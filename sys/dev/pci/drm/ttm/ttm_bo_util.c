@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.3 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -409,7 +409,7 @@ EXPORT_SYMBOL(ttm_bo_move_memcpy);
 
 static void ttm_transfered_destroy(struct ttm_buffer_object *bo)
 {
-	free(bo, M_DRM);
+	kfree(bo);
 }
 
 /**
@@ -434,7 +434,7 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	struct ttm_bo_device *bdev = bo->bdev;
 	struct ttm_bo_driver *driver = bdev->driver;
 
-	fbo = malloc(sizeof(*fbo), M_DRM, M_WAITOK);
+	fbo = kmalloc(sizeof(*fbo), GFP_KERNEL);
 	if (!fbo)
 		return -ENOMEM;
 

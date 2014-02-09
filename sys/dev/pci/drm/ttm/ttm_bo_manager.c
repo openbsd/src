@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_manager.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_manager.c,v 1.2 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -103,13 +103,13 @@ static int ttm_bo_man_init(struct ttm_mem_type_manager *man,
 	struct ttm_range_manager *rman;
 	int ret;
 
-	rman = malloc(sizeof(*rman), M_DRM, M_WAITOK | M_ZERO);
+	rman = kzalloc(sizeof(*rman), GFP_KERNEL);
 	if (!rman)
 		return -ENOMEM;
 
 	ret = drm_mm_init(&rman->mm, 0, p_size);
 	if (ret) {
-		free(rman, M_DRM);
+		kfree(rman);
 		return ret;
 	}
 
@@ -127,7 +127,7 @@ static int ttm_bo_man_takedown(struct ttm_mem_type_manager *man)
 	if (drm_mm_clean(mm)) {
 		drm_mm_takedown(mm);
 		mtx_leave(&rman->lock);
-		free(rman, M_DRM);
+		kfree(rman);
 		man->priv = NULL;
 		return 0;
 	}

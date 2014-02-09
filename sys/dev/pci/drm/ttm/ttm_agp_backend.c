@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_agp_backend.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_agp_backend.c,v 1.3 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -99,7 +99,7 @@ static void ttm_agp_destroy(struct ttm_tt *ttm)
 	if (agp_be->bound)
 		ttm_agp_unbind(ttm);
 	ttm_tt_fini(ttm);
-	free(agp_be, M_DRM);
+	kfree(agp_be);
 }
 
 static struct ttm_backend_func ttm_agp_func = {
@@ -115,7 +115,7 @@ struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
 {
 	struct ttm_agp_backend *agp_be;
 
-	agp_be = malloc(sizeof(*agp_be), M_DRM, M_WAITOK);
+	agp_be = kmalloc(sizeof(*agp_be), GFP_KERNEL);
 	if (!agp_be)
 		return NULL;
 

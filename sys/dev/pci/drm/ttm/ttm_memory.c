@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.3 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.4 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -75,7 +75,7 @@ static void ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
 
 	DRM_INFO("Zone %7s: Used memory at exit: %llu kiB\n",
 		zone->name, (unsigned long long)zone->used_mem >> 10);
-	free(zone, M_DRM);
+	kfree(zone);
 }
 
 #ifdef notyet
@@ -170,7 +170,7 @@ static struct kobj_type ttm_mem_zone_kobj_type = {
 static void ttm_mem_global_kobj_release(struct ttm_mem_global *glob)
 {
 
-	free(glob, M_DRM);
+	kfree(glob);
 }
 
 #ifdef notyet
@@ -244,7 +244,7 @@ static void ttm_shrink_work(void *arg1, void *arg2)
 static int ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
-	struct ttm_mem_zone *zone = malloc(sizeof(*zone), M_DRM, M_WAITOK | M_ZERO);
+	struct ttm_mem_zone *zone = kzalloc(sizeof(*zone), GFP_KERNEL);
 
 	if (unlikely(!zone))
 		return -ENOMEM;
@@ -271,7 +271,7 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 	if (si->totalhigh == 0)
 		return 0;
 
-	zone = malloc(sizeof(*zone), M_DRM, M_WAITOK | M_ZERO);
+	zone = kzalloc(sizeof(*zone), GFP_KERNEL);
 	if (unlikely(!zone))
 		return -ENOMEM;
 
@@ -291,7 +291,7 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
-	struct ttm_mem_zone *zone = malloc(sizeof(*zone), M_DRM, M_WAITOK | M_ZERO);
+	struct ttm_mem_zone *zone = kzalloc(sizeof(*zone), GFP_KERNEL);
 
 	if (unlikely(!zone))
 		return -ENOMEM;
@@ -301,7 +301,7 @@ static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
 	 */
 
 	if (mem <= ((uint64_t) 1ULL << 32)) {
-		free(zone, M_DRM);
+		kfree(zone);
 		return 0;
 	}
 

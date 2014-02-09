@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.3 2014/02/09 10:57:26 jsg Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -172,7 +172,7 @@ ttm_uvm_free_page(struct vm_page *m)
 
 static void ttm_pool_kobj_release(struct ttm_pool_manager *m)
 {
-	free(m, M_DRM);
+	kfree(m);
 }
 
 #ifdef notyet
@@ -348,8 +348,8 @@ static int ttm_page_pool_free(struct ttm_page_pool *pool, unsigned nr_free)
 	if (NUM_PAGES_TO_ALLOC < nr_free)
 		npages_to_free = NUM_PAGES_TO_ALLOC;
 
-	pages_to_free = malloc(npages_to_free * sizeof(struct vm_page *),
-			M_DRM, M_WAITOK);
+	pages_to_free = kmalloc(npages_to_free * sizeof(struct vm_page *),
+			GFP_KERNEL);
 	if (!pages_to_free) {
 		printf("Failed to allocate memory for pool free operation\n");
 		return 0;
@@ -414,7 +414,7 @@ restart:
 	if (freed_pages)
 		ttm_pages_put(pages_to_free, freed_pages);
 out:
-	free(pages_to_free, M_DRM);
+	kfree(pages_to_free);
 	return nr_free;
 }
 
@@ -532,7 +532,7 @@ static int ttm_alloc_new_pages(struct pglist *pages, int gfp_flags,
 			(unsigned)(PAGE_SIZE/sizeof(struct vm_page *)));
 
 	/* allocate array for page caching change */
-	caching_array = malloc(max_cpages*sizeof(struct vm_page *), M_DRM, M_WAITOK);
+	caching_array = kmalloc(max_cpages*sizeof(struct vm_page *), GFP_KERNEL);
 
 	if (!caching_array) {
 		printf("Unable to allocate table for new pages\n");
@@ -592,7 +592,7 @@ static int ttm_alloc_new_pages(struct pglist *pages, int gfp_flags,
 					caching_array, cpages);
 	}
 out:
-	free(caching_array, M_DRM);
+	kfree(caching_array);
 
 	return r;
 }
@@ -829,7 +829,7 @@ int ttm_page_alloc_init(struct ttm_mem_global *glob, unsigned max_pages)
 
 	DRM_DEBUG("Initializing pool allocator\n");
 
-	_manager = malloc(sizeof(*_manager), M_DRM, M_WAITOK | M_ZERO);
+	_manager = kzalloc(sizeof(*_manager), GFP_KERNEL);
 
 	ttm_page_pool_init_locked(&_manager->wc_pool, 0, "wc");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.c,v 1.2 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2009 VMware, Inc., Palo Alto, CA., USA
@@ -124,7 +124,7 @@ ttm_object_file_ref(struct ttm_object_file *tfile)
 static void ttm_object_file_destroy(struct ttm_object_file *tfile)
 {
 
-	free(tfile, M_DRM);
+	kfree(tfile);
 }
 
 static inline void ttm_object_file_unref(struct ttm_object_file **p_tfile)
@@ -268,7 +268,7 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 					   false, false);
 		if (unlikely(ret != 0))
 			return ret;
-		ref = malloc(sizeof(*ref), M_DRM, M_WAITOK);
+		ref = kmalloc(sizeof(*ref), GFP_KERNEL);
 		if (unlikely(ref == NULL)) {
 			ttm_mem_global_free(mem_glob, sizeof(*ref));
 			return -ENOMEM;
@@ -296,7 +296,7 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 		BUG_ON(ret != -EINVAL);
 
 		ttm_mem_global_free(mem_glob, sizeof(*ref));
-		free(ref, M_DRM);
+		kfree(ref);
 	}
 
 	return ret;
@@ -320,7 +320,7 @@ static void ttm_ref_object_release(struct ttm_ref_object *ref)
 
 	ttm_base_object_unref(&ref->obj);
 	ttm_mem_global_free(mem_glob, sizeof(*ref));
-	free(ref, M_DRM);
+	kfree(ref);
 	rw_enter_write(&tfile->lock);
 }
 
@@ -378,7 +378,7 @@ EXPORT_SYMBOL(ttm_object_file_release);
 struct ttm_object_file *ttm_object_file_init(struct ttm_object_device *tdev,
 					     unsigned int hash_order)
 {
-	struct ttm_object_file *tfile = malloc(sizeof(*tfile), M_DRM, M_WAITOK);
+	struct ttm_object_file *tfile = kmalloc(sizeof(*tfile), GFP_KERNEL);
 	unsigned int i;
 	unsigned int j = 0;
 	int ret;
@@ -404,7 +404,7 @@ out_err:
 	for (i = 0; i < j; ++i)
 		drm_ht_remove(&tfile->ref_hash[i]);
 
-	free(tfile, M_DRM);
+	kfree(tfile);
 
 	return NULL;
 }
@@ -414,7 +414,7 @@ struct ttm_object_device *ttm_object_device_init(struct ttm_mem_global
 						 *mem_glob,
 						 unsigned int hash_order)
 {
-	struct ttm_object_device *tdev = malloc(sizeof(*tdev), M_DRM, M_WAITOK);
+	struct ttm_object_device *tdev = kmalloc(sizeof(*tdev), GFP_KERNEL);
 	int ret;
 
 	if (unlikely(tdev == NULL))
@@ -428,7 +428,7 @@ struct ttm_object_device *ttm_object_device_init(struct ttm_mem_global
 	if (likely(ret == 0))
 		return tdev;
 
-	free(tdev, M_DRM);
+	kfree(tdev);
 	return NULL;
 }
 EXPORT_SYMBOL(ttm_object_device_init);
@@ -443,6 +443,6 @@ void ttm_object_device_release(struct ttm_object_device **p_tdev)
 	drm_ht_remove(&tdev->object_hash);
 	mtx_leave(&tdev->object_lock);
 
-	free(tdev, M_DRM);
+	kfree(tdev);
 }
 EXPORT_SYMBOL(ttm_object_device_release);

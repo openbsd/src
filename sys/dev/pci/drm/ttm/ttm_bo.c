@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.5 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.6 2014/02/09 10:57:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -154,7 +154,7 @@ static void ttm_bo_release_list(struct ttm_buffer_object *bo)
 	if (bo->destroy)
 		bo->destroy(bo);
 	else {
-		free(bo, M_DRM);
+		kfree(bo);
 	}
 	ttm_mem_global_free(bdev->glob->mem_glob, acc_size);
 }
@@ -1204,7 +1204,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 		if (destroy)
 			(*destroy)(bo);
 		else
-			free(bo, M_DRM);
+			kfree(bo);
 		return -ENOMEM;
 	}
 
@@ -1214,7 +1214,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 		if (destroy)
 			(*destroy)(bo);
 		else
-			free(bo, M_DRM);
+			kfree(bo);
 		ttm_mem_global_free(mem_glob, acc_size);
 		return -EINVAL;
 	}
@@ -1323,7 +1323,7 @@ int ttm_bo_create(struct ttm_bo_device *bdev,
 	size_t acc_size;
 	int ret;
 
-	bo = malloc(sizeof(*bo), M_DRM, M_WAITOK | M_ZERO);
+	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
 	if (unlikely(bo == NULL))
 		return -ENOMEM;
 
@@ -1455,7 +1455,7 @@ static void ttm_bo_global_kobj_release(struct ttm_bo_global *glob)
 
 	ttm_mem_unregister_shrink(glob->mem_glob, &glob->shrink);
 	km_free(glob->dummy_read_page, PAGE_SIZE, &kv_any, &kp_dma_zero);
-	drm_free(glob);
+	kfree(glob);
 }
 
 void ttm_bo_global_release(struct drm_global_reference *ref)
@@ -1503,7 +1503,7 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 out_no_shrink:
 	km_free(glob->dummy_read_page, PAGE_SIZE, &kv_any, &kp_dma_zero);
 out_no_drp:
-	free(glob, M_DRM);
+	kfree(glob);
 	return ret;
 }
 EXPORT_SYMBOL(ttm_bo_global_init);
