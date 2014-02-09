@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_hdmi.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: r600_hdmi.c,v 1.2 2014/02/09 13:43:02 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -323,6 +323,9 @@ void r600_hdmi_setmode(struct drm_encoder *encoder, struct drm_display_mode *mod
 	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
 	uint32_t offset;
 
+	if (!dig || !dig->afmt)
+		return;
+
 	/* Silent, r600_hdmi_enable will raise WARN for us */
 	if (!dig->afmt->enabled)
 		return;
@@ -480,6 +483,9 @@ void r600_hdmi_enable(struct drm_encoder *encoder)
 	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
 	uint32_t offset;
 	u32 hdmi;
+
+	if (!dig || !dig->afmt)
+		return;
 
 	if (ASIC_IS_DCE6(rdev))
 		return;
