@@ -185,10 +185,11 @@ typedef struct
 #define CpuSVME	      0x80000	/* AMD Secure Virtual Machine Ext-s required */
 #define CpuVMX	     0x100000	/* VMX Instructions required */
 #define CpuMNI	     0x200000	/* Merom New Instructions required */
-#define CpuAES	     0x400000	/* Intel AES extensions required */
-#define CpuPCLMUL    0x800000	/* Intel Carry-less Multiplication extensions */
-#define CpuRdRnd    0x1000000	/* Intel Random Number Generator extensions */
-#define CpuSMAP     0x2000000	/* Intel Supervisor Mode Access Prevention */
+#define CpuXSAVE     0x400000	/* XSAVE Instructions required */
+#define CpuAES	     0x800000	/* Intel AES extensions required */
+#define CpuPCLMUL   0x1000000	/* Intel Carry-less Multiplication extensions */
+#define CpuRdRnd    0x2000000	/* Intel Random Number Generator extensions */
+#define CpuSMAP     0x4000000	/* Intel Supervisor Mode Access Prevention */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
@@ -197,8 +198,8 @@ typedef struct
   /* The default value for unknown CPUs - enable all features to avoid problems.  */
 #define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686 \
 	|CpuP4|CpuSledgehammer|CpuMMX|CpuMMX2|CpuSSE|CpuSSE2|CpuPNI|CpuVMX \
-	|Cpu3dnow|Cpu3dnowA|CpuK6|CpuAthlon|CpuPadLock|CpuSVME|CpuMNI|CpuAES \
-	|CpuPCLMUL|CpuRdRnd|CpuSMAP)
+	|Cpu3dnow|Cpu3dnowA|CpuK6|CpuAthlon|CpuPadLock|CpuSVME|CpuMNI \
+	|CpuXSAVE|CpuAES|CpuPCLMUL|CpuRdRnd|CpuSMAP)
 
   /* the bits in opcode_modifier are used to generate the final opcode from
      the base_opcode.  These bits also are used to detect alternate forms of

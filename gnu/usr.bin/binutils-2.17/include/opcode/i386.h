@@ -1508,6 +1508,13 @@ static const template i386_optab[] =
 {"clac", 0, 0x0f01, 0xca, CpuSMAP, NoSuf|ImmExt, { 0, 0, 0 } },
 {"stac", 0, 0x0f01, 0xcb, CpuSMAP, NoSuf|ImmExt, { 0, 0, 0 } },
 
+/* Intel XSAVE extensions */
+{"xgetbv", 0, 0x0f01, 0xd0, CpuXSAVE, NoSuf|ImmExt, { 0, 0, 0 } },
+{"xsetbv", 0, 0x0f01, 0xd1, CpuXSAVE, NoSuf|ImmExt, { 0, 0, 0 } },
+{"xsave", 1, 0x0fae, 4, CpuXSAVE, q_Suf|Modrm, { LLongMem, 0, 0 } },
+{"xrstor", 1, 0x0fae, 5, CpuXSAVE, q_Suf|Modrm, { LLongMem, 0, 0 } },
+{"xsaveopt", 1, 0x0fae, 6, CpuXSAVE, q_Suf|Modrm, { LLongMem, 0, 0 } },
+
 /* sentinel */
 {NULL, 0, 0, 0, 0, 0, { 0, 0, 0} }
 };

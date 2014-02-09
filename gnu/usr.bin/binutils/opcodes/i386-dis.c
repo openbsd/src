@@ -100,6 +100,7 @@ static void OP_xcrypt (int, int);
 static void OP_SIMD_Suffix (int, int);
 static void SIMD_Fixup (int, int);
 static void PNI_Fixup (int, int);
+static void XCR_Fixup (int, int);
 static void INVLPG_Fixup (int, int);
 static void OP_0f38 (int, int);
 static void OP_0f3a (int, int);
@@ -1366,7 +1367,7 @@ static const struct dis386 grps[][8] = {
   {
     { "sgdtQ",	 M, XX, XX },
     { "sidtQ", PNI_Fixup, 0, XX, XX },
-    { "lgdtQ",	 M, XX, XX },
+    { "lgdtQ", XCR_Fixup, 0, XX, XX },
     { "lidtQ",	 M, XX, XX },
     { "smswQ",	Ev, XX, XX },
     { "(bad)",	XX, XX, XX },
@@ -1434,10 +1435,10 @@ static const struct dis386 grps[][8] = {
     { "fxrstor", Ev, XX, XX },
     { "ldmxcsr", Ev, XX, XX },
     { "stmxcsr", Ev, XX, XX },
-    { "(bad)",	XX, XX, XX },
-    { "lfence", OP_0fae, 0, XX, XX },
-    { "mfence", OP_0fae, 0, XX, XX },
-    { "clflush", OP_0fae, 0, XX, XX },
+    { "xsave",	Ev, XX, XX },
+    { "xrstor", OP_0fae, v_mode, XX, XX },
+    { "xsaveopt", OP_0fae, v_mode, XX, XX },
+    { "clflush", OP_0fae, v_mode, XX, XX },
   },
   /* GRP14 */
   {
@@ -3962,6 +3963,11 @@ OP_0fae (int bytemode, int sizeflag)
     {
       if (reg == 7)
 	strcpy (obuf + strlen (obuf) - sizeof ("clflush") + 1, "sfence");
+      else if (reg == 6)
+	strcpy (obuf + strlen (obuf) - sizeof ("xsaveopt") + 1, "mfence");
+      else if (reg == 5)
+	strcpy (obuf + strlen (obuf) - sizeof ("xrstor") + 1, "lfence");
+      bytemode = 0;
 
       if (reg < 5 || rm != 0)
 	{
@@ -3969,9 +3975,9 @@ OP_0fae (int bytemode, int sizeflag)
 	  return;
 	}
     }
-  else if (reg != 7)
+  else if (reg < 5)
     {
-      BadOp ();		/* bad clflush */
+      BadOp ();		/* bad sfence, mfence, or lfence */
       return;
     }
 
@@ -4178,6 +4184,29 @@ PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
     }
   else
     OP_E (0, sizeflag);
+}
+
+static void
+XCR_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
+{
+  if (mod == 3 && reg == 2 && rm <= 1)
+    {
+      char *p = obuf + strlen (obuf);
+
+      /* Override "lgdt".  */
+      if (rm)
+	{
+	  strcpy (p - 4, "xsetbv");
+	}
+      else
+	{
+	  strcpy (p - 4, "xgetbv");
+	}
+
+      codep++;
+    }
+  else
+    OP_M (0, sizeflag);
 }
 
 static void

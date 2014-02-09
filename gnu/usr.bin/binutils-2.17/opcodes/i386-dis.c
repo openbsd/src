@@ -96,6 +96,7 @@ static void OP_3DNowSuffix (int, int);
 static void OP_SIMD_Suffix (int, int);
 static void SIMD_Fixup (int, int);
 static void PNI_Fixup (int, int);
+static void XCR_Fixup (int, int);
 static void SVME_Fixup (int, int);
 static void INVLPG_Fixup (int, int);
 static void BadOp (void);
@@ -1404,7 +1405,7 @@ static const struct dis386 grps[][8] = {
   {
     { "sgdtIQ", VMX_Fixup, 0, XX, XX },
     { "sidtIQ", PNI_Fixup, 0, XX, XX },
-    { "lgdt{Q|Q||}",	 M, XX, XX },
+    { "lgdt{Q|Q||}",	 XCR_Fixup, 0, XX, XX },
     { "lidt{Q|Q||}",	 SVME_Fixup, 0, XX, XX },
     { "smswQ",	Ev, XX, XX },
     { "(bad)",	XX, XX, XX },
@@ -1472,10 +1473,10 @@ static const struct dis386 grps[][8] = {
     { "fxrstor", Ev, XX, XX },
     { "ldmxcsr", Ev, XX, XX },
     { "stmxcsr", Ev, XX, XX },
-    { "(bad)",	XX, XX, XX },
-    { "lfence", OP_0fae, 0, XX, XX },
-    { "mfence", OP_0fae, 0, XX, XX },
-    { "clflush", OP_0fae, 0, XX, XX },
+    { "xsave",	Ev, XX, XX },
+    { "xrstor", OP_0fae, v_mode, XX, XX },
+    { "xsaveopt", OP_0fae, v_mode, XX, XX },
+    { "clflush", OP_0fae, v_mode, XX, XX },
   },
   /* GRP14 */
   {
@@ -4826,6 +4827,11 @@ OP_0fae (int bytemode, int sizeflag)
     {
       if (reg == 7)
 	strcpy (obuf + strlen (obuf) - sizeof ("clflush") + 1, "sfence");
+      else if (reg == 6)
+	strcpy (obuf + strlen (obuf) - sizeof ("xsaveopt") + 1, "mfence");
+      else if (reg == 5)
+	strcpy (obuf + strlen (obuf) - sizeof ("xrstor") + 1, "lfence");
+      bytemode = 0;
 
       if (reg < 5 || rm != 0)
 	{
@@ -4833,9 +4839,9 @@ OP_0fae (int bytemode, int sizeflag)
 	  return;
 	}
     }
-  else if (reg != 7)
+  else if (reg < 5)
     {
-      BadOp ();		/* bad clflush */
+      BadOp ();		/* bad sfence, mfence, or lfence */
       return;
     }
 
@@ -5077,6 +5083,44 @@ PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
         strcpy (p, "clac");
       else if (*codep == 0xcb)
         strcpy (p, "stac");
+      codep++;
+    }
+  else
+    OP_M (0, sizeflag);
+}
+
+static void
+XCR_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
+{
+  if (mod == 3 && reg == 2 && rm <= 1)
+    {
+      /* Override "lgdt".  */
+      size_t olen = strlen (obuf);
+      char *p = obuf + olen - 4;
+
+      /* We might have a suffix when disassembling with -Msuffix.  */
+      if (*p == 'i')
+	--p;
+
+      /* Remove "addr16/addr32" if we aren't in Intel mode.  */
+      if (!intel_syntax
+	  && (prefixes & PREFIX_ADDR)
+	  && olen >= (4 + 7)
+	  && *(p - 1) == ' '
+	  && strncmp (p - 7, "addr", 4) == 0
+	  && (strncmp (p - 3, "16", 2) == 0
+	      || strncmp (p - 3, "32", 2) == 0))
+	p -= 7;
+
+      if (rm)
+	{
+	  strcpy (p, "xsetbv");
+	}
+      else
+	{
+	  strcpy (p, "xgetbv");
+	}
+
       codep++;
     }
   else
