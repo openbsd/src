@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.14 2012/09/01 13:47:34 espie Exp $
+# $OpenBSD: Signature.pm,v 1.15 2014/02/09 19:22:19 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -154,7 +154,7 @@ sub new
 	my $o = $class->SUPER::new($pkgname, $extra);
 	my $hash;
 	open my $fh, '>', \$hash;
-	$plist->write_no_sig($fh);
+	$plist->write_without_variation($fh);
 	close $fh;
 	$o->{hash} = $hash;
 	return $o;

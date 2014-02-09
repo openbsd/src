@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.231 2014/02/03 16:18:05 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.232 2014/02/09 19:22:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -122,6 +122,12 @@ sub write_no_sig
 {
 	my ($self, $fh) = @_;
 	$self->write($fh);
+}
+
+sub write_without_variation
+{
+	my ($self, $fh) = @_;
+	$self->write_no_sig($fh);
 }
 
 # needed for comment checking
@@ -1710,6 +1716,11 @@ sub new
 	$class->SUPER::new($args);
 }
 
+# don't incorporate this into compared signatures
+sub write_without_variation
+{
+}
+
 # XXX digital-signatures have to be unique, since they are a part
 # of the unsigned packing-list, with only the b64sig part removed
 # (likewise for signer)
@@ -1779,6 +1790,11 @@ sub write_no_sig
 	my ($self, $fh) = @_;
 	print $fh "\@", $self->keyword, " ", $self->{key}, ":",
 	    time_to_iso8601($self->{timestamp}), "\n";
+}
+
+# don't incorporate this into compared signatures
+sub write_without_variation
+{
 }
 
 package OpenBSD::PackingElement::Old;
