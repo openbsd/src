@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.135 2014/01/21 05:17:45 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.136 2014/02/09 20:45:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -312,3 +312,5 @@ void add_route(int, struct in_addr, struct in_addr, struct in_addr, int, int);
 void sendhup(struct client_lease *);
 
 int resolv_conf_priority(int);
+
+void flush_unpriv_ibuf(const char *);

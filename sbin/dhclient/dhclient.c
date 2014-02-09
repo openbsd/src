@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.292 2014/02/08 18:12:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.293 2014/02/09 20:45:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2419,10 +2419,7 @@ write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
 	if (rslt == -1)
 		warning("write_file: imsg_composev: %s", strerror(errno));
 
-	/* Do flush to maximize chances of keeping file current. */
-	rslt = imsg_flush(unpriv_ibuf);
-	if (rslt == -1)
-		warning("write_file: imsg_flush: %s", strerror(errno));
+	flush_unpriv_ibuf("write_file");
 }
 
 void
