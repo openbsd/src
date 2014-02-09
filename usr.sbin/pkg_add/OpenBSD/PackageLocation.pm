@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.38 2014/02/09 12:18:26 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.39 2014/02/09 14:23:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -212,6 +212,7 @@ sub wipe_info
 	$self->deref;
 	delete $self->{_current_name};
 	delete $self->{update_info};
+	delete $self->{_unput};
 }
 
 sub info
@@ -282,7 +283,6 @@ sub deref
 	delete $self->{pid2};
 	delete $self->{_archive};
 	delete $self->{_current};
-	delete $self->{_unput};
 }
 
 # proxy for archive operations
