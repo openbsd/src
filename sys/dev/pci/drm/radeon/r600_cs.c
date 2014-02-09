@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_cs.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: r600_cs.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -2401,7 +2401,7 @@ int r600_cs_parse(struct radeon_cs_parser *p)
 
 	if (p->track == NULL) {
 		/* initialize tracker, we are in kms */
-		track = malloc(sizeof(*track), M_DRM, M_WAITOK | M_ZERO);
+		track = kzalloc(sizeof(*track), GFP_KERNEL);
 		if (track == NULL)
 			return -ENOMEM;
 		r600_cs_track_init(track);
@@ -2419,7 +2419,7 @@ int r600_cs_parse(struct radeon_cs_parser *p)
 	do {
 		r = r600_cs_packet_parse(p, &pkt, p->idx);
 		if (r) {
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return r;
 		}
@@ -2435,12 +2435,12 @@ int r600_cs_parse(struct radeon_cs_parser *p)
 			break;
 		default:
 			DRM_ERROR("Unknown packet type %d !\n", pkt.type);
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return -EINVAL;
 		}
 		if (r) {
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return r;
 		}
@@ -2451,7 +2451,7 @@ int r600_cs_parse(struct radeon_cs_parser *p)
 		mdelay(1);
 	}
 #endif
-	free(p->track, M_DRM);
+	kfree(p->track);
 	p->track = NULL;
 	return 0;
 }
@@ -2463,7 +2463,7 @@ static int r600_cs_parser_relocs_legacy(struct radeon_cs_parser *p)
 	if (p->chunk_relocs_idx == -1) {
 		return 0;
 	}
-	p->relocs = malloc(sizeof(struct radeon_cs_reloc), M_DRM, M_WAITOK | M_ZERO);
+	p->relocs = kzalloc(sizeof(struct radeon_cs_reloc), GFP_KERNEL);
 	if (p->relocs == NULL) {
 		return -ENOMEM;
 	}
@@ -2482,16 +2482,16 @@ static void r600_cs_parser_fini(struct radeon_cs_parser *parser, int error)
 {
 	unsigned i;
 
-	free(parser->relocs, M_DRM);
+	kfree(parser->relocs);
 	for (i = 0; i < parser->nchunks; i++) {
-		free(parser->chunks[i].kdata, M_DRM);
+		kfree(parser->chunks[i].kdata);
 		if (parser->rdev && (parser->rdev->flags & RADEON_IS_AGP)) {
-			free(parser->chunks[i].kpage[0], M_DRM);
-			free(parser->chunks[i].kpage[1], M_DRM);
+			kfree(parser->chunks[i].kpage[0]);
+			kfree(parser->chunks[i].kpage[1]);
 		}
 	}
-	free(parser->chunks, M_DRM);
-	free(parser->chunks_array, M_DRM);
+	kfree(parser->chunks);
+	kfree(parser->chunks_array);
 }
 
 int r600_cs_legacy(struct drm_device *dev, void *data, struct drm_file *filp,
@@ -2503,7 +2503,7 @@ int r600_cs_legacy(struct drm_device *dev, void *data, struct drm_file *filp,
 	int r;
 
 	/* initialize tracker */
-	track = malloc(sizeof(*track), M_DRM, M_WAITOK | M_ZERO);
+	track = kzalloc(sizeof(*track), GFP_KERNEL);
 	if (track == NULL)
 		return -ENOMEM;
 	r600_cs_track_init(track);

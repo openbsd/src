@@ -1,4 +1,4 @@
-/*	$OpenBSD: atom.c,v 1.2 2014/01/23 00:57:10 jsg Exp $	*/
+/*	$OpenBSD: atom.c,v 1.3 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
@@ -1183,7 +1183,7 @@ static int atom_execute_table_locked(struct atom_context *ctx, int index, uint32
 	ectx.abort = false;
 	ectx.last_jump = 0;
 	if (ws)
-		ectx.ws = malloc(4 * ws, M_DRM, M_WAITOK | M_ZERO);
+		ectx.ws = kzalloc(4 * ws, GFP_KERNEL);
 	else
 		ectx.ws = NULL;
 
@@ -1215,7 +1215,7 @@ static int atom_execute_table_locked(struct atom_context *ctx, int index, uint32
 
 free:
 	if (ws)
-		free(ectx.ws, M_DRM);
+		kfree(ectx.ws);
 	return ret;
 }
 
@@ -1244,7 +1244,7 @@ static int atom_iio_len[] = { 1, 2, 3, 3, 3, 3, 4, 4, 4, 3 };
 
 static void atom_index_iio(struct atom_context *ctx, int base)
 {
-	ctx->iio = malloc(2 * 256, M_DRM, M_WAITOK | M_ZERO);
+	ctx->iio = kzalloc(2 * 256, GFP_KERNEL);
 	while (CU8(base) == ATOM_IIO_START) {
 		ctx->iio[CU8(base + 1)] = base + 2;
 		base += 2;
@@ -1258,7 +1258,7 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 {
 	int base;
 	struct atom_context *ctx =
-	    malloc(sizeof(struct atom_context), M_DRM, M_WAITOK | M_ZERO);
+	    kzalloc(sizeof(struct atom_context), GFP_KERNEL);
 #ifdef DRMDEBUG
 	char *str;
 	char name[512];
@@ -1273,14 +1273,14 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 
 	if (CU16(0) != ATOM_BIOS_MAGIC) {
 		DRM_INFO( "Invalid BIOS magic.\n");
-		free(ctx, M_DRM);
+		kfree(ctx);
 		return NULL;
 	}
 	if (strncmp
 	    (CSTR(ATOM_ATI_MAGIC_PTR), ATOM_ATI_MAGIC,
 	     strlen(ATOM_ATI_MAGIC))) {
 		DRM_INFO( "Invalid ATI magic.\n");
-		free(ctx, M_DRM);
+		kfree(ctx);
 		return NULL;
 	}
 
@@ -1289,7 +1289,7 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 	    (CSTR(base + ATOM_ROM_MAGIC_PTR), ATOM_ROM_MAGIC,
 	     strlen(ATOM_ROM_MAGIC))) {
 		DRM_INFO( "Invalid ATOM magic.\n");
-		free(ctx, M_DRM);
+		kfree(ctx);
 		return NULL;
 	}
 
@@ -1347,8 +1347,8 @@ int atom_asic_init(struct atom_context *ctx)
 void atom_destroy(struct atom_context *ctx)
 {
 	if (ctx->iio)
-		free(ctx->iio, M_DRM);
-	free(ctx, M_DRM);
+		kfree(ctx->iio);
+	kfree(ctx);
 }
 
 bool atom_parse_data_header(struct atom_context *ctx, int index,
@@ -1409,7 +1409,7 @@ int atom_allocate_fb_scratch(struct atom_context *ctx)
 	if (usage_bytes == 0)
 		usage_bytes = 20 * 1024;
 	/* allocate some scratch memory */
-	ctx->scratch = malloc(usage_bytes, M_DRM, M_WAITOK | M_ZERO);
+	ctx->scratch = kzalloc(usage_bytes, GFP_KERNEL);
 	if (!ctx->scratch)
 		return -ENOMEM;
 	ctx->scratch_size_bytes = usage_bytes;

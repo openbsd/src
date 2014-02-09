@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs690.c,v 1.2 2014/01/23 00:30:20 jsg Exp $	*/
+/*	$OpenBSD: rs690.c,v 1.3 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -715,8 +715,7 @@ void rs690_fini(struct radeon_device *rdev)
 	radeon_fence_driver_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	if (rdev->bios)
-		free(rdev->bios, M_DRM);
+	kfree(rdev->bios);
 	rdev->bios = NULL;
 }
 

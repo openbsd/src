@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.19 2014/01/23 03:15:09 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.20 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1052,7 +1052,7 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 		struct radeon_bo_va *bo_va;
 		int r;
 
-		fpriv = malloc(sizeof(*fpriv), M_DRM, M_WAITOK | M_ZERO);
+		fpriv = kzalloc(sizeof(*fpriv), GFP_KERNEL);
 		if (unlikely(!fpriv)) {
 			return -ENOMEM;
 		}
@@ -1068,7 +1068,7 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 					  RADEON_VM_PAGE_SNOOPED);
 		if (r) {
 			radeon_vm_fini(rdev, &fpriv->vm);
-			free(fpriv, M_DRM);
+			kfree(fpriv);
 			return r;
 		}
 
@@ -1106,7 +1106,7 @@ void radeon_driver_postclose_kms(struct drm_device *dev,
 		}
 
 		radeon_vm_fini(rdev, &fpriv->vm);
-		free(fpriv, M_DRM);
+		kfree(fpriv);
 		file_priv->driver_priv = NULL;
 	}
 }

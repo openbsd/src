@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_sa.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_sa.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -156,7 +156,7 @@ static void radeon_sa_bo_remove_locked(struct radeon_sa_bo *sa_bo)
 	list_del_init(&sa_bo->olist);
 	list_del_init(&sa_bo->flist);
 	radeon_fence_unref(&sa_bo->fence);
-	free(sa_bo, M_DRM);
+	kfree(sa_bo);
 }
 
 static void radeon_sa_bo_try_free(struct radeon_sa_manager *sa_manager)
@@ -332,7 +332,7 @@ int radeon_sa_bo_new(struct radeon_device *rdev,
 	BUG_ON(align > RADEON_GPU_PAGE_SIZE);
 	BUG_ON(size > sa_manager->size);
 
-	*sa_bo = malloc(sizeof(struct radeon_sa_bo), M_DRM, M_WAITOK);
+	*sa_bo = kmalloc(sizeof(struct radeon_sa_bo), GFP_KERNEL);
 	if ((*sa_bo) == NULL) {
 		return -ENOMEM;
 	}
@@ -383,7 +383,7 @@ int radeon_sa_bo_new(struct radeon_device *rdev,
 	} while (!r);
 
 	mtx_leave(&sa_manager->wq_lock);
-	free(*sa_bo, M_DRM);
+	kfree(*sa_bo);
 	*sa_bo = NULL;
 	return r;
 }

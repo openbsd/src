@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -109,7 +109,7 @@ int radeon_fence_emit(struct radeon_device *rdev,
 		      int ring)
 {
 	/* we are protected by the ring emission rwlock */
-	*fence = malloc(sizeof(struct radeon_fence), M_DRM, M_WAITOK);
+	*fence = kmalloc(sizeof(struct radeon_fence), GFP_KERNEL);
 	if ((*fence) == NULL) {
 		return -ENOMEM;
 	}
@@ -205,7 +205,7 @@ void radeon_fence_process(struct radeon_device *rdev, int ring)
 static void radeon_fence_destroy(struct radeon_fence *fence)
 {
 
-	drm_free(fence);
+	kfree(fence);
 }
 
 /**

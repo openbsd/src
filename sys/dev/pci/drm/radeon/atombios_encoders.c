@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.3 2014/01/23 00:46:16 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.4 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -201,7 +201,7 @@ void radeon_atom_backlight_init(struct radeon_encoder *radeon_encoder,
 	if (!(rdev->mode_info.firmware_flags & ATOM_BIOS_INFO_BL_CONTROLLED_BY_GPU))
 		return;
 
-	pdata = malloc(sizeof(struct radeon_backlight_privdata), M_DRM, M_WAITOK);
+	pdata = kmalloc(sizeof(struct radeon_backlight_privdata), GFP_KERNEL);
 	if (!pdata) {
 		DRM_ERROR("Memory allocation failed\n");
 		goto error;
@@ -235,7 +235,7 @@ void radeon_atom_backlight_init(struct radeon_encoder *radeon_encoder,
 	return;
 
 error:
-	free(pdata, M_DRM);
+	kfree(pdata);
 	return;
 }
 
@@ -264,7 +264,7 @@ static void radeon_atom_backlight_exit(struct radeon_encoder *radeon_encoder)
 
 		pdata = bl_get_data(bd);
 		backlight_device_unregister(bd);
-		free(pdata, M_DRM);
+		kfree(pdata);
 
 		DRM_INFO("radeon atom LVDS backlight unloaded\n");
 	}
@@ -2506,9 +2506,9 @@ void radeon_enc_destroy(struct drm_encoder *encoder)
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 	if (radeon_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT))
 		radeon_atom_backlight_exit(radeon_encoder);
-	free(radeon_encoder->enc_priv, M_DRM);
+	kfree(radeon_encoder->enc_priv);
 	drm_encoder_cleanup(encoder);
-	free(radeon_encoder, M_DRM);
+	kfree(radeon_encoder);
 }
 
 static const struct drm_encoder_funcs radeon_atom_enc_funcs = {
@@ -2520,8 +2520,7 @@ radeon_atombios_set_dac_info(struct radeon_encoder *radeon_encoder)
 {
 	struct drm_device *dev = radeon_encoder->base.dev;
 	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder_atom_dac *dac = malloc(sizeof(struct radeon_encoder_atom_dac),
-	    M_DRM, M_WAITOK | M_ZERO);
+	struct radeon_encoder_atom_dac *dac = kzalloc(sizeof(struct radeon_encoder_atom_dac), GFP_KERNEL);
 
 	if (!dac)
 		return NULL;
@@ -2534,8 +2533,7 @@ static struct radeon_encoder_atom_dig *
 radeon_atombios_set_dig_info(struct radeon_encoder *radeon_encoder)
 {
 	int encoder_enum = (radeon_encoder->encoder_enum & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
-	struct radeon_encoder_atom_dig *dig = malloc(sizeof(struct radeon_encoder_atom_dig),
-	    M_DRM, M_WAITOK | M_ZERO);
+	struct radeon_encoder_atom_dig *dig = kzalloc(sizeof(struct radeon_encoder_atom_dig), GFP_KERNEL);
 
 	if (!dig)
 		return NULL;
@@ -2573,7 +2571,7 @@ radeon_add_atom_encoder(struct drm_device *dev,
 	}
 
 	/* add a new one */
-	radeon_encoder = malloc(sizeof(struct radeon_encoder), M_DRM, M_WAITOK | M_ZERO);
+	radeon_encoder = kzalloc(sizeof(struct radeon_encoder), GFP_KERNEL);
 	if (!radeon_encoder)
 		return;
 

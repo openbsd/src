@@ -1,4 +1,4 @@
-/*	$OpenBSD: ni.c,v 1.3 2014/01/24 05:17:06 jsg Exp $	*/
+/*	$OpenBSD: ni.c,v 1.4 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -1832,8 +1832,7 @@ void cayman_fini(struct radeon_device *rdev)
 	radeon_fence_driver_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	if (rdev->bios)
-		free(rdev->bios, M_DRM);
+	kfree(rdev->bios);
 	rdev->bios = NULL;
 }
 

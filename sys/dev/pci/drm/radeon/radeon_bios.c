@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -73,7 +73,7 @@ radeon_read_platform_bios(struct radeon_device *rdev)
 		return false;
 	}
 
-	rdev->bios = malloc(size, M_DRM, M_WAITOK);
+	rdev->bios = kmalloc(size, GFP_KERNEL);
 	if (rdev->bios == NULL)
 		return false;
 
@@ -116,7 +116,7 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 		return false;
 	}
 
-	rdev->bios = malloc(size, M_DRM, M_WAITOK);
+	rdev->bios = kmalloc(size, GFP_KERNEL);
 	if (rdev->bios == NULL) {
 		bus_space_unmap(bst, bsh, size);
 		return false;
@@ -160,7 +160,7 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 
 	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa)
 		goto fail;
-	rdev->bios = malloc(size, M_DRM, M_WAITOK);
+	rdev->bios = kmalloc(size, GFP_KERNEL);
 	memcpy(rdev->bios, bios, size);
 	bus_space_unmap(rdev->memt, romh, size);
 	return true;
@@ -213,7 +213,7 @@ static int radeon_atrm_call(acpi_handle atrm_handle, uint8_t *bios,
 	obj = (union acpi_object *)buffer.pointer;
 	memcpy(bios+offset, obj->buffer.pointer, obj->buffer.length);
 	len = obj->buffer.length;
-	free(buffer.pointer, M_DRM);
+	kfree(buffer.pointer);
 	return len;
 }
 
@@ -246,7 +246,7 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 	if (!found)
 		return false;
 
-	rdev->bios = malloc(size, M_DRM, M_WAITOK);
+	rdev->bios = kmalloc(size, GFP_KERNEL);
 	if (!rdev->bios) {
 		DRM_ERROR("Unable to allocate bios\n");
 		return false;
@@ -262,7 +262,7 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 	}
 
 	if (i == 0 || rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
-		free(rdev->bios, M_DRM);
+		kfree(rdev->bios);
 		return false;
 	}
 	return true;
@@ -723,7 +723,7 @@ bool radeon_get_bios(struct radeon_device *rdev)
 	DRM_DEBUG("%sBIOS detected\n", rdev->is_atom_bios ? "ATOM" : "COM");
 	return true;
 free_bios:
-	free(rdev->bios, M_DRM);
+	kfree(rdev->bios);
 	rdev->bios = NULL;
 	return false;
 }

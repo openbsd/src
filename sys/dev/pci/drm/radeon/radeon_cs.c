@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_cs.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_cs.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.
@@ -234,7 +234,7 @@ int radeon_cs_parser_init(struct radeon_cs_parser *p, void *data)
 		if ((p->chunks[i].chunk_id == RADEON_CHUNK_ID_RELOCS) ||
 		    (p->chunks[i].chunk_id == RADEON_CHUNK_ID_FLAGS)) {
 			size = p->chunks[i].length_dw * sizeof(uint32_t);
-			p->chunks[i].kdata = malloc(size, M_DRM, M_WAITOK);
+			p->chunks[i].kdata = kmalloc(size, GFP_KERNEL);
 			if (p->chunks[i].kdata == NULL) {
 				return -ENOMEM;
 			}
@@ -281,12 +281,12 @@ int radeon_cs_parser_init(struct radeon_cs_parser *p, void *data)
 			return -EINVAL;
 		}
 		if (p->rdev && (p->rdev->flags & RADEON_IS_AGP)) {
-			p->chunks[p->chunk_ib_idx].kpage[0] = malloc(PAGE_SIZE, M_DRM, M_WAITOK);
-			p->chunks[p->chunk_ib_idx].kpage[1] = malloc(PAGE_SIZE, M_DRM, M_WAITOK);
+			p->chunks[p->chunk_ib_idx].kpage[0] = kmalloc(PAGE_SIZE, GFP_KERNEL);
+			p->chunks[p->chunk_ib_idx].kpage[1] = kmalloc(PAGE_SIZE, GFP_KERNEL);
 			if (p->chunks[p->chunk_ib_idx].kpage[0] == NULL ||
 			    p->chunks[p->chunk_ib_idx].kpage[1] == NULL) {
-				drm_free(p->chunks[p->chunk_ib_idx].kpage[0]);
-				drm_free(p->chunks[p->chunk_ib_idx].kpage[1]);
+				kfree(p->chunks[p->chunk_ib_idx].kpage[0]);
+				kfree(p->chunks[p->chunk_ib_idx].kpage[1]);
 				p->chunks[p->chunk_ib_idx].kpage[0] = NULL;
 				p->chunks[p->chunk_ib_idx].kpage[1] = NULL;
 				return -ENOMEM;
@@ -327,18 +327,18 @@ static void radeon_cs_parser_fini(struct radeon_cs_parser *parser, int error)
 				drm_gem_object_unreference_unlocked(parser->relocs[i].gobj);
 		}
 	}
-	drm_free(parser->track);
-	drm_free(parser->relocs);
-	drm_free(parser->relocs_ptr);
+	kfree(parser->track);
+	kfree(parser->relocs);
+	kfree(parser->relocs_ptr);
 	for (i = 0; i < parser->nchunks; i++) {
-		drm_free(parser->chunks[i].kdata);
+		kfree(parser->chunks[i].kdata);
 		if ((parser->rdev->flags & RADEON_IS_AGP)) {
-			drm_free(parser->chunks[i].kpage[0]);
-			drm_free(parser->chunks[i].kpage[1]);
+			kfree(parser->chunks[i].kpage[0]);
+			kfree(parser->chunks[i].kpage[1]);
 		}
 	}
-	drm_free(parser->chunks);
-	drm_free(parser->chunks_array);
+	kfree(parser->chunks);
+	kfree(parser->chunks_array);
 	radeon_ib_free(parser->rdev, &parser->ib);
 	radeon_ib_free(parser->rdev, &parser->const_ib);
 }

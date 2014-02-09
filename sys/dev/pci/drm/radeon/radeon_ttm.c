@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.2 2014/01/24 05:43:46 jsg Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.3 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -594,7 +594,7 @@ radeon_ttm_backend_destroy(struct ttm_tt *ttm)
 	bus_dmamap_destroy(gtt->rdev->dmat, gtt->map);
 	free(gtt->segs, M_DRM);
 	ttm_dma_tt_fini(&gtt->ttm);
-	free(gtt, M_DRM);
+	kfree(gtt);
 }
 
 static struct ttm_backend_func radeon_backend_func = {
@@ -618,14 +618,14 @@ struct ttm_tt *radeon_ttm_tt_create(struct ttm_bo_device *bdev,
 	}
 #endif
 
-	gtt = malloc(sizeof(struct radeon_ttm_tt), M_DRM, M_WAITOK | M_ZERO);
+	gtt = kzalloc(sizeof(struct radeon_ttm_tt), GFP_KERNEL);
 	if (gtt == NULL) {
 		return NULL;
 	}
 	gtt->ttm.ttm.func = &radeon_backend_func;
 	gtt->rdev = rdev;
 	if (ttm_dma_tt_init(&gtt->ttm, bdev, size, page_flags, dummy_read_page)) {
-		free(gtt, M_DRM);
+		kfree(gtt);
 		return NULL;
 	}
 

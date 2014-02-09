@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.9 2014/01/24 05:43:46 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.10 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -3813,8 +3813,7 @@ void evergreen_fini(struct radeon_device *rdev)
 	radeon_agp_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	if (rdev->bios)
-		free(rdev->bios, M_DRM);
+	kfree(rdev->bios);
 	rdev->bios = NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_semaphore.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_semaphore.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2011 Christian König.
  * All Rights Reserved.
@@ -37,14 +37,14 @@ int radeon_semaphore_create(struct radeon_device *rdev,
 {
 	int r;
 
-	*semaphore = malloc(sizeof(struct radeon_semaphore), M_DRM, M_WAITOK);
+	*semaphore = kmalloc(sizeof(struct radeon_semaphore), GFP_KERNEL);
 	if (*semaphore == NULL) {
 		return -ENOMEM;
 	}
 	r = radeon_sa_bo_new(rdev, &rdev->ring_tmp_bo,
 			     &(*semaphore)->sa_bo, 8, 8, true);
 	if (r) {
-		free(*semaphore, M_DRM);
+		kfree(*semaphore);
 		*semaphore = NULL;
 		return r;
 	}
@@ -115,6 +115,6 @@ void radeon_semaphore_free(struct radeon_device *rdev,
 			" hardware lockup imminent!\n", *semaphore);
 	}
 	radeon_sa_bo_free(rdev, &(*semaphore)->sa_bo, fence);
-	free(*semaphore, M_DRM);
+	kfree(*semaphore);
 	*semaphore = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.5 2013/11/11 03:08:20 dlg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.6 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -709,7 +709,7 @@ void radeon_pm_fini(struct radeon_device *rdev)
 	}
 
 	if (rdev->pm.power_state)
-		free(rdev->pm.power_state, M_DRM);
+		kfree(rdev->pm.power_state);
 
 	radeon_hwmon_fini(rdev);
 }

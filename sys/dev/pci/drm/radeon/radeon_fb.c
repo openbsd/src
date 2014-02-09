@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.4 2014/01/09 13:42:57 mpi Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.5 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -340,7 +340,7 @@ out_unref:
 	if (fb && ret) {
 		drm_gem_object_unreference(gobj);
 		drm_framebuffer_cleanup(fb);
-		free(fb, M_DRM);
+		kfree(fb);
 	}
 	return ret;
 }
@@ -410,7 +410,7 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 	if (ASIC_IS_RN50(rdev) || rdev->mc.real_vram_size <= (32*1024*1024))
 		bpp_sel = 8;
 
-	rfbdev = malloc(sizeof(struct radeon_fbdev), M_DRM, M_WAITOK | M_ZERO);
+	rfbdev = kzalloc(sizeof(struct radeon_fbdev), GFP_KERNEL);
 	if (!rfbdev)
 		return -ENOMEM;
 
@@ -422,7 +422,7 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 				 rdev->num_crtc,
 				 RADEONFB_CONN_LIMIT);
 	if (ret) {
-		free(rfbdev, M_DRM);
+		kfree(rfbdev);
 		return ret;
 	}
 
@@ -463,7 +463,7 @@ void radeon_fbdev_fini(struct radeon_device *rdev)
 	task_del(systq, &rdev->burner_task);
 
 	radeon_fbdev_destroy(rdev->ddev, rdev->mode_info.rfbdev);
-	free(rdev->mode_info.rfbdev, M_DRM);
+	kfree(rdev->mode_info.rfbdev);
 	rdev->mode_info.rfbdev = NULL;
 }
 

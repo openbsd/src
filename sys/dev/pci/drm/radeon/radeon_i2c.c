@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_i2c.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_i2c.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1012,7 +1012,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 	if (rec->mm_i2c && (radeon_hw_i2c == 0))
 		return NULL;
 
-	i2c = malloc(sizeof(struct radeon_i2c_chan), M_DRM, M_WAITOK | M_ZERO);
+	i2c = kzalloc(sizeof(struct radeon_i2c_chan), GFP_KERNEL);
 	if (i2c == NULL)
 		return NULL;
 
@@ -1090,7 +1090,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 
 	return i2c;
 out_free:
-	free(i2c, M_DRM);
+	kfree(i2c);
 	return NULL;
 }
 
@@ -1101,7 +1101,7 @@ struct radeon_i2c_chan *radeon_i2c_create_dp(struct drm_device *dev,
 	struct radeon_i2c_chan *i2c;
 	int ret = 0;
 
-	i2c = malloc(sizeof(struct radeon_i2c_chan), M_DRM, M_WAITOK | M_ZERO);
+	i2c = kzalloc(sizeof(struct radeon_i2c_chan), GFP_KERNEL);
 	if (i2c == NULL)
 		return NULL;
 
@@ -1130,7 +1130,7 @@ struct radeon_i2c_chan *radeon_i2c_create_dp(struct drm_device *dev,
 
 	return i2c;
 out_free:
-	free(i2c, M_DRM);
+	kfree(i2c);
 	return NULL;
 }
 
@@ -1141,7 +1141,7 @@ void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 	if (!i2c)
 		return;
 	i2c_del_adapter(&i2c->adapter);
-	free(i2c, M_DRM);
+	kfree(i2c);
 #endif
 }
 

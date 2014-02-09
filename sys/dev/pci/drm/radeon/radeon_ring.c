@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ring.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_ring.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -617,7 +617,7 @@ unsigned radeon_ring_backup(struct radeon_device *rdev, struct radeon_ring *ring
 	}
 
 	/* and then save the content of the ring */
-	*data = malloc(size * sizeof(uint32_t), M_DRM, M_WAITOK);
+	*data = kmalloc_array(size, sizeof(uint32_t), GFP_KERNEL);
 	if (!*data) {
 		rw_exit_write(&rdev->ring_lock);
 		return 0;
@@ -659,7 +659,7 @@ int radeon_ring_restore(struct radeon_device *rdev, struct radeon_ring *ring,
 	}
 
 	radeon_ring_unlock_commit(rdev, ring);
-	free(data, M_DRM);
+	kfree(data);
 	return 0;
 }
 

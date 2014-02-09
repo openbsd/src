@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen_cs.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: evergreen_cs.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -2760,7 +2760,7 @@ int evergreen_cs_parse(struct radeon_cs_parser *p)
 
 	if (p->track == NULL) {
 		/* initialize tracker, we are in kms */
-		track = malloc(sizeof(*track), M_DRM, M_WAITOK | M_ZERO);
+		track = kzalloc(sizeof(*track), GFP_KERNEL);
 		if (track == NULL)
 			return -ENOMEM;
 		evergreen_cs_track_init(track);
@@ -2826,7 +2826,7 @@ int evergreen_cs_parse(struct radeon_cs_parser *p)
 	do {
 		r = evergreen_cs_packet_parse(p, &pkt, p->idx);
 		if (r) {
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return r;
 		}
@@ -2842,12 +2842,12 @@ int evergreen_cs_parse(struct radeon_cs_parser *p)
 			break;
 		default:
 			DRM_ERROR("Unknown packet type %d !\n", pkt.type);
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return -EINVAL;
 		}
 		if (r) {
-			free(p->track, M_DRM);
+			kfree(p->track);
 			p->track = NULL;
 			return r;
 		}
@@ -2858,7 +2858,7 @@ int evergreen_cs_parse(struct radeon_cs_parser *p)
 		mdelay(1);
 	}
 #endif
-	free(p->track, M_DRM);
+	kfree(p->track);
 	p->track = NULL;
 	return 0;
 }

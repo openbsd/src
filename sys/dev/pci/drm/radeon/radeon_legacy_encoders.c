@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_encoders.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_legacy_encoders.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -383,7 +383,7 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 		return;
 #endif
 
-	pdata = malloc(sizeof(struct radeon_backlight_privdata), M_DRM, M_WAITOK);
+	pdata = kmalloc(sizeof(struct radeon_backlight_privdata), GFP_KERNEL);
 	if (!pdata) {
 		DRM_ERROR("Memory allocation failed\n");
 		goto error;
@@ -447,7 +447,7 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 	return;
 
 error:
-	free(pdata, M_DRM);
+	kfree(pdata);
 	return;
 }
 
@@ -475,7 +475,7 @@ static void radeon_legacy_backlight_exit(struct radeon_encoder *radeon_encoder)
 
 		pdata = bl_get_data(bd);
 		backlight_device_unregister(bd);
-		free(pdata, M_DRM);
+		kfree(pdata);
 
 		DRM_INFO("radeon legacy LVDS backlight unloaded\n");
 	}
@@ -500,10 +500,10 @@ static void radeon_lvds_enc_destroy(struct drm_encoder *encoder)
 
 	if (radeon_encoder->enc_priv) {
 		radeon_legacy_backlight_exit(radeon_encoder);
-		free(radeon_encoder->enc_priv, M_DRM);
+		kfree(radeon_encoder->enc_priv);
 	}
 	drm_encoder_cleanup(encoder);
-	free(radeon_encoder, M_DRM);
+	kfree(radeon_encoder);
 }
 
 static const struct drm_encoder_funcs radeon_legacy_lvds_enc_funcs = {
@@ -1010,9 +1010,9 @@ static void radeon_ext_tmds_enc_destroy(struct drm_encoder *encoder)
 {
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 	/* don't destroy the i2c bus record here, this will be done in radeon_i2c_fini */
-	free(radeon_encoder->enc_priv, M_DRM);
+	kfree(radeon_encoder->enc_priv);
 	drm_encoder_cleanup(encoder);
-	free(radeon_encoder, M_DRM);
+	kfree(radeon_encoder);
 }
 
 static const struct drm_encoder_helper_funcs radeon_legacy_tmds_ext_helper_funcs = {
@@ -1696,7 +1696,7 @@ static struct radeon_encoder_int_tmds *radeon_legacy_get_tmds_info(struct radeon
 	struct radeon_encoder_int_tmds *tmds = NULL;
 	bool ret;
 
-	tmds = malloc(sizeof(struct radeon_encoder_int_tmds), M_DRM, M_WAITOK | M_ZERO);
+	tmds = kzalloc(sizeof(struct radeon_encoder_int_tmds), GFP_KERNEL);
 
 	if (!tmds)
 		return NULL;
@@ -1722,7 +1722,7 @@ static struct radeon_encoder_ext_tmds *radeon_legacy_get_ext_tmds_info(struct ra
 	if (rdev->is_atom_bios)
 		return NULL;
 
-	tmds = malloc(sizeof(struct radeon_encoder_ext_tmds), M_DRM, M_WAITOK | M_ZERO);
+	tmds = kzalloc(sizeof(struct radeon_encoder_ext_tmds), GFP_KERNEL);
 
 	if (!tmds)
 		return NULL;
@@ -1753,7 +1753,7 @@ radeon_add_legacy_encoder(struct drm_device *dev, uint32_t encoder_enum, uint32_
 	}
 
 	/* add a new one */
-	radeon_encoder = malloc(sizeof(struct radeon_encoder), M_DRM, M_WAITOK | M_ZERO);
+	radeon_encoder = kzalloc(sizeof(struct radeon_encoder), GFP_KERNEL);
 	if (!radeon_encoder)
 		return;
 

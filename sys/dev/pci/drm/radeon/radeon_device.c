@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.3 2014/01/24 05:28:50 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.4 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -748,7 +748,7 @@ cail_ioreg_read(struct card_info *info, uint32_t reg)
 int radeon_atombios_init(struct radeon_device *rdev)
 {
 	struct card_info *atom_card_info =
-	    malloc(sizeof(struct card_info), M_DRM, M_WAITOK | M_ZERO);
+	    kzalloc(sizeof(struct card_info), GFP_KERNEL);
 
 	if (!atom_card_info)
 		return -ENOMEM;
@@ -790,11 +790,10 @@ int radeon_atombios_init(struct radeon_device *rdev)
 void radeon_atombios_fini(struct radeon_device *rdev)
 {
 	if (rdev->mode_info.atom_context) {
-		free(rdev->mode_info.atom_context->scratch, M_DRM);
-		free(rdev->mode_info.atom_context, M_DRM);
+		kfree(rdev->mode_info.atom_context->scratch);
+		kfree(rdev->mode_info.atom_context);
 	}
-	if (rdev->mode_info.atom_card_info)
-		free(rdev->mode_info.atom_card_info, M_DRM);
+	kfree(rdev->mode_info.atom_card_info);
 }
 
 /* COMBIOS */
@@ -1446,7 +1445,7 @@ retry:
 	} else {
 		radeon_fence_driver_force_completion(rdev);
 		for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-			free(ring_data[i], M_DRM);
+			kfree(ring_data[i]);
 		}
 	}
 

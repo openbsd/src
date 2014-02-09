@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_acpi.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_acpi.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -111,7 +111,7 @@ static union acpi_object *radeon_atif_call(acpi_handle handle, int function,
 	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATIF got %s\n",
 				 acpi_format_exception(status));
-		free(buffer.pointer, M_DRM);
+		kfree(buffer.pointer);
 		return NULL;
 	}
 
@@ -207,7 +207,7 @@ static int radeon_atif_verify_interface(acpi_handle handle,
 	radeon_atif_parse_functions(&atif->functions, output.function_bits);
 
 out:
-	free(info, M_DRM);
+	kfree(info);
 	return err;
 }
 
@@ -270,7 +270,7 @@ out:
 	DRM_DEBUG_DRIVER("Notification %s, command code = %#x\n",
 			(n->enabled ? "enabled" : "disabled"),
 			n->command_code);
-	free(info, M_DRM);
+	kfree(info);
 	return err;
 }
 
@@ -310,7 +310,7 @@ static int radeon_atif_get_sbios_requests(acpi_handle handle,
 	count = hweight32(req->pending);
 
 out:
-	free(info, M_DRM);
+	kfree(info);
 	return count;
 }
 
@@ -426,7 +426,7 @@ static union acpi_object *radeon_atcs_call(acpi_handle handle, int function,
 	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATCS got %s\n",
 				 acpi_format_exception(status));
-		free(buffer.pointer, M_DRM);
+		kfree(buffer.pointer);
 		return NULL;
 	}
 
@@ -492,7 +492,7 @@ static int radeon_atcs_verify_interface(acpi_handle handle,
 	radeon_atcs_parse_functions(&atcs->functions, output.function_bits);
 
 out:
-	free(info, M_DRM);
+	kfree(info);
 	return err;
 }
 

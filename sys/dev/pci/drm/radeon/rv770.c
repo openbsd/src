@@ -1,4 +1,4 @@
-/*	$OpenBSD: rv770.c,v 1.3 2013/08/26 05:15:21 jsg Exp $	*/
+/*	$OpenBSD: rv770.c,v 1.4 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1204,8 +1204,7 @@ void rv770_fini(struct radeon_device *rdev)
 	radeon_agp_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	if (rdev->bios)
-		free(rdev->bios, M_DRM);
+	kfree(rdev->bios);
 	rdev->bios = NULL;
 }
 
