@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.200 2014/02/04 20:55:22 dlg Exp $
+#	$OpenBSD: Makefile,v 1.201 2014/02/09 15:40:24 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -150,7 +150,8 @@ MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
 MLINKS+=evcount.9 evcount_attach.9 evcount.9 evcount_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
-	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
+	extent.9 extent_alloc.9 extent.9 extent_alloc_with_descr.9 \
+	extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_subregion_with_descr.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
 	extent.9 extent_print.9
