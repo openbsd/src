@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.137 2013/09/14 01:35:01 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.138 2014/02/09 10:04:42 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -200,7 +200,7 @@
 89	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
 90	STD		{ int sys_dup2(int from, int to); }
-91	STD NOLOCK	{ int sys_nanosleep(const struct timespec *rqtp, \
+91	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
 93	OBSOL		t32_select
