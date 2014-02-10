@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.13 2013/12/26 21:02:37 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.14 2014/02/10 20:30:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -60,7 +60,7 @@ try_lock(struct mutex *mtx)
 }
 
 void
-mtx_init(struct mutex *mtx, int wantipl)
+__mtx_init(struct mutex *mtx, int wantipl)
 {
 	mtx->mtx_lock = 0;
 	mtx->mtx_wantipl = wantipl;
