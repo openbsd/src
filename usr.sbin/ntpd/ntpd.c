@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.78 2014/01/28 22:57:37 sthen Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.79 2014/02/10 09:12:34 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -18,6 +18,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -165,6 +166,9 @@ main(int argc, char *argv[])
 
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		errx(1, "unknown user %s", NTPD_USER);
+
+	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
+		warn("can't set priority");
 
 	reset_adjtime();
 	if (!lconf.settime) {
