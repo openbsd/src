@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.127 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.128 2014/02/10 19:08:58 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -94,6 +94,8 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_130_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_2 },
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -243,7 +245,8 @@ int		iwn5000_query_calibration(struct iwn_softc *);
 int		iwn5000_send_calibration(struct iwn_softc *);
 int		iwn5000_send_wimax_coex(struct iwn_softc *);
 int		iwn5000_crystal_calib(struct iwn_softc *);
-int		iwn5000_temp_offset_calib(struct iwn_softc *);
+int		iwn6000_temp_offset_calib(struct iwn_softc *);
+int		iwn2000_temp_offset_calib(struct iwn_softc *);
 int		iwn4965_post_alive(struct iwn_softc *);
 int		iwn5000_post_alive(struct iwn_softc *);
 int		iwn4965_load_bootcode(struct iwn_softc *, const uint8_t *,
@@ -650,6 +653,11 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 			sc->sc_flags |= IWN_FLAG_ADV_BT_COEX;
 		} else
 			sc->fwname = "iwn-6005";
+		break;
+	case IWN_HW_REV_TYPE_2030:
+		sc->limits = &iwn2000_sensitivity_limits;
+		sc->fwname = "iwn-2030";
+		sc->sc_flags |= IWN_FLAG_ADV_BT_COEX;
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
@@ -1529,6 +1537,14 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	    hdr.version, hdr.pa_type, letoh16(hdr.volt)));
 	sc->calib_ver = hdr.version;
 
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+		sc->eeprom_voltage = letoh16(hdr.volt);
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
+		sc->eeprom_temp = letoh16(val);
+		iwn_read_prom_data(sc, base + IWN2000_EEPROM_RAWTEMP, &val, 2);
+		sc->eeprom_rawtemp = letoh16(val);
+	}
+
 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
 		/* Compute temperature offset. */
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
@@ -2095,7 +2111,8 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	switch (calib->code) {
 	case IWN5000_PHY_CALIB_DC:
-		if (sc->hw_type == IWN_HW_REV_TYPE_5150)
+		if (sc->hw_type == IWN_HW_REV_TYPE_5150 ||
+		    sc->hw_type == IWN_HW_REV_TYPE_2030)
 			idx = 0;
 		break;
 	case IWN5000_PHY_CALIB_LO:
@@ -3822,7 +3839,7 @@ iwn5000_init_gains(struct iwn_softc *sc)
 	struct iwn_phy_calib cmd;
 
 	memset(&cmd, 0, sizeof cmd);
-	cmd.code = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
+	cmd.code = sc->reset_noise_gain;
 	cmd.ngroups = 1;
 	cmd.isvalid = 1;
 	DPRINTF(("setting initial differential gains\n"));
@@ -3872,7 +3889,7 @@ iwn5000_set_gains(struct iwn_softc *sc)
 	div = (sc->hw_type == IWN_HW_REV_TYPE_6050) ? 20 : 30;
 
 	memset(&cmd, 0, sizeof cmd);
-	cmd.code = IWN5000_PHY_CALIB_NOISE_GAIN;
+	cmd.code = sc->noise_gain;
 	cmd.ngroups = 1;
 	cmd.isvalid = 1;
 	/* Get first available RX antenna as referential. */
@@ -4160,29 +4177,55 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 		0xcc00ff28, 0x0000aaaa, 0xcc00aaaa, 0x0000aaaa,
 		0xc0004000, 0x00004000, 0xf0005000, 0xf0005000,
 	};
-	struct iwn6000_btcoex_config btconfig;
 	struct iwn_btcoex_priotable btprio;
 	struct iwn_btcoex_prot btprot;
 	int error, i;
 
-	memset(&btconfig, 0, sizeof btconfig);
-	btconfig.flags = IWN_BT_FLAG_COEX6000_CHAN_INHIBITION |
-	    (IWN_BT_FLAG_COEX6000_MODE_3W << IWN_BT_FLAG_COEX6000_MODE_SHIFT) |
-	    IWN_BT_FLAG_SYNC_2_BT_DISABLE;
-	btconfig.max_kill = 5;
-	btconfig.bt3_t7_timer = 1;
-	btconfig.kill_ack = htole32(0xffff0000);
-	btconfig.kill_cts = htole32(0xffff0000);
-	btconfig.sample_time = 2;
-	btconfig.bt3_t2_timer = 0xc;
-	for (i = 0; i < 12; i++)
-		btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
-	btconfig.valid = htole16(0xff);
-	btconfig.prio_boost = 0xf0;
-	DPRINTF(("configuring advanced bluetooth coexistence\n"));
-	error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig, sizeof(btconfig), 1);
-	if (error != 0)
-		return (error);
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+		struct iwn2000_btcoex_config btconfig;
+
+		memset(&btconfig, 0, sizeof btconfig);
+		btconfig.flags = IWN_BT_COEX6000_CHAN_INHIBITION |
+		    (IWN_BT_COEX6000_MODE_3W << IWN_BT_COEX6000_MODE_SHIFT) |
+		    IWN_BT_SYNC_2_BT_DISABLE;
+		btconfig.max_kill = 5;
+		btconfig.bt3_t7_timer = 1;
+		btconfig.kill_ack = htole32(0xffff0000);
+		btconfig.kill_cts = htole32(0xffff0000);
+		btconfig.sample_time = 2;
+		btconfig.bt3_t2_timer = 0xc;
+		for (i = 0; i < 12; i++)
+			btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
+		btconfig.valid = htole16(0xff);
+		btconfig.prio_boost = htole32(0xf0);
+		DPRINTF(("configuring advanced bluetooth coexistence\n"));
+		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig,
+		    sizeof(btconfig), 1);
+		if (error != 0)
+			return (error);
+	} else {
+		struct iwn6000_btcoex_config btconfig;
+
+		memset(&btconfig, 0, sizeof btconfig);
+		btconfig.flags = IWN_BT_COEX6000_CHAN_INHIBITION |
+		    (IWN_BT_COEX6000_MODE_3W << IWN_BT_COEX6000_MODE_SHIFT) |
+		    IWN_BT_SYNC_2_BT_DISABLE;
+		btconfig.max_kill = 5;
+		btconfig.bt3_t7_timer = 1;
+		btconfig.kill_ack = htole32(0xffff0000);
+		btconfig.kill_cts = htole32(0xffff0000);
+		btconfig.sample_time = 2;
+		btconfig.bt3_t2_timer = 0xc;
+		for (i = 0; i < 12; i++)
+			btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
+		btconfig.valid = htole16(0xff);
+		btconfig.prio_boost = 0xf0;
+		DPRINTF(("configuring advanced bluetooth coexistence\n"));
+		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig,
+		    sizeof(btconfig), 1);
+		if (error != 0)
+			return (error);
+	}
 
 	memset(&btprio, 0, sizeof btprio);
 	btprio.calib_init1 = 0x6;
@@ -4233,9 +4276,16 @@ iwn_config(struct iwn_softc *sc)
 	uint16_t rxchain;
 	int error;
 
+	/* Set radio temperature sensor offset. */
 	if (sc->hw_type == IWN_HW_REV_TYPE_6005) {
-		/* Set radio temperature sensor offset. */
-		error = iwn5000_temp_offset_calib(sc);
+		error = iwn6000_temp_offset_calib(sc);
+		if (error != 0) {
+			printf("%s: could not set temperature offset\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
+	} else if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+		error = iwn2000_temp_offset_calib(sc);
 		if (error != 0) {
 			printf("%s: could not set temperature offset\n",
 			    sc->sc_dev.dv_xname);
@@ -4989,12 +5039,12 @@ iwn5000_crystal_calib(struct iwn_softc *sc)
 }
 
 int
-iwn5000_temp_offset_calib(struct iwn_softc *sc)
+iwn6000_temp_offset_calib(struct iwn_softc *sc)
 {
-	struct iwn5000_phy_calib_temp_offset cmd;
+	struct iwn6000_phy_calib_temp_offset cmd;
 
 	memset(&cmd, 0, sizeof cmd);
-	cmd.code = IWN5000_PHY_CALIB_TEMP_OFFSET;
+	cmd.code = IWN6000_PHY_CALIB_TEMP_OFFSET;
 	cmd.ngroups = 1;
 	cmd.isvalid = 1;
 	if (sc->eeprom_temp != 0)
@@ -5002,6 +5052,29 @@ iwn5000_temp_offset_calib(struct iwn_softc *sc)
 	else
 		cmd.offset = htole16(IWN_DEFAULT_TEMP_OFFSET);
 	DPRINTF(("setting radio sensor offset to %d\n", letoh16(cmd.offset)));
+	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
+}
+
+int
+iwn2000_temp_offset_calib(struct iwn_softc *sc)
+{
+	struct iwn2000_phy_calib_temp_offset cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.code = IWN2000_PHY_CALIB_TEMP_OFFSET;
+	cmd.ngroups = 1;
+	cmd.isvalid = 1;
+	if (sc->eeprom_rawtemp != 0) {
+		cmd.offset_low = htole16(sc->eeprom_rawtemp);
+		cmd.offset_high = htole16(sc->eeprom_temp);
+	} else {
+		cmd.offset_low = htole16(IWN_DEFAULT_TEMP_OFFSET);
+		cmd.offset_high = htole16(IWN_DEFAULT_TEMP_OFFSET);
+	}
+	cmd.burnt_voltage_ref = htole16(sc->eeprom_voltage);
+	DPRINTF(("setting radio sensor offset to %d:%d, voltage to %d\n",
+	    letoh16(cmd.offset_low), letoh16(cmd.offset_high),
+	    letoh16(cmd.burnt_voltage_ref)));
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
 }
 
@@ -5458,6 +5531,27 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
 			fw->boot.text = ptr;
 			fw->boot.textsz = len;
 			break;
+		case IWN_FW_TLV_ENH_SENS:
+			if (len !=  0) {
+				printf("%s: TLV type %d has invalid size %u\n",
+				    sc->sc_dev.dv_xname, letoh16(tlv->type),
+				    len);
+				goto next;
+			}
+			sc->sc_flags |= IWN_FLAG_ENH_SENS;
+			break;
+		case IWN_FW_TLV_PHY_CALIB:
+			if (len != sizeof(uint32_t)) {
+				printf("%s: TLV type %d has invalid size %u\n",
+				    sc->sc_dev.dv_xname, letoh16(tlv->type),
+				    len);
+				goto next;
+			}
+			if (letoh32(*ptr) <= IWN5000_PHY_CALIB_MAX) {
+				sc->reset_noise_gain = letoh32(*ptr);
+				sc->noise_gain = letoh32(*ptr) + 1;
+			}
+			break;
 		default:
 			DPRINTF(("TLV type %d not handled\n",
 			    letoh16(tlv->type)));
@@ -5474,6 +5568,14 @@ iwn_read_firmware(struct iwn_softc *sc)
 {
 	struct iwn_fw_info *fw = &sc->fw;
 	int error;
+
+	/*
+	 * Some PHY calibration commands are firmware-dependent; these
+	 * are the default values that will be overridden if
+	 * necessary.
+	 */
+	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
+	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
 
 	memset(fw, 0, sizeof (*fw));
 
@@ -5681,6 +5783,8 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	}
 	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
 		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_6050_1X2);
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030)
+		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_IQ_INVERT);
 	return 0;
 }
 

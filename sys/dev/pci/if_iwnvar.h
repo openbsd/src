@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.26 2013/11/30 19:41:21 kettenis Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.27 2014/02/10 19:08:58 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -275,10 +275,14 @@ struct iwn_softc {
 	uint32_t		eeprom_crystal;
 	int16_t			eeprom_temp;
 	int16_t			eeprom_voltage;
+	int16_t			eeprom_rawtemp;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 	int8_t			enh_maxpwr[35];
+
+	uint8_t			reset_noise_gain;
+	uint8_t			noise_gain;
 
 	int32_t			temp_off;
 	uint32_t		int_mask;
