@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.211 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.212 2014/02/10 09:28:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -294,8 +294,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] "
-	    "[-f file] [-P system]\n", __progname);
+	fprintf(stderr, "usage: %s [-dhnv] [-D macro=value] "
+	    "[-f file] [-P system] [-T trace]\n", __progname);
 	exit(1);
 }
 
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&offline_q);
 
-	while ((c = getopt(argc, argv, "B:dD:nP:f:T:v")) != -1) {
+	while ((c = getopt(argc, argv, "B:dD:hnP:f:T:v")) != -1) {
 		switch (c) {
 		case 'B':
 			if (strstr(optarg, "queue=") == optarg)
@@ -509,6 +509,10 @@ main(int argc, char *argv[])
 				log_warnx("warn: "
 				    "could not parse macro definition %s",
 				    optarg);
+			break;
+		case 'h':
+			log_info("version: OpenSMTPD " SMTPD_VERSION);
+			usage();
 			break;
 		case 'n':
 			debug = 2;
