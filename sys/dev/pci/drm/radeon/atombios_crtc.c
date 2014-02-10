@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_crtc.c,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: atombios_crtc.c,v 1.3 2014/02/10 01:11:37 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1684,7 +1684,7 @@ static int radeon_atom_pick_pll(struct drm_crtc *crtc)
 				if (pll != ATOM_PPLL_INVALID)
 					return pll;
 			}
-		} else {
+		} else if (!ASIC_IS_DCE41(rdev)) { /* Don't share PLLs on DCE4.1 chips */
 			/* use the same PPLL for all monitors with the same clock */
 			pll = radeon_get_shared_nondp_ppll(crtc);
 			if (pll != ATOM_PPLL_INVALID)
