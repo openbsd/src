@@ -1,4 +1,4 @@
-/* $OpenBSD: asm_2300.h,v 1.5 2008/07/11 14:46:25 sobrado Exp $ */
+/* $OpenBSD: asm_2300.h,v 1.6 2014/02/10 22:41:27 jmatthew Exp $ */
 /* $FreeBSD: src/sys/dev/ispfw/asm_2300.h,v 1.10 2006/11/02 03:23:01 mjacob Exp $ */
 /*-
  * Copyright (C) 2001, 2002, 2003, 2004, 2005 by QLogic, Inc.
@@ -38,7 +38,7 @@
  *	Firmware Version 3.03.19 (09:41 Nov 30, 2005)
  */
 
-static const u_int16_t isp_2300_risc_code[] = {
+const u_int16_t isp_2300_risc_code[] = {
 	0x0470, 0x0000, 0x0000, 0xcd3b, 0x0000, 0x0003, 0x0003, 0x0013,
 	0x0107, 0x2043, 0x4f50, 0x5952, 0x4947, 0x4854, 0x2032, 0x3030,
 	0x3120, 0x514c, 0x4f47, 0x4943, 0x2043, 0x4f52, 0x504f, 0x5241,

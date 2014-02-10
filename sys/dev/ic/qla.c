@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.18 2014/02/06 09:51:42 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.19 2014/02/10 22:41:27 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -39,9 +39,9 @@
 #include <dev/ic/qlavar.h>
 
 #ifndef ISP_NOFIRMWARE
-#include <dev/microcode/isp/asm_2100.h>
-#include <dev/microcode/isp/asm_2200.h>
-#include <dev/microcode/isp/asm_2300.h>
+extern const u_int16_t isp_2100_risc_code[];
+extern const u_int16_t isp_2200_risc_code[];
+extern const u_int16_t isp_2300_risc_code[];
 #endif
 
 struct cfdriver qla_cd = {

@@ -1,4 +1,4 @@
-/* $OpenBSD: asm_2100.h,v 1.6 2008/07/11 14:46:24 sobrado Exp $ */
+/* $OpenBSD: asm_2100.h,v 1.7 2014/02/10 22:41:27 jmatthew Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 /*
  *	Firmware Version 1.19.24 (14:02 Jul 16, 2002)
  */
-static const u_int16_t isp_2100_risc_code[] = {
+const u_int16_t isp_2100_risc_code[] = {
 	0x0078, 0x102d, 0x0000, 0x95f1, 0x0000, 0x0001, 0x0013, 0x0018,
 	0x0017, 0x2043, 0x4f50, 0x5952, 0x4947, 0x4854, 0x2032, 0x3030,
 	0x3120, 0x514c, 0x4f47, 0x4943, 0x2043, 0x4f52, 0x504f, 0x5241,
@@ -4849,7 +4849,7 @@ static const u_int16_t isp_2100_risc_code[] = {
 /*
  *	Firmware Version 1.15.37 (15:36 May 03, 1999)
  */
-static const u_int16_t isp_2100_risc_code[] = {
+const u_int16_t isp_2100_risc_code[] = {
 	0x0078, 0x1029, 0x0000, 0x66e6, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x3620, 0x514c, 0x4f47, 0x4943,
 	0x2043, 0x4f52, 0x504f, 0x5241, 0x5449, 0x4f4e, 0x2049, 0x5350,

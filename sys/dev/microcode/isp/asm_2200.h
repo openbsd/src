@@ -1,4 +1,4 @@
-/* $OpenBSD: asm_2200.h,v 1.7 2008/07/11 14:46:25 sobrado Exp $ */
+/* $OpenBSD: asm_2200.h,v 1.8 2014/02/10 22:41:27 jmatthew Exp $ */
 /* $FreeBSD: src/sys/dev/ispfw/asm_2200.h,v 1.7 2005/01/06 01:42:50 imp Exp $ */
 /*-
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
@@ -36,7 +36,7 @@
 /*
  *	Firmware Version 2.02.06 (08:39 Jun 26, 2003)
  */
-static const u_int16_t isp_2200_risc_code[] = {
+const u_int16_t isp_2200_risc_code[] = {
 	0x0470, 0x0000, 0x0000, 0x96cf, 0x0000, 0x0002, 0x0002, 0x0006,
 	0x0007, 0x2043, 0x4f50, 0x5952, 0x4947, 0x4854, 0x2032, 0x3030,
 	0x3120, 0x514c, 0x4f47, 0x4943, 0x2043, 0x4f52, 0x504f, 0x5241,

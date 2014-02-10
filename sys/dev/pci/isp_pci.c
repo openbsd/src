@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.57 2011/06/23 22:02:26 oga Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.58 2014/02/10 22:41:27 jmatthew Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -75,22 +75,22 @@
 #endif
 
 #if	defined(ISP_FIRMWARE_2100)
+extern const u_int16_t isp_2100_risc_code[];
 #define	ISP_2100_RISC_CODE	(u_int16_t *) isp_2100_risc_code
-#include <dev/microcode/isp/asm_2100.h>
 #else
 #define	ISP_2100_RISC_CODE	NULL
 #endif
 
 #if	defined(ISP_FIRMWARE_2200)
+extern const u_int16_t isp_2200_risc_code[];
 #define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
-#include <dev/microcode/isp/asm_2200.h>
 #else
 #define	ISP_2200_RISC_CODE	NULL
 #endif
 
 #if	defined(ISP_FIRMWARE_2300)
+extern const u_int16_t isp_2300_risc_code[];
 #define	ISP_2300_RISC_CODE	(u_int16_t *) isp_2300_risc_code
-#include <dev/microcode/isp/asm_2300.h>
 #else
 #define	ISP_2300_RISC_CODE	NULL
 #endif
