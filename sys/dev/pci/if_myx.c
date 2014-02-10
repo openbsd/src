@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.55 2014/02/05 08:17:30 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.56 2014/02/10 05:21:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1274,7 +1274,8 @@ myx_setlladdr(struct myx_softc *sc, u_int32_t cmd, u_int8_t *addr)
 	struct myx_cmd		 mc;
 
 	memset(&mc, 0, sizeof(mc));
-	mc.mc_data0 = htobe32(addr[0] << 24 | addr[1] << 16 | addr[2] << 8 | addr[3]);
+	mc.mc_data0 = htobe32(addr[0] << 24 | addr[1] << 16 |
+	    addr[2] << 8 | addr[3]);
 	mc.mc_data1 = htobe32(addr[4] << 8 | addr[5]);
 
 	if (myx_cmd(sc, cmd, &mc, NULL) != 0) {
@@ -1291,6 +1292,7 @@ myx_iff(struct myx_softc *sc)
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
+	u_int8_t *addr;
 
 	CLR(ifp->if_flags, IFF_ALLMULTI);
 
@@ -1310,15 +1312,21 @@ myx_iff(struct myx_softc *sc)
 		return;
 	}
 
-	if (ISSET(ifp->if_flags, IFF_PROMISC) || sc->sc_ac.ac_multirangecnt > 0) {
+	if (ISSET(ifp->if_flags, IFF_PROMISC) ||
+	    sc->sc_ac.ac_multirangecnt > 0) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		return;
 	}
 
 	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
 	while (enm != NULL) {
-		if (myx_setlladdr(sc, MYXCMD_SET_MCASTGROUP,
-		    enm->enm_addrlo) != 0) {
+		addr = enm->enm_addrlo;
+
+		memset(&mc, 0, sizeof(mc));
+		mc.mc_data0 = htobe32(addr[0] << 24 | addr[1] << 16 |
+		    addr[2] << 8 | addr[3]);
+		mc.mc_data1 = htobe32(addr[4] << 24 | addr[5] << 16);
+		if (myx_cmd(sc, MYXCMD_SET_MCASTGROUP, &mc, NULL) != 0) {
 			printf("%s: failed to join mcast group\n", DEVNAME(sc));
 			return;
 		}
