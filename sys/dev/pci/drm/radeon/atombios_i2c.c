@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_i2c.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: atombios_i2c.c,v 1.2 2014/02/10 00:25:28 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -27,6 +27,8 @@
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
 #include "atom.h"
+
+extern void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le);
 
 #define TARGET_HW_I2C_CLOCK 50
 
@@ -83,7 +85,7 @@ radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 	}
 
 	if (!(flags & HW_I2C_WRITE))
-		memcpy(buf, base, num);
+		radeon_atom_copy_swap(buf, base, num, false);
 
 	return 0;
 }

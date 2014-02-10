@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_dp.c,v 1.2 2014/02/10 00:02:56 jsg Exp $	*/
+/*	$OpenBSD: atombios_dp.c,v 1.3 2014/02/10 00:25:28 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -46,6 +46,8 @@ static char *pre_emph_names[] = {
 };
 #endif
 
+void	radeon_atom_copy_swap(u8 *, u8 *, u8, bool);
+
 /***** radeon AUX functions *****/
 
 /* Atom needs data in little endian format
@@ -53,7 +55,7 @@ static char *pre_emph_names[] = {
  * or from atom. Note that atom operates on
  * dw units.
  */
-static void radeon_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
+void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
 {
 #ifdef __BIG_ENDIAN
 	u8 src_tmp[20], dst_tmp[20]; /* used for byteswapping */
@@ -103,7 +105,7 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 
 	base = (unsigned char *)(rdev->mode_info.atom_context->scratch + 1);
 
-	radeon_copy_swap(base, send, send_bytes, true);
+	radeon_atom_copy_swap(base, send, send_bytes, true);
 
 	args.v1.lpAuxRequest = cpu_to_le16((u16)(0 + 4));
 	args.v1.lpDataOut = cpu_to_le16((u16)(16 + 4));
@@ -140,7 +142,7 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 		recv_bytes = recv_size;
 
 	if (recv && recv_size)
-		radeon_copy_swap(recv, base + 16, recv_bytes, false);
+		radeon_atom_copy_swap(recv, base + 16, recv_bytes, false);
 
 	return recv_bytes;
 }
