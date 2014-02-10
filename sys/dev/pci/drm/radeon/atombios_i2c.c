@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_i2c.c,v 1.3 2014/02/10 01:14:42 jsg Exp $	*/
+/*	$OpenBSD: atombios_i2c.c,v 1.4 2014/02/10 01:32:13 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -48,7 +48,7 @@ radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 	PROCESS_I2C_CHANNEL_TRANSACTION_PS_ALLOCATION args;
 	int index = GetIndexIntoMasterTable(COMMAND, ProcessI2cChannelTransaction);
 	unsigned char *base;
-	u16 out;
+	u16 out = cpu_to_le16(0);
 
 	memset(&args, 0, sizeof(args));
 
@@ -59,10 +59,14 @@ radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 			DRM_ERROR("hw i2c: tried to write too many bytes (%d vs 2)\n", num);
 			return -EINVAL;
 		}
-		if (num > 1) {
+		if (buf == NULL)
+			args.ucRegIndex = 0;
+		else
+			args.ucRegIndex = buf[0];
+		if (num)
 			num--;
+		if (num)
 			memcpy(&out, &buf[1], num);
-		}
 		args.lpI2CDataOut = cpu_to_le16(out);
 #if 0
 	} else {
@@ -100,14 +104,14 @@ int radeon_atom_hw_i2c_xfer(struct i2c_controller *i2c_adap,
 	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
 	struct i2c_msg *p;
 	int i, remaining, current_count, buffer_offset, max_bytes, ret;
-	u8 buf = 0, flags;
+	u8 flags;
 
 	/* check for bus probe */
 	p = &msgs[0];
 	if ((num == 1) && (p->len == 0)) {
 		ret = radeon_process_i2c_ch(i2c,
 					    p->addr, HW_I2C_WRITE,
-					    &buf, 1);
+					    NULL, 0);
 		if (ret)
 			return ret;
 		else
