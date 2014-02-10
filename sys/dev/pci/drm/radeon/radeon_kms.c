@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.20 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.21 2014/02/10 00:47:19 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -982,6 +982,9 @@ int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 			value = rdev->config.si.max_sh_per_se;
 		else
 			return -EINVAL;
+		break;
+	case RADEON_INFO_SI_CP_DMA_COMPUTE:
+		value = 1;
 		break;
 	default:
 		DRM_DEBUG_KMS("Invalid request %d\n", info->request);
