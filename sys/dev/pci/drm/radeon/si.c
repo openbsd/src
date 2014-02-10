@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.12 2014/02/10 01:35:49 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.13 2014/02/10 01:59:48 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -1503,6 +1503,8 @@ static void si_setup_rb(struct radeon_device *rdev,
 			enabled_rbs |= mask;
 		mask <<= 1;
 	}
+
+	rdev->config.si.backend_enable_mask = enabled_rbs;
 
 	for (i = 0; i < se_num; i++) {
 		si_select_se_sh(rdev, i, 0xffffffff);

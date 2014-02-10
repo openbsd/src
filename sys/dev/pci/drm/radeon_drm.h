@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drm.h,v 1.10 2014/01/18 08:25:06 jsg Exp $ */
+/* $OpenBSD: radeon_drm.h,v 1.11 2014/02/10 01:59:47 jsg Exp $ */
 /* radeon_drm.h -- Public header for the radeon driver -*- linux-c -*-
  *
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
@@ -987,6 +987,8 @@ struct drm_radeon_cs {
 #define RADEON_INFO_SI_CP_DMA_COMPUTE	0x17
 /* CIK macrotile mode array */
 #define RADEON_INFO_CIK_MACROTILE_MODE_ARRAY	0x18
+/* query the number of render backends */
+#define RADEON_INFO_SI_BACKEND_ENABLED_MASK	0x19
 
 
 struct drm_radeon_info {

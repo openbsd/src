@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.21 2014/02/10 00:47:19 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.22 2014/02/10 01:59:48 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -985,6 +985,13 @@ int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 		break;
 	case RADEON_INFO_SI_CP_DMA_COMPUTE:
 		value = 1;
+		break;
+	case RADEON_INFO_SI_BACKEND_ENABLED_MASK:
+		if (rdev->family >= CHIP_TAHITI) {
+			value = rdev->config.si.backend_enable_mask;
+		} else {
+			DRM_DEBUG_KMS("BACKEND_ENABLED_MASK is si+ only!\n");
+		}
 		break;
 	default:
 		DRM_DEBUG_KMS("Invalid request %d\n", info->request);
