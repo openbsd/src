@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.45 2014/01/10 16:09:08 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.46 2014/02/10 19:40:47 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -739,6 +739,23 @@ sub display_unknown
 	}
 }
 
+sub display_tmps
+{
+	my ($self, $state) = @_;
+	$state->say("Unregistered temporary files:");
+	for my $e (sort @{$state->{tmps}}) {
+		$state->say("\t#1", $e);
+	}
+	if ($state->{force}) {
+		unlink(@{$state->{tmps}});
+	} elsif ($state->{interactive}) {
+		require OpenBSD::Interactive;
+		if (OpenBSD::Interactive::confirm("Remove")) {
+			unlink(@{$state->{tmps}});
+		}
+	}
+}
+
 sub locate_unknown
 {
 	my ($self, $state) = @_;
@@ -793,9 +810,17 @@ sub localbase_check
 			push(@{$state->{unknown}{dir}}, $File::Find::name);
 		} else {
 			return if $state->{known}{$File::Find::dir}{$_};
-			push(@{$state->{unknown}{file}}, $File::Find::name);
+			if (m/^pkg\..{10}$/) {
+				push(@{$state->{tmps}}, $File::Find::name);
+			} else {
+				push(@{$state->{unknown}{file}}, 
+				    $File::Find::name);
+			}
 		}
 	}, OpenBSD::Paths->localbase);
+	if (defined $state->{tmps}) {
+		$self->display_tmps($state);
+	}
 	if (defined $state->{unknown}) {
 		if ($self->install_pkglocate($state)) {
 			$self->locate_unknown($state);
