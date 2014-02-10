@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.3 2014/02/09 10:57:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.4 2014/02/10 02:15:25 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -347,7 +347,9 @@ int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
 	if (old_iomap == NULL && ttm == NULL)
 		goto out2;
 
-	if (ttm->state == tt_unpopulated) {
+	/* TTM might be null for moves within the same region.
+	 */
+	if (ttm && ttm->state == tt_unpopulated) {
 		ret = ttm->bdev->driver->ttm_tt_populate(ttm);
 		if (ret) {
 			/* if we fail here don't nuke the mm node
