@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_i2c.c,v 1.2 2014/02/10 00:25:28 jsg Exp $	*/
+/*	$OpenBSD: atombios_i2c.c,v 1.3 2014/02/10 01:14:42 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -59,7 +59,10 @@ radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 			DRM_ERROR("hw i2c: tried to write too many bytes (%d vs 2)\n", num);
 			return -EINVAL;
 		}
-		memcpy(&out, buf, num);
+		if (num > 1) {
+			num--;
+			memcpy(&out, &buf[1], num);
+		}
 		args.lpI2CDataOut = cpu_to_le16(out);
 #if 0
 	} else {
