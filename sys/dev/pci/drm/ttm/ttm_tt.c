@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_tt.c,v 1.2 2013/12/08 07:54:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_tt.c,v 1.3 2014/02/10 02:11:02 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -168,7 +168,7 @@ void ttm_tt_destroy(struct ttm_tt *ttm)
 		ttm_tt_unbind(ttm);
 	}
 
-	if (likely(ttm->pages != NULL)) {
+	if (ttm->state == tt_unbound) {
 		ttm->bdev->driver->ttm_tt_unpopulate(ttm);
 	}
 
