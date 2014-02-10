@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.232 2014/02/09 19:22:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.233 2014/02/10 19:12:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -716,6 +716,11 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { 'comment' }
 
 sub category() { 'cvstags'}
+
+# don't incorporate this into compared signatures
+sub write_without_variation
+{
+}
 
 package OpenBSD::PackingElement::sha;
 our @ISA=qw(OpenBSD::PackingElement::Annotation);
