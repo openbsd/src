@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.3 2014/02/10 00:10:12 jsg Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -904,10 +904,14 @@ struct radeon_encoder_primary_dac *radeon_combios_get_primary_dac_info(struct
 	}
 
 	/* quirks */
-	/* Radeon 9100 (R200) */
-	if ((dev->pci_device == 0x514D) &&
+	/* Radeon 7000 (RV100) */
+	if (((dev->pci_device == 0x5159) &&
 	    (dev->pci_subvendor == 0x174B) &&
-	    (dev->pci_subdevice == 0x7149)) {
+	    (dev->pci_subdevice == 0x7c28)) ||
+	/* Radeon 9100 (R200) */
+	   ((dev->pci_device == 0x514D) &&
+	    (dev->pci_subvendor == 0x174B) &&
+	    (dev->pci_subdevice == 0x7149))) {
 		/* vbios value is bad, use the default */
 		found = 0;
 	}
