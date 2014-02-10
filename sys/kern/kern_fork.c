@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.156 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.157 2014/02/10 01:38:07 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ allocpid(void)
 		pid = ++lastpid;
 	} else {
 		do {
-			pid = 1 + arc4random_uniform(PID_MAX - 1);
+			pid = 1 + arc4random_uniform(PID_MAX);
 		} while (ispidtaken(pid));
 	}
 
