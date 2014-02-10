@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.148 2014/02/08 10:43:25 espie Exp $
+# $OpenBSD: Add.pm,v 1.149 2014/02/10 19:16:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -143,6 +143,7 @@ sub tweak_package_status
 	$pkgname = extract_pkgname($pkgname);
 	return 0 unless is_installed($pkgname);
 	return 0 unless $user_tagged->{$pkgname};
+	return 1 if $state->{not};
 	my $plist = OpenBSD::PackingList->from_installation($pkgname);
 	if ($plist->has('manual-installation') && $state->{automatic} > 1) {
 		delete $plist->{'manual-installation'};
