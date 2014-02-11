@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.123 2014/02/08 08:54:26 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.124 2014/02/11 10:36:13 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 8 2014 $
+.Dd $Mdocdate: February 11 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -288,7 +288,7 @@ set by
 .Xr fw_update 1
 to separate firmwares from normal packages.
 .It Ar installed
-in update mode, reinstall an existing package with the same signature.
+in update mode, reinstall an existing package with the same update signature.
 .It Ar libdepends
 library specifications may not be fulfilled.
 .It Ar nonroot
@@ -619,7 +619,9 @@ When replacing packages, the procedure is slightly different.
 .Bl -enum
 .It
 A check is made to determine if a similar package is already installed.
-If its signature is identical to that of the new package, no replacement
+If so, its full update signature is computed, which contains all the
+necessary dependency information along with the actual package version.
+If that signature is identical to that of the new package, no replacement
 is performed (unless -D installed is specified).
 .It
 A check is made to determine what old package(s) the new package(s) should
@@ -701,8 +703,8 @@ and
 .Pc
 in order to weed out similar packages with distinct options.
 .It
-The signature of the candidate is compared to the signature of the already
-installed package: identical signatures mean no update needed.
+The update signature of the candidate is compared to the signature of the 
+already installed package: identical signatures mean no update needed.
 .It
 If several candidates are left,
 .Nm
