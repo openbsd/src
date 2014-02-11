@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.87 2014/01/11 11:54:43 espie Exp $
+# $OpenBSD: Replace.pm,v 1.88 2014/02/11 08:58:34 sthen Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -114,7 +114,7 @@ sub is_set_safe
 		return 1;
 	} elsif ($state->{interactive}) {
 
-		if ($state->confirm("proceed with update anyways", 0)) {
+		if ($state->confirm("proceed with update anyway", 0)) {
 			return 1;
 		} else {
 			return 0;

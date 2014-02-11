@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.60 2014/02/08 12:18:14 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.61 2014/02/11 08:58:34 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -520,7 +520,7 @@ sub check_forward_dependencies
 			$state->errsay("Forcing update");
 			return $no_merge;
 		} elsif ($state->{interactive}) {
-			if ($state->confirm("Proceed with update anyways", 0)) {
+			if ($state->confirm("Proceed with update anyway", 0)) {
 				return $no_merge;
 			} else {
 				return undef;
@@ -635,7 +635,7 @@ sub iterate
 			}
 		}
 	} while ($something_done);
-	# if we can't do stuff in order, do it anyways
+	# if we can't do stuff in order, do it anyway
 	for my $c (@_) {
 		next if $done->{$c->pkgname};
 		&$sub($c);
@@ -668,7 +668,7 @@ sub check_digital_signature
 			if ($state->{interactive}) {
 				$state->errprint('UNSIGNED PACKAGE #1: ', 
 				    $pkgname);
-				$okay = $state->confirm("install anyways", 0);
+				$okay = $state->confirm("install anyway", 0);
 			}
 			if (!$okay) {
 				$state->fatal("Unsigned package #1", $pkgname);
