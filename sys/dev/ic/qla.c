@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.19 2014/02/10 22:41:27 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.20 2014/02/11 11:41:46 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1378,7 +1378,7 @@ qla_update_fabric(struct qla_softc *sc)
 	rft->subcmd = htole16(QLA_SNS_RFT_ID);
 	rft->max_word = htole16(sizeof(struct qla_sns_req_hdr) / 4);
 	rft->port_id = htole32(sc->sc_port_id);
-	rft->fc4_types[0] = (1 << QLA_FC4_SCSI);
+	rft->fc4_types[0] = htole32(1 << QLA_FC4_SCSI);
 	if (qla_sns_req(sc, sc->sc_scratch, sizeof(*rft))) {
 		printf("%s: RFT_ID failed\n", DEVNAME(sc));
 		/* we might be able to continue after this fails */
@@ -1427,9 +1427,9 @@ qla_next_fabric_port(struct qla_softc *sc, u_int32_t *firstport,
 	if (*firstport == 0xffffffff)
 		*firstport = *lastport;
 
-	printf("%s: GA_NXT: port type/id: %x, wwpn %llx, wwnn %llx, fct: %x\n",
+	printf("%s: GA_NXT: port type/id: %x, wwpn %llx, wwnn %llx\n",
 	    DEVNAME(sc), *lastport, betoh64(gar->port_name),
-	    betoh64(gar->node_name), gar->fc4_types[0]);
+	    betoh64(gar->node_name));
 
 	/* don't try to log in to ourselves */
 	if (*lastport == sc->sc_port_id) {
