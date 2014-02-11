@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.43 2014/02/11 12:23:14 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.44 2014/02/11 19:57:19 kettenis Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -20,7 +20,7 @@
 .Os
 .Sh NAME
 .Nm iwn
-.Nd Intel WiFi Link 4965/5000/1000/2000/6000 IEEE 802.11a/g/n wireless network devices
+.Nd Intel WiFi Link and Centrino IEEE 802.11a/g/n wireless network devices
 .Sh SYNOPSIS
 .Cd "iwn* at pci?"
 .Sh DESCRIPTION
@@ -28,7 +28,7 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965/5000 and Centrino Wireless-N 1000/2000/6000
+Wireless WiFi Link 4965/5000/1000 and Centrino Wireless-N 1000/2000/6000
 Series PCIe Mini Card network adapters.
 .Pp
 The Intel Wireless WiFi Link 4965AGN (codenamed Kedron) is a PCIe
@@ -68,9 +68,13 @@ It has 2 transmit paths and 2 receiver paths (2T2R).
 These adapters are part of the sixth-generation Centrino platform
 (codenamed Calpella).
 .Pp
-The Intel Centrino Wireless-N 2230 (codename Jackson Peak) is a
-wireless network adapter that operates in the 2GHz spectra.
-It has 2 transmit parts and 2 receiver paths (2T2R).
+The Intel Centrino Wireless-N 2230 (codename Jackson Peak) and Intel
+Centrino Wireless-N 2200 (codename Marble Peak) are wireless network
+adapters that operate in the 2GHz spectrum.
+These adapters have 2 transmit paths and 2 receiver paths (2T2R).
+The Intel Centrino Wireless-N 135 and Intel Centrino Wireless-N 105
+(codename Canyon Peak) also operate in the 2GHz spectrum.
+These adapters have 1 transmit path and 1 receiver path (1T1R).
 .Pp
 These are the modes the
 .Nm
@@ -125,6 +129,9 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwn-6005
 .It Pa /etc/firmware/iwn-6030
 .It Pa /etc/firmware/iwn-2030
+.It Pa /etc/firmware/iwn-2000
+.It Pa /etc/firmware/iwn-135
+.It Pa /etc/firmware/iwn-105
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
