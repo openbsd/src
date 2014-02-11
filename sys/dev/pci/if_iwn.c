@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.128 2014/02/10 19:08:58 kettenis Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.129 2014/02/11 19:30:10 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -96,6 +96,12 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_135_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_135_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_105_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_105_2 },
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -364,7 +370,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	/* Read hardware revision and attach. */
-	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;
+	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0x1f;
 	if (sc->hw_type == IWN_HW_REV_TYPE_4965)
 		error = iwn4965_attach(sc, PCI_PRODUCT(pa->pa_id));
 	else
@@ -658,6 +664,19 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->limits = &iwn2000_sensitivity_limits;
 		sc->fwname = "iwn-2030";
 		sc->sc_flags |= IWN_FLAG_ADV_BT_COEX;
+		break;
+	case IWN_HW_REV_TYPE_2000:
+		sc->limits = &iwn2000_sensitivity_limits;
+		sc->fwname = "iwn-2000";
+		break;
+	case IWN_HW_REV_TYPE_135:
+		sc->limits = &iwn2000_sensitivity_limits;
+		sc->fwname = "iwn-135";
+		sc->sc_flags |= IWN_FLAG_ADV_BT_COEX;
+		break;
+	case IWN_HW_REV_TYPE_105:
+		sc->limits = &iwn2000_sensitivity_limits;
+		sc->fwname = "iwn-105";
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
@@ -1537,7 +1556,10 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	    hdr.version, hdr.pa_type, letoh16(hdr.volt)));
 	sc->calib_ver = hdr.version;
 
-	if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_2000 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_135 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_105) {
 		sc->eeprom_voltage = letoh16(hdr.volt);
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
 		sc->eeprom_temp = letoh16(val);
@@ -2112,7 +2134,10 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	switch (calib->code) {
 	case IWN5000_PHY_CALIB_DC:
 		if (sc->hw_type == IWN_HW_REV_TYPE_5150 ||
-		    sc->hw_type == IWN_HW_REV_TYPE_2030)
+		    sc->hw_type == IWN_HW_REV_TYPE_2030 ||
+		    sc->hw_type == IWN_HW_REV_TYPE_2000 ||
+		    sc->hw_type == IWN_HW_REV_TYPE_135 ||
+		    sc->hw_type == IWN_HW_REV_TYPE_105)
 			idx = 0;
 		break;
 	case IWN5000_PHY_CALIB_LO:
@@ -4181,7 +4206,8 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 	struct iwn_btcoex_prot btprot;
 	int error, i;
 
-	if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_135) {
 		struct iwn2000_btcoex_config btconfig;
 
 		memset(&btconfig, 0, sizeof btconfig);
@@ -4284,7 +4310,12 @@ iwn_config(struct iwn_softc *sc)
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
-	} else if (sc->hw_type == IWN_HW_REV_TYPE_2030) {
+	}
+
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_2000 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_135 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_105) {
 		error = iwn2000_temp_offset_calib(sc);
 		if (error != 0) {
 			printf("%s: could not set temperature offset\n",
@@ -5783,7 +5814,10 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	}
 	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
 		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_6050_1X2);
-	if (sc->hw_type == IWN_HW_REV_TYPE_2030)
+	if (sc->hw_type == IWN_HW_REV_TYPE_2030 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_2000 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_135 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_105)
 		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_IQ_INVERT);
 	return 0;
 }
