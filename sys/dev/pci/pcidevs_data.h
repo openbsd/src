@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1714 2014/02/02 19:16:10 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1715 2014/02/11 19:43:02 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8904,20 +8904,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Centrino Wireless-N 6150",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_1,
-	    "Centrino Wireless-N 2030",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2230_1,
+	    "Centrino Wireless-N 2230",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2030_2,
-	    "Centrino Wireless-N 2030",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2230_2,
+	    "Centrino Wireless-N 2230",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_1,
-	    "Centrino Wireless-N 2000",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2200_1,
+	    "Centrino Wireless-N 2200",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2000_2,
-	    "Centrino Wireless-N 2000",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_2200_2,
+	    "Centrino Wireless-N 2200",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_135_1,
