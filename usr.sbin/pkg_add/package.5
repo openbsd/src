@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.19 2014/01/18 22:28:18 halex Exp $
+.\"	$OpenBSD: package.5,v 1.20 2014/02/11 08:04:18 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 18 2014 $
+.Dd $Mdocdate: February 11 2014 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -62,7 +62,13 @@ This table of contents can be read using the API described in
 .Pp
 All the remaining information in the archive should be referenced in
 the packing-list, including all relevant information: symlinks destinations,
-special permissions, and file owners.
+special permissions, and file owners
+.Po
+.Xr pkg_create 1
+and
+.Xr pkg_add 1
+actually enforce this
+.Pc .
 See
 .Xr pkg_create 1
 for annotation details.
@@ -71,13 +77,14 @@ This table of contents is always followed by a few special files, some of
 which are optional: the package description (+DESC),
 a display message (+DISPLAY), etc.
 .Pp
-The ustar format has some limitations with respect to file names.
+The basic ustar format has some limitations with respect to file names.
 Accordingly, the package tools will replace very long names with
 .Pa LongName#n
 and long link names with
 .Pa LongLink#n .
 The packing-list will hold the real file names, and the package tools
 will reconstitute the correct names behind the scenes.
+Extended ustar headers are currently recognized, but not supported.
 .Sh PACKING LIST ANNOTATIONS
 User annotations are described in
 .Xr pkg_create 1 .
@@ -225,6 +232,7 @@ since no practical application was found.
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
+.Xr pkg_sign 1 ,
 .Xr packages 7 ,
 .Xr packages-specs 7
 .Sh STANDARDS
