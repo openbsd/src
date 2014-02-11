@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.22 2014/01/19 23:45:34 henning Exp $	 */
+/* $OpenBSD: pftop.c,v 1.23 2014/02/11 01:07:21 pelikan Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1646,8 +1646,10 @@ pfctl_update_qstats(void)
 
 	/* if a new set is found, start over */
 	if (pq.ticket != last_ticket)
-		while ((node = TAILQ_FIRST(&qnodes)) != NULL)
+		while ((node = TAILQ_FIRST(&qnodes)) != NULL) {
 			TAILQ_REMOVE(&qnodes, node, entries);
+			free(node);
+		}
 	last_ticket = pq.ticket;
 
 	num_queues = mnr = pq.nr;
@@ -1810,8 +1812,10 @@ read_queues(void)
 	if (pfctl_update_altqstats(&altq_root, &inserts))
 		return (-1);
 
-	while ((node = TAILQ_FIRST(&qnodes)) != NULL)
+	while ((node = TAILQ_FIRST(&qnodes)) != NULL) {
 		TAILQ_REMOVE(&qnodes, node, entries);
+		free(node);
+	}
 	if (pfctl_update_qstats() < 0)
 		return (-1);
 	
