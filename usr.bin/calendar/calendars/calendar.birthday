@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.55 2013/12/29 18:44:43 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.56 2014/02/11 08:02:08 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -110,6 +110,7 @@
 03/14	Casey Jones born, 1864
 03/14	Giovanni Virginio Schiaparelli born, 1835, astronomer;
 		named Mars "canals"
+03/14	Karl Marx died, 1883
 03/15	Julius Caesar assassinated by Brutus; Ides of March, 44BC
 03/15	J.J. Robert's Birthday in Liberia
 03/16	George Clymer born, 1739
@@ -165,6 +166,7 @@
 05/01	Little Walter (Marion Walter Jacobs) is born in Alexandria,
 		Louisiana, 1930
 05/02	Dr. Benjamin Spock born, 1903
+05/05	Karl Marx born, 1818
 05/09	Pinza died, 1957
 05/10	Fred Astaire (Frederick Austerlitz) born in Omaha, Nebraska, 1899
 05/11	Douglas Adams dies in Santa Barbara, 2001
@@ -200,6 +202,7 @@
 06/23	Alan Mathison Turing born, Paddington, London, 1912
 06/25	Eric Arthur Blair (a.k.a. George Orwell) born, 1903
 06/26	William Thomson (a.k.a. Lord Kelvin) born, 1824
+06/26	Robert Morris dies, 2011
 06/27	Helen Keller born, 1880
 07/03	Franz Kafka born in Vienna, 1883
 07/04	Nathaniel Hawthorne born in Salem, Massachusetts, 1804
@@ -215,6 +218,7 @@
 		Saint Nicholas"
 07/18	Brian Auger is born in London, 1939
 07/20	Bruce Lee died in Hong Kong, 1973
+07/25	Robert Morris is born in Boston, 1932
 07/25	Steve Goodman is born in Chicago, 1948
 07/28	(Helen) Beatrix Potter born, 1866
 07/29	Mussolini born, 1883
@@ -225,6 +229,7 @@
 	Lawrence KS, 1997
 08/02	Fela Kuti dies of AIDS-related heart failure in Lagos Nigeria, 1997
 08/03	Lenny Bruce dies of a morphine overdose, 1966
+08/05	Friedrich Engels died, 1895
 08/06	Edsger Wybe Dijkstra died after a long struggle with cancer, 2002
 08/08	Dustin Hoffman born in Los Angeles, 1937
 08/12	Thomas Mann's Death, 1955
@@ -319,6 +324,7 @@
 11/26	Charles Schulz born in Minneapolis, 1922
 11/26	Norbert Weiner born, 1894
 11/27	Bruce Lee born in San Francisco, 1940
+11/28	Friedrich Engels born, 1820
 11/29	John Mayall is born in Cheshire, England, 1933
 11/30	Cleopatra died, 30 BC
 11/30	Mark Twain (Samuel Clemens) born in Florida, Missouri, 1835
