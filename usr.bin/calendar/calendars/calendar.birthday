@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.56 2014/02/11 08:02:08 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.57 2014/02/11 12:20:34 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -115,6 +115,7 @@
 03/15	J.J. Robert's Birthday in Liberia
 03/16	George Clymer born, 1739
 03/16	James Madison born, 1751
+03/18	Norbert Wiener dies, 1964
 03/19	Arthur C. Clarke died in Colombo, Sri Lanka, 2008
 03/21	Jean Baptiste Joseph Fourier born, 1768, mathematician & physicist
 03/22	Jack Kerouac born in Lowell MA, 1922
@@ -322,7 +323,7 @@
 11/24	Emir Kusturica born in Sarajevo, Bosnia-Herzegovina, 1954
 11/25	Chaucer's death (according to tradition), 1400
 11/26	Charles Schulz born in Minneapolis, 1922
-11/26	Norbert Weiner born, 1894
+11/26	Norbert Wiener born, 1894
 11/27	Bruce Lee born in San Francisco, 1940
 11/28	Friedrich Engels born, 1820
 11/29	John Mayall is born in Cheshire, England, 1933
