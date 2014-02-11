@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.1 2011/07/07 02:57:24 deraadt Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.2 2014/02/11 16:51:19 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -80,27 +80,22 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	zbuf.opaque = Z_NULL;
 	zbuf.avail_in = size;	/* Total length of data to be processed */
 
-	if (comp == 0) {
-		buf[i].out = malloc((u_long)size, M_CRYPTO_DATA, M_NOWAIT);
-		if (buf[i].out == NULL)
-			goto bad;
-		buf[i].size = size;
-		buf[i].flag = 1;
-		i++;
-	} else {
+	if (comp) {
 		/*
 	 	 * Choose a buffer with 4x the size of the input buffer
 	 	 * for the size of the output buffer in the case of
 	 	 * decompression. If it's not sufficient, it will need to be
 	 	 * updated while the decompression is going on
 	 	 */
-		buf[i].out = malloc((u_long)(size * 4), M_CRYPTO_DATA, M_NOWAIT);
-		if (buf[i].out == NULL)
-			goto bad;
-		buf[i].size = size * 4;
-		buf[i].flag = 1;
-		i++;
+		if (size < 32 * 1024)
+			size *= 4;
 	}
+	buf[i].out = malloc((u_long)size, M_CRYPTO_DATA, M_NOWAIT);
+	if (buf[i].out == NULL)
+		goto bad;
+	buf[i].size = size;
+	buf[i].flag = 1;
+	i++;
 
 	zbuf.next_out = buf[0].out;
 	zbuf.avail_out = buf[0].size;
@@ -114,12 +109,16 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	for (;;) {
 		error = comp ? inflate(&zbuf, Z_PARTIAL_FLUSH) :
 		    deflate(&zbuf, Z_PARTIAL_FLUSH);
-		if (error != Z_OK && error != Z_STREAM_END)
+		if (error != Z_OK && error != Z_STREAM_END &&
+		    !(error == Z_BUF_ERROR && comp && zbuf.avail_in == 0 &&
+		    zbuf.avail_out == 0))
 			goto bad;
 		else if (zbuf.avail_in == 0 && zbuf.avail_out != 0)
 			goto end;
 		else if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
 			/* we need more output space, allocate size */
+			if (size < 32 * 1024)
+				size *= 2;
 			buf[i].out = malloc((u_long)size, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if (buf[i].out == NULL)
