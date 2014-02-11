@@ -35,10 +35,11 @@ floorl(long double x)
 	jj0 = (se&0x7fff)-0x3fff;
 	if(jj0<31) {
 	    if(jj0<0) {	/* raise inexact if x != 0 */
-		if(huge+x>0.0) {/* return 0*sign(x) if |x|<1 */
-		    if(sx==0) {se=0;i0=i1=0;}
+		if(huge+x>0.0) {
+		    if(sx==0)
+			return 0.0L;
 		    else if(((se&0x7fff)|i0|i1)!=0)
-			{ se=0xbfff;i0=i1=0;}
+			return -1.0L;
 		}
 	    } else {
 		i = (0x7fffffff)>>jj0;
