@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.3 2014/01/23 22:57:06 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.4 2014/02/12 12:15:03 schwarze Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2014 $
+.Dd $Mdocdate: February 12 2014 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -104,13 +104,11 @@ This assumes the existence of a certificate authority (or several), whose
 public information is recorded as a
 .Pa /etc/ssl/pkgca.pem
 file.
-.Pp
 .It Fl v
 Turn on verbose output, display
 .Sq Signed output/pkg.tgz
 after each package is signed.
 .El
-.Pp
 .Sh SIGNATURE DETAILS
 The packing-list is extracted from the source package:
 it already contains a complete manifest of files within the package,
@@ -126,14 +124,14 @@ will refuse to give special rights to any file which isn't properly annotated,
 and so that it will abort on installation of a file whose checksum does not
 match.
 .Pp
-That packing list is a text file that is signed using the provided method, 
+That packing list is a text file that is signed using the provided method,
 adding a
 .Cm \@digital-signature
 annotation.
 The signed package is then created, by putting the signed packing-list at
 the start of the new package, and then blindly copying the rest of the source
-package: there is no need to re-checksum any of the files; 
-If someone tampers with them later, their checksum will not match.
+package: there is no need to re-checksum any of the files;
+if someone tampers with them later, their checksum will not match.
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr pkg_add 1 ,
