@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.134 2014/02/09 11:17:19 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.135 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -458,9 +458,7 @@ reaper(void)
 			if ((pr->ps_flags & PS_NOZOMBIE) == 0) {
 				/* Process is now a true zombie. */
 				p->p_stat = SZOMB;
-
-				if (P_EXITSIG(p) != 0)
-					prsignal(pr->ps_pptr, P_EXITSIG(p));
+				prsignal(pr->ps_pptr, SIGCHLD);
 
 				/* Wake up the parent so it can get exit status. */
 				wakeup(pr->ps_pptr);
@@ -513,7 +511,7 @@ dowait4(struct proc *q, pid_t pid, int *statusp, int options,
 
 	if (pid == 0)
 		pid = -q->p_p->ps_pgid;
-	if (options &~ (WUNTRACED|WNOHANG|WALTSIG|WCONTINUED))
+	if (options &~ (WUNTRACED|WNOHANG|WCONTINUED))
 		return (EINVAL);
 
 loop:
@@ -524,15 +522,6 @@ loop:
 		    (pid != WAIT_ANY &&
 		    p->p_pid != pid &&
 		    pr->ps_pgid != -pid))
-			continue;
-
-		/*
-		 * Wait for processes with p_exitsig != SIGCHLD processes only
-		 * if WALTSIG is set; wait for processes with p_exitsig ==
-		 * SIGCHLD only if WALTSIG is clear.
-		 */
-		if ((options & WALTSIG) ?
-		    (p->p_exitsig == SIGCHLD) : (P_EXITSIG(p) != SIGCHLD))
 			continue;
 
 		nfound++;
@@ -606,8 +595,7 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
 		pr->ps_oppid = 0;
 		proc_reparent(pr, tr);
-		if (p->p_exitsig != 0)
-			prsignal(tr, p->p_exitsig);
+		prsignal(tr, SIGCHLD);
 		wakeup(tr);
 	} else {
 		scheduler_wait_hook(waiter, p);
@@ -629,9 +617,6 @@ proc_reparent(struct process *child, struct process *parent)
 
 	if (child->ps_pptr == parent)
 		return;
-
-	if (parent == initproc->p_p)
-		child->ps_mainproc->p_exitsig = SIGCHLD;
 
 	LIST_REMOVE(child, ps_sibling);
 	LIST_INSERT_HEAD(&parent->ps_children, child, ps_sibling);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.203 2014/01/20 21:19:27 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.204 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ main(void *framep)
 	 * wait for us to inform it that the root file system has been
 	 * mounted.
 	 */
-	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, start_init, NULL, NULL,
+	if (fork1(p, FORK_FORK, NULL, 0, start_init, NULL, NULL,
 	    &initproc))
 		panic("fork init");
 

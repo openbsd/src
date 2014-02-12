@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.140 2014/02/08 00:51:13 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.141 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ struct kinfo_proc {
 	int32_t	p_eflag;		/* LONG: extra kinfo_proc flags */
 #define	EPROC_CTTY	0x01	/* controlling tty vnode active */
 #define	EPROC_SLEADER	0x02	/* session leader */
-	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
+	int32_t	p_exitsig;		/* unused, always zero. */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
 	int32_t	p_pid;			/* PID_T: Process identifier. */
@@ -478,7 +478,7 @@ do {									\
 		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
 	}								\
 	(kp)->p_stats = 0;						\
-	(kp)->p_exitsig = (p)->p_exitsig;				\
+	(kp)->p_exitsig = 0;						\
 	(kp)->p_flag = (p)->p_flag;					\
 	(kp)->p_psflags = (pr)->ps_flags;				\
 									\

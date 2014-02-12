@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.30 2013/06/06 13:09:37 haesbaert Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.31 2014/02/12 05:47:36 guenther Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -105,7 +105,7 @@ sched_kthreads_create(void *v)
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	static int num;
 
-	if (fork1(&proc0, 0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
+	if (fork1(&proc0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
 	    FORK_SIGHAND|FORK_IDLE, NULL, 0, sched_idle, ci, NULL,
 	    &spc->spc_idleproc))
 		panic("fork idle");

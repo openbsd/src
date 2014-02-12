@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.176 2014/02/09 11:17:19 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.177 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ struct process {
 #define	PS_COREDUMP	0x00000800	/* Busy coredumping */
 #define	PS_SINGLEEXIT	0x00001000	/* Other threads must die. */
 #define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
-#define	PS_NOZOMBIE	0x00004000	/* Pid 1 waits for me instead of dad */
+#define	PS_NOZOMBIE	0x00004000	/* No signal or zombie at exit. */
 #define	PS_STOPPED	0x00008000	/* Just stopped, need sig to parent. */
 
 #define	PS_BITS \
@@ -264,7 +264,6 @@ struct proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_p->ps_limit->pl_rlimit
 
-	int	p_exitsig;		/* Signal to send to parent on exit. */
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */
 	char	p_stat;			/* S* process status. */
@@ -385,10 +384,6 @@ struct proc {
      "\013TIMEOUT\016WEXIT\020OWEUPC\024SUSPSINGLE" \
      "\027SYSTRACE\030CONTINUED\033THREAD" \
      "\034SUSPSIG\035SOFTDEP\037CPUPEG")
-
-/* Macro to compute the exit signal to be delivered. */
-#define P_EXITSIG(p) \
-    (((p)->p_p->ps_flags & PS_TRACED) ? SIGCHLD : (p)->p_exitsig)
 
 #define	THREAD_PID_OFFSET	1000000
 
@@ -512,7 +507,7 @@ void	exit2(struct proc *);
 int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
 	    register_t *);
 void	cpu_exit(struct proc *);
-int	fork1(struct proc *, int, int, void *, pid_t *, void (*)(void *),
+int	fork1(struct proc *, int, void *, pid_t *, void (*)(void *),
 	    void *, register_t *, struct proc **);
 int	groupmember(gid_t, struct ucred *);
 

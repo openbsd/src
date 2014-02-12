@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.157 2014/02/10 01:38:07 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.158 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -100,15 +100,14 @@ sys_fork(struct proc *p, void *v, register_t *retval)
 	flags = FORK_FORK;
 	if (p->p_p->ps_ptmask & PTRACE_FORK)
 		flags |= FORK_PTRACE;
-	return (fork1(p, SIGCHLD, flags, NULL, 0,
-	    fork_return, NULL, retval, NULL));
+	return (fork1(p, flags, NULL, 0, fork_return, NULL, retval, NULL));
 }
 
 /*ARGSUSED*/
 int
 sys_vfork(struct proc *p, void *v, register_t *retval)
 {
-	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
+	return (fork1(p, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
 	    NULL, retval, NULL));
 }
 
@@ -136,7 +135,7 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	flags = FORK_TFORK | FORK_THREAD | FORK_SIGHAND | FORK_SHAREVM
 	    | FORK_SHAREFILES;
 
-	return (fork1(p, 0, flags, param.tf_stack, param.tf_tid,
+	return (fork1(p, flags, param.tf_stack, param.tf_tid,
 	    tfork_child_return, param.tf_tcb, retval, NULL));
 }
 
@@ -204,7 +203,7 @@ process_new(struct proc *p, struct process *parent)
 struct timeval fork_tfmrate = { 10, 0 };
 
 int
-fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
+fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
@@ -295,7 +294,6 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	p = pool_get(&proc_pool, PR_WAITOK);
 
 	p->p_stat = SIDL;			/* protect against others */
-	p->p_exitsig = exitsig;
 	p->p_flag = 0;
 	p->p_xstat = 0;
 

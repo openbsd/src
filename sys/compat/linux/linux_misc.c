@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.85 2014/01/23 04:11:46 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.86 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -172,16 +172,13 @@ linux_sys_wait4(p, v, retval)
 
 	linux_options = SCARG(uap, options);
 	options = 0;
-	if (linux_options &
-	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WCLONE))
+	if (linux_options & ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED))
 		return (EINVAL);
 
 	if (linux_options & LINUX_WAIT4_WNOHANG)
 		options |= WNOHANG;
 	if (linux_options & LINUX_WAIT4_WUNTRACED)
 		options |= WUNTRACED;
-	if (linux_options & LINUX_WAIT4_WCLONE)
-		options |= WALTSIG;
 
 	if ((error = dowait4(p, SCARG(uap, pid),
 	    SCARG(uap, status) ? &status : NULL, options,

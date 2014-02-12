@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.15 2013/03/24 17:42:43 deraadt Exp $	*/
+/*	$OpenBSD: wait.h,v 1.16 2014/02/12 05:47:36 guenther Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -81,9 +81,6 @@
  */
 #define WNOHANG		1	/* don't hang in wait */
 #define WUNTRACED	2	/* tell about stopped, untraced children */
-#if __XPG_VISIBLE
-#define	WALTSIG		4	/* wait for child with alternate exit signal */
-#endif
 #define	WCONTINUED	8	/* report a job control continued process */
 
 #if __BSD_VISIBLE
