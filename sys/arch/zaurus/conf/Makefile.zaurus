@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.zaurus,v 1.49 2013/10/15 19:23:31 guenther Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.50 2014/02/12 05:31:58 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -146,6 +146,7 @@ ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S
 locore.o: ${_archdir}/${_arch}/locore.S assym.h
 in_cksum_arm.o fiq_subr.o bcopyinout.o copystr.o sigcode.o: assym.h
 vectors.o cpuswitch.o exception.o bcopy_page.o irq_dispatch.o: assym.h
+zaurus_start.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
