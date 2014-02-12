@@ -1,6 +1,6 @@
-.\" $OpenBSD: skeyinfo.1,v 1.9 2007/05/31 19:20:16 jmc Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.10 2014/02/12 16:58:44 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 12 2014 $
 .Dt SKEYINFO 1
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ $ skey -n \*(Ltnumber of passwords to print\*(Gt `skeyinfo` \*(Ba lpr
 .Pp
 This would print out a list of S/Key passwords for use over
 an untrusted network (perhaps for use at a conference).
-.Sh ERRORS
+.Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It cannot open /etc/skey/user
 The user does not have an entry in
