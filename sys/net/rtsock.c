@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.137 2014/01/22 06:28:09 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.138 2014/02/12 13:01:50 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1193,12 +1193,15 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 		if ((cmd == RTM_ADD && pass == 2) ||
 		    (cmd == RTM_DELETE && pass == 1)) {
 			struct rt_msghdr *rtm;
+			struct sockaddr_rtlabel sa_rl;
 			
 			if (rt == 0)
 				continue;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_DST] = sa = rt_key(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+			info.rti_info[RTAX_LABEL] =
+			    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 			if ((m = rt_msg1(cmd, &info)) == NULL)
 				continue;
 			rtm = mtod(m, struct rt_msghdr *);
