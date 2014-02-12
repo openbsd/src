@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.302 2014/01/21 21:14:58 sf Exp $
+#	$OpenBSD: files.pci,v 1.303 2014/02/12 23:04:26 jmatthew Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -216,6 +216,11 @@ file	dev/pci/isp_pci.c		isp_pci
 # QLogic ISP23xx FC Controllers
 attach  qla at pci with qla_pci
 file    dev/pci/qla_pci.c               qla_pci
+
+# QLogic ISP24xx FC Controllers
+device  qle: scsi
+attach  qle at pci
+file    dev/pci/qle.c                   qle
 
 # LSI Logic Fusion-MPT Message Passing Interface
 attach	mpi at pci with mpi_pci
