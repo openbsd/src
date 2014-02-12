@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.35 2014/01/24 05:58:52 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.36 2014/02/12 12:59:44 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -808,7 +808,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			ret = ikev2_send_ike_e(env, sa, resp,
 			    IKEV2_PAYLOAD_NONE,
 			    IKEV2_EXCHANGE_INFORMATIONAL, 1);
-			msg->msg_responded = 1;
+			msg->msg_parent->msg_responded = 1;
 			ibuf_release(resp);
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return (ret);
@@ -911,7 +911,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	if (found) {
 		ret = ikev2_send_ike_e(env, sa, resp, IKEV2_PAYLOAD_DELETE,
 		    IKEV2_EXCHANGE_INFORMATIONAL, 1);
-		msg->msg_responded = 1;
+		msg->msg_parent->msg_responded = 1;
 	} else {
 		/* XXX should we send an INVALID_SPI notification? */
 		ret = 0;
