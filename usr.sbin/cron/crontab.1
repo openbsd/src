@@ -17,19 +17,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.31 2014/01/30 13:28:59 jmc Exp $
+.\" $OpenBSD: crontab.1,v 1.32 2014/02/12 10:07:33 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 30 2014 $
+.Dd $Mdocdate: February 12 2014 $
 .Dt CRONTAB 1
 .Os
 .Sh NAME
 .Nm crontab
 .Nd maintain crontab files for individual users
 .Sh SYNOPSIS
-.Nm crontab
+.Nm
 .Op Fl u Ar user
 .Ar file
-.Nm crontab
+.Nm
 .Oo
 .Fl e | l | r
 .Oc
@@ -54,7 +54,7 @@ is given.
 If the
 .Pa /var/cron/cron.allow
 file exists, then you must be listed therein in order to use
-.Nm crontab .
+.Nm .
 If the
 .Pa /var/cron/cron.allow
 file does not exist but the
@@ -64,10 +64,10 @@ file does exist, then you must
 be listed in the
 .Pa /var/cron/cron.deny
 file in order to use
-.Nm crontab .
+.Nm .
 If neither of these files exists then only the super user
 will be allowed to use
-.Nm crontab .
+.Nm .
 .Em NOTE :
 if they exist,
 .Pa /var/cron/cron.allow
@@ -77,7 +77,7 @@ must be readable by group crontab.
 If
 .Nm
 is unable to read the files, users will not be allowed to use
-.Nm crontab .
+.Nm .
 .Pp
 The options are as follows:
 .Bl -tag -width "-u userX"
