@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.27 2014/02/12 01:18:36 bluhm Exp $
+.\"	$OpenBSD: dd.1,v 1.28 2014/02/12 18:27:57 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -150,7 +150,7 @@ is one of the symbols from the following list.
 Do not print the transfer statistics as the last line of status output.
 .It Cm none
 Do not print the status output.
-Error messages are shown, but no informational messages.
+Error messages are shown; informational messages are not.
 .El
 .It Xo
 .Sm off
@@ -387,7 +387,9 @@ X/Open System Interfaces option.
 .Pp
 The
 .Cm files
-operand,
+and
+.Cm status
+operands,
 the conversions
 .Cm oldascii ,
 .Cm oldebcdic ,
