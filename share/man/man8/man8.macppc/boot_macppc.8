@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.19 2010/01/03 16:43:45 schwarze Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.20 2014/02/12 11:54:28 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_macppc.8
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: February 12 2014 $
 .Dt BOOT_MACPPC 8 macppc
 .Os
 .Sh NAME
@@ -41,23 +41,21 @@ When powered on, after a panic, or if the system is rebooted via
 .Xr reboot 8
 or
 .Xr shutdown 8 ,
-the
-.Tn Open Firmware
-will proceed to its initialization, and will boot an operating system
-if the
-.Em auto-boot?\&
+the Open Firmware will proceed to its initialization,
+and will boot an operating system if the
+.Va auto-boot?\&
 variable is set to
 .Dq true ,
 or will wait for interactive commands otherwise.
 .Ss Boot process description
 The Apple Open Firmware will normally load the kernel from the device and
 filename as instructed by the
-.Em boot-device
+.Va boot-device
 and
-.Em boot-file
+.Va boot-file
 variables.
 If the
-.Em boot-file
+.Va boot-file
 variable is empty, the
 .Ox
 bootloader will look for a kernel named
@@ -99,9 +97,7 @@ The file specification used is of the form:
 .Dl promdev:partition/filename options
 where:
 .Dq promdev
-is an optional
-.Tn Open Firmware
-device name (such as
+is an optional Open Firmware device name (such as
 .Dq hd
 or
 .Dq ide )
@@ -135,7 +131,7 @@ In case of system crashes, the kernel will usually enter the kernel
 debugger,
 .Xr ddb 4 ,
 unless it is not present in the kernel, or it is disabled via the
-.Em ddb.panic
+.Va ddb.panic
 sysctl.
 Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
 if it was still in device configuration phase, or attempt a dump to the
@@ -170,8 +166,7 @@ default system kernel
 standalone installation kernel, suitable for disaster recovery
 .It Pa /usr/mdec/ofwboot
 system bootstrap (usually installed on a stand-alone FAT partition or an
-.Tn Apple
-HFS partition, to be readable by Open Firmware)
+Apple HFS partition, to be readable by Open Firmware)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
