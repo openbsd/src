@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.152 2014/02/12 10:00:38 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.153 2014/02/12 12:50:13 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -130,8 +130,6 @@
 
 struct ifaddr	*encap_findgwifa(struct sockaddr *, u_int);
 #endif
-
-#define	SA(p) ((struct sockaddr *)(p))
 
 struct	route_cb	   route_cb;
 struct	rtstat		   rtstat;
