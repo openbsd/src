@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.21 2013/11/11 23:07:28 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.22 2014/02/12 01:18:36 bluhm Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ static void	f_obs(char *);
 static void	f_of(char *);
 static void	f_seek(char *);
 static void	f_skip(char *);
+static void	f_status(char *);
 static size_t	get_bsz(char *);
 static off_t	get_off(char *);
 
@@ -78,6 +79,7 @@ static const struct arg {
 	{ "of",		f_of,		C_OF,	 C_OF },
 	{ "seek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "skip",	f_skip,		C_SKIP,	 C_SKIP },
+	{ "status",	f_status,	C_STATUS,C_STATUS },
 };
 
 static char *oper;
@@ -247,6 +249,18 @@ f_skip(char *arg)
 {
 
 	in.offset = get_off(arg);
+}
+
+static void
+f_status(char *arg)
+{
+
+	if (strcmp(arg, "none") == 0)
+		ddflags |= C_NOINFO;
+	else if (strcmp(arg, "noxfer") == 0)
+		ddflags |= C_NOXFER;
+	else
+		errx(1, "unknown status %s", arg);
 }
 
 

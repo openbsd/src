@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2013/04/16 22:13:43 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2014/02/12 01:18:36 bluhm Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -58,6 +58,9 @@ summary(void)
 	double microsecs;
 	int i = 0;
 
+	if (ddflags & C_NOINFO)
+		return;
+
 	(void)gettimeofday(&nowtv, (struct timezone *)NULL);
 	timersub(&nowtv, &st.startv, &nowtv);
 	microsecs = ((double)nowtv.tv_sec * 1000000) + nowtv.tv_usec;
@@ -85,13 +88,15 @@ summary(void)
 		iov[i].iov_base = buf[2];
 		iov[i++].iov_len = strlen(buf[2]);
 	}
-	(void)snprintf(buf[3], sizeof(buf[3]),
-	    "%qd bytes transferred in %lld.%03ld secs (%0.0f bytes/sec)\n",
-	    (long long)st.bytes, (long long)nowtv.tv_sec, nowtv.tv_usec / 1000,
-	    ((double)st.bytes * 1000000) / microsecs);
-
-	iov[i].iov_base = buf[3];
-	iov[i++].iov_len = strlen(buf[3]);
+	if (!(ddflags & C_NOXFER)) {
+		(void)snprintf(buf[3], sizeof(buf[3]),
+		    "%qd bytes transferred in %lld.%03ld secs "
+		    "(%0.0f bytes/sec)\n", (long long)st.bytes,
+		    (long long)nowtv.tv_sec, nowtv.tv_usec / 1000,
+		    ((double)st.bytes * 1000000) / microsecs);
+		iov[i].iov_base = buf[3];
+		iov[i++].iov_len = strlen(buf[3]);
+	}
 
 	(void)writev(STDERR_FILENO, iov, i);
 }
