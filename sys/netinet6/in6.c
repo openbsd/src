@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.131 2014/01/22 13:19:12 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.132 2014/02/12 10:03:07 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -808,10 +808,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * must be 128.
 	 */
 	if (ifra->ifra_dstaddr.sin6_family == AF_INET6) {
-#ifdef FORCE_P2PPLEN
-		int i;
-#endif
-
 		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
 			/* XXX: noisy message */
 			nd6log((LOG_INFO, "in6_update_ifa: a destination can "
@@ -821,22 +817,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (plen != 128) {
 			nd6log((LOG_INFO, "in6_update_ifa: prefixlen should "
 			    "be 128 when dstaddr is specified\n"));
-#ifdef FORCE_P2PPLEN
-			/*
-			 * To be compatible with old configurations,
-			 * such as ifconfig gif0 inet6 2001::1 2001::2
-			 * prefixlen 126, we override the specified
-			 * prefixmask as if the prefix length was 128.
-			 */
-			ifra->ifra_prefixmask.sin6_len =
-			    sizeof(struct sockaddr_in6);
-			for (i = 0; i < 4; i++)
-				ifra->ifra_prefixmask.sin6_addr.s6_addr32[i] =
-				    0xffffffff;
-			plen = 128;
-#else
 			return (EINVAL);
-#endif
 		}
 	}
 	/* lifetime consistency check */
