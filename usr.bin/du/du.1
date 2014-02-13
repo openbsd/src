@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.29 2014/02/04 18:45:29 jmc Exp $
+.\"	$OpenBSD: du.1,v 1.30 2014/02/13 14:28:52 jmc Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt DU 1
 .Os
 .Sh NAME
@@ -145,7 +145,10 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl chPr
+.Op Fl chP ,
+as well as the
+.Ev BLOCKSIZE
+environment variable,
 are extensions to that specification.
 .Pp
 The flag
