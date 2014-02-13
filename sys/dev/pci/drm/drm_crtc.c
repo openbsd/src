@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.6 2014/01/18 08:25:06 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.7 2014/02/13 12:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -1364,8 +1364,9 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 #if 0
 		} else {
 			for (i = mode_group->num_crtcs; i < mode_group->num_crtcs + mode_group->num_encoders; i++) {
-				if (copyout(&mode_group->id_list[i]
-				    encoder_id + copied, sizeof(uint32_t)) != 0) {
+				if (copyout(&mode_group->id_list[i],
+				    encoder_id + copied,
+				    sizeof(mode_group->id_list[i])) != 0) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1405,7 +1406,7 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 			for (i = start; i < start + mode_group->num_connectors; i++) {
 				if (copyout(&mode_group->id_list[i],
 				    connector_id + copied,
-				    sizeof(uint32_t)) != 0) {
+				    sizeof(mode_grou->id_list[i])) != 0) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1593,14 +1594,14 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 		for (i = 0; i < connector->properties.count; i++) {
 			if (copyout(&connector->properties.ids[i],
 			    prop_ptr + copied,
-			    sizeof(uint32_t)) != 0) {
+			    sizeof(connector->properties.ids[i])) != 0) {
 				ret = -EFAULT;
 				goto out;
 			}
 
 			if (copyout(&connector->properties.values[i],
 			    prop_values + copied,
-			    sizeof(uint32_t)) != 0) {
+			    sizeof(connector->properties.values[i])) != 0) {
 				ret = -EFAULT;
 				goto out;
 			}
@@ -1701,7 +1702,7 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 
 		list_for_each_entry(plane, &config->plane_list, head) {
 			if (copyout(&plane->base.id, plane_ptr + copied,
-			    sizeof(uint32_t))) {
+			    sizeof(plane->base.id))) {
 				ret = -EFAULT;
 				goto out;
 			}
