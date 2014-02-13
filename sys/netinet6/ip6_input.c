@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.122 2014/02/05 08:44:21 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.123 2014/02/13 11:20:54 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -496,28 +496,6 @@ ip6_input(struct mbuf *m)
 			goto bad;
 		}
 	}
-
-#if 0
-    {
-	/*
-	 * Last resort: check in6_ifaddr for incoming interface.
-	 * The code is here until I update the "goto ours hack" code above
-	 * working right.
-	 */
-	struct ifaddr *ifa;
-	TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		if (IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ip6->ip6_dst)) {
-			ours = 1;
-			deliverifp = ifa->ifa_ifp;
-			goto hbhcheck;
-		}
-	}
-    }
-#endif
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
