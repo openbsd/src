@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.221 2014/02/07 22:22:37 stsp Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.222 2014/02/13 10:31:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -509,17 +509,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			}
 			break;
 		}
-
-#ifdef INET6
-		case AF_INET6:
-			if (sc->sc_balancing >= CARP_BAL_IP)
-				continue;
-			if (cmd == RTM_ADD)
-				in6_ifaddloop(ifa);
-			else
-				in6_ifremloop(ifa);
-			break;
-#endif /* INET6 */
 		default:
 			break;
 		}
@@ -1330,7 +1319,7 @@ carp_send_arp(struct carp_softc *sc)
 			continue;
 
 		in = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
-		arprequest(sc->sc_carpdev, &in, &in, sc->sc_ac.ac_enaddr);
+		arprequest(&sc->sc_if, &in, &in, sc->sc_ac.ac_enaddr);
 		DELAY(1000);	/* XXX */
 	}
 	splx(s);
@@ -1351,7 +1340,7 @@ carp_send_na(struct carp_softc *sc)
 			continue;
 
 		in6 = &ifatoia6(ifa)->ia_addr.sin6_addr;
-		nd6_na_output(sc->sc_carpdev, &mcast, in6,
+		nd6_na_output(&sc->sc_if, &mcast, in6,
 		    ND_NA_FLAG_OVERRIDE |
 		    (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0), 1, NULL);
 		DELAY(1000);	/* XXX */
