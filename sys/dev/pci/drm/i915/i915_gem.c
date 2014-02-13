@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.69 2014/02/05 10:41:32 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.70 2014/02/13 23:11:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -368,9 +368,14 @@ __copy_to_user(void *to, const void *from, unsigned len)
 static inline unsigned long
 __copy_to_user_inatomic(void *to, const void *from, unsigned len)
 {
-	if (copyout(from, to, len))
-		return len;
-	return 0;
+	struct cpu_info *ci = curcpu();
+	int error;
+
+	ci->ci_inatomic = 1;
+	error = copyout(from, to, len);
+	ci->ci_inatomic = 0;
+
+	return (error ? len : 0);
 }
 
 static inline int
@@ -410,9 +415,14 @@ __copy_from_user(void *to, const void *from, unsigned len)
 static inline unsigned long
 __copy_from_user_inatomic_nocache(void *to, const void *from, unsigned len)
 {
-	if (copyin(from, to, len))
-		return len;
-	return 0;
+	struct cpu_info *ci = curcpu();
+	int error;
+
+	ci->ci_inatomic = 1;
+	error = copyin(from, to, len);
+	ci->ci_inatomic = 0;
+
+	return (error ? len : 0);
 }
 
 static inline int

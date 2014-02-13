@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2012/12/31 06:46:13 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2014/02/13 23:11:06 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -372,12 +372,16 @@ faultcommon:
 		}
 #endif
 
-		/* Fault the original page in. */
-		onfault = pcb->pcb_onfault;
-		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, frame->tf_err & PGEX_P?
-		    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
-		pcb->pcb_onfault = onfault;
+		if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
+			/* Fault the original page in. */
+			onfault = pcb->pcb_onfault;
+			pcb->pcb_onfault = NULL;
+			error = uvm_fault(map, va, frame->tf_err & PGEX_P?
+			    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
+			pcb->pcb_onfault = onfault;
+		} else
+			error = EFAULT;
+
 		if (error == 0) {
 			if (map != kernel_map)
 				uvm_grow(p, va);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.110 2013/12/22 11:00:13 sf Exp $	*/
+/*	$OpenBSD: trap.c,v 1.111 2014/02/13 23:11:06 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -449,10 +449,13 @@ trap(struct trapframe *frame)
 		}
 #endif
 
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
-		rv = uvm_fault(map, va, 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
+			onfault = p->p_addr->u_pcb.pcb_onfault;
+			p->p_addr->u_pcb.pcb_onfault = NULL;
+			rv = uvm_fault(map, va, 0, ftype);
+			p->p_addr->u_pcb.pcb_onfault = onfault;
+		} else
+			rv = EFAULT;
 
 		if (rv == 0) {
 			if (map != kernel_map)

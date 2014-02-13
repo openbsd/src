@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.82 2013/10/05 16:58:30 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.83 2014/02/13 23:11:06 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -104,6 +104,8 @@ struct cpu_info {
 	u_int32_t	ci_model;
 	u_int32_t	ci_cflushsz;
 	u_int64_t	ci_tsc_freq;
+
+	int		ci_inatomic;
 
 #define ARCH_HAVE_CPU_TOPOLOGY
 	u_int32_t	ci_smt_id;
