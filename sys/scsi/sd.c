@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.251 2013/11/01 17:36:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.252 2014/02/13 05:51:06 halex Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -232,6 +232,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		if (ISSET(sc->flags, SDF_THIN)) {
 			sortby = BUFQ_FIFO;
 			printf(", thin");
+		}
+		if (ISSET(sc_link->flags, SDEV_READONLY)) {
+			printf(", readonly");
 		}
 		printf("\n");
 		break;
