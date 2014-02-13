@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.61 2014/02/11 08:58:34 sthen Exp $
+# $OpenBSD: PkgAdd.pm,v 1.62 2014/02/13 16:58:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -331,7 +331,7 @@ sub complete
 		return 1 if !defined $plist;
 		return 1 if $n->has_error;
 	}
-	for my $o ($set->older) {
+	for my $o ($set->older, $set->kept) {
 		$o->complete_old($state);
 	}
 
