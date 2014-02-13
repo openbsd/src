@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.6 2014/02/13 23:41:24 pelikan Exp $ */
+/*	$OpenBSD: ahci.c,v 1.7 2014/02/13 23:48:30 pelikan Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -190,10 +190,10 @@ ahci_attach(struct ahci_softc *sc)
 		case AHCI_REG_CAP_ISS_G1:
 			gen = "1 (1.5Gbps)";
 			break;
-		case AHCI_REG_CAP_ISS_G1_2:
+		case AHCI_REG_CAP_ISS_G2:
 			gen = "2 (3Gbps)";
 			break;
-		case AHCI_REG_CAP_ISS_G1_3:
+		case AHCI_REG_CAP_ISS_G3:
 			gen = "3 (6Gbps)";
 			break;
 		default:
