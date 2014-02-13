@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.14 2014/02/13 03:49:00 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.15 2014/02/13 03:53:15 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -1772,10 +1772,13 @@ static void intel_sdvo_get_lvds_modes(struct drm_connector *connector)
 	 * arranged in priority order.
 	 */
 	intel_ddc_get_modes(connector, &intel_sdvo->ddc);
-	if (list_empty(&connector->probed_modes) == false)
-		goto end;
 
-	/* Fetch modes from VBT */
+	/*
+	 * Fetch modes from VBT. For SDVO prefer the VBT mode since some
+	 * SDVO->LVDS transcoders can't cope with the EDID mode. Since
+	 * drm_mode_probed_add adds the mode at the head of the list we add it
+	 * last.
+	 */
 	if (dev_priv->sdvo_lvds_vbt_mode != NULL) {
 		newmode = drm_mode_duplicate(connector->dev,
 					     dev_priv->sdvo_lvds_vbt_mode);
@@ -1787,7 +1790,6 @@ static void intel_sdvo_get_lvds_modes(struct drm_connector *connector)
 		}
 	}
 
-end:
 	list_for_each_entry(newmode, &connector->probed_modes, head) {
 		if (newmode->type & DRM_MODE_TYPE_PREFERRED) {
 			intel_sdvo->sdvo_lvds_fixed_mode =
