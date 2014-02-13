@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.20 2014/02/13 13:12:32 dlg Exp $
+.\" $OpenBSD: mutex.9,v 1.21 2014/02/13 13:16:40 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -63,8 +63,6 @@ function acquires a mutex, spinning if necessary.
 The
 .Fn mtx_enter_try
 function attempts to acquire a mutex.
-If it succeeds in acquiring the mutex it will return non-zero, otherwise
-it will return 0.
 .Pp
 The
 .Fn mtx_leave
@@ -99,6 +97,12 @@ can be called during autoconf, from process context, or from any
 interrupt context at or below the interrupt level
 .Fa mtxp
 was initialised with.
+.Sh RETURN VALUES
+The
+.Fn mtx_enter_try
+function will return non-zero If it succeeds in acquiring the mutex
+.Fa mtxp ,
+otherwise it will return 0.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
 .Xr msleep 9 ,
