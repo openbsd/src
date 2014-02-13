@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.41 2013/10/20 07:40:42 jmc Exp $
+.\"	$OpenBSD: rdist.1,v 1.42 2014/02/13 09:18:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: October 20 2013 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -262,16 +262,20 @@ but is present to allow compatibility with older versions.
 Binary comparison.
 Perform a binary comparison and update files if they differ rather than
 comparing dates and sizes.
-.It Ic defgroup Ns Op = Ns Ic groupname
+.It Ic defgroup Ns Op = Ns Ar groupname
 If the group of a file to be transferred does not exist on the destination
 host, use the specified group instead.
-If groupname is not specified, the
+If
+.Ar groupname
+is not specified, the
 .Em bin
 group is used.
-.It Ic defowner Ns Op = Ns Ic owner
+.It Ic defowner Ns Op = Ns Ar owner
 If the owner of a file to be transferred does not exist on the destination
 host, use the specified owner instead.
-If owner is not specified, the user
+If
+.Ar owner
+is not specified, the user
 .Em bin
 is used.
 .It Ic follow
@@ -853,9 +857,9 @@ will report missing links.
 Only one instance of a link should be listed in each target.
 .Pp
 The
-.Sy defowner ,
-.Sy defgroup ,
+.Ic defowner ,
+.Ic defgroup ,
 and
-.Sy updateperm
+.Ic updateperm
 options are extensions to the 6.1.0 protocol and will not work with earlier
 versions of rdist 6.
