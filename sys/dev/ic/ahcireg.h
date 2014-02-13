@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcireg.h,v 1.1 2013/01/21 11:17:48 patrick Exp $ */
+/*	$OpenBSD: ahcireg.h,v 1.2 2014/02/13 23:41:24 pelikan Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -33,7 +33,8 @@
 #define  AHCI_REG_CAP_SNZO		(1<<19) /* Non Zero DMA Offsets */
 #define  AHCI_REG_CAP_ISS		(0xf<<20) /* Interface Speed Support */
 #define  AHCI_REG_CAP_ISS_G1		(0x1<<20) /* Gen 1 (1.5 Gbps) */
-#define  AHCI_REG_CAP_ISS_G1_2		(0x2<<20) /* Gen 1 and 2 (3 Gbps) */
+#define  AHCI_REG_CAP_ISS_G2		(0x2<<20) /* Gen 2 (3 Gbps) */
+#define  AHCI_REG_CAP_ISS_G3		(0x3<<20) /* Gen 3 (6 Gbps) */
 #define  AHCI_REG_CAP_SCLO		(1<<24) /* Cmd List Override */
 #define  AHCI_REG_CAP_SAL		(1<<25) /* Activity LED */
 #define  AHCI_REG_CAP_SALP		(1<<26) /* Aggressive Link Pwr Mgmt */
@@ -168,6 +169,7 @@
 #define  AHCI_PREG_SSTS_SPD_NONE	0x00
 #define  AHCI_PREG_SSTS_SPD_GEN1	0x10
 #define  AHCI_PREG_SSTS_SPD_GEN2	0x20
+#define  AHCI_PREG_SSTS_SPD_GEN3	0x30
 #define  AHCI_PREG_SSTS_IPM		0xf00 /* Interface Power Management */
 #define  AHCI_PREG_SSTS_IPM_NONE	0x000
 #define  AHCI_PREG_SSTS_IPM_ACTIVE	0x100
@@ -182,6 +184,7 @@
 #define  AHCI_PREG_SCTL_SPD_ANY		0x00
 #define  AHCI_PREG_SCTL_SPD_GEN1	0x10
 #define  AHCI_PREG_SCTL_SPD_GEN2	0x20
+#define  AHCI_PREG_SCTL_SPD_GEN3	0x30
 #define  AHCI_PREG_SCTL_IPM		0xf00 /* Interface Power Management */
 #define  AHCI_PREG_SCTL_IPM_NONE	0x000
 #define  AHCI_PREG_SCTL_IPM_NOPARTIAL	0x100
