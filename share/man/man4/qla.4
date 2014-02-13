@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qla.4,v 1.2 2014/02/07 11:41:46 dlg Exp $
+.\"	$OpenBSD: qla.4,v 1.3 2014/02/13 01:59:05 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt QLA 4
 .Os
 .Sh NAME
 .Nm qla
-.Nd QLogic Fibre Channel Controllers
+.Nd QLogic ISP2100/ISP2200/ISP2300 Fibre Channel Controllers
 .Sh SYNOPSIS
 .Cd "qla* at pci?     " Pq PCI
 .Cd "qla* at sbus?    " Pq SBus
@@ -38,6 +38,7 @@ ISP2300
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
+.Xr qle 4 ,
 .Xr sbus 4 ,
 .Xr scsi 4
 .Sh HISTORY

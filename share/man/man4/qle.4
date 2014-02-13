@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qle.4,v 1.1 2014/02/12 23:08:58 jmatthew Exp $
+.\"	$OpenBSD: qle.4,v 1.2 2014/02/13 01:59:05 dlg Exp $
 .\"
 .\" Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt QLE 4
 .Os
 .Sh NAME
 .Nm qle
-.Nd QLogic Fibre Channel Controllers
+.Nd QLogic ISP2400 Fibre Channel Controllers
 .Sh SYNOPSIS
 .Cd "qle* at pci?     " Pq PCI
 .Sh DESCRIPTION
@@ -30,6 +30,7 @@ the ISP2400 family of chipsets.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
+.Xr qla 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The
