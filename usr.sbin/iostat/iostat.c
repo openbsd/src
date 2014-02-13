@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.33 2014/02/13 08:46:36 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.34 2014/02/13 21:01:23 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
  */
 
 #include <sys/dkstat.h>
+#include <sys/limits.h>
 #include <sys/time.h>
 
 #include <err.h>
@@ -112,14 +113,16 @@ int dkinit(int);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	int ch, hdrcnt;
 	struct timeval	tv;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
 		case 'c':
-			if ((reps = atoi(optarg)) <= 0)
-				errx(1, "repetition count <= 0.");
+			reps = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "repetition count is %s", errstr);
 			break;
 		case 'C':
 			todo |= SHOW_CPU;
@@ -143,8 +146,9 @@ main(int argc, char *argv[])
 			todo |= SHOW_TTY;
 			break;
 		case 'w':
-			if ((interval = atoi(optarg)) <= 0)
-				errx(1, "interval <= 0.");
+			interval = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "interval is %s", errstr);
 			break;
 		case '?':
 		default:
@@ -385,6 +389,7 @@ display(void)
 static void
 selectdrives(char *argv[])
 {
+	const char *errstr;
 	int	i, ndrives;
 
 	/*
@@ -411,9 +416,14 @@ selectdrives(char *argv[])
 	}
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-		interval = atoi(*argv);
-		if (*++argv)
-			reps = atoi(*argv);
+		interval = strtonum(*argv, 1, INT_MAX, &errstr);
+		if (errstr)
+			errx(1, "interval is %s", errstr);
+		if (*++argv) {
+			reps = strtonum(*argv, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "repetition count is %s", errstr);
+		}
 	}
 #endif
 
