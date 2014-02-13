@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_add_int.9,v 1.5 2014/02/13 12:03:47 dlg Exp $
+.\" $OpenBSD: atomic_add_int.9,v 1.6 2014/02/13 12:05:05 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -54,7 +54,7 @@ can all be called during autoconf, from process context, or from interrupt conte
 .Nm atomic_add_int
 and
 .Nm atomic_add_long
-perform the addition without returning any knowledge of the value at the
+perform the addition without returning any knowledge of the value at
 .Fa p .
 .Pp
 .Nm atomic_add_int_nv
