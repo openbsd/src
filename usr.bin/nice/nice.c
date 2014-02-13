@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.12 2013/11/20 20:52:12 deraadt Exp $	*/
+/*	$OpenBSD: nice.c,v 1.13 2014/02/13 20:43:29 tedu Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +71,8 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-	argc -= optind; argv += optind;
+	argc -= optind;
+	argv += optind;
 
 	if (argc == 0)
 		usage();
