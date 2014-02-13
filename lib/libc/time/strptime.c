@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.15 2012/01/16 17:42:45 millert Exp $ */
+/*	$OpenBSD: strptime.c,v 1.16 2014/02/13 23:16:03 millert Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 
 /*-
@@ -594,7 +594,7 @@ literal:
 		const int year = tm->tm_year + TM_YEAR_BASE;
 		const int *mon_lens = mon_lengths[isleap(year)];
 		if (!(fields & FIELD_TM_YDAY) &&
-		    (fields & (FIELD_TM_MON|FIELD_TM_MDAY))) {
+		    (fields & FIELD_TM_MON) && (fields & FIELD_TM_MDAY)) {
 			tm->tm_yday = tm->tm_mday - 1;
 			for (i = 0; i < tm->tm_mon; i++)
 				tm->tm_yday += mon_lens[i];
