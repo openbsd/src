@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.47 2014/01/23 04:11:46 tedu Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.48 2014/02/13 13:10:34 mpi Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1586,7 +1586,6 @@ linux_ioctl_socket(p, v, retval)
 		struct linux_ifreq *ifr = (struct linux_ifreq *)SCARG(uap, data);
 		struct sockaddr_dl *sdl;
 		struct ifnet *ifp;
-		struct ifaddr *ifa;
 
 		/* 
 		 * Note that we don't actually respect the name in the ifreq
@@ -1595,16 +1594,14 @@ linux_ioctl_socket(p, v, retval)
 		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if (ifp->if_type != IFT_ETHER)
 				continue;
-			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-				    (sdl->sdl_family == AF_LINK) &&
-				    (sdl->sdl_type == IFT_ETHER)) {
-					error = copyout(LLADDR(sdl),
-					    (caddr_t)&ifr->ifr_hwaddr.sa_data,
-					    LINUX_IFHWADDRLEN);
-					dosys = 0;
-					goto out;
-				}
+			if ((sdl = ifp->if_sadl) &&
+			    (sdl->sdl_family == AF_LINK) &&
+			    (sdl->sdl_type == IFT_ETHER)) {
+				error = copyout(LLADDR(sdl),
+				    &ifr->ifr_hwaddr.sa_data,
+				    LINUX_IFHWADDRLEN);
+				dosys = 0;
+				goto out;
 			}
 		}
 		error = ENOENT;
