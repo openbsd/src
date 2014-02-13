@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.63 2014/02/09 20:45:56 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.64 2014/02/13 00:24:13 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -692,7 +692,7 @@ flush_unpriv_ibuf(const char *who)
 	while (unpriv_ibuf->w.queued) {
 		if (msgbuf_write(&unpriv_ibuf->w) <= 0) {
 			if (errno == EAGAIN)
-				continue;
+				break;
 			if (quit == 0)
 				quit = INTERNALSIG;
 			if (errno != EPIPE && errno != 0)
