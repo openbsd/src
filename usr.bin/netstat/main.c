@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.99 2014/01/10 04:54:35 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.100 2014/02/13 20:51:21 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			repeatcount = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "count is %s", errstr);
 			break;
 		case 'd':
 			dflag = 1;
@@ -289,7 +291,9 @@ main(int argc, char *argv[])
 			interface = optarg;
 			break;
 		case 'w':
-			interval = atoi(optarg);
+			interval = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "interval is %s", errstr);
 			iflag = 1;
 			break;
 		case '?':
@@ -314,9 +318,9 @@ main(int argc, char *argv[])
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
 		if (isdigit((unsigned char)**argv)) {
-			interval = atoi(*argv);
-			if (interval <= 0)
-				usage();
+			interval = strtonum(*argv, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "interval is %s", errstr);
 			++argv;
 			iflag = 1;
 		}
