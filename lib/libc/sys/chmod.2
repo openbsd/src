@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.2,v 1.24 2014/01/11 19:23:39 espie Exp $
+.\"	$OpenBSD: chmod.2,v 1.25 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: chmod.2,v 1.7 1995/02/27 12:32:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chmod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 11 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt CHMOD 2
 .Os
 .Sh NAME
@@ -59,12 +59,10 @@ to
 verifies that the process owner (user) either owns the specified file
 or is the superuser.
 .Pp
-Values for
+The
 .Fa mode
-are constructed by bitwise-inclusive
-.Tn OR Ns ing
-permission bit masks from the following list defined in
-.In sys/stat.h :
+argument is the bitwise OR of zero or more of the permission bit masks
+from the following list:
 .Bd -literal -offset indent
 #define S_IRWXU 0000700    /* RWX mask for owner */
 #define S_IRUSR 0000400    /* R for owner */
@@ -135,12 +133,9 @@ If
 is also zero, the behavior is identical to a call to
 .Fn chmod .
 .Pp
-Values for
+The
 .Fa flag
-are constructed by bitwise-inclusive
-.Tn OR Ns ing
-flags from the following list defined in
-.In fcntl.h :
+argument is the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
 .It Dv AT_SYMLINK_NOFOLLOW

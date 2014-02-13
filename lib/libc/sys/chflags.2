@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.22 2009/08/20 18:32:58 martynas Exp $
+.\"	$OpenBSD: chflags.2,v 1.23 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)chflags.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: August 20 2009 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt CHFLAGS 2
 .Os
 .Sh NAME
@@ -52,9 +52,7 @@ or referenced by the descriptor
 has its flags changed to
 .Fa flags .
 .Pp
-The flags specified are formed by
-.Tn OR Ns 'ing
-the following values:
+The flags are the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width "SF_IMMUTABLE" -compact -offset indent
 .It Dv UF_NODUMP

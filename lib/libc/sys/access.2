@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.22 2013/04/01 20:16:31 guenther Exp $
+.\"	$OpenBSD: access.2,v 1.23 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: April 1 2013 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt ACCESS 2
 .Os
 .Sh NAME
@@ -52,11 +52,10 @@ function checks the accessibility of the file named by
 .Fa path
 for the access permissions indicated by
 .Fa amode .
-The value of
+The
 .Fa amode
-is the bitwise inclusive
-.Tn OR
-of the access permissions to be checked
+argument is either the bitwise OR of one or more of the access permissions
+to be checked
 .Pf ( Dv R_OK
 for read permission,
 .Dv W_OK
@@ -115,12 +114,9 @@ If
 is also zero, the behavior is identical to a call to
 .Fn access .
 .Pp
-Values for
+The
 .Fa flag
-are constructed by bitwise-inclusive
-.Tn OR Ns ing
-flags from the following list defined in
-.In fcntl.h :
+argument is the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width AT_EACCESS -offset indent -compact
 .It Dv AT_EACCESS

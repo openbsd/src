@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.39 2014/01/22 22:54:14 guenther Exp $
+.\"	$OpenBSD: recv.2,v 1.40 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -114,9 +114,7 @@ system calls may be used to determine when more data arrive.
 .Pp
 The
 .Fa flags
-argument is the bitwise
-.Tn OR
-of zero or more of the following values:
+argument is the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width "MSG_DONTWAITXX" -offset indent -compact
 .It Dv MSG_OOB

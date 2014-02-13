@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.21 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: msync.2,v 1.22 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -69,9 +69,7 @@ are unpredictable except after an
 .Pp
 The
 .Fa flags
-argument is formed by
-.Tn OR Ns 'ing
-the following values:
+argument is the bitwise OR of zero or more of the following values:
 .Bd -literal -offset indent
 MS_ASYNC	Perform asynchronous writes.
 MS_SYNC		Perform synchronous writes.

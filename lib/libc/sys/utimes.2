@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.20 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: utimes.2,v 1.21 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -126,12 +126,9 @@ in the
 .Fa fd
 parameter, the current working directory is used.
 .Pp
-Values for
+The
 .Fa flag
-are constructed by bitwise-inclusive
-.Tn OR Ns ing
-flags from the following list defined in
-.In fcntl.h :
+argument is the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
 .It Dv AT_SYMLINK_NOFOLLOW

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.109 2013/11/24 12:36:13 espie Exp $
+.\"	$OpenBSD: make.1,v 1.110 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: November 24 2013 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1113,9 +1113,7 @@ may be any one of the following:
 .It Cm ||
 logical OR
 .It Cm \&&&
-Logical
-.Tn AND ;
-of higher precedence than
+Logical AND; of higher precedence than
 .Cm || .
 .El
 .Pp

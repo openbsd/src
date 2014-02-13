@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.63 2014/01/09 03:13:24 guenther Exp $
+.\"	$OpenBSD: pax.1,v 1.64 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 9 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -592,9 +592,7 @@ operands.
 If any intermediate directories are needed in order to extract an archive
 member, these directories will be created as if
 .Xr mkdir 2
-was called with the bitwise inclusive
-.Tn OR
-of
+was called with the bitwise OR of
 .Dv S_IRWXU , S_IRWXG ,
 and
 .Dv S_IRWXO

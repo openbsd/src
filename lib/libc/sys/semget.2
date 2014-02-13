@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semget.2,v 1.17 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: semget.2,v 1.18 2014/02/13 07:30:39 guenther Exp $
 .\"	$NetBSD: semget.2,v 1.2 1997/03/27 08:20:41 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt SEMGET 2
 .Os
 .Sh NAME
@@ -63,9 +63,7 @@ bit is set in
 .Pp
 The access modes of the created semaphores is specified in
 .Fa semflg
-by
-.Tn OR Ns 'ing
-the following values:
+as a bitwise OR of zero or more of the following values:
 .Bd -literal -offset indent
 SEM_A        alter permission for owner
 SEM_R        read permission for owner
