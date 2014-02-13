@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_setbits_int.9,v 1.2 2014/02/13 12:03:47 dlg Exp $
+.\" $OpenBSD: atomic_setbits_int.9,v 1.3 2014/02/13 14:25:21 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -58,12 +58,12 @@ and
 .Fn atomic_clearbits_int
 can be called during autoconf, from process context, or from interrupt context.
 .Sh SEE ALSO
-.Xr atomic_add 9 ,
-.Xr atomic_cas 9 ,
-.Xr atomic_dec 9 ,
-.Xr atomic_inc 9 ,
-.Xr atomic_sub 9 ,
-.Xr atomic_swap 9
+.Xr atomic_add_int 9 ,
+.Xr atomic_cas_uint 9 ,
+.Xr atomic_dec_int 9 ,
+.Xr atomic_inc_int 9 ,
+.Xr atomic_sub_int 9 ,
+.Xr atomic_swap_uint 9
 .Sh HISTORY
 The
 .Nm
