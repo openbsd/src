@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.28 2012/08/14 01:08:19 dlg Exp $
+.\"	$OpenBSD: isp.4,v 1.29 2014/02/13 08:55:40 tedu Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: August 14 2012 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt ISP 4
 .Os
 .Sh NAME
@@ -60,13 +60,10 @@ and Ultra2 LVD (for the ISP1080) and Ultra3 LVD (for the ISP12160)
 and the FCP SCSI (private loop, public loop or fabric) for Fibre Channel.
 Command tagging is supported for all (in fact, Fibre Channel requires tagging).
 .Sh CONFIGURATION
-Adding
-.Tn option ISP_COMPILE_FW
-to the kernel configuration file ensures that known good firmware
+Unless the
+.Tn option ISP_NOFIRMWARE
+is added to the kernel configuration file, known good firmware
 will be downloaded to the driver at attach time.
-This is the default setting on sparc, sparc64 and macppc platforms,
-and is also recommended on platforms where the card's bios may not be
-initialized upon power-up.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
