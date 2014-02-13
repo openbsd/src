@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.138 2014/02/12 13:01:50 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.139 2014/02/13 22:01:50 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -446,11 +446,10 @@ route_output(struct mbuf *m, ...)
 	struct ifaddr		*ifa = NULL;
 	struct socket		*so;
 	struct rawcb		*rp = NULL;
-	struct sockaddr_rtlabel	 sa_rt;
+	struct sockaddr_rtlabel	 sa_rl;
 #ifdef MPLS
 	struct sockaddr_mpls	 sa_mpls, *psa_mpls;
 #endif
-	const char		*label;
 	va_list			 ap;
 	u_int			 tableid;
 	u_int8_t		 prio;
@@ -686,17 +685,8 @@ report:
 			info.rti_info[RTAX_DST] = rt_key(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-
-			if (rt->rt_labelid) {
-				bzero(&sa_rt, sizeof(sa_rt));
-				sa_rt.sr_len = sizeof(sa_rt);
-				label = rtlabel_id2name(rt->rt_labelid);
-				if (label != NULL)
-					strlcpy(sa_rt.sr_label, label,
-					    sizeof(sa_rt.sr_label));
-				info.rti_info[RTAX_LABEL] =
-				    (struct sockaddr *)&sa_rt;
-			}
+			info.rti_info[RTAX_LABEL] =
+			    rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 #ifdef MPLS
 			if (rt->rt_flags & RTF_MPLS) {
 				bzero(&sa_mpls, sizeof(sa_mpls));
@@ -1256,8 +1246,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 #ifdef MPLS
 	struct sockaddr_mpls	 sa_mpls;
 #endif
-	struct sockaddr_rtlabel	 sa_rt;
-	const char		*label;
+	struct sockaddr_rtlabel	 sa_rl;
 
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
@@ -1272,17 +1261,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
 	}
-	if (rt->rt_labelid) {
-		bzero(&sa_rt, sizeof(sa_rt));
-		sa_rt.sr_len = sizeof(sa_rt);
-		label = rtlabel_id2name(rt->rt_labelid);
-		if (label != NULL) {
-			strlcpy(sa_rt.sr_label, label,
-			    sizeof(sa_rt.sr_label));
-			info.rti_info[RTAX_LABEL] =
-			    (struct sockaddr *)&sa_rt;
-		}
-	}
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
 		bzero(&sa_mpls, sizeof(sa_mpls));
