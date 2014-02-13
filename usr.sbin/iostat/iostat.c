@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.32 2013/11/23 22:51:42 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.33 2014/02/13 08:46:36 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -205,12 +205,18 @@ header(void)
 
 	/* Main Headers. */
 	if (ISSET(todo, SHOW_TTY))
-		printf("      tty");
+		if (ISSET(todo, SHOW_TOTALS))
+			printf("            tty");
+		else
+			printf("      tty");
 
 	if (ISSET(todo, SHOW_STATS_1))
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
-				printf(" %16.16s ", cur.dk_name[i]);
+				if (ISSET(todo, SHOW_TOTALS))
+					printf(" %18.18s ", cur.dk_name[i]);
+				else
+					printf(" %16.16s ", cur.dk_name[i]);
 	if (ISSET(todo, SHOW_STATS_2))
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i])
@@ -222,13 +228,16 @@ header(void)
 
 	/* Sub-Headers. */
 	if (ISSET(todo, SHOW_TTY))
-		printf(" tin tout");
+		if (ISSET(todo, SHOW_TOTALS))
+			printf("   tin     tout");
+		else
+			printf(" tin tout");
 
 	if (ISSET(todo, SHOW_STATS_1))
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i]) {
 				if (ISSET(todo, SHOW_TOTALS))
-					printf("  KB/t xfr MB   ");
+					printf("  KB/t   xfr     MB ");
 				else
 					printf("  KB/t  t/s  MB/s ");
 			}
@@ -262,7 +271,10 @@ disk_stats(double etime)
 		printf(" %5.2f", mbps);
 
 		/* average transfers per second. */
-		printf(" %4.0f", (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
+		if (ISSET(todo, SHOW_TOTALS))
+			printf(" %5.0f", (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
+		else
+			printf(" %4.0f", (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 		/* time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
@@ -274,7 +286,10 @@ disk_stats(double etime)
 			    (double)(1024 * 1024);
 		else
 			mbps = 0;
-		printf(" %5.2f ", mbps / etime);
+		if (ISSET(todo, SHOW_TOTALS))
+			printf(" %6.2f ", mbps / etime);
+		else
+			printf(" %5.2f ", mbps / etime);
 	}
 }
 
@@ -347,7 +362,12 @@ display(void)
 		etime = 1.0;
 
 	if (ISSET(todo, SHOW_TTY))
-		printf("%4.0f %4.0f", cur.tk_nin / etime, cur.tk_nout / etime);
+		if (ISSET(todo, SHOW_TOTALS))
+			printf("%6.0f %8.0f", cur.tk_nin / etime,
+			    cur.tk_nout / etime);
+		else
+			printf("%4.0f %4.0f", cur.tk_nin / etime,
+			    cur.tk_nout / etime);
 
 	if (ISSET(todo, SHOW_STATS_1))
 		disk_stats(etime);
