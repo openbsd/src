@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.34 2014/02/13 12:32:49 dlg Exp $
+.\"	$OpenBSD: timeout.9,v 1.35 2014/02/13 12:38:20 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -131,9 +131,6 @@ and may not be used in calls to
 .Fn timeout_set
 until it has timed out or been removed with
 .Fn timeout_del .
-If the timeout was not already scheduled by a previous call to
-.Fn timeout_add
-it will return 1, otherwise 0.
 If the timeout in the
 .Fa to
 argument is already scheduled, the old execution time will be
@@ -145,9 +142,6 @@ will cancel the timeout in the argument
 .Fa to .
 If the timeout has already executed or has never been added
 the call will have no effect.
-If the timeout was actually removed by
-.Fn timeout_del
-it will return 1, otherwise 0.
 .Pp
 The
 .Fn timeout_pending
@@ -197,6 +191,24 @@ can be called during autoconf, from process context, or from interrupt context.
 .Fn timeout_triggered
 can be called during autoconf, from process context, or from any interrupt context at or below
 .Dv IPL_CLOCK .
+.Sh RETURN VALUES
+.Fn timeout_add ,
+.Fn timeout_add_sec ,
+.Fn timeout_add_msec ,
+.Fn timeout_add_nsec ,
+.Fn timeout_add_usec ,
+.Fn timeout_add_tv ,
+.Fn timeout_add_ts ,
+and
+.Fn timeout_add_bt
+will return 1 if the timeout
+.Fa to
+was added to the timeout schedule or 0 if it was already queued.
+.Pp
+.Fn timeout_del
+will return 1 if the timeout
+.Fa to
+was removed from the pending timeout schedule or 0 if it was not currently queued.
 .Sh CODE REFERENCES
 These functions are implemented in the file
 .Pa sys/kern/kern_timeout.c .
