@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.51 2014/02/13 21:07:42 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.52 2014/02/13 21:17:13 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/uio.h>
-#include <sys/namei.h>
 #include <sys/sysctl.h>
 
 #include <uvm/uvm.h>
@@ -76,7 +75,6 @@
 #define PRINT_VM_MAP		0x00000002
 #define PRINT_VM_MAP_HEADER	0x00000004
 #define PRINT_VM_MAP_ENTRY	0x00000008
-#define DUMP_NAMEI_CACHE	0x00000010
 
 struct cache_entry {
 	LIST_ENTRY(cache_entry) ce_next;
@@ -125,7 +123,6 @@ struct kbit {
 		struct vnode vnode;
 		struct uvm_object uvm_object;
 		struct mount mount;
-		struct namecache namecache;
 		struct inode inode;
 		struct iso_node iso_node;
 		struct uvm_device uvm_device;
