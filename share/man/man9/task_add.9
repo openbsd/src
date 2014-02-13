@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.9 2014/02/13 11:44:12 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.10 2014/02/13 11:56:44 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -111,10 +111,6 @@ on the
 taskq.
 The task structure must already be initialised by
 .Fn task_set .
-.Fn task_add
-will return 1 if
-.Fa t
-was added to the taskq or 0 if it was already on the taskq.
 .Pp
 .Fn task_del
 will remove the task structure
@@ -128,7 +124,6 @@ Calling
 against a different taskq than the one given in a previous call to
 .Fn task_add
 is an error and will lead to undefined behaviour.
-If the work was actually removed from the taskq it will return 1, otherwise 0.
 .Pp
 The kernel provides a system taskq
 .Va systq
@@ -158,7 +153,25 @@ can be called during autoconf, or from process context.
 and
 .Fn task_del
 can be called during autoconf, from process context, or from interrupt context.
-.Sh SEE ALSO
+.Sh RETURN VALUES
+.Fn taskq_create
+returns a pointer to a taskq structure on success or
+.Dv NULL
+on failure.
+.Pp
+.Fn task_add
+will return 1 if the task
+.Fa t
+was added to the taskq
+.Fa tq
+or 0 if the task was already queued.
+.Pp
+.Fn task_del
+will return 1 if the task
+.Fa t
+was removed from the taskq
+.Fa tq
+or 0 if the task was not already on the queue.
 .Xr autoconf 9 ,
 .Xr spl 9
 .Sh HISTORY
