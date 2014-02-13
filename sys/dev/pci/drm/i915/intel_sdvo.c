@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.13 2014/01/22 05:16:55 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.14 2014/02/13 03:49:00 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -1771,7 +1771,7 @@ static void intel_sdvo_get_lvds_modes(struct drm_connector *connector)
 	 * Assume that the preferred modes are
 	 * arranged in priority order.
 	 */
-	intel_ddc_get_modes(connector, intel_sdvo->i2c);
+	intel_ddc_get_modes(connector, &intel_sdvo->ddc);
 	if (list_empty(&connector->probed_modes) == false)
 		goto end;
 
