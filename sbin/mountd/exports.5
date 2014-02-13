@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.18 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: exports.5,v 1.19 2014/02/13 10:20:13 schwarze Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)exports.5	8.3 (Berkeley) 3/29/95
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt EXPORTS 5
 .Os
 .Sh NAME
@@ -90,16 +90,18 @@ user credentials on the server.
 Export options are specified as follows:
 .Pp
 .Sm off
-.Fl maproot No = Sy user
+.Fl maproot No = Ar user
 .Sm on
 The credential of the specified user is used for remote access by root.
 The credential includes all the groups to which the user is a member
 on the local machine (see
 .Xr id 1 ) .
-The user may be specified by name or number.
+The
+.Ar user
+may be specified by name or number.
 .Pp
 .Sm off
-.Fl maproot No = Sy user:group1:group2:...
+.Fl maproot No = Ar user:group1:group2:...
 .Sm on
 The colon separated list is used to specify the precise credential
 to be used for remote access by root.
@@ -108,11 +110,11 @@ Note that user: should be used to distinguish a credential containing
 no groups from a complete credential for that user.
 .Pp
 .Sm off
-.Fl mapall No = Sy user
+.Fl mapall No = Ar user
 .Sm on
 or
 .Sm off
-.Fl mapall No = Sy user:group1:group2:...
+.Fl mapall No = Ar user:group1:group2:...
 .Sm on
 Specifies a mapping for all client UIDs (including root)
 using the same semantics as
@@ -177,11 +179,11 @@ Using the full domain specification for a hostname can normally
 circumvent the problem of a host that has the same name as a netgroup.
 The third case is specified by the flag
 .Sm off
-.Fl network No = Sy netname
+.Fl network No = Ar netname
 .Sm on
 and optionally
 .Sm off
-.Fl mask No = Sy netmask .
+.Fl mask No = Ar netmask .
 .Sm on
 If the mask is not specified, it will default to the mask for that network
 class (A, B or C; see
