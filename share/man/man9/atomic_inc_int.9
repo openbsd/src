@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_inc_int.9,v 1.4 2014/02/04 21:26:21 dlg Exp $
+.\" $OpenBSD: atomic_inc_int.9,v 1.5 2014/02/13 12:03:47 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt ATOMIC_INC_INT 9
 .Os
 .Sh NAME
@@ -42,6 +42,13 @@ to interrupts and multiple processors in the system.
 The value referenced by the pointer
 .Fa p
 is incremented by 1.
+.Sh CONTEXT
+.Fn atomic_inc_int ,
+.Fn atomic_inc_int_nv ,
+.Fn atomic_inc_long ,
+and
+.Fn atomic_inc_long_nv
+can all be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Nm atomic_inc_int
 and
