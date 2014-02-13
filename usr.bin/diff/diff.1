@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.42 2013/07/16 06:52:05 jmc Exp $
+.\" $OpenBSD: diff.1,v 1.43 2014/02/13 14:52:53 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)diff.1	8.1 (Berkeley) 6/30/93
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: February 13 2014 $
 .Dt DIFF 1
 .Os
 .Sh NAME
@@ -461,7 +461,7 @@ utility exits with one of the following values:
 No differences were found.
 .It 1
 Differences were found.
-.It \*(Gt1
+.It >1
 An error occurred.
 .El
 .Sh SEE ALSO
@@ -487,7 +487,10 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl aDdIiLlNnPpqSsTtwXx
+.Op Fl aDdIiLlNnPpqSsTtwXx ,
+as well as the
+.Ev TMPDIR
+environment variable,
 are extensions to that specification.
 .Sh HISTORY
 A
