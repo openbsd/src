@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.50 2013/08/12 05:41:01 otto Exp $ */
+/*	$OpenBSD: procmap.c,v 1.51 2014/02/13 21:07:42 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -197,6 +197,7 @@ RB_GENERATE(uvm_map_addr, vm_map_entry, daddrs.addr_entry, no_impl);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	char errbuf[_POSIX2_LINE_MAX], *kmem = NULL, *kernel = NULL;
 	struct kinfo_proc *kproc;
 	struct sum total_sum;
@@ -217,7 +218,9 @@ main(int argc, char *argv[])
 			print_ddb = 1;
 			break;
 		case 'D':
-			debug = atoi(optarg);
+			debug = strtonum(optarg, 0, 0xf, &errstr);
+			if (errstr)
+				errx(1, "invalid debug mask");
 			break;
 		case 'l':
 			print_maps = 1;
