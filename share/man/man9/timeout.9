@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.35 2014/02/13 12:38:20 dlg Exp $
+.\"	$OpenBSD: timeout.9,v 1.36 2014/02/13 12:40:02 dlg Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -175,7 +175,8 @@ Those functions add a timeout whilst converting the time specified
 by the respective types.
 .Sh CONTEXT
 .Fn timeout_set
-can be called during autoconf, from process context, or from interrupt context.
+can be called during autoconf, from process context, or from interrupt
+context.
 .Pp
 .Fn timeout_add ,
 .Fn timeout_add_sec ,
@@ -189,7 +190,8 @@ can be called during autoconf, from process context, or from interrupt context.
 .Fn timeout_pending ,
 .Fn timeout_initialized ,
 .Fn timeout_triggered
-can be called during autoconf, from process context, or from any interrupt context at or below
+can be called during autoconf, from process context, or from any
+interrupt context at or below
 .Dv IPL_CLOCK .
 .Sh RETURN VALUES
 .Fn timeout_add ,
@@ -208,7 +210,8 @@ was added to the timeout schedule or 0 if it was already queued.
 .Fn timeout_del
 will return 1 if the timeout
 .Fa to
-was removed from the pending timeout schedule or 0 if it was not currently queued.
+was removed from the pending timeout schedule or 0 if it was not
+currently queued.
 .Sh CODE REFERENCES
 These functions are implemented in the file
 .Pa sys/kern/kern_timeout.c .
