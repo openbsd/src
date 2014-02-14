@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.19 2014/02/10 22:41:27 jmatthew Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.20 2014/02/14 14:00:08 jmatthew Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 /*
  * SBus specific probe and attach routines for QLogic ISP SCSI adapters.
@@ -706,9 +706,6 @@ mbxsync:
 		/* FALLTHROUGH */
 	case RQSTYPE_A64:
 		isp_put_request_t3(isp, (ispreqt3_t *) rq, (ispreqt3_t *) qep);
-		break;
-	case RQSTYPE_T7RQS:
-		isp_put_request_t7(isp, (ispreqt7_t *) rq, (ispreqt7_t *) qep);
 		break;
 	}
 	*nxtip = nxti;
