@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.20 2014/02/12 11:54:28 schwarze Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.21 2014/02/14 12:18:27 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_macppc.8
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt BOOT_MACPPC 8 macppc
 .Os
 .Sh NAME
@@ -61,11 +61,10 @@ variable is empty, the
 bootloader will look for a kernel named
 .Pa bsd ,
 unless a different filename has been specified in the boot command.
-To reset this variable to its default, empty, value, type the following:
+To reset this variable to its default, empty, value, type the following
+at the Open Firmware prompt:
 .Pp
-.Em \	ok
-set-default
-.Em boot-device
+.Dl set-default boot-device
 .Pp
 The
 .Ox
