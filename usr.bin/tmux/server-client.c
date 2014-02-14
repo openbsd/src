@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.116 2014/02/14 13:59:01 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.117 2014/02/14 14:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -280,7 +280,7 @@ server_client_status_timer(void)
 		interval = options_get_number(&s->options, "status-interval");
 
 		difference = tv.tv_sec - c->status_timer.tv_sec;
-		if (difference >= interval) {
+		if (interval != 0 && difference >= interval) {
 			status_update_jobs(c);
 			c->flags |= CLIENT_STATUS;
 		}
