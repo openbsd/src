@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.124 2014/02/11 10:36:13 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.125 2014/02/14 14:13:19 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 11 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -791,14 +791,3 @@ Initial design.
 .It "Marc Espie"
 Complete rewrite.
 .El
-.Sh CAVEATS
-Package extraction does need a temporary area that
-can hold executable scripts.
-.Pp
-If
-.Pa /var/tmp
-is mounted noexec, you must currently set
-.Ev PKG_TMPDIR
-to a suitable area, as
-.Nm
-will refuse to install any package that contains executable scripts.
