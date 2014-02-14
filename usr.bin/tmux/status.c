@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.109 2014/02/14 12:37:54 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.110 2014/02/14 13:59:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -690,7 +690,7 @@ status_message_set(struct client *c, const char *fmt, ...)
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
-	if (event_initialized (&c->message_timer))
+	if (event_initialized(&c->message_timer))
 		evtimer_del(&c->message_timer);
 	evtimer_set(&c->message_timer, status_message_callback, c);
 	evtimer_add(&c->message_timer, &tv);

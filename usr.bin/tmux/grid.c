@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.34 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.35 2014/02/14 13:59:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -749,7 +749,7 @@ grid_reflow_split(struct grid *dst, u_int *py, struct grid_line *src_gl,
 		dst_gl->flags |= GRID_LINE_WRAPPED;
 
 		/* Copy the data. */
-		memcpy (&dst_gl->celldata[0], &src_gl->celldata[offset],
+		memcpy(&dst_gl->celldata[0], &src_gl->celldata[offset],
 		    to_copy * sizeof dst_gl->celldata[0]);
 
 		/* Move offset and reduce old line size. */

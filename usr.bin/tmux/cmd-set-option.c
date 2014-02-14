@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.64 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.65 2014/02/14 13:59:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -172,7 +172,7 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	/* Start or stop timers when automatic-rename changed. */
-	if (strcmp (oe->name, "automatic-rename") == 0) {
+	if (strcmp(oe->name, "automatic-rename") == 0) {
 		for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
 			if ((w = ARRAY_ITEM(&windows, i)) == NULL)
 				continue;

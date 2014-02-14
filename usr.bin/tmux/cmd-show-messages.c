@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.8 2014/01/22 14:43:42 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.9 2014/02/14 13:59:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,12 +49,12 @@ const struct cmd_entry cmd_server_info_entry = {
 	cmd_show_messages_exec
 };
 
-void	cmd_show_messages_server (struct cmd_q *);
-void	cmd_show_messages_terminals (struct cmd_q *);
-void	cmd_show_messages_jobs (struct cmd_q *);
+void	cmd_show_messages_server(struct cmd_q *);
+void	cmd_show_messages_terminals(struct cmd_q *);
+void	cmd_show_messages_jobs(struct cmd_q *);
 
 void
-cmd_show_messages_server (struct cmd_q *cmdq)
+cmd_show_messages_server(struct cmd_q *cmdq)
 {
 	char	*tim;
 
@@ -68,7 +68,7 @@ cmd_show_messages_server (struct cmd_q *cmdq)
 }
 
 void
-cmd_show_messages_terminals (struct cmd_q *cmdq)
+cmd_show_messages_terminals(struct cmd_q *cmdq)
 {
 	struct tty_term				*term;
 	const struct tty_term_code_entry	*ent;
@@ -111,7 +111,7 @@ cmd_show_messages_terminals (struct cmd_q *cmdq)
 }
 
 void
-cmd_show_messages_jobs (struct cmd_q *cmdq)
+cmd_show_messages_jobs(struct cmd_q *cmdq)
 {
 	struct job	*job;
 	u_int		 n;
@@ -136,20 +136,20 @@ cmd_show_messages_exec(struct cmd *self, struct cmd_q *cmdq)
 	int			 done;
 
 	done = 0;
-	if (args_has (args, 'I') || self->entry == &cmd_server_info_entry) {
-		cmd_show_messages_server (cmdq);
+	if (args_has(args, 'I') || self->entry == &cmd_server_info_entry) {
+		cmd_show_messages_server(cmdq);
 		done = 1;
 	}
-	if (args_has (args, 'T') || self->entry == &cmd_server_info_entry) {
+	if (args_has(args, 'T') || self->entry == &cmd_server_info_entry) {
 		if (done)
-			cmdq_print (cmdq, "%s", "");
-		cmd_show_messages_terminals (cmdq);
+			cmdq_print(cmdq, "%s", "");
+		cmd_show_messages_terminals(cmdq);
 		done = 1;
 	}
-	if (args_has (args, 'J') || self->entry == &cmd_server_info_entry) {
+	if (args_has(args, 'J') || self->entry == &cmd_server_info_entry) {
 		if (done)
-			cmdq_print (cmdq, "%s", "");
-		cmd_show_messages_jobs (cmdq);
+			cmdq_print(cmdq, "%s", "");
+		cmd_show_messages_jobs(cmdq);
 		done = 1;
 	}
 	if (done)
