@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.26 2013/07/16 16:05:49 schwarze Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.27 2014/02/14 14:48:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt CPU 4 hppa
 .Os
 .Sh NAME
@@ -36,119 +36,99 @@
 The following table lists the
 .Tn PA-RISC
 CPU types and their characteristics, such as TLB, maximum
-cache sizes (where * character means on-chip) and
+cache sizes (where the
+.Sq *
+character means on-chip) and
 .Tn HP 9000/700
 machines they were used in (see also
 .Xr intro 4
 for the reverse list).
-.Pp
-.in +\n(dIu
-.TS
-tab (:) ;
-l l l l l l l
-l l l l l l l
-_ _ _ _ _ _ _
-l l l l l l l .
-CPU:PA:Clock  :Caches:TLB:BAT:Models
-   :  :MHz max:KB max:   :   :
-7000:1.1a:66 : 256 L1I:96I:4I:705,710,720
-    :    :   : 256 L1D:96D:4D:730,750
-7100:1.1b:100:1024 L1I:120:16:715/33/50/75
-    :    :   :2048 L1D:   :  :725/50/75
-    :    :   :        :   :  :{735,755}/100
-    :    :   :        :   :  :742i, 745i, 747i
-7150:1.1b:125:1024 L1I:120:16:{735,755}/125
-    :    :   :2048 L1D:   :  :
-7100LC:1.1c:100:   1 L1I*:64:8:712/60/80/100
-      :    :   :1024 L2I:  : :715/64/80/100
-      :    :   :1024 L2D:  : :715/100XC
-      :    :   :        :  : :725/64/100
-      :    :   :        :  : :743i, 748i
-      :    :   :        :  : :SAIC
-7200:1.1d:140:   2 L1*:120:16:C100,C110
-    :    :   :1024 L2I:   :  :J200,J210
-    :    :   :1024 L2D:   :  :
-7300LC:1.1e:180:  64 L1I*:96:8:A180,A180C
-       :    :  :  64 L1D*:  : :B132,B160,B180
-       :    :  :8192 L2:  : :C132L,C160L
-       :    :  :       :  : :744, 745, 748
-       :    :  :       :  : :RDI PrecisionBook
-8000:2.0:180:1024 L1I:96:  :C160, C180
-    :   :   :1024 L1D:  :  :J280, J282
-8200:2.0:300:2048 L1I:120:  :C200, C240
-    :   :   :2048 L1D:   :  :J2240
-8500:2.0:440: 512 L1I*:160:  :A400,A500,C360
-    :   :   :1024 L1D*:   :  :B1000,B2000,C3000
-    :   :   :         :   :  :J5000,J7000
-8600:2.0:550: 512 L1I*:160:  :A400,A500,C3600
-    :   :   :1024 L1D*:   :  :B2000,B2600
-    :   :   :         :   :  :J5600,J6000,J7600
-8700:2.0:875: 768 L1I*:240:  :A400,A500,J6700
-    :   :   :1536 L1D*:   :  :C3650,C3700,C3750
-.TE
-.in -\n(dIu
+.Bl -column "7100LC" "1.1e" "MHz max" "2048 L1D*" "TLB" "BAT" "C3650, C3700, C3750"
+.It Sy CPU Ta Sy PA Ta Sy Clock Ta Sy Caches Ta Sy TLB Ta Sy BAT Ta Sy Models
+.It Ta Ta MHz max Ta KB max Ta Ta Ta ""
+.It 7000 Ta 1.1a Ta 66 Ta 256 L1I Ta 96I Ta 4I Ta 705, 710, 720
+.It Ta Ta Ta 256 L1D Ta 96D Ta 4D Ta 730, 750
+.It 7100 Ta 1.1b Ta 100 Ta 1024 L1I Ta 120 Ta 16 Ta 715/33/50/75
+.It Ta Ta Ta 2048 L1D Ta Ta Ta 725/50/75
+.It Ta Ta Ta Ta Ta Ta {735,755}/100
+.It Ta Ta Ta Ta Ta Ta 742i, 745i, 747i
+.It 7150 Ta 1.1b Ta 125 Ta 1024 L1I Ta 120 Ta 16 Ta 735/125, 755/125
+.It Ta Ta Ta 2048 L1D Ta Ta Ta ""
+.It 7100LC Ta 1.1c Ta 100 Ta 1 L1I* Ta 64 Ta 8 Ta 712/60/80/100
+.It Ta Ta Ta 1024 L2I Ta Ta Ta 715/64/80/100
+.It Ta Ta Ta 1024 L2D Ta Ta Ta 715/100XC
+.It Ta Ta Ta Ta Ta Ta 725/64/100
+.It Ta Ta Ta Ta Ta Ta 743i, 748i
+.It Ta Ta Ta Ta Ta Ta SAIC
+.It 7200 Ta 1.1d Ta 140 Ta 2 L1* Ta 120 Ta 16 Ta C100, C110
+.It Ta Ta Ta 1024 L2I Ta Ta Ta J200, J210
+.It Ta Ta Ta 1024 L2D Ta Ta Ta ""
+.It 7300LC Ta 1.1e Ta 180 Ta 64 L1I* Ta 96 Ta 8 Ta A180, A180C
+.It Ta Ta Ta 64 L1D* Ta Ta Ta B132, B160, B180
+.It Ta Ta Ta 8192 L2 Ta Ta Ta C132L, C160L
+.It Ta Ta Ta Ta Ta Ta 744, 745, 748
+.It Ta Ta Ta Ta Ta Ta RDI PrecisionBook
+.It 8000 Ta 2.0 Ta 180 Ta 1024 L1I Ta 96 Ta Ta C160, C180
+.It Ta Ta Ta 1024 L1D Ta Ta Ta J280, J282
+.It 8200 Ta 2.0 Ta 300 Ta 2048 L1I Ta 120 Ta Ta C200, C240
+.It Ta Ta Ta 2048 L1D Ta Ta Ta J2240
+.It 8500 Ta 2.0 Ta 440 Ta 512 L1I* Ta 160 Ta Ta A400, A500, C360
+.It Ta Ta Ta 1024 L1D* Ta Ta Ta B1000, B2000, C3000
+.It Ta Ta Ta Ta Ta Ta J5000, J7000
+.It 8600 Ta 2.0 Ta 550 Ta 512 L1I* Ta 160 Ta Ta A400, A500, C3600
+.It Ta Ta Ta 1024 L1D* Ta Ta Ta B2000, B2600
+.It Ta Ta Ta Ta Ta Ta J5600, J6000, J7600
+.It 8700 Ta 2.0 Ta 875 Ta 768 L1I* Ta 240 Ta Ta A400, A500, J6700
+.It Ta Ta Ta 1536 L1D* Ta Ta Ta C3650, C3700, C3750
+.El
 .Sh FLOATING-POINT COPROCESSOR
 The following table summarizes available floating-point coprocessor
 models for the 32-bit
 .Tn PA-RISC
 processors.
-.Pp
-.in +\n(dIu
-.TS
-tab (:) nokeep ;
-l l
-_ _
-l l .
-FPU:Model
-Indigo:
-Sterling I MIU (TYCO):
-Sterling I MIU (ROC w/Weitek):
-FPC (w/Weitek):
-FPC (w/Bit):
-Timex-II:
-Rolex:725/50, 745i
-HARP-I:
-Tornado:J2x0,C1x0
-PA-50 (Hitachi):
-PCXL:712/60/80/100
-.TE
-.in -\n(dIu
+.Bl -column "Sterling I MIU (ROC w/Weitek)" "712/60/80/100"
+.It Sy FPU Ta Sy Model
+.It Indigo Ta ""
+.It Sterling I MIU (TYCO) Ta ""
+.It Sterling I MIU (ROC w/Weitek) Ta ""
+.It FPC (w/Weitek) Ta ""
+.It FPC (w/Bit) Ta ""
+.It Timex-II Ta ""
+.It Rolex Ta 725/50, 745i
+.It HARP-I Ta ""
+.It Tornado Ta J2x0,C1x0
+.It PA-50 (Hitachi) Ta ""
+.It PCXL Ta 712/60/80/100
+.El
 .Sh SUPERSCALAR EXECUTION
 The following table summarizes the superscalar execution capabilities
 of 32-bit
 .Tn PA-RISC
 processors.
-.Pp
-.in +\n(dIu
-.TS
-tab (:) nokeep ;
-l l l
-_ _ _
-l l l .
-CPU:Units:Bundles
-7100:1 integer ALU:load-store/fp
-    :1 FP         :int/fp
-    :             :branch/*
-7100LC:2 integer ALU:load-store/int
-      :1 FP	    :load-store/fp
-      :             :int/fp
-      :             :branch/*
-7200:2 integer ALU:load-store/int
-    :1 FP         :load-store/fp
-    :        :int/int
-    :        :int/fp
-    :        :branch/*
-7300LC:2 integer ALU:load-store/int
-      :1 FP         :load-store/fp
-      :        :int/fp
-      :        :branch/*
-8x00:2 integer ALU:4-way superscalar
-    :2 shift/merge:
-    :2 load/store:
-    :2 FPU mul/add:
-    :2 FPU div/sqrt:
-.TE
-.in -\n(dIu
+.Bl -column "7100LC" "2 integer ALU" "4-way superscalar"
+.It Sy CPU Ta Sy Units Ta Sy Bundles
+.It 7100 Ta 1 integer ALU Ta load-store/fp
+.It Ta 1 FP Ta int/fp
+.It Ta Ta branch/*
+.It 7100LC Ta 2 integer ALU Ta load-store/int
+.It Ta 1 FP Ta load-store/fp
+.It Ta Ta int/fp
+.It Ta Ta branch/*
+.It 7200 Ta 2 integer ALU Ta load-store/int
+.It Ta 1 FP Ta load-store/fp
+.It Ta Ta int/int
+.It Ta Ta int/fp
+.It Ta Ta branch/*
+.It 7300LC Ta 2 integer ALU Ta load-store/int
+.It Ta 1 FP Ta load-store/fp
+.It Ta Ta int/fp
+.It Ta Ta branch/*
+.It 8x00 Ta 2 integer ALU Ta 4-way superscalar
+.It Ta 2 shift/merge Ta ""
+.It Ta 2 load/store Ta ""
+.It Ta 2 FPU mul/add Ta ""
+.It Ta 2 FPU div/sqrt Ta ""
+.El
 .Pp
 In conclusion, all of the above CPUs are dual-issue, or 2-way superscalar,
 with the exception that on CPUs with two integer ALUs only one of these
@@ -158,45 +138,31 @@ superscalar execution:
 .Pp
 For the purpose of showing which instructions are allowed to proceed
 together through the pipeline, they are divided into classes:
-.Pp
-.in +\n(dIu
-.TS
-tab (:) ;
-l l
-_ _
-l l .
-Class:Description
-flop:floating point operation
-ldst:loads and stores
-flex:integer ALU
-mm:shifts, extracts and deposits
-nul:might nullify successor
-bv:BV, BE
-br:other branches
-fsys:FTEST and FP status/exception
-sys:system control instructions
-.TE
-.in -\n(dIu
+.Bl -column "fsys" "FTEST and FP status/exception"
+.It Sy Class Ta Sy Description
+.It flop Ta floating point operation
+.It ldst Ta loads and stores
+.It flex Ta integer ALU
+.It mm Ta shifts, extracts and deposits
+.It nul Ta might nullify successor
+.It bv Ta BV, BE
+.It br Ta other branches
+.It fsys Ta FTEST and FP status/exception
+.It sys Ta system control instructions
+.El
 .Pp
 For CPUs with two integer ALUs (7100LC, 7200, 7300LC), the following
 table lists the instructions which are allowed to be executed
 concurrently:
-.Pp
-.in +\n(dIu
-.TS
-tab (:) ;
-l l
-_ _
-l l .
-First:Second instruction
-flop: + ldst/flex/mm/nul/bv/br
-ldst: + flop/flex/mm/nul/br
-flex: + flop/ldst/flex/mm/nul/br/fsys
-mm: + flop/ldst/flex/fsys
-nul: + flop
-sys: never bundled
-.TE
-.in -\n(dIu
+.Bl -column "flex" "flop/ldst/flex/mm/nul/br/fsys"
+.It Sy First Ta Sy Second instruction
+.It flop Ta + ldst/flex/mm/nul/bv/br
+.It ldst Ta + flop/flex/mm/nul/br
+.It flex Ta + flop/ldst/flex/mm/nul/br/fsys
+.It mm Ta + flop/ldst/flex/fsys
+.It nul Ta + flop
+.It sys Ta never bundled
+.El
 .Pp
 ldst + ldst is also possible under certain circumstances, which is then
 called "double word load/store".
