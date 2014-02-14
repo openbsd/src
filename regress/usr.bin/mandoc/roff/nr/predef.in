@@ -1,0 +1,17 @@
+.TH NR-PREDEF 1 "February 4, 2014" OpenBSD
+.SH NAME
+nr-predef \- pre-defined read-only integer number registers
+.SH DESCRIPTION
+.nf
+.nr .A 111
+.nr .g 111
+.nr .H 111
+.nr .j 111
+.nr .T 111
+.nr .V 111
+ascii mode: \n(.A
+groff mode: \n(.g
+horizontal resolution: \n(.H
+adjustment mode: \n(.j
+output device defined: \n(.T
+vertical resolution: \n(.V

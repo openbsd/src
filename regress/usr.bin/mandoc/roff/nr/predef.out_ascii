@@ -1,0 +1,18 @@
+NR-PREDEF(1)               OpenBSD Reference Manual               NR-PREDEF(1)
+
+
+
+NNAAMMEE
+       nr-predef - pre-defined read-only integer number registers
+
+DDEESSCCRRIIPPTTIIOONN
+       ascii mode: 0
+       groff mode: 1
+       horizontal resolution: 24
+       adjustment mode: 0
+       output device defined: 1
+       vertical resolution: 40
+
+
+
+OpenBSD                        February 4, 2014                   NR-PREDEF(1)

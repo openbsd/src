@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.64 2014/01/06 23:46:01 schwarze Exp $ */
+/*	$Id: roff.c,v 1.65 2014/02/14 22:27:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -188,6 +188,7 @@ static	int		 roff_getnum(const char *, int *, int *);
 static	int		 roff_getop(const char *, int *, char *);
 static	int		 roff_getregn(const struct roff *,
 				const char *, size_t);
+static	int		 roff_getregro(const char *name);
 static	const char	*roff_getstrn(const struct roff *, 
 				const char *, size_t);
 static	enum rofferr	 roff_it(ROFF_ARGS);
@@ -1376,10 +1377,45 @@ roff_setreg(struct roff *r, const char *name, int val, char sign)
 		reg->val = val;
 }
 
+/*
+ * Handle some predefined read-only number registers.
+ * For now, return -1 if the requested register is not predefined;
+ * in case a predefined read-only register having the value -1
+ * were to turn up, another special value would have to be chosen.
+ */
+static int
+roff_getregro(const char *name)
+{
+
+	switch (*name) {
+	case ('A'):  /* ASCII approximation mode is always off. */
+		return(0);
+	case ('g'):  /* Groff compatibility mode is always on. */
+		return(1);
+	case ('H'):  /* Fixed horizontal resolution. */
+		return (24);
+	case ('j'):  /* Always adjust left margin only. */
+		return(0);
+	case ('T'):  /* Some output device is always defined. */
+		return(1);
+	case ('V'):  /* Fixed vertical resolution. */
+		return (40);
+	default:
+		return (-1);
+	}
+}
+
 int
 roff_getreg(const struct roff *r, const char *name)
 {
 	struct roffreg	*reg;
+	int		 val;
+
+	if ('.' == name[0] && '\0' != name[1] && '\0' == name[2]) {
+		val = roff_getregro(name + 1);
+		if (-1 != val)
+			return (val);
+	}
 
 	for (reg = r->regtab; reg; reg = reg->next)
 		if (0 == strcmp(name, reg->key.p))
@@ -1392,6 +1428,13 @@ static int
 roff_getregn(const struct roff *r, const char *name, size_t len)
 {
 	struct roffreg	*reg;
+	int		 val;
+
+	if ('.' == name[0] && 2 == len) {
+		val = roff_getregro(name + 1);
+		if (-1 != val)
+			return (val);
+	}
 
 	for (reg = r->regtab; reg; reg = reg->next)
 		if (len == reg->key.sz &&
