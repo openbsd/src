@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.164 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.165 2014/02/14 14:37:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1581,13 +1581,29 @@ tty_try_256(struct tty *tty, u_char colour, const char *type)
 {
 	char	s[32];
 
-	if (!(tty->term->flags & TERM_256COLOURS) &&
-	    !(tty->term_flags & TERM_256COLOURS))
-		return (-1);
+	/*
+	 * If the terminfo entry has 256 colours, assume that setaf and setab
+	 * work correctly.
+	 */
+	if (tty->term->flags & TERM_256COLOURS) {
+		if (*type == '3')
+			tty_putcode1(tty, TTYC_SETAF, colour);
+		else
+			tty_putcode1(tty, TTYC_SETAB, colour);
+		return (0);
+	}
 
-	xsnprintf(s, sizeof s, "\033[%s;5;%hhum", type, colour);
-	tty_puts(tty, s);
-	return (0);
+	/*
+	 * If the user has specified -2 to the client, setaf and setab may not
+	 * work, so send the usual sequence.
+	 */
+	if (tty->term_flags & TERM_256COLOURS) {
+		xsnprintf(s, sizeof s, "\033[%s;5;%hhum", type, colour);
+		tty_puts(tty, s);
+		return (0);
+	}
+
+	return (-1);
 }
 
 void
