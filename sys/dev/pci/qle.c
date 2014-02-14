@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.2 2014/02/14 11:38:48 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.3 2014/02/14 12:04:16 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2406,12 +2406,20 @@ qle_read_nvram(struct qle_softc *sc)
 	u_int32_t csum, tmp, v;
 	int i, base, l;
 
-	base = 0x80 + (sc->sc_port * 0x100);
+	switch (sc->sc_isp_gen) {
+	case QLE_GEN_ISP24XX:
+		base = 0x7ffe0080;
+		break;
+	case QLE_GEN_ISP25XX:
+		base = 0x7ff48080;
+		break;
+	}
+	base += sc->sc_port * 0x100;
 	
 	csum = 0;
 	for (i = 0; i < nitems(data); i++) {
 		data[i] = 0xffffffff;
-		qle_write(sc, QLE_FLASH_NVRAM_ADDR, 0x7ffe0000 | (base + i));
+		qle_write(sc, QLE_FLASH_NVRAM_ADDR, base + i);
 		for (l = 0; l < 5000; l++) {
 			delay(10);
 			tmp = qle_read(sc, QLE_FLASH_NVRAM_ADDR);
