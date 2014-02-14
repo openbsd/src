@@ -1,4 +1,4 @@
-.\"	$OpenBSD: echo.1,v 1.20 2010/09/03 09:53:20 jmc Exp $
+.\"	$OpenBSD: echo.1,v 1.21 2014/02/14 17:44:01 jmc Exp $
 .\"	$NetBSD: echo.1,v 1.7 1995/03/21 09:04:26 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)echo.1	8.1 (Berkeley) 7/22/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -52,7 +52,12 @@ characters and followed by a newline
 .Pq Sq \en
 character, to the standard
 output.
+.Pp
 When no operands are given, only the newline is written.
+The -- operand,
+which generally denotes an end to option processing,
+is treated as part of
+.Ar string .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -76,9 +81,20 @@ The flag
 .Op Fl n
 is an extension to that specification.
 .Pp
+The
+.Nm
+utility does not support any of the backslash character sequences
+mandated by the
+X/Open System Interfaces option of the
+.St -p1003.1-2008
+specification.
+.Pp
 .Nm
 also exists as a built-in to
 .Xr csh 1
 and
 .Xr ksh 1 ,
 though with a different syntax.
+.Pp
+Where portability is paramount, use
+.Xr printf 1 .
