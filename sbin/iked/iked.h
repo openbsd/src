@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.65 2014/01/24 07:31:25 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.66 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -165,6 +165,7 @@ struct iked_childsa {
 	u_int8_t			 csa_allocated;	/* from the kernel */
 	u_int8_t			 csa_persistent;/* do not rekey */
 	u_int8_t			 csa_esn;	/* use ESN */
+	u_int8_t			 csa_transport;	/* transport mode */
 
 	struct iked_spi			 csa_spi;
 
@@ -238,6 +239,7 @@ struct iked_policy {
 #define IKED_POLICY_REFCNT		 0x04
 #define IKED_POLICY_QUICK		 0x08
 #define IKED_POLICY_SKIP		 0x10
+#define IKED_POLICY_IPCOMP		 0x20
 
 	int				 pol_refcnt;
 
@@ -403,6 +405,10 @@ struct iked_sa {
 	struct iked_proposals		 sa_proposals;	/* SA proposals */
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPSec flows */
+
+	u_int8_t			 sa_ipcomp;	/* IPcomp transform */
+	u_int16_t			 sa_cpi_out;	/* IPcomp outgoing */
+	u_int16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_REKEY_TIMEOUT	 300		/* 5 minutes */

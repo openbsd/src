@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.12 2013/03/30 16:31:37 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.13 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -125,6 +125,7 @@ struct ikev2_sa_proposal {
 #define IKEV2_SAPROTO_ESP		3	/* ESP */
 #define IKEV2_SAPROTO_FC_ESP_HEADER	4	/* RFC4595 */
 #define IKEV2_SAPROTO_FC_CT_AUTH	5	/* RFC4595 */
+#define IKEV2_SAPROTO_IPCOMP		204	/* private, should be 4 */
 
 extern struct iked_constmap ikev2_saproto_map[];
 

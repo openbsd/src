@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2014/01/22 00:21:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -369,6 +369,7 @@ typedef struct {
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
+%token	IPCOMP
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -385,7 +386,7 @@ typedef struct {
 %type	<v.id>			id
 %type	<v.transforms>		transforms
 %type	<v.filters>		filters
-%type	<v.ikemode>		ikeflags ikematch ikemode
+%type	<v.ikemode>		ikeflags ikematch ikemode ipcomp
 %type	<v.ikeauth>		ikeauth
 %type	<v.ikekey>		keyspec
 %type	<v.mode>		ike_sa child_sa
@@ -752,7 +753,7 @@ ike_sa		: /* empty */	{
 			encxfs = ikeencxfs;
 		} transforms	{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
-				err(1, "child_sa: calloc");
+				err(1, "ike_sa: calloc");
 			$$->xfs = $3;
 		}
 		;
@@ -769,7 +770,7 @@ child_sa	: /* empty */	{
 		}
 		;
 
-ikeflags	: ikematch ikemode		{ $$ = $1 | $2; }
+ikeflags	: ikematch ikemode ipcomp	{ $$ = $1 | $2 | $3; }
 		;
 
 ikematch	: /* empty */			{ $$ = 0; }
@@ -781,6 +782,10 @@ ikematch	: /* empty */			{ $$ = 0; }
 ikemode		: /* empty */			{ $$ = IKED_POLICY_PASSIVE; }
 		| PASSIVE			{ $$ = IKED_POLICY_PASSIVE; }
 		| ACTIVE			{ $$ = IKED_POLICY_ACTIVE; }
+		;
+
+ipcomp		: /* empty */			{ $$ = 0; }
+		| IPCOMP			{ $$ = IKED_POLICY_IPCOMP; }
 		;
 
 ikeauth		: /* empty */			{
@@ -1077,6 +1082,7 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "inet",		INET },
 		{ "inet6",		INET6 },
+		{ "ipcomp",		IPCOMP },
 		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
 		{ "name",		NAME },

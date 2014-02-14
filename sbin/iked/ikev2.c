@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.91 2014/01/24 07:35:55 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.92 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -100,9 +100,13 @@ ssize_t	 ikev2_add_ts(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    struct iked_sa *, int);
 ssize_t	 ikev2_add_certreq(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    struct ibuf *, u_int8_t);
+ssize_t	 ikev2_add_ipcompnotify(struct iked *, struct ibuf *,
+	    struct ikev2_payload **, ssize_t, struct iked_sa *);
 ssize_t	 ikev2_add_ts_payload(struct ibuf *, u_int, struct iked_sa *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
+
+int	 ikev2_ipcomp_enable(struct iked_sa *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -1010,6 +1014,11 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 			goto done;
 	}
 
+	/* compression */
+	if ((pol->pol_flags & IKED_POLICY_IPCOMP) &&
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa)) == -1)
+		goto done;
+
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
 		goto done;
 
@@ -1343,6 +1352,57 @@ ikev2_add_certreq(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 
 	log_debug("%s: type %s length %d", __func__,
 	    print_map(type, ikev2_cert_map), len);
+
+	return (len);
+}
+
+ssize_t
+ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
+    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa)
+{
+	struct iked_childsa		 csa;
+	struct ikev2_notify		*n;
+	u_int8_t			*ptr;
+	u_int16_t			 cpi;
+	u_int32_t			 spi;
+	u_int8_t			 transform;
+
+	/* we only support deflate */
+	transform = IKEV2_IPCOMP_DEFLATE;
+
+	bzero(&csa, sizeof(csa));
+	csa.csa_saproto = IKEV2_SAPROTO_IPCOMP;
+	csa.csa_ikesa = sa;
+	csa.csa_local = &sa->sa_peer;
+	csa.csa_peer = &sa->sa_local;
+
+	if (pfkey_sa_init(env->sc_pfkey, &csa, &spi) == -1)
+		return (-1);
+	/*
+	 * We get spi == 0 if the kernel does not support IPcomp,
+	 * so just return the length of the current payload.
+	 */
+	if (spi == 0)
+		return (len);
+	cpi = htobe16((u_int16_t)spi);
+	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+		return (-1);
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+	len = sizeof(*n) + sizeof(cpi) + sizeof(transform);
+	if ((ptr = ibuf_advance(e, len)) == NULL)
+		return (-1);
+	n = (struct ikev2_notify *)ptr;
+	n->n_protoid = 0;
+	n->n_spisize = 0;
+	n->n_type = htobe16(IKEV2_N_IPCOMP_SUPPORTED);
+	ptr += sizeof(*n);
+	memcpy(ptr, &cpi, sizeof(cpi));
+	ptr += sizeof(cpi);
+	memcpy(ptr, &transform, sizeof(transform));
+
+	sa->sa_cpi_in = spi;	/* already on host byte order */
+	log_debug("%s: sa_cpi_in 0x%04x", __func__, sa->sa_cpi_in);
 
 	return (len);
 }
@@ -2075,6 +2135,11 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 			goto done;
 	}
 
+	/* compression */
+	if (sa->sa_ipcomp &&
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa)) == -1)
+		goto done;
+
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
 		goto done;
 
@@ -2692,6 +2757,9 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 
 	/* check for incoming traffic on any child SA */
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+		if (!csa->csa_loaded ||
+		    csa->csa_saproto == IKEV2_SAPROTO_IPCOMP)
+			continue;
 		if (pfkey_sa_last_used(env->sc_pfkey, csa, &last_used) != 0)
 			continue;
 		gettimeofday(&tv, NULL);
@@ -3832,10 +3900,113 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 }
 
 int
+ikev2_ipcomp_enable(struct iked_sa *sa)
+{
+	struct iked_childsa	*other, *csa = NULL, *csb = NULL;
+	struct iked_flow	*flow, *flowa = NULL, *flowb = NULL;
+
+	if ((csa = calloc(1, sizeof(*csa))) == NULL ||
+	    (csb = calloc(1, sizeof(*csb))) == NULL ||
+	    (flowa = calloc(1, sizeof(*flowa))) == NULL ||
+	    (flowb = calloc(1, sizeof(*flowb))) == NULL) {
+		free(csa);
+		free(csb);
+		free(flowa);
+		free(flowb);
+		return (-1);
+	}
+
+	/* switch ESP SAs to transport mode */
+	TAILQ_FOREACH(other, &sa->sa_childsas, csa_entry)
+		if (!other->csa_rekey && !other->csa_loaded &&
+		    other->csa_saproto == IKEV2_SAPROTO_ESP)
+			other->csa_transport = 1;
+
+	/* install IPCOMP SAs */
+	csa->csa_ikesa = sa;
+	csa->csa_saproto = IKEV2_SAPROTO_IPCOMP;
+	if (sa->sa_hdr.sh_initiator) {
+		csa->csa_dstid = &sa->sa_rid;
+		csa->csa_srcid = &sa->sa_iid;
+	} else {
+		csa->csa_dstid = &sa->sa_iid;
+		csa->csa_srcid = &sa->sa_rid;
+	}
+	csa->csa_spi.spi_size = 2;
+	csa->csa_spi.spi = sa->sa_cpi_out;
+	csa->csa_peerspi = sa->sa_cpi_in;
+	csa->csa_dir = IPSP_DIRECTION_OUT;
+	csa->csa_local = &sa->sa_local;
+	csa->csa_peer = &sa->sa_peer;
+	csb->csa_allocated = 0;
+
+	memcpy(csb, csa, sizeof(*csb));
+	csb->csa_spi.spi = csa->csa_peerspi;
+	csb->csa_peerspi = csa->csa_spi.spi;
+	csb->csa_dir = IPSP_DIRECTION_IN;
+	csb->csa_local = csa->csa_peer;
+	csb->csa_peer = csa->csa_local;
+	csb->csa_allocated = 1;
+
+	TAILQ_INSERT_TAIL(&sa->sa_childsas, csa, csa_entry);
+	TAILQ_INSERT_TAIL(&sa->sa_childsas, csb, csa_entry);
+
+	csa->csa_peersa = csb;
+	csb->csa_peersa = csa;
+
+	/* redirect flows to IPCOMP */
+	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+		if (flow->flow_loaded ||
+		    flow->flow_saproto != IKEV2_SAPROTO_ESP)
+			continue;
+		log_debug("%s: flow %p saproto %d -> %d", __func__,
+		    flow, flow->flow_saproto, IKEV2_SAPROTO_IPCOMP);
+		flow->flow_saproto = IKEV2_SAPROTO_IPCOMP;
+	}
+
+	/* setup ESP flows for gateways */
+	flowa->flow_dir = IPSP_DIRECTION_OUT;
+	flowa->flow_saproto = IKEV2_SAPROTO_ESP;
+	if (sa->sa_hdr.sh_initiator) {
+		flowa->flow_dstid = &sa->sa_rid;
+		flowa->flow_srcid = &sa->sa_iid;
+	} else {
+		flowa->flow_dstid = &sa->sa_iid;
+		flowa->flow_srcid = &sa->sa_rid;
+	}
+	flowa->flow_local = &sa->sa_local;
+	flowa->flow_peer = &sa->sa_peer;
+	memcpy(&flowa->flow_src, &sa->sa_local, sizeof(sa->sa_local));
+	memcpy(&flowa->flow_dst, &sa->sa_peer, sizeof(sa->sa_peer));
+	flowa->flow_src.addr_mask = flowa->flow_dst.addr_mask =
+	    (sa->sa_local.addr_af == AF_INET) ? 32 : 128;
+	flowa->flow_src.addr_port = flowa->flow_dst.addr_port = 0;
+	flowa->flow_ikesa = sa;
+
+	memcpy(flowb, flowa, sizeof(*flowb));
+	flowb->flow_dir = IPSP_DIRECTION_IN;
+	memcpy(&flowb->flow_dst, &flowa->flow_src, sizeof(flowa->flow_src));
+	memcpy(&flowb->flow_src, &flowa->flow_dst, sizeof(flowa->flow_dst));
+
+	TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
+	TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
+
+	/* make sure IPCOMP CPIs are not reused */
+	sa->sa_ipcomp = 0;
+	sa->sa_cpi_in = sa->sa_cpi_out = 0;
+
+	return (0);
+}
+
+int
 ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_childsa	*csa;
 	struct iked_flow	*flow, *oflow;
+
+	if (sa->sa_ipcomp && sa->sa_cpi_in && sa->sa_cpi_out &&
+	    ikev2_ipcomp_enable(sa) == -1)
+		return (-1);
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)

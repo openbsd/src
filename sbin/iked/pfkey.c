@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.27 2014/01/22 09:25:41 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.28 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,7 @@ static const struct pfkey_constmap pfkey_integr[] = {
 static const struct pfkey_constmap pfkey_satype[] = {
 	{ SADB_SATYPE_AH,	IKEV2_SAPROTO_AH },
 	{ SADB_SATYPE_ESP,	IKEV2_SAPROTO_ESP },
+	{ SADB_X_SATYPE_IPCOMP,	IKEV2_SAPROTO_IPCOMP },
 	{ 0 }
 };
 
@@ -478,8 +479,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	sadb.sadb_sa_state = SADB_SASTATE_MATURE;
 	sadb.sadb_sa_replay = 64;
 
-	/* XXX we don't support transport mode, yet */
-	sadb.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+	if (!sa->csa_transport)
+		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 
 	if (sa->csa_esn)
 		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_ESN;
@@ -526,7 +527,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		return (-1);
 	}
 
-	if (sa->csa_ikesa->sa_udpencap && sa->csa_ikesa->sa_natt) {
+	if (satype == SADB_SATYPE_ESP &&
+	    sa->csa_ikesa->sa_udpencap && sa->csa_ikesa->sa_natt) {
 		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
 		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
 		udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
@@ -570,6 +572,10 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		sa_enckey.sadb_key_bits =
 		    8 * ibuf_size(sa->csa_encrkey);
 	}
+
+	/* we only support deflate */
+	if (satype == SADB_X_SATYPE_IPCOMP)
+		sadb.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
 
 	/* local id */
 	sa_srcid = pfkey_id2ident(sa->csa_srcid, SADB_EXT_IDENTITY_SRC);
@@ -861,7 +867,8 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 	sa_spirange.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
 	sa_spirange.sadb_spirange_len = sizeof(sa_spirange) / 8;
 	sa_spirange.sadb_spirange_min = 0x100;
-	sa_spirange.sadb_spirange_max = 0xffffffff;
+	sa_spirange.sadb_spirange_max = (satype == SADB_X_SATYPE_IPCOMP) ?
+	    (CPI_PRIVATE_MIN - 1) : 0xffffffff;
 	sa_spirange.sadb_spirange_reserved = 0;
 
 	bzero(&sa_src, sizeof(sa_src));

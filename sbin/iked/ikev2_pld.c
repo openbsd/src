@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.36 2014/02/12 12:59:44 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.37 2014/02/14 09:00:03 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -650,6 +650,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	struct iked_spi		*rekey;
 	u_int16_t		 type;
 	u_int16_t		 group;
+	u_int16_t		 cpi;
+	u_int8_t		 transform;
 
 	if ((n = ibuf_seek(msg->msg_data, offset, sizeof(*n))) == NULL)
 		return (-1);
@@ -752,6 +754,23 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		log_debug("%s: rekey %s spi %s", __func__,
 		    print_map(n->n_protoid, ikev2_saproto_map),
 		    print_spi(rekey->spi, n->n_spisize));
+		break;
+	case IKEV2_N_IPCOMP_SUPPORTED:
+		if (len < sizeof(cpi) + sizeof(transform)) {
+			log_debug("%s: malformed ipcomp notification",
+			    __func__);
+			return (0);
+		}
+		memcpy(&cpi, buf, sizeof(cpi));
+		memcpy(&transform, buf + sizeof(cpi), sizeof(transform));
+		log_debug("%s: cpi 0x%x, transform %s, len %d", __func__,
+		    betoh16(cpi), print_map(transform, ikev2_ipcomp_map), len);
+		/* we only support deflate */
+		if ((msg->msg_policy->pol_flags & IKED_POLICY_IPCOMP) &&
+		    (transform == IKEV2_IPCOMP_DEFLATE)) {
+			msg->msg_sa->sa_ipcomp = transform;
+			msg->msg_sa->sa_cpi_out = betoh16(cpi);
+		}
 		break;
 	}
 
