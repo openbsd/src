@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.191 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.192 2014/02/14 15:03:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1147,16 +1147,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				errors++;
 			} else
 				lp->d_ncylinders = v;
-			continue;
-		}
-		if (!strcmp(cp, "total sectors")) {
-			lv = GETNUM(lv, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else {
-				DL_SETDSIZE(lp, lv);
-			}
 			continue;
 		}
 
