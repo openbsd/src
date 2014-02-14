@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.1 2014/02/12 23:04:26 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.2 2014/02/14 11:38:48 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -44,6 +44,7 @@
 
 /* firmware */
 #include <dev/microcode/isp/asm_2400.h>
+#include <dev/microcode/isp/asm_2500.h>
 
 #define QLE_PCI_MEM_BAR		0x14
 #define QLE_PCI_IO_BAR		0x10
@@ -61,17 +62,15 @@
 
 enum qle_isp_gen {
 	QLE_GEN_ISP24XX = 1,
-	/*QLE_GEN_ISP25XX*/
+	QLE_GEN_ISP25XX
 };
 
 enum qle_isp_type {
 	QLE_ISP2422 = 1,
 	QLE_ISP2432,
-	/*
 	QLE_ISP2512,
 	QLE_ISP2522,
 	QLE_ISP2532
-	*/
 };
 
 /* port database things */
@@ -291,9 +290,9 @@ void		qle_update_done(struct qle_softc *, int);
 void		qle_do_update(void *, void *);
 int		qle_async(struct qle_softc *, u_int16_t);
 
-int		qle_load_fwchunk_2400(struct qle_softc *,
+int		qle_load_fwchunk(struct qle_softc *,
 		    struct qle_dmamem *, const u_int32_t *);
-int		qle_load_firmware_2400(struct qle_softc *);
+int		qle_load_firmware_chunks(struct qle_softc *, const u_int32_t *);
 int		qle_read_nvram(struct qle_softc *);
 
 struct qle_dmamem *qle_dmamem_alloc(struct qle_softc *, size_t);
@@ -312,15 +311,15 @@ void		qle_dump_iocb_segs(struct qle_softc *, void *, int);
 static const struct pci_matchid qle_devices[] = {
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2422 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2432 },
-	/*{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2512 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2512 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2522 },
-	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2532 }, */
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2532 },
 };
 
 int
 qle_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid(aux, qle_devices, nitems(qle_devices)) * 2);
+	return (pci_matchbyid(aux, qle_devices, nitems(qle_devices)));
 }
 
 void
@@ -396,20 +395,21 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_isp_gen = QLE_GEN_ISP24XX;
 		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
 		break;
-	/*
 	case PCI_PRODUCT_QLOGIC_ISP2512:
 		sc->sc_isp_type = QLE_ISP2512;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
+		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2522:
 		sc->sc_isp_type = QLE_ISP2522;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
+		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2532:
 		sc->sc_isp_type = QLE_ISP2532;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
+		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
 		break;
-	*/
 
 	default:
 		printf("unknown pci id %x", pa->pa_id);
@@ -441,9 +441,19 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	if (qle_read_nvram(sc) == 0)
 		sc->sc_nvram_valid = 1;
 
-	if (qle_load_firmware_2400(sc)) {
-		printf("firmware load failed\n");
-		goto deintr;
+	switch (sc->sc_isp_gen) {
+	case QLE_GEN_ISP24XX:
+		if (qle_load_firmware_chunks(sc, isp_2400_risc_code)) {
+			printf("firmware load failed\n");
+			goto deintr;
+		}
+		break;
+	case QLE_GEN_ISP25XX:
+		if (qle_load_firmware_chunks(sc, isp_2500_risc_code)) {
+			printf("firmware load failed\n");
+			goto deintr;
+		}
+		break;
 	}
 
 	/* execute firmware */
@@ -451,7 +461,8 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mbox[1] = QLE_2400_CODE_ORG >> 16;
 	sc->sc_mbox[2] = QLE_2400_CODE_ORG & 0xffff;
 	sc->sc_mbox[3] = 0;
-	if (qle_mbox(sc, 0x000f, 0x0001)) {
+	sc->sc_mbox[4] = 0;
+	if (qle_mbox(sc, 0x001f, 0x0001)) {
 		printf("ISP couldn't exec firmware: %x\n", sc->sc_mbox[0]);
 		goto deintr;
 	}
@@ -1374,6 +1385,7 @@ qle_read_isr(struct qle_softc *sc, u_int16_t *isr, u_int16_t *info)
 
 	switch (sc->sc_isp_gen) {
 	case QLE_GEN_ISP24XX:
+	case QLE_GEN_ISP25XX:
 		if ((qle_read(sc, QLE_INT_STATUS) & QLE_RISC_INT_REQ) == 0)
 			return (0);
 
@@ -2319,7 +2331,7 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 }
 
 int
-qle_load_fwchunk_2400(struct qle_softc *sc, struct qle_dmamem *mem,
+qle_load_fwchunk(struct qle_softc *sc, struct qle_dmamem *mem,
     const u_int32_t *src)
 {
 	u_int32_t dest, done, total;
@@ -2371,14 +2383,13 @@ qle_load_fwchunk_2400(struct qle_softc *sc, struct qle_dmamem *mem,
 }
 
 int
-qle_load_firmware_2400(struct qle_softc *sc)
+qle_load_firmware_chunks(struct qle_softc *sc, const u_int32_t *fw)
 {
 	struct qle_dmamem *mem;
-	const u_int32_t *fw = isp_2400_risc_code;
 
 	mem = qle_dmamem_alloc(sc, 65536);
 	for (;;) {
-		qle_load_fwchunk_2400(sc, mem, fw);
+		qle_load_fwchunk(sc, mem, fw);
 		if (fw[1] == 0)
 			break;
 		fw += fw[3];
