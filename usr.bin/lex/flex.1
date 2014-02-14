@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.35 2014/02/12 12:32:41 schwarze Exp $
+.\"	$OpenBSD: flex.1,v 1.36 2014/02/14 17:15:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -116,9 +116,13 @@ facility for generating C++ scanner classes.
 .It Sy Incompatibilities with Lex and POSIX
 How
 .Nm
-differs from AT&T lex and the
+differs from
+.At
+.Nm lex
+and the
 .Tn POSIX
-lex standard.
+.Nm lex
+standard.
 .It Sy Files
 Files used by
 .Nm .
@@ -761,7 +765,8 @@ The default is
 .Dq %pointer ,
 unless the
 .Fl l
-lex compatibility option is used, in which case
+.Nm lex
+compatibility option is used, in which case
 .Fa yytext
 will be an array.
 The advantage of using
@@ -1632,7 +1637,8 @@ Flex provides
 .Dv YYSTATE
 as an alias for
 .Dv YY_START
-(since that is what's used by AT&T
+(since that is what's used by
+.At
 .Nm lex ) .
 .Pp
 Note that start conditions do not have their own name-space;
@@ -2687,7 +2693,8 @@ or
 fault \- these sorts of errors should be reported to the email address
 given below).
 .It Fl l
-Turns on maximum compatibility with the original AT&T
+Turns on maximum compatibility with the original
+.At
 .Nm lex
 implementation.
 Note that this does not mean full compatibility.
@@ -3749,7 +3756,7 @@ specification.
 .Pp
 In this section we discuss all of the known areas of incompatibility between
 .Nm ,
-AT&T
+.At
 .Nm lex ,
 and the
 .Tn POSIX
@@ -3757,7 +3764,8 @@ specification.
 .Pp
 .Nm flex Ns 's
 .Fl l
-option turns on maximum compatibility with the original AT&T
+option turns on maximum compatibility with the original
+.At
 .Nm lex
 implementation, at the cost of a major loss in the generated scanner's
 performance.
