@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.66 2014/02/14 09:00:03 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.67 2014/02/14 10:23:43 benno Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -820,7 +820,6 @@ int	 proc_composev_imsg(struct iked *, enum privsep_procid,
 	    u_int16_t, int, const struct iovec *, int);
 int	 proc_forward_imsg(struct iked *, struct imsg *,
 	    enum privsep_procid);
-void	 proc_flush_imsg(struct iked *, enum privsep_procid);
 
 /* util.c */
 void	 socket_set_blockmode(int, enum blockmodes);

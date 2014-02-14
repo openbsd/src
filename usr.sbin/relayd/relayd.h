@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.171 2013/09/09 17:57:45 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.172 2014/02/14 10:21:00 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1164,7 +1164,6 @@ int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
 	    enum privsep_procid, int);
-void	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 void	 imsg_event_add(struct imsgev *);
