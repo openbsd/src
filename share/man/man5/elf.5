@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.25 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: elf.5,v 1.26 2014/02/14 15:50:41 schwarze Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -159,19 +159,19 @@ The following macros are defined:
 .It Dv EI_MAG0
 The first byte of the magic number.
 It must be filled with
-.Sy ELFMAG0 .
+.Dv ELFMAG0 .
 .It Dv EI_MAG1
 The second byte of the magic number.
 It must be filled with
-.Sy ELFMAG1 .
+.Dv ELFMAG1 .
 .It Dv EI_MAG2
 The third byte of the magic number.
 It must be filled with
-.Sy ELFMAG2 .
+.Dv ELFMAG2 .
 .It Dv EI_MAG3
 The fourth byte of the magic number.
 It must be filled with
-.Sy ELFMAG3 .
+.Dv ELFMAG3 .
 .It Dv EI_CLASS
 The fifth byte identifies the architecture for this binary:
 .Pp
@@ -392,7 +392,7 @@ This member holds the section header table index of the entry associated
 with the section name string table.
 If the file has no section name string
 table, this member holds the value
-.Sy SHN_UNDEF .
+.Dv SHN_UNDEF .
 .El
 .Pp
 An executable or shared object file's program header table is an array of
@@ -503,19 +503,19 @@ will be initialized with the data in this segment and the remaining
 bytes will be set to zero.
 .It Dv PT_LOOS
 This value up to and including
-.Sy PT_HIOS
+.Dv PT_HIOS
 is reserved for operating system-specific semantics.
 .It Dv PT_HIOS
 This value down to and including
-.Sy PT_LOOS
+.Dv PT_LOOS
 is reserved for operating system-specific semantics.
 .It Dv PT_LOPROC
 This value up to and including
-.Sy PT_HIPROC
+.Dv PT_HIPROC
 is reserved for processor-specific semantics.
 .It Dv PT_HIPROC
 This value down to and including
-.Sy PT_LOPROC
+.Dv PT_LOPROC
 is reserved for processor-specific semantics.
 .El
 .It Dv p_offset
@@ -550,14 +550,14 @@ A readable segment.
 .El
 .Pp
 A text segment commonly has the flags
-.Sy PF_X
+.Dv PF_X
 and
-.Sy PF_R .
+.Dv PF_R .
 A data segment commonly has
-.Sy PF_X ,
-.Sy PF_W
+.Dv PF_X ,
+.Dv PF_W
 and
-.Sy PF_R .
+.Dv PF_R .
 .It Dv p_align
 This member holds the value to which the segments are aligned in memory
 and in the file.
@@ -602,23 +602,23 @@ section reference.
 For example, a symbol
 .Dq defined
 relative to section number
-.Sy SHN_UNDEF
+.Dv SHN_UNDEF
 is an undefined symbol.
 .It Dv SHN_LORESERVE
 This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
 This value up to and including
-.Sy SHN_HIPROC
+.Dv SHN_HIPROC
 is reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
 This value down to and including
-.Sy SHN_LOPROC
+.Dv SHN_LOPROC
 is reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies the absolute value for the corresponding reference.
 For
 example, a symbol defined relative to section number
-.Sy SHN_ABS
+.Dv SHN_ABS
 has an absolute value and is not affected by relocation.
 .It Dv SHN_COMMON
 Symbols defined relative to this section are common symbols, such as FORTRAN
@@ -627,9 +627,9 @@ COMMON or unallocated C external variables.
 This value specifies the upper bound of the range of reserved indices.
 The
 system reserves indices between
-.Sy SHN_LORESERVE
+.Dv SHN_LORESERVE
 and
-.Sy SHN_HIRESERVE ,
+.Dv SHN_HIRESERVE ,
 inclusive.
 The section header table does not contain entries for the
 reserved indices.
@@ -685,14 +685,14 @@ format and meaning are determined solely by the program.
 .It Dv SHT_SYMTAB
 This section holds a symbol table.
 Typically,
-.Sy SHT_SYMTAB
+.Dv SHT_SYMTAB
 provides symbols for link editing, though it may also be used
 for dynamic linking.
 As a complete symbol table, it may contain
 many symbols unnecessary for dynamic linking.
 An object file can
 also contain a
-.Sy SHT_DYNSYM
+.Dv SHT_DYNSYM
 section.
 .It Dv SHT_STRTAB
 This section holds a string table.
@@ -720,7 +720,7 @@ This section holds information that marks the file in some way.
 .It Dv SHT_NOBITS
 A section of this type occupies no space in the file but otherwise
 resembles
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 Although this section contains no bytes, the
 .Sy sh_offset
 member contains the conceptual file offset.
@@ -737,15 +737,15 @@ This section is reserved but has unspecified semantics.
 This section holds a minimal set of dynamic linking symbols.
 An
 object file can also contain a
-.Sy SHT_SYMTAB
+.Dv SHT_SYMTAB
 section.
 .It Dv SHT_LOPROC
 This value up to and including
-.Sy SHT_HIPROC
+.Dv SHT_HIPROC
 is reserved for processor-specific semantics.
 .It Dv SHT_HIPROC
 This value down to and including
-.Sy SHT_LOPROC
+.Dv SHT_LOPROC
 is reserved for processor-specific semantics.
 .It Dv SHT_LOUSER
 This value specifies the lower bound of the range of indices reserved for
@@ -754,9 +754,9 @@ application programs.
 This value specifies the upper bound of the range of indices reserved for
 application programs.
 Section types between
-.Sy SHT_LOUSER
+.Dv SHT_LOUSER
 and
-.Sy SHT_HIUSER
+.Dv SHT_HIUSER
 may be used by the application, without conflicting with current or future
 system-defined section types.
 .El
@@ -798,7 +798,7 @@ Otherwise, the member contains zero.
 This member's value holds the byte offset from the beginning of the file
 to the first byte in the section.
 One section type,
-.Sy SHT_NOBITS ,
+.Dv SHT_NOBITS ,
 occupies no space in the file, and its
 .Sy sh_offset
 member locates the conceptual placement in the file.
@@ -806,12 +806,12 @@ member locates the conceptual placement in the file.
 This member holds the section's size in bytes.
 Unless the section type
 is
-.Sy SHT_NOBITS ,
+.Dv SHT_NOBITS ,
 the section occupies
 .Sy sh_size
 bytes in the file.
 A section of type
-.Sy SHT_NOBITS
+.Dv SHT_NOBITS
 may have a non-zero size, but it occupies no space in the file.
 .It Dv sh_link
 This member holds a section header table index link, whose interpretation
@@ -846,138 +846,138 @@ memory image.
 By definition, the system initializes the data with zeros
 when the program begins to run.
 This section is of type
-.Sy SHT_NOBITS .
+.Dv SHT_NOBITS .
 The attribute types are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_WRITE .
+.Dv SHF_WRITE .
 .It .comment
 This section holds version control information.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 No attribute types are used.
 .It .ctors
 This section holds initialized pointers to the C++ constructor functions.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute types are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_WRITE .
+.Dv SHF_WRITE .
 .It .data
 This section holds initialized data that contribute to the program's
 memory image.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute types are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_WRITE .
+.Dv SHF_WRITE .
 .It .data1
 This section holds initialized data that contribute to the program's
 memory image.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute types are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_WRITE .
+.Dv SHF_WRITE .
 .It .debug
 This section holds information for symbolic debugging.
 The contents
 are unspecified.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 No attribute types are used.
 .It .dtors
 This section holds initialized pointers to the C++ destructor functions.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute types are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_WRITE .
+.Dv SHF_WRITE .
 .It .dynamic
 This section holds dynamic linking information.
 The section's attributes
 will include the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Whether the
-.Sy SHF_WRITE
+.Dv SHF_WRITE
 bit is set is processor-specific.
 This section is of type
-.Sy SHT_DYNAMIC .
+.Dv SHT_DYNAMIC .
 See the attributes above.
 .It .dynstr
 This section holds strings needed for dynamic linking, most commonly
 the strings that represent the names associated with symbol table entries.
 This section is of type
-.Sy SHT_STRTAB .
+.Dv SHT_STRTAB .
 The attribute type used is
-.Sy SHF_ALLOC .
+.Dv SHF_ALLOC .
 .It .dynsym
 This section holds the dynamic linking symbol table.
 This section is of type
-.Sy SHT_DYNSYM .
+.Dv SHT_DYNSYM .
 The attribute used is
-.Sy SHF_ALLOC .
+.Dv SHF_ALLOC .
 .It .fini
 This section holds executable instructions that contribute to the process
 termination code.
 When a program exits normally the system arranges to
 execute the code in this section.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attributes used are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_EXECINSTR .
+.Dv SHF_EXECINSTR .
 .It .got
 This section holds the global offset table.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attributes are processor-specific.
 .It .hash
 This section holds a symbol hash table.
 This section is of type
-.Sy SHT_HASH .
+.Dv SHT_HASH .
 The attribute used is
-.Sy SHF_ALLOC .
+.Dv SHF_ALLOC .
 .It .init
 This section holds executable instructions that contribute to the process
 initialization code.
 When a program starts to run the system arranges to
 execute the code in this section before calling the main program entry point.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attributes used are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_EXECINSTR .
+.Dv SHF_EXECINSTR .
 .It .interp
 This section holds the pathname of a program interpreter.
 If the file has
 a loadable segment that includes the section, the section's attributes will
 include the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Otherwise, that bit will be off.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 .It .line
 This section holds line number information for symbolic debugging, which
 describes the correspondence between the program source and the machine code.
 The contents are unspecified.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 No attribute types are used.
 .It .note
 This section holds information in the
 note section
 format described below.
 This section is of type
-.Sy SHT_NOTE .
+.Dv SHT_NOTE .
 No attribute types are used.
 .Ox
 native executables usually contain a
@@ -987,14 +987,14 @@ ELF binary emulation tests when loading the file.
 .It .plt
 This section holds the procedure linkage table.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attributes are processor-specific.
 .It .relNAME
 This section holds relocation information as described below.
 If the file
 has a loadable segment that includes relocation, the section's attributes
 will include the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Otherwise the bit will be off.
 By convention,
@@ -1006,13 +1006,13 @@ section for
 normally would have the name
 .Sy .rel.text .
 This section is of type
-.Sy SHT_REL .
+.Dv SHT_REL .
 .It .relaNAME
 This section holds relocation information as described below.
 If the file
 has a loadable segment that includes relocation, the section's attributes
 will include the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Otherwise the bit will be off.
 By convention,
@@ -1024,25 +1024,25 @@ section for
 normally would have the name
 .Sy .rela.text .
 This section is of type
-.Sy SHT_RELA .
+.Dv SHT_RELA .
 .It .rodata
 This section holds read-only data that typically contribute to a
 non-writable segment in the process image.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute used is
-.Sy SHF_ALLOC .
+.Dv SHF_ALLOC .
 .It .rodata1
 This section holds read-only data that typically contribute to a
 non-writable segment in the process image.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute used is
-.Sy SHF_ALLOC .
+.Dv SHF_ALLOC .
 .It .shstrtab
 This section holds section names.
 This section is of type
-.Sy SHT_STRTAB .
+.Dv SHT_STRTAB .
 No attribute types are used.
 .It .strtab
 This section holds strings, most commonly the strings that represent the
@@ -1050,21 +1050,21 @@ names associated with symbol table entries.
 If the file has a loadable
 segment that includes the symbol string table, the section's attributes
 will include the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Otherwise the bit will be off.
 This section is of type
-.Sy SHT_STRTAB .
+.Dv SHT_STRTAB .
 .It .symtab
 This section holds a symbol table.
 If the file has a loadable segment
 that includes the symbol table, the section's attributes will include
 the
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 bit.
 Otherwise the bit will be off.
 This section is of type
-.Sy SHT_SYMTAB .
+.Dv SHT_SYMTAB .
 .It .tbss
 This section is the thread-local storage version of
 .Sy .bss ,
@@ -1073,12 +1073,12 @@ image on a per-thread basis.
 By definition, the system allocates and initializes the data with
 zeros for each thread before it first accesses it.
 This section is of type
-.Sy SHT_NOBITS .
+.Dv SHT_NOBITS .
 The attribute types are
-.Sy SHF_ALLOC ,
-.Sy SHF_WRITE ,
+.Dv SHF_ALLOC ,
+.Dv SHF_WRITE ,
 and
-.Sy SHF_TLS .
+.Dv SHF_TLS .
 .It .tdata
 This section is the thread-local storage version of
 .Sy .data ,
@@ -1087,22 +1087,22 @@ image on a per-thread basis.
 The system allocates and initializes the data for each thread before
 it first accesses it.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attribute types are
-.Sy SHF_ALLOC ,
-.Sy SHF_WRITE ,
+.Dv SHF_ALLOC ,
+.Dv SHF_WRITE ,
 and
-.Sy SHF_TLS .
+.Dv SHF_TLS .
 .It .text
 This section holds the
 .Dq text ,
 or executable instructions, of a program.
 This section is of type
-.Sy SHT_PROGBITS .
+.Dv SHT_PROGBITS .
 The attributes used are
-.Sy SHF_ALLOC
+.Dv SHF_ALLOC
 and
-.Sy SHF_EXECINSTR .
+.Dv SHF_EXECINSTR .
 .El
 .Pp
 String table sections hold null-terminated character sequences, commonly
@@ -1167,28 +1167,28 @@ The symbol is associated with a function or other executable code.
 The symbol is associated with a section.
 Symbol table entries of
 this type exist primarily for relocation and normally have
-.Sy STB_LOCAL
+.Dv STB_LOCAL
 bindings.
 .It Dv STT_FILE
 By convention, the symbol's name gives the name of the source file
 associated with the object file.
 A file symbol has
-.Sy STB_LOCAL
+.Dv STB_LOCAL
 bindings, its section index is
-.Sy SHN_ABS ,
+.Dv SHN_ABS ,
 and it precedes the other
-.Sy STB_LOCAL
+.Dv STB_LOCAL
 symbols of the file, if it is present.
 .It Dv STT_TLS
 The symbol is associated with an object in thread-local storage.
 The symbol's value is its offset in the TLS storage for this file.
 .It Dv STT_LOPROC
 This value up to and including
-.Sy STT_HIPROC
+.Dv STT_HIPROC
 is reserved for processor-specific semantics.
 .It Dv STT_HIPROC
 This value down to and including
-.Sy STT_LOPROC
+.Dv STT_LOPROC
 is reserved for processor-specific semantics.
 .El
 .Bl -tag -width "STB_GLOBAL"
@@ -1207,11 +1207,11 @@ Weak symbols resemble global symbols, but their definitions have lower
 precedence.
 .It Dv STB_LOPROC
 This value up to and including
-.Sy STB_HIPROC
+.Dv STB_HIPROC
 is reserved for processor-specific semantics.
 .It Dv STB_HIPROC
 This value down to and including
-.Sy STB_LOPROC
+.Dv STB_LOPROC
 is reserved for processor-specific semantics.
 .Pp
 There are macros for packing and unpacking the binding and type fields:
@@ -1300,9 +1300,9 @@ types are processor-specific.
 When the text refers to a relocation
 entry's relocation type or symbol table index, it means the result of
 applying
-.Sy ELF_[32|64]_R_TYPE
+.Dv ELF[32|64]_R_TYPE
 or
-.Sy ELF[32|64]_R_SYM ,
+.Dv ELF[32|64]_R_SYM ,
 respectively, to the entry's
 .Sy r_info
 member.
