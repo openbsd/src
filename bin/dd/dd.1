@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.28 2014/02/12 18:27:57 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.29 2014/02/14 17:27:58 schwarze Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -180,12 +180,15 @@ There are two conversion maps for
 .Tn ASCII .
 The value
 .Cm ascii
-specifies the recommended one which is compatible with System V.
+specifies the recommended one which is compatible with
+.At V .
 The value
 .Cm oldascii
 specifies the one used in historic
-.Tn AT&T
-and pre-4.3BSD-reno systems.
+.At
+and
+.Pf pre- Bx 4.3 Reno
+systems.
 .It Cm block
 Treats the input as a sequence of newline or end-of-file terminated variable
 length records independent of input and output block boundaries.
@@ -229,8 +232,10 @@ The values
 and
 .Cm oldibm
 are maps used in historic
-.Tn AT&T
-and pre-4.3BSD-reno systems.
+.At
+and
+.Pf pre- Bx 4.3 Reno
+systems.
 .It Cm lcase
 Transform uppercase characters into lowercase characters.
 .It Cm noerror
