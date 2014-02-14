@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.30 2014/02/13 14:28:52 jmc Exp $
+.\"	$OpenBSD: du.1,v 1.31 2014/02/14 18:17:50 schwarze Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt DU 1
 .Os
 .Sh NAME
@@ -153,10 +153,27 @@ are extensions to that specification.
 .Pp
 The flag
 .Op Fl r
-exists solely for conformance with
-.St -xpg4 .
+is accepted but ignored, for compatibility with systems implementing
+the obsolete
+.St -xcu5
+standard.
 .Sh HISTORY
 A
 .Nm
-command appeared in
+command first appeared in
 .At v3 .
+.Sh AUTHORS
+.An -nosplit
+This version of
+.Nm
+was written by
+.An Chris Newcomb
+for
+.Bx 4.3 Reno
+in 1989 and incorporates later contributions from
+.An Elan Amir ,
+.An Keith Bostic ,
+.An Luke Mewburn ,
+.An Matt Bing ,
+and
+.An Can Erkin Acar Aq Mt canacar@openbsd.org .
