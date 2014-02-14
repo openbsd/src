@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yacc.1,v 1.28 2014/01/28 15:43:42 jmc Exp $
+.\"	$OpenBSD: yacc.1,v 1.29 2014/02/14 17:22:18 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt YACC 1
 .Os
 .Sh NAME
@@ -204,16 +204,28 @@ The flags
 .Op Fl or
 are extensions to that specification.
 .Sh HISTORY
-Yacc was originally developed at AT&T by Stephen C. Johnson.
+.Nm
+was originally developed at AT&T by
+.An Stephen C. Johnson .
 .Pp
-Berkeley Yacc was originally developed using PCC on a VAX with the
-intent of being as compatible as possible with AT&T Yacc.
+Berkeley
+.Nm
+was originally developed using PCC on a VAX with the
+intent of being as compatible as possible with
+.At
+.Nm .
 Much is owed to the unflagging efforts of Keith Bostic.
-His badgering kept me working on Yacc long after I was ready to
-quit.
+His badgering kept me working on
+.Nm
+long after I was ready to quit.
 .Pp
-Berkeley Yacc is based on the excellent algorithm for computing
-LALR(1) lookaheads developed by Tom Pennello and Frank DeRemer.
+Berkeley
+.Nm
+is based on the excellent algorithm for computing
+LALR(1) lookaheads developed by
+.An Tom Pennello
+and
+.An Frank DeRemer .
 The algorithm is described in their almost impenetrable article in
 TOPLAS (see above).
 .Pp
