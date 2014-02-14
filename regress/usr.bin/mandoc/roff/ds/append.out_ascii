@@ -1,0 +1,12 @@
+DS-APPEND(1)               OpenBSD Reference Manual               DS-APPEND(1)
+
+NNAAMMEE
+     ddss--aappppeenndd - appending to user-defined strings
+
+DDEESSCCRRIIPPTTIIOONN
+     first part: first part
+     with second part: first part second part
+     with third part: first part second part third part
+     end of test document
+
+OpenBSD                        February 4, 2014                        OpenBSD
