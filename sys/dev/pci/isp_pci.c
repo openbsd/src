@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.58 2014/02/10 22:41:27 jmatthew Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.59 2014/02/14 05:17:05 jmatthew Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -203,19 +203,6 @@ static struct ispmdvec mdvec_2300 = {
 	ISP_2300_RISC_CODE
 };
 
-static struct ispmdvec mdvec_2400 = {
-	isp_pci_rd_isr_2400,
-	isp_pci_rd_reg_2400,
-	isp_pci_wr_reg_2400,
-	isp_pci_mbxdma,
-	isp_pci_dmasetup,
-	isp_pci_dmateardown,
-	isp_pci_reset0,
-	isp_pci_reset1,
-	NULL,
-	ISP_2400_RISC_CODE
-};
-
 #ifndef	PCIM_CMD_INVEN
 #define	PCIM_CMD_INVEN			0x10
 #endif
@@ -296,14 +283,6 @@ static struct ispmdvec mdvec_2400 = {
 #define	PCI_PRODUCT_QLOGIC_ISP2322	0x2322
 #endif
 
-#ifndef	PCI_PRODUCT_QLOGIC_ISP2422
-#define	PCI_PRODUCT_QLOGIC_ISP2422	0x2422
-#endif
-
-#ifndef	PCI_PRODUCT_QLOGIC_ISP2432
-#define	PCI_PRODUCT_QLOGIC_ISP2432	0x2432
-#endif
-
 #ifndef	PCI_PRODUCT_QLOGIC_ISP6312
 #define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312
 #endif
@@ -345,12 +324,6 @@ static struct ispmdvec mdvec_2400 = {
 
 #define	PCI_QLOGIC_ISP2322	\
 	((PCI_PRODUCT_QLOGIC_ISP2322 << 16) | PCI_VENDOR_QLOGIC)
-
-#define	PCI_QLOGIC_ISP2422	\
-	((PCI_PRODUCT_QLOGIC_ISP2422 << 16) | PCI_VENDOR_QLOGIC)
-
-#define	PCI_QLOGIC_ISP2432	\
-	((PCI_PRODUCT_QLOGIC_ISP2432 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP6312	\
 	((PCI_PRODUCT_QLOGIC_ISP6312 << 16) | PCI_VENDOR_QLOGIC)
@@ -394,8 +367,6 @@ const struct pci_matchid ispdev[] = {
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300 },
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2312 },
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2322 },
-	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2422 },
-	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2432 },
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312 },
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6322 },
 	{ 0, 0 }
@@ -718,20 +689,6 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2300_OFF;
 	}
-	if (pa->pa_id == PCI_QLOGIC_ISP2422 ||
-	    pa->pa_id == PCI_QLOGIC_ISP2432) {
-		isp->isp_mdvec = &mdvec_2400;
-		isp->isp_type = ISP_HA_FC_2400;
-		isp->isp_port = pa->pa_function;
-		isp->isp_param = malloc(sizeof(fcparam), M_DEVBUF,
-		    M_NOWAIT | M_ZERO);
-		if (isp->isp_param == NULL) {
-			printf(nomem);
-			return;
-		}
-		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
-		    PCI_MBOX_REGS2400_OFF;
-	}
 	/*
 	 * Set up logging levels.
 	 */
@@ -1006,43 +963,6 @@ isp_pci_rd_reg(struct ispsoftc *isp, int regoff)
 	return (rv);
 }
 
-int
-isp_pci_rd_isr_2400(ispsoftc_t *isp, uint32_t *isrp,
-    uint16_t *semap, uint16_t *mbox0p)
-{
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
-	uint32_t r2hisr;
-
-	r2hisr = BXR4(pcs, IspVirt2Off(isp, BIU2400_R2HSTSLO));
-	isp_prt(isp, ISP_LOGDEBUG3, "RISC2HOST ISR 0x%x", r2hisr);
-	if ((r2hisr & BIU2400_R2HST_INTR) == 0) {
-		*isrp = 0;
-		return (0);
-	}
-	switch (r2hisr & BIU2400_R2HST_ISTAT_MASK) {
-	case ISP2400R2HST_ROM_MBX_OK:
-	case ISP2400R2HST_ROM_MBX_FAIL:
-	case ISP2400R2HST_MBX_OK:
-	case ISP2400R2HST_MBX_FAIL:
-	case ISP2400R2HST_ASYNC_EVENT:
-		*isrp = r2hisr & 0xffff;
-		*mbox0p = (r2hisr >> 16);
-		*semap = 1;
-		return (1);
-	case ISP2400R2HST_RSPQ_UPDATE:
-	case ISP2400R2HST_ATIO_RSPQ_UPDATE:
-	case ISP2400R2HST_ATIO_RQST_UPDATE:
-		*isrp = r2hisr & 0xffff;
-		*mbox0p = 0;
-		*semap = 0;
-		return (1);
-	default:
-		ISP_WRITE(isp, BIU2400_HCCR, HCCR_2400_CMD_CLEAR_RISC_INT);
-		isp_prt(isp, ISP_LOGERR, "unknown interrupt 0x%x\n", r2hisr);
-		return (0);
-	}
-}
-
 void
 isp_pci_wr_reg(struct ispsoftc *isp, int regoff, u_int32_t val)
 {
@@ -1134,125 +1054,6 @@ isp_pci_wr_reg_1080(struct ispsoftc *isp, int regoff, u_int32_t val)
 		MEMORYBARRIER(isp, SYNC_REG, IspVirt2Off(isp, BIU_CONF1), 2);
 	}
 }
-
-uint32_t
-isp_pci_rd_reg_2400(ispsoftc_t *isp, int regoff)
-{
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
-	uint32_t rv;
-	int block = regoff & _BLK_REG_MASK;
-
-	switch (block) {
-	case BIU_BLOCK:
-		break;
-	case MBOX_BLOCK:
-		return (BXR2(pcs, IspVirt2Off(isp, regoff)));
-	case SXP_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "SXP_BLOCK read at 0x%x", regoff);
-		return (0xffffffff);
-	case RISC_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "RISC_BLOCK read at 0x%x", regoff);
-		return (0xffffffff);
-	case DMA_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "DMA_BLOCK read at 0x%x", regoff);
-		return (0xffffffff);
-	default:
-		isp_prt(isp, ISP_LOGWARN, "unknown block read at 0x%x", regoff);
-		return (0xffffffff);
-	}
-
-
-	switch (regoff) {
-	case BIU2400_FLASH_ADDR:
-	case BIU2400_FLASH_DATA:
-	case BIU2400_ICR:
-	case BIU2400_ISR:
-	case BIU2400_CSR:
-	case BIU2400_REQINP:
-	case BIU2400_REQOUTP:
-	case BIU2400_RSPINP:
-	case BIU2400_RSPOUTP:
-	case BIU2400_PRI_RQINP:
-	case BIU2400_PRI_RSPINP:
-	case BIU2400_ATIO_RSPINP:
-	case BIU2400_ATIO_REQINP:
-	case BIU2400_HCCR:
-	case BIU2400_GPIOD:
-	case BIU2400_GPIOE:
-	case BIU2400_HSEMA:
-		rv = BXR4(pcs, IspVirt2Off(isp, regoff));
-		break;
-	case BIU2400_R2HSTSLO:
-		rv = BXR4(pcs, IspVirt2Off(isp, regoff));
-		break;
-	case BIU2400_R2HSTSHI:
-		rv = BXR4(pcs, IspVirt2Off(isp, regoff)) >> 16;
-		break;
-	default:
-		isp_prt(isp, ISP_LOGERR,
-		    "isp_pci_rd_reg_2400: unknown offset %x", regoff);
-		rv = 0xffffffff;
-		break;
-	}
-	return (rv);
-}
-
-void
-isp_pci_wr_reg_2400(ispsoftc_t *isp, int regoff, uint32_t val)
-{
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
-	int block = regoff & _BLK_REG_MASK;
-
-	switch (block) {
-	case BIU_BLOCK:
-		break;
-	case MBOX_BLOCK:
-		BXW2(pcs, IspVirt2Off(isp, regoff), val);
-		MEMORYBARRIER(isp, SYNC_REG, IspVirt2Off(isp, regoff), 2);
-		return;
-	case SXP_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "SXP_BLOCK write at 0x%x", regoff);
-		return;
-	case RISC_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "RISC_BLOCK write at 0x%x", regoff);
-		return;
-	case DMA_BLOCK:
-		isp_prt(isp, ISP_LOGWARN, "DMA_BLOCK write at 0x%x", regoff);
-		return;
-	default:
-		isp_prt(isp, ISP_LOGWARN, "unknown block write at 0x%x",
-		    regoff);
-		break;
-	}
-
-	switch (regoff) {
-	case BIU2400_FLASH_ADDR:
-	case BIU2400_FLASH_DATA:
-	case BIU2400_ICR:
-	case BIU2400_ISR:
-	case BIU2400_CSR:
-	case BIU2400_REQINP:
-	case BIU2400_REQOUTP:
-	case BIU2400_RSPINP:
-	case BIU2400_RSPOUTP:
-	case BIU2400_PRI_RQINP:
-	case BIU2400_PRI_RSPINP:
-	case BIU2400_ATIO_RSPINP:
-	case BIU2400_ATIO_REQINP:
-	case BIU2400_HCCR:
-	case BIU2400_GPIOD:
-	case BIU2400_GPIOE:
-	case BIU2400_HSEMA:
-		BXW4(pcs, IspVirt2Off(isp, regoff), val);
-		MEMORYBARRIER(isp, SYNC_REG, IspVirt2Off(isp, regoff), 4);
-		break;
-	default:
-		isp_prt(isp, ISP_LOGERR,
-		    "isp_pci_wr_reg_2400: bad offset 0x%x", regoff);
-		break;
-	}
-}
-
 
 struct imush {
 	ispsoftc_t *isp;
@@ -1510,9 +1311,6 @@ mbxsync:
 	case RQSTYPE_A64:
 		isp_put_request_t3(isp, (ispreqt3_t *) rq, (ispreqt3_t *) qep);
 		break;
-	case RQSTYPE_T7RQS:
-		isp_put_request_t7(isp, (ispreqt7_t *) rq, (ispreqt7_t *) qep);
-		break;
 	}
 	*nxtip = nxti;
 	return (CMD_QUEUED);
@@ -1557,10 +1355,8 @@ isp_pci_reset0(ispsoftc_t *isp)
 void
 isp_pci_reset1(struct ispsoftc *isp)
 {
-	if (!IS_24XX(isp)) {
-		/* Make sure the BIOS is disabled */
-		isp_pci_wr_reg(isp, HCCR, PCI_HCCR_CMD_BIOS);
-	}
+	/* Make sure the BIOS is disabled */
+	isp_pci_wr_reg(isp, HCCR, PCI_HCCR_CMD_BIOS);
 	/* and enable interrupts */
 	ISP_ENABLE_INTS(isp);
 }
