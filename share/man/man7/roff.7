@@ -1,7 +1,7 @@
-.\"	$OpenBSD: roff.7,v 1.26 2013/12/26 02:43:12 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.27 2014/02/14 23:50:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 26 2013 $
+.Dd $Mdocdate: February 14 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -425,6 +425,12 @@ The syntax of this request is the same as that of
 It is currently ignored by
 .Xr mandoc 1 ,
 as are its children.
+.Ss \&as
+Append to a user-defined string.
+The syntax of this request is the same as that of
+.Sx \&ds .
+If a user-defined string with the specified name does not yet exist,
+it is set to the empty string before appending.
 .Ss \&cc
 Changes the control character.
 Its syntax is as follows:
@@ -437,6 +443,12 @@ If
 is not specified, the control character is reset to
 .Sq \&. .
 Trailing characters are ignored.
+.Ss \&ce
+Center some lines.
+This line-scoped request is intended to take one integer argument,
+specifying how many lines to center.
+Currently, it is ignored including its arguments, and the number
+of arguments is not checked.
 .Ss \&de
 Define a
 .Nm
