@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.4 2014/02/15 09:40:31 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.5 2014/02/15 13:16:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -42,9 +42,10 @@
 
 #include <dev/pci/qlereg.h>
 
-/* firmware */
+#ifndef ISP_NOFIRMWARE
 #include <dev/microcode/isp/asm_2400.h>
 #include <dev/microcode/isp/asm_2500.h>
+#endif
 
 #define QLE_PCI_MEM_BAR		0x14
 #define QLE_PCI_IO_BAR		0x10
@@ -441,6 +442,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	if (qle_read_nvram(sc) == 0)
 		sc->sc_nvram_valid = 1;
 
+#ifndef ISP_NOFIRMWARE
 	switch (sc->sc_isp_gen) {
 	case QLE_GEN_ISP24XX:
 		if (qle_load_firmware_chunks(sc, isp_2400_risc_code)) {
@@ -455,12 +457,17 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	}
+#endif
 
 	/* execute firmware */
 	sc->sc_mbox[0] = QLE_MBOX_EXEC_FIRMWARE;
 	sc->sc_mbox[1] = QLE_2400_CODE_ORG >> 16;
 	sc->sc_mbox[2] = QLE_2400_CODE_ORG & 0xffff;
+#ifdef ISP_NOFIRMWARE
+	sc->sc_mbox[3] = 1;
+#else
 	sc->sc_mbox[3] = 0;
+#endif
 	sc->sc_mbox[4] = 0;
 	if (qle_mbox(sc, 0x001f, 0x0001)) {
 		printf("ISP couldn't exec firmware: %x\n", sc->sc_mbox[0]);
