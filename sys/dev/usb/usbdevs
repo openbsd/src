@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.622 2014/01/22 01:25:41 sasano Exp $
+$OpenBSD: usbdevs,v 1.623 2014/02/15 02:16:57 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -50,7 +50,7 @@ $OpenBSD: usbdevs,v 1.622 2014/01/22 01:25:41 sasano Exp $
  * make the device recognised by the appropriate device driver.
  */
 
-vendor UNKNOWN1		0x0053	Unknown vendor
+vendor PLANEX4		0x0053	Planex Communications
 vendor UNKNOWN2		0x0105	Unknown vendor
 vendor EGALAX2		0x0123	eGalax
 vendor UNKNOWN6		0x01e1	Unknown vendor
@@ -3284,6 +3284,8 @@ product PLANEX2 RTL8188CUS	0x1201	RTL8188CUS
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
 product PLANEX2 RTL8188CU_3	0x4902	RTL8188CU
+product PLANEX4 GWUS54ZGL	0x5301	GW-US54ZGL
+product PLANEX4 ZD1211B		0x5302	ZD1211B
 product PLANEX2 GW_US54GXS	0x5303	GW-US54GXS WLAN
 product PLANEX2 GW_US300	0x5304	GW-US300
 product PLANEX2 GWUS54HP	0xab01	GW-US54HP
@@ -4124,10 +4126,6 @@ product UMAX ASTRA3400		0x0060	Astra 3400
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf ISDN
 
-/* Unknown vendor 1 */
-product UNKNOWN1 ZD1211B_1	0x5301	ZD1211B
-product UNKNOWN1 ZD1211B_2	0x5301	ZD1211B
-
 /* Unknown vendor 2 */
 product UNKNOWN2 ZD1211B	0x0105	ZD1211B
 product UNKNOWN2 NW3100		0x145f	NW-3100
@@ -4320,13 +4318,16 @@ product ZYDAS ZD1211B_2		0xb215	ZD1211B
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N
+product ZYXEL G220		0x3401	G-220
+product ZYXEL G220F		0x3402	G-220F
 product ZYXEL G200V2		0x3407	G-200 v2
-product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
 product ZYXEL AG225H		0x3409	AG-225H
 product ZYXEL M202		0x340a	M-202
 product ZYXEL G270S		0x340c	G-270S
 product ZYXEL G220V2		0x340f	G-220 v2
 product ZYXEL G202		0x3410	G-202
+product ZYXEL AG220		0x3412	AG-220
+product ZYXEL AG225HV2		0x3413	AG-225H v2
 product ZYXEL RT2573		0x3415	RT2573
 product ZYXEL RT2870_1		0x3416	RT2870
 product ZYXEL NWD271N		0x3417	NWD-271N
