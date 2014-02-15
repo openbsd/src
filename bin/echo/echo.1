@@ -1,4 +1,4 @@
-.\"	$OpenBSD: echo.1,v 1.21 2014/02/14 17:44:01 jmc Exp $
+.\"	$OpenBSD: echo.1,v 1.22 2014/02/15 09:57:31 jmc Exp $
 .\"	$NetBSD: echo.1,v 1.7 1995/03/21 09:04:26 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)echo.1	8.1 (Berkeley) 7/22/93
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: February 15 2014 $
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -79,15 +79,15 @@ specification.
 .Pp
 The flag
 .Op Fl n
-is an extension to that specification.
-.Pp
-The
-.Nm
-utility does not support any of the backslash character sequences
-mandated by the
+conflicts with the behaviour mandated by the
 X/Open System Interfaces option of the
 .St -p1003.1-2008
-specification.
+specification,
+which says it should be treated as part of
+.Ar string .
+Additionally,
+.Nm
+does not support any of the backslash character sequences mandated by XSI.
 .Pp
 .Nm
 also exists as a built-in to
