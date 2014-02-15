@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: December 8 2013 $
+.Dd $Mdocdate: February 15 2014 $
 .Dt SUDO @mansectsu@
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@
 .Op Fl u Ar user name No | Ar #uid
 .Ek
 .Bk -words
-.Op Sy VAR Ns = Ns Ar value
+.Op Ar VAR Ns = Ns Ar value
 .Ek
 .Bk -words
 .Fl i No | Fl s
@@ -622,9 +622,9 @@ should stop processing command line arguments.
 .Pp
 Environment variables to be set for the command may also be passed
 on the command line in the form of
-.Sy VAR Ns No = Ns Em value ,
+.Ar VAR Ns No = Ns Ar value ,
 e.g.\&
-.Sy LD_LIBRARY_PATH Ns No = Ns Em /usr/local/pkg/lib .
+.Ev LD_LIBRARY_PATH Ns No = Ns Pa /usr/local/pkg/lib .
 Variables passed on the command line are subject to the same
 restrictions as normal environment variables with one important
 exception.
