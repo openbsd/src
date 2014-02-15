@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.60 2014/02/15 06:25:18 tedu Exp $
+#	$OpenBSD: adduser.perl,v 1.61 2014/02/15 06:27:50 tedu Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -1305,7 +1305,7 @@ sub choosetxt_yn_default {
 
 # YES or NO question
 # return 1 if &confirm("message", "yes") and answer is yes
-#	or if &confirm("message", "no") an answer is no
+#	or if &confirm("message", "no") and answer is no
 # otherwise return 0
 sub confirm_yn {
     local($message, $confirm) = @_;
