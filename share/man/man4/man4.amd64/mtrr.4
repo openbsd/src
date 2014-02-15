@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrr.4,v 1.7 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: mtrr.4,v 1.8 2014/02/15 23:41:19 schwarze Exp $
 .\"
 .\" MTRR driver for OpenBSD.
 .\" Copyright 1999 Matthieu Herrb <matthieu@openbsd.org>
@@ -7,7 +7,7 @@
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 15 2014 $
 .Dt MTRR 4 amd64
 .Os
 .Sh NAME
@@ -107,7 +107,12 @@ flag may not be removed.
 .Fa mo_arg[0]
 should be set to MEMRANGE_SET_UPDATE to update an existing
 or establish a new range, or to MEMRANGE_SET_REMOVE to remove a range.
-.Sh RETURN VALUES
+.Sh ERRORS
+On
+.Xr ioctl 2
+failure,
+.Xr errno 2
+will be set as follows:
 .Bl -tag -width Er
 .It Bq Er EOPNOTSUPP
 Memory range operations are not supported on this architecture.
