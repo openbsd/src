@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_atombios.c,v 1.4 2014/02/10 00:40:38 jsg Exp $	*/
+/*	$OpenBSD: radeon_atombios.c,v 1.5 2014/02/15 15:38:46 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -2833,6 +2833,10 @@ void radeon_atom_initialize_bios_scratch_regs(struct drm_device *dev)
 
 	/* tell the bios not to handle mode switching */
 	bios_6_scratch |= ATOM_S6_ACC_BLOCK_DISPLAY_SWITCH;
+
+	/* clear the vbios dpms state */
+	if (ASIC_IS_DCE4(rdev))
+		bios_2_scratch &= ~ATOM_S2_DEVICE_DPMS_STATE;
 
 	if (rdev->family >= CHIP_R600) {
 		WREG32(R600_BIOS_2_SCRATCH, bios_2_scratch);
