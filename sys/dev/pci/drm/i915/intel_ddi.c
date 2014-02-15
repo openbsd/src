@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.10 2014/01/23 10:42:57 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.11 2014/02/15 09:37:03 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -1184,12 +1184,18 @@ void intel_ddi_setup_hw_pll_state(struct drm_device *dev)
 	enum pipe pipe;
 	struct intel_crtc *intel_crtc;
 
+	dev_priv->ddi_plls.spll_refcount = 0;
+	dev_priv->ddi_plls.wrpll1_refcount = 0;
+	dev_priv->ddi_plls.wrpll2_refcount = 0;
+
 	for_each_pipe(pipe) {
 		intel_crtc =
 			to_intel_crtc(dev_priv->pipe_to_crtc_mapping[pipe]);
 
-		if (!intel_crtc->active)
+		if (!intel_crtc->active) {
+			intel_crtc->ddi_pll_sel = PORT_CLK_SEL_NONE;
 			continue;
+		}
 
 		intel_crtc->ddi_pll_sel = intel_ddi_get_crtc_pll(dev_priv,
 								 pipe);
