@@ -121,6 +121,7 @@ _quick3p=
     perlhacktut 1		pod/perlhacktut.pod \
     perlhist 1			pod/perlhist.pod \
     perlintern 1		pod/perlintern.pod \
+    perlinterp 1		pod/perlinterp.pod \
     perlintro 1			pod/perlintro.pod \
     perliol 1			pod/perliol.pod \
     perlipc 1			pod/perlipc.pod \
