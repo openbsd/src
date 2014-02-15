@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.3 2014/02/14 12:04:16 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.4 2014/02/15 09:40:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2292,8 +2292,8 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 		}
 		req->req_data_len = htole32(xs->datalen);
 	}
-	req->req_fcp_lun[0] = htole16((lun >> 16) & 0xffff);
-	req->req_fcp_lun[1] = htole16(lun & 0xffff);
+	req->req_fcp_lun[0] = htobe16(lun & 0xffff);
+	req->req_fcp_lun[1] = htobe16((lun >> 16) & 0xffff);
 
 	req->req_target_id = htole32(target_port & 0xffffff);
 
