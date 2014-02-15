@@ -1,4 +1,4 @@
-/*	$OpenBSD: nid.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: nid.h,v 1.2 2014/02/15 14:28:13 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -557,6 +557,7 @@
 #              define PACKET3_DB_ACTION_ENA        (1 << 26)
 #              define PACKET3_SH_ACTION_ENA        (1 << 27)
 #              define PACKET3_SX_ACTION_ENA        (1 << 28)
+#              define PACKET3_ENGINE_ME            (1 << 31)
 #define	PACKET3_ME_INITIALIZE				0x44
 #define		PACKET3_ME_INITIALIZE_DEVICE_ID(x) ((x) << 16)
 #define	PACKET3_COND_WRITE				0x45
