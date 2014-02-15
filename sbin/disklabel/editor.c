@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.278 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.279 2014/02/15 00:10:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -138,6 +138,7 @@ void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
 void	mpcopy(char **, char **);
+void	mpfree(char **);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
@@ -500,9 +501,9 @@ editor(int f)
 		}
 	}
 done:
-	free(omountpoints);
-	free(origmountpoints);
-	free(tmpmountpoints);
+	mpfree(omountpoints);
+	mpfree(origmountpoints);
+	mpfree(tmpmountpoints);
 	if (disk_geop)
 		free(disk_geop);
 	return(error);
@@ -1896,6 +1897,19 @@ mpsave(struct disklabel *lp)
 	}
 }
 
+void
+mpfree(char **mp)
+{
+	int part;
+
+	for (part == 0; part < MAXPARTITIONS; part++) {
+		free(mp[part]);
+		mp[part] = NULL;
+	}
+
+	free(mp);
+}
+	
 int
 get_offset(struct disklabel *lp, int partno)
 {
