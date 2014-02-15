@@ -32,87 +32,39 @@
 .Nm sudo
 .Fl v
 .Op Fl AknS
-.Bk -words
 .Op Fl a Ar auth_type
-.Ek
-.Bk -words
 .Op Fl g Ar group name No | Ar #gid
-.Ek
-.Bk -words
 .Op Fl p Ar prompt
-.Ek
-.Bk -words
 .Op Fl u Ar user name No | Ar #uid
-.Ek
 .Nm sudo
 .Fl l Ns Op Ar l
 .Op Fl AknS
-.Bk -words
 .Op Fl a Ar auth_type
-.Ek
-.Bk -words
 .Op Fl g Ar group name No | Ar #gid
-.Ek
-.Bk -words
 .Op Fl p Ar prompt
-.Ek
-.Bk -words
 .Op Fl U Ar user name
-.Ek
-.Bk -words
 .Op Fl u Ar user name No | Ar #uid
-.Ek
 .Op Ar command
 .Nm sudo
 .Op Fl AbEHnPS
-.Bk -words
 .Op Fl a Ar auth_type
-.Ek
-.Bk -words
 .Op Fl C Ar fd
-.Ek
-.Bk -words
 .Op Fl c Ar class No | Ar -
-.Ek
-.Bk -words
 .Op Fl g Ar group name No | Ar #gid
-.Ek
-.Bk -words
 .Op Fl p Ar prompt
-.Ek
-.Bk -words
 .Op Fl u Ar user name No | Ar #uid
-.Ek
-.Bk -words
 .Op Ar VAR Ns = Ns Ar value
-.Ek
-.Bk -words
 .Fl i No | Fl s
-.Ek
 .Op Ar command
 .Nm sudoedit
 .Op Fl AnS
-.Bk -words
 .Op Fl a Ar auth_type
-.Ek
-.Bk -words
 .Op Fl C Ar fd
-.Ek
-.Bk -words
 .Op Fl c Ar class No | Ar -
-.Ek
-.Bk -words
 .Op Fl g Ar group name No | Ar #gid
-.Ek
-.Bk -words
 .Op Fl p Ar prompt
-.Ek
-.Bk -words
 .Op Fl u Ar user name No | Ar #uid
-.Ek
-.Bk -words
 file ...
-.Ek
 .Sh DESCRIPTION
 .Nm sudo
 allows a permitted user to execute a

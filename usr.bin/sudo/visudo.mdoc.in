@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: August 17 2012 $
+.Dd $Mdocdate: February 15 2014 $
 .Dt VISUDO @mansectsu@
 .Os
 .Sh NAME
@@ -28,9 +28,7 @@
 .Sh SYNOPSIS
 .Nm visudo
 .Op Fl cqsV
-.Bk -words
 .Op Fl f Ar sudoers
-.Ek
 .Sh DESCRIPTION
 .Nm visudo
 edits the

@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 23 2013 $
+.Dd $Mdocdate: February 15 2014 $
 .Dt SUDOERS @mansectform@
 .Os
 .Sh NAME
@@ -798,7 +798,7 @@ it must be
 escaped.
 For example:
 .Bd -literal -offset 4n
-/bin/ls [[\:alpha\:]]*
+/bin/ls [[:\&alpha:\&]]*
 .Ed
 .Pp
 Would match any file name beginning with a letter.
