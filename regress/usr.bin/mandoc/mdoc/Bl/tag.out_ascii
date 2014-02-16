@@ -33,6 +33,9 @@ DDEESSCCRRIIPPTTIIOONN
             x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x
 
+     hundred                                                                                               text
+                                                                                                           text
+
      Trailing white space in the head:
 
      a      b
@@ -59,4 +62,4 @@ DDEESSCCRRIIPPTTIIOONN
 
              second paragraph
 
-OpenBSD                          May 19, 2013                          OpenBSD
+OpenBSD                        February 16, 2014                       OpenBSD

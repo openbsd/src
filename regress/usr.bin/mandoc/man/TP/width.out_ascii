@@ -26,6 +26,9 @@ DDEESSCCRRIIPPTTIIOONN
        tag  indented
             text
 
+       tag                                                                                                 indented
+                                                                                                           text
+
        Literal mode:
 
        tag
@@ -46,6 +49,9 @@ DDEESSCCRRIIPPTTIIOONN
        tag  indented
             text
 
+       tag                                                                                                 indented
+                                                                                                           text
 
 
-OpenBSD                         January 4, 2011                    TP-WIDTH(1)
+
+OpenBSD                        February 16, 2014                   TP-WIDTH(1)

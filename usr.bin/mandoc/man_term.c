@@ -1,7 +1,7 @@
-/*	$Id: man_term.c,v 1.93 2013/12/22 23:33:52 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.94 2014/02/16 12:30:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -654,7 +654,8 @@ pre_IP(DECL_ARGS)
 		return(0);
 	case (MAN_BODY):
 		p->offset = mt->offset + len;
-		p->rmargin = p->maxrmargin;
+		p->rmargin = p->maxrmargin > p->offset ?
+				p->maxrmargin : p->offset;
 		break;
 	default:
 		break;
@@ -744,7 +745,8 @@ pre_TP(DECL_ARGS)
 		return(0);
 	case (MAN_BODY):
 		p->offset = mt->offset + len;
-		p->rmargin = p->maxrmargin;
+		p->rmargin = p->maxrmargin > p->offset ?
+				p->maxrmargin : p->offset;
 		p->trailspace = 0;
 		p->flags &= ~TERMP_NOBREAK;
 		break;
@@ -905,8 +907,9 @@ pre_RS(DECL_ARGS)
 			sz = (size_t)ival;
 
 	mt->offset += sz;
-	p->rmargin = p->maxrmargin;
-	p->offset = mt->offset < p->rmargin ? mt->offset : p->rmargin;
+	p->offset = mt->offset;
+	p->rmargin = p->maxrmargin > p->offset ?
+			p->maxrmargin : p->offset;
 
 	if (++mt->lmarginsz < MAXMARGINS)
 		mt->lmargincur = mt->lmarginsz;

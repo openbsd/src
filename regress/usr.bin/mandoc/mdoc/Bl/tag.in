@@ -1,4 +1,4 @@
-.Dd May 19, 2013
+.Dd February 16, 2014
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -36,6 +36,10 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .Bl -tag -width 5n
 .It zehn_ zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 100n
+.It hundred
+text text
 .El
 .Pp
 Trailing white space in the head:

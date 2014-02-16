@@ -1,0 +1,16 @@
+RS-WIDTH(1)                OpenBSD Reference Manual                RS-WIDTH(1)
+
+
+
+NNAAMMEE
+       RS-width - excessive indentation
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+                                                                                                           indented
+                                                                                                           text
+       regular text
+
+
+
+OpenBSD                        February 16, 2014                   RS-WIDTH(1)
