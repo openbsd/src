@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.116 2014/02/04 16:32:36 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.117 2014/02/16 21:59:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: February 16 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ decision comes the optional tag matching:
 .Bl -tag -width Ds
 .It Xo
 .Ic tagged
-.Op Ic \!
+.Op Ic \&!
 .Ic tag
 .Xc
 If specified, the rule will only be matched if the client session was tagged with
@@ -99,7 +99,7 @@ After that the client's IP address filter is specified:
 Make the rule match regardless of the IP of connecting client.
 .It Xo
 .Ic from
-.Op Ic \!
+.Op Ic \&!
 .Ic local
 .Xc
 The rule matches only locally originating connections.
@@ -107,7 +107,7 @@ This is the default,
 and may be omitted.
 .It Xo
 .Ic from
-.Op Ic \!
+.Op Ic \&!
 .Ic source
 .Ic table
 .Xc
@@ -120,7 +120,7 @@ In addition, finer filtering may be achieved on the sender if desired:
 .Bl -tag -width Ds
 .It Xo
 .Ic sender
-.Op Ic \!
+.Op Ic \&!
 .Ic senders
 .Xc
 If specified, the rule will only be matched if the sender email address
@@ -144,7 +144,7 @@ The
 table will be used as the virtual domain mapping.
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic domain
 .Ar domain
 .Op Ic alias Aq Ar aliases
@@ -165,7 +165,7 @@ is used for looking up alternative destinations for addresses in this
 .Ar domain .
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic domain
 .Aq Ar domains
 .Op Ic alias Aq Ar aliases
@@ -179,7 +179,7 @@ is used for looking up alternative destinations for addresses in these
 .Ar domains .
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic domain
 .Ar domain
 .Ic virtual Aq Ar users
@@ -204,7 +204,7 @@ table, see
 .Xr makemap 8 .
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic domain
 .Ao Ar domains
 .Ac Ic virtual Aq Ar users
@@ -222,7 +222,7 @@ table, see
 .Xr makemap 8 .
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic local
 .Op Ic alias Aq Ar aliases
 .Xc
@@ -236,7 +236,7 @@ entry for
 below for details of how the server name is determined.
 .It Xo
 .Ic for
-.Op Ic \!
+.Op Ic \&!
 .Ic local
 .Ic virtual Aq Ar vmap
 .Xc
@@ -516,10 +516,25 @@ The relay URL must specify TLS for this option to be valid.
 .Pp
 Additional per-rule adjustments available:
 .Bl -tag -width Ds
-.It Ic expire Ar n Brq Ar s|m|h|d
+.It Xo
+.Ic expire
+.Sm off
+.Ar n
+.Brq Cm s | m | h | d
+.Sm on
+.Xc
 Specify how long a message that matched this rule can stay in the queue.
 .El
-.It Ic bounce-warn Ar n Bro Ar s|m|h|d Brc Bq , Ar ...
+.It Xo
+.Ic bounce-warn
+.Sm off
+.Ar n
+.Brq Cm s | m | h | d
+.Oo ,
+.Sm on
+.Ar ...
+.Oc
+.Xc
 Specify the delays for which temporary failure reports must be generated
 when messages are stuck in the queue.
 For example:
@@ -530,7 +545,13 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
-.It Ic expire Ar n Brq Ar s|m|h|d
+.It Xo
+.Ic expire
+.Sm off
+.Ar n
+.Brq Cm s | m | h | d
+.Sm on
+.Xc
 Specify how long a message can stay in the queue.
 The default value is 4 days.
 For example:
