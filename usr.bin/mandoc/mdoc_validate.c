@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.120 2014/01/11 22:16:03 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.121 2014/02/16 14:26:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2038,9 +2038,11 @@ post_sh_head(POST_ARGS)
 	assert(mdoc->meta.msec);
 
 	switch (sec) {
-	case (SEC_RETURN_VALUES):
-		/* FALLTHROUGH */
 	case (SEC_ERRORS):
+		if (*mdoc->meta.msec == '4')
+			break;
+		/* FALLTHROUGH */
+	case (SEC_RETURN_VALUES):
 		/* FALLTHROUGH */
 	case (SEC_LIBRARY):
 		if (*mdoc->meta.msec == '2')

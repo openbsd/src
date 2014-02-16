@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.13 2012/09/06 01:01:58 tedu Exp $
+.\"	$OpenBSD: mdoc.template,v 1.14 2014/02/16 14:26:51 schwarze Exp $
 .\"
 .\" Copyright (c) YYYY YOUR NAME HERE <user@your.dom.ain>
 .\"
@@ -36,15 +36,15 @@ utility processes files ...
 .\" .Sh RETURN VALUES
 .\" For sections 2, 3, and 9 function return values only.
 .\" .Sh ENVIRONMENT
-.\" For sections 1, 6, 7 & 8 only.
+.\" For sections 1, 6, 7, and 8 only.
 .\" .Sh FILES
 .\" .Sh EXIT STATUS
-.\" For sections 1, 6, & 8 only.
+.\" For sections 1, 6, and 8 only.
 .\" .Sh EXAMPLES
 .\" .Sh DIAGNOSTICS
-.\" For sections 1, 4, 6, 7, and 8 only.
+.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
 .\" .Sh ERRORS
-.\" For sections 2, 3, and 9 error and signal handling only.
+.\" For sections 2, 3, 4, and 9 errno settings only.
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1
 .\" .Sh STANDARDS

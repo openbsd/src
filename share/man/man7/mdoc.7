@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.107 2014/01/24 22:54:30 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.108 2014/02/16 14:26:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2014 $
+.Dd $Mdocdate: February 16 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ file for a utility
 \&.Nm progname
 \&.Nd one line about what it does
 \&.\e\(dq .Sh LIBRARY
-\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq For sections 2, 3, and 9 only.
 \&.\e\(dq Not used in OpenBSD.
 \&.Sh SYNOPSIS
 \&.Nm progname
@@ -138,17 +138,17 @@ utility processes files ...
 \&.\e\(dq .Sh IMPLEMENTATION NOTES
 \&.\e\(dq Not used in OpenBSD.
 \&.\e\(dq .Sh RETURN VALUES
-\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq For sections 2, 3, and 9 function return values only.
 \&.\e\(dq .Sh ENVIRONMENT
-\&.\e\(dq For sections 1, 6, 7, & 8 only.
+\&.\e\(dq For sections 1, 6, 7, and 8 only.
 \&.\e\(dq .Sh FILES
 \&.\e\(dq .Sh EXIT STATUS
-\&.\e\(dq For sections 1, 6, & 8 only.
+\&.\e\(dq For sections 1, 6, and 8 only.
 \&.\e\(dq .Sh EXAMPLES
 \&.\e\(dq .Sh DIAGNOSTICS
-\&.\e\(dq For sections 1, 4, 6, 7, & 8 only.
+\&.\e\(dq For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
 \&.\e\(dq .Sh ERRORS
-\&.\e\(dq For sections 2, 3, & 9 only.
+\&.\e\(dq For sections 2, 3, 4, and 9 errno settings only.
 \&.\e\(dq .Sh SEE ALSO
 \&.\e\(dq .Xr foobar 1
 \&.\e\(dq .Sh STANDARDS
@@ -358,8 +358,12 @@ Example usages.
 This often contains snippets of well-formed, well-tested invocations.
 Make sure that examples work properly!
 .It Em DIAGNOSTICS
-Documents error conditions.
-This is most useful in section 4 manuals.
+Documents error messages.
+In section 4 and 9 manuals, these are usually messages printed by the
+kernel to the console and to the kernel log.
+In section 1, 6, 7, and 8, these are usually messages printed by
+userland programs to the standard error output.
+.Pp
 Historically, this section was used in place of
 .Em EXIT STATUS
 for manuals in sections 1, 6, and 8; however, this practise is
@@ -369,7 +373,9 @@ See
 .Sx \&Bl
 .Fl diag .
 .It Em ERRORS
-Documents error handling in sections 2, 3, and 9.
+Documents
+.Xr errno 2
+settings in sections 2, 3, 4, and 9.
 .Pp
 See
 .Sx \&Er .
