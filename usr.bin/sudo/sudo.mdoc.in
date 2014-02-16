@@ -19,7 +19,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: February 16 2014 $
 .Dt SUDO @mansectsu@
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Op Fl p Ar prompt
 .Op Fl u Ar user name | #uid
 .Nm sudo
-.Fl l Ns Op Ar l
+.Fl l
 .Op Fl AknS
 .Op Fl a Ar auth_type
 .Op Fl g Ar group name | #gid
@@ -49,7 +49,7 @@
 .Op Fl AbEHnPS
 .Op Fl a Ar auth_type
 .Op Fl C Ar fd
-.Op Fl c Ar class | -
+.Op Fl c Ar class | Cm -
 .Op Fl g Ar group name | #gid
 .Op Fl p Ar prompt
 .Op Fl u Ar user name | #uid
@@ -60,7 +60,7 @@
 .Op Fl AnS
 .Op Fl a Ar auth_type
 .Op Fl C Ar fd
-.Op Fl c Ar class | -
+.Op Fl c Ar class | Cm -
 .Op Fl g Ar group name | #gid
 .Op Fl p Ar prompt
 .Op Fl u Ar user name | #uid
@@ -184,7 +184,7 @@ character.
 If
 .Ar class
 is
-.Li - ,
+.Cm - ,
 the default login class of the target user will be used.
 Otherwise, the command must be run as the superuser (user ID 0), or
 .Nm sudo
@@ -381,7 +381,7 @@ may be set in a
 line along with a short description for each.
 This option will be removed from a future version of
 .Nm sudo .
-.It Fl l Ns Oo Sy l Oc Op Ar command
+.It Fl l Op Ar command
 If no
 .Ar command
 is specified, the
@@ -402,13 +402,7 @@ If
 is specified but not allowed,
 .Nm sudo
 will exit with a status value of 1.
-If the
-.Fl l
-option is specified with an
-.Ar l
-argument
-.Pq i.e.\& Fl ll ,
-or if
+If
 .Fl l
 is specified multiple times, a longer list format is used.
 .It Fl n
