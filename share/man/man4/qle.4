@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qle.4,v 1.4 2014/02/14 13:37:23 jmatthew Exp $
+.\"	$OpenBSD: qle.4,v 1.5 2014/02/17 10:21:15 dlg Exp $
 .\"
 .\" Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: February 17 2014 $
 .Dt QLE 4
 .Os
 .Sh NAME
@@ -25,8 +25,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for QLogic Fibre Channel host bus adapters using
-the ISP2400 and ISP2500 family of chipsets.
+driver provides support for 4G and 8G QLogic Fibre Channel host bus
+adapters using the ISP2400 and ISP2500 family of chipsets.
+.Pp
+.Nm
+provides no ability to configure an adapter parameters at runtime,
+all configuration must be done prior to booting
+.Ox .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
