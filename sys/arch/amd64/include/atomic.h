@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.9 2012/11/19 15:18:06 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.10 2014/02/17 10:01:32 dlg Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -69,14 +69,6 @@ x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val)
 	return val;
 }
 
-static __inline int32_t
-x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val)
-{
-	__asm__ volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
-	return val;
-}
-
-
 
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
@@ -132,7 +124,6 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 }
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u64
-#define x86_atomic_testset_i	x86_atomic_testset_i32
 #define x86_atomic_setbits_ul	x86_atomic_setbits_u64
 #define x86_atomic_clearbits_ul	x86_atomic_clearbits_u64
 
