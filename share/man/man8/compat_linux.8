@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.46 2014/01/23 08:13:12 jmc Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.47 2014/02/17 21:06:31 juanfra Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 23 2014 $
+.Dd $Mdocdate: February 17 2014 $
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -39,8 +39,7 @@
 .Sh DESCRIPTION
 .Ox
 supports running Linux binaries.
-This only applies to i386 systems for now.
-Both the a.out and ELF binary formats are supported.
+This only applies to i386 systems and the ELF binary format.
 Most programs should work, including the ones that use the Linux SVGAlib.
 Additionally, OSS audio is emulated, so Linux binaries can access the
 native audio transparently.
