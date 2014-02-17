@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.56 2013/11/27 01:13:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.57 2014/02/17 07:02:45 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -571,6 +571,9 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_I350_SGMII          0x1524
 #define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
 #define E1000_DEV_ID_I350_DA4            0x1546
+#define E1000_DEV_ID_I354_BACKPLANE_1GBPS       0x1F40
+#define E1000_DEV_ID_I354_SGMII                 0x1F41
+#define E1000_DEV_ID_I354_BACKPLANE_2_5GBPS     0x1F45
 #define E1000_DEV_ID_82574L              0x10D3
 #define E1000_DEV_ID_EP80579_LAN_1       0x5040
 #define E1000_DEV_ID_EP80579_LAN_2       0x5044
@@ -3374,6 +3377,7 @@ struct em_host_command_info {
 #define GG82563_E_PHY_ID     0x01410CA0
 #define BME1000_E_PHY_ID     0x01410CB0
 #define BME1000_E_PHY_ID_R2  0x01410CB1
+#define M88E1543_E_PHY_ID    0x01410EA0
 #define I82577_E_PHY_ID      0x01540050
 #define I82578_E_PHY_ID      0x004DD040
 #define I82579_E_PHY_ID      0x01540090

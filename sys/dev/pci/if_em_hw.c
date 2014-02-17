@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.75 2013/11/27 01:13:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.76 2014/02/17 07:02:45 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -225,6 +225,7 @@ em_set_phy_type(struct em_hw *hw)
 	case M88E1000_I_PHY_ID:
 	case M88E1011_I_PHY_ID:
 	case M88E1111_I_PHY_ID:
+	case M88E1543_E_PHY_ID:
 		hw->phy_type = em_phy_m88;
 		break;
 	case IGP01E1000_I_PHY_ID:
@@ -523,6 +524,9 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_I350_SERDES:
 	case E1000_DEV_ID_I350_SGMII:
 	case E1000_DEV_ID_I350_DA4:
+	case E1000_DEV_ID_I354_BACKPLANE_1GBPS:
+	case E1000_DEV_ID_I354_SGMII:
+	case E1000_DEV_ID_I354_BACKPLANE_2_5GBPS:
 		hw->mac_type = em_i350;
 		hw->initialize_hw_bits_disable = 1;
 		hw->eee_enable = 1;
@@ -5178,7 +5182,9 @@ em_match_gig_phy(struct em_hw *hw)
 		break;
 	case em_82580:
 	case em_i350:
-		if (hw->phy_id == I82580_I_PHY_ID || hw->phy_id == I350_I_PHY_ID) {
+		if (hw->phy_id == I82580_I_PHY_ID ||
+		    hw->phy_id == I350_I_PHY_ID ||
+		    hw->phy_id == M88E1543_E_PHY_ID) {
 			uint32_t mdic;
 
 			mdic = EM_READ_REG(hw, E1000_MDICNFG);
