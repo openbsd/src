@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.26 2013/12/19 14:31:07 deraadt Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.27 2014/02/17 08:58:50 tedu Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -168,7 +168,8 @@ bcrypt(const char *key, const char *salt)
 	blf_ctx state;
 	u_int32_t rounds, i, k;
 	u_int16_t j;
-	u_int8_t key_len, salt_len, logr, minor;
+	size_t key_len;
+	u_int8_t salt_len, logr, minor;
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
@@ -185,8 +186,8 @@ bcrypt(const char *key, const char *salt)
 	/* Check for minor versions */
 	if (salt[1] != '$') {
 		 switch (salt[1]) {
-		 case 'a':
-			 /* 'ab' should not yield the same as 'abab' */
+		 case 'a':	/* 'ab' should not yield the same as 'abab' */
+		 case 'b':	/* cap input length at 72 bytes */
 			 minor = salt[1];
 			 salt++;
 			 break;
@@ -220,7 +221,19 @@ bcrypt(const char *key, const char *salt)
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
 	salt_len = BCRYPT_MAXSALT;
-	key_len = strlen(key) + (minor >= 'a' ? 1 : 0);
+	if (minor <= 'a')
+		key_len = (u_int8_t)(strlen(key) + (minor >= 'a' ? 1 : 0));
+	else {
+		/* strlen() returns a size_t, but the function calls
+		 * below result in implicit casts to a narrower integer
+		 * type, so cap key_len at the actual maximum supported
+		 * length here to avoid integer wraparound */
+		key_len = strlen(key);
+		if (key_len > 72)
+			key_len = 72;
+		if (minor >= 'a')
+			key_len++; /* include the NUL */
+	}
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
