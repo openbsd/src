@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.65 2014/02/14 13:59:01 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.66 2014/02/17 18:12:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -307,11 +307,13 @@ cmd_set_option_set(struct cmd *self, struct cmd_q *cmdq,
 		break;
 	case OPTIONS_TABLE_COLOUR:
 		o = cmd_set_option_colour(self, cmdq, oe, oo, value);
-		style_update_new(oo, o->name, oe->style);
+		if (o != NULL)
+			style_update_new(oo, o->name, oe->style);
 		break;
 	case OPTIONS_TABLE_ATTRIBUTES:
 		o = cmd_set_option_attributes(self, cmdq, oe, oo, value);
-		style_update_new(oo, o->name, oe->style);
+		if (o != NULL)
+			style_update_new(oo, o->name, oe->style);
 		break;
 	case OPTIONS_TABLE_FLAG:
 		o = cmd_set_option_flag(self, cmdq, oe, oo, value);
