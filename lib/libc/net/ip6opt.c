@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6opt.c,v 1.5 2014/02/07 09:50:04 mpi Exp $	*/
+/*	$OpenBSD: ip6opt.c,v 1.6 2014/02/17 21:05:39 stsp Exp $	*/
 /*	$KAME: ip6opt.c,v 1.18 2005/06/15 07:11:35 keiichi Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ inet6_opt_init(void *extbuf, socklen_t extlen)
 	struct ip6_ext *ext = (struct ip6_ext *)extbuf;
 
 	if (ext) {
-               if (extlen <= 0 || (extlen % 8))
+		if (extlen <= 0 || (extlen % 8))
 			return (-1);
 		ext->ip6e_len = (extlen >> 3) - 1;
 	}
