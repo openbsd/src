@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.161 2014/01/22 09:35:20 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.162 2014/02/17 14:48:48 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 				if (((struct sockaddr_dl *)dst)->sdl_alen <
 				    sizeof(edst))
 					senderr(EHOSTUNREACH);
-				bcopy(LLADDR(((struct sockaddr_dl *)dst)), edst,
+				memcpy(edst, LLADDR((struct sockaddr_dl *)dst),
 				    sizeof(edst));
 				break;
 			case AF_INET:
@@ -329,12 +329,12 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof(esrc));
+		memcpy(esrc, eh->ether_shost, sizeof(esrc));
 		/* FALLTHROUGH */
 
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof(edst));
+		memcpy(edst, eh->ether_dhost, sizeof(edst));
 		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
 		etype = eh->ether_type;
 		break;
@@ -360,11 +360,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	eh->ether_type = etype;
 	memcpy(eh->ether_dhost, edst, sizeof(edst));
 	if (hdrcmplt)
-		memcpy(eh->ether_shost, esrc,
-		    sizeof(eh->ether_shost));
+		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	else
-		memcpy(eh->ether_shost, ac->ac_enaddr, 
-		    sizeof(eh->ether_shost));
+		memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
@@ -403,7 +401,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 				error = ENOBUFS;
 				goto bad;
 			}
-			bcopy(&ifp->if_bridgeport, mtag + 1, sizeof(caddr_t));
+			memcpy(mtag + 1, &ifp->if_bridgeport, sizeof(caddr_t));
 			m_tag_prepend(m, mtag);
 			error = bridge_output(ifp, m, NULL, NULL);
 			return (error);
@@ -649,7 +647,7 @@ decapsulate:
 			goto done;
 
 		eh_tmp = mtod(m, struct ether_header *);
-		bcopy(eh, eh_tmp, sizeof(struct ether_header));
+		memcpy(eh_tmp, eh, sizeof(struct ether_header));
 #ifdef PIPEX
 		if (pipex_enable) {
 			struct pipex_session *session;
@@ -774,8 +772,8 @@ ether_ifattach(struct ifnet *ifp)
 		ifp->if_hardmtu = ETHERMTU;
 
 	if_alloc_sadl(ifp);
-	bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-	    LLADDR(ifp->if_sadl), ifp->if_addrlen);
+	memcpy(LLADDR(ifp->if_sadl), ((struct arpcom *)ifp)->ac_enaddr,
+	    ifp->if_addrlen);
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
@@ -936,8 +934,8 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 	switch (sa->sa_family) {
 
 	case AF_UNSPEC:
-		bcopy(sa->sa_data, addrlo, ETHER_ADDR_LEN);
-		bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
+		memcpy(addrlo, sa->sa_data, ETHER_ADDR_LEN);
+		memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		break;
 
 #ifdef INET
@@ -950,11 +948,11 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 			 * multicast addresses used for IP.
 			 * (This is for the sake of IP multicast routers.)
 			 */
-			bcopy(ether_ipmulticast_min, addrlo, ETHER_ADDR_LEN);
-			bcopy(ether_ipmulticast_max, addrhi, ETHER_ADDR_LEN);
+			memcpy(addrlo, ether_ipmulticast_min, ETHER_ADDR_LEN);
+			memcpy(addrhi, ether_ipmulticast_max, ETHER_ADDR_LEN);
 		} else {
 			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
-			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
+			memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		}
 		break;
 #endif
@@ -974,11 +972,11 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
 			 * is not a bad idea.)
 			 */
 
-			bcopy(ether_ip6multicast_min, addrlo, ETHER_ADDR_LEN);
-			bcopy(ether_ip6multicast_max, addrhi, ETHER_ADDR_LEN);
+			memcpy(addrlo, ether_ip6multicast_min, ETHER_ADDR_LEN);
+			memcpy(addrhi, ether_ip6multicast_max, ETHER_ADDR_LEN);
 		} else {
 			ETHER_MAP_IPV6_MULTICAST(&sin6->sin6_addr, addrlo);
-			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
+			memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		}
 		break;
 #endif
@@ -1035,8 +1033,8 @@ ether_addmulti(struct ifreq *ifr, struct arpcom *ac)
 		splx(s);
 		return (ENOBUFS);
 	}
-	bcopy(addrlo, enm->enm_addrlo, ETHER_ADDR_LEN);
-	bcopy(addrhi, enm->enm_addrhi, ETHER_ADDR_LEN);
+	memcpy(enm->enm_addrlo, addrlo, ETHER_ADDR_LEN);
+	memcpy(enm->enm_addrhi, addrhi, ETHER_ADDR_LEN);
 	enm->enm_ac = ac;
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
