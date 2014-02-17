@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.59 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.60 2014/02/17 19:50:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -245,7 +245,8 @@ fail:
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	return (NULL);
 }
 
