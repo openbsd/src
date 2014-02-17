@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.96 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.97 2014/02/17 13:33:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -719,6 +719,14 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 
 		imsg->hdr.peerid = c->id;
 		m_forward(p_mta, imsg);
+		return;
+
+	case IMSG_CTL_SHOW_STATUS:
+		if (c->euid)
+			goto badcred;
+
+		m_compose(p, IMSG_CTL_SHOW_STATUS, 0, 0, -1, &env->sc_flags,
+		    sizeof(env->sc_flags));
 		return;
 
 	case IMSG_CTL_MTA_BLOCK:

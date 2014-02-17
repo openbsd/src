@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.449 2014/02/10 09:28:05 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.450 2014/02/17 13:33:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -150,7 +150,7 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		8
+#define	IMSG_VERSION		9
 
 enum imsg_type {
 	IMSG_NONE,
@@ -171,6 +171,7 @@ enum imsg_type {
 	IMSG_CTL_LIST_ENVELOPES,
 	IMSG_CTL_REMOVE,
 	IMSG_CTL_SCHEDULE,
+	IMSG_CTL_SHOW_STATUS,
 
 	IMSG_CTL_TRACE,
 	IMSG_CTL_UNTRACE,

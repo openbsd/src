@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.115 2014/02/04 15:22:39 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.116 2014/02/17 13:33:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -755,6 +755,24 @@ do_show_stats(int argc, struct parameter *argv)
 }
 
 static int
+do_show_status(int argc, struct parameter *argv)
+{
+	uint32_t	sc_flags;
+
+	srv_send(IMSG_CTL_SHOW_STATUS, NULL, 0);
+	srv_recv(IMSG_CTL_SHOW_STATUS);
+	srv_read(&sc_flags, sizeof(sc_flags));
+	srv_end();
+	printf("MDA %s\n",
+	    (sc_flags & SMTPD_MDA_PAUSED) ? "paused" : "running");
+	printf("MTA %s\n",
+	    (sc_flags & SMTPD_MTA_PAUSED) ? "paused" : "running");
+	printf("SMTP %s\n",
+	    (sc_flags & SMTPD_SMTP_PAUSED) ? "paused" : "running");
+	return (0);
+}
+
+static int
 do_stop(int argc, struct parameter *argv)
 {
 	srv_send(IMSG_CTL_SHUTDOWN, NULL, 0);
@@ -908,6 +926,7 @@ main(int argc, char **argv)
 	cmd_install("show relays",		do_show_relays);
 	cmd_install("show routes",		do_show_routes);
 	cmd_install("show stats",		do_show_stats);
+	cmd_install("show status",		do_show_status);
 	cmd_install("stop",			do_stop);
 	cmd_install("trace <str>",		do_trace);
 	cmd_install("unprofile <str>",		do_unprofile);

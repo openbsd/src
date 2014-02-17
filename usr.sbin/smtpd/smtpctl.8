@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.46 2013/11/13 09:15:41 eric Exp $
+.\" $OpenBSD: smtpctl.8,v 1.47 2014/02/17 13:33:56 eric Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2013 $
+.Dd $Mdocdate: February 17 2014 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -226,6 +226,8 @@ reactivate or discard it.
 .It Cm show stats
 Displays runtime statistics concerning
 .Xr smtpd 8 .
+.It Cm show status
+Shows if MTA, MDA and SMTP systems are currently running or paused.
 .It Cm stop
 Stop the server.
 .It Cm trace Ar subsystem
