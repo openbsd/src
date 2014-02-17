@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.19 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.20 2014/02/17 11:04:23 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,6 +43,7 @@ struct match {
 static int getaddrinfo_async_run(struct async *, struct async_res *);
 static int get_port(const char *, const char *, int);
 static int iter_family(struct async *, int);
+static int iter_domain(struct async *, const char *, char *, size_t);
 static int addrinfo_add(struct async *, const struct sockaddr *, const char *);
 static int addrinfo_from_file(struct async *, int,  FILE *);
 static int addrinfo_from_pkt(struct async *, char *, size_t);
@@ -65,6 +66,12 @@ static const struct match matches[] = {
 /* Do not match SOCK_RAW unless explicitely specified */
 #define MATCH_SOCKTYPE(a, b) ((a) == matches[(b)].socktype || ((a) == 0 && \
 				matches[(b)].socktype != SOCK_RAW))
+
+enum {
+	DOM_INIT,
+	DOM_DOMAIN,
+	DOM_DONE
+};
 
 struct async *
 getaddrinfo_async(const char *hostname, const char *servname,
@@ -107,6 +114,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 	int		 len;
 	char		 alias[MAXDNAME], *name;
 #endif
+	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
 	int		 i, family, r;
@@ -282,9 +290,38 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 				ar->ar_gai_errno = 0;
 				async_set_state(as, ASR_STATE_HALT);
 			} else
-				async_set_state(as, ASR_STATE_NEXT_DB);
+				async_set_state(as, ASR_STATE_NEXT_DOMAIN);
 			break;
 		}
+		async_set_state(as, ASR_STATE_SAME_DB);
+		break;
+
+	case ASR_STATE_NEXT_DOMAIN:
+		/* domain search is only for dns */
+		if (AS_DB(as) != ASR_DB_DNS) {
+			async_set_state(as, ASR_STATE_NEXT_DB);
+			break;
+		}
+		as->as_family_idx = 0;
+
+		free(as->as.ai.fqdn);
+		as->as.ai.fqdn = NULL;
+		r = iter_domain(as, as->as.ai.hostname, fqdn, sizeof(fqdn));
+		if (r == -1) {
+			async_set_state(as, ASR_STATE_NEXT_DB);
+			break;
+		}
+		if (r == 0) {
+			ar->ar_gai_errno = EAI_FAIL;
+			async_set_state(as, ASR_STATE_HALT);
+			break;
+		}
+		as->as.ai.fqdn = strdup(fqdn);
+		if (as->as.ai.fqdn == NULL) {
+			ar->ar_gai_errno = EAI_MEMORY;
+			async_set_state(as, ASR_STATE_HALT);
+		}
+
 		async_set_state(as, ASR_STATE_SAME_DB);
 		break;
 
@@ -292,20 +329,21 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		/* query the current DB again */
 		switch (AS_DB(as)) {
 		case ASR_DB_DNS:
+			if (as->as.ai.fqdn == NULL) {
+				/* First try, initialize domain iteration */
+				as->as_dom_flags = 0;
+				as->as_dom_step = DOM_INIT;
+				async_set_state(as, ASR_STATE_NEXT_DOMAIN);
+				break;
+			}
+
 			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
 			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
-			if (as->as.ai.fqdn) {
-				as->as.ai.subq = res_query_async_ctx(
-				    as->as.ai.fqdn, C_IN,
-				    (family == AF_INET6) ? T_AAAA : T_A,
-				    as->as_ctx);
-			}
-			else {
-				as->as.ai.subq = res_search_async_ctx(
-				    as->as.ai.hostname, C_IN,
-				    (family == AF_INET6) ? T_AAAA : T_A,
-				    as->as_ctx);
-			}
+
+			as->as.ai.subq = res_query_async_ctx(as->as.ai.fqdn,
+			    C_IN, (family == AF_INET6) ? T_AAAA : T_A,
+			    as->as_ctx);
+
 			if (as->as.ai.subq == NULL) {
 				if (errno == ENOMEM)
 					ar->ar_gai_errno = EAI_MEMORY;
@@ -484,6 +522,115 @@ iter_family(struct async *as, int first)
 	as->as_family_idx++;
 
 	return AS_FAMILY(as);
+}
+
+/*
+ * Concatenate a name and a domain name. The result has no trailing dot.
+ * Return the resulting string length, or 0 in case of error.
+ */
+static size_t
+domcat(const char *name, const char *domain, char *buf, size_t buflen)
+{
+	size_t	r;
+
+	r = asr_make_fqdn(name, domain, buf, buflen);
+	if (r == 0)
+		return (0);
+	buf[r - 1] = '\0';
+
+	return (r - 1);
+}
+
+/*
+ * Implement the search domain strategy.
+ *
+ * XXX duplicate from res_search_async
+ *
+ * This function works as a generator that constructs complete domains in
+ * buffer "buf" of size "len" for the given host name "name", according to the
+ * search rules defined by the resolving context.  It is supposed to be called
+ * multiple times (with the same name) to generate the next possible domain
+ * name, if any.
+ *
+ * It returns -1 if all possibilities have been exhausted, 0 if there was an
+ * error generating the next name, or the resulting name length.
+ */
+static int
+iter_domain(struct async *as, const char *name, char * buf, size_t len)
+{
+	const char	*c;
+	int		 dots;
+
+	switch (as->as_dom_step) {
+
+	case DOM_INIT:
+		/* First call */
+
+		/*
+		 * If "name" is an FQDN, that's the only result and we
+		 * don't try anything else.
+		 */
+		if (strlen(name) && name[strlen(name) - 1] ==  '.') {
+			DPRINT("asr: iter_domain(\"%s\") fqdn\n", name);
+			as->as_dom_flags |= ASYNC_DOM_FQDN;
+			as->as_dom_step = DOM_DONE;
+			return (domcat(name, NULL, buf, len));
+		}
+
+		/*
+		 * Otherwise, we iterate through the specified search domains.
+		 */
+		as->as_dom_step = DOM_DOMAIN;
+		as->as_dom_idx = 0;
+
+		/*
+		 * If "name" as enough dots, use it as-is first, as indicated
+		 * in resolv.conf(5).
+		 */
+		dots = 0;
+		for (c = name; *c; c++)
+			dots += (*c == '.');
+		if (dots >= as->as_ctx->ac_ndots) {
+			DPRINT("asr: iter_domain(\"%s\") ndots\n", name);
+			as->as_dom_flags |= ASYNC_DOM_NDOTS;
+			if (strlcpy(buf, name, len) >= len)
+				return (0);
+			return (strlen(buf));
+		}
+		/* Otherwise, starts using the search domains */
+		/* FALLTHROUGH */
+
+	case DOM_DOMAIN:
+		if (as->as_dom_idx < as->as_ctx->ac_domcount) {
+			DPRINT("asr: iter_domain(\"%s\") domain \"%s\"\n",
+			    name, as->as_ctx->ac_dom[as->as_dom_idx]);
+			as->as_dom_flags |= ASYNC_DOM_DOMAIN;
+			return (domcat(name,
+			    as->as_ctx->ac_dom[as->as_dom_idx++], buf, len));
+		}
+
+		/* No more domain to try. */
+
+		as->as_dom_step = DOM_DONE;
+
+		/*
+		 * If the name was not tried as an absolute name before,
+		 * do it now.
+		 */
+		if (!(as->as_dom_flags & ASYNC_DOM_NDOTS)) {
+			DPRINT("asr: iter_domain(\"%s\") as is\n", name);
+			as->as_dom_flags |= ASYNC_DOM_ASIS;
+			if (strlcpy(buf, name, len) >= len)
+				return (0);
+			return (strlen(buf));
+		}
+		/* Otherwise, we are done. */
+
+	case DOM_DONE:
+	default:
+		DPRINT("asr: iter_domain(\"%s\") done\n", name);
+		return (-1);
+	}
 }
 
 /*
