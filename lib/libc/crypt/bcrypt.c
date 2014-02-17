@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.27 2014/02/17 08:58:50 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.28 2014/02/17 09:00:20 tedu Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -231,8 +231,7 @@ bcrypt(const char *key, const char *salt)
 		key_len = strlen(key);
 		if (key_len > 72)
 			key_len = 72;
-		if (minor >= 'a')
-			key_len++; /* include the NUL */
+		key_len++; /* include the NUL */
 	}
 
 	/* Setting up S-Boxes and Subkeys */
