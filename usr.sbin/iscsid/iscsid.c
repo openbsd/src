@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.8 2011/08/20 19:03:39 sthen Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.9 2014/02/17 18:59:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -106,14 +106,15 @@ main(int argc, char *argv[])
 	log_init(debug);
 	log_verbose(verbose);
 
+	if (control_init(ctrlsock) == -1)
+		fatalx("control socket setup failed");
+
 	if (!debug)
 		daemon(1, 0);
 	log_info("startup");
 
 	event_init();
 	vscsi_open(vscsidev);
-	if (control_init(ctrlsock) == -1)
-		fatalx("control socket setup failed");
 
 	/* chroot and drop to iscsid user */
 	if ((pw = getpwnam(ISCSID_USER)) == NULL)
