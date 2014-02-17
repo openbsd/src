@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.23 2013/11/24 23:51:29 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.24 2014/02/17 10:49:53 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -505,8 +505,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 			if (strcasecmp(rr.rr_dname, dname) != 0)
 				continue;
 			if (hostent_set_cname(h, rr.rr.ptr.ptrname, 1) == -1)
-				goto fail;
-			/* XXX See if we need MULTI_PTRS_ARE_ALIASES */
+				hostent_add_alias(h, rr.rr.ptr.ptrname, 1);
 			break;
 
 		case T_A:
