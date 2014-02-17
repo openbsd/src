@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.17 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.18 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,9 @@
 #define IKED_PUBKEY_DIR	"pubkeys/"
 #define IKED_PRIVKEY	IKED_CA "private/local.key"
 #define IKED_PUBKEY	"local.pub"
+
+#define IKED_OCSP_RESPCERT        "ocsp/responder.crt"
+#define IKED_OCSP_ISSUER          "ocsp/issuer.crt"
 
 #define IKED_OPT_VERBOSE	0x00000001
 #define IKED_OPT_NOACTION	0x00000002
@@ -101,6 +104,8 @@ enum imsg_type {
 	IMSG_CERT,
 	IMSG_CERTVALID,
 	IMSG_CERTINVALID,
+	IMSG_OCSP_FD,
+	IMSG_OCSP_URL,
 	IMSG_AUTH
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.24 2014/01/24 05:58:52 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.25 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -726,5 +726,30 @@ config_getcompile(struct iked *env, struct imsg *imsg)
 	policy_calc_skip_steps(&env->sc_policies);
 
 	log_debug("%s: compilation done", __func__);
+	return (0);
+}
+
+int
+config_setocsp(struct iked *env)
+{
+	if (env->sc_opts & IKED_OPT_NOACTION)
+		return (0);
+	proc_compose_imsg(env, PROC_CERT, IMSG_OCSP_URL, -1, env->sc_ocsp_url,
+	    env->sc_ocsp_url ? strlen(env->sc_ocsp_url) : 0);
+
+	return (0);
+}
+
+int
+config_getocsp(struct iked *env, struct imsg *imsg)
+{
+	if (env->sc_ocsp_url)
+		free(env->sc_ocsp_url);
+	if (IMSG_DATA_SIZE(imsg) > 0)
+		env->sc_ocsp_url = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+	else
+		env->sc_ocsp_url = NULL;
+	log_debug("%s: ocsp_url %s", __func__,
+	    env->sc_ocsp_url ? env->sc_ocsp_url : "none");
 	return (0);
 }

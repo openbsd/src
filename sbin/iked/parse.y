@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2014/02/14 09:00:03 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -92,6 +92,7 @@ static int		 debug = 0;
 static int		 rules = 0;
 static int		 passive = 0;
 static int		 decouple = 0;
+static char		*ocsp_url = NULL;
 
 struct ipsec_xf {
 	const char	*name;
@@ -369,7 +370,7 @@ typedef struct {
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
-%token	IPCOMP
+%token	IPCOMP OCSP
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -430,6 +431,12 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET PASSIVE	{ passive = 1; }
 		| SET COUPLE	{ decouple = 0; }
 		| SET DECOUPLE	{ decouple = 1; }
+		| SET OCSP STRING		{
+			if ((ocsp_url = strdup($3)) == NULL) {
+				yyerror("cannot set ocsp_url");
+				YYERROR;
+			}
+		}
 		;
 
 user		: USER STRING STRING		{
@@ -1086,6 +1093,7 @@ lookup(char *s)
 		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
 		{ "name",		NAME },
+		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
 		{ "port",		PORT },
@@ -1460,6 +1468,7 @@ parse_config(const char *filename, struct iked *x_env)
 
 	env->sc_passive = passive ? 1 : 0;
 	env->sc_decoupled = decouple ? 1 : 0;
+	env->sc_ocsp_url = ocsp_url;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

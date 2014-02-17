@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.25 2014/02/17 11:00:14 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.26 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -162,6 +162,12 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_debug("%s: config reload", __func__);
 			ca_reset(&env->sc_ps, store);
 		}
+		break;
+	case IMSG_OCSP_FD:
+		ocsp_receive_fd(env, imsg);
+		break;
+	case IMSG_OCSP_URL:
+		config_getocsp(env, imsg);
 		break;
 	default:
 		return (-1);
@@ -348,6 +354,11 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	switch (type) {
 	case IKEV2_CERT_X509_CERT:
 		ret = ca_validate_cert(env, &id, ptr, len);
+		if (ret == 0 && env->sc_ocsp_url) {
+			ret = ocsp_validate_cert(env, &id, ptr, len, sh, type);
+			if (ret == 0)
+				return (0);
+		}
 		break;
 	case IKEV2_CERT_RSA_KEY:
 		ret = ca_validate_pubkey(env, &id, ptr, len);

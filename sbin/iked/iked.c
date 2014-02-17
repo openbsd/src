@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.18 2013/10/24 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: iked.c,v 1.19 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -217,6 +217,7 @@ parent_configure(struct iked *env)
 
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setmode(env, env->sc_passive ? 1 : 0);
+	config_setocsp(env);
 
 	return (0);
 }
@@ -246,6 +247,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setmode(env, env->sc_passive ? 1 : 0);
+		config_setocsp(env);
 	} else {
 		config_setreset(env, reset, PROC_IKEV1);
 		config_setreset(env, reset, PROC_IKEV2);
@@ -368,6 +370,9 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 		parent_reload(env, 0, str);
 		if (str != NULL)
 			free(str);
+		break;
+	case IMSG_OCSP_FD:
+		ocsp_connect(env);
 		break;
 	default:
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.67 2014/02/14 10:23:43 benno Exp $	*/
+/*	$OpenBSD: iked.h,v 1.68 2014/02/17 15:07:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -511,6 +511,12 @@ struct privsep_proc {
 	struct iked		*p_env;
 };
 
+struct iked_ocsp_entry {
+	TAILQ_ENTRY(iked_ocsp_entry) ioe_entry;	/* next request */
+	void			*ioe_ocsp;	/* private ocsp request data */
+};
+TAILQ_HEAD(iked_ocsp_requests, iked_ocsp_entry);
+
 /*
  * Daemon configuration
  */
@@ -545,6 +551,9 @@ struct iked {
 #define IKED_INITIATOR_INTERVAL		 60
 
 	struct privsep			 sc_ps;
+
+	struct iked_ocsp_requests	 sc_ocsp;
+	char				*sc_ocsp_url;
 };
 
 struct iked_socket {
@@ -603,6 +612,8 @@ int	 config_setuser(struct iked *, struct iked_user *, enum privsep_procid);
 int	 config_getuser(struct iked *, struct imsg *);
 int	 config_setcompile(struct iked *, enum privsep_procid);
 int	 config_getcompile(struct iked *, struct imsg *);
+int	 config_setocsp(struct iked *);
+int	 config_getocsp(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);
@@ -888,6 +899,12 @@ void	 print_debug(const char *, ...) __attribute__((format(printf, 1, 2)));
 void	 print_verbose(const char *, ...) __attribute__((format(printf, 1, 2)));
 __dead void fatal(const char *);
 __dead void fatalx(const char *);
+
+/* ocsp.c */
+int	 ocsp_connect(struct iked *env);
+int	 ocsp_receive_fd(struct iked *, struct imsg *);
+int	 ocsp_validate_cert(struct iked *, struct iked_static_id *,
+    void *, size_t, struct iked_sahdr, u_int8_t);
 
 /* parse.y */
 int	 parse_config(const char *, struct iked *);

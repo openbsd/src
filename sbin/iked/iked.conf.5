@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.26 2013/11/01 10:42:38 henning Exp $
+.\" $OpenBSD: iked.conf.5,v 1.27 2014/02/17 15:07:23 markus Exp $
 .\"
 .\" Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2013 $
+.Dd $Mdocdate: February 17 2014 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -136,6 +136,13 @@ This is the default.
 .It Ic set decouple
 Don't load the negotiated SAs and flows from the kernel.
 This mode is only useful for testing and debugging.
+.It Ic set ocsp Ar URL
+Enable OCSP and set the URL of the OCSP responder.
+Please note that the matching responder and issuer certificates
+have to be placed in
+.Pa /etc/iked/ocsp/responder.crt
+and
+.Pa /etc/iked/ocsp/issuer.crt .
 .It Ic user Ar name Ar password
 .Xr iked 8
 supports user-based authentication by tunneling the Extensible
