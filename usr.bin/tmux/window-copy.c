@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.101 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.102 2014/02/17 23:07:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1455,8 +1455,8 @@ window_copy_copy_buffer(struct window_pane *wp, int idx, void *buf, size_t len)
 	if (idx == -1) {
 		limit = options_get_number(&global_options, "buffer-limit");
 		paste_add(&global_buffers, buf, len, limit);
-	} else
-		paste_replace(&global_buffers, idx, buf, len);
+	} else if (paste_replace(&global_buffers, idx, buf, len) != 0)
+		free(buf);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.14 2012/11/27 20:22:12 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.15 2014/02/17 23:07:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -131,8 +131,10 @@ paste_replace(struct paste_stack *ps, u_int idx, char *data, size_t size)
 {
 	struct paste_buffer	*pb;
 
-	if (size == 0)
+	if (size == 0) {
+		free(data);
 		return (0);
+	}
 
 	if (idx >= ARRAY_LENGTH(ps))
 		return (-1);

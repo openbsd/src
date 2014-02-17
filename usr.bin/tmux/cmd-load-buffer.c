@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.26 2014/02/14 13:59:01 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.27 2014/02/17 23:07:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -169,6 +169,7 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 		/* No context so can't use server_client_msg_error. */
 		evbuffer_add_printf(c->stderr_data, "no buffer %d\n", *buffer);
 		server_push_stderr(c);
+		free(pdata);
 	}
 
 	free(data);
