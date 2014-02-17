@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.6 2014/02/17 03:50:42 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.7 2014/02/17 03:57:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -364,7 +364,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-	    qle_intr, sc, sc->sc_dev.dv_xname);
+	    qle_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n");
 		goto deintr;
