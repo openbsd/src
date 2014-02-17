@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.29 2014/01/24 07:35:55 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.30 2014/02/17 15:53:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -511,6 +511,13 @@ sa_peer_cmp(struct iked_sa *a, struct iked_sa *b)
 	    (struct sockaddr *)&b->sa_polpeer.addr, -1));
 }
 
+static __inline int
+sa_addrpool_cmp(struct iked_sa *a, struct iked_sa *b)
+{
+	return (sockaddr_cmp((struct sockaddr *)&a->sa_addrpool->addr,
+	    (struct sockaddr *)&b->sa_addrpool->addr, -1));
+}
+
 struct iked_user *
 user_lookup(struct iked *env, const char *user)
 {
@@ -573,6 +580,7 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
+RB_GENERATE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
 RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 RB_GENERATE(iked_flows, iked_flow, flow_node, flow_cmp);

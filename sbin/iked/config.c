@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2014/02/17 15:07:23 markus Exp $	*/
+/*	$OpenBSD: config.c,v 1.26 2014/02/17 15:53:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -85,6 +85,11 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	config_free_proposals(&sa->sa_proposals, 0);
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);
 	sa_free_flows(env, &sa->sa_flows);
+
+	if (sa->sa_addrpool) {
+		(void)RB_REMOVE(iked_addrpool, &env->sc_addrpool, sa);
+		free(sa->sa_addrpool);
+	}
 
 	if (sa->sa_policy) {
 		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);

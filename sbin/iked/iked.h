@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.68 2014/02/17 15:07:23 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.69 2014/02/17 15:53:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -422,8 +422,12 @@ struct iked_sa {
 
 	RB_ENTRY(iked_sa)		 sa_peer_entry;
 	RB_ENTRY(iked_sa)		 sa_entry;
+
+	struct iked_addr		*sa_addrpool;	/* address from pool */
+	RB_ENTRY(iked_sa)		 sa_addrpool_entry;	/* pool entries */
 };
 RB_HEAD(iked_sas, iked_sa);
+RB_HEAD(iked_addrpool, iked_sa);
 
 struct iked_message {
 	struct ibuf		*msg_data;
@@ -554,6 +558,8 @@ struct iked {
 
 	struct iked_ocsp_requests	 sc_ocsp;
 	char				*sc_ocsp_url;
+
+	struct iked_addrpool		 sc_addrpool;
 };
 
 struct iked_socket {
@@ -645,6 +651,7 @@ struct iked_user *
 	 user_lookup(struct iked *, const char *);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
+RB_PROTOTYPE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);
 RB_PROTOTYPE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 RB_PROTOTYPE(iked_flows, iked_flow, flow_node, flow_cmp);

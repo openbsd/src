@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.93 2014/02/17 11:00:14 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.94 2014/02/17 15:53:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -107,6 +107,10 @@ int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
 
 int	 ikev2_ipcomp_enable(struct iked_sa *);
+
+int	 ikev2_cp_setaddr(struct iked *, struct iked_sa *);
+int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
+	    struct iked_addr *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -1201,6 +1205,7 @@ ikev2_add_ts_payload(struct ibuf *buf, u_int type, struct iked_sa *sa)
 	struct ikev2_ts		*ts;
 	struct iked_flow	*flow;
 	struct iked_addr	*addr;
+	struct iked_addr	 pooladdr;
 	u_int8_t		*ptr;
 	size_t			 len = 0;
 	u_int32_t		 av[4], bv[4], mv[4];
@@ -1228,6 +1233,13 @@ ikev2_add_ts_payload(struct ibuf *buf, u_int type, struct iked_sa *sa)
 				addr = &flow->flow_src;
 		} else
 			return (-1);
+
+		/* patch remote address (if configured to 0.0.0.0) */
+		if ((type == IKEV2_PAYLOAD_TSi && !sa->sa_hdr.sh_initiator) ||
+		    (type == IKEV2_PAYLOAD_TSr && sa->sa_hdr.sh_initiator)) {
+			if (ikev2_cp_fixaddr(sa, addr, &pooladdr) != -1)
+				addr = &pooladdr;
+		}
 
 		ts->ts_protoid = flow->flow_ipproto;
 
@@ -1578,7 +1590,13 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 		case IKEV2_CFG_INTERNAL_IP4_DHCP:
 		case IKEV2_CFG_INTERNAL_IP4_SERVER:
 			/* 4 bytes IPv4 address */
-			in4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
+			in4 = (ikecfg->cfg.address.addr_mask != 32 &&
+			    (ikecfg->cfg_type ==
+			    IKEV2_CFG_INTERNAL_IP4_ADDRESS) &&
+			    sa->sa_addrpool &&
+			    sa->sa_addrpool->addr_af == AF_INET) ?
+			    (struct sockaddr_in *)&sa->sa_addrpool->addr :
+			    (struct sockaddr_in *)&ikecfg->cfg.address.addr;
 			cfg->cfg_length = htobe16(4);
 			if (ibuf_add(buf, &in4->sin_addr.s_addr, 4) == -1)
 				return (-1);
@@ -1609,7 +1627,13 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 		case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
 		case IKEV2_CFG_INTERNAL_IP6_SUBNET:
 			/* 16 bytes IPv6 address + 1 byte prefix length */
-			in6 = (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
+			in6 = (ikecfg->cfg.address.addr_mask != 128 &&
+			    (ikecfg->cfg_type ==
+			    IKEV2_CFG_INTERNAL_IP6_ADDRESS) &&
+			    sa->sa_addrpool &&
+			    sa->sa_addrpool->addr_af == AF_INET6) ?
+			    (struct sockaddr_in6 *)&sa->sa_addrpool->addr :
+			    (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
 			cfg->cfg_length = htobe16(17);
 			if (ibuf_add(buf, &in6->sin6_addr.s6_addr, 16) == -1)
 				return (-1);
@@ -2046,6 +2070,9 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		return (ikev2_resp_ike_eap(env, sa, NULL));
 	else if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (0);	/* ignore */
+
+	if (sa->sa_cp)
+		ikev2_cp_setaddr(env, sa);
 
 	if (ikev2_childsa_negotiate(env, sa, sa->sa_hdr.sh_initiator) == -1)
 		return (-1);
@@ -2727,6 +2754,14 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			timer_del(env, &sa->sa_timer);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_REKEY_TIMEOUT);
+
+		if (sa->sa_addrpool) {
+			/* transfer sa_addrpool address */
+			RB_REMOVE(iked_addrpool, &env->sc_addrpool, sa);
+			nsa->sa_addrpool = sa->sa_addrpool;
+			sa->sa_addrpool = NULL;
+			RB_INSERT(iked_addrpool, &env->sc_addrpool, nsa);
+		}
 	} else
 		ret = ikev2_childsa_enable(env, sa);
 
@@ -3771,6 +3806,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
+			ikev2_cp_fixaddr(sa, &flow->flow_dst, &flowa->flow_dst);
 
 			if ((flowb = calloc(1, sizeof(*flowb))) == NULL) {
 				log_debug("%s: failed to get flow", __func__);
@@ -3785,6 +3821,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator)
 			    sizeof(flow->flow_dst));
 			memcpy(&flowb->flow_dst, &flow->flow_src,
 			    sizeof(flow->flow_src));
+			ikev2_cp_fixaddr(sa, &flow->flow_dst, &flowb->flow_src);
 
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
@@ -4383,5 +4420,146 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 		break;
 	}
 
+	return (0);
+}
+
+/*
+ * If we have an IKEV2_CP_REQUEST for IKEV2_CFG_INTERNAL_IP4_ADDRESS and
+ * if a network(pool) is configured, then select an address from that pool
+ * and remember it in the sa_addrpool attribute.
+ */
+int
+ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_cfg		*ikecfg = NULL;
+	struct iked_policy	*pol = sa->sa_policy;
+	struct sockaddr_in	*in4 = NULL, *cfg4 = NULL;
+	struct sockaddr_in6	*in6 = NULL, *cfg6 = NULL;
+	struct iked_sa		 key;
+	struct iked_addr	 addr;
+	u_int32_t		 mask, host, lower, upper, start;
+	size_t			 i;
+
+	if (sa->sa_addrpool || pol->pol_ncfg == 0)
+		return (0);
+	/* check for an address pool config (address w/ prefixlen != 32) */
+	bzero(&addr, sizeof(addr));
+	for (i = 0; i < pol->pol_ncfg; i++) {
+		ikecfg = &pol->pol_cfg[i];
+		if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_ADDRESS &&
+		    ikecfg->cfg.address.addr_mask != 32) {
+			addr.addr_af = AF_INET;
+			break;
+		}
+		if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP6_ADDRESS &&
+		    ikecfg->cfg.address.addr_mask != 128) {
+			addr.addr_af = AF_INET6;
+			break;
+		}
+	}
+	if (ikecfg == NULL)
+		return (0);
+
+	/*
+	 * failure: pool configured, but not requested.
+	 * If we continue, we might end up with flows where 0.0.0.0 is NOT
+	 * replaced with an address from the pool with ikev2_cp_fixaddr().
+	 */
+	if (sa->sa_cp != IKEV2_CP_REQUEST) {
+		log_debug("%s: pool configured, but IKEV2_CP_REQUEST missing",
+		    __func__);
+		return (-1);
+	}
+
+	/* truncate prefixlen in the v6 case */
+	mask = prefixlen2mask(ikecfg->cfg.address.addr_mask);
+
+	switch (addr.addr_af) {
+	case AF_INET:
+		cfg4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
+		in4 = (struct sockaddr_in *)&addr.addr;
+		in4->sin_family = AF_INET;
+		in4->sin_len = sizeof(*in4);
+		lower = ntohl(cfg4->sin_addr.s_addr & ~mask);
+		break;
+	case AF_INET6:
+		cfg6 = (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
+		in6 = (struct sockaddr_in6 *)&addr.addr;
+		in6->sin6_family = AF_INET6;
+		in6->sin6_len = sizeof(*in6);
+		lower = cfg6->sin6_addr.s6_addr[3];
+		break;
+	default:
+		return (-1);
+	}
+
+	if (lower == 0)
+		lower = 1;
+	/* Note that start, upper and host are in HOST byte order */
+	upper = ntohl(~mask);
+	/* Randomly select start from [lower, upper-1] */
+	start = arc4random_uniform(upper - lower) + lower;
+
+	key.sa_addrpool = &addr;
+
+	for (host = start;;) {
+		log_debug("%s: mask %x start %x lower %x host %x upper %x",
+		    __func__, mask, start, lower, host, upper);
+		switch (addr.addr_af) {
+		case AF_INET:
+			in4->sin_addr.s_addr =
+			    (cfg4->sin_addr.s_addr & mask) | htonl(host);
+			break;
+		case AF_INET6:
+			memcpy(in6, cfg6, sizeof(*in6));
+			in6->sin6_addr.s6_addr[3] = htonl(host);
+			break;
+		}
+		if (!RB_FIND(iked_addrpool, &env->sc_addrpool, &key))
+			break;
+		/* try next address */
+		host++;
+		/* but skip broadcast and network address */
+		if (host >= upper || host < lower)
+			host = lower;
+		if (host == start)
+			return (-1);		/* exhausted */
+	}
+	if (!key.sa_addrpool)
+		return (-1);			/* cannot happen? */
+	if ((sa->sa_addrpool = calloc(1, sizeof(addr))) == NULL)
+		return (-1);
+	memcpy(sa->sa_addrpool, &addr, sizeof(addr));
+	RB_INSERT(iked_addrpool, &env->sc_addrpool, sa);
+	return (0);
+}
+
+/*
+ * if 'addr' is 'UNSPECIFIED' replace it with sa_addrpool from
+ * the ip-pool and store the result in 'patched'.
+ */
+int
+ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
+    struct iked_addr *patched)
+{
+	struct sockaddr_in	*in4;
+	struct sockaddr_in6	*in6;
+
+	if (sa->sa_addrpool == NULL ||
+	    sa->sa_addrpool->addr_af != addr->addr_af)
+		return (-1);
+	switch (addr->addr_af) {
+	case AF_INET:
+		in4 = (struct sockaddr_in *)&addr->addr;
+		if (in4->sin_addr.s_addr)
+			return (-1);
+		break;
+	case AF_INET6:
+		in6 = (struct sockaddr_in6 *)&addr->addr;
+		if (IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
+			return (-1);
+		break;
+	}
+	memcpy(patched, sa->sa_addrpool, sizeof(*patched));
 	return (0);
 }
