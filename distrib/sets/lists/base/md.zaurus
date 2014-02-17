@@ -1254,6 +1254,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/qlereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/safevar.ph

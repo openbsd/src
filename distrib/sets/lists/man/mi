@@ -580,6 +580,7 @@
 ./usr/share/man/man1/perlhacktut.1
 ./usr/share/man/man1/perlhist.1
 ./usr/share/man/man1/perlintern.1
+./usr/share/man/man1/perlinterp.1
 ./usr/share/man/man1/perlintro.1
 ./usr/share/man/man1/perliol.1
 ./usr/share/man/man1/perlipc.1
@@ -2034,6 +2035,8 @@
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/pwdog.4
+./usr/share/man/man4/qla.4
+./usr/share/man/man4/qle.4
 ./usr/share/man/man4/qsphy.4
 ./usr/share/man/man4/radeondrm.4
 ./usr/share/man/man4/radio.4

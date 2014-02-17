@@ -597,7 +597,6 @@
 ./usr/libdata/perl5/hppa64-openbsd/5.16.3/threads
 ./usr/libdata/perl5/hppa64-openbsd/5.16.3/threads.pm
 ./usr/libdata/perl5/hppa64-openbsd/5.16.3/threads/shared.pm
-./usr/libdata/perl5/site_perl/hppa-openbsd/hppa64/fenv.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/a.out.ph
@@ -1236,6 +1235,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/qlereg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/safevar.ph
