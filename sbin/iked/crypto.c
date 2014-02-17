@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.12 2014/01/24 07:29:17 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.13 2014/02/17 11:00:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -328,7 +328,7 @@ cipher_setiv(struct iked_cipher *encr, void *iv, size_t len)
 	ibuf_release(encr->encr_iv);
 	if (iv != NULL) {
 		if (len < encr->encr_ivlength) {
-			log_debug("%s: invalid IV length %d", __func__, len);
+			log_debug("%s: invalid IV length %zu", __func__, len);
 			return (NULL);
 		}
 		encr->encr_iv = ibuf_new(iv, encr->encr_ivlength);

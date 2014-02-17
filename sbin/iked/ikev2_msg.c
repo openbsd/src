@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.28 2014/01/24 05:58:52 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.29 2014/02/17 11:00:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -334,7 +334,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	buf = ibuf_data(src);
 	len = ibuf_size(src);
 
-	log_debug("%s: decrypted length %d", __func__, len);
+	log_debug("%s: decrypted length %zu", __func__, len);
 	print_hex(buf, 0, len);
 
 	if (sa == NULL ||
@@ -366,7 +366,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	if (ibuf_add(src, &pad, sizeof(pad)) != 0)
 		goto done;
 
-	log_debug("%s: padded length %d", __func__, ibuf_size(src));
+	log_debug("%s: padded length %zu", __func__, ibuf_size(src));
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
@@ -391,7 +391,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		goto done;
 	bzero(ptr, integrlen);
 
-	log_debug("%s: length %d, padding %d, output length %d",
+	log_debug("%s: length %zu, padding %d, output length %zu",
 	    __func__, len + sizeof(pad), pad, ibuf_size(dst));
 	print_hex(ibuf_data(dst), 0, ibuf_size(dst));
 
@@ -413,7 +413,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	struct ibuf		*integr, *tmp = NULL;
 	u_int8_t		*ptr;
 
-	log_debug("%s: message length %d", __func__, ibuf_size(src));
+	log_debug("%s: message length %zu", __func__, ibuf_size(src));
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
 
 	if (sa == NULL ||
@@ -429,7 +429,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 
 	integrlen = hash_length(sa->sa_integr);
 
-	log_debug("%s: integrity checksum length %d", __func__,
+	log_debug("%s: integrity checksum length %zu", __func__,
 	    integrlen);
 
 	/*
@@ -502,11 +502,11 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	log_debug("%s: IV length %d", __func__, ivlen);
+	log_debug("%s: IV length %zd", __func__, ivlen);
 	print_hex(ibuf_data(src), 0, ivlen);
-	log_debug("%s: encrypted payload length %d", __func__, encrlen);
+	log_debug("%s: encrypted payload length %zd", __func__, encrlen);
 	print_hex(ibuf_data(src), encroff, encrlen);
-	log_debug("%s: integrity checksum length %d", __func__, integrlen);
+	log_debug("%s: integrity checksum length %zd", __func__, integrlen);
 	print_hex(ibuf_data(src), integroff, integrlen);
 
 	/*
@@ -556,7 +556,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		pad = *ptr;
 	}
 
-	log_debug("%s: decrypted payload length %d/%d padding %d",
+	log_debug("%s: decrypted payload length %zd/%zd padding %d",
 	    __func__, outlen, encrlen, pad);
 	print_hex(ibuf_data(out), 0, ibuf_size(out));
 
@@ -681,7 +681,7 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 	if (tmplen != hash_length(sa->sa_prf))
 		goto fail;
 
-	log_debug("%s: %s auth data length %d",
+	log_debug("%s: %s auth data length %zu",
 	    __func__, response ? "responder" : "initiator",
 	    ibuf_size(authmsg));
 	print_hex(ibuf_data(authmsg), 0, ibuf_size(authmsg));
@@ -739,7 +739,7 @@ ikev2_msg_authverify(struct iked *env, struct iked_sa *sa,
 		break;
 	}
 
-	log_debug("%s: method %s keylen %d type %s", __func__,
+	log_debug("%s: method %s keylen %zd type %s", __func__,
 	    print_map(auth->auth_method, ikev2_auth_map), keylen,
 	    print_map(id->id_type, ikev2_cert_map));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.13 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.14 2014/02/17 11:00:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -108,7 +108,7 @@ ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (0);
 		}
 
-		log_debug("%s: message length %d", __func__, len);
+		log_debug("%s: message length %zd", __func__, len);
 
 		ikev1_recv(env, &msg);
 		ikev2_msg_cleanup(env, &msg);

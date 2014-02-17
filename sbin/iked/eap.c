@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.9 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: eap.c,v 1.10 2014/02/17 11:00:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -77,11 +77,11 @@ eap_identity_response(struct eap_message *eap)
 	ptr += sizeof(*eap);
 
 	if (len == 0 || (str = get_string(ptr, len)) == NULL) {
-		log_info("%s: invalid identity response, length %d",
+		log_info("%s: invalid identity response, length %zu",
 		    __func__, len);
 		return (NULL);
 	}
-	log_debug("%s: identity '%s' length %d", __func__, str, len);
+	log_debug("%s: identity '%s' length %zd", __func__, str, len);
 	return (str);
 }
 
@@ -397,7 +397,7 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 				return (-1);
 			}
 			log_info("%s: %s %s id %d "
-			    "length %d valuesize %d name '%s' length %d",
+			    "length %d valuesize %d name '%s' length %zu",
 			    __func__,
 			    print_map(eap->eap_type, eap_type_map),
 			    print_map(ms->ms_opcode, eap_msopcode_map),
@@ -418,7 +418,7 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 				return (-1);
 			}
 			log_info("%s: %s %s id %d "
-			    "length %d valuesize %d name '%s' name-length %d",
+			    "length %d valuesize %d name '%s' name-length %zu",
 			    __func__,
 			    print_map(eap->eap_type, eap_type_map),
 			    print_map(ms->ms_opcode, eap_msopcode_map),
@@ -440,7 +440,7 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 					return (-1);
 				}
 				log_info("%s: %s %s request id %d "
-				    "length %d message '%s' message-len %d",
+				    "length %d message '%s' message-len %zu",
 				    __func__,
 				    print_map(eap->eap_type, eap_type_map),
 				    print_map(ms->ms_opcode, eap_msopcode_map),
