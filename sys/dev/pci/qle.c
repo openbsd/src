@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.5 2014/02/15 13:16:55 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.6 2014/02/17 03:50:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -157,7 +157,7 @@ struct qle_softc {
 	enum qle_isp_gen	sc_isp_gen;
 	int			sc_port;
 
-	int			sc_mbox_base;
+	bus_space_handle_t	sc_mbox_ioh;
 	u_int16_t		sc_mbox[QLE_MBOX_COUNT];
 	int			sc_mbox_pending;
 	struct mutex		sc_mbox_mtx;
@@ -332,6 +332,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t pcictl;
 	struct scsibus_attach_args saa;
 	struct qle_init_cb *icb;
+	bus_size_t mbox_base;
 
 	pcireg_t bars[] = { QLE_PCI_MEM_BAR, QLE_PCI_IO_BAR };
 	pcireg_t memtype;
@@ -389,31 +390,37 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_QLOGIC_ISP2422:
 		sc->sc_isp_type = QLE_ISP2422;
 		sc->sc_isp_gen = QLE_GEN_ISP24XX;
-		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
+		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2432:
 		sc->sc_isp_type = QLE_ISP2432;
 		sc->sc_isp_gen = QLE_GEN_ISP24XX;
-		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
+		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2512:
 		sc->sc_isp_type = QLE_ISP2512;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
+		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2522:
 		sc->sc_isp_type = QLE_ISP2522;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
+		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2532:
 		sc->sc_isp_type = QLE_ISP2532;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		sc->sc_mbox_base = QLE_MBOX_BASE_24XX;
+		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 
 	default:
 		printf("unknown pci id %x", pa->pa_id);
+		goto deintr;
+	}
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, mbox_base,
+	    sizeof(sc->sc_mbox), &sc->sc_mbox_ioh) != 0) {
+		printf("%s: unable to map mbox registers\n", DEVNAME(sc));
 		goto deintr;
 	}
 
@@ -1273,9 +1280,9 @@ u_int16_t
 qle_read_mbox(struct qle_softc *sc, int mbox)
 {
 	u_int16_t v;
-	bus_size_t offset = sc->sc_mbox_base + (mbox * 2);
-	v = bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, offset, 2,
+	bus_size_t offset = mbox * 2;
+	v = bus_space_read_2(sc->sc_iot, sc->sc_mbox_ioh, offset);
+	bus_space_barrier(sc->sc_iot, sc->sc_mbox_ioh, offset, 2,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	return (v);
 }
@@ -1283,9 +1290,9 @@ qle_read_mbox(struct qle_softc *sc, int mbox)
 void
 qle_write_mbox(struct qle_softc *sc, int mbox, u_int16_t value)
 {
-	bus_size_t offset = sc->sc_mbox_base + (mbox * 2);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, value);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, offset, 2,
+	bus_size_t offset = (mbox * 2);
+	bus_space_write_2(sc->sc_iot, sc->sc_mbox_ioh, offset, value);
+	bus_space_barrier(sc->sc_iot, sc->sc_mbox_ioh, offset, 2,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 }
 
