@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.37 2013/03/08 18:29:33 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.38 2014/02/18 19:37:33 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -58,13 +58,16 @@ struct sio_softc {
 
 int	siomatch(struct device *, void *, void *);
 void	sioattach(struct device *, struct device *, void *);
+int	sioactivate(struct device *, int);
 
 extern int sio_intr_alloc(isa_chipset_tag_t *, int, int, int *);
 extern int sio_intr_check(isa_chipset_tag_t *, int, int);
 
-
 struct cfattach sio_ca = {
-	sizeof(struct sio_softc), siomatch, sioattach,
+	.ca_devsize = sizeof(struct sio_softc),
+	.ca_match = siomatch,
+	.ca_attach = sioattach,
+	.ca_activate = sioactivate
 };
 
 struct cfdriver sio_cd = {
@@ -154,6 +157,23 @@ sioattach(parent, self, aux)
 		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 	config_defer(self, sio_bridge_callback);
+}
+
+int
+sioactivate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		sio_intr_shutdown();
+		break;
+	default:
+		rv = config_activate_children(self, act);
+		break;
+	}
+	return (rv);
 }
 
 void

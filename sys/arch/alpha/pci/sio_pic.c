@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.35 2013/03/08 18:29:33 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.36 2014/02/18 19:37:33 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -123,9 +123,6 @@ int		sio_intr_check(void *, int, int);
 u_int8_t	(*sio_read_elcr)(int);
 void		(*sio_write_elcr)(int, u_int8_t);
 static void	specific_eoi(int);
-#ifdef BROKEN_PROM_CONSOLE
-void		sio_intr_shutdown(void *);
-#endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
@@ -403,11 +400,10 @@ sio_intr_setup(pc, iot)
 	}
 }
 
-#ifdef BROKEN_PROM_CONSOLE
 void
-sio_intr_shutdown(arg)
-	void *arg;
+sio_intr_shutdown()
 {
+#ifdef BROKEN_PROM_CONSOLE
 	if (sio_write_elcr == NULL)
 		return;
 
@@ -418,8 +414,8 @@ sio_intr_shutdown(arg)
 	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, initial_ocw1[1]);
 	(*sio_write_elcr)(0, initial_elcr[0]);			/* XXX */
 	(*sio_write_elcr)(1, initial_elcr[1]);			/* XXX */
-}
 #endif
+}
 
 const char *
 sio_intr_string(v, irq)

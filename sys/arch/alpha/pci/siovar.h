@@ -1,4 +1,4 @@
-/*	$OpenBSD: siovar.h,v 1.14 2010/06/06 11:26:11 miod Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.15 2014/02/18 19:37:33 miod Exp $	*/
 /*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
 #include <sys/evcount.h>
 
 void	sio_intr_setup(pci_chipset_tag_t, bus_space_tag_t);
+void	sio_intr_shutdown(void);
 void	sio_iointr(void *framep, unsigned long vec);
 
 const char *sio_intr_string(void *, int);

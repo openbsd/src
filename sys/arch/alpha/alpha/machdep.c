@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.148 2014/02/04 21:52:42 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.149 2014/02/18 19:37:32 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -120,10 +120,6 @@
 #include <machine/tc_machdep.h>
 #include <dev/tc/tcreg.h>
 #include <dev/tc/ioasicvar.h>
-#endif
-
-#ifdef BROKEN_PROM_CONSOLE
-extern void sio_intr_shutdown(void);
 #endif
 
 int	cpu_dump(void);
@@ -1048,10 +1044,6 @@ haltsys:
 	doshutdownhooks();
 	if (!TAILQ_EMPTY(&alldevs))
 		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
-
-#ifdef BROKEN_PROM_CONSOLE
-	sio_intr_shutdown(NULL);
-#endif
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
