@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.7 2014/02/02 04:02:04 jsg Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.8 2014/02/18 02:48:57 jsg Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -1662,10 +1662,20 @@
 #define CRT_HOTPLUG_DETECT_VOLTAGE_475MV	(1 << 2)
 
 #define PORT_HOTPLUG_STAT	0x61114
-/* HDMI/DP bits are gen4+ */
-#define   DPB_HOTPLUG_LIVE_STATUS               (1 << 29)
-#define   DPC_HOTPLUG_LIVE_STATUS               (1 << 28)
-#define   DPD_HOTPLUG_LIVE_STATUS               (1 << 27)
+/*
+ * HDMI/DP bits are gen4+
+ *
+ * WARNING: Bspec for hpd status bits on gen4 seems to be completely confused.
+ * Please check the detailed lore in the commit message for for experimental
+ * evidence.
+ */
+#define   DPD_HOTPLUG_LIVE_STATUS_G4X		(1 << 29)
+#define   DPC_HOTPLUG_LIVE_STATUS_G4X		(1 << 28)
+#define   DPB_HOTPLUG_LIVE_STATUS_G4X		(1 << 27)
+/* VLV DP/HDMI bits again match Bspec */
+#define   DPD_HOTPLUG_LIVE_STATUS_VLV		(1 << 27)
+#define   DPC_HOTPLUG_LIVE_STATUS_VLV		(1 << 28)
+#define   DPB_HOTPLUG_LIVE_STATUS_VLV		(1 << 29)
 #define   DPD_HOTPLUG_INT_STATUS		(3 << 21)
 #define   DPC_HOTPLUG_INT_STATUS		(3 << 19)
 #define   DPB_HOTPLUG_INT_STATUS		(3 << 17)
