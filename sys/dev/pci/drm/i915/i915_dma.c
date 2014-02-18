@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.15 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.16 2014/02/18 02:36:49 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -407,7 +407,9 @@ i915_driver_close(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 
+	DRM_LOCK();
 	i915_gem_context_close(dev, file);
 	i915_gem_release(dev, file);
+	DRM_UNLOCK();
 	kfree(file_priv);
 }
