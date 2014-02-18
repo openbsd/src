@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.94 2014/02/17 15:53:46 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.95 2014/02/18 13:10:48 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2071,8 +2071,8 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	else if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (0);	/* ignore */
 
-	if (sa->sa_cp)
-		ikev2_cp_setaddr(env, sa);
+	if (ikev2_cp_setaddr(env, sa) < 0)
+		return (-1);
 
 	if (ikev2_childsa_negotiate(env, sa, sa->sa_hdr.sh_initiator) == -1)
 		return (-1);
