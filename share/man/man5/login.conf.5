@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.51 2013/08/14 08:39:28 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.52 2014/02/18 22:54:14 tedu Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: February 18 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -863,7 +863,7 @@ service above).
 The second string is the response the user gave (i.e., the password).
 If the response is correct for the specified challenge, the authentication
 should be accepted, else it should be rejected.
-It is possible for the challenge to be any empty string, which implies
+It is possible for the challenge to be an empty string, which implies
 the calling program did first obtain a challenge prior to getting a
 response from the user.
 Not all authentication styles support empty challenges.
