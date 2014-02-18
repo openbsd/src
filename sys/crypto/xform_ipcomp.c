@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.2 2014/02/11 16:51:19 markus Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.3 2014/02/18 09:43:34 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -40,7 +40,6 @@
 
 #define Z_METHOD	8
 #define Z_MEMLEVEL	8
-#define MINCOMP		2	/* won't be used, but must be defined */
 #define ZBUF		10
 
 u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
@@ -60,10 +59,8 @@ int window_deflate = -12;
  */
 
 u_int32_t
-deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
+deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 {
-	/* comp indicates whether we compress (0) or decompress (1) */
-
 	z_stream zbuf;
 	u_int8_t *output;
 	u_int32_t count, result;
@@ -80,7 +77,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	zbuf.opaque = Z_NULL;
 	zbuf.avail_in = size;	/* Total length of data to be processed */
 
-	if (comp) {
+	if (decomp) {
 		/*
 	 	 * Choose a buffer with 4x the size of the input buffer
 	 	 * for the size of the output buffer in the case of
@@ -100,22 +97,22 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	zbuf.next_out = buf[0].out;
 	zbuf.avail_out = buf[0].size;
 
-	error = comp ? inflateInit2(&zbuf, window_inflate) :
+	error = decomp ?
+	    inflateInit2(&zbuf, window_inflate) :
 	    deflateInit2(&zbuf, Z_DEFAULT_COMPRESSION, Z_METHOD,
 	    window_deflate, Z_MEMLEVEL, Z_DEFAULT_STRATEGY);
 
 	if (error != Z_OK)
 		goto bad;
 	for (;;) {
-		error = comp ? inflate(&zbuf, Z_PARTIAL_FLUSH) :
-		    deflate(&zbuf, Z_PARTIAL_FLUSH);
-		if (error != Z_OK && error != Z_STREAM_END &&
-		    !(error == Z_BUF_ERROR && comp && zbuf.avail_in == 0 &&
-		    zbuf.avail_out == 0))
+		error = decomp ?
+		    inflate(&zbuf, Z_PARTIAL_FLUSH) :
+		    deflate(&zbuf, Z_FINISH);
+		if (error == Z_STREAM_END)
+			break;
+		if (error != Z_OK)
 			goto bad;
-		else if (zbuf.avail_in == 0 && zbuf.avail_out != 0)
-			goto end;
-		else if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
+		if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
 			/* we need more output space, allocate size */
 			if (size < 32 * 1024)
 				size *= 2;
@@ -129,16 +126,14 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 			zbuf.avail_out = buf[i].size;
 			i++;
 		} else
-			goto bad;
+			goto bad;	/* out of buffers */
 	}
-
-end:
 	result = count = zbuf.total_out;
 
 	*out = malloc((u_long)result, M_CRYPTO_DATA, M_NOWAIT);
 	if (*out == NULL)
 		goto bad;
-	if (comp)
+	if (decomp)
 		inflateEnd(&zbuf);
 	else
 		deflateEnd(&zbuf);
@@ -164,7 +159,7 @@ bad:
 	*out = NULL;
 	for (j = 0; buf[j].flag != 0; j++)
 		free(buf[j].out, M_CRYPTO_DATA);
-	if (comp)
+	if (decomp)
 		inflateEnd(&zbuf);
 	else
 		deflateEnd(&zbuf);
