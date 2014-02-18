@@ -55,6 +55,7 @@ ENTRY(mdrandom)
 	movl	$1, %eax
 	movl	$0, %ecx
 	cpuid
+	movl	%edx, %eax
 
 	movl	36(%esp), %ebx
 	movl	40(%esp), %edx
@@ -65,7 +66,10 @@ ENTRY(mdrandom)
 	jnz	userand
 
 	movl	%edx, %ecx
-	jmp	usetsc
+	andl	$CPUID_TSC, %eax	// See if we have rdtsc.
+	jnz	usetsc
+
+	jmp	done
 
 userand:
 	rdrand	%eax
