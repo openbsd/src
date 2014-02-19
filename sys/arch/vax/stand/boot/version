@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.10 2013/07/05 21:13:06 miod Exp $
+$OpenBSD: version,v 1.11 2014/02/19 22:13:53 miod Exp $
 $NetBSD: version,v 1.4 2001/11/09 19:53:15 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
@@ -39,3 +39,4 @@ is taken as the current.
 	controllers.
 1.16:	Remove support for VAX 11/7x0, VAX6000 and VAX8000
 1.17:	ELF bootblocks.
+1.18:	/etc/random.seed support

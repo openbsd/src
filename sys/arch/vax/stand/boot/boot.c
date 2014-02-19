@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.24 2014/01/04 10:49:21 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.25 2014/02/19 22:13:53 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -33,6 +33,10 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNEL
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
@@ -53,12 +57,13 @@ char line[100];
 int	bootdev, debug;
 extern	unsigned opendev;
 
-char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
+char   rnddata[BOOTRANDOM_MAX];
 
 void	usage(char *), boot(char *), halt(char *);
 void	Xmain(void);
 void	autoconf(void);
 time_t	getsecs(void);
+int	loadrandom(const char *, char *, size_t);
 int	setjmp(int *);
 int	testkey(void);
 
@@ -106,7 +111,7 @@ Xmain(void)
 		transition = ' ';
 
 	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
-	printf("\n\r>> OpenBSD/vax boot [%s] <<\n", "1.16");
+	printf("\n\r>> OpenBSD/vax boot [%s] <<\n", "1.18");
 	printf(">> Press enter to autoboot now, or any other key to abort:  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
@@ -185,6 +190,7 @@ boot(char *arg)
 	char *fn = "bsd";
 	int howto, err;
 	u_long marks[MARK_MAX];
+	static int rnd_loaded = 0;
 
 	if (arg) {
 		while (*arg == ' ')
@@ -221,6 +227,23 @@ fail:			printf("usage: boot [filename] [-acsd]\n");
 		bootrpb.rpb_bootr5 = howto;
 	}
 load:  
+	/*
+	 * Attempt to load /etc/random.seed if loading from a disk.
+	 */
+	switch (bootrpb.devtyp) {
+	default:
+		break;
+	case BDEV_UDA:
+	case BDEV_RD:
+	case BDEV_SD:
+	case BDEV_SDN:
+	case BDEV_SDS:
+		if (rnd_loaded == 0)
+			rnd_loaded = loadrandom(BOOTRANDOM, rnddata,
+			    sizeof(rnddata));
+		break;
+	}
+
 	marks[MARK_START] = 0;
 	err = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
 	if (err == 0) {
@@ -247,4 +270,27 @@ usage(char *hej)
 		printf("%s\n", v->info);
 		v++;
 	}
+}
+
+int
+loadrandom(const char *name, char *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd;
+	int rc = 0;
+
+	fd = open(name, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", name, strerror(errno));
+		return 0;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+	rc = 1;
+fail:
+	close(fd);
+	return rc;
 }
