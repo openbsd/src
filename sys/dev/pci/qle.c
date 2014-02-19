@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.8 2014/02/19 07:15:45 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.9 2014/02/19 07:44:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -1036,23 +1036,19 @@ qle_handle_intr(struct qle_softc *sc, u_int16_t isr, u_int16_t info)
 
 	case QLE_INT_TYPE_IO:
 		rspin = qle_read(sc, QLE_RESP_IN);
-		if (rspin == sc->sc_last_resp_id) {
-			/* isp(4) has some weird magic for this case */
-			printf("%s: nonsense interrupt (%x)\n", DEVNAME(sc),
-			    rspin);
-		} else {
-			while (sc->sc_last_resp_id != rspin) {
-				ccb = qle_handle_resp(sc, sc->sc_last_resp_id);
-				if (ccb)
-					scsi_done(ccb->ccb_xs);
+		if (rspin == sc->sc_last_resp_id)
+			break;
 
-				sc->sc_last_resp_id++;
-				if (sc->sc_last_resp_id == sc->sc_maxcmds)
-					sc->sc_last_resp_id = 0;
-			}
+		do {
+			ccb = qle_handle_resp(sc, sc->sc_last_resp_id);
+			if (ccb)
+				scsi_done(ccb->ccb_xs);
 
-			qle_write(sc, QLE_RESP_OUT, sc->sc_last_resp_id);
-		}
+			sc->sc_last_resp_id++;
+			sc->sc_last_resp_id %= sc->sc_maxcmds;
+		} while (sc->sc_last_resp_id != rspin);
+
+		qle_write(sc, QLE_RESP_OUT, sc->sc_last_resp_id);
 		break;
 
 	case QLE_INT_TYPE_MBOX:
