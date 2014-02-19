@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.61 2014/02/19 01:17:59 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.62 2014/02/19 01:20:12 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -990,6 +990,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	intel_pm_init(dev);
 	intel_gt_sanitize(dev);
 	intel_gt_init(dev);
 

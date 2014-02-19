@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.19 2014/02/19 01:17:59 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.20 2014/02/19 01:20:12 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4509,6 +4509,12 @@ void intel_gt_init(struct drm_device *dev)
 		dev_priv->gt.force_wake_get = __gen6_gt_force_wake_get;
 		dev_priv->gt.force_wake_put = __gen6_gt_force_wake_put;
 	}
+}
+
+void intel_pm_init(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
 	task_set(&dev_priv->rps.delayed_resume_task, intel_gen6_powersave_work,
 	    dev_priv, NULL);
 	timeout_set(&dev_priv->rps.delayed_resume_to, intel_gen6_powersave_tick,
