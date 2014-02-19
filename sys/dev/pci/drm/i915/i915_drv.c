@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.59 2014/02/19 01:12:25 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.60 2014/02/19 01:14:41 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -570,7 +570,7 @@ i915_drm_thaw(struct drm_device *dev)
 {
 	int error = 0;
 
-	intel_gt_reset(dev);
+	intel_gt_sanitize(dev);
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		DRM_LOCK();
@@ -989,8 +989,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	intel_gt_sanitize(dev);
 	intel_gt_init(dev);
-	intel_gt_reset(dev);
 
 	intel_opregion_setup(dev);
 	intel_setup_bios(dev);
