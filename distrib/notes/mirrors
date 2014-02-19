@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.117 2014/02/13 16:58:56 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.118 2014/02/19 22:31:45 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -156,6 +156,8 @@ United Kingdom:
     ftp://mirror.bytemark.co.uk/OpenBSD (Manchester)
     http://mirror.ox.ac.uk/pub/OpenBSD (Oxford)
     ftp://mirror.ox.ac.uk/pub/OpenBSD (Oxford)
+    http://mirror.exonetric.net/pub/OpenBSD (London)
+    ftp://mirror.exonetric.net/pub/OpenBSD (London)
 
 USA:
     http://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA)
