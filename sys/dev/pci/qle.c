@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.7 2014/02/17 03:57:20 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.8 2014/02/19 07:15:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -357,7 +357,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
