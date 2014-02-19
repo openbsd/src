@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.42 2014/01/24 23:32:15 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.43 2014/02/19 22:02:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -147,9 +147,8 @@ loadrandom(char *name, char *buf, size_t buflen)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		if (errno == EPERM)
-			goto fail;
-		printf("cannot open %s: %s\n", path, strerror(errno));
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", path, strerror(errno));
 		return;
 	}
 	if (fstat(fd, &sb) == -1 ||

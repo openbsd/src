@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.22 2014/02/19 20:52:57 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.23 2014/02/19 22:02:14 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -71,9 +71,8 @@ loadrandom(char *name, char *buf, size_t buflen)
 
 	fd = open(name, O_RDONLY);
 	if (fd == -1) {
-		if (errno == EPERM)
-			goto fail;
-		printf("cannot open %s: %s\n", name, strerror(errno));
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", name, strerror(errno));
 		return;
 	}
 	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
