@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.10 2014/02/19 08:01:20 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.11 2014/02/19 15:13:14 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/rwlock.h>
 #include <sys/task.h>
 
+#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
