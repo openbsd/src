@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.42 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.43 2014/02/19 05:32:57 jmatthew Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -69,6 +69,8 @@ owserial*	at onewire?
 #### SCSI
 ahc*		at pci?
 isp*		at pci?
+#qla*		at pci?
+#qle*		at pci?
 mpi*		at pci?
 siop*		at pci?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.134 2014/01/20 21:57:01 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.135 2014/02/19 05:32:57 jmatthew Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -182,6 +182,8 @@ twe*	at pci?			# 3ware Escalade RAID controllers
 iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
 ips*	at pci?			# IBM ServeRAID controllers
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
+#qla*	at pci?			# Qlogic ISP 2[123]xx SCSI/FibreChannel
+#qle*	at pci?			# Qlogic ISP 2[45]xx SCSI/FibreChannel
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
