@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.24 2014/01/08 05:52:47 guenther Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.25 2014/02/19 03:59:47 guenther Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -438,8 +438,8 @@ cpio_wr(ARCHD *arcn)
 		 OCT) ||
 	    ul_asc((u_long)arcn->sb.st_rdev, hd->c_rdev, sizeof(hd->c_rdev),
 		OCT) ||
-	    uqd_asc((u_quad_t)arcn->sb.st_mtime,hd->c_mtime,sizeof(hd->c_mtime),
-		OCT) ||
+	    uqd_asc(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->c_mtime,
+		sizeof(hd->c_mtime), OCT) ||
 	    ul_asc((u_long)nsz, hd->c_namesize, sizeof(hd->c_namesize), OCT))
 		goto out;
 
@@ -749,8 +749,8 @@ vcpio_wr(ARCHD *arcn)
 		HEX) ||
 	    ul_asc((u_long)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_mtime, hd->c_mtime, sizeof(hd->c_mtime),
-		HEX) ||
+	    ul_asc(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->c_mtime,
+		sizeof(hd->c_mtime), HEX) ||
 	    ul_asc((u_long)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
 		HEX) ||
 	    ul_asc((u_long)MAJOR(arcn->sb.st_dev),hd->c_maj, sizeof(hd->c_maj),
@@ -1063,14 +1063,19 @@ bcpio_wr(ARCHD *arcn)
 	hd->h_rdev[1] = CHR_WR_3(arcn->sb.st_rdev);
 	if (arcn->sb.st_rdev != (dev_t)(SHRT_EXT(hd->h_rdev)))
 		goto out;
-	hd->h_mtime_1[0] = CHR_WR_0(arcn->sb.st_mtime);
-	hd->h_mtime_1[1] = CHR_WR_1(arcn->sb.st_mtime);
-	hd->h_mtime_2[0] = CHR_WR_2(arcn->sb.st_mtime);
-	hd->h_mtime_2[1] = CHR_WR_3(arcn->sb.st_mtime);
-	t_timet = (time_t)(SHRT_EXT(hd->h_mtime_1));
-	t_timet =  (t_timet << 16) | ((time_t)(SHRT_EXT(hd->h_mtime_2)));
-	if (arcn->sb.st_mtime != t_timet)
-		goto out;
+	if (arcn->sb.st_mtime > 0) {
+		hd->h_mtime_1[0] = CHR_WR_0(arcn->sb.st_mtime);
+		hd->h_mtime_1[1] = CHR_WR_1(arcn->sb.st_mtime);
+		hd->h_mtime_2[0] = CHR_WR_2(arcn->sb.st_mtime);
+		hd->h_mtime_2[1] = CHR_WR_3(arcn->sb.st_mtime);
+		t_timet = (time_t)SHRT_EXT(hd->h_mtime_1);
+		t_timet =  t_timet << 16 | (time_t)SHRT_EXT(hd->h_mtime_2);
+		if (arcn->sb.st_mtime != t_timet)
+			goto out;
+	} else {
+		hd->h_mtime_1[0] = hd->h_mtime_1[1] = 0;
+		hd->h_mtime_2[0] = hd->h_mtime_2[1] = 0;
+	}
 	nsz = arcn->nlen + 1;
 	hd->h_namesize[0] = CHR_WR_2(nsz);
 	hd->h_namesize[1] = CHR_WR_3(nsz);
