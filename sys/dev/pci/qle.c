@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.9 2014/02/19 07:44:44 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.10 2014/02/19 08:01:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -266,7 +266,7 @@ void		qle_clear_isr(struct qle_softc *, u_int16_t);
 void		qle_put_marker(struct qle_softc *, void *);
 void		qle_put_cmd(struct qle_softc *, void *, struct scsi_xfer *,
 		    struct qle_ccb *, u_int32_t);
-struct qle_ccb *qle_handle_resp(struct qle_softc *, u_int16_t);
+struct qle_ccb *qle_handle_resp(struct qle_softc *, u_int32_t);
 void		qle_put_data_seg(struct qle_iocb_seg *, bus_dmamap_t, int);
 
 struct qle_fc_port *qle_next_fabric_port(struct qle_softc *, u_int32_t *,
@@ -846,7 +846,7 @@ qle_add_fabric_port(struct qle_softc *sc, struct qle_fc_port *port)
 }
 
 struct qle_ccb *
-qle_handle_resp(struct qle_softc *sc, u_int16_t id)
+qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 {
 	struct qle_ccb *ccb;
 	struct qle_iocb_status *status;
@@ -1026,7 +1026,7 @@ void
 qle_handle_intr(struct qle_softc *sc, u_int16_t isr, u_int16_t info)
 {
 	int i;
-	u_int16_t rspin;
+	u_int32_t rspin;
 	struct qle_ccb *ccb;
 
 	switch (isr) {
