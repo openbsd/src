@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.252 2014/02/13 05:51:06 halex Exp $	*/
+/*	$OpenBSD: sd.c,v 1.253 2014/02/19 10:15:35 mpi Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1439,6 +1439,11 @@ sd_read_cap_16(struct sd_softc *sc, int flags)
 	scsi_xs_put(xs);
 
 	if (rv == 0) {
+		if (_8btol(rdcap->addr) == 0) {
+			rv = EIO;
+			goto done;
+		}
+
 		sc->params.disksize = _8btol(rdcap->addr) + 1;
 		sc->params.secsize = _4btol(rdcap->length);
 		if (ISSET(_2btol(rdcap->lowest_aligned), READ_CAP_16_TPE))
