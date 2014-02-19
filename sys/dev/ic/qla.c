@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.21 2014/02/18 11:48:09 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.22 2014/02/19 06:29:08 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -93,10 +93,6 @@ void		qla_update(struct qla_softc *, int);
 void		qla_put_marker(struct qla_softc *, void *);
 void		qla_put_cmd(struct qla_softc *, void *, struct scsi_xfer *,
 		    struct qla_ccb *);
-#if 0
-void		qla_put_cmd_cont(struct qla_softc *, void *,
-		    struct scsi_xfer *, bus_dmamap_t, int);
-#endif
 struct qla_ccb *qla_handle_resp(struct qla_softc *, u_int16_t);
 void		qla_put_data_seg(struct qla_iocb_seg *, bus_dmamap_t, int);
 
@@ -1778,23 +1774,6 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 
 	qla_dump_iocb(sc, buf);
 }
-
-#if 0
-void
-qla_put_cmd_cont(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
-    bus_dmamap_t dmap, int offset)
-{
-	int seg;
-	struct qla_iocb_cont1 *cont1 = buf;
-	cont1->entry_type = QLA_IOCB_CONT_TYPE_1;
-	cont1->entry_count = 1;
-	for (seg = 0; seg < QLA_IOCB_SEGS_PER_CMD_CONT; seg++) {
-		if (seg + offset == dmap->dm_nsegs)
-			break;
-		qla_put_data_seg(&cont1->segs[seg], dmap, seg + offset);
-	}
-}
-#endif
 
 #ifdef ISP_NOFIRMWARE
 
