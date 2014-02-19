@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.58 2014/01/24 04:05:06 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.59 2014/02/19 01:12:25 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -890,6 +890,13 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev = (struct drm_device *)dev_priv->drmdev;
 
+	mtx_init(&dev_priv->irq_lock, IPL_TTY);
+	mtx_init(&dev_priv->rps.lock, IPL_TTY);
+	mtx_init(&dev_priv->dpio_lock, IPL_TTY);
+	mtx_init(&mchdev_lock, IPL_TTY);
+	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
+	rw_init(&dev_priv->rps.hw_lock, "rpshw");
+
 	/* we need to use this api for now due to sharing with intagp */
 	bar = vga_pci_bar_info(vga_sc, (IS_I9XX(dev) ? 0 : 1));
 	if (bar == NULL) {
@@ -977,20 +984,13 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	i915_gem_load(dev);
 
-	mtx_init(&dev_priv->irq_lock, IPL_TTY);
-	mtx_init(&dev_priv->rps.lock, IPL_TTY);
-	mtx_init(&dev_priv->dpio_lock, IPL_TTY);
-	mtx_init(&mchdev_lock, IPL_TTY);
-	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
-
-	rw_init(&dev_priv->rps.hw_lock, "rpshw");
-
 	if (drm_vblank_init(dev, INTEL_INFO(dev)->num_pipes)) {
 		printf(": vblank init failed\n");
 		return;
 	}
 
 	intel_gt_init(dev);
+	intel_gt_reset(dev);
 
 	intel_opregion_setup(dev);
 	intel_setup_bios(dev);

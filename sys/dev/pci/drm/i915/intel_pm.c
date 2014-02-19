@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.16 2014/02/19 01:08:21 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.17 2014/02/19 01:12:25 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4460,6 +4460,9 @@ void intel_gt_reset(struct drm_device *dev)
 		if (IS_IVYBRIDGE(dev) || IS_HASWELL(dev))
 			__gen6_gt_force_wake_mt_reset(dev_priv);
 	}
+
+	/* BIOS often leaves RC6 enabled, but disable it for hw init */
+	intel_disable_gt_powersave(dev);
 }
 
 void intel_gt_init(struct drm_device *dev)
@@ -4467,8 +4470,6 @@ void intel_gt_init(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	mtx_init(&dev_priv->gt_lock, IPL_TTY);
-
-	intel_gt_reset(dev);
 
 	if (IS_VALLEYVIEW(dev)) {
 		dev_priv->gt.force_wake_get = vlv_force_wake_get;
