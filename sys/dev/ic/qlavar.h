@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.3 2014/02/02 07:53:33 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.4 2014/02/19 13:41:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -27,6 +27,8 @@
 /* maximum number of segments allowed for in a single io */
 #define QLA_MAX_SEGS			16
 
+struct qla_softc;
+
 enum qla_isp_gen {
 	QLA_GEN_ISP2100 = 1,
 	QLA_GEN_ISP2200,
@@ -41,12 +43,13 @@ enum qla_isp_type {
 	QLA_ISP2322
 };
 
-/* needed as <2300 use mailbox registers for queue pointers */
-enum qla_qptr {
-	QLA_REQ_QUEUE_IN,
-	QLA_REQ_QUEUE_OUT,
-	QLA_RESP_QUEUE_IN,
-	QLA_RESP_QUEUE_OUT
+struct qla_queue_regs {
+	u_int16_t	(*read)(struct qla_softc *, bus_size_t);
+
+	bus_size_t	req_in;
+	bus_size_t	req_out;
+	bus_size_t	res_in;
+	bus_size_t	res_out;
 };
 
 /* port database things */
@@ -125,7 +128,7 @@ struct qla_softc {
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
 
-	struct scsi_link        sc_link;
+	struct scsi_link	sc_link;
 
 	struct scsibus_softc	*sc_scsibus;
 
@@ -135,6 +138,8 @@ struct qla_softc {
 	int			sc_expanded_lun;
 	int			sc_fabric;
 	int			sc_2k_logins;
+
+	const struct qla_queue_regs *sc_q;
 
 	int			sc_mbox_base;
 	u_int16_t		sc_mbox[12];
