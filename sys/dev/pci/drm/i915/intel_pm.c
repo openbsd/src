@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.18 2014/02/19 01:14:41 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.19 2014/02/19 01:17:59 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4469,8 +4469,6 @@ void intel_gt_sanitize(struct drm_device *dev)
 void intel_gt_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-
-	mtx_init(&dev_priv->gt_lock, IPL_TTY);
 
 	if (IS_VALLEYVIEW(dev)) {
 		dev_priv->gt.force_wake_get = vlv_force_wake_get;
