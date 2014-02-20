@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.27 2014/02/20 11:09:48 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.28 2014/02/20 20:20:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -402,8 +402,8 @@ qla_attach(struct qla_softc *sc)
 		    sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	printf("firmware v%d.%d.%d, attrs %x\n", sc->sc_mbox[1], sc->sc_mbox[2],
-	    sc->sc_mbox[3], sc->sc_mbox[6]);
+	printf("%s: firmware rev %d.%d.%d, attrs 0x%x\n", DEVNAME(sc),
+	    sc->sc_mbox[1], sc->sc_mbox[2], sc->sc_mbox[3], sc->sc_mbox[6]);
 
 	if (sc->sc_mbox[6] & QLA_FW_ATTR_EXPANDED_LUN)
 		sc->sc_expanded_lun = 1;
