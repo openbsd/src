@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.744 2014/02/19 18:48:23 rpe Exp $
+#	$OpenBSD: install.sub,v 1.745 2014/02/20 00:26:14 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1259,10 +1259,10 @@ install_files() {
 		_cfile=$_tmpsrc/SHA256
 		_srclocal=false
 		_t=Get/Verify
-		[[ $_src == file://* ]] && _srclocal=true _t=Verifying
+		[[ $_src == file://* ]] && _srclocal=true _t='Verifying '
 
 		# Fetch signature file
-		! ftp -D $_t -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
+		! ftp -D "$_t" -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys
@@ -1277,7 +1277,7 @@ install_files() {
 			# Create a flag file in case ftp failed. Sets from net
 			# are written to prefetch area, the output of local sets
 			# is discarded.
-			( ftp -D $_t -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
+			( ftp -D "$_t" -Vmo - "$_src/$_f" || >"$_tmpsrc/fail" ) |
 			( $_srclocal && sha256 >$_tmpsrc/h ||
 				sha256 -ph "$_tmpsrc/h" >"$_tmpsrc/$_f" )
 
