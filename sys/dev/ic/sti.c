@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.67 2013/10/20 20:07:29 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.68 2014/02/20 11:09:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -467,6 +467,7 @@ sti_region_setup(struct sti_screen *scr)
 			if (regno == 1) {
 				scr->fbaddr = addr;
 				scr->fblen = r->length << PGSHIFT;
+				printf("0x%x/0x%x\n", scr->fbaddr, scr->fblen);
 			}
 		}
 
@@ -1068,14 +1069,24 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-sti_mmap(void *v, off_t offset, int prot)
+sti_mmap(void *v, off_t off, int prot)
 {
-#if 0
 	struct sti_screen *scr = (struct sti_screen *)v;
-#endif
 
-	/* XXX not finished */
-	return -1;
+	if (off & PGOFSET)
+		return (-1);
+
+	if (scr->scr_wsmode == WSDISPLAYIO_MODE_DUMBFB) {
+#if 0
+		if (off >= 0 && off < scr->fblen)
+			return (bus_space_mmap(scr->scr_rom->memt, scr->fbaddr,
+			    off, prot, BUS_SPACE_MAP_LINEAR));
+#else
+		return (scr->fbaddr + off);
+#endif
+	}
+
+	return (-1);
 }
 
 int

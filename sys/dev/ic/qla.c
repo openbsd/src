@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.26 2014/02/20 03:39:07 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.27 2014/02/20 11:09:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1977,7 +1977,13 @@ qla_read_nvram(struct qla_softc *sc)
 	if (sc->sc_nvram.id[0] != 'I' || sc->sc_nvram.id[1] != 'S' ||
 	    sc->sc_nvram.id[2] != 'P' || sc->sc_nvram.id[3] != ' ' ||
 	    sc->sc_nvram.nvram_version < 1 || (csum != 0)) {
-		printf("%s: nvram corrupt\n", DEVNAME(sc));
+		/*
+		 * onboard 2200s on Sun hardware don't have an nvram
+		 * fitted, but will provide us with node and port name
+		 * through Open Firmware; don't complain in that case.
+		 */
+		if (sc->sc_node_name == 0 || sc->sc_port_name == 0)
+			printf("%s: nvram corrupt\n", DEVNAME(sc));
 		return (1);
 	}
 	return (0);
