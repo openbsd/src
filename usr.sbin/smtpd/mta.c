@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.182 2014/02/04 15:44:05 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.183 2014/02/20 17:42:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -2453,7 +2453,7 @@ mta_block_cmp(const struct mta_block *a, const struct mta_block *b)
 		return (1);
 	if (a->domain == b->domain)
 		return (0);
-	return (strcmp(a->domain, b->domain));
+	return (strcasecmp(a->domain, b->domain));
 }
 
 SPLAY_GENERATE(mta_block_tree, mta_block, entry, mta_block_cmp);
