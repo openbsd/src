@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.12 2012/12/31 21:35:32 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.13 2014/02/20 20:34:27 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -34,15 +34,22 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNEL
 
 #include <machine/prom.h>
 
 #include "stand.h"
 #include "libsa.h"
 
+int loadrandom(const char *, char *, size_t);
+
 int debug;
 int errno;
 extern char *version;
+extern char rnddata[BOOTRANDOM_MAX];
 char	line[80];
 
 int
@@ -51,6 +58,7 @@ main()
 	char *cp, *file;
 	int	flag, ret;
 	int	ask = 0;
+	int	rnd_loaded = 0;
 
 	printf(">> OpenBSD MVME%x bootsd [%s]\n", bugargs.cputyp, version);
 
@@ -73,9 +81,37 @@ main()
 			printf("boot: -q returning to MVME-Bug\n");
 			break;
 		}
+
+		if (rnd_loaded == 0)
+			rnd_loaded = loadrandom(BOOTRANDOM, rnddata,
+			    sizeof(rnddata));
+
 		exec_mvme(file, flag);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}
 	return(0);
+}
+
+int
+loadrandom(const char *name, char *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd;
+	int rc = 0;
+
+	fd = open(name, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", name, strerror(errno));
+		return 0;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+	rc = 1;
+fail:
+	close(fd);
+	return rc;
 }
