@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hsq.4,v 1.16 2008/05/21 19:05:51 kettenis Exp $
+.\"	$OpenBSD: hsq.4,v 1.17 2014/02/20 17:56:35 schwarze Exp $
 .\"	from: OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp
 .\"	from: NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp
 .\"
@@ -35,7 +35,7 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd $Mdocdate: May 21 2008 $
+.Dd $Mdocdate: February 20 2014 $
 .Dt HSQ 4
 .Os
 .Sh NAME
@@ -47,13 +47,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Hostess (Comtrol Corporation,
-www.comtrol.com) and compatible boards that multiplex together
-up to four
+driver provides support for Hostess
+.Pq Lk www.comtrol.com "Comtrol Corporation"
+and compatible boards that multiplex together up to four
 .Tn EIA
 .Tn RS-232C
-.Pf ( Tn CCITT
-.Tn V.28 )
+.Pq Tn CCITT V.28
 communications interfaces.
 .Pp
 Each
@@ -72,17 +71,13 @@ The slave ID given for each
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
 The
-.Tn port
+.Cd port
 specification for the
 .Nm
 device is used to compute the base addresses for the
 .Nm com
-subdevices (they are equal to
-.Tn port
-+ ID * 8) and the port for the interrupt multiplexing register
-(it is equal to
-.Tn port
-+ 7).
+subdevices (they are equal to port + ID * 8) and the port for
+the interrupt multiplexing register (it is equal to port + 7).
 More technical details on how the driver works can be found in
 the big comment at the beginning of the driver's source code.
 .Pp
@@ -101,6 +96,8 @@ the driver only with Hostess-compatible cards.
 .Sh HISTORY
 The
 .Nm
-driver was written by Denis A. Doroshenko based on the
+driver was written by
+.An Denis A. Doroshenko
+based on the
 .Xr ast 4
 driver.

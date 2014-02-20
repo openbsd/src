@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtfps.4,v 1.12 2010/09/19 12:49:37 jmc Exp $
+.\"	$OpenBSD: rtfps.4,v 1.13 2014/02/20 17:56:35 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: February 20 2014 $
 .Dt RTFPS 4
 .Os
 .Sh NAME
@@ -48,8 +48,7 @@ The
 driver provides support for IBM RT PC boards that multiplex together up to four
 .Tn EIA
 .Tn RS-232C
-.Pf ( Tn CCITT
-.Tn V.28 )
+.Pq Tn CCITT V.28
 or
 .Tn RS-422A
 communications interfaces.
@@ -66,7 +65,7 @@ devices as slave devices of the
 device, as shown in
 .Sx SYNOPSIS .
 The
-.Tn port
+.Cd port
 specification for the
 .Nm
 device is used to compute the base addresses for the
@@ -83,7 +82,9 @@ subdevices.
 .Sh HISTORY
 The
 .Nm
-driver was written by Charles Hannum, based on the
+driver was written by
+.An Charles Hannum ,
+based on the
 .Nm ast
 driver.
 .Sh BUGS
