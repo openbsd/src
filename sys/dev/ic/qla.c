@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.23 2014/02/19 13:41:23 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.24 2014/02/20 00:23:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -84,7 +84,8 @@ void		qla_write_mbox(struct qla_softc *, int, u_int16_t);
 
 void		qla_handle_intr(struct qla_softc *, u_int16_t, u_int16_t);
 void		qla_set_ints(struct qla_softc *, int);
-int		qla_read_isr(struct qla_softc *, u_int16_t *, u_int16_t *);
+int		qla_read_isr_1G(struct qla_softc *, u_int16_t *, u_int16_t *);
+int		qla_read_isr_2G(struct qla_softc *, u_int16_t *, u_int16_t *);
 void		qla_clear_isr(struct qla_softc *, u_int16_t);
 
 void		qla_update(struct qla_softc *, int);
@@ -131,32 +132,38 @@ void		qla_put_ccb(void *, void *);
 void		qla_dump_iocb(struct qla_softc *, void *);
 void		qla_dump_iocb_segs(struct qla_softc *, void *, int);
 
-static const struct qla_queue_regs qla_queue_regs_2100 = {
+static const struct qla_regs qla_regs_2100 = {
 	qla_read_queue_2100,
+	qla_read_isr_1G,
 	QLA_MBOX_BASE_2100 + 0x8,
 	QLA_MBOX_BASE_2100 + 0x8,
 	QLA_MBOX_BASE_2100 + 0xa,
 	QLA_MBOX_BASE_2100 + 0xa
 };
 
-static const struct qla_queue_regs qla_queue_regs_2200 = {
+static const struct qla_regs qla_regs_2200 = {
 	qla_read,
+	qla_read_isr_1G,
 	QLA_MBOX_BASE_2200 + 0x8,
 	QLA_MBOX_BASE_2200 + 0x8,
 	QLA_MBOX_BASE_2200 + 0xa,
 	QLA_MBOX_BASE_2200 + 0xa
 };
 
-static const struct qla_queue_regs qla_queue_regs_23XX = {
+static const struct qla_regs qla_regs_23XX = {
 	qla_read,
+	qla_read_isr_2G,
 	QLA_REQ_IN,
 	QLA_REQ_OUT,
 	QLA_RESP_IN,
 	QLA_RESP_OUT
 };
 
-#define qla_queue_read(_sc, _r) ((*(_sc)->sc_q->read)((_sc), (_r)))
+#define qla_queue_read(_sc, _r) ((*(_sc)->sc_regs->read)((_sc), (_r)))
 #define qla_queue_write(_sc, _r, _v) qla_write((_sc), (_r), (_v))
+
+#define qla_read_isr(_sc, _isr, _info) \
+    ((*(_sc)->sc_regs->read_isr)((_sc), (_isr), (_info)))
 
 struct scsi_adapter qla_switch = {
 	qla_scsi_cmd,
@@ -303,17 +310,17 @@ qla_attach(struct qla_softc *sc)
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2100:
 		sc->sc_mbox_base = QLA_MBOX_BASE_2100;
-		sc->sc_q = &qla_queue_regs_2100;
+		sc->sc_regs = &qla_regs_2100;
 		break;
 
 	case QLA_GEN_ISP2200:
 		sc->sc_mbox_base = QLA_MBOX_BASE_2200;
-		sc->sc_q = &qla_queue_regs_2200;
+		sc->sc_regs = &qla_regs_2200;
 		break;
 
 	case QLA_GEN_ISP23XX:
 		sc->sc_mbox_base = QLA_MBOX_BASE_23XX;
-		sc->sc_q = &qla_queue_regs_23XX;
+		sc->sc_regs = &qla_regs_23XX;
 		break;
 
 	default:
@@ -748,10 +755,7 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 		break;
 
 	case QLA_INT_TYPE_IO:
-		/* apparently can't read the out ptr with <2300 chips,
-		 * and apparently also need to debounce the in ptr reads
-		 */
-		rspin = qla_queue_read(sc, sc->sc_q->res_in);
+		rspin = qla_queue_read(sc, sc->sc_regs->res_in);
 		if (rspin == sc->sc_last_resp_id) {
 			/* seems to happen a lot on 2200s when mbox commands
 			 * complete but it doesn't want to give us the register
@@ -784,7 +788,7 @@ qla_handle_intr(struct qla_softc *sc, u_int16_t isr, u_int16_t info)
 			sc->sc_last_resp_id %= sc->sc_maxcmds;
 		} while (sc->sc_last_resp_id != rspin);
 
-		qla_queue_write(sc, sc->sc_q->res_out, rspin);
+		qla_queue_write(sc, sc->sc_regs->res_out, rspin);
 		break;
 
 	case QLA_INT_TYPE_MBOX:
@@ -903,7 +907,7 @@ qla_scsi_cmd(struct scsi_xfer *xs)
 		bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_requests),
 		    offset, QLA_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTWRITE);
 		qla_put_marker(sc, iocb);
-		qla_queue_write(sc, sc->sc_q->req_in, sc->sc_next_req_id);
+		qla_queue_write(sc, sc->sc_regs->req_in, sc->sc_next_req_id);
 		sc->sc_marker_required = 0;
 	}
 
@@ -921,7 +925,7 @@ qla_scsi_cmd(struct scsi_xfer *xs)
 	DPRINTF(QLA_D_IO, "%s: writing cmd at request %d\n", DEVNAME(sc), req);
 	qla_put_cmd(sc, iocb, xs, ccb);
 
-	qla_queue_write(sc, sc->sc_q->req_in, sc->sc_next_req_id);
+	qla_queue_write(sc, sc->sc_regs->req_in, sc->sc_next_req_id);
 
 	if (!ISSET(xs->flags, SCSI_POLL)) {
 		mtx_leave(&sc->sc_queue_mtx);
@@ -962,7 +966,7 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 			continue;
 		}
 
-		rspin = qla_queue_read(sc, sc->sc_q->res_in);
+		rspin = qla_queue_read(sc, sc->sc_regs->res_in);
 		if (rspin != sc->sc_last_resp_id) {
 			ccb = qla_handle_resp(sc, sc->sc_last_resp_id);
 
@@ -970,7 +974,7 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 			if (sc->sc_last_resp_id == sc->sc_maxcmds)
 				sc->sc_last_resp_id = 0;
 
-			qla_queue_write(sc, sc->sc_q->res_out,
+			qla_queue_write(sc, sc->sc_regs->res_out,
 			    sc->sc_last_resp_id);
 		}
 
@@ -1126,65 +1130,63 @@ qla_set_ints(struct qla_softc *sc, int enabled)
 }
 
 int
-qla_read_isr(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
+qla_read_isr_1G(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
 {
 	u_int16_t int_status;
-	u_int32_t v;
 
-	switch (sc->sc_isp_gen) {
-	case QLA_GEN_ISP2100:
-	case QLA_GEN_ISP2200:
-		if (qla_read(sc, QLA_SEMA) & QLA_SEMA_LOCK) {
-			*info = qla_read_mbox(sc, 0);
-			if (*info & QLA_MBOX_HAS_STATUS)
-				*isr = QLA_INT_TYPE_MBOX;
-			else
-				*isr = QLA_INT_TYPE_ASYNC;
-		} else {
-			int_status = qla_read(sc, QLA_INT_STATUS);
-			if ((int_status & QLA_INT_REQ) == 0)
-				return (0);
-
-			*isr = QLA_INT_TYPE_IO;
-		}
-		return (1);
-
-	case QLA_GEN_ISP23XX:
-		if ((qla_read(sc, QLA_INT_STATUS) & QLA_INT_REQ) == 0)
+	if (qla_read(sc, QLA_SEMA) & QLA_SEMA_LOCK) {
+		*info = qla_read_mbox(sc, 0);
+		if (*info & QLA_MBOX_HAS_STATUS)
+			*isr = QLA_INT_TYPE_MBOX;
+		else
+			*isr = QLA_INT_TYPE_ASYNC;
+	} else {
+		int_status = qla_read(sc, QLA_INT_STATUS);
+		if ((int_status & QLA_INT_REQ) == 0)
 			return (0);
 
-		v = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    QLA_RISC_STATUS_LOW);
-		bus_space_barrier(sc->sc_iot, sc->sc_ioh, QLA_RISC_STATUS_LOW,
-		    4, BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+		*isr = QLA_INT_TYPE_IO;
+	}
 
-		switch (v & QLA_INT_STATUS_MASK) {
-		case QLA_23XX_INT_ROM_MBOX:
-		case QLA_23XX_INT_ROM_MBOX_FAIL:
-		case QLA_23XX_INT_MBOX:
-		case QLA_23XX_INT_MBOX_FAIL:
-			*isr = QLA_INT_TYPE_MBOX;
-			break;
+	return (1);
+}
 
-		case QLA_23XX_INT_ASYNC:
-			*isr = QLA_INT_TYPE_ASYNC;
-			break;
+int
+qla_read_isr_2G(struct qla_softc *sc, u_int16_t *isr, u_int16_t *info)
+{
+	u_int32_t v;
 
-		case QLA_23XX_INT_RSPQ:
-			*isr = QLA_INT_TYPE_IO;
-			break;
+	if ((qla_read(sc, QLA_INT_STATUS) & QLA_INT_REQ) == 0)
+		return (0);
 
-		default:
-			*isr = QLA_INT_TYPE_OTHER;
-			break;
-		}
+	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QLA_RISC_STATUS_LOW);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, QLA_RISC_STATUS_LOW,
+	    4, BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
-		*info = (v >> QLA_INT_INFO_SHIFT);
-		return (1);
+	switch (v & QLA_INT_STATUS_MASK) {
+	case QLA_23XX_INT_ROM_MBOX:
+	case QLA_23XX_INT_ROM_MBOX_FAIL:
+	case QLA_23XX_INT_MBOX:
+	case QLA_23XX_INT_MBOX_FAIL:
+		*isr = QLA_INT_TYPE_MBOX;
+		break;
+
+	case QLA_23XX_INT_ASYNC:
+		*isr = QLA_INT_TYPE_ASYNC;
+		break;
+
+	case QLA_23XX_INT_RSPQ:
+		*isr = QLA_INT_TYPE_IO;
+		break;
 
 	default:
-		return (0);
+		*isr = QLA_INT_TYPE_OTHER;
+		break;
 	}
+
+	*info = (v >> QLA_INT_INFO_SHIFT);
+
+	return (1);
 }
 
 void
@@ -1260,10 +1262,10 @@ qla_softreset(struct qla_softc *sc)
 	qla_host_cmd(sc, QLA_HOST_CMD_RELEASE);
 
 	/* reset queue pointers */
-	qla_queue_write(sc, sc->sc_q->req_in, 0);
-	qla_queue_write(sc, sc->sc_q->req_out, 0);
-	qla_queue_write(sc, sc->sc_q->res_in, 0);
-	qla_queue_write(sc, sc->sc_q->res_out, 0);
+	qla_queue_write(sc, sc->sc_regs->req_in, 0);
+	qla_queue_write(sc, sc->sc_regs->req_out, 0);
+	qla_queue_write(sc, sc->sc_regs->res_in, 0);
+	qla_queue_write(sc, sc->sc_regs->res_out, 0);
 
 	qla_set_ints(sc, 1);
 	/* isp(4) sends QLA_HOST_CMD_BIOS here.. not documented? */
