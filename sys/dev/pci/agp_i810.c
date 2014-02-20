@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.81 2014/02/05 11:52:49 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.82 2014/02/20 22:18:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -623,37 +623,6 @@ int
 agp_i810_activate(struct device *arg, int act)
 {
 	struct agp_i810_softc *isc = (struct agp_i810_softc *)arg;
-	bus_space_tag_t bst = isc->map->bst;
-	bus_space_handle_t bsh = isc->map->bsh;
-	bus_size_t offset;
-
-	if (isc->chiptype == CHIP_I915 ||
-	    isc->chiptype == CHIP_G33 ||
-	    isc->chiptype == CHIP_PINEVIEW) {
-		bst = isc->gtt_map->bst;
-		bsh = isc->gtt_map->bsh;
-	}
-
-	switch(isc->chiptype) {
-	case CHIP_I915:
-	case CHIP_G33:
-	case CHIP_PINEVIEW:
-		offset = 0;
-		break;
-	case CHIP_I965:
-		offset = AGP_I965_GTT;
-		break;
-	case CHIP_G4X:
-	case CHIP_IRONLAKE:
-	case CHIP_SANDYBRIDGE:
-	case CHIP_IVYBRIDGE:
-	case CHIP_HASWELL:
-		offset = AGP_G4X_GTT;
-		break;
-	default:
-		offset = AGP_I810_GTT;
-		break;
-	}
 
 	/*
 	 * Anything kept in agp over a suspend/resume cycle (and thus by X
@@ -667,6 +636,7 @@ agp_i810_activate(struct device *arg, int act)
 
 	return (0);
 }
+
 void
 agp_i810_configure(struct agp_i810_softc *isc)
 {
