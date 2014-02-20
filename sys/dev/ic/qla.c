@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.24 2014/02/20 00:23:00 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.25 2014/02/20 00:42:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -622,7 +622,7 @@ qla_handle_resp(struct qla_softc *sc, u_int16_t id)
 	    QLA_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTREAD);
 
 	qla_dump_iocb(sc, entry);
-	switch(entry[0]) {
+	switch (entry[0]) {
 	case QLA_IOCB_STATUS:
 		status = (struct qla_iocb_status *)entry;
 		handle = status->handle;
