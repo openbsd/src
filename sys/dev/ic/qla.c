@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.25 2014/02/20 00:42:44 dlg Exp $ */
+/*	$OpenBSD: qla.c,v 1.26 2014/02/20 03:39:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1208,17 +1208,15 @@ qla_read_queue_2100(struct qla_softc *sc, bus_size_t queue)
 {
 	u_int16_t a, b, i;
 
-	do {
+	for (i = 0; i < 1000; i++) {
 		a = qla_read(sc, queue);
 		b = qla_read(sc, queue);
 
 		if (a == b)
 			return (a);
+	}
 
-	} while (++i < 1000);
-
-	DPRINTF(QLA_D_INTR, "%s: queue ptr unstable\n",
-	    DEVNAME(sc));
+	DPRINTF(QLA_D_INTR, "%s: queue ptr unstable\n", DEVNAME(sc));
 
 	return (a);
 }
