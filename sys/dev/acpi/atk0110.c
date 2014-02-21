@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.7 2011/06/19 17:55:37 jsg Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.8 2014/02/21 16:25:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -517,7 +517,6 @@ aibs_probe(struct aibs_softc *sc)
 	 * New mode uses GGRP for enumeration and GITM and SITM as accessor.
 	 * If the new methods are available use them else default to old mode.
 	 */
-	printf(":");
 	aml_find_node(sc->sc_devnode, "RTMP", aibs_find_cb, &sc->sc_rtmpnode);
 	aml_find_node(sc->sc_devnode, "RVLT", aibs_find_cb, &sc->sc_rvltnode);
 	aml_find_node(sc->sc_devnode, "RFAN", aibs_find_cb, &sc->sc_rfannode);
