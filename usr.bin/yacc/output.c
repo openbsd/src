@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.19 2014/01/08 22:55:59 millert Exp $	*/
+/*	$OpenBSD: output.c,v 1.20 2014/02/21 02:18:00 tedu Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -173,12 +173,8 @@ output_rule_data(void)
     int j;
 
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %slhs[] =\n"
-	"#else\n"
-	"short %slhs[] =\n"
-	"#endif\n"
-	"\t{%42d,", symbol_prefix, symbol_prefix, symbol_value[start_symbol]);
+	"\t{%42d,", symbol_prefix, symbol_value[start_symbol]);
 
     j = 10;
     for (i = 3; i < nrules; i++)
@@ -198,12 +194,8 @@ output_rule_data(void)
     fprintf(output_file, "\n};\n");
 
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %slen[] =\n"
-	"#else\n"
-	"short %slen[] =\n"
-	"#endif\n"
-	"\t{%42d,", symbol_prefix, symbol_prefix, 2);
+	"\t{%42d,", symbol_prefix, 2);
 
     j = 10;
     for (i = 3; i < nrules; i++)
@@ -230,13 +222,9 @@ output_yydefred(void)
     int i, j;
 
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %sdefred[] =\n"
-	"#else\n"
-	"short %sdefred[] =\n"
-	"#endif\n"
 	"\t{%39d,",
-	symbol_prefix, symbol_prefix, (defred[0] ? defred[0] - 2 : 0));
+	symbol_prefix, (defred[0] ? defred[0] - 2 : 0));
 
     j = 10;
     for (i = 1; i < nstates; i++)
@@ -381,12 +369,8 @@ goto_actions(void)
 
     k = default_goto(start_symbol + 1);
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %sdgoto[] =\n"
-	"#else\n"
-	"short %sdgoto[] =\n"
-	"#endif\n"
-	"\t{%40d,", symbol_prefix, symbol_prefix, k);
+	"\t{%40d,", symbol_prefix, k);
     save_column(start_symbol + 1, k);
 
     j = 10;
@@ -709,12 +693,8 @@ output_base(void)
     int i, j;
 
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %ssindex[] =\n"
-	"#else\n"
-	"short %ssindex[] =\n"
-	"#endif\n"
-	"\t{%39d,", symbol_prefix, symbol_prefix, base[0]);
+	"\t{%39d,", symbol_prefix, base[0]);
 
     j = 10;
     for (i = 1; i < nstates; i++)
@@ -734,12 +714,8 @@ output_base(void)
     if (!rflag) outline += 2;
     fprintf(output_file,
 	"};\n"
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %srindex[] =\n"
-	"#else\n"
-	"short %srindex[] =\n"
-	"#endif\n"
-	"\t{%39d,", symbol_prefix, symbol_prefix, base[nstates]);
+	"\t{%39d,", symbol_prefix, base[nstates]);
 
     j = 10;
     for (i = nstates + 1; i < 2*nstates; i++)
@@ -759,12 +735,8 @@ output_base(void)
     if (!rflag) outline += 2;
     fprintf(output_file,
 	"};\n"
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %sgindex[] =\n"
-	"#else\n"
-	"short %sgindex[] =\n"
-	"#endif\n"
-	"\t{%39d,", symbol_prefix, symbol_prefix, base[2*nstates]);
+	"\t{%39d,", symbol_prefix, base[2*nstates]);
 
     j = 10;
     for (i = 2*nstates + 1; i < nvectors - 1; i++)
@@ -796,12 +768,8 @@ output_table(void)
     ++outline;
     fprintf(code_file, "#define YYTABLESIZE %d\n", high);
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %stable[] =\n"
-	"#else\n"
-	"short %stable[] =\n"
-	"#endif\n"
-	"\t{%40d,", symbol_prefix, symbol_prefix, table[0]);
+	"\t{%40d,", symbol_prefix, table[0]);
 
     j = 10;
     for (i = 1; i <= high; i++)
@@ -831,12 +799,8 @@ output_check(void)
     int j;
 
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %scheck[] =\n"
-	"#else\n"
-	"short %scheck[] =\n"
-	"#endif\n"
-	"\t{%40d,", symbol_prefix, symbol_prefix, check[0]);
+	"\t{%40d,", symbol_prefix, check[0]);
 
     j = 10;
     for (i = 1; i <= high; i++)
@@ -1006,12 +970,8 @@ output_debug(void)
     if (!rflag) ++outline;
     fprintf(output_file,
 	"#if YYDEBUG\n"
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const char * const %sname[] =\n"
-	"#else\n"
-	"char *%sname[] =\n"
-	"#endif\n"
-	"\t{", symbol_prefix, symbol_prefix);
+	"\t{", symbol_prefix);
     j = 80;
     for (i = 0; i <= max; ++i)
     {
@@ -1138,12 +1098,8 @@ output_debug(void)
 
     if (!rflag) ++outline;
     fprintf(output_file,
-	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const char * const %srule[] =\n"
-	"#else\n"
-	"char *%srule[] =\n"
-	"#endif\n"
-	"\t{", symbol_prefix, symbol_prefix);
+	"\t{", symbol_prefix);
     for (i = 2; i < nrules; ++i)
     {
 	fprintf(output_file, "\"%s :", symbol_name[rlhs[i]]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.31 2013/10/30 20:33:00 millert Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.32 2014/02/21 02:18:00 tedu Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -59,13 +59,12 @@ char *banner[] =
     "#define yyclearin (yychar=(YYEMPTY))",
     "#define yyerrok (yyerrflag=0)",
     "#define YYRECOVERING() (yyerrflag!=0)",
-    0
+    NULL
 };
 
 
 char *tables[] =
 {
-    "#if defined(__cplusplus) || defined(__STDC__)",
     "extern const short yylhs[];",
     "extern const short yylen[];",
     "extern const short yydefred[];",
@@ -79,22 +78,7 @@ char *tables[] =
     "extern const char *const yyname[];",
     "extern const char *const yyrule[];",
     "#endif",
-    "#else /* !(defined(__cplusplus) || defined(__STDC__)) */",
-    "extern short yylhs[];",
-    "extern short yylen[];",
-    "extern short yydefred[];",
-    "extern short yydgoto[];",
-    "extern short yysindex[];",
-    "extern short yyrindex[];",
-    "extern short yygindex[];",
-    "extern short yytable[];",
-    "extern short yycheck[];",
-    "#if YYDEBUG",
-    "extern char *yyname[];",
-    "extern char *yyrule[];",
-    "#endif /* YYDEBUG */",
-    "#endif /* !(defined(__cplusplus) || defined(__STDC__)) */",
-    0
+    NULL
 };
 
 
@@ -125,18 +109,14 @@ char *header[] =
     "short *yysslim;",
     "YYSTYPE *yyvs;",
     "unsigned int yystacksize;",
-    0
+    NULL
 };
 
 
 char *body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
-    "#if defined(__cplusplus) || defined(__STDC__)",
     "static int yygrowstack(void)",
-    "#else",
-    "static int yygrowstack()",
-    "#endif",
     "{",
     "    unsigned int newsize;",
     "    long sslen;",
@@ -190,19 +170,11 @@ char *body[] =
     "#define YYACCEPT goto yyaccept",
     "#define YYERROR goto yyerrlab",
     "int",
-    "#if defined(__cplusplus) || defined(__STDC__)",
     "yyparse(void)",
-    "#else",
-    "yyparse()",
-    "#endif",
     "{",
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
-    "#if defined(__cplusplus) || defined(__STDC__)",
     "    const char *yys;",
-    "#else /* !(defined(__cplusplus) || defined(__STDC__)) */",
-    "    char *yys;",
-    "#endif /* !(defined(__cplusplus) || defined(__STDC__)) */",
     "",
     "    if ((yys = getenv(\"YYDEBUG\")))",
     "    {",
@@ -338,7 +310,7 @@ char *body[] =
     "        memset(&yyval, 0, sizeof yyval);",
     "    switch (yyn)",
     "    {",
-    0
+    NULL
 };
 
 
@@ -414,7 +386,7 @@ char *trailer[] =
     "    yystacksize = 0;",
     "    return (0);",
     "}",
-    0
+    NULL
 };
 
 
