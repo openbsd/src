@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.69 2014/02/17 15:53:46 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.70 2014/02/21 20:52:38 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -183,6 +183,9 @@ struct iked_childsa {
 	struct iked_sa			*csa_ikesa;	/* parent SA */
 
 	struct iked_childsa		*csa_peersa;	/* peer */
+
+	struct iked_childsa		*csa_parent;	/* IPCOMP parent */
+	u_int				 csa_children;	/* IPCOMP children */
 
 	RB_ENTRY(iked_childsa)		 csa_node;
 	TAILQ_ENTRY(iked_childsa)	 csa_entry;
@@ -844,6 +847,7 @@ void	 socket_set_blockmode(int, enum blockmodes);
 int	 socket_af(struct sockaddr *, in_port_t);
 in_port_t
 	 socket_getport(struct sockaddr *);
+int	 socket_setport(struct sockaddr *, in_port_t);
 int	 socket_getaddr(int, struct sockaddr_storage *);
 int	 socket_bypass(int, struct sockaddr *);
 int	 udp_bind(struct sockaddr *, in_port_t);

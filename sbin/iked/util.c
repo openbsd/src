@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2014/02/14 09:00:03 markus Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2014/02/21 20:52:38 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -87,6 +87,22 @@ socket_getport(struct sockaddr *sa)
 	}
 
 	/* NOTREACHED */
+	return (0);
+}
+
+int
+socket_setport(struct sockaddr *sa, in_port_t port)
+{
+	switch (sa->sa_family) {
+	case AF_INET:
+		((struct sockaddr_in *)sa)->sin_port = htons(port);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)sa)->sin6_port = htons(port);
+		break;
+	default:
+		return (-1);
+	}
 	return (0);
 }
 

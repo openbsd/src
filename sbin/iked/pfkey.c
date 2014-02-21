@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.28 2014/02/14 09:00:03 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.29 2014/02/21 20:52:38 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -814,7 +814,7 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, u_int64_t *last_used)
 	}
 	if ((sa_life = pfkey_find_ext(data, n, SADB_X_EXT_LIFETIME_LASTUSE))
 	    == NULL) {
-		log_debug("%s: erronous reply", __func__);
+		/* has never been used */
 		ret = -1;
 		goto done;
 	}
