@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.8 2007/10/22 23:55:58 deraadt Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.9 2014/02/21 21:28:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -96,10 +96,9 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 		}
 
 		/*
-		 * XXX alipm crashes on some machines for an unknown, skip
-		 * reason when doing the periodic i2c accesses things like
-		 * sensors need.  However, devices accessed only at boot
-		 * are fine.
+		 * XXX alipm crashes on some machines for an unknown reason
+		 * when doing the periodic i2c accesses things like sensors
+		 * need.  However, devices accessed only at boot are fine.
 		 */
 		if (strcmp(self->dv_parent->dv_xname, "alipm0") == 0 &&
 		    (ia.ia_addr < 0x50 || ia.ia_addr > 0x57)) {
