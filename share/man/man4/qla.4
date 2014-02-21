@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qla.4,v 1.7 2014/02/17 13:06:05 jmc Exp $
+.\"	$OpenBSD: qla.4,v 1.8 2014/02/21 16:38:19 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2014 $
+.Dd $Mdocdate: February 21 2014 $
 .Dt QLA 4
 .Os
 .Sh NAME
@@ -27,16 +27,7 @@
 The
 .Nm
 driver provides support for 1G and 2G QLogic Fibre Channel
-host bus adapters using the following family of chipsets:
-.Pp
-.Bl -dash -offset indent -compact
-.It
-ISP2100
-.It
-ISP2200
-.It
-ISP2300
-.El
+host bus adapters using the ISP2100, ISP2200, and ISP2300 chipsets.
 .Pp
 .Nm
 provides no ability to configure an adapter's parameters at runtime;
