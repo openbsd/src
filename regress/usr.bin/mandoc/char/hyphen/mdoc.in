@@ -1,4 +1,4 @@
-.Dd September 18, 2011
+.Dd February 22, 2014
 .Dt HYPHEN-MDOC 1
 .Os OpenBSD
 .Sh NAME
@@ -6,6 +6,9 @@
 .Nd formatting hyphens and breaking lines
 .Sh DESCRIPTION
 This is a long line of text, such that the last word won't fit: break-here
+.Pp
+But do not break the line at hyphens inside macro arguments: no
+.No break-here
 .Pp
 Try the same thing once same again, but now in italic font mode:
 \fIbreak-here\fP

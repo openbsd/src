@@ -7,10 +7,13 @@ DDEESSCCRRIIPPTTIIOONN
      This is a long line of text, such that the last word won't fit: break-
      here
 
+     But do not break the line at hyphens inside macro arguments: no
+     break-here
+
      Try the same thing once same again, but now in italic font mode: _b_r_e_a_k_-
      _h_e_r_e
 
      And finally, try it a third time, but this time in bold font mode: bbrreeaakk--
      hheerree
 
-OpenBSD                       September 18, 2011                       OpenBSD
+OpenBSD                        February 22, 2014                       OpenBSD
