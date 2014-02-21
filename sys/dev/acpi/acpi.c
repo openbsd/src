@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.252 2014/01/20 00:47:21 claudio Exp $ */
+/* $OpenBSD: acpi.c,v 1.253 2014/02/21 23:48:38 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2170,7 +2170,6 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	acpi_resume_clocks(sc);		/* AML may need clocks */
 	acpi_resume_pm(sc, state);
 	acpi_resume_cpu(sc);
-	acpibtn_disable_psw();		/* disable _LID for wakeup */
 
 fail_pts:
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
@@ -2180,6 +2179,7 @@ fail_suspend:
 	enable_intr();
 	splx(s);
 
+	acpibtn_disable_psw();		/* disable _LID for wakeup */
 	inittodr(time_second);
 
 	/* 3rd resume AML step: _TTS(runstate) */
