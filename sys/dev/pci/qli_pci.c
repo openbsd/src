@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.20 2010/08/07 03:50:02 krw Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.21 2014/02/21 18:47:35 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -198,7 +198,7 @@ qli_pci_find_device(void *aux) {
 	for (i = 0; qli_pci_devices[i].qpd_vendor; i++) {
 		if (qli_pci_devices[i].qpd_vendor == PCI_VENDOR(pa->pa_id) &&
 		    qli_pci_devices[i].qpd_product == PCI_PRODUCT(pa->pa_id)) {
-		    	DNPRINTF(QLI_D_MISC, "qli_pci_find_device: %i\n", i);
+			DNPRINTF(QLI_D_MISC, "qli_pci_find_device: %i\n", i);
 			return (i);
 		}
 	}
@@ -851,7 +851,7 @@ qli_mgmt(struct qli_softc *sc, int len, u_int32_t *mbox)
 			    (QLI_REG_CTRLSTAT_SCSI_RESET_INTR |
 			    QLI_REG_CTRLSTAT_SCSI_COMPL_INTR |
 			    QLI_REG_CTRLSTAT_SCSI_PROC_INTR))) {
-			    	qli_intr(sc);
+				qli_intr(sc);
 				break;
 			}
 		}
@@ -944,7 +944,7 @@ qli_attach(struct qli_softc *sc)
 	}
 
 	/* setup queues & shadow registers */
-	sc->sc_queues_len = (QLI_REQUESTQ_DEPTH * QLI_QUEUE_SIZE) + 
+	sc->sc_queues_len = (QLI_REQUESTQ_DEPTH * QLI_QUEUE_SIZE) +
 	    (QLI_RESPONSEQ_DEPTH * QLI_QUEUE_SIZE) +
 	    sizeof(struct qli_shadow_regs) +
 	    QLIMEM_ALIGN + PAGE_SIZE - 1;
