@@ -1,5 +1,4 @@
-#	$OpenBSD: list,v 1.55 2014/02/21 16:30:14 deraadt Exp $
-#	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
+#	$OpenBSD: list,v 1.56 2014/02/21 19:14:23 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
