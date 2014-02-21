@@ -1,5 +1,6 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.243 2014/02/21 16:29:08 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.244 2014/02/21 16:30:14 deraadt Exp $
+#	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -53,6 +54,8 @@
 #
 
 #	OpenBSD installation script.
+#	In a perfect world, this would be a nice C program, with a reasonable
+#	user interface.
 
 # install.sub needs to know the MODE
 MODE=install
@@ -275,16 +278,16 @@ if [[ -n $user ]]; then
 	_encr=$(encr_pwd "$userpass")
 	_home=/home/$user
 	uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:$_home:/bin/ksh"
-	echo "$uline" >>/mnt/etc/master.passwd
-	echo "${user}:*:1000:" >>/mnt/etc/group
-	echo ${user} >/mnt/root/.forward
+	echo "$uline" >> /mnt/etc/master.passwd
+	echo "${user}:*:1000:" >> /mnt/etc/group
+	echo ${user} > /mnt/root/.forward
 
 	_home=/mnt$_home
 	mkdir -p $_home
 	(cd /mnt/etc/skel; cp -pR . $_home)
 	(umask 077 &&
 		sed "s,^To: root\$,To: ${username} <${user}>," \
-		/mnt/var/mail/root >/mnt/var/mail/$user )
+		/mnt/var/mail/root > /mnt/var/mail/$user )
 	chown -R 1000:1000 $_home /mnt/var/mail/$user
 	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${user}@
 w
@@ -292,7 +295,7 @@ q" | ed /mnt/etc/group 2>/dev/null
 
 	# Add public ssh key to authorized_keys
 	[[ -n "$userkey" ]] &&
-		print -r -- "$userkey" >>$_home/.ssh/authorized_keys
+		print -r -- "$userkey" >> $_home/.ssh/authorized_keys
 fi
 
 if [[ -n "$_rootpass" ]]; then
@@ -307,7 +310,7 @@ fi
 [[ -n "$rootkey" ]] && (
 	umask 077
 	mkdir /mnt/root/.ssh
-	print -r -- "$rootkey" >>/mnt/root/.ssh/authorized_keys
+	print -r -- "$rootkey" >> /mnt/root/.ssh/authorized_keys
 )
 
 if grep -qs '^rtsol' /mnt/etc/hostname.*; then
