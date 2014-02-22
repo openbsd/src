@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.28 2014/02/20 20:20:28 kettenis Exp $ */
+/*	$OpenBSD: qla.c,v 1.29 2014/02/22 15:36:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -301,6 +301,9 @@ qla_attach(struct qla_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	struct qla_init_cb *icb;
+#ifndef ISP_NOFIRMWARE
+	int (*loadfirmware)(struct qla_softc *) = NULL;
+#endif
 	int i, rv;
 
 	TAILQ_INIT(&sc->sc_ports);
@@ -311,16 +314,25 @@ qla_attach(struct qla_softc *sc)
 	case QLA_GEN_ISP2100:
 		sc->sc_mbox_base = QLA_MBOX_BASE_2100;
 		sc->sc_regs = &qla_regs_2100;
+#ifndef ISP_NOFIRMWARE
+		loadfirmware = qla_load_firmware_2100;
+#endif
 		break;
 
 	case QLA_GEN_ISP2200:
 		sc->sc_mbox_base = QLA_MBOX_BASE_2200;
 		sc->sc_regs = &qla_regs_2200;
+#ifndef ISP_NOFIRMWARE
+		loadfirmware = qla_load_firmware_2200;
+#endif
 		break;
 
 	case QLA_GEN_ISP23XX:
 		sc->sc_mbox_base = QLA_MBOX_BASE_23XX;
 		sc->sc_regs = &qla_regs_23XX;
+#ifndef ISP_NOFIRMWARE
+		loadfirmware = qla_load_firmware_2300;
+#endif
 		break;
 
 	default:
@@ -353,29 +365,12 @@ qla_attach(struct qla_softc *sc)
 	if (sc->sc_port_name == 0)
 		sc->sc_port_name = QLA_DEFAULT_PORT_NAME;
 
-	switch (sc->sc_isp_gen) {
-	case QLA_GEN_ISP2100:
-		if (qla_load_firmware_2100(sc)) {
-			printf("firmware load failed\n");
-			return (ENXIO);
-		}
-		break;
-
-	case QLA_GEN_ISP2200:
-		if (qla_load_firmware_2200(sc)) {
-			printf("firmware load failed\n");
-			return (ENXIO);
-		}
-		break;
-
-	case QLA_GEN_ISP23XX:
-		if (qla_load_firmware_2300(sc)) {
-			printf("firmware load failed\n");
-			return (ENXIO);
-		}
-		break;
-
+#ifndef ISP_NOFIRMWARE
+	if (loadfirmware && (loadfirmware)(sc)) {
+		printf("firmware load failed\n");
+		return (ENXIO);
 	}
+#endif
 
 	/* execute firmware */
 	sc->sc_mbox[0] = QLA_MBOX_EXEC_FIRMWARE;
@@ -616,7 +611,7 @@ qla_handle_resp(struct qla_softc *sc, u_int16_t id)
 
 	ccb = NULL;
 	entry = QLA_DMA_KVA(sc->sc_responses) + (id * QLA_QUEUE_ENTRY_SIZE);
-	
+
 	bus_dmamap_sync(sc->sc_dmat,
 	    QLA_DMA_MAP(sc->sc_responses), id * QLA_QUEUE_ENTRY_SIZE,
 	    QLA_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTREAD);
@@ -694,7 +689,7 @@ qla_handle_resp(struct qla_softc *sc, u_int16_t id)
 			sc->sc_marker_required = 1;
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
-		
+
 		case QLA_IOCB_STATUS_TIMEOUT:
 			DPRINTF(QLA_D_IO, "%s: command timed out\n",
 			    DEVNAME(sc));
@@ -919,7 +914,7 @@ qla_scsi_cmd(struct scsi_xfer *xs)
 	iocb = QLA_DMA_KVA(sc->sc_requests) + offset;
 	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_requests), offset,
 	    QLA_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTWRITE);
-	    
+
 	ccb->ccb_xs = xs;
 
 	DPRINTF(QLA_D_IO, "%s: writing cmd at request %d\n", DEVNAME(sc), req);
@@ -1760,34 +1755,7 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 	qla_dump_iocb(sc, buf);
 }
 
-#ifdef ISP_NOFIRMWARE
-
-int
-qla_load_firmware_words(struct qla_softc *sc, const u_int16_t *)
-{
-	return (0);
-}
-
-int
-qla_load_firmware_2100(struct qla_softc *sc)
-{
-	return (0);
-}
-
-int
-qla_load_firmware_2200(struct qla_softc *sc)
-{
-	return (0);
-}
-
-int
-qla_load_firmware_2300(struct qla_softc *sc)
-{
-	return (0);
-}
-
-#else
-
+#ifndef ISP_NOFIRMWARE
 int
 qla_load_firmware_words(struct qla_softc *sc, const u_int16_t *src,
     u_int16_t dest)
@@ -1904,7 +1872,7 @@ qla_load_firmware_2300(struct qla_softc *sc)
 	return (0);
 }
 
-#endif	/* ISP_NOFIRMWARE */
+#endif	/* !ISP_NOFIRMWARE */
 
 int
 qla_read_nvram(struct qla_softc *sc)
@@ -1920,7 +1888,7 @@ qla_read_nvram(struct qla_softc *sc)
 	delay(10);
 	qla_write(sc, QLA_NVRAM, QLA_NVRAM_CHIP_SEL | QLA_NVRAM_CLOCK);
 	delay(10);
-	
+
 	for (i = 0; i < nitems(data); i++) {
 		req = (i + base) | (QLA_NVRAM_CMD_READ << 8);
 
@@ -2138,7 +2106,7 @@ qla_free_ccbs(struct qla_softc *sc)
 void *
 qla_get_ccb(void *xsc)
 {
-	struct qla_softc 	*sc = xsc;
+	struct qla_softc	*sc = xsc;
 	struct qla_ccb		*ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
