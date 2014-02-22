@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.23 2013/12/28 02:51:07 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.24 2014/02/22 20:27:21 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -27,6 +27,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNEL
+
 #include <lib/libkern/libkern.h>
 #include <stand.h>
 
@@ -37,10 +42,9 @@
 #undef ELFSIZE
 #include "loadfile.h"
 
-char *strstr(char *, const char *);	/* strstr.c */
-
-int	main(int, char **);
-void	dobootopts(int, char **);
+void	 dobootopts(int, char **);
+void	 loadrandom(const char *, const char *, void *, size_t);
+char	*strstr(char *, const char *);	/* strstr.c */
 
 enum {
 	AUTO_NONE,
@@ -54,7 +58,7 @@ char *OSLoadFilename = NULL;
 
 int	IP;
 
-char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
+char   rnddata[BOOTRANDOM_MAX];
 
 #include "version"
 
@@ -96,6 +100,17 @@ boot_main(int argc, char *argv[])
 	printf("Boot: %s\n", line);
 
 	/*
+	 * Try and load randomness if booting from a disk.
+	 */
+	
+	if (bootauto != AUTO_MINI &&
+	    strstr(OSLoadPartition, "bootp(") == NULL &&
+	    strstr(OSLoadPartition, "cdrom(") == NULL) {
+		loadrandom(OSLoadPartition, BOOTRANDOM, rnddata,
+		    sizeof(rnddata));
+	}
+
+	/*
 	 * Load the kernel and symbol table.
 	 */
 
@@ -118,6 +133,7 @@ boot_main(int argc, char *argv[])
 
 	/* We failed to load the kernel. */
 	panic("Boot FAILED!");
+	/* NOTREACHED */
 }
 
 __dead void
@@ -261,4 +277,31 @@ check_phdr(void *v)
 	}
 
 	return 0;
+}
+
+/*
+ * Load the saved randomness file.
+ */
+void
+loadrandom(const char *partition, const char *name, void *buf, size_t buflen)
+{
+	char path[MAXPATHLEN];
+	struct stat sb;
+	int fd;
+
+	strlcpy(path, partition, sizeof path);
+	strlcat(path, name, sizeof path);
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", path, strerror(errno));
+		return;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+fail:
+	close(fd);
 }
