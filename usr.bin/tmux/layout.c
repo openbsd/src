@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.20 2013/10/10 12:08:14 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.21 2014/02/22 18:01:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,6 +53,7 @@ layout_create_cell(struct layout_cell *lcparent)
 	lc->yoff = UINT_MAX;
 
 	lc->wp = NULL;
+	lc->lastwp = NULL;
 
 	return (lc);
 }

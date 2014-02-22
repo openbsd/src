@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.101 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.102 2014/02/22 18:01:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -410,8 +410,9 @@ window_pane_active_set(struct window_pane *wp, struct window_pane *nextwp)
 	 * Previously active pane, if any, must not be the same as the source
 	 * pane.
 	 */
-	if (nextwp->layout_cell->parent != NULL) {
-		lastwp = nextwp->layout_cell->parent->lastwp;
+	lc = nextwp->layout_cell->parent;
+	if (lc != NULL && lc->lastwp != NULL) {
+		lastwp = lc->lastwp;
 		if (lastwp != wp && window_pane_visible(lastwp))
 			return (lastwp);
 	}
