@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.237 2014/02/19 05:32:56 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.238 2014/02/22 17:43:16 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -292,7 +292,7 @@ mlphy*	at mii?				# Micro Linear 6692 PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 # sensors
-alipm*	at pci?
+alipm*	at pci? disable
 iic*	at alipm?
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
