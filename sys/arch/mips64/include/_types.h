@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.17 2013/12/18 16:41:01 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.18 2014/02/22 18:10:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
  * (within reasonable limits).
  */
 #define	_ALIGNBYTES		7
-#define	_STACKALIGNBYTES	_ALIGNBYTES
+#define	_STACKALIGNBYTES	15
 #define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	((((unsigned long)(p)) & (sizeof(t) - 1)) == 0)
 

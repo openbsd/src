@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.5 2013/12/23 18:16:39 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.6 2014/02/22 18:10:39 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -99,6 +99,8 @@
 	"	addiu	$gp, $gp, %lo(%neg(%gp_rel(__start)))	\n" \
 	"	daddu	$gp, $gp, $t9		\n" \
 	"	move	$a0, $sp		\n" \
+	"	dsrl	$a1, $sp, 4		\n" /* align stack on a */ \
+	"	dsll	$sp, $a1, 4		\n" /* 16 byte boundary */ \
 	"	move	$a1, $v0		\n" \
 	"	dla	$t9, ___start		\n" \
 	"	jr	$t9			\n" \
