@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.76 2014/02/17 07:02:45 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.77 2014/02/22 04:41:31 chris Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -226,6 +226,7 @@ em_set_phy_type(struct em_hw *hw)
 	case M88E1011_I_PHY_ID:
 	case M88E1111_I_PHY_ID:
 	case M88E1543_E_PHY_ID:
+	case I210_I_PHY_ID:
 		hw->phy_type = em_phy_m88;
 		break;
 	case IGP01E1000_I_PHY_ID:
@@ -519,6 +520,17 @@ em_set_mac_type(struct em_hw *hw)
 		hw->mac_type = em_82580;
 		hw->initialize_hw_bits_disable = 1;
 		break;
+	case E1000_DEV_ID_I210_COPPER:
+	case E1000_DEV_ID_I210_FIBER:
+	case E1000_DEV_ID_I210_SERDES:
+	case E1000_DEV_ID_I210_SGMII:
+	case E1000_DEV_ID_I210_COPPER_FLASHLESS:
+	case E1000_DEV_ID_I210_SERDES_FLASHLESS:
+	case E1000_DEV_ID_I211_COPPER:
+		hw->mac_type = em_i210;
+		hw->initialize_hw_bits_disable = 1;
+		hw->eee_enable = 1;
+		break;
 	case E1000_DEV_ID_I350_COPPER:
 	case E1000_DEV_ID_I350_FIBER:
 	case E1000_DEV_ID_I350_SERDES:
@@ -612,6 +624,7 @@ em_set_mac_type(struct em_hw *hw)
 	case em_80003es2lan:
 	case em_82575:
 	case em_82580:
+	case em_i210:
 	case em_i350:
 		hw->swfw_sync_present = TRUE;
 		/* FALLTHROUGH */
@@ -650,7 +663,7 @@ em_set_media_type(struct em_hw *hw)
 	}
 
 	if (hw->mac_type == em_82575 || hw->mac_type == em_82580 ||
-	    hw->mac_type == em_i350) {
+	    hw->mac_type == em_i210 || hw->mac_type == em_i350) {
 		hw->media_type = em_media_type_copper;
 	
 		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
@@ -755,7 +768,7 @@ em_reset_hw(struct em_hw *hw)
 
         /* Set the completion timeout for 82575 chips */
         if (hw->mac_type == em_82575 || hw->mac_type == em_82580 ||
-	    hw->mac_type == em_i350) {
+	    hw->mac_type == em_i210 || hw->mac_type == em_i350) {
                 ret_val = em_set_pciex_completion_timeout(hw);
                 if (ret_val) {              
                         DEBUGOUT("PCI-E Set completion timeout has failed.\n");
@@ -1011,7 +1024,7 @@ em_reset_hw(struct em_hw *hw)
 		EM_WRITE_REG(hw, E1000_MDICNFG, mdicnfg);
 	}
 
-	if (hw->mac_type == em_i350)
+	if (hw->mac_type == em_i210 || hw->mac_type == em_i350)
 		em_set_eee_i350(hw);
 
 	return E1000_SUCCESS;
@@ -1380,6 +1393,7 @@ em_init_hw(struct em_hw *hw)
 	case em_82572:
 	case em_82575:
 	case em_82580:
+	case em_i210:
 	case em_i350:
 	case em_ich8lan:
 	case em_ich9lan:
@@ -5181,8 +5195,10 @@ em_match_gig_phy(struct em_hw *hw)
 			match = TRUE;
 		break;
 	case em_82580:
+	case em_i210:
 	case em_i350:
 		if (hw->phy_id == I82580_I_PHY_ID ||
+		    hw->phy_id == I210_I_PHY_ID ||
 		    hw->phy_id == I350_I_PHY_ID ||
 		    hw->phy_id == M88E1543_E_PHY_ID) {
 			uint32_t mdic;
@@ -5319,7 +5335,8 @@ em_detect_gig_phy(struct em_hw *hw)
 		hw->phy_type = em_phy_gg82563;
 
 	/* Power on SGMII phy if it is disabled */
-	if (hw->mac_type == em_82580 || hw->mac_type == em_i350) {
+	if (hw->mac_type == em_82580 || hw->mac_type == em_i210 ||
+	    hw->mac_type == em_i350) {
 		uint32_t ctrl_ext = EM_READ_REG(hw, E1000_CTRL_EXT);
 		EM_WRITE_REG(hw, E1000_CTRL_EXT,
 		    ctrl_ext & ~E1000_CTRL_EXT_SDP3_DATA);
@@ -5461,6 +5478,7 @@ em_init_eeprom_params(struct em_hw *hw)
 	case em_82574:
 	case em_82575:
 	case em_82580:
+	case em_i210:
 	case em_i350:
 		eeprom->type = em_eeprom_spi;
 		eeprom->opcode_bits = 8;
@@ -6789,6 +6807,8 @@ em_init_rx_addrs(struct em_hw *hw)
 		rar_num -= 1;
 	if (hw->mac_type == em_82580)
 		rar_num = E1000_RAR_ENTRIES_82580;
+	if (hw->mac_type == em_i210)
+		rar_num = E1000_RAR_ENTRIES_82575;
 	if (hw->mac_type == em_i350)
 		rar_num = E1000_RAR_ENTRIES_I350;
 
@@ -7444,6 +7464,7 @@ em_get_bus_info(struct em_hw *hw)
 	case em_82575:
 	case em_82580:
 	case em_80003es2lan:
+	case em_i210:
 	case em_i350:
 		hw->bus_type = em_bus_type_pci_express;
 		hw->bus_speed = em_bus_speed_2500;
@@ -8641,6 +8662,7 @@ em_get_auto_rd_done(struct em_hw *hw)
 	case em_82575:
 	case em_82580:
 	case em_80003es2lan:
+	case em_i210:
 	case em_i350:
 	case em_ich8lan:
 	case em_ich9lan:

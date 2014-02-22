@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.276 2014/02/17 07:02:45 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.277 2014/02/22 04:41:31 chris Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -130,6 +130,13 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82579LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82579V },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SGMII },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_NF },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SERDES_NF },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I211_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM },
@@ -410,6 +417,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_82574:
 		case em_82575:
 		case em_82580:
+		case em_i210:
 		case em_i350:
 		case em_ich9lan:
 		case em_ich10lan:
@@ -478,7 +486,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->hw.mac_type == em_80003es2lan || sc->hw.mac_type == em_82575 ||
-	    sc->hw.mac_type == em_82580 || sc->hw.mac_type == em_i350) {
+	    sc->hw.mac_type == em_82580 || sc->hw.mac_type == em_i210 ||
+	    sc->hw.mac_type == em_i350) {
 		uint32_t reg = EM_READ_REG(&sc->hw, E1000_STATUS);
 		sc->hw.bus_func = (reg & E1000_STATUS_FUNC_MASK) >>
 		    E1000_STATUS_FUNC_SHIFT;
@@ -778,6 +787,9 @@ em_init(void *arg)
 	case em_80003es2lan:
 	case em_i350:
 		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
+		break;
+	case em_i210:
+		pba = E1000_PBA_34K;
 		break;
 	case em_82573: /* 82573: Total Packet Buffer is 32K */
 		/* Jumbo frames not supported */
@@ -1122,7 +1134,8 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 		goto fail;
 
 	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
-	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i350)
+	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
+	    sc->hw.mac_type != em_i350)
 		em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
 	else
 		txd_upper = txd_lower = 0;
@@ -1761,7 +1774,8 @@ em_hardware_init(struct em_softc *sc)
 	      sc->hw.mac_type == em_82572 ||
 	      sc->hw.mac_type == em_82575 ||
 	      sc->hw.mac_type == em_82580 ||
-	      sc->hw.mac_type == em_i350)) {
+	      sc->hw.mac_type == em_i210 ||
+	      sc->hw.mac_type == em_i350 )) {
 		uint16_t phy_tmp = 0;
 
 		/* Speed up time to link by disabling smart power down */
@@ -1842,12 +1856,13 @@ em_setup_interface(struct em_softc *sc)
 
 #if NVLAN > 0
 	if (sc->hw.mac_type != em_82575 && sc->hw.mac_type != em_82580 &&
-	    sc->hw.mac_type != em_i350)
+	    sc->hw.mac_type != em_i210 && sc->hw.mac_type != em_i350)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
-	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i350)
+	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
+	    sc->hw.mac_type != em_i350)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
 	/* 
@@ -2202,7 +2217,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	sc->txd_cmd = E1000_TXD_CMD_IFCS;
 
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
-	    sc->hw.mac_type == em_i350) {
+	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the TX queue and lack the IDE bit */
 		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL);
 		reg_tctl |= E1000_TXDCTL_QUEUE_ENABLE;
@@ -2627,7 +2642,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 	 * asked to or not.  So ask for stripped CRC here and
 	 * cope in rxeof
 	 */
-	if (sc->hw.mac_type == em_i350)
+	if (sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350)
 		reg_rctl |= E1000_RCTL_SECRC;
 
 	switch (sc->rx_buffer_len) {
@@ -2664,7 +2679,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, RDTR, 0x20);
 
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
-	    sc->hw.mac_type == em_i350) {
+	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the RX queue */
 		uint32_t reg;
 		reg = E1000_READ_REG(&sc->hw, RXDCTL);
@@ -2862,7 +2877,8 @@ em_rxeof(struct em_softc *sc)
 			if (desc_len < ETHER_CRC_LEN) {
 				len = 0;
 				prev_len_adj = ETHER_CRC_LEN - desc_len;
-			} else if (sc->hw.mac_type == em_i350)
+			} else if (sc->hw.mac_type == em_i210 ||
+			    sc->hw.mac_type == em_i350)
 				len = desc_len;
 			else
 				len = desc_len - ETHER_CRC_LEN;

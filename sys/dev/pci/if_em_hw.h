@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.57 2014/02/17 07:02:45 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.58 2014/02/22 04:41:32 chris Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -72,6 +72,7 @@ typedef enum {
     em_82575,
     em_82580,
     em_i350,
+    em_i210,
     em_80003es2lan,
     em_ich8lan,
     em_ich9lan,
@@ -570,6 +571,13 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_I350_SERDES         0x1523
 #define E1000_DEV_ID_I350_SGMII          0x1524
 #define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
+#define E1000_DEV_ID_I210_COPPER	 0x1533
+#define E1000_DEV_ID_I210_FIBER		 0x1536
+#define E1000_DEV_ID_I210_SERDES	 0x1537
+#define E1000_DEV_ID_I210_SGMII		 0x1538
+#define E1000_DEV_ID_I210_COPPER_FLASHLESS      0x157B
+#define E1000_DEV_ID_I210_SERDES_FLASHLESS      0x157C
+#define E1000_DEV_ID_I211_COPPER	 0x1539
 #define E1000_DEV_ID_I350_DA4            0x1546
 #define E1000_DEV_ID_I354_BACKPLANE_1GBPS       0x1F40
 #define E1000_DEV_ID_I354_SGMII                 0x1F41
@@ -3384,6 +3392,7 @@ struct em_host_command_info {
 #define I217_E_PHY_ID        0x015400A0
 #define I82580_I_PHY_ID      0x015403A0
 #define I350_I_PHY_ID        0x015403B0
+#define I210_I_PHY_ID        0x01410C00
 #define IGP04E1000_E_PHY_ID  0x02A80391
 #define M88E1141_E_PHY_ID    0x01410CD0
 
