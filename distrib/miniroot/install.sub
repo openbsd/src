@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.748 2014/02/21 19:47:31 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.749 2014/02/22 05:13:22 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1409,6 +1409,7 @@ startftplist() {
 
 		# Remember finish time for adjusting the received timestamp
 		echo -n $SECONDS >$SERVERLISTSEC
+		feed_random
 	) & ftppid=$!
 	set +m
 
