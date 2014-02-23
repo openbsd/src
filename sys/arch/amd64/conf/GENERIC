@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.359 2014/02/19 05:32:57 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.360 2014/02/23 09:36:52 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -308,8 +308,10 @@ agp*		at intagp?
 
 #option		DRM_DEBUG
 inteldrm*	at vga? 	# Intel i915, i945 DRM driver
+drm0		at inteldrm? console 1
 drm*		at inteldrm?
 radeondrm*	at pci? 	# ATI Radeon DRM driver
+drm0		at radeondrm? console 1
 drm*		at radeondrm?
 wsdisplay0	at radeondrm? console 1
 wsdisplay*	at radeondrm?

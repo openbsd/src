@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.167 2014/02/09 10:50:43 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.168 2014/02/23 09:36:52 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -897,7 +897,13 @@ struct drm_attach_args {
 	u_int16_t			 pci_subdevice;
 	pci_chipset_tag_t		 pc;
 	pcitag_t			*bridgetag;
+	int				 console;
 };
+
+#define DRMDEVCF_CONSOLE	0
+#define drmdevcf_console	cf_loc[DRMDEVCF_CONSOLE]
+/* spec'd as console? */
+#define DRMDEVCF_CONSOLE_UNK	-1
 
 extern int	drm_debug_flag;
 
@@ -942,7 +948,7 @@ int dmi_check_system(const struct dmi_system_id *);
 /* Device setup support (drm_drv.c) */
 int	drm_pciprobe(struct pci_attach_args *, const struct drm_pcidev * );
 struct device	*drm_attach_pci(struct drm_driver_info *, 
-		     struct pci_attach_args *, int, struct device *);
+		     struct pci_attach_args *, int, int, struct device *);
 dev_type_ioctl(drmioctl);
 dev_type_read(drmread);
 dev_type_poll(drmpoll);

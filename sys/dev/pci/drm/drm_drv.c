@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.122 2014/01/30 15:10:47 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.123 2014/02/23 09:36:52 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -100,7 +100,7 @@ int	 drm_getcap(struct drm_device *, void *, struct drm_file *);
  */
 struct device *
 drm_attach_pci(struct drm_driver_info *driver, struct pci_attach_args *pa,
-    int is_agp, struct device *dev)
+    int is_agp, int console, struct device *dev)
 {
 	struct drm_attach_args arg;
 	pcireg_t subsys;
@@ -110,6 +110,7 @@ drm_attach_pci(struct drm_driver_info *driver, struct pci_attach_args *pa,
 	arg.bst = pa->pa_memt;
 	arg.irq = pa->pa_intrline;
 	arg.is_agp = is_agp;
+	arg.console = console;
 
 	arg.pci_vendor = PCI_VENDOR(pa->pa_id);
 	arg.pci_device = PCI_PRODUCT(pa->pa_id);
@@ -169,9 +170,22 @@ drm_pciprobe(struct pci_attach_args *pa, const struct drm_pcidev *idlist)
 int
 drm_probe(struct device *parent, void *match, void *aux)
 {
+	struct cfdata *cf = match;
 	struct drm_attach_args *da = aux;
 
-	return (da->driver != NULL ? 1 : 0);
+	if (cf->drmdevcf_console != DRMDEVCF_CONSOLE_UNK) {
+		/*
+		 * If console-ness of device specified, either match
+		 * exactly (at high priority), or fail.
+		 */
+		if (cf->drmdevcf_console != 0 && da->console != 0)
+			return (10);
+		else
+			return (0);
+	}
+
+	/* If console-ness unspecified, it wins. */
+	return (1);
 }
 
 void

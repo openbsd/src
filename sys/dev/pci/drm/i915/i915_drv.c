@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.62 2014/02/19 01:20:12 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.63 2014/02/23 09:36:52 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -886,7 +886,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* All intel chipsets need to be treated as agp, so just pass one */
-	dev_priv->drmdev = drm_attach_pci(&inteldrm_driver, pa, 1, self);
+	dev_priv->drmdev = drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
 
 	dev = (struct drm_device *)dev_priv->drmdev;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.22 2014/02/10 01:59:48 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.23 2014/02/23 09:36:52 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -538,7 +538,8 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	dev = (struct drm_device *)drm_attach_pci(&kms_driver, pa, is_agp, self);
+	dev = (struct drm_device *)drm_attach_pci(&kms_driver, pa, is_agp,
+	    rdev->console, self);
 	rdev->ddev = dev;
 
 	rdev->family = rdev->flags & RADEON_FAMILY_MASK;
