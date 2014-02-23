@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2013/01/01 17:18:49 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2014/02/23 19:22:40 miod Exp $
 
 LIB=	sa
 
@@ -15,7 +15,7 @@ SRCS+=	devopen.c exec_hp300.c rawfs.c
 .PATH:	${.CURDIR}/../../../../lib/libsa
 SRCS+=	alloc.c exit.c getfile.c gets.c globals.c loadfile.c \
 	memcmp.c memcpy.c memset.c printf.c snprintf.c strcmp.c \
-	strerror.c strlen.c strncmp.c strncpy.c
+	strerror.c strlcat.c strlen.c strncmp.c strncpy.c
 
 .PATH:	${.CURDIR}/../../../../lib/libkern
 SRCS+=	__main.c

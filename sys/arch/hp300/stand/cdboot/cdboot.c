@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.9 2014/02/23 19:22:40 miod Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@ char *names[] = {
 #if 0
 static int bdev, badapt, bctlr, bunit, bpart;
 #endif
+
+char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 
 int
 main(void)

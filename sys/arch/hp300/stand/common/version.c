@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.15 2013/12/28 02:53:03 deraadt Exp $	*/
+/*	$OpenBSD: version.c,v 1.16 2014/02/23 19:22:40 miod Exp $	*/
 
 /*
  * Record major changes in the boot code here, and increment the version
@@ -26,6 +26,8 @@
  *	`/'.
  * 2.14 Build with the ELF toolchain.
  * 2.15 Remove SLOWSCSI from scsi code, and increase target selection timeout.
+ * 2.16	Loadfile support for .openbsd.randomdata section.
+ * 2.17	/etc/random.seed support in uboot (SYS_UBOOT).
  */
 
-const char version[] = "2.16";
+const char version[] = "2.17";

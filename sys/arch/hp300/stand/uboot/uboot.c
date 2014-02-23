@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.6 2011/08/18 20:02:58 miod Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.7 2014/02/23 19:22:40 miod Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -34,6 +34,11 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNERL
+
 #include <machine/exec.h>
 #include <a.out.h>
 
@@ -55,6 +60,8 @@ extern	int noconsole;
 
 extern	const char version[];
 
+extern int devparse(const char *, int *, int *, int *, int *, int *, char **);
+
 /*
  * XXX UFS accepts a /, NFS doesn't.
  */
@@ -66,7 +73,11 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
+void	boot(char *, void *, int);
 void	getbootdev(int *);
+int	loadrandom(const char *, void *, size_t);
+
+char   rnddata[BOOTRANDOM_MAX];
 
 int
 main(void)
@@ -94,7 +105,7 @@ main(void)
 		} else
 			printf(": %s\n", name);
 
-		exec(name, lowram, howto);
+		boot(name, lowram, howto);
 		printf("boot: %s\n", strerror(errno));
 	}
 	return (0);
@@ -147,4 +158,60 @@ getbootdev(int *howto)
 		}
 	} else
 		printf("\n");
+}
+
+void
+boot(char *path, void *loadaddr, int howto)
+{
+	static int rnd_loaded = 0;
+	char rndpath[MAXPATHLEN];
+	int dev, adapt, ctlr, unit, part;
+	char *fname;
+
+	/*
+	 * Try and load randomness from the boot device if this is a disk.
+	 */
+	if (rnd_loaded == 0) {
+		if (devparse(path, &dev, &adapt, &ctlr, &unit, &part,
+		    &fname) != 0) {
+			/*
+			 * If the device name is bogus, devlookup() has
+			 * complained loudly. No need to attempt to load a
+			 * kernel from the same string.
+			 */
+			return;
+		}
+		if (fname - path < sizeof(rndpath)) {
+			memcpy(rndpath, path, fname - path);
+			rndpath[fname - path] = '\0';
+			strlcat(rndpath, BOOTRANDOM, sizeof rndpath);
+			rnd_loaded = loadrandom(rndpath, rnddata,
+			    sizeof(rnddata));
+		}
+	}
+
+	exec(path, loadaddr, howto);
+}
+
+int
+loadrandom(const char *path, void *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd;
+	int rc = 0;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", path, strerror(errno));
+		return 0;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+	rc = 1;
+fail:
+	close(fd);
+	return rc;
 }
