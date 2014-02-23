@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.12 2014/02/20 20:20:28 kettenis Exp $ */
+/*	$OpenBSD: qle.c,v 1.13 2014/02/23 08:59:09 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -43,7 +43,7 @@
 
 #include <dev/pci/qlereg.h>
 
-#ifndef ISP_NOFIRMWARE
+#ifndef QLE_NOFIRMWARE
 #include <dev/microcode/isp/asm_2400.h>
 #include <dev/microcode/isp/asm_2500.h>
 #endif
@@ -294,6 +294,8 @@ int		qle_async(struct qle_softc *, u_int16_t);
 
 int		qle_load_fwchunk(struct qle_softc *,
 		    struct qle_dmamem *, const u_int32_t *);
+u_int32_t	qle_read_ram_word(struct qle_softc *, u_int32_t);
+int		qle_verify_firmware(struct qle_softc *, u_int32_t);
 int		qle_load_firmware_chunks(struct qle_softc *, const u_int32_t *);
 int		qle_read_nvram(struct qle_softc *);
 
@@ -334,6 +336,10 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	struct scsibus_attach_args saa;
 	struct qle_init_cb *icb;
 	bus_size_t mbox_base;
+	u_int32_t firmware_addr;
+#ifndef QLE_NOFIRMWARE
+	const u_int32_t *firmware = NULL;
+#endif
 
 	pcireg_t bars[] = { QLE_PCI_MEM_BAR, QLE_PCI_IO_BAR };
 	pcireg_t memtype;
@@ -391,33 +397,32 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_QLOGIC_ISP2422:
 		sc->sc_isp_type = QLE_ISP2422;
 		sc->sc_isp_gen = QLE_GEN_ISP24XX;
-		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2432:
 		sc->sc_isp_type = QLE_ISP2432;
 		sc->sc_isp_gen = QLE_GEN_ISP24XX;
-		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2512:
 		sc->sc_isp_type = QLE_ISP2512;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2522:
 		sc->sc_isp_type = QLE_ISP2522;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 	case PCI_PRODUCT_QLOGIC_ISP2532:
 		sc->sc_isp_type = QLE_ISP2532;
 		sc->sc_isp_gen = QLE_GEN_ISP25XX;
-		mbox_base = QLE_MBOX_BASE_24XX;
 		break;
 
 	default:
 		printf("unknown pci id %x", pa->pa_id);
 		goto deintr;
 	}
+
+	/* these are the same for 24xx and 25xx but may vary later */
+	mbox_base = QLE_MBOX_BASE_24XX;
+	firmware_addr = QLE_2400_CODE_ORG;
 
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, mbox_base,
 	    sizeof(sc->sc_mbox), &sc->sc_mbox_ioh) != 0) {
@@ -450,28 +455,34 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	if (qle_read_nvram(sc) == 0)
 		sc->sc_nvram_valid = 1;
 
-#ifndef ISP_NOFIRMWARE
+#ifdef QLE_NOFIRMWARE
+	if (qle_verify_firmware(sc, firmware_addr)) {
+		printf("%s: no firmware loaded\n", DEVNAME(sc));
+		goto deintr;
+	}
+#else
 	switch (sc->sc_isp_gen) {
 	case QLE_GEN_ISP24XX:
-		if (qle_load_firmware_chunks(sc, isp_2400_risc_code)) {
-			printf("firmware load failed\n");
-			goto deintr;
-		}
+		firmware = isp_2400_risc_code;
 		break;
 	case QLE_GEN_ISP25XX:
-		if (qle_load_firmware_chunks(sc, isp_2500_risc_code)) {
-			printf("firmware load failed\n");
-			goto deintr;
-		}
+		firmware = isp_2500_risc_code;
 		break;
+	default:
+		printf("%s: no firmware to load?\n", DEVNAME(sc));
+		goto deintr;
+	}
+	if (qle_load_firmware_chunks(sc, firmware)) {
+		printf("%s: firmware load failed\n", DEVNAME(sc));
+		goto deintr;
 	}
 #endif
 
 	/* execute firmware */
 	sc->sc_mbox[0] = QLE_MBOX_EXEC_FIRMWARE;
-	sc->sc_mbox[1] = QLE_2400_CODE_ORG >> 16;
-	sc->sc_mbox[2] = QLE_2400_CODE_ORG & 0xffff;
-#ifdef ISP_NOFIRMWARE
+	sc->sc_mbox[1] = firmware_addr >> 16;
+	sc->sc_mbox[2] = firmware_addr & 0xffff;
+#ifdef QLE_NOFIRMWARE
 	sc->sc_mbox[3] = 1;
 #else
 	sc->sc_mbox[3] = 0;
@@ -2381,32 +2392,62 @@ qle_load_fwchunk(struct qle_softc *sc, struct qle_dmamem *mem,
 		dest += words;
 	}
 
-	sc->sc_mbox[0] = QLE_MBOX_VERIFY_CSUM;
-	sc->sc_mbox[1] = src[2] >> 16;
-	sc->sc_mbox[2] = src[2];
-	if (qle_mbox(sc, 0x0007, 0x0007)) {
-		printf("verification of chunk at %x failed: %x %x\n", src[2],
-		    sc->sc_mbox[1], sc->sc_mbox[2]);
-		return (1);
-	}
-
-	return (0);
+	return (qle_verify_firmware(sc, src[2]));
 }
 
 int
 qle_load_firmware_chunks(struct qle_softc *sc, const u_int32_t *fw)
 {
 	struct qle_dmamem *mem;
+	int res = 0;
 
 	mem = qle_dmamem_alloc(sc, 65536);
 	for (;;) {
-		qle_load_fwchunk(sc, mem, fw);
+		if (qle_load_fwchunk(sc, mem, fw)) {
+			res = 1;
+			break;
+		}
 		if (fw[1] == 0)
 			break;
 		fw += fw[3];
 	}
 
 	qle_dmamem_free(sc, mem);
+	return (res);
+}
+
+u_int32_t
+qle_read_ram_word(struct qle_softc *sc, u_int32_t addr)
+{
+	sc->sc_mbox[0] = QLE_MBOX_READ_RISC_RAM;
+	sc->sc_mbox[1] = addr & 0xffff;
+	sc->sc_mbox[8] = addr >> 16;
+	if (qle_mbox(sc, 0x0103, 0x000e)) {
+		return (0);
+	}
+	return ((sc->sc_mbox[3] << 16) | sc->sc_mbox[2]);
+}
+
+int
+qle_verify_firmware(struct qle_softc *sc, u_int32_t addr)
+{
+	/*
+	 * QLE_MBOX_VERIFY_CSUM requires at least the firmware header
+	 * to be correct, otherwise it wanders all over ISP memory and
+	 * gets lost.  Check that chunk address (addr+2) is right and
+	 * size (addr+3) is plausible first.
+	 */
+	if ((qle_read_ram_word(sc, addr+2) != addr) ||
+	    (qle_read_ram_word(sc, addr+3) > 0xffff)) {
+		return (1);
+	}
+
+	sc->sc_mbox[0] = QLE_MBOX_VERIFY_CSUM;
+	sc->sc_mbox[1] = addr >> 16;
+	sc->sc_mbox[2] = addr;
+	if (qle_mbox(sc, 0x0007, 0x0007)) {
+		return (1);
+	}
 	return (0);
 }
 

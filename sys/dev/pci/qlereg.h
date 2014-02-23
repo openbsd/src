@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.1 2014/02/12 23:04:26 jmatthew Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.2 2014/02/23 08:59:09 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -127,6 +127,7 @@
 #define QLE_MBOX_ABOUT_FIRMWARE		0x0008
 #define QLE_MBOX_LOAD_RISC_RAM		0x000B
 #define QLE_MBOX_INIT_RISC_RAM		0x000E
+#define QLE_MBOX_READ_RISC_RAM		0x000F
 #define QLE_MBOX_GET_IO_STATUS		0x0012
 #define QLE_MBOX_STOP_FIRMWARE		0x0014
 #define QLE_MBOX_GET_ID			0x0020
