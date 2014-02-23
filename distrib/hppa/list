@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.25 2014/01/19 00:33:40 deraadt Exp $
+#	$OpenBSD: list,v 1.26 2014/02/23 11:06:28 jsing Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -46,12 +46,13 @@ LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/rtsol
+LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
-LINK	instbin					sbin/sysctl
 LINK	instbin					usr/bin/signify
+LINK	instbin					usr/sbin/installboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
