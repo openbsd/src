@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.56 2013/11/22 20:58:36 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.57 2014/02/23 00:53:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -145,7 +145,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	/* Open the terminal if necessary. */
 	if (!detached && !already_attached) {
-		if (server_client_open(c, NULL, &cause) != 0) {
+		if (server_client_open(c, &cause) != 0) {
 			cmdq_error(cmdq, "open terminal failed: %s", cause);
 			free(cause);
 			goto error;
