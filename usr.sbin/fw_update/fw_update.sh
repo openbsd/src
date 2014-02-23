@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.19 2014/01/30 00:12:09 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.20 2014/02/23 20:09:59 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -112,6 +112,8 @@ elif $delete && [ -z "$update" ]; then
 	verbose "No firmware to delete."
 	exit 0
 fi
+
+$delete || verbose "Path to firmware: $PKG_PATH"
 
 [ "$nop" ] || [ 0 = $(id -u) ] ||
 	{ echo "${0##*/} must be run as root" >&2; exit 1; }
