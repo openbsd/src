@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.7 2007/06/17 00:28:57 deraadt Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.8 2014/02/23 12:30:15 jsg Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -123,10 +123,8 @@ void
 copy_exe(exe_file, tape_exe)
 	int exe_file, tape_exe;
 {
-	char *buf;
+	char buf[BUF_SIZ];
 	int cnt = 0;
-
-	buf = (char *)malloc(BUF_SIZ);
 
 	lseek (exe_file, 0x20, SEEK_SET);
 	while (BUF_SIZ == (cnt = read(exe_file, buf, BUF_SIZ))) {
