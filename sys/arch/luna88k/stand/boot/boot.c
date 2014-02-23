@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2014/01/29 11:22:13 aoyama Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 2014/02/23 20:01:04 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -78,13 +78,19 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <sys/exec.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNEL
+
+#include <lib/libkern/libkern.h>
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/status.h>
 #include <lib/libsa/loadfile.h>
 
 int howto;
 
+int	loadrandom(const char *, char *, size_t);
 #if 0
 static int get_boot_device(const char *, int *, int *, int *);
 #endif
@@ -93,7 +99,7 @@ void (*cpu_boot)(uint32_t, uint32_t);
 uint32_t cpu_bootarg1;
 uint32_t cpu_bootarg2;
 
-char rnddata[BOOTRANDOM_MAX];	/* XXX dummy */
+char rnddata[BOOTRANDOM_MAX];
 
 #if 0
 int
@@ -139,7 +145,9 @@ error:
 int
 boot(int argc, char *argv[])
 {
-	char *line;
+	char *line, *lparen, *rparen;
+	char rndpath[MAXPATHLEN];
+	static int rnd_loaded = 0;
 
 	if (argc < 2)
 		line = default_file;
@@ -147,6 +155,27 @@ boot(int argc, char *argv[])
 		line = argv[1];
 
 	printf("Booting %s\n", line);
+
+	/*
+	 * Try and load randomness from the boot device.
+	 */
+	if (rnd_loaded == 0) {
+		lparen = strchr(line, '(');
+		if (lparen != NULL)
+			rparen = strchr(line, ')');
+		else
+			rparen = NULL;
+		if (rparen != NULL &&
+		    rparen + 1 - line < sizeof rndpath) {
+			rparen++;
+			memcpy(rndpath, line, rparen - line);
+			rndpath[rparen - line] = '\0';
+			strlcat(rndpath, BOOTRANDOM, sizeof rndpath);
+		} else
+			strlcpy(rndpath, BOOTRANDOM, sizeof rndpath);
+
+		rnd_loaded = loadrandom(rndpath, rnddata, sizeof(rnddata));
+	}
 
 	return bootunix(line);
 }
@@ -186,4 +215,27 @@ bootunix(char *line)
 	printf("Booting kernel failed. (%s)\n", strerror(errno));
 
 	return ST_ERROR;
+}
+
+int
+loadrandom(const char *name, char *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd;
+	int rc = 0;
+
+	fd = open(name, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", name, strerror(errno));
+		return 0;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+	rc = 1;
+fail:
+	close(fd);
+	return rc;
 }

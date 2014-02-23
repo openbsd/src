@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.5 2013/11/01 07:43:09 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.6 2014/02/23 20:01:04 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ main(void)
 	nplane = get_plane_numbers();
 	cninit();
 
-	printf("\nOpenBSD/" MACHINE " (%s) boot 0.3\n\n", machstr);
+	printf("\nOpenBSD/" MACHINE " (%s) boot 0.4\n\n", machstr);
 
 #ifdef SUPPORT_ETHERNET
 	try_bootp = 1;
