@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.9 2009/12/25 20:52:34 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.10 2014/02/23 12:26:18 jsg Exp $ */
 /* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
@@ -338,7 +338,7 @@ __C(CHIP,_mem_unmap)(v, memh, memsize)
 	memaddr = memh - ALPHA_PHYS_TO_K0SEG(CHIP_MEM_SYS_START(v));
 
 #ifdef EXTENT_DEBUG
-	"mem: freeing 0x%lx to 0x%lx\n", memaddr, memaddr + memsize - 1);
+	printf("mem: freeing 0x%lx to 0x%lx\n", memaddr, memaddr + memsize - 1);
 #endif
 	error = extent_free(CHIP_MEM_EXTENT(v), memaddr, memsize,
 	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
