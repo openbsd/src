@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $OpenBSD: fw_update.sh,v 1.20 2014/02/23 20:09:59 halex Exp $
+# $OpenBSD: fw_update.sh,v 1.21 2014/02/23 22:22:16 halex Exp $
 # Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -23,7 +23,7 @@ PKG_ADD="pkg_add -I -D repair -DFW_UPDATE"
 PKG_DELETE="pkg_delete -I -DFW_UPDATE"
 
 usage() {
-	echo "usage: ${0##*/} [-adnv] [driver ...]" >&2
+	echo "usage: ${0##*/} [-adnv] [-p path] [driver ...]" >&2
 	exit 1
 }
 
@@ -32,6 +32,8 @@ verbose() {
 }
 
 setpath() {
+	[ "$path" ] && export PKG_PATH=$path && return
+
 	set -- $(sysctl -n kern.version |
 	    sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 
@@ -53,13 +55,15 @@ all=false
 verbose=
 nop=
 delete=false
-while getopts 'adnv' s "$@" 2>/dev/null; do
+path=
+while getopts 'adnp:v' s "$@" 2>/dev/null; do
 	case "$s" in
 	a)	all=true;;
 	d)	delete=true;;
-	v)	verbose=${verbose:--}v ;;
-	n)	nop=-n ;;
-	*)	usage ;;
+	n)	nop=-n;;
+	p)	path=$OPTARG;;
+	v)	verbose=${verbose:--}v;;
+	*)	usage;;
 	esac
 done
 
@@ -120,17 +124,17 @@ $delete || verbose "Path to firmware: $PKG_PATH"
 
 # Install missing firmware packages
 if ! $delete && [ "$install" ]; then
-	verbose "Installing firmware files:$update $install."
+	verbose "Installing firmware:$update $install."
 	perform $PKG_ADD $nop $verbose $update $install
 fi
 
 # Update or delete installed firmware packages
 if [ "$update" ]; then
 	if $delete; then
-		verbose "Deleting firmware files:$update."
+		verbose "Deleting firmware:$update."
 		perform $PKG_DELETE $nop $verbose $update
 	else
-		verbose "Updating firmware files:$update."
+		verbose "Updating firmware:$update."
 		perform $PKG_ADD $extra $nop $verbose -u $update
 	fi
 fi
