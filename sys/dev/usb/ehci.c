@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.140 2014/01/15 11:10:40 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.141 2014/02/24 18:21:20 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1041,6 +1041,13 @@ ehci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		sc->sc_bus.use_polling++;
 
+		for (i = 1; i <= sc->sc_noport; i++) {
+			cmd = EOREAD4(sc, EHCI_PORTSC(i));
+			if ((cmd & (EHCI_PS_PO|EHCI_PS_PE)) == EHCI_PS_PE)
+				EOWRITE4(sc, EHCI_PORTSC(i),
+				    cmd | EHCI_PS_SUSP);
+		}
+
 		/*
 		 * First tell the host to stop processing Asynchronous
 		 * and Periodic schedules.
@@ -1080,7 +1087,27 @@ ehci_activate(struct device *self, int act)
 
 		EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 		EOWRITE4(sc, EHCI_ASYNCLISTADDR,
-		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
+	  	    sc->sc_async_head->physaddr | EHCI_LINK_QH);
+
+		hcr = 0;
+		for (i = 1; i <= sc->sc_noport; i++) {
+			cmd = EOREAD4(sc, EHCI_PORTSC(i));
+			if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) == EHCI_PS_SUSP) {
+				EOWRITE4(sc, EHCI_PORTSC(i), cmd | EHCI_PS_FPR);
+				hcr = 1;
+			}
+		}
+
+		if (hcr) {
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+			for (i = 1; i <= sc->sc_noport; i++) {
+				cmd = EOREAD4(sc, EHCI_PORTSC(i));
+				if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) ==
+				   EHCI_PS_SUSP)
+					EOWRITE4(sc, EHCI_PORTSC(i),
+					   cmd & ~EHCI_PS_FPR);
+			}
+		}
 
 		/* Turn on controller */
 		EOWRITE4(sc, EHCI_USBCMD,
