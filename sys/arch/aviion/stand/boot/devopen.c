@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.4 2013/10/16 16:59:34 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.5 2014/02/24 20:15:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -22,24 +22,28 @@
 
 #include "libsa.h"
 
+int	devparse(const char *, uint *, uint *, uint *, uint *,
+	    const char **, const char **, char **);
+
 /*
  * Parse the boot commandline into a proper device specification and
  * kernel filename.
  */
 int
-devopen(struct open_file *f, const char *fname, char **file)
+devparse(const char *fname, uint *controller, uint *unit, uint *lun, uint *part,
+    const char **dev, const char **ctrl, char **file)
 {
 	struct devsw *dp;
-	int error, i;
+	int i;
 	const char *po, *pc, *pc2, *p, *comma;
-	char ctrl[1 + 4], device[1 + 4];
-	uint controller, unit, lun, part;
+	static char devctrl[1 + 4];
+	char device[1 + 4];
 	size_t devlen;
 
 	/* defaults */
-	controller = unit = lun = part = 0;
+	*controller = *unit = *lun = *part = 0;
 	device[0] = '\0';
-	ctrl[0] = '\0';
+	devctrl[0] = '\0';
 
 	/*
 	 * Attempt to parse the name as
@@ -80,28 +84,28 @@ devopen(struct open_file *f, const char *fname, char **file)
 			devlen = p++ - po;
 			if (devlen > 4)
 				return EINVAL;
-			memcpy(ctrl, po, devlen);
-			ctrl[devlen] = '\0';
+			memcpy(devctrl, po, devlen);
+			devctrl[devlen] = '\0';
 
-			controller = strtol(p, NULL, 0);
+			*controller = strtol(p, NULL, 0);
 			po = pc + 1;
 			pc = pc2;
 		} else {
 			/* first form. extract controller number */
-			controller = strtol(po, NULL, 0);
+			*controller = strtol(po, NULL, 0);
 		}
 
 		comma = strchr(po, ',');
 		if (comma != NULL && comma < pc) {
 			comma++;
-			unit = strtol(comma, NULL, 0);
+			*unit = strtol(comma, NULL, 0);
 			po = comma;
 		}
 
 		comma = strchr(po, ',');
 		if (comma != NULL && comma < pc) {
 			comma++;
-			lun = strtol(comma, NULL, 0);
+			*lun = strtol(comma, NULL, 0);
 			po = comma;
 		}
 
@@ -113,7 +117,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	p = strchr(fname, ':');
 	if (p != NULL) {
-		part = strtol(fname, NULL, 0);
+		*part = strtol(fname, NULL, 0);
 		fname = p + 1;
 	}
 
@@ -121,6 +125,34 @@ devopen(struct open_file *f, const char *fname, char **file)
 		fname++;
 
 	*file = (char *)fname;
+
+	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
+		if (dp->dv_name != NULL && strcmp(dp->dv_name, device) == 0)
+			break;
+	if (i == ndevs)
+		return ENXIO;
+
+	*dev = dp->dv_name;
+	*ctrl = devctrl;
+	return 0;
+}
+
+/*
+ * Parse the boot commandline into a proper device specification and
+ * kernel filename.
+ */
+int
+devopen(struct open_file *f, const char *fname, char **file)
+{
+	struct devsw *dp;
+	int error, i;
+	uint controller, unit, lun, part;
+	const char *device, *ctrl;
+
+	error = devparse(fname, &controller, &unit, &lun, &part, &device, &ctrl,
+	    file);
+	if (error != 0)
+		return error;
 
 	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
 		if (dp->dv_name != NULL && strcmp(dp->dv_name, device) == 0)
