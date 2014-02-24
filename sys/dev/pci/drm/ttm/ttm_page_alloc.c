@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.3 2014/02/09 10:57:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.4 2014/02/24 21:36:49 kettenis Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -460,7 +460,6 @@ static int ttm_pool_mm_shrink(struct shrinker *shrink,
 
 static void ttm_pool_mm_shrink_init(struct ttm_pool_manager *manager)
 {
-	printf("%s stub\n", __func__);
 #ifdef notyet
 	manager->mm_shrink.shrink = &ttm_pool_mm_shrink;
 	manager->mm_shrink.seeks = 1;
