@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.352 2014/02/05 05:59:42 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.353 2014/02/24 20:00:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3019,8 +3019,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->bge_chipid != BGE_CHIPID_BCM5700_B0)
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4;
-	if (BGE_IS_5755_PLUS(sc))
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv6;
 
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		ifp->if_hardmtu = BGE_JUMBO_MTU;
