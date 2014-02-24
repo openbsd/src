@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.6 2014/02/04 00:49:04 sthen Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.7 2014/02/24 23:43:26 krw Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2014 $
+.Dd $Mdocdate: February 24 2014 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -22,44 +22,81 @@
 .Nd unattended OpenBSD installation and upgrade
 .Sh DESCRIPTION
 .Nm
-allows unattended installation or upgrade of netbooted
+allows unattended installation or upgrade of
 .Ox
-machines by automatically answering installer questions read from
-a response file.
-The information whether to install or upgrade and where to get the
-response file from is obtained via DHCP.
-The response file is downloaded from an HTTP server.
-.Pp
-The DHCP parameter
-.Ql filename
-controls the
+by automatically responding to installer questions with
+answers from a response file.
 .Nm
-mode and has to contain either
-.Ql auto_install
+uses DHCP to discover the location of the response
+file and HTTP to fetch the file.
+.Ss AUTOINSTALL METHODS
+The first method is to choose '(A)utoinstall' at the install prompt.
+If there is only one network interface, the installer will fetch the response
+file via that interface.
+If there is more than one network interface, a selection is presented
+and the installer fetches the response file via the selected interface.
+.Pp
+The second method is to netboot the machine.
+In this situation
+.Nm
+feature will be invoked if the user does not intervene within
+a short time.
+It will behave as if the user selected '(A)utoinstall', but will
+always fetch the response file via the netboot interface.
+.Ss FETCHING THE RESPONSE FILE
+.Nm
+will use HTTP to fetch one of the files
+.Ql install.conf
 or
-.Ql auto_upgrade .
-On architectures where this parameter is used for netbooting, create
-a symbolic link from the boot program to auto_install and/or
-auto_upgrade.
-The DHCP parameter
-.Ql next-server
-contains the IP address of the HTTP server.
-Optionally, the DHCP parameter
-.Ql host-name
-is used to configure the hostname.
-.Pp
-Valid response file names are
-.Ql install.conf ,
-.Ql MAC-install.conf ,
+.Ql <MAC address>-install.conf
+for install answers, and one of
 .Ql upgrade.conf
+or
+.Ql <MAC address>-upgrade.conf
+for upgrade answers.
+The URL used to fetch the file is constructed from information provided in
+the DHCP options
+.Ql next-server
 and
-.Ql MAC-upgrade.conf .
-The MAC address of the netboot interface, in lowercase hex notation, can be
-used to provide machine-specific response files, which have precedence.
-The response files are fetched from the
-.Ql DocumentRoot
-of the HTTP server.
+.Ql filename .
+If
+.Ql filename
+is
+.Ql auto_install
+then the URLs tried are, in order:
+.Bd -literal -offset indent
+http://<next-server>/<MAC address>-install.conf
+http://<next-server>/install.conf
+.Ed
 .Pp
+where <MAC address> is a string of six hex octets separated by colons
+representing the MAC
+address of the interface being used to fetch the files.
+.Pp
+If
+.Ql filename
+is
+.Ql auto_upgrade
+the URLs tried are, in order:
+.Bd -literal -offset indent
+http://<next-server>/<MAC address>-upgrade.conf
+http://next-server/upgrade.conf
+.Ed
+.Pp
+On architectures where
+.Ql filename
+is used to provide the name of the file to netboot it is necessary to
+create symbolic links called
+.Ql auto_install
+and
+.Ql auto_upgrade
+that point to the expected boot program
+and to change the value of the filename option in the dhcpd.conf file
+to be auto_install or auto_upgrade.
+.Pp
+Note that in these cases, the HTTP server and TFTP server must
+be on the same machine.
+.Ss RESPONSE FILE FORMAT
 The format of a response file is:
 .Bd -literal -offset indent
 question = answer
@@ -74,7 +111,7 @@ Passwords may be in plaintext, encrypted with
 .Xr encrypt 1 ,
 or set to
 .Ql *************
-to disable password logins, only permitting alternative access methods
+(13 '*'s) to disable password logins, only permitting alternative access methods
 (for example,
 .Xr ssh 1
 keys).
@@ -107,8 +144,9 @@ Location of sets = http
 Server = ftp.eu.openbsd.org
 .Ed
 .Pp
-It can be also used for upgrades by creating a symbolic link to
-upgrade.conf.
+The same file could be used for upgrades by creating a symbolic link called
+upgrade.conf that points to install.conf.
+The upgrade process will only use the answers it needs.
 .Pp
 And an example
 .Xr dhcpd.conf 5
