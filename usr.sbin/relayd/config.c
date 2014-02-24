@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2013/09/09 17:57:44 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2014/02/24 06:55:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -804,7 +804,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 	struct relay_table	*rlt;
 	int			 id;
 	int			 fd, n, m;
-	struct iovec		 iov[4];
+	struct iovec		 iov[6];
 	size_t			 c;
 
 	/* opens listening sockets etc. */
