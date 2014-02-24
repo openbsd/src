@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.28 2014/02/17 09:00:20 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.29 2014/02/24 19:45:43 tedu Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -60,7 +60,7 @@
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
-#define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
+#define BCRYPT_MINLOGROUNDS 4	/* we have log2(rounds) in salt */
 
 char   *bcrypt_gensalt(u_int8_t);
 
@@ -173,7 +173,7 @@ bcrypt(const char *key, const char *salt)
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
-	int n;
+	char arounds[3];
 
 	/* Discard "$" identifier */
 	salt++;
@@ -204,13 +204,15 @@ bcrypt(const char *key, const char *salt)
 		/* Out of sync with passwd entry */
 		return error;
 
-	/* Computer power doesn't increase linear, 2^x should be fine */
-	n = atoi(salt);
-	if (n > 31 || n < 0)
+	memcpy(arounds, salt, sizeof(arounds));
+	if (arounds[sizeof(arounds) - 1] != '$')
 		return error;
-	logr = (u_int8_t)n;
-	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
+	arounds[sizeof(arounds) - 1] = 0;
+	logr = strtonum(arounds, BCRYPT_MINLOGROUNDS, 31, NULL);
+	if (logr == 0)
 		return error;
+	/* Computer power doesn't increase linearly, 2^x should be fine */
+	rounds = 1U << logr;
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
