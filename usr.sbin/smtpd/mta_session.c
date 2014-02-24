@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.54 2014/02/04 15:44:05 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.55 2014/02/24 18:06:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1023,7 +1023,7 @@ mta_response(struct mta_session *s, char *line)
 				    buf, delivery, line);
 
 			if (domain)
-				mta_hoststat_update(domain + 1, e->status);
+				mta_hoststat_update(domain, e->status);
 			mta_delivery_notify(e);
 
 			if (s->relay->limits->max_failures_per_session &&
@@ -1383,9 +1383,10 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 
 		domain = strchr(e->dest, '@');
 		if (domain) {
-			mta_hoststat_update(domain + 1, error);
+			domain++;
+			mta_hoststat_update(domain, error);
 			if (cache)
-				mta_hoststat_cache(domain + 1, e->id);
+				mta_hoststat_cache(domain, e->id);
 		}
 
 		n++;
