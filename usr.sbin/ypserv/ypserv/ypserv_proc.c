@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.27 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.28 2014/02/24 06:45:56 jsg Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -489,6 +489,7 @@ bail:
 				}
 
 				if ((map_name = malloc(dp->d_namlen - 2)) == NULL) {
+					free(m);
 					status = YP_YPERR;
 					break;
 				}
