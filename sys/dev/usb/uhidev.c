@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.51 2013/11/19 14:04:07 pirofti Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.52 2014/02/25 15:49:10 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -362,8 +362,17 @@ uhidev_detach(struct device *self, int flags)
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
-	if (sc->sc_ipipe != NULL)
+	if (sc->sc_opipe != NULL) {
+		usbd_abort_pipe(sc->sc_opipe);
+		usbd_close_pipe(sc->sc_opipe);
+		sc->sc_opipe = NULL;
+	}
+
+	if (sc->sc_ipipe != NULL) {
 		usbd_abort_pipe(sc->sc_ipipe);
+		usbd_close_pipe(sc->sc_ipipe);
+		sc->sc_ipipe = NULL;
+	}
 
 	if (sc->sc_repdesc != NULL)
 		free(sc->sc_repdesc, M_USBDEV);
