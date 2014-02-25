@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.55 2014/02/24 18:06:12 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.56 2014/02/25 15:58:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -764,8 +764,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		break;
 
 	case MTA_MAIL:
-		if (s->currevp == NULL)
-			s->currevp = TAILQ_FIRST(&s->task->envelopes);
+		s->currevp = TAILQ_FIRST(&s->task->envelopes);
 
 		e = s->currevp;
 		s->hangon = 0;
