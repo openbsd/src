@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1716 2014/02/24 06:05:49 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1717 2014/02/25 00:14:49 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5480,8 +5480,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Myrinet LANai",
 	},
 	{
+	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST1150,
+	    "AST1150 PCI",
+	},
+	{
+	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST1180,
+	    "AST1180",
+	},
+	{
 	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST2000,
 	    "AST2000",
+	},
+	{
+	    PCI_VENDOR_ASPEED, PCI_PRODUCT_ASPEED_AST2100,
+	    "AST2100",
 	},
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210,
@@ -9084,6 +9096,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1200V3_HB,
+	    "Xeon E3-1200 v3 Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_PCIE_3,
 	    "Core 4G PCIE",
 	},
@@ -10562,6 +10578,82 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NM70_LPC,
 	    "NM70 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_HB,
+	    "Atom C2000 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCIE_1,
+	    "Atom C2000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCIE_2,
+	    "Atom C2000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCIE_3,
+	    "Atom C2000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCIE_4,
+	    "Atom C2000 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_RAS,
+	    "Atom C2000 RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_SMB,
+	    "Atom C2000 SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_RCEC,
+	    "Atom C2000 RCEC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_SATA_1,
+	    "Atom C2000 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_SATA_2,
+	    "Atom C2000 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_AHCI_1,
+	    "Atom C2000 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_AHCI_2,
+	    "Atom C2000 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_EHCI,
+	    "Atom C2000 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_AHCI_3,
+	    "Atom C2000 AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCU_1,
+	    "Atom C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCU_2,
+	    "Atom C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCU_3,
+	    "Atom C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCU_4,
+	    "Atom C2000 PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOMC2000_PCU_SMB,
+	    "Atom C2000 PCU SMBus",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I354_BP_1GBPS,
@@ -13950,6 +14042,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_SMB,
 	    "8 Series SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_THERM,
+	    "8 Series Thermal",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_EHCI_1,
