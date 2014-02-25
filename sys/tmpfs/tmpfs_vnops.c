@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.13 2014/01/22 18:28:16 tedu Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.14 2014/02/25 17:31:15 guenther Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -596,6 +596,7 @@ tmpfs_write(void *v)
 	const int ioflag = ap->a_ioflag;
 	tmpfs_node_t *node;
 	off_t oldsize;
+	ssize_t overrun;
 	int extended;
 	int error;
 
@@ -615,6 +616,14 @@ tmpfs_write(void *v)
 	if (ioflag & IO_APPEND) {
 		uio->uio_offset = node->tn_size;
 	}
+
+	if (uio->uio_offset < 0 ||
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > LLONG_MAX)
+		return (EFBIG);
+
+	/* do the filesize rlimit check */
+	if ((error = vn_fsizechk(vp, uio, ioflag, &overrun)))
+		return (error);
 
 	extended = uio->uio_offset + uio->uio_resid > node->tn_size;
 	if (extended) {
@@ -648,6 +657,10 @@ out:
 		KASSERT(oldsize == node->tn_size);
 	} else {
 		KASSERT(uio->uio_resid == 0);
+
+		/* correct the result for writes clamped by vn_fsizechk() */
+		uio->uio_resid += overrun;
+
 	}
 	return error;
 }
