@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2011/04/14 18:27:49 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 2014/02/25 21:28:30 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -34,6 +34,11 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
+#define _KERNEL
+#include <sys/fcntl.h>
+#undef _KERNEL
+
 #include <lib/libsa/loadfile.h>
 #include <lib/libsa/stand.h>
 
@@ -55,13 +60,16 @@ int netif_debug;
 
 extern char	*version;
 char		fbuf[80], dbuf[128];
+char		rnddata[BOOTRANDOM_MAX];
 
 paddr_t	bstart, bend;	/* physical start & end address of the boot program */
 int	compat = 1;	/* try to load in compat mode */
+int	rnd_loaded = 0;
 
 typedef void (*entry_t)(u_long, int, int, int, long, long);
 
-int fdloadfile(int, u_long *, int);
+int	fdloadfile(int, u_long *, int);
+int	loadrandom(const char *, void *, size_t);
 
 static paddr_t
 getphysmem(u_long size)
@@ -160,7 +168,7 @@ loadk(char *file, u_long *marks)
 	 */
 	extra = 512 * 1024;
 
-	if ((fd = open(file, 0)) < 0)
+	if ((fd = open(file, O_RDONLY)) < 0)
 		return (errno ? errno : ENOENT);
 
 	/*
@@ -179,6 +187,15 @@ loadk(char *file, u_long *marks)
 		/* compensate for extra room below */
 		minsize -= extra;
 	} else {
+		/*
+		 * If we did not load a random.seed file yet, try and load
+		 * one.
+		 */
+		if (rnd_loaded == 0) {
+			rnd_loaded = loadrandom(BOOTRANDOM, rnddata,
+			    sizeof(rnddata));
+		}
+
 		flags = LOAD_KERNEL;
 		marks[MARK_START] = 0;
 
@@ -337,4 +354,27 @@ main(int argc, char *argv[])
 	    marks[MARK_END], DDB_MAGIC1);
 
 	_rtt();
+}
+
+int
+loadrandom(const char *path, void *buf, size_t buflen)
+{
+	struct stat sb;
+	int fd;
+	int rc = 0;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		if (errno != EPERM)
+			printf("cannot open %s: %s\n", path, strerror(errno));
+		return 0;
+	}
+	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & (S_IWOTH|S_IROTH)))
+		goto fail;
+	(void) read(fd, buf, buflen);
+	rc = 1;
+fail:
+	close(fd);
+	return rc;
 }

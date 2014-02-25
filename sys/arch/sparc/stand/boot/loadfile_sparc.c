@@ -1,4 +1,4 @@
-/* $OpenBSD: loadfile_sparc.c,v 1.2 2011/04/14 18:27:49 miod Exp $ */
+/* $OpenBSD: loadfile_sparc.c,v 1.3 2014/02/25 21:28:30 miod Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -194,6 +194,22 @@ elf32_exec(int fd, off_t filepos, Elf_Ehdr *elf, u_long *marks, int flags)
 	filepos += sz;
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+		if (phdr[i].p_type == PT_OPENBSD_RANDOMIZE) {
+			int m;
+
+			/* Fill segment is asked for. */
+			if (flags & LOAD_DATA) {
+				for (pos = 0; pos < phdr[i].p_filesz;
+				    pos += m) {
+					m = MIN(phdr[i].p_filesz - pos,
+					    sizeof(rnddata));
+					BCOPY(rnddata, phdr[i].p_paddr + pos,
+					    m);
+				}
+			}
+			continue;
+		}
+
 		if (phdr[i].p_type != PT_LOAD ||
 		    (phdr[i].p_flags & (PF_W|PF_R|PF_X)) == 0)
 			continue;
