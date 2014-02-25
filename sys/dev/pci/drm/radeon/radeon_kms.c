@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.23 2014/02/23 09:36:52 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.24 2014/02/25 00:03:38 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -32,6 +32,14 @@
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon_asic.h"
 #include <dev/pci/drm/drm_pciids.h>
+
+#ifndef PCI_MEM_START
+#define PCI_MEM_START	0
+#endif
+
+#ifndef PCI_MEM_END
+#define PCI_MEM_END	0xffffffff
+#endif
 
 /* can't include radeon_drv.h due to duplicated defines in radeon_reg.h */
 
@@ -453,6 +461,10 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	int			 is_agp;
 	pcireg_t		 type;
 	uint8_t			 iobar;
+#if !defined(__sparc64__)
+	pcireg_t		 addr, mask;
+	int			 s;
+#endif
 
 #if defined(__sparc64__) || defined(__macppc__)
 	extern int fbnode;
@@ -514,6 +526,31 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mmio space\n");
 		return;
 	}
+
+#if !defined(__sparc64__)
+	/*
+	 * Make sure we have a base address for the ROM such that we
+	 * can map it later.
+	 */
+	s = splhigh();
+	addr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, ~PCI_ROM_ENABLE);
+	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, addr);
+	splx(s);
+
+	if (addr == 0 && PCI_ROM_SIZE(mask) != 0 && pa->pa_memex) {
+		bus_size_t size, start, end;
+		bus_addr_t base;
+
+		size = PCI_ROM_SIZE(mask);
+		start = max(PCI_MEM_START, pa->pa_memex->ex_start);
+		end = min(PCI_MEM_END, pa->pa_memex->ex_end);
+		if (extent_alloc_subregion(pa->pa_memex, start, end, size,
+		    size, 0, 0, 0, &base) == 0)
+			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, base);
+	}
+#endif
 
 #ifdef notyet
 	mtx_init(&rdev->swi_lock, IPL_TTY);
