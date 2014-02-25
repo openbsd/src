@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.2 2014/01/01 08:02:09 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.3 2014/02/25 21:26:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -44,12 +44,12 @@ SECTIONS
 	{
 		PROVIDE(__data_start = ABSOLUTE(.));
 		*(.data)
-		PROVIDE(edata = ABSOLUTE(.));
 	} :data
 	.openbsd.randomdata :
 	{
 		*(.openbsd.randomdata)
 	} :data :openbsd_randomize
+	PROVIDE(edata = ABSOLUTE(.));
 	.bss :
 	{
 		*(.bss)
