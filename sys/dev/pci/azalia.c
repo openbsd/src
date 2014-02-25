@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.209 2013/12/30 10:53:30 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.210 2014/02/25 18:40:37 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1110,7 +1110,7 @@ azalia_halt_rirb(azalia_t *az)
 int
 azalia_init_rirb(azalia_t *az, int resuming)
 {
-	int err;
+	int err, i;
 	uint16_t rirbwp;
 	uint8_t rirbctl;
 
@@ -1161,6 +1161,16 @@ azalia_init_rirb(azalia_t *az, int resuming)
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	AZ_WRITE_1(az, RIRBCTL, rirbctl |
 	    HDA_RIRBCTL_RIRBDMAEN | HDA_RIRBCTL_RINTCTL);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		rirbctl = AZ_READ_1(az, RIRBCTL);
+		if (rirbctl & HDA_RIRBCTL_RIRBDMAEN)
+			break;
+	}
+	if (i <= 0) {
+		DPRINTF(("%s: RIRB is not running\n", XNAME(az)));
+		return(EBUSY);
+	}
 
 	return (0);
 }
