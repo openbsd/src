@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.9 2013/11/24 23:51:29 deraadt Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.10 2014/02/26 20:00:08 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -53,10 +53,6 @@ dname_check_label(const char *s, size_t l)
 {
 	if (l == 0 || l > 63)
 		return (-1);
-
-	for (l--; l; l--, s++)
-		if (!(isalnum((unsigned char)*s) || *s == '_' || *s == '-'))
-			return (-1);
 
 	return (0);
 }

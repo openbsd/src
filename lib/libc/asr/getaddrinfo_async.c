@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.20 2014/02/17 11:04:23 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.21 2014/02/26 20:00:08 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -27,6 +27,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <resolv.h> /* for res_hnok */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -767,14 +768,6 @@ addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 		    rr.rr_class != q.q_class)
 			continue;
 
-		if (as->as.ai.fqdn == NULL) {
-			asr_strdname(q.q_dname, buf, sizeof buf);
-			buf[strlen(buf) - 1] = '\0';
-			as->as.ai.fqdn = strdup(buf);
-			if (as->as.ai.fqdn == NULL)
-				return (-1); /* errno set */
-		}
-
 		memset(&u, 0, sizeof u);
 		if (rr.rr_type == T_A) {
 			u.sain.sin_len = sizeof u.sain;
@@ -792,7 +785,7 @@ addrinfo_from_pkt(struct async *as, char *pkt, size_t pktlen)
 		if (as->as.ai.hints.ai_flags & AI_CANONNAME) {
 			asr_strdname(rr.rr_dname, buf, sizeof buf);
 			buf[strlen(buf) - 1] = '\0';
-			c = buf;
+			c = res_hnok(buf) ? buf : NULL;
 		} else if (as->as.ai.hints.ai_flags & AI_FQDN)
 			c = as->as.ai.fqdn;
 		else
