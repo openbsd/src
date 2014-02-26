@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2013/11/16 18:37:26 rpe Exp $
+#	$OpenBSD: install.md,v 1.5 2014/02/26 16:01:32 maja Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ md_installboot() {
 			cp /mnt/usr/mdec/panda/{mlo,u-boot.bin} /mnt/mnt/
 		fi
 		cat > /mnt/mnt/uenv.txt<<__EOT
-bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
+bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg ; fatload mmc \${mmcdev} \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
 uenvcmd=boot
 __EOT
 	elif [[ ${MDPLAT} == "IMX" ]]; then
