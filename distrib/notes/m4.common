@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.101 2014/02/02 11:56:26 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.102 2014/02/26 18:13:41 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -820,58 +820,48 @@ Preparing an unattended installation of OpenBSD:
 If the installation system detects that it booted from the network,
 and isn't interrupted within 5 seconds, it attempts a fully-automatic
 installation.  In this mode the installer runs dhclient(8) on the
-network interface the system booted from, and upon success retrieves
-a response file via HTTP.  The "next-server" DHCP option specifies the
-hostname part of the URL, as in "http://<next-server>/install.conf".
+network interface the system booted from, or in case of multiple
+interfaces it will ask which one to use. Upon success it retrieves a
+response file via HTTP.
 
-You can also retrieve the response file from another source, a local
-disk for example.  If you wish to do that, enter the shell, retrieve
-the response file, store it as /install.conf, and start the automatic
-installation by leaving the shell and entering 'A' for "(A)utoinstall"
-at the prompt.
+The "next-server" DHCP option specifies the hostname part of the URL,
+as in "http://<next-server>/install.conf".  The "filename" DHCP
+parameter specifies the installer mode, e.g. "auto_install".  On
+architectures where this parameter is used for netbooting, create
+a symbolic link named "auto_install" pointing to the boot program.
 
-The response file format is very simple.  It contains key/value pairs
-separated by an equals sign '=', where the key is a substring of the
-question or the plural of a thing in multiple-choice questions, and
-the value is what would have been entered at the interactive prompt.
-Empty lines, and lines beginning with a '#' character are ignored.
+The response file contains lines with key/value pairs separated by
+an equals sign '=', where the key is a non-ambiguous part (up to the
+question mark) of the installer question, consisting of whitespace
+separated words. The value is what would have been entered at the
+interactive prompt. Empty lines and lines beginning with a '#'
+character are ignored. The installer uses default answers in case
+of missing answers.
 
-Here is a minimal response file:
+Here is a response file example that uses a hashed password (see
+encrypt(1) for more details) for root and a public ssh key for the
+user that is created during the installation.
 
-  system hostname = openbsd
-  # generated with: encrypt -- secret
-  password for root = ${:--:}2a${:--:}06${:--:}4Q.5e2eIJYyMn2J/HTR6N.gJ4tpBsSXgYrhVnxlomfhVGHOcnu3KW
-  location of sets = http
+           System hostname = openbsd
+           Password for root = ${:--:}2a${:--:}14${:--:}Z4xRMg8vDpgYH...GVot3ySoj8yby
+           Setup a user = puffy
+           Password for user = *************
+           Public ssh key for user = ssh-rsa AAAAB3...RVtZJL puffy@ai
+           What timezone are you in = Europe/Stockholm
+           Location of sets = http
+           Server = ftp.eu.openbsd.org
 
-(Passwords should always be encrypted using encrypt(1), although the
-installer also accepts cleartext passwords.)
-
-The "system hostname" key above matches the following full question
+The "System hostname" key above matches the following full question
 asked during an interactive installation:
 
   System hostname? (short form, e.g. 'foo')
 
-Take "network interfaces" for an example of a multiple-choice question,
-which could be asked during an interactive installation:
-
-  Available network interfaces: re0 re1
-  Which one do you wish to configure? [re0]
-
-In a response file, this multiple-choice question is identified by
-only the ``thing'' which is available: "network interfaces" in this
-case.  To configure these two interfaces the response file might
-contain:
-
-  network interfaces = re0 re1
-  IPv4 address for re0 = dhcp
-  IPv4 address for re1 = dhcp
-
-While the installation is in progress the installer will redirect all
-output to the file /install.log, which can also be found on the freshly
+While the installation is in progress the installer writes all output
+to the file /ai.log, which is available as mail on the freshly
 installed system after the initial reboot.  If the installation is
 successful the system will reboot automatically; otherwise, you will
-be dropped back into the shell where you can look at the /install.log
-file or try again.
+be dropped back into the shell where you can look at the /ai.log file
+or try again.
 
 dnl XXX: do we want this?
 dnl A more complete example of a response file is distributed with the
