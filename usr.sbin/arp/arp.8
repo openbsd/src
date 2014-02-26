@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.30 2011/09/01 21:21:25 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.31 2014/02/26 20:51:17 claudio Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 1 2011 $
+.Dd $Mdocdate: February 26 2014 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -155,7 +155,6 @@ be replaced unless
 is given.
 .It Fl V Ar rdomain
 Select the routing domain.
-The default is 0.
 .It Fl W Ar ether_addr Op Ar iface
 Send the Wake on LAN frame from all interfaces on the local machine
 that are up, if
