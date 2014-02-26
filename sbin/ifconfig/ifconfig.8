@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.239 2014/01/21 21:27:14 benno Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.240 2014/02/26 21:19:44 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 26 2014 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -403,12 +403,16 @@ This will influence the default routing priority of new static routes added to
 the kernel.
 .Ar n
 is in the range of 0 to 16 with smaller numbers being better.
-.It Cm rdomain Ar route-id
-Attach the interface to the routing table with the specified
-.Ar route-id .
+.It Cm rdomain Ar rdomainid
+Attach the interface to the routing domain with the specified
+.Ar rdomainid .
 Interfaces in different routing domains are separated and can not directly
 pass traffic between each other.
-By default all interfaces belong to routing table 0.
+It is therefore possible to reuse the same addresses in different routing
+domains.
+If the specified rdomain does not yet exist it will be created, including
+a routing table with the same id.
+By default all interfaces belong to routing domain 0.
 .It Cm rtlabel Ar route-label
 (inet)
 Attach
@@ -1426,7 +1430,7 @@ for a complete list of the available protocols,
 .Op Cm deletetunnel Ar src_address dest_address
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
 .Op Cm tunnel Ar src_address dest_address
-.Op Cm tunneldomain Ar route-id
+.Op Cm tunneldomain Ar tableid
 .Op Cm vnetid Ar network-id
 .Ek
 .nr nS 0
@@ -1464,13 +1468,13 @@ Both addresses must be of the same family.
 The optional destination port can be specified for interfaces such as
 .Xr vxlan 4 ,
 which further encapsulate the packets in UDP datagrams.
-.It Cm tunneldomain Ar route-id
+.It Cm tunneldomain Ar tableid
 Use routing table
-.Ar route-id
+.Ar tableid
 instead of the default table.
 The tunnel does not need to terminate in the same routing domain as the
 interface itself.
-.Ar route-id
+.Ar tableid
 can be set to any valid routing table ID;
 the corresponding routing domain is derived from this table.
 .It Cm tunnelttl Ar ttl
