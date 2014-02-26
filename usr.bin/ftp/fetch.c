@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.112 2013/12/24 13:00:59 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.113 2014/02/26 20:48:06 tedu Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -199,6 +199,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	SSL *ssl = NULL;
 	int status;
 	int save_errno;
+	const size_t buflen = 128 * 1024;
 
 	direction = "received";
 
@@ -418,13 +419,13 @@ noslash:
 		hashbytes = mark;
 		progressmeter(-1, path);
 
-		if ((buf = malloc(4096)) == NULL)
+		if ((buf = malloc(buflen)) == NULL)
 			errx(1, "Can't allocate memory for transfer buffer");
 
 		/* Finally, suck down the file. */
 		i = 0;
 		oldinti = signal(SIGINFO, psummary);
-		while ((len = read(s, buf, 4096)) > 0) {
+		while ((len = read(s, buf, buflen)) > 0) {
 			bytes += len;
 			for (cp = buf; len > 0; len -= i, cp += i) {
 				if ((i = write(out, cp, len)) == -1) {
@@ -935,13 +936,13 @@ again:
 	free(buf);
 
 	/* Finally, suck down the file. */
-	if ((buf = malloc(4096)) == NULL)
+	if ((buf = malloc(buflen)) == NULL)
 		errx(1, "Can't allocate memory for transfer buffer");
 	i = 0;
 	len = 1;
 	oldinti = signal(SIGINFO, psummary);
 	while (len > 0) {
-		len = ftp_read(fin, ssl, buf, 4096);
+		len = ftp_read(fin, ssl, buf, buflen);
 		bytes += len;
 		for (cp = buf, wlen = len; wlen > 0; wlen -= i, cp += i) {
 			if ((i = write(out, cp, wlen)) == -1) {
