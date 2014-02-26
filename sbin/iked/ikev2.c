@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.96 2014/02/21 20:52:38 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.97 2014/02/26 14:09:15 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -510,12 +510,9 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 				log_debug("%s: conflicting sa", __func__);
 				RB_INSERT(iked_sapeers, &old->pol_sapeers, sa);
 				msg->msg_policy = old;
-			}
-			policy = sa->sa_policy = msg->msg_policy;
-			if (policy != old) {
+			} else
 				policy_unref(env, old);
-				policy_ref(env, policy);
-			}
+			policy = sa->sa_policy = msg->msg_policy;
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
