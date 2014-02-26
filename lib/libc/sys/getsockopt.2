@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.41 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.42 2014/02/26 21:01:38 claudio Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 26 2014 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -168,7 +168,7 @@ enables reception of a timestamp with datagrams
 .It Dv SO_PEERCRED
 get the credentials from other side of connection
 .It Dv SO_RTABLE
-set the routing domain
+set the routing table used for route lookups
 .It Dv SO_SPLICE
 splice two sockets together or get data length
 .It Dv SO_TYPE
@@ -363,11 +363,17 @@ were called.
 .Pp
 The
 .Dv SO_RTABLE
-option gets or sets a routing domain.
-If a protocol family of the socket doesn't support routing domains,
+option gets or sets the routing table which will be used by the socket
+for address lookups.
+If a protocol family of the socket doesn't support switching routing tables,
 the
 .Er ENOPROTOOPT
 error is returned.
+Only the superuser is allowed to change the routing table if it is already
+set to a non-zero value.
+A socket's chosen routing table is initialized from the process's configuration,
+previously selected using
+.Xr setrtable 2 .
 .Pp
 .Dv SO_SPLICE
 can splice together two TCP or UDP sockets for zero-copy data transfers.
@@ -481,6 +487,7 @@ is not in a valid part of the process address space.
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr socket 2 ,
+.Xr getrtable 2 ,
 .Xr getprotoent 3 ,
 .Xr divert 4 ,
 .Xr pf.conf 5 ,
