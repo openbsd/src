@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.72 2014/01/22 06:23:37 claudio Exp $
+.\"	$OpenBSD: route.8,v 1.73 2014/02/26 21:10:03 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: February 26 2014 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ to forgo this, especially when attempting to repair networking operations.)
 Suppress all output.
 .It Fl T Ar tableid
 Select an alternate routing table to modify or query.
-Table 0 is the default table.
+The default is to use the current routing table.
 .It Fl t
 Write routing messages to a fake device
 .Pa ( /dev/null )
@@ -105,8 +105,8 @@ utility provides the following simple commands:
 .Cm exec
 .Op Ar command ...
 .Xc
-Execute a command forcing the process and its children into the
-routing domain as specified with the
+Execute a command forcing the process and its children to use the
+routing table and appropriate routing domain as specified with the
 .Fl T Ar tableid
 option.
 .It Xo
