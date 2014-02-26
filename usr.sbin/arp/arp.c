@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.54 2013/08/15 13:43:33 bluhm Exp $ */
+/*	$OpenBSD: arp.c,v 1.55 2014/02/26 20:50:17 claudio Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -83,7 +83,7 @@ static int replace;	/* replace entries when adding */
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int s = -1;
-static int rdomain = 0;
+static int rdomain;
 
 extern int h_errno;
 
