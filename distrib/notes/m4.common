@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.104 2014/02/27 19:26:50 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.105 2014/02/27 19:29:19 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -965,8 +965,8 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using a Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the sha256(1) command to
-	verify the checksums of the images vs. the values in the SHA256 file
+	image as described above.  You should use the signify(1) and sha256(1)
+	commands to verify the integrity of the images with the SHA256.sig file
 	on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
