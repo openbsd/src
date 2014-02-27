@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.45 2011/08/08 20:03:03 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.46 2014/02/27 18:04:28 tedu Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -168,9 +168,7 @@ Administrivia:
 There are various mailing lists available via the mailing list
 server at <majordomo@OpenBSD.org>.  To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
-reply with instructions.  There are also two OpenBSD Usenet newsgroups,
-comp.unix.bsd.openbsd.announce for important announcements and
-comp.unix.bsd.openbsd.misc for general OpenBSD discussion.
+reply with instructions.
 
 More information about the various OpenBSD mailing list and proper
 netiquette is available at
@@ -191,8 +189,8 @@ dnl are entered into the OpenBSD bugs database, and thus can't slip through
 dnl the cracks.
 dnl 
 As a favor, please avoid mailing huge documents or files to the
-mailing lists.  Instead, put the material you would have sent up
-for FTP somewhere, then mail the appropriate list about it, or, if
+mailing lists.  Instead, put the material you would have sent on
+a web server, then mail the appropriate list about it, or if
 you'd rather not do that, mail the list saying you'll send the data
 to those who want it.
 

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.102 2014/02/26 18:13:41 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.103 2014/02/27 18:04:28 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -256,10 +256,9 @@ dnl
 dnl Installation introduction.  Warns about disk geometry hell if argument
 dnl is not empty.
 define({:-OpenBSDInstallPrelude-:},
-{:-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand and are careful to read and remember the
-information which is presented to you by the install program, it
-shouldn't be too much trouble.ifelse(X$1,X,,{:-
+{:-Installing OpenBSD is a relatively simple process. If you take your time
+and are careful to read the information presented by the installer, you
+shouldn't have any trouble.ifelse(X$1,X,,{:-
 
 If the disks connected to your machine are $1,
 it is recommended that you know their geometry, i.e. the sector size (note
@@ -298,23 +297,12 @@ though).-:})dnl
 dnl
 dnl OpenBSDInstallPart3(warn geometry, disk type, disk type, disk type)
 dnl
-dnl Describes the boot of the ramdisk, the expected disk devices
-dnl names, and warns bore the reader with geometry concerns if the
-dnl first argument is not empty.
+dnl Describes the boot of the ramdisk.
 dnl Describes the serial terminal setup.
 define({:-OpenBSDInstallPart3-:},
 {:-	Once the kernel has loaded, you will be presented with the
-	OpenBSD kernel boot messages.  You will want to read them
-	to determine your disks name and geometry.  Its name will
-	be something like ifelse(X$2,X,{:-"sd0" for SCSI drives, or "wd0" for IDE
-	drives-:},$2){:--:}ifelse(X$3,X,,{:-, $3-:}){:--:}ifelse(X$4,X,,{:-, $4-:}){:--:}.{:--:}ifelse(X$1,X,,{:-
-	As mentioned above, you will need your disks geometry (which
-	will be printed on a line beginning with its name) when
-	creating OpenBSD partitions.-:})
-	You will also need to know the device name to tell the
-	install tools what disk to install on.  If you cannot read
-	the messages as they scroll by, do not worry -- you can get
-	at this information later inside the install program.
+	OpenBSD kernel boot messages which contain information about
+	the hardware that was detected and supported by OpenBSD.
 
 dnl dot.profile
 	After the kernel is done initialising, you will be asked whether

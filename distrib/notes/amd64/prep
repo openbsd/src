@@ -1,70 +1,16 @@
-dnl	$OpenBSD: prep,v 1.5 2008/08/05 23:05:12 miod Exp $
-NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do not
-want any other operating system to reside on your hard disk, you can skip
-this section and go on to the section that describes installation, below.
-If you're upgrading your system from a previous release of OpenBSD, you
-should have proceeded directly to the section about upgrading; you need
-none of the information presented here.
-
+dnl	$OpenBSD: prep,v 1.6 2014/02/27 18:04:28 tedu Exp $
 First and foremost, before beginning the installation process, MAKE
 SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
 wish to keep.  Repartitioning your hard disk is an excellent way to
 destroy important data.
 
-dnl
-dnl All this text below is probably completely unapplicable to amd64,
-dnl as they don't have BIOS that old and crappy...
-dnl Second, if you are using a disk controller which supports disk geometry
-dnl translation, be sure to use the same parameters for OpenBSD as for the
-dnl other operating systems installed on your disk.  If you do not, it will
-dnl be much harder to make OpenBSD properly coexist with them.
-dnl
-dnl Utilities exist which will print out the disk geometry which DOS sees;
-dnl some versions of DOS "fdisk" also do this.  If you have an "EIDE" hard
-dnl disk, DOS and OpenBSD probably won't see the same geometry, and you must
-dnl be careful to find out the DOS geometry and tell OpenBSD about it during
-dnl the installation.
-dnl
-dnl Third (but related to the second point above), if you are using a hard
-dnl disk with more sectors than DOS or your controller's BIOS supports without
-dnl some kind of software translation utility or other kludge, you MUST
-dnl BE SURE that all partitions which you want to boot from must start and end
-dnl below cylinder 1024 by the BIOS's idea of the disk, and that all DOS
-dnl partitions MUST EXIST ENTIRELY BELOW cylinder 1024, or you will either not
-dnl be able to boot OpenBSD, not be able to boot DOS, or you may experience
-dnl data loss or filesystem corruption.  Be sure you aren't using geometry
-dnl translation that you don't know about, but that the DOS "fdisk" program
-dnl does!
-dnl
-dnl The OpenBSD root partition must also reside completely within the BIOS
-dnl supported part of the hard disk -- this would typically be 504MB, 2GB or
-dnl 8GB, depending upon the age of the machine and its BIOS.
-
-dnl Fourth, use the other operating system's "fdisk" program or partition
-Second, use the other operating system's "fdisk" program or partition
-editor to create at least one of the partitions to be used for that
-operating system.  If that operating system is already set up to use the
+If you plan to dual boot, use the other operating system's "fdisk" program
+or partition editor to create at least one of the partitions to be used for
+that operating system.  If that operating system is already set up to use the
 entire disk, you will have to back it up, remove and recreate a smaller
-partition for it, and then restore the data from that partition.  You do
-not have to create an OpenBSD partition at this time, the OpenBSD install-
-ation will give you an opportunity to create the partition needed for
-OpenBSD.
+partition for it, and then restore the data from that partition.  You do not
+have to create an OpenBSD partition at this time, the OpenBSD installation
+will give you an opportunity to create the partition needed for OpenBSD.
 
-Finally, do whatever is necessary to restore order to the partition
-you took space away from. Most operating systems will need to reformat
-the partition, and if it was their "main" partition, will probably need
-to be reinstalled.
-
-dnl
-dnl Don't advertize fips on amd64.
-dnl
-dnl Once you've backed all your data up, there is a tool called fips 2.0
-dnl that can shrink your FAT-based DOS/Windows partition to make room for
-dnl OpenBSD.  It is included in the MACHINE tools area of this distribution as
-dnl a convenience.  It is strongly advised that you read its documentation
-dnl and understand the consequences of your actions before using it.  In some
-dnl cases, defragmenting your disk and running fips may be much faster than
-dnl reinstalling your DOS partition from the backup.
-dnl
 Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.

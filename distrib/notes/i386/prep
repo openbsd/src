@@ -1,64 +1,27 @@
-NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do
-not want DOS or any other operating system to reside on your hard
-disk, you can skip this section and go on to the section that
-describes installation, below.  If you're upgrading your system from a
-previous release of OpenBSD, you should have proceeded directly to the
-section about upgrading; you need none of the information presented
-here.
-
 First and foremost, before beginning the installation process, MAKE
 SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
 wish to keep.  Repartitioning your hard disk is an excellent way to
 destroy important data.
 
-Second, if you are using a disk controller which supports disk geometry
-translation, be sure to use the same parameters for OpenBSD as for any
-other operating systems installed on the disk.  If you do not, it
-will be much harder to make OpenBSD properly coexist with them.  Most
-operating systems have utilities that print out the disk geometry they
-use; often "fdisk" (or its equivalent) will do this.
-
-Third (but related to the second point above), if you are using a hard
-disk with more cylinders than are supported by the other operating
-systems or the BIOS, you MUST be sure that all boot partitions start and
-end within the area supported by both the BIOS and the OS in question.
-
-The OpenBSD root partition must also reside completely within the BIOS
+The OpenBSD root partition must reside completely within the BIOS
 supported part of the hard disk -- this could typically be 504MB, 2GB,
 8GB or 128GB, depending upon the age of the machine and its BIOS. The
 rest of the OpenBSD partitions can be anywhere that hardware supports.
 
-Fourth, use the other operating system's "fdisk" program or partition
-editor to create at least one of the partitions to be used for that
-operating system.  If that operating system is already set up to use the
+If you plan to dual boot, use the other operating system's "fdisk" program
+or partition editor to create at least one of the partitions to be used for
+that operating system.  If that operating system is already set up to use the
 entire disk, you will have to back it up, remove and recreate a smaller
-partition for it, and then restore the data from that partition.  You do
-not have to create an OpenBSD partition at this time; the OpenBSD install-
-ation will give you an opportunity to create the partition needed for
-OpenBSD.
+partition for it, and then restore the data from that partition.  You do not
+have to create an OpenBSD partition at this time; the OpenBSD installation
+will give you an opportunity to create the partition needed for OpenBSD.
 
-Finally, do whatever is necessary to restore order to the partition
-you took space away from.  If it was a DOS partition, you probably
-will need to use "format" to create a new file system on it, and then
-restore your important files from your backups.  Other operating
-systems will have different needs; most will need to reformat the
-partition, and if it was their "main" partition, will probably need
-to be reinstalled.
-
-Once you've backed all your data up, there is a tool called fips 2.0
-that can shrink your FAT-based DOS/Windows partition to make room for
-OpenBSD.  It is included in the MACHINE tools area of this distribution as
-a convenience.  It is strongly advised that you read its documentation
-and understand the consequences of your actions before using it.  In some
-cases, defragmenting your disk and running fips may be much faster than
-reinstalling your DOS partition from the backup.
-
-Windows 7 (and possibly Vista) can resize their own system partition, which
-is usually NTFS. In the control panel, search for "partition": this will lead
-you to the system administration tool. Then right click on the partition you
-wish to shrink.  You may have to fiddle with the swap file, because it's
-unmoveable, and you might not be able to shrink the partition as much as you
-would wish.
+There is a tool called fips 2.0 that can shrink your FAT-based DOS/Windows
+partition to make room for OpenBSD.  It is included in the MACHINE tools area
+of this distribution as a convenience.  Windows 7 (and possibly Vista) can
+resize their own system partition, which is usually NTFS. In the control
+panel, search for "partition": this will lead you to the system
+administration tool.
 
 Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.
