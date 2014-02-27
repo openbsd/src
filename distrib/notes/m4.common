@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.103 2014/02/27 18:04:28 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.104 2014/02/27 19:26:50 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -962,22 +962,16 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	(i.e. read-only).-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromUNIX-:},
-{:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like
-system:
+{:-Creating a bootable floppy disk using a Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the sha1(1) command to
+	image as described above.  If possible use the sha256(1) command to
 	verify the checksums of the images vs. the values in the SHA256 file
 	on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
-	The command would likely be, under SunOS:
+	The command would likely be, under OpenBSD:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
-	and, under Solaris:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rdiskette0 bs=36b
-	unless the volume management daemon, vold(1M), is running, in
-	which case the following command is preferable:
-		dd if=floppy{:--:}OSrev.fs of=/vol/dev/rdiskette0 bs=36b
 
 	If you are using another operating system, you may have to adapt
 	this to conform to local naming conventions for the floppy and
@@ -1033,7 +1027,7 @@ define({:-OpenBSDXferBareTape-:},
 	cd .../OSREV/MACHINE
 	sh -x /tmp/maketape
 
-	If you're using a system other than OpenBSD or SunOS, the tape
+	If you're using a system other than OpenBSD, the tape
 	name and other requirements may change.  You can override the
 	default device name (/dev/nrst0) with the TAPE environment
 	variable.  For example, under Solaris, you would probably run:
@@ -1093,7 +1087,7 @@ ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
         cd .../OSREV/MACHINE
         sh -x /tmp/maketape noboot
 
-	If you're using a system other than OpenBSD or SunOS, the tape
+	If you're using a system other than OpenBSD, the tape
 	name and other requirements may change.  You can override the
 	default device name (/dev/nrst0) with the TAPE environment
 	variable.  For example, under Solaris, you would probably run:
