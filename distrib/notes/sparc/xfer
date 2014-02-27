@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.45 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: xfer,v 1.46 2014/02/27 20:18:10 tedu Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -27,6 +27,7 @@ from one of the FTP mirrors over the internet, you may wish to transfer
 the sets to a local FTP server, or copy them to a partition on the target
 system's disk or onto a SCSI tape.
 
+OpenBSDXferCDROM
 
 OpenBSDXferFloppyFromDOS
 
