@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.285 2013/03/14 22:10:03 tedu Exp $
+dnl	$OpenBSD: hardware,v 1.286 2014/02/27 18:06:44 tedu Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1089,28 +1089,6 @@ Drivers for hardware marked with [C] are NOT included in floppy C.
 Support for devices marked with [*] is not included in the distribution media
 or in the GENERIC kernel, and will require you to compile a custom kernel to
 enable it.
-
-Hardware that we do NOT currently support, but get many questions
-about:
-	The "Micro Channel" MCA bus used in many IBM PS/2 models
-	NCR 5380-based and 53400-based SCSI host adapters
-	QIC-40 and QIC-80 tape drives (these are the tape drives
-		that connect to the floppy disk controller)
-	Sony and Panasonic proprietary CD-ROM interfaces
-	Parallel-port ZIP drives (SCSI and ATAPI ZIP drives work fine)
-	Intel i82556 (EtherExpress PRO/100A) and i82596 (EtherExpress
-		PRO/10 PCI) Ethernet adapters
-	Hewlett-Packard PC-LAN+ (HP27xxx) Ethernet adapters
-	Aureal Vortex sound cards
-	Winmodems
-	Infrared devices, such as commonly found on laptops
-	Firewire
-	Mylex and Intel RAID controllers
-	PCMCIA:
-		Memory cards
-		Most multifunction cards
-
-We are planning future support for many of these devices.
 
 To be detected by the distributed kernels, some ISA devices must
 be configured with specific settings.  Here's their list:
