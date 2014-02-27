@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2013/02/25 20:28:01 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2014/02/27 18:48:15 deraadt Exp $
 OpenBSD/MACHINE OSREV runs on the OMRON Luna-88K workstations family.
 
 16MB of RAM should be sufficient to boot and a minimal system can probably
@@ -12,5 +12,3 @@ Supported devices:
 	On-board SCSI controllers (spc)
 	LCD display on front panel (lcd)
 	Keyboard, mouse and frame buffer (suitable as a console too)
-
-Devices not listed above are not supported by this release.

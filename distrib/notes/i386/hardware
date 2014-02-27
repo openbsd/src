@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.287 2014/02/27 18:22:11 tedu Exp $
+dnl	$OpenBSD: hardware,v 1.288 2014/02/27 18:48:15 deraadt Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -105,9 +105,6 @@ IsoLan, NE2100, and DEPCA
 
 Intel EtherExpress PRO/10
 		ex0	0x320	5
-
-PCI Ethernet boards need to have an interrupt, either assigned in your
-PCI BIOS, or autoconfigured.
 
 Hardware not listed in the above table doesn't need any specific
 configuration.

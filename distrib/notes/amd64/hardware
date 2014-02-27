@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.108 2014/02/27 18:22:11 tedu Exp $
+dnl	$OpenBSD: hardware,v 1.109 2014/02/27 18:48:15 deraadt Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -9,4 +9,3 @@ is included with the installation file sets.
 Please refer to the website for a full list of supported hardware.
 
 http://www.openbsd.org/amd64.html
-

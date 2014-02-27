@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2013/02/25 20:28:01 miod Exp $
+dnl	$OpenBSD: hardware,v 1.30 2014/02/27 18:48:15 deraadt Exp $
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
 
@@ -86,12 +86,3 @@ The following HP hardware is supported:
 	Digital audio on model 425e (arcofi)
 	Battery-backed real-time clock (except on 425e).
 	Printers and plotters on RS232 and HP-IB (ppi).
-
-Unsupported hardware mainly consists of:
-
-    68010 and 68020 based systems: 310, 318, 319, 320, 330 and 350.
-    68030 FPU-less systems: 332.
-    parallel port on the 3x2 and 4xx models.
-    98765 TurboVRX, X-Genesis and Y-Genesis frame buffers.
-    ISA slot on 4xx ``t'' models.
-    EISA slots on 4xx ``s'' models.
