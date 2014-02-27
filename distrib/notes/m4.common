@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.106 2014/02/27 19:42:28 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.107 2014/02/27 20:11:25 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -926,6 +926,24 @@ widely in terms of what peripherals and what sort of network arrangements
 a user has, the intent is to provide some way that will be practical.-:})dnl
 dnl
 dnl Various floppy generation instructions.
+dnl
+define({:-OpenBSDXferCDROM-:},
+{:-Creating a bootable CD-ROM:
+
+	First you need to get access to the OpenBSD bootable CD-ROM (ISO)
+	images. They can be found on one of the FTP or HTTP mirrors. Two
+	files are available, install{:--:}OSrev.iso which contains all of
+	the sets needed for installation, and a smaller cd{:--:}OSrev.iso
+	which contains just the installer, for a network install.
+
+	Windows 7 users should be able to do this by right clicking on the
+	install{:--:}OSrev.iso file and clicking burn to CD.
+
+	OpenBSD users should be able to do this with the cdio command.
+	"cdio tao install{:--:}OSrev.iso"
+
+	Users of other operating systems should consult the 
+	appropriate documentation.-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromDOS-:},
 {:-Creating a bootable floppy disk using Windows:
