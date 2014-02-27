@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.46 2014/02/27 18:04:28 tedu Exp $
+dnl	$OpenBSD: INSTALL,v 1.47 2014/02/27 19:44:37 tedu Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -56,7 +56,8 @@ includeit(whatis)dnl
 Sources of OpenBSD:
 -------------------
 
-includeit(mirrors)dnl
+Please refer to http://www.openbsd.org/ftp.html for all the ways you may
+acquire OpenBSD.
 
 
 OpenBSD OSREV Release Contents:
