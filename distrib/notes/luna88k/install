@@ -1,9 +1,11 @@
-dnl	$OpenBSD: install,v 1.10 2013/10/30 22:06:36 miod Exp $
+dnl	$OpenBSD: install,v 1.11 2014/02/27 18:55:39 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
-in terms of preliminary setup is to use the OpenBSD ramdisk kernel, bsd.rd,
-which can be booted from tape, or an existing Mach partition.
+in terms of preliminary setup is to use the OpenBSD miniroot that can be
+booted off your local disk's swap partition. Alternatively, you can
+use the OpenBSD bootblocks and the ramdisk kernel, bsd.rd, copied to an
+existing UniOS partition.
 
 
 Booting from the Installation Media:
@@ -14,7 +16,7 @@ wipe out all the partitions on the hard disk, errors during the install
 process can have unforeseen consequences and will probably leave the system
 unbootable if the installation process is not completed. Availability
 of the installation media for the prior installation, such as a Luna-88K
-Mach tape, is always a good insurance, should it be necessary to "go back"
+UniOS tape, is always a good insurance, should it be necessary to "go back"
 for some reason.
 
 After taking care of all that, the system should be brought down gracefully
@@ -70,7 +72,27 @@ Booting from an existing partition:
 
     Then, boot the installation kernel from the same partition:
 
-     b sd(n,p)bsd.rd
+     boot sd(n,p)bsd.rd
+
+Booting from the miniroot:
+
+    Copy the OpenBSD/MACHINE miniroot to the swap partition (assuming your
+    disk is sd0):
+
+	dd if=miniroot{:--:}OSrev.fs of=/dev/sd0b
+
+    After halting the system, at the PROM prompt, enter
+
+	b sd(n,1)
+
+    to boot the OpenBSD bootloader from the swap partition.
+
+    Once the OpenBSD bootloader starts, press any key to stop the countdown
+    if the ``boot>'' prompt does not appear.
+
+    Then, boot the installation kernel from the same partition:
+
+     boot sd(n,1)
 
 
 Installing the system:

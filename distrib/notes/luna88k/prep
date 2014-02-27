@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2013/10/30 22:06:36 miod Exp $
+dnl	$OpenBSD: prep,v 1.6 2014/02/27 18:55:39 miod Exp $
 dnl Need to provide a short monitor description. Start from
 dnl http://www.nk-home.net/~aoyama/luna88k/monitor.txt
 dnl and also document NVRAM?
@@ -21,6 +21,7 @@ Setting up the boot device and filename:
   ``boot_filename'' variable stores the name of the file to boot, and
   defaults to ``vmunix''. To boot OpenBSD, this variable should be
   changed to ``boot'', as in:
+
     0> nvram boot_filename boot
 
   The ``boot_unit'' value is an encoding of the device SCSI identifier.

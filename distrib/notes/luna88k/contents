@@ -1,5 +1,11 @@
-dnl	$OpenBSD: contents,v 1.12 2013/10/30 22:06:36 miod Exp $
+dnl	$OpenBSD: contents,v 1.13 2014/02/27 18:55:39 miod Exp $
 TopPart
+
+OpenBSDminiroot
+			It can be copied to the swap partition of an existing
+			UniOS or OpenBSD installation, or to the beginning of
+			a disk, to allow installing or upgrading to OpenBSD
+			OSREV.
 
 OpenBSDdistsets
 
@@ -11,11 +17,10 @@ OpenBSDrd
 
 	boot		The OpenBSD/MACHINE boot block.
 
-These files can be used to make a bootable tape suitable for installation.
-They can also be used to configure an NFS server to support installation
-over the network. See the section "Getting the OpenBSD system onto Useful
-Media" for more information.
-
+dnl These files can be used to make a bootable tape suitable for installation.
+dnl See the section "Getting the OpenBSD system onto Useful Media" for more
+dnl information.
+dnl
 DistributionDescription(ten)
 
 OpenBSDbase(63446514,182505582)
