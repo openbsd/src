@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwrite.c,v 1.5 2011/11/06 15:00:34 guenther Exp $	*/
+/*	$OpenBSD: pwrite.c,v 1.6 2014/02/28 16:14:05 espie Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -42,6 +42,9 @@ main(int argc, char *argv[])
 
 	c = '5';
 	if (write(fd, &c, 1) != 1)
+		err(1, "write");
+
+	if (write(fd, &c, 0) != 0)
 		err(1, "write");
 
 	if (pread(fd, buf, 10, 0) != 10)
