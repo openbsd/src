@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.2 2013/10/22 16:24:11 jasper Exp $
+dnl	$OpenBSD: prep,v 1.3 2014/02/28 00:47:14 afresh1 Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -15,8 +15,8 @@ The command would likely be, under OpenBSD:
 	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsd1c
 
 When you have connected the BeagleBoard to you computer, a command such
-as "tip -115200 tty00" (assuming tty00 is your serial port device) should
-connect you to the board's console.
+as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
+should connect you to the board's console.
 
 Note: By default the BeagleBone Black will boot from the internal emmc. 
 In order to make it boot from the micro sdcard, you will need to hold down

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2010/04/14 17:13:51 jasper Exp $
+dnl	$OpenBSD: prep,v 1.11 2014/02/28 00:47:14 afresh1 Exp $
 To be able to boot the OpenBSD/MACHINE installation program on the Thecus
 N1200, you will need to learn a bit about Das U-Boot, the low-level process
 that controls the microprocessor after hardware initialization.
@@ -38,7 +38,7 @@ Thecus N1200 setup:
 	Booting the Thecus N1200
 
 	When you have connected your computer, a command such as
-	"tip -115200 tty00" (assuming tty00 is your serial port device)
+	"cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
 	should connect you to the Thecus console. Now apply power to the
 	Thecus and start it.
 
@@ -144,7 +144,7 @@ RouterBOARD RB600A setup:
 
 	The RouterBOARD RB600A comes with a standard DB9 serial port, so no
 	special cables are needed.  Like the Thecus, the default baudrate is
-	115200, so a command like "tip -115200 tty00" should connect you to
+	115200, so a command like "cu -l cuaU0 -s 115200" should connect you to
 	the RouterBOARD console.  As soon as you apply power to the
 	RouterBOARD, it will start booting.
 

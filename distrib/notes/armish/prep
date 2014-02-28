@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.16 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: prep,v 1.17 2014/02/28 00:47:14 afresh1 Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will need
 to learn a bit about RedBoot, the low-level process that controls the
 microprocessor after hardware initialization.
@@ -53,7 +53,7 @@ Thecus N2100 setup:
 	Booting Thecus N2100
 
 	When you have connected your computer, a command such as
-       	"tip -115200 tty00" (assuming tty00 is your serial port device)
+       	"cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
 	should connect you to the Thecus console. Now apply power to the
 	Thecus and start it.
 
