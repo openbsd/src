@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.63 2014/02/04 10:38:06 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.64 2014/02/28 16:00:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -705,7 +705,7 @@ lka_expand_token(char *dest, size_t len, const char *token,
 		} while ((mods = sep) != NULL);
 	}
 	
-	if (! raw)
+	if (! raw && replace)
 		for (i = 0; (size_t)i < strlen(tmp); ++i)
 			if (strchr(unsafe, tmp[i]))
 				tmp[i] = ':';
