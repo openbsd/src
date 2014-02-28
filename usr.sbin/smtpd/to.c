@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.15 2014/02/04 10:03:32 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.16 2014/02/28 08:32:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -414,7 +414,7 @@ relayhost_to_text(const struct relayhost *relay)
 {
 	static char	buf[4096];
 	char		port[4096];
-	uint16_t	mask = F_SMTPS|F_STARTTLS|F_AUTH|F_TLS_OPTIONAL|F_LMTP;
+	uint16_t	mask = F_SMTPS|F_STARTTLS|F_AUTH|F_TLS_OPTIONAL|F_LMTP|F_BACKUP;
 
 	memset(buf, 0, sizeof buf);
 	switch (relay->flags & mask) {
