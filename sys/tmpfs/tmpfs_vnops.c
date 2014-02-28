@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.14 2014/02/25 17:31:15 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.15 2014/02/28 15:59:38 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -605,14 +605,12 @@ tmpfs_write(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	oldsize = node->tn_size;
 
-	if (uio->uio_offset < 0 || vp->v_type != VREG) {
-		error = EINVAL;
-		goto out;
-	}
-	if (uio->uio_resid == 0) {
-		error = 0;
-		goto out;
-	}
+	if (vp->v_type != VREG)
+		return (EINVAL);
+
+	if (uio->uio_resid == 0)
+		return (0);
+
 	if (ioflag & IO_APPEND) {
 		uio->uio_offset = node->tn_size;
 	}
