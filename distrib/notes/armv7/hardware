@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.1 2013/09/04 20:00:26 patrick Exp $
+dnl	$OpenBSD: hardware,v 1.2 2014/02/28 00:55:02 afresh1 Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
@@ -12,6 +12,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	  standard serial port (com)
 	  watchdog controller (omdog)
 	  ethernet controller (cpsw)
+	  GPIO controller (omgpio)
 
     PandaBoard (ES)
 	Supported on-board devices:
