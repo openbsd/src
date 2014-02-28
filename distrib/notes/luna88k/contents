@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.13 2014/02/27 18:55:39 miod Exp $
+dnl	$OpenBSD: contents,v 1.14 2014/02/28 21:37:59 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -23,22 +23,22 @@ dnl information.
 dnl
 DistributionDescription(ten)
 
-OpenBSDbase(63446514,182505582)
+OpenBSDbase(64527917,184893363)
 
-OpenBSDcomp(92394770,257472630)
+OpenBSDcomp(93073629,259873888)
 
-OpenBSDetc(523891,1644215)
+OpenBSDetc(526669,1717378)
 
-OpenBSDgame(2707976,6051405)
+OpenBSDgame(2705532,6044788)
 
-OpenBSDman(9768637,37904304)
+OpenBSDman(9871422,38294216)
 
-OpenBSDxbase(13954117,37725935)
+OpenBSDxbase(12175241,31703000)
 
-OpenBSDxetc(64839,272248)
+OpenBSDxetc(64997,272503)
 
-OpenBSDxfont(39807602,51943721)
+OpenBSDxfont(39938762,52169245)
 
-OpenBSDxserv(4111642,10499538)
+OpenBSDxserv(3375974,8624503)
 
-OpenBSDxshare(4482928,24957505)
+OpenBSDxshare(4411622,24361113)

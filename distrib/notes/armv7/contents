@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.2 2013/10/22 16:24:11 jasper Exp $
+dnl	$OpenBSD: contents,v 1.3 2014/02/28 21:37:59 miod Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -27,22 +27,22 @@ dnl OpenBSDcd
 
 DistributionDescription(ten)
 
-OpenBSDbase(57200072,160429598)
+OpenBSDbase(59810834,166146114)
 
-OpenBSDcomp(48715241,148174537)
+OpenBSDcomp(49060908,148496717)
 
-OpenBSDetc(523911,1644246)
+OpenBSDetc(526168,1717454)
 
-OpenBSDgame(2674656,6016273)
+OpenBSDgame(2677213,6022047)
 
-OpenBSDman(9956540,38700830)
+OpenBSDman(10062290,39102681)
 
-OpenBSDxbase(10973881,28807741)
+OpenBSDxbase(12620198,33609128)
 
-OpenBSDxetc(64834,272324)
+OpenBSDxetc(64962,272508)
 
-OpenBSDxfont(39797846,51943721)
+OpenBSDxfont(39938719,52169245)
 
-OpenBSDxserv(5825255,14409683)
+OpenBSDxserv(5945263,14963812)
 
-OpenBSDxshare(4479383,24953178)
+OpenBSDxshare(4411475,24366232)
