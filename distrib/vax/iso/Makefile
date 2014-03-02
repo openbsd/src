@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2014/02/28 22:53:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2014/03/02 05:46:26 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -44,8 +44,10 @@ ${CDROM}: ${BASE} ${XBASE} ${BOOT} ${BOOTXX}
 
 	cp -p ${BASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
-	cp -p ${RELDIR}/.i-SHA256 ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
-	cp -p ${RELDIR}/.i-SHA256.sig ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256.sig
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
 
 	disklabel -B -b ${BOOTXX} ${VND}
 	@echo ""

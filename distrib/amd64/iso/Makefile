@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2014/01/24 00:34:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/03/02 05:46:26 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -27,8 +27,10 @@ ${CDROM}: ${BASE} ${XBASE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
-	cp -p ${RELDIR}/.i-SHA256 ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
-	cp -p ${RELDIR}/.i-SHA256.sig ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256.sig
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
 
 	cp -p ${RELDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot

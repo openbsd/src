@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2014/02/03 05:35:40 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2014/03/02 05:46:24 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -25,8 +25,10 @@ ${CDROM}: ${BASE} ${XBASE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
-	cp -p ${RELDIR}/.i-SHA256 ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
-	cp -p ${RELDIR}/.i-SHA256.sig ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256.sig
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
 
 	# make sure right kernel is in /
 	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
