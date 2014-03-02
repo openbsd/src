@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/03/02 15:57:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2014/03/02 16:06:14 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -95,7 +95,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	    ${.OBJDIR}/cd-dir
 
 install:
-	cp ${CDROM} ${RELDIR}/
+	cp ${CDROM} ${FS} ${RELDIR}/
 
 clean cleandir:
 	/bin/rm -f ${CDROM} ${FS}
