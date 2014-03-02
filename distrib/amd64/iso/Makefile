@@ -1,13 +1,24 @@
-#	$OpenBSD: Makefile,v 1.9 2014/03/02 05:46:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/03/02 15:57:34 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 CDROM=		install${REV}.iso
+
+FS=		install${REV}.fs
+FSSIZE=		491520
+FSTYPE=		install240
+
+RAMDISK=	RAMDISK_CD
+
+MOUNT_POINT=	/mnt
+MTREE=		${UTILS}/mtree.conf
+
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
+BSDRD=		${RELDIR}/bsd.rd
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
 		${RELDIR}/man${OSrev}.tgz \
@@ -17,7 +28,47 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
 		${RELXDIR}/xserv${OSrev}.tgz
 
-all: ${CDROM}
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CRDEV=	/dev/r${VND}c
+BOOT?=		${DESTDIR}/usr/mdec/boot
+PID!=		echo $$$$
+REALIMAGE!=	echo /var/tmp/image.${PID}
+
+all: ${CDROM} ${FS}
+
+${FS}: ${BASE} ${XBASE} bsd.gz
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FSSIZE}
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	disklabel -w ${VND} ${FSTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	cp ${BOOT} ${MOUNT_POINT}/boot
+	strip ${MOUNT_POINT}/boot
+	strip -R .comment ${MOUNT_POINT}/boot
+	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
+	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
+	    ${DESTDIR}/usr/mdec/biosboot ${MOUNT_POINT}/boot
+	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	mkdir -p ${MOUNT_POINT}/etc
+	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${MOUNT_POINT}/etc/boot.conf
+
+	cp -p ${BASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+	cp -p ${XBASE} ${MOUNT_POINT}/${OSREV}/${MACHINE}
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
+
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND}
+	cp ${REALIMAGE} ${FS}
+	rm ${REALIMAGE}
 
 ${CDROM}: ${BASE} ${XBASE}
 	-rm -rf ${.OBJDIR}/cd-dir
@@ -35,7 +86,6 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
 
-
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
@@ -48,8 +98,16 @@ install:
 	cp ${CDROM} ${RELDIR}/
 
 clean cleandir:
-	/bin/rm -f ${CDROM}
+	/bin/rm -f ${CDROM} ${FS}
 	rm -rf cd-dir
+
+bsd.gz: bsd.rd
+	cp ${BSDRD} bsd.strip
+	strip bsd.strip
+	strip -R .comment bsd.strip
+	gzip -c9n bsd.strip > bsd.gz
+
+bsd.rd: ${BSDRD}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
