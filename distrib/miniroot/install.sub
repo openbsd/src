@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.750 2014/02/28 23:51:54 krw Exp $
+#	$OpenBSD: install.sub,v 1.751 2014/03/02 03:36:22 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1266,7 +1266,7 @@ install_files() {
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys
-		! signify -Vep /etc/signify/${VERSION}base.pub \
+		! signify -Vep /etc/signify/openbsd-${VERSION}-base.pub \
 			-x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
