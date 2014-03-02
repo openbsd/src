@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.751 2014/03/02 03:36:22 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.752 2014/03/02 14:12:16 deraadt Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -198,7 +198,8 @@ mount_mnt2() {
 		[[ $resp == done ]] && return 1
 	fi
 
-	grep -q "^  $resp: .*MSDOS" $_file && _opts="-l"
+	# Always mount msdos partitions with -s to get lower case names.
+	grep -q "^  $resp: .*MSDOS" $_file && _opts="-s"
 	mount -o ro,$_opts /dev/$_dev$resp /mnt2
 }
 
@@ -1161,9 +1162,8 @@ enable_network() {
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _f _sets _get_sets _n _col=$COLUMNS \
+	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
 		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal _size
-	typeset -l _files=$2
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1197,7 +1197,7 @@ install_files() {
 		return
 	fi
 
-	isin install.$ARCH $_files ||
+	isin INSTALL.$ARCH $_files ||
 		ask_yn "INSTALL.$ARCH not found. Use sets found here anyway?" ||
 		return
 
@@ -1225,7 +1225,7 @@ install_files() {
 	# Try to prefetch and control checksum files
 	# use dummy for loop as combined assignment and do { ... } while(0)
 	for _issue in ''; do
-		! isin sha256.sig $_files &&
+		! isin SHA256.sig $_files &&
 			_issue="Directory does not contain SHA256.sig" && break
 
 		# Find a filesystem to store the prefetched sets. Prefer file-
@@ -1262,7 +1262,6 @@ install_files() {
 
 		# Fetch signature file
 		! ftp -D "$_t" -Vmo "$_cfile.sig" "$_src/SHA256.sig" &&
-		! ftp -D "$_t" -Vmo "$_cfile.sig" "$_src/sha256.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys
