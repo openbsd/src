@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.46 2014/01/19 00:33:40 deraadt Exp $
+#	$OpenBSD: list,v 1.47 2014/03/03 07:40:34 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin
@@ -63,7 +63,7 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
 SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
-COPY	${DESTDIR}/etc/signify/${REV}base.pub	etc/signify/${REV}base.pub
+COPY	${DESTDIR}/etc/signify/openbsd-${REV}-base.pub	etc/signify/openbsd-${REV}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
 SYMLINK	/tmp/fstab.shadow			etc/fstab
