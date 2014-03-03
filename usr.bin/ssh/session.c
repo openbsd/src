@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.270 2014/01/31 16:39:19 tedu Exp $ */
+/* $OpenBSD: session.c,v 1.271 2014/03/03 22:22:30 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -870,6 +870,11 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	char **env;
 	u_int envsize;
 	u_int i, namelen;
+
+	if (strchr(name, '=') != NULL) {
+		error("Invalid environment variable \"%.100s\"", name);
+		return;
+	}
 
 	/*
 	 * Find the slot where the value should be stored.  If the variable
@@ -1858,8 +1863,8 @@ session_env_req(Session *s)
 	char *name, *val;
 	u_int name_len, val_len, i;
 
-	name = packet_get_string(&name_len);
-	val = packet_get_string(&val_len);
+	name = packet_get_cstring(&name_len);
+	val = packet_get_cstring(&val_len);
 	packet_check_eom();
 
 	/* Don't set too many environment variables */
