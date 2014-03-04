@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.41 2014/01/22 21:11:03 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.42 2014/03/04 16:44:07 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -75,11 +75,12 @@ usage(const char *error)
 		fprintf(stderr, "%s\n", error);
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
+	    "\t%1$s -C [-q] -p pubkey -x sigfile [files...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
 	    "\t%1$s -I [-p pubkey] [-s seckey] [-x sigfile]\n"
 	    "\t%1$s -S [-e] [-x sigfile] -s seckey -m message\n"
 #endif
-	    "\t%1$s -V [-e] [-x sigfile] -p pubkey -m message\n",
+	    "\t%1$s -V [-eq] [-x sigfile] -p pubkey -m message\n",
 	    __progname);
 	exit(1);
 }
@@ -406,7 +407,7 @@ inspect(const char *seckeyfile, const char *pubkeyfile, const char *sigfile)
 
 static void
 verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
-    uint8_t *sig)
+    uint8_t *sig, int quiet)
 {
 	uint8_t *sigbuf, *dummybuf;
 	unsigned long long siglen, dummylen;
@@ -419,6 +420,8 @@ verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
 	if (crypto_sign_ed25519_open(dummybuf, &dummylen, sigbuf, siglen,
 	    pubkey) == -1)
 		errx(1, "signature verification failed");
+	if (!quiet)
+		printf("Signature Verified\n");
 	free(sigbuf);
 	free(dummybuf);
 }
@@ -426,7 +429,7 @@ verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
 
 static void
 verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
-    int embedded)
+    int embedded, int quiet)
 {
 	struct sig sig;
 	struct pubkey pubkey;
@@ -452,7 +455,7 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 		errx(1, "verification failed: checked against wrong key");
 	}
 
-	verifymsg(pubkey.pubkey, msg, msglen, sig.sig);
+	verifymsg(pubkey.pubkey, msg, msglen, sig.sig, quiet);
 	if (embedded) {
 		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 		writeall(fd, msg, msglen, msgfile);
@@ -461,6 +464,130 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	free(msg - siglen);
 }
+
+#ifndef VERIFYONLY
+struct checksum {
+	char file[1024];
+	char hash[1024];
+	char algo[256];
+};
+
+static void
+verifychecksums(const char *msg, unsigned long long msglen, int argc,
+    char **argv, int quiet)
+{
+	char buf[1024];
+	char *input, *line, *endline;
+	struct checksum *checksums = NULL, *c = NULL;
+	int nchecksums = 0;
+	int i, j, uselist, count, failcount;
+	int *failures;
+
+	if (!(input = strndup(msg, msglen)))
+		err(1, "strndup");
+	line = input;
+	while (line && *line) {
+		if (!(checksums = realloc(checksums,
+		    sizeof(*c) * (nchecksums + 1))))
+			err(1, "realloc");
+		c = &checksums[nchecksums++];
+		if ((endline = strchr(line, '\n')))
+			*endline++ = 0;
+		if (sscanf(line, "%255s %1023s = %1023s",
+		    c->algo, buf, c->hash) != 3 ||
+		    buf[0] != '(' || buf[strlen(buf) - 1] != ')')
+			errx(1, "unable to parse checksum line %s", line);
+		buf[strlen(buf) - 1] = 0;
+		strlcpy(c->file, buf + 1, sizeof(c->file));
+		line = endline;
+	}
+	free(input);
+
+	if (argc) {
+		uselist = 0;
+		count = argc;
+	} else {
+		uselist = 1;
+		count = nchecksums;
+	}
+	failures = calloc(count, sizeof(int));
+	for (i = 0; i < count; i++) {
+		if (uselist) {
+			c = &checksums[i];
+		} else {
+			for (j = 0; j < nchecksums; j++) {
+				c = &checksums[j];
+				if (strcmp(c->file, argv[i]) == 0)
+					break;
+			}
+			if (j == nchecksums) {
+				failures[i] = 1;
+				continue;
+			}
+		}
+
+		if (strcmp(c->algo, "SHA256") == 0) {
+			if (!SHA256File(c->file, buf)) {
+				failures[i] = 1;
+				continue;
+			}
+		} else if (strcmp(c->algo, "SHA512") == 0) {
+			if (!SHA512File(c->file, buf)) {
+				failures[i] = 1;
+				continue;
+			}
+		} else {
+			errx(1, "can't handle algorithm %s", c->algo);
+		}
+		if (strcmp(c->hash, buf) != 0) {
+			failures[i] = 1;
+			continue;
+		}
+		if (!quiet)
+			printf("%s: OK\n", c->file);
+	}
+	failcount = 0;
+	for (i = 0; i < count; i++) {
+		if (failures[i]) {
+			fprintf(stderr, "%s: FAIL\n",
+			    uselist ? checksums[i].file : argv[i]);
+			failcount++;
+		}
+	}
+	if (failcount)
+		exit(1);
+	free(checksums);
+}
+
+static void
+check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
+    char **argv)
+{
+	struct sig sig;
+	struct pubkey pubkey;
+	unsigned long long msglen, siglen;
+	uint8_t *msg;
+
+	msg = readmsg(sigfile, &msglen);
+
+	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
+	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), NULL);
+	msg += siglen;
+	msglen -= siglen;
+
+	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN)) {
+#ifndef VERIFYONLY
+		inspect(NULL, pubkeyfile, sigfile);
+#endif
+		errx(1, "verification failed: checked against wrong key");
+	}
+
+	verifymsg(pubkey.pubkey, msg, msglen, sig.sig, quiet);
+	verifychecksums(msg, msglen, argc, argv, quiet);
+
+	free(msg - siglen);
+}
+#endif
 
 int
 main(int argc, char **argv)
@@ -471,8 +598,10 @@ main(int argc, char **argv)
 	const char *comment = "signify";
 	int ch, rounds;
 	int embedded = 0;
+	int quiet = 0;
 	enum {
 		NONE,
+		CHECK,
 		GENERATE,
 		INSPECT,
 		SIGN,
@@ -482,9 +611,14 @@ main(int argc, char **argv)
 
 	rounds = 42;
 
-	while ((ch = getopt(argc, argv, "GISVc:em:np:s:x:")) != -1) {
+	while ((ch = getopt(argc, argv, "CGISVc:em:np:qs:x:")) != -1) {
 		switch (ch) {
 #ifndef VERIFYONLY
+		case 'C':
+			if (verb)
+				usage(NULL);
+			verb = CHECK;
+			break;
 		case 'G':
 			if (verb)
 				usage(NULL);
@@ -521,6 +655,9 @@ main(int argc, char **argv)
 		case 'p':
 			pubkeyfile = optarg;
 			break;
+		case 'q':
+			quiet = 1;
+			break;
 		case 's':
 			seckeyfile = optarg;
 			break;
@@ -534,6 +671,17 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+#ifndef VERIFYONLY
+	if (verb == CHECK) {
+		if (!pubkeyfile || !sigfile)
+			usage("need pubkey and sigfile");
+		check(pubkeyfile, sigfile, quiet, argc, argv);
+		return 0;
+	}
+#endif
+
+	quiet = 1; /* retain quiet default for 5.5 release */
 
 	if (argc != 0)
 		usage(NULL);
@@ -566,7 +714,7 @@ main(int argc, char **argv)
 	case VERIFY:
 		if (!msgfile || !pubkeyfile)
 			usage("need message and pubkey");
-		verify(pubkeyfile, msgfile, sigfile, embedded);
+		verify(pubkeyfile, msgfile, sigfile, embedded, quiet);
 		break;
 	default:
 		usage(NULL);
