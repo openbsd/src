@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.32 2014/01/23 01:41:44 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.33 2014/03/05 21:35:21 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -403,7 +403,7 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	}
 
 	/* XXX wait for card to power up */
-	sdmmc_delay(100000);
+	sdmmc_delay(250000);
 
 	/* Initialize SD I/O card function(s). */
 	if ((error = sdmmc_io_enable(sc)) != 0)
