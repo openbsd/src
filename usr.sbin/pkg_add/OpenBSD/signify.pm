@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.11 2014/01/17 10:59:18 espie Exp $
+# $OpenBSD: signify.pm,v 1.12 2014/03/05 22:42:36 espie Exp $
 #
 # Copyright (c) 2013-2014 Marc Espie <espie@openbsd.org>
 #
@@ -38,10 +38,11 @@ sub compute_signature
 	open my $fh, ">", $contents;
 	$plist->write_no_sig($fh);
 	close $fh;
-	$state->system($cmd, '-S', '-s', $key, '-m', $contents) == 0 or 
+	$state->system($cmd, '-S', '-q', '-s', $key, '-m', $contents) == 0 or 
 	    $state->fatal("problem generating signature");
 	if (defined $pub) {
-		$state->system($cmd, '-V', '-p', $pub, '-m', $contents) == 0 or 
+		$state->system($cmd, '-V', '-q', '-p', $pub, '-m', 
+		    $contents) == 0 or 
 		    $state->fatal("public key and private key don't match");
 	}
 	open(my $sighandle, '<', $sigfile)
@@ -77,7 +78,7 @@ sub check_signature
 	print $fh2 $header, $sig->{b64sig}, "\n";
 	close $fh;
 	close $fh2;
-	my $rc = $state->system($cmd, '-V', '-p', $pubkey, '-m', $fname);
+	my $rc = $state->system($cmd, '-V', '-q', '-p', $pubkey, '-m', $fname);
 	unlink $fname;
 	unlink $fname.$suffix;
 
