@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.11 2014/03/05 20:24:16 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.12 2014/03/05 20:31:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,11 +55,10 @@ int play_filt_dec(struct slot *, void *, void *, int);
 void dev_mix_badd(struct dev *, struct slot *);
 void dev_empty_cycle(struct dev *);
 void dev_mix_adjvol(struct dev *);
-void dev_mix_cycle(struct dev *);
 int rec_filt_resamp(struct slot *, void *, void *, int);
 int rec_filt_enc(struct slot *, void *, void *, int);
 void dev_sub_bcopy(struct dev *, struct slot *);
-void dev_sub_cycle(struct dev *);
+void dev_full_cycle(struct dev *);
 
 void dev_onmove(struct dev *, int);
 void dev_master(struct dev *, unsigned int);
@@ -93,10 +92,10 @@ void slot_ready(struct slot *);
 void slot_start(struct slot *);
 void slot_detach(struct slot *);
 void slot_stop(struct slot *);
+void slot_skip_update(struct slot *);
 void slot_write(struct slot *);
 void slot_read(struct slot *);
-void slot_mix_drop(struct slot *);
-void slot_sub_sil(struct slot *);
+int slot_skip(struct slot *);
 
 struct midiops dev_midiops = {
 	dev_midi_imsg,
@@ -541,44 +540,42 @@ dev_midi_exit(void *arg)
 		dev_close(d);
 }
 
-void
-slot_mix_drop(struct slot *s)
+int
+slot_skip(struct slot *s)
 {
-	while (s->mix.drop > 0 && s->mix.buf.used >= s->round * s->mix.bpf) {
+	unsigned char *data = (unsigned char *)0xdeadbeef; /* please gcc */
+	int max, count;
+
+	max = s->skip;
+	while (s->skip > 0) {
+		if (s->pstate != SLOT_STOP && (s->mode & MODE_RECMASK)) {
+			data = abuf_wgetblk(&s->sub.buf, &count);
+			if (count < s->round * s->sub.bpf)
+				break;
+		}
+		if (s->mode & MODE_PLAY) {
+			if (s->mix.buf.used < s->round * s->mix.bpf)
+				break;
+		}
 #ifdef DEBUG
 		if (log_level >= 4) {
 			slot_log(s);
-			log_puts(": dropped a play block\n");
+			log_puts(": skipped a cycle\n");
 		}
 #endif
-		abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
-		s->mix.drop--;
-	}
-}
-
-void
-slot_sub_sil(struct slot *s)
-{
-	unsigned char *data;
-	int count;
-
-	while (s->sub.silence > 0) {
-		data = abuf_wgetblk(&s->sub.buf, &count);
-		if (count < s->round * s->sub.bpf)
-			break;
-#ifdef DEBUG
-		if (log_level >= 4) {
-			slot_log(s);
-			log_puts(": inserted a rec block of silence\n");
+		if (s->pstate != SLOT_STOP && (s->mode & MODE_RECMASK)) {
+			if (s->sub.encbuf)
+				enc_sil_do(&s->sub.enc, data, s->round);
+			else
+				memset(data, 0, s->round * s->sub.bpf);
+			abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
 		}
-#endif
-		if (s->sub.encbuf)
-			enc_sil_do(&s->sub.enc, data, s->round);
-		else
-			memset(data, 0, s->round * s->sub.bpf);
-		abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
-		s->sub.silence--;
+		if (s->mode & MODE_PLAY) {
+			abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
+		}
+		s->skip--;		
 	}
+	return max - s->skip;
 }
 
 /*
@@ -716,99 +713,6 @@ dev_mix_adjvol(struct dev *d)
 	}
 }
 
-void
-dev_mix_cycle(struct dev *d)
-{
-	struct slot *s, **ps;
-	unsigned char *base;
-	int nsamp;
-
-#ifdef DEBUG
-	if (log_level >= 4) {
-		dev_log(d);
-		log_puts(": dev_mix_cycle, poffs = ");
-		log_puti(d->poffs);
-		log_puts("\n");
-	}
-#endif
-	base = (unsigned char *)DEV_PBUF(d);
-	nsamp = d->round * d->pchan;
-	memset(base, 0, nsamp * sizeof(adata_t));
-	ps = &d->slot_list;
-	while ((s = *ps) != NULL) {
-		if (!(s->mode & MODE_PLAY)) {
-			ps = &s->next;
-			continue;
-		}
-#ifdef DEBUG
-		if (log_level >= 4) {
-			slot_log(s);
-			log_puts(": mixing, drop = ");
-			log_puti(s->mix.drop);
-			log_puts(" cycles\n");
-		}
-#endif		
-		slot_mix_drop(s);
-		if (s->mix.drop < 0) {
-			s->mix.drop++;
-			ps = &s->next;
-			continue;
-		}
-		if (s->mix.buf.used < s->round * s->mix.bpf &&
-		    s->pstate == SLOT_STOP) {
-			/*
-			 * partial blocks are zero-filled by socket
-			 * layer
-			 */
-			s->pstate = SLOT_INIT;
-			abuf_done(&s->mix.buf);
-			if (s->mix.decbuf)
-				xfree(s->mix.decbuf);
-			if (s->mix.resampbuf)
-				xfree(s->mix.resampbuf);
-			s->ops->eof(s->arg);
-			*ps = s->next;
-			dev_mix_adjvol(d);
-			continue;
-		}
-		if (s->mix.buf.used < s->round * s->mix.bpf &&
-		    !(s->pstate == SLOT_STOP)) {
-			if (s->xrun == XRUN_IGNORE) {
-				if (s->mode & MODE_RECMASK)
-					s->sub.silence--;
-				s->delta -= s->round;
-#ifdef DEBUG
-				if (log_level >= 3) {
-					slot_log(s);
-					log_puts(": underrun, pause cycle\n");
-				}
-#endif
-				ps = &s->next;
-				continue;
-			}
-			if (s->xrun == XRUN_SYNC) {
-				s->mix.drop++;
-				ps = &s->next;
-				continue;
-			}
-			if (s->xrun == XRUN_ERROR) {
-				s->ops->exit(s->arg);
-				*ps = s->next;
-				continue;
-			}
-		} else {
-			dev_mix_badd(d, s);
-			if (s->pstate != SLOT_STOP)
-				s->ops->fill(s->arg);
-		}
-		ps = &s->next;
-	}
-	if (d->encbuf) {
-		enc_do(&d->enc, (unsigned char *)DEV_PBUF(d),
-		    d->encbuf, d->round);
-	}
-}
-
 int 
 rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
 {
@@ -872,59 +776,141 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 }
 
 void
-dev_sub_cycle(struct dev *d)
+dev_full_cycle(struct dev *d)
 {
 	struct slot *s, **ps;
+	unsigned char *base;
+	int nsamp;
 
+	d->delta -= d->round;
 #ifdef DEBUG
 	if (log_level >= 4) {
 		dev_log(d);
-		log_puts(": dev_sub_cycle\n");
+		log_puts(": dev_full_cycle: clk=");
+		log_puti(d->delta);
+		if (d->mode & MODE_PLAY) {
+			log_puts(", poffs = ");
+			log_puti(d->poffs);
+		}
+		log_puts("\n");
 	}
 #endif
+	if (d->mode & MODE_PLAY) {
+		base = (unsigned char *)DEV_PBUF(d);
+		nsamp = d->round * d->pchan;
+		memset(base, 0, nsamp * sizeof(adata_t));
+	}
 	if ((d->mode & MODE_REC) && d->decbuf)
 		dec_do(&d->dec, d->decbuf, (unsigned char *)d->rbuf, d->round);
 	ps = &d->slot_list;
 	while ((s = *ps) != NULL) {
-		if (!(s->mode & MODE_RECMASK) || s->pstate == SLOT_STOP) {
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": running");
+			log_puts(", skip = ");
+			log_puti(s->skip);
+			log_puts("\n");
+		}
+#endif
+		/*
+		 * skip cycles for XRUN_SYNC correction
+		 */
+		slot_skip(s);
+		if (s->skip < 0) {
+			s->skip++;
 			ps = &s->next;
 			continue;
 		}
-		slot_sub_sil(s);
-		if (s->sub.silence < 0) {
-			s->sub.silence++;
-			ps = &s->next;
+
+#ifdef DEBUG
+		if (s->pstate == SLOT_STOP && !(s->mode & MODE_PLAY)) {
+			slot_log(s);
+			log_puts(": rec-only slots can't be drained\n");
+			panic();
+		}
+#endif
+		/*
+		 * check if stopped stream finished draining
+		 */
+		if (s->pstate == SLOT_STOP &&
+		    s->mix.buf.used < s->round * s->mix.bpf) {
+			/*
+			 * partial blocks are zero-filled by socket
+			 * layer, so s->mix.buf.used == 0 and we can
+			 * destroy the buffer
+			 */
+			s->pstate = SLOT_INIT;
+			abuf_done(&s->mix.buf);
+			if (s->mix.decbuf)
+				xfree(s->mix.decbuf);
+			if (s->mix.resampbuf)
+				xfree(s->mix.resampbuf);
+			s->ops->eof(s->arg);
+			*ps = s->next;
+			dev_mix_adjvol(d);
 			continue;
 		}
-		if (s->sub.buf.len - s->sub.buf.used < s->round * s->sub.bpf) {
+		
+		/*
+		 * check for xruns
+		 */
+		if (((s->mode & MODE_PLAY) && 
+			s->mix.buf.used < s->round * s->mix.bpf) ||
+		    ((s->mode & MODE_RECMASK) &&
+			s->sub.buf.len - s->sub.buf.used <
+			s->round * s->sub.bpf)) {
+
+#ifdef DEBUG
+			if (log_level >= 3) {
+				slot_log(s);
+				log_puts(": xrun, pause cycle\n");
+			}
+#endif
 			if (s->xrun == XRUN_IGNORE) {
-				if (s->mode & MODE_PLAY)
-					s->mix.drop--;
 				s->delta -= s->round;
+				ps = &s->next;
+			} else if (s->xrun == XRUN_SYNC) {
+				s->skip++;
+				ps = &s->next;
+			} else if (s->xrun == XRUN_ERROR) {
+				s->ops->exit(s->arg);
+				*ps = s->next;
+			} else {
+#ifdef DEBUG
+				slot_log(s);
+				log_puts(": bad xrun mode\n");
+				panic();
+#endif
+			}
+			continue;
+		}
+		if (s->mode & MODE_PLAY) {
+			dev_mix_badd(d, s);
+			if (s->pstate != SLOT_STOP)
+				s->ops->fill(s->arg);
+		}
+		if ((s->mode & MODE_RECMASK) && !(s->pstate == SLOT_STOP)) {
+			if (s->sub.prime == 0) {
+				dev_sub_bcopy(d, s);
+				s->ops->flush(s->arg);
+			} else {
 #ifdef DEBUG
 				if (log_level >= 3) {
 					slot_log(s);
-					log_puts(": overrun, pause cycle\n");
+					log_puts(": prime = ");
+					log_puti(s->sub.prime);
+					log_puts("\n");
 				}
 #endif
-				ps = &s->next;
-				continue;
+				s->sub.prime--;
 			}
-			if (s->xrun == XRUN_SYNC) {
-				s->sub.silence++;
-				ps = &s->next;
-				continue;
-			}
-			if (s->xrun == XRUN_ERROR) {
-				s->ops->exit(s->arg);
-				*ps = s->next;
-				continue;
-			}
-		} else {
-			dev_sub_bcopy(d, s);
-			s->ops->flush(s->arg);
 		}
 		ps = &s->next;
+	}
+	if ((d->mode & MODE_PLAY) && d->encbuf) {
+		enc_do(&d->enc, (unsigned char *)DEV_PBUF(d),
+		    d->encbuf, d->round);
 	}
 }
 
@@ -935,12 +921,14 @@ void
 dev_onmove(struct dev *d, int delta)
 {
 	long long pos;
-	struct slot *s, *snext;
+	struct slot *s, *snext;	
 
-	/*
-	 * s->ops->onmove() may remove the slot
-	 */
+	d->delta += delta;
+
 	for (s = d->slot_list; s != NULL; s = snext) {
+		/*
+		 * s->ops->onmove() may remove the slot
+		 */
 		snext = s->next;
 		pos = (long long)delta * s->round + s->delta_rem;
 		s->delta_rem = pos % d->round;
@@ -994,10 +982,7 @@ dev_cycle(struct dev *d)
 		d->prime -= d->round;
 		dev_empty_cycle(d);
 	} else {
-		if (d->mode & MODE_RECMASK)
-			dev_sub_cycle(d);
-		if (d->mode & MODE_PLAY)
-			dev_mix_cycle(d);
+		dev_full_cycle(d);
 	}
 }
 
@@ -1332,6 +1317,10 @@ dev_wakeup(struct dev *d)
 		} else {
 			d->prime = 0;
 		}
+
+		/* empty cycles don't increment delta */
+		d->delta = 0; 
+
 		d->pstate = DEV_RUN;
 		dev_sio_start(d);
 	}
@@ -1675,6 +1664,7 @@ slot_attach(struct slot *s)
 {
 	struct dev *d = s->dev;
 	unsigned int slot_nch, dev_nch;
+	long long pos;
 	int startpos;
 
 	/*
@@ -1687,14 +1677,22 @@ slot_attach(struct slot *s)
 	 * played and/or recorded
 	 */
 	startpos = dev_getpos(d) * (int)s->round / (int)d->round;
-	s->delta = startpos;
-	s->delta_rem = 0;
+
+	/*
+	 * adjust initial clock
+	 */
+	pos = (long long)d->delta * s->round;
+	s->delta = startpos + pos / (int)d->round;
+	s->delta_rem = pos % d->round;
+
 	s->pstate = SLOT_RUN;
 #ifdef DEBUG
-	if (log_level >= 3) {
+	if (log_level >= 0) {
 		slot_log(s);
 		log_puts(": attached at ");
 		log_puti(startpos);
+		log_puts(", delta = ");
+		log_puti(d->delta);
 		log_puts("\n");
 	}
 #endif
@@ -1713,6 +1711,7 @@ slot_attach(struct slot *s)
 #endif
 	s->next = d->slot_list;
 	d->slot_list = s;
+	s->skip = 0;
 	if (s->mode & MODE_PLAY) {
 		slot_nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
 		dev_nch = s->mix.dev_cmax - s->mix.dev_cmin + 1;
@@ -1742,7 +1741,6 @@ slot_attach(struct slot *s)
 			s->mix.resampbuf =
 			    xmalloc(d->round * slot_nch * sizeof(adata_t));
 		}
-		s->mix.drop = 0;
 		s->mix.vol = MIDI_TO_ADATA(s->vol);
 		dev_mix_adjvol(d);
 	}
@@ -1779,7 +1777,7 @@ slot_attach(struct slot *s)
 		/*
 		 * N-th recorded block is the N-th played block
 		 */
-		s->sub.silence = startpos / (int)s->round;
+		s->sub.prime = -startpos / (int)s->round;
 	}
 }
 
@@ -1958,6 +1956,27 @@ slot_stop(struct slot *s)
 		s->tstate = MMC_STOP;
 }
 
+void
+slot_skip_update(struct slot *s)
+{
+	int skip;
+
+	skip = slot_skip(s);
+	while (skip > 0) {
+#ifdef DEBUG
+		if (log_level >= 4) {
+			slot_log(s);
+			log_puts(": catching skipped block\n");
+		}
+#endif
+		if (s->mode & MODE_RECMASK)
+			s->ops->flush(s->arg);
+		if (s->mode & MODE_PLAY)
+			s->ops->fill(s->arg);
+		skip--;
+	}
+}
+
 /*
  * notify the slot that we just wrote in the play buffer, must be called
  * after each write
@@ -1965,8 +1984,6 @@ slot_stop(struct slot *s)
 void
 slot_write(struct slot *s)
 {
-	int drop;
-
 	if (s->pstate == SLOT_START && s->mix.buf.used == s->mix.buf.len) {
 #ifdef DEBUG
 		if (log_level >= 4) {
@@ -1977,18 +1994,7 @@ slot_write(struct slot *s)
 		s->pstate = SLOT_READY;
 		slot_ready(s);
 	}
-	drop = s->mix.drop;
-	slot_mix_drop(s);
-	while (drop > s->mix.drop) {
-#ifdef DEBUG
-		if (log_level >= 4) {
-			slot_log(s);
-			log_puts(": catching play block\n");
-		}
-#endif
-		s->ops->fill(s->arg);
-		drop--;
-	}
+	slot_skip_update(s);
 }
 
 /*
@@ -1997,18 +2003,5 @@ slot_write(struct slot *s)
 void
 slot_read(struct slot *s)
 {
-	int sil;
-
-	sil = s->sub.silence;
-	slot_sub_sil(s);
-	while (sil > s->sub.silence) {
-#ifdef DEBUG
-		if (log_level >= 4) {
-			slot_log(s);
-			log_puts(": catching rec block\n");
-		}
-#endif
-		s->ops->flush(s->arg);
-		sil--;
-	}
+	slot_skip_update(s);
 }

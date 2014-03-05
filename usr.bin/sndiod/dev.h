@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.4 2014/03/05 20:24:16 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.5 2014/03/05 20:31:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,7 +48,6 @@ struct slot {
 		int weight;			/* dynamic range */	
 		int maxweight;			/* max dynamic range allowed */
 		unsigned int vol;		/* volume within the vol */
-		int drop;			/* to drop on next read */
 		struct abuf buf;		/* socket side buffer */
 		int bpf;			/* byte per frame */
 		int slot_cmin, slot_cmax;	/* slot source chans */
@@ -61,8 +60,8 @@ struct slot {
 		void *resampbuf, *decbuf;	/* tmp buffers */
 	} mix;
 	struct {
-		int silence;			/* to add on next write */
 		struct abuf buf;		/* socket side buffer */
+		int prime;			/* initial cycles to skip */
 		int bpf;			/* byte per frame */
 		int slot_cmin, slot_cmax;	/* slot destination chans */
 		int dev_cmin, dev_cmax;		/* device source chans */
@@ -74,6 +73,7 @@ struct slot {
 		void *resampbuf, *encbuf;	/* tmp buffers */
 	} sub;
 	int xrun;				/* underrun policy */
+	int skip;				/* cycles to skip (for xrun) */
 	int dup;				/* mono-to-stereo and alike */
 #define SLOT_BUFSZ(s) \
 	((s)->appbufsz + (s)->dev->bufsz / (s)->dev->round * (s)->round)
@@ -127,6 +127,11 @@ struct dev {
 #define DEV_NSLOT	8
 	struct slot slot[DEV_NSLOT];
 	unsigned int serial;			/* for slot allocation */
+
+	/*
+	 * current position, relative to the current cycle
+	 */
+	int delta;
 
 	/*
 	 * desired parameters
