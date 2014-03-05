@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.45 2014/03/05 23:03:19 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.46 2014/03/05 23:11:18 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -118,21 +118,21 @@ xmalloc(size_t len)
 }
 
 static void
-readall(int fd, void *buf, size_t len, const char *filename)
+readall(int fd, void *buf, size_t buflen, const char *filename)
 {
 	ssize_t x;
 
-	while (len != 0) {
-		x = read(fd, buf, len);
+	while (buflen != 0) {
+		x = read(fd, buf, buflen);
 		if (x == -1)
 			err(1, "read from %s", filename);
-		len -= x;
+		buflen -= x;
 		buf = (char*)buf + x;
 	}
 }
 
 static size_t
-parseb64file(const char *filename, char *b64, void *buf, size_t len,
+parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
     char *comment)
 {
 	int rv;
@@ -153,8 +153,8 @@ parseb64file(const char *filename, char *b64, void *buf, size_t len,
 	if (!b64end)
 		errx(1, "missing new line after b64 in %s", filename);
 	*b64end = 0;
-	rv = b64_pton(commentend + 1, buf, len);
-	if (rv != len)
+	rv = b64_pton(commentend + 1, buf, buflen);
+	if (rv != buflen)
 		errx(1, "invalid b64 encoding in %s", filename);
 	if (memcmp(buf, PKALG, 2))
 		errx(1, "unsupported file %s", filename);
@@ -162,7 +162,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t len,
 }
 
 static void
-readb64file(const char *filename, void *buf, size_t len, char *comment)
+readb64file(const char *filename, void *buf, size_t buflen, char *comment)
 {
 	char b64[2048];
 	int rv, fd;
@@ -172,7 +172,7 @@ readb64file(const char *filename, void *buf, size_t len, char *comment)
 	rv = read(fd, b64, sizeof(b64) - 1);
 	if (rv == -1)
 		err(1, "read from %s", filename);
-	parseb64file(filename, b64, buf, len, comment);
+	parseb64file(filename, b64, buf, buflen, comment);
 	explicit_bzero(b64, sizeof(b64));
 	close(fd);
 }
@@ -203,33 +203,33 @@ readmsg(const char *filename, unsigned long long *msglenp)
 }
 
 static void
-writeall(int fd, const void *buf, size_t len, const char *filename)
+writeall(int fd, const void *buf, size_t buflen, const char *filename)
 {
 	ssize_t x;
 
-	while (len != 0) {
-		x = write(fd, buf, len);
+	while (buflen != 0) {
+		x = write(fd, buf, buflen);
 		if (x == -1)
 			err(1, "write to %s", filename);
-		len -= x;
+		buflen -= x;
 		buf = (char*)buf + x;
 	}
 }
 
 #ifndef VERIFYONLY
 static void
-appendall(const char *filename, const void *buf, size_t len)
+appendall(const char *filename, const void *buf, size_t buflen)
 {
 	int fd;
 
 	fd = xopen(filename, O_NOFOLLOW | O_WRONLY | O_APPEND, 0);
-	writeall(fd, buf, len, filename);
+	writeall(fd, buf, buflen, filename);
 	close(fd);
 }
 
 static void
 writeb64file(const char *filename, const char *comment, const void *buf,
-    size_t len, int flags, mode_t mode)
+    size_t buflen, int flags, mode_t mode)
 {
 	char header[1024];
 	char b64[1024];
@@ -240,7 +240,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	    COMMENTHDR, comment) >= sizeof(header))
 		err(1, "comment too long");
 	writeall(fd, header, strlen(header), filename);
-	if ((rv = b64_ntop(buf, len, b64, sizeof(b64)-1)) == -1)
+	if ((rv = b64_ntop(buf, buflen, b64, sizeof(b64)-1)) == -1)
 		errx(1, "b64 encode failed");
 	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
