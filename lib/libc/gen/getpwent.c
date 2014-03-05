@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.48 2013/11/15 22:32:55 benno Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.49 2014/03/05 23:44:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -708,8 +708,12 @@ getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
+	int my_errno = 0;
+	int saved_errno;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	saved_errno = errno;
+	errno = 0;
 	if (!_pw_db && !__initdb())
 		goto fail;
 
@@ -733,8 +737,12 @@ getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
 fail:
 	if (pwretp)
 		*pwretp = pwret;
+	if (pwret == NULL)
+		my_errno = errno;
+	if (!errno)
+		errno = saved_errno;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
-	return (pwret ? 0 : 1);
+	return (my_errno);
 }
 
 struct passwd *
@@ -753,8 +761,12 @@ getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 {
 	struct passwd *pwret = NULL;
 	int flags = 0, *flagsp;
+	int my_errno = 0;
+	int saved_errno;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	saved_errno = errno;
+	errno = 0;
 	if (!_pw_db && !__initdb())
 		goto fail;
 
@@ -778,8 +790,12 @@ getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 fail:
 	if (pwretp)
 		*pwretp = pwret;
+	if (pwret == NULL)
+		my_errno = errno;
+	if (!errno)
+		errno = saved_errno;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
-	return (pwret ? 0 : 1);
+	return (my_errno);
 }
 
 struct passwd *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.38 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.39 2014/03/05 23:44:47 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -134,6 +134,7 @@ getgrnam_r(const char *name, struct group *grp, char *buffer,
 	if (bufsize < GETGR_R_SIZE_MAX)
 		return ERANGE;
 	errnosave = errno;
+	errno = 0;
 	*result = getgrnam_gs(name, grp, (struct group_storage *)buffer);
 	if (*result == NULL)
 		ret = errno;
@@ -180,6 +181,7 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t bufsize,
 	if (bufsize < GETGR_R_SIZE_MAX)
 		return ERANGE;
 	errnosave = errno;
+	errno = 0;
 	*result = getgrgid_gs(gid, grp, (struct group_storage *)buffer);
 	if (*result == NULL)
 		ret = errno;
