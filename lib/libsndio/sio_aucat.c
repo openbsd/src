@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.16 2013/12/20 08:51:28 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.17 2014/03/05 20:40:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -180,17 +180,11 @@ static int
 sio_aucat_start(struct sio_hdl *sh)
 {
 	struct sio_aucat_hdl *hdl = (struct sio_aucat_hdl *)sh;
-	struct sio_par par;
 
-	/*
-	 * save bpf
-	 */
-	if (!sio_getpar(&hdl->sio, &par))
-		return 0;
-	hdl->wbpf = par.bps * par.pchan;
-	hdl->rbpf = par.bps * par.rchan;
+	hdl->wbpf = hdl->sio.par.bps * hdl->sio.par.pchan;
+	hdl->rbpf = hdl->sio.par.bps * hdl->sio.par.rchan;
 	hdl->aucat.maxwrite = 0;
-	hdl->round = par.round;
+	hdl->round = hdl->sio.par.round;
 	hdl->delta = 0;
 	DPRINTFN(2, "aucat: start, maxwrite = %d\n", hdl->aucat.maxwrite);
 

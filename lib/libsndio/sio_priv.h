@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.7 2013/11/13 22:38:22 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.8 2014/03/05 20:40:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,13 +37,13 @@ struct sio_hdl {
 	int eof;			/* true if error occured */
 	int rdrop;			/* recorded bytes to drop */
 	int wsil;			/* silence to play */
+	int rused;			/* bytes used in read buffer */
+	int wused;			/* bytes used in write buffer */
+	long long cpos;			/* clock since start */
+	struct sio_par par;
 #ifdef DEBUG
 	unsigned long long pollcnt;	/* times sio_revents was called */
-	long long wcnt;			/* bytes written with sio_write() */
-	long long rcnt;			/* bytes read with sio_read() */
-	long long cpos;
 	long long start_nsec;
-	struct sio_par par;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.10 2013/12/20 08:51:28 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.11 2014/03/05 20:40:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -436,14 +436,11 @@ sio_sun_close(struct sio_hdl *sh)
 static int
 sio_sun_start(struct sio_hdl *sh)
 {
-	struct sio_par par;
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 	struct audio_info aui;
 
-	if (!sio_getpar(&hdl->sio, &par))
-		return 0;
-	hdl->obpf = par.pchan * par.bps;
-	hdl->ibpf = par.rchan * par.bps;
+	hdl->obpf = hdl->sio.par.pchan * hdl->sio.par.bps;
+	hdl->ibpf = hdl->sio.par.rchan * hdl->sio.par.bps;
 	hdl->ibytes = 0;
 	hdl->obytes = 0;
 	hdl->ierr = 0;
@@ -828,7 +825,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 
 	if (!hdl->sio.started)
 		return pfd->revents;
-	if ((revents & POLLOUT) && (hdl->sio.mode & SIO_PLAY)) {
+	if (hdl->sio.mode & SIO_PLAY) {
 		if (ioctl(hdl->fd, AUDIO_GETOOFFS, &ao) < 0) {
 			DPERROR("sio_sun_revents: GETOOFFS");
 			hdl->sio.eof = 1;
@@ -840,7 +837,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		if (!(hdl->sio.mode & SIO_REC))
 			hdl->idelta += delta;
 	}
-	if ((revents & POLLIN) && (hdl->sio.mode & SIO_REC)) {
+	if (hdl->sio.mode & SIO_REC) {
 		if (ioctl(hdl->fd, AUDIO_GETIOFFS, &ao) < 0) {
 			DPERROR("sio_sun_revents: GETIOFFS");
 			hdl->sio.eof = 1;
@@ -878,16 +875,22 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		if (dierr > 0)
 			DPRINTFN(2, "rec xrun %d\n", dierr);
 	}
+
+	/*
+	 * GET{I,O}OFFS report positions including xruns,
+	 * so we have to substract to get the real position
+	 */
+	hdl->idelta -= dierr;
+	hdl->odelta -= doerr;
+
 	offset = doerr - dierr;
 	if (offset > 0) {
 		hdl->sio.rdrop += offset * hdl->ibpf;
-		hdl->idelta -= doerr;
-		hdl->odelta -= doerr;
+		hdl->idelta -= offset;
 		DPRINTFN(2, "will drop %d and pause %d\n", offset, doerr);
 	} else if (offset < 0) {
 		hdl->sio.wsil += -offset * hdl->obpf;
-		hdl->idelta -= dierr;
-		hdl->odelta -= dierr;
+		hdl->odelta -= offset;
 		DPRINTFN(2, "will insert %d and pause %d\n", -offset, dierr);
 	}
 
