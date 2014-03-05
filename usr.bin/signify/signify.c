@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.44 2014/03/05 22:55:07 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.45 2014/03/05 23:03:19 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -193,8 +193,9 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	msglen = sb.st_size;
 	if (msglen > (1UL << 30))
 		errx(1, "msg too large in %s", filename);
-	msg = xmalloc(msglen);
+	msg = xmalloc(msglen + 1);
 	readall(fd, msg, msglen, filename);
+	msg[msglen] = 0;
 	close(fd);
 
 	*msglenp = msglen;
@@ -469,19 +470,16 @@ struct checksum {
 };
 
 static void
-verifychecksums(const char *msg, unsigned long long msglen, int argc,
-    char **argv, int quiet)
+verifychecksums(char *msg, int argc, char **argv, int quiet)
 {
 	char buf[1024];
-	char *input, *line, *endline;
+	char *line, *endline;
 	struct checksum *checksums = NULL, *c = NULL;
 	int nchecksums = 0;
 	int i, j, uselist, count, hasfailed;
 	int *failures;
 
-	if (!(input = strndup(msg, msglen)))
-		err(1, "strndup");
-	line = input;
+	line = msg;
 	while (line && *line) {
 		if (!(checksums = realloc(checksums,
 		    sizeof(*c) * (nchecksums + 1))))
@@ -497,7 +495,6 @@ verifychecksums(const char *msg, unsigned long long msglen, int argc,
 		strlcpy(c->file, buf + 1, sizeof(c->file));
 		line = endline;
 	}
-	free(input);
 
 	if (argc) {
 		uselist = 0;
@@ -581,7 +578,7 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 	}
 
 	verifymsg(pubkey.pubkey, msg, msglen, sig.sig, quiet);
-	verifychecksums(msg, msglen, argc, argv, quiet);
+	verifychecksums((char *)msg, argc, argv, quiet);
 
 	free(msg - siglen);
 }
