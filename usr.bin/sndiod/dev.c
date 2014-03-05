@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.10 2014/02/08 15:17:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.11 2014/03/05 20:24:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1047,7 +1047,6 @@ dev_new(char *path, struct aparams *par,
 	d->reqrate = rate;
 	d->hold = hold;
 	d->autovol = autovol;
-	d->autostart = 0;
 	d->refcnt = 0;
 	d->pstate = DEV_CFG;
 	d->serial = 0;
