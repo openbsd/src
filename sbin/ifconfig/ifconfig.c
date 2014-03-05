@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.281 2014/01/21 21:27:14 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.282 2014/03/05 20:46:50 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1002,12 +1002,12 @@ printif(char *ifname, int ifaliases)
 				continue;
 			if ((p = afp) != NULL) {
 				if (ifa->ifa_addr->sa_family == p->af_af)
-					(*p->af_status)(1);
+					p->af_status(1);
 			} else {
 				for (p = afs; p->af_name; p++) {
 					if (ifa->ifa_addr->sa_family ==
 					    p->af_af)
-						(*p->af_status)(0);
+						p->af_status(0);
 				}
 			}
 			count++;
@@ -1109,7 +1109,7 @@ setifaddr(const char *addr, int param)
 		newaddr = 1;
 	if (doalias == 0)
 		clearaddr = 1;
-	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
+	afp->af_getaddr(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
 
 #ifndef SMALL
@@ -1129,14 +1129,14 @@ setifrtlabel(const char *label, int d)
 void
 setifnetmask(const char *addr, int ignored)
 {
-	(*afp->af_getaddr)(addr, MASK);
+	afp->af_getaddr(addr, MASK);
 }
 
 /* ARGSUSED */
 void
 setifbroadaddr(const char *addr, int ignored)
 {
-	(*afp->af_getaddr)(addr, DSTADDR);
+	afp->af_getaddr(addr, DSTADDR);
 }
 
 #ifndef SMALL
@@ -1199,7 +1199,7 @@ void
 setifdstaddr(const char *addr, int param)
 {
 	setaddr++;
-	(*afp->af_getaddr)(addr, DSTADDR);
+	afp->af_getaddr(addr, DSTADDR);
 }
 
 /*
@@ -2940,10 +2940,10 @@ status(int link, struct sockaddr_dl *sdl, int ls)
  proto_status:
 	if (link == 0) {
 		if ((p = afp) != NULL) {
-			(*p->af_status)(1);
+			p->af_status(1);
 		} else for (p = afs; p->af_name; p++) {
 			ifr.ifr_addr.sa_family = p->af_af;
-			(*p->af_status)(0);
+			p->af_status(0);
 		}
 	}
 
@@ -3018,8 +3018,8 @@ in_status(int force)
 void
 setifprefixlen(const char *addr, int d)
 {
-	if (*afp->af_getprefix)
-		(*afp->af_getprefix)(addr, MASK);
+	if (afp->af_getprefix)
+		afp->af_getprefix(addr, MASK);
 	explicit_prefix = 1;
 }
 
