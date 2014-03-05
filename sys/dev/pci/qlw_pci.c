@@ -1,0 +1,266 @@
+/*	$OpenBSD: qlw_pci.c,v 1.1 2014/03/05 23:10:42 kettenis Exp $ */
+
+/*
+ * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
+ * Copyright (c) 2014 Mark Kettenis <kettenis@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "bio.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/device.h>
+#include <sys/sensors.h>
+#include <sys/rwlock.h>
+
+#include <machine/bus.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <dev/ic/qlwreg.h>
+#include <dev/ic/qlwvar.h>
+
+#ifndef ISP_NOFIRMWARE
+#include <dev/microcode/isp/asm_1040.h>
+#include <dev/microcode/isp/asm_1080.h>
+#include <dev/microcode/isp/asm_12160.h>
+#endif
+
+#define QLW_PCI_MEM_BAR		0x14
+#define QLW_PCI_IO_BAR		0x10
+
+int	qlw_pci_match(struct device *, void *, void *);
+void	qlw_pci_attach(struct device *, struct device *, void *);
+int	qlw_pci_detach(struct device *, int);
+
+struct qlw_pci_softc {
+	struct qlw_softc	psc_qlw;
+
+	pci_chipset_tag_t	psc_pc;
+	pcitag_t		psc_tag;
+
+	void			*psc_ih;
+};
+
+struct cfattach qlw_pci_ca = {
+	sizeof(struct qlw_pci_softc),
+	qlw_pci_match,
+	qlw_pci_attach
+};
+
+static const struct pci_matchid qlw_devices[] = {
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP1020 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP1240 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP1080 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP1280 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP10160 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP12160 },
+};
+
+int
+qlw_pci_match(struct device *parent, void *match, void *aux)
+{
+	return (pci_matchbyid(aux, qlw_devices, nitems(qlw_devices)) * 2);
+}
+
+void
+qlw_pci_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct qlw_pci_softc *psc = (void *)self;
+	struct qlw_softc *sc = &psc->psc_qlw;
+	struct pci_attach_args *pa = aux;
+	pci_intr_handle_t ih;
+	u_int32_t pcictl;
+#ifdef __sparc64__
+	u_int64_t wwn;
+	int node;
+#endif
+
+	pcireg_t bars[] = { QLW_PCI_MEM_BAR, QLW_PCI_IO_BAR };
+	pcireg_t memtype;
+	int r;
+
+	psc->psc_pc = pa->pa_pc;
+	psc->psc_tag = pa->pa_tag;
+	psc->psc_ih = NULL;
+	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_ios = 0;
+
+	for (r = 0; r < nitems(bars); r++) {
+		memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag, bars[r]);
+		if (pci_mapreg_map(pa, bars[r], memtype, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios, 0) == 0)
+			break;
+
+		sc->sc_ios = 0;
+	}
+	if (sc->sc_ios == 0) {
+		printf(": unable to map registers\n");
+		return;
+	}
+
+	if (pci_intr_map(pa, &ih)) {
+		printf(": unable to map interrupt\n");
+		goto unmap;
+	}
+	printf(": %s\n", pci_intr_string(psc->psc_pc, ih));
+
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
+	    qlw_intr, sc, DEVNAME(sc));
+	if (psc->psc_ih == NULL) {
+		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
+		goto deintr;
+	}
+
+	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pcictl |= PCI_COMMAND_INVALIDATE_ENABLE |
+	    PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
+	/* fw manual says to enable bus master here, then disable it while
+	 * resetting.. hm.
+	 */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, pcictl);
+
+	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	pcictl &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+	pcictl &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+	pcictl |= (0x80 << PCI_LATTIMER_SHIFT);
+	pcictl |= (0x10 << PCI_CACHELINE_SHIFT);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, pcictl);
+
+	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pcictl &= ~1;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, pcictl);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_QLOGIC_ISP1020:
+		sc->sc_isp_gen = QLW_GEN_ISP1040;
+		sc->sc_isp_type = QLW_ISP1040;
+		sc->sc_numbusses = 1;
+		sc->sc_clock = 60;
+		break;
+
+	case PCI_PRODUCT_QLOGIC_ISP1240:
+		sc->sc_isp_gen = QLW_GEN_ISP1080;
+		sc->sc_isp_type = QLW_ISP1240;
+		sc->sc_numbusses = 2;
+		sc->sc_clock = 60;
+		break;
+
+	case PCI_PRODUCT_QLOGIC_ISP1080:
+		sc->sc_isp_gen = QLW_GEN_ISP1080;
+		sc->sc_isp_type = QLW_ISP1080;
+		sc->sc_numbusses = 1;
+		sc->sc_clock = 100;
+		break;
+
+	case PCI_PRODUCT_QLOGIC_ISP1280:
+		sc->sc_isp_gen = QLW_GEN_ISP1080;
+		sc->sc_isp_type = QLW_ISP1280;
+		sc->sc_numbusses = 2;
+		sc->sc_clock = 100;
+		break;
+
+	case PCI_PRODUCT_QLOGIC_ISP10160:
+		sc->sc_isp_gen = QLW_GEN_ISP12160;
+		sc->sc_isp_type = QLW_ISP10160;
+		sc->sc_numbusses = 1;
+		sc->sc_clock = 100;
+		break;
+
+	case PCI_PRODUCT_QLOGIC_ISP12160:
+		sc->sc_isp_gen = QLW_GEN_ISP12160;
+		sc->sc_isp_type = QLW_ISP12160;
+		sc->sc_numbusses = 2;
+		sc->sc_clock = 100;
+		break;
+
+	default:
+		printf("unknown pci id %x", pa->pa_id);
+		return;
+	}
+
+#ifndef ISP_NOFIRMWARE
+	switch (sc->sc_isp_gen) {
+	case QLW_GEN_ISP1040:
+		sc->sc_firmware = isp_1040_risc_code;
+		break;
+	case QLW_GEN_ISP1080:
+		sc->sc_firmware = isp_1080_risc_code;
+		break;
+	case QLW_GEN_ISP12160:
+		sc->sc_firmware = isp_12160_risc_code;
+		break;
+	}
+#endif
+
+#ifdef __sparc64__
+	node = PCITAG_NODE(pa->pa_tag);
+	if (OF_getprop(node, "port-wwn", &wwn, sizeof(wwn)) == sizeof(wwn))
+		sc->sc_port_name = wwn;
+	if (OF_getprop(node, "node-wwn", &wwn, sizeof(wwn)) == sizeof(wwn))
+		sc->sc_node_name = wwn;
+#endif
+
+	if (qlw_attach(sc) != 0) {
+		/* error printed by qlw_attach */
+		goto deintr;
+	}
+
+	return;
+
+deintr:
+	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+	psc->psc_ih = NULL;
+unmap:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
+}
+
+int
+qlw_pci_detach(struct device *self, int flags)
+{
+	struct qlw_pci_softc *psc = (struct qlw_pci_softc *)self;
+	struct qlw_softc *sc = &psc->psc_qlw;
+	int rv;
+
+	if (psc->psc_ih == NULL) {
+		/* we didnt attach properly, so nothing to detach */
+		return (0);
+	}
+
+	rv = qlw_detach(sc, flags);
+	if (rv != 0)
+		return (rv);
+
+	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+	psc->psc_ih = NULL;
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
+
+	return (0);
+}

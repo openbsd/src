@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.566 2014/02/10 22:41:27 jmatthew Exp $
+#	$OpenBSD: files,v 1.567 2014/03/05 23:10:41 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -194,6 +194,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_openbsd.c		isp
 file	dev/ic/isp_library.c		isp
+
+# QLogic ISP SCSI Controllers
+device	qlw: scsi
+file	dev/ic/qlw.c			qlw
 
 # QLogic ISP23xx FC Controllers
 device  qla: scsi
