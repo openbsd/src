@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.43 2014/03/05 22:53:36 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.44 2014/03/05 22:55:07 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -126,10 +126,8 @@ readall(int fd, void *buf, size_t len, const char *filename)
 		x = read(fd, buf, len);
 		if (x == -1)
 			err(1, "read from %s", filename);
-		else {
-			len -= x;
-			buf = (char*)buf + x;
-		}
+		len -= x;
+		buf = (char*)buf + x;
 	}
 }
 
@@ -212,10 +210,8 @@ writeall(int fd, const void *buf, size_t len, const char *filename)
 		x = write(fd, buf, len);
 		if (x == -1)
 			err(1, "write to %s", filename);
-		else {
-			len -= x;
-			buf = (char*)buf + x;
-		}
+		len -= x;
+		buf = (char*)buf + x;
 	}
 }
 
