@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.9 2014/02/08 15:15:31 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.10 2014/03/05 20:04:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1413,7 +1413,7 @@ sock_buildmsg(struct sock *f)
 	/*
 	 * If data available, build a DATA message.
 	 */
-	if (f->slot != NULL && f->slot->sub.buf.used > 0 && f->wmax > 0) {
+	if (f->slot != NULL && f->wmax > 0 && f->slot->sub.buf.used > 0) {
 		size = f->slot->sub.buf.used;
 		if (size > AMSG_DATAMAX)
 			size = AMSG_DATAMAX;
