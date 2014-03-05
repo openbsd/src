@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.4 2013/12/08 09:09:47 martynas Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.5 2014/03/05 19:48:22 miod Exp $
 #
 # GENERIC machine description file
 #
@@ -20,8 +20,6 @@
 
 machine	armv7	arm
 include "../../../conf/GENERIC"
-options	TIMEZONE=0	# time zone to adjust RTC time by
-options	DST=0		# daylight saving time used by RTC
 
 makeoptions	KERNEL_BASE_PHYS="0x40800000"
 makeoptions	KERNEL_BASE_VIRT="0xc0800000"
@@ -30,8 +28,6 @@ options	STARTUP_PAGETABLE_ADDR=0x40200000
 options	SDRAM_START="0x40000000"
 
 option CONF_HAVE_GPIO
-
-options	AHCI_DEBUG
 
 #options		APERTURE
 
@@ -48,6 +44,8 @@ options	CPU_ARMv7	# Support the ARMv7
 #option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=1
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+
+option		USBVERBOSE
 
 config		bsd	swap generic
 
