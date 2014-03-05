@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2013/11/16 18:37:27 rpe Exp $
+#	$OpenBSD: install.md,v 1.6 2014/03/05 20:03:01 jasper Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ __EOT
 md_congrats() {
 	cat <<__EOT
 
-	INSTALL.$ARCH describes how to configure U-Boot to boot OpenBSD.
+INSTALL.$ARCH describes how to configure U-Boot to boot OpenBSD.
 __EOT
 }
 
