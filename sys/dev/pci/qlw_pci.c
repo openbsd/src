@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.1 2014/03/05 23:10:42 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.2 2014/03/05 23:27:37 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -95,10 +95,6 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	u_int32_t pcictl;
-#ifdef __sparc64__
-	u_int64_t wwn;
-	int node;
-#endif
 
 	pcireg_t bars[] = { QLW_PCI_MEM_BAR, QLW_PCI_IO_BAR };
 	pcireg_t memtype;
@@ -215,14 +211,6 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_firmware = isp_12160_risc_code;
 		break;
 	}
-#endif
-
-#ifdef __sparc64__
-	node = PCITAG_NODE(pa->pa_tag);
-	if (OF_getprop(node, "port-wwn", &wwn, sizeof(wwn)) == sizeof(wwn))
-		sc->sc_port_name = wwn;
-	if (OF_getprop(node, "node-wwn", &wwn, sizeof(wwn)) == sizeof(wwn))
-		sc->sc_node_name = wwn;
 #endif
 
 	if (qlw_attach(sc) != 0) {
