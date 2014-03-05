@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.42 2014/03/04 16:44:07 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.43 2014/03/05 22:53:36 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -480,7 +480,7 @@ verifychecksums(const char *msg, unsigned long long msglen, int argc,
 	char *input, *line, *endline;
 	struct checksum *checksums = NULL, *c = NULL;
 	int nchecksums = 0;
-	int i, j, uselist, count, failcount;
+	int i, j, uselist, count, hasfailed;
 	int *failures;
 
 	if (!(input = strndup(msg, msglen)))
@@ -510,7 +510,8 @@ verifychecksums(const char *msg, unsigned long long msglen, int argc,
 		uselist = 1;
 		count = nchecksums;
 	}
-	failures = calloc(count, sizeof(int));
+	if (!(failures = calloc(count, sizeof(int))))
+		err(1, "calloc");
 	for (i = 0; i < count; i++) {
 		if (uselist) {
 			c = &checksums[i];
@@ -546,17 +547,18 @@ verifychecksums(const char *msg, unsigned long long msglen, int argc,
 		if (!quiet)
 			printf("%s: OK\n", c->file);
 	}
-	failcount = 0;
+	hasfailed = 0;
 	for (i = 0; i < count; i++) {
 		if (failures[i]) {
 			fprintf(stderr, "%s: FAIL\n",
 			    uselist ? checksums[i].file : argv[i]);
-			failcount++;
+			hasfailed = 1;
 		}
 	}
-	if (failcount)
+	if (hasfailed)
 		exit(1);
 	free(checksums);
+	free(failures);
 }
 
 static void
