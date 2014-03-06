@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.6 2012/10/20 09:05:33 jasper Exp $	*/
+/*	$OpenBSD: tags.c,v 1.7 2014/03/06 14:51:48 jasper Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -15,6 +15,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <util.h>
 
 #include "def.h"
