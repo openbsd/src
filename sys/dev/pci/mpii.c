@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.74 2014/01/22 03:02:58 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.75 2014/03/06 14:08:06 gerhard Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2994,8 +2994,6 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	    vpg, pagelen) != 0) {
 		rv = EINVAL;
 		goto done;
-		free(vpg, M_TEMP);
-		return (EINVAL);
 	}
 
 	enabled = ((letoh16(vpg->volume_settings) &
