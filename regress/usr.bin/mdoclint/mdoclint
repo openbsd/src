@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.40 2014/01/04 18:27:03 jmc Exp $
-# $NetBSD: mdoclint,v 1.43 2013/09/30 09:36:45 wiz Exp $
+# $OpenBSD: mdoclint,v 1.41 2014/03/06 17:41:28 jmc Exp $
+# $NetBSD: mdoclint,v 1.46 2014/02/24 09:37:48 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -205,7 +205,7 @@ my $valid_date_re;
 		@arches =
 		    (qw(acorn26 acorn32 algor alpha amiga arc atari
 		    bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-		    evbsh3 evbsh5 hp300 hp700 hpcarm hpcmips hpcsh
+		    evbsh3 evbsh5 hp300 hpcarm hpcmips hpcsh hppa
 		    i386 ibmnws luna68k mac68k macppc mipsco mmeye
 		    mvme68k mvmeppc netwinder news68k newsmips next68k
 		    pc532 playstation2 pmax pmppc prep sandpoint sbmips
@@ -226,7 +226,7 @@ my $valid_date_re;
 		$valid_date_re = qr{\$Mdocdate\b};
 	}
 	if (NETBSD) {
-		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|201[0-3])$}o;
+		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|201[0-4])$}o;
 	}
 }
 
