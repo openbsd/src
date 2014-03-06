@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.55 2014/03/02 15:41:28 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.56 2014/03/06 17:39:23 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -51,7 +51,7 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-eiuy] [-l blocks] [-c cylinders -h heads -s sectors] [-f mbrfile] disk\n"
+	    "[-eiuy] [-c cylinders -h heads -s sectors] [-f mbrfile] [-l blocks] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
 	    "\t-u: update MBR code, preserve partition table\n"
 	    "\t-e: edit MBRs on disk interactively\n"
