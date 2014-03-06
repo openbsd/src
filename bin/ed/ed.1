@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.58 2014/02/22 14:24:43 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.59 2014/03/06 17:37:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 22 2014 $
+.Dd $Mdocdate: March 6 2014 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -307,11 +307,6 @@ or
 .Ic n
 .Pq enumerate ,
 to print the last line affected by the command.
-.Pp
-An interrupt
-.Pq typically ^C
-has the effect of aborting the current command
-and returning the editor to command mode.
 .Pp
 .Nm
 recognizes the following commands.
@@ -720,6 +715,30 @@ When the shell returns from execution, a
 .Sq \&!
 is printed to the standard output.
 The current line is unchanged.
+.El
+.Sh ASYNCHRONOUS EVENTS
+.Bl -tag -width "SIGWINCH"
+.It Dv SIGHUP
+If the current buffer has changed since it was last written,
+.Nm
+attempts to write the buffer to the file
+.Pa ed.hup .
+Nothing is written to the currently remembered file, and
+.Nm
+exits.
+.It Dv SIGINT
+When an interrupt occurs,
+.Nm
+prints
+.Sq ?\en
+and returns to command mode.
+If interrupted during text input,
+the text already input is written to the current buffer,
+as if text input had been normally terminated.
+.It Dv SIGQUIT
+This signal is ignored.
+.It Dv SIGWINCH
+The screen is resized.
 .El
 .Sh FILES
 .Bl -tag -width /tmp/ed.* -compact
