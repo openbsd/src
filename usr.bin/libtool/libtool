@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.40 2013/02/02 13:45:11 brad Exp $
+# $OpenBSD: libtool,v 1.41 2014/03/06 08:58:43 ajacoutot Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -287,7 +287,7 @@ sub guess_implicit_mode
 	my ($self, $ltprog) = @_;
 	my $m;
 	for my $a (@$ltprog) {
-	   if ($a =~ m/(install([.-]sh)?|cp)$/) {
+	   if ($a =~ m/(install([.-](sh|check))?|cp)$/) {
 		$m = LT::Mode->factory('install', "implicit $a");
 	   } elsif ($a =~ m/cc|c\+\+/) {	# XXX improve test
 		if (grep { $_ eq '-c' } @ARGV) {
@@ -388,7 +388,7 @@ while (@ARGV) {
 	tsay {"arg = \"$arg\""};
 	# if the current argument is an install program, stop immediately
 	if ($arg =~ /cp$/) { last; }
-	if ($arg =~ /install([-.]sh)?$/) { last; }
+	if ($arg =~ /install([-.](sh|check))?$/) { last; }
 }
 tsay {"ltprog = \"@$ltprog\""};
 
