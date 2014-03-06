@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.57 2014/02/11 12:20:34 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.58 2014/03/06 17:36:28 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -77,6 +77,7 @@
 02/17	T. J. Watson, Sr. born, 1874
 02/17	Marion Anderson born, 1902
 02/18	Ernst Mach born, 1838, philosopher & optics pioneer
+02/18	Michelangelo Buonarroti dies in Rome, Italy, 1564
 02/19	Nicolas Copernicus born in Thorn, Poland, 1473
 02/20	Ludwig Boltzmann born, 1844, atomic physics pioneer
 02/21	Alexis De Rochon born, 1838, developed the spyglass
