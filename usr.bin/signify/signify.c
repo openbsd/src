@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.47 2014/03/06 15:01:58 naddy Exp $ */
+/* $OpenBSD: signify.c,v 1.48 2014/03/06 20:04:45 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -252,13 +252,16 @@ static void
 kdf(uint8_t *salt, size_t saltlen, int rounds, uint8_t *key, size_t keylen)
 {
 	char pass[1024];
+	int rppflags = RPP_ECHO_OFF;
 
 	if (rounds == 0) {
 		memset(key, 0, keylen);
 		return;
 	}
 
-	if (!readpassphrase("passphrase: ", pass, sizeof(pass), RPP_ECHO_OFF))
+	if (!isatty(STDIN_FILENO))
+		rppflags |= RPP_STDIN;
+	if (!readpassphrase("passphrase: ", pass, sizeof(pass), rppflags))
 		errx(1, "unable to read passphrase");
 	if (strlen(pass) == 0)
 		errx(1, "please provide a password");
