@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.24 2014/03/04 16:44:07 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.25 2014/03/06 15:01:58 naddy Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: March 4 2014 $
+.Dd $Mdocdate: March 6 2014 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -26,11 +26,11 @@
 .Op Fl q
 .Fl p Ar pubkey
 .Fl x Ar sigfile
-.Op files...
+.Op Ar
 .Nm signify
 .Fl G
-.Op Fl c Ar comment
 .Op Fl n
+.Op Fl c Ar comment
 .Fl p Ar pubkey
 .Fl s Ar seckey
 .Nm signify
@@ -59,14 +59,14 @@ A signature verifies the integrity of a
 The mode of operation is selected with the following options:
 .Bl -tag -width Dsssigfile
 .It Fl C
-Verify the signed checksum list, and then verify the checksum for
+Verify a signed checksum list, and then verify the checksum for
 each file.
 If no files are specified, all of them are checked.
 .Ar sigfile
 should be the signed output of
 .Xr sha256 1 .
 .It Fl G
-Generate a new keypair.
+Generate a new key pair.
 .It Fl I
 Inspect the specified keys or signature and print their fingerprint.
 .It Fl S
@@ -103,7 +103,8 @@ and used by
 .Fl V
 to check a signature.
 .It Fl q
-Quiet mode. Suppress informational output.
+Quiet mode.
+Suppress informational output.
 .It Fl s Ar seckey
 Secret (private) key produced by
 .Fl G ,
@@ -137,7 +138,7 @@ The message file was corrupted and its signature does not match.
 The message file is too large.
 .El
 .Sh EXAMPLES
-Create a new keypair:
+Create a new key pair:
 .Dl $ signify -G -p newkey.pub -s newkey.sec
 .Pp
 Sign a file, specifying a signature name:
