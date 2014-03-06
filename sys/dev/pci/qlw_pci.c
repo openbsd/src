@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.2 2014/03/05 23:27:37 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.3 2014/03/06 17:57:34 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -156,7 +156,10 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_isp_gen = QLW_GEN_ISP1040;
 		sc->sc_isp_type = QLW_ISP1040;
 		sc->sc_numbusses = 1;
-		sc->sc_clock = 60;
+		if (PCI_REVISION(pa->pa_class) < 2)
+			sc->sc_clock = 40; /* ISP1020/1020A */
+		else
+			sc->sc_clock = 60; /* ISP1040/1040A/1040B/1040C */
 		break;
 
 	case PCI_PRODUCT_QLOGIC_ISP1240:
