@@ -1,6 +1,6 @@
-.\"	$OpenBSD: qla.4,v 1.9 2014/03/06 11:32:55 kettenis Exp $
+.\"	$OpenBSD: qlw.4,v 1.1 2014/03/06 11:32:55 kettenis Exp $
 .\"
-.\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
+.\" Copyright (c) 2014 Mark Kettenis <kettenis@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,19 +15,20 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: March 6 2014 $
-.Dt QLA 4
+.Dt QLW 4
 .Os
 .Sh NAME
-.Nm qla
-.Nd QLogic ISP2100/ISP2200/ISP2300 Fibre Channel controller
+.Nm qlw
+.Nd QLogic ISP1020/1x40/1x80/1x160 SCSI controller
 .Sh SYNOPSIS
-.Cd "qla* at pci?     " Pq PCI
-.Cd "qla* at sbus?    " Pq SBus
+.Cd "qlw* at pci?"
+.\" .Cd "qlw* at sbus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for 1G and 2G QLogic Fibre Channel
-host bus adapters using the ISP2100, ISP2200, and ISP2300 chipsets.
+driver provides support for QLogic Ultra Wide SCSI host bus adapters
+using the ISP1020/1040, ISP1080/ISP1240/ISP1280 and ISP10160/12160
+chipsets.
 .Pp
 .Nm
 provides no ability to configure an adapter's parameters at runtime;
@@ -36,17 +37,20 @@ all configuration must be done prior to booting
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
-.Xr qle 4 ,
-.Xr qlw 4 ,
-.Xr sbus 4 ,
+.Xr qla 4 ,
+.\" .Xr sbus 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 5.5 .
+.Ox 5.6 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
+.An Mark Kettenis Aq Mt kettenis@openbsd.org ,
+based on the
+.Xr qla(4)
+driver written by
 .An Jonathan Matthew Aq Mt jmatthew@openbsd.org .
