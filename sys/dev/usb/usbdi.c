@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.67 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.68 2014/03/06 23:28:01 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -573,7 +573,7 @@ usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 	 * Clearing en endpoint stall resets the endpoint toggle, so
 	 * do the same to the HC toggle.
 	 */
-	pipe->methods->cleartoggle(pipe);
+	usbd_clear_endpoint_toggle(pipe);
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
@@ -592,7 +592,7 @@ usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 	usb_device_request_t req;
 	usbd_status err;
 
-	pipe->methods->cleartoggle(pipe);
+	usbd_clear_endpoint_toggle(pipe);
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
@@ -606,7 +606,8 @@ usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 void
 usbd_clear_endpoint_toggle(struct usbd_pipe *pipe)
 {
-	pipe->methods->cleartoggle(pipe);
+	if (pipe->methods->cleartoggle != NULL)
+		pipe->methods->cleartoggle(pipe);
 }
 
 int
