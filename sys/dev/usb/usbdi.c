@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.68 2014/03/06 23:28:01 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.69 2014/03/06 23:53:11 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -109,16 +109,6 @@ int
 usbd_iface_claimed(struct usbd_device *dev, int ifaceidx)
 {
 	return (dev->ifaces[ifaceidx].claimed);
-}
-
-static __inline int
-usbd_xfer_isread(struct usbd_xfer *xfer)
-{
-	if (xfer->rqflags & URQ_REQUEST)
-		return (xfer->request.bmRequestType & UT_READ);
-	else
-		return (xfer->pipe->endpoint->edesc->bEndpointAddress &
-		    UE_DIR_IN);
 }
 
 #ifdef USB_DEBUG

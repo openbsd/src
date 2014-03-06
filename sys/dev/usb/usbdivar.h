@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.54 2014/03/06 23:51:04 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.55 2014/03/06 23:53:11 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -281,5 +281,14 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #define	UHUB_UNK_VENDOR		UHUBCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
 #define	UHUB_UNK_PRODUCT	UHUBCF_PRODUCT_DEFAULT /* wildcarded 'product' */
 #define	UHUB_UNK_RELEASE	UHUBCF_RELEASE_DEFAULT /* wildcarded 'release' */
+
+static inline int
+usbd_xfer_isread(struct usbd_xfer *xfer)
+{
+	if (xfer->rqflags & URQ_REQUEST)
+		return (xfer->request.bmRequestType & UT_READ);
+
+	return (xfer->pipe->endpoint->edesc->bEndpointAddress & UE_DIR_IN);
+}
 
 #endif /* _USBDIVAR_H_ */
