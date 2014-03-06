@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthread_set_name_np.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_set_name_np.3,v 1.6 2014/03/06 17:42:25 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 6 2014 $
 .Dt PTHREAD_SET_NAME_NP 3
 .Os
 .Sh NAME
@@ -10,7 +10,7 @@
 .In pthread.h
 .In pthread_np.h
 .Ft void
-.Fn pthread_set_name_np "pthread_t thread" "char *name"
+.Fn pthread_set_name_np "pthread_t thread" "const char *name"
 .Sh DESCRIPTION
 The
 .Fn pthread_set_name_np
