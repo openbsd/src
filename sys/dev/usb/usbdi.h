@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.60 2013/11/19 14:04:07 pirofti Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.61 2014/03/06 23:51:04 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -31,6 +31,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _USBDI_H_
+#define _USBDI_H_
 
 struct usbd_bus;
 struct usbd_device;
@@ -256,3 +259,5 @@ struct usb_attach_arg {
 #endif
 #define splhardusb splbio
 #define IPL_USB IPL_BIO
+
+#endif /* _USBDI_H_ */

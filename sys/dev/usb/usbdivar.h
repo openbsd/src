@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.53 2013/11/01 12:00:54 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.54 2014/03/06 23:51:04 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -31,6 +31,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _USBDIVAR_H_
+#define _USBDIVAR_H_
 
 #include <sys/timeout.h>
 
@@ -278,3 +281,5 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #define	UHUB_UNK_VENDOR		UHUBCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
 #define	UHUB_UNK_PRODUCT	UHUBCF_PRODUCT_DEFAULT /* wildcarded 'product' */
 #define	UHUB_UNK_RELEASE	UHUBCF_RELEASE_DEFAULT /* wildcarded 'release' */
+
+#endif /* _USBDIVAR_H_ */
