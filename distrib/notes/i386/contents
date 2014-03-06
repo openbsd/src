@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.71 2014/02/28 21:37:59 miod Exp $
+dnl	$OpenBSD: contents,v 1.72 2014/03/06 02:28:25 deraadt Exp $
 TopPart
 
 OpenBSDfloppy
@@ -37,13 +37,6 @@ OpenBSDcd
 			then loads the bsd.rd installation ramdisk kernel.
 			This file is included in the cd{:--:}OSrev.iso image, and is
 			provided as a convenience, but will rarely be needed.
-
-	cdemu{:--:}OSrev.iso	Another bootable CD-ROM image, for older systems
-			where the BIOS only supports the ``large floppy
-			emulation'' mode for bootable CD-ROMs, and which
-			are therefore unable to boot cd{:--:}OSrev.iso.  This image
-			is provided as a convenience, but should rarely be
-			needed.
 
 Additionally, you may be interested in
 
