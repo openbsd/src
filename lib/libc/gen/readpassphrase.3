@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.19 2014/01/22 22:54:14 guenther Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.20 2014/03/06 23:03:18 millert Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: March 6 2014 $
 .Dt READPASSPHRASE 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ RPP_REQUIRE_TTY		fail if there is no tty
 RPP_FORCELOWER		force input to lower case
 RPP_FORCEUPPER		force input to upper case
 RPP_SEVENBIT		strip the high bit from input
-RPP_STDIN		force read of passphrase from stdin
+RPP_STDIN		read passphrase from stdin; ignore prompt
 .Ed
 .Pp
 The calling process should zero the passphrase as soon as possible to
@@ -96,7 +96,7 @@ if (compare(transform(passbuf), epass) != 0)
 
 \&...
 
-memset(passbuf, 0, sizeof(passbuf));
+explicit_bzero(passbuf, sizeof(passbuf));
 .Ed
 .Sh ERRORS
 .Bl -tag -width Er
