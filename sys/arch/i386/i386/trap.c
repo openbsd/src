@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.111 2014/02/13 23:11:06 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.112 2014/03/07 07:47:14 gerhard Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -519,7 +519,6 @@ trap(struct trapframe *frame)
 		if (kdb_trap(type, 0, frame))
 			return;
 #endif
-			return;
 #endif /* DDB || KGDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 		if (isa_nmi() == 0)
