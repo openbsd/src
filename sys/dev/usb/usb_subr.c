@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.98 2014/02/09 13:21:48 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.99 2014/03/07 18:59:40 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1132,8 +1132,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		/* Max packet size must be 64 (sec 5.5.3). */
 		if (dd->bMaxPacketSize != USB_2_MAX_CTRL_PACKET) {
 #ifdef DIAGNOSTIC
-			printf("usbd_new_device: addr=%d bad max packet size\n",
-			    addr);
+			printf("%s: addr=%d bad max packet size %d\n", __func__,
+			    addr, dd->bMaxPacketSize);
 #endif
 			dd->bMaxPacketSize = USB_2_MAX_CTRL_PACKET;
 		}
