@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.17 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.18 2014/03/07 18:56:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -176,7 +176,7 @@ usbf_new_device(struct device *parent, struct usbf_bus *bus, int depth,
 	ud->bDescriptorType = UDESC_DEVICE;
 	ud->bMaxPacketSize = bus->ep0_maxp;
 	if (bus->usbrev >= USBREV_2_0)
-		USETW(ud->bcdUSB, UD_USB_2_0);
+		USETW(ud->bcdUSB, 0x0200);
 	else
 		USETW(ud->bcdUSB, 0x0101);
 
