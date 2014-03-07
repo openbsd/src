@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.2 2014/03/07 12:45:49 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.3 2014/03/07 22:17:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -221,6 +221,9 @@ qlw_attach(struct qlw_softc *sc)
 		if (sc->sc_max_queue_depth[bus] > sc->sc_maxcmds)
 			sc->sc_max_queue_depth[bus] = sc->sc_maxcmds;
 	}
+
+	/* We may need up to 3 request entries per SCSI command. */
+	sc->sc_maxccbs = sc->sc_maxcmds / 3;
 
 #if 0
 	qlw_write(sc, QLW_CFG1, sc->sc_nvram.isp_config | (1 << 13));
@@ -531,9 +534,9 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 	case QLW_IOCB_STATUS:
 		status = (struct qla_iocb_status *)entry;
 		handle = letoh32(status->handle);
-		if (handle > sc->sc_maxcmds) {
+		if (handle > sc->sc_maxccbs) {
 			panic("bad completed command handle: %d (> %d)",
-			    handle, sc->sc_maxcmds);
+			    handle, sc->sc_maxccbs);
 		}
 
 		ccb = &sc->sc_ccbs[handle];
@@ -1569,7 +1572,7 @@ qlw_alloc_ccbs(struct qlw_softc *sc)
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	mtx_init(&sc->sc_queue_mtx, IPL_BIO);
 
-	sc->sc_ccbs = malloc(sizeof(struct qlw_ccb) * sc->sc_maxcmds,
+	sc->sc_ccbs = malloc(sizeof(struct qlw_ccb) * sc->sc_maxccbs,
 	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -1590,8 +1593,8 @@ qlw_alloc_ccbs(struct qlw_softc *sc)
 	}
 
 	cmd = QLW_DMA_KVA(sc->sc_requests);
-	memset(cmd, 0, QLW_QUEUE_ENTRY_SIZE * sc->sc_maxcmds);
-	for (i = 0; i < sc->sc_maxcmds; i++) {
+	memset(cmd, 0, QLW_QUEUE_ENTRY_SIZE * sc->sc_maxccbs);
+	for (i = 0; i < sc->sc_maxccbs; i++) {
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
