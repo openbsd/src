@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.63 2013/10/19 08:29:30 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.64 2014/03/07 18:57:23 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -121,14 +121,16 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->device;
-	usbd_status err;
 	struct usbd_hub *hub = NULL;
-	usb_device_request_t req;
 	usb_hub_descriptor_t hubdesc;
-	int p, port, nports, nremov, pwrdly;
+	int p, port, nports, pwrdly;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
+	usbd_status err;
+#ifdef UHUB_DEBUG
+	int nremov;
+#endif
 
 	sc->sc_hub = dev;
 
@@ -146,28 +148,21 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Get hub descriptor. */
-	req.bmRequestType = UT_READ_CLASS_DEVICE;
-	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW2(req.wValue, UDESC_HUB, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
-	err = usbd_do_request(dev, &req, &hubdesc);
+	err = usbd_get_hub_descriptor(dev, &hubdesc, 1);
 	nports = hubdesc.bNbrPorts;
-	if (!err && nports > 7) {
-		USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE + (nports+1) / 8);
-		err = usbd_do_request(dev, &req, &hubdesc);
-	}
+	if (!err && nports > 7)
+		usbd_get_hub_descriptor(dev, &hubdesc, nports);
 	if (err) {
 		DPRINTF("%s: getting hub descriptor failed, error=%s\n",
 			 sc->sc_dev.dv_xname, usbd_errstr(err));
 		return;
 	}
 
+#ifdef UHUB_DEBUG
 	for (nremov = 0, port = 1; port <= nports; port++)
 		if (!UHD_NOT_REMOV(&hubdesc, port))
 			nremov++;
 
-#ifdef UHUB_DEBUG
 	printf("%s: %d port%s with %d removable, %s powered",
 	       sc->sc_dev.dv_xname, nports, nports != 1 ? "s" : "",
 	       nremov, dev->self_powered ? "self" : "bus");

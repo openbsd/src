@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.34 2013/11/13 13:48:08 pirofti Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.35 2014/03/07 18:57:23 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -103,6 +103,21 @@ usbd_get_hub_status(struct usbd_device *dev, usb_hub_status_t *st)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, sizeof(usb_hub_status_t));
 	return (usbd_do_request(dev, &req, st));
+}
+
+usbd_status
+usbd_get_hub_descriptor(struct usbd_device *dev, usb_hub_descriptor_t *hd,
+    uint8_t nports)
+{
+	usb_device_request_t req;
+	uint16_t len = USB_HUB_DESCRIPTOR_SIZE + (nports + 1) / 8;
+
+	req.bmRequestType = UT_READ_CLASS_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_HUB, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, len);
+	return (usbd_do_request(dev, &req, hd));
 }
 
 usbd_status
