@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.34 2013/03/21 18:45:58 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.35 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -42,7 +42,7 @@
 
 struct disklabel dl;
 
-DISK_metrics *DISK_getlabelmetrics(char *name);
+struct DISK_metrics *DISK_getlabelmetrics(char *name);
 
 int
 DISK_open(char *disk, int mode)
@@ -65,16 +65,16 @@ DISK_open(char *disk, int mode)
  * in the land of PC, things are not always what
  * they seem.
  */
-DISK_metrics *
+struct DISK_metrics *
 DISK_getlabelmetrics(char *name)
 {
-	DISK_metrics *lm = NULL;
+	struct DISK_metrics *lm = NULL;
 	u_int64_t sz, spc;
 	int fd;
 
 	/* Get label metrics */
 	if ((fd = DISK_open(name, O_RDONLY)) != -1) {
-		lm = malloc(sizeof(DISK_metrics));
+		lm = malloc(sizeof(struct DISK_metrics));
 		if (lm == NULL)
 			err(1, NULL);
 
@@ -114,7 +114,7 @@ DISK_getlabelmetrics(char *name)
  * geometry he/she wishes to use.
  */
 int
-DISK_getmetrics(disk_t *disk, DISK_metrics *user)
+DISK_getmetrics(struct disk *disk, struct DISK_metrics *user)
 {
 
 	disk->label = DISK_getlabelmetrics(disk->name);
@@ -141,7 +141,7 @@ DISK_getmetrics(disk_t *disk, DISK_metrics *user)
  * to indicate the units that should be used for display.
  */
 int
-DISK_printmetrics(disk_t *disk, char *units)
+DISK_printmetrics(struct disk *disk, char *units)
 {
 	const int secsize = unit_types[SECTORS].conversion;
 	double size;

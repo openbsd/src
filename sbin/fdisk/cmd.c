@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.60 2013/03/21 18:45:58 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.61 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,7 +44,8 @@
 #include "cmd.h"
 
 int
-Xreinit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xreinit(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	char buf[DEV_BSIZE];
 
@@ -65,7 +66,8 @@ Xreinit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xdisk(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	int maxcyl  = 1024;
 	int maxhead = 256;
@@ -98,12 +100,13 @@ Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xswap(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	const char *errstr;
 	char *from, *to;
 	int pf, pt, ret;
-	prt_t pp;
+	struct prt pp;
 
 	ret = CMD_CONT;
 
@@ -142,11 +145,12 @@ Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xedit(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	const char *errstr;
 	int pn, num, ret;
-	prt_t *pp;
+	struct prt *pp;
 
 	pn = (int)strtonum(cmd->args, 0, 3, &errstr);
 	if (errstr) {
@@ -204,11 +208,12 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xsetpid(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	const char *errstr;
 	int pn, num, ret;
-	prt_t *pp;
+	struct prt *pp;
 
 	ret = CMD_CONT;
 
@@ -235,7 +240,8 @@ Xsetpid(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xselect(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	const char *errstr;
 	static int firstoff = 0;
@@ -275,7 +281,8 @@ Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xprint(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xprint(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 
 	DISK_printmetrics(disk, cmd->args);
@@ -287,7 +294,8 @@ Xprint(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xwrite(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	char mbr_buf[DEV_BSIZE];
 	int fd, i, n;
@@ -322,12 +330,8 @@ Xwrite(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xquit(cmd, disk, r, tt, offset)
-	cmd_t *cmd;
-	disk_t *disk;
-	mbr_t *r;
-	mbr_t *tt;
-	int offset;
+Xquit(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 
 	/* Nothing to do here */
@@ -336,7 +340,8 @@ Xquit(cmd, disk, r, tt, offset)
 
 /* ARGSUSED */
 int
-Xabort(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xabort(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	exit(0);
 
@@ -347,7 +352,8 @@ Xabort(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xexit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xexit(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 
 	/* Nothing to do here */
@@ -356,9 +362,10 @@ Xexit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xhelp(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xhelp(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
-	cmd_table_t *cmd_table = cmd->table;
+	struct cmd_table *cmd_table = cmd->table;
 	int i;
 
 	/* Hmm, print out cmd_table here... */
@@ -369,7 +376,8 @@ Xhelp(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xupdate(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 
 	/* Update code */
@@ -381,7 +389,8 @@ Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xflag(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	const char *errstr;
 	int i, pn = -1, val = -1;
@@ -422,7 +431,8 @@ Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 /* ARGSUSED */
 int
-Xmanual(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+Xmanual(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
+    int offset)
 {
 	char *pager = "/usr/bin/less";
 	char *p;

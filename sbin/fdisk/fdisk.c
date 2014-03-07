@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.56 2014/03/06 17:39:23 jmc Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.57 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,15 +71,15 @@ main(int argc, char *argv[])
 	int ch, fd, error;
 	int i_flag = 0, m_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
-	disk_t disk;
+	struct disk disk;
 	u_int32_t l_arg = 0;
-	DISK_metrics *usermetrics;
+	struct DISK_metrics *usermetrics;
 #ifdef HAS_MBR
 	char *mbrfile = _PATH_MBR;
 #else
 	char *mbrfile = NULL;
 #endif
-	mbr_t mbr;
+	struct mbr mbr;
 	char mbr_buf[DEV_BSIZE];
 
 	while ((ch = getopt(argc, argv, "ieuf:c:h:s:l:y")) != -1) {
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 
 	/* Put in supplied geometry if there */
 	if (c_arg | h_arg | s_arg) {
-		usermetrics = malloc(sizeof(DISK_metrics));
+		usermetrics = malloc(sizeof(struct DISK_metrics));
 		if (usermetrics != NULL) {
 			if (c_arg && h_arg && s_arg) {
 				usermetrics->cylinders = c_arg;
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 		}
 	} else if (l_arg) {
 		/* Force into LBA mode */
-		usermetrics = malloc(sizeof(DISK_metrics));
+		usermetrics = malloc(sizeof(struct DISK_metrics));
 		if (usermetrics != NULL) {
 			usermetrics->cylinders = l_arg / 64;
 			usermetrics->heads = 1;

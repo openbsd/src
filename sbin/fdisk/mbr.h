@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.12 2013/03/21 18:37:07 deraadt Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.13 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,23 +38,23 @@
 
 
 /* MBR type */
-typedef struct _mbr_t {
+struct mbr {
 	off_t reloffset;
 	off_t offset;
 	unsigned char code[MBR_CODE_SIZE];
-	prt_t part[NDOSPART];
+	struct prt part[NDOSPART];
 	unsigned short signature;
-} mbr_t;
+};
 
 /* Prototypes */
 void MBR_print_disk(char *);
-void MBR_print(mbr_t *, char *);
-void MBR_parse(disk_t *, char *, off_t, off_t, mbr_t *);
-void MBR_make(mbr_t *, char *);
-void MBR_init(disk_t *, mbr_t *);
+void MBR_print(struct mbr *, char *);
+void MBR_parse(struct disk *, char *, off_t, off_t, struct mbr *);
+void MBR_make(struct mbr *, char *);
+void MBR_init(struct disk *, struct mbr *);
 int MBR_read(int, off_t, char *);
 int MBR_write(int, off_t, char *);
-void MBR_pcopy(disk_t *, mbr_t *);
+void MBR_pcopy(struct disk *, struct mbr *);
 
 /* Sanity check */
 #include <sys/param.h>

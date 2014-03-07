@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.26 2013/03/21 18:45:58 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.27 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@
 
 
 /* Our command table */
-static cmd_table_t cmd_table[] = {
+static struct cmd_table cmd_table[] = {
 	{"help",   Xhelp,	"Command help list"},
 	{"manual", Xmanual,	"Show entire OpenBSD man page for fdisk"},
 	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
@@ -64,7 +64,7 @@ static cmd_table_t cmd_table[] = {
 
 
 int
-USER_init(disk_t *disk, mbr_t *tt, int preserve)
+USER_init(struct disk *disk, struct mbr *tt, int preserve)
 {
 	char *query;
 
@@ -85,12 +85,12 @@ USER_init(disk_t *disk, mbr_t *tt, int preserve)
 int modified;
 
 int
-USER_modify(disk_t *disk, mbr_t *tt, off_t offset, off_t reloff)
+USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 {
 	static int editlevel;
 	char mbr_buf[DEV_BSIZE];
-	mbr_t mbr;
-	cmd_t cmd;
+	struct mbr mbr;
+	struct cmd cmd;
 	int i, st, fd, error;
 
 	/* One level deeper */
@@ -167,12 +167,12 @@ done:
 }
 
 int
-USER_print_disk(disk_t *disk)
+USER_print_disk(struct disk *disk)
 {
 	off_t offset, firstoff;
 	int fd, i, error;
 	char mbr_buf[DEV_BSIZE];
-	mbr_t mbr;
+	struct mbr mbr;
 
 	fd = DISK_open(disk->name, O_RDONLY);
 	offset = firstoff = 0;

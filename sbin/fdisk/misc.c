@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.32 2013/11/22 04:12:47 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.33 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -65,7 +65,7 @@ unit_lookup(char *units)
 }
 
 int
-ask_cmd(cmd_t *cmd)
+ask_cmd(struct cmd *cmd)
 {
 	char lbuf[100], *cp, *buf;
 	size_t lbuflen;
@@ -235,7 +235,7 @@ putlong(void *p, u_int32_t l)
  * adapted from sbin/disklabel/editor.c
  */
 u_int32_t
-getuint(disk_t *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
+getuint(struct disk *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	size_t n;

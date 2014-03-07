@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.32 2014/02/05 03:51:07 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.33 2014/03/07 21:56:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,7 +45,7 @@
 
 
 void
-MBR_init(disk_t *disk, mbr_t *mbr)
+MBR_init(struct disk *disk, struct mbr *mbr)
 {
 	daddr_t i;
 	u_int64_t adj;
@@ -107,7 +107,8 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 }
 
 void
-MBR_parse(disk_t *disk, char *mbr_buf, off_t offset, off_t reloff, mbr_t *mbr)
+MBR_parse(struct disk *disk, char *mbr_buf, off_t offset, off_t reloff,
+    struct mbr *mbr)
 {
 	int i;
 
@@ -122,7 +123,7 @@ MBR_parse(disk_t *disk, char *mbr_buf, off_t offset, off_t reloff, mbr_t *mbr)
 }
 
 void
-MBR_make(mbr_t *mbr, char *mbr_buf)
+MBR_make(struct mbr *mbr, char *mbr_buf)
 {
 	int i;
 
@@ -135,7 +136,7 @@ MBR_make(mbr_t *mbr, char *mbr_buf)
 }
 
 void
-MBR_print(mbr_t *mbr, char *units)
+MBR_print(struct mbr *mbr, char *units)
 {
 	int i;
 
@@ -235,10 +236,10 @@ done:
  * to the supplied mbr structure
  */
 void
-MBR_pcopy(disk_t *disk, mbr_t *mbr)
+MBR_pcopy(struct disk *disk, struct mbr *mbr)
 {
 	int i, fd, error, offset = 0, reloff = 0;
-	mbr_t mbrd;
+	struct mbr mbrd;
 	char mbr_disk[DEV_BSIZE];
 
 	fd = DISK_open(disk->name, O_RDONLY);
