@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.48 2014/03/06 20:04:45 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.49 2014/03/07 19:49:44 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -117,20 +117,6 @@ xmalloc(size_t len)
 	return p;
 }
 
-static void
-readall(int fd, void *buf, size_t buflen, const char *filename)
-{
-	ssize_t x;
-
-	while (buflen != 0) {
-		x = read(fd, buf, buflen);
-		if (x == -1)
-			err(1, "read from %s", filename);
-		buflen -= x;
-		buf = (char*)buf + x;
-	}
-}
-
 static size_t
 parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
     char *comment)
@@ -180,21 +166,39 @@ readb64file(const char *filename, void *buf, size_t buflen, char *comment)
 static uint8_t *
 readmsg(const char *filename, unsigned long long *msglenp)
 {
-	unsigned long long msglen;
-	uint8_t *msg;
+	unsigned long long msglen = 0;
+	uint8_t *msg = NULL;
 	struct stat sb;
+	ssize_t x, space;
 	int fd;
+	const size_t chunklen = 64 * 1024;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
-	if (fstat(fd, &sb) == -1)
-		err(1, "fstat on %s", filename);
-	if (!S_ISREG(sb.st_mode))
-		errx(1, "%s must be a regular file", filename);
-	msglen = sb.st_size;
-	if (msglen > (1UL << 30))
-		errx(1, "msg too large in %s", filename);
-	msg = xmalloc(msglen + 1);
-	readall(fd, msg, msglen, filename);
+	if (fstat(fd, &sb) == 0 && S_ISREG(sb.st_mode)) {
+		if (sb.st_size > (1UL << 30))
+			errx(1, "msg too large in %s", filename);
+		space = sb.st_size + 1;
+		msg = xmalloc(space + 1);
+	} else {
+		space = 0;
+	}
+
+	while (1) {
+		if (space == 0) {
+			space = chunklen;
+			if (!(msg = realloc(msg, msglen + space + 1)))
+				errx(1, "realloc");
+		}
+		if ((x = read(fd, msg + msglen, space)) == -1)
+			err(1, "read from %s", filename);
+		if (x == 0)
+			break;
+		space -= x;
+		msglen += x;
+		if (msglen > (1UL << 30))
+			errx(1, "msg too large in %s", filename);
+	}
+
 	msg[msglen] = 0;
 	close(fd);
 
