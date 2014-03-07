@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.106 2014/03/07 09:38:14 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.107 2014/03/07 09:51:50 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -852,8 +852,7 @@ void
 uhci_poll_hub(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct usbd_pipe *pipe = xfer->pipe;
-	struct uhci_softc *sc = (struct uhci_softc *)pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	int s;
 	u_char *p;
 
@@ -1352,7 +1351,7 @@ uhci_idone(struct uhci_xfer *ex)
 		DPRINTFN((status == UHCI_TD_STALLED)*10,
 			 ("uhci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
-			  xfer->pipe->device->address,
+			  xfer->device->address,
 			  xfer->pipe->endpoint->edesc->bEndpointAddress,
 			  sbuf));
 #endif
@@ -1822,7 +1821,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
-		usb_rem_task(xfer->pipe->device, &xfer->abort_task);
+		usb_rem_task(xfer->device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -1837,7 +1836,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	s = splusb();
 	xfer->status = status;	/* make software ignore it */
 	timeout_del(&xfer->timeout_handle);
-	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
+	usb_rem_task(xfer->device, &xfer->abort_task);
 	DPRINTFN(1,("uhci_abort_xfer: stop ex=%p\n", ex));
 	for (std = ex->stdstart; std != NULL; std = std->link.std)
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
@@ -1900,7 +1899,7 @@ uhci_device_ctrl_transfer(struct usbd_xfer *xfer)
 usbd_status
 uhci_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	usbd_status err;
 
 	if (sc->sc_bus.dying)
@@ -2534,7 +2533,7 @@ void
 uhci_device_intr_done(struct usbd_xfer *xfer)
 {
 	struct uhci_xfer *ex = UXFER(xfer);
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	struct uhci_soft_qh *sqh;
 	int i, npoll;
@@ -2596,7 +2595,7 @@ void
 uhci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	struct uhci_xfer *ex = UXFER(xfer);
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 
 #ifdef DIAGNOSTIC
@@ -2625,7 +2624,7 @@ void
 uhci_device_bulk_done(struct usbd_xfer *xfer)
 {
 	struct uhci_xfer *ex = UXFER(xfer);
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 
 	DPRINTFN(5,("uhci_device_bulk_done: xfer=%p ex=%p sc=%p upipe=%p\n",
@@ -3007,7 +3006,7 @@ uhci_root_ctrl_transfer(struct usbd_xfer *xfer)
 usbd_status
 uhci_root_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	usb_device_request_t *req;
 	void *buf = NULL;
 	int port, x;
@@ -3352,7 +3351,7 @@ uhci_root_ctrl_close(struct usbd_pipe *pipe)
 void
 uhci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 
 	timeout_del(&sc->sc_poll_handle);
 	sc->sc_intr_xfer = NULL;
@@ -3388,8 +3387,7 @@ uhci_root_intr_transfer(struct usbd_xfer *xfer)
 usbd_status
 uhci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->pipe;
-	struct uhci_softc *sc = (struct uhci_softc *)pipe->device->bus;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 
 	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%u flags=%d\n",
 		     xfer, xfer->length, xfer->flags));

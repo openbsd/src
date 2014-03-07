@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.142 2014/03/07 09:38:14 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.143 2014/03/07 09:51:50 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ ehci_idone(struct ehci_xfer *ex)
 		DPRINTFN(2,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
-			  xfer->pipe->device->address,
+			  xfer->device->address,
 			  xfer->pipe->endpoint->edesc->bEndpointAddress,
 			  sbuf));
 		if (ehcidebug > 2) {
@@ -1893,7 +1893,7 @@ ehci_root_ctrl_transfer(struct usbd_xfer *xfer)
 usbd_status
 ehci_root_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	usb_device_request_t *req;
 	void *buf = NULL;
 	int port, i;
@@ -2990,7 +2990,7 @@ ehci_device_ctrl_transfer(struct usbd_xfer *xfer)
 usbd_status
 ehci_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	usbd_status err;
 
 	if (sc->sc_bus.dying)
@@ -3018,7 +3018,7 @@ void
 ehci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	struct ehci_xfer *ex = EXFER(xfer);
-	struct ehci_softc *sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	/*struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;*/
 
 	DPRINTFN(10,("ehci_ctrl_done: xfer=%p\n", xfer));
@@ -3326,7 +3326,7 @@ void
 ehci_device_bulk_done(struct usbd_xfer *xfer)
 {
 	struct ehci_xfer *ex = EXFER(xfer);
-	struct ehci_softc *sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	int endpt = epipe->pipe.endpoint->edesc->bEndpointAddress;
 	int rd = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -3390,7 +3390,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 {
 #define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
-	struct usbd_device *dev = xfer->pipe->device;
+	struct usbd_device *dev = xfer->device;
 	struct ehci_softc *sc = (struct ehci_softc *)dev->bus;
 	struct ehci_soft_qtd *data, *dataend;
 	struct ehci_soft_qh *sqh;
@@ -3501,7 +3501,7 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 {
 #define exfer EXFER(xfer)
 	struct ehci_xfer *ex = EXFER(xfer);
-	struct ehci_softc *sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	struct ehci_soft_qtd *data, *dataend;
 	struct ehci_soft_qh *sqh;
@@ -3594,7 +3594,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	itd = NULL;
 	trans_count = 0;
 	exfer = (struct ehci_xfer *) xfer;
-	sc = (struct ehci_softc *)xfer->pipe->device->bus;
+	sc = (struct ehci_softc *)xfer->device->bus;
 	epipe = (struct ehci_pipe *)xfer->pipe;
 
 	/*
@@ -3856,14 +3856,11 @@ ehci_device_isoc_close(struct usbd_pipe *pipe)
 void
 ehci_device_isoc_done(struct usbd_xfer *xfer)
 {
-	struct ehci_xfer *exfer;
-	struct ehci_softc *sc;
-	struct ehci_pipe *epipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
+	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	int s;
 
-	exfer = EXFER(xfer);
-	sc = (struct ehci_softc *)xfer->pipe->device->bus;
-	epipe = (struct ehci_pipe *) xfer->pipe;
 
 	s = splusb();
 	epipe->u.isoc.cur_xfers--;
