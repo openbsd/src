@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.12 2014/03/05 20:31:22 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.13 2014/03/07 10:15:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,6 @@
 #include "dsp.h"
 #include "siofile.h"
 #include "midi.h"
-#include "opt.h"
 #include "sysex.h"
 #include "utils.h"
 
@@ -32,9 +31,6 @@ void zomb_onvol(void *, unsigned int);
 void zomb_fill(void *);
 void zomb_flush(void *);
 void zomb_eof(void *);
-void zomb_mmcstart(void *);
-void zomb_mmcstop(void *);
-void zomb_mmcloc(void *, unsigned int);
 void zomb_exit(void *);
 
 void dev_log(struct dev *);
@@ -110,9 +106,6 @@ struct slotops zomb_slotops = {
 	zomb_fill,
 	zomb_flush,
 	zomb_eof,
-	zomb_mmcstart,
-	zomb_mmcstop,
-	zomb_mmcloc,
 	zomb_exit
 };
 
@@ -196,21 +189,6 @@ zomb_eof(void *arg)
 	}
 #endif
 	s->ops = NULL;
-}
-
-void
-zomb_mmcstart(void *arg)
-{
-}
-
-void
-zomb_mmcstop(void *arg)
-{
-}
-
-void
-zomb_mmcloc(void *arg, unsigned int pos)
-{
 }
 
 void
@@ -1414,9 +1392,6 @@ dev_mmcstart(struct dev *d)
 void
 dev_mmcstop(struct dev *d)
 {
-	int i;
-	struct slot *s;
-
 	switch (d->tstate) {
 	case MMC_START:
 		d->tstate = MMC_STOP;
@@ -1434,19 +1409,6 @@ dev_mmcstop(struct dev *d)
 #endif
 		return;
 	}
-	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
-		if (!s->ops)
-			continue;
-		if (s->tstate == MMC_RUN) {
-#ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": requested to stop\n");
-			}
-#endif
-			s->ops->mmcstop(s->arg);
-		}
-	}
 }
 
 /*
@@ -1455,9 +1417,6 @@ dev_mmcstop(struct dev *d)
 void
 dev_mmcloc(struct dev *d, unsigned int origin)
 {
-	int i;
-	struct slot *s;
-
 	if (log_level >= 2) {
 		dev_log(d);
 		log_puts(": relocated to ");
@@ -1467,11 +1426,6 @@ dev_mmcloc(struct dev *d, unsigned int origin)
 	if (d->tstate == MMC_RUN)
 		dev_mmcstop(d);
 	d->mtc.origin = origin;
-	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
-		if (!s->ops)
-			continue;
-		s->ops->mmcloc(s->arg, d->mtc.origin);
-	}
 	if (d->tstate == MMC_RUN)
 		dev_mmcstart(d);
 }

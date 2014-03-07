@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.5 2014/03/05 20:31:22 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.6 2014/03/07 10:15:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,9 +32,6 @@ struct slotops
 	void (*fill)(void *);			/* request to fill a play block */
 	void (*flush)(void *);			/* request to flush a rec block */
 	void (*eof)(void *);			/* notify that play drained */
-	void (*mmcstart)(void *);		/* request to start */
-	void (*mmcstop)(void *);		/* request to stop */
-	void (*mmcloc)(void *, unsigned int);	/* relocate to new position */
 	void (*exit)(void *);			/* delete client */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.10 2014/03/05 20:04:21 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.11 2014/03/07 10:15:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,9 +43,6 @@ void sock_midi_imsg(void *, unsigned char *, int);
 void sock_midi_omsg(void *, unsigned char *, int);
 void sock_midi_fill(void *, int);
 struct sock *sock_new(int);
-void sock_slot_mmcstart(void *);
-void sock_slot_mmcstop(void *);
-void sock_slot_mmcloc(void *, unsigned int);
 void sock_exit(void *);
 int sock_fdwrite(struct sock *, void *, int);
 int sock_fdread(struct sock *, void *, int);
@@ -81,9 +78,6 @@ struct slotops sock_slotops = {
 	sock_slot_fill,
 	sock_slot_flush,
 	sock_slot_eof,
-	sock_slot_mmcstart,
-	sock_slot_mmcstop,
-	sock_slot_mmcloc,
 	sock_exit
 };
 
@@ -300,45 +294,6 @@ sock_new(int fd)
 	f->next = sock_list;
 	sock_list = f;
 	return f;
-}
-
-void
-sock_slot_mmcstart(void *arg)
-{
-#ifdef DEBUG
-	struct sock *f = (struct sock *)arg;
-
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": ignored mmc start signal\n");
-	}
-#endif
-}
-
-void
-sock_slot_mmcstop(void *arg)
-{
-#ifdef DEBUG
-	struct sock *f = (struct sock *)arg;
-
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": ignored mmc stop signal\n");
-	}
-#endif
-}
-
-void
-sock_slot_mmcloc(void *arg, unsigned int mmcpos)
-{
-#ifdef DEBUG
-	struct sock *f = (struct sock *)arg;
-
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": ignored mmc relocate signal\n");
-	}
-#endif
 }
 
 void
