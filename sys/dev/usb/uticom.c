@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.23 2013/11/15 10:17:39 pirofti Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.24 2014/03/07 18:39:02 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -45,9 +45,8 @@
 
 #include <dev/usb/ucomvar.h>
 
-#ifdef USB_DEBUG
-static int	uticomdebug = 0;
-
+#ifdef UTICOM_DEBUG
+static int uticomdebug = 0;
 #define DPRINTFN(n, x)	do { if (uticomdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.8 2013/08/17 08:34:45 sthen Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.9 2014/03/07 18:39:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -34,10 +34,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#ifdef USB_DEBUG
-#define UYUREX_DEBUG
-#endif
 
 #define	CMD_NONE	0xf0
 #define CMD_EOF		0x0d

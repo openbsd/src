@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.24 2013/09/28 11:22:09 sasano Exp $   */
+/*	$OpenBSD: uthum.c,v 1.25 2014/03/07 18:39:02 mpi Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -33,10 +33,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#ifdef USB_DEBUG
-#define UTHUM_DEBUG
-#endif
 
 #ifdef UTHUM_DEBUG
 #define DPRINTF(x)	do { printf x; } while (0)

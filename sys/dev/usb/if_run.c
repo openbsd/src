@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.95 2013/09/30 05:18:56 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.96 2014/03/07 18:39:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -62,10 +62,6 @@
 
 #include <dev/ic/rt2860reg.h>		/* shared with ral(4) */
 #include <dev/usb/if_runvar.h>
-
-#ifdef USB_DEBUG
-#define RUN_DEBUG
-#endif
 
 #ifdef RUN_DEBUG
 #define DPRINTF(x)	do { if (run_debug) printf x; } while (0)

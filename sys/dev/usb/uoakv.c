@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.5 2013/11/11 09:16:03 pirofti Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.6 2014/03/07 18:39:02 mpi Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -35,10 +35,6 @@
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
 #include "uoak.h"
-
-#ifdef USB_DEBUG
-#define UOAKV_DEBUG
-#endif
 
 #ifdef UOAKV_DEBUG
 int	uoakvdebug = 0;

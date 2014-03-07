@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.4 2013/11/07 10:44:37 pirofti Exp $   */
+/*	$OpenBSD: usps.c,v 1.5 2014/03/07 18:39:02 mpi Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -30,10 +30,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-
-#ifdef USB_DEBUG
-#define USPS_DEBUG
-#endif
 
 #ifdef USPS_DEBUG
 int	uspsdebug = 0;

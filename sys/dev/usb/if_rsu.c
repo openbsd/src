@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.18 2013/08/07 01:06:42 bluhm Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.19 2014/03/07 18:39:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -59,10 +59,6 @@
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_rsureg.h>
-
-#ifdef USB_DEBUG
-#define RSU_DEBUG
-#endif
 
 #ifdef RSU_DEBUG
 #define DPRINTF(x)	do { if (rsu_debug) printf x; } while (0)

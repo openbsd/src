@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.32 2013/11/07 10:33:43 pirofti Exp $ */
+/*	$OpenBSD: uts.c,v 1.33 2014/03/07 18:39:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -38,10 +38,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
-
-#ifdef USB_DEBUG
-#define UTS_DEBUG
-#endif
 
 #ifdef UTS_DEBUG
 #define DPRINTF(x)		do { printf x; } while (0)

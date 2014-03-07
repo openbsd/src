@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.32 2013/09/30 05:18:57 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.33 2014/03/07 18:39:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -59,10 +59,6 @@
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_urtwnreg.h>
-
-#ifdef USB_DEBUG
-#define URTWN_DEBUG
-#endif
 
 #ifdef URTWN_DEBUG
 #define DPRINTF(x)	do { if (urtwn_debug) printf x; } while (0)

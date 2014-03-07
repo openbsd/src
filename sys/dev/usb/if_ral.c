@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.124 2013/08/07 01:06:42 bluhm Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.125 2014/03/07 18:39:02 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -63,10 +63,6 @@
 
 #include <dev/usb/if_ralreg.h>
 #include <dev/usb/if_ralvar.h>
-
-#ifdef USB_DEBUG
-#define URAL_DEBUG
-#endif
 
 #ifdef URAL_DEBUG
 #define DPRINTF(x)	do { if (ural_debug) printf x; } while (0)

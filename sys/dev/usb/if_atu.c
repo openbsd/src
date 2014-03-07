@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.104 2013/11/15 10:17:39 pirofti Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.105 2014/03/07 18:39:02 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -81,10 +81,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
-
-#ifdef USB_DEBUG
-#define ATU_DEBUG
-#endif
 
 #include <dev/usb/if_atureg.h>
 
