@@ -13,6 +13,7 @@ DDEESSCCRRIIPPTTIIOONN
 
        One-line true condition with block.
        Two-line true condition without continuation and macros.
+       Two-line true condition wwiitthhoouutt ccoonnttiinnuuaattiioonn bbuutt wwiitthh mmaaccrrooss..
        Two-line true condition with continuation and macros.
 
        Two-line true condition with blank line.
@@ -20,6 +21,9 @@ DDEESSCCRRIIPPTTIIOONN
        Inner one-line true condition.
        Inner two-line true condition without continuation and macros.
        Back to the outer true condition.
+       Outer true condition.  After conditional.
+       Outer true condition.  After conditional.
+       Outer true condition.  After conditional.
 
 
 

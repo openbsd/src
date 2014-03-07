@@ -13,13 +13,18 @@ False condition with whitespace:
 .if t 
 True condition with whitespace:
 .if n 
-.if n \{One-line true condition with block.\}
-.if t \{One-line false condition with block.\}
+.if n \{One-line true condition\} with block.
+.if t \{One-line false condition\} with block.
 .br
 .if n \{Two-line true condition
-without continuation and macros.\}
+without continuation\} and macros.
 .if t \{Two-line false condition
-without continuation and macros.\}
+without continuation\} and macros.
+.br
+.if n \{Two-line true condition
+.B without continuation\} but with macros.
+.if t \{Two-line false condition
+.B without continuation\} but with macros.
 .br
 .if n \{\
 Two-line true condition
@@ -58,3 +63,18 @@ without continuation and macros.\}
 without continuation and macros.\}
 .br
 Back to the outer false condition.\}
+.br
+.if n \{Outer true condition.
+.if t \{Inner false condition.
+inner\}middle\}end
+After conditional.
+.br
+.if n \{Outer true condition.
+.if t \{Inner false condition.
+.\}middle\}end
+After conditional.
+.br
+.if n \{Outer true condition.
+.if t \{Inner false condition.
+.B\}middle\}end
+After conditional.
