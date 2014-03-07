@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.44 2014/02/04 07:59:40 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.45 2014/03/07 09:45:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,13 +30,13 @@ sub check_1flavor
 {
 	my ($f, $spec) = @_;
 
-	for my $_ (split /\-/o, $spec) {
+	for my $flavor (split /\-/o, $spec) {
 		# must not be here
-		if (m/^\!(.*)$/o) {
+		if ($flavor =~ m/^\!(.*)$/o) {
 			return 0 if $f->{$1};
 		# must be here
 		} else {
-			return 0 unless $f->{$_};
+			return 0 unless $f->{$flavor};
 		}
 	}
 	return 1;
@@ -47,8 +47,8 @@ sub match
 	my ($self, $h) = @_;
 
 	# check each flavor constraint
-	for my $_ (split /\,/o, $$self) {
-		if (check_1flavor($h->{flavors}, $_)) {
+	for my $c (split /\,/o, $$self) {
+		if (check_1flavor($h->{flavors}, $c)) {
 			return 1;
 		}
 	}
