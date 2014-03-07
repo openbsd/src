@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.33 2014/03/07 19:34:49 tedu Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.34 2014/03/07 19:44:07 tedu Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -393,15 +393,12 @@ char *trailer[] =
 void
 write_section(char *section[])
 {
-	int c;
 	int i;
 	char *s;
-	FILE *f;
 
-	f = code_file;
 	for (i = 0; (s = section[i]); ++i) {
 		++outline;
-		fputs(s, f);
-		putc('\n', f);
+		fputs(s, code_file);
+		putc('\n', code_file);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.21 2014/03/07 19:34:49 tedu Exp $	*/
+/*	$OpenBSD: output.c,v 1.22 2014/03/07 19:44:07 tedu Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -185,7 +185,6 @@ output_rule_data(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", symbol_value[rlhs[i]]);
 	}
 	if (!rflag)
@@ -205,7 +204,6 @@ output_rule_data(void)
 			j = 1;
 		} else
 			j++;
-
 		fprintf(output_file, "%5d,", rrhs[i + 1] - rrhs[i] - 1);
 	}
 	if (!rflag)
@@ -234,7 +232,6 @@ output_yydefred(void)
 			putc('\n', output_file);
 			j = 1;
 		}
-
 		fprintf(output_file, "%5d,", (defred[i] ? defred[i] - 2 : 0));
 	}
 
@@ -287,7 +284,6 @@ token_actions(void)
 	if (parser[i]) {
 		for (j = 0; j < 2 * ntokens; ++j)
 			actionrow[j] = 0;
-
 			shiftcount = 0;
 			reducecount = 0;
 			for (p = parser[i]; p; p = p->next) {
@@ -354,9 +350,8 @@ goto_actions(void)
 	state_count = NEW2(nstates, short);
 
 	k = default_goto(start_symbol + 1);
-	fprintf(output_file,
-	"const short %sdgoto[] =\n"
-	"\t{%40d,", symbol_prefix, k);
+	fprintf(output_file, "const short %sdgoto[] =\n"
+	    "\t{%40d,", symbol_prefix, k);
 	save_column(start_symbol + 1, k);
 
 	j = 10;
@@ -392,12 +387,13 @@ default_goto(int symbol)
 	m = goto_map[symbol];
 	n = goto_map[symbol + 1];
 
-	if (m == n) return (0);
+	if (m == n)
+		return (0);
 
 	memset(state_count, 0, nstates * sizeof(short));
 
 	for (i = m; i < n; i++)
-	state_count[to_state[i]]++;
+		state_count[to_state[i]]++;
 
 	max = 0;
 	default_state = 0;
@@ -620,11 +616,15 @@ pack_vector(int vector)
 					fatal("maximum table size exceeded");
 
 				newmax = maxtable;
-				do { newmax += 200; } while (newmax <= loc);
-				table = (short *) realloc(table, newmax*sizeof(short));
-				if (table == 0) no_space();
-				check = (short *) realloc(check, newmax*sizeof(short));
-				if (check == 0) no_space();
+				do {
+					newmax += 200;
+				} while (newmax <= loc);
+				table = realloc(table, newmax*sizeof(short));
+				if (table == 0)
+					no_space();
+				check = realloc(check, newmax*sizeof(short));
+				if (check == 0)
+					no_space();
 				for (l  = maxtable; l < newmax; ++l) {
 					table[l] = 0;
 					check[l] = -1;
@@ -663,9 +663,8 @@ output_base(void)
 {
 	int i, j;
 
-	fprintf(output_file,
-	"const short %ssindex[] =\n"
-	"\t{%39d,", symbol_prefix, base[0]);
+	fprintf(output_file, "const short %ssindex[] =\n"
+	    "\t{%39d,", symbol_prefix, base[0]);
 
 	j = 10;
 	for (i = 1; i < nstates; i++) {
@@ -676,14 +675,12 @@ output_base(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", base[i]);
 	}
 
 	if (!rflag)
 		outline += 2;
-	fprintf(output_file,
-	    "};\n"
+	fprintf(output_file, "};\n"
 	    "const short %srindex[] =\n"
 	    "\t{%39d,", symbol_prefix, base[nstates]);
 
@@ -696,14 +693,12 @@ output_base(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", base[i]);
 	}
 
 	if (!rflag)
 		outline += 2;
-	fprintf(output_file,
-	    "};\n"
+	fprintf(output_file, "};\n"
 	    "const short %sgindex[] =\n"
 	    "\t{%39d,", symbol_prefix, base[2*nstates]);
 
@@ -716,7 +711,6 @@ output_base(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", base[i]);
 	}
 
@@ -735,9 +729,8 @@ output_table(void)
 
 	++outline;
 	fprintf(code_file, "#define YYTABLESIZE %d\n", high);
-	fprintf(output_file,
-	"const short %stable[] =\n"
-	"\t{%40d,", symbol_prefix, table[0]);
+	fprintf(output_file, "const short %stable[] =\n"
+	    "\t{%40d,", symbol_prefix, table[0]);
 
 	j = 10;
 	for (i = 1; i <= high; i++) {
@@ -748,7 +741,6 @@ output_table(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", table[i]);
 	}
 
@@ -765,9 +757,8 @@ output_check(void)
 	int i;
 	int j;
 
-	fprintf(output_file,
-	"const short %scheck[] =\n"
-	"\t{%40d,", symbol_prefix, check[0]);
+	fprintf(output_file, "const short %scheck[] =\n"
+	    "\t{%40d,", symbol_prefix, check[0]);
 
 	j = 10;
 	for (i = 1; i <= high; i++) {
@@ -778,7 +769,6 @@ output_check(void)
 			j = 1;
 		} else
 			++j;
-
 		fprintf(output_file, "%5d,", check[i]);
 	}
 
@@ -834,12 +824,14 @@ output_defines(void)
 			if (c == '"') {
 				while ((c = (unsigned char)*++s) != '"') {
 					putc(c, code_file);
-					if (dflag) putc(c, defines_file);
+					if (dflag)
+						putc(c, defines_file);
 				}
 			} else {
 				do {
 					putc(c, code_file);
-					if (dflag) putc(c, defines_file);
+					if (dflag)
+						putc(c, defines_file);
 				} while ((c = (unsigned char)*++s));
 			}
 			++outline;
@@ -944,7 +936,8 @@ output_debug(void)
 				}
 				j += k;
 				if (j > 80) {
-					if (!rflag) ++outline;
+					if (!rflag)
+						++outline;
 					putc('\n', output_file);
 					j = k;
 				}
@@ -964,11 +957,11 @@ output_debug(void)
 			} else if (s[0] == '\'') {
 				if (s[1] == '"') {
 					j += 7;
-					if (j > 80)
-					{
-					if (!rflag) ++outline;
-					putc('\n', output_file);
-					j = 7;
+					if (j > 80) {
+						if (!rflag)
+							++outline;
+						putc('\n', output_file);
+						j = 7;
 					}
 					fprintf(output_file, "\"'\\\"'\",");
 				} else {
@@ -978,12 +971,13 @@ output_debug(void)
 						if (*s == '\\') {
 							k += 2;
 							if (*++s == '\\')
-							++k;
+								++k;
 						}
 					}
 					j += k;
 					if (j > 80) {
-						if (!rflag) ++outline;
+						if (!rflag)
+							++outline;
 						putc('\n', output_file);
 						j = k;
 					}
@@ -1005,18 +999,22 @@ output_debug(void)
 				k = strlen(s) + 3;
 				j += k;
 				if (j > 80) {
-					if (!rflag) ++outline;
+					if (!rflag)
+						++outline;
 					putc('\n', output_file);
 					j = k;
 				}
 				putc('"', output_file);
-				do { putc(*s, output_file); } while (*++s);
+				do {
+					putc(*s, output_file);
+				} while (*++s);
 				fprintf(output_file, "\",");
 			}
 		} else {
 			j += 2;
 			if (j > 80) {
-				if (!rflag) ++outline;
+				if (!rflag)
+					++outline;
 				putc('\n', output_file);
 				j = 2;
 			}
@@ -1041,13 +1039,13 @@ output_debug(void)
 				fprintf(output_file, " \\\"");
 				while (*++s != '"') {
 					if (*s == '\\') {
-					if (s[1] == '\\')
-						fprintf(output_file, "\\\\\\\\");
-					else
-						fprintf(output_file, "\\\\%c", s[1]);
-					++s;
+						if (s[1] == '\\')
+							fprintf(output_file, "\\\\\\\\");
+						else
+							fprintf(output_file, "\\\\%c", s[1]);
+						++s;
 					} else
-					putc(*s, output_file);
+						putc(*s, output_file);
 				}
 				fprintf(output_file, "\\\"");
 			} else if (s[0] == '\'') {
@@ -1183,10 +1181,9 @@ free_itemsets(void)
 	core *cp, *next;
 
 	free(state_table);
-	for (cp = first_state; cp; cp = next)
-	{
-	next = cp->next;
-	free(cp);
+	for (cp = first_state; cp; cp = next) {
+		next = cp->next;
+		free(cp);
 	}
 }
 
