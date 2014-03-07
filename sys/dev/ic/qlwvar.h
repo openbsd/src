@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.1 2014/03/05 23:10:41 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.2 2014/03/07 00:20:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -37,7 +37,7 @@ enum qlw_isp_type {
 	QLW_ISP1240,
 	QLW_ISP1080,
 	QLW_ISP1280,
-	QLW_ISP10160 = 2,
+	QLW_ISP10160,
 	QLW_ISP12160,
 };
 
