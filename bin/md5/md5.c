@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.71 2014/01/15 16:07:27 jmc Exp $	*/
+/*	$OpenBSD: md5.c,v 1.72 2014/03/07 04:10:55 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -210,7 +210,7 @@ TAILQ_HEAD(hash_list, hash_function);
 
 void digest_end(const struct hash_function *, void *, char *, size_t, int);
 int  digest_file(const char *, struct hash_list *, int);
-int  digest_filelist(const char *, struct hash_function *, char **);
+int  digest_filelist(const char *, struct hash_function *, int, char **);
 void digest_print(const struct hash_function *, const char *, const char *);
 #if !defined(SHA2_ONLY)
 void digest_printstr(const struct hash_function *, const char *, const char *);
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 	size_t len;
 	char *cp, *input_string, *selective_checklist;
 	const char *optstr;
-	int fl, error, base64;
+	int fl, error, base64, i;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
 	TAILQ_INIT(&hl);
@@ -400,15 +400,23 @@ main(int argc, char **argv)
 		digest_test(&hl);
 	else if (input_string)
 		digest_string(input_string, &hl);
-	else if (selective_checklist)
-		error = digest_filelist(selective_checklist, TAILQ_FIRST(&hl), argv);
-	else if (cflag) {
+	else if (selective_checklist) {
+		error = digest_filelist(selective_checklist, TAILQ_FIRST(&hl),
+		    argc, argv);
+		for (i = 0; i < argc; i++) {
+			if (argv[i] != NULL) {
+				warnx("%s does not exist in %s", argv[i],
+				    selective_checklist);
+				error++;
+			}
+		}
+	} else if (cflag) {
 		if (argc == 0)
-			error = digest_filelist("-", TAILQ_FIRST(&hl), NULL);
+			error = digest_filelist("-", TAILQ_FIRST(&hl), 0, NULL);
 		else
 			while (argc--)
 				error += digest_filelist(*argv++,
-				    TAILQ_FIRST(&hl), NULL);
+				    TAILQ_FIRST(&hl), 0, NULL);
 	} else
 #endif /* !defined(SHA2_ONLY) */
 	if (pflag || argc == 0)
@@ -562,12 +570,13 @@ digest_file(const char *file, struct hash_list *hl, int echo)
  * Print out the result of each comparison.
  */
 int
-digest_filelist(const char *file, struct hash_function *defhash, char **sel)
+digest_filelist(const char *file, struct hash_function *defhash, int selcount,
+    char **sel)
 {
-	int found, base64, error, cmp;
+	int found, base64, error, cmp, i;
 	size_t algorithm_max, algorithm_min;
 	const char *algorithm;
-	char *filename, *checksum, *buf, *p, **sp;
+	char *filename, *checksum, *buf, *p;
 	char digest[MAX_DIGEST_LEN + 1];
 	char *lbuf = NULL;
 	FILE *listfp, *fp;
@@ -691,13 +700,17 @@ digest_filelist(const char *file, struct hash_function *defhash, char **sel)
 		/*
 		 * If only a selection of files is wanted, proceed only
 		 * if the filename matches one of those in the selection.
+		 * Mark found files by setting them to NULL so that we can
+		 * detect files that are missing from the checklist later.
 		 */
 		if (sel) {
-			for (sp = sel; *sp; sp++) {
-				if (strcmp(*sp, filename) == 0)
+			for (i = 0; i < selcount; i++) {
+				if (sel[i] && strcmp(sel[i], filename) == 0) {
+					sel[i] = NULL;
 					break;
+				}
 			}
-			if (*sp == NULL)
+			if (i == selcount)
 				continue;
 		}
 
