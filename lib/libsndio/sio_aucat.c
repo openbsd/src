@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.17 2014/03/05 20:40:49 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.18 2014/03/07 10:17:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,17 +95,18 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 			hdl->sio.eof = 1;
 			return 0;
 		}
+		DPRINTFN(3, "aucat: data(%d)\n", size);
 		return 1;
 	case AMSG_FLOWCTL:
 		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
 		hdl->aucat.maxwrite += delta * (int)hdl->wbpf;
-		DPRINTFN(3, "aucat: flowctl = %d, maxwrite = %d\n",
+		DPRINTFN(3, "aucat: flowctl(%d), maxwrite = %d\n",
 		    delta, hdl->aucat.maxwrite);
 		break;
 	case AMSG_MOVE:
 		delta = ntohl(hdl->aucat.rmsg.u.ts.delta);
 		hdl->delta += delta;
-		DPRINTFN(3, "aucat: move = %d, delta = %d, maxwrite = %d\n",
+		DPRINTFN(3, "aucat: move(%d), delta = %d, maxwrite = %d\n",
 		    delta, hdl->delta, hdl->aucat.maxwrite);
 		if (hdl->delta >= 0) {
 			_sio_onmove_cb(&hdl->sio, hdl->delta);
@@ -115,9 +116,11 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 	case AMSG_SETVOL:
 		ctl = ntohl(hdl->aucat.rmsg.u.vol.ctl);
 		hdl->curvol = hdl->reqvol = ctl;
+		DPRINTFN(3, "aucat: setvol(%d)\n", ctl);
 		_sio_onvol_cb(&hdl->sio, ctl);
 		break;
 	case AMSG_STOP:
+		DPRINTFN(3, "aucat: stop()\n");
 		hdl->pstate = PSTATE_INIT;
 		break;
 	default:
