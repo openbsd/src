@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.49 2014/03/07 19:49:44 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.50 2014/03/07 19:53:33 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -253,7 +253,8 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 }
 
 static void
-kdf(uint8_t *salt, size_t saltlen, int rounds, uint8_t *key, size_t keylen)
+kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin,
+    uint8_t *key, size_t keylen)
 {
 	char pass[1024];
 	int rppflags = RPP_ECHO_OFF;
@@ -263,7 +264,7 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, uint8_t *key, size_t keylen)
 		return;
 	}
 
-	if (!isatty(STDIN_FILENO))
+	if (allowstdin && !isatty(STDIN_FILENO))
 		rppflags |= RPP_STDIN;
 	if (!readpassphrase("passphrase: ", pass, sizeof(pass), rppflags))
 		errx(1, "unable to read passphrase");
@@ -313,7 +314,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	enckey.kdfrounds = htonl(rounds);
 	memcpy(enckey.fingerprint, fingerprint, FPLEN);
 	arc4random_buf(enckey.salt, sizeof(enckey.salt));
-	kdf(enckey.salt, sizeof(enckey.salt), rounds, xorkey, sizeof(xorkey));
+	kdf(enckey.salt, sizeof(enckey.salt), rounds, 1, xorkey, sizeof(xorkey));
 	memcpy(enckey.checksum, digest, sizeof(enckey.checksum));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
@@ -355,7 +356,8 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	if (memcmp(enckey.kdfalg, KDFALG, 2))
 		errx(1, "unsupported KDF");
 	rounds = ntohl(enckey.kdfrounds);
-	kdf(enckey.salt, sizeof(enckey.salt), rounds, xorkey, sizeof(xorkey));
+	kdf(enckey.salt, sizeof(enckey.salt), rounds, strcmp(msgfile, "-") != 0,
+	    xorkey, sizeof(xorkey));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
 	explicit_bzero(xorkey, sizeof(xorkey));
