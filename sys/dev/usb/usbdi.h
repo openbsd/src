@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.61 2014/03/06 23:51:04 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.62 2014/03/07 09:38:14 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -171,6 +171,8 @@ struct usbd_desc_iter {
 };
 void usbd_desc_iter_init(struct usbd_device *, struct usbd_desc_iter *);
 const usb_descriptor_t *usbd_desc_iter_next(struct usbd_desc_iter *);
+
+int usbd_str(usb_string_descriptor_t *, int, const char *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB task

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.119 2014/01/15 11:10:40 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.120 2014/03/07 09:38:14 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -157,8 +157,6 @@ void		ohci_device_isoc_done(struct usbd_xfer *);
 
 usbd_status	ohci_device_setintr(struct ohci_softc *sc,
 			    struct ohci_pipe *pipe, int ival);
-
-int		ohci_str(usb_string_descriptor_t *, int, const char *);
 
 void		ohci_timeout(void *);
 void		ohci_timeout_task(void *);
@@ -2279,23 +2277,6 @@ usb_hub_descriptor_t ohci_hubd = {
 	{0},
 };
 
-int
-ohci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -2399,13 +2380,13 @@ ohci_root_ctrl_start(struct usbd_xfer *xfer)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				totlen = ohci_str(buf, len, "\001");
+				totlen = usbd_str(buf, len, "\001");
 				break;
 			case 1: /* Vendor */
-				totlen = ohci_str(buf, len, sc->sc_vendor);
+				totlen = usbd_str(buf, len, sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = ohci_str(buf, len, "OHCI root hub");
+				totlen = usbd_str(buf, len, "OHCI root hub");
 				break;
 			}
 			break;

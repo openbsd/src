@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.105 2013/12/09 01:02:06 brad Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.106 2014/03/07 09:38:14 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -152,7 +152,6 @@ void		uhci_add_bulk(struct uhci_softc *, struct uhci_soft_qh *);
 void		uhci_remove_ls_ctrl(struct uhci_softc *, struct uhci_soft_qh *);
 void		uhci_remove_hs_ctrl(struct uhci_softc *, struct uhci_soft_qh *);
 void		uhci_remove_bulk(struct uhci_softc *,struct uhci_soft_qh *);
-int		uhci_str(usb_string_descriptor_t *, int, char *);
 void		uhci_add_loop(struct uhci_softc *sc);
 void		uhci_rem_loop(struct uhci_softc *sc);
 
@@ -2890,23 +2889,6 @@ usb_hub_descriptor_t uhci_hubd_piix = {
 	{ 0x00 },		/* both ports are removable */
 };
 
-int
-uhci_str(usb_string_descriptor_t *p, int l, char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * The USB hub protocol requires that SET_FEATURE(PORT_RESET) also
  * enables the port, and also states that SET_FEATURE(PORT_ENABLE)
@@ -3105,13 +3087,13 @@ uhci_root_ctrl_start(struct usbd_xfer *xfer)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				totlen = uhci_str(buf, len, "\001");
+				totlen = usbd_str(buf, len, "\001");
 				break;
 			case 1: /* Vendor */
-				totlen = uhci_str(buf, len, sc->sc_vendor);
+				totlen = usbd_str(buf, len, sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = uhci_str(buf, len, "UHCI root hub");
+				totlen = usbd_str(buf, len, "UHCI root hub");
 				break;
 			}
 			break;

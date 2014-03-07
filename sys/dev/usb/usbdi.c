@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.69 2014/03/06 23:53:11 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.70 2014/03/07 09:38:14 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -1106,3 +1106,21 @@ usbd_desc_iter_next(struct usbd_desc_iter *iter)
 	}
 	return desc;
 }
+
+int
+usbd_str(usb_string_descriptor_t *p, int l, const char *s)
+{
+	int i;
+
+	if (l == 0)
+		return (0);
+	p->bLength = 2 * strlen(s) + 2;
+	if (l == 1)
+		return (1);
+	p->bDescriptorType = UDESC_STRING;
+	l -= 2;
+	for (i = 0; s[i] && l > 1; i++, l -= 2)
+		USETW2(p->bString[i], 0, s[i]);
+	return (2*i+2);
+}
+

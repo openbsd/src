@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.141 2014/02/24 18:21:20 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.142 2014/03/07 09:38:14 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -175,7 +175,6 @@ void		ehci_device_isoc_done(struct usbd_xfer *);
 void		ehci_device_clear_toggle(struct usbd_pipe *pipe);
 void		ehci_noop(struct usbd_pipe *pipe);
 
-int		ehci_str(usb_string_descriptor_t *, int, const char *);
 void		ehci_pcd(struct ehci_softc *, struct usbd_xfer *);
 void		ehci_disown(struct ehci_softc *, int, int);
 
@@ -1874,23 +1873,6 @@ usb_hub_descriptor_t ehci_hubd = {
 	{0},
 };
 
-int
-ehci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -2013,13 +1995,13 @@ ehci_root_ctrl_start(struct usbd_xfer *xfer)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				totlen = ehci_str(buf, len, "\001");
+				totlen = usbd_str(buf, len, "\001");
 				break;
 			case 1: /* Vendor */
-				totlen = ehci_str(buf, len, sc->sc_vendor);
+				totlen = usbd_str(buf, len, sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = ehci_str(buf, len, "EHCI root hub");
+				totlen = usbd_str(buf, len, "EHCI root hub");
 				break;
 			}
 			break;
