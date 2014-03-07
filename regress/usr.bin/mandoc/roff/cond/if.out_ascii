@@ -9,7 +9,8 @@ DDEESSCCRRIIPPTTIIOONN
        One-line true condition.
 
        Next-line empty true condition.
-       False condition with whitespace: True condition with whitespace:
+       False condition with whitespace:
+       True condition with whitespace:
 
        One-line true condition with block.
        Two-line true condition without continuation and macros.
@@ -23,6 +24,7 @@ DDEESSCCRRIIPPTTIIOONN
        Back to the outer true condition.
        Outer true condition.  After conditional.
        Outer true condition.  After conditional.
+       Outer true condition.  Inner true condition.  After conditional.
        Outer true condition.  After conditional.
 
 
