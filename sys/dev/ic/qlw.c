@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.3 2014/03/07 22:17:02 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.4 2014/03/07 22:39:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1432,7 +1432,9 @@ qlw_parse_nvram_1040(struct qlw_softc *sc, int bus)
 
 	KASSERT(bus == 0);
 
-	sc->sc_initiator[0] = (nv->config1 >> 4);
+	if (!ISSET(sc->sc_flags, QLW_FLAG_INITIATOR))
+		sc->sc_initiator[0] = (nv->config1 >> 4);
+
 	sc->sc_retry_count[0] = nv->retry_count;
 	sc->sc_retry_delay[0] = nv->retry_delay;
 	sc->sc_reset_delay[0] = nv->reset_delay;
@@ -1459,7 +1461,9 @@ qlw_parse_nvram_1080(struct qlw_softc *sc, int bus)
 	struct qlw_nvram_bus *nv = &nvram->bus[bus];
 	int target;
 
-	sc->sc_initiator[bus] = (nv->config1 & 0x0f);
+	if (!ISSET(sc->sc_flags, QLW_FLAG_INITIATOR))
+		sc->sc_initiator[bus] = (nv->config1 & 0x0f);
+
 	sc->sc_retry_count[bus] = nv->retry_count;
 	sc->sc_retry_delay[bus] = nv->retry_delay;
 	sc->sc_reset_delay[bus] = nv->reset_delay;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.5 2014/03/07 12:45:49 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.6 2014/03/07 22:39:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -251,6 +251,11 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	while (node) {
 		if (OF_getprop(node, "scsi-initiator-id",
 		    &initiator, sizeof(initiator)) == sizeof(initiator)) {
+			/*
+			 * Override the SCSI initiator ID provided by
+			 * the nvram.
+			 */
+			sc->sc_flags |= QLW_FLAG_INITIATOR;
 			sc->sc_initiator[0] = sc->sc_initiator[1] = initiator;
 			break;
 		}

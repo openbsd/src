@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.4 2014/03/07 22:17:03 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.5 2014/03/07 22:39:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -76,6 +76,9 @@ struct qlw_target {
 
 struct qlw_softc {
 	struct device		sc_dev;
+
+	int			sc_flags;
+#define QLW_FLAG_INITIATOR	0x0001
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
