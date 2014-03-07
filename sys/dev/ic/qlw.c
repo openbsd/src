@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.1 2014/03/05 23:10:41 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.2 2014/03/07 12:45:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -373,7 +373,7 @@ qlw_attach(struct qlw_softc *sc)
 	for (bus = 0; bus < sc->sc_numbusses; bus++) {
 		sc->sc_link[bus].adapter = &qlw_switch;
 		sc->sc_link[bus].adapter_softc = sc;
-		sc->sc_link[bus].adapter_target = 7;
+		sc->sc_link[bus].adapter_target = sc->sc_initiator[bus];
 		sc->sc_link[bus].adapter_buswidth = QLW_MAX_TARGETS;
 		sc->sc_link[bus].openings = sc->sc_max_queue_depth[bus];
 		sc->sc_link[bus].pool = &sc->sc_iopool;
@@ -408,7 +408,7 @@ qlw_config_bus(struct qlw_softc *sc, int bus)
 	int target, err;
 
 	sc->sc_mbox[0] = QLW_MBOX_SET_INITIATOR_ID;
-	sc->sc_mbox[1] = (bus << 7) | 7;
+	sc->sc_mbox[1] = (bus << 7) | sc->sc_initiator[bus];
 
 	if (qlw_mbox(sc, 0x0003, 0x0001)) {
 		printf("couldn't set initiator id: %x\n", sc->sc_mbox[0]);
@@ -1429,6 +1429,7 @@ qlw_parse_nvram_1040(struct qlw_softc *sc, int bus)
 
 	KASSERT(bus == 0);
 
+	sc->sc_initiator[0] = (nv->config1 >> 4);
 	sc->sc_retry_count[0] = nv->retry_count;
 	sc->sc_retry_delay[0] = nv->retry_delay;
 	sc->sc_reset_delay[0] = nv->reset_delay;
@@ -1455,6 +1456,7 @@ qlw_parse_nvram_1080(struct qlw_softc *sc, int bus)
 	struct qlw_nvram_bus *nv = &nvram->bus[bus];
 	int target;
 
+	sc->sc_initiator[bus] = (nv->config1 & 0x0f);
 	sc->sc_retry_count[bus] = nv->retry_count;
 	sc->sc_retry_delay[bus] = nv->retry_delay;
 	sc->sc_reset_delay[bus] = nv->reset_delay;

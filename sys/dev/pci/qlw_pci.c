@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.4 2014/03/06 18:09:17 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.5 2014/03/07 12:45:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -106,6 +106,9 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	u_int32_t pcictl;
+#ifdef __sparc64__
+	int node, initiator;
+#endif
 
 	pcireg_t bars[] = { QLW_PCI_MEM_BAR, QLW_PCI_IO_BAR };
 	pcireg_t memtype;
@@ -224,6 +227,34 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	case QLW_GEN_ISP12160:
 		sc->sc_firmware = isp_12160_risc_code;
 		break;
+	}
+#endif
+
+	/*
+	 * The standard SCSI initiator ID is 7, but various SGI
+	 * machines use 0 as the initiator ID for their onboard SCSI.
+	 * Add-on cards should have a valid nvram, which will override
+	 * these defaults.
+	 */
+#ifdef __sgi__
+	sc->sc_initiator[0] = sc->sc_initiator[1] = 0;
+#else
+	sc->sc_initiator[0] = sc->sc_initiator[1] = 7;
+#endif
+
+#ifdef __sparc64__
+	/*
+	 * Walk up the Open Firmware device tree until we find a
+	 * "scsi-initiator-id" property.
+	 */
+	node = PCITAG_NODE(pa->pa_tag);
+	while (node) {
+		if (OF_getprop(node, "scsi-initiator-id",
+		    &initiator, sizeof(initiator)) == sizeof(initiator)) {
+			sc->sc_initiator[0] = sc->sc_initiator[1] = initiator;
+			break;
+		}
+		node = OF_parent(node);
 	}
 #endif
 

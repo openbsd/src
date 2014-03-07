@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.2 2014/03/07 00:20:55 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.3 2014/03/07 12:45:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -111,6 +111,7 @@ struct qlw_softc {
 	int			sc_nvram_size;
 	int			sc_nvram_minversion;
 
+	u_int8_t		sc_initiator[2];
 	u_int8_t		sc_retry_count[2];
 	u_int8_t		sc_retry_delay[2];
 	u_int8_t		sc_reset_delay[2];
