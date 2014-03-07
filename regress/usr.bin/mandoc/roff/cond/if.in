@@ -84,3 +84,11 @@ After conditional.
 .if t \{Inner false condition.
 .B\}middle\}end
 After conditional.
+.br
+Backslash-backslash-brace in text:
+.if t \{This text is not printed.\\}
+This neither.\}
+On a macro line:
+.if t \{.B This text\\} is not printed.
+.B This\} neither.
+End.
