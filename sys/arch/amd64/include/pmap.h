@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.42 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.43 2014/03/07 16:56:57 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -368,7 +368,6 @@ struct pmap_remove_record {
 extern u_long PTDpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
-extern int pmap_pg_g;			/* do we support PG_G? */
 
 extern paddr_t ptp_masks[];
 extern int ptp_shifts[];

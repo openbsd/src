@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2013/11/19 04:12:17 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2014/03/07 16:56:57 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -229,13 +229,6 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 
 /*
- * pmap_pg_g: if our processor supports PG_G in the PTE then we
- * set pmap_pg_g to PG_G (otherwise it is zero).
- */
-
-int pmap_pg_g = 0;
-
-/*
  * pmap_pg_wc: if our processor supports PAT then we set this
  * to be the pte bits for Write Combining. Else we fall back to
  * UC- so mtrrs can override the cacheability;
@@ -442,7 +435,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/* special 1:1 mappings in the first 2MB must not be global */
 	if (va >= (vaddr_t)NBPD_L2)
-		npte |= pmap_pg_g;
+		npte |= PG_G;
 
 	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
@@ -578,8 +571,6 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	/*
 	 * enable global TLB entries.
 	 */
-	pmap_pg_g = PG_G;		/* enable software */
-
 	/* add PG_G attribute to already mapped kernel pages */
 #if KERNBASE == VM_MIN_KERNEL_ADDRESS
 	for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
@@ -2117,7 +2108,7 @@ enter_now:
 	else if (va < VM_MAX_ADDRESS)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
-		npte |= pmap_pg_g;
+		npte |= PG_G;
 
 	ptes[pl1_i(va)] = npte;		/* zap! */
 
