@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.45 2014/01/20 17:23:17 jcs Exp $ */
+/*	$OpenBSD: usb.h,v 1.46 2014/03/08 11:47:26 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -138,12 +138,18 @@ typedef struct {
 #define  UDESC_OTHER_SPEED_CONFIGURATION 0x07
 #define  UDESC_INTERFACE_POWER	0x08
 #define  UDESC_OTG		0x09
+#define  UDESC_DEBUG		0x0A
+#define  UDESC_IFACE_ASSOC	0x0B	/* interface association */
+#define  UDESC_BOS		0x0F	/* binary object store */
+#define  UDESC_DEVICE_CAPABILITY	0x10
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
 #define  UDESC_CS_INTERFACE	0x24
 #define  UDESC_CS_ENDPOINT	0x25
 #define  UDESC_HUB		0x29
+#define  UDESC_SS_HUB		0x2A	/* super speed */
+#define  UDESC_ENDPOINT_SS_COMP	0x30	/* super speed */
 #define UR_SET_DESCRIPTOR	0x07
 #define UR_GET_CONFIG		0x08
 #define UR_SET_CONFIG		0x09
@@ -158,8 +164,8 @@ typedef struct {
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
 
-#define USB_2_MAX_CTRL_PACKET	64
-#define USB_2_MAX_BULK_PACKET	512
+#define USB_2_MAX_CTRL_PACKET  64
+#define USB_2_MAX_BULK_PACKET  512
 
 typedef struct {
 	uByte		bLength;
@@ -171,8 +177,6 @@ typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bcdUSB;
-#define UD_USB_2_0		0x0200
-#define UD_IS_USB2(d) (UGETW((d)->bcdUSB) >= UD_USB_2_0)
 	uByte		bDeviceClass;
 	uByte		bDeviceSubClass;
 	uByte		bDeviceProtocol;
@@ -245,6 +249,15 @@ typedef struct {
 	uByte		bInterval;
 } __packed usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bMaxBurst;
+	uByte		bmAttributes;
+	uWord		wBytesPerInterval;
+} __packed usb_endpoint_ss_comp_descriptor_t;
+#define USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE 6
 
 /*
  * Note: The length of the USB string descriptor is stored in a one byte
@@ -369,9 +382,11 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_POWER			0x0100
+#define UPS_PORT_POWER_SS		0x0200	/* super-speed only */
+#define UPS_FULL_SPEED			0x0000
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
-#define UPS_PORT_TEST			0x0800
+#define UPS_SUPER_SPEED			0x0800
 #define UPS_PORT_INDICATOR		0x1000
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
@@ -389,6 +404,7 @@ typedef struct {
 #define  UDPROTO_FSHUB		0x00
 #define  UDPROTO_HSHUBSTT	0x01
 #define  UDPROTO_HSHUBMTT	0x02
+#define  UDPROTO_SSHUB		0x03
 #define UDCLASS_DIAGNOSTIC	0xdc
 #define UDCLASS_WIRELESS	0xe0
 #define UDCLASS_VIDEO		0xef
@@ -630,9 +646,10 @@ struct usb_device_info {
 	u_int8_t	udi_protocol;
 	u_int8_t	udi_config;
 	u_int8_t	udi_speed;
-#define USB_SPEED_LOW  1
-#define USB_SPEED_FULL 2
-#define USB_SPEED_HIGH 3
+#define USB_SPEED_LOW	1
+#define USB_SPEED_FULL	2
+#define USB_SPEED_HIGH	3
+#define USB_SPEED_SUPER	4
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
