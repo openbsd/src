@@ -1,0 +1,29 @@
+TP-SAMELINE(1)             OpenBSD Reference Manual             TP-SAMELINE(1)
+
+
+
+NNAAMMEE
+       TP-sameline - test sameline logic of indented paragraphs
+
+DDEESSCCRRIIPPTTIIOONN
+   wwiitthhoouutt uusseerr--ddeeffiinneedd mmaaccrrooss
+       with width:
+
+       tag   text
+
+       without width:
+
+       20n    text
+
+   wwiitthh uusseerr--ddeeffiinneedd mmaaccrrooss
+       with width:
+
+       tag   text
+
+       without width:
+
+       20n    text
+
+
+
+OpenBSD                          March 8, 2014                  TP-SAMELINE(1)

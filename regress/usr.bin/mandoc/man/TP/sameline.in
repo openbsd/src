@@ -1,0 +1,30 @@
+.TH TP-SAMELINE 1 "March 8, 2014" OpenBSD
+.SH NAME
+TP-sameline \- test sameline logic of indented paragraphs
+.SH DESCRIPTION
+.SS without user-defined macros
+with width:
+.TP 6n
+tag
+text
+.PP
+without width:
+.TP
+20n
+text
+.SS with user-defined macros
+.de mylist
+with width:
+.TP 6n
+tag
+text
+..
+.mylist
+.PP
+.de mylist
+without width:
+.TP
+20n
+text
+..
+.mylist

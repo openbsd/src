@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.94 2014/02/16 12:30:51 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.95 2014/03/08 15:50:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -716,7 +716,7 @@ pre_TP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if (NULL != (nn = n->parent->head->child))
-		if (nn->string && nn->parent->line == nn->line)
+		if (nn->string && 0 == (MAN_LINE & nn->flags))
 			if ((ival = a2width(p, nn->string)) >= 0)
 				len = (size_t)ival;
 
@@ -733,9 +733,14 @@ pre_TP(DECL_ARGS)
 		mt->fl &= ~MANT_LITERAL;
 
 		/* Don't print same-line elements. */
-		for (nn = n->child; nn; nn = nn->next)
-			if (nn->line > n->line)
-				print_man_node(p, mt, nn, meta);
+		nn = n->child;
+		while (NULL != nn && 0 == (MAN_LINE & nn->flags))
+			nn = nn->next;
+
+		while (NULL != nn) {
+			print_man_node(p, mt, nn, meta);
+			nn = nn->next;
+		}
 
 		if (savelit)
 			mt->fl |= MANT_LITERAL;
