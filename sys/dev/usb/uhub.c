@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.64 2014/03/07 18:57:23 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.65 2014/03/08 11:52:02 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -439,7 +439,9 @@ uhub_explore(struct usbd_device *dev)
 		}
 
 		/* Figure out device speed */
-		if (status & UPS_HIGH_SPEED)
+		if (status & UPS_SUPER_SPEED)
+			speed = USB_SPEED_SUPER;
+		else if (status & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
 		else if (status & UPS_LOW_SPEED)
 			speed = USB_SPEED_LOW;
