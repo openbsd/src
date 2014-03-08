@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.16 2014/01/10 23:01:29 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.17 2014/03/08 01:05:39 tedu Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -143,70 +143,65 @@
 /*  the structure of a symbol table entry  */
 
 typedef struct bucket bucket;
-struct bucket
-{
-    struct bucket *link;
-    struct bucket *next;
-    char *name;
-    char *tag;
-    short value;
-    short index;
-    short prec;
-    char class;
-    char assoc;
+struct bucket {
+	struct bucket *link;
+	struct bucket *next;
+	char *name;
+	char *tag;
+	short value;
+	short index;
+	short prec;
+	char class;
+	char assoc;
 };
 
 
 /*  the structure of the LR(0) state machine  */
 
 typedef struct core core;
-struct core
-{
-    struct core *next;
-    struct core *link;
-    short number;
-    short accessing_symbol;
-    short nitems;
-    short items[1];
+struct core {
+	struct core *next;
+	struct core *link;
+	short number;
+	short accessing_symbol;
+	short nitems;
+	short items[1];
 };
 
 
 /*  the structure used to record shifts  */
 
 typedef struct shifts shifts;
-struct shifts
-{
-    struct shifts *next;
-    short number;
-    short nshifts;
-    short shift[1];
+struct shifts {
+	struct shifts *next;
+	short number;
+	short nshifts;
+	short shift[1];
 };
 
 
 /*  the structure used to store reductions  */
 
 typedef struct reductions reductions;
-struct reductions
-{
-    struct reductions *next;
-    short number;
-    short nreds;
-    short rules[1];
+struct reductions {
+	struct reductions *next;
+	short number;
+	short nreds;
+	short rules[1];
 };
 
 
 /*  the structure used to represent parser actions  */
 
 typedef struct action action;
-struct action
-{
-    struct action *next;
-    short symbol;
-    short number;
-    short prec;
-    char action_code;
-    char assoc;
-    char suppressed;
+struct action {
+	struct action *next;
+	short symbol;
+	short number;
+	short prec;
+	char action_code;
+	char assoc;
+	char suppressed;
 };
 
 
