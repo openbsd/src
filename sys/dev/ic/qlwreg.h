@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.3 2014/03/08 16:56:29 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.4 2014/03/08 18:30:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -305,7 +305,9 @@ struct qla_iocb_status {
 #define QLW_IOCB_STATUS_TIMEOUT		0x0006
 #define QLW_IOCB_STATUS_DATA_OVERRUN	0x0007
 #define QLW_IOCB_STATUS_DATA_UNDERRUN	0x0015
-#define QLW_IOCB_STATUS_QUEUE_FULL	0x001C
+#define QLW_IOCB_STATUS_QUEUE_FULL	0x001c
+#define QLW_IOCB_STATUS_WIDE_FAILED	0x001f
+#define QLW_IOCB_STATUS_SYNCXFER_FAILED	0x0020
 
 #define QLW_STATE_GOT_BUS		0x0100
 #define QLW_STATE_GOT_TARGET		0x0200

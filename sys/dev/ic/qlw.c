@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.8 2014/03/08 16:56:29 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.9 2014/03/08 18:30:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -77,6 +77,7 @@ int		qlw_config_bus(struct qlw_softc *, int);
 int		qlw_config_target(struct qlw_softc *, int, int);
 void		qlw_update_bus(struct qlw_softc *, int);
 void		qlw_update_target(struct qlw_softc *, int, int);
+void		qlw_update_task(void *, void *);
 
 void		qlw_handle_intr(struct qlw_softc *, u_int16_t, u_int16_t);
 void		qlw_set_ints(struct qlw_softc *, int);
@@ -95,7 +96,6 @@ void		qlw_put_data_seg(struct qlw_iocb_seg *, bus_dmamap_t, int);
 int		qlw_softreset(struct qlw_softc *);
 void		qlw_dma_burst_enable(struct qlw_softc *);
 
-void		qlw_update_start(struct qlw_softc *, int);
 int		qlw_async(struct qlw_softc *, u_int16_t);
 
 int		qlw_load_firmware_words(struct qlw_softc *, const u_int16_t *,
@@ -141,6 +141,8 @@ qlw_attach(struct qlw_softc *sc)
 	void (*parse_nvram)(struct qlw_softc *, int);
 	int reset_delay;
 	int bus;
+
+	task_set(&sc->sc_update_task, qlw_update_task, sc, NULL);
 
 	switch (sc->sc_isp_gen) {
 	case QLW_GEN_ISP1040:
@@ -332,6 +334,7 @@ qlw_attach(struct qlw_softc *sc)
 			goto free_ccbs;
 		}
 		sc->sc_marker_required[bus] = 1;
+		sc->sc_update_required[bus] = 0xffff;
 
 		if (sc->sc_reset_delay[bus] > reset_delay)
 			reset_delay = sc->sc_reset_delay[bus];
@@ -442,6 +445,10 @@ qlw_update_target(struct qlw_softc *sc, int bus, int target)
 	struct scsi_link *link;
 	int lun;
 
+	if ((sc->sc_update_required[bus] & (1 << target)) == 0)
+		return;
+	atomic_clearbits_int(&sc->sc_update_required[bus], (1 << target));
+
 	link = scsi_get_link(sc->sc_scsibus[bus], target, 0);
 	if (link == NULL)
 		return;
@@ -481,6 +488,16 @@ qlw_update_target(struct qlw_softc *sc, int bus, int target)
 	}
 }
 
+void
+qlw_update_task(void *arg1, void *arg2)
+{
+	struct qlw_softc *sc = arg1;
+	int bus;
+
+	for (bus = 0; bus < sc->sc_numbusses; bus++)
+		qlw_update_bus(sc, bus);
+}
+
 struct qlw_ccb *
 qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 {
@@ -489,6 +506,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 	struct scsi_xfer *xs;
 	u_int32_t handle;
 	u_int8_t *entry;
+	int bus;
 
 	ccb = NULL;
 	entry = QLW_DMA_KVA(sc->sc_responses) + (id * QLW_QUEUE_ENTRY_SIZE);
@@ -529,6 +547,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 		}
 
+		bus = qlw_xs_bus(sc, xs);
 		xs->status = letoh16(status->scsi_status);
 		switch (letoh16(status->completion)) {
 		case QLW_IOCB_STATUS_COMPLETE:
@@ -560,13 +579,13 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 		case QLW_IOCB_STATUS_RESET:
 			DPRINTF(QLW_D_IO, "%s: reset destroyed command\n",
 			    DEVNAME(sc));
-			sc->sc_marker_required[qlw_xs_bus(sc, xs)] = 1;
+			sc->sc_marker_required[bus] = 1;
 			xs->error = XS_RESET;
 			break;
 
 		case QLW_IOCB_STATUS_ABORTED:
 			DPRINTF(QLW_D_IO, "%s: aborted\n", DEVNAME(sc));
-			sc->sc_marker_required[qlw_xs_bus(sc, xs)] = 1;
+			sc->sc_marker_required[bus] = 1;
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -585,6 +604,26 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 		case QLW_IOCB_STATUS_QUEUE_FULL:
 			DPRINTF(QLW_D_IO, "%s: queue full\n", DEVNAME(sc));
 			xs->error = XS_BUSY;
+			break;
+
+		case QLW_IOCB_STATUS_WIDE_FAILED:
+			DPRINTF(QLW_D_IO, "%s: wide failed\n", DEVNAME(sc));
+			sc->sc_link->quirks |= SDEV_NOWIDE;
+			atomic_setbits_int(&sc->sc_update_required[bus],
+			    1 << xs->sc_link->target);
+			task_add(systq, &sc->sc_update_task);
+			xs->resid = letoh32(status->resid);
+			xs->error = XS_NOERROR;
+			break;
+
+		case QLW_IOCB_STATUS_SYNCXFER_FAILED:
+			DPRINTF(QLW_D_IO, "%s: sync failed\n", DEVNAME(sc));
+			sc->sc_link->quirks |= SDEV_NOSYNC;
+			atomic_setbits_int(&sc->sc_update_required[bus],
+			    1 << xs->sc_link->target);
+			task_add(systq, &sc->sc_update_task);
+			xs->resid = letoh32(status->resid);
+			xs->error = XS_NOERROR;
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.7 2014/03/08 16:56:29 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.8 2014/03/08 18:30:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/task.h>
 
 #define QLW_MAX_TARGETS			16
 #define QLW_MAX_LUNS			8
@@ -115,6 +116,8 @@ struct qlw_softc {
 	u_int16_t		sc_next_req_id;
 	u_int16_t		sc_last_resp_id;
 	int			sc_marker_required[2];
+	u_int			sc_update_required[2];
+	struct task		sc_update_task;
 
 	struct qlw_nvram	sc_nvram;
 	int			sc_nvram_size;
@@ -133,7 +136,7 @@ struct qlw_softc {
 	u_int8_t		sc_async_data_setup[2];
 	u_int8_t		sc_req_ack_active_neg[2];
 	u_int8_t		sc_data_line_active_neg[2];
-	struct qlw_target	sc_target[2][QLW_MAX_TARGETS];		
+	struct qlw_target	sc_target[2][QLW_MAX_TARGETS];
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
