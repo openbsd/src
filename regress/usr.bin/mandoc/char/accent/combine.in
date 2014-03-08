@@ -1,0 +1,23 @@
+.TH CHAR-ACCENT-COMBINE 1 "February 28, 2014" OpenBSD
+.SH NAME
+\fBchar-accent-combine\fR - combining accents
+.SH DESCRIPTION
+char + combine char U: e\U'0301'
+.br
+char + combine char C: e\C'u0301'
+.br
+char + combine char named: e\[u0301]
+.\" XXX not implemented in mandoc
+.\" .br
+.\" combined chars named numeric: \[u0065_0301]
+.\" .br
+.\" combined chars named: \[e aa]
+.br
+combined char pre N: \['e]
+.br
+combined char pre 2: \('e
+.\" XXX Plan 9 roff only
+.\" .br
+.\" combined char post N: \[e']
+.\" .br
+.\" combined char post 2: \(e'
