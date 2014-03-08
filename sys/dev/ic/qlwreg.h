@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.1 2014/03/05 23:10:41 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.2 2014/03/08 15:13:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -35,7 +35,11 @@
 #define QLW_NVRAM			0x0e
 #define QLW_FLASH_BIOS_DATA		0x10
 #define QLW_FLASH_BIOS_ADDR		0x12
+#define QLW_CDMA_CFG			0x20
+#define QLW_DDMA_CFG			0x40
 #define QLW_MBOX_BASE			0x70
+#define QLW_CDMA_CFG_1080		0x80
+#define QLW_DDMA_CFG_1080		0xa0
 #define QLW_HOST_CMD_CTRL		0xc0
 #define QLW_GPIO_DATA			0xcc
 #define QLW_GPIO_ENABLE			0xce
@@ -44,6 +48,15 @@
 #define QLW_REQ_OUT	QLW_MBOX_BASE + 0x8
 #define QLW_RESP_IN	QLW_MBOX_BASE + 0xa
 #define QLW_RESP_OUT	QLW_MBOX_BASE + 0xa
+
+/* QLW_CFG1 */
+#define QLW_BURST_ENABLE		0x0004
+#define QLW_PCI_FIFO_16			0x0010
+#define QLW_PCI_FIFO_32			0x0020
+#define QLW_PCI_FIFO_64			0x0030
+#define QLW_PCI_FIFO_128		0x0040
+#define QLW_PCI_FIFO_MASK		0x0070
+#define QLW_DMA_BANK			0x0300
 
 /* QLW_INT_CTRL */
 #define QLW_RESET			0x0001
@@ -62,6 +75,9 @@
 #define QLW_NVRAM_CHIP_SEL		0x0002
 #define QLW_NVRAM_CLOCK			0x0001
 #define QLW_NVRAM_CMD_READ		6
+
+/* QLW_CDMA_CFG and QLW_DDMA_CFG */
+#define QLW_DMA_BURST_ENABLE		0x0002
 
 /* QLW_HOST_CMD_CTRL write */
 #define QLW_HOST_CMD_SHIFT		12

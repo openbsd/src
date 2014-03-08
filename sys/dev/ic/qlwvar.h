@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.5 2014/03/07 22:39:07 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.6 2014/03/08 15:13:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -33,7 +33,12 @@ enum qlw_isp_gen {
 };
 
 enum qlw_isp_type {
-	QLW_ISP1040 = 1,
+	QLW_ISP1020 = 1,
+	QLW_ISP1020A,
+	QLW_ISP1040,
+	QLW_ISP1040A,
+	QLW_ISP1040B,
+	QLW_ISP1040C,
 	QLW_ISP1240,
 	QLW_ISP1080,
 	QLW_ISP1280,
@@ -114,6 +119,8 @@ struct qlw_softc {
 	struct qlw_nvram	sc_nvram;
 	int			sc_nvram_size;
 	int			sc_nvram_minversion;
+
+	u_int16_t		sc_isp_config;
 
 	u_int8_t		sc_initiator[2];
 	u_int8_t		sc_retry_count[2];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.4 2014/03/07 22:39:07 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.5 2014/03/08 15:13:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -93,6 +93,7 @@ struct qlw_ccb *qlw_handle_resp(struct qlw_softc *, u_int16_t);
 void		qlw_put_data_seg(struct qlw_iocb_seg *, bus_dmamap_t, int);
 
 int		qlw_softreset(struct qlw_softc *);
+void		qlw_dma_burst_enable(struct qlw_softc *);
 
 void		qlw_update_start(struct qlw_softc *, int);
 int		qlw_async(struct qlw_softc *, u_int16_t);
@@ -225,9 +226,13 @@ qlw_attach(struct qlw_softc *sc)
 	/* We may need up to 3 request entries per SCSI command. */
 	sc->sc_maxccbs = sc->sc_maxcmds / 3;
 
-#if 0
-	qlw_write(sc, QLW_CFG1, sc->sc_nvram.isp_config | (1 << 13));
-#endif
+	/* Allegedly the FIFO is busted on the 1040A. */
+	if (sc->sc_isp_type == QLW_ISP1040A)
+		sc->sc_isp_config &= ~QLW_PCI_FIFO_MASK;
+	qlw_write(sc, QLW_CFG1, sc->sc_isp_config);
+
+	if (sc->sc_isp_config & QLW_BURST_ENABLE)
+		qlw_dma_burst_enable(sc);
 
 #if 0
 	/* set SCSI termination */
@@ -296,16 +301,6 @@ qlw_attach(struct qlw_softc *sc)
 	sc->sc_mbox[1] = 2;
 	if (qlw_mbox(sc, 0x0003, 0x0001)) {
 		printf("couldn't set data overrun recovery: %x\n", sc->sc_mbox[0]);
-		return (ENXIO);
-	}
-#endif
-
-#if 0
-	sc->sc_mbox[0] = QLW_MBOX_SET_PCI_CONTROL;
-	sc->sc_mbox[1] = 0x0002; /* data dma channel burst enable */
-	sc->sc_mbox[2] = 0x0002; /* command dma channel burst enable */
-	if (qlw_mbox(sc, 0x0007, 0x0001)) {
-		printf("couldn't set PCI control: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
 #endif
@@ -1090,11 +1085,7 @@ qlw_softreset(struct qlw_softc *sc)
 	/* reset risc processor */
 	qlw_host_cmd(sc, QLW_HOST_CMD_RESET);
 	delay(100);
-
 	qlw_write(sc, QLW_SEMA, 0);
-
-	qlw_write(sc, QLW_CFG1, qlw_read(sc, QLW_CFG1) | 0x04 | 0x03);
-
 	qlw_host_cmd(sc, QLW_HOST_CMD_RELEASE);
 
 	/* reset queue pointers */
@@ -1115,6 +1106,28 @@ qlw_softreset(struct qlw_softc *sc)
 	}
 
 	return (0);
+}
+
+void
+qlw_dma_burst_enable(struct qlw_softc *sc)
+{
+	if (sc->sc_isp_gen == QLW_GEN_ISP1040) {
+		qlw_write(sc, QLW_CDMA_CFG,
+		    qlw_read(sc, QLW_CDMA_CFG) | QLW_DMA_BURST_ENABLE);
+		qlw_write(sc, QLW_DDMA_CFG,
+		    qlw_read(sc, QLW_DDMA_CFG) | QLW_DMA_BURST_ENABLE);
+	} else {
+		qlw_host_cmd(sc, QLW_HOST_CMD_PAUSE);
+		qlw_write(sc, QLW_CFG1,
+		    qlw_read(sc, QLW_CFG1) | QLW_DMA_BANK);
+		qlw_write(sc, QLW_CDMA_CFG_1080,
+		    qlw_read(sc, QLW_CDMA_CFG_1080) | QLW_DMA_BURST_ENABLE);
+		qlw_write(sc, QLW_DDMA_CFG_1080,
+		    qlw_read(sc, QLW_DDMA_CFG_1080) | QLW_DMA_BURST_ENABLE);
+		qlw_write(sc, QLW_CFG1,
+		    qlw_read(sc, QLW_CFG1) & ~QLW_DMA_BANK);
+		qlw_host_cmd(sc, QLW_HOST_CMD_RELEASE);
+	}
 }
 
 void
@@ -1461,6 +1474,8 @@ qlw_parse_nvram_1080(struct qlw_softc *sc, int bus)
 	struct qlw_nvram_bus *nv = &nvram->bus[bus];
 	int target;
 
+	sc->sc_isp_config = nvram->isp_config;
+
 	if (!ISSET(sc->sc_flags, QLW_FLAG_INITIATOR))
 		sc->sc_initiator[bus] = (nv->config1 & 0x0f);
 
@@ -1490,6 +1505,16 @@ void
 qlw_init_defaults(struct qlw_softc *sc, int bus)
 {
 	int target;
+
+	switch (sc->sc_isp_gen) {
+	case QLW_GEN_ISP1040:
+		sc->sc_isp_config = QLW_BURST_ENABLE | QLW_PCI_FIFO_64;
+		break;
+	case QLW_GEN_ISP1080:
+	case QLW_GEN_ISP12160:
+		sc->sc_isp_config = QLW_BURST_ENABLE | QLW_PCI_FIFO_128;
+		break;
+	}
 
 	sc->sc_retry_count[bus] = 0;
 	sc->sc_retry_delay[bus] = 0;
