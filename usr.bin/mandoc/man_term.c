@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.95 2014/03/08 15:50:21 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.96 2014/03/08 16:19:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1041,7 +1041,7 @@ out:
 	 * more specific than this.
 	 */
 	if (MANT_LITERAL & mt->fl && ! (TERMP_NOBREAK & p->flags) &&
-	    (NULL == n->next || n->next->line > n->line)) {
+	    (NULL == n->next || MAN_LINE & n->next->flags)) {
 		rm = p->rmargin;
 		rmax = p->maxrmargin;
 		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;

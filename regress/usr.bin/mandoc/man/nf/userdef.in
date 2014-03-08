@@ -1,0 +1,21 @@
+.TH NF-USERDEF 1 "March 8, 2014" OpenBSD
+.SH NAME
+nf-userdef \- setting unfilled mode via user-defined macros
+.SH DESCRIPTION
+filled
+text
+.nf
+unfilled
+text
+.fi
+filled
+text
+.de MYBLOCK
+.nf
+unfilled
+text
+.fi
+filled
+text
+..
+.MYBLOCK
