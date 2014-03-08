@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.99 2014/03/07 18:59:40 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.100 2014/03/08 11:42:56 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -793,25 +793,20 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	struct usbd_pipe *p;
 	usbd_status err;
 
-	DPRINTFN(1,("usbd_setup_pipe: dev=%p iface=%p ep=%p pipe=%p\n",
+	DPRINTF(("%s: dev=%p iface=%p ep=%p pipe=%p\n", __func__,
 		    dev, iface, ep, pipe));
-	p = malloc(dev->bus->pipe_size, M_USB, M_NOWAIT);
+	p = malloc(dev->bus->pipe_size, M_USB, M_NOWAIT|M_ZERO);
 	if (p == NULL)
 		return (USBD_NOMEM);
 	p->device = dev;
 	p->iface = iface;
 	p->endpoint = ep;
 	ep->refcnt++;
-	p->intrxfer = 0;
-	p->running = 0;
-	p->aborting = 0;
-	p->repeat = 0;
 	p->interval = ival;
 	SIMPLEQ_INIT(&p->queue);
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
-		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
-			 "%s\n",
+		DPRINTF(("%s: endpoint=0x%x failed, error=%s\n", __func__,
 			 ep->edesc->bEndpointAddress, usbd_errstr(err)));
 		free(p, M_USB);
 		return (err);
