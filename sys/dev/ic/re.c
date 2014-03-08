@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.147 2013/12/31 21:09:34 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.148 2014/03/08 22:37:32 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -707,6 +707,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	case RL_HWREV_8168E_VL:
 	case RL_HWREV_8168F:
+		sc->rl_flags |= RL_FLAG_EARLYOFF;
+		/* FALLTHROUGH */
 	case RL_HWREV_8411:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
@@ -714,12 +716,17 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	case RL_HWREV_8168G:
 	case RL_HWREV_8168G_SPIN1:
-	case RL_HWREV_8168G_SPIN2:
 	case RL_HWREV_8168G_SPIN4:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
 		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO |
-		    RL_FLAG_EARLYOFF;
+		    RL_FLAG_EARLYOFFV2 | RL_FLAG_RXDV_GATED;
+		break;
+	case RL_HWREV_8168G_SPIN2:
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
+		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO |
+		    RL_FLAG_EARLYOFFV2 | RL_FLAG_RXDV_GATED;
 		break;
 	case RL_HWREV_8169_8110SB:
 	case RL_HWREV_8169_8110SBL:
@@ -1850,6 +1857,10 @@ re_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, RL_TXLIST_ADDR_LO,
 	    RL_ADDR_LO(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
 
+	if (sc->rl_flags & RL_FLAG_RXDV_GATED)
+		CSR_WRITE_4(sc, RL_MISC, CSR_READ_4(sc, RL_MISC) &
+		    ~0x00080000);
+
 	/*
 	 * Enable transmit and receive.
 	 */
@@ -1873,6 +1884,8 @@ re_init(struct ifnet *ifp)
 	rxcfg = RL_RXCFG_CONFIG;
 	if (sc->rl_flags & RL_FLAG_EARLYOFF)
 		rxcfg |= RL_RXCFG_EARLYOFF;
+	else if (sc->rl_flags & RL_FLAG_EARLYOFFV2)
+		rxcfg |= RL_RXCFG_EARLYOFFV2;
 	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/* Program promiscuous mode and multicast filters. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.78 2013/11/18 22:21:27 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.79 2014/03/08 22:37:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -142,6 +142,7 @@
 #define RL_LDPS			0x0082	/* Link Down Power Saving */
 #define RL_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RL_IM			0x00E2
+#define RL_MISC			0x00F0
 
 /*
  * TX config register bits
@@ -283,10 +284,11 @@
 #define RL_RXCFG_RX_RUNT	0x00000010
 #define RL_RXCFG_RX_ERRPKT	0x00000020
 #define RL_RXCFG_WRAP		0x00000080
-#define RL_RXCFG_EARLYOFF	0x00000100
+#define RL_RXCFG_EARLYOFFV2	0x00000800
 #define RL_RXCFG_MAXDMA		0x00000700
 #define RL_RXCFG_BURSZ		0x00001800
-#define	RL_RXCFG_FIFOTHRESH	0x0000E000
+#define RL_RXCFG_EARLYOFF	0x00003800
+#define RL_RXCFG_FIFOTHRESH	0x0000E000
 #define RL_RXCFG_EARLYTHRESH	0x07000000
 
 #define RL_RXDMA_16BYTES	0x00000000
@@ -856,6 +858,8 @@ struct rl_softc {
 #define	RL_FLAG_LINK		0x00008000
 #define	RL_FLAG_PHYWAKE_PM	0x00010000
 #define	RL_FLAG_EARLYOFF	0x00020000
+#define	RL_FLAG_EARLYOFFV2	0x00040000
+#define	RL_FLAG_RXDV_GATED	0x00080000
 
 	u_int16_t		rl_intrs;
 	u_int16_t		rl_tx_ack;
