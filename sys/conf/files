@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.567 2014/03/05 23:10:41 kettenis Exp $
+#	$OpenBSD: files,v 1.568 2014/03/08 14:34:12 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -463,6 +463,10 @@ file	dev/usb/ohci.c			ohci	needs-flag
 # EHCI USB controller
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci	needs-flag
+
+# XHCI USB controller
+device	xhci: usbus
+file	dev/usb/xhci.c			xhci	needs-flag
 
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
