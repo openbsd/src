@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.210 2014/02/25 18:40:37 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.211 2014/03/08 22:49:00 tedu Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -771,26 +771,26 @@ azalia_reset(azalia_t *az)
 	DPRINTF(("%s: resetting\n", __func__));
 	gctl = AZ_READ_4(az, GCTL);
 	AZ_WRITE_4(az, GCTL, gctl & ~HDA_GCTL_CRST);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		if ((AZ_READ_4(az, GCTL) & HDA_GCTL_CRST) == 0)
 			break;
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: reset failure\n", XNAME(az)));
 		return(ETIMEDOUT);
 	}
 	DELAY(1000);
 	gctl = AZ_READ_4(az, GCTL);
 	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_CRST);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		if (AZ_READ_4(az, GCTL) & HDA_GCTL_CRST)
 			break;
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: reset-exit failure\n", XNAME(az)));
 		return(ETIMEDOUT);
 	}
@@ -1016,13 +1016,13 @@ azalia_halt_corb(azalia_t *az)
 	corbctl = AZ_READ_1(az, CORBCTL);
 	if (corbctl & HDA_CORBCTL_CORBRUN) { /* running? */
 		AZ_WRITE_1(az, CORBCTL, corbctl & ~HDA_CORBCTL_CORBRUN);
-		for (i = 5000; i >= 0; i--) {
+		for (i = 5000; i > 0; i--) {
 			DELAY(10);
 			corbctl = AZ_READ_1(az, CORBCTL);
 			if ((corbctl & HDA_CORBCTL_CORBRUN) == 0)
 				break;
 		}
-		if (i <= 0) {
+		if (i == 0) {
 			DPRINTF(("%s: CORB is running\n", XNAME(az)));
 			return EBUSY;
 		}
@@ -1061,13 +1061,13 @@ azalia_init_corb(azalia_t *az, int resuming)
 	corbrp = AZ_READ_2(az, CORBRP);
 	AZ_WRITE_2(az, CORBRP, corbrp | HDA_CORBRP_CORBRPRST);
 	AZ_WRITE_2(az, CORBRP, corbrp & ~HDA_CORBRP_CORBRPRST);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		corbrp = AZ_READ_2(az, CORBRP);
 		if ((corbrp & HDA_CORBRP_CORBRPRST) == 0)
 			break;
 	}
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: CORBRP reset failure\n", XNAME(az)));
 		return -1;
 	}
@@ -1093,13 +1093,13 @@ azalia_halt_rirb(azalia_t *az)
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	if (rirbctl & HDA_RIRBCTL_RIRBDMAEN) { /* running? */
 		AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RIRBDMAEN);
-		for (i = 5000; i >= 0; i--) {
+		for (i = 5000; i > 0; i--) {
 			DELAY(10);
 			rirbctl = AZ_READ_1(az, RIRBCTL);
 			if ((rirbctl & HDA_RIRBCTL_RIRBDMAEN) == 0)
 				break;
 		}
-		if (i <= 0) {
+		if (i == 0) {
 			DPRINTF(("%s: RIRB is running\n", XNAME(az)));
 			return(EBUSY);
 		}
@@ -1161,13 +1161,13 @@ azalia_init_rirb(azalia_t *az, int resuming)
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	AZ_WRITE_1(az, RIRBCTL, rirbctl |
 	    HDA_RIRBCTL_RIRBDMAEN | HDA_RIRBCTL_RINTCTL);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		rirbctl = AZ_READ_1(az, RIRBCTL);
 		if (rirbctl & HDA_RIRBCTL_RIRBDMAEN)
 			break;
 	}
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: RIRB is not running\n", XNAME(az)));
 		return(EBUSY);
 	}
@@ -1244,7 +1244,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 			DELAY(10);
 			i--;
 		}
-		if (i <= 0) {
+		if (i == 0) {
 			DPRINTF(("%s: RIRB time out\n", XNAME(az)));
 			return(ETIMEDOUT);
 		}
@@ -3708,26 +3708,26 @@ azalia_stream_reset(stream_t *this)
 	/* Start reset and wait for chip to enter. */
 	ctl = STR_READ_2(this, CTL);
 	STR_WRITE_2(this, CTL, ctl | HDA_SD_CTL_SRST);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		ctl = STR_READ_2(this, CTL);
 		if (ctl & HDA_SD_CTL_SRST)
 			break;
 	}
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: stream reset failure 1\n", XNAME(this->az)));
 		return -1;
 	}
 
 	/* Clear reset and wait for chip to finish */
 	STR_WRITE_2(this, CTL, ctl & ~HDA_SD_CTL_SRST);
-	for (i = 5000; i >= 0; i--) {
+	for (i = 5000; i > 0; i--) {
 		DELAY(10);
 		ctl = STR_READ_2(this, CTL);
 		if ((ctl & HDA_SD_CTL_SRST) == 0)
 			break;
 	}
-	if (i <= 0) {
+	if (i == 0) {
 		DPRINTF(("%s: stream reset failure 2\n", XNAME(this->az)));
 		return -1;
 	}
