@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.9 2014/03/08 18:30:54 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.10 2014/03/08 18:42:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -185,7 +185,7 @@ qlw_attach(struct qlw_softc *sc)
 	}
 
 #ifndef ISP_NOFIRMWARE
-	if (qlw_load_firmware(sc)) {
+	if (sc->sc_firmware && qlw_load_firmware(sc)) {
 		printf("firmware load failed\n");
 		return (ENXIO);
 	}
