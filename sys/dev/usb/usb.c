@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.93 2013/12/06 21:03:05 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.94 2014/03/08 11:49:19 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -140,8 +140,7 @@ const struct cfattach usb_ca = {
 int
 usb_match(struct device *parent, void *match, void *aux)
 {
-	DPRINTF(("usbd_match\n"));
-	return (UMATCH_GENERIC);
+	return (1);
 }
 
 void
@@ -152,8 +151,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status err;
 	int usbrev;
 	int speed;
-
-	DPRINTF(("usbd_attach\n"));
 
 	if (usb_nbuses == 0) {
 		rw_init(&usbpalock, "usbpalock");
@@ -178,6 +175,9 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case USBREV_2_0:
 		speed = USB_SPEED_HIGH;
+		break;
+	case USBREV_3_0:
+		speed = USB_SPEED_SUPER;
 		break;
 	default:
 		printf(", not supported\n");
