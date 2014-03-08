@@ -1,0 +1,37 @@
+.TH COND-STRCMP 1 "March 8, 2014" OpenBSD
+.SH NAME
+cond-strcmp \- roff conditions involving string comparison
+.SH DESCRIPTION
+empty:
+.ie """ (t)
+.el (f)
+one char:
+.ie xaxax (t)
+.el (f)
+three chars:
+.ie xabcxabcx (t)
+.el (f)
+.br
+mismatch:
+.ie xabcxabdx (t)
+.el (f)
+longer:
+.ie xabcxabcdx (t)
+.el (f)
+shorter:
+.ie xabcdxabcx (t)
+.el (f)
+.br
+no middle:
+.ie xabc (t)
+.el (f)
+no end:
+.ie xabcxabc
+.el (f)
+.SS Negation
+match:
+.ie !xabcxabcx (t)
+.el (f)
+mismatch:
+.ie !xaxbx (t)
+.el (f)

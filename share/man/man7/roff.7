@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.27 2014/02/14 23:50:49 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.28 2014/03/08 04:43:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: March 8 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -703,10 +703,73 @@ Its syntax is equivalent to
 .Sx \&if .
 .Ss \&if
 Begins a conditional.
-Right now, the conditional evaluates to true
-if and only if it starts with the letter
-.Sy n ,
-indicating processing in nroff style as opposed to troff style.
+This request has the following syntax:
+.Bd -literal -offset indent
+\&.if COND BODY
+.Ed
+.Bd -literal -offset indent
+\&.if COND \e{BODY
+BODY...\e}
+.Ed
+.Bd -literal -offset indent
+\&.if COND \e{\e
+BODY...
+\&.\e}
+.Ed
+.Pp
+COND is a conditional statement.
+Currently,
+.Xr mandoc 1
+supports the following subset of roff conditionals:
+.Bl -bullet
+.It
+If
+.Sq \&!
+is prefixed to COND, the condition is logically inverted.
+.It
+If the first character of COND is
+.Sq n
+.Pq nroff mode
+or
+.Sq o
+.Pq odd page ,
+COND evaluates to true.
+.It
+If the first character of COND is
+.Sq c
+.Pq character available ,
+.Sq d
+.Pq string defined ,
+.Sq e
+.Pq even page ,
+.Sq r
+.Pq register accessed ,
+or
+.Sq t
+.Pq troff mode ,
+COND evaluates to false.
+.It
+If COND starts with a digit, optionally prefixed by a minus sign,
+it is evaluated as a numerical expression of the form
+.Ar number operator number ,
+where
+.Ar operator
+is one of
+.Sq < ,
+.Sq <= ,
+.Sq = ,
+.Sq >= ,
+or
+.Sq > .
+.It
+Otherwise, the first character of COND is regarded as a delimiter
+and COND evaluates to true if the string extending from its first
+to its second occurrence is equal to the string extending from its
+second to its third occurrence.
+.It
+If COND cannot be parsed, it evaluates to false.
+.El
+.Pp
 If a conditional is false, its children are not processed, but are
 syntactically interpreted to preserve the integrity of the input
 document.
@@ -724,44 +787,12 @@ will continue to syntactically interpret to the block close of the final
 conditional.
 Sub-conditionals, in this case, obviously inherit the truth value of
 the parent.
-This request has the following syntax:
-.Bd -literal -offset indent
-\&.if COND \e{\e
-BODY...
-\&.\e}
-.Ed
-.Bd -literal -offset indent
-\&.if COND \e{ BODY
-BODY... \e}
-.Ed
-.Bd -literal -offset indent
-\&.if COND \e{ BODY
-BODY...
-\&.\e}
-.Ed
-.Bd -literal -offset indent
-\&.if COND \e
-BODY
-.Ed
-.Pp
-COND is a conditional statement.
-roff allows for complicated conditionals; mandoc is much simpler.
-At this time, mandoc supports only
-.Sq n ,
-evaluating to true;
-and
-.Sq t ,
-.Sq e ,
-and
-.Sq o ,
-evaluating to false.
-All other invocations are read up to the next end of line or space and
-evaluate as false.
 .Pp
 If the BODY section is begun by an escaped brace
 .Sq \e{ ,
-scope continues until a closing-brace escape sequence
-.Sq \.\e} .
+scope continues until the end of the input line containing the
+matching closing-brace escape sequence
+.Sq \e} .
 If the BODY is not enclosed in braces, scope continues until
 the end of the line.
 If the COND is followed by a BODY on the same line, whether after a

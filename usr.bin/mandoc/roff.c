@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.70 2014/03/07 18:37:32 schwarze Exp $ */
+/*	$Id: roff.c,v 1.71 2014/03/08 04:43:39 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,11 +72,6 @@ enum	rofft {
 	ROFF_MAX
 };
 
-enum	roffrule {
-	ROFFRULE_DENY,
-	ROFFRULE_ALLOW
-};
-
 /*
  * An incredibly-simple string buffer.
  */
@@ -108,7 +103,7 @@ struct	roff {
 	struct mparse	*parse; /* parse point */
 	int		 quick; /* skip standard macro deletion */
 	struct roffnode	*last; /* leaf of stack */
-	enum roffrule	 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
+	int		 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
 	char		 control; /* control character */
 	int		 rstackpos; /* position in rstack */
 	struct roffreg	*regtab; /* number registers */
@@ -132,7 +127,7 @@ struct	roffnode {
 	char		*name; /* node name, e.g. macro name */
 	char		*end; /* end-rules: custom token */
 	int		 endspan; /* end-rules: next-line or infty */
-	enum roffrule	 rule; /* current evaluation rule */
+	int		 rule; /* current evaluation rule */
 };
 
 #define	ROFF_ARGS	 struct roff *r, /* parse ctx */ \
@@ -180,7 +175,8 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
-static	enum roffrule	 roff_evalcond(const char *, int *);
+static	int		 roff_evalcond(const char *, int *);
+static	int		 roff_evalstrcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
@@ -397,7 +393,7 @@ roffnode_push(struct roff *r, enum rofft tok, const char *name,
 	p->parent = r->last;
 	p->line = line;
 	p->col = col;
-	p->rule = p->parent ? p->parent->rule : ROFFRULE_DENY;
+	p->rule = p->parent ? p->parent->rule : 0;
 
 	r->last = p;
 }
@@ -1046,8 +1042,8 @@ static enum rofferr
 roff_cond_sub(ROFF_ARGS)
 {
 	enum rofft	 t;
-	enum roffrule	 rr;
 	char		*ep;
+	int		 rr;
 
 	rr = r->last->rule;
 	roffnode_cleanscope(r);
@@ -1059,8 +1055,7 @@ roff_cond_sub(ROFF_ARGS)
 	 */
 
 	if ((ROFF_MAX != t) &&
-	    (ROFFRULE_ALLOW == rr ||
-	     ROFFMAC_STRUCT & roffs[t].flags)) {
+	    (rr || ROFFMAC_STRUCT & roffs[t].flags)) {
 		assert(roffs[t].proc);
 		return((*roffs[t].proc)(r, t, bufp, szp,
 					ln, ppos, pos, offs));
@@ -1073,7 +1068,7 @@ roff_cond_sub(ROFF_ARGS)
 
 	ep = *bufp + pos;
 	if ('\\' == ep[0] && '}' == ep[1])
-		rr = ROFFRULE_DENY;
+		rr = 0;
 
 	/* Always check for the closing delimiter `\}'. */
 
@@ -1084,7 +1079,7 @@ roff_cond_sub(ROFF_ARGS)
 		}
 		++ep;
 	}
-	return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
+	return(rr ? ROFF_CONT : ROFF_IGN);
 }
 
 /* ARGSUSED */
@@ -1092,7 +1087,7 @@ static enum rofferr
 roff_cond_text(ROFF_ARGS)
 {
 	char		*ep;
-	enum roffrule	 rr;
+	int		 rr;
 
 	rr = r->last->rule;
 	roffnode_cleanscope(r);
@@ -1105,7 +1100,7 @@ roff_cond_text(ROFF_ARGS)
 		}
 		++ep;
 	}
-	return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
+	return(rr ? ROFF_CONT : ROFF_IGN);
 }
 
 static int
@@ -1158,64 +1153,103 @@ roff_getop(const char *v, int *pos, char *res)
 	return(*res);
 }
 
-static enum roffrule
+/*
+ * Evaluate a string comparison condition.
+ * The first character is the delimiter.
+ * Succeed if the string up to its second occurrence
+ * matches the string up to its third occurence.
+ * Advance the cursor after the third occurrence
+ * or lacking that, to the end of the line.
+ */
+static int
+roff_evalstrcond(const char *v, int *pos)
+{
+	const char	*s1, *s2, *s3;
+	int		 match;
+
+	match = 0;
+	s1 = v + *pos;		/* initial delimiter */
+	s2 = s1 + 1;		/* for scanning the first string */
+	s3 = strchr(s2, *s1);	/* for scanning the second string */
+
+	if (NULL == s3)		/* found no middle delimiter */
+		goto out;
+
+	while ('\0' != *++s3) {
+		if (*s2 != *s3) {  /* mismatch */
+			s3 = strchr(s3, *s1);
+			break;
+		}
+		if (*s3 == *s1) {  /* found the final delimiter */
+			match = 1;
+			break;
+		}
+		s2++;
+	}
+
+out:
+	if (NULL == s3)
+		s3 = strchr(s2, '\0');
+	else
+		s3++;
+	*pos = s3 - v;
+	return(match);
+}
+
+static int
 roff_evalcond(const char *v, int *pos)
 {
-	int	 not, lh, rh;
+	int	 wanttrue, lh, rh;
 	char	 op;
+
+	if ('!' == v[*pos]) {
+		wanttrue = 0;
+		(*pos)++;
+	} else
+		wanttrue = 1;
 
 	switch (v[*pos]) {
 	case ('n'):
-		(*pos)++;
-		return(ROFFRULE_ALLOW);
-	case ('e'):
 		/* FALLTHROUGH */
 	case ('o'):
+		(*pos)++;
+		return(wanttrue);
+	case ('c'):
+		/* FALLTHROUGH */
+	case ('d'):
+		/* FALLTHROUGH */
+	case ('e'):
+		/* FALLTHROUGH */
+	case ('r'):
 		/* FALLTHROUGH */
 	case ('t'):
 		(*pos)++;
-		return(ROFFRULE_DENY);
-	case ('!'):
-		(*pos)++;
-		not = 1;
-		break;
+		return(!wanttrue);
 	default:
-		not = 0;
 		break;
 	}
 
 	if (!roff_getnum(v, pos, &lh))
-		return ROFFRULE_DENY;
-	if (!roff_getop(v, pos, &op)) {
-		if (lh < 0)
-			lh = 0;
-		goto out;
-	}
+		return(roff_evalstrcond(v, pos) == wanttrue);
+	if (!roff_getop(v, pos, &op))
+		return((lh > 0) == wanttrue);
 	if (!roff_getnum(v, pos, &rh))
-		return ROFFRULE_DENY;
+		return(0);
+
 	switch (op) {
 	case 'g':
-		lh = lh >= rh;
-		break;
+		return((lh >= rh) == wanttrue);
 	case 'l':
-		lh = lh <= rh;
-		break;
+		return((lh <= rh) == wanttrue);
 	case '=':
-		lh = lh == rh;
-		break;
+		return((lh == rh) == wanttrue);
 	case '>':
-		lh = lh > rh;
-		break;
+		return((lh > rh) == wanttrue);
 	case '<':
-		lh = lh < rh;
-		break;
+		return((lh < rh) == wanttrue);
 	default:
-		return ROFFRULE_DENY;
+		return(0);
 	}
-out:
-	if (not)
-		lh = !lh;
-	return lh ? ROFFRULE_ALLOW : ROFFRULE_DENY;
 }
 
 /* ARGSUSED */
@@ -1242,8 +1276,7 @@ roff_cond(ROFF_ARGS)
 	 */
 
 	r->last->rule = ROFF_el == tok ?
-		(r->rstackpos < 0 ? 
-		 ROFFRULE_DENY : r->rstack[r->rstackpos--]) :
+		(r->rstackpos < 0 ? 0 : r->rstack[r->rstackpos--]) :
 		roff_evalcond(*bufp, &pos);
 
 	/*
@@ -1257,15 +1290,13 @@ roff_cond(ROFF_ARGS)
 				r->parse, ln, ppos, NULL);
 			return(ROFF_ERR);
 		}
-		r->rstack[++r->rstackpos] = 
-			ROFFRULE_DENY == r->last->rule ?
-			ROFFRULE_ALLOW : ROFFRULE_DENY;
+		r->rstack[++r->rstackpos] = !r->last->rule;
 	}
 
 	/* If the parent has false as its rule, then so do we. */
 
-	if (r->last->parent && ROFFRULE_DENY == r->last->parent->rule)
-		r->last->rule = ROFFRULE_DENY;
+	if (r->last->parent && !r->last->parent->rule)
+		r->last->rule = 0;
 
 	/*
 	 * Determine scope.
