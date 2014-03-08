@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.183 2014/02/20 17:42:29 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.184 2014/03/08 15:47:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -66,7 +66,7 @@ static void mta_query_preference(struct mta_relay *);
 static void mta_query_source(struct mta_relay *);
 static void mta_on_mx(void *, void *, void *);
 static void mta_on_secret(struct mta_relay *, const char *);
-static void mta_on_preference(struct mta_relay *, int, int);
+static void mta_on_preference(struct mta_relay *, int);
 static void mta_on_source(struct mta_relay *, struct mta_source *);
 static void mta_on_timeout(struct runq *, void *);
 static void mta_connect(struct mta_connector *);
@@ -373,7 +373,13 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_end(&m);
 
 			relay = tree_xpop(&wait_preference, reqid);
-			mta_on_preference(relay, dnserror, preference);
+			if (dnserror) {
+				log_warnx("warn: Couldn't find backup "
+				    "preference for %s: error %d",
+				    mta_relay_to_text(relay), dnserror);
+				preference = INT_MAX;
+			}
+			mta_on_preference(relay, preference);
 			return;
 
 		case IMSG_DNS_PTR:
@@ -1016,18 +1022,12 @@ mta_on_secret(struct mta_relay *relay, const char *secret)
 }
 
 static void
-mta_on_preference(struct mta_relay *relay, int dnserror, int preference)
+mta_on_preference(struct mta_relay *relay, int preference)
 {
-	if (dnserror) {
-		log_warnx("warn: Couldn't find backup preference for %s",
-		    mta_relay_to_text(relay));
-		relay->backuppref = INT_MAX;
-	}
-	else {
-		log_debug("debug: mta: ... got preference for %s: %d, %d",
-		    mta_relay_to_text(relay), dnserror, preference);
-		relay->backuppref = preference;
-	}
+	log_debug("debug: mta: ... got preference for %s: %d",
+	    mta_relay_to_text(relay), preference);
+
+	relay->backuppref = preference;
 
 	relay->status &= ~RELAY_WAIT_PREFERENCE;
 	mta_drain(relay);
