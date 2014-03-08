@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.13 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.14 2014/03/08 01:54:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,6 +28,8 @@
 #ifndef _MBR_H
 #define _MBR_H
 
+#include <sys/param.h>
+
 #include "part.h"
 
 /* Various constants */
@@ -55,12 +57,6 @@ void MBR_init(struct disk *, struct mbr *);
 int MBR_read(int, off_t, char *);
 int MBR_write(int, off_t, char *);
 void MBR_pcopy(struct disk *, struct mbr *);
-
-/* Sanity check */
-#include <sys/param.h>
-#if (DEV_BSIZE != 512)
-#error "DEV_BSIZE != 512, somebody better fix me!"
-#endif
 
 #endif /* _MBR_H */
 
