@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.5 2014/03/08 15:13:12 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.6 2014/03/08 16:04:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -478,11 +478,11 @@ qlw_update_target(struct qlw_softc *sc, int bus, int target)
 	sc->sc_mbox[2] = sc->sc_target[bus][target].qt_params;
 	sc->sc_mbox[2] |= QLW_TARGET_RENEG;
 	sc->sc_mbox[2] &= ~QLW_TARGET_QFRZ;
-	if (link->flags & SDEV_NOSYNC)
+	if (link->quirks & SDEV_NOSYNC)
 		sc->sc_mbox[2] &= ~QLW_TARGET_SYNC;
-	if (link->flags & SDEV_NOWIDE)
+	if (link->quirks & SDEV_NOWIDE)
 		sc->sc_mbox[2] &= ~QLW_TARGET_WIDE;
-	if (link->flags & SDEV_NOTAGS)
+	if (link->quirks & SDEV_NOTAGS)
 		sc->sc_mbox[2] &= ~QLW_TARGET_TAGS;
 
 	sc->sc_mbox[3] = sc->sc_target[bus][target].qt_sync_period;
