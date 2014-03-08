@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.2 2014/03/08 15:13:12 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.3 2014/03/08 16:56:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -141,6 +141,9 @@
 #define QLW_MBOX_ABOUT_FIRMWARE_OUT	0x004f
 #define QLW_MBOX_INIT_FIRMWARE_IN	0x00fd
 
+#define QLW_FW_FEATURE_FAST_POSTING	0x0001
+#define QLW_FW_FEATURE_LVD_NOTIFY	0x0002
+
 /* nvram layout */
 struct qlw_nvram_target {
 	u_int8_t	parameter;
@@ -193,7 +196,7 @@ struct qlw_nvram_1080 {
 	u_int8_t	isp_config;
 	u_int8_t	termination;
 	u_int16_t	isp_parameter;
-	u_int16_t	fw_options;
+	u_int16_t	fw_features;
 	u_int16_t	reserved_1;
 	struct qlw_nvram_bus bus[2];
 	u_int8_t	reserved_2[2];

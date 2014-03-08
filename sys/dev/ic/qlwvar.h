@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.6 2014/03/08 15:13:12 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.7 2014/03/08 16:56:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -121,11 +121,13 @@ struct qlw_softc {
 	int			sc_nvram_minversion;
 
 	u_int16_t		sc_isp_config;
+	u_int16_t		sc_fw_features;
 
 	u_int8_t		sc_initiator[2];
 	u_int8_t		sc_retry_count[2];
 	u_int8_t		sc_retry_delay[2];
 	u_int8_t		sc_reset_delay[2];
+	u_int8_t		sc_tag_age_limit[2];
 	u_int16_t		sc_selection_timeout[2];
 	u_int16_t		sc_max_queue_depth[2];
 	u_int8_t		sc_async_data_setup[2];

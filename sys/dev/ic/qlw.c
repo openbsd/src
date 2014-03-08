@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.7 2014/03/08 16:34:29 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.8 2014/03/08 16:56:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -234,28 +234,10 @@ qlw_attach(struct qlw_softc *sc)
 	if (sc->sc_isp_config & QLW_BURST_ENABLE)
 		qlw_dma_burst_enable(sc);
 
-#if 0
-	/* set SCSI termination */
-	qlw_write(sc, QLW_GPIO_ENABLE, 0x8f);
-	qlw_write(sc, QLW_GPIO_DATA, sc->sc_nvram.termination);
-#endif
-
-#if 0
-	sc->sc_mbox[0] = QLW_MBOX_SET_SYSTEM_PARAMETER;
-	sc->sc_mbox[1] = sc->sc_nvram.isp_parameter;
-	if (qlw_mbox(sc, 0x0003, 0x0001)) {
-		printf("couldn't set system parameter: %x\n", sc->sc_mbox[0]);
-		return (ENXIO);
-	}
-#endif
-
 	sc->sc_mbox[0] = QLW_MBOX_SET_FIRMWARE_FEATURES;
-#if 0
-	sc->sc_mbox[1] = letoh16(sc->sc_nvram.fw_options);
-#else
-	sc->sc_mbox[1] = 0x000a;
-	sc->sc_mbox[1] = 0x0002;
-#endif
+	sc->sc_mbox[1] = 0;
+	if (sc->sc_fw_features & QLW_FW_FEATURE_LVD_NOTIFY)
+		sc->sc_mbox[1] |= QLW_FW_FEATURE_LVD_NOTIFY;
 	if (qlw_mbox(sc, 0x0003, 0x0001)) {
 		printf("couldn't set firmware features: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
@@ -296,18 +278,9 @@ qlw_attach(struct qlw_softc *sc)
 		return (ENXIO);
 	}
 
-#if 0
-	sc->sc_mbox[0] = QLW_MBOX_SET_DATA_OVERRUN_RECOVERY;
-	sc->sc_mbox[1] = 2;
-	if (qlw_mbox(sc, 0x0003, 0x0001)) {
-		printf("couldn't set data overrun recovery: %x\n", sc->sc_mbox[0]);
-		return (ENXIO);
-	}
-#endif
-
 	sc->sc_mbox[0] = QLW_MBOX_SET_TAG_AGE_LIMIT;
-	sc->sc_mbox[1] = 8;
-	sc->sc_mbox[2] = 8;
+	sc->sc_mbox[1] = sc->sc_tag_age_limit[0];
+	sc->sc_mbox[2] = sc->sc_tag_age_limit[1];
 	if (qlw_mbox(sc, 0x0007, 0x0001)) {
 		printf("couldn't set tag age limit: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
@@ -1454,6 +1427,7 @@ qlw_parse_nvram_1040(struct qlw_softc *sc, int bus)
 	sc->sc_retry_count[0] = nv->retry_count;
 	sc->sc_retry_delay[0] = nv->retry_delay;
 	sc->sc_reset_delay[0] = nv->reset_delay;
+	sc->sc_tag_age_limit[0] = nv->tag_age_limit;
 	sc->sc_selection_timeout[0] = letoh16(nv->selection_timeout);
 	sc->sc_max_queue_depth[0] = letoh16(nv->max_queue_depth);
 	sc->sc_async_data_setup[0] = (nv->config2 & 0x0f);
@@ -1478,6 +1452,7 @@ qlw_parse_nvram_1080(struct qlw_softc *sc, int bus)
 	int target;
 
 	sc->sc_isp_config = nvram->isp_config;
+	sc->sc_fw_features = nvram->fw_features;
 
 	if (!ISSET(sc->sc_flags, QLW_FLAG_INITIATOR))
 		sc->sc_initiator[bus] = (nv->config1 & 0x0f);
@@ -1516,12 +1491,14 @@ qlw_init_defaults(struct qlw_softc *sc, int bus)
 	case QLW_GEN_ISP1080:
 	case QLW_GEN_ISP12160:
 		sc->sc_isp_config = QLW_BURST_ENABLE | QLW_PCI_FIFO_128;
+		sc->sc_fw_features = QLW_FW_FEATURE_LVD_NOTIFY;
 		break;
 	}
 
 	sc->sc_retry_count[bus] = 0;
 	sc->sc_retry_delay[bus] = 0;
 	sc->sc_reset_delay[bus] = 3;
+	sc->sc_tag_age_limit[bus] = 8;
 	sc->sc_selection_timeout[bus] = 250;
 	sc->sc_max_queue_depth[bus] = 32;
 	if (sc->sc_clock > 40)
