@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.15 2014/03/08 00:09:20 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 		*p++ = '\0';
 		if (setenv(*argv, p, 1) == -1) {
 			/* reuse 126, it matches the problem most */
-			exit(126);
+			err(126, "setenv");
 		}
 	}
 
