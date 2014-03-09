@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1717 2014/02/25 00:14:49 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1718 2014/03/09 16:55:12 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3928,6 +3928,41 @@
 #define	PCI_PRODUCT_INTEL_E5_ADDRMAP	0x3c28		/* E5 Address Map */
 #define	PCI_PRODUCT_INTEL_E5_ERR	0x3c2a		/* E5 Error Reporting */
 #define	PCI_PRODUCT_INTEL_E5_IOAPIC	0x3c2c		/* E5 I/O APIC */
+#define	PCI_PRODUCT_INTEL_E5_R2PCIE_MON	0x3c43		/* E5 PCIE Monitor */
+#define	PCI_PRODUCT_INTEL_E5_QPI_L_MON_0	0x3c44		/* E5 QPI Link Monitor */
+#define	PCI_PRODUCT_INTEL_E5_QPI_L_MON_1	0x3c45		/* E5 QPI Link Monitor */
+#define	PCI_PRODUCT_INTEL_E5_HA_2	0x3c46		/* E5 Home Agent */
+#define	PCI_PRODUCT_INTEL_E5_RAS	0x3c71		/* E5 RAS */
+#define	PCI_PRODUCT_INTEL_E5_QPI_L_0	0x3c80		/* E5 QPI Link */
+#define	PCI_PRODUCT_INTEL_E5_QPI_L_1	0x3c90		/* E5 QPI Link */
+#define	PCI_PRODUCT_INTEL_E5_HA_1	0x3ca0		/* E5 Home Agent */
+#define	PCI_PRODUCT_INTEL_E5_TA	0x3ca8		/* E5 TA */
+#define	PCI_PRODUCT_INTEL_E5_TAD_1	0x3caa		/* E5 TAD */
+#define	PCI_PRODUCT_INTEL_E5_TAD_2	0x3cab		/* E5 TAD */
+#define	PCI_PRODUCT_INTEL_E5_TAD_3	0x3cac		/* E5 TAD */
+#define	PCI_PRODUCT_INTEL_E5_TAD_4	0x3cad		/* E5 TAD */
+#define	PCI_PRODUCT_INTEL_E5_TAD_5	0x3cae		/* E5 TAD */
+#define	PCI_PRODUCT_INTEL_E5_THERMAL_1	0x3cb0		/* E5 Thermal */
+#define	PCI_PRODUCT_INTEL_E5_THERMAL_2	0x3cb1		/* E5 Thermal */
+#define	PCI_PRODUCT_INTEL_E5_ERR_2	0x3cb2		/* E5 Error */
+#define	PCI_PRODUCT_INTEL_E5_ERR_3	0x3cb3		/* E5 Error */
+#define	PCI_PRODUCT_INTEL_E5_THERMAL_3	0x3cb4		/* E5 Thermal */
+#define	PCI_PRODUCT_INTEL_E5_THERMAL_4	0x3cb5		/* E5 Thermal */
+#define	PCI_PRODUCT_INTEL_E5_ERR_4	0x3cb6		/* E5 Error */
+#define	PCI_PRODUCT_INTEL_E5_ERR_5	0x3cb7		/* E5 Error */
+#define	PCI_PRODUCT_INTEL_E5_DDRIO	0x3cb8		/* E5 DDRIO */
+#define	PCI_PRODUCT_INTEL_E5_PCU_0	0x3cc0		/* E5 PCU */
+#define	PCI_PRODUCT_INTEL_E5_PCU_1	0x3cc1		/* E5 PCU */
+#define	PCI_PRODUCT_INTEL_E5_PCU_2	0x3cc2		/* E5 PCU */
+#define	PCI_PRODUCT_INTEL_E5_PCU_3	0x3cd0		/* E5 PCU */
+#define	PCI_PRODUCT_INTEL_E5_SCRATCH_1	0x3ce0		/* E5 Scratch */
+#define	PCI_PRODUCT_INTEL_E5_SCRATCH_2	0x3ce3		/* E5 Scratch */
+#define	PCI_PRODUCT_INTEL_E5_R2PCIE	0x3ce4		/* E5 R2PCIE */
+#define	PCI_PRODUCT_INTEL_E5_R3_QPI	0x3ce6		/* E5 QPI */
+#define	PCI_PRODUCT_INTEL_E5_UNICAST	0x3ce8		/* E5 Unicast */
+#define	PCI_PRODUCT_INTEL_E5_SAD_1	0x3cf4		/* E5 SAD */
+#define	PCI_PRODUCT_INTEL_E5_BROADCAST	0x3cf5		/* E5 Broadcast */
+#define	PCI_PRODUCT_INTEL_E5_SAD_2	0x3cf6		/* E5 SAD */
 #define	PCI_PRODUCT_INTEL_5400_HB	0x4000		/* 5400 Host */
 #define	PCI_PRODUCT_INTEL_5400A_HB	0x4001		/* 5400A Host */
 #define	PCI_PRODUCT_INTEL_5400B_HB	0x4003		/* 5400B Host */
