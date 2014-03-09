@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.7 2014/03/08 15:13:12 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.8 2014/03/09 20:23:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -105,6 +105,7 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct qlw_softc *sc = &psc->psc_qlw;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
+	const char *intrstr;
 	u_int32_t pcictl;
 #ifdef __sparc64__
 	int node, initiator;
@@ -137,21 +138,22 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	printf(": %s\n", pci_intr_string(psc->psc_pc, ih));
-
+	intrstr = pci_intr_string(psc->psc_pc, ih);
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
 	    qlw_intr, sc, DEVNAME(sc));
 	if (psc->psc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
+		printf(": unable to establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
 		goto deintr;
 	}
+
+	printf(": %s\n", intrstr);
 
 	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pcictl |= PCI_COMMAND_INVALIDATE_ENABLE |
 	    PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
-	/* fw manual says to enable bus master here, then disable it while
-	 * resetting.. hm.
-	 */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, pcictl);
 
 	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);

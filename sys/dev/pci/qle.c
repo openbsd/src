@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.14 2014/02/25 13:08:16 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.15 2014/03/09 20:23:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -345,6 +345,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	struct qle_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
+	const char *intrstr;
 	u_int32_t pcictl;
 	struct scsibus_attach_args saa;
 	struct qle_init_cb *icb;
@@ -381,14 +382,18 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
-
+	intrstr = pci_intr_string(sc->sc_pc, ih);
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    qle_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n", DEVNAME(sc));
+		printf(": unable to establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
 		goto deintr;
 	}
+
+	printf(": %s\n", intrstr);
 
 	pcictl = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pcictl |= PCI_COMMAND_INVALIDATE_ENABLE |
