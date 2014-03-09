@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.61 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.62 2014/03/09 22:25:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,30 +28,24 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <memory.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
-#include <limits.h>
-#include "disk.h"
-#include "misc.h"
+
 #include "user.h"
-#include "part.h"
 #include "cmd.h"
 
 int
 Xreinit(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
-	char buf[DEV_BSIZE];
+	struct dos_mbr dos_mbr;
 
 	/* Copy template MBR */
-	MBR_make(tt, buf);
-	MBR_parse(disk, buf, mbr->offset, mbr->reloffset, mbr);
+	MBR_make(tt, &dos_mbr);
+	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
 	MBR_init(disk, mbr);
 
@@ -297,7 +291,7 @@ int
 Xwrite(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
-	char mbr_buf[DEV_BSIZE];
+	struct dos_mbr dos_mbr;
 	int fd, i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
@@ -310,10 +304,10 @@ Xwrite(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	}
 
 	fd = DISK_open(disk->name, O_RDWR);
-	MBR_make(mbr, mbr_buf);
+	MBR_make(mbr, &dos_mbr);
 
 	printf("Writing MBR at offset %d.\n", offset);
-	if (MBR_write(fd, offset, mbr_buf) == -1) {
+	if (MBR_write(fd, offset, &dos_mbr) == -1) {
 		int saved_errno = errno;
 		warn("error writing MBR");
 		close(fd);
@@ -323,7 +317,7 @@ Xwrite(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	close(fd);
 
 	/* Refresh in memory copy to reflect what was just written. */
-	MBR_parse(disk, mbr_buf, mbr->offset, mbr->reloffset, mbr);
+	MBR_parse(disk, &dos_mbr, mbr->offset, mbr->reloffset, mbr);
 
 	return (CMD_CLEAN);
 }
@@ -381,7 +375,7 @@ Xupdate(struct cmd *cmd, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 {
 
 	/* Update code */
-	memcpy(mbr->code, tt->code, MBR_CODE_SIZE);
+	memcpy(mbr->code, tt->code, sizeof(mbr->code));
 	mbr->signature = DOSMBR_SIGNATURE;
 	printf("Machine code updated.\n");
 	return (CMD_DIRTY);

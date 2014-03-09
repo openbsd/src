@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.57 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.58 2014/03/09 22:25:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,13 +28,13 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <paths.h>
 #include <stdint.h>
+
 #include "disk.h"
 #include "user.h"
 
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	char *mbrfile = NULL;
 #endif
 	struct mbr mbr;
-	char mbr_buf[DEV_BSIZE];
+	struct dos_mbr dos_mbr;
 
 	while ((ch = getopt(argc, argv, "ieuf:c:h:s:l:y")) != -1) {
 		const char *errstr;
@@ -177,14 +177,14 @@ main(int argc, char *argv[])
 		mbrfile = NULL;
 	}
 	if (mbrfile == NULL) {
-		memcpy(mbr_buf, builtin_mbr, sizeof(mbr_buf));
+		memcpy(&dos_mbr, builtin_mbr, sizeof(dos_mbr));
 	} else {
-		error = MBR_read(fd, 0, mbr_buf);
+		error = MBR_read(fd, 0, &dos_mbr);
 		if (error == -1)
 			err(1, "Unable to read MBR");
 		close(fd);
 	}
-	MBR_parse(&disk, mbr_buf, 0, 0, &mbr);
+	MBR_parse(&disk, &dos_mbr, 0, 0, &mbr);
 
 	/* Now do what we are supposed to */
 	if (i_flag || u_flag)
@@ -196,4 +196,3 @@ main(int argc, char *argv[])
 
 	return (0);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.33 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.34 2014/03/09 22:25:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,18 +27,15 @@
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
-#include <err.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <limits.h>
+
 #include "misc.h"
 
 struct unit_type unit_types[] = {
 	{"b", 1			, "Bytes"},
-	{" ", DEV_BSIZE		, "Sectors"},
+	{" ", 0			, "Sectors"},	/* Filled in from disklabel. */
 	{"K", 1024		, "Kilobytes"},
 	{"M", 1024 * 1024	, "Megabytes"},
 	{"G", 1024 * 1024 *1024	, "Gigabytes"},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.35 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.36 2014/03/09 22:25:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -27,7 +27,6 @@
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
-#include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/stdint.h>
 #include <sys/stat.h>
@@ -36,7 +35,7 @@
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include "disk.h"
 #include "misc.h"
 
@@ -154,7 +153,7 @@ DISK_printmetrics(struct disk *disk, char *units)
 		printf("geometry: %d/%d/%d [%.0f ",
 		    disk->real->cylinders, disk->real->heads,
 		    disk->real->sectors, size);
-		if (i == SECTORS && secsize != DEV_BSIZE)
+		if (i == SECTORS && secsize != sizeof(struct dos_mbr))
 			printf("%d-byte ", secsize);
 		printf("%s]\n", unit_types[i].lname);
 	} else

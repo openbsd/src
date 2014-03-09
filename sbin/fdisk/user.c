@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.27 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.28 2014/03/09 22:25:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,14 +27,10 @@
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
-#include <sys/stat.h>
 #include <sys/disklabel.h>
-#include <err.h>
-#include <errno.h>
-#include <util.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+
 #include "user.h"
 #include "disk.h"
 #include "misc.h"
@@ -88,7 +84,7 @@ int
 USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 {
 	static int editlevel;
-	char mbr_buf[DEV_BSIZE];
+	struct dos_mbr dos_mbr;
 	struct mbr mbr;
 	struct cmd cmd;
 	int i, st, fd, error;
@@ -101,13 +97,13 @@ USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 
 	/* Read MBR & partition */
 	fd = DISK_open(disk->name, O_RDONLY);
-	error = MBR_read(fd, offset, mbr_buf);
+	error = MBR_read(fd, offset, &dos_mbr);
 	close(fd);
 	if (error == -1)
 		goto done;
 
 	/* Parse the sucker */
-	MBR_parse(disk, mbr_buf, offset, reloff, &mbr);
+	MBR_parse(disk, &dos_mbr, offset, reloff, &mbr);
 
 	printf("Enter 'help' for information\n");
 
@@ -171,7 +167,7 @@ USER_print_disk(struct disk *disk)
 {
 	off_t offset, firstoff;
 	int fd, i, error;
-	char mbr_buf[DEV_BSIZE];
+	struct dos_mbr dos_mbr;
 	struct mbr mbr;
 
 	fd = DISK_open(disk->name, O_RDONLY);
@@ -180,10 +176,10 @@ USER_print_disk(struct disk *disk)
 	DISK_printmetrics(disk, NULL);
 
 	do {
-		error = MBR_read(fd, offset, mbr_buf);
+		error = MBR_read(fd, offset, &dos_mbr);
 		if (error == -1)
 			break;
-		MBR_parse(disk, mbr_buf, offset, firstoff, &mbr);
+		MBR_parse(disk, &dos_mbr, offset, firstoff, &mbr);
 
 		printf("Offset: %lld\t", offset);
 		MBR_print(&mbr, NULL);
