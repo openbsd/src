@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.6 2013/12/16 19:57:09 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.7 2014/03/09 11:07:18 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -587,23 +587,23 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 
 	/* Allocate space for the backup of all (non-pointer) crtc, encoder and
 	 * connector data. */
-	save_crtcs = malloc(dev->mode_config.num_crtc *
-	    sizeof(struct drm_crtc), M_DRM, M_WAITOK|M_ZERO);
+	save_crtcs = kzalloc(dev->mode_config.num_crtc *
+			     sizeof(struct drm_crtc), GFP_KERNEL);
 	if (!save_crtcs)
 		return -ENOMEM;
 
-	save_encoders = malloc(dev->mode_config.num_encoder *
-	    sizeof(struct drm_encoder), M_DRM, M_WAITOK|M_ZERO);
+	save_encoders = kzalloc(dev->mode_config.num_encoder *
+				sizeof(struct drm_encoder), GFP_KERNEL);
 	if (!save_encoders) {
-		free(save_crtcs, M_DRM);
+		kfree(save_crtcs);
 		return -ENOMEM;
 	}
 
-	save_connectors = malloc(dev->mode_config.num_connector *
-	    sizeof(struct drm_connector), M_DRM, M_WAITOK|M_ZERO);
+	save_connectors = kzalloc(dev->mode_config.num_connector *
+				sizeof(struct drm_connector), GFP_KERNEL);
 	if (!save_connectors) {
-		free(save_crtcs, M_DRM);
-		free(save_encoders, M_DRM);
+		kfree(save_crtcs);
+		kfree(save_encoders);
 		return -ENOMEM;
 	}
 
@@ -775,9 +775,9 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 		}
 	}
 
-	free(save_connectors, M_DRM);
-	free(save_encoders, M_DRM);
-	free(save_crtcs, M_DRM);
+	kfree(save_connectors);
+	kfree(save_encoders);
+	kfree(save_crtcs);
 	return 0;
 
 fail:
@@ -803,9 +803,9 @@ fail:
 				      save_set.y, save_set.fb))
 		DRM_ERROR("failed to restore config after modeset failure\n");
 
-	free(save_connectors, M_DRM);
-	free(save_encoders, M_DRM);
-	free(save_crtcs, M_DRM);
+	kfree(save_connectors);
+	kfree(save_encoders);
+	kfree(save_crtcs);
 	return ret;
 }
 EXPORT_SYMBOL(drm_crtc_helper_set_config);

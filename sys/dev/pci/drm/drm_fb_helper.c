@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.5 2013/09/02 06:25:28 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.6 2014/03/09 11:07:18 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -56,8 +56,7 @@ int drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper)
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		struct drm_fb_helper_connector *fb_helper_connector;
 
-		fb_helper_connector = malloc(sizeof(struct drm_fb_helper_connector), M_DRM,
-		    M_WAITOK | M_ZERO);
+		fb_helper_connector = kzalloc(sizeof(struct drm_fb_helper_connector), GFP_KERNEL);
 		if (!fb_helper_connector)
 			goto fail;
 
@@ -67,7 +66,7 @@ int drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper)
 	return 0;
 fail:
 	for (i = 0; i < fb_helper->connector_count; i++) {
-		free(fb_helper->connector_info[i], M_DRM);
+		kfree(fb_helper->connector_info[i]);
 		fb_helper->connector_info[i] = NULL;
 	}
 	fb_helper->connector_count = 0;
@@ -388,14 +387,14 @@ static void drm_fb_helper_crtc_free(struct drm_fb_helper *helper)
 	int i;
 
 	for (i = 0; i < helper->connector_count; i++)
-		free(helper->connector_info[i], M_DRM);
-	free(helper->connector_info, M_DRM);
+		kfree(helper->connector_info[i]);
+	kfree(helper->connector_info);
 	for (i = 0; i < helper->crtc_count; i++) {
-		free(helper->crtc_info[i].mode_set.connectors, M_DRM);
+		kfree(helper->crtc_info[i].mode_set.connectors);
 		if (helper->crtc_info[i].mode_set.mode)
 			drm_mode_destroy(helper->dev, helper->crtc_info[i].mode_set.mode);
 	}
-	free(helper->crtc_info, M_DRM);
+	kfree(helper->crtc_info);
 }
 
 int drm_fb_helper_init(struct drm_device *dev,
@@ -409,25 +408,23 @@ int drm_fb_helper_init(struct drm_device *dev,
 
 	INIT_LIST_HEAD(&fb_helper->kernel_fb_list);
 
-	fb_helper->crtc_info = malloc(crtc_count *
-	    sizeof(struct drm_fb_helper_crtc), M_DRM, M_WAITOK | M_ZERO);
+	fb_helper->crtc_info = kcalloc(crtc_count, sizeof(struct drm_fb_helper_crtc), GFP_KERNEL);
 	if (!fb_helper->crtc_info)
 		return -ENOMEM;
 
 	fb_helper->crtc_count = crtc_count;
-	fb_helper->connector_info = malloc(dev->mode_config.num_connector *
-	    sizeof(struct drm_fb_helper_connector *), M_DRM,
-	    M_WAITOK | M_ZERO);
+	fb_helper->connector_info = kcalloc(dev->mode_config.num_connector, sizeof(struct drm_fb_helper_connector *), GFP_KERNEL);
 	if (!fb_helper->connector_info) {
-		free(fb_helper->crtc_info, M_DRM);
+		kfree(fb_helper->crtc_info);
 		return -ENOMEM;
 	}
 	fb_helper->connector_count = 0;
 
 	for (i = 0; i < crtc_count; i++) {
 		fb_helper->crtc_info[i].mode_set.connectors =
-			malloc(max_conn_count * sizeof(struct drm_connector *),
-			    M_DRM, M_WAITOK | M_ZERO);
+			kcalloc(max_conn_count,
+				sizeof(struct drm_connector *),
+				GFP_KERNEL);
 
 		if (!fb_helper->crtc_info[i].mode_set.connectors)
 			goto out_free;
@@ -1205,9 +1202,8 @@ static int drm_pick_crtcs(struct drm_fb_helper *fb_helper,
 	if (modes[n] == NULL)
 		return best_score;
 
-	crtcs = malloc(dev->mode_config.num_connector *
-	    sizeof(struct drm_fb_helper_crtc *), M_DRM,
-	    M_WAITOK | M_ZERO);
+	crtcs = kzalloc(dev->mode_config.num_connector *
+			sizeof(struct drm_fb_helper_crtc *), GFP_KERNEL);
 	if (!crtcs)
 		return best_score;
 
@@ -1258,7 +1254,7 @@ static int drm_pick_crtcs(struct drm_fb_helper *fb_helper,
 		}
 	}
 out:
-	free(crtcs, M_DRM);
+	kfree(crtcs);
 	return best_score;
 }
 
@@ -1277,14 +1273,12 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 	width = dev->mode_config.max_width;
 	height = dev->mode_config.max_height;
 
-	crtcs = malloc(dev->mode_config.num_connector *
-	    sizeof(struct drm_fb_helper_crtc *), M_DRM,
-	    M_WAITOK | M_ZERO);
-	modes = malloc(dev->mode_config.num_connector *
-	    sizeof(struct drm_display_mode *), M_DRM,
-	    M_WAITOK | M_ZERO);
-	enabled = malloc(dev->mode_config.num_connector *
-	    sizeof(bool), M_DRM, M_WAITOK | M_ZERO);
+	crtcs = kcalloc(dev->mode_config.num_connector,
+			sizeof(struct drm_fb_helper_crtc *), GFP_KERNEL);
+	modes = kcalloc(dev->mode_config.num_connector,
+			sizeof(struct drm_display_mode *), GFP_KERNEL);
+	enabled = kcalloc(dev->mode_config.num_connector,
+			  sizeof(bool), GFP_KERNEL);
 	if (!crtcs || !modes || !enabled) {
 		DRM_ERROR("Memory allocation failed\n");
 		goto out;
@@ -1329,9 +1323,9 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 	}
 
 out:
-	free(crtcs, M_DRM);
-	free(modes, M_DRM);
-	free(enabled, M_DRM);
+	kfree(crtcs);
+	kfree(modes);
+	kfree(enabled);
 }
 
 /**

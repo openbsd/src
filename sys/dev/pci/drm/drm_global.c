@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_global.c,v 1.1 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_global.c,v 1.2 2014/03/09 11:07:18 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2008-2009 VMware, Inc., Palo Alto, CA., USA
@@ -71,7 +71,7 @@ int drm_global_item_ref(struct drm_global_reference *ref)
 
 	rw_enter_write(&item->rwlock);
 	if (item->refcount == 0) {
-		item->object = malloc(ref->size, M_DRM, M_WAITOK | M_ZERO);
+		item->object = kzalloc(ref->size, GFP_KERNEL);
 		if (unlikely(item->object == NULL)) {
 			ret = -ENOMEM;
 			goto out_err;

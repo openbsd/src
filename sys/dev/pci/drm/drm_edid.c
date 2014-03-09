@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.8 2014/01/22 22:41:48 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.9 2014/03/09 11:07:18 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -304,7 +304,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 	u8 *block, *new;
 	bool print_bad_edid = !connector->bad_edid_counter;
 
-	if ((block = malloc(EDID_LENGTH, M_DRM, M_WAITOK)) == NULL)
+	if ((block = kmalloc(EDID_LENGTH, GFP_KERNEL)) == NULL)
 		return NULL;
 
 	/* base block fetch */
@@ -374,7 +374,7 @@ carp:
 	connector->bad_edid_counter++;
 
 out:
-	free(block, M_DRM);
+	kfree(block);
 	return NULL;
 }
 

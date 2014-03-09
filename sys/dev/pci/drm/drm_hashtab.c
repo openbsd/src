@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_hashtab.c,v 1.1 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_hashtab.c,v 1.2 2014/03/09 11:07:18 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
@@ -51,7 +51,7 @@ int drm_ht_create(struct drm_open_hash *ht, unsigned int order)
 	ht->order = order;
 	ht->table = NULL;
 	if (size <= PAGE_SIZE / sizeof(*ht->table))
-		ht->table = drm_calloc(size, sizeof(*ht->table));
+		ht->table = kcalloc(size, sizeof(*ht->table), GFP_KERNEL);
 	else
 		ht->table = vzalloc(size*sizeof(*ht->table));
 	if (!ht->table) {
@@ -244,7 +244,7 @@ void drm_ht_remove(struct drm_open_hash *ht)
 #ifdef notyet
 	if (ht->table) {
 		if ((PAGE_SIZE / sizeof(*ht->table)) >> ht->order)
-			free(ht->table, M_DRM);
+			kfree(ht->table);
 		else
 			vfree(ht->table);
 		ht->table = NULL;

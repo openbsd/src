@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mm.c,v 1.3 2014/02/15 10:03:15 jsg Exp $	*/
+/*	$OpenBSD: drm_mm.c,v 1.4 2014/03/09 11:07:18 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA.
@@ -51,8 +51,10 @@ static struct drm_mm_node *drm_mm_kmalloc(struct drm_mm *mm, int atomic)
 {
 	struct drm_mm_node *child;
 
-	child = malloc(sizeof(*child), M_DRM, M_ZERO |
-	    (atomic ? M_NOWAIT : M_WAITOK));
+	if (atomic)
+		child = kzalloc(sizeof(*child), GFP_ATOMIC);
+	else
+		child = kzalloc(sizeof(*child), GFP_KERNEL);
 
 	if (unlikely(child == NULL)) {
 		mtx_enter(&mm->unused_lock);
@@ -82,7 +84,7 @@ int drm_mm_pre_get(struct drm_mm *mm)
 	mtx_enter(&mm->unused_lock);
 	while (mm->num_unused < MM_UNUSED_TARGET) {
 		mtx_leave(&mm->unused_lock);
-		node = malloc(sizeof(*node), M_DRM, M_WAITOK);
+		node = kzalloc(sizeof(*node), GFP_KERNEL);
 		mtx_enter(&mm->unused_lock);
 
 		if (unlikely(node == NULL)) {
@@ -358,7 +360,7 @@ void drm_mm_put_block(struct drm_mm_node *node)
 		list_add(&node->node_list, &mm->unused_nodes);
 		++mm->num_unused;
 	} else
-		free(node, M_DRM);
+		kfree(node);
 	mtx_leave(&mm->unused_lock);
 }
 EXPORT_SYMBOL(drm_mm_put_block);
@@ -673,7 +675,7 @@ void drm_mm_takedown(struct drm_mm * mm)
 	mtx_enter(&mm->unused_lock);
 	list_for_each_entry_safe(entry, next, &mm->unused_nodes, node_list) {
 		list_del(&entry->node_list);
-		free(entry, M_DRM);
+		kfree(entry);
 		--mm->num_unused;
 	}
 	mtx_leave(&mm->unused_lock);
