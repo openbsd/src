@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.623 2014/02/15 02:16:57 jsg Exp $
+$OpenBSD: usbdevs,v 1.624 2014/03/09 05:09:39 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -389,6 +389,7 @@ vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
 vendor SHANTOU		0x0a46	ShanTou
+vendor HIROSE		0x0a47	Hirose
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
@@ -2069,6 +2070,9 @@ product HAWKING RTL8192CU_2	0x0020	RTL8192CU
 product HAWKING UF100		0x400c	10/100 Ethernet
 product ABOCOM UF200		0x420a	UF200 Ethernet
 
+/* Hirose products */
+product HIROSE USB100		0x9601	USB-100
+
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
 
@@ -3445,6 +3449,8 @@ product REALTEK RTL8188CTV	0x018a	RTL8188CTV
 product REALTEK RTL8188RU_2	0x317f	RTL8188RU
 product REALTEK RTL8150		0x8150	RTL8150
 product REALTEK RTL8151		0x8151	RTL8151 PNA
+product REALTEK RTL8152		0x8152	RTL8152
+product REALTEK RTL8153		0x8153	RTL8153
 product REALTEK RTL8188CE_0	0x8170	RTL8188CE
 product REALTEK RTL8171		0x8171	RTL8171
 product REALTEK RTL8172		0x8172	RTL8172
@@ -3627,9 +3633,15 @@ product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
 /* ShanTou products */
 product SHANTOU ST268		0x0268	ST268
+product SHANTOU DM9620A		0x0269	DM9620A
+product SHANTOU DM9621A		0x1269	DM9621A
 product SHANTOU ZT6688		0x6688	ZT6688
 product SHANTOU ADM8515		0x8515	ADM8515 Ethernet
+product SHANTOU DM9000E		0x9000	DM9000E
 product SHANTOU DM9601		0x9601	DM9601
+product SHANTOU DM9620		0x9620	DM9620
+product SHANTOU DM9621		0x9621	DM9621
+product SHANTOU DM9622		0x9622	DM9622
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
