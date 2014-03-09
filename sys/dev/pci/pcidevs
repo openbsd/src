@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1717 2014/02/25 00:14:49 jsg Exp $
+$OpenBSD: pcidevs,v 1.1718 2014/03/09 16:55:12 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3923,6 +3923,41 @@ product INTEL E5_DMA_8		0x3c27	E5 DMA
 product INTEL E5_ADDRMAP	0x3c28	E5 Address Map
 product INTEL E5_ERR		0x3c2a	E5 Error Reporting
 product INTEL E5_IOAPIC		0x3c2c	E5 I/O APIC
+product INTEL E5_R2PCIE_MON	0x3c43	E5 PCIE Monitor
+product INTEL E5_QPI_L_MON_0	0x3c44	E5 QPI Link Monitor
+product INTEL E5_QPI_L_MON_1	0x3c45	E5 QPI Link Monitor
+product INTEL E5_HA_2		0x3c46	E5 Home Agent
+product INTEL E5_RAS		0x3c71	E5 RAS
+product INTEL E5_QPI_L_0	0x3c80	E5 QPI Link
+product INTEL E5_QPI_L_1	0x3c90	E5 QPI Link
+product INTEL E5_HA_1		0x3ca0	E5 Home Agent
+product INTEL E5_TA		0x3ca8	E5 TA
+product INTEL E5_TAD_1		0x3caa	E5 TAD
+product INTEL E5_TAD_2		0x3cab	E5 TAD
+product INTEL E5_TAD_3		0x3cac	E5 TAD
+product INTEL E5_TAD_4		0x3cad	E5 TAD
+product INTEL E5_TAD_5		0x3cae	E5 TAD
+product INTEL E5_THERMAL_1	0x3cb0	E5 Thermal
+product INTEL E5_THERMAL_2	0x3cb1	E5 Thermal
+product INTEL E5_ERR_2		0x3cb2	E5 Error
+product INTEL E5_ERR_3		0x3cb3	E5 Error
+product INTEL E5_THERMAL_3	0x3cb4	E5 Thermal
+product INTEL E5_THERMAL_4	0x3cb5	E5 Thermal
+product INTEL E5_ERR_4		0x3cb6	E5 Error
+product INTEL E5_ERR_5		0x3cb7	E5 Error
+product INTEL E5_DDRIO		0x3cb8	E5 DDRIO
+product INTEL E5_PCU_0		0x3cc0	E5 PCU
+product INTEL E5_PCU_1		0x3cc1	E5 PCU
+product INTEL E5_PCU_2		0x3cc2	E5 PCU
+product INTEL E5_PCU_3		0x3cd0	E5 PCU
+product INTEL E5_SCRATCH_1	0x3ce0	E5 Scratch
+product INTEL E5_SCRATCH_2	0x3ce3	E5 Scratch
+product INTEL E5_R2PCIE		0x3ce4	E5 R2PCIE
+product INTEL E5_R3_QPI		0x3ce6	E5 QPI
+product INTEL E5_UNICAST	0x3ce8	E5 Unicast
+product INTEL E5_SAD_1		0x3cf4	E5 SAD
+product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
+product INTEL E5_SAD_2		0x3cf6	E5 SAD
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
