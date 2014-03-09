@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.10 2013/12/23 21:32:30 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.11 2014/03/09 10:01:25 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -834,10 +834,10 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	/* Setup pixel painting. */
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00010405);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00002400);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0xc580cc08);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, OPENGL_COLOR_3UB);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00011453);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000002);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
@@ -847,7 +847,7 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	odyssey_cmd_flush(sc, 0);
 
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x2900812f);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00014400);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, OPENGL_BEGIN);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x0000000a);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0xcf80a92f);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
@@ -862,9 +862,9 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO,
 	    ieee754_sp(y + font->fontheight));
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x8080c800);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000000);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, OPENGL_VERTEX_2I);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00004570);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x0f00104c);
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00000071);
@@ -919,7 +919,7 @@ odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	}
 
-	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x00014001);
+	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, OPENGL_END);
 	odyssey_cmd_flush(sc, 1);
 
 	bus_space_write_4(sc->iot, sc->ioh, ODYSSEY_CMD_FIFO, 0x290080d6);
