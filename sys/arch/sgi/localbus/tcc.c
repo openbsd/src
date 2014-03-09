@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.2 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.3 2014/03/09 10:12:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -142,16 +142,14 @@ void tcc_virtual(struct cpu_info *, vaddr_t, vsize_t, uint64_t);
 void
 tcc_ConfigCache(struct cpu_info *ci)
 {
-	uint l2line, l2size;
+	struct cache_info l2;
 
-	l2line = ci->ci_l2line;
-	l2size = ci->ci_l2size;
+	l2 = ci->ci_l2;
 
 	tfp_ConfigCache(ci);
 
-	if (l2size != 0) {
-		ci->ci_l2line = l2line;
-		ci->ci_l2size = l2size;
+	if (l2.size != 0) {
+		ci->ci_l2 = l2;
 
 		ci->ci_SyncCache = tcc_SyncCache;
 		ci->ci_SyncDCachePage = tcc_SyncDCachePage;
@@ -167,7 +165,7 @@ tcc_SyncCache(struct cpu_info *ci)
 	uint64_t idx;
 
 	mips_sync();
-	tfp_InvalidateICache(ci, 0, ci->ci_l1instcachesize);
+	tfp_InvalidateICache(ci, 0, ci->ci_l1inst.size);
 
 	/*
 	 * The following relies upon the fact that the (line, set)
@@ -175,7 +173,7 @@ tcc_SyncCache(struct cpu_info *ci)
 	 * a huge number of sets and only one line, we can span the
 	 * whole cache.
 	 */
-	idx = (uint64_t)ci->ci_l2size / TCC_CACHE_LINE;
+	idx = (uint64_t)ci->ci_l2.size / TCC_CACHE_LINE;
 	while (idx != 0) {
 		idx--;
 		tcc_cache_index(idx, 0,

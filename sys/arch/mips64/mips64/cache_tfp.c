@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.2 2013/06/28 18:56:10 miod Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.3 2014/03/09 10:12:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -53,37 +53,37 @@ tfp_ConfigCache(struct cpu_info *ci)
 	 * XXX then.
 	 */
 #if 0
+	ci->ci_l1inst.size = (1 << 11) << ((cfg >> 9) & 0x07); /* IC */
 	if (cfg & (1 << 5))	/* IB */
-		ci->ci_l1instcacheline = 32;
+		ci->ci_l1inst.linesize = 32;
 	else
-		ci->ci_l1instcacheline = 16;
-	ci->ci_l1instcachesize = (1 << 11) << ((cfg >> 9) & 0x07); /* IC */
+		ci->ci_l1inst.linesize = 16;
 
+	ci->ci_l1data.size = (1 << 12) << ((cfg >> 6) & 0x07); /* DC */
 	if (cfg & (1 << 4))	/* DB */
-		ci->ci_l1datacacheline = 32;
+		ci->ci_l1data.linesize = 32;
 	else
-		ci->ci_l1datacacheline = 16;
-	ci->ci_l1datacachesize = (1 << 12) << ((cfg >> 6) & 0x07); /* DC */
+		ci->ci_l1data.linesize = 16;
 #else
-	ci->ci_l1instcacheline = 32;
-	ci->ci_l1datacacheline = 32;
-	ci->ci_l1instcachesize = 16384;
-	ci->ci_l1datacachesize = 16384;
+	ci->ci_l1inst.size = 16384;
+	ci->ci_l1inst.linesize = 32;
+	ci->ci_l1data.size = 16384;
+	ci->ci_l1data.linesize = 32;
 #endif
 
 	/* R8000 L1 caches are direct */
-	ci->ci_cacheways = 1;
-	ci->ci_l1instcacheset = ci->ci_l1instcachesize;
-	ci->ci_l1datacacheset = ci->ci_l1datacachesize;
+	ci->ci_l1inst.setsize = ci->ci_l1inst.size;
+	ci->ci_l1inst.sets = 1;
+	ci->ci_l1data.setsize = ci->ci_l1data.size;
+	ci->ci_l1data.sets = 1;
 
 	cache_valias_mask =
-	    (max(ci->ci_l1instcachesize, ci->ci_l1datacachesize) - 1) &
+	    (max(ci->ci_l1inst.size, ci->ci_l1data.size) - 1) &
 	    ~PAGE_MASK;
 
 	/* R8000 L2 cache are platform-specific, and not covered here */
-	ci->ci_l2line = 0;
-	ci->ci_l2size = 0;
-	ci->ci_l3size = 0;
+	memset(&ci->ci_l2, 0, sizeof(struct cache_info));
+	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
 
 	ci->ci_SyncCache = tfp_SyncCache;
 	ci->ci_InvalidateICache = tfp_InvalidateICache;
@@ -102,10 +102,10 @@ tfp_SyncCache(struct cpu_info *ci)
 	vaddr_t va, eva;
 	register_t sr;
 
-	tfp_InvalidateICache(ci, 0, ci->ci_l1instcachesize);
+	tfp_InvalidateICache(ci, 0, ci->ci_l1inst.size);
 
 	sr = disableintr();
-	eva = ci->ci_l1datacachesize;
+	eva = ci->ci_l1data.size;
 	for (va = 0; va < eva; va += TFP_DCTW_STEP)
 		tfp_dctw_zero(va);
 	setsr(sr);
@@ -121,15 +121,15 @@ tfp_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	vsize_t sz;
 	void (*inval_subr)(vsize_t);
 
-	if (_sz >= ci->ci_l1instcachesize) {
-		tfp_inval_icache(ci->ci_l1instcachesize);
+	if (_sz >= ci->ci_l1inst.size) {
+		tfp_inval_icache(ci->ci_l1inst.size);
 	} else {
 		/* extend the range to multiple of 32 bytes */
 		va = _va & ~(32UL - 1);
 		sz = ((_va + _sz + 32 - 1) & ~(32UL - 1)) - va;
 
 		/* compute cache offset */
-		va &= (ci->ci_l1instcachesize - 1);
+		va &= (ci->ci_l1inst.size - 1);
 		inval_subr = (void (*)(vsize_t))
 		    ((vaddr_t)tfp_inval_icache + va);
 		(*inval_subr)(sz);

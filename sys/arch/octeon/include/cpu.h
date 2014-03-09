@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.4 2012/04/21 12:20:30 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.5 2014/03/09 10:12:17 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,9 +55,12 @@ void hw_cpu_spinup_trampoline(struct cpu_info *);
 int  hw_ipi_intr_establish(int (*)(void *), u_long);
 void hw_ipi_intr_set(u_long);
 void hw_ipi_intr_clear(u_long);
-void hw_cpu_init_secondary(struct cpu_info *);
 #endif	/* MULTIPROCESSOR && !_LOCORE */
 
+/*
+ * No need to use the per-cpu_info function pointers, as we only support
+ * one processor type.
+ */
 #define	Mips_SyncCache(ci)			\
 	Octeon_SyncCache((ci))
 #define	Mips_InvalidateICache(ci, va, l)	\

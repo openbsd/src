@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.3 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.4 2014/03/09 10:12:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -71,17 +71,24 @@ static __inline__ void	ls2f_hitwbinv_secondary(vaddr_t, vsize_t);
 void
 Loongson2_ConfigCache(struct cpu_info *ci)
 {
-	ci->ci_l1instcacheline = LS2F_CACHE_LINE;
-	ci->ci_l1instcachesize = LS2F_L1_SIZE;
-	ci->ci_l1datacacheline = LS2F_CACHE_LINE;
-	ci->ci_l1datacachesize = LS2F_L1_SIZE;
-	ci->ci_cacheways = LS2F_CACHE_WAYS;
-	ci->ci_l1instcacheset = LS2F_L1_SIZE / LS2F_CACHE_WAYS;
-	ci->ci_l1datacacheset = LS2F_L1_SIZE / LS2F_CACHE_WAYS;
-	ci->ci_l2size = LS2F_L2_SIZE;
-	ci->ci_l3size = 0;
+	ci->ci_l1inst.size = LS2F_L1_SIZE;
+	ci->ci_l1inst.linesize = LS2F_CACHE_LINE;
+	ci->ci_l1inst.setsize = LS2F_L1_SIZE / LS2F_CACHE_WAYS;
+	ci->ci_l1inst.sets = LS2F_CACHE_WAYS;
 
-	cache_valias_mask = ci->ci_l1instcacheset & ~PAGE_MASK;
+	ci->ci_l1data.size = LS2F_L1_SIZE;
+	ci->ci_l1data.linesize = LS2F_CACHE_LINE;
+	ci->ci_l1data.setsize = LS2F_L1_SIZE / LS2F_CACHE_WAYS;
+	ci->ci_l1data.sets = LS2F_CACHE_WAYS;
+
+	ci->ci_l2.size = LS2F_L2_SIZE;
+	ci->ci_l2.linesize = LS2F_CACHE_LINE;
+	ci->ci_l2.setsize = LS2F_L2_SIZE / LS2F_CACHE_WAYS;
+	ci->ci_l2.sets = LS2F_CACHE_WAYS;
+
+	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
+
+	cache_valias_mask = ci->ci_l1inst.setsize & ~PAGE_MASK;
 
 	/* should not happen as we use 16KB pages */
 	if (cache_valias_mask != 0) {

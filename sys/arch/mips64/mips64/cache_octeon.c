@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.6 2012/09/29 18:54:38 miod Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.7 2014/03/09 10:12:17 miod Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -60,14 +60,22 @@
 void 
 Octeon_ConfigCache(struct cpu_info *ci)
 {
-	ci->ci_cacheways = 4;
-	ci->ci_l1instcachesize = 32 * 1024;
-	ci->ci_l1instcacheline = 128;
-	ci->ci_l1datacachesize = 16 * 1024;
-	ci->ci_l1datacacheline = 128;
-	ci->ci_l2size = 128 * 1024;
-	ci->ci_l2line = 128;
-	ci->ci_l3size = 0;
+	ci->ci_l1inst.size = 32 * 1024;
+	ci->ci_l1inst.linesize = 128;
+	ci->ci_l1inst.setsize = 4;
+	ci->ci_l1inst.sets = ci->ci_l1inst.size / ci->ci_l1inst.setsize;
+
+	ci->ci_l1data.size = 16 * 1024;
+	ci->ci_l1data.linesize = 128;
+	ci->ci_l1data.setsize = 4;
+	ci->ci_l1data.sets = ci->ci_l1data.size / ci->ci_l1data.setsize;
+
+	ci->ci_l2.size = 128 * 1024;
+	ci->ci_l2.linesize = 128;
+	ci->ci_l2.setsize = 4;
+	ci->ci_l2.sets = ci->ci_l2.size / ci->ci_l2.setsize;
+
+	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
 
 	ci->ci_SyncCache = Octeon_SyncCache;
 	ci->ci_InvalidateICache = Octeon_InvalidateICache;

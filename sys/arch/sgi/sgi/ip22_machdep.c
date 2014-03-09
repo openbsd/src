@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.14 2012/09/29 21:46:02 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.15 2014/03/09 10:12:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -115,8 +115,10 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		 * SS is Log2(cache size in 4KB units)
 		 *   (should be between 0007 and 0009)
 		 */
-		ci->ci_l2size = (1 << 12) << (key & 0x0000ffff);
-		ci->ci_l2line = 1 << ((key >> 16) & 0xff);
+		ci->ci_l2.size = (1 << 12) << (key & 0x0000ffff);
+		ci->ci_l2.linesize = 1 << ((key >> 16) & 0xff);
+		ci->ci_l2.setsize = ci->ci_l2.size;
+		ci->ci_l2.sets = 1;
 
 		ip22_arcwalk_results |= IP22_HAS_L2;
 	}
@@ -752,7 +754,7 @@ ip22_cache_halt(int howto)
 void
 ip22_ConfigCache(struct cpu_info *ci)
 {
-	uint l2line, l2size;
+	struct cache_info l2;
 
 	/*
 	 * Note that we are relying upon machdep.c only invoking us if we
@@ -763,12 +765,11 @@ ip22_ConfigCache(struct cpu_info *ci)
 		return;
 	}
 
-	l2line = ci->ci_l2line;
-	l2size = ci->ci_l2size;
+	l2 = ci->ci_l2;
 
 	Mips5k_ConfigCache(ci);
 
-	if (l2line != IP22_L2_LINE) {
+	if (ci->ci_l2.linesize != IP22_L2_LINE) {
 		/*
 		 * This should not happen. Better not try and tame an
 		 * unknown beast.
@@ -776,8 +777,7 @@ ip22_ConfigCache(struct cpu_info *ci)
 		return;
 	}
 
-	ci->ci_l2line = l2line;
-	ci->ci_l2size = l2size;
+	ci->ci_l2 = l2;
 
 	ci->ci_SyncCache = ip22_SyncCache;
 	ci->ci_IOSyncDCache = ip22_IOSyncDCache;
@@ -794,7 +794,7 @@ ip22_SyncCache(struct cpu_info *ci)
 	Mips5k_SyncCache(ci);
 
 	sva = PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
-	eva = sva + ci->ci_l2size;
+	eva = sva + ci->ci_l2.size;
 
 	while (sva < eva) {
 		*(volatile uint32_t *)sva = 0;
@@ -833,7 +833,7 @@ ip22_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 #endif
 			}
 
-			pa &= ci->ci_l2size - 1;
+			pa &= ci->ci_l2.size - 1;
 			pa |= PHYS_TO_XKPHYS(IP22_CACHE_TAG_ADDRESS, CCA_NC);
 
 			while (sz != 0) {

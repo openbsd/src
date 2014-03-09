@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.9 2013/11/26 20:33:13 deraadt Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.10 2014/03/09 10:12:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -285,17 +285,15 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 	cfg = cp0_get_config();
 
 	/* L1 cache */
-	ci->ci_l1instcacheline = R5K_LINE;
-	ci->ci_l1instcachesize = (1 << 12) << ((cfg >> 9) & 0x07); /* IC */
-	ci->ci_l1datacacheline = R5K_LINE;
-	ci->ci_l1datacachesize = (1 << 12) << ((cfg >> 6) & 0x07); /* DC */
+	ci->ci_l1inst.size = (1 << 12) << ((cfg >> 9) & 0x07); /* IC */
+	ci->ci_l1inst.linesize = R5K_LINE;
+	ci->ci_l1data.size = (1 << 12) << ((cfg >> 6) & 0x07); /* DC */
+	ci->ci_l1data.linesize = R5K_LINE;
 
 	/* sane defaults */
-	ci->ci_cacheways = 2;
 	setshift = 1;
-	ci->ci_l2line = 0;
-	ci->ci_l2size = 0;
-	ci->ci_l3size = 0;
+	memset(&ci->ci_l2, 0, sizeof(struct cache_info));
+	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
 	ci->ci_cacheconfiguration = 0;
 
 	switch ((cp0_get_prid() >> 8) & 0xff) {
@@ -311,25 +309,26 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 #ifdef CPU_R5000
 	case MIPS_R5000:
 	case MIPS_RM52X0:
-		/* optional external L2 cache */
+		/* optional external direct L2 cache */
 		if ((cfg & CF_5_SC) == 0) {
-			ci->ci_l2line = R5K_LINE;
-			ci->ci_l2size = (1 << 19) <<
+			ci->ci_l2.size = (1 << 19) <<
 			    ((cfg & CF_5_SS) >> CF_5_SS_AL);
+			ci->ci_l2.linesize = R5K_LINE;
+			ci->ci_l2.setsize = ci->ci_l2.size;
+			ci->ci_l2.sets = 1;
 		}
-		if (ci->ci_l2size != 0) {
+		if (ci->ci_l2.size != 0) {
 			ci->ci_cacheconfiguration |= CTYPE_HAS_XL2;
 			cfg |= CF_5_SE;
-			run_uncached(mips5k_l2_init, ci->ci_l2size);
+			run_uncached(mips5k_l2_init, ci->ci_l2.size);
 		}
 		break;
 #endif	/* CPU_R5000 */
 #ifdef CPU_RM7000
 	case MIPS_RM7000:
 	case MIPS_RM9000:
-		ci->ci_cacheways = 4;
 		setshift = 2;
-		/* optional external L3 cache */
+		/* optional external direct L3 cache */
 		if ((cfg & CF_7_TC) == 0) {
 #ifndef L3SZEXT
 			/*
@@ -339,40 +338,48 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 			 * an upgrade from an R5000/RM52xx processor, such as
 			 * the SGI O2.
 			 */
-			ci->ci_l3size = (1 << 19) <<
+			ci->ci_l3.size = (1 << 19) <<
 			    ((cfg & CF_7_TS) >> CF_7_TS_AL);
+			ci->ci_l3.linesize = R5K_LINE;
+			ci->ci_l3.setsize = ci->ci_l3.size;
+			ci->ci_l3.sets = 1;
 #else
 			/*
-			 * Assume machdep has initialized ci_l3size for us.
+			 * Assume machdep has initialized ci_l3 for us.
 			 */
 #endif
 		}
-		if (ci->ci_l3size != 0) {
+		if (ci->ci_l3.size != 0) {
 			ci->ci_cacheconfiguration |= CTYPE_HAS_XL3;
 			cfg |= CF_7_TE;
-			run_uncached(mips7k_l3_init, ci->ci_l3size);
+			run_uncached(mips7k_l3_init, ci->ci_l3.size);
+
 		}
-		/* internal L2 cache */
+		/* internal 4-way L2 cache */
 		if ((cfg & CF_7_SC) == 0) {
-			ci->ci_l2line = R5K_LINE;
-			ci->ci_l2size = 256 * 1024;	/* fixed size */
+			ci->ci_l2.size = 256 * 1024;	/* fixed size */
+			ci->ci_l2.linesize = R5K_LINE;
+			ci->ci_l2.setsize = ci->ci_l2.size / 4;
+			ci->ci_l2.sets = 4;
 		}
-		if (ci->ci_l2size != 0) {
+		if (ci->ci_l2.size != 0) {
 			ci->ci_cacheconfiguration |= CTYPE_HAS_IL2;
 			if ((cfg & CF_7_SE) == 0) {
 				cfg |= CF_7_SE;
-				run_uncached(mips7k_l2_init, ci->ci_l2size);
+				run_uncached(mips7k_l2_init, ci->ci_l2.size);
 			}
 		}
 		break;
 #endif	/* CPU_RM7000 */
 	}
 
-	ci->ci_l1instcacheset = ci->ci_l1instcachesize >> setshift;
-	ci->ci_l1datacacheset = ci->ci_l1datacachesize >> setshift;
+	ci->ci_l1inst.setsize = ci->ci_l1inst.size >> setshift;
+	ci->ci_l1inst.sets = setshift == 2 ? 4 : 2;
+	ci->ci_l1data.setsize = ci->ci_l1data.size >> setshift;
+	ci->ci_l1data.sets = setshift == 2 ? 4 : 2;
 
 	cache_valias_mask =
-	    (max(ci->ci_l1instcacheset, ci->ci_l1datacacheset) - 1) &
+	    (max(ci->ci_l1inst.setsize, ci->ci_l1data.setsize) - 1) &
 	    ~PAGE_MASK;
 
 	if (cache_valias_mask != 0) {
@@ -408,14 +415,14 @@ Mips5k_SyncCache(struct cpu_info *ci)
 #endif
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-	eva = sva + ci->ci_l1instcachesize;
+	eva = sva + ci->ci_l1inst.size;
 	while (sva != eva) {
 		cache(IndexInvalidate_I, 0, sva);
 		sva += R5K_LINE;
 	}
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-	eva = sva + ci->ci_l1datacachesize;
+	eva = sva + ci->ci_l1data.size;
 	while (sva != eva) {
 		cache(IndexWBInvalidate_D, 0, sva);
 		sva += R5K_LINE;
@@ -428,7 +435,7 @@ Mips5k_SyncCache(struct cpu_info *ci)
 #ifdef CPU_RM7000
 	if (ci->ci_cacheconfiguration & CTYPE_HAS_IL2) {
 		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-		eva = sva + ci->ci_l2size;
+		eva = sva + ci->ci_l2.size;
 		while (sva != eva) {
 			cache(IndexWBInvalidate_S, 0, sva);
 			sva += R5K_LINE;
@@ -438,7 +445,7 @@ Mips5k_SyncCache(struct cpu_info *ci)
 #ifdef CPU_R5000
 	if (ci->ci_cacheconfiguration & CTYPE_HAS_XL2) {
 		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-		eva = sva + ci->ci_l2size;
+		eva = sva + ci->ci_l2.size;
 		reset_taglo();
 		while (sva != eva) {
 			cache(InvalidatePage_S, 0, sva);
@@ -452,7 +459,7 @@ Mips5k_SyncCache(struct cpu_info *ci)
 #ifdef CPU_RM7000
 	if (ci->ci_cacheconfiguration & CTYPE_HAS_XL3) {
 		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-		eva = sva + ci->ci_l3size;
+		eva = sva + ci->ci_l3.size;
 		reset_taglo();
 		while (sva != eva) {
 			cache(InvalidatePage_T, 0, sva);
@@ -485,12 +492,12 @@ Mips5k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	sz = ((_va + _sz + R5K_LINE - 1) & ~(R5K_LINE - 1)) - va;
 
 	sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-	offs = ci->ci_l1instcacheset;
+	offs = ci->ci_l1inst.setsize;
 	/* keep only the index bits */
 	sva |= va & (offs - 1);
 	eva = sva + sz;
 
-	switch (ci->ci_cacheways) {
+	switch (ci->ci_l1inst.sets) {
 	default:
 #ifdef CPU_RM7000
 	case 4:
@@ -565,7 +572,7 @@ Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	register_t sr = disableintr();
 #endif
 
-	switch (ci->ci_cacheways) {
+	switch (ci->ci_l1data.sets) {
 	default:
 #ifdef CPU_RM7000
 	case 4:
@@ -589,7 +596,7 @@ Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 		vsize_t offs;
 
 		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
-		offs = ci->ci_l1datacacheset;
+		offs = ci->ci_l1data.setsize;
 		/* keep only the index bits */
 		sva |= va & (offs - 1);
 		eva = sva + PAGE_SIZE;

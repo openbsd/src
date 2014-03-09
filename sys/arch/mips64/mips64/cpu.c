@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2014/01/19 12:45:35 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.53 2014/03/09 10:12:17 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -109,8 +109,18 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	ci->ci_dev = dev;
 	bcopy(ch, &ci->ci_hw, sizeof(struct cpu_hwinfo));
 #ifdef MULTIPROCESSOR
-	if (!ISSET(ci->ci_flags, CPUF_PRIMARY))
-		hw_cpu_init_secondary(ci);
+	/*
+	 * When attaching secondary processors, cache information is not
+	 * available yet.  Copy the cache information from the primary cpu
+	 * instead.
+	 * XXX The MP boot sequence needs to be reworked to avoid this.
+	 */
+	if (!ISSET(ci->ci_flags, CPUF_PRIMARY)) {
+		ci->ci_l1inst = cpu_info_primary.ci_l1inst;
+		ci->ci_l1data = cpu_info_primary.ci_l1data;
+		ci->ci_l2 = cpu_info_primary.ci_l2;
+		ci->ci_l3 = cpu_info_primary.ci_l3;
+	}
 #endif
 
 	printf(": ");
@@ -282,49 +292,49 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf(" rev %d.%d", vers_maj, vers_min);
 	printf("\n");
 
-	printf("cpu%d: cache L1-I %dKB D %dKB ", cpuno,
-	    ci->ci_l1instcachesize / 1024, ci->ci_l1datacachesize / 1024);
-
-	switch (ci->ci_cacheways) {
-	case 2:
-		printf("2 way");
-		break;
-	case 4:
-		printf("4 way");
-		break;
-	default:
-		printf("direct");
-		break;
+	if (ci->ci_l1inst.sets == ci->ci_l1data.sets) {
+		printf("cpu%d: cache L1-I %dKB D %dKB ", cpuno,
+		    ci->ci_l1inst.size / 1024, ci->ci_l1data.size / 1024);
+		if (ci->ci_l1inst.sets == 1)
+			printf("direct");
+		else
+			printf("%d way", ci->ci_l1inst.sets);
+	} else {
+		printf("cpu%d: cache L1-I %dKB ", cpuno,
+		    ci->ci_l1inst.size / 1024);
+		if (ci->ci_l1inst.sets == 1)
+			printf("direct");
+		else
+			printf("%d way", ci->ci_l1inst.sets);
+		printf(" D %dKB ", ci->ci_l1data.size / 1024);
+		if (ci->ci_l1data.sets == 1)
+			printf("direct");
+		else
+			printf("%d way", ci->ci_l1data.sets);
 	}
 
-	if (ci->ci_l2size != 0) {
-		switch (ch->type) {
-		case MIPS_R10000:
-		case MIPS_R12000:
-		case MIPS_R14000:
-			printf(", L2 %dKB 2 way", ci->ci_l2size / 1024);
-			break;
-		case MIPS_RM7000:
-		case MIPS_R8000:
-		case MIPS_RM9000:
-		case MIPS_LOONGSON2:
-			printf(", L2 %dKB 4 way", ci->ci_l2size / 1024);
-			break;
-		default:
-			printf(", L2 %dKB direct", ci->ci_l2size / 1024);
-			break;
-		}
+	if (ci->ci_l2.size != 0) {
+		printf(", L2 %dKB ", ci->ci_l2.size / 1024);
+		if (ci->ci_l2.sets == 1)
+			printf("direct");
+		else
+			printf("%d way", ci->ci_l2.sets);
 	}
-	if (ci->ci_l3size != 0)
-		printf(", L3 %dKB direct", ci->ci_l3size / 1024);
+	if (ci->ci_l3.size != 0) {
+		printf(", L3 %dKB ", ci->ci_l3.size / 1024);
+		if (ci->ci_l3.sets == 1)
+			printf("direct");
+		else
+			printf("%d way", ci->ci_l3.sets);
+	}
 	printf("\n");
 
 #ifdef DEBUG
 	printf("cpu%d: L1 set size %d:%d\n", cpuno,
-	    ci->ci_l1instcacheset, ci->ci_l1datacacheset);
+	    ci->ci_l1inst.setsize, ci->ci_l1data.setsize);
 	printf("cpu%d: L1 line size %d:%d\n", cpuno,
-	    ci->ci_l1instcacheline, ci->ci_l1datacacheline);
-	printf("cpu%d: L2 line size %d\n", cpuno, ci->ci_l2line);
+	    ci->ci_l1inst.linesize, ci->ci_l1data.linesize);
+	printf("cpu%d: L2 line size %d\n", cpuno, ci->ci_l2.linesize);
 	printf("cpu%d: cache configuration %x\n",
 	    cpuno, ci->ci_cacheconfiguration);
 	printf("cpu%d: virtual alias mask %p\n", cpuno, cache_valias_mask);

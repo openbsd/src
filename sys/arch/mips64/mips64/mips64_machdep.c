@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.12 2013/04/21 15:43:34 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.13 2014/03/09 10:12:17 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -231,7 +231,7 @@ tlb_asid_wrap(struct cpu_info *ci)
 {
 	tlb_flush(ci->ci_hw.tlbsize);
 #ifdef CPU_R8000
-	Mips_InvalidateICache(ci, 0, ci->ci_l1instcachesize);
+	Mips_InvalidateICache(ci, 0, ci->ci_l1inst.size);
 #endif
 }
 

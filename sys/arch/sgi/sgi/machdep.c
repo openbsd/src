@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.133 2013/09/28 12:40:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.134 2014/03/09 10:12:17 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -532,7 +532,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		extern void xtlb_miss_err_r4k;
 		extern void xtlb_miss_err_r4000SC;
 
-		if (ci->ci_l2size == 0 ||
+		if (ci->ci_l2.size == 0 ||
 		    ((cp0_get_prid() >> 4) & 0x0f) >= 4) /* R4400 */
 			xtlb_handler = (vaddr_t)&xtlb_miss_err_r4k;
 		else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2013/09/28 12:40:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.42 2014/03/09 10:12:17 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -892,17 +892,5 @@ hw_ipi_intr_clear(u_long cpuid)
 	uint64_t clr =
 		bus_space_read_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid));
 	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid), clr);
-}
-
-void
-hw_cpu_init_secondary(struct cpu_info *ci)
-{
-	ci->ci_cacheways = 2;
-	ci->ci_l1instcachesize = 32 * 1024;
-	ci->ci_l1instcacheline = 64;
-	ci->ci_l1datacachesize = 32 * 1024;
-	ci->ci_l1datacacheline = 64;
-	ci->ci_l2size = ci->ci_hw.l2size;
-	ci->ci_l3size = 0;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.95 2013/12/19 09:37:13 jasper Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.96 2014/03/09 10:12:17 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,6 +134,16 @@ struct cpu_hwinfo {
 	uint32_t	l2size;
 };
 
+/*
+ * Cache memory configuration. One struct per cache.
+ */
+struct cache_info {
+	uint		size;		/* total cache size */
+	uint		linesize;	/* line size */
+	uint		setsize;	/* set size */
+	uint		sets;		/* number of sets */
+};
+
 struct cpu_info {
 	struct device	*ci_dev;	/* our device */
 	struct cpu_info	*ci_self;	/* pointer to this structure */
@@ -147,16 +157,11 @@ struct cpu_info {
 
 	/* cache information */
 	uint		ci_cacheconfiguration;
-	uint		ci_cacheways;
-	uint		ci_l1instcachesize;
-	uint		ci_l1instcacheline;
-	uint		ci_l1instcacheset;
-	uint		ci_l1datacachesize;
-	uint		ci_l1datacacheline;
-	uint		ci_l1datacacheset;
-	uint		ci_l2size;
-	uint		ci_l2line;
-	uint		ci_l3size;
+	struct cache_info
+			ci_l1inst,
+			ci_l1data,
+			ci_l2,
+			ci_l3;
 
 	/* function pointers for the cache handling routines */
 	void		(*ci_SyncCache)(struct cpu_info *);
