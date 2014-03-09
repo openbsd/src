@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.168 2014/02/23 09:36:52 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.169 2014/03/09 07:42:29 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -86,11 +86,6 @@
 #else
 #define __LITTLE_ENDIAN
 #endif
-
-#define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
-#define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
-
-#define DRM_MAX_CTXBITMAP (PAGE_SIZE * 8)
 
 				/* Internal types and structures */
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
@@ -386,16 +381,6 @@ mdelay(unsigned long msecs)
 
 #define	drm_can_sleep()	(hz & 1)
 
-#define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
-do {									\
-	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
-	     dev->lock.file_priv != file_priv) {			\
-		DRM_ERROR("%s called without lock held\n",		\
-			   __FUNCTION__);				\
-		return EINVAL;						\
-	}								\
-} while (0)
-
 #define DRM_WAIT_ON(ret, queue, lock,  timeout, msg, condition ) do {	\
 	mtx_enter(lock);						\
 	while ((ret) == 0) {						\
@@ -548,13 +533,6 @@ struct drm_file {
 	void					*driver_priv;
 };
 
-struct drm_lock_data {
-	struct mutex		 spinlock;
-	struct drm_hw_lock	*hw_lock;	/* Hardware lock */
-	/* Unique identifier of holding process (NULL is kernel) */
-	struct drm_file		*file_priv;
-};
-
 /* This structure, in the struct drm_device, is always initialized while
  * the device is open.  dev->dma_lock protects the incrementing of
  * dev->buf_use, which when set marks that no further bufs may be allocated
@@ -597,11 +575,6 @@ struct drm_agp_head {
 	int					 cant_use_aperture;
 	int					 enabled;
    	int					 mtrr;
-};
-
-struct drm_sg_mem {
-	struct drm_dmamem	*mem;
-	unsigned long		 handle;
 };
 
 struct drm_local_map {
@@ -830,9 +803,6 @@ struct drm_device {
 	struct extent				*handle_ext;
 	TAILQ_HEAD(drm_map_list, drm_local_map)	 maplist;
 
-
-	struct drm_lock_data  lock;	/* Information on hardware lock	*/
-
 				/* DMA queues (contexts) */
 	struct drm_device_dma  *dma;		/* Optional pointer for DMA support */
 
@@ -865,8 +835,6 @@ struct drm_device {
 	pid_t			 buf_pgid;
 
 	struct drm_agp_head	*agp;
-	struct drm_sg_mem	*sg;  /* Scatter gather memory */
-	atomic_t		*ctx_bitmap;
 	void			*dev_private;
 	struct drm_local_map	*agp_buffer_map;
 
@@ -962,6 +930,7 @@ void			 drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
 
 const struct drm_pcidev	*drm_find_description(int , int ,
 			     const struct drm_pcidev *);
+int	 drm_order(unsigned long);
 
 /* File operations helpers (drm_fops.c) */
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
@@ -979,35 +948,6 @@ void	drm_core_ioremapfree(struct drm_local_map *, struct drm_device *);
 
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
-
-/* Context management (DRI1, deprecated) */
-int	drm_ctxbitmap_init(struct drm_device *);
-void	drm_ctxbitmap_cleanup(struct drm_device *);
-void	drm_ctxbitmap_free(struct drm_device *, int);
-int	drm_ctxbitmap_next(struct drm_device *);
-
-/* Locking IOCTL support (drm_lock.c) */
-int	drm_lock_take(struct drm_lock_data *, unsigned int);
-int	drm_lock_free(struct drm_lock_data *, unsigned int);
-
-/* Buffer management and DMA support (drm_bufs.c) */
-int	drm_order(unsigned long);
-struct drm_local_map *drm_core_findmap(struct drm_device *, unsigned long);
-int	drm_rmmap_ioctl(struct drm_device *, void *, struct drm_file *);
-void	drm_rmmap(struct drm_device *, struct drm_local_map *);
-void	drm_rmmap_locked(struct drm_device *, struct drm_local_map *);
-int	drm_addmap_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_addmap(struct drm_device *, unsigned long, unsigned long,
-	    enum drm_map_type, enum drm_map_flags, struct drm_local_map **);
-int	drm_addbufs(struct drm_device *, struct drm_buf_desc *);
-int	drm_freebufs(struct drm_device *, void *, struct drm_file *);
-int	drm_mapbufs(struct drm_device *, void *, struct drm_file *);
-int	drm_dma(struct drm_device *, void *, struct drm_file *);
-int	drm_dma_setup(struct drm_device *);
-void	drm_dma_takedown(struct drm_device *);
-void	drm_cleanup_buf(struct drm_device *, struct drm_buf_entry *);
-void	drm_free_buffer(struct drm_device *, struct drm_buf *);
-void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 
 /* IRQ support (drm_irq.c) */
 int	drm_irq_install(struct drm_device *);
@@ -1052,20 +992,6 @@ int	drm_agp_free(struct drm_device *, struct drm_agp_buffer *);
 int	drm_agp_bind(struct drm_device *, struct drm_agp_binding *);
 int	drm_agp_unbind(struct drm_device *, struct drm_agp_binding *);
 
-/* Scatter Gather Support (drm_scatter.c) */
-void	drm_sg_cleanup(struct drm_device *, struct drm_sg_mem *);
-int	drm_sg_alloc(struct drm_device *, struct drm_scatter_gather *);
-
-/* Locking IOCTL support (drm_drv.c) */
-int	drm_lock(struct drm_device *, void *, struct drm_file *);
-int	drm_unlock(struct drm_device *, void *, struct drm_file *);
-
-/* Context IOCTL support (drm_context.c) */
-int	drm_resctx(struct drm_device *, void *, struct drm_file *);
-int	drm_addctx(struct drm_device *, void *, struct drm_file *);
-int	drm_getctx(struct drm_device *, void *, struct drm_file *);
-int	drm_rmctx(struct drm_device *, void *, struct drm_file *);
-
 /* IRQ support (drm_irq.c) */
 int	drm_control(struct drm_device *, void *, struct drm_file *);
 int	drm_wait_vblank(struct drm_device *, void *, struct drm_file *);
@@ -1082,10 +1008,6 @@ int	drm_agp_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_agp_free_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_agp_unbind_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
-
-/* Scatter Gather Support (drm_scatter.c) */
-int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
-int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
 
 static inline int
 drm_sysfs_connector_add(struct drm_connector *connector)

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_memory.c,v 1.24 2012/12/06 15:05:21 mpi Exp $ */
+/* $OpenBSD: drm_memory.c,v 1.25 2014/03/09 07:42:29 jsg Exp $ */
 /*-
  *Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -78,69 +78,6 @@ drm_free(void *pt)
 {
 	if (pt != NULL)
 		free(pt, M_DRM);
-}
-
-/* Inline replacements for DRM_IOREMAP macros */
-void
-drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
-{
-	DRM_DEBUG("offset: 0x%x size: 0x%x type: %d\n", map->offset, map->size,
-	    map->type);
-
-	/* default to failure. */
-	map->handle = 0;
-
-	switch (map->type) {
-#if __OS_HAS_AGP
-	case _DRM_AGP:
-		DRM_DEBUG("AGP map\n");
-		map->bst = dev->bst;
-		/* handles are still supposed to be kernel virtual addresses */
-		map->handle = agp_map(dev->agp->agpdev,
-		    map->offset - dev->agp->base, map->size, &map->bsh);
-		if (map->handle == 0) {
-			DRM_ERROR("ioremap fail\n");
-			return;
-		}
-		break;
-#endif
-	case _DRM_FRAME_BUFFER:
-		DRM_DEBUG("FRAME_BUFFER map\n");
-		map->bst = dev->bst;
-		if (bus_space_map(map->bst, map->offset,
-		    map->size, BUS_SPACE_MAP_LINEAR |
-		    BUS_SPACE_MAP_PREFETCHABLE, &map->bsh)) {
-			DRM_ERROR("ioremap fail\n");
-			return;
-		}
-		/* handles are still supposed to be kernel virtual addresses */
-		map->handle = bus_space_vaddr(map->bst, map->bsh);
-		break;
-	default:
-		break;
-	}
-}
-
-void
-drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
-{
-	if (map->handle == 0 || map->size == 0)
-		return;
-
-	switch (map->type) {
-#if __OS_HAS_AGP
-	case _DRM_AGP:
-		agp_unmap(dev->agp->agpdev, map->handle, map->size, map->bsh);
-		map->handle = 0;
-		break;
-#endif
-	case _DRM_FRAME_BUFFER:
-		bus_space_unmap(map->bst, map->bsh, map->size);
-		map->handle = 0;
-		break;
-	default:
-		break;
-	}
 }
 
 int
