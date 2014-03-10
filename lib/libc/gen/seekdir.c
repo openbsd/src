@@ -1,4 +1,4 @@
-/*	$OpenBSD: seekdir.c,v 1.11 2013/11/06 20:35:25 schwarze Exp $ */
+/*	$OpenBSD: seekdir.c,v 1.12 2014/03/10 07:54:14 schwarze Exp $ */
 /*
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -36,6 +36,13 @@ seekdir(DIR *dirp, long loc)
 	 */
 
 	_MUTEX_LOCK(&dirp->dd_lock);
+	if (dirp->dd_size && dirp->dd_bufpos == loc) {
+		dirp->dd_loc = 0;
+		dirp->dd_curpos = loc;
+		_MUTEX_UNLOCK(&dirp->dd_lock);
+		return;
+	}
+
 	for (dirp->dd_loc = 0;
 	     dirp->dd_loc < dirp->dd_size;
 	     dirp->dd_loc += dp->d_reclen) {
@@ -61,7 +68,7 @@ seekdir(DIR *dirp, long loc)
 	 * In particular, invalidate dd_loc.
 	 */
 
-	dirp->dd_loc = 0;
-	dirp->dd_curpos = lseek(dirp->dd_fd, loc, SEEK_SET);
+	dirp->dd_loc = dirp->dd_size;
+	dirp->dd_bufpos = dirp->dd_curpos = lseek(dirp->dd_fd, loc, SEEK_SET);
 	_MUTEX_UNLOCK(&dirp->dd_lock);
 }

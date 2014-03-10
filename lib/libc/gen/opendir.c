@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.26 2013/11/06 20:35:25 schwarze Exp $ */
+/*	$OpenBSD: opendir.c,v 1.27 2014/03/10 07:54:14 schwarze Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@ fdopendir(int fd)
 	dirp = __fdopendir(fd);
 	if (dirp != NULL) {
 		/* Record current offset for immediate telldir() */
-		dirp->dd_curpos = lseek(fd, 0, SEEK_CUR);
+		dirp->dd_bufpos = dirp->dd_curpos = lseek(fd, 0, SEEK_CUR);
 
 		/*
 		 * POSIX doesn't require fdopendir() to set
@@ -116,6 +116,7 @@ __fdopendir(int fd)
 	dirp->dd_fd = fd;
 	dirp->dd_lock = NULL;
 	dirp->dd_curpos = 0;
+	dirp->dd_bufpos = 0;
 
 	return (dirp);
 }
