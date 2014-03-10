@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.78 2014/03/10 03:08:34 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.79 2014/03/10 04:09:53 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -225,8 +225,10 @@ em_set_phy_type(struct em_hw *hw)
 	case M88E1000_I_PHY_ID:
 	case M88E1011_I_PHY_ID:
 	case M88E1111_I_PHY_ID:
+	case M88E1112_E_PHY_ID:
 	case M88E1543_E_PHY_ID:
 	case I210_I_PHY_ID:
+	case I347AT4_E_PHY_ID:
 		hw->phy_type = em_phy_m88;
 		break;
 	case IGP01E1000_I_PHY_ID:
@@ -514,9 +516,14 @@ em_set_mac_type(struct em_hw *hw)
 		break;
 	case E1000_DEV_ID_82580_COPPER:
 	case E1000_DEV_ID_82580_FIBER:
+	case E1000_DEV_ID_82580_QUAD_FIBER:
 	case E1000_DEV_ID_82580_SERDES:
 	case E1000_DEV_ID_82580_SGMII:
 	case E1000_DEV_ID_82580_COPPER_DUAL:
+	case E1000_DEV_ID_DH89XXCC_SGMII:
+	case E1000_DEV_ID_DH89XXCC_SERDES:
+	case E1000_DEV_ID_DH89XXCC_BACKPLANE:
+	case E1000_DEV_ID_DH89XXCC_SFP:
 		hw->mac_type = em_82580;
 		hw->initialize_hw_bits_disable = 1;
 		break;
@@ -5203,7 +5210,9 @@ em_match_gig_phy(struct em_hw *hw)
 	case em_i350:
 		if (hw->phy_id == I82580_I_PHY_ID ||
 		    hw->phy_id == I210_I_PHY_ID ||
+		    hw->phy_id == I347AT4_E_PHY_ID ||
 		    hw->phy_id == I350_I_PHY_ID ||
+		    hw->phy_id == M88E1112_E_PHY_ID ||
 		    hw->phy_id == M88E1543_E_PHY_ID) {
 			uint32_t mdic;
 

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.59 2014/03/10 03:08:34 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.60 2014/03/10 04:09:53 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -570,6 +570,11 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82580_SERDES        0x1510
 #define E1000_DEV_ID_82580_SGMII         0x1511
 #define E1000_DEV_ID_82580_COPPER_DUAL   0x1516
+#define E1000_DEV_ID_82580_QUAD_FIBER    0x1527
+#define E1000_DEV_ID_DH89XXCC_SGMII      0x0438
+#define E1000_DEV_ID_DH89XXCC_SERDES     0x043A
+#define E1000_DEV_ID_DH89XXCC_BACKPLANE  0x043C
+#define E1000_DEV_ID_DH89XXCC_SFP        0x0440
 #define E1000_DEV_ID_I350_COPPER         0x1521
 #define E1000_DEV_ID_I350_FIBER          0x1522
 #define E1000_DEV_ID_I350_SERDES         0x1523
@@ -586,7 +591,6 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_I354_BACKPLANE_1GBPS       0x1F40
 #define E1000_DEV_ID_I354_SGMII                 0x1F41
 #define E1000_DEV_ID_I354_BACKPLANE_2_5GBPS     0x1F45
-#define E1000_DEV_ID_82574L              0x10D3
 #define E1000_DEV_ID_EP80579_LAN_1       0x5040
 #define E1000_DEV_ID_EP80579_LAN_2       0x5044
 #define E1000_DEV_ID_EP80579_LAN_3       0x5048
@@ -3385,6 +3389,8 @@ struct em_host_command_info {
 #define M88E1000_14_PHY_ID   M88E1000_E_PHY_ID
 #define M88E1011_I_REV_4     0x04
 #define M88E1111_I_PHY_ID    0x01410CC0
+#define M88E1112_E_PHY_ID    0x01410C90
+#define I347AT4_E_PHY_ID     0x01410DC0
 #define L1LXT971A_PHY_ID     0x001378E0
 #define GG82563_E_PHY_ID     0x01410CA0
 #define BME1000_E_PHY_ID     0x01410CB0
