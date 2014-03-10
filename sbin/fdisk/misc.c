@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.34 2014/03/09 22:25:06 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.35 2014/03/10 21:40:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,9 +62,10 @@ unit_lookup(char *units)
 }
 
 int
-ask_cmd(struct cmd *cmd)
+ask_cmd(char **cmd, char **args)
 {
-	char lbuf[100], *cp, *buf;
+	static char lbuf[100];
+	char *cp, *buf;
 	size_t lbuflen;
 
 	/* Get input */
@@ -79,9 +80,8 @@ ask_cmd(struct cmd *cmd)
 	buf = &buf[strspn(buf, " \t")];
 	cp = &buf[strcspn(buf, " \t")];
 	*cp++ = '\0';
-	strncpy(cmd->cmd, buf, sizeof(cmd->cmd));
-	buf = &cp[strspn(cp, " \t")];
-	strncpy(cmd->args, buf, sizeof(cmd->args));
+	*cmd = buf;
+	*args = &cp[strspn(cp, " \t")];
 
 	return (0);
 }

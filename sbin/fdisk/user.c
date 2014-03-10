@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.28 2014/03/09 22:25:06 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.29 2014/03/10 21:40:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,7 +39,7 @@
 
 
 /* Our command table */
-static struct cmd_table cmd_table[] = {
+struct cmd cmd_table[] = {
 	{"help",   Xhelp,	"Command help list"},
 	{"manual", Xmanual,	"Show entire OpenBSD man page for fdisk"},
 	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
@@ -86,14 +86,11 @@ USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 	static int editlevel;
 	struct dos_mbr dos_mbr;
 	struct mbr mbr;
-	struct cmd cmd;
+	char *cmd, *args;
 	int i, st, fd, error;
 
 	/* One level deeper */
 	editlevel += 1;
-
-	/* Set up command table pointer */
-	cmd.table = cmd_table;
 
 	/* Read MBR & partition */
 	fd = DISK_open(disk->name, O_RDONLY);
@@ -112,27 +109,26 @@ USER_modify(struct disk *disk, struct mbr *tt, off_t offset, off_t reloff)
 again:
 		printf("fdisk:%c%d> ", (modified)?'*':' ', editlevel);
 		fflush(stdout);
-		ask_cmd(&cmd);
+		ask_cmd(&cmd, &args);
 
-		if (cmd.cmd[0] == '\0')
+		if (cmd[0] == '\0')
 			goto again;
 		for (i = 0; cmd_table[i].cmd != NULL; i++)
-			if (strstr(cmd_table[i].cmd, cmd.cmd)==cmd_table[i].cmd)
+			if (strstr(cmd_table[i].cmd, cmd) == cmd_table[i].cmd)
 				break;
 
 		/* Quick hack to put in '?' == 'help' */
-		if (!strcmp(cmd.cmd, "?"))
+		if (!strcmp(cmd, "?"))
 			i = 0;
 
 		/* Check for valid command */
 		if (cmd_table[i].cmd == NULL) {
-			printf("Invalid command '%s'.  Try 'help'.\n", cmd.cmd);
+			printf("Invalid command '%s'.  Try 'help'.\n", cmd);
 			continue;
-		} else
-			strlcpy(cmd.cmd, cmd_table[i].cmd, sizeof cmd.cmd);
+		}
 
 		/* Call function */
-		st = cmd_table[i].fcn(&cmd, disk, &mbr, tt, offset);
+		st = cmd_table[i].fcn(args, disk, &mbr, tt, offset);
 
 		/* Update status */
 		if (st == CMD_EXIT)
