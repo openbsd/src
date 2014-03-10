@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.60 2014/03/10 19:57:24 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.61 2014/03/10 19:58:43 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ int rcvhlim;
 struct in6_pktinfo *rcvpktinfo;
 
 struct sockaddr_in6 Src, Dst, Rcv;
-u_long datalen;			/* How much data */
+int datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
@@ -543,14 +543,12 @@ main(int argc, char *argv[])
 	}
 
 	if (*++argv) {
-		ep = NULL;
 		errno = 0;
-		datalen = strtoul(*argv, &ep, 0);
-		if (errno || !*argv || *ep) {
-			fprintf(stderr,
-			    "traceroute6: invalid packet length.\n");
-			exit(1);
-		}
+		ep = NULL;
+		l = strtol(*argv, &ep, 10);
+		if (errno || !*argv || *ep || l < 0 || l > INT_MAX)
+			errx(1, "datalen out of range");
+		datalen = (int)l;
 	}
 	if (useicmp)
 		minlen = ICMP6ECHOLEN + sizeof(struct tv32);
@@ -564,12 +562,9 @@ main(int argc, char *argv[])
 		    minlen, (long)MAXPACKET);
 		exit(1);
 	}
-	outpacket = (struct opacket *)malloc((size_t)datalen);
-	if (!outpacket) {
-		perror("malloc");
-		exit(1);
-	}
-	(void) bzero((char *)outpacket, datalen);
+
+	if ((outpacket = calloc(1, datalen)) == NULL)
+		err(1, "calloc");
 
 	/* initialize msghdr for receiving packets */
 	rcviov[0].iov_base = (caddr_t)packet;
@@ -610,12 +605,9 @@ main(int argc, char *argv[])
 			err(1, "setsockopt SO_RTABLE");
 	}
 #ifdef SO_SNDBUF
-	i = datalen;
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&i,
-	    sizeof(i)) < 0) {
-		perror("setsockopt(SO_SNDBUF)");
-		exit(6);
-	}
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
+	    sizeof(datalen)) < 0)
+		err(6, "SO_SNDBUF");
 #endif /* SO_SNDBUF */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
@@ -717,7 +709,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
 	if (source)
 		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %u hops max, %lu byte packets\n",
+	fprintf(stderr, ", %u hops max, %d byte packets\n",
 	    max_hops, datalen);
 	(void) fflush(stderr);
 
@@ -871,7 +863,7 @@ send_probe(int seq, u_int8_t hops, int iflag)
 	if (i < 0 || i != datalen)  {
 		if (i < 0)
 			perror("sendto");
-		printf("traceroute6: wrote %s %lu chars, ret=%d\n",
+		printf("traceroute6: wrote %s %d chars, ret=%d\n",
 		    hostname, datalen, i);
 		(void) fflush(stdout);
 	}
