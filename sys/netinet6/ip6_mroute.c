@@ -247,7 +247,7 @@ int
 ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 {
 	if (cmd != MRT6_INIT && so != ip6_mrouter)
-		return (EACCES);
+		return (EPERM);
 
 	switch (cmd) {
 	case MRT6_INIT:
@@ -287,7 +287,8 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 int
 ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
 {
-	if (so != ip6_mrouter) return EACCES;
+	if (so != ip6_mrouter)
+		return (EPERM);
 
 	*m = m_get(M_WAIT, MT_SOOPTS);
 
