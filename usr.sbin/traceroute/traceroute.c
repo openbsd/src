@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.89 2014/03/10 19:56:58 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.90 2014/03/10 19:58:06 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -534,10 +534,8 @@ main(int argc, char *argv[])
 
 	datalen += headerlen;
 
-	outpacket = malloc(datalen);
-	if (outpacket == 0)
-		err(1, "malloc");
-	(void) memset(outpacket, 0, datalen);
+	if ((outpacket = calloc(1, datalen)) == NULL)
+		err(1, "calloc");
 
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
