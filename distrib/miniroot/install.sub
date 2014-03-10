@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.752 2014/03/02 14:12:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.753 2014/03/10 00:14:34 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1163,7 +1163,7 @@ enable_network() {
 # user will know to try again.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal _size
+		_tmpfs _tmpsrc _cfile _fsrc _unver _t _issue _srclocal
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1209,16 +1209,6 @@ install_files() {
 	# Reorder $_get_sets
 	_get_sets=$(for s in $THESETS; do isin $s $_get_sets && echo $s; done)
 
-	# Sum up the size of the selected sets
-	_size=$( ( [[ $_src == file://* ]] && ls -lT "${_src#file://}" ||
-		ftp -V -o - "$_src/index.txt" 2>/dev/null ) | (
-		sum=0
-		while read x x x x s x x x f2 f && : ${f:=$f2}; do
-			isin $f $_get_sets && let sum+=s
-		done; echo $sum ) )
-
-	# Byte -> KByte and fallback to 512M if _size calculation failed
-	_size=$((${_size:-536870912} / 1024))
 	# Note which sets didn't verify ok
 	_unver=$_get_sets
 
@@ -1230,10 +1220,8 @@ install_files() {
 
 		# Find a filesystem to store the prefetched sets. Prefer file-
 		# systems which are not used during extraction. They need to
-		# have free space the size of the selected sets +10M. Other-
-		# wise use any other filesystem that has four time the free
-		# space of the selected sets to prevent overflow during the
-		# extraction.
+		# have 512 MB free space. Otherwise use any other filesystem
+		# having 2 GB free space to prevent overflow during extraction.
 		_tmpfs=$( (
 			for fs in /mnt/{{,var/}tmp,home,usr{/local,}}; do
 				df -k $fs 2>/dev/null | grep " $fs\$"
@@ -1242,9 +1230,9 @@ install_files() {
 		) | (
 			while read a a a a m m; do
 				[[ $m == /mnt/@(@(|var/)tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
-					((a > _size + 10240)) && echo $m && exit
+					((a > 524288)) && echo $m && exit
 				[[ $m == /mnt@(|/*) ]] &&
-					((a > _size * 4)) && echo $m && exit
+					((a > 524288 * 4)) && echo $m && exit
 			done
 		) )
 
