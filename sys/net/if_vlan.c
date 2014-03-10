@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.101 2013/11/08 09:18:27 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.102 2014/03/10 12:21:35 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -348,7 +348,6 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 int
 vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
-	struct ifaddr *ifa1, *ifa2;
 	struct sockaddr_dl *sdl1, *sdl2;
 	struct vlan_taghash *tagh;
 	u_int flags;
@@ -427,10 +426,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	 * Set up our ``Ethernet address'' to reflect the underlying
 	 * physical interface's.
 	 */
-	ifa1 = ifv->ifv_if.if_lladdr;
-	ifa2 = p->if_lladdr;
-	sdl1 = (struct sockaddr_dl *)ifa1->ifa_addr;
-	sdl2 = (struct sockaddr_dl *)ifa2->ifa_addr;
+	sdl1 = ifv->ifv_if.if_sadl;
+	sdl2 = p->if_sadl;
 	sdl1->sdl_type = IFT_ETHER;
 	sdl1->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(LLADDR(sdl2), LLADDR(sdl1), ETHER_ADDR_LEN);
@@ -458,7 +455,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 int
 vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 {
-	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	struct ifvlan *ifv;
 	struct ifnet *p;
@@ -501,8 +497,7 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	ifv->ifv_flags = 0;
 
 	/* Clear our MAC address. */
-	ifa = ifv->ifv_if.if_lladdr;
-	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	sdl = ifv->ifv_if.if_sadl;
 	sdl->sdl_type = IFT_ETHER;
 	sdl->sdl_alen = ETHER_ADDR_LEN;
 	bzero(LLADDR(sdl), ETHER_ADDR_LEN);

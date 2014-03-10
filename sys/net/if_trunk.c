@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.86 2013/11/21 16:16:08 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.87 2014/03/10 12:21:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -246,11 +246,9 @@ void
 trunk_lladdr(struct arpcom *ac, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = &ac->ac_if;
-	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
-	ifa = ifp->if_lladdr;
-	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	sdl = ifp->if_sadl;
 	sdl->sdl_type = IFT_ETHER;
 	sdl->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(lladdr, LLADDR(sdl), ETHER_ADDR_LEN);
