@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.59 2014/03/10 19:56:58 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.60 2014/03/10 19:57:24 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -494,19 +494,12 @@ main(int argc, char *argv[])
 				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'w':
-			ep = NULL;
 			errno = 0;
-			waittime = strtoul(optarg, &ep, 0);
-			if (errno || !*optarg || *ep) {
-				fprintf(stderr,
-				    "traceroute6: invalid wait time.\n");
-				exit(1);
-			}
-			if (waittime <= 1) {
-				fprintf(stderr,
-				    "traceroute6: wait must be >1 sec.\n");
-				exit(1);
-			}
+			ep = NULL;
+			l = strtol(optarg, &ep, 10);
+			if (errno || !*optarg || *ep || l <= 1 || l > INT_MAX)
+				errx(1, "wait must be >1 sec.");
+			waittime = (int)l;
 			break;
 		default:
 			usage();
