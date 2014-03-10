@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expand.1,v 1.18 2011/12/28 01:52:33 schwarze Exp $
+.\"	$OpenBSD: expand.1,v 1.19 2014/03/10 20:37:27 jmc Exp $
 .\"	$NetBSD: expand.1,v 1.3 1995/09/02 06:19:45 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)expand.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 28 2011 $
+.Dd $Mdocdate: March 10 2014 $
 .Dt EXPAND 1
 .Os
 .Sh NAME
@@ -62,7 +62,6 @@ files and writes the result on the standard output.
 The options are as follows:
 .Bl -tag -width flag
 .It Fl a
-.Pq Nm unexpand No only
 By default, only leading blanks and tabs
 are reconverted to maximal strings of tabs.
 If the
@@ -70,7 +69,6 @@ If the
 option is given, tabs are inserted whenever they would compress the
 resultant file by replacing two or more characters.
 .It Fl t Ar tablist
-.Pq Nm expand No only
 If the argument to
 .Fl t ,
 .Ar tablist ,
@@ -86,7 +84,7 @@ Otherwise the argument to
 .Fl t
 may consist of a list
 of two or more positive decimal integers,
-comma separated,
+separated by commas or single blank characters,
 in ascending order:
 in the event of having to process a
 .Aq tab
@@ -111,11 +109,7 @@ with a dash
 .Pq - .
 .El
 .Sh EXIT STATUS
-The
-.Nm expand
-and
-.Nm unexpand
-utilities exit 0 on success or \*(Gt0 if an error occurred.
+.Ex -std expand unexpand
 .Sh SEE ALSO
 .Xr fold 1
 .Sh STANDARDS
@@ -125,25 +119,22 @@ and
 .Nm unexpand
 utilities are compliant with the
 .St -p1003.1-2008
-specification,
-with the following exceptions:
-.Bl -bullet -offset indent
-.It
-.Tn POSIX
-does not support specifying tabstops without use of the
-.Fl t
-flag.
-.It
-.Tn POSIX
-specifies that multiple tabstops may be given separated by
-commas or blanks.
-This implementation supports only comma-separated tabstops.
-.It
+specification.
+.Pp
+The
+.St -p1003.1-2008
+specification mandates that
 .Nm unexpand
-does not recognise the
+supports the
 .Fl t
-flag.
-.El
+flag, but that is not supported by this implementation.
+.Pp
+The ability to specify tabstops without the
+.Fl t
+flag is not specified by
+.St -p1003.1-2008 ,
+though it states it
+.Dq may be present in some implementations .
 .Sh HISTORY
 The
 .Nm expand
