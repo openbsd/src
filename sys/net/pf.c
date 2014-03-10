@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.868 2014/01/25 03:39:00 lteo Exp $ */
+/*	$OpenBSD: pf.c,v 1.869 2014/03/10 17:22:27 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6228,7 +6228,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
 		pd->virtual_proto = pd->proto;
 		pd->tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
-		pd->tos = 0;
+		pd->tos = (ntohl(h->ip6_flow) & 0x0fc00000) >> 20;
 		pd->ttl = h->ip6_hlim;
 
 		if (pd->fragoff != 0)
