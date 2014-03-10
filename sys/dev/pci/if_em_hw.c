@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.77 2014/02/22 04:41:31 chris Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.78 2014/03/10 03:08:34 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -592,6 +592,10 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_LPT_I217_V:
 	case E1000_DEV_ID_PCH_LPTLP_I218_LM:
 	case E1000_DEV_ID_PCH_LPTLP_I218_V:
+	case E1000_DEV_ID_PCH_I218_LM2:
+	case E1000_DEV_ID_PCH_I218_V2:
+	case E1000_DEV_ID_PCH_I218_LM3:
+	case E1000_DEV_ID_PCH_I218_V3:
 		hw->mac_type = em_pch_lpt;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_1:

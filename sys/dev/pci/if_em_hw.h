@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.58 2014/02/22 04:41:32 chris Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.59 2014/03/10 03:08:34 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -547,6 +547,10 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_LPT_I217_V      0x153B
 #define E1000_DEV_ID_PCH_LPTLP_I218_LM   0x155A
 #define E1000_DEV_ID_PCH_LPTLP_I218_V    0x1559
+#define E1000_DEV_ID_PCH_I218_LM2        0x15A0
+#define E1000_DEV_ID_PCH_I218_V2         0x15A1
+#define E1000_DEV_ID_PCH_I218_LM3        0x15A2
+#define E1000_DEV_ID_PCH_I218_V3         0x15A3
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
