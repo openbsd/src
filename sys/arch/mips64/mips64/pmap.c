@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2014/02/08 09:34:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2014/03/10 21:17:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -916,6 +916,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				}
 			}
 		}
+		if (flags & PMAP_NOCACHE) {
+			npte &= ~PG_CACHED;
+			npte |= PG_UNCACHED;
+		}
 
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
@@ -1541,7 +1545,10 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		stat_count(enter_stats.firstpv);
 
 		pv->pv_va = va;
-		atomic_setbits_int(&pg->pg_flags, PV_CACHED);
+		if (*npte & PG_CACHED)
+			atomic_setbits_int(&pg->pg_flags, PV_CACHED);
+		if (*npte & PG_UNCACHED)
+			atomic_setbits_int(&pg->pg_flags, PV_UNCACHED);
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
@@ -1580,7 +1587,8 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 			return ENOMEM;
 		}
 
-		if ((pg->pg_flags & PV_CACHED) != 0 && cache_valias_mask != 0) {
+		if ((*npte & PG_CACHED) != 0 &&
+		    (pg->pg_flags & PV_CACHED) != 0 && cache_valias_mask != 0) {
 			/*
 			 * We have a VAC possibility.  Check if virtual
 			 * address of current mappings are compatible
