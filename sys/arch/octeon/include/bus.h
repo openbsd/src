@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2010/12/04 16:46:00 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2014/03/10 21:32:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -303,18 +303,19 @@ bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 
-#define	BUS_DMA_WAITOK		0x000
-#define	BUS_DMA_NOWAIT		0x001
-#define	BUS_DMA_ALLOCNOW	0x002
-#define	BUS_DMA_COHERENT	0x008
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100   /* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200   /* mapping is memory -> device only */
-#define	BUS_DMA_STREAMING	0x400   /* hint: sequential, unidirectional */
-#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_WAITOK		0x0000
+#define	BUS_DMA_NOWAIT		0x0001
+#define	BUS_DMA_ALLOCNOW	0x0002
+#define	BUS_DMA_COHERENT	0x0008
+#define	BUS_DMA_BUS1		0x0010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x0020
+#define	BUS_DMA_BUS3		0x0040
+#define	BUS_DMA_BUS4		0x0080
+#define	BUS_DMA_READ		0x0100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x0200	/* mapping is memory -> device only */
+#define	BUS_DMA_STREAMING	0x0400	/* hint: sequential, unidirectional */
+#define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_NOCACHE		0x1000
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -446,7 +447,7 @@ int	_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
 void	_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 paddr_t	_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int, off_t, int, int);
 int	_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int, vaddr_t, vaddr_t);
+	    bus_dma_segment_t *, int, int *, int, paddr_t, paddr_t);
 
 /*
  *	bus_dmamap_t
