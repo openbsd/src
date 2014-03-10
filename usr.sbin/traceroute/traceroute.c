@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.88 2014/01/24 15:26:32 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.89 2014/03/10 19:56:58 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
 	if (argc < 1 || argc > 2)
 		usage();
 
-	setlinebuf (stdout);
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	(void) memset(&to, 0, sizeof(struct sockaddr));
 	to.sin_family = AF_INET;

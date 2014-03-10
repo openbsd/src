@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.58 2014/01/24 15:28:03 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.59 2014/03/10 19:56:58 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -517,11 +517,7 @@ main(int argc, char *argv[])
 	if (argc < 1 || argc > 2)
 		usage();
 
-#if 1
-	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
-#else
-	setlinebuf(stdout);
-#endif
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
