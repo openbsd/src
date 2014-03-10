@@ -1,4 +1,4 @@
-/*	$OpenBSD: regdef.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: regdef.h,v 1.5 2014/03/10 21:10:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,8 +45,7 @@
 #define a1	$5
 #define a2	$6
 #define a3	$7
-#if defined(__mips_n32) || defined(__mips_n64)
-#define a4	$8	/* expanded register arguments */
+#define a4	$8
 #define a5	$9
 #define a6	$10
 #define a7	$11
@@ -58,20 +57,6 @@
 #define t1	$13
 #define t2	$14
 #define t3	$15
-#else
-#define t0	$8	/* temp registers (not saved across subroutine calls) */
-#define t1	$9
-#define t2	$10
-#define t3	$11
-#define t4	$12
-#define t5	$13
-#define t6	$14
-#define t7	$15
-#define ta0	$12	/* alias */
-#define ta1	$13
-#define ta2	$14
-#define ta3	$15
-#endif
 #define s0	$16	/* saved across subroutine calls (callee saved) */
 #define s1	$17
 #define s2	$18
