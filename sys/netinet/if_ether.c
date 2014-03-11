@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.119 2014/03/10 12:21:35 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.120 2014/03/11 10:31:29 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -135,14 +135,12 @@ arptimer(void *arg)
 	splx(s);
 }
 
-/*
- * Parallel to llc_rtrequest.
- */
 void
 arp_rtrequest(int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
 	struct mbuf *m;
 
@@ -181,12 +179,11 @@ arp_rtrequest(int req, struct rtentry *rt)
 			/*
 			 * Case 1: This route should come from a route to iface.
 			 */
-			rt_setgate(rt, rt_key(rt),
-			    (struct sockaddr *)&null_sdl,
-			    rt->rt_ifp->if_rdomain);
+			rt_setgate(rt, rt_key(rt), (struct sockaddr *)&null_sdl,
+			    ifp->if_rdomain);
 			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
+			SDL(gate)->sdl_type = ifp->if_type;
+			SDL(gate)->sdl_index = ifp->if_index;
 			/*
 			 * Give this route an expiration time, even though
 			 * it's a "permanent" route, so that routes cloned
@@ -197,7 +194,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
-			arprequest(rt->rt_ifp,
+			arprequest(ifp,
 			    &satosin(rt_key(rt))->sin_addr.s_addr,
 			    &satosin(rt_key(rt))->sin_addr.s_addr,
 			    (u_char *)LLADDR(SDL(gate)));
@@ -205,11 +202,12 @@ arp_rtrequest(int req, struct rtentry *rt)
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sizeof(struct sockaddr_dl)) {
-			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
+			log(LOG_DEBUG, "%s: bad gateway value: %s\n", __func__,
+			    ifp->if_xname);
 			break;
 		}
-		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-		SDL(gate)->sdl_index = rt->rt_ifp->if_index;
+		SDL(gate)->sdl_type = ifp->if_type;
+		SDL(gate)->sdl_index = ifp->if_index;
 		if (la != 0)
 			break; /* This happens on a route change */
 		/*
@@ -219,7 +217,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		la = malloc(sizeof(*la), M_RTABLE, M_NOWAIT | M_ZERO);
 		rt->rt_llinfo = (caddr_t)la;
 		if (la == NULL) {
-			log(LOG_DEBUG, "arp_rtrequest: malloc failed\n");
+			log(LOG_DEBUG, "%s: malloc failed\n", __func__);
 			break;
 		}
 		arp_inuse++;
@@ -228,7 +226,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
 
-		TAILQ_FOREACH(ifa, &rt->rt_ifp->if_addrlist, ifa_list) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if ((ifa->ifa_addr->sa_family == AF_INET) &&
 			    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
 			    satosin(rt_key(rt))->sin_addr.s_addr)
@@ -255,8 +253,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 			rt->rt_expire = 0;
 			SDL(gate)->sdl_alen = ETHER_ADDR_LEN;
 			memcpy(LLADDR(SDL(gate)),
-			    ((struct arpcom *)rt->rt_ifp)->ac_enaddr,
-			    ETHER_ADDR_LEN);
+			    ((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
 			if (useloopback)
 				rt->rt_ifp = lo0ifp;
 			/*
