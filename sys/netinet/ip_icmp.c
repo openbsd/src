@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.114 2014/01/19 05:01:50 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.115 2014/03/11 10:28:55 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -699,25 +699,6 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
 	/*
-	 * If the incoming packet was addressed directly to us,
-	 * use dst as the src for the reply.  For broadcast, use
-	 * the address which corresponds to the incoming interface.
-	 */
-	if (ia == NULL) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp->if_rdomain !=
-			    rtable_l2(m->m_pkthdr.rdomain))
-				continue;
-			if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
-				break;
-			if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-			    ia->ia_broadaddr.sin_addr.s_addr != 0 &&
-			    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
-				break;
-		}
-	}
-	/*
-	 * The following happens if the packet was not addressed to us.
 	 * Use the new source address and do a route lookup. If it fails
 	 * drop the packet as there is no path to the host.
 	 */
