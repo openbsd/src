@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2013/11/19 04:12:17 guenther Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2014/03/11 04:11:14 guenther Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -53,6 +53,7 @@
 #define	EXTR	6
 #define	SDEP	7
 #define	NONE	8
+#define	RDEP	9
 
 /*
  * Addressing modes
@@ -93,6 +94,7 @@
 #define	XA	34			/* for 'fstcw %ax' */
 #define	Ril	36			/* long register in instruction */
 #define	Iba	37			/* byte immediate, don't print if 0xa */
+#define	MEx	38			/* memory, or an extension op */
 
 struct inst {
 	char *	i_name;			/* name */
@@ -119,9 +121,15 @@ char *	db_Grp6[] = {
 	"verr",		"verw",		"",		""
 };
 
-char *	db_Grp7[] = {
-	"sgdt",		"sidt",		"lgdt",		"lidt",
-	"smsw",		"",		"lmsw",		"invlpg"
+struct inst db_Grp7[] = {
+	{ "sgdt",   FALSE, NONE, op1(E),     0 },
+	{ "sidt",   FALSE, NONE, op2(MEx,4), "monitor\0mwait\0clac\0stac"},
+	{ "lgdt",   FALSE, NONE, op2(MEx,2), "xgetbv\0xsetbv" },
+	{ "lidt",   FALSE, NONE, op1(E),     0 },
+	{ "smsw",   FALSE, NONE, op1(E),     0 },
+	{ "",       FALSE, NONE, 0,          0 },
+	{ "lmsw",   FALSE, NONE, op1(E),     0 },
+	{ "invlpg", FALSE, NONE, op2(MEx,2), "swapgs\0rdtscp" },
 };
 
 char *	db_Grp8[] = {
@@ -129,24 +137,35 @@ char *	db_Grp8[] = {
 	"bt",		"bts",		"btr",		"btc"
 };
 
-char *	db_Grp9[] = {
-	"fxsave",	"fxrstor",	"",		"",
-	"",		"",		"",		""
+struct inst db_Grp9[] = {
+	{ "fxsave",   FALSE, NONE, op1(E),     0 },
+	{ "fxrstor",  FALSE, NONE, op1(E),     0 },
+	{ "ldmxcsr",  FALSE, NONE, op1(E),     0 },
+	{ "stmxcsr",  FALSE, NONE, op1(E),     0 },
+	{ "xsave",    FALSE, NONE, op1(E),     0 },
+	{ "xrstor",   FALSE, NONE, op2(MEx,1), "lfence" },
+	{ "xsaveopt", FALSE, NONE, op2(MEx,1), "mfence" },
+	{ "clflush",  FALSE, NONE, op2(MEx,1), "sfence" },
 };
 
 char *	db_GrpA[] = {
 	"",		"cmpxchg8b",	"",		"",
-	"",		"",		"",		""
+	"",		"",		"rdrand",	"rdseed"
 };
 
 char *	db_GrpB[] = {
-	"xstore-rng",	"xcrypt-ecb",	"xcrypt-cbc",	"",
+	"xstore-rng",	"xcrypt-ecb",	"xcrypt-cbc",	"xcrypt-ctr",
 	"xcrypt-cfb",	"xcrypt-ofb",	"",		""
 };
 
+char * db_GrpC[] = {
+	"montmul",	"xsha1",	"xsha256",	"",
+	"",		"",		"",		""
+};
+
 struct inst db_inst_0f0x[] = {
-/*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     db_Grp6 },
-/*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     db_Grp7 },
+/*00*/	{ NULL,	   TRUE,  NONE,  op1(Ew),     db_Grp6 },
+/*01*/	{ "",	   TRUE,  RDEP,  0,           db_Grp7 },
 /*02*/	{ "lar",   TRUE,  LONG,  op2(E,R),    0 },
 /*03*/	{ "lsl",   TRUE,  LONG,  op2(E,R),    0 },
 /*04*/	{ "",      FALSE, NONE,  0,	      0 },
@@ -251,8 +270,8 @@ struct inst	db_inst_0fax[] = {
 /*a3*/	{ "bt",    TRUE,  LONG,  op2(R,E),    0 },
 /*a4*/	{ "shld",  TRUE,  LONG,  op3(Ib,R,E), 0 },
 /*a5*/	{ "shld",  TRUE,  LONG,  op3(CL,R,E), 0 },
-/*a6*/	{ "",      FALSE, NONE,  0,	      0 },
-/*a7*/	{ "",      TRUE,  NONE,  0,	      db_GrpB },
+/*a6*/	{ NULL,    TRUE,  NONE,  0,	      db_GrpC },
+/*a7*/	{ NULL,    TRUE,  NONE,  0,	      db_GrpB },
 
 /*a8*/	{ "push",  FALSE, QUAD,  op1(Si),     0 },
 /*a9*/	{ "pop",   FALSE, QUAD,  op1(Si),     0 },
@@ -260,7 +279,7 @@ struct inst	db_inst_0fax[] = {
 /*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
-/*ae*/	{ "",      TRUE,  NONE,  op1(E),      db_Grp9 },
+/*ae*/	{ "",      TRUE,  RDEP,  op1(E),      db_Grp9 },
 /*af*/	{ "imul",  TRUE,  LONG,  op2(E,R),    0 },
 };
 
@@ -276,7 +295,7 @@ struct inst	db_inst_0fbx[] = {
 
 /*b8*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b9*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  db_Grp8 },
+/*ba*/	{ NULL,    TRUE,  LONG,  op2(Ib, E),  db_Grp8 },
 /*bb*/	{ "btc",   TRUE,  LONG,  op2(R, E),   0 },
 /*bc*/	{ "bsf",   TRUE,  LONG,  op2(E, R),   0 },
 /*bd*/	{ "bsr",   TRUE,  LONG,  op2(E, R),   0 },
@@ -292,7 +311,7 @@ struct inst	db_inst_0fcx[] = {
 /*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
 /*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c7*/	{ "",      TRUE,  NONE,  op1(E),      db_GrpA },
+/*c7*/	{ NULL,    TRUE,  NONE,  op1(E),      db_GrpA },
 
 /*c8*/	{ "bswap", FALSE, LONG,  op1(Ril),    0 },
 /*c9*/	{ "bswap", FALSE, LONG,  op1(Ril),    0 },
@@ -657,10 +676,10 @@ struct inst db_inst_table[256] = {
 /*7e*/	{ "jle",   FALSE, NONE,  op1(Db),     0 },
 /*7f*/	{ "jnle",  FALSE, NONE,  op1(Db),     0 },
 
-/*80*/	{ "",	   TRUE,  BYTE,  op2(I, E),   db_Grp1 },
-/*81*/	{ "",	   TRUE,  LONG,  op2(I, E),   db_Grp1 },
-/*82*/	{ "",	   TRUE,  BYTE,  op2(I, E),   db_Grp1 },
-/*83*/	{ "",	   TRUE,  LONG,  op2(Ibs,E),  db_Grp1 },
+/*80*/	{ NULL,	   TRUE,  BYTE,  op2(I, E),   db_Grp1 },
+/*81*/	{ NULL,	   TRUE,  LONG,  op2(I, E),   db_Grp1 },
+/*82*/	{ NULL,	   TRUE,  BYTE,  op2(I, E),   db_Grp1 },
+/*83*/	{ NULL,	   TRUE,  LONG,  op2(Ibs,E),  db_Grp1 },
 /*84*/	{ "test",  TRUE,  BYTE,  op2(R, E),   0 },
 /*85*/	{ "test",  TRUE,  LONG,  op2(R, E),   0 },
 /*86*/	{ "xchg",  TRUE,  BYTE,  op2(R, E),   0 },
@@ -729,8 +748,8 @@ struct inst db_inst_table[256] = {
 /*be*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
 /*bf*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
 
-/*c0*/	{ "",	   TRUE,  BYTE,  op2(Ib, E),  db_Grp2 },
-/*c1*/	{ "",	   TRUE,  LONG,  op2(Ib, E),  db_Grp2 },
+/*c0*/	{ NULL,	   TRUE,  BYTE,  op2(Ib, E),  db_Grp2 },
+/*c1*/	{ NULL,	   TRUE,  LONG,  op2(Ib, E),  db_Grp2 },
 /*c2*/	{ "ret",   FALSE, NONE,  op1(Iw),     0 },
 /*c3*/	{ "ret",   FALSE, NONE,  0,	      0 },
 /*c4*/	{ "",      TRUE,  LONG,  op2(E, R),   0 },
@@ -747,15 +766,16 @@ struct inst db_inst_table[256] = {
 /*ce*/	{ "",      FALSE, NONE,  0,	      0 },
 /*cf*/	{ "iret",  FALSE, NONE,  0,	      0 },
 
-/*d0*/	{ "",	   TRUE,  BYTE,  op2(o1, E),  db_Grp2 },
-/*d1*/	{ "",	   TRUE,  LONG,  op2(o1, E),  db_Grp2 },
-/*d2*/	{ "",	   TRUE,  BYTE,  op2(CL, E),  db_Grp2 },
-/*d3*/	{ "",	   TRUE,  LONG,  op2(CL, E),  db_Grp2 },
+/*d0*/	{ NULL,	   TRUE,  BYTE,  op2(o1, E),  db_Grp2 },
+/*d1*/	{ NULL,	   TRUE,  LONG,  op2(o1, E),  db_Grp2 },
+/*d2*/	{ NULL,	   TRUE,  BYTE,  op2(CL, E),  db_Grp2 },
+/*d3*/	{ NULL,	   TRUE,  LONG,  op2(CL, E),  db_Grp2 },
 /*d4*/	{ "",      TRUE,  NONE,  op1(Iba),    0 },
 /*d5*/	{ "",      TRUE,  NONE,  op1(Iba),    0 },
 /*d6*/	{ ".byte\t0xd6",FALSE, NONE, 0,       0 },
 /*d7*/	{ "xlat",  FALSE, BYTE,  op1(BX),     0 },
 
+/* d8 to df block is ignored: direct test in code handles them */
 /*d8*/	{ "",      TRUE,  NONE,  0,	      db_Esc8 },
 /*d9*/	{ "",      TRUE,  NONE,  0,	      db_Esc9 },
 /*da*/	{ "",      TRUE,  NONE,  0,	      db_Esca },
@@ -798,8 +818,8 @@ struct inst db_inst_table[256] = {
 /*fb*/	{ "sti",   FALSE, NONE,  0,	     0 },
 /*fc*/	{ "cld",   FALSE, NONE,  0,	     0 },
 /*fd*/	{ "std",   FALSE, NONE,  0,	     0 },
-/*fe*/	{ "",	   TRUE,  NONE,  0,	     db_Grp4 },
-/*ff*/	{ "",	   TRUE,  NONE,  0,	     db_Grp5 },
+/*fe*/	{ "",	   TRUE,  RDEP,  0,	     db_Grp4 },
+/*ff*/	{ "",	   TRUE,  RDEP,  0,	     db_Grp5 },
 };
 
 struct inst	db_bad_inst =
@@ -1200,22 +1220,40 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	i_size = ip->i_size;
 	i_mode = ip->i_mode;
 
-	if (ip->i_extra == db_Grp1 || ip->i_extra == db_Grp2 ||
-	    ip->i_extra == db_Grp6 || ip->i_extra == db_Grp7 ||
-	    ip->i_extra == db_Grp8 || ip->i_extra == db_Grp9 ||
-	    ip->i_extra == db_GrpA || ip->i_extra == db_GrpB) {
+	if (i_size == RDEP) {
+		/* sub-table to handle dependency on reg from ModR/M byte */
+		ip = (struct inst *)ip->i_extra;
+		ip = &ip[f_reg(regmodrm, 0)];
+		i_name = ip->i_name;
+		i_mode = ip->i_mode;
+		i_size = ip->i_size;
+	} else if (i_name == NULL) {
 		i_name = ((char **)ip->i_extra)[f_reg(regmodrm, 0)];
 	} else if (ip->i_extra == db_Grp3) {
 		ip = (struct inst *)ip->i_extra;
 		ip = &ip[f_reg(regmodrm, 0)];
 		i_name = ip->i_name;
 		i_mode = ip->i_mode;
-	} else if (ip->i_extra == db_Grp4 || ip->i_extra == db_Grp5) {
-		ip = (struct inst *)ip->i_extra;
-		ip = &ip[f_reg(regmodrm, 0)];
-		i_name = ip->i_name;
-		i_mode = ip->i_mode;
-		i_size = ip->i_size;
+	}
+
+	/* ModR/M-specific operation? */
+	if ((i_mode & 0xFF) == MEx) {
+		if (f_mod(regmodrm) != 3)
+			i_mode = op1(E);
+		else {
+			/* unknown extension? */
+			if (f_rm(regmodrm, 0) > (i_mode >> 8))
+				i_name = "";
+			else {
+				/* skip to the specific op */
+				int i = f_rm(regmodrm, 0);
+				i_name = ip->i_extra;
+				while (i-- > 0)
+					while (*i_name++)
+						;
+			}
+			i_mode = 0;
+		}
 	}
 
 	if (i_size == SDEP) {
