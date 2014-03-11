@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_name.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.do_name.c,v 1.10 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -201,7 +201,7 @@ do_oname(struct obj *obj)
 		}
 	}
 	/* obfree(obj, otmp2);*//* now unnecessary: no pointers on bill */
-	free((char *) obj);	/* let us hope nobody else saved a pointer */
+	free(obj);		/* let us hope nobody else saved a pointer */
 }
 
 int

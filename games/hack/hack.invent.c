@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.invent.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.10 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -220,7 +220,7 @@ freegold(struct gold *gold)
 			if(!gtmp) panic("error in freegold");
 		gtmp->ngold = gold->ngold;
 	}
-	free((char *) gold);
+	free(gold);
 }
 
 void
@@ -234,7 +234,7 @@ deltrap(struct trap *trap)
 		for(ttmp = ftrap; ttmp->ntrap != trap; ttmp = ttmp->ntrap) ;
 		ttmp->ntrap = trap->ntrap;
 	}
-	free((char *) trap);
+	free(trap);
 }
 
 struct wseg *m_atseg;

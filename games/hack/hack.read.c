@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.read.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.read.c,v 1.8 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -192,7 +192,7 @@ doread()
 			Punished = 0;
 			freeobj(uchain);
 			unpobj(uchain);
-			free((char *) uchain);
+			free(uchain);
 			uball->spe = 0;
 			uball->owornmask &= ~W_BALL;
 			uchain = uball = (struct obj *) 0;

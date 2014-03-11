@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.19 2011/03/16 18:11:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.20 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -341,7 +341,7 @@ cornline(int mode, char *text)
 cleanup:
 	while ((tl = texthead)) {
 		texthead = tl->next_line;
-		free((char *) tl);
+		free(tl);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.9 2006/03/14 22:06:10 deraadt Exp $*/
+/*	$OpenBSD: hack.h,v 1.10 2014/03/11 08:05:15 guenther Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -391,7 +391,7 @@ int  dosuspend(void);
 
 /* hack.lev.c */
 void savelev(int, xchar);
-void bwrite(int, char *, unsigned int);
+void bwrite(int, const void *, ssize_t);
 void saveobjchn(int, struct obj *);
 void savemonchn(int, struct monst *);
 void savegoldchn(int, struct gold *);

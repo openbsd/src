@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.steal.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.steal.c,v 1.6 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -201,7 +201,7 @@ steal(struct monst *mtmp)
 	if(Punished && otmp == uball){
 		Punished = 0;
 		freeobj(uchain);
-		free((char *) uchain);
+		free(uchain);
 		uchain = (struct obj *) 0;
 		uball->spe = 0;
 		uball = (struct obj *) 0;	/* superfluous */

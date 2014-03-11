@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mon.c,v 1.9 2014/03/11 07:41:10 guenther Exp $	*/
+/*	$OpenBSD: hack.mon.c,v 1.10 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -704,7 +704,7 @@ dmonsfree()
 
 	while ((mtmp = fdmon)) {
 		fdmon = mtmp->nmon;
-		free((char *) mtmp);
+		free(mtmp);
 	}
 }
 

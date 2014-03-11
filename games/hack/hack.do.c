@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.do.c,v 1.8 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -94,7 +94,7 @@ drop(struct obj *obj)
 				amount, plur(amount));
 			if(Invisible) newsym(u.ux, u.uy);
 		}
-		free((char *) obj);
+		free(obj);
 		return(1);
 	}
 	if(obj->owornmask & (W_ARMOR | W_RING)){

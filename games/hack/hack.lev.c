@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.lev.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.lev.c,v 1.8 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -92,14 +92,14 @@ savelev(int fd, xchar lev)
 	if (lev >= 0 && lev <= MAXLEVEL)
 		level_exists[(int)lev] = TRUE;
 
-	bwrite(fd,(char *) &hackpid,sizeof(hackpid));
-	bwrite(fd,(char *) &lev,sizeof(lev));
-	bwrite(fd,(char *) levl,sizeof(levl));
-	bwrite(fd,(char *) &moves,sizeof(long));
-	bwrite(fd,(char *) &xupstair,sizeof(xupstair));
-	bwrite(fd,(char *) &yupstair,sizeof(yupstair));
-	bwrite(fd,(char *) &xdnstair,sizeof(xdnstair));
-	bwrite(fd,(char *) &ydnstair,sizeof(ydnstair));
+	bwrite(fd, &hackpid,sizeof(hackpid));
+	bwrite(fd, &lev,sizeof(lev));
+	bwrite(fd, levl,sizeof(levl));
+	bwrite(fd, &moves,sizeof(long));
+	bwrite(fd, &xupstair,sizeof(xupstair));
+	bwrite(fd, &yupstair,sizeof(yupstair));
+	bwrite(fd, &xdnstair,sizeof(xdnstair));
+	bwrite(fd, &ydnstair,sizeof(ydnstair));
 	savemonchn(fd, fmon);
 	savegoldchn(fd, fgold);
 	savetrapchn(fd, ftrap);
@@ -108,31 +108,30 @@ savelev(int fd, xchar lev)
 	billobjs = 0;
 	save_engravings(fd);
 #ifndef QUEST
-	bwrite(fd,(char *) rooms,sizeof(rooms));
-	bwrite(fd,(char *) doors,sizeof(doors));
+	bwrite(fd, rooms,sizeof(rooms));
+	bwrite(fd, doors,sizeof(doors));
 #endif /* QUEST */
 	fgold = 0;
 	ftrap = 0;
 	fmon = 0;
 	fobj = 0;
 #ifndef NOWORM
-	bwrite(fd,(char *) wsegs,sizeof(wsegs));
+	bwrite(fd, wsegs,sizeof(wsegs));
 	for(tmp=1; tmp<32; tmp++){
 		for(wtmp = wsegs[tmp]; wtmp; wtmp = wtmp2){
 			wtmp2 = wtmp->nseg;
-			bwrite(fd,(char *) wtmp,sizeof(struct wseg));
+			bwrite(fd, wtmp,sizeof(struct wseg));
 		}
 		wsegs[tmp] = 0;
 	}
-	bwrite(fd,(char *) wgrowtime,sizeof(wgrowtime));
+	bwrite(fd, wgrowtime,sizeof(wgrowtime));
 #endif /* NOWORM */
 }
 
 void
-bwrite(int fd, char *loc, unsigned int num)
+bwrite(int fd, const void *loc, ssize_t num)
 {
-/* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
-	if(write(fd, loc, (int) num) != num)
+	if(write(fd, loc, num) != num)
 		panic("cannot write %u bytes to file #%d", num, fd);
 }
 
@@ -146,12 +145,12 @@ saveobjchn(int fd, struct obj *otmp)
 	while(otmp) {
 		otmp2 = otmp->nobj;
 		xl = otmp->onamelth;
-		bwrite(fd, (char *) &xl, sizeof(int));
-		bwrite(fd, (char *) otmp, xl + sizeof(struct obj));
-		free((char *) otmp);
+		bwrite(fd, &xl, sizeof(int));
+		bwrite(fd, otmp, xl + sizeof(struct obj));
+		free(otmp);
 		otmp = otmp2;
 	}
-	bwrite(fd, (char *) &minusone, sizeof(int));
+	bwrite(fd, &minusone, sizeof(int));
 }
 
 void
@@ -162,18 +161,18 @@ savemonchn(int fd, struct monst *mtmp)
 	int minusone = -1;
 	struct permonst *monbegin = &mons[0];
 
-	bwrite(fd, (char *) &monbegin, sizeof(monbegin));
+	bwrite(fd, &monbegin, sizeof(monbegin));
 
 	while(mtmp) {
 		mtmp2 = mtmp->nmon;
 		xl = mtmp->mxlth + mtmp->mnamelth;
-		bwrite(fd, (char *) &xl, sizeof(int));
-		bwrite(fd, (char *) mtmp, xl + sizeof(struct monst));
+		bwrite(fd, &xl, sizeof(int));
+		bwrite(fd, mtmp, xl + sizeof(struct monst));
 		if(mtmp->minvent) saveobjchn(fd,mtmp->minvent);
-		free((char *) mtmp);
+		free(mtmp);
 		mtmp = mtmp2;
 	}
-	bwrite(fd, (char *) &minusone, sizeof(int));
+	bwrite(fd, &minusone, sizeof(int));
 }
 
 void
@@ -182,8 +181,8 @@ savegoldchn(int fd, struct gold *gold)
 	struct gold *gold2;
 	while(gold) {
 		gold2 = gold->ngold;
-		bwrite(fd, (char *) gold, sizeof(struct gold));
-		free((char *) gold);
+		bwrite(fd, gold, sizeof(struct gold));
+		free(gold);
 		gold = gold2;
 	}
 	bwrite(fd, nul, sizeof(struct gold));
@@ -195,8 +194,8 @@ savetrapchn(int fd, struct trap *trap)
 	struct trap *trap2;
 	while(trap) {
 		trap2 = trap->ntrap;
-		bwrite(fd, (char *) trap, sizeof(struct trap));
-		free((char *) trap);
+		bwrite(fd, trap, sizeof(struct trap));
+		free(trap);
 		trap = trap2;
 	}
 	bwrite(fd, nul, sizeof(struct trap));
@@ -273,7 +272,7 @@ getlev(int fd, int pid, xchar lev)
 		gold = newgold();
 		mread(fd, (char *)gold, sizeof(struct gold));
 	}
-	free((char *) gold);
+	free(gold);
 	trap = newtrap();
 	mread(fd, (char *)trap, sizeof(struct trap));
 	while(trap->tx) {
@@ -282,7 +281,7 @@ getlev(int fd, int pid, xchar lev)
 		trap = newtrap();
 		mread(fd, (char *)trap, sizeof(struct trap));
 	}
-	free((char *) trap);
+	free(trap);
 	fobj = restobjchn(fd);
 	billobjs = restobjchn(fd);
 	rest_engravings(fd);

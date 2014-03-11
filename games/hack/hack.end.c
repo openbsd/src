@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.11 2009/12/10 23:53:07 beck Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.12 2014/03/11 08:05:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -732,7 +732,7 @@ prscore(int argc, char **argv)
 				break;
 			}
 		}
-		free((char *) t1);
+		free(t1);
 	}
 #ifdef nonsense
 	totchars[totcharct] = 0;
