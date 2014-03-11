@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.113 2013/11/14 08:47:21 bentley Exp $
+.\" $OpenBSD: isakmpd.8,v 1.114 2014/03/11 15:25:34 sthen Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 14 2013 $
+.Dd $Mdocdate: March 11 2014 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -640,15 +640,12 @@ to be signed by the CA.
 .It
 Create your own Certificate Authority (CA).
 .Pp
-Create a self-signed root certificate.
-The CA certificate is named
-.Pa ca.crt ,
-and its private key
-.Pa ca.key :
+First, create a private key for the CA, and a Certificate Signing Request
+(CSR) to enable the CA to sign its own key:
 .Bd -literal -offset indent
-# openssl req -x509 -days 365 -newkey rsa:2048 \e
-	-keyout /etc/ssl/private/ca.key \e
-	-out /etc/ssl/ca.crt
+# openssl genrsa -out /etc/ssl/private/ca.key 2048
+# openssl req -new -key /etc/ssl/private/ca.key \e
+	-out /etc/ssl/private/ca.csr
 .Ed
 .Pp
 .Ic openssl req
@@ -659,6 +656,15 @@ There are quite a few fields, but some can be left blank.
 For some fields there will be a default value; if
 .Sq \&.
 is entered, the field will be left blank.
+.Pp
+After the CSR has been generated, it is used to create and sign
+a certificate for the CA:
+.Bd -literal -offset indent
+# openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \e
+	-signkey /etc/ssl/private/ca.key \e
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_CA \e
+	-out /etc/ssl/ca.crt
+.Ed
 .It
 Create Certificate Signing Requests (CSRs) for IKE peers.
 The CSRs are signed with a pre-generated private key.
