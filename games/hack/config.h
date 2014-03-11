@@ -1,4 +1,4 @@
-/* *	$OpenBSD: config.h,v 1.9 2011/03/16 18:11:37 deraadt Exp $*/
+/* *	$OpenBSD: config.h,v 1.10 2014/03/11 08:02:36 guenther Exp $*/
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -151,11 +151,7 @@
  * will do when you have signed characters; otherwise use
  *	typedef	short int schar;
  */
-#ifdef __CHAR_UNSIGNED__
-typedef	short int	schar;
-#else
-typedef	char	schar;
-#endif
+typedef	signed char	schar;
 
 /*
  * small unsigned integers (8 bits suffice - but 7 bits do not)
