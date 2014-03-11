@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2013/05/17 19:38:52 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.17 2014/03/11 19:45:27 guenther Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#ifndef lint
 #define _splset(reg)						\
 ({								\
 	register int val;					\
@@ -86,7 +85,6 @@
 
 #define	splx(reg)						\
 	__asm __volatile ("mtpr %0,$0x12" : : "g" (reg))
-#endif
 
 #define	spl0()		_splset(IPL_NONE)
 #define splsoftclock()	_splraise(IPL_SOFTCLOCK)

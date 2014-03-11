@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.13 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.14 2014/03/11 19:45:27 guenther Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
@@ -43,13 +43,8 @@ typedef __va_list	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#ifdef lint
-#define	va_start(ap,lastarg)	((ap) = (ap))
-#define	__va_copy(dst, src)	((dst) = (src))
-#else
 #define	va_start(ap, last) \
 	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
-#endif /* lint */
 
 #define	__REAL_TYPE_CLASS	8
 #define	__va_arg_offset(ap, type)					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.20 2004/09/24 15:02:43 markus Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.21 2014/03/11 19:45:28 guenther Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -191,11 +191,9 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 		printf("@%x, urp=%x", ack, th->th_urp);
 		flags = th->th_flags;
 		if (flags) {
-#ifndef lint
 			char *cp = "<";
 #define pf(f) { if (th->th_flags&TH_##f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
-#endif
 			printf(">");
 		}
 		break;

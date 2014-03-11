@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.10 2010/12/30 05:01:36 tedu Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.11 2014/03/11 19:45:27 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,12 +39,7 @@
 
 typedef __va_list va_list;
 
-#ifdef lint
-#define	va_start(ap,lastarg)	((ap) = (ap))
-#define	__va_copy(dst, src)	((dst) = (src))
-#else
 #define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())
-#endif /* lint */
 
 #define va_arg(ap,type)							\
 	(sizeof(type) > 8 ?						\

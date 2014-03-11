@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.20 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: macros.h,v 1.21 2014/03/11 19:45:27 guenther Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_MACHINE_MACROS_H_) && !defined(lint)
+#ifndef _MACHINE_MACROS_H_
 #define _MACHINE_MACROS_H_
 
 /* Here general macros are supposed to be stored */

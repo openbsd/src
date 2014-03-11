@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.34 2014/01/19 03:04:54 claudio Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.35 2014/03/11 19:45:28 guenther Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ domaininit(void)
 	 * KAME NOTE: ADDDOMAIN(route) is moved to the last part so that
 	 * it will be initialized as the *first* element.  confusing!
 	 */
-#ifndef lint
 	ADDDOMAIN(unix);
 #ifdef INET
 	ADDDOMAIN(inet);
@@ -101,7 +100,6 @@ domaininit(void)
 	ADDDOMAIN(bt);
 #endif
 	ADDDOMAIN(route);
-#endif
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_init)

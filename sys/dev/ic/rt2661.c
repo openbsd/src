@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.70 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.71 2014/03/11 19:45:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -273,7 +273,7 @@ rt2661_attachhook(void *xsc)
 	struct rt2661_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	const char *name = NULL;	/* make lint happy */
+	const char *name = NULL;
 	int i, error;
 
 	switch (sc->sc_id) {

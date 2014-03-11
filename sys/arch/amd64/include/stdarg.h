@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.9 2014/03/11 19:45:27 guenther Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #include <machine/_types.h>		/* for __va_list */
 
 /*
- * NOTE: this file is only used by lint and non-GNU compilers
+ * NOTE: this file is only used by non-GNU compilers
  */
 
 typedef __va_list	va_list;
@@ -47,13 +47,8 @@ typedef __va_list	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#ifdef lint
-#define	va_start(ap,lastarg)	((ap) = (ap))
-#define	__va_copy(dst, src)	((dst) = (src))
-#else
 #define	va_start(ap, last) \
 	((ap) = (va_list)&(last) + __va_size(last))
-#endif /* lint */
 
 #define	va_arg(ap, type) \
 	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))

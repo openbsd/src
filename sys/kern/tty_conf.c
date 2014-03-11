@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.17 2013/12/13 19:55:12 naddy Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.18 2014/03/11 19:45:28 guenther Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -162,13 +162,8 @@ int	nlinesw = sizeof (linesw) / sizeof (linesw[0]);
  * Do nothing specific version of line
  * discipline specific ioctl command.
  */
-/*ARGSUSED*/
 int
 nullioctl(struct tty *tp, u_long cmd, char *data, int flags, struct proc *p)
 {
-
-#ifdef lint
-	tp = tp; data = data; flags = flags; p = p;
-#endif
 	return (-1);
 }

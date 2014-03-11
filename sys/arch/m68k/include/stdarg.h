@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.11 2008/10/23 21:25:07 kettenis Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.12 2014/03/11 19:45:27 guenther Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.14 1995/12/25 23:15:33 mycroft Exp $	*/
 
 /*-
@@ -43,12 +43,8 @@ typedef __va_list	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#ifdef lint
-#define	va_start(ap,lastarg)	((ap) = (ap))
-#else
 #define va_start(ap, last) \
 	((ap) = (va_list)__builtin_next_arg(last))
-#endif /* lint */
 
 #define	va_arg(ap, type) \
 	(*(type *)((ap) += __va_size(type),			\

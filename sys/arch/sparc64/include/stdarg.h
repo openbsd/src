@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.10 2014/03/11 19:45:27 guenther Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.11 2000/07/23 21:36:56 mycroft Exp $ */
 
 /*
@@ -47,21 +47,10 @@
 #include <sys/cdefs.h>
 #include <machine/_types.h>
 
-#ifdef __lint__
-#define	__builtin_saveregs(t)		(0)
-#define	__builtin_classify_type(t)	(0)
-#define	__builtin_next_arg(t)		((t) ? 0 : 0)
-#endif
-
 typedef __va_list	va_list;
 
-#ifdef lint
-#define	va_start(ap,lastarg)	((ap) = (ap))
-#define	__va_copy(dst, src)	((dst) = (src))
-#else
 #define	va_start(ap, last) \
 	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
-#endif /* lint */
 
 #define va_end(ap)	
 

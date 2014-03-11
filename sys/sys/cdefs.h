@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.34 2012/08/14 20:11:37 matthew Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.35 2014/03/11 19:45:28 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -69,9 +69,9 @@
 #if defined(__cplusplus) || defined(__PCC__)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
-#if !defined(__GNUC__) && !defined(lint)
+#if !defined(__GNUC__)
 #define	__inline			/* delete GCC keyword */
-#endif /* !__GNUC__ && !lint */
+#endif /* !__GNUC__ */
 #endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
@@ -79,12 +79,12 @@
 #define	__CONCAT(x,y)	x/**/y
 #define	__STRING(x)	"x"
 
-#if !defined(__GNUC__) && !defined(lint)
+#if !defined(__GNUC__)
 #define	__const				/* delete pseudo-ANSI C keywords */
 #define	__inline
 #define	__signed
 #define	__volatile
-#endif	/* !__GNUC__ && !lint */
+#endif	/* !__GNUC__ */
 
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
@@ -114,8 +114,6 @@
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
 #define	__pure		__const
-#elif defined(lint)
-#define __dead		/* NORETURN */
 #endif
 #elif !defined(__STRICT_ANSI__)
 #define __dead		__attribute__((__noreturn__))
@@ -207,8 +205,6 @@
 
 #if __GNUC_PREREQ__(2, 7) || defined(__PCC__)
 #define	__packed	__attribute__((__packed__))
-#elif defined(lint)
-#define	__packed
 #endif
 
 #if !__GNUC_PREREQ__(2, 8)
@@ -217,8 +213,6 @@
 
 #if __GNUC_PREREQ__(2, 8) || defined(__PCC__)
 #define __statement(x)	__extension__(x)
-#elif defined(lint)
-#define __statement(x)	(0)
 #else
 #define __statement(x)	(x)
 #endif
