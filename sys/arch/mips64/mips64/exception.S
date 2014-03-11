@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.36 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.37 2014/03/11 07:50:49 jasper Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -155,9 +155,7 @@ exception:
 
 	LA	k0, u_exception_table
 	PTR_ADDU k0, k0, k1
-#ifdef __LP64__
 	PTR_ADDU k0, k0, k1		# yes, twice...
-#endif
 	PTR_L	k0, 0(k0)
 	j	k0
 	nop
@@ -165,9 +163,7 @@ exception:
 k_exception:
 	LA	k0, k_exception_table
 	PTR_ADDU k0, k0, k1
-#ifdef __LP64__
 	PTR_ADDU k0, k0, k1		# yes, twice...
-#endif
 	PTR_L	k0, 0(k0)
 	j	k0
 	nop

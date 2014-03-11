@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.19 2013/03/28 17:41:04 martynas Exp $ */
+/*	$OpenBSD: asm.h,v 1.20 2014/03/11 07:50:49 jasper Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -148,19 +148,6 @@
 #define	CF_RA_OFFS	40	/* Call ra save offset */
 #endif
 
-#ifndef __LP64__
-#define	PTR_L		lw
-#define	PTR_S		sw
-#define	PTR_SUB		sub
-#define	PTR_ADD		add
-#define	PTR_SUBU	subu
-#define	PTR_ADDU	addu
-#define LI		li
-#define	LA		la
-#define	PTR_SLL		sll
-#define	PTR_SRL		srl
-#define	PTR_VAL		.word
-#else
 #define	PTR_L		ld
 #define	PTR_S		sd
 #define	PTR_ADD		dadd
@@ -172,7 +159,6 @@
 #define	PTR_SLL		dsll
 #define	PTR_SRL		dsrl
 #define	PTR_VAL		.dword
-#endif
 
 /*
  * The following macros are here to benefit the R8000 processor:
