@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.10 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.11 2014/03/11 07:41:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -231,13 +231,10 @@ setclipped()
 void
 at(xchar x, xchar y, char ch)
 {
-#ifndef lint
-	/* if xchar is unsigned, lint will complain about  if(x < 0)  */
 	if(x < 0 || x > COLNO-1 || y < 0 || y > ROWNO-1) {
 		impossible("At gets 0%o at %d %d.", ch, x, y);
 		return;
 	}
-#endif /* lint */
 	if(!ch) {
 		impossible("At gets null at %d %d.", x, y);
 		return;

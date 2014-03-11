@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.c,v 1.9 2014/03/11 07:41:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -540,10 +540,6 @@ lookaround()
 	int corrct = 0, noturn = 0;
 	struct monst *mtmp;
 
-#ifdef lint
-	/* suppress "used before set" message */
-	x0 = y0 = 0;
-#endif /* lint */
 	if (Blind || flags.run == 0) return;
 	if (flags.run == 1 && levl[(int)u.ux][(int)u.uy].typ == ROOM)
 		return;

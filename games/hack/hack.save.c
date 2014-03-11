@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.save.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.save.c,v 1.10 2014/03/11 07:41:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -239,10 +239,6 @@ restobjchn(int fd)
 	struct obj *otmp, *otmp2;
 	struct obj *first = 0;
 	int xl;
-#ifdef lint
-	/* suppress "used before set" warning from lint */
-	otmp2 = 0;
-#endif /* lint */
 	while(1) {
 		mread(fd, (char *) &xl, sizeof(xl));
 		if(xl == -1) break;
@@ -273,10 +269,6 @@ restmonchn(int fd)
 	mread(fd, (char *)&monbegin, sizeof(monbegin));
 	differ = (char *)(&mons[0]) - (char *)(monbegin);
 
-#ifdef lint
-	/* suppress "used before set" warning from lint */
-	mtmp2 = 0;
-#endif /* lint */
 	while(1) {
 		mread(fd, (char *) &xl, sizeof(xl));
 		if(xl == -1) break;

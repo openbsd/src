@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mon.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.mon.c,v 1.9 2014/03/11 07:41:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -726,9 +726,6 @@ unstuck(struct monst *mtmp)
 void
 killed(struct monst *mtmp)
 {
-#ifdef lint
-#define	NEW_SCORING
-#endif /* lint */
 	int tmp, nk, x, y;
 	struct permonst *mdat;
 
