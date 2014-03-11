@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.121 2014/03/07 09:51:50 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.122 2014/03/11 10:24:42 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -30,13 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * USB Open Host Controller driver.
- *
- * OHCI spec: http://www.compaq.com/productinfo/development/openhci.html
- * USB spec: http://www.usb.org/developers/docs/usbspec.zip
  */
 
 #include <sys/param.h>

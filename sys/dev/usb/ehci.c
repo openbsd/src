@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.143 2014/03/07 09:51:50 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.144 2014/03/11 10:24:42 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -29,15 +29,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * USB Enhanced Host Controller Driver, a.k.a. USB 2.0 controller.
- *
- * The EHCI 1.0 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
- * and the USB 2.0 spec at
- * http://www.usb.org/developers/docs/usb_20.zip
  */
 
 /*

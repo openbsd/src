@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.65 2014/03/08 11:52:02 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.66 2014/03/11 10:24:42 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -30,10 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * USB spec: http://www.usb.org/developers/docs/usbspec.zip
  */
 
 #include <sys/param.h>

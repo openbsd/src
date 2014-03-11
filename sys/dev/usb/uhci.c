@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.107 2014/03/07 09:51:50 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.108 2014/03/11 10:24:42 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -30,16 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * USB Universal Host Controller driver.
- * Handles e.g. PIIX3 and PIIX4.
- *
- * UHCI spec: http://download.intel.com/technology/usb/UHCI11D.pdf
- * USB spec: http://www.usb.org/developers/docs/usbspec.zip
- * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
- *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
 
 #include <sys/param.h>

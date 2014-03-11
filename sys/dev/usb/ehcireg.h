@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.18 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.19 2014/03/11 10:24:42 mpi Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -28,13 +28,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * The EHCI 1.0 spec can be found at
- * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
- * and the USB 2.0 spec at
- * http://www.usb.org/developers/data/usb_20.zip
  */
 
 #ifndef _DEV_PCI_EHCIREG_H_
