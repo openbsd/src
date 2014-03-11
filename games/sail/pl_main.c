@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.12 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.13 2014/03/11 07:42:55 guenther Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -38,13 +38,12 @@
 #include <err.h>
 
 /*ARGSUSED*/
-int
+void
 pl_main()
 {
 	initialize();
 	Msg("Aye aye, Sir");
 	play();
-	return 0;			/* for lint,  play() never returns */
 }
 
 void
@@ -172,7 +171,6 @@ reprint:
 		switch (fork()) {
 		case 0:
 			longjmp(restart, MODE_DRIVER);
-			/*NOTREACHED*/
 		case -1:
 			perror("fork");
 			leave(LEAVE_FORK);

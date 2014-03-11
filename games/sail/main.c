@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2013/08/29 20:22:20 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2014/03/11 07:42:55 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:37:01 cgd Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ main(argc, argv)
 		mode = i;
 	switch (mode) {
 	case MODE_PLAYER:
-		return pl_main();
+		pl_main();
 	case MODE_DRIVER:
 		return dr_main();
 	case MODE_LOGGER:
@@ -106,5 +106,4 @@ main(argc, argv)
 		warnx("Unknown mode %d", mode);
 		abort();
 	}
-	/*NOTREACHED*/
 }
