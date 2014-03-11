@@ -2456,14 +2456,12 @@ ngx_http_upstream_upgrade(ngx_http_request_t *r, ngx_http_upstream_t *u)
     if (u->peer.connection->read->ready
         || u->buffer.pos != u->buffer.last)
     {
+        ngx_post_event(c->read, &ngx_posted_events);
         ngx_http_upstream_process_upgraded(r, 1, 1);
+        return;
     }
 
-    if (c->read->ready
-        || r->header_in->pos != r->header_in->last)
-    {
-        ngx_http_upstream_process_upgraded(r, 0, 1);
-    }
+    ngx_http_upstream_process_upgraded(r, 0, 1);
 }
 
 
