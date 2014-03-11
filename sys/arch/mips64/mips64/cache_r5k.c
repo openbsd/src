@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.10 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.11 2014/03/11 20:32:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -149,6 +149,7 @@ static __inline__ void	mips5k_hitwbinv_secondary(vaddr_t, vsize_t);
 void mips5k_l2_init(register_t);
 void mips7k_l2_init(register_t);
 void mips7k_l3_init(register_t);
+void mips5k_c0_cca_update(register_t);
 static void run_uncached(void (*)(register_t), register_t);
 
 /*
@@ -223,25 +224,25 @@ mips7k_l2_init(register_t l2size)
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
 	while (va != eva) {
+		cache(IndexStoreTag_S, 0, va);
 		va += R5K_LINE;
-		cache(IndexStoreTag_S, -4, va);
 	}
 	mips_sync();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
 	while (va != eva) {
-		va += R5K_LINE;
 		__asm__ __volatile__
-		    ("lw $zero, %0(%1)" :: "i"(-4), "r"(va));
+		    ("lw $zero, 0(%0)" :: "r"(va));
+		va += R5K_LINE;
 	}
 	mips_sync();
 
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
 	while (va != eva) {
+		cache(IndexStoreTag_S, 0, va);
 		va += R5K_LINE;
-		cache(IndexStoreTag_S, -4, va);
 	}
 	mips_sync();
 }
@@ -270,6 +271,28 @@ mips7k_l3_init(register_t l3size)
 		cache(InvalidatePage_T, 0, va);
 		va += R5K_PAGE;
 	}
+}
+
+/*
+ * Update the coherency of KSEG0.
+ * INTENDED TO BE RUN UNCACHED - BE SURE TO CHECK THAT IT WON'T STORE ANYTHING
+ * ON THE STACK IN THE ASSEMBLY OUTPUT EVERYTIME YOU CHANGE IT.
+ */
+void
+mips5k_c0_cca_update(register_t cfg)
+{
+	set_config(cfg);
+
+#if defined(CPU_R5000) || defined(CPU_RM7000)
+	/*
+	 * RM52xx and RM7000 hazard: after updating the K0 field of the Config
+	 * register, the KSEG0 and CKSEG0 address segments should not be used
+	 * for 5 cycles. The register modification and the use of these address
+	 * segments should be separated by at least five (RM52xx) or
+	 * ten (RM7000) integer instructions.
+	 */
+	nop10();
+#endif
 }
 
 /*
@@ -396,7 +419,7 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 
 	ncfg = (cfg & ~CFGR_CCA_MASK) | CCA_CACHED;
 	if (cfg != ncfg)
-		run_uncached(cp0_set_config, ncfg);
+		run_uncached(mips5k_c0_cca_update, ncfg);
 }
 
 /*
