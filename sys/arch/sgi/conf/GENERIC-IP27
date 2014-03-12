@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.51 2014/03/08 18:28:24 kettenis Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.52 2014/03/12 00:44:10 jmatthew Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -79,8 +79,8 @@ iockbc*		at iof?
 ahc*		at pci?
 isp*		at pci?
 qlw*		at pci?
-#qla*		at pci?
-#qle*		at pci?
+qla*		at pci?
+qle*		at pci?
 mpi*		at pci?
 siop*		at pci?
 
