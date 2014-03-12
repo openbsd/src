@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwnam.3,v 1.5 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: getpwnam.3,v 1.6 2014/03/12 11:36:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: March 12 2014 $
 .Dt GETPWNAM 3
 .Os
 .Sh NAME
@@ -85,9 +85,9 @@ and
 .Fn getpwuid_r ,
 behave similarly but the various strings associated with the result
 are stored in
-.Va buf ,
+.Fa buf ,
 and
-.Va pwstore
+.Fa pwstore
 is updated to reference those strings.
 .Pp
 .Fn setpassent
@@ -123,7 +123,7 @@ If the process which calls them has an effective UID of 0 or has the
 group in its group vector, the encrypted password will be returned, otherwise,
 the password field of the returned structure will point to the string
 .Ql * .
-.Sh YP SUPPORT
+.Ss YP support
 If YP is active, the functions
 .Fn getpwnam
 and
@@ -149,18 +149,24 @@ The functions
 .Fn getpwnam
 and
 .Fn getpwuid
-return a valid pointer to a passwd structure on success
-or a null pointer if end-of-file is reached or an error occurs.
+return a pointer to a passwd structure if a match is found or a
+.Dv NULL
+pointer if no match is found or an error occurs.
 .Pp
 The functions
 .Fn getpwnam_r
 and
 .Fn getpwuid_r
 update
-.Va result
+.Fa result
 to point to
-.Va pwstore
-and then return 0 on success.
+.Fa pwstore
+if a match is found or set it to
+.Dv NULL
+if no match is found or an error occurs.
+They return 0 on success, even if no match is found,
+or an error number if an error occurs; see
+.Sx ERRORS .
 .Pp
 The
 .Fn setpassent
@@ -176,6 +182,36 @@ current password file
 .It Pa /etc/passwd
 a Version 7 format password file
 .El
+.Sh ERRORS
+The
+.Fn getpwnam_r
+and
+.Fn getpwuid_r
+functions may fail if:
+.Bl -tag -width Er
+.It Bq Er ERANGE
+The storage supplied via
+.Fa buf
+and
+.Fa buflen
+is too small and cannot contain all the strings to be returned in
+.Fa pwstore .
+.El
+.Pp
+The
+.Fn getpwnam ,
+.Fn getpwnam_r ,
+.Fn getpwuid ,
+and
+.Fn getpwuid_r
+functions may also fail for any of the errors specified for
+.Xr dbopen 3
+and its
+.Fn get
+routine.
+.Pp
+If YP is active, they may also fail due to errors caused by the YP
+subsystem.
 .Sh SEE ALSO
 .Xr getlogin 2 ,
 .Xr getgrent 3 ,
@@ -187,6 +223,21 @@ a Version 7 format password file
 .Xr pwd_mkdb 8 ,
 .Xr vipw 8 ,
 .Xr yp 8
+.Sh STANDARDS
+The
+.Fn getpwnam ,
+.Fn getpwnam_r ,
+.Fn getpwuid ,
+and
+.Fn getpwuid_r
+functions are compliant with the
+.St -p1003.1-2008
+specification.
+.Pp
+.Sx YP support
+and the
+.Fn setpassent
+function are extensions to that specification.
 .Sh HISTORY
 A predecessor to
 .Fn getpwuid ,
