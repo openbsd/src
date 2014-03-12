@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.98 2014/03/12 11:57:54 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.99 2014/03/12 14:28:09 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4394,11 +4394,6 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		log_debug("%s: failed to find a parent SA", __func__);
 		return;
 	}
-
-	if ((buf = ibuf_static()) == NULL)
-		goto done;
-	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
-		goto done;
 
 	if (csa->csa_allocated)
 		spi32 = htobe32(csa->csa_spi.spi);
