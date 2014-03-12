@@ -13,7 +13,7 @@
 .\"
 .\"     $Sendmail: sendmail.8,v 8.61 2013/11/22 20:51:56 ca Exp $
 .\"
-.Dd $Mdocdate: February 7 2014 $
+.Dd $Mdocdate: March 12 2014 $
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -196,10 +196,7 @@ Otherwise,
 an X-Authentication-Warning header
 will be added to the message.
 .It Fl G
-Relay (gateway) submission of a message, e.g., when
-.Nm rmail
-calls
-.Nm .
+Relay (gateway) submission of a message.
 .It Fl h Ns Ar N
 Set the hop count to
 .Ar N .
@@ -658,7 +655,6 @@ but was queued.
 .Xr mailstats 8 ,
 .Xr newaliases 8 ,
 .Xr rc 8 ,
-.Xr rmail 8 ,
 .Xr starttls 8
 .Pp
 "Filtering Mail with Sendmail",
