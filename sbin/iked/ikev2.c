@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.97 2014/02/26 14:09:15 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.98 2014/03/12 11:57:54 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4562,7 +4562,7 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa)
 			break;
 		}
 	}
-	if (ikecfg == NULL)
+	if (i == pol->pol_ncfg)
 		return (0);
 
 	/*
