@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.118 2014/02/19 22:31:45 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.119 2014/03/12 20:47:36 deraadt Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -188,5 +188,4 @@ USA:
 
 
 Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/ftplist
-contains a list which is continually updated.  If you wish to become a
-distribution site for OpenBSD, contact <www@OpenBSD.org>.
+contains a list which is continually updated.
