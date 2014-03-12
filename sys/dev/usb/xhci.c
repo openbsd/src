@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.1 2014/03/08 14:34:11 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.2 2014/03/12 13:05:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -73,6 +73,7 @@ int	xhci_intr1(struct xhci_softc *);
 void	xhci_waitintr(struct xhci_softc *, struct usbd_xfer *);
 void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
+void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
 int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *, uint32_t);
 int	xhci_scratchpad_alloc(struct xhci_softc *, int);
@@ -92,8 +93,8 @@ void	xhci_xfer_done(struct usbd_xfer *xfer);
 int	xhci_command_submit(struct xhci_softc *, struct xhci_trb *, int);
 int	xhci_command_abort(struct xhci_softc *);
 
-int	xhci_cmd_reset_endpoint(struct xhci_softc *, uint8_t, uint8_t);
-int	xhci_cmd_set_tr_deq(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
+void	xhci_cmd_reset_endpoint_async(struct xhci_softc *, uint8_t, uint8_t);
+void	xhci_cmd_set_tr_deq_async(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
 int	xhci_cmd_configure_endpoint(struct xhci_softc *, uint8_t, uint64_t);
 int	xhci_cmd_stop_endpoint(struct xhci_softc *, uint8_t, uint8_t);
 int	xhci_cmd_slot_control(struct xhci_softc *, uint8_t *, int);
@@ -191,7 +192,7 @@ struct usbd_pipe_methods xhci_device_generic_methods = {
 	.done = xhci_device_generic_done,
 };
 
-#if XHCI_DEBUG
+#ifdef XHCI_DEBUG
 static void
 xhci_dump_trb(struct xhci_trb *trb)
 {
@@ -577,16 +578,14 @@ xhci_event_dequeue(struct xhci_softc *sc)
 			xhci_event_xfer(sc, paddr, status, flags);
 			break;
 		case XHCI_EVT_CMD_COMPLETE:
-			if (paddr == TRBADDR(sc->sc_cmd_ring, sc->sc_cmd_trb)) {
-				memcpy(&sc->sc_result_trb, trb, sizeof(*trb));
-				wakeup(&sc->sc_cmd_trb);
-			}
+			memcpy(&sc->sc_result_trb, trb, sizeof(*trb));
+			xhci_event_command(sc, paddr);
 			break;
 		case XHCI_EVT_PORT_CHANGE:
 			xhci_event_port_change(sc, paddr, status);
 			break;
 		default:
-#if XHCI_DEBUG
+#ifdef XHCI_DEBUG
 			printf("event (%d): ", XHCI_TRB_TYPE(flags));
 			xhci_dump_trb(trb);
 #endif
@@ -638,8 +637,6 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		return;
 	}
 
-	xhci_xfer_done(xfer);
-
 	switch (code) {
 	case XHCI_CODE_SUCCESS:
 	case XHCI_CODE_SHORT_XFER:
@@ -651,11 +648,16 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xfer->status = USBD_STALLED;
 		xp->halted = 1;
 		break;
-	case XHCI_CODE_BABBLE:
-		xfer->status = USBD_IOERROR;
-		xp->halted = 1;
-		/* FALLTHROUGH */
 #endif
+	case XHCI_CODE_BABBLE:
+		/*
+		 * Since the stack might try to start a new transfer as
+		 * soon as a pending one finishes, make sure the endpoint
+		 * is fully reset before calling usb_transfer_complete().
+		 */
+		xp->halted = 1;
+		xhci_cmd_reset_endpoint_async(sc, slot, dci);
+		return;
 	default:
 #if 1
 		DPRINTF(("%s: dev %d dci=%d paddr=0x%016llx idx=%d remain=%u"
@@ -665,9 +667,62 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		DPRINTF(("%s: unhandled code %d\n", DEVNAME(sc), code));
 		xfer->status = USBD_IOERROR;
 		xp->halted = 1;
+		break;
 	}
 
+	xhci_xfer_done(xfer);
 	usb_transfer_complete(xfer);
+}
+
+void
+xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
+{
+	uint32_t flags = letoh32(sc->sc_cmd_trb->trb_flags);
+	struct usbd_xfer *xfer;
+	struct xhci_pipe *xp;
+	uint8_t dci, slot;
+	int i;
+
+	KASSERT(paddr == TRBADDR(sc->sc_cmd_ring, sc->sc_cmd_trb));
+
+	slot = XHCI_TRB_GET_SLOT(flags);
+	dci = XHCI_TRB_GET_EP(flags);
+	xp = sc->sc_sdevs[slot].pipes[dci - 1];
+
+	sc->sc_cmd_trb = NULL;
+
+	switch (flags & XHCI_TRB_TYPE_MASK) {
+	case XHCI_CMD_RESET_EP:
+		/*
+		 * Clear the TRBs and reconfigure the dequeue pointer
+		 * before declaring the endpoint ready.
+		 */
+		xhci_ring_reset(sc, &xp->ring);
+		xp->free_trbs = xp->ring.ntrb;
+		xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
+		    DMAADDR(&xp->ring.dma, 0) | XHCI_EPCTX_DCS);
+		break;
+	case XHCI_CMD_SET_TR_DEQ:
+		/*
+		 * Now that the endpoint is in its initial state, we
+		 * can finish all its pending transfers and let the
+		 * stack play with it again.
+		 */
+		xp->halted = 0;
+		for (i = 0; i < XHCI_MAX_TRANSFERS; i++) {
+			xfer = xp->pending_xfers[i];
+			if (xfer != NULL && xfer->done == 0) {
+				xfer->status = USBD_IOERROR;
+				usb_transfer_complete(xfer);
+			}
+			xp->pending_xfers[i] = NULL;
+		}
+		break;
+	default:
+		/* All other commands are synchronous. */
+		wakeup(&sc->sc_cmd_trb);
+		break;
+	}
 }
 
 void
@@ -751,7 +806,7 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 
 	KASSERT(xp->slot == 0);
 
-#if XHCI_DEBUG
+#ifdef XHCI_DEBUG
 	struct usbd_device *dev = pipe->device;
 	printf("%s: pipe=%p addr=%d depth=%d port=%d speed=%d\n", __func__,
 	    pipe, dev->address, dev->depth, dev->powersrc->portno, dev->speed);
@@ -870,6 +925,8 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 		return (ENOMEM);
 
 	xp->free_trbs = xp->ring.ntrb;
+	xp->halted = 0;
+
 	sdev->pipes[xp->dci - 1] = xp;
 
 	switch (pipe->device->speed) {
@@ -1129,22 +1186,7 @@ xhci_ring_alloc(struct xhci_softc *sc, struct xhci_ring *ring, size_t ntrb)
 	ring->trbs = KERNADDR(&ring->dma, 0);
 	ring->ntrb = ntrb;
 
-	memset(ring->trbs, 0, size);
-
-	ring->index = 0;
-	ring->toggle = XHCI_TRB_CYCLE;
-
-	/*
-	 * Since all our rings use only one segment, at least for
-	 * the moment, link their tail to their head.
-	 */
-	if (ring != &sc->sc_evt_ring) {
-		ring->trbs[ntrb - 1].trb_paddr = htole64(DMAADDR(&ring->dma, 0));
-		ring->trbs[ntrb - 1].trb_flags = htole32(
-		    XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG
-		);
-	}
-	usb_syncmem(&ring->dma, 0, size, BUS_DMASYNC_PREWRITE);
+	xhci_ring_reset(sc, ring);
 
 	return (0);
 }
@@ -1160,13 +1202,23 @@ xhci_ring_reset(struct xhci_softc *sc, struct xhci_ring *ring)
 {
 	size_t size;
 
-	/* Don't touch the link TRB, hence the -1. */
-	size = (ring->ntrb - 1) * sizeof(struct xhci_trb);
+	size = ring->ntrb * sizeof(struct xhci_trb);
+
 	memset(ring->trbs, 0, size);
 
 	ring->index = 0;
 	ring->toggle = XHCI_TRB_CYCLE;
 
+	/*
+	 * Since all our rings use only one segment, at least for
+	 * the moment, link their tail to their head.
+	 */
+	if (ring != &sc->sc_evt_ring) {
+		struct xhci_trb *trb = &ring->trbs[ring->ntrb - 1];
+
+		trb->trb_paddr = htole64(DMAADDR(&ring->dma, 0));
+		trb->trb_flags = htole32(XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG);
+	}
 	usb_syncmem(&ring->dma, 0, size, BUS_DMASYNC_PREWRITE);
 }
 
@@ -1200,7 +1252,7 @@ xhci_ring_dequeue(struct xhci_softc *sc, struct xhci_ring *ring, int cons)
 		    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 
 		ring->index = 0;
-		ring->toggle ^= XHCI_TRB_CYCLE;
+		ring->toggle ^= 1;
 	}
 
 	return (trb);
@@ -1242,12 +1294,17 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
 
 	sc->sc_cmd_trb = trb;
-
 	XDWRITE4(sc, XHCI_DOORBELL(0), 0);
+
+	if (timeout == 0)
+		return (0);
+
+	assertwaitok();
+
 	error = tsleep(&sc->sc_cmd_trb, PZERO, "xhcicmd",
 	    (timeout*hz+999)/ 1000 + 1);
 	if (error) {
-#if XHCI_DEBUG
+#ifdef XHCI_DEBUG
 		printf("cmd = %d " ,XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
 		xhci_dump_trb(trb);
 #endif
@@ -1266,13 +1323,12 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	}
 
 timedout:
-#if XHCI_DEBUG
+#ifdef XHCI_DEBUG
 	if (error) {
 		printf("result = %d ", XHCI_TRB_TYPE(letoh32(trb0->trb_flags)));
 		xhci_dump_trb(trb0);
 	}
 #endif
-	sc->sc_cmd_trb = NULL;
 	return (error);
 }
 
@@ -1336,8 +1392,8 @@ xhci_cmd_stop_endpoint(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
 }
 
-int
-xhci_cmd_reset_endpoint(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
+void
+xhci_cmd_reset_endpoint_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
 
@@ -1349,11 +1405,11 @@ xhci_cmd_reset_endpoint(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_TRB_SET_EP(dci) | XHCI_CMD_RESET_EP
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	xhci_command_submit(sc, &trb, 0);
 }
 
-int
-xhci_cmd_set_tr_deq(struct xhci_softc *sc, uint8_t slot, uint8_t dci,
+void
+xhci_cmd_set_tr_deq_async(struct xhci_softc *sc, uint8_t slot, uint8_t dci,
    uint64_t addr)
 {
 	struct xhci_trb trb;
@@ -1366,7 +1422,7 @@ xhci_cmd_set_tr_deq(struct xhci_softc *sc, uint8_t slot, uint8_t dci,
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_TRB_SET_EP(dci) | XHCI_CMD_SET_TR_DEQ
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT));
+	xhci_command_submit(sc, &trb, 0);
 }
 
 int
@@ -2052,7 +2108,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	KASSERT(xfer->rqflags & URQ_REQUEST);
 
-	if (sc->sc_bus.dying)
+	if (sc->sc_bus.dying || xp->halted)
 		return (USBD_IOERROR);
 
 	if (xp->free_trbs < 3)
@@ -2145,7 +2201,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
-	if (sc->sc_bus.dying)
+	if (sc->sc_bus.dying || xp->halted)
 		return (USBD_IOERROR);
 
 	if (xp->free_trbs < 1)
