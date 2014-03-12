@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.51 2014/03/12 09:58:23 schwarze Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.52 2014/03/12 10:54:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -847,7 +847,10 @@ setpwent(void)
 void
 endpwent(void)
 {
+	int saved_errno;
+
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	saved_errno = errno;
 	_pw_keynum = 0;
 	if (_pw_db) {
 		(void)(_pw_db->close)(_pw_db);
@@ -861,6 +864,7 @@ endpwent(void)
 	__ypexclude_free(&__ypexhead);
 	__ypproto = NULL;
 #endif
+	errno = saved_errno;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 }
 

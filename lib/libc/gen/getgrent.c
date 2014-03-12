@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.39 2014/03/05 23:44:47 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.40 2014/03/12 10:54:36 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -213,7 +213,11 @@ start_gr(void)
 void
 setgrent(void)
 {
-	(void) setgroupent(0);
+	int saved_errno;
+
+	saved_errno = errno;
+	setgroupent(0);
+	errno = saved_errno;
 }
 
 int
@@ -236,8 +240,11 @@ static
 void
 endgrent_basic(void)
 {
+	int saved_errno;
+
 	if (_gr_fp) {
-		(void)fclose(_gr_fp);
+		saved_errno = errno;
+		fclose(_gr_fp);
 		_gr_fp = NULL;
 #ifdef YP
 		__ypmode = 0;
@@ -248,6 +255,7 @@ endgrent_basic(void)
 			__ypexclude_free(&__ypexhead);
 		__ypexhead = NULL;
 #endif
+		errno = saved_errno;
 	}
 }
 
