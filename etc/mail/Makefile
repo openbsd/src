@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2009/04/02 10:21:08 jacekm Exp $
+# $OpenBSD: Makefile,v 1.8 2014/03/12 21:40:27 tedu Exp $
 #
 # Generate the various .db versions from their source files.
 # The sendmail .mc files are not built here.  They live in
@@ -60,7 +60,7 @@ access.db: access
 	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
 
 aliases.db: aliases
-	${SENDMAIL} -bi
+	newaliases
 
 genericstable.db: genericstable
 	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
