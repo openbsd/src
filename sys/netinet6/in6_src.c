@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.37 2014/01/07 17:07:46 mikeb Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.38 2014/03/12 14:15:09 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -602,11 +602,8 @@ in6_selecthlim(struct inpcb *in6p, struct ifnet *ifp)
  * we may want to change the function to return something other than ifp.
  */
 int
-in6_embedscope(in6, sin6, in6p, ifpp)
-	struct in6_addr *in6;
-	const struct sockaddr_in6 *sin6;
-	struct inpcb *in6p;
-	struct ifnet **ifpp;
+in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
+    struct inpcb *in6p, struct ifnet **ifpp)
 {
 	struct ifnet *ifp = NULL;
 	u_int32_t scopeid;
