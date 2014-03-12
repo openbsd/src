@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.153 2014/02/12 12:50:13 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.154 2014/03/12 12:03:55 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -409,8 +409,7 @@ rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp != NULL) {
-		info.rti_info[RTAX_IFP] =
-		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
+		info.rti_info[RTAX_IFP] =(struct sockaddr *)rt->rt_ifp->if_sadl;
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 

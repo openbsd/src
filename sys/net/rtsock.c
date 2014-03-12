@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.139 2014/02/13 22:01:50 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.140 2014/03/12 12:03:55 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ report:
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA) &&
 			    (ifp = rt->rt_ifp) != NULL) {
 				info.rti_info[RTAX_IFP] =
-				    TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
+					(struct sockaddr *)ifp->if_sadl;
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 				if (ifp->if_flags & IFF_POINTOPOINT)
 					info.rti_info[RTAX_BRD] =
@@ -1168,7 +1168,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			info.rti_info[RTAX_IFP] =
-			    TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
+			    (struct sockaddr *)ifp->if_sadl;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
 			if ((m = rt_msg1(ncmd, &info)) == NULL)
@@ -1256,7 +1256,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
 		info.rti_info[RTAX_IFP] =
-		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
+		    (struct sockaddr *)rt->rt_ifp->if_sadl;
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
@@ -1309,10 +1309,8 @@ sysctl_iflist(int af, struct walkarg *w)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		ifa = TAILQ_FIRST(&ifp->if_addrlist);
-		if (!ifa)
-			continue;
-		info.rti_info[RTAX_IFP] = ifa->ifa_addr;
+		/* Copy the link-layer address first */
+		info.rti_info[RTAX_IFP] = (struct sockaddr *)ifp->if_sadl;
 		len = rt_msg2(RTM_IFINFO, RTM_VERSION, &info, 0, w);
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			struct if_msghdr *ifm;
@@ -1329,7 +1327,9 @@ sysctl_iflist(int af, struct walkarg *w)
 			w->w_where += len;
 		}
 		info.rti_info[RTAX_IFP] = NULL;
-		while ((ifa = TAILQ_NEXT(ifa, ifa_list)) != NULL) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family == AF_LINK)
+				continue;
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
