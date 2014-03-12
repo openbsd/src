@@ -32,7 +32,6 @@
 ./bin/rcp
 ./bin/rksh
 ./bin/rm
-./bin/rmail
 ./bin/rmdir
 ./bin/sh
 ./bin/sha1
