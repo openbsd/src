@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.50 2014/03/08 16:47:43 schwarze Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.51 2014/03/12 09:58:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -741,8 +741,7 @@ fail:
 		*pwretp = pwret;
 	if (pwret == NULL)
 		my_errno = errno;
-	if (!errno)
-		errno = saved_errno;
+	errno = saved_errno;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
@@ -751,9 +750,14 @@ struct passwd *
 getpwnam(const char *name)
 {
 	struct passwd *pw = NULL;
+	int my_errno;
 
-	if (getpwnam_r(name, &_pw_passwd, _pw_string, sizeof _pw_string, &pw))
+	my_errno = getpwnam_r(name, &_pw_passwd, _pw_string,
+	    sizeof _pw_string, &pw);
+	if (my_errno) {
 		pw = NULL;
+		errno = my_errno;
+	}
 	return (pw);
 }
 
@@ -796,8 +800,7 @@ fail:
 		*pwretp = pwret;
 	if (pwret == NULL)
 		my_errno = errno;
-	if (!errno)
-		errno = saved_errno;
+	errno = saved_errno;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
@@ -806,9 +809,14 @@ struct passwd *
 getpwuid(uid_t uid)
 {
 	struct passwd *pw = NULL;
+	int my_errno;
 
-	if (getpwuid_r(uid, &_pw_passwd, _pw_string, sizeof _pw_string, &pw))
+	my_errno = getpwuid_r(uid, &_pw_passwd, _pw_string,
+	    sizeof _pw_string, &pw);
+	if (my_errno) {
 		pw = NULL;
+		errno = my_errno;
+	}
 	return (pw);
 }
 
