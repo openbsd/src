@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.117 2013/10/26 21:33:29 sthen Exp $ */
+/* $OpenBSD: netcat.c,v 1.118 2014/03/12 10:19:40 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -133,7 +133,6 @@ main(int argc, char *argv[])
 	host = NULL;
 	uport = NULL;
 	sv = NULL;
-	rtableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
 	    "46DdFhI:i:klNnO:P:p:rSs:tT:UuV:vw:X:x:z")) != -1) {
@@ -698,7 +697,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		if (rtableid >= 0 && (setsockopt(s, IPPROTO_IP, SO_RTABLE,
+		if (rtableid >= 0 && (setsockopt(s, SOL_SOCKET, SO_RTABLE,
 		    &rtableid, sizeof(rtableid)) == -1))
 			err(1, "setsockopt SO_RTABLE");
 
