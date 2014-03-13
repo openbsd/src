@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.47 2013/10/26 12:27:59 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.48 2014/03/13 20:39:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -115,8 +115,6 @@ queue_init(const char *name, int server)
 	int		 r;
 
 	pwq = getpwnam(SMTPD_QUEUE_USER);
-	if (pwq == NULL)
-		pwq = getpwnam(SMTPD_USER);
 	if (pwq == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
