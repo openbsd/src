@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.35 2014/03/10 21:40:58 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.36 2014/03/13 12:02:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -244,7 +244,7 @@ getuint(struct disk *disk, char *prompt, u_int32_t oval, u_int32_t maxval)
 	if (oval > maxval)
 		oval = maxval;
 
-	secpercyl = disk->real->sectors * disk->real->heads;
+	secpercyl = disk->sectors * disk->heads;
 
 	do {
 		printf("%s: [%u] ", prompt, oval);

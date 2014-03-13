@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.58 2014/03/09 22:25:06 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.59 2014/03/13 12:02:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -73,7 +73,6 @@ main(int argc, char *argv[])
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	struct disk disk;
 	u_int32_t l_arg = 0;
-	struct DISK_metrics *usermetrics;
 #ifdef HAS_MBR
 	char *mbrfile = _PATH_MBR;
 #else
@@ -115,7 +114,7 @@ main(int argc, char *argv[])
 				errx(1, "Sector argument %s [1..63].", errstr);
 			break;
 		case 'l':
-			l_arg = strtonum(optarg, 1, UINT32_MAX, &errstr);
+			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
 			if (errstr)
 				errx(1, "Block argument %s [1..%u].", errstr,
 				    UINT32_MAX);
@@ -130,40 +129,38 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	memset(&disk, 0, sizeof(disk));
+
 	/* Argument checking */
 	if (argc != 1)
 		usage();
 	else
 		disk.name = argv[0];
 
-	/* Put in supplied geometry if there */
 	if (c_arg | h_arg | s_arg) {
-		usermetrics = malloc(sizeof(struct DISK_metrics));
-		if (usermetrics != NULL) {
-			if (c_arg && h_arg && s_arg) {
-				usermetrics->cylinders = c_arg;
-				usermetrics->heads = h_arg;
-				usermetrics->sectors = s_arg;
-				usermetrics->size = c_arg * h_arg * s_arg;
-			} else
-				errx(1, "Please specify a full geometry with [-chs].");
-		}
+		/* Use supplied geometry if it is completely specified. */
+		if (c_arg && h_arg && s_arg) {
+			disk.cylinders = c_arg;
+			disk.heads = h_arg;
+			disk.sectors = s_arg;
+			disk.size = c_arg * h_arg * s_arg;
+		} else
+			errx(1, "Please specify a full geometry with [-chs].");
 	} else if (l_arg) {
-		/* Force into LBA mode */
-		usermetrics = malloc(sizeof(struct DISK_metrics));
-		if (usermetrics != NULL) {
-			usermetrics->cylinders = l_arg / 64;
-			usermetrics->heads = 1;
-			usermetrics->sectors = 64;
-			usermetrics->size = l_arg;
-		}
-	} else
-		usermetrics = NULL;
+		/* Use supplied size to calculate a geometry. */
+		disk.cylinders = l_arg / 64;
+		disk.heads = 1;
+		disk.sectors = 64;
+		disk.size = l_arg;
+	}
 
-	/* Get the geometry */
-	disk.real = NULL;
-	if (DISK_getmetrics(&disk, usermetrics))
-		errx(1, "Can't get disk geometry, please use [-chs] to specify.");
+	if (disk.size == 0) {
+		/* Get the disklabel geometry. */
+		DISK_getlabelgeometry(&disk);
+		if (disk.size == 0)
+			errx(1, "Can't get disk geometry, please use [-chs] "
+			    "to specify.");
+	}
 
 
 	/* Print out current MBRs on disk */
