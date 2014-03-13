@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.64 2014/03/13 12:02:28 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.65 2014/03/13 12:12:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,7 +58,6 @@ Xreinit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_DIRTY);
 }
 
-/* ARGSUSED */
 int
 Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -91,7 +90,6 @@ Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CONT);
 }
 
-/* ARGSUSED */
 int
 Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -136,7 +134,6 @@ Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 
-/* ARGSUSED */
 int
 Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -199,7 +196,6 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (ret);
 }
 
-/* ARGSUSED */
 int
 Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -231,7 +227,6 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (ret);
 }
 
-/* ARGSUSED */
 int
 Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -272,7 +267,6 @@ Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CONT);
 }
 
-/* ARGSUSED */
 int
 Xprint(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -285,7 +279,6 @@ Xprint(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CONT);
 }
 
-/* ARGSUSED */
 int
 Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -321,7 +314,6 @@ Xwrite(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CLEAN);
 }
 
-/* ARGSUSED */
 int
 Xquit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -331,7 +323,6 @@ Xquit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_SAVE);
 }
 
-/* ARGSUSED */
 int
 Xabort(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -343,7 +334,6 @@ Xabort(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 }
 
 
-/* ARGSUSED */
 int
 Xexit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -353,7 +343,6 @@ Xexit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_EXIT);
 }
 
-/* ARGSUSED */
 int
 Xhelp(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -365,7 +354,6 @@ Xhelp(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CONT);
 }
 
-/* ARGSUSED */
 int
 Xupdate(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -378,7 +366,6 @@ Xupdate(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_DIRTY);
 }
 
-/* ARGSUSED */
 int
 Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -420,7 +407,6 @@ Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_DIRTY);
 }
 
-/* ARGSUSED */
 int
 Xmanual(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
