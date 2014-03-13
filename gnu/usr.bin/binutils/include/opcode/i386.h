@@ -989,21 +989,24 @@ static const template i386_optab[] = {
 /* MMX/SSE2 instructions.  */
 
 {"emms",     0, 0x0f77, X, CpuMMX, FP,			{ 0, 0, 0 } },
-{"movd",     2, 0x0f6e, X, CpuMMX, FP|Modrm,		{ Reg32|LongMem, RegMMX, 0 } },
-{"movd",     2, 0x0f7e, X, CpuMMX, FP|Modrm,		{ RegMMX, Reg32|LongMem, 0 } },
-{"movd",     2, 0x660f6e,X,CpuSSE2,FP|Modrm,		{ Reg32|LLongMem, RegXMM, 0 } },
-{"movd",     2, 0x660f7e,X,CpuSSE2,FP|Modrm,		{ RegXMM, Reg32|LLongMem, 0 } },
-/* Real MMX instructions.  */
-{"movd",     2, 0x0f6e, X, CpuMMX, FP|Modrm,		{ Reg64|LLongMem, RegMMX, 0 } },
-{"movd",     2, 0x0f7e, X, CpuMMX, FP|Modrm,		{ RegMMX, Reg64|LLongMem, 0 } },
-{"movd",     2, 0x660f6e,X,CpuSSE2,FP|Modrm,		{ Reg64|LLongMem, RegXMM, 0 } },
-{"movd",     2, 0x660f7e,X,CpuSSE2,FP|Modrm,		{ RegXMM, Reg64|LLongMem, 0 } },
+/* These really shouldn't allow for Reg64 (movq is the right mnemonic for
+   copying between Reg64/Mem64 and RegXMM/RegMMX, as is mandated by Intel's
+   spec). AMD's spec, having been in existence for much longer, failed to
+   recognize that and specified movd for 32- and 64-bit operations.  */
+{"movd",     2, 0x0f6e, X, CpuMMX, FP|Modrm,		{ Reg32|Reg64|LongMem, RegMMX, 0 } },
+{"movd",     2, 0x0f7e, X, CpuMMX, FP|Modrm,		{ RegMMX, Reg32|Reg64|LongMem, 0 } },
+{"movd",     2, 0x660f6e,X,CpuSSE2,FP|Modrm,		{ Reg32|Reg64|LLongMem, RegXMM, 0 } },
+{"movd",     2, 0x660f7e,X,CpuSSE2,FP|Modrm,		{ RegXMM, Reg32|Reg64|LLongMem, 0 } },
 /* In the 64bit mode the short form mov immediate is redefined to have
    64bit displacement value.  */
-{"movq",     2, 0x0f6f, X, CpuMMX, FP|Modrm,		{ RegMMX|LongMem, RegMMX, 0 } },
-{"movq",     2, 0x0f7f, X, CpuMMX, FP|Modrm,		{ RegMMX, RegMMX|LongMem, 0 } },
-{"movq",     2, 0xf30f7e,X,CpuSSE2,FP|Modrm,		{ RegXMM|LLongMem, RegXMM, 0 } },
-{"movq",     2, 0x660fd6,X,CpuSSE2,FP|Modrm,		{ RegXMM, RegXMM|LLongMem, 0 } },
+{"movq",     2, 0x0f6f, X, CpuMMX, FP|Modrm|NoRex64,	{ RegMMX|LongMem, RegMMX, 0 } },
+{"movq",     2, 0x0f7f, X, CpuMMX, FP|Modrm|NoRex64,	{ RegMMX, RegMMX|LongMem, 0 } },
+{"movq",     2, 0xf30f7e,X,CpuSSE2,FP|Modrm|NoRex64,	{ RegXMM|LLongMem, RegXMM, 0 } },
+{"movq",     2, 0x660fd6,X,CpuSSE2,FP|Modrm|NoRex64,	{ RegXMM, RegXMM|LLongMem, 0 } },
+{"movq",     2, 0x0f6e, X, Cpu64,  FP|Modrm,		{ Reg64|LLongMem, RegMMX, 0 } },
+{"movq",     2, 0x0f7e, X, Cpu64,  FP|Modrm,		{ RegMMX, Reg64|LLongMem, 0 } },
+{"movq",     2, 0x660f6e,X,Cpu64,  FP|Modrm,		{ Reg64|LLongMem, RegXMM, 0 } },
+{"movq",     2, 0x660f7e,X,Cpu64,  FP|Modrm,		{ RegXMM, Reg64|LLongMem, 0 } },
 {"movq",   2,	0x88, X, Cpu64,	 NoSuf|D|W|Modrm|Size64,{ Reg64, Reg64|AnyMem, 0 } },
 {"movq",   2,	0xc6, 0, Cpu64,	 NoSuf|W|Modrm|Size64,	{ Imm32S, Reg64|WordMem, 0 } },
 {"movq",   2,	0xb0, X, Cpu64,	 NoSuf|W|ShortForm|Size64,{ Imm64, Reg64, 0 } },
