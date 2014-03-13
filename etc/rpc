@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: rpc,v 1.5 2014/03/12 18:17:26 tedu Exp $
+#	$OpenBSD: rpc,v 1.6 2014/03/13 15:22:21 tedu Exp $
 # from: rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
 #
 portmapper	100000	portmap sunrpc
@@ -13,6 +13,7 @@ walld		100008	rwall shutdown
 yppasswdd	100009	yppasswd
 etherstatd	100010	etherstat
 rquotad		100011	rquotaprog quota rquota
+sprayd		100012	spray
 3270_mapper	100013
 rje_mapper	100014
 selection_svc	100015	selnsvc
