@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.345 2014/01/25 20:23:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.346 2014/03/13 10:11:01 florian Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -49,7 +49,7 @@ BIN2=	motd
 
 # -r-xr-xr-x
 RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
-		ftpd ftpproxy hostapd hotplugd httpd identd ifstated iked \
+		ftpd ftpproxy hostapd hotplugd identd ifstated iked \
 		inetd isakmpd ldapd npppd ldattach ldpd lpd mopd mrouted \
 		named nginx nsd ntpd ospfd ospf6d portmap pflogd rarpd rbootd \
 		relayd ripd route6d rtadvd rtsold rwhod sasyncd sendmail \
@@ -257,7 +257,6 @@ distribution-etc-root-var: distrib-dirs
 	cd ../gnu/usr.sbin/sendmail/cf/cf && exec ${MAKE} distribution
 	cd ../usr.sbin/ypserv/ypinit && exec ${MAKE} distribution
 	cd ../usr.bin/ssh && exec ${MAKE} distribution
-	cd ../usr.sbin/httpd && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../lib/libssl && exec ${MAKE} distribution
 	cd ../gnu/usr.bin/lynx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../usr.bin/bgplg && exec ${MAKE} distribution

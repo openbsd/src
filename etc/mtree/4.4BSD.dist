@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.241 2014/01/08 21:52:22 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.242 2014/03/13 10:11:01 florian Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -374,29 +374,6 @@ rpcsvc		gname=bin uname=root mode=0755
 # ./usr/lib
 lib
 
-# ./usr/lib/apache
-apache		gname=bin uname=root mode=0755
-
-
-# ./usr/lib/apache/modules
-modules		gname=bin uname=root mode=0755
-# ./usr/lib/apache/modules
-..
-
-# ./usr/lib/apache/include
-include		gname=bin uname=root mode=0755
-
-# ./usr/lib/apache/include/xml
-xml		gname=bin uname=root mode=0755
-# ./usr/lib/apache/include/xml
-..
-
-# ./usr/lib/apache/include
-..
-
-# ./usr/lib/apache
-..
-
 # ./usr/lib/debug
 debug		gname=bin uname=root mode=0755
 # ./usr/lib/debug
@@ -680,53 +657,6 @@ curses
 milter
 
 # ./usr/share/doc/html/milter
-..
-
-# ./usr/share/doc/html/httpd
-httpd  type=dir uname=root gname=wheel mode=755
-
-# ./usr/share/doc/html/httpd/mod
-mod  type=dir uname=root gname=wheel mode=755
-
-# ./usr/share/doc/html/httpd/mod/mod_ssl
-mod_ssl  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/mod/mod_ssl
-..
-
-# ./usr/share/doc/html/httpd/mod
-..
-
-# ./usr/share/doc/html/httpd/images
-images  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/images
-..
-
-# ./usr/share/doc/html/httpd/vhosts
-vhosts  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/vhosts
-..
-
-# ./usr/share/doc/html/httpd/misc
-misc  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/misc
-..
-
-# ./usr/share/doc/html/httpd/search
-search  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/search
-..
-
-# ./usr/share/doc/html/httpd/howto
-howto  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/howto
-..
-
-# ./usr/share/doc/html/httpd/programs
-programs  type=dir uname=root gname=wheel mode=755
-# ./usr/share/doc/html/httpd/programs
-..
-
-# ./usr/share/doc/html/httpd
 ..
 
 # ./usr/share/doc/html
@@ -1451,17 +1381,6 @@ dev type=dir uname=root gname=daemon mode=755
 # ./www
 ..
 
-# ./www/icons
-icons  type=dir uname=root gname=daemon mode=755
-
-# ./www/icons/small
-small  type=dir uname=root gname=daemon mode=755
-# ./www/icons/small
-..
-
-# ./www/icons
-..
-
 #./www/cgi-bin
 cgi-bin  type=dir uname=root gname=daemon mode=755
 #./www/cgi-bin
@@ -1480,24 +1399,8 @@ logs  type=dir uname=root gname=daemon mode=755
 
 #./www/conf
 conf  type=dir uname=root gname=daemon mode=755
-#./www/conf
-
-#./www/conf/modules
-modules  type=dir uname=root gname=daemon mode=755
-#./www/conf/modules
-..
-
-#./www/conf/modules.sample
-modules.sample  type=dir uname=root gname=daemon mode=755
-#./www/conf/modules.sample
-..
 
 #./www/conf
-..
-
-#./www/users
-users  type=dir uname=root gname=daemon mode=755
-#./www/users
 ..
 
 #./www/bin
