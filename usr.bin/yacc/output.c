@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.22 2014/03/07 19:44:07 tedu Exp $	*/
+/*	$OpenBSD: output.c,v 1.23 2014/03/13 01:18:22 tedu Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -547,13 +547,7 @@ pack_table(void)
 int
 matching_vector(int vector)
 {
-	int i;
-	int j;
-	int k;
-	int t;
-	int w;
-	int match;
-	int prev;
+	int i, j, k, t, w, match, prev;
 
 	i = order[vector];
 	if (i >= 2*nstates)
@@ -587,11 +581,8 @@ int
 pack_vector(int vector)
 {
 	int i, j, k, l;
-	int t;
-	int loc;
-	int ok;
-	short *from;
-	short *to;
+	int t, loc, ok;
+	short *from, *to;
 	int newmax;
 
 	i = order[vector];
@@ -619,11 +610,11 @@ pack_vector(int vector)
 				do {
 					newmax += 200;
 				} while (newmax <= loc);
-				table = realloc(table, newmax*sizeof(short));
-				if (table == 0)
+				table = realloc(table, newmax * sizeof(short));
+				if (table == NULL)
 					no_space();
-				check = realloc(check, newmax*sizeof(short));
-				if (check == 0)
+				check = realloc(check, newmax * sizeof(short));
+				if (check == NULL)
 					no_space();
 				for (l  = maxtable; l < newmax; ++l) {
 					table[l] = 0;
@@ -724,8 +715,7 @@ output_base(void)
 void
 output_table(void)
 {
-	int i;
-	int j;
+	int i, j;
 
 	++outline;
 	fprintf(code_file, "#define YYTABLESIZE %d\n", high);
@@ -754,8 +744,7 @@ output_table(void)
 void
 output_check(void)
 {
-	int i;
-	int j;
+	int i, j;
 
 	fprintf(output_file, "const short %scheck[] =\n"
 	    "\t{%40d,", symbol_prefix, check[0]);
@@ -908,8 +897,9 @@ output_debug(void)
 	++outline;
 	fprintf(code_file, "#define YYMAXTOKEN %d\n", max);
 
-	symnam = (char **) calloc(max+1, sizeof(char *));
-	if (symnam == 0) no_space();
+	symnam = calloc(max+1, sizeof(char *));
+	if (symnam == NULL)
+		no_space();
 
 	for (i = ntokens - 1; i >= 2; --i)
 		symnam[symbol_value[i]] = symbol_name[i];

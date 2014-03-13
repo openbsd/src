@@ -1,4 +1,4 @@
-/* $OpenBSD: lr0.c,v 1.17 2014/03/13 00:59:34 tedu Exp $	 */
+/* $OpenBSD: lr0.c,v 1.18 2014/03/13 01:18:22 tedu Exp $	 */
 /* $NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	 */
 
 /*
@@ -79,12 +79,8 @@ static short *kernel_items;
 void
 allocate_itemsets(void)
 {
-	short *itemp;
-	short *item_end;
-	int symbol;
-	int i;
-	int count;
-	int max;
+	short *itemp, *item_end;
+	int i, count, max, symbol;
 	short *symbol_count;
 
 	count = 0;
@@ -127,9 +123,7 @@ allocate_storage(void)
 void
 append_states(void)
 {
-	int i;
-	int j;
-	int symbol;
+	int i, j, symbol;
 
 #ifdef	TRACE
 	fprintf(stderr, "Entering append_states()\n");
@@ -193,13 +187,9 @@ generate_states(void)
 short
 get_state(int symbol)
 {
-	int key;
-	short *isp1;
-	short *isp2;
-	short *iend;
+	int n, found, key;
+	short *isp1, *isp2, *iend;
 	core *sp;
-	int found;
-	int n;
 
 #ifdef	TRACE
 	fprintf(stderr, "Entering get_state(%d)\n", symbol);
@@ -273,10 +263,8 @@ initialize_states(void)
 void
 new_itemsets(void)
 {
-	int i;
-	int shiftcount;
-	short *isp;
-	short *ksp;
+	int i, shiftcount;
+	short *isp, *ksp;
 	int symbol;
 
 	memset(kernel_end, 0, nsyms * sizeof(short *));
@@ -307,9 +295,7 @@ new_state(int symbol)
 {
 	int n;
 	core *p;
-	short *isp1;
-	short *isp2;
-	short *iend;
+	short *isp1, *isp2, *iend;
 
 #ifdef	TRACE
 	fprintf(stderr, "Entering new_state(%d)\n", symbol);
@@ -344,9 +330,7 @@ void
 save_shifts(void)
 {
 	shifts *p;
-	short *sp1;
-	short *sp2;
-	short *send;
+	short *sp1, *sp2, *send;
 
 	p = allocate(sizeof(shifts) + (nshifts - 1) * sizeof(short));
 
@@ -373,11 +357,8 @@ save_shifts(void)
 void
 save_reductions(void)
 {
-	short *isp;
-	short *rp1;
-	short *rp2;
-	int item;
-	int count;
+	short *isp, *rp1, *rp2;
+	int item, count;
 	reductions *p;
 	short *rend;
 
@@ -415,8 +396,7 @@ save_reductions(void)
 void
 set_derives(void)
 {
-	int i, k;
-	int lhs;
+	int i, k, lhs;
 	short *rules;
 
 	derives = NEW2(nsyms, short *);

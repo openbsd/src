@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.15 2014/03/08 01:05:39 tedu Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.16 2014/03/13 01:18:22 tedu Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -148,10 +148,8 @@ set_reduction_table(void)
 void
 set_maxrhs(void)
 {
-	short *itemp;
-	short *item_end;
-	int length;
-	int max;
+	short *itemp, *item_end;
+	int length, max;
 
 	length = 0;
 	max = 0;
@@ -206,12 +204,9 @@ void
 set_goto_map(void)
 {
 	shifts *sp;
-	int i;
-	int symbol;
-	int k;
+	int i, j, k, symbol;
+	int state1, state2;
 	short *temp_map;
-	int state2;
-	int state1;
 
 	goto_map = NEW2(nvars + 1, short) - ntokens;
 	temp_map = NEW2(nvars + 1, short) - ntokens;
@@ -270,10 +265,7 @@ set_goto_map(void)
 int
 map_goto(int state, int symbol)
 {
-	int high;
-	int low;
-	int middle;
-	int s;
+	int high, low, middle, s;
 
 	low = goto_map[symbol];
 	high = goto_map[symbol + 1];
@@ -295,18 +287,11 @@ map_goto(int state, int symbol)
 void
 initialize_F(void)
 {
-	int i;
-	int j;
-	int k;
+	int i, j, k;
 	shifts *sp;
-	short *edge;
-	unsigned *rowp;
-	short *rp;
-	short **reads;
-	int nedges;
-	int stateno;
-	int symbol;
-	int nwords;
+	short *edge, *rp, **reads;
+	unsigned int *rowp;
+	int nedges, stateno, symbol, nwords;
 
 	nwords = ngotos * tokensetsize;
 	F = NEW2(nwords, unsigned);
@@ -366,22 +351,12 @@ initialize_F(void)
 void
 build_relations(void)
 {
-	int i;
-	int j;
-	int k;
-	short *rulep;
-	short *rp;
+	int i, j, k;
+	short *rulep, *rp;
 	shifts *sp;
-	int length;
-	int nedges;
-	int done;
-	int state1;
-	int stateno;
-	int symbol1;
-	int symbol2;
-	short *shortp;
-	short *edge;
-	short *states;
+	int length, nedges, done;
+	int state1, stateno, symbol1, symbol2;
+	short *shortp, *edge, *states;
 	short **new_includes;
 
 	includes = NEW2(ngotos, short *);
@@ -453,8 +428,7 @@ build_relations(void)
 void
 add_lookback_edge(int stateno, int ruleno, int gotono)
 {
-	int i, k;
-	int found;
+	int i, k, found;
 	shorts *sp;
 
 	i = lookaheads[stateno];
@@ -479,12 +453,8 @@ add_lookback_edge(int stateno, int ruleno, int gotono)
 short **
 transpose(short **R, int n)
 {
-	short **new_R;
-	short **temp_R;
-	short *nedges;
-	short *sp;
-	int i;
-	int k;
+	short **new_R, **temp_R, *nedges, *sp;
+	int i, k;
 
 	nedges = NEW2(n, short);
 
@@ -535,9 +505,9 @@ void
 compute_lookaheads(void)
 {
 	int i, n;
-	unsigned *fp1, *fp2, *fp3;
+	unsigned int *fp1, *fp2, *fp3;
 	shorts *sp, *next;
-	unsigned *rowp;
+	unsigned int *rowp;
 
 	rowp = LA;
 	n = lookaheads[nstates];
@@ -586,14 +556,9 @@ digraph(short **relation)
 void
 traverse(int i)
 {
-	unsigned *fp1;
-	unsigned *fp2;
-	unsigned *fp3;
-	int j;
+	unsigned int *base, *fp1, *fp2, *fp3;
+	int j, height;
 	short *rp;
-
-	int height;
-	unsigned *base;
 
 	VERTICES[++top] = i;
 	INDEX[i] = height = top;

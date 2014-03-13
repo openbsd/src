@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.27 2014/03/13 00:33:55 tedu Exp $	 */
+/* $OpenBSD: reader.c,v 1.28 2014/03/13 01:18:22 tedu Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -124,8 +124,7 @@ void
 get_line(void)
 {
 	FILE *f = input_file;
-	int c;
-	int i;
+	int c, i;
 
 	if (saw_eof || (c = getc(f)) == EOF) {
 		if (line) {
@@ -155,7 +154,7 @@ get_line(void)
 		if (++i >= linesize) {
 			linesize += LINESIZE;
 			line = realloc(line, linesize);
-			if (line == 0)
+			if (line == NULL)
 				no_space();
 		}
 		c = getc(f);
@@ -195,7 +194,6 @@ void
 skip_comment(void)
 {
 	char *s;
-
 	int st_lineno = lineno;
 	char *st_line = dup_line();
 	char *st_cptr = st_line + (cptr - line);
@@ -489,9 +487,7 @@ next_line:
 void
 copy_union(void)
 {
-	int c;
-	int quote;
-	int depth;
+	int c, quote, depth;
 	int u_lineno = lineno;
 	char *u_line = dup_line();
 	char *u_cptr = u_line + (cptr - line - 6);
@@ -636,9 +632,7 @@ next_line:
 bucket *
 get_literal(void)
 {
-	int c, quote;
-	int i;
-	int n;
+	int c, quote, i, n;
 	char *s;
 	bucket *bp;
 	int s_lineno = lineno;
@@ -826,8 +820,7 @@ get_name(void)
 int
 get_number(void)
 {
-	int c;
-	int n;
+	int c, n;
 
 	n = 0;
 	for (c = (unsigned char) *cptr; isdigit(c); c = (unsigned char) *++cptr)
@@ -840,8 +833,7 @@ get_number(void)
 char *
 get_tag(void)
 {
-	int c;
-	int i;
+	int c, i;
 	char *s;
 	int t_lineno = lineno;
 	char *t_line = dup_line();
@@ -1133,6 +1125,7 @@ void
 expand_items(void)
 {
 	int olditems = maxitems;
+
 	maxitems += 300;
 	pitem = realloc(pitem, maxitems * sizeof(bucket *));
 	if (pitem == NULL)
@@ -1306,10 +1299,7 @@ add_symbol(void)
 void
 copy_action(void)
 {
-	int c;
-	int i, n;
-	int depth;
-	int quote;
+	int c, i, n, depth, quote;
 	char *tag;
 	FILE *f = action_file;
 	int a_lineno = lineno;

@@ -1,4 +1,4 @@
-/* $OpenBSD: warshall.c,v 1.10 2014/03/13 00:56:39 tedu Exp $	 */
+/* $OpenBSD: warshall.c,v 1.11 2014/03/13 01:18:22 tedu Exp $	 */
 /* $NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	 */
 
 /*
@@ -41,14 +41,8 @@ void
 transitive_closure(unsigned int *R, int n)
 {
 	int rowsize;
-	unsigned i;
-	unsigned *rowj;
-	unsigned *rp;
-	unsigned *rend;
-	unsigned *ccol;
-	unsigned *relend;
-	unsigned *cword;
-	unsigned *rowi;
+	unsigned int i;
+	unsigned int *rowj, *rp, *rend, *ccol, *relend, *cword, *rowi;
 
 	rowsize = WORDSIZE(n);
 	relend = R + n * rowsize;
@@ -85,9 +79,8 @@ void
 reflexive_transitive_closure(unsigned int *R, int n)
 {
 	int rowsize;
-	unsigned i;
-	unsigned *rp;
-	unsigned *relend;
+	unsigned int i;
+	unsigned int *rp, *relend;
 
 	transitive_closure(R, n);
 

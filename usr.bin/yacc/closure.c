@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.12 2014/03/08 00:44:14 tedu Exp $	*/
+/*	$OpenBSD: closure.c,v 1.13 2014/03/13 01:18:22 tedu Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -46,12 +46,9 @@ static unsigned *EFF;
 void
 set_EFF(void)
 {
-	unsigned *row;
-	int symbol;
+	unsigned int *row;
+	int symbol, rowsize, i, rule;
 	short *sp;
-	int rowsize;
-	int i;
-	int rule;
 
 	rowsize = WORDSIZE(nvars);
 	EFF = NEW2(nvars * rowsize, unsigned);
@@ -80,17 +77,10 @@ set_EFF(void)
 void
 set_first_derives(void)
 {
-	unsigned *rrow;
-	unsigned *vrow;
-	int j;
-	unsigned k;
-	unsigned cword = 0;
+	unsigned int *rrow, *vrow;
+	unsigned int k, cword = 0;
+	int i, j, rule, rulesetsize, varsetsize;
 	short *rp;
-
-	int rule;
-	int i;
-	int rulesetsize;
-	int varsetsize;
 
 	rulesetsize = WORDSIZE(nrules);
 	varsetsize = WORDSIZE(nvars);
@@ -131,18 +121,11 @@ set_first_derives(void)
 void
 closure(short *nucleus, int n)
 {
-	int ruleno;
-	unsigned word;
-	unsigned i;
-	short *csp;
-	unsigned *dsp;
-	unsigned *rsp;
+	unsigned int i, word;
+	short *csp, *csend;
+	unsigned int *dsp, *rsp, *rsend;
 	int rulesetsize;
-
-	short *csend;
-	unsigned *rsend;
-	int symbol;
-	int itemno;
+	int ruleno, symbol, itemno;
 
 	rulesetsize = WORDSIZE(nrules);
 	rsend = ruleset + rulesetsize;
@@ -214,9 +197,8 @@ void
 print_EFF(void)
 {
 	int i, j;
-	unsigned *rowp;
-	unsigned word;
-	unsigned k;
+	unsigned int *rowp;
+	unsigned int k, word;
 
 	printf("\n\nEpsilon Free Firsts\n");
 
@@ -241,11 +223,9 @@ print_EFF(void)
 void
 print_first_derives(void)
 {
-	int i;
-	int j;
-	unsigned *rp;
-	unsigned cword = 0;
-	unsigned k;
+	int i, j;
+	unsigned int *rp;
+	unsigned int k, cword = 0;
 
 	printf("\n\n\nFirst Derives\n");
 
