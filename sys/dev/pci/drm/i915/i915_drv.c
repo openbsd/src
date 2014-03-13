@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.63 2014/02/23 09:36:52 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.64 2014/03/13 12:45:04 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1113,24 +1113,29 @@ inteldrm_detach(struct device *self, int flags)
 }
 
 int
-inteldrm_activate(struct device *arg, int act)
+inteldrm_activate(struct device *self, int act)
 {
-	struct inteldrm_softc	*dev_priv = (struct inteldrm_softc *)arg;
-	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
+	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
 		i915_drm_freeze(dev);
 		break;
 	case DVACT_SUSPEND:
 		break;
+	case DVACT_RESUME:
+		break;
 	case DVACT_WAKEUP:
 		i915_drm_thaw(dev);
 		intel_fb_restore_mode(dev);
+		rv = config_activate_children(self, act);
 		break;
 	}
 
-	return (0);
+	return (rv);
 }
 
 struct cfattach inteldrm_ca = {

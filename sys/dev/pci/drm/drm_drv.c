@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.124 2014/03/09 07:42:29 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.125 2014/03/13 12:45:04 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -63,8 +63,12 @@ int	 drm_lastclose(struct drm_device *);
 void	 drm_attach(struct device *, struct device *, void *);
 int	 drm_probe(struct device *, void *, void *);
 int	 drm_detach(struct device *, int);
+void	 drm_quiesce(struct drm_device *);
+void	 drm_wakeup(struct drm_device *);
+int	 drm_activate(struct device *, int);
 int	 drmprint(void *, const char *);
 int	 drmsubmatch(struct device *, void *, void *);
+int	 drm_do_ioctl(struct drm_device *, int, u_long, caddr_t);
 int	 drm_dequeue_event(struct drm_device *, struct drm_file *, size_t,
 	     struct drm_pending_event **);
 
@@ -212,6 +216,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->event_lock, IPL_TTY);
+	mtx_init(&dev->quiesce_mtx, IPL_NONE);
 
 	TAILQ_INIT(&dev->maplist);
 	SPLAY_INIT(&dev->files);
@@ -293,9 +298,47 @@ drm_detach(struct device *self, int flags)
 	return 0;
 }
 
+void
+drm_quiesce(struct drm_device *dev)
+{
+	mtx_enter(&dev->quiesce_mtx);
+	dev->quiesce = 1;
+	while (dev->quiesce_count > 0) {
+		msleep(&dev->quiesce_count, &dev->quiesce_mtx,
+		    PZERO, "drmqui", 0);
+	}
+	mtx_leave(&dev->quiesce_mtx);
+}
+
+void
+drm_wakeup(struct drm_device *dev)
+{
+	mtx_enter(&dev->quiesce_mtx);
+	dev->quiesce = 0;
+	wakeup(&dev->quiesce);
+	mtx_leave(&dev->quiesce_mtx);
+}
+
+int
+drm_activate(struct device *self, int act)
+{
+	struct drm_device *dev = (struct drm_device *)self;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		drm_quiesce(dev);
+		break;
+	case DVACT_WAKEUP:
+		drm_wakeup(dev);
+		break;
+	}
+
+	return (0);
+}
+
 struct cfattach drm_ca = {
 	sizeof(struct drm_device), drm_probe, drm_attach,
-	drm_detach
+	drm_detach, drm_activate
 };
 
 struct cfdriver drm_cd = {
@@ -540,20 +583,13 @@ done:
 	return (retcode);
 }
 
-/* drmioctl is called whenever a process performs an ioctl on /dev/drm.
- */
 int
-drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, 
-    struct proc *p)
+drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 {
-	struct drm_device *dev = drm_get_device_from_kdev(kdev);
 	struct drm_file *file_priv;
 
-	if (dev == NULL)
-		return ENODEV;
-
 	DRM_LOCK();
-	file_priv = drm_find_file_by_minor(dev, minor(kdev));
+	file_priv = drm_find_file_by_minor(dev, minor);
 	DRM_UNLOCK();
 	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
@@ -713,6 +749,34 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		return (dev->driver->ioctl(dev, cmd, data, file_priv));
 	else
 		return (EINVAL);
+}
+
+/* drmioctl is called whenever a process performs an ioctl on /dev/drm.
+ */
+int
+drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, struct proc *p)
+{
+	struct drm_device *dev = drm_get_device_from_kdev(kdev);
+	int error;
+
+	if (dev == NULL)
+		return ENODEV;
+
+	mtx_enter(&dev->quiesce_mtx);
+	while (dev->quiesce)
+		msleep(&dev->quiesce, &dev->quiesce_mtx, PZERO, "drmioc", 0);
+	dev->quiesce_count++;
+	mtx_leave(&dev->quiesce_mtx);
+
+	error = drm_do_ioctl(dev, minor(kdev), cmd, data);
+
+	mtx_enter(&dev->quiesce_mtx);
+	dev->quiesce_count--;
+	if (dev->quiesce)
+		wakeup(&dev->quiesce_count);
+	mtx_leave(&dev->quiesce_mtx);
+
+	return (error);
 }
 
 int
@@ -1224,10 +1288,39 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 		return(VM_PAGER_ERROR);
 	}
 
+	/*
+	 * We could end up here as the result of a copyin(9) or
+	 * copyout(9) while handling an ioctl.  So we must be careful
+	 * not to deadlock.  Therefore we only block if the quiesce
+	 * count is zero, which guarantees we didn't enter from within
+	 * an ioctl code path.
+	 */
+	mtx_enter(&dev->quiesce_mtx);
+	if (dev->quiesce && dev->quiesce_count == 0) {
+		mtx_leave(&dev->quiesce_mtx);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		mtx_enter(&dev->quiesce_mtx);
+		while (dev->quiesce) {
+			msleep(&dev->quiesce, &dev->quiesce_mtx,
+			    PZERO, "drmflt", 0);
+		}
+		mtx_leave(&dev->quiesce_mtx);
+		return(VM_PAGER_REFAULT);
+	}
+	dev->quiesce_count++;
+	mtx_leave(&dev->quiesce_mtx);
+
 	/* Call down into driver to do the magic */
 	ret = dev->driver->gem_fault(obj, ufi, entry->offset + (vaddr -
 	    entry->start), vaddr, pps, npages, centeridx,
 	    access_type, flags);
+
+	mtx_enter(&dev->quiesce_mtx);
+	dev->quiesce_count--;
+	if (dev->quiesce)
+		wakeup(&dev->quiesce_count);
+	mtx_leave(&dev->quiesce_mtx);
+
 	return (ret);
 }
 

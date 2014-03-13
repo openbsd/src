@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.169 2014/03/09 07:42:29 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.170 2014/03/13 12:45:04 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -784,6 +784,10 @@ struct drm_device {
 
 	bus_dma_tag_t			dmat;
 	bus_space_tag_t			bst;
+
+	struct mutex	quiesce_mtx;
+	int		quiesce;
+	int		quiesce_count;
 
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */

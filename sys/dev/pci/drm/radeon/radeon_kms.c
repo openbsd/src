@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.24 2014/02/25 00:03:38 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.25 2014/03/13 12:45:04 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -750,12 +750,14 @@ radeondrm_attachhook(void *xsc)
 }
 
 int
-radeondrm_activate_kms(struct device *arg, int act)
+radeondrm_activate_kms(struct device *self, int act)
 {
-	struct radeon_device *rdev = (struct radeon_device *)arg;
+	struct radeon_device *rdev = (struct radeon_device *)self;
+	int rv = 0;
 
 	switch (act) {
 	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
 		radeon_suspend_kms(rdev->ddev);
 		break;
 	case DVACT_SUSPEND:
@@ -764,10 +766,11 @@ radeondrm_activate_kms(struct device *arg, int act)
 		break;
 	case DVACT_WAKEUP:
 		radeon_resume_kms(rdev->ddev);
+		rv = config_activate_children(self, act);
 		break;
 	}
 
-	return (0);
+	return (rv);
 }
 
 /**
