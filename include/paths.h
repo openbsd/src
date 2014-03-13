@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.24 2012/08/23 06:38:02 deraadt Exp $	*/
+/*	$OpenBSD: paths.h,v 1.25 2014/03/13 15:24:41 tedu Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MEM	"/dev/mem"
 #define	_PATH_NOLOGIN	"/etc/nologin"
-#define	_PATH_RSH	"/usr/bin/rsh"
+#define	_PATH_RSH	"/usr/bin/ssh"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
 #define	_PATH_TTY	"/dev/tty"
