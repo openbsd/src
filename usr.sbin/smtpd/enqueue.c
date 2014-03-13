@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.75 2014/02/04 15:44:05 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.76 2014/03/13 14:28:33 chris Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -336,9 +336,6 @@ enqueue(int argc, char *argv[])
 			send_line(fout, 0, "Content-Transfer-Encoding: "
 			    "quoted-printable\n");
 	}
-	if (!msg.saw_user_agent)
-		send_line(fout, 0, "User-Agent: %s enqueuer (%s)\n",
-		    SMTPD_NAME, "Demoostik");
 
 	/* add separating newline */
 	if (noheader)
