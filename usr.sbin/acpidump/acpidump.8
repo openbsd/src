@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.14 2014/03/13 19:35:08 jmc Exp $
+.\"	$OpenBSD: acpidump.8,v 1.15 2014/03/13 21:14:08 brynet Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -58,7 +58,7 @@ The ACPICA disassembler is available through the
 ports tree or package system:
 .Bd -literal -offset indent
 # pkg_add acpica
-# iasl -d <prefix>.<sig>.<id>
+$ iasl -d <prefix>.<sig>.<id>
 .Ed
 .Sh FILES
 .Bl -tag -width /dev/mem
