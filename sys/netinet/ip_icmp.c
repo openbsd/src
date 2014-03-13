@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.115 2014/03/11 10:28:55 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.116 2014/03/13 01:22:54 jsg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -611,9 +611,12 @@ reflect:
 		memset(&ssrc, 0, sizeof(ssrc));
 		sdst.sin_family = sgw.sin_family = ssrc.sin_family = AF_INET;
 		sdst.sin_len = sgw.sin_len = ssrc.sin_len = sizeof(sdst);
-		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst, sizeof(sdst));
-		memcpy(&sgw.sin_addr, &icp->icmp_gwaddr, sizeof(sgw));
-		memcpy(&ssrc.sin_addr, &ip->ip_src, sizeof(ssrc));
+		memcpy(&sdst.sin_addr, &icp->icmp_ip.ip_dst,
+		    sizeof(sdst.sin_addr));
+		memcpy(&sgw.sin_addr, &icp->icmp_gwaddr,
+		    sizeof(sgw.sin_addr));
+		memcpy(&ssrc.sin_addr, &ip->ip_src,
+		    sizeof(ssrc.sin_addr));
 
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
