@@ -492,8 +492,25 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
 		return;
 	} else {
-		/* check the mtime */
-		if(udb_zone_get_mtime(nsd->db->udb, dname_name(domain_dname(
+		const char* zone_fname = udb_zone_get_file_str(nsd->db->udb,
+			dname_name(domain_dname(zone->apex)), domain_dname(
+			zone->apex)->name_size);
+		/* if no zone_fname, then it was acquired in zone transfer,
+		 * see if the file is newer than the zone transfer
+		 * (regardless if this is a different file), because the
+		 * zone transfer is a different content source too */
+		if(!zone_fname && udb_zone_get_mtime(nsd->db->udb,
+			dname_name(domain_dname(zone->apex)), domain_dname(
+			zone->apex)->name_size) >= (uint64_t)mtime) {
+			VERBOSITY(3, (LOG_INFO, "zonefile %s is older than "
+				"zone transfer in memory", fname));
+			return;
+
+		/* if zone_fname, then the file was acquired from reading it,
+		 * and see if filename changed or mtime newer to read it */
+		} else if(zone_fname && fname &&
+		   strcmp(zone_fname, fname) == 0 &&
+		   udb_zone_get_mtime(nsd->db->udb, dname_name(domain_dname(
 			zone->apex)), domain_dname(zone->apex)->name_size)
 			>= (uint64_t)mtime) {
 			VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
@@ -549,7 +566,7 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		zone->is_ok = 1;
 		zone->is_changed = 0;
 		/* store zone into udb */
-		if(!write_zone_to_udb(nsd->db->udb, zone, mtime)) {
+		if(!write_zone_to_udb(nsd->db->udb, zone, mtime, fname)) {
 			log_msg(LOG_ERR, "failed to store zone in db");
 		} else {
 			VERBOSITY(2, (LOG_INFO, "zone %s written to db",

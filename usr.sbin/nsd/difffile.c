@@ -300,8 +300,14 @@ static int
 rdatas_equal(rdata_atom_type *a, rdata_atom_type *b, int num, uint16_t type,
 	int* rdnum, char** reason)
 {
-	int k;
-	for(k = 0; k < num; k++)
+	int k, start, end;
+	start = 0;
+	end = num;
+	if (type == TYPE_SOA) {
+		start = 2;
+		end = 2;
+	}
+	for(k = start; k < end; k++)
 	{
 		if(rdata_atom_is_domain(type, k)) {
 			if(dname_compare(domain_dname(a[k].domain),
@@ -1185,7 +1191,7 @@ check_for_bad_serial(namedb_type* db, const char* zone_str, uint32_t old_serial)
 	zone_type* zone = 0;
 	domain = domain_table_find(db->domains, zone_name);
 	if(domain)
-		zone = domain_find_zone(domain);
+		zone = domain_find_zone(db, domain);
 	if(zone && zone->apex == domain && zone->soa_rrset && old_serial)
 	{
 		uint32_t memserial;
@@ -1321,6 +1327,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		ZONE(&z)->is_changed = 1;
 		ZONE(&z)->mtime = time_end_0;
 		udb_zone_set_log_str(nsd->db->udb, &z, log_buf);
+		udb_zone_set_file_str(nsd->db->udb, &z, NULL);
 		udb_ptr_unlink(&z, nsd->db->udb);
 		if(softfail && taskudb && !is_axfr) {
 			log_msg(LOG_ERR, "Failed to apply IXFR cleanly "

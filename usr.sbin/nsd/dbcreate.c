@@ -146,7 +146,8 @@ write_zone(udb_base* udb, udb_ptr* z, zone_type* zone)
 
 /** create and write a zone */
 int
-write_zone_to_udb(udb_base* udb, zone_type* zone, time_t mtime)
+write_zone_to_udb(udb_base* udb, zone_type* zone, time_t mtime,
+	const char* file_str)
 {
 	udb_ptr z;
 	/* make udb dirty */
@@ -167,6 +168,7 @@ write_zone_to_udb(udb_base* udb, zone_type* zone, time_t mtime)
 	ZONE(&z)->mtime = (uint64_t)mtime;
 	ZONE(&z)->is_changed = 0;
 	udb_zone_set_log_str(udb, &z, NULL);
+	udb_zone_set_file_str(udb, &z, file_str);
 	/* write zone */
 	if(!write_zone(udb, &z, zone)) {
 		udb_base_set_userflags(udb, 0);

@@ -444,7 +444,7 @@ radsel_split(struct region* region, struct radsel* r, uint8_t* k,
 		/* create the shared prefix to go in r */
 		if(common_len > 0) {
 			common_str = (uint8_t*)region_alloc(region,
-				common_len*sizeof(uint8_t*));
+				common_len*sizeof(uint8_t));
 			if(!common_str) {
 				region_recycle(region, com, sizeof(*com));
 				region_recycle(region, s1_str, s1_len);

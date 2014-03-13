@@ -508,14 +508,17 @@ domain_find_any_rrset(domain_type* domain, zone_type* zone)
 }
 
 zone_type *
-domain_find_zone(domain_type* domain)
+domain_find_zone(namedb_type* db, domain_type* domain)
 {
 	rrset_type* rrset;
 	while (domain) {
-		for (rrset = domain->rrsets; rrset; rrset = rrset->next) {
-			if (rrset_rrtype(rrset) == TYPE_SOA) {
-				return rrset->zone;
+		if(domain->is_apex) {
+			for (rrset = domain->rrsets; rrset; rrset = rrset->next) {
+				if (rrset_rrtype(rrset) == TYPE_SOA) {
+					return rrset->zone;
+				}
 			}
+			return namedb_find_zone(db, domain_dname(domain));
 		}
 		domain = domain->parent;
 	}

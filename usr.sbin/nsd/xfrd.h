@@ -11,9 +11,15 @@
 #define XFRD_H
 
 #ifndef USE_MINI_EVENT
-#include <event.h>
+#  ifdef HAVE_EVENT_H
+#    include <event.h>
+#  else
+#    include <event2/event.h>
+#    include "event2/event_struct.h"
+#    include "event2/event_compat.h"
+#  endif
 #else
-#include "mini_event.h"
+#  include "mini_event.h"
 #endif
 #include "rbtree.h"
 #include "namedb.h"

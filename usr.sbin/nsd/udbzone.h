@@ -15,7 +15,10 @@
  *     |
  *     v
  * zonetree -> zone -- zone_name
- * radtree       |
+ * radtree       |--> nsec3param
+ *               |--> log_str
+ *               |--> file_str
+ *               |
  *               v
  *            domain --> rrset -> rr
  *            radtree    list     list
@@ -32,6 +35,8 @@ struct zone_d {
 	udb_rel_ptr nsec3param;
 	/** the log_str for the AXFR change, or 0 */
 	udb_rel_ptr log_str;
+	/** the file name when read from a file, or 0 */
+	udb_rel_ptr file_str;
 	/** modification time, time when the zone data was changed */
 	uint64_t mtime;
 	/** number of RRsets in the zone */
@@ -105,6 +110,11 @@ int udb_zone_search(udb_base* udb, udb_ptr* result, const uint8_t* dname,
 uint64_t udb_zone_get_mtime(udb_base* udb, const uint8_t* dname, size_t dlen);
 /** set log str in udb, or remove it */
 void udb_zone_set_log_str(udb_base* udb, udb_ptr* zone, const char* str);
+/** set file str in udb, or remove it */
+void udb_zone_set_file_str(udb_base* udb, udb_ptr* zone, const char* str);
+/** get file string for zone or NULL */
+const char* udb_zone_get_file_str(udb_base* udb, const uint8_t* dname,
+	size_t dlen);
 /** find a domain name in the zone domain tree */
 int udb_domain_find(udb_base* udb, udb_ptr* zone, const uint8_t* nm,
 	size_t nmlen, udb_ptr* result);

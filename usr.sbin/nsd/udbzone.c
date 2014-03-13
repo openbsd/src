@@ -22,6 +22,7 @@ udb_zone_delete_plain(udb_base* udb, udb_ptr* zone)
 	udb_rptr_zero(&ZONE(zone)->node, udb);
 	udb_rptr_zero(&ZONE(zone)->nsec3param, udb);
 	udb_rptr_zero(&ZONE(zone)->log_str, udb);
+	udb_rptr_zero(&ZONE(zone)->file_str, udb);
 	udb_ptr_new(&dtree, udb, &ZONE(zone)->domains);
 	udb_rptr_zero(&ZONE(zone)->domains, udb);
 	udb_radix_tree_delete(udb, &dtree);
@@ -89,6 +90,7 @@ udb_zone_create(udb_base* udb, udb_ptr* result, const uint8_t* dname,
 	udb_rel_ptr_init(&ZONE(&z)->domains);
 	udb_rel_ptr_init(&ZONE(&z)->nsec3param);
 	udb_rel_ptr_init(&ZONE(&z)->log_str);
+	udb_rel_ptr_init(&ZONE(&z)->file_str);
 	ZONE(&z)->rrset_count = 0;
 	ZONE(&z)->rr_count = 0;
 	ZONE(&z)->expired = 0;
@@ -205,6 +207,7 @@ udb_zone_clear(udb_base* udb, udb_ptr* zone)
 	udb_ptr_new(&dtree, udb, &ZONE(zone)->domains);
 	udb_rptr_zero(&ZONE(zone)->nsec3param, udb);
 	udb_zone_set_log_str(udb, zone, NULL);
+	udb_zone_set_file_str(udb, zone, NULL);
 
 	/* walk and delete all domains, rrsets, rrs, but keep tree */
 	for(udb_radix_first(udb, &dtree, &d); d.data; udb_radix_next(udb, &d)){
@@ -286,6 +289,49 @@ void udb_zone_set_log_str(udb_base* udb, udb_ptr* zone, const char* str)
 		udb_rptr_set_ptr(&ZONE(zone)->log_str, udb, &s);
 		udb_ptr_unlink(&s, udb);
 	}
+}
+
+void udb_zone_set_file_str(udb_base* udb, udb_ptr* zone, const char* str)
+{
+	/* delete original file str (if any) */
+	if(ZONE(zone)->file_str.data) {
+		udb_ptr s;
+		size_t sz;
+		udb_ptr_new(&s, udb, &ZONE(zone)->file_str);
+		udb_rptr_zero(&ZONE(zone)->file_str, udb);
+		sz = strlen((char*)udb_ptr_data(&s))+1;
+		udb_ptr_free_space(&s, udb, sz);
+	}
+
+	/* set new file str */
+	if(str) {
+		udb_ptr s;
+		size_t sz = strlen(str)+1;
+		if(!udb_ptr_alloc_space(&s, udb, udb_chunk_type_data, sz)) {
+			return; /* failed to allocate file string */
+		}
+		memmove(udb_ptr_data(&s), str, sz);
+		udb_rptr_set_ptr(&ZONE(zone)->file_str, udb, &s);
+		udb_ptr_unlink(&s, udb);
+	}
+}
+
+const char* udb_zone_get_file_str(udb_base* udb, const uint8_t* dname,
+	size_t dlen)
+{
+	udb_ptr z;
+	if(udb_zone_search(udb, &z, dname, dlen)) {
+		const char* str;
+		if(ZONE(&z)->file_str.data) {
+			udb_ptr s;
+			udb_ptr_new(&s, udb, &ZONE(&z)->file_str);
+			str = (const char*)udb_ptr_data(&s);
+			udb_ptr_unlink(&s, udb);
+		} else str = NULL;
+		udb_ptr_unlink(&z, udb);
+		return str;
+	}
+	return NULL;
 }
 
 #ifdef NSEC3
@@ -706,6 +752,7 @@ udb_zone_walk_chunk(void* base, void* d, uint64_t s, udb_walk_relptr_cb* cb,
 	(*cb)(base, &p->domains, arg);
 	(*cb)(base, &p->nsec3param, arg);
 	(*cb)(base, &p->log_str, arg);
+	(*cb)(base, &p->file_str, arg);
 }
 
 void

@@ -134,12 +134,17 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 	if(g.hsize > UDB_HEADER_SIZE) {
 		log_msg(LOG_WARNING, "%s: header size too large %d", fname,
 			(int)g.hsize);
-		log_msg(LOG_WARNING, "attempting to continue...");
+		goto fail;
 	}
 	if(g.clean_close != 0) {
 		log_msg(LOG_WARNING, "%s: not cleanly closed %d", fname,
 			(int)g.clean_close);
-		log_msg(LOG_WARNING, "attempting to continue...");
+		goto fail;
+	}
+	if(g.dirty_alloc != 0) {
+		log_msg(LOG_WARNING, "%s: not cleanly closed (alloc:%d)", fname,
+			(int)g.dirty_alloc);
+		goto fail;
 	}
 	/* TODO check if too large (>4g on 32bit); mmap-usage would fail */
 	
@@ -169,6 +174,7 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 	/* init completion */
 	udb->glob_data = (udb_glob_d*)(udb->base+sizeof(uint64_t));
 	r = 0;
+	/* cannot be dirty because that is goto fail above */
 	if(udb->glob_data->dirty_alloc != udb_dirty_clean)
 		r = 1;
 	udb->alloc = udb_alloc_create(udb, (udb_alloc_d*)(

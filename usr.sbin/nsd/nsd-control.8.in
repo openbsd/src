@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Jan 27, 2014" "NLnet Labs" "nsd 4.0.1"
+.TH "nsd\-control" "8" "Mar 12, 2014" "NLnet Labs" "nsd 4.0.2"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -121,6 +121,12 @@ increases, use the 'transfer' command.
 Print state of the zone, the serial numbers and since when they have
 been acquired.  Also prints the notify action (to which server), and
 zone transfer (and from which master) if there is activity right now.
+The state of the zone is printed as: 'master' (master zones), 'ok' (slave
+zone is up\-to\-date), 'expired' (slave zone has expired), 'refreshing' (slave
+zone has transfers active).  The serial numbers printed are
+the 'served\-serial' (currently active), the 'commit\-serial' (is in reload),
+the 'notified\-serial' (got notify, busy fetching the data).  The serial
+numbers are only printed if such a serial number is available.
 .TP
 .B serverpid
 Prints the PID of the server process.  This is used for statistics (and
