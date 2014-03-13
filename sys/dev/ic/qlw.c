@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.11 2014/03/13 10:31:53 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.12 2014/03/13 23:04:14 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -901,6 +901,8 @@ qlw_scsi_cmd_poll(struct qlw_softc *sc)
 			continue;
 		}
 
+		qlw_clear_isr(sc, isr);
+
 		rspin = qlw_queue_read(sc, QLW_RESP_IN);
 		if (rspin != sc->sc_last_resp_id) {
 			ccb = qlw_handle_resp(sc, sc->sc_last_resp_id);
@@ -911,8 +913,6 @@ qlw_scsi_cmd_poll(struct qlw_softc *sc)
 
 			qlw_queue_write(sc, QLW_RESP_OUT, sc->sc_last_resp_id);
 		}
-
-		qlw_clear_isr(sc, isr);
 	}
 
 	return (ccb);
