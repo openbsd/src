@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.6 2014/03/13 02:17:13 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,6 +34,7 @@
 #include <mips64/mips_cpu.h>
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
+#include <octeon/dev/cn30xxcorereg.h>
 
 #include "assym.h"
 
@@ -48,7 +49,8 @@ start:
 	mtc0	t0, COP_0_EBASE
 
 /* initialize cvmctl */
-	dli	t0, 0x900043F0
+	dli     t0, COP_0_CVMCTL_FUSE_START_BIT|COP_0_CVMCTL_NOFDA_CP2|\
+		    COP_0_CVMCTL_IPPCI|COP_0_CVMCTL_IPTI
 	dmtc0	t0, COP_0_CVMCTL
 
 /* initialize cvmmemctl */
