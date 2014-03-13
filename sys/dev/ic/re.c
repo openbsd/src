@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.148 2014/03/08 22:37:32 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.149 2014/03/13 13:11:30 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1869,15 +1869,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Set the initial TX and RX configuration.
 	 */
-	if (sc->rl_testmode) {
-		if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
-			CSR_WRITE_4(sc, RL_TXCFG,
-			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON_CPLUS);
-		else
-			CSR_WRITE_4(sc, RL_TXCFG,
-			    RL_TXCFG_CONFIG|RL_LOOPTEST_ON);
-	} else
-		CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
+	CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
 
 	CSR_WRITE_1(sc, RL_EARLY_TX_THRESH, 16);
 
@@ -1894,10 +1886,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Enable interrupts.
 	 */
-	if (sc->rl_testmode)
-		CSR_WRITE_2(sc, RL_IMR, 0);
-	else
-		re_setup_intr(sc, 1, sc->rl_imtype);
+	re_setup_intr(sc, 1, sc->rl_imtype);
 	CSR_WRITE_2(sc, RL_ISR, sc->rl_imtype);
 
 	/* Start RX/TX process. */
@@ -1913,11 +1902,6 @@ re_init(struct ifnet *ifp)
 	 */
 	if (sc->sc_hwrev != RL_HWREV_8139CPLUS)
 		CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
-
-	if (sc->rl_testmode) {
-		splx(s);
-		return (0);
-	}
 
 	mii_mediachg(&sc->sc_mii);
 
