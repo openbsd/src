@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.35 2014/03/11 19:45:28 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.36 2014/03/13 04:21:35 dlg Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -203,8 +203,21 @@
 #define	__pure
 #endif
 
+/*
+ * The __packed macro indicates that a variable or structure members
+ * should have the smallest possible alignment, despite any host CPU
+ * alignment requirements.
+ *
+ * The __aligned(x) macro specifies the minimum alignment of a
+ * variable or structure.
+ *
+ * These macros together are useful for describing the layout and
+ * alignment of messages exchanged with hardware or other systems.
+ */
+
 #if __GNUC_PREREQ__(2, 7) || defined(__PCC__)
 #define	__packed	__attribute__((__packed__))
+#define	__aligned(x)	__attribute__((__aligned__(x)))
 #endif
 
 #if !__GNUC_PREREQ__(2, 8)
