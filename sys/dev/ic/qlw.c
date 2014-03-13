@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.10 2014/03/08 18:42:42 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.11 2014/03/13 10:31:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -217,16 +217,24 @@ qlw_attach(struct qlw_softc *sc)
 		printf("couldn't get firmware status: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	sc->sc_maxcmds = sc->sc_mbox[2];
-	if (sc->sc_maxcmds > 512)
-		sc->sc_maxcmds = 512;
+	sc->sc_maxrequests = sc->sc_mbox[2];
+	if (sc->sc_maxrequests > 512)
+		sc->sc_maxrequests = 512;
 	for (bus = 0; bus < sc->sc_numbusses; bus++) {
-		if (sc->sc_max_queue_depth[bus] > sc->sc_maxcmds)
-			sc->sc_max_queue_depth[bus] = sc->sc_maxcmds;
+		if (sc->sc_max_queue_depth[bus] > sc->sc_maxrequests)
+			sc->sc_max_queue_depth[bus] = sc->sc_maxrequests;
 	}
 
+	/* 
+	 * On some 1020/1040 variants the response queue is limited to
+	 * 256 entries.  We don't really need all that many anyway.
+	 */
+	sc->sc_maxresponses = sc->sc_maxrequests / 2;
+	if (sc->sc_maxresponses < 64)
+		sc->sc_maxresponses = 64;
+
 	/* We may need up to 3 request entries per SCSI command. */
-	sc->sc_maxccbs = sc->sc_maxcmds / 3;
+	sc->sc_maxccbs = sc->sc_maxrequests / 3;
 
 	/* Allegedly the FIFO is busted on the 1040A. */
 	if (sc->sc_isp_type == QLW_ISP1040A)
@@ -307,7 +315,7 @@ qlw_attach(struct qlw_softc *sc)
 	}
 
 	sc->sc_mbox[0] = QLW_MBOX_INIT_REQ_QUEUE_A64;
-	sc->sc_mbox[1] = sc->sc_maxcmds;
+	sc->sc_mbox[1] = sc->sc_maxrequests;
 	qlw_mbox_putaddr(sc->sc_mbox, sc->sc_requests);
 	sc->sc_mbox[4] = 0;
 	if (qlw_mbox(sc, 0x00df, 0x0001)) {
@@ -316,7 +324,7 @@ qlw_attach(struct qlw_softc *sc)
 	}
 
 	sc->sc_mbox[0] = QLW_MBOX_INIT_RSP_QUEUE_A64;
-	sc->sc_mbox[1] = sc->sc_maxcmds;
+	sc->sc_mbox[1] = sc->sc_maxresponses;
 	qlw_mbox_putaddr(sc->sc_mbox, sc->sc_responses);
 	sc->sc_mbox[5] = 0;
 	if (qlw_mbox(sc, 0x00ef, 0x0001)) {
@@ -687,7 +695,7 @@ qlw_handle_intr(struct qlw_softc *sc, u_int16_t isr, u_int16_t info)
 				scsi_done(ccb->ccb_xs);
 
 			sc->sc_last_resp_id++;
-			sc->sc_last_resp_id %= sc->sc_maxcmds;
+			sc->sc_last_resp_id %= sc->sc_maxresponses;
 		} while (sc->sc_last_resp_id != rspin);
 
 		qlw_queue_write(sc, QLW_RESP_OUT, rspin);
@@ -790,7 +798,7 @@ qlw_scsi_cmd(struct scsi_xfer *xs)
 	bus = qlw_xs_bus(sc, xs);
 	if (sc->sc_marker_required[bus]) {
 		req = sc->sc_next_req_id++;
-		if (sc->sc_next_req_id == sc->sc_maxcmds)
+		if (sc->sc_next_req_id == sc->sc_maxrequests)
 			sc->sc_next_req_id = 0;
 
 		DPRINTF(QLW_D_IO, "%s: writing marker at request %d\n",
@@ -807,7 +815,7 @@ qlw_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	req = sc->sc_next_req_id++;
-	if (sc->sc_next_req_id == sc->sc_maxcmds)
+	if (sc->sc_next_req_id == sc->sc_maxrequests)
 		sc->sc_next_req_id = 0;
 
 	offset = (req * QLW_QUEUE_ENTRY_SIZE);
@@ -826,7 +834,7 @@ qlw_scsi_cmd(struct scsi_xfer *xs)
 
 	while (seg < ccb->ccb_dmamap->dm_nsegs) {
 		req = sc->sc_next_req_id++;
-		if (sc->sc_next_req_id == sc->sc_maxcmds)
+		if (sc->sc_next_req_id == sc->sc_maxrequests)
 			sc->sc_next_req_id = 0;
 
 		offset = (req * QLW_QUEUE_ENTRY_SIZE);
@@ -898,7 +906,7 @@ qlw_scsi_cmd_poll(struct qlw_softc *sc)
 			ccb = qlw_handle_resp(sc, sc->sc_last_resp_id);
 
 			sc->sc_last_resp_id++;
-			if (sc->sc_last_resp_id == sc->sc_maxcmds)
+			if (sc->sc_last_resp_id == sc->sc_maxresponses)
 				sc->sc_last_resp_id = 0;
 
 			qlw_queue_write(sc, QLW_RESP_OUT, sc->sc_last_resp_id);
@@ -1627,13 +1635,13 @@ qlw_alloc_ccbs(struct qlw_softc *sc)
 		return (1);
 	}
 
-	sc->sc_requests = qlw_dmamem_alloc(sc, sc->sc_maxcmds *
+	sc->sc_requests = qlw_dmamem_alloc(sc, sc->sc_maxrequests *
 	    QLW_QUEUE_ENTRY_SIZE);
 	if (sc->sc_requests == NULL) {
 		printf("%s: unable to allocate ccb dmamem\n", DEVNAME(sc));
 		goto free_ccbs;
 	}
-	sc->sc_responses = qlw_dmamem_alloc(sc, sc->sc_maxcmds *
+	sc->sc_responses = qlw_dmamem_alloc(sc, sc->sc_maxresponses *
 	    QLW_QUEUE_ENTRY_SIZE);
 	if (sc->sc_responses == NULL) {
 		printf("%s: unable to allocate rcb dmamem\n", DEVNAME(sc));
