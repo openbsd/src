@@ -33,13 +33,18 @@
 #ifndef SHUT_WR
 #define SHUT_WR 1
 #endif
-#ifndef USE_MINI_EVENT
-#include <event.h>
-#else
-#include "mini_event.h"
-#endif
-
 #include <openssl/rand.h>
+#ifndef USE_MINI_EVENT
+#  ifdef HAVE_EVENT_H
+#    include <event.h>
+#  else
+#    include <event2/event.h>
+#    include "event2/event_struct.h"
+#    include "event2/event_compat.h"
+#  endif
+#else
+#  include "mini_event.h"
+#endif
 
 #include "axfr.h"
 #include "namedb.h"

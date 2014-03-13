@@ -1563,7 +1563,7 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 	startzonec = time(NULL);
 	parser->errors = 0;
 
-	dname = dname_parse(parser->region, name);
+	dname = dname_parse(parser->rr_region, name);
 	if (!dname) {
 		zc_error("incorrect zone name '%s'", name);
 		return 0;
@@ -1589,6 +1589,8 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 
 	/* remove origin if it was unused */
 	domain_table_deldomain(parser->db, parser->origin);
+	/* rr_region has been emptied by now */
+	dname = dname_parse(parser->rr_region, name);
 
 	/* check if zone file contained a correct SOA record */
 	if (!parser->current_zone) {

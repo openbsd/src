@@ -4,10 +4,13 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.0.1,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.0.2,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
+if test "$ac_cv_header_minix_config_h" = "yes"; then
+	AC_DEFINE(_NETBSD_SOURCE,1, [Enable for compile on Minix])
+fi
 
 dnl
 dnl By default set $sysconfdir to /etc and $localstatedir to /var
@@ -337,7 +340,7 @@ if test x_$withval = x_yes -o x_$withval != x_no; then
         fi
         for dir in $withval; do
             thedir="$dir"
-            if test -f "$dir/include/event.h"; then
+            if test -f "$dir/include/event.h" -o -f "$dir/include/event2/event.h"; then
                 found_libevent="yes"
 		dnl assume /usr is in default path.
 		if test "$thedir" != "/usr"; then
@@ -361,10 +364,16 @@ You can restart ./configure --with-libevent=no to use a builtin alternative.])
 		fi
         else
             AC_MSG_RESULT(found in $thedir)
-	    dnl assume /usr is in default path, do not add "".
-	    if test "$thedir" != "/usr" -a "$thedir" != ""; then
-                LDFLAGS="$LDFLAGS -L$thedir/lib"
-		ACX_RUNTIME_PATH_ADD([$thedir/lib])
+	    dnl if event2 exists and no event lib in dir itself, use subdir
+	    if test ! -f $thedir/lib/libevent.a -a ! -f $thedir/lib/libevent.so -a -d "$thedir/lib/event2"; then
+		LDFLAGS="$LDFLAGS -L$thedir/lib/event2"
+		ACX_RUNTIME_PATH_ADD([$thedir/lib/event2])
+	    else
+		    dnl assume /usr is in default path, do not add "".
+		    if test "$thedir" != "/usr" -a "$thedir" != ""; then
+			LDFLAGS="$LDFLAGS -L$thedir/lib"
+			ACX_RUNTIME_PATH_ADD([$thedir/lib])
+		    fi
 	    fi
         fi
 	# check for library used by libevent after 1.3c
@@ -575,11 +584,9 @@ AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
 AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam mmap])
 
-AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--disable-recvmmsg], [Disable recvmmsg and sendmmsg compilation for compatibility with more Linux kernel versions]))
+AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems]))
 case "$enable_recvmmsg" in
-        no)
-                ;;
-        yes|*)
+        yes)
 		AC_CHECK_FUNC([recvmmsg], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/socket.h>
@@ -614,6 +621,8 @@ AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
 )])
 
 		;;
+        no|*)
+                ;;
 esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).

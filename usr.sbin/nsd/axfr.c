@@ -51,11 +51,12 @@ query_axfr(struct nsd *nsd, struct query *query)
 				      &closest_encloser);
 
 		qdomain = closest_encloser;
-		query->axfr_zone = domain_find_zone(closest_encloser);
+		query->axfr_zone = domain_find_zone(nsd->db, closest_encloser);
 
 		if (!exact
 		    || query->axfr_zone == NULL
-		    || query->axfr_zone->apex != qdomain)
+		    || query->axfr_zone->apex != qdomain
+		    || query->axfr_zone->soa_rrset == NULL)
 		{
 			/* No SOA no transfer */
 			RCODE_SET(query->packet, RCODE_NOTAUTH);

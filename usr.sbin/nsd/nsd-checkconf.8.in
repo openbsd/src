@@ -1,4 +1,4 @@
-.TH "nsd\-checkconf" "8" "Jan 27, 2014" "NLnet Labs" "nsd 4.0.1"
+.TH "nsd\-checkconf" "8" "Mar 12, 2014" "NLnet Labs" "nsd 4.0.2"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -55,9 +55,7 @@ The special value
 prints out a list of configured patterns.
 .P
 .RS
-This option is primarily used by 
-.B nsdc 
-to parse the config file from the shell. If the
+This option can be used to parse the config file from the shell. If the
 .B \-z
 option is given, but the 
 .B \-o 

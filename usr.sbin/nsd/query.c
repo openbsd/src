@@ -1137,8 +1137,15 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	size_t domain_number, int exact, domain_type *closest_match,
 	domain_type *closest_encloser, const dname_type *qname)
 {
-	q->zone = domain_find_zone(closest_encloser);
+	q->zone = domain_find_zone(nsd->db, closest_encloser);
 	if (!q->zone) {
+		/* no zone for this */
+		if(q->cname_count == 0)
+			RCODE_SET(q->packet, RCODE_REFUSE);
+		return;
+	}
+	if(!q->zone->apex || !q->zone->soa_rrset) {
+		/* zone is configured but not loaded */
 		if(q->cname_count == 0)
 			RCODE_SET(q->packet, RCODE_SERVFAIL);
 		return;
