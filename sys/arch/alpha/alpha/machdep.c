@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.149 2014/02/18 19:37:32 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.150 2014/03/13 03:52:55 dlg Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -977,6 +977,7 @@ void
 boot(howto)
 	int howto;
 {
+	struct device *mainbus;
 #if defined(MULTIPROCESSOR)
 	u_long wait_mask;
 	int i;
@@ -1042,8 +1043,9 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");

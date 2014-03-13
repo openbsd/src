@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2013/09/28 12:40:30 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.44 2014/03/13 03:52:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -814,6 +814,7 @@ int	waittime = -1;
 void
 boot(int howto)
 {
+	struct device *mainbus;
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
@@ -861,8 +862,9 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {

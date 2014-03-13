@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.173 2014/01/05 20:23:56 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.174 2014/03/13 03:52:55 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -745,6 +745,8 @@ struct pcb dumppcb;
 void
 boot(int howto)
 {
+	struct device *mainbus;
+
 	if (howto & RB_POWERDOWN)
 		lid_suspend = 0;
 
@@ -788,8 +790,9 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);

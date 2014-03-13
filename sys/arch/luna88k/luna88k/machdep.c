@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2014/01/19 12:45:35 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 2014/03/13 03:52:55 dlg Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -469,6 +469,8 @@ __dead void
 boot(howto)
 	int howto;
 {
+	struct device *mainbus;
+
 	/* take a snapshot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
@@ -505,8 +507,9 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	/* Luna88k supports automatic powerdown */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2013/11/23 07:20:52 uebayasi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2014/03/13 03:52:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -537,6 +537,8 @@ int waittime = -1;
 void
 boot(int howto)
 {
+	struct device *mainbus;
+
 	/* If system is cold, just halt. */
 	if (cold) {
 		/* (Unless the user explicitly asked for reboot.) */
@@ -572,8 +574,9 @@ boot(int howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	/* in case we came on powerfail interrupt */
 	if (cold_hook)

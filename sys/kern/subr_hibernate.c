@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.84 2014/02/01 07:10:33 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.85 2014/03/13 03:52:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1152,14 +1152,14 @@ hibernate_resume(void)
 	if (hibernate_read_image(&disk_hib))
 		goto fail;
 
-	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE) != 0)
+	if (config_suspend(device_mainbus(), DVACT_QUIESCE) != 0)
 		goto fail;
 
 	(void) splhigh();
 	hibernate_disable_intr_machdep();
 	cold = 1;
 
-	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
+	if (config_suspend(device_mainbus(), DVACT_SUSPEND) != 0) {
 		cold = 0;
 		hibernate_enable_intr_machdep();
 		goto fail;

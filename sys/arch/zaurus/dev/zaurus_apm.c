@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.24 2013/12/06 21:03:05 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.25 2014/03/13 03:52:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -570,7 +570,7 @@ zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
 	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
 
 	bufq_quiesce();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_QUIESCE);
+	config_suspend(device_mainbus(), DVACT_QUIESCE);
 
 	/* Poll in suspended mode and forget the discharge timeout. */
 	sc->sc_suspended = 1;
@@ -642,6 +642,7 @@ zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
 void
 zapm_poweroff(void)
 {
+	struct device *mainbus = device_mainbus();
 	struct pxa2x0_apm_softc *sc;
 	int s;
 
@@ -653,14 +654,14 @@ zapm_poweroff(void)
 #endif /* NWSDISPLAY > 0 */
 
 	s = splhigh();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+	config_suspend(mainbus, DVACT_SUSPEND);
 
 	/* XXX
 	 * Flag to disk drivers that they should "power down" the disk
 	 * when we get to DVACT_POWERDOWN.
 	 */
 	boothowto |= RB_POWERDOWN;
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	config_suspend(mainbus, DVACT_POWERDOWN);
 	boothowto &= ~RB_POWERDOWN;
 
 	/* XXX enable charging during suspend */
@@ -682,12 +683,12 @@ zapm_poweroff(void)
 	zapm_restart();
 
 	/* NOTREACHED */
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
+	config_suspend(mainbus, DVACT_RESUME);
 	splx(s);
 
 	bufq_restart();
 
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_WAKEUP);
+	config_suspend(mainbus, DVACT_WAKEUP);
 
 #if NWSDISPLAY > 0
 	wsdisplay_resume();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.41 2013/12/06 21:03:05 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.42 2014/03/13 03:52:55 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -306,6 +306,7 @@ apm_power_info(struct pxa2x0_apm_softc *sc,
 void
 apm_suspend(struct pxa2x0_apm_softc *sc)
 {
+	struct device *mainbus = device_mainbus();
 	int s;
 
 #if NWSDISPLAY > 0
@@ -320,14 +321,14 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 		sc->sc_suspend(sc);
 
 	s = splhigh();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+	config_suspend(mainbus, DVACT_SUSPEND);
 
 	/* XXX
 	 * Flag to disk drivers that they should "power down" the disk
 	 * when we get to DVACT_POWERDOWN.
 	 */
 	boothowto |= RB_POWERDOWN;
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	config_suspend(mainbus, DVACT_POWERDOWN);
 	boothowto &= ~RB_POWERDOWN;
 
 	splx(s);
@@ -338,10 +339,11 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 void
 apm_resume(struct pxa2x0_apm_softc *sc)
 {
+	struct device *mainbus = device_mainbus();
 	int s;
 
 	s = splhigh();
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
+	config_suspend(mainbus, DVACT_RESUME);
 	splx(s);
 
 	inittodr(0);
@@ -355,7 +357,7 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 
 	bufq_restart();
 
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_WAKEUP);
+	config_suspend(mainbus, DVACT_WAKEUP);
 
 #if NWSDISPLAY > 0
 	wsdisplay_resume();

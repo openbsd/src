@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2014/01/19 12:45:35 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2014/03/13 03:52:55 dlg Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -295,6 +295,8 @@ __dead void
 boot(howto)
 	int howto;
 {
+	struct device *mainbus;
+
 	/* take a snapshot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
@@ -331,8 +333,9 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	if (howto & RB_HALT) {
 		printf("System halted.\n\n");

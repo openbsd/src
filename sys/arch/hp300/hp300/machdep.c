@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2013/11/20 23:57:07 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2014/03/13 03:52:55 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -570,6 +570,8 @@ void
 boot(howto)
 	int howto;
 {
+	struct device *mainbus;
+
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(&curproc->p_addr->u_pcb);
@@ -616,8 +618,9 @@ boot(howto)
 
 haltsys:
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	mainbus = device_mainbus();
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {

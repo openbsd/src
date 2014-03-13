@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.4 2013/11/13 17:30:44 syl Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.5 2014/03/13 03:52:55 dlg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -245,10 +245,13 @@ int comcnmode = CONMODE;
 void
 boot(int howto)
 {
+	struct device *mainbus;
 #ifdef DIAGNOSTIC
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
+
+	mainbus = device_mainbus();
 
 	/*
 	 * If we are still cold then hit the air brakes
@@ -256,8 +259,8 @@ boot(int howto)
 	 */
 	if (cold) {
 		doshutdownhooks();
-		if (!TAILQ_EMPTY(&alldevs))
-			config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+		if (mainbus != NULL)
+			config_suspend(mainbus, DVACT_POWERDOWN);
 		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
 			printf("The operating system has halted.\n");
 			printf("Please press any key to reboot.\n\n");
@@ -297,8 +300,8 @@ boot(int howto)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+	if (mainbus != NULL)
+		config_suspend(mainbus, DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.73 2013/12/12 20:56:01 guenther Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.74 2014/03/13 03:52:56 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -859,6 +859,16 @@ device_lookup(struct cfdriver *cd, int unit)
 	return (dv);
 }
 
+struct device *
+device_mainbus(void)
+{
+	extern struct cfdriver mainbus_cd;
+
+	if (mainbus_cd.cd_ndevs < 1)
+		return (NULL);
+
+	return (mainbus_cd.cd_devs[0]);
+}
 
 /*
  * Increments the ref count on the device structure. The device
