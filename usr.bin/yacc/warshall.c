@@ -1,5 +1,5 @@
-/*	$OpenBSD: warshall.c,v 1.9 2009/10/27 23:59:50 deraadt Exp $	*/
-/*	$NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	*/
+/* $OpenBSD: warshall.c,v 1.10 2014/03/13 00:56:39 tedu Exp $	 */
+/* $NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	 */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,78 +40,68 @@ void transitive_closure(unsigned int *, int);
 void
 transitive_closure(unsigned int *R, int n)
 {
-    int rowsize;
-    unsigned i;
-    unsigned *rowj;
-    unsigned *rp;
-    unsigned *rend;
-    unsigned *ccol;
-    unsigned *relend;
-    unsigned *cword;
-    unsigned *rowi;
+	int rowsize;
+	unsigned i;
+	unsigned *rowj;
+	unsigned *rp;
+	unsigned *rend;
+	unsigned *ccol;
+	unsigned *relend;
+	unsigned *cword;
+	unsigned *rowi;
 
-    rowsize = WORDSIZE(n);
-    relend = R + n*rowsize;
+	rowsize = WORDSIZE(n);
+	relend = R + n * rowsize;
 
-    cword = R;
-    i = 0;
-    rowi = R;
-    while (rowi < relend)
-    {
-	ccol = cword;
-	rowj = R;
+	cword = R;
+	i = 0;
+	rowi = R;
+	while (rowi < relend) {
+		ccol = cword;
+		rowj = R;
 
-	while (rowj < relend)
-	{
-	    if (*ccol & (1 << i))
-	    {
-		rp = rowi;
-		rend = rowj + rowsize;
-		while (rowj < rend)
-		    *rowj++ |= *rp++;
-	    }
-	    else
-	    {
-		rowj += rowsize;
-	    }
+		while (rowj < relend) {
+			if (*ccol & (1 << i)) {
+				rp = rowi;
+				rend = rowj + rowsize;
+				while (rowj < rend)
+					*rowj++ |= *rp++;
+			} else {
+				rowj += rowsize;
+			}
 
-	    ccol += rowsize;
+			ccol += rowsize;
+		}
+
+		if (++i >= BITS_PER_WORD) {
+			i = 0;
+			cword++;
+		}
+		rowi += rowsize;
 	}
-
-	if (++i >= BITS_PER_WORD)
-	{
-	    i = 0;
-	    cword++;
-	}
-
-	rowi += rowsize;
-    }
 }
 
 void
 reflexive_transitive_closure(unsigned int *R, int n)
 {
-    int rowsize;
-    unsigned i;
-    unsigned *rp;
-    unsigned *relend;
+	int rowsize;
+	unsigned i;
+	unsigned *rp;
+	unsigned *relend;
 
-    transitive_closure(R, n);
+	transitive_closure(R, n);
 
-    rowsize = WORDSIZE(n);
-    relend = R + n*rowsize;
+	rowsize = WORDSIZE(n);
+	relend = R + n * rowsize;
 
-    i = 0;
-    rp = R;
-    while (rp < relend)
-    {
-	*rp |= (1 << i);
-	if (++i >= BITS_PER_WORD)
-	{
-	    i = 0;
-	    rp++;
+	i = 0;
+	rp = R;
+	while (rp < relend) {
+		*rp |= (1 << i);
+		if (++i >= BITS_PER_WORD) {
+			i = 0;
+			rp++;
+		}
+		rp += rowsize;
 	}
-
-	rp += rowsize;
-    }
 }

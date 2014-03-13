@@ -1,5 +1,5 @@
-/*	$OpenBSD: symtab.c,v 1.16 2014/01/08 21:40:25 millert Exp $	*/
-/*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
+/* $OpenBSD: symtab.c,v 1.17 2014/03/13 00:56:39 tedu Exp $	 */
+/* $NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	 */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -51,99 +51,101 @@ int hash(char *);
 int
 hash(char *name)
 {
-    char *s;
-    int c, k;
+	char *s;
+	int c, k;
 
-    assert(name && *name);
-    s = name;
-    k = *s;
-    while ((c = *++s))
-	k = (31*k + c) & (TABLE_SIZE - 1);
+	assert(name && *name);
+	s = name;
+	k = *s;
+	while ((c = *++s))
+		k = (31 * k + c) & (TABLE_SIZE - 1);
 
-    return (k);
+	return (k);
 }
 
 
 bucket *
 make_bucket(char *name)
 {
-    bucket *bp;
+	bucket *bp;
 
-    assert(name);
-    bp = (bucket *) malloc(sizeof(bucket));
-    if (bp == 0) no_space();
-    bp->link = 0;
-    bp->next = 0;
-    bp->name = strdup(name);
-    if (bp->name == 0) no_space();
-    bp->tag = 0;
-    bp->value = UNDEFINED;
-    bp->index = 0;
-    bp->prec = 0;
-    bp-> class = UNKNOWN;
-    bp->assoc = TOKEN;
+	assert(name);
+	bp = malloc(sizeof(bucket));
+	if (bp == NULL)
+		no_space();
+	bp->link = 0;
+	bp->next = 0;
+	bp->name = strdup(name);
+	if (bp->name == NULL)
+		no_space();
+	bp->tag = 0;
+	bp->value = UNDEFINED;
+	bp->index = 0;
+	bp->prec = 0;
+	bp->class = UNKNOWN;
+	bp->assoc = TOKEN;
 
-    return (bp);
+	return (bp);
 }
 
 
 bucket *
 lookup(char *name)
 {
-    bucket *bp, **bpp;
+	bucket *bp, **bpp;
 
-    bpp = symbol_table + hash(name);
-    bp = *bpp;
-
-    while (bp)
-    {
-	if (strcmp(name, bp->name) == 0) return (bp);
-	bpp = &bp->link;
+	bpp = symbol_table + hash(name);
 	bp = *bpp;
-    }
 
-    *bpp = bp = make_bucket(name);
-    last_symbol->next = bp;
-    last_symbol = bp;
+	while (bp) {
+		if (strcmp(name, bp->name) == 0)
+			return (bp);
+		bpp = &bp->link;
+		bp = *bpp;
+	}
 
-    return (bp);
+	*bpp = bp = make_bucket(name);
+	last_symbol->next = bp;
+	last_symbol = bp;
+
+	return (bp);
 }
 
 
 void
 create_symbol_table(void)
 {
-    bucket *bp;
+	bucket *bp;
 
-    symbol_table = calloc(TABLE_SIZE, sizeof(bucket *));
-    if (symbol_table == NULL) no_space();
+	symbol_table = calloc(TABLE_SIZE, sizeof(bucket *));
+	if (symbol_table == NULL)
+		no_space();
 
-    bp = make_bucket("error");
-    bp->index = 1;
-    bp->class = TERM;
+	bp = make_bucket("error");
+	bp->index = 1;
+	bp->class = TERM;
 
-    first_symbol = bp;
-    last_symbol = bp;
-    symbol_table[hash("error")] = bp;
+	first_symbol = bp;
+	last_symbol = bp;
+	symbol_table[hash("error")] = bp;
 }
 
 
 void
 free_symbol_table(void)
 {
-    free(symbol_table);
-    symbol_table = 0;
+	free(symbol_table);
+	symbol_table = 0;
 }
 
 
 void
 free_symbols(void)
 {
-    bucket *p, *q;
+	bucket *p, *q;
 
-    for (p = first_symbol; p; p = q)
-    {
-	q = p->next;
-	free(p);
-    }
+	for (p = first_symbol; p; p = q) {
+		q = p->next;
+		free(p);
+	}
 }
