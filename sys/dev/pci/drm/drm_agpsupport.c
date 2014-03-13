@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.25 2013/08/12 04:11:52 jsg Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.26 2014/03/13 13:35:21 kettenis Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -30,17 +30,12 @@
  */
 
 /*
- * Support code for tying the kernel AGP support to DRM drivers and
- * the DRM's AGP ioctls.
+ * Support code for tying the kernel AGP support to DRM drivers.
  */
 
 #include "drmP.h"
 
 #if __OS_HAS_AGP
-
-struct drm_agp_mem	*drm_agp_lookup_entry(struct drm_device *, void *);
-void			 drm_agp_remove_entry(struct drm_device *,
-			     struct drm_agp_mem *);
 
 int
 drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
@@ -66,22 +61,6 @@ drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 }
 
 int
-drm_agp_info_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_info	*info = data;
-
-	return (drm_agp_info(dev, info));
-}
-
-int
-drm_agp_acquire_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	return (drm_agp_acquire(dev));
-}
-
-int
 drm_agp_acquire(struct drm_device *dev)
 {
 	int	retcode;
@@ -96,13 +75,6 @@ drm_agp_acquire(struct drm_device *dev)
 	dev->agp->acquired = 1;
 
 	return (0);
-}
-
-int
-drm_agp_release_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	return (drm_agp_release(dev));
 }
 
 int
@@ -130,224 +102,14 @@ drm_agp_enable(struct drm_device *dev, drm_agp_mode_t mode)
 	return (retcode);
 }
 
-int
-drm_agp_enable_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_mode	*mode = data;
-
-	return (drm_agp_enable(dev, *mode));
-}
-
-int
-drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
-{
-	struct drm_agp_mem	*entry;
-	void			*handle;
-	struct agp_memory_info	 info;
-	unsigned long		 pages;
-	u_int32_t		 type;
-
-	if (dev->agp == NULL || !dev->agp->acquired)
-		return (EINVAL);
-
-	entry = drm_alloc(sizeof(*entry));
-	if (entry == NULL)
-		return (ENOMEM);
-
-	pages = (request->size + PAGE_SIZE - 1) / PAGE_SIZE;
-	type = (u_int32_t)request->type;
-
-	handle = agp_alloc_memory(dev->agp->agpdev, type,
-	    pages << AGP_PAGE_SHIFT);
-	if (handle == NULL) {
-		drm_free(entry);
-		return (ENOMEM);
-	}
-
-	entry->handle = handle;
-	entry->bound = 0;
-	entry->pages = pages;
-
-	agp_memory_info(dev->agp->agpdev, entry->handle, &info);
-
-	request->handle = (unsigned long)entry->handle;
-        request->physical = info.ami_physical;
-	DRM_LOCK();
-	TAILQ_INSERT_HEAD(&dev->agp->memory, entry, link);
-	DRM_UNLOCK();
-
-	return (0);
-}
-
-int
-drm_agp_alloc_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_buffer	*request = data;
-
-	return (drm_agp_alloc(dev, request));
-}
-
-/*
- * find entry on agp list. Must be called with dev_lock locked.
- */
-struct drm_agp_mem *
-drm_agp_lookup_entry(struct drm_device *dev, void *handle)
-{
-	struct drm_agp_mem	*entry;
-
-	TAILQ_FOREACH(entry, &dev->agp->memory, link) {
-		if (entry->handle == handle)
-			break;
-	}
-	return (entry);
-}
-
-int
-drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
-{
-	struct drm_agp_mem	*entry;
-	int			 retcode;
-
-	if (dev->agp == NULL || !dev->agp->acquired)
-		return (EINVAL);
-
-	DRM_LOCK();
-	entry = drm_agp_lookup_entry(dev, (void *)request->handle);
-	/*
-	 * If the AGP bridge has an aperture base address of 0 and
-	 * the entry is bound with an offset of 0, entry->bound will
-	 * not reflect the reality.
-	 *
-	 * XXX This means that we may try to unbind unbound entries
-	 * with such an AGP bridge, but it should be safe because
-	 * agp_unbind_memory() has a correct check for bound memory.
-	 */
-	if (entry == NULL || (!entry->bound && dev->agp->base)) {
-		DRM_UNLOCK();
-		return (EINVAL);
-	}
-
-	retcode =  agp_unbind_memory(dev->agp->agpdev, entry->handle);
-
-	if (retcode == 0)
-		entry->bound = 0;
-	DRM_UNLOCK();
-
-	return (retcode);
-}
-
-int
-drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_binding	*request = data;
-
-	return (drm_agp_unbind(dev, request));
-}
-
-int
-drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
-{
-	struct drm_agp_mem	*entry;
-	int			 retcode, page;
-
-	if (dev->agp == NULL || !dev->agp->acquired)
-		return (EINVAL);
-
-	DRM_DEBUG("agp_bind, page_size=%x\n", PAGE_SIZE);
-
-	DRM_LOCK();
-	entry = drm_agp_lookup_entry(dev, (void *)request->handle);
-	if (entry == NULL || entry->bound) {
-		DRM_UNLOCK();
-		return (EINVAL);
-	}
-
-	page = (request->offset + PAGE_SIZE - 1) / PAGE_SIZE;
-
-	retcode = agp_bind_memory(dev->agp->agpdev, entry->handle,
-	    page * PAGE_SIZE);
-	if (retcode == 0)
-		entry->bound = dev->agp->base + (page << PAGE_SHIFT);
-	DRM_UNLOCK();
-
-	return (retcode);
-}
-
-int
-drm_agp_bind_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_binding	*request = data;
-
-	return (drm_agp_bind(dev, request));
-}
-
-/*
- * Remove entry from list and free. Call locked.
- */
-void
-drm_agp_remove_entry(struct drm_device *dev, struct drm_agp_mem *entry)
-{
-	TAILQ_REMOVE(&dev->agp->memory, entry, link);
-
-	if (entry->bound)
-		agp_unbind_memory(dev->agp->agpdev, entry->handle);
-	agp_free_memory(dev->agp->agpdev, entry->handle);
-	drm_free(entry);
-}
-
 void
 drm_agp_takedown(struct drm_device *dev)
 {
-	struct drm_agp_mem	*entry;
-
 	if (dev->agp == NULL)
 		return;
 
-	/*
-	 * Remove AGP resources, but leave dev->agp intact until
-	 * we detach the device
-	 */
-	DRM_LOCK();
-	while ((entry = TAILQ_FIRST(&dev->agp->memory)) != NULL)
-		drm_agp_remove_entry(dev, entry);
-	DRM_UNLOCK();
-
 	drm_agp_release(dev);
 	dev->agp->enabled  = 0;
-}
-
-int
-drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request)
-{
-	struct drm_agp_mem	*entry;
-
-	if (dev->agp == NULL || !dev->agp->acquired)
-		return (EINVAL);
-
-	DRM_LOCK();
-	entry = drm_agp_lookup_entry(dev, (void*)request->handle);
-	if (entry == NULL) {
-		DRM_UNLOCK();
-		return (EINVAL);
-	}
-
-	drm_agp_remove_entry(dev, entry);
-	DRM_UNLOCK();
-
-	return (0);
-}
-
-int
-drm_agp_free_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_agp_buffer	*request = data;
-
-	return (drm_agp_free(dev, request));
 }
 
 struct drm_agp_head *
