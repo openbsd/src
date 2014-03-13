@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.35 2014/01/26 17:48:08 miod Exp $ */
+/* $OpenBSD: pckbd.c,v 1.36 2014/03/13 07:48:14 ratchov Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -911,12 +911,7 @@ pckbd_input(void *vsc, int data)
 			    sc->sc_rawcnt);
 			sc->sc_rawcnt = 0;
 		}
-
-		/*
-		 * Pass audio keys to wskbd_input anyway.
-		 */
-		if (rc == 0 || (key != 160 && key != 174 && key != 176))
-			return;
+		return;
 	}
 #endif
 	if (rc != 0)
