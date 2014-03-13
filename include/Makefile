@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.181 2013/12/08 17:05:09 naddy Exp $
+#	$OpenBSD: Makefile,v 1.182 2014/03/13 10:09:43 florian Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -44,7 +44,7 @@ RDIRS=	../lib/librthread ../lib/libcurses ../lib/libform ../lib/libssl \
 	../lib/libfuse ../lib/libpcap ../lib/libsqlite3 ../lib/libutil \
 	../lib/libusbhid ../lib/libwrap ../lib/libz ../lib/libkeynote \
 	../lib/libevent ../usr.bin/lex ../gnu/lib/libreadline \
-	../gnu/usr.sbin/sendmail/libmilter ../usr.sbin/httpd \
+	../gnu/usr.sbin/sendmail/libmilter \
 	../sys/arch/${MACHINE}
 
 .if ${COMPILER_VERSION:L} == "gcc3"
