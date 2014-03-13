@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.92 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.93 2014/03/13 10:12:11 florian Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 13 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -8867,10 +8867,6 @@ to implement an automatic email-based TSA with
 .Xr procmail
 and
 .Xr perl 1 .
-HTTP server support is provided in the form of
-a separate
-.Xr httpd 8
-module.
 Pure TCP/IP is not supported.
 .Pp
 The file containing the last serial number of the TSA is not
@@ -8879,9 +8875,6 @@ This is a problem if more than one instance of
 .Nm OpenSSL
 is trying to create a time stamp
 response at the same time.
-This is not an issue when using the
-.Xr httpd 8
-server module, which does proper locking.
 .Pp
 Look for the FIXME word in the source files.
 .Pp
@@ -10455,7 +10448,7 @@ certificates.
 .\" SEE ALSO
 .\"
 .Sh SEE ALSO
-.Xr httpd 8 ,
+.Xr nginx 8 ,
 .Xr sendmail 8 ,
 .Xr ssl 8 ,
 .Xr starttls 8

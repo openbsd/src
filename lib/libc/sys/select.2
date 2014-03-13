@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.36 2014/01/29 14:00:07 jmc Exp $
+.\"	$OpenBSD: select.2,v 1.37 2014/03/13 10:12:11 florian Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: January 29 2014 $
+.Dd $Mdocdate: March 13 2014 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -284,5 +284,4 @@ and
 .Fn pselect
 work poorly if multiple processes wait on the same file descriptor.
 Given that, it is rather surprising to see that many daemons are
-written that way (e.g.,
-.Xr httpd 8 ) .
+written that way.
