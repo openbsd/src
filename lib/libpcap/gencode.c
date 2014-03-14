@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.36 2010/10/09 08:14:36 canacar Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.37 2014/03/14 03:44:13 lteo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -191,11 +191,10 @@ newchunk(n)
 		if (k >= NCHUNKS)
 			bpf_error("out of memory");
 		size = CHUNK0SIZE << k;
-		cp->m = (void *)malloc(size);
+		cp->m = (void *)calloc(1, size);
 		if (cp->m == NULL)
 			bpf_error("out of memory");
-		
-		memset((char *)cp->m, 0, size);
+
 		cp->n_left = size;
 		if (n > size)
 			bpf_error("out of memory");

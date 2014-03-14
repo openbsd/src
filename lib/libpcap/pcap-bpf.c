@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.22 2013/12/03 00:25:34 deraadt Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.23 2014/03/14 03:44:13 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -895,13 +895,12 @@ pcap_create(const char *device, char *ebuf)
 {
 	pcap_t *p;
 
-	p = malloc(sizeof(*p));
+	p = calloc(1, sizeof(*p));
 	if (p == NULL) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
 		return (NULL);
 	}
-	memset(p, 0, sizeof(*p));
 	p->fd = -1;	/* not opened yet */
 
 	p->opt.source = strdup(device);

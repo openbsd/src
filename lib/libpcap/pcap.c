@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.13 2012/05/25 01:58:08 lteo Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.14 2014/03/14 03:44:13 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -612,10 +612,9 @@ pcap_open_dead(int linktype, int snaplen)
 {
 	pcap_t *p;
 
-	p = malloc(sizeof(*p));
+	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		return NULL;
-	memset (p, 0, sizeof(*p));
 	p->snapshot = snaplen;
 	p->linktype = linktype;
 	p->fd = -1;
