@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.48 2014/03/13 20:39:27 deraadt Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.49 2014/03/14 05:27:00 halex Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -116,7 +116,7 @@ queue_init(const char *name, int server)
 
 	pwq = getpwnam(SMTPD_QUEUE_USER);
 	if (pwq == NULL)
-		errx(1, "unknown user %s", SMTPD_USER);
+		errx(1, "unknown user %s", SMTPD_QUEUE_USER);
 
 	tree_init(&evpcache_tree);
 	TAILQ_INIT(&evpcache_list);
