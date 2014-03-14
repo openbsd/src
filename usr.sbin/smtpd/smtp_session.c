@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.196 2014/02/17 11:06:54 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.197 2014/03/14 11:14:11 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1917,7 +1917,8 @@ smtp_sni_callback(SSL *ssl, int *ad, void *arg)
 	}
 	ssl_ctx = dict_get(env->sc_ssl_dict, sn);
 	if (ssl_ctx == NULL) {
-		log_warnx("warn: SNI name not found in PKI");
+		log_info("smtp-in: No PKI entry for requested SNI \"%s\""
+		    "on session %016"PRIx64, sn, s->id);
 		return SSL_TLSEXT_ERR_NOACK;
 	}
 	SSL_set_SSL_CTX(ssl, ssl_ctx);
