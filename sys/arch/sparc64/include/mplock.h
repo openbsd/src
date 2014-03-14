@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.2 2007/11/27 23:29:57 kettenis Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.3 2014/03/14 01:20:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -27,9 +27,15 @@
 #ifndef _MACHINE_MPLOCK_H_
 #define _MACHINE_MPLOCK_H_
 
+struct __mp_lock_cpu {
+	volatile u_int		mplc_ticket;
+	volatile u_int		mplc_depth;
+};
+
 struct __mp_lock {
-	volatile struct cpu_info *mpl_cpu;
-	volatile long		mpl_count;
+	struct __mp_lock_cpu	mpl_cpus[MAXCPUS];
+	volatile u_int		mpl_ticket;
+	volatile u_int		mpl_users;
 };
 
 #ifndef _LOCORE
