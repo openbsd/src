@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.82 2014/01/09 20:54:10 brad Exp $
+#	$OpenBSD: services,v 1.83 2014/03/14 17:56:36 sthen Exp $
 #
 # Network services, Internet style
 #
@@ -292,6 +292,7 @@ spamd		8025/tcp		# spamd(8)
 spamd-sync	8025/udp		# spamd(8) synchronisation
 spamd-cfg	8026/tcp		# spamd(8) configuration
 dhcpd-sync	8067/udp		# dhcpd(8) synchronisation
+ub-dns-control	8953/tcp		# unbound dns nameserver control
 amt-soap-http	16992/tcp		# Intel AMT SOAP/HTTP
 amt-soap-https	16993/tcp		# Intel AMT SOAP/HTTPS
 amt-redir-tcp	16994/tcp		# Intel AMT Redirection/TCP
