@@ -152,6 +152,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active)
 	xfrd->reload_timeout.tv_sec = 0;
 	xfrd->reload_cmd_last_sent = xfrd->xfrd_start_time;
 	xfrd->can_send_reload = !reload_active;
+	xfrd->reload_pid = -1;
 
 	xfrd->ipc_send_blocked = 0;
 	event_set(&xfrd->ipc_handler, socket, EV_PERSIST|EV_READ,
@@ -300,6 +301,21 @@ xfrd_shutdown()
 		}
 	}
 	close_notify_fds(xfrd->notify_zones);
+
+	/* wait for server parent (if necessary) */
+	if(xfrd->reload_pid != -1) {
+		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd wait for servermain %d",
+			(int)xfrd->reload_pid));
+		while(1) {
+			if(waitpid(xfrd->reload_pid, NULL, 0) == -1) {
+				if(errno == EINTR) continue;
+				if(errno == ECHILD) break;
+				log_msg(LOG_ERR, "xfrd: waitpid(%d): %s",
+					(int)xfrd->reload_pid, strerror(errno));
+			}
+			break;
+		}
+	}
 
 	/* if we are killed past this point this is not a problem,
 	 * some files left in /tmp are cleaned by the OS, but it is neater
