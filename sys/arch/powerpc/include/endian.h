@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.17 2011/08/22 18:22:07 deraadt Exp $ */
+/*	$OpenBSD: endian.h,v 1.18 2014/03/14 10:47:21 dlg Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -26,6 +26,72 @@
 
 #ifndef _POWERPC_ENDIAN_H_
 #define _POWERPC_ENDIAN_H_
+
+#ifdef _KERNEL
+
+static inline __uint16_t
+__mswap16(volatile __uint16_t *m)
+{
+	__uint16_t v;
+
+	__asm volatile("lhbrx %0, 0, %1"
+	    : "=r" (v)
+            : "r" (m), "m" (*m));
+
+	return (v);
+}
+
+static inline __uint32_t
+__mswap32(volatile __uint32_t *m)
+{
+	__uint32_t v;
+
+	__asm volatile("lwbrx %0, 0, %1"
+	    : "=r" (v)
+            : "r" (m), "m" (*m));
+
+	return (v);
+}
+
+static inline __uint64_t
+__mswap64(volatile __uint64_t *m)
+{
+	__uint32_t *a = (__uint32_t *)m;
+	__uint64_t v;
+
+	v = (__uint64_t)__mswap32(a + 1) << 32 |
+	    (__uint64_t)__mswap32(a);
+
+	return (v);
+}
+
+static inline void
+__swapm16(volatile __uint16_t *m, __uint16_t v)
+{
+	__asm __volatile("sthbrx %1, 0, %2"
+	    : "=m" (*m)
+	    : "r" (v), "r" (m));
+}
+
+static inline void
+__swapm32(volatile __uint32_t *m, __uint32_t v)
+{
+	__asm __volatile("stwbrx %1, 0, %2"
+	    : "=m" (*m)
+	    : "r" (v), "r" (m));
+}
+
+static inline void
+__swapm64(volatile __uint64_t *m, __uint64_t v)
+{
+	__uint32_t *a = (__uint32_t *)m;
+
+	__swapm32(a + 1, v >> 32);
+	__swapm32(a, v);
+}
+
+#define MD_SWAPIO
+#endif /* _KERNEL */
 
 #undef _BIG_ENDIAN	/* XXX - gcc may define _BIG_ENDIAN too */
 #define _BYTE_ORDER _BIG_ENDIAN

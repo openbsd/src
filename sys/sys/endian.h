@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.20 2013/08/20 12:55:02 kettenis Exp $	*/
+/*	$OpenBSD: endian.h,v 1.21 2014/03/14 10:47:21 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -207,7 +207,41 @@ __END_DECLS
 #define ntohs(x) __swap16(x)
 #define ntohl(x) __swap32(x)
 
-#endif /* _BYTE_ORDER */
+#ifdef _KERNEL
+
+#ifdef MD_SWAPIO
+
+#define bemtoh16(_x) __mswap16(_x)
+#define bemtoh32(_x) __mswap32(_x)
+#define bemtoh64(_x) __mswap64(_x)
+
+#define htobem16(_x, _v) __swapm16((_x), (_v))
+#define htobem32(_x, _v) __swapm32((_x), (_v))
+#define htobem64(_x, _v) __swapm64((_x), (_v))
+
+#else /* MD_SWAPIO */
+
+#define bemtoh16(_x) htobe16(*(__uint16_t *)(_x))
+#define bemtoh32(_x) htobe32(*(__uint32_t *)(_x))
+#define bemtoh64(_x) htobe64(*(__uint64_t *)(_x))
+
+#define htobem16(_x, _v) (*(__uint16_t *)(_x) = htobe16(_v))
+#define htobem32(_x, _v) (*(__uint32_t *)(_x) = htobe32(_v))
+#define htobem64(_x, _v) (*(__uint64_t *)(_x) = htole64(_v))
+
+#endif /* MD_SWAPIO */
+
+#define lemtoh16(_x) (*(__uint16_t *)(_x))
+#define lemtoh32(_x) (*(__uint32_t *)(_x))
+#define lemtoh64(_x) (*(__uint64_t *)(_x))
+
+#define htolem16(_x, _v) (*(__uint16_t *)(_x) = (__uint16_t)(_v))
+#define htolem32(_x, _v) (*(__uint32_t *)(_x) = (__uint32_t)(_v))
+#define htolem64(_x, _v) (*(__uint64_t *)(_x) = (__uint64_t)(_v))
+
+#endif /* _KERNEL */
+
+#endif /* _BYTE_ORDER == _LITTLE_ENDIAN */
 
 #if _BYTE_ORDER == _BIG_ENDIAN
 
@@ -240,7 +274,41 @@ __END_DECLS
 #define ntohs(x) ((__uint16_t)(x))
 #define ntohl(x) ((__uint32_t)(x))
 
-#endif /* _BYTE_ORDER */
+#ifdef _KERNEL
+
+#ifdef MD_SWAPIO
+
+#define lemtoh16(_x) __mswap16(_x)
+#define lemtoh32(_x) __mswap32(_x)
+#define lemtoh64(_x) __mswap64(_x)
+
+#define htolem16(_x, _v) __swapm16((_x), (_v))
+#define htolem32(_x, _v) __swapm32((_x), (_v))
+#define htolem64(_x, _v) __swapm64((_x), (_v))
+
+#else /* MD_SWAPIO */
+
+#define lemtoh16(_x) htole16(*(__uint16_t *)(_x))
+#define lemtoh32(_x) htole32(*(__uint32_t *)(_x))
+#define lemtoh64(_x) htole64(*(__uint64_t *)(_x))
+
+#define htolem16(_x, _v) (*(__uint16_t *)(_x) = htole16(_v))
+#define htolem32(_x, _v) (*(__uint32_t *)(_x) = htole32(_v))
+#define htolem64(_x, _v) (*(__uint64_t *)(_x) = htole64(_v))
+
+#endif /* MD_SWAPIO */
+
+#define bemtoh16(_x) (*(__uint16_t *)(_x))
+#define bemtoh32(_x) (*(__uint32_t *)(_x))
+#define bemtoh64(_x) (*(__uint64_t *)(_x))
+
+#define htobem16(_x, _v) (*(__uint16_t *)(_x) = (__uint16_t)(_v))
+#define htobem32(_x, _v) (*(__uint32_t *)(_x) = (__uint32_t)(_v))
+#define htobem64(_x, _v) (*(__uint64_t *)(_x) = (__uint64_t)(_v))
+
+#endif /* _KERNEL */
+
+#endif /* _BYTE_ORDER == _BIG_ENDIAN */
 
 #if __BSD_VISIBLE
 #define	NTOHL(x) (x) = ntohl((u_int32_t)(x))
