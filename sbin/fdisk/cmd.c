@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.65 2014/03/13 12:12:35 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.66 2014/03/14 15:41:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -67,7 +67,7 @@ Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	int maxsec  = 63;
 
 	/* Print out disk info */
-	DISK_printgeometry(disk, args);
+	DISK_printmetrics(disk, args);
 
 #if defined (__powerpc__) || defined (__mips__)
 	maxcyl  = 9999999;
@@ -77,14 +77,15 @@ Xdisk(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	/* Ask for new info */
 	if (ask_yn("Change disk geometry?")) {
-		disk->cylinders = ask_num("BIOS Cylinders",
-		    disk->cylinders, 1, maxcyl);
-		disk->heads = ask_num("BIOS Heads",
-		    disk->heads, 1, maxhead);
-		disk->sectors = ask_num("BIOS Sectors",
-		    disk->sectors, 1, maxsec);
+		disk->real->cylinders = ask_num("BIOS Cylinders",
+		    disk->real->cylinders, 1, maxcyl);
+		disk->real->heads = ask_num("BIOS Heads",
+		    disk->real->heads, 1, maxhead);
+		disk->real->sectors = ask_num("BIOS Sectors",
+		    disk->real->sectors, 1, maxsec);
 
-		disk->size = disk->cylinders * disk->heads * disk->sectors;
+		disk->real->size = disk->real->cylinders * disk->real->heads
+			* disk->real->sectors;
 	}
 
 	return (CMD_CONT);
@@ -169,9 +170,9 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		int maxcyl, maxhead, maxsect;
 
 		/* Shorter */
-		maxcyl = disk->cylinders - 1;
-		maxhead = disk->heads - 1;
-		maxsect = disk->sectors;
+		maxcyl = disk->real->cylinders - 1;
+		maxhead = disk->real->heads - 1;
+		maxsect = disk->real->sectors;
 
 		/* Get data */
 		EDIT("BIOS Starting cylinder", pp->scyl,  0, maxcyl);
@@ -186,9 +187,9 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		PRT_fix_CHS(disk, pp);
 	} else {
 		pp->bs = getuint(disk, "Partition offset", pp->bs,
-		    disk->size);
+		    disk->real->size);
 		pp->ns = getuint(disk, "Partition size", pp->ns,
-		    disk->size - pp->bs);
+		    disk->real->size - pp->bs);
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
 	}
@@ -272,7 +273,7 @@ Xprint(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
 
-	DISK_printgeometry(disk, args);
+	DISK_printmetrics(disk, args);
 	printf("Offset: %d\t", offset);
 	MBR_print(mbr, args);
 

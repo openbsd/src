@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.35 2014/03/13 12:02:28 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.36 2014/03/14 15:41:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,20 +62,20 @@ MBR_init(struct disk *disk, struct mbr *mbr)
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
 	mbr->part[3].id = DOSPTYP_OPENBSD;
-	if (disk->heads > 1)
+	if (disk->real->heads > 1)
 		mbr->part[3].shead = 1;
 	else
 		mbr->part[3].shead = 0;
-	if (disk->heads < 2 && disk->cylinders > 1)
+	if (disk->real->heads < 2 && disk->real->cylinders > 1)
 		mbr->part[3].scyl = 1;
 	else
 		mbr->part[3].scyl = 0;
 	mbr->part[3].ssect = 1;
 
 	/* Go right to the end */
-	mbr->part[3].ecyl = disk->cylinders - 1;
-	mbr->part[3].ehead = disk->heads - 1;
-	mbr->part[3].esect = disk->sectors;
+	mbr->part[3].ecyl = disk->real->cylinders - 1;
+	mbr->part[3].ehead = disk->real->heads - 1;
+	mbr->part[3].esect = disk->real->sectors;
 
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &mbr->part[3], 3);
