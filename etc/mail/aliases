@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.40 2013/12/15 17:40:45 tedu Exp $
+#	$OpenBSD: aliases,v 1.41 2014/03/14 00:35:50 tedu Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
@@ -49,6 +49,7 @@ _rtadvd: /dev/null
 _rusersd: /dev/null
 _rwalld: /dev/null
 _smtpd: /dev/null
+_smtpq: /dev/null
 _sndio: /dev/null
 _snmpd: /dev/null
 _spamd: /dev/null
