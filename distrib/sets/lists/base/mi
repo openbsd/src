@@ -88,9 +88,6 @@
 ./etc/ppp/ppp.secret.sample
 ./etc/rc.d
 ./etc/signify
-./etc/signify/55base.pub
-./etc/signify/55fw.pub
-./etc/signify/55pkg.pub
 ./etc/signify/openbsd-55-base.pub
 ./etc/signify/openbsd-55-fw.pub
 ./etc/signify/openbsd-55-pkg.pub
@@ -241,7 +238,6 @@
 ./usr/bin/cut
 ./usr/bin/cvs
 ./usr/bin/cvsbug
-./usr/bin/dbmmanage
 ./usr/bin/dc
 ./usr/bin/deroff
 ./usr/bin/diff
@@ -287,8 +283,6 @@
 ./usr/bin/help
 ./usr/bin/hexdump
 ./usr/bin/hoststat
-./usr/bin/htdigest
-./usr/bin/htpasswd
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -530,10 +524,6 @@
 ./usr/games
 ./usr/include
 ./usr/lib
-./usr/lib/apache
-./usr/lib/apache/include
-./usr/lib/apache/include/xml
-./usr/lib/apache/modules
 ./usr/lib/gcc-lib
 ./usr/lib/pkgconfig
 ./usr/lib/pkgconfig/expat.pc
@@ -2620,7 +2610,6 @@
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd
 ./usr/libexec/rpc.rwalld
-./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
 ./usr/libexec/security
 ./usr/libexec/sendmail
@@ -2682,8 +2671,6 @@
 ./usr/sbin/adduser
 ./usr/sbin/amd
 ./usr/sbin/amq
-./usr/sbin/apachectl
-./usr/sbin/apxs
 ./usr/sbin/arp
 ./usr/sbin/authpf
 ./usr/sbin/authpf-noip
@@ -2717,7 +2704,6 @@
 ./usr/sbin/groupmod
 ./usr/sbin/host
 ./usr/sbin/hostapd
-./usr/sbin/httpd
 ./usr/sbin/identd
 ./usr/sbin/ifstated
 ./usr/sbin/ikectl
@@ -2736,7 +2722,6 @@
 ./usr/sbin/ldapd
 ./usr/sbin/ldpctl
 ./usr/sbin/ldpd
-./usr/sbin/logresolve
 ./usr/sbin/lpc
 ./usr/sbin/lpd
 ./usr/sbin/lptest
@@ -2814,7 +2799,6 @@
 ./usr/sbin/rmuser
 ./usr/sbin/rndc
 ./usr/sbin/rndc-confgen
-./usr/sbin/rotatelogs
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
@@ -2837,11 +2821,9 @@
 ./usr/sbin/snmpctl
 ./usr/sbin/snmpd
 ./usr/sbin/spamdb
-./usr/sbin/spray
 ./usr/sbin/sshd
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
-./usr/sbin/suexec
 ./usr/sbin/sysctl
 ./usr/sbin/syslogc
 ./usr/sbin/syslogd
@@ -5201,16 +5183,11 @@
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
-./var/www/conf/modules
-./var/www/conf/modules.sample
 ./var/www/dev
 ./var/www/htdocs
 ./var/www/htdocs/bgplg
-./var/www/icons
-./var/www/icons/small
 ./var/www/logs
 ./var/www/run
-./var/www/users
 ./var/yp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.main.dist

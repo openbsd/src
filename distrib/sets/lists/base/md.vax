@@ -320,6 +320,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/pt2254a.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/qlareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/qlavar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/qlwreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/qlwvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/rf3000reg.ph
@@ -804,6 +806,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbfvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uvideo.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/xhcireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/xhcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vbe.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vesa/vesabiosreg.ph
