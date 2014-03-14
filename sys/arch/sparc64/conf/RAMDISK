@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.106 2014/03/08 18:28:24 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.107 2014/03/14 05:38:31 jmatthew Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -169,15 +169,15 @@ dma*	at sbus?		# SBus
 esp*	at dma?			# SBus
 esp*	at sbus?
 isp*	at sbus?
-#qla*	at sbus?
+qla*	at sbus?
 softraid0	at root		# Software RAID
 
 ahc*	at pci?
 siop*	at pci?
 isp*	at pci?
 qlw*	at pci?
-#qla*	at pci?
-#qle*	at pci?
+qla*	at pci?
+qle*	at pci?
 mpi*	at pci?
 mpii*	at pci?
 sili*	at pci?
