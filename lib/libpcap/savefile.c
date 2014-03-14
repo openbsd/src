@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.11 2014/03/14 03:44:13 lteo Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.12 2014/03/14 03:45:41 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -129,7 +129,7 @@ pcap_fopen_offline(FILE *fp, char *errbuf)
 	struct pcap_file_header hdr;
 	int linklen;
 
-	p = (pcap_t *)calloc(1, sizeof(*p));
+	p = calloc(1, sizeof(*p));
 	if (p == NULL) {
 		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		return (NULL);
