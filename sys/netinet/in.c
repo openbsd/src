@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.91 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.92 2014/03/14 12:08:18 krw Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
-		if (ifra->ifra_addr.sin_family == AF_INET)
+		if (ifra->ifra_addr.sin_family == AF_INET) {
 			for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 				if ((ifa->ifa_addr->sa_family == AF_INET) &&
 				    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
@@ -237,6 +237,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 					break;
 			}
 			ia = ifatoia(ifa);
+		}
 		if (cmd == SIOCDIFADDR && ia == NULL)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
