@@ -17,9 +17,15 @@
 #ifndef _MACHINE_MPLOCK_H_
 #define _MACHINE_MPLOCK_H_
 
+struct __mp_lock_cpu {
+	u_int			mplc_ticket;
+	u_int			mplc_depth;
+};
+
 struct __mp_lock {
-	volatile struct cpu_info *mpl_cpu;
-	volatile int	mpl_count;
+	struct __mp_lock_cpu	mpl_cpus[MAXCPUS];
+	volatile u_int		mpl_ticket;
+	u_int			mpl_users;
 };
 
 #ifndef _LOCORE
