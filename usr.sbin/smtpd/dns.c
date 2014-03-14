@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.70 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.71 2014/03/14 11:09:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -302,10 +302,10 @@ static void
 dns_dispatch_mx(int ev, struct async_res *ar, void *arg)
 {
 	struct dns_session	*s = arg;
-	struct unpack		 pack;
-	struct header		 h;
-	struct query		 q;
-	struct rr		 rr;
+	struct asr_unpack	 pack;
+	struct asr_dns_header	 h;
+	struct asr_dns_query	 q;
+	struct asr_dns_rr	 rr;
 	char			 buf[512];
 	size_t			 found;
 
@@ -350,10 +350,10 @@ static void
 dns_dispatch_mx_preference(int ev, struct async_res *ar, void *arg)
 {
 	struct dns_session	*s = arg;
-	struct unpack		 pack;
-	struct header		 h;
-	struct query		 q;
-	struct rr		 rr;
+	struct asr_unpack	 pack;
+	struct asr_dns_header	 h;
+	struct asr_dns_query	 q;
+	struct asr_dns_rr	 rr;
 	char			 buf[512];
 	int			 error;
 
