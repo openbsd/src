@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2013/11/04 17:14:26 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.57 2014/03/14 23:42:40 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -110,8 +110,6 @@ cdev_decl(com);
 #include "inet.h"
 
 #include "apm.h"
-#include "agp.h"
-cdev_decl(agp);
 #include "drm.h"
 cdev_decl(drm);
 
@@ -234,7 +232,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 83: vscsi */
 	cdev_disk_init(1,diskmap),	/* 84: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 85: pppx */
-	cdev_agp_init(NAGP,agp),	/* 86: agp */
+	cdev_notdef,			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_fuse_init(NFUSE,fuse),	/* 88: fuse */
 };

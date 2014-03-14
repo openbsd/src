@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2013/11/04 17:14:26 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2014/03/14 23:42:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -156,8 +156,6 @@ cdev_decl(cztty);
 #include "radio.h"
 #include "nvram.h"
 cdev_decl(nvram);
-#include "agp.h"
-cdev_decl(agp);
 #include "drm.h"
 cdev_decl(drm);
 
@@ -278,7 +276,7 @@ struct cdevsw	cdevsw[] =
 	cdev_acpi_init(NACPI,acpi),	/* 83: ACPI */
 	cdev_notdef(),
 	cdev_nvram_init(NNVRAM,nvram),	/* 85: NVRAM interface */
-	cdev_agp_init(NAGP,agp),	/* 86: agp */
+	cdev_notdef(),			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_gpio_init(NGPIO,gpio),	/* 88: gpio */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 89: vscsi */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.145 2013/11/04 14:11:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.146 2014/03/14 23:42:40 kettenis Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -159,8 +159,6 @@ cdev_decl(cztty);
 #include "gpr.h"
 #include "nvram.h"
 cdev_decl(nvram);
-#include "agp.h"
-cdev_decl(agp);
 #include "drm.h"
 cdev_decl(drm);
 
@@ -283,7 +281,7 @@ struct cdevsw	cdevsw[] =
 	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
 	cdev_notdef(),			/* 85: ACPI (deprecated) */
 	cdev_notdef(),
-	cdev_agp_init(NAGP,agp),	/* 87: agp */
+	cdev_notdef(),			/* 87 */
 	cdev_drm_init(NDRM,drm),	/* 88: drm */
 	cdev_amdmsr_init(NAMDMSR,amdmsr),	/* 89: amdmsr */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 90: vscsi */
