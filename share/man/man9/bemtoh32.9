@@ -1,4 +1,4 @@
-.\" $OpenBSD: bemtoh32.9,v 1.3 2014/03/14 10:47:21 dlg Exp $
+.\" $OpenBSD: bemtoh32.9,v 1.4 2014/03/14 11:53:35 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -47,19 +47,19 @@
 .Ft uint64_t
 .Fn lemtoh64 "uint64_t *m"
 .Ft void
-.Fn htobem16 "uint16_t *m, uint16_t v"
+.Fn htobem16 "uint16_t *m" "uint16_t v"
 .Ft void
-.Fn htobem32 "uint32_t *m, uint32_t v"
+.Fn htobem32 "uint32_t *m" "uint32_t v"
 .Ft void
-.Fn htobem64 "uint64_t *m, uint64_t v"
+.Fn htobem64 "uint64_t *m" "uint64_t v"
 .Ft void
-.Fn htolem16 "uint16_t *m, uint16_t v"
+.Fn htolem16 "uint16_t *m" "uint16_t v"
 .Ft void
-.Fn htolem32 "uint32_t *m, uint32_t v"
+.Fn htolem32 "uint32_t *m" "uint32_t v"
 .Ft void
-.Fn htolem64 "uint64_t *m, uint64_t v"
+.Fn htolem64 "uint64_t *m" "uint64_t v"
 .Sh DESCRIPTION
-This API provides a way to take advantage of an architectures ability
+This API provides a way to take advantage of an architecture's ability
 to load and store words in memory of different endians.
 If an architecture has no specialised support for these operations
 they will be implemented as a wrapper around the
@@ -67,7 +67,7 @@ they will be implemented as a wrapper around the
 API.
 .Pp
 These operations are subject to the same alignment restrictions as
-the hosts normal memory loads and stores.
+the host's normal memory loads and stores.
 .Pp
 .Fn bemtoh16 ,
 .Fn bemtoh32 ,
@@ -75,20 +75,20 @@ and
 .Fn bemtoh64
 read a big endian value from the memory located at
 .Fa m
-into the hosts native byte order.
+into the host's native byte order.
 .Fn lemtoh16 ,
 .Fn lemtoh32 ,
 and
 .Fn lemtoh64
 read a little endian value from the memory located at
 .Fa m
-into the hosts native byte order.
+into the host's native byte order.
 .Pp
 .Fn htobem16 ,
 .Fn htobem32 ,
 and
 .Fn htobem64
-store the hosts native byte ordered value of
+store the host's native byte ordered value of
 .Fa v
 as a big endian value in the memory located at
 .Fa m .
@@ -96,7 +96,7 @@ as a big endian value in the memory located at
 .Fn htolem32 ,
 and
 .Fn htolem64
-store the hosts native byte ordered value of
+store the host's native byte ordered value of
 .Fa v
 as a little endian value in the memory located at
 .Fa m .
@@ -124,7 +124,7 @@ context.
 .Fn lemtoh32 ,
 and
 .Fn lemtoh64
-return the hosts native byte ordered value of the memory at
+return the host's native byte ordered value of the memory at
 .Fa m
 after the appropriate byteswapping has occurred.
 .Pp
