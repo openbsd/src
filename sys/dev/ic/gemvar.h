@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.27 2013/03/09 17:57:00 mpi Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.28 2014/03/14 11:04:24 dlg Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -208,8 +208,10 @@ struct gem_softc {
 	void	(*sc_hwinit)(struct gem_softc *);
 };
 
-#define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? letoh64(v) : betoh64(v))
-#define	GEM_DMA_WRITE(sc, v)	(((sc)->sc_pci) ? htole64(v) : htobe64(v))
+#define	GEM_DMA_READ(_sc, _a) \
+	(((_sc)->sc_pci) ? lemtoh64(_a) : bemtoh64(_a))
+#define	GEM_DMA_WRITE(_sc, _a, _v) \
+	(((_sc)->sc_pci) ? htolem64((_a), (_v)) : htobem64((_a), (_v)))
 
 /*
  * This macro returns the current media entry for *non-MII* media.
@@ -266,10 +268,9 @@ do {									\
 	struct gem_desc *__rxd = &sc->sc_rxdescs[(x)];			\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 									\
-	__rxd->gd_addr =						\
-	    GEM_DMA_WRITE((sc), __rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
-	__rxd->gd_flags =						\
-	    GEM_DMA_WRITE((sc),						\
+	GEM_DMA_WRITE((sc), &__rxd->gd_addr,				\
+	    __rxs->rxs_dmamap->dm_segs[0].ds_addr);			\
+	GEM_DMA_WRITE((sc), &__rxd->gd_flags,				\
 		(((__m->m_ext.ext_size)<<GEM_RD_BUFSHIFT)		\
 	    & GEM_RD_BUFSIZE) | GEM_RD_OWN);				\
 	GEM_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \

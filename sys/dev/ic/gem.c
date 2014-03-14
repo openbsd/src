@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.101 2013/08/08 16:01:34 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.102 2014/03/14 11:04:24 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1056,7 +1056,7 @@ gem_rint(struct gem_softc *sc)
 		GEM_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
+		rxstat = GEM_DMA_READ(sc, &sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
 			/* We have processed all of the receive buffers. */
@@ -1086,9 +1086,9 @@ gem_rint(struct gem_softc *sc)
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("    rxsoft %p descriptor %d: ", rxs, i);
 			printf("gd_flags: 0x%016llx\t", (long long)
-				GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags));
+				GEM_DMA_READ(sc, &sc->sc_rxdescs[i].gd_flags));
 			printf("gd_addr: 0x%016llx\n", (long long)
-				GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_addr));
+				GEM_DMA_READ(sc, &sc->sc_rxdescs[i].gd_addr));
 		}
 #endif
 
@@ -1811,15 +1811,15 @@ gem_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		for (i = 0; i < map->dm_nsegs; i++) {
-			sc->sc_txdescs[frag].gd_addr =
-			    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
+			GEM_DMA_WRITE(sc, &sc->sc_txdescs[frag].gd_addr,
+			    map->dm_segs[i].ds_addr);
 			flags = map->dm_segs[i].ds_len & GEM_TD_BUFSIZE;
 			if (i == 0)
 				flags |= GEM_TD_START_OF_PACKET;
 			if (i == (map->dm_nsegs - 1))
 				flags |= GEM_TD_END_OF_PACKET;
-			sc->sc_txdescs[frag].gd_flags =
-			    GEM_DMA_WRITE(sc, flags);
+			GEM_DMA_WRITE(sc, &sc->sc_txdescs[frag].gd_flags,
+			    flags);
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
 			    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
 			    BUS_DMASYNC_PREWRITE);
