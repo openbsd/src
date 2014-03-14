@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.90 2013/12/23 14:58:16 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.91 2014/03/14 10:02:52 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -506,6 +506,11 @@ filewrite(int f, int n)
 
         /* Check if file exists; write checks done later */
         if (stat(adjfname, &statbuf) == 0) {
+		if (S_ISDIR(statbuf.st_mode)) {
+			dobeep();
+			ewprintf("%s is a directory", adjfname);
+			return (FALSE);
+		}
 		snprintf(tmp, sizeof(tmp), "File `%s' exists; overwrite",
 		    adjfname);
 		if ((s = eyorn(tmp)) != TRUE)
