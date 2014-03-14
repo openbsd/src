@@ -42,6 +42,7 @@ namedb_close(struct namedb* db)
 		if(db->udb) {
 			udb_base_close(db->udb);
 			udb_base_free(db->udb);
+			db->udb = NULL;
 		}
 		zonec_desetup_parser();
 		region_destroy(db->region);

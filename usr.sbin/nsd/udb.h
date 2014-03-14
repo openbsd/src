@@ -40,9 +40,12 @@
 typedef struct udb_base udb_base;
 typedef struct udb_alloc udb_alloc;
 
+/** these checks are very slow, disabled by default */
+#if 0
 /** perform extra checks (when --enable-checking is used) */
 #ifndef NDEBUG
 #define UDB_CHECK 1
+#endif
 #endif
 
 /** pointers are stored like this */
@@ -141,7 +144,7 @@ struct udb_glob_d {
 	uint64_t hsize;
 	/** version number of this file */
 	uint8_t version;
-	/** was the file not cleanly closed, 0 is ok */
+	/** was the file cleanly closed, 0 is not clean, 1 is clean */
 	uint8_t clean_close;
 	/** an allocation operation was in progress, file needs to be salvaged
 	 * type enum udb_dirty_alloc */

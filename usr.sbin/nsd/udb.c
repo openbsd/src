@@ -70,7 +70,7 @@ udb_base*
 udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 	void* arg)
 {
-	uint64_t m;
+	uint64_t m, fsz;
 	udb_glob_d g;
 	ssize_t r;
 	udb_base* udb = (udb_base*)xalloc_zero(sizeof(*udb));
@@ -136,7 +136,7 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 			(int)g.hsize);
 		goto fail;
 	}
-	if(g.clean_close != 0) {
+	if(g.clean_close != 1) {
 		log_msg(LOG_WARNING, "%s: not cleanly closed %d", fname,
 			(int)g.clean_close);
 		goto fail;
@@ -146,11 +146,25 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 			(int)g.dirty_alloc);
 		goto fail;
 	}
-	/* TODO check if too large (>4g on 32bit); mmap-usage would fail */
-	
+
+	/* check file size correctly written, for 4.0.2 nsd.db failure */
+	fsz = (uint64_t)lseek(fd, (off_t)0, SEEK_END);
+	(void)lseek(fd, (off_t)0, SEEK_SET);
+	if(g.fsize != fsz) {
+		log_msg(LOG_WARNING, "%s: file size %llu but mmap header "
+			"has size %llu", fname, (unsigned long long)fsz,
+			(unsigned long long)g.fsize);
+		goto fail;
+	}
+
 	/* mmap it */
 	if(g.fsize < UDB_HEADER_SIZE || g.fsize < g.hsize) {
 		log_msg(LOG_ERR, "%s: file too short", fname);
+		goto fail;
+	}
+	if(g.fsize > (uint64_t)400*1024*1024*1024*1024) /* 400 Tb */ {
+		log_msg(LOG_WARNING, "%s: file size too large %llu",
+			fname, (unsigned long long)g.fsize);
 		goto fail;
 	}
 	udb->base_size = (size_t)g.fsize;
@@ -189,6 +203,7 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 		udb_alloc_compact(udb, udb->alloc);
 		udb_base_sync(udb, 1);
 	}
+	udb->glob_data->clean_close = 0;
 
 	return udb;
 }
@@ -245,6 +260,7 @@ udb_base* udb_base_create_new(const char* fname, udb_walk_relptr_func walkfunc,
 	m = UDB_MAGIC;
 	udb_glob_init_new(&g);
 	udb_alloc_init_new(&a);
+	g.clean_close = 1;
 
 	/* write new data to file (closes fd on error) */
 	if(!write_fdata(fname, fd, &m, sizeof(m)))
@@ -260,6 +276,13 @@ udb_base* udb_base_create_new(const char* fname, udb_walk_relptr_func walkfunc,
 	/* rewind to start */
 	if(lseek(fd, (off_t)0, SEEK_SET) == (off_t)-1) {
 		log_msg(LOG_ERR, "%s: lseek %s", fname, strerror(errno));
+		close(fd);
+		return NULL;
+	}
+	/* truncate to the right size */
+	if(ftruncate(fd, (off_t)g.fsize) < 0) {
+		log_msg(LOG_ERR, "%s: ftruncate(%d): %s", fname,
+			(int)g.fsize, strerror(errno));
 		close(fd);
 		return NULL;
 	}
@@ -292,6 +315,7 @@ void udb_base_close(udb_base* udb)
 			udb_base_shrink(udb, nsize);
 	}
 	if(udb->fd != -1) {
+		udb->glob_data->clean_close = 1;
 		close(udb->fd);
 		udb->fd = -1;
 	}
