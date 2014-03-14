@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.25 2014/02/26 20:00:08 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.26 2014/03/14 11:07:33 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -467,12 +467,12 @@ fail:
 static struct hostent_ext *
 hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 {
-	struct hostent_ext *h;
-	struct unpack	 p;
-	struct header	 hdr;
-	struct query	 q;
-	struct rr	 rr;
-	char		 dname[MAXDNAME];
+	struct hostent_ext	*h;
+	struct asr_unpack	 p;
+	struct asr_dns_header	 hdr;
+	struct asr_dns_query	 q;
+	struct asr_dns_rr	 rr;
+	char			 dname[MAXDNAME];
 
 	if ((h = hostent_alloc(family)) == NULL)
 		return (NULL);

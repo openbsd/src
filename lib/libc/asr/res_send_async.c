@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.19 2013/07/12 14:36:22 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.20 2014/03/14 11:07:33 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -51,11 +51,11 @@ static int iter_ns(struct async *);
 struct async *
 res_send_async(const unsigned char *buf, int buflen, struct asr *asr)
 {
-	struct asr_ctx  *ac;
-	struct async	*as;
-	struct unpack	 p;
-	struct header	 h;
-	struct query	 q;
+	struct asr_ctx		*ac;
+	struct async		*as;
+	struct asr_unpack	 p;
+	struct asr_dns_header	 h;
+	struct asr_dns_query	 q;
 
 	DPRINT_PACKET("asr: res_send_async()", buf, buflen);
 
@@ -346,10 +346,10 @@ static int
 setup_query(struct async *as, const char *name, const char *dom,
 	int class, int type)
 {
-	struct pack	 p;
-	struct header	 h;
-	char		 fqdn[MAXDNAME];
-	char		 dname[MAXDNAME];
+	struct asr_pack		p;
+	struct asr_dns_header	h;
+	char			fqdn[MAXDNAME];
+	char			dname[MAXDNAME];
 
 	if (as->as.dns.flags & ASYNC_EXTOBUF) {
 		errno = EINVAL;
@@ -672,11 +672,11 @@ ensure_ibuf(struct async *as, size_t n)
 static int
 validate_packet(struct async *as)
 {
-	struct unpack	 p;
-	struct header	 h;
-	struct query	 q;
-	struct rr	 rr;
-	int		 r;
+	struct asr_unpack	 p;
+	struct asr_dns_header	 h;
+	struct asr_dns_query	 q;
+	struct asr_dns_rr	 rr;
+	int			 r;
 
 	asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
 

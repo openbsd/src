@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.14 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.15 2014/03/14 11:07:33 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -28,9 +28,9 @@
 
 static const char *rcodetostr(uint16_t);
 static const char *print_dname(const char *, char *, size_t);
-static const char *print_header(const struct header *, char *, size_t);
-static const char *print_query(const struct query *, char *, size_t);
-static const char *print_rr(const struct rr *, char *, size_t);
+static const char *print_header(const struct asr_dns_header *, char *, size_t);
+static const char *print_query(const struct asr_dns_query *, char *, size_t);
+static const char *print_rr(const struct asr_dns_rr *, char *, size_t);
 
 FILE *asr_debug = NULL;
 
@@ -58,7 +58,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 }
 
 static const char *
-print_rr(const struct rr *rr, char *buf, size_t max)
+print_rr(const struct asr_dns_rr *rr, char *buf, size_t max)
 {
 	char	*res;
 	char	 tmp[256];
@@ -130,7 +130,7 @@ print_rr(const struct rr *rr, char *buf, size_t max)
 }
 
 static const char *
-print_query(const struct query *q, char *buf, size_t max)
+print_query(const struct asr_dns_query *q, char *buf, size_t max)
 {
 	char b[256];
 
@@ -142,7 +142,7 @@ print_query(const struct query *q, char *buf, size_t max)
 }
 
 static const char *
-print_header(const struct header *h, char *buf, size_t max)
+print_header(const struct asr_dns_header *h, char *buf, size_t max)
 {
 	snprintf(buf, max,
 	"id:0x%04x %s op:%i %s %s %s %s z:%i r:%s qd:%i an:%i ns:%i ar:%i",
@@ -163,12 +163,12 @@ print_header(const struct header *h, char *buf, size_t max)
 void
 asr_dump_packet(FILE *f, const void *data, size_t len)
 {
-	char		buf[1024];
-	struct unpack	p;
-	struct header	h;
-	struct query	q;
-	struct rr	rr;
-	int		i, an, ns, ar, n;
+	char			buf[1024];
+	struct asr_unpack	p;
+	struct asr_dns_header	h;
+	struct asr_dns_query	q;
+	struct asr_dns_rr	rr;
+	int			i, an, ns, ar, n;
 
 	if (f == NULL)
 		return;

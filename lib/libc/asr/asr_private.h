@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.23 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.24 2014/03/14 11:07:33 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,21 +34,21 @@
 #define RCODE(v)	((v) & RCODE_MASK)
 
 
-struct pack {
+struct asr_pack {
 	char		*buf;
 	size_t		 len;
 	size_t		 offset;
 	const char	*err;
 };
 
-struct unpack {
+struct asr_unpack {
 	const char	*buf;
 	size_t		 len;
 	size_t		 offset;
 	const char	*err;
 };
 
-struct header {
+struct asr_dns_header {
 	uint16_t	id;
 	uint16_t	flags;
 	uint16_t	qdcount;
@@ -57,13 +57,13 @@ struct header {
 	uint16_t	arcount;
 };
 
-struct query {
+struct asr_dns_query {
 	char		q_dname[MAXDNAME];
 	uint16_t	q_type;
 	uint16_t	q_class;
 };
 
-struct rr {
+struct asr_dns_rr {
 	char		rr_dname[MAXDNAME];
 	uint16_t	rr_type;
 	uint16_t	rr_class;
@@ -299,14 +299,14 @@ enum asr_state {
 
 
 /* asr_utils.c */
-void	asr_pack_init(struct pack *, char *, size_t);
-int	asr_pack_header(struct pack *, const struct header *);
-int	asr_pack_query(struct pack *, uint16_t, uint16_t, const char *);
-void	asr_unpack_init(struct unpack *, const char *, size_t);
-int	asr_unpack_header(struct unpack *, struct header *);
-int	asr_unpack_query(struct unpack *, struct query *);
-int	asr_unpack_rr(struct unpack *, struct rr *);
-int	asr_sockaddr_from_str(struct sockaddr *, int, const char *);
+void asr_pack_init(struct asr_pack *, char *, size_t);
+int asr_pack_header(struct asr_pack *, const struct asr_dns_header *);
+int asr_pack_query(struct asr_pack *, uint16_t, uint16_t, const char *);
+void asr_unpack_init(struct asr_unpack *, const char *, size_t);
+int asr_unpack_header(struct asr_unpack *, struct asr_dns_header *);
+int asr_unpack_query(struct asr_unpack *, struct asr_dns_query *);
+int asr_unpack_rr(struct asr_unpack *, struct asr_dns_rr *);
+int asr_sockaddr_from_str(struct sockaddr *, int, const char *);
 ssize_t asr_dname_from_fqdn(const char *, char *, size_t);
 ssize_t asr_addr_as_fqdn(const char *, int, char *, size_t);
 
@@ -321,7 +321,7 @@ int asr_iter_db(struct async *);
 int asr_parse_namedb_line(FILE *, char **, int);
 char *asr_hostalias(struct asr_ctx *, const char *, char *, size_t);
 
-/* <*>_async.h */
+/* *_async.c */
 struct async *res_query_async_ctx(const char *, int, int, struct asr_ctx *);
 struct async *res_search_async_ctx(const char *, int, int, struct asr_ctx *);
 struct async *gethostbyaddr_async_ctx(const void *, socklen_t, int,
