@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.110 2014/02/13 07:30:39 guenther Exp $
+.\"	$OpenBSD: make.1,v 1.111 2014/03/14 07:46:12 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: March 14 2014 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -71,9 +71,9 @@ If none of these files exist,
 .Nm
 can still rely on a set of built-in system rules.
 .Pp
-In addition, if the file
+If the file
 .Sq Pa .depend
-exists, it is also read on top of the main
+exists, its contents are appended to the main
 .Ar makefile
 (see
 .Xr mkdep 1 ) .
