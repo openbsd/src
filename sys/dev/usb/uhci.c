@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.108 2014/03/11 10:24:42 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.109 2014/03/15 09:49:28 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1359,27 +1359,20 @@ uhci_idone(struct uhci_xfer *ex)
 	DPRINTFN(12, ("uhci_idone: ex=%p done\n", ex));
 }
 
-/*
- * Called when a request does not complete.
- */
 void
 uhci_timeout(void *addr)
 {
-	struct uhci_xfer *uxfer = addr;
-	struct uhci_pipe *upipe = (struct uhci_pipe *)uxfer->xfer.pipe;
-	struct uhci_softc *sc = (struct uhci_softc *)upipe->pipe.device->bus;
-
-	DPRINTF(("uhci_timeout: uxfer=%p\n", uxfer));
+	struct usbd_xfer *xfer = addr;
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 
 	if (sc->sc_bus.dying) {
-		uhci_abort_xfer(&uxfer->xfer, USBD_TIMEOUT);
+		uhci_timeout_task(addr);
 		return;
 	}
 
-	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->xfer.abort_task, uhci_timeout_task, &uxfer->xfer,
+	usb_init_task(&xfer->abort_task, uhci_timeout_task, addr,
 	    USB_TASK_TYPE_ABORT);
-	usb_add_task(uxfer->xfer.pipe->device, &uxfer->xfer.abort_task);
+	usb_add_task(xfer->device, &xfer->abort_task);
 }
 
 void
@@ -1388,7 +1381,7 @@ uhci_timeout_task(void *addr)
 	struct usbd_xfer *xfer = addr;
 	int s;
 
-	DPRINTF(("uhci_timeout_task: xfer=%p\n", xfer));
+	DPRINTF(("%s: xfer=%p\n", __func__, xfer));
 
 	s = splusb();
 	uhci_abort_xfer(xfer, USBD_TIMEOUT);

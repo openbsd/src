@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.144 2014/03/11 10:24:42 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.145 2014/03/15 09:49:28 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2906,21 +2906,17 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 void
 ehci_timeout(void *addr)
 {
-	struct ehci_xfer *exfer = addr;
-	struct ehci_pipe *epipe = (struct ehci_pipe *)exfer->xfer.pipe;
-	struct ehci_softc *sc = (struct ehci_softc *)epipe->pipe.device->bus;
-
-	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
+	struct usbd_xfer *xfer = addr;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 
 	if (sc->sc_bus.dying) {
-		ehci_abort_xfer(&exfer->xfer, USBD_TIMEOUT);
+		ehci_timeout_task(addr);
 		return;
 	}
 
-	/* Execute the abort in a process context. */
-	usb_init_task(&exfer->xfer.abort_task, ehci_timeout_task, addr,
+	usb_init_task(&xfer->abort_task, ehci_timeout_task, addr,
 	    USB_TASK_TYPE_ABORT);
-	usb_add_task(exfer->xfer.pipe->device, &exfer->xfer.abort_task);
+	usb_add_task(xfer->device, &xfer->abort_task);
 }
 
 void
@@ -2929,7 +2925,7 @@ ehci_timeout_task(void *addr)
 	struct usbd_xfer *xfer = addr;
 	int s;
 
-	DPRINTF(("ehci_timeout_task: xfer=%p\n", xfer));
+	DPRINTF(("%s: xfer=%p\n", __func__, xfer));
 
 	s = splusb();
 	ehci_abort_xfer(xfer, USBD_TIMEOUT);
