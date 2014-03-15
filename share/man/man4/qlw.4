@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qlw.4,v 1.3 2014/03/06 17:49:54 kettenis Exp $
+.\"	$OpenBSD: qlw.4,v 1.4 2014/03/15 21:54:26 kettenis Exp $
 .\"
 .\" Copyright (c) 2014 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,20 +14,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2014 $
+.Dd $Mdocdate: March 15 2014 $
 .Dt QLW 4
 .Os
 .Sh NAME
 .Nm qlw
-.Nd QLogic ISP1020/1x40/1x80/1x160 SCSI controller
+.Nd QLogic ISP1000/1020/1x40/1x80/1x160 SCSI controller
 .Sh SYNOPSIS
 .Cd "qlw* at pci?"
-.\" .Cd "qlw* at sbus?"
+.Cd "qlw* at sbus?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for QLogic Ultra Wide SCSI host bus adapters
-using the ISP1020/1040, ISP1080/1240/1280 and ISP10160/12160 chipsets.
+using the ISP1000, ISP1020/1040, ISP1080/1240/1280 and ISP10160/12160 chips.
 .Pp
 .Nm
 provides no ability to configure an adapter's parameters at runtime;
@@ -37,7 +37,7 @@ all configuration must be done prior to booting
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr qla 4 ,
-.\" .Xr sbus 4 ,
+.Xr sbus 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The

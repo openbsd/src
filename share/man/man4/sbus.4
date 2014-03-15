@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.45 2014/02/07 13:41:05 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.46 2014/03/15 21:54:26 kettenis Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 7 2014 $
+.Dd $Mdocdate: March 15 2014 $
 .Dt SBUS 4
 .Os
 .Sh NAME
@@ -71,6 +71,8 @@ ESP NCR 53c94 on-board or SBus SCSI interface
 QLogic based SCSI or Fibre Channel SCSI interface
 .It Xr qla 4
 QLogic Fibre Channel Controllers
+.It Xr qlw 4
+QLogic ISP100 SCSI controller
 .El
 .Ss Network interfaces
 .Bl -tag -width 13n -offset ind -compact
