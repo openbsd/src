@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.346 2014/03/13 10:11:01 florian Exp $
+#	$OpenBSD: Makefile,v 1.347 2014/03/15 22:13:36 sthen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -56,7 +56,7 @@ RCDAEMONS=	amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd \
 		sensorsd slowcgi smtpd snmpd spamd sshd syslogd watchdogd \
 		wsmoused xdm ypbind ypldap yppasswdd ypserv kdc kadmind \
 		kpasswdd nfsd mountd lockd statd spamlogd sndiod \
-		tftpd tftpproxy ldomd ipropd_master ipropd_slave
+		tftpd tftpproxy ldomd ipropd_master ipropd_slave unbound
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
@@ -131,6 +131,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 ldapd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ypldap.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g _nsd -m 640 nsd.conf ${DESTDIR}/var/nsd/etc
+	${INSTALL} -c -o root -g wheel -m 644 unbound.conf ${DESTDIR}/var/unbound/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	cd root; \
