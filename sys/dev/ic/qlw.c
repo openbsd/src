@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.13 2014/03/15 11:36:38 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.14 2014/03/15 11:53:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -248,7 +248,7 @@ qlw_attach(struct qlw_softc *sc)
 	sc->sc_mbox[1] = 0;
 	if (sc->sc_fw_features & QLW_FW_FEATURE_LVD_NOTIFY)
 		sc->sc_mbox[1] |= QLW_FW_FEATURE_LVD_NOTIFY;
-	if (qlw_mbox(sc, 0x0003, 0x0001)) {
+	if (sc->sc_mbox[1] != 0 && qlw_mbox(sc, 0x0003, 0x0001)) {
 		printf("couldn't set firmware features: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
