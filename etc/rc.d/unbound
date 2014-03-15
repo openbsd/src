@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# $OpenBSD: unbound,v 1.1 2014/03/15 00:34:18 sthen Exp $
+
+daemon="/usr/sbin/unbound"
+daemon_flags="-c /var/unbound/etc/unbound.conf"
+
+. /etc/rc.d/rc.subr
+
+pexp="unbound${daemon_flags:+ ${daemon_flags}}"
+
+rc_pre() {
+	if grep '^[[:space:]]*control-enable:[[:space:]]*yes' \
+	    /var/unbound/etc/unbound.conf > /dev/null 2>&1 && \
+	    ! [[ -f /var/unbound/etc/unbound_server.key ||
+	    -f /var/unbound/etc/unbound_server.pem ||
+	    -f /var/unbound/etc/unbound_control.key ||
+	    -f /var/unbound/etc/unbound_control.pem ]]; then
+		/usr/sbin/unbound-control-setup 2> /dev/null
+	fi
+	if grep '^[[:space:]]*auto-trust-anchor-file:' \
+            /var/unbound/etc/unbound.conf > /dev/null 2>&1; then
+		/usr/sbin/unbound-anchor -v || true
+	fi
+}
+
+rc_start() {
+	/usr/sbin/unbound-checkconf > /dev/null &&
+	    ${rcexec} "unbound ${daemon_flags}"
+}
+
+rc_cmd $1
