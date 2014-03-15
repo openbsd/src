@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.36 2014/03/13 04:21:35 dlg Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.37 2014/03/15 21:59:56 djm Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -130,6 +130,18 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused	/* suppress -Wunused warnings */
+#endif
+
+#if __GNUC_PREREQ__(3,4)
+# define __warn_unused_result	__attribute__((__warn_unused_result__))
+#else
+# define __warn_unused_result	/* delete */
+#endif
+
+#if __GNUC_PREREQ__(3,3) && !defined(__clang__)
+# define __bounded(args)	__attribute__ ((__bounded__ args ))
+#else
+# define __bounded(args)	/* delete */
 #endif
 
 /*
