@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_pci.c,v 1.8 2014/03/09 20:23:43 kettenis Exp $ */
+/*	$OpenBSD: qlw_pci.c,v 1.9 2014/03/15 13:08:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -249,6 +249,8 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 	case QLW_GEN_ISP12160:
 		sc->sc_firmware = isp_12160_risc_code;
 		break;
+	default:
+		break;
 	}
 #endif
 
@@ -284,6 +286,9 @@ qlw_pci_attach(struct device *parent, struct device *self, void *aux)
 		node = OF_parent(node);
 	}
 #endif
+
+	sc->sc_host_cmd_ctrl = QLW_HOST_CMD_CTRL_PCI;
+	sc->sc_mbox_base = QLW_MBOX_BASE_PCI;
 
 	if (qlw_attach(sc) != 0) {
 		/* error printed by qlw_attach */

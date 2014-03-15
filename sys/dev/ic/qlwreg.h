@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.5 2014/03/15 12:28:47 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.6 2014/03/15 13:08:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -37,17 +37,20 @@
 #define QLW_FLASH_BIOS_ADDR		0x12
 #define QLW_CDMA_CFG			0x20
 #define QLW_DDMA_CFG			0x40
-#define QLW_MBOX_BASE			0x70
+#define QLW_MBOX_BASE_PCI		0x70
+#define QLW_MBOX_BASE_SBUS		0x80
 #define QLW_CDMA_CFG_1080		0x80
 #define QLW_DDMA_CFG_1080		0xa0
-#define QLW_HOST_CMD_CTRL		0xc0
+#define QLW_HOST_CMD_CTRL_PCI		0xc0
 #define QLW_GPIO_DATA			0xcc
 #define QLW_GPIO_ENABLE			0xce
 
-#define QLW_REQ_IN	QLW_MBOX_BASE + 0x8
-#define QLW_REQ_OUT	QLW_MBOX_BASE + 0x8
-#define QLW_RESP_IN	QLW_MBOX_BASE + 0xa
-#define QLW_RESP_OUT	QLW_MBOX_BASE + 0xa
+#define QLW_HOST_CMD_CTRL_SBUS		0x440
+
+#define QLW_REQ_IN			0x08
+#define QLW_REQ_OUT			0x08
+#define QLW_RESP_IN			0x0a
+#define QLW_RESP_OUT			0x0a
 
 /* QLW_CFG1 */
 #define QLW_BURST_ENABLE		0x0004
@@ -56,6 +59,12 @@
 #define QLW_PCI_FIFO_64			0x0030
 #define QLW_PCI_FIFO_128		0x0040
 #define QLW_PCI_FIFO_MASK		0x0070
+#define QLW_SBUS_FIFO_64		0x0003
+#define QLW_SBUS_FIFO_32		0x0002
+#define QLW_SBUS_FIFO_16		0x0001
+#define QLW_SBUS_FIFO_8			0x0000
+#define QLW_SBUS_FIFO_MASK		0x0003
+#define QLW_SBUS_BURST_8		0x0008
 #define QLW_DMA_BANK			0x0300
 
 /* QLW_INT_CTRL */

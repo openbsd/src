@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.15 2014/03/15 12:28:47 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.16 2014/03/15 13:08:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -123,8 +123,17 @@ qlw_xs_bus(struct qlw_softc *sc, struct scsi_xfer *xs)
 	return ((xs->sc_link->scsibus == sc->sc_link[0].scsibus) ? 0 : 1);
 }
 
-#define qlw_queue_read(_sc, _r) qlw_read((_sc), (_r))
-#define qlw_queue_write(_sc, _r, _v) qlw_write((_sc), (_r), (_v))
+static inline u_int16_t
+qlw_queue_read(struct qlw_softc *sc, bus_size_t offset)
+{
+	return qlw_read(sc, sc->sc_mbox_base + offset);
+}
+
+static inline void
+qlw_queue_write(struct qlw_softc *sc, bus_size_t offset, u_int16_t value)
+{
+	qlw_write(sc, sc->sc_mbox_base + offset, value);
+}
 
 struct scsi_adapter qlw_switch = {
 	qlw_scsi_cmd,
@@ -145,6 +154,9 @@ qlw_attach(struct qlw_softc *sc)
 	task_set(&sc->sc_update_task, qlw_update_task, sc, NULL);
 
 	switch (sc->sc_isp_gen) {
+	case QLW_GEN_ISP1000:
+		sc->sc_nvram_size = 0;
+		break;
 	case QLW_GEN_ISP1040:
 		sc->sc_nvram_size = 128;
 		sc->sc_nvram_minversion = 2;
@@ -940,19 +952,19 @@ u_int16_t
 qlw_read_mbox(struct qlw_softc *sc, int mbox)
 {
 	/* could range-check mboxes according to chip type? */
-	return (qlw_read(sc, QLW_MBOX_BASE + (mbox * 2)));
+	return (qlw_read(sc, sc->sc_mbox_base + (mbox * 2)));
 }
 
 void
 qlw_write_mbox(struct qlw_softc *sc, int mbox, u_int16_t value)
 {
-	qlw_write(sc, QLW_MBOX_BASE + (mbox * 2), value);
+	qlw_write(sc, sc->sc_mbox_base + (mbox * 2), value);
 }
 
 void
 qlw_host_cmd(struct qlw_softc *sc, u_int16_t cmd)
 {
-	qlw_write(sc, QLW_HOST_CMD_CTRL, cmd << QLW_HOST_CMD_SHIFT);
+	qlw_write(sc, sc->sc_host_cmd_ctrl, cmd << QLW_HOST_CMD_SHIFT);
 }
 
 #define MBOX_COMMAND_TIMEOUT	4000
@@ -1131,7 +1143,8 @@ qlw_softreset(struct qlw_softc *sc)
 void
 qlw_dma_burst_enable(struct qlw_softc *sc)
 {
-	if (sc->sc_isp_gen == QLW_GEN_ISP1040) {
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000 ||
+	    sc->sc_isp_gen == QLW_GEN_ISP1040) {
 		qlw_write(sc, QLW_CDMA_CFG,
 		    qlw_read(sc, QLW_CDMA_CFG) | QLW_DMA_BURST_ENABLE);
 		qlw_write(sc, QLW_DDMA_CFG,
@@ -1384,6 +1397,9 @@ qlw_read_nvram(struct qlw_softc *sc)
 	int reqcmd;
 	int nbits;
 
+	if (sc->sc_nvram_size == 0)
+		return (1);
+
 	if (sc->sc_nvram_size == 128) {
 		reqcmd = (QLW_NVRAM_CMD_READ << 6);
 		nbits = 8;
@@ -1532,6 +1548,8 @@ qlw_init_defaults(struct qlw_softc *sc, int bus)
 	int target;
 
 	switch (sc->sc_isp_gen) {
+	case QLW_GEN_ISP1000:
+		break;
 	case QLW_GEN_ISP1040:
 		sc->sc_isp_config = QLW_BURST_ENABLE | QLW_PCI_FIFO_64;
 		break;

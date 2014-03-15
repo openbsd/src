@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.9 2014/03/13 10:31:53 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.10 2014/03/15 13:08:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -28,13 +28,15 @@
 struct qlw_softc;
 
 enum qlw_isp_gen {
-	QLW_GEN_ISP1040 = 1,
+	QLW_GEN_ISP1000 = 1,
+	QLW_GEN_ISP1040,
 	QLW_GEN_ISP1080,
 	QLW_GEN_ISP12160,
 };
 
 enum qlw_isp_type {
-	QLW_ISP1020 = 1,
+	QLW_ISP1000 = 1,
+	QLW_ISP1020,
 	QLW_ISP1020A,
 	QLW_ISP1040,
 	QLW_ISP1040A,
@@ -101,6 +103,8 @@ struct qlw_softc {
 	int			sc_numbusses;
 	int			sc_clock;
 
+	int			sc_host_cmd_ctrl;
+	int			sc_mbox_base;
 	u_int16_t		sc_mbox[8];
 	int			sc_mbox_pending;
 
