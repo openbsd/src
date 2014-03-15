@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2013/12/08 17:21:59 miod Exp $
+#	$OpenBSD: Makefile,v 1.15 2014/03/15 04:07:39 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,7 +8,7 @@ BSDRD=	bsd.rd
 CDROM=	cd${REV}.iso
 FFS=	ffs.img
 # must match the size of `minicdroot' in disktab
-CDFSMB=	12
+CDFSMB=	13
 all: ${CDROM}
 
 ALLIP=		22 27 28 30 32
