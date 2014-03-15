@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.40 2014/02/02 13:01:58 kettenis Exp $
+#	$OpenBSD: files.sbus,v 1.41 2014/03/15 21:49:47 kettenis Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -57,6 +57,9 @@ file	dev/sbus/cs4231.c		audiocs
 
 attach	isp at sbus with isp_sbus
 file	dev/sbus/isp_sbus.c		isp_sbus
+
+attach	qlw at sbus with qlw_sbus
+file	dev/sbus/qlw_sbus.c		qlw_sbus
 
 attach	qla at sbus with qla_sbus
 file	dev/sbus/qla_sbus.c		qla_sbus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.16 2014/03/15 13:08:52 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.17 2014/03/15 21:49:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -91,7 +91,12 @@ void		qlw_put_cmd(struct qlw_softc *, void *, struct scsi_xfer *,
 void		qlw_put_cont(struct qlw_softc *, void *, struct scsi_xfer *,
 		    struct qlw_ccb *, int);
 struct qlw_ccb *qlw_handle_resp(struct qlw_softc *, u_int16_t);
-void		qlw_put_data_seg(struct qlw_iocb_seg *, bus_dmamap_t, int);
+void		qlw_get_header(struct qlw_softc *, struct qlw_iocb_hdr *,
+		    int *, int *);
+void		qlw_put_header(struct qlw_softc *, struct qlw_iocb_hdr *,
+		    int, int);
+void		qlw_put_data_seg(struct qlw_softc *, struct qlw_iocb_seg *,
+		    bus_dmamap_t, int);
 
 int		qlw_softreset(struct qlw_softc *);
 void		qlw_dma_burst_enable(struct qlw_softc *);
@@ -121,6 +126,24 @@ static inline int
 qlw_xs_bus(struct qlw_softc *sc, struct scsi_xfer *xs)
 {
 	return ((xs->sc_link->scsibus == sc->sc_link[0].scsibus) ? 0 : 1);
+}
+
+static inline u_int16_t
+qlw_swap16(struct qlw_softc *sc, u_int16_t value)
+{
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000)
+		return htobe16(value);
+	else
+		return htole16(value);
+}
+
+static inline u_int32_t
+qlw_swap32(struct qlw_softc *sc, u_int32_t value)
+{
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000)
+		return htobe32(value);
+	else
+		return htole32(value);
 }
 
 static inline u_int16_t
@@ -522,24 +545,28 @@ struct qlw_ccb *
 qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 {
 	struct qlw_ccb *ccb;
-	struct qla_iocb_status *status;
+	struct qlw_iocb_hdr *hdr;
+	struct qlw_iocb_status *status;
 	struct scsi_xfer *xs;
 	u_int32_t handle;
-	u_int8_t *entry;
+	int entry_type;
+	int flags;
 	int bus;
 
 	ccb = NULL;
-	entry = QLW_DMA_KVA(sc->sc_responses) + (id * QLW_QUEUE_ENTRY_SIZE);
+	hdr = QLW_DMA_KVA(sc->sc_responses) + (id * QLW_QUEUE_ENTRY_SIZE);
 
 	bus_dmamap_sync(sc->sc_dmat,
 	    QLW_DMA_MAP(sc->sc_responses), id * QLW_QUEUE_ENTRY_SIZE,
 	    QLW_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTREAD);
 
-	qlw_dump_iocb(sc, entry);
-	switch (entry[0]) {
+	qlw_dump_iocb(sc, hdr);
+
+	qlw_get_header(sc, hdr, &entry_type, &flags);
+	switch (entry_type) {
 	case QLW_IOCB_STATUS:
-		status = (struct qla_iocb_status *)entry;
-		handle = letoh32(status->handle);
+		status = (struct qlw_iocb_status *)hdr;
+		handle = qlw_swap32(sc, status->handle);
 		if (handle > sc->sc_maxccbs) {
 			panic("bad completed command handle: %d (> %d)",
 			    handle, sc->sc_maxccbs);
@@ -568,10 +595,10 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 		}
 
 		bus = qlw_xs_bus(sc, xs);
-		xs->status = letoh16(status->scsi_status);
-		switch (letoh16(status->completion)) {
+		xs->status = qlw_swap16(sc, status->scsi_status);
+		switch (qlw_swap16(sc, status->completion)) {
 		case QLW_IOCB_STATUS_COMPLETE:
-			if (letoh16(status->scsi_status) &
+			if (qlw_swap16(sc, status->scsi_status) &
 			    QLW_SCSI_STATUS_SENSE_VALID) {
 				memcpy(&xs->sense, status->sense_data,
 				    sizeof(xs->sense));
@@ -583,8 +610,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			break;
 
 		case QLW_IOCB_STATUS_INCOMPLETE:
-			if (letoh16(status->flags) &
-			    QLW_STATE_GOT_TARGET) {
+			if (flags & QLW_STATE_GOT_TARGET) {
 				xs->error = XS_DRIVER_STUFFUP;
 			} else {
 				xs->error = XS_SELTIMEOUT;
@@ -617,7 +643,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 
 		case QLW_IOCB_STATUS_DATA_OVERRUN:
 		case QLW_IOCB_STATUS_DATA_UNDERRUN:
-			xs->resid = letoh32(status->resid);
+			xs->resid = qlw_swap32(sc, status->resid);
 			xs->error = XS_NOERROR;
 			break;
 
@@ -632,7 +658,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			atomic_setbits_int(&sc->sc_update_required[bus],
 			    1 << xs->sc_link->target);
 			task_add(systq, &sc->sc_update_task);
-			xs->resid = letoh32(status->resid);
+			xs->resid = qlw_swap32(sc, status->resid);
 			xs->error = XS_NOERROR;
 			break;
 
@@ -642,14 +668,14 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			atomic_setbits_int(&sc->sc_update_required[bus],
 			    1 << xs->sc_link->target);
 			task_add(systq, &sc->sc_update_task);
-			xs->resid = letoh32(status->resid);
+			xs->resid = qlw_swap32(sc, status->resid);
 			xs->error = XS_NOERROR;
 			break;
 
 		default:
 			DPRINTF(QLW_D_INTR, "%s: unexpected completion"
 			    " status %x\n", DEVNAME(sc),
-			    letoh16(status->completion));
+			    qlw_swap16(sc, status->completion));
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
@@ -657,7 +683,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 
 	default:
 		DPRINTF(QLW_D_INTR, "%s: unexpected response entry type %x\n",
-		    DEVNAME(sc), entry[0]);
+		    DEVNAME(sc), entry_type);
 		break;
 	}
 
@@ -774,7 +800,7 @@ qlw_scsi_cmd(struct scsi_xfer *xs)
 	int			bus;
 	int			seg;
 
-	if (xs->cmdlen > sizeof(iocb->req_cdb)) {
+	if (xs->cmdlen > sizeof(iocb->cdb)) {
 		DPRINTF(QLW_D_IO, "%s: cdb too big (%d)\n", DEVNAME(sc),
 		    xs->cmdlen);
 		memset(&xs->sense, 0, sizeof(xs->sense));
@@ -1252,27 +1278,63 @@ qlw_dump_iocb_segs(struct qlw_softc *sc, void *segs, int n)
 #endif
 }
 
+/*
+ * The PCI bus is little-endian whereas SBus is big-endian.  This
+ * leads to some differences in byte twisting of DMA transfers of
+ * request and response queue entries.  Most fields can be treated as
+ * 16-bit or 32-bit with the endianness of the bus, but the header
+ * fields end up being swapped by the ISP1000's SBus interface.
+ */
+
+void
+qlw_get_header(struct qlw_softc *sc, struct qlw_iocb_hdr *hdr,
+    int *type, int *flags)
+{
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000) {
+		*type = hdr->entry_count;
+		*flags = hdr->seqno;
+	} else {
+		*type = hdr->entry_type;
+		*flags = hdr->flags;
+	}
+}
+
+void
+qlw_put_header(struct qlw_softc *sc, struct qlw_iocb_hdr *hdr,
+    int type, int count)
+{
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000) {
+		hdr->entry_type = count;
+		hdr->entry_count = type;
+		hdr->seqno = 0;
+		hdr->flags = 0;
+	} else {
+		hdr->entry_type = type;
+		hdr->entry_count = count;
+		hdr->seqno = 0;
+		hdr->flags = 0;
+	}
+}
+
+void
+qlw_put_data_seg(struct qlw_softc *sc, struct qlw_iocb_seg *seg,
+    bus_dmamap_t dmap, int num)
+{
+	seg->seg_addr = qlw_swap32(sc, dmap->dm_segs[num].ds_addr);
+	seg->seg_len = qlw_swap32(sc, dmap->dm_segs[num].ds_len);
+}
+
 void
 qlw_put_marker(struct qlw_softc *sc, int bus, void *buf)
 {
 	struct qlw_iocb_marker *marker = buf;
 
-	marker->entry_type = QLW_IOCB_MARKER;
-	marker->entry_count = 1;
-	marker->seqno = 0;
-	marker->flags = 0;
+	qlw_put_header(sc, &marker->hdr, QLW_IOCB_MARKER, 1);
 
 	/* could be more specific here; isp(4) isn't */
-	marker->target = (bus << 7);
-	marker->modifier = QLW_IOCB_MARKER_SYNC_ALL;
+	marker->device = qlw_swap16(sc, (bus << 7) << 8);
+	marker->modifier = qlw_swap16(sc, QLW_IOCB_MARKER_SYNC_ALL);
 	qlw_dump_iocb(sc, buf);
-}
-
-void
-qlw_put_data_seg(struct qlw_iocb_seg *seg, bus_dmamap_t dmap, int num)
-{
-	seg->seg_addr = htole32(dmap->dm_segs[num].ds_addr);
-	seg->seg_len = htole32(dmap->dm_segs[num].ds_len);
 }
 
 void
@@ -1280,30 +1342,29 @@ qlw_put_cmd(struct qlw_softc *sc, void *buf, struct scsi_xfer *xs,
     struct qlw_ccb *ccb)
 {
 	struct qlw_iocb_req0 *req = buf;
+	int entry_count = 1;
 	u_int16_t dir;
 	int seg, nsegs;
-
-	req->entry_type = QLW_IOCB_CMD_TYPE_0;
-	req->entry_count = 1;
-	req->seqno = 0;
-	req->flags = 0;
+	int seg_count;
+	int timeout = 0;
+	int bus, target, lun;
 
 	if (xs->datalen == 0) {
 		dir = QLW_IOCB_CMD_NO_DATA;
-		req->req_seg_count = htole16(1);
+		seg_count = 1;
 	} else {
 		dir = xs->flags & SCSI_DATA_IN ? QLW_IOCB_CMD_READ_DATA :
 		    QLW_IOCB_CMD_WRITE_DATA;
-		req->req_seg_count = htole16(ccb->ccb_dmamap->dm_nsegs);
+		seg_count = ccb->ccb_dmamap->dm_nsegs;
 		nsegs = ccb->ccb_dmamap->dm_nsegs - QLW_IOCB_SEGS_PER_CMD;
 		while (nsegs > 0) {
-			req->entry_count++;
+			entry_count++;
 			nsegs -= QLW_IOCB_SEGS_PER_CONT;
 		}
 		for (seg = 0; seg < ccb->ccb_dmamap->dm_nsegs; seg++) {
 			if (seg >= QLW_IOCB_SEGS_PER_CMD)
 				break;
-			qlw_put_data_seg(&req->req0_segs[seg],
+			qlw_put_data_seg(sc, &req->segs[seg],
 			    ccb->ccb_dmamap, seg);
 		}
 	}
@@ -1311,42 +1372,45 @@ qlw_put_cmd(struct qlw_softc *sc, void *buf, struct scsi_xfer *xs,
 	if (sc->sc_running && (xs->sc_link->quirks & SDEV_NOTAGS) == 0)
 		dir |= QLW_IOCB_CMD_SIMPLE_QUEUE;
 
-	req->req_flags = htole16(dir);
+	qlw_put_header(sc, &req->hdr, QLW_IOCB_CMD_TYPE_0, entry_count);
 
 	/*
 	 * timeout is in seconds.  make sure it's at least 1 if a timeout
 	 * was specified in xs
 	 */
 	if (xs->timeout != 0)
-		req->req_time = htole16(MAX(1, xs->timeout/1000));
+		timeout = MAX(1, xs->timeout/1000);
 
-	req->req_target = (qlw_xs_bus(sc, xs) << 7) | xs->sc_link->target;
-	req->req_lun_trn = xs->sc_link->lun;
+	req->flags = qlw_swap16(sc, dir);
+	req->seg_count = qlw_swap16(sc, seg_count);
+	req->timeout = qlw_swap16(sc, timeout);
 
-	memcpy(req->req_cdb, xs->cmd, xs->cmdlen);
-	req->req_ccblen = htole16(xs->cmdlen);
+	bus = qlw_xs_bus(sc, xs);
+	target = xs->sc_link->target;
+	lun = xs->sc_link->lun;
+	req->device = qlw_swap16(sc, (((bus << 7) | target) << 8) | lun);
 
-	req->req_handle = htole32(ccb->ccb_id);
+	memcpy(req->cdb, xs->cmd, xs->cmdlen);
+	req->ccblen = qlw_swap16(sc, xs->cmdlen);
+
+	req->handle = qlw_swap32(sc, ccb->ccb_id);
 
 	qlw_dump_iocb(sc, buf);
 }
 
 void
 qlw_put_cont(struct qlw_softc *sc, void *buf, struct scsi_xfer *xs,
-	     struct qlw_ccb *ccb, int seg0)
+    struct qlw_ccb *ccb, int seg0)
 {
 	struct qlw_iocb_cont0 *cont = buf;
 	int seg;
 
-	cont->entry_type = QLW_IOCB_CONT_TYPE_0;
-	cont->entry_count = 1;
-	cont->seqno = 0;
-	cont->flags = 0;
+	qlw_put_header(sc, &cont->hdr, QLW_IOCB_CONT_TYPE_0, 1);
 
 	for (seg = seg0; seg < ccb->ccb_dmamap->dm_nsegs; seg++) {
 		if ((seg - seg0) >= QLW_IOCB_SEGS_PER_CONT)
 			break;
-		qlw_put_data_seg(&cont->segs[seg - seg0],
+		qlw_put_data_seg(sc, &cont->segs[seg - seg0],
 		    ccb->ccb_dmamap, seg);
 	}
 }

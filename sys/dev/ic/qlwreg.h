@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.6 2014/03/15 13:08:52 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.7 2014/03/15 21:49:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -245,7 +245,12 @@ struct qlw_nvram {
 #define QLW_IOCB_CMD_WRITE_DATA		0x0040
 #define QLW_IOCB_CMD_NO_FAST_POST	0x0080
 
-#define QLW_IOCB_MARKER_SYNC_ALL	2
+struct qlw_iocb_hdr {
+	u_int8_t	entry_type;
+	u_int8_t	entry_count;
+	u_int8_t	seqno;
+	u_int8_t	flags;
+} __packed;
 
 #define QLW_IOCB_SEGS_PER_CMD		4
 #define QLW_IOCB_SEGS_PER_CONT		7
@@ -262,38 +267,28 @@ struct qlw_iocb_seg {
 #define QLW_IOCB_MARKER			0x04
 
 struct qlw_iocb_req0 {
-	u_int8_t	entry_type;	/* QLW_IOCB_CMD_TYPE_0 */
-	u_int8_t	entry_count;
-	u_int8_t	seqno;
-	u_int8_t	flags;
+	struct qlw_iocb_hdr hdr;	/* QLW_IOCB_REQ_TYPE0 */
 
-	u_int32_t	req_handle;
-	u_int8_t	req_lun_trn;
-	u_int8_t	req_target;
-	u_int16_t	req_ccblen;
-	u_int16_t	req_flags;
-	u_int16_t	req_reserved;
-	u_int16_t	req_time;
-	u_int16_t	req_seg_count;
-	u_int8_t	req_cdb[12];
-	struct qlw_iocb_seg req0_segs[4];
+	u_int32_t	handle;
+	u_int16_t	device;
+	u_int16_t	ccblen;
+	u_int16_t	flags;
+	u_int16_t	reserved;
+	u_int16_t	timeout;
+	u_int16_t	seg_count;
+	u_int8_t	cdb[12];
+	struct qlw_iocb_seg segs[4];
 } __packed;
 
 struct qlw_iocb_cont0 {
-	u_int8_t	entry_type;	/* QLA_IOCB_CONT_TYPE_0 */
-	u_int8_t	entry_count;
-	u_int8_t	seqno;
-	u_int8_t	flags;
+	struct qlw_iocb_hdr hdr;	/* QLW_IOCB_CONT_TYPE_0 */
 
 	u_int32_t	reserved;
 	struct qlw_iocb_seg segs[7];
 } __packed;
 
-struct qla_iocb_status {
-	u_int8_t	entry_type;	/* QLA_IOCB_STATUS */
-	u_int8_t	entry_count;
-	u_int8_t	seqno;
-	u_int8_t	flags;
+struct qlw_iocb_status {
+	struct qlw_iocb_hdr hdr;
 
 	u_int32_t	handle;
 	u_int16_t	scsi_status;
@@ -326,14 +321,13 @@ struct qla_iocb_status {
 #define QLW_SCSI_STATUS_SENSE_VALID	0x0200
 
 struct qlw_iocb_marker {
-	u_int8_t	entry_type;	/* QLW_IOCB_MARKER */
-	u_int8_t	entry_count;
-	u_int8_t	seqno;
-	u_int8_t	flags;
+	struct qlw_iocb_hdr hdr;	/* QLW_IOCB_MARKER */
 
 	u_int32_t	handle;
-	u_int8_t	lun;
-	u_int8_t	target;
-	u_int8_t	modifier;
-	u_int8_t	reserved2[53];
+	u_int16_t	device;
+	u_int16_t	modifier;
+	u_int8_t	reserved2[52];
+
 } __packed;
+
+#define QLW_IOCB_MARKER_SYNC_ALL	2
