@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.53 2014/03/15 09:50:26 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.54 2014/03/15 10:13:24 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -60,6 +60,8 @@
 #include <dev/usb/uhid_rdesc.h>
 #endif /* !SMALL_KERNEL */
 
+#define DEVNAME(sc)		((sc)->sc_dev.dv_xname)
+
 #ifdef UHIDEV_DEBUG
 #define DPRINTF(x)	do { if (uhidevdebug) printf x; } while (0)
 #define DPRINTFN(n,x)	do { if (uhidevdebug>(n)) printf x; } while (0)
@@ -119,7 +121,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_interface *iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
@@ -132,24 +133,22 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status err;
 
 	sc->sc_udev = uaa->device;
-	sc->sc_iface = iface;
-	id = usbd_get_interface_descriptor(iface);
+	sc->sc_iface = uaa->iface;
+	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	(void)usbd_set_idle(iface, 0, 0);
+	usbd_set_idle(sc->sc_iface, 0, 0);
 #if 0
-
-	qflags = usbd_get_quirks(sc->sc_udev)->uq_flags;
-	if ((qflags & UQ_NO_SET_PROTO) == 0 &&
+	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0 &&
 	    id->bInterfaceSubClass != UISUBCLASS_BOOT)
-		(void)usbd_set_protocol(iface, 1);
+		usbd_set_protocol(sc->sc_iface, 1);
 #endif
 
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
-			    sc->sc_dev.dv_xname);
+			    DEVNAME(sc));
 			return;
 		}
 
@@ -169,7 +168,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			printf("%s: unexpected endpoint\n", sc->sc_dev.dv_xname);
+			printf("%s: unexpected endpoint\n", DEVNAME(sc));
 			return;
 		}
 	}
@@ -179,7 +178,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	 * The output interrupt endpoint is optional
 	 */
 	if (sc->sc_iep_addr == -1) {
-		printf("%s: no input interrupt endpoint\n", sc->sc_dev.dv_xname);
+		printf("%s: no input interrupt endpoint\n", DEVNAME(sc));
 		return;
 	}
 
@@ -197,7 +196,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
-			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
+			usbd_set_report(sc->sc_iface, UHID_FEATURE_REPORT, 2,
 			    &reportbuf, sizeof reportbuf);
 			size = sizeof uhid_graphire3_4x5_report_descr;
 			descptr = uhid_graphire3_4x5_report_descr;
@@ -224,31 +223,30 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		desc = NULL;
-		err = usbd_read_report_desc(uaa->iface, &desc, &size, M_USBDEV);
+		err = usbd_read_report_desc(sc->sc_iface, &desc, &size,
+		    M_USBDEV);
 	}
 	if (err) {
-		printf("%s: no report descriptor\n", sc->sc_dev.dv_xname);
+		printf("%s: no report descriptor\n", DEVNAME(sc));
 		return;
 	}
 
 	sc->sc_repdesc = desc;
 	sc->sc_repdesc_size = size;
 
-	uha.uaa = uaa;
 	nrepid = uhidev_maxrepid(desc, size);
 	if (nrepid < 0)
 		return;
-	printf("%s: iclass %d/%d", sc->sc_dev.dv_xname,
-	    id->bInterfaceClass, id->bInterfaceSubClass);
+	printf("%s: iclass %d/%d", DEVNAME(sc), id->bInterfaceClass,
+	    id->bInterfaceSubClass);
 	if (nrepid > 0)
-		printf(", %d report id%s", nrepid,
-		    nrepid > 1 ? "s" : "");
+		printf(", %d report id%s", nrepid, nrepid > 1 ? "s" : "");
 	printf("\n");
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(struct device *),
 	    M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
-		printf("%s: no memory\n", sc->sc_dev.dv_xname);
+		printf("%s: no memory\n", DEVNAME(sc));
 		return;
 	}
 	sc->sc_nrepid = nrepid;
@@ -266,6 +264,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_isize += nrepid != 1;	/* space for report ID */
 	DPRINTF(("uhidev_attach: isize=%d\n", sc->sc_isize));
 
+	uha.uaa = uaa;
 	uha.parent = sc;
 	for (repid = 0; repid < nrepid; repid++) {
 		DPRINTF(("uhidev_match: try repid=%d\n", repid));
@@ -284,7 +283,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
 					DPRINTF(("%s: sc_intr == NULL\n",
-					       sc->sc_dev.dv_xname));
+					       DEVNAME(sc)));
 					return;
 				}
 #endif
@@ -417,8 +416,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: interrupt status=%d\n", sc->sc_dev.dv_xname,
-			 status));
+		DPRINTF(("%s: interrupt status=%d\n", DEVNAME(sc), status));
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 		return;
 	}
