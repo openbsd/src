@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.52 2014/02/25 15:49:10 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.53 2014/03/15 09:50:26 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -279,7 +279,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			                           uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
-				dev->sc_in_rep_size = repsizes[repid];
 #ifdef DIAGNOSTIC
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
@@ -438,11 +437,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (scd == NULL || !(scd->sc_state & UHIDEV_OPEN))
 		return;
-#ifdef UHIDEV_DEBUG
-	if (scd->sc_in_rep_size != cc)
-		printf("%s: bad input length %d != %d\n",sc->sc_dev.dv_xname,
-		       scd->sc_in_rep_size, cc);
-#endif
+
 	scd->sc_intr(scd, p, cc);
 }
 
