@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.277 2014/03/12 00:44:10 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.278 2014/03/15 22:29:28 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -399,6 +399,7 @@ dma*	at sbus?				# SBus
 esp*	at dma?					# SBus
 esp*	at sbus?
 isp*	at sbus?
+qlw*	at sbus?
 qla*	at sbus?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
