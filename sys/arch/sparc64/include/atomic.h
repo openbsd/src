@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.9 2014/01/30 12:27:10 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.10 2014/03/15 06:18:00 dlg Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -129,15 +129,11 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 	} while (r != e);
 }
 
-#if KERN_MM != PSTATE_MM_TSO
-#error membar operations only support KERN_MM = PSTATE_MM_TSO
-#endif
-
-#define membar_enter()		membar(LoadLoad)
-#define membar_exit()		membar(LoadLoad)
-#define membar_producer()	membar(0)
+#define membar_enter()		membar(StoreLoad|StoreStore)
+#define membar_exit()		membar(LoadStore|StoreStore)
+#define membar_producer()	membar(StoreStore)
 #define membar_consumer()	membar(LoadLoad)
-#define membar_sync()		membar(LoadLoad)
+#define membar_sync()		membar(Sync)
 
 #endif /* defined(_KERNEL) */
 #endif /* _MACHINE_ATOMIC_H_ */
