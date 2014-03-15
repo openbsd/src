@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwreg.h,v 1.4 2014/03/08 18:30:54 kettenis Exp $ */
+/*	$OpenBSD: qlwreg.h,v 1.5 2014/03/15 12:28:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -118,6 +118,8 @@
 #define QLW_MBOX_REGISTER_TEST		0x0006
 #define QLW_MBOX_VERIFY_CSUM		0x0007
 #define QLW_MBOX_ABOUT_FIRMWARE		0x0008
+#define QLW_MBOX_INIT_REQ_QUEUE		0x0010
+#define QLW_MBOX_INIT_RSP_QUEUE		0x0011
 #define QLW_MBOX_BUS_RESET		0x0018
 #define QLW_MBOX_GET_FIRMWARE_STATUS	0x001F
 #define QLW_MBOX_SET_INITIATOR_ID	0x0030

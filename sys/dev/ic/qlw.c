@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.14 2014/03/15 11:53:35 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.15 2014/03/15 12:28:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -314,7 +314,7 @@ qlw_attach(struct qlw_softc *sc)
 		return (ENOMEM);
 	}
 
-	sc->sc_mbox[0] = QLW_MBOX_INIT_REQ_QUEUE_A64;
+	sc->sc_mbox[0] = QLW_MBOX_INIT_REQ_QUEUE;
 	sc->sc_mbox[1] = sc->sc_maxrequests;
 	qlw_mbox_putaddr(sc->sc_mbox, sc->sc_requests);
 	sc->sc_mbox[4] = 0;
@@ -323,7 +323,7 @@ qlw_attach(struct qlw_softc *sc)
 		goto free_ccbs;
 	}
 
-	sc->sc_mbox[0] = QLW_MBOX_INIT_RSP_QUEUE_A64;
+	sc->sc_mbox[0] = QLW_MBOX_INIT_RSP_QUEUE;
 	sc->sc_mbox[1] = sc->sc_maxresponses;
 	qlw_mbox_putaddr(sc->sc_mbox, sc->sc_responses);
 	sc->sc_mbox[5] = 0;
