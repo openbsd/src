@@ -6293,6 +6293,9 @@
 ./usr/share/man/man9/bcmp.9
 ./usr/share/man/man9/bdevvp.9
 ./usr/share/man/man9/bdwrite.9
+./usr/share/man/man9/bemtoh16.9
+./usr/share/man/man9/bemtoh32.9
+./usr/share/man/man9/bemtoh64.9
 ./usr/share/man/man9/bintime.9
 ./usr/share/man/man9/binuptime.9
 ./usr/share/man/man9/bio_register.9
@@ -6481,6 +6484,12 @@
 ./usr/share/man/man9/hashinit.9
 ./usr/share/man/man9/hook_disestablish.9
 ./usr/share/man/man9/hook_establish.9
+./usr/share/man/man9/htobem16.9
+./usr/share/man/man9/htobem32.9
+./usr/share/man/man9/htobem64.9
+./usr/share/man/man9/htolem16.9
+./usr/share/man/man9/htolem32.9
+./usr/share/man/man9/htolem64.9
 ./usr/share/man/man9/hz.9
 ./usr/share/man/man9/hzto.9
 ./usr/share/man/man9/idgen32.9
@@ -6571,6 +6580,9 @@
 ./usr/share/man/man9/ktrpsig.9
 ./usr/share/man/man9/ktrsyscall.9
 ./usr/share/man/man9/ktrsysret.9
+./usr/share/man/man9/lemtoh16.9
+./usr/share/man/man9/lemtoh32.9
+./usr/share/man/man9/lemtoh64.9
 ./usr/share/man/man9/lmax.9
 ./usr/share/man/man9/lmin.9
 ./usr/share/man/man9/loadfirmware.9
