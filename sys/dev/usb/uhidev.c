@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.54 2014/03/15 10:13:24 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.55 2014/03/16 10:54:40 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #ifndef SMALL_KERNEL
 /* Replacement report descriptors for devices shipped with broken ones */
 #include <dev/usb/uhid_rdesc.h>
+int uhidev_use_rdesc(struct uhidev_softc *, int, int, void **, int *);
 #endif /* !SMALL_KERNEL */
 
 #define DEVNAME(sc)		((sc)->sc_dev.dv_xname)
@@ -124,13 +125,9 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
-	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
-	int repsizes[256];
-	int i;
-	void *desc;
-	const void *descptr;
-	usbd_status err;
+	int i, repsizes[256];
+	void *desc = NULL;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
@@ -182,53 +179,17 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* XXX need to extend this */
-	descptr = NULL;
 #ifndef SMALL_KERNEL
-	if (uaa->vendor == USB_VENDOR_WACOM) {
-		static uByte reportbuf[] = {2, 2, 2};
-
-		/* The report descriptor for the Wacom Graphire is broken. */
-		switch (uaa->product) {
-		case USB_PRODUCT_WACOM_GRAPHIRE:
-			size = sizeof uhid_graphire_report_descr;
-			descptr = uhid_graphire_report_descr;
-			break;
-		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
-		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
-			usbd_set_report(sc->sc_iface, UHID_FEATURE_REPORT, 2,
-			    &reportbuf, sizeof reportbuf);
-			size = sizeof uhid_graphire3_4x5_report_descr;
-			descptr = uhid_graphire3_4x5_report_descr;
-			break;
-		default:
-			/* Keep descriptor */
-			break;
-		}
-	} else if (uaa->vendor == USB_VENDOR_MICROSOFT &&
-	    uaa->product == USB_PRODUCT_MICROSOFT_XBOX360_CONTROLLER) {
-		/* The Xbox 360 gamepad has no report descriptor. */
-		size = sizeof uhid_xb360gp_report_descr;
-		descptr = uhid_xb360gp_report_descr;
-	}
+	if (uhidev_use_rdesc(sc, uaa->vendor, uaa->product, &desc, &size))
+		return;
 #endif /* !SMALL_KERNEL */
 
-	if (descptr) {
-		desc = malloc(size, M_USBDEV, M_NOWAIT);
-		if (desc == NULL)
-			err = USBD_NOMEM;
-		else {
-			err = USBD_NORMAL_COMPLETION;
-			memcpy(desc, descptr, size);
+	if (desc == NULL) {
+		if (usbd_read_report_desc(sc->sc_iface, &desc, &size,
+		    M_USBDEV)) {
+			printf("%s: no report descriptor\n", DEVNAME(sc));
+			return;
 		}
-	} else {
-		desc = NULL;
-		err = usbd_read_report_desc(sc->sc_iface, &desc, &size,
-		    M_USBDEV);
-	}
-	if (err) {
-		printf("%s: no report descriptor\n", DEVNAME(sc));
-		return;
 	}
 
 	sc->sc_repdesc = desc;
@@ -267,30 +228,69 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	uha.uaa = uaa;
 	uha.parent = sc;
 	for (repid = 0; repid < nrepid; repid++) {
-		DPRINTF(("uhidev_match: try repid=%d\n", repid));
+		struct device *dev;
+
+		DPRINTF(("%s: try repid=%d\n", __func__, repid));
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
 		    hid_report_size(desc, size, hid_output, repid) == 0 &&
-		    hid_report_size(desc, size, hid_feature, repid) == 0) {
-			;	/* already NULL in sc->sc_subdevs[repid] */
-		} else {
-			uha.reportid = repid;
-			dev = (struct uhidev *)config_found_sm(self, &uha,
-			                           uhidevprint, uhidevsubmatch);
-			sc->sc_subdevs[repid] = dev;
-			if (dev != NULL) {
-#ifdef DIAGNOSTIC
-				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
-					 repid, dev));
-				if (dev->sc_intr == NULL) {
-					DPRINTF(("%s: sc_intr == NULL\n",
-					       DEVNAME(sc)));
-					return;
-				}
-#endif
-			}
-		}
+		    hid_report_size(desc, size, hid_feature, repid) == 0)
+			continue;
+
+		uha.reportid = repid;
+		dev = config_found_sm(self, &uha, uhidevprint, uhidevsubmatch);
+		sc->sc_subdevs[repid] = (struct uhidev *)dev;
 	}
 }
+
+#ifndef SMALL_KERNEL
+int
+uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
+    void **descp, int *sizep)
+{
+	static uByte reportbuf[] = {2, 2, 2};
+	const void *descptr = NULL;
+	void *desc;
+	int size;
+
+	if (vendor == USB_VENDOR_WACOM) {
+
+		/* The report descriptor for the Wacom Graphire is broken. */
+		switch (product) {
+		case USB_PRODUCT_WACOM_GRAPHIRE:
+			size = sizeof(uhid_graphire_report_descr);
+			descptr = uhid_graphire_report_descr;
+			break;
+		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
+		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
+			usbd_set_report(sc->sc_iface, UHID_FEATURE_REPORT, 2,
+			    &reportbuf, sizeof(reportbuf));
+			size = sizeof(uhid_graphire3_4x5_report_descr);
+			descptr = uhid_graphire3_4x5_report_descr;
+			break;
+		default:
+			break;
+		}
+	} else if (vendor == USB_VENDOR_MICROSOFT &&
+	    product == USB_PRODUCT_MICROSOFT_XBOX360_CONTROLLER) {
+		/* The Xbox 360 gamepad has no report descriptor. */
+		size = sizeof(uhid_xb360gp_report_descr);
+		descptr = uhid_xb360gp_report_descr;
+	}
+
+	if (descptr) {
+		desc = malloc(size, M_USBDEV, M_NOWAIT);
+		if (desc == NULL)
+			return (ENOMEM);
+
+		memcpy(desc, descptr, size);
+
+		*descp = desc;
+		*sizep = size;
+	}
+
+	return (0);
+}
+#endif /* !SMALL_KERNEL */
 
 int
 uhidev_maxrepid(void *buf, int len)
