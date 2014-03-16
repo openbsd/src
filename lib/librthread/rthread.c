@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.76 2013/12/12 08:12:08 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.77 2014/03/16 18:38:30 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -62,7 +62,6 @@ struct pthread _initial_thread;
 struct thread_control_block _initial_thread_tcb;
 
 struct pthread_attr _rthread_attr_default = {
-#ifndef lint
 	.stack_addr			= NULL,
 	.stack_size			= RTHREAD_STACK_SIZE_DEF,
 /*	.guard_size		set in _rthread_init */
@@ -71,9 +70,6 @@ struct pthread_attr _rthread_attr_default = {
 	.sched_policy			= SCHED_OTHER,
 	.sched_param = { .sched_priority = 0 },
 	.sched_inherit			= PTHREAD_INHERIT_SCHED,
-#else
-	0
-#endif
 };
 
 /*

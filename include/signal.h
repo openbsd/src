@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.20 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.21 2014/03/16 18:38:30 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ int	pthread_sigmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 #endif
 int	sigsuspend(const sigset_t *);
 
-#if !defined(_ANSI_LIBRARY) && !defined(lint)
+#if !defined(_ANSI_LIBRARY)
 
 extern int *__errno(void);
 
@@ -96,7 +96,7 @@ __only_inline int sigismember(const sigset_t *__set, int __signo) {
 	}
 	return ((*__set & (1U << ((__signo)-1))) != 0);
 }
-#endif /* !_ANSI_LIBRARY && !lint */
+#endif /* !_ANSI_LIBRARY */
 
 /* List definitions after function declarations, or Reiser cpp gets upset. */
 #define	sigemptyset(set)	(*(set) = 0, 0)

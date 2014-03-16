@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2013/10/27 18:31:24 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2014/03/16 18:38:30 guenther Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.13 2013/10/27 18:31:24 guenther Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.14 2014/03/16 18:38:30 guenther Exp $ */
 
 
 #include "flexdef.h"
@@ -167,7 +167,7 @@ char **argv;
 	 */
 	flexend( 0 );
 
-	return 0;	/* keep compilers/lint happy */
+	return 0;
 	}
 
 

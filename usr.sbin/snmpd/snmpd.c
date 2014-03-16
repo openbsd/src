@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.18 2013/10/17 08:42:44 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.19 2014/03/16 18:38:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -83,7 +83,6 @@ snmpd_sig_handler(int sig, short event, void *arg)
 	}
 }
 
-/* __dead is for lint */
 __dead void
 usage(void)
 {

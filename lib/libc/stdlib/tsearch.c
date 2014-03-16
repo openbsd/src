@@ -1,10 +1,10 @@
-/*	$OpenBSD: tsearch.c,v 1.7 2012/02/06 20:29:54 guenther Exp $	*/
+/*	$OpenBSD: tsearch.c,v 1.8 2014/03/16 18:38:30 guenther Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
  * the AT&T man page says.
  *
- * The node_t structure is for internal use only, lint doesn't grok it.
+ * The node_t structure is for internal use only
  *
  * Written by reading the System V Interface Definition, not the code.
  *

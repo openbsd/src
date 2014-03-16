@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.34 2014/03/07 19:44:07 tedu Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.35 2014/03/16 18:38:30 guenther Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -234,12 +234,12 @@ char *body[] =
 	"        goto yyreduce;",
 	"    }",
 	"    if (yyerrflag) goto yyinrecovery;",
-	"#if defined(lint) || defined(__GNUC__)",
+	"#if defined(__GNUC__)",
 	"    goto yynewerror;",
 	"#endif",
 	"yynewerror:",
 	"    yyerror(\"syntax error\");",
-	"#if defined(lint) || defined(__GNUC__)",
+	"#if defined(__GNUC__)",
 	"    goto yyerrlab;",
 	"#endif",
 	"yyerrlab:",

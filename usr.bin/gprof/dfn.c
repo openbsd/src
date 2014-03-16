@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfn.c,v 1.7 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: dfn.c,v 1.8 2014/03/16 18:38:30 guenther Exp $	*/
 /*	$NetBSD: dfn.c,v 1.5 1995/04/19 07:15:56 cgd Exp $	*/
 
 /*
@@ -251,10 +251,9 @@ dfn_findcycle(nltype *childp)
 
     /*
      *	deal with self-cycles
-     *	for lint: ARGSUSED
      */
 void
-dfn_self_cycle(nltype *parentp)
+dfn_self_cycle(nltype *parentp __unused)
 {
 	/*
 	 *	since we are taking out self-cycles elsewhere

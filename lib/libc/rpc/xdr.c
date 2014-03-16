@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.c,v 1.11 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: xdr.c,v 1.12 2014/03/16 18:38:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -409,7 +409,6 @@ xdr_bool(XDR *xdrs, int32_t *bp)
 bool_t
 xdr_enum(XDR *xdrs, int32_t *ep)
 {
-#ifndef lint
 	enum sizecheck { SIZEVAL };	/* used to find the size of an enum */
 
 	/*
@@ -424,11 +423,6 @@ xdr_enum(XDR *xdrs, int32_t *ep)
 	} else {
 		return (FALSE);
 	}
-#else
-	(void) (xdr_short(xdrs, (short *)ep));
-	(void) (xdr_int(xdrs, (int *)ep));
-	return (xdr_long(xdrs, (long *)ep));
-#endif
 }
 
 /*

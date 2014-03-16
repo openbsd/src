@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.45 2013/12/04 22:58:24 deraadt Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.46 2014/03/16 18:38:30 guenther Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -437,7 +437,6 @@ extern int __isthreaded;
 #define putc(x, fp)	(!__isthreaded ? __sputc(x, fp) : (putc)(x, fp))
 #endif /* __BSD_VISIBLE */
 
-#ifndef lint
 #if __POSIX_VISIBLE >= 199506
 #define	getc_unlocked(fp)	__sgetc(fp)
 /*
@@ -448,7 +447,6 @@ extern int __isthreaded;
 #define putc_unlocked(x, fp)	__sputc(x, fp)
 #endif /* __BSD_VISIBLE */
 #endif /* __POSIX_VISIBLE >= 199506 */
-#endif /* lint */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)

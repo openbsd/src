@@ -1,4 +1,4 @@
-/*	$OpenBSD: complex.h,v 1.4 2011/07/08 19:25:31 martynas Exp $	*/
+/*	$OpenBSD: complex.h,v 1.5 2014/03/16 18:38:30 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -27,8 +27,6 @@
 #if __STDC_VERSION__ < 199901
 #define _Complex	__complex__
 #endif
-#define _Complex_I	1.0fi
-#elif defined(lint)
 #define _Complex_I	1.0fi
 #endif
 

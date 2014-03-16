@@ -42,11 +42,7 @@
 	    abort(); \
 	}
 #else
-#ifdef lint
-#define ASSERT(x)
-#else
 #define ASSERT(x)	((void)0);
-#endif
 #endif
 #endif
 

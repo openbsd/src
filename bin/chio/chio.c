@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.24 2012/12/04 02:24:46 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.25 2014/03/16 18:38:30 guenther Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -483,11 +483,6 @@ do_status(char *cname, int argc, char *argv[])
 	int i, chet, schet, echet, c;
 	char *description;
 	size_t count;
-
-#ifdef lint
-	count = 0;
-	description = NULL;
-#endif
 
 	optreset = 1;
 	optind = 1;
