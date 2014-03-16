@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2014/03/16 07:48:00 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.12 2014/03/16 20:31:45 guenther Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -103,9 +103,6 @@ extern struct mutex ddb_mp_mutex;
  * We define some of our own commands
  */
 #define DB_MACHINE_COMMANDS
-
-#define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	64
 
 extern void db_machine_init(void);
 

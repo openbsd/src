@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.22 2014/01/26 17:40:11 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.23 2014/03/16 20:31:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -29,12 +29,6 @@
 
 /* XXX - Need to include vm.h for boolean_t */
 #include <uvm/uvm_extern.h>
-
-/*
- * We use Elf64 symbols in DDB.
- */
-#define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	64
 
 struct opcode {
 	enum opc_fmt { OPC_PAL, OPC_RES, OPC_MEM, OPC_OP, OPC_BR } opc_fmt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2013/05/10 22:08:15 patrick Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.9 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -100,9 +100,6 @@ void db_machine_init (void);
 
 #define branch_taken(ins, pc, fun, regs) \
 	db_branch_taken((ins), (pc), (regs))
-
-#define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32
 
 void db_show_frame_cmd(db_expr_t, int, db_expr_t, char *);
 

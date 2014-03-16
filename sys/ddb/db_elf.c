@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.9 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.10 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -42,14 +42,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
-
-#ifdef DB_ELF_SYMBOLS
-
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-
-#define	ELFSIZE		DB_ELFSIZE
 
 #include <sys/exec_elf.h>
 
@@ -419,4 +411,3 @@ db_elf_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 		}
 	return;
 }
-#endif /* DB_ELF_SYMBOLS */

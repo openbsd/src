@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2010/11/27 19:57:23 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
@@ -62,13 +62,6 @@ void db_machine_init (void);
 boolean_t inst_call(int);
 boolean_t inst_return(int);
 boolean_t inst_trap_return(int);
-
-/*
- * We use ELF symbols in DDB.
- *
- */
-#define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 /*
  * We have machine-dependent commands.

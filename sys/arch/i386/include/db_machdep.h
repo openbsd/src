@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.22 2014/03/16 07:48:00 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.23 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -72,9 +72,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 				  ((ins)&0x3800) == 0x1000))
 
 #define DB_MACHINE_COMMANDS
-
-#define DB_ELF_SYMBOLS
-#define DB_ELFSIZE		32
 
 /*
  * Constants for KGDB.

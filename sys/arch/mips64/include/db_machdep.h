@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2013/02/09 19:25:13 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.14 2014/03/16 20:31:46 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -34,8 +34,6 @@
 #include <uvm/uvm_param.h>
 
 #define DB_MACHINE_COMMANDS	/* We have machine specific commands */
-#define	DB_ELF_SYMBOLS		/* Elf style symbol table support */
-#define	DB_ELFSIZE	64
 
 typedef struct trap_frame db_regs_t;
 extern db_regs_t	ddb_regs;

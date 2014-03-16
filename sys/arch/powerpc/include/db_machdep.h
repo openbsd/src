@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.24 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.25 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -36,12 +36,6 @@
 #include <sys/types.h>
 #include <uvm/uvm_param.h>
 #include <machine/trap.h>
-
-/*
- * We use Elf32 symbols in DDB.
- */
-#define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 typedef	vaddr_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */

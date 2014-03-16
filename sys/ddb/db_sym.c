@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.33 2013/10/17 08:02:19 deraadt Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.34 2014/03/16 20:31:46 guenther Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -62,9 +62,7 @@ extern char end[];
  * Put the most picky symbol table formats at the top!
  */
 const db_symformat_t *db_symformats[] = {
-#ifdef DB_ELF_SYMBOLS
 	&db_symformat_elf,
-#endif
 	NULL,
 };
 
