@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.81 2013/11/26 20:12:03 sthen Exp $
+#	$OpenBSD: changelist,v 1.82 2014/03/16 11:57:10 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -178,6 +178,8 @@
 /var/named/standard/loopback
 /var/named/standard/loopback6.arpa
 /var/nsd/etc/nsd.conf
+/var/unbound/etc/root.key
+/var/unbound/etc/unbound.conf
 /var/www/conf/access.conf
 /var/www/conf/httpd.conf
 /var/www/conf/mime.types
