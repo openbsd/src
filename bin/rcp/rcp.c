@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.54 2013/11/20 20:53:55 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.55 2014/03/16 05:30:13 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ toremote(char *targ, int argc, char *argv[])
 		src = colon(argv[i]);
 		if (src) {			/* remote to remote */
 			freeargs(&alist);
-			addargs(&alist, "%s", _PATH_RSH);
+			addargs(&alist, "%s", _PATH_OLD_RSH);
 			addargs(&alist, "%s", "-n");
 
 			*src++ = 0;

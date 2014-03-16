@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2014/03/16 05:30:13 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.5 1995/03/21 08:19:03 cgd Exp $	*/
 
 /*
@@ -35,4 +35,4 @@
 #include <paths.h>
 
 #define	_PATH_CP	"/bin/cp"
-#define	_PATH_RSH	"/usr/bin/rsh"
+#define	_PATH_OLD_RSH	"/usr/bin/rsh"
