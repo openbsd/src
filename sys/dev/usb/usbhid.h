@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.16 2014/03/15 02:24:44 andre Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.17 2014/03/16 10:53:09 mpi Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -69,7 +69,7 @@ struct usb_hid_descriptor {
 #define HUP_SPORTS_CONTROLS	0x0004
 #define HUP_GAMING_CONTROLS	0x0005
 #define HUP_KEYBOARD		0x0007
-#define HUP_LEDS		0x0008
+#define HUP_LED			0x0008
 #define HUP_BUTTON		0x0009
 #define HUP_ORDINALS		0x000a
 #define HUP_TELEPHONY		0x000b
@@ -91,7 +91,7 @@ struct usb_hid_descriptor {
 #define HUP_APPLE		0x00ff
 #define HUP_MICROSOFT		0xff00
 
-/* Usage pages for USB Power Devices (0x84 power device page) */
+/* Usages, Power Device */
 #define HUP_INAME		0x0001
 #define HUP_PRESENT_STATUS	0x0002
 #define HUP_CHANGED_STATUS	0x0003
@@ -170,7 +170,7 @@ struct usb_hid_descriptor {
 #define HUP_IPRODUCT		0x00fe
 #define HUP_ISERIALNUMBER	0x00ff
 
-/* Usage pages for USB Power Devices (0x85 battery system page) */
+/* Usages, Battery */
 #define HUB_SMB_BATTERY_MODE	0x0001
 #define HUB_SMB_BATTERY_STATUS	0x0002
 #define HUB_SMB_ALARM_WARNING	0x0003
@@ -307,7 +307,7 @@ struct usb_hid_descriptor {
 #define HUG_SYSTEM_MENU_UP	0x008c
 #define HUG_SYSTEM_MENU_DOWN	0x008d
 
-/* Usages Digitizers */
+/* Usages, Digitizers */
 #define HUD_UNDEFINED		0x0000
 #define HUD_DIGITIZER		0x0001
 #define HUD_PEN			0x0002
@@ -336,12 +336,12 @@ struct usb_hid_descriptor {
 #define HUD_ERASER		0x0045
 #define HUD_TABLET_PICK		0x0046
 
-/* Usages LEDs */
-#define HUD_LED_NUM_LOCK	0x0001
-#define HUD_LED_CAPS_LOCK	0x0002
-#define HUD_LED_SCROLL_LOCK	0x0003
-#define HUD_LED_COMPOSE		0x0004
-#define HUD_LED_KANA		0x0005
+/* Usages, LED */
+#define HUL_NUM_LOCK		0x0001
+#define HUL_CAPS_LOCK		0x0002
+#define HUL_SCROLL_LOCK		0x0003
+#define HUL_COMPOSE		0x0004
+#define HUL_KANA		0x0005
 
 /* Usages, Consumer */
 #define HUC_AC_PAN		0x0238

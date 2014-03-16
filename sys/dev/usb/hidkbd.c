@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.9 2014/03/16 10:32:31 mpi Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.10 2014/03/16 10:53:09 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -619,13 +619,13 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 	if (kbd->sc_nkeycode == 0 && ivar == 0)
 		return "no usable key codes array";
 
-	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_NUM_LOCK),
+	hid_locate(desc, dlen, HID_USAGE2(HUP_LED, HUL_NUM_LOCK),
 	    id, hid_output, &kbd->sc_numloc, NULL);
-	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_CAPS_LOCK),
+	hid_locate(desc, dlen, HID_USAGE2(HUP_LED, HUL_CAPS_LOCK),
 	    id, hid_output, &kbd->sc_capsloc, NULL);
-	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_SCROLL_LOCK),
+	hid_locate(desc, dlen, HID_USAGE2(HUP_LED, HUL_SCROLL_LOCK),
 	    id, hid_output, &kbd->sc_scroloc, NULL);
-	hid_locate(desc, dlen, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
+	hid_locate(desc, dlen, HID_USAGE2(HUP_LED, HUL_COMPOSE),
 	    id, hid_output, &kbd->sc_compose, NULL);
 
 	return (NULL);
