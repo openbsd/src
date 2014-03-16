@@ -2691,7 +2691,6 @@
 ./usr/sbin/dig
 ./usr/sbin/dnssec-keygen
 ./usr/sbin/dnssec-signzone
-./usr/sbin/drill
 ./usr/sbin/dvmrpctl
 ./usr/sbin/dvmrpd
 ./usr/sbin/editmap
