@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.57 2014/03/16 22:43:13 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.58 2014/03/16 23:29:41 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -226,18 +226,8 @@ writeall(int fd, const void *buf, size_t buflen, const char *filename)
 
 #ifndef VERIFYONLY
 static void
-appendall(const char *filename, const void *buf, size_t buflen)
-{
-	int fd;
-
-	fd = xopen(filename, O_NOFOLLOW | O_WRONLY | O_APPEND, 0);
-	writeall(fd, buf, buflen, filename);
-	close(fd);
-}
-
-static void
 writeb64file(const char *filename, const char *comment, const void *buf,
-    size_t buflen, int flags, mode_t mode)
+    size_t buflen, const void *msg, size_t msglen, int flags, mode_t mode)
 {
 	char header[1024];
 	char b64[1024];
@@ -253,6 +243,8 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
 	explicit_bzero(b64, sizeof(b64));
+	if (msg)
+		writeall(fd, msg, msglen, filename);
 	close(fd);
 }
 
@@ -329,7 +321,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	    comment) >= sizeof(commentbuf))
 		err(1, "comment too long");
 	writeb64file(seckeyfile, commentbuf, &enckey,
-	    sizeof(enckey), O_EXCL, 0600);
+	    sizeof(enckey), NULL, 0, O_EXCL, 0600);
 	explicit_bzero(&enckey, sizeof(enckey));
 
 	memcpy(pubkey.pkalg, PKALG, 2);
@@ -338,7 +330,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	    comment) >= sizeof(commentbuf))
 		err(1, "comment too long");
 	writeb64file(pubkeyfile, commentbuf, &pubkey,
-	    sizeof(pubkey), O_EXCL, 0666);
+	    sizeof(pubkey), NULL, 0, O_EXCL, 0666);
 }
 
 static void
@@ -389,9 +381,12 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 		    comment) >= sizeof(sigcomment))
 			err(1, "comment too long");
 	}
-	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), O_TRUNC, 0666);
 	if (embedded)
-		appendall(sigfile, msg, msglen);
+		writeb64file(sigfile, sigcomment, &sig, sizeof(sig), msg,
+		    msglen, O_TRUNC, 0666);
+	else
+		writeb64file(sigfile, sigcomment, &sig, sizeof(sig), NULL,
+		    0, O_TRUNC, 0666);
 
 	free(msg);
 }
