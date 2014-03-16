@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2014/03/15 01:08:05 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2014/03/16 11:43:28 sthen Exp $
 
 .include <bsd.own.mk>
 
@@ -8,14 +8,10 @@ USER=		_unbound
 
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 
-CONFIGURE_OPTS_LDNS=	--with-drill \
-			--disable-shared
-
 CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-ssl=/usr \
 			--with-libevent=/usr \
 			--with-libexpat=/usr \
-			--with-ldns=ldns \
 			--without-pthreads \
 			--without-pythonmodule \
 			--with-chroot-dir=${CHROOTDIR} \
@@ -24,8 +20,7 @@ CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-username=${USER} \
 			--disable-shared
 
-PROG=	ldns/drill/drill \
-	unbound \
+PROG=	unbound \
 	unbound-anchor \
 	unbound-checkconf \
 	unbound-control \
@@ -33,8 +28,7 @@ PROG=	ldns/drill/drill \
 
 SCRIPT=	unbound-control-setup
 
-MAN=	ldns/drill/drill.1 \
-	doc/unbound.8 \
+MAN=	doc/unbound.8 \
 	doc/unbound.conf.5 \
 	doc/unbound-anchor.8 \
 	doc/unbound-checkconf.8	\
@@ -55,44 +49,23 @@ gnu: ${.OBJDIR}/config.status
 .FORCE: .IGNORE
 
 config: .FORCE
-	-rm -f ${.OBJDIR}/ldns/config.cache
 	-rm -f ${.OBJDIR}/config.cache
-	cd ${.OBJDIR} && mkdir -p ldns && cd ldns && \
-		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-		${XCFLAGS} \
-		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/ldns/configure ${CONFIGURE_OPTS_LDNS} && \
-		${MAKE} 
 	cd ${.OBJDIR} && \
 		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 		${XCFLAGS} \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
-	if [ ! -e ${.OBJDIR}/ldns/drill/drill.1 ]; then \
-		cp ${.CURDIR}/ldns/drill/drill.1 \
-			${.OBJDIR}/ldns/drill/drill.1;\
-	fi
 	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
 		cp ${.CURDIR}/doc/unbound-host.1 \
 			${.OBJDIR}/doc/unbound-host.1; \
 	fi
 
 ${.OBJDIR}/config.status:
-	cd ${.OBJDIR} && mkdir -p ldns && cd ldns && \
-		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-		${XCFLAGS} \
-		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		sh ${.CURDIR}/ldns/configure ${CONFIGURE_OPTS_LDNS} && \
-		${MAKE}
 	cd ${.OBJDIR} && \
 		PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 		${XCFLAGS} \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
-	if [ ! -e ${.OBJDIR}/ldns/drill/drill.1 ]; then \
-		cp ${.CURDIR}/ldns/drill/drill.1 \
-			 ${.OBJDIR}/ldns/drill/drill.1;\
-	fi
 	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
 		cp ${.CURDIR}/doc/unbound-host.1 \
 			${.OBJDIR}/doc/unbound-host.1; \
@@ -121,7 +94,6 @@ CLEANFILES+= ${MAN} doc/example.conf doc/libunbound.3
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
-	-@if [ -e ldns/Makefile ]; then cd ldns; ${MAKE} realclean; fi
 	rm -f ${CLEANFILES}
 
 depend:
