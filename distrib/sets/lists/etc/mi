@@ -167,6 +167,7 @@
 ./etc/rc.d/syslogd
 ./etc/rc.d/tftpd
 ./etc/rc.d/tftpproxy
+./etc/rc.d/unbound
 ./etc/rc.d/watchdogd
 ./etc/rc.d/wsmoused
 ./etc/rc.d/xdm
@@ -247,6 +248,9 @@
 ./var/named/standard/loopback6.arpa
 ./var/nsd/etc/nsd.conf
 ./var/run/utmp
+./var/unbound
+./var/unbound/etc
+./var/unbound/etc/unbound.conf
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
 ./var/www/conf/bgplg.head

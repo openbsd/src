@@ -2691,6 +2691,7 @@
 ./usr/sbin/dig
 ./usr/sbin/dnssec-keygen
 ./usr/sbin/dnssec-signzone
+./usr/sbin/drill
 ./usr/sbin/dvmrpctl
 ./usr/sbin/dvmrpd
 ./usr/sbin/editmap
@@ -2839,6 +2840,12 @@
 ./usr/sbin/traceroute
 ./usr/sbin/traceroute6
 ./usr/sbin/trpt
+./usr/sbin/unbound
+./usr/sbin/unbound-anchor
+./usr/sbin/unbound-checkconf
+./usr/sbin/unbound-control
+./usr/sbin/unbound-control-setup
+./usr/sbin/unbound-host
 ./usr/sbin/usbdevs
 ./usr/sbin/user
 ./usr/sbin/useradd
