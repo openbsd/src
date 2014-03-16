@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.50 2014/03/07 19:53:33 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.51 2014/03/16 17:58:28 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -43,6 +43,7 @@
 #define COMMENTHDR "untrusted comment: "
 #define COMMENTHDRLEN 19
 #define COMMENTMAXLEN 1024
+#define VERIFYWITH "verify with "
 
 struct enckey {
 	uint8_t pkalg[2];
@@ -346,7 +347,8 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	struct enckey enckey;
 	uint8_t xorkey[sizeof(enckey.seckey)];
 	uint8_t *msg;
-	char comment[COMMENTMAXLEN], sigcomment[1024];
+	char comment[COMMENTMAXLEN], sigcomment[COMMENTMAXLEN];
+	char *secname;
 	unsigned long long msglen;
 	int i, rounds;
 	SHA2_CTX ctx;
@@ -375,9 +377,14 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	explicit_bzero(&enckey, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
-	if (snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
-	    comment) >= sizeof(sigcomment))
-		err(1, "comment too long");
+	if ((secname = strstr(seckeyfile, ".sec")) && strlen(secname) == 4) {
+		if (snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
+		    (int)strlen(seckeyfile) - 4, seckeyfile) >= sizeof(sigcomment));
+	} else {
+		if (snprintf(sigcomment, sizeof(sigcomment), "signature from %s",
+		    comment) >= sizeof(sigcomment))
+			err(1, "comment too long");
+	}
 	writeb64file(sigfile, sigcomment, &sig, sizeof(sig), O_TRUNC, 0666);
 	if (embedded)
 		appendall(sigfile, msg, msglen);
@@ -437,6 +444,7 @@ static void
 verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
     int embedded, int quiet)
 {
+	char comment[COMMENTMAXLEN];
 	struct sig sig;
 	struct pubkey pubkey;
 	unsigned long long msglen, siglen = 0;
@@ -445,14 +453,20 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 
 	msg = readmsg(embedded ? sigfile : msgfile, &msglen);
 
-	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 	if (embedded) {
-		siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), NULL);
+		siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), comment);
 		msg += siglen;
 		msglen -= siglen;
 	} else {
-		readb64file(sigfile, &sig, sizeof(sig), NULL);
+		readb64file(sigfile, &sig, sizeof(sig), comment);
 	}
+	if (!pubkeyfile) {
+		if ((pubkeyfile = strstr(comment, VERIFYWITH)))
+			pubkeyfile += strlen(VERIFYWITH);
+		else
+			usage("need pubkey");
+	}
+	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 
 	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN)) {
 #ifndef VERIFYONLY
@@ -567,6 +581,7 @@ static void
 check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
     char **argv)
 {
+	char comment[COMMENTMAXLEN];
 	struct sig sig;
 	struct pubkey pubkey;
 	unsigned long long msglen, siglen;
@@ -574,8 +589,14 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 
 	msg = readmsg(sigfile, &msglen);
 
-	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), NULL);
+	if (!pubkeyfile) {
+		if ((pubkeyfile = strstr(comment, VERIFYWITH)))
+			pubkeyfile += strlen(VERIFYWITH);
+		else
+			usage("need pubkey");
+	}
+	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 	msg += siglen;
 	msglen -= siglen;
 
@@ -716,8 +737,8 @@ main(int argc, char **argv)
 		break;
 #endif
 	case VERIFY:
-		if (!msgfile || !pubkeyfile)
-			usage("need message and pubkey");
+		if (!msgfile)
+			usage("need message");
 		verify(pubkeyfile, msgfile, sigfile, embedded, quiet);
 		break;
 	default:
