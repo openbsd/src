@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.39 2014/03/14 23:42:41 kettenis Exp $ */
+/* $OpenBSD: agp.c,v 1.40 2014/03/16 13:57:28 kettenis Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -59,11 +59,6 @@ struct agp_memory *
 int	agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 void	agp_attach(struct device *, struct device *, void *);
 int	agp_probe(struct device *, void *, void *);
-int	agpbusprint(void *, const char *);
-paddr_t	agpmmap(dev_t, off_t, int);
-int	agpioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	agpopen(dev_t, int, int, struct proc *);
-int	agpclose(dev_t, int, int , struct proc *);
 
 struct agp_memory *agp_find_memory(struct agp_softc *, int);
 struct agp_memory *agp_lookup_memory(struct agp_softc *, off_t);
