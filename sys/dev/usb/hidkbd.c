@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.8 2013/04/22 15:10:56 deraadt Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.9 2014/03/16 10:32:31 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -425,22 +425,6 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 		}
 		s = spltty();
 		wskbd_rawinput(kbd->sc_wskbddev, cbuf, j);
-
-		/*
-		 * Pass audio keys to wskbd_input anyway.
-		 */
-		for (i = 0; i < nkeys; i++) {
-			key = ibuf[i];
-			switch (key & CODEMASK) {
-			case 127:
-			case 128:
-			case 129:
-				wskbd_input(kbd->sc_wskbddev,
-				    key & RELEASE ?  WSCONS_EVENT_KEY_UP :
-				      WSCONS_EVENT_KEY_DOWN, key & CODEMASK);
-				break;
-			}
-		}
 		splx(s);
 
 		return;
