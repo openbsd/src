@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.43 2014/03/07 16:56:57 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.44 2014/03/16 07:28:55 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  * The x86_64 pmap module closely resembles the i386 one. It uses
  * the same recursive entry scheme, and the same alternate area
  * trick for accessing non-current pmaps. See the i386 pmap.h
- * for a description. The obvious difference is that 3 extra
+ * for a description. The first obvious difference is that 2 extra
  * levels of page table need to be dealt with. The level 1 page
  * table pages are at:
  *
@@ -96,27 +96,32 @@
  *
  * The alternate space is at:
  *
- * l1: 0xffffff8000000000 - 0xffffffffffffffff     (39 bits, needs PML4 entry)
+ * l1: 0xffffff0000000000 - 0xffffff7fffffffff     (39 bits, needs PML4 entry)
  *
- * The rest is kept as physical pages in 3 UVM objects, and is
+ * The other levels are kept as physical pages in 3 UVM objects and are
  * temporarily mapped for virtual access when needed.
+ *
+ * The other obvious difference from i386 is that it has a direct map of all
+ * physical memory in the VA range:
+ *
+ *     0xfffffe8000000000 - 0xfffffeffffffffff
  *
  * Note that address space is signed, so the layout for 48 bits is:
  *
  *  +---------------------------------+ 0xffffffffffffffff
- *  |                                 |
- *  |    alt.L1 table (PTE pages)     |
- *  |                                 |
+ *  |         Kernel Image            |
  *  +---------------------------------+ 0xffffff8000000000
+ *  |    alt.L1 table (PTE pages)     |
+ *  +---------------------------------+ 0xffffff0000000000
+ *  |         Direct Map              |
+ *  +---------------------------------+ 0xfffffe8000000000
  *  ~                                 ~
  *  |                                 |
  *  |         Kernel Space            |
  *  |                                 |
  *  |                                 |
  *  +---------------------------------+ 0xffff800000000000 = 0x0000800000000000
- *  |                                 |
- *  |    L1 table (PTE pages)	      |
- *  |                                 |
+ *  |    L1 table (PTE pages)         |
  *  +---------------------------------+ 0x00007f8000000000
  *  ~                                 ~
  *  |                                 |
@@ -372,7 +377,6 @@ extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern paddr_t ptp_masks[];
 extern int ptp_shifts[];
 extern long nkptp[], nbpd[], nkptpmax[];
-extern pd_entry_t *pdes[];
 
 /*
  * macros
