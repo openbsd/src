@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.54 2014/03/16 18:12:08 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.55 2014/03/16 20:17:10 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -189,7 +189,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 
 	while (1) {
 		if (space == 0) {
-			space = chunklen;
+			space = msglen + chunklen;
 			if (!(msg = realloc(msg, msglen + space + 1)))
 				errx(1, "realloc");
 		}
