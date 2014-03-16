@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.7 2013/11/12 19:48:40 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.8 2014/03/16 20:45:47 guenther Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -47,13 +47,6 @@
  * 	other globals are hidden and will not conflict with other symbols.
  *
  * TODO:
- *	- resolve the theoretical hanging reloc problem (see check_reloc()
- *	  below). I have yet to see this problem actually occur in any real
- *	  program. In what cases will gcc/gas generate code that needs a
- *	  relative reloc from a global symbol, other than PIC?  The
- *	  solution is to not hide the symbol from the linker in this case,
- *	  but to generate some random name for it so that it doesn't link
- *	  with anything but holds the place for the reloc.
  *      - arrange that all the BSS segments start at the same address, so
  *	  that the final crunched binary BSS size is the max of all the
  *	  component programs' BSS sizes, rather than their sum.
@@ -192,20 +185,6 @@ add_file_to_keep_list(char *filename)
 	}
 	fclose(keepf);
 }
-
-int             nsyms, ntextrel, ndatarel;
-struct exec    *hdrp;
-char           *aoutdata, *strbase;
-struct relocation_info *textrel, *datarel;
-struct nlist   *symbase;
-
-#define SYMSTR(sp)	&strbase[(sp)->n_un.n_strx]
-
-/* is the symbol a global symbol defined in the current file? */
-#define IS_GLOBAL_DEFINED(sp) \
-	(((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
-
-void            check_reloc(char *filename, struct relocation_info * relp);
 
 void 
 hide_syms(char *filename)
