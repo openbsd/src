@@ -1813,6 +1813,8 @@
 ./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/oce.4
 ./usr/share/man/man4/octeon
+./usr/share/man/man4/octeon/octrng.4
+./usr/share/man/man4/octeon/octrtc.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
