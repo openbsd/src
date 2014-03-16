@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.532 2014/03/13 03:52:55 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.533 2014/03/16 05:19:44 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2219,32 +2219,17 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
-	/* nehalem */
-	case 0x1a: /* Core i7, Xeon 3500/5500 */
-	case 0x1e: /* Core i5/i7, Xeon 3400 */
-	case 0x1f: /* Core i5/i7 */
-	case 0x2e: /* Xeon 6500/7500 */
-	/* westmere */
-	case 0x25: /* Core i3/i5, Xeon 3400 */
-	case 0x2c: /* Core i7, Xeon 3600/5600 */
-	case 0x2f: /* Xeon E7 */
-	/* sandy bridge */
-	case 0x2a: /* Core i5/i7 2nd Generation */
-	case 0x2d: /* Xeon E5 */
-	/* ivy bridge */
-	case 0x3a: /* Core i3/i5/i7 3rd Generation */
-		break;
 	default: 
-		printf("%s: unknown i686 model 0x%x, can't get bus clock",
-		    ci->ci_dev.dv_xname, ci->ci_model);
-print_msr:
-		/*
-		 * Show the EBL_CR_POWERON MSR, so we'll at least have
-		 * some extra information, such as clock ratio, etc.
-		 */
-		printf(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
+		/* no FSB on modern Intel processors */
 		break;
 	}
+	return;
+print_msr:
+	/*
+	 * Show the EBL_CR_POWERON MSR, so we'll at least have
+	 * some extra information, such as clock ratio, etc.
+	 */
+	printf(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
 }
 
 void

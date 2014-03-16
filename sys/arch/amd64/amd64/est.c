@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.29 2012/10/08 09:01:21 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.30 2014/03/16 05:19:44 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -215,24 +215,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		}
 		break;
-	/* nehalem */
-	case 0x1a: /* Core i7, Xeon 3500/5500 */
-	case 0x1e: /* Core i5/i7, Xeon 3400 */
-	case 0x1f: /* Core i5/i7 */
-	case 0x2e: /* Xeon 6500/7500 */
-	/* westmere */
-	case 0x25: /* Core i3/i5, Xeon 3400 */
-	case 0x2c: /* Core i7, Xeon 3600/5600 */
-	case 0x2f: /* Xeon E7 */
-	/* sandy bridge */
-	case 0x2a: /* Core i5/i7 2nd Generation */
-	case 0x2d: /* Xeon E5 */
-	/* ivy bridge */
-	case 0x3a: /* Core i3/i5/i7 3rd Generation */
-		break;
 	default:
-		printf("%s: unknown i686 model 0x%x, can't get bus clock\n",
-		    ci->ci_dev->dv_xname, ci->ci_model);
+		/* no FSB on modern Intel processors */
+		break;
 	}
 }
 
