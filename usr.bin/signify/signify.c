@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.58 2014/03/16 23:29:41 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.59 2014/03/16 23:39:42 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -595,6 +595,9 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 	if (!pubkeyfile) {
 		if ((pubkeyfile = strstr(comment, VERIFYWITH)))
 			pubkeyfile += strlen(VERIFYWITH);
+			if (strncmp(pubkeyfile, "/etc/signify/", 13) != 0 ||
+			    strstr(pubkeyfile, "/../") != NULL)
+				errx(1, "untrusted path %s", pubkeyfile);
 		else
 			usage("need pubkey");
 	}
