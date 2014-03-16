@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.31 2014/02/15 09:56:08 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.32 2014/03/16 03:34:32 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -9462,8 +9462,6 @@ void intel_modeset_setup_hw_state(struct drm_device *dev,
 	}
 
 	intel_modeset_check_state(dev);
-
-	drm_mode_config_reset(dev);
 }
 
 void intel_modeset_gem_init(struct drm_device *dev)
@@ -9472,6 +9470,7 @@ void intel_modeset_gem_init(struct drm_device *dev)
 
 	intel_setup_overlay(dev);
 
+	drm_mode_config_reset(dev);
 	intel_modeset_setup_hw_state(dev, false);
 }
 
