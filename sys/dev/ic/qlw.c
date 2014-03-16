@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.17 2014/03/15 21:49:47 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.18 2014/03/16 10:36:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -242,6 +242,13 @@ qlw_attach(struct qlw_softc *sc)
 		printf("ISP not talking after firmware exec: %x\n",
 		    sc->sc_mbox[0]);
 		return (ENXIO);
+	}
+	/* The ISP1000 firmware we use doesn't return a version number. */
+	if (sc->sc_isp_gen == QLW_GEN_ISP1000 && sc->sc_firmware) {
+		sc->sc_mbox[1] = 1;
+		sc->sc_mbox[2] = 37;
+		sc->sc_mbox[3] = 0;
+		sc->sc_mbox[6] = 0;
 	}
 	printf("%s: firmware rev %d.%d.%d, attrs 0x%x\n", DEVNAME(sc),
 	    sc->sc_mbox[1], sc->sc_mbox[2], sc->sc_mbox[3], sc->sc_mbox[6]);
