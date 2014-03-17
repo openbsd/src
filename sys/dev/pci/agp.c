@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.40 2014/03/16 13:57:28 kettenis Exp $ */
+/* $OpenBSD: agp.c,v 1.41 2014/03/17 04:10:59 jsg Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -240,13 +240,16 @@ agp_alloc_gatt(bus_dma_tag_t dmat, u_int32_t apsize)
 	gatt->ag_size = entries * sizeof(u_int32_t);
 
 	if (agp_alloc_dmamem(dmat, gatt->ag_size, &gatt->ag_dmamap,
-	    &gatt->ag_physical, &gatt->ag_dmaseg) != 0)
+	    &gatt->ag_physical, &gatt->ag_dmaseg) != 0) {
+		free(gatt, M_AGP);
 		return (NULL);
+	}
 
 	if (bus_dmamem_map(dmat, &gatt->ag_dmaseg, 1, gatt->ag_size,
 	    (caddr_t *)&gatt->ag_virtual, BUS_DMA_NOWAIT) != 0) {
 		agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap,
 		    &gatt->ag_dmaseg);
+		free(gatt, M_AGP);
 		return (NULL);
 	}
 
