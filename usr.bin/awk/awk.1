@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.40 2011/05/02 11:14:11 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.41 2014/03/17 21:48:51 jmc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2011 $
+.Dd $Mdocdate: March 17 2014 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -771,7 +771,10 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except
+.Nm
+does not support {n,m} pattern matching.
 .Pp
 The flags
 .Op Fl \&dV
@@ -781,9 +784,6 @@ as well as the commands
 .Cm fflush , compl , and , or ,
 .Cm xor , lshift , rshift ,
 are extensions to that specification.
-.Pp
-.Nm
-does not support {n,m} pattern matching.
 .Sh HISTORY
 An
 .Nm

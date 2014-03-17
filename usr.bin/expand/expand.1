@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expand.1,v 1.19 2014/03/10 20:37:27 jmc Exp $
+.\"	$OpenBSD: expand.1,v 1.20 2014/03/17 21:48:51 jmc Exp $
 .\"	$NetBSD: expand.1,v 1.3 1995/09/02 06:19:45 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)expand.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 10 2014 $
+.Dd $Mdocdate: March 17 2014 $
 .Dt EXPAND 1
 .Os
 .Sh NAME
@@ -119,15 +119,11 @@ and
 .Nm unexpand
 utilities are compliant with the
 .St -p1003.1-2008
-specification.
-.Pp
-The
-.St -p1003.1-2008
-specification mandates that
-.Nm unexpand
-supports the
+specification,
+except that this implementation does not support a
 .Fl t
-flag, but that is not supported by this implementation.
+flag for
+.Nm unexpand .
 .Pp
 The ability to specify tabstops without the
 .Fl t
