@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: signify.sh,v 1.5 2014/03/17 02:43:15 tedu Exp $
+# $OpenBSD: signify.sh,v 1.6 2014/03/17 02:49:02 tedu Exp $
 
 srcdir=$1
 
@@ -21,5 +21,11 @@ signify -V -p $pubkey -m $forgery 2> /dev/null && exit 1
 signify -S -s $seckey -x confirmorders.sig -e -m $orders 
 signify -V -p $pubkey -e -m confirmorders
 diff -u $orders confirmorders
+
+sha256 $pubkey $seckey > HASH
+sha512 $orders $forgery >> HASH
+signify -S -e -s $seckey -m HASH
+rm HASH
+signify -q -C -p $pubkey -x HASH.sig
 
 true
