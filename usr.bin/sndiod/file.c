@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 2014/03/17 17:17:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -207,7 +207,7 @@ timo_done(void)
 void
 file_log(struct file *f)
 {
-	static char *states[] = { "ini", "bus", "clo", "zom" };
+	static char *states[] = { "ini", "zom" };
 
 	log_puts(f->ops->name);
 	if (log_level >= 3) {
