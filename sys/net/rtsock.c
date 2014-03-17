@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.140 2014/03/12 12:03:55 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.141 2014/03/17 10:24:40 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -759,32 +759,21 @@ report:
 				error = EDQUOT;
 				goto flush;
 			}
-			if (info.rti_info[RTAX_IFP] != NULL && (ifa =
-			    ifa_ifwithnet(info.rti_info[RTAX_IFP], tableid)) &&
-			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] ||
-			    info.rti_info[RTAX_GATEWAY]))
-				ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA] ?
-				    info.rti_info[RTAX_IFA] :
-				    info.rti_info[RTAX_GATEWAY], ifp);
-			else if ((info.rti_info[RTAX_IFA] != NULL && (ifa =
-			    ifa_ifwithaddr(info.rti_info[RTAX_IFA], tableid)))||
-			    (info.rti_info[RTAX_GATEWAY] != NULL && (ifa =
-			    ifa_ifwithroute(rt->rt_flags, rt_key(rt),
-				    info.rti_info[RTAX_GATEWAY], tableid))))
-				ifp = ifa->ifa_ifp;
+			ifa = info.rti_ifa;
 			if (ifa) {
-				struct ifaddr *oifa = rt->rt_ifa;
-				if (oifa != ifa) {
-				    if (oifa && oifa->ifa_rtrequest)
-					oifa->ifa_rtrequest(RTM_DELETE, rt);
-				    ifafree(rt->rt_ifa);
-				    rt->rt_ifa = ifa;
-				    ifa->ifa_refcnt++;
-				    rt->rt_ifp = ifp;
+				if (rt->rt_ifa != ifa) {
+					if (rt->rt_ifa->ifa_rtrequest)
+						rt->rt_ifa->ifa_rtrequest(
+						    RTM_DELETE, rt);
+					ifafree(rt->rt_ifa);
+					rt->rt_ifa = ifa;
+					ifa->ifa_refcnt++;
+					rt->rt_ifp = info.rti_ifp;
 #ifndef SMALL_KERNEL
-				    /* recheck link state after ifp change */
-				    rt_if_linkstate_change(
-					(struct radix_node *)rt, ifp, tableid);
+					/* recheck link state after ifp change*/
+					rt_if_linkstate_change(
+					    (struct radix_node *)rt, rt->rt_ifp,
+					    tableid);
 #endif
 				}
 			}
