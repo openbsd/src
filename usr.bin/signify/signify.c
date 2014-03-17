@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.64 2014/03/17 03:07:10 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.65 2014/03/17 03:10:26 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -130,7 +130,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 
 	commentend = strchr(b64, '\n');
 	if (!commentend || commentend - b64 <= COMMENTHDRLEN ||
-	    memcmp(b64, COMMENTHDR, COMMENTHDRLEN))
+	    memcmp(b64, COMMENTHDR, COMMENTHDRLEN) != 0)
 		errx(1, "invalid comment in %s; must start with '%s'",
 		    filename, COMMENTHDR);
 	*commentend = 0;
@@ -146,7 +146,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 	rv = b64_pton(commentend + 1, buf, buflen);
 	if (rv != buflen)
 		errx(1, "invalid b64 encoding in %s", filename);
-	if (memcmp(buf, PKALG, 2))
+	if (memcmp(buf, PKALG, 2) != 0)
 		errx(1, "unsupported file %s", filename);
 	return b64end - b64 + 1;
 }
@@ -350,7 +350,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 
 	readb64file(seckeyfile, &enckey, sizeof(enckey), comment);
 
-	if (memcmp(enckey.kdfalg, KDFALG, 2))
+	if (memcmp(enckey.kdfalg, KDFALG, 2) != 0)
 		errx(1, "unsupported KDF");
 	rounds = ntohl(enckey.kdfrounds);
 	kdf(enckey.salt, sizeof(enckey.salt), rounds, strcmp(msgfile, "-") != 0,
@@ -361,7 +361,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	SHA512Init(&ctx);
 	SHA512Update(&ctx, enckey.seckey, sizeof(enckey.seckey));
 	SHA512Final(digest, &ctx);
-	if (memcmp(enckey.checksum, digest, sizeof(enckey.checksum)))
+	if (memcmp(enckey.checksum, digest, sizeof(enckey.checksum)) != 0)
 	    errx(1, "incorrect passphrase");
 	explicit_bzero(digest, sizeof(digest));
 
@@ -424,7 +424,7 @@ verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
 	uint8_t *sigbuf, *dummybuf;
 	unsigned long long siglen, dummylen;
 
-	if (memcmp(pubkey->fingerprint, sig->fingerprint, FPLEN))
+	if (memcmp(pubkey->fingerprint, sig->fingerprint, FPLEN) != 0)
 		errx(1, "verification failed: checked against wrong key");
 
 	siglen = SIGBYTES + msglen;
