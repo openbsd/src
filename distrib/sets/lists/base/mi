@@ -78,6 +78,7 @@
 ./etc/mtree/BSD.local.dist
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
+./etc/nginx
 ./etc/npppd
 ./etc/ppp
 ./etc/ppp/chatscript.sample
@@ -5152,6 +5153,8 @@
 ./var/named
 ./var/named/dev
 ./var/named/etc
+./var/named/master
+./var/named/slave
 ./var/named/standard
 ./var/named/tmp
 ./var/nsd
@@ -5178,6 +5181,8 @@
 ./var/spool/uucppublic
 ./var/tmp
 ./var/tmp/vi.recover
+./var/unbound
+./var/unbound/etc
 ./var/www
 ./var/www/bin
 ./var/www/bin/bgpctl

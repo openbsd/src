@@ -77,7 +77,6 @@
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf
-./etc/nginx
 ./etc/nginx/fastcgi_params
 ./etc/nginx/koi-utf
 ./etc/nginx/koi-win
@@ -241,15 +240,11 @@
 ./var/named/etc/named-simple.conf
 ./var/named/etc/named.conf
 ./var/named/etc/root.hint
-./var/named/master
-./var/named/slave
 ./var/named/standard/localhost
 ./var/named/standard/loopback
 ./var/named/standard/loopback6.arpa
 ./var/nsd/etc/nsd.conf
 ./var/run/utmp
-./var/unbound
-./var/unbound/etc
 ./var/unbound/etc/unbound.conf
 ./var/www/conf/bgplg.css
 ./var/www/conf/bgplg.foot
