@@ -223,6 +223,7 @@
 ./usr/share/man/man1/host.1
 ./usr/share/man/man1/hostname.1
 ./usr/share/man/man1/hoststat.1
+./usr/share/man/man1/htpasswd.1
 ./usr/share/man/man1/i386
 ./usr/share/man/man1/i386/fdformat.1
 ./usr/share/man/man1/id.1
@@ -2183,6 +2184,7 @@
 ./usr/share/man/man4/uoakrh.4
 ./usr/share/man/man4/uoakv.4
 ./usr/share/man/man4/uow.4
+./usr/share/man/man4/upd.4
 ./usr/share/man/man4/upgt.4
 ./usr/share/man/man4/upl.4
 ./usr/share/man/man4/uplcom.4
@@ -2801,10 +2803,7 @@
 ./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/pkg_check.8
 ./usr/share/man/man8/portmap.8
-./usr/share/man/man8/ppp.8
-./usr/share/man/man8/pppctl.8
 ./usr/share/man/man8/pppd.8
-./usr/share/man/man8/pppoe.8
 ./usr/share/man/man8/pppstats.8
 ./usr/share/man/man8/pstat.8
 ./usr/share/man/man8/pwd_mkdb.8

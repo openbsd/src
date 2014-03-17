@@ -83,10 +83,6 @@
 ./etc/ppp
 ./etc/ppp/chatscript.sample
 ./etc/ppp/options.sample
-./etc/ppp/ppp.conf.sample
-./etc/ppp/ppp.linkdown.sample
-./etc/ppp/ppp.linkup.sample
-./etc/ppp/ppp.secret.sample
 ./etc/rc.d
 ./etc/signify
 ./etc/signify/openbsd-55-base.pub
@@ -284,6 +280,7 @@
 ./usr/bin/help
 ./usr/bin/hexdump
 ./usr/bin/hoststat
+./usr/bin/htpasswd
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -2773,10 +2770,7 @@
 ./usr/sbin/pkg_mklocatedb
 ./usr/sbin/pkg_sign
 ./usr/sbin/portmap
-./usr/sbin/ppp
-./usr/sbin/pppctl
 ./usr/sbin/pppd
-./usr/sbin/pppoe
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/procmap
