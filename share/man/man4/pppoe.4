@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.25 2014/03/17 17:07:45 deraadt Exp $
+.\"	$OpenBSD: pppoe.4,v 1.26 2014/03/17 21:55:05 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -137,9 +137,6 @@ add the following to your kernel config file:
 .Pp
 .Dl option PPPOE_TERM_UNKNOWN_SESSIONS
 .Pp
-Note that this will break all userland PPPoE
-implementations using the same Ethernet interface!
-.Pp
 This option is only useful if you have a static IP address assigned and
 your ISP does not use LCP echo requests to monitor the link status.
 After a crash or power failure the peer device still tries to send data to
@@ -181,14 +178,6 @@ sets the MTU on its interface to 1492 as a matter of course.
 However,
 machines connecting on a private LAN will still have their MTUs set to 1500,
 causing conflict.
-.Pp
-While
-.Xr pppoe 8
-has an internal option,
-.Dq mssfixup ,
-which is enabled by default and takes care of this,
-.Nm
-users have to rely on other methods.
 Using a packet filter,
 the
 maximum segment size (MSS)
