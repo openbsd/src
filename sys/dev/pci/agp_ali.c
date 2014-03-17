@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.12 2010/08/07 18:15:38 oga Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.13 2014/03/17 22:01:56 kettenis Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -37,7 +37,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/lock.h>
-#include <sys/agpio.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

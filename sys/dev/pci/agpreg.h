@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.17 2012/12/22 19:17:36 mpi Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.18 2014/03/17 22:01:56 kettenis Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -33,6 +33,12 @@
 #define _PCI_AGPREG_H_
 
 /*
+ * The AGP gatt uses 4k pages irrespective of the host page size.
+ */
+#define AGP_PAGE_SIZE		4096
+#define AGP_PAGE_SHIFT		12
+
+/*
  * Offsets for various AGP configuration registers.
  */
 #define AGP_APBASE			0x10
@@ -48,6 +54,25 @@
 
 #define AGP_STATUS			0x4
 #define AGP_COMMAND			0x8
+
+/*
+ * Macros to manipulate AGP mode words.
+ */
+#define AGP_MODE_GET_RQ(x)		(((x) & 0xff000000U) >> 24)
+#define AGP_MODE_GET_SBA(x)		(((x) & 0x00000200U) >> 9)
+#define AGP_MODE_GET_AGP(x)		(((x) & 0x00000100U) >> 8)
+#define AGP_MODE_GET_4G(x)		(((x) & 0x00000020U) >> 5)
+#define AGP_MODE_GET_FW(x)		(((x) & 0x00000010U) >> 4)
+#define AGP_MODE_GET_RATE(x)		((x) & 0x00000007U)
+#define AGP_MODE_SET_RQ(x,v)		(((x) & ~0xff000000U) | ((v) << 24))
+#define AGP_MODE_SET_SBA(x,v)		(((x) & ~0x00000200U) | ((v) << 9))
+#define AGP_MODE_SET_AGP(x,v)		(((x) & ~0x00000100U) | ((v) << 8))
+#define AGP_MODE_SET_4G(x,v)		(((x) & ~0x00000020U) | ((v) << 5))
+#define AGP_MODE_SET_FW(x,v)		(((x) & ~0x00000010U) | ((v) << 4))
+#define AGP_MODE_SET_RATE(x,v)		(((x) & ~0x00000007U) | (v))
+#define AGP_MODE_RATE_1x		0x00000001
+#define AGP_MODE_RATE_2x		0x00000002
+#define AGP_MODE_RATE_4x		0x00000004
 
 /*
  * Config offsets for Intel AGP chipsets.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.83 2014/03/11 14:29:07 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.84 2014/03/17 22:01:56 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,7 +35,6 @@
 #include <sys/lock.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/agpio.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.74 2013/12/06 21:03:04 deraadt Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.75 2014/03/17 22:01:56 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -73,7 +73,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/agpio.h>
 
 #include <uvm/uvm.h>
 

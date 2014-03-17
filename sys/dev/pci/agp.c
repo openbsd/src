@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.41 2014/03/17 04:10:59 jsg Exp $ */
+/* $OpenBSD: agp.c,v 1.42 2014/03/17 22:01:56 kettenis Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -29,9 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/agpio.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
 
 #include <uvm/uvm.h>
 

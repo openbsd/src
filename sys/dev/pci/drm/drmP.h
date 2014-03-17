@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.170 2014/03/13 12:45:04 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.171 2014/03/17 22:01:56 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -58,7 +58,6 @@
 #include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stdint.h>
-#include <sys/agpio.h>
 #include <sys/memrange.h>
 #include <sys/extent.h>
 #include <sys/vnode.h>
