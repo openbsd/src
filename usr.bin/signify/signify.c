@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.68 2014/03/17 11:47:06 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.69 2014/03/17 15:19:06 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -718,8 +718,6 @@ main(int argc, char **argv)
 		return 0;
 	}
 #endif
-
-	quiet = 1; /* retain quiet default for 5.5 release */
 
 	if (argc != 0)
 		usage(NULL);
