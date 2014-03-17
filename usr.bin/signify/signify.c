@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.65 2014/03/17 03:10:26 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.66 2014/03/17 03:33:57 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -106,7 +106,7 @@ xopen(const char *fname, int oflags, mode_t mode)
 			    (oflags & O_WRONLY) ? "writing" : "reading");
 	}
 	if (fstat(fd, &sb) == -1 || S_ISDIR(sb.st_mode))
-		errx(1, "can't use directory as file: %s", fname);
+		errx(1, "not a valid file: %s", fname);
 	return fd;
 }
 
@@ -453,7 +453,7 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 			    strstr(pubkeyfile, "/../") != NULL)
 				errx(1, "untrusted path %s", pubkeyfile);
 		} else
-			usage("need pubkey");
+			usage("must specify pubkey");
 	}
 	readb64file(pubkeyfile, pubkey, sizeof(*pubkey), NULL);
 }
@@ -713,7 +713,7 @@ main(int argc, char **argv)
 #ifndef VERIFYONLY
 	if (verb == CHECK) {
 		if (!pubkeyfile || !sigfile)
-			usage("need pubkey and sigfile");
+			usage("must specify pubkey and sigfile");
 		check(pubkeyfile, sigfile, quiet, argc, argv);
 		return 0;
 	}
@@ -726,7 +726,7 @@ main(int argc, char **argv)
 
 	if (!sigfile && msgfile) {
 		if (strcmp(msgfile, "-") == 0)
-			errx(1, "must specify sigfile with - message");
+			usage("must specify sigfile with - message");
 		if (snprintf(sigfilebuf, sizeof(sigfilebuf), "%s.sig",
 		    msgfile) >= sizeof(sigfilebuf))
 			errx(1, "path too long");
@@ -737,7 +737,7 @@ main(int argc, char **argv)
 #ifndef VERIFYONLY
 	case GENERATE:
 		if (!pubkeyfile || !seckeyfile)
-			usage("need pubkey and seckey");
+			usage("must specify pubkey and seckey");
 		generate(pubkeyfile, seckeyfile, rounds, comment);
 		break;
 	case INSPECT:
@@ -745,13 +745,13 @@ main(int argc, char **argv)
 		break;
 	case SIGN:
 		if (!msgfile || !seckeyfile)
-			usage("need message and seckey");
+			usage("must specify message and seckey");
 		sign(seckeyfile, msgfile, sigfile, embedded);
 		break;
 #endif
 	case VERIFY:
 		if (!msgfile)
-			usage("need message");
+			usage("must specify message");
 		verify(pubkeyfile, msgfile, sigfile, embedded, quiet);
 		break;
 	default:
