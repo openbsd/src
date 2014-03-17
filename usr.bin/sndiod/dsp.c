@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.5 2014/03/05 20:06:05 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.6 2014/03/17 17:16:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -679,7 +679,7 @@ cmap_init(struct cmap *p,
 		log_puti(p->onext);
 		log_puts(", istart = ");
 		log_puti(p->istart);
-		log_puts(", inext= ");
+		log_puts(", inext = ");
 		log_puti(p->inext);
 		log_puts("\n");
 	}
