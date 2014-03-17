@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.12 2014/01/19 23:09:13 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.13 2014/03/17 16:29:22 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -246,7 +246,8 @@ mansearch(const struct mansearch *search,
 		sqlite3_finalize(s);
 
 		c = sqlite3_prepare_v2(db, 
-		    "SELECT * FROM mlinks WHERE pageid=?",
+		    "SELECT * FROM mlinks WHERE pageid=?"
+		    " ORDER BY sec, arch, name",
 		    -1, &s, NULL);
 		if (SQLITE_OK != c)
 			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
@@ -295,17 +296,18 @@ static void
 buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 		uint64_t id, const char *path, int form)
 {
-	char		*newnames;
+	char		*newnames, *prevsec, *prevarch;
 	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch, *fsec;
 	size_t		 i;
 	int		 c;
 
 	mpage->names = NULL;
+	prevsec = prevarch = NULL;
 	i = 1;
 	SQL_BIND_INT64(db, s, i, id);
 	while (SQLITE_ROW == (c = sqlite3_step(s))) {
 
-		/* Assemble the list of names. */
+		/* Decide whether we already have some names. */
 
 		if (NULL == mpage->names) {
 			oldnames = "";
@@ -314,12 +316,42 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 			oldnames = mpage->names;
 			sep1 = ", ";
 		}
+
+		/* Fetch the next name. */
+
 		sec = sqlite3_column_text(s, 0);
 		arch = sqlite3_column_text(s, 1);
 		name = sqlite3_column_text(s, 2);
-		sep2 = '\0' == *arch ? "" : "/";
-		if (-1 == asprintf(&newnames, "%s%s%s(%s%s%s)",
-		    oldnames, sep1, name, sec, sep2, arch)) {
+
+		/* If the section changed, append the old one. */
+
+		if (NULL != prevsec &&
+		    (strcmp(sec, prevsec) ||
+		     strcmp(arch, prevarch))) {
+			sep2 = '\0' == *prevarch ? "" : "/";
+			if (-1 == asprintf(&newnames, "%s(%s%s%s)",
+			    oldnames, prevsec, sep2, prevarch)) {
+				perror(0);
+				exit((int)MANDOCLEVEL_SYSERR);
+			}
+			free(mpage->names);
+			oldnames = mpage->names = newnames;
+			free(prevsec);
+			free(prevarch);
+			prevsec = prevarch = NULL;
+		}
+
+		/* Save the new section, to append it later. */
+
+		if (NULL == prevsec) {
+			prevsec = mandoc_strdup(sec);
+			prevarch = mandoc_strdup(arch);
+		}
+
+		/* Append the new name. */
+
+		if (-1 == asprintf(&newnames, "%s%s%s",
+		    oldnames, sep1, name)) {
 			perror(0);
 			exit((int)MANDOCLEVEL_SYSERR);
 		}
@@ -338,6 +370,7 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 			sep1 = "cat";
 			fsec = "0";
 		}
+		sep2 = '\0' == *arch ? "" : "/";
 		if (-1 == asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
 		    path, sep1, sec, sep2, arch, name, fsec)) {
 			perror(0);
@@ -347,6 +380,21 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 	if (SQLITE_DONE != c)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 	sqlite3_reset(s);
+
+	/* Append one final section to the names. */
+
+	if (NULL != prevsec) {
+		sep2 = '\0' == *prevarch ? "" : "/";
+		if (-1 == asprintf(&newnames, "%s(%s%s%s)",
+		    mpage->names, prevsec, sep2, prevarch)) {
+			perror(0);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+		free(mpage->names);
+		mpage->names = newnames;
+		free(prevsec);
+		free(prevarch);
+	}
 }
 
 static char *
