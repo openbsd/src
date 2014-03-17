@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.2 2014/03/17 12:51:58 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.3 2014/03/17 13:54:58 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -35,7 +35,7 @@ extern char *__progname;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage:\t%s [file] login\n", __progname);
+	fprintf(stderr, "usage: %s [file] login\n", __progname);
 	exit(1);
 }
 
