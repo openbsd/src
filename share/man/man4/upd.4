@@ -1,4 +1,4 @@
-.\"	$OpenBSD: upd.4,v 1.1 2014/03/17 18:40:46 andre Exp $
+.\"	$OpenBSD: upd.4,v 1.2 2014/03/17 20:07:09 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm upd
-.Nd USB Power Devices battery voltage and load sensor
+.Nd USB Power Devices sensor
 .Sh SYNOPSIS
 .Cd "upd* at uhub?"
 .Sh DESCRIPTION
@@ -28,21 +28,13 @@ The
 driver exposes data from USB Power Devices (such as an UPS),
 as hardware sensors via
 .Xr sysctl 3 .
-The following devices are supported by the
-.Nm
-driver:
-.Bl -bullet -offset indent
-.It
-American Power Conversion Smart-UPS 750
-.It
-American Power Conversion Back-UPS CS 350
-.El
 .Pp
 The following sensors are provided by the
 .Nm
 driver, which can be monitored using
 .Xr sensorsd 8 :
-.Bl -bullet -offset indent
+.Pp
+.Bl -item -offset indent -compact
 .It
 RelativeStateOfCharge
 .It
@@ -64,28 +56,6 @@ ACPresent
 .It
 AtRateTimeToFull
 .El
-.Sh EXAMPLES
-In this example, the upd0 device is a regular UPS.
-We use an entry on
-.Xr sensorsd 8
-to take an action when the battery level is below a 70%:
-.Bd -literal
-hw.sensors.upd0.percent0:low=70:command=/etc/sensorsd/lowbattwarn %l
-.Ed
-.Pp
-The contents of lowbattwarn could be:
-.Bd -literal -offset indent
-#!/bin/ksh
-
-if [ $# -lt 1 ]; then
-        return;
-fi
-
-if [ $1 -lt 70 ]; then
-        logger "ups battery warning-level, halting"
-        /sbin/halt -p
-fi
-.Ed
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhub 4 ,
@@ -100,16 +70,4 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Andre de Oliveira Aq Mt andre@openbsd.org ,
-partially sponsored by Esdenera Networks GmbH.
-.Sh CAVEATS
-When the battery is not present, even with Battery Presence indicator set to
-Off the remaining battery sensors will still be present, besides their values
-cannot be trusted.
-.Pp
-Users of apcupsd port will notice either
-.Xr ugen 4 ,
-is missing, it is necessary to disable the
-.Nm
-driver
-in order to use apcupsd.
+.An Andre de Oliveira .
