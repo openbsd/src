@@ -1,4 +1,4 @@
-.\"	$Id: apropos.1,v 1.19 2014/03/17 09:25:39 schwarze Exp $
+.\"	$Id: apropos.1,v 1.20 2014/03/17 11:29:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -25,6 +25,7 @@
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
+.Op Fl O Ar outkey
 .Op Fl S Ar arch
 .Op Fl s Ar section
 .Ar expression ...
@@ -70,6 +71,10 @@ for
 .Xr makewhatis 8
 databases.
 Invalid paths, or paths without manual databases, are ignored.
+.It Fl O Ar outkey
+Show the values associated with the key
+.Ar outkey
+instead of the manual descriptions.
 .It Fl S Ar arch
 Restrict the search to pages for the specified
 .Xr machine 1
@@ -182,6 +187,8 @@ Names and description:
 .Bl -column "xLix" description -offset indent -compact
 .It Li \&Nm Ta manual name
 .It Li \&Nd Ta one-line manual description
+.It Li arch Ta machine architecture (case-insensitive)
+.It Li sec  Ta manual section number
 .El
 .Pp
 Sections and cross references:
@@ -310,6 +317,15 @@ with the argument
 .Qq ssh :
 .Pp
 .Dl $ apropos \-\- \-i 'Nm~[[:<:]]ssh[[:>:]]'
+.Pp
+The following two invocations are equivalent:
+.Pp
+.D1 Li $ apropos -S Ar arch Li -s Ar section expression
+.Bd -ragged -offset indent
+.Li $ apropos \e( Ar expression Li \e)
+.Li -a arch~^( Ns Ar arch Ns Li |any)$
+.Li -a sec~^ Ns Ar section Ns Li $
+.Ed
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr re_format 7 ,
@@ -320,7 +336,7 @@ An
 utility first appeared in
 .Bx 2 .
 It was rewritten from scratch for
-.Ox 5.1 .
+.Ox 5.6 .
 .Pp
 The
 .Fl M
@@ -348,4 +364,6 @@ wrote the original
 .Nm
 in February 1979.
 The current version was written by
-.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv
+and
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org .

@@ -1,4 +1,4 @@
-.\"	$Id: makewhatis.8,v 1.5 2014/03/17 08:31:54 schwarze Exp $
+.\"	$Id: makewhatis.8,v 1.6 2014/03/17 11:29:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,20 +23,25 @@
 .Nd index UNIX manuals
 .Sh SYNOPSIS
 .Nm
-.Op Fl anvW
+.Op Fl anQvW
+.Op Fl T Cm utf8
 .Op Fl C Ar file
 .Nm
-.Op Fl anvW
+.Op Fl anQvW
+.Op Fl T Cm utf8
 .Ar dir ...
 .Nm
-.Op Fl nvW
+.Op Fl nQvW
+.Op Fl T Cm utf8
 .Fl d Ar dir
 .Op Ar
 .Nm
 .Op Fl nvW
+.Op Fl T Cm utf8
 .Fl u Ar dir
 .Op Ar
 .Nm
+.Op Fl Q
 .Fl t Ar
 .Sh DESCRIPTION
 The
@@ -95,6 +100,12 @@ to the database in
 .It Fl n
 Do not create or modify any database;
 scan and parse only.
+.It Fl Q
+Quickly build reduced-size databases
+by reading only the NAME sections of manuals.
+The resulting databases will usually contain names and descriptions only.
+.It Fl T Cm utf8
+Use UTF-8 encoding instead of ASCII for strings stored in the databases.
 .It Fl t Ar
 Check the given
 .Ar files
@@ -113,6 +124,9 @@ from the database in
 .Ar dir .
 .It Fl v
 Display all files added or removed to the index.
+With a second
+.Fl v ,
+also show all keyswords added for each file.
 .It Fl W
 Print warnings about potential problems with manual pages
 to the standard error output.
@@ -166,7 +180,7 @@ It was rewritten in
 for
 .Ox 2.7
 and in C for
-.Ox 5.1 .
+.Ox 5.6 .
 .Pp
 The
 .Ar dir
@@ -177,9 +191,9 @@ the options
 in
 .Ox 2.7 ;
 and the options
-.Fl aCvW
+.Fl aCnQTvW
 in
-.Ox 5.1 .
+.Ox 5.6 .
 .Sh AUTHORS
 .An -nosplit
 .An Bill Joy
