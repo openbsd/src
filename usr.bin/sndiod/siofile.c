@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.3 2013/11/18 17:37:45 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.4 2014/03/17 17:16:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -415,7 +415,7 @@ dev_sio_run(void *arg)
 			}
 #endif
 			d->poffs += d->round;
-			if (d->poffs == d->bufsz)
+			if (d->poffs == d->psize)
 				d->poffs = 0;
 			if ((d->mode & MODE_REC) && d->prime == 0) {
 				d->sio.cstate = DEV_SIO_READ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.7 2014/03/07 10:23:05 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.8 2014/03/17 17:16:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -113,6 +113,7 @@ struct dev {
 	adata_t *pbuf;				/* array of play buffers */
 #define DEV_PBUF(d) ((d)->pbuf + (d)->poffs * (d)->pchan)
 	int poffs;				/* index of current play buf */
+	int psize;				/* size of play buffer */
 	struct conv enc;			/* native->device format */
 	struct conv dec;			/* device->native format */
 	unsigned char *encbuf;			/* buffer for encoding */

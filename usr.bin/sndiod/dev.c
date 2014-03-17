@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.14 2014/03/07 10:23:05 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.15 2014/03/17 17:16:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -739,9 +739,15 @@ void
 dev_sub_bcopy(struct dev *d, struct slot *s)
 {
 	adata_t *idata, *odata;
-	int ocount;
+	int ocount, moffs;
 
-	idata = (s->mode & MODE_MON) ? DEV_PBUF(d) : d->rbuf;
+	if (s->mode & MODE_MON) {
+		moffs = d->poffs + d->round;
+		if (moffs == d->psize)
+			moffs = 0;
+		idata = d->pbuf + moffs * d->pchan;
+	} else
+		idata = d->rbuf;
 	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
 #ifdef DEBUG
 	if (ocount < s->round * s->sub.bpf) {
@@ -863,11 +869,6 @@ dev_full_cycle(struct dev *d)
 			}
 			continue;
 		}
-		if (s->mode & MODE_PLAY) {
-			dev_mix_badd(d, s);
-			if (s->pstate != SLOT_STOP)
-				s->ops->fill(s->arg);
-		}
 		if ((s->mode & MODE_RECMASK) && !(s->pstate == SLOT_STOP)) {
 			if (s->sub.prime == 0) {
 				dev_sub_bcopy(d, s);
@@ -883,6 +884,11 @@ dev_full_cycle(struct dev *d)
 #endif
 				s->sub.prime--;
 			}
+		}
+		if (s->mode & MODE_PLAY) {
+			dev_mix_badd(d, s);
+			if (s->pstate != SLOT_STOP)
+				s->ops->fill(s->arg);
 		}
 		ps = &s->next;
 	}
@@ -1094,8 +1100,9 @@ dev_open(struct dev *d)
 		/*
 		 * Create device <-> mixer buffer
 		 */
-		d->pbuf = xmalloc(d->bufsz * d->pchan * sizeof(adata_t));
 		d->poffs = 0;
+		d->psize = d->bufsz + d->round;
+		d->pbuf = xmalloc(d->psize * d->pchan * sizeof(adata_t));
 		d->mode |= MODE_MON;
 
 		/*
