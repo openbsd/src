@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.4 2014/03/17 21:25:09 benno Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.5 2014/03/17 22:37:53 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <pwd.h>
 #include <readpassphrase.h>
@@ -108,7 +109,10 @@ main(int argc, char** argv)
 			} else
 				err(1, "cannot open password file for"
 					" reading or writing");
-		}
+		} else
+			if (flock(fileno(in), LOCK_EX|LOCK_NB) == -1)
+				errx(1, "cannot lock password file");
+
 		/* file already exits, copy content and filter login out */
 		if (out == NULL) {
 			strlcpy(tmpl, "/tmp/htpasswd-XXXXXXXXXX", sizeof(tmpl));
