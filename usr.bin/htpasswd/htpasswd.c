@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.5 2014/03/17 22:37:53 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.6 2014/03/17 22:39:19 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -39,6 +39,9 @@ usage(void)
 	fprintf(stderr, "usage: %s [file] login\n", __progname);
 	exit(1);
 }
+
+#define MAXNAG 5
+int nagcount;
 
 int
 main(int argc, char** argv)
@@ -159,6 +162,9 @@ main(int argc, char** argv)
 		if (in != NULL && unlink(tmpl) == -1)
 			err(1, "cannot delete temp file (%s)", tmpl);
 	}
+	if (nagcount >= MAXNAG)
+		fprintf(stderr, "%d more logins not using bcryt.\n",
+		    nagcount - MAXNAG);
 	exit(0);
 }
 
@@ -169,7 +175,10 @@ nag(char* line)
 	if (strtok(line, ":") != NULL)
 		if ((tok = strtok(NULL, ":")) != NULL)
 			if (strncmp(tok, "$2a$", 4) != 0 &&
-			     strncmp(tok, "$2b$", 4) != 0)
-				fprintf(stderr, "%s doesn't use bcrypt."
-				    " Update the password.\n", line);
+			     strncmp(tok, "$2b$", 4) != 0) {
+				nagcount++;
+				if (nagcount <= MAXNAG)
+					fprintf(stderr, "%s doesn't use bcrypt."
+					    " Update the password.\n", line);
+			}
 }
