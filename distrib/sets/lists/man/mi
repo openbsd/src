@@ -2958,7 +2958,6 @@
 ./usr/share/man/man8/unbound.8
 ./usr/share/man/man8/updatedb.8
 ./usr/share/man/man8/usbdevs.8
-./usr/share/man/man8/uucpd.8
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
