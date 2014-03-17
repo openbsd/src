@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.59 2014/03/16 23:39:42 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.60 2014/03/17 00:01:58 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -591,7 +591,7 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 
 	msg = readmsg(sigfile, &msglen);
 
-	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), NULL);
+	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), comment);
 	if (!pubkeyfile) {
 		if ((pubkeyfile = strstr(comment, VERIFYWITH)))
 			pubkeyfile += strlen(VERIFYWITH);
