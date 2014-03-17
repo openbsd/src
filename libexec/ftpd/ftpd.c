@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.200 2014/03/17 20:54:10 sthen Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.201 2014/03/17 21:02:49 sthen Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 			minuid = strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr) {
 				syslog(LOG_ERR,
-				    "%s is a bad value for -n, aborting",
+				    "%s is a bad value for -m, aborting",
 				    optarg);
 				exit(2);
 			}
