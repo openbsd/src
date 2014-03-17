@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.47 2014/01/27 16:57:55 sobrado Exp $
+.\"	$OpenBSD: compress.1,v 1.48 2014/03/17 14:23:50 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 27 2014 $
+.Dd $Mdocdate: March 17 2014 $
 .Dt COMPRESS 1
 .Os
 .Sh NAME
@@ -320,12 +320,7 @@ increase.
 An error occurred.
 .El
 .Pp
-The
-.Nm uncompress
-and
-.Nm zcat
-utilities exit 0 on success,
-and >0 if an error occurs.
+.Ex -std uncompress zcat
 .Sh SEE ALSO
 .Xr gzexe 1 ,
 .Xr gzip 1 ,
