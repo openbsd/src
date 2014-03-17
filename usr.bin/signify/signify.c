@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.61 2014/03/17 01:23:58 deraadt Exp $ */
+/* $OpenBSD: signify.c,v 1.62 2014/03/17 02:10:54 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -418,19 +418,22 @@ inspect(const char *seckeyfile, const char *pubkeyfile, const char *sigfile)
 #endif
 
 static void
-verifymsg(uint8_t *pubkey, uint8_t *msg, unsigned long long msglen,
-    uint8_t *sig, int quiet)
+verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
+    struct sig *sig, int quiet)
 {
 	uint8_t *sigbuf, *dummybuf;
 	unsigned long long siglen, dummylen;
 
+	if (memcmp(pubkey->fingerprint, sig->fingerprint, FPLEN))
+		errx(1, "verification failed: checked against wrong key");
+
 	siglen = SIGBYTES + msglen;
 	sigbuf = xmalloc(siglen);
 	dummybuf = xmalloc(siglen);
-	memcpy(sigbuf, sig, SIGBYTES);
+	memcpy(sigbuf, sig->sig, SIGBYTES);
 	memcpy(sigbuf + SIGBYTES, msg, msglen);
 	if (crypto_sign_ed25519_open(dummybuf, &dummylen, sigbuf, siglen,
-	    pubkey) == -1)
+	    pubkey->pubkey) == -1)
 		errx(1, "signature verification failed");
 	if (!quiet)
 		printf("Signature Verified\n");
@@ -470,14 +473,7 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 	}
 	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 
-	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN)) {
-#ifndef VERIFYONLY
-		inspect(NULL, pubkeyfile, sigfile);
-#endif
-		errx(1, "verification failed: checked against wrong key");
-	}
-
-	verifymsg(pubkey.pubkey, msg, msglen, sig.sig, quiet);
+	verifymsg(&pubkey, msg, msglen, &sig, quiet);
 	if (embedded) {
 		fd = xopen(msgfile, O_CREAT|O_TRUNC|O_NOFOLLOW|O_WRONLY, 0666);
 		writeall(fd, msg, msglen, msgfile);
@@ -605,14 +601,7 @@ check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
 	msg += siglen;
 	msglen -= siglen;
 
-	if (memcmp(pubkey.fingerprint, sig.fingerprint, FPLEN)) {
-#ifndef VERIFYONLY
-		inspect(NULL, pubkeyfile, sigfile);
-#endif
-		errx(1, "verification failed: checked against wrong key");
-	}
-
-	verifymsg(pubkey.pubkey, msg, msglen, sig.sig, quiet);
+	verifymsg(&pubkey, msg, msglen, &sig, quiet);
 	verifychecksums((char *)msg, argc, argv, quiet);
 
 	free(msg - siglen);
