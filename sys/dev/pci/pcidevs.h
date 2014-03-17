@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1719 2014/03/10 02:23:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1720 2014/03/17 17:24:02 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -326,6 +326,7 @@
 #define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
+#define	PCI_VENDOR_REDHAT	0x1b36		/* Red Hat */
 #define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_ETRON	0x1b6f		/* Etron */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
@@ -5827,6 +5828,10 @@
 #define	PCI_PRODUCT_REALTEK_RTL8190P	0x8190		/* RTL8190P */
 #define	PCI_PRODUCT_REALTEK_RTL8192E	0x8192		/* RTL8192E */
 #define	PCI_PRODUCT_REALTEK_RTL8187SE	0x8199		/* 8187SE */
+
+/* Red Hat products */
+#define	PCI_PRODUCT_REDHAT_PPB	0x0001		/* Qemu PCI-PCI */
+#define	PCI_PRODUCT_REDHAT_QXL	0x0100		/* QXL Video */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_RF5C465	0x0465		/* 5C465 CardBus */

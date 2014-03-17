@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1719 2014/03/10 02:23:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1720 2014/03/17 17:24:02 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -20092,6 +20092,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8187SE",
 	},
 	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_PPB,
+	    "Qemu PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_QXL,
+	    "QXL Video",
+	},
+	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
 	    "5C465 CardBus",
 	},
@@ -24526,6 +24534,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ASMEDIA,
 	    "ASMedia",
+	},
+	{
+	    PCI_VENDOR_REDHAT,
+	    "Red Hat",
 	},
 	{
 	    PCI_VENDOR_MARVELL2,
