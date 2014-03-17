@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.347 2014/03/15 22:13:36 sthen Exp $
+#	$OpenBSD: Makefile,v 1.348 2014/03/17 17:07:45 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -183,14 +183,6 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 chatscript.sample \
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 pap-secrets \
-		    ${DESTDIR}/etc/ppp; \
-		${INSTALL} -c -o root -g wheel -m 600 ppp.conf.sample \
-		    ${DESTDIR}/etc/ppp; \
-		${INSTALL} -c -o root -g wheel -m 644 ppp.linkup.sample \
-		    ${DESTDIR}/etc/ppp; \
-		${INSTALL} -c -o root -g wheel -m 644 ppp.linkdown.sample \
-		    ${DESTDIR}/etc/ppp; \
-		${INSTALL} -c -o root -g wheel -m 644 ppp.secret.sample \
 		    ${DESTDIR}/etc/ppp
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
