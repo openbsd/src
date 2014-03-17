@@ -1,6 +1,7 @@
-.\"	$Id: makewhatis.8,v 1.4 2013/07/13 19:27:46 schwarze Exp $
+.\"	$Id: makewhatis.8,v 1.5 2014/03/17 08:31:54 schwarze Exp $
 .\"
-.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2013 $
+.Dd $Mdocdate: March 17 2014 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -22,17 +23,17 @@
 .Nd index UNIX manuals
 .Sh SYNOPSIS
 .Nm
-.Op Fl avW
+.Op Fl anvW
 .Op Fl C Ar file
 .Nm
-.Op Fl avW
+.Op Fl anvW
 .Ar dir ...
 .Nm
-.Op Fl vW
+.Op Fl nvW
 .Fl d Ar dir
 .Op Ar
 .Nm
-.Op Fl vW
+.Op Fl nvW
 .Fl u Ar dir
 .Op Ar
 .Nm
@@ -42,11 +43,7 @@ The
 .Nm
 utility extracts keywords from
 .Ux
-manuals and indexes them in a
-.Sx Keyword Database
-and
-.Sx Index Database
-for fast retrieval by
+manuals and indexes them in a database for fast retrieval by
 .Xr apropos 1 ,
 .Xr whatis 1 ,
 and
@@ -56,7 +53,7 @@ option.
 .Pp
 By default,
 .Nm
-creates databases in each
+creates a database in each
 .Ar dir
 using the files
 .Sm off
@@ -70,14 +67,14 @@ and
 .Op Ar arch Li /
 .Ar title . Sy 0
 .Sm on
-in that directory;
-existing databases are truncated.
+in that directory.
+Existing databases are replaced.
 If
 .Ar dir
 is not provided,
 .Nm
 uses the default paths stipulated by
-.Xr man 1 .
+.Xr man.conf 5 .
 .Pp
 The arguments are as follows:
 .Bl -tag -width "-C file"
@@ -94,15 +91,17 @@ format.
 Merge (remove and re-add)
 .Ar
 to the database in
-.Ar dir
-without truncating it.
+.Ar dir .
+.It Fl n
+Do not create or modify any database;
+scan and parse only.
 .It Fl t Ar
 Check the given
 .Ar files
 for potential problems.
-No databases are modified.
 Implies
-.Fl a
+.Fl a ,
+.Fl n ,
 and
 .Fl W .
 All diagnostic messages are printed to the standard output;
@@ -111,8 +110,7 @@ the standard error output is not used.
 Remove
 .Ar
 from the database in
-.Ar dir
-without truncating it.
+.Ar dir .
 .It Fl v
 Display all files added or removed to the index.
 .It Fl W
@@ -123,117 +121,12 @@ to the standard error output.
 If fatal parse errors are encountered while parsing, the offending file
 is printed to stderr, omitted from the index, and the parse continues
 with the next input file.
-.Ss Index Database
-The index database,
-.Pa mandoc.index ,
-is a
-.Xr recno 3
-database with record values consisting of
-.Pp
-.Bl -enum -compact
-.It
-the character
-.Cm d ,
-.Cm a ,
-or
-.Cm c
-to indicate the file type
-.Po
-.Xr mdoc 7 ,
-.Xr man 7 ,
-and post-formatted, respectively
-.Pc ,
-.It
-the filename relative to the databases' path,
-.It
-the manual section,
-.It
-the manual title,
-.It
-the architecture
-.Pq often empty ,
-.It
-and the description.
-.El
-.Pp
-Each of the above is NUL-terminated.
-.Pp
-If the record value is zero-length, it is unassigned.
-.Ss Keyword Database
-The keyword database,
-.Pa mandoc.db ,
-is a
-.Xr btree 3
-database of NUL-terminated keywords (record length is non-zero string
-length plus one) mapping to a 16-byte binary field consisting of the
-64-bit keyword type and the 64-bit
-.Sx Index Database
-record number, both in network-byte order.
-.Pp
-The type bit-mask consists of the following
-values mapping into
-.Xr mdoc 7
-macro identifiers:
-.Pp
-.Bl -column "x0x0000000000000001ULLx" "xLix" -offset indent -compact
-.It Li 0x0000000000000001ULL Ta \&An
-.It Li 0x0000000000000002ULL Ta \&Ar
-.It Li 0x0000000000000004ULL Ta \&At
-.It Li 0x0000000000000008ULL Ta \&Bsx
-.It Li 0x0000000000000010ULL Ta \&Bx
-.It Li 0x0000000000000020ULL Ta \&Cd
-.It Li 0x0000000000000040ULL Ta \&Cm
-.It Li 0x0000000000000080ULL Ta \&Dv
-.It Li 0x0000000000000100ULL Ta \&Dx
-.It Li 0x0000000000000200ULL Ta \&Em
-.It Li 0x0000000000000400ULL Ta \&Er
-.It Li 0x0000000000000800ULL Ta \&Ev
-.It Li 0x0000000000001000ULL Ta \&Fa
-.It Li 0x0000000000002000ULL Ta \&Fl
-.It Li 0x0000000000004000ULL Ta \&Fn
-.It Li 0x0000000000008000ULL Ta \&Ft
-.It Li 0x0000000000010000ULL Ta \&Fx
-.It Li 0x0000000000020000ULL Ta \&Ic
-.It Li 0x0000000000040000ULL Ta \&In
-.It Li 0x0000000000080000ULL Ta \&Lb
-.It Li 0x0000000000100000ULL Ta \&Li
-.It Li 0x0000000000200000ULL Ta \&Lk
-.It Li 0x0000000000400000ULL Ta \&Ms
-.It Li 0x0000000000800000ULL Ta \&Mt
-.It Li 0x0000000001000000ULL Ta \&Nd
-.It Li 0x0000000002000000ULL Ta \&Nm
-.It Li 0x0000000004000000ULL Ta \&Nx
-.It Li 0x0000000008000000ULL Ta \&Ox
-.It Li 0x0000000010000000ULL Ta \&Pa
-.It Li 0x0000000020000000ULL Ta \&Rs
-.It Li 0x0000000040000000ULL Ta \&Sh
-.It Li 0x0000000080000000ULL Ta \&Ss
-.It Li 0x0000000100000000ULL Ta \&St
-.It Li 0x0000000200000000ULL Ta \&Sy
-.It Li 0x0000000400000000ULL Ta \&Tn
-.It Li 0x0000000800000000ULL Ta \&Va
-.It Li 0x0000001000000000ULL Ta \&Vt
-.It Li 0x0000002000000000ULL Ta \&Xr
-.El
-.Sh IMPLEMENTATION NOTES
-The time to construct a new database pair grows linearly with the
-number of keywords in the input files.
-However, removing or updating entries with
-.Fl u
-or
-.Fl d ,
-respectively, grows as a multiple of the index length and input size.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa mandoc.db
-A
-.Xr btree 3
-keyword database mapping keywords to a type and file reference in
-.Pa mandoc.index .
-.It Pa mandoc.index
-A
-.Xr recno 3
-database of indexed file-names.
+A database of manpages relative to the directory of the file.
+This file is portable across architectures and systems, so long as the
+manpage hierarchy it indexes does not change.
 .It Pa /etc/man.conf
 The default
 .Xr man 1
@@ -258,32 +151,10 @@ Such errors cause
 to exit at once, possibly in the middle of parsing or formatting a file.
 The output databases are corrupt and should be removed.
 .El
-.Sh DIAGNOSTICS
-If the following errors occur, the
-.Nm
-databases should be rebuilt.
-.Bl -diag
-.It "%s: Corrupt database"
-The keyword database file indicated by
-.Pa %s
-is unreadable.
-.It "%s: Corrupt index"
-The index database file indicated by
-.Pa %s
-is unreadable.
-.It "%s: Path too long"
-The file
-.Pa %s
-is too long.
-This usually indicates database corruption or invalid command-line
-arguments.
-.El
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr man 1 ,
 .Xr whatis 1 ,
-.Xr btree 3 ,
-.Xr recno 3 ,
 .Xr man.conf 5
 .Sh HISTORY
 A
@@ -318,5 +189,9 @@ wrote the original
 in February 1979,
 .An Marc Espie
 started the Perl version in 2000,
-and the current version was written by
-.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+and the current version of
+.Nm
+was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv
+and
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org .
