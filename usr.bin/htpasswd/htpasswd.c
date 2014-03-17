@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.3 2014/03/17 13:54:58 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.4 2014/03/17 21:25:09 benno Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -106,7 +106,8 @@ main(int argc, char** argv)
 					    " reading or writing");
 				umask(old_umask);
 			} else
-				err(1, "cannot open password file for reading");
+				err(1, "cannot open password file for"
+					" reading or writing");
 		}
 		/* file already exits, copy content and filter login out */
 		if (out == NULL) {
@@ -134,10 +135,10 @@ main(int argc, char** argv)
 		if (in != NULL) {
 			if (fseek(in, 0, SEEK_SET) == -1)
 				err(1, "cannot seek in password file");
-			if (ftruncate(fileno(in), 0) == -1)
-				err(1, "cannot truncate password file");
 			if (fseek(out, 0, SEEK_SET) == -1)
 				err(1, "cannot seek in temp file");
+			if (ftruncate(fileno(in), 0) == -1)
+				err(1, "cannot truncate password file");
 			while ((linelen = getline(&line, &linesize, out))
 			    != -1)
 				if (fprintf(in, "%s", line) == -1)
