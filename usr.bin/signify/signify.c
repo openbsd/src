@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.66 2014/03/17 03:33:57 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.67 2014/03/17 04:09:39 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -175,21 +175,22 @@ readmsg(const char *filename, unsigned long long *msglenp)
 	struct stat sb;
 	ssize_t x, space;
 	int fd;
-	const size_t chunklen = 64 * 1024;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
 	if (fstat(fd, &sb) == 0 && S_ISREG(sb.st_mode)) {
 		if (sb.st_size > (1UL << 30))
 			errx(1, "msg too large in %s", filename);
 		space = sb.st_size + 1;
-		msg = xmalloc(space + 1);
 	} else {
-		space = 0;
+		space = 64 * 1024;
 	}
 
+	msg = xmalloc(space + 1);
 	while (1) {
 		if (space == 0) {
-			space = msglen + chunklen;
+			if (msglen * 2 > (1UL << 30))
+				errx(1, "msg too large in %s", filename);
+			space = msglen;
 			if (!(msg = realloc(msg, msglen + space + 1)))
 				errx(1, "realloc");
 		}
@@ -199,8 +200,6 @@ readmsg(const char *filename, unsigned long long *msglenp)
 			break;
 		space -= x;
 		msglen += x;
-		if (msglen > (1UL << 30))
-			errx(1, "msg too large in %s", filename);
 	}
 
 	msg[msglen] = 0;
