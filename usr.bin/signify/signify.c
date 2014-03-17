@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.60 2014/03/17 00:01:58 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.61 2014/03/17 01:23:58 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -87,23 +87,23 @@ usage(const char *error)
 }
 
 static int
-xopen(const char *fname, int flags, mode_t mode)
+xopen(const char *fname, int oflags, mode_t mode)
 {
 	struct stat sb;
 	int fd;
 
 	if (strcmp(fname, "-") == 0) {
-		if ((flags & O_WRONLY))
+		if ((oflags & O_WRONLY))
 			fd = dup(STDOUT_FILENO);
 		else
 			fd = dup(STDIN_FILENO);
 		if (fd == -1)
 			err(1, "dup failed");
 	} else {
-		fd = open(fname, flags, mode);
+		fd = open(fname, oflags, mode);
 		if (fd == -1)
 			err(1, "can't open %s for %s", fname,
-			    (flags & O_WRONLY) ? "writing" : "reading");
+			    (oflags & O_WRONLY) ? "writing" : "reading");
 	}
 	if (fstat(fd, &sb) == -1 || S_ISDIR(sb.st_mode))
 		errx(1, "can't use directory as file: %s", fname);
@@ -220,20 +220,20 @@ writeall(int fd, const void *buf, size_t buflen, const char *filename)
 		if (x == -1)
 			err(1, "write to %s", filename);
 		buflen -= x;
-		buf = (char*)buf + x;
+		buf = (char *)buf + x;
 	}
 }
 
 #ifndef VERIFYONLY
 static void
 writeb64file(const char *filename, const char *comment, const void *buf,
-    size_t buflen, const void *msg, size_t msglen, int flags, mode_t mode)
+    size_t buflen, const void *msg, size_t msglen, int oflags, mode_t mode)
 {
 	char header[1024];
 	char b64[1024];
 	int fd, rv;
 
-	fd = xopen(filename, O_CREAT|flags|O_NOFOLLOW|O_WRONLY, mode);
+	fd = xopen(filename, O_CREAT|oflags|O_NOFOLLOW|O_WRONLY, mode);
 	if (snprintf(header, sizeof(header), "%s%s\n",
 	    COMMENTHDR, comment) >= sizeof(header))
 		err(1, "comment too long");
