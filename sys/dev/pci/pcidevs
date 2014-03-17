@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1719 2014/03/10 02:23:56 jsg Exp $
+$OpenBSD: pcidevs,v 1.1720 2014/03/17 17:24:02 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -321,6 +321,7 @@ vendor	AWT		0x1a3b	AWT
 vendor	FUSIONIO	0x1aed	Fusion-io
 vendor	QUMRANET	0x1af4	Qumranet
 vendor	ASMEDIA		0x1b21	ASMedia
+vendor	REDHAT		0x1b36	Red Hat
 vendor	MARVELL2	0x1b4b	Marvell
 vendor	ETRON		0x1b6f	Etron
 vendor	FRESCO		0x1b73	Fresco Logic
@@ -5822,6 +5823,10 @@ product REALTEK RTL8192CE	0x8178	RTL8192CE
 product REALTEK RTL8190P	0x8190	RTL8190P
 product REALTEK RTL8192E	0x8192	RTL8192E
 product REALTEK RTL8187SE	0x8199	8187SE
+
+/* Red Hat products */
+product REDHAT PPB		0x0001	Qemu PCI-PCI
+product REDHAT QXL		0x0100	QXL Video
 
 /* RICOH products */
 product RICOH RF5C465		0x0465	5C465 CardBus
