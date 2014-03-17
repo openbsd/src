@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.38 2014/03/14 15:41:33 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.39 2014/03/17 13:15:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -41,8 +41,6 @@
 
 struct disklabel dl;
 
-struct DISK_metrics *DISK_getlabelmetrics(char *name);
-
 int
 DISK_open(char *disk, int mode)
 {
@@ -59,80 +57,34 @@ DISK_open(char *disk, int mode)
 	return (fd);
 }
 
-/* Routine to go after the disklabel for geometry
- * information.  This should work everywhere, but
- * in the land of PC, things are not always what
- * they seem.
- */
-struct DISK_metrics *
-DISK_getlabelmetrics(char *name)
+void
+DISK_getlabelgeometry(struct disk *disk)
 {
-	struct DISK_metrics *lm = NULL;
 	u_int64_t sz, spc;
 	int fd;
 
-	/* Get label metrics */
-	if ((fd = DISK_open(name, O_RDONLY)) != -1) {
-		lm = malloc(sizeof(struct DISK_metrics));
-		if (lm == NULL)
-			err(1, NULL);
-
+	/* Get label geometry. */
+	if ((fd = DISK_open(disk->name, O_RDONLY)) != -1) {
 		if (ioctl(fd, DIOCGPDINFO, &dl) == -1) {
 			warn("DIOCGPDINFO");
-			free(lm);
-			lm = NULL;
 		} else {
-			lm->cylinders = dl.d_ncylinders;
-			lm->heads = dl.d_ntracks;
-			lm->sectors = dl.d_nsectors;
+			disk->cylinders = dl.d_ncylinders;
+			disk->heads = dl.d_ntracks;
+			disk->sectors = dl.d_nsectors;
 			/* MBR handles only first UINT32_MAX sectors. */
-			spc = (u_int64_t)lm->heads * lm->sectors;
+			spc = (u_int64_t)disk->heads * disk->sectors;
 			sz = DL_GETDSIZE(&dl);
 			if (sz > UINT32_MAX) {
-				lm->cylinders = UINT32_MAX / spc;
-				lm->size = lm->cylinders * spc;
+				disk->cylinders = UINT32_MAX / spc;
+				disk->size = disk->cylinders * spc;
 				warnx("disk too large (%llu sectors)."
 				    " size truncated.", sz);
 			} else
-				lm->size = sz;
+				disk->size = sz;
 			unit_types[SECTORS].conversion = dl.d_secsize;
 		}
 		close(fd);
 	}
-
-	return (lm);
-}
-
-/* This is ugly, and convoluted.  All the magic
- * for disk geo/size happens here.  Basically,
- * the real size is the one we will use in the
- * rest of the program, the label size is what we
- * got from the disklabel.  If the disklabel fails,
- * we assume we are working with a normal file,
- * and should request the user to specify the
- * geometry he/she wishes to use.
- */
-int
-DISK_getmetrics(struct disk *disk, struct DISK_metrics *user)
-{
-
-	disk->label = DISK_getlabelmetrics(disk->name);
-
-	/* If user supplied, use that */
-	if (user) {
-		disk->real = user;
-		return (0);
-	}
-
-	/* If we have a label, use that */
-	if (disk->label) {
-		disk->real = disk->label;
-		return (0);
-	}
-
-	/* Can not get geometry, punt */
-	disk->real = NULL;
-	return (1);
 }
 
 /*
@@ -140,19 +92,18 @@ DISK_getmetrics(struct disk *disk, struct DISK_metrics *user)
  * to indicate the units that should be used for display.
  */
 int
-DISK_printmetrics(struct disk *disk, char *units)
+DISK_printgeometry(struct disk *disk, char *units)
 {
 	const int secsize = unit_types[SECTORS].conversion;
 	double size;
 	int i;
 
 	i = unit_lookup(units);
-	size = ((double)disk->real->size * secsize) / unit_types[i].conversion;
+	size = ((double)disk->size * secsize) / unit_types[i].conversion;
 	printf("Disk: %s\t", disk->name);
-	if (disk->real) {
-		printf("geometry: %d/%d/%d [%.0f ",
-		    disk->real->cylinders, disk->real->heads,
-		    disk->real->sectors, size);
+	if (disk->size) {
+		printf("geometry: %d/%d/%d [%.0f ", disk->cylinders,
+		    disk->heads, disk->sectors, size);
 		if (i == SECTORS && secsize != sizeof(struct dos_mbr))
 			printf("%d-byte ", secsize);
 		printf("%s]\n", unit_types[i].lname);
