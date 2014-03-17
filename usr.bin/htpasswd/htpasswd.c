@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.1 2014/03/17 12:49:13 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.2 2014/03/17 12:51:58 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -45,6 +45,7 @@ main(int argc, char** argv)
 	FILE *in, *out;
 	size_t linesize;
 	ssize_t linelen;
+	mode_t old_umask;
 	int fd, loginlen;
 	char hash[_PASSWORD_LEN], *file, *line, *login, pass[1024], pass2[1024];
 	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
@@ -97,13 +98,13 @@ main(int argc, char** argv)
 	else {
 		if ((in = fopen(file, "r+")) == NULL) {
 			if (errno == ENOENT) {
+				old_umask = umask(S_IXUSR|
+				    S_IWGRP|S_IRGRP|S_IXGRP|
+				    S_IWOTH|S_IROTH|S_IXOTH);
 				if ((out = fopen(file, "w")) == NULL)
 					err(1, "cannot open password file for"
 					    " reading or writing");
-				if (fchmod(fileno(out), S_IRUSR | S_IWUSR)
-				    == -1)
-					err(1, "cannot chmod new password"
-					    " file");
+				umask(old_umask);
 			} else
 				err(1, "cannot open password file for reading");
 		}
