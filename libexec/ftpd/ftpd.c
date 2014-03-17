@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.201 2014/03/17 21:02:49 sthen Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.202 2014/03/17 23:23:37 sthen Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ curdir(void)
 	return (guest ? path+1 : path);
 }
 
-char *argstr = "AdDhnlMSt:T:u:PUvW46";
+char *argstr = "AdDhnlm:MSt:T:u:PUvW46";
 
 static void
 usage(void)
