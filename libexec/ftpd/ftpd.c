@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.199 2014/01/08 17:31:36 jca Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.200 2014/03/17 20:54:10 sthen Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	anon_ok = 1;
 int	anon_only = 0;
+unsigned int minuid = 1000;
 int	multihome = 0;
 int	guest;
 int	stats;
@@ -255,7 +256,8 @@ static void
 usage(void)
 {
 	syslog(LOG_ERR,
-	    "usage: ftpd [-46ADdlMnPSUW] [-T maxtimeout] [-t timeout] [-u mask]");
+	    "usage: ftpd [-46ADdlMnPSUW] [-m minuid] [-T maxtimeout] "
+	    "[-t timeout] [-u mask]");
 	exit(2);
 }
 
@@ -300,6 +302,16 @@ main(int argc, char *argv[])
 
 		case 'l':
 			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 'm':
+			minuid = strtonum(optarg, 0, UINT_MAX, &errstr);
+			if (errstr) {
+				syslog(LOG_ERR,
+				    "%s is a bad value for -n, aborting",
+				    optarg);
+				exit(2);
+			}
 			break;
 
 		case 'M':
@@ -829,6 +841,14 @@ user(char *name)
 		return;
 	}
 	if (pw) {
+		if (pw->pw_uid < minuid) {
+			reply(530, "User %s access denied.", name);
+			if (logging)
+				syslog(LOG_NOTICE,
+				    "FTP LOGIN REFUSED FROM %s, %s (UID))",
+				    remotehost, name);
+			return;
+		}
 		if ((!shell && !dochroot) || checkuser(_PATH_FTPUSERS, name)) {
 			reply(530, "User %s access denied.", name);
 			if (logging)
