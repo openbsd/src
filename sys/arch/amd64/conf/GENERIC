@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.362 2014/03/12 00:44:10 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.363 2014/03/17 18:40:46 andre Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -236,6 +236,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 uberry*	at uhub?		# Research In Motion Blackberry
 ugen*	at uhub?		# USB Generic driver
+#upd*	at uhidev?		# USB Power Devices sensors
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
