@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.11 2014/03/10 21:40:58 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.12 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,30 +28,20 @@
 #ifndef _CMD_H
 #define _CMD_H
 
-/* Includes */
-#include "disk.h"
-#include "mbr.h"
-
-
-/* Constants (returned by cmd funs) */
 #define CMD_EXIT	0x0000
 #define CMD_SAVE	0x0001
 #define CMD_CONT	0x0002
 #define CMD_CLEAN	0x0003
 #define CMD_DIRTY	0x0004
 
-
-/* Data types */
 struct cmd {
 	char *cmd;
 	int (*fcn)(char *, struct disk *, struct mbr *, struct mbr *,
 	    int);
 	char *help;
 };
-
 extern struct cmd cmd_table[];
 
-/* Prototypes */
 int Xreinit(char *, struct  disk *, struct mbr *, struct mbr *, int);
 int Xdisk(char *, struct disk *, struct mbr *, struct mbr *, int);
 int Xmanual(char *, struct disk *, struct mbr *, struct mbr *, int);

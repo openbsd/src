@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.14 2014/03/07 21:56:13 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.15 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,7 +28,6 @@
 #ifndef _PART_H
 #define _PART_H
 
-/* Partition type */
 struct prt {
 	u_int32_t shead, scyl, ssect;
 	u_int32_t ehead, ecyl, esect;
@@ -38,7 +37,6 @@ struct prt {
 	unsigned char id;
 };
 
-/* Prototypes */
 void	PRT_printall(void);
 const char *PRT_ascii_id(int);
 void PRT_parse(struct disk *, void *, off_t, off_t, struct prt *);
@@ -52,4 +50,3 @@ void PRT_fix_BN(struct disk *, struct prt *, int);
 void PRT_fix_CHS(struct disk *, struct prt *);
 
 #endif /* _PART_H */
-

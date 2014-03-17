@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.20 2014/03/10 21:40:58 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.21 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,10 +28,6 @@
 #ifndef _MISC_H
 #define _MISC_H
 
-#include "cmd.h"
-
-/* typedefs */
-
 struct unit_type {
 	char	*abbr;
 	int	conversion;
@@ -39,11 +35,6 @@ struct unit_type {
 };
 extern struct unit_type unit_types[];
 #define SECTORS	1	/* units are bytes/sectors/kbytes/mbytes/gbytes */
-
-/* Constants */
-#define ASK_HEX 0x01
-#define ASK_DEC 0x02
-#define UNIT_TYPE_DEFAULT 1
 
 /* Prototypes */
 int unit_lookup(char *);
@@ -58,4 +49,3 @@ void putlong(void *, u_int32_t);
 u_int32_t getuint(struct disk *, char *, u_int32_t, u_int32_t);
 
 #endif /* _MISC_H */
-

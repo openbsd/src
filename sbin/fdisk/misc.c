@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.38 2014/03/17 13:15:44 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.39 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "disk.h"
 #include "misc.h"
 
 struct unit_type unit_types[] = {
@@ -47,7 +48,7 @@ unit_lookup(char *units)
 {
 	int i = 0;
 	if (units == NULL)
-		return (UNIT_TYPE_DEFAULT);
+		return (SECTORS);
 
 	while (unit_types[i].abbr != NULL) {
 		if (strncasecmp(unit_types[i].abbr, units, 1) == 0)
@@ -56,7 +57,7 @@ unit_lookup(char *units)
 	}
 	/* default */
 	if (unit_types[i].abbr == NULL)
-		return (UNIT_TYPE_DEFAULT);
+		return (SECTORS);
 
 	return (i);
 }
@@ -127,7 +128,7 @@ ask_pid(int dflt)
 {
 	char lbuf[100], *cp;
 	size_t lbuflen;
-	int num;
+	int num = -1;
 	const int low = 0, high = 0xff;
 
 	if (dflt < low)
@@ -136,7 +137,6 @@ ask_pid(int dflt)
 		dflt = high;
 
 	do {
-again:
 		printf("Partition id ('0' to disable) [%X - %X]: [%X] ", low,
 		    high, dflt);
 		printf("(? for help) ");
@@ -149,7 +149,7 @@ again:
 
 		if (lbuf[0] == '?') {
 			PRT_printall();
-			goto again;
+			continue;
 		}
 
 		/* Convert */

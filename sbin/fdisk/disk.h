@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.15 2014/03/17 13:15:44 krw Exp $	*/
+/*	$OpenBSD: disk.h,v 1.16 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,7 +28,6 @@
 #ifndef _DISK_H
 #define _DISK_H
 
-/* Data types */
 struct disk {
 	char *name;
 	u_int32_t cylinders;
@@ -37,7 +36,6 @@ struct disk {
 	u_int32_t size;
 };
 
-/* Prototypes */
 int  DISK_open(char *, int);
 void DISK_getlabelgeometry(struct disk *);
 int  DISK_printgeometry(struct disk *, char *);

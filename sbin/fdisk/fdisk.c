@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.61 2014/03/17 13:15:44 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.62 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,6 +36,8 @@
 #include <stdint.h>
 
 #include "disk.h"
+#include "part.h"
+#include "mbr.h"
 #include "misc.h"
 #include "user.h"
 
@@ -117,7 +119,7 @@ main(int argc, char *argv[])
 		case 'l':
 			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
 			if (errstr)
-				errx(1, "Block argument %s [1..%u].", errstr,
+				errx(1, "Block argument %s [64..%u].", errstr,
 				    UINT32_MAX);
 			break;
 		case 'y':

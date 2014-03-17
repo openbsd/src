@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.37 2014/03/17 13:15:44 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.38 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,10 +41,9 @@
 #include <memory.h>
 
 #include "disk.h"
+#include "part.h"
 #include "misc.h"
 #include "mbr.h"
-#include "part.h"
-
 
 void
 MBR_init(struct disk *disk, struct mbr *mbr)
@@ -143,8 +142,7 @@ MBR_print(struct mbr *mbr, char *units)
 	int i;
 
 	/* Header */
-	printf("Signature: 0x%X\n",
-	    (int)mbr->signature);
+	printf("Signature: 0x%X\n", (int)mbr->signature);
 	PRT_print(0, NULL, units);
 
 	/* Entries */

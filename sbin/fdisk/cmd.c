@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.67 2014/03/17 13:15:44 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.68 2014/03/17 16:40:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#include "disk.h"
+#include "part.h"
+#include "mbr.h"
 #include "user.h"
 #include "cmd.h"
 
@@ -109,12 +112,12 @@ Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 		return (ret);
 	}
 
-	pf = (int)strtonum(from, 0, 3, &errstr);
+	pf = strtonum(from, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, from);
 		return (ret);
 	}
-	pt = (int)strtonum(to, 0, 3, &errstr);
+	pt = strtonum(to, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, to);
 		return (ret);
@@ -142,7 +145,7 @@ Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	int pn, num, ret;
 	struct prt *pp;
 
-	pn = (int)strtonum(args, 0, 3, &errstr);
+	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, args);
 		return (CMD_CONT);
@@ -206,7 +209,7 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	ret = CMD_CONT;
 
-	pn = (int)strtonum(args, 0, 3, &errstr);
+	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, args);
 		return (ret);
@@ -236,7 +239,7 @@ Xselect(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	int off;
 	int pn;
 
-	pn = (int)strtonum(args, 0, 3, &errstr);
+	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, args);
 		return (CMD_CONT);
@@ -358,7 +361,6 @@ int
 Xupdate(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
-
 	/* Update code */
 	memcpy(mbr->code, tt->code, sizeof(mbr->code));
 	mbr->signature = DOSMBR_SIGNATURE;
@@ -377,7 +379,7 @@ Xflag(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	flag = args;
 	part = strsep(&flag, " \t");
 
-	pn = (int)strtonum(part, 0, 3, &errstr);
+	pn = strtonum(part, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s.\n", errstr, part);
 		return (CMD_CONT);
@@ -424,13 +426,13 @@ Xmanual(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	if (asprintf(&p, "gunzip -qc|%s", pager) != -1) {
 		f = popen(p, "w");
 		if (f) {
-			(void) fwrite(manpage, manpage_sz, 1, f);
+			fwrite(manpage, manpage_sz, 1, f);
 			pclose(f);
 		}
 		free(p);
 	}
 
-	(void)signal(SIGPIPE, opipe);
+	signal(SIGPIPE, opipe);
 	return (CMD_CONT);
 }
 
