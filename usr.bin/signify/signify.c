@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.63 2014/03/17 02:54:54 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.64 2014/03/17 03:07:10 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -441,22 +441,13 @@ verifymsg(struct pubkey *pubkey, uint8_t *msg, unsigned long long msglen,
 	free(dummybuf);
 }
 
-
 static void
-verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
-    int quiet)
+readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
+    const char *sigcomment)
 {
-	char comment[COMMENTMAXLEN];
-	struct sig sig;
-	struct pubkey pubkey;
-	unsigned long long msglen;
-	uint8_t *msg;
 
-	msg = readmsg(msgfile, &msglen);
-
-	readb64file(sigfile, &sig, sizeof(sig), comment);
 	if (!pubkeyfile) {
-		if ((pubkeyfile = strstr(comment, VERIFYWITH))) {
+		if ((pubkeyfile = strstr(sigcomment, VERIFYWITH))) {
 			pubkeyfile += strlen(VERIFYWITH);
 			if (strncmp(pubkeyfile, "/etc/signify/", 13) != 0 ||
 			    strstr(pubkeyfile, "/../") != NULL)
@@ -464,7 +455,23 @@ verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 		} else
 			usage("need pubkey");
 	}
-	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
+	readb64file(pubkeyfile, pubkey, sizeof(*pubkey), NULL);
+}
+
+static void
+verifysimple(const char *pubkeyfile, const char *msgfile, const char *sigfile,
+    int quiet)
+{
+	char sigcomment[COMMENTMAXLEN];
+	struct sig sig;
+	struct pubkey pubkey;
+	unsigned long long msglen;
+	uint8_t *msg;
+
+	msg = readmsg(msgfile, &msglen);
+
+	readb64file(sigfile, &sig, sizeof(sig), sigcomment);
+	readpubkey(pubkeyfile, &pubkey, sigcomment);
 
 	verifymsg(&pubkey, msg, msglen, &sig, quiet);
 
@@ -475,7 +482,7 @@ static uint8_t *
 verifyembedded(const char *pubkeyfile, const char *sigfile,
     int quiet, unsigned long long *msglenp)
 {
-	char comment[COMMENTMAXLEN];
+	char sigcomment[COMMENTMAXLEN];
 	struct sig sig;
 	struct pubkey pubkey;
 	unsigned long long msglen, siglen;
@@ -483,20 +490,12 @@ verifyembedded(const char *pubkeyfile, const char *sigfile,
 
 	msg = readmsg(sigfile, &msglen);
 
-	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), comment);
+	siglen = parseb64file(sigfile, msg, &sig, sizeof(sig), sigcomment);
+	readpubkey(pubkeyfile, &pubkey, sigcomment);
+
 	msglen -= siglen;
 	memmove(msg, msg + siglen, msglen);
 	msg[msglen] = 0;
-	if (!pubkeyfile) {
-		if ((pubkeyfile = strstr(comment, VERIFYWITH))) {
-			pubkeyfile += strlen(VERIFYWITH);
-			if (strncmp(pubkeyfile, "/etc/signify/", 13) != 0 ||
-			    strstr(pubkeyfile, "/../") != NULL)
-				errx(1, "untrusted path %s", pubkeyfile);
-		} else
-			usage("need pubkey");
-	}
-	readb64file(pubkeyfile, &pubkey, sizeof(pubkey), NULL);
 
 	verifymsg(&pubkey, msg, msglen, &sig, quiet);
 
