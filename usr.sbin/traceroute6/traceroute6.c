@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.63 2014/03/18 10:08:24 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.64 2014/03/18 10:09:37 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -720,7 +720,7 @@ main(int argc, char *argv[])
 	 */
 	for (hops = first_hop; hops <= max_hops; ++hops) {
 		struct in6_addr lastaddr;
-		int got_there = 0, unreachable = 0, loss;
+		int got_there = 0, unreachable = 0, timeout = 0, loss;
 
 		printf("%2u ", hops);
 		bzero(&lastaddr, sizeof(lastaddr));
@@ -771,6 +771,7 @@ main(int argc, char *argv[])
 			}
 			if (cc == 0) {
 				printf(" *");
+				timeout++;
 				loss++;
 			}
 			(void) fflush(stdout);
@@ -779,11 +780,9 @@ main(int argc, char *argv[])
 			printf(" (%d%% loss)", (loss * 100) / nprobes);
 		putchar('\n');
 		if (got_there ||
-		    (unreachable > 0 && unreachable >= ((nprobes + 1) / 2))) {
-			exit(0);
-		}
+		    (unreachable && (unreachable + timeout) >= nprobes))
+			break;
 	}
-
 	exit(0);
 }
 
