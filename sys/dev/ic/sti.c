@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.69 2014/02/20 11:13:44 kettenis Exp $	*/
+/*	$OpenBSD: sti.c,v 1.70 2014/03/18 22:36:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1331,46 +1331,3 @@ sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
 	if (ul != NULL)
 		*ul = 0;
 }
-
-#if NSTI_DIO > 0 || NSTI_SGC > 0
-
-/*
- * Early console support.  Only used on hp300.
- */
-
-int
-sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
-    bus_addr_t *bases, u_int codebase)
-{
-	bus_space_handle_t romh;
-	u_int romend;
-	int error;
-	long defattr;
-
-	if ((error = bus_space_map(memt, bases[0], PAGE_SIZE, 0, &romh)) != 0)
-		return (error);
-
-	/*
-	 * Compute real PROM size
-	 */
-	romend = sti_rom_size(memt, romh);
-
-	bus_space_unmap(memt, romh, PAGE_SIZE);
-
-	if ((error = bus_space_map(memt, bases[0], romend, 0, &romh)) != 0)
-		return (error);
-
-	bases[0] = romh;
-	if (sti_rom_setup(rom, memt, memt, romh, bases, codebase) != 0)
-		panic(__func__);
-	scr->scr_rom = rom;
-	if (sti_screen_setup(scr, STI_CLEARSCR) != 0)
-		panic(__func__);
-
-	sti_alloc_attr(scr, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&scr->scr_wsd, scr, 0, 0, defattr);
-
-	return (0);
-}
-
-#endif	/* NSTI_SGC > 0 */

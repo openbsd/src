@@ -1,4 +1,4 @@
-.\"	$OpenBSD: genassym.cf.5,v 1.8 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: genassym.cf.5,v 1.9 2014/03/18 22:36:31 miod Exp $
 .\"	$NetBSD: genassym.cf.5,v 1.8 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt GENASSYM.CF 5
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ before they get handed to printf.
 <asm print modifier> (default: empty) can be used to force gcc to output
 operands in different ways than normal.
 The "a" modifier e.g. stops gcc from emitting immediate
-prefixes in front of constants for the i386 and m68k port.
+prefixes in front of constants for the i386 port.
 .Sh FILES
 .Pa /sys/arch/${MACHINE}/${MACHINE}/genassym.cf
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.116 2013/10/13 23:30:12 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.117 2014/03/18 22:36:30 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -57,10 +57,6 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o \
 	symlinkat.o sync.o sysarch.o umask.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
-
-# modules with specific implementations on some architectures, and the
-# default implementation elsewhere:
-SRCS_m68k=	__get_tcb.S shmat.S
 
 SRCS+=	${SRCS_${MACHINE_CPU}}
 .for i in ${SRCS_${MACHINE_CPU}}

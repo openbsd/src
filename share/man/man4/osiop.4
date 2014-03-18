@@ -1,4 +1,4 @@
-.\"	$OpenBSD: osiop.4,v 1.13 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: osiop.4,v 1.14 2014/03/18 22:36:31 miod Exp $
 .\"	$NetBSD: osiop.4,v 1.2 2001/09/22 01:44:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt OSIOP 4
 .Os
 .Sh NAME
@@ -33,8 +33,6 @@
 .Nd Symbios/NCR 53C710 SCSI driver
 .Sh SYNOPSIS
 .Cd "osiop* at gsc? irq 9                  " Pq "hppa"
-.Cd "osiop0 at mc0 offset 0x47000 ipl 2    " Pq "mvme68k"
-.Cd "osiop0 at pcctwo0 offset 0x47000 ipl 2" Pq "mvme68k/mvme88k"
 .Sh DESCRIPTION
 The
 .Nm

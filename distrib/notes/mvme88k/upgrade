@@ -1,2 +1,0 @@
-dnl	$OpenBSD: upgrade,v 1.3 2013/02/09 19:48:37 miod Exp $
-OpenBSDUpgrade({:-an installation tape, or bsd.rd over the network-:})

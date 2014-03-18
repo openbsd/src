@@ -1,4 +1,4 @@
-#	$OpenBSD: remote,v 1.14 2012/06/21 01:00:36 deraadt Exp $
+#	$OpenBSD: remote,v 1.15 2014/03/18 22:36:29 miod Exp $
 #	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description database
@@ -20,7 +20,7 @@
 # /dev/ttya, /dev/cuaa, etc. The samples provide descriptions
 # for the first serial port in each style.
 #
-# A few architectures such as the Alpha, HPPA, or mvme88k either
+# A few architectures such as the Alpha or HPPA either
 # don't provide a serial port by default or have more complex
 # naming conventions.
 #
@@ -53,8 +53,8 @@ doshost:\
 unixhost:\
 	:pa=none:br#9600:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:
 
-tty00|For hp300,i386,macppc,vax:\
+tty00|For i386,macppc,vax:\
 	:dv=/dev/tty00:tc=direct:tc=unixhost:
 
-ttya|For sparc,mvme68k:\
+ttya|For sparc:\
 	:dv=/dev/ttya:tc=direct:tc=unixhost:

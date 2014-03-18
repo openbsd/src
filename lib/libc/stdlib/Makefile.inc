@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.48 2013/06/05 04:06:08 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.49 2014/03/18 22:36:29 miod Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -12,9 +12,7 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
 	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c _Exit.c
 
-.if   (${MACHINE_CPU} == "m68k")
-SRCS+=	abs.S div.c labs.c ldiv.c
-.elif (${MACHINE_CPU} == "i386")
+.if (${MACHINE_CPU} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
 .elif (${MACHINE_CPU} == "vax")
 SRCS+=	abs.c div.c labs.c ldiv.c
@@ -25,7 +23,7 @@ SRCS+=	abs.c div.c labs.c ldiv.c
 SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
 
-.if (${MACHINE_CPU} == "vax") || (${MACHINE_CPU} == "m68k")
+.if (${MACHINE_CPU} == "vax")
 SRCS+=	insque.S remque.S
 .else
 SRCS+=	insque.c remque.c

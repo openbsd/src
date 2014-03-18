@@ -1,4 +1,0 @@
-dnl	$OpenBSD: whatis,v 1.7 2008/03/10 22:00:12 miod Exp $
-
-OpenBSD/MACHINE runs on the Motorola 88100 and 88110 processor-based VME
-boards and systems built upon them.

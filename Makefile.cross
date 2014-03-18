@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.68 2013/09/04 14:43:27 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.69 2014/03/18 22:36:27 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -9,10 +9,7 @@ cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
 .if	(${TARGET} == "armish" || ${TARGET} == "armv7" || \
 	 ${TARGET} == "zaurus")
 TARGET_ARCH=	arm
-.elif	(${TARGET} == "hp300" || ${TARGET} == "mvme68k")
-TARGET_ARCH=	m68k
-.elif	(${TARGET} == "aviion" || ${TARGET} == "luna88k" || \
-	 ${TARGET} == "mvme88k")
+.elif	(${TARGET} == "aviion" || ${TARGET} == "luna88k")
 TARGET_ARCH=	m88k
 .elif	(${TARGET} == "sgi" || ${TARGET} == "octeon")
 TARGET_ARCH=	mips64

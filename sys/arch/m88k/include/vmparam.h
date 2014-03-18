@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2014/01/30 18:16:41 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.15 2014/03/18 22:36:34 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -80,7 +80,7 @@
 
 /*
  * Constants which control the way the VM system deals with memory segments.
- * The mvme88k only has one physical memory segment.
+ * All m88k systems so far only have one physical memory segment.
  */
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM

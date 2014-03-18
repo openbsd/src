@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2014/01/19 05:26:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2014/03/18 22:36:28 miod Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -32,11 +32,6 @@ SRCS += stubs.c
 SRCS += stubs.c
 .endif
 
-.if ${MACHINE} == "hp300"
-CFLAGS += -DBOOTSTRAP
-SRCS += hp300_installboot.c
-.endif
-
 .if ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
@@ -68,14 +63,6 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "macppc"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "mvme68k"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "mvme88k"
 SRCS += stubs.c
 .endif
 

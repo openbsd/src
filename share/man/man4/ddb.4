@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.75 2012/11/14 22:19:02 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.76 2014/03/18 22:36:31 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 14 2012 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -263,10 +263,6 @@ Print affected register contents for every instruction.
 .It amd64 ,
 .It i386
 Do not skip padding to the next long word boundary for unconditional jumps.
-.It m68k
-Use
-.Tn Motorola
-assembly syntax.
 .It m88k
 Decode instructions for the opposite CPU model (e.g. m88110 when running on an
 m88100 processor).
@@ -1015,11 +1011,6 @@ mips64:
 .Op Ar tlb
 .Xc
 .It Ic trap Ar ??
-.El
-.Pp
-mvme68k:
-.Bl -tag -width "searchframe [addr]" -compact
-.It Ic prom Ar ??
 .El
 .Pp
 sh:

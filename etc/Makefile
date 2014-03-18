@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.348 2014/03/17 17:07:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.349 2014/03/18 22:36:29 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -39,8 +39,7 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf mixerctl.conf
 
-.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
-    ${MACHINE} != "mvme88k"
+.if ${MACHINE} != "aviion" 
 BIN1+=	wsconsctl.conf
 .endif
 
@@ -320,9 +319,9 @@ distrib:
 	release allarchs kernels release-sets m4 install-mtree \
 	bootblocks ${ALL_KERNELS}
 
-SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7 etc.aviion etc.hp300
+SUBDIR+= etc.alpha etc.amd64 etc.armish etc.armv7 etc.aviion
 SUBDIR+= etc.hppa etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k
-SUBDIR+= etc.macppc etc.mvme68k etc.mvme88k etc.octeon
+SUBDIR+= etc.macppc etc.octeon
 SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.vax etc.zaurus
 
 .include <bsd.subdir.mk>

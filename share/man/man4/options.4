@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.234 2014/02/18 11:26:51 sthen Exp $
+.\"	$OpenBSD: options.4,v 1.235 2014/03/18 22:36:31 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 18 2014 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ to fail.
 .It Cd option DDB_STRUCT
 Compiles in symbolic information about the various data structures used by the
 kernel, for use within the kernel debugger.
-This option is currently not supported on alpha, m68k, m88k and vax based
+This option is currently not supported on alpha, m88k and vax based
 platforms.
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.

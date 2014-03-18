@@ -1,7 +1,0 @@
-In short: 
-	cd /usr/mdec
-	cp bootsd /
-	./installboot -v /bootsd ./bootxx /dev/rsd0c
-
-	(you will need to be single user to run installboot since it writes
-	to a raw disk device)

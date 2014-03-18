@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.54 2013/10/31 22:37:17 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.55 2014/03/18 22:36:30 miod Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -37,8 +37,7 @@ CFLAGS+= -DSEEALSO="\"fdisk(8), installboot(8)\""
 CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 .endif
 
-.if (${MACHINE} == "hp300") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "hppa64") || (${MACHINE} == "vax")
+.if (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || (${MACHINE} == "vax")
 CFLAGS+= -DNUMBOOT=1
 .endif
 
@@ -49,10 +48,6 @@ CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 
 .if (${MACHINE} == "macppc" || ${MACHINE} == "socppc")
 CFLAGS+= -DSEEALSO="\"fdisk(8), pdisk(8)\""
-.endif
-
-.if (${MACHINE} == "mvme68k") || (${MACHINE} == "mvme88k")
-CFLAGS+= -DSEEALSO="\"installboot(8)\""
 .endif
 
 .if (${MACHINE} == "solbourne") || (${MACHINE} == "sparc") || \

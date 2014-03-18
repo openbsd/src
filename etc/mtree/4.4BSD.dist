@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.243 2014/03/15 22:13:36 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.244 2014/03/18 22:36:29 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -783,8 +783,6 @@ armv7
 ..
 aviion
 ..
-hp300
-..
 hppa
 ..
 i386
@@ -796,10 +794,6 @@ loongson
 luna88k
 ..
 macppc
-..
-mvme68k
-..
-mvme88k
 ..
 octeon
 ..
@@ -867,8 +861,6 @@ armv7
 ..
 aviion
 ..
-hp300
-..
 hppa
 ..
 hppa64
@@ -882,10 +874,6 @@ loongson
 luna88k
 ..
 macppc
-..
-mvme68k
-..
-mvme88k
 ..
 octeon
 ..

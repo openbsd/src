@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.62 2013/08/05 12:32:50 kettenis Exp $
+.\"	$OpenBSD: diskless.8,v 1.63 2014/03/18 22:36:31 miod Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 5 2013 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -172,7 +172,7 @@ Assign an IP address for myclient in
 192.197.96.12           myclient
 .Ed
 .It
-If booting an alpha, amd64, hppa, hppa64, i386, sgi, mvme68k, mvme88k,
+If booting an alpha, amd64, hppa, hppa64, i386, sgi,
 sparc, sparc64, or vax client,
 ensure that
 .Xr tftpd 8
@@ -191,8 +191,8 @@ See the
 .Xr rbootd 8
 manual page for more information.
 .It
-If booting a newer alpha, amd64, hppa, hppa64, i386, sgi, mvme68k,
-mvme88k, sparc, or sparc64 client,
+If booting a newer alpha, amd64, hppa, hppa64, i386, sgi,
+sparc, or sparc64 client,
 install a copy of the appropriate diskless boot loader (such as
 .Pa boot.net
 from the root directory of the
@@ -368,8 +368,7 @@ For all clients:
 and
 .Xr rpc.bootparamd 8 .
 .Pp
-For alpha, amd64, hppa, hppa64, i386, sgi, mvme68k, mvme88k,
-sparc, sparc64, and vax clients:
+For alpha, amd64, hppa, hppa64, i386, sgi, sparc, sparc64, and vax clients:
 .Xr tftpd 8
 .Pp
 For HP 300 and older HPPA clients:
