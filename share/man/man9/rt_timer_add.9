@@ -1,0 +1,85 @@
+.\"     $OpenBSD: rt_timer_add.9,v 1.1 2014/03/18 09:01:11 mpi Exp $
+.\"
+.\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 18 2014 $
+.Dt RT_TIMER_ADD 9
+.Os
+.Sh NAME
+.Nm rt_timer_add ,
+.Nm rt_timer_count ,
+.Nm rt_timer_remove_all ,
+.Nm rt_timer_queue_create ,
+.Nm rt_timer_queue_change ,
+.Nm rt_timer_queue_destroy
+.Nd route timer queues interface
+.Sh SYNOPSIS
+.In net/route.h
+.Ft int
+.Fn rt_timer_add "struct rtentry *rt" \
+"void (*func)(struct rtentry *, struct rttimer *)" \
+"struct rttimer_queue *queue" "u_int rtableid"
+.Ft unsigned long
+.Fn rt_timer_count "struct rttimer_queue *rtq"
+.Ft void
+.Fn rt_timer_remove_all "struct rtentry *rt"
+.Ft struct rttimer_queue *
+.Fn rt_timer_queue_create "u_int timeout"
+.Ft void
+.Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
+.Ft void
+.Fn rt_timer_queue_destroy "struct rttimer_queue *rtq" "int destroy"
+.Sh DESCRIPTION
+Route timer queues provide a method of queueing routing-related actions to be
+triggered once per second.
+.Bl -tag -width Ds
+.It Fn rt_timer_add "struct rtentry *rt" \
+"void (*func)(struct rtentry *, struct rttimer *)" \
+"struct rttimer_queue *queue" "u_int rtableid"
+Schedule
+.Fa func
+to be called on
+.Fa rt
+using the timeout of
+.Fa queue .
+If
+.Fa rt
+already has a call to
+.Fa func
+scheduled on any timer queue, it will be replaced with the new invocation.
+.It Fn rt_timer_queue_create "u_int timeout"
+Create a timer queue with a timeout of
+.Fa timeout
+seconds.
+.It Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
+Set timeout for
+.Fa rtq
+to
+.Fa timeout
+seconds.
+.It Fn rt_timer_remove_all "struct rtentry *rt"
+Remove all timeouts associated with
+.Fa rt
+from all routing timer queues.
+.El
+.Sh RETURN VALUES
+.Fn rt_timer_add
+may fail with
+.Er ENOBUFS
+if memory could not be allocated for the timeout.
+.Sh SEE ALSO
+.Xr route 4 ,
+.Xr route 9

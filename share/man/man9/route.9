@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.8 2014/01/22 06:25:52 claudio Exp $
+.\"     $OpenBSD: route.9,v 1.9 2014/03/18 09:01:11 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -46,38 +46,6 @@
 "struct rtentry **rtp" "u_int rdomain"
 .Ft int
 .Fn rtdeletemsg "struct rtentry *rt" "u_int tableid"
-.Ft int
-.Fn rtable_exists "u_int id"
-.Ft int
-.Fn rtable_add "u_int id"
-.Ft u_int
-.Fn rtable_l2 "u_int id"
-.Ft void
-.Fn rtable_l2set "u_int id" "u_int parent"
-.Ft struct radix_node_head *
-.Fn rt_gettable "sa_family_t af" "u_int id"
-.Ft struct rttimer_queue *
-.Fn rt_timer_queue_create "u_int timeout"
-.Ft int
-.Fn rt_timer_add "struct rtentry *rt" \
-"void (*func)(struct rtentry *, struct rttimer *)" \
-"struct rttimer_queue *queue" "u_int rtableid"
-.Ft void
-.Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
-.Ft void
-.Fn rt_timer_queue_destroy "struct rttimer_queue *rtq" "int destroy"
-.Ft unsigned long
-.Fn rt_timer_count "struct rttimer_queue *rtq"
-.Ft void
-.Fn rt_timer_remove_all "struct rtentry *rt"
-.Ft u_int16_t
-.Fn rtlabel_name2id "char *name"
-.Ft const char *
-.Fn rtlabel_id2name "u_int16_t id"
-.Ft struct sockaddr *
-.Fn rtlabel_id2sa "u_int16_t labelid" "struct sockaddr_rtlabel *sa_rl"
-.Ft void
-.Fn rtlabel_unref "u_int16_t id"
 .Bd -literal
 struct rt_addrinfo {
 	int	rti_addrs;
@@ -102,7 +70,6 @@ struct rt_addrinfo {
 #define RTAX_MAX	11	/* size of array to allocate */
 .Ed
 .Sh DESCRIPTION
-.Ss Route Entries
 Routing entries describe the routes to be taken by packets in a router.
 .Bl -tag -width Ds
 .It Fn rt_lookup "struct sockaddr *dst" "struct sockaddr *mask" "u_int tableid"
@@ -178,88 +145,6 @@ freeing it if the reference count drops to 0.
 A macro which calls
 .Fn rtfree .
 .El
-.Ss Routing Tables and Domains
-Routing tables contain layer 2 and 3 forwarding information.
-Each address family in use will have its own routing table.
-Routing domains are a way of logically segmenting a router among multiple
-networks and may contain more than one routing table.
-.Bl -tag -width Ds
-.It Fn rtable_exists "u_int id"
-Return
-.Fa 1
-if table with ID
-.Fa id
-exists,
-.Fa 0
-otherwise.
-.It Fn rtable_add "u_int id"
-Add table with ID of
-.Fa id
-to routing domain
-.Fa 0 .
-.It Fn rtable_l2 "u_int id"
-Get the routing domain of table with ID of
-.Fa id .
-.It Fn rtable_l2set "u_int id" "u_int parent"
-Place table with ID of
-.Fa id
-under the routing domain with ID of
-.Fa parent .
-.El
-.Ss Route Timer Queues
-Route timer queues provide a method of queueing routing-related actions to be
-triggered once per second.
-.Bl -tag -width Ds
-.It Fn rt_timer_queue_create "u_int timeout"
-Create a timer queue with a timeout of
-.Fa timeout
-seconds.
-.It Fn rt_timer_add "struct rtentry *rt" \
-"void (*func)(struct rtentry *, struct rttimer *)" \
-"struct rttimer_queue *queue" "u_int rtableid"
-Schedule
-.Fa func
-to be called on
-.Fa rt
-using the timeout of
-.Fa queue .
-If
-.Fa rt
-already has a call to
-.Fa func
-scheduled on any timer queue, it will be replaced with the new invocation.
-.It Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
-Set timeout for
-.Fa rtq
-to
-.Fa timeout
-seconds.
-.It Fn rt_timer_remove_all "struct rtentry *rt"
-Remove all timeouts associated with
-.Fa rt
-from all routing timer queues.
-.El
-.Ss Route Labels
-Route labels are arbitrary data appended to routes and can be acted upon by
-.Xr pf 4 .
-.Bl -tag -width Ds
-.It Fn rtlabel_name2id "char *name"
-Return numerical ID of the route label named
-.Fa name ,
-creating the label if it does not already exist.
-.It Fn rtlabel_id2name "u_int16_t id"
-Return the string name of the route label with ID
-.Fa id .
-.It Fn rtlabel_id2sa "u_int16_t labelid" "struct sockaddr_rtlabel *sa_rl"
-Populate
-.Fa sa_rl
-with the data from the route label specified by
-.Fa labelid .
-.It Fn rtlabel_unref "u_int16_t id"
-Remove a reference to the route label with ID
-.Fa id ,
-freeing the label if the reference count drops to 0.
-.El
 .Sh RETURN VALUES
 .Fn rtrequest1
 may fail with:
@@ -320,31 +205,12 @@ could be found.
 .Fa rt
 is a multipath route that conflicts with existing multipath route.
 .El
-.Pp
-.Fn rtable_add
-may fail with:
-.Pp
-.Bl -tag -width Er -compact
-.It Bq Er EEXIST
-A table with ID of
-.Fa id
-already exists.
-.It Bq Er ENOMEM
-Memory could not be allocated to extend the list of routing domains.
-.El
-.Pp
-.Fn rt_timer_add
-may fail with
-.Er ENOBUFS
-if memory could not be allocated for the timeout.
-.Pp
-.Fn rtlabel_name2id
-returns
-.Fa 0
-if it was unable to create a route label.
 .Sh SEE ALSO
 .Xr route 4 ,
-.Xr route 8
+.Xr route 8 ,
+.Xr rt_timer_add 9 ,
+.Xr rtable_add 9 ,
+.Xr rtlabel_id2name 9
 .Sh BUGS
 The current route entry reference counting code, while not incorrect, is also
 likely not correct either.
