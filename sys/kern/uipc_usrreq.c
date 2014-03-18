@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.72 2014/01/24 06:00:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.73 2014/03/18 06:59:00 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	unp->unp_vnode = vp;
 	unp->unp_connid.uid = p->p_ucred->cr_uid;
 	unp->unp_connid.gid = p->p_ucred->cr_gid;
-	unp->unp_connid.pid = p->p_p->ps_mainproc->p_pid;
+	unp->unp_connid.pid = p->p_p->ps_pid;
 	unp->unp_flags |= UNP_FEIDSBIND;
 	VOP_UNLOCK(vp, 0, p);
 	return (0);
@@ -527,7 +527,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 			    m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
 		unp3->unp_connid.uid = p->p_ucred->cr_uid;
 		unp3->unp_connid.gid = p->p_ucred->cr_gid;
-		unp3->unp_connid.pid = p->p_p->ps_mainproc->p_pid;
+		unp3->unp_connid.pid = p->p_p->ps_pid;
 		unp3->unp_flags |= UNP_FEIDS;
 		so2 = so3;
 		if (unp2->unp_flags & UNP_FEIDSBIND) {
