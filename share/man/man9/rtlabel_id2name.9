@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtlabel_id2name.9,v 1.1 2014/03/18 09:01:11 mpi Exp $
+.\"     $OpenBSD: rtlabel_id2name.9,v 1.2 2014/03/18 15:01:07 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -26,12 +26,12 @@
 .Nd manipulate route labels
 .Sh SYNOPSIS
 .In net/route.h
+.Ft const char *
 .Fn rtlabel_id2name "u_int16_t id"
 .Ft struct sockaddr *
 .Fn rtlabel_id2sa "u_int16_t labelid" "struct sockaddr_rtlabel *sa_rl"
 .Ft u_int16_t
 .Fn rtlabel_name2id "char *name"
-.Ft const char *
 .Ft void
 .Fn rtlabel_unref "u_int16_t id"
 .Sh DESCRIPTION
