@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.109 2014/03/07 09:44:11 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.110 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -99,30 +99,30 @@ sub pipe() { 'OpenBSD::PackageRepository::Local::Pipe' }
 sub parse
 {
 	my ($class, $r, $state) = @_;
-	my $_ = $$r;
-	return undef if $_ eq '';
+	my $u = $$r;
+	return undef if $u eq '';
 
-	if (m/^ftp\:/io) {
+	if ($u =~ m/^ftp\:/io) {
 		return $class->ftp->parse_fullurl($r, $state);
-	} elsif (m/^http\:/io) {
+	} elsif ($u =~ m/^http\:/io) {
 #		require OpenBSD::PackageRepository::HTTP;
 
 		return $class->http->parse_fullurl($r, $state);
-	} elsif (m/^https\:/io) {
+	} elsif ($u =~ m/^https\:/io) {
 		return $class->https->parse_fullurl($r, $state);
-	} elsif (m/^scp\:/io) {
+	} elsif ($u =~ m/^scp\:/io) {
 		require OpenBSD::PackageRepository::SCP;
 
 		return $class->scp->parse_fullurl($r, $state);
-	} elsif (m/^src\:/io) {
+	} elsif ($u =~ m/^src\:/io) {
 		require OpenBSD::PackageRepository::Source;
 
 		return $class->source->parse_fullurl($r, $state);
-	} elsif (m/^file\:/io) {
+	} elsif ($u =~ m/^file\:/io) {
 		return $class->file->parse_fullurl($r, $state);
-	} elsif (m/^inst\:$/io) {
+	} elsif ($u =~ m/^inst\:$/io) {
 		return $class->installed->parse_fullurl($r, $state);
-	} elsif (m/^pipe\:$/io) {
+	} elsif ($u =~ m/^pipe\:$/io) {
 		return $class->pipe->parse_fullurl($r, $state);
 	} else {
 		return $class->file->parse_fullurl($r, $state);
@@ -655,7 +655,6 @@ sub parse_problems
 	if (defined $object) {
 		$url = $object->url;
 	}
-	my $_;
 	my $notyet = 1;
 	while(<$fh>) {
 		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
@@ -723,7 +722,6 @@ sub get_http_list
 
 	my $fullname = $self->url;
 	my $l = [];
-	my $_;
 	open(my $fh, '-|', OpenBSD::Paths->ftp." -o - $fullname 2>$error")
 	    or return;
 	while(<$fh>) {
@@ -773,7 +771,6 @@ sub _list
 {
 	my ($self, $cmd) = @_;
 	my $l =[];
-	my $_;
 	open(my $fh, '-|', "$cmd") or return;
 	while(<$fh>) {
 		chomp;

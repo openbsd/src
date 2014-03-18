@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.22 2014/02/07 11:20:58 espie Exp $
+# $OpenBSD: Term.pm,v 1.23 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -188,18 +188,18 @@ sub set_header
 sub hmove
 {
 	my ($self, $v) = @_;
-	my $_ = $self->{hpa};
-	s/\%i// and $v++;
-	s/\%n// and $v ^= 0140;
-	s/\%B// and $v = 16 * ($v/10) + $v%10;
-	s/\%D// and $v = $v - 2*($v%16);
-	s/\%\./sprintf('%c', $v)/e;
-	s/\%d/sprintf('%d', $v)/e;
-	s/\%2/sprintf('%2d', $v)/e;
-	s/\%3/sprintf('%3d', $v)/e;
-	s/\%\+(.)/sprintf('%c', $v+ord($1))/e;
-	s/\%\%/\%/g;
-	return $_;
+	my $seq = $self->{hpa};
+	$seq =~ s/\%i// and $v++;
+	$seq =~ s/\%n// and $v ^= 0140;
+	$seq =~ s/\%B// and $v = 16 * ($v/10) + $v%10;
+	$seq =~ s/\%D// and $v = $v - 2*($v%16);
+	$seq =~ s/\%\./sprintf('%c', $v)/e;
+	$seq =~ s/\%d/sprintf('%d', $v)/e;
+	$seq =~ s/\%2/sprintf('%2d', $v)/e;
+	$seq =~ s/\%3/sprintf('%3d', $v)/e;
+	$seq =~ s/\%\+(.)/sprintf('%c', $v+ord($1))/e;
+	$seq =~ s/\%\%/\%/g;
+	return $seq;
 }
 
 sub _show

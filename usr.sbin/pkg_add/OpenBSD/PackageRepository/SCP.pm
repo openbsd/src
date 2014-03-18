@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.27 2011/07/19 17:30:05 espie Exp $
+# $OpenBSD: SCP.pm,v 1.28 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -45,8 +45,6 @@ sub initiate
 	$self->{cmdfh} = $wrfh;
 	$self->{getfh} = $rdfh;
 	$wrfh->autoflush(1);
-	my $_;
-
 	while(<DATA>) {
 		# compress script a bit
 		next if m/^\#/o && !m/^\#!/o;
@@ -103,7 +101,6 @@ sub expand_tilde
 	return $dirs->{$arg} //= (getpwnam($arg))[7]."/";
 }
 
-my $_;
 while (<STDIN>) {
 	chomp;
 	if (m/^LIST\s+(.*)$/o) {

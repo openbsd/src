@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.30 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.31 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -106,7 +106,6 @@ sub footer
 sub printfile
 {
 	my ($state, $filename) = @_;
-	my $_;
 
 	open my $fh, '<', $filename or return;
 	while(<$fh>) {
@@ -120,7 +119,6 @@ sub printfile
 sub print_description
 {
 	my ($state, $dir) = @_;
-	my $_;
 
 	open my $fh, '<', $dir.DESC or return;
 	$_ = <$fh>; # zap COMMENT

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.132 2014/02/08 15:07:12 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.133 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -183,7 +183,6 @@ sub read
 sub defaultCode
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		&$cont($_);
 	}
@@ -192,7 +191,6 @@ sub defaultCode
 sub SharedItemsOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
 		&$cont($_);
@@ -207,7 +205,6 @@ sub DirrmOnly
 sub LibraryOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|lib|name|comment\s+subdir\=)\b/o;
 		&$cont($_);
@@ -217,7 +214,6 @@ sub LibraryOnly
 sub FilesOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell|sample|bin|rcscript)\b/o || !m/^\@/o;
 		&$cont($_);
@@ -227,7 +223,6 @@ sub FilesOnly
 sub PrelinkStuffOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		next unless m/^\@(?:cwd|bin|lib|name|depend|wantlib|comment\s+ubdir\=)\b/o;
 		&$cont($_);
@@ -237,7 +232,6 @@ sub PrelinkStuffOnly
 sub DependOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
 			&$cont($_);
@@ -251,7 +245,6 @@ sub DependOnly
 sub ExtraInfoOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		if (m/^\@(?:name|pkgpath|comment\s+(?:subdir|pkgpath)\=)\b/o) {
 			&$cont($_);
@@ -265,7 +258,6 @@ sub ExtraInfoOnly
 sub UpdateInfoOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		# if alwaysupdate, all info is sig
 		if (m/^\@option\s+always-update\b/o) {
@@ -287,7 +279,6 @@ sub UpdateInfoOnly
 sub ConflictOnly
 {
 	my ($fh, $cont) = @_;
-	my $_;
 	while (<$fh>) {
 		if (m/^\@(?:name|conflict|option)\b/o) {
 			&$cont($_);

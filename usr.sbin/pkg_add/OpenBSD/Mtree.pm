@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.12 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.13 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ use File::Spec;
 sub parse_fh
 {
 	my ($mtree, $basedir, $fh, $h) = @_;
-	my $_;
 	while(<$fh>) {
 		chomp;
 		s/^\s*//o;

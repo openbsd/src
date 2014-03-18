@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.51 2011/08/31 10:11:58 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.52 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,14 +32,14 @@ sub url2pkgname($)
 # see packages-specs(7)
 sub splitname
 {
-	my $_ = shift;
-	if (/^(.*?)\-(\d.*)$/o) {
+	my $n = shift;
+	if ($n =~ /^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
 		my @all = split /\-/o, $rest;
 		return ($stem, @all);
 	} else {
-		return ($_);
+		return ($n);
 	}
 }
 
@@ -47,14 +47,14 @@ my $cached = {};
 
 sub from_string
 {
-	my ($class, $_) = @_;
-	return $cached->{$_} //= $class->new_from_string($_);
+	my ($class, $s) = @_;
+	return $cached->{$s} //= $class->new_from_string($s);
 }
 
 sub new_from_string
 {
-	my ($class, $_) = @_;
-	if (/^(.*?)\-(\d.*)$/o) {
+	my ($class, $n) = @_;
+	if ($n =~ /^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
 		my @all = split /\-/o, $rest;
@@ -66,25 +66,25 @@ sub new_from_string
 		}, "OpenBSD::PackageName::Name";
 	} else {
 		return bless {
-			stem => $_,
+			stem => $n,
 		}, "OpenBSD::PackageName::Stem";
 	}
 }
 
 sub splitstem
 {
-	my $_ = shift;
-	if (/^(.*?)\-\d/o) {
+	my $s = shift;
+	if ($s =~ /^(.*?)\-\d/o) {
 		return $1;
 	} else {
-		return $_;
+		return $s;
 	}
 }
 
 sub is_stem
 {
-	my $_ = shift;
-	if (m/\-\d/o || $_ eq '-') {
+	my $s = shift;
+	if ($s =~ m/\-\d/o || $s eq '-') {
 		return 0;
 	} else {
 		return 1;

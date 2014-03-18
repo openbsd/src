@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistant.pm,v 1.3 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Persistant.pm,v 1.4 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,6 @@ sub grab_object
 	my $getfh = $self->{getfh};
 
 	print $cmdfh "ABORT\n";
-	my $_;
 	while (<$getfh>) {
 		last if m/^ABORTED/o;
 	}
@@ -98,7 +97,6 @@ sub list
 		my $path = $self->{path};
 		my $l = [];
 		print $cmdfh "LIST $path\n";
-		my $_;
 		$_ = <$getfh>;
 		if (!defined $_) {
 			$self->{state}->fatal("Could not initiate #1 session",

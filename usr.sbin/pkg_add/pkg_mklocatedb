@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.40 2014/03/09 09:55:10 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.41 2014/03/18 18:53:29 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -248,7 +248,6 @@ sub do_portsdir
 		my $plist = OpenBSD::PackingList->read($in,
 		    sub {
 			my ($fh, $cont) = @_;
-			my $_;
 			while (<$fh>) {
 				return if m/^\=\=\=\> /o;
 				&$cont($_);

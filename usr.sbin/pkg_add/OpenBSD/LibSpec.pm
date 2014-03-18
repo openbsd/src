@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.15 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.16 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -195,8 +195,8 @@ my $cached = {};
 
 sub from_string
 {
-	my ($class, $_) = @_;
-	return $cached->{$_} //= $class->new_from_string($_);
+	my ($class, $s) = @_;
+	return $cached->{$s} //= $class->new_from_string($s);
 }
 
 sub new_with_stem

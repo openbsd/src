@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.102 2014/03/05 22:32:32 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.103 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1017,19 +1017,19 @@ sub read_fragments
 	    sub {
 		my ($stack, $cont) = @_;
 		while(my $file = pop @$stack) {
-			while (my $_ = $file->readline) {
+			while (my $l = $file->readline) {
 				$state->progress->working(2048) unless $state->opt('q');
-				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
-					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
+				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
+					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
-				if (m/^(\!)?\%\%(.*)\%\%$/) {
-					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $_, $cont)) {
+				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
+					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont)) {
 						push(@$stack, $file);
 						$file = $f2;
 					}
 					next;
 				}
-				my $s = $subst->do($_);
+				my $s = $subst->do($l);
 				if ($fast) {
 					next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
@@ -1037,7 +1037,7 @@ sub read_fragments
 				my $o = &$cont($s);
 				if (defined $o) {
 					$o->check_version($state, $s);
-					$self->annotate($o, $_, $file);
+					$self->annotate($o, $l, $file);
 				}
 			}
 		}

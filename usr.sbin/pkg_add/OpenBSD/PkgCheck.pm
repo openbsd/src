@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.46 2014/02/10 19:40:47 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.47 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -293,9 +293,9 @@ sub log
 
 sub safe
 {
-	my ($self, $_) = @_;
-	s/[^\w\d\s\+\-\.\>\<\=\/\;\:\,\(\)\[\]]/?/g;
-	return $_;
+	my ($self, $string) = @_;
+	$string =~ s/[^\w\d\s\+\-\.\>\<\=\/\;\:\,\(\)\[\]]/?/g;
+	return $string;
 }
 
 sub handle_options

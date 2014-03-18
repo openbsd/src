@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.133 2014/02/08 10:43:25 espie Exp $
+# $OpenBSD: Delete.pm,v 1.134 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -601,7 +601,6 @@ sub delete
 		my $fullname = $self->fullname;
 		my @l=();
 		if (open(my $shells, '<', $destdir.OpenBSD::Paths->shells)) {
-			my $_;
 			while(<$shells>) {
 				push(@l, $_);
 				s/^\#.*//o;

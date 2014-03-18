@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.233 2014/02/10 19:12:20 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.234 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1266,24 +1266,24 @@ our @ISA=qw(OpenBSD::PackingElement::Action);
 sub expand
 {
 	my ($self, $state) = @_;
-	my $_ = $self->name;
-	if (m/\%F/o) {
+	my $e = $self->name;
+	if ($e =~ m/\%F/o) {
 		die "Bad expand" unless defined $state->{lastfile};
-		s/\%F/$state->{lastfile}->{name}/g;
+		$e =~ s/\%F/$state->{lastfile}->{name}/g;
 	}
-	if (m/\%D/o) {
+	if ($e =~ m/\%D/o) {
 		die "Bad expand" unless defined $state->{cwd};
-		s/\%D/$state->cwd/ge;
+		$e =~ s/\%D/$state->cwd/ge;
 	}
-	if (m/\%B/o) {
+	if ($e =~ m/\%B/o) {
 		die "Bad expand" unless defined $state->{lastfile};
-		s/\%B/dirname($state->{lastfile}->fullname)/ge;
+		$e =~ s/\%B/dirname($state->{lastfile}->fullname)/ge;
 	}
-	if (m/\%f/o) {
+	if ($e =~ m/\%f/o) {
 		die "Bad expand" unless defined $state->{lastfile};
-		s/\%f/basename($state->{lastfile}->fullname)/ge;
+		$e =~ s/\%f/basename($state->{lastfile}->fullname)/ge;
 	}
-	return $_;
+	return $e;
 }
 
 sub destate

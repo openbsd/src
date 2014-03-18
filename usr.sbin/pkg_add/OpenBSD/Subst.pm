@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.15 2011/11/13 15:41:57 nigel Exp $
+# $OpenBSD: Subst.pm,v 1.16 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -62,26 +62,26 @@ sub parse_option
 sub do
 {
 	my $self = shift;
-	my $_ = shift;
-	return $_ unless m/\$/o;	# optimization
-	while ( my $k = (m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
+	my $s = shift;
+	return $s unless $s =~ m/\$/o;	# optimization
+	while ( my $k = ($s =~ m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
 		my $v = $self->{$k};
 		unless ( defined $v ) { $v = "\$\\\{$k\}"; }
-		s/\$\{\Q$k\E\}/$v/g;
+		$s =~ s/\$\{\Q$k\E\}/$v/g;
 	}
-	s/\$\\\{([A-Za-z_])/\$\{$1/go;
-	return $_;
+	$s =~ s/\$\\\{([A-Za-z_])/\$\{$1/go;
+	return $s;
 }
 
 sub copy_fh2
 {
 	my ($self, $src, $dest) = @_;
-	my $_ = do { local $/; <$src> };
+	my $contents = do { local $/; <$src> };
 	while (my ($k, $v) = each %{$self}) {
-		s/\$\{\Q$k\E\}/$v/g;
+		$contents =~ s/\$\{\Q$k\E\}/$v/g;
 	}
-	s/\$\\\{([A-Za-z_])/\$\{$1/go;
-	print $dest $_;
+	$contents =~ s/\$\\\{([A-Za-z_])/\$\{$1/go;
+	print $dest $contents;
 }
 
 sub copy_fh

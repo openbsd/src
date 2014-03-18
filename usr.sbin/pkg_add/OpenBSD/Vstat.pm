@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.67 2013/07/08 08:49:57 jasper Exp $
+# $OpenBSD: Vstat.pm,v 1.68 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -259,7 +259,6 @@ sub run
 	open(my $cmd, "-|", @_) or
 		$state->errsay("Can't run #1", join(' ', @_))
 		and return;
-	my $_;
 	while (<$cmd>) {
 		&$code($_);
 	}
@@ -278,13 +277,13 @@ sub ask_mount
 
 	delete $ENV{'BLOCKSIZE'};
 	run($state, OpenBSD::Paths->mount, sub {
-		my $_ = shift;
-		chomp;
-		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
+		my $l = shift;
+		chomp $l;
+		if ($l =~ m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
 			my ($dev, $opts) = ($1, $2);
 			$class->new($dev, $opts);
 		} else {
-			$state->errsay("Can't parse mount line: #1", $_);
+			$state->errsay("Can't parse mount line: #1", $l);
 		}
 	});
 }
@@ -298,11 +297,11 @@ sub ask_df
 
 	$class->ask_mount($state) if !defined $devinfo;
 	run($state, OpenBSD::Paths->df, "--", $fname, sub {
-		my $_ = shift;
-		chomp;
-		if (m/^Filesystem\s+(\d+)\-blocks/o) {
+		my $l = shift;
+		chomp $l;
+		if ($l =~ m/^Filesystem\s+(\d+)\-blocks/o) {
 			$blocksize = $1;
-		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/o) {
+		} elsif ($l =~ m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/o) {
 			my ($dev, $avail) = ($1, $2);
 			$info = $devinfo->{$dev};
 			if (!defined $info) {

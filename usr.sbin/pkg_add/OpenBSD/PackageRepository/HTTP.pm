@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.10 2011/07/19 18:09:41 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.11 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -104,18 +104,18 @@ sub send_header
 sub get_header
 {
 	my $o = shift;
-	my $_ = $o->getline;
-	if (!m,^HTTP/1\.1\s+(\d\d\d),) {
+	my $l = $o->getline;
+	if ($l !~ m,^HTTP/1\.1\s+(\d\d\d),) {
 		return undef;
 	}
 	my $h = _Proxy::Header->new;
 	$h->{code} = $1;
-	while ($_ = $o->getline) {
-		last if m/^$/;
-		if (m/^([\w\-]+)\:\s*(.*)$/) {
+	while ($l = $o->getline) {
+		last if $l =~ m/^$/;
+		if ($l =~ m/^([\w\-]+)\:\s*(.*)$/) {
 			$h->{$1} = $2;
 		} else {
-			print STDERR "unknown line: $_\n";
+			print STDERR "unknown line: $l\n";
 		}
 	}
 	if (defined $h->{'Content-Length'}) {
@@ -336,7 +336,6 @@ sub get_file
 sub main
 {
 	my $self = shift;
-	my $_;
 	my $o = _Proxy::Connection->new($self->{host}, "www");
 	while (<STDIN>) {
 		chomp;

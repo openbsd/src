@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.102 2013/05/29 21:58:25 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.103 2014/03/18 18:53:29 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -68,34 +68,34 @@ sub path_parse
 
 sub find
 {
-	my ($self, $_, $state) = @_;
+	my ($self, $url, $state) = @_;
 
 	my $package;
-	if (m/[\/\:]/o) {
-		my ($repository, $pkgname) = $self->path_parse($_, $state);
+	if ($url =~ m/[\/\:]/o) {
+		my ($repository, $pkgname) = $self->path_parse($url, $state);
 		$package = $repository->find($pkgname);
 		if (defined $package) {
 			$self->default_path($state)->add($repository);
 		}
 	} else {
-		$package = $self->default_path($state)->find($_);
+		$package = $self->default_path($state)->find($url);
 	}
 	return $package;
 }
 
 sub grabPlist
 {
-	my ($self, $_, $code, $state) = @_;
+	my ($self, $url, $code, $state) = @_;
 
 	my $plist;
-	if (m/[\/\:]/o) {
-		my ($repository, $pkgname) = $self->path_parse($_, $state);
+	if ($url =~ m/[\/\:]/o) {
+		my ($repository, $pkgname) = $self->path_parse($url, $state);
 		$plist = $repository->grabPlist($pkgname, $code);
 		if (defined $plist) {
 			$self->default_path($state)->add($repository);
 		}
 	} else {
-		$plist = $self->default_path($state)->grabPlist($_, $code);
+		$plist = $self->default_path($state)->grabPlist($url, $code);
 	}
 	return $plist;
 }
