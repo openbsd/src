@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.62 2014/03/18 10:06:39 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.63 2014/03/18 10:08:24 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -994,13 +994,8 @@ packet_ok(struct msghdr *mhdr, int cc, int seq, int iflag)
 	}
 	if (rcvpktinfo == NULL || hlimp == NULL) {
 		warnx("failed to get received hop limit or packet info");
-#if 0
-		return(0);
-#else
 		rcvhlim = 0;	/*XXX*/
-#endif
-	}
-	else
+	} else
 		rcvhlim = *hlimp;
 
 	type = icp->icmp6_type;
