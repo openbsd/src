@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.18 2014/03/16 10:36:44 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.19 2014/03/18 23:17:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -905,19 +905,10 @@ qlw_scsi_cmd(struct scsi_xfer *xs)
 	SIMPLEQ_INIT(&list);
 	do {
 		ccb = qlw_scsi_cmd_poll(sc);
-		if (ccb == NULL) {
-			printf("TO 0x%02x\n", xs->cmd->opcode);
-			break;
-		}
 		SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_link);
 	} while (xs->io != ccb);
 
 	mtx_leave(&sc->sc_queue_mtx);
-
-	if (xs->io != ccb) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-	}
 
 	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&list, ccb_link);
@@ -930,9 +921,8 @@ qlw_scsi_cmd_poll(struct qlw_softc *sc)
 {
 	u_int16_t rspin;
 	struct qlw_ccb *ccb = NULL;
-	int i = 50000;
 
-	while (ccb == NULL && --i > 0) {
+	while (ccb == NULL) {
 		u_int16_t isr, info;
 
 		delay(100);
