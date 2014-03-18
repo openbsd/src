@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.55 2014/02/26 20:50:17 claudio Exp $ */
+/*	$OpenBSD: arp.c,v 1.56 2014/03/18 14:18:22 mikeb Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -238,11 +238,15 @@ file(char *name)
 void
 getsocket(void)
 {
+	socklen_t len = sizeof(rdomain);
+
 	if (s >= 0)
 		return;
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
 		err(1, "socket");
+	if (setsockopt(s, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+		err(1, "ROUTE_TABLEFILTER");
 }
 
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
