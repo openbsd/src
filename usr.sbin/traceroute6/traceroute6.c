@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.66 2014/03/18 10:11:00 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.67 2014/03/18 10:11:36 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -295,7 +295,7 @@ int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
 char	*pr_type(int);
 int	packet_ok(struct msghdr *, int, int, int);
-void	print(struct msghdr *, int);
+void	print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr *);
 void	print_asn(struct sockaddr_storage *);
 void	usage(void);
@@ -736,7 +736,12 @@ main(int argc, char *argv[])
 				    incflag))) {
 					if (!IN6_ARE_ADDR_EQUAL(&Rcv.sin6_addr,
 					    &lastaddr)) {
-						print(&rcvmhdr, cc);
+						print((struct sockaddr *)
+						    rcvmhdr.msg_name, cc,
+						    rcvpktinfo ?  inet_ntop(
+						    AF_INET6, &rcvpktinfo->
+						    ipi6_addr, hbuf,
+						    sizeof(hbuf)) : "?");
 						lastaddr = Rcv.sin6_addr;
 					}
 					printf("  %g ms", deltaT(&t1, &t2));
@@ -1099,27 +1104,22 @@ get_udphdr(struct ip6_hdr *ip6, u_char *lim)
 }
 
 void
-print(struct msghdr *mhdr, int cc)
+print(struct sockaddr *from, int cc, const char *to)
 {
-	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
 	char hbuf[NI_MAXHOST];
-
-	if (getnameinfo((struct sockaddr *)from, from->sin6_len,
+	if (getnameinfo(from, from->sa_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 		strlcpy(hbuf, "invalid", sizeof(hbuf));
 	if (nflag)
 		printf(" %s", hbuf);
 	else
-		printf(" %s (%s)", inetname((struct sockaddr *)from), hbuf);
+		printf(" %s (%s)", inetname(from), hbuf);
 
 	if (Aflag)
 		print_asn((struct sockaddr_storage *)from);
 
-	if (verbose) {
-		printf(" %d bytes of data to %s", cc,
-		    rcvpktinfo ?  inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
-		    hbuf, sizeof(hbuf)) : "?");
-	}
+	if (verbose)
+		printf(" %d bytes to %s", cc, to);
 }
 
 /*

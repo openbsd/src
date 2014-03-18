@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.93 2014/03/18 10:11:00 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.94 2014/03/18 10:11:36 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -261,7 +261,7 @@ void send_probe(int, u_int8_t, int, struct sockaddr_in *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
-void print(u_char *, int, struct sockaddr_in *);
+void print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr*);
 void print_asn(struct sockaddr_storage *);
 u_short in_cksum(u_short *, int);
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 	struct ip *ip, *inner_ip;
 	struct icmp *icp;
 	u_int8_t ttl;
-	char *ep;
+	char *ep, hbuf[NI_MAXHOST];
 	const char *errstr;
 	long l;
 	uid_t uid;
@@ -635,7 +635,11 @@ main(int argc, char *argv[])
 				if (i == 0)
 					continue;
 				if (from.sin_addr.s_addr != lastaddr) {
-					print(packet, cc, &from);
+					print((struct sockaddr *)&from,
+					    (cc - (((struct ip*)packet)->ip_hl
+					    <<2)), inet_ntop(AF_INET,
+					    &((struct ip*)packet)->ip_dst,
+					    hbuf, sizeof(hbuf)));
 					lastaddr = from.sin_addr.s_addr;
 				}
 				dt = (quad_t)(t2.tv_sec - t1.tv_sec) * 1000000 +
@@ -1107,27 +1111,23 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 }
 
 void
-print(u_char *buf, int cc, struct sockaddr_in *from)
+print(struct sockaddr *from, int cc, const char *to)
 {
-	struct ip *ip;
-	int hlen;
-
-	ip = (struct ip *) buf;
-	hlen = ip->ip_hl << 2;
-	cc -= hlen;
-
+	char hbuf[NI_MAXHOST];
+	if (getnameinfo(from, from->sa_len,
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+		strlcpy(hbuf, "invalid", sizeof(hbuf));
 	if (nflag)
-		printf(" %s", inet_ntoa(from->sin_addr));
+		printf(" %s", hbuf);
 	else
-		printf(" %s (%s)", inetname((struct sockaddr*)from),
-		    inet_ntoa(from->sin_addr));
+		printf(" %s (%s)", inetname(from), hbuf);
+
 	if (Aflag)
 		print_asn((struct sockaddr_storage *)from);
 
 	if (verbose)
-		printf(" %d bytes to %s", cc, inet_ntoa(ip->ip_dst));
+		printf(" %d bytes to %s", cc, to);
 }
-
 
 /*
  * Checksum routine for Internet Protocol family headers (C Version)
