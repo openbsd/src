@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.173 2013/11/13 22:52:41 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.174 2014/03/18 13:47:14 florian Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1346,7 +1346,6 @@ show_attr(void *b, u_int16_t len)
 	u_int16_t	 alen, ioff;
 	u_int8_t	 flags, type;
 
-	data = b;
 	if (len < 3)
 		errx(1, "show_attr: too short bgp attr");
 
@@ -1362,7 +1361,7 @@ show_attr(void *b, u_int16_t len)
 		data += 4;
 		len -= 4;
 	} else {
-		alen = data[2];
+		alen = (u_char)data[2];
 		data += 3;
 		len -= 3;
 	}
