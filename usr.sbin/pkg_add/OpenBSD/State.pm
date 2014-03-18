@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.25 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: State.pm,v 1.26 2014/03/18 16:42:24 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -33,7 +33,6 @@ sub read_file
 {
 	my ($self, $filename, $state) = @_;
 	open(my $fh, '<', $filename) or return;
-	my $_;
 	while (<$fh>) {
 		chomp;
 		next if m/^\s*\#/;
@@ -402,14 +401,15 @@ sub child_error
 
 sub _system
 {
-	my ($self, $todo) = (shift, shift);
+	my ($self, $todo, $todo2, @r) = @_;
 	my $r = fork;
 	if (!defined $r) {
 		return 1;
 	} elsif ($r == 0) {
 		&$todo;
-		exec {$_[0]} @_ or return 1;
+		exec {$r[0]} @r or return 1;
 	} else {
+		&$todo2;
 		waitpid($r, 0);
 		return $?;
 	}
@@ -418,13 +418,18 @@ sub _system
 sub system
 {
 	my $self = shift;
-	my $todo;
+	my ($todo, $todo2);
 	if (ref $_[0] eq 'CODE') {
 		$todo = shift;
 	} else {
 		$todo = sub {};
 	}
-	my $r = $self->_system($todo, @_);
+	if (ref $_[0] eq 'CODE') {
+		$todo2 = shift;
+	} else {
+		$todo2 = sub {};
+	}
+	my $r = $self->_system($todo, $todo2, @_);
 	if ($r != 0) {
 		$self->say("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
