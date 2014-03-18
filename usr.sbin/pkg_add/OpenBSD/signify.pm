@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: signify.pm,v 1.12 2014/03/05 22:42:36 espie Exp $
+# $OpenBSD: signify.pm,v 1.13 2014/03/18 16:40:46 espie Exp $
 #
 # Copyright (c) 2013-2014 Marc Espie <espie@openbsd.org>
 #
@@ -28,32 +28,64 @@ my $header = "untrusted comment: signify -- signature\n";
 my $cmd = OpenBSD::Paths->signify;
 my $suffix = ".sig";
 
+sub do_check
+{
+	my ($plist, $state, $sig, $pubkey) = @_;
+	my ($rdmsg, $wrmsg);
+	pipe($rdmsg, $wrmsg) or $state->fatal("Bad pipe: #1", $!);
+	return $state->system(
+	    sub {
+		    close($wrmsg);
+		    open(STDIN, '<&', $rdmsg);
+		    close($rdmsg);
+	    },
+	    sub {
+	    	close($rdmsg);
+		print $wrmsg $header, $sig, "\n";
+		$plist->write_no_sig($wrmsg);
+		close($wrmsg);
+	    },
+	    $cmd, '-V', '-q', '-p', $pubkey, '-e', '-x', '-', 
+	    '-m', '/dev/null');
+}
+
 sub compute_signature
 {
 	my ($plist, $state, $key, $pub) = @_;
 
-	my $contents = $plist->infodir.CONTENTS;
-	my $sigfile = $contents.$suffix;
-
-	open my $fh, ">", $contents;
-	$plist->write_no_sig($fh);
-	close $fh;
-	$state->system($cmd, '-S', '-q', '-s', $key, '-m', $contents) == 0 or 
+	my ($rdmsg, $wrmsg);
+	my ($rdsig, $wrsig);
+	pipe($rdmsg, $wrmsg) or $state->fatal("Bad pipe: #1", $!);
+	pipe($rdsig, $wrsig) or $state->fatal("Bad pipe: #1", $!);
+	my $sig;
+	$state->system(
+	    sub {
+		close($wrmsg);
+		open(STDIN, '<&', $rdmsg);
+		close($rdmsg);
+		close($rdsig);
+		open(STDOUT, '>&', $wrsig);
+		close($wrsig);
+	    },
+	    sub {
+	    	close($rdmsg);
+		close($wrsig);
+		$plist->write_no_sig($wrmsg);
+		close($wrmsg);
+		my $header = <$rdsig>;
+		$sig = <$rdsig>;
+		chomp $sig;
+		close($rdsig);
+	    },
+	    $cmd, '-S', '-q', '-s', $key, '-m', '-', '-x', '-') == 0 or 
 	    $state->fatal("problem generating signature");
 	if (defined $pub) {
-		$state->system($cmd, '-V', '-q', '-p', $pub, '-m', 
-		    $contents) == 0 or 
+		do_check($plist, $state, $sig, $pub) == 0 or
 		    $state->fatal("public key and private key don't match");
 	}
-	open(my $sighandle, '<', $sigfile)
-		or $state->fatal("problem reading signature");
-	my $header = <$sighandle>;
-	my $sig = <$sighandle>;
-	close($sighandle);
-	unlink($sigfile);
-	chomp $sig;
 	return $sig;
 }
+
 
 sub check_signature
 {
@@ -72,16 +104,7 @@ sub check_signature
 	}
 
 	my $sig = $plist->get('digital-signature');
-	my ($fh, $fname) = mkstemp("/tmp/pkgcontent.XXXXXXXXX");
-	$plist->write_no_sig($fh);
-	open(my $fh2, ">", $fname.$suffix);
-	print $fh2 $header, $sig->{b64sig}, "\n";
-	close $fh;
-	close $fh2;
-	my $rc = $state->system($cmd, '-V', '-q', '-p', $pubkey, '-m', $fname);
-	unlink $fname;
-	unlink $fname.$suffix;
-
+	my $rc = do_check($plist, $state, $sig->{b64sig}, $pubkey);
 	if ($rc != 0) {
 	    	$state->log("Bad signature");
 		return 0;
