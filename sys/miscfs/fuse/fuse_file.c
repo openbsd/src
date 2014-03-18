@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_file.c,v 1.7 2014/01/20 15:26:52 syl Exp $ */
+/* $OpenBSD: fuse_file.c,v 1.8 2014/03/18 08:51:53 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/fusebuf.h>

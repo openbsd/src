@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.13 2014/01/16 10:36:33 syl Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.14 2014/03/18 08:51:53 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
