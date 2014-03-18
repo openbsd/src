@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.2 2014/03/12 13:05:02 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.3 2014/03/18 15:47:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -95,8 +95,8 @@ int	xhci_command_abort(struct xhci_softc *);
 
 void	xhci_cmd_reset_endpoint_async(struct xhci_softc *, uint8_t, uint8_t);
 void	xhci_cmd_set_tr_deq_async(struct xhci_softc *, uint8_t, uint8_t, uint64_t);
-int	xhci_cmd_configure_endpoint(struct xhci_softc *, uint8_t, uint64_t);
-int	xhci_cmd_stop_endpoint(struct xhci_softc *, uint8_t, uint8_t);
+int	xhci_cmd_configure_ep(struct xhci_softc *, uint8_t, uint64_t);
+int	xhci_cmd_stop_ep(struct xhci_softc *, uint8_t, uint8_t);
 int	xhci_cmd_slot_control(struct xhci_softc *, uint8_t *, int);
 int	xhci_cmd_address_device(struct xhci_softc *,uint8_t,  uint64_t, int);
 int	xhci_cmd_evaluate_ctx(struct xhci_softc *, uint8_t, uint64_t);
@@ -1033,7 +1033,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe, uint32_t port)
 		dev->address = addr;
 #endif
 	} else {
-		error = xhci_cmd_configure_endpoint(sc, xp->slot,
+		error = xhci_cmd_configure_ep(sc, xp->slot,
 		    DMAADDR(&sdev->ictx_dma, 0));
 		if (error) {
 			xhci_ring_free(sc, &xp->ring);
@@ -1050,30 +1050,45 @@ void
 xhci_pipe_close(struct usbd_pipe *pipe)
 {
 	struct xhci_softc *sc = (struct xhci_softc *)pipe->device->bus;
-	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
+	struct xhci_pipe *lxp, *xp = (struct xhci_pipe *)pipe;
+	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
+	int i;
 
 	/* Root Hub */
 	if (pipe->device->depth == 0)
 		return;
 
-	/* XXX this is wrong */
-	if (!xp->halted || xhci_cmd_stop_endpoint(sc, xp->slot, xp->dci)) {
-		DPRINTF(("%s: unable to stop pipe=%p dci=%d\n", DEVNAME(sc),
-		    pipe, xp->dci));
-		return;
-	}
+	if (!xp->halted || xhci_cmd_stop_ep(sc, xp->slot, xp->dci))
+		DPRINTF(("%s: error stopping ep (%d)\n", DEVNAME(sc), xp->dci));
 
 	/* Mask the endpoint */
-	sdev->input_ctx->drop_flags |= htole32(XHCI_INCTX_MASK_DCI(xp->dci));
-	sdev->input_ctx->add_flags &= ~htole32(XHCI_INCTX_MASK_DCI(xp->dci));
+	sdev->input_ctx->drop_flags = htole32(XHCI_INCTX_MASK_DCI(xp->dci));
+	sdev->input_ctx->add_flags = 0;
 
-	/* Clear the endpoint context */
-	memset(&sdev->ep_ctx[xp->dci-1], 0, sizeof(struct xhci_epctx));
+	/* Update last valid Endpoint Context */
+	for (i = 30; i >= 0; i--) {
+		lxp = sdev->pipes[i];
+		if (lxp != NULL && lxp != xp)
+			break;
+	}
+	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_SET_DCI(lxp->dci));
+
+	/* Clear the Endpoint Context */
+	memset(&sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
 
 	usb_syncmem(&sdev->ictx_dma, 0, sc->sc_pagesize, BUS_DMASYNC_PREWRITE);
 
+	if (xhci_cmd_configure_ep(sc, xp->slot, DMAADDR(&sdev->ictx_dma, 0)))
+		DPRINTF(("%s: error clearing ep (%d)\n", DEVNAME(sc), xp->dci));
+
 	xhci_ring_free(sc, &xp->ring);
+	sdev->pipes[xp->dci - 1] = NULL;
+
+	if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_CONTROL) {
+		xhci_cmd_slot_control(sc, &xp->slot, 0);
+		xhci_softdev_free(sc, xp->slot);
+	}
 }
 
 struct usbd_xfer *
@@ -1361,7 +1376,7 @@ xhci_command_abort(struct xhci_softc *sc)
 }
 
 int
-xhci_cmd_configure_endpoint(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
+xhci_cmd_configure_ep(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
 
@@ -1377,7 +1392,7 @@ xhci_cmd_configure_endpoint(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 }
 
 int
-xhci_cmd_stop_endpoint(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
+xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
 
@@ -1434,14 +1449,18 @@ xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 
 	trb.trb_paddr = 0;
 	trb.trb_status = 0;
-	trb.trb_flags = htole32(
-	    enable ? XHCI_CMD_ENABLE_SLOT : XHCI_CMD_DISABLE_SLOT
-	);
+	if (enable)
+		trb.trb_flags = htole32(XHCI_CMD_ENABLE_SLOT);
+	else
+		trb.trb_flags = htole32(
+			XHCI_TRB_SET_SLOT(*slotp) | XHCI_CMD_DISABLE_SLOT
+		);
 
 	if (xhci_command_submit(sc, &trb, XHCI_COMMAND_TIMEOUT))
 		return (EIO);
 
-	*slotp = XHCI_TRB_GET_SLOT(letoh32(trb.trb_flags));
+	if (enable)
+		*slotp = XHCI_TRB_GET_SLOT(letoh32(trb.trb_flags));
 
 	return (0);
 }
@@ -1546,16 +1565,10 @@ void
 xhci_softdev_free(struct xhci_softc *sc, uint8_t slot)
 {
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[slot];
-	int i;
 
 	sc->sc_dcbaa.segs[slot] = 0;
 	usb_syncmem(&sc->sc_dcbaa.dma, slot * sizeof(uint64_t),
 	    sizeof(uint64_t), BUS_DMASYNC_PREWRITE);
-
-	for (i = 0; i < 31; i++) {
-		if (sdev->pipes[i] != NULL)
-			xhci_ring_free(sc, &sdev->pipes[i]->ring);
-	}
 
 	usb_freemem(&sc->sc_bus, &sdev->octx_dma);
 	usb_freemem(&sc->sc_bus, &sdev->ictx_dma);
