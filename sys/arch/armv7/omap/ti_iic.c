@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.1 2013/11/24 15:00:22 rapha Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.2 2014/03/18 14:23:52 rapha Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -475,7 +475,7 @@ ti_iic_handle_intr(struct ti_iic_softc *sc, uint32_t stat)
 void
 ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
 {
-	int len;
+	int len = 0;
 
 	DPRINTF(("ti_iic_do_read stat %#x\n", stat));
 	if (stat & I2C_IRQSTATUS_RDR) {
@@ -501,7 +501,7 @@ ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
 void
 ti_iic_do_write(struct ti_iic_softc *sc, uint32_t stat)
 {
-	int len;
+	int len = 0;
 
 	DPRINTF(("ti_iic_do_write stat %#x\n", stat));
 
