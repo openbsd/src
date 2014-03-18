@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.6 2014/03/17 22:39:19 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.7 2014/03/18 17:47:04 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -36,7 +36,8 @@ extern char *__progname;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [file] login\n", __progname);
+	fprintf(stderr, "usage:\t%s [file] login\n", __progname);
+	fprintf(stderr, "\t%s [file]\n", __progname);
 	exit(1);
 }
 
@@ -50,9 +51,10 @@ main(int argc, char** argv)
 	size_t linesize;
 	ssize_t linelen;
 	mode_t old_umask;
-	int fd, loginlen;
+	int c, fd, loginlen, batch;
 	char hash[_PASSWORD_LEN], *file, *line, *login, pass[1024], pass2[1024];
 	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
+	char *tok;
 
 	file = NULL;
 	login = NULL;
@@ -60,37 +62,76 @@ main(int argc, char** argv)
 	out = NULL;
 	line = NULL;
 	linesize = 0;
+	batch = 0;
 
-	switch (argc) {
-	case 2:
-		if ((loginlen = asprintf(&login, "%s:", argv[1])) == -1)
-			err(1, "asprintf");
-		break;
-	case 3:
-		file = argv[1];
-		if ((loginlen = asprintf(&login, "%s:", argv[2])) == -1)
-			err(1, "asprintf");
-		break;
-	default:
-		usage();
-		/* NOT REACHED */
-		break;
+	while ((c = getopt(argc, argv, "B")) != -1) {
+		switch (c) {
+		case 'B':
+			batch++;
+			break;
+		default:
+			usage();
+			/* NOT REACHED */
+			break;
+		}
 	}
 
-	if (!readpassphrase("Password: ", pass, sizeof(pass), RPP_ECHO_OFF))
-		err(1, "unable to read password");
-	if (!readpassphrase("Retype Password: ", pass2, sizeof(pass2),
-	    RPP_ECHO_OFF)) {
-		explicit_bzero(pass, sizeof(pass));
-		err(1, "unable to read password");
-	}
-	if (strcmp(pass, pass2) != 0) {
-		explicit_bzero(pass, sizeof(pass));
+	argc -= optind;
+	argv += optind;
+
+	if (batch) {
+		if (argc == 1)
+			file = argv[0];
+		else if (argc > 1)
+			usage();
+		if ((linelen = getline(&line, &linesize, stdin)) == -1)
+			err(1, "cannot read login:password from stdin\n");
+		line[linelen-1] = '\0';
+
+		if ((tok = strstr(line, ":")) == NULL)
+			errx(1, "cannot find ';' in input");
+		*tok++ = '\0';
+
+		if ((loginlen = asprintf(&login, "%s:", line)) == -1)
+			err(1, "asprintf");
+
+		if (strlcpy(pass, tok, sizeof(pass)) >= sizeof(pass))
+			errx(1, "password too long\n");
+	} else {
+
+		switch (argc) {
+		case 1:
+			if ((loginlen = asprintf(&login, "%s:", argv[0])) == -1)
+				err(1, "asprintf");
+			break;
+		case 2:
+			file = argv[0];
+			if ((loginlen = asprintf(&login, "%s:", argv[1])) == -1)
+				err(1, "asprintf");
+			break;
+		default:
+			usage();
+			/* NOT REACHED */
+			break;
+		}
+
+		if (!readpassphrase("Password: ", pass, sizeof(pass),
+		    RPP_ECHO_OFF))
+			err(1, "unable to read password");
+		if (!readpassphrase("Retype Password: ", pass2, sizeof(pass2),
+		    RPP_ECHO_OFF)) {
+			explicit_bzero(pass, sizeof(pass));
+			err(1, "unable to read password");
+		}
+		if (strcmp(pass, pass2) != 0) {
+			explicit_bzero(pass, sizeof(pass));
+			explicit_bzero(pass2, sizeof(pass2));
+			errx(1, "passwords don't match");
+		}
+
 		explicit_bzero(pass2, sizeof(pass2));
-		errx(1, "passwords don't match");
 	}
 
-	explicit_bzero(pass2, sizeof(pass2));
 	if (strlcpy(salt, bcrypt_gensalt(8), sizeof(salt)) >= sizeof(salt))
 		err(1, "salt too long");
 	if (strlcpy(hash, bcrypt(pass, salt), sizeof(hash)) >= sizeof(hash))
