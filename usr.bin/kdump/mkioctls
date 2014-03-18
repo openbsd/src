@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.31 2013/12/13 19:59:03 naddy Exp $
+#	$OpenBSD: mkioctls,v 1.32 2014/03/18 09:11:31 kettenis Exp $
 
 #
 # Copyright (c) 1994
@@ -57,7 +57,6 @@ BEGIN {
 	print "#include <net/if_tun.h>"
 	print "#include <net/pfvar.h>"
 	print "#include <sys/disklabel.h>"
-	print "#include <sys/agpio.h>"
 	print "#include <sys/ataio.h>"
 	print "#include <sys/audioio.h>"
 	print "#include <sys/cdio.h>"
@@ -91,7 +90,7 @@ BEGIN {
 	print ""
 }
 
-/^[ 	]*#[ 	]*define[ 	]+(AGPIOC_|ATAIO|AUDIO_|BIOC|CDIO|CIOC|CHIO|DIOC|DRM|GPIO|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|USB|VIDIOC|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
+/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CIOC|CHIO|DIOC|DRM|GPIO|TIO|FIO|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|USB|VIDIOC|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
