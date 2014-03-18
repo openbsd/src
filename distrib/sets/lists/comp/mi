@@ -1413,7 +1413,6 @@
 ./usr/include/sys/_time.h
 ./usr/include/sys/_types.h
 ./usr/include/sys/acct.h
-./usr/include/sys/agpio.h
 ./usr/include/sys/ataio.h
 ./usr/include/sys/atomic.h
 ./usr/include/sys/audioio.h
@@ -6719,7 +6718,6 @@
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/route.9
 ./usr/share/man/man9/rssadapt.9
-./usr/share/man/man9/rt_gettable.9
 ./usr/share/man/man9/rt_lookup.9
 ./usr/share/man/man9/rt_setgate.9
 ./usr/share/man/man9/rt_timer_add.9
@@ -6730,6 +6728,7 @@
 ./usr/share/man/man9/rt_timer_remove_all.9
 ./usr/share/man/man9/rtable_add.9
 ./usr/share/man/man9/rtable_exists.9
+./usr/share/man/man9/rtable_get.9
 ./usr/share/man/man9/rtable_l2.9
 ./usr/share/man/man9/rtable_l2set.9
 ./usr/share/man/man9/rtalloc.9
