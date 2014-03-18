@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.123 2014/03/06 15:07:11 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.124 2014/03/18 18:03:44 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -131,8 +131,6 @@ get_set() {
 			error_rm_wrkdir "${_url}: no such file"
 	fi
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
-	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
-		error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	if [ -z "${NOSIGCHECK}" ]; then
 		if [ -z "${SIGFETCHED}" ]; then
 			echo "===> Fetching ${_url%/*}/${SIGHASH}.sig"
@@ -140,6 +138,9 @@ get_set() {
 				error_rm_wrkdir "could not retrieve ${SIGHASH}.sig"
 		fi
 		check_sig "${_sigfile}" "${_tgz}"
+	else
+		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
+			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	fi
 }
 
