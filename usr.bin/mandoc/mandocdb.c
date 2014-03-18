@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.71 2014/01/22 20:58:35 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.72 2014/03/18 16:56:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -160,6 +161,7 @@ static	int	 set_basedir(const char *);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);
 
+static	char		 tempfilename[32];
 static	char		*progname;
 static	int		 nodb; /* no database changes */
 static	int		 quick; /* abort the parse early */
@@ -1866,6 +1868,8 @@ static void
 dbclose(int real)
 {
 	size_t		 i;
+	int		 status;
+	pid_t		 child;
 
 	if (nodb)
 		return;
@@ -1881,9 +1885,59 @@ dbclose(int real)
 	if (real)
 		return;
 
-	if (-1 == rename(MANDOC_DB "~", MANDOC_DB)) {
+	if ('\0' == *tempfilename) {
+		if (-1 == rename(MANDOC_DB "~", MANDOC_DB)) {
+			exitcode = (int)MANDOCLEVEL_SYSERR;
+			say(MANDOC_DB, "%s", strerror(errno));
+		}
+		return;
+	}
+
+	switch (child = fork()) {
+	case (-1):
 		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say(MANDOC_DB, NULL);
+		say("fork cmp", "%s", strerror(errno));
+		return;
+	case (0):
+		execlp("cmp", "cmp", "-s",
+		    tempfilename, MANDOC_DB, NULL);
+		say("exec cmp", "%s", strerror(errno));
+		exit(0);
+	default:
+		break;
+	}
+	if (-1 == waitpid(child, &status, 0)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say("wait cmp", "%s", strerror(errno));
+	} else if (WIFSIGNALED(status)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say("cmp", "Died from a signal");
+	} else if (WEXITSTATUS(status)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(MANDOC_DB,
+		    "Data changed, but cannot replace database");
+	}
+
+	*strrchr(tempfilename, '/') = '\0';
+	switch (child = fork()) {
+	case (-1):
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say("fork rm", "%s", strerror(errno));
+		return;
+	case (0):
+		execlp("rm", "rm", "-rf", tempfilename, NULL);
+		say("exec rm", "%s", strerror(errno));
+		exit((int)MANDOCLEVEL_SYSERR);
+	default:
+		break;
+	}
+	if (-1 == waitpid(child, &status, 0)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say("wait rm", "%s", strerror(errno));
+	} else if (WIFSIGNALED(status) || WEXITSTATUS(status)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(tempfilename,
+		    "Cannot remove temporary directory");
 	}
 }
 
@@ -1898,42 +1952,62 @@ dbclose(int real)
 static int
 dbopen(int real)
 {
-	const char	*file, *sql;
+	const char	*sql;
 	int		 rc, ofl;
 
 	if (nodb) 
 		return(1);
 
+	*tempfilename = '\0';
 	ofl = SQLITE_OPEN_READWRITE;
-	if (0 == real) {
-		file = MANDOC_DB "~";
-		if (-1 == remove(file) && ENOENT != errno) {
+
+	if (real) {
+		rc = sqlite3_open_v2(MANDOC_DB, &db, ofl, NULL);
+		if (SQLITE_OK != rc) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
-			say(file, NULL);
+			say(MANDOC_DB, "%s", sqlite3_errmsg(db));
 			return(0);
 		}
-		ofl |= SQLITE_OPEN_EXCLUSIVE;
-	} else
-		file = MANDOC_DB;
-
-	rc = sqlite3_open_v2(file, &db, ofl, NULL);
-	if (SQLITE_OK == rc) 
 		goto prepare_statements;
-	if (SQLITE_CANTOPEN != rc) {
+	}
+
+	ofl |= SQLITE_OPEN_CREATE | SQLITE_OPEN_EXCLUSIVE;
+
+	remove(MANDOC_DB "~");
+	rc = sqlite3_open_v2(MANDOC_DB "~", &db, ofl, NULL);
+	if (SQLITE_OK == rc) 
+		goto create_tables;
+	if (quick) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say(file, NULL);
+		say(MANDOC_DB "~", "%s", sqlite3_errmsg(db));
 		return(0);
 	}
 
-	sqlite3_close(db);
-	db = NULL;
-
-	if (SQLITE_OK != (rc = sqlite3_open(file, &db))) {
+	if (strlcpy(tempfilename, "/tmp/mandocdb.XXXXXX",
+	    sizeof(tempfilename)) >= sizeof(tempfilename)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say(file, NULL);
+		say("/tmp/mandocdb.XXXXXX", "Filename too long");
+		return(0);
+	}
+	if (NULL == mkdtemp(tempfilename)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(tempfilename, "%s", strerror(errno));
+		return(0);
+	}
+	if (strlcat(tempfilename, "/" MANDOC_DB,
+	    sizeof(tempfilename)) >= sizeof(tempfilename)) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(tempfilename, "Filename too long");
+		return(0);
+	}
+	rc = sqlite3_open_v2(tempfilename, &db, ofl, NULL);
+	if (SQLITE_OK != rc) {
+		exitcode = (int)MANDOCLEVEL_SYSERR;
+		say(tempfilename, "%s", sqlite3_errmsg(db));
 		return(0);
 	}
 
+create_tables:
 	sql = "CREATE TABLE \"mpages\" (\n"
 	      " \"form\" INTEGER NOT NULL,\n"
 	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
@@ -1956,7 +2030,7 @@ dbopen(int real)
 
 	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, NULL)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say(file, "%s", sqlite3_errmsg(db));
+		say(MANDOC_DB, "%s", sqlite3_errmsg(db));
 		return(0);
 	}
 
