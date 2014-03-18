@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.61 2014/03/10 19:58:43 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.62 2014/03/18 10:06:39 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -331,14 +331,13 @@ int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int dump;
 int useicmp;
-int lflag;			/* print both numerical address & hostname */
 int Aflag;			/* lookup ASN */
 
 int
 main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
-	int incflag = 1, sump = 0;
+	int ttl_flag = 0, incflag = 1, sump = 0;
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
@@ -436,7 +435,7 @@ main(int argc, char *argv[])
 			ident = htons(getpid() & 0xffff); /* same as ping6 */
 			break;
 		case 'l':
-			lflag++;
+			ttl_flag++;
 			break;
 		case 'm':
 			errno = 0;
@@ -741,6 +740,8 @@ main(int argc, char *argv[])
 						lastaddr = Rcv.sin6_addr;
 					}
 					printf("  %g ms", deltaT(&t1, &t2));
+					if (ttl_flag)
+						printf(" (%u)", rcvhlim);
 					switch (i - 1) {
 					case ICMP6_DST_UNREACH_NOROUTE:
 						++unreachable;
@@ -1114,10 +1115,9 @@ print(struct msghdr *mhdr, int cc)
 		strlcpy(hbuf, "invalid", sizeof(hbuf));
 	if (nflag)
 		printf(" %s", hbuf);
-	else if (lflag)
-		printf(" %s (%s)", inetname((struct sockaddr *)from), hbuf);
 	else
-		printf(" %s", inetname((struct sockaddr *)from));
+		printf(" %s (%s)", inetname((struct sockaddr *)from), hbuf);
+
 	if (Aflag)
 		print_asn((struct sockaddr *)from);
 

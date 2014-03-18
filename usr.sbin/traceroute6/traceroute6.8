@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute6.8,v 1.20 2014/02/26 20:52:29 claudio Exp $
+.\"	$OpenBSD: traceroute6.8,v 1.21 2014/03/18 10:06:39 florian Exp $
 .\"	$KAME: traceroute6.8,v 1.9 2002/08/30 03:56:20 onoe Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 26 2014 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt TRACEROUTE6 8
 .Os
 .\"
@@ -81,14 +81,8 @@ uses a routing header
 .It Fl I
 Use ICMP6 ECHO instead of UDP datagrams.
 .It Fl l
-Print both host hostnames and numeric addresses.
-Normally
-.Nm
-prints only hostnames if
-.Fl n
-is not specified, and only numeric addresses if
-.Fl n
-is specified.
+Display the hop limit value of the returned packet.
+This is useful for checking for asymmetric routing.
 .It Fl m Ar hoplimit
 Specify a maximum hoplimit.
 .It Fl n
