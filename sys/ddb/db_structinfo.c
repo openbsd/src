@@ -1,4 +1,4 @@
-/* $OpenBSD: db_structinfo.c,v 1.7 2013/12/13 19:55:12 naddy Exp $ */
+/* $OpenBSD: db_structinfo.c,v 1.8 2014/03/18 07:31:04 guenther Exp $ */
 /* public domain */
 /*
  * This file is intended to be compiled with debug information,
@@ -98,7 +98,6 @@
 
 /* XXX add filesystem includes there */
 
-#include <sys/agpio.h>
 #include <sys/ataio.h>
 #include <sys/audioio.h>
 #include <sys/cdio.h>
