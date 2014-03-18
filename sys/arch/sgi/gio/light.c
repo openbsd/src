@@ -1,8 +1,8 @@
-/*	$OpenBSD: light.c,v 1.4 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: light.c,v 1.5 2014/03/18 23:23:09 miod Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
- * Copyright (c) 2012 Miodrag Vallat.
+ * Copyright (c) 2012, 2014 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,6 +98,8 @@ struct light_devconfig {
 
 	struct light_softc	*dc_sc;
 	struct wsscreen_descr	dc_wsd;
+
+	uint8_t			dc_cmap[256 * 3];
 };
 
 /* always 1024x768x8 */
@@ -126,11 +128,11 @@ int	light_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
 struct wsdisplay_accessops light_accessops = {
-	.ioctl		= light_ioctl,
-	.mmap		= light_mmap,
-	.alloc_screen	= light_alloc_screen,
-	.free_screen	= light_free_screen,
-	.show_screen	= light_show_screen,
+	.ioctl = light_ioctl,
+	.mmap = light_mmap,
+	.alloc_screen = light_alloc_screen,
+	.free_screen = light_free_screen,
+	.show_screen = light_show_screen,
 };
 
 int	light_do_cursor(struct rasops_info *);
@@ -144,10 +146,8 @@ static __inline__
 uint32_t rex_read(struct light_devconfig *, uint32_t, uint32_t);
 static __inline__
 void	 rex_write(struct light_devconfig *, uint32_t, uint32_t, uint32_t);
-static __inline__
-uint8_t	 rex_vc1_read(struct light_devconfig *);
-static __inline__
-void	 rex_vc1_write(struct light_devconfig *, uint8_t);
+uint8_t	 rex_vc1_sysctl_read(struct light_devconfig *);
+void	 rex_vc1_sysctl_write(struct light_devconfig *, uint8_t);
 static __inline__
 void	 rex_wait(struct light_devconfig *);
 static __inline__
@@ -156,6 +156,10 @@ void	 rex_copy_rect(struct light_devconfig *, int, int, int, int, int, int,
 	    int);
 void	 rex_fill_rect(struct light_devconfig *, int, int, int, int, int);
 
+int	light_getcmap(struct light_devconfig *, struct wsdisplay_cmap *);
+void	light_loadcmap(struct light_devconfig *, int, int);
+int	light_putcmap(struct light_devconfig *, struct wsdisplay_cmap *);
+
 void	light_attach_common(struct light_devconfig *, struct gio_attach_args *);
 void	light_init_screen(struct light_devconfig *);
 
@@ -163,15 +167,15 @@ static struct light_devconfig light_console_dc;
 
 #define LIGHT_IS_LG1(_rev)		((_rev) < 2)	/* else LG2 */
 
-/*******************************************************************************
- * REX routines and helper functions
- ******************************************************************************/
+/*
+ * REX routines and helper functions.
+ */
 
 static __inline__
 uint32_t
 rex_read(struct light_devconfig *dc, uint32_t rset, uint32_t r)
 {
-	return (bus_space_read_4(dc->dc_st, dc->dc_sh, rset + r));
+	return bus_space_read_4(dc->dc_st, dc->dc_sh, rset + r);
 }
 
 static __inline__
@@ -181,20 +185,20 @@ rex_write(struct light_devconfig *dc, uint32_t rset, uint32_t r, uint32_t v)
 	bus_space_write_4(dc->dc_st, dc->dc_sh, rset + r, v);
 }
 
-static __inline__
 uint8_t
-rex_vc1_read(struct light_devconfig *dc)
+rex_vc1_sysctl_read(struct light_devconfig *dc)
 {
 	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_SYSCTL);
+
 	rex_read(dc, REX_PAGE1_GO, REX_P1REG_VC1_ADDRDATA);
-	return (rex_read(dc, REX_PAGE1_SET, REX_P1REG_VC1_ADDRDATA));
+	return rex_read(dc, REX_PAGE1_SET, REX_P1REG_VC1_ADDRDATA);
 }
 
-static __inline__
 void
-rex_vc1_write(struct light_devconfig *dc, uint8_t val)
+rex_vc1_sysctl_write(struct light_devconfig *dc, uint8_t val)
 {
 	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_SYSCTL);
+
 	rex_write(dc, REX_PAGE1_SET, REX_P1REG_VC1_ADDRDATA, val);
 	rex_write(dc, REX_PAGE1_GO, REX_P1REG_VC1_ADDRDATA, val);
 }
@@ -213,7 +217,7 @@ rex_revision(struct light_devconfig *dc)
 {
 	rex_write(dc, REX_PAGE1_SET, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_LADDR);
 	rex_read(dc, REX_PAGE1_GO, REX_P1REG_WCLOCKREV);
-	return (rex_read(dc, REX_PAGE1_SET, REX_P1REG_WCLOCKREV) & 0x7);
+	return rex_read(dc, REX_PAGE1_SET, REX_P1REG_WCLOCKREV) & 0x7;
 }
 
 void
@@ -227,11 +231,11 @@ rex_copy_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 
 	/* adjust for y. NB: STOPONX, STOPONY are inclusive */
 	if (to_y > from_y) {
-		ystarti = to_y + height - 1;
+		ystarti = to_y + height;
 		yendi = to_y;
 	} else {
 		ystarti = to_y;
-		yendi = to_y + height - 1;
+		yendi = to_y + height;
 	}
 
 	rex_wait(dc);
@@ -269,9 +273,103 @@ rex_fill_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 	rex_read(dc, REX_PAGE0_GO, REX_P0REG_COMMAND);
 }
 
-/*******************************************************************************
- * match/attach functions
- ******************************************************************************/
+/*
+ * Colormap routines
+ */
+
+int
+light_getcmap(struct light_devconfig *dc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count, i;
+	u_int colcount = 1 << dc->dc_ri.ri_depth;
+	int rc;
+	u_int8_t color[256], *c, *r;
+
+	if (index >= colcount || count > colcount - index)
+		return EINVAL;
+
+	c = dc->dc_cmap + 0 + index * 3;
+	for (i = count, r = color; i != 0; i--) {
+		*r++ = *c;
+		c += 3;
+	}
+	if ((rc = copyout(color, cm->red, count)) != 0)
+		return rc;
+
+	c = dc->dc_cmap + 1 + index * 3;
+	for (i = count, r = color; i != 0; i--) {
+		*r++ = *c;
+		c += 3;
+	}
+	if ((rc = copyout(color, cm->green, count)) != 0)
+		return rc;
+
+	c = dc->dc_cmap + 2 + index * 3;
+	for (i = count, r = color; i != 0; i--) {
+		*r++ = *c;
+		c += 3;
+	}
+	if ((rc = copyout(color, cm->blue, count)) != 0)
+		return rc;
+
+	return 0;
+}
+
+int
+light_putcmap(struct light_devconfig *dc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << dc->dc_ri.ri_depth;
+	int i, rc;
+	u_int8_t r[256], g[256], b[256], *nr, *ng, *nb, *c;
+
+	if (index >= colcount || count > colcount - index)
+		return EINVAL;
+
+	if ((rc = copyin(cm->red, r, count)) != 0)
+		return rc;
+	if ((rc = copyin(cm->green, g, count)) != 0)
+		return rc;
+	if ((rc = copyin(cm->blue, b, count)) != 0)
+		return rc;
+
+	nr = r, ng = g, nb = b;
+	c = dc->dc_cmap + index * 3;
+	for (i = count; i != 0; i--) {
+		*c++ = *nr++;
+		*c++ = *ng++;
+		*c++ = *nb++;
+	}
+
+	return 0;
+}
+
+void
+light_loadcmap(struct light_devconfig *dc, int from, int count)
+{
+	u_int8_t *cmap = dc->dc_cmap;
+
+	/* XXX should wait for retrace first */
+
+	cmap += 3 * from;
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_DAC_RADDR);
+	rex_write(dc, REX_PAGE1_SET, REX_P1REG_DAC_ADDRDATA, from);
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_DAC_ADDRDATA, from);
+
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_DAC_CMAP);
+	while (count-- > 0) {
+		rex_write(dc, REX_PAGE1_GO, REX_P1REG_DAC_ADDRDATA, *cmap);
+		rex_write(dc, REX_PAGE1_SET, REX_P1REG_DAC_ADDRDATA, *cmap++);
+		rex_write(dc, REX_PAGE1_GO, REX_P1REG_DAC_ADDRDATA, *cmap);
+		rex_write(dc, REX_PAGE1_SET, REX_P1REG_DAC_ADDRDATA, *cmap++);
+		rex_write(dc, REX_PAGE1_GO, REX_P1REG_DAC_ADDRDATA, *cmap);
+		rex_write(dc, REX_PAGE1_SET, REX_P1REG_DAC_ADDRDATA, *cmap++);
+	}
+}
+
+/*
+ * Autoconf and console glue
+ */
 
 int
 light_match(struct device *parent, void *vcf, void *aux)
@@ -314,8 +412,8 @@ light_attach(struct device *parent, struct device *self, void *aux)
 		printf(": LG%dMC\n",
 		    LIGHT_IS_LG1(sc->sc_dc->dc_boardrev) ? 1 : 2);
 	printf(", revision %d\n", dc->dc_boardrev);
-	printf("%s: %dx%d %d-bit frame buffer\n",
-	    self->dv_xname, LIGHT_XRES, LIGHT_YRES, LIGHT_DEPTH);
+	printf("%s: %dx%d %d-bit frame buffer\n", self->dv_xname,
+	    dc->dc_ri.ri_width, dc->dc_ri.ri_height, dc->dc_ri.ri_depth);
 
 	sc->sc_scrlist[0] = &dc->dc_wsd;
 	sc->sc_wsl.nscreens = 1;
@@ -359,8 +457,8 @@ light_attach_common(struct light_devconfig *dc, struct gio_attach_args *ga)
 
 	dc->dc_boardrev = rex_revision(dc);
 
-	rex_vc1_write(dc, rex_vc1_read(dc) & ~(VC1_SYSCTL_CURSOR |
-	    VC1_SYSCTL_CURSOR_ON));
+	rex_vc1_sysctl_write(dc, rex_vc1_sysctl_read(dc) &
+	    ~(VC1_SYSCTL_CURSOR | VC1_SYSCTL_CURSOR_ON));
 }
 
 void
@@ -371,7 +469,6 @@ light_init_screen(struct light_devconfig *dc)
 	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_hw = dc;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-	ri->ri_flg |= RI_FORCEMONO;	/* XXX until colormap support... */
 	/* for the proper operation of rasops computations, pretend 8bpp */
 	ri->ri_depth = 8;
 	ri->ri_stride = LIGHT_XRES;
@@ -395,12 +492,15 @@ light_init_screen(struct light_devconfig *dc)
 	dc->dc_wsd.fontheight = ri->ri_font->fontheight;
 	dc->dc_wsd.capabilities = ri->ri_caps;
 
-	rex_fill_rect(dc, 0, 0, LIGHT_XRES - 1, LIGHT_YRES - 1, WSCOL_BLACK);
+	memcpy(dc->dc_cmap, rasops_cmap, sizeof(dc->dc_cmap));
+	light_loadcmap(dc, 0, 1 << ri->ri_depth);
+
+	rex_fill_rect(dc, 0, 0, ri->ri_width, ri->ri_height, WSCOL_BLACK);
 }
 
-/*******************************************************************************
+/*
  * wsdisplay_emulops
- ******************************************************************************/
+ */
 
 int
 light_do_cursor(struct rasops_info *ri)
@@ -434,17 +534,17 @@ light_putchar(void *c, int row, int col, u_int ch, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, &ul);
 
 	if ((ch == ' ' || ch == 0) && ul == 0) {
-		rex_fill_rect(dc, x, y, x + font->fontwidth - 1,
-		    y + font->fontheight - 1, bg);
+		rex_fill_rect(dc, x, y, x + font->fontwidth,
+		    y + font->fontheight, bg);
 		return 0;
 	}
 
 	rex_wait(dc);
 
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, y);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, y + font->fontheight - 1);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, y + font->fontheight);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, x);
-	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, x + font->fontwidth - 1);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, x + font->fontwidth);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORREDI,
 	    ri->ri_devcmap[fg] & 0xff);
 	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORBACK,
@@ -464,21 +564,21 @@ light_putchar(void *c, int row, int col, u_int ch, long attr)
 	if (font->fontwidth <= 8) {
 		for (i = font->fontheight; i != 0; i--) {
 			if (ul && i == 1)
-				pattern = 0xff000000;
+				pattern = 0xff;
 			else
-				pattern = *bitmap << 24;
+				pattern = *bitmap;
 			rex_write(dc, REX_PAGE0_GO, REX_P0REG_ZPATTERN,
-			    pattern);
+			    pattern << 24);
 			bitmap += font->stride;
 		}
 	} else {
 		for (i = font->fontheight; i != 0; i--) {
 			if (ul && i == 1)
-				pattern = 0xffff0000;
+				pattern = 0xffff;
 			else
-				pattern = *(uint16_t *)bitmap << 16;
+				pattern = *(uint16_t *)bitmap;
 			rex_write(dc, REX_PAGE0_GO, REX_P0REG_ZPATTERN,
-			    pattern);
+			    pattern << 16);
 			bitmap += font->stride;
 		}
 	}
@@ -495,11 +595,11 @@ light_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 	struct wsdisplay_font *font = ri->ri_font;
 	int from_x, to_x, y, width, height;
 
-	from_x	= ri->ri_xorigin + srccol * font->fontwidth;
-	to_x	= ri->ri_xorigin + dstcol * font->fontwidth;
-	y	= ri->ri_yorigin + row * font->fontheight;
-	width	= ncols * font->fontwidth;
-	height	= font->fontheight;
+	from_x = ri->ri_xorigin + srccol * font->fontwidth;
+	to_x = ri->ri_xorigin + dstcol * font->fontwidth;
+	y = ri->ri_yorigin + row * font->fontheight;
+	width = ncols * font->fontwidth;
+	height = font->fontheight;
 
 	rex_copy_rect(dc, from_x, y, to_x, y, width, height,
 	    OPENGL_LOGIC_OP_COPY);
@@ -519,10 +619,10 @@ light_erasecols(void *c, int row, int startcol, int ncols, long attr)
 
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
-	from_x	= ri->ri_xorigin + startcol * font->fontwidth;
-	from_y	= ri->ri_yorigin + row * font->fontheight;
-	to_x	= from_x + (ncols * font->fontwidth) - 1;
-	to_y	= from_y + font->fontheight - 1;
+	from_x = ri->ri_xorigin + startcol * font->fontwidth;
+	from_y = ri->ri_yorigin + row * font->fontheight;
+	to_x = from_x + ncols * font->fontwidth;
+	to_y = from_y + font->fontheight;
 
 	rex_fill_rect(dc, from_x, from_y, to_x, to_y, bg);
 
@@ -538,11 +638,11 @@ light_copyrows(void *c, int srcrow, int dstrow, int nrows)
 	struct wsdisplay_font *font = ri->ri_font;
 	int x, from_y, to_y, width, height;
 
-	x	= ri->ri_xorigin;
-	from_y	= ri->ri_yorigin + srcrow * font->fontheight;
-	to_y	= ri->ri_yorigin + dstrow * font->fontheight;
-	width	= ri->ri_emuwidth;
-	height	= nrows * font->fontheight;
+	x = ri->ri_xorigin;
+	from_y = ri->ri_yorigin + srcrow * font->fontheight;
+	to_y = ri->ri_yorigin + dstrow * font->fontheight;
+	width = ri->ri_emuwidth;
+	height = nrows * font->fontheight;
 
 	rex_copy_rect(dc, x, from_y, x, to_y, width, height,
 	    OPENGL_LOGIC_OP_COPY);
@@ -562,26 +662,29 @@ light_eraserows(void *c, int row, int nrows, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
 	if (nrows == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		rex_fill_rect(dc, 0, 0, LIGHT_XRES - 1, LIGHT_YRES - 1, bg);
+		rex_fill_rect(dc, 0, 0, ri->ri_width, ri->ri_height, bg);
 		return 0;
 	}
 
 	rex_fill_rect(dc, ri->ri_xorigin,
-	    ri->ri_yorigin + row * font->fontheight - 1,
-	    ri->ri_xorigin + ri->ri_emuwidth - 1,
-	    ri->ri_yorigin + (row + nrows) * font->fontheight - 1, bg);
+	    ri->ri_yorigin + row * font->fontheight,
+	    ri->ri_xorigin + ri->ri_emuwidth,
+	    ri->ri_yorigin + (row + nrows) * font->fontheight, bg);
 
 	return 0;
 }
 
-/*******************************************************************************
+/*
  * wsdisplay_accessops
- ******************************************************************************/
+ */
 
 int
 light_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct light_devconfig *dc = v;
 	struct wsdisplay_fbinfo *fb;
+	struct wsdisplay_cmap *cm;
+	int rc;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -589,10 +692,23 @@ light_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		fb = (struct wsdisplay_fbinfo *)data;
-		fb->width	= LIGHT_XRES;
-		fb->height	= LIGHT_YRES;
-		fb->depth	= LIGHT_DEPTH;
-		fb->cmsize	= 1 << LIGHT_DEPTH;
+		fb->width = dc->dc_ri.ri_width;
+		fb->height = dc->dc_ri.ri_height;
+		fb->depth = dc->dc_ri.ri_depth;
+		fb->cmsize = 1 << fb->depth;
+		break;
+	case WSDISPLAYIO_GETCMAP:
+		cm = (struct wsdisplay_cmap *)data;
+		rc = light_getcmap(dc, cm);
+		if (rc != 0)
+			return rc;
+		break;
+	case WSDISPLAYIO_PUTCMAP:
+		cm = (struct wsdisplay_cmap *)data;
+		rc = light_putcmap(dc, cm);
+		if (rc != 0)
+			return rc;
+		light_loadcmap(dc, cm->index, cm->count);
 		break;
 	default:
 		return -1;

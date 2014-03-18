@@ -1,4 +1,4 @@
-/*	$OpenBSD: lightreg.h,v 1.1 2012/04/17 15:36:55 miod Exp $	*/
+/*	$OpenBSD: lightreg.h,v 1.2 2014/03/18 23:23:09 miod Exp $	*/
 /*	$NetBSD: lightreg.h,v 1.3 2006/12/29 00:31:48 rumble Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 
 /* configuration register offsets (from REX_PAGE1_{SET,GO}) */
 #define REX_P1REG_WCLOCKREV	0x00000054	/* nsclock / revision */
+#define REX_P1REG_DAC_ADDRDATA	0x00000058	/* DAC r/w addr and data 8bit */
 #define REX_P1REG_CFGSEL	0x0000005c	/* function selector */
 #define REX_P1REG_VC1_ADDRDATA	0x00000060	/* vc1 r/w addr and data 8bit */
 #define REX_P1REG_CFGMODE	0x00000068	/* REX system config */
@@ -80,6 +81,14 @@
 #define REX_CFGSEL_VC1_LADDR	0x00000004	/* low address bits */
 #define REX_CFGSEL_VC1_HADDR	0x00000005	/* high address bits */
 #define REX_CFGSEL_VC1_SYSCTL	0x00000006
+#define REX_CFGSEL_DAC_WADDR	0x00000000	/* write address */
+#define REX_CFGSEL_DAC_CMAP	0x00000001	/* colormap data */
+#define REX_CFGSEL_DAC_PMASK	0x00000002	/* pixel read mask */
+#define REX_CFGSEL_DAC_RADDR	0x00000003	/* read address */
+#define REX_CFGSEL_DAC_OVWADDR	0x00000004	/* overlay write address */
+#define REX_CFGSEL_DAC_OV	0x00000005	/* overlay registers */
+#define REX_CFGSEL_DAC_CTL	0x00000006	/* control registers */
+#define REX_CFGSEL_DAC_OVRADDR	0x00000007	/* overlay read address */
 
 /* vc1 sysctl bits (byte) */
 #define VC1_SYSCTL_VIDEO_ON	0x04
