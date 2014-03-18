@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2014/03/18 18:06:25 espie Exp $
+# $OpenBSD: Makefile,v 1.22 2014/03/18 18:48:46 schwarze Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -292,7 +292,8 @@ MAN=	\
 	SHA1 sha
 
 ${page}.3: ${src}.pod
-	${POD2MAN} --section=3 --name=${page:U} ${.ALLSRC} > ${.TARGET}
+	@echo '${POD2MAN} --section=3 --name=${page:U} $? > $@'
+	@${POD2MAN} --section=3 --name=${page:U} $? > $@.tmp && mv $@.tmp $@
 .endfor
 
 MLINKS+=\
@@ -1122,11 +1123,12 @@ maninstall:
 .SUFFIXES: .pod .1 .3 .7
 .for sect in 1 3 7
 .pod.${sect}:
-	${POD2MAN} --section=${sect} --name=${*:U} $< > $@.tmp && mv $@.tmp $@
+	@echo '${POD2MAN} --section=${sect} --name=${*:U} $< > $@'
+	@${POD2MAN} --section=${sect} --name=${*:U} $< > $@.tmp && mv $@.tmp $@
 .endfor
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 
 clean cleandir:
-	rm -f ${MAN}
+	rm -f ${MAN} ${MANLINT}
