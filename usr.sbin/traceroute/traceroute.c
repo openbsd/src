@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.90 2014/03/10 19:58:06 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.91 2014/03/18 10:08:58 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -745,7 +745,8 @@ main(int argc, char *argv[])
 		if (sump)
 			printf(" (%d%% loss)", (loss * 100) / nprobes);
 		putchar('\n');
-		if (got_there || (unreachable && (unreachable + timeout) >= nprobes))
+		if (got_there ||
+		    (unreachable && (unreachable + timeout) >= nprobes))
 			break;
 	}
 	exit(0);
