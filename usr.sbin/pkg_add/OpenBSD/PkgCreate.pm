@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.103 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.104 2014/03/18 20:56:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -979,7 +979,7 @@ our @ISA = qw(OpenBSD::AddCreateDelete);
 
 sub handle_fragment
 {
-	my ($self, $state, $old, $not, $frag, $_, $cont) = @_;
+	my ($self, $state, $old, $not, $frag, undef, $cont) = @_;
 	my $def = $frag;
 	if ($frag eq 'SHARED') {
 		$def = 'SHARED_LIBS';
