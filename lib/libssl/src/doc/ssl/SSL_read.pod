@@ -81,12 +81,12 @@ The following return values can occur:
 
 =over 4
 
-=item E<gt>0
+=item C<E<gt>0>
 
 The read operation was successful; the return value is the number of
 bytes actually read from the TLS/SSL connection.
 
-=item 0
+=item C<0>
 
 The read operation was not successful. The reason may either be a clean
 shutdown due to a "close notify" alert sent by the peer (in which case
@@ -103,7 +103,7 @@ only be detected, whether the underlying connection was closed. It cannot
 be checked, whether the closure was initiated by the peer or by something
 else.
 
-=item E<lt>0
+=item C<E<lt>0>
 
 The read operation was not successful, because either an error occurred
 or action must be taken by the calling process. Call SSL_get_error() with the
