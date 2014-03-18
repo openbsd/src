@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.91 2014/03/18 10:08:58 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.92 2014/03/18 10:10:17 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(u_char *, int, struct sockaddr_in *);
 char *inetname(struct in_addr);
-void print_asn(struct in_addr);
+void print_asn(struct sockaddr_storage *);
 u_short in_cksum(u_short *, int);
 char *pr_type(u_int8_t);
 int map_tos(char *, int *);
@@ -1122,7 +1122,7 @@ print(u_char *buf, int cc, struct sockaddr_in *from)
 		printf(" %s (%s)", inetname(from->sin_addr),
 		    inet_ntoa(from->sin_addr));
 	if (Aflag)
-		print_asn(from->sin_addr);
+		print_asn((struct sockaddr_storage *)from);
 
 	if (verbose)
 		printf(" %d bytes to %s", cc, inet_ntoa(ip->ip_dst));
@@ -1194,17 +1194,50 @@ inetname(struct in_addr in)
 }
 
 void
-print_asn(struct in_addr in)
+print_asn(struct sockaddr_storage *ss)
 {
-	const u_char *uaddr = (const u_char *)&in.s_addr;
-	int counter;
 	struct rrsetinfo *answers = NULL;
-	char qbuf[MAXDNAME];
+	int counter;
+	const u_char *uaddr;
+	char qbuf[MAXDNAME], *qp;
 
-	if (snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.origin.asn.cymru.com",
-	    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
-	    (uaddr[1] & 0xff), (uaddr[0] & 0xff)) >= sizeof (qbuf))
+	switch (ss->ss_family) {
+	case AF_INET:
+		uaddr = (const u_char *)&((struct sockaddr_in *) ss)->sin_addr;
+		if (snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u."
+		    "origin.asn.cymru.com",
+		    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+		    (uaddr[1] & 0xff), (uaddr[0] & 0xff)) >= sizeof (qbuf))
+			return;
+		break;
+	case AF_INET6:
+		uaddr = (const u_char *)&((struct sockaddr_in6 *) ss)->sin6_addr;
+		if (snprintf(qbuf, sizeof qbuf, 
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
+		    "origin6.asn.cymru.com",
+		    (uaddr[15] & 0x0f), ((uaddr[15] >>4)& 0x0f),
+		    (uaddr[14] & 0x0f), ((uaddr[14] >>4)& 0x0f),
+		    (uaddr[13] & 0x0f), ((uaddr[13] >>4)& 0x0f),
+		    (uaddr[12] & 0x0f), ((uaddr[12] >>4)& 0x0f),
+		    (uaddr[11] & 0x0f), ((uaddr[11] >>4)& 0x0f),
+		    (uaddr[10] & 0x0f), ((uaddr[10] >>4)& 0x0f),
+		    (uaddr[9] & 0x0f), ((uaddr[9] >>4)& 0x0f),
+		    (uaddr[8] & 0x0f), ((uaddr[8] >>4)& 0x0f),
+		    (uaddr[7] & 0x0f), ((uaddr[7] >>4)& 0x0f),
+		    (uaddr[6] & 0x0f), ((uaddr[6] >>4)& 0x0f),
+		    (uaddr[5] & 0x0f), ((uaddr[5] >>4)& 0x0f),
+		    (uaddr[4] & 0x0f), ((uaddr[4] >>4)& 0x0f),
+		    (uaddr[3] & 0x0f), ((uaddr[3] >>4)& 0x0f),
+		    (uaddr[2] & 0x0f), ((uaddr[2] >>4)& 0x0f),
+		    (uaddr[1] & 0x0f), ((uaddr[1] >>4)& 0x0f),
+		    (uaddr[0] & 0x0f), ((uaddr[0] >>4)& 0x0f)) >= sizeof (qbuf))
+			return;
+		break;
+	default:
 		return;
+	}
+
 	if (getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers) != 0)
 		return;
 	for (counter = 0; counter < answers->rri_nrdatas; counter++) {

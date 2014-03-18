@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.64 2014/03/18 10:09:37 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.65 2014/03/18 10:10:17 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ char	*pr_type(int);
 int	packet_ok(struct msghdr *, int, int, int);
 void	print(struct msghdr *, int);
 const char *inetname(struct sockaddr *);
-void	print_asn(struct sockaddr *);
+void	print_asn(struct sockaddr_storage *);
 void	usage(void);
 
 int rcvsock;			/* receive (icmp) socket file descriptor */
@@ -1113,7 +1113,7 @@ print(struct msghdr *mhdr, int cc)
 		printf(" %s (%s)", inetname((struct sockaddr *)from), hbuf);
 
 	if (Aflag)
-		print_asn((struct sockaddr *)from);
+		print_asn((struct sockaddr_storage *)from);
 
 	if (verbose) {
 		printf(" %d bytes of data to %s", cc,
@@ -1161,32 +1161,52 @@ inetname(struct sockaddr *sa)
 	return line;
 }
 
-static char hex_digits[] = {
-	'0', '1', '2', '3', '4', '5', '6', '7',
-	'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-};
-
 void
-print_asn(struct sockaddr *sa)
+print_asn(struct sockaddr_storage *ss)
 {
-	struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)sa;
-	const u_char *uaddr = (const u_char *)&sa_in6->sin6_addr;
-	char qbuf[MAXDNAME], *qp;
 	struct rrsetinfo *answers = NULL;
-	int n, i, counter;
+	int counter;
+	const u_char *uaddr;
+	char qbuf[MAXDNAME], *qp;
 
-	qp = qbuf;
-	for (i = 15; i >= 0; i--) {
-		*qp++ = hex_digits[uaddr[i] & 0x0f];
-		*qp++ = '.';
-		*qp++ = hex_digits[(uaddr[i] >> 4) & 0x0f];
-		*qp++ = '.';
-	}
-	*qp = 0;
-	if (strlcat(qbuf, "origin6.asn.cymru.com",
-	    sizeof(qbuf)) >= sizeof(qbuf))
+	switch (ss->ss_family) {
+	case AF_INET:
+		uaddr = (const u_char *)&((struct sockaddr_in *) ss)->sin_addr;
+		if (snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u."
+		    "origin.asn.cymru.com",
+		    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+		    (uaddr[1] & 0xff), (uaddr[0] & 0xff)) >= sizeof (qbuf))
+			return;
+		break;
+	case AF_INET6:
+		uaddr = (const u_char *)&((struct sockaddr_in6 *) ss)->sin6_addr;
+		if (snprintf(qbuf, sizeof qbuf, 
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
+		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
+		    "origin6.asn.cymru.com",
+		    (uaddr[15] & 0x0f), ((uaddr[15] >>4)& 0x0f),
+		    (uaddr[14] & 0x0f), ((uaddr[14] >>4)& 0x0f),
+		    (uaddr[13] & 0x0f), ((uaddr[13] >>4)& 0x0f),
+		    (uaddr[12] & 0x0f), ((uaddr[12] >>4)& 0x0f),
+		    (uaddr[11] & 0x0f), ((uaddr[11] >>4)& 0x0f),
+		    (uaddr[10] & 0x0f), ((uaddr[10] >>4)& 0x0f),
+		    (uaddr[9] & 0x0f), ((uaddr[9] >>4)& 0x0f),
+		    (uaddr[8] & 0x0f), ((uaddr[8] >>4)& 0x0f),
+		    (uaddr[7] & 0x0f), ((uaddr[7] >>4)& 0x0f),
+		    (uaddr[6] & 0x0f), ((uaddr[6] >>4)& 0x0f),
+		    (uaddr[5] & 0x0f), ((uaddr[5] >>4)& 0x0f),
+		    (uaddr[4] & 0x0f), ((uaddr[4] >>4)& 0x0f),
+		    (uaddr[3] & 0x0f), ((uaddr[3] >>4)& 0x0f),
+		    (uaddr[2] & 0x0f), ((uaddr[2] >>4)& 0x0f),
+		    (uaddr[1] & 0x0f), ((uaddr[1] >>4)& 0x0f),
+		    (uaddr[0] & 0x0f), ((uaddr[0] >>4)& 0x0f)) >= sizeof (qbuf))
+			return;
+		break;
+	default:
 		return;
-	if ((n = getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers)))
+	}
+
+	if (getrrsetbyname(qbuf, C_IN, T_TXT, 0, &answers) != 0)
 		return;
 	for (counter = 0; counter < answers->rri_nrdatas; counter++) {
 		char *p, *as = answers->rri_rdatas[counter].rdi_data;
