@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.121 2014/03/18 10:47:34 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.122 2014/03/18 14:55:49 mikeb Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -694,6 +694,7 @@ in_arpinput(struct mbuf *m)
 			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
+		rt_sendmsg(rt, RTM_RESOLVE, rt->rt_ifp->if_rdomain);
 		while ((mh = la->la_hold_head) != NULL) {
 			if ((la->la_hold_head = mh->m_nextpkt) == NULL)
 				la->la_hold_tail = NULL;
