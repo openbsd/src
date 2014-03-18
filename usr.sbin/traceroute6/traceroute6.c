@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.65 2014/03/18 10:10:17 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.66 2014/03/18 10:11:00 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -1124,8 +1124,6 @@ print(struct msghdr *mhdr, int cc)
 
 /*
  * Construct an Internet address representation.
- * If the nflag has been supplied, give
- * numeric value, otherwise try for symbolic name.
  */
 const char *
 inetname(struct sockaddr *sa)
@@ -1134,31 +1132,26 @@ inetname(struct sockaddr *sa)
 	static int first = 1;
 	char *cp;
 
-	if (first && !nflag) {
+	if (first) {
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
-		    (cp = strchr(domain, '.')))
+		    (cp = strchr(domain, '.')) != NULL)
 			(void) strlcpy(domain, cp + 1, sizeof(domain));
 		else
 			domain[0] = 0;
 	}
-	cp = NULL;
-	if (!nflag) {
-		if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
-		    NI_NAMEREQD) == 0) {
-			if ((cp = strchr(line, '.')) &&
-			    !strcmp(cp + 1, domain))
-				*cp = 0;
-			cp = line;
-		}
+	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
+	    NI_NAMEREQD) == 0) {
+		if ((cp = strchr(line, '.')) != NULL && strcmp(cp + 1,
+		    domain) == 0)
+			*cp = '\0';
+		return (line);
 	}
-	if (cp)
-		return cp;
 
 	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
 	    NI_NUMERICHOST) != 0)
-		strlcpy(line, "invalid", sizeof(line));
-	return line;
+		return ("invalid");
+	return (line);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.92 2014/03/18 10:10:17 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.93 2014/03/18 10:11:00 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -262,7 +262,7 @@ int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(u_char *, int, struct sockaddr_in *);
-char *inetname(struct in_addr);
+const char *inetname(struct sockaddr*);
 void print_asn(struct sockaddr_storage *);
 u_short in_cksum(u_short *, int);
 char *pr_type(u_int8_t);
@@ -1119,7 +1119,7 @@ print(u_char *buf, int cc, struct sockaddr_in *from)
 	if (nflag)
 		printf(" %s", inet_ntoa(from->sin_addr));
 	else
-		printf(" %s (%s)", inetname(from->sin_addr),
+		printf(" %s (%s)", inetname((struct sockaddr*)from),
 		    inet_ntoa(from->sin_addr));
 	if (Aflag)
 		print_asn((struct sockaddr_storage *)from);
@@ -1165,32 +1165,33 @@ in_cksum(u_short *addr, int len)
 /*
  * Construct an Internet address representation.
  */
-char *
-inetname(struct in_addr in)
+const char *
+inetname(struct sockaddr *sa)
 {
-	static char domain[MAXHOSTNAMELEN], line[MAXHOSTNAMELEN];
+	static char line[NI_MAXHOST], domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
-	struct hostent *hp;
 	char *cp;
 
 	if (first) {
 		first = 0;
-		if (gethostname(domain, sizeof domain) == 0 &&
-		    (cp = strchr(domain, '.')) != NULL) {
-			strlcpy(domain, cp + 1, sizeof(domain));
-		}
+		if (gethostname(domain, sizeof(domain)) == 0 &&
+		    (cp = strchr(domain, '.')) != NULL)
+			(void) strlcpy(domain, cp + 1, sizeof(domain));
+		else
+			domain[0] = 0;
 	}
-	if (in.s_addr != INADDR_ANY) {
-		hp = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
-		if (hp != NULL) {
-			if ((cp = strchr(hp->h_name, '.')) != NULL &&
-			    strcmp(cp + 1, domain) == 0)
-				*cp = '\0';
-			strlcpy(line, hp->h_name, sizeof(line));
-			return (line);
-		}
+	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
+	    NI_NAMEREQD) == 0) {
+		if ((cp = strchr(line, '.')) != NULL && strcmp(cp + 1,
+		    domain) == 0)
+			*cp = '\0';
+		return (line);
 	}
-	return (inet_ntoa(in));
+
+	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
+	    NI_NUMERICHOST) != 0)
+		return ("invalid");
+	return (line);
 }
 
 void
