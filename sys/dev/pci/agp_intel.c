@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.20 2012/11/13 23:36:17 kettenis Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.21 2014/03/18 09:21:35 mpi Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -34,9 +34,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/agpio.h>
 #include <sys/device.h>
-#include <sys/agpio.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
