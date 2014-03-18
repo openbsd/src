@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.87 2014/01/23 10:16:30 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.88 2014/03/18 10:47:34 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -361,9 +361,11 @@ extern const struct sockaddr_rtin rt_defmask4;
 struct	socket;
 void	 route_init(void);
 int	 rtable_add(u_int);
+struct radix_node_head *rtable_get(u_int, sa_family_t);
 u_int	 rtable_l2(u_int);
 void	 rtable_l2set(u_int, u_int);
 int	 rtable_exists(u_int);
+
 int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *, int, struct mbuf *,
 			   struct mbuf *, struct mbuf *, struct proc *);
@@ -413,7 +415,6 @@ int	 rt_if_linkstate_change(struct radix_node *, void *, u_int);
 #endif
 int	 rtdeletemsg(struct rtentry *, u_int);
 
-struct radix_node_head	*rt_gettable(sa_family_t, u_int);
 struct rtentry		*rt_lookup(struct sockaddr *, struct sockaddr *, u_int);
 
 struct rtentry *rt_mpath_next(struct rtentry *);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.203 2014/03/18 09:01:11 mpi Exp $
+#	$OpenBSD: Makefile,v 1.204 2014/03/18 10:47:34 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -315,8 +315,8 @@ MLINKS+=route.9 rt_lookup.9 route.9 rtalloc.9 \
 	route.9 rtfree.9 route.9 rtrequest1.9 \
 	route.9 rt_setgate.9 route.9 rtredirect.9 \
 	route.9 rtdeletemsg.9
-MLINKS+=rtable_add.9 rtable_exists.9 rtable_add.9 rtable_l2.9 \
-	rtable_add.9 rtable_l2set.9 rtable_add.9 rt_gettable.9
+MLINKS+=rtable_add.9 rtable_exists.9 rtable_add.9 rtable_get.9 \
+	rtable_add.9 rtable_l2.9 rtable_add.9 rtable_l2set.9
 MLINKS+=rt_timer_add.9 rt_timer_queue_create.9 \
 	rt_timer_add.9 rt_timer_queue_change.9 \
 	rt_timer_add.9 rt_timer_queue_destroy.9 \

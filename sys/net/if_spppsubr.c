@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.117 2014/01/13 23:03:52 bluhm Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.118 2014/03/18 10:47:34 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4575,7 +4575,7 @@ sppp_update_gw(struct ifnet *ifp)
 
 	/* update routing table */
 	for (tid = 0; tid <= RT_TABLEID_MAX; tid++) {
-		if ((rnh = rt_gettable(AF_INET, tid)) != NULL) {
+		if ((rnh = rtable_get(tid, AF_INET)) != NULL) {
 			while ((*rnh->rnh_walktree)(rnh,
 			    sppp_update_gw_walker, ifp) == EAGAIN)
 				;	/* nothing */
