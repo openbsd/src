@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ethers.3,v 1.22 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: ethers.3,v 1.23 2014/03/18 03:58:49 lteo Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 18 2014 $
 .Dt ETHERS 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ Ethernet addresses are represented by the
 following structure:
 .Bd -literal -offset indent
 struct ether_addr {
-        u_int8_t  ether_addr_octet[6];
+        u_int8_t  ether_addr_octet[ETHER_ADDR_LEN];
 };
 .Ed
 .Pp
