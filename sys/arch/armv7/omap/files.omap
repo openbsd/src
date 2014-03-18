@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.5 2013/11/20 13:32:40 rapha Exp $
+#	$OpenBSD: files.omap,v 1.6 2014/03/18 07:34:17 syl Exp $
 
 define omap {}
 device omap: omap
@@ -29,6 +29,10 @@ file	arch/armv7/omap/sitara_cm.c		sitaracm
 device omgpio: gpiobus
 attach omgpio at omap
 file	arch/armv7/omap/omgpio.c		omgpio
+
+device tiiic: i2cbus
+attach tiiic at omap
+file	arch/armv7/omap/ti_iic.c		tiiic
 
 device edma
 attach edma at omap

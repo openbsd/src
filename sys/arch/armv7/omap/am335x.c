@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.6 2013/11/20 13:32:40 rapha Exp $ */
+/* $OpenBSD: am335x.c,v 1.7 2014/03/18 07:34:17 syl Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -96,6 +96,14 @@
 #define CPSW_SIZE	0x4000
 #define CPSW_ADDR	0x4A100000
 #define CPSW_IRQ	40
+
+#define IICx_SIZE	0x1000
+#define IIC0_ADDR	0x44e0b000
+#define IIC1_ADDR	0x4802a000
+#define IIC2_ADDR	0x4819c000
+#define IIC0_IRQ	70
+#define IIC1_IRQ	71
+#define IIC2_IRQ	30
 
 struct armv7_dev am335x_devs[] = {
 
@@ -196,6 +204,28 @@ struct armv7_dev am335x_devs[] = {
 	  .unit = 3,
 	  .mem = { { GPIO3_ADDR, GPIOx_SIZE } },
 	  .irq = { GPIO3_IRQ }
+	},
+
+	/*
+	 * IIC 
+	 */
+
+	{ .name = "tiiic",
+	  .unit = 0,
+	  .mem = { { IIC0_ADDR, IICx_SIZE } },
+	  .irq = { IIC0_IRQ }
+	},
+
+	{ .name = "tiiic",
+	  .unit = 1,
+	  .mem = { { IIC1_ADDR, IICx_SIZE } },
+	  .irq = { IIC1_IRQ }
+	},
+
+	{ .name = "tiiic",
+	  .unit = 2,
+	  .mem = { { IIC2_ADDR, IICx_SIZE } },
+	  .irq = { IIC2_IRQ }
 	},
 
 	/*
