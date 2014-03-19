@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.24 2013/01/10 21:34:29 millert Exp $
+# $OpenBSD: Link.pm,v 1.25 2014/03/19 02:16:22 afresh1 Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -472,15 +472,15 @@ sub internal_resolve_la
 	$level //= 0;
 	tsay {"resolve level: $level"};
 	$o->{pthread} = 0;
-	foreach my $_ (@$args) {
-		if ($_ eq '-pthread') {
+	foreach my $arg (@$args) {
+		if ($arg eq '-pthread') {
 			$o->{pthread}++;
 			next;
 		}
-		push(@{$o->{result}}, $_);
-		next unless m/\.la$/;
+		push(@{$o->{result}}, $arg);
+		next unless $arg =~ m/\.la$/;
 		require LT::LaFile;
-		my $lainfo = LT::LaFile->parse($_);
+		my $lainfo = LT::LaFile->parse($arg);
 		if  (!exists $lainfo->{cached}) {
 			$self->build_cache($lainfo, $level+1);
 		}
@@ -537,33 +537,33 @@ sub internal_parse_linkargs1
 	my $result   = $self->{result};
 
 	# first read all directories where we can search libraries
-	foreach my $_ (@$args) {
-		if (m/^-L(.*)/) {
+	foreach my $arg (@$args) {
+		if ($arg =~ m/^-L(.*)/) {
 			if (!exists $dirs->{$1}) {
 				$dirs->{$1} = 1;
-				tsay {"    adding $_ to deplibs"} 
+				tsay {"    adding $arg to deplibs"} 
 				    if $level == 0;
-				push @$deplibs, $_;
+				push(@$deplibs, $arg);
 			}
 		}
 	}
-	foreach my $_ (@$args) {
-		tsay {"  processing $_"};
-		if (!$_ || $_ eq '' || m/^\s+$/) {
+	foreach my $arg (@$args) {
+		tsay {"  processing $arg"};
+		if (!$arg || $arg eq '' || $arg =~ m/^\s+$/) {
 			# skip empty arguments
-		} elsif (m/^-Wc,(.*)/) {
+		} elsif ($arg =~ m/^-Wc,(.*)/) {
 			push(@$result, $1);
-		} elsif ($_ eq '-Xcompiler') {
+		} elsif ($arg eq '-Xcompiler') {
 			next;
-		} elsif ($_ eq '-pthread') {
+		} elsif ($arg eq '-pthread') {
 			$self->{pthread} = 1;
-		} elsif (m/^-L(.*)/) {
+		} elsif ($arg =~ m/^-L(.*)/) {
 			# already read earlier, do nothing
-		} elsif (m/^-R(.*)/) {
+		} elsif ($arg =~ m/^-R(.*)/) {
 			# -R options originating from .la resolution
 			# those from @ARGV are in @Ropts
 			$gp->add_R($1);
-		} elsif (m/^-l(\S+)/) {
+		} elsif ($arg =~ m/^-l(\S+)/) {
 			my @largs = ();
 			my $key = $1;
 			if (!exists $libs->{$key}) {
@@ -575,8 +575,8 @@ sub internal_parse_linkargs1
 					my $absla = abs_path($lafile);
 					tsay {"    adding $absla to deplibs"} 
 					    if $level == 0;
-					push @$deplibs, $absla;
-					push @$result, $lafile;
+					push(@$deplibs, $absla);
+					push(@$result, $lafile);
 					next;
 				} else {
 					$libs->{$key}->resolve_library($dirs, 1, 0, 'notyet', $gp);
@@ -589,21 +589,21 @@ sub internal_parse_linkargs1
 					}
 				}
 			}
-			tsay {"    adding $_ to deplibs"} if $level == 0;
-			push @$deplibs, $_;
-			push(@$result, $_);
+			tsay {"    adding $arg to deplibs"} if $level == 0;
+			push(@$deplibs, $arg);
+			push(@$result, $arg);
 			my $dummy = []; # no need to add deplibs recursively
 			$self->internal_parse_linkargs1($dummy, $gp, $dirs, 
 			    $libs, \@largs, $level+1) if @largs;
-		} elsif (m/(\S+\/)*(\S+)\.a$/) {
+		} elsif ($arg =~ m/(\S+\/)*(\S+)\.a$/) {
 			(my $key = $2) =~ s/^lib//;
-			$dirs->{abs_dir($_)} = 1;
-			$libs->create($key)->{fullpath} = $_;
-			push(@$result, $_);
-		} elsif (m/(\S+\/)*(\S+)\.la$/) {
+			$dirs->{abs_dir($arg)} = 1;
+			$libs->create($key)->{fullpath} = $arg;
+			push(@$result, $arg);
+		} elsif ($arg =~ m/(\S+\/)*(\S+)\.la$/) {
 			(my $key = $2) =~ s/^lib//;
-			$dirs->{abs_dir($_)} = 1;
-			my $fulla = abs_path($_);
+			$dirs->{abs_dir($arg)} = 1;
+			my $fulla = abs_path($arg);
 			require LT::LaFile;
 			my $lainfo = LT::LaFile->parse($fulla);
 			my $dlname = $lainfo->{dlname};
@@ -614,17 +614,17 @@ sub internal_parse_linkargs1
 					$libs->create($key)->{lafile} = $fulla;
 				}
 			}
-			push(@$result, $_);
+			push(@$result, $arg);
 			push(@$deplibs, $fulla) if $libdir ne '';
-		} elsif (m/(\S+\/)*(\S+)\.so(\.\d+){2}/) {
+		} elsif ($arg =~ m/(\S+\/)*(\S+)\.so(\.\d+){2}/) {
 			(my $key = $2) =~ s/^lib//;
-			$dirs->{abs_dir($_)} = 1;
+			$dirs->{abs_dir($arg)} = 1;
 			$libs->create($key);
 			# not really normal argument
 			# -lfoo should be used instead, so convert it
 			push(@$result, "-l$key");
 		} else {
-			push(@$result, $_);
+			push(@$result, $arg);
 		}
 	}
 }
@@ -658,54 +658,54 @@ sub parse_linkargs2
 	tsay {"  args: @{$self->{args}}"};
 	my $result = [];
 
-	foreach my $_ (@{$self->{args}}) {
-		tsay {"  processing $_"};
-		if (!$_ || $_ eq '' || m/^\s+$/) {
+	foreach my $arg (@{$self->{args}}) {
+		tsay {"  processing $arg"};
+		if (!$arg || $arg eq '' || $arg =~ m/^\s+$/) {
 			# skip empty arguments
-		} elsif ($_ eq '-lc') {
+		} elsif ($arg eq '-lc') {
 			# don't link explicitly with libc (just remove -lc)
-		} elsif ($_ eq '-pthread') {
+		} elsif ($arg eq '-pthread') {
 			$self->{pthread} = 1;
-		} elsif (m/^-L(.*)/) {
+		} elsif ($arg =~ m/^-L(.*)/) {
 			if (!exists $dirs->{$1}) {
 				$dirs->{$1} = 1;
 			}
-		} elsif (m/^-R(.*)/) {
+		} elsif ($arg =~ m/^-R(.*)/) {
 			# -R options originating from .la resolution
 			# those from @ARGV are in @Ropts
 			$gp->add_R($1);
-		} elsif (m/^-l(.*)/) {
+		} elsif ($arg =~ m/^-l(.*)/) {
 			my @largs = ();
 			my $key = $1;
 			$libs->create($key);
-			push @$orderedlibs, $key;
-		} elsif (m/(\S+\/)*(\S+)\.a$/) {
+			push(@$orderedlibs, $key);
+		} elsif ($arg =~ m/(\S+\/)*(\S+)\.a$/) {
 			(my $key = $2) =~ s/^lib//;
-			$libs->create($key)->{fullpath} = $_;
-			push(@$staticlibs, $_);
-		} elsif (m/(\S+\/)*(\S+)\.la$/) {
+			$libs->create($key)->{fullpath} = $arg;
+			push(@$staticlibs, $arg);
+		} elsif ($arg =~ m/(\S+\/)*(\S+)\.la$/) {
 			(my $key = $2) =~ s/^lib//;
-			my $d = abs_dir($_);
+			my $d = abs_dir($arg);
 			$dirs->{$d} = 1;
-			my $fulla = abs_path($_);
+			my $fulla = abs_path($arg);
 			require LT::LaFile;
 			my $lainfo = LT::LaFile->parse($fulla);
 			my $dlname = $lainfo->stringize('dlname');
 			my $oldlib = $lainfo->stringize('old_library');
 			my $installed = $lainfo->stringize('installed');
 			if ($dlname ne '' && $installed eq 'no') {
-				tsay {"seen uninstalled la shared in $_"};
+				tsay {"seen uninstalled la shared in $arg"};
 				$self->{seen_la_shared} = 1;
 			}
 			if ($dlname eq '' && -f "$d/$ltdir/$oldlib") {
-				push @$staticlibs, "$d/$ltdir/$oldlib";
+				push(@$staticlibs, "$d/$ltdir/$oldlib");
 			} else {
 				if (!exists $libs->{$key}) {
 					$libs->create($key)->{lafile} = $fulla;
 				}
-				push @$orderedlibs, $key;
+				push(@$orderedlibs, $key);
 			}
-		} elsif (m/^-Wl,(\S+)$/) {
+		} elsif ($arg =~ m/^-Wl,(\S+)$/) {
 			# libtool accepts a list of -Wl options separated
 			# by commas, and possibly with a trailing comma
 			# which is not accepted by the linker
@@ -714,7 +714,7 @@ sub parse_linkargs2
 				push(@$result, "-Wl,$f");
 			}
 		} else {
-			push(@$result, $_);
+			push(@$result, $arg);
 		}
 	}
 	tsay {"end parse_linkargs2"};

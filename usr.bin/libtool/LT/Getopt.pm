@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.11 2012/07/12 12:20:06 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.12 2014/03/19 02:16:22 afresh1 Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -21,20 +21,20 @@ use warnings;
 package Option;
 sub factory
 {
-	my ($class, $_) = @_;
-	if (m/^(.)$/) {
+	my ($class, $o) = @_;
+	if ($o =~ m/^(.)$/) {
 		return Option::Short->new($1);
-	} elsif (m/^(.)\:$/) {
+	} elsif ($o =~ m/^(.)\:$/) {
 		return Option::ShortArg->new($1);
-	} elsif (m/^(\-?.)(?:\:\!|\!\:)$/) {
+	} elsif ($o =~ m/^(\-?.)(?:\:\!|\!\:)$/) {
 		return Option::LongArg0->new($1);
-	} elsif (m/^(\-?.)\!$/) {
+	} elsif ($o =~ m/^(\-?.)\!$/) {
 		return Option::Long->new($1);
-	} elsif (m/^(\-?.*)\=$/) {
+	} elsif ($o =~ m/^(\-?.*)\=$/) {
 		return Option::LongArg->new($1);
-	} elsif (m/^(\-?.*)\:$/) {
+	} elsif ($o =~ m/^(\-?.*)\:$/) {
 		return Option::LongArg0->new($1);
-	} elsif (m/^(\-?.*)$/) {
+	} elsif ($o =~ m/^(\-?.*)$/) {
 		return Option::Long->new($1);
 	}
 }
@@ -57,12 +57,12 @@ our @ISA = qw(Option);
 
 sub match
 {
-	my ($self, $_, $opts, $canonical, $code) = @_;
-	if (m/^\-\Q$$self\E$/) {
-		&$code($opts, $canonical, 1, $_);
+	my ($self, $arg, $opts, $canonical, $code) = @_;
+	if ($arg =~ m/^\-\Q$$self\E$/) {
+		&$code($opts, $canonical, 1, $arg);
 		return 1;
 	}
-	if (m/^(\-\Q$$self\E)(.*)$/) {
+	if ($arg =~ m/^(\-\Q$$self\E)(.*)$/) {
 		unshift(@main::ARGV, "-$2");
 		&$code($opts, $canonical, 1, $1);
 		return 1;
@@ -75,12 +75,12 @@ our @ISA = qw(Option::Short);
 
 sub match
 {
-	my ($self, $_, $opts, $canonical, $code) = @_;
-	if (m/^\-\Q$$self\E$/) {
-		&$code($opts, $canonical, (shift @main::ARGV), $_);
+	my ($self, $arg, $opts, $canonical, $code) = @_;
+	if ($arg =~ m/^\-\Q$$self\E$/) {
+		&$code($opts, $canonical, (shift @main::ARGV), $arg);
 		return 1;
 	}
-	if (m/^(\-\Q$$self\E)(.*)$/) {
+	if ($arg =~ m/^(\-\Q$$self\E)(.*)$/) {
 		&$code($opts, $canonical, $2, $1);
 		return 1;
 	}
@@ -92,9 +92,9 @@ our @ISA = qw(Option);
 
 sub match
 {
-	my ($self, $_, $opts, $canonical, $code) = @_;
-	if (m/^\-\Q$$self\E$/) {
-		&$code($opts, $canonical, 1, $_);
+	my ($self, $arg, $opts, $canonical, $code) = @_;
+	if ($arg =~ m/^\-\Q$$self\E$/) {
+		&$code($opts, $canonical, 1, $arg);
 		return 1;
 	}
 	return 0;
@@ -104,10 +104,10 @@ package Option::LongArg0;
 our @ISA = qw(Option::Long);
 sub match
 {
-	my ($self, $_, $opts, $canonical, $code) = @_;
-	if (m/^\-\Q$$self\E$/) {
+	my ($self, $arg, $opts, $canonical, $code) = @_;
+	if ($arg =~ m/^\-\Q$$self\E$/) {
 		if (@main::ARGV > 0) {
-			&$code($opts, $canonical, (shift @main::ARGV), $_);
+			&$code($opts, $canonical, (shift @main::ARGV), $arg);
 			return 1;
 		} else {
 			die "Missing argument  for option -$$self\n";
@@ -121,11 +121,11 @@ our @ISA = qw(Option::LongArg0);
 
 sub match
 {
-	my ($self, $_, $opts, $canonical, $code) = @_;
-	if ($self->SUPER::match($_, $opts, $canonical, $code)) {
+	my ($self, $arg, $opts, $canonical, $code) = @_;
+	if ($self->SUPER::match($arg, $opts, $canonical, $code)) {
 		return 1;
 	}
-	if (m/^(-\Q$$self\E)\=(.*)$/) {
+	if ($arg =~ m/^(-\Q$$self\E)\=(.*)$/) {
 		&$code($opts, $canonical, $2, $1);
 		return 1;
 	}
@@ -260,19 +260,19 @@ sub handle_options
 
 MAINLOOP:
 	while (@main::ARGV > 0) {
-		my $_ = shift @main::ARGV;
-		if (m/^\-\-$/) {
+		my $arg = shift @main::ARGV;
+		if ($arg =~ m/^\-\-$/) {
 			last;
 		}
-		if (m/^\-/) {
+		if ($arg =~ m/^\-/) {
 			for my $opt (@options) {
-				if ($opt->match($_, $self)) {
+				if ($opt->match($arg, $self)) {
 					next MAINLOOP;
 				}
 			}
-			shortdie "Unknown option $_\n";
+			shortdie "Unknown option $arg\n";
 		} else {
-			unshift(@main::ARGV, $_);
+			unshift(@main::ARGV, $arg);
 			last;
 		}
 	}
@@ -288,18 +288,18 @@ sub handle_permuted_options
 
 MAINLOOP2:
 	while (@main::ARGV > 0) {
-		my $_ = shift @main::ARGV;
-		if (m/^\-\-$/) {
+		my $arg = shift @main::ARGV;
+		if ($arg =~ m/^\-\-$/) {
 			next;   # XXX ?
 		}
-		if (m/^\-/) {
+		if ($arg =~ m/^\-/) {
 			for my $opt (@options) {
-				if ($opt->match($_, $self)) {
+				if ($opt->match($arg, $self)) {
 					next MAINLOOP2;
 				}
 			}
 		}
-		$self->keep_for_later($_);
+		$self->keep_for_later($arg);
 	}
 	@main::ARGV = @{$self->{kept}};
 }

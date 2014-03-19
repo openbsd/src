@@ -1,4 +1,4 @@
-# $OpenBSD: LaLoFile.pm,v 1.3 2012/07/06 11:30:41 espie Exp $
+# $OpenBSD: LaLoFile.pm,v 1.4 2014/03/19 02:16:22 afresh1 Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -48,14 +48,13 @@ sub read
 	my ($class, $filename) = @_;
 	my $info = $class->new;
 	open(my $fh, '<', $filename) or die "Cannot read $filename: $!\n";
-	my $_;
-	while (<$fh>) {
-		chomp;
-		next if /^\#/;
-		next if /^\s*$/;
-		if (m/^(\S+)\=\'(.*)\'$/) {
+	while (my $line = <$fh>) {
+		chomp($line);
+		next if $line =~ /^\#/;
+		next if $line =~ /^\s*$/;
+		if ($line =~ m/^(\S+)\=\'(.*)\'$/) {
 			$info->set($1, $2);
-		} elsif (m/^(\S+)\=(\S+)$/) {
+		} elsif ($line =~ m/^(\S+)\=(\S+)$/) {
 			$info->set($1, $2);
 		}
 	}

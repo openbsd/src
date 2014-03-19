@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.8 2012/07/13 11:56:12 espie Exp $
+# $OpenBSD: Library.pm,v 1.9 2014/03/19 02:16:22 afresh1 Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -154,11 +154,11 @@ sub findbest
 	my $best = undef;
 	if (opendir(my $dir, $sd)) {
 		my ($major, $minor) = (-1, -1);
-		while (my $_ = readdir($dir)) {
-			next unless m/^lib\Q$name\E\.so\.(\d+)\.(\d+)$/;
+		while (my $e = readdir($dir)) {
+			next unless $e =~ m/^lib\Q$name\E\.so\.(\d+)\.(\d+)$/;
 			if ($1 > $major || ($1 == $major && $2 > $minor)) {
 				($major, $minor) = ($1, $2);
-				$best = "$sd/$_";
+				$best = "$sd/$e";
 			}
 		}
 		closedir($dir);
