@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.2 2014/03/19 16:08:32 deraadt Exp $ */
+/*	$OpenBSD: upd.c,v 1.3 2014/03/19 16:34:34 andre Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -234,44 +234,56 @@ upd_refresh(void *arg)
 	struct hid_location	*loc;
 	struct upd_sensor	*sensor;
 	ulong			hdata;
+	ulong 			adjust;
 	uint8_t			buf[256];
 	int			i, err;
 
 	for (i = 0; i < UPD_SENSOR_NUM; i++) {
 		sensor = &sc->sc_sensors[i];
-		if (sensor && ! sensor->attached)
+		if (sensor && !sensor->attached)
 			continue;
+
+		switch (i) {
+		case UPD_SENSOR_RELCHARGE:
+		case UPD_SENSOR_ABSCHARGE:
+		case UPD_SENSOR_REMCAPACI:
+		case UPD_SENSOR_FULLCHARG:
+			adjust = 1000; /* scale adjust */
+			/* FALLTHROUGH */
+		case UPD_SENSOR_CHARGING:
+		case UPD_SENSOR_DISCHARG:
+		case UPD_SENSOR_TIMETOFULL:
+			/*
+			 * don't query nor show battery dependent sensors if no
+			 * battery
+			 */
+			if (sc->sc_sensors[UPD_SENSOR_BATTPRESENT].sensor.value
+			    <= 0) {
+				sensor->sensor.flags |= SENSOR_FINVALID;
+				continue;
+			}
+			break;
+		default:
+			adjust = 1; /* no scale adjust */
+		}
 
 		loc = &sensor->item.loc;
 		sc->sc_hdev.sc_report_id = sensor->item.report_ID;
 		memset(buf, 0x0, sizeof(buf));
 		err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT, buf,
 		    sensor->flen);
-
 		if (err) {
-			DPRINTF(("read failure: sens=%02x reportid=%02x err=%d\n", i,
-			    sc->sc_hdev.sc_report_id, err));
+			DPRINTF(("read failure: sens=%02x reportid=%02x "
+			    "err=%d\n", i, sc->sc_hdev.sc_report_id, err));
 			continue;
 		}
 
 		hdata = hid_get_data(buf + 1, loc);
-		switch (i) {
-		case UPD_SENSOR_RELCHARGE:
-		case UPD_SENSOR_ABSCHARGE:
-		case UPD_SENSOR_REMCAPACI:
-		case UPD_SENSOR_FULLCHARG:
-			if (sc->sc_sensors[UPD_SENSOR_BATTPRESENT].sensor.value)
-				hdata *= 1000; /* scale adjust */
-			else
-				hdata = 0;
-			break;
-		}
 
 		sensor->sensor.flags &= ~SENSOR_FINVALID;
-		sensor->sensor.value = hdata;
-		DPRINTF(("%s: %s: hidget data: %d\n",
-		    sc->sc_sensordev.xname, upd_usage_table[i].usage_name,
-		    hdata));
+		sensor->sensor.value = hdata * adjust;
+		DPRINTF(("%s: %s: hidget data: %d\n", sc->sc_sensordev.xname,
+		    upd_usage_table[i].usage_name, hdata));
 	}
 }
 
