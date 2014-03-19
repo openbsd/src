@@ -29,7 +29,6 @@
 ./bin/pax
 ./bin/ps
 ./bin/pwd
-./bin/rcp
 ./bin/rksh
 ./bin/rm
 ./bin/rmdir

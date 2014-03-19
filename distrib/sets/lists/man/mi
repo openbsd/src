@@ -495,7 +495,6 @@
 ./usr/share/man/man1/pwd.1
 ./usr/share/man/man1/quota.1
 ./usr/share/man/man1/radioctl.1
-./usr/share/man/man1/rcp.1
 ./usr/share/man/man1/rcs.1
 ./usr/share/man/man1/rcs2log.1
 ./usr/share/man/man1/rcsclean.1
