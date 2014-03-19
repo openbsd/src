@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.68 2014/01/21 03:15:46 schwarze Exp $
+.\"     $OpenBSD: mbuf.9,v 1.69 2014/03/19 10:09:19 mpi Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: March 19 2014 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -119,6 +119,7 @@ struct pkthdr {
 	u_int16_t csum_flags;
 	u_int16_t ether_vtag;
 	u_int	rdomain;
+	void	*ph_cookie;
 	struct	pkthdr_pf pf;
 };
 

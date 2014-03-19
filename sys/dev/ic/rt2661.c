@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.71 2014/03/11 19:45:28 guenther Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.72 2014/03/19 10:09:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1947,8 +1947,7 @@ rt2661_start(struct ifnet *ifp)
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = m0->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);

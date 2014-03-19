@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.96 2014/03/07 18:39:02 mpi Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.97 2014/03/19 10:09:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2273,7 +2273,7 @@ run_start(struct ifnet *ifp)
 		/* send pending management frames first */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.18 2013/08/07 01:06:41 bluhm Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.19 2014/03/19 10:09:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2009,7 +2009,7 @@ athn_usb_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.96 2014/03/07 18:39:02 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.97 2014/03/19 10:09:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2230,7 +2230,7 @@ zyd_start(struct ifnet *ifp)
 		/* send pending management frames first */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

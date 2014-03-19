@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.117 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.118 2014/03/19 10:09:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1926,7 +1926,7 @@ wpi_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

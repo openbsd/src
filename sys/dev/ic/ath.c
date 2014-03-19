@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.98 2013/11/26 09:50:32 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.99 2014/03/19 10:09:19 mpi Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -897,17 +897,7 @@ ath_start(struct ifnet *ifp)
 			}
 			wh = mtod(m, struct ieee80211_frame *);
 		} else {
-			/*
-			 * Hack!  The referenced node pointer is in the
-			 * rcvif field of the packet header.  This is
-			 * placed there by ieee80211_mgmt_output because
-			 * we need to hold the reference with the frame
-			 * and there's no other way (other than packet
-			 * tags which we consider too expensive to use)
-			 * to pass it along.
-			 */
-			ni = (struct ieee80211_node *) m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = m->m_pkthdr.ph_cookie;
 
 			wh = mtod(m, struct ieee80211_frame *);
 			if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==

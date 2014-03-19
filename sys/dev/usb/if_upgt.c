@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.60 2013/08/21 05:21:45 dlg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.61 2014/03/19 10:09:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1410,8 +1410,7 @@ upgt_start(struct ifnet *ifp)
 			/* management frame */
 			IF_DEQUEUE(&ic->ic_mgtq, m);
 
-			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = m->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);

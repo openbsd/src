@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.89 2013/12/07 01:55:06 brad Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.90 2014/03/19 10:09:19 mpi Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -202,17 +202,16 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	ni->ni_inact = 0;
 
 	/*
-	 * Yech, hack alert!  We want to pass the node down to the
-	 * driver's start routine.  We could stick this in an m_tag
-	 * and tack that on to the mbuf.  However that's rather
-	 * expensive to do for every frame so instead we stuff it in
-	 * the rcvif field since outbound frames do not (presently)
-	 * use this.
+	 * We want to pass the node down to the driver's start
+	 * routine.  We could stick this in an m_tag and tack that
+	 * on to the mbuf.  However that's rather expensive to do
+	 * for every frame so instead we stuff it in a special pkthdr
+	 * field.
 	 */
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-	m->m_pkthdr.rcvif = (void *)ni;
+	m->m_pkthdr.ph_cookie = ni;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT | type;
@@ -1864,7 +1863,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 #endif
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
-	m->m_pkthdr.rcvif = (void *)ni;
+	m->m_pkthdr.ph_cookie = ni;
 
 	return m;
 }
@@ -1914,10 +1913,10 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct mbuf *m,
 	} else {
 		IF_ENQUEUE(&ni->ni_savedq, m);
 		/*
-		 * Similar to ieee80211_mgmt_output, store the node in the
-		 * rcvif field.
+		 * Similar to ieee80211_mgmt_output, store the node in a
+		 * special pkthdr field.
 		 */
-		m->m_pkthdr.rcvif = (void *)ni;
+		m->m_pkthdr.ph_cookie = ni;
 	}
 	return 1;
 }

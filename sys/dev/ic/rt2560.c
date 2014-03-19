@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.62 2013/12/06 21:03:03 deraadt Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.63 2014/03/19 10:09:19 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1945,8 +1945,7 @@ rt2560_start(struct ifnet *ifp)
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = m0->m_pkthdr.ph_cookie;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);

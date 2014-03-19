@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.83 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.84 2014/03/19 10:09:19 mpi Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1504,7 +1504,7 @@ rtw_intr_beacon(struct rtw_softc *sc, u_int16_t isr)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
+		m->m_pkthdr.ph_cookie = ieee80211_ref_node(ic->ic_bss);
 		IF_ENQUEUE(&sc->sc_beaconq, m);
 		rtw_start(&sc->sc_if);
 	}
@@ -2706,8 +2706,7 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 		return NULL;
 	}
 	IF_DEQUEUE(ifq, m);
-	*nip = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-	m->m_pkthdr.rcvif = NULL;
+	*nip = m->m_pkthdr.ph_cookie;
 	return m;
 }
 

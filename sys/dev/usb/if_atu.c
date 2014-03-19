@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.105 2014/03/07 18:39:02 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.106 2014/03/19 10:09:19 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2013,17 +2013,7 @@ atu_start(struct ifnet *ifp)
 			DPRINTFN(25, ("%s: atu_start: mgmt packet\n",
 			    sc->atu_dev.dv_xname));
 
-			/*
-			 * Hack!  The referenced node pointer is in the
-			 * rcvif field of the packet header.  This is
-			 * placed there by ieee80211_mgmt_output because
-			 * we need to hold the reference with the frame
-			 * and there's no other way (other than packet
-			 * tags which we consider too expensive to use)
-			 * to pass it along.
-			 */
-			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = m->m_pkthdr.ph_cookie;
 
 			wh = mtod(m, struct ieee80211_frame *);
 			/* sc->sc_stats.ast_tx_mgmt++; */
