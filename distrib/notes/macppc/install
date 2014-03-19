@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.32 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: install,v 1.33 2014/03/19 01:59:49 tedu Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -140,7 +140,7 @@ OpenBSDInstallPart5({:-
 	automatically installed if you setup a small (a few MB) MSDOS
 	partition as position `i' in the label.
 
-OpenBSDInstallPart6({:-CD-ROM, tape, -:})
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDURLInstall
 
@@ -151,8 +151,6 @@ OpenBSDNFSInstall
 OpenBSDDISKInstall(,,{:- or MS-DOS-:})
 		
 OpenBSDCommonInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
 

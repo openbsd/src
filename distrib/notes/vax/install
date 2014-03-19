@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.25 2011/09/11 13:54:11 miod Exp $
+dnl	$OpenBSD: install,v 1.26 2014/03/19 01:59:49 tedu Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -105,7 +105,7 @@ OpenBSDInstallPart5(,{:-
 	The affected systems are: all VAXstation 3100, and MicroVAX
 	3100 models 10, 10e, 20 and 20e shipped before april 1992.-:})
 
-OpenBSDInstallPart6({:-CD-ROM, tape, NFS, -:})
+OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
 
 OpenBSDURLInstall
 
@@ -114,8 +114,6 @@ OpenBSDCDROMInstall
 OpenBSDNFSInstall
 
 OpenBSDDISKInstall(,{:-only -:})
-
-OpenBSDTAPEInstall
 
 OpenBSDCommonInstall
 

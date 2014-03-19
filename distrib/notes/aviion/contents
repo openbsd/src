@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2014/02/28 21:37:59 miod Exp $
+dnl	$OpenBSD: contents,v 1.7 2014/03/19 01:59:48 tedu Exp $
 TopPart
 
 OpenBSDdistsets
@@ -15,8 +15,6 @@ OpenBSDrd
 	boot		The OpenBSD/MACHINE disk boot loader, suitable for
 			booting from DG/UX.
 
-dnl These files can be used to make a bootable tape suitable for installation.
-dnl They can also be used to configure an NFS server to support installation
 These files can be used to configure an NFS server to support installation
 over the network. See the section "Getting the OpenBSD system onto Useful
 Media" for more information.

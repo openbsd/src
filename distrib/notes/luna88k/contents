@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2014/02/28 21:37:59 miod Exp $
+dnl	$OpenBSD: contents,v 1.15 2014/03/19 01:59:49 tedu Exp $
 TopPart
 
 OpenBSDminiroot
@@ -17,10 +17,6 @@ OpenBSDrd
 
 	boot		The OpenBSD/MACHINE boot block.
 
-dnl These files can be used to make a bootable tape suitable for installation.
-dnl See the section "Getting the OpenBSD system onto Useful Media" for more
-dnl information.
-dnl
 DistributionDescription(ten)
 
 OpenBSDbase(64527917,184893363)

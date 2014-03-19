@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.107 2014/02/27 20:11:25 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.108 2014/03/19 01:59:48 tedu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -600,36 +600,6 @@ define({:-OpenBSDURLInstall-:},
 		Then refer to the section named "installation set selection"
 		below.-:})dnl
 dnl
-dnl For arches where you can create a boot tape, $1 can be set as the
-dnl file index of the first set, after the boot files.
-define({:-OpenBSDTAPEInstall-:},
-{:-	To install from tape:
-		Unlike all other installation methods, there is no way
-		to know the names of the files on tape.  Because of this,
-		it is impossible to check that the files on tape match
-		the machine architecture and release of OpenBSD/MACHINE.
-
-		Moreover, since tape filenames are not known, the file
-		checksums can not be verified.  Use this installation
-		method only if there is no better option.
-
-		In order to install from tape, the distribution sets to be
-		installed must have been written to tape previously, either
-		in tar format or gzip-compressed tar format.
-
-		You will also have to identify the tape device where the
-		distribution sets are to be extracted from.  This will
-		typically be "nrst0" (no-rewind, raw interface).
-
-		Next you will have to specify how many files have to be
-		skipped on the tape.  This number is usually zero{:--:}ifelse(X$1,X,,{:-, unless
-		you have created a bootable tape, in which case the number
-		will be $1-:}).
-
-		The install program will not automatically detect whether
-		an image has been compressed, so it will ask for that
-		information before starting the extraction of each file.-:})dnl
-dnl
 define({:-OpenBSDCDROMInstall-:},
 {:-	To install from CD-ROM:
 		When installing from a CD-ROM, you will be asked which
@@ -992,112 +962,6 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 	read/write errors.
 
 	Note that, when installing, the boot floppy can be write-protected
-	(i.e. read-only).-:})dnl
-dnl
-dnl Tape preparation instructions.
-dnl
-dnl OpenBSDXferBareTape describes how to set up a non-bootable distribution
-dnl tape, and takes as an optional argument, the list of X11 sets which
-dnl may be put on the tape.
-define({:-OpenBSDXferBareTape-:},
-{:-Creating an installation tape:
-
-	While you won't be able to boot OpenBSD from a tape, you can use
-	one to provide the installation sets.  To do so, you need to make
-	a tape that contains the distribution set files, each in "tar"
-	format or in "gzipped tar format".  First you will need to
-	transfer the distribution sets to your local system, using ftp or
-	by mounting the CD-ROM containing the release.  Then you need to
-	make a tape containing the files.
-
-	If you're making the tape on a UN*X-like system, the easiest way
-	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape".
-
-	#! /bin/sh
-	TAPE=${TAPE:-/dev/nrst0}
-	mt -f ${TAPE} rewind
-	for file in base etc comp game man $1
-	do
-		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
-	done
-	tar cf ${TAPE} bsd
-	mt -f ${TAPE} offline
-	# end of script
-
-	And then:
-
-	cd .../OSREV/MACHINE
-	sh -x /tmp/maketape
-
-	If you're using a system other than OpenBSD, the tape
-	name and other requirements may change.  You can override the
-	default device name (/dev/nrst0) with the TAPE environment
-	variable.  For example, under Solaris, you would probably run:
-
-	TAPE=/dev/rmt/0n sh -x /tmp/maketape
-
-	Note that, when installing, the tape can be write-protected
-	(i.e. read-only).-:})dnl
-dnl OpenBSDXferBootTape describes how to set up a non-bootable distribution
-dnl tape, and takes as first argument, the list of X11 sets which may be put
-dnl on the tape.  Then at least one, and up to three arguments list the first
-dnl files to be put on the tape to make it bootable.  Each filename can be
-dnl followed by dd(1) arguments (such as conv=osync).
-define({:-OpenBSDXferBootTape-:},
-{:-Creating an (optionally bootable) installation tape:
-
-	To install OpenBSD from a tape, you need to make a tape that
-	contains the distribution set files, each in "tar" format or in
-	"gzipped tar format".  First you will need to transfer the
-	distribution sets to your local system, using ftp or by
-	mounting the CD-ROM containing the release.  Then you need to
-	make a tape containing the files.
-
-	If you're making the tape on a UN*X-like system, the easiest way
-	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape".
-
-	#! /bin/sh
-	TAPE=${TAPE:-/dev/nrst0}
-	mt -f ${TAPE} rewind
-	if test {:-$-:}# -lt 1
-	then
-		dd of=${TAPE} if=$2
-ifelse(X$3,X,,{:-		dd of=${TAPE} if=$3
--:})dnl
-ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
--:})dnl
-	fi
-	for file in base etc comp game man $1
-	do
-		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
-	done
-	tar cf ${TAPE} bsd
-	mt -f ${TAPE} offline
-	# end of script
-
-	And then:
-
-	cd .../OSREV/MACHINE
-	sh -x /tmp/maketape
-
-        Note that, by default, this script creates a bootable tape.  If
-	you only want to fetch the OpenBSD files from tape, but want to
-	boot from another device, you can save time and space creating
-	the tape this way:
-
-        cd .../OSREV/MACHINE
-        sh -x /tmp/maketape noboot
-
-	If you're using a system other than OpenBSD, the tape
-	name and other requirements may change.  You can override the
-	default device name (/dev/nrst0) with the TAPE environment
-	variable.  For example, under Solaris, you would probably run:
-
-	TAPE=/dev/rmt/0n sh -x /tmp/maketape
-
-	Note that, when installing, the tape can be write-protected
 	(i.e. read-only).-:})dnl
 dnl OpenBSDXferNFS [(noupgrade)]
 define({:-OpenBSDXferNFS-:},

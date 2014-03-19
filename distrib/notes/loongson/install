@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2013/12/04 23:20:19 jmc Exp $
+dnl	$OpenBSD: install,v 1.14 2014/03/19 01:59:48 tedu Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -79,9 +79,6 @@ OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
 
 OpenBSDCommonInstall
 
-dnl usb tape drives anyone?
-dnl OpenBSDTAPEInstall
-dnl
 OpenBSDInstallWrapup
 
 Lemote systems final steps:

@@ -1,9 +1,9 @@
-dnl	$OpenBSD: install,v 1.74 2011/06/15 21:36:48 miod Exp $
+dnl	$OpenBSD: install,v 1.75 2014/03/19 01:59:49 tedu Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
 There are several ways to install OpenBSD onto a disk.  The normal way
 is to use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
-installation floppy, or an installation tape, depending on your hardware.
+installation floppy, depending on your hardware.
 Alternatively, if you already have an operating system installed and
 do not wish to change the existing partition layout, it is simpler to
 use the OpenBSD miniroot that can be booted off your local disk's swap
@@ -121,30 +121,6 @@ drive vs. SCSI-ID shuffling and partition a=0, b=1...
 (*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
 
 
-Booting from SCSI tape:
-
-Boot the miniroot by typing the appropriate command at the PROM:
-
-	> b st(,,1)			# for sun4 monitors
-					# (not working currently)
-	ok boot st(,,1)			# for version 1 OpenBOOT ROMs
-	ok boot tape:1			# for version 2 OpenBOOT ROMs
-	ok boot /sbus/esp/st@4,0:1	# for version 2 OpenBOOT ROMs
-					# that won't take tape:n syntax.
-	
-The above instructions assume your tape drive is the default tape drive
-using SCSI ID 4. If your drive uses ID 5, modify the boot command
-accordingly:
-
-	> b st(,28,1)		# example - 2nd tape drive on sun4 monitors
-	ok boot st(,5,1)	# example - 2nd tape drive on v1 OpenBOOT ROM
-	ok boot tape1:1		# example - 2nd tape drive on v2 OpenBOOT ROM
-	ok boot /sbus/esp/st@5,0:1	# example - 2nd tape drive on v2
-					# OpenBOOT ROM that won't take
-					# tape:n syntax
-	
-
-
 Installing using a diskless setup:
 
 First, you must set up a diskless client configuration on a server. If
@@ -165,7 +141,7 @@ this command takes one of the following forms:
 	ok boot net bsd.rd	# for version 2 OpenBOOT ROMs
 
 
-Installing using the Floppy, CD-ROM, tape, miniroot or netboot procedure:
+Installing using the Floppy, CD-ROM, miniroot or netboot procedure:
 
 OpenBSDInstallPart2
 
@@ -186,7 +162,7 @@ OpenBSDInstallPart4
 
 OpenBSDInstallPart5
 
-OpenBSDInstallPart6({:-CD-ROM, tape, -:})
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDURLInstall
 
@@ -195,8 +171,6 @@ OpenBSDCDROMInstall
 OpenBSDDISKInstall({:-"xdN", "xyN" or -:},{:-only -:})
 
 OpenBSDCommonInstall
-
-OpenBSDTAPEInstall(2)
 
 OpenBSDInstallWrapup
 

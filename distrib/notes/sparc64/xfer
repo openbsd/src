@@ -1,9 +1,8 @@
-dnl	$OpenBSD: xfer,v 1.29 2014/02/27 20:18:10 tedu Exp $
+dnl	$OpenBSD: xfer,v 1.30 2014/03/19 01:59:49 tedu Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
 	FFS partitions
-	Tape
 	FTP
 	HTTP
 
@@ -81,7 +80,5 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 
 OpenBSDXferPrelude
-
-OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
 
 OpenBSDXferFFS

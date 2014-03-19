@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.6 2014/02/27 18:55:39 miod Exp $
+dnl	$OpenBSD: prep,v 1.7 2014/03/19 01:59:49 tedu Exp $
 dnl Need to provide a short monitor description. Start from
 dnl http://www.nk-home.net/~aoyama/luna88k/monitor.txt
 dnl and also document NVRAM?
@@ -14,7 +14,7 @@ Setting up the boot device and filename:
   the machine's non-volatile memory.
 
   LUNA88K systems can only boot from SCSI devices. The boot device type
-  (either ``sd'' for a disk or ``st'' for a tape) is specified by the
+  (such as ``sd'' for a disk) is specified by the
   ``boot_device'' variable. The SCSI id of the boot device is specified
   by the ``boot_unit'' NVRAM variable, and the boot partition on said
   device is specified by the ``boot_partition'' variable. The

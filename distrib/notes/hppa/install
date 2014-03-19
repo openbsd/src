@@ -1,16 +1,13 @@
-dnl	$OpenBSD: install,v 1.25 2014/01/26 04:35:09 tedu Exp $
+dnl	$OpenBSD: install,v 1.26 2014/03/19 01:59:48 tedu Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
 Bootstrapping the installation ramdisk kernel is supported
-from either network, tape or CD-ROM.
+from either the network or a CD-ROM.
 
 
-Booting from Tape or CD-ROM installation media:
+Booting from CD-ROM installation media:
 
-  You can burn a bootable CD-ROM and boot from it or you can prepare an
-  installation tape as described in the "Creating an installation tape"
-  section earlier.
   To boot from SCSI CD-ROM, simply insert the CD into the drive before power
   up, then during the computer's self-test cycle, press the space bar.
   Subsequently at the PROM prompt issue a command:
@@ -32,10 +29,6 @@ Booting from Tape or CD-ROM installation media:
   To boot from your CD-ROM type:
 
 	BOOT_ADMIN> boot p0
-
-  To boot from your tape type:
-
-	BOOT_ADMIN> boot p4
 
 
 Booting from Network:
@@ -137,7 +130,7 @@ OpenBSDInstallPart5(,{:-
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDInstallPart6({:-CD-ROM, tape, -:})
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDURLInstall
 
@@ -148,8 +141,6 @@ OpenBSDNFSInstall
 OpenBSDDISKInstall(,{:-only -:})
 
 OpenBSDCommonInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
 
