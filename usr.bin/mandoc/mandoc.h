@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.59 2014/01/22 20:58:35 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.60 2014/03/19 21:50:59 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -372,15 +372,12 @@ struct	eqn {
 };
 
 /*
- * The type of parse sequence.  This value is usually passed via the
- * mandoc(1) command line of -man and -mdoc.  It's almost exclusively
- * -mandoc but the others have been retained for compatibility.
+ * Parse options.
  */
-enum	mparset {
-	MPARSE_AUTO, /* magically determine the document type */
-	MPARSE_MDOC, /* assume -mdoc */
-	MPARSE_MAN /* assume -man */
-};
+#define	MPARSE_MDOC	1  /* assume -mdoc */
+#define	MPARSE_MAN	2  /* assume -man */
+#define	MPARSE_SO	4  /* honour .so requests */
+#define	MPARSE_QUICK	8  /* abort the parse early */
 
 enum	mandoc_esc {
 	ESCAPE_ERROR = 0, /* bail! unparsable escape */
@@ -422,8 +419,7 @@ int		  mchars_spec2cp(const struct mchars *,
 			const char *, size_t);
 const char	 *mchars_spec2str(const struct mchars *, 
 			const char *, size_t, size_t *);
-struct mparse	 *mparse_alloc(enum mparset, enum mandoclevel,
-			mandocmsg, char *, int);
+struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg, char *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);

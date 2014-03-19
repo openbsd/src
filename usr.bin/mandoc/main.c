@@ -1,7 +1,7 @@
-/*	$Id: main.c,v 1.86 2014/01/06 00:53:14 schwarze Exp $ */
+/*	$Id: main.c,v 1.87 2014/03/19 21:50:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -61,7 +61,7 @@ struct	curparse {
 int			  apropos(int, char**);
 int			  mandocdb(int, char**);
 
-static	int		  moptions(enum mparset *, char *);
+static	int		  moptions(int *, char *);
 static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
 static	void		  parse(struct curparse *, int, 
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 {
 	int		 c;
 	struct curparse	 curp;
-	enum mparset	 type;
+	int		 options;
 	enum mandoclevel rc;
 	char		*defos;
 
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 
 	memset(&curp, 0, sizeof(struct curparse));
 
-	type = MPARSE_AUTO;
+	options = MPARSE_SO;
 	curp.outtype = OUTT_ASCII;
 	curp.wlevel  = MANDOCLEVEL_FATAL;
 	defos = NULL;
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 			defos = mandoc_strdup(optarg + 3);
 			break;
 		case ('m'):
-			if ( ! moptions(&type, optarg))
+			if ( ! moptions(&options, optarg))
 				return((int)MANDOCLEVEL_BADARG);
 			break;
 		case ('O'):
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 
-	curp.mp = mparse_alloc(type, curp.wlevel, mmsg, defos, 0);
+	curp.mp = mparse_alloc(options, curp.wlevel, mmsg, defos);
 
 	/*
 	 * Conditionally start up the lookaside buffer before parsing.
@@ -313,15 +313,15 @@ parse(struct curparse *curp, int fd,
 }
 
 static int
-moptions(enum mparset *tflags, char *arg)
+moptions(int *options, char *arg)
 {
 
 	if (0 == strcmp(arg, "doc"))
-		*tflags = MPARSE_MDOC;
+		*options |= MPARSE_MDOC;
 	else if (0 == strcmp(arg, "andoc"))
-		*tflags = MPARSE_AUTO;
+		/* nothing to do */;
 	else if (0 == strcmp(arg, "an"))
-		*tflags = MPARSE_MAN;
+		*options |= MPARSE_MAN;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
