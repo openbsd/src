@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.14 2013/12/18 16:41:01 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.15 2014/03/19 05:14:13 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,7 +57,7 @@ typedef struct label_t {
 #endif
 
 /* 7.18.1.1 Exact-width integer types */
-typedef	__signed char		__int8_t;
+typedef	signed char		__int8_t;
 typedef	unsigned char		__uint8_t;
 typedef	short			__int16_t;
 typedef	unsigned short		__uint16_t;

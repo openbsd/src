@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.18 2014/02/22 18:10:39 miod Exp $	*/
+/*	$OpenBSD: _types.h,v 1.19 2014/03/19 05:14:13 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,7 +59,7 @@
 #define	_MIPS_ISA_MIPS4	4	/* TFP (R1x000) */
 
 /* 7.18.1.1 Exact-width integer types */
-typedef	__signed char		__int8_t;
+typedef	signed char		__int8_t;
 typedef	unsigned char		__uint8_t;
 typedef	short			__int16_t;
 typedef	unsigned short		__uint16_t;
