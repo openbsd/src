@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.88 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: umsm.4,v 1.89 2014/03/19 22:56:44 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 19 2014 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -159,78 +159,15 @@ the second one is for management.
 The Option GlobeTrotter HSDPA/HSUPA modems have three serial ports,
 but only the last port can be used to make PPP connections.
 .Pp
-Some modems require multi-link
-.Xr ppp 8
-operation.
+Some modems require multi-link PPP operation.
 For example, the Huawei E1550 has four serial ports.
 When initiating a connection, the control commands have to be issued
 on the third port, and after that the actual PPP connection comes
 up on the first port.
 The function of the second and fourth ports is unknown.
 .Sh EXAMPLES
-An example
-.Pa /etc/ppp/ppp.conf
-configuration for Verizon Wireless might look something like below;
-see
-.Xr ppp 8
-for more information.
-.Bd -literal -offset indent
-default:
-   set device /dev/cuaU0
-   set speed 230400
-   set dial "ABORT BUSY ABORT NO\e\esCARRIER TIMEOUT 5 \e
-             \e"\e" AT OK-AT-OK ATE1Q0s7=60 OK \e\edATDT\e\eT TIMEOUT 40 CONNECT"
-   set phone "#777"
-   set login
-   set authname 4517654321@vzw3g.com
-   set authkey vzw
-   set timeout 120
-   set ifaddr 10.0.0.1/0 10.0.0.2/0 255.255.255.0 0.0.0.0
-   add default HISADDR
-   enable dns
-.Ed
-.Pp
-In this example the phone number is (451) 765-4321: replace this with
-the number issued for the card or your phone's number if a handset is being
-used.
-.Pp
-The Huawei E1550 requires a multi-link
-.Pa /etc/ppp/ppp.conf
-configuration as follows:
-.Bd -literal -offset indent
-default:
-   set speed 460800
-   set login
-   set authname
-   set authkey
-   set timeout 0
-   set ifaddr 10.0.0.1/0 10.0.0.2/0 255.255.255.0 0.0.0.0
-   set cd off
-   set mrru 1500
-   clone ctrl,data
-   link deflink remove
-   link ctrl set device /dev/cuaU2
-   link ctrl set dial "ABORT ERROR ABORT BUSY TIMEOUT 5 \e
-      \e"\e" ATZ \e
-      OK-ATZ-OK AT+CPIN? \e
-      +CPIN:\e\esREADY\e\er\e\en\e\er\e\enOK-AT+CPIN=5027-OK ATE1Q0 \e
-      OK AT+CGDCONT=1,\e\e\e"IP\e\e\e",\e\e\e"pinternet.interkom.de\e\e\e" \e
-      OK \e\edATDT\e\eT \e
-      CONNECT-\e\edATDT\e\eT-CONNECT"
-   link ctrl set phone "*99#"
-   link ctrl set openmode passive
-   link ctrl open
-   link data set device /dev/cuaU0
-   link data set dial
-   link data set lcpretry 10 6
-   link data open
-   add default HISADDR
-   enable dns
-.Ed
-.Pp
 An example demand dial configuration for Cingular Wireless using
-.Xr pppd 8
-appears below.
+.Xr pppd 8 :
 .Pp
 .Pa /etc/ppp/cingular-chat :
 .Bd -literal -offset indent
@@ -277,7 +214,6 @@ is then started using:
 .Xr ucom 4 ,
 .Xr uhub 4 ,
 .Xr usb 4 ,
-.Xr ppp 8 ,
 .Xr pppd 8
 .Sh HISTORY
 The
