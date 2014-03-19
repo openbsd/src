@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.89 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.90 2014/03/19 04:17:33 guenther Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -498,6 +498,8 @@ ufs_print(struct vnode *vp)
 		*flags++ = 'U';
 	if (flag & IN_MODIFIED)
 		*flags++ = 'M';
+	if (flag & IN_LAZYMOD)
+		*flags++ = 'm';
 	if (flag & IN_RENAME)
 		*flags++ = 'R';
 	if (flag & IN_SHLOCK)

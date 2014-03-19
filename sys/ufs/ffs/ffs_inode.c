@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.67 2014/01/25 23:31:12 guenther Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.68 2014/03/19 04:17:33 guenther Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -59,8 +59,11 @@ int ffs_indirtrunc(struct inode *, daddr_t, daddr_t, daddr_t, int, long *);
  * Update the access, modified, and inode change times as specified by the
  * IN_ACCESS, IN_UPDATE, and IN_CHANGE flags respectively. The IN_MODIFIED
  * flag is used to specify that the inode needs to be updated but that the
- * times have already been set.  If waitfor is set, then wait for
- * the disk write of the inode to complete.
+ * times have already been set.  The IN_LAZYMOD flag is used to specify
+ * that the inode needs to be updated at some point, by reclaim if not
+ * in the course of other changes; this is used to defer writes just to
+ * update device timestamps.  If waitfor is set, then wait for the disk
+ * write of the inode to complete.
  */
 int
 ffs_update(struct inode *ip, int waitfor)
@@ -76,7 +79,7 @@ ffs_update(struct inode *ip, int waitfor)
 	if ((ip->i_flag & IN_MODIFIED) == 0 && waitfor != MNT_WAIT)
 		return (0);
 
-	ip->i_flag &= ~IN_MODIFIED;
+	ip->i_flag &= ~(IN_MODIFIED | IN_LAZYMOD);
 	fs = ip->i_fs;
 
 	/*

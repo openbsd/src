@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.42 2014/01/26 02:02:26 tedu Exp $	*/
+/*	$OpenBSD: inode.h,v 1.43 2014/03/19 04:17:33 guenther Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -250,6 +250,7 @@ struct inode_vtbl {
 #define	IN_RENAME	0x0010		/* Inode is being renamed. */
 #define IN_SHLOCK       0x0020          /* File has shared lock. */
 #define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
+#define	IN_LAZYMOD	0x0080		/* Modified, but don't write yet. */
 
 #define	i_devvp i_ump->um_devvp
 

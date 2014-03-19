@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.112 2014/01/25 23:31:13 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.113 2014/03/19 04:17:33 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -131,7 +131,10 @@ ufs_itimes(struct vnode *vp)
 	}
 #endif
 
-	ip->i_flag |= IN_MODIFIED;
+	if ((vp->v_type == VBLK || vp->v_type == VCHR) && !DOINGSOFTDEP(vp))
+		ip->i_flag |= IN_LAZYMOD;
+	else
+		ip->i_flag |= IN_MODIFIED;
 
 	getnanotime(&ts);
 	if (ip->i_flag & IN_ACCESS) {

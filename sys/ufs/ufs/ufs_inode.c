@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.38 2009/08/14 20:55:05 jasper Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.39 2014/03/19 04:17:33 guenther Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -139,10 +139,19 @@ ufs_reclaim(struct vnode *vp, struct proc *p)
 		vprint("ufs_reclaim: pushing active", vp);
 #endif
 
+	ip = VTOI(vp);
+
+	/*
+	 * Stop deferring timestamp writes
+	 */
+	if (ip->i_flag & IN_LAZYMOD) {
+		ip->i_flag |= IN_MODIFIED;
+		UFS_UPDATE(ip, 0);
+	}
+
 	/*
 	 * Remove the inode from its hash chain.
 	 */
-	ip = VTOI(vp);
 	ufs_ihashrem(ip);
 	/*
 	 * Purge old data structures associated with the inode.
