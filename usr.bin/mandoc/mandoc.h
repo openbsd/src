@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.60 2014/03/19 21:50:59 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.61 2014/03/19 22:20:36 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -425,7 +425,7 @@ void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *, 
-			struct mdoc **, struct man **);
+			struct mdoc **, struct man **, char **);
 const char	 *mparse_getkeep(const struct mparse *);
 const char	 *mparse_strerror(enum mandocerr);
 const char	 *mparse_strlevel(enum mandoclevel);

@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.22 2014/03/19 21:50:59 schwarze Exp $ */
+/*	$Id: read.c,v 1.23 2014/03/19 22:20:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,6 +51,7 @@ struct	mparse {
 	struct man	 *man; /* man parser */
 	struct mdoc	 *mdoc; /* mdoc parser */
 	struct roff	 *roff; /* roff parser (!NULL) */
+	char		 *sodest; /* filename pointed to by .so */
 	int		  reparse_count; /* finite interp. stack */
 	mandocmsg	  mmsg; /* warning/error message handler */
 	const char	 *file; 
@@ -482,6 +483,12 @@ rerun:
 			assert(MANDOCLEVEL_FATAL <= curp->file_status);
 			break;
 		case (ROFF_SO):
+			if (0 == (MPARSE_SO & curp->options) &&
+			    (i >= (int)blk.sz || '\0' == blk.buf[i])) {
+				curp->sodest = mandoc_strdup(ln.buf + of);
+				free(ln.buf);
+				return;
+			}
 			/*
 			 * We remove `so' clauses from our lookaside
 			 * buffer because we're going to descend into
@@ -666,7 +673,7 @@ mparse_end(struct mparse *curp)
 		return;
 	}
 
-	if ( ! (curp->man || curp->mdoc)) {
+	if ( ! (curp->mdoc || curp->man || curp->sodest)) {
 		mandoc_msg(MANDOCERR_NOTMANUAL, curp, 1, 0, NULL);
 		curp->file_status = MANDOCLEVEL_FATAL;
 		return;
@@ -773,6 +780,9 @@ mparse_reset(struct mparse *curp)
 	curp->file_status = MANDOCLEVEL_OK;
 	curp->mdoc = NULL;
 	curp->man = NULL;
+
+	free(curp->sodest);
+	curp->sodest = NULL;
 }
 
 void
@@ -789,13 +799,20 @@ mparse_free(struct mparse *curp)
 		free(curp->secondary->buf);
 
 	free(curp->secondary);
+	free(curp->sodest);
 	free(curp);
 }
 
 void
-mparse_result(struct mparse *curp, struct mdoc **mdoc, struct man **man)
+mparse_result(struct mparse *curp,
+	struct mdoc **mdoc, struct man **man, char **sodest)
 {
 
+	if (sodest && NULL != (*sodest = curp->sodest)) {
+		*mdoc = NULL;
+		*man = NULL;
+		return;
+	}
 	if (mdoc)
 		*mdoc = curp->mdoc;
 	if (man)
