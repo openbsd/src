@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.3 2013/11/04 11:51:33 mpi Exp $   */
+/*	$OpenBSD: ugold.c,v 1.4 2014/03/19 08:59:37 mpi Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
@@ -101,6 +101,9 @@ ugold_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size;
 	void *desc;
+
+	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+		return (UMATCH_NONE);
 
 	if (usb_lookup(ugold_devs, uha->uaa->vendor, uha->uaa->product) == NULL)
 		return (UMATCH_NONE);

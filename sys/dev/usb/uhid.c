@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.55 2013/11/19 14:04:07 pirofti Exp $ */
+/*	$OpenBSD: uhid.c,v 1.56 2014/03/19 08:59:37 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -114,11 +114,10 @@ const struct cfattach uhid_ca = {
 int
 uhid_match(struct device *parent, void *match, void *aux)
 {
-#ifdef UHID_DEBUG
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
-#endif
+	struct uhidev_attach_arg *uha = aux;
 
-	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
+	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS_GENERIC);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.12 2014/03/07 18:39:02 mpi Exp $   */
+/*	$OpenBSD: utrh.c,v 1.13 2014/03/19 08:59:37 mpi Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -92,8 +92,10 @@ const struct cfattach utrh_ca = {
 int
 utrh_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
+
+	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+		return (UMATCH_NONE);
 
 	return (usb_lookup(utrh_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

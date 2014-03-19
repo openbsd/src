@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.6 2014/03/07 18:39:02 mpi Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.7 2014/03/19 08:59:37 mpi Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -109,8 +109,10 @@ struct uoak_methods uoakv_methods = {
 int
 uoakv_match(struct device *parent, void *match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
+
+	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+		return (UMATCH_NONE);
 
 	if (uoakv_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
 		return UMATCH_NONE;

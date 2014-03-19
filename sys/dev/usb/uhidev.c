@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.55 2014/03/16 10:54:40 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.56 2014/03/19 08:59:37 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	int size, nrepid, repid, repsz;
 	int i, repsizes[256];
 	void *desc = NULL;
+	struct device *dev;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
@@ -217,19 +218,25 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		repsz = hid_report_size(desc, size, hid_input, repid);
 		DPRINTF(("uhidev_match: repid=%d, repsz=%d\n", repid, repsz));
 		repsizes[repid] = repsz;
-		if (repsz > 0) {
-			if (repsz > sc->sc_isize)
-				sc->sc_isize = repsz;
-		}
+		if (repsz > sc->sc_isize)
+			sc->sc_isize = repsz;
 	}
-	sc->sc_isize += nrepid != 1;	/* space for report ID */
+	sc->sc_isize += (nrepid != 1);	/* one byte for the report ID */
 	DPRINTF(("uhidev_attach: isize=%d\n", sc->sc_isize));
 
 	uha.uaa = uaa;
 	uha.parent = sc;
-	for (repid = 0; repid < nrepid; repid++) {
-		struct device *dev;
+	uha.reportid = UHIDEV_CLAIM_ALLREPORTID;
 
+	/* Look for a driver claiming all report IDs first. */
+	dev = config_found_sm(self, &uha, NULL, uhidevsubmatch);
+	if (dev != NULL) {
+		for (repid = 0; repid < nrepid; repid++)
+			sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		return;
+	}
+
+	for (repid = 0; repid < nrepid; repid++) {
 		DPRINTF(("%s: try repid=%d\n", __func__, repid));
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
 		    hid_report_size(desc, size, hid_output, repid) == 0 &&
@@ -315,7 +322,7 @@ uhidevprint(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("uhid at %s", pnp);
-	if (uha->reportid != 0)
+	if (uha->reportid != 0 && uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
 		printf(" reportid %d", uha->reportid);
 	return (UNCONF);
 }
@@ -356,7 +363,7 @@ int
 uhidev_detach(struct device *self, int flags)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
-	int i, rv;
+	int i, rv = 0;
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -375,7 +382,14 @@ uhidev_detach(struct device *self, int flags)
 	if (sc->sc_repdesc != NULL)
 		free(sc->sc_repdesc, M_USBDEV);
 
-	rv = 0;
+	/*
+	 * XXX Check if we have only one children claiming all the Report
+	 * IDs, this is a hack since we need a dev -> Report ID mapping
+	 * for uhidev_intr().
+	 */
+	if (sc->sc_nrepid > 0 && sc->sc_subdevs[0] == sc->sc_subdevs[1])
+		return (config_detach(&sc->sc_subdevs[0]->sc_dev, flags));
+
 	for (i = 0; i < sc->sc_nrepid; i++) {
 		if (sc->sc_subdevs[i] != NULL) {
 			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);

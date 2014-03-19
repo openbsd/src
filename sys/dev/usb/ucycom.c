@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.24 2013/11/15 08:25:31 pirofti Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.25 2014/03/19 08:59:36 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -174,7 +174,9 @@ ucycom_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	DPRINTF(("ucycom match\n"));
+	if (uha->reportid == UHIDEV_CLAIM_ALLREPORTID)
+		return (UMATCH_NONE);
+
 	return (usb_lookup(ucycom_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
