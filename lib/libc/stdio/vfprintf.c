@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.64 2013/11/01 19:05:10 guenther Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.65 2014/03/19 05:17:01 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -398,7 +398,7 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	    flags&PTRINT ? GETARG(ptrdiff_t) : \
 	    flags&SIZEINT ? GETARG(ssize_t) : \
 	    flags&SHORTINT ? (short)GETARG(int) : \
-	    flags&CHARINT ? (__signed char)GETARG(int) : \
+	    flags&CHARINT ? (signed char)GETARG(int) : \
 	    GETARG(int)))
 #define	UARG() \
 	((uintmax_t)(flags&MAXINT ? GETARG(uintmax_t) : \
@@ -809,7 +809,7 @@ fp_common:
 			else if (flags & SHORTINT)
 				*GETARG(short *) = ret;
 			else if (flags & CHARINT)
-				*GETARG(__signed char *) = ret;
+				*GETARG(signed char *) = ret;
 			else if (flags & PTRINT)
 				*GETARG(ptrdiff_t *) = ret;
 			else if (flags & SIZEINT)
