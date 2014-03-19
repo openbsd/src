@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.280 2014/02/04 01:04:03 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.281 2014/03/19 13:49:12 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -359,12 +359,10 @@ if_free_sadl(struct ifnet *ifp)
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
-#if 0
 	ifa_del(ifp, ifa);
+	ifafree(ifp->if_lladdr);
 	ifp->if_lladdr = NULL;
-#endif
 	ifp->if_sadl = NULL;
-
 	splx(s);
 }
 
@@ -492,8 +490,6 @@ nettxintr(void)
 /*
  * Detach an interface from everything in the kernel.  Also deallocate
  * private resources.
- * XXX So far only the INET protocol family has been looked over
- * wrt resource usage that needs to be decoupled.
  */
 void
 if_detach(struct ifnet *ifp)
@@ -587,27 +583,22 @@ do { \
 	if (ISSET(ifp->if_xflags, IFXF_TXREADY))
 		TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
 
-	/*
-	 * Deallocate private resources.
-	 */
-	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
-		ifa_del(ifp, ifa);
-		/* XXX if_free_sadl needs this */
-		if (ifa == ifp->if_lladdr)
-			continue;
-
-		ifa->ifa_ifp = NULL;
-		ifafree(ifa);
-	}
-
 	while ((ifg = TAILQ_FIRST(&ifp->if_groups)) != NULL)
 		if_delgroup(ifp, ifg->ifgl_group->ifg_group);
 
 	if_free_sadl(ifp);
 
-	ifp->if_lladdr->ifa_ifp = NULL;
-	ifafree(ifp->if_lladdr);
-	ifp->if_lladdr = NULL;
+	/* We should not have any address left at this point. */
+	if (!TAILQ_EMPTY(&ifp->if_addrlist)) {
+#ifdef DIAGNOSTIC
+		printf("%s: address list non empty\n", ifp->if_xname);
+#endif
+		while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
+			ifa_del(ifp, ifa);
+			ifa->ifa_ifp = NULL;
+			ifafree(ifa);
+		}
+	}
 
 	free(ifp->if_addrhooks, M_TEMP);
 	free(ifp->if_linkstatehooks, M_TEMP);
