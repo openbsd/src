@@ -13,7 +13,7 @@
 .\"
 .\"     $Sendmail: sendmail.8,v 8.61 2013/11/22 20:51:56 ca Exp $
 .\"
-.Dd $Mdocdate: March 12 2014 $
+.Dd $Mdocdate: March 19 2014 $
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -708,3 +708,17 @@ the permission problems should be fixed.
 For more information, see:
 .Pp
 .Lk http://www.sendmail.org/tips/DontBlameSendmail.html
+.Pp
+Because
+.Xr smtpd 8
+is the default
+.Ox
+mailer,
+.Nm
+versions of
+.Xr aliases 5 ,
+.Xr forward 5 ,
+.Xr makemap 8 ,
+and
+.Xr newaliases 8
+are not currently installed.

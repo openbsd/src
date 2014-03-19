@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2013/08/06 19:05:57 miod Exp $
+#	$OpenBSD: Makefile,v 1.30 2014/03/19 21:10:27 tedu Exp $
 
 PROG=	sendmail
 
@@ -43,7 +43,7 @@ SRCS=	main.c alias.c arpadate.c bf.c collect.c conf.c control.c convtime.c \
 	recipient.c sasl.c savemail.c sfsasl.c shmticklib.c sm_resolve.c \
 	srvrsmtp.c stab.c stats.c sysexits.c timers.c tls.c trace.c udb.c \
 	usersmtp.c util.c version.c
-MAN=	aliases.5 mailq.8 newaliases.8 sendmail.8
+MAN=	mailq.8 sendmail.8
 MLINKS=	sendmail.8 hoststat.1 sendmail.8 purgestat.1
 BINDIR=	/usr/libexec/sendmail
 BINOWN=	root

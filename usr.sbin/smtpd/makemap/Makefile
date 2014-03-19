@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile,v 1.23 2014/03/19 21:10:27 tedu Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,9 +8,7 @@ BINOWN=	root
 BINMODE?=555
 
 BINDIR=	/usr/libexec/smtpd
-MAN=	makemap.8 newaliases.8
-# do not override default manpages for now
-NOMAN=	noman
+MAN=	aliases.5 forward.5 makemap.8 newaliases.8
 
 CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
