@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sti.4,v 1.24 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: sti.4,v 1.25 2014/03/19 12:57:51 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 19 2014 $
 .Dt STI 4
 .Os
 .Sh NAME
@@ -32,10 +32,8 @@
 .Nd HP Standard Text Interface
 .Sh SYNOPSIS
 .Cd "sti*	at mainbus0"
-.Cd "sti*	at dio?"
 .Cd "sti*	at pci?"
 .Cd "sti*	at phantomas0"
-.Cd "sti*	at sgc?"
 .Cd "wsdisplay*	at sti?"
 .Sh DESCRIPTION
 The
@@ -249,11 +247,9 @@ function added (flashing under HP-UX and other sideband traffic).
 Colour frame buffer support.
 .El
 .Sh SEE ALSO
-.Xr dio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr phantomas 4 ,
-.Xr sgc 4 ,
 .Xr wsdisplay 4
 .Pp
 .Rs
@@ -271,10 +267,7 @@ for HPPA
 port for
 .Ox 2.7 .
 .\" .Pp
-.\" .Xr dio 4 ,
 .\" .Xr pci 4
-.\" and
-.\" .Xr sgc 4
 .\" attachment code was written by
 .\" .An Miod Vallat .
 .Sh BUGS
