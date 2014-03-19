@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.13 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.14 2014/03/19 14:02:24 mpi Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -45,9 +45,6 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <arpa/inet.h>
