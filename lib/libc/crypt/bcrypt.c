@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.29 2014/02/24 19:45:43 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.30 2014/03/19 02:43:03 tedu Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -71,61 +71,6 @@ static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 static char    encrypted[_PASSWORD_LEN];
 static char    gsalt[7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1];
 static char    error[] = ":";
-
-const static u_int8_t Base64Code[] =
-"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-const static u_int8_t index_64[128] = {
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 0, 1, 54, 55,
-	56, 57, 58, 59, 60, 61, 62, 63, 255, 255,
-	255, 255, 255, 255, 255, 2, 3, 4, 5, 6,
-	7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-	17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-	255, 255, 255, 255, 255, 255, 28, 29, 30,
-	31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-	41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-	51, 52, 53, 255, 255, 255, 255, 255
-};
-#define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
-
-static void
-decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
-{
-	u_int8_t *bp = buffer;
-	u_int8_t *p = data;
-	u_int8_t c1, c2, c3, c4;
-	while (bp < buffer + len) {
-		c1 = CHAR64(*p);
-		c2 = CHAR64(*(p + 1));
-
-		/* Invalid data */
-		if (c1 == 255 || c2 == 255)
-			break;
-
-		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
-		if (bp >= buffer + len)
-			break;
-
-		c3 = CHAR64(*(p + 2));
-		if (c3 == 255)
-			break;
-
-		*bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
-		if (bp >= buffer + len)
-			break;
-
-		c4 = CHAR64(*(p + 3));
-		if (c4 == 255)
-			break;
-		*bp++ = ((c3 & 0x03) << 6) | c4;
-
-		p += 4;
-	}
-}
 
 static void
 encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
@@ -284,6 +229,61 @@ bcrypt(const char *key, const char *salt)
 	return encrypted;
 }
 
+const static u_int8_t Base64Code[] =
+"./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+const static u_int8_t index_64[128] = {
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 0, 1, 54, 55,
+	56, 57, 58, 59, 60, 61, 62, 63, 255, 255,
+	255, 255, 255, 255, 255, 2, 3, 4, 5, 6,
+	7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+	17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+	255, 255, 255, 255, 255, 255, 28, 29, 30,
+	31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+	41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+	51, 52, 53, 255, 255, 255, 255, 255
+};
+#define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
+
+static void
+decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
+{
+	u_int8_t *bp = buffer;
+	u_int8_t *p = data;
+	u_int8_t c1, c2, c3, c4;
+	while (bp < buffer + len) {
+		c1 = CHAR64(*p);
+		c2 = CHAR64(*(p + 1));
+
+		/* Invalid data */
+		if (c1 == 255 || c2 == 255)
+			break;
+
+		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
+		if (bp >= buffer + len)
+			break;
+
+		c3 = CHAR64(*(p + 2));
+		if (c3 == 255)
+			break;
+
+		*bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
+		if (bp >= buffer + len)
+			break;
+
+		c4 = CHAR64(*(p + 3));
+		if (c4 == 255)
+			break;
+		*bp++ = ((c3 & 0x03) << 6) | c4;
+
+		p += 4;
+	}
+}
+
 static void
 encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 {
@@ -313,33 +313,3 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 	}
 	*bp = '\0';
 }
-#if 0
-void
-main()
-{
-	char    blubber[73];
-	char    salt[100];
-	char   *p;
-	salt[0] = '$';
-	salt[1] = BCRYPT_VERSION;
-	salt[2] = '$';
-
-	snprintf(salt + 3, 4, "%2.2u$", 5);
-
-	printf("24 bytes of salt: ");
-	fgets(salt + 6, sizeof(salt) - 6, stdin);
-	salt[99] = 0;
-	printf("72 bytes of password: ");
-	fpurge(stdin);
-	fgets(blubber, sizeof(blubber), stdin);
-	blubber[72] = 0;
-
-	p = crypt(blubber, salt);
-	printf("Passwd entry: %s\n\n", p);
-
-	p = bcrypt_gensalt(5);
-	printf("Generated salt: %s\n", p);
-	p = crypt(blubber, p);
-	printf("Passwd entry: %s\n", p);
-}
-#endif
