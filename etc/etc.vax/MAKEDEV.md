@@ -1,6 +1,6 @@
 define(MACHINE,vax)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.51 2014/01/05 01:16:52 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.52 2014/03/19 15:28:16 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -20,7 +20,7 @@ dnl
 dnl
 dnl *** vax specific definitions
 dnl
-__devitem(hd, hd*, {-HDC9224 disks-})dnl
+__devitem(hd, hd*, {-HDC9224 disks-}, nothing)dnl
 __devitem(dz, dz*, UNIBUS DZ11 and DZ32)dnl
 _mkdev(dz, dz*,
 {-case $U in
