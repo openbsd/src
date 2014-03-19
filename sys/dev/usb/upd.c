@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.1 2014/03/17 18:40:46 andre Exp $ */
+/*	$OpenBSD: upd.c,v 1.2 2014/03/19 16:08:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -145,7 +145,7 @@ upd_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 
 	if (upd_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
-                return (UMATCH_NONE);
+		return (UMATCH_NONE);
 
 	DPRINTF(("upd: vendor=0x%x, product=0x%x\n", uha->uaa->vendor,
 	    uha->uaa->product));
