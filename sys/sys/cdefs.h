@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.37 2014/03/15 21:59:56 djm Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.38 2014/03/19 05:11:06 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -85,19 +85,6 @@
 #define	__signed
 #define	__volatile
 #endif	/* !__GNUC__ */
-
-/*
- * In non-ANSI C environments, new programs will want ANSI-only C keywords
- * deleted from the program and old programs will want them left alone.
- * Programs using the ANSI C keywords const, inline etc. as normal
- * identifiers should define -DNO_ANSI_KEYWORDS.
- */
-#ifndef	NO_ANSI_KEYWORDS
-#define	const		__const		/* convert ANSI C keywords */
-#define	inline		__inline
-#define	signed		__signed
-#define	volatile	__volatile
-#endif /* !NO_ANSI_KEYWORDS */
 #endif	/* !(__STDC__ || __cplusplus) */
 
 /*
