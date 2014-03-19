@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.137 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.138 2014/03/19 00:01:56 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -81,9 +81,8 @@
 int exec_sigcode_map(struct proc *, struct emul *);
 
 /*
- * stackgap_random specifies if the stackgap should have a random size added
- * to it. Must be a n^2. If non-zero, the stack gap will be calculated as:
- * (arc4random() * ALIGNBYTES) & (stackgap_random - 1) + STACKGAPLEN.
+ * If non-zero, stackgap_random specifies the upper limit of the random gap size
+ * added to the fixed stack gap. Must be n^2.
  */
 int stackgap_random = STACKGAP_RANDOM;
 
@@ -391,19 +390,19 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		}
 	}
 
-	dp = (char *)ALIGN(dp);
+	dp = (char *)(((long)dp + _STACKALIGNBYTES) & ~_STACKALIGNBYTES);
 
 	sgap = STACKGAPLEN;
-	if (stackgap_random != 0)
-		sgap += (arc4random() * ALIGNBYTES) & (stackgap_random - 1);
-#ifdef MACHINE_STACK_GROWS_UP
-	sgap = ALIGN(sgap);
-#endif
+	if (stackgap_random != 0) {
+		sgap += arc4random() & (stackgap_random - 1);
+		sgap = (sgap + _STACKALIGNBYTES) & ~_STACKALIGNBYTES;
+	}
+
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
 	    sizeof(long) + dp + sgap + sizeof(struct ps_strings)) - argp;
 
-	len = ALIGN(len);	/* make the stack "safely" aligned */
+	len = (len + _STACKALIGNBYTES) &~ _STACKALIGNBYTES;
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
 		error = ENOMEM;
