@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.4 2014/03/20 12:50:49 andre Exp $ */
+/*	$OpenBSD: upd.c,v 1.5 2014/03/20 13:07:01 andre Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
