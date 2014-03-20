@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.60 2014/03/20 13:18:21 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.61 2014/03/20 13:43:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -223,16 +223,16 @@ void
 PRT_make(struct prt *partn, off_t offset, off_t reloff, void *prt)
 {
 	unsigned char *p = prt;
-	int ecsave, scsave;
-	int modified = 0;
 	off_t off;
+	u_int32_t ecsave, scsave;
+
+	/* Save (and restore below) cylinder info we may fiddle with. */
+	scsave = partn->scyl;
+	ecsave = partn->ecyl;
 
 	if ((partn->scyl > 1023) || (partn->ecyl > 1023)) {
-		scsave = partn->scyl;
-		ecsave = partn->ecyl;
 		partn->scyl = (partn->scyl > 1023)? 1023: partn->scyl;
 		partn->ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl;
-		modified = 1;
 	}
 	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
 		off = reloff;
@@ -266,10 +266,9 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff, void *prt)
 
 	putlong(p, partn->bs - off);
 	putlong(p+4, partn->ns);
-	if (modified) {
-		partn->scyl = scsave;
-		partn->ecyl = ecsave;
-	}
+
+	partn->scyl = scsave;
+	partn->ecyl = ecsave;
 }
 
 void
