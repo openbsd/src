@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.72 2014/03/19 21:50:59 schwarze Exp $ */
+/*	$Id: roff.c,v 1.73 2014/03/20 02:57:13 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -260,34 +260,36 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ NULL, roff_userdef, NULL, NULL, 0, NULL },
 };
 
+/* not currently implemented: Ds em Eq LP Me PP pp Or Rd Sf SH */
 const	char *const __mdoc_reserved[] = {
 	"Ac", "Ad", "An", "Ao", "Ap", "Aq", "Ar", "At",
 	"Bc", "Bd", "Bf", "Bk", "Bl", "Bo", "Bq",
 	"Brc", "Bro", "Brq", "Bsx", "Bt", "Bx",
 	"Cd", "Cm", "Db", "Dc", "Dd", "Dl", "Do", "Dq",
-	"Ds", "Dt", "Dv", "Dx", "D1",
-	"Ec", "Ed", "Ef", "Ek", "El", "Em", "em",
-	"En", "Eo", "Eq", "Er", "Es", "Ev", "Ex",
+	"Dt", "Dv", "Dx", "D1",
+	"Ec", "Ed", "Ef", "Ek", "El", "Em",
+	"En", "Eo", "Er", "Es", "Ev", "Ex",
 	"Fa", "Fc", "Fd", "Fl", "Fn", "Fo", "Fr", "Ft", "Fx",
-	"Hf", "Ic", "In", "It", "Lb", "Li", "Lk", "Lp", "LP",
-	"Me", "Ms", "Mt", "Nd", "Nm", "No", "Ns", "Nx",
+	"Hf", "Ic", "In", "It", "Lb", "Li", "Lk", "Lp",
+	"Ms", "Mt", "Nd", "Nm", "No", "Ns", "Nx",
 	"Oc", "Oo", "Op", "Os", "Ot", "Ox",
-	"Pa", "Pc", "Pf", "Po", "Pp", "PP", "pp", "Pq",
-	"Qc", "Ql", "Qo", "Qq", "Or", "Rd", "Re", "Rs", "Rv",
-	"Sc", "Sf", "Sh", "SH", "Sm", "So", "Sq",
+	"Pa", "Pc", "Pf", "Po", "Pp", "Pq",
+	"Qc", "Ql", "Qo", "Qq", "Re", "Rs", "Rv",
+	"Sc", "Sh", "Sm", "So", "Sq",
 	"Ss", "St", "Sx", "Sy",
 	"Ta", "Tn", "Ud", "Ux", "Va", "Vt", "Xc", "Xo", "Xr",
-	"%A", "%B", "%D", "%I", "%J", "%N", "%O",
+	"%A", "%B", "%C", "%D", "%I", "%J", "%N", "%O",
 	"%P", "%Q", "%R", "%T", "%U", "%V",
 	NULL
 };
 
+/* not currently implemented: BT DE DS ME MT PT SY TQ YS */
 const	char *const __man_reserved[] = {
-	"AT", "B", "BI", "BR", "BT", "DE", "DS", "DT",
-	"EE", "EN", "EQ", "EX", "HF", "HP", "I", "IB", "IP", "IR",
-	"LP", "ME", "MT", "OP", "P", "PD", "PP", "PT",
-	"R", "RB", "RE", "RI", "RS", "SB", "SH", "SM", "SS", "SY",
-	"TE", "TH", "TP", "TQ", "TS", "T&", "UC", "UE", "UR", "YS",
+	"AT", "B", "BI", "BR", "DT",
+	"EE", "EN", "EQ", "EX", "HP", "I", "IB", "IP", "IR",
+	"LP", "OP", "P", "PD", "PP",
+	"R", "RB", "RE", "RI", "RS", "SB", "SH", "SM", "SS",
+	"TE", "TH", "TP", "TS", "T&", "UC", "UE", "UR",
 	NULL
 };
 
