@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.87 2014/01/20 05:07:48 schwarze Exp $
+.\"	$OpenBSD: find.1,v 1.88 2014/03/20 08:49:32 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: March 20 2014 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -571,21 +571,21 @@ and owned by
 .Pp
 Print out a list of all core files on local file systems:
 .Pp
-.Dl "$ find / \e! -fstype local -prune -or -name '*.core'"
+.Dl "$ find / \e! -fstype local -prune -o -name '*.core'"
 .Pp
 Find all files in
 .Pa /usr/src
 ending in a dot and single digit, but skip directory
 .Pa /usr/src/gnu :
 .Pp
-.Dl "$ find /usr/src -path /usr/src/gnu -prune -or -name \e*.[0-9]"
+.Dl "$ find /usr/src -path /usr/src/gnu -prune -o -name \e*.[0-9]"
 .Pp
 Find and remove all *.jpg and *.gif files under the current working
 directory:
 .Pp
-.Dl "$ find . \e( -name \e*.jpg -or -name \e*.gif \e) -exec rm {} \e;"
+.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -exec rm {} \e;"
 or
-.Dl "$ find . \e( -name \e*.jpg -or -name \e*.gif \e) -print0 | xargs -0r rm"
+.Dl "$ find . \e( -name \e*.jpg -o -name \e*.gif \e) -print0 | xargs -0r rm"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
@@ -606,8 +606,8 @@ utility is compliant with the
 specification.
 .Pp
 The options
-.Op Fl dfhXx
-and primaries
+.Op Fl dfhXx ,
+primaries
 .Ic -amin ,
 .Ic -anewer ,
 .Ic -cmin ,
@@ -624,11 +624,12 @@ and primaries
 .Ic -mindepth ,
 .Ic -mmin ,
 and
-.Ic -print0
+.Ic -print0 ,
+and operators
+.Fl or
+and
+.Fl and ,
 are extensions to that specification.
-The
-.Ic -iname
-primary was inspired by GNU find.
 .Pp
 Historically, the
 .Fl d ,
@@ -652,15 +653,6 @@ implies that
 .Cm -depth
 would never be evaluated.
 This is not the case.
-.Pp
-The operator
-.Cm -or
-was implemented as
-.Cm -o ,
-and the operator
-.Cm -and
-was implemented as
-.Cm -a .
 .Pp
 Historic implementations of the
 .Ic -exec
