@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.124 2014/03/18 18:03:44 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.125 2014/03/20 09:00:09 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -41,7 +41,6 @@ DBDIR="${DBDIR:=/var/db/sysmerge}"
 
 # system-wide variables (overridable)
 PAGER="${PAGER:=/usr/bin/more}"
-SIGHASH=SHA256
 
 # clean leftovers created by make in src
 clean_src() {
@@ -80,7 +79,6 @@ error_rm_wrkdir() {
 	(($#)) && echo "**** ERROR: $@"
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
-	rm -f ${WRKDIR}/*${SIGHASH}{,.sig}
 	rm -f ${WRKDIR}/*.tgz
 	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
@@ -93,12 +91,7 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir "need root privileges"
 fi
 
-# takes 2 arguments: output file and URL
-fetch() {
-	/usr/bin/ftp -V -m -k "${FTP_KEEPALIVE-0}" -o "$1" "$2" >/dev/null
-}
-
-# extract and verify (x)etcXX.tgz and create cksum file;
+# extract (x)etcXX.tgz and create cksum file;
 # stores sum filename in ETCSUM or XETCSUM (see eval);
 # takes file and setname ('etc' or 'xetc') as arguments
 extract_set() {
@@ -113,51 +106,33 @@ extract_set() {
 	rm "${_tgz}"
 }
 
-# fetch and check if file is a valid (x)etcXX.tgz;
-# fetch and signature file;
+# fetch and check if tgz is valid;
 # stores local path to tgz in TGZ or XTGZ;
-# takes url or filename and setname ('etc' or 'xetc') as arguments
+# takes url or filename and setname ('etc' or 'xetc') as arguments;
+# verify SHA256.sig, abort on failure
 get_set() {
-	local _tgz=${WRKDIR}/${1##*/} _url=$1 _set=$2
-	[ -n "${SM_PATH}" ] && \
-		local _sigfile=${WRKDIR}/${SIGHASH} || \
-		local _sigfile=${WRKDIR}/${_set}-${SIGHASH} 
+	local _url=$1 _set=$2
+	local _tgz=${WRKDIR}/${_url##*/}
+	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
-		echo "===> Fetching ${_url}"
-		fetch "${_tgz}" "${_url}" || \
+		echo "===> Fetching from ${_url%/*}"
+		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${_tgz}" "${_url}" || \
 			error_rm_wrkdir "could not retrieve ${_url##*/}"
 	else
 			error_rm_wrkdir "${_url}: no such file"
 	fi
-	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	if [ -z "${NOSIGCHECK}" ]; then
-		if [ -z "${SIGFETCHED}" ]; then
-			echo "===> Fetching ${_url%/*}/${SIGHASH}.sig"
-			fetch "${_sigfile}.sig" "${_url%/*}/${SIGHASH}.sig" || \
-				error_rm_wrkdir "could not retrieve ${SIGHASH}.sig"
-		fi
-		check_sig "${_sigfile}" "${_tgz}"
+		echo "===> Verifying against ${_key}"
+		cd ${WRKDIR} && 
+			/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o - "${_url%/*}/SHA256.sig" | \
+				/usr/bin/signify -qC -p ${_key} -x - ${_url##*/} || \
+				error_rm_wrkdir "SHA256.sig: signature/checksum failed"
 	else
 		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
 			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	fi
-}
-
-# verify ${SIGHASH}.sig and write ${WRKDIR}/(x)etc-${SIGHASH}, abort on failure;
-# takes the signature file and set as arguments
-check_sig() {
-	local _sigfile=${1##*/} _tgz=${2##*/}
-	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
-	echo "===> Verifying ${_tgz} using ${_sigfile}.sig against ${_key}"
-	(cd ${WRKDIR} && \
-		signify -V -e -p ${_key} -x "${_sigfile}.sig" -m ${_sigfile} >/dev/null) || \
-			error_rm_wrkdir "${_sigfile}.sig: signature check failed"
-	(cd ${WRKDIR} && \
-		sha256 -C "${_sigfile}" "${_tgz}" >/dev/null) || \
-			error_rm_wrkdir "${_tgz}: bad ${SIGHASH} checksum"
-	[ -n "${SM_PATH}" -a -d ${DESTDIR}/etc/X11 -a -z "${SIGFETCHED}" ] && SIGFETCHED=1 && return
-	rm ${WRKDIR}/${_sigfile}{,.sig}
+	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -726,14 +701,12 @@ while getopts bdSs:x: arg; do
 				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
 			continue
 		fi
-		unset SM_PATH
 		get_set "${OPTARG}" etc
 		;;
 	S)	
 		NOSIGCHECK=1
 		;;
 	x)
-		unset SM_PATH
 		get_set "${OPTARG}" xetc
 		;;
 	*)
