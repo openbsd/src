@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.753 2014/03/10 00:14:34 rpe Exp $
+#	$OpenBSD: install.sub,v 1.754 2014/03/20 20:01:28 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1183,9 +1183,7 @@ install_files() {
 	done
 
 	if [[ -z $_sets ]]; then
-		# Show $_src, but delete any ftp password.
-		echo -n "Looked at "
-		echo $_src | sed 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/'
+		echo -n "Looked at $_src "
 		echo "and found no $OBSD sets.  The set names looked for were:"
 
 		let COLUMNS=_col-8
@@ -1322,69 +1320,8 @@ install_files() {
 	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
 }
 
-# Encode $1 as specified for usercodes and passwords in RFC 1738
-# section 3.1 and section 5.
-#
-# Escape everything between 0x20 and 0x7e to avoid both illegal url
-# characters and characters causing problems during script processing.
-#
-# *NOTE*
-#	1) quotes around $1 are required to preserve trailing or
-#	   embedded blanks in usercodes and passwords.
-#	2) substitute '%' FIRST so it doesn't eliminate '%' chars we insert.
-encode_for_url() {
-	echo "$1" | sed "
-s/%/%25/g
-s/ /%20/g
-s/!/%21/g
-s/\"/%22/g
-s/#/%23/g
-s/\\\$/%24/g
-s/&/%26/g
-s/'/%27/g
-s/(/%28/g
-s/)/%29/g
-s/\*/%2a/g
-s/+/%2b/g
-s/,/%2c/g
-s/-/%2d/g
-s/\./%2e/g
-s/\//%2f/g
-s/:/%3a/g
-s/;/%3b/g
-s/</%3c/g
-s/=/%3d/g
-s/>/%3e/g
-s/?/%3f/g
-s/@/%40/g
-s/\[/%5b/g
-s/\\\\/%5c/g
-s/]/%5d/g
-s/\^/%5e/g
-s/_/%5f/g
-s/\`/%60/g
-s/{/%7b/g
-s/|/%7c/g
-s/}/%7d/g
-s/~/%7e/g
-"
-}
-
-# Check for the presence of an error message in the output of the ftp commands
-# used to get the list of files in a directory.
-#
-# $1 = error message to look for
-# $2 = ftp command output
-ftp_error() {
-	if [[ -n $(echo "$2" | grep "$1") ]]; then
-		echo $1
-		return 0
-	fi
-	return 1
-}
-
-startftplist() {
-	# If no networks are configured, we do not need the ftplist file
+startcgiinfo() {
+	# If no networks are configured, we do not need the httplist file
 	((nifs < 1)) && return
 
 	# Make sure the ftp subshell gets its own process group
@@ -1392,154 +1329,124 @@ startftplist() {
 	(
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the foreseeable future.
-		ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$FTPSETDIR" \
-			2>/tmp/ftplisterr >$SERVERLISTALL
+		ftp -Vao - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$HTTP_SETDIR" \
+			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp
-		echo -n $SECONDS >$SERVERLISTSEC
+		echo -n $SECONDS >$HTTP_SEC
 		feed_random
-	) & ftppid=$!
+	) & CGIPID=$!
 	set +m
 
 	# If the ftp process takes more than 12 seconds, kill it
 	# XXX We are relying on the pid space not randomly biting us --
 	# XXX ftp could terminate early, and the pid could be reused
-	(sleep 12; kill -INT -$ftppid >/dev/null 2>&1) &
+	(sleep 12; kill -INT -$CGIPID >/dev/null 2>&1) &
 }
 
-# Wait for the ftp process to finish, or be killed after the timeout
-waitftplist() {
-	wait "$ftppid" 2>/dev/null
+# Wait for the http process to finish, or be killed after the timeout
+waitcgiinfo() {
+	wait "$CGIPID" 2>/dev/null
+	[[ -s $CGI_INFO ]] || return
+
+	sed -n "s,^http://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
+		$CGI_INFO >$HTTP_LIST 2>/dev/null
+	set -- $(sed q $HTTP_LIST)
+	: ${HTTP_SERVER:=${1%%/*}}
+
+	CGI_METHOD=$(sed -n '/^method=/s///p' $CGI_INFO 2>/dev/null)
+	CGI_TZ=$(sed -n '/^TZ=/s///p' $CGI_INFO 2>/dev/null)
+	CGI_TIME=$(sed -n '/^TIME=/s///p' $CGI_INFO 2>/dev/null)
 }
 
 # If possible, print the timestamp received from the ftplist.cgi output,
 # adjusted with the time elapsed since it was received
-ftp_time() {
-	local _ftplist_sec=$(cat $SERVERLISTSEC 2>/dev/null)
-	local _time=$(sed '/^TIME=\([0-9]*\)$/!d;s//\1/;q' $SERVERLISTALL 2>/dev/null)
-	[[ -n $_ftplist_sec && -n $_time ]] &&
-		echo $((_time + SECONDS - _ftplist_sec))
+http_time() {
+	local _sec=$(cat $HTTP_SEC 2>/dev/null)
+
+	[[ -n $_sec && -n $CGI_TIME ]] &&
+		echo $((CGI_TIME + SECONDS - _sec))
 }
 
-# Get several parameters from the user, and xfer
-# files from the server.
-# $1 = url type (ftp or http)
-# Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login must be global.
-install_url() {
-	local _url_type=$1 _file_list _url_base _prompt _passwd _mirror
-	eval local _server_ip=\$_${_url_type}_server_ip \
-		_server_dir=\$_${_url_type}_server_dir
+# Get several parameters from the user, and xfer files from the http server.
+install_http() {
+	local _file_list _prompt _mirror _url_base
 
-	waitftplist
-	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
-		"${ftp_proxy:-none}"
-	unset ftp_proxy http_proxy
-	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
+	waitcgiinfo
+	ask "HTTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
+		"${HTTP_PROXY:-none}"
+	unset HTTP_PROXY
+	[[ $resp == none ]] || export HTTP_PROXY=$resp
 
-	if [[ -s $SERVERLISTALL ]]; then
+	if [[ -s $HTTP_LIST ]]; then
 		_prompt="Server? (hostname, list#, 'done' or '?')"
-		sed -n "s,^${_url_type}://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
-			$SERVERLISTALL >$SERVERLIST
-		set -- $(sed q $SERVERLIST)
-		_server_ip=${1%%/*}
 	else
-		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
+		echo "(Unable to get list from ftp.openbsd.org, but that is OK)"
 		_prompt="Server? (hostname or 'done')"
 	fi
 
 	# Get server IP address or hostname
 	while :; do
-		ask_until "$_prompt" "$_server_ip"
+		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
 		done)	return;;
-		"?")	[[ -s $SERVERLIST ]] || continue
-			less -XEN < $SERVERLIST
+		"?")	[[ -s $HTTP_LIST ]] || continue
+			less -XEN < $HTTP_LIST
 			;;
 		+([0-9]))
 			# A numeric hostname is ignored. A number is only used
-			# as a line number in $SERVERLIST.
-			[[ -s $SERVERLIST ]] || continue
-			set -- $(sed -n "${resp}p" $SERVERLIST)
+			# as a line number in $HTTP_LIST.
+			[[ -s $HTTP_LIST ]] || continue
+			set -- $(sed -n "${resp}p" $HTTP_LIST)
 			(($# < 1)) && { echo "There is no line $resp."; continue; }
-			_server_ip=${1%%/*}
+			HTTP_SERVER=${1%%/*}
 			# Repeat loop to get user to confirm server address.
 			;;
 		+([A-Za-z0-9\:.\[\]_-]))
-			_server_ip=$resp
+			HTTP_SERVER=$resp
 			break
 			;;
 		*)	echo "'$resp' is not a valid hostname."
 			;;
 		esac
 	done
-	eval _${_url_type}_server_ip=$_server_ip
 
 	# Get directory info from *last* line starting with the server
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
-	set -- $(sed "/^$_server_ip/x;\$!d;x" $SERVERLIST 2>/dev/null)
+	set -- $(sed "/^$HTTP_SERVER/x;\$!d;x" $HTTP_LIST 2>/dev/null)
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
 	if (($# > 1)); then
 		# It's a mirror, since it has location info.
-		resp=$resp/$FTPSETDIR
+		resp=$resp/$HTTP_SETDIR
 		_mirror=yes
 	fi
 
-	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
-	_server_dir=$resp
-	eval _${_url_type}_server_dir=$_server_dir
-
-	if [[ $_url_type == ftp ]]; then
-		# Get login name, preserving leading and trailing blanks
-		IFS= ask_until "Login?" "${_ftp_server_login:=anonymous}"
-		_ftp_server_login=$resp
-
-		# Get password unless login in 'anonymous' or 'ftp'
-		if [[ $_ftp_server_login == @(anonymous|ftp) ]]; then
-			_passwd=root@`hostname`
-		else
-			resp=
-			while [[ -z $resp ]]; do
-				askpass "Password? (will not echo)"
-			done
-			_passwd=$resp
-		fi
-	fi
-
-	# Build up the base url since it is so nasty...
-	_url_base=$_url_type://
-	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
-		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
-	fi
-	_url_base=$_url_base$_server_ip/$_server_dir
+	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
+	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
+	HTTP_DIR=$resp
+	_url_base="http://$HTTP_SERVER/$HTTP_DIR"
 
 	# Get list of files from the server.
-	if [[ $_url_type == ftp && -z $ftp_proxy ]]; then
-		_file_list=$(ftp -V "$_url_base/")
-		ftp_error "Login failed." "$_file_list" && return
-		ftp_error "No such file or directory." "$_file_list" && return
-	else
-		# Assumes index file is "index.txt" for http (or proxy)
-		# We can't use index.html since the format is server-dependent
-		_file_list=$(ftp -Vo - "$_url_base/index.txt" |
-			sed 's/^.* //' | sed 's///')
-	fi
+	# Assumes index file is "index.txt" for http (or proxy)
+	# We can't use index.html since the format is server-dependent
+	_file_list=$(ftp -Vo - "$_url_base/index.txt" |
+		sed 's/^.* //' | sed 's///')
 
 	install_files "$_url_base" "$_file_list"
 
-	# Remember where we installed from
-	installedfrom=$_url_type://$_server_ip/$_server_dir
+	# Remember where we installed from, to tell the cgi server.
+	INSTALL=$_url_base
 
-	# Bake a package path if we installed from a mirror
+	# Bake a package path only if we installed from a mirror.
+	PACKAGE_PATH=
 	if [[ -n $_mirror ]]; then
-		PACKAGE_PATH=$(print -r -- "$installedfrom" |
+		PACKAGE_PATH=$(print -r -- "$_url_base" |
 			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
 				s!!/\1/packages/$(arch -s)/!;q")
-	else
-		PACKAGE_PATH=
 	fi
 }
 
@@ -1661,13 +1568,13 @@ set_timezone() {
 		TZ=${TZ#*${_zoneroot#/mnt}/}
 	fi
 
-	waitftplist
-	if [[ -s $SERVERLISTALL ]]; then
-		_tz=$(sed -n '/^TZ=/s/TZ=//p' <$SERVERLISTALL)
+	waitcgiinfo
+	if [[ -n $CGI_TZ ]]; then
+		_tz=$CGI_TZ
 		[[ -n $_tz ]] && isin "$_tz" `cat $_zonefile` && TZ=$_tz
 	fi
 
-	# If neither the base or SERVERLIST gave a hint, and this is the
+	# If neither the base or HTTP_LIST gave a hint, and this is the
 	# early question, give up, and ask after the sets are installed
 	[[ $_zonefile = /var/tzlist && -z $TZ ]] && return
 
@@ -1719,12 +1626,11 @@ sane_install() {
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
-	local _d _locs="disk ftp http"
+	local _d _locs="disk http"
 
 	echo
 
-	[[ -s $SERVERLISTALL ]] &&
-		_d=$(sed -n '/^method=/s/method=//p' $SERVERLISTALL)
+	_d=$CGI_METHOD
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
 	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs"; : ${_d:=cd}; }
@@ -1733,7 +1639,7 @@ install_sets() {
 	: ${_d:=http}
 
 	if ! isin "$_d" $_locs; then
-		for a in http ftp cd nfs tape disk; do
+		for a in http cd nfs tape disk; do
 			isin $a $_locs && _d=$a && break
 		done
 	fi
@@ -1741,18 +1647,18 @@ install_sets() {
 	echo "Let's $MODE the sets!"
 	while :; do
 		umount -f /mnt2 >/dev/null 2>&1
-		[[ -n $method ]] && _d=$method
+		[[ -n $METHOD ]] && _d=$METHOD
 		sane_install quiet && _d=done
 
 		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return;;
-		c*|C*)	isin cd $_locs && install_cdrom && method=cd;;
-		d*|D*)	install_disk && method=disk;;
-		f*|F*)	isin ftp $_locs && install_url ftp && method=ftp;;
-		h*|H*)	isin http $_locs && install_url http && method=http;;
-		n*|N*)	isin nfs $_locs && install_nfs && method=nfs;;
-		t*|T*)	isin tape $_locs && install_tape && method=tape;;
+		c*|C*)	isin cd $_locs && install_cdrom && METHOD=cd;;
+		d*|D*)	install_disk && METHOD=disk;;
+		h*|H*)	isin http $_locs && install_http && METHOD=http;;
+		n*|N*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
+		t*|T*)	isin tape $_locs && install_tape && METHOD=tape;;
+		*)	$auto && echo "'$resp' is not a valid choice." && exit 1;;
 		esac
 
 		# Install sets only once, in non-interactive installations.
@@ -2062,7 +1968,7 @@ upgrade_to64time_t() {
 # Feed the random pool some entropy before we read from it
 feed_random() {
 	{
-	    (dmesg; cat $SERVERLISTALL /*.conf; sysctl; route -n show; df;
+	    (dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
 	    ifconfig -A; hostname) >/dev/random 2>&1
 	    dd if=/mnt/var/db/host.random of=/dev/random bs=65536 count=1
 	} >/dev/null 2>&1
@@ -2170,10 +2076,15 @@ SM_ARGS=
 SM_ARGSX=
 
 SETDIR="$VNAME/$ARCH"
-FTPDIR="pub/OpenBSD/$VNAME"
-SERVERLISTALL=/tmp/serverlistall
-SERVERLISTSEC=/tmp/serverlistsec
-SERVERLIST=/tmp/serverlist
+CGI_INFO=/tmp/cgiinfo
+CGI_TZ=
+CGI_TIME=
+CGI_METHOD=
+INSTALL=
+METHOD=
+HTTP_DIR=
+HTTP_SEC=/tmp/httpsec
+HTTP_LIST=/tmp/httplist
 WLANLIST=/tmp/wlanlist
 FSTABFLAG=-f
 
@@ -2187,9 +2098,9 @@ dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
-FTPSETDIR=$SETDIR
+HTTP_SETDIR=$SETDIR
 set -- $(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
-[[ $1 == -!(stable) ]] && FTPSETDIR=snapshots/$ARCH
+[[ $1 == -!(stable) ]] && HTTP_SETDIR=snapshots/$ARCH
 
 # Scan /var/run/dmesg.boot for interesting devices.
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
@@ -2340,7 +2251,7 @@ if [[ $MODE == install ]]; then
 	echo
 	donetconfig
 
-	((nifs != 0)) && startftplist
+	((nifs != 0)) && startcgiinfo
 
 	echo
 	while :; do

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.76 2014/02/21 17:11:02 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.77 2014/03/20 20:01:28 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -70,7 +70,7 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 # Configure the network.
 enable_network
 
-startftplist
+startcgiinfo
 
 # Create fstab for use during upgrade.
 munge_fstab

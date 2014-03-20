@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.245 2014/02/21 17:11:02 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.246 2014/03/20 20:01:28 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -204,27 +204,27 @@ if [[ -z $TZ ]]; then
 	rm -f /mnt/tmp/tzlist
 fi
 
-# If we got a timestamp from the ftplist server, and that time diffs by more
+# If we got a timestamp from the cgi server, and that time diffs by more
 # than 120 seconds, ask if the user wants to adjust the time
-if _time=$(ftp_time) && _now=$(date +%s) &&
+if _time=$(http_time) && _now=$(date +%s) &&
 	(( _now - _time > 120 || _time - _now > 120 )); then
 	_tz=/mnt/usr/share/zoneinfo/$TZ
-	ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(ftp_time)")'?" yes
+	ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(http_time)")'?" yes
 	if [[ $resp == y ]]; then
 		# We do not need to specify TZ below since both date
 		# invocations use the same one
-		date $(date -r "$(ftp_time)" "+%Y%m%d%H%M.%S") >/dev/null
+		date $(date -r "$(http_time)" "+%Y%m%d%H%M.%S") >/dev/null
 		# N.B. This will screw up SECONDS
 	fi
 fi
 
-# If we managed to talk to the ftplist server before, tell it what
+# If we managed to talk to the cgi server before, tell it what
 # location we used... so it can perform magic next time
-if [[ -s $SERVERLISTALL ]]; then
+if [[ -s $HTTP_LIST ]]; then
 	_i=
-	[[ -n $installedfrom ]] && _i="install=$installedfrom"
+	[[ -n $INSTALL ]] && _i="install=$INSTALL"
 	[[ -n $TZ ]] && _i="$_i&TZ=$TZ"
-	[[ -n $method ]] && _i="$_i&method=$method"
+	[[ -n $METHOD ]] && _i="$_i&method=$METHOD"
 
 	[[ -n $_i ]] && ftp -Vao - \
 		"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
