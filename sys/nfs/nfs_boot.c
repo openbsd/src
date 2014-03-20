@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.30 2013/11/11 09:15:35 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.31 2014/03/20 09:18:01 mpi Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -212,50 +212,6 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
 	inet_ntop(AF_INET, &bp_sin.sin_addr, addr, sizeof(addr));
 	printf("nfs_boot: server_addr=%s hostname=%s\n", addr, hostname);
-
-#ifdef	NFS_BOOT_GATEWAY
-	/*
-	 * XXX - This code is conditionally compiled only because
-	 * many bootparam servers (in particular, SunOS 4.1.3)
-	 * always set the gateway address to their own address.
-	 * The bootparam server is not necessarily the gateway.
-	 * We could just believe the server, and at worst you would
-	 * need to delete the incorrect default route before adding
-	 * the correct one, but for simplicity, ignore the gateway.
-	 * If your server is OK, you can turn on this option.
-	 *
-	 * If the gateway address is set, add a default route.
-	 * (The mountd RPCs may go across a gateway.)
-	 */
-	if (gw_ip.s_addr) {
-		struct sockaddr dst, gw, mask;
-		struct rt_addrinfo info;
-		/* Destination: (default) */
-		bzero((caddr_t)&dst, sizeof(dst));
-		dst.sa_len = sizeof(dst);
-		dst.sa_family = AF_INET;
-		/* Gateway: */
-		bzero((caddr_t)&gw, sizeof(gw));
-		sin = (struct sockaddr_in *)&gw;
-		sin->sin_len = sizeof(gw);
-		sin->sin_family = AF_INET;
-		sin->sin_addr.s_addr = gw_ip.s_addr;
-		/* Mask: (zero length) */
-		bzero(&mask, sizeof(mask));
-		bzero(&info, sizeof(info));
-		info.rti_info[RTAX_DST] = &dst;
-		info.rti_info[RTAX_GATEWAY] = &gw;
-		info.rti_info[RTAX_NETMASK] = &mask;
-		info.rti_flags = (RTF_UP | RTF_GATEWAY | RTF_STATIC);
-
-		inet_ntop(AF_INET, gw_ip, addr, sizeof(addr));
-		printf("nfs_boot: gateway=%s\n", addr);
-		/* add, dest, gw, mask, flags, 0 */
-		error = rtrequest1(RTM_ADD, &info, RTP_STATIC, NULL, 0);
-		if (error)
-			printf("nfs_boot: add route, error=%d\n", error);
-	}
-#endif
 
 	bcopy(&bp_sin, &nd->nd_boot, sizeof(bp_sin));
 
