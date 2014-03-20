@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.626 2014/03/16 02:43:08 jsg Exp $
+$OpenBSD: usbdevs,v 1.627 2014/03/20 15:05:04 abieber Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2301,6 +2301,7 @@ product ITEGNO WM1080A		0x1080	WM1080A
 
 /* Ituner (mini-box.com) products */
 product ITUNER USBLCD20x2	0x0002	USB-LCD-20x2
+product ITUNER USBLCD256x64	0xc002	USB-LCD-256x64
 
 /* Jablotron products */
 product JABLOTRON PC60B		0x0001	PC-60B
