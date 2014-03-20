@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.281 2014/03/19 13:49:12 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.282 2014/03/20 13:19:06 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
+#include <sys/tree.h>
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -152,12 +153,21 @@ int	if_group_egress_build(void);
 
 void	if_link_state_change_task(void *, void *);
 
+struct ifaddr_item {
+	RB_ENTRY(ifaddr_item)	 ifai_entry;
+	struct sockaddr		*ifai_addr;
+	struct ifaddr		*ifai_ifa;
+	struct ifaddr_item	*ifai_next;
+	u_int			 ifai_rdomain;
+};
+
 int	ifai_cmp(struct ifaddr_item *,  struct ifaddr_item *);
 void	ifa_item_insert(struct sockaddr *, struct ifaddr *, struct ifnet *);
 void	ifa_item_remove(struct sockaddr *, struct ifaddr *, struct ifnet *);
 #ifndef SMALL_KERNEL
 void	ifa_print_rb(void);
 #endif
+
 RB_HEAD(ifaddr_items, ifaddr_item) ifaddr_items = RB_INITIALIZER(&ifaddr_items);
 RB_PROTOTYPE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
 RB_GENERATE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);

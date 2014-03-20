@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.4 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.5 2014/03/20 13:19:06 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #define _NET_IF_VAR_H_
 
 #include <sys/queue.h>
-#include <sys/tree.h>
 #include <altq/if_altq.h>
 #ifdef _KERNEL
 #include <net/hfsc.h>
@@ -296,14 +295,6 @@ struct ifaddr {
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
-
-struct ifaddr_item {
-	RB_ENTRY(ifaddr_item)	 ifai_entry;
-	struct sockaddr		*ifai_addr;
-	struct ifaddr		*ifai_ifa;
-	struct ifaddr_item	*ifai_next;
-	u_int			 ifai_rdomain;
-};
 
 /*
  * Interface multicast address.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.44 2013/03/24 17:01:23 claudio Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.45 2014/03/20 13:19:06 mpi Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -32,6 +32,8 @@
  */
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
+
+#include <sys/tree.h>
 
 #define	IEEE80211_PSCAN_WAIT	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT	5		/* transition wait */
