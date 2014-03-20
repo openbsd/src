@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.3 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: crc.c,v 1.4 2014/03/20 22:03:56 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -130,88 +130,6 @@ CKSUM_End(CKSUM_CTX *ctx, char *outstr)
 			return (NULL);
 	} else {
 		(void)snprintf(outstr, (size_t)CKSUM_DIGEST_STRING_LENGTH,
-		    "%u %lld", ctx->crc, ctx->len);
-	}
-
-	return (outstr);
-}
-
-void
-SUM_Init(SUM_CTX *ctx)
-{
-	ctx->crc = 0;
-	ctx->len = 0;
-}
-
-void
-SUM_Update(SUM_CTX *ctx, const unsigned char *buf, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; i++) {
-		ctx->crc = ((ctx->crc >> 1) + ((ctx->crc & 1) << 15) + buf[i]);
-		ctx->crc &= 0xffff;
-	}
-	ctx->len += len;
-}
-
-void
-SUM_Final(SUM_CTX *ctx)
-{
-	ctx->len = (ctx->len + 1023) / 1024;	/* convert to 1KB blocks */
-}
-
-char *
-SUM_End(SUM_CTX *ctx, char *outstr)
-{
-	SUM_Final(ctx);
-
-	if (outstr == NULL) {
-		if (asprintf(&outstr, "%u %lld", ctx->crc, ctx->len) == -1)
-			return (NULL);
-	} else {
-		(void)snprintf(outstr, (size_t)SUM_DIGEST_STRING_LENGTH,
-		    "%u %lld", ctx->crc, ctx->len);
-	}
-
-	return (outstr);
-}
-
-void
-SYSVSUM_Init(SYSVSUM_CTX *ctx)
-{
-	ctx->crc = 0;
-	ctx->len = 0;
-}
-
-void
-SYSVSUM_Update(SYSVSUM_CTX *ctx, const unsigned char *buf, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i < len; i++)
-		ctx->crc += buf[i];
-	ctx->len += len;
-}
-
-void
-SYSVSUM_Final(SYSVSUM_CTX *ctx)
-{
-	ctx->crc = (ctx->crc & 0xffff) + (ctx->crc >> 16);
-	ctx->crc = (ctx->crc & 0xffff) + (ctx->crc >> 16);
-	ctx->len = (ctx->len + 511) / 512;	/* convert to 512 byte blocks */
-}
-
-char *
-SYSVSUM_End(SYSVSUM_CTX *ctx, char *outstr)
-{
-	SYSVSUM_Final(ctx);
-
-	if (outstr == NULL) {
-		if (asprintf(&outstr, "%u %lld", ctx->crc, ctx->len) == -1)
-			return (NULL);
-	} else {
-		(void)snprintf(outstr, (size_t)SYSVSUM_DIGEST_STRING_LENGTH,
 		    "%u %lld", ctx->crc, ctx->len);
 	}
 

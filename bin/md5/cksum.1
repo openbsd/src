@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.36 2014/03/20 20:32:42 naddy Exp $
+.\"	$OpenBSD: cksum.1,v 1.37 2014/03/20 22:03:56 tedu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,8 +36,7 @@
 .Dt CKSUM 1
 .Os
 .Sh NAME
-.Nm cksum ,
-.Nm sum
+.Nm cksum
 .Nd display file checksums and block counts
 .Sh SYNOPSIS
 .Nm cksum
@@ -46,7 +45,6 @@
 .Op Fl a Ar algorithms
 .Op Fl C Ar checklist
 .Op Fl h Ar hashfile
-.Op Fl o Cm 1 | 2
 .Op Fl s Ar string
 .Op Ar
 .Ek
@@ -63,22 +61,10 @@ The
 .Nm cksum
 utility writes to the standard output a single line for each input file.
 The format of this line varies with the algorithm being used as follows:
-.Bl -tag -width sysvsum
+.Bl -tag -width allxothers
 .It cksum
 The output line consists of three whitespace separated fields:
 a CRC checksum, the number of octets in the input,
-and name of the file or string.
-If no file name is specified, the standard input is used and no file name
-is written.
-.It sum
-The output line consists of three whitespace separated fields:
-a CRC checksum, the number of kilobytes in the input,
-and name of the file or string.
-If no file name is specified, the standard input is used and no file name
-is written.
-.It sysvsum
-The output line consists of three whitespace separated fields:
-a CRC checksum, the number of 512-byte blocks in the input,
 and name of the file or string.
 If no file name is specified, the standard input is used and no file name
 is written.
@@ -90,20 +76,12 @@ If no file name is specified, the standard input is used and only
 the cryptographic hash is output.
 .El
 .Pp
-The
-.Nm sum
-utility is identical to the
-.Nm cksum
-utility, except that it defaults to using historic algorithm 1, as
-described below.
-It is provided for compatibility only.
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar algorithms
 Use the specified algorithm(s) instead of the default (cksum).
 Supported algorithms include cksum, md5, rmd160, sha1,
-sha224, sha256, sha384, sha512, sum, and sysvsum.
+sha224, sha256, sha384, and sha512.
 Multiple algorithms may be specified, separated by a comma or whitespace.
 Additionally, multiple
 .Fl a
@@ -121,7 +99,7 @@ suffix, the checksum will be output in hex format.
 If an algorithm with the same output format is repeated,
 only the first instance is used.
 Note that output format suffixes are not supported
-for the cksum, sum and sysvsum algorithms.
+for the cksum algorithm.
 .It Fl b
 Output checksums in base64 notation, not hexadecimal by
 default.
@@ -130,8 +108,7 @@ A
 or
 .Sq x
 suffix on the algorithm will override this default.
-This option is ignored for the cksum, sum and sysvsum
-algorithms, which do not use hexadecimal output.
+This option is ignored for the cksum algorithm.
 .It Fl C Ar checklist
 Compare the checksum of each
 .Ar file
@@ -161,9 +138,6 @@ option.
 Place the checksum into
 .Ar hashfile
 instead of stdout.
-.It Fl o Cm 1 | 2
-Use historic algorithms instead of the (superior) default one
-(see below).
 .It Fl p
 Echoes stdin to stdout and appends the
 checksum to stdout.
@@ -187,80 +161,13 @@ by 10 for each additional flag.
 Runs a built-in test script.
 .El
 .Pp
-Algorithm 1 (aka sum)
-is the algorithm used by historic
-.Bx
-systems as the
-.Nm sum
-algorithm and by historic
-.At V
-systems as the
-.Nm sum
-algorithm when using the
-.Fl r
-option.
-This is a 16-bit checksum, with a right rotation before each addition;
-overflow is discarded.
-.Pp
-Algorithm 2 (aka sysvsum) is the algorithm used by historic
-.At V
-systems as the
-default
-.Nm sum
-algorithm.
-This is a 32-bit checksum, and is defined as follows:
-.Bd -unfilled -offset indent
-s = sum of all bytes;
-r = s % 2^16 + (s % 2^32) / 2^16;
-cksum = (r % 2^16) + r / 2^16;
-.Ed
-.Pp
-Both algorithm 1 and 2 write to the standard output the same fields as
-the default algorithm, except that the size of the file in bytes is
-replaced with the size of the file in blocks.
-For historic reasons, the block size is 1024 for algorithm 1 and 512
-for algorithm 2.
-Partial blocks are rounded up.
-.Pp
 The default CRC used is based on the polynomial used for CRC error checking
 in the networking standard
 ISO/IEC 8802-3:1996.
-The CRC checksum encoding is defined by the generating polynomial:
-.Bd -unfilled -offset indent
-G(x) = x^32 + x^26 + x^23 + x^22 + x^16 + x^12 +
-     x^11 + x^10 + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1
-.Ed
-.Pp
-Mathematically, the CRC value corresponding to a given file is defined by
-the following procedure:
-.Bd -filled -offset indent
-The
-.Ar n
-bits to be evaluated are considered to be the coefficients of a mod 2
-polynomial M(x) of degree
-.Ar n Ns \-1 .
-These
-.Ar n
-bits are the bits from the file, with the most significant bit being the most
-significant bit of the first octet of the file and the last bit being the least
-significant bit of the last octet, padded with zero bits (if necessary) to
-achieve an integral number of octets, followed by one or more octets
-representing the length of the file as a binary value, least significant octet
-first.
-The smallest number of octets capable of representing this integer are used.
-.Pp
-M(x) is multiplied by x^32 (i.e., shifted left 32 bits) and divided by
-G(x) using mod 2 division, producing a remainder R(x) of degree \*(Lt= 31.
-.Pp
-The coefficients of R(x) are considered to be a 32-bit sequence.
-.Pp
-The bit sequence is complemented and the result is the CRC.
-.Ed
-.Pp
 The other available algorithms are described in their respective
 man pages in section 3 of the manual.
 .Sh EXIT STATUS
-.Ex -std cksum sum
+.Ex -std cksum
 .Sh SEE ALSO
 .Xr md5 1
 .Pp
@@ -281,17 +188,12 @@ specification.
 .Pp
 All the flags are extensions to that specification.
 .Sh HISTORY
-A
-.Nm sum
-command appeared in
-.At v2 .
 The
 .Nm cksum
 utility appeared in
 .Bx 4.4 .
 .Sh CAVEATS
-Do not use the cksum, md5, sum, or sysvsum
-algorithms to verify file integrity.
+Do not use the cksum or md5 algorithms to verify file integrity.
 An attacker can trivially produce modified payload that
 has the same checksum as the original version.
 Use a cryptographic checksum instead.

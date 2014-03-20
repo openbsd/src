@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.73 2014/03/20 20:32:42 naddy Exp $	*/
+/*	$OpenBSD: md5.c,v 1.74 2014/03/20 22:03:56 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -53,8 +53,6 @@
 
 union ANY_CTX {
 #if !defined(SHA2_ONLY)
-	SUM_CTX sum;
-	SYSVSUM_CTX sysvsum;
 	CKSUM_CTX cksum;
 	MD5_CTX md5;
 	RMD160_CTX rmd160;
@@ -86,28 +84,6 @@ struct hash_function {
 		(void (*)(void *, const unsigned char *, unsigned int))CKSUM_Update,
 		(void (*)(unsigned char *, void *))CKSUM_Final,
 		(char *(*)(void *, char *))CKSUM_End
-	},
-	{
-		"SUM",
-		SUM_DIGEST_LENGTH,
-		STYLE_CKSUM,
-		-1,
-		NULL,
-		(void (*)(void *))SUM_Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SUM_Update,
-		(void (*)(unsigned char *, void *))SUM_Final,
-		(char *(*)(void *, char *))SUM_End
-	},
-	{
-		"SYSVSUM",
-		SYSVSUM_DIGEST_LENGTH,
-		STYLE_CKSUM,
-		-1,
-		NULL,
-		(void (*)(void *))SYSVSUM_Init,
-		(void (*)(void *, const unsigned char *, unsigned int))SYSVSUM_Update,
-		(void (*)(unsigned char *, void *))SYSVSUM_Final,
-		(char *(*)(void *, char *))SYSVSUM_End
 	},
 	{
 		"MD5",
@@ -230,8 +206,8 @@ main(int argc, char **argv)
 	error = bflag = cflag = pflag = qflag = rflag = tflag = xflag = 0;
 
 #if !defined(SHA2_ONLY)
-	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
-		optstr = "a:bC:ch:o:pqrs:tx";
+	if (strcmp(__progname, "cksum") == 0)
+		optstr = "a:bC:ch:pqrs:tx";
 	else
 #endif /* !defined(SHA2_ONLY) */
 		optstr = "bC:ch:pqrs:tx";
@@ -305,23 +281,6 @@ main(int argc, char **argv)
 			break;
 		case 'c':
 			cflag = 1;
-			break;
-		case 'o':
-			if (strcmp(optarg, "1") == 0)
-				hf = &functions[1];
-			else if (strcmp(optarg, "2") == 0)
-				hf = &functions[2];
-			else {
-				warnx("illegal argument to -o option");
-				usage();
-			}
-			/* Check for dupes. */
-			TAILQ_FOREACH(hftmp, &hl, tailq) {
-				if (strcmp(hf->name, hftmp->name) == 0)
-					break;
-			}
-			if (hftmp == TAILQ_END(&hl))
-				hash_insert(&hl, hf, 0);
 			break;
 #endif /* !defined(SHA2_ONLY) */
 		case 'p':
@@ -836,9 +795,9 @@ void
 usage(void)
 {
 #if !defined(SHA2_ONLY)
-	if (strcmp(__progname, "cksum") == 0 || strcmp(__progname, "sum") == 0)
+	if (strcmp(__progname, "cksum") == 0)
 		fprintf(stderr, "usage: %s [-bcpqrtx] [-a algorithms] [-C checklist] "
-		    "[-h hashfile] [-o 1 | 2]\n"
+		    "[-h hashfile]\n"
 		    "	[-s string] [file ...]\n",
 		    __progname);
 	else
