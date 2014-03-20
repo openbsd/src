@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.8 2014/03/19 14:56:44 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.9 2014/03/20 15:04:35 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -52,9 +52,10 @@ main(int argc, char** argv)
 	ssize_t linelen;
 	mode_t old_umask;
 	int c, fd, loginlen, batch;
-	char hash[_PASSWORD_LEN], *file, *line, *login, pass[1024], pass2[1024];
+	char hash[_PASSWORD_LEN], *line, *login, pass[1024], pass2[1024];
 	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
 	char *tok;
+	const char *file;
 
 	file = NULL;
 	login = NULL;
@@ -85,18 +86,18 @@ main(int argc, char** argv)
 		else if (argc > 1)
 			usage();
 		if ((linelen = getline(&line, &linesize, stdin)) == -1)
-			err(1, "cannot read login:password from stdin\n");
+			err(1, "cannot read login:password from stdin");
 		line[linelen-1] = '\0';
 
 		if ((tok = strstr(line, ":")) == NULL)
-			errx(1, "cannot find ';' in input");
+			errx(1, "cannot find ':' in input");
 		*tok++ = '\0';
 
 		if ((loginlen = asprintf(&login, "%s:", line)) == -1)
 			err(1, "asprintf");
 
 		if (strlcpy(pass, tok, sizeof(pass)) >= sizeof(pass))
-			errx(1, "password too long\n");
+			errx(1, "password too long");
 	} else {
 
 		switch (argc) {
@@ -133,9 +134,9 @@ main(int argc, char** argv)
 	}
 
 	if (strlcpy(salt, bcrypt_gensalt(8), sizeof(salt)) >= sizeof(salt))
-		err(1, "salt too long");
+		errx(1, "salt too long");
 	if (strlcpy(hash, bcrypt(pass, salt), sizeof(hash)) >= sizeof(hash))
-		err(1, "hash too long");
+		errx(1, "hash too long");
 	explicit_bzero(pass, sizeof(pass));
 
 	if (file == NULL)
@@ -170,14 +171,14 @@ main(int argc, char** argv)
 			    != -1) {
 				if (strncmp(line, login, loginlen) != 0) {
 					if (fprintf(out, "%s", line) == -1)
-						err(1, "cannot write to temp "
+						errx(1, "cannot write to temp "
 						    "file");
 					nag(line);
 				}
 			}
 		}
 		if (fprintf(out, "%s%s\n", login, hash) == -1)
-			err(1, "cannot write new password hash");
+			errx(1, "cannot write new password hash");
 
 		/* file already exists, overwrite it */
 		if (in != NULL) {
@@ -190,7 +191,8 @@ main(int argc, char** argv)
 			while ((linelen = getline(&line, &linesize, out))
 			    != -1)
 				if (fprintf(in, "%s", line) == -1)
-					err(1, "cannot write to password file");
+					errx(1, "cannot write to password "
+					    "file");
 			if (fclose(in) == EOF)
 				err(1, "cannot close password file");
 		}
@@ -204,22 +206,21 @@ main(int argc, char** argv)
 			err(1, "cannot delete temp file (%s)", tmpl);
 	}
 	if (nagcount >= MAXNAG)
-		fprintf(stderr, "%d more logins not using bcryt.\n",
-		    nagcount - MAXNAG);
+		warnx("%d more logins not using bcryt.", nagcount - MAXNAG);
 	exit(0);
 }
 
 void
 nag(char* line)
 {
-	char *tok;
+	const char *tok;
 	if (strtok(line, ":") != NULL)
 		if ((tok = strtok(NULL, ":")) != NULL)
 			if (strncmp(tok, "$2a$", 4) != 0 &&
 			     strncmp(tok, "$2b$", 4) != 0) {
 				nagcount++;
 				if (nagcount <= MAXNAG)
-					fprintf(stderr, "%s doesn't use bcrypt."
-					    " Update the password.\n", line);
+					warnx("%s doesn't use bcrypt."
+					    " Update the password.", line);
 			}
 }
