@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.72 2014/03/07 04:10:55 lteo Exp $	*/
+/*	$OpenBSD: md5.c,v 1.73 2014/03/20 20:32:42 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <md4.h>
 #include <md5.h>
 #include <rmd160.h>
 #include <sha1.h>
@@ -57,7 +56,6 @@ union ANY_CTX {
 	SUM_CTX sum;
 	SYSVSUM_CTX sysvsum;
 	CKSUM_CTX cksum;
-	MD4_CTX md4;
 	MD5_CTX md5;
 	RMD160_CTX rmd160;
 	SHA1_CTX sha1;
@@ -112,16 +110,6 @@ struct hash_function {
 		(char *(*)(void *, char *))SYSVSUM_End
 	},
 	{
-		"MD4",
-		MD4_DIGEST_LENGTH,
-		STYLE_MD5,
-		0,
-		NULL,
-		(void (*)(void *))MD4Init,
-		(void (*)(void *, const unsigned char *, unsigned int))MD4Update,
-		(void (*)(unsigned char *, void *))MD4Final,
-		(char *(*)(void *, char *))MD4End
-	}, {
 		"MD5",
 		MD5_DIGEST_LENGTH,
 		STYLE_MD5,
