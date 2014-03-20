@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.29 2013/05/31 18:03:45 lum Exp $	*/
+/*	$OpenBSD: window.c,v 1.30 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -92,6 +92,7 @@ do_redraw(int f, int n, int force)
 
 		/* check if too small */
 		if (nrow < wp->w_toprow + 3) {
+			dobeep();
 			ewprintf("Display unusable");
 			return (FALSE);
 		}
@@ -211,11 +212,13 @@ splitwind(int f, int n)
 	int		 ntru, ntrd, ntrl;
 
 	if (curwp->w_ntrows < 3) {
+		dobeep();
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
 	wp = new_window(curbp);
 	if (wp == NULL) {
+		dobeep();
 		ewprintf("Unable to create a window");
 		return (FALSE);
 	}
@@ -302,6 +305,7 @@ enlargewind(int f, int n)
 	if (n < 0)
 		return (shrinkwind(f, -n));
 	if (wheadp->w_wndp == NULL) {
+		dobeep();
 		ewprintf("Only one window");
 		return (FALSE);
 	}
@@ -311,6 +315,7 @@ enlargewind(int f, int n)
 			adjwp = adjwp->w_wndp;
 	}
 	if (adjwp->w_ntrows <= n) {
+		dobeep();
 		ewprintf("Impossible change");
 		return (FALSE);
 	}
@@ -351,6 +356,7 @@ shrinkwind(int f, int n)
 	if (n < 0)
 		return (enlargewind(f, -n));
 	if (wheadp->w_wndp == NULL) {
+		dobeep();
 		ewprintf("Only one window");
 		return (FALSE);
 	}
@@ -359,6 +365,7 @@ shrinkwind(int f, int n)
 	 * to be trusted implicitly about sizes.
 	 */
 	if (!(f & FFRAND) && curwp->w_ntrows <= n) {
+		dobeep();
 		ewprintf("Impossible change");
 		return (FALSE);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.18 2008/06/14 08:46:30 kjell Exp $	*/
+/*	$OpenBSD: modes.c,v 1.19 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,6 +24,7 @@ changemode(int f, int n, char *mode)
 	struct maps_s	*m;
 
 	if ((m = name_mode(mode)) == NULL) {
+		dobeep();
 		ewprintf("Can't find mode %s", mode);
 		return (FALSE);
 	}
@@ -41,6 +42,7 @@ changemode(int f, int n, char *mode)
 				/* mode already set */
 				return (TRUE);
 		if (curbp->b_nmodes >= PBMODES - 1) {
+			dobeep();
 			ewprintf("Too many modes");
 			return (FALSE);
 		}
@@ -116,6 +118,7 @@ set_default_mode(int f, int n)
 	else if (bufp[0] == '\0')
 		return (FALSE);
 	if ((m = name_mode(modebuf)) == NULL) {
+		dobeep();
 		ewprintf("can't find mode %s", modebuf);
 		return (FALSE);
 	}
@@ -133,6 +136,7 @@ set_default_mode(int f, int n)
 				/* mode already set */
 				return (TRUE);
 		if (defb_nmodes >= PBMODES - 1) {
+			dobeep();
 			ewprintf("Too many modes");
 			return (FALSE);
 		}

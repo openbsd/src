@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.52 2013/12/23 21:47:32 florian Exp $	*/
+/*	$OpenBSD: line.c,v 1.53 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -147,6 +147,7 @@ linsert_str(const char *s, int n)
 		return (k);
 
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
@@ -244,6 +245,7 @@ linsert(int n, int c)
 		return (s);
 	
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
@@ -259,6 +261,7 @@ linsert(int n, int c)
 
 		/* now should only happen in empty buffer */
 		if (curwp->w_doto != 0) {
+			dobeep();
 			ewprintf("bug: linsert");
 			return (FALSE);
 		}
@@ -405,6 +408,7 @@ lnewline(void)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
@@ -436,6 +440,7 @@ ldelete(RSIZE n, int kflag)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		goto out;
 	}
@@ -524,6 +529,7 @@ ldelnewline(void)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
@@ -601,6 +607,7 @@ lreplace(RSIZE plen, char *st)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}

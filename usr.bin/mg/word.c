@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.15 2008/09/15 16:11:35 kjell Exp $	*/
+/*	$OpenBSD: word.c,v 1.16 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -74,6 +74,7 @@ upperword(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -116,6 +117,7 @@ lowerword(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -159,6 +161,7 @@ capword(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -239,6 +242,7 @@ delfword(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -293,6 +297,7 @@ delbword(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}

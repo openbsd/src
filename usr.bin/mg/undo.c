@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.54 2013/06/01 16:27:56 lum Exp $ */
+/* $OpenBSD: undo.c,v 1.55 2014/03/20 07:47:29 lum Exp $ */
 /*
  * This file is in the public domain
  */
@@ -41,6 +41,7 @@ find_dot(struct line *lp, int off)
 	for (p = curbp->b_headp; p != lp; p = lforw(p)) {
 		if (count != 0) {
 			if (p == curbp->b_headp) {
+				dobeep();
 				ewprintf("Error: Undo stuff called with a"
 				    "nonexistent line");
 				return (FALSE);
@@ -421,6 +422,7 @@ undo_dump(int f, int n)
 		}
 		snprintf(tmp, sizeof(tmp), " [%d]", rec->region.r_size);
 		if (strlcat(buf, tmp, sizeof(buf)) >= sizeof(buf)) {
+			dobeep();
 			ewprintf("Undo record too large. Aborted.");
 			return (FALSE);
 		}
@@ -507,6 +509,7 @@ undo(int f, int n)
 		 * its creation.
 		 */
 		if (ptr == NULL) {
+			dobeep();
 			ewprintf("No further undo information");
 			rval = FALSE;
 			nulled = TRUE;
@@ -536,6 +539,7 @@ undo(int f, int n)
 			if (ptr->type != BOUNDARY && ptr->type != MODIFIED) {
 				if (find_lo(ptr->pos, &lp,
 				    &offset, &lineno) == FALSE) {
+					dobeep();
 					ewprintf("Internal error in Undo!");
 					rval = FALSE;
 					break;

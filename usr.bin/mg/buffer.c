@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.92 2013/12/23 14:58:16 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.93 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -372,6 +372,7 @@ listbuf_goto_buffer_helper(int f, int n, int only)
 	int		 i, ret = FALSE;
 
 	if (curwp->w_dotp->l_text[listbuf_ncol/2 - 1] == '$') {
+		dobeep();
 		ewprintf("buffer name truncated");
 		return (FALSE);
 	}
@@ -462,6 +463,7 @@ anycb(int f)
 			ret = snprintf(pbuf, sizeof(pbuf), "Save file %s",
 			    bp->b_fname);
 			if (ret < 0 || ret >= sizeof(pbuf)) {
+				dobeep();
 				ewprintf("Error: filename too long!");
 				return (UERROR);
 			}
@@ -523,6 +525,7 @@ bnew(const char *bname)
 
 	bp = calloc(1, sizeof(struct buffer));
 	if (bp == NULL) {
+		dobeep();
 		ewprintf("Can't get %d bytes", sizeof(struct buffer));
 		return (NULL);
 	}
@@ -561,6 +564,7 @@ bnew(const char *bname)
 	bp->b_dotline = bp->b_markline = 1;
 	bp->b_lines = 1;
 	if ((bp->b_bname = strdup(bname)) == NULL) {
+		dobeep();
 		ewprintf("Can't get %d bytes", strlen(bname) + 1);
 		return (NULL);
 	}
@@ -745,6 +749,7 @@ bufferinsert(int f, int n)
 		return (FALSE);
 
 	if (bp == curbp) {
+		dobeep();
 		ewprintf("Cannot insert buffer into self");
 		return (FALSE);
 	}
@@ -886,6 +891,7 @@ revertbuffer(int f, int n)
 	char fbuf[NFILEN + 32];
 
 	if (curbp->b_fname[0] == 0) {
+		dobeep();
 		ewprintf("Cannot revert buffer not associated with any files.");
 		return (FALSE);
 	}
@@ -906,6 +912,7 @@ dorevert(void)
 	struct undo_rec *rec;
 
 	if (access(curbp->b_fname, F_OK|R_OK) != 0) {
+		dobeep();
 		if (errno == ENOENT)
 			ewprintf("File %s no longer exists!",
 			    curbp->b_fname);
@@ -954,11 +961,13 @@ diffbuffer(int f, int n)
 		return (ABORT);
 
 	if (access(DIFFTOOL, X_OK) != 0) {
+		dobeep();
 		ewprintf("%s not found or not executable.", DIFFTOOL);
 		return (FALSE);
 	}
 
 	if (curbp->b_fname[0] == 0) {
+		dobeep();
 		ewprintf("Cannot diff buffer not associated with any files.");
 		return (FALSE);
 	}
@@ -970,6 +979,7 @@ diffbuffer(int f, int n)
 			len++;
 	}
 	if ((text = calloc(len + 1, sizeof(char))) == NULL) {
+		dobeep();
 		ewprintf("Cannot allocate memory.");
 		return (FALSE);
 	}
@@ -1014,6 +1024,7 @@ findbuffer(char *fn)
 	char		bname[NBUFN], fname[NBUFN];
 
 	if (strlcpy(fname, fn, sizeof(fname)) >= sizeof(fname)) {
+		dobeep();
 		ewprintf("filename too long");
 		return (NULL);
 	}

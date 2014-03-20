@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.91 2014/03/14 10:02:52 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.92 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -191,6 +191,7 @@ readin(char *fname)
 	/* Clear readonly. May be set by autoexec path */
 	curbp->b_flag &= ~BFREADONLY;
 	if ((status = insertfile(fname, fname, TRUE)) != TRUE) {
+		dobeep();
 		ewprintf("File is not readable: %s", fname);
 		return (FALSE);
 	}
@@ -322,6 +323,7 @@ insertfile(char *fname, char *newname, int replacebuf)
 	} else if (s == FIODIR) {
 		/* file was a directory */
 		if (replacebuf == FALSE) {
+			dobeep();
 			ewprintf("Cannot insert: file is a directory, %s",
 			    fname);
 			goto cleanup;
@@ -385,6 +387,7 @@ retry:
 				newsize = linesize * 2;
 				if (newsize < 0 ||
 				    (cp = malloc(newsize)) == NULL) {
+					dobeep();
 					ewprintf("Could not allocate %d bytes",
 					    newsize);
 						s = FIOERR;
@@ -402,6 +405,7 @@ retry:
 				goto retry;
 			}
 		default:
+			dobeep();
 			ewprintf("Unknown code %d reading file", s);
 			s = FIOERR;
 			break;
@@ -578,6 +582,7 @@ buffsave(struct buffer *bp)
 
 	/* must have a name */
 	if (bp->b_fname[0] == '\0') {
+		dobeep();
 		ewprintf("No file name");
 		return (FALSE);
 	}
@@ -655,10 +660,12 @@ writeout(FILE ** ffp, struct buffer *bp, char *fn)
 		(void)xdirname(dp, fn, sizeof(dp));
 		(void)strlcat(dp, "/", sizeof(dp));
 		if (access(dp, W_OK) && errno == EACCES) {
+			dobeep();
 			ewprintf("Directory %s write-protected", dp);
 			return (FIOERR);
 		} else if (errno == ENOENT) {
-                        ewprintf("%s: no such directory", dp);
+   			dobeep();
+			ewprintf("%s: no such directory", dp);
 			return (FIOERR);
 		}
         }
@@ -674,6 +681,7 @@ writeout(FILE ** ffp, struct buffer *bp, char *fn)
 	} else {
 		/* print a message indicating write error */
 		(void)ffclose(*ffp, bp);
+		dobeep();
 		ewprintf("Unable to write %s", fn);
 	}
 	return (s == FIOSUC);

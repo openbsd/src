@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.33 2013/05/22 19:23:45 lum Exp $	*/
+/*	$OpenBSD: region.c,v 1.34 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -118,6 +118,7 @@ lowerregion(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -161,6 +162,7 @@ upperregion(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -204,6 +206,7 @@ getregion(struct region *rp)
 	long	 fsize, bsize;
 
 	if (curwp->w_markp == NULL) {
+		dobeep();
 		ewprintf("No mark set in this window");
 		return (FALSE);
 	}
@@ -249,6 +252,7 @@ getregion(struct region *rp)
 			}
 		}
 	}
+	dobeep();
 	ewprintf("Bug: lost mark");
 	return (FALSE);
 }
@@ -261,6 +265,7 @@ setsize(struct region *rp, RSIZE size)
 {
 	rp->r_size = size;
 	if (rp->r_size != size) {
+		dobeep();
 		ewprintf("Region is too large");
 		return (FALSE);
 	}
@@ -288,6 +293,7 @@ prefixregion(int f, int n)
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
+		dobeep();
 		ewprintf("Buffer is read-only");
 		return (FALSE);
 	}
@@ -416,6 +422,7 @@ piperegion(int f, int n)
 		return (ABORT);
 
 	if (curwp->w_markp == NULL) {
+		dobeep();
 		ewprintf("The mark is not set now, so there is no region");
 		return (FALSE);
 	}
@@ -432,6 +439,7 @@ piperegion(int f, int n)
 	len = region.r_size;
 
 	if ((text = malloc(len + 1)) == NULL) {
+		dobeep();
 		ewprintf("Cannot allocate memory.");
 		return (FALSE);
 	}
@@ -507,12 +515,14 @@ pipeio(const char* const path, char* const argv[], char* const text, int len,
 	char *err;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s) == -1) {
+		dobeep();
 		ewprintf("socketpair error");
 		return (FALSE);
 	}
 
 	switch(fork()) {
 	case -1:
+		dobeep();
 		ewprintf("Can't fork");
 		return (FALSE);
 	case 0:
@@ -584,9 +594,11 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 		leftover[0] = '\0';
 	}
 	if (nfds == 0) {
+		dobeep();
 		ewprintf("poll timed out");
 		return (FALSE);
 	} else if (nfds == -1) {
+		dobeep();
 		ewprintf("poll error");
 		return (FALSE);
 	}
@@ -638,6 +650,7 @@ preadin(int fd, struct buffer *bp)
 		*q++ = '\0';
 		if (strlcat(leftover, p, sizeof(leftover)) >=
 		    sizeof(leftover)) {
+			dobeep();
 			ewprintf("line too long");
 			return (FALSE);
 		}
@@ -651,6 +664,7 @@ preadin(int fd, struct buffer *bp)
 		p = q;
 	}
 	if (strlcpy(leftover, p, sizeof(leftover)) >= sizeof(leftover)) {
+		dobeep();
 		ewprintf("line too long");
 		return (FALSE);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.14 2012/04/12 04:47:59 lum Exp $	*/
+/*	$OpenBSD: macro.c,v 1.15 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -71,6 +71,7 @@ executemacro(int f, int n)
 	if (macrodef ||
 	    (macrocount >= MAXMACRO && macro[MAXMACRO - 1].m_funct
 	    != finishmacro)) {
+		dobeep();
 		ewprintf("Macro too long. Aborting.");
 		return (FALSE);
 	}

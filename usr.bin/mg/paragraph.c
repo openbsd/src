@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.29 2013/06/15 19:58:39 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.30 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -335,6 +335,7 @@ setfillcol(int f, int n)
 			return (FALSE);
 		nfill = strtonum(rep, 0, INT_MAX, &es);
 		if (es != NULL) {
+			dobeep();
 			ewprintf("Invalid fill column: %s", rep);
 			return (FALSE);
 		}

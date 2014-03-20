@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.55 2013/05/31 18:03:44 lum Exp $	*/
+/*	$OpenBSD: echo.c,v 1.56 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -316,6 +316,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 					nbuf = newsize;
 				}
 				if (!dynbuf && epos + 1 >= nbuf) {
+					dobeep();
 					ewprintf("Line too long");
 					return (emptyval);
 				}
@@ -471,6 +472,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 				nbuf = newsize;
 			}
 			if (!dynbuf && epos + 1 >= nbuf) {
+				dobeep();
 				ewprintf("Line too long");
 				return (emptyval);
 			}
@@ -504,6 +506,7 @@ done:
 memfail:
 	if (dynbuf && buf)
 		free(buf);
+	dobeep();
 	ewprintf("Out of memory");
 	return (emptyval);
 }

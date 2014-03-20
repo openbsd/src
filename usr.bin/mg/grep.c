@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.39 2013/06/01 17:31:11 lum Exp $	*/
+/*	$OpenBSD: grep.c,v 1.40 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -193,10 +193,12 @@ compile_mode(const char *name, const char *command)
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		panic("Can't get current directory!");
 	if (chdir(bp->b_cwd) == -1) {
+		dobeep();
 		ewprintf("Can't change dir to %s", bp->b_cwd);
 		return (NULL);
 	}
 	if ((fpipe = popen(qcmd, "r")) == NULL) {
+		dobeep();
 		ewprintf("Problem opening pipe");
 		return (NULL);
 	}
@@ -227,6 +229,7 @@ compile_mode(const char *name, const char *command)
 	compile_buffer = bp;
 
 	if (chdir(cwd) == -1) {
+		dobeep();
 		ewprintf("Can't change dir back to %s", cwd);
 		return (NULL);
 	}
@@ -296,6 +299,7 @@ fail:
 		curwp->w_rflag |= WFMOVE;
 		goto retry;
 	}
+	dobeep();
 	ewprintf("No more hits");
 	return (FALSE);
 }
@@ -305,12 +309,14 @@ int
 next_error(int f, int n)
 {
 	if (compile_win == NULL || compile_buffer == NULL) {
+		dobeep();
 		ewprintf("No compilation active");
 		return (FALSE);
 	}
 	curwp = compile_win;
 	curbp = compile_buffer;
 	if (curwp->w_dotp == blastlp(curbp)) {
+		dobeep();
 		ewprintf("No more hits");
 		return (FALSE);
 	}

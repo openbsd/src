@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.41 2013/05/31 18:19:19 florian Exp $	*/
+/*	$OpenBSD: basic.c,v 1.42 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -416,6 +416,7 @@ pagenext(int f, int n)
 	struct mgwin *wp;
 
 	if (wheadp->w_wndp == NULL) {
+		dobeep();
 		ewprintf("No other window");
 		return (FALSE);
 	}
@@ -482,6 +483,7 @@ swapmark(int f, int n)
 	int odoto, odotline;
 
 	if (curwp->w_markp == NULL) {
+		dobeep();
 		ewprintf("No mark in this window");
 		return (FALSE);
 	}
@@ -520,6 +522,7 @@ gotoline(int f, int n)
 			return (ABORT);
 		n = (int)strtonum(buf, INT_MIN, INT_MAX, &err);
 		if (err) {
+			dobeep();
 			ewprintf("Line number %s", err);
 			return (FALSE);
 		}

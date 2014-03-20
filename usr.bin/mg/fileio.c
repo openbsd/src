@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.96 2013/05/18 05:53:58 lum Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.97 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -103,11 +103,13 @@ ffwopen(FILE ** ffp, const char *fn, struct buffer *bp)
 	fd = open(fn, O_RDWR | O_CREAT | O_TRUNC, fmode);
 	if (fd == -1) {
 		ffp = NULL;
+		dobeep();
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		return (FIOERR);
 	}
 
 	if ((*ffp = fdopen(fd, "w")) == NULL) {
+		dobeep();
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
 		close(fd);
 		return (FIOERR);
@@ -151,6 +153,7 @@ ffputbuf(FILE *ffp, struct buffer *bp)
 	lpend = bp->b_headp;
 	for (lp = lforw(lpend); lp != lpend; lp = lforw(lp)) {
 		if (fwrite(ltext(lp), 1, llength(lp), ffp) != llength(lp)) {
+			dobeep();
 			ewprintf("Write I/O error");
 			return (FIOERR);
 		}
@@ -188,6 +191,7 @@ ffgetline(FILE *ffp, char *buf, int nbuf, int *nbytes)
 			return (FIOLONG);
 	}
 	if (c == EOF && ferror(ffp) != FALSE) {
+		dobeep();
 		ewprintf("File read error");
 		return (FIOERR);
 	}
@@ -213,6 +217,7 @@ fbackupfile(const char *fn)
 	char		*nname, *tname, *bkpth;
 
 	if (stat(fn, &sb) == -1) {
+		dobeep();
 		ewprintf("Can't stat %s : %s", fn, strerror(errno));
 		return (FALSE);
 	}
@@ -221,11 +226,13 @@ fbackupfile(const char *fn)
 		return (FALSE);
 
 	if (asprintf(&nname, "%s~", bkpth) == -1) {
+		dobeep();
 		ewprintf("Can't allocate backup file name : %s", strerror(errno));
 		free(bkpth);
 		return (ABORT);
 	}
 	if (asprintf(&tname, "%s.XXXXXXXXXX", bkpth) == -1) {
+		dobeep();
 		ewprintf("Can't allocate temp file name : %s", strerror(errno));
 		free(bkpth);
 		free(nname);
@@ -368,6 +375,7 @@ copy(char *frname, char *toname)
 	if ((ifd = open(frname, O_RDONLY)) == -1)
 		return (FALSE);
 	if (fstat(ifd, &orig) == -1) {
+		dobeep();
 		ewprintf("fstat: %s", strerror(errno));
 		close(ifd);
 		return (FALSE);
@@ -734,6 +742,7 @@ expandtilde(const char *fn)
 		plen = strlcpy(path, pw->pw_dir, sizeof(path));
 		if (plen == 0 || path[plen - 1] != '/') {
 			if (strlcat(path, "/", sizeof(path)) >= sizeof(path)) {
+				dobeep();				
 				ewprintf("Path too long");
 				return (NULL);
 			}
@@ -743,6 +752,7 @@ expandtilde(const char *fn)
 			fn++;
 	}
 	if (strlcat(path, fn, sizeof(path)) >= sizeof(path)) {
+		dobeep();
 		ewprintf("Path too long");
 		return (NULL);
 	}

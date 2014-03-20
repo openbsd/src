@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.29 2013/12/20 18:44:13 florian Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.30 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -57,6 +57,7 @@ re_forwsearch(int f, int n)
 	if ((s = re_readpattern("RE Search")) != TRUE)
 		return (s);
 	if (re_forwsrch() == FALSE) {
+		dobeep();
 		ewprintf("Search failed: \"%s\"", re_pat);
 		return (FALSE);
 	}
@@ -80,6 +81,7 @@ re_backsearch(int f, int n)
 	if ((s = re_readpattern("RE Search backward")) != TRUE)
 		return (s);
 	if (re_backsrch() == FALSE) {
+		dobeep();
 		ewprintf("Search failed: \"%s\"", re_pat);
 		return (FALSE);
 	}
@@ -100,11 +102,13 @@ int
 re_searchagain(int f, int n)
 {
 	if (re_srch_lastdir == SRCH_NOPR) {
+		dobeep();
 		ewprintf("No last search");
 		return (FALSE);
 	}
 	if (re_srch_lastdir == SRCH_FORW) {
 		if (re_forwsrch() == FALSE) {
+			dobeep();
 			ewprintf("Search failed: \"%s\"", re_pat);
 			return (FALSE);
 		}
@@ -112,6 +116,7 @@ re_searchagain(int f, int n)
 	}
 	if (re_srch_lastdir == SRCH_BACK)
 		if (re_backsrch() == FALSE) {
+			dobeep();
 			ewprintf("Search failed: \"%s\"", re_pat);
 			return (FALSE);
 		}
@@ -438,6 +443,7 @@ re_readpattern(char *prompt)
 		if (error != 0) {
 			char	message[256];
 			regerror(error, &regex_buff, message, sizeof(message));
+			dobeep();
 			ewprintf("Regex Error: %s", message);
 			re_pat[0] = '\0';
 			return (FALSE);

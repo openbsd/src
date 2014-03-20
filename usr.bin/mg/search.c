@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.42 2013/05/31 18:03:45 lum Exp $	*/
+/*	$OpenBSD: search.c,v 1.43 2014/03/20 07:47:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -62,6 +62,7 @@ forwsearch(int f, int n)
 	if ((s = readpattern("Search")) != TRUE)
 		return (s);
 	if (forwsrch() == FALSE) {
+		dobeep();
 		ewprintf("Search failed: \"%s\"", pat);
 		return (FALSE);
 	}
@@ -84,6 +85,7 @@ backsearch(int f, int n)
 	if ((s = readpattern("Search backward")) != TRUE)
 		return (s);
 	if (backsrch() == FALSE) {
+		dobeep();
 		ewprintf("Search failed: \"%s\"", pat);
 		return (FALSE);
 	}
@@ -102,6 +104,7 @@ searchagain(int f, int n)
 {
 	if (srch_lastdir == SRCH_FORW) {
 		if (forwsrch() == FALSE) {
+			dobeep();
 			ewprintf("Search failed: \"%s\"", pat);
 			return (FALSE);
 		}
@@ -109,11 +112,13 @@ searchagain(int f, int n)
 	}
 	if (srch_lastdir == SRCH_BACK) {
 		if (backsrch() == FALSE) {
+			dobeep();
 			ewprintf("Search failed: \"%s\"", pat);
 			return (FALSE);
 		}
 		return (TRUE);
 	}
+	dobeep();
 	ewprintf("No last search");
 	return (FALSE);
 }
@@ -174,6 +179,7 @@ isearch(int dir)
 	int		 cdotline;	/* Saved line number */
 
 	if (macrodef) {
+		dobeep();
 		ewprintf("Can't isearch in macro");
 		return (FALSE);
 	}
@@ -502,6 +508,7 @@ is_find(int dir)
 			}
 			return (TRUE);
 		}
+		dobeep();
 		ewprintf("bad call to is_find");
 		return (FALSE);
 	}
@@ -558,6 +565,7 @@ queryrepl(int f, int n)
 	char	news[NPAT], *rep;	/* replacement string		*/
 
 	if (macrodef) {
+		dobeep();
 		ewprintf("Can't query replace in macro");
 		return (FALSE);
 	}
