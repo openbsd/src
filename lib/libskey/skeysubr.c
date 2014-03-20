@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.31 2013/11/29 19:00:51 deraadt Exp $
+ * $OpenBSD: skeysubr.c,v 1.32 2014/03/20 20:39:13 naddy Exp $
  */
 
 #include <stdio.h>
@@ -19,7 +19,6 @@
 #include <signal.h>
 #include <termios.h>
 #include <unistd.h>
-#include <md4.h>
 #include <md5.h>
 #include <sha1.h>
 #include <rmd160.h>
@@ -31,7 +30,6 @@
 #define SKEY_HASH_DEFAULT	1
 #endif
 
-static int keycrunch_md4(char *, char *, char *);
 static int keycrunch_md5(char *, char *, char *);
 static int keycrunch_sha1(char *, char *, char *);
 static int keycrunch_rmd160(char *, char *, char *);
@@ -52,7 +50,6 @@ struct skey_algorithm_table {
 	int (*keycrunch)(char *, char *, char *);
 };
 static struct skey_algorithm_table skey_algorithm_table[] = {
-	{ "md4", keycrunch_md4 },
 	{ "md5", keycrunch_md5 },
 	{ "sha1", keycrunch_sha1 },
 	{ "rmd160", keycrunch_rmd160 }
@@ -70,48 +67,6 @@ int
 keycrunch(char *result, char *seed, char *passwd)
 {
 	return(skey_algorithm_table[skey_hash_type].keycrunch(result, seed, passwd));
-}
-
-static int
-keycrunch_md4(char *result, char *seed, char *passwd)
-{
-	char *buf = NULL;
-	MD4_CTX md;
-	u_int32_t results[4];
-	unsigned int buflen;
-
-	/*
-	 * If seed and passwd are defined we are in keycrunch() mode,
-	 * else we are in f() mode.
-	 */
-	if (seed && passwd) {
-		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = malloc(buflen + 1)) == NULL)
-			return(-1);
-		(void)strlcpy(buf, seed, buflen + 1);
-		lowcase(buf);
-		(void)strlcat(buf, passwd, buflen + 1);
-		sevenbit(buf);
-	} else {
-		buf = result;
-		buflen = SKEY_BINKEY_SIZE;
-	}
-
-	/* Crunch the key through MD4 */
-	MD4Init(&md);
-	MD4Update(&md, (unsigned char *)buf, buflen);
-	MD4Final((unsigned char *)results, &md);
-
-	/* Fold result from 128 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-
-	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
-
-	if (buf != result)
-		(void)free(buf);
-
-	return(0);
 }
 
 static int

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: skeyinit.1,v 1.36 2014/02/12 16:58:44 schwarze Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.37 2014/03/20 20:39:13 naddy Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
-.Dd $Mdocdate: February 12 2014 $
+.Dd $Mdocdate: March 20 2014 $
 .Dt SKEYINIT 1
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Op Fl CDErsx
 .Op Fl a Ar auth-type
 .Op Fl n Ar count
-.Op Fl md4 | md5 | rmd160 | sha1
+.Op Fl md5 | rmd160 | sha1
 .Op Ar user
 .Ek
 .Sh DESCRIPTION
@@ -91,9 +91,9 @@ Enables access to the S/Key database.
 Only the superuser may use the
 .Fl E
 option.
-.It Fl md4 | md5 | rmd160 | sha1
+.It Fl md5 | rmd160 | sha1
 Selects the hash algorithm:
-MD4, MD5, RMD-160 (160-bit Ripe Message Digest),
+MD5, RMD-160 (160-bit Ripe Message Digest),
 or SHA1 (NIST Secure Hash Algorithm Revision 1).
 .It Fl n Ar count
 Start the

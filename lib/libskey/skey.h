@@ -10,7 +10,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.19 2004/08/05 13:31:36 millert Exp $
+ * $OpenBSD: skey.h,v 1.20 2014/03/20 20:39:13 naddy Exp $
  */
 
 #ifndef _SKEY_H_
@@ -51,7 +51,7 @@ struct mc {
 /* Max length of S/Key challenge (otp-???? 9999 seed) */
 #define SKEY_MAX_CHALLENGE	(11 + SKEY_MAX_HASHNAME_LEN + SKEY_MAX_SEED_LEN)
 
-/* Max length of hash algorithm name (md4/md5/sha1/rmd160) */
+/* Max length of hash algorithm name (md5/sha1/rmd160) */
 #define SKEY_MAX_HASHNAME_LEN	6
 
 /* Size of a binary key (not NULL-terminated) */

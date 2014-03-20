@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.52 2013/11/28 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.53 2014/03/20 20:39:13 naddy Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -513,12 +513,11 @@ convert_db(void)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
-		if (isalpha((unsigned char)*cp)) {
-			hashtype = cp;
-			if ((cp = strtok(NULL, " \t")) == NULL)
-				continue;
-		} else
-			hashtype = "md4";
+		if (!isalpha((unsigned char)*cp))
+			continue;
+		hashtype = cp;
+		if ((cp = strtok(NULL, " \t")) == NULL)
+			continue;
 		n = atoi(cp);
 		if ((seed = strtok(NULL, " \t")) == NULL)
 			continue;
@@ -559,6 +558,6 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-CDErsx] [-a auth-type] [-n count]"
-	    "\n\t[-md4 | -md5 | -rmd160 | -sha1] [user]\n", __progname);
+	    "\n\t[-md5 | -rmd160 | -sha1] [user]\n", __progname);
 	exit(1);
 }
