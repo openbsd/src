@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.68 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.69 2014/03/20 13:18:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,13 +28,16 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "disk.h"
+#include "misc.h"
 #include "part.h"
 #include "mbr.h"
 #include "user.h"

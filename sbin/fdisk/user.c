@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.33 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.34 2014/03/20 13:18:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,6 +30,7 @@
 #include <sys/disklabel.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "disk.h"
 #include "part.h"

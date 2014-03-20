@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.40 2014/03/20 02:08:29 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.41 2014/03/20 13:18:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,13 +27,16 @@
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <errno.h>
 
 #include "disk.h"
 #include "misc.h"
+#include "part.h"
 
 struct unit_type unit_types[] = {
 	{"b", 1			, "Bytes"},

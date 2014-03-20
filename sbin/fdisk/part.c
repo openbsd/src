@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.59 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.60 2014/03/20 13:18:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 

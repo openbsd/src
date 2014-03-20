@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.40 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.41 2014/03/20 13:18:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/dkio.h>
 #include <sys/stdint.h>
 #include <sys/stat.h>
@@ -35,6 +36,7 @@
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "disk.h"
 #include "misc.h"
