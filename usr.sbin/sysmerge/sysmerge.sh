@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.125 2014/03/20 09:00:09 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.126 2014/03/21 08:02:11 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -115,6 +115,7 @@ get_set() {
 	local _tgz=${WRKDIR}/${_url##*/}
 	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
 	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
+	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching from ${_url%/*}"
 		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${_tgz}" "${_url}" || \
@@ -124,15 +125,14 @@ get_set() {
 	fi
 	if [ -z "${NOSIGCHECK}" ]; then
 		echo "===> Verifying against ${_key}"
-		cd ${WRKDIR} && 
+		(cd ${WRKDIR} && 
 			/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o - "${_url%/*}/SHA256.sig" | \
-				/usr/bin/signify -qC -p ${_key} -x - ${_url##*/} || \
+				/usr/bin/signify -qC -p ${_key} -x - ${_url##*/}) || \
 				error_rm_wrkdir "SHA256.sig: signature/checksum failed"
 	else
 		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
 			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
 	fi
-	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
