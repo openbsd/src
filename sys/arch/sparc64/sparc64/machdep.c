@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.150 2014/03/13 03:52:56 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.151 2014/03/21 03:56:49 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -2104,7 +2104,7 @@ struct blink_led_softc {
 	SLIST_HEAD(, blink_led) bls_head;
 	int bls_on;
 	struct timeout bls_to;
-} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+} blink_sc = { SLIST_HEAD_INITIALIZER(blink_sc.bls_head), 0 };
 
 void
 blink_led_register(struct blink_led *l)
