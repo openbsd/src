@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.12 2013/01/29 11:08:55 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.13 2014/03/21 10:58:46 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -137,13 +137,13 @@ sub scan_manpages
 			$p->errsay("Can't find type of #1", $_);
 			next;
 		}
-		if ($p->picky) {
-			require OpenBSD::Makewhatis::Check;
+	}
+	if ($p->picky) {
+		require OpenBSD::Makewhatis::Check;
 
-			for my $s ($h->subjects) {
-				OpenBSD::Makewhatis::Check::verify_subject($s, 
-				    $_, $p);
-			}
+		while (my ($s, $f) = each %{$h->subject_hash}) {
+			OpenBSD::Makewhatis::Check::verify_subject($s, 
+			    $f, $p);
 		}
 	}
 	my @done = $h->subjects;
