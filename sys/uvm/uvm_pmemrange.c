@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.37 2014/02/06 16:40:40 tedu Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.38 2014/03/21 21:39:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -68,8 +68,7 @@
  * this check in pages which are freed.
  */
 #define VALID_FLAGS(pg_flags)						\
-	(((pg_flags) & ~(PQ_FREE|PG_ZERO|				\
-	    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3)) == 0x0)
+	(((pg_flags) & ~(PQ_FREE|PG_ZERO|PG_PMAPMASK)) == 0x0)
 
 /* Tree comparators. */
 int	uvm_pmemrange_addr_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
@@ -1043,8 +1042,7 @@ out:
 	diag_prev = NULL;
 #endif /* DIAGNOSTIC */
 	TAILQ_FOREACH(found, result, pageq) {
-		atomic_clearbits_int(&found->pg_flags,
-		    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3);
+		atomic_clearbits_int(&found->pg_flags, PG_PMAPMASK);
 
 		if (found->pg_flags & PG_ZERO) {
 			uvmexp.zeropages--;

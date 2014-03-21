@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.85 2014/03/13 03:52:56 dlg Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.86 2014/03/21 21:39:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -407,8 +407,7 @@ found:
 	while (sz > 0) {
 		KASSERT(pg->pg_flags & PQ_FREE);
 
-		atomic_clearbits_int(&pg->pg_flags,
-		    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3);
+		atomic_clearbits_int(&pg->pg_flags, PG_PMAPMASK);
 
 		if (pg->pg_flags & PG_ZERO)
 			uvmexp.zeropages -= sz;
@@ -524,8 +523,7 @@ found:
 	TAILQ_FOREACH(pg, &pageq, pageq) {
 		KASSERT(pg->pg_flags & PQ_FREE);
 
-		atomic_clearbits_int(&pg->pg_flags,
-		    PG_PMAP0|PG_PMAP1|PG_PMAP2|PG_PMAP3);
+		atomic_clearbits_int(&pg->pg_flags, PG_PMAPMASK);
 
 		if (pg->pg_flags & PG_ZERO)
 			uvmexp.zeropages--;

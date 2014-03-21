@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2014/03/10 21:17:58 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2014/03/21 21:39:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1659,8 +1659,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		} else {
 			pv->pv_pmap = NULL;
 			atomic_clearbits_int(&pg->pg_flags,
-			    (PG_PMAP0 | PG_PMAP1 | PG_PMAP2 | PG_PMAP3) &
-			    ~PV_PRESERVE);
+			    PG_PMAPMASK & ~PV_PRESERVE);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {

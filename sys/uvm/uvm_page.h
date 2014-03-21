@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.52 2014/01/23 22:06:30 miod Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.53 2014/03/21 21:39:36 miod Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -173,6 +173,9 @@ struct vm_page {
 #define PG_PMAP1	0x02000000	/* Used by some pmaps. */
 #define PG_PMAP2	0x04000000	/* Used by some pmaps. */
 #define PG_PMAP3	0x08000000	/* Used by some pmaps. */
+#define PG_PMAP4	0x10000000	/* Used by some pmaps. */
+#define PG_PMAP5	0x20000000	/* Used by some pmaps. */
+#define PG_PMAPMASK	0x3f000000
 
 /*
  * physical memory layout structure
