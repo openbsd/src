@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.13 2006/01/11 07:31:46 jaredy Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.14 2014/03/21 02:55:29 lteo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -407,15 +407,5 @@ __pcap_nametodnaddr(const char *name)
 	bpf_error("decnet name support not included, '%s' cannot be translated\n",
 		name);
 	/* NOTREACHED */
-#ifdef lint
-	/*
-	 * Arguably, lint should assume that functions which don't return
-	 * (i.e. that contain no return statements and whose ends are
-	 * unreachable) actually return a value, so callers won't get
-	 * warnings for using that value (since they won't actually
-	 * be doing so).  However, most lints don't seem to do that...
-	 */
-	return (0);
-#endif
 #endif
 }
