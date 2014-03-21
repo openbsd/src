@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rt_timer_add.9,v 1.2 2014/03/21 10:44:42 mpi Exp $
+.\"     $OpenBSD: rt_timer_add.9,v 1.3 2014/03/21 11:24:11 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -69,7 +69,7 @@ Create a timer queue with a timeout of
 .Fa timeout
 seconds.
 .It Fn rt_timer_queue_count "struct rtentry *rt"
-Return the number of timers present in the queue 
+Return the number of timers present in the queue
 .Fa rtq .
 .It Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
 Set timeout for
@@ -80,7 +80,7 @@ seconds.
 .It Fn rt_timer_queue_destroy "struct rttimer_queue *rtq"
 Remove all timeouts from the routing timer queue
 .Fa rtq ,
-execute their associated callback and destroy it. 
+execute their associated callback and destroy it.
 .El
 .Sh RETURN VALUES
 .Fn rt_timer_add
