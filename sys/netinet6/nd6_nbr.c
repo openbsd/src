@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.75 2014/01/24 12:20:22 naddy Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.76 2014/03/21 09:45:09 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -570,9 +570,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct rtentry *rt;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
-#if NCARP > 0
-	struct sockaddr_dl *proxydl = NULL;
-#endif
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
 	if (ip6->ip6_hlim != 255) {
@@ -632,11 +629,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
-#if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ifa &&
-	    !carp_iamatch6(ifp, lladdr, &proxydl))
-		ifa = NULL;
-#endif
 
 	/*
 	 * Target address matches one of my interface address.
@@ -652,8 +644,18 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 	}
 
-	/* Just for safety, maybe unnecessary. */
 	if (ifa) {
+#if NCARP > 0
+		struct sockaddr_dl *proxydl = NULL;
+
+		/*
+		 * Ignore NAs silently for carp addresses if we're not
+		 * the CARP master.
+		 */
+		if (ifp->if_type == IFT_CARP &&
+		    !carp_iamatch6(ifp, lladdr, &proxydl))
+			goto freeit;
+#endif
 		log(LOG_ERR,
 		    "nd6_na_input: duplicate IP6 address %s\n",
 		    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr)));
