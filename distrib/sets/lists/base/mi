@@ -38,7 +38,6 @@
 ./bin/sha512
 ./bin/sleep
 ./bin/stty
-./bin/sum
 ./bin/sync
 ./bin/systrace
 ./bin/tar
@@ -356,7 +355,6 @@
 ./usr/bin/nohup
 ./usr/bin/od
 ./usr/bin/oldrdist
-./usr/bin/otp-md4
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160
 ./usr/bin/otp-sha1
@@ -5174,6 +5172,7 @@
 ./var/tmp
 ./var/tmp/vi.recover
 ./var/unbound
+./var/unbound/db
 ./var/unbound/etc
 ./var/www
 ./var/www/bin

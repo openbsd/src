@@ -316,7 +316,6 @@
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/oldrdist.1
 ./usr/share/man/man1/openssl.1
-./usr/share/man/man1/otp-md4.1
 ./usr/share/man/man1/otp-md5.1
 ./usr/share/man/man1/otp-rmd160.1
 ./usr/share/man/man1/otp-sha1.1
@@ -556,7 +555,6 @@
 ./usr/share/man/man1/strings.1
 ./usr/share/man/man1/stty.1
 ./usr/share/man/man1/su.1
-./usr/share/man/man1/sum.1
 ./usr/share/man/man1/systat.1
 ./usr/share/man/man1/systrace.1
 ./usr/share/man/man1/tail.1
