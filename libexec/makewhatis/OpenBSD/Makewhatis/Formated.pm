@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Formated.pm,v 1.8 2013/06/17 20:04:21 schwarze Exp $
+# $OpenBSD: Formated.pm,v 1.9 2014/03/21 10:59:31 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -23,13 +23,13 @@ package OpenBSD::Makewhatis::Formated;
 #
 sub add_formated_subject
 {
-    my ($_, $section, $h) = @_;
+    my ($s, $section, $h) = @_;
 
-    if (m/\-/) {
-	s/([-+.\w\d,])\s+/$1 /g;
-	s/([a-z][A-z])-\s+/$1/g;
+    if ($s =~ m/\-/) {
+	$s =~ s/([-+.\w\d,])\s+/$1 /g;
+	$s =~ s/([a-z][A-z])-\s+/$1/g;
 	# some twits use: func -- description
-	if (m/^[^-+.\w\d]*(.*?) -(?:-?)\s+(.*)/) {
+	if ($s =~ m/^[^-+.\w\d]*(.*?) -(?:-?)\s+(.*)/) {
 	    my ($func, $descr) = ($1, $2);
 	    $func =~ s/,\s*$//;
 	    # nroff will tend to cut function names at the weirdest places
@@ -41,10 +41,10 @@ sub add_formated_subject
 	}
     }
 
-    $h->weird_subject($_) if $h->p->picky;
+    $h->weird_subject($s) if $h->p->picky;
 
     # try to find subject in line anyway
-    if (m/^\s*(.*\S)(?:\s{3,}|\(\)\s+)(.*?)\s*$/) {
+    if ($s =~ m/^\s*(.*\S)(?:\s{3,}|\(\)\s+)(.*?)\s*$/) {
     	my ($func, $descr) = ($1, $2);
 	$func =~ s/\s+/ /g;
 	$descr =~ s/\s+/ /g;
@@ -52,7 +52,7 @@ sub add_formated_subject
 	return;
     }
 
-    $h->weird_subject($_) unless $h->p->picky;
+    $h->weird_subject($s) unless $h->p->picky;
 }
 
 # handle($file, $h)
@@ -64,7 +64,7 @@ sub add_formated_subject
 sub handle
 {
     my ($file, $h) = @_;
-    my $_;
+    # my $_;
     my ($section, $subject);
     my $foundname = 0;
     while (<$file>) {

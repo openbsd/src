@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Check.pm,v 1.3 2010/07/09 08:12:49 espie Exp $
+# $OpenBSD: Check.pm,v 1.4 2014/03/21 10:59:31 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -48,8 +48,8 @@ sub found
 #   sense, e.g., is there a man page around.
 sub verify_subject
 {
-    my ($_, $filename, $p) = @_;
-    if (m/\s*(.*?)\s*\((.*?)\)\s-\s/) {
+    my ($s, $filename, $p) = @_;
+    if ($s =~ m/\s*(.*?)\s*\((.*?)\)\s-\s/) {
     	my $man = $1;
 	my $section = $2;
 	my @mans = split(/\s*,\s*|\s+/, $man);
@@ -75,7 +75,7 @@ sub verify_subject
 	}
 	if (@notfound > 0) {
 	    $p->errsay("Couldn't find #1 in #2:\n#3",
-	    	join(', ', @notfound), $filename, $_);
+	    	join(', ', @notfound), $filename, $s);
 	}
     }
 }

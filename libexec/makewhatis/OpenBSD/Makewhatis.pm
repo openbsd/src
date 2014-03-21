@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.13 2014/03/21 10:58:46 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.14 2014/03/21 10:59:31 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -51,11 +51,11 @@ sub f
 	if (@_ == 0) {
 		return '';
 	}
-	my ($_, @l) = @_;
+	my ($fmt, @l) = @_;
 	# make it so that #0 is #
 	unshift(@l, '#');
-	s/\#(\d+)/$l[$1]/ge;
-	return $_;
+	$fmt =~ s/\#(\d+)/$l[$1]/ge;
+	return $fmt;
 }
 
 sub picky
@@ -94,31 +94,32 @@ sub scan_manpages
 	require OpenBSD::Makewhatis::Subject;
 	my $h = OpenBSD::Makewhatis::SubjectHandler->new($p);
 
-	for my $_ (@$list) {
+	for my $filename (@$list) {
 		my $file;
-		if (m/\.(?:Z|gz)$/) {
-			unless (open $file, '-|', "gzip", "-fdc", $_) {
+		if ($filename =~ m/\.(?:Z|gz)$/) {
+			unless (open $file, '-|', "gzip", "-fdc", $filename) {
 				$p->errsay("#1: can't decompress #2: #3", 
-				    $0, $_, $!);
+				    $0, $filename, $!);
 				next;
 			}
-			$_ = $`;
+			$filename = $`;
 		} else {
-			if (-z $_) {
-				$p->errsay("Empty file #1", $_);
+			if (-z $filename) {
+				$p->errsay("Empty file #1", $filename);
 				next;
 			}
-			unless (open $file, '<', $_) {
-				$p->errsay("#1: can't read #2: #3", $0, $_, $!);
+			unless (open $file, '<', $filename) {
+				$p->errsay("#1: can't read #2: #3", $0, 
+				    $filename, $!);
 				next;
 			}
 		}
-		$h->set_filename($_);
-		if (m/\.(?:[1-9ln][^.]*|tbl)$/) {
+		$h->set_filename($filename);
+		if ($filename =~ m/\.(?:[1-9ln][^.]*|tbl)$/) {
 			require OpenBSD::Makewhatis::Unformated;
 
 			OpenBSD::Makewhatis::Unformated::handle($file, $h);
-		} elsif (m/\.0$/) {
+		} elsif ($filename =~ m/\.0$/) {
 			require OpenBSD::Makewhatis::Formated;
 
 			OpenBSD::Makewhatis::Formated::handle($file, $h);
@@ -134,7 +135,7 @@ sub scan_manpages
 				    $h);
 			}
 		} else {
-			$p->errsay("Can't find type of #1", $_);
+			$p->errsay("Can't find type of #1", $filename);
 			next;
 		}
 	}

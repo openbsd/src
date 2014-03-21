@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Find.pm,v 1.3 2011/07/02 12:47:49 espie Exp $
+# $OpenBSD: Find.pm,v 1.4 2014/03/21 10:59:31 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -24,14 +24,14 @@ use File::Find;
 
 sub equivalents
 {
-	my $_ = shift;
+	my $f = shift;
 	my @l = ();
-	s/(?:\.Z|\.gz)$//;
-	push(@l, $_, "$_.Z", "$_.gz");
-	if (s,/cat([\dln]\w*?)/(.*)\.0$,/man$1/$2.$1,) {
-		push(@l, $_, "$_.Z", "$_.gz");
-	} elsif (s,/man([\dln]\w*?)/(.*)\.\1$,/cat$1/$2.0,) {
-		push(@l, $_, "$_.Z", "$_.gz");
+	$f =~ s/(?:\.Z|\.gz)$//;
+	push(@l, $f, "$f.Z", "$f.gz");
+	if ($f =~ s,/cat([\dln]\w*?)/(.*)\.0$,/man$1/$2.$1,) {
+		push(@l, $f, "$f.Z", "$f.gz");
+	} elsif ($f =~ s,/man([\dln]\w*?)/(.*)\.\1$,/cat$1/$2.0,) {
+		push(@l, $f, "$f.Z", "$f.gz");
 	}
 	return @l;
 }

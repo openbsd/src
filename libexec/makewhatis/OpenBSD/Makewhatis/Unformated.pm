@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.9 2013/01/29 11:08:56 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.10 2014/03/21 10:59:31 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -36,55 +36,57 @@ sub add_unformated_subject
 	}
     };
 
-    my $_ = join(' ', @$toadd);
+    my $s = join(' ', @$toadd);
 	# do interpolations
-    s/\\\*\((..)/&$exp($1)/ge;
-    s/\\\*\[(.*?)\]/&$exp($1)/ge;
+    $s =~ s/\\\*\((..)/&$exp($1)/ge;
+    $s =~ s/\\\*\[(.*?)\]/&$exp($1)/ge;
 
 	# horizontal space adjustments
-    while (s/\\s[-+]?\d+//g)
+    while ($s =~ s/\\s[-+]?\d+//g)
     	{}
 	# unbreakable spaces
-    s/\\\s+/ /g;
+    $s =~ s/\\\s+/ /g;
     	# unbreakable em dashes
-    s/\\\|\\\(em\\\|/-/g;
+    $s =~ s/\\\|\\\(em\\\|/-/g;
 	# em dashes
-    s/\\\(em\s+/- /g;
+    $s =~ s/\\\(em\s+/- /g;
     	# single quotes
-    s/\\\(aq/\'/g;
+    $s =~ s/\\\(aq/\'/g;
     	# em dashes in the middle of lines
-    s/\\\(em/-/g;
-    s/\\\*[LO]//g;
-    s/\\\(tm/(tm)/g;
+    $s =~ s/\\\(em/-/g;
+    $s =~ s/\\\*[LO]//g;
+    $s =~ s/\\\(tm/(tm)/g;
 	# font changes
-    s/\\f[BIRP]//g;
-    s/\\f\(..//g;
+    $s =~ s/\\f[BIRP]//g;
+    $s =~ s/\\f\(..//g;
     	# fine space adjustments
-    while (s/\\[vh]\'.*?\'//g)
+    while ($s =~ s/\\[vh]\'.*?\'//g)
     	{}
-    unless (s/\s+\\-\s+/ ($section) - / || s/\s?\\\-/ ($section) -/ ||
-    	s/\s-\s/ ($section) - /) {
-	$h->weird_subject($_) if $h->p->picky;
+    unless ($s =~ s/\s+\\-\s+/ ($section) - / || 
+    	$s =~ s/\s?\\\-/ ($section) -/ ||
+    	$s =~ s/\s-\s/ ($section) - /) {
+	$h->weird_subject($s) if $h->p->picky;
 	    # Try guessing where the separation falls...
-	s/\s+\:\s+/ ($section) - / || s/\S+\s/$& ($section) - / || s/$/ ($section) - (empty subject)/;
+	$s =~ s/\s+\:\s+/ ($section) - / || $s =~ s/\S+\s/$& ($section) - / || 
+	    $s =~ s/$/ ($section) - (empty subject)/;
     }
 	# other dashes
-    s/\\-/-/g;
+    $s =~ s/\\-/-/g;
 	# escaped characters
-    s/\\\&(.)/$1/g;
-    s/\\\|/|/g;
+    $s =~ s/\\\&(.)/$1/g;
+    $s =~ s/\\\|/|/g;
 	# gremlins...
-    s/\\c//g;
+    $s =~ s/\\c//g;
 	# sequence of spaces
-    s/\s+$//;
-    s/^\s+//;
-    s/\s+/ /g;
+    $s =~ s/\s+$//;
+    $s =~ s/^\s+//;
+    $s =~ s/\s+/ /g;
     	# some damage control
-    if (m/^\Q($section) - \E/) {
-    	$h->weird_subject($_) if $h->p->picky;
+    if ($s =~ m/^\Q($section) - \E/) {
+    	$h->weird_subject($s) if $h->p->picky;
 	return;
     }
-    $h->add($_);
+    $h->add($s);
 }
 
 # handle($file, $h)
@@ -106,10 +108,10 @@ sub handle
     my @subject = ();
     my @keep = ();
     my $nd_seen = 0;
-    my $_;
 	# retrieve basename of file
     my ($name, $section) = $h->filename =~ m|(?:.*/)?(.*)\.([\w\d]+)|;
 	# scan until macro
+    local $_;
     while (<$f>) {
 	next unless m/^\./ || $found_old || $found_new;
 	next if m/^\.\\\"/;
