@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.126 2014/03/21 08:02:11 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.127 2014/03/21 08:13:57 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -118,7 +118,7 @@ get_set() {
 	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
 	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
 		echo "===> Fetching from ${_url%/*}"
-		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${_tgz}" "${_url}" || \
+		/usr/bin/ftp -D "===> Getting" -Vm -k "${FTP_KEEPALIVE-0}" -o "${_tgz}" "${_url}" || \
 			error_rm_wrkdir "could not retrieve ${_url##*/}"
 	else
 			error_rm_wrkdir "${_url}: no such file"
@@ -126,7 +126,7 @@ get_set() {
 	if [ -z "${NOSIGCHECK}" ]; then
 		echo "===> Verifying against ${_key}"
 		(cd ${WRKDIR} && 
-			/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o - "${_url%/*}/SHA256.sig" | \
+			/usr/bin/ftp -D "===> Getting" -Vm -k "${FTP_KEEPALIVE-0}" -o - "${_url%/*}/SHA256.sig" | \
 				/usr/bin/signify -qC -p ${_key} -x - ${_url##*/}) || \
 				error_rm_wrkdir "SHA256.sig: signature/checksum failed"
 	else
