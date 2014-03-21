@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.40 2014/03/21 21:46:47 andre Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.41 2014/03/21 21:54:14 andre Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -554,8 +554,9 @@ nmea_timeout(void *xnp)
 		 * sentences are received.
 		 */
 		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
-	} else
+	} else {
 		np->time.status = SENSOR_S_CRIT;
 		np->latitude.status = SENSOR_S_CRIT;
 		np->longitude.status = SENSOR_S_CRIT;
+	}
 }
