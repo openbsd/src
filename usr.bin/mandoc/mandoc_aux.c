@@ -1,6 +1,7 @@
-/*	$Id: mandoc_aux.c,v 1.1 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: mandoc_aux.c,v 1.2 2014/03/21 22:52:21 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,12 +17,30 @@
  */
 #include <sys/types.h>
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "mandoc.h"
 #include "mandoc_aux.h"
+
+int
+mandoc_asprintf(char **dest, const char *fmt, ...)
+{
+	va_list	 ap;
+	int	 ret;
+
+	va_start(ap, fmt);
+	ret = vasprintf(dest, fmt, ap);
+	va_end(ap);
+
+	if (-1 == ret) {
+		perror(NULL);
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+	return(ret);
+}
 
 void *
 mandoc_calloc(size_t num, size_t size)

@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.74 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: roff.c,v 1.75 2014/03/21 22:52:21 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -652,11 +652,7 @@ roff_parsetext(char **bufp, size_t *szp, int pos, int *offs)
 
 	/* Spring the input line trap. */
 	if (1 == roffit_lines) {
-		isz = asprintf(&p, "%s\n.%s", *bufp, roffit_macro);
-		if (-1 == isz) {
-			perror(NULL);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		isz = mandoc_asprintf(&p, "%s\n.%s", *bufp, roffit_macro);
 		free(*bufp);
 		*bufp = p;
 		*szp = isz + 1;

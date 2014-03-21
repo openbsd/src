@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.14 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.15 2014/03/21 22:52:21 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -330,11 +330,8 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 		    (strcmp(sec, prevsec) ||
 		     strcmp(arch, prevarch))) {
 			sep2 = '\0' == *prevarch ? "" : "/";
-			if (-1 == asprintf(&newnames, "%s(%s%s%s)",
-			    oldnames, prevsec, sep2, prevarch)) {
-				perror(0);
-				exit((int)MANDOCLEVEL_SYSERR);
-			}
+			mandoc_asprintf(&newnames, "%s(%s%s%s)",
+			    oldnames, prevsec, sep2, prevarch);
 			free(mpage->names);
 			oldnames = mpage->names = newnames;
 			free(prevsec);
@@ -351,11 +348,8 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 
 		/* Append the new name. */
 
-		if (-1 == asprintf(&newnames, "%s%s%s",
-		    oldnames, sep1, name)) {
-			perror(0);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		mandoc_asprintf(&newnames, "%s%s%s",
+		    oldnames, sep1, name);
 		free(mpage->names);
 		mpage->names = newnames;
 
@@ -372,11 +366,8 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 			fsec = "0";
 		}
 		sep2 = '\0' == *arch ? "" : "/";
-		if (-1 == asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
-		    path, sep1, sec, sep2, arch, name, fsec)) {
-			perror(0);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		mandoc_asprintf(&mpage->file, "%s/%s%s%s%s/%s.%s",
+		    path, sep1, sec, sep2, arch, name, fsec);
 	}
 	if (SQLITE_DONE != c)
 		fprintf(stderr, "%s\n", sqlite3_errmsg(db));
@@ -386,11 +377,8 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 
 	if (NULL != prevsec) {
 		sep2 = '\0' == *prevarch ? "" : "/";
-		if (-1 == asprintf(&newnames, "%s(%s%s%s)",
-		    mpage->names, prevsec, sep2, prevarch)) {
-			perror(0);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		mandoc_asprintf(&newnames, "%s(%s%s%s)",
+		    mpage->names, prevsec, sep2, prevarch);
 		free(mpage->names);
 		mpage->names = newnames;
 		free(prevsec);
@@ -419,11 +407,8 @@ buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t id, uint64_t outbit)
 			sep1 = " # ";
 		}
 		data = sqlite3_column_text(s, 1);
-		if (-1 == asprintf(&newoutput, "%s%s%s",
-		    oldoutput, sep1, data)) {
-			perror(0);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		mandoc_asprintf(&newoutput, "%s%s%s",
+		    oldoutput, sep1, data);
 		free(output);
 		output = newoutput;
 	}
@@ -595,10 +580,7 @@ exprspec(struct expr *cur, uint64_t key, const char *value,
 	if (NULL == value)
 		return(cur);
 
-	if (-1 == asprintf(&cp, format, value)) {
-		perror(0);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	mandoc_asprintf(&cp, format, value);
 	cur->next = mandoc_calloc(1, sizeof(struct expr));
 	cur = cur->next;
 	cur->and = 1;

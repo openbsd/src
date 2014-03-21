@@ -1,6 +1,7 @@
-/*	$Id: mandoc_aux.h,v 1.1 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: mandoc_aux.h,v 1.2 2014/03/21 22:52:21 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +20,7 @@
 
 __BEGIN_DECLS
 
+int		  mandoc_asprintf(char **, const char *, ...);
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
 void		 *mandoc_realloc(void *, size_t);

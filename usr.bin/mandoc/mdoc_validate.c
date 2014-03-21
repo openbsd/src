@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.122 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.123 2014/03/21 22:52:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2393,11 +2393,9 @@ post_os(POST_ARGS)
 		if (-1 == uname(&utsname)) {
 			mdoc_nmsg(mdoc, n, MANDOCERR_UNAME);
                         defbuf = mandoc_strdup("UNKNOWN");
-                } else if (-1 == asprintf(&defbuf, "%s %s",
-		    utsname.sysname, utsname.release)) {
-			perror(NULL);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+                } else
+			mandoc_asprintf(&defbuf, "%s %s",
+			    utsname.sysname, utsname.release);
 	}
 	mdoc->meta.os = mandoc_strdup(defbuf);
 #endif /*!OSNAME*/
