@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.13 2014/03/17 16:29:22 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.14 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sqlite3.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "manpath.h"
 #include "mansearch.h"
 

@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.20 2014/01/05 21:21:08 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.21 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/types.h>
 
 #include <assert.h>
@@ -30,6 +26,7 @@
 #include <unistd.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "main.h"
 #include "term.h"

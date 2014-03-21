@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.10 2013/06/01 14:27:13 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.11 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,7 +16,6 @@
  */
 #include <sys/types.h>
 
-#include <assert.h>
 #include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -25,6 +24,7 @@
 #include <wchar.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "term.h"
 #include "main.h"

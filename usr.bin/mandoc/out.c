@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.19 2013/10/05 21:17:29 schwarze Exp $ */
+/*	$Id: out.c,v 1.20 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc_aux.h"
 #include "mandoc.h"
 #include "out.h"
 

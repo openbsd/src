@@ -1,7 +1,7 @@
-/*	$Id: mandoc.h,v 1.61 2014/03/19 22:20:36 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.62 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -405,12 +405,7 @@ struct	man;
 
 __BEGIN_DECLS
 
-void		 *mandoc_calloc(size_t, size_t);
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
-void		 *mandoc_malloc(size_t);
-void		 *mandoc_realloc(void *, size_t);
-char		 *mandoc_strdup(const char *);
-char		 *mandoc_strndup(const char *, size_t);
 struct mchars	 *mchars_alloc(void);
 void		  mchars_free(struct mchars *);
 char	 	  mchars_num2char(const char *, size_t);

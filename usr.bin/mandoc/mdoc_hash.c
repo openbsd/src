@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.13 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.14 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "mdoc.h"
-#include "mandoc.h"
 #include "libmdoc.h"
 
 static	unsigned char	 table[27 * 12];

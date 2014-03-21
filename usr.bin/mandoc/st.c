@@ -1,4 +1,4 @@
-/*	$Id: st.c,v 1.6 2011/04/24 16:22:02 schwarze Exp $ */
+/*	$Id: st.c,v 1.7 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,12 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "mdoc.h"
-#include "mandoc.h"
 #include "libmdoc.h"
 
 #define LINE(x, y) \

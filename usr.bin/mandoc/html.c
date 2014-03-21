@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.33 2014/01/22 20:58:35 schwarze Exp $ */
+/*	$Id: html.c,v 1.34 2014/03/21 22:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "libmandoc.h"
 #include "out.h"
 #include "html.h"
