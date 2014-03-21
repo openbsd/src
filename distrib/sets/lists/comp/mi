@@ -6721,8 +6721,8 @@
 ./usr/share/man/man9/rt_lookup.9
 ./usr/share/man/man9/rt_setgate.9
 ./usr/share/man/man9/rt_timer_add.9
-./usr/share/man/man9/rt_timer_count.9
 ./usr/share/man/man9/rt_timer_queue_change.9
+./usr/share/man/man9/rt_timer_queue_count.9
 ./usr/share/man/man9/rt_timer_queue_create.9
 ./usr/share/man/man9/rt_timer_queue_destroy.9
 ./usr/share/man/man9/rt_timer_remove_all.9
