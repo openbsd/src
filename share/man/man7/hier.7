@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.117 2014/03/17 22:57:41 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.118 2014/03/21 11:21:32 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: March 17 2014 $
+.Dd $Mdocdate: March 21 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -550,7 +550,7 @@ tree.
 .It /var/
 Multi-purpose log, temporary, transient, and spool files.
 .Pp
-.Bl -tag -width "unbound/etc/" -compact
+.Bl -tag -width "kerberosV" -compact
 .It account/
 System accounting files.
 .Pp
@@ -672,7 +672,7 @@ Commonly ~uucp; public uucp temporary directory.
 Temporary files that are kept between system reboots.
 Periodically cleaned by
 .Xr daily 8 .
-.It unbound/etc/
+.It unbound/
 Configuration files for
 .Xr unbound 8 .
 .It www/
