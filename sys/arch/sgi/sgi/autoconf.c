@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2014/02/08 09:35:07 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2014/03/21 22:00:59 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -195,16 +195,14 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask)
 	}
 #endif
 
-#ifndef MIPS_PTE64
 	/*
-	 * Prevent use of memory above 16GB physical, until pmap can support
-	 * this.
+	 * Prevent use of memory beyond what pmap can support.
+	 * PG_FRAME is the highest supported page number.
 	 */
-	if (startpfn >= atop(16UL * 1024 * 1024 * 1024))
+	if (startpfn > atop(pfn_to_pad(PG_FRAME)))
 		return 0;
-	if (endpfn >= atop(16UL * 1024 * 1024 * 1024))
-		endpfn = atop(16UL * 1024 * 1024 * 1024);
-#endif
+	if (endpfn > atop(pfn_to_pad(PG_FRAME)))
+		endpfn = 1 + atop(pfn_to_pad(PG_FRAME));
 	
 	for (i = 0, cur = mem_layout; i < MAXMEMSEGS; i++, cur++) {
 		if (cur->mem_last_page == 0) {
