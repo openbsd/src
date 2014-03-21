@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2014/03/21 21:39:35 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2014/03/21 21:49:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -909,7 +909,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				 */
 				npte = PG_RWPAGE;
 			} else {
-				if (pg->pg_flags & PV_ATTR_MOD) {
+				if (pg->pg_flags & PGF_ATTR_MOD) {
 					npte = PG_RWPAGE;
 				} else {
 					npte = PG_CWPAGE;
@@ -924,9 +924,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
 			atomic_setbits_int(&pg->pg_flags,
-			    PV_ATTR_MOD | PV_ATTR_REF);
+			    PGF_ATTR_MOD | PGF_ATTR_REF);
 		else if (flags & VM_PROT_ALL)
-			atomic_setbits_int(&pg->pg_flags, PV_ATTR_REF);
+			atomic_setbits_int(&pg->pg_flags, PGF_ATTR_REF);
 
 		stat_count(enter_stats.managed);
 	} else {
@@ -1238,9 +1238,9 @@ pmap_zero_page(struct vm_page *pg)
 
 	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
-	if (pg->pg_flags & PV_UNCACHED)
+	if (pg->pg_flags & PGF_UNCACHED)
 		df = 1;
-	else if (pg->pg_flags & PV_CACHED) {
+	else if (pg->pg_flags & PGF_CACHED) {
 		df = ((pv->pv_va ^ va) & cache_valias_mask) != 0;
 		if (df)
 			Mips_SyncDCachePage(ci, pv->pv_va, phys);
@@ -1275,17 +1275,17 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
 
 	pv = pg_to_pvh(srcpg);
-	if (srcpg->pg_flags & PV_UNCACHED)
+	if (srcpg->pg_flags & PGF_UNCACHED)
 		sf = 1;
-	else if (srcpg->pg_flags & PV_CACHED) {
+	else if (srcpg->pg_flags & PGF_CACHED) {
 		sf = ((pv->pv_va ^ s) & cache_valias_mask) != 0;
 		if (sf)
 			Mips_SyncDCachePage(ci, pv->pv_va, src);
 	}
 	pv = pg_to_pvh(dstpg);
-	if (dstpg->pg_flags & PV_UNCACHED)
+	if (dstpg->pg_flags & PGF_UNCACHED)
 		df = 1;
-	else if (dstpg->pg_flags & PV_CACHED) {
+	else if (dstpg->pg_flags & PGF_CACHED) {
 		df = ((pv->pv_va ^ s) & cache_valias_mask) != 0;
 		if (df)
 			Mips_SyncDCachePage(ci, pv->pv_va, dst);
@@ -1318,8 +1318,8 @@ pmap_clear_modify(struct vm_page *pg)
 	pa = VM_PAGE_TO_PHYS(pg);
 	pv = pg_to_pvh(pg);
 	s = splvm();
-	if (pg->pg_flags & PV_ATTR_MOD) {
-		atomic_clearbits_int(&pg->pg_flags, PV_ATTR_MOD);
+	if (pg->pg_flags & PGF_ATTR_MOD) {
+		atomic_clearbits_int(&pg->pg_flags, PGF_ATTR_MOD);
 		rv = TRUE;
 	}
 
@@ -1333,7 +1333,7 @@ pmap_clear_modify(struct vm_page *pg)
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
 			if ((entry & PG_V) != 0 && (entry & PG_M) != 0) {
-				if (pg->pg_flags & PV_CACHED)
+				if (pg->pg_flags & PGF_CACHED)
 					Mips_HitSyncDCache(ci, pv->pv_va,
 					    PAGE_SIZE);
 				rv = TRUE;
@@ -1347,7 +1347,7 @@ pmap_clear_modify(struct vm_page *pg)
 			pte += uvtopte(pv->pv_va);
 			entry = *pte;
 			if ((entry & PG_V) != 0 && (entry & PG_M) != 0) {
-				if (pg->pg_flags & PV_CACHED)
+				if (pg->pg_flags & PGF_CACHED)
 					Mips_SyncDCachePage(ci, pv->pv_va, pa);
 				rv = TRUE;
 				entry &= ~PG_M;
@@ -1364,7 +1364,7 @@ pmap_clear_modify(struct vm_page *pg)
 void
 pmap_set_modify(struct vm_page *pg)
 {
-	atomic_setbits_int(&pg->pg_flags, PV_ATTR_MOD | PV_ATTR_REF);
+	atomic_setbits_int(&pg->pg_flags, PGF_ATTR_MOD | PGF_ATTR_REF);
 }
 
 /*
@@ -1379,8 +1379,8 @@ pmap_clear_reference(struct vm_page *pg)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", VM_PAGE_TO_PHYS(pg)));
 
-	rv = (pg->pg_flags & PV_ATTR_REF) != 0;
-	atomic_clearbits_int(&pg->pg_flags, PV_ATTR_REF);
+	rv = (pg->pg_flags & PGF_ATTR_REF) != 0;
+	atomic_clearbits_int(&pg->pg_flags, PGF_ATTR_REF);
 	return rv;
 }
 
@@ -1393,7 +1393,7 @@ pmap_clear_reference(struct vm_page *pg)
 boolean_t
 pmap_is_referenced(struct vm_page *pg)
 {
-	return (pg->pg_flags & PV_ATTR_REF) != 0;
+	return (pg->pg_flags & PGF_ATTR_REF) != 0;
 }
 
 /*
@@ -1405,7 +1405,7 @@ pmap_is_referenced(struct vm_page *pg)
 boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
-	return (pg->pg_flags & PV_ATTR_MOD) != 0;
+	return (pg->pg_flags & PGF_ATTR_MOD) != 0;
 }
 
 /*
@@ -1436,7 +1436,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_page_cache(%p)\n", pg));
 
-	newmode = mode & PV_CACHED ? PG_CACHED : PG_UNCACHED;
+	newmode = mode & PGF_CACHED ? PG_CACHED : PG_UNCACHED;
 	pv = pg_to_pvh(pg);
 
 	s = splvm();
@@ -1466,7 +1466,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 			}
 		}
 	}
-	atomic_clearbits_int(&pg->pg_flags, PV_CACHED | PV_UNCACHED);
+	atomic_clearbits_int(&pg->pg_flags, PGF_CACHED | PGF_UNCACHED);
 	atomic_setbits_int(&pg->pg_flags, mode);
 	splx(s);
 }
@@ -1546,9 +1546,9 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 
 		pv->pv_va = va;
 		if (*npte & PG_CACHED)
-			atomic_setbits_int(&pg->pg_flags, PV_CACHED);
+			atomic_setbits_int(&pg->pg_flags, PGF_CACHED);
 		if (*npte & PG_UNCACHED)
-			atomic_setbits_int(&pg->pg_flags, PV_UNCACHED);
+			atomic_setbits_int(&pg->pg_flags, PGF_UNCACHED);
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
@@ -1557,7 +1557,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		 * We'll place this entry after the header.
 		 */
 
-		if ((pg->pg_flags & PV_CACHED) == 0) {
+		if ((pg->pg_flags & PGF_CACHED) == 0) {
 			/*
 			 * If page is not mapped cached it's either because
 			 * an uncached mapping was explicitely requested or
@@ -1588,7 +1588,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		}
 
 		if ((*npte & PG_CACHED) != 0 &&
-		    (pg->pg_flags & PV_CACHED) != 0 && cache_valias_mask != 0) {
+		    (pg->pg_flags & PGF_CACHED) != 0 && cache_valias_mask != 0) {
 			/*
 			 * We have a VAC possibility.  Check if virtual
 			 * address of current mappings are compatible
@@ -1659,7 +1659,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		} else {
 			pv->pv_pmap = NULL;
 			atomic_clearbits_int(&pg->pg_flags,
-			    PG_PMAPMASK & ~PV_PRESERVE);
+			    PG_PMAPMASK & ~PGF_PRESERVE);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {
@@ -1679,7 +1679,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 	}
 
-	if ((pg->pg_flags & (PV_CACHED | PV_UNCACHED)) == 0 &&
+	if ((pg->pg_flags & (PGF_CACHED | PGF_UNCACHED)) == 0 &&
 	    cache_valias_mask != 0 && pv->pv_pmap != NULL) {
 		/*
 		 * If this page had been mapped uncached due to aliasing,
@@ -1698,7 +1698,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			printf("%s: caching page pa %p, va %p again\n",
 			    __func__, VM_PAGE_TO_PHYS(pg), va);
 #endif
-			pmap_page_cache(pg, PV_CACHED);
+			pmap_page_cache(pg, PGF_CACHED);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.32 2014/03/10 21:17:58 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.33 2014/03/21 21:49:45 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -126,12 +126,12 @@ typedef struct pmap {
 	       (sizeof(struct pmap_asid_info) * ((x) - 1))))
 
 
-/* flags for pv_entry */
-#define	PV_UNCACHED	PG_PMAP0	/* Page is explicitely uncached */
-#define	PV_CACHED	PG_PMAP1	/* Page is currently cached */
-#define	PV_ATTR_MOD	PG_PMAP2
-#define	PV_ATTR_REF	PG_PMAP3
-#define	PV_PRESERVE	(PV_ATTR_MOD | PV_ATTR_REF)
+/* machine-dependent pg_flags */
+#define	PGF_UNCACHED	PG_PMAP0	/* Page is explicitely uncached */
+#define	PGF_CACHED	PG_PMAP1	/* Page is currently cached */
+#define	PGF_ATTR_MOD	PG_PMAP2
+#define	PGF_ATTR_REF	PG_PMAP3
+#define	PGF_PRESERVE	(PGF_ATTR_MOD | PGF_ATTR_REF)
 
 #define	PMAP_NOCACHE	PMAP_MD0
 

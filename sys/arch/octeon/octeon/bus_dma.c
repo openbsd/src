@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.8 2014/03/10 21:32:15 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.9 2014/03/21 21:49:45 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -473,7 +473,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 			 */
 			if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
 				pmap_page_cache(PHYS_TO_VM_PAGE(pa),
-				    PV_UNCACHED);
+				    PGF_UNCACHED);
 		}
 		pmap_update(pmap_kernel());
 	}
