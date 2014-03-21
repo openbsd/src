@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.92 2014/03/14 12:08:18 krw Exp $	*/
+/*	$OpenBSD: in.c,v 1.93 2014/03/21 10:32:17 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -94,8 +94,10 @@ int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 	struct ifnet *);
 
 void in_purgeaddr(struct ifaddr *);
-int in_addprefix(struct in_ifaddr *, int);
+int in_addprefix(struct in_ifaddr *);
 int in_scrubprefix(struct in_ifaddr *);
+int in_addhost(struct in_ifaddr *);
+int in_scrubhost(struct in_ifaddr *);
 
 /* Return 1 if an internet address is for a directly connected host */
 int
@@ -609,7 +611,10 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 void
 in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
 {
-	in_scrubprefix(ia);
+	if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
+		in_scrubprefix(ia);
+	else
+		in_scrubhost(ia);
 }
 
 /*
@@ -622,7 +627,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splnet(), flags = RTF_UP, error = 0;
+	int s = splnet(), error = 0;
 
 	if (newaddr)
 		TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
@@ -682,13 +687,15 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 		}
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		ia->ia_dstaddr = ia->ia_addr;
-		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
 		if (ia->ia_dstaddr.sin_family != AF_INET)
 			goto out;
-		flags |= RTF_HOST;
 	}
-	error = in_addprefix(ia, flags);
+
+	if ((ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0)
+		error = in_addprefix(ia);
+	else
+		error = in_addhost(ia);
 
 	/*
 	 * If the interface supports multicast, join the "all hosts"
@@ -740,51 +747,118 @@ in_purgeaddr(struct ifaddr *ifa)
 	ifafree(&ia->ia_ifa);
 }
 
-#define rtinitflags(x) \
-	((((x)->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) != 0) \
-	    ? RTF_HOST : 0)
+int
+in_addhost(struct in_ifaddr *ia0)
+{
+	struct in_ifaddr *ia;
+	struct in_addr dst;
+	int error;
+
+	dst = ia0->ia_dstaddr.sin_addr;
+
+	/*
+	 * If an interface already have a route to the same
+	 * destination don't do anything.
+	 */
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
+			continue;
+
+		if (dst.s_addr != ia->ia_dstaddr.sin_addr.s_addr)
+			continue;
+
+		if ((ia->ia_flags & IFA_ROUTE) == 0)
+			continue;
+
+		return (0);
+	}
+
+	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
+	if (!error)
+		ia0->ia_flags |= IFA_ROUTE;
+
+	return (error);
+}
+
+int
+in_scrubhost(struct in_ifaddr *ia0)
+{
+	struct in_ifaddr *ia;
+	struct in_addr dst;
+	int error;
+
+	if ((ia0->ia_flags & IFA_ROUTE) == 0)
+		return (0);
+
+	dst = ia0->ia_dstaddr.sin_addr;
+
+	/*
+	 * Because we only add one route for a given destination at
+	 * a time, here we need to do some magic to move this route
+	 * to another interface if it has the same destination.
+	 */
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
+			continue;
+
+		if (dst.s_addr != ia->ia_dstaddr.sin_addr.s_addr)
+			continue;
+
+		if ((ia->ia_flags & IFA_ROUTE) != 0)
+			continue;
+
+		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_HOST);
+		ia0->ia_flags &= ~IFA_ROUTE;
+		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
+		if (!error)
+			ia->ia_flags |= IFA_ROUTE;
+
+		return (error);
+	}
+
+	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_HOST);
+	ia0->ia_flags &= ~IFA_ROUTE;
+
+	return (0);
+}
 
 /*
  * add a route to prefix ("connected route" in cisco terminology).
  * does nothing if there's some interface address with the same prefix already.
  */
 int
-in_addprefix(struct in_ifaddr *target, int flags)
+in_addprefix(struct in_ifaddr *ia0)
 {
 	struct in_ifaddr *ia;
-	struct in_addr prefix, mask, p;
+	struct in_addr prefix, mask, p, m;
 	int error;
 
-	if ((flags & RTF_HOST) != 0)
-		prefix = target->ia_dstaddr.sin_addr;
-	else {
-		prefix = target->ia_addr.sin_addr;
-		mask = target->ia_sockmask.sin_addr;
-		prefix.s_addr &= mask.s_addr;
-	}
+	prefix = ia0->ia_addr.sin_addr;
+	mask = ia0->ia_sockmask.sin_addr;
+	prefix.s_addr &= mask.s_addr;
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != target->ia_ifp->if_rdomain)
+		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
 			continue;
-		if (rtinitflags(ia)) {
-			p = ia->ia_dstaddr.sin_addr;
-			if (prefix.s_addr != p.s_addr)
-				continue;
-		} else {
-			p = ia->ia_addr.sin_addr;
-			p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
-			if (prefix.s_addr != p.s_addr ||
-			    mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
-				continue;
-		}
+
+		if ((ia->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)))
+			continue;
+
 		if ((ia->ia_flags & IFA_ROUTE) == 0)
 			continue;
+
+		p = ia->ia_addr.sin_addr;
+		m = ia->ia_sockmask.sin_addr;
+		p.s_addr &= m.s_addr;
+
+		if (prefix.s_addr != p.s_addr || mask.s_addr != m.s_addr)
+			continue;
+
 #if NCARP > 0
 		/* move to a real interface instead of carp interface */
 		if (ia->ia_ifp->if_type == IFT_CARP &&
-		    target->ia_ifp->if_type != IFT_CARP) {
-			rtinit(&(ia->ia_ifa), (int)RTM_DELETE,
-			    rtinitflags(ia));
+		    ia0->ia_ifp->if_type != IFT_CARP) {
+			rtinit(&ia->ia_ifa, RTM_DELETE, 0);
 			ia->ia_flags &= ~IFA_ROUTE;
 			break;
 		}
@@ -799,9 +873,9 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&target->ia_ifa, (int)RTM_ADD, flags);
+	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP);
 	if (!error)
-		target->ia_flags |= IFA_ROUTE;
+		ia0->ia_flags |= IFA_ROUTE;
 	return error;
 }
 
@@ -811,64 +885,54 @@ in_addprefix(struct in_ifaddr *target, int flags)
  * with the same prefix (otherwise we lose the route mistakenly).
  */
 int
-in_scrubprefix(struct in_ifaddr *target)
+in_scrubprefix(struct in_ifaddr *ia0)
 {
 	struct in_ifaddr *ia;
 	struct in_addr prefix, mask, p, m;
 	int error;
 
-	if ((target->ia_flags & IFA_ROUTE) == 0)
+	if ((ia0->ia_flags & IFA_ROUTE) == 0)
 		return 0;
 
-	if (rtinitflags(target)) {
-		prefix = target->ia_dstaddr.sin_addr;
-		mask.s_addr = INADDR_BROADCAST;
-	} else {
-		prefix = target->ia_addr.sin_addr;
-		mask = target->ia_sockmask.sin_addr;
-		prefix.s_addr &= mask.s_addr;
-	}
+	prefix = ia0->ia_addr.sin_addr;
+	mask = ia0->ia_sockmask.sin_addr;
+	prefix.s_addr &= mask.s_addr;
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (rtinitflags(ia)) {
-			p = ia->ia_dstaddr.sin_addr;
-			m.s_addr = INADDR_BROADCAST;
-		} else {
-			p = ia->ia_addr.sin_addr;
-			m = ia->ia_sockmask.sin_addr;
-			p.s_addr &= m.s_addr;
-		}
+		if (ia->ia_ifp->if_rdomain != ia0->ia_ifp->if_rdomain)
+			continue;
 
-		if (ia->ia_ifp->if_rdomain != target->ia_ifp->if_rdomain)
+		if ((ia->ia_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)))
 			continue;
-		if (prefix.s_addr != p.s_addr ||
-		    mask.s_addr != m.s_addr)
+
+		if ((ia->ia_flags & IFA_ROUTE) != 0)
 			continue;
+
+		p = ia->ia_addr.sin_addr;
+		m = ia->ia_sockmask.sin_addr;
+		p.s_addr &= m.s_addr;
+
+		if (prefix.s_addr != p.s_addr || mask.s_addr != m.s_addr)
+			continue;
+
 		/*
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
-		if ((ia->ia_flags & IFA_ROUTE) == 0) {
-			rtinit(&(target->ia_ifa), (int)RTM_DELETE,
-			    rtinitflags(target));
-			target->ia_flags &= ~IFA_ROUTE;
-
-			error = rtinit(&ia->ia_ifa, (int)RTM_ADD,
-			    rtinitflags(ia) | RTF_UP);
-			if (error == 0)
-				ia->ia_flags |= IFA_ROUTE;
-			return error;
-		}
+		rtinit(&ia0->ia_ifa, RTM_DELETE, 0);
+		ia0->ia_flags &= ~IFA_ROUTE;
+		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP);
+		if (error == 0)
+			ia->ia_flags |= IFA_ROUTE;
+		return error;
 	}
 
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rtinit(&(target->ia_ifa), (int)RTM_DELETE, rtinitflags(target));
-	target->ia_flags &= ~IFA_ROUTE;
+	rtinit(&ia0->ia_ifa, RTM_DELETE, 0);
+	ia0->ia_flags &= ~IFA_ROUTE;
 	return 0;
 }
-
-#undef rtinitflags
 
 /*
  * Return 1 if the address might be a local broadcast address.
