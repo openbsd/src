@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.13 2014/03/09 10:12:17 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.14 2014/03/21 23:05:41 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -52,6 +52,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <mips64/mips_cpu.h>
+#include <mips64/mips_opcode.h>
 
 #include <uvm/uvm.h>
 
@@ -490,4 +491,63 @@ resettodr()
 
 	if (cd->tod_set)
 		(*cd->tod_set)(cd->tod_cookie, &c);
+}
+
+/*
+ * Decode instruction and figure out type.
+ */
+int
+classify_insn(uint32_t insn)
+{
+	InstFmt	inst;
+
+	inst.word = insn;
+	switch (inst.JType.op) {
+	case OP_SPECIAL:
+		switch (inst.RType.func) {
+		case OP_JR:
+			return INSNCLASS_BRANCH;
+		case OP_JALR:
+			return INSNCLASS_CALL;
+		}
+		break;
+
+	case OP_BCOND:
+		switch (inst.IType.rt) {
+		case OP_BLTZ:
+		case OP_BLTZL:
+		case OP_BGEZ:
+		case OP_BGEZL:
+			return INSNCLASS_BRANCH;
+		case OP_BLTZAL:
+		case OP_BLTZALL:
+		case OP_BGEZAL:
+		case OP_BGEZALL:
+			return INSNCLASS_CALL;
+		}
+		break;
+
+	case OP_JAL:
+		return INSNCLASS_CALL;
+
+	case OP_J:
+	case OP_BEQ:
+	case OP_BEQL:
+	case OP_BNE:
+	case OP_BNEL:
+	case OP_BLEZ:
+	case OP_BLEZL:
+	case OP_BGTZ:
+	case OP_BGTZL:
+		return INSNCLASS_BRANCH;
+
+	case OP_COP1:
+		switch (inst.RType.rs) {
+		case OP_BC:
+			return INSNCLASS_BRANCH;
+		}
+		break;
+	}
+
+	return INSNCLASS_NEUTRAL;
 }

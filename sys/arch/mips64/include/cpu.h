@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.96 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.97 2014/03/21 23:05:41 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -427,6 +427,11 @@ int	guarded_write_4(paddr_t, uint32_t);
 
 void	MipsFPTrap(struct trap_frame *);
 register_t MipsEmulateBranch(struct trap_frame *, vaddr_t, uint32_t, uint32_t);
+
+int	classify_insn(uint32_t);
+#define	INSNCLASS_NEUTRAL	0
+#define	INSNCLASS_CALL		1
+#define	INSNCLASS_BRANCH	2
 
 /*
  * Low level access routines to CPU registers

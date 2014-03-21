@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.36 2012/09/29 21:37:03 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.37 2014/03/21 23:05:41 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -376,75 +376,6 @@ next_instr_address(db_addr_t pc, boolean_t bd)
 	return(next);
 }
 
-
-/*
- *	Decode instruction and figure out type.
- */
-int
-db_inst_type(ins)
-	int	ins;
-{
-	InstFmt	inst;
-	int	ityp = 0;
-
-	inst.word = ins;
-	switch ((int)inst.JType.op) {
-	case OP_SPECIAL:
-		switch ((int)inst.RType.func) {
-		case OP_JR:
-			ityp = IT_BRANCH;
-			break;
-		case OP_JALR:
-		case OP_SYSCALL:
-			ityp = IT_CALL;
-			break;
-		}
-		break;
-
-	case OP_BCOND:
-		switch ((int)inst.IType.rt) {
-		case OP_BLTZ:
-		case OP_BLTZL:
-		case OP_BGEZ:
-		case OP_BGEZL:
-			ityp = IT_BRANCH;
-			break;
-
-		case OP_BLTZAL:
-		case OP_BLTZALL:
-		case OP_BGEZAL:
-		case OP_BGEZALL:
-			ityp = IT_CALL;
-			break;
-		}
-		break;
-
-	case OP_JAL:
-		ityp = IT_CALL;
-		break;
-
-	case OP_J:
-	case OP_BEQ:
-	case OP_BEQL:
-	case OP_BNE:
-	case OP_BNEL:
-	case OP_BLEZ:
-	case OP_BLEZL:
-	case OP_BGTZ:
-	case OP_BGTZL:
-		ityp = IT_BRANCH;
-		break;
-
-	case OP_COP1:
-		switch (inst.RType.rs) {
-		case OP_BC:
-			ityp = IT_BRANCH;
-			break;
-		}
-		break;
-	}
-	return (ityp);
-}
 
 /*
  *  MIPS machine dependent DDB commands.

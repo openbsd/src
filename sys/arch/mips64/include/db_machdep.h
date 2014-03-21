@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.14 2014/03/16 20:31:46 guenther Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.15 2014/03/21 23:05:41 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -58,15 +58,11 @@ db_addr_t	next_instr_address(db_addr_t, boolean_t);
 /*
  *  Test of instructions to see class.
  */
-#define	IT_CALL		0x01
-#define	IT_BRANCH	0x02
-
-#define	inst_branch(i)	(db_inst_type(i) == IT_BRANCH)
+#define	inst_branch(i)		(classify_insn(i) == INSNCLASS_BRANCH)
 #define	inst_trap_return(i)	((i) & 0)
-#define	inst_call(i)	(db_inst_type(i) == IT_CALL)
-#define	inst_return(i)	((i) == 0x03e00008)
+#define	inst_call(i)		(classify_insn(i) == INSNCLASS_CALL)
+#define	inst_return(i)		((i) == 0x03e00008)
 
-int db_inst_type(int);
 void db_machine_init(void);
 
 int db_enter_ddb(void);
