@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.155 2014/03/18 10:47:34 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.156 2014/03/21 10:44:42 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ int			rttrash;	/* routes not in table but not freed */
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
+void	rt_timer_init(void);
 int	rtable_init(struct radix_node_head ***, u_int);
 int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
@@ -1232,15 +1233,14 @@ rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
 }
 
 void
-rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
+rt_timer_queue_destroy(struct rttimer_queue *rtq)
 {
 	struct rttimer	*r;
 
 	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
-		if (destroy)
-			RTTIMER_CALLOUT(r);
+		RTTIMER_CALLOUT(r);
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
@@ -1253,7 +1253,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
 }
 
 unsigned long
-rt_timer_count(struct rttimer_queue *rtq)
+rt_timer_queue_count(struct rttimer_queue *rtq)
 {
 	return (rtq->rtq_count);
 }

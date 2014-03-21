@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.140 2014/01/24 12:20:22 naddy Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.141 2014/03/21 10:44:42 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1093,7 +1093,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 * allow non-validated cases if memory is plenty, to make traffic
 	 * from non-connected pcb happy.
 	 */
-	rtcount = rt_timer_count(icmp6_mtudisc_timeout_q);
+	rtcount = rt_timer_queue_count(icmp6_mtudisc_timeout_q);
 	if (validated) {
 		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat)
 			return;
@@ -2317,7 +2317,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		 * work just fine even if we do not install redirect route
 		 * (there will be additional hops, though).
 		 */
-		rtcount = rt_timer_count(icmp6_redirect_timeout_q);
+		rtcount = rt_timer_queue_count(icmp6_redirect_timeout_q);
 		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
 			goto freeit;
 		else if (0 <= icmp6_redirect_lowat &&

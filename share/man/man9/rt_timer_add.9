@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rt_timer_add.9,v 1.1 2014/03/18 09:01:11 mpi Exp $
+.\"     $OpenBSD: rt_timer_add.9,v 1.2 2014/03/21 10:44:42 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,14 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: March 21 2014 $
 .Dt RT_TIMER_ADD 9
 .Os
 .Sh NAME
 .Nm rt_timer_add ,
-.Nm rt_timer_count ,
 .Nm rt_timer_remove_all ,
 .Nm rt_timer_queue_create ,
+.Nm rt_timer_queue_count ,
 .Nm rt_timer_queue_change ,
 .Nm rt_timer_queue_destroy
 .Nd route timer queues interface
@@ -32,16 +32,16 @@
 .Fn rt_timer_add "struct rtentry *rt" \
 "void (*func)(struct rtentry *, struct rttimer *)" \
 "struct rttimer_queue *queue" "u_int rtableid"
-.Ft unsigned long
-.Fn rt_timer_count "struct rttimer_queue *rtq"
 .Ft void
 .Fn rt_timer_remove_all "struct rtentry *rt"
 .Ft struct rttimer_queue *
 .Fn rt_timer_queue_create "u_int timeout"
+.Ft unsigned long
+.Fn rt_timer_queue_count "struct rttimer_queue *rtq"
 .Ft void
 .Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
 .Ft void
-.Fn rt_timer_queue_destroy "struct rttimer_queue *rtq" "int destroy"
+.Fn rt_timer_queue_destroy "struct rttimer_queue *rtq"
 .Sh DESCRIPTION
 Route timer queues provide a method of queueing routing-related actions to be
 triggered once per second.
@@ -60,20 +60,27 @@ If
 already has a call to
 .Fa func
 scheduled on any timer queue, it will be replaced with the new invocation.
+.It Fn rt_timer_remove_all "struct rtentry *rt"
+Remove all timeouts associated with
+.Fa rt
+from all routing timer queues.
 .It Fn rt_timer_queue_create "u_int timeout"
 Create a timer queue with a timeout of
 .Fa timeout
 seconds.
+.It Fn rt_timer_queue_count "struct rtentry *rt"
+Return the number of timers present in the queue 
+.Fa rtq .
 .It Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
 Set timeout for
 .Fa rtq
 to
 .Fa timeout
 seconds.
-.It Fn rt_timer_remove_all "struct rtentry *rt"
-Remove all timeouts associated with
-.Fa rt
-from all routing timer queues.
+.It Fn rt_timer_queue_destroy "struct rttimer_queue *rtq"
+Remove all timeouts from the routing timer queue
+.Fa rtq ,
+execute their associated callback and destroy it. 
 .El
 .Sh RETURN VALUES
 .Fn rt_timer_add

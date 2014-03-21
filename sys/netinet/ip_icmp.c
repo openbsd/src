@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.117 2014/03/20 11:22:15 benno Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.118 2014/03/21 10:44:42 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -876,8 +876,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    &icmp_redirtimeout);
 		if (icmp_redirect_timeout_q != NULL) {
 			if (icmp_redirtimeout == 0) {
-				rt_timer_queue_destroy(icmp_redirect_timeout_q,
-				    TRUE);
+				rt_timer_queue_destroy(icmp_redirect_timeout_q);
 				icmp_redirect_timeout_q = NULL;
 			} else
 				rt_timer_queue_change(icmp_redirect_timeout_q,
