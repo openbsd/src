@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.754 2014/03/20 20:01:28 krw Exp $
+#	$OpenBSD: install.sub,v 1.755 2014/03/22 01:13:02 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -84,7 +84,6 @@ shift $((OPTIND-1))
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
-#	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 #	NCPU	    - the number of cpus for mp capable arches
 . install.md
@@ -1506,52 +1505,6 @@ install_nfs() {
 	install_mounted_fs
 }
 
-install_tape() {
-	local _z _bs
-
-	# Get the name of the tape device.
-	get_drive "tape drive" '$MTDEVS' || return
-	export TAPE=/dev/nr$resp
-	if [[ ! -c $TAPE ]]; then
-		echo "$TAPE is not a character special file."
-		return
-	fi
-
-	# Rewind the tape device.
-	echo -n "Rewinding $TAPE (mt rewind)..."
-	mt rewind || return
-	echo "done."
-
-	# Extract the desired files.
-	while :; do
-		ask_until "Skip how many files? (or 'done')" 0
-		[[ $resp == done ]] && return
-		[[ $resp == +([0-9]) ]] || continue
-
-		if (($resp > 0)); then
-			echo -n "Skipping $resp file(s)..."
-			mt fsf $resp || return
-			echo "done."
-		elif [[ -n $_bs ]]; then
-			# Dance to start of next file.
-			mt bsf; mt fsf
-		fi
-
-		unset _z
-		ask_yn "Is the file gzipped?" yes
-		[[ $resp == y ]] && _z=z
-
-		# Get the blocksize to use. If the file isn't gzipped then
-		# default to the 20 x 512 = 10,240 byte tar default.
-		[[ $_z == z ]] || _bs=10240
-		ask_until "Blocksize for this file?" "${_bs:-8k}"
-		[[ $resp == done ]] && return
-		_bs=$resp
-
-		dd if=$TAPE bs=$_bs | tar ${_z}xvphf - -C /mnt || return
-	done
-}
-
 set_timezone() {
 	local _zonefile=$1 _zonepath _zsed _tz _zoneroot=/usr/share/zoneinfo
 
@@ -1635,11 +1588,10 @@ install_sets() {
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
 	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs"; : ${_d:=cd}; }
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
-	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 	: ${_d:=http}
 
 	if ! isin "$_d" $_locs; then
-		for a in http cd nfs tape disk; do
+		for a in http cd nfs disk; do
 			isin $a $_locs && _d=$a && break
 		done
 	fi
@@ -1657,7 +1609,6 @@ install_sets() {
 		d*|D*)	install_disk && METHOD=disk;;
 		h*|H*)	isin http $_locs && install_http && METHOD=http;;
 		n*|N*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
-		t*|T*)	isin tape $_locs && install_tape && METHOD=tape;;
 		*)	$auto && echo "'$resp' is not a valid choice." && exit 1;;
 		esac
 
