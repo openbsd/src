@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.204 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.205 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -299,8 +299,8 @@ main(void *framep)
 
 	/* Initialize signal state for process 0. */
 	signal_init();
-	p->p_sigacts = &sigacts0;
-	siginit(p);
+	pr->ps_sigacts = &sigacts0;
+	siginit(pr);
 
 	/* Create the file descriptor table. */
 	p->p_fd = fdinit(NULL);
@@ -604,7 +604,7 @@ start_init(void *arg)
 	check_console(p);
 
 	/* process 0 ignores SIGCHLD, but we can't */
-	p->p_sigacts->ps_flags = 0;
+	p->p_p->ps_sigacts->ps_flags = 0;
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.

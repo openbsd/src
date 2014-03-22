@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2014/03/13 03:52:55 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2014/03/22 06:05:45 guenther Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -361,7 +361,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	struct proc *p = curproc;
-	struct sigacts *psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
 	int caddr, oldsp, newsp;

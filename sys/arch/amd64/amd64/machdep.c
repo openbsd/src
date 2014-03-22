@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.174 2014/03/13 03:52:55 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.175 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -543,7 +543,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts * psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigcontext ksc;
 	siginfo_t ksi;
 	register_t sp, scp, sip;

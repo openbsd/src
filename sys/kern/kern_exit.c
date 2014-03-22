@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.135 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.136 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -240,8 +240,7 @@ exit1(struct proc *p, int rv, int flags)
 		 * If parent has the SAS_NOCLDWAIT flag set, we're not
 		 * going to become a zombie.
 		 */
-		if (pr->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
-		    SAS_NOCLDWAIT)
+		if (pr->ps_pptr->ps_sigacts->ps_flags & SAS_NOCLDWAIT)
 			atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
 	}
 
@@ -347,12 +346,12 @@ exit1(struct proc *p, int rv, int flags)
 			proc_reparent(pr, initproc->p_p);
 			wakeup(ppr);
 		}
-	}
 
-	/*
-	 * Release the process's signal state.
-	 */
-	sigactsfree(p);
+		/*
+		 * Release the process's signal state.
+		 */
+		sigactsfree(pr);
+	}
 
 	/* just a thread? detach it from its process */
 	if (p->p_flag & P_THREAD) {

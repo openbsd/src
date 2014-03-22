@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.16 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.17 2014/03/22 06:05:45 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -88,7 +88,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
-	struct sigacts *psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigframe *fp;
 	int fsize;
 	struct sigframe sf;

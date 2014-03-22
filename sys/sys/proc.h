@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.177 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.178 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -164,6 +164,7 @@ struct process {
 	LIST_ENTRY(process) ps_sibling;	/* List of sibling processes. */
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
 
+	struct	sigacts *ps_sigacts;	/* Signal actions, state */
 	struct	vnode *ps_textvp;	/* Vnode of executable. */
 
 /* The following fields are all zeroed upon creation in process_new. */
@@ -259,7 +260,6 @@ struct proc {
 	/* substructures: */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
 	struct	vmspace *p_vmspace;	/* Address space. */
-	struct	sigacts *p_sigacts;	/* Signal actions, state */
 #define	p_cred		p_p->ps_cred
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_p->ps_limit->pl_rlimit

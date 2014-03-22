@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.150 2014/03/13 03:52:55 dlg Exp $ */
+/* $OpenBSD: machdep.c,v 1.151 2014/03/22 06:05:45 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1427,7 +1427,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigcontext *scp, ksc;
 	struct fpreg *fpregs = (struct fpreg *)&ksc.sc_fpregs;
 	struct trapframe *frame;
-	struct sigacts *psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	unsigned long oldsp;
 	int fsize, rndfsize, kscsize;
 	siginfo_t *sip, ksi;

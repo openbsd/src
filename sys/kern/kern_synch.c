@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.114 2014/01/23 01:48:44 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.115 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -310,7 +310,8 @@ sleep_finish_signal(struct sleep_state *sls)
 		if ((error = single_thread_check(p, 1)))
 			return (error);
 		if (sls->sls_sig != 0 || (sls->sls_sig = CURSIG(p)) != 0) {
-			if (p->p_sigacts->ps_sigintr & sigmask(sls->sls_sig))
+			if (p->p_p->ps_sigacts->ps_sigintr &
+			    sigmask(sls->sls_sig))
 				return (EINTR);
 			return (ERESTART);
 		}

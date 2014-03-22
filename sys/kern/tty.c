@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.104 2013/12/16 18:46:39 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.105 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -739,7 +739,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSWINSZ:
 		while (isbackground(pr, tp) &&
 		    (pr->ps_flags & PS_PPWAIT) == 0 &&
-		    (p->p_sigacts->ps_sigignore & sigmask(SIGTTOU)) == 0 &&
+		    (pr->ps_sigacts->ps_sigignore & sigmask(SIGTTOU)) == 0 &&
 		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 			if (pr->ps_pgrp->pg_jobc == 0)
 				return (EIO);
@@ -1490,7 +1490,7 @@ loop:	lflag = tp->t_lflag;
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(pr, tp)) {
-		if ((p->p_sigacts->ps_sigignore & sigmask(SIGTTIN)) ||
+		if ((pr->ps_sigacts->ps_sigignore & sigmask(SIGTTIN)) ||
 		   (p->p_sigmask & sigmask(SIGTTIN)) ||
 		    pr->ps_flags & PS_PPWAIT || pr->ps_pgrp->pg_jobc == 0) {
 			error = EIO;
@@ -1747,7 +1747,7 @@ loop:
 	pr = p->p_p;
 	if (isbackground(pr, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (pr->ps_flags & PS_PPWAIT) == 0 &&
-	    (p->p_sigacts->ps_sigignore & sigmask(SIGTTOU)) == 0 &&
+	    (pr->ps_sigacts->ps_sigignore & sigmask(SIGTTOU)) == 0 &&
 	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
 		if (pr->ps_pgrp->pg_jobc == 0) {
 			error = EIO;

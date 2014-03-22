@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.43 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.44 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ linux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	int oonstack;
 
 	tf = p->p_md.md_regs;

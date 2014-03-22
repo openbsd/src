@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.158 2014/02/09 11:17:19 kettenis Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.159 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -149,12 +149,12 @@ signal_init(void)
  * as p.
  */
 struct sigacts *
-sigactsinit(struct proc *p)
+sigactsinit(struct process *pr)
 {
 	struct sigacts *ps;
 
 	ps = pool_get(&sigacts_pool, PR_WAITOK);
-	memcpy(ps, p->p_sigacts, sizeof(struct sigacts));
+	memcpy(ps, pr->ps_sigacts, sizeof(struct sigacts));
 	ps->ps_refcnt = 1;
 	return (ps);
 }
@@ -163,10 +163,12 @@ sigactsinit(struct proc *p)
  * Share a sigacts structure.
  */
 struct sigacts *
-sigactsshare(struct proc *p)
+sigactsshare(struct process *pr)
 {
-	p->p_sigacts->ps_refcnt++;
-	return p->p_sigacts;
+	struct sigacts *ps = pr->ps_sigacts;
+
+	ps->ps_refcnt++;
+	return ps;
 }
 
 /*
@@ -185,30 +187,30 @@ sigstkinit(struct sigaltstack *ss)
  * signal state.
  */
 void
-sigactsunshare(struct proc *p)
+sigactsunshare(struct process *pr)
 {
 	struct sigacts *newps;
 
-	if (p->p_sigacts->ps_refcnt == 1)
+	if (pr->ps_sigacts->ps_refcnt == 1)
 		return;
 
-	newps = sigactsinit(p);
-	sigactsfree(p);
-	p->p_sigacts = newps;
+	newps = sigactsinit(pr);
+	sigactsfree(pr);
+	pr->ps_sigacts = newps;
 }
 
 /*
  * Release a sigacts structure.
  */
 void
-sigactsfree(struct proc *p)
+sigactsfree(struct process *pr)
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = pr->ps_sigacts;
 
 	if (--ps->ps_refcnt > 0)
 		return;
 
-	p->p_sigacts = NULL;
+	pr->ps_sigacts = NULL;
 
 	pool_put(&sigacts_pool, ps);
 }
@@ -229,7 +231,7 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 	struct sigaction *sa;
 	const struct sigaction *nsa;
 	struct sigaction *osa;
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_p->ps_sigacts;
 	int signum;
 	int bit, error;
 
@@ -291,7 +293,7 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 void
 setsigvec(struct proc *p, int signum, struct sigaction *sa)
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_p->ps_sigacts;
 	int bit;
 	int s;
 
@@ -315,8 +317,9 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 		 * (init) which will reap the zombie.  Because we use
 		 * init to do our dirty work we never set SAS_NOCLDWAIT
 		 * for PID 1.
+		 * XXX exit1 rework means this is unnecessary?
 		 */
-		if (initproc->p_sigacts != ps &&
+		if (initproc->p_p->ps_sigacts != ps &&
 		    ((sa->sa_flags & SA_NOCLDWAIT) ||
 		    sa->sa_handler == SIG_IGN))
 			atomic_setbits_int(&ps->ps_flags, SAS_NOCLDWAIT);
@@ -366,9 +369,9 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
  * set to ignore signals that are ignored by default.
  */
 void
-siginit(struct proc *p)
+siginit(struct process *pr)
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = pr->ps_sigacts;
 	int i;
 
 	for (i = 0; i < NSIG; i++)
@@ -378,7 +381,7 @@ siginit(struct proc *p)
 }
 
 /*
- * Reset signals for an exec of the specified process.
+ * Reset signals for an exec by the specified thread.
  */
 void
 execsigs(struct proc *p)
@@ -386,8 +389,8 @@ execsigs(struct proc *p)
 	struct sigacts *ps;
 	int nc, mask;
 
-	sigactsunshare(p);
-	ps = p->p_sigacts;
+	sigactsunshare(p->p_p);
+	ps = p->p_p->ps_sigacts;
 
 	/*
 	 * Reset caught signals.  Held signals remain held
@@ -475,7 +478,8 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 	struct sys_sigsuspend_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
-	struct sigacts *ps = p->p_sigacts;
+	struct process *pr = p->p_p;
+	struct sigacts *ps = pr->ps_sigacts;
 
 	/*
 	 * When returning from sigpause, we want
@@ -721,11 +725,12 @@ void
 trapsignal(struct proc *p, int signum, u_long trapno, int code,
     union sigval sigval)
 {
-	struct sigacts *ps = p->p_sigacts;
+	struct process *pr = p->p_p;
+	struct sigacts *ps = pr->ps_sigacts;
 	int mask;
 
 	mask = sigmask(signum);
-	if ((p->p_p->ps_flags & PS_TRACED) == 0 &&
+	if ((pr->ps_flags & PS_TRACED) == 0 &&
 	    (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 #ifdef KTRACE
@@ -874,11 +879,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		if (p->p_sigacts->ps_sigignore & mask)
+		if (pr->ps_sigacts->ps_sigignore & mask)
 			return;
 		if (p->p_sigmask & mask) {
 			action = SIG_HOLD;
-		} else if (p->p_sigacts->ps_sigcatch & mask) {
+		} else if (pr->ps_sigacts->ps_sigcatch & mask) {
 			action = SIG_CATCH;
 		} else {
 			action = SIG_DFL;
@@ -1097,7 +1102,7 @@ issignal(struct proc *p)
 		 * We should see pending but ignored signals
 		 * only if PS_TRACED was on when they were posted.
 		 */
-		if (mask & p->p_sigacts->ps_sigignore &&
+		if (mask & pr->ps_sigacts->ps_sigignore &&
 		    (pr->ps_flags & PS_TRACED) == 0)
 			continue;
 
@@ -1153,7 +1158,7 @@ issignal(struct proc *p)
 		 * Return the signal's number, or fall through
 		 * to clear it from the pending mask.
 		 */
-		switch ((long)p->p_sigacts->ps_sigact[signum]) {
+		switch ((long)pr->ps_sigacts->ps_sigact[signum]) {
 		case (long)SIG_DFL:
 			/*
 			 * Don't take default actions on system processes.
@@ -1268,8 +1273,7 @@ proc_stop_sweep(void *v)
 			continue;
 		atomic_clearbits_int(&pr->ps_flags, PS_STOPPED);
 
-		if ((pr->ps_pptr->ps_mainproc->p_sigacts->ps_flags &
-		    SAS_NOCLDSTOP) == 0)
+		if ((pr->ps_pptr->ps_sigacts->ps_flags & SAS_NOCLDSTOP) == 0)
 			prsignal(pr->ps_pptr, SIGCHLD);
 		wakeup(pr->ps_pptr);
 	}
@@ -1283,7 +1287,7 @@ void
 postsig(int signum)
 {
 	struct proc *p = curproc;
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_p->ps_sigacts;
 	sig_t action;
 	u_long trapno;
 	int mask, returnmask;

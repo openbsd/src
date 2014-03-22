@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.20 2012/12/02 07:03:31 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.21 2014/03/22 06:05:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,7 +111,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct proc *p = curproc;
 	struct sigframe *fp;
 	struct trap_frame *regs;
-	struct sigacts *psp = p->p_sigacts;
+	struct sigacts *psp = p->p_p->ps_sigacts;
 	int fsize;
 	struct sigcontext ksc;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.26 2012/12/02 07:03:32 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.27 2014/03/22 06:05:45 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -64,11 +64,6 @@ struct	sigacts {
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)(int))2
 #define	SIG_HOLD	(void (*)(int))3
-
-/*
- * get signal action for process and signal; currently only for current process
- */
-#define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -160,7 +155,7 @@ void	postsig(int sig);
 void	psignal(struct proc *p, int sig);
 void	ptsignal(struct proc *p, int sig, enum signal_type type);
 #define prsignal(pr,sig)	ptsignal((pr)->ps_mainproc, (sig), SPROCESS)
-void	siginit(struct proc *p);
+void	siginit(struct process *);
 void	trapsignal(struct proc *p, int sig, u_long code, int type,
 	    union sigval val);
 void	sigexit(struct proc *, int);
@@ -170,11 +165,11 @@ int	killpg1(struct proc *, int, int, int);
 
 void	signal_init(void);
 
-struct sigacts *sigactsinit(struct proc *);
-struct sigacts *sigactsshare(struct proc *);
+struct sigacts *sigactsinit(struct process *);
+struct sigacts *sigactsshare(struct process *);
 void	sigstkinit(struct sigaltstack *);
-void	sigactsunshare(struct proc *);
-void	sigactsfree(struct proc *);
+void	sigactsunshare(struct process *);
+void	sigactsfree(struct process *);
 
 /*
  * Machine-dependent functions:
