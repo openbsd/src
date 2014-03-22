@@ -31,7 +31,6 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/agpio.h>
 
 #include <uvm/uvm_extern.h>
 
