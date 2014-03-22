@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.12 2013/04/16 07:42:27 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.13 2014/03/22 04:30:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -71,22 +71,9 @@
 
 #include "privsep.h"
 
-#include "npppd_ctl.h"
-typedef struct _npppd_ctl {
-	/** event context */
-	struct event ev_sock;
-	/** socket */
-	int sock;
-	/** enabled or disabled */
-	int enabled;
-	/** parent of npppd structure */
-	void *npppd;
-	/** pathname of socket */
-	char pathname[MAXPATHLEN];
-} npppd_ctl;
-
 #include "addr_range.h"
 #include "npppd_pool.h"
+#include "npppd_ctl.h"
 
 /** structure of pool */
 struct _npppd_pool {
@@ -104,6 +91,16 @@ struct _npppd_pool {
 			initialized:1,
 			/** whether in use or not */
 			running:1;
+};
+
+/** structure for control socket. (control.c) */
+struct control_sock {
+	const char      *cs_name;
+	struct event     cs_ev;
+	struct event     cs_evt;
+	int              cs_fd;
+	int              cs_restricted;
+	void            *cs_ctx;
 };
 
 /**
@@ -160,7 +157,6 @@ struct _npppd {
 	/** configuration file  */
 	struct npppd_conf conf;
 
-	npppd_ctl ctl;
 	/** the time in seconds which process was started.*/
 	uint32_t	secs;
 
@@ -170,6 +166,8 @@ struct _npppd {
 	int16_t		reloading_count;
 
 	int		nsession;
+
+	struct control_sock  ctl_sock;
 
 	u_int /** whether finalizing or not */
 	    finalizing:1,
@@ -190,16 +188,6 @@ struct _npppd {
 	    ? (interval)				\
 	    : (interval) + NPPPD_TIMER_TICK_IVAL	\
 		- ((interval) % NPPPD_TIMER_TICK_IVAL))
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void  npppd_ctl_init (npppd_ctl *, npppd *, const char *);
-int   npppd_ctl_start (npppd_ctl *);
-void  npppd_ctl_stop (npppd_ctl *);
 
 #ifdef __cplusplus
 }

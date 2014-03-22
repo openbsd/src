@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.34 2014/03/22 04:23:17 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.35 2014/03/22 04:30:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.34 2014/03/22 04:23:17 yasuoka Exp $
+ * $Id: npppd.c,v 1.35 2014/03/22 04:30:31 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -96,21 +96,23 @@
 
 static npppd s_npppd;	/* singleton */
 
-static void            npppd_reload0 (npppd *);
-static void            npppd_update_pool_reference (npppd *);
-static int             npppd_rd_walktree_delete(struct radish_head *);
-static void            usage (void);
-static void            npppd_stop_really (npppd *);
-static uint32_t        str_hash(const void *, int);
-static void            npppd_on_sighup (int, short, void *);
-static void            npppd_on_sigterm (int, short, void *);
-static void            npppd_on_sigint (int, short, void *);
-static void            npppd_on_sigchld (int, short, void *);
-static void            npppd_reset_timer(npppd *);
-static void            npppd_timer(int, short, void *);
-static void            npppd_auth_finalizer_periodic(npppd *);
-static int  rd2slist_walk (struct radish *, void *);
-static int  rd2slist (struct radish_head *, slist *);
+static void         npppd_reload0 (npppd *);
+static void         npppd_update_pool_reference (npppd *);
+static int          npppd_rd_walktree_delete(struct radish_head *);
+static void         usage (void);
+static void         npppd_stop_really (npppd *);
+static uint32_t     str_hash(const void *, int);
+static void         npppd_on_sighup (int, short, void *);
+static void         npppd_on_sigterm (int, short, void *);
+static void         npppd_on_sigint (int, short, void *);
+static void         npppd_on_sigchld (int, short, void *);
+static void         npppd_reset_timer(npppd *);
+static void         npppd_timer(int, short, void *);
+static void         npppd_auth_finalizer_periodic(npppd *);
+static int          rd2slist_walk (struct radish *, void *);
+static int          rd2slist (struct radish_head *, slist *);
+static slist       *npppd_get_ppp_by_user (npppd *, const char *);
+static int          npppd_get_all_users (npppd *, slist *);
 
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
 static struct in_addr loop;	/* initialize at npppd_init() */
@@ -312,7 +314,18 @@ npppd_init(npppd *_this, const char *config_file)
 
 	/* initialize event(3) */
 	event_init();
-
+	_this->ctl_sock.cs_name = NPPPD_SOCKET;
+	_this->ctl_sock.cs_ctx = _this;
+	if (control_init(&_this->ctl_sock) == -1) {
+		log_printf(LOG_ERR, "control_init() failed %s(): %m",
+		    __func__);
+		return (-1);
+	}
+	if (control_listen(&_this->ctl_sock) == -1) {
+		log_printf(LOG_ERR, "control_listen() failed %s(): %m",
+		    __func__);
+		return (-1);
+	}
 	accept_init();
 
 	/* ignore signals */
@@ -359,9 +372,6 @@ npppd_init(npppd *_this, const char *config_file)
 	if (npppd_config_str_equali(_this, "arpd.enabled", "true", ARPD_DEFAULT) == 1)
         	arp_sock_init();
 #endif
-	npppd_ctl_init(&_this->ctl, _this, NPPPD_CTL_SOCK_PATH);
-	if ((status = npppd_ctl_start(&_this->ctl)) != 0)
-		return status;
 	if ((status = npppd_modules_reload(_this)) != 0)
 		return status;
 
@@ -399,12 +409,12 @@ npppd_stop(npppd *_this)
 #ifdef	USE_NPPPD_PPPOE
 	pppoed_stop(&_this->pppoed);
 #endif
-#ifdef	USE_NPPPD_NPPPD_CTL
-	npppd_ctl_stop(&_this->ctl);
-#endif
 #ifdef USE_NPPPD_ARP
         arp_sock_fini();
 #endif
+	close(_this->ctl_sock.cs_fd);
+	control_cleanup(&_this->ctl_sock);
+
 	for (i = countof(_this->iface) - 1; i >= 0; i--) {
 		if (_this->iface[i].initialized != 0)
 			npppd_iface_stop(&_this->iface[i]);
@@ -730,7 +740,7 @@ npppd_get_ppp_by_ip(npppd *_this, struct in_addr ipaddr)
  * @return	{@link slist} that contans the {@link npppd_ppp} instances.
  * NULL may be returned if no instance has been found.
  */
-slist *
+static slist *
 npppd_get_ppp_by_user(npppd *_this, const char *username)
 {
 	hash_link *hl;
@@ -1764,7 +1774,7 @@ fail:
  * This function stores all users to {@link slist} and returns them.
  * References to {@link ::npppd_ppp} will be stored in users.
  */
-int
+static int
 npppd_get_all_users(npppd *_this, slist *users)
 {
 	int rval;
@@ -2298,3 +2308,40 @@ npppd_get_tunnconf(npppd *_this, const char *name)
 	return NULL;
 }
 
+void
+npppd_on_ppp_start(npppd *_this, npppd_ppp *ppp)
+{
+	struct ctl_conn  *c;
+
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (npppd_ctl_add_started_ppp_id(c->ctx, ppp->id) == 0) {
+			npppd_ctl_imsg_compose(c->ctx, &c->iev.ibuf);
+			imsg_event_add(&c->iev);
+		}
+	}
+}
+
+void
+npppd_on_ppp_stop(npppd *_this, npppd_ppp *ppp)
+{
+	struct ctl_conn  *c;
+
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (npppd_ctl_add_stopped_ppp(c->ctx, ppp) == 0) {
+			npppd_ctl_imsg_compose(c->ctx, &c->iev.ibuf);
+			imsg_event_add(&c->iev);
+		}
+	}
+}
+
+void
+imsg_event_add(struct imsgev *iev)
+{
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
+
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	event_add(&iev->ev, NULL);
+}

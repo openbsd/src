@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppctl.8,v 1.2 2012/09/18 13:14:08 yasuoka Exp $
+.\"	$OpenBSD: npppctl.8,v 1.3 2014/03/22 04:30:31 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 Internet Initiative Japan Inc.
 .\"
@@ -14,19 +14,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2012 $
+.Dd $Mdocdate: March 22 2014 $
 .Dt NPPPCTL 8
 .Os
 .Sh NAME
 .Nm npppctl
 .Nd control the npppd daemon
-.\" XXX .Xr npppd 8
+.Xr npppd 8
 .Sh SYNOPSIS
 .Nm
 .Op Fl n
-.Op Fl r Ar rcvbuf_size
 .Op Fl s Ar socket
-.Op Fl t Ar timeout_sec
 .Ar command
 .Op Ar argument ...
 .Sh DESCRIPTION
@@ -41,26 +39,13 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Show IP addresses instead of their hostnames.
-.It Fl r Ar rcvbuf_size
-.Nm
-may fail if the receive buffer is not large enough for
-the requested information.
-Use
-.Ar rcvbuf_size
-to extend the receive buffer size instead of the default value of 131072.
-This must be greater than or equal to 2048.
 .It Fl s Ar socket
 Use
 .Ar socket
 instead of the default
-.Pa /var/run/npppd_ctl
+.Pa /var/run/npppd.sock
 to communicate with
-.\" XXX .Xr npppd 8 .
-npppd.
-.It Fl t Ar timeout_sec
-Use
-.Ar timeout_sec
-as the I/O timeout timer value in seconds instead of the default value of 2.
+.Xr npppd 8 .
 .El
 .Sh NPPPD CONTROL COMMANDS
 The following commands are available:
@@ -73,6 +58,18 @@ is specified, only matching PPP sessions are disconnected.
 If
 .Ar all
 is specified, all PPP sessions are disconnected.
+See
+.Cm session all
+for the types of
+.Ar filter .
+.It Cm monitor all | filter ...
+Monitor start and stop of PPP sessions.
+If
+.Ar filter
+is specified, only matching PPP sessions are monitored.
+If
+.Ar all
+is specified, all PPP sessions are monitored.
 See
 .Cm session all
 for the types of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.14 2014/03/22 04:23:17 yasuoka Exp $ */
+/*	$OpenBSD: npppd.h,v 1.15 2014/03/22 04:30:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -38,7 +38,6 @@
 #include <netinet/in.h>
 #include <event.h>
 
-#include "slist.h"
 #include "addr_range.h"
 
 #include "l2tp_conf.h"
@@ -223,6 +222,29 @@ typedef struct _npppd		npppd;
 
 #include "ppp.h"
 
+#include <imsg.h>
+
+struct imsgev {
+	struct imsgbuf           ibuf;
+	void                    (*handler)(int, short, void *);
+	struct event             ev;
+	void                    *data;
+	short                    events;
+};
+
+struct ctl_conn {
+	TAILQ_ENTRY(ctl_conn)    entry;
+	struct control_sock     *parent;
+	u_int8_t                 flags;
+#define CTL_CONN_NOTIFY          0x01
+#define CTL_CONN_LOCKED          0x02   /* restricted mode */
+	struct imsgev            iev;
+	void                    *ctx;
+};
+
+TAILQ_HEAD(ctl_conn_list, ctl_conn);
+extern struct ctl_conn_list ctl_conns;
+
 __BEGIN_DECLS
 npppd           *npppd_get_npppd (void);
 int              npppd_init (npppd *, const char *);
@@ -234,7 +256,6 @@ int              npppd_get_user_password (npppd *, npppd_ppp *, const char *, ch
 struct in_addr  *npppd_get_user_framed_ip_address (npppd *, npppd_ppp *, const char *);
 int              npppd_check_calling_number (npppd *, npppd_ppp *);
 npppd_ppp       *npppd_get_ppp_by_ip (npppd *, struct in_addr);
-slist           *npppd_get_ppp_by_user (npppd *, const char *);
 npppd_ppp       *npppd_get_ppp_by_id (npppd *, u_int);
 int              npppd_check_user_max_session (npppd *, npppd_ppp *);
 void             npppd_network_output (npppd *, npppd_ppp *, int, u_char *, int);
@@ -245,7 +266,6 @@ void             npppd_release_ip (npppd *, npppd_ppp *);
 void             npppd_set_ip_enabled (npppd *, npppd_ppp *, int);
 int              npppd_assign_ip_addr (npppd *, npppd_ppp *, uint32_t);
 int              npppd_set_radish (npppd *, void *);
-int              npppd_get_all_users (npppd *, slist *);
 int              npppd_ppp_bind_realm (npppd *, npppd_ppp *, const char *, int);
 int              npppd_ppp_is_realm_local (npppd *, npppd_ppp *);
 int              npppd_ppp_is_realm_radius (npppd *, npppd_ppp *);
@@ -269,6 +289,22 @@ int              npppd_conf_parse (struct npppd_conf *, const char *);
 void             npppd_conf_init (struct npppd_conf *);
 void             npppd_conf_fini (struct npppd_conf *);
 int              npppd_config_check (const char *);
+void             npppd_on_ppp_start (npppd *, npppd_ppp *);
+void             npppd_on_ppp_stop (npppd *, npppd_ppp *);
+void             imsg_event_add(struct imsgev *);
+
+int              control_init (struct control_sock *);
+int              control_listen (struct control_sock *);
+void             control_cleanup (struct control_sock *);
+struct npppd_ctl *npppd_ctl_create (npppd *);
+void		 npppd_ctl_destroy (struct npppd_ctl *);
+int              npppd_ctl_who (struct npppd_ctl *);
+int              npppd_ctl_monitor (struct npppd_ctl *);
+int              npppd_ctl_who_and_monitor (struct npppd_ctl *);
+int              npppd_ctl_add_started_ppp_id (struct npppd_ctl *, uint32_t);
+int              npppd_ctl_add_stopped_ppp (struct npppd_ctl *, npppd_ppp *);
+int              npppd_ctl_imsg_compose (struct npppd_ctl *, struct imsgbuf *);
+int              npppd_ctl_disconnect (struct npppd_ctl *, u_int *, int);
 
 __END_DECLS
 

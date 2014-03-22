@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_config.c,v 1.11 2013/08/24 23:48:25 mlarkin Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.12 2014/03/22 04:30:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.11 2013/08/24 23:48:25 mlarkin Exp $ */
+/* $Id: npppd_config.c,v 1.12 2014/03/22 04:30:31 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -50,7 +50,6 @@
 #include "debugutil.h"
 #include "npppd_subr.h"
 #include "npppd_local.h"
-#include "npppd_ctl.h"
 #include "npppd_auth.h"
 #include "npppd_iface.h"
 #include "radish.h"

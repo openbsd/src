@@ -26,6 +26,7 @@
 #ifndef	DEBUG_UTIL_H
 #define	DEBUG_UTIL_H 1
 
+#include <stdio.h>	/* for FILE * */
 #include "debugmacro.h"
 
 #define	DEBUG_LEVEL_1	( 1 << 24)

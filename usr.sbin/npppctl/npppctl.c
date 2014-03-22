@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.1 2012/01/18 03:13:04 yasuoka Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.2 2014/03/22 04:30:31 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/un.h>
 #include <sys/uio.h>
 #include <net/if.h>
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <imsg.h>
 
 #include <unistd.h>
 #include <err.h>
@@ -46,8 +47,8 @@
 #define	NMAX_DISCONNECT		2048
 
 static void         usage (void);
-static void         on_exit (void);
 static void         show_clear_session (struct parse_result *, FILE *);
+static void         monitor_session (struct parse_result *, FILE *);
 static void         clear_session (u_int[], int, int, FILE *);
 static void         fprint_who_brief (int, struct npppd_who *, FILE *);
 static void         fprint_who_packets (int, struct npppd_who *, FILE *);
@@ -56,10 +57,11 @@ static const char  *peerstr (struct sockaddr *, char *, int);
 static const char  *humanize_duration (uint32_t, char *, int);
 static const char  *humanize_bytes (double, char *, int);
 static bool         filter_match(struct parse_result *, struct npppd_who *);
+static int          imsg_wait_command_completion (void);
 
-static int	ctlsock = -1;
-static char	ctlsockpath[] = "/tmp/npppctl.XXXXXX";
-static int	nflag = 0;
+static int             nflag = 0;
+static struct imsgbuf  ctl_ibuf;
+static struct imsg     ctl_imsg;
 
 static void
 usage(void)
@@ -67,43 +69,26 @@ usage(void)
 	extern char		*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-n] [-r rcvbuf_size] [-s socket] [-t timeout_sec] "
-	    "command [arg ...]\n", __progname);
+	    "usage: %s [-n] [-s socket] command [arg ...]\n", __progname);
 }
 
 int
 main(int argc, char *argv[])
 {
-	int			 ch, timeout_sec, rcvbuf;
+	int			 ch, ctlsock = -1;
 	struct parse_result	*result;
 	struct sockaddr_un	 sun;
-	const char		*npppd_ctlpath = NPPPD_CTL_SOCK_PATH;
-	struct timeval		 tv;
+	const char		*npppd_ctlpath = NPPPD_SOCKET;
 	extern int		 optind;
 	extern char		*optarg;
 
-	rcvbuf = NPPPD_CTL_MSGSZ * 64;
-	timeout_sec = 2;
-	while ((ch = getopt(argc, argv, "nr:s:t:")) != -1)
+	while ((ch = getopt(argc, argv, "ns:")) != -1)
 		switch (ch) {
 		case 'n':
 			nflag = 1;
 			break;
-		case 'r':
-			if (sscanf(optarg, "%d", &rcvbuf) != 1 || rcvbuf <= 0)
-				errx(EXIT_FAILURE, "invalid rcvbuf_size value");
-			if (rcvbuf < NPPPD_CTL_MSGSZ)
-				errx(EXIT_FAILURE, 
-				    "rcvbuf_size can not be less than %d",
-				    NPPPD_CTL_MSGSZ);
-			break;
 		case 's':
 			npppd_ctlpath = optarg;
-			break;
-		case 't':
-			if (sscanf(optarg, "%d", &timeout_sec) != 1 ||
-			    timeout_sec <= 0)
-				errx(EXIT_FAILURE, "invalid timeout value");
 			break;
 		default:
 			usage();
@@ -116,39 +101,16 @@ main(int argc, char *argv[])
 	if ((result = parse(argc, argv)) == NULL)
 		exit(EXIT_FAILURE);
 
-	if ((ctlsock = mkstemp(ctlsockpath)) < 0)
-		err(1, "mkstemp");
-
+	if ((ctlsock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+		err(EXIT_FAILURE, "socket");
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	sun.sun_len = sizeof(sun);
-	strlcpy(sun.sun_path, ctlsockpath, sizeof(sun.sun_path));
-
-	close(ctlsock);
-	unlink(ctlsockpath);
-
-	if ((ctlsock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
-		err(EXIT_FAILURE, "socket");
-	if (bind(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) != 0)
-		err(EXIT_FAILURE, "bind");
-
-	if (setsockopt(ctlsock, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf))
-	    != 0)
-		err(EXIT_FAILURE, "setsockopt(,,SO_RCVBUF)");
 	strlcpy(sun.sun_path, npppd_ctlpath, sizeof(sun.sun_path));
-	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) != 0)
+	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) < 0)
 		err(EXIT_FAILURE, "connect");
-	/* setup cleaner */
-	atexit(on_exit);
 
-	tv.tv_sec = timeout_sec;
-	tv.tv_usec = 0L;
-	if (setsockopt(ctlsock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)))
-		warn("setsockopt(,,SO_SNDTIMEO)");
-	tv.tv_sec = timeout_sec;
-	tv.tv_usec = 0L;
-	if (setsockopt(ctlsock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)))
-		warn("setsockopt(,,SO_RCVTIMEO)");
+	imsg_init(&ctl_ibuf, ctlsock);
 
 	switch (result->action) {
 	case SESSION_BRIEF:
@@ -165,6 +127,9 @@ main(int argc, char *argv[])
 			clear_session(ids, 1, 1, stdout);
 		}
 		break;
+	case MONITOR_SESSION:
+		monitor_session(result, stdout);
+		break;
 	case NONE:
 		break;
 	}
@@ -173,39 +138,30 @@ main(int argc, char *argv[])
 }
 
 static void
-on_exit(void)
-{
-	if (ctlsock >= 0)
-		close(ctlsock);
-	unlink(ctlsockpath);
-}
-
-static void
 show_clear_session(struct parse_result *result, FILE *out)
 {
-	int				 i, n, sz, ppp_id_idx;
-	struct npppd_ctl_who_request	 req = { .cmd = NPPPD_CTL_CMD_WHO };
-	struct npppd_ctl_who_response	*res;
-	u_char				 buf[NPPPD_CTL_MSGSZ + BUFSIZ];
-	u_int				 ppp_id[NMAX_DISCONNECT];
+	int                    i, n, ppp_id_idx;
+	struct npppd_who_list *res;
+	u_int                  ppp_id[NMAX_DISCONNECT];
 
-	res = (struct npppd_ctl_who_response *)buf;
-	if (send(ctlsock, &req, sizeof(req), 0) < 0)
-		err(1, "send");
-	res->count = 0;
-	n = 0;
-	ppp_id_idx = 0;
-	do {
-		if ((sz = recv(ctlsock, &buf, sizeof(buf), MSG_WAITALL)) < 0) {
-			if (errno == EAGAIN) {
-				warn("recv");
-				break;
-			}
-			err(EXIT_FAILURE, "recv");
+	if (imsg_compose(&ctl_ibuf, IMSG_CTL_WHO, 0, 0, -1, NULL, 0) == -1)
+		err(EXIT_FAILURE, "failed to componse a message\n");
+	if (imsg_wait_command_completion() < 0)
+		errx(EXIT_FAILURE, "failed to get response");
+	if (ctl_imsg.hdr.type != IMSG_CTL_OK)
+		errx(EXIT_FAILURE, "command was fail");
+	n = ppp_id_idx = 0;
+	while (imsg_wait_command_completion() == IMSG_PPP_START) {
+		res = (struct npppd_who_list *)ctl_imsg.data;
+		if (ctl_imsg.hdr.len - IMSG_HEADER_SIZE <
+		    offsetof(struct npppd_who_list,
+			    entry[res->entry_count + 1])) {
+			err(1, "response size %d is too small for "
+			    "the entry count %d",
+			    (int)(ctl_imsg.hdr.len - IMSG_HEADER_SIZE),
+			    res->entry_count);
 		}
-		for (i = 0; n < res->count &&
-		    offsetof(struct npppd_ctl_who_response, entry[i + 1]) <= sz;
-		    i++, n++)
+		for (i = 0; i < res->entry_count; i++, n++) {
 			switch (result->action) {
 			case SESSION_BRIEF:
 				fprint_who_brief(n, &res->entry[i], out);
@@ -229,14 +185,64 @@ show_clear_session(struct parse_result *result, FILE *out)
 				warnx("must not reached here");
 				abort();
 			}
-	} while (n < res->count);
-	if (n > 0 && n < res->count)
-		warnx("There are %d sessions in total, but we received only %d "
-		    "sessions.  Receive buffer size may not be enough, use -r "
-		    "option to increase the size.", res->count, n);
-	if (result->action == CLEAR_SESSION)
-		clear_session(ppp_id, MIN(ppp_id_idx,  nitems(ppp_id)),
-		    ppp_id_idx, out);
+		}
+		if (!res->more_data)
+			break;
+	}
+	if (result->action == CLEAR_SESSION) {
+		if (ppp_id_idx > nitems(ppp_id))
+			warnx(
+			    "Disconnection for %d sessions has been requested, "
+			    "but cannot disconnect only %d sessions because of "
+			    "the implementation limit.",
+			    ppp_id_idx, (int)nitems(ppp_id));
+		clear_session(ppp_id, MIN(ppp_id_idx, nitems(ppp_id)),
+			ppp_id_idx, out);
+	}
+}
+
+const char *bar =
+"------------------------------------------------------------------------\n";
+static void
+monitor_session(struct parse_result *result, FILE *out)
+{
+	int                    i, n;
+	struct npppd_who_list *res;
+
+	if (imsg_compose(&ctl_ibuf, IMSG_CTL_MONITOR, 0, 0, -1, NULL, 0) == -1)
+		err(EXIT_FAILURE, "failed to compose a message");
+	if (imsg_wait_command_completion() < 0)
+		errx(EXIT_FAILURE, "failed to get response");
+	if (ctl_imsg.hdr.type != IMSG_CTL_OK)
+		errx(EXIT_FAILURE, "command was fail");
+	do {
+		if (imsg_wait_command_completion() < 0)
+			break;
+		n = 0;
+		if (ctl_imsg.hdr.type == IMSG_PPP_START ||
+		    ctl_imsg.hdr.type == IMSG_PPP_STOP) {
+			res = (struct npppd_who_list *)ctl_imsg.data;
+			for (i = 0; i < res->entry_count; i++) {
+				if (!filter_match(result, &res->entry[i]))
+					continue;
+				if (n == 0)
+					fprintf(out, "PPP %s\n%s",
+					    (ctl_imsg.hdr.type ==
+						    IMSG_PPP_START)
+						    ? "Started"
+						    : "Stopped", bar);
+				fprint_who_all(n++, &res->entry[i], out);
+			}
+			if (n > 0)
+				fputs(bar, out);
+		} else {
+			warnx("received unknown message type = %d",
+			    ctl_imsg.hdr.type);
+			break;
+		}
+	} while (true);
+
+	return;
 }
 
 static void
@@ -274,9 +280,9 @@ fprint_who_packets(int i, struct npppd_who *w, FILE *out)
 static void
 fprint_who_all(int i, struct npppd_who *w, FILE *out)
 {
-	struct tm		tm;
-	char			ibytes_buf[48], obytes_buf[48], peer_buf[48],
-				time_buf[48], dur_buf[48];
+	struct tm  tm;
+	char       ibytes_buf[48], obytes_buf[48], peer_buf[48], time_buf[48];
+	char       dur_buf[48];
 
 	localtime_r(&w->time, &tm);
 	strftime(time_buf, sizeof(time_buf), "%Y/%m/%d %T", &tm);
@@ -326,42 +332,48 @@ fprint_who_all(int i, struct npppd_who *w, FILE *out)
 static void
 clear_session(u_int ppp_id[], int ppp_id_count, int total, FILE *out)
 {
-	int					 succ, fail, i, n, nmax;
-	struct npppd_ctl_disconnect_request	 req;
-	struct npppd_ctl_disconnect_response	 res;
-	struct iovec				 iov[2];
-	struct msghdr				 msg;
+	int                               succ, fail, i, n, nmax;
+	struct iovec                      iov[2];
+	struct npppd_disconnect_request   req;
+	struct npppd_disconnect_response *res;
 
 	succ = fail = 0;
 	if (ppp_id_count > 0) {
-		nmax = (NPPPD_CTL_MSGSZ -
-		    offsetof(struct npppd_ctl_disconnect_request, ppp_id[0])) /
+		nmax = (MAX_IMSGSIZE - IMSG_HEADER_SIZE -
+		    offsetof(struct npppd_disconnect_request, ppp_id[0])) /
 		    sizeof(u_int);
 		for (i = 0; i < ppp_id_count; i += n) {
 			n = MIN(nmax, ppp_id_count - i);
-			req.cmd = NPPPD_CTL_CMD_DISCONNECT;
 			req.count = n;
-			memset(&msg, 0, sizeof(msg));
-			msg.msg_iov = iov;
-			msg.msg_iovlen = nitems(iov);
 			iov[0].iov_base = &req;
 			iov[0].iov_len = offsetof(
-			    struct npppd_ctl_disconnect_request, ppp_id[0]);
+			    struct npppd_disconnect_request, ppp_id[0]);
 			iov[1].iov_base = &ppp_id[i];
 			iov[1].iov_len = sizeof(u_int) * n;
-			if (sendmsg(ctlsock, &msg, 0) < 0)
-				err(EXIT_FAILURE, "sendmsg");
-			if (recv(ctlsock, &res, sizeof(res), 0) < 0)
-				err(EXIT_FAILURE, "recv");
-			succ += res.count;
+
+			if (imsg_composev(&ctl_ibuf, IMSG_CTL_DISCONNECT, 0, 0,
+			    -1, iov, 2) == -1)
+				err(EXIT_FAILURE,
+				    "Failed to compose a message");
+			if (imsg_wait_command_completion() < 0)
+				errx(EXIT_FAILURE, "failed to get response");
+			if (ctl_imsg.hdr.type != IMSG_CTL_OK)
+				errx(EXIT_FAILURE,
+				    "Command was fail: msg type = %d",
+				    ctl_imsg.hdr.type);
+			if (ctl_imsg.hdr.len - IMSG_HEADER_SIZE <
+			    sizeof(struct npppd_disconnect_response))
+				err(EXIT_FAILURE, "response is corrupted");
+			res = (struct npppd_disconnect_response *)ctl_imsg.data;
+			succ += res->count;
 		}
 		fail = total - succ;
 	}
 	if (succ > 0)
-		fprintf(out, "Successfully disconnected %d session%s.\n", 
+		fprintf(out, "Successfully disconnected %d session%s.\n",
 		    succ, (succ > 1)? "s" : "");
 	if (fail > 0)
-		fprintf(out, "Failed to disconnect %d session%s.\n", 
+		fprintf(out, "Failed to disconnect %d session%s.\n",
 		    fail, (fail > 1)? "s" : "");
 	if (succ == 0 && fail == 0)
 		fprintf(out, "No session to disconnect.\n");
@@ -374,42 +386,42 @@ static bool
 filter_match(struct parse_result *result, struct npppd_who *who)
 {
 	if (result->has_ppp_id && result->ppp_id != who->ppp_id)
-		return false;
+		return (false);
 
 	switch (result->address.ss_family) {
 	case AF_INET:
 		if (((struct sockaddr_in *)&result->address)->sin_addr.
 		    s_addr != who->framed_ip_address.s_addr)
-			return false;
+			return (false);
 		break;
 	case AF_INET6:
 		/* npppd doesn't support IPv6 yet */
-		return false;
+		return (false);
 	}
 
 	if (result->interface != NULL &&
 	    strcmp(result->interface, who->ifname) != 0)
-		return false;
+		return (false);
 
 	if (result->protocol != PROTO_UNSPEC &&
 	    result->protocol != parse_protocol(who->tunnel_proto) )
-		return false;
+		return (false);
 
 	if (result->realm != NULL && strcmp(result->realm, who->rlmname) != 0)
-		return false;
+		return (false);
 
 	if (result->username != NULL &&
 	    strcmp(result->username, who->username) != 0)
-		return false;
+		return (false);
 
-	return true;
+	return (true);
 }
 
 static const char *
 peerstr(struct sockaddr *sa, char *buf, int lbuf)
 {
-	int		 niflags, hasserv;
-	char		 hoststr[NI_MAXHOST], servstr[NI_MAXSERV];
+	int   niflags, hasserv;
+	char  hoststr[NI_MAXHOST], servstr[NI_MAXSERV];
 
 	niflags = hasserv = 0;
 	if (nflag)
@@ -431,28 +443,28 @@ peerstr(struct sockaddr *sa, char *buf, int lbuf)
 	else
 		getnameinfo(sa, sa->sa_len, hoststr, sizeof(hoststr), servstr,
 		    sizeof(servstr), niflags);
-	
+
 	strlcpy(buf, hoststr, lbuf);
 	if (hasserv) {
 		strlcat(buf, ":", lbuf);
 		strlcat(buf, servstr, lbuf);
 	}
 
-	return buf;
+	return (buf);
 }
 
 static const char *
 humanize_duration(uint32_t sec, char *buf, int lbuf)
 {
-	char		fbuf[128];
-	int		hour, min;
+	char  fbuf[128];
+	int   hour, min;
 
 	hour = sec / (60 * 60);
 	min = sec / 60;
 	min %= 60;
 
 	if (lbuf <= 0)
-		return buf;
+		return (buf);
 	buf[0] = '\0';
 	if (hour || min) {
 		strlcat(buf, "(", lbuf);
@@ -471,14 +483,14 @@ humanize_duration(uint32_t sec, char *buf, int lbuf)
 		strlcat(buf, ")", lbuf);
 	}
 
-	return buf;
+	return (buf);
 }
 
 static const char *
 humanize_bytes(double val, char *buf, int lbuf)
 {
 	if (lbuf <= 0)
-		return buf;
+		return (buf);
 
 	if (val >= 1000 * 1024 * 1024)
 		snprintf(buf, lbuf, " (%.1f GB)",
@@ -489,6 +501,26 @@ humanize_bytes(double val, char *buf, int lbuf)
 		snprintf(buf, lbuf, " (%.1f KB)", (double)val / 1024);
 	else
 		buf[0] = '\0';
-			
-	return buf;
+
+	return (buf);
+}
+
+static int
+imsg_wait_command_completion(void)
+{
+	int  n;
+
+	while (ctl_ibuf.w.queued)
+		if (msgbuf_write(&ctl_ibuf.w) < -1)
+			return (-1);
+	do {
+		if ((n = imsg_get(&ctl_ibuf, &ctl_imsg)) == -1)
+			return (-1);
+		if (n != 0)
+			break;
+		if ((n = imsg_read(&ctl_ibuf)) == -1 || n == 0)
+			return (-1);
+	} while (1);
+
+	return (ctl_imsg.hdr.type);
 }

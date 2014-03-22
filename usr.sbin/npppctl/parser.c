@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2012/01/18 03:13:04 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2014/03/22 04:30:31 yasuoka Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.c 1.9 */
 /*
@@ -57,6 +57,7 @@ static struct parse_result res;
 static const struct token t_main[];
 static const struct token t_session[];
 static const struct token t_clear[];
+static const struct token t_monitor[];
 static const struct token t_filter[];
 static const struct token t_ppp_id[];
 static const struct token t_address[];
@@ -68,6 +69,7 @@ static const struct token t_username[];
 static const struct token t_main[] = {
 	{ KEYWORD,	"session",	NONE,		t_session },
 	{ KEYWORD,	"clear",	NONE,		t_clear },
+	{ KEYWORD,	"monitor",	NONE,		t_monitor },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -87,6 +89,17 @@ static const struct token t_clear[] = {
 	{ KEYWORD,	"realm",	CLEAR_SESSION,	t_realm },
 	{ KEYWORD,	"username",	CLEAR_SESSION,	t_username },
 	{ ENDTOKEN,	"",		CLEAR_SESSION,	NULL }
+};
+
+static const struct token t_monitor[] = {
+	{ KEYWORD,	"all",		MONITOR_SESSION,	NULL },
+	{ KEYWORD,	"ppp-id",	MONITOR_SESSION,	t_ppp_id },
+	{ KEYWORD,	"address",	MONITOR_SESSION,	t_address },
+	{ KEYWORD,	"interface",	MONITOR_SESSION,	t_interface },
+	{ KEYWORD,	"protocol",	MONITOR_SESSION,	t_protocol },
+	{ KEYWORD,	"realm",	MONITOR_SESSION,	t_realm },
+	{ KEYWORD,	"username",	MONITOR_SESSION,	t_username },
+	{ ENDTOKEN,	"",		MONITOR_SESSION,	NULL }
 };
 
 static const struct token t_filter[] = {
@@ -232,7 +245,7 @@ match_token(char *word, const struct token table[])
 		case PROTOCOL:
 			if (word == NULL)
 				break;
-			if ((res.protocol = parse_protocol(word)) == 
+			if ((res.protocol = parse_protocol(word)) ==
 			    PROTO_UNSPEC)
 				break;
 			match++;

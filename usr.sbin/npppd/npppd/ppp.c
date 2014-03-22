@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.18 2013/02/13 22:10:38 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.19 2014/03/22 04:30:31 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.18 2013/02/13 22:10:38 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.19 2014/03/22 04:30:31 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -408,6 +408,7 @@ ppp_stop0(npppd_ppp *_this)
 #ifdef USE_NPPPD_RADIUS
 	npppd_ppp_radius_acct_stop(_this->pppd, _this);
 #endif
+	npppd_on_ppp_stop(_this->pppd, _this);
 	npppd_ppp_unbind_iface(_this->pppd, _this);
 #ifdef	USE_NPPPD_MPPE
 	mppe_fini(&_this->mppe);
@@ -690,6 +691,7 @@ ppp_ipcp_opened(npppd_ppp *_this)
 #ifdef USE_NPPPD_RADIUS
 		npppd_ppp_radius_acct_start(_this->pppd, _this);
 #endif
+		npppd_on_ppp_start(_this->pppd, _this);
 
 		_this->logged_acct_start = 1;
 		ppp_reset_idle_timeout(_this);

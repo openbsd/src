@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2014/03/22 04:30:31 yasuoka Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.h 1.9 */
 /*
@@ -25,7 +25,8 @@ enum actions {
 	SESSION_BRIEF,
 	SESSION_PKTS,
 	SESSION_ALL,
-	CLEAR_SESSION
+	CLEAR_SESSION,
+	MONITOR_SESSION
 };
 
 enum protocol {
