@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.6 2014/03/22 04:21:04 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -247,12 +247,9 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 	ATTR_INT32(RADIUS_TYPE_FRAMED_PROTOCOL, RADIUS_FRAMED_PROTOCOL_PPP);
 
 	/* RFC 2865 "5.8. Framed-IP-Address" */
-	if (ppp_ip_assigned(ppp) && !stop)
-		ppp->realm_framed_ip_address = ppp->ppp_framed_ip_address;
-	if (ppp->realm_framed_ip_address.s_addr != INADDR_ANY) {
+	if (ppp->acct_framed_ip_address.s_addr != INADDR_ANY)
 		ATTR_INT32(RADIUS_TYPE_FRAMED_IP_ADDRESS,
-		    ntohl(ppp->realm_framed_ip_address.s_addr));
-	}
+		    ntohl(ppp->acct_framed_ip_address.s_addr));
 
     /* Accounting */
 	/* RFC 2866  5.1. Acct-Status-Type */
