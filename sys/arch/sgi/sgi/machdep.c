@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2014/03/13 03:52:55 dlg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.136 2014/03/22 00:01:04 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -570,6 +570,14 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	build_trampoline(TLB_MISS_EXC_VEC, xtlb_handler);
 	build_trampoline(XTLB_MISS_EXC_VEC, xtlb_handler);
 #endif	/* } */
+
+#ifdef CPU_R4000
+	/*
+	 * Enable R4000 EOP errata workaround code if necessary.
+	 */
+	if (cpufamily == MIPS_R4000 && ((cp0_get_prid() >> 4) & 0x0f) < 3)
+		r4000_errata = 1;
+#endif
 
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.

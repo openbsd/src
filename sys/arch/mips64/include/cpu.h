@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.97 2014/03/21 23:05:41 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.98 2014/03/22 00:01:04 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -400,11 +400,13 @@ void	tlb_asid_wrap(struct cpu_info *);
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
 void	tlb_init(unsigned int);
+int64_t	tlb_probe(vaddr_t);
 void	tlb_set_gbase(vaddr_t, vsize_t);
 void	tlb_set_page_mask(uint32_t);
 void	tlb_set_pid(u_int);
 void	tlb_set_wired(uint32_t);
 int	tlb_update(vaddr_t, register_t);
+void	tlb_update_indexed(vaddr_t, register_t, register_t, uint);
 
 void	build_trampoline(vaddr_t, vaddr_t);
 void	cpu_switchto_asm(struct proc *, struct proc *);
@@ -432,6 +434,16 @@ int	classify_insn(uint32_t);
 #define	INSNCLASS_NEUTRAL	0
 #define	INSNCLASS_CALL		1
 #define	INSNCLASS_BRANCH	2
+
+/*
+ * R4000 end-of-page errata workaround routines
+ */
+
+extern int r4000_errata;
+u_int	eop_page_check(paddr_t);
+int	eop_tlb_miss_handler(struct trap_frame *, struct cpu_info *,
+	    struct proc *);
+void	eop_cleanup(struct trap_frame *, struct proc *);
 
 /*
  * Low level access routines to CPU registers

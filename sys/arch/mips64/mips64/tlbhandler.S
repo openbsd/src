@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.40 2014/02/08 09:34:04 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.41 2014/03/22 00:01:04 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -153,11 +153,20 @@ xtlb_miss:
 	PTR_ADDU k1, k1, k0
 	PTE_LOAD	k0, 0(k1)
 	PTE_LOAD	k1, PTE_OFFS(k1)
+#ifdef CPU_R4000
+	dsll	k0, k0, (64 - PG_FRAMEBITS - 1)	# clear bits left of PG_FRAME...
+	dsll	k1, k1, (64 - PG_FRAMEBITS - 1)	# ...but PG_SP
+	bltz	k0, _inv_seg			# defer to trap() if PG_SP set.
+	bltz	k1, _inv_seg
+	dsll	k0, k0, 1
+	dsll	k1, k1, 1
+#else
 	dsll	k0, k0, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
-	dsrl	k0, k0, (64 - PG_FRAMEBITS)
-	dmtc0	k0, COP_0_TLB_LO0
 	dsll	k1, k1, (64 - PG_FRAMEBITS)
+#endif
+	dsrl	k0, k0, (64 - PG_FRAMEBITS)
 	dsrl	k1, k1, (64 - PG_FRAMEBITS)
+	dmtc0	k0, COP_0_TLB_LO0
 	dmtc0	k1, COP_0_TLB_LO1
 	TLB_HAZARD
 	tlbwr				# update TLB
@@ -175,7 +184,9 @@ _k_miss:
 	b	k_tlb_miss		# kernel tlbmiss.
 	nop
 
-_inv_seg:				# No page table for this segment.
+_inv_seg:				# No page table for this segment,
+					# or processing is too complex to be
+					# done here: invoke C code.
 	mfc0	k0, COP_0_STATUS_REG
 	andi	k0, SR_KSU_USER
 	bne	k0, zero, go_u_general
@@ -290,6 +301,7 @@ NLEAF(k_tlb_miss, 0)
 	andi	k1, SR_KSU_USER
 	bne	k1, zero, go_u_general
 	LA	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
+						# (safe if expands to > 1 insn)
 	PTR_SUBU k0, k0, k1
 	lw	k1, Sysmapsize			# index within range?
 	PTR_SRL	k0, k0, PGSHIFT
@@ -546,6 +558,72 @@ LEAF(tlb_update, 0)
 	j	ra
 	li	v0, 0
 END(tlb_update)
+
+/*
+ * int64_t tlb_probe(vaddr_t a0);
+ * Probe for a TLB entry covering the given address, and return its index
+ * (< 0 if no match)
+ */
+LEAF(tlb_probe, 0)
+	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	ori	v0, v1, SR_INT_ENAB
+	xori	v0, v0, SR_INT_ENAB
+	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
+	MTC0_SR_IE_HAZARD
+	dli	v0, (PG_HVPN | PG_ASID_MASK)
+	and	a0, a0, v0
+	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
+	dmtc0	a0, COP_0_TLB_HI	# Init high reg
+	TLB_HAZARD
+	tlbp				# Probe for the entry.
+	TLB_HAZARD			# necessary?
+	dmtc0	ta0, COP_0_TLB_HI	# restore PID
+	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
+	MTC0_SR_IE_HAZARD
+	j	ra
+	mfc0	v0, COP_0_TLB_INDEX	# Return index
+END(tlb_probe)
+
+/*
+ * void tlb_update_indexed(vaddr_t a0, register_t a1, register_t a2, uint a3);
+ * Update a TLB entry pair.
+ */
+LEAF(tlb_update_indexed, 0)
+	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	ori	v0, v1, SR_INT_ENAB
+	xori	v0, v0, SR_INT_ENAB
+	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
+	MTC0_SR_IE_HAZARD
+	dli	v0, (PG_HVPN | PG_ASID_MASK)
+	and	a0, a0, v0
+	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
+	li	ta1, TLB_PAGE_MASK
+
+	mtc0	a3, COP_0_TLB_INDEX
+	TLB_HAZARD
+	tlbr
+	TLB_HAZARD			# necessary?
+
+	mtc0	ta1, COP_0_TLB_PG_MASK	# init mask
+	dmtc0	a0, COP_0_TLB_HI	# init high reg.
+
+	dsll	a1, a1, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	a1, a1, (64 - PG_FRAMEBITS)
+	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
+	dsll	a2, a2, (64 - PG_FRAMEBITS)	# clear bits left of PG_FRAME
+	dsrl	a2, a2, (64 - PG_FRAMEBITS)
+	dmtc0	a2, COP_0_TLB_LO1	# init low reg1.
+
+	TLB_HAZARD
+	tlbwi				# update slot
+	TLB_HAZARD
+
+	dmtc0	ta0, COP_0_TLB_HI	# restore PID
+	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
+	MTC0_SR_IE_HAZARD
+	j	ra
+	nop
+END(tlb_update_indexed)
 
 /*---------------------------------------------------------------- tlb_read
  *	Read the TLB entry.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2014/03/22 00:01:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -269,6 +269,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 	int onfault;
 	int typ = 0;
 	union sigval sv;
+	struct pcb *pcb;
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -288,6 +289,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			    trunc_page(trapframe->badvaddr), entry)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
+				pcb = &p->p_addr->u_pcb;
 				goto kernel_fault;
 			}
 			entry |= PG_M;
@@ -324,7 +326,8 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		    trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
-			goto fault_common;
+			pcb = &p->p_addr->u_pcb;
+			goto fault_common_no_miss;
 		}
 		entry |= PG_M;
 		*pte = entry;
@@ -343,6 +346,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
 		ftype = (type == T_TLB_ST_MISS) ? VM_PROT_WRITE : VM_PROT_READ;
+		pcb = &p->p_addr->u_pcb;
 		/* check for kernel address */
 		if (trapframe->badvaddr < 0) {
 			vaddr_t va;
@@ -350,16 +354,16 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 
 	kernel_fault:
 			va = trunc_page((vaddr_t)trapframe->badvaddr);
-			onfault = p->p_addr->u_pcb.pcb_onfault;
-			p->p_addr->u_pcb.pcb_onfault = 0;
+			onfault = pcb->pcb_onfault;
+			pcb->pcb_onfault = 0;
 			KERNEL_LOCK();
 			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
-			p->p_addr->u_pcb.pcb_onfault = onfault;
+			pcb->pcb_onfault = onfault;
 			if (rv == 0)
 				return;
 			if (onfault != 0) {
-				p->p_addr->u_pcb.pcb_onfault = 0;
+				pcb->pcb_onfault = 0;
 				trapframe->pc = onfault_table[onfault];
 				return;
 			}
@@ -369,7 +373,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault != 0) {
+		if (pcb->pcb_onfault != 0) {
 			/*
 			 * We want to resolve the TLB fault before invoking
 			 * pcb_onfault if necessary.
@@ -381,11 +385,29 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 
 	case T_TLB_LD_MISS+T_USER:
 		ftype = VM_PROT_READ;
+		pcb = &p->p_addr->u_pcb;
 		goto fault_common;
 
 	case T_TLB_ST_MISS+T_USER:
 		ftype = VM_PROT_WRITE;
+		pcb = &p->p_addr->u_pcb;
 fault_common:
+
+#ifdef CPU_R4000
+		if (r4000_errata != 0) {
+			if (eop_tlb_miss_handler(trapframe, ci, p) != 0)
+				return;
+		}
+#endif
+
+fault_common_no_miss:
+
+#ifdef CPU_R4000
+		if (r4000_errata != 0) {
+			eop_cleanup(trapframe, p);
+		}
+#endif
+
 	    {
 		vaddr_t va;
 		struct vmspace *vm;
@@ -396,12 +418,12 @@ fault_common:
 		map = &vm->vm_map;
 		va = trunc_page((vaddr_t)trapframe->badvaddr);
 
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = 0;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = 0;
 		KERNEL_LOCK();
 
-		rv = uvm_fault(map, trunc_page(va), 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		rv = uvm_fault(map, va, 0, ftype);
+		pcb->pcb_onfault = onfault;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -421,7 +443,7 @@ fault_common:
 			return;
 		if (!USERMODE(trapframe->sr)) {
 			if (onfault != 0) {
-				p->p_addr->u_pcb.pcb_onfault = 0;
+				pcb->pcb_onfault = 0;
 				trapframe->pc =  onfault_table[onfault];
 				return;
 			}
@@ -757,8 +779,9 @@ fault_common:
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
-		if ((onfault = p->p_addr->u_pcb.pcb_onfault) != 0) {
-			p->p_addr->u_pcb.pcb_onfault = 0;
+		pcb = &p->p_addr->u_pcb;
+		if ((onfault = pcb->pcb_onfault) != 0) {
+			pcb->pcb_onfault = 0;
 			trapframe->pc = onfault_table[onfault];
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2014/03/21 21:49:45 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2014/03/22 00:01:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,7 +59,6 @@ int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
 uint	 pmap_alloc_tlbpid(struct proc *);
 int	 pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, pt_entry_t *);
-void	 pmap_page_cache(vm_page_t, int);
 void	 pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
 void	*pmap_pg_alloc(struct pool *, int, int *);
 void	 pmap_pg_free(struct pool *, void *);
@@ -1036,11 +1035,29 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x\n", npte));
 	}
 
+#ifdef CPU_R4000
+	/*
+	 * If mapping an executable page, check for the R4000 EOP bug, and
+	 * flag it in the pte.
+	 */
+	if (r4000_errata != 0) {
+		if (pg != NULL && (prot & VM_PROT_EXECUTE)) {
+			if ((pg->pg_flags & PGF_EOP_CHECKED) == 0)
+				atomic_setbits_int(&pg->pg_flags,
+				     PGF_EOP_CHECKED |
+				     eop_page_check(pa));
+
+			if (pg->pg_flags & PGF_EOP_VULN)
+				npte |= PG_SP;
+		}
+	}
+#endif
+
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
 
 	/*
-	 *  If mapping a memory space address invalidate ICache.
+	 * If mapping an executable page, invalidate ICache.
 	 */
 	if (pg != NULL && (prot & VM_PROT_EXECUTE))
 		Mips_InvalidateICache(ci, va, PAGE_SIZE);
@@ -1248,6 +1265,10 @@ pmap_zero_page(struct vm_page *pg)
 	mem_zero_page(va);
 	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCache(ci, va, PAGE_SIZE);
+
+#ifdef CPU_R4000
+	atomic_clearbits_int(&pg->pg_flags, PGF_EOP_CHECKED | PGF_EOP_VULN);
+#endif
 }
 
 /*
@@ -1297,6 +1318,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 		Mips_HitInvalidateDCache(ci, s, PAGE_SIZE);
 	if (df || cache_valias_mask != 0)
 		Mips_HitSyncDCache(ci, d, PAGE_SIZE);
+
+#ifdef CPU_R4000
+	atomic_clearbits_int(&dstpg->pg_flags, PGF_EOP_CHECKED | PGF_EOP_VULN);
+	atomic_setbits_int(&dstpg->pg_flags,
+	    srcpg->pg_flags & (PGF_EOP_CHECKED | PGF_EOP_VULN));
+#endif
 }
 
 /*
@@ -1427,7 +1454,7 @@ pmap_is_page_ro(pmap_t pmap, vaddr_t va, pt_entry_t entry)
  *  mappings to cached or uncached.
  */
 void
-pmap_page_cache(vm_page_t pg, int mode)
+pmap_page_cache(vm_page_t pg, u_int mode)
 {
 	pv_entry_t pv;
 	pt_entry_t *pte, entry;

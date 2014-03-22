@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.52 2014/02/08 09:34:04 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.53 2014/03/22 00:01:04 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -176,6 +176,25 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	MTC0_HAZARD
 #endif
 
+#ifdef CPU_R4000
+	/*
+	 * Restore the number of wired TLB entries to the minimal possible
+	 * value, in case the EOP errata workaround has caused more wired
+	 * entries to be created.
+	 */
+	lw	a0, PCB_NWIRED(t3)
+	beqz	a0, 1f
+	sw	zero, PCB_NWIRED(t3)
+
+	li	a1, UPAGES / 2
+	move	s0, v0				# save asid
+	mtc0	a1, COP_0_TLB_WIRED
+	jal	tlb_flush			# clear formerly wired entries
+	addu	a0, a1, a0
+	move	v0, s0
+1:
+#endif
+
 #if UPAGES > 1	/* { */
 #ifdef CPU_R8000
 #error Your processor has just been eaten by a grue.
@@ -193,7 +212,7 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	LA	t1, CKSEG0_BASE
 	PTR_SUBU t2, t3, t1
 	bgez	t2, ctx3			# in CKSEG0
-	LA	t1, VM_MIN_KERNEL_ADDRESS	# safe if expands to > 1 insn
+	LA	t1, VM_MIN_KERNEL_ADDRESS	# (safe if expands to > 1 insn)
 	PTR_SUBU t2, t3, t1
 	bltz	t2, ctx3			# not mapped.
 	PTR_SRL	t2, PGSHIFT+1
@@ -263,14 +282,13 @@ ctx2:
 	tlbwi
 	TLB_HAZARD
 #endif	/* } UPAGES > 2 */
+ctx3:
 #else	/* } UPAGES > 1 { */
 #if PG_ASID_SHIFT != 0
 	dsll	v0, PG_ASID_SHIFT
 #endif
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 #endif	/* } UPAGES > 1 */
-
-ctx3:
 
 #ifdef CPU_LOONGSON2
 	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE

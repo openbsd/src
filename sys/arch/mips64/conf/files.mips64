@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.21 2012/09/29 21:37:01 miod Exp $
+#	$OpenBSD: files.mips64,v 1.22 2014/03/22 00:01:04 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c		clock
@@ -28,6 +28,7 @@ file	arch/mips64/mips64/exception_tfp.S	cpu_r8000
 file	arch/mips64/mips64/fp_emulate.c
 file	arch/mips64/mips64/lcore_access.S
 file	arch/mips64/mips64/lcore_float.S
+file	arch/mips64/mips64/r4000_errata.c	cpu_r4000
 file	arch/mips64/mips64/tlbhandler.S		!cpu_r8000
 file	arch/mips64/mips64/tlb_tfp.S		cpu_r8000
 

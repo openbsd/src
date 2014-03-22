@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.33 2014/03/21 21:49:45 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.34 2014/03/22 00:01:04 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -87,15 +87,15 @@
 #else
 #define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 2)
 #endif
-#define NBSEG			(1UL << SEGSHIFT)
+#define	NBSEG			(1UL << SEGSHIFT)
 #define	SEGOFSET		(NBSEG - 1)
 
-#define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
-#define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
-#define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
+#define	mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define	mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
+#define	pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
 /* number of segments entries */
-#define PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
+#define	PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
 
 struct segtab {
 	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
@@ -131,26 +131,28 @@ typedef struct pmap {
 #define	PGF_CACHED	PG_PMAP1	/* Page is currently cached */
 #define	PGF_ATTR_MOD	PG_PMAP2
 #define	PGF_ATTR_REF	PG_PMAP3
-#define	PGF_PRESERVE	(PGF_ATTR_MOD | PGF_ATTR_REF)
+#define	PGF_EOP_CHECKED	PG_PMAP4
+#define	PGF_EOP_VULN	PG_PMAP5
+#define	PGF_PRESERVE	(PGF_ATTR_MOD | PGF_ATTR_REF | PGF_EOP_CHECKED | PGF_EOP_VULN)
 
 #define	PMAP_NOCACHE	PMAP_MD0
 
 extern	struct pmap *const kernel_pmap_ptr;
 
-#define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
+#define	pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define pmap_kernel()			(kernel_pmap_ptr)
+#define	pmap_kernel()			(kernel_pmap_ptr)
 
 #define	PMAP_STEAL_MEMORY		/* Enable 'stealing' during boot */
 
-#define PMAP_PREFER(pa, va)		pmap_prefer(pa, va)
+#define	PMAP_PREFER(pa, va)		pmap_prefer(pa, va)
 
 extern vaddr_t pmap_prefer_mask;
 /* pmap prefer alignment */
-#define PMAP_PREFER_ALIGN()						\
+#define	PMAP_PREFER_ALIGN()						\
 	(pmap_prefer_mask ? pmap_prefer_mask + 1 : 0)
 /* pmap prefer offset in alignment */
-#define PMAP_PREFER_OFFSET(of)		((of) & pmap_prefer_mask)
+#define	PMAP_PREFER_OFFSET(of)		((of) & pmap_prefer_mask)
 
 #define	pmap_update(x)			do { /* nothing */ } while (0)
 
@@ -159,17 +161,17 @@ int	pmap_is_page_ro( pmap_t, vaddr_t, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
 void	pmap_set_modify(vm_page_t);
-void	pmap_page_cache(vm_page_t, int);
+void	pmap_page_cache(vm_page_t, u_int);
 
 #define	pmap_collect(x)			do { /* nothing */ } while (0)
-#define pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
+#define	pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
-void pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
-void pmap_update_kernel_page(vaddr_t, pt_entry_t);
+void	pmap_update_kernel_page(vaddr_t, pt_entry_t);
 #else
-#define pmap_update_kernel_page(va, entry) tlb_update(va, entry)
+#define	pmap_update_kernel_page(va, entry)	tlb_update(va, entry)
 #endif
 
 /*
@@ -192,13 +194,13 @@ vm_page_t pmap_unmap_direct(vaddr_t);
  * MD flags to pmap_enter:
  */
 
-#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
+#define	PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
 
 /* Kernel virtual address to page table entry */
 #define	kvtopte(va) \
 	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT))
 /* User virtual address to pte page entry */
-#define uvtopte(va)	(((va) >> PAGE_SHIFT) & (NPTEPG -1))
+#define	uvtopte(va)	(((va) >> PAGE_SHIFT) & (NPTEPG -1))
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
