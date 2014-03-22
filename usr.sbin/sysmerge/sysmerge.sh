@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.128 2014/03/22 11:16:42 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.129 2014/03/22 12:26:03 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -79,6 +79,7 @@ error_rm_wrkdir() {
 	(($#)) && echo "**** ERROR: $@"
 	# do not remove the entire WRKDIR in case sysmerge stopped half
 	# way since it contains our backup files
+	rm -rf ${TEMPROOT}
 	rm -f ${WRKDIR}/*.tgz
 	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
