@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.129 2014/03/22 12:26:03 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.130 2014/03/22 12:33:36 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -85,7 +85,7 @@ error_rm_wrkdir() {
 	exit 1
 }
 
-trap "restore_sum; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+trap "restore_sum; clean_src; error_rm_wrkdir; exit 1" 1 2 3 13 15
 
 if (($(id -u) != 0)); then
 	usage
