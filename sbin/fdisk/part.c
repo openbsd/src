@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.61 2014/03/20 13:43:32 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.62 2014/03/22 15:40:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -324,7 +324,7 @@ PRT_fix_BN(struct disk *disk, struct prt *part, int pn)
 
 	/* XXX - Should handle this... */
 	if (start > end)
-		warn("Start of partition #%d after end!", pn);
+		warnx("Start of partition #%d after end!", pn);
 
 	part->bs = start;
 	part->ns = (end - start) + 1;
