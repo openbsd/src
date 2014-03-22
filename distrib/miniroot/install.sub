@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.756 2014/03/22 02:24:43 krw Exp $
+#	$OpenBSD: install.sub,v 1.757 2014/03/22 02:42:00 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -739,7 +739,7 @@ configure_ifs() {
 
 		if [[ -f $_hn ]]; then
 			chmod 640 $_hn
-			((nifs++))
+			((NIFS++))
 			: ${_first:=$_ifs}
 			_p=done
 		fi
@@ -987,7 +987,7 @@ v4_defroute() {
 	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
 	# If only one interface, and it is running dhclient, ask nothing
-	[[ -f /tmp/dhclient.conf && $nifs == 1 ]] && return
+	[[ -f /tmp/dhclient.conf && $NIFS == 1 ]] && return
 
 	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
 	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
@@ -1042,7 +1042,7 @@ enable_network() {
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
-		((nifs++))
+		((NIFS++))
 
 		# Strip off /mnt/etc/hostname. prefix
 		if=${hn#/mnt/etc/hostname.}
@@ -1322,7 +1322,7 @@ install_files() {
 
 startcgiinfo() {
 	# If no networks are configured, we do not need the httplist file
-	((nifs < 1)) && return
+	((NIFS < 1)) && return
 
 	# Make sure the ftp subshell gets its own process group
 	set -m
@@ -1787,7 +1787,7 @@ donetconfig() {
 
 	# Get & apply fully qualified domain name to hostname.
 	resp="${_dn:=$(get_fqdn)}"
-	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 ]]; then
+	if [[ ! -f /tmp/dhclient.conf || $NIFS != 1 ]]; then
 		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
 	else
 		echo "Using DNS domainname $resp"
@@ -1797,7 +1797,7 @@ donetconfig() {
 	# If only one interface, and it is running dhclient, ask nothing
 	# else Get/Confirm nameservers
 	resp="${_ns:=none}"
-	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 || $resp == none ]]; then
+	if [[ ! -f /tmp/dhclient.conf || $NIFS != 1 || $resp == none ]]; then
 		ask "DNS nameservers? (IP address list or 'none')" "$resp"
 	else
 		echo "Using DNS nameservers at $resp"
@@ -2056,7 +2056,7 @@ set -- $(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
 
 # Scan /var/run/dmesg.boot for interesting devices.
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
-nifs=0
+NIFS=0
 DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
@@ -2203,7 +2203,7 @@ if [[ $MODE == install ]]; then
 	echo
 	donetconfig
 
-	((nifs != 0)) && startcgiinfo
+	((NIFS != 0)) && startcgiinfo
 
 	echo
 	while :; do
