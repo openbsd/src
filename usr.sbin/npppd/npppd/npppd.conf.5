@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.12 2014/03/22 04:23:17 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.13 2014/03/22 04:32:39 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -85,6 +85,7 @@ If the port is omitted, the default port numbers are used.
 The default port numbers are 1723 for PPTP and 1701 for L2TP.
 The default value is 0.0.0.0.
 This option is for PPTP and L2TP only.
+This option can be used multiple times.
 .It Ic listen on interface Ar interface-name
 Specify the interface name that this PPPoE tunnel listens on.
 The interface must be an Ethernet interface.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.20 2014/03/22 04:19:54 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.20 2014/03/22 04:19:54 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.20 2014/03/22 04:19:54 yasuoka Exp $
+ * $Id: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,8 @@ pptpd_init(pptpd *_this)
 
 /* add a listner to pptpd daemon context */
 int
-pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf)
+pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf,
+    struct sockaddr *addr)
 {
 	int inaddr_any;
 	pptpd_listener *plistener, *plstn;
@@ -172,10 +173,9 @@ pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf)
 	}
 	memset(plistener, 0, sizeof(pptpd_listener));
 
-	PPTPD_ASSERT(sizeof(plistener->bind_sin) >= conf->address.ss_len);
-	memcpy(&plistener->bind_sin, &conf->address, conf->address.ss_len);
-	memcpy(&plistener->bind_sin_gre, &conf->address,
-	    conf->address.ss_len);
+	PPTPD_ASSERT(sizeof(plistener->bind_sin) >= addr->sa_len);
+	memcpy(&plistener->bind_sin, addr, addr->sa_len);
+	memcpy(&plistener->bind_sin_gre, addr, addr->sa_len);
 
 	if (plistener->bind_sin.sin_port == 0)
 		plistener->bind_sin.sin_port = htons(PPTPD_DEFAULT_TCP_PORT);
@@ -566,9 +566,10 @@ pptpd_stop(pptpd *_this)
 int
 pptpd_reload(pptpd *_this, struct pptp_confs *pptp_conf)
 {
-	int              i;
-	struct pptp_conf *conf;
-	pptpd_listener  *listener;
+	int			 i;
+	struct pptp_conf	*conf;
+	pptpd_listener 		*listener;
+	struct pptp_listen_addr	*addr;
 
 	if (slist_length(&_this->listener) > 0) {
 		/*
@@ -590,8 +591,11 @@ pptpd_reload(pptpd *_this, struct pptp_confs *pptp_conf)
 	}
 
 	i = 0;
-	TAILQ_FOREACH(conf, pptp_conf, entry)
-		pptpd_add_listener(_this, i++, conf);
+	TAILQ_FOREACH(conf, pptp_conf, entry) {
+		TAILQ_FOREACH(addr, &conf->listen, entry)
+			pptpd_add_listener(_this, i++, conf,
+			    (struct sockaddr *)&addr->addr);
+	}
 	if (pptpd_start(_this) != 0)
 		return -1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2014/03/22 04:23:17 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2014/03/22 04:32:39 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,23 +68,24 @@ int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
 
-static void             tunnconf_init (struct tunnconf *, int);
-static void             tunnconf_fini (struct tunnconf *);
-static struct tunnconf *tunnconf_find (const char *);
-static void             authconf_init (struct authconf *);
-static void             authconf_fini (struct authconf *);
-static void             radconf_fini (struct radconf *);
-static struct authconf *authconf_find (const char *);
-static void             ipcpconf_init (struct ipcpconf *);
-static void             ipcpconf_fini (struct ipcpconf *);
-static struct ipcpconf *ipcpconf_find (const char *);
-struct iface           *iface_find (const char *);
+static void		 tunnconf_init (struct tunnconf *, int);
+static void		 tunnconf_fini (struct tunnconf *);
+static struct tunnconf	*tunnconf_find (const char *);
+static void		 authconf_init (struct authconf *);
+static void		 authconf_fini (struct authconf *);
+static void		 radconf_fini (struct radconf *);
+static struct authconf	*authconf_find (const char *);
+static void		 ipcpconf_init (struct ipcpconf *);
+static void		 ipcpconf_fini (struct ipcpconf *);
+static struct ipcpconf	*ipcpconf_find (const char *);
+static struct iface	*iface_find (const char *);
+static void		 sa_set_in_addr_any(struct sockaddr *);
 
-struct npppd_conf      *conf;
-struct ipcpconf        *curr_ipcpconf;
-struct tunnconf        *curr_tunnconf;
-struct authconf        *curr_authconf;
-struct radconf         *curr_radconf;
+struct npppd_conf	*conf;
+struct ipcpconf		*curr_ipcpconf;
+struct tunnconf		*curr_tunnconf;
+struct authconf		*curr_authconf;
+struct radconf		*curr_radconf;
 
 typedef struct {
 	union {
@@ -215,12 +216,42 @@ tunnel		: TUNNEL STRING PROTOCOL tunnelproto {
 			switch (curr_tunnconf->protocol) {
 #ifdef USE_NPPPD_L2TP
 			case NPPPD_TUNNEL_L2TP:
+				if (TAILQ_EMPTY(
+				    &curr_tunnconf->proto.l2tp.listen)) {
+					struct l2tp_listen_addr *addr;
+
+					if ((addr = malloc(sizeof(struct
+					    l2tp_listen_addr))) == NULL) {
+						free(curr_tunnconf);
+						yyerror("out of memory");
+						YYERROR;
+					}
+					sa_set_in_addr_any(
+					    (struct sockaddr *)&addr->addr);
+					TAILQ_INSERT_TAIL(&curr_tunnconf->proto.
+					    l2tp.listen, addr, entry);
+				}
 				TAILQ_INSERT_TAIL(&conf->l2tp_confs,
 				    &curr_tunnconf->proto.l2tp, entry);
 				break;
 #endif
 #ifdef USE_NPPPD_PPTP
 			case NPPPD_TUNNEL_PPTP:
+				if (TAILQ_EMPTY(
+				    &curr_tunnconf->proto.pptp.listen)) {
+					struct pptp_listen_addr *addr;
+
+					if ((addr = malloc(sizeof(struct
+					    pptp_listen_addr))) == NULL) {
+						free(curr_tunnconf);
+						yyerror("out of memory");
+						YYERROR;
+					}
+					sa_set_in_addr_any(
+					    (struct sockaddr *)&addr->addr);
+					TAILQ_INSERT_TAIL(&curr_tunnconf->proto.
+					    pptp.listen, addr, entry);
+				}
 				TAILQ_INSERT_TAIL(&conf->pptp_confs,
 				    &curr_tunnconf->proto.pptp, entry);
 				break;
@@ -254,18 +285,41 @@ tunnopt_l	: /* empty */
 		;
 
 tunnopt		: LISTEN ON addressport {
+
 			switch (curr_tunnconf->protocol) {
 			case NPPPD_TUNNEL_L2TP:
-				curr_tunnconf->proto.l2tp.address = $3;
+			    {
+				struct l2tp_listen_addr	*l_listen;
+
+				if ((l_listen = malloc(sizeof(
+				    struct l2tp_listen_addr))) == NULL) {
+					yyerror("out of memory");
+					YYERROR;
+				}
+				l_listen->addr = $3;
+				TAILQ_INSERT_TAIL(&curr_tunnconf->proto
+				    .l2tp.listen, l_listen, entry);
 				break;
+			    }
 			case NPPPD_TUNNEL_PPTP:
 				if ($3.ss_family == AF_INET6) {
 					yyerror("listen on IPv6 address is not "
 					    "supported by pptp tunnel");
 					YYERROR;
 				}
-				curr_tunnconf->proto.pptp.address = $3;
+			    {
+				struct pptp_listen_addr	*p_listen;
+
+				if ((p_listen = malloc(sizeof(
+				    struct pptp_listen_addr))) == NULL) {
+					yyerror("out of memory");
+					YYERROR;
+				}
+				p_listen->addr = $3;
+				TAILQ_INSERT_TAIL(&curr_tunnconf->proto
+				    .pptp.listen, p_listen, entry);
 				break;
+			    }
 			default:
 				yyerror("listen on address is not supported "
 				    "for specified protocol.\n");
@@ -1401,21 +1455,39 @@ tunnconf_fini(struct tunnconf *tun)
 
 	switch (tun->protocol) {
 	case NPPPD_TUNNEL_L2TP:
+	    {
+		struct l2tp_listen_addr	*l_addr, *l_tmp;
+
 		if (tun->proto.l2tp.hostname != NULL)
 			free(tun->proto.l2tp.hostname);
 		tun->proto.l2tp.hostname = NULL;
 		if (tun->proto.l2tp.vendor_name != NULL)
 			free(tun->proto.l2tp.vendor_name);
 		tun->proto.l2tp.vendor_name = NULL;
+		TAILQ_FOREACH_SAFE(l_addr, &tun->proto.l2tp.listen, entry,
+		    l_tmp) {
+			TAILQ_REMOVE(&tun->proto.l2tp.listen, l_addr, entry);
+			free(l_addr);
+		}
 		break;
+	    }
 	case NPPPD_TUNNEL_PPTP:
+	    {
+		struct pptp_listen_addr	*p_addr, *p_tmp;
+
 		if (tun->proto.pptp.hostname != NULL)
 			free(tun->proto.pptp.hostname);
 		tun->proto.pptp.hostname = NULL;
 		if (tun->proto.pptp.vendor_name != NULL)
 			free(tun->proto.pptp.vendor_name);
 		tun->proto.pptp.vendor_name = NULL;
+		TAILQ_FOREACH_SAFE(p_addr, &tun->proto.pptp.listen, entry,
+		    p_tmp) {
+			TAILQ_REMOVE(&tun->proto.pptp.listen, p_addr, entry);
+			free(p_addr);
+		}
 		break;
+	    }
 	case NPPPD_TUNNEL_PPPOE:
 		if (tun->proto.pppoe.service_name != NULL)
 			free(tun->proto.pppoe.service_name);
@@ -1436,9 +1508,11 @@ tunnconf_init(struct tunnconf *tun, int protocol)
 	switch (protocol) {
 	case NPPPD_TUNNEL_L2TP:
 		memcpy(tun, &tunnconf_default_l2tp, sizeof(struct tunnconf));
+		TAILQ_INIT(&tun->proto.l2tp.listen);
 		break;
 	case NPPPD_TUNNEL_PPTP:
 		memcpy(tun, &tunnconf_default_pptp, sizeof(struct tunnconf));
+		TAILQ_INIT(&tun->proto.pptp.listen);
 		break;
 	case NPPPD_TUNNEL_PPPOE:
 		memcpy(tun, &tunnconf_default_pppoe, sizeof(struct tunnconf));
@@ -1547,4 +1621,14 @@ iface_find(const char *name)
 	}
 
 	return NULL;
+}
+
+void
+sa_set_in_addr_any(struct sockaddr *sa)
+{
+	memset(sa, 0, sizeof(struct sockaddr_in));
+
+	sa->sa_family = AF_INET,
+	sa->sa_len = sizeof(struct sockaddr_in);
+	((struct sockaddr_in *)sa)->sin_addr.s_addr = htonl(INADDR_ANY);
 }

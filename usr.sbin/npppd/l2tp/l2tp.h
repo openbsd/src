@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.9 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.9 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -466,7 +466,7 @@ l2tp_ctrl        *l2tpd_get_ctrl (l2tpd *, u_int);
 void             l2tpd_add_ctrl (l2tpd *, l2tp_ctrl *);
 void             l2tpd_ctrl_finished_notify(l2tpd *);
 void             l2tpd_remove_ctrl (l2tpd *, u_int);
-int              l2tpd_add_listener (l2tpd *, int, struct l2tp_conf *);
+int              l2tpd_add_listener (l2tpd *, int, struct l2tp_conf *, struct sockaddr *);
 void             l2tpd_log (l2tpd *, int, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));
 int              l2tpd_reload(l2tpd *, struct l2tp_confs *);
 void             l2tpd_log_access_deny(l2tpd *, const char *, struct sockaddr *);

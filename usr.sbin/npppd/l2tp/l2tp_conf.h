@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_conf.h,v 1.1 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_conf.h,v 1.2 2014/03/22 04:32:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -28,23 +28,30 @@
 
 TAILQ_HEAD(l2tp_confs, l2tp_conf);
 
+struct l2tp_listen_addr {
+	struct sockaddr_storage	 addr;
+	TAILQ_ENTRY(l2tp_listen_addr)
+				 entry;
+};
+
 struct l2tp_conf {
-	TAILQ_ENTRY(l2tp_conf)   entry;
-	char                     name[L2TP_NAME_LEN];
-	char                    *hostname;
-	char                    *vendor_name;
-	struct sockaddr_storage  address;
-	int	                 hello_interval;
-	int	                 hello_timeout;
-	bool                     data_use_seq;
-	bool                     require_ipsec;
-	bool                     accept_dialin;
-	bool                     lcp_renegotiation;
-	bool                     force_lcp_renegotiation;
-	bool                     ctrl_in_pktdump;
-	bool                     ctrl_out_pktdump;
-	bool                     data_in_pktdump;
-	bool                     data_out_pktdump;
+	TAILQ_ENTRY(l2tp_conf)	 entry;
+	char			 name[L2TP_NAME_LEN];
+	char			*hostname;
+	char			*vendor_name;
+	TAILQ_HEAD(l2tp_listen_addrs, l2tp_listen_addr)
+				 listen;
+	int			 hello_interval;
+	int			 hello_timeout;
+	bool			 data_use_seq;
+	bool			 require_ipsec;
+	bool			 accept_dialin;
+	bool			 lcp_renegotiation;
+	bool			 force_lcp_renegotiation;
+	bool			 ctrl_in_pktdump;
+	bool			 ctrl_out_pktdump;
+	bool			 data_in_pktdump;
+	bool			 data_out_pktdump;
 };
 
 #endif

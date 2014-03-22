@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp.h,v 1.9 2012/11/13 17:10:40 yasuoka Exp $	*/
+/*	$OpenBSD: pptp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -333,7 +333,7 @@ int   pptpd_start (pptpd *);
 void  pptpd_stop (pptpd *);
 void pptpd_stop_immediatly (pptpd *);
 void  pptpd_ctrl_finished_notify(pptpd *, pptp_ctrl *);
-int  pptpd_add_listener(pptpd *, int, struct pptp_conf *);
+int  pptpd_add_listener(pptpd *, int, struct pptp_conf *, struct sockaddr *);
 
 pptp_ctrl  *pptp_ctrl_create (void);
 int        pptp_ctrl_init (pptp_ctrl *);

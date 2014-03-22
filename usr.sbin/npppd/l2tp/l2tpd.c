@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.13 2013/04/20 23:32:32 yasuoka Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.14 2014/03/22 04:32:39 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.13 2013/04/20 23:32:32 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.14 2014/03/22 04:32:39 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -139,7 +139,8 @@ l2tpd_init(l2tpd *_this)
  * @param	bindaddr	bind address
  */
 int
-l2tpd_add_listener(l2tpd *_this, int idx, struct l2tp_conf *conf)
+l2tpd_add_listener(l2tpd *_this, int idx, struct l2tp_conf *conf,
+    struct sockaddr *addr)
 {
 	l2tpd_listener *plistener, *plsnr;
 
@@ -167,8 +168,8 @@ l2tpd_add_listener(l2tpd *_this, int idx, struct l2tp_conf *conf)
 		goto fail;
 	}
 	memset(plistener, 0, sizeof(l2tpd_listener));
-	L2TPD_ASSERT(sizeof(plistener->bind) >= conf->address.ss_len);
-	memcpy(&plistener->bind, &conf->address, conf->address.ss_len);
+	L2TPD_ASSERT(sizeof(plistener->bind) >= addr->sa_len);
+	memcpy(&plistener->bind, addr, addr->sa_len);
 
 	if (plistener->bind.sin6.sin6_port == 0)
 		plistener->bind.sin6.sin6_port = htons(L2TPD_DEFAULT_UDP_PORT);
@@ -550,9 +551,10 @@ l2tpd_stop(l2tpd *_this)
 int
 l2tpd_reload(l2tpd *_this, struct l2tp_confs *l2tp_conf)
 {
-	int               i;
-	struct l2tp_conf *conf;
-	l2tpd_listener   *listener;
+	int			 i;
+	struct l2tp_conf	*conf;
+	l2tpd_listener		*listener;
+	struct l2tp_listen_addr	*addr;
 
 	if (slist_length(&_this->listener) > 0) {
 		/*
@@ -574,8 +576,11 @@ l2tpd_reload(l2tpd *_this, struct l2tp_confs *l2tp_conf)
 	}
 
 	i = 0;
-	TAILQ_FOREACH(conf, l2tp_conf, entry)
-		l2tpd_add_listener(_this, i++, conf);
+	TAILQ_FOREACH(conf, l2tp_conf, entry) {
+		TAILQ_FOREACH(addr, &conf->listen, entry)
+			l2tpd_add_listener(_this, i++, conf, 
+			    (struct sockaddr *)&addr->addr);
+	}
 	if (l2tpd_start(_this) != 0)
 		return -1;
 

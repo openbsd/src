@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_conf.h,v 1.1 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: pptp_conf.h,v 1.2 2014/03/22 04:32:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -28,18 +28,25 @@
 
 TAILQ_HEAD(pptp_confs, pptp_conf);
 
+struct pptp_listen_addr {
+	struct sockaddr_storage	 addr;
+	TAILQ_ENTRY(pptp_listen_addr)
+				 entry;
+};
+
 struct pptp_conf {
-	TAILQ_ENTRY(pptp_conf)   entry;
-	char                     name[PPTP_NAME_LEN];
-	char                    *hostname;
-	char                    *vendor_name;
-	int	                 echo_interval;
-	int	                 echo_timeout;
-	struct sockaddr_storage  address;
-	bool                     ctrl_in_pktdump;
-	bool                     ctrl_out_pktdump;
-	bool                     data_in_pktdump;
-	bool                     data_out_pktdump;
+	TAILQ_ENTRY(pptp_conf)	 entry;
+	char			 name[PPTP_NAME_LEN];
+	char			*hostname;
+	char			*vendor_name;
+	int			 echo_interval;
+	int			 echo_timeout;
+	TAILQ_HEAD(pptp_listen_addrs, pptp_listen_addr)
+				 listen;
+	bool			 ctrl_in_pktdump;
+	bool			 ctrl_out_pktdump;
+	bool			 data_in_pktdump;
+	bool			 data_out_pktdump;
 };
 
 #endif
