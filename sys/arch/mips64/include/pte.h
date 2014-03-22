@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.17 2014/02/08 09:34:04 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.18 2014/03/22 00:00:38 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@ typedef u_int32_t pt_entry_t;
 #endif /* _LOCORE */
 
 /* entryhi values */
+
 #ifndef CPU_R8000
 #define	PG_HVPN		(-2 * PAGE_SIZE)	/* Hardware page number mask */
 #define	PG_ODDPG	PAGE_SIZE
@@ -84,22 +85,38 @@ typedef u_int32_t pt_entry_t;
 #define	PG_ASID_COUNT		256	/* Number of available ASID */
 
 /* entrylo values */
+
 #ifdef CPU_R8000
-#define	PG_WIRED	0x00000010	/* SW */
-#define PG_RO		0x00000020	/* SW */
+#define	PG_FRAME	0xfffff000
+#define	PG_SHIFT	0
+#else
+#ifdef MIPS_PTE64
+#define	PG_FRAMEBITS	61
+#else
+#define	PG_FRAMEBITS	29
+#endif
+#define	PG_FRAME	((1ULL << PG_FRAMEBITS) - (1ULL << PG_SHIFT))
+#define	PG_SHIFT	6
+#endif
+
+/* software pte bits - not put in entrylo */
+#ifdef CPU_R8000
+#define	PG_WIRED	0x00000010
+#define	PG_RO		0x00000020
+#else
+#define	PG_WIRED	(1ULL << (PG_FRAMEBITS + 2))
+#define	PG_RO		(1ULL << (PG_FRAMEBITS + 1))
+#define	PG_SP		(1ULL << (PG_FRAMEBITS + 0))	/* ``special'' bit */
+#endif
+
+#define	PG_NV		0x00000000
+#ifdef CPU_R8000
 #define	PG_G		0x00000000	/* no such concept for R8000 */
 #define	PG_V		0x00000080
 #define	PG_M		0x00000100
 #define	PG_CCA_SHIFT	9
 #else
-#ifdef MIPS_PTE64
-#define	PG_WIRED	0x8000000000000000ULL	/* SW */
-#define PG_RO		0x4000000000000000ULL	/* SW */
-#else
-#define	PG_WIRED	0x80000000	/* SW */
-#define PG_RO		0x40000000	/* SW */
-#endif
-#define	PG_G		0x00000001	/* HW */
+#define	PG_G		0x00000001
 #define	PG_V		0x00000002
 #define	PG_M		0x00000004
 #define	PG_CCA_SHIFT	3
@@ -119,22 +136,8 @@ typedef u_int32_t pt_entry_t;
 #define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 
-#ifdef CPU_R8000
-#define	PG_FRAME	0xfffff000
-#define PG_SHIFT	0
-#else
-#ifdef MIPS_PTE64
-#define	PG_FRAME	0x3fffffffffffffc0ULL
-#define	PG_FRAMEBITS	62
-#else
-#define	PG_FRAME	0x3fffffc0
-#define	PG_FRAMEBITS	30
-#endif
-#define PG_SHIFT	6
-#endif
-
 #define	pfn_to_pad(pa)	((((paddr_t)pa) & PG_FRAME) << PG_SHIFT)
-#define vad_to_pfn(va)	(((va) >> PG_SHIFT) & PG_FRAME)
+#define	vad_to_pfn(va)	(((va) >> PG_SHIFT) & PG_FRAME)
 
 #ifndef CPU_R8000
 #define	PG_SIZE_4K	0x00000000
