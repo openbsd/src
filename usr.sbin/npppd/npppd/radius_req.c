@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.7 2014/03/22 04:25:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.6 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: radius_req.c,v 1.7 2014/03/22 04:25:00 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,19 +54,20 @@
 #endif
 
 struct overlapped {
-	struct event ev_sock;
-	int socket;
-	int ntry;
-	int max_tries;
-	int failovers;
-	struct sockaddr_storage ss;
-	struct timespec req_time;
-	void *context;
-	radius_response *response_fn;
-	char secret[MAX_RADIUS_SECRET];
-	RADIUS_PACKET *pkt;
-	radius_req_setting *setting;
-	int acct_delay_time;
+	struct event		 ev_sock;
+	int			 socket;
+	int			 ntry;
+	int			 max_tries;
+	int			 failovers;
+	int			 acct_delay_time;
+	int			 response_fn_calling;
+	struct sockaddr_storage	 ss;
+	struct timespec		 req_time;
+	void			*context;
+	radius_response		*response_fn;
+	char			 secret[MAX_RADIUS_SECRET];
+	RADIUS_PACKET		*pkt;
+	radius_req_setting	*setting;
 };
 
 static int   radius_request0 (struct overlapped *, int);
@@ -311,9 +312,16 @@ fail:
 void
 radius_cancel_request(RADIUS_REQUEST_CTX ctx)
 {
-	struct overlapped *lap;
+	struct overlapped	*lap = ctx;
 
-	lap = ctx;
+	/*
+	 * Don't call this function from the callback function.
+	 * The context will be freed after the callback function is called.
+	 */
+	RADIUS_REQ_ASSERT(lap->response_fn_calling == 0);
+	if (lap->response_fn_calling != 0)
+		return;
+
 	if (lap->socket >= 0) {
 		event_del(&lap->ev_sock);
 		close(lap->socket);
@@ -490,8 +498,11 @@ radius_on_response(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt, int flags,
 	}
 
 	failovers = lap->failovers;
-	if (lap->response_fn != NULL)
+	if (lap->response_fn != NULL) {
+		lap->response_fn_calling++;
 		lap->response_fn(lap->context, pkt, flags, ctx);
+		lap->response_fn_calling--;
+	}
 	if (failovers == lap->failovers)
 		radius_cancel_request(lap);
 }
