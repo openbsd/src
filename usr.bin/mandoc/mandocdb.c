@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.77 2014/03/21 22:52:21 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.78 2014/03/22 00:56:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1255,9 +1255,9 @@ static void
 parse_man(struct mpage *mpage, const struct man_node *n)
 {
 	const struct man_node *head, *body;
-	char		*start, *sv, *title;
+	char		*start, *title;
 	char		 byte;
-	size_t		 sz, titlesz;
+	size_t		 sz;
 
 	if (NULL == n)
 		return;
@@ -1277,11 +1277,7 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 				NULL != (head = (head->child)) &&
 				MAN_TEXT == head->type &&
 				0 == strcmp(head->string, "NAME") &&
-				NULL != (body = body->child) &&
-				MAN_TEXT == body->type) {
-
-			title = NULL;
-			titlesz = 0;
+				NULL != body->child) {
 
 			/*
 			 * Suck the entire NAME section into memory.
@@ -1290,46 +1286,10 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 			 * NAME sections over many lines.
 			 */
 
-			for ( ; NULL != body; body = body->next) {
-				if (MAN_TEXT != body->type)
-					break;
-				if (0 == (sz = strlen(body->string)))
-					continue;
-				title = mandoc_realloc
-					(title, titlesz + sz + 1);
-				memcpy(title + titlesz, body->string, sz);
-				titlesz += sz + 1;
-				title[titlesz - 1] = ' ';
-			}
+			title = NULL;
+			man_deroff(&title, body);
 			if (NULL == title)
 				return;
-
-			title = mandoc_realloc(title, titlesz + 1);
-			title[titlesz] = '\0';
-
-			/* Skip leading space.  */
-
-			sv = title;
-			while (isspace((unsigned char)*sv))
-				sv++;
-
-			if (0 == (sz = strlen(sv))) {
-				free(title);
-				return;
-			}
-
-			/* Erase trailing space. */
-
-			start = &sv[sz - 1];
-			while (start > sv && isspace((unsigned char)*start))
-				*start-- = '\0';
-
-			if (start == sv) {
-				free(title);
-				return;
-			}
-
-			start = sv;
 
 			/* 
 			 * Go through a special heuristic dance here.
@@ -1339,6 +1299,7 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 			 * the name parts here.
 			 */
 
+			start = title;
 			for ( ;; ) {
 				sz = strcspn(start, " ,");
 				if ('\0' == start[sz])
@@ -1369,7 +1330,7 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 					start++;
 			}
 
-			if (sv == start) {
+			if (start == title) {
 				putkey(mpage, start, TYPE_Nm);
 				free(title);
 				return;
