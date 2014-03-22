@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.8 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: tags.c,v 1.9 2014/03/22 10:00:58 lum Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -146,11 +146,12 @@ findtag(int f, int n)
 	char *tok, *bufp;
 	int  ret;
 
-	if (curtoken(f, n, dtok) == FALSE)
-		return (FALSE);
-	
-	bufp = eread("Find tag (default %s) ", utok, MAX_TOKEN,
-	    EFNUL | EFNEW, dtok);
+	if (curtoken(f, n, dtok) == FALSE) {
+		dtok[0] = '\0';
+		bufp = eread("Find tag:", utok, MAX_TOKEN, EFNUL | EFNEW);
+	} else
+		bufp = eread("Find tag (default %s):", utok, MAX_TOKEN,
+		    EFNUL | EFNEW, dtok);
 
 	if (bufp == NULL)
 		return (ABORT);
