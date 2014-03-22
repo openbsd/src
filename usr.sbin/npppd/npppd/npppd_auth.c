@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.12 2013/01/31 09:44:21 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.13 2014/03/22 04:23:17 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.12 2013/01/31 09:44:21 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.13 2014/03/22 04:23:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -189,15 +189,11 @@ npppd_auth_reload(npppd_auth_base *base)
 	if (auth == NULL)
 		return 1;
 
-	base->pppprefix[0] = '\0';
 	base->pppsuffix[0] = '\0';
 	if (auth != NULL) {
 		if (auth->username_suffix != NULL)
 			strlcpy(base->pppsuffix, auth->username_suffix,
 			    sizeof(base->pppsuffix));
-		if (auth->username_prefix != NULL)
-			strlcpy(base->pppprefix, auth->username_prefix,
-			    sizeof(base->pppprefix));
 		base->eap_capable = auth->eap_capable;
 		base->strip_nt_domain = auth->strip_nt_domain;
 		base->strip_atmark_realm = auth->strip_atmark_realm;
@@ -450,12 +446,6 @@ npppd_auth_get_suffix(npppd_auth_base *base)
 }
 
 const char *
-npppd_auth_get_prefix(npppd_auth_base *base)
-{
-	return base->pppprefix;
-}
-
-const char *
 npppd_auth_username_for_auth(npppd_auth_base *base, const char *username,
     char *username_buffer)
 {
@@ -494,12 +484,10 @@ npppd_auth_get_user(npppd_auth_base *base, const char *username)
 
 	un = username;
 	lsuffix = strlen(base->pppsuffix);
-	if (lsuffix > 0) {
-		/* Strip the suffix */
-		lusername = strlen(username);
-		NPPPD_AUTH_ASSERT(lusername + 1 < sizeof(buf));
-		if (lusername + 1 >= sizeof(buf))
-			return NULL;
+	lusername = strlen(username);
+	if (lsuffix > 0 && lusername > lsuffix &&
+	    strcmp(username + lusername - lsuffix, base->pppsuffix) == 0 &&
+	    lusername - lsuffix < sizeof(buf)) {
 		memcpy(buf, username, lusername - lsuffix);
 		buf[lusername - lsuffix] = '\0';
 		un = buf;

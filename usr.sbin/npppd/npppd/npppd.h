@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.h,v 1.13 2012/12/05 23:20:26 deraadt Exp $ */
+/*	$OpenBSD: npppd.h,v 1.14 2014/03/22 04:23:17 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -150,7 +150,6 @@ struct authconf {
 	char                               name[NPPPD_GENERIC_NAME_LEN];
 	int                                auth_type;
 	char                              *username_suffix;
-	char                              *username_prefix;
 	bool                               eap_capable;
 	bool                               strip_nt_domain;
 	bool                               strip_atmark_realm;

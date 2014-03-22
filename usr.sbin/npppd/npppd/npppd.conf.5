@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.11 2013/09/11 05:38:08 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.12 2014/03/22 04:23:17 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2013 $
+.Dd $Mdocdate: March 22 2014 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -552,12 +552,6 @@ so that
 .Xr npppd 8
 selects this authentication setting only for a user who has the username
 that matches this suffix pattern.
-.It Ic username-prefix Ar string
-Specify the prefix of the username
-so that
-.Xr npppd 8
-selects this authentication setting only for a user who has the username
-that matches this prefix pattern.
 .\" .It Ic eap-capable Ar yes | no
 .\" Specify whether this authentcation server is able to use EAP.
 .\" Default is `yes'.

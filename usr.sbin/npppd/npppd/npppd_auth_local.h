@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth_local.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth_local.h,v 1.7 2014/03/22 04:23:17 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -35,8 +35,6 @@ struct _npppd_auth_base {
 	int	type;
 	/** PPP suffix */
 	char	pppsuffix[64];
-	/** PPP prefix */
-	char	pppprefix[64];
 	uint32_t
 		/** whether initialized or not */
 		initialized:1,

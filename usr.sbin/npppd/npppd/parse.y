@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2013/11/25 12:58:17 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2014/03/22 04:23:17 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -604,9 +604,6 @@ authopt_l	: /* empty */
 authopt	: USERNAME_SUFFIX STRING {
 			curr_authconf->username_suffix = $2;
 		}
-		| USERNAME_PREFIX STRING {
-			curr_authconf->username_prefix = $2;
-		}
 		| EAP_CAPABLE yesno {
 			curr_authconf->eap_capable = $2;
 		}
@@ -1037,7 +1034,6 @@ lookup(char *s)
 		{ "tunnel",                       TUNNEL},
 		{ "type",                         TYPE},
 		{ "user-max-session",             USER_MAX_SESSION},
-		{ "username-prefix",              USERNAME_PREFIX},
 		{ "username-suffix",              USERNAME_SUFFIX},
 		{ "users-file",                   USERS_FILE},
 		{ "yes",                          YES}
@@ -1478,10 +1474,6 @@ authconf_fini(struct authconf *auth)
 	if (auth->username_suffix != NULL)
 		free(auth->username_suffix);
 	auth->username_suffix = NULL;
-
-	if (auth->username_prefix != NULL)
-		free(auth->username_prefix);
-	auth->username_prefix = NULL;
 
 	switch (auth->auth_type) {
 	case NPPPD_AUTH_TYPE_RADIUS:

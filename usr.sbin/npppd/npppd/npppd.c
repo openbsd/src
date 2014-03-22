@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.33 2014/03/22 04:21:04 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.34 2014/03/22 04:23:17 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.33 2014/03/22 04:21:04 yasuoka Exp $
+ * $Id: npppd.c,v 1.34 2014/03/22 04:23:17 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -1955,7 +1955,7 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 	struct confbind *bind;
 	npppd_auth_base *realm = NULL, *realm0 = NULL, *realm1 = NULL;
 	char             buf1[MAX_USERNAME_LENGTH];
-	int              lsuffix, lprefix, lusername, lmax;
+	int              lsuffix, lusername, lmax;
 
 	NPPPD_ASSERT(_this != NULL);
 	NPPPD_ASSERT(ppp != NULL);
@@ -1996,13 +1996,6 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 			(lsuffix < lusername && strcmp(username + lusername
 				- lsuffix, npppd_auth_get_suffix(realm0))
 				== 0))) {
-			/* check prefix */
-			lprefix = strlen(npppd_auth_get_prefix(realm0));
-			if (lprefix > 0 &&
-			    strncmp(username, npppd_auth_get_prefix(realm0),
-				    lprefix) != 0)
-				continue;
-
 			lmax = lsuffix;
 			realm = realm0;
 		}
