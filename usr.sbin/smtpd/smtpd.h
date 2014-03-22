@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.450 2014/02/17 13:33:56 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.451 2014/03/22 09:41:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -592,6 +592,7 @@ struct smtpd {
 #define PROFILE_TOSTAT	0x0001
 #define PROFILE_IMSG	0x0002
 #define PROFILE_QUEUE	0x0004
+#define PROFILE_BUFFERS	0x0008
 
 struct forward_req {
 	uint64_t			id;

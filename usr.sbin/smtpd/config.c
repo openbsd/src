@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.24 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.25 2014/03/22 09:41:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -34,6 +34,8 @@
 #include "smtpd.h"
 #include "log.h"
 #include "ssl.h"
+
+extern int profiling;
 
 static int pipes[PROC_COUNT][PROC_COUNT];
 
@@ -170,6 +172,9 @@ config_done(void)
 	}
 
 	if (smtpd_process == PROC_CONTROL)
+		return;
+
+	if (!(profiling & PROFILE_BUFFERS))
 		return;
 
 	evtimer_set(&ev, process_stat_event, &ev);
