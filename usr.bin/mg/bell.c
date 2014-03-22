@@ -1,4 +1,4 @@
-/*	$OpenBSD: bell.c,v 1.1 2013/05/31 18:03:43 lum Exp $	*/
+/*	$OpenBSD: bell.c,v 1.2 2014/03/22 11:05:37 lum Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -18,7 +18,6 @@ bellinit(void)
 {
 	doaudiblebell = 1;
 	dovisiblebell = 0;
-	donebell = 0;
 }
 
 void
@@ -32,7 +31,6 @@ dobeep(void)
 		update(CNONE);
 		usleep(50000);
 	}
-	donebell = 1;
 }
 
 /* ARGSUSED */

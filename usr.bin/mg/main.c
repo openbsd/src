@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.71 2013/05/31 18:03:44 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.72 2014/03/22 11:05:37 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -20,7 +20,6 @@ int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
 int		 doaudiblebell;			/* audible bell toggle	*/
 int		 dovisiblebell;			/* visible bell toggle	*/
-int		 donebell;			/* done't wring bell	*/
 struct buffer	*curbp;				/* current buffer	*/
 struct buffer	*bheadp;			/* BUFFER list head	*/
 struct mgwin	*curwp;				/* current window	*/
@@ -187,11 +186,8 @@ notnum:
 			/* FALLTHRU */
 		case FALSE:
 		default:
-			if (!donebell)
-				dobeep();
 			macrodef = FALSE;
 		}
-		donebell = 0;
 	}
 }
 
