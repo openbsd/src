@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.127 2014/03/21 08:13:57 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.128 2014/03/22 11:16:42 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -155,9 +155,16 @@ sm_populate() {
 		mkdir -p ${DESTDIR}/${DBDIR} || exit 1
 	fi
 
-	prepare_src
 	extract_set "${TGZ}" etc
 	extract_set "${XTGZ}" xetc
+
+	# automatically install missing user(s) and group(s) from the
+	# new master.passwd and group files:
+	# - after extracting the sets (so we have the new files)
+	# - before running distribution-etc-root-var (using files from SRCDIR)
+	install_user_group
+
+	prepare_src
 
 	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
 		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
@@ -169,10 +176,7 @@ sm_populate() {
 					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
-						# sanity check: _always_ compare master.passwd(5) and group(5)
-						# we don't want to have missing system user(s) and/or group(s)
-						[ ${_r} != ./etc/master.passwd -a ${_r} != ./etc/group ] && \
-							rm -f ${TEMPROOT}/${_r}
+						rm -f ${TEMPROOT}/${_r}
 					fi
 				done
 			fi
@@ -194,8 +198,10 @@ sm_populate() {
 
 	# files we don't want/need to deal with
 	IGNORE_FILES="/etc/*.db
+		      /etc/group
 		      /etc/localtime
 		      /etc/mail/*.db
+		      /etc/master.passwd
 		      /etc/passwd
 		      /etc/motd
 		      /etc/myname
@@ -269,10 +275,6 @@ install_file() {
 		echo " (running newaliases(8))"
 		${DESTDIR:+chroot ${DESTDIR}} newaliases >/dev/null || export NEED_NEWALIASES=1
 		;;
-	/etc/master.passwd)
-		echo " (running pwd_mkdb(8))"
-		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
-		;;
 	*)
 		echo ""
 		;;
@@ -291,6 +293,40 @@ install_link() {
 	rm -f ${COMPFILE}
 	(cd ${_LINKF} && ln -sf ${_LINKT} .)
 	return
+}
+
+install_user_group() {
+	local _g _gid _u
+	if [ -n "${SRCDIR}" ]; then
+		local _pw="${SRCDIR}/etc/master.passwd"
+		local _gr="${SRCDIR}/etc/group"
+	else
+		local _pw="${TEMPROOT}/etc/master.passwd"
+		local _gr="${TEMPROOT}/etc/group"
+	fi
+
+	while read l; do
+		_u=$(echo ${l} | awk -F ':' '{ print $1 }')
+		if [ "${_u}" != "root" ]; then
+			if [ -z "$(grep -E "^${_u}:" ${DESTDIR}/etc/master.passwd)" ]; then
+				echo "===> Adding the ${_u} user"
+				if ${DESTDIR:+chroot ${DESTDIR}} chpass -la "${l}"; then
+					set -A NEWUSR -- ${NEWUSR[@]} ${_u}
+				fi
+			fi
+		fi
+	done < ${_pw}
+
+	while read l; do
+		_g=$(echo ${l} | awk -F ':' '{ print $1 }')
+		_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
+		if [ -z "$(grep -E "^${_g}:" ${DESTDIR}/etc/group)" ]; then
+			echo "===> Adding the ${_g} group"
+			if ${DESTDIR:+chroot ${DESTDIR}} groupadd -g "${_gid}" "${_g}"; then
+				set -A NEWGRP -- ${NEWGRP[@]} ${_g}
+			fi
+		fi
+	done < ${_gr}
 }
 
 merge_loop() {
@@ -367,7 +403,7 @@ merge_loop() {
 }
 
 diff_loop() {
-	local i _g _gid _merge_pwd _merge_grp _u CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
+	local i CAN_INSTALL HANDLE_COMPFILE NO_INSTALLED
 	if [ -n "${BATCHMODE}" ]; then
 		HANDLE_COMPFILE=todo
 	else
@@ -392,45 +428,6 @@ diff_loop() {
 						warn "problem updating ${COMPFILE#.}"
 					fi
 					return
-				fi
-				# automatically install missing users
-				if [ "${COMPFILE}" = "./etc/master.passwd" ]; then
-					while read l; do
-						_u=$(echo ${l} | awk -F ':' '{ print $1 }')
-						if [ "${_u}" != "root" ]; then
-							if [ -z "$(grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.})" ]; then
-								echo "===> Adding the ${_u} user"
-								if ${DESTDIR:+chroot ${DESTDIR}} chpass -la "${l}"; then
-									set -A NEWUSR -- ${NEWUSR[@]} ${_u}
-								else
-									_merge_pwd=1
-								fi
-							fi
-						fi
-					done < ${COMPFILE}
-					if [ -z ${_merge_pwd} ]; then
-						rm "${TEMPROOT}${COMPFILE#.}"
-						return
-					fi
-				fi
-				# automatically install missing groups
-				if [ "${COMPFILE}" = "./etc/group" ]; then
-					while read l; do
-						_g=$(echo ${l} | awk -F ':' '{ print $1 }')
-						_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
-						if [ -z "$(grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.})" ]; then
-							echo "===> Adding the ${_g} group"
-							if ${DESTDIR:+chroot ${DESTDIR}} groupadd -g "${_gid}" "${_g}"; then
-								set -A NEWGRP -- ${NEWGRP[@]} ${_g}
-							else
-								_merge_grp=1
-							fi
-						fi
-					done < ${COMPFILE}
-					if [ -z ${_merge_grp} ]; then
-						rm "${TEMPROOT}${COMPFILE#.}"
-						return
-					fi
 				fi
 			fi
 			if [ "${HANDLE_COMPFILE}" = "v" ]; then
@@ -474,7 +471,7 @@ diff_loop() {
 
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			if [[ ${COMPFILE} != ./etc/@(master.passwd|group|hosts) ]]; then
+			if [[ ${COMPFILE} != ./etc/hosts ]]; then
 				CAN_INSTALL=1
 				echo "  Use 'i' to install the temporary ${COMPFILE}"
 			fi
@@ -551,24 +548,20 @@ diff_loop() {
 }
 
 sm_compare() {
-	local _c1 _c2 _c3 COMPFILE CVSID1 CVSID2
+	local _c1 _c2 COMPFILE CVSID1 CVSID2
 	echo "===> Starting comparison"
 
 	cd ${TEMPROOT} || error_rm_wrkdir "cannot enter ${TEMPROOT}"
 
-	# group and master.passwd need to be handled first in case
-	# install_file needs a new user/group;
 	# aliases(5) needs to be handled last in case smtpd.conf(5) syntax changes
-	_c1="./etc/group ./etc/master.passwd"
-	_c2=$(find . -type f -or -type l | grep -vE '^./etc/(group|master.passwd|mail/aliases)$')
-	_c3=$(find . -type f -name aliases)
-	for COMPFILE in ${_c1} ${_c2} ${_c3}; do
+	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
+	_c2=$(find . -type f -name aliases)
+	for COMPFILE in ${_c1} ${_c2}; do
 		unset IS_BINFILE IS_LINK
-		# treat empty files the same as IS_BINFILE to avoid comparing them
+		# treat empty files the same as IS_BINFILE to avoid comparing them;
 		# only process them (i.e. install) if they don't exist on the target system
 		if [ ! -s "${COMPFILE}" ]; then
 			if [ -f "${DESTDIR}${COMPFILE#.}" ]; then
-				# group and master.passwd are always in the _c1 list
 				[ -f "${COMPFILE}" ] && rm "${COMPFILE}"
 			else
 				IS_BINFILE=1
