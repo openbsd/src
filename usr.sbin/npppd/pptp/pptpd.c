@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.18 2013/04/20 23:32:32 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.19 2014/03/22 04:18:18 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.18 2013/04/20 23:32:32 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.19 2014/03/22 04:18:18 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.18 2013/04/20 23:32:32 yasuoka Exp $
+ * $Id: pptpd.c,v 1.19 2014/03/22 04:18:18 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -507,7 +507,7 @@ pptpd_stop_immediatly(pptpd *_this)
 		pptpd_close_gre(_this);
 		slist_fini(&_this->ctrl_list);
 		slist_fini(&_this->call_free_list);
-		pptpd_log(_this, LOG_NOTICE, "Stopped");
+		PPTPD_DBG((_this, LOG_DEBUG, "Stopped"));
 	} else {
 		PPTPD_DBG((_this, LOG_DEBUG, "(Already) Stopped"));
 	}
