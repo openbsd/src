@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.78 2014/03/22 00:56:07 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.79 2014/03/23 12:44:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1498,32 +1498,10 @@ parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_node *n)
 static int
 parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_node *n)
 {
-	size_t		 sz;
 
-	if (MDOC_BODY != n->type)
-		return(0);
-
-	/*
-	 * Special-case the `Nd' because we need to put the description
-	 * into the document table.
-	 */
-
-	for (n = n->child; NULL != n; n = n->next) {
-		if (MDOC_TEXT == n->type) {
-			if (NULL != mpage->desc) {
-				sz = strlen(mpage->desc) +
-				     strlen(n->string) + 2;
-				mpage->desc = mandoc_realloc(
-				    mpage->desc, sz);
-				strlcat(mpage->desc, " ", sz);
-				strlcat(mpage->desc, n->string, sz);
-			} else
-				mpage->desc = mandoc_strdup(n->string);
-		}
-		if (NULL != n->child)
-			parse_mdoc_Nd(mpage, n);
-	}
-	return(1);
+	if (MDOC_BODY == n->type)
+		mdoc_deroff(&mpage->desc, n);
+	return(0);
 }
 
 static int

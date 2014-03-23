@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.100 2014/03/21 22:52:21 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.101 2014/03/23 12:44:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1015,4 +1016,43 @@ mdoc_isdelim(const char *p)
 		return(DELIM_MIDDLE);
 
 	return(DELIM_NONE);
+}
+
+void
+mdoc_deroff(char **dest, const struct mdoc_node *n)
+{
+	char	*cp;
+	size_t	 sz;
+
+	if (MDOC_TEXT != n->type) {
+		for (n = n->child; n; n = n->next)
+			mdoc_deroff(dest, n);
+		return;
+	}
+
+	/* Skip leading whitespace. */
+
+	for (cp = n->string; '\0' != *cp; cp++)
+		if (0 == isspace((unsigned char)*cp))
+			break;
+
+	/* Skip trailing whitespace. */
+
+	for (sz = strlen(cp); sz; sz--)
+		if (0 == isspace((unsigned char)cp[sz-1]))
+			break;
+
+	/* Skip empty strings. */
+
+	if (0 == sz)
+		return;
+
+	if (NULL == *dest) {
+		*dest = mandoc_strndup(cp, sz);
+		return;
+	}
+
+	mandoc_asprintf(&cp, "%s %*s", *dest, (int)sz, cp);
+	free(*dest);
+	*dest = cp;
 }

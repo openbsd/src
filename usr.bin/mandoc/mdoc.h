@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.49 2013/12/24 19:10:34 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.50 2014/03/23 12:44:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -389,6 +389,7 @@ struct	mdoc;
 
 const struct mdoc_node *mdoc_node(const struct mdoc *);
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);
+void mdoc_deroff(char **, const struct mdoc_node *);
 
 __END_DECLS
 
