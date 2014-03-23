@@ -6,45 +6,45 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
+.\" 	$OpenBSD: md5.3,v 1.1 2014/03/23 23:27:22 naddy Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
-.Dt MDX 3
+.Dd $Mdocdate: March 23 2014 $
+.Dt MD5 3
 .Os
 .Sh NAME
-.Nm MDXInit ,
-.Nm MDXUpdate ,
-.Nm MDXPad ,
-.Nm MDXFinal ,
-.Nm MDXTransform ,
-.Nm MDXEnd ,
-.Nm MDXFile ,
-.Nm MDXFileChunk ,
-.Nm MDXData
-.Nd calculate the RSA Data Security, Inc., ``MDX'' message digest
+.Nm MD5Init ,
+.Nm MD5Update ,
+.Nm MD5Pad ,
+.Nm MD5Final ,
+.Nm MD5Transform ,
+.Nm MD5End ,
+.Nm MD5File ,
+.Nm MD5FileChunk ,
+.Nm MD5Data
+.Nd calculate the RSA Data Security, Inc., ``MD5'' message digest
 .Sh SYNOPSIS
 .In sys/types.h
-.In mdX.h
+.In md5.h
 .Ft void
-.Fn MDXInit "MDX_CTX *context"
+.Fn MD5Init "MD5_CTX *context"
 .Ft void
-.Fn MDXUpdate "MDX_CTX *context" "const u_int8_t *data" "size_t len"
+.Fn MD5Update "MD5_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
-.Fn MDXPad "MDX_CTX *context"
+.Fn MD5Pad "MD5_CTX *context"
 .Ft void
-.Fn MDXFinal "u_int8_t digest[MDX_DIGEST_LENGTH]" "MDX_CTX *context"
+.Fn MD5Final "u_int8_t digest[MD5_DIGEST_LENGTH]" "MD5_CTX *context"
 .Ft void
-.Fn MDXTransform "u_int32_t state[4]" "u_int8_t block[MDX_BLOCK_LENGTH]"
+.Fn MD5Transform "u_int32_t state[4]" "u_int8_t block[MD5_BLOCK_LENGTH]"
 .Ft "char *"
-.Fn MDXEnd "MDX_CTX *context" "char *buf"
+.Fn MD5End "MD5_CTX *context" "char *buf"
 .Ft "char *"
-.Fn MDXFile "const char *filename" "char *buf"
+.Fn MD5File "const char *filename" "char *buf"
 .Ft "char *"
-.Fn MDXFileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn MD5FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
-.Fn MDXData "const u_int8_t *data" "size_t len" "char *buf"
+.Fn MD5Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
-The MDX functions calculate a 128-bit cryptographic checksum (digest)
+The MD5 functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.
 A cryptographic checksum is a one-way
 hash-function, that is, you cannot find (except by exhaustive search)
@@ -53,66 +53,67 @@ This net result is a
 .Dq fingerprint
 of the input-data, which doesn't disclose the actual input.
 .Pp
-MD4 and MD5 have been broken; they should only be used where necessary for
+MD5 has been broken; it should only be used where necessary for
 backward compatibility.
-The attacks on both MD4 and MD5
-are both in the nature of finding
+The attack on MD5 is in the nature of finding
 .Dq collisions
 \- that is, multiple
 inputs which hash to the same value; it is still unlikely for an attacker
 to be able to determine the exact original input given a hash value.
 .Pp
 The
-.Fn MDXInit ,
-.Fn MDXUpdate ,
+.Fn MD5Init ,
+.Fn MD5Update ,
 and
-.Fn MDXFinal
+.Fn MD5Final
 functions are the core functions.
-Allocate an MDX_CTX, initialize it with
-.Fn MDXInit ,
+Allocate an
+.Vt MD5_CTX ,
+initialize it with
+.Fn MD5Init ,
 run over the data with
-.Fn MDXUpdate ,
+.Fn MD5Update ,
 and finally extract the result using
-.Fn MDXFinal .
+.Fn MD5Final .
 .Pp
 The
-.Fn MDXPad
+.Fn MD5Pad
 function can be used to apply padding to the message digest as in
-.Fn MDXFinal ,
+.Fn MD5Final ,
 but the current context can still be used with
-.Fn MDXUpdate .
+.Fn MD5Update .
 .Pp
 The
-.Fn MDXTransform
+.Fn MD5Transform
 function is used by
-.Fn MDXUpdate
+.Fn MD5Update
 to hash 512-bit blocks and forms the core of the algorithm.
 Most programs should use the interface provided by
-.Fn MDXInit ,
-.Fn MDXUpdate
+.Fn MD5Init ,
+.Fn MD5Update
 and
-.Fn MDXFinal
+.Fn MD5Final
 instead of calling
-.Fn MDXTransform
+.Fn MD5Transform
 directly.
 .Pp
-.Fn MDXEnd
+.Fn MD5End
 is a wrapper for
-.Fn MDXFinal
-which converts the return value to an MDX_DIGEST_STRING_LENGTH-character
+.Fn MD5Final
+which converts the return value to an MD5_DIGEST_STRING_LENGTH-character
 (including the terminating '\e0')
 .Tn ASCII
 string which represents the 128 bits in hexadecimal.
 .Pp
-.Fn MDXFile
+.Fn MD5File
 calculates the digest of a file, and uses
-.Fn MDXEnd
+.Fn MD5End
 to return the result.
 If the file cannot be opened, a null pointer is returned.
 .Pp
-.Fn MDXFileChunk
+.Fn MD5FileChunk
 behaves like
-.Fn MDXFile
+.Fn MD5File
 but calculates the digest only for that portion of the file starting at
 .Fa offset
 and continuing for
@@ -126,17 +127,17 @@ A negative
 or
 .Fa offset
 will be ignored.
-.Fn MDXData
+.Fn MD5Data
 calculates the digest of a chunk of data in memory, and uses
-.Fn MDXEnd
+.Fn MD5End
 to return the result.
 .Pp
 When using
-.Fn MDXEnd ,
-.Fn MDXFile ,
-.Fn MDXFileChunk ,
+.Fn MD5End ,
+.Fn MD5File ,
+.Fn MD5FileChunk ,
 or
-.Fn MDXData ,
+.Fn MD5Data ,
 the
 .Ar buf
 argument can be a null pointer, in which case the returned string
@@ -147,20 +148,14 @@ and subsequently must be explicitly deallocated using
 after use.
 If the
 .Ar buf
-argument is non-null it must point to at least MDX_DIGEST_STRING_LENGTH
+argument is non-null it must point to at least MD5_DIGEST_STRING_LENGTH
 characters of buffer space.
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr md5 1 ,
-.Xr mdY 3 ,
 .Xr rmd160 3 ,
 .Xr sha1 3 ,
 .Xr sha2 3
-.Rs
-.%A RSA Laboratories
-.%T Frequently Asked Questions About today's Cryptography
-.%U http://www.rsa.com/rsalabs/faq/
-.Re
 .Rs
 .%A H. Dobbertin
 .%D 1995
@@ -182,13 +177,6 @@ characters of buffer space.
 .Sh STANDARDS
 .Rs
 .%A R. Rivest
-.%D October 1990
-.%R RFC 1186
-.%T The MD4 Message Digest Algorithm
-.Re
-.Pp
-.Rs
-.%A R. Rivest
 .%D April 1992
 .%R RFC 1321
 .%T The MD5 Message Digest Algorithm
@@ -197,20 +185,20 @@ characters of buffer space.
 These functions appeared in
 .Ox 2.0 .
 .Sh AUTHORS
-The original MDX routines were developed by
+The original MD5 routines were developed by
 .Tn RSA
 Data Security, Inc., and published in the above references.
 This code is derived from a public domain implementation written by Colin Plumb.
 .Pp
 The
-.Fn MDXEnd ,
-.Fn MDXFile ,
-.Fn MDXFileChunk ,
+.Fn MD5End ,
+.Fn MD5File ,
+.Fn MD5FileChunk ,
 and
-.Fn MDXData
+.Fn MD5Data
 helper functions are derived from code written by Poul-Henning Kamp.
 .Sh BUGS
-Collisions have been found for the full versions of both MD4 and MD5.
+Collisions have been found for the full version of MD5.
 The use of
 .Xr sha2 3
 is recommended instead.

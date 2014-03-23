@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.31 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: rmd160.3,v 1.32 2014/03/23 23:27:22 naddy Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 23 2014 $
 .Dt RMD160 3
 .Os
 .Sh NAME
@@ -62,8 +62,6 @@ message less than 2^64 bits as input and produces a 160-bit digest
 suitable for use as a digital signature.
 .Pp
 The RMD160 functions are considered to be more secure than the
-.Xr md4 3
-and
 .Xr md5 3
 functions and at least as secure as the
 .Xr sha1 3
@@ -199,7 +197,6 @@ printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
 .Ed
 .Sh SEE ALSO
 .Xr cksum 1 ,
-.Xr md4 3 ,
 .Xr md5 3 ,
 .Xr sha1 3 ,
 .Xr sha2 3
