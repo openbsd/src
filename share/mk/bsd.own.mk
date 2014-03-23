@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.145 2014/03/18 22:36:31 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.146 2014/03/23 03:33:58 tedu Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -18,7 +18,7 @@ KERBEROS5?=	yes
 YP?=		yes
 # Set `TCP_WRAPPERS' to `yes' to build certain networking daemons with
 # integrated support for libwrap.
-TCP_WRAPPERS?=	yes
+TCP_WRAPPERS?=	no
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
