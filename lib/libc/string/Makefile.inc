@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.33 2014/01/22 21:06:45 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.34 2014/03/23 23:16:48 tedu Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
-SRCS+=	bm.c explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
+SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
 	strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strerror_r.c strlcat.c strmode.c strndup.c strnlen.c \
 	strsignal.c strtok.c strxfrm.c \
@@ -144,7 +144,7 @@ strrchr.do: rindex.c
 	@mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
-MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
+MAN+=	bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	memcmp.3 memcpy.3 memmem.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 \
 	strcat.3 strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strdup.3 \
 	strerror.3 string.3 strlen.3 strmode.3 strncat.3 strncpy.3 strpbrk.3 \
@@ -154,7 +154,6 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	wcsstr.3 wcstok.3 wcswidth.3 wmemchr.3 wmemcmp.3 wmemcpy.3 wmemmove.3 \
 	wmemset.3
 
-MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=bzero.3 explicit_bzero.3
 MLINKS+=memchr.3 memrchr.3
 MLINKS+=stpcpy.3 stpncpy.3
