@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.21 2012/07/08 21:48:38 schwarze Exp $
+.\" $OpenBSD: security.8,v 1.22 2014/03/23 22:08:59 sthen Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: July 8 2012 $
+.Dd $Mdocdate: March 23 2014 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -36,9 +36,6 @@ suspicious UIDs, suspicious GIDs, and duplicate entries.
 Check root's home directory and login environment for
 insecure permissions, suspicious paths, and umask commands in the
 dotfiles.
-.It
-Check that root and uucp are in
-.Pa /etc/ftpusers .
 .It
 Check for suspicious commands in
 .Pa /etc/mail/aliases .
