@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.35 2010/12/23 14:43:03 jmc Exp $
+.\"	$OpenBSD: kill.1,v 1.36 2014/03/23 07:44:37 jmc Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)kill.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: December 23 2010 $
+.Dd $Mdocdate: March 23 2014 $
 .Dt KILL 1
 .Os
 .Sh NAME
@@ -156,6 +156,16 @@ The
 utility is compliant with the
 .St -p1003.1-2008
 specification.
+.Pp
+The
+.Fl Ar signal_name
+and
+.Fl Ar signal_number
+syntax is marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces
+option.
 .Pp
 .Nm
 also exists as a built-in to
