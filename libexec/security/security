@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.23 2013/03/21 09:37:37 sthen Exp $
+# $OpenBSD: security,v 1.24 2014/03/23 22:08:15 sthen Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -285,20 +285,6 @@ sub check_ksh {
 		chomp @output;
 		check_root_path $output[-1], $filename;
 	}
-}
-
-# Root and uucp should both be in /etc/ftpusers.
-sub check_ftpusers {
-	my $filename = '/etc/ftpusers';
-	nag !(open my $fh, '<', $filename), "open: $filename: $!" and return;
-	my %banned = qw(root 1 uucp 1);
-	while (<$fh>) {
-		chomp;
-		delete $banned{$_};
-	}
-	nag 1, "\u$_ not listed in $filename file."
-	    foreach sort keys %banned;
-	close $fh;
 }
 
 # Uudecode should not be in the /etc/mail/aliases file.
@@ -899,7 +885,6 @@ check_ksh(check_sh);
 open STDERR, '>&', $olderr;
 
 $check_title = "Checking configuration files:";
-check_ftpusers;
 check_mail_aliases;
 check_hostname_if;
 check_hosts_equiv;
