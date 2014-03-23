@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.76 2014/03/22 00:56:07 schwarze Exp $ */
+/*	$Id: man.c,v 1.77 2014/03/23 20:57:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -716,11 +716,18 @@ man_deroff(char **dest, const struct man_node *n)
 		return;
 	}
 
-	/* Skip leading whitespace. */
+	/* Skip leading whitespace and escape sequences. */
 
-	for (cp = n->string; '\0' != *cp; cp++)
-		if (0 == isspace((unsigned char)*cp))
+	cp = n->string;
+	while ('\0' != *cp) {
+		if ('\\' == *cp) {
+			cp++;
+			mandoc_escape((const char **)&cp, NULL, NULL);
+		} else if (isspace((unsigned char)*cp))
+			cp++;
+		else
 			break;
+	}
 
 	/* Skip trailing whitespace. */
 
