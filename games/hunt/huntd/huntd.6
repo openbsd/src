@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.22 2014/03/23 02:42:47 tedu Exp $
+.\"	$OpenBSD: huntd.6,v 1.23 2014/03/23 07:45:47 jmc Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -20,9 +20,7 @@
 .Op Fl bs
 .Op Fl a Ar addr
 .Sm off
-.Oo
-.Fl D Ar var No = Ar value \ \&...
-.Oc
+.Op Fl D Ar var No = Ar value ...
 .Sm on
 .Op Fl p Ar port
 .Sh DESCRIPTION
@@ -92,7 +90,7 @@ to start up
 .Nm huntd
 on a private port, change the port listed in
 .Pa /etc/services .
-.Ss "NETWORK RENDEZVOUS"
+.Ss NETWORK RENDEZVOUS
 When
 .Xr hunt 6
 starts up, it broadcasts on attached networks,
@@ -105,7 +103,7 @@ If a
 hears the request, it sends back the port number for the
 .Nm hunt
 process to connect to.
-.Ss "CONFIGURATION"
+.Ss CONFIGURATION
 When
 .Nm
 starts, it looks for configuration files that determine
@@ -118,7 +116,7 @@ The configuration files loaded in order
 .Pq if they exist
 are:
 .Pa /etc/hunt.conf ,
-.Pa "$HOME/.hunt.conf" ,
+.Pa $HOME/.hunt.conf ,
 and
 .Pa ./.hunt.conf .
 .Pp
@@ -171,7 +169,8 @@ nr deaths before nr kills begins to decay
 Maximum number of holes in the maze wall
 .Pq default 40
 .It Va linger
-Seconds to keep game open with no players. \&-1 means forever
+Seconds to keep game open with no players.
+\&-1 means forever
 .Pq default 90
 .It Va flytime
 max time flying
@@ -263,7 +262,7 @@ Zero means traditional blocking behaviour.
 Try 55000 for something reasonable
 .Pq default 0
 .El
-.Sh "FILES"
+.Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /etc/hunt.conf
 .It Pa "$HOME/.hunt.conf"
