@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2014/03/23 15:28:10 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -249,10 +249,18 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	ppc_mtibat1u(0);
 	ppc_mtibat2u(0);
 	ppc_mtibat3u(0);
+	ppc_mtibat4u(0);
+	ppc_mtibat5u(0);
+	ppc_mtibat6u(0);
+	ppc_mtibat7u(0);
 	ppc_mtdbat0u(0);
 	ppc_mtdbat1u(0);
 	ppc_mtdbat2u(0);
 	ppc_mtdbat3u(0);
+	ppc_mtdbat4u(0);
+	ppc_mtdbat5u(0);
+	ppc_mtdbat6u(0);
+	ppc_mtdbat7u(0);
 
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
