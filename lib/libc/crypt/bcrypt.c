@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.32 2014/03/23 23:19:21 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.33 2014/03/23 23:20:12 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -58,7 +58,7 @@ static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 /*
  * Generates a salt for this version of crypt.
  */
-int
+static int
 bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 {
 	uint8_t csalt[BCRYPT_MAXSALT];
@@ -82,7 +82,7 @@ bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 /*
  * the core bcrypt function
  */
-int
+static int
 bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
     size_t encryptedlen)
 {
