@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2013/03/28 16:37:13 eric Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2014/03/23 23:15:58 tedu Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -9,7 +9,7 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c fmemopen.c \
 	fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
 	fseek.c fsetpos.c ftell.c funopen.c fvwrite.c fwalk.c fwrite.c \
-	getc.c getchar.c gets.c getw.c makebuf.c mktemp.c open_memstream.c \
+	getc.c getchar.c getw.c makebuf.c mktemp.c open_memstream.c \
 	open_wmemstream.c perror.c printf.c putc.c putchar.c puts.c putw.c \
 	refill.c remove.c rewind.c rget.c scanf.c setbuf.c setbuffer.c \
 	setvbuf.c snprintf.c sprintf.c sscanf.c stdio.c tempnam.c tmpfile.c \
@@ -29,7 +29,6 @@ MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fmemopen.3 fopen.3 fputs.3 \
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
-MLINKS+=fgets.3 gets.3
 MLINKS+=fopen.3 fdopen.3 fopen.3 freopen.3
 MLINKS+=fputs.3 puts.3
 MLINKS+=fread.3 fwrite.3
