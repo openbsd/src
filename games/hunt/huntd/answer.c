@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.11 2007/11/06 10:22:29 chl Exp $	*/
+/*	$OpenBSD: answer.c,v 1.12 2014/03/23 02:42:47 tedu Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <tcpd.h>
 #include <syslog.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -67,7 +66,6 @@ answer_first()
 	int			newsock;
 	socklen_t		socklen;
 	int			flags;
-	struct request_info	ri;
 	struct spawn *sp;
 
 	/* Answer the call to hunt: */
@@ -75,15 +73,6 @@ answer_first()
 	newsock = accept(Socket, (struct sockaddr *) &sockstruct, &socklen);
 	if (newsock < 0) {
 		logit(LOG_ERR, "accept");
-		return;
-	}
-
-	/* Check for access permissions: */
-	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, newsock, 0);
-	fromhost(&ri);
-	if (hosts_access(&ri) == 0) {
-		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
-		close(newsock);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.20 2013/08/29 20:22:15 naddy Exp $	*/
+/*	$OpenBSD: driver.c,v 1.21 2014/03/23 02:42:47 tedu Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -41,7 +41,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <tcpd.h>
 #include <syslog.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -1007,7 +1006,6 @@ send_stats()
 	int	s;
 	struct sockaddr_in	sockstruct;
 	socklen_t	socklen;
-	struct request_info ri;
 	int	flags;
 
 	/* Accept a connection to the statistics socket: */
@@ -1017,15 +1015,6 @@ send_stats()
 		if (errno == EINTR)
 			return;
 		logx(LOG_ERR, "accept");
-		return;
-	}
-
-	/* Check for access permissions: */
-	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, s, 0);
-	fromhost(&ri);
-	if (hosts_access(&ri) == 0) {
-		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
-		close(s);
 		return;
 	}
 
@@ -1152,10 +1141,7 @@ handle_wkport(fd)
 	socklen_t		fromlen;
 	u_int16_t		query;
 	u_int16_t		response;
-	struct request_info	ri;
 
-	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, fd, 0);
-	fromhost(&ri);
 	fromlen = sizeof fromaddr;
 	if (recvfrom(fd, &query, sizeof query, 0, &fromaddr, &fromlen) == -1)
 	{
@@ -1172,12 +1158,6 @@ handle_wkport(fd)
 		inet_ntoa(((struct sockaddr_in *)&fromaddr)->sin_addr),
 		ntohs(((struct sockaddr_in *)&fromaddr)->sin_port));
 #endif
-
-	/* Do we allow access? */
-	if (hosts_access(&ri) == 0) {
-		logx(LOG_INFO, "rejected connection from %s", eval_client(&ri));
-		return;
-	}
 
 	query = ntohs(query);
 
