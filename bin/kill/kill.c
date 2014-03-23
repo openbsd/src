@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.11 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: kill.c,v 1.12 2014/03/23 12:44:00 millert Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -59,6 +59,8 @@ main(int argc, char *argv[])
 	argc--, argv++;
 	if (!strcmp(*argv, "-l")) {
 		argc--, argv++;
+		if (argc > 0 && !strcmp(*argv, "--"))
+			argc--, argv++;
 		if (argc > 1)
 			usage();
 		if (argc == 1) {
@@ -80,6 +82,8 @@ main(int argc, char *argv[])
 
 	if (!strcmp(*argv, "-s")) {
 		argc--, argv++;
+		if (argc > 0 && !strcmp(*argv, "--"))
+			argc--, argv++;
 		if (argc < 1) {
 			warnx("option requires an argument -- s");
 			usage();
@@ -91,18 +95,20 @@ main(int argc, char *argv[])
 			numsig = 0;
 		argc--, argv++;
 	} else if (**argv == '-') {
-		++*argv;
-		if (isalpha((unsigned char)**argv)) {
-			if ((numsig = signame_to_signum(*argv)) < 0)
+		if (strcmp(*argv, "--")) {
+			++*argv;
+			if (isalpha((unsigned char)**argv)) {
+				if ((numsig = signame_to_signum(*argv)) < 0)
+					nosig(*argv);
+			} else if (isdigit((unsigned char)**argv)) {
+				numsig = strtol(*argv, &ep, 10);
+				if (*ep)
+					errx(1, "illegal signal number: %s", *argv);
+				if (numsig < 0 || numsig >= NSIG)
+					nosig(*argv);
+			} else
 				nosig(*argv);
-		} else if (isdigit((unsigned char)**argv)) {
-			numsig = strtol(*argv, &ep, 10);
-			if (*ep)
-				errx(1, "illegal signal number: %s", *argv);
-			if (numsig < 0 || numsig >= NSIG)
-				nosig(*argv);
-		} else
-			nosig(*argv);
+		}
 		argc--, argv++;
 	}
 
