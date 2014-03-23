@@ -1,6 +1,7 @@
-/*	$OpenBSD: bcrypt.c,v 1.31 2014/03/22 23:02:03 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.32 2014/03/23 23:19:21 tedu Exp $	*/
 
 /*
+ * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 1997 Niels Provos <provos@umich.edu>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -47,37 +48,23 @@
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINLOGROUNDS 4	/* we have log2(rounds) in salt */
 
+#define	BCRYPT_SALTSPACE	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
+
 char   *bcrypt_gensalt(u_int8_t);
 
-static void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
 static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
 static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
 
-static char    encrypted[_PASSWORD_LEN];
-static char    gsalt[7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1];
-static char    error[] = ":";
-
-static void
-encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
-{
-	salt[0] = '$';
-	salt[1] = BCRYPT_VERSION;
-	salt[2] = 'a';
-	salt[3] = '$';
-
-	snprintf(salt + 4, 4, "%2.2u$", logr);
-
-	encode_base64((u_int8_t *) salt + 7, csalt, clen);
-}
-/* Generates a salt for this version of crypt.
-   Since versions may change. Keeping this here
-   seems sensible.
+/*
+ * Generates a salt for this version of crypt.
  */
-
-char *
-bcrypt_gensalt(u_int8_t log_rounds)
+int
+bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 {
-	u_int8_t csalt[BCRYPT_MAXSALT];
+	uint8_t csalt[BCRYPT_MAXSALT];
+
+	if (saltbuflen < BCRYPT_SALTSPACE)
+		return -1;
 
 	arc4random_buf(csalt, sizeof(csalt));
 
@@ -86,14 +73,18 @@ bcrypt_gensalt(u_int8_t log_rounds)
 	else if (log_rounds > 31)
 		log_rounds = 31;
 
-	encode_salt(gsalt, csalt, BCRYPT_MAXSALT, log_rounds);
-	return gsalt;
-}
-/* We handle $Vers$log2(NumRounds)$salt+passwd$
-   i.e. $2$04$iwouldntknowwhattosayetKdJ6iFtacBqJdKe6aW7ou */
+	snprintf(salt, 4, "$2a$%2.2u$", log_rounds);
+	encode_base64((uint8_t *)salt + 7, csalt, sizeof(csalt));
 
-char   *
-bcrypt(const char *key, const char *salt)
+	return 0;
+}
+
+/*
+ * the core bcrypt function
+ */
+int
+bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
+    size_t encryptedlen)
 {
 	blf_ctx state;
 	u_int32_t rounds, i, k;
@@ -109,8 +100,7 @@ bcrypt(const char *key, const char *salt)
 	salt++;
 
 	if (*salt > BCRYPT_VERSION) {
-		/* How do I handle errors ? Return ':' */
-		return error;
+		return -1;
 	}
 
 	/* Check for minor versions */
@@ -122,7 +112,7 @@ bcrypt(const char *key, const char *salt)
 			 salt++;
 			 break;
 		 default:
-			 return error;
+			 return -1;
 		 }
 	} else
 		 minor = 0;
@@ -132,15 +122,15 @@ bcrypt(const char *key, const char *salt)
 
 	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
-		return error;
+		return -1;
 
 	memcpy(arounds, salt, sizeof(arounds));
 	if (arounds[sizeof(arounds) - 1] != '$')
-		return error;
+		return -1;
 	arounds[sizeof(arounds) - 1] = 0;
 	logr = strtonum(arounds, BCRYPT_MINLOGROUNDS, 31, NULL);
 	if (logr == 0)
-		return error;
+		return -1;
 	/* Computer power doesn't increase linearly, 2^x should be fine */
 	rounds = 1U << logr;
 
@@ -148,7 +138,7 @@ bcrypt(const char *key, const char *salt)
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		return error;
+		return -1;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
@@ -211,9 +201,41 @@ bcrypt(const char *key, const char *salt)
 	memset(ciphertext, 0, sizeof(ciphertext));
 	memset(csalt, 0, sizeof(csalt));
 	memset(cdata, 0, sizeof(cdata));
-	return encrypted;
+	return 0;
 }
 
+/*
+ * user friendly functions
+ */
+int
+bcrypt_newhash(const char *pass, int log_rounds, char *hash, size_t hashlen)
+{
+	char salt[BCRYPT_SALTSPACE];
+
+	if (bcrypt_initsalt(log_rounds, salt, sizeof(salt)) != 0)
+		return -1;
+
+	if (bcrypt_hashpass(pass, salt, hash, hashlen) != 0)
+		return -1;
+
+	return 0;
+}
+
+int
+bcrypt_checkpass(const char *pass, const char *goodhash)
+{
+	char hash[_PASSWORD_LEN];
+
+	if (bcrypt_hashpass(pass, goodhash, hash, sizeof(hash)) != 0)
+		return -1;
+	if (strcmp(hash, goodhash) != 0)
+		return -1;
+	return 0;
+}
+
+/*
+ * internal utilities
+ */
 const static u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -298,3 +320,30 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 	}
 	*bp = '\0';
 }
+
+/*
+ * classic interface
+ */
+char *
+bcrypt_gensalt(u_int8_t log_rounds)
+{
+	static char    gsalt[7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1];
+
+	bcrypt_initsalt(log_rounds, gsalt, sizeof(gsalt));
+
+	return gsalt;
+}
+
+char *
+bcrypt(const char *pass, const char *salt)
+{
+	static char    gencrypted[_PASSWORD_LEN];
+	static char    gerror[] = ":";
+
+	/* How do I handle errors ? Return ':' */
+	if (bcrypt_hashpass(pass, salt, gencrypted, sizeof(gencrypted)) != 0)
+		return gerror;
+
+	return gencrypted;
+}
+
