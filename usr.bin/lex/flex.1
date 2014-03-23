@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.36 2014/02/14 17:15:11 schwarze Exp $
+.\"	$OpenBSD: flex.1,v 1.37 2014/03/23 16:28:29 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: March 23 2014 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -4071,7 +4071,7 @@ plus almost all of the
 flags.
 The last feature in the list refers to the fact that with
 .Nm
-Multiple actions ican be placed on the same line,
+multiple actions can be placed on the same line,
 separated with semi-colons, while with
 .Nm lex ,
 the following
@@ -4265,6 +4265,10 @@ The flags
 and
 .Op Fl -version
 are extensions to that specification.
+.Pp
+See also the
+.Sx INCOMPATIBILITIES WITH LEX AND POSIX
+section, above.
 .Sh AUTHORS
 Vern Paxson, with the help of many ideas and much inspiration from
 Van Jacobson.
