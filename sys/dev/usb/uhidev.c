@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.56 2014/03/19 08:59:37 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.57 2014/03/23 12:20:14 andre Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -387,7 +387,8 @@ uhidev_detach(struct device *self, int flags)
 	 * IDs, this is a hack since we need a dev -> Report ID mapping
 	 * for uhidev_intr().
 	 */
-	if (sc->sc_nrepid > 0 && sc->sc_subdevs[0] == sc->sc_subdevs[1])
+	if (sc->sc_nrepid > 1 && sc->sc_subdevs[0] != NULL &&
+	    sc->sc_subdevs[0] == sc->sc_subdevs[1])
 		return (config_detach(&sc->sc_subdevs[0]->sc_dev, flags));
 
 	for (i = 0; i < sc->sc_nrepid; i++) {
