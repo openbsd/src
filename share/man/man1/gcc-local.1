@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.41 2014/01/21 07:47:59 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.42 2014/03/23 17:29:06 pascal Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: March 23 2014 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -160,7 +160,8 @@ which includes additional functions to be protected \(em those that
 have local array definitions
 or have references to local frame addresses.
 .It
-On the alpha, amd64, hppa, i386, mips64, sh and sparc64 architectures,
+On the alpha, amd64, hppa, i386, mips64, powerpc, sh and sparc64
+architectures,
 .Nm gcc
 generates position-independent executables
 .Pq PIEs

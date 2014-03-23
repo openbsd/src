@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.146 2014/03/23 03:33:58 tedu Exp $
+#	$OpenBSD: bsd.own.mk,v 1.147 2014/03/23 17:29:06 pascal Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -27,12 +27,11 @@ ELF_TOOLCHAIN?=	yes
 GCC3_ARCH=m88k vax
 BINUTILS217_ARCH=hppa64 ia64
 
-# powerpc has problems on some "embedded" powerpc.
 # arm needs binutils-2.17, which still lacks W^X support
 # sparc has not been tried
 # m88k unknown
 # hppa64 unknown
-PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el sh sparc64
+PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC3_ARCH:M${_arch})
