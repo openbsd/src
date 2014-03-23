@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.33 2014/03/23 23:20:12 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.34 2014/03/23 23:25:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -228,7 +228,8 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 
 	if (bcrypt_hashpass(pass, goodhash, hash, sizeof(hash)) != 0)
 		return -1;
-	if (strcmp(hash, goodhash) != 0)
+	if (strlen(hash) != strlen(goodhash) ||
+	    timingsafe_bcmp(hash, goodhash, strlen(goodhash)) != 0)
 		return -1;
 	return 0;
 }
@@ -327,7 +328,7 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 char *
 bcrypt_gensalt(u_int8_t log_rounds)
 {
-	static char    gsalt[7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1];
+	static char    gsalt[BCRYPT_SALTSPACE];
 
 	bcrypt_initsalt(log_rounds, gsalt, sizeof(gsalt));
 
@@ -338,9 +339,10 @@ char *
 bcrypt(const char *pass, const char *salt)
 {
 	static char    gencrypted[_PASSWORD_LEN];
-	static char    gerror[] = ":";
+	static char    gerror[2];
 
 	/* How do I handle errors ? Return ':' */
+	strlcpy(gerror, ":", sizeof(gerror));
 	if (bcrypt_hashpass(pass, salt, gencrypted, sizeof(gencrypted)) != 0)
 		return gerror;
 
