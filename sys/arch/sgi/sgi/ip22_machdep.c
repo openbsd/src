@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.15 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.16 2014/03/23 00:00:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -117,8 +117,8 @@ ip22_arcbios_walk_component(arc_config_t *cf)
 		 */
 		ci->ci_l2.size = (1 << 12) << (key & 0x0000ffff);
 		ci->ci_l2.linesize = 1 << ((key >> 16) & 0xff);
-		ci->ci_l2.setsize = ci->ci_l2.size;
-		ci->ci_l2.sets = 1;
+		ci->ci_l2.sets = (key >> 24) & 0xff;
+		ci->ci_l2.setsize = ci->ci_l2.size / ci->ci_l2.sets;
 
 		ip22_arcwalk_results |= IP22_HAS_L2;
 	}
@@ -362,7 +362,7 @@ ip22_video_setup()
 	 * Verified addresses:
 	 * grtwo	slot + 0x00000000
 	 * impact	slot + 0x00000000
-	 * light	?
+	 * light	slot + 0x003f0000 (LIGHT_ADDR_0)
 	 * newport	slot + 0x000f0000 (NEWPORT_REX3_OFFSET)
 	 */
 
@@ -769,7 +769,7 @@ ip22_ConfigCache(struct cpu_info *ci)
 
 	Mips5k_ConfigCache(ci);
 
-	if (ci->ci_l2.linesize != IP22_L2_LINE) {
+	if (l2.linesize != IP22_L2_LINE || l2.sets != 1) {
 		/*
 		 * This should not happen. Better not try and tame an
 		 * unknown beast.
