@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.9 2014/03/20 15:04:35 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.10 2014/03/24 20:33:01 florian Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -37,7 +37,7 @@ __dead void
 usage(void)
 {
 	fprintf(stderr, "usage:\t%s [file] login\n", __progname);
-	fprintf(stderr, "\t%s -B [file]\n", __progname);
+	fprintf(stderr, "\t%s -I [file]\n", __progname);
 	exit(1);
 }
 
@@ -65,9 +65,9 @@ main(int argc, char** argv)
 	linesize = 0;
 	batch = 0;
 
-	while ((c = getopt(argc, argv, "B")) != -1) {
+	while ((c = getopt(argc, argv, "I")) != -1) {
 		switch (c) {
-		case 'B':
+		case 'I':
 			batch++;
 			break;
 		default:
