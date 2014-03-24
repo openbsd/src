@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.130 2014/03/22 12:33:36 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.131 2014/03/24 15:20:32 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -20,9 +20,8 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE EDIT ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT NOSIGCHECK RELINT SIGFETCHED SRCDIR SRCSUM
-unset TGZ XETCSUM XTGZ
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES NEWGRP
+unset NEWUSR NEED_REBOOT NOSIGCHECK SRCDIR SRCSUM TGZ XETCSUM XTGZ
 
 # forced variables
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
@@ -44,7 +43,7 @@ PAGER="${PAGER:=/usr/bin/more}"
 
 # clean leftovers created by make in src
 clean_src() {
-	[ -n "${SRCDIR}" ] && \
+	[[ -n ${SRCDIR} ]] && \
 		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir >/dev/null
 }
 
@@ -81,6 +80,7 @@ error_rm_wrkdir() {
 	# way since it contains our backup files
 	rm -rf ${TEMPROOT}
 	rm -f ${WRKDIR}/*.tgz
+	rm -f ${WRKDIR}/SHA256.sig
 	rmdir ${WRKDIR} 2>/dev/null
 	exit 1
 }
@@ -92,48 +92,60 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir "need root privileges"
 fi
 
-# extract (x)etcXX.tgz and create cksum file;
+# extract (x)etcXX.tgz and create cksum file(s);
 # stores sum filename in ETCSUM or XETCSUM (see eval);
-# takes file and setname ('etc' or 'xetc') as arguments
-extract_set() {
-	[[ -z $1 ]] && return
-	local _tgz=$(readlink -f "$1") _set=$2 _f
-	typeset -u _SETSUM=${_set}sum
-	eval ${_SETSUM}=${_set}sum
-	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
-		tar -tzf "${_tgz}" | while read _f; do
-			[ ! -h ${_f} ] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
-				error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
-	rm "${_tgz}"
+extract_sets() {
+	[[ -n ${SRCDIR} ]] && return
+	local _e _x _set _tgz
+
+	[[ -f ${WRKDIR}/${TGZ##*/} ]] && _e=etc
+	[[ -f ${WRKDIR}/${XTGZ##*/} ]] && _x=xetc
+
+	for _set in ${_e} ${_x}; do
+		typeset -u _SETSUM=${_set}sum
+		eval ${_SETSUM}=${_set}sum
+		[[ ${_set} == etc ]] && _tgz=${WRKDIR}/${TGZ##*/}
+		[[ ${_set} == xetc ]] && _tgz=${WRKDIR}/${XTGZ##*/}
+
+		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null ||
+			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
+
+		(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
+			tar -tzf "${_tgz}" | while read _f; do
+				[[ ! -h ${_f} ]] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
+					error_rm_wrkdir "failed to extract ${_tgz} and create checksum file"
+		rm "${_tgz}"
+	done
 }
 
-# fetch and check if tgz is valid;
-# stores local path to tgz in TGZ or XTGZ;
-# takes url or filename and setname ('etc' or 'xetc') as arguments;
-# verify SHA256.sig, abort on failure
-get_set() {
-	local _url=$1 _set=$2
-	local _tgz=${WRKDIR}/${_url##*/}
+# fetch and verify sets, abort on failure
+sm_fetch_and_verify() {
+	[[ -n ${SRCDIR} ]] && return
+	local _file _sigdone _url;
 	local _key="/etc/signify/openbsd-${RELINT}-base.pub"
-	[ -f "${_url}" ] && _url="file://$(readlink -f ${_url})"
-	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
-	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then
-		echo "===> Fetching from ${_url%/*}"
-		/usr/bin/ftp -D "===> Getting" -Vm -k "${FTP_KEEPALIVE-0}" -o "${_tgz}" "${_url}" || \
+
+	for _url in ${TGZ} ${XTGZ}; do
+		[[ -f ${_url} ]] && _url="file://$(readlink -f ${_url})"
+		_file=${WRKDIR}/${_url##*/}
+		[[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]] ||
+			error_rm_wrkdir "${_url}: invalid URL"
+		echo "===> Fetching ${_url}"
+		/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${_file}" "${_url}" >/dev/null || \
 			error_rm_wrkdir "could not retrieve ${_url##*/}"
-	else
-			error_rm_wrkdir "${_url}: no such file"
-	fi
-	if [ -z "${NOSIGCHECK}" ]; then
-		echo "===> Verifying against ${_key}"
-		(cd ${WRKDIR} && 
-			/usr/bin/ftp -D "===> Getting" -Vm -k "${FTP_KEEPALIVE-0}" -o - "${_url%/*}/SHA256.sig" | \
-				/usr/bin/signify -qC -p ${_key} -x - ${_url##*/}) || \
-				error_rm_wrkdir "SHA256.sig: signature/checksum failed"
-	else
-		tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null || \
-			error_rm_wrkdir "${_tgz##*/}: badly formed \"${_set}\" set, lacks ./var/db/sysmerge/${_set}sum"
-	fi
+		if [ -z "${NOSIGCHECK}" ]; then
+			if [ -z ${_sigdone} ]; then
+				echo "===> Fetching ${_url%/*}/SHA256.sig"
+				/usr/bin/ftp -Vm -k "${FTP_KEEPALIVE-0}" -o "${WRKDIR}/SHA256.sig" "${_url%/*}/SHA256.sig" >/dev/null || \
+					error_rm_wrkdir "could not retrieve SHA256.sig"
+				[[ ${TGZ%/*} == ${XTGZ%/*} ]] && _sigdone=1
+			fi
+			echo "===> Verifying ${_url##*/} against ${_key}"
+			(cd ${WRKDIR} && /usr/bin/signify -qC -p ${_key} -x SHA256.sig ${_url##*/}) || \
+				error_rm_wrkdir "${_url##*/}: signature/checksum failed"
+		fi
+	done
+
+	[[ -z ${NOSIGCHECK} ]] && rm ${WRKDIR}/SHA256.sig
 }
 
 # prepare TEMPROOT content from a src dir and create cksum file 
@@ -156,15 +168,12 @@ sm_populate() {
 		mkdir -p ${DESTDIR}/${DBDIR} || exit 1
 	fi
 
-	extract_set "${TGZ}" etc
-	extract_set "${XTGZ}" xetc
-
 	# automatically install missing user(s) and group(s) from the
 	# new master.passwd and group files:
 	# - after extracting the sets (so we have the new files)
 	# - before running distribution-etc-root-var (using files from SRCDIR)
+	extract_sets
 	install_user_group
-
 	prepare_src
 
 	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
@@ -190,7 +199,7 @@ sm_populate() {
 				[ -n "$(grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i})" -a -z "$(grep "${CURSUM}" ${WRKDIR}/${i})" ] && \
 					_array="${_array} ${_d}"
 			done
-			[ -n "${_array}" ] && set -A AUTO_UPG -- ${_array}
+			[[ -n ${_array} ]] && set -A AUTO_UPG -- ${_array}
 
 			mv ${DESTDIR}/${DBDIR}/${i} ${DESTDIR}/${DBDIR}/.${i}.bak
 		fi
@@ -213,7 +222,7 @@ sm_populate() {
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
 		CF_DIFF=$(diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2>/dev/null)
-		[ -z "${CF_DIFF}" ] && IGNORE_FILES="${IGNORE_FILES} ${cf}"
+		[[ -z ${CF_DIFF} ]] && IGNORE_FILES="${IGNORE_FILES} ${cf}"
 	done
 	if [ -r /etc/sysmerge.ignore ]; then
 		while read i; do \
@@ -243,7 +252,7 @@ install_file() {
 	INSTDIR=${1#.}
 	INSTDIR=${INSTDIR%/*}
 
-	[ -z "${INSTDIR}" ] && INSTDIR=/
+	[[ -z ${INSTDIR} ]] && INSTDIR=/
 
 	DIR_MODE=$(stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}")
 	eval $(stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1})
@@ -288,7 +297,7 @@ install_link() {
 	_LINKF=$(dirname ${DESTDIR}${COMPFILE#.})
 
 	DIR_MODE=$(stat -f "%OMp%OLp" "${TEMPROOT}/${_LINKF}")
-	[ ! -d "${_LINKF}" ] && \
+	[[ ! -d ${_LINKF} ]] && \
 		install -d -o root -g wheel -m "${DIR_MODE}" "${_LINKF}"
 
 	rm -f ${COMPFILE}
@@ -305,6 +314,9 @@ install_user_group() {
 		local _pw="${TEMPROOT}/etc/master.passwd"
 		local _gr="${TEMPROOT}/etc/group"
 	fi
+
+	# when running with '-x' only
+	[ ! -f ${_pw} -o ! -f ${_gr} ] && return
 
 	while read l; do
 		_u=$(echo ${l} | awk -F ':' '{ print $1 }')
@@ -418,7 +430,7 @@ diff_loop() {
 			if [ -z "${DIFFMODE}" ]; then
 				# automatically install files if current != new and current = old
 				for i in "${AUTO_UPG[@]}"; do
-					[ "${i}" = "${COMPFILE}" ] && FORCE_UPG=1
+					[[ ${i} == ${COMPFILE} ]] && FORCE_UPG=1
 				done
 				# automatically install files which differ only by CVS Id or that are binaries
 				if [ -z "$(diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}")" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
@@ -472,7 +484,7 @@ diff_loop() {
 
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			if [[ ${COMPFILE} != ./etc/hosts ]]; then
+			if [ "${COMPFILE}" != ./etc/hosts ]; then
 				CAN_INSTALL=1
 				echo "  Use 'i' to install the temporary ${COMPFILE}"
 			fi
@@ -563,14 +575,14 @@ sm_compare() {
 		# only process them (i.e. install) if they don't exist on the target system
 		if [ ! -s "${COMPFILE}" ]; then
 			if [ -f "${DESTDIR}${COMPFILE#.}" ]; then
-				[ -f "${COMPFILE}" ] && rm "${COMPFILE}"
+				[[ -f ${COMPFILE} ]] && rm ${COMPFILE}
 			else
 				IS_BINFILE=1
 			fi
 		fi
 
 		# links need to be treated in a different way
-		[ -h "${COMPFILE}" ] && IS_LINK=1
+		[[ -h ${COMPFILE} ]] && IS_LINK=1
 		if [ -n "${IS_LINK}" -a -h "${DESTDIR}${COMPFILE#.}" ]; then
 			IS_LINK=1
 			# if links target are the same, remove from temproot
@@ -597,7 +609,7 @@ sm_compare() {
 			-z ${IS_LINK} ]]; then
 			CVSID1=$(grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
 			CVSID2=$(grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null) || CVSID2=none
-			[ "${CVSID2}" = "${CVSID1}" ] && rm "${COMPFILE}"
+			[[ ${CVSID2} == ${CVSID1} ]] && rm "${COMPFILE}"
 		fi
 
 		if [ -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
@@ -619,7 +631,7 @@ sm_post() {
 	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
 
 	FILES_IN_TEMPROOT=$(find ${TEMPROOT} -type f ! -name \*.merged -size +0)
-	[ -d "${BKPDIR}" ] && FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0)
+	[[ -d ${BKPDIR} ]] && FILES_IN_BKPDIR=$(find ${BKPDIR} -type f -size +0)
 
 	if [ -n "${NEED_NEWALIASES}" ]; then
 		report "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
@@ -641,8 +653,8 @@ sm_post() {
 	fi
 	if [ -n "${NEWUSR}" -o -n "${NEWGRP}" ]; then
 		report "===> The following user(s)/group(s) have been added"
-		[ -n "${NEWUSR}" ] && report "user(s): ${NEWUSR[@]}"
-		[ -n "${NEWGRP}" ] && report "group(s): ${NEWGRP[@]}"
+		[[ -n ${NEWUSR} ]] && report "user(s): ${NEWUSR[@]}"
+		[[ -n ${NEWGRP} ]] && report "group(s): ${NEWGRP[@]}"
 		report ""
 	fi
 	if [ -n "${FILES_IN_TEMPROOT}" ]; then
@@ -650,18 +662,18 @@ sm_post() {
 		report "${FILES_IN_TEMPROOT}"
 	fi
 
-	[ -n "${FILES_IN_TEMPROOT}" ] && \
+	[[ -n ${FILES_IN_TEMPROOT} ]] && \
 		warn "some files are still left for comparison"
 
-	[ -n "${NEED_NEWALIASES}" ] && \
+	[[ -n ${NEED_NEWALIASES} ]] && \
 		warn "newaliases(8) failed to run properly"
 
-	[ -n "${NEED_REBOOT}" ] && \
+	[[ -n ${NEED_REBOOT} ]] && \
 		warn "some new/updated file(s) may require a reboot"
 
 	echo "===> Checking directory hierarchy permissions (running mtree(8))"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
-	[ -n "${XTGZ}" ] && \
+	[[ -n ${XTGZ} ]] && \
 		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U >/dev/null
 
 	if [ -e "${REPORT}" ]; then
@@ -690,18 +702,18 @@ while getopts bdSs:x: arg; do
 		;;
 	s)
 		if [ -d "${OPTARG}" ]; then
-			SRCDIR=${OPTARG}
-			[ -f "${SRCDIR}/etc/Makefile" ] || \
+			SRCDIR="${OPTARG}"
+			[[ -f ${SRCDIR}/etc/Makefile ]] || \
 				error_rm_wrkdir "${SRCDIR}: invalid \"src\" tree, missing ${SRCDIR}/etc/Makefile"
 			continue
 		fi
-		get_set "${OPTARG}" etc
+		TGZ="${OPTARG}"
 		;;
 	S)	
 		NOSIGCHECK=1
 		;;
 	x)
-		get_set "${OPTARG}" xetc
+		XTGZ="${OPTARG}"
 		;;
 	*)
 		usage
@@ -718,9 +730,9 @@ fi
 
 if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	if [ -n "${SM_PATH}" ]; then
-		get_set "${SM_PATH}/etc${RELINT}.tgz" etc
+		TGZ="${SM_PATH}/etc${RELINT}.tgz"
 		if [ -d ${DESTDIR}/etc/X11 ]; then
-			get_set "${SM_PATH}/xetc${RELINT}.tgz" xetc
+			XTGZ="${SM_PATH}/xetc${RELINT}.tgz"
 		fi
 	elif [ -f "/usr/src/etc/Makefile" ]; then
 		SRCDIR=/usr/src
@@ -733,6 +745,7 @@ fi
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
+sm_fetch_and_verify
 sm_populate
 sm_compare
 sm_post
