@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.41 2014/03/22 00:01:04 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.42 2014/03/24 17:12:01 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -577,11 +577,12 @@ LEAF(tlb_probe, 0)
 	TLB_HAZARD
 	tlbp				# Probe for the entry.
 	TLB_HAZARD			# necessary?
+	mfc0	v0, COP_0_TLB_INDEX	# Return index
 	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	MTC0_SR_IE_HAZARD
 	j	ra
-	mfc0	v0, COP_0_TLB_INDEX	# Return index
+	nop
 END(tlb_probe)
 
 /*
@@ -594,16 +595,10 @@ LEAF(tlb_update_indexed, 0)
 	xori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
 	MTC0_SR_IE_HAZARD
-	dli	v0, (PG_HVPN | PG_ASID_MASK)
-	and	a0, a0, v0
 	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
 	li	ta1, TLB_PAGE_MASK
 
 	mtc0	a3, COP_0_TLB_INDEX
-	TLB_HAZARD
-	tlbr
-	TLB_HAZARD			# necessary?
-
 	mtc0	ta1, COP_0_TLB_PG_MASK	# init mask
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 
