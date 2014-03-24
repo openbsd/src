@@ -1,4 +1,4 @@
-/*	$OpenBSD: r4000_errata.c,v 1.1 2014/03/22 00:01:04 miod Exp $	*/
+/*	$OpenBSD: r4000_errata.c,v 1.2 2014/03/24 17:12:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -187,8 +187,8 @@ eop_tlb_miss_handler(struct trap_frame *trapframe, struct cpu_info *ci,
 	 * Clear possible TLB entries for the pages we're about to wire.
 	 */
 
-	for (i = npairs * 2, va = faultva & PG_HVPN; i != 0;
-	    i--, va += PAGE_SIZE) {
+	for (i = npairs, va = faultva & PG_HVPN; i != 0;
+	    i--, va += 2 * PAGE_SIZE) {
 		tlbidx = tlb_probe(va | asid);
 		if (tlbidx >= 0)
 			tlb_update_indexed(CKSEG0_BASE, PG_NV, PG_NV, tlbidx);
