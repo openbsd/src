@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.75 2014/03/06 14:08:06 gerhard Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.76 2014/03/24 07:24:20 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -31,6 +31,7 @@
 #include <sys/sensors.h>
 #include <sys/dkio.h>
 #include <sys/tree.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 
@@ -225,6 +226,10 @@ struct mpii_softc {
 	struct mpii_dmamem	*sc_reply_freeq;
 	int			sc_reply_free_host_index;
 
+	struct mpii_rcb_list	sc_evt_sas_queue;
+	struct mutex		sc_evt_sas_mtx;
+	struct task		sc_evt_sas_task;
+
 	struct mpii_rcb_list	sc_evt_ack_queue;
 	struct mutex		sc_evt_ack_mtx;
 	struct scsi_iohandler	sc_evt_ack_handler;
@@ -336,11 +341,9 @@ void		mpii_eventack(void *, void *);
 void		mpii_eventack_done(struct mpii_ccb *);
 void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
 void		mpii_event_done(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_event_sas(struct mpii_softc *,
-		    struct mpii_msg_event_reply *);
+void		mpii_event_sas(void *, void *);
 void		mpii_event_raid(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
-void		mpii_event_defer(void *, void *);
 
 void		mpii_sas_remove_device(struct mpii_softc *, u_int16_t);
 
@@ -569,7 +572,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
 	    mpii_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		goto free_dev;
@@ -796,7 +799,7 @@ mpii_scsi_probe(struct scsi_link *link)
 
 	if ((sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL) &&
 	    (sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL))
-		return (1);
+		return (ENXIO);
 
 	if (sc->sc_devs[link->target] == NULL)
 		return (1);
@@ -1534,6 +1537,10 @@ mpii_eventnotify(struct mpii_softc *sc)
 		return (1);
 	}
 
+	SIMPLEQ_INIT(&sc->sc_evt_sas_queue);
+	mtx_init(&sc->sc_evt_sas_mtx, IPL_BIO);
+	task_set(&sc->sc_evt_sas_task, mpii_event_sas, sc, NULL);
+
 	SIMPLEQ_INIT(&sc->sc_evt_ack_queue);
 	mtx_init(&sc->sc_evt_ack_mtx, IPL_BIO);
 	scsi_ioh_set(&sc->sc_evt_ack_handler, &sc->sc_iopool,
@@ -1676,18 +1683,31 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 }
 
 void
-mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
+mpii_event_sas(void *xsc, void *x)
 {
+	struct mpii_softc *sc = xsc;
+	struct mpii_rcb *rcb, *next;
+	struct mpii_msg_event_reply *enp;
 	struct mpii_evt_sas_tcl		*tcl;
 	struct mpii_evt_phy_entry	*pe;
 	struct mpii_device		*dev;
 	int				i;
 
-	tcl = (struct mpii_evt_sas_tcl *)(enp + 1);
+	mtx_enter(&sc->sc_evt_sas_mtx);
+	rcb = SIMPLEQ_FIRST(&sc->sc_evt_sas_queue);
+	if (rcb != NULL) {
+		next = SIMPLEQ_NEXT(rcb, rcb_link);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_evt_sas_queue, rcb_link);
+	}
+	mtx_leave(&sc->sc_evt_sas_mtx);
 
-	if (tcl->num_entries == 0)
+	if (rcb == NULL)
 		return;
+	if (next != NULL)
+		task_add(systq, &sc->sc_evt_sas_task);
 
+	enp = (struct mpii_msg_event_reply *)rcb->rcb_reply;
+	tcl = (struct mpii_evt_sas_tcl *)(enp + 1);
 	pe = (struct mpii_evt_phy_entry *)(tcl + 1);
 
 	for (i = 0; i < tcl->num_entries; i++, pe++) {
@@ -1699,12 +1719,8 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 				    letoh16(pe->dev_handle));
 				break;
 			}
-			dev = malloc(sizeof(*dev), M_DEVBUF, M_NOWAIT | M_ZERO);
-			if (!dev) {
-				printf("%s: failed to allocate a "
-				    "device structure\n", DEVNAME(sc));
-				break;
-			}
+
+			dev = malloc(sizeof(*dev), M_DEVBUF, M_WAITOK | M_ZERO);
 			dev->slot = sc->sc_pd_id_start + tcl->start_phy_num + i;
 			dev->dev_handle = letoh16(pe->dev_handle);
 			dev->phy_num = tcl->start_phy_num + i;
@@ -1712,37 +1728,36 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 				dev->physical_port = tcl->physical_port;
 			dev->enclosure = letoh16(tcl->enclosure_handle);
 			dev->expander = letoh16(tcl->expander_handle);
+
 			if (mpii_insert_dev(sc, dev)) {
 				free(dev, M_DEVBUF);
 				break;
 			}
-			if (sc->sc_scsibus) {
-				SET(dev->flags, MPII_DF_ATTACH);
-				if (scsi_task(mpii_event_defer, sc,
-				    dev, 0) != 0)
-					printf("%s: unable to run device "
-					    "attachment routine\n",
-					    DEVNAME(sc));
-			}
+
+			if (sc->sc_scsibus != NULL)
+				scsi_probe_target(sc->sc_scsibus, dev->slot);
 			break;
+
 		case MPII_EVENT_SAS_TOPO_PS_RC_MISSING:
-			if (!(dev = mpii_find_dev(sc,
-			    letoh16(pe->dev_handle))))
+			dev = mpii_find_dev(sc, letoh16(pe->dev_handle));
+			if (dev == NULL)
 				break;
+
 			mpii_remove_dev(sc, dev);
-			if (sc->sc_scsibus) {
-				SET(dev->flags, MPII_DF_DETACH);
+			mpii_sas_remove_device(sc, dev->dev_handle);
+			if (sc->sc_scsibus != NULL && 
+			    !ISSET(dev->flags, MPII_DF_HIDDEN)) {
 				scsi_activate(sc->sc_scsibus, dev->slot, -1,
 				    DVACT_DEACTIVATE);
-				if (scsi_task(mpii_event_defer, sc,
-				    dev, 0) != 0)
-					printf("%s: unable to run device "
-					    "detachment routine\n",
-					    DEVNAME(sc));
+				scsi_detach_target(sc->sc_scsibus, dev->slot,
+				    DETACH_FORCE);
 			}
-			break;
+
+			free(dev, M_DEVBUF);
 		}
 	}
+
+	mpii_event_done(sc, rcb);
 }
 
 void
@@ -1771,8 +1786,11 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		}
 		break;
 	case MPII_EVENT_SAS_TOPOLOGY_CHANGE_LIST:
-		mpii_event_sas(sc, enp);
-		break;
+		mtx_enter(&sc->sc_evt_sas_mtx);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_evt_sas_queue, rcb, rcb_link);
+		mtx_leave(&sc->sc_evt_sas_mtx);
+		task_add(systq, &sc->sc_evt_sas_task);
+		return;
 	case MPII_EVENT_SAS_DEVICE_STATUS_CHANGE:
 		break;
 	case MPII_EVENT_SAS_ENCL_DEVICE_STATUS_CHANGE:
@@ -1794,7 +1812,8 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 
 		if (cold)
 			break;
-		if (!(dev = mpii_find_dev(sc, letoh16(evd->vol_dev_handle))))
+		dev = mpii_find_dev(sc, letoh16(evd->vol_dev_handle));
+		if (dev == NULL)
 			break;
 #if NBIO > 0
 		if (evd->reason_code == MPII_EVENT_IR_VOL_RC_STATE_CHANGED)
@@ -1820,9 +1839,9 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		    (struct mpii_evt_ir_status *)(enp + 1);
 		struct mpii_device		*dev;
 
-		if (!(dev = mpii_find_dev(sc, letoh16(evs->vol_dev_handle))))
-			break;
-		if (evs->operation == MPII_EVENT_IR_RAIDOP_RESYNC)
+		dev = mpii_find_dev(sc, letoh16(evs->vol_dev_handle));
+		if (dev != NULL &&
+		    evs->operation == MPII_EVENT_IR_RAIDOP_RESYNC)
 			dev->percent = evs->percent;
 		break;
 		}
@@ -1846,27 +1865,6 @@ mpii_event_done(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		scsi_ioh_add(&sc->sc_evt_ack_handler);
 	} else
 		mpii_push_reply(sc, rcb);
-}
-
-void
-mpii_event_defer(void *xsc, void *arg)
-{
-	struct mpii_softc	*sc = xsc;
-	struct mpii_device	*dev = arg;
-
-	if (ISSET(dev->flags, MPII_DF_DETACH)) {
-		mpii_sas_remove_device(sc, dev->dev_handle);
-		if (!ISSET(dev->flags, MPII_DF_HIDDEN)) {
-			scsi_detach_target(sc->sc_scsibus, dev->slot,
-			    DETACH_FORCE);
-		}
-		free(dev, M_DEVBUF);
-
-	} else if (ISSET(dev->flags, MPII_DF_ATTACH)) {
-		CLR(dev->flags, MPII_DF_ATTACH);
-		if (!ISSET(dev->flags, MPII_DF_HIDDEN))
-			scsi_probe_target(sc->sc_scsibus, dev->slot);
-	}
 }
 
 void
@@ -2656,8 +2654,9 @@ mpii_wait_done(struct mpii_ccb *ccb)
 
 	mtx_enter(mtx);
 	ccb->ccb_cookie = NULL;
-	wakeup_one(ccb);
 	mtx_leave(mtx);
+
+	wakeup_one(ccb);
 }
 
 void
