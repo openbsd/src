@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.72 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.73 2014/03/24 00:19:48 guenther Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <syslog.h>
-#include <sys/ucred.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
@@ -139,10 +138,10 @@ int	check_options(struct dirlist *);
 int	chk_host(struct dirlist *, in_addr_t, int *, int *);
 void	del_mlist(char *, char *);
 struct dirlist *dirp_search(struct dirlist *, char *);
-int	do_mount(struct exportlist *, struct grouplist *, int, struct ucred *,
+int	do_mount(struct exportlist *, struct grouplist *, int, struct xucred *,
 	    char *, int, struct statfs *);
 int	do_opt(char **, char **, struct exportlist *, struct grouplist *,
-	    int *, int *, struct ucred *);
+	    int *, int *, struct xucred *);
 struct	exportlist *ex_search(fsid_t *);
 struct	exportlist *get_exp(void);
 void	free_dir(struct dirlist *);
@@ -164,7 +163,7 @@ void	hang_dirp(struct dirlist *, struct grouplist *, struct exportlist *,
 void	mntsrv(struct svc_req *, SVCXPRT *);
 void	nextfield(char **, char **);
 void	out_of_mem(void);
-void	parsecred(char *, struct ucred *);
+void	parsecred(char *, struct xucred *);
 int	put_exlist(struct dirlist *, XDR *, struct dirlist *, int *);
 int	scan_tree(struct dirlist *, in_addr_t);
 void	send_umntall(int signo);
@@ -179,12 +178,11 @@ struct exportlist *exphead;
 struct mountlist *mlhead;
 struct grouplist *grphead;
 char exname[MAXPATHLEN];
-struct ucred def_anon = {
-	1,
-	(uid_t) -2,
-	(gid_t) -2,
-	0,
-	{ 0, }
+struct xucred def_anon = {
+	.cr_uid		= (uid_t) -2,
+	.cr_gid		= (gid_t) -2,
+	.cr_ngroups	= 0,
+	.cr_groups	= { 0, }
 };
 int resvport_only = 1;
 int opt_flags;
@@ -690,7 +688,7 @@ get_exportlist(void)
 	struct dirlist *dirhead;
 	struct statfs fsb, *ofsp, *fsp;
 	struct hostent *hpe;
-	struct ucred anon;
+	struct xucred anon;
 	union {
 		struct ufs_args ua;
 		struct iso_args ia;
@@ -1324,7 +1322,7 @@ free_dir(struct dirlist *dp)
  */
 int
 do_opt(char **cpp, char **endcpp, struct exportlist *ep, struct grouplist *grp,
-    int *has_hostp, int *exflagsp, struct ucred *cr)
+    int *has_hostp, int *exflagsp, struct xucred *cr)
 {
 	char *cp, *endcp, *cpopt, savedc, savedc2 = 0;
 	char *cpoptarg, *cpoptend;
@@ -1559,7 +1557,7 @@ out_of_mem(void)
  */
 int
 do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
-    struct ucred *anoncrp, char *dirp, int dirplen, struct statfs *fsb)
+    struct xucred *anoncrp, char *dirp, int dirplen, struct statfs *fsb)
 {
 	struct sockaddr_in sin, imask;
 	union {
@@ -1806,7 +1804,7 @@ get_line(void)
  * Parse a description of a credential.
  */
 void
-parsecred(char *namelist, struct ucred *cr)
+parsecred(char *namelist, struct xucred *cr)
 {
 	gid_t groups[NGROUPS + 1];
 	char *name, *names;
@@ -1817,10 +1815,8 @@ parsecred(char *namelist, struct ucred *cr)
 	/*
 	 * Set up the unprivileged user.
 	 */
-	cr->cr_ref = 1;
-	cr->cr_uid = (uid_t)-2;
-	cr->cr_gid = (gid_t)-2;
-	cr->cr_ngroups = 0;
+	*cr = def_anon;
+
 	/*
 	 * Get the user's password table entry.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.117 2013/12/01 16:40:56 krw Exp $	*/
+/*	$OpenBSD: mount.h,v 1.118 2014/03/24 00:19:48 guenther Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct fid {
 struct export_args {
 	int	ex_flags;		/* export related flags */
 	uid_t	ex_root;		/* mapping for root uid */
-	struct	ucred ex_anon;		/* mapping for anonymous user */
+	struct	xucred ex_anon;		/* mapping for anonymous user */
 	struct	sockaddr *ex_addr;	/* net address to which exported */
 	int	ex_addrlen;		/* and the net address length */
 	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.211 2014/01/21 01:48:45 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.212 2014/03/24 00:19:48 guenther Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1397,11 +1397,8 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 		if (mp->mnt_flag & MNT_DEFEXPORTED)
 			return (EPERM);
 		np = &nep->ne_defexported;
-		np->netc_exflags = argp->ex_flags;
-		np->netc_anon = argp->ex_anon;
-		np->netc_anon.cr_ref = 1;
 		mp->mnt_flag |= MNT_DEFEXPORTED;
-		return (0);
+		goto finish;
 	}
 	if (argp->ex_addrlen > MLEN || argp->ex_masklen > MLEN ||
 	    argp->ex_addrlen < 0 || argp->ex_masklen < 0)
@@ -1449,9 +1446,10 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 		error = EPERM;
 		goto out;
 	}
+finish:
 	np->netc_exflags = argp->ex_flags;
-	np->netc_anon = argp->ex_anon;
-	np->netc_anon.cr_ref = 1;
+	/* fill in the kernel's ucred from userspace's xucred */
+	crfromxucred(&np->netc_anon, &argp->ex_anon);
 	return (0);
 out:
 	free(np, M_NETADDR);

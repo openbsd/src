@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.51 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.52 2014/03/24 00:19:48 guenther Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct nfsd_srvargs {
 	struct nfsd	*nsd_nfsd;	/* Pointer to in kernel nfsd struct */
 	uid_t		nsd_uid;	/* Effective uid mapped to cred */
 	u_int32_t	nsd_haddr;	/* IP address of client */
-	struct ucred	nsd_cr;		/* Cred. uid maps to */
+	struct xucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	u_char		*nsd_authstr;	/* Auth string (ret) */
 	int		nsd_verflen;	/* and the verifier */
