@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.86 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.87 2014/03/24 03:48:00 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <sys/times.h>
 #include <sys/vnode.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
