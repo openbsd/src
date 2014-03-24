@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.4 2014/03/24 12:06:58 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.5 2014/03/24 12:15:03 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -126,7 +126,7 @@ struct mpii_sge {
 	u_int32_t		sg_hdr;
 	u_int32_t		sg_addr_lo;
 	u_int32_t		sg_addr_hi;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_fw_tce {
 	u_int8_t		reserved1;
