@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.3 2014/01/23 13:09:43 espie Exp $
+# $OpenBSD: Signer.pm,v 1.4 2014/03/24 11:58:15 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -129,7 +129,8 @@ sub create_archive
 	my ($state, $filename, $dir) = @_;
 	require IO::Compress::Gzip;
 	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
-	my $fh = IO::Compress::Gzip->new($filename, -Level => $level);
+	my $fh = IO::Compress::Gzip->new($filename, -Level => $level) or
+		$state->fatal("Can't create archive #1: #2", $filename, $!);
 	$state->{archive_filename} = $filename;
 	return OpenBSD::Ustar->new($fh, $state, $dir);
 }
