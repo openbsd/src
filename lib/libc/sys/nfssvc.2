@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.20 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.21 2014/03/24 01:54:58 guenther Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 24 2014 $
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -66,14 +66,13 @@ struct nfsd_srvargs {
         struct nfsd     *nsd_nfsd;   /* Pointer to in kernel nfsd struct */
         uid_t           nsd_uid;        /* Effective uid mapped to cred */
         u_int32_t       nsd_haddr;      /* IP address of client */
-        struct ucred    nsd_cr;         /* Cred. uid maps to */
+        struct xucred   nsd_cr;         /* Cred. uid maps to */
         int             nsd_authlen;    /* Length of auth string (ret) */
         u_char          *nsd_authstr;   /* Auth string (ret) */
         int             nsd_verflen;    /* and the verifier */
         u_char          *nsd_verfstr;
         struct timeval  nsd_timestamp;  /* timestamp from verifier */
         u_int32_t       nsd_ttl;        /* credential ttl (sec) */
-        NFSKERBKEY_T    nsd_key;        /* Session key */
 };
 .Ed
 .Pp
