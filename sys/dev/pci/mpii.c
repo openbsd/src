@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.76 2014/03/24 07:24:20 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.77 2014/03/24 11:05:03 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -569,7 +569,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
+	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
@@ -1126,8 +1126,8 @@ mpii_iocfacts(struct mpii_softc *sc)
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_iocfacts\n", DEVNAME(sc));
 
-	bzero(&ifq, sizeof(ifq));
-	bzero(&ifp, sizeof(ifp));
+	memset(&ifq, 0, sizeof(ifq));
+	memset(&ifp, 0, sizeof(ifp));
 
 	ifq.function = MPII_FUNCTION_IOC_FACTS;
 
@@ -1248,8 +1248,8 @@ mpii_iocinit(struct mpii_softc *sc)
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_iocinit\n", DEVNAME(sc));
 
-	bzero(&iiq, sizeof(iiq));
-	bzero(&iip, sizeof(iip));
+	memset(&iiq, 0, sizeof(iiq));
+	memset(&iip, 0, sizeof(iip));
 
 	iiq.function = MPII_FUNCTION_IOC_INIT;
 	iiq.whoinit = MPII_WHOINIT_HOST_DRIVER;
@@ -1355,7 +1355,7 @@ mpii_portfacts(struct mpii_softc *sc)
 	ccb->ccb_done = mpii_empty_done;
 	pfq = ccb->ccb_cmd;
 
-	bzero(pfq, sizeof(*pfq));
+	memset(pfq, 0, sizeof(*pfq));
 
 	pfq->function = MPII_FUNCTION_PORT_FACTS;
 	pfq->chain_offset = 0;
@@ -1489,7 +1489,7 @@ mpii_cfg_coalescing(struct mpii_softc *sc)
 	hdr.page_length = sizeof(ipg) / 4;
 	hdr.page_number = 1;
 	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_IOC;
-	bzero(&ipg, sizeof(ipg));
+	memset(&ipg, 0, sizeof(ipg));
 	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &ipg,
 	    sizeof(ipg)) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch IOC page 1\n"
@@ -1894,7 +1894,7 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	ccb->ccb_rcb = NULL;
 
 	soq = ccb->ccb_cmd;
-	bzero(soq, sizeof(*soq));
+	memset(soq, 0, sizeof(*soq));
 	soq->function = MPII_FUNCTION_SAS_IO_UNIT_CONTROL;
 	soq->operation = MPII_SAS_OP_REMOVE_DEVICE;
 	soq->dev_handle = htole16(handle);
@@ -1915,8 +1915,8 @@ mpii_board_info(struct mpii_softc *sc)
 	struct mpii_cfg_manufacturing_pg0	mpg;
 	struct mpii_cfg_hdr			hdr;
 
-	bzero(&ifq, sizeof(ifq));
-	bzero(&ifp, sizeof(ifp));
+	memset(&ifq, 0, sizeof(ifq));
+	memset(&ifp, 0, sizeof(ifp));
 
 	ifq.function = MPII_FUNCTION_IOC_FACTS;
 
@@ -1936,7 +1936,7 @@ mpii_board_info(struct mpii_softc *sc)
 	hdr.page_length = sizeof(mpg) / 4;
 	hdr.page_number = 0;
 	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_MANUFACTURING;
-	bzero(&mpg, sizeof(mpg));
+	memset(&mpg, 0, sizeof(mpg));
 	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &mpg,
 	    sizeof(mpg)) != 0) {
 		printf("%s: unable to fetch manufacturing page 0\n",
@@ -1964,7 +1964,7 @@ mpii_target_map(struct mpii_softc *sc)
 	hdr.page_length = sizeof(ipg) / 4;
 	hdr.page_number = 8;
 	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_IOC;
-	bzero(&ipg, sizeof(ipg));
+	memset(&ipg, 0, sizeof(ipg));
 	if (mpii_req_cfg_page(sc, 0, MPII_PG_POLL, &hdr, 1, &ipg,
 	    sizeof(ipg)) != 0) {
 		printf("%s: unable to fetch ioc page 8\n",
@@ -2072,7 +2072,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	if (letoh16(cp->ioc_status) != MPII_IOCSTATUS_SUCCESS)
 		rv = 1;
 	else if (ISSET(flags, MPII_PG_EXTENDED)) {
-		bzero(ehdr, sizeof(*ehdr));
+		memset(ehdr, 0, sizeof(*ehdr));
 		ehdr->page_version = cp->config_header.page_version;
 		ehdr->page_number = cp->config_header.page_number;
 		ehdr->page_type = cp->config_header.page_type;
@@ -2424,7 +2424,7 @@ mpii_put_ccb(void *cookie, void *io)
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_done = NULL;
 	ccb->ccb_rcb = NULL;
-	bzero(ccb->ccb_cmd, sc->sc_request_size);
+	memset(ccb->ccb_cmd, 0, sc->sc_request_size);
 
 	mtx_enter(&sc->sc_ccb_free_mtx);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
@@ -2503,7 +2503,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 
 	rhp = ccb->ccb_cmd;
 
-	bzero(&descr, sizeof(descr));
+	memset(&descr, 0, sizeof(descr));
 
 	switch (rhp->function) {
 	case MPII_FUNCTION_SCSI_IO_REQUEST:
@@ -2673,7 +2673,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->cmdlen > MPII_CDB_LEN) {
 		DNPRINTF(MPII_D_CMD, "%s: CBD too big %d\n",
 		    DEVNAME(sc), xs->cmdlen);
-		bzero(&xs->sense, sizeof(xs->sense));
+		memset(&xs->sense, 0, sizeof(xs->sense));
 		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
@@ -3022,7 +3022,7 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	ccb->ccb_done = mpii_empty_done;
 
 	req = ccb->ccb_cmd;
-	bzero(req, sizeof(*req));
+	memset(req, 0, sizeof(*req));
 	req->function = MPII_FUNCTION_RAID_ACTION;
 	req->action = MPII_RAID_ACTION_CHANGE_VOL_WRITE_CACHE;
 	req->vol_dev_handle = htole16(dev->dev_handle);
@@ -3544,7 +3544,7 @@ mpii_refresh_sensors(void *arg)
 	int			i;
 
 	for (i = 0; i < sc->sc_nsensors; i++) {
-		bzero(&bv, sizeof(bv));
+		memset(&bv, 0, sizeof(bv));
 		bv.bv_volid = i;
 		if (mpii_bio_volstate(sc, &bv))
 			return;
