@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.245 2014/03/21 00:23:15 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.246 2014/03/24 09:24:09 sthen Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1356,6 +1356,11 @@ vi.recover	 mode=01777
 
 # ./var/unbound
 unbound
+
+# ./var/unbound/dev
+dev		uname=root gname=wheel mode=0755
+# ./var/unbound/dev
+..
 
 # ./var/unbound/etc
 etc		uname=root gname=wheel mode=0755

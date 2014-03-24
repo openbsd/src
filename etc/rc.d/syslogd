@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: syslogd,v 1.2 2014/03/15 00:59:50 sthen Exp $
+# $OpenBSD: syslogd,v 1.3 2014/03/24 09:24:09 sthen Exp $
 
 daemon="/usr/sbin/syslogd"
 
@@ -15,6 +15,8 @@ rc_pre() {
 		daemon_flags="${daemon_flags} -a /var/named/dev/log"
 	[ X"${nsd_flags}" != X"NO" ] && rm -f /var/nsd/dev/log && \
 		daemon_flags="${daemon_flags} -a /var/nsd/dev/log"
+	[ X"${unbound_flags}" != X"NO" ] && rm -f /var/unbound/dev/log && \
+		daemon_flags="${daemon_flags} -a /var/unbound/dev/log"
 	[ -d /var/empty ] && rm -f /var/empty/dev/log && \
 		mkdir -p -m 0555 /var/empty/dev && \
 		daemon_flags="${daemon_flags} -a /var/empty/dev/log"
