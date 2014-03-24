@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.70 2014/02/13 23:11:05 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.71 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3829,7 +3829,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 
 	args->busy = obj->active;
 	if (obj->ring) {
-//		BUILD_BUG_ON(I915_NUM_RINGS > 16);
+		BUILD_BUG_ON(I915_NUM_RINGS > 16);
 		args->busy |= intel_ring_flag(obj->ring) << 16;
 	}
 

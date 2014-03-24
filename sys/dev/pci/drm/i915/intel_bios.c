@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.7 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.8 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -747,7 +747,7 @@ intel_parse_bios(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct bdb_header *bdb = NULL;
-	u8 *bios = NULL;
+	u8 __iomem *bios = NULL;
 
 	init_vbt_defaults(dev_priv);
 

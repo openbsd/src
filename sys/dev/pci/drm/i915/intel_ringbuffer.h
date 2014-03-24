@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.h,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.h,v 1.2 2014/03/24 17:06:49 kettenis Exp $	*/
 
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
@@ -76,14 +76,14 @@ struct  intel_ring_buffer {
 	u32		irq_enable_mask;	/* bitmask to enable ring interrupt */
 	u32		trace_irq_seqno;
 	u32		sync_seqno[I915_NUM_RINGS-1];
-	bool		(*irq_get)(struct intel_ring_buffer *ring);
+	bool __must_check (*irq_get)(struct intel_ring_buffer *ring);
 	void		(*irq_put)(struct intel_ring_buffer *ring);
 
 	int		(*init)(struct intel_ring_buffer *ring);
 
 	void		(*write_tail)(struct intel_ring_buffer *ring,
 				      u32 value);
-	int		(*flush)(struct intel_ring_buffer *ring,
+	int __must_check (*flush)(struct intel_ring_buffer *ring,
 				  u32	invalidate_domains,
 				  u32	flush_domains);
 	int		(*add_request)(struct intel_ring_buffer *ring);
@@ -197,7 +197,7 @@ u32 intel_read_status_page(struct intel_ring_buffer *ring, int reg);
 
 void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring);
 
-int intel_ring_begin(struct intel_ring_buffer *ring, int n);
+int __must_check intel_ring_begin(struct intel_ring_buffer *ring, int n);
 #ifdef notyet
 static inline void intel_ring_emit(struct intel_ring_buffer *ring,
 				   u32 data)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.8 2014/02/18 02:48:57 jsg Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.9 2014/03/24 17:06:49 kettenis Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -471,7 +471,7 @@
 #define   RING_WAIT_I8XX	(1<<0) /* gen2, PRBx_HEAD */
 #define   RING_WAIT		(1<<11) /* gen3+, PRBx_CTL */
 #define   RING_WAIT_SEMAPHORE	(1<<10) /* gen6+ */
-#if 1
+#if 0
 #define PRB0_TAIL	0x02030
 #define PRB0_HEAD	0x02034
 #define PRB0_START	0x02038

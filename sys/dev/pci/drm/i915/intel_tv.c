@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_tv.c,v 1.5 2014/01/22 05:16:55 kettenis Exp $	*/
+/*	$OpenBSD: intel_tv.c,v 1.6 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2006-2008 Intel Corporation
  *   Jesse Barnes <jesse.barnes@intel.com>
@@ -1412,7 +1412,7 @@ intel_tv_get_modes(struct drm_connector *connector)
 
 		tmp = (u64) tv_mode->refresh * mode_ptr->vtotal;
 		tmp *= mode_ptr->htotal;
-		tmp = tmp / 1000000;
+		tmp = div_u64(tmp, 1000000);
 		mode_ptr->clock = (int) tmp;
 
 		mode_ptr->type = DRM_MODE_TYPE_DRIVER;

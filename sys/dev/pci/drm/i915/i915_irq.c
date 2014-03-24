@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.11 2014/02/05 10:58:48 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.12 2014/03/24 17:06:49 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -33,6 +33,9 @@
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
+
+#define IRQ_NONE	0
+#define IRQ_HANDLED	1
 
 /* For display hotplug interrupt */
 static void
@@ -524,7 +527,7 @@ static int valleyview_intr(void *arg)
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 iir, gt_iir, pm_iir;
-	int ret = 0;
+	int ret = IRQ_NONE;
 	int pipe;
 	u32 pipe_stats[I915_MAX_PIPES];
 	bool blc_event;
@@ -539,7 +542,7 @@ static int valleyview_intr(void *arg)
 		if (gt_iir == 0 && pm_iir == 0 && iir == 0)
 			goto out;
 
-		ret = 1;
+		ret = IRQ_HANDLED;
 
 		snb_gt_irq_handler(dev, dev_priv, gt_iir);
 
@@ -678,7 +681,7 @@ static int ivybridge_intr(void *arg)
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	u32 de_iir, gt_iir, de_ier, pm_iir;
-	int ret = 0;
+	int ret = IRQ_NONE;
 	int i;
 
 //	atomic_inc(&dev_priv->irq_received);
@@ -691,7 +694,7 @@ static int ivybridge_intr(void *arg)
 	if (gt_iir) {
 		snb_gt_irq_handler(dev, dev_priv, gt_iir);
 		I915_WRITE(GTIIR, gt_iir);
-		ret = 1;
+		ret = IRQ_HANDLED;
 	}
 
 	de_iir = I915_READ(DEIIR);
@@ -719,7 +722,7 @@ static int ivybridge_intr(void *arg)
 		}
 
 		I915_WRITE(DEIIR, de_iir);
-		ret = 1;
+		ret = IRQ_HANDLED;
 	}
 
 	pm_iir = I915_READ(GEN6_PMIIR);
@@ -727,7 +730,7 @@ static int ivybridge_intr(void *arg)
 		if (pm_iir & GEN6_PM_DEFERRED_EVENTS)
 			gen6_queue_rps_work(dev_priv, pm_iir);
 		I915_WRITE(GEN6_PMIIR, pm_iir);
-		ret = 1;
+		ret = IRQ_HANDLED;
 	}
 
 	I915_WRITE(DEIER, de_ier);
@@ -750,7 +753,7 @@ static int ironlake_intr(void *arg)
 {
 	drm_i915_private_t *dev_priv = arg;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-	int ret = 0;
+	int ret = IRQ_NONE;
 	u32 de_iir, gt_iir, de_ier, pch_iir, pm_iir;
 
 //	atomic_inc(&dev_priv->irq_received);
@@ -769,7 +772,7 @@ static int ironlake_intr(void *arg)
 	    (!IS_GEN6(dev) || pm_iir == 0))
 		goto done;
 
-	ret = 1;
+	ret = IRQ_HANDLED;
 
 	if (IS_GEN5(dev))
 		ilk_gt_irq_handler(dev, dev_priv, gt_iir);
@@ -2152,7 +2155,7 @@ static int i8xx_intr(void *arg)
 
 	iir = I915_READ16(IIR);
 	if (iir == 0)
-		return 0;
+		return IRQ_NONE;
 
 	while (iir & ~flip_mask) {
 		/* Can't rely on pipestat interrupt bit in iir as it might
@@ -2210,7 +2213,7 @@ static int i8xx_intr(void *arg)
 		iir = new_iir;
 	}
 
-	return 1;
+	return IRQ_HANDLED;
 }
 
 static void i8xx_irq_uninstall(struct drm_device * dev)
@@ -2325,7 +2328,7 @@ static int i915_intr(void *arg)
 		I915_DISPLAY_PLANE_A_FLIP_PENDING_INTERRUPT,
 		I915_DISPLAY_PLANE_B_FLIP_PENDING_INTERRUPT
 	};
-	int pipe, ret = 0;
+	int pipe, ret = IRQ_NONE;
 
 //	atomic_inc(&dev_priv->irq_received);
 
@@ -2416,7 +2419,7 @@ static int i915_intr(void *arg)
 		 * trigger the 99% of 100,000 interrupts test for disabling
 		 * stray interrupts.
 		 */
-		ret = 1;
+		ret = IRQ_HANDLED;
 		iir = new_iir;
 	} while (iir & ~flip_mask);
 
@@ -2556,7 +2559,7 @@ static int i965_intr(void *arg)
 	u32 iir, new_iir;
 	u32 pipe_stats[I915_MAX_PIPES];
 	int irq_received;
-	int ret = 0, pipe;
+	int ret = IRQ_NONE, pipe;
 
 //	atomic_inc(&dev_priv->irq_received);
 
@@ -2596,7 +2599,7 @@ static int i965_intr(void *arg)
 		if (!irq_received)
 			break;
 
-		ret = 1;
+		ret = IRQ_HANDLED;
 
 		/* Consume port.  Then clear IIR or we'll miss events */
 		if (iir & I915_DISPLAY_PORT_INTERRUPT) {

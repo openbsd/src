@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.171 2014/03/17 22:01:56 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.172 2014/03/24 17:06:49 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -141,7 +141,8 @@ typedef uint32_t __be32;
 #define __init
 #define ARRAY_SIZE nitems
 #define DRM_ARRAY_SIZE nitems
-#define DIV_ROUND_UP howmany
+#define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
+#define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
 
 #define ERESTARTSYS EINTR
 
@@ -156,6 +157,8 @@ do {									\
 } while (0)
 
 #define BUG_ON(x) KASSERT(!(x))
+
+#define BUILD_BUG_ON(x) CTASSERT(!(x))
 
 #define WARN(condition, fmt...) ({ 					\
 	int __ret = !!(condition);					\

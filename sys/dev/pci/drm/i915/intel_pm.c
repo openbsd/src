@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.20 2014/02/19 01:20:12 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.21 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2314,7 +2314,13 @@ err_unref:
 	return NULL;
 }
 
+/**
+ * Lock protecting IPS related data structures
+ */
 struct mutex mchdev_lock;
+
+/* Global for IPS driver to get at the current i915 device. Protected by
+ * mchdev_lock. */
 static struct drm_i915_private *i915_mch_dev;
 
 bool ironlake_set_drps(struct drm_device *dev, u8 val)
@@ -2723,7 +2729,6 @@ static void gen6_update_ring_freq(struct drm_device *dev)
 	for (gpu_freq = dev_priv->rps.max_delay; gpu_freq >= dev_priv->rps.min_delay;
 	     gpu_freq--) {
 		int diff = dev_priv->rps.max_delay - gpu_freq;
-		int d;
 
 		/*
 		 * For GPU frequencies less than 750MHz, just use the lowest
@@ -2733,8 +2738,7 @@ static void gen6_update_ring_freq(struct drm_device *dev)
 			ia_freq = 800;
 		else
 			ia_freq = max_ia_freq - ((diff * scaling_factor) / 2);
-		d = 100;
-		ia_freq = (ia_freq + d / 2) / d;
+		ia_freq = DIV_ROUND_CLOSEST(ia_freq, 100);
 		ia_freq <<= GEN6_PCODE_FREQ_IA_RATIO_SHIFT;
 
 		sandybridge_pcode_write(dev_priv,
@@ -2936,9 +2940,9 @@ static unsigned long __i915_chipset_val(struct drm_i915_private *dev_priv)
 		}
 	}
 
-	diff = diff / diff1;
+	diff = div_u64(diff, diff1);
 	ret = ((m * diff) + c);
-	ret = ret / 10;
+	ret = div_u64(ret, 10);
 
 	dev_priv->ips.last_count1 = total_count;
 	dev_priv->ips.last_time1 = now;
@@ -3151,7 +3155,7 @@ static void __i915_update_gfx_val(struct drm_i915_private *dev_priv)
 
 	/* More magic constants... */
 	diff = diff * 1181;
-	diff = diff / (diffms * 10);
+	diff = div_u64(diff, diffms * 10);
 	dev_priv->ips.gfx_power = diff;
 }
 
@@ -3395,7 +3399,6 @@ void intel_gpu_ips_teardown(void)
 	i915_mch_dev = NULL;
 	mtx_leave(&mchdev_lock);
 } 
-
 static void intel_init_emon(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;

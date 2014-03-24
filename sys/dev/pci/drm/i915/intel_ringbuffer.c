@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.18 2014/02/01 09:32:05 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.19 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -473,15 +473,15 @@ init_pipe_control(struct intel_ring_buffer *ring)
 
 	pc->gtt_offset = obj->gtt_offset;
 	pc->cpu_page = (volatile u_int32_t *)vm_map_min(kernel_map);
-        obj->base.uao->pgops->pgo_reference(obj->base.uao);
-        if ((ret = uvm_map(kernel_map, (vaddr_t *)&pc->cpu_page,
-            PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-            UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0)
-        if (ret != 0) {
-                DRM_ERROR("Failed to map status page.\n");
-                obj->base.uao->pgops->pgo_detach(obj->base.uao);
+	obj->base.uao->pgops->pgo_reference(obj->base.uao);
+	ret = uvm_map(kernel_map, (vaddr_t *)&pc->cpu_page,
+	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
+	    UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	if (ret != 0) {
+		DRM_ERROR("Failed to map status page.\n");
+		obj->base.uao->pgops->pgo_detach(obj->base.uao);
 		goto err_unpin;
-        }
+	}
 
 	pc->obj = obj;
 	ring->private = pc;
@@ -1121,9 +1121,9 @@ static int init_status_page(struct intel_ring_buffer *ring)
 	ring->status_page.gfx_addr = obj->gtt_offset;
 	ring->status_page.page_addr = (u_int32_t *)vm_map_min(kernel_map);
 	obj->base.uao->pgops->pgo_reference(obj->base.uao);
-	if ((ret = uvm_map(kernel_map, (vaddr_t *)&ring->status_page.page_addr,
-	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0)
+	ret = uvm_map(kernel_map, (vaddr_t *)&ring->status_page.page_addr,
+	    PAGE_SIZE, obj->base.uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
+	    UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (ret != 0) {
 		obj->base.uao->pgops->pgo_detach(obj->base.uao);
 		ret = -ENOMEM;

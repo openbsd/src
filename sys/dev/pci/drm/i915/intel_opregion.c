@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_opregion.c,v 1.4 2013/08/13 10:23:51 jsg Exp $	*/
+/*	$OpenBSD: intel_opregion.c,v 1.5 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
  * Copyright 2008 Red Hat <mjg@redhat.com>
@@ -152,8 +152,10 @@ struct opregion_asle {
 static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_asle *asle = dev_priv->opregion.asle;
+	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
 	u32 max;
+
+	DRM_DEBUG_DRIVER("bclp = 0x%08x\n", bclp);
 
 	if (!(bclp & ASLE_BCLP_VALID))
 		return ASLE_BACKLIGHT_FAILED;
@@ -164,7 +166,7 @@ static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 
 	max = intel_panel_get_max_backlight(dev);
 	intel_panel_set_backlight(dev, bclp * max / 255);
-	asle->cblv = (bclp*0x64)/0xff | ASLE_CBLV_VALID;
+	asle->cblv = DIV_ROUND_UP(bclp * 100, 255) | ASLE_CBLV_VALID;
 
 	return 0;
 }
@@ -201,7 +203,7 @@ static u32 asle_set_pfit(struct drm_device *dev, u32 pfit)
 void intel_opregion_asle_intr(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_asle *asle = dev_priv->opregion.asle;
+	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
 	u32 asle_stat = 0;
 	u32 asle_req;
 
@@ -211,7 +213,7 @@ void intel_opregion_asle_intr(struct drm_device *dev)
 	asle_req = asle->aslc & ASLE_REQ_MSK;
 
 	if (!asle_req) {
-		DRM_DEBUG("non asle set request??\n");
+		DRM_DEBUG_DRIVER("non asle set request??\n");
 		return;
 	}
 
@@ -233,7 +235,7 @@ void intel_opregion_asle_intr(struct drm_device *dev)
 void intel_opregion_gse_intr(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_asle *asle = dev_priv->opregion.asle;
+	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
 	u32 asle_stat = 0;
 	u32 asle_req;
 
@@ -243,12 +245,12 @@ void intel_opregion_gse_intr(struct drm_device *dev)
 	asle_req = asle->aslc & ASLE_REQ_MSK;
 
 	if (!asle_req) {
-		DRM_DEBUG("non asle set request??\n");
+		DRM_DEBUG_DRIVER("non asle set request??\n");
 		return;
 	}
 
 	if (asle_req & ASLE_SET_ALS_ILLUM) {
-		DRM_DEBUG("Illum is not supported\n");
+		DRM_DEBUG_DRIVER("Illum is not supported\n");
 		asle_stat |= ASLE_ALS_ILLUM_FAILED;
 	}
 
@@ -256,18 +258,17 @@ void intel_opregion_gse_intr(struct drm_device *dev)
 		asle_stat |= asle_set_backlight(dev, asle->bclp);
 
 	if (asle_req & ASLE_SET_PFIT) {
-		DRM_DEBUG("Pfit is not supported\n");
+		DRM_DEBUG_DRIVER("Pfit is not supported\n");
 		asle_stat |= ASLE_PFIT_FAILED;
 	}
 
 	if (asle_req & ASLE_SET_PWM_FREQ) {
-		DRM_DEBUG("PWM freq is not supported\n");
+		DRM_DEBUG_DRIVER("PWM freq is not supported\n");
 		asle_stat |= ASLE_PWM_FREQ_FAILED;
 	}
 
 	asle->aslc = asle_stat;
 }
-
 #define ASLE_ALS_EN    (1<<0)
 #define ASLE_BLC_EN    (1<<1)
 #define ASLE_PFIT_EN   (1<<2)
@@ -276,7 +277,7 @@ void intel_opregion_gse_intr(struct drm_device *dev)
 void intel_opregion_enable_asle(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_asle *asle = dev_priv->opregion.asle;
+	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
 
 	if (asle) {
 		if (IS_MOBILE(dev))
@@ -302,7 +303,8 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 	   either a docking event, lid switch or display switch request. In
 	   Linux, these are handled by the dock, button and video drivers.
 	*/
-	struct opregion_acpi *acpi;
+
+	struct opregion_acpi __iomem *acpi;
 	struct acpi_bus_event *event = data;
 	int ret = NOTIFY_OK;
 
@@ -361,7 +363,7 @@ static void intel_didl_outputs(struct drm_device *dev)
 	}
 
 	if (!acpi_video_bus) {
-		printk(KERN_WARNING "No ACPI video bus found\n");
+		pr_warn("No ACPI video bus found\n");
 		return;
 	}
 
@@ -393,7 +395,7 @@ blind_set:
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		int output_type = ACPI_OTHER_OUTPUT;
 		if (i >= 8) {
-			device_printf(dev->device,
+			dev_printk(KERN_ERR, &dev->pdev->dev,
 				    "More than 8 outputs detected\n");
 			return;
 		}
@@ -485,52 +487,49 @@ int intel_opregion_setup(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
-	void *base;
+	void __iomem *base;
 	u32 asls, mboxes;
 	int err = 0;
 
 	asls = pci_conf_read(dev_priv->pc, dev_priv->tag, PCI_ASLS);
-	DRM_DEBUG("graphic opregion physical addr: 0x%x\n", asls);
+	DRM_DEBUG_DRIVER("graphic opregion physical addr: 0x%x\n", asls);
 	if (asls == 0) {
-		DRM_DEBUG("ACPI OpRegion not supported!\n");
+		DRM_DEBUG_DRIVER("ACPI OpRegion not supported!\n");
 		return -ENOTSUP;
 	}
 
 	if (bus_space_map(dev_priv->bst, asls, OPREGION_SIZE,
 	    BUS_SPACE_MAP_LINEAR, &dev_priv->opregion_ioh)) {
-		DRM_DEBUG("could not map opregion!\n");
-		return ENOMEM;
+		DRM_DEBUG_DRIVER("could not map opregion!\n");
+		return -ENOMEM;
 	}
 	base = bus_space_vaddr(dev_priv->bst, dev_priv->opregion_ioh);
 	if (!base)
 		return -ENOMEM;
 
 	if (memcmp(base, OPREGION_SIGNATURE, 16)) {
-		DRM_DEBUG("opregion signature mismatch\n");
+		DRM_DEBUG_DRIVER("opregion signature mismatch\n");
 		err = -EINVAL;
 		goto err_out;
 	}
-	opregion->header = (struct opregion_header *)base;
+	opregion->header = base;
 	opregion->vbt = base + OPREGION_VBT_OFFSET;
 
-	opregion->lid_state = (u32 *)(base + ACPI_CLID);
+	opregion->lid_state = base + ACPI_CLID;
 
 	mboxes = opregion->header->mboxes;
 	if (mboxes & MBOX_ACPI) {
-		DRM_DEBUG("Public ACPI methods supported\n");
-		opregion->acpi = (struct opregion_acpi *)(base +
-		    OPREGION_ACPI_OFFSET);
+		DRM_DEBUG_DRIVER("Public ACPI methods supported\n");
+		opregion->acpi = base + OPREGION_ACPI_OFFSET;
 	}
 
 	if (mboxes & MBOX_SWSCI) {
-		DRM_DEBUG("SWSCI supported\n");
-		opregion->swsci = (struct opregion_swsci *)(base +
-		    OPREGION_SWSCI_OFFSET);
+		DRM_DEBUG_DRIVER("SWSCI supported\n");
+		opregion->swsci = base + OPREGION_SWSCI_OFFSET;
 	}
 	if (mboxes & MBOX_ASLE) {
-		DRM_DEBUG("ASLE supported\n");
-		opregion->asle = (struct opregion_asle *)(base +
-		    OPREGION_ASLE_OFFSET);
+		DRM_DEBUG_DRIVER("ASLE supported\n");
+		opregion->asle = base + OPREGION_ASLE_OFFSET;
 	}
 
 	return 0;

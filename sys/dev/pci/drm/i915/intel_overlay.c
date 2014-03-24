@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.8 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.9 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -193,10 +193,10 @@ static struct overlay_registers __iomem *
 intel_overlay_map_regs(struct intel_overlay *overlay)
 {
 	drm_i915_private_t *dev_priv = overlay->dev->dev_private;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 
 	if (OVERLAY_NEEDS_PHYSICAL(overlay->dev))
-		regs = (struct overlay_registers *)overlay->reg_bo->phys_obj->handle->kva;
+		regs = (struct overlay_registers __iomem *)overlay->reg_bo->phys_obj->handle->kva;
 	else {
 #ifdef __linux__
 		regs = io_mapping_map_wc(dev_priv->mm.gtt_mapping,
@@ -702,7 +702,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 				      struct put_image_params *params)
 {
 	int ret, tmp_width;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 	bool scale_changed = false;
 	struct drm_device *dev = overlay->dev;
 	u32 swidth, swidthsw, sheight, ostride;
@@ -810,7 +810,7 @@ out_unpin:
 
 int intel_overlay_switch_off(struct intel_overlay *overlay)
 {
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 	struct drm_device *dev = overlay->dev;
 	int ret;
 
@@ -1254,7 +1254,7 @@ int intel_overlay_attrs(struct drm_device *dev, void *data,
 	struct drm_intel_overlay_attrs *attrs = data;
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_overlay *overlay;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 	int ret;
 
 	/* No need to check for DRIVER_MODESET - we don't set it up then. */
@@ -1340,7 +1340,7 @@ void intel_setup_overlay(struct drm_device *dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_overlay *overlay;
 	struct drm_i915_gem_object *reg_bo;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 	int ret;
 
 	if (!HAS_OVERLAY(dev))
@@ -1447,12 +1447,12 @@ static struct overlay_registers __iomem *
 intel_overlay_map_regs_atomic(struct intel_overlay *overlay)
 {
 	drm_i915_private_t *dev_priv = overlay->dev->dev_private;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 
 	if (OVERLAY_NEEDS_PHYSICAL(overlay->dev))
 		/* Cast to make sparse happy, but it's wc memory anyway, so
 		 * equivalent to the wc io mapping on X86. */
-		regs = (struct overlay_registers *)
+		regs = (struct overlay_registers __iomem *)
 			overlay->reg_bo->phys_obj->handle->vaddr;
 	else
 		regs = io_mapping_map_atomic_wc(dev_priv->mm.gtt_mapping,
@@ -1475,7 +1475,7 @@ intel_overlay_capture_error_state(struct drm_device *dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct intel_overlay *overlay = dev_priv->overlay;
 	struct intel_overlay_error_state *error;
-	struct overlay_registers *regs;
+	struct overlay_registers __iomem *regs;
 
 	if (!overlay || !overlay->active)
 		return NULL;

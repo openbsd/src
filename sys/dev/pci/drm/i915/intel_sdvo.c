@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.15 2014/02/13 03:53:15 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.16 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -35,7 +35,7 @@
 #include "intel_sdvo_regs.h"
 
 static __inline uint16_t
-bitcount16(uint32_t x)
+hweight16(uint32_t x)
 {
 
 	x = (x & 0x5555) + ((x & 0xaaaa) >> 1);
@@ -637,9 +637,7 @@ static bool intel_sdvo_get_trained_inputs(struct intel_sdvo *intel_sdvo, bool *i
 {
 	struct intel_sdvo_get_trained_inputs_response response;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(response) != 1);
-#endif
 	if (!intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_TRAINED_INPUTS,
 				  &response, sizeof(response)))
 		return false;
@@ -695,9 +693,7 @@ static bool intel_sdvo_get_input_pixel_clock_range(struct intel_sdvo *intel_sdvo
 {
 	struct intel_sdvo_pixel_clock_range clocks;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(clocks) != 4);
-#endif
 	if (!intel_sdvo_get_value(intel_sdvo,
 				  SDVO_CMD_GET_INPUT_PIXEL_CLOCK_RANGE,
 				  &clocks, sizeof(clocks)))
@@ -765,10 +761,8 @@ intel_sdvo_create_preferred_input_timing(struct intel_sdvo *intel_sdvo,
 static bool intel_sdvo_get_preferred_input_timing(struct intel_sdvo *intel_sdvo,
 						  struct intel_sdvo_dtd *dtd)
 {
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(dtd->part1) != 8);
 	BUILD_BUG_ON(sizeof(dtd->part2) != 8);
-#endif
 	return intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_PREFERRED_INPUT_TIMING_PART1,
 				    &dtd->part1, sizeof(dtd->part1)) &&
 		intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_PREFERRED_INPUT_TIMING_PART2,
@@ -875,9 +869,7 @@ static bool intel_sdvo_check_supp_encode(struct intel_sdvo *intel_sdvo)
 {
 	struct intel_sdvo_encode encode;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(encode) != 2);
-#endif
 	return intel_sdvo_get_value(intel_sdvo,
 				  SDVO_CMD_GET_SUPP_ENCODE,
 				  &encode, sizeof(encode));
@@ -997,9 +989,7 @@ static bool intel_sdvo_set_tv_format(struct intel_sdvo *intel_sdvo)
 	memset(&format, 0, sizeof(format));
 	memcpy(&format, &format_map, min(sizeof(format), sizeof(format_map)));
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(format) != 6);
-#endif
 	return intel_sdvo_set_value(intel_sdvo,
 				    SDVO_CMD_SET_TV_FORMAT,
 				    &format, sizeof(format));
@@ -1407,9 +1397,7 @@ static int intel_sdvo_mode_valid(struct drm_connector *connector,
 
 static bool intel_sdvo_get_capabilities(struct intel_sdvo *intel_sdvo, struct intel_sdvo_caps *caps)
 {
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(*caps) != 8);
-#endif
 	if (!intel_sdvo_get_value(intel_sdvo,
 				  SDVO_CMD_GET_DEVICE_CAPS,
 				  caps, sizeof(*caps)))
@@ -1473,7 +1461,7 @@ static bool
 intel_sdvo_multifunc_encoder(struct intel_sdvo *intel_sdvo)
 {
 	/* Is there more than one type of output? */
-	return bitcount16(intel_sdvo->caps.output_flags) > 1;
+	return hweight16(intel_sdvo->caps.output_flags) > 1;
 }
 
 static struct edid *
@@ -1740,9 +1728,7 @@ static void intel_sdvo_get_tv_modes(struct drm_connector *connector)
 	if (!intel_sdvo_set_target_output(intel_sdvo, intel_sdvo->attached_output))
 		return;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(tv_res) != 3);
-#endif
 	if (!intel_sdvo_write_cmd(intel_sdvo,
 				  SDVO_CMD_GET_SDTV_RESOLUTION_SUPPORT,
 				  &tv_res, sizeof(tv_res)))
@@ -2102,7 +2088,7 @@ intel_sdvo_guess_ddc_bus(struct intel_sdvo *sdvo)
 
 	/* Count bits to find what number we are in the priority list. */
 	mask &= sdvo->caps.output_flags;
-	num_bits = bitcount16(mask);
+	num_bits = hweight16(mask);
 	/* If more than 3 outputs, default to DDC bus 3 for now. */
 	if (num_bits > 3)
 		num_bits = 3;
@@ -2480,9 +2466,7 @@ static bool intel_sdvo_tv_create_property(struct intel_sdvo *intel_sdvo,
 	if (!intel_sdvo_set_target_output(intel_sdvo, type))
 		return false;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(format) != 6);
-#endif
 	if (!intel_sdvo_get_value(intel_sdvo,
 				  SDVO_CMD_GET_SUPPORTED_TV_FORMATS,
 				  &format, sizeof(format)))
@@ -2675,9 +2659,7 @@ static bool intel_sdvo_create_enhance_property(struct intel_sdvo *intel_sdvo,
 		uint16_t response;
 	} enhancements;
 
-#ifdef notyet
 	BUILD_BUG_ON(sizeof(enhancements) != 2);
-#endif
 
 	enhancements.response = 0;
 	intel_sdvo_get_value(intel_sdvo,

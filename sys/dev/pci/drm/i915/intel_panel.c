@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.6 2014/01/24 04:05:06 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.7 2014/03/24 17:06:49 kettenis Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -209,8 +209,8 @@ u32 intel_panel_get_max_backlight(struct drm_device *dev)
 
 static int i915_panel_invert_brightness;
 /* 
- 	"(-1 force normal, 0 machine defaults, 1 force inversion), please "
- 	"report PCI device ID, subsystem vendor and subsystem device ID "
+	"(-1 force normal, 0 machine defaults, 1 force inversion), please "
+	"report PCI device ID, subsystem vendor and subsystem device ID "
 	"to dri-devel@lists.freedesktop.org, if your machine needs it. "
 	"It will then be included in an upcoming module version.");
 */
