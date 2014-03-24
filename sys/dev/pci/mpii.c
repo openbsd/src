@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.78 2014/03/24 11:10:48 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.79 2014/03/24 12:06:58 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -397,6 +397,13 @@ void		mpii_refresh_sensors(void *);
 #define mpii_wait_db_ack(s)	mpii_wait_eq((s), MPII_INTR_STATUS, \
 				    MPII_INTR_STATUS_SYS2IOCDB, 0)
 
+static inline void
+mpii_dvatosge(struct mpii_sge *sge, u_int64_t dva)
+{
+	htolem32(&sge->sg_addr_lo, dva);
+	htolem32(&sge->sg_addr_hi, dva >> 32);
+}
+
 #define MPII_PG_EXTENDED	(1<<0)
 #define MPII_PG_POLL		(1<<1)
 #define MPII_PG_FMT		"\020" "\002POLL" "\001EXTENDED"
@@ -728,7 +735,6 @@ mpii_load_xs(struct mpii_ccb *ccb)
 	struct mpii_msg_scsi_io	*io = ccb->ccb_cmd;
 	struct mpii_sge		*csge, *nsge, *sge;
 	bus_dmamap_t		dmap = ccb->ccb_dmamap;
-	u_int64_t		addr;
 	u_int32_t		flags;
 	u_int16_t		len;
 	int			i, error;
@@ -767,17 +773,13 @@ mpii_load_xs(struct mpii_ccb *ccb)
 			csge->sg_hdr = htole32(MPII_SGE_FL_TYPE_CHAIN |
 			    MPII_SGE_FL_SIZE_64 | len);
 			/* address of the next sge */
-			addr = (u_int64_t)ccb->ccb_cmd_dva +
-			    (caddr_t)nsge - (caddr_t)io;
-			csge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
-			csge->sg_lo_addr = htole32((u_int32_t)addr);
+			mpii_dvatosge(csge, ccb->ccb_cmd_dva +
+			    (caddr_t)nsge - (caddr_t)io);
 		}
 
 		sge = nsge;
 		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
-		addr = (u_int64_t)dmap->dm_segs[i].ds_addr;
-		sge->sg_hi_addr = htole32((u_int32_t)(addr >> 32));
-		sge->sg_lo_addr = htole32((u_int32_t)addr);
+		mpii_dvatosge(sge, dmap->dm_segs[i].ds_addr);
 	}
 
 	/* terminate list */
@@ -2096,7 +2098,6 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	struct mpii_ccb				*ccb;
 	struct mpii_cfg_hdr			*hdr = p;
 	struct mpii_ecfg_hdr			*ehdr = p;
-	u_int64_t				dva;
 	caddr_t					kva;
 	int					page_length;
 	int					rv = 0;
@@ -2141,10 +2142,8 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	    (read ? MPII_SGE_FL_DIR_IN : MPII_SGE_FL_DIR_OUT));
 
 	/* bounce the page via the request space to avoid more bus_dma games */
-	dva = ccb->ccb_cmd_dva + sizeof(struct mpii_msg_config_request);
-
-	cq->page_buffer.sg_hi_addr = htole32((u_int32_t)(dva >> 32));
-	cq->page_buffer.sg_lo_addr = htole32((u_int32_t)dva);
+	mpii_dvatosge(&cq->page_buffer, ccb->ccb_cmd_dva +
+	    sizeof(struct mpii_msg_config_request));
 
 	kva = ccb->ccb_cmd;
 	kva += sizeof(struct mpii_msg_config_request);
