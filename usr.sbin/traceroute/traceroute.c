@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.94 2014/03/18 10:11:36 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.95 2014/03/24 11:11:49 mpi Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
 
-	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:nP:p:q:rSs:t:V:vw:x"))
+	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x"))
 			!= -1)
 		switch (ch) {
 		case 'A':
@@ -420,9 +420,6 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *ep || l < 1 || l > INT_MAX)
 				errx(1, "nprobes must be >0.");
 			nprobes = (int)l;
-			break;
-		case 'r':
-			options |= SO_DONTROUTE;
 			break;
 		case 's':
 			/*
@@ -580,9 +577,6 @@ main(int argc, char *argv[])
 #endif /* IP_HDRINCL */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
-	if (options & SO_DONTROUTE)
-		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
 
 	if (source) {
@@ -1310,7 +1304,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-AcDdIlnrSvx] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
+	    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
 	    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr] [-t toskeyword]\n"
 	    "\t[-V rtable] [-w waittime] host [packetsize]\n", __progname);
 	exit(1);

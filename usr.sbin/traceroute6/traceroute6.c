@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.67 2014/03/18 10:11:36 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.68 2014/03/24 11:11:49 mpi Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:rSs:w:vV:")) != -1)
+	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:Ss:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -465,9 +465,6 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *ep || l < 1 || l > INT_MAX)
 				errx(1, "nprobes must be >0.");
 			nprobes = (int)l;
-			break;
-		case 'r':
-			options |= SO_DONTROUTE;
 			break;
 		case 's':
 			/*
@@ -585,9 +582,6 @@ main(int argc, char *argv[])
 	if (options & SO_DEBUG)
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
-	if (options & SO_DONTROUTE)
-		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DONTROUTE,
-		    (char *)&on, sizeof(on));
 
 	/*
 	 * Send UDP or ICMP
@@ -610,9 +604,6 @@ main(int argc, char *argv[])
 #endif /* SO_SNDBUF */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
-	if (options & SO_DONTROUTE)
-		(void) setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE,
 		    (char *)&on, sizeof(on));
 	if (rth) {/* XXX: there is no library to finalize the header... */
 		rth->ip6r_len = rth->ip6r_segleft * 2;
@@ -1221,7 +1212,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-AcDdIlnrSv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AcDdIlnSv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
 "       host [datalen]\n");
 	exit(1);

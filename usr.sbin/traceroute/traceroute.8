@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.52 2014/02/26 20:52:29 claudio Exp $
+.\"	$OpenBSD: traceroute.8,v 1.53 2014/03/24 11:11:49 mpi Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 26 2014 $
+.Dd $Mdocdate: March 24 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm traceroute
 .Bk -words
-.Op Fl AcDdIlnrSvx
+.Op Fl AcDdIlnSvx
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl m Ar max_ttl
@@ -151,17 +151,6 @@ to pick an unused port range.
 Set the number of probes per ``ttl'' to
 .Ar nqueries
 (default is three probes).
-.It Fl r
-Bypass the normal routing tables and send directly to a host on an attached
-network.
-If the host is not on a directly attached network,
-an error is returned.
-This option corresponds to the
-.Dv SO_DONTROUTE
-socket option;
-it can be used to ping a local host through an interface
-that has no route through it
-(e.g., after the interface was dropped by a routing daemon).
 .It Fl S
 Print how many probes were not answered for each hop.
 .It Fl s Ar src_addr

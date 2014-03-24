@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute6.8,v 1.21 2014/03/18 10:06:39 florian Exp $
+.\"	$OpenBSD: traceroute6.8,v 1.22 2014/03/24 11:11:49 mpi Exp $
 .\"	$KAME: traceroute6.8,v 1.9 2002/08/30 03:56:20 onoe Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: March 24 2014 $
 .Dt TRACEROUTE6 8
 .Os
 .\"
@@ -38,7 +38,7 @@
 .\"
 .Sh SYNOPSIS
 .Nm traceroute6
-.Op Fl AcDdIlnrSv
+.Op Fl AcDdIlnSv
 .Op Fl f Ar firsthop
 .Op Fl g Ar gateway
 .Op Fl m Ar hoplimit
@@ -93,17 +93,6 @@ Set UDP port number to
 .It Fl q Ar probes
 Set the number of probes per hop count to
 .Ar probes .
-.It Fl r
-Bypass the normal routing tables and send directly to a host on an attached
-network.
-If the host is not on a directly attached network,
-an error is returned.
-This option corresponds to the
-.Dv SO_DONTROUTE
-socket option;
-it can be used to ping a local host through an interface
-that has no route through it
-(e.g. after the interface was dropped by a routing daemon).
 .It Fl S
 Print how many probes were not answered for each hop.
 .It Fl s Ar src

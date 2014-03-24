@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.51 2014/03/13 09:07:01 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.52 2014/03/24 11:11:49 mpi Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 13 2014 $
+.Dd $Mdocdate: March 24 2014 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ping
 .Bk -words
-.Op Fl DdEefLnqRrv
+.Op Fl DdEefLnqRv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
 .Op Fl i Ar wait
@@ -171,12 +171,6 @@ packet,
 .Nm
 will print the route list and then truncate it at the correct spot.
 Many hosts ignore or discard this option.
-.It Fl r
-Bypass the normal routing tables and send directly to a host on an attached
-network.
-If the host is not on a directly attached network, an error is returned.
-This option can be used to ping a local host through an interface
-that has no route through it.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56,

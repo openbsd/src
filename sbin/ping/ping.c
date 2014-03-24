@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.99 2014/01/10 21:57:44 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.100 2014/03/24 11:11:49 mpi Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ int options;
 #define	F_QUIET		0x0010
 #define	F_RROUTE	0x0020
 #define	F_SO_DEBUG	0x0040
-#define	F_SO_DONTROUTE	0x0080
+/*			0x0080 */
 #define	F_VERBOSE	0x0100
 #define	F_SADDR		0x0200
 #define	F_HDRINCL	0x0400
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct tv32)];
 	while ((ch = getopt(argc, argv,
-	    "DEI:LRS:c:defi:l:np:qrs:T:t:V:vw:")) != -1)
+	    "DEI:LRS:c:defi:l:np:qs:T:t:V:vw:")) != -1)
 		switch(ch) {
 		case 'c':
 			npackets = (unsigned long)strtonum(optarg, 0,
@@ -282,9 +282,6 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			options |= F_RROUTE;
-			break;
-		case 'r':
-			options |= F_SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
 			datalen = (unsigned int)strtonum(optarg, 0, MAXPAYLOAD, &errstr);
@@ -402,9 +399,6 @@ main(int argc, char *argv[])
 
 	if (options & F_SO_DEBUG)
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &hold,
-		    sizeof(hold));
-	if (options & F_SO_DONTROUTE)
-		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &hold,
 		    sizeof(hold));
 
 	if (options & F_TTL) {
@@ -1420,7 +1414,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-DdEefLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
+	    "usage: ping [-DdEefLnqRv] [-c count] [-I ifaddr] [-i wait]\n"
 	    "\t[-l preload] [-p pattern] [-s packetsize]"
 #ifndef	SMALL
 	    " [-T toskeyword]"
