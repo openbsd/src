@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.43 2014/03/24 04:05:11 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.44 2014/03/24 04:26:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -840,7 +840,7 @@ struct mpi_msg_scsi_io {
 	u_int32_t		sense_buf_low_addr;
 
 	/* followed by an sgl */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_scsi_io_error {
 	u_int8_t		target_id;
@@ -886,7 +886,7 @@ struct mpi_msg_scsi_io_error {
 
 	u_int16_t		tag;
 	u_int16_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_scsi_task_request {
 	u_int8_t		target_id;

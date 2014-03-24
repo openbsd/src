@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.187 2014/03/24 04:05:11 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.188 2014/03/24 04:26:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1340,7 +1340,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	io->sense_buf_len = sizeof(xs->sense);
 	io->msg_flags = MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64;
 
-	io->lun[0] = htobe16(link->lun);
+	htobem16(&io->lun[0], link->lun);
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
@@ -1362,9 +1362,9 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
-	io->data_length = htole32(xs->datalen);
+	htolem32(&io->data_length, xs->datalen);
 
-	io->sense_buf_low_addr = htole32(ccb->ccb_cmd_dva +
+	htolem32(&io->sense_buf_low_addr, ccb->ccb_cmd_dva +
 	    ((u_int8_t *)&mcb->mcb_sense - (u_int8_t *)mcb));
 
 	if (mpi_load_xs(ccb) != 0) {
@@ -1442,9 +1442,9 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	    letoh16(sie->tag));
 
 	xs->status = sie->scsi_status;
-	switch (letoh16(sie->ioc_status)) {
+	switch (lemtoh16(&sie->ioc_status)) {
 	case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
-		xs->resid = xs->datalen - letoh32(sie->transfer_count);
+		xs->resid = xs->datalen - lemtoh32(&sie->transfer_count);
 		if (sie->scsi_state & MPI_SCSIIO_ERR_STATE_NO_SCSI_STATUS) {
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
