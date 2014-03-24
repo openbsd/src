@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.61 2014/01/22 06:24:23 claudio Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.62 2014/03/24 10:48:29 mpi Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -967,7 +967,7 @@ sendpacket(struct sockaddr_in6 *sin6, int len)
 		pi->ipi6_ifindex = idx;
 	}
 
-	if (sendmsg(ripsock, &m, 0 /*MSG_DONTROUTE*/) < 0) {
+	if (sendmsg(ripsock, &m, 0) < 0) {
 		trace(1, "sendmsg: %s\n", strerror(errno));
 		return errno;
 	}
