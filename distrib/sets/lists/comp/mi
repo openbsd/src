@@ -1542,7 +1542,6 @@
 ./usr/include/sysexits.h
 ./usr/include/syslog.h
 ./usr/include/tar.h
-./usr/include/tcpd.h
 ./usr/include/term.h
 ./usr/include/termcap.h
 ./usr/include/termios.h
@@ -1710,8 +1709,6 @@
 ./usr/lib/libutil_p.a
 ./usr/lib/libwind.a
 ./usr/lib/libwind_p.a
-./usr/lib/libwrap.a
-./usr/lib/libwrap_p.a
 ./usr/lib/liby.a
 ./usr/lib/liby_p.a
 ./usr/lib/libz.a
@@ -4182,8 +4179,6 @@
 ./usr/share/man/man3/history_winit.3
 ./usr/share/man/man3/hline.3
 ./usr/share/man/man3/hline_set.3
-./usr/share/man/man3/hosts_access.3
-./usr/share/man/man3/hosts_ctl.3
 ./usr/share/man/man3/hsearch.3
 ./usr/share/man/man3/hstrerror.3
 ./usr/share/man/man3/htobe16.3
@@ -5438,8 +5433,6 @@
 ./usr/share/man/man3/remquof.3
 ./usr/share/man/man3/remquol.3
 ./usr/share/man/man3/replace_panel.3
-./usr/share/man/man3/request_init.3
-./usr/share/man/man3/request_set.3
 ./usr/share/man/man3/res_init.3
 ./usr/share/man/man3/res_mkquery.3
 ./usr/share/man/man3/res_query.3
@@ -5454,7 +5447,6 @@
 ./usr/share/man/man3/restartterm.3
 ./usr/share/man/man3/rewind.3
 ./usr/share/man/man3/rewinddir.3
-./usr/share/man/man3/rfc1413.3
 ./usr/share/man/man3/rindex.3
 ./usr/share/man/man3/rint.3
 ./usr/share/man/man3/rintf.3

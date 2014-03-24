@@ -53,7 +53,6 @@
 ./usr/lib/libusbhid.so.6.0
 ./usr/lib/libutil.so.12.0
 ./usr/lib/libwind.so.1.0
-./usr/lib/libwrap.so.6.0
 ./usr/lib/libz.so.5.0
 ./usr/libdata/perl5/aviion-openbsd/5.18.2
 ./usr/libdata/perl5/aviion-openbsd/5.18.2/.packlist
@@ -2650,7 +2649,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/tar.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termios.ph

@@ -118,7 +118,6 @@
 ./usr/lib/libusbhid.so.6.0
 ./usr/lib/libutil.so.12.0
 ./usr/lib/libwind.so.1.0
-./usr/lib/libwrap.so.6.0
 ./usr/lib/libz.so.5.0
 ./usr/libdata/perl5/hppa-openbsd
 ./usr/libdata/perl5/hppa-openbsd/5.18.2
@@ -2284,7 +2283,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/tar.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/termios.ph

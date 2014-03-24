@@ -120,7 +120,6 @@
 ./usr/lib/libusbhid.so.6.0
 ./usr/lib/libutil.so.12.0
 ./usr/lib/libwind.so.1.0
-./usr/lib/libwrap.so.6.0
 ./usr/lib/libz.so.5.0
 ./usr/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/_h2ph_pre.ph
@@ -1829,7 +1828,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/tar.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/termios.ph

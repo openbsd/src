@@ -1584,7 +1584,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/tar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/term.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/termios.ph

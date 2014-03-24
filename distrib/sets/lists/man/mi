@@ -2311,11 +2311,7 @@
 ./usr/share/man/man5/hostapd.conf.5
 ./usr/share/man/man5/hostname.if.5
 ./usr/share/man/man5/hosts.5
-./usr/share/man/man5/hosts.allow.5
-./usr/share/man/man5/hosts.deny.5
 ./usr/share/man/man5/hosts.equiv.5
-./usr/share/man/man5/hosts_access.5
-./usr/share/man/man5/hosts_options.5
 ./usr/share/man/man5/hppa
 ./usr/share/man/man5/hppa/boot.conf.5
 ./usr/share/man/man5/hppa64
