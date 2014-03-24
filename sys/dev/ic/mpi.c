@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.185 2014/01/20 02:22:10 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.186 2014/03/24 02:59:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -787,8 +787,6 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	io->sense_buf_len = sizeof(struct scsi_sense_data);
 	io->msg_flags = MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64;
 
-	io->msg_context = htole32(ccb->ccb_id);
-
 	/*
 	 * always lun 0
 	 * io->lun[0] = htobe16(link->lun);
@@ -947,7 +945,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 
 		reply = rcb->rcb_reply;
 
-		id = letoh32(reply->msg_context);
+		id = lemtoh32(&reply->msg_context);
 	} else {
 		switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
 		case MPI_REPLY_QUEUE_TYPE_INIT:
@@ -1194,8 +1192,13 @@ mpi_push_replies(struct mpi_softc *sc)
 void
 mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 {
+	struct mpi_msg_request *msg;
+
 	DNPRINTF(MPI_D_RW, "%s: mpi_start %#x\n", DEVNAME(sc),
 	    ccb->ccb_cmd_dva);
+
+	msg = ccb->ccb_cmd;
+	htolem32(&msg->msg_context, ccb->ccb_id);
 
 	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_offset, MPI_REQUEST_SIZE,
@@ -1331,8 +1334,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	io->cdb_length = xs->cmdlen;
 	io->sense_buf_len = sizeof(xs->sense);
 	io->msg_flags = MPI_SCSIIO_SENSE_BUF_ADDR_WIDTH_64;
-
-	io->msg_context = htole32(ccb->ccb_id);
 
 	io->lun[0] = htobe16(link->lun);
 
@@ -2163,7 +2164,6 @@ mpi_portfacts(struct mpi_softc *sc)
 	pfq->chain_offset = 0;
 	pfq->msg_flags = 0;
 	pfq->port_number = 0;
-	pfq->msg_context = htole32(ccb->ccb_id);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts poll\n", DEVNAME(sc));
@@ -2277,7 +2277,6 @@ mpi_eventnotify(struct mpi_softc *sc)
 	enq->function = MPI_FUNCTION_EVENT_NOTIFICATION;
 	enq->chain_offset = 0;
 	enq->event_switch = MPI_EVENT_SWITCH_ON;
-	enq->msg_context = htole32(ccb->ccb_id);
 
 	mpi_start(sc, ccb);
 	return (0);
@@ -2436,8 +2435,6 @@ mpi_evt_sas_detach(void *cookie, void *io)
 
 	str->task_type = MPI_MSG_SCSI_TASK_TYPE_TARGET_RESET;
 
-	str->msg_context = htole32(ccb->ccb_id);
-
 	mpi_eventnotify_free(sc, rcb);
 
 	mpi_start(sc, ccb);
@@ -2563,7 +2560,6 @@ mpi_eventack(void *cookie, void *io)
 	eaq = ccb->ccb_cmd;
 
 	eaq->function = MPI_FUNCTION_EVENT_ACK;
-	eaq->msg_context = htole32(ccb->ccb_id);
 
 	eaq->event = enp->event;
 	eaq->event_context = enp->event_context;
@@ -2607,7 +2603,6 @@ mpi_portenable(struct mpi_softc *sc)
 
 	peq->function = MPI_FUNCTION_PORT_ENABLE;
 	peq->port_number = 0;
-	peq->msg_context = htole32(ccb->ccb_id);
 
 	if (mpi_poll(sc, ccb, 50000) != 0) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_portenable poll\n", DEVNAME(sc));
@@ -2660,7 +2655,6 @@ mpi_fwupload(struct mpi_softc *sc)
 	bundle = ccb->ccb_cmd;
 
 	bundle->req.function = MPI_FUNCTION_FW_UPLOAD;
-	bundle->req.msg_context = htole32(ccb->ccb_id);
 
 	bundle->req.image_type = MPI_FWUPLOAD_IMAGETYPE_IOC_FW;
 
@@ -2778,7 +2772,6 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq = ccb->ccb_cmd;
 
 	cq->function = MPI_FUNCTION_CONFIG;
-	cq->msg_context = htole32(ccb->ccb_id);
 
 	cq->action = MPI_CONFIG_REQ_ACTION_PAGE_HEADER;
 
@@ -2873,7 +2866,6 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	cq = ccb->ccb_cmd;
 
 	cq->function = MPI_FUNCTION_CONFIG;
-	cq->msg_context = htole32(ccb->ccb_id);
 
 	cq->action = (read ? MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT :
 	    MPI_CONFIG_REQ_ACTION_PAGE_WRITE_CURRENT);
@@ -3043,7 +3035,6 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	req->action = MPI_MSG_RAID_ACTION_CH_VOL_SETTINGS;
 	req->vol_id = rpg0->volume_id;
 	req->vol_bus = rpg0->volume_bus;
-	req->msg_context = htole32(ccb->ccb_id);
 
 	memcpy(&req->data_word, &settings, sizeof(req->data_word));
 	ccb->ccb_done = mpi_empty_done;
