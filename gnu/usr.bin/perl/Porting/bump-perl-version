@@ -26,6 +26,9 @@
 #     $ Porting/bump-perl-version -u < /tmp/scan
 #
 # (so line 52 of Porting/config.sh is now updated)
+#
+# The -i option can be used to combine these two steps (if you prefer to make
+# all of the changes at once and then edit the results via git).
 
 # This utility 'knows' about certain files and formats, and so can spot
 # 'hidden' version numbers, like PERL_SUBVERSION=9.
@@ -194,14 +197,6 @@ my @maps =  (
         qr/uconfig/,
     ],
 
-    # rename perl-5^.15^.1.dirperl-5_15_1.dir in README.vms
-    [
-	qr{\sperl-(\d+)_(\d+)_(\d+)\.dir}x,
-	sub { " perl-${1}_${2}_${3}.dir", " perl-${newx}_${newy}_${newz}.dir" },
-	" perl-${oldx}_${oldy}_{$oldz}.dir",
-	qr/README.vms/,
-    ],
-
 );
 
 
@@ -212,6 +207,7 @@ my %SKIP_FILES = map { ($_ => 1) } qw(
     MANIFEST
     Porting/Maintainers.pl
     Porting/acknowledgements.pl
+    Porting/corelist-perldelta.pl
     Porting/epigraphs.pod
     Porting/how_to_write_a_perldelta.pod
     Porting/release_managers_guide.pod

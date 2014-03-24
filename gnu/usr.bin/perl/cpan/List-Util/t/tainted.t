@@ -26,7 +26,7 @@ my $var = 2;
 
 ok( !tainted($var), 'known variable');
 
-my $key = (keys %ENV)[0];
+my $key = (grep { !/^PERL/ } keys %ENV)[0];
 
 ok( tainted($ENV{$key}),	'environment variable');
 

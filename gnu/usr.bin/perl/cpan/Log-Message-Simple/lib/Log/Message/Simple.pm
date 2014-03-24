@@ -1,13 +1,14 @@
 package Log::Message::Simple;
+use if $] > 5.017, 'deprecate';
 
 use strict;
 use Log::Message private => 0;;
 
-BEGIN { 
-    use vars qw[$VERSION]; 
-    $VERSION = 0.08;
+BEGIN {
+    use vars qw[$VERSION];
+    $VERSION = '0.10';
 }
-        
+
 
 =pod
 
@@ -45,7 +46,7 @@ Log::Message::Simple - Simplified interface to Log::Message
     local $Log::Message::Simple::MSG_FH     = \*STDERR;
     local $Log::Message::Simple::ERROR_FH   = \*STDERR;
     local $Log::Message::Simple::DEBUG_FH   = \*STDERR;
-    
+
     ### force a stacktrace on error
     local $Log::Message::Simple::STACKTRACE_ON_ERROR = 1
 
@@ -68,7 +69,7 @@ Exported by default, or using the C<:STD> tag.
 =head2 debug("message string" [,VERBOSE])
 
 Records a debug message on the stack, and prints it to C<STDOUT> (or
-actually C<$DEBUG_FH>, see the C<GLOBAL VARIABLES> section below), 
+actually C<$DEBUG_FH>, see the C<GLOBAL VARIABLES> section below),
 if the C<VERBOSE> option is true.
 The C<VERBOSE> option defaults to false.
 
@@ -83,10 +84,10 @@ The C<VERBOSE> options defaults to true.
 
 Exported by default, or using the C<:STD> tag.
 
-=cut 
+=cut
 
 {   package Log::Message::Handlers;
-    
+
     sub msg {
         my $self    = shift;
         my $verbose = shift || 0;
@@ -127,8 +128,8 @@ Exported by default, or using the C<:STD> tag.
 
         my $msg     = '['. $self->tag . '] ' . $self->message;
 
-        print $Log::Message::Simple::STACKTRACE_ON_ERROR 
-                    ? Carp::shortmess($msg) 
+        print $Log::Message::Simple::STACKTRACE_ON_ERROR
+                    ? Carp::shortmess($msg)
                     : $msg . "\n";
 
         select $old_fh;
@@ -197,23 +198,23 @@ BEGIN {
     @ISA            = 'Exporter';
     @EXPORT         = qw[error msg debug];
     @EXPORT_OK      = qw[carp cluck croak confess];
-    
+
     %EXPORT_TAGS    = (
         STD     => \@EXPORT,
         CARP    => \@EXPORT_OK,
         ALL     => [ @EXPORT, @EXPORT_OK ],
-    );        
+    );
 
     my $log         = new Log::Message;
 
     for my $func ( @EXPORT, @EXPORT_OK ) {
         no strict 'refs';
-        
+
                         ### up the carplevel for the carp emulation
                         ### functions
         *$func = sub {  local $Carp::CarpLevel += 2
                             if grep { $_ eq $func } @EXPORT_OK;
-                            
+
                         my $msg     = shift;
                         $log->store(
                                 message => $msg,
@@ -265,7 +266,7 @@ printed. This default to C<*STDOUT>.
 
 =item $STACKTRACE_ON_ERROR
 
-If this option is set to C<true>, every call to C<error()> will 
+If this option is set to C<true>, every call to C<error()> will
 generate a stacktrace using C<Carp::shortmess()>.
 Defaults to C<false>
 
@@ -280,7 +281,7 @@ BEGIN {
     $ERROR_FH               = \*STDERR;
     $MSG_FH                 = \*STDOUT;
     $DEBUG_FH               = \*STDOUT;
-    
+
     $STACKTRACE_ON_ERROR    = 0;
 }
 

@@ -1,10 +1,10 @@
 package bigint;
 use 5.006;
 
-$VERSION = '0.29';
+$VERSION = '0.34';
 use Exporter;
 @ISA		= qw( Exporter );
-@EXPORT_OK	= qw( PI e bpi bexp );
+@EXPORT_OK	= qw( PI e bpi bexp hex oct );
 @EXPORT		= qw( inf NaN );
 
 use strict;
@@ -120,37 +120,66 @@ sub in_effect
 #############################################################################
 # the following two routines are for "use bigint qw/hex oct/;":
 
-sub _hex_global
+use constant LEXICAL => $] > 5.009004;
+
+{
+    my $proto = LEXICAL ? '_' : ';$';
+    eval '
+sub hex(' . $proto . ')' . <<'.';
   {
-  my $i = $_[0];
+  my $i = @_ ? $_[0] : $_;
   $i = '0x'.$i unless $i =~ /^0x/;
   Math::BigInt->new($i);
   }
-
-sub _oct_global
+.
+    eval '
+sub oct(' . $proto . ')' . <<'.';
   {
-  my $i = $_[0];
-  return Math::BigInt->from_oct($i) if $i =~ /^0[0-7]/;
+  my $i = @_ ? $_[0] : $_;
+  # oct() should never fall back to decimal
+  return Math::BigInt->from_oct($i) if $i =~ s/^(?=0[0-9]|[1-9])/0/;
   Math::BigInt->new($i);
   }
+.
+}
 
 #############################################################################
 # the following two routines are for Perl 5.9.4 or later and are lexical
 
-sub _hex
+my ($prev_oct, $prev_hex, $overridden);
+
+if (LEXICAL) { eval <<'.' }
+sub _hex(_)
   {
-  return CORE::hex($_[0]) unless in_effect(1);
+  my $hh = (caller 0)[10];
+  return $prev_hex ? &$prev_hex($_[0]) : CORE::hex($_[0])
+    unless $$hh{bigint}||$$hh{bignum}||$$hh{bigrat};
   my $i = $_[0];
   $i = '0x'.$i unless $i =~ /^0x/;
   Math::BigInt->new($i);
   }
 
-sub _oct
+sub _oct(_)
   {
-  return CORE::oct($_[0]) unless in_effect(1);
+  my $hh = (caller 0)[10];
+  return $prev_oct ? &$prev_oct($_[0]) : CORE::oct($_[0])
+    unless $$hh{bigint}||$$hh{bignum}||$$hh{bigrat};
   my $i = $_[0];
-  return Math::BigInt->from_oct($i) if $i =~ /^0[0-7]/;
+  # oct() should never fall back to decimal
+  return Math::BigInt->from_oct($i) if $i =~ s/^(?=0[0-9]|[1-9])/0/;
   Math::BigInt->new($i);
+  }
+.
+
+sub _override
+  {
+  return if $overridden;
+  $prev_oct = *CORE::GLOBAL::oct{CODE};
+  $prev_hex = *CORE::GLOBAL::hex{CODE};
+  no warnings 'redefine';
+  *CORE::GLOBAL::oct = \&_oct;
+  *CORE::GLOBAL::hex = \&_hex;
+  $overridden++;
   }
 
 sub import 
@@ -159,12 +188,10 @@ sub import
 
   $^H{bigint} = 1;					# we are in effect
 
-  my ($hex,$oct);
   # for newer Perls always override hex() and oct() with a lexical version:
-  if ($] > 5.009004)
+  if (LEXICAL)
     {
-    $oct = \&_oct;
-    $hex = \&_hex;
+    _override();
     }
   # some defaults
   my $lib = ''; my $lib_kind = 'try';
@@ -205,17 +232,7 @@ sub import
       $trace = 1;
       splice @a, $j, 1; $j --;
       }
-    elsif ($_[$i] eq 'hex')
-      {
-      splice @a, $j, 1; $j --;
-      $hex = \&_hex_global;
-      }
-    elsif ($_[$i] eq 'oct')
-      {
-      splice @a, $j, 1; $j --;
-      $oct = \&_oct_global;
-      }
-    elsif ($_[$i] !~ /^(PI|e|bpi|bexp)\z/)
+    elsif ($_[$i] !~ /^(PI|e|bpi|bexp|hex|oct)\z/)
       {
       die ("unknown option $_[$i]");
       }
@@ -271,11 +288,6 @@ sub import
     {
     $self->export_to_level(1,$self,@a);           # export inf and NaN, e and PI
     }
-  {
-    no warnings 'redefine';
-    *CORE::GLOBAL::oct = $oct if $oct;
-    *CORE::GLOBAL::hex = $hex if $hex;
-  }
   }
 
 sub inf () { Math::BigInt::binf(); }
@@ -302,22 +314,22 @@ bigint - Transparent BigInteger support for Perl
   print 2 ** 512,"\n";			# really is what you think it is
   print inf + 42,"\n";			# inf
   print NaN * 7,"\n";			# NaN
-  print hex("0x1234567890123490"),"\n";	# Perl v5.9.4 or later
+  print hex("0x1234567890123490"),"\n";	# Perl v5.10.0 or later
 
   {
     no bigint;
     print 2 ** 256,"\n";		# a normal Perl scalar now
   }
 
-  # Note that this will be global:
+  # Import into current package:
   use bigint qw/hex oct/;
   print hex("0x1234567890123490"),"\n";
   print oct("01234567890123490"),"\n";
 
 =head1 DESCRIPTION
 
-All operators (including basic math operations) are overloaded. Integer
-constants are created as proper BigInts.
+All operators (including basic math operations) except the range operator C<..>
+are overloaded. Integer constants are created as proper BigInts.
 
 Floating point constants are truncated to integer. All parts and results of
 expressions are also truncated.
@@ -355,7 +367,7 @@ return value of subroutines:
 
     sub three_integer { use integer; return 3.2; } 
     sub three_bigint { use bigint; return 3.2; }
- 
+
     print three_integer(), " ", three_bigint(),"\n";	# prints "3.2 3"
 
 =head2 Options
@@ -397,14 +409,16 @@ Math::BigInt.
 =item hex
 
 Override the built-in hex() method with a version that can handle big
-integers. Note that under Perl v5.9.4 or ealier, this will be global
-and cannot be disabled with "no bigint;".
+integers. This overrides it by exporting it to the current package. Under
+Perl v5.10.0 and higher, this is not so necessary, as hex() is lexically
+overridden in the current scope whenever the bigint pragma is active.
 
 =item oct
 
 Override the built-in oct() method with a version that can handle big
-integers. Note that under Perl v5.9.4 or ealier, this will be global
-and cannot be disabled with "no bigint;".
+integers. This overrides it by exporting it to the current package. Under
+Perl v5.10.0 and higher, this is not so necessary, as oct() is lexically
+overridden in the current scope whenever the bigint pragma is active.
 
 =item l, lib, try or only
 
@@ -479,11 +493,45 @@ numbers or as a result of 0/0. '+inf' and '-inf' represent plus respectively
 minus infinity. You will get '+inf' when dividing a positive number by 0, and
 '-inf' when dividing any negative number by 0.
 
-=head2 Methods
+=head2 Method calls
 
 Since all numbers are now objects, you can use all functions that are part of
 the BigInt API. You can only use the bxxx() notation, and not the fxxx()
 notation, though. 
+
+But a warning is in order. When using the following to make a copy of a number,
+only a shallow copy will be made.
+
+	$x = 9; $y = $x;
+	$x = $y = 7;
+
+Using the copy or the original with overloaded math is okay, e.g. the
+following work:
+
+	$x = 9; $y = $x;
+	print $x + 1, " ", $y,"\n";	# prints 10 9
+
+but calling any method that modifies the number directly will result in
+B<both> the original and the copy being destroyed:
+
+	$x = 9; $y = $x;
+	print $x->badd(1), " ", $y,"\n";	# prints 10 10
+
+	$x = 9; $y = $x;
+	print $x->binc(1), " ", $y,"\n";	# prints 10 10
+
+	$x = 9; $y = $x;
+	print $x->bmul(2), " ", $y,"\n";	# prints 18 18
+
+Using methods that do not modify, but testthe contents works:
+
+	$x = 9; $y = $x;
+	$z = 9 if $x->is_zero();		# works fine
+
+See the documentation about the copy constructor and C<=> in overload, as
+well as the documentation in BigInt for further details.
+
+=head2 Methods
 
 =over 2
 
@@ -556,47 +604,23 @@ This method only works on Perl v5.9.4 or later.
 
 =back
 
-=head2 MATH LIBRARY
-
-Math with the numbers is done (by default) by a module called
-
-=head2 Caveat
-
-But a warning is in order. When using the following to make a copy of a number,
-only a shallow copy will be made.
-
-	$x = 9; $y = $x;
-	$x = $y = 7;
-
-Using the copy or the original with overloaded math is okay, e.g. the
-following work:
-
-	$x = 9; $y = $x;
-	print $x + 1, " ", $y,"\n";	# prints 10 9
-
-but calling any method that modifies the number directly will result in
-B<both> the original and the copy being destroyed:
-	
-	$x = 9; $y = $x;
-	print $x->badd(1), " ", $y,"\n";	# prints 10 10
-	
-        $x = 9; $y = $x;
-	print $x->binc(1), " ", $y,"\n";	# prints 10 10
-        
-	$x = 9; $y = $x;
-	print $x->bmul(2), " ", $y,"\n";	# prints 18 18
-	
-Using methods that do not modify, but testthe contents works:
-
-	$x = 9; $y = $x;
-	$z = 9 if $x->is_zero();		# works fine
-
-See the documentation about the copy constructor and C<=> in overload, as
-well as the documentation in BigInt for further details.
-
 =head1 CAVEATS
 
 =over 2
+
+=item ranges
+
+Perl does not allow overloading of ranges, so you can neither safely use
+ranges with bigint endpoints, nor is the iterator variable a bigint.
+
+	use 5.010;
+	for my $i (12..13) {
+	  for my $j (20..21) {
+	    say $i ** $j;  # produces a floating-point number,
+	                   # not a big integer
+	  }
+	}
+
 
 =item in_effect()
 
@@ -644,7 +668,7 @@ The following modules are currently used by bigint:
 
 Some cool command line examples to impress the Python crowd ;) You might want
 to compare them to the results under -Mbignum or -Mbigrat:
- 
+
 	perl -Mbigint -le 'print sqrt(33)'
 	perl -Mbigint -le 'print 2*255'
 	perl -Mbigint -le 'print 4.5+2*255'
@@ -666,7 +690,7 @@ Especially L<bigrat> as in C<perl -Mbigrat -le 'print 1/3+1/4'> and
 L<bignum> as in C<perl -Mbignum -le 'print sqrt(2)'>.
 
 L<Math::BigInt>, L<Math::BigRat> and L<Math::Big> as well
-as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
+as L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 

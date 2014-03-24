@@ -1,7 +1,7 @@
 package ExtUtils::CBuilder::Platform::Windows::BCC;
 
 use vars qw($VERSION);
-$VERSION = '0.280206';
+$VERSION = '0.280209';
 
 sub format_compiler_cmd {
   my ($self, %spec) = @_;

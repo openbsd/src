@@ -1,0 +1,2 @@
+package TriggerTest::Plugin::Error;
+

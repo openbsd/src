@@ -3,7 +3,7 @@
  * 
  * Author   : Paul Marquess 
  * Date     : 24th April 2011
- * Version  : 1.40
+ * Version  : 1.43
  *
  *    Copyright (c) 1995-2011 Paul Marquess. All rights reserved.
  *       This program is free software; you can redistribute it and/or

@@ -19,7 +19,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 95 + $extra ;
+    plan tests => 101 + $extra ;
 
     use_ok('IO::Compress::Zip', qw(:all)) ;
     use_ok('IO::Uncompress::Unzip', qw(unzip $UnzipError)) ;
@@ -329,4 +329,32 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
     #ok IO::Compress::Zip::isMethodAvailable(ZIP_CM_STORE), "ZIP_CM_STORE available";
     
     ok ! IO::Compress::Zip::isMethodAvailable(999), "999 not available";    
+}
+
+{
+    title "Memember & Comment 0";
+
+    my $lex = new LexFile my $file1;
+
+    my $content = 'hello' ;
+                 
+
+    my $zip = new IO::Compress::Zip $file1,
+                    Name => "0", Comment => "0" ;
+    isa_ok $zip, "IO::Compress::Zip";
+
+    is $zip->write($content), length($content), "write"; 
+
+    ok $zip->close(), "closed";                    
+
+
+
+    my $u = new IO::Uncompress::Unzip $file1, Append => 1, @_
+        or die "Cannot open $file1: $UnzipError";
+
+    isa_ok $u, "IO::Uncompress::Unzip";
+
+    my $name = $u->getHeaderInfo()->{Name};
+    
+    is $u->getHeaderInfo()->{Name}, "0", "Name is '0'";
 }

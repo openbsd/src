@@ -3,7 +3,7 @@
  * Created : 22nd January 1996
  * Version : 2.000
  *
- *   Copyright (c) 1995-2010 Paul Marquess. All rights reserved.
+ *   Copyright (c) 1995-2013 Paul Marquess. All rights reserved.
  *   This program is free software; you can redistribute it and/or
  *   modify it under the same terms as Perl itself.
  *
@@ -26,7 +26,7 @@
 */
 
 
-
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -432,7 +432,7 @@ DispStream(s, message)
 
 #define EnDis(f) (s->flags & f ? "Enabled" : "Disabled")
 
-    printf("DispStream 0x%p", s) ;
+    printf("DispStream %p", s) ;
     if (message)
         printf("- %s \n", message) ;
     printf("\n") ;
@@ -441,22 +441,23 @@ DispStream(s, message)
         printf("    stream pointer is NULL\n");
     }
     else     {
-        printf("    stream           0x%p\n", &(s->stream));
-        printf("           zalloc    0x%p\n", s->stream.zalloc);
-        printf("           zfree     0x%p\n", s->stream.zfree);
-        printf("           opaque    0x%p\n", s->stream.opaque);
+        printf("    stream           %p\n", &(s->stream));
+        printf("           zalloc    %p\n", s->stream.zalloc);
+        printf("           zfree     %p\n", s->stream.zfree);
+        printf("           opaque    %p\n", s->stream.opaque);
+        printf("           state     %p\n", s->stream.state);
         if (s->stream.msg)
             printf("           msg       %s\n", s->stream.msg);
         else
             printf("           msg       \n");
-        printf("           next_in   0x%p", s->stream.next_in);
+        printf("           next_in   %p", s->stream.next_in);
         if (s->stream.next_in){
             printf(" =>");
             DispHex(s->stream.next_in, 4);
         }
         printf("\n");
 
-        printf("           next_out  0x%p", s->stream.next_out);
+        printf("           next_out  %p", s->stream.next_out);
         if (s->stream.next_out){
             printf(" =>");
             DispHex(s->stream.next_out, 4);
@@ -469,7 +470,7 @@ DispStream(s, message)
         printf("           total_out %ld\n",  s->stream.total_out);
         printf("           adler     %ld\n",  s->stream.adler    );
         printf("    bufsize          %ld\n",  s->bufsize);
-        printf("    dictionary       0x%p\n", s->dictionary);
+        printf("    dictionary       %p\n",   s->dictionary);
         printf("    dict_adler       0x%ld\n",s->dict_adler);
         printf("    zip_mode         %d\n",   s->zip_mode);
         printf("    crc32            0x%x\n", (unsigned)s->crc32);
@@ -483,7 +484,7 @@ DispStream(s, message)
 
 
 #ifdef MAGIC_APPEND
-        printf("    window           0x%p\n", s->window);
+        printf("    window           %p\n", s->window);
 #endif
         printf("\n");
 
@@ -499,7 +500,8 @@ voidpf my_zcalloc (voidpf opaque, unsigned items, unsigned size)
 
 void my_zcfree (voidpf opaque, voidpf ptr)
 {
-    return safefree(ptr);
+    safefree(ptr);
+    return; 
 }
 
 #endif
@@ -574,9 +576,8 @@ char * string;
             croak("%s: buffer parameter is a reference to a reference", string) ;
     }
 
-    if (!SvOK(sv)) { 
-        sv = newSVpv("", 0);
-    }
+    if (!SvOK(sv))
+        sv = sv_2mortal(newSVpv("", 0));
 
     return sv ;
 }
@@ -592,6 +593,7 @@ char * string ;
 {
     dTHX;
     bool wipe = 0 ;
+    STRLEN na;
     
     SvGETMAGIC(sv);
     wipe = ! SvOK(sv) ;
@@ -619,10 +621,9 @@ char * string ;
     SvUPGRADE(sv, SVt_PV);
 
     if (wipe)
-        SvCUR_set(sv, 0);
-    
-    SvOOK_off(sv);
-    SvPOK_only(sv);
+        sv_setpv(sv, "") ;
+    else
+        (void)SvPVbyte_force(sv, na) ;
 
     return sv ;
 }
@@ -791,18 +792,21 @@ _deflateInit(flags,level, method, windowBits, memLevel, strategy, bufsize, dicti
         err = deflateInit2(&(s->stream), level, 
 			   method, windowBits, memLevel, strategy);
 
-        if (trace) 
-            warn(" _deflateInit2 returned %d\n", err);
+        if (trace) {
+            warn(" _deflateInit2 returned %d (state %p)\n", err, s);
+            DispStream(s, "INIT");
+        }
 
 	/* Check if a dictionary has been specified */
-
-	if (err == Z_OK && SvCUR(dictionary)) {
+	SvGETMAGIC(dictionary);
+	if (err == Z_OK && SvPOK(dictionary) && SvCUR(dictionary)) {
 #ifdef UTF8_AVAILABLE    
-        if (DO_UTF8(dictionary) && !sv_utf8_downgrade(dictionary, 1))
-             croak("Wide character in Compress::Raw::Zlib::Deflate::new dicrionary parameter");
+            if (DO_UTF8(dictionary) && !sv_utf8_downgrade(dictionary, 1))
+                croak("Wide character in Compress::Raw::Zlib::Deflate::new dicrionary parameter");
 #endif         
-	    err = deflateSetDictionary(&(s->stream), (const Bytef*) SvPVbyte_nolen(dictionary), 
-					SvCUR(dictionary)) ;
+	    err = deflateSetDictionary(&(s->stream), (const Bytef*) SvPVX(dictionary), SvCUR(dictionary)) ;
+        if (trace) 
+            warn("deflateSetDictionary returned %d\n", err);
 	    s->dict_adler = s->stream.adler ;
 	}
 
@@ -869,7 +873,7 @@ _inflateInit(flags, windowBits, bufsize, dictionary)
             }
         }
         else
-#endif   
+#endif
             /* Dictionary specified - take a copy for use in inflate */
 	    s->dictionary = newSVsv(dictionary) ;
 	}
@@ -941,7 +945,7 @@ deflate (s, buf, output)
     if (DO_UTF8(buf) && !sv_utf8_downgrade(buf, 1))
          croak("Wide character in Compress::Raw::Zlib::Deflate::deflate input parameter");
 #endif         
-    s->stream.next_in = (Bytef*)SvPVbyte_nolen(buf) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
     s->stream.avail_in = SvCUR(buf) ;
     
     if (s->flags & FLAG_CRC32)
@@ -962,7 +966,7 @@ deflate (s, buf, output)
         /* sv_setpvn(output, "", 0); */
     }
     prefix = cur_length =  SvCUR(output) ;
-    s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length;
+    s->stream.next_out = (Bytef*) SvPVX(output) + cur_length;
     increment =  SvLEN(output) -  cur_length;
     s->stream.avail_out =  increment;
 #ifdef SETP_BYTE
@@ -993,19 +997,33 @@ deflate (s, buf, output)
 	s->deflateParams_out_length = 0;
     }
 #endif
+    RETVAL = Z_OK ;
     while (s->stream.avail_in != 0) {
 
         if (s->stream.avail_out == 0) {
 	    /* out of space in the output buffer so make it bigger */
-            Sv_Grow(output, SvLEN(output) + bufinc) ;
+            s->stream.next_out = (Bytef*) Sv_Grow(output, SvLEN(output) + bufinc) ;
             cur_length += increment ;
-            s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
+            s->stream.next_out += cur_length ;
             increment = bufinc ;
             s->stream.avail_out = increment;
             bufinc *= 2 ;
         }
 
+        if (trace) {
+          printf("DEFLATE Avail In %d, Out %d\n", s->stream.avail_in, s->stream.avail_out); 
+          DispStream(s, "BEFORE");
+          /* Perl_sv_dump(output); */
+        }
+
         RETVAL = deflate(&(s->stream), Z_NO_FLUSH);
+    
+        if (trace) {
+            printf("DEFLATE returned %d %s, avail in %d, out %d\n", RETVAL,
+           GetErrorString(RETVAL), s->stream.avail_in, s->stream.avail_out); 
+            DispStream(s, "AFTER");
+        }
+
         if (RETVAL != Z_OK) 
             break;
     }
@@ -1027,6 +1045,8 @@ void
 DESTROY(s)
     Compress::Raw::Zlib::deflateStream	s
   CODE:
+    if (trace)
+        printf("Compress::Raw::Zlib::deflateStream::DESTROY %p\n", s);
     deflateEnd(&s->stream) ;
     if (s->dictionary)
 	SvREFCNT_dec(s->dictionary) ;
@@ -1063,7 +1083,7 @@ flush(s, output, f=Z_FINISH)
         /* sv_setpvn(output, "", 0); */
     }
     prefix = cur_length =  SvCUR(output) ;
-    s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length;
+    s->stream.next_out = (Bytef*) SvPVX(output) + cur_length;
     increment =  SvLEN(output) -  cur_length;
     s->stream.avail_out =  increment;
 #ifdef SETP_BYTE
@@ -1098,9 +1118,9 @@ flush(s, output, f=Z_FINISH)
     for (;;) {
         if (s->stream.avail_out == 0) {        
             /* consumed all the available output, so extend it */
-            Sv_Grow(output, SvLEN(output) + bufinc) ;
+            s->stream.next_out = (Bytef*) Sv_Grow(output, SvLEN(output) + bufinc) ;
             cur_length += increment ;
-            s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
+            s->stream.next_out += cur_length ;
             increment = bufinc ;
             s->stream.avail_out = increment;
             bufinc *= 2 ;
@@ -1108,8 +1128,20 @@ flush(s, output, f=Z_FINISH)
         
         availableout = s->stream.avail_out ;
         
+        if (trace) {
+          printf("flush (%d) DEFLATE Avail In %d, Out %d\n", f, s->stream.avail_in, s->stream.avail_out); 
+          DispStream(s, "BEFORE");
+          /* Perl_sv_dump(output); */
+        }
+
         RETVAL = deflate(&(s->stream), f);
     
+        if (trace) {
+            printf("flush DEFLATE returned %d %s, avail in %d, out %d\n", RETVAL,
+            GetErrorString(RETVAL), s->stream.avail_in, s->stream.avail_out); 
+            DispStream(s, "AFTER");
+        }
+
         /* Ignore the second of two consecutive flushes: */
         if (availableout == s->stream.avail_out && RETVAL == Z_BUF_ERROR) 
             RETVAL = Z_OK; 
@@ -1323,26 +1355,29 @@ inflate (s, buf, output, eof=FALSE)
     uInt	cur_length = 0;
     uInt	prefix_length = 0;
     int	    increment = 0;
-    STRLEN  stmp    = NO_INIT
-    uLong     bufinc = NO_INIT
+    uLong   bufinc = NO_INIT
+    STRLEN  na = NO_INIT ;
   PREINIT:
 #ifdef UTF8_AVAILABLE    
     bool	out_utf8  = FALSE;
 #endif    
-  CODE:
+  CODE: 
     bufinc = s->bufsize;
     /* If the buffer is a reference, dereference it */
     buf = deRef(buf, "inflate") ;
 
-    if (s->flags & FLAG_CONSUME_INPUT && SvREADONLY(buf))
-        croak("Compress::Raw::Zlib::Inflate::inflate input parameter cannot be read-only when ConsumeInput is specified");
+    if (s->flags & FLAG_CONSUME_INPUT) {
+        if (SvREADONLY(buf))
+            croak("Compress::Raw::Zlib::Inflate::inflate input parameter cannot be read-only when ConsumeInput is specified");
+        SvPV_force(buf, na);
+    }
 #ifdef UTF8_AVAILABLE    
     if (DO_UTF8(buf) && !sv_utf8_downgrade(buf, 1))
          croak("Wide character in Compress::Raw::Zlib::Inflate::inflate input parameter");
 #endif         
     
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPVbyte_force(buf, stmp) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
     s->stream.avail_in = SvCUR(buf) ;
 	
     /* and retrieve the output buffer */
@@ -1374,7 +1409,7 @@ inflate (s, buf, output, eof=FALSE)
         */
         if (SvLEN(output) > cur_length + 1)
         {
-            s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length;
+            s->stream.next_out = (Bytef*) SvPV_nomg_nolen(output) + cur_length;
             increment = SvLEN(output) -  cur_length - 1;
             s->stream.avail_out = increment;
         }
@@ -1388,9 +1423,9 @@ inflate (s, buf, output, eof=FALSE)
     while (RETVAL == Z_OK) {
         if (s->stream.avail_out == 0) {
 	    /* out of space in the output buffer so make it bigger */
-            Sv_Grow(output, SvLEN(output) + bufinc +1) ;
+            s->stream.next_out = (Bytef*) Sv_Grow(output, SvLEN(output) + bufinc +1) ;
             cur_length += increment ;
-            s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
+            s->stream.next_out += cur_length ;
             increment = bufinc ;
             s->stream.avail_out = increment;
             bufinc *= 2 ; 
@@ -1408,7 +1443,7 @@ Perl_sv_dump(output); */
         if (RETVAL == Z_NEED_DICT && s->dictionary) {
             s->dict_adler = s->stream.adler ;
             RETVAL = inflateSetDictionary(&(s->stream), 
-            (const Bytef*)SvPVbyte_nolen(s->dictionary),
+            (const Bytef*)SvPVX(s->dictionary),
             SvCUR(s->dictionary));
             if (RETVAL == Z_OK)
                 continue;
@@ -1439,9 +1474,9 @@ Perl_sv_dump(output); */
         s->stream.avail_in = 1;
         if (s->stream.avail_out == 0) {
 	    /* out of space in the output buffer so make it bigger */
-            Sv_Grow(output, SvLEN(output) + bufinc) ;
+            s->stream.next_out = Sv_Grow(output, SvLEN(output) + bufinc) ;
             cur_length += increment ;
-            s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
+            s->stream.next_out += cur_length ;
             increment = bufinc ;
             s->stream.avail_out = increment;
             bufinc *= 2 ;
@@ -1471,12 +1506,12 @@ Perl_sv_dump(output); */
 
         if (s->flags & FLAG_CRC32 )
             s->crc32 = crc32(s->crc32, 
-				(const Bytef*)SvPVbyte_nolen(output)+prefix_length, 
+				(const Bytef*)SvPVX(output)+prefix_length, 
             			SvCUR(output)-prefix_length) ;
 
         if (s->flags & FLAG_ADLER32) 
             s->adler32 = adler32(s->adler32, 
-				(const Bytef*)SvPVbyte_nolen(output)+prefix_length, 
+				(const Bytef*)SvPVX(output)+prefix_length, 
             			SvCUR(output)-prefix_length) ;
 
 	/* fix the input buffer */
@@ -1484,7 +1519,7 @@ Perl_sv_dump(output); */
 	    in = s->stream.avail_in ;
 	    SvCUR_set(buf, in) ;
 	    if (in)
-	        Move(s->stream.next_in, SvPVbyte_nolen(buf), in, char) ;	
+	        Move(s->stream.next_in, SvPVX(buf), in, char) ;	
             *SvEND(buf) = '\0';
             SvSETMAGIC(buf);
 	}
@@ -1532,7 +1567,7 @@ inflateSync (s, buf)
 #endif         
     
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPVbyte_nolen(buf) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
     s->stream.avail_in = SvCUR(buf) ;
 	
     /* inflateSync doesn't create any output */
@@ -1547,7 +1582,7 @@ inflateSync (s, buf)
 	unsigned in = s->stream.avail_in ;
  	SvCUR_set(buf, in) ;
  	if (in)
-     	    Move(s->stream.next_in, SvPVbyte_nolen(buf), in, char) ;	
+     	    Move(s->stream.next_in, SvPVX(buf), in, char) ;	
         *SvEND(buf) = '\0';
         SvSETMAGIC(buf);
     }
@@ -1693,7 +1728,6 @@ scan(s, buf, out=NULL, eof=FALSE)
     bool	eof
     bool	eof_mode = FALSE;
     int    start_len = NO_INIT
-    STRLEN stmp      = NO_INIT
   CODE:
     /* If the input buffer is a reference, dereference it */
 #ifndef MAGIC_APPEND
@@ -1706,7 +1740,7 @@ scan(s, buf, out=NULL, eof=FALSE)
         croak("Wide character in Compress::Raw::Zlib::InflateScan::scan input parameter");
 #endif         
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPVbyte_force(buf, stmp) ;
+    s->stream.next_in = (Bytef*)SvPV_nomg_nolen(buf) ;
     s->stream.avail_in = SvCUR(buf) ;
     start_len = s->stream.avail_in ;
     s->bytesInflated = 0 ; 
@@ -1791,7 +1825,7 @@ scan(s, buf, out=NULL, eof=FALSE)
             unsigned in = s->stream.avail_in ;
             SvCUR_set(buf, in) ;
             if (in)
-                Move(s->stream.next_in, SvPVbyte_nolen(buf), in, char) ;	
+                Move(s->stream.next_in, SvPVX(buf), in, char) ;	
                 *SvEND(buf) = '\0';
                 SvSETMAGIC(buf);
         }

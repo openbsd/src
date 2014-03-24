@@ -171,7 +171,7 @@ use strict;
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 
-$VERSION = '3.39_02';
+$VERSION = '3.40';
 my $xs_version = $VERSION;
 $VERSION =~ tr/_//;
 
@@ -624,8 +624,8 @@ sub fast_abs_path {
 
     # Detaint else we'll explode in taint mode.  This is safe because
     # we're not doing anything dangerous with it.
-    ($path) = $path =~ /(.*)/;
-    ($cwd)  = $cwd  =~ /(.*)/;
+    ($path) = $path =~ /(.*)/s;
+    ($cwd)  = $cwd  =~ /(.*)/s;
 
     unless (-e $path) {
  	_croak("$path: No such file or directory");

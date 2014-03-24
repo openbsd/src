@@ -1,16 +1,16 @@
 package Object::Accessor;
+use if $] > 5.017, 'deprecate';
 
 use strict;
 use Carp            qw[carp croak];
 use vars            qw[$FATAL $DEBUG $AUTOLOAD $VERSION];
 use Params::Check   qw[allow];
-use Data::Dumper;
 
 ### some objects might have overload enabled, we'll need to
 ### disable string overloading for callbacks
 require overload;
 
-$VERSION    = '0.42';
+$VERSION    = '0.46';
 $FATAL      = 0;
 $DEBUG      = 0;
 
@@ -430,19 +430,20 @@ sub can {
     my($self, $method) = @_;
 
     ### it's one of our regular methods
-    if( $self->UNIVERSAL::can($method) ) {
-        __PACKAGE__->___debug( "Can '$method' -- provided by package" );
-        return $self->UNIVERSAL::can($method);
+    my $code = $self->UNIVERSAL::can($method);
+    if( $code ) {
+        carp( "Can '$method' -- provided by package" ) if $DEBUG;
+        return $code;
     }
 
     ### it's an accessor we provide;
     if( UNIVERSAL::isa( $self, 'HASH' ) and exists $self->{$method} ) {
-        __PACKAGE__->___debug( "Can '$method' -- provided by object" );
+        carp( "Can '$method' -- provided by object" ) if $DEBUG;
         return sub { $self->$method(@_); }
     }
 
     ### we don't support it
-    __PACKAGE__->___debug( "Cannot '$method'" );
+    carp( "Cannot '$method'" ) if $DEBUG;
     return;
 }
 
@@ -611,7 +612,6 @@ sub ___debug {
 
     my $self = shift;
     my $msg  = shift;
-    my $lvl  = shift || 0;
 
     local $Carp::CarpLevel += 1;
 
@@ -741,7 +741,6 @@ See C<perldoc perlsub> for details.
 ### standard tie class for bound attributes
 {   package Object::Accessor::TIE;
     use Tie::Scalar;
-    use Data::Dumper;
     use base 'Tie::StdScalar';
 
     my %local = ();

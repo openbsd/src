@@ -45,7 +45,6 @@ use constant SRC_DIR => 'tarballs';
 use constant UNTAR_DIR => 'untarred';
 
 use constant DIFF_CMD => 'diff';
-use constant WGET_CMD => 'wget';
 
 sub usage {
     print STDERR "\n@_\n\n" if @_;
@@ -59,7 +58,6 @@ Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 
 -d/--diff     Display file differences using diff(1), rather than just
               listing which files have changed.
-              The diff(1) command is assumed to be in your PATH.
 
 --diffopts    Options to pass to the diff command. Defaults to '-u'.
 
@@ -88,6 +86,10 @@ those in the perl source tree.
 
 Must be run from the root of the perl source tree.
 Module names must match the keys of %Modules in Maintainers.pl.
+
+The diff(1) command is assumed to be in your PATH and is used to diff files
+regardless of whether the --diff option has been chosen to display any file
+differences.
 HERE
     exit(1);
 }
@@ -120,6 +122,8 @@ sub run {
         'x|crosscheck'  => \$do_crosscheck,
     ) or usage;
 
+    @wanted_upstreams = map { $_ eq 'undef' ? undef : $_ } @wanted_upstreams;
+
     my @modules;
 
     usage("Cannot mix -a with module list") if $scan_all && @ARGV;
@@ -151,7 +155,9 @@ sub run {
     }
 
     if ( defined $cache_dir ) {
-        die "ERROR: no such directory: '$cache_dir'\n" unless -d $cache_dir;
+        die "ERROR: not a directory: '$cache_dir'\n"
+            if !-d $cache_dir && -e $cache_dir;
+        File::Path::mkpath($cache_dir);
     }
     else {
         $cache_dir = File::Temp::tempdir( CLEANUP => 1 );
@@ -165,7 +171,10 @@ sub run {
     ) or die "ERROR: not a CPAN mirror '$mirror_url'\n";
 
     if ($do_crosscheck) {
-        do_crosscheck( $outfh, $cache_dir, $mirror_url, $force, \@modules );
+        do_crosscheck(
+            $outfh, $cache_dir, $mirror_url,
+            $force, \@modules,  \@wanted_upstreams
+        );
     }
     else {
         do_compare(
@@ -194,7 +203,7 @@ sub cpan_url_distribution {
     my ( $mirror_url, $distribution ) = @_;
     $distribution =~ /^([A-Z])([A-Z])/
         or die "ERROR: invalid DISTRIBUTION name (not /^[A-Z]{2}/): $distribution\n";
-    my $path = "modules/by-authors/id/$1/$1$2/$distribution";
+    my $path = "authors/id/$1/$1$2/$distribution";
     return cpan_url( $mirror_url, $path );
 }
 
@@ -217,6 +226,7 @@ sub do_compare {
     }
 
     my %ignorable = map { ( $_ => 1 ) } @Maintainers::IGNORABLE;
+    my %wanted_upstream = map { ( $_ => 1 ) } @$wanted_upstreams;
 
     my %seen_dist;
     for my $module (@$modules) {
@@ -237,13 +247,13 @@ sub do_compare {
             warn "WARNING: duplicate entry for $dist in $module\n";
         }
 
-        my $upstream = $m->{UPSTREAM} || 'UNKNOWN';
-        next if @$wanted_upstreams and !( $upstream ~~ $wanted_upstreams );
+        my $upstream = $m->{UPSTREAM};
+        next if @$wanted_upstreams and !$wanted_upstream{$upstream};
 
         print $outfh "\n$module - "
           . $Maintainers::Modules{$module}->{DISTRIBUTION} . "\n";
         print $outfh "  upstream is: "
-          . ( $m->{UPSTREAM} || 'UNKNOWN!' ) . "\n";
+          . ( $m->{UPSTREAM} // 'UNKNOWN!' ) . "\n";
 
         my $cpan_dir;
         eval {
@@ -419,7 +429,10 @@ sub distro_base {
 # Maintainers.pl
 
 sub do_crosscheck {
-    my ( $outfh, $cache_dir, $mirror_url, $force, $modules ) = @_;
+    my (
+        $outfh, $cache_dir, $mirror_url,
+        $force, $modules,   $wanted_upstreams,
+    ) = @_;
 
     my $file         = '02packages.details.txt';
     my $download_dir = $cache_dir || File::Temp::tempdir( CLEANUP => 1 );
@@ -465,6 +478,7 @@ sub do_crosscheck {
         $distros{ distro_base($short_distro) }{$distro} = 1;
     }
 
+    my %wanted_upstream = map { ( $_ => 1 ) } @$wanted_upstreams;
     for my $module (@$modules) {
         my $m = $Maintainers::Modules{$module}
           or die "ERROR: No such module in Maintainers.pl: '$module'\n";
@@ -481,6 +495,9 @@ sub do_crosscheck {
 
         my $pdist = $m->{DISTRIBUTION};
         die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $pdist;
+
+        my $upstream = $m->{UPSTREAM};
+        next if @$wanted_upstreams and !$wanted_upstream{$upstream};
 
         my $cdist = $modules{$module};
         ( my $short_pdist = $pdist ) =~ s{^.*/}{};
@@ -563,8 +580,9 @@ sub get_map {
 sub cpan_to_perl {
     my ( $excluded, $map, $customized, $cpan_file ) = @_;
 
+    my %customized = map { ( $_ => 1 ) } @$customized;
     for my $exclude (@$excluded) {
-        next if $exclude ~~ $customized;
+        next if $customized{$exclude};
 
         # may be a simple string to match exactly, or a pattern
         if ( ref $exclude ) {
@@ -625,7 +643,7 @@ sub get_distribution {
 
     if ( -f $download_file and !-s $download_file ) {
 
-        # wget can leave a zero-length file on failed download
+        # failed download might leave a zero-length file
         unlink $download_file;
     }
 
@@ -642,6 +660,7 @@ sub get_distribution {
     my $path = catfile( $untar_dir, $filename );
 
     $path =~ s/\.tar\.gz$//
+      or $path =~ s/\.tgz$//
       or $path =~ s/\.zip$//
       or die
       "ERROR: downloaded file does not have a recognised suffix: $path\n";

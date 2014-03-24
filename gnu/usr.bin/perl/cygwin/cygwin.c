@@ -129,7 +129,7 @@ do_spawn (char *cmd)
 	    return do_spawnvp("sh",command);
 	}
 
-    Newx (PL_Argv,(s-cmd)/2+2,char*);
+    Newx (PL_Argv, (s-cmd)/2+2, const char*);
     PL_Cmd=savepvn (cmd,s-cmd);
     a=PL_Argv;
     for (s=PL_Cmd; *s;) {
@@ -254,7 +254,7 @@ XS(XS_Cygwin_win_to_posix_path)
     dXSARGS;
     int absolute_flag = 0;
     STRLEN len;
-    int err;
+    int err = 0;
     char *src_path;
     char *posix_path;
     int isutf8 = 0;
@@ -343,7 +343,7 @@ XS(XS_Cygwin_posix_to_win_path)
     dXSARGS;
     int absolute_flag = 0;
     STRLEN len;
-    int err;
+    int err = 0;
     char *src_path, *win_path;
     int isutf8 = 0;
 

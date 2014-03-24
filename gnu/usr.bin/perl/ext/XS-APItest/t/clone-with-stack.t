@@ -17,7 +17,7 @@ if (not $Config{'useithreads'}) {
     skip_all("clone_with_stack requires threads");
 }
 
-plan(3);
+plan(4);
 
 fresh_perl_is( <<'----', <<'====', undef, "minimal clone_with_stack" );
 use XS::APItest;
@@ -48,6 +48,20 @@ BEGIN {
 print "ok\n";
 ----
 ok
+====
+
+}
+
+{
+    fresh_perl_is( <<'----', <<'====', undef, "clone stack" );
+use XS::APItest;
+sub f {
+    clone_with_stack();
+    0..4;
+}
+print 'X-', 'Y-', join(':', f()), "-Z\n";
+----
+X-Y-0:1:2:3:4-Z
 ====
 
 }

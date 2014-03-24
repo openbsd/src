@@ -390,18 +390,14 @@ checkOptree ( name	=> 'my ($a,$b)=()',
 # 1  <0> enter 
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
-# 4  <0> pushmark sRM*/128
-# 5  <0> padsv[$a:1,2] lRM*/LVINTRO
-# 6  <0> padsv[$b:1,2] lRM*/LVINTRO
-# 7  <2> aassign[t3] vKS
-# 8  <@> leave[1 ref] vKP/REFC
+# 4  <0> padrange[$a:1,2; $b:1,2] lRM/LVINTRO,2
+# 5  <2> aassign[t3] vKS
+# 6  <@> leave[1 ref] vKP/REFC
 EOT_EOT
 # 1  <0> enter 
 # 2  <;> nextstate(main 1 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
-# 4  <0> pushmark sRM*/128
-# 5  <0> padsv[$a:1,2] lRM*/LVINTRO
-# 6  <0> padsv[$b:1,2] lRM*/LVINTRO
-# 7  <2> aassign[t3] vKS
-# 8  <@> leave[1 ref] vKP/REFC
+# 4  <0> padrange[$a:1,2; $b:1,2] lRM/LVINTRO,2
+# 5  <2> aassign[t3] vKS
+# 6  <@> leave[1 ref] vKP/REFC
 EONT_EONT

@@ -8,6 +8,7 @@ BEGIN {
 use strict;
 use warnings;
 no warnings 'uninitialized';
+no warnings 'experimental::smartmatch';
 
 use Tie::Array;
 use Tie::Hash;

@@ -685,7 +685,7 @@ Returns 0 on end-of-file, 1 if not end-of-file, -1 on error.
 
 Return error indicator. C<PerlIOBase_error()> is normally sufficient.
 
-Returns 1 if there is an error (usually when C<PERLIO_F_ERROR> is set,
+Returns 1 if there is an error (usually when C<PERLIO_F_ERROR> is set),
 0 otherwise.
 
 =item  Clearerr

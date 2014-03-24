@@ -1,0 +1,130 @@
+__END__
+# NAME Unterminated here-doc in string eval
+eval "<<foo"; die $@
+EXPECT
+Can't find string terminator "foo" anywhere before EOF at (eval 1) line 1.
+########
+# NAME Unterminated here-doc in s/// string eval
+eval "s//<<foo/e"; die $@
+EXPECT
+Can't find string terminator "foo" anywhere before EOF at (eval 1) line 1.
+########
+# NAME Missing name in "my sub"
+use feature 'lexical_subs'; my sub;
+EXPECT
+The lexical_subs feature is experimental at - line 1.
+Missing name in "my sub" at - line 1.
+########
+# NAME Missing name in "our sub"
+use feature 'lexical_subs'; our sub;
+EXPECT
+The lexical_subs feature is experimental at - line 1.
+Missing name in "our sub" at - line 1.
+########
+# NAME Missing name in "state sub"
+use 5.01; use feature 'lexical_subs';
+state sub;
+EXPECT
+The lexical_subs feature is experimental at - line 2.
+Missing name in "state sub" at - line 2.
+########
+# NAME Integer constant overloading returning undef
+use overload;
+BEGIN { overload::constant integer => sub {}; undef *^H }
+1
+EXPECT
+Constant(1) unknown at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME Float constant overloading returning undef
+use overload;
+BEGIN { overload::constant float => sub {}; undef *^H }
+1.1
+EXPECT
+Constant(1.1) unknown at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME Binary constant overloading returning undef
+use overload;
+BEGIN { overload::constant binary => sub {}; undef *^H }
+0x1
+EXPECT
+Constant(0x1) unknown at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME String constant overloading returning undef
+use overload;
+BEGIN { overload::constant q => sub {}; undef *^H }
+'1', "1$_", tr"a"", s""a"
+EXPECT
+Constant(q) unknown at - line 3, near "'1'"
+Constant(qq) unknown at - line 3, within string
+Constant(tr) unknown at - line 3, within string
+Constant(s) unknown at - line 3, within string
+Execution of - aborted due to compilation errors.
+########
+# NAME Regexp constant overloading when *^H is undefined
+use overload;
+BEGIN { overload::constant qr => sub {}; undef *^H }
+/a/, m'a'
+EXPECT
+Constant(qq) unknown at - line 3, within pattern
+Constant(q) unknown at - line 3, within pattern
+Execution of - aborted due to compilation errors.
+########
+# NAME \N{...} when charnames fails to load but without an error
+# SKIP ? exists $ENV{PERL_UNICODE} ? "Unreliable under some PERL_UNICODE settings" : 0
+BEGIN { ++$_ for @INC{"charnames.pm","_charnames.pm"} }
+"\N{a}"
+EXPECT
+Constant(\N{a}) unknown at - line 2, within string
+Execution of - aborted due to compilation errors.
+########
+# NAME Integer constant overloading returning undef
+use overload;
+BEGIN { overload::constant integer => sub {} }
+1
+EXPECT
+Constant(1): Call to &{$^H{integer}} did not return a defined value at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME Float constant overloading returning undef
+use overload;
+BEGIN { overload::constant float => sub {} }
+1.1
+EXPECT
+Constant(1.1): Call to &{$^H{float}} did not return a defined value at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME Binary constant overloading returning undef
+use overload;
+BEGIN { overload::constant binary => sub {} }
+0x1
+EXPECT
+Constant(0x1): Call to &{$^H{binary}} did not return a defined value at - line 3, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME String constant overloading returning undef
+use overload;
+BEGIN { overload::constant q => sub {} }
+'1', "1$_", tr"a"", s""a"
+EXPECT
+Constant(q): Call to &{$^H{q}} did not return a defined value at - line 3, near "'1'"
+Constant(qq): Call to &{$^H{q}} did not return a defined value at - line 3, within string
+Constant(tr): Call to &{$^H{q}} did not return a defined value at - line 3, within string
+Constant(s): Call to &{$^H{q}} did not return a defined value at - line 3, within string
+Execution of - aborted due to compilation errors.
+########
+# NAME Regexp constant overloading returning undef
+use overload;
+BEGIN { overload::constant qr => sub {} }
+/a/, m'a'
+EXPECT
+Constant(qq): Call to &{$^H{qr}} did not return a defined value at - line 3, within pattern
+Constant(q): Call to &{$^H{qr}} did not return a defined value at - line 3, within pattern
+Execution of - aborted due to compilation errors.
+########
+# NAME Unterminated delimiter for here document
+<<"foo
+EXPECT
+Unterminated delimiter for here document at - line 1.

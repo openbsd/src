@@ -6,6 +6,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    require Config; import Config;
     skip_all_if_miniperl("no dynamic loading on miniperl, no Encode nor POSIX");
 }
 
@@ -74,6 +75,9 @@ sub numerically {
     return $a <=> $b
 }
 
+my $list_all_tests = $ENV{PERL_DEBUG_FULL_TEST} || $DEBUG;
+$| = 1 if $list_all_tests;
+
 # Significant time is saved by not outputting each test but grouping the
 # output into subtests
 my $okays;          # Number of ok's in current subtest
@@ -86,7 +90,7 @@ sub run_test($$$) {
     $debug = "" unless $DEBUG;
     my $res = eval $test;
 
-    if (!$res || $ENV{PERL_DEBUG_FULL_TEST}) {
+    if (!$res || $list_all_tests) {
       # Failed or debug; output the result
       $count++;
       ok($res, "$test; $debug");
@@ -235,28 +239,61 @@ sub add_test($@) {
     push @{$tests{$ord_smallest_from}}, map { ord $_ } @from;
 }
 
-# Read the Unicode rules file and construct inverse mappings from it
+# Get the Unicode rules and construct inverse mappings from them
 
+use Unicode::UCD;
 my $file="../lib/unicore/CaseFolding.txt";
-open my $fh, "<", $file or die "Failed to read '$file': $!";
 
-while (<$fh>) {
-    chomp;
+# Use the Unicode data file if we are on an ASCII platform (which its data is
+# for), and it is in the modern format (starting in Unicode 3.1.0) and it is
+# available.  This avoids being affected by potential bugs introduced by other
+# layers of Perl
+if (ord('A') == 65
+    && pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v3.1.0
+    && open my $fh, "<", $file)
+{
+    while (<$fh>) {
+        chomp;
 
-    # Lines look like (though without the initial '#')
-    #0130; F; 0069 0307; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+        # Lines look like (though without the initial '#')
+        #0130; F; 0069 0307; # LATIN CAPITAL LETTER I WITH DOT ABOVE
 
-    # Get rid of comments, ignore blank or comment-only lines
-    my $line = $_ =~ s/ (?: \s* \# .* )? $ //rx;
-    next unless length $line;
-    my ($hex_from, $fold_type, @hex_folded) = split /[\s;]+/, $line;
+        # Get rid of comments, ignore blank or comment-only lines
+        my $line = $_ =~ s/ (?: \s* \# .* )? $ //rx;
+        next unless length $line;
+        my ($hex_from, $fold_type, @hex_folded) = split /[\s;]+/, $line;
 
-    next if $fold_type eq 'T';  # Perl doesn't do Turkish folding
-    next if $fold_type eq 'S';  # If Unicode's tables are correct, the F
-                                # should be a superset of S
+        next if $fold_type =~ / ^ [IT] $/x; # Perl doesn't do Turkish folding
+        next if $fold_type eq 'S';  # If Unicode's tables are correct, the F
+                                    # should be a superset of S
 
-    my $folded_str = pack ("U0U*", map { hex $_ } @hex_folded);
-    push @{$inverse_folds{$folded_str}}, chr hex $hex_from;
+        my $folded_str = pack ("U0U*", map { hex $_ } @hex_folded);
+        push @{$inverse_folds{$folded_str}}, chr hex $hex_from;
+    }
+}
+else {  # Here, can't use the .txt file: read the Unicode rules file and
+        # construct inverse mappings from it
+
+    my ($invlist_ref, $invmap_ref, undef, $default)
+                                    = Unicode::UCD::prop_invmap('Case_Folding');
+    for my $i (0 .. @$invlist_ref - 1 - 1) {
+        next if $invmap_ref->[$i] == $default;
+
+        # Make into an array if not so already, so can treat uniformly below
+        $invmap_ref->[$i] = [ $invmap_ref->[$i] ] if ! ref $invmap_ref->[$i];
+
+        # Each subsequent element of the range requires adjustment of +1 from
+        # the previous element
+        my $adjust = -1;
+        for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
+            $adjust++;
+            my $folded_str
+                        = pack "U0U*", map { $_ + $adjust } @{$invmap_ref->[$i]};
+            #note (sprintf "%d: %04X: %s", __LINE__, $j, join " ",
+            #    map { sprintf "%04X", $_  + $adjust } @{$invmap_ref->[$i]});
+            push @{$inverse_folds{$folded_str}}, chr $j;
+        }
+    }
 }
 
 # Analyze the data and generate tests to get adequate test coverage.  We sort
@@ -265,7 +302,8 @@ TO:
 foreach my $to (sort { (length $a == length $b)
                         ? $a cmp $b
                         : length $a <=> length $b
-                    } keys %inverse_folds) {
+                    } keys %inverse_folds)
+{
 
     # Within each fold, sort so that the smallest code points are done first
     @{$inverse_folds{$to}} = sort { $a cmp $b } @{$inverse_folds{$to}};
@@ -363,23 +401,27 @@ sub prefix {
 # It doesn't return pairs like (a, a), (b, b).  Change the slice to an array
 # to do that.  This was just to have fewer tests.
 sub pairs (@) {
-    #print __LINE__, ": ", join(" XXX ", @_), "\n";
+    #print __LINE__, ": ", join(" XXX ", map { sprintf "%04X", $_ } @_), "\n";
     map { prefix $_[$_], @_[0..$_-1, $_+1..$#_] } 0..$#_
 }
 
 my @charsets = qw(d u a aa);
-my $current_locale = POSIX::setlocale( &POSIX::LC_ALL, "C") // "";
-if ($current_locale eq 'C') {
-    use locale;
+if($Config{d_setlocale}) {
+    my $current_locale = POSIX::setlocale( &POSIX::LC_ALL, "C") // "";
+    if ($current_locale eq 'C') {
+        require locale; import locale;
 
-    # Some locale implementations don't have the range 128-255 characters all
-    # mean nothing.  Skip the locale tests in that situation.
-    for my $i (128 .. 255) {
-        my $char = chr($i);
-        goto bad_locale if uc($char) ne $char || lc($char) ne $char;
+        # Some implementations don't have the 128-255 range characters all
+        # mean nothing under the C locale (an example being VMS).  This is
+        # legal, but since we don't know what the right answers should be,
+        # skip the locale tests in that situation.
+        for my $i (128 .. 255) {
+            my $char = chr($i);
+            goto untestable_locale if uc($char) ne $char || lc($char) ne $char;
+        }
+        push @charsets, 'l';
+      untestable_locale:
     }
-    push @charsets, 'l';
-bad_locale:
 }
 
 # Finally ready to do the tests
@@ -600,9 +642,32 @@ foreach my $test (sort { numerically } keys %tests) {
           $eval = "my \$c = \"$lhs\"; my \$p = qr/$rhs|xyz/i$charset;$upgrade_target$upgrade_pattern \$c $op \$p";
           run_test($eval, "", "");
 
+          # Check that works when the folded character follows something that
+          # is quantified.  This test knows the regex code internals to the
+          # extent that it knows this is a potential problem, and that there
+          # are three different types of quantifiers generated: 1) The thing
+          # being quantified matches a single character; 2) it matches more
+          # than one character, but is fixed width; 3) it can match a variable
+          # number of characters.  (It doesn't know that case 3 shouldn't
+          # matter, since it doesn't do anything special for the character
+          # following the quantifier; nor that some of the different
+          # quantifiers execute the same underlying code, as these tests are
+          # quick, and this insulates these tests from changes in the
+          # implementation.)
+          for my $quantifier ('?', '??', '*', '*?', '+', '+?', '{1,2}', '{1,2}?') {
+            $eval = "my \$c = \"_$lhs\"; my \$p = qr/(?$charset:.$quantifier$rhs)/i;$upgrade_target$upgrade_pattern \$c $op \$p";
+            run_test($eval, "", "");
+            $eval = "my \$c = \"__$lhs\"; my \$p = qr/(?$charset:(?:..)$quantifier$rhs)/i;$upgrade_target$upgrade_pattern \$c $op \$p";
+            run_test($eval, "", "");
+            $eval = "my \$c = \"__$lhs\"; my \$p = qr/(?$charset:(?:.|\\R)$quantifier$rhs)/i;$upgrade_target$upgrade_pattern \$c $op \$p";
+            run_test($eval, "", "");
+          }
+
           foreach my $bracketed (0, 1) {   # Put rhs in [...], or not
             next if $bracketed && @pattern != 1;    # bracketed makes these
                                                     # or's instead of a sequence
+            foreach my $optimize_bracketed (0, 1) {
+                next if $optimize_bracketed && ! $bracketed;
             foreach my $inverted (0,1) {
                 next if $inverted && ! $bracketed;  # inversion only valid in [^...]
                 next if $inverted && @target != 1;  # [perl #89750] multi-char
@@ -624,8 +689,9 @@ foreach my $test (sort { numerically } keys %tests) {
                       $rhs .=  $rhs_char;
 
                       # Add a character to the class, so class doesn't get
-                      # optimized out
-                      $rhs .= '_]' if $bracketed;
+                      # optimized out, unless we are testing that optimization
+                      $rhs .= '_' if $optimize_bracketed;
+                      $rhs .= ']' if $bracketed;
                   }
 
                   # Add one of: no capturing parens
@@ -732,7 +798,7 @@ foreach my $test (sort { numerically } keys %tests) {
                           utf8::upgrade($p) if length($upgrade_pattern);
                           my $res = $op ? ($c =~ $p): ($c !~ $p);
 
-                          if (!$res || $ENV{PERL_DEBUG_FULL_TEST}) {
+                          if (!$res || $list_all_tests) {
                             # Failed or debug; output the result
                             $count++;
                             ok($res, "test $count - $desc");
@@ -749,9 +815,10 @@ foreach my $test (sort { numerically } keys %tests) {
               }
             }
           }
+          }
         }
       }
-      unless($ENV{PERL_DEBUG_FULL_TEST}) {
+      unless($list_all_tests) {
         $count++;
         is $okays, $this_iteration, "$okays subtests ok for"
           . " /$charset,"

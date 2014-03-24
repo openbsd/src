@@ -95,11 +95,11 @@ strings of the C<char *> type to Perl scalars/strings:
 
   TYPEMAP
   char *  T_PV
-  
+
   INPUT
   T_PV
     $var = ($type)SvPV_nolen($arg)
-  
+
   OUTPUT
   T_PV
     sv_setpv((SV*)$arg, $var);
@@ -117,7 +117,7 @@ that type:
 
   TYPEMAP
   Net_Config      T_PTROBJ_SPECIAL
-  
+
   INPUT
   T_PTROBJ_SPECIAL
     if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")){
@@ -126,7 +126,7 @@ that type:
     }
     else
       croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
-  
+
   OUTPUT
   T_PTROBJ_SPECIAL
     sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\",

@@ -7,7 +7,7 @@ Porting/acknowledgements.pl - Generate perldelta acknowledgements text
 =head1 SYNOPSIS
 
   perl Porting/acknowledgements.pl v5.15.0..HEAD
-  
+
 =head1 DESCRIPTION
 
 This generates the text which goes in the Acknowledgements section in
@@ -100,7 +100,7 @@ sub development_time {
 
     my $development_time;
     if ( $months < 2 ) {
-        return "$weeks weeks";
+        return "$weeks @{[$weeks == 1 ? q(week) : q(weeks)]}";
     } else {
         return "$months months";
     }

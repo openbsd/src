@@ -188,19 +188,17 @@ sub match {
 
     my ($str, $name);
 
-    given ($char) {
-        when (/^\\/) {
-            $str  = eval qq ["$char"];
-            $name =      qq ["$char"];
-        }
-        when (/^0x([0-9A-Fa-f]+)$/) {
-            $str  =  chr hex $1;
-            $name = "chr ($char)";
-        }
-        default {
-            $str  =      $char;
-            $name = qq ["$char"];
-        }
+    if ($char =~ /^\\/) {
+        $str  = eval qq ["$char"];
+        $name =      qq ["$char"];
+    }
+    elsif ($char =~ /^0x([0-9A-Fa-f]+)$/) {
+        $str  =  chr hex $1;
+        $name = "chr ($char)";
+    }
+    else {
+        $str  =      $char;
+        $name = qq ["$char"];
     }
 
     undef $@;

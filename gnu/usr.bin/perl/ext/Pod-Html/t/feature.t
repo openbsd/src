@@ -21,7 +21,6 @@ convert_n_test("feature", "misc pod-html features",
  "--podroot=$cwd",
  "--title=a title",
  "--quiet",
- "--libpods=perlguts:perlootut",
  );
 
 __DATA__

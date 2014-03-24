@@ -20,7 +20,7 @@ sub _reset_globals {
     $planned    = 0;
 }
 
-$VERSION = '1.25_02';
+$VERSION = '1.26';
 require Exporter;
 @ISA=('Exporter');
 

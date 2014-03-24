@@ -22,7 +22,7 @@ BEGIN {
 }
 
 
-plan tests => 2521;  # Update this when adding/deleting tests.
+plan tests => 2532;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -384,14 +384,7 @@ sub run_tests {
         is("@_", "a|b|c", $message);
     }
 
-    {
-        # XXX DAPM 13-Apr-06. Recursive split is still broken. It's only luck it
-        # hasn't been crashing. Disable this test until it is fixed properly.
-        # XXX also check what it returns rather than just doing ok(1,...)
-        # split /(?{ split "" })/, "abc";
-        local $::TODO = "Recursive split is still broken";
-        ok 0, 'cache_re & "(?{": it dumps core in 5.6.1 & 5.8.0';
-    }
+    is(join('-', split /(?{ split "" })/, "abc"), 'a-b-c', 'nested split');
 
     {
         $_ = "code:   'x' { '...' }\n"; study;
@@ -922,12 +915,17 @@ sub run_tests {
     {
          my $message = '$REGMARK in replacement; Bug 49190';
          our $REGMARK;
+         no warnings 'experimental::lexical_topic';
          my $_ = "A";
          ok(s/(*:B)A/$REGMARK/, $message);
          is($_, "B", $message);
          $_ = "CCCCBAA";
          ok(s/(*:X)A+|(*:Y)B+|(*:Z)C+/$REGMARK/g, $message);
          is($_, "ZYX", $message);
+         # Use a longer name to force reallocation of $REGMARK.
+         $_ = "CCCCBAA";
+         ok(s/(*:X)A+|(*:YYYYYYYYYYYYYYYY)B+|(*:Z)C+/$REGMARK/g, $message);
+         is($_, "ZYYYYYYYYYYYYYYYYX", $message);
     }
 
     {
@@ -1135,6 +1133,46 @@ $t =~ s/([^a])//ge;
 EOP
     }
 
+    {
+        # pattern must be compiled late or we can break the test file
+        my $message = '[perl #115050] repeated nothings in a trie can cause panic';
+        my $pattern;
+        $pattern = '[xyz]|||';
+        ok("blah blah" =~ /$pattern/, $message);
+        ok("blah blah" =~ /(?:$pattern)h/, $message);
+        $pattern = '|||[xyz]';
+        ok("blah blah" =~ /$pattern/, $message);
+        ok("blah blah" =~ /(?:$pattern)h/, $message);
+    }
+
+    {
+        # [perl #4289] First mention $& after a match
+        local $::TODO = "these tests fail without Copy-on-Write enabled";
+        fresh_perl_is(
+            '$_ = "abc"; /b/g; $_ = "hello"; print eval q|$&|, "\n"',
+            "b\n", {}, '$& first mentioned after match');
+        fresh_perl_is(
+            '$_ = "abc"; /b/g; $_ = "hello"; print eval q|$`|, "\n"',
+            "a\n", {}, '$` first mentioned after match');
+        fresh_perl_is(
+            '$_ = "abc"; /b/g; $_ = "hello"; print eval q|$\'|,"\n"',
+            "c\n", {}, '$\' first mentioned after match');
+    }
+
+    {
+	# [perl #118175] threaded perl-5.18.0 fails pat_rt_report_thr.t
+	# this tests some related failures
+	#
+	# The tests in the block *only* fail when run on 32-bit systems
+	# with a malloc that allocates above the 2GB line.  On the system
+	# in the report above that only happened in a thread.
+	my $s = "\x{1ff}" . "f" x 32;
+	ok($s =~ /\x{1ff}[[:alpha:]]+/gca, "POSIXA pointer wrap");
+
+	# this one segfaulted under the conditions above
+	# of course, CANY is evil, maybe it should crash
+	ok($s =~ /.\C+/, "CANY pointer wrap");
+    }
 } # End of sub run_tests
 
 1;

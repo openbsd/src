@@ -35,12 +35,6 @@ ULONG PERLEXPORTALL(PCSZ name, LONG rargc, const RXSTRING *rargv, PCSZ queuename
 ULONG PERLDROPALL(PCSZ name, LONG rargc, const RXSTRING *rargv, PCSZ queuename, PRXSTRING retstr);
 ULONG PERLDROPALLEXIT(PCSZ name, LONG rargc, const RXSTRING *rargv, PCSZ queuename, PRXSTRING retstr);
 
-#if defined (atarist)
-/* The Atari operating system doesn't have a dynamic stack.  The
-   stack size is determined from this value.  */
-long _stksize = 64 * 1024;
-#endif
-
 /* Register any extra external extensions */
 
 /* Do not delete this line--writemain depends on it */

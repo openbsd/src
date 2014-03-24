@@ -19,7 +19,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 140 + $extra ;
+    plan tests => 163 + $extra ;
 
     use_ok('Scalar::Util');
     use_ok('IO::Compress::Base::Common');
@@ -47,24 +47,24 @@ sub My::testParseParameters()
     like $@, mkErr(': Expected even number of parameters, got 1'), 
             "Trap odd number of params";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_boolean, 0]}, Fred => 'joe') ; };
-    like $@, mkErr("Parameter 'Fred' must be an int, got 'joe'"), 
+    eval { ParseParameters(1, {'fred' => [Parse_boolean, 0]}, fred => 'joe') ; };
+    like $@, mkErr("Parameter 'fred' must be an int, got 'joe'"), 
             "wanted unsigned, got undef";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_unsigned, 0]}, Fred => undef) ; };
-    like $@, mkErr("Parameter 'Fred' must be an unsigned int, got 'undef'"), 
+    eval { ParseParameters(1, {'fred' => [Parse_unsigned, 0]}, fred => undef) ; };
+    like $@, mkErr("Parameter 'fred' must be an unsigned int, got 'undef'"), 
             "wanted unsigned, got undef";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_signed, 0]}, Fred => undef) ; };
-    like $@, mkErr("Parameter 'Fred' must be a signed int, got 'undef'"), 
+    eval { ParseParameters(1, {'fred' => [Parse_signed, 0]}, fred => undef) ; };
+    like $@, mkErr("Parameter 'fred' must be a signed int, got 'undef'"), 
             "wanted signed, got undef";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_signed, 0]}, Fred => 'abc') ; };
-    like $@, mkErr("Parameter 'Fred' must be a signed int, got 'abc'"), 
+    eval { ParseParameters(1, {'fred' => [Parse_signed, 0]}, fred => 'abc') ; };
+    like $@, mkErr("Parameter 'fred' must be a signed int, got 'abc'"), 
             "wanted signed, got 'abc'";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_code, undef]}, Fred => 'abc') ; };
-    like $@, mkErr("Parameter 'Fred' must be a code reference, got 'abc'"), 
+    eval { ParseParameters(1, {'fred' => [Parse_code, undef]}, fred => 'abc') ; };
+    like $@, mkErr("Parameter 'fred' must be a code reference, got 'abc'"), 
             "wanted code, got 'abc'";
 
 
@@ -72,89 +72,120 @@ sub My::testParseParameters()
     {
         use Config;
 
-        skip 'readonly + threads', 1
+        skip 'readonly + threads', 2
             if $Config{useithreads};
 
-        eval { ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, 0]}, Fred => 'abc') ; };
-        like $@, mkErr("Parameter 'Fred' not writable"), 
+        eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => 'abc') ; };
+        like $@, mkErr("Parameter 'fred' not writable"), 
+                "wanted writable, got readonly";
+
+        eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => \'abc') ; };
+        like $@, mkErr("Parameter 'fred' not writable"), 
                 "wanted writable, got readonly";
     }
 
     my @xx;
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, 0]}, Fred => \@xx) ; };
-    like $@, mkErr("Parameter 'Fred' not a scalar reference"), 
+    eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => \@xx) ; };
+    like $@, mkErr("Parameter 'fred' not a scalar reference"), 
             "wanted scalar reference";
 
     local *ABC;
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, 0]}, Fred => *ABC) ; };
-    like $@, mkErr("Parameter 'Fred' not a scalar"), 
+    eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => *ABC) ; };
+    like $@, mkErr("Parameter 'fred' not a scalar"), 
             "wanted scalar";
 
-    eval { ParseParameters(1, {'Fred' => [1, 1, Parse_any, 0]}, Fred => 1, Fred => 2) ; };
-    like $@, mkErr("Muliple instances of 'Fred' found"),
+    eval { ParseParameters(1, {'fred' => [Parse_any, 0]}, fred => 1, fred => 2) ; };
+    like $@, mkErr("Muliple instances of 'fred' found"),
         "multiple instances";
 
-    my $g = ParseParameters(1, {'Fred' => [1, 1, Parse_unsigned|Parse_multiple, 7]}, Fred => 1, Fred => 2) ;
-    is_deeply $g->value('Fred'), [ 1, 2 ] ;
+#    my $g = ParseParameters(1, {'fred' => [Parse_unsigned|Parse_multiple, 7]}, fred => 1, fred => 2) ;
+#    is_deeply $g->value('fred'), [ 1, 2 ] ;
+    ok 1;
 
     #ok 1;
 
-    my $got = ParseParameters(1, {'Fred' => [1, 1, 0x1000000, 0]}, Fred => 'abc') ;
-    is $got->value('Fred'), "abc", "other" ;
+    my $got = ParseParameters(1, {'fred' => [0x1000000, 0]}, fred => 'abc') ;
+    is $got->getValue('fred'), "abc", "other" ;
 
-    $got = ParseParameters(1, {'Fred' => [0, 1, Parse_any, undef]}, Fred => undef) ;
-    ok $got->parsed('Fred'), "undef" ;
-    ok ! defined $got->value('Fred'), "undef" ;
+    $got = ParseParameters(1, {'fred' => [Parse_any, undef]}, fred => undef) ;
+    ok $got->parsed('fred'), "undef" ;
+    ok ! defined $got->getValue('fred'), "undef" ;
 
-    $got = ParseParameters(1, {'Fred' => [0, 1, Parse_string, undef]}, Fred => undef) ;
-    ok $got->parsed('Fred'), "undef" ;
-    is $got->value('Fred'), "", "empty string" ;
+    $got = ParseParameters(1, {'fred' => [Parse_string, undef]}, fred => undef) ;
+    ok $got->parsed('fred'), "undef" ;
+    is $got->getValue('fred'), "", "empty string" ;
 
     my $xx;
-    $got = ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, undef]}, Fred => $xx) ;
+    $got = ParseParameters(1, {'fred' => [Parse_writable_scalar, undef]}, fred => $xx) ;
 
-    ok $got->parsed('Fred'), "parsed" ;
-    my $xx_ref = $got->value('Fred');
+    ok $got->parsed('fred'), "parsed" ;
+    my $xx_ref = $got->getValue('fred');
     $$xx_ref = 77 ;
     is $xx, 77;
 
-    $got = ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, undef]}, Fred => \$xx) ;
+    $got = ParseParameters(1, {'fred' => [Parse_writable_scalar, undef]}, fred => \$xx) ;
 
-    ok $got->parsed('Fred'), "parsed" ;
-    $xx_ref = $got->value('Fred');
+    ok $got->parsed('fred'), "parsed" ;
+    $xx_ref = $got->getValue('fred');
 
     $$xx_ref = 666 ;
     is $xx, 666;
 
     {
-        my $got1 = ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, undef]}, $got) ;
+        my $got1 = ParseParameters(1, {'fred' => [Parse_writable_scalar, undef]}, $got) ;
         is $got1, $got, "Same object";
     
-        ok $got1->parsed('Fred'), "parsed" ;
-        $xx_ref = $got1->value('Fred');
+        ok $got1->parsed('fred'), "parsed" ;
+        $xx_ref = $got1->getValue('fred');
         
         $$xx_ref = 777 ;
         is $xx, 777;
     }
+
+    for my $type (Parse_unsigned, Parse_signed, Parse_any)    
+    {
+        my $value = 0;
+        my $got1 ;
+        eval { $got1 = ParseParameters(1, {'fred' => [$type, 1]}, fred => $value) } ;
     
-##    my $got2 = ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, undef]}, '__xxx__' => $got) ;
-##    isnt $got2, $got, "not the Same object";
-##
-##    ok $got2->parsed('Fred'), "parsed" ;
-##    $xx_ref = $got2->value('Fred');
-##    $$xx_ref = 888 ;
-##    is $xx, 888;  
-##      
-##    my $other;
-##    my $got3 = ParseParameters(1, {'Fred' => [1, 1, Parse_writable_scalar, undef]}, '__xxx__' => $got, Fred => \$other) ;
-##    isnt $got3, $got, "not the Same object";
-##
-##        exit;
-##    ok $got3->parsed('Fred'), "parsed" ;
-##    $xx_ref = $got3->value('Fred');
-##    $$xx_ref = 999 ;
-##    is $other, 999;  
-##    is $xx, 888;  
+        ok ! $@;
+        ok $got1->parsed('fred'), "parsed ok" ;
+        is $got1->getValue('fred'), 0;
+    }    
+
+    {
+        # setValue/getValue
+        my $value = 0;
+        my $got1 ;
+        eval { $got1 = ParseParameters(1, {'fred' => [Parse_any, 1]}, fred => $value) } ;
+    
+        ok ! $@;
+        ok $got1->parsed('fred'), "parsed ok" ;
+        is $got1->getValue('fred'), 0;
+        $got1->setValue('fred' => undef);
+        is $got1->getValue('fred'), undef;        
+    }  
+    
+    {
+        # twice
+        my $value = 0;
+        
+        my $got = IO::Compress::Base::Parameters::new();
+
+       
+        ok $got->parse({'fred' => [Parse_any, 1]}, fred => $value) ;
+
+        ok $got->parsed('fred'), "parsed ok" ;
+        is $got->getValue('fred'), 0;
+        
+        ok $got->parse({'fred' => [Parse_any, 1]}, fred => undef) ;  
+        ok $got->parsed('fred'), "parsed ok" ;
+        is $got->getValue('fred'), undef;   
+        
+        ok $got->parse({'fred' => [Parse_any, 1]}, fred => 7) ;  
+        ok $got->parsed('fred'), "parsed ok" ;
+        is $got->getValue('fred'), 7;   
+    }      
 }
 
 

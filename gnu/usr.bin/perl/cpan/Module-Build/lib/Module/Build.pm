@@ -16,7 +16,7 @@ use Module::Build::Base;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Module::Build::Base);
-$VERSION = '0.39_01';
+$VERSION = '0.4003';
 $VERSION = eval $VERSION;
 
 
@@ -878,7 +878,7 @@ parameter as follows:
 
   lib     => installprivlib  installsitelib      installvendorlib
   arch    => installarchlib  installsitearch     installvendorarch
-  script  => installscript   installsitebin      installvendorbin
+  script  => installscript   installsitescript   installvendorscript
   bin     => installbin      installsitebin      installvendorbin
   bindoc  => installman1dir  installsiteman1dir  installvendorman1dir
   libdoc  => installman3dir  installsiteman3dir  installvendorman3dir
@@ -967,24 +967,28 @@ platform you're installing on.
 =item prefix
 
 Provided for compatibility with C<ExtUtils::MakeMaker>'s PREFIX argument.
-C<prefix> should be used when you wish Module::Build to install your
-modules, documentation and scripts in the same place
-C<ExtUtils::MakeMaker> does.
+C<prefix> should be used when you want Module::Build to install your
+modules, documentation, and scripts in the same place as
+C<ExtUtils::MakeMaker>'s PREFIX mechanism.
 
 The following are equivalent.
 
     perl Build.PL --prefix /tmp/foo
     perl Makefile.PL PREFIX=/tmp/foo
 
-Because of the very complex nature of the prefixification logic, the
+Because of the complex nature of the prefixification logic, the
 behavior of PREFIX in C<MakeMaker> has changed subtly over time.
 Module::Build's --prefix logic is equivalent to the PREFIX logic found
 in C<ExtUtils::MakeMaker> 6.30.
 
-If you do not need to retain compatibility with C<ExtUtils::MakeMaker> or
+The maintainers of C<MakeMaker> do understand the troubles with the
+PREFIX mechanism, and added INSTALL_BASE support in version 6.31 of
+C<MakeMaker>, which was released in 2006.
+
+If you don't need to retain compatibility with old versions (pre-6.31) of C<ExtUtils::MakeMaker> or
 are starting a fresh Perl installation we recommend you use
 C<install_base> instead (and C<INSTALL_BASE> in C<ExtUtils::MakeMaker>).
-See L<Module::Build::Cookbook/Instaling in the same location as
+See L<Module::Build::Cookbook/Installing in the same location as
 ExtUtils::MakeMaker> for further information.
 
 
@@ -1046,14 +1050,14 @@ perl.
 It is risky to make major changes to C<MakeMaker>, since it does so many
 things, is so important, and generally works.  C<Module::Build> is an
 entirely separate package so that I can work on it all I want, without
-worrying about backward compatibility.
+worrying about backward compatibility with C<MakeMaker>.
 
 =item *
 
 Finally, Perl is said to be a language for system administration.
 Could it really be the case that Perl isn't up to the task of building
-and installing software?  Even if that software is a bunch of stupid
-little C<.pm> files that just need to be copied from one place to
+and installing software?  Even if that software is a bunch of
+C<.pm> files that just need to be copied from one place to
 another?  My sense was that we could design a system to accomplish
 this in a flexible, extensible, and friendly manner.  Or die trying.
 
@@ -1083,7 +1087,7 @@ Bug reports are also welcome at
 <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Build>.
 
 The latest development version is available from the Git
-repository at <https://github.com/dagolden/module-build/>
+repository at <https://github.com/Perl-Toolchain-Gang/Module-Build>
 
 
 =head1 COPYRIGHT

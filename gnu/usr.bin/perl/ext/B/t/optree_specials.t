@@ -20,7 +20,7 @@ BEGIN {
 use OptreeCheck;	# ALSO DOES @ARGV HANDLING !!!!!!
 use Config;
 
-plan tests => 13 + ($] > 5.009 ? 2 : 0);
+plan tests => 15;
 
 require_ok("B::Concise");
 
@@ -34,16 +34,9 @@ my $out = runperl(
 my $src = q[our ($beg, $chk, $init, $end, $uc) = qq{'foo'}; BEGIN { $beg++ } CHECK { $chk++ } INIT { $init++ } END { $end++ } UNITCHECK {$uc++}];
 
 
-my @warnings_todo;
-@warnings_todo = (todo =>
-   "Change 23768 (Remove Carp from warnings.pm) alters expected output, not"
-   . "propagated to 5.8.x")
-    if $] < 5.009;
-
 checkOptree ( name	=> 'BEGIN',
 	      bcopts	=> 'BEGIN',
 	      prog	=> $src,
-	      @warnings_todo,
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # BEGIN 1:
@@ -193,12 +186,11 @@ EOT_EOT
 # 2              <$> gvsv(*chk) s ->3
 EONT_EONT
 
-if ($] >= 5.009) {
-    checkOptree ( name	=> 'UNITCHECK',
-		  bcopts=> 'UNITCHECK',
-		  prog	=> $src,
-		  strip_open_hints => 1,
-		  expect=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+checkOptree ( name	=> 'UNITCHECK',
+	      bcopts=> 'UNITCHECK',
+	      prog	=> $src,
+	      strip_open_hints => 1,
+	      expect=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # UNITCHECK 1:
 # 4  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->4
@@ -215,7 +207,6 @@ EOT_EOT
 # -           <1> ex-rv2sv sKRM/1 ->3
 # 2              <$> gvsv(*uc) s ->3
 EONT_EONT
-}
 
 checkOptree ( name	=> 'INIT',
 	      bcopts	=> 'INIT',
@@ -244,7 +235,6 @@ EONT_EONT
 checkOptree ( name	=> 'all of BEGIN END INIT CHECK UNITCHECK -exec',
 	      bcopts	=> [qw/ BEGIN END INIT CHECK UNITCHECK -exec /],
 	      prog	=> $src,
-	      @warnings_todo,
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # BEGIN 1:
@@ -374,7 +364,6 @@ EONT_EONT
 checkOptree ( name	=> 'regression test for patch 25352',
 	      bcopts	=> [qw/ BEGIN END INIT CHECK -exec /],
 	      prog	=> 'print q/foo/',
-	      @warnings_todo,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # BEGIN 1:
 # 1  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$

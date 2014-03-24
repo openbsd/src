@@ -68,7 +68,7 @@ as C<Not in [].>
  \A                Beginning of string.  Not in [].
  \b                Word/non-word boundary. (Backspace in []).
  \B                Not a word/non-word boundary.  Not in [].
- \cX               Control-X
+ \cX               Control-X.
  \C                Single octet, even under UTF-8.  Not in [].
  \d                Character class for digits.
  \D                Character class for non-digits.
@@ -76,7 +76,8 @@ as C<Not in [].>
  \E                Turn off \Q, \L and \U processing.  Not in [].
  \f                Form feed.
  \F                Foldcase till \E.  Not in [].
- \g{}, \g1         Named, absolute or relative backreference.  Not in []
+ \g{}, \g1         Named, absolute or relative backreference.
+                   Not in [].
  \G                Pos assertion.  Not in [].
  \h                Character class for horizontal whitespace.
  \H                Character class for non horizontal whitespace.
@@ -85,7 +86,7 @@ as C<Not in [].>
  \l                Lowercase next character.  Not in [].
  \L                Lowercase till \E.  Not in [].
  \n                (Logical) newline character.
- \N                Any character but newline.  Experimental.  Not in [].
+ \N                Any character but newline.  Not in [].
  \N{}              Named or numbered (Unicode) character or sequence.
  \o{}              Octal escape sequence.
  \p{}, \pP         Character with the given Unicode property.
@@ -246,16 +247,17 @@ Mnemonic: I<0>ctal or I<o>ctal.
  $str = "Perl";
  $str =~ /\o{120}/;  # Match, "\120" is "P".
  $str =~ /\120/;     # Same.
- $str =~ /\o{120}+/; # Match, "\120" is "P", it's repeated at least once
+ $str =~ /\o{120}+/; # Match, "\120" is "P",
+                     # it's repeated at least once.
  $str =~ /\120+/;    # Same.
  $str =~ /P\053/;    # No match, "\053" is "+" and taken literally.
  /\o{23073}/         # Black foreground, white background smiling face.
- /\o{4801234567}/    # Raises a warning, and yields chr(4)
+ /\o{4801234567}/    # Raises a warning, and yields chr(4).
 
 =head4 Disambiguation rules between old-style octal escapes and backreferences
 
 Octal escapes of the C<\000> form outside of bracketed character classes
-potentially clash with old-style backreferences.  (see L</Absolute referencing>
+potentially clash with old-style backreferences (see L</Absolute referencing>
 below).  They both consist of a backslash followed by numbers.  So Perl has to
 use heuristics to determine whether it is a backreference or an octal escape.
 Perl uses the following rules to disambiguate:
@@ -282,7 +284,7 @@ takes only the first three for the octal escape; the rest are matched as is.
     $pat .= ")" x 999;
  /^($pat)\1000$/;   #  Matches 'aa'; there are 1000 capture groups.
  /^$pat\1000$/;     #  Matches 'a@0'; there are 999 capture groups
-                    #    and \1000 is seen as \100 (a '@') and a '0'
+                    #  and \1000 is seen as \100 (a '@') and a '0'.
 
 =back
 
@@ -430,7 +432,7 @@ Mnemonic: I<g>roup.
 =head4 Examples
 
  /(\w+) \g1/;    # Finds a duplicated word, (e.g. "cat cat").
- /(\w+) \1/;     # Same thing; written old-style
+ /(\w+) \1/;     # Same thing; written old-style.
  /(.)(.)\g2\g1/;  # Match a four letter palindrome (e.g. "ABBA").
 
 
@@ -575,7 +577,7 @@ categories above. These are:
 
 C<\C> always matches a single octet, even if the source string is encoded
 in UTF-8 format, and the character to be matched is a multi-octet character.
-C<\C> was introduced in perl 5.6.  This is very dangerous, because it violates
+This is very dangerous, because it violates
 the logical character abstraction and can cause UTF-8 sequences to become malformed.
 
 Mnemonic: oI<C>tet.
@@ -591,7 +593,7 @@ Mnemonic: I<K>eep.
 
 =item \N
 
-This is an experimental feature new to perl 5.12.0.  It matches any character
+This feature, available starting in v5.12,  matches any character
 that is B<not> a newline.  It is a short-hand for writing C<[^\n]>, and is
 identical to the C<.> metasymbol, except under the C</s> flag, which changes
 the meaning of C<.>, but not C<\N>.
@@ -647,7 +649,8 @@ Mnemonic: eI<X>tended Unicode character.
 
 =head4 Examples
 
- "\x{256}" =~ /^\C\C$/;    # Match as chr (0x256) takes 2 octets in UTF-8.
+ "\x{256}" =~ /^\C\C$/;    # Match as chr (0x256) takes 
+                           # 2 octets in UTF-8.
 
  $str =~ s/foo\Kbar/baz/g; # Change any 'bar' following a 'foo' to 'baz'
  $str =~ s/(.)\K\g1//g;    # Delete duplicated characters.

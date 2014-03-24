@@ -469,7 +469,8 @@ checkOptree ( name	=> '%h = map { getkey($_) => $_ } @a',
 # 3  <0> pushmark s
 # 4  <#> gv[*a] s
 # 5  <1> rv2av[t8] lKM/1
-# 6  <@> mapstart lK*
+# 6  <@> mapstart lK*                 < 5.017002
+# 6  <@> mapstart lK                  >=5.017002
 # 7  <|> mapwhile(other->8)[t9] lK
 # 8      <0> enter l
 # 9      <;> nextstate(main 500 (eval 22):1) v:{
@@ -493,7 +494,8 @@ EOT_EOT
 # 3  <0> pushmark s
 # 4  <$> gv(*a) s
 # 5  <1> rv2av[t3] lKM/1
-# 6  <@> mapstart lK*
+# 6  <@> mapstart lK*                 < 5.017002
+# 6  <@> mapstart lK                  >=5.017002
 # 7  <|> mapwhile(other->8)[t4] lK
 # 8      <0> enter l
 # 9      <;> nextstate(main 500 (eval 22):1) v:{
@@ -617,14 +619,16 @@ checkOptree ( name	=> '-e use constant j => qq{junk}; print j',
 # 1  <0> enter 
 # 2  <;> nextstate(main 71 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
-# 4  <$> const[PV "junk"] s*
+# 4  <$> const[PV "junk"] s*      < 5.017002
+# 4  <$> const[PV "junk"] s*/FOLD >=5.017002
 # 5  <@> print vK
 # 6  <@> leave[1 ref] vKP/REFC
 EOT_EOT
 # 1  <0> enter 
 # 2  <;> nextstate(main 71 -e:1) v:>,<,%,{
 # 3  <0> pushmark s
-# 4  <$> const(PV "junk") s*
+# 4  <$> const(PV "junk") s*      < 5.017002
+# 4  <$> const(PV "junk") s*/FOLD >=5.017002
 # 5  <@> print vK
 # 6  <@> leave[1 ref] vKP/REFC
 EONT_EONT

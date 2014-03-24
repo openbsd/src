@@ -34,8 +34,8 @@ $file_magic_str = 'pst0';
 $other_magic = 7 + length $byteorder;
 $network_magic = 2;
 $major = 2;
-$minor = 8;
-$minor_write = $] > 5.005_50 ? 8 : 4;
+$minor = 9;
+$minor_write = $] > 5.008 ? 9 : $] > 5.005_50 ? 8 : 4;
 
 use Test::More;
 
@@ -208,7 +208,7 @@ sub test_things {
     $where = $file_magic + $network_magic;
   }
 
-  # Just the header and a tag 255. As 28 is currently the highest tag, this
+  # Just the header and a tag 255. As 30 is currently the highest tag, this
   # is "unexpected"
   $copy = substr ($contents, 0, $where) . chr 255;
 
@@ -228,7 +228,7 @@ sub test_things {
   # local $Storable::DEBUGME = 1;
   # This is the delayed croak
   test_corrupt ($copy, $sub,
-                "/^Storable binary image v$header->{major}.$minor6 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 28/",
+                "/^Storable binary image v$header->{major}.$minor6 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 30/",
                 "bogus tag, minor plus 4");
   # And check again that this croak is not delayed:
   {

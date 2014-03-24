@@ -2,7 +2,7 @@
 # Test for File::Temp - OO interface
 
 use strict;
-use Test::More tests => 30;
+use Test::More tests => 35;
 use File::Spec;
 
 # Will need to check that all files were unlinked correctly
@@ -33,6 +33,12 @@ END { foreach (@dirs)  { ok( !(-d $_), "Directory $_ should not be there" ) } }
 # removes them
 BEGIN {use_ok( "File::Temp" ); }
 
+# Check for misuse
+eval { File::Temp->tempfile };
+like( $@, qr/can't be called as a method/, "File::Temp->tempfile error" );
+eval { File::Temp->tempdir };
+like( $@, qr/can't be called as a method/, "File::Temp->tempfile error" );
+
 # Tempfile
 # Open tempfile in some directory, unlink at end
 my $fh = new File::Temp( SUFFIX => '.txt' );
@@ -50,6 +56,15 @@ my $dirname = "$tdir"; # Stringify overload
 ok( -d $dirname, "Directory $tdir exists");
 undef $tdir;
 ok( !-d $dirname, "Directory should now be gone");
+
+# with template
+$tdir = File::Temp->newdir( TEMPLATE => 'helloXXXXX' );
+like( "$tdir", qr/hello/, "Directory with TEMPLATE" );
+undef $tdir;
+
+$tdir = File::Temp->newdir( 'helloXXXXX' );
+like( "$tdir", qr/hello/, "Directory with leading template" );
+undef $tdir;
 
 # Quick basic tempfile test
 my $qfh = File::Temp->new();
@@ -102,8 +117,18 @@ $fh = new File::Temp( TEMPLATE => 'helloXXXXXXX',
 
 print "# TEMPFILE: Created $fh\n";
 
-ok( (-f "$fh"), "File $fh exists? [from template]" );
+# and with a leading template
+$fh = File::Temp->new( 'helloXXXXXXX',
+		      DIR => $tempdir,
+		      SUFFIX => '.dat',
+		    );
+
+print "# TEMPFILE: Created $fh\n";
+
+ok( (-f "$fh"), "File $fh exists? [from leading template]" );
+like( "$fh", qr/hello/, "saw template" );
 push(@files, "$fh");
+
 
 
 # Create a temporary file that should stay around after

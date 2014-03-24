@@ -7,7 +7,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 78;
+use Test::More tests => 82;
 
 my $ro_err = qr/^Modification of a read-only value attempted/;
 
@@ -173,4 +173,18 @@ is( Internals::SvREFCNT($foo, $big_count), $big_count,
     "set reference count unsigned");
 is( Internals::SvREFCNT($foo), $big_count, "reference count unsigned");
 
-Internals::SvREFCNT($foo, 1 );
+{
+    my @arr = Internals::SvREFCNT($foo, 1 );
+    is(scalar(@arr), 1, "SvREFCNT always returns only 1 item");
+}
+
+{
+    my $usage =  'Usage: Internals::SvREFCNT(SCALAR[, REFCOUNT])';
+    eval { &Internals::SvREFCNT();};
+    like($@, qr/\Q$usage\E/);
+    $foo = \"perl";
+    eval { &Internals::SvREFCNT($foo, 0..1);};
+    like($@, qr/\Q$usage\E/);
+    eval { &Internals::SvREFCNT($foo, 0..3);};
+    like($@, qr/\Q$usage\E/);
+}

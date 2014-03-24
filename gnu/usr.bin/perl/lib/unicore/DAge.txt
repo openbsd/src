@@ -1,5 +1,5 @@
-# DerivedAge-6.1.0.txt
-# Date: 2012-01-20, 21:47:00 GMT [MD, KW]
+# DerivedAge-6.2.0.txt
+# Date: 2012-09-20, 21:30:39 GMT [MD]
 #
 # Unicode Character Database
 # Copyright (c) 1991-2012 Unicode, Inc.
@@ -1293,5 +1293,15 @@ FA2E..FA2F    ; 6.1 #   [2] CJK COMPATIBILITY IDEOGRAPH-FA2E..CJK COMPATIBILITY 
 1F634         ; 6.1 #       SLEEPING FACE
 
 # Total code points: 732
+
+# ================================================
+
+# Age=V6_2
+
+# Newly assigned in Unicode 6.2.0 (September, 2012)
+
+20BA          ; 6.2 #       TURKISH LIRA SIGN
+
+# Total code points: 1
 
 # EOF

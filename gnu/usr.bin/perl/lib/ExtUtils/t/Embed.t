@@ -204,13 +204,13 @@ int main(int argc, char **argv, char **env) {
 
     perl_free(my_perl);
 
-#ifdef PERL_GLOBAL_STRUCT
-    free_global_struct(plvarsp);
-#endif /* PERL_GLOBAL_STRUCT */
-
     my_puts("ok 8");
 
     PERL_SYS_TERM();
+
+#ifdef PERL_GLOBAL_STRUCT
+    free_global_struct(plvarsp);
+#endif /* PERL_GLOBAL_STRUCT */
 
     return 0;
 }

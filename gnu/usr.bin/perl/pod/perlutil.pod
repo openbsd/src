@@ -232,7 +232,7 @@ came along modules included in the perl distribution.
 
 B<piconv> is a Perl version of B<iconv>, a character encoding converter
 widely available for various Unixen today.  This script was primarily a
-technology demonstrator for Perl 5.8.0, but you can use piconv in the
+technology demonstrator for Perl v5.8.0, but you can use piconv in the
 place of iconv for virtually any case.
 
 =item L<ptar>

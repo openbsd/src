@@ -4,11 +4,8 @@ use strict;
 use warnings;
 no warnings 'surrogate';    # surrogates can be inputs to this
 use charnames ();
-use Unicode::Normalize qw(getCombinClass NFD);
 
-our $VERSION = '0.43';
-
-use Storable qw(dclone);
+our $VERSION = '0.51';
 
 require Exporter;
 
@@ -20,7 +17,7 @@ our @EXPORT_OK = qw(charinfo
 		    charinrange
 		    general_categories bidi_types
 		    compexcl
-		    casefold casespec
+		    casefold all_casefolds casespec
 		    namedseq
                     num
                     prop_aliases
@@ -43,6 +40,9 @@ Unicode::UCD - Unicode character database
 
     use Unicode::UCD 'casefold';
     my $casefold = casefold(0xFB00);
+
+    use Unicode::UCD 'all_casefolds';
+    my $all_casefolds_ref = all_casefolds();
 
     use Unicode::UCD 'casespec';
     my $casespec = casespec(0xFB00);
@@ -104,8 +104,16 @@ a decimal or a hexadecimal scalar designating a Unicode code point, or C<U+>
 followed by hexadecimals designating a Unicode code point.  In other words, if
 you want a code point to be interpreted as a hexadecimal number, you must
 prefix it with either C<0x> or C<U+>, because a string like e.g. C<123> will be
-interpreted as a decimal code point.  Note that the largest code point in
-Unicode is U+10FFFF.
+interpreted as a decimal code point.
+
+Examples:
+
+    223     # Decimal 223
+    0223    # Hexadecimal 223 (= 547 decimal)
+    0xDF    # Hexadecimal DF (= 223 decimal
+    U+DF    # Hexadecimal DF
+
+Note that the largest code point in Unicode is U+10FFFF.
 
 =cut
 
@@ -114,6 +122,7 @@ my $VERSIONFH;
 my $CASEFOLDFH;
 my $CASESPECFH;
 my $NAMEDSEQFH;
+my $v_unicode_version;  # v-string.
 
 sub openunicode {
     my ($rfh, @path) = @_;
@@ -130,6 +139,35 @@ sub openunicode {
 	    unless defined $f;
     }
     return $f;
+}
+
+sub _dclone ($) {   # Use Storable::dclone if available; otherwise emulate it.
+
+    use if defined &DynaLoader::boot_DynaLoader, Storable => qw(dclone);
+
+    return dclone(shift) if defined &dclone;
+
+    my $arg = shift;
+    my $type = ref $arg;
+    return $arg unless $type;   # No deep cloning needed for scalars
+
+    if ($type eq 'ARRAY') {
+        my @return;
+        foreach my $element (@$arg) {
+            push @return, &_dclone($element);
+        }
+        return \@return;
+    }
+    elsif ($type eq 'HASH') {
+        my %return;
+        foreach my $key (keys %$arg) {
+            $return{$key} = &_dclone($arg->{$key});
+        }
+        return \%return;
+    }
+    else {
+        croak "_dclone can't handle " . $type;
+    }
 }
 
 =head2 B<charinfo()>
@@ -303,6 +341,7 @@ my %SIMPLE_LOWER;
 my %SIMPLE_TITLE;
 my %SIMPLE_UPPER;
 my %UNICODE_1_NAMES;
+my %ISO_COMMENT;
 
 sub charinfo {
 
@@ -314,6 +353,9 @@ sub charinfo {
     # mktables tables.
 
     use feature 'unicode_strings';
+
+    # Will fail if called under minitest
+    use if defined &DynaLoader::boot_DynaLoader, "Unicode::Normalize" => qw(getCombinClass NFD);
 
     my $arg  = shift;
     my $code = _getcode($arg);
@@ -353,7 +395,8 @@ sub charinfo {
     # Having no decomposition implies an empty field; otherwise, all but
     # "Canonical" imply a compatible decomposition, and the type is prefixed
     # to that, as it is in UnicodeData.txt
-    if ($char =~ /\p{Block=Hangul_Syllables}/) {
+    UnicodeVersion() unless defined $v_unicode_version;
+    if ($v_unicode_version ge v2.0.0 && $char =~ /\p{Block=Hangul_Syllables}/) {
         # The code points of the decomposition are output in standard Unicode
         # hex format, separated by blanks.
         $prop{'decomposition'} = join " ", map { sprintf("%04X", $_)}
@@ -400,9 +443,16 @@ sub charinfo {
     %UNICODE_1_NAMES =_read_table("To/Na1.pl", "use_hash") unless %UNICODE_1_NAMES;
     $prop{'unicode10'} = $UNICODE_1_NAMES{$code} // "";
 
-    # This is true starting in 6.0, but, num() also requires 6.0, so
-    # don't need to test for version again here.
-    $prop{'comment'} = "";
+    UnicodeVersion() unless defined $v_unicode_version;
+    if ($v_unicode_version ge v6.0.0) {
+        $prop{'comment'} = "";
+    }
+    else {
+        %ISO_COMMENT = _read_table("To/Isc.pl", "use_hash") unless %ISO_COMMENT;
+        $prop{'comment'} = (defined $ISO_COMMENT{$code})
+                           ? $ISO_COMMENT{$code}
+                           : "";
+    }
 
     %SIMPLE_UPPER = _read_table("To/Uc.pl", "use_hash") unless %SIMPLE_UPPER;
     $prop{'upper'} = (defined $SIMPLE_UPPER{$code})
@@ -536,7 +586,8 @@ With a L</code point argument> charblock() returns the I<block> the code point
 belongs to, e.g.  C<Basic Latin>.  The old-style block name is returned (see
 L</Old-style versus new-style block names>).
 If the code point is unassigned, this returns the block it would belong to if
-it were assigned.
+it were assigned.  (If the Unicode version being used is so early as to not
+have blocks, all code points are considered to be in C<No_Block>.)
 
 See also L</Blocks versus Scripts>.
 
@@ -562,7 +613,13 @@ sub _charblocks {
     # Can't read from the mktables table because it loses the hyphens in the
     # original.
     unless (@BLOCKS) {
-	if (openunicode(\$BLOCKSFH, "Blocks.txt")) {
+        UnicodeVersion() unless defined $v_unicode_version;
+        if ($v_unicode_version lt v2.0.0) {
+            my $subrange = [ 0, 0x10FFFF, 'No_Block' ];
+            push @BLOCKS, $subrange;
+            push @{$BLOCKS{'No_Block'}}, $subrange;
+        }
+        elsif (openunicode(\$BLOCKSFH, "Blocks.txt")) {
 	    local $_;
 	    local $/ = "\n";
 	    while (<$BLOCKSFH>) {
@@ -591,7 +648,7 @@ sub charblock {
         return 'No_Block';
     }
     elsif (exists $BLOCKS{$arg}) {
-        return dclone $BLOCKS{$arg};
+        return _dclone $BLOCKS{$arg};
     }
 }
 
@@ -607,7 +664,8 @@ sub charblock {
 
 With a L</code point argument> charscript() returns the I<script> the
 code point belongs to, e.g.  C<Latin>, C<Greek>, C<Han>.
-If the code point is unassigned, it returns C<"Unknown">.
+If the code point is unassigned or the Unicode version being used is so early
+that it doesn't have scripts, this function returns C<"Unknown">.
 
 If supplied with an argument that can't be a code point, charscript() tries
 to do the opposite and interpret the argument as a script name. The
@@ -624,7 +682,15 @@ my @SCRIPTS;
 my %SCRIPTS;
 
 sub _charscripts {
-    @SCRIPTS =_read_table("To/Sc.pl") unless @SCRIPTS;
+    unless (@SCRIPTS) {
+        UnicodeVersion() unless defined $v_unicode_version;
+        if ($v_unicode_version lt v3.1.0) {
+            push @SCRIPTS, [ 0, 0x10FFFF, 'Unknown' ];
+        }
+        else {
+            @SCRIPTS =_read_table("To/Sc.pl");
+        }
+    }
     foreach my $entry (@SCRIPTS) {
         $entry->[2] =~ s/(_\w)/\L$1/g;  # Preserve old-style casing
         push @{$SCRIPTS{$entry->[2]}}, $entry;
@@ -643,7 +709,7 @@ sub charscript {
         return $result if defined $result;
         return $utf8::SwashInfo{'ToSc'}{'missing'};
     } elsif (exists $SCRIPTS{$arg}) {
-        return dclone $SCRIPTS{$arg};
+        return _dclone $SCRIPTS{$arg};
     }
 
     return;
@@ -670,7 +736,7 @@ See also L</Blocks versus Scripts>.
 
 sub charblocks {
     _charblocks() unless %BLOCKS;
-    return dclone \%BLOCKS;
+    return _dclone \%BLOCKS;
 }
 
 =head2 B<charscripts()>
@@ -692,7 +758,7 @@ See also L</Blocks versus Scripts>.
 
 sub charscripts {
     _charscripts() unless %SCRIPTS;
-    return dclone \%SCRIPTS;
+    return _dclone \%SCRIPTS;
 }
 
 =head2 B<charinrange()>
@@ -752,7 +818,7 @@ my %GENERAL_CATEGORIES =
  );
 
 sub general_categories {
-    return dclone \%GENERAL_CATEGORIES;
+    return _dclone \%GENERAL_CATEGORIES;
 }
 
 =head2 B<general_categories()>
@@ -820,7 +886,7 @@ the bidi type name.
 =cut
 
 sub bidi_types {
-    return dclone \%BIDI_TYPES;
+    return _dclone \%BIDI_TYPES;
 }
 
 =head2 B<compexcl()>
@@ -829,7 +895,9 @@ sub bidi_types {
 
     my $compexcl = compexcl(0x09dc);
 
-This routine is included for backwards compatibility, but as of Perl 5.12, for
+This routine returns C<undef> if the Unicode version being used is so early
+that it doesn't have this property.  It is included for backwards
+compatibility, but as of Perl 5.12 and more modern Unicode versions, for
 most purposes it is probably more convenient to use one of the following
 instead:
 
@@ -863,6 +931,9 @@ sub compexcl {
     my $code = _getcode($arg);
     croak __PACKAGE__, "::compexcl: unknown code '$arg'"
 	unless defined $code;
+
+    UnicodeVersion() unless defined $v_unicode_version;
+    return if $v_unicode_version lt v3.0.0;
 
     no warnings "non_unicode";     # So works on non-Unicode code points
     return chr($code) =~ /\p{Composition_Exclusion}/;
@@ -943,12 +1014,12 @@ dotless lowercase i:
 
 =over
 
-=item B<*> If you use this C<I> mapping
+=item Z<>B<*> If you use this C<I> mapping
 
 the result is case-insensitive,
 but dotless and dotted I's are not distinguished
 
-=item B<*> If you exclude this C<I> mapping
+=item Z<>B<*> If you exclude this C<I> mapping
 
 the result is not fully case-insensitive, but
 dotless and dotted I's are distinguished
@@ -997,54 +1068,88 @@ L<http://www.unicode.org/unicode/reports/tr21>
 my %CASEFOLD;
 
 sub _casefold {
-    unless (%CASEFOLD) {
-	if (openunicode(\$CASEFOLDFH, "CaseFolding.txt")) {
-	    local $_;
-	    local $/ = "\n";
-	    while (<$CASEFOLDFH>) {
-		if (/^([0-9A-F]+); ([CFIST]); ([0-9A-F]+(?: [0-9A-F]+)*);/) {
-		    my $code = hex($1);
-		    $CASEFOLD{$code}{'code'} = $1;
-		    $CASEFOLD{$code}{'turkic'} = "" unless
-					    defined $CASEFOLD{$code}{'turkic'};
-		    if ($2 eq 'C' || $2 eq 'I') {	# 'I' is only on 3.1 and
-							# earlier Unicodes
-							# Both entries there (I
-							# only checked 3.1) are
-							# the same as C, and
-							# there are no other
-							# entries for those
-							# codepoints, so treat
-							# as if C, but override
-							# the turkic one for
-							# 'I'.
-			$CASEFOLD{$code}{'status'} = $2;
-			$CASEFOLD{$code}{'full'} = $CASEFOLD{$code}{'simple'} =
-			$CASEFOLD{$code}{'mapping'} = $3;
-			$CASEFOLD{$code}{'turkic'} = $3 if $2 eq 'I';
-		    } elsif ($2 eq 'F') {
-			$CASEFOLD{$code}{'full'} = $3;
-			unless (defined $CASEFOLD{$code}{'simple'}) {
-				$CASEFOLD{$code}{'simple'} = "";
-				$CASEFOLD{$code}{'mapping'} = $3;
-				$CASEFOLD{$code}{'status'} = $2;
-			}
-		    } elsif ($2 eq 'S') {
+    unless (%CASEFOLD) {   # Populate the hash
+        my ($full_invlist_ref, $full_invmap_ref, undef, $default)
+                                                = prop_invmap('Case_Folding');
 
+        # Use the recipe given in the prop_invmap() pod to convert the
+        # inversion map into the hash.
+        for my $i (0 .. @$full_invlist_ref - 1 - 1) {
+            next if $full_invmap_ref->[$i] == $default;
+            my $adjust = -1;
+            for my $j ($full_invlist_ref->[$i] .. $full_invlist_ref->[$i+1] -1) {
+                $adjust++;
+                if (! ref $full_invmap_ref->[$i]) {
 
-			# There can't be a simple without a full, and simple
-			# overrides all but full
+                    # This is a single character mapping
+                    $CASEFOLD{$j}{'status'} = 'C';
+                    $CASEFOLD{$j}{'simple'}
+                        = $CASEFOLD{$j}{'full'}
+                        = $CASEFOLD{$j}{'mapping'}
+                        = sprintf("%04X", $full_invmap_ref->[$i] + $adjust);
+                    $CASEFOLD{$j}{'code'} = sprintf("%04X", $j);
+                    $CASEFOLD{$j}{'turkic'} = "";
+                }
+                else {  # prop_invmap ensures that $adjust is 0 for a ref
+                    $CASEFOLD{$j}{'status'} = 'F';
+                    $CASEFOLD{$j}{'full'}
+                    = $CASEFOLD{$j}{'mapping'}
+                    = join " ", map { sprintf "%04X", $_ }
+                                                    @{$full_invmap_ref->[$i]};
+                    $CASEFOLD{$j}{'simple'} = "";
+                    $CASEFOLD{$j}{'code'} = sprintf("%04X", $j);
+                    $CASEFOLD{$j}{'turkic'} = "";
+                }
+            }
+        }
 
-			$CASEFOLD{$code}{'simple'} = $3;
-			$CASEFOLD{$code}{'mapping'} = $3;
-			$CASEFOLD{$code}{'status'} = $2;
-		    } elsif ($2 eq 'T') {
-			$CASEFOLD{$code}{'turkic'} = $3;
-		    } # else can't happen because only [CIFST] are possible
-		}
-	    }
-	    close($CASEFOLDFH);
-	}
+        # We have filled in the full mappings above, assuming there were no
+        # simple ones for the ones with multi-character maps.  Now, we find
+        # and fix the cases where that assumption was false.
+        (my ($simple_invlist_ref, $simple_invmap_ref, undef), $default)
+                                        = prop_invmap('Simple_Case_Folding');
+        for my $i (0 .. @$simple_invlist_ref - 1 - 1) {
+            next if $simple_invmap_ref->[$i] == $default;
+            my $adjust = -1;
+            for my $j ($simple_invlist_ref->[$i]
+                       .. $simple_invlist_ref->[$i+1] -1)
+            {
+                $adjust++;
+                next if $CASEFOLD{$j}{'status'} eq 'C';
+                $CASEFOLD{$j}{'status'} = 'S';
+                $CASEFOLD{$j}{'simple'}
+                    = $CASEFOLD{$j}{'mapping'}
+                    = sprintf("%04X", $simple_invmap_ref->[$i] + $adjust);
+                $CASEFOLD{$j}{'code'} = sprintf("%04X", $j);
+                $CASEFOLD{$j}{'turkic'} = "";
+            }
+        }
+
+        # We hard-code in the turkish rules
+        UnicodeVersion() unless defined $v_unicode_version;
+        if ($v_unicode_version ge v3.2.0) {
+
+            # These two code points should already have regular entries, so
+            # just fill in the turkish fields
+            $CASEFOLD{ord('I')}{'turkic'} = '0131';
+            $CASEFOLD{0x130}{'turkic'} = sprintf "%04X", ord('i');
+        }
+        elsif ($v_unicode_version ge v3.1.0) {
+
+            # These two code points don't have entries otherwise.
+            $CASEFOLD{0x130}{'code'} = '0130';
+            $CASEFOLD{0x131}{'code'} = '0131';
+            $CASEFOLD{0x130}{'status'} = $CASEFOLD{0x131}{'status'} = 'I';
+            $CASEFOLD{0x130}{'turkic'}
+                = $CASEFOLD{0x130}{'mapping'}
+                = $CASEFOLD{0x130}{'full'}
+                = $CASEFOLD{0x130}{'simple'}
+                = $CASEFOLD{0x131}{'turkic'}
+                = $CASEFOLD{0x131}{'mapping'}
+                = $CASEFOLD{0x131}{'full'}
+                = $CASEFOLD{0x131}{'simple'}
+                = sprintf "%04X", ord('i');
+        }
     }
 }
 
@@ -1057,6 +1162,55 @@ sub casefold {
     _casefold() unless %CASEFOLD;
 
     return $CASEFOLD{$code};
+}
+
+=head2 B<all_casefolds()>
+
+
+    use Unicode::UCD 'all_casefolds';
+
+    my $all_folds_ref = all_casefolds();
+    foreach my $char_with_casefold (sort { $a <=> $b }
+                                    keys %$all_folds_ref)
+    {
+        printf "%04X:", $char_with_casefold;
+        my $casefold = $all_folds_ref->{$char_with_casefold};
+
+        # Get folds for $char_with_casefold
+
+        my @full_fold_hex = split / /, $casefold->{'full'};
+        my $full_fold_string =
+                    join "", map {chr(hex($_))} @full_fold_hex;
+        print " full=", join " ", @full_fold_hex;
+        my @turkic_fold_hex =
+                        split / /, ($casefold->{'turkic'} ne "")
+                                        ? $casefold->{'turkic'}
+                                        : $casefold->{'full'};
+        my $turkic_fold_string =
+                        join "", map {chr(hex($_))} @turkic_fold_hex;
+        print "; turkic=", join " ", @turkic_fold_hex;
+        if (defined $casefold && $casefold->{'simple'} ne "") {
+            my $simple_fold_hex = $casefold->{'simple'};
+            my $simple_fold_string = chr(hex($simple_fold_hex));
+            print "; simple=$simple_fold_hex";
+        }
+        print "\n";
+    }
+
+This returns all the case foldings in the current version of Unicode in the
+form of a reference to a hash.  Each key to the hash is the decimal
+representation of a Unicode character that has a casefold to other than
+itself.  The casefold of a semi-colon is itself, so it isn't in the hash;
+likewise for a lowercase "a", but there is an entry for a capital "A".  The
+hash value for each key is another hash, identical to what is returned by
+L</casefold()> if called with that code point as its argument.  So the value
+C<< all_casefolds()->{ord("A")}' >> is equivalent to C<casefold(ord("A"))>;
+
+=cut
+
+sub all_casefolds () {
+    _casefold() unless %CASEFOLD;
+    return _dclone \%CASEFOLD;
 }
 
 =head2 B<casespec()>
@@ -1161,15 +1315,25 @@ my %CASESPEC;
 
 sub _casespec {
     unless (%CASESPEC) {
-	if (openunicode(\$CASESPECFH, "SpecialCasing.txt")) {
+        UnicodeVersion() unless defined $v_unicode_version;
+        if ($v_unicode_version lt v2.1.8) {
+            %CASESPEC = {};
+        }
+	elsif (openunicode(\$CASESPECFH, "SpecialCasing.txt")) {
 	    local $_;
 	    local $/ = "\n";
 	    while (<$CASESPECFH>) {
 		if (/^([0-9A-F]+); ([0-9A-F]+(?: [0-9A-F]+)*)?; ([0-9A-F]+(?: [0-9A-F]+)*)?; ([0-9A-F]+(?: [0-9A-F]+)*)?; (\w+(?: \w+)*)?/) {
+
 		    my ($hexcode, $lower, $title, $upper, $condition) =
 			($1, $2, $3, $4, $5);
 		    my $code = hex($hexcode);
-		    if (exists $CASESPEC{$code}) {
+
+                    # In 2.1.8, there were duplicate entries; ignore all but
+                    # the first one -- there were no conditions in the file
+                    # anyway.
+		    if (exists $CASESPEC{$code} && $v_unicode_version ne v2.1.8)
+                    {
 			if (exists $CASESPEC{$code}->{code}) {
 			    my ($oldlower,
 				$oldtitle,
@@ -1222,7 +1386,7 @@ sub casespec {
 
     _casespec() unless %CASESPEC;
 
-    return ref $CASESPEC{$code} ? dclone $CASESPEC{$code} : $CASESPEC{$code};
+    return ref $CASESPEC{$code} ? _dclone $CASESPEC{$code} : $CASESPEC{$code};
 }
 
 =head2 B<namedseq()>
@@ -1307,16 +1471,6 @@ sub namedseq {
 my %NUMERIC;
 
 sub _numeric {
-
-    # Unicode 6.0 instituted the rule that only digits in a consecutive
-    # block of 10 would be considered decimal digits.  Before that, the only
-    # problematic code point that I'm (khw) aware of is U+019DA, NEW TAI LUE
-    # THAM DIGIT ONE, which is an alternate form of U+019D1, NEW TAI LUE DIGIT
-    # ONE.  The code could be modified to handle that, but not bothering, as
-    # in TUS 6.0, U+19DA was changed to Nt=Di.
-    if ((pack "C*", split /\./, UnicodeVersion()) lt 6.0.0) {
-	croak __PACKAGE__, "::num requires Unicode 6.0 or greater"
-    }
     my @numbers = _read_table("To/Nv.pl");
     foreach my $entry (@numbers) {
         my ($start, $end, $value) = @$entry;
@@ -1427,14 +1581,43 @@ sub num {
     return if $string =~ /\D/;
     my $first_ord = ord(substr($string, 0, 1));
     my $value = $NUMERIC{$first_ord};
+
+    # To be a valid decimal number, it should be in a block of 10 consecutive
+    # characters, whose values are 0, 1, 2, ... 9.  Therefore this digit's
+    # value is its offset in that block from the character that means zero.
     my $zero_ord = $first_ord - $value;
 
+    # Unicode 6.0 instituted the rule that only digits in a consecutive
+    # block of 10 would be considered decimal digits.  If this is an earlier
+    # release, we verify that this first character is a member of such a
+    # block.  That is, that the block of characters surrounding this one
+    # consists of all \d characters whose numeric values are the expected
+    # ones.
+    UnicodeVersion() unless defined $v_unicode_version;
+    if ($v_unicode_version lt v6.0.0) {
+        for my $i (0 .. 9) {
+            my $ord = $zero_ord + $i;
+            return unless chr($ord) =~ /\d/;
+            my $numeric = $NUMERIC{$ord};
+            return unless defined $numeric;
+            return unless $numeric == $i;
+        }
+    }
+
     for my $i (1 .. $length -1) {
+
+        # Here we know either by verifying, or by fact of the first character
+        # being a \d in Unicode 6.0 or later, that any character between the
+        # character that means 0, and 9 positions above it must be \d, and
+        # must have its value correspond to its offset from the zero.  Any
+        # characters outside these 10 do not form a legal number for this
+        # function.
         my $ord = ord(substr($string, $i, 1));
         my $digit = $ord - $zero_ord;
         return unless $digit >= 0 && $digit <= 9;
         $value = $value * 10 + $digit;
     }
+
     return $value;
 }
 
@@ -1676,7 +1859,7 @@ sub prop_aliases ($) {
     # The full name is in element 1.
     return $list_ref->[1] unless wantarray;
 
-    return @{dclone $list_ref};
+    return @{_dclone $list_ref};
 }
 
 =pod
@@ -1815,7 +1998,7 @@ sub prop_value_aliases ($$) {
         # The full name is in element 1.
         return $list_ref->[1] unless wantarray;
 
-        return @{dclone $list_ref};
+        return @{_dclone $list_ref};
     }
 
     return $list_ref->[0] unless wantarray;
@@ -1842,7 +2025,8 @@ by the input parameter string:
  prints:
  0, 1114112
 
-An empty list is returned if the input is unknown; the number of elements in
+If the input is unknown C<undef> is returned in scalar context; an empty-list
+in list context.  If the input is known, the number of elements in
 the list is returned if called in scalar context.
 
 L<perluniprops|perluniprops/Properties accessible through \p{} and \P{}> gives
@@ -1952,8 +2136,12 @@ properties, and will return C<undef> if called with one of those.
 our %loose_defaults;
 our $MAX_UNICODE_CODEPOINT;
 
-sub prop_invlist ($) {
+sub prop_invlist ($;$) {
     my $prop = $_[0];
+
+    # Undocumented way to get at Perl internal properties
+    my $internal_ok = defined $_[1] && $_[1] eq '_perl_core_internal_ok';
+
     return if ! defined $prop;
 
     require "utf8_heavy.pl";
@@ -1970,7 +2158,7 @@ sub prop_invlist ($) {
               || ref $swash eq ""
               || $swash->{'BITS'} != 1
               || $swash->{'USER_DEFINED'}
-              || $prop =~ /^\s*_/;
+              || (! $internal_ok && $prop =~ /^\s*_/);
 
     if ($swash->{'EXTRAS'}) {
         carp __PACKAGE__, "::prop_invlist: swash returned for $prop unexpectedly has EXTRAS magic";
@@ -2075,7 +2263,8 @@ sub prop_invlist ($) {
 
 sub _search_invlist {
     # Find the range in the inversion list which contains a code point; that
-    # is, find i such that l[i] <= code_point < l[i+1]
+    # is, find i such that l[i] <= code_point < l[i+1].  Returns undef if no
+    # such i.
 
     # If this is ever made public, could use to speed up .t specials.  Would
     # need to use code point argument, as in other functions in this pm
@@ -2085,7 +2274,10 @@ sub _search_invlist {
     # Verify non-neg numeric  XXX
 
     my $max_element = @$list_ref - 1;
-    return if ! $max_element < 0;     # Undef if list is empty.
+
+    # Return undef if list is empty or requested item is before the first element.
+    return if $max_element < 0;
+    return if $code_point < $list_ref->[0];
 
     # Short cut something at the far-end of the table.  This also allows us to
     # refer to element [$i+1] without fear of being out-of-bounds in the loop
@@ -2431,7 +2623,7 @@ means that all the elements of the map array are either rational numbers or
 the string C<"NaN">, meaning "Not a Number".  A rational number is either an
 integer, or two integers separated by a solidus (C<"/">).  The second integer
 represents the denominator of the division implied by the solidus, and is
-actually always positive, so it is guaranteed not to be 0 and to not to be
+actually always positive, so it is guaranteed not to be 0 and to not be
 signed.  When the element is a plain integer (without the
 solidus), it may need to be adjusted to get the correct value by adding the
 offset, just as other C<"a"> properties.  No adjustment is needed for
@@ -2443,7 +2635,7 @@ can use something like this:
 
  my ($invlist_ref, $invmap_ref, $format) = prop_invmap($property);
  if ($format && $format eq "ar") {
-     map { $_ = eval $_ } @$invmap_ref;
+     map { $_ = eval $_ if $_ ne 'NaN' } @$map_ref;
  }
 
 Here's some entries from the output of the property "Nv", which has format
@@ -2665,7 +2857,7 @@ RETRY:
             $prop = "age";
             goto RETRY;
         }
-        elsif ($second_try =~ / ^ s ( cf | [ltu] c ) $ /x) {
+        elsif ($second_try =~ / ^ s ( cf | fc | [ltu] c ) $ /x) {
 
             # These properties use just the LIST part of the full mapping,
             # which includes the simple maps that are otherwise overridden by
@@ -2674,7 +2866,11 @@ RETRY:
             $overrides = -1;
 
             # The full name is the simple name stripped of its initial 's'
-            $prop = $second_try =~ s/^s//r;
+            $prop = $1;
+
+            # .. except for this case
+            $prop = 'cf' if $prop eq 'fc';
+
             goto RETRY;
         }
         elsif ($second_try eq "blk") {
@@ -2733,7 +2929,7 @@ RETRY:
                 my ($hex_code_point, $name) = split "\t", $line;
 
                 # Weeds out all comments, blank lines, and named sequences
-                next if $hex_code_point =~ /\P{ASCII_HEX_DIGIT}/;
+                next if $hex_code_point =~ /[^[:xdigit:]]/a;
 
                 my $code_point = hex $hex_code_point;
 
@@ -2791,8 +2987,11 @@ RETRY:
             $decomps{'LIST'} = "";
 
             # This property has one special range not in the file: for the
-            # hangul syllables
-            my $done_hangul = 0;    # Have we done the hangul range.
+            # hangul syllables.  But not in Unicode version 1.
+            UnicodeVersion() unless defined $v_unicode_version;
+            my $done_hangul = ($v_unicode_version lt v2.0.0)
+                              ? 1
+                              : 0;    # Have we done the hangul range ?
             foreach my $line (split "\n", $original) {
                 my ($hex_lower, $hex_upper, $type_and_map) = split "\t", $line;
                 my $code_point = hex $hex_lower;
@@ -2820,6 +3019,12 @@ RETRY:
                                         ($second_try eq 'dt')
                                         ? "Canonical"
                                         : "<hangul syllable>";
+                }
+
+                if ($value =~ / / && $hex_upper ne "" && $hex_upper ne $hex_lower) {
+                    $line = sprintf("%04X\t%s\t%s", hex($hex_lower) + 1, $hex_upper, $value);
+                    $hex_upper = "";
+                    $redo = 1;
                 }
 
                 # And append this to our constructed LIST.
@@ -2863,8 +3068,8 @@ RETRY:
                     }
                     else {
 
-                        # These should all single-element ranges.
-                        croak __PACKAGE__, "::prop_invmap: Not expecting a mapping with multiple code points in a multi-element range, $ranges[$i]" if $hex_end ne "";
+                        # These should all be single-element ranges.
+                        croak __PACKAGE__, "::prop_invmap: Not expecting a mapping with multiple code points in a multi-element range, $ranges[$i]" if $hex_end ne "" && $hex_end ne $hex_begin;
 
                         # Convert them to decimal, as that's what's expected.
                         $list .= "$hex_begin\t\t"
@@ -3334,6 +3539,7 @@ sub UnicodeVersion {
 	croak __PACKAGE__, "::VERSION: strange version '$UNICODEVERSION'"
 	    unless $UNICODEVERSION =~ /^\d+(?:\.\d+)+$/;
     }
+    $v_unicode_version = pack "C*", split /\./, $UNICODEVERSION;
     return $UNICODEVERSION;
 }
 
@@ -3342,7 +3548,8 @@ sub UnicodeVersion {
 The difference between a block and a script is that scripts are closer
 to the linguistic notion of a set of code points required to present
 languages, while block is more of an artifact of the Unicode code point
-numbering and separation into blocks of (mostly) 256 code points.
+numbering and separation into blocks of consecutive code points (so far the
+size of a block is some multiple of 16, like 128 or 256).
 
 For example the Latin B<script> is spread over several B<blocks>, such
 as C<Basic Latin>, C<Latin 1 Supplement>, C<Latin Extended-A>, and

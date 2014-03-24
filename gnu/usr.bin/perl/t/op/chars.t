@@ -1,74 +1,82 @@
 #!./perl
 
-print "1..33\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 34;
 
 # because of ebcdic.c these should be the same on asciiish 
 # and ebcdic machines.
 # Peter Prymmer <pvhp@best.com>.
 
 my $c = "\c@";
-print +((ord($c) == 0) ? "" : "not "),"ok 1\n";
+is (ord($c), 0, '\c@');
 $c = "\cA";
-print +((ord($c) == 1) ? "" : "not "),"ok 2\n";
+is (ord($c), 1, '\cA');
 $c = "\cB";
-print +((ord($c) == 2) ? "" : "not "),"ok 3\n";
+is (ord($c), 2, '\cB');
 $c = "\cC";
-print +((ord($c) == 3) ? "" : "not "),"ok 4\n";
+is (ord($c), 3, '\cC');
 $c = "\cD";
-print +((ord($c) == 4) ? "" : "not "),"ok 5\n";
+is (ord($c), 4, '\cD');
 $c = "\cE";
-print +((ord($c) == 5) ? "" : "not "),"ok 6\n";
+is (ord($c), 5, '\cE');
 $c = "\cF";
-print +((ord($c) == 6) ? "" : "not "),"ok 7\n";
+is (ord($c), 6, '\cF');
 $c = "\cG";
-print +((ord($c) == 7) ? "" : "not "),"ok 8\n";
+is (ord($c), 7, '\cG');
 $c = "\cH";
-print +((ord($c) == 8) ? "" : "not "),"ok 9\n";
+is (ord($c), 8, '\cH');
 $c = "\cI";
-print +((ord($c) == 9) ? "" : "not "),"ok 10\n";
+is (ord($c), 9, '\cI');
 $c = "\cJ";
-print +((ord($c) == 10) ? "" : "not "),"ok 11\n";
+is (ord($c), 10, '\cJ');
 $c = "\cK";
-print +((ord($c) == 11) ? "" : "not "),"ok 12\n";
+is (ord($c), 11, '\cK');
 $c = "\cL";
-print +((ord($c) == 12) ? "" : "not "),"ok 13\n";
+is (ord($c), 12, '\cL');
 $c = "\cM";
-print +((ord($c) == 13) ? "" : "not "),"ok 14\n";
+is (ord($c), 13, '\cM');
 $c = "\cN";
-print +((ord($c) == 14) ? "" : "not "),"ok 15\n";
+is (ord($c), 14, '\cN');
 $c = "\cO";
-print +((ord($c) == 15) ? "" : "not "),"ok 16\n";
+is (ord($c), 15, '\cO');
 $c = "\cP";
-print +((ord($c) == 16) ? "" : "not "),"ok 17\n";
+is (ord($c), 16, '\cP');
 $c = "\cQ";
-print +((ord($c) == 17) ? "" : "not "),"ok 18\n";
+is (ord($c), 17, '\cQ');
 $c = "\cR";
-print +((ord($c) == 18) ? "" : "not "),"ok 19\n";
+is (ord($c), 18, '\cR');
 $c = "\cS";
-print +((ord($c) == 19) ? "" : "not "),"ok 20\n";
+is (ord($c), 19, '\cS');
 $c = "\cT";
-print +((ord($c) == 20) ? "" : "not "),"ok 21\n";
+is (ord($c), 20, '\cT');
 $c = "\cU";
-print +((ord($c) == 21) ? "" : "not "),"ok 22\n";
+is (ord($c), 21, '\cU');
 $c = "\cV";
-print +((ord($c) == 22) ? "" : "not "),"ok 23\n";
+is (ord($c), 22, '\cV');
 $c = "\cW";
-print +((ord($c) == 23) ? "" : "not "),"ok 24\n";
+is (ord($c), 23, '\cW');
 $c = "\cX";
-print +((ord($c) == 24) ? "" : "not "),"ok 25\n";
+is (ord($c), 24, '\cX');
 $c = "\cY";
-print +((ord($c) == 25) ? "" : "not "),"ok 26\n";
+is (ord($c), 25, '\cY');
 $c = "\cZ";
-print +((ord($c) == 26) ? "" : "not "),"ok 27\n";
+is (ord($c), 26, '\cZ');
 $c = "\c[";
-print +((ord($c) == 27) ? "" : "not "),"ok 28\n";
+is (ord($c), 27, '\c[');
 $c = "\c\\";
-print +((ord($c) == 28) ? "" : "not "),"ok 29\n";
+is (ord($c), 28, '\c\\');
 $c = "\c]";
-print +((ord($c) == 29) ? "" : "not "),"ok 30\n";
+is (ord($c), 29, '\c]');
 $c = "\c^";
-print +((ord($c) == 30) ? "" : "not "),"ok 31\n";
+is (ord($c), 30, '\c^');
 $c = "\c_";
-print +((ord($c) == 31) ? "" : "not "),"ok 32\n";
+is (ord($c), 31, '\c_');
 $c = "\c?";
-print +((ord($c) == 127) ? "" : "not "),"ok 33\n";
+is (ord($c), 127, '\c?');
+$c = '';
+is (ord($c), 0, 'ord("") is 0');

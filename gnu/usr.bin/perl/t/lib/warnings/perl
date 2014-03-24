@@ -223,3 +223,9 @@ BEGIN { $^W = 1 }
 $ŷ = 3 ;
 EXPECT
 Name "ɕლȃṢȿ::ŷ" used only once: possible typo at - line 9.
+########
+
+use warnings 'once';
+$foo++; BEGIN { eval q|@a =~ s///; sub foo;| }
+EXPECT
+Name "main::foo" used only once: possible typo at - line 3.

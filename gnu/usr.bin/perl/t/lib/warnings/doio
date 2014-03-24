@@ -159,10 +159,16 @@ Unsuccessful stat on filename containing newline at - line 4.
 # doio.c [Perl_my_stat]
 use warnings 'io';
 -l STDIN;
+-l $fh;
+open $fh, $0 or die "# $!";
+-l $fh;
 no warnings 'io';
 -l STDIN;
+-l $fh;
+close $fh;
 EXPECT
 Use of -l on filehandle STDIN at - line 3.
+Use of -l on filehandle $fh at - line 6.
 ########
 # doio.c [Perl_my_stat]
 use utf8;

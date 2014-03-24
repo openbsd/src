@@ -11,7 +11,7 @@ package Module::Metadata;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.000009';
+$VERSION = '1.000011';
 $VERSION = eval $VERSION;
 
 use Carp qw/croak/;
@@ -60,7 +60,6 @@ my $VERS_REGEXP = qr{ # match a VERSION definition
   \s*
   =[^=~]  # = but not ==, nor =~
 }x;
-
 
 sub new_from_file {
   my $class    = shift;
@@ -219,7 +218,7 @@ sub new_from_module {
     # separating into primary & alternative candidates
     my( %prime, %alt );
     foreach my $file (@files) {
-      my $mapped_filename = File::Spec->abs2rel( $file, $dir );
+      my $mapped_filename = File::Spec::Unix->abs2rel( $file, $dir );
       my @path = split( /\//, $mapped_filename );
       (my $prime_package = join( '::', @path )) =~ s/\.pm$//;
   
@@ -232,10 +231,12 @@ sub new_from_module {
   
         my $version = $pm_info->version( $package );
   
+        $prime_package = $package if lc($prime_package) eq lc($package);
         if ( $package eq $prime_package ) {
           if ( exists( $prime{$package} ) ) {
             croak "Unexpected conflict in '$package'; multiple versions found.\n";
           } else {
+            $mapped_filename = "$package.pm" if lc("$package.pm") eq lc($mapped_filename);
             $prime{$package}{file} = $mapped_filename;
             $prime{$package}{version} = $version if defined( $version );
           }
@@ -420,7 +421,7 @@ sub _parse_version_expression {
   my $line = shift;
 
   my( $sig, $var, $pkg );
-  if ( $line =~ $VERS_REGEXP ) {
+  if ( $line =~ /$VERS_REGEXP/o ) {
     ( $sig, $var, $pkg ) = $2 ? ( $1, $2, $3 ) : ( $4, $5, $6 );
     if ( $pkg ) {
       $pkg = ($pkg eq '::') ? 'main' : $pkg;
@@ -438,7 +439,47 @@ sub _parse_file {
   my $fh = IO::File->new( $filename )
     or croak( "Can't open '$filename': $!" );
 
+  $self->_handle_bom($fh, $filename);
+
   $self->_parse_fh($fh);
+}
+
+# Look for a UTF-8/UTF-16BE/UTF-16LE BOM at the beginning of the stream.
+# If there's one, then skip it and set the :encoding layer appropriately.
+sub _handle_bom {
+  my ($self, $fh, $filename) = @_;
+
+  my $pos = $fh->getpos;
+  return unless defined $pos;
+
+  my $buf = ' ' x 2;
+  my $count = $fh->read( $buf, length $buf );
+  return unless defined $count and $count >= 2;
+
+  my $encoding;
+  if ( $buf eq "\x{FE}\x{FF}" ) {
+    $encoding = 'UTF-16BE';
+  } elsif ( $buf eq "\x{FF}\x{FE}" ) {
+    $encoding = 'UTF-16LE';
+  } elsif ( $buf eq "\x{EF}\x{BB}" ) {
+    $buf = ' ';
+    $count = $fh->read( $buf, length $buf );
+    if ( defined $count and $count >= 1 and $buf eq "\x{BF}" ) {
+      $encoding = 'UTF-8';
+    }
+  }
+
+  if ( defined $encoding ) {
+    if ( "$]" >= 5.008 ) {
+      # $fh->binmode requires perl 5.10
+      binmode( $fh, ":encoding($encoding)" );
+    }
+  } else {
+    $fh->setpos($pos)
+      or croak( sprintf "Can't reset position to the top of '$filename'" );
+  }
+
+  return $encoding;
 }
 
 sub _parse_fh {
@@ -454,16 +495,21 @@ sub _parse_fh {
     my $line_num = $.;
 
     chomp( $line );
-    next if $line =~ /^\s*#/;
 
-    $in_pod = ($line =~ /^=(?!cut)/) ? 1 : ($line =~ /^=cut/) ? 0 : $in_pod;
+    # From toke.c : any line that begins by "=X", where X is an alphabetic
+    # character, introduces a POD segment.
+    my $is_cut;
+    if ( $line =~ /^=([a-zA-Z].*)/ ) {
+      my $cmd = $1;
+      # Then it goes back to Perl code for "=cutX" where X is a non-alphabetic
+      # character (which includes the newline, but here we chomped it away).
+      $is_cut = $cmd =~ /^cut(?:[^a-zA-Z]|$)/;
+      $in_pod = !$is_cut;
+    }
 
-    # Would be nice if we could also check $in_string or something too
-    last if !$in_pod && $line =~ /^__(?:DATA|END)__$/;
+    if ( $in_pod ) {
 
-    if ( $in_pod || $line =~ /^=cut/ ) {
-
-      if ( $line =~ /^=head\d\s+(.+)\s*$/ ) {
+      if ( $line =~ /^=head[1-4]\s+(.+)\s*$/ ) {
 	push( @pod, $1 );
 	if ( $self->{collect_pod} && length( $pod_data ) ) {
           $pod{$pod_sect} = $pod_data;
@@ -471,25 +517,37 @@ sub _parse_fh {
         }
 	$pod_sect = $1;
 
-
       } elsif ( $self->{collect_pod} ) {
 	$pod_data .= "$line\n";
 
       }
 
+    } elsif ( $is_cut ) {
+
+      if ( $self->{collect_pod} && length( $pod_data ) ) {
+        $pod{$pod_sect} = $pod_data;
+        $pod_data = '';
+      }
+      $pod_sect = '';
+
     } else {
 
-      $pod_sect = '';
-      $pod_data = '';
+      # Skip comments in code
+      next if $line =~ /^\s*#/;
+
+      # Would be nice if we could also check $in_string or something too
+      last if $line =~ /^__(?:DATA|END)__$/;
 
       # parse $line to see if it's a $VERSION declaration
       my( $vers_sig, $vers_fullname, $vers_pkg ) =
-	  $self->_parse_version_expression( $line );
+          ($line =~ /VERSION/)
+              ? $self->_parse_version_expression( $line )
+              : ();
 
-      if ( $line =~ $PKG_REGEXP ) {
+      if ( $line =~ /$PKG_REGEXP/o ) {
         $pkg = $1;
         push( @pkgs, $pkg ) unless grep( $pkg eq $_, @pkgs );
-        $vers{$pkg} = (defined $2 ? $2 : undef)  unless exists( $vers{$pkg} );
+        $vers{$pkg} = $2 unless exists( $vers{$pkg} );
         $need_vers = defined $2 ? 0 : 1;
 
       # VERSION defined with full package spec, i.e. $Module::VERSION
@@ -500,14 +558,6 @@ sub _parse_fh {
 	unless ( defined $vers{$vers_pkg} && length $vers{$vers_pkg} ) {
 	  $vers{$vers_pkg} =
 	    $self->_evaluate_version_line( $vers_sig, $vers_fullname, $line );
-	} else {
-	  # Warn unless the user is using the "$VERSION = eval
-	  # $VERSION" idiom (though there are probably other idioms
-	  # that we should watch out for...)
-	  warn <<"EOM" unless $line =~ /=\s*eval/;
-Package '$vers_pkg' already declared with version '$vers{$vers_pkg}',
-ignoring subsequent declaration on line $line_num.
-EOM
 	}
 
       # first non-comment line in undeclared package main is VERSION
@@ -533,12 +583,7 @@ EOM
 
 	unless ( defined $vers{$pkg} && length $vers{$pkg} ) {
 	  $vers{$pkg} = $v;
-	} else {
-	  warn <<"EOM";
-Package '$pkg' already declared with version '$vers{$pkg}'
-ignoring new version '$v' on line $line_num.
-EOM
-	}
+	} 
 
       }
 
@@ -730,27 +775,43 @@ without executing unsafe code.
 
 =item C<< new_from_file($filename, collect_pod => 1) >>
 
-Construct a C<Module::Metadata> object given the path to a file. Takes an
-optional argument C<collect_pod> which is a boolean that determines whether POD
-data is collected and stored for reference. POD data is not collected by
-default. POD headings are always collected.  Returns undef if the filename
-does not exist.
+Constructs a C<Module::Metadata> object given the path to a file.  Returns
+undef if the filename does not exist.
+
+C<collect_pod> is a optional boolean argument that determines whether POD
+data is collected and stored for reference.  POD data is not collected by
+default.  POD headings are always collected.
+
+If the file begins by an UTF-8, UTF-16BE or UTF-16LE byte-order mark, then
+it is skipped before processing, and the content of the file is also decoded
+appropriately starting from perl 5.8.
 
 =item C<< new_from_handle($handle, $filename, collect_pod => 1) >>
 
 This works just like C<new_from_file>, except that a handle can be provided
-as the first argument.  Note that there is no validation to confirm that the
-handle is a handle or something that can act like one.  Passing something that
-isn't a handle will cause a exception when trying to read from it.  The
-C<filename> argument is mandatory or undef will be returned.
+as the first argument.
+
+Note that there is no validation to confirm that the handle is a handle or
+something that can act like one.  Passing something that isn't a handle will
+cause a exception when trying to read from it.  The C<filename> argument is
+mandatory or undef will be returned.
+
+You are responsible for setting the decoding layers on C<$handle> if
+required.
 
 =item C<< new_from_module($module, collect_pod => 1, inc => \@dirs) >>
 
-Construct a C<Module::Metadata> object given a module or package name. In addition
-to accepting the C<collect_pod> argument as described above, this
-method accepts a C<inc> argument which is a reference to an array of
-of directories to search for the module. If none are given, the
-default is @INC.  Returns undef if the module cannot be found.
+Constructs a C<Module::Metadata> object given a module or package name.
+Returns undef if the module cannot be found.
+
+In addition to accepting the C<collect_pod> argument as described above,
+this method accepts a C<inc> argument which is a reference to an array of
+directories to search for the module.  If none are given, the default is
+@INC.
+
+If the file that contains the module begins by an UTF-8, UTF-16BE or
+UTF-16LE byte-order mark, then it is skipped before processing, and the
+content of the file is also decoded appropriately starting from perl 5.8.
 
 =item C<< find_module_by_name($module, \@dirs) >>
 
@@ -897,7 +958,7 @@ Original code from Module::Build::ModuleInfo by Ken Williams
 Released as Module::Metadata by Matt S Trout (mst) <mst@shadowcat.co.uk> with
 assistance from David Golden (xdg) <dagolden@cpan.org>.
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT & LICENSE
 
 Original code Copyright (c) 2001-2011 Ken Williams.
 Additional code Copyright (c) 2010-2011 Matt Trout and David Golden.

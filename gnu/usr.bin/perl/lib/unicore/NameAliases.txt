@@ -1,5 +1,5 @@
-# NameAliases-6.1.0.txt
-# Date: 2012-01-03, 21:52:00 GMT [KW]
+# NameAliases-6.2.0.txt
+# Date: 2012-05-15, 18:44:00 GMT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
@@ -216,6 +216,7 @@
 01A2;LATIN CAPITAL LETTER GHA;correction
 01A3;LATIN SMALL LETTER GHA;correction
 034F;CGJ;abbreviation
+0709;SYRIAC SUBLINEAR COLON SKEWED LEFT;correction
 0CDE;KANNADA LETTER LLLA;correction
 0E9D;LAO LETTER FO FON;correction
 0E9F;LAO LETTER FO FAY;correction

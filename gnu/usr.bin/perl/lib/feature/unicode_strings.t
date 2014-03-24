@@ -172,6 +172,7 @@ for my $i ( 0x30 .. 0x39,   # 0-9
 my @s = (0) x 256;
 $s[ord_latin1_to_native 0x09] = 1;   # Tab
 $s[ord_latin1_to_native 0x0A] = 1;   # LF
+$s[ord_latin1_to_native 0x0B] = 1;   # VT
 $s[ord_latin1_to_native 0x0C] = 1;   # FF
 $s[ord_latin1_to_native 0x0D] = 1;   # CR
 $s[ord_latin1_to_native 0x20] = 1;   # SPACE

@@ -481,7 +481,7 @@ buffered otherwise.  Setting this variable is useful primarily when
 you are outputting to a pipe or socket, such as when you are running
 a Perl program under B<rsh> and want to see the output as it's
 happening.  This has no effect on input buffering.  See L<perlfunc/getc>
-for that.  See L<perldoc/select> on how to select the output channel. 
+for that.  See L<perlfunc/select> on how to select the output channel.
 See also L<IO::Handle>. (Mnemonic: when you want your pipes to be piping hot.)
 
 =item IO::Handle->output_field_separator EXPR
@@ -725,7 +725,7 @@ contains formline() calls that put their result into C<$^A>.  After
 calling its format, write() prints out the contents of C<$^A> and empties.
 So you never really see the contents of C<$^A> unless you call
 formline() yourself and then look at it.  See L<perlform> and
-L<perlfunc/formline()>.
+L<formline|perlfunc/formline PICTURE,LIST>.
 
 =item $CHILD_ERROR
 

@@ -2,7 +2,7 @@ package ExtUtils::Typemaps;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.16';
+our $VERSION = '3.19';
 #use Carp qw(croak);
 
 require ExtUtils::ParseXS;
@@ -23,7 +23,7 @@ ExtUtils::Typemaps - Read/Write/Modify Perl/XS typemap files
   # $typemap = ExtUtils::Typemaps->new();
   # alternatively create an in-memory typemap by parsing a string
   # $typemap = ExtUtils::Typemaps->new(string => $sometypemap);
-  
+
   # add a mapping
   $typemap->add_typemap(ctype => 'NV', xstype => 'T_NV');
   $typemap->add_inputmap(
@@ -34,13 +34,13 @@ ExtUtils::Typemaps - Read/Write/Modify Perl/XS typemap files
   );
   $typemap->add_string(string => $typemapstring);
                                            # will be parsed and merged
-  
+
   # remove a mapping (same for remove_typemap and remove_outputmap...)
   $typemap->remove_inputmap(xstype => 'SomeType');
-  
+
   # save a typemap to a file
   $typemap->write(file => 'anotherfile.map');
-  
+
   # merge the other typemap into this one
   $typemap->merge(typemap => $another_typemap);
 

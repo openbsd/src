@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..53\n"; }
+BEGIN { $| = 1; print "1..89\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -28,14 +28,13 @@ use Unicode::Collate;
 
 ok(1);
 
-#########################
+##### 1
 
 my $Collator = Unicode::Collate->new(
   table => 'keys.txt',
   normalization => undef,
+  UCA_Version => 24,
 );
-
-##############
 
 ok($Collator->viewSortKey(""), "[| | |]");
 
@@ -60,7 +59,7 @@ ok($Collator->viewSortKey("A"), "[0A15 | 0020 | |]");
 $Collator->change(level => 1);
 ok($Collator->viewSortKey("A"), "[0A15 | | |]");
 
-### Version 8
+##### 10
 
 $Collator->change(level => 4, UCA_Version => 8);
 
@@ -87,7 +86,7 @@ ok($Collator->viewSortKey("A"), "[0A15|0020||]");
 $Collator->change(level => 1);
 ok($Collator->viewSortKey("A"), "[0A15|||]");
 
-# Version 9
+##### 19
 
 $Collator->change(level => 3, UCA_Version => 9);
 ok($Collator->viewSortKey("A\x{300}z\x{301}"),
@@ -156,7 +155,7 @@ ok($Collator->viewSortKey("?!."), '[| | | 024E 024B 0255]');
 
 $Collator->change(%origVar);
 
-#####
+##### 37
 
 # Level 3 weight
 
@@ -197,7 +196,7 @@ ok($Collator->viewSortKey("a\x{3042}"),
 ok($Collator->viewSortKey("A\x{30A2}"),
     '[0A15 1921 | 0020 0020 | 0008 0011 | FFFF FFFF]');
 
-#####
+##### 47
 
 our $el = Unicode::Collate->new(
   entry => <<'ENTRY',
@@ -214,6 +213,7 @@ FF2C ; [.0B03.0020.0009.FF2C] # FULLWIDTH LATIN CAPITAL LETTER L; QQK
 ENTRY
   table => undef,
   normalization => undef,
+  UCA_Version => 24,
 );
 
 our $el12 = '0B03 0B03 0B03 0B03 0B03 | 0020 0020 0020 0020 0020';
@@ -240,5 +240,30 @@ ok($el->viewSortKey("l\x{FF4C}\x{217C}\x{2113}\x{24DB}"),
 ok($el->viewSortKey("L\x{FF2C}\x{216C}\x{2112}\x{24C1}"),
     "[$el12 | 0008 0009 000A 000B 000C | FFFF FFFF FFFF FFFF FFFF]");
 
-#####
+##### 53
+
+my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26);
+
+for my $v (@Versions) {
+    $Collator->change(UCA_Version => $v);
+    my $app = $v >= 26 ? ' |]' : ']';
+
+    $Collator->change(variable => 'Shifted', level => 4);
+    ok($Collator->viewSortKey("1+2"),
+	'[0A0C 0A0D | 0020 0020 | 0002 0002 | FFFF 039F FFFF'.$app);
+
+    $Collator->change(variable => 'Shift-Trimmed');
+    ok($Collator->viewSortKey("1+2"),
+	'[0A0C 0A0D | 0020 0020 | 0002 0002 | 039F'.$app);
+
+    $Collator->change(variable => 'Non-ignorable', level => 3);
+    ok($Collator->viewSortKey("1+2"),
+	'[0A0C 039F 0A0D | 0020 0020 0020 | 0002 0002 0002 |]');
+
+    $Collator->change(variable => 'Blanked');
+    ok($Collator->viewSortKey("1+2"),
+	'[0A0C 0A0D | 0020 0020 | 0002 0002 |]');
+}
+
+##### 89
 

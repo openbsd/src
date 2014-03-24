@@ -20,5 +20,5 @@ is_deeply([ Module::CoreList->find_modules(qr/Test::H.*::.*s/, 5.006001, 5.00700
           'qr/Test::H.*::.*s/ at 5.006001 and 5.007003');
 
 is_deeply([ Module::CoreList::find_modules(qr/Module::CoreList/) ],
-          [ qw(Module::CoreList Module::CoreList::TieHashDelta) ], 
+          [ qw(Module::CoreList Module::CoreList::TieHashDelta Module::CoreList::Utils) ], 
           'Module::CoreList functional' );

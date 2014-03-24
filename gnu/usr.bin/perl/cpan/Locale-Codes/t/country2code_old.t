@@ -98,7 +98,7 @@ Libya
    ~
    ly
 
-Syria
+Syrian Arab Republic
    ~
    sy
 

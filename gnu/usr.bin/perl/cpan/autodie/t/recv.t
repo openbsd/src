@@ -38,12 +38,15 @@ SKIP: {
 }
 
 eval {
-    # STDIN isn't a socket, so this should fail.
-    recv(STDIN,$buffer,1,0);
+    my $string = "now is the time...";
+    open(my $fh, '<', \$string) or die("Can't open \$string for read");
+    # $fh isn't a socket, so this should fail.
+    recv($fh,$buffer,1,0);
 };
 
 ok($@,'recv dies on returning undef');
-isa_ok($@,'autodie::exception');
+isa_ok($@,'autodie::exception')
+    or diag("$@");
 
 $buffer = "# Not an empty string\n";
 

@@ -17,11 +17,11 @@ App::Prove - Implements the C<prove> command.
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 DESCRIPTION
 
@@ -218,6 +218,7 @@ sub process_args {
             'D|dry'      => \$self->{dry},
             'ext=s@'     => sub {
                 my ( $opt, $val ) = @_;
+
                 # Workaround for Getopt::Long 2.25 handling of
                 # multivalue options
                 push @{ $self->{extensions} ||= [] }, $val;

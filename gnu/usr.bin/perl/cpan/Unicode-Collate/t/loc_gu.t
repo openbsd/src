@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; print "1..10\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -35,15 +35,24 @@ my $objGu = Unicode::Collate::Locale->
 
 ok($objGu->getlocale, 'gu');
 
-$objGu->change(level => 1);
-
-ok($objGu->lt("\x{AD0}", "\x{A82}"));
-ok($objGu->lt("\x{A82}", "\x{A83}"));
-ok($objGu->lt("\x{A83}", "\x{A85}"));
-
-ok($objGu->eq("\x{A82}", "\x{A81}"));
-
 $objGu->change(level => 2);
 
 ok($objGu->lt("\x{A82}", "\x{A81}"));
 
+$objGu->change(level => 1);
+
+ok($objGu->eq("\x{A82}", "\x{A81}"));
+
+# 4
+
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objGu->change(highestFFFF => 1) if $h;
+
+    ok($objGu->lt("\x{AD0}$t", "\x{A82}"));
+    ok($objGu->lt("\x{A82}$t", "\x{A83}"));
+    ok($objGu->lt("\x{A83}$t", "\x{A85}"));
+}
+
+# 10

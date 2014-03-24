@@ -2,7 +2,7 @@ package Text::ParseWords;
 
 use strict;
 require 5.006;
-our $VERSION = "3.27";
+our $VERSION = "3.28";
 
 
 use Exporter;
@@ -273,6 +273,10 @@ backslashed double-quote)
 Replacing C<quotewords('\s+', 0, q{this   is...})>
 with C<shellwords(q{this   is...})>
 is a simpler way to accomplish the same thing.
+
+=head1 SEE ALSO
+
+L<Text::CSV> - for parsing CSV files
 
 =head1 AUTHORS
 

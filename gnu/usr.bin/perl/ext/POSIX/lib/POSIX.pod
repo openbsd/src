@@ -412,7 +412,7 @@ Retrieves the value of a configurable limit on a file or directory.  This
 uses file descriptors such as those obtained by calling C<POSIX::open>.
 
 The following will determine the maximum length of the longest allowable
-pathname on the filesystem which holds C</var/foo>.
+pathname on the filesystem which holds F</var/foo>.
 
 	$fd = POSIX::open( "/var/foo", &POSIX::O_RDONLY );
 	$path_max = POSIX::fpathconf( $fd, &POSIX::_PC_PATH_MAX );
@@ -730,27 +730,32 @@ containing the current locale formatting values.
 
 Here is how to query the database for the B<de> (Deutsch or German) locale.
 
-	$loc = POSIX::setlocale( &POSIX::LC_ALL, "de" );
-	print "Locale = $loc\n";
-	$lconv = POSIX::localeconv();
-	print "decimal_point	= ", $lconv->{decimal_point},	"\n";
-	print "thousands_sep	= ", $lconv->{thousands_sep},	"\n";
-	print "grouping	= ", $lconv->{grouping},	"\n";
-	print "int_curr_symbol	= ", $lconv->{int_curr_symbol},	"\n";
-	print "currency_symbol	= ", $lconv->{currency_symbol},	"\n";
-	print "mon_decimal_point = ", $lconv->{mon_decimal_point}, "\n";
-	print "mon_thousands_sep = ", $lconv->{mon_thousands_sep}, "\n";
-	print "mon_grouping	= ", $lconv->{mon_grouping},	"\n";
-	print "positive_sign	= ", $lconv->{positive_sign},	"\n";
-	print "negative_sign	= ", $lconv->{negative_sign},	"\n";
-	print "int_frac_digits	= ", $lconv->{int_frac_digits},	"\n";
-	print "frac_digits	= ", $lconv->{frac_digits},	"\n";
-	print "p_cs_precedes	= ", $lconv->{p_cs_precedes},	"\n";
-	print "p_sep_by_space	= ", $lconv->{p_sep_by_space},	"\n";
-	print "n_cs_precedes	= ", $lconv->{n_cs_precedes},	"\n";
-	print "n_sep_by_space	= ", $lconv->{n_sep_by_space},	"\n";
-	print "p_sign_posn	= ", $lconv->{p_sign_posn},	"\n";
-	print "n_sign_posn	= ", $lconv->{n_sign_posn},	"\n";
+	my $loc = POSIX::setlocale( &POSIX::LC_ALL, "de" );
+	print "Locale: \"$loc\"\n";
+	my $lconv = POSIX::localeconv();
+	foreach my $property (qw(
+		decimal_point
+		thousands_sep
+		grouping
+		int_curr_symbol
+		currency_symbol
+		mon_decimal_point
+		mon_thousands_sep
+		mon_grouping
+		positive_sign
+		negative_sign
+		int_frac_digits
+		frac_digits
+		p_cs_precedes
+		p_sep_by_space
+		n_cs_precedes
+		n_sep_by_space
+		p_sign_posn
+		n_sign_posn
+	))
+	{
+		printf qq(%s: "%s",\n), $property, $lconv->{$property};
+	}
 
 =item localtime
 

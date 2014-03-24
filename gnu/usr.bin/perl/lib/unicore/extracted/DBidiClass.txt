@@ -1,8 +1,8 @@
-# DerivedBidiClass-6.1.0.txt
-# Date: 2011-12-11, 18:26:53 GMT [MD]
+# DerivedBidiClass-6.2.0.txt
+# Date: 2012-05-20, 00:42:30 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -807,8 +807,8 @@ FFDA..FFDC    ; L # Lo   [3] HALFWIDTH HANGUL LETTER EU..HALFWIDTH HANGUL LETTER
 F0000..FFFFD  ; L # Co [65534] <private-use-F0000>..<private-use-FFFFD>
 100000..10FFFD; L # Co [65534] <private-use-100000>..<private-use-10FFFD>
 
-# The above property value applies to 858960 code points not listed here.
-# Total code points: 1098531
+# The above property value applies to 858959 code points not listed here.
+# Total code points: 1098530
 
 # ================================================
 
@@ -971,7 +971,7 @@ FF0D          ; ES # Pd       FULLWIDTH HYPHEN-MINUS
 0E3F          ; ET # Sc       THAI CURRENCY SYMBOL BAHT
 17DB          ; ET # Sc       KHMER CURRENCY SYMBOL RIEL
 2030..2034    ; ET # Po   [5] PER MILLE SIGN..TRIPLE PRIME
-20A0..20B9    ; ET # Sc  [26] EURO-CURRENCY SIGN..INDIAN RUPEE SIGN
+20A0..20BA    ; ET # Sc  [27] EURO-CURRENCY SIGN..TURKISH LIRA SIGN
 212E          ; ET # So       ESTIMATED SYMBOL
 2213          ; ET # Sm       MINUS-OR-PLUS SIGN
 A838          ; ET # Sc       NORTH INDIC RUPEE MARK
@@ -985,7 +985,7 @@ FF05          ; ET # Po       FULLWIDTH PERCENT SIGN
 FFE0..FFE1    ; ET # Sc   [2] FULLWIDTH CENT SIGN..FULLWIDTH POUND SIGN
 FFE5..FFE6    ; ET # Sc   [2] FULLWIDTH YEN SIGN..FULLWIDTH WON SIGN
 
-# Total code points: 65
+# Total code points: 66
 
 # ================================================
 

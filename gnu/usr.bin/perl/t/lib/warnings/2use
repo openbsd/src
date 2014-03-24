@@ -358,3 +358,22 @@ $a =+ 1 ;
 EXPECT
 Reversed += operator at - line 6.
 Use of uninitialized value $c in scalar chop at - line 9.
+########
+
+# Check that deprecation warnings are not implicitly disabled by use
+$*;
+use warnings "void";
+$#;
+EXPECT
+$* is no longer supported at - line 3.
+$# is no longer supported at - line 5.
+Useless use of a variable in void context at - line 5.
+########
+
+# Check that deprecation warnings are not implicitly disabled by no
+$*;
+no warnings "void";
+$#;
+EXPECT
+$* is no longer supported at - line 3.
+$# is no longer supported at - line 5.

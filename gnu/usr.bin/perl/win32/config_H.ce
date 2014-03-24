@@ -1050,6 +1050,12 @@
 #define BYTEORDER 0x1234	/* large digits for MSB */
 #endif /* NeXT */
 
+/* CHARBITS:
+ *	This symbol contains the size of a char, so that the C preprocessor
+ *	can make decisions based on it.
+ */
+#define CHARBITS 8		/**/
+
 /* CAT2:
  *	This macro concatenates 2 tokens together.
  */
@@ -1889,9 +1895,16 @@
 /* LOCALTIME_R_NEEDS_TZSET:
  *	Many libc's localtime_r implementations do not call tzset,
  *	making them differ from localtime(), and making timezone
- *	changes using $ENV{TZ} without explicitly calling tzset
+ *	changes using \undef{TZ} without explicitly calling tzset
  *	impossible. This symbol makes us call tzset before localtime_r
  */
+/*#define LOCALTIME_R_NEEDS_TZSET /**/
+#ifdef LOCALTIME_R_NEEDS_TZSET
+#define L_R_TZSET tzset(),
+#else
+#define L_R_TZSET
+#endif
+
 /* LOCALTIME_R_PROTO:
  *	This symbol encodes the prototype of localtime_r.
  *	It is zero if d_localtime_r is undef, and one of the
@@ -1899,7 +1912,6 @@
  *	is defined.
  */
 /*#define HAS_LOCALTIME_R	   /**/
-/*#define LOCALTIME_R_NEEDS_TZSET	   /**/
 #define LOCALTIME_R_PROTO 0	   /**/
 
 /* HAS_LONG_DOUBLE:
@@ -4420,5 +4432,25 @@
  */
 /*#define HAS_TTYNAME_R	   /**/
 #define TTYNAME_R_PROTO 0	   /**/
+/* GMTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* GMTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+#define GMTIME_MAX		2147483647	/**/
+#define GMTIME_MIN		0	/**/
+#define LOCALTIME_MAX	2147483647	/**/
+#define LOCALTIME_MIN	0	/**/
 
 #endif

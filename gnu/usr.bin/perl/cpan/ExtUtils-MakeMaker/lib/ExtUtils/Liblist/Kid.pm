@@ -11,7 +11,7 @@ use 5.006;
 
 use strict;
 use warnings;
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 use ExtUtils::MakeMaker::Config;
 use Cwd 'cwd';
@@ -232,7 +232,7 @@ sub _unix_os2_ext {
             }
             last;    # found one here so don't bother looking further
         }
-        warn "Note (probably harmless): " . "No library found for -l$thislib\n"
+        warn "Warning (mostly harmless): " . "No library found for -l$thislib\n"
           unless $found_lib > 0;
     }
 
@@ -308,7 +308,7 @@ sub _win32_ext {
         my ( $fullname, $path ) = _win32_search_file( $thislib, $libext, \@paths, $verbose, $GC );
 
         if ( !$fullname ) {
-            warn "Note (probably harmless): No library found for $thislib\n";
+            warn "Warning (mostly harmless): No library found for $thislib\n";
             next;
         }
 
@@ -422,7 +422,8 @@ sub _win32_try_attach_extension {
 sub _win32_lib_extensions {
     my %extensions;
     $extensions{ $Config{'lib_ext'} } = 1 if $Config{'lib_ext'};
-    $extensions{".lib"} = 1;
+    $extensions{".dll.a"} = 1 if $extensions{".a"};
+    $extensions{".lib"}   = 1;
     return [ keys %extensions ];
 }
 
@@ -559,11 +560,11 @@ sub _vms_ext {
                     if    ( $fullname =~ /(?:$so|exe)$/i )      { $type = 'SHR'; }
                     elsif ( $fullname =~ /(?:$lib_ext|olb)$/i ) { $type = 'OLB'; }
                     elsif ( $fullname =~ /(?:$obj_ext|obj)$/i ) {
-                        warn "Note (probably harmless): " . "Plain object file $fullname found in library list\n";
+                        warn "Warning (mostly harmless): " . "Plain object file $fullname found in library list\n";
                         $type = 'OBJ';
                     }
                     else {
-                        warn "Note (probably harmless): " . "Unknown library type for $fullname; assuming shared\n";
+                        warn "Warning (mostly harmless): " . "Unknown library type for $fullname; assuming shared\n";
                         $type = 'SHR';
                     }
                 }
@@ -588,7 +589,7 @@ sub _vms_ext {
                     ( -f ( $fullname = VMS::Filespec::rmsexpand( $name, $obj_ext ) ) or -f ( $fullname = VMS::Filespec::rmsexpand( $name, '.obj' ) ) )
                   )
                 {
-                    warn "Note (probably harmless): " . "Plain object file $fullname found in library list\n";
+                    warn "Warning (mostly harmless): " . "Plain object file $fullname found in library list\n";
                     $type = 'OBJ';
                     $name = $fullname unless $fullname =~ /obj;?\d*$/i;
                 }
@@ -609,7 +610,7 @@ sub _vms_ext {
                 next LIB;
             }
         }
-        warn "Note (probably harmless): " . "No library found for $lib\n";
+        warn "Warning (mostly harmless): " . "No library found for $lib\n";
     }
 
     push @fndlibs, @{ $found{OBJ} } if exists $found{OBJ};

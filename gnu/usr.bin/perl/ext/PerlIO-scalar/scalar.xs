@@ -6,6 +6,9 @@
 
 #include "perliol.h"
 
+static const char code_point_warning[] =
+ "Strings with code points over 0xFF may not be mapped into in-memory file handles\n";
+
 typedef struct {
     struct _PerlIO base;	/* Base "class" info */
     SV *var;
@@ -51,6 +54,14 @@ PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
     {
 	sv_force_normal(s->var);
 	SvCUR_set(s->var, 0);
+    }
+    if (SvUTF8(s->var) && !sv_utf8_downgrade(s->var, TRUE)) {
+	if (ckWARN(WARN_UTF8))
+	    Perl_warner(aTHX_ packWARN(WARN_UTF8), code_point_warning);
+	SETERRNO(EINVAL, SS_IVCHAN);
+	SvREFCNT_dec(s->var);
+	s->var = Nullsv;
+	return -1;
     }
     if ((PerlIOBase(f)->flags) & PERLIO_F_APPEND)
     {
@@ -143,6 +154,17 @@ PerlIOScalar_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
 	STRLEN len;
 	I32 got;
 	p = SvPV(sv, len);
+	if (SvUTF8(sv)) {
+	    if (sv_utf8_downgrade(sv, TRUE)) {
+	        p = SvPV_nomg(sv, len);
+	    }
+	    else {
+	        if (ckWARN(WARN_UTF8))
+		    Perl_warner(aTHX_ packWARN(WARN_UTF8), code_point_warning);
+	        SETERRNO(EINVAL, SS_IVCHAN);
+	        return -1;
+	    }
+	}
 	got = len - (STRLEN)(s->posn);
 	if (got <= 0)
 	    return 0;
@@ -165,6 +187,12 @@ PerlIOScalar_write(pTHX_ PerlIO * f, const void *vbuf, Size_t count)
 	SvGETMAGIC(sv);
 	if (!SvROK(sv)) sv_force_normal(sv);
 	if (SvOK(sv)) SvPV_force_nomg_nolen(sv);
+	if (SvUTF8(sv) && !sv_utf8_downgrade(sv, TRUE)) {
+	    if (ckWARN(WARN_UTF8))
+	        Perl_warner(aTHX_ packWARN(WARN_UTF8), code_point_warning);
+	    SETERRNO(EINVAL, SS_IVCHAN);
+	    return 0;
+	}
 	if ((PerlIOBase(f)->flags) & PERLIO_F_APPEND) {
 	    dst = SvGROW(sv, SvCUR(sv) + count + 1);
 	    offset = SvCUR(sv);

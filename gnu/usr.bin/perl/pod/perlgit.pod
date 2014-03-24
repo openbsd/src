@@ -481,7 +481,7 @@ the "first commit where the bug is solved".
 C<git help bisect> has much more information on how you can tweak your
 binary searches.
 
-=head1 Topic branches and rewriting history
+=head2 Topic branches and rewriting history
 
 Individual committers should create topic branches under
 B<yourname>/B<some_descriptive_name>. Other committers should check
@@ -586,7 +586,7 @@ this once globally in their F<~/.gitconfig> by doing something like:
   % git config --global user.name "Ævar Arnfjörð Bjarmason"
   % git config --global user.email avarab@gmail.com
 
-However if you'd like to override that just for perl then execute then
+However, if you'd like to override that just for perl, 
 execute something like the following in F<perl>:
 
   % git config user.email avar@cpan.org
@@ -606,7 +606,7 @@ to push your changes back with the C<camel> remote:
 The C<fetch> command just updates the C<camel> refs, as the objects
 themselves should have been fetched when pulling from C<origin>.
 
-=head1 Accepting a patch
+=head2 Accepting a patch
 
 If you have received a patch file generated using the above section,
 you should try out the patch.
@@ -656,7 +656,7 @@ then merge it into blead then push it out to the main repository:
 
   % git checkout blead
   % git merge experimental
-  % git push
+  % git push origin blead
 
 If you want to delete your temporary branch, you may do so with:
 
@@ -708,7 +708,7 @@ because it runs a subset of tests under miniperl rather than perl.
 
 =back
 
-=head3 On merging and rebasing
+=head2 On merging and rebasing
 
 Simple, one-off commits pushed to the 'blead' branch should be simple
 commits that apply cleanly.  In other words, you should make sure your
@@ -824,7 +824,77 @@ Or you could just merge the whole branch if you like it all:
 
 And then push back to the repository:
 
-  % git push
+  % git push origin blead
+
+=head2 Using a smoke-me branch to test changes
+
+Sometimes a change affects code paths which you cannot test on the OSes
+which are directly available to you and it would be wise to have users
+on other OSes test the change before you commit it to blead.
+
+Fortunately, there is a way to get your change smoke-tested on various
+OSes: push it to a "smoke-me" branch and wait for certain automated
+smoke-testers to report the results from their OSes.
+
+The procedure for doing this is roughly as follows (using the example of
+of tonyc's smoke-me branch called win32stat):
+
+First, make a local branch and switch to it:
+
+  % git checkout -b win32stat
+
+Make some changes, build perl and test your changes, then commit them to
+your local branch. Then push your local branch to a remote smoke-me
+branch:
+
+  % git push origin win32stat:smoke-me/tonyc/win32stat
+
+Now you can switch back to blead locally:
+
+  % git checkout blead
+
+and continue working on other things while you wait a day or two,
+keeping an eye on the results reported for your smoke-me branch at
+L<http://perl.develop-help.com/?b=smoke-me/tonyc/win32state>.
+
+If all is well then update your blead branch:
+
+  % git pull
+
+then checkout your smoke-me branch once more and rebase it on blead:
+
+  % git rebase blead win32stat
+
+Now switch back to blead and merge your smoke-me branch into it:
+
+  % git checkout blead
+  % git merge win32stat
+
+As described earlier, if there are many changes on your smoke-me branch
+then you should prepare a merge commit in which to give an overview of
+those changes by using the following command instead of the last
+command above:
+
+  % git merge win32stat --no-ff --no-commit
+
+You should now build perl and test your (merged) changes one last time
+(ideally run the whole test suite, but failing that at least run the
+F<t/porting/*.t> tests) before pushing your changes as usual:
+
+  % git push origin blead
+
+Finally, you should then delete the remote smoke-me branch:
+
+  % git push origin :smoke-me/tonyc/win32stat
+
+(which is likely to produce a warning like this, which can be ignored:
+
+  remote: fatal: ambiguous argument 'refs/heads/smoke-me/tonyc/win32stat': unknown revision or path not in the working tree.
+  remote: Use '--' to separate paths from revisions
+
+) and then delete your local branch:
+
+  % git branch -d win32stat
 
 =head2 A note on camel and dromedary
 

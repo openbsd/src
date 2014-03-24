@@ -1,9 +1,15 @@
 #!./perl
 
+BEGIN {
+    chdir 't' if -d 't';
+    push @INC, '../lib';
+    require './test.pl';
+}
+
 use strict;
 use warnings;
 
-print "1..2\n";
+plan tests => 2;
 
 package Foo;
 
@@ -11,7 +17,7 @@ use overload;
 
 sub import
 {
-    overload::constant 'integer' => sub { return shift; };
+    overload::constant 'integer' => sub { return shift };
 }
 
 package main;
@@ -21,35 +27,9 @@ BEGIN { $INC{'Foo.pm'} = "/lib/Foo.pm" }
 use Foo;
 
 my $result = eval "5+6";
-
 my $error = $@;
+$result //= '';
 
-my $label = "No exception was thrown with an overload::constant 'integer' inside an eval.";
-# TEST
-if ($error eq "")
-{
-    print "ok 1 - $label\n"
-}
-else
-{
-    print "not ok 1 - $label\n";
-    print "# Error is $error\n";
-}
-
-$label = "Correct solution";
-
-if (!defined($result))
-{
-    $result = "";
-}
-# TEST
-if ($result eq 11)
-{
-    print "ok 2 - $label\n";
-}
-else
-{
-    print "not ok 2 - $label\n";
-    print "# Result is $result\n";
-}
+is ($error, '', "No exception was thrown with an overload::constant 'integer' inside an eval.");
+is ($result, 11, "Correct solution");
 

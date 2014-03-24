@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 use strict;
 package CPAN;
-$CPAN::VERSION = '1.9800';
+$CPAN::VERSION = '2.00';
 $CPAN::VERSION =~ s/_//;
 
 # we need to run chdir all over and we would get at wrong libraries
@@ -1316,9 +1316,28 @@ sub is_installed {
 
 sub _list_sorted_descending_is_tested {
     my($self) = @_;
-    sort
+    my $foul = 0;
+    my @sorted = sort
         { ($self->{is_tested}{$b}||0) <=> ($self->{is_tested}{$a}||0) }
-            keys %{$self->{is_tested}}
+            grep
+                { if ($foul){ 0 } elsif (-e) { 1 } else { $foul = $_; 0 } }
+                    keys %{$self->{is_tested}};
+    if ($foul) {
+        $CPAN::Frontend->mywarn("Lost build_dir detected ($foul), giving up all cached test results of currently running session.\n");
+        for my $dbd (keys %{$self->{is_tested}}) { # distro-build-dir
+        SEARCH: for my $d ($CPAN::META->all_objects("CPAN::Distribution")) {
+                if ($d->{build_dir} && $d->{build_dir} eq $dbd) {
+                    $CPAN::Frontend->mywarn(sprintf "Flushing cache for %s\n", $d->pretty_id);
+                    $d->fforce("");
+                    last SEARCH;
+                }
+            }
+            delete $self->{is_tested}{$dbd};
+        }
+        return ();
+    } else {
+        return @sorted;
+    }
 }
 
 #-> sub CPAN::set_perl5lib
@@ -1702,7 +1721,9 @@ C<$CPAN::Config-E<gt>{cpan_home}/Bundle> directory. The file contains
 a list of all modules that are both available from CPAN and currently
 installed within @INC. Duplicates of each distribution are suppressed.
 The name of the bundle file is based on the current date and a
-counter.
+counter, e.g. F<Bundle/Snapshot_2012_05_21_00.pm>. This is installed
+again by running C<cpan Bundle::Snapshot_2012_05_21_00>, or installing
+C<Bundle::Snapshot_2012_05_21_00> from the CPAN shell.
 
 Return value: path to the written file.
 
@@ -1715,6 +1736,21 @@ This commands provides a statistical overview over recent download
 activities. The data for this is collected in the YAML file
 C<FTPstats.yml> in your C<cpan_home> directory. If no YAML module is
 configured or YAML not installed, no stats are provided.
+
+=over
+
+=item install_tested
+
+Install all distributions that have been tested successfully but have
+not yet been installed. See also C<is_tested>.
+
+=item is_tested
+
+List all buid directories of distributions that have been tested
+successfully but have not yet been installed. See also
+C<install_tested>.
+
+=back
 
 =head2 mkmyconfig
 
@@ -2463,7 +2499,7 @@ CPAN mantra. See below under I<Processing Instructions>.
 
 =item match [hash]
 
-A hashref with one or more of the keys C<distribution>, C<modules>,
+A hashref with one or more of the keys C<distribution>, C<module>,
 C<perl>, C<perlconfig>, and C<env> that specify whether a document is
 targeted at a specific CPAN distribution or installation.
 Keys prefixed with C<not_> negates the corresponding match.
@@ -2881,11 +2917,6 @@ there are no dependencies in the way. To install an object along with all
 its dependencies, use CPAN::Shell->install.
 
 Note that install() gives no meaningful return value. See uptodate().
-
-=item CPAN::Distribution::install_tested()
-
-Install all distributions that have tested successfully but
-not yet installed. See also C<is_tested>.
 
 =item CPAN::Distribution::isa_perl()
 
@@ -3432,7 +3463,7 @@ annoying that so many distributions need some interactive configuring. So
 what you can try to accomplish in your private bundle file is to have the
 packages that need to be configured early in the file and the gentle
 ones later, so you can go out for coffee after a few minutes and leave CPAN.pm
-to churn away untended.
+to churn away unattended.
 
 =head1 WORKING WITH CPAN.pm BEHIND FIREWALLS
 
@@ -3770,7 +3801,7 @@ yourself.
 
 =head2 OLD PERL VERSIONS
 
-CPAN.pm is regularly tested to run under 5.004, 5.005, and assorted
+CPAN.pm is regularly tested to run under 5.005 and assorted
 newer versions. It is getting more and more difficult to get the
 minimal prerequisites working on older perls. It is close to
 impossible to get the whole Bundle::CPAN working there. If you're in
@@ -3833,5 +3864,9 @@ you have this directory in your PATH variable (or some equivalent in
 your operating system) then typing C<cpan> in a console window will
 work for you as well. Above that the utility provides several
 commandline shortcuts.
+
+melezhik (Alexey) sent me a link where he published a chef recipe to
+work with CPAN.pm: http://community.opscode.com/cookbooks/cpan.
+
 
 =cut

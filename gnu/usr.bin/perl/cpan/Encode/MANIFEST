@@ -202,3 +202,4 @@ ucm/posix-bc.ucm	Unicode Character Map
 ucm/shiftjis.ucm	Unicode Character Map
 ucm/symbol.ucm	Unicode Character Map
 ucm/viscii.ucm	Unicode Character Map
+META.json                                Module JSON meta-data (added by MakeMaker)

@@ -165,17 +165,17 @@ our ($db_version, $use_XSLoader, $splice_end_array_no_length, $splice_end_array,
 use Carp;
 
 
-$VERSION = "1.826" ;
+$VERSION = "1.827" ;
 $VERSION = eval $VERSION; # needed for dev releases
 
 {
-    local $SIG{__WARN__} = sub {$splice_end_array_no_length = "@_";};
+    local $SIG{__WARN__} = sub {$splice_end_array_no_length = join(" ",@_);};
     my @a =(1); splice(@a, 3);
     $splice_end_array_no_length = 
         ($splice_end_array_no_length =~ /^splice\(\) offset past end of array at /);
 }      
 {
-    local $SIG{__WARN__} = sub {$splice_end_array = "@_";};
+    local $SIG{__WARN__} = sub {$splice_end_array = join(" ", @_);};
     my @a =(1); splice(@a, 3, 1);
     $splice_end_array = 
         ($splice_end_array =~ /^splice\(\) offset past end of array at /);

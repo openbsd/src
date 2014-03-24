@@ -1,5 +1,9 @@
 Revision history for Perl extension Win32API::File.
 
+0.1201 by Alexandr Ciornii 2013-01-28
+        - Fix tests on Cygwin (RURBAN)
+        - Constants for GetStdHandle and SetStdHandle
+
 0.1200 by Alexandr Ciornii 2011-07-01
         - Spelling fixes by Peter John Acklam
         - Upgraded Makefile.PL

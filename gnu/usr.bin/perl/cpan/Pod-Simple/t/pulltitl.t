@@ -7,7 +7,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 116 };
+BEGIN { plan tests => 117 };
 
 #use Pod::Simple::Debug (5);
 
@@ -408,6 +408,14 @@ ok( $t && $t->type eq 'start' && $t->tagname, 'Document' );
 }
 
 ###########################################################################
+{
+print "# Testing a title with an X<>, at line ", __LINE__, "\n";
+my $p = Pod::Simple::PullParser->new;
+$p->set_source( \qq{\n=head1 NAME Foo Bar\nX<Some entry>\n} );
+
+ok $p->get_title(), 'NAME Foo Bar';
+}
+
 ###########################################################################
 
 

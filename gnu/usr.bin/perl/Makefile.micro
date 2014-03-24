@@ -29,7 +29,7 @@ microperl:	$(O)
 
 generated_headers = uuudmap.h ubitcount.h umg_data.h
 H = av.h uconfig.h cop.h cv.h embed.h embedvar.h form.h gv.h handy.h \
-	hv.h intrpvar.h iperlsys.h mg.h op.h opcode.h opnames.h pad.h \
+	hv.h hv_func.h intrpvar.h iperlsys.h mg.h op.h opcode.h opnames.h pad.h \
 	patchlevel.h perl.h perlsdio.h perlvars.h perly.h pp.h \
 	pp_proto.h proto.h reentr.h regexp.h scope.h sv.h \
 	thread.h unixish.h utf8.h util.h warnings.h $(generated_headers)

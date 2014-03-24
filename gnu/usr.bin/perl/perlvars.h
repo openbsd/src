@@ -231,3 +231,6 @@ PERLVAR(G, sv_placeholder, SV)
 #if defined(MYMALLOC) && defined(USE_ITHREADS)
 PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 #endif
+
+PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
+PERLVARA(G, hash_seed, PERL_HASH_SEED_BYTES, unsigned char) /* perl.c and hv.h */

@@ -8,7 +8,7 @@ use CPAN::InfoObj;
 use File::Path ();
 @CPAN::Distribution::ISA = qw(CPAN::InfoObj);
 use vars qw($VERSION);
-$VERSION = "1.9602";
+$VERSION = "2.00";
 
 # Accessors
 sub cpan_comment {
@@ -321,6 +321,10 @@ sub get {
                                         );
                 return 1;
             }
+            if (exists $self->{build_dir} && ! -d $self->{build_dir}){
+                # we have lost it.
+                $self->fforce(""); # no method to reset all phases but not set force (dodge)
+            }
 
             # although we talk about 'force' we shall not test on
             # force directly. New model of force tries to refrain from
@@ -516,8 +520,8 @@ See also http://rt.cpan.org/Ticket/Display.html?id=38932\n");
         chmod 0777 &~ umask, $packagedir; # may fail
         my $f;
         for $f (@dirents) { # is already without "." and ".."
-            my $from = File::Spec->catdir($from_dir,$f);
-            my $to = File::Spec->catdir($packagedir,$f);
+            my $from = File::Spec->catfile($from_dir,$f);
+            my $to = File::Spec->catfile($packagedir,$f);
             unless (File::Copy::move($from,$to)) {
                 my $err = $!;
                 $from = File::Spec->rel2abs($from);
@@ -604,7 +608,7 @@ sub pick_meta_file {
     push @choices, 'META.yml' if $has_cm || $has_pcm;
 
     for my $file ( grep { /$filter/ } @choices ) {
-        my $path = File::Spec->catdir( $build_dir, $file );
+        my $path = File::Spec->catfile( $build_dir, $file );
         return $path if -f $path
     }
 
@@ -773,6 +777,7 @@ sub choose_MM_or_MB {
     return $self;
 }
 
+# see also reanimate_build_dir
 #-> CPAN::Distribution::store_persistent_state
 sub store_persistent_state {
     my($self) = @_;
@@ -783,8 +788,8 @@ sub store_persistent_state {
                                     "will not store persistent state\n");
         return;
     }
-    unless (File::Spec->canonpath(File::Basename::dirname($dir))
-            eq File::Spec->canonpath($CPAN::Config->{build_dir})) {
+    unless (   Cwd::realpath(File::Spec->catdir($dir, File::Spec->updir()) )
+            eq Cwd::realpath($CPAN::Config->{build_dir}                  ) ) {
         $CPAN::Frontend->mywarnonce("Directory '$dir' not below $CPAN::Config->{build_dir}, ".
                                     "will not store persistent state\n");
         return;
@@ -1173,6 +1178,7 @@ sub untar_me {
     if ($result) {
         $self->{unwrapped} = CPAN::Distrostatus->new("YES");
     } else {
+        # unfortunately we have no $@ here, Tarzip is using mydie which dies with "\n"
         $self->{unwrapped} = CPAN::Distrostatus->new("NO -- untar failed");
     }
 }
@@ -1859,12 +1865,8 @@ is part of the perl-%s distribution. To install that, you need to run
         return;
     }
 
-    my %env;
-    while (my($k,$v) = each %ENV) {
-        next unless defined $v;
-        $env{$k} = $v;
-    }
-    local %ENV = %env;
+    local $ENV{PERL_AUTOINSTALL} = $ENV{PERL_AUTOINSTALL};
+    local $ENV{PERL_EXTUTILS_AUTOINSTALL} = $ENV{PERL_EXTUTILS_AUTOINSTALL};
     if ($CPAN::Config->{prerequisites_policy} eq "follow") {
         $ENV{PERL_AUTOINSTALL}          ||= "--defaultdeps";
         $ENV{PERL_EXTUTILS_AUTOINSTALL} ||= "--defaultdeps";
@@ -1874,6 +1876,8 @@ is part of the perl-%s distribution. To install that, you need to run
     if ($self->prefs->{pl}) {
         $pl_commandline = $self->prefs->{pl}{commandline};
     }
+    local $ENV{PERL} = $ENV{PERL};
+    local $ENV{PERL5_CPAN_IS_EXECUTING} = $ENV{PERL5_CPAN_IS_EXECUTING};
     if ($pl_commandline) {
         $system = $pl_commandline;
         $ENV{PERL} = $^X;
@@ -1881,7 +1885,11 @@ is part of the perl-%s distribution. To install that, you need to run
         $system = $self->{'configure'};
     } elsif ($self->{modulebuild}) {
         my($perl) = $self->perl or die "Couldn\'t find executable perl\n";
-        $system = "$perl Build.PL $CPAN::Config->{mbuildpl_arg}";
+        my $mbuildpl_arg = $self->_make_phase_arg("pl");
+        $system = sprintf("%s Build.PL%s",
+                          $perl,
+                          $mbuildpl_arg ? " $mbuildpl_arg" : "",
+                         );
     } else {
         my($perl) = $self->perl or die "Couldn\'t find executable perl\n";
         my $switch = "";
@@ -1902,11 +1910,7 @@ is part of the perl-%s distribution. To install that, you need to run
     if ($self->prefs->{pl}) {
         $pl_env = $self->prefs->{pl}{env};
     }
-    if ($pl_env) {
-        for my $e (keys %$pl_env) {
-            $ENV{$e} = $pl_env->{$e};
-        }
-    }
+    local @ENV{keys %$pl_env} = values %$pl_env if $pl_env;
     if (exists $self->{writemakefile}) {
     } else {
         local($SIG{ALRM}) = sub { die "inactivity_timeout reached\n" };
@@ -1998,7 +2002,7 @@ is part of the perl-%s distribution. To install that, you need to run
                 return $self->goodbye("$system -- NOT OK");
             }
         }
-        if (-f "Makefile" || -f "Build") {
+        if (-f "Makefile" || -f "Build" || ($^O eq 'VMS' && (-f 'descrip.mms' || -f 'Build.com'))) {
             $self->{writemakefile} = CPAN::Distrostatus->new("YES");
             delete $self->{make_clean}; # if cleaned before, enable next
         } else {
@@ -2026,12 +2030,13 @@ is part of the perl-%s distribution. To install that, you need to run
     if ($self->prefs->{make}) {
         $make_commandline = $self->prefs->{make}{commandline};
     }
+    local $ENV{PERL} = $ENV{PERL};
     if ($make_commandline) {
         $system = $make_commandline;
         $ENV{PERL} = CPAN::find_perl();
     } else {
         if ($self->{modulebuild}) {
-            unless (-f "Build") {
+            unless (-f "Build" || ($^O eq 'VMS' && -f 'Build.com')) {
                 my $cwd = CPAN::anycwd();
                 $CPAN::Frontend->mywarn("Alert: no Build file available for 'make $self->{id}'".
                                         " in cwd[$cwd]. Danger, Will Robinson!\n");
@@ -2052,12 +2057,7 @@ is part of the perl-%s distribution. To install that, you need to run
     if ($self->prefs->{make}) {
         $make_env = $self->prefs->{make}{env};
     }
-    if ($make_env) { # overriding the local ENV of PL, not the outer
-                     # ENV, but unlikely to be a risk
-        for my $e (keys %$make_env) {
-            $ENV{$e} = $make_env->{$e};
-        }
-    }
+    local @ENV{keys %$make_env} = values %$make_env if $make_env;
     my $expect_model = $self->_prefs_with_expect("make");
     my $want_expect = 0;
     if ( $expect_model && @{$expect_model->{talk}} ) {
@@ -2657,8 +2657,31 @@ sub unsat_prereq {
         # one and is deprecated
 
         if ( $available_file ) {
-            if  ( $inst_file && $available_file eq $inst_file && $nmo->inst_deprecated ) {
-                # continue installing as a prereq
+            my $fulfills_all_version_rqs = $self->_fulfills_all_version_rqs
+                (
+                 $need_module,
+                 $available_file,
+                 $available_version,
+                 $need_version,
+                );
+            if (0) {
+            } elsif  ( $inst_file
+                       && $available_file eq $inst_file
+                       && $nmo->inst_deprecated
+                     ) {
+                # continue installing as a prereq. we really want that
+                # because the deprecated module may spit out warnings
+                # and third party did not know until today. Only one
+                # exception is OK, because CPANPLUS is special after
+                # all:
+                if ( $fulfills_all_version_rqs and
+                     $nmo->id =~ /^CPANPLUS(?:::Dist::Build)$/
+                   ) {
+                    # here we have an available version that is good
+                    # enough although deprecated (preventing circular
+                    # loop CPANPLUS => CPANPLUS::Dist::Build RT#83042)
+                    next NEED;
+                }
             } elsif ($self->{reqtype} =~ /^(r|c)$/ && exists $prereq_pm->{requires}{$need_module} && $nmo && !$inst_file) {
                 # continue installing as a prereq; this may be a
                 # distro we already used when it was a build_requires
@@ -2674,9 +2697,7 @@ sub unsat_prereq {
                 }
             }
             else {
-                next NEED if $self->_fulfills_all_version_rqs(
-                    $need_module,$available_file,$available_version,$need_version
-                );
+                next NEED if $fulfills_all_version_rqs;
             }
         }
 
@@ -2760,13 +2781,13 @@ sub unsat_prereq {
                             # DMAKI/DateTime-Calendar-Chinese-0.05.tar.gz
                             # in 2007-03 for 'make install'
                             # and 2008-04: #30464 (for 'make test')
-                            $CPAN::Frontend->mywarn("Warning: Prerequisite ".
-                                                    "'$need_module => $need_version' ".
-                                                    "for '$selfid' already built ".
-                                                    "but the result looks suspicious. ".
-                                                    "Skipping another build attempt, ".
-                                                    "to prevent looping endlessly.\n"
-                                                   );
+                            # $CPAN::Frontend->mywarn("Warning: Prerequisite ".
+                            #                         "'$need_module => $need_version' ".
+                            #                         "for '$selfid' already built ".
+                            #                         "but the result looks suspicious. ".
+                            #                         "Skipping another build attempt, ".
+                            #                         "to prevent looping endlessly.\n"
+                            #                        );
                             next NEED;
                         }
                     }
@@ -3205,7 +3226,7 @@ sub test {
         $ENV{PERL} = CPAN::find_perl();
     } elsif ($self->{modulebuild}) {
         $system = sprintf "%s test", $self->_build_command();
-        unless (-e "Build") {
+        unless (-e "Build" || ($^O eq 'VMS' && -e "Build.com")) {
             my $id = $self->pretty_id;
             $CPAN::Frontend->mywarn("Alert: no 'Build' file found while trying to test '$id'");
         }
@@ -3218,21 +3239,11 @@ sub test {
                       $make_test_arg ? " $make_test_arg" : "",
                      );
     my($tests_ok);
-    my %env;
-    while (my($k,$v) = each %ENV) {
-        next unless defined $v;
-        $env{$k} = $v;
-    }
-    local %ENV = %env;
     my $test_env;
     if ($self->prefs->{test}) {
         $test_env = $self->prefs->{test}{env};
     }
-    if ($test_env) {
-        for my $e (keys %$test_env) {
-            $ENV{$e} = $test_env->{$e};
-        }
-    }
+    local @ENV{keys %$test_env} = values %$test_env if $test_env;
     my $expect_model = $self->_prefs_with_expect("test");
     my $want_expect = 0;
     if ( $expect_model && @{$expect_model->{talk}} ) {
@@ -3554,10 +3565,13 @@ sub install {
                 $CPAN::Config->{mbuild_install_build_command} ?
                     $CPAN::Config->{mbuild_install_build_command} :
                         $self->_build_command();
-        $system = sprintf("%s install %s",
+        my $install_directive = $^O eq 'VMS' ? '"install"' : 'install';
+        $system = sprintf("%s %s %s",
                           $mbuild_install_build_command,
+                          $install_directive,
                           $CPAN::Config->{mbuild_install_arg},
                          );
+        
     } else {
         my($make_install_make_command) =
             CPAN::HandleConfig->prefs_lookup($self,
@@ -3569,7 +3583,7 @@ sub install {
                          );
     }
 
-    my($stderr) = $^O eq "MSWin32" ? "" : " 2>&1 ";
+    my($stderr) = $^O eq "MSWin32" || $^O eq 'VMS' ? "" : " 2>&1 ";
     my $brip = CPAN::HandleConfig->prefs_lookup($self,
                                                 q{build_requires_install_policy});
     $brip ||="ask/yes";
@@ -3882,6 +3896,9 @@ sub _build_command {
                             # in M:B has been promised 2006-01-30
         my($perl) = $self->perl or $CPAN::Frontend->mydie("Couldn't find executable perl\n");
         return "$perl ./Build";
+    }
+    elsif ($^O eq 'VMS') {
+        return "$^X Build.com";
     }
     return "./Build";
 }

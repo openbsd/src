@@ -4,20 +4,20 @@
 # Since it’s so large, it gets its own file.
 
 BEGIN {
-    require Config; import Config;
-    no warnings 'once';
-    if ($Config{'extensions'} !~ /\bData\/Dumper\b/) {
-	print "1..0 # Skip: Data::Dumper was not built\n";
-	exit 0;
+    if ($ENV{PERL_CORE}){
+        require Config; import Config;
+        no warnings 'once';
+        if ($Config{'extensions'} !~ /\bData\/Dumper\b/) {
+            print "1..0 # Skip: Data::Dumper was not built\n";
+            exit 0;
+        }
     }
 }
-
 use strict;
 use Test::More tests => 1;
 use Data::Dumper;
 
-our %repos = ();
-&real_life_setup();
+our %repos = real_life_setup();
 
 $Data::Dumper::Indent = 1;
 # A custom sort sub is necessary for reproducing the bug, as this is where
@@ -25,13 +25,14 @@ $Data::Dumper::Indent = 1;
 $Data::Dumper::Sortkeys = sub { return [ reverse sort keys %{$_[0]} ]; }
     unless exists $ENV{NO_SORT_SUB};
 
-ok +Data::Dumper->Dumpxs([\%repos], [qw(*repos)]);
+ok(Data::Dumper->Dump([\%repos], [qw(*repos)]), "RT 74170 test");
 
 sub real_life_setup {
     # set up the %repos hash in a manner that reflects a real run of
-    # gitolite's "compiler" script:
+    # the gitolite "compiler" script:
     # Yes, all this is necessary to get the stack in such a state that the
     # custom sort sub will trigger a reallocation.
+    my %repos;
     push @{ $repos{''}{'@all'} }, ();
     push @{ $repos{''}{'guser86'} }, ();
     push @{ $repos{''}{'guser87'} }, ();
@@ -140,4 +141,5 @@ sub real_life_setup {
     $repos{''}{R}{'user8'} = 1;
     $repos{''}{W}{'user8'} = 1;
     push @{ $repos{''}{'user8'} }, ();
+    return %repos;
 }

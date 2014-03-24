@@ -1210,7 +1210,7 @@ generation task.
 
 L<CPAN::Meta> version 2.110440 has been added as a dual-life module.  It
 provides a standard library to read, interpret and write CPAN distribution
-metadata files (like F<META.json> and F<META.yml)> that describe a
+metadata files (like F<META.json> and F<META.yml>) that describe a
 distribution, its contents, and the requirements for building it and
 installing it.  The latest CPAN distribution metadata specification is
 included as L<CPAN::Meta::Spec> and notes on changes in the specification

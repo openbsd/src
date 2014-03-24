@@ -33,10 +33,13 @@ WriteMakefile(
   OBJECT       => '$(O_FILES)',
   ABSTRACT     => 'Perl core IO modules',
   AUTHOR       => 'Graham Barr <gbarr@cpan.org>',
+  PREREQ_PM    => {
+    'Test::More' => 0,
+  },
   ( $PERL_CORE
     ? ()
     : (
-      INSTALLDIRS => 'perl',
+      INSTALLDIRS => ($] < 5.011 ? 'perl' : 'site'),
       clean       => {FILES => 'typemap'},
     )
   ),

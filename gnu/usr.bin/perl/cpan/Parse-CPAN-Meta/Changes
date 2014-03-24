@@ -1,5 +1,11 @@
 Changes for Perl programming language extension Parse-CPAN-Meta
 
+1.4404 Sun Apr 05 2012
+      - Protected tests from user PERL_YAML/JSON_BACKEND
+
+1.4403 Sun Apr 01 2012
+      - Bumped prereqs: JSON::PP to 2.27200 and CPAN::Meta::YAML to 0.008
+
 1.4402 Tue Feb 07 2012
       - Minor maintenance: standardized newlines to Unix style
 

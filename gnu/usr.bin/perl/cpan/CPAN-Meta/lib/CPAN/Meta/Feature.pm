@@ -2,7 +2,7 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::Feature;
-our $VERSION = '2.120630'; # VERSION
+our $VERSION = '2.120921'; # VERSION
 
 use CPAN::Meta::Prereqs;
 
@@ -42,7 +42,7 @@ CPAN::Meta::Feature - an optional feature provided by a CPAN distribution
 
 =head1 VERSION
 
-version 2.120630
+version 2.120921
 
 =head1 DESCRIPTION
 

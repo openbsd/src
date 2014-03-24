@@ -1,4 +1,14 @@
 
+#define PERL_NO_GET_CONTEXT /* we want efficiency */
+
+/* private functions which need pTHX_ and aTHX_
+    pv_cat_decompHangul
+    sv_2pvunicode
+    pv_utf8_decompose
+    pv_utf8_reorder
+    pv_utf8_compose
+*/
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -177,7 +187,7 @@ static U8 getCombinClass(UV uv)
     return row ? row[uv & 0xff] : 0;
 }
 
-static U8* pv_cat_decompHangul(U8* d, UV uv)
+static U8* pv_cat_decompHangul(pTHX_ U8* d, UV uv)
 {
     UV sindex =  uv - Hangul_SBase;
     UV lindex =  sindex / Hangul_NCount;
@@ -194,7 +204,7 @@ static U8* pv_cat_decompHangul(U8* d, UV uv)
     return d;
 }
 
-static char* sv_2pvunicode(SV *sv, STRLEN *lp)
+static char* sv_2pvunicode(pTHX_ SV *sv, STRLEN *lp)
 {
     char *s;
     STRLEN len;
@@ -212,7 +222,7 @@ static char* sv_2pvunicode(SV *sv, STRLEN *lp)
 }
 
 static
-U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
+U8* pv_utf8_decompose(pTHX_ U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 {
     U8* p = s;
     U8* e = s + slen;
@@ -228,7 +238,7 @@ U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 
 	if (Hangul_IsS(uv)) {
 	    Renew_d_if_not_enough_to(UTF8_MAXLEN * 3)
-	    d = pv_cat_decompHangul(d, uv);
+	    d = pv_cat_decompHangul(aTHX_ d, uv);
 	}
 	else {
 	    U8* r = iscompat ? dec_compat(uv) : dec_canonical(uv);
@@ -250,7 +260,7 @@ U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 }
 
 static
-U8* pv_utf8_reorder(U8* s, STRLEN slen, U8** dp, STRLEN dlen)
+U8* pv_utf8_reorder(pTHX_ U8* s, STRLEN slen, U8** dp, STRLEN dlen)
 {
     U8* p = s;
     U8* e = s + slen;
@@ -323,7 +333,7 @@ U8* pv_utf8_reorder(U8* s, STRLEN slen, U8** dp, STRLEN dlen)
 }
 
 static
-U8* pv_utf8_compose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscontig)
+U8* pv_utf8_compose(pTHX_ U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscontig)
 {
     U8* p = s;
     U8* e = s + slen;
@@ -451,11 +461,11 @@ decompose(src, compat = &PL_sv_no)
     U8 *s, *d, *dend;
     STRLEN slen, dlen;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&slen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&slen);
     dst = newSVpvn("", 0);
     dlen = slen;
     New(0, d, dlen+1, U8);
-    dend = pv_utf8_decompose(s, slen, &d, dlen, (bool)SvTRUE(compat));
+    dend = pv_utf8_decompose(aTHX_ s, slen, &d, dlen, (bool)SvTRUE(compat));
     sv_setpvn(dst, (char *)d, dend - d);
     SvUTF8_on(dst);
     Safefree(d);
@@ -473,11 +483,11 @@ reorder(src)
     U8 *s, *d, *dend;
     STRLEN slen, dlen;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&slen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&slen);
     dst = newSVpvn("", 0);
     dlen = slen;
     New(0, d, dlen+1, U8);
-    dend = pv_utf8_reorder(s, slen, &d, dlen);
+    dend = pv_utf8_reorder(aTHX_ s, slen, &d, dlen);
     sv_setpvn(dst, (char *)d, dend - d);
     SvUTF8_on(dst);
     Safefree(d);
@@ -497,11 +507,11 @@ compose(src)
     U8 *s, *d, *dend;
     STRLEN slen, dlen;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&slen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&slen);
     dst = newSVpvn("", 0);
     dlen = slen;
     New(0, d, dlen+1, U8);
-    dend = pv_utf8_compose(s, slen, &d, dlen, (bool)ix);
+    dend = pv_utf8_compose(aTHX_ s, slen, &d, dlen, (bool)ix);
     sv_setpvn(dst, (char *)d, dend - d);
     SvUTF8_on(dst);
     Safefree(d);
@@ -521,19 +531,19 @@ NFD(src)
     U8 *s, *t, *tend, *d, *dend;
     STRLEN slen, tlen, dlen;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&slen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&slen);
 
     /* decompose */
     tlen = slen;
     New(0, t, tlen+1, U8);
-    tend = pv_utf8_decompose(s, slen, &t, tlen, (bool)(ix==1));
+    tend = pv_utf8_decompose(aTHX_ s, slen, &t, tlen, (bool)(ix==1));
     *tend = '\0';
     tlen = tend - t; /* no longer know real size of t */
 
     /* reorder */
     dlen = tlen;
     New(0, d, dlen+1, U8);
-    dend = pv_utf8_reorder(t, tlen, &d, dlen);
+    dend = pv_utf8_reorder(aTHX_ t, tlen, &d, dlen);
     *dend = '\0';
     dlen = dend - d; /* no longer know real size of d */
 
@@ -561,26 +571,26 @@ NFC(src)
     U8 *s, *t, *tend, *u, *uend, *d, *dend;
     STRLEN slen, tlen, ulen, dlen;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&slen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&slen);
 
     /* decompose */
     tlen = slen;
     New(0, t, tlen+1, U8);
-    tend = pv_utf8_decompose(s, slen, &t, tlen, (bool)(ix==1));
+    tend = pv_utf8_decompose(aTHX_ s, slen, &t, tlen, (bool)(ix==1));
     *tend = '\0';
     tlen = tend - t; /* no longer know real size of t */
 
     /* reorder */
     ulen = tlen;
     New(0, u, ulen+1, U8);
-    uend = pv_utf8_reorder(t, tlen, &u, ulen);
+    uend = pv_utf8_reorder(aTHX_ t, tlen, &u, ulen);
     *uend = '\0';
     ulen = uend - u; /* no longer know real size of u */
 
     /* compose */
     dlen = ulen;
     New(0, d, dlen+1, U8);
-    dend = pv_utf8_compose(u, ulen, &d, dlen, (bool)(ix==2));
+    dend = pv_utf8_compose(aTHX_ u, ulen, &d, dlen, (bool)(ix==2));
     *dend = '\0';
     dlen = dend - d; /* no longer know real size of d */
 
@@ -608,7 +618,7 @@ checkNFD(src)
     U8 *s, *e, *p, curCC, preCC;
     bool result = TRUE;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&srclen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&srclen);
     e = s + srclen;
 
     preCC = 0;
@@ -645,7 +655,7 @@ checkNFC(src)
     bool result = TRUE;
     bool isMAYBE = FALSE;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&srclen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&srclen);
     e = s + srclen;
 
     preCC = 0;
@@ -701,7 +711,7 @@ checkFCD(src)
     bool result = TRUE;
     bool isMAYBE = FALSE;
   CODE:
-    s = (U8*)sv_2pvunicode(src,&srclen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&srclen);
     e = s + srclen;
     preCC = 0;
     for (p = s; p < e; p += retlen) {
@@ -858,7 +868,7 @@ getCanon(uv)
     if (Hangul_IsS(uv)) {
 	U8 tmp[3 * UTF8_MAXLEN + 1];
 	U8 *t = tmp;
-	U8 *e = pv_cat_decompHangul(t, uv);
+	U8 *e = pv_cat_decompHangul(aTHX_ t, uv);
 	RETVAL = newSVpvn((char *)t, e - t);
     } else {
 	U8* rstr = ix ? dec_compat(uv) : dec_canonical(uv);
@@ -879,7 +889,7 @@ splitOnLastStarter(src)
     STRLEN srclen;
     U8 *s, *e, *p;
   PPCODE:
-    s = (U8*)sv_2pvunicode(src,&srclen);
+    s = (U8*)sv_2pvunicode(aTHX_ src,&srclen);
     e = s + srclen;
     p = e;
     while (s < p) {

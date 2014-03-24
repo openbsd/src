@@ -3,7 +3,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 19;
+use Test::More tests => 22;
 
 use Data::Dumper;
 use File::Temp;
@@ -402,29 +402,37 @@ my $new_mm = sub {
         version         => '6.57_07',
         abstract        => 'Create a module Makefile',
         author          => ['Michael G Schwern <schwern@pobox.com>'],
-        license         => 'perl',
+        license         => ['perl_5'],
         dynamic_config  => 0,
 
-        requires        => {
-            "DirHandle"         => 0,
-            "File::Basename"    => 0,
-            "File::Spec"        => "0.8",
-            "Pod::Man"          => 0,
-            "perl"              => "5.006"
+        prereqs         => {
+            runtime => {
+                requires => {
+                    "DirHandle"         => 0,
+                    "File::Basename"    => 0,
+                    "File::Spec"        => "0.8",
+                    "Pod::Man"          => 0,
+                    "perl"              => "5.006",
+                },
+            },
+            configure => {
+                requires => {
+                },
+            },
+            build    => {
+                requires => {
+                    'Fake::Module1'       => 1.01,
+                },
+            },
         },
 
-        configure_requires      => {
-        },
-        build_requires      => {
-            'Fake::Module1'       => 1.01,
-        },
-
+        release_status => 'testing',
         resources => {
-            license     =>      'http://dev.perl.org/licenses/',
-            homepage    =>      'http://makemaker.org',
-            bugtracker  =>      'http://rt.cpan.org/NoAuth/Bugs.html?Dist=ExtUtils-MakeMaker',
-            repository  =>      'http://github.com/Perl-Toolchain-Gang/ExtUtils-MakeMaker',
-            x_MailingList =>      'makemaker@perl.org',
+            license     =>  [ 'http://dev.perl.org/licenses/' ],
+            homepage    =>  'http://makemaker.org',
+            bugtracker  =>  { web => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=ExtUtils-MakeMaker' },
+            repository  =>  { url => 'http://github.com/Perl-Toolchain-Gang/ExtUtils-MakeMaker' },
+            x_MailingList => 'makemaker@perl.org',
         },
 
         no_index        => {
@@ -434,8 +442,8 @@ my $new_mm = sub {
 
         generated_by => "ExtUtils::MakeMaker version 6.5707, CPAN::Meta::Converter version 2.110580",
         'meta-spec'  => {
-            url         => 'http://module-build.sourceforge.net/META-spec-v1.4.html', 
-            version     => 1.4
+            url         => 'http://search.cpan.org/perldoc?CPAN::Meta::Spec',
+            version     => 2,
         },
     };
 
@@ -448,6 +456,28 @@ my $new_mm = sub {
               'MYMETA YAML data (BUILD_REQUIRES wins)';
 }
 
+{
+    my $mm = $new_mm->(
+        DISTNAME       => 'Foo-Bar',
+        VERSION        => 1.23,
+        BUILD_REQUIRES => { "Fake::Module1" => 1.01 },
+        TEST_REQUIRES  => { "Fake::Module2" => 1.23 },
+    );
+
+    my $meta = $mm->mymeta('t/META_for_testing.json');
+    is($meta->{build_requires}, undef, "no build_requires in v2 META");
+    is_deeply(
+        $meta->{prereqs}{build}{requires},
+        { "Fake::Module1" => 1.01 },
+        "build requires are one thing in META v2...",
+    );
+
+    is_deeply(
+        $meta->{prereqs}{test}{requires},
+        { "Fake::Module2" => 1.23 },
+        "...and test requires are another",
+    );
+}
 
 note "CPAN::Meta bug using the module version instead of the meta spec version"; {
     my $mm = $new_mm->(
@@ -462,7 +492,7 @@ note "CPAN::Meta bug using the module version instead of the meta spec version";
     );
 
     my $meta = $mm->mymeta("t/META_for_testing_tricky_version.yml");
-    is $meta->{'meta-spec'}{version}, 1.4;
+    is $meta->{'meta-spec'}{version}, 2, "internally, our MYMETA struct is v2";
 
     in_dir {
         $mm->write_mymeta($meta);
@@ -475,7 +505,6 @@ note "CPAN::Meta bug using the module version instead of the meta spec version";
         my $meta_json = Parse::CPAN::Meta->load_file("MYMETA.json");
         cmp_ok $meta_json->{'meta-spec'}{version}, ">=", 2, "MYMETA.json at 2 or better";
     };
-
 }
 
 

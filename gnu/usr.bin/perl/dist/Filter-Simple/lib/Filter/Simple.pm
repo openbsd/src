@@ -4,7 +4,7 @@ use Text::Balanced ':ALL';
 
 use vars qw{ $VERSION @EXPORT };
 
-$VERSION = '0.88';
+$VERSION = '0.89';
 
 use Filter::Util::Call;
 use Carp;
@@ -251,7 +251,7 @@ Filter::Simple - Simplified source filtering
      package MyFilter;
 
      use Filter::Simple;
-     
+
      FILTER { ... };
 
      # or just:
@@ -338,7 +338,7 @@ to the sequence C<die 'BANG' if $BANG> in any piece of code following a
 C<use BANG;> statement (until the next C<no BANG;> statement, if any):
 
     package BANG;
- 
+
     use Filter::Util::Call ;
 
     sub import {
@@ -403,7 +403,7 @@ In other words, the previous example, would become:
 
     package BANG;
     use Filter::Simple;
-    
+
     FILTER {
         s/BANG\s+BANG/die 'BANG' if \$BANG/g;
     };
@@ -447,7 +447,7 @@ you would write:
 
     package BANG;
     use Filter::Simple;
-    
+
     FILTER {
         s/BANG\s+BANG/die 'BANG' if \$BANG/g;
     }
@@ -464,7 +464,7 @@ and to prevent the filter's being turned off in any way:
 
     package BANG;
     use Filter::Simple;
-    
+
     FILTER {
         s/BANG\s+BANG/die 'BANG' if \$BANG/g;
     }
@@ -761,9 +761,9 @@ list to the filtering subroutine, so the BANG.pm filter could easily
 be made parametric:
 
     package BANG;
- 
+
     use Filter::Simple;
-    
+
     FILTER {
         my ($die_msg, $var_name) = @_;
         s/BANG\s+BANG/die '$die_msg' if \${$var_name}/g;

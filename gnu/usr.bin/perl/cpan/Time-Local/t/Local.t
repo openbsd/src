@@ -1,9 +1,10 @@
 #!./perl
 
 use strict;
+use warnings;
 
 use Config;
-use Test::More;
+use Test::More 0.88;
 use Time::Local;
 
 # Set up time values to test
@@ -24,6 +25,9 @@ my @time =
 # so it is commented out. The end of the Epoch for a 32-bit signed
 # implementation of time_t should be Jan 19, 2038  03:14:07 UTC.
 #  [2038,  1, 17, 23, 59, 59],     # last full day in any tz
+
+   [2010, 10, 12, 14, 13, 12.1],
+   [2010, 10, 12, 14, 13, 59.1],
   );
 
 # more than 2**31 time_t - requires a 64bit safe localtime/gmtime
@@ -74,14 +78,6 @@ if ($^O eq 'VMS') {
 
 my $epoch_is_64 = eval { $Config{ivsize} == 8 && ( gmtime 2**40 )[5] == 34912 };
 
-my $tests = (@time * 12);
-$tests += @neg_time * 12;
-$tests += @bad_time;
-$tests += @years;
-$tests += 21;
-
-plan tests => $tests;
-
 for (@time, @neg_time) {
     my($year, $mon, $mday, $hour, $min, $sec) = @$_;
     $year -= 1900;
@@ -100,7 +96,7 @@ for (@time, @neg_time) {
 
             my($s,$m,$h,$D,$M,$Y) = localtime($time);
 
-            is($s, $sec, "timelocal second for @$_");
+            is($s, int($sec), "timelocal second for @$_");
             is($m, $min, "timelocal minute for @$_");
             is($h, $hour, "timelocal hour for @$_");
             is($D, $mday, "timelocal day for @$_");
@@ -116,7 +112,7 @@ for (@time, @neg_time) {
 
             my($s,$m,$h,$D,$M,$Y) = gmtime($time);
 
-            is($s, $sec, "timegm second for @$_");
+            is($s, int($sec), "timegm second for @$_");
             is($m, $min, "timegm minute for @$_");
             is($h, $hour, "timegm hour for @$_");
             is($D, $mday, "timegm day for @$_");
@@ -265,3 +261,5 @@ SKIP:
     is( ( localtime( timelocal( 0, 0, 2, 27, 2, 2005 ) ) )[2], 2,
         'hour is 2 when given 2:00 AM on Europe/London date change' );
 }
+
+done_testing();

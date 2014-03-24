@@ -8,6 +8,7 @@ BEGIN {
 
 use strict;
 use warnings;
+use Config;
 
 plan('no_plan');
 
@@ -35,19 +36,24 @@ $testcases{'[:space:]'} = $testcases{'\s'};
 $testcases{'[:word:]'} = $testcases{'\w'};
 
 my @charsets = qw(a d u aa);
-if (! is_miniperl()) {
+if (! is_miniperl() && $Config{d_setlocale}) {
     require POSIX;
     my $current_locale = POSIX::setlocale( &POSIX::LC_ALL, "C") // "";
     if ($current_locale eq 'C') {
-        use locale;
 
-        # Some locale implementations don't have the 128-255 characters all
-        # mean nothing.  Skip the locale tests in that situation
+        # test for d_setlocale is repeated here because this one is compile
+        # time, and the one above is run time
+        use if $Config{d_setlocale}, 'locale';
+
+        # Some implementations don't have the 128-255 range characters all
+        # mean nothing under the C locale (an example being VMS).  This is
+        # legal, but since we don't know what the right answers should be,
+        # skip the locale tests in that situation.
         for my $i (128 .. 255) {
-            goto bad_locale if chr($i) =~ /[[:print:]]/;
+            goto untestable_locale if chr($i) =~ /[[:print:]]/;
         }
         push @charsets, 'l';
-    bad_locale:
+    untestable_locale:
     }
 }
 

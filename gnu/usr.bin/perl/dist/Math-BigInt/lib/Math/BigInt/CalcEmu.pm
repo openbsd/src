@@ -5,7 +5,7 @@ use strict;
 # use warnings;	# dont use warnings for older Perls
 use vars qw/$VERSION/;
 
-$VERSION = '1.997';
+$VERSION = '1.998';
 
 package Math::BigInt;
 
@@ -323,7 +323,7 @@ Tels from 2001-2003.
 
 =head1 SEE ALSO
 
-L<Math::BigInt>, L<Math::BigFloat>, L<Math::BigInt::BitVect>,
+L<Math::BigInt>, L<Math::BigFloat>,
 L<Math::BigInt::GMP> and L<Math::BigInt::Pari>.
 
 =cut

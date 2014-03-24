@@ -1,6 +1,8 @@
 package utf8;
 use strict;
 use warnings;
+use re "/aa";  # So we won't even try to look at above Latin1, potentially
+               # resulting in a recursive call
 
 sub DEBUG () { 0 }
 $|=1 if DEBUG;
@@ -244,7 +246,7 @@ sub _loose_name ($) {
                                                     # minus
 
                             # Remove underscores between digits.
-                            $part =~ s/( ?<= [0-9] ) _ (?= [0-9] ) //xg;
+                            $part =~ s/(?<= [0-9] ) _ (?= [0-9] ) //xg;
 
                             # No leading zeros (but don't make a single '0'
                             # into a null string)

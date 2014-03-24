@@ -19,11 +19,11 @@ TAP::Harness - Run test scripts with statistics
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;
@@ -888,7 +888,7 @@ parameter to C<new>, typically from your C<Build.PL>.  For example:
                   extensions => ['.tap', '.txt'],
               },
           },
-          formatter => 'TAP::Formatter::HTML',
+          formatter_class => 'TAP::Formatter::HTML',
       },
       build_requires     => {
           'Module::Build' => '0.30',

@@ -13,7 +13,7 @@ use vars qw($VERSION @ISA @EXPORT_OK
           $Is_MacOS $Is_VMS $Is_VMS_mode $Is_VMS_lc $Is_VMS_nodot
           $Debug $Verbose $Quiet $MANIFEST $DEFAULT_MSKIP);
 
-$VERSION = '1.61';
+$VERSION = '1.63';
 @ISA=('Exporter');
 @EXPORT_OK = qw(mkmanifest
                 manicheck  filecheck  fullcheck  skipcheck
@@ -161,6 +161,14 @@ sub clean_up_filename {
   my $filename = shift;
   $filename =~ s|^\./||;
   $filename =~ s/^:([^:]+)$/$1/ if $Is_MacOS;
+  if ( $Is_VMS ) {
+      $filename =~ s/\.$//;                           # trim trailing dot
+      $filename = VMS::Filespec::unixify($filename);  # unescape spaces, etc.
+      if( $Is_VMS_lc ) {
+          $filename = lc($filename);
+          $filename = uc($filename) if $filename =~ /^MANIFEST(\.SKIP)?$/i;
+      }
+  }
   return $filename;
 }
 
@@ -182,11 +190,6 @@ sub manifind {
 	my $name = clean_up_filename($File::Find::name);
 	warn "Debug: diskfile $name\n" if $Debug;
 	return if -d $_;
-
-        if( $Is_VMS_lc ) {
-            $name =~ s#(.*)\.$#\L$1#;
-            $name = uc($name) if $name =~ /^MANIFEST(\.SKIP)?$/i;
-        }
 	$found->{$name} = "";
     };
 
@@ -378,8 +381,10 @@ sub maniread {
                 warn "Debug: Illegal name $file changed to $okfile\n" if $Debug;
                 $file = $okfile;
             }
-            $file = lc($file)
-                unless $Is_VMS_lc &&($file =~ /^MANIFEST(\.SKIP)?$/);
+            if( $Is_VMS_lc ) {
+                $file = lc($file);
+                $file = uc($file) if $file =~ /^MANIFEST(\.SKIP)?$/i;
+            }
         }
 
         $read->{$file} = $comment;

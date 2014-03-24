@@ -9,7 +9,7 @@ BEGIN { require "./test.pl"; }
 
 # This test depends on t/lib/Devel/switchd*.pm.
 
-plan(tests => 7);
+plan(tests => 10);
 
 my $r;
 
@@ -35,19 +35,25 @@ __SWDTEST__
 		 progfile => $filename,
 		 args => ['3'],
 		);
-    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/);
+    like($r,
+qr/^sub<Devel::switchd::import>;import<Devel::switchd>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/,
+    'Got debugging output: 1');
     $r = runperl(
 		 switches => [ '-Ilib', '-f', '-d:switchd=a,42' ],
 		 progfile => $filename,
 		 args => ['4'],
 		);
-    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd a 42>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/);
+    like($r,
+qr/^sub<Devel::switchd::import>;import<Devel::switchd a 42>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/,
+    'Got debugging output: 2');
     $r = runperl(
 		 switches => [ '-Ilib', '-f', '-d:-switchd=a,42' ],
 		 progfile => $filename,
 		 args => ['4'],
 		);
-    like($r, qr/^sub<Devel::switchd::unimport>;unimport<Devel::switchd a 42>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/);
+    like($r,
+qr/^sub<Devel::switchd::unimport>;unimport<Devel::switchd a 42>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/,
+    'Got debugging output: 3');
 }
 
 # [perl #71806]
@@ -109,4 +115,51 @@ like(
   ),
   qr "ok\r?\n",
  'No crash when calling orphaned subroutine via goto &',
+);
+
+# test when DB::DB is seen but not defined [perl #114990]
+like(
+  runperl(
+    switches => [ '-Ilib', '-d:nodb' ],
+    prog     => [ '1' ],
+    stderr   => 1,
+  ),
+  qr/^No DB::DB routine defined/,
+  "No crash when *DB::DB exists but not &DB::DB",
+);
+like(
+  runperl(
+    switches => [ '-Ilib' ],
+    prog     => 'sub DB::DB; BEGIN { $^P = 0x22; } for(0..9){ warn }',
+    stderr   => 1,
+  ),
+  qr/^No DB::DB routine defined/,
+  "No crash when &DB::DB exists but isn't actually defined",
+);
+
+# [perl #115742] Recursive DB::DB clobbering its own pad
+like(
+  runperl(
+    switches => [ '-Ilib' ],
+    progs    => [ split "\n", <<'='
+     BEGIN {
+      $^P = 0x22;
+     }
+     package DB;
+     sub DB {
+      my $x = 42;
+      return if $__++;
+      $^D |= 1 << 30; # allow recursive calls
+      main::foo();
+      print $x//q-u-, qq-\n-;
+     }
+     package main;
+     chop;
+     sub foo { chop; }
+=
+    ],
+    stderr   => 1,
+  ),
+  qr/42/,
+  "Recursive DB::DB does not clobber its own pad",
 );

@@ -8,7 +8,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 131;
+plan tests => 132;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -486,11 +486,11 @@ is($s, "AxBC", "utf8, DELETE");
 
 ($s) = keys %{{pie => 3}};
 SKIP: {
-    if (!eval { require B }) { skip "no B", 1 }
-    my $wasro = B::svref_2object(\$s)->FLAGS & &B::SVf_READONLY;
-    $wasro or local $TODO = "didn't have a COW";
+    if (!eval { require XS::APItest }) { skip "no XS::APItest", 2 }
+    my $wasro = XS::APItest::SvIsCOW($s);
+    ok $wasro, "have a COW";
     $s =~ tr/i//;
-    ok( B::svref_2object(\$s)->FLAGS & &B::SVf_READONLY,
+    ok( XS::APItest::SvIsCOW($s),
        "count-only tr doesn't deCOW COWs" );
 }
 
@@ -512,6 +512,7 @@ SKIP: {
 eval q{ $a ~= tr/a/b/; };
 ok 1;
 SKIP: {
+    no warnings "deprecated";
     skip "no encoding", 1 unless eval { require encoding; 1 };
     eval q{ use encoding "utf8"; $a ~= tr/a/b/; };
     ok 1;

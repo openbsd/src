@@ -2,12 +2,16 @@
 # 
 # Regenerate (overwriting only if changed):
 #
+#    pod/perldebguts.pod
 #    regnodes.h
 #
 # from information stored in
 #
 #    regcomp.sym
 #    regexp.h
+#
+# pod/perldebguts.pod is not completely regenerated.  Only the table of
+# regexp nodes is replaced; other parts remain unchanged.
 #
 # Accepts the standard regen_lib -q and -v args.
 #
@@ -22,11 +26,15 @@ use strict;
 open DESC, 'regcomp.sym';
 
 my $ind = 0;
-my (@name,@rest,@type,@code,@args,@flags,@longj);
-my ($desc,$lastregop);
+my (@name,@rest,@type,@code,@args,@flags,@longj,@cmnt);
+my ($longest_name_length,$desc,$lastregop) = 0;
 while (<DESC>) {
-    s/#.*$//;
-    next if /^\s*$/;
+    # Special pod comments
+    if (/^#\* ?/) { $cmnt[$ind] .= "# $'"; }
+    # Truly blank lines possibly surrounding pod comments
+    elsif (/^\s*$/) { $cmnt[$ind] .= "\n" }
+
+    next if /^(?:#|\s*$)/;
     chomp; # No \z in 5.004
     s/\s*$//;
     if (/^-+\s*$/) {
@@ -34,9 +42,11 @@ while (<DESC>) {
         next;
     }
     unless ($lastregop) {
-        ($name[$ind], $desc, $rest[$ind]) = /^(\S+)\s+([^\t]+)\s*;\s*(.*)/;
+        ($name[$ind], $desc, $rest[$ind]) = /^(\S+)\s+([^\t]+?)\s*;\s*(.*)/;
         ($type[$ind], $code[$ind], $args[$ind], $flags[$ind], $longj[$ind])
           = split /[,\s]\s*/, $desc;
+        $longest_name_length = length $name[$ind]
+          if length $name[$ind] > $longest_name_length;
         ++$ind;
     } else {
         my ($type,@lists)=split /\s+/, $_;
@@ -253,10 +263,11 @@ foreach my $file ("op_reg_common.h", "regexp.h") {
 
         # optional leading '_'.  Return symbol in $1, and strip it from
         # rest of line
-        if (s/ \#define \s+ ( _? RXf_ \w+ ) \s+ //xi) {
+        if (s/ \# \s* define \s+ ( _? RXf_ \w+ ) \s+ //xi) {
             chomp;
             my $define = $1;
-            s: / \s* \* .*? \* \s* / : :x;    # Replace comments by a blank
+            my $orig= $_;
+            s{ /\* .*? \*/ }{ }x;    # Replace comments by a blank
 
             # Replace any prior defined symbols by their values
             foreach my $key (keys %definitions) {
@@ -272,7 +283,12 @@ foreach my $file ("op_reg_common.h", "regexp.h") {
 
             next unless $_ =~ /<</; # Bit defines use left shift
             if($val & $newval) {
-                die sprintf "Both $define and $reverse{$newval} use %08X", $newval;
+                my @names=($define, $reverse{$newval});
+                s/PMf_// for @names;
+                if ($names[0] ne $names[1]) {
+                    die sprintf "ERROR: both $define and $reverse{$newval} use 0x%08X (%s:%s)", $newval, $orig, $_;
+                }
+                next;
             }
             $val|=$newval;
             $rxfv{$define}= $newval;
@@ -282,9 +298,11 @@ foreach my $file ("op_reg_common.h", "regexp.h") {
 }
 my %vrxf=reverse %rxfv;
 printf $out "\t/* Bits in extflags defined: %s */\n", unpack 'B*', pack 'N', $val;
+my %multibits;
 for (0..31) {
     my $power_of_2 = 2**$_;
     my $n=$vrxf{$power_of_2};
+    my $extra = "";
     if (! $n) {
 
         # Here, there was no name that matched exactly the bit.  It could be
@@ -299,16 +317,17 @@ for (0..31) {
             # that name, and all the bits it matches
             foreach my $name (keys %rxfv) {
                 if ($rxfv{$name} & $power_of_2) {
-                    $n = $name;
-                    $power_of_2 = $rxfv{$name};
+                    $n = $name . ( $multibits{$name}++ );
+                    $extra= sprintf qq{ : "%s" - 0x%08x}, $name, $rxfv{$name}
+                        if $power_of_2 != $rxfv{$name};
                     last;
                 }
             }
         }
     }
-    $n=~s/^RXf_(PMf_)?//;
-    printf $out qq(\t%-20s/* 0x%08x */\n), 
-        qq("$n",),$power_of_2;
+    s/\bRXf_(PMf_)?// for $n, $extra;
+    printf $out qq(\t%-20s/* 0x%08x%s */\n),
+        qq("$n",),$power_of_2, $extra;
 }  
  
 print $out <<EOP;
@@ -328,3 +347,51 @@ print $out process_flags('S', 'simple', <<'EOC');
 EOC
 
 read_only_bottom_close_and_rename($out);
+
+my $guts = open_new('pod/perldebguts.pod', '>');
+
+my $code;
+my $name_fmt = '<' x ($longest_name_length-1);
+my $descr_fmt = '<' x (58-$longest_name_length);
+eval <<EOD;
+format GuTS =
+ ^*~~
+ \$cmnt[\$_]
+ ^$name_fmt ^<<<<<<<<< ^$descr_fmt~~
+ \$name[\$_], \$code,  \$rest[\$_]
+.
+EOD
+
+select +(select($guts), do {
+    $~ = "GuTS";
+
+    open my $oldguts, "pod/perldebguts.pod"
+        or die "$0 cannot open pod/perldebguts.pod for reading: $!";
+    while(<$oldguts>) {
+        print;
+        last if /=for regcomp.pl begin/;
+    }
+
+    print <<'end';
+
+ # TYPE arg-description [num-args] [longjump-len] DESCRIPTION
+end
+    for (0..$lastregop-1) {
+        $code = "$code[$_] ".($args[$_]||"");
+        $code .= " $longj[$_]" if $longj[$_];
+        if ($cmnt[$_] ||= "") {
+            # Trim multiple blanks
+            $cmnt[$_] =~ s/^\n\n+/\n/; $cmnt[$_] =~ s/\n\n+$/\n\n/
+        }
+        write;
+    }
+    print "\n";
+
+    while(<$oldguts>) {
+        last if /=for regcomp.pl end/;
+    }
+    do { print } while <$oldguts>;
+
+})[0];
+
+close_and_rename($guts);

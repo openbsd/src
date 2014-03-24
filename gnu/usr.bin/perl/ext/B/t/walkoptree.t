@@ -33,7 +33,7 @@ sub B::OP::walkoptree_debug {
 my $victim = sub {
     # This gives us a substcont, which gets to the second recursive call
     # point (in the if statement in the XS code)
-    $_[0] =~ s/(a)/$1/;
+    $_[0] =~ s/(a)/ $1/;
     # PMOP_pmreplroot(cPMOPo) is NULL for this
     $_[0] =~ s/(b)//;
     # This gives an OP_PUSHRE

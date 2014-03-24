@@ -1,3 +1,34 @@
+2013-04-12  Andreas Koenig  <k@UX31A>
+
+	* release 2.00 (at Lancester #QA2013)
+
+	* Removed the trial status for the release in the Makefile.PL
+
+	* Merge with App::Cpan 0.61 (just a version number change)
+
+2013-02-06  k  <k@k83.linux.bogus>
+
+	* release 2.00-TRIAL
+
+	* import App::Cpan 0.60_02 from brian d foy
+
+	* RT#82589 doc fix thanks to Zefram
+
+	* several portability fixes for 5.6.2
+
+	* RT#83042 workaround for current circular dependency in CPANPLUS and
+	CPANPLUS::Dist::Build
+
+2012-10-16  Andreas Koenig  <andreas.koenig.7os6VVqR@franz.ak.mind.de>
+
+	* release 1.99_51
+
+	* RT #79969: fix incompatibilities with VMS (Craig Berry)
+
+  * bugfix: distroprefs of type pl/args were dropped for 'perl Build.PL'
+
+	* RT #73742: watch build_dirs and react calmly when one has gone lost
+
 2011-08-07  Andreas J. Koenig  <andk@cpan.org>
 
 	* release 1.9800

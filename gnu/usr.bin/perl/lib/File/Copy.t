@@ -14,7 +14,7 @@ use Test::More;
 
 my $TB = Test::More->builder;
 
-plan tests => 463;
+plan tests => 465;
 
 # We're going to override rename() later on but Perl has to see an override
 # at compile time to honor it.
@@ -139,7 +139,7 @@ for my $cross_partition_test (0..1) {
   { 
     my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
-    ok copy("file-$$", "file-$$"), 'copy(fn, fn) succeeds';
+    ok !copy("file-$$", "file-$$"), 'copy to itself fails';
 
     like $warnings, qr/are identical/, 'but warns';
     ok -s "file-$$", 'contents preserved';
@@ -267,6 +267,9 @@ SKIP: {
           if $^O eq "MSWin32";
     skip "Copy maps POSIX permissions to VOS permissions.", $skips
           if $^O eq "vos";
+    skip "There be dragons here with DragonflyBSD.", $skips
+         if $^O eq 'dragonfly';
+
 
     # Just a sub to get better failure messages.
     sub __ ($) {
@@ -411,7 +414,7 @@ SKIP: {
 	foreach my $right (qw(plain object1 object2)) {
 	    @warnings = ();
 	    $! = 0;
-	    is eval {copy $what{$left}, $what{$right}}, 1, "copy $left $right";
+	    is eval {copy $what{$left}, $what{$right}}, 0, "copy $left $right";
 	    is $@, '', 'No croaking';
 	    is $!, '', 'No system call errors';
 	    is @warnings, 1, 'Exactly 1 warning';
@@ -470,6 +473,31 @@ SKIP: {
     close($OUT);
     is($? >> 8, 55, "content copied through the pipes");
     close($IN);
+}
+
+use File::Temp qw(tempdir);
+use File::Spec;
+
+SKIP: {
+    # RT #111126: File::Copy copy() zeros file when copying a file
+    # into the same directory it is stored in
+
+    my $temp_dir = tempdir( CLEANUP => 1 );
+    my $temp_file = File::Spec->catfile($temp_dir, "somefile");
+
+    open my $fh, ">", $temp_file
+	or skip "Cannot create $temp_file: $!", 2;
+    print $fh "Just some data";
+    close $fh
+	or skip "Cannot close $temp_file: $!", 2;
+
+    my $warn_message = "";
+    local $SIG{__WARN__} = sub { $warn_message .= "@_" };
+    ok(!copy($temp_file, $temp_dir),
+       "Copy of foo/file to foo/ should fail");
+    like($warn_message, qr/^\Q'$temp_file' and '$temp_file'\E are identical.*Copy\.t/i,
+	 "error message should describe the problem");
+    1 while unlink $temp_file;
 }
 
 END {

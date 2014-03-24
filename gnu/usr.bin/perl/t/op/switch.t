@@ -8,6 +8,7 @@ BEGIN {
 
 use strict;
 use warnings;
+no warnings 'experimental::smartmatch';
 
 plan tests => 201;
 
@@ -52,9 +53,10 @@ given(my $x = "foo") {
 
 $_ = "outside";
 given("inside") { check_outside1() }
-sub check_outside1 { is($_, "outside", "\$_ lexically scoped") }
+sub check_outside1 { is($_, "inside", "\$_ is not lexically scoped") }
 
 {
+    no warnings 'experimental::lexical_topic';
     my $_ = "outside";
     given("inside") { check_outside2() }
     sub check_outside2 {
@@ -397,6 +399,7 @@ sub check_outside1 { is($_, "outside", "\$_ lexically scoped") }
 
 # Make sure it still works with a lexical $_:
 {
+    no warnings 'experimental::lexical_topic';
     my $_;
     my $test = "explicit comparison with lexical \$_";
     my $twenty_five = 25;
@@ -598,7 +601,7 @@ sub notfoo {"bar"}
 
 my $f = tie my $v, "FetchCounter";
 
-{   my $test_name = "Only one FETCH (in given)";
+{   my $test_name = "Multiple FETCHes in given, due to aliasing";
     my $ok;
     given($v = 23) {
     	when(undef) {}
@@ -609,7 +612,7 @@ my $f = tie my $v, "FetchCounter";
 	when(/24/) {$ok = 0}
     }
     is($ok, 1, "precheck: $test_name");
-    is($f->count(), 1, $test_name);
+    is($f->count(), 4, $test_name);
 }
 
 {   my $test_name = "Only one FETCH (numeric when)";
@@ -697,6 +700,7 @@ my $f = tie my $v, "FetchCounter";
 
 {
     my $first = 1;
+    no warnings 'experimental::lexical_topic';
     my $_;
     for (1, "two") {
 	when ("two") {
@@ -715,6 +719,7 @@ my $f = tie my $v, "FetchCounter";
 
 {
     my $first = 1;
+    no warnings 'experimental::lexical_topic';
     my $_;
     for $_ (1, "two") {
 	when ("two") {
@@ -733,6 +738,7 @@ my $f = tie my $v, "FetchCounter";
 
 {
     my $first = 1;
+    no warnings 'experimental::lexical_topic';
     for my $_ (1, "two") {
 	when ("two") {
 	    is($first, 0, "Lexical loop: second");
@@ -1366,6 +1372,8 @@ unreified_check(undef,"");
 
 {
     sub f1 {
+	no warnings 'experimental::lexical_topic';
+	my $_;
 	given(3) {
 	    return sub { $_ } # close over lexical $_
 	}
@@ -1378,6 +1386,7 @@ unreified_check(undef,"");
     sub DESTROY { $d++ };
 
     sub f2 {
+	no warnings 'experimental::lexical_topic';
 	my $_ = 5;
 	given(bless [7]) {
 	    ::is($_->[0], 7, "is [7]");

@@ -19,7 +19,9 @@ use XSLoader ();
 
 use strict;
 
-our $VERSION   = '3.03_01';
+use if $] > 5.016, 'deprecate';
+
+our $VERSION   = '3.04';
 our @EXPORT_OK = qw(soundex soundex_unicode soundex_nara soundex_nara_unicode
                     $soundex_nocode);
 our @EXPORT    = qw(soundex soundex_nara $soundex_nocode);

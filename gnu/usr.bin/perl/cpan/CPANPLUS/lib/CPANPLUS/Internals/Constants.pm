@@ -1,4 +1,5 @@
 package CPANPLUS::Internals::Constants;
+use deprecate;
 
 use strict;
 
@@ -13,9 +14,9 @@ use vars    qw[$VERSION @ISA @EXPORT];
 
 use Package::Constants;
 
+$VERSION = "0.9135";
 @ISA        = qw[Exporter];
 @EXPORT     = Package::Constants->list( __PACKAGE__ );
-
 
 sub constants { @EXPORT };
 
@@ -194,6 +195,10 @@ use constant BLIB_LIBDIR    => sub { return @_
                                                 @_, BLIB->(), LIB )
                                         : File::Spec->catdir( BLIB->(), LIB );
                             };
+
+use constant BIN            => 'bin';
+
+use constant SCRIPT         => 'script';
 
 use constant CONFIG_USER_LIB_DIR => sub {
                                     require CPANPLUS::Internals::Utils;

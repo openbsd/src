@@ -22,6 +22,12 @@ like($@,qr/contains a newline/,'invalid header blows up');
 like $cgi->header( -type => "text/html".$CGI::CRLF." evil: stuff " ),
     qr#Content-Type: text/html evil: stuff#, 'known header, with leading and trailing whitespace on the continuation line';
 
+eval { $cgi->header( -p3p => ["foo".$CGI::CRLF."bar"] ) };
+like($@,qr/contains a newline/,'P3P header with CRLF embedded blows up');
+
+eval { $cgi->header( -cookie => ["foo".$CGI::CRLF."bar"] ) };
+like($@,qr/contains a newline/,'Set-Cookie header with CRLF embedded blows up');
+
 eval { $cgi->header( -foobar => "text/html".$CGI::CRLF."evil: stuff" ) };
 like($@,qr/contains a newline/,'unknown header with CRLF embedded blows up');
 

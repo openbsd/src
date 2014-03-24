@@ -18,7 +18,7 @@ package Math::BigInt;
 my $class = "Math::BigInt";
 use 5.006002;
 
-$VERSION = '1.998';
+$VERSION = '1.9991';
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(objectify bgcd blcm); 
@@ -5251,7 +5251,7 @@ With overloaded math, only the first two variants will result in a BigFloat:
 
 	use Math::BigInt;
 	use Math::BigFloat;
-	
+
 	$mbf = Math::BigFloat->new(5);
 	$mbi2 = Math::BigInteger->new(5);
 	$mbi = Math::BigInteger->new(2);
@@ -5330,7 +5330,7 @@ the same terms as Perl itself.
 =head1 SEE ALSO
 
 L<Math::BigFloat>, L<Math::BigRat> and L<Math::Big> as well as
-L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
+L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 The pragmas L<bignum>, L<bigint> and L<bigrat> also might be of interest
 because they solve the autoupgrading/downgrading issue, at least partly.

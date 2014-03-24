@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..71\n"; }
+BEGIN { $| = 1; print "1..91\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -28,8 +28,6 @@ use Unicode::Collate;
 
 ok(1);
 
-#########################
-
 our $IsEBCDIC = ord("A") != 0x41;
 
 my $Collator = Unicode::Collate->new(
@@ -37,7 +35,7 @@ my $Collator = Unicode::Collate->new(
   normalization => undef,
 );
 
-##############
+##### 1
 
 my %old_level = $Collator->change(level => 2);
 
@@ -64,7 +62,7 @@ if (my($pos,$len) = $Collator->index($str, $sub)) {
 
 ok($str, $orig);
 
-##############
+##### 3
 
 my $match;
 
@@ -126,7 +124,7 @@ if (my($pos, $len) = $Collator->index($str, $sub)) {
 }
 ok($match, $ret);
 
-##############
+##### 9
 
 $Collator->change(level => 1);
 
@@ -165,7 +163,7 @@ if (my($pos,$len) = $Collator->index("", "abc")) {
 }
 ok($match, undef);
 
-##############
+##### 13
 
 $Collator->change(level => 1);
 
@@ -201,7 +199,7 @@ if (my($pos, $len) = $Collator->index($str, $sub)) {
 }
 ok($match, $ret);
 
-##############
+##### 16
 
 $Collator->change(level => 1);
 
@@ -246,7 +244,7 @@ ok($match, undef);
 
 $Collator->change(%old_level);
 
-##############
+##### 22
 
 my @ret;
 
@@ -318,7 +316,7 @@ ok($ret, undef);
 
 $Collator->change(%old_level);
 
-##############
+##### 38
 
 $Collator->change(level => 1);
 
@@ -349,6 +347,8 @@ $Collator->gsubst($str, "camel", sub { "<b>$_[0]</b>" });
 ok($str, "<b>Camel</b> donkey zebra <b>came\x{301}l</b> "
 	. "<b>CAMEL</b> horse <b>cAm\0E\0L</b>...");
 
+##### 47
+
 # http://www.xray.mpe.mpg.de/mailing-lists/perl-unicode/2010-09/msg00014.html
 # when the substring includes an ignorable element like a space...
 
@@ -376,6 +376,8 @@ $str = "Camel donkey zebra camex{301}l CAMEL horse cAmEL-horse...";
 $Collator->gsubst($str, "ca\x{300}melho\x{302}rse", sub { "=$_[0]=" });
 ok($str, "Camel donkey zebra camex{301}l =CAMEL horse= =cAmEL-horse=...");
 
+##### 53
+
 $Collator->change(level => 3);
 
 $str = "P\cBe\x{300}\cBrl and PERL.";
@@ -400,7 +402,7 @@ ok($str, "P\cBe\x{300}\cBrl and PERL.");
 
 $Collator->change(%old_level);
 
-##############
+##### 61
 
 $str = "Perl and Camel";
 $ret = $Collator->gsubst($str, "\cA\cA\0", "AB");
@@ -422,7 +424,7 @@ $ret = $Collator->gsubst($str, 'PP', "ABC");
 ok($ret, 2);
 ok($str, "ABCABCP");
 
-##############
+##### 69
 
 # Shifted; ignorable after variable
 
@@ -434,3 +436,99 @@ $Collator->change(alternate => 'Non-ignorable');
 ($ret) = $Collator->match("A?\x{300}!\x{301}B\x{315}", "?!");
 ok($ret, undef);
 
+##### 71
+
+# Now preprocess is defined.
+
+$Collator->change(preprocess => sub {''});
+
+eval { $Collator->index("", "") };
+ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+eval { $Collator->index("a", "a") };
+ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+eval { $Collator->match("", "") };
+ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+
+eval { $Collator->match("a", "a") };
+ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+
+$Collator->change(preprocess => sub { uc shift });
+
+eval { $Collator->index("", "") };
+ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+eval { $Collator->index("a", "a") };
+ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+eval { $Collator->match("", "") };
+ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+
+eval { $Collator->match("a", "a") };
+ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+
+##### 79
+
+eval { require Unicode::Normalize };
+my $has_norm = !$@;
+
+if ($has_norm) {
+    # Now preprocess and normalization are defined.
+
+    $Collator->change(normalization => 'NFD');
+
+    eval { $Collator->index("", "") };
+    ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+    eval { $Collator->index("a", "a") };
+    ok($@ && $@ =~ /Don't use Preprocess with index\(\)/);
+
+    eval { $Collator->match("", "") };
+    ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+
+    eval { $Collator->match("a", "a") };
+    ok($@ && $@ =~ /Don't use Preprocess with.*match\(\)/);
+} else {
+    ok(1) for 1..4;
+}
+
+$Collator->change(preprocess => undef);
+
+if ($has_norm) {
+    # Now only normalization is defined.
+
+    eval { $Collator->index("", "") };
+    ok($@ && $@ =~ /Don't use Normalization with index\(\)/);
+
+    eval { $Collator->index("a", "a") };
+    ok($@ && $@ =~ /Don't use Normalization with index\(\)/);
+
+    eval { $Collator->match("", "") };
+    ok($@ && $@ =~ /Don't use Normalization with.*match\(\)/);
+
+    eval { $Collator->match("a", "a") };
+    ok($@ && $@ =~ /Don't use Normalization with.*match\(\)/);
+
+    $Collator->change(normalization => undef);
+} else {
+    ok(1) for 1..4;
+}
+
+##### 87
+
+# Now preprocess and normalization are undef.
+
+eval { $Collator->index("", "") };
+ok(!$@);
+
+eval { $Collator->index("a", "a") };
+ok(!$@);
+
+eval { $Collator->match("", "") };
+ok(!$@);
+
+eval { $Collator->match("a", "a") };
+ok(!$@);
+
+##### 91

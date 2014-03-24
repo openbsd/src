@@ -1,11 +1,68 @@
 CHANGES
 -------
 
+  2.060 7 January 2013
+
+      * Updated POD
+        RT# 82138: Example code not clear - gunzip() takes filenames!
+
+      * IO::Compress::Base
+        Remove the flush call when opening a filehandle. 
+
+  2.059 10 December 2012
+
+      * IO::Compress::Base
+        Added "Encode" option.
+        Fixes the encoding half of RT# 42656. Decode is still TODO
+
+  2.058 12 November 2012
+
+      * RT# 81119: Latest IO::Compress 2.057 fails tests on 5.8.x
+
+  2.057 10 November 2012
+
+      * IO::Compress::Zip
+        Allow member name & Zip Comment to be "0"
+   
+      * IO::Compress::Base::Common
+        Remove "-r" test - the file open will catch this.
+        RT# 80855: IO::Compress::Base::Common returns that it cannot read readable files in NFS
+
+      * RT# 79820: Install to 'site' instead of 'perl' when perl version is 5.11+
+      
+      * General Performance improvements.
+                
+  2.055 5 August 2012
+
+      * FAQ
+        Added a few paragraphs on how to deal with pbzip2 files
+        [RT# #77743: Interoperability problems with pbzip2]
+
+      * Compress::Zip
+        speed up compress, uncompress, memGzip & memGunzip.
+        [RT# #77350: Compress::Zlib::uncompress() is slowed down needlessly 
+                     by parameter validation
+
+  2.052 29 April 2012
+
+      * IO::Compress::Zip
+        Force a ZIP64 archive when it contains >= 0xFFFF entries.
+        
+      * Typos in POD
+        [RT# #76130: Gunzip Pod typo in OO section: $$output instead of $$input
+
+  2.049 18 February 2012
+
+      * IO::Compress::Zip
+        Error in t/cz-03zlib-v1.t that caused warnings with 5.15
+        [RT# 110736: warnings from cpan/IO-Compress/t/cz-03zlib-v1.t]
+
   2.048 29 January 2012
 
       * Set minimum zlib version to 1.2.0
       
-      * IO::Compress test suite fails with Compress::Raw::Zlib 2.047 and zlib < 1.2.4
+      * IO::Compress test suite fails with Compress::Raw::Zlib 2.047 
+        and zlib < 1.2.4
         [RT# 74503]
       
   2.047 28 January 2012

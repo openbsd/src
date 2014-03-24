@@ -53,19 +53,19 @@ test whether we're still at the start of the string. So, here's where
 C<pat> is set up:
 
     STRLEN fromlen;
-    register char *pat = SvPVx(*++MARK, fromlen);
-    register char *patend = pat + fromlen;
-    register I32 len;
+    char *pat = SvPVx(*++MARK, fromlen);
+    char *patend = pat + fromlen;
+    I32 len;
     I32 datumtype;
     SV *fromstr;
 
 We'll have another string pointer in there:
 
     STRLEN fromlen;
-    register char *pat = SvPVx(*++MARK, fromlen);
-    register char *patend = pat + fromlen;
+    char *pat = SvPVx(*++MARK, fromlen);
+    char *patend = pat + fromlen;
  +  char *patcopy;
-    register I32 len;
+    I32 len;
     I32 datumtype;
     SV *fromstr;
 

@@ -1,3 +1,179 @@
+2013-01-07  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 4.02 released.
+
+	* Makefile.PL: Add the minimum Perl version to the package
+	metadata.
+
+	* t/basic256.t: List the tag first in the import list for
+	compatibility with the Exporter from Perl 5.6.2.  Thanks to David
+	Cantrell for the testing and debugging.
+
+2012-12-31  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 4.01 released.
+
+	* t/strict.t: During coverage checking, skip generic tests that
+	don't run module code for a significant speed-up.
+
+	* examples/generate-colors: Add POD documentation.
+	* t/critic.t: Also check the examples directory.
+	* t/pod.t: Likewise.
+	* t/pod-spelling.t: Likewise.
+
+	* t/aliases-env.t: Fix logic for skipping tests when Test::Warn is
+	not installed.
+
+2012-12-30  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 4.00 released.
+
+	* LICENSE: New file summarizing copyright and license information.
+
+	* examples/generate-colors: Add support for "basic" and "bright"
+	test file types that test all the other supported attributes.
+	* tests/README: Remove VT100 test files.  The license was unclear,
+	and the new generate-colors example script does everything they do
+	of significance for this package plus more.
+	* tests/ansicolor: Likewise.
+	* tests/vt100-torture: Likewise.
+
+	* ANSIColor.pm (PUSHCOLOR): Take an array like all the other
+	constant functions and join all arguments together before
+	manipulating it.
+	* t/basic.t: Multiple new tests for various weird edge cases.
+
+	* ANSIColor.pm (AUTOLOAD): Only honor ANSI_COLORS_DISABLED if it
+	is set to a true value.
+	(color): Likewise.
+	(colored): Likewise.
+	* t/basic.t: Test that ANSI_COLORS_DISABLED must be true.
+
+	* t/synopsis.t: New test for SYNOPSIS syntax.
+
+	* ANSIColor.pm: Add COMPATIBILITY section to the documentation,
+	collecting all information about when features were introduced and
+	adding the version of Perl that they shipped with.  Add
+	appropriate version numbers to the use statements in the SYNOPSIS.
+
+	* ANSIColor.pm: Use coloralias to load aliases from the
+	environment.  Improve commenting in the SYNOPSIS.  Document the
+	new alias name restrictions.
+	(coloralias): New function to set a color alias.  Enforce
+	restrictions on the acceptable alias name.
+
+	* t/aliases-env.t: Adjust warning test for new error message.
+	* t/aliases-func.t: New test of coloralias.
+
+2012-12-29  Stephen Thirlwall  <stephen.thirlwall@strategicdata.com.au>
+	    Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add support for custom color names configured with
+	the ANSI_COLORS_ALIASES environment variable as set during module
+	load.
+	(color): Support custom colors.
+	(colorvalid): Likewise.
+	* t/aliases-env.t: New test of custom colors from the environment.
+	* t/basic.t: Delete ANSI_COLORS_ALIASES from the environment before
+	module load to avoid any effects from the test runner's settings.
+	* t/basic256.t: Likewise.
+	* t/eval.t: Likewise.
+	* t/stringify.t: Likewise.
+	* t/taint.t: Likewise.
+
+2012-12-28  Kurt Starsinic  <kstarsinic@gmail.com>
+	    Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add constants (with tag :constants256) and
+	attributes for 256-color emulators.
+	(uncolor): Support the three-part 256-color codes.
+	* t/basic256.t: New test for 256-color support.
+	* examples/generate-colors: New script to generate 256-color test
+	or demonstration files.
+
+2012-12-28  Russ Allbery  <rra@stanford.edu>
+
+	* t/basic.t: Test uncolor with \e[m and '' as only arguments.
+
+	* ANSIColor.pm: $AUTOLOCAL takes precedence over $AUTORESET,
+	reversing the previous behvior.  Document the precedence.
+	* t/basic.t: Test for $AUTOLOCAL vs. $AUTORESET precedence.
+
+	* t/taint.t: New check for proper untainting in AUTOLOAD.
+	* ANSIColor.pm: Comment the untainting of $AUTOLOAD so that it
+	isn't accidentally removed as apparently unnecessary.
+
+	* t/strict.t: Ignore t/taint.t for coverage checking, since
+	Test::Strict doesn't know how to invoke tests that require
+	tainting.
+
+	* t/strict.t: Add test suite coverage checking if running the test
+	in maintainer mode.
+	* ANSIColor.pm (AUTOLOAD): Drop a redundant check on the result of
+	eval so that 100% test coverage can be achieved.
+	* t/basic.t: Remove taint checking, which is incompatible with
+	coverage testing.  Add tests to achieve 100% coverage.
+	* t/eval.t: Remove taint checking.
+	* t/stringify.t: Likewise.
+
+	* ANSIColor.pm: Document $Term::ANSIColor::AUTOLOCAL.
+
+	* ANSIColor.pm (AUTOLOAD): Support ANSI_COLORS_DISABLED in the
+	generated constant subs.  Fixes a bug where the environment
+	variable would be ignored if the constant were used before it was
+	set.
+	* t/basic.t: Test for proper ANSI_COLORS_DISABLED support in
+	generated constant subs.
+
+	* t/critic.t: New test that runs perlcritic (and perltidy) on all
+	source files and checks for violations.
+	* t/data/perlcriticrc: New file.
+	* t/data/perltidyrc: New file.
+	* ANSIColor.pm: Substantial reworking to improve coding style and
+	layout.  Update to Perl 5.6 syntax.  Unconditionally load Carp for
+	simplicity.
+	* Makefile.PL: Require Perl 5.6.  Remove conditionals for
+	configuration that was not supported prior to Perl 5.6.
+	* t/basic.t: Update coding style.
+	* t/eval.t: Likewise.
+	* t/stringify.t: Likewise.
+
+	* t/minimum-version.t: New test for the minimum required version
+	of Perl.
+
+	* t/pod-coverage.t: New test for POD coverage.
+
+	* ANSIColor.pm: Add use warnings.
+	* Makefile.PL: Add use strict and use warnings.
+	* t/strict.t: New test for strict and warnings in all code.
+
+	* t/pod.t: Update coding style.
+	* t/pod-spelling.t: Use Test::Spelling instead of including a
+	less-tested version of the same code.  Update coding style.
+
+2012-03-18  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 3.02 released.
+
+	* ANSIColor.pm (AUTOLOAD): Only return pass-through behavior if
+	the function that was called was one of our constants, rather than
+	turning every unknown function in the Term::ANSIColor namespace
+	into a passthrough join function when colors are disabled.
+	* t/basic.t: Test proper error reporting with colors disabled.
+
+	* ANSIColor.pm (AUTOLOAD): Preserve an existing value of $@ when
+	generating a constant sub and restore it afterwards.  Diagnose
+	errors in creating the constant sub and die instead of ignoring
+	them.
+	* t/eval.t: New test for $@ preservation.
+
+	* ANSIColor.pm: Add italic and the ITALIC constant.  Document that
+	the support for it is rare.
+	* t/basic.t: Test italic and ITALIC support.
+
+	* ANSIColor.pm: Add "mistyped" as a stopword, required by the
+	latest aspell on Debian.
+
 2011-07-20  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 3.01 released.

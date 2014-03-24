@@ -1,8 +1,8 @@
-# DerivedNumericType-6.1.0.txt
-# Date: 2011-08-23, 00:47:14 GMT [MD]
+# DerivedNumericType-6.2.0.txt
+# Date: 2012-08-13, 19:20:20 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -131,9 +131,7 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10B78..10B7F  ; Numeric # No   [8] INSCRIPTIONAL PAHLAVI NUMBER ONE..INSCRIPTIONAL PAHLAVI NUMBER ONE THOUSAND
 10E69..10E7E  ; Numeric # No  [22] RUMI NUMBER TEN..RUMI FRACTION TWO THIRDS
 1105B..11065  ; Numeric # No  [11] BRAHMI NUMBER TEN..BRAHMI NUMBER ONE THOUSAND
-12400..12431  ; Numeric # Nl  [50] CUNEIFORM NUMERIC SIGN TWO ASH..CUNEIFORM NUMERIC SIGN FIVE SHARU
-12434..12455  ; Numeric # Nl  [34] CUNEIFORM NUMERIC SIGN ONE BURU..CUNEIFORM NUMERIC SIGN FIVE BAN2 VARIANT FORM
-12458..12462  ; Numeric # Nl  [11] CUNEIFORM NUMERIC SIGN ONE ESHE3..CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER
+12400..12462  ; Numeric # Nl  [99] CUNEIFORM NUMERIC SIGN TWO ASH..CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER
 1D360..1D371  ; Numeric # No  [18] COUNTING ROD UNIT DIGIT ONE..COUNTING ROD TENS DIGIT NINE
 20001         ; Numeric # Lo       CJK UNIFIED IDEOGRAPH-20001
 20064         ; Numeric # Lo       CJK UNIFIED IDEOGRAPH-20064
@@ -152,7 +150,7 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 2626D         ; Numeric # Lo       CJK UNIFIED IDEOGRAPH-2626D
 2F890         ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 637
+# Total code points: 641
 
 # ================================================
 

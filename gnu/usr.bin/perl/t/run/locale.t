@@ -64,7 +64,11 @@ my $original_locale = setlocale(LC_NUMERIC);
 
 my ($base, $different, $difference);
 for ("C", @locales) { # prefer C for the base if available
-    use locale;
+    BEGIN {
+        if($Config{d_setlocale}) {
+            require locale; import locale;
+        }
+    }
     setlocale(LC_NUMERIC, $_) or next;
     my $in = 4.2; # avoid any constant folding bugs
     if ((my $s = sprintf("%g", $in)) eq "4.2")  {
@@ -113,14 +117,15 @@ format STDOUT =
 @.#
 4.179
 .
-{ use locale; write; }
+{ require locale; import locale; write; }
 EOF
 	    "too late to look at the locale at write() time");
         }
 
         {
 	    fresh_perl_is(<<'EOF', $difference, {},
-use locale; format STDOUT =
+use locale;
+format STDOUT =
 @.#
 4.179
 .
@@ -134,7 +139,11 @@ EOF
         # do not let "use 5.000" affect the locale!
         # this test is to prevent regression of [rt.perl.org #105784]
         fresh_perl_is(<<"EOF",
-            use locale;
+            BEGIN {
+                if($Config{d_setlocale}) {
+                    require locale; import locale;
+                }
+            }
             use POSIX;
             my \$i = 0.123;
             POSIX::setlocale(POSIX::LC_NUMERIC(),"$different");
@@ -163,7 +172,7 @@ EOF
 	local $ENV{LC_NUMERIC} = $_;
 	local $ENV{LC_ALL}; # so it never overrides LC_NUMERIC
 	fresh_perl_is(<<'EOF', "$difference "x4, {},
-	    use locale;
+        use locale;
 	    use POSIX qw(locale_h);
 	    setlocale(LC_NUMERIC, "");
 	    my $in = 4.2;

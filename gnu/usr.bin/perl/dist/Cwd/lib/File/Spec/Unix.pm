@@ -3,7 +3,7 @@ package File::Spec::Unix;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '3.39_02';
+$VERSION = '3.40';
 $VERSION =~ tr/_//;
 
 =head1 NAME
@@ -352,9 +352,11 @@ directories.
 If $path is relative, it is converted to absolute form using L</rel2abs()>.
 This means that it is taken to be relative to L<cwd()|Cwd>.
 
-No checks against the filesystem are made.  On VMS, there is
-interaction with the working environment, as logicals and
-macros are expanded.
+No checks against the filesystem are made, so the result may not be correct if
+C<$base> contains symbolic links.  (Apply
+L<Cwd::abs_path()|Cwd/abs_path> beforehand if that
+is a concern.)  On VMS, there is interaction with the working environment, as
+logicals and macros are expanded.
 
 Based on code written by Shigio Yamaguchi.
 
@@ -366,28 +368,32 @@ sub abs2rel {
 
     ($path, $base) = map $self->canonpath($_), $path, $base;
 
+    my $path_directories;
+    my $base_directories;
+
     if (grep $self->file_name_is_absolute($_), $path, $base) {
 	($path, $base) = map $self->rel2abs($_), $path, $base;
+
+	my ($path_volume) = $self->splitpath($path, 1);
+	my ($base_volume) = $self->splitpath($base, 1);
+
+	# Can't relativize across volumes
+	return $path unless $path_volume eq $base_volume;
+
+	$path_directories = ($self->splitpath($path, 1))[1];
+	$base_directories = ($self->splitpath($base, 1))[1];
+
+	# For UNC paths, the user might give a volume like //foo/bar that
+	# strictly speaking has no directory portion.  Treat it as if it
+	# had the root directory for that volume.
+	if (!length($base_directories) and $self->file_name_is_absolute($base)) {
+	    $base_directories = $self->rootdir;
+	}
     }
     else {
-	# save a couple of cwd()s if both paths are relative
-	($path, $base) = map $self->catdir('/', $_), $path, $base;
-    }
-
-    my ($path_volume) = $self->splitpath($path, 1);
-    my ($base_volume) = $self->splitpath($base, 1);
-
-    # Can't relativize across volumes
-    return $path unless $path_volume eq $base_volume;
-
-    my $path_directories = ($self->splitpath($path, 1))[1];
-    my $base_directories = ($self->splitpath($base, 1))[1];
-
-    # For UNC paths, the user might give a volume like //foo/bar that
-    # strictly speaking has no directory portion.  Treat it as if it
-    # had the root directory for that volume.
-    if (!length($base_directories) and $self->file_name_is_absolute($base)) {
-      $base_directories = $self->rootdir;
+	my $wd= ($self->splitpath($self->_cwd(), 1))[1];
+	$path_directories = $self->catdir($wd, $path);
+	$base_directories = $self->catdir($wd, $base);
     }
 
     # Now, remove all leading components that are the same
@@ -395,19 +401,39 @@ sub abs2rel {
     my @basechunks = $self->splitdir( $base_directories );
 
     if ($base_directories eq $self->rootdir) {
+      return $self->curdir if $path_directories eq $self->rootdir;
       shift @pathchunks;
       return $self->canonpath( $self->catpath('', $self->catdir( @pathchunks ), '') );
     }
 
+    my @common;
     while (@pathchunks && @basechunks && $self->_same($pathchunks[0], $basechunks[0])) {
-        shift @pathchunks ;
+        push @common, shift @pathchunks ;
         shift @basechunks ;
     }
     return $self->curdir unless @pathchunks || @basechunks;
 
-    # $base now contains the directories the resulting relative path 
-    # must ascend out of before it can descend to $path_directory.
-    my $result_dirs = $self->catdir( ($self->updir) x @basechunks, @pathchunks );
+    # @basechunks now contains the directories the resulting relative path 
+    # must ascend out of before it can descend to $path_directory.  If there
+    # are updir components, we must descend into the corresponding directories
+    # (this only works if they are no symlinks).
+    my @reverse_base;
+    while( defined(my $dir= shift @basechunks) ) {
+	if( $dir ne $self->updir ) {
+	    unshift @reverse_base, $self->updir;
+	    push @common, $dir;
+	}
+	elsif( @common ) {
+	    if( @reverse_base && $reverse_base[0] eq $self->updir ) {
+		shift @reverse_base;
+		pop @common;
+	    }
+	    else {
+		unshift @reverse_base, pop @common;
+	    }
+	}
+    }
+    my $result_dirs = $self->catdir( @reverse_base, @pathchunks );
     return $self->canonpath( $self->catpath('', $result_dirs, '') );
 }
 
@@ -472,6 +498,8 @@ Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+Please submit bug reports and patches to perlbug@perl.org.
 
 =head1 SEE ALSO
 

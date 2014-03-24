@@ -1,11 +1,18 @@
 #!./perl -T
 use strict;
+use Test::More;
+BEGIN {
+    plan(
+        ${^TAINT}
+        ? (tests => 45)
+        : (skip_all => "A perl without taint support") 
+    );
+}
 
 my %Expect_File = (); # what we expect for $_
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname
 my %Expect_Dir  = (); # what we expect for $File::Find::dir
 my ($cwd, $cwd_untainted);
-
 
 BEGIN {
     require File::Spec;
@@ -41,8 +48,6 @@ BEGIN {
     }
     $ENV{'PATH'} = join($sep,@path);
 }
-
-use Test::More tests => 45;
 
 my $symlink_exists = eval { symlink("",""); 1 };
 

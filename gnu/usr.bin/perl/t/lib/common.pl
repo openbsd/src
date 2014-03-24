@@ -54,11 +54,11 @@ foreach my $file (@w_files) {
 }
 
 $^X = rel2abs($^X);
+@INC = map { rel2abs($_) } @INC;
 my $tempdir = tempfile;
 
 mkdir $tempdir, 0700 or die "Can't mkdir '$tempdir': $!";
 chdir $tempdir or die die "Can't chdir '$tempdir': $!";
-unshift @INC, '../../lib';
 my $cleanup = 1;
 
 END {

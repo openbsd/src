@@ -28,6 +28,7 @@ my %feature = (
     evalbytes       => 'evalbytes',
     array_base      => 'arybase',
     current_sub     => '__SUB__',
+    lexical_subs    => 'lexsubs',
     unicode_eval    => 'unieval',
     unicode_strings => 'unicode',
     fc              => 'fc',
@@ -37,24 +38,31 @@ my %feature = (
 #       versions, any code below that uses %BundleRanges will have to
 #       be changed to account.
 
+# 5.odd implies the next 5.even, but an explicit 5.even can override it.
 my %feature_bundle = (
      all     => [ keys %feature ],
      default =>	[qw(array_base)],
     "5.9.5"  =>	[qw(say state switch array_base)],
     "5.10"   =>	[qw(say state switch array_base)],
     "5.11"   =>	[qw(say state switch unicode_strings array_base)],
-    "5.12"   =>	[qw(say state switch unicode_strings array_base)],
     "5.13"   =>	[qw(say state switch unicode_strings array_base)],
-    "5.14"   =>	[qw(say state switch unicode_strings array_base)],
     "5.15"   =>	[qw(say state switch unicode_strings unicode_eval
 		    evalbytes current_sub fc)],
-    "5.16"   =>	[qw(say state switch unicode_strings unicode_eval
+    "5.17"   =>	[qw(say state switch unicode_strings unicode_eval
 		    evalbytes current_sub fc)],
 );
+
+# not actually used currently
+my @experimental = qw( lexical_subs );
 
 
 ###########################################################################
 # More data generated from the above
+
+for (keys %feature_bundle) {
+    next unless /^5\.(\d*[13579])\z/;
+    $feature_bundle{"5.".($1+1)} ||= $feature_bundle{$_};
+}
 
 my %UniqueBundles; # "say state switch" => 5.10
 my %Aliases;       #  5.12 => 5.11
@@ -147,7 +155,7 @@ sub longest {
 
 print $pm "our %feature = (\n";
 my $width = length longest keys %feature;
-for(sort { length $a <=> length $b } keys %feature) {
+for(sort { length $a <=> length $b || $a cmp $b } keys %feature) {
     print $pm "    $_" . " "x($width-length)
 	    . " => 'feature_$feature{$_}',\n";
 }
@@ -167,6 +175,10 @@ for (sort keys %Aliases) {
     print $pm
 	qq'\$feature_bundle{"$_"} = \$feature_bundle{"$Aliases{$_}"};\n';
 };
+
+#print $pm "my \%experimental = (\n";
+#print $pm "    $_ => 1,\n", for @experimental;
+#print $pm ");\n";
 
 print $pm <<EOPM;
 
@@ -247,7 +259,7 @@ print $h <<EOL;
 EOL
 
 for (
-    sort { length $a <=> length $b } keys %feature
+    sort { length $a <=> length $b || $a cmp $b } keys %feature
 ) {
     my($first,$last) =
 	map { (my $__ = uc) =~ y/.//d; $__ } @{$BundleRanges{$_}};
@@ -276,7 +288,7 @@ EOI
 
 EOH3
     }
-    else {
+    elsif ($first) {
 	print $h <<EOH4;
 #define FEATURE_$NAME\_IS_ENABLED \\
     ( \\
@@ -286,6 +298,16 @@ EOH3
     )
 
 EOH4
+    }
+    else {
+	print $h <<EOH5;
+#define FEATURE_$NAME\_IS_ENABLED \\
+    ( \\
+	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \\
+	 FEATURE_IS_ENABLED("$name") \\
+    )
+
+EOH5
     }
 }
 
@@ -334,7 +356,7 @@ read_only_bottom_close_and_rename($h);
 __END__
 package feature;
 
-our $VERSION = '1.27';
+our $VERSION = '1.32';
 
 FEATURES
 
@@ -373,7 +395,7 @@ pragma.)
 =head2 Lexical effect
 
 Like other pragmas (C<use strict>, for example), features have a lexical
-effect. C<use feature qw(foo)> will only make the feature "foo" available
+effect.  C<use feature qw(foo)> will only make the feature "foo" available
 from that point to the end of the enclosing block.
 
     {
@@ -433,7 +455,8 @@ C<use feature 'unicode_strings'> tells the compiler to use Unicode semantics
 in all string operations executed within its scope (unless they are also
 within the scope of either C<use locale> or C<use bytes>).  The same applies
 to all regular expressions compiled within the scope, even if executed outside
-it.
+it.  It does not change the internal representation of strings, but only how
+they are interpreted.
 
 C<no feature 'unicode_strings'> tells the compiler to use the traditional
 Perl semantics wherein the native character set semantics is used unless it is
@@ -518,6 +541,20 @@ which implements Unicode casefolding.
 See L<perlfunc/fc> for details.
 
 This feature is available from Perl 5.16 onwards.
+
+=head2 The 'lexical_subs' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::lexical_subs";
+
+This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
+and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
+
+This feature is available from Perl 5.18 onwards.
 
 =head1 FEATURE BUNDLES
 

@@ -14,7 +14,7 @@ use Fcntl;
 
 $Is_Dosish = ($^O eq 'amigaos' || $^O eq 'MSWin32' ||
 	      $^O eq 'NetWare' || $^O eq 'dos' ||
-	      $^O eq 'os2' || $^O eq 'mint' ||
+	      $^O eq 'os2' ||
 	      $^O eq 'cygwin');
 
 my $filename = "Any_dbmx$$";

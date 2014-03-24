@@ -10,9 +10,9 @@ perlmacosx - Perl under Mac OS X
 
 This document briefly describes Perl under Mac OS X.
 
-  curl http://www.cpan.org/src/perl-5.12.3.tar.gz > perl-5.12.3.tar.gz 
-  tar -xzf perl-5.12.3.tar.gz 
-  cd perl-5.12.3
+  curl http://www.cpan.org/src/perl-5.18.2.tar.gz > perl-5.18.0.tar.gz
+  tar -xzf perl-5.18.2.tar.gz
+  cd perl-5.18.2
   ./Configure -des -Dprefix=/usr/local/
   make
   make test
@@ -20,13 +20,23 @@ This document briefly describes Perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.12.3 as of this writing) builds without changes
+The latest Perl release (5.18.2 as of this writing) builds without changes
 under all versions of Mac OS X from 10.3 "Panther" onwards. 
 
-In order to build your own version of Perl you will need 'make'
-this is part of the Apples developer tools (you only need the 'unix tools'),
-usually supplied with Mac OS install DVDs. You do not need the latest 
-version of Xcode (which is now charged for) in order to install make.
+In order to build your own version of Perl you will need 'make',
+which is part of Apple's developer tools - also known as Xcode. From
+Mac OS X 10.7 "Lion" onwards, it can be downloaded separately as the
+'Command Line Tools' bundle directly from L<https://developer.apple.com/downloads/>
+(you will need a free account to log in), or as a part of the Xcode suite,
+freely available at the App Store. Xcode is a pretty big app, so
+unless you already have it or really want it, you are advised to get the
+'Command Line Tools' bundle separately from the link above. If you want
+to do it from within Xcode, go to Xcode -> Preferences -> Downloads and
+select the 'Command Line Tools' option.
+
+Between Mac OS X 10.3 "Panther" and 10.6 "Snow Leopard", the 'Command
+Line Tools' bundle was called 'unix tools', and was usually supplied
+with Mac OS install DVDs.
 
 Earlier Mac OS X releases (10.2 "Jaguar" and older) did not include a
 completely thread-safe libc, so threading is not fully supported. Also,
@@ -53,9 +63,18 @@ on a file server and used by many Macs.
 
 First, export the path to the SDK into the build environment:
 
-    export SDK=/Developer/SDKs/MacOSX10.3.9.sdk
+    export SDK=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
 
-Use an SDK by exporting some additions to Perl's 'ccflags' and '..flags'
+Please make sure the SDK version (i.e. the numbers right before '.sdk')
+matches your system's (in this case, Mac OS X 10.8 "Mountain Lion"), as it is
+possible to have more than one SDK installed. Also make sure the path exists
+in your system, and if it doesn't please make sure the SDK is properly
+installed, as it should come with the 'Command Line Tools' bundle mentioned
+above. Finally, if you have an older Mac OS X (10.6 "Snow Leopard" and below)
+running Xcode 4.2 or lower, the SDK path might be something like
+C<'/Developer/SDKs/MacOSX10.3.9.sdk'>.
+
+You can use the SDK by exporting some additions to Perl's 'ccflags' and '..flags'
 config variables:
 
     ./Configure -Accflags="-nostdinc -B$SDK/usr/include/gcc \
@@ -66,10 +85,17 @@ config variables:
 
 =head2 Universal Binary support
 
-To compile perl as a universal binary (built for both ppc and intel), export
-the SDK variable as above, selecting the 10.4u SDK:
+Note: From Mac OS X 10.6 "Snow Leopard" onwards, Apple only supports
+Intel-based hardware. This means you can safely skip this section unless
+you have an older Apple computer running on ppc or wish to create a perl
+binary with backwards compatibility.
+
+You can compile perl as a universal binary (built for both ppc and intel).
+In Mac OS X 10.4 "Tiger", you must export the 'u' variant of the SDK:
 
     export SDK=/Developer/SDKs/MacOSX10.4u.sdk
+
+Mac OS X 10.5 "Leopard" and above do not require the 'u' variant.
 
 In addition to the compiler flags used to select the SDK, also add the flags
 for creating a universal binary:
@@ -79,12 +105,6 @@ for creating a universal binary:
                            -F$SDK/System/Library/Frameworks" \
                 -Aldflags="-arch i686 -arch ppc -Wl,-syslibroot,$SDK" \
                 -de
-
-In Leopard (MacOSX 10.5.6 at the time of this writing) you must use the 10.5 SDK:
-
-    export SDK=/Developer/SDKs/MacOSX10.5.sdk
-
-You can use the same compiler flags you would use with the 10.4u SDK.
 
 Keep in mind that these compiler and linker settings will also be used when
 building CPAN modules. For XS modules to be compiled as a universal binary, any
@@ -136,17 +156,15 @@ need to go to a great deal of effort to obtain the information needed
 for pre-binding.
 
 You can override the default and build a shared libperl if you wish
-(S<Configure ... -Duseshrplib>), but the load time on pre-10.4 OS
-releases will be greater than either the static library, or Apple's
-pre-bound dynamic library.
+(S<Configure ... -Duseshrplib>).
 
-With 10.4 "Tiger" and newer, Apple has all but eliminated the performance
-penalty for non-prebound libraries.
-
+With Mac OS X 10.4 "Tiger" and newer, there is almost no performance
+penalty for non-prebound libraries. Earlier releases will suffer a greater
+load time than either the static library, or Apple's pre-bound dynamic library.
 
 =head2 Updating Apple's Perl
 
-In a word - don't, at least without a *very* good reason. Your scripts
+In a word - don't, at least not without a *very* good reason. Your scripts
 can just as easily begin with "#!/usr/local/bin/perl" as with
 "#!/usr/bin/perl". Scripts supplied by Apple and other third parties as
 part of installation packages and such have generally only been tested
@@ -247,10 +265,10 @@ reinstall the entire OS.
 =head1 AUTHOR
 
 This README was written by Sherm Pendley E<lt>sherm@dot-app.orgE<gt>,
-and subsequently updated by Dominic Dunlop E<lt>domo@computer.orgE<gt>.
-The "Starting From Scratch" recipe was contributed by John Montbriand
-E<lt>montbriand@apple.comE<gt>.
+and subsequently updated by Dominic Dunlop E<lt>domo@computer.orgE<gt>
+and Breno G. de Oliveira E<lt>garu@cpan.orgE<gt>. The "Starting From Scratch"
+recipe was contributed by John Montbriand E<lt>montbriand@apple.comE<gt>.
 
 =head1 DATE
 
-Last modified 2006-02-24.
+Last modified 2013-04-29.

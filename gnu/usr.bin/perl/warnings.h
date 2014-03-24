@@ -29,67 +29,75 @@
 
 /* Warnings Categories added in Perl 5.008 */
 
-#define WARN_ALL		0
-#define WARN_CLOSURE		1
-#define WARN_DEPRECATED		2
-#define WARN_EXITING		3
-#define WARN_GLOB		4
-#define WARN_IO			5
-#define WARN_CLOSED		6
-#define WARN_EXEC		7
-#define WARN_LAYER		8
-#define WARN_NEWLINE		9
-#define WARN_PIPE		10
-#define WARN_UNOPENED		11
-#define WARN_MISC		12
-#define WARN_NUMERIC		13
-#define WARN_ONCE		14
-#define WARN_OVERFLOW		15
-#define WARN_PACK		16
-#define WARN_PORTABLE		17
-#define WARN_RECURSION		18
-#define WARN_REDEFINE		19
-#define WARN_REGEXP		20
-#define WARN_SEVERE		21
-#define WARN_DEBUGGING		22
-#define WARN_INPLACE		23
-#define WARN_INTERNAL		24
-#define WARN_MALLOC		25
-#define WARN_SIGNAL		26
-#define WARN_SUBSTR		27
-#define WARN_SYNTAX		28
-#define WARN_AMBIGUOUS		29
-#define WARN_BAREWORD		30
-#define WARN_DIGIT		31
-#define WARN_PARENTHESIS	32
-#define WARN_PRECEDENCE		33
-#define WARN_PRINTF		34
-#define WARN_PROTOTYPE		35
-#define WARN_QW			36
-#define WARN_RESERVED		37
-#define WARN_SEMICOLON		38
-#define WARN_TAINT		39
-#define WARN_THREADS		40
-#define WARN_UNINITIALIZED	41
-#define WARN_UNPACK		42
-#define WARN_UNTIE		43
-#define WARN_UTF8		44
-#define WARN_VOID		45
+#define WARN_ALL		 0
+#define WARN_CLOSURE		 1
+#define WARN_DEPRECATED		 2
+#define WARN_EXITING		 3
+#define WARN_GLOB		 4
+#define WARN_IO			 5
+#define WARN_CLOSED		 6
+#define WARN_EXEC		 7
+#define WARN_LAYER		 8
+#define WARN_NEWLINE		 9
+#define WARN_PIPE		 10
+#define WARN_UNOPENED		 11
+#define WARN_MISC		 12
+#define WARN_NUMERIC		 13
+#define WARN_ONCE		 14
+#define WARN_OVERFLOW		 15
+#define WARN_PACK		 16
+#define WARN_PORTABLE		 17
+#define WARN_RECURSION		 18
+#define WARN_REDEFINE		 19
+#define WARN_REGEXP		 20
+#define WARN_SEVERE		 21
+#define WARN_DEBUGGING		 22
+#define WARN_INPLACE		 23
+#define WARN_INTERNAL		 24
+#define WARN_MALLOC		 25
+#define WARN_SIGNAL		 26
+#define WARN_SUBSTR		 27
+#define WARN_SYNTAX		 28
+#define WARN_AMBIGUOUS		 29
+#define WARN_BAREWORD		 30
+#define WARN_DIGIT		 31
+#define WARN_PARENTHESIS	 32
+#define WARN_PRECEDENCE		 33
+#define WARN_PRINTF		 34
+#define WARN_PROTOTYPE		 35
+#define WARN_QW			 36
+#define WARN_RESERVED		 37
+#define WARN_SEMICOLON		 38
+#define WARN_TAINT		 39
+#define WARN_THREADS		 40
+#define WARN_UNINITIALIZED	 41
+#define WARN_UNPACK		 42
+#define WARN_UNTIE		 43
+#define WARN_UTF8		 44
+#define WARN_VOID		 45
 
 /* Warnings Categories added in Perl 5.011 */
 
-#define WARN_IMPRECISION	46
-#define WARN_ILLEGALPROTO	47
+#define WARN_IMPRECISION	 46
+#define WARN_ILLEGALPROTO	 47
 
 /* Warnings Categories added in Perl 5.013 */
 
-#define WARN_NON_UNICODE	48
-#define WARN_NONCHAR		49
-#define WARN_SURROGATE		50
+#define WARN_NON_UNICODE	 48
+#define WARN_NONCHAR		 49
+#define WARN_SURROGATE		 50
 
-#define WARNsize		13
-#define WARN_ALLstring		"\125\125\125\125\125\125\125\125\125\125\125\125\125"
-#define WARN_NONEstring		"\0\0\0\0\0\0\0\0\0\0\0\0\0"
+/* Warnings Categories added in Perl 5.017 */
+
+#define WARN_EXPERIMENTAL	 51
+#define WARN_EXPERIMENTAL__LEXICAL_SUBS 52
+#define WARN_EXPERIMENTAL__LEXICAL_TOPIC 53
+#define WARN_EXPERIMENTAL__REGEX_SETS 54
+#define WARN_EXPERIMENTAL__SMARTMATCH 55
+
+#define WARNsize		14
+#define WARN_ALLstring		"\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
+#define WARN_NONEstring		"\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
 #define isLEXWARN_on 	(PL_curcop->cop_warnings != pWARN_STD)
 #define isLEXWARN_off	(PL_curcop->cop_warnings == pWARN_STD)

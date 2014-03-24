@@ -1,4 +1,4 @@
-# Date: 2012-01-26, 22:03:00 GMT [KW]
+# Date: 2012-09-24, 22:40:00 GMT [KW]
 #
 # Unicode Character Database
 # Copyright (c) 1991-2012 Unicode, Inc.
@@ -10,4 +10,6 @@
 #
 
 This directory contains final data files
-for the Unicode Character Database (UCD) for Unicode 6.1.0.
+for the Unicode Character Database (UCD) for Unicode 6.2.0.
+
+

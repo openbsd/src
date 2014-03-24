@@ -4,15 +4,15 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common 2.048 qw(:Status createSelfTiedObject);
+use IO::Compress::Base::Common 2.060 qw(:Status );
 
-use IO::Uncompress::Base 2.048 ;
-use IO::Uncompress::Adapter::Bunzip2 2.048 ;
+use IO::Uncompress::Base 2.060 ;
+use IO::Uncompress::Adapter::Bunzip2 2.060 ;
 
 require Exporter ;
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $Bunzip2Error);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $Bunzip2Error = '';
 
 @ISA    = qw( Exporter IO::Uncompress::Base );
@@ -25,26 +25,22 @@ push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
 sub new
 {
     my $class = shift ;
-    my $obj = createSelfTiedObject($class, \$Bunzip2Error);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject($class, \$Bunzip2Error);
 
     $obj->_create(undef, 0, @_);
 }
 
 sub bunzip2
 {
-    my $obj = createSelfTiedObject(undef, \$Bunzip2Error);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject(undef, \$Bunzip2Error);
     return $obj->_inf(@_);
 }
 
 sub getExtraParams
 {
-    my $self = shift ;
-
-    use IO::Compress::Base::Common 2.048 qw(:Parse);
-    
     return (
-            'Verbosity'     => [1, 1, Parse_boolean,   0],
-            'Small'         => [1, 1, Parse_boolean,   0],
+            'verbosity'     => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'small'         => [IO::Compress::Base::Common::Parse_boolean,   0],
         );
 }
 
@@ -68,8 +64,8 @@ sub mkUncomp
     *$self->{Info} = $self->readHeader($magic)
         or return undef ;
 
-    my $Small     = $got->value('Small');
-    my $Verbosity = $got->value('Verbosity');
+    my $Small     = $got->getValue('small');
+    my $Verbosity = $got->getValue('verbosity');
 
     my ($obj, $errstr, $errno) =  IO::Uncompress::Adapter::Bunzip2::mkUncompObject(
                                                     $Small, $Verbosity);

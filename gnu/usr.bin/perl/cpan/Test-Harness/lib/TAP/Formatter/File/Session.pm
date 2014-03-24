@@ -13,11 +13,11 @@ TAP::Formatter::File::Session - Harness output delegate for file output
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ sub close_test {
 
         $formatter->_output( $pretty
               . ( $self->{results} ? "\n" . $self->{results} : "" )
-              . "ok$time_report\n" );
+              . $self->_make_ok_line($time_report) );
     }
 }
 

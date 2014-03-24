@@ -378,8 +378,8 @@ Execution of - aborted due to compilation errors.
 use strict 'subs';
 qr/(?{my $x=foo})/;
 EXPECT
-Bareword "foo" not allowed while "strict subs" in use at (re_eval 1) line 1.
-Compilation failed in regexp at - line 3.
+Bareword "foo" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.
 ########
 # Regexp compilation errors weren't UTF-8 clean
 use strict 'subs';
@@ -387,8 +387,8 @@ use utf8;
 use open qw( :utf8 :std );
 qr/(?{my $x=fòò})/;
 EXPECT
-Bareword "fòò" not allowed while "strict subs" in use at (re_eval 1) line 1.
-Compilation failed in regexp at - line 5.
+Bareword "fòò" not allowed while "strict subs" in use at - line 5.
+Execution of - aborted due to compilation errors.
 ########
 #  [perl #27628] strict 'subs' didn't warn on bareword array index
 use strict 'subs';
@@ -450,4 +450,11 @@ sub foo {
 }
 EXPECT
 Bareword "FOO" not allowed while "strict subs" in use at - line 5.
+Execution of - aborted due to compilation errors.
+########
+# make sure checks are done within (?{})
+use strict 'subs';
+/(?{FOO})/
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 3.
 Execution of - aborted due to compilation errors.

@@ -18,6 +18,8 @@
 #	B	test exposes a known bug in Perl, should be skipped
 #	b	test exposes a known bug in Perl, should be skipped if noamp
 #	t	test exposes a bug with threading, TODO if qr_embed_thr
+#       s       test should only be run for regex_sets_compat.t
+#       S       test should not be run for regex_sets_compat.t
 #
 # Columns 4 and 5 are used only if column 3 contains C<y> or C<c>.
 #
@@ -67,7 +69,8 @@ sub _comment {
 use strict;
 use warnings FATAL=>"all";
 use vars qw($bang $ffff $nulnul); # used by the tests
-use vars qw($qr $skip_amp $qr_embed $qr_embed_thr); # set by our callers
+use vars qw($qr $skip_amp $qr_embed $qr_embed_thr $regex_sets); # set by our callers
+
 
 
 if (!defined $file) {
@@ -96,24 +99,210 @@ foreach (@tests) {
         next;
     }
     chomp;
-    s/\\n/\n/g;
+    s/\\n/\n/g unless $regex_sets;
     my ($pat, $subject, $result, $repl, $expect, $reason) = split(/\t/,$_,6);
     $reason = '' unless defined $reason;
     my $input = join(':',$pat,$subject,$result,$repl,$expect);
     # the double '' below keeps simple syntax highlighters from going crazy
     $pat = "'$pat'" unless $pat =~ /^[:''\/]/; 
     $pat =~ s/(\$\{\w+\})/$1/eeg;
-    $pat =~ s/\\n/\n/g;
+    $pat =~ s/\\n/\n/g unless $regex_sets;
     $subject = eval qq("$subject"); die $@ if $@;
     $expect  = eval qq("$expect"); die $@ if $@;
     $expect = $repl = '-' if $skip_amp and $input =~ /\$[&\`\']/;
     my $todo_qr = $qr_embed_thr && ($result =~ s/t//);
     my $skip = ($skip_amp ? ($result =~ s/B//i) : ($result =~ s/B//));
     ++$skip if $result =~ s/M// && !defined &DynaLoader::boot_DynaLoader;
+    if ($result =~ s/ ( [Ss] ) //x) {
+        if (($1 eq 'S' && $regex_sets) || ($1 eq 's' && ! $regex_sets)) {
+            $skip++;
+            $reason = "Test not valid for $0";
+        }
+    }
     $reason = 'skipping $&' if $reason eq  '' && $skip_amp;
     $result =~ s/B//i unless $skip;
     my $todo= $result =~ s/T// ? " # TODO" : "";
-    
+    if (! $skip && $regex_sets) {
+
+        # If testing regex sets, change the [bracketed] classes into
+        # (?[bracketed]).
+
+        if ($pat !~ / \[ /x) {
+
+            $skip++;
+            $reason = "Pattern doesn't contain [brackets]";
+        }
+        else { # Use non-regex features of Perl to accomplish this.
+            my $modified = "";
+            my $in_brackets = 0;
+
+            # Go through the pattern character-by-character.  We also add
+            # blanks around each token to test the /x parts of (?[ ])
+            my $pat_len = length($pat);
+      CHAR: for (my $i = 0; $i < $pat_len; $i++) {
+                my $curchar = substr($pat, $i, 1);
+                if ($curchar eq '\\') {
+                    $modified .= " " if $in_brackets;
+                    $modified .= $curchar;
+                    $i++;
+
+                    # Get the character the backslash is escaping
+                    $curchar = substr($pat, $i, 1);
+                    $modified .= $curchar;
+
+                    # If the character following that is a '{}', treat the
+                    # entire amount as a single token
+                    if ($i < $pat_len -1 && substr($pat, $i+1, 1) eq '{') {
+                        my $j = index($pat, '}', $i+2);
+                        if ($j < 0) {
+                            last unless $in_brackets;
+                            if ($result eq 'c') {
+                                $skip++;
+                                $reason = "Can't handle compilation errors with unmatched '{'";
+                            }
+                            else {
+                                print "not ok $test # Problem in $0; original = '$pat'; mod = '$modified'\n";
+                                next TEST;
+                            }
+                        }
+                        $modified .= substr($pat, $i+1, $j - $i);
+                        $i = $j;
+                    }
+                    elsif ($curchar eq 'x') {
+
+                        # \x without brackets is supposed to be followed by 2
+                        # hex digits.  Take up to 2, and then add a blank
+                        # after the last one.  This avoids getting errors from
+                        # (?[ ]) for run-ons, like \xabc
+                        my $j = $i + 1;
+                        for (; $j < $i + 3 && $j < $pat_len; $j++) {
+                            my $curord = ord(substr($pat, $j, 1));
+                            if (!(($curord >= ord("A") && $curord <= ord("F"))
+                                 || ($curord >= ord("a") && $curord <= ord("f"))
+                                 || ($curord >= ord("0") && $curord <= ord("9"))))
+                            {
+                                $j++;
+                                last;
+                            }
+                        }
+                        $j--;
+                        $modified .= substr($pat, $i + 1, $j - $i) . " ";
+                        $i = $j;
+                    }
+                    elsif (ord($curchar) >= ord('0')
+                           && (ord($curchar) <= ord('7')))
+                    {
+                        # Similarly, octal constants have up to 3 digits.
+                        my $j = $i + 1;
+                        for (; $j < $i + 3 && $j < $pat_len; $j++) {
+                            my $curord = ord(substr($pat, $j, 1));
+                            if (! ($curord >= ord("0") &&  $curord <= ord("7"))) {
+                                $j++;
+                                last;
+                            }
+                        }
+                        $j--;
+                        $modified .= substr($pat, $i + 1, $j - $i);
+                        $i = $j;
+                    }
+
+                    next;
+                } # End of processing a backslash sequence
+
+                if (! $in_brackets  # Skip (?{ })
+                    && $curchar eq '('
+                    && $i < $pat_len - 2
+                    && substr($pat, $i+1, 1) eq '?'
+                    && substr($pat, $i+2, 1) eq '{')
+                {
+                    $skip++;
+                    $reason = "Pattern contains '(?{'";
+                    last;
+                }
+
+                # Closing ']'
+                if ($curchar eq ']' && $in_brackets) {
+                    $modified .= " ] ])";
+                    $in_brackets = 0;
+                    next;
+                }
+
+                # A regular character.
+                if ($curchar ne '[') {
+                    if (! $in_brackets) {
+                        $modified .= $curchar;
+                    }
+                    else {
+                        $modified .= " $curchar ";
+                    }
+                    next;
+                }
+
+                # Here is a '['; If not in a bracketed class, treat as the
+                # beginning of one.
+                if (! $in_brackets) {
+                    $in_brackets = 1;
+                    $modified .= "(?[ [ ";
+
+                    # An immediately following ']' or '^]' is not the ending
+                    # of the class, but is to be treated literally.
+                    if ($i < $pat_len - 1
+                        && substr($pat, $i+1, 1) eq ']')
+                    {
+                        $i ++;
+                        $modified .= " ] ";
+                    }
+                    elsif ($i < $pat_len - 2
+                            && substr($pat, $i+1, 1) eq '^'
+                            && substr($pat, $i+2, 1) eq ']')
+                    {
+                        $i += 2;
+                        $modified .= " ^ ] ";
+                    }
+                    next;
+                }
+
+                # Here is a plain '[' within [ ].  Could mean wants to
+                # match a '[', or it could be a posix class that has a
+                # corresponding ']'.  Absorb either
+
+                $modified .= ' [';
+                last if $i >= $pat_len - 1;
+
+                $i++;
+                $curchar = substr($pat, $i, 1);
+                if ($curchar =~ /[:=.]/) {
+                    for (my $j = $i + 1; $j < $pat_len; $j++) {
+                        next unless substr($pat, $j, 1) eq ']';
+                        last if $j - $i < 2;
+                        if (substr($pat, $j - 1, 1) eq $curchar) {
+                            # Here, is a posix class
+                            $modified .= substr($pat, $i, $j - $i + 1) . " ";
+                            $i = $j;
+                            next CHAR;
+                        }
+                    }
+                }
+
+                # Here wasn't a posix class, just process normally
+                $modified .= " $curchar ";
+            }
+
+            if ($in_brackets && ! $skip) {
+                if ($result eq 'c') {
+                    $skip++;
+                    $reason = "Can't figure out where to put the (?[ and ]) since is a compilation error";
+                }
+                else {
+                    print "not ok $test # Problem in $0; original = '$pat'; mod = '$modified'\n";
+                    next TEST;
+                }
+            }
+
+            # Use our modified pattern instead of the original
+            $pat = $modified;
+        }
+    }
 
     for my $study ('', 'study $subject', 'utf8::upgrade($subject)',
 		   'utf8::upgrade($subject); study $subject') {
@@ -155,6 +344,7 @@ EOFCODE
                 \$got = "$repl";
 EOFCODE
         }
+        $code = "no warnings 'experimental::regex_sets';$code" if $regex_sets;
         #$code.=qq[\n\$expect="$expect";\n];
         #use Devel::Peek;
         #die Dump($code) if $pat=~/\\h/ and $subject=~/\x{A0}/;
@@ -166,13 +356,13 @@ EOFCODE
 	    eval $code;
 	}
 	chomp( my $err = $@ );
-	if ($result eq 'c') {
+	if ( $skip ) {
+	    print "ok $test # skipped", length($reason) ? ".  $reason" : '', "\n";
+	    next TEST;
+	}
+	elsif ($result eq 'c') {
 	    if ($err !~ m!^\Q$expect!) { print "not ok $test$todo (compile) $input => '$err'\n"; next TEST }
 	    last;  # no need to study a syntax error
-	}
-	elsif ( $skip ) {
-	    print "ok $test # skipped", length($reason) ? " $reason" : '', "\n";
-	    next TEST;
 	}
 	elsif ( $todo_qr ) {
 	    print "not ok $test # TODO", length($reason) ? " - $reason" : '', "\n";
@@ -187,6 +377,7 @@ EOFCODE
 	else {
 	    if (!$match || $got ne $expect) {
 	        eval { require Data::Dumper };
+                no warnings "utf8"; # But handle should be utf8
 		if ($@ || !defined &DynaLoader::boot_DynaLoader) {
 		    # Data::Dumper will load on miniperl, but fail when used in
 		    # anger as it tries to load B. I'd prefer to keep the

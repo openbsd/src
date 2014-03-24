@@ -24,7 +24,7 @@ use vars qw($VERSION @ISA $upgrade $downgrade
 
 @ISA = qw(Math::BigFloat);
 
-$VERSION = '0.2603';
+$VERSION = '0.2604';
 $VERSION = eval $VERSION;
 
 # inherit overload from Math::BigFloat, but disable the bitwise ops that don't
@@ -1692,7 +1692,7 @@ BigInts.
 
 Returns the object as a scalar. This will lose some data if the object
 cannot be represented by a normal Perl scalar (integer or float), so
-use L<as_int()> or L<as_float()> instead.
+use L<as_int()|/as_int()E<sol>as_number()> or L</as_float()> instead.
 
 This routine is automatically used whenever a scalar is required:
 
@@ -1925,7 +1925,7 @@ Euler's number.
 
 This method was added in v0.20 of Math::BigRat (May 2007).
 
-See also L<blog()>.
+See also L</blog()>.
 
 =head2 bnok()
 
@@ -2012,7 +2012,7 @@ the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Math::BigFloat> and L<Math::Big> as well as L<Math::BigInt::BitVect>,
+L<Math::BigFloat> and L<Math::Big> as well as
 L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 See L<http://search.cpan.org/search?dist=bignum> for a way to use

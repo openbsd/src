@@ -1,4 +1,5 @@
 package Log::Message::Config;
+use if $] > 5.017, 'deprecate';
 use strict;
 
 use Params::Check qw[check];
@@ -8,7 +9,7 @@ use Locale::Maketext::Simple Style => 'gettext';
 
 BEGIN {
     use vars        qw[$VERSION $AUTOLOAD];
-    $VERSION    =   0.04;
+    $VERSION    =   '0.06';
 }
 
 sub new {

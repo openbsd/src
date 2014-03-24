@@ -3,14 +3,14 @@ package HTTP::Tiny;
 use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
-our $VERSION = '0.017'; # VERSION
+our $VERSION = '0.025'; # VERSION
 
 use Carp ();
 
 
 my @attributes;
 BEGIN {
-    @attributes = qw(agent default_headers max_redirect max_size proxy timeout);
+    @attributes = qw(agent default_headers local_address max_redirect max_size proxy timeout SSL_options verify_SSL);
     no strict 'refs';
     for my $accessor ( @attributes ) {
         *{$accessor} = sub {
@@ -21,12 +21,20 @@ BEGIN {
 
 sub new {
     my($class, %args) = @_;
-    (my $agent = $class) =~ s{::}{-}g;
+
+    (my $default_agent = $class) =~ s{::}{-}g;
+    $default_agent .= "/" . ($class->VERSION || 0);
+
     my $self = {
-        agent        => $agent . "/" . ($class->VERSION || 0),
+        agent        => $default_agent,
         max_redirect => 5,
         timeout      => 60,
+        verify_SSL   => $args{verify_SSL} || $args{verify_ssl} || 0, # no verification by default
     };
+
+    $args{agent} .= $default_agent
+        if defined $args{agent} && $args{agent} =~ / $/;
+
     for my $key ( @attributes ) {
         $self->{$key} = $args{$key} if exists $args{$key}
     }
@@ -129,6 +137,7 @@ sub request {
 
     if (my $e = "$@") {
         $response = {
+            url     => $url,
             success => q{},
             status  => 599,
             reason  => 'Internal Exception',
@@ -190,7 +199,12 @@ sub _request {
         headers   => {},
     };
 
-    my $handle  = HTTP::Tiny::Handle->new(timeout => $self->{timeout});
+    my $handle  = HTTP::Tiny::Handle->new(
+        timeout         => $self->{timeout},
+        SSL_options     => $self->{SSL_options},
+        verify_SSL      => $self->{verify_SSL},
+        local_address   => $self->{local_address},
+    );
 
     if ($self->{proxy}) {
         $request->{uri} = "$scheme://$request->{host_port}$path_query";
@@ -224,6 +238,7 @@ sub _request {
 
     $handle->close;
     $response->{success} = substr($response->{status},0,1) eq '2';
+    $response->{url} = $url;
     return $response;
 }
 
@@ -402,33 +417,30 @@ sub new {
         timeout          => 60,
         max_line_size    => 16384,
         max_header_lines => 64,
+        verify_SSL       => 0,
+        SSL_options      => {},
         %args
     }, $class;
 }
-
-my $ssl_verify_args = {
-    check_cn => "when_only",
-    wildcards_in_alt => "anywhere",
-    wildcards_in_cn => "anywhere"
-};
 
 sub connect {
     @_ == 4 || die(q/Usage: $handle->connect(scheme, host, port)/ . "\n");
     my ($self, $scheme, $host, $port) = @_;
 
     if ( $scheme eq 'https' ) {
-        eval "require IO::Socket::SSL"
-            unless exists $INC{'IO/Socket/SSL.pm'};
-        die(qq/IO::Socket::SSL must be installed for https support\n/)
-            unless $INC{'IO/Socket/SSL.pm'};
+        die(qq/IO::Socket::SSL 1.56 must be installed for https support\n/)
+            unless eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.56)};
+        die(qq/Net::SSLeay 1.49 must be installed for https support\n/)
+            unless eval {require Net::SSLeay; Net::SSLeay->VERSION(1.49)};
     }
     elsif ( $scheme ne 'http' ) {
       die(qq/Unsupported URL scheme '$scheme'\n/);
     }
-
     $self->{fh} = 'IO::Socket::INET'->new(
         PeerHost  => $host,
         PeerPort  => $port,
+        $self->{local_address} ?
+            ( LocalAddr => $self->{local_address} ) : (),
         Proto     => 'tcp',
         Type      => SOCK_STREAM,
         Timeout   => $self->{timeout}
@@ -438,11 +450,20 @@ sub connect {
       or die(qq/Could not binmode() socket: '$!'\n/);
 
     if ( $scheme eq 'https') {
-        IO::Socket::SSL->start_SSL($self->{fh});
-        ref($self->{fh}) eq 'IO::Socket::SSL'
-            or die(qq/SSL connection failed for $host\n/);
-        $self->{fh}->verify_hostname( $host, $ssl_verify_args )
-            or die(qq/SSL certificate not valid for $host\n/);
+        my $ssl_args = $self->_ssl_args($host);
+        IO::Socket::SSL->start_SSL(
+            $self->{fh},
+            %$ssl_args,
+            SSL_create_ctx_callback => sub {
+                my $ctx = shift;
+                Net::SSLeay::CTX_set_mode($ctx, Net::SSLeay::MODE_AUTO_RETRY());
+            },
+        );
+
+        unless ( ref($self->{fh}) eq 'IO::Socket::SSL' ) {
+            my $ssl_err = IO::Socket::SSL->errstr;
+            die(qq/SSL connection failed for $host: $ssl_err\n/);
+        }
     }
 
     $self->{host} = $host;
@@ -485,7 +506,14 @@ sub write {
             die(qq/Socket closed by remote server: $!\n/);
         }
         elsif ($! != EINTR) {
-            die(qq/Could not write to socket: '$!'\n/);
+            if ($self->{fh}->can('errstr')){
+                my $err = $self->{fh}->errstr();
+                die (qq/Could not write to SSL socket: '$err'\n /);
+            }
+            else {
+                die(qq/Could not write to socket: '$!'\n/);
+            }
+
         }
     }
     return $off;
@@ -513,7 +541,13 @@ sub read {
             $len -= $r;
         }
         elsif ($! != EINTR) {
-            die(qq/Could not read from socket: '$!'\n/);
+            if ($self->{fh}->can('errstr')){
+                my $err = $self->{fh}->errstr();
+                die (qq/Could not read from SSL socket: '$err'\n /);
+            }
+            else {
+                die(qq/Could not read from socket: '$!'\n/);
+            }
         }
     }
     if ($len && !$allow_partial) {
@@ -540,7 +574,13 @@ sub readline {
             last unless $r;
         }
         elsif ($! != EINTR) {
-            die(qq/Could not read from socket: '$!'\n/);
+            if ($self->{fh}->can('errstr')){
+                my $err = $self->{fh}->errstr();
+                die (qq/Could not read from SSL socket: '$err'\n /);
+            }
+            else {
+                die(qq/Could not read from socket: '$!'\n/);
+            }
         }
     }
     die(qq/Unexpected end of stream while looking for line\n/);
@@ -827,11 +867,60 @@ sub can_write {
     return $self->_do_timeout('write', @_)
 }
 
+# Try to find a CA bundle to validate the SSL cert,
+# prefer Mozilla::CA or fallback to a system file
+sub _find_CA_file {
+    my $self = shift();
+
+    return $self->{SSL_options}->{SSL_ca_file}
+        if $self->{SSL_options}->{SSL_ca_file} and -e $self->{SSL_options}->{SSL_ca_file};
+
+    return Mozilla::CA::SSL_ca_file()
+        if eval { require Mozilla::CA };
+
+    foreach my $ca_bundle (qw{
+        /etc/ssl/certs/ca-certificates.crt
+        /etc/pki/tls/certs/ca-bundle.crt
+        /etc/ssl/ca-bundle.pem
+        }
+    ) {
+        return $ca_bundle if -e $ca_bundle;
+    }
+
+    die qq/Couldn't find a CA bundle with which to verify the SSL certificate.\n/
+      . qq/Try installing Mozilla::CA from CPAN\n/;
+}
+
+sub _ssl_args {
+    my ($self, $host) = @_;
+
+    my %ssl_args = (
+        SSL_hostname        => $host,  # SNI
+    );
+
+    if ($self->{verify_SSL}) {
+        $ssl_args{SSL_verifycn_scheme}  = 'http'; # enable CN validation
+        $ssl_args{SSL_verifycn_name}    = $host;  # set validation hostname
+        $ssl_args{SSL_verify_mode}      = 0x01;   # enable cert validation
+        $ssl_args{SSL_ca_file}          = $self->_find_CA_file;
+    }
+    else {
+        $ssl_args{SSL_verifycn_scheme}  = 'none'; # disable CN validation
+        $ssl_args{SSL_verify_mode}      = 0x00;   # disable cert validation
+    }
+
+    # user options override settings from verify_SSL
+    for my $k ( keys %{$self->{SSL_options}} ) {
+        $ssl_args{$k} = $self->{SSL_options}{$k} if $k =~ m/^SSL_/;
+    }
+
+    return \%ssl_args;
+}
+
 1;
 
-
-
 __END__
+
 =pod
 
 =head1 NAME
@@ -840,7 +929,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.017
+version 0.025
 
 =head1 SYNOPSIS
 
@@ -883,13 +972,19 @@ This constructor returns a new HTTP::Tiny object.  Valid attributes include:
 
 C<agent>
 
-A user-agent string (defaults to 'HTTP::Tiny/$VERSION')
+A user-agent string (defaults to 'HTTP-Tiny/$VERSION'). If C<agent> ends in a space character, the default user-agent string is appended.
 
 =item *
 
 C<default_headers>
 
 A hashref of default headers to apply to requests
+
+=item *
+
+C<local_address>
+
+The local IP address to bind to
 
 =item *
 
@@ -916,11 +1011,26 @@ C<timeout>
 
 Request timeout in seconds (default is 60)
 
+=item *
+
+C<verify_SSL>
+
+A boolean that indicates whether to validate the SSL certificate of an C<https>
+connection (default is false)
+
+=item *
+
+C<SSL_options>
+
+A hashref of C<SSL_*> options to pass through to L<IO::Socket::SSL>
+
 =back
 
 Exceptions from C<max_size>, C<timeout> or other errors will result in a
 pseudo-HTTP status code of 599 and a reason of "Internal Exception". The
 content field in the response will contain the text of the exception.
+
+See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
 
 =head2 get|head|put|post|delete
 
@@ -987,7 +1097,7 @@ Valid options are:
 
 =item *
 
-headers
+C<headers>
 
 A hashref containing headers to include with the request.  If the value for
 a header is an array reference, the header will be output multiple times with
@@ -995,21 +1105,21 @@ each value in the array.  These headers over-write any default headers.
 
 =item *
 
-content
+C<content>
 
 A scalar to include as the body of the request OR a code reference
-that will be called iteratively to produce the body of the response
+that will be called iteratively to produce the body of the request
 
 =item *
 
-trailer_callback
+C<trailer_callback>
 
 A code reference that will be called if it exists to provide a hashref
 of trailing headers (only used with chunked transfer-encoding)
 
 =item *
 
-data_callback
+C<data_callback>
 
 A code reference that will be called for each chunks of the response
 body received.
@@ -1034,25 +1144,33 @@ will have the following keys:
 
 =item *
 
-success
+C<success>
 
 Boolean indicating whether the operation returned a 2XX status code
 
 =item *
 
-status
+C<url>
+
+URL that provided the response. This is the URL of the request unless
+there were redirections, in which case it is the last URL queried
+in a redirection chain
+
+=item *
+
+C<status>
 
 The HTTP status code of the response
 
 =item *
 
-reason
+C<reason>
 
 The response phrase returned by the server
 
 =item *
 
-content
+C<content>
 
 The body of the response.  If the response does not have any content
 or if a data callback is provided to consume the response body,
@@ -1060,7 +1178,7 @@ this will be the empty string
 
 =item *
 
-headers
+C<headers>
 
 A hashref of header fields.  All header field names will be normalized
 to be lower case. If a header is repeated, the value will be an arrayref;
@@ -1085,10 +1203,96 @@ and value.
 
 =for Pod::Coverage agent
 default_headers
+local_address
 max_redirect
 max_size
 proxy
 timeout
+verify_SSL
+SSL_options
+
+=head1 SSL SUPPORT
+
+Direct C<https> connections are supported only if L<IO::Socket::SSL> 1.56 or
+greater and L<Net::SSLeay> 1.49 or greater are installed. An exception will be
+thrown if a new enough versions of these modules not installed or if the SSL
+encryption fails. There is no support for C<https> connections via proxy (i.e.
+RFC 2817).
+
+SSL provides two distinct capabilities:
+
+=over 4
+
+=item *
+
+Encrypted communication channel
+
+=item *
+
+Verification of server identity
+
+=back
+
+B<By default, HTTP::Tiny does not verify server identity>.
+
+Server identity verification is controversial and potentially tricky because it
+depends on a (usually paid) third-party Certificate Authority (CA) trust model
+to validate a certificate as legitimate.  This discriminates against servers
+with self-signed certificates or certificates signed by free, community-driven
+CA's such as L<CAcert.org|http://cacert.org>.
+
+By default, HTTP::Tiny does not make any assumptions about your trust model,
+threat level or risk tolerance.  It just aims to give you an encrypted channel
+when you need one.
+
+Setting the C<verify_SSL> attribute to a true value will make HTTP::Tiny verify
+that an SSL connection has a valid SSL certificate corresponding to the host
+name of the connection and that the SSL certificate has been verified by a CA.
+Assuming you trust the CA, this will protect against a L<man-in-the-middle
+attack|http://en.wikipedia.org/wiki/Man-in-the-middle_attack>.  If you are
+concerned about security, you should enable this option.
+
+Certificate verification requires a file containing trusted CA certificates.
+If the L<Mozilla::CA> module is installed, HTTP::Tiny will use the CA file
+included with it as a source of trusted CA's.  (This means you trust Mozilla,
+the author of Mozilla::CA, the CPAN mirror where you got Mozilla::CA, the
+toolchain used to install it, and your operating system security, right?)
+
+If that module is not available, then HTTP::Tiny will search several
+system-specific default locations for a CA certificate file:
+
+=over 4
+
+=item *
+
+/etc/ssl/certs/ca-certificates.crt
+
+=item *
+
+/etc/pki/tls/certs/ca-bundle.crt
+
+=item *
+
+/etc/ssl/ca-bundle.pem
+
+=back
+
+An exception will be raised if C<verify_SSL> is true and no CA certificate file
+is available.
+
+If you desire complete control over SSL connections, the C<SSL_options> attribute
+lets you provide a hash reference that will be passed through to
+C<IO::Socket::SSL::start_SSL()>, overriding any options set by HTTP::Tiny. For
+example, to provide your own trusted CA file:
+
+    SSL_options => {
+        SSL_ca_file => $file_path,
+    }
+
+The C<SSL_options> attribute could also be used for such things as providing a
+client certificate for authentication to a server or controlling the choice of
+cipher used for the SSL connection. See L<IO::Socket::SSL> documentation for
+details.
 
 =head1 LIMITATIONS
 
@@ -1128,13 +1332,6 @@ always be set to C<close>.
 
 =item *
 
-Direct C<https> connections are supported only if L<IO::Socket::SSL> is
-installed.  There is no support for C<https> connections via proxy.
-Any SSL certificate that matches the host is accepted -- SSL certificates
-are not verified against certificate authorities.
-
-=item *
-
 Cookies are not directly supported.  Users that set a C<Cookie> header
 should also set C<max_redirect> to zero to ensure cookies are not
 inappropriately re-transmitted.
@@ -1158,6 +1355,10 @@ Only 'chunked' C<Transfer-Encoding> is supported.
 
 There is no support for a Request-URI of '*' for the 'OPTIONS' request.
 
+=item *
+
+There is no support for IPv6 of any kind.
+
 =back
 
 =head1 SEE ALSO
@@ -1168,16 +1369,28 @@ There is no support for a Request-URI of '*' for the 'OPTIONS' request.
 
 L<LWP::UserAgent>
 
+=item *
+
+L<IO::Socket::SSL>
+
+=item *
+
+L<Mozilla::CA>
+
+=item *
+
+L<Net::SSLeay>
+
 =back
 
-=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
 =head1 SUPPORT
 
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<http://rt.cpan.org/Public/Dist/Display.html?Name=HTTP-Tiny>.
+at L<https://rt.cpan.org/Public/Dist/Display.html?Name=HTTP-Tiny>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -1185,9 +1398,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/dagolden/p5-http-tiny>
+L<https://github.com/dagolden/http-tiny>
 
-  git clone https://github.com/dagolden/p5-http-tiny.git
+  git clone git://github.com/dagolden/http-tiny.git
 
 =head1 AUTHORS
 
@@ -1201,6 +1414,10 @@ Christian Hansen <chansen@cpan.org>
 
 David Golden <dagolden@cpan.org>
 
+=item *
+
+Mike Doherty <doherty@cpan.org>
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
@@ -1211,4 +1428,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

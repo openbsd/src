@@ -16,11 +16,11 @@ if ( $^O eq "VMS" ) {
   skip_all( "- regen.pl needs porting." );
 }
 
-my $in_regen_pl = 22; # I can't see a clean way to calculate this automatically.
+my $in_regen_pl = 23; # I can't see a clean way to calculate this automatically.
 my @files = qw(perly.act perly.h perly.tab keywords.c keywords.h uconfig.h);
-my @progs = qw(Porting/makemeta regen/regcharclass.pl regen/mk_PL_charclass.pl);
+my @progs = qw(regen/regcharclass.pl regen/mk_PL_charclass.pl);
 
-plan (tests => $in_regen_pl + @files + @progs);
+plan (tests => $in_regen_pl + @files + @progs + 2);
 
 OUTER: foreach my $file (@files) {
     open my $fh, '<', $file or die "Can't open $file: $!";
@@ -46,4 +46,8 @@ OUTER: foreach my $file (@files) {
 
 foreach (@progs, 'regen.pl') {
   system "$^X $_ --tap";
+}
+
+foreach ( '-y', '-j' ) {
+  system "$^X Porting/makemeta --tap $_";
 }

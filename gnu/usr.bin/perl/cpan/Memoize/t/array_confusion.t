@@ -2,6 +2,7 @@
 
 use lib '..';
 use Memoize 'memoize', 'unmemoize';
+use Test::More;
 
 sub reff {
   return [1,2,3];
@@ -12,20 +13,20 @@ sub listf {
   return (1,2,3);
 }
 
-print "1..6\n";
+sub f17 { return 17 }
+
+plan tests => 7;
 
 memoize 'reff', LIST_CACHE => 'MERGE';
-print "ok 1\n";
 memoize 'listf';
-print "ok 2\n";
 
 $s = reff();
 @a = reff();
-print @a == 1 ? "ok 3\n" : "not ok 3\n";
+is(scalar(@a), 1, "reff list context");
 
 $s = listf();
 @a = listf();
-print @a == 3 ? "ok 4\n" : "not ok 4\n";
+is(scalar(@a), 3, "listf list context");
 
 unmemoize 'reff';
 memoize 'reff', LIST_CACHE => 'MERGE';
@@ -34,10 +35,13 @@ memoize 'listf';
 
 @a = reff();
 $s = reff();
-print @a == 1 ? "ok 5\n" : "not ok 5\n";
+is(scalar @a, 1, "reff list context");
 
 @a = listf();
 $s = listf();
-print @a == 3 ? "ok 6\n" : "not ok 6\n";
+is(scalar @a, 3, "listf list context");
 
-
+memoize 'f17', SCALAR_CACHE => 'MERGE';
+is(f17(), 17, "f17 first call");
+is(f17(), 17, "f17 second call");
+is(scalar(f17()), 17, "f17 scalar context call");

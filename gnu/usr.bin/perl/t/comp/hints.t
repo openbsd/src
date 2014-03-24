@@ -4,6 +4,7 @@
 
 BEGIN {
     @INC = qw(. ../lib);
+    chdir 't';
 }
 
 BEGIN { print "1..31\n"; }

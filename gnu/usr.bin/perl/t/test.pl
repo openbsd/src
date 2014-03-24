@@ -109,6 +109,16 @@ sub _comment {
            map { split /\n/ } @_;
 }
 
+sub _have_dynamic_extension {
+    my $extension = shift;
+    unless (eval {require Config; 1}) {
+	warn "test.pl had problems loading Config: $@";
+	return 1;
+    }
+    $extension =~ s!::!/!g;
+    return 1 if ($Config::Config{extensions} =~ /\b$extension\b/);
+}
+
 sub skip_all {
     if (@_) {
         _print "1..0 # Skip @_\n";
@@ -123,14 +133,9 @@ sub skip_all_if_miniperl {
 }
 
 sub skip_all_without_dynamic_extension {
-    my $extension = shift;
+    my ($extension) = @_;
     skip_all("no dynamic loading on miniperl, no $extension") if is_miniperl();
-    unless (eval {require Config; 1}) {
-	warn "test.pl had problems loading Config: $@";
-	return;
-    }
-    $extension =~ s!::!/!g;
-    return if ($Config::Config{extensions} =~ /\b$extension\b/);
+    return if &_have_dynamic_extension;
     skip_all("$extension was not built");
 }
 
@@ -153,9 +158,9 @@ sub skip_all_without_config {
 }
 
 sub find_git_or_skip {
-    my ($found_dir, $reason);
+    my ($source_dir, $reason);
     if (-d '.git') {
-	$found_dir = 1;
+	$source_dir = '.';
     } elsif (-l 'MANIFEST' && -l 'AUTHORS') {
 	my $where = readlink 'MANIFEST';
 	die "Can't readling MANIFEST: $!" unless defined $where;
@@ -163,16 +168,20 @@ sub find_git_or_skip {
 	    unless $where =~ s!/MANIFEST\z!!;
 	if (-d "$where/.git") {
 	    # Looks like we are in a symlink tree
-	    chdir $where or die "Can't chdir '$where': $!";
-	    note("Found source tree at $where");
-	    $found_dir = 1;
+	    if (exists $ENV{GIT_DIR}) {
+		diag("Found source tree at $where, but \$ENV{GIT_DIR} is $ENV{GIT_DIR}. Not changing it");
+	    } else {
+		note("Found source tree at $where, setting \$ENV{GIT_DIR}");
+		$ENV{GIT_DIR} = "$where/.git";
+	    }
+	    $source_dir = $where;
 	}
     }
-    if ($found_dir) {
+    if ($source_dir) {
 	my $version_string = `git --version`;
 	if (defined $version_string
 	      && $version_string =~ /\Agit version (\d+\.\d+\.\d+)(.*)/) {
-	    return if eval "v$1 ge v1.5.0";
+	    return $source_dir if eval "v$1 ge v1.5.0";
 	    # If you have earlier than 1.5.0 and it works, change this test
 	    $reason = "in git checkout, but git version '$1$2' too old";
 	} else {
@@ -183,6 +192,12 @@ sub find_git_or_skip {
     }
     skip_all($reason) if $_[0] && $_[0] eq 'all';
     skip($reason, @_);
+}
+
+sub BAIL_OUT {
+    my ($reason) = @_;
+    _print("Bail out!  $reason\n");
+    exit 255;
 }
 
 sub _ok {
@@ -444,6 +459,13 @@ sub skip_if_miniperl {
     skip(@_) if is_miniperl();
 }
 
+sub skip_without_dynamic_extension {
+    my ($extension) = @_;
+    skip("no dynamic loading on miniperl, no $extension") if is_miniperl();
+    return if &_have_dynamic_extension;
+    skip("$extension was not built");
+}
+
 sub todo_skip {
     my $why = shift;
     my $n   = @_ ? shift : 1;
@@ -475,7 +497,10 @@ sub eq_hash {
     # Force a hash recompute if this perl's internals can cache the hash key.
     $key = "" . $key;
     if (exists $orig->{$key}) {
-      if ($orig->{$key} ne $value) {
+      if (
+        defined $orig->{$key} != defined $value
+        || (defined $value && $orig->{$key} ne $value)
+      ) {
         _print "# key ", _qq($key), " was ", _qq($orig->{$key}),
                      " now ", _qq($value), "\n";
         $fail = 1;
@@ -740,6 +765,44 @@ sub unlink_all {
     $count;
 }
 
+# _num_to_alpha - Returns a string of letters representing a positive integer.
+# Arguments :
+#   number to convert
+#   maximum number of letters
+
+# returns undef if the number is negative
+# returns undef if the number of letters is greater than the maximum wanted
+
+# _num_to_alpha( 0) eq 'A';
+# _num_to_alpha( 1) eq 'B';
+# _num_to_alpha(25) eq 'Z';
+# _num_to_alpha(26) eq 'AA';
+# _num_to_alpha(27) eq 'AB';
+
+my @letters = qw(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z);
+
+# Avoid ++ -- ranges split negative numbers
+sub _num_to_alpha{
+    my($num,$max_char) = @_;
+    return unless $num >= 0;
+    my $alpha = '';
+    my $char_count = 0;
+    $max_char = 0 if $max_char < 0;
+
+    while( 1 ){
+        $alpha = $letters[ $num % 26 ] . $alpha;
+        $num = int( $num / 26 );
+        last if $num == 0;
+        $num = $num - 1;
+
+        # char limit
+        next unless $max_char;
+        $char_count = $char_count + 1;
+        return if $char_count == $max_char;
+    }
+    return $alpha;
+}
+
 my %tmpfiles;
 END { unlink_all keys %tmpfiles }
 
@@ -747,25 +810,23 @@ END { unlink_all keys %tmpfiles }
 $::tempfile_regexp = 'tmp\d+[A-Z][A-Z]?';
 
 # Avoid ++, avoid ranges, avoid split //
-my @letters = qw(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z);
+my $tempfile_count = 0;
 sub tempfile {
-    my $count = 0;
-    do {
-	my $temp = $count;
+    while(1){
 	my $try = "tmp$$";
-	do {
-	    $try = $try . $letters[$temp % 26];
-	    $temp = int ($temp / 26);
-	} while $temp;
+        my $alpha = _num_to_alpha($tempfile_count,2);
+        last unless defined $alpha;
+        $try = $try . $alpha;
+        $tempfile_count = $tempfile_count + 1;
+
 	# Need to note all the file names we allocated, as a second request may
 	# come before the first is created.
-	if (!-e $try && !$tmpfiles{$try}) {
+	if (!$tmpfiles{$try} && !-e $try) {
 	    # We have a winner
 	    $tmpfiles{$try} = 1;
 	    return $try;
 	}
-	$count = $count + 1;
-    } while $count < 26 * 26;
+    }
     die "Can't find temporary file name starting 'tmp$$'";
 }
 
@@ -783,8 +844,8 @@ sub _fresh_perl {
     # it feels like the least-worse thing is to assume that auto-vivification
     # works. At least, this is only going to be a run-time failure, so won't
     # affect tests using this file but not this function.
-    $runperl_args->{progfile} = $tmpfile;
-    $runperl_args->{stderr} = 1;
+    $runperl_args->{progfile} ||= $tmpfile;
+    $runperl_args->{stderr}     = 1 unless exists $runperl_args->{stderr};
 
     open TEST, ">$tmpfile" or die "Cannot open $tmpfile: $!";
 
@@ -883,7 +944,8 @@ sub fresh_perl_like {
 # Each program is source code to run followed by an "EXPECT" line, followed
 # by the expected output.
 #
-# The code to run may contain (note the '# ' on each):
+# The code to run may begin with a command line switch such as -w or -0777
+# (alphanumerics only), and may contain (note the '# ' on each):
 #   # TODO reason for todo
 #   # SKIP reason for skip
 #   # SKIP ?code to test if this should be skipped
@@ -892,9 +954,6 @@ sub fresh_perl_like {
 # The expected output may contain:
 #   OPTION list of options
 #   OPTIONS list of options
-#   PREFIX
-#     indicates that the supplied output is only a prefix to the
-#     expected output
 #
 # The possible options for OPTION may be:
 #   regex - the expected output is a regular expression
@@ -903,6 +962,9 @@ sub fresh_perl_like {
 #
 # If the actual output contains a line "SKIPPED" the test will be
 # skipped.
+#
+# If the actual output contains a line "PREFIX", any output starting with that
+# line will be ignored when comparing with the expected output
 #
 # If the global variable $FATAL is true then OPTION fatal is the
 # default.
@@ -923,6 +985,7 @@ sub run_multiple_progs {
 
     my $tmpfile = tempfile();
 
+  PROGRAM:
     for (@prgs){
 	unless (/\n/) {
 	    print "# From $_\n";
@@ -949,13 +1012,22 @@ sub run_multiple_progs {
 		$reason{$what} = $temp;
 	    }
 	}
+
 	my $name = '';
 	if ($prog =~ s/^#\s*NAME\s+(.+)\n//m) {
 	    $name = $1;
 	}
 
+	if ($reason{skip}) {
+	SKIP:
+	  {
+	    skip($name ? "$name - $reason{skip}" : $reason{skip}, 1);
+	  }
+	  next PROGRAM;
+	}
+
 	if ($prog =~ /--FILE--/) {
-	    my @files = split(/\n--FILE--\s*([^\s\n]*)\s*\n/, $prog) ;
+	    my @files = split(/\n?--FILE--\s*([^\s\n]*)\s*\n/, $prog) ;
 	    shift @files ;
 	    die "Internal error: test $_ didn't split into pairs, got " .
 		scalar(@files) . "[" . join("%%%%", @files) ."]\n"

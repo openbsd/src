@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 34;
+use MBTest tests => 35;
 
 blib_load('Module::Build');
 
@@ -164,6 +164,10 @@ is $@, '';
   my $basedir = File::Spec->catdir('', 'bar');
   eval {$mb->run_perl_script($cmd, [], ['install', '--destdir', $destdir,
 					      '--install_base', $basedir])};
+  is $@, '';
+
+  eval {$mb->run_perl_script($cmd, [], ['install', '--destdir', $destdir,
+					      '--install_base', $basedir, '--install_base', $basedir])};
   is $@, '';
 
   $install_to = File::Spec->catfile($destdir, $libdir, $dist->name ) . '.pm';

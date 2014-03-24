@@ -7,7 +7,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan (tests => 47);
+plan (tests => 48);
 
 use utf8;
 use open qw( :utf8 :std );
@@ -145,3 +145,10 @@ eval q{ Ｆｏｏ::$bar };
 like( $@, qr/Bad name after Ｆｏｏ::/, 'Bad name after Ｆｏｏ::' );
 eval q{ Ｆｏｏ''bar };
 like( $@, qr/Bad name after Ｆｏｏ'/, 'Bad name after Ｆｏｏ\'' );
+
+{
+    no warnings 'utf8';
+    my $malformed_to_be = "\x{c0}\x{a0}";   # Overlong sequence
+    CORE::evalbytes "use charnames ':full'; use utf8; my \$x = \"\\N{abc$malformed_to_be}\"";
+    like( $@, qr/Malformed UTF-8 character immediately after '\\N\{abc' at .* within string/, 'Malformed UTF-8 input to \N{}');
+}

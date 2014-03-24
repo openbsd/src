@@ -9,7 +9,7 @@ use Test::More qw/no_plan/;
 BEGIN {
     (my $coretests = $0) =~ s'[^/]+\.t'coretests.pm';
     require $coretests;
-    use_ok('version', 0.97);
+    use_ok('version', 0.9902);
 }
 
 diag "Tests with base class" unless $ENV{PERL_CORE};
@@ -32,3 +32,15 @@ my $v = eval {
     return IO::Handle->VERSION;
 };
 ok defined($v), 'Fix for RT #47980';
+
+{ # https://rt.cpan.org/Ticket/Display.html?id=81085
+    eval { version::new() };
+    like $@, qr'Usage: version::new\(class, version\)',
+	'No bus err when called as function';
+    eval { $x = 1; print version::new };
+    like $@, qr'Usage: version::new\(class, version\)',
+	'No implicit object creation when called as function';
+    eval { $x = "version"; print version::new };
+    like $@, qr'Usage: version::new\(class, version\)',
+	'No implicit object creation when called as function';
+}

@@ -820,6 +820,7 @@ undef $g1;
 $m1 = '$g1';
 $foo =~ s//$m1/ee;
 EXPECT
+Use of my $_ is experimental at - line 16.
 Use of uninitialized value $_ in pattern match (m//) at - line 5.
 Use of uninitialized value $m1 in regexp compilation at - line 6.
 Use of uninitialized value $_ in pattern match (m//) at - line 6.
@@ -830,9 +831,8 @@ Use of uninitialized value $m1 in regexp compilation at - line 10.
 Use of uninitialized value $_ in substitution (s///) at - line 10.
 Use of uninitialized value $_ in substitution (s///) at - line 10.
 Use of uninitialized value $_ in substitution (s///) at - line 11.
-Use of uninitialized value $g1 in substitution (s///) at - line 11.
 Use of uninitialized value $_ in substitution (s///) at - line 11.
-Use of uninitialized value $g1 in substitution (s///) at - line 11.
+Use of uninitialized value $g1 in substitution iterator at - line 11.
 Use of uninitialized value $m1 in regexp compilation at - line 12.
 Use of uninitialized value $_ in substitution (s///) at - line 12.
 Use of uninitialized value $_ in substitution (s///) at - line 12.
@@ -849,9 +849,8 @@ Use of uninitialized value $m1 in regexp compilation at - line 21.
 Use of uninitialized value $_ in substitution (s///) at - line 21.
 Use of uninitialized value $_ in substitution (s///) at - line 21.
 Use of uninitialized value $_ in substitution (s///) at - line 22.
-Use of uninitialized value $g1 in substitution (s///) at - line 22.
 Use of uninitialized value $_ in substitution (s///) at - line 22.
-Use of uninitialized value $g1 in substitution (s///) at - line 22.
+Use of uninitialized value $g1 in substitution iterator at - line 22.
 Use of uninitialized value $m1 in regexp compilation at - line 23.
 Use of uninitialized value $_ in substitution (s///) at - line 23.
 Use of uninitialized value $_ in substitution (s///) at - line 23.
@@ -868,9 +867,8 @@ Use of uninitialized value $m1 in regexp compilation at - line 31.
 Use of uninitialized value $g2 in substitution (s///) at - line 31.
 Use of uninitialized value $g2 in substitution (s///) at - line 31.
 Use of uninitialized value $g2 in substitution (s///) at - line 32.
-Use of uninitialized value $g1 in substitution (s///) at - line 32.
 Use of uninitialized value $g2 in substitution (s///) at - line 32.
-Use of uninitialized value $g1 in substitution (s///) at - line 32.
+Use of uninitialized value $g1 in substitution iterator at - line 32.
 Use of uninitialized value $m1 in regexp compilation at - line 33.
 Use of uninitialized value $g2 in substitution (s///) at - line 33.
 Use of uninitialized value $g2 in substitution (s///) at - line 33.
@@ -880,10 +878,10 @@ Use of uninitialized value in transliteration (tr///) at - line 35.
 Use of uninitialized value $m1 in regexp compilation at - line 38.
 Use of uninitialized value $g1 in regexp compilation at - line 39.
 Use of uninitialized value $m1 in regexp compilation at - line 41.
-Use of uninitialized value $g1 in substitution (s///) at - line 42.
+Use of uninitialized value $g1 in substitution iterator at - line 42.
 Use of uninitialized value $m1 in regexp compilation at - line 43.
 Use of uninitialized value $g1 in substitution iterator at - line 43.
-Use of uninitialized value $m1 in substitution iterator at - line 44.
+Use of uninitialized value $m1 in substitution (s///) at - line 44.
 Use of uninitialized value in substitution iterator at - line 47.
 ########
 use warnings 'uninitialized';
@@ -1035,7 +1033,6 @@ Use of uninitialized value $g1 in vec at - line 11.
 Use of uninitialized value $m1 in vec at - line 11.
 Use of uninitialized value $m2 in vec at - line 12.
 Use of uninitialized value $g1 in vec at - line 12.
-Use of uninitialized value $m1 in vec at - line 12.
 Use of uninitialized value $m1 in index at - line 14.
 Use of uninitialized value $m2 in index at - line 14.
 Use of uninitialized value $g1 in index at - line 15.
@@ -1144,8 +1141,8 @@ our @foo3=(1,undef); chop  @foo3;
 my  @foo4=(1,undef); chop  @foo4;
 our @foo5=(1,undef); $v = sprintf "%s%s",@foo5;
 my  @foo6=(1,undef); $v = sprintf "%s%s",@foo6;
-our %foo7=('foo'=>'bar','baz'=>undef); $v = sprintf "%s%s",%foo7;
-my  %foo8=('foo'=>'bar','baz'=>undef); $v = sprintf "%s%s",%foo8;
+our %foo7=('foo'=>'bar','baz'=>undef); $v = sprintf "%s%s%s%s",%foo7;
+my  %foo8=('foo'=>'bar','baz'=>undef); $v = sprintf "%s%s%s%s",%foo8;
 our @foo9 =(1,undef); $v = sprintf "%s%s%s%s",$m1,@foo9, $ma[2];
 my  @foo10=(1,undef); $v = sprintf "%s%s%s%s",$m2,@foo10,$ma[2];
 our %foo11=('foo'=>'bar','baz'=>undef); $v = join '', %foo11;
@@ -1226,8 +1223,6 @@ Use of uninitialized value $m1 in splice at - line 10.
 Use of uninitialized value $g1 in splice at - line 10.
 Use of uninitialized value in addition (+) at - line 10.
 Use of uninitialized value $m1 in method lookup at - line 13.
-Use of uninitialized value in subroutine entry at - line 15.
-Use of uninitialized value in subroutine entry at - line 16.
 Use of uninitialized value $m1 in warn at - line 18.
 Use of uninitialized value $g1 in warn at - line 18.
 foo at - line 18.
@@ -1962,7 +1957,7 @@ $v = 1 + prototype $fn;
 EXPECT
 Use of uninitialized value in addition (+) at - line 4.
 ########
-use warnings 'uninitialized';
+use warnings 'uninitialized'; no warnings 'experimental::smartmatch';
 my $v;
 my $fn = sub {};
 $v = 1 + (1 ~~ $fn);
@@ -2037,3 +2032,58 @@ use warnings 'uninitialized';
 "@{[ $x ]}";
 EXPECT
 Use of uninitialized value in join or string at - line 3.
+########
+# inside formats
+use warnings 'uninitialized';
+my $x;
+format =
+@
+"$x";
+.
+write;
+EXPECT
+Use of uninitialized value $x in string at - line 6.
+########
+# NAME off-by-one error in hash bucket walk in key detection logic
+use warnings 'uninitialized';
+
+for ( 0 .. 20 ) { # we assume that this means we test keys for every bucket
+    my %h= ( $_ => undef );
+    my $s= sprintf "%s", $h{$_};
+}
+EXPECT
+Use of uninitialized value $h{"0"} in sprintf at - line 5.
+Use of uninitialized value $h{"1"} in sprintf at - line 5.
+Use of uninitialized value $h{"2"} in sprintf at - line 5.
+Use of uninitialized value $h{"3"} in sprintf at - line 5.
+Use of uninitialized value $h{"4"} in sprintf at - line 5.
+Use of uninitialized value $h{"5"} in sprintf at - line 5.
+Use of uninitialized value $h{"6"} in sprintf at - line 5.
+Use of uninitialized value $h{"7"} in sprintf at - line 5.
+Use of uninitialized value $h{"8"} in sprintf at - line 5.
+Use of uninitialized value $h{"9"} in sprintf at - line 5.
+Use of uninitialized value $h{"10"} in sprintf at - line 5.
+Use of uninitialized value $h{"11"} in sprintf at - line 5.
+Use of uninitialized value $h{"12"} in sprintf at - line 5.
+Use of uninitialized value $h{"13"} in sprintf at - line 5.
+Use of uninitialized value $h{"14"} in sprintf at - line 5.
+Use of uninitialized value $h{"15"} in sprintf at - line 5.
+Use of uninitialized value $h{"16"} in sprintf at - line 5.
+Use of uninitialized value $h{"17"} in sprintf at - line 5.
+Use of uninitialized value $h{"18"} in sprintf at - line 5.
+Use of uninitialized value $h{"19"} in sprintf at - line 5.
+Use of uninitialized value $h{"20"} in sprintf at - line 5.
+########
+# NAME SvPOK && SvLEN==0 should not produce uninit warning
+use warnings 'uninitialized';
+
+$v = int(${qr||}); # sv_2iv on a regexp
+$v = 1.1 *  ${qr||}; # sv_2nv on a regexp
+$v = ${qr||} << 2; # sv_2uv on a regexp
+
+sub TIESCALAR{bless[]}
+sub FETCH {${qr||}}
+tie $t, "";
+$v = 1.1 * $t; # sv_2nv on a tied regexp
+
+EXPECT

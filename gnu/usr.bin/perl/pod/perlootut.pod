@@ -10,7 +10,13 @@ perlootut - Object-Oriented Programming in Perl Tutorial
 
 =head1 DATE
 
-This document was created in February, 2011.
+This document was created in February, 2011, and the last major
+revision was in February, 2013.
+
+If you are reading this in the future then it's possible that the state
+of the art has changed. We recommend you start by reading the perlootut
+document in the latest stable release of Perl, rather than this
+version.
 
 =head1 DESCRIPTION
 
@@ -218,8 +224,8 @@ Polymorphism is one of the key concepts of object-oriented design.
 =head2 Inheritance
 
 B<Inheritance> lets you create a specialized version of an existing
-class. Inheritance lets the new class to reuse the methods and
-attributes of another class.
+class. Inheritance lets the new class reuse the methods and attributes
+of another class.
 
 For example, we could create an C<File::MP3> class which B<inherits>
 from C<File>. An C<File::MP3> B<is-a> I<more specific> type of C<File>.
@@ -576,27 +582,30 @@ compiler. If you need to install your software on a system without a
 compiler, or if having I<any> dependencies is a problem, then C<Moose>
 may not be right for you.
 
-=head3 Mouse
+=head3 Moo
 
 If you try C<Moose> and find that one of these issues is preventing you
-from using C<Moose>, we encourage you to consider L<Mouse> next.
-C<Mouse> implements a subset of C<Moose>'s functionality in a simpler
-package. For all features that it does implement, the end-user API is
-I<identical> to C<Moose>, meaning you can switch from C<Mouse> to
+from using C<Moose>, we encourage you to consider L<Moo> next. C<Moo>
+implements a subset of C<Moose>'s functionality in a simpler package.
+For most features that it does implement, the end-user API is
+I<identical> to C<Moose>, meaning you can switch from C<Moo> to
 C<Moose> quite easily.
 
-C<Mouse> does not implement most of C<Moose>'s introspection API, so
-it's often faster when loading your modules. Additionally, all of its
-I<required> dependencies ship with the Perl core, and it can run
-without a compiler. If you do have a compiler, C<Mouse> will use it to
-compile some of its code for a speed boost.
+C<Moo> does not implement most of C<Moose>'s introspection API, so it's
+often faster when loading your modules. Additionally, none of its
+dependencies require XS, so it can be installed on machines without a
+compiler.
 
-Finally, it ships with a C<Mouse::Tiny> module that takes most of
-C<Mouse>'s features and bundles them up in a single module file. You
-can copy this module file into your application's library directory for
-easy bundling.
+One of C<Moo>'s most compelling features is its interoperability with
+C<Moose>. When someone tries to use C<Moose>'s introspection API on a
+C<Moo> class or role, it is transparently inflated into a C<Moose>
+class or role. This makes it easier to incorporate C<Moo>-using code
+into a C<Moose> code base and vice versa.
 
-The C<Moose> authors hope that one day C<Mouse> can be made obsolete by
+For example, a C<Moose> class can subclass a C<Moo> class using
+C<extends> or consume a C<Moo> role using C<with>.
+
+The C<Moose> authors hope that one day C<Moo> can be made obsolete by
 improving C<Moose> enough, but for now it provides a worthwhile
 alternative to C<Moose>.
 
@@ -683,8 +692,8 @@ Here's a brief recap of the options we covered:
 =item * L<Moose>
 
 C<Moose> is the maximal option. It has a lot of features, a big
-ecosystem, and a thriving user base. We also covered L<Mouse> briefly.
-C<Mouse> is C<Moose> lite, and a reasonable alternative when Moose
+ecosystem, and a thriving user base. We also covered L<Moo> briefly.
+C<Moo> is C<Moose> lite, and a reasonable alternative when Moose
 doesn't work for your application.
 
 =item * L<Class::Accessor>

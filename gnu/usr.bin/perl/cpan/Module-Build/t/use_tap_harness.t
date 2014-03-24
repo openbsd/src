@@ -3,7 +3,7 @@
 use strict;
 use Test::More;
 use lib 't/lib';
-if (eval { require TAP::Harness } && TAP::Harness->VERSION >= 3) {
+if (eval { require TAP::Harness && TAP::Harness->VERSION(3) }) {
     plan tests => 9;
 } else {
     plan skip_all => 'TAP::Harness 3+ not installed'

@@ -37,7 +37,7 @@ print OUT <<'!NO!SUBS!';
 
 # pod2man -- Convert POD data to formatted *roff input.
 #
-# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010
+# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -51,6 +51,9 @@ use Pod::Usage qw(pod2usage);
 
 use strict;
 
+# Clean up $0 for error reporting.
+$0 =~ s%.*/%%;
+
 # Insert -- into @ARGV before any single dash argument to hide it from
 # Getopt::Long; we want to interpret it as meaning stdin.
 my $stdin;
@@ -59,12 +62,12 @@ my $stdin;
 # Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
-$options{errors} = 'pod';
 Getopt::Long::config ('bundling_override');
-GetOptions (\%options, 'center|c=s', 'date|d=s', 'fixed=s', 'fixedbold=s',
-            'fixeditalic=s', 'fixedbolditalic=s', 'help|h', 'lax|l',
-            'name|n=s', 'official|o', 'quotes|q=s', 'release|r:s',
-            'section|s=s', 'stderr', 'verbose|v', 'utf8|u') or exit 1;
+GetOptions (\%options, 'center|c=s', 'date|d=s', 'errors=s', 'fixed=s',
+            'fixedbold=s', 'fixeditalic=s', 'fixedbolditalic=s', 'help|h',
+            'lax|l', 'name|n=s', 'nourls', 'official|o', 'quotes|q=s',
+            'release|r:s', 'section|s=s', 'stderr', 'verbose|v', 'utf8|u')
+    or exit 1;
 pod2usage (0) if $options{help};
 
 # Official sets --center, but don't override things explicitly set.
@@ -80,32 +83,48 @@ delete $options{verbose};
 # compatibility.
 delete $options{lax};
 
+# If neither stderr nor errors is set, default to errors = die.
+if (!defined $options{stderr} && !defined $options{errors}) {
+    $options{errors} = 'die';
+}
+
 # Initialize and run the formatter, pulling a pair of input and output off at
-# a time.
+# a time.  For each file, we check whether the document was completely empty
+# and, if so, will remove the created file and exit with a non-zero exit
+# status.
 my $parser = Pod::Man->new (%options);
+my $status = 0;
 my @files;
 do {
     @files = splice (@ARGV, 0, 2);
     print "  $files[1]\n" if $verbose;
     $parser->parse_from_file (@files);
+    if ($parser->{CONTENTLESS}) {
+        $status = 1;
+        warn "$0: unable to format $files[0]\n";
+        if (defined ($files[1]) and $files[1] ne '-') {
+            unlink $files[1] unless (-s $files[1]);
+        }
+    }
 } while (@ARGV);
+exit $status;
 
 __END__
+
+=for stopwords
+en em --stderr stderr --utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris
+URL troff troff-specific formatters uppercased Christiansen --nourls
 
 =head1 NAME
 
 pod2man - Convert POD data to formatted *roff input
 
-=for stopwords
-en em --stderr stderr --utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris
-URL troff troff-specific formatters uppercased Christiansen
-
 =head1 SYNOPSIS
 
-pod2man [B<--center>=I<string>] [B<--date>=I<string>]
+pod2man [B<--center>=I<string>] [B<--date>=I<string>] [B<--errors>=I<style>]
     [B<--fixed>=I<font>] [B<--fixedbold>=I<font>] [B<--fixeditalic>=I<font>]
-    [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--official>]
-    [B<--quotes>=I<quotes>] [B<--release>[=I<version>]]
+    [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--nourls>]
+    [B<--official>] [B<--quotes>=I<quotes>] [B<--release>[=I<version>]]
     [B<--section>=I<manext>] [B<--stderr>] [B<--utf8>] [B<--verbose>]
     [I<input> [I<output>] ...]
 
@@ -159,6 +178,16 @@ Set the left-hand footer string to this value.  By default, the modification
 date of the input file will be used, or the current date if input comes from
 C<STDIN>.
 
+=item B<-errors>=I<style>
+
+Set the error handling style.  C<die> says to throw an exception on any
+POD formatting error.  C<stderr> says to report errors on standard error,
+but not to throw an exception.  C<pod> says to include a POD ERRORS
+section in the resulting documentation summarizing the errors.  C<none>
+ignores POD errors entirely, as much as possible.
+
+The default is C<die>.
+
 =item B<--fixed>=I<font>
 
 The fixed-width font to use for verbatim text and code.  Defaults to
@@ -206,6 +235,21 @@ Note that this option is probably not useful when converting multiple POD
 files at once.  The convention for Unix man pages for commands is for the
 man page title to be in all-uppercase even if the command isn't.
 
+=item B<--nourls>
+
+Normally, LZ<><> formatting codes with a URL but anchor text are formatted
+to show both the anchor text and the URL.  In other words:
+
+    L<foo|http://example.com/>
+
+is formatted as:
+
+    foo <http://example.com/>
+
+This flag, if given, suppresses the URL when anchor text is given, so this
+example would be formatted as just C<foo>.  This can produce less
+cluttered output in cases where the URLs are not particularly important.
+
 =item B<-o>, B<--official>
 
 Set the default header to indicate that this page is part of the standard
@@ -248,10 +292,10 @@ which case section 3 will be selected.
 
 =item B<--stderr>
 
-By default, B<pod2man> puts any errors detected in the POD input in a POD
-ERRORS section in the output manual page.  If B<--stderr> is given, errors
-are sent to standard error instead and the POD ERRORS section is
-suppressed.
+By default, B<pod2man> dies if any errors are detected in the POD input.
+If B<--stderr> is given and no B<--errors> flag is present, errors are
+sent to standard error, but B<pod2man> does not abort.  This is equivalent
+to C<--errors=stderr> and is supported for backward compatibility.
 
 =item B<-u>, B<--utf8>
 
@@ -280,6 +324,16 @@ L<perlpod(1)> for more information on the C<=encoding> command.
 Print out the name of each output file as it is being generated.
 
 =back
+
+=head1 EXIT STATUS
+
+As long as all documents processed result in some output, even if that
+output includes errata (a C<POD ERRORS> section generated with
+C<--errors=pod>), B<pod2man> will exit with status 0.  If any of the
+documents being processed do not result in an output document, B<pod2man>
+will exit with status 1.  If there are syntax errors in a POD document
+being processed and the error handling style is set to the default of
+C<die>, B<pod2man> will abort immediately with exit status 255.
 
 =head1 DIAGNOSTICS
 
@@ -329,15 +383,14 @@ B<pod2man> by Larry Wall and Tom Christiansen.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010 Russ Allbery
-<rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013 Russ
+Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
 !NO!SUBS!
-#'# (cperl-mode)
 
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";

@@ -1,15 +1,18 @@
 package Module::Pluggable;
 
 use strict;
-use vars qw($VERSION);
+use vars qw($VERSION $FORCE_SEARCH_ALL_PATHS);
 use Module::Pluggable::Object;
+
+use if $] > 5.017, 'deprecate';
 
 # ObQuote:
 # Bob Porter: Looks like you've been missing a lot of work lately. 
 # Peter Gibbons: I wouldn't say I've been missing it, Bob! 
 
 
-$VERSION = '4.0';
+$VERSION = '4.7';
+$FORCE_SEARCH_ALL_PATHS = 0;
 
 sub import {
     my $class        = shift;
@@ -22,6 +25,7 @@ sub import {
     my ($package)    = $opts{'package'} || $pkg;
     $opts{filename}  = $file;
     $opts{package}   = $package;
+    $opts{force_search_all_paths} = $FORCE_SEARCH_ALL_PATHS unless exists $opts{force_search_all_paths};
 
 
     my $finder       = Module::Pluggable::Object->new(%opts);
@@ -152,9 +156,8 @@ Optionally it instantiates those classes for you.
 
 =head1 ADVANCED USAGE
 
-    
 Alternatively, if you don't want to use 'plugins' as the method ...
-    
+
     package MyClass;
     use Module::Pluggable sub_name => 'foo';
 
@@ -227,6 +230,21 @@ and then later ...
 
     my @filters = $self->filters;
     my @plugins = $self->plugins;
+    
+=head1 PLUGIN SEARCHING
+
+Every time you call 'plugins' the whole search path is walked again. This allows 
+for dynamically loading plugins even at run time. However this can get expensive 
+and so if you don't expect to want to add new plugins at run time you could do
+
+
+  package Foo;
+  use strict;
+  use Module::Pluggable sub_name => '_plugins';
+
+  our @PLUGINS;
+  sub plugins { @PLUGINS ||= shift->_plugins }
+  1;
 
 =head1 INNER PACKAGES
 
@@ -307,6 +325,62 @@ the extensions F<.swp> or F<.swo>, or files beginning with F<.#>.
 Setting C<include_editor_junk> changes C<Module::Pluggable> so it does
 not ignore any files it finds.
 
+=head2 follow_symlinks
+
+Whether, when searching directories, to follow symlinks.
+
+Defaults to 1 i.e do follow symlinks.
+
+=head2 min_depth, max_depth
+
+This will allow you to set what 'depth' of plugin will be allowed.
+
+So, for example, C<MyClass::Plugin::Foo> will have a depth of 3 and 
+C<MyClass::Plugin::Foo::Bar> will have a depth of 4 so to only get the former 
+(i.e C<MyClass::Plugin::Foo>) do
+
+        package MyClass;
+        use Module::Pluggable max_depth => 3;
+        
+and to only get the latter (i.e C<MyClass::Plugin::Foo::Bar>)
+
+        package MyClass;
+        use Module::Pluggable min_depth => 4;
+
+
+=head1 TRIGGERS
+
+Various triggers can also be passed in to the options.
+
+If any of these triggers return 0 then the plugin will not be returned.
+
+=head2 before_require <plugin>
+
+Gets passed the plugin name. 
+
+If 0 is returned then this plugin will not be required either.
+
+=head2 on_require_error <plugin> <err>
+
+Gets called when there's an error on requiring the plugin.
+
+Gets passed the plugin name and the error. 
+
+The default on_require_error handler is to C<carp> the error and return 0.
+
+=head2 on_instantiate_error <plugin> <err>
+
+Gets called when there's an error on instantiating the plugin.
+
+Gets passed the plugin name and the error. 
+
+The default on_instantiate_error handler is to C<carp> the error and return 0.
+
+=head2 after_require <plugin>
+
+Gets passed the plugin name. 
+
+If 0 is returned then this plugin will be required but not returned as a plugin.
 
 =head1 METHODs
 
@@ -319,7 +393,29 @@ search_path.
     $self->search_path( add => "New::Path" ); # add
     $self->search_path( new => "New::Path" ); # replace
 
+=head1 BEHAVIOUR UNDER TEST ENVIRONMENT
 
+In order to make testing reliable we exclude anything not from blib if blib.pm is 
+in %INC. 
+
+However if the module being tested used another module that itself used C<Module::Pluggable> 
+then the second module would fail. This was fixed by checking to see if the caller 
+had (^|/)blib/ in their filename.
+
+There's an argument that this is the wrong behaviour and that modules should explicitly
+trigger this behaviour but that particular code has been around for 7 years now and I'm 
+reluctant to change the default behaviour.
+
+You can now (as of version 4.1) force Module::Pluggable to look outside blib in a test environment by doing either
+
+        require Module::Pluggable;
+        $Module::Pluggable::FORCE_SEARCH_ALL_PATHS = 1;
+        import Module::Pluggable;
+
+or
+
+        use Module::Pluggable force_search_all_paths => 1;
+        
 
 =head1 FUTURE PLANS
 
@@ -331,6 +427,12 @@ Recently tried fixed to find inner packages and to make it
 
 
 However suggestions (and patches) are welcome.
+
+=head1 DEVELOPMENT
+
+The master repo for this module is at
+
+https://github.com/simonwistow/Module-Pluggable
 
 =head1 AUTHOR
 

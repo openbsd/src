@@ -8,7 +8,7 @@ our @ISA = qw(Fatal);
 our $VERSION;
 
 BEGIN {
-    $VERSION = '2.10';
+    $VERSION = '2.13';
 }
 
 use constant ERROR_WRONG_FATAL => q{
@@ -333,6 +333,10 @@ C<autodie>.  To workaround this, C<autodie> may be explicitly disabled until
 the end of the current block with C<no autodie>.
 To disable autodie for only a single function (eg, open)
 use C<no autodie qw(open)>.
+
+C<autodie> performs no checking of called context to determine whether to throw
+an exception; the explicitness of error handling with C<autodie> is a deliberate
+feature.
 
 =item No user hints defined for %s
 

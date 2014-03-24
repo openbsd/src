@@ -65,11 +65,17 @@ Run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>, among other
 Perl-related literature), perl.com provides current Perl news, articles, and
 resources for Perl developers as well as a directory of other useful websites.
 
+=item L<http://blogs.perl.org/>
+
+Many members of the community have a Perl-related blog on this site. If
+you'd like to join them, you can sign up for free.
+
 =item L<http://use.perl.org/>
 
-use Perl; provides a slashdot-style Perl news website covering all things Perl,
-from minutes of the meetings of the Perl 6 Design team to conference
-announcements with (ir)relevant discussion.
+use Perl; used to provide a slashdot-style news/blog website covering all
+things Perl, from minutes of the meetings of the Perl 6 Design team to
+conference announcements with (ir)relevant discussion. It no longer accepts
+updates, but you can still use the site to read old entries and comments.
 
 =back
 
@@ -82,6 +88,12 @@ announcements with (ir)relevant discussion.
 PerlMonks is one of the largest Perl forums, and describes itself as "A place
 for individuals to polish, improve, and showcase their Perl skills." and "A
 community which allows everyone to grow and learn from each other."
+
+=item L<http://stackoverflow.com/>
+
+Stack Overflow is a free question-and-answer site for programmers. It's not
+focussed solely on Perl, but it does have an active group of users who do
+their best to help people with their Perl programming questions.
 
 =back
 

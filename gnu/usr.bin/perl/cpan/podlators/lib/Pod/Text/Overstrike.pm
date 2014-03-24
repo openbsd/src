@@ -1,13 +1,5 @@
 # Pod::Text::Overstrike -- Convert POD data to formatted overstrike text
 #
-# Created by Joe Smith <Joe.Smith@inwap.com> 30-Nov-2000
-#   (based on Pod::Text::Color by Russ Allbery <rra@stanford.edu>)
-# Copyright 2000 Joe Smith <Joe.Smith@inwap.com>.
-# Copyright 2001, 2004, 2008 Russ Allbery <rra@stanford.edu>.
-#
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
-#
 # This was written because the output from:
 #
 #     pod2text Text.pm > plain.txt; less plain.txt
@@ -18,6 +10,14 @@
 #
 # and because both Pod::Text::Color and Pod::Text::Termcap are not device
 # independent.
+#
+# Created by Joe Smith <Joe.Smith@inwap.com> 30-Nov-2000
+#   (based on Pod::Text::Color by Russ Allbery <rra@stanford.edu>)
+# Copyright 2000 Joe Smith <Joe.Smith@inwap.com>.
+# Copyright 2001, 2004, 2008 Russ Allbery <rra@stanford.edu>.
+#
+# This program is free software; you may redistribute it and/or modify it
+# under the same terms as Perl itself.
 
 ##############################################################################
 # Modules and declarations
@@ -34,7 +34,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '2.04';
+$VERSION = '2.05';
 
 ##############################################################################
 # Overrides

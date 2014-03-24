@@ -12,16 +12,17 @@ my (%authors, %untraced, %patchers, %committers, %real_names);
 
 my $result = GetOptions (
              # modes
-             "who" => \$who,
-             "rank" => \$rank,
+             "who"            => \$who,
+             "rank"           => \$rank,
              "thanks-applied" => \$ta,
-             "missing"   => \$ack ,
-             "tap" => \$tap,
+             "missing"        => \$ack ,
+             "tap"            => \$tap,
+
              # modifiers
-             "authors" => \$author_file,
-             "percentage" => \$percentage,      # show as %age
-             "cumulative" => \$cumulative,
-             "reverse" => \$reverse,
+             "authors=s"      => \$author_file,
+             "percentage"     => \$percentage,      # show as %age
+             "cumulative"     => \$cumulative,
+             "reverse"        => \$reverse,
             );
 
 if (!$result or ( $rank + $ta + $who + $ack + $tap != 1 ) or !@ARGV) {
@@ -29,7 +30,7 @@ if (!$result or ( $rank + $ta + $who + $ack + $tap != 1 ) or !@ARGV) {
 }
 
 $author_file ||= './AUTHORS';
-die "Can't locate '$author_file'. Specify it with '--author <path>'."
+die "Can't locate '$author_file'. Specify it with '--authors <path>'."
   unless -f $author_file;
 
 my $map = generate_known_author_map();
@@ -159,6 +160,7 @@ sub generate_known_author_map {
         "arbor\100al37al08.telecel.pt"
         ,    # reported perlbug ticket 5196 - no actual code contribution. no real name - jrv 20091006
         "oracle\100pcr8.pcr.com",    # Reported perlbug ticket 1015 - no patch - Probably Ed Eddington ed@pcr.com
+        "snaury\100gmail.com",       # Reported cpan ticket 35943, with patch for fix
         ;
 
     #
@@ -335,11 +337,17 @@ sub _raw_address {
         #
         # Try to find the author
         #
-        while (my ($email, $author_name) = each %authors) {
-            if ($name eq $author_name) {
-                $addr = $email;
-                $real_name = $name;
-                last;
+        if (exists $map->{$name}) {
+            $addr = $map->{$name};
+            $real_name = $authors{$addr};
+        }
+        else {
+            while (my ($email, $author_name) = each %authors) {
+                if ($name eq $author_name) {
+                    $addr = $email;
+                    $real_name = $name;
+                    last;
+                }
             }
         }
     }
@@ -364,7 +372,7 @@ __DATA__
 # List of mappings. First entry the "correct" email address, as appears
 # in the AUTHORS file. Second is any "alias" mapped to it.
 #
-# If the "correct" email address is a '+', the entry above is reused;
+# If the "correct" email address is a '+', the entry above it is reused;
 # this for addresses with more than one alias.
 #
 # Note that all entries are in lowercase. Further, no '@' signs should
@@ -553,8 +561,10 @@ blgl\100stacken.kth.se                  blgl\100hagernas.com
 +                                       2bfjdsla52kztwejndzdstsxl9athp\100gmail.com
 brian.d.foy\100gmail.com                bdfoy\100cpan.org
 BQW10602\100nifty.com                   sadahiro\100cpan.org
+bulk88\100hotmail.com                   bulk88
 
 chromatic\100wgz.org                    chromatic\100rmci.net
+ckuskie\100cadence.com                  colink\100perldreamer.com
 claes\100surfar.nu                      claes\100versed.se
 clintp\100geeksalad.org                 cpierce1\100ford.com
 clkao\100clkao.org                      clkao\100bestpractical.com
@@ -585,6 +595,7 @@ dennis\100booking.com                   dennis\100camel.ams6.corp.booking.com
 dev-perl\100pimb.org                    knew-p5p\100pimb.org
 +                                       lists-p5p\100pimb.org
 djberg86\100attbi.com                   djberg96\100attbi.com
+dk\100tetsuo.karasik.eu.org             dmitry\100karasik.eu.org
 domo\100computer.org                    shouldbedomo\100mac.com
 +                                       domo\100slipper.ip.lu
 +                                       domo\100tcp.ip.lu
@@ -695,6 +706,7 @@ lupe\100lupe-christoph.de               lupe\100alanya.m.isar.de
 lutherh\100stratcom.com                 lutherh\100infinet.com
 mab\100wdl.loral.com                    markb\100rdcf.sm.unisys.com
 marcel\100codewerk.com                  gr\100univie.ac.at
++                                       hanekomu\100gmail.com
 marcgreen\100cpan.org                   marcgreen\100wpi.edu
 markleightonfisher\100gmail.com         fisherm\100tce.com
 mark.p.lutz\100boeing.com               tecmpl1\100triton.ca.boeing.com
@@ -786,10 +798,13 @@ public\100khwilliamson.com              khw\100karl.(none)
 +                                       khw\100khw-desktop.(none)
 
 radu\100netsoft.ro                      rgreab\100fx.ro
+rajagopa\100pauline.schrodinger.com     rajagopa\100schrodinger.com
 raphael.manfredi\100pobox.com           raphael_manfredi\100grenoble.hp.com
 module@renee-baecker.de                 renee.baecker\100smart-websolutions.de
 +                                       reneeb\100reneeb-desktop.(none)
++                                       github@renee-baecker.de
 +                                       otrs\100ubuntu.(none)
++                                       perl\100renee-baecker.de
 richard.foley\100rfi.net                richard.foley\100t-online.de
 +                                       richard.foley\100ubs.com
 +                                       richard.foley\100ubsw.com
@@ -801,6 +816,7 @@ rjbs\100cpan.org                        rjbs-perl-p5p\100lists.manxome.org
 +                                       perl.p5p\100rjbs.manxome.org
 rjk\100linguist.dartmouth.edu           rjk\100linguist.thayer.dartmouth.edu
 +                                       rjk-perl-p5p\100tamias.net
++                                       rjk\100tamias.net
 rjray\100redhat.com                     rjray\100uswest.com
 rmgiroux\100acm.org                     rmgiroux\100hotmail.com
 +                                       mgiroux\100bear.com
@@ -815,11 +831,13 @@ roberto\100keltia.freenix.fr            roberto\100eurocontrol.fr
 robin\100cpan.org                       robin\100kitsite.com
 roderick\100argon.org                   roderick\100gate.net
 +                                       roderick\100ibcinc.com
+argrath\100ub32.org                     root\100ub32.org
 rootbeer\100teleport.com                rootbeer\100redcat.com
 +                                       tomphoenix\100unknown
 rurban\100x-ray.at                      rurban\100cpan.org
 +                                       rurban\100cpanel.net
 sartak\100bestpractical.com             sartak\100gmail.com
++                                       code\100sartak.org
 sadinoff\100olf.com                     danny-cpan\100sadinoff.com
 schubiger\100cpan.org                   steven\100accognoscere.org
 +                                       sts\100accognoscere.org
@@ -845,6 +863,8 @@ simon\100simon-cozens.org               simon\100pembro4.pmb.ox.ac.uk
 +                                       simon\100othersideofthe.earth.li
 +                                       simon\100cozens.net
 +                                       simon\100netthink.co.uk
+lannings\100who.int                     lannings\100gmail.com
++                                       slanning\100cpan.org
 slaven\100rezic.de                      slaven.rezic\100berlin.de
 +                                       srezic\100iconmobile.com
 +                                       srezic\100cpan.org
@@ -896,6 +916,7 @@ whatever\100davidnicol.com              davidnicol\100gmail.com
 wolfgang.laun\100alcatel.at             wolfgang.laun\100chello.at
 +                                       wolfgang.laun\100thalesgroup.com
 +                                       wolfgang.laun\100gmail.com
+wolfsage\100gmail.com                   mhorsfall\100darmstadtium.(none)
 yath\100yath.de                         yath-perlbug\100yath.de
 
 jkeen@verizon.net                       jkeenan@cpan.org

@@ -13,8 +13,6 @@ BEGIN {
 
 use strict;
 
-skip_all('broken on MPE/iX') if $^O eq 'mpeix';
-
 $| = 1;
 
 my @tests = (

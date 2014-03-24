@@ -1,3 +1,8 @@
+1.827 25 Jan 2012
+
+   * DB_File.pm - Don't use "@_" construct
+     [RT ##79287]
+
 1.826 25 Jan 2012
 
    * t/db-btree.t - fix use of "length @array"

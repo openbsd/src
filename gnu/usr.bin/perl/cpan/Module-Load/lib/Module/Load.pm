@@ -1,6 +1,6 @@
 package Module::Load;
 
-$VERSION = '0.22';
+$VERSION = '0.24';
 
 use strict;
 use File::Spec ();
@@ -48,7 +48,7 @@ sub _to_file{
     my $pm      = shift || '';
 
     ## trailing blanks ignored by default. [rt #69886]
-    my @parts = split /::/, $_, -1;
+    my @parts = split /::|'/, $_, -1;
     ## make sure that we can't hop out of @INC
     shift @parts if @parts && !$parts[0];
 

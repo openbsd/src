@@ -66,17 +66,17 @@ like (ref(4.5+4.5), qr/^Math::BigInt/);
 ###############################################################################
 # accuracy and precision
 
-is (bigint->accuracy(), undef);
-is (bigint->accuracy(12),12);
-is (bigint->accuracy(),12);
+is ('bigint'->accuracy(), undef);
+is ('bigint'->accuracy(12),12);
+is ('bigint'->accuracy(),12);
 
-is (bigint->precision(), undef);
-is (bigint->precision(12),12);
-is (bigint->precision(),12);
+is ('bigint'->precision(), undef);
+is ('bigint'->precision(12),12);
+is ('bigint'->precision(),12);
 
-is (bigint->round_mode(),'even');
-is (bigint->round_mode('odd'),'odd');
-is (bigint->round_mode(),'odd');
+is ('bigint'->round_mode(),'even');
+is ('bigint'->round_mode('odd'),'odd');
+is ('bigint'->round_mode(),'odd');
 
 ###############################################################################
 # hex() and oct()

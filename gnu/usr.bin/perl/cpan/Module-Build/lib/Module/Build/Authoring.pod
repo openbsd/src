@@ -304,7 +304,7 @@ Bug reports are also welcome at
 <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Build>.
 
 The latest development version is available from the Git
-repository at <https://github.com/dagolden/module-build/>
+repository at <https://github.com/Perl-Toolchain-Gang/Module-Build>
 
 
 =head1 SEE ALSO

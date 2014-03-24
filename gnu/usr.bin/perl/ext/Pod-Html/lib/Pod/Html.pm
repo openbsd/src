@@ -3,7 +3,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.15_02;
+$VERSION = 1.18;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
 @EXPORT_OK = qw(anchorify);
@@ -16,8 +16,11 @@ use File::Spec;
 use File::Spec::Unix;
 use Getopt::Long;
 use Pod::Simple::Search;
-
-use locale; # make \w work right in non-ASCII lands
+BEGIN {
+    if($Config{d_setlocale}) {
+        require locale; import locale; # make \w work right in non-ASCII lands
+    }
+}
 
 =head1 NAME
 
@@ -432,6 +435,7 @@ HTMLFOOT
     } else {
         open $fhout, ">-";
     }
+    binmode $fhout, ":utf8";
     print $fhout $output;
     close $fhout or die "Failed to close $Htmlfile: $!";
     chmod 0644, $Htmlfile unless $Htmlfile eq '-';
@@ -695,6 +699,7 @@ sub _unixify {
     $full_path = File::Spec::Unix->catfile(File::Spec::Unix->catdir(@dirs),
                                            $file);
     $full_path =~ s|^\/|| if $^O eq 'MSWin32'; # C:/foo works, /C:/foo doesn't
+    $full_path =~ s/\^\././g if $^O eq 'VMS'; # unescape dots
     return $full_path;
 }
 

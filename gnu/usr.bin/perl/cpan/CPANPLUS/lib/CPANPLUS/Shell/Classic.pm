@@ -5,6 +5,7 @@
 ##################################################
 
 package CPANPLUS::Shell::Classic;
+use deprecate;
 
 use strict;
 
@@ -30,7 +31,7 @@ $Params::Check::ALLOW_UNKNOWN = 1;
 BEGIN {
     use vars        qw[ $VERSION @ISA ];
     @ISA        =   qw[ CPANPLUS::Shell::_Base::ReadLine ];
-    $VERSION    =   '0.0562';
+    $VERSION = "0.9135";
 }
 
 load CPANPLUS::Shell;
@@ -96,6 +97,20 @@ sub new {
             name    => 'edit_test_report',
             code    => \&__ask_about_test_report,
     );
+
+    if (my $histfile = $self->configure_object->get_conf( 'histfile' )) {
+        my $term = $self->term;
+        if ($term->can('AddHistory')) {
+            if (open my $fh, '<', $histfile) {
+                local $/ = "\n";
+                while (my $line = <$fh>) {
+                    chomp($line);
+                    $term->AddHistory($line);
+                }
+                close($fh);
+            }
+        }
+    }
 
     return $self;
 }
@@ -194,6 +209,24 @@ sub _dispatch_on_input {
 
 ### displays quit message
 sub _quit {
+    my $self = shift;
+    my $term = $self->term;
+
+    if ($term->can('GetHistory')) {
+        my @history = $term->GetHistory;
+
+        my $histfile = $self->configure_object->get_conf('histfile');
+
+        if (open my $fh, '>', $histfile) {
+            foreach my $line (@history) {
+                print {$fh} "$line\n";
+            }
+            close($fh);
+        }
+        else {
+            warn "Cannot open history file '$histfile' - $!";
+        }
+    }
 
     ### well, that's what CPAN.pm says...
     print "Lockfile removed\n";

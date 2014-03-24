@@ -173,7 +173,7 @@ sub {
 }->();
 f();
 EXPECT
-Variable "$x" is not available at (eval 1) line 2.
+Variable "$x" is not available at (eval 1) line 1.
 ########
 # pad.c
 use warnings 'closure' ;
@@ -195,7 +195,7 @@ sub f {
 }
 f()->();
 EXPECT
-Variable "$x" is not available at (eval 1) line 2.
+Variable "$x" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 {
@@ -205,7 +205,7 @@ use warnings 'closure' ;
 }
 f2();
 EXPECT
-Variable "$x" is not available at (eval 1) line 2.
+Variable "$x" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 for my $x (1,2,3) {
@@ -214,7 +214,7 @@ for my $x (1,2,3) {
 }
 f();
 EXPECT
-Variable "$x" is not available at (eval 4) line 2.
+Variable "$x" is not available at (eval 4) line 1.
 ########
 # pad.c
 no warnings 'closure' ;
@@ -433,7 +433,7 @@ sub {
 }->();
 f();
 EXPECT
-Variable "$に" is not available at (eval 1) line 2.
+Variable "$に" is not available at (eval 1) line 1.
 ########
 # pad.c
 # see bugid 1754
@@ -446,7 +446,7 @@ sub f {
 }
 f()->();
 EXPECT
-Variable "$に" is not available at (eval 1) line 2.
+Variable "$に" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 BEGIN { binmode STDERR, 'utf8'; }
@@ -458,7 +458,7 @@ BEGIN { binmode STDERR, 'utf8'; }
 }
 f2();
 EXPECT
-Variable "$に" is not available at (eval 1) line 2.
+Variable "$に" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 BEGIN { binmode STDERR, 'utf8'; }
@@ -469,7 +469,7 @@ for my $に (1,2,3) {
 }
 f();
 EXPECT
-Variable "$に" is not available at (eval 4) line 2.
+Variable "$に" is not available at (eval 4) line 1.
 ########
 # pad.c
 use warnings 'closure' ;
@@ -534,7 +534,7 @@ sub {
 }->();
 f();
 EXPECT
-Variable "$è" is not available at (eval 1) line 2.
+Variable "$è" is not available at (eval 1) line 1.
 ########
 # pad.c
 # see bugid 1754
@@ -547,7 +547,7 @@ sub f {
 }
 f()->();
 EXPECT
-Variable "$è" is not available at (eval 1) line 2.
+Variable "$è" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 BEGIN { binmode STDERR, 'utf8'; }
@@ -559,7 +559,7 @@ BEGIN { binmode STDERR, 'utf8'; }
 }
 f2();
 EXPECT
-Variable "$è" is not available at (eval 1) line 2.
+Variable "$è" is not available at (eval 1) line 1.
 ########
 use warnings 'closure' ;
 BEGIN { binmode STDERR, 'utf8'; }
@@ -570,5 +570,5 @@ for my $è (1,2,3) {
 }
 f();
 EXPECT
-Variable "$è" is not available at (eval 4) line 2.
+Variable "$è" is not available at (eval 4) line 1.
 ########

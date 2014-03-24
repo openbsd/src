@@ -55,7 +55,7 @@ if (not defined $key) {
   }
 }
 else {
-	plan(tests => 13);
+	plan(tests => 15);
 	pass('acquired shared mem');
 }
 
@@ -80,3 +80,13 @@ shmwrite $key, $int, 0, 1;
 shmread $key, $number, 0, 1;
 is("$number", $int, qq{"\$id" eq "$int"});
 cmp_ok($number + 0, '==', $int, "\$id + 0 == $int");
+
+my ($fetch, $store) = (0, 0);
+{ package Counted;
+  sub TIESCALAR { bless [undef] }
+  sub FETCH     { ++$fetch; $_[0][0] }
+  sub STORE     { ++$store; $_[0][0] = $_[1] } }
+tie $ct, 'Counted';
+shmread $key, $ct, 0, 1;
+is($fetch, 1, "shmread FETCH once");
+is($store, 1, "shmread STORE once");

@@ -4,7 +4,7 @@ BEGIN {
     chdir '..' if -d '../pod' && -d '../t';
     @INC = 'lib';
     require './t/test.pl';
-    plan(18);
+    plan(24);
 }
 
 BEGIN {
@@ -20,7 +20,8 @@ eval {
     'base'->import(qw(I::do::not::exist));
 };
 
-like( $@, qr/^Base class package "I::do::not::exist" is empty/);
+like( $@, qr/^Base class package "I::do::not::exist" is empty/,
+         'diagnostics not tripped up by "use base qw(Dont::Exist)"');
 
 open *whatever, ">", \my $warning
     or die "Couldn't redirect STDERR to var: $!";
@@ -48,7 +49,7 @@ like $warning, qr/using lex_stuff_pvn or similar/, 'L<foo|bar/baz>';
 seek STDERR, 0,0;
 $warning = '';
 warn 'Code point 0xBEE5 is not Unicode, may not be portable';
-like $warning, qr/W utf8/,
+like $warning, qr/S utf8/,
    'Message sharing its description with the following message';
 
 # Periods at end of entries in perldiag.pod get matched correctly
@@ -69,6 +70,12 @@ $warning = '';
 warn "Unicode surrogate U+C0FFEE is illegal in UTF-8";
 like $warning, qr/You had a UTF-16 surrogate/, '%X';
 
+# Test for %p
+seek STDERR, 0,0;
+$warning = '';
+warn "Slab leaked from cv fadedc0ffee";
+like $warning, qr/bookkeeping of op trees/, '%p';
+
 # Strip S<>
 seek STDERR, 0,0;
 $warning = '';
@@ -88,6 +95,39 @@ warn "Attempt to reload weapon aborted.\nCompilation failed in require";
 like $warning,
      qr/You tried to load a file.*Perl could not compile/s,
     'multiline errors';
+
+# Multiline entry in perldiag.pod
+seek STDERR, 0,0;
+$warning = '';
+warn "Using just the first character returned by \\N{} in character class in regex; marked by <-- HERE in m/%s/";
+like $warning,
+    qr/A charnames handler may return a sequence/s,
+    'multi-line entries in perldiag.pod match';
+
+# ; at end of entry in perldiag.pod
+seek STDERR, 0,0;
+$warning = '';
+warn "Perl folding rules are not up-to-date for 0xA; please use the perlbug utility to report; in regex; marked by <-- HERE in m/\ <-- HERE q/";
+like $warning,
+    qr/regular expression folding rules/s,
+    '; works at the end of entries in perldiag.pod';
+
+# Differences in spaces in warnings (Why not be nice and accept them?)
+seek STDERR, 0,0;
+$warning = '';
+warn "Assignment     to both a list and a scalar\n";
+like $warning,
+    qr/2nd and 3rd/s,
+    'spaces in warnings are matched lightly';
+
+# Differences in spaces in warnings with a period at the end
+seek STDERR, 0,0;
+$warning = '';
+warn "perl: warning: Setting locale failed.\n";
+like $warning,
+    qr/The whole warning/s,
+    'spaces in warnings with periods at the end are matched lightly';
+
 
 *STDERR = $old_stderr;
 
@@ -145,3 +185,13 @@ like runperl(
 	main::bar\(\) called at -e line \d+
 	main::foo\(\) called at -e line \d+
 /,  'backtrace from multiline error';
+is runperl(@runperl_args, prog => 'BEGIN { die q _panic: gremlins_ }'),
+   << 'EOX', 'BEGIN{die} does not suppress diagnostics';
+panic: gremlins at -e line 1.
+BEGIN failed--compilation aborted at -e line 1 (#1)
+    (P) An internal error.
+    
+Uncaught exception from user code:
+	panic: gremlins at -e line 1.
+	BEGIN failed--compilation aborted at -e line 1.
+EOX

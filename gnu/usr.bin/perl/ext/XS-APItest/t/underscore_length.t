@@ -1,4 +1,4 @@
-use warnings;
+use warnings; no warnings 'experimental::lexical_topic';
 use strict;
 
 use Test::More tests => 4;

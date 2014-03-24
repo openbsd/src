@@ -1,4 +1,5 @@
 package CPANPLUS;
+use deprecate;
 
 use strict;
 use Carp;
@@ -13,7 +14,7 @@ BEGIN {
     use vars        qw( @EXPORT @ISA $VERSION );
     @EXPORT     =   qw( shell fetch get install );
     @ISA        =   qw( Exporter );
-    $VERSION = "0.9121";     #have to hardcode or cpan.org gets unhappy
+    $VERSION = "0.9135";     #have to hardcode or cpan.org gets unhappy
 }
 
 ### purely for backward compatibility, so we can call it from the commandline:

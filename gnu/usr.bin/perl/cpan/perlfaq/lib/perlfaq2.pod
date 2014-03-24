@@ -151,7 +151,7 @@ Perl user group.
 
 CPAN, or the Comprehensive Perl Archive Network L<http://www.cpan.org/>,
 is a replicated, worldwide repository of Perl software.
-See L<What is CPAN?|/"What modules and extensions are available for Perl? What is CPAN? What does CPANE<sol>srcE<sol>... mean?">.
+See L<What is CPAN?|/"What modules and extensions are available for Perl? What is CPAN?">.
 
 =head2 Where can I post questions?
 

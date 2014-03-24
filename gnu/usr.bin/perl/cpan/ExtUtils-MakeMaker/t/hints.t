@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 
-BEGIN {
-    unshift @INC, 't/lib/';
-}
+use strict;
+use warnings;
+
+use lib 't/lib';
 chdir 't';
 
 use File::Spec;
@@ -13,36 +14,55 @@ use Test::More tests => 3;
 my $curdir = File::Spec->curdir;
 @INC = grep { $_ ne $curdir && $_ ne '.' } @INC;
 
-mkdir('hints', 0777);
-(my $os = $^O) =~ s/\./_/g;
-my $hint_file = File::Spec->catfile('hints', "$os.pl");
-
-open(HINT, ">$hint_file") || die "Can't write dummy hints file $hint_file: $!";
-print HINT <<'CLOO';
-$self->{CCFLAGS} = 'basset hounds got long ears';
-CLOO
-close HINT;
-
-use TieOut;
 use ExtUtils::MakeMaker;
 
-my $out = tie *STDERR, 'TieOut';
-my $mm = bless {}, 'ExtUtils::MakeMaker';
-$mm->check_hints;
-is( $mm->{CCFLAGS}, 'basset hounds got long ears' );
-is( $out->read, "Processing hints file $hint_file\n" );
+# Make a hints directory for testing
+mkdir('hints', 0777);
+(my $os = $^O) =~ s/\./_/g;
+my $Hint_File = File::Spec->catfile('hints', "$os.pl");
 
-open(HINT, ">$hint_file") || die "Can't write dummy hints file $hint_file: $!";
-print HINT <<'CLOO';
+
+my $mm = bless {}, 'ExtUtils::MakeMaker';
+
+# Write a hints file for testing
+{
+    open my $hint_fh, ">", $Hint_File || die "Can't write dummy hints file $Hint_File: $!";
+    print $hint_fh <<'CLOO';
+$self->{CCFLAGS} = 'basset hounds got long ears';
+CLOO
+}
+
+# Test our hint file is detected
+{
+    my $stderr = '';
+    local $SIG{__WARN__} = sub { $stderr .= join '', @_ };
+
+    $mm->check_hints;
+    is( $mm->{CCFLAGS}, 'basset hounds got long ears' );
+    is( $stderr, "Processing hints file $Hint_File\n" );
+}
+
+
+# Test a hint file which dies
+{
+    open my $hint_fh, ">", $Hint_File || die "Can't write dummy hints file $Hint_File: $!";
+    print $hint_fh <<'CLOO';
 die "Argh!\n";
 CLOO
-close HINT;
+}
 
-$mm->check_hints;
-is( $out->read, <<OUT, 'hint files produce errors' );
-Processing hints file $hint_file
+
+# Test the hint file which produces errors
+{
+    my $stderr = '';
+    local $SIG{__WARN__} = sub { $stderr .= join '', @_ };
+
+    $mm->check_hints;
+    is( $stderr, <<OUT, 'hint files produce errors' );
+Processing hints file $Hint_File
 Argh!
 OUT
+}
 
 END {
     use File::Path;

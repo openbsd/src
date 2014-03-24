@@ -10,7 +10,6 @@ END {
 
 use strict;
 use Cwd;
-use File::Spec;
 use File::Spec::Functions;
 use Test::More tests => 2;
 
@@ -20,13 +19,15 @@ SKIP: {
 
     my $cwd = cwd();
     my ($v, $d) = splitpath($cwd, 1);
-    my $relcwd = substr($d, length(File::Spec->rootdir()));
+    my @dirs = splitdir($d);
+    shift @dirs if $dirs[0] eq '';
+    my $relcwd = join '/', @dirs;
 
     my $data_pos = tell DATA; # to read <DATA> twice
 
     convert_n_test("htmldir3", "test --htmldir and --htmlroot 3a", 
      "--podpath=$relcwd",
-     "--podroot=$v". File::Spec->rootdir,
+     "--podroot=". catpath($v, '/', ''),
      "--htmldir=". catdir($cwd, 't', ''), # test removal trailing slash,
      "--quiet",
     );
@@ -35,7 +36,7 @@ SKIP: {
 
     convert_n_test("htmldir3", "test --htmldir and --htmlroot 3b", 
      "--podpath=". catdir($relcwd, 't'),
-     "--podroot=$v". File::Spec->rootdir,
+     "--podroot=". catpath($v, '/', ''),
      "--htmldir=t",
      "--outfile=t/htmldir3.html",
      "--quiet",

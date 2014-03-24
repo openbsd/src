@@ -45,7 +45,6 @@ Porting/config_h.pl
 Porting/corecpan.pl
 Porting/corelist-perldelta.pl
 Porting/corelist.pl
-Porting/curliff.pl
 Porting/expand-macro.pl
 Porting/findrfuncs
 Porting/makerel
@@ -56,7 +55,5 @@ Porting/perlhist_calculate.pl
 Porting/sort_perldiag.pl
 Porting/sync-with-cpan
 Porting/valgrindpp.pl
-mpeix/nm
-mpeix/relink
 Cross/generate_config_sh
 Cross/warp

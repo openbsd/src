@@ -1,7 +1,7 @@
 package inc::latest::private;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.39_01';
+$VERSION = '0.4003';
 $VERSION = eval $VERSION;
 
 use File::Spec;

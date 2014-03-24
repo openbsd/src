@@ -4,12 +4,12 @@ use strict;
 use Carp;
 use base qw(Unicode::Collate);
 
-our $VERSION = '0.89';
+our $VERSION = '0.96';
 
 my $PL_EXT  = '.pl';
 
 my %LocaleFile = map { ($_, $_) } qw(
-   af ar as az be bg bn ca cs cy da eo es et fa fi fil fo fr
+   af ar as az be bg bn ca cs cy da ee eo es et fa fi fil fo fr
    gu ha haw hi hr hu hy ig is ja kk kl kn ko kok ln lt lv
    mk ml mr mt nb nn nso om or pa pl ro ru sa se si sk sl sq
    sr sv ta te th tn to tr uk ur vi wae wo yo zh
@@ -17,6 +17,7 @@ my %LocaleFile = map { ($_, $_) } qw(
    $LocaleFile{'default'} = '';
 # aliases
    $LocaleFile{'bs'}      = 'hr';
+   $LocaleFile{'bs_Cyrl'} = 'sr';
    $LocaleFile{'sr_Latn'} = 'hr';
 # short file names
    $LocaleFile{'de__phonebook'}   = 'de_phone';
@@ -28,6 +29,7 @@ my %LocaleFile = map { ($_, $_) } qw(
    $LocaleFile{'zh__gb2312han'}   = 'zh_gb';
    $LocaleFile{'zh__pinyin'}      = 'zh_pin';
    $LocaleFile{'zh__stroke'}      = 'zh_strk';
+   $LocaleFile{'zh__zhuyin'}      = 'zh_zhu';
 
 my %TypeAlias = qw(
     phone     phonebook
@@ -108,10 +110,13 @@ sub new {
 
     my $href = _fetchpl($hash{accepted_locale});
     while (my($k,$v) = each %$href) {
-	if (exists $hash{$k}) {
+	if (!exists $hash{$k}) {
+	    $hash{$k} = $v;
+	} elsif ($k eq 'entry') {
+	    $hash{$k} = $v.$hash{$k};
+	} else {
 	    croak "$k is reserved by $hash{locale}, can't be overwritten";
 	}
-	$hash{$k} = $v;
     }
     return $class->SUPER::new(%hash);
 }
@@ -121,90 +126,93 @@ __END__
 
 MEMORANDA for developing
 
-locale		based CLDR
+locale            based CLDR
 ----------------------------------------------------------------------------
-af		2.0 = 1.8.1
-ar		2.0
-as		2.0 = 1.8.1
-az		2.0 = 1.8.1 (type="standard")
-be		2.0
-bg		2.0
-bn		2.0.1 (type="standard")
-bs		2.0 (alias source="hr")
-ca		2.0 = 1.8.1 (alt="proposed" type="standard")
-cs		2.0 = 1.8.1 (type="standard")
-cy		2.0 = 1.8.1
-da		2.0 = 1.8.1 (type="standard") [modify aA to pass CLDR tests]
-de__phonebook	2.0 (type="phonebook")
-eo		2.0 = 1.8.1
-es		2.0 (type="standard")
-es__traditional	2.0 = 1.8.1 (type="traditional")
-et		2.0 = 1.8.1
-fa		2.0 = 1.8.1
-fi		2.0 = 1.8.1 (type="standard" alt="proposed")
-fi__phonebook	2.0 = 1.8.1 (type="phonebook")
-fil		2.0 (type="standard") = 1.8.1
-fo		2.0 = 1.8.1 (alt="proposed" type="standard")
-fr		2.0 (fr_CA, backwards="on")
-gu		2.0 (type="standard")
-ha		2.0
-haw		2.0 = 1.8.1
-hi		2.0 (type="standard")
-hr		2.0 (type="standard")
-hu		2.0 = 1.8.1 (alt="proposed" type="standard")
-hy		2.0 = 1.8.1
-ig		2.0 = 1.8.1
-is		2.0 = 1.8.1 (type="standard")
-ja		2.0 = 1.8.1 (type="standard")
-kk		2.0
-kl		2.0 = 1.8.1 (type="standard")
-kn		2.0 (type="standard")
-ko		2.0 = 1.8.1 (type="standard")
-kok		2.0 = 1.8.1
-ln		2.0 (type="standard") = 1.8.1
-lt		2.0
-lv		2.0 (type="standard") = 1.8.1
-mk		2.0
-ml		2.0
-mr		2.0 = 1.8.1
-mt		2.0
-nb		2.0 (type="standard")
-nn		2.0 (type="standard")
-nso		2.0 = 1.8.1
-om		2.0 = 1.8.1
-or		2.0
-pa		2.0 = 1.8.1
-pl		2.0 = 1.8.1
-ro		2.0 (type="standard")
-ru		2.0
-sa		1.8.1 (type="standard" alt="proposed") [currently in /seed]
-se		2.0 = 1.8.1 (type="standard")
-si		2.0 (type="standard")
-si__dictionary	2.0 (type="dictionary")
-sk		2.0 (type="standard")
-sl		2.0 = 1.8.1 (type="standard" alt="proposed")
-sq		2.0 = 1.8.1 (alt="proposed" type="standard")
-sr		2.0 (type="standard")
-sr_Latn		2.0 = 1.8.1 (alias source="hr")
-sv		2.0 (type="standard")
-sv__reformed	2.0 = 1.8.1 (type="reformed")
-ta		2.0
-te		2.0
-th		2.0 (type="standard")
-tn		2.0 = 1.8.1
-to		2.0 = 1.8.1 (type="standard" alt="proposed")
-tr		2.0 = 1.8.1 (type="standard")
-uk		2.0
-ur		2.0
-vi		2.0 = 1.8.1
-wae		2.0
-wo		1.8.1 [currently in /seed]
-yo		2.0 = 1.8.1
-zh		2.0 = 1.8.1 (type="standard")
-zh__big5han	2.0 = 1.8.1 (type="big5han")
-zh__gb2312han	2.0 = 1.8.1 (type="gb2312han")
-zh__pinyin	2.0 (type='pinyin' alt='short')
-zh__stroke	2.0 = 1.9.1 (type='stroke' alt='short')
+af                22.1 = 1.8.1
+ar                22.1 = 1.9.0
+as                22.1 = 1.8.1
+az                22.1 = 1.8.1 (type="standard")
+be                22.1 = 1.9.0
+bg                22.1 = 1.9.0
+bn                22.1 = 2.0.1 (type="standard")
+bs                22.1 = 1.9.0 (alias source="hr")
+bs_Cyrl           22.1 = 22    (alias source="sr")
+ca                22.1 = 1.8.1 (alt="proposed" type="standard")
+cs                22.1 = 1.8.1 (type="standard")
+cy                22.1 = 1.8.1
+da                22.1 = 1.8.1 (type="standard") [mod aA to pass CLDR test]
+de__phonebook     22.1 = 2.0   (type="phonebook")
+ee                22.1 = 22
+eo                22.1 = 1.8.1
+es                22.1 = 1.9.0 (type="standard")
+es__traditional   22.1 = 1.8.1 (type="traditional")
+et                22.1 = 1.8.1
+fa                22.1 = 1.8.1
+fi                22.1 = 1.8.1 (type="standard" alt="proposed")
+fi__phonebook     22.1 = 1.8.1 (type="phonebook")
+fil               22.1 = 1.9.0 (type="standard") = 1.8.1
+fo                22.1 = 1.8.1 (alt="proposed" type="standard")
+fr                22.1 = 1.9.0 (fr_CA, backwards="on")
+gu                22.1 = 1.9.0 (type="standard")
+ha                22.1 = 1.9.0
+haw               22.1 = 1.8.1
+hi                22.1 = 1.9.0 (type="standard")
+hr                22.1 = 1.9.0 (type="standard")
+hu                22.1 = 1.8.1 (alt="proposed" type="standard")
+hy                22.1 = 1.8.1
+ig                22.1 = 1.8.1
+is                22.1 = 1.8.1 (type="standard")
+ja                22.1 = 1.8.1 (type="standard")
+kk                22.1 = 1.9.0
+kl                22.1 = 1.8.1 (type="standard")
+kn                22.1 = 1.9.0 (type="standard")
+ko                22.1 = 1.8.1 (type="standard")
+kok               22.1 = 1.8.1
+ln                22.1 = 2.0   (type="standard") = 1.8.1
+lt                22.1 = 1.9.0
+lv                22.1 = 1.9.0 (type="standard") = 1.8.1
+mk                22.1 = 1.9.0
+ml                22.1 = 1.9.0
+mr                22.1 = 1.8.1
+mt                22.1 = 1.9.0
+nb                22.1 = 2.0   (type="standard")
+nn                22.1 = 2.0   (type="standard")
+nso               22.1 = 1.8.1
+om                22.1 = 1.8.1
+or                22.1 = 1.9.0
+pa                22.1 = 1.8.1
+pl                22.1 = 1.8.1
+ro                22.1 = 1.9.0 (type="standard")
+ru                22.1 = 1.9.0
+sa                1.9.1 = 1.8.1 (type="standard" alt="proposed") [now /seed]
+se                22.1 = 1.8.1 (type="standard")
+si                22.1 = 1.9.0 (type="standard")
+si__dictionary    22.1 = 1.9.0 (type="dictionary")
+sk                22.1 = 1.9.0 (type="standard")
+sl                22.1 = 1.8.1 (type="standard" alt="proposed")
+sq                22.1 = 1.8.1 (alt="proposed" type="standard")
+sr                22.1 = 1.9.0 (type="standard")
+sr_Latn           22.1 = 1.8.1 (alias source="hr")
+sv                22.1 = 1.9.0 (type="standard")
+sv__reformed      22.1 = 1.8.1 (type="reformed")
+ta                22.1 = 1.9.0
+te                22.1 = 1.9.0
+th                22.1 = 22
+tn                22.1 = 1.8.1
+to                22.1 = 22
+tr                22.1 = 1.8.1 (type="standard")
+uk                22.1 = 21
+ur                22.1 = 1.9.0
+vi                22.1 = 1.8.1
+wae               22.1 = 2.0
+wo                1.9.1 = 1.8.1 [now /seed]
+yo                22.1 = 1.8.1
+zh                22.1 = 1.8.1 (type="standard")
+zh__big5han       22.1 = 1.8.1 (type="big5han")
+zh__gb2312han     22.1 = 1.8.1 (type="gb2312han")
+zh__pinyin        22.1 = 2.0   (type='pinyin' alt='short')
+zh__stroke        22.1 = 1.9.1 (type='stroke' alt='short')
+zh__zhuyin        22.1 = 22    (type='zhuyin' alt='short')
 ----------------------------------------------------------------------------
 
 =head1 NAME
@@ -265,6 +273,9 @@ fallback is selected in the following order:
 Tailoring tags provided by C<Unicode::Collate> are allowed as long as
 they are not used for C<locale> support.  Esp. the C<table> tag
 is always untailorable, since it is reserved for DUCET.
+
+However C<entry> is allowed, even if it is used for C<locale> support,
+to add or override mappings.
 
 E.g. a collator for French, which ignores diacritics and case difference
 (i.e. level 1), with reversed case ordering and no normalization.
@@ -330,11 +341,13 @@ a combination of return values from C<getlocale> and C<locale_version>.
       bg                Bulgarian
       bn                Bengali
       bs                Bosnian
+      bs_Cyrl           Bosnian in Cyrillic (tailored as Serbian)
       ca                Catalan
       cs                Czech
       cy                Welsh
       da                Danish
       de__phonebook     German (umlaut as 'ae', 'oe', 'ue')
+      ee                Ewe
       eo                Esperanto
       es                Spanish
       es__traditional   Spanish ('ch' and 'll' as a grapheme)
@@ -404,6 +417,7 @@ a combination of return values from C<getlocale> and C<locale_version>.
       zh__gb2312han     Chinese (ideographs: GB-2312 order)
       zh__pinyin        Chinese (ideographs: pinyin order) [3]
       zh__stroke        Chinese (ideographs: stroke order) [3]
+      zh__zhuyin        Chinese (ideographs: zhuyin order) [3]
     --------------------------------------------------------------
 
 Locales according to the default UCA rules include
@@ -425,7 +439,7 @@ zu (Zulu).
 B<Note>
 
 [1] ja: Ideographs are sorted in JIS X 0208 order.
-Fullwidth and halfwidth forms are identical to their normal form.
+Fullwidth and halfwidth forms are identical to their regular form.
 The difference between hiragana and katakana is at the 4th level,
 the comparison also requires C<(variable =E<gt> 'Non-ignorable')>,
 and then C<katakana_before_hiragana> has no effect.
@@ -434,8 +448,10 @@ and then C<katakana_before_hiragana> has no effect.
 an ideograph is primary (level 1) equal to, and secondary (level 2)
 greater than, the corresponding hangul syllable.
 
-[3] zh__pinyin and zh__stroke: implemented alt='short', where
-a smaller number of ideographs are tailored.
+[3] zh__pinyin, zh__stroke and zh__zhuyin: implemented alt='short',
+where a smaller number of ideographs are tailored.
+
+Note: 'pinyin' is in latin, 'zhuyin' is in bopomofo.
 
 =head1 INSTALL
 

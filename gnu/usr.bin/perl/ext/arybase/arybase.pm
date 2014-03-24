@@ -1,6 +1,6 @@
 package arybase;
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 require XSLoader;
 XSLoader::load(); # This returns true, which makes require happy.
@@ -14,7 +14,7 @@ arybase - Set indexing base via $[
 =head1 SYNOPSIS
 
     $[ = 1;
-    
+
     @a = qw(Sun Mon Tue Wed Thu Fri Sat);
     print $a[3], "\n";  # prints Tue
 
@@ -44,7 +44,7 @@ It affects the following operations:
     splice @array, $index, ...
     each @array
     keys @array
-    
+
     index $string, $substring  # return value is affected
     pos $string
     substr $string, $offset, ...

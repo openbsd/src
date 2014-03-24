@@ -10,7 +10,7 @@ BEGIN {
 no utf8; # needed for use utf8 not griping about the raw octets
 
 
-plan(tests => 55);
+plan(tests => 61);
 
 $| = 1;
 
@@ -347,4 +347,42 @@ is($failed, undef);
     like( $@, qr/utf8 "\\x$chrF6" does not map to Unicode .+ <F> line 2/,
 	  "<:utf8 rcatline must warn about bad utf8");
     close F;
+}
+
+{
+    # fixed record reads
+    open F, ">:utf8", $a_file;
+    print F "foo\xE4";
+    print F "bar\xFE";
+    print F "\xC0\xC8\xCC\xD2";
+    print F "a\xE4ab";
+    print F "a\xE4a";
+    close F;
+    open F, "<:utf8", $a_file;
+    local $/ = \4;
+    my $line = <F>;
+    is($line, "foo\xE4", "readline with \$/ = \\4");
+    $line .= <F>;
+    is($line, "foo\xE4bar\xFE", "rcatline with \$/ = \\4");
+    $line = <F>;
+    is($line, "\xC0\xC8\xCC\xD2", "readline with several encoded characters");
+    $line = <F>;
+    is($line, "a\xE4ab", "readline with another boundary condition");
+    $line = <F>;
+    is($line, "a\xE4a", "readline with boundary condition");
+    close F;
+
+    # badly encoded at EOF
+    open F, ">:raw", $a_file;
+    print F "foo\xEF\xAC"; # truncated \x{FB04} small ligature ffl
+    close F;
+
+    use warnings 'utf8';
+    open F, "<:utf8", $a_file;
+    undef $@;
+    local $SIG{__WARN__} = sub { $@ = shift };
+    $line = <F>;
+
+    like( $@, qr/utf8 "\\xEF" does not map to Unicode .+ <F> chunk 1/,
+	  "<:utf8 readline (fixed) must warn about bad utf8");
 }

@@ -8,7 +8,7 @@ BEGIN {
     require DynaLoader;
 
     @ISA = qw|Exporter DynaLoader|;
-    $VERSION = '0.34';
+    $VERSION = '0.35';
     $XS_VERSION = $VERSION;
     $VERSION = eval $VERSION;
 

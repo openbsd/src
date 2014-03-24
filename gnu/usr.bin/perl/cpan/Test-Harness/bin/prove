@@ -144,7 +144,7 @@ If you need to make sure your diagnostics are displayed in the correct
 order relative to test results you can use the C<--merge> option to
 merge the test scripts' STDERR into their STDOUT.
 
-This guarantees that STDOUT (where the test results appear) and STDOUT
+This guarantees that STDOUT (where the test results appear) and STDERR
 (where the diagnostics appear) will stay in sync. The harness will
 display any diagnostics your tests emit on STDERR.
 

@@ -1,11 +1,14 @@
 #!./perl -na
 
 BEGIN {
-    print "1..2\n";
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
     *ARGV = *DATA;
-    $i = 0;
+    plan(tests => 2);
 }
-print "$F[1] ",++$i,"\n";
+chomp;
+is($F[1], 'ok', "testing split of string '$_'");
 
 __DATA__
 not ok

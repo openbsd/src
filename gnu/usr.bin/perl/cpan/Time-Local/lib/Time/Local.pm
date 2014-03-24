@@ -6,7 +6,7 @@ use Config;
 use strict;
 
 use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK );
-$VERSION   = '1.2000';
+$VERSION   = '1.2300';
 
 @ISA       = qw( Exporter );
 @EXPORT    = qw( timegm timelocal );
@@ -109,14 +109,14 @@ sub timegm {
             if $month > 11
             or $month < 0;
 
-	my $md = $MonthDays[$month];
+    my $md = $MonthDays[$month];
         ++$md
             if $month == 1 && _is_leap_year( $year + 1900 );
 
         croak "Day '$mday' out of range 1..$md"  if $mday > $md or $mday < 1;
         croak "Hour '$hour' out of range 0..23"  if $hour > 23  or $hour < 0;
         croak "Minute '$min' out of range 0..59" if $min > 59   or $min < 0;
-        croak "Second '$sec' out of range 0..59" if $sec > 59   or $sec < 0;
+        croak "Second '$sec' out of range 0..59" if $sec >= 60  or $sec < 0;
     }
 
     my $days = _daygm( undef, undef, undef, $mday, $month, $year );
@@ -125,10 +125,10 @@ sub timegm {
         my $msg = '';
         $msg .= "Day too big - $days > $MaxDay\n" if $days > $MaxDay;
 
-	$year += 1900;
+        $year += 1900;
         $msg .=  "Cannot handle date ($sec, $min, $hour, $mday, $month, $year)";
 
-	croak $msg;
+        croak $msg;
     }
 
     return $sec
@@ -201,8 +201,8 @@ Time::Local - efficiently compute time from local and GMT time
 
 =head1 SYNOPSIS
 
-    $time = timelocal($sec,$min,$hour,$mday,$mon,$year);
-    $time = timegm($sec,$min,$hour,$mday,$mon,$year);
+    $time = timelocal( $sec, $min, $hour, $mday, $mon, $year );
+    $time = timegm( $sec, $min, $hour, $mday, $mon, $year );
 
 =head1 DESCRIPTION
 
@@ -239,7 +239,7 @@ C<timegm_nocheck()>. These variants must be explicitly imported.
     use Time::Local 'timelocal_nocheck';
 
     # The 365th day of 1999
-    print scalar localtime timelocal_nocheck 0,0,0,365,0,99;
+    print scalar localtime timelocal_nocheck( 0, 0, 0, 365, 0, 99 );
 
 If you supply data which is not valid (month 27, second 1,000) the
 results will be unpredictable (so don't do that).

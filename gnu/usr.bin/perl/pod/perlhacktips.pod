@@ -277,11 +277,9 @@ This is transparent for the most part, but because the character sets
 differ, you shouldn't use numeric (decimal, octal, nor hex) constants
 to refer to characters. You can safely say 'A', but not 0x41. You can
 safely say '\n', but not \012. If a character doesn't have a trivial
-input form, you can create a #define for it in both C<utfebcdic.h> and
-C<utf8.h>, so that it resolves to different values depending on the
-character set being used. (There are three different EBCDIC character
-sets defined in C<utfebcdic.h>, so it might be best to insert the
-#define three times in that file.)
+input form, you should add it to the list in
+F<regen/unicode_constants.pl>, and have Perl create #defines for you,
+based on the current platform.
 
 Also, the range 'A' - 'Z' in ASCII is an unbroken sequence of 26 upper
 case alphabetic characters. That is not true in EBCDIC. Nor for 'a' to
@@ -886,7 +884,8 @@ parse also C and C++.
 Download the pmd-bin-X.Y.zip () from the SourceForge site, extract the
 pmd-X.Y.jar from it, and then run that on source code thusly:
 
-  java -cp pmd-X.Y.jar net.sourceforge.pmd.cpd.CPD --minimum-tokens 100 --files /some/where/src --language c > cpd.txt
+  java -cp pmd-X.Y.jar net.sourceforge.pmd.cpd.CPD \
+   --minimum-tokens 100 --files /some/where/src --language c > cpd.txt
 
 You may run into memory limits, in which case you should use the -Xmx
 option:
@@ -967,14 +966,16 @@ C<-std1> mode on.
 
 =head1 MEMORY DEBUGGERS
 
-B<NOTE 1>: Running under memory debuggers such as Purify, valgrind, or
-Third Degree greatly slows down the execution: seconds become minutes,
-minutes become hours. For example as of Perl 5.8.1, the
+B<NOTE 1>: Running under older memory debuggers such as Purify,
+valgrind or Third Degree greatly slows down the execution: seconds
+become minutes, minutes become hours. For example as of Perl 5.8.1, the
 ext/Encode/t/Unicode.t takes extraordinarily long to complete under
 e.g. Purify, Third Degree, and valgrind. Under valgrind it takes more
 than six hours, even on a snappy computer. The said test must be doing
 something that is quite unfriendly for memory debuggers. If you don't
 feel like waiting, that you can simply kill away the perl process.
+Roughly valgrind slows down execution by factor 10, AddressSanitizer by
+factor 2.
 
 B<NOTE 2>: To minimize the number of memory leak false alarms (see
 L</PERL_DESTRUCT_LEVEL> for more information), you have to set the
@@ -1137,12 +1138,12 @@ finally report any memory problems.
 
 =head2 valgrind
 
-The excellent valgrind tool can be used to find out both memory leaks
-and illegal memory accesses. As of version 3.3.0, Valgrind only
-supports Linux on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and
-x86-64). The special "test.valgrind" target can be used to run the
-tests under valgrind. Found errors and memory leaks are logged in
-files named F<testfile.valgrind>.
+The valgrind tool can be used to find out both memory leaks and illegal
+heap memory accesses. As of version 3.3.0, Valgrind only supports Linux
+on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and x86-64). The
+special "test.valgrind" target can be used to run the tests under
+valgrind. Found errors and memory leaks are logged in files named
+F<testfile.valgrind>.
 
 Valgrind also provides a cachegrind tool, invoked on perl as:
 
@@ -1156,6 +1157,52 @@ of them. Some additional suppressions are defined in F<t/perl.supp>.
 To get valgrind and for more information see
 
     http://valgrind.org/
+
+=head2 AddressSanitizer
+
+AddressSanitizer is a clang extension, included in clang since v3.1. It
+checks illegal heap pointers, global pointers, stack pointers and use
+after free errors, and is fast enough that you can easily compile your
+debugging or optimized perl with it. It does not check memory leaks
+though. AddressSanitizer is available for linux, Mac OS X and soon on
+Windows.
+
+To build perl with AddressSanitizer, your Configure invocation should
+look like:
+
+    sh Configure -des -Dcc=clang \
+       -Accflags=-faddress-sanitizer -Aldflags=-faddress-sanitizer \
+       -Alddlflags=-shared\ -faddress-sanitizer
+
+where these arguments mean:
+
+=over 4
+
+=item * -Dcc=clang
+
+This should be replaced by the full path to your clang executable if it
+is not in your path.
+
+=item * -Accflags=-faddress-sanitizer
+
+Compile perl and extensions sources with AddressSanitizer.
+
+=item * -Aldflags=-faddress-sanitizer
+
+Link the perl executable with AddressSanitizer.
+
+=item * -Alddlflags=-shared\ -faddress-sanitizer
+
+Link dynamic extensions with AddressSanitizer. You must manually
+specify C<-shared> because using C<-Alddlflags=-shared> will prevent
+Configure from setting a default value for C<lddlflags>, which usually
+contains C<-shared> (at least on linux).
+
+=back
+
+See also
+L<http://code.google.com/p/address-sanitizer/wiki/AddressSanitizer>.
+
 
 =head1 PROFILING
 
@@ -1411,41 +1458,17 @@ L<perlclib>.
 
 Under ithreads the optree is read only. If you want to enforce this, to
 check for write accesses from buggy code, compile with
-C<-DPL_OP_SLAB_ALLOC> to enable the OP slab allocator and
 C<-DPERL_DEBUG_READONLY_OPS> to enable code that allocates op memory
-via C<mmap>, and sets it read-only at run time. Any write access to an
-op results in a C<SIGBUS> and abort.
+via C<mmap>, and sets it read-only when it is attached to a subroutine. Any
+write access to an op results in a C<SIGBUS> and abort.
 
 This code is intended for development only, and may not be portable
 even to all Unix variants. Also, it is an 80% solution, in that it
-isn't able to make all ops read only. Specifically it
+isn't able to make all ops read only. Specifically it does not apply to op
+slabs belonging to C<BEGIN> blocks.
 
-=over
-
-=item * 1
-
-Only sets read-only on all slabs of ops at C<CHECK> time, hence ops
-allocated later via C<require> or C<eval> will be re-write
-
-=item * 2
-
-Turns an entire slab of ops read-write if the refcount of any op in the
-slab needs to be decreased.
-
-=item * 3
-
-Turns an entire slab of ops read-write if any op from the slab is
-freed.
-
-=back
-
-It's not possible to turn the slabs to read-only after an action
-requiring read-write access, as either can happen during op tree
-building time, so there may still be legitimate write access.
-
-However, as an 80% solution it is still effective, as currently it
-catches a write access during the generation of F<Config.pm>, which
-means that we can't yet build F<perl> with this enabled.
+However, as an 80% solution it is still effective, as it has caught bugs in
+the past.
 
 =head2 The .i Targets
 
@@ -1453,7 +1476,8 @@ You can expand the macros in a F<foo.c> file by saying
 
     make foo.i
 
-which will expand the macros using cpp.  Don't be scared by the results.
+which will expand the macros using cpp.  Don't be scared by the
+results.
 
 =head1 AUTHOR
 

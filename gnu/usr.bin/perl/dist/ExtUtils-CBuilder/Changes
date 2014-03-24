@@ -1,5 +1,26 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280209 - 2012-10-20 (Perl v5.17.5)
+
+  Fixed:
+
+  - Allow options to be passed to prelink in Windows (perl #115100)
+    [Eric Brine]
+
+0.280208 - 2012-06-20 (Perl v5.17.1)
+
+  Fixed:
+
+  - Corrected location in which manifest file is looked for on
+    Windows (RT#35943, perl #111798) [snaury@gmail.com]
+
+0.280207 (Not released)
+
+  Fixed:
+
+  - Corrected test for existence of manifest file on Windows
+    (perl #111782) [Steve Hay]
+
 0.280206 - 2012-03-20 (Perl v5.15.9)
 
   Documented:

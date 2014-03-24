@@ -8,7 +8,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..14\n";
+print "1..16\n";
 
 my $i = 1;
 
@@ -35,12 +35,14 @@ sub test_no_error {
 
 test_too_many($_) for split /\n/,
 q[	defined(&foo, $bar);
+	pos(1,$b);
 	undef(&foo, $bar);
 	uc($bar,$bar);
 ];
 
 test_too_few($_) for split /\n/,
 q[	unpack;
+	pack;
 ];
 
 test_no_error($_) for split /\n/,

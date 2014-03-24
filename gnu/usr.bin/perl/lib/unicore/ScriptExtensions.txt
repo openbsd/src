@@ -1,13 +1,12 @@
-# ScriptExtensions-6.1.0.txt
-# Date: 2011-12-05, 22:51:22 GMT [MD]
+# ScriptExtensions-6.2.0.txt
+# Date: 2012-08-13, 20:52:17 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 # The Script_Extensions property indicates which characters are commonly used
-# with a limited number of scripts, but with more than one.
-# The property is provisional: values are expected to change over time as more information becomes available.
+# with more than one script, but with a limited number of scripts.
 # For each code point, there is one or more property values.  Each such value is a Script property value.
 # For more information, see:
 #   UAX #24: http://www.unicode.org/reports/tr24/ and
@@ -21,6 +20,38 @@
 # ================================================
 
 # Property:	Script_Extensions
+
+# ================================================
+
+# Script_Extensions=Deva
+
+1CD0..1CD2    ; Deva # Mn   [3] VEDIC TONE KARSHANA..VEDIC TONE PRENKHA
+1CD4..1CE0    ; Deva # Mn  [13] VEDIC SIGN YAJURVEDIC MIDLINE SVARITA..VEDIC TONE RIGVEDIC KASHMIRI INDEPENDENT SVARITA
+1CE1          ; Deva # Mc       VEDIC TONE ATHARVAVEDIC INDEPENDENT SVARITA
+1CE2..1CE8    ; Deva # Mn   [7] VEDIC SIGN VISARGA SVARITA..VEDIC SIGN VISARGA ANUDATTA WITH TAIL
+1CED          ; Deva # Mn       VEDIC SIGN TIRYAK
+1CF2..1CF3    ; Deva # Mc   [2] VEDIC SIGN ARDHAVISARGA..VEDIC SIGN ROTATED ARDHAVISARGA
+1CF4          ; Deva # Mn       VEDIC TONE CANDRA ABOVE
+
+# Total code points: 28
+
+# ================================================
+
+# Script_Extensions=Grek
+
+0342          ; Grek # Mn       COMBINING GREEK PERISPOMENI
+0345          ; Grek # Mn       COMBINING GREEK YPOGEGRAMMENI
+1DC0..1DC1    ; Grek # Mn   [2] COMBINING DOTTED GRAVE ACCENT..COMBINING DOTTED ACUTE ACCENT
+
+# Total code points: 4
+
+# ================================================
+
+# Script_Extensions=Latn
+
+0363..036F    ; Latn # Mn  [13] COMBINING LATIN SMALL LETTER A..COMBINING LATIN SMALL LETTER X
+
+# Total code points: 13
 
 # ================================================
 
@@ -66,6 +97,22 @@ FDFD          ; Arab Thaa # So       ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHE
 10137..1013F  ; Cprt Linb # So   [9] AEGEAN WEIGHT BASE UNIT..AEGEAN MEASURE THIRD SUBUNIT
 
 # Total code points: 57
+
+# ================================================
+
+# Script_Extensions=Cyrl Latn
+
+0485..0486    ; Cyrl Latn # Mn   [2] COMBINING CYRILLIC DASIA PNEUMATA..COMBINING CYRILLIC PSILI PNEUMATA
+
+# Total code points: 2
+
+# ================================================
+
+# Script_Extensions=Deva Latn
+
+0951..0952    ; Deva Latn # Mn   [2] DEVANAGARI STRESS SIGN UDATTA..DEVANAGARI STRESS SIGN ANUDATTA
+
+# Total code points: 2
 
 # ================================================
 
@@ -123,17 +170,17 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 
 # ================================================
 
-# Script_Extensions=Beng Deva Guru Orya
+# Script_Extensions=Buhd Hano Tagb Tglg
 
-0964..0965    ; Beng Deva Guru Orya # Po   [2] DEVANAGARI DANDA..DEVANAGARI DOUBLE DANDA
+1735..1736    ; Buhd Hano Tagb Tglg # Po   [2] PHILIPPINE SINGLE PUNCTUATION..PHILIPPINE DOUBLE PUNCTUATION
 
 # Total code points: 2
 
 # ================================================
 
-# Script_Extensions=Buhd Hano Tagb Tglg
+# Script_Extensions=Beng Deva Guru Orya Takr
 
-1735..1736    ; Buhd Hano Tagb Tglg # Po   [2] PHILIPPINE SINGLE PUNCTUATION..PHILIPPINE DOUBLE PUNCTUATION
+0964..0965    ; Beng Deva Guru Orya Takr # Po   [2] DEVANAGARI DANDA..DEVANAGARI DOUBLE DANDA
 
 # Total code points: 2
 

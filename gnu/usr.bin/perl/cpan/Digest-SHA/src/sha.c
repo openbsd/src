@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-2 Secure Hash Standard
  *
- * Copyright (C) 2003-2012 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2013 Mark Shelor, All Rights Reserved
  *
- * Version: 5.71
- * Wed Feb 29 04:06:10 MST 2012
+ * Version: 5.84
+ * Sat Mar  9 17:36:08 MST 2013
  *
  */
 
@@ -86,7 +86,7 @@ static W32 H0256[8] =			/* SHA-256 initial hash value */
 static void sha1(SHA *s, UCHR *block)		/* SHA-1 transform */
 {
 	W32 a, b, c, d, e;
-	SHA_STO_CLASS W32 W[16];
+	W32 W[16];
 	W32 *wp = W;
 	W32 *H = (W32 *) s->H;
 
@@ -153,7 +153,7 @@ static void sha1(SHA *s, UCHR *block)		/* SHA-1 transform */
 static void sha256(SHA *s, UCHR *block)		/* SHA-224/256 transform */
 {
 	W32 a, b, c, d, e, f, g, h, T1;
-	SHA_STO_CLASS W32 W[16];
+	W32 W[16];
 	W32 *kp = K256;
 	W32 *wp = W;
 	W32 *H = (W32 *) s->H;
@@ -216,7 +216,7 @@ static void sha256(SHA *s, UCHR *block)		/* SHA-224/256 transform */
 
 #define SETBIT(s, pos)	s[(pos) >> 3] |=  (0x01 << (7 - (pos) % 8))
 #define CLRBIT(s, pos)	s[(pos) >> 3] &= ~(0x01 << (7 - (pos) % 8))
-#define NBYTES(nbits)	((nbits) > 0 ? 1 + (((nbits) - 1) >> 3) : 0)
+#define NBYTES(nbits)	(((nbits) + 7) >> 3)
 #define HEXLEN(nbytes)	((nbytes) << 1)
 #define B64LEN(nbytes)	(((nbytes) % 3 == 0) ? ((nbytes) / 3) * 4 \
 			: ((nbytes) / 3) * 4 + ((nbytes) % 3) + 1)
@@ -258,7 +258,7 @@ static void digcpy(SHA *s)
 	} while (0)
 
 /* sharewind: re-initializes the digest object */
-void sharewind(SHA *s)
+static void sharewind(SHA *s)
 {
 	if      (s->alg == SHA1)   SHA_INIT(1, 1);
 	else if (s->alg == SHA224) SHA_INIT(224, 256);
@@ -270,9 +270,9 @@ void sharewind(SHA *s)
 }
 
 /* shaopen: creates a new digest object */
-SHA *shaopen(int alg)
+static SHA *shaopen(int alg)
 {
-	SHA *s;
+	SHA *s = NULL;
 
 	if (alg != SHA1 && alg != SHA224 && alg != SHA256 &&
 		alg != SHA384    && alg != SHA512 &&
@@ -286,6 +286,16 @@ SHA *shaopen(int alg)
 	s->alg = alg;
 	sharewind(s);
 	return(s);
+}
+
+/* shaclose: de-allocates digest object */
+static int shaclose(SHA *s)
+{
+	if (s != NULL) {
+		memset(s, 0, sizeof(SHA));
+		SHA_free(s);
+	}
+	return(0);
 }
 
 /* shadirect: updates state directly (w/o going through s->block) */
@@ -365,7 +375,7 @@ static ULNG shabits(UCHR *bitstr, ULNG bitcnt, SHA *s)
 }
 
 /* shawrite: triggers a state update using data in bitstr/bitcnt */
-ULNG shawrite(UCHR *bitstr, ULNG bitcnt, SHA *s)
+static ULNG shawrite(UCHR *bitstr, ULNG bitcnt, SHA *s)
 {
 	if (bitcnt < 1)
 		return(0);
@@ -382,7 +392,7 @@ ULNG shawrite(UCHR *bitstr, ULNG bitcnt, SHA *s)
 }
 
 /* shafinish: pads remaining block(s) and computes final digest state */
-void shafinish(SHA *s)
+static void shafinish(SHA *s)
 {
 	UINT lenpos, lhpos, llpos;
 
@@ -407,14 +417,14 @@ void shafinish(SHA *s)
 }
 
 /* shadigest: returns pointer to current digest (binary) */
-UCHR *shadigest(SHA *s)
+static UCHR *shadigest(SHA *s)
 {
 	digcpy(s);
 	return(s->digest);
 }
 
 /* shahex: returns pointer to current digest (hexadecimal) */
-char *shahex(SHA *s)
+static char *shahex(SHA *s)
 {
 	int i;
 
@@ -448,7 +458,7 @@ static void encbase64(UCHR *in, int n, char *out)
 }
 
 /* shabase64: returns pointer to current digest (Base 64) */
-char *shabase64(SHA *s)
+static char *shabase64(SHA *s)
 {
 	int n;
 	UCHR *q;
@@ -456,7 +466,7 @@ char *shabase64(SHA *s)
 
 	digcpy(s);
 	s->base64[0] = '\0';
-	if (B64LEN(s->digestlen) >= sizeof(s->base64))
+	if (B64LEN((size_t) s->digestlen) >= sizeof(s->base64))
 		return(s->base64);
 	for (n = s->digestlen, q = s->digest; n > 3; n -= 3, q += 3) {
 		encbase64(q, 3, out);
@@ -468,19 +478,19 @@ char *shabase64(SHA *s)
 }
 
 /* shadsize: returns length of digest in bytes */
-int shadsize(SHA *s)
+static int shadsize(SHA *s)
 {
 	return(s->digestlen);
 }
 
 /* shaalg: returns which SHA algorithm is being used */
-int shaalg(SHA *s)
+static int shaalg(SHA *s)
 {
 	return(s->alg);
 }
 
 /* shadup: duplicates current digest object */
-SHA *shadup(SHA *s)
+static SHA *shadup(SHA *s)
 {
 	SHA *p;
 
@@ -492,7 +502,7 @@ SHA *shadup(SHA *s)
 }
 
 /* shadump: dumps digest object to a human-readable ASCII file */
-int shadump(char *file, SHA *s)
+static int shadump(char *file, SHA *s)
 {
 	int i, j;
 	SHA_FILE *f;
@@ -608,7 +618,7 @@ static SHA *closeall(SHA_FILE *f, SHA *s)
 }
 
 /* shaload: creates digest object corresponding to contents of dump file */
-SHA *shaload(char *file)
+static SHA *shaload(char *file)
 {
 	int alg;
 	SHA *s = NULL;
@@ -638,12 +648,88 @@ SHA *shaload(char *file)
 	return(s);
 }
 
-/* shaclose: de-allocates digest object */
-int shaclose(SHA *s)
+/* hmacopen: creates a new HMAC-SHA digest object */
+static HMAC *hmacopen(int alg, UCHR *key, UINT keylen)
 {
-	if (s != NULL) {
-		memset(s, 0, sizeof(SHA));
-		SHA_free(s);
+	UINT i;
+	HMAC *h;
+
+	SHA_newz(0, h, 1, HMAC);
+	if (h == NULL)
+		return(NULL);
+	if ((h->isha = shaopen(alg)) == NULL) {
+		SHA_free(h);
+		return(NULL);
+	}
+	if ((h->osha = shaopen(alg)) == NULL) {
+		shaclose(h->isha);
+		SHA_free(h);
+		return(NULL);
+	}
+	if (keylen <= h->osha->blocksize / 8)
+		memcpy(h->key, key, keylen);
+	else {
+		if ((h->ksha = shaopen(alg)) == NULL) {
+			shaclose(h->isha);
+			shaclose(h->osha);
+			SHA_free(h);
+			return(NULL);
+		}
+		shawrite(key, keylen * 8, h->ksha);
+		shafinish(h->ksha);
+		memcpy(h->key, shadigest(h->ksha), h->ksha->digestlen);
+		shaclose(h->ksha);
+	}
+	for (i = 0; i < h->osha->blocksize / 8; i++)
+		h->key[i] ^= 0x5c;
+	shawrite(h->key, h->osha->blocksize, h->osha);
+	for (i = 0; i < h->isha->blocksize / 8; i++)
+		h->key[i] ^= (0x5c ^ 0x36);
+	shawrite(h->key, h->isha->blocksize, h->isha);
+	memset(h->key, 0, sizeof(h->key));
+	return(h);
+}
+
+/* hmacwrite: triggers a state update using data in bitstr/bitcnt */
+static ULNG hmacwrite(UCHR *bitstr, ULNG bitcnt, HMAC *h)
+{
+	return(shawrite(bitstr, bitcnt, h->isha));
+}
+
+/* hmacfinish: computes final digest state */
+static void hmacfinish(HMAC *h)
+{
+	shafinish(h->isha);
+	shawrite(shadigest(h->isha), h->isha->digestlen * 8, h->osha);
+	shaclose(h->isha);
+	shafinish(h->osha);
+}
+
+/* hmacdigest: returns pointer to digest (binary) */
+static UCHR *hmacdigest(HMAC *h)
+{
+	return(shadigest(h->osha));
+}
+
+/* hmachex: returns pointer to digest (hexadecimal) */
+static char *hmachex(HMAC *h)
+{
+	return(shahex(h->osha));
+}
+
+/* hmacbase64: returns pointer to digest (Base 64) */
+static char *hmacbase64(HMAC *h)
+{
+	return(shabase64(h->osha));
+}
+
+/* hmacclose: de-allocates digest object */
+static int hmacclose(HMAC *h)
+{
+	if (h != NULL) {
+		shaclose(h->osha);
+		memset(h, 0, sizeof(HMAC));
+		SHA_free(h);
 	}
 	return(0);
 }

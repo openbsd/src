@@ -46,11 +46,11 @@ Test::Harness - Run Perl standard test scripts with statistics
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
@@ -73,7 +73,7 @@ END {
 
 $Verbose = $ENV{HARNESS_VERBOSE} || 0;
 $Debug   = $ENV{HARNESS_DEBUG}   || 0;
-$Switches = '-w';
+$Switches = '';
 $Columns = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
 $Columns--;    # Some shells have trouble with a full line of text.
 $Timer      = $ENV{HARNESS_TIMER}       || 0;
@@ -238,6 +238,7 @@ sub _new_harness {
     $args->{stdout} = $sub_args->{out}
       if exists $sub_args->{out};
 
+    my $class = $ENV{HARNESS_SUBCLASS} || 'TAP::Harness';
     if ( defined( my $env_opt = $ENV{HARNESS_OPTIONS} ) ) {
         for my $opt ( split /:/, $env_opt ) {
             if ( $opt =~ /^j(\d*)$/ ) {
@@ -246,13 +247,22 @@ sub _new_harness {
             elsif ( $opt eq 'c' ) {
                 $args->{color} = 1;
             }
+            elsif ( $opt =~ m/^f(.*)$/ ) {
+                my $fmt = $1;
+                $fmt =~ s/-/::/g;
+                $args->{formatter_class} = $fmt;
+            }
+            elsif ( $opt =~ m/^a(.*)$/ ) {
+                my $archive = $1;
+                $class = "TAP::Harness::Archive";
+                $args->{archive} = $archive;
+            }
             else {
                 die "Unknown HARNESS_OPTIONS item: $opt\n";
             }
         }
     }
 
-    my $class = $ENV{HARNESS_SUBCLASS} || 'TAP::Harness';
     return TAP::Harness->_construct( $class, $args );
 }
 
@@ -534,6 +544,16 @@ Run <n> (default 9) parallel jobs.
 =item C<< c >>
 
 Try to color output. See L<TAP::Formatter::Base/"new">.
+
+=item C<< a<file.tgz> >>
+
+Will use L<TAP::Harness::Archive> as the harness class, and save the TAP to
+C<file.tgz>
+
+=item C<< fPackage-With-Dashes >>
+
+Set the formatter_class of the harness being run. Since the C<HARNESS_OPTIONS>
+is seperated by C<:>, we use C<-> instead.
 
 =back
 

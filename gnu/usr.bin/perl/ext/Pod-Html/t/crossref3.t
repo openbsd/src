@@ -10,8 +10,6 @@ END {
 
 use strict;
 use Cwd;
-use File::Spec;
-use File::Spec::Functions;
 use Test::More tests => 1;
 
 SKIP: {
@@ -68,13 +66,13 @@ __DATA__
 
 <p><a href="[ABSCURRENTWORKINGDIRECTORY]/testdir/test.lib/var-copy.html">var-copy</a></p>
 
-<p><a href="[ABSCURRENTWORKINGDIRECTORY]/testdir/test.lib/var-copy.html#pod-">&quot;$&quot;&quot; in var-copy</a></p>
+<p><a href="[ABSCURRENTWORKINGDIRECTORY]/testdir/test.lib/var-copy.html#pod">&quot;$&quot;&quot; in var-copy</a></p>
 
 <p><code>var-copy</code></p>
 
 <p><code>var-copy/$&quot;</code></p>
 
-<p><a href="[ABSCURRENTWORKINGDIRECTORY]/testdir/test.lib/podspec-copy.html#First:">&quot;First:&quot; in podspec-copy</a></p>
+<p><a href="[ABSCURRENTWORKINGDIRECTORY]/testdir/test.lib/podspec-copy.html#First">&quot;First:&quot; in podspec-copy</a></p>
 
 <p><code>podspec-copy/First:</code></p>
 

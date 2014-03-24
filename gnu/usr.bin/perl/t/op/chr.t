@@ -6,7 +6,7 @@ BEGIN {
     require "test.pl";
 }
 
-plan tests => 34;
+plan tests => 42;
 
 # Note that t/op/ord.t already tests for chr() <-> ord() rountripping.
 
@@ -30,6 +30,22 @@ is(chr(-3.0), "\x{FFFD}");
     is(chr(-2  ), "\xFE");
     is(chr(-3.0), "\xFD");
 }
+
+# Make sure -1 is treated the same way when coming from a tied variable
+sub TIESCALAR {bless[]}
+sub STORE { $_[0][0] = $_[1] }
+sub FETCH { $_[0][0] }
+tie $t, "";
+$t = -1; is chr $t, chr -1, 'chr $tied when $tied is -1';
+$t = -2; is chr $t, chr -2, 'chr $tied when $tied is -2';
+$t = -1.1; is chr $t, chr -1.1, 'chr $tied when $tied is -1.1';
+$t = -2.2; is chr $t, chr -2.2, 'chr $tied when $tied is -2.2';
+
+# And that stringy scalars are treated likewise
+is chr "-1", chr -1, 'chr "-1" eq chr -1';
+is chr "-2", chr -2, 'chr "-2" eq chr -2';
+is chr "-1.1", chr -1.1, 'chr "-1.1" eq chr -1.1';
+is chr "-2.2", chr -2.2, 'chr "-2.2" eq chr -2.2';
 
 # Check UTF-8 (not UTF-EBCDIC).
 SKIP: {
@@ -63,3 +79,4 @@ sub hexes {
     is(hexes(0x1FFFFF), "f7 bf bf bf"); # last four byte encoding
     is(hexes(0x200000), "f8 88 80 80 80");
 }
+

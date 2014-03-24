@@ -311,6 +311,7 @@ sub general_tests {
     is grep( !Encode::is_utf8($_), @$names_av), $tests->{pad_size}{invariant}{cmp};
 
     for my $var (@{$tests->{vars}}) {
+        no warnings 'experimental::smartmatch';
         if ($var->{type} eq 'ok') {
             ok $var->{name} ~~ $names_av, $var->{msg};
         } else {

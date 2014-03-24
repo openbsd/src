@@ -51,6 +51,7 @@ my @victims = (qw(installman installperl regen_perly.pl));
 my %excuses = (
                'Porting/git-deltatool' => 'Git::Wrapper',
                'Porting/podtidy' => 'Pod::Tidy',
+               'Porting/leakfinder.pl' => 'XS::APItest',
               );
 
 foreach (@maybe) {

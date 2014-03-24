@@ -136,7 +136,7 @@ and L<perlunicode> for details.
    \S      A non-whitespace character
    \h      An horizontal whitespace
    \H      A non horizontal whitespace
-   \N      A non newline (when not followed by '{NAME}'; experimental;
+   \N      A non newline (when not followed by '{NAME}';;
            not valid in a character class; equivalent to [^\n]; it's
            like '.' without /s modifier)
    \v      A vertical whitespace

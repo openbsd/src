@@ -11,7 +11,7 @@ $DOWARN = 1; # enable run-time warnings now
 
 use Config;
 
-plan( tests => 55 );
+plan( tests => 57 );
 
 eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
@@ -270,6 +270,11 @@ ok( exists $h{chr(65).chr(66).chr(67)}, "v-stringness is engaged for X.Y.Z" );
     is $|, 1, 'clobbering vstrings does not clobber all magic';
 }
 
+$a = v102; $a =~ s/f/f/;
+is ref \$a, 'SCALAR',
+  's/// flattens vstrings even when the subst results in the same value';
+$a = v102; $a =~ y/f/g/;
+is ref \$a, 'SCALAR', 'y/// flattens vstrings';
 
 # The following tests whether v-strings are correctly
 # interpreted by the tokeniser when it's in a XTERMORDORDOR

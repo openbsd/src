@@ -22,11 +22,11 @@ TAP::Parser::SourceHandler::Perl - Stream TAP from a Perl executable
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 SYNOPSIS
 
@@ -80,6 +80,7 @@ sub can_handle {
 
     if ( my $shebang = $file->{shebang} ) {
         return 0.9 if $shebang =~ /^#!.*\bperl/;
+
         # We favour Perl as the interpreter for any shebang to preserve
         # previous semantics: we used to execute everything via Perl and
         # relied on it to pass the shebang off to the appropriate
@@ -315,7 +316,7 @@ Gets the version of Perl currently running the test suite.
 sub get_perl {
     my $class = shift;
     return $ENV{HARNESS_PERL} if defined $ENV{HARNESS_PERL};
-    return Win32::GetShortPathName($^X) if IS_WIN32;
+    return qq["$^X"] if IS_WIN32 && ( $^X =~ /[^\w\.\/\\]/ );
     return $^X;
 }
 

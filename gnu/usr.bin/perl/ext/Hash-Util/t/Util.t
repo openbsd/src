@@ -16,22 +16,28 @@ use Test::More;
 my @Exported_Funcs;
 BEGIN {
     @Exported_Funcs = qw(
-                     hash_seed all_keys
+                     fieldhash fieldhashes
+
+                     all_keys
                      lock_keys unlock_keys
                      lock_value unlock_value
                      lock_hash unlock_hash
-                     lock_keys_plus hash_locked
+                     lock_keys_plus
+                     hash_locked hash_unlocked
+                     hashref_locked hashref_unlocked
                      hidden_keys legal_keys
 
                      lock_ref_keys unlock_ref_keys
                      lock_ref_value unlock_ref_value
                      lock_hashref unlock_hashref
-                     lock_ref_keys_plus hashref_locked
+                     lock_ref_keys_plus
                      hidden_ref_keys legal_ref_keys
-                     hv_store
 
+                     hash_seed hash_value bucket_stats bucket_info bucket_array
+                     hv_store
+                     lock_hash_recurse unlock_hash_recurse
                     );
-    plan tests => 204 + @Exported_Funcs;
+    plan tests => 234 + @Exported_Funcs;
     use_ok 'Hash::Util', @Exported_Funcs;
 }
 foreach my $func (@Exported_Funcs) {
@@ -43,7 +49,7 @@ lock_keys(%hash);
 eval { $hash{baz} = 99; };
 like( $@, qr/^Attempt to access disallowed key 'baz' in a restricted hash/,
                                                        'lock_keys()');
-is( $hash{bar}, 23 );
+is( $hash{bar}, 23, '$hash{bar} == 23' );
 ok( !exists $hash{baz},'!exists $hash{baz}' );
 
 delete $hash{bar};
@@ -70,7 +76,7 @@ like( $@, qr/^Attempt to delete readonly key 'locked' from a restricted hash/,
 eval { $hash{locked} = 42; };
 like( $@, qr/^Modification of a read-only value attempted/,
                                            'trying to change a locked key' );
-is( $hash{locked}, 'yep' );
+is( $hash{locked}, 'yep', '$hash{locked} is yep' );
 
 eval { delete $hash{I_dont_exist} };
 like( $@, qr/^Attempt to delete disallowed key 'I_dont_exist' from a restricted hash/,
@@ -108,24 +114,23 @@ is( $hash{locked}, 42,  'unlock_value' );
     lock_value(%hash, 'RO');
 
     eval { %hash = (KEY => 1) };
-    like( $@, qr/^Attempt to delete readonly key 'RO' from a restricted hash/ );
+    like( $@, qr/^Attempt to delete readonly key 'RO' from a restricted hash/,
+        'attempt to delete readonly key from restricted hash' );
 }
 
 {
     my %hash = (KEY => 1, RO => 2);
     lock_keys(%hash);
     eval { %hash = (KEY => 1, RO => 2) };
-    is( $@, '');
+    is( $@, '', 'No error message, as expected');
 }
-
-
 
 {
     my %hash = ();
     lock_keys(%hash, qw(foo bar));
     is( keys %hash, 0,  'lock_keys() w/keyset shouldnt add new keys' );
     $hash{foo} = 42;
-    is( keys %hash, 1 );
+    is( keys %hash, 1, '1 element in hash' );
     eval { $hash{wibble} = 42 };
     like( $@, qr/^Attempt to access disallowed key 'wibble' in a restricted hash/,
                         'write threw error (locked)');
@@ -134,7 +139,6 @@ is( $hash{locked}, 42,  'unlock_value' );
     eval { $hash{wibble} = 23; };
     is( $@, '', 'unlock_keys' );
 }
-
 
 {
     my %hash = (foo => 42, bar => undef, baz => 0);
@@ -150,35 +154,49 @@ is( $hash{locked}, 42,  'unlock_value' );
           'locked "wibble"' );
 }
 
-
 {
     my %hash = (foo => 42, bar => undef);
     eval { lock_keys(%hash, qw(foo baz)); };
-    is( $@, sprintf("Hash has key 'bar' which is not in the new key ".
-                    "set at %s line %d.\n", __FILE__, __LINE__ - 2),
+    like( $@, qr/^Hash has key 'bar' which is not in the new key set/,
                     'carp test' );
 }
-
 
 {
     my %hash = (foo => 42, bar => 23);
     lock_hash( %hash );
+    ok( hashref_locked( \%hash ), 'hashref_locked' );
+    ok( hash_locked( %hash ), 'hash_locked' );
 
     ok( Internals::SvREADONLY(%hash),'Was locked %hash' );
     ok( Internals::SvREADONLY($hash{foo}),'Was locked $hash{foo}' );
     ok( Internals::SvREADONLY($hash{bar}),'Was locked $hash{bar}' );
 
     unlock_hash ( %hash );
+    ok( hashref_unlocked( { %hash } ), 'hashref_unlocked' );
+    ok( hash_unlocked( %hash ), 'hash_unlocked' );
 
     ok( !Internals::SvREADONLY(%hash),'Was unlocked %hash' );
     ok( !Internals::SvREADONLY($hash{foo}),'Was unlocked $hash{foo}' );
     ok( !Internals::SvREADONLY($hash{bar}),'Was unlocked $hash{bar}' );
 }
 
+{
+    my %hash = (foo => 42, bar => 23);
+    ok( ! hashref_locked( { %hash } ), 'hashref_locked negated' );
+    ok( ! hash_locked( %hash ), 'hash_locked negated' );
+
+    lock_hash( %hash );
+    ok( ! hashref_unlocked( \%hash ), 'hashref_unlocked negated' );
+    ok( ! hash_unlocked( %hash ), 'hash_unlocked negated' );
+}
 
 lock_keys(%ENV);
 eval { () = $ENV{I_DONT_EXIST} };
-like( $@, qr/^Attempt to access disallowed key 'I_DONT_EXIST' in a restricted hash/,   'locked %ENV');
+like(
+    $@,
+    qr/^Attempt to access disallowed key 'I_DONT_EXIST' in a restricted hash/,
+    'locked %ENV'
+);
 
 {
     my %hash;
@@ -309,7 +327,7 @@ like( $@, qr/^Attempt to access disallowed key 'I_DONT_EXIST' in a restricted ha
 }
 
 my $hash_seed = hash_seed();
-ok($hash_seed >= 0, "hash_seed $hash_seed");
+ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
 
 {
     package Minder;
@@ -440,6 +458,17 @@ ok($hash_seed >= 0, "hash_seed $hash_seed");
     is("@keys","0 2 4 6 8",'lock_ref_keys_plus() @keys DDS/t');
 }
 {
+    my %hash=(0..9, 'a' => 'alpha');
+    lock_ref_keys_plus(\%hash,'a'..'f');
+    ok(Internals::SvREADONLY(%hash),'lock_ref_keys_plus args overlap');
+    my @hidden=sort(hidden_keys(%hash));
+    my @legal=sort(legal_keys(%hash));
+    my @keys=sort(keys(%hash));
+    is("@hidden","b c d e f",'lock_ref_keys_plus() @hidden overlap');
+    is("@legal","0 2 4 6 8 a b c d e f",'lock_ref_keys_plus() @legal overlap');
+    is("@keys","0 2 4 6 8 a",'lock_ref_keys_plus() @keys overlap');
+}
+{
     my %hash=(0..9);
     lock_keys_plus(%hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_keys_plus args DDS/t');
@@ -449,6 +478,17 @@ ok($hash_seed >= 0, "hash_seed $hash_seed");
     is("@hidden","a b c d e f",'lock_keys_plus() @hidden DDS/t 3');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_keys_plus() @legal DDS/t 3');
     is("@keys","0 2 4 6 8",'lock_keys_plus() @keys DDS/t 3');
+}
+{
+    my %hash=(0..9, 'a' => 'alpha');
+    lock_keys_plus(%hash,'a'..'f');
+    ok(Internals::SvREADONLY(%hash),'lock_keys_plus args overlap non-ref');
+    my @hidden=sort(hidden_keys(%hash));
+    my @legal=sort(legal_keys(%hash));
+    my @keys=sort(keys(%hash));
+    is("@hidden","b c d e f",'lock_keys_plus() @hidden overlap non-ref');
+    is("@legal","0 2 4 6 8 a b c d e f",'lock_keys_plus() @legal overlap non-ref');
+    is("@keys","0 2 4 6 8 a",'lock_keys_plus() @keys overlap non-ref');
 }
 
 {
@@ -468,3 +508,49 @@ ok($hash_seed >= 0, "hash_seed $hash_seed");
     is_deeply(\@ph, \@bam, "Placeholders in place");
 }
 
+{
+    my %hash = (
+        a   => 'alpha',
+        b   => [ qw( beta gamma delta ) ],
+        c   => [ 'epsilon', { zeta => 'eta' }, ],
+        d   => { theta => 'iota' },
+    );
+    lock_hash_recurse(%hash);
+    ok( hash_locked(%hash),
+        "lock_hash_recurse(): top-level hash locked" );
+    ok( hash_locked(%{$hash{d}}),
+        "lock_hash_recurse(): element which is hashref locked" );
+    ok( ! hash_locked(%{$hash{c}[1]}),
+        "lock_hash_recurse(): element which is hashref in array ref not locked" );
+
+    unlock_hash_recurse(%hash);
+    ok( hash_unlocked(%hash),
+        "unlock_hash_recurse(): top-level hash unlocked" );
+    ok( hash_unlocked(%{$hash{d}}),
+        "unlock_hash_recurse(): element which is hashref unlocked" );
+    ok( hash_unlocked(%{$hash{c}[1]}),
+        "unlock_hash_recurse(): element which is hashref in array ref not locked" );
+}
+
+{
+    my $h1= hash_value("foo");
+    my $h2= hash_value("bar");
+    is( $h1, hash_value("foo") );
+    is( $h2, hash_value("bar") );
+}
+{
+    my @info1= bucket_info({});
+    my @info2= bucket_info({1..10});
+    my @stats1= bucket_stats({});
+    my @stats2= bucket_stats({1..10});
+    my $array1= bucket_array({});
+    my $array2= bucket_array({1..10});
+    is("@info1","0 8 0");
+    is("@info2[0,1]","5 8");
+    is("@stats1","0 8 0");
+    is("@stats2[0,1]","5 8");
+    my @keys1= sort map { ref $_ ? @$_ : () } @$array1;
+    my @keys2= sort map { ref $_ ? @$_ : () } @$array2;
+    is("@keys1","");
+    is("@keys2","1 3 5 7 9");
+}

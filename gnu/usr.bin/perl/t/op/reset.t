@@ -7,8 +7,7 @@ BEGIN {
 }
 use strict;
 
-# Currently only testing the reset of patterns.
-plan tests => 24;
+plan tests => 30;
 
 package aiieee;
 
@@ -61,6 +60,65 @@ is(CLINK::ZZIP("ZZIP"), 0, "match doesn't match third time");
 CLINK::reset_ZZIP();
 is(CLINK::ZZIP("ZZIP"), 1, "match matches after reset");
 is(CLINK::ZZIP(""), 0, "mismatch doesn't match");
+
+sub match_foo{
+    "foo" =~ m?foo?;
+}
+match_foo();
+reset "";
+ok !match_foo(), 'reset "" leaves patterns alone [perl #97958]';
+
+$scratch::a = "foo";
+$scratch::a2 = "bar";
+$scratch::b   = "baz";
+package scratch { reset "a" }
+is join("-", $scratch::a//'u', $scratch::a2//'u', $scratch::b//'u'),
+   "u-u-baz",
+   'reset "char"';
+
+$scratch::a = "foo";
+$scratch::a2 = "bar";
+$scratch::b   = "baz";
+$scratch::c    = "sea";
+package scratch { reset "bc" }
+is join("-", $scratch::a//'u', $scratch::a2//'u', $scratch::b//'u',
+             $scratch::c//'u'),
+   "foo-bar-u-u",
+   'reset "chars"';
+
+$scratch::a = "foo";
+$scratch::a2 = "bar";
+$scratch::b   = "baz";
+$scratch::c    = "sea";
+package scratch { reset "a-b" }
+is join("-", $scratch::a//'u', $scratch::a2//'u', $scratch::b//'u',
+             $scratch::c//'u'),
+   "u-u-u-sea",
+   'reset "range"';
+
+{ no strict; ${"scratch::\0foo"} = "bar" }
+$scratch::a = "foo";
+package scratch { reset "\0a" }
+is join("-", $scratch::a//'u', do { no strict; ${"scratch::\0foo"} }//'u'),
+   "u-u",
+   'reset "\0char"';
+
+# This used to crash under threaded builds, because pmops were remembering
+# their stashes by name, rather than by pointer.
+fresh_perl_is( # it crashes more reliably with a smaller script
+  'package bar;
+   sub foo {
+     m??;
+     BEGIN { *baz:: = *bar::; *bar:: = *foo:: }
+     # The name "bar" no langer refers to the same package
+   }
+   undef &foo; # so freeing the op does not remove it from the stash’s list
+   $_ = "";
+   push @_, ($_) x 10000;  # and its memory is scribbled over
+   reset;  # so reset on the original package tries to reset an invalid op
+   print "ok\n";',
+  "ok\n", {},
+  "no crash if package is effectively renamed before op is freed");
 
 
 undef $/;

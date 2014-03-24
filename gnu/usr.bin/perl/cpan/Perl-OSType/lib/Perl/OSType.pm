@@ -1,18 +1,8 @@
-#
-# This file is part of Perl-OSType
-#
-# This software is copyright (c) 2010 by David Golden.
-#
-# This is free software; you can redistribute it and/or modify it under
-# the same terms as the Perl 5 programming language system itself.
-#
 use strict;
 use warnings;
 package Perl::OSType;
-BEGIN {
-  $Perl::OSType::VERSION = '1.002';
-}
 # ABSTRACT: Map Perl operating system names to generic types
+our $VERSION = '1.003'; # VERSION
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -71,7 +61,7 @@ my %OSTYPES = qw(
 
   MacOS       MacOS
   VMS         VMS
-  VOS         VOS
+  vos         VOS
   riscos      RiscOS
   amigaos     Amiga
   mpeix       MPEiX
@@ -92,6 +82,7 @@ sub is_os_type {
 
 1;
 
+__END__
 
 =pod
 
@@ -101,7 +92,7 @@ Perl::OSType - Map Perl operating system names to generic types
 
 =head1 VERSION
 
-version 1.002
+version 1.003
 
 =head1 SYNOPSIS
 
@@ -155,20 +146,48 @@ L<Devel::CheckOS>
 
 =back
 
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
+
+=head1 SUPPORT
+
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<https://github.com/dagolden/perl-ostype/issues>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/dagolden/perl-ostype>
+
+  git clone git://github.com/dagolden/perl-ostype.git
+
 =head1 AUTHOR
 
 David Golden <dagolden@cpan.org>
 
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Jonas B. Nielsen <jonasbn@hoarfrost.local>
+
+=item *
+
+Paul Green <Paul.Green@stratus.com>
+
+=back
+
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by David Golden.
+This software is copyright (c) 2013 by David Golden.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
-
-__END__
-
-

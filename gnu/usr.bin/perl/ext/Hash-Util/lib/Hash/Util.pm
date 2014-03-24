@@ -17,19 +17,24 @@ our @EXPORT_OK  = qw(
                      lock_keys unlock_keys
                      lock_value unlock_value
                      lock_hash unlock_hash
-                     lock_keys_plus hash_locked
+                     lock_keys_plus
+                     hash_locked hash_unlocked
+                     hashref_locked hashref_unlocked
                      hidden_keys legal_keys
 
                      lock_ref_keys unlock_ref_keys
                      lock_ref_value unlock_ref_value
                      lock_hashref unlock_hashref
-                     lock_ref_keys_plus hashref_locked
+                     lock_ref_keys_plus
                      hidden_ref_keys legal_ref_keys
 
-                     hash_seed hv_store
+                     hash_seed hash_value hv_store
+                     bucket_stats bucket_info bucket_array
+                     lock_hash_recurse unlock_hash_recurse
 
+                     hash_traversal_mask
                     );
-our $VERSION = '0.11';
+our $VERSION = '0.16';
 require XSLoader;
 XSLoader::load();
 
@@ -53,12 +58,28 @@ Hash::Util - A selection of general-utility hash subroutines
   # Restricted hashes
 
   use Hash::Util qw(
-                     hash_seed all_keys
+                     fieldhash fieldhashes
+
+                     all_keys
                      lock_keys unlock_keys
                      lock_value unlock_value
                      lock_hash unlock_hash
-                     lock_keys_plus hash_locked
+                     lock_keys_plus
+                     hash_locked hash_unlocked
+                     hashref_locked hashref_unlocked
                      hidden_keys legal_keys
+
+                     lock_ref_keys unlock_ref_keys
+                     lock_ref_value unlock_ref_value
+                     lock_hashref unlock_hashref
+                     lock_ref_keys_plus
+                     hidden_ref_keys legal_ref_keys
+
+                     hash_seed hash_value hv_store
+                     bucket_stats bucket_info bucket_array
+                     lock_hash_recurse unlock_hash_recurse
+
+                     hash_traversal_mask
                    );
 
   %hash = (foo => 42, bar => 23);
@@ -85,6 +106,12 @@ Hash::Util - A selection of general-utility hash subroutines
   unlock_hash(%hash);
 
   my $hashes_are_randomised = hash_seed() != 0;
+
+  my $int_hash_value = hash_value( 'string' );
+
+  my $mask= hash_traversal_mask(%hash);
+
+  hash_traversal_mask(%hash,1234);
 
 =head1 DESCRIPTION
 
@@ -129,8 +156,8 @@ the hash before you call lock_keys() so this shouldn't be a problem.
 
 Removes the restriction on the %hash's keyset.
 
-B<Note> that if any of the values of the hash have been locked they will not be unlocked
-after this sub executes.
+B<Note> that if any of the values of the hash have been locked they will not
+be unlocked after this sub executes.
 
 Both routines return a reference to the hash operated on.
 
@@ -190,7 +217,7 @@ Returns a reference to %hash
 
 
 sub lock_ref_keys_plus {
-    my ($hash,@keys)=@_;
+    my ($hash,@keys) = @_;
     my @delete;
     Internals::hv_clear_placeholders(%$hash);
     foreach my $key (@keys) {
@@ -301,9 +328,9 @@ lock_hash() locks an entire hash and any hashes it references recursively,
 making all keys and values read-only. No value can be changed, no keys can
 be added or deleted.
 
-B<Only> recurses into hashes that are referenced by another hash. Thus a
-Hash of Hashes (HoH) will all be restricted, but a Hash of Arrays of Hashes
-(HoAoH) will only have the top hash restricted.
+This method B<only> recurses into hashes that are referenced by another hash.
+Thus a Hash of Hashes (HoH) will all be restricted, but a Hash of Arrays of
+Hashes (HoAoH) will only have the top hash restricted.
 
     unlock_hash_recurse(%hash);
 
@@ -346,9 +373,29 @@ sub unlock_hashref_recurse {
 sub   lock_hash_recurse (\%) {   lock_hashref_recurse(@_) }
 sub unlock_hash_recurse (\%) { unlock_hashref_recurse(@_) }
 
+=item B<hashref_locked>
+
+=item B<hash_locked>
+
+  hashref_locked(\%hash) and print "Hash is locked!\n";
+  hash_locked(%hash) and print "Hash is locked!\n";
+
+Returns true if the hash and its keys are locked.
+
+=cut
+
+sub hashref_locked {
+    my $hash=shift;
+    Internals::SvREADONLY(%$hash);
+}
+
+sub hash_locked(\%) { hashref_locked(@_) }
+
+=item B<hashref_unlocked>
 
 =item B<hash_unlocked>
 
+  hashref_unlocked(\%hash) and print "Hash is unlocked!\n";
   hash_unlocked(%hash) and print "Hash is unlocked!\n";
 
 Returns true if the hash and its keys are unlocked.
@@ -357,7 +404,7 @@ Returns true if the hash and its keys are unlocked.
 
 sub hashref_unlocked {
     my $hash=shift;
-    return Internals::SvREADONLY($hash)
+    !Internals::SvREADONLY(%$hash);
 }
 
 sub hash_unlocked(\%) { hashref_unlocked(@_) }
@@ -424,9 +471,7 @@ unrestricted hash.
 
     my $hash_seed = hash_seed();
 
-hash_seed() returns the seed number used to randomise hash ordering.
-Zero means the "traditional" random hash ordering, non-zero means the
-new even more random hash ordering introduced in Perl 5.8.1.
+hash_seed() returns the seed bytes used to randomise hash ordering.
 
 B<Note that the hash seed is sensitive information>: by knowing it one
 can craft a denial-of-service attack against Perl code, even remotely,
@@ -434,10 +479,121 @@ see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
 B<Do not disclose the hash seed> to people who don't need to know it.
 See also L<perlrun/PERL_HASH_SEED_DEBUG>.
 
+Prior to Perl 5.17.6 this function returned a UV, it now returns a string,
+which may be of nearly any size as determined by the hash function your
+Perl has been built with. Possible sizes may be but are not limited to
+4 bytes (for most hash algorithms) and 16 bytes (for siphash).
+
+=item B<hash_value>
+
+    my $hash_value = hash_value($string);
+
+hash_value() returns the current perl's internal hash value for a given
+string.
+
+Returns a 32 bit integer representing the hash value of the string passed
+in. This value is only reliable for the lifetime of the process. It may
+be different depending on invocation, environment variables,  perl version,
+architectures, and build options.
+
+B<Note that the hash value of a given string is sensitive information>:
+by knowing it one can deduce the hash seed which in turn can allow one to
+craft a denial-of-service attack against Perl code, even remotely,
+see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
+B<Do not disclose the hash value of a string> to people who don't need to
+know it. See also L<perlrun/PERL_HASH_SEED_DEBUG>.
+
+=item B<bucket_info>
+
+Return a set of basic information about a hash.
+
+    my ($keys, $buckets, $used, @length_counts)= bucket_info($hash);
+
+Fields are as follows:
+
+    0: Number of keys in the hash
+    1: Number of buckets in the hash
+    2: Number of used buckets in the hash
+    rest : list of counts, Kth element is the number of buckets
+           with K keys in it.
+
+See also bucket_stats() and bucket_array().
+
+=item B<bucket_stats>
+
+Returns a list of statistics about a hash.
+
+    my ($keys, buckets, $used, $utilization_ratio, $collision_pct,
+        $mean, $stddev, @length_counts) = bucket_info($hashref);
+
+
+Fields are as follows:
+
+
+    0: Number of keys in the hash
+    1: Number of buckets in the hash
+    2: Number of used buckets in the hash
+    3: Hash Quality Score
+    4: Percent of buckets used
+    5: Percent of keys which are in collision
+    6: Average bucket length
+    7: Standard Deviation of bucket lengths.
+    rest : list of counts, Kth element is the number of buckets
+           with K keys in it.
+
+See also bucket_info() and bucket_array().
+
+Note that Hash Quality Score would be 1 for an ideal hash, numbers
+close to and below 1 indicate good hashing, and number significantly
+above indicate a poor score. In practice it should be around 0.95 to 1.05.
+It is defined as:
+
+ $score= sum( $count[$length] * ($length * ($length + 1) / 2) )
+            /
+            ( ( $keys / 2 * $buckets ) *
+              ( $keys + ( 2 * $buckets ) - 1 ) )
+
+The formula is from the Red Dragon book (reformulated to use the data available)
+and is documented at L<http://www.strchr.com/hash_functions>
+
+=item B<bucket_array>
+
+    my $array= bucket_array(\%hash);
+
+Returns a packed representation of the bucket array associated with a hash. Each element
+of the array is either an integer K, in which case it represents K empty buckets, or
+a reference to another array which contains the keys that are in that bucket.
+
+B<Note that the information returned by bucket_array is sensitive information>:
+by knowing it one can directly attack perl's hash function which in turn may allow
+one to craft a denial-of-service attack against Perl code, even remotely,
+see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
+B<Do not disclose the output of this function> to people who don't need to
+know it. See also L<perlrun/PERL_HASH_SEED_DEBUG>. This function is provided strictly
+for  debugging and diagnostics purposes only, it is hard to imagine a reason why it
+would be used in production code.
+
 =cut
 
-sub hash_seed () {
-    Internals::rehash_seed();
+
+sub bucket_stats {
+    my ($hash) = @_;
+    my ($keys, $buckets, $used, @length_counts) = bucket_info($hash);
+    my $sum;
+    my $score;
+    for (0 .. $#length_counts) {
+        $sum += ($length_counts[$_] * $_);
+        $score += $length_counts[$_] * ( $_ * ($_ + 1 ) / 2 );
+    }
+    $score = $score /
+             (( $keys / (2 * $buckets )) * ( $keys + ( 2 * $buckets ) - 1 ))
+                 if $keys;
+    my $mean= $sum/$buckets;
+    $sum= 0;
+    $sum += ($length_counts[$_] * (($_-$mean)**2)) for 0 .. $#length_counts;
+
+    my $stddev= sqrt($sum/$buckets);
+    return $keys, $buckets, $used, $keys ? ($score, $used/$buckets, ($keys-$used)/$keys, $mean, $stddev, @length_counts) : ();
 }
 
 =item B<hv_store>
@@ -448,6 +604,20 @@ sub hash_seed () {
   print $sv; # prints 1
 
 Stores an alias to a variable in a hash instead of copying the value.
+
+=item B<hash_traversal_mask>
+
+As of Perl 5.18 every hash has its own hash traversal order, and this order
+changes every time a new element is inserted into the hash. This functionality
+is provided by maintaining an unsigned integer mask (U32) which is xor'ed
+with the actual bucket id during a traversal of the hash buckets using keys(),
+values() or each().
+
+You can use this subroutine to get and set the traversal mask for a specific
+hash. Setting the mask ensures that a given hash will produce the same key
+order. B<Note> that this does B<not> guarantee that B<two> hashes will produce
+the same key order for the same hash seed and traversal mask, items that
+collide into one bucket may have different orders regardless of this setting.
 
 =back
 

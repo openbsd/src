@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+
 # Testing of a known-bad file from an editor
 
 BEGIN {

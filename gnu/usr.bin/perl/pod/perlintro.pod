@@ -64,13 +64,13 @@ worth writing about.
 
 To run a Perl program from the Unix command line:
 
-    perl progname.pl
+ perl progname.pl
 
 Alternatively, put this as the first line of your script:
 
-    #!/usr/bin/env perl
+ #!/usr/bin/env perl
 
-... and run the script as C</path/to/script.pl>.  Of course, it'll need
+... and run the script as F</path/to/script.pl>.  Of course, it'll need
 to be executable first, so C<chmod 755 script.pl> (under Unix).
 
 (This start line assumes you have the B<env> program.  You can also put
@@ -84,9 +84,9 @@ Windows and Mac OS, read L<perlrun>.
 Perl by default is very forgiving.  In order to make it more robust
 it is recommended to start every program with the following lines:
 
-    #!/usr/bin/perl
-    use strict;
-    use warnings;
+ #!/usr/bin/perl
+ use strict;
+ use warnings;
 
 The two additional lines request from perl to catch various common
 problems in your code.  They check different things so you need both.  A
@@ -105,45 +105,45 @@ that kind.
 
 Perl statements end in a semi-colon:
 
-    print "Hello, world";
+ print "Hello, world";
 
 Comments start with a hash symbol and run to the end of the line
 
-    # This is a comment
+ # This is a comment
 
 Whitespace is irrelevant:
 
-    print
-        "Hello, world"
-        ;
+ print
+     "Hello, world"
+     ;
 
 ... except inside quoted strings:
 
-    # this would print with a linebreak in the middle
-    print "Hello
-    world";
+ # this would print with a linebreak in the middle
+ print "Hello
+ world";
 
 Double quotes or single quotes may be used around literal strings:
 
-    print "Hello, world";
-    print 'Hello, world';
+ print "Hello, world";
+ print 'Hello, world';
 
 However, only double quotes "interpolate" variables and special
 characters such as newlines (C<\n>):
 
-    print "Hello, $name\n";     # works fine
-    print 'Hello, $name\n';     # prints $name\n literally
+ print "Hello, $name\n";     # works fine
+ print 'Hello, $name\n';     # prints $name\n literally
 
 Numbers don't need quotes around them:
 
-    print 42;
+ print 42;
 
 You can use parentheses for functions' arguments or omit them
 according to your personal taste.  They are only required
 occasionally to clarify issues of precedence.
 
-    print("Hello, world\n");
-    print "Hello, world\n";
+ print("Hello, world\n");
+ print "Hello, world\n";
 
 More detailed information about Perl syntax can be found in L<perlsyn>.
 
@@ -157,8 +157,8 @@ Perl has three main variable types: scalars, arrays, and hashes.
 
 A scalar represents a single value:
 
-    my $animal = "camel";
-    my $answer = 42;
+ my $animal = "camel";
+ my $answer = 42;
 
 Scalar values can be strings, integers or floating point numbers, and Perl
 will automatically convert between them as required.  There is no need
@@ -168,9 +168,9 @@ requirements of C<use strict;>.)
 
 Scalar values can be used in various ways:
 
-    print $animal;
-    print "The animal is $animal\n";
-    print "The square of $answer is ", $answer * $answer, "\n";
+ print $animal;
+ print "The animal is $animal\n";
+ print "The square of $answer is ", $answer * $answer, "\n";
 
 There are a number of "magic" scalars with names that look like
 punctuation or line noise.  These special variables are used for all
@@ -179,32 +179,32 @@ need to know about for now is C<$_> which is the "default variable".
 It's used as the default argument to a number of functions in Perl, and
 it's set implicitly by certain looping constructs.
 
-    print;          # prints contents of $_ by default
+ print;          # prints contents of $_ by default
 
 =item Arrays
 
 An array represents a list of values:
 
-    my @animals = ("camel", "llama", "owl");
-    my @numbers = (23, 42, 69);
-    my @mixed   = ("camel", 42, 1.23);
+ my @animals = ("camel", "llama", "owl");
+ my @numbers = (23, 42, 69);
+ my @mixed   = ("camel", 42, 1.23);
 
 Arrays are zero-indexed.  Here's how you get at elements in an array:
 
-    print $animals[0];              # prints "camel"
-    print $animals[1];              # prints "llama"
+ print $animals[0];              # prints "camel"
+ print $animals[1];              # prints "llama"
 
 The special variable C<$#array> tells you the index of the last element
 of an array:
 
-    print $mixed[$#mixed];       # last element, prints 1.23
+ print $mixed[$#mixed];       # last element, prints 1.23
 
 You might be tempted to use C<$#array + 1> to tell you how many items there
 are in an array.  Don't bother.  As it happens, using C<@array> where Perl
 expects to find a scalar value ("in scalar context") will give you the number
 of elements in the array:
 
-    if (@animals < 5) { ... }
+ if (@animals < 5) { ... }
 
 The elements we're getting from the array start with a C<$> because
 we're getting just a single value out of the array; you ask for a scalar,
@@ -212,16 +212,16 @@ you get a scalar.
 
 To get multiple values from an array:
 
-    @animals[0,1];                  # gives ("camel", "llama");
-    @animals[0..2];                 # gives ("camel", "llama", "owl");
-    @animals[1..$#animals];         # gives all except the first element
+ @animals[0,1];                 # gives ("camel", "llama");
+ @animals[0..2];                # gives ("camel", "llama", "owl");
+ @animals[1..$#animals];        # gives all except the first element
 
 This is called an "array slice".
 
 You can do various useful things to lists:
 
-    my @sorted    = sort @animals;
-    my @backwards = reverse @numbers;
+ my @sorted    = sort @animals;
+ my @backwards = reverse @numbers;
 
 There are a couple of special arrays too, such as C<@ARGV> (the command
 line arguments to your script) and C<@_> (the arguments passed to a
@@ -231,25 +231,25 @@ subroutine).  These are documented in L<perlvar>.
 
 A hash represents a set of key/value pairs:
 
-    my %fruit_color = ("apple", "red", "banana", "yellow");
+ my %fruit_color = ("apple", "red", "banana", "yellow");
 
 You can use whitespace and the C<< => >> operator to lay them out more
 nicely:
 
-    my %fruit_color = (
-        apple  => "red",
-        banana => "yellow",
-    );
+ my %fruit_color = (
+     apple  => "red",
+     banana => "yellow",
+ );
 
 To get at hash elements:
 
-    $fruit_color{"apple"};           # gives "red"
+ $fruit_color{"apple"};           # gives "red"
 
 You can get at lists of keys and values with C<keys()> and
 C<values()>.
 
-    my @fruits = keys %fruit_colors;
-    my @colors = values %fruit_colors;
+ my @fruits = keys %fruit_colors;
+ my @colors = values %fruit_colors;
 
 Hashes have no particular internal order, though you can sort the keys
 and loop through them.
@@ -272,22 +272,22 @@ element, you can easily create lists and hashes within lists and
 hashes.  The following example shows a 2 level hash of hash
 structure using anonymous hash references.
 
-    my $variables = {
-        scalar  =>  {
-                     description => "single item",
-                     sigil => '$',
-                    },
-        array   =>  {
-                     description => "ordered list of items",
-                     sigil => '@',
-                    },
-        hash    =>  {
-                     description => "key/value pairs",
-                     sigil => '%',
-                    },
-    };
+ my $variables = {
+     scalar  =>  {
+                  description => "single item",
+                  sigil => '$',
+                 },
+     array   =>  {
+                  description => "ordered list of items",
+                  sigil => '@',
+                 },
+     hash    =>  {
+                  description => "key/value pairs",
+                  sigil => '%',
+                 },
+ };
 
-    print "Scalars begin with a $variables->{'scalar'}->{'sigil'}\n";
+ print "Scalars begin with a $variables->{'scalar'}->{'sigil'}\n";
 
 Exhaustive information on the topic of references can be found in
 L<perlreftut>, L<perllol>, L<perlref> and L<perldsc>.
@@ -296,11 +296,11 @@ L<perlreftut>, L<perllol>, L<perlref> and L<perldsc>.
 
 Throughout the previous section all the examples have used the syntax:
 
-    my $var = "value";
+ my $var = "value";
 
 The C<my> is actually not required; you could just use:
 
-    $var = "value";
+ $var = "value";
 
 However, the above usage will create global variables throughout your
 program, which is bad programming practice.  C<my> creates lexically
@@ -308,15 +308,15 @@ scoped variables instead.  The variables are scoped to the block
 (i.e. a bunch of statements surrounded by curly-braces) in which they
 are defined.
 
-    my $x = "foo";
-    my $some_condition = 1;
-    if ($some_condition) {
-        my $y = "bar";
-        print $x;           # prints "foo"
-        print $y;           # prints "bar"
-    }
-    print $x;               # prints "foo"
-    print $y;               # prints nothing; $y has fallen out of scope
+ my $x = "foo";
+ my $some_condition = 1;
+ if ($some_condition) {
+     my $y = "bar";
+     print $x;           # prints "foo"
+     print $y;           # prints "bar"
+ }
+ print $x;               # prints "foo"
+ print $y;               # prints nothing; $y has fallen out of scope
 
 Using C<my> in combination with a C<use strict;> at the top of
 your Perl scripts means that the interpreter will pick up certain common
@@ -338,19 +338,19 @@ which are commonly used in conditional statements.
 
 =item if
 
-    if ( condition ) {
-        ...
-    } elsif ( other condition ) {
-        ...
-    } else {
-        ...
-    }
+ if ( condition ) {
+     ...
+ } elsif ( other condition ) {
+     ...
+ } else {
+     ...
+ }
 
 There's also a negated version of it:
 
-    unless ( condition ) {
-        ...
-    }
+ unless ( condition ) {
+     ...
+ }
 
 This is provided as a more readable version of C<if (!I<condition>)>.
 
@@ -358,54 +358,54 @@ Note that the braces are required in Perl, even if you've only got one
 line in the block.  However, there is a clever way of making your one-line
 conditional blocks more English like:
 
-    # the traditional way
-    if ($zippy) {
-        print "Yow!";
-    }
+ # the traditional way
+ if ($zippy) {
+     print "Yow!";
+ }
 
-    # the Perlish post-condition way
-    print "Yow!" if $zippy;
-    print "We have no bananas" unless $bananas;
+ # the Perlish post-condition way
+ print "Yow!" if $zippy;
+ print "We have no bananas" unless $bananas;
 
 =item while
 
-    while ( condition ) {
-        ...
-    }
+ while ( condition ) {
+     ...
+ }
 
 There's also a negated version, for the same reason we have C<unless>:
 
-    until ( condition ) {
-        ...
-    }
+ until ( condition ) {
+     ...
+ }
 
 You can also use C<while> in a post-condition:
 
-    print "LA LA LA\n" while 1;          # loops forever
+ print "LA LA LA\n" while 1;          # loops forever
 
 =item for
 
 Exactly like C:
 
-    for ($i = 0; $i <= $max; $i++) {
-        ...
-    }
+ for ($i = 0; $i <= $max; $i++) {
+     ...
+ }
 
 The C style for loop is rarely needed in Perl since Perl provides
 the more friendly list scanning C<foreach> loop.
 
 =item foreach
 
-    foreach (@array) {
-        print "This element is $_\n";
-    }
+ foreach (@array) {
+     print "This element is $_\n";
+ }
 
-    print $list[$_] foreach 0 .. $max;
+ print $list[$_] foreach 0 .. $max;
 
-    # you don't have to use the default $_ either...
-    foreach my $key (keys %hash) {
-        print "The value of $key is $hash{$key}\n";
-    }
+ # you don't have to use the default $_ either...
+ foreach my $key (keys %hash) {
+     print "The value of $key is $hash{$key}\n";
+ }
 
 The C<foreach> keyword is actually a synonym for the C<for>
 keyword.  See C<L<perlsyn/"Foreach Loops">>.
@@ -429,28 +429,28 @@ of the most common ones:
 
 =item Arithmetic
 
-    +   addition
-    -   subtraction
-    *   multiplication
-    /   division
+ +   addition
+ -   subtraction
+ *   multiplication
+ /   division
 
 =item Numeric comparison
 
-    ==  equality
-    !=  inequality
-    <   less than
-    >   greater than
-    <=  less than or equal
-    >=  greater than or equal
+ ==  equality
+ !=  inequality
+ <   less than
+ >   greater than
+ <=  less than or equal
+ >=  greater than or equal
 
 =item String comparison
 
-    eq  equality
-    ne  inequality
-    lt  less than
-    gt  greater than
-    le  less than or equal
-    ge  greater than or equal
+ eq  equality
+ ne  inequality
+ lt  less than
+ gt  greater than
+ le  less than or equal
+ ge  greater than or equal
 
 (Why do we have separate numeric and string comparisons?  Because we don't
 have special variable types, and Perl needs to know whether to sort
@@ -459,9 +459,9 @@ before 99).
 
 =item Boolean logic
 
-    &&  and
-    ||  or
-    !   not
+ &&  and
+ ||  or
+ !   not
 
 (C<and>, C<or> and C<not> aren't just in the above table as descriptions
 of the operators.  They're also supported as operators in their own
@@ -471,18 +471,18 @@ detail.)
 
 =item Miscellaneous
 
-    =   assignment
-    .   string concatenation
-    x   string multiplication
-    ..  range operator (creates a list of numbers)
+ =   assignment
+ .   string concatenation
+ x   string multiplication
+ ..  range operator (creates a list of numbers)
 
 =back
 
 Many operators can be combined with a C<=> as follows:
 
-    $a += 1;        # same as $a = $a + 1
-    $a -= 1;        # same as $a = $a - 1
-    $a .= "\n";     # same as $a = $a . "\n";
+ $a += 1;        # same as $a = $a + 1
+ $a -= 1;        # same as $a = $a - 1
+ $a .= "\n";     # same as $a = $a . "\n";
 
 =head2 Files and I/O
 
@@ -490,17 +490,17 @@ You can open a file for input or output using the C<open()> function.
 It's documented in extravagant detail in L<perlfunc> and L<perlopentut>,
 but in short:
 
-    open(my $in,  "<",  "input.txt")  or die "Can't open input.txt: $!";
-    open(my $out, ">",  "output.txt") or die "Can't open output.txt: $!";
-    open(my $log, ">>", "my.log")     or die "Can't open my.log: $!";
+ open(my $in,  "<",  "input.txt")  or die "Can't open input.txt: $!";
+ open(my $out, ">",  "output.txt") or die "Can't open output.txt: $!";
+ open(my $log, ">>", "my.log")     or die "Can't open my.log: $!";
 
 You can read from an open filehandle using the C<< <> >> operator.  In
 scalar context it reads a single line from the filehandle, and in list
 context it reads the whole file in, assigning each line to an element of
 the list:
 
-    my $line  = <$in>;
-    my @lines = <$in>;
+ my $line  = <$in>;
+ my @lines = <$in>;
 
 Reading in the whole file at one time is called slurping.  It can
 be useful but it may be a memory hog.  Most text file processing
@@ -508,22 +508,22 @@ can be done a line at a time with Perl's looping constructs.
 
 The C<< <> >> operator is most often seen in a C<while> loop:
 
-    while (<$in>) {     # assigns each line in turn to $_
-        print "Just read in this line: $_";
-    }
+ while (<$in>) {     # assigns each line in turn to $_
+     print "Just read in this line: $_";
+ }
 
 We've already seen how to print to standard output using C<print()>.
 However, C<print()> can also take an optional first argument specifying
 which filehandle to print to:
 
-    print STDERR "This is your final warning.\n";
-    print $out $record;
-    print $log $logmessage;
+ print STDERR "This is your final warning.\n";
+ print $out $record;
+ print $log $logmessage;
 
 When you're done with your filehandles, you should C<close()> them
 (though to be honest, Perl will clean up after you if you forget):
 
-    close $in or die "$in: $!";
+ close $in or die "$in: $!";
 
 =head2 Regular expressions
 
@@ -535,8 +535,8 @@ elsewhere.  However, in short:
 
 =item Simple matching
 
-    if (/foo/)       { ... }  # true if $_ contains "foo"
-    if ($a =~ /foo/) { ... }  # true if $a contains "foo"
+ if (/foo/)       { ... }  # true if $_ contains "foo"
+ if ($a =~ /foo/) { ... }  # true if $a contains "foo"
 
 The C<//> matching operator is documented in L<perlop>.  It operates on
 C<$_> by default, or can be bound to another variable using the C<=~>
@@ -544,9 +544,10 @@ binding operator (also documented in L<perlop>).
 
 =item Simple substitution
 
-    s/foo/bar/;               # replaces foo with bar in $_
-    $a =~ s/foo/bar/;         # replaces foo with bar in $a
-    $a =~ s/foo/bar/g;        # replaces ALL INSTANCES of foo with bar in $a
+ s/foo/bar/;               # replaces foo with bar in $_
+ $a =~ s/foo/bar/;         # replaces foo with bar in $a
+ $a =~ s/foo/bar/g;        # replaces ALL INSTANCES of foo with bar
+                           # in $a
 
 The C<s///> substitution operator is documented in L<perlop>.
 
@@ -557,46 +558,49 @@ on just about anything you could dream of by using more complex regular
 expressions.  These are documented at great length in L<perlre>, but for
 the meantime, here's a quick cheat sheet:
 
-    .                   a single character
-    \s                  a whitespace character (space, tab, newline, ...)
-    \S                  non-whitespace character
-    \d                  a digit (0-9)
-    \D                  a non-digit
-    \w                  a word character (a-z, A-Z, 0-9, _)
-    \W                  a non-word character
-    [aeiou]             matches a single character in the given set
-    [^aeiou]            matches a single character outside the given set
-    (foo|bar|baz)       matches any of the alternatives specified
+ .                   a single character
+ \s                  a whitespace character (space, tab, newline,
+                     ...)
+ \S                  non-whitespace character
+ \d                  a digit (0-9)
+ \D                  a non-digit
+ \w                  a word character (a-z, A-Z, 0-9, _)
+ \W                  a non-word character
+ [aeiou]             matches a single character in the given set
+ [^aeiou]            matches a single character outside the given
+                     set
+ (foo|bar|baz)       matches any of the alternatives specified
 
-    ^                   start of string
-    $                   end of string
+ ^                   start of string
+ $                   end of string
 
 Quantifiers can be used to specify how many of the previous thing you
 want to match on, where "thing" means either a literal character, one
 of the metacharacters listed above, or a group of characters or
 metacharacters in parentheses.
 
-    *                   zero or more of the previous thing
-    +                   one or more of the previous thing
-    ?                   zero or one of the previous thing
-    {3}                 matches exactly 3 of the previous thing
-    {3,6}               matches between 3 and 6 of the previous thing
-    {3,}                matches 3 or more of the previous thing
+ *                   zero or more of the previous thing
+ +                   one or more of the previous thing
+ ?                   zero or one of the previous thing
+ {3}                 matches exactly 3 of the previous thing
+ {3,6}               matches between 3 and 6 of the previous thing
+ {3,}                matches 3 or more of the previous thing
 
 Some brief examples:
 
-    /^\d+/              string starts with one or more digits
-    /^$/                nothing in the string (start and end are adjacent)
-    /(\d\s){3}/         a three digits, each followed by a whitespace
-                        character (eg "3 4 5 ")
-    /(a.)+/             matches a string in which every odd-numbered letter
-                        is a (eg "abacadaf")
+ /^\d+/              string starts with one or more digits
+ /^$/                nothing in the string (start and end are
+                     adjacent)
+ /(\d\s){3}/         three digits, each followed by a whitespace
+                     character (eg "3 4 5 ")
+ /(a.)+/             matches a string in which every odd-numbered
+                     letter is a (eg "abacadaf")
 
-    # This loop reads from STDIN, and prints non-blank lines:
-    while (<>) {
-        next if /^$/;
-        print;
-    }
+ # This loop reads from STDIN, and prints non-blank lines:
+ while (<>) {
+     next if /^$/;
+     print;
+ }
 
 =item Parentheses for capturing
 
@@ -604,12 +608,12 @@ As well as grouping, parentheses serve a second purpose.  They can be
 used to capture the results of parts of the regexp match for later use.
 The results end up in C<$1>, C<$2> and so on.
 
-    # a cheap and nasty way to break an email address up into parts
+ # a cheap and nasty way to break an email address up into parts
 
-    if ($email =~ /([^@]+)@(.+)/) {
-        print "Username is $1\n";
-        print "Hostname is $2\n";
-    }
+ if ($email =~ /([^@]+)@(.+)/) {
+     print "Username is $1\n";
+     print "Hostname is $2\n";
+ }
 
 =item Other regexp features
 
@@ -623,15 +627,15 @@ L<perlretut>, and L<perlre>.
 
 Writing subroutines is easy:
 
-    sub logger {
-        my $logmessage = shift;
-        open my $logfile, ">>", "my.log" or die "Could not open my.log: $!";
-        print $logfile $logmessage;
-    }
+ sub logger {
+    my $logmessage = shift;
+    open my $logfile, ">>", "my.log" or die "Could not open my.log: $!";
+    print $logfile $logmessage;
+ }
 
 Now we can use the subroutine just as any other built-in function:
 
-    logger("We have a logger subroutine!");
+ logger("We have a logger subroutine!");
 
 What's that C<shift>?  Well, the arguments to a subroutine are available
 to us as a special array called C<@_> (see L<perlvar> for more on that).
@@ -641,20 +645,20 @@ arguments and assigns it to C<$logmessage>.
 
 We can manipulate C<@_> in other ways too:
 
-    my ($logmessage, $priority) = @_;       # common
-    my $logmessage = $_[0];                 # uncommon, and ugly
+ my ($logmessage, $priority) = @_;       # common
+ my $logmessage = $_[0];                 # uncommon, and ugly
 
 Subroutines can also return values:
 
-    sub square {
-        my $num = shift;
-        my $result = $num * $num;
-        return $result;
-    }
+ sub square {
+     my $num = shift;
+     my $result = $num * $num;
+     return $result;
+ }
 
 Then use it like:
 
-    $sq = square(8);
+ $sq = square(8);
 
 For more information on writing subroutines, see L<perlsub>.
 

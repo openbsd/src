@@ -9,48 +9,14 @@ core. Although all of these are documented with their appropriate topics,
 this succinct listing gives you an overview and basic facts about their
 status.
 
-So far I've merely tried to find and list the experimental features and infer
+So far we've merely tried to find and list the experimental features and infer
 their inception, versions, etc. There's a lot of speculation here.
 
 =head2 Current experiments
 
 =over 8
 
-=item fork() emulation
-
-Introduced in Perl 5.6.1
-
-See also L<perlfork>
-
-=item Weak references
-
-Introduced in Perl 5.6.0
-
-=item Internal file glob
-
-Introduced in Perl 5.6.0
-
-Accepted in XXX
-
-=item 64-bit support
-
-Introduced in Perl 5.005
-
-Accepted in XXX
-
-=item die accepts a reference
-
-Introduced in Perl 5.005
-
-Accepted in Perl XXX
-
-=item Unicode support
-
-Introduced in Perl 5.6.0
-
-Accepted in Perl 5.8.0 XXX
-
-=item -Dusemultiplicity -Dusethreads
+=item -Dusemultiplicity -Duseithreads
 
 Introduced in Perl 5.6.0
 
@@ -58,41 +24,11 @@ Introduced in Perl 5.6.0
 
 Introduced in Perl 5.7.0
 
-=item GetOpt::Long Options can now take multiple values at once (experimental)
-
-C<Getopt::Long> upgraded to version 2.35
-
-Removed in Perl 5.8.8
-
-=item 5.005-style threading
-
-Introduced in Perl 5.005
-
-Removed in Perl 5.10 XXX
-
-=item Test::Harness::Straps
-
-Removed in Perl 5.10.1
-
-=item perlcc
-
-Introduced in Perl 5.005
-
-Removed in Perl 5.9.0
-
 =item C<our> can now have an experimental optional attribute C<unique>
 
 Introduced in Perl 5.8.0
 
 Deprecated in Perl 5.10.0
-
-=item Assertions
-
-The C<-A> command line switch
-
-Introduced in Perl 5.9.0
-
-Removed in Perl 5.9.5
 
 =item Linux abstract Unix domain sockets
 
@@ -103,8 +39,6 @@ See also L<Socket>
 =item L<Pod::HTML2Pod|Pod::HTML2Pod>
 
 =item L<Pod::PXML|Pod::PXML>
-
-=item threads
 
 =item The <:pop> IO pseudolayer
 
@@ -126,11 +60,15 @@ See also L<perlguts>
 
 Introduced in Perl 5.13.7
 
-=item internal API for C<%H>
+=item internal API for C<%^H>
 
 Introduced in Perl 5.13.7
 
 See also C<cophh_> in L<perlapi>.
+
+=item alloccopstash
+
+Introduced in Perl 5.18.0
 
 =item av_create_and_push
 
@@ -138,7 +76,15 @@ See also C<cophh_> in L<perlapi>.
 
 =item av_create_and_unshift_one
 
+=item cop_store_label
+
+Introduced in Perl 5.16.0
+
 =item PL_keyword_plugin
+
+=item gv_fetchmethod_*_flags
+
+Introduced in Perl 5.16.0
 
 =item hv_iternext_flags
 
@@ -168,6 +114,10 @@ See also C<cophh_> in L<perlapi>.
 
 =item lex_unstuff
 
+=item op_scope
+
+=item op_lvalue
+
 =item parse_fullstmt
 
 =item parse_stmtseq
@@ -194,16 +144,6 @@ See also C<cophh_> in L<perlapi>.
 
 =item utf8_to_bytes
 
-=item DB module
-
-Introduced in Perl 5.6.0
-
-See also L<perldebug>, L<perldebtut>
-
-=item The pseudo-hash data type
-
-Introduced in Perl 5.6.0
-
 =item Lvalue subroutines
 
 Introduced in Perl 5.6.0
@@ -222,6 +162,16 @@ See also L<perlre>
 
 See also L<perlre>
 
+=item Smart match (C<~~>)
+
+Introduced in Perl 5.10.0
+
+Modified in Perl 5.10.1, 5.12.0
+
+=item Lexical C<$_>
+
+Introduced in Perl 5.10.0
+
 =item Backtracking control verbs
 
 C<(*ACCEPT)>
@@ -232,15 +182,6 @@ See also: L<perlre/"Special Backtracking Control Verbs">
 
 =item Code expressions, conditional expressions, and independent expressions in regexes
 
-=item The C<\N> regex character class
-
-The C<\N> character class, not to be confused with the named character
-sequence C<\N{NAME}>, denotes any non-newline character in a regular
-expression.
-
-Introduced in: Perl 5.12
-
-See also: 
 
 =item gv_try_downgrade
 
@@ -256,6 +197,22 @@ See L<perlapi/PL_keyword_plugin> for the mechanism.
 
 Introduced in: Perl 5.11.2
 
+=item Array and hash container functions accept references
+
+Introduced in Perl 5.14.0
+
+=item Lexical subroutines
+
+Introduced in: Perl 5.18
+
+See also: L<perlsub/Lexical Subroutines>
+
+=item Regular Expression Set Operations
+
+Introduced in: Perl 5.18
+
+See also: L<perlrecharclass/Extended Bracketed Character Classes>
+
 =back
 
 =head2 Accepted features
@@ -267,7 +224,41 @@ They are also awarded +5 Stability and +3 Charisma.
 
 =over 8
 
-=item (none yet identified)
+=item The C<\N> regex character class
+
+The C<\N> character class, not to be confused with the named character
+sequence C<\N{NAME}>, denotes any non-newline character in a regular
+expression.
+
+Introduced in: Perl 5.12
+
+=item fork() emulation
+
+Introduced in Perl 5.6.1
+
+See also L<perlfork>
+
+=item DB module
+
+Introduced in Perl 5.6.0
+
+See also L<perldebug>, L<perldebtut>
+
+=item Weak references
+
+Introduced in Perl 5.6.0
+
+=item Internal file glob
+
+Introduced in Perl 5.6.0
+
+=item die accepts a reference
+
+Introduced in Perl 5.005
+
+=item 64-bit support
+
+Introduced in Perl 5.005
 
 =back
 
@@ -287,11 +278,49 @@ Introduced in: 5.11.2
 
 Removed in: 5.11.3
 
+=item Assertions
+
+The C<-A> command line switch
+
+Introduced in Perl 5.9.0
+
+Removed in Perl 5.9.5
+
+=item Test::Harness::Straps
+
+Moved from Perl 5.10.1 to CPAN
+
+=item GetOpt::Long Options can now take multiple values at once (experimental)
+
+C<Getopt::Long> upgraded to version 2.35
+
+Removed in Perl 5.8.8
+
+=item The pseudo-hash data type
+
+Introduced in Perl 5.6.0
+
+Removed in Perl 5.9.0
+
+=item 5.005-style threading
+
+Introduced in Perl 5.005
+
+Removed in Perl 5.10
+
+=item perlcc
+
+Introduced in Perl 5.005
+
+Moved from Perl 5.9.0 to CPAN
+
 =back
 
 =head1 AUTHORS
 
 brian d foy C<< <brian.d.foy@gmail.com> >>
+
+SE<eacute>bastien Aperghis-Tramoni C<< <saper@cpan.org> >>
 
 =head1 COPYRIGHT
 

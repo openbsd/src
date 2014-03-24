@@ -13,7 +13,7 @@ use warnings;
 use strict;
 use Test::More;
 
-my $tests = 17; # not counting those in the __DATA__ section
+my $tests = 18; # not counting those in the __DATA__ section
 
 use B::Deparse;
 my $deparse = B::Deparse->new();
@@ -104,6 +104,7 @@ my $path = join " ", map { qq["-I$_"] } @INC;
 $a = `$^X $path "-MO=Deparse" -anlwi.bak -e 1 2>&1`;
 $a =~ s/-e syntax OK\n//g;
 $a =~ s/.*possible typo.*\n//;	   # Remove warning line
+$a =~ s/.*-i used with no filenames.*\n//;	# Remove warning line
 $a =~ s{\\340\\242}{\\s} if (ord("\\") == 224); # EBCDIC, cp 1047 or 037
 $a =~ s{\\274\\242}{\\s} if (ord("\\") == 188); # $^O eq 'posix-bc'
 $b = <<'EOF';
@@ -210,11 +211,11 @@ like($a, qr/-e syntax OK/,
     "Deparse does not hang when traversing stash circularities");
 
 # [perl #93990]
-@* = ();
-is($deparse->coderef2text(sub{ print "@{*}" }),
+@] = ();
+is($deparse->coderef2text(sub{ print "@{]}" }),
 q<{
-    print "@{*}";
-}>, 'curly around to interpolate "@{*}"');
+    print "@{]}";
+}>, 'curly around to interpolate "@{]}"');
 is($deparse->coderef2text(sub{ print "@{-}" }),
 q<{
     print "@-";
@@ -241,6 +242,17 @@ SKIP: {
 	  'ambient_pragmas do not mess with compiling scope';
    `;
 }
+
+# multiple statements on format lines
+$a = `$^X $path "-MO=Deparse" -e "format =" -e "\@" -e "x();z()" -e. 2>&1`;
+$a =~ s/-e syntax OK\n//g;
+is($a, <<'EOCODH', 'multiple statements on format lines');
+format STDOUT =
+@
+x(); z()
+.
+EOCODH
+
 
 done_testing($tests);
 
@@ -310,6 +322,8 @@ my $foo = "Ab\x{100}\200\x{200}\237Cd\000Ef\x{1000}\cA\x{2000}\cZ";
 ####
 # s///e
 s/x/'y';/e;
+s/x/$a;/e;
+s/x/complex_expression();/e;
 ####
 # block
 { my $x; }
@@ -580,7 +594,7 @@ my $c = [];
 my $d = \[];
 ####
 # SKIP ?$] < 5.010 && "smartmatch and given/when not implemented on this Perl version"
-# CONTEXT use feature ':5.10';
+# CONTEXT use feature ':5.10'; no warnings 'experimental::smartmatch';
 # implicit smartmatch in given/when
 given ('foo') {
     when ('bar') { continue; }
@@ -940,6 +954,7 @@ my @a;
 $a[0] = 1;
 ####
 # feature features without feature
+# CONTEXT no warnings 'experimental::smartmatch';
 CORE::state $x;
 CORE::say $x;
 CORE::given ($x) {
@@ -955,6 +970,7 @@ CORE::evalbytes '';
 () = CORE::fc $x;
 ####
 # feature features when feature has been disabled by use VERSION
+# CONTEXT no warnings 'experimental::smartmatch';
 use feature (sprintf(":%vd", $^V));
 use 1;
 CORE::state $x;
@@ -984,7 +1000,7 @@ CORE::evalbytes '';
 () = CORE::__SUB__;
 ####
 # (the above test with CONTEXT, and the output is equivalent but different)
-# CONTEXT use feature ':5.10';
+# CONTEXT use feature ':5.10'; no warnings 'experimental::smartmatch';
 # feature features when feature has been disabled by use VERSION
 use feature (sprintf(":%vd", $^V));
 use 1;
@@ -1044,8 +1060,9 @@ my @x;
 @x = ($#{<}, $#{.}, $#{>}, $#{/}, $#{?}, $#{=}, $#+, $#{\}, $#{|}, $#-);
 @x = ($#{;}, $#{:});
 ####
-# ${#} interpolated (the first line magically disables the warning)
-() = *#;
+# ${#} interpolated
+# It's a known TODO that warnings are deparsed as bits, not textually.
+no warnings;
 () = "${#}a";
 ####
 # [perl #86060] $( $| $) in regexps need braces
@@ -1144,6 +1161,13 @@ $_ = ($a xor not +($1 || 2) ** 2);
 () = warn;
 () = warn() + 1;
 () = setpgrp() + 1;
+####
+# loopexes have assignment prec
+() = (CORE::dump a) | 'b';
+() = (goto a) | 'b';
+() = (last a) | 'b';
+() = (next a) | 'b';
+() = (redo a) | 'b';
 ####
 # [perl #63558] open local(*FH)
 open local *FH;
@@ -1244,3 +1268,122 @@ foreach my $i (1 .. 3) {
 continue {
     ();
 }
+####
+# file handles
+no strict;
+my $mfh;
+open F;
+open *F;
+open $fh;
+open $mfh;
+open 'a+b';
+select *F;
+select F;
+select $f;
+select $mfh;
+select 'a+b';
+####
+# 'my' works with padrange op
+my($z, @z);
+my $m1;
+$m1 = 1;
+$z = $m1;
+my $m2 = 2;
+my($m3, $m4);
+($m3, $m4) = (1, 2);
+@z = ($m3, $m4);
+my($m5, $m6) = (1, 2);
+my($m7, undef, $m8) = (1, 2, 3);
+@z = ($m7, undef, $m8);
+($m7, undef, $m8) = (1, 2, 3);
+####
+# 'our/local' works with padrange op
+no strict;
+our($z, @z);
+our $o1;
+local $o11;
+$o1 = 1;
+local $o1 = 1;
+$z = $o1;
+$z = local $o1;
+our $o2 = 2;
+our($o3, $o4);
+($o3, $o4) = (1, 2);
+local($o3, $o4) = (1, 2);
+@z = ($o3, $o4);
+@z = local($o3, $o4);
+our($o5, $o6) = (1, 2);
+our($o7, undef, $o8) = (1, 2, 3);
+@z = ($o7, undef, $o8);
+@z = local($o7, undef, $o8);
+($o7, undef, $o8) = (1, 2, 3);
+local($o7, undef, $o8) = (1, 2, 3);
+####
+# 'state' works with padrange op
+no strict;
+use feature 'state';
+state($z, @z);
+state $s1;
+$s1 = 1;
+$z = $s1;
+state $s2 = 2;
+state($s3, $s4);
+($s3, $s4) = (1, 2);
+@z = ($s3, $s4);
+# assignment of state lists isn't implemented yet
+#state($s5, $s6) = (1, 2);
+#state($s7, undef, $s8) = (1, 2, 3);
+#@z = ($s7, undef, $s8);
+($s7, undef, $s8) = (1, 2, 3);
+####
+# anon lists with padrange
+my($a, $b);
+my $c = [$a, $b];
+my $d = {$a, $b};
+####
+# slices with padrange
+my($a, $b);
+my(@x, %y);
+@x = @x[$a, $b];
+@x = @y{$a, $b};
+####
+# binops with padrange
+my($a, $b, $c);
+$c = $a cmp $b;
+$c = $a + $b;
+$a += $b;
+$c = $a - $b;
+$a -= $b;
+$c = my $a1 cmp $b;
+$c = my $a2 + $b;
+$a += my $b1;
+$c = my $a3 - $b;
+$a -= my $b2;
+####
+# 'x' with padrange
+my($a, $b, $c, $d, @e);
+$c = $a x $b;
+$a x= $b;
+@e = ($a) x $d;
+@e = ($a, $b) x $d;
+@e = ($a, $b, $c) x $d;
+@e = ($a, 1) x $d;
+####
+# @_ with padrange
+my($a, $b, $c) = @_;
+####
+# SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
+# TODO unimplemented in B::Deparse; RT #116553
+# lexical subroutine
+use feature 'lexical_subs';
+no warnings "experimental::lexical_subs";
+my sub f {}
+print f();
+####
+# SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
+# TODO unimplemented in B::Deparse; RT #116553
+# lexical "state" subroutine
+use feature 'state', 'lexical_subs';
+no warnings 'experimental::lexical_subs';
+state sub f {}
+print f();

@@ -508,7 +508,7 @@ sub url {
 sub ping {
     my $self = shift;
 
-    my $ping = Net::Ping->new("tcp",1);
+    my $ping = Net::Ping->new($^O eq 'VMS' ? 'icmp' : 'tcp', 1);
     my ($proto) = $self->url =~ m{^([^:]+)};
     my $port = $proto eq 'http' ? 80 : 21;
     return unless $port;

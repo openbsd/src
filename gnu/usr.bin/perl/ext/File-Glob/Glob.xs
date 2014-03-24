@@ -9,8 +9,12 @@
 #define MY_CXT_KEY "File::Glob::_guts" XS_VERSION
 
 typedef struct {
+#ifdef USE_ITHREADS
+    tTHX interp;
+#endif
     int		x_GLOB_ERROR;
     HV *	x_GLOB_ENTRIES;
+    Perl_ophook_t	x_GLOB_OLD_OPHOOK;
 } my_cxt_t;
 
 START_MY_CXT
@@ -67,18 +71,12 @@ iterate(pTHX_ bool(*globber)(pTHX_ AV *entries, SV *patsv))
     dSP;
     dMY_CXT;
 
-    SV * const cxixsv = POPs;
-    const char *cxixpv;
-    STRLEN cxixlen;
+    const char * const cxixpv = (char *)&PL_op;
+    STRLEN const cxixlen = sizeof(OP *);
     AV *entries;
     U32 const gimme = GIMME_V;
     SV *patsv = POPs;
     bool on_stack = FALSE;
-
-    /* assume global context if not provided one */
-    SvGETMAGIC(cxixsv);
-    if (SvOK(cxixsv)) cxixpv = SvPV_nomg(cxixsv, cxixlen);
-    else cxixpv = "_G_", cxixlen = 3;
 
     if (!MY_CXT.x_GLOB_ENTRIES) MY_CXT.x_GLOB_ENTRIES = newHV();
     entries = (AV *)*(hv_fetch(MY_CXT.x_GLOB_ENTRIES, cxixpv, cxixlen, 1));
@@ -93,6 +91,7 @@ iterate(pTHX_ bool(*globber)(pTHX_ AV *entries, SV *patsv))
     /* chuck it all out, quick or slow */
     if (gimme == G_ARRAY) {
 	if (!on_stack) {
+	    EXTEND(SP, AvFILLp(entries)+1);
 	    Copy(AvARRAY(entries), SP+1, AvFILLp(entries)+1, SV *);
 	    SP += AvFILLp(entries)+1;
 	}
@@ -317,6 +316,20 @@ doglob_iter_wrapper(pTHX_ AV *entries, SV *patsv)
     return FALSE;
 }
 
+static void
+glob_ophook(pTHX_ OP *o)
+{
+  if (PL_dirty) return;
+  {
+    dMY_CXT;
+    if (MY_CXT.x_GLOB_ENTRIES
+     && (o->op_type == OP_GLOB || o->op_type == OP_ENTERSUB))
+	hv_delete(MY_CXT.x_GLOB_ENTRIES, (char *)&o, sizeof(OP *),
+		  G_DISCARD);
+    if (MY_CXT.x_GLOB_OLD_OPHOOK) MY_CXT.x_GLOB_OLD_OPHOOK(aTHX_ o);
+  }
+}
+
 MODULE = File::Glob		PACKAGE = File::Glob
 
 int
@@ -354,13 +367,11 @@ void
 csh_glob(...)
 PPCODE:
     /* For backward-compatibility with the original Perl function, we sim-
-     * ply take the first two arguments, regardless of how many there are.
+     * ply take the first argument, regardless of how many there are.
      */
-    if (items >= 2) SP += 2;
+    if (items) SP ++;
     else {
-	SP += items;
 	XPUSHs(&PL_sv_undef);
-	if (!items) XPUSHs(&PL_sv_undef);
     }
     PUTBACK;
     csh_glob_iter(aTHX);
@@ -369,15 +380,40 @@ PPCODE:
 void
 bsd_glob_override(...)
 PPCODE:
-    if (items >= 2) SP += 2;
+    if (items) SP ++;
     else {
-	SP += items;
 	XPUSHs(&PL_sv_undef);
-	if (!items) XPUSHs(&PL_sv_undef);
     }
     PUTBACK;
     iterate(aTHX_ doglob_iter_wrapper);
     SPAGAIN;
+
+#ifdef USE_ITHREADS
+
+void
+CLONE(...)
+INIT:
+    HV *glob_entries_clone = NULL;
+CODE:
+    PERL_UNUSED_ARG(items);
+    {
+        dMY_CXT;
+        if ( MY_CXT.x_GLOB_ENTRIES ) {
+            CLONE_PARAMS param;
+            param.stashes    = NULL;
+            param.flags      = 0;
+            param.proto_perl = MY_CXT.interp;
+            
+            glob_entries_clone = MUTABLE_HV(sv_dup_inc((SV*)MY_CXT.x_GLOB_ENTRIES, &param));
+        }
+    }
+    {
+        MY_CXT_CLONE;
+        MY_CXT.x_GLOB_ENTRIES = glob_entries_clone;
+        MY_CXT.interp = aTHX;
+    }
+
+#endif
 
 BOOT:
 {
@@ -393,6 +429,11 @@ BOOT:
     {
 	dMY_CXT;
 	MY_CXT.x_GLOB_ENTRIES = NULL;
+	MY_CXT.x_GLOB_OLD_OPHOOK = PL_opfreehook;
+#ifdef USE_ITHREADS
+        MY_CXT.interp = aTHX;
+#endif
+	PL_opfreehook = glob_ophook;
     }  
 }
 

@@ -2,7 +2,7 @@
 #
 # text-utf8.t -- Test Pod::Text with UTF-8 input.
 #
-# Copyright 2002, 2004, 2006, 2007, 2008, 2009
+# Copyright 2002, 2004, 2006, 2007, 2008, 2009, 2012
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -41,7 +41,7 @@ eval { binmode ($builder->output, ':encoding(utf-8)') };
 eval { binmode ($builder->failure_output, ':encoding(utf-8)') };
 while (<DATA>) {
     next until $_ eq "###\n";
-    open (TMP, '> tmp.pod') or die "Cannot create tmp.pod: $!\n";
+    open (TMP, "> tmp$$.pod") or die "Cannot create tmp$$.pod: $!\n";
     eval { binmode (\*TMP, ':encoding(utf-8)') };
     print TMP "=encoding UTF-8\n\n";
     while (<DATA>) {
@@ -49,10 +49,10 @@ while (<DATA>) {
         print TMP $_;
     }
     close TMP;
-    open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
-    $parser->parse_from_file ('tmp.pod', \*OUT);
+    open (OUT, "> out$$.tmp") or die "Cannot create out$$.tmp: $!\n";
+    $parser->parse_from_file ("tmp$$.pod", \*OUT);
     close OUT;
-    open (TMP, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+    open (TMP, "out$$.tmp") or die "Cannot open out$$.tmp: $!\n";
     eval { binmode (\*TMP, ':encoding(utf-8)') };
     my $output;
     {
@@ -60,7 +60,7 @@ while (<DATA>) {
         $output = <TMP>;
     }
     close TMP;
-    1 while unlink ('tmp.pod', 'out.tmp');
+    1 while unlink ("tmp$$.pod", "out$$.tmp");
     my $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";

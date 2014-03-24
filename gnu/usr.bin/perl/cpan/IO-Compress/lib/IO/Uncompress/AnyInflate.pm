@@ -6,22 +6,22 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.048 qw(createSelfTiedObject);
+use IO::Compress::Base::Common  2.060 ();
 
-use IO::Uncompress::Adapter::Inflate  2.048 ();
+use IO::Uncompress::Adapter::Inflate  2.060 ();
 
 
-use IO::Uncompress::Base  2.048 ;
-use IO::Uncompress::Gunzip  2.048 ;
-use IO::Uncompress::Inflate  2.048 ;
-use IO::Uncompress::RawInflate  2.048 ;
-use IO::Uncompress::Unzip  2.048 ;
+use IO::Uncompress::Base  2.060 ;
+use IO::Uncompress::Gunzip  2.060 ;
+use IO::Uncompress::Inflate  2.060 ;
+use IO::Uncompress::RawInflate  2.060 ;
+use IO::Uncompress::Unzip  2.060 ;
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyInflateError);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $AnyInflateError = '';
 
 @ISA = qw( Exporter IO::Uncompress::Base );
@@ -36,20 +36,20 @@ Exporter::export_ok_tags('all');
 sub new
 {
     my $class = shift ;
-    my $obj = createSelfTiedObject($class, \$AnyInflateError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject($class, \$AnyInflateError);
     $obj->_create(undef, 0, @_);
 }
 
 sub anyinflate
 {
-    my $obj = createSelfTiedObject(undef, \$AnyInflateError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject(undef, \$AnyInflateError);
     return $obj->_inf(@_) ;
 }
 
 sub getExtraParams
 {
-    use IO::Compress::Base::Common  2.048 qw(:Parse);
-    return ( 'RawInflate' => [1, 1, Parse_boolean,  0] ) ;
+    use IO::Compress::Base::Common  2.060 qw(:Parse);
+    return ( 'rawinflate' => [Parse_boolean,  0] ) ;
 }
 
 sub ckParams
@@ -58,8 +58,8 @@ sub ckParams
     my $got = shift ;
 
     # any always needs both crc32 and adler32
-    $got->value('CRC32' => 1);
-    $got->value('ADLER32' => 1);
+    $got->setValue('crc32' => 1);
+    $got->setValue('adler32' => 1);
 
     return 1;
 }
@@ -78,7 +78,7 @@ sub mkUncomp
     
      my @possible = qw( Inflate Gunzip Unzip );
      unshift @possible, 'RawInflate' 
-        if 1 || $got->value('RawInflate');
+        if 1 || $got->getValue('rawinflate');
 
      my $magic = $self->ckMagic( @possible );
 
@@ -205,19 +205,20 @@ section.
 
     use IO::Uncompress::AnyInflate qw(anyinflate $AnyInflateError) ;
 
-    anyinflate $input => $output [,OPTS] 
+    anyinflate $input_filename_or_reference => $output_filename_or_reference [,OPTS] 
         or die "anyinflate failed: $AnyInflateError\n";
 
 The functional interface needs Perl5.005 or better.
 
 =head2 anyinflate $input => $output [, OPTS]
 
-C<anyinflate> expects at least two parameters, C<$input> and C<$output>.
+C<anyinflate> expects at least two parameters,
+C<$input_filename_or_reference> and C<$output_filename_or_reference>.
 
-=head3 The C<$input> parameter
+=head3 The C<$input_filename_or_reference> parameter
 
-The parameter, C<$input>, is used to define the source of
-the compressed data. 
+The parameter, C<$input_filename_or_reference>, is used to define the
+source of the compressed data. 
 
 It can take one of the following forms:
 
@@ -225,25 +226,25 @@ It can take one of the following forms:
 
 =item A filename
 
-If the C<$input> parameter is a simple scalar, it is assumed to be a
-filename. This file will be opened for reading and the input data
-will be read from it.
+If the <$input_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename. This file will be opened for reading and the
+input data will be read from it.
 
 =item A filehandle
 
-If the C<$input> parameter is a filehandle, the input data will be
-read from it.
-The string '-' can be used as an alias for standard input.
+If the C<$input_filename_or_reference> parameter is a filehandle, the input
+data will be read from it.  The string '-' can be used as an alias for
+standard input.
 
 =item A scalar reference 
 
-If C<$input> is a scalar reference, the input data will be read
-from C<$$input>.
+If C<$input_filename_or_reference> is a scalar reference, the input data
+will be read from C<$$input_filename_or_reference>.
 
 =item An array reference 
 
-If C<$input> is an array reference, each element in the array must be a
-filename.
+If C<$input_filename_or_reference> is an array reference, each element in
+the array must be a filename.
 
 The input data will be read from each file in turn. 
 
@@ -252,64 +253,71 @@ contains valid filenames before any data is uncompressed.
 
 =item An Input FileGlob string
 
-If C<$input> is a string that is delimited by the characters "<" and ">"
-C<anyinflate> will assume that it is an I<input fileglob string>. The
-input is the list of files that match the fileglob.
+If C<$input_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<anyinflate> will assume that it is an 
+I<input fileglob string>. The input is the list of files that match the 
+fileglob.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$input> parameter is any other type, C<undef> will be returned.
+If the C<$input_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
-=head3 The C<$output> parameter
+=head3 The C<$output_filename_or_reference> parameter
 
-The parameter C<$output> is used to control the destination of the
-uncompressed data. This parameter can take one of these forms.
+The parameter C<$output_filename_or_reference> is used to control the
+destination of the uncompressed data. This parameter can take one of
+these forms.
 
 =over 5
 
 =item A filename
 
-If the C<$output> parameter is a simple scalar, it is assumed to be a
-filename.  This file will be opened for writing and the uncompressed
-data will be written to it.
+If the C<$output_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename.  This file will be opened for writing and the 
+uncompressed data will be written to it.
 
 =item A filehandle
 
-If the C<$output> parameter is a filehandle, the uncompressed data
-will be written to it.
-The string '-' can be used as an alias for standard output.
+If the C<$output_filename_or_reference> parameter is a filehandle, the
+uncompressed data will be written to it.  The string '-' can be used as
+an alias for standard output.
 
 =item A scalar reference 
 
-If C<$output> is a scalar reference, the uncompressed data will be
-stored in C<$$output>.
+If C<$output_filename_or_reference> is a scalar reference, the
+uncompressed data will be stored in C<$$output_filename_or_reference>.
 
 =item An Array Reference
 
-If C<$output> is an array reference, the uncompressed data will be
-pushed onto the array.
+If C<$output_filename_or_reference> is an array reference, 
+the uncompressed data will be pushed onto the array.
 
 =item An Output FileGlob
 
-If C<$output> is a string that is delimited by the characters "<" and ">"
-C<anyinflate> will assume that it is an I<output fileglob string>. The
-output is the list of files that match the fileglob.
+If C<$output_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<anyinflate> will assume that it is an
+I<output fileglob string>. The output is the list of files that match the
+fileglob.
 
-When C<$output> is an fileglob string, C<$input> must also be a fileglob
-string. Anything else is an error.
+When C<$output_filename_or_reference> is an fileglob string,
+C<$input_filename_or_reference> must also be a fileglob string. Anything
+else is an error.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$output> parameter is any other type, C<undef> will be returned.
+If the C<$output_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
 =head2 Notes
 
-When C<$input> maps to multiple compressed files/buffers and C<$output> is
-a single file/buffer, after uncompression C<$output> will contain a
+When C<$input_filename_or_reference> maps to multiple compressed
+files/buffers and C<$output_filename_or_reference> is
+a single file/buffer, after uncompression C<$output_filename_or_reference> will contain a
 concatenation of all the uncompressed data from each of the input
 files/buffers.
 
@@ -507,7 +515,7 @@ The string '-' can be used as an alias for standard input.
 =item A scalar reference 
 
 If C<$input> is a scalar reference, the compressed data will be read from
-C<$$output>.
+C<$$input>.
 
 =back
 
@@ -799,6 +807,13 @@ Provides a sub-set of the C<seek> functionality, with the restriction
 that it is only legal to seek forward in the input file/buffer.
 It is a fatal error to attempt to seek backward.
 
+Note that the implementation of C<seek> in this module does not provide
+true random access to a compressed file/buffer. It  works by uncompressing
+data from the current offset in the file/buffer until it reaches the
+ucompressed offset specified in the parameters to C<seek>. For very small
+files this may be acceptable behaviour. For large files it may cause an
+unacceptable delay.
+
 The C<$whence> parameter takes one the usual values, namely SEEK_SET,
 SEEK_CUR or SEEK_END.
 
@@ -945,7 +960,7 @@ Same as doing this
 
 =head2 Working with Net::FTP
 
-See L<IO::Uncompress::AnyInflate::FAQ|IO::Uncompress::AnyInflate::FAQ/"Compressed files and Net::FTP">
+See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
 
 =head1 SEE ALSO
 
@@ -980,7 +995,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

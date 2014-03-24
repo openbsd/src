@@ -1086,10 +1086,10 @@ BEGIN {    # START PLAN
         },
 
         # Specify an oddball extension
-        {   name => 'Switch --ext=.wango',
-            switches => [ '--ext=.wango' ],
-            expect => { extensions => ['.wango'] },
-            runlog => [
+        {   name     => 'Switch --ext=.wango',
+            switches => ['--ext=.wango'],
+            expect   => { extensions => ['.wango'] },
+            runlog   => [
                 [   '_runtests',
                     {   verbosity  => 0,
                         show_count => 1,
@@ -1100,10 +1100,10 @@ BEGIN {    # START PLAN
         },
 
         # Handle multiple extensions
-        {   name => 'Switch --ext=.foo --ext=.bar',
+        {   name     => 'Switch --ext=.foo --ext=.bar',
             switches => [ '--ext=.foo', '--ext=.bar', ],
-            expect => { extensions => ['.foo','.bar'] },
-            runlog => [
+            expect   => { extensions => [ '.foo', '.bar' ] },
+            runlog   => [
                 [   '_runtests',
                     {   verbosity  => 0,
                         show_count => 1,
@@ -1157,10 +1157,10 @@ BEGIN {    # START PLAN
                 sources => {
                     Perl     => { foo => 'bar baz', avg => 0.278 },
                     MyCustom => {},
-                    File => {
+                    File     => {
                         extensions => [ '.txt', '.tmp' ],
-                        hash => { this => 'that', foo => 'bar'},
-                        sep => 'foo=bar',
+                        hash => { this => 'that', foo => 'bar' },
+                        sep  => 'foo=bar',
                     },
                 },
             },
@@ -1169,10 +1169,10 @@ BEGIN {    # START PLAN
                     {   sources => {
                             Perl     => { foo => 'bar baz', avg => 0.278 },
                             MyCustom => {},
-                            File => {
+                            File     => {
                                 extensions => [ '.txt', '.tmp' ],
-                                hash => { this => 'that', foo => 'bar'},
-                                sep => 'foo=bar',
+                                hash => { this => 'that', foo => 'bar' },
+                                sep  => 'foo=bar',
                             },
                         },
                         verbosity  => 0,

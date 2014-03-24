@@ -29,7 +29,7 @@ the most well-known character class. By default, a dot matches any
 character, except for the newline. That default can be changed to
 add matching the newline by using the I<single line> modifier: either
 for the entire regular expression with the C</s> modifier, or
-locally with C<(?s)>.  (The experimental C<\N> backslash sequence, described
+locally with C<(?s)>.  (The C<\N> backslash sequence, described
 below, matches any character except newline without regard to the
 I<single line> modifier.)
 
@@ -68,13 +68,13 @@ character classes, see L<perlrebackslash>.)
  \H             Match a character that isn't horizontal whitespace.
  \v             Match a vertical whitespace character.
  \V             Match a character that isn't vertical whitespace.
- \N             Match a character that isn't a newline.  Experimental.
+ \N             Match a character that isn't a newline.
  \pP, \p{Prop}  Match a character that has the given Unicode property.
  \PP, \P{Prop}  Match a character that doesn't have the Unicode property
 
 =head3 \N
 
-C<\N> is new in 5.12, and is experimental.  It, like the dot, matches any
+C<\N>, available starting in v5.12, like the dot, matches any
 character that is not a newline. The difference is that C<\N> is not influenced
 by the I<single line> regular expression modifier (see L</The dot> above).  Note
 that the form C<\N{...}> may mean something completely different.  When the
@@ -140,11 +140,12 @@ Any character not matched by C<\d> is matched by C<\D>.
 =head3 Word characters
 
 A C<\w> matches a single alphanumeric character (an alphabetic character, or a
-decimal digit) or a connecting punctuation character, such as an
-underscore ("_").  It does not match a whole word.  To match a whole
-word, use C<\w+>.  This isn't the same thing as matching an English word, but
-in the ASCII range it is the same as a string of Perl-identifier
-characters.
+decimal digit); or a connecting punctuation character, such as an
+underscore ("_"); or a "mark" character (like some sort of accent) that
+attaches to one of those.  It does not match a whole word.  To match a
+whole word, use C<\w+>.  This isn't the same thing as matching an
+English word, but in the ASCII range it is the same as a string of
+Perl-identifier characters.
 
 =over
 
@@ -173,7 +174,7 @@ are generally used to add auxiliary markings to letters.
 C<\w> matches the platform's native underscore character plus whatever
 the locale considers to be alphanumeric.
 
-=item if Unicode rules are in effect or if on an EBCDIC platform ...
+=item if Unicode rules are in effect ...
 
 C<\w> matches exactly what C<\p{Word}> matches.
 
@@ -208,9 +209,11 @@ C<\s> matches any single character considered whitespace.
 
 =item If the C</a> modifier is in effect ...
 
-C<\s> matches the 5 characters [\t\n\f\r ]; that is, the horizontal tab,
-the newline, the form feed, the carriage return, and the space.  (Note
-that it doesn't match the vertical tab, C<\cK> on ASCII platforms.)
+In all Perl versions, C<\s> matches the 5 characters [\t\n\f\r ]; that
+is, the horizontal tab,
+the newline, the form feed, the carriage return, and the space.
+Starting in Perl v5.18, experimentally, it also matches the vertical tab, C<\cK>.
+See note C<[1]> below for a discussion of this.
 
 =item otherwise ...
 
@@ -227,18 +230,18 @@ in the table below.
 
 =item if locale rules are in effect ...
 
-C<\s> matches whatever the locale considers to be whitespace.  Note that
-this is likely to include the vertical space, unlike non-locale C<\s>
-matching.
+C<\s> matches whatever the locale considers to be whitespace.
 
-=item if Unicode rules are in effect or if on an EBCDIC platform ...
+=item if Unicode rules are in effect ...
 
 C<\s> matches exactly the characters shown with an "s" column in the
 table below.
 
 =item otherwise ...
 
-C<\s> matches [\t\n\f\r ].
+C<\s> matches [\t\n\f\r\cK ] and, starting, experimentally in Perl
+v5.18, the vertical tab, C<\cK>.
+(See note C<[1]> below for a discussion of this.)
 Note that this list doesn't include the non-breaking space.
 
 =back
@@ -277,26 +280,26 @@ Note that unlike C<\s> (and C<\d> and C<\w>), C<\h> and C<\v> always match
 the same characters, without regard to other factors, such as the active
 locale or whether the source string is in UTF-8 format.
 
-One might think that C<\s> is equivalent to C<[\h\v]>. This is not true.
-The difference is that the vertical tab (C<"\x0b">) is not matched by
-C<\s>; it is however considered vertical whitespace.
+One might think that C<\s> is equivalent to C<[\h\v]>. This is indeed true
+starting in Perl v5.18, but prior to that, the sole difference was that the
+vertical tab (C<"\cK">) was not matched by C<\s>.
 
 The following table is a complete listing of characters matched by
 C<\s>, C<\h> and C<\v> as of Unicode 6.0.
 
 The first column gives the Unicode code point of the character (in hex format),
 the second column gives the (Unicode) name. The third column indicates
-by which class(es) the character is matched (assuming no locale or EBCDIC code
-page is in effect that changes the C<\s> matching).
+by which class(es) the character is matched (assuming no locale is in
+effect that changes the C<\s> matching).
 
  0x0009        CHARACTER TABULATION   h s
  0x000a              LINE FEED (LF)    vs
- 0x000b             LINE TABULATION    v
+ 0x000b             LINE TABULATION    vs  [1]
  0x000c              FORM FEED (FF)    vs
  0x000d        CARRIAGE RETURN (CR)    vs
  0x0020                       SPACE   h s
- 0x0085             NEXT LINE (NEL)    vs  [1]
- 0x00a0              NO-BREAK SPACE   h s  [1]
+ 0x0085             NEXT LINE (NEL)    vs  [2]
+ 0x00a0              NO-BREAK SPACE   h s  [2]
  0x1680            OGHAM SPACE MARK   h s
  0x180e   MONGOLIAN VOWEL SEPARATOR   h s
  0x2000                     EN QUAD   h s
@@ -319,6 +322,16 @@ page is in effect that changes the C<\s> matching).
 =over 4
 
 =item [1]
+
+Prior to Perl v5.18, C<\s> did not match the vertical tab.  The change
+in v5.18 is considered an experiment, which means it could be backed out
+in v5.20 or v5.22 if experience indicates that it breaks too much
+existing code.  If this change adversely affects you, send email to
+C<perlbug@perl.org>; if it affects you positively, email
+C<perlthanks@perl.org>.  In the meantime, C<[^\S\cK]> (obscurely)
+matches what C<\s> traditionally did.
+
+=item [2]
 
 NEXT LINE and NO-BREAK SPACE may or may not match C<\s> depending
 on the rules in effect.  See
@@ -345,9 +358,9 @@ C</\pLl/> is valid, but means something different.
 It matches a two character string: a letter (Unicode property C<\pL>),
 followed by a lowercase C<l>.
 
-If neither the C</a> modifier nor locale rules are in effect, the use of
+If locale rules are not in effect, the use of
 a Unicode property will force the regular expression into using Unicode
-rules.
+rules, if it isn't already.
 
 Note that almost all properties are immune to case-insensitive matching.
 That is, adding a C</i> regular expression modifier does not change what
@@ -441,7 +454,8 @@ Examples:
 
 * There is an exception to a bracketed character class matching a
 single character only.  When the class is to match caselessly under C</i>
-matching rules, and a character inside the class matches a
+matching rules, and a character that is explicitly mentioned inside the
+class matches a
 multiple-character sequence caselessly under Unicode rules, the class
 (when not L<inverted|/Negation>) will also match that sequence.  For
 example, Unicode says that the letter C<LATIN SMALL LETTER SHARP S>
@@ -449,6 +463,18 @@ should match the sequence C<ss> under C</i> rules.  Thus,
 
  'ss' =~ /\A\N{LATIN SMALL LETTER SHARP S}\z/i             # Matches
  'ss' =~ /\A[aeioust\N{LATIN SMALL LETTER SHARP S}]\z/i    # Matches
+
+For this to happen, the character must be explicitly specified, and not
+be part of a multi-character range (not even as one of its endpoints).
+(L</Character Ranges> will be explained shortly.)  Therefore,
+
+ 'ss' =~ /\A[\0-\x{ff}]\z/i        # Doesn't match
+ 'ss' =~ /\A[\0-\N{LATIN SMALL LETTER SHARP S}]\z/i    # No match
+ 'ss' =~ /\A[\xDF-\xDF]\z/i    # Matches on ASCII platforms, since \XDF
+                               # is LATIN SMALL LETTER SHARP S, and the
+                               # range is just a single element
+
+Note that it isn't a good idea to specify these types of ranges anyway.
 
 =head3 Special Characters Inside a Bracketed Character Class
 
@@ -508,7 +534,7 @@ escaping.
 Examples:
 
  "+"   =~ /[+?*]/     #  Match, "+" in a character class is not special.
- "\cH" =~ /[\b]/      #  Match, \b inside in a character class
+ "\cH" =~ /[\b]/      #  Match, \b inside in a character class.
                       #  is equivalent to a backspace.
  "]"   =~ /[][]/      #  Match, as the character class contains.
                       #  both [ and ].
@@ -643,7 +669,7 @@ is valid and matches '0', '1', any alphabetic character, and the percent sign.
 Perl recognizes the following POSIX character classes:
 
  alpha  Any alphabetical character ("[A-Za-z]").
- alnum  Any alphanumeric character. ("[A-Za-z0-9]")
+ alnum  Any alphanumeric character ("[A-Za-z0-9]").
  ascii  Any character in the ASCII character set.
  blank  A GNU extension, equal to a space or a horizontal tab ("\t").
  cntrl  Any control character.  See Note [2] below.
@@ -652,7 +678,8 @@ Perl recognizes the following POSIX character classes:
  lower  Any lowercase character ("[a-z]").
  print  Any printable character, including a space.  See Note [4] below.
  punct  Any graphical character excluding "word" characters.  Note [5].
- space  Any whitespace character. "\s" plus the vertical tab ("\cK").
+ space  Any whitespace character. "\s" including the vertical tab
+        ("\cK").
  upper  Any uppercase character ("[A-Z]").
  word   A Perl extension ("[A-Za-z0-9_]"), equivalent to "\w".
  xdigit Any hexadecimal digit ("[0-9a-fA-F]").
@@ -705,10 +732,6 @@ the terminal somehow: for example, newline and backspace are control characters.
 In the ASCII range, characters whose code points are between 0 and 31 inclusive,
 plus 127 (C<DEL>) are control characters.
 
-On EBCDIC platforms, it is likely that the code page will define C<[[:cntrl:]]>
-to be the EBCDIC equivalents of the ASCII controls, plus the controls
-that in Unicode have code pointss from 128 through 159.
-
 =item [3]
 
 Any character that is I<graphical>, that is, visible. This class consists
@@ -743,9 +766,10 @@ Unicode considers symbols.
 
 =item [6]
 
-C<\p{SpacePerl}> and C<\p{Space}> differ only in that in non-locale
-matching, C<\p{Space}> additionally
-matches the vertical tab, C<\cK>.   Same for the two ASCII-only range forms.
+C<\p{SpacePerl}> and C<\p{Space}> match identically starting with Perl
+v5.18.  In earlier versions, these differ only in that in non-locale
+matching, C<\p{SpacePerl}> does not match the vertical tab, C<\cK>.
+Same for the two ASCII-only range forms.
 
 =back
 
@@ -787,7 +811,7 @@ The POSIX class matches according to the locale, except that
 C<word> uses the platform's native underscore character, no matter what
 the locale is.
 
-=item if Unicode rules are in effect or if on an EBCDIC platform ...
+=item if Unicode rules are in effect ...
 
 The POSIX class matches the same as the Full-range counterpart.
 
@@ -806,7 +830,7 @@ L<perlre/Which character set modifier is in effect?>.
 
 It is proposed to change this behavior in a future release of Perl so that
 whether or not Unicode rules are in effect would not change the
-behavior:  Outside of locale or an EBCDIC code page, the POSIX classes
+behavior:  Outside of locale, the POSIX classes
 would behave like their ASCII-range counterparts.  If you wish to
 comment on this proposal, send email to C<perl5-porters@perl.org>.
 
@@ -840,11 +864,218 @@ either construct raises an exception.
  /[01[:lower:]]/          # Matches a character that is either a
                           # lowercase letter, or '0' or '1'.
  /[[:digit:][:^xdigit:]]/ # Matches a character that can be anything
-			  # except the letters 'a' to 'f'.  This is
-			  # because the main character class is composed
-			  # of two POSIX character classes that are ORed
-			  # together, one that matches any digit, and
-			  # the other that matches anything that isn't a
-			  # hex digit.  The result matches all
-			  # characters except the letters 'a' to 'f' and
-			  # 'A' to 'F'.
+                          # except the letters 'a' to 'f' and 'A' to
+                          # 'F'.  This is because the main character
+                          # class is composed of two POSIX character
+                          # classes that are ORed together, one that
+                          # matches any digit, and the other that
+                          # matches anything that isn't a hex digit.
+                          # The OR adds the digits, leaving only the
+                          # letters 'a' to 'f' and 'A' to 'F' excluded.
+
+=head3 Extended Bracketed Character Classes
+X<character class>
+X<set operations>
+
+This is a fancy bracketed character class that can be used for more
+readable and less error-prone classes, and to perform set operations,
+such as intersection. An example is
+
+ /(?[ \p{Thai} & \p{Digit} ])/
+
+This will match all the digit characters that are in the Thai script.
+
+This is an experimental feature available starting in 5.18, and is
+subject to change as we gain field experience with it.  Any attempt to
+use it will raise a warning, unless disabled via
+
+ no warnings "experimental::regex_sets";
+
+Comments on this feature are welcome; send email to
+C<perl5-porters@perl.org>.
+
+We can extend the example above:
+
+ /(?[ ( \p{Thai} + \p{Lao} ) & \p{Digit} ])/
+
+This matches digits that are in either the Thai or Laotian scripts.
+
+Notice the white space in these examples.  This construct always has
+the C<E<sol>x> modifier turned on.
+
+The available binary operators are:
+
+ &    intersection
+ +    union
+ |    another name for '+', hence means union
+ -    subtraction (the result matches the set consisting of those
+      code points matched by the first operand, excluding any that
+      are also matched by the second operand)
+ ^    symmetric difference (the union minus the intersection).  This
+      is like an exclusive or, in that the result is the set of code
+      points that are matched by either, but not both, of the
+      operands.
+
+There is one unary operator:
+
+ !    complement
+
+All the binary operators left associate, and are of equal precedence.
+The unary operator right associates, and has higher precedence.  Use
+parentheses to override the default associations.  Some feedback we've
+received indicates a desire for intersection to have higher precedence
+than union.  This is something that feedback from the field may cause us
+to change in future releases; you may want to parenthesize copiously to
+avoid such changes affecting your code, until this feature is no longer
+considered experimental.
+
+The main restriction is that everything is a metacharacter.  Thus,
+you cannot refer to single characters by doing something like this:
+
+ /(?[ a + b ])/ # Syntax error!
+
+The easiest way to specify an individual typable character is to enclose
+it in brackets:
+
+ /(?[ [a] + [b] ])/
+
+(This is the same thing as C<[ab]>.)  You could also have said the
+equivalent:
+
+ /(?[[ a b ]])/
+
+(You can, of course, specify single characters by using, C<\x{ }>,
+C<\N{ }>, etc.)
+
+This last example shows the use of this construct to specify an ordinary
+bracketed character class without additional set operations.  Note the
+white space within it; C<E<sol>x> is turned on even within bracketed
+character classes, except you can't have comments inside them.  Hence,
+
+ (?[ [#] ])
+
+matches the literal character "#".  To specify a literal white space character,
+you can escape it with a backslash, like:
+
+ /(?[ [ a e i o u \  ] ])/
+
+This matches the English vowels plus the SPACE character.
+All the other escapes accepted by normal bracketed character classes are
+accepted here as well; but unrecognized escapes that generate warnings
+in normal classes are fatal errors here.
+
+All warnings from these class elements are fatal, as well as some
+practices that don't currently warn.  For example you cannot say
+
+ /(?[ [ \xF ] ])/     # Syntax error!
+
+You have to have two hex digits after a braceless C<\x> (use a leading
+zero to make two).  These restrictions are to lower the incidence of
+typos causing the class to not match what you thought it would.
+
+The final difference between regular bracketed character classes and
+these, is that it is not possible to get these to match a
+multi-character fold.  Thus,
+
+ /(?[ [\xDF] ])/iu
+
+does not match the string C<ss>.
+
+You don't have to enclose POSIX class names inside double brackets,
+hence both of the following work:
+
+ /(?[ [:word:] - [:lower:] ])/
+ /(?[ [[:word:]] - [[:lower:]] ])/
+
+Any contained POSIX character classes, including things like C<\w> and C<\D>
+respect the C<E<sol>a> (and C<E<sol>aa>) modifiers.
+
+C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt to use
+something which isn't knowable at the time the containing regular
+expression is compiled is a fatal error.  In practice, this means
+just three limitiations:
+
+=over 4
+
+=item 1
+
+This construct cannot be used within the scope of
+C<use locale> (or the C<E<sol>l> regex modifier).
+
+=item 2
+
+Any
+L<user-defined property|perlunicode/"User-Defined Character Properties">
+used must be already defined by the time the regular expression is
+compiled (but note that this construct can be used instead of such
+properties).
+
+=item 3
+
+A regular expression that otherwise would compile
+using C<E<sol>d> rules, and which uses this construct will instead
+use C<E<sol>u>.  Thus this construct tells Perl that you don't want
+C<E<sol>d> rules for the entire regular expression containing it.
+
+=back
+
+The C<E<sol>x> processing within this class is an extended form.
+Besides the characters that are considered white space in normal C</x>
+processing, there are 5 others, recommended by the Unicode standard:
+
+ U+0085 NEXT LINE
+ U+200E LEFT-TO-RIGHT MARK
+ U+200F RIGHT-TO-LEFT MARK
+ U+2028 LINE SEPARATOR
+ U+2029 PARAGRAPH SEPARATOR
+
+Note that skipping white space applies only to the interior of this
+construct.  There must not be any space between any of the characters
+that form the initial C<(?[>.  Nor may there be space between the
+closing C<])> characters.
+
+Just as in all regular expressions, the pattern can can be built up by
+including variables that are interpolated at regex compilation time.
+Care must be taken to ensure that you are getting what you expect.  For
+example:
+
+ my $thai_or_lao = '\p{Thai} + \p{Lao}';
+ ...
+ qr/(?[ \p{Digit} & $thai_or_lao ])/;
+
+compiles to
+
+ qr/(?[ \p{Digit} & \p{Thai} + \p{Lao} ])/;
+
+But this does not have the effect that someone reading the code would
+likely expect, as the intersection applies just to C<\p{Thai}>,
+excluding the Laotian.  Pitfalls like this can be avoided by
+parenthesizing the component pieces:
+
+ my $thai_or_lao = '( \p{Thai} + \p{Lao} )';
+
+But any modifiers will still apply to all the components:
+
+ my $lower = '\p{Lower} + \p{Digit}';
+ qr/(?[ \p{Greek} & $lower ])/i;
+
+matches upper case things.  You can avoid surprises by making the
+components into instances of this construct by compiling them:
+
+ my $thai_or_lao = qr/(?[ \p{Thai} + \p{Lao} ])/;
+ my $lower = qr/(?[ \p{Lower} + \p{Digit} ])/;
+
+When these are embedded in another pattern, what they match does not
+change, regardless of parenthesization or what modifiers are in effect
+in that outer pattern.
+
+Due to the way that Perl parses things, your parentheses and brackets
+may need to be balanced, even including comments.  If you run into any
+examples, please send them to C<perlbug@perl.org>, so that we can have a
+concrete example for this man page.
+
+We may change it so that things that remain legal uses in normal bracketed
+character classes might become illegal within this experimental
+construct.  One proposal, for example, is to forbid adjacent uses of the
+same character, as in C<(?[ [aa] ])>.  The motivation for such a change
+is that this usage is likely a typo, as the second "a" adds nothing.

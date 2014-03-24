@@ -30,7 +30,7 @@ my $p = new Net::Ping "tcp";
 
 isa_ok($p, 'Net::Ping', 'new() worked');
 
-is($Net::Ping::hires, 0, 'Default is to not use Time::HiRes');
+is($Net::Ping::hires, 1, 'Default is to use Time::HiRes');
 
 $p -> hires();
 isnt($Net::Ping::hires, 0, 'Enabled hires');

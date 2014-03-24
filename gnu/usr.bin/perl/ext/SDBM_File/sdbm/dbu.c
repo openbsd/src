@@ -68,7 +68,7 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	register cmd *act;
+	cmd *act;
 	extern int optind;
 	extern char *optarg;
 
@@ -96,13 +96,13 @@ main(int argc, char **argv)
 }
 
 static void
-doit(register cmd *act, char *file)
+doit(cmd *act, char *file)
 {
 	datum key;
 	datum val;
-	register DBM *db;
-	register char *op;
-	register int n;
+	DBM *db;
+	char *op;
+	int n;
 	char *line;
 #ifdef TIME
 	long start;
@@ -195,7 +195,7 @@ doit(register cmd *act, char *file)
 static void
 badk(char *word)
 {
-	register int i;
+	int i;
 
 	if (progname)
 		fprintf(stderr, "%s: ", progname);
@@ -209,10 +209,10 @@ badk(char *word)
 }
 
 static cmd *
-parse(register char *str)
+parse(char *str)
 {
-	register int i = CTABSIZ;
-	register cmd *p;
+	int i = CTABSIZ;
+	cmd *p;
 	
 	for (p = cmds; i--; p++)
 		if (strcmp(p->sname, str) == 0)
@@ -223,9 +223,9 @@ parse(register char *str)
 static void
 prdatum(FILE *stream, datum d)
 {
-	register int c;
-	register char *p = d.dptr;
-	register int n = d.dsize;
+	int c;
+	char *p = d.dptr;
+	int n = d.dsize;
 
 	while (n--) {
 		c = *p++ & 0377;

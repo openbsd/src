@@ -4,8 +4,63 @@ use strict;
 use Digest::MD5 'md5';
 use File::Find;
 
-# make it clearer when we haven't run to completion, as we can be quite
-# noisy when things are working ok
+=head1 NAME
+
+Porting/pod_lib.pl - functions for building and installing POD
+
+=head1 SYNOPSIS
+
+    require './Porting/pod_lib.pl';
+
+=cut
+
+=head1 DESCRIPTION
+
+This program, when C<require>d into other programs in the Perl 5 core
+distribution, provides functions useful during building and, secondarily,
+testing.
+
+As of this writing, the functions in this program are used in these other
+programs:
+
+    installman
+    installperl
+    pod/buildtoc
+    pod/perl.pod
+    Porting/new-perldelta.pl
+    Porting/pod_rules.pl
+
+Note:  Since these functions are used during the Perl build process, they must
+work with F<miniperl>.  That necessarily implies that these functions must not
+rely on XS modules, either directly or indirectly (e.g., C<autodie>).
+
+=head1 SUBROUTINES
+
+=head2 C<my_die()>
+
+=over 4
+
+=item * Purpose
+
+Exit from a process with an error code and a message.
+
+=item * Arguments
+
+List of arguments to be passed with the error message.  Example:
+
+    close $fh or my_die("close 'utils.lst': $!");
+
+=item * Return Value
+
+Exit code C<255>.
+
+=item * Comment
+
+Prints C<ABORTED> to STDERR.
+
+=back
+
+=cut
 
 sub my_die {
     print STDERR "$0: ", @_;
@@ -14,11 +69,55 @@ sub my_die {
     exit 255;
 }
 
+=head2 C<open_or_die()>
+
+=over 4
+
+=item * Purpose
+
+Opens a file or fails if it cannot.
+
+=item * Arguments
+
+String holding filename to be opened.  Example:
+
+    $fh = open_or_die('utils.lst');
+
+=item * Return Value
+
+Handle to opened file.
+
+=back
+
+=cut
+
 sub open_or_die {
     my $filename = shift;
     open my $fh, '<', $filename or my_die "Can't open $filename: $!";
     return $fh;
 }
+
+=head2 C<slurp_or_die()>
+
+=over 4
+
+=item * Purpose
+
+Read the contents of a file into memory as a single string.
+
+=item * Arguments
+
+String holding name of file to be read into memory.
+
+    $olddelta = slurp_or_die('pod/perldelta.pod');
+
+=item * Return Value
+
+String holding contents of file.
+
+=back
+
+=cut
 
 sub slurp_or_die {
     my $filename = shift;
@@ -30,6 +129,29 @@ sub slurp_or_die {
     return $contents;
 }
 
+=head2 C<write_or_die()>
+
+=over 4
+
+=item * Purpose
+
+Write out a string to a file.
+
+=item * Arguments
+
+List of two arguments:  (i) String holding name of file to be written to; (ii)
+String holding contents to be written.
+
+    write_or_die($olddeltaname, $olddelta);
+
+=item * Return Value
+
+Implicitly returns true value upon success.
+
+=back
+
+=cut
+
 sub write_or_die {
     my ($filename, $contents) = @_;
     open my $fh, '>', $filename or die "Can't open $filename for writing: $!";
@@ -37,6 +159,48 @@ sub write_or_die {
     print $fh $contents or die "Can't write to $filename: $!";
     close $fh or die "Can't close $filename: $!";
 }
+
+=head2 C<pods_to_install()>
+
+=over 4
+
+=item * Purpose
+
+Create a lookup table holding information about PODs to be installed.
+
+=item * Arguments
+
+None.
+
+=item * Return Value
+
+Reference to a hash with a structure like this:
+
+    $found = {
+      'MODULE' => {
+        'CPAN::Bundle' => 'lib/CPAN/Bundle.pm',
+        'Locale::Codes::Script_Retired' =>
+            'lib/Locale/Codes/Script_Retired.pm',
+        'Pod::Simple::DumpAsText' =>
+            'lib/Pod/Simple/DumpAsText.pm',
+        # ...
+        'Locale::Codes::LangVar' =>
+            'lib/Locale/Codes/LangVar.pod'
+      },
+      'PRAGMA' => {
+        'fields' => 'lib/fields.pm',
+        'subs' => 'lib/subs.pm',
+        # ...
+      },
+
+=item * Comment
+
+Broadly speaking, the function assembles a list of all F<.pm> and F<.pod>
+files in the distribution and then excludes certain files from installation.
+
+=back
+
+=cut
 
 sub pods_to_install {
     # manpages not to be installed
@@ -224,6 +388,60 @@ sub __prime_state {
            . join ' ', sort keys %flag_set)
         if keys %flag_set;
 }
+
+=head2 C<get_pod_metadata()>
+
+=over 4
+
+=item * Purpose
+
+=item * Arguments
+
+List of one or more arguments.
+
+=over 4
+
+=item * Boolean true or false
+
+=item * Reference to a suboutine.
+
+=item * Various other arguments.
+
+=back
+
+Example:
+
+    $state = get_pod_metadata(
+        0, sub { warn @_ if @_ }, 'pod/perltoc.pod');
+
+    get_pod_metadata(
+        1, sub { warn @_ if @_ }, values %Build);
+
+=item * Return Value
+
+Hash reference; each element provides either a list or a lookup table for
+information about various types of POD files.
+
+  'aux'             => [ # utility programs like
+                            'h2xs' and 'perlbug' ]
+  'generated'       => { # lookup table for generated POD files
+                            like 'perlapi.pod' }
+  'ignore'          => { # lookup table for files to be ignored }
+  'pods'            => { # lookup table in "name" =>
+                            "short description" format }
+  'readmes'         => { # lookup table for OS-specific
+                            and other READMEs }
+  'delta_version'   => [ # major version number, minor no.,
+                            patch no. ]
+  'delta_target'    => 'perl<Mmmpp>delta.pod',
+  'master'          => [ # list holding entries for files callable
+                        by 'perldoc' ]
+  'copies'          => { # patch version perldelta =>
+                        minor version perldelta }
+
+=back
+
+=cut
 
 sub get_pod_metadata {
     # Do we expect to find generated pods on disk?

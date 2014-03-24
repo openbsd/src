@@ -55,6 +55,10 @@ package name of the function.
 
 The C<phase-change> probe was added.
 
+=item 5.18.0
+
+The C<op-entry>, C<loading-file>, and C<loaded-file> probes were added.
+
 =back
 
 =head1 PROBES
@@ -70,7 +74,7 @@ I<caller> from a DTrace action.
 
     :*perl*::sub-entry {
         printf("%s::%s entered at %s line %d\n",
-               copyinstr(arg3), copyinstr(arg0), copyinstr(arg1), arg0);
+               copyinstr(arg3), copyinstr(arg0), copyinstr(arg1), arg2);
     }
 
 =item sub-return(SUBNAME, FILE, LINE, PACKAGE)
@@ -82,7 +86,7 @@ from a DTrace action.
 
     :*perl*::sub-return {
         printf("%s::%s returned at %s line %d\n",
-               copyinstr(arg3), copyinstr(arg0), copyinstr(arg1), arg0);
+               copyinstr(arg3), copyinstr(arg0), copyinstr(arg1), arg2);
     }
 
 =item phase-change(NEWPHASE, OLDPHASE)
@@ -95,6 +99,40 @@ C<${^GLOBAL_PHASE}> reports.
     :*perl*::phase-change {
         printf("Phase changed from %s to %s\n",
             copyinstr(arg1), copyinstr(arg0));
+    }
+
+=item op-entry(OPNAME)
+
+Traces the execution of each opcode in the Perl runloop. This probe
+is fired before the opcode is executed. When the Perl debugger is
+enabled, the DTrace probe is fired I<after> the debugger hooks (but
+still before the opcode itself is executed).
+
+    :*perl*::op-entry {
+        printf("About to execute opcode %s\n", copyinstr(arg0));
+    }
+
+=item loading-file(FILENAME)
+
+Fires when Perl is about to load an individual file, whether from
+C<use>, C<require>, or C<do>. This probe fires before the file is
+read from disk. The filename argument is converted to local filesystem
+paths instead of providing C<Module::Name>-style names.
+
+    :*perl*:loading-file {
+        printf("About to load %s\n", copyinstr(arg0));
+    }
+
+=item loaded-file(FILENAME)
+
+Fires when Perl has successfully loaded an individual file, whether
+from C<use>, C<require>, or C<do>. This probe fires after the file
+is read from disk and its contentss evaluated. The filename argument
+is converted to local filesystem paths instead of providing
+C<Module::Name>-style names.
+
+    :*perl*:loaded-file {
+        printf("Successfully loaded %s\n", copyinstr(arg0));
     }
 
 =back
@@ -156,19 +194,38 @@ C<${^GLOBAL_PHASE}> reports.
     read                                                            374
     stat64                                                         1056
 
+=item Perl functions that execute the most opcodes
+
+    # dtrace -qZn 'sub-entry { self->fqn = strjoin(copyinstr(arg3), strjoin("::", copyinstr(arg0))) } op-entry /self->fqn != ""/ { @[self->fqn] = count() } END { trunc(@, 3) }'
+
+    warnings::unimport                                             4589
+    Exporter::Heavy::_rebuild_cache                                5039
+    Exporter::import                                              14578
+
 =back
 
 =head1 REFERENCES
 
 =over 4
 
-=item DTrace User Guide
+=item DTrace Dynamic Tracing Guide
 
-L<http://download.oracle.com/docs/cd/E19082-01/819-3620/index.html>
+L<http://dtrace.org/guide/preface.html>
 
 =item DTrace: Dynamic Tracing in Oracle Solaris, Mac OS X and FreeBSD
 
 L<http://www.amazon.com/DTrace-Dynamic-Tracing-Solaris-FreeBSD/dp/0132091518/>
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Devel::DTrace::Provider>
+
+This CPAN module lets you create application-level DTrace probes written in
+Perl.
 
 =back
 

@@ -44,7 +44,7 @@ my %Files;
 sub add_file {
     my ($file, $data) = @_;
     $data ||= 'foo';
-    $file =~ s/ /^_/g if $Is_VMS; # escape spaces
+    $file =~ s/ /^_/g if $Is_VMS_noefs; # escape spaces
     1 while unlink $file;  # or else we'll get multiple versions on VMS
     open( T, '> '.$file) or return;
     print T $data;

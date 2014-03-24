@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..10\n"; }
+BEGIN { $| = 1; print "1..20\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -35,19 +35,30 @@ my $objOr = Unicode::Collate::Locale->
 
 ok($objOr->getlocale, 'or');
 
-$objOr->change(level => 1);
-
-ok($objOr->lt("\x{B14}", "\x{B01}"));
-ok($objOr->lt("\x{B01}", "\x{B02}"));
-ok($objOr->lt("\x{B02}", "\x{B03}"));
-ok($objOr->lt("\x{B03}", "\x{B15}"));
-
-ok($objOr->lt("\x{B39}", "\x{B15}\x{B4D}\x{B37}"));
-ok($objOr->gt("\x{B3D}", "\x{B15}\x{B4D}\x{B37}"));
-
-ok($objOr->eq("\x{B2F}", "\x{B5F}"));
-
 $objOr->change(level => 2);
 
 ok($objOr->lt("\x{B2F}", "\x{B5F}"));
 
+$objOr->change(level => 1);
+
+ok($objOr->eq("\x{B2F}", "\x{B5F}"));
+
+# 4
+
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objOr->change(highestFFFF => 1) if $h;
+
+    ok($objOr->lt("\x{B13}$t", "\x{B14}"));
+    ok($objOr->lt("\x{B14}$t", "\x{B01}"));
+    ok($objOr->lt("\x{B01}$t", "\x{B02}"));
+    ok($objOr->lt("\x{B02}$t", "\x{B03}"));
+    ok($objOr->lt("\x{B03}$t", "\x{B15}"));
+
+    ok($objOr->lt("\x{B38}$t", "\x{B39}"));
+    ok($objOr->lt("\x{B39}$t", "\x{B15}\x{B4D}\x{B37}"));
+    ok($objOr->lt("\x{B15}\x{B4D}\x{B37}$t", "\x{B3D}"));
+}
+
+# 20

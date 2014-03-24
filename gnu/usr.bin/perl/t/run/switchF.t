@@ -1,11 +1,16 @@
 #!./perl -anFx+
 
 BEGIN {
-    print "1..2\n";
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
     *ARGV = *DATA;
+    plan(tests => 2);
 }
-print "@F";
+my $index = $F[-1];
+chomp $index;
+is($index, $., "line $.");
 
 __DATA__
 okx1
-okxxx2
+okx3xx2

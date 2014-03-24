@@ -50,6 +50,7 @@ for (my $ii = 0; $ii < $#manifest; $ii++) {
 if (defined($outfile)) {
     open(my $OUT, '>', $outfile)
         or die("Can't open output file '$outfile': $!");
+    binmode($OUT);
     print($OUT join("\n", @sorted), "\n");
     close($OUT) or die($!);
 }

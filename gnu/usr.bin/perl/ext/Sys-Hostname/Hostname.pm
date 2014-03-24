@@ -14,7 +14,7 @@ our $VERSION;
 our $host;
 
 BEGIN {
-    $VERSION = '1.16';
+    $VERSION = '1.17';
     {
 	local $SIG{__DIE__};
 	eval {
@@ -62,10 +62,6 @@ sub hostname {
   elsif ($^O eq 'MSWin32') {
     ($host) = gethostbyname('localhost');
     chomp($host = `hostname 2> NUL`) unless defined $host;
-    return $host;
-  }
-  elsif ($^O eq 'epoc') {
-    $host = 'localhost';
     return $host;
   }
   else {  # Unix

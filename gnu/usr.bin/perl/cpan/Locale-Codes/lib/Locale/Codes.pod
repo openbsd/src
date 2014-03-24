@@ -244,6 +244,18 @@ Codes for identification of scripts.
 
 Codes for identification of currencies and funds.
 
+=item B<Locale::Codes::LangExt>
+
+Codes for identification of language extensions.
+
+=item B<Locale::Codes::LangVar>
+
+Codes for identification of language variations.
+
+=item B<Locale::Codes::LangFam>
+
+Codes for identification of language families.
+
 =item B<Locale::Codes::Changes>
 
 A history of changes made to this distribution.
@@ -277,7 +289,7 @@ perl problem tracker at:
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001      Michael Hennecke (Locale::Currency)
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2012 Sullivan Beck
+   Copyright (c) 2010-2013 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -2,6 +2,18 @@ use strict;
 use warnings;
 use Test::More 0.88;
 
+sub dies_ok (&@) {
+  my ($code, $qr, $comment) = @_;
+
+  my $lived = eval { $code->(); 1 };
+
+  if ($lived) {
+    fail("$comment: did not die");
+  } else {
+    like($@, $qr, $comment);
+  }
+}
+
 use CPAN::Meta::Requirements;
 
 my $req = CPAN::Meta::Requirements->new;
@@ -42,5 +54,10 @@ ok($req->accepts_module('A::Tribe::Called' => '1.5'), 'middle version (>=, <=, !
 ok(!$req->accepts_module('A::Tribe::Called' => '1.2'), 'lower version (>=, <=, !)');
 ok(!$req->accepts_module('A::Tribe::Called' => '2.1'), 'higher version (>=, <=, !)');
 ok(!$req->accepts_module('A::Tribe::Called' => '1.6'), 'excluded version (>=, <=, !)');
+
+# Test fatal errors
+dies_ok { $req->add_string_requirement('Foo::Bar', undef) }
+  qr/No requirement string provided/,
+  "die without a requirement string";
 
 done_testing;

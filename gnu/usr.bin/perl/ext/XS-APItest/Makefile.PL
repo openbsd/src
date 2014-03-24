@@ -14,6 +14,8 @@ WriteMakefile(
     realclean => {FILES	=> 'const-c.inc const-xs.inc'},
     ($Config{gccversion} && $Config{d_attribute_deprecated} ?
       (CCFLAGS => $Config{ccflags} . ' -Wno-deprecated-declarations') : ()),
+    depend => { 'core.o' => 'core_or_not.inc',
+		'notcore.o' => 'core_or_not.inc' },
 );
 
 my @names = (qw(HV_DELETE HV_DISABLE_UVAR_XKEY HV_FETCH_ISSTORE

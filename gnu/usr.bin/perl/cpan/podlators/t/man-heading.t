@@ -2,7 +2,7 @@
 #
 # man-options.t -- Additional tests for Pod::Man options.
 #
-# Copyright 2002, 2004, 2006, 2008, 2009 Russ Allbery <rra@stanford.edu>
+# Copyright 2002, 2004, 2006, 2008, 2009, 2012 Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -36,10 +36,10 @@ while (<DATA>) {
     close TMP;
     my $parser = Pod::Man->new (%options);
     isa_ok ($parser, 'Pod::Man', 'Parser object');
-    open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+    open (OUT, "> out$$.tmp") or die "Cannot create out$$.tmp: $!\n";
     $parser->parse_from_file ('tmp.pod', \*OUT);
     close OUT;
-    open (TMP, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+    open (TMP, "out$$.tmp") or die "Cannot open out$$.tmp: $!\n";
     my $heading;
     while (<TMP>) {
         if (/^\.TH/) {
@@ -48,7 +48,7 @@ while (<DATA>) {
         }
     }
     close TMP;
-    unlink ('tmp.pod', 'out.tmp');
+    1 while unlink ('tmp.pod', "out$$.tmp");
     my $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";

@@ -627,6 +627,19 @@ s/a\{3\}/a rep 3/
 [TheEnd]
 },
 
+### s2 ### RT #115156
+'s2' => {
+  todo   => 'RT #115156',
+  script => 's/1*$/x/g',
+  input  => 'bins',
+  expect => <<'[TheEnd]',
+0x
+x
+1000x
+1000x
+[TheEnd]
+},
+
 ### t ###
 't' => {
   script => join( "\n",
@@ -814,6 +827,8 @@ push( @aux, $psed );
 my $indat = '';
 for my $tc ( sort keys %testcase ){
     my( $psedres, $s2pres );
+
+    local $TODO = $testcase{$tc}{todo};
 
     # 1st test: run psed
     # prepare the script 

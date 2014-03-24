@@ -470,8 +470,8 @@ mro__nextcan(...)
   PREINIT:
     SV* self = ST(0);
     const I32 throw_nomethod = SvIVX(ST(1));
-    register I32 cxix = cxstack_ix;
-    register const PERL_CONTEXT *ccstack = cxstack;
+    I32 cxix = cxstack_ix;
+    const PERL_CONTEXT *ccstack = cxstack;
     const PERL_SI *top_si = PL_curstackinfo;
     HV* selfstash;
     SV *stashname;

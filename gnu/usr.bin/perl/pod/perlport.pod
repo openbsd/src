@@ -212,7 +212,7 @@ them in big-endian mode.  To avoid this problem in network (socket)
 connections use the C<pack> and C<unpack> formats C<n> and C<N>, the
 "network" orders.  These are guaranteed to be portable.
 
-As of perl 5.9.2, you can also use the C<E<gt>> and C<E<lt>> modifiers
+As of perl 5.10.0, you can also use the C<E<gt>> and C<E<lt>> modifiers
 to force big- or little-endian byte-order.  This is useful if you want
 to store signed integers or 64-bit integers, for example.
 
@@ -236,9 +236,9 @@ transferring or storing raw binary numbers.
 
 One can circumnavigate both these problems in two ways.  Either
 transfer and store numbers always in text format, instead of raw
-binary, or else consider using modules like Data::Dumper (included in
-the standard distribution as of Perl 5.005) and Storable (included as
-of perl 5.8).  Keeping all data as text significantly simplifies matters.
+binary, or else consider using modules like Data::Dumper and Storable
+(included as of perl 5.8).  Keeping all data as text significantly
+simplifies matters.
 
 The v-strings are portable only up to v2147483647 (0x7FFFFFFF), that's
 how far EBCDIC, or more precisely UTF-EBCDIC will go.
@@ -679,9 +679,8 @@ ISO 8859-1 bytes beyond 0x7f into your strings might cause trouble
 later.  If the bytes are native 8-bit bytes, you can use the C<bytes>
 pragma.  If the bytes are in a string (regular expression being a
 curious string), you can often also use the C<\xHH> notation instead
-of embedding the bytes as-is.  (If you want to write your code in UTF-8,
-you can use the C<utf8>.) The C<bytes> and C<utf8> pragmata are
-available since Perl 5.6.0.
+of embedding the bytes as-is.  If you want to write your code in UTF-8,
+you can use the C<utf8>.
 
 =head2 System Resources
 
@@ -777,8 +776,8 @@ Testing results: L<http://www.cpantesters.org/>
 
 =head1 PLATFORMS
 
-As of version 5.002, Perl is built with a C<$^O> variable that
-indicates the operating system it was built on.  This was implemented
+Perl is built with a C<$^O> variable that indicates the operating
+system it was built on.  This was implemented
 to help speed up code that would otherwise have to C<use Config>
 and use the value of C<$Config{osname}>.  Of course, to get more
 detailed information about the system, looking into C<%Config> is
@@ -1196,12 +1195,12 @@ trailing apostrophe.  Although an extended file name is limited
 to 255 characters, a path name is still limited to 256
 characters.
 
-The value of C<$^O> on VOS is "VOS".  To determine the
+The value of C<$^O> on VOS is "vos".  To determine the
 architecture that you are running on without resorting to loading
 all of C<%Config> you can examine the content of the @INC array
 like so:
 
-    if ($^O =~ /VOS/) {
+    if ($^O =~ /vos/) {
         print "I'm on a Stratus box!\n";
     } else {
         print "I'm not on a Stratus box!\n";
@@ -1220,14 +1219,18 @@ F<README.vos> (installed as L<perlvos>)
 
 The VOS mailing list.
 
-There is no specific mailing list for Perl on VOS.  You can post
-comments to the comp.sys.stratus newsgroup, or use the contact
-information located in the distribution files on the Stratus
-Anonymous FTP site.
+There is no specific mailing list for Perl on VOS.  You can contact
+the Stratus Technologies Customer Assistance Center (CAC) for your
+region, or you can use the contact information located in the
+distribution files on the Stratus Anonymous FTP site.
 
 =item *
 
-VOS Perl on the web at L<http://ftp.stratus.com/pub/vos/posix/posix.html>
+Stratus Technologies on the web at L<http://www.stratus.com>
+
+=item *
+
+VOS Open-Source Software on the web at L<http://ftp.stratus.com/pub/vos/vos.html>
 
 =back
 
@@ -1241,7 +1244,7 @@ systems).  On the mainframe perl currently works under the "Unix system
 services for OS/390" (formerly known as OpenEdition), VM/ESA OpenEdition, or
 the BS200 POSIX-BC system (BS2000 is supported in perl 5.6 and greater).
 See L<perlos390> for details.  Note that for OS/400 there is also a port of
-Perl 5.8.1/5.9.0 or later to the PASE which is ASCII-based (as opposed to
+Perl 5.8.1/5.10.0 or later to the PASE which is ASCII-based (as opposed to
 ILE which is EBCDIC-based), see L<perlos400>. 
 
 As of R2.5 of USS for OS/390 and Version 2.3 of VM/ESA these Unix
@@ -1280,7 +1283,7 @@ and C<|>, not to mention dealing with socket interfaces to ASCII computers
 
 Fortunately, most web servers for the mainframe will correctly
 translate the C<\n> in the following statement to its ASCII equivalent
-(C<\r> is the same under both Unix and OS/390 & VM/ESA):
+(C<\r> is the same under both Unix and OS/390):
 
     print "Content-type: text/html\r\n\r\n";
 
@@ -1291,7 +1294,6 @@ The values of C<$^O> on some of these platforms includes:
     OS/390        os390      os390
     OS400         os400      os400
     POSIX-BC      posix-bc   BS2000-posix-bc
-    VM/ESA        vmesa      vmesa
 
 Some simple tricks for determining if you are running on an EBCDIC
 platform could include any of the following (perhaps all):
@@ -1313,8 +1315,7 @@ Also see:
 
 =item *
 
-L<perlos390>, F<README.os390>, F<perlbs2000>, F<README.vmesa>,
-L<perlebcdic>.
+L<perlos390>, F<README.os390>, F<perlbs2000>, L<perlebcdic>.
 
 =item *
 
@@ -1436,7 +1437,7 @@ in C<$^O> is "riscos" (because we don't like shouting).
 =head2 Other perls
 
 Perl has been ported to many platforms that do not fit into any of
-the categories listed above.  Some, such as AmigaOS, BeOS, HP MPE/iX,
+the categories listed above.  Some, such as AmigaOS,
 QNX, Plan 9, and VOS, have been well-integrated into the standard
 Perl source code kit.  You may need to see the F<ports/> directory
 on CPAN for information, and possibly binaries, for the likes of:
@@ -1450,8 +1451,6 @@ in the "OTHER" category include:
     OS            $^O        $Config{'archname'}
     ------------------------------------------
     Amiga DOS     amigaos    m68k-amigos
-    BeOS          beos
-    MPE/iX        mpeix      PA-RISC1.1
 
 See also:
 
@@ -1460,15 +1459,6 @@ See also:
 =item *
 
 Amiga, F<README.amiga> (installed as L<perlamiga>).
-
-=item *
-
-Be OS, F<README.beos>
-
-=item *
-
-HP 300 MPE/iX, F<README.mpeix> and Mark Bixby's web page
-L<http://www.bixby.org/mark/porting.html>
 
 =item *
 
@@ -1586,7 +1576,7 @@ A little funky, because VOS's notion of ownership is a little funky (VOS).
 
 =item chroot
 
-Not implemented. (Win32, VMS, S<Plan 9>, S<RISC OS>, VOS, VM/ESA)
+Not implemented. (Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
 
 =item crypt
 
@@ -1610,8 +1600,6 @@ Not supported. (Cygwin, Win32)
 Invokes VMS debugger. (VMS)
 
 =item exec
-
-Implemented via Spawn. (VM/ESA)
 
 Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
@@ -1651,7 +1639,7 @@ Not implemented (VMS, S<RISC OS>, VOS).
 
 =item fork
 
-Not implemented. (AmigaOS, S<RISC OS>, VM/ESA, VMS)
+Not implemented. (AmigaOS, S<RISC OS>, VMS)
 
 Emulated using multiple interpreters.  See L<perlfork>.  (Win32)
 
@@ -1672,7 +1660,7 @@ Not implemented. (Win32, S<RISC OS>)
 
 =item getpriority
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS, VM/ESA)
+Not implemented. (Win32, VMS, S<RISC OS>, VOS)
 
 =item getpwnam
 
@@ -1708,11 +1696,11 @@ Not implemented. (Win32, S<Plan 9>)
 
 =item getpwent
 
-Not implemented. (Win32, VM/ESA)
+Not implemented. (Win32)
 
 =item getgrent
 
-Not implemented. (Win32, VMS, VM/ESA)
+Not implemented. (Win32, VMS)
 
 =item gethostbyname
 
@@ -1753,11 +1741,11 @@ Not implemented. (S<Plan 9>, Win32, S<RISC OS>)
 
 =item endpwent
 
-Not implemented. (MPE/iX, VM/ESA, Win32)
+Not implemented. (Win32)
 
 =item endgrent
 
-Not implemented. (MPE/iX, S<RISC OS>, VM/ESA, VMS, Win32)
+Not implemented. (S<RISC OS>, VMS, Win32)
 
 =item endhostent
 
@@ -1824,7 +1812,7 @@ numbers. (VMS)
 
 =item link
 
-Not implemented. (MPE/iX, S<RISC OS>, VOS)
+Not implemented. (S<RISC OS>, VOS)
 
 Link count not updated because hard links are not quite that hard
 (They are sort of half-way between hard and soft links). (AmigaOS)
@@ -1898,7 +1886,7 @@ Not implemented. (Win32, VMS, S<RISC OS>)
 
 =item setgrent
 
-Not implemented. (MPE/iX, VMS, Win32, S<RISC OS>)
+Not implemented. (VMS, Win32, S<RISC OS>)
 
 =item setpgrp
 
@@ -1910,7 +1898,7 @@ Not implemented. (Win32, VMS, S<RISC OS>, VOS)
 
 =item setpwent
 
-Not implemented. (MPE/iX, Win32, S<RISC OS>)
+Not implemented. (Win32, S<RISC OS>)
 
 =item setsockopt
 
@@ -1924,7 +1912,13 @@ Not implemented. (S<Plan 9>)
 
 =item shmwrite
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS)
+Not implemented. (Win32, VMS, S<RISC OS>)
+
+=item sleep
+
+Emulated using synchronization functions such that it can be
+interrupted by alarm(), and limited to a maximum of 4294967 seconds,
+approximately 49 days. (Win32)
 
 =item sockatmark
 
@@ -1933,9 +1927,7 @@ be implemented even in Unix platforms.
 
 =item socketpair
 
-Not implemented. (S<RISC OS>, VM/ESA)
-
-Available on OpenVOS Release 17.0 or later. (VOS)
+Not implemented. (S<RISC OS>)
 
 Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 
@@ -1976,14 +1968,14 @@ syntax if it is intended to resolve to a valid path.
 
 =item syscall
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS, VM/ESA)
+Not implemented. (Win32, VMS, S<RISC OS>, VOS)
 
 =item sysopen
 
 The traditional "0", "1", and "2" MODEs are implemented with different
 numeric values on some systems.  The flags exported by C<Fcntl>
 (O_RDONLY, O_WRONLY, O_RDWR) should work everywhere though.  (S<Mac
-OS>, OS/390, VM/ESA)
+OS>, OS/390)
 
 =item system
 
@@ -2038,14 +2030,14 @@ should not be held open elsewhere. (Win32)
 
 =item umask
 
-Returns undef where unavailable, as of version 5.005.
+Returns undef where unavailable.
 
 C<umask> works but the correct permissions are set only when the file
 is finally closed. (AmigaOS)
 
 =item utime
 
-Only the modification time is updated. (S<BeOS>, VMS, S<RISC OS>)
+Only the modification time is updated. (VMS, S<RISC OS>)
 
 May not behave as expected.  Behavior depends on the C runtime
 library's implementation of utime(), and the filesystem being
@@ -2127,9 +2119,13 @@ at L<http://www.cpan.org/src>
 
 =item Dragonfly BSD
 
+=item Midnight BSD
+
 =item QNX Neutrino RTOS (6.5.0)
 
 =item MirOS BSD
+
+=item Stratus OpenVOS (17.0 or later)
 
 Caveats:
 
@@ -2221,7 +2217,7 @@ available at L<http://www.cpan.org/src/>
         UNICOS
         UNICOS/mk
         UTS
-        VOS
+        VOS / OpenVOS
         Win95/98/ME/2K/XP 2)
         WinCE
         z/OS            (formerly OS/390)
@@ -2312,14 +2308,13 @@ L<http://www.cpan.org/ports/index.html> for binary distributions.
 
 =head1 SEE ALSO
 
-L<perlaix>, L<perlamiga>, L<perlbeos>, L<perlbs2000>,
-L<perlce>, L<perlcygwin>, L<perldgux>, L<perldos>, L<perlepoc>,
+L<perlaix>, L<perlamiga>, L<perlbs2000>,
+L<perlce>, L<perlcygwin>, L<perldgux>, L<perldos>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
-L<perlmacos>, L<perlmacosx>, L<perlmpeix>,
+L<perlmacos>, L<perlmacosx>,
 L<perlnetware>, L<perlos2>, L<perlos390>, L<perlos400>,
 L<perlplan9>, L<perlqnx>, L<perlsolaris>, L<perltru64>,
-L<perlunicode>, L<perlvmesa>, L<perlvms>, L<perlvos>,
-L<perlwin32>, and L<Win32>.
+L<perlunicode>, L<perlvms>, L<perlvos>, L<perlwin32>, and L<Win32>.
 
 =head1 AUTHORS / CONTRIBUTORS
 

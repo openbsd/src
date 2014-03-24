@@ -1,13 +1,14 @@
 package CPANPLUS::Module::Signature;
+use deprecate;
 
 use strict;
-
 
 use Cwd;
 use CPANPLUS::Error;
 use Params::Check               qw[check];
 use Module::Load::Conditional   qw[can_load];
-
+use vars qw[$VERSION];
+$VERSION = "0.9135";
 
 ### detached sig, not actually used afaik --kane ###
 #sub get_signature {

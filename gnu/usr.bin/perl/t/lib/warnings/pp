@@ -37,10 +37,16 @@ use warnings 'substr' ;
 $a = "ab" ; 
 $b = \$a ;  
 substr($b, 1,1) = "ab" ;
+$b = \$a;
+substr($b, 1,1) = "\x{100}" ;
 no warnings 'substr' ;
+$b = \$a;
 substr($b, 1,1) = "ab" ;
+$b = \$a;
+substr($b, 1,1) = "\x{100}" ;
 EXPECT
 Attempt to use reference as lvalue in substr at - line 5.
+Attempt to use reference as lvalue in substr at - line 7.
 ########
 # pp.c
 use warnings 'misc' ;

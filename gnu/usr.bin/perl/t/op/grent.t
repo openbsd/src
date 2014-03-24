@@ -28,11 +28,11 @@ if (not defined $where) {	# Try NIS.
         {
             print "# `ypcat group` worked\n";
 
-            # Check to make sure we're really using NIS.
+            # Check to make sure we are really using NIS.
             if( open(NSSW, "/etc/nsswitch.conf" ) ) {
                 my($group) = grep /^\s*group:/, <NSSW>;
 
-                # If there's no group line, assume it default to compat.
+                # If there is no group line, assume it default to compat.
                 if( !$group || $group !~ /(nis|compat)/ ) {
                     print "# Doesn't look like you're using NIS in ".
                           "/etc/nsswitch.conf\n";
@@ -91,7 +91,7 @@ ok( setgrent(), 'setgrent' ) || print "# $!\n";
 
 while (<GR>) {
     chomp;
-    # LIMIT -1 so that groups with no users don't fall off
+    # LIMIT -1 so that groups with no users do not fall off
     my @s = split /:/, $_, -1;
     my ($name_s,$passwd_s,$gid_s,$members_s) = @s;
     if (@s) {
@@ -158,7 +158,7 @@ EOEX
     fail();
     print "#\t (not necessarily serious: run t/op/grent.t by itself)\n";
 } else {
-    pass();
+    pass("getgrgid and getgrnam performed as expected");
 }
 
 # Test both the scalar and list contexts.
@@ -183,6 +183,6 @@ for (1..$max) {
 }
 endgrent();
 
-is("@gr1", "@gr2");
+is("@gr1", "@gr2", "getgrent gave same results in scalar and list contexts");
 
 close(GR);

@@ -1,8 +1,8 @@
-# GraphemeBreakProperty-6.1.0.txt
-# Date: 2011-12-05, 16:44:15 GMT [MD]
+# GraphemeBreakProperty-6.2.0.txt
+# Date: 2012-08-13, 19:12:02 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -305,6 +305,12 @@ FF9E..FF9F    ; Extend # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFWIDT
 E0100..E01EF  ; Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
 # Total code points: 1317
+
+# ================================================
+
+1F1E6..1F1FF  ; Regional_Indicator # So  [26] REGIONAL INDICATOR SYMBOL LETTER A..REGIONAL INDICATOR SYMBOL LETTER Z
+
+# Total code points: 26
 
 # ================================================
 

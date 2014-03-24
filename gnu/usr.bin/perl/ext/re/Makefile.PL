@@ -25,23 +25,28 @@ sub postamble {
     my $regcomp_c = upupfile('regcomp.c');
     my $regexec_c = upupfile('regexec.c');
     my $dquote_static_c = upupfile('dquote_static.c');
+    my $inline_invlist_c = upupfile('inline_invlist.c');
 
     <<EOF;
 re_comp.c : $regcomp_c
 	- \$(RM_F) re_comp.c
 	\$(CP) $regcomp_c re_comp.c
 
-re_comp\$(OBJ_EXT) : re_comp.c dquote_static.c
+re_comp\$(OBJ_EXT) : re_comp.c dquote_static.c inline_invlist.c
 
 re_exec.c : $regexec_c
 	- \$(RM_F) re_exec.c
 	\$(CP) $regexec_c re_exec.c
 
-re_exec\$(OBJ_EXT) : re_exec.c
+re_exec\$(OBJ_EXT) : re_exec.c inline_invlist.c
 
 dquote_static.c : $dquote_static_c
 	- \$(RM_F) dquote_static.c
 	\$(CP) $dquote_static_c dquote_static.c
+
+inline_invlist.c : $inline_invlist_c
+	- \$(RM_F) inline_invlist.c
+	\$(CP) $inline_invlist_c inline_invlist.c
 
 EOF
 }

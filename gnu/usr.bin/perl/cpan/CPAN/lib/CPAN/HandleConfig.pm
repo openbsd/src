@@ -6,6 +6,12 @@ use File::Spec ();
 use File::Basename ();
 use Carp ();
 
+=head1 NAME
+
+CPAN::HandleConfig - internal configuration handling for CPAN.pm
+
+=cut 
+
 $VERSION = "5.5003"; # see also CPAN::Config::VERSION at end of file
 
 %can = (
@@ -527,7 +533,8 @@ sub cpan_home_dir_candidates {
     push @dirs, $ENV{USERPROFILE} if $ENV{USERPROFILE};
 
     $CPAN::Config->{load_module_verbosity} = $old_v;
-    @dirs = map { "$_/.cpan" } grep { defined } @dirs;
+    my $dotcpan = $^O eq 'VMS' ? '_cpan' : '.cpan';
+    @dirs = map { File::Spec->catdir($_, $dotcpan) } grep { defined } @dirs;
     return wantarray ? @dirs : $dirs[0];
 }
 

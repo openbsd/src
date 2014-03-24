@@ -12,6 +12,10 @@ Module::CoreList - what modules shipped with versions of perl
  print Module::CoreList->first_release_by_date('File::Spec'); # prints 5.005
  print Module::CoreList->first_release('File::Spec', 0.82);   # prints 5.006001
 
+ if (Module::CoreList::is_core('File::Spec')) {
+   print "File::Spec is a core module\n";
+ }
+
  print join ', ', Module::CoreList->find_modules(qr/Data/);
     # prints 'Data::Dumper'
  print join ', ', Module::CoreList->find_modules(qr/test::h.*::.*s/i, 5.008008);
@@ -71,12 +75,32 @@ you may provide a list of perl versions to limit the regex search.
 Takes a perl version as an argument. Returns that perl version if it exists or C<undef>
 otherwise.
 
+=item C<is_core( MODULE, [ MODULE_VERSION, [ PERL_VERSION ] ] )>
+
+Available in version 2.99 and above.
+
+Returns true if MODULE was bundled with the specified version of Perl.
+You can optionally specify a minimum version of the module,
+and can also specify a version of Perl.
+If a version of Perl isn't specified,
+C<is_core()> will use the version of Perl that is running (ie C<$^V>).
+
+If you want to specify the version of Perl, but don't care about
+the version of the module, pass C<undef> for the module version:
+
 =item C<is_deprecated( MODULE, PERL_VERSION )>
 
 Available in version 2.22 and above.
 
 Returns true if MODULE is marked as deprecated in PERL_VERSION.  If PERL_VERSION is
 omitted, it defaults to the current version of Perl.
+
+=item C<deprecated_in( MODULE )>
+
+Available in version 2.77 and above.
+
+Returns the first PERL_VERSION where the MODULE was marked as deprecated. Returns C<undef>
+if the MODULE has not been marked as deprecated.
 
 =item C<removed_from( MODULE )>
 
@@ -99,12 +123,12 @@ in core.
 Available in version 2.66 and above.
 
 Given two perl versions, this returns a list of pairs describing the changes in
-core module content betweent hem.  The list is suitable for storing in a hash.
+core module content between them.  The list is suitable for storing in a hash.
 The keys are library names and the values are hashrefs.  Each hashref has an
 entry for one or both of C<left> and C<right>, giving the versions of the
 library in each of the left and right perl distributions.
 
-For example, it might return these data (among others) for the the difference
+For example, it might return these data (among others) for the difference
 between 5.008000 and 5.008001:
 
   'Pod::ParseLink'  => { left => '1.05', right => '1.06' },
@@ -134,6 +158,20 @@ that's what you're testing for.
 
 Starting with 2.10, the special module name C<Unicode> refers to the version of
 the Unicode Character Database bundled with Perl.
+
+=item C<%Module::CoreList::delta>
+
+Available in version 3.00 and above.
+
+C<%Module::CoreList::version> is implemented via C<Module::CoreList::TieHashDelta>
+using this hash of delta changes.
+
+It is a hash of hashes that is keyed on perl version. Each keyed hash will have the
+following keys:
+
+  delta_from - a previous perl version that the changes are based on
+  changed    - a hash of module/versions that have changed
+  removed    - a hash of modules that have been removed
 
 =item C<%Module::CoreList::released>
 
@@ -185,10 +223,12 @@ Module::CoreList currently covers the 5.000, 5.001, 5.002, 5.003_07,
 5.8.0, 5.8.1, 5.8.2, 5.8.3, 5.8.4, 5.8.5, 5.8.6, 5.8.7, 5.8.8, 5.8.9,
 5.9.0, 5.9.1, 5.9.2, 5.9.3, 5.9.4, 5.9.5, 5.10.0, 5.10.1, 5.11.0, 5.11.1,
 5.11.2, 5.11.3, 5.11.4, 5.11.5, 5.12.0, 5.12.1, 5.12.2, 5.12.3, 5.12.4,
-5.13.0, 5.13.1, 5.13.2, 5.13.3, 5.13.4, 5.13.5, 5.13.6, 5.13.7, 5.13.8,
-5.13.9, 5.13.10, 5.13.11, 5.14.0, 5.14.1, 5.14.2, 5.15.0, 5.15.1, 5.15.2,
-5.15.3, 5.15.4, 5.15.5, 5.15.6, 5.15.7, 5.15.8, 5.15.9, 5.16.0, 5.17.0,
-5.17.1, 5.17.2, 5.17.3, 5.17.4 and 5.17.5 releases of perl.
+5.12.5, 5.13.0, 5.13.1, 5.13.2, 5.13.3, 5.13.4, 5.13.5, 5.13.6, 5.13.7,
+5.13.8, 5.13.9, 5.13.10, 5.13.11, 5.14.0, 5.14.1, 5.14.2 5.14.3, 5.14.4,
+5.15.0, 5.15.1, 5.15.2, 5.15.3, 5.15.4, 5.15.5, 5.15.6, 5.15.7, 5.15.8,
+5.15.9, 5.16.0, 5.16.1, 5.16.2, 5.16.3, 5.17.0, 5.17.1, 5.17.2, 5.17.3,
+5.17.4, 5.17.5, 5.17.6, 5.17.7, 5.17.8, 5.17.9, 5.17.10, 5.17.11, 5.18.0,
+5.19.0, 5.19.1, 5.19.2, 5.19.3, 5.19.4, 5.19.5, 5.19.6 and 5.19.7 releases of perl.
 
 =head1 HISTORY
 

@@ -34,17 +34,25 @@ my $installdirs = $] < 5.011 ? "perl" : "site";
 
 WriteMakefile(
     NAME            => $PACKAGE,
-    ($ExtUtils::MakeMaker::VERSION > 6.30 ?
-     (LICENSE       => 'perl',
-      AUTHOR        => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
-      ABSTRACT_FROM => 'XSLoader_pm.PL',
-     ) : ()),
+    LICENSE         => 'perl',
+    AUTHOR          => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
     VERSION_FROM    => 'XSLoader_pm.PL',
+    ABSTRACT_FROM   => 'XSLoader_pm.PL',
     INSTALLDIRS     => $installdirs,
     PL_FILES        => { 'XSLoader_pm.PL'  => 'XSLoader.pm' },
     PM              => { 'XSLoader.pm' => '$(INST_ARCHLIB)/XSLoader.pm' },
     PREREQ_PM       => {
-        'Test::More' => '0.62',
+        'Test::More' => '0.47',
+    },
+    META_MERGE      => {
+        resources   => {
+            repository  => 'git://perl5.git.perl.org/perl.git',
+            license     => 'http://dev.perl.org/licenses/',
+            homepage    => 'https://metacpan.org/module/Math::BigInt',
+            irc         => 'irc://irc.perl.org/#p5p',
+            mailinglist => 'http://lists.perl.org/list/perl5-porters.html',
+            bugtracker  => "https://rt.perl.org/rt3/Search/Results.html?Query=Queue='perl5' AND Content LIKE 'module=XSLoader' AND (Status='open' OR Status='new' OR Status='stalled')",
+        },
     },
     dist            => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean           => { FILES => 'XSLoader-* XSLoader.pm' },

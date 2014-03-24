@@ -182,9 +182,9 @@ POSIX char classes called C<regnode_charclass_class> which has an
 additional 4-byte (32-bit) bitmap indicating which POSIX char classes
 have been included.
 
-    regnode_charclass_class  U32 arg1;
-                             char bitmap[ANYOF_BITMAP_SIZE];
-                             char classflags[ANYOF_CLASSBITMAP_SIZE];
+   regnode_charclass_class  U32 arg1;
+                            char bitmap[ANYOF_BITMAP_SIZE];
+                            char classflags[ANYOF_CLASSBITMAP_SIZE];
 
 =back
 
@@ -354,20 +354,23 @@ simpler form.
 
 The call graph looks like this:
 
-    reg()                        # parse a top level regex, or inside of parens
-        regbranch()              # parse a single branch of an alternation
-            regpiece()           # parse a pattern followed by a quantifier
-                regatom()        # parse a simple pattern
-                    regclass()   #   used to handle a class
-                    reg()        #   used to handle a parenthesised subpattern
-                    ....
-            ...
-            regtail()            # finish off the branch
-        ...
-        regtail()                # finish off the branch sequence. Tie each
-                                 # branch's tail to the tail of the sequence
-                                 # (NEW) In Debug mode this is
-                                 # regtail_study().
+ reg()                        # parse a top level regex, or inside of
+                              # parens
+     regbranch()              # parse a single branch of an alternation
+         regpiece()           # parse a pattern followed by a quantifier
+             regatom()        # parse a simple pattern
+                 regclass()   #   used to handle a class
+                 reg()        #   used to handle a parenthesised
+                              #   subpattern
+                 ....
+         ...
+         regtail()            # finish off the branch
+     ...
+     regtail()                # finish off the branch sequence. Tie each
+                              # branch's tail to the tail of the
+                              # sequence
+                              # (NEW) In Debug mode this is
+                              # regtail_study().
 
 A grammar form might be something like this:
 
@@ -382,6 +385,52 @@ A grammar form might be something like this:
     _piece: atom | group
     piece : _piece
           | _piece quant
+
+=head3 Parsing complications
+
+The implication of the above description is that a pattern containing nested
+parentheses will result in a call graph which cycles through C<reg()>,
+C<regbranch()>, C<regpiece()>, C<regatom()>, C<reg()>, C<regbranch()> I<etc>
+multiple times, until the deepest level of nesting is reached. All the above
+routines return a pointer to a C<regnode>, which is usually the last regnode
+added to the program. However, one complication is that reg() returns NULL
+for parsing C<(?:)> syntax for embedded modifiers, setting the flag
+C<TRYAGAIN>. The C<TRYAGAIN> propagates upwards until it is captured, in
+some cases by by C<regatom()>, but otherwise unconditionally by
+C<regbranch()>. Hence it will never be returned by C<regbranch()> to
+C<reg()>. This flag permits patterns such as C<(?i)+> to be detected as
+errors (I<Quantifier follows nothing in regex; marked by <-- HERE in m/(?i)+
+<-- HERE />).
+
+Another complication is that the representation used for the program differs
+if it needs to store Unicode, but it's not always possible to know for sure
+whether it does until midway through parsing. The Unicode representation for
+the program is larger, and cannot be matched as efficiently. (See L</Unicode
+and Localisation Support> below for more details as to why.)  If the pattern
+contains literal Unicode, it's obvious that the program needs to store
+Unicode. Otherwise, the parser optimistically assumes that the more
+efficient representation can be used, and starts sizing on this basis.
+However, if it then encounters something in the pattern which must be stored
+as Unicode, such as an C<\x{...}> escape sequence representing a character
+literal, then this means that all previously calculated sizes need to be
+redone, using values appropriate for the Unicode representation. Currently,
+all regular expression constructions which can trigger this are parsed by code
+in C<regatom()>.
+
+To avoid wasted work when a restart is needed, the sizing pass is abandoned
+- C<regatom()> immediately returns NULL, setting the flag C<RESTART_UTF8>.
+(This action is encapsulated using the macro C<REQUIRE_UTF8>.) This restart
+request is propagated up the call chain in a similar fashion, until it is
+"caught" in C<Perl_re_op_compile()>, which marks the pattern as containing
+Unicode, and restarts the sizing pass. It is also possible for constructions
+within run-time code blocks to turn out to need Unicode representation.,
+which is signalled by C<S_compile_runtime_code()> returning false to
+C<Perl_re_op_compile()>.
+
+The restart was previously implemented using a C<longjmp> in C<regatom()>
+back to a C<setjmp> in C<Perl_re_op_compile()>, but this proved to be
+problematic as the latter is a large function containing many automatic
+variables, which interact badly with the emergent control flow of C<setjmp>.
 
 =head3 Debug Output
 
@@ -489,11 +538,11 @@ Now for something much more complex: C</x(?:foo*|b[a][rR])(foo|bar)$/>
                                       atom
  >)$<             34              tail~ BRANCH (28)
                   36              tsdy~ BRANCH (END) (31)
-                                      ~ attach to CLOSE1 (34) offset to 3
+                                     ~ attach to CLOSE1 (34) offset to 3
                                   tsdy~ EXACT <foo> (EXACT) (29)
-                                      ~ attach to CLOSE1 (34) offset to 5
+                                     ~ attach to CLOSE1 (34) offset to 5
                                   tsdy~ EXACT <bar> (EXACT) (32)
-                                      ~ attach to CLOSE1 (34) offset to 2
+                                     ~ attach to CLOSE1 (34) offset to 2
  >$<                        tail~ BRANCH (3)
                                 ~ BRANCH (9)
                                 ~ TAIL (25)
@@ -765,7 +814,7 @@ implement things such as the stringification of C<qr//>.
 The other structure is pointed to be the C<regexp> struct's
 C<pprivate> and is in addition to C<intflags> in the same struct
 considered to be the property of the regex engine which compiled the
-regular expression; 
+regular expression;
 
 The regexp structure contains all the data that perl needs to be aware of
 to properly work with the regular expression. It includes data about
@@ -792,30 +841,23 @@ The following structure is used as the C<pprivate> struct by perl's
 regex engine. Since it is specific to perl it is only of curiosity
 value to other engine implementations.
 
-    typedef struct regexp_internal {
-            regexp_paren_ofs *swap; /* Swap copy of *startp / *endp */
-            U32 *offsets;           /* offset annotations 20001228 MJD 
-                                       data about mapping the program to the 
-                                       string*/
-            regnode *regstclass;    /* Optional startclass as identified or constructed
-                                       by the optimiser */
-            struct reg_data *data;  /* Additional miscellaneous data used by the program.
-                                       Used to make it easier to clone and free arbitrary
-                                       data that the regops need. Often the ARG field of
-                                       a regop is an index into this structure */
-            regnode program[1];     /* Unwarranted chumminess with compiler. */
-    } regexp_internal;
+ typedef struct regexp_internal {
+         U32 *offsets;           /* offset annotations 20001228 MJD
+                                  * data about mapping the program to
+                                  * the string*/
+         regnode *regstclass;    /* Optional startclass as identified or
+                                  * constructed by the optimiser */
+         struct reg_data *data;  /* Additional miscellaneous data used
+                                  * by the program.  Used to make it
+                                  * easier to clone and free arbitrary
+                                  * data that the regops need. Often the
+                                  * ARG field of a regop is an index
+                                  * into this structure */
+         regnode program[1];     /* Unwarranted chumminess with
+                                  * compiler. */
+ } regexp_internal;
 
 =over 5
-
-=item C<swap>
-
-C<swap> formerly was an extra set of startp/endp stored in a
-C<regexp_paren_ofs> struct. This was used when the last successful match
-was from the same pattern as the current pattern, so that a partial
-match didn't overwrite the previous match's results, but it caused a
-problem with re-entrant code such as trying to build the UTF-8 swashes.
-Currently unused and left for backward compatibility with 5.10.0.
 
 =item C<offsets>
 

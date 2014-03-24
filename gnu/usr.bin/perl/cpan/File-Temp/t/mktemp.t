@@ -4,8 +4,7 @@
 # Use STANDARD safe level for these tests
 
 use strict;
-use Test;
-BEGIN { plan tests => 9 }
+use Test::More tests => 9;
 
 use File::Spec;
 use File::Path;

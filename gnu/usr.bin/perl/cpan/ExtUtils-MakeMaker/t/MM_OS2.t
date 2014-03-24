@@ -42,7 +42,7 @@ delete $mm->{SKIPHASH};
 my $res = $mm->dlsyms();
 like( $res, qr/baseext\.def: Makefile/,
 	'... without flag, should return make targets' );
-like( $res, qr/"DL_FUNCS" => {  }/, 
+like( $res, qr/"DL_FUNCS" => \{  \}/, 
 	'... should provide empty hash refs where necessary' );
 like( $res, qr/"DL_VARS" => \[]/, '... and empty array refs too' );
 

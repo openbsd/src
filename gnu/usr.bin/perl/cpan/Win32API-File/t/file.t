@@ -16,7 +16,7 @@ BEGIN {
 	}
     }
 
-    print "1..267\n";
+    print "1..270\n";
 }
 END {print "not ok 1\n" unless $loaded;}
 
@@ -24,7 +24,7 @@ END {print "not ok 1\n" unless $loaded;}
 # the ../lib directory in @INC will no longer work once
 # we chdir() into the TEMP directory.
 
-require Win32 unless defined &Win32::FormatMessage;
+use Win32;
 use File::Spec;
 use Carp;
 use Carp::Heavy;
@@ -342,8 +342,9 @@ if( !$ok  ) {
 }
 print $ok ? "" : "not ", "ok ", ++$test, "\n";	# ok 49
 
-$ok= -f $let.substr($ENV{WINDIR},3)."/win.ini";
-$ok or print "# ",fileLastError(),"\n";
+my $path = $ENV{WINDIR};
+$ok= -f $let.substr($path,$^O eq 'cygwin'?2:3)."/win.ini";
+$ok or print "# ",$let.substr($path,3)."/win.ini ",fileLastError(),"\n";
 print $ok ? "" : "not ", "ok ", ++$test, "\n";	# ok 50
 
 $ok= DefineDosDevice( DDD_REMOVE_DEFINITION|DDD_EXACT_MATCH_ON_REMOVE
@@ -351,7 +352,6 @@ $ok= DefineDosDevice( DDD_REMOVE_DEFINITION|DDD_EXACT_MATCH_ON_REMOVE
 $ok or print "# $let,$dev: ",fileLastError(),"\n";
 print $ok ? "" : "not ", "ok ", ++$test, "\n";	# ok 51
 
-my $path = $ENV{WINDIR};
 my $attrs = GetFileAttributes( $path );
 $ok= $attrs != INVALID_FILE_ATTRIBUTES;
 $ok or print "# $path gave invalid attribute value, attrs=$attrs: ",fileLastError(),"\n";

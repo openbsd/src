@@ -23,42 +23,43 @@ already be overwhelming.
   []     anon. arrayref  ${$$foo[1]}[2] aka $foo->[1]->[2]
   {}     anon. hashref   ${$$foo[1]}[2] aka $foo->[1][2]
   \()    list of refs
-                         NUMBERS vs STRINGS    LINKS
-  OPERATOR PRECEDENCE    =          =          perldoc.perl.org
-  ->                     +          .           search.cpan.org
-  ++ --                  == !=      eq ne              cpan.org
-  **                     < > <= >=  lt gt le ge          pm.org
-  ! ~ \ u+ u-            <=>        cmp                p3rl.org
-  =~ !~                                           perlmonks.org
-  * / % x                SYNTAX
-  + - .                  foreach (LIST) { }     for (a;b;c) { }
-  << >>                  while   (e) { }        until (e)   { }
-  named uops             if      (e) { } elsif (e) { } else { }
-  < > <= >= lt gt le ge  unless  (e) { } elsif (e) { } else { }
-  == != <=> eq ne cmp ~~ given   (e) { when (e) {} default {} }
+                         SYNTAX
+  OPERATOR PRECEDENCE    foreach (LIST) { }     for (a;b;c) { }
+  ->                     while   (e) { }        until (e)   { }
+  ++ --                  if      (e) { } elsif (e) { } else { }
+  **                     unless  (e) { } elsif (e) { } else { }
+  ! ~ \ u+ u-            given   (e) { when (e) {} default {} }
+  =~ !~
+  * / % x                 NUMBERS vs STRINGS  FALSE vs TRUE
+  + - .                   =          =        undef, "", 0, "0"
+  << >>                   +          .        anything else
+  named uops              == !=      eq ne
+  < > <= >= lt gt le ge   < > <= >=  lt gt le ge
+  == != <=> eq ne cmp ~~  <=>        cmp
   &
-  | ^             REGEX METACHARS          REGEX MODIFIERS
-  &&              ^      string begin      /i case insensitive
-  || //           $      str end (bfr \n)  /m line based ^$
-  .. ...          +      one or more       /s . includes \n
-  ?:              *      zero or more      /x ignore wh.space
-  = += -= *= etc  ?      zero or one       /p preserve
-  , =>            {3,7}  repeat in range   /a ASCII    /aa safe
-  list ops        |      alternation       /l locale   /d  dual
-  not             []     character class   /u Unicode
-  and             \b     word boundary     /e evaluate /ee rpts
-  or xor          \z     string end        /g global
-                  ()     capture           /o compile pat once
-  DEBUG           (?:p)  no capture
-   -MO=Deparse    (?#t)  comment           REGEX CHARCLASSES
-   -MO=Terse      (?=p)  ZW pos ahead      .   [^\n]
-   -D##           (?!p)  ZW neg ahead      \s  whitespace
-   -d:Trace       (?<=p) ZW pos behind \K  \w  word chars
-                  (?<!p) ZW neg behind     \d  digits
-  CONFIGURATION   (?>p)  no backtrack      \pP named property
-  perl -V:ivsize  (?|p|p)branch reset      \h  horiz.wh.space
-                  (?&NM) cap to name       \R  linebreak
-                                           \S \W \D \H negate
+  | ^             REGEX MODIFIERS       REGEX METACHARS
+  &&              /i case insensitive   ^      string begin
+  || //           /m line based ^$      $      str end (bfr \n)
+  .. ...          /s . includes \n      +      one or more
+  ?:              /x ignore wh.space    *      zero or more
+  = += last goto  /p preserve           ?      zero or one
+  , =>            /a ASCII    /aa safe  {3,7}  repeat in range
+  list ops        /l locale   /d  dual  |      alternation
+  not             /u Unicode            []     character class
+  and             /e evaluate /ee rpts  \b     word boundary
+  or xor          /g global             \z     string end
+                  /o compile pat once   ()     capture
+  DEBUG                                 (?:p)  no capture
+  -MO=Deparse     REGEX CHARCLASSES     (?#t)  comment
+  -MO=Terse       .   [^\n]             (?=p)  ZW pos ahead
+  -D##            \s  whitespace        (?!p)  ZW neg ahead
+  -d:Trace        \w  word chars        (?<=p) ZW pos behind \K
+                  \d  digits            (?<!p) ZW neg behind
+  CONFIGURATION   \pP named property    (?>p)  no backtrack
+  perl -V:ivsize  \h  horiz.wh.space    (?|p|p)branch reset
+                  \R  linebreak         (?<n>p)named capture
+                  \S \W \D \H negate    \g{n}  ref to named cap
+                                        \K     keep left part
   FUNCTION RETURN LISTS
   stat      localtime    caller         SPECIAL VARIABLES
    0 dev    0 second      0 package     $_    default variable

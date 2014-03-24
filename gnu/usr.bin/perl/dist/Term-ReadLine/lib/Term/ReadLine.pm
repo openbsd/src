@@ -117,7 +117,7 @@ C<readline> method).
 =item C<event_loop>
 
 Registers call-backs to wait for user input (i.e., during C<readline>
-method).  This supercedes tkRunning.
+method).  This supersedes tkRunning.
 
 The first call-back registered is the call back for waiting.  It is
 expected that the callback will call the current event loop until
@@ -233,24 +233,17 @@ sub findConsole {
     my $console;
     my $consoleOUT;
 
-    if (-e "/dev/tty") {
+    if (-e "/dev/tty" and $^O ne 'MSWin32') {
 	$console = "/dev/tty";
-    } elsif (-e "con" or $^O eq 'MSWin32') {
+    } elsif (-e "con" or $^O eq 'MSWin32' or $^O eq 'msys') {
        $console = 'CONIN$';
        $consoleOUT = 'CONOUT$';
-    } else {
+    } elsif ($^O eq 'VMS') {
 	$console = "sys\$command";
-    }
-
-    if (($^O eq 'amigaos') || ($^O eq 'beos') || ($^O eq 'epoc')) {
-	$console = undef;
-    }
-    elsif ($^O eq 'os2') {
-      if ($DB::emacs) {
-	$console = undef;
-      } else {
+    } elsif ($^O eq 'os2' && !$DB::emacs) {
 	$console = "/dev/con";
-      }
+    } else {
+	$console = undef;
     }
 
     $consoleOUT = $console unless defined $consoleOUT;
@@ -327,7 +320,7 @@ sub Features { \%features }
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.09';
+our $VERSION = '1.12';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {

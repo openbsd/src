@@ -21,6 +21,8 @@ use Locale::Codes::Country;
 %type = ( "LOCALE_CODE_ALPHA_2" => LOCALE_CODE_ALPHA_2,
           "LOCALE_CODE_ALPHA_3" => LOCALE_CODE_ALPHA_3,
           "LOCALE_CODE_NUMERIC" => LOCALE_CODE_NUMERIC,
+          "LOCALE_CODE_FIPS"    => LOCALE_CODE_FIPS,
+          "LOCALE_CODE_DOM"     => LOCALE_CODE_DOM,
         );
 
 sub test {
@@ -98,7 +100,7 @@ Libya
    ~
    ly
 
-Syria
+Syrian Arab Republic
    ~
    sy
 
@@ -168,6 +170,38 @@ Congo, The Democratic Republic of the
 LOCALE_CODE_NUMERIC
    ~
    180
+
+Syria
+   ~
+   sy
+
+# Last codes in each set (we'll assume that if we got these, there's a good
+# possiblity that we got all the others).
+
+Zimbabwe
+LOCALE_CODE_ALPHA_2
+   ~
+   zw
+
+Zimbabwe
+LOCALE_CODE_ALPHA_3
+   ~
+   zwe
+
+Zimbabwe
+LOCALE_CODE_NUMERIC
+   ~
+   716
+
+Zimbabwe
+LOCALE_CODE_FIPS
+   ~
+   ZI
+
+Zimbabwe
+LOCALE_CODE_DOM
+   ~
+   zw
 
 ";
 

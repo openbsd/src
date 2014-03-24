@@ -4,7 +4,7 @@ use warnings;
 use parent qw(Pod::Perldoc::BaseTo);
 
 use vars qw($VERSION);
-$VERSION = '3.17';
+$VERSION = '3.19';
 
 # This is unlike ToMan.pm in that it emits the raw nroff source!
 

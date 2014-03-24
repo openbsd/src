@@ -82,7 +82,6 @@ our @names = qw#
     (~~
     (-X
     (qr
-    DESTROY
 #;
 
 our @enums = qw#
@@ -154,7 +153,6 @@ our @enums = qw#
     smart
     ftest
     regexp
-    DESTROY
 #;
 
 { my $i = 0; our %names = map { $_ => $i++ } @names }

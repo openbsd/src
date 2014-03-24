@@ -7,7 +7,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Fcntl;
 use integer;
 
-$VERSION = '5.71';
+$VERSION = '5.84_01';
 
 require Exporter;
 require DynaLoader;
@@ -49,8 +49,8 @@ sub new {
 			sharewind($$class);
 			return($class);
 		}
-		shaclose($$class) if $$class;
-		$$class = shaopen($alg) || return;
+		if ($$class) { shaclose($$class); $$class = undef }
+		return unless $$class = shaopen($alg);
 		return($class);
 	}
 	$alg = 1 unless defined $alg;
@@ -62,7 +62,7 @@ sub new {
 
 sub DESTROY {
 	my $self = shift;
-	shaclose($$self) if $$self;
+	if ($$self) { shaclose($$self); $$self = undef }
 }
 
 sub clone {
@@ -163,18 +163,21 @@ sub Addfile {
 
 sub dump {
 	my $self = shift;
-	my $file = shift || "";
+	my $file = shift;
 
+	$file = "" unless defined $file;
 	shadump($file, $$self) || return;
 	return($self);
 }
 
 sub load {
 	my $class = shift;
-	my $file = shift || "";
+	my $file = shift;
+
+	$file = "" unless defined $file;
 	if (ref($class)) {	# instance method
-		shaclose($$class) if $$class;
-		$$class = shaload($file) || return;
+		if ($$class) { shaclose($$class); $$class = undef }
+		return unless $$class = shaload($file);
 		return($class);
 	}
 	my $state = shaload($file) || return;
@@ -321,21 +324,44 @@ I<sha_base64()> functions.
 	use Digest::SHA qw(hmac_sha256_hex);
 	print hmac_sha256_hex("Hi There", chr(0x0b) x 32), "\n";
 
+=head1 UNICODE AND SIDE EFFECTS
+
+Perl supports Unicode strings as of version 5.6.  Such strings may
+contain wide characters, namely, characters whose ordinal values are
+greater than 255.  This can cause problems for digest algorithms such
+as SHA that are specified to operate on sequences of bytes.
+
+The rule by which Digest::SHA handles a Unicode string is easy
+to state, but potentially confusing to grasp: the string is interpreted
+as a sequence of byte values, where each byte value is equal to the
+ordinal value (viz. code point) of its corresponding Unicode character.
+That way, the Unicode string 'abc' has exactly the same digest value as
+the ordinary string 'abc'.
+
+Since a wide character does not fit into a byte, the Digest::SHA
+routines croak if they encounter one.  Whereas if a Unicode string
+contains no wide characters, the module accepts it quite happily.
+The following code illustrates the two cases:
+
+	$str1 = pack('U*', (0..255));
+	print sha1_hex($str1);		# ok
+
+	$str2 = pack('U*', (0..256));
+	print sha1_hex($str2);		# croaks
+
+Be aware that the digest routines silently convert UTF-8 input into its
+equivalent byte sequence in the native encoding (cf. utf8::downgrade).
+This side effect influences only the way Perl stores the data internally,
+but otherwise leaves the actual value of the data intact.
+
 =head1 NIST STATEMENT ON SHA-1
 
-I<NIST was recently informed that researchers had discovered a way
-to "break" the current Federal Information Processing Standard SHA-1
-algorithm, which has been in effect since 1994. The researchers
-have not yet published their complete results, so NIST has not
-confirmed these findings. However, the researchers are a reputable
-research team with expertise in this area.>
+NIST acknowledges that the work of Prof. Xiaoyun Wang constitutes a
+practical collision attack on SHA-1.  Therefore, NIST encourages the
+rapid adoption of the SHA-2 hash functions (e.g. SHA-256) for applications
+requiring strong collision resistance, such as digital signatures.
 
-I<Due to advances in computing power, NIST already planned to phase
-out SHA-1 in favor of the larger and stronger hash functions (SHA-224,
-SHA-256, SHA-384 and SHA-512) by 2010. New developments should use
-the larger and stronger hash functions.>
-
-ref. L<http://www.csrc.nist.gov/pki/HashWorkshop/NIST%20Statement/Burr_Mar2005.html>
+ref. L<http://csrc.nist.gov/groups/ST/hash/statement.html>
 
 =head1 PADDING OF BASE64 DIGESTS
 
@@ -707,7 +733,7 @@ darkness and moored it in so perfect a calm and in so brilliant a light"
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003-2012 Mark Shelor
+Copyright (C) 2003-2013 Mark Shelor
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

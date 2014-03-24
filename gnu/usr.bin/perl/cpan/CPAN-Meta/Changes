@@ -1,5 +1,34 @@
 Revision history for CPAN-Meta
 
+2.120921  2012-04-01 15:20:24 Europe/Paris
+
+  [REMOVED]
+
+  - CPAN::Meta::Requirements has been split out into its own distribution
+    so it can be used by CPAN.pm without requiring all of CPAN::Meta
+
+2.120920  2012-04-01 11:30:43 Europe/Paris
+
+  [ADDED]
+
+  - CPAN::Meta::Requirements now has a 'requirements_for_module' method
+    to retrieve a version requirements string for a specific module
+    [Leon Timmermans]
+
+  [OTHER]
+
+  - Parse::CPAN::Meta prerequisite bumped to 1.4403
+  - JSON::PP prerequisites bumped to 2.27200
+  - CPAN::Meta::YAML prerequisite bumped to 0.008
+
+2.120900  2012-03-30 13:15:15 Europe/Paris
+
+  [BUGFIX]
+
+  - CPAN::Meta::Requirements now treats undef requirements given to
+    from_string_hash() as '0' and warns about it; add_string_requirements()
+    dies if it does not get a requirements string to parse
+
 2.120630  2012-03-03 14:48:35 EST5EDT
 
   [BUGFIX]

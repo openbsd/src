@@ -3,7 +3,7 @@ package Digest::MD5;
 use strict;
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = '2.51';
+$VERSION = '2.52';
 
 require Exporter;
 *import = \&Exporter::import;
@@ -30,7 +30,7 @@ if ($@) {
 	require Digest::Perl::MD5;
 
 	Digest::Perl::MD5->import(qw(md5 md5_hex md5_base64));
-	push(@ISA, "Digest::Perl::MD5");  # make OO interface work
+	unshift(@ISA, "Digest::Perl::MD5");  # make OO interface work
     };
     if ($@) {
 	# restore the original error
@@ -63,7 +63,7 @@ Digest::MD5 - Perl interface to the MD5 Algorithm
  $ctx = Digest::MD5->new;
 
  $ctx->add($data);
- $ctx->addfile(*FILE);
+ $ctx->addfile($file_handle);
 
  $digest = $ctx->digest;
  $digest = $ctx->hexdigest;
@@ -253,7 +253,7 @@ The same checksum can also be calculated in OO style:
     
     print "Digest is $digest\n";
 
-With OO style you can break the message arbitrary.  This means that we
+With OO style, you can break the message arbitrarily.  This means that we
 are no longer limited to have space for the whole message in memory, i.e.
 we can handle messages of any size.
 
@@ -261,27 +261,27 @@ This is useful when calculating checksum for files:
 
     use Digest::MD5;
 
-    my $file = shift || "/etc/passwd";
-    open(FILE, $file) or die "Can't open '$file': $!";
-    binmode(FILE);
+    my $filename = shift || "/etc/passwd";
+    open (my $fh, '<', $filename) or die "Can't open '$filename': $!";
+    binmode($fh);
 
     $md5 = Digest::MD5->new;
-    while (<FILE>) {
+    while (<$fh>) {
         $md5->add($_);
     }
-    close(FILE);
-    print $md5->b64digest, " $file\n";
+    close($fh);
+    print $md5->b64digest, " $filename\n";
 
 Or we can use the addfile method for more efficient reading of
 the file:
 
     use Digest::MD5;
 
-    my $file = shift || "/etc/passwd";
-    open(FILE, $file) or die "Can't open '$file': $!";
-    binmode(FILE);
+    my $filename = shift || "/etc/passwd";
+    open (my $fh, '<', $filename) or die "Can't open '$filename': $!";
+    binmode ($fh);
 
-    print Digest::MD5->new->addfile(*FILE)->hexdigest, " $file\n";
+    print Digest::MD5->new->addfile($fh)->hexdigest, " $filename\n";
 
 Perl 5.8 support Unicode characters in strings.  Since the MD5
 algorithm is only defined for strings of bytes, it can not be used on

@@ -204,8 +204,12 @@ sub do_unix {
     # pod/perl511delta.pod: pod/perldelta.pod
     #         cd pod && $(LNS) perldelta.pod perl511delta.pod
 
+    # although it seems that HP-UX make gets confused, always tried to
+    # regenerate the symlink, and then the ln -s fails, as the target exists.
+
     $makefile_SH =~ s!(
 pod/perl[a-z0-9_]+\.pod: pod/perl[a-z0-9_]+\.pod
+	\$\(RMS\) pod/perl[a-z0-9_]+\.pod
 	\$\(LNS\) perl[a-z0-9_]+\.pod pod/perl[a-z0-9_]+\.pod
 )+!\0!gm;
 
@@ -213,6 +217,7 @@ pod/perl[a-z0-9_]+\.pod: pod/perl[a-z0-9_]+\.pod
 
     my @copy_rules = map "
 pod/$_: pod/$state->{copies}{$_}
+	\$(RMS) pod/$_
 	\$(LNS) $state->{copies}{$_} pod/$_
 ", keys %{$state->{copies}};
 

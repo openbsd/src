@@ -19,8 +19,8 @@ $val = eval {
 	$@ = "t1\n";
 	1;
 }; $err = $@;
-is($val, 1);
-is($err, "");
+is($val, 1, "true return value from successful eval block");
+is($err, "", "no exception after successful eval block");
 
 $@ = "t0\n";
 $val = eval {
@@ -30,8 +30,8 @@ $val = eval {
 	};
 	1;
 }; $err = $@;
-is($val, undef);
-is($err, "t3\n");
+is($val, undef, "undefined return value from eval block with 'die'");
+is($err, "t3\n", "exception after eval block with 'die'");
 
 $@ = "t0\n";
 $val = eval {
@@ -39,8 +39,8 @@ $val = eval {
 	local $@ = "t2\n";
 	1;
 }; $err = $@;
-is($val, 1);
-is($err, "");
+is($val, 1, "true return value from successful eval block with localized \$@");
+is($err, "", "no exception after successful eval block with localized \$@");
 
 $@ = "t0\n";
 $val = eval {
@@ -51,8 +51,10 @@ $val = eval {
 	};
 	1;
 }; $err = $@;
-is($val, undef);
-is($err, "t3\n");
+is($val, undef,
+    "undefined return value from eval block with 'die' and localized \$@");
+is($err, "t3\n",
+    "exception after eval block with 'die' and localized \$@");
 
 $@ = "t0\n";
 $val = eval {
@@ -60,8 +62,8 @@ $val = eval {
 	my $c = end { $@ = "t2\n"; };
 	1;
 }; $err = $@;
-is($val, 1);
-is($err, "");
+is($val, 1, "true return value from eval block with 'end'");
+is($err, "", "no exception after eval block with 'end'");
 
 $@ = "t0\n";
 $val = eval {
@@ -72,7 +74,7 @@ $val = eval {
 	};
 	1;
 }; $err = $@;
-is($val, undef);
-is($err, "t3\n");
+is($val, undef, "undefined return value from eval block with 'end' and 'die'");
+is($err, "t3\n", "exception after eval block with 'end' and 'die'");
 
 done_testing();

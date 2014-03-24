@@ -137,7 +137,7 @@ forms>, of which I<UTF-8> is perhaps the most popular.  UTF-8 is a
 variable length encoding that encodes Unicode characters as 1 to 6
 bytes.  Other encodings
 include UTF-16 and UTF-32 and their big- and little-endian variants
-(UTF-8 is byte-order independent) The ISO/IEC 10646 defines the UCS-2
+(UTF-8 is byte-order independent).  The ISO/IEC 10646 defines the UCS-2
 and UCS-4 encoding forms.
 
 For more information about encodings--for instance, to learn what
@@ -145,12 +145,12 @@ I<surrogates> and I<byte order marks> (BOMs) are--see L<perlunicode>.
 
 =head2 Perl's Unicode Support
 
-Starting from Perl 5.6.0, Perl has had the capacity to handle Unicode
-natively.  Perl 5.8.0, however, is the first recommended release for
+Starting from Perl v5.6.0, Perl has had the capacity to handle Unicode
+natively.  Perl v5.8.0, however, is the first recommended release for
 serious Unicode work.  The maintenance release 5.6.1 fixed many of the
 problems of the initial Unicode implementation, but for example
 regular expressions still do not work with Unicode in 5.6.1.
-Perl 5.14.0 is the first release where Unicode support is
+Perl v5.14.0 is the first release where Unicode support is
 (almost) seamlessly integrable without some gotchas (the exception being
 some differences in L<quotemeta|perlfunc/quotemeta>, which is fixed
 starting in Perl 5.16.0).   To enable this
@@ -159,12 +159,12 @@ automatically selected if you C<use 5.012> or higher).  See L<feature>.
 (5.14 also fixes a number of bugs and departures from the Unicode
 standard.)
 
-Before Perl 5.8.0, the use of C<use utf8> was used to declare
+Before Perl v5.8.0, the use of C<use utf8> was used to declare
 that operations in the current block or file would be Unicode-aware.
 This model was found to be wrong, or at least clumsy: the "Unicodeness"
 is now carried with the data, instead of being attached to the
 operations.
-Starting with Perl 5.8.0, only one case remains where an explicit C<use
+Starting with Perl v5.8.0, only one case remains where an explicit C<use
 utf8> is needed: if your Perl script itself is encoded in UTF-8, you can
 use UTF-8 in your identifier names, and in string and regular expression
 literals, by saying C<use utf8>.  This is not the default because
@@ -176,7 +176,7 @@ Perl supports both pre-5.6 strings of eight-bit native bytes, and
 strings of Unicode characters.  The general principle is that Perl tries
 to keep its data as eight-bit bytes for as long as possible, but as soon
 as Unicodeness cannot be avoided, the data is transparently upgraded
-to Unicode.  Prior to Perl 5.14, the upgrade was not completely
+to Unicode.  Prior to Perl v5.14.0, the upgrade was not completely
 transparent (see L<perlunicode/The "Unicode Bug">), and for backwards
 compatibility, full transparency is not gained unless C<use feature
 'unicode_strings'> (see L<feature>) or C<use 5.012> (or higher) is
@@ -415,7 +415,7 @@ streams, use explicit layers directly in the C<open()> call.
 You can switch encodings on an already opened stream by using
 C<binmode()>; see L<perlfunc/binmode>.
 
-The C<:locale> does not currently (as of Perl 5.8.0) work with
+The C<:locale> does not currently work with
 C<open()> and C<binmode()>, only with the C<open> pragma.  The
 C<:utf8> and C<:encoding(...)> methods do work with all of C<open()>,
 C<binmode()>, and the C<open> pragma.

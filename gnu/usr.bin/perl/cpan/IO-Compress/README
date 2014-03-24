@@ -1,11 +1,11 @@
 
-                             IO-Compress
+                            IO-Compress
 
-                             Version 2.048
+                         Version 2.060
 
-                             29th January 2012
+                             7th January 2013
 
-       Copyright (c) 1995-2012 Paul Marquess. All rights reserved.
+       Copyright (c) 1995-2013 Paul Marquess. All rights reserved.
           This program is free software; you can redistribute it
            and/or modify it under the same terms as Perl itself.
 
@@ -32,7 +32,7 @@ PREREQUISITES
 Before you can build IO-Compress you need to have the following
 installed on your system:
 
-    * Perl 5.004 or better. 
+    * Perl 5.006 or better. 
     * Compress::Raw::Zlib
     * Compress::Raw::Bzip2
 
@@ -89,7 +89,7 @@ To help me help you, I need all of the following information:
         If you haven't installed IO-Compress then search IO::Compress::Gzip.pm
         for a line like this:
 
-          $VERSION = "2.048" ;
+          $VERSION = "2.060" ;
 
  2. If you are having problems building IO-Compress, send me a
     complete log of what happened. Start by unpacking the IO-Compress

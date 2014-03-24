@@ -96,6 +96,8 @@ if (!defined $where && $Config::Config{useperlio}) {
 	    }
 	}
 	if (@rec) {
+        # see above
+        no warnings 'uninitialized';
 	    push @lines, join (':', @rec) . "\n";
 	}
 	my $data = join '', @lines;
@@ -215,7 +217,7 @@ SKIP: {
 EOEX
     }
 
-    cmp_ok(keys %perfect, '>', 0)
+    cmp_ok(keys %perfect, '>', 0, "pwent test satisfactory")
 	or note("(not necessarily serious: run t/op/pwent.t by itself)");
 }
 
@@ -241,6 +243,7 @@ for (1..$max) {
 }
 endpwent();
 
-is("@pw1", "@pw2");
+is("@pw1", "@pw2",
+    "getpwent() produced identical results in list and scalar contexts");
 
 close(PW);

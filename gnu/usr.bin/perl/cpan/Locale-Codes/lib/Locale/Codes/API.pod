@@ -278,7 +278,7 @@ delete the alias.
 
 =over 4
 
-=item B<*>
+=item B<Relationship between code sets>
 
 Because each code set uses a slightly different list of elements, and
 they are not necessarily one-to-one, there may be some confusion
@@ -291,7 +291,7 @@ to different islands (Baker Island, Howland Island, etc.).
 This may cause some confusion... I've done the best that I could do
 to minimize it.
 
-=item B<*>
+=item B<Non-ASCII characters not supported>
 
 Currently all names must be all ASCII. I plan on relaxing that
 limitation in the future.
@@ -312,7 +312,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2012 Sullivan Beck
+   Copyright (c) 2010-2013 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

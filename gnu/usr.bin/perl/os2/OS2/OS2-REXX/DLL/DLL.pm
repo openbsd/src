@@ -1,6 +1,6 @@
 package OS2::DLL;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 use Carp;
 use XSLoader;
@@ -152,7 +152,7 @@ See documentation of L<OS2::REXX> module if you need the variable pool.
 
 =head1 DESCRIPTION
 
-=head2 L<Create a DLL handle>
+=head2 Create a DLL handle
 
 	$dll = OS2::DLL->module( NAME [, WHERE] );
 

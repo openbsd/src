@@ -1,8 +1,8 @@
-# DerivedCombiningClass-6.1.0.txt
-# Date: 2011-12-05, 16:44:07 GMT [MD]
+# DerivedCombiningClass-6.2.0.txt
+# Date: 2012-08-13, 19:56:56 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -718,7 +718,7 @@
 208D          ; 0 # Ps       SUBSCRIPT LEFT PARENTHESIS
 208E          ; 0 # Pe       SUBSCRIPT RIGHT PARENTHESIS
 2090..209C    ; 0 # Lm  [13] LATIN SUBSCRIPT SMALL LETTER A..LATIN SUBSCRIPT SMALL LETTER T
-20A0..20B9    ; 0 # Sc  [26] EURO-CURRENCY SIGN..INDIAN RUPEE SIGN
+20A0..20BA    ; 0 # Sc  [27] EURO-CURRENCY SIGN..TURKISH LIRA SIGN
 20DD..20E0    ; 0 # Me   [4] COMBINING ENCLOSING CIRCLE..COMBINING ENCLOSING CIRCLE BACKSLASH
 20E2..20E4    ; 0 # Me   [3] COMBINING ENCLOSING SCREEN..COMBINING ENCLOSING UPWARD POINTING TRIANGLE
 2100..2101    ; 0 # So   [2] ACCOUNT OF..ADDRESSED TO THE SUBJECT
@@ -1514,7 +1514,7 @@ E0100..E01EF  ; 0 # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 F0000..FFFFD  ; 0 # Co [65534] <private-use-F0000>..<private-use-FFFFD>
 100000..10FFFD; 0 # Co [65534] <private-use-100000>..<private-use-10FFFD>
 
-# The above property value applies to 866463 code points not listed here.
+# The above property value applies to 866462 code points not listed here.
 # Total code points: 1113459
 
 # ================================================
@@ -1893,7 +1893,7 @@ FB1E          ; 26 # Mn       HEBREW POINT JUDEO-SPANISH VARIKA
 
 # ================================================
 
-# Canonical_Combining_Class=CCC133
+# Canonical_Combining_Class=CCC132
 
 0F74          ; 132 # Mn       TIBETAN VOWEL SIGN U
 

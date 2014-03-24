@@ -57,6 +57,7 @@ SKIP: {
     my $chflags = "/usr/bin/chflags";
     my $tstfile = "filetest.tst";
     skip("No $chflags available", 4) if !-x $chflags;
+    skip("Dragonfly filetests seem non-chflags aware", 4) if $^O eq 'dragonfly';
 
     my $skip_eff_user_tests = (!$Config{d_setreuid} && !$Config{d_setresuid})
 	                                            ||

@@ -5,6 +5,3 @@
 
 . ./hints/linux.sh
 
-# Configure sets these where $osname = linux
-ccdlflags='-Wl,-E'
-lddlflags='-shared'

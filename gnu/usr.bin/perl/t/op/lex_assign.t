@@ -3,6 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 $| = 1;
@@ -24,17 +25,13 @@ sub subb {"in s"}
 
 @INPUT = <DATA>;
 @simple_input = grep /^\s*\w+\s*\$\w+\s*[#\n]/, @INPUT;
-print "1..", (11 + @INPUT + @simple_input), "\n";
-$ord = 0;
 
 sub wrn {"@_"}
 
 # Check correct optimization of ucfirst etc
-$ord++;
 my $a = "AB";
 my $b = "\u\L$a";
-print "not " unless $b eq 'Ab';
-print "ok $ord\n";
+is( $b, 'Ab', 'Check correct optimization of ucfirst, etc');
 
 # Check correct destruction of objects:
 my $dc = 0;
@@ -43,23 +40,18 @@ $a=8;
 my $b;
 { my $c = 6; $b = bless \$c, "A"}
 
-$ord++;
-print "not " unless $dc == 0;
-print "ok $ord\n";
+is($dc, 0, 'No destruction yet');
 
 $b = $a+5;
 
-$ord++;
-print "not " unless $dc == 1;
-print "ok $ord\n";
+is($dc, 1, 'object descruction via reassignment to variable');
 
-$ord++;
 my $xxx = 'b';
 $xxx = 'c' . ($xxx || 'e');
-print "not " unless $xxx eq 'cb';
-print "ok $ord\n";
+is( $xxx, 'cb', 'variables can be read before being overwritten');
 
 {				# Check calling STORE
+  note('Tied variables, calling STORE');
   my $sc = 0;
   sub B::TIESCALAR {bless [11], 'B'}
   sub B::FETCH { -(shift->[0]) }
@@ -69,30 +61,18 @@ print "ok $ord\n";
   tie $m, 'B';
   $m = 100;
 
-  $ord++;
-  print "not " unless $sc == 1;
-  print "ok $ord\n";
+  is( $sc, 1, 'STORE called when assigning scalar to tied variable' );
 
   my $t = 11;
   $m = $t + 89;
   
-  $ord++;
-  print "not " unless $sc == 2;
-  print "ok $ord\n";
-
-  $ord++;
-  print "# $m\nnot " unless $m == -117;
-  print "ok $ord\n";
+  is( $sc, 2, 'and again' );
+  is( $m,  -117, 'checking the tied variable result' );
 
   $m += $t;
 
-  $ord++;
-  print "not " unless $sc == 3;
-  print "ok $ord\n";
-
-  $ord++;
-  print "# $m\nnot " unless $m == 89;
-  print "ok $ord\n";
+  is( $sc, 3, 'called on self-increment' );
+  is( $m,  89, 'checking the tied variable result' );
 
 }
 
@@ -102,14 +82,14 @@ my ($l1, $l2, $l3, $l4);
 my $zzzz = 12;
 $zzz1 = $l1 = $l2 = $zzz2 = $l3 = $l4 = 1 + $zzzz;
 
-$ord++;
-print "# $zzz1 = $l1 = $l2 = $zzz2 = $l3 = $l4 = 13\nnot "
-  unless $zzz1 == 13 and $zzz2 == 13 and $l1 == 13
-  and $l2 == 13 and $l3 == 13 and $l4 == 13;
-print "ok $ord\n";
+is($zzz1, 13, 'chain assignment, part1');
+is($zzz2, 13, 'chain assignment, part2');
+is($l1,   13, 'chain assignment, part3');
+is($l2,   13, 'chain assignment, part4');
+is($l3,   13, 'chain assignment, part5');
+is($l4,   13, 'chain assignment, part6');
 
 for (@INPUT) {
-  $ord++;
   ($op, undef, $comment) = /^([^\#]+)(\#\s+(.*))?/;
   $comment = $op unless defined $comment;
   chomp;
@@ -119,7 +99,13 @@ for (@INPUT) {
   $skip = ($op =~ /^'\?\?\?'/ or $comment =~ /skip\(.*\Q$^O\E.*\)/i)
 	  ? "skip" : "# '$_'\nnot";
   $integer = ($comment =~ /^i_/) ? "use integer" : '' ;
-  (print "#skipping $comment:\nok $ord\n"), next if $skip eq 'skip';
+  if ($skip eq 'skip') {
+    SKIP: {
+        skip $comment, 1;
+        pass();
+    }
+    next;
+  }
   
   eval <<EOE;
   local \$SIG{__WARN__} = \\&wrn;
@@ -128,23 +114,28 @@ for (@INPUT) {
   \$a = $op;
   \$b = $expectop;
   if (\$a ne \$b) {
-    print "# \$comment: got '\$a', expected '\$b'\n";
-    print "\$skip " if \$a ne \$b or \$skip eq 'skip';
+    SKIP: {
+        skip "\$comment: got '\$a', expected '\$b'", 1;
+        pass("")
+    }
   }
-  print "ok \$ord\\n";
+  pass();
 EOE
   if ($@) {
+    $warning = $@;
+    chomp $warning;
     if ($@ =~ /is unimplemented/) {
-      print "# skipping $comment: unimplemented:\nok $ord\n";
+      SKIP: {
+        skip $warning, 1;
+        pass($comment);
+      }
     } else {
-      warn $@;
-      print "# '$_'\nnot ok $ord\n";
+      fail($_ . ' ' . $warning);
     }
   }
 }
 
 for (@simple_input) {
-  $ord++;
   ($op, undef, $comment) = /^([^\#]+)(\#\s+(.*))?/;
   $comment = $op unless defined $comment;
   chomp;
@@ -155,23 +146,28 @@ for (@simple_input) {
   \$$variable = $operator \$$variable;
   \$toself = \$$variable;
   \$direct = $operator "Ac# Ca\\nxxx";
-  print "# \\\$$variable = $operator \\\$$variable\\nnot "
-    unless \$toself eq \$direct;
-  print "ok \$ord\\n";
+  is(\$toself, \$direct);
 EOE
   if ($@) {
+    $warning = $@;
+    chomp $warning;
     if ($@ =~ /is unimplemented/) {
-      print "# skipping $comment: unimplemented:\nok $ord\n";
+      SKIP: {
+        skip $warning, 1;
+        pass($comment);
+      }
     } elsif ($@ =~ /Can't (modify|take log of 0)/) {
-      print "# skipping $comment: syntax not good for selfassign:\nok $ord\n";
+      SKIP: {
+        skip $warning . ' ' . $comment . ' syntax not good for selfassign', 1;
+        pass();
+      }
     } else {
-      warn $@;
-      print "# '$_'\nnot ok $ord\n";
+      ##Something bad happened
+      fail($_ . ' ' . $warning);
     }
   }
 }
 
-$ord++;
 eval {
     sub PVBM () { 'foo' }
     index 'foo', PVBM;
@@ -183,11 +179,9 @@ eval {
 
     1;
 };
-if ($@) {
-    warn "# $@";
-    print 'not ';
-}
-print "ok $ord\n";
+is($@, '', 'ex-PVBM assert'.$@);
+
+done_testing();
 
 __END__
 ref $xref			# ref

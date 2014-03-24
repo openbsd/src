@@ -14,6 +14,8 @@ BEGIN {
     $^P |= 0x100;
 }
 
+no warnings 'experimental::smartmatch';
+
 sub lis($$;$) {
   &is(map(@$_ ? "[@{[map $_//'~~u~~', @$_]}]" : 'nought', @_[0,1]), $_[2]);
 }
@@ -28,10 +30,13 @@ package sov {
 my %op_desc = (
  evalbytes=> 'eval "string"',
  join     => 'join or string',
+ pos      => 'match position',
+ prototype=> 'subroutine prototype',
  readline => '<HANDLE>',
  readpipe => 'quoted execution (``, qx)',
  reset    => 'symbol reset',
  ref      => 'reference-type operator',
+ undef    => 'undef operator',
 );
 sub op_desc($) {
   return $op_desc{$_[0]} || $_[0];
@@ -56,7 +61,7 @@ sub test_proto {
     like $@, qr/^Too many arguments for $o at /, "&$o with too many args";
 
   }
-  elsif ($p eq '_') {
+  elsif ($p =~ /^_;?\z/) {
     $tests ++;
 
     eval " &CORE::$o(1,2) ";
@@ -83,6 +88,7 @@ sub test_proto {
     # works in all cases.
     undef $_;
     {
+      no warnings 'experimental::lexical_topic';
       my $_ = $in;
       is &{"CORE::$o"}(), $out, "&$o with no args uses lexical \$_";
     }
@@ -90,6 +96,7 @@ sub test_proto {
     my $r;
     $r = sub {
       if($_[0]) {
+        no warnings 'experimental::lexical_topic';
         my $_ = $in;
         is &{"CORE::$o"}(), $out,
            "&$o with no args uses the right lexical \$_ under recursion";
@@ -99,6 +106,7 @@ sub test_proto {
       }
     };
     &$r(0);
+    no warnings 'experimental::lexical_topic';
     my $_ = $in;
     eval {
        is "CORE::$o"->(), $out, "&$o with the right lexical \$_ in an eval"
@@ -187,46 +195,73 @@ sub test_proto {
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash reference at /,
         "&$o with non-hash arg with hash overload (which does not count)";
   }
-  elsif ($p =~ /^\\\[(\$\@%&?\*)](\$\@)?\z/) {
-    $tests += 4;
+  elsif ($p =~ /^(;)?\\\[(\$\@%&?\*)](\$\@)?\z/) {
+    $tests += 3;
 
-    unless ($2) {
+    unless ($3) {
       $tests ++;
       eval " &CORE::$o(1,2) ";
-      like $@, qr/^Too many arguments for $o at /,
+      like $@, qr/^Too many arguments for ${\op_desc($o)} at /,
         "&$o with too many args";
     }
-    eval { &{"CORE::$o"}($2 ? 1 : ()) };
-    like $@, qr/^Not enough arguments for $o at /,
+    unless ($1) {
+      $tests ++;
+      eval { &{"CORE::$o"}($3 ? 1 : ()) };
+      like $@, qr/^Not enough arguments for $o at /,
          "&$o with too few args";
-    my $more_args = $2 ? ',1' : '';
+    }
+    my $more_args = $3 ? ',1' : '';
     eval " &CORE::$o(2$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
-                ) \[\Q$1\E] at /,
+                ) \[\Q$2\E] at /,
         "&$o with non-ref arg";
     eval " &CORE::$o(*STDOUT{IO}$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
-                ) \[\Q$1\E] at /,
+                ) \[\Q$2\E] at /,
         "&$o with ioref arg";
     my $class = ref *DATA{IO};
     eval " &CORE::$o(bless(*DATA{IO}, 'hov')$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
-                ) \[\Q$1\E] at /,
+                ) \[\Q$2\E] at /,
         "&$o with ioref arg with hash overload (which does not count)";
     bless *DATA{IO}, $class;
-    if (do {$1 !~ /&/}) {
+    if (do {$2 !~ /&/}) {
       $tests++;
       eval " &CORE::$o(\\&scriggle$more_args) ";
       like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one (?x:
-                  )of \[\Q$1\E] at /,
+                  )of \[\Q$2\E] at /,
         "&$o with coderef arg";
     }    
+  }
+  elsif ($p eq ';\[$*]') {
+    $tests += 4;
+
+    my $desc = quotemeta op_desc($o);
+    eval " &CORE::$o(1,2) ";
+    like $@, qr/^Too many arguments for $desc at /,
+        "&$o with too many args";
+    eval " &CORE::$o([]) ";
+    like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
+        "&$o with array ref arg";
+    eval " &CORE::$o(1) ";
+    like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
+        "&$o with scalar arg";
+    eval " &CORE::$o(bless([], 'sov')) ";
+    like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
+        "&$o with non-scalar arg w/scalar overload (which does not count)";
   }
 
   else {
     die "Please add tests for the $p prototype";
   }
 }
+
+# Test that &CORE::foo calls without parentheses (no new @_) can handle the
+# total absence of any @_ without crashing.
+undef *_;
+&CORE::wantarray;
+$tests++;
+pass('no crash with &CORE::foo when *_{ARRAY} is undef');
 
 test_proto '__FILE__';
 test_proto '__LINE__';
@@ -480,6 +515,20 @@ test_proto "get$_" for qw '
   pwent pwnam pwuid servbyname servbyport servent sockname sockopt
 ';
 
+# Make sure the following tests test what we think they are testing.
+ok ! $CORE::{glob}, '*CORE::glob not autovivified yet'; $tests ++;
+{
+  # Make sure ck_glob does not respect the override when &CORE::glob is
+  # autovivified (by test_proto).
+  local *CORE::GLOBAL::glob = sub {};
+  test_proto 'glob';
+}
+$_ = "t/*.t";
+@_ = &myglob($_);
+is join($", &myglob()), "@_", '&glob without arguments';
+is join($", &myglob("t/*.t")), "@_", '&glob with an arg';
+$tests += 2;
+
 test_proto 'gmtime';
 &CORE::gmtime;
 pass '&gmtime without args does not crash'; ++$tests;
@@ -564,13 +613,33 @@ is &mypack("H*", '5065726c'), 'Perl', '&pack';
 lis [&mypack("H*", '5065726c')], ['Perl'], '&pack in list context';
 
 test_proto 'pipe';
+
+test_proto 'pos';
+$tests += 4;
+$_ = "hello";
+pos = 3;
+is &mypos, 3, 'reading &pos without args';
+&mypos = 4;
+is pos, 4, 'writing to &pos without args';
+{
+  my $x = "gubai";
+  pos $x = 3;
+  is &mypos(\$x), 3, 'reading &pos without args';
+  &mypos(\$x) = 4;
+  is pos $x, 4, 'writing to &pos without args';
+}
+
+test_proto 'prototype';
+$tests++;
+is &myprototype(\&myprototype), prototype("CORE::prototype"), '&prototype';
+
 test_proto 'quotemeta', '$', '\$';
 
 test_proto 'rand';
 $tests += 3;
-like &CORE::rand, qr/^0[.\d]*\z/, '&rand';
+like &CORE::rand, qr/^0[.\d+-e]*\z/, '&rand';
 unlike join(" ", &CORE::rand), qr/ /, '&rand in list context';
-&cmp_ok(&CORE::rand(78), qw '< 78', '&rand with 2 args');
+&cmp_ok(&CORE::rand(78), qw '< 78', '&rand with 1 arg');
 
 test_proto 'read';
 {
@@ -637,12 +706,12 @@ $tests += 2;
 my $oncer = sub { "a" =~ m?a? };
 &$oncer;
 &myreset;
-ok &$oncer, '&reset with one arg';
+ok &$oncer, '&reset with no args';
 package resettest {
   $b = "c";
   $banana = "cream";
   &::myreset('b');
-  ::lis [$b,$banana],[(undef)x2], '2-arg &reset';
+  ::lis [$b,$banana],[(undef)x2], '1-arg &reset';
 }
 
 test_proto 'reverse';
@@ -660,6 +729,11 @@ lis [&myrindex("foffooo","o",2)],[1],'&rindex in list context';
 is &myrindex("foffooo","o"),6,'&rindex with 2 args';
 
 test_proto 'rmdir';
+
+test_proto 'scalar';
+$tests += 2;
+is &myscalar(3), 3, '&scalar';
+lis [&myscalar(3)], [3], '&scalar in list cx';
 
 test_proto 'seek';
 {
@@ -733,7 +807,10 @@ test_proto 'sqrt', 4, 2;
 test_proto 'srand';
 $tests ++;
 &CORE::srand;
+() = &CORE::srand;
 pass '&srand with no args does not crash';
+
+test_proto 'study';
 
 test_proto 'substr';
 $tests += 5;
@@ -808,6 +885,34 @@ test_proto 'umask';
 $tests ++;
 is &myumask, umask, '&umask with no args';
 
+test_proto 'undef';
+$tests += 12;
+is &myundef(), undef, '&undef returns undef';
+lis [&myundef()], [undef], '&undef returns undef in list cx';
+lis [&myundef(\$_)], [undef], '&undef(...) returns undef in list cx';
+is \&myundef(), \undef, '&undef returns the right undef';
+$_ = 'anserine questions';
+&myundef(\$_);
+is $_, undef, '&undef(\$_) undefines $_';
+@_ = 1..3;
+&myundef(\@_);
+is @_, 0, '&undef(\@_) undefines @_';
+%_ = 1..4;
+&myundef(\%_);
+ok !%_, '&undef(\%_) undefines %_';
+&myundef(\&utf8::valid); # nobody should be using this :-)
+ok !defined &utf8::valid, '&undef(\&foo) undefines &foo';
+@_ = \*_;
+&myundef;
+is *_{ARRAY}, undef, '@_=\*_, &undef undefines *_';
+@_ = \*_;
+&myundef(\*_);
+is *_{ARRAY}, undef, '&undef(\*_) undefines *_';
+(&myundef(), @_) = 1..10;
+lis \@_, [2..10], 'list assignment to &undef()';
+ok !defined undef, 'list assignment to &undef() does not affect undef'; 
+undef @_;
+
 test_proto 'unpack';
 $tests += 2;
 $_ = 'abcd';
@@ -875,10 +980,17 @@ like $@, qr'^Undefined format "STDOUT" called',
   open my $kh, $keywords_file
     or die "$0 cannot open $keywords_file: $!";
   while(<$kh>) {
-    if (m?__END__?..${\0} and /^[-](.*)/) {
+    if (m?__END__?..${\0} and /^[-+](.*)/) {
       my $word = $1;
       next if
-       $word =~ /^(?:CORE|and|cmp|dump|eq|ge|gt|le|lt|ne|or|x|xor)\z/;
+       $word =~ /^(?:s(?:tate|ort|ay|ub)?|d(?:ef
+                  ault|ump|o)|p(?:rintf?|ackag
+                  e)|e(?:ls(?:if|e)|val|q)|g(?:[et]|iven|oto
+                  |rep)|u(?:n(?:less|til)|se)|l(?:(?:as)?t|ocal|e)|re
+                  (?:quire|turn|do)|__(?:DATA|END)__|for(?:each|mat)?|(?:
+                  AUTOLOA|EN)D|n(?:e(?:xt)?|o)|C(?:HECK|ORE)|wh(?:ile|en)
+                  |(?:ou?|t)r|m(?:ap|y)?|UNITCHECK|q[qrwx]?|x(?:or)?|DEST
+                  ROY|BEGIN|INIT|and|cmp|if|y)\z/x;
       $tests ++;
       ok   exists &{"my$word"}
         || (eval{&{"CORE::$word"}}, $@ =~ /cannot be called directly/),
@@ -906,6 +1018,7 @@ like $@, qr'^Undefined format "STDOUT" called',
   my $warnings;
   local $SIG{__WARN__} = sub { ++$warnings };
 
+  no warnings 'experimental::lexical_topic';
   my $_ = 'Phoo';
   ok &mymkdir(), '&mkdir';
   like <*>, qr/^phoo(.DIR)?\z/i, 'mkdir works with implicit $_';

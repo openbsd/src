@@ -4,7 +4,6 @@ use strict;
 our($VERSION, @ISA, @EXPORT_OK, @EXPORT_FAIL, %EXPORT_TAGS, $DEFAULT_FLAGS);
 
 require XSLoader;
-use feature 'switch';
 
 @ISA = qw(Exporter);
 
@@ -38,26 +37,31 @@ pop @{$EXPORT_TAGS{bsd_glob}}; # no "glob"
 
 @EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
 
-$VERSION = '1.17';
+$VERSION = '1.20_01';
 
 sub import {
     require Exporter;
     local $Exporter::ExportLevel = $Exporter::ExportLevel + 1;
     Exporter::import(grep {
-	my $passthrough;
-	given ($_) {
-	    $DEFAULT_FLAGS &= ~GLOB_NOCASE() when ':case';
-	    $DEFAULT_FLAGS |= GLOB_NOCASE() when ':nocase';
-	    when (':globally') {
-		no warnings 'redefine';
-		*CORE::GLOBAL::glob = \&File::Glob::csh_glob;
-	    }
-	    if ($_ eq ':bsd_glob') {
-		no strict; *{caller."::glob"} = \&bsd_glob_override;
-	    }
-	    $passthrough = 1;
+        my $passthrough;
+        if ($_ eq ':case') {
+            $DEFAULT_FLAGS &= ~GLOB_NOCASE()
+        }
+        elsif ($_ eq ':nocase') {
+            $DEFAULT_FLAGS |= GLOB_NOCASE();
+        }
+        elsif ($_ eq ':globally') {
+	    no warnings 'redefine';
+	    *CORE::GLOBAL::glob = \&File::Glob::csh_glob;
 	}
-	$passthrough;
+        elsif ($_ eq ':bsd_glob') {
+	    no strict; *{caller."::glob"} = \&bsd_glob_override;
+            $passthrough = 1;
+	}
+	else {
+            $passthrough = 1;
+        }
+        $passthrough;
     } @_);
 }
 
@@ -71,7 +75,7 @@ if ($^O =~ /^(?:MSWin32|VMS|os2|dos|riscos)$/) {
 # File::Glob::glob() is deprecated because its prototype is different from
 # CORE::glob() (use bsd_glob() instead)
 sub glob {
-    splice @_, 1; # don't pass PL_glob_index as flags!
+    splice @_, 1; # no flags
     goto &bsd_glob;
 }
 

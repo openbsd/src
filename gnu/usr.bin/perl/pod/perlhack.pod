@@ -10,7 +10,7 @@ perlhack - How to hack on Perl
 
 =head1 DESCRIPTION
 
-This document explains how Perl development works. It includes details
+This document explains how Perl development works.  It includes details
 about the Perl 5 Porters email list, the Perl repository, the Perlbug
 bug tracker, patch guidelines, and commentary on Perl development
 philosophy.
@@ -24,10 +24,17 @@ for a bug, comment fixes, etc., it's easy! Here's how:
 
 =item * Check out the source repository
 
-The perl source is in a git repository. You can clone the repository
+The perl source is in a git repository.  You can clone the repository
 with the following command:
 
   % git clone git://perl5.git.perl.org/perl.git perl
+
+=item * Ensure you're following the latest advice
+
+In case the advice in this guide has been updated recently, read the
+latest version directly from the perl source:
+
+  % perldoc pod/perlhack.pod
 
 =item * Make your change
 
@@ -49,57 +56,78 @@ Committing your work will save the change I<on your local system>:
   % git commit -a -m 'Commit message goes here'
 
 Make sure the commit message describes your change in a single
-sentence. For example, "Fixed spelling errors in perlhack.pod".
+sentence.  For example, "Fixed spelling errors in perlhack.pod".
 
 =item * Send your change to perlbug
 
 The next step is to submit your patch to the Perl core ticket system
 via email.
 
-Assuming your patch consists of a single git commit, the following
-writes the file as a MIME attachment, and sends it with a meaningful
+If your changes are in a single git commit, run the following commands
+to write the file as a MIME attachment and send it with a meaningful
 subject:
 
   % git format-patch -1 --attach
-  % perlbug -s "[PATCH] $(git log -1 --oneline HEAD)" -f 0001-*.patch
+  % ./perl -Ilib utils/perlbug -s "[PATCH] $(
+        git log -1 --oneline HEAD)" -f 0001-*.patch
 
 The perlbug program will ask you a few questions about your email
-address and the patch you're submitting. Once you've answered them it
+address and the patch you're submitting.  Once you've answered them it
 will submit your patch via email.
+
+If your changes are in multiple commits, generate a patch file
+containing them all, and attach that:
+
+  % git format-patch origin/blead --attach --stdout > patches
+  % ./perl -Ilib utils/perlbug -f patches
+
+When prompted, pick a subject that summarizes your changes overall and
+has "[PATCH]" at the beginning.
 
 =item * Thank you
 
 The porters appreciate the time you spent helping to make Perl better.
 Thank you!
 
+=item * Next time
+
+The next time you wish to make a patch, you need to start from the
+latest perl in a pristine state.  Check you don't have any local changes
+or added files in your perl check-out which you wish to keep, then run
+these commands:
+
+  % git pull
+  % git reset --hard origin/blead
+  % git clean -dxf
+
 =back
 
 =head1 BUG REPORTING
 
 If you want to report a bug in Perl, you must use the F<perlbug>
-command line tool. This tool will ensure that your bug report includes
+command line tool.  This tool will ensure that your bug report includes
 all the relevant system and configuration information.
 
 To browse existing Perl bugs and patches, you can use the web interface
 at L<http://rt.perl.org/>.
 
 Please check the archive of the perl5-porters list (see below) and/or
-the bug tracking system before submitting a bug report. Often, you'll
+the bug tracking system before submitting a bug report.  Often, you'll
 find that the bug has been reported already.
 
 You can log in to the bug tracking system and comment on existing bug
-reports. If you have additional information regarding an existing bug,
-please add it. This will help the porters fix the bug.
+reports.  If you have additional information regarding an existing bug,
+please add it.  This will help the porters fix the bug.
 
 =head1 PERL 5 PORTERS
 
 The perl5-porters (p5p) mailing list is where the Perl standard
-distribution is maintained and developed. The people who maintain Perl
+distribution is maintained and developed.  The people who maintain Perl
 are also referred to as the "Perl 5 Porters", "p5p" or just the
 "porters".
 
 A searchable archive of the list is available at
-L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/>. There is
+L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/>.  There is
 also another archive at
 L<http://archive.develooper.com/perl5-porters@perl.org/>.
 
@@ -107,7 +135,7 @@ L<http://archive.develooper.com/perl5-porters@perl.org/>.
 
 The perl5-changes mailing list receives a copy of each patch that gets
 submitted to the maintenance and development branches of the perl
-repository. See L<http://lists.perl.org/list/perl5-changes.html> for
+repository.  See L<http://lists.perl.org/list/perl5-changes.html> for
 subscription and archive information.
 
 =head2 #p5p on IRC
@@ -119,8 +147,8 @@ Perl core.
 =head1 GETTING THE PERL SOURCE
 
 All of Perl's source code is kept centrally in a Git repository at
-I<perl5.git.perl.org>. The repository contains many Perl revisions from
-Perl 1 onwards and all the revisions from Perforce, the previous
+I<perl5.git.perl.org>.  The repository contains many Perl revisions
+from Perl 1 onwards and all the revisions from Perforce, the previous
 version control system.
 
 For much more detail on using git with the Perl repository, please see
@@ -128,7 +156,7 @@ L<perlgit>.
 
 =head2 Read access via Git
 
-You will need a copy of Git for your computer. You can fetch a copy of
+You will need a copy of Git for your computer.  You can fetch a copy of
 the repository using the git protocol:
 
   % git clone git://perl5.git.perl.org/perl.git perl
@@ -143,10 +171,10 @@ clone via http, though this is much slower:
 
 =head2 Read access via the web
 
-You may access the repository over the web. This allows you to browse
+You may access the repository over the web.  This allows you to browse
 the tree, see recent commits, subscribe to RSS feeds for the changes,
-search for particular commits and more. You may access it at
-L<http://perl5.git.perl.org/perl.git>. A mirror of the repository is
+search for particular commits and more.  You may access it at
+L<http://perl5.git.perl.org/perl.git>.  A mirror of the repository is
 found at L<http://github.com/mirrors/perl>.
 
 =head2 Read access via rsync
@@ -154,18 +182,18 @@ found at L<http://github.com/mirrors/perl>.
 You can also choose to use rsync to get a copy of the current source
 tree for the bleadperl branch and all maintenance branches:
 
-    % rsync -avz rsync://perl5.git.perl.org/perl-current .
-    % rsync -avz rsync://perl5.git.perl.org/perl-5.12.x .
-    % rsync -avz rsync://perl5.git.perl.org/perl-5.10.x .
-    % rsync -avz rsync://perl5.git.perl.org/perl-5.8.x .
-    % rsync -avz rsync://perl5.git.perl.org/perl-5.6.x .
-    % rsync -avz rsync://perl5.git.perl.org/perl-5.005xx .
+  % rsync -avz rsync://perl5.git.perl.org/perl-current .
+  % rsync -avz rsync://perl5.git.perl.org/perl-5.12.x .
+  % rsync -avz rsync://perl5.git.perl.org/perl-5.10.x .
+  % rsync -avz rsync://perl5.git.perl.org/perl-5.8.x .
+  % rsync -avz rsync://perl5.git.perl.org/perl-5.6.x .
+  % rsync -avz rsync://perl5.git.perl.org/perl-5.005xx .
 
 (Add the C<--delete> option to remove leftover files.)
 
 To get a full list of the available sync points:
 
-    % rsync perl5.git.perl.org::
+  % rsync perl5.git.perl.org::
 
 =head2 Write access via git
 
@@ -175,40 +203,41 @@ using git.
 =head1 PATCHING PERL
 
 If you're planning to do more extensive work than a single small fix,
-we encourage you to read the documentation below. This will help you
+we encourage you to read the documentation below.  This will help you
 focus your work and make your patches easier to incorporate into the
 Perl source.
 
 =head2 Submitting patches
 
-If you have a small patch to submit, please submit it via perlbug. You
-can also send email directly to perlbug@perl.org. Please note that
+If you have a small patch to submit, please submit it via perlbug.  You
+can also send email directly to perlbug@perl.org.  Please note that
 messages sent to perlbug may be held in a moderation queue, so you
 won't receive a response immediately.
 
 You'll know your submission has been processed when you receive an
-email from our ticket tracking system. This email will give you a
-ticket number. Once your patch has made it to the ticket tracking
+email from our ticket tracking system.  This email will give you a
+ticket number.  Once your patch has made it to the ticket tracking
 system, it will also be sent to the perl5-porters@perl.org list.
 
-Patches are reviewed and discussed on the p5p list. Simple,
+Patches are reviewed and discussed on the p5p list.  Simple,
 uncontroversial patches will usually be applied without any discussion.
 When the patch is applied, the ticket will be updated and you will
-receive email. In addition, an email will be sent to the p5p list.
+receive email.  In addition, an email will be sent to the p5p list.
 
-In other cases, the patch will need more work or discussion. That will
+In other cases, the patch will need more work or discussion.  That will
 happen on the p5p list.
 
 You are encouraged to participate in the discussion and advocate for
-your patch. Sometimes your patch may get lost in the shuffle. It's
+your patch.  Sometimes your patch may get lost in the shuffle.  It's
 appropriate to send a reminder email to p5p if no action has been taken
-in a month. Please remember that the Perl 5 developers are all
+in a month.  Please remember that the Perl 5 developers are all
 volunteers, and be polite.
 
 Changes are always applied directly to the main development branch,
-called "blead". Some patches may be backported to a maintenance branch.
-If you think your patch is appropriate for the maintenance branch,
-please explain why when you submit it.
+called "blead".  Some patches may be backported to a maintenance
+branch.  If you think your patch is appropriate for the maintenance
+branch (see L<perlpolicy/MAINTENANCE BRANCHES>), please explain why
+when you submit it.
 
 =head2 Getting your patch accepted
 
@@ -218,25 +247,25 @@ can do to help the Perl 5 Porters accept your patch.
 =head3 Patch style
 
 If you used git to check out the Perl source, then using C<git
-format-patch> will produce a patch in a style suitable for Perl. The
+format-patch> will produce a patch in a style suitable for Perl.  The
 C<format-patch> command produces one patch file for each commit you
-made. If you prefer to send a single patch for all commits, you can use
-C<git diff>.
+made.  If you prefer to send a single patch for all commits, you can
+use C<git diff>.
 
   % git checkout blead
   % git pull
   % git diff blead my-branch-name
 
 This produces a patch based on the difference between blead and your
-current branch. It's important to make sure that blead is up to date
+current branch.  It's important to make sure that blead is up to date
 before producing the diff, that's why we call C<git pull> first.
 
-We strongly recommend that you use git if possible. It will make your
+We strongly recommend that you use git if possible.  It will make your
 life easier, and ours as well.
 
 However, if you're not using git, you can still produce a suitable
-patch. You'll need a pristine copy of the Perl source to diff against.
-The porters prefer unified diffs. Using GNU C<diff>, you can produce a
+patch.  You'll need a pristine copy of the Perl source to diff against.
+The porters prefer unified diffs.  Using GNU C<diff>, you can produce a
 diff like this:
 
   % diff -Npurd perl.pristine perl.mine
@@ -247,11 +276,11 @@ build artifacts, or you may get a confusing result.
 =head3 Commit message
 
 As you craft each patch you intend to submit to the Perl core, it's
-important to write a good commit message. This is especially important
+important to write a good commit message.  This is especially important
 if your submission will consist of a series of commits.
 
 The first line of the commit message should be a short description
-without a period. It should be no longer than the subject line of an
+without a period.  It should be no longer than the subject line of an
 email, 50 characters being a good rule of thumb.
 
 A lot of Git tools (Gitweb, GitHub, git log --pretty=oneline, ...) will
@@ -271,11 +300,11 @@ to Perl.
 =item * Why
 
 Your commit message should describe why the change you are making is
-important. When someone looks at your change in six months or six
+important.  When someone looks at your change in six months or six
 years, your intent should be clear.
 
 If you're deprecating a feature with the intent of later simplifying
-another bit of code, say so. If you're fixing a performance problem or
+another bit of code, say so.  If you're fixing a performance problem or
 adding a new feature to support some other bit of the core, mention
 that.
 
@@ -294,23 +323,23 @@ month or next year.
 =back
 
 A commit message isn't intended to take the place of comments in your
-code. Commit messages should describe the change you made, while code
+code.  Commit messages should describe the change you made, while code
 comments should describe the current state of the code.
 
 If you've just implemented a new feature, complete with doc, tests and
-well-commented code, a brief commit message will often suffice. If,
+well-commented code, a brief commit message will often suffice.  If,
 however, you've just changed a single character deep in the parser or
 lexer, you might need to write a small novel to ensure that future
 readers understand what you did and why you did it.
 
 =head3 Comments, Comments, Comments
 
-Be sure to adequately comment your code. While commenting every line is
-unnecessary, anything that takes advantage of side effects of
+Be sure to adequately comment your code.  While commenting every line
+is unnecessary, anything that takes advantage of side effects of
 operators, that creates changes that will be felt outside of the
 function being patched, or that others may find confusing should be
-documented. If you are going to err, it is better to err on the side of
-adding too many comments than too few.
+documented.  If you are going to err, it is better to err on the side
+of adding too many comments than too few.
 
 The best comments explain I<why> the code does what it does, not I<what
 it does>.
@@ -381,13 +410,28 @@ extra paren, e.g. "if (a && (b = c)) ..."
 
 "if (!foo) ..." rather than "if (foo == FALSE) ..." etc.
 
+=item *
+
+Do not declare variables using "register".  It may be counterproductive
+with modern compilers, and is deprecated in C++, under which the Perl
+source is regularly compiled.
+
+=item *
+
+In-line functions that are in headers that are accessible to XS code
+need to be able to compile without warnings with commonly used extra
+compilation flags, such as gcc's C<-Wswitch-default> which warns
+whenever a switch statement does not have a "default" case.  The use of
+these extra flags is to catch potential problems in legal C code, and
+is often used by Perl aggregators, such as Linux distributors.
+
 =back
 
 =head3 Test suite
 
 If your patch changes code (rather than just changing documentation),
 you should also include one or more test cases which illustrate the bug
-you're fixing or validate the new functionality you're adding. In
+you're fixing or validate the new functionality you're adding.  In
 general, you should update an existing test file rather than create a
 new one.
 
@@ -398,7 +442,7 @@ Your test suite additions should generally follow these guidelines
 
 =item *
 
-Know what you're testing. Read the docs, and the source.
+Know what you're testing.  Read the docs, and the source.
 
 =item *
 
@@ -428,7 +472,7 @@ Give meaningful error messages when a test fails.
 
 =item *
 
-Avoid using qx// and system() unless you are testing for them. If you
+Avoid using qx// and system() unless you are testing for them.  If you
 do use them, make sure that you cover _all_ perl platforms.
 
 =item *
@@ -450,7 +494,7 @@ Add comments to the code explaining what you are testing for.
 
 =item *
 
-Make updating the '1..42' string unnecessary. Or make sure that you
+Make updating the '1..42' string unnecessary.  Or make sure that you
 update it.
 
 =item *
@@ -473,7 +517,7 @@ This works just like patching anything else, with one extra
 consideration.
 
 Modules in the F<cpan/> directory of the source tree are maintained
-outside of the Perl core. When the author updates the module, the
+outside of the Perl core.  When the author updates the module, the
 updates are simply copied into the core.  See that module's
 documentation or its listing on L<http://search.cpan.org/> for more
 information on reporting bugs and submitting patches.
@@ -493,8 +537,8 @@ core.
 
 For changes significant enough to warrant a F<pod/perldelta.pod> entry,
 the porters will greatly appreciate it if you submit a delta entry
-along with your actual change. Significant changes include, but are not
-limited to:
+along with your actual change.  Significant changes include, but are
+not limited to:
 
 =over 4
 
@@ -534,13 +578,13 @@ Important platform-specific changes
 =back
 
 Please make sure you add the perldelta entry to the right section
-within F<pod/perldelta.pod>. More information on how to write good
+within F<pod/perldelta.pod>.  More information on how to write good
 perldelta entries is available in the C<Style> section of
 F<Porting/how_to_write_a_perldelta.pod>.
 
 =head2 What makes for a good patch?
 
-New features and extensions to the language can be contentious. There
+New features and extensions to the language can be contentious.  There
 is no specific set of criteria which determine what features get added,
 but here are some questions to consider when developing a patch:
 
@@ -574,28 +618,28 @@ Either assimilate new technologies, or build bridges to them.
 
 =head3 Where is the implementation?
 
-All the talk in the world is useless without an implementation. In
+All the talk in the world is useless without an implementation.  In
 almost every case, the person or people who argue for a new feature
-will be expected to be the ones who implement it. Porters capable of
+will be expected to be the ones who implement it.  Porters capable of
 coding new features have their own agendas, and are not available to
 implement your (possibly good) idea.
 
 =head3 Backwards compatibility
 
-It's a cardinal sin to break existing Perl programs. New warnings can
+It's a cardinal sin to break existing Perl programs.  New warnings can
 be contentious--some say that a program that emits warnings is not
-broken, while others say it is. Adding keywords has the potential to
+broken, while others say it is.  Adding keywords has the potential to
 break programs, changing the meaning of existing token sequences or
 functions might break programs.
 
 The Perl 5 core includes mechanisms to help porters make backwards
 incompatible changes more compatible such as the L<feature> and
-L<deprecate> modules. Please use them when appropriate.
+L<deprecate> modules.  Please use them when appropriate.
 
 =head3 Could it be a module instead?
 
 Perl 5 has extension mechanisms, modules and XS, specifically to avoid
-the need to keep changing the Perl interpreter. You can write modules
+the need to keep changing the Perl interpreter.  You can write modules
 that export functions, you can give those functions prototypes so they
 can be called like built-in functions, you can even write XS code to
 mess with the runtime data structures of the Perl interpreter if you
@@ -618,26 +662,26 @@ potential to introduce new bugs.
 
 =head3 How big is it?
 
-The smaller and more localized the change, the better. Similarly, a
+The smaller and more localized the change, the better.  Similarly, a
 series of small patches is greatly preferred over a single large patch.
 
 =head3 Does it preclude other desirable features?
 
 A patch is likely to be rejected if it closes off future avenues of
-development. For instance, a patch that placed a true and final
+development.  For instance, a patch that placed a true and final
 interpretation on prototypes is likely to be rejected because there are
 still options for the future of prototypes that haven't been addressed.
 
 =head3 Is the implementation robust?
 
 Good patches (tight code, complete, correct) stand more chance of going
-in. Sloppy or incorrect patches might be placed on the back burner
+in.  Sloppy or incorrect patches might be placed on the back burner
 until the pumpking has time to fix, or might be discarded altogether
 without further notice.
 
 =head3 Is the implementation generic enough to be portable?
 
-The worst patches make use of system-specific features. It's highly
+The worst patches make use of system-specific features.  It's highly
 unlikely that non-portable additions to the Perl language will be
 accepted.
 
@@ -656,14 +700,14 @@ patch won't be accidentally thrown away by someone in the future?
 =head3 Is there enough documentation?
 
 Patches without documentation are probably ill-thought out or
-incomplete. No features can be added or changed without documentation,
+incomplete.  No features can be added or changed without documentation,
 so submitting a patch for the appropriate pod docs as well as the
 source code is important.
 
 =head3 Is there another way to do it?
 
 Larry said "Although the Perl Slogan is I<There's More Than One Way to
-Do It>, I hesitate to make 10 ways to do something". This is a tricky
+Do It>, I hesitate to make 10 ways to do something".  This is a tricky
 heuristic to navigate, though--one man's essential addition is another
 man's pointless cruft.
 
@@ -674,12 +718,12 @@ authors, ... Perl is supposed to be easy.
 
 =head3 Patches speak louder than words
 
-Working code is always preferred to pie-in-the-sky ideas. A patch to
+Working code is always preferred to pie-in-the-sky ideas.  A patch to
 add a feature stands a much higher chance of making it to the language
 than does a random feature request, no matter how fervently argued the
-request might be. This ties into "Will it be useful?", as the fact that
-someone took the time to make the patch demonstrates a strong desire
-for the feature.
+request might be.  This ties into "Will it be useful?", as the fact
+that someone took the time to make the patch demonstrates a strong
+desire for the feature.
 
 =head1 TESTING
 
@@ -687,11 +731,12 @@ The core uses the same testing style as the rest of Perl, a simple
 "ok/not ok" run through Test::Harness, but there are a few special
 considerations.
 
-There are three ways to write a test in the core. L<Test::More>,
-F<t/test.pl> and ad hoc C<print $test ? "ok 42\n" : "not ok 42\n">. The
-decision of which to use depends on what part of the test suite you're
-working on. This is a measure to prevent a high-level failure (such as
-Config.pm breaking) from causing basic functionality tests to fail.
+There are three ways to write a test in the core: L<Test::More>,
+F<t/test.pl> and ad hoc C<print $test ? "ok 42\n" : "not ok 42\n">.
+The decision of which to use depends on what part of the test suite
+you're working on.  This is a measure to prevent a high-level failure
+(such as Config.pm breaking) from causing basic functionality tests to
+fail.
 
 The F<t/test.pl> library provides some of the features of
 L<Test::More>, but avoids loading most modules and uses as few core
@@ -702,11 +747,13 @@ Protocol|http://testanything.org>.
 
 =over 4
 
-=item * F<t/base> and F<t/comp>
+=item * F<t/base>, F<t/comp> and F<t/opbasic>
 
 Since we don't know if require works, or even subroutines, use ad hoc
-tests for these two. Step carefully to avoid using the feature being
-tested.
+tests for these three.  Step carefully to avoid using the feature being
+tested.  Tests in F<t/opbasic>, for instance, have been placed there
+rather than in F<t/op> because they test functionality which
+F<t/test.pl> presumes has already been demonstrated to work.
 
 =item * F<t/cmd>, F<t/run>, F<t/io> and F<t/op>
 
@@ -719,25 +766,25 @@ sure to skip the test gracefully if it's not there.
 =item * Everything else
 
 Now that the core of Perl is tested, L<Test::More> can and should be
-used. You can also use the full suite of core modules in the tests.
+used.  You can also use the full suite of core modules in the tests.
 
 =back
 
 When you say "make test", Perl uses the F<t/TEST> program to run the
-test suite (except under Win32 where it uses F<t/harness> instead). All
-tests are run from the F<t/> directory, B<not> the directory which
-contains the test. This causes some problems with the tests in F<lib/>,
-so here's some opportunity for some patching.
+test suite (except under Win32 where it uses F<t/harness> instead).
+All tests are run from the F<t/> directory, B<not> the directory which
+contains the test.  This causes some problems with the tests in
+F<lib/>, so here's some opportunity for some patching.
 
-You must be triply conscious of cross-platform concerns. This usually
+You must be triply conscious of cross-platform concerns.  This usually
 boils down to using L<File::Spec> and avoiding things like C<fork()>
 and C<system()> unless absolutely necessary.
 
 =head2 Special C<make test> targets
 
 There are various special make targets that can be used to test Perl
-slightly differently than the standard "test" target. Not all them are
-expected to give a 100% success rate. Many of them have several
+slightly differently than the standard "test" target.  Not all them are
+expected to give a 100% success rate.  Many of them have several
 aliases, and many of them are not available on certain operating
 systems.
 
@@ -748,75 +795,32 @@ systems.
 This runs some basic sanity tests on the source tree and helps catch
 basic errors before you submit a patch.
 
-=item * coretest
-
-Run F<perl> on all core tests (F<t/*> and F<lib/[a-z]*> pragma tests).
-
-(Not available on Win32)
-
-=item * test.deparse
-
-Run all the tests through L<B::Deparse>. Not all tests will succeed.
-
-(Not available on Win32)
-
-=item * test.taintwarn
-
-Run all tests with the B<-t> command-line switch. Not all tests are
-expected to succeed (until they're specifically fixed, of course).
-
-(Not available on Win32)
-
 =item * minitest
 
 Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
 F<t/op>, F<t/uni> and F<t/mro> tests.
 
-=item * test.valgrind check.valgrind utest.valgrind ucheck.valgrind
+=item * test.valgrind check.valgrind
 
 (Only in Linux) Run all the tests using the memory leak + naughty
-memory access tool "valgrind". The log files will be named
+memory access tool "valgrind".  The log files will be named
 F<testname.valgrind>.
-
-=item * test.torture torturetest
-
-Run all the usual tests and some extra tests. As of Perl 5.8.0, the
-only extra tests are Abigail's JAPHs, F<t/japh/abigail.t>.
-
-You can also run the torture test with F<t/harness> by giving
-C<-torture> argument to F<t/harness>.
-
-=item * utest ucheck test.utf8 check.utf8
-
-Run all the tests with -Mutf8. Not all tests will succeed.
-
-(Not available on Win32)
-
-=item * minitest.utf16 test.utf16
-
-Runs the tests with UTF-16 encoded scripts, encoded with different
-versions of this encoding.
-
-C<make utest.utf16> runs the test suite with a combination of C<-utf8>
-and C<-utf16> arguments to F<t/TEST>.
-
-(Not available on Win32)
 
 =item * test_harness
 
 Run the test suite with the F<t/harness> controlling program, instead
-of F<t/TEST>. F<t/harness> is more sophisticated, and uses the
+of F<t/TEST>.  F<t/harness> is more sophisticated, and uses the
 L<Test::Harness> module, thus using this test target supposes that perl
-mostly works. The main advantage for our purposes is that it prints a
-detailed summary of failed tests at the end. Also, unlike F<t/TEST>, it
-doesn't redirect stderr to stdout.
+mostly works.  The main advantage for our purposes is that it prints a
+detailed summary of failed tests at the end.  Also, unlike F<t/TEST>,
+it doesn't redirect stderr to stdout.
 
 Note that under Win32 F<t/harness> is always used instead of F<t/TEST>,
 so there is no special "test_harness" target.
 
 Under Win32's "test" target you may use the TEST_SWITCHES and
 TEST_FILES environment variables to control the behaviour of
-F<t/harness>. This means you can say
+F<t/harness>.  This means you can say
 
     nmake test TEST_FILES="op/*.t"
     nmake test TEST_SWITCHES="-torture" TEST_FILES="op/*.t"
@@ -830,9 +834,9 @@ Sets PERL_SKIP_TTY_TEST to true before running normal test.
 =head2 Parallel tests
 
 The core distribution can now run its regression tests in parallel on
-Unix-like platforms. Instead of running C<make test>, set C<TEST_JOBS>
+Unix-like platforms.  Instead of running C<make test>, set C<TEST_JOBS>
 in your environment to the number of tests to run in parallel, and run
-C<make test_harness>. On a Bourne-like shell, this can be done as
+C<make test_harness>.  On a Bourne-like shell, this can be done as
 
     TEST_JOBS=3 make test_harness  # Run 3 tests in parallel
 
@@ -842,8 +846,8 @@ non-conflicting test scripts itself, and there is no standard interface
 to C<make> utilities to interact with their job schedulers.
 
 Note that currently some test scripts may fail when run in parallel
-(most notably F<ext/IO/t/io_dir.t>). If necessary, run just the failing
-scripts again sequentially and see if the failures go away.
+(most notably F<ext/IO/t/io_dir.t>).  If necessary, run just the
+failing scripts again sequentially and see if the failures go away.
 
 =head2 Running tests by hand
 
@@ -861,14 +865,14 @@ or
 =head2 Using F<t/harness> for testing
 
 If you use C<harness> for testing, you have several command line
-options available to you. The arguments are as follows, and are in the
+options available to you.  The arguments are as follows, and are in the
 order that they must appear if used together.
 
     harness -v -torture -re=pattern LIST OF FILES TO TEST
     harness -v -torture -re LIST OF PATTERNS TO MATCH
 
 If C<LIST OF FILES TO TEST> is omitted, the file list is obtained from
-the manifest. The file list may include shell wildcards which will be
+the manifest.  The file list may include shell wildcards which will be
 expanded out.
 
 =over 4
@@ -884,14 +888,14 @@ Run the torture tests as well as the normal set.
 
 =item * -re=PATTERN
 
-Filter the file list so that all the test files run match PATTERN. Note
-that this form is distinct from the B<-re LIST OF PATTERNS> form below
-in that it allows the file list to be provided as well.
+Filter the file list so that all the test files run match PATTERN.
+Note that this form is distinct from the B<-re LIST OF PATTERNS> form
+below in that it allows the file list to be provided as well.
 
 =item * -re LIST OF PATTERNS
 
 Filter the file list so that all the test files run match
-/(LIST|OF|PATTERNS)/. Note that with this form the patterns are joined
+/(LIST|OF|PATTERNS)/.  Note that with this form the patterns are joined
 by '|' and you cannot supply a list of files, instead the test files
 are obtained from the MANIFEST.
 
@@ -909,7 +913,7 @@ affect the execution of the test:
 =item * PERL_CORE=1
 
 indicates that we're running this test as part of the perl core test
-suite. This is useful for modules that have a dual life on CPAN.
+suite.  This is useful for modules that have a dual life on CPAN.
 
 =item * PERL_DESTRUCT_LEVEL=2
 
@@ -924,9 +928,9 @@ F<./perl>).
 
 =item * PERL_SKIP_TTY_TEST
 
-if set, tells to skip the tests that need a terminal. It's actually set
-automatically by the Makefile, but can also be forced artificially by
-running 'make test_notty'.
+if set, tells to skip the tests that need a terminal.  It's actually
+set automatically by the Makefile, but can also be forced artificially
+by running 'make test_notty'.
 
 =back
 
@@ -937,7 +941,7 @@ running 'make test_notty'.
 =item * PERL_TEST_Net_Ping
 
 Setting this variable runs all the Net::Ping modules tests, otherwise
-some tests that interact with the outside world are skipped. See
+some tests that interact with the outside world are skipped.  See
 L<perl58delta>.
 
 =item * PERL_TEST_NOVREXX
@@ -947,6 +951,13 @@ Setting this variable skips the vrexx.t tests for OS2::REXX.
 =item * PERL_TEST_NUMCONVERTS
 
 This sets a variable in op/numconvert.t.
+
+=item * PERL_TEST_MEMORY
+
+Setting this variable includes the tests in F<t/bigmem/>.  This should
+be set to the number of gigabytes of memory available for testing, eg.
+C<PERL_TEST_MEMORY=4> indicates that tests that require 4GiB of
+available memory can be run safely.
 
 =back
 
@@ -961,7 +972,7 @@ To hack on the Perl guts, you'll need to read the following things:
 
 =item * L<perlsource>
 
-An overview of the Perl source tree. This will help you find the files
+An overview of the Perl source tree.  This will help you find the files
 you're looking for.
 
 =item * L<perlinterp>
@@ -972,12 +983,12 @@ Perl does what it does.
 =item * L<perlhacktut>
 
 This document walks through the creation of a small patch to Perl's C
-code. If you're just getting started with Perl core hacking, this will
+code.  If you're just getting started with Perl core hacking, this will
 help you understand how it works.
 
 =item * L<perlhacktips>
 
-More details on hacking the Perl core. This document focuses on lower
+More details on hacking the Perl core.  This document focuses on lower
 level details such as how to write tests, compilation issues,
 portability, debugging, etc.
 
@@ -986,7 +997,7 @@ If you plan on doing serious C hacking, make sure to read this.
 =item * L<perlguts>
 
 This is of paramount importance, since it's the documentation of what
-goes where in the Perl source. Read it over a couple of times and it
+goes where in the Perl source.  Read it over a couple of times and it
 might start to make sense - don't worry if it doesn't yet, because the
 best way to study it is to read it in conjunction with poking at Perl
 source, and we'll do that later on.
@@ -1000,7 +1011,7 @@ L<http://search.cpan.org/dist/illguts/>
 
 A working knowledge of XSUB programming is incredibly useful for core
 hacking; XSUBs use techniques drawn from the PP code, the portion of
-the guts that actually executes a Perl program. It's a lot gentler to
+the guts that actually executes a Perl program.  It's a lot gentler to
 learn those techniques from simple examples and explanation than from
 the core itself.
 
@@ -1015,13 +1026,6 @@ This is a collection of words of wisdom for a Perl porter; some of it
 is only useful to the pumpkin holder, but most of it applies to anyone
 wanting to go about Perl development.
 
-=item * The perl5-porters FAQ
-
-This should be available from
-http://dev.perl.org/perl5/docs/p5p-faq.html . It contains hints on
-reading perl5-porters, information on how perl5-porters works and how
-Perl development in general works.
-
 =back
 
 =head1 CPAN TESTERS AND PERL SMOKERS
@@ -1034,9 +1038,9 @@ http://www.nntp.perl.org/group/perl.daily-build.reports/ )
 automatically test Perl source releases on platforms with various
 configurations.
 
-Both efforts welcome volunteers. In order to get involved in smoke
+Both efforts welcome volunteers.  In order to get involved in smoke
 testing of the perl itself visit
-L<http://search.cpan.org/dist/Test-Smoke/>. In order to start smoke
+L<http://search.cpan.org/dist/Test-Smoke/>.  In order to start smoke
 testing CPAN modules visit
 L<http://search.cpan.org/dist/CPANPLUS-YACSmoke/> or
 L<http://search.cpan.org/dist/minismokebox/> or
@@ -1060,14 +1064,14 @@ who knows, you may unearth a bug in the patch...
 =item *
 
 Do read the README associated with your operating system, e.g.
-README.aix on the IBM AIX OS. Don't hesitate to supply patches to that
+README.aix on the IBM AIX OS.  Don't hesitate to supply patches to that
 README if you find anything missing or changed over a new OS release.
 
 =item *
 
 Find an area of Perl that seems interesting to you, and see if you can
-work out how it works. Scan through the source, and step over it in the
-debugger. Play, poke, investigate, fiddle! You'll probably get to
+work out how it works.  Scan through the source, and step over it in
+the debugger.  Play, poke, investigate, fiddle! You'll probably get to
 understand not just your chosen area but a much wider range of
 F<perl>'s activity as well, and probably sooner than you'd think.
 
@@ -1076,7 +1080,7 @@ F<perl>'s activity as well, and probably sooner than you'd think.
 =head2 "The Road goes ever on and on, down from the door where it began."
 
 If you can do these things, you've started on the long road to Perl
-porting. Thanks for wanting to help make Perl better - and happy
+porting.  Thanks for wanting to help make Perl better - and happy
 hacking!
 
 =head2 Metaphoric Quotations
@@ -1084,7 +1088,7 @@ hacking!
 If you recognized the quote about the Road above, you're in luck.
 
 Most software projects begin each file with a literal description of
-each file's purpose. Perl instead begins each with a literary allusion
+each file's purpose.  Perl instead begins each with a literary allusion
 to that file's purpose.
 
 Like chapters in many books, all top-level Perl source files (along
@@ -1093,20 +1097,20 @@ inscription that alludes, indirectly and metaphorically, to the
 material you're about to read.
 
 Quotations are taken from writings of J.R.R. Tolkien pertaining to his
-Legendarium, almost always from I<The Lord of the Rings>. Chapters and
+Legendarium, almost always from I<The Lord of the Rings>.  Chapters and
 page numbers are given using the following editions:
 
 =over 4
 
 =item *
 
-I<The Hobbit>, by J.R.R. Tolkien. The hardcover, 70th-anniversary
+I<The Hobbit>, by J.R.R. Tolkien.  The hardcover, 70th-anniversary
 edition of 2007 was used, published in the UK by Harper Collins
 Publishers and in the US by the Houghton Mifflin Company.
 
 =item *
 
-I<The Lord of the Rings>, by J.R.R. Tolkien. The hardcover,
+I<The Lord of the Rings>, by J.R.R. Tolkien.  The hardcover,
 50th-anniversary edition of 2004 was used, published in the UK by
 Harper Collins Publishers and in the US by the Houghton Mifflin
 Company.
@@ -1115,7 +1119,7 @@ Company.
 
 I<The Lays of Beleriand>, by J.R.R. Tolkien and published posthumously
 by his son and literary executor, C.J.R. Tolkien, being the 3rd of the
-12 volumes in Christopher's mammoth I<History of Middle Earth>. Page
+12 volumes in Christopher's mammoth I<History of Middle Earth>.  Page
 numbers derive from the hardcover edition, first published in 1983 by
 George Allen & Unwin; no page numbers changed for the special 3-volume
 omnibus edition of 2002 or the various trade-paper editions, all again
@@ -1126,7 +1130,7 @@ now by Harper Collins or Houghton Mifflin.
 Other JRRT books fair game for quotes would thus include I<The
 Adventures of Tom Bombadil>, I<The Silmarillion>, I<Unfinished Tales>,
 and I<The Tale of the Children of Hurin>, all but the first
-posthumously assembled by CJRT. But I<The Lord of the Rings> itself is
+posthumously assembled by CJRT.  But I<The Lord of the Rings> itself is
 perfectly fine and probably best to quote from, provided you can find a
 suitable quote there.
 
@@ -1134,7 +1138,7 @@ So if you were to supply a new, complete, top-level source file to add
 to Perl, you should conform to this peculiar practice by yourself
 selecting an appropriate quotation from Tolkien, retaining the original
 spelling and punctuation and using the same format the rest of the
-quotes are in. Indirect and oblique is just fine; remember, it's a
+quotes are in.  Indirect and oblique is just fine; remember, it's a
 metaphor, so being meta is, after all, what it's for.
 
 =head1 AUTHOR

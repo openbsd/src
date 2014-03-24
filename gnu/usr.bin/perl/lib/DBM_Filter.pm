@@ -2,7 +2,7 @@ package DBM_Filter ;
 
 use strict;
 use warnings;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 package Tie::Hash ;
 
@@ -247,7 +247,7 @@ DBM_Filter -- Filter DBM keys/values
     $db->Filtered();
 
     package DBM_Filter::my_filter1;
-    
+
     sub Store { ... }
     sub Fetch { ... }
 

@@ -274,11 +274,14 @@ _EOH_
     print $fh $podname eq 'perlapi' ? <<'_EOB_' : <<'_EOB_';
 The following functions have been flagged as part of the public API,
 but are currently undocumented. Use them at your own risk, as the
-interfaces are subject to change.
+interfaces are subject to change.  Functions that are not listed in this
+document are not intended for public use, and should NOT be used under any
+circumstances.
 
-If you use one of them, you may wish to consider creating and submitting
-documentation for it. If your patch is accepted, this will indicate that
-the interface is stable (unless it is explicitly marked otherwise).
+If you use one of the undocumented functions below, you may wish to consider
+creating and submitting documentation for it. If your patch is accepted, this
+will indicate that the interface is stable (unless it is explicitly marked
+otherwise).
 
 =over
 
@@ -411,11 +414,6 @@ it also (essentially transparently) means C<UTF-EBCDIC>.
 But the ordinals of characters differ between ASCII, EBCDIC, and
 the UTF- encodings, and a string encoded in UTF-EBCDIC may occupy more bytes
 than in UTF-8.
-
-Also, on some EBCDIC machines, functions that are documented as operating on
-US-ASCII (or Basic Latin in Unicode terminology) may in fact operate on all
-256 characters in the EBCDIC range, not just the subset corresponding to
-US-ASCII.
 
 The listing below is alphabetical, case insensitive.
 

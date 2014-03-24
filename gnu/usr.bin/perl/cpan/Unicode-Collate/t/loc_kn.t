@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; print "1..14\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -37,9 +37,16 @@ ok($objKn->getlocale, 'kn');
 
 $objKn->change(level => 1);
 
-ok($objKn->lt("\x{C94}", "\x{C82}"));
-ok($objKn->lt("\x{C82}", "\x{C83}"));
-ok($objKn->lt("\x{C83}", "\x{CF1}"));
-ok($objKn->lt("\x{CF1}", "\x{CF2}"));
-ok($objKn->lt("\x{CF2}", "\x{C95}"));
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objKn->change(highestFFFF => 1) if $h;
+
+    ok($objKn->lt("\x{C93}$t", "\x{C94}"));
+    ok($objKn->lt("\x{C94}$t", "\x{C82}"));
+    ok($objKn->lt("\x{C82}$t", "\x{C83}"));
+    ok($objKn->lt("\x{C83}$t", "\x{CF1}"));
+    ok($objKn->lt("\x{CF1}$t", "\x{CF2}"));
+    ok($objKn->lt("\x{CF2}$t", "\x{C95}"));
+}
 

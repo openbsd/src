@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 #
-# man-options.t -- Additional tests for Pod::Man options.
+# Additional tests for Pod::Man options.
 #
-# Copyright 2002, 2004, 2006, 2008, 2009 Russ Allbery <rra@stanford.edu>
+# Copyright 2002, 2004, 2006, 2008, 2009, 2012, 2013
+#     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -18,13 +19,13 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 10;
+use Test::More tests => 28;
 BEGIN { use_ok ('Pod::Man') }
 
 # Redirect stderr to a file.
 sub stderr_save {
     open (OLDERR, '>&STDERR') or die "Can't dup STDERR: $!\n";
-    open (STDERR, '> out.err') or die "Can't redirect STDERR: $!\n";
+    open (STDERR, "> out$$.err") or die "Can't redirect STDERR: $!\n";
 }
 
 # Restore stderr.
@@ -43,7 +44,7 @@ while (<DATA>) {
         my ($option, $value) = split;
         $options{$option} = $value;
     }
-    open (TMP, '> tmp.pod') or die "Cannot create tmp.pod: $!\n";
+    open (TMP, "> tmp$$.pod") or die "Cannot create tmp$$.pod: $!\n";
     while (<DATA>) {
         last if $_ eq "###\n";
         print TMP $_;
@@ -51,13 +52,14 @@ while (<DATA>) {
     close TMP;
     my $parser = Pod::Man->new (%options);
     isa_ok ($parser, 'Pod::Man', 'Parser object');
-    open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+    open (OUT, "> out$$.tmp") or die "Cannot create out$$.tmp: $!\n";
     stderr_save;
-    $parser->parse_from_file ('tmp.pod', \*OUT);
+    eval { $parser->parse_from_file ("tmp$$.pod", \*OUT) };
+    my $exception = $@;
     stderr_restore;
     close OUT;
     my $accents = 0;
-    open (TMP, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+    open (TMP, "out$$.tmp") or die "Cannot open out$$.tmp: $!\n";
     while (<TMP>) {
         last if /^\.nh/;
     }
@@ -67,21 +69,26 @@ while (<DATA>) {
         $output = <TMP>;
     }
     close TMP;
-    1 while unlink ('tmp.pod', 'out.tmp');
+    1 while unlink ("tmp$$.pod", "out$$.tmp");
     my $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";
         $expected .= $_;
     }
     is ($output, $expected, "Output correct for test $n");
-    open (ERR, 'out.err') or die "Cannot open out.err: $!\n";
+    open (ERR, "out$$.err") or die "Cannot open out.err: $!\n";
     my $errors;
     {
         local $/;
         $errors = <ERR>;
     }
     close ERR;
-    1 while unlink ('out.err');
+    $errors =~ s/\Qtmp$$.pod/tmp.pod/g;
+    1 while unlink ("out$$.err");
+    if ($exception) {
+        $exception =~ s/ at .*//;
+        $errors .= "EXCEPTION: $exception";
+    }
     $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";
@@ -156,4 +163,124 @@ Bar.
 .IX Header "NEXT"
 ###
 tmp.pod around line 7: You forgot a '=back' before '=head1'
+###
+
+###
+nourls 1
+###
+=head1 URL suppression
+
+L<anchor|http://www.example.com/>
+###
+.SH "URL suppression"
+.IX Header "URL suppression"
+anchor
+###
+###
+
+###
+errors stderr
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+.IP "Foo" 4
+.IX Item "Foo"
+Bar.
+.SH "NEXT"
+.IX Header "NEXT"
+###
+tmp.pod around line 7: You forgot a '=back' before '=head1'
+###
+
+###
+errors die
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+.IP "Foo" 4
+.IX Item "Foo"
+Bar.
+.SH "NEXT"
+.IX Header "NEXT"
+###
+tmp.pod around line 7: You forgot a '=back' before '=head1'
+EXCEPTION: POD document had syntax errors
+###
+
+###
+errors pod
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+.IP "Foo" 4
+.IX Item "Foo"
+Bar.
+.SH "NEXT"
+.IX Header "NEXT"
+.SH "POD ERRORS"
+.IX Header "POD ERRORS"
+Hey! \fBThe above document had some coding errors, which are explained below:\fR
+.IP "Around line 7:" 4
+.IX Item "Around line 7:"
+You forgot a '=back' before '=head1'
+###
+###
+
+###
+errors none
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+.IP "Foo" 4
+.IX Item "Foo"
+Bar.
+.SH "NEXT"
+.IX Header "NEXT"
+###
+###
+
+###
+errors none
+###
+=over 4
+
+=item foo
+
+Not a bullet.
+
+=item *
+
+Also not a bullet.
+
+=back
+###
+.IP "foo" 4
+.IX Item "foo"
+Not a bullet.
+.IP "*" 4
+Also not a bullet.
 ###

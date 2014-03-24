@@ -282,9 +282,9 @@ foreach my $chr (60, 200, 600, 6000, 60000) {
     fieldhash %h;
     is( (join ':', %h = (1) x 8), '1:1',
 	'hash assignment in list context removes duplicates' );
-    is( scalar( %h = (1,2,1,3,1,4,1,5) ), 2,
+    is( scalar( %h = (1,2,1,3,1,4,1,5) ), 8,
 	'hash assignment in scalar context' );
-    is( scalar( ($x,%h) = (0,1,2,1,3,1,4,1,5) ), 3,
+    is( scalar( ($x,%h) = (0,1,2,1,3,1,4,1,5) ), 9,
 	'scalar + hash assignment in scalar context' );
     $ar = [ %h = (1,2,1,3,1,4,1,5) ];
     is( $#$ar, 1, 'hash assignment in list context' );

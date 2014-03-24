@@ -108,12 +108,14 @@ bisect.pl - use git bisect to pinpoint changes
     .../Porting/bisect.pl -e 'my $a := 2;'
     # When did this stop being an error?
     .../Porting/bisect.pl --expect-fail -e '1 // 2'
-    # When did this stop matching?
+    # When were all lines matching this pattern removed from all files?
     .../Porting/bisect.pl --match '\b(?:PL_)hash_seed_set\b'
-    # When did this start matching?
+    # When was some line matching this pattern added to some file?
     .../Porting/bisect.pl --expect-fail --match '\buseithreads\b'
-    # When did this test program stop working?
+    # When did this test program stop exiting 0?
     .../Porting/bisect.pl -- ./perl -Ilib ../test_prog.pl
+    # When did this test start failing?
+    .../Porting/bisect.pl -- ./perl -Ilib t/TEST op/sort.t
     # When did this first become valid syntax?
     .../Porting/bisect.pl --target=miniperl --end=v5.10.0 \
          --expect-fail -e 'my $a := 2;'
@@ -152,10 +154,12 @@ end revisions.
 By default F<bisect.pl> will process all options, then use the rest of the
 command line as arguments to list C<system> to run a test case. By default,
 the test case should pass (exit with 0) on earlier perls, and fail (exit
-non-zero) on I<blead>. F<bisect.pl> will use F<bisect-runner.pl> to find the
-earliest stable perl version on which the test case passes, check that it
-fails on blead, and then use F<bisect-runner.pl> with C<git bisect run> to
-find the commit which caused the failure.
+non-zero) on I<blead> (note that running most of perl's test files directly
+won't do this, you'll need to run them through a harness to get the proper
+error code). F<bisect.pl> will use F<bisect-runner.pl> to find the earliest
+stable perl version on which the test case passes, check that it fails on
+blead, and then use F<bisect-runner.pl> with C<git bisect run> to find the
+commit which caused the failure.
 
 Because the test case is the complete argument to C<system>, it is easy to
 run something other than the F<perl> built, if necessary. If you need to run
@@ -317,17 +321,23 @@ revision. The bisect run will find the first commit where it passes.
 
 =item *
 
--Dnoextensions=Encode
+-D I<config_arg=value>
 
 =item *
 
--Uusedevel
+-U I<config_arg>
 
 =item *
 
--Accflags=-DNO_MATHOMS
+-A I<config_arg=value>
 
-Arguments to pass to F<Configure>. Repeated C<-A> arguments are passed
+Arguments (C<-A>, C<-D>, C<-U>) to pass to F<Configure>. For example,
+
+    -Dnoextensions=Encode
+    -Uusedevel
+    -Accflags=-DNO_MATHOMS
+
+Repeated C<-A> arguments are passed
 through as is. C<-D> and C<-U> are processed in order, and override
 previous settings for the same parameter. F<bisect-runner.pl> emulates
 C<-Dnoextensions> when F<Configure> itself does not provide it, as it's

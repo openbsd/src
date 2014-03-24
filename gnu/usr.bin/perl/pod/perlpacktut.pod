@@ -85,7 +85,7 @@ with ASCII character coding, it will print C<0123456789>.
 Let's suppose you've got to read in a data file like this:
 
     Date      |Description                | Income|Expenditure
-    01/24/2001 Ahmed's Camel Emporium                  1147.99
+    01/24/2001 Zed's Camel Emporium                    1147.99
     01/28/2001 Flea spray                                24.99
     01/29/2001 Camel rides to tourists      235.00
 
@@ -200,7 +200,7 @@ how much we've spent:
 
 Oh, hmm. That didn't quite work. Let's see what happened:
 
-    01/24/2001 Ahmed's Camel Emporium                   1147.99
+    01/24/2001 Zed's Camel Emporium                     1147.99
     01/28/2001 Flea spray                                 24.99
     01/29/2001 Camel rides to tourists     1235.00
     03/23/2001Totals                     1235.001172.98
@@ -225,7 +225,7 @@ additional spaces to line up our fields, like this:
 but they don't translate to spaces in the output.) Here's what we got
 this time:
 
-    01/24/2001 Ahmed's Camel Emporium                   1147.99
+    01/24/2001 Zed's Camel Emporium                     1147.99
     01/28/2001 Flea spray                                 24.99
     01/29/2001 Camel rides to tourists     1235.00
     03/23/2001 Totals                      1235.00 1172.98

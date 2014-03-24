@@ -26,11 +26,10 @@
 #endif
 
 START_EXTERN_C
-extern char *		g_win32_get_privlib(const char *pl, STRLEN *const len);
-extern char *		g_win32_get_sitelib(const char *pl, STRLEN *const len);
-extern char *		g_win32_get_vendorlib(const char *pl,
-					      STRLEN *const len);
-extern char *		g_getlogin(void);
+extern char *	g_win32_get_privlib(const char *pl, STRLEN *const len);
+extern char *	g_win32_get_sitelib(const char *pl, STRLEN *const len);
+extern char *	g_win32_get_vendorlib(const char *pl, STRLEN *const len);
+extern char *	g_getlogin(void);
 END_EXTERN_C
 
 class CPerlHost
@@ -1279,8 +1278,7 @@ PerlSockGethostbyname(struct IPerlSock* piPerl, const char* name)
 struct hostent*
 PerlSockGethostent(struct IPerlSock* piPerl)
 {
-    dTHX;
-    Perl_croak(aTHX_ "gethostent not implemented!\n");
+    win32_croak_not_implemented("gethostent");
     return NULL;
 }
 
@@ -1535,13 +1533,13 @@ PerlProcCrypt(struct IPerlProc* piPerl, const char* clear, const char* salt)
     return win32_crypt(clear, salt);
 }
 
-void
+PERL_CALLCONV_NO_RET void
 PerlProcExit(struct IPerlProc* piPerl, int status)
 {
     exit(status);
 }
 
-void
+PERL_CALLCONV_NO_RET void
 PerlProc_Exit(struct IPerlProc* piPerl, int status)
 {
     _exit(status);
@@ -1809,8 +1807,8 @@ restart:
 int
 PerlProcFork(struct IPerlProc* piPerl)
 {
-    dTHX;
 #ifdef USE_ITHREADS
+    dTHX;
     DWORD id;
     HANDLE handle;
     CPerlHost *h;
@@ -1862,7 +1860,7 @@ PerlProcFork(struct IPerlProc* piPerl)
 #  endif
     return -(int)id;
 #else
-    Perl_croak(aTHX_ "fork() not implemented!\n");
+    win32_croak_not_implemented("fork()");
     return -1;
 #endif /* USE_ITHREADS */
 }
@@ -1894,6 +1892,8 @@ PerlProcSpawnvp(struct IPerlProc* piPerl, int mode, const char *cmdname, const c
 int
 PerlProcLastHost(struct IPerlProc* piPerl)
 {
+ /* this dTHX is unused in an optimized build since CPerlHost::num_hosts
+    is a static */
  dTHX;
  CPerlHost *h = (CPerlHost*)w32_internal_host;
  return h->LastHost();
@@ -2178,7 +2178,6 @@ compare(const void *arg1, const void *arg2)
 void
 CPerlHost::Add(LPCSTR lpStr)
 {
-    dTHX;
     char szBuffer[1024];
     LPSTR *lpPtr;
     int index, length = strlen(lpStr)+1;
@@ -2225,14 +2224,12 @@ CPerlHost::CalculateEnvironmentSpace(void)
 void
 CPerlHost::FreeLocalEnvironmentStrings(LPSTR lpStr)
 {
-    dTHX;
     Safefree(lpStr);
 }
 
 char*
 CPerlHost::GetChildDir(void)
 {
-    dTHX;
     char* ptr;
     size_t length;
 
@@ -2249,20 +2246,18 @@ CPerlHost::GetChildDir(void)
 void
 CPerlHost::FreeChildDir(char* pStr)
 {
-    dTHX;
     Safefree(pStr);
 }
 
 LPSTR
 CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
 {
-    dTHX;
     LPSTR lpStr, lpPtr, lpEnvPtr, lpTmp, lpLocalEnv, lpAllocPtr;
     DWORD dwSize, dwEnvIndex;
     int nLength, compVal;
 
     // get the process environment strings
-    lpAllocPtr = lpTmp = (LPSTR)GetEnvironmentStrings();
+    lpAllocPtr = lpTmp = (LPSTR)win32_getenvironmentstrings();
 
     // step over current directory stuff
     while(*lpTmp == '=')
@@ -2338,7 +2333,7 @@ CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
     }
 
     // release the process environment strings
-    FreeEnvironmentStrings(lpAllocPtr);
+    win32_freeenvironmentstrings(lpAllocPtr);
 
     return lpPtr;
 }
@@ -2346,7 +2341,6 @@ CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
 void
 CPerlHost::Reset(void)
 {
-    dTHX;
     if(m_lppEnvList != NULL) {
 	for(DWORD index = 0; index < m_dwEnvCount; ++index) {
 	    Free(m_lppEnvList[index]);
@@ -2361,7 +2355,6 @@ CPerlHost::Reset(void)
 void
 CPerlHost::Clearenv(void)
 {
-    dTHX;
     char ch;
     LPSTR lpPtr, lpStr, lpEnvPtr;
     if (m_lppEnvList != NULL) {
@@ -2375,7 +2368,7 @@ CPerlHost::Clearenv(void)
     }
 
     /* get the process environment strings */
-    lpStr = lpEnvPtr = (LPSTR)GetEnvironmentStrings();
+    lpStr = lpEnvPtr = (LPSTR)win32_getenvironmentstrings();
 
     /* step over current directory stuff */
     while(*lpStr == '=')
@@ -2394,14 +2387,13 @@ CPerlHost::Clearenv(void)
 	lpStr += strlen(lpStr) + 1;
     }
 
-    FreeEnvironmentStrings(lpEnvPtr);
+    win32_freeenvironmentstrings(lpEnvPtr);
 }
 
 
 char*
 CPerlHost::Getenv(const char *varname)
 {
-    dTHX;
     if (!m_bTopLevel) {
 	char *pEnv = Find(varname);
 	if (pEnv && *pEnv)
@@ -2413,7 +2405,6 @@ CPerlHost::Getenv(const char *varname)
 int
 CPerlHost::Putenv(const char *envstring)
 {
-    dTHX;
     Add(envstring);
     if (m_bTopLevel)
 	return win32_putenv(envstring);
@@ -2424,7 +2415,6 @@ CPerlHost::Putenv(const char *envstring)
 int
 CPerlHost::Chdir(const char *dirname)
 {
-    dTHX;
     int ret;
     if (!dirname) {
 	errno = ENOENT;

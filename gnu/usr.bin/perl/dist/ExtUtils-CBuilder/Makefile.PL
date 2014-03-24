@@ -15,6 +15,7 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => "6.30"
   },
   "EXE_FILES" => [],
+  "INSTALLDIRS" => ($] < 5.011 ? 'perl' : 'site'),
   "LICENSE" => "perl",
   "PREREQ_PM" => {
     "Cwd" => 0,

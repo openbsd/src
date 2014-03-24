@@ -120,7 +120,7 @@ sub samepath {
 	my($dev1, $ino1, $dev2, $ino2);
 	($dev1, $ino1) = stat($p1);
 	($dev2, $ino2) = stat($p2);
-	($dev1 ~~ $dev2 && $ino1 ~~ $ino2);
+	($dev1 == $dev2 && $ino1 == $ino2);
     }
     else {
 	1;

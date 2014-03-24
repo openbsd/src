@@ -304,6 +304,24 @@ MGVTBL sharedsv_userlock_vtbl = {
 #endif
 };
 
+
+/* Support for dual-valued variables */
+#ifdef SVf_IVisUV
+#  define DUALVAR_FLAGS(sv)                             \
+    ((SvPOK(sv))                                        \
+        ? ((SvNOK(sv) || SvNOKp(sv)) ? SVf_NOK          \
+        : ((SvIsUV(sv)) ? (SVf_IOK | SVf_IVisUV)        \
+        : ((SvIOK(sv) || SvIOKp(sv)) ? SVf_IOK : 0)))   \
+        : 0)
+#else
+#  define DUALVAR_FLAGS(sv)                             \
+    ((SvPOK(sv))                                        \
+        ? ((SvNOK(sv) || SvNOKp(sv)) ? SVf_NOK          \
+        : ((SvIOK(sv) || SvIOKp(sv)) ? SVf_IOK : 0))    \
+        : 0)
+#endif
+
+
 /*
  * Access to shared things is heavily based on MAGIC
  *      - in mg.h/mg.c/sv.c sense
@@ -326,11 +344,7 @@ extern MGVTBL sharedsv_elem_vtbl;      /* Elements of hashes and arrays have
 
 /* Get shared aggregate SV pointed to by threads::shared::tie magic object */
 
-STATIC SV *
-S_sharedsv_from_obj(pTHX_ SV *sv)
-{
-     return ((SvROK(sv)) ? INT2PTR(SV *, SvIV(SvRV(sv))) : NULL);
-}
+#define SHAREDSV_FROM_OBJ(sv) ((SvROK(sv)) ? INT2PTR(SV *, SvIV(SvRV(sv))) : NULL)
 
 
 /* Return the user_lock structure (if any) associated with a shared SV.
@@ -405,7 +419,7 @@ Perl_sharedsv_find(pTHX_ SV *sv)
     }
     /* Just for tidyness of API also handle tie objects */
     if (SvROK(sv) && sv_derived_from(sv, "threads::shared::tie")) {
-        return (S_sharedsv_from_obj(aTHX_ sv));
+        return (SHAREDSV_FROM_OBJ(sv));
     }
     return (NULL);
 }
@@ -885,7 +899,7 @@ int
 sharedsv_elem_mg_FETCH(pTHX_ SV *sv, MAGIC *mg)
 {
     dTHXc;
-    SV *saggregate = S_sharedsv_from_obj(aTHX_ mg->mg_obj);
+    SV *saggregate = SHAREDSV_FROM_OBJ(mg->mg_obj);
     SV** svp = NULL;
 
     ENTER_LOCK;
@@ -935,8 +949,10 @@ int
 sharedsv_elem_mg_STORE(pTHX_ SV *sv, MAGIC *mg)
 {
     dTHXc;
-    SV *saggregate = S_sharedsv_from_obj(aTHX_ mg->mg_obj);
+    SV *saggregate = SHAREDSV_FROM_OBJ(mg->mg_obj);
     SV **svp;
+    U32 dualvar_flags = DUALVAR_FLAGS(sv);
+
     /* Theory - SV itself is magically shared - and we have ordered the
        magic such that by the time we get here it has been stored
        to its shared counterpart
@@ -965,6 +981,7 @@ sharedsv_elem_mg_STORE(pTHX_ SV *sv, MAGIC *mg)
     CALLER_CONTEXT;
     Perl_sharedsv_associate(aTHX_ sv, *svp);
     sharedsv_scalar_store(aTHX_ sv, *svp);
+    SvFLAGS(*svp) |= dualvar_flags;
     LEAVE_LOCK;
     return (0);
 }
@@ -976,7 +993,7 @@ sharedsv_elem_mg_DELETE(pTHX_ SV *sv, MAGIC *mg)
 {
     dTHXc;
     MAGIC *shmg;
-    SV *saggregate = S_sharedsv_from_obj(aTHX_ mg->mg_obj);
+    SV *saggregate = SHAREDSV_FROM_OBJ(mg->mg_obj);
 
     /* Object may not exist during global destruction */
     if (! saggregate) {
@@ -1017,7 +1034,7 @@ int
 sharedsv_elem_mg_dup(pTHX_ MAGIC *mg, CLONE_PARAMS *param)
 {
     PERL_UNUSED_ARG(param);
-    SvREFCNT_inc_void(S_sharedsv_from_obj(aTHX_ mg->mg_obj));
+    SvREFCNT_inc_void(SHAREDSV_FROM_OBJ(mg->mg_obj));
     assert(mg->mg_flags & MGf_DUP);
     return (0);
 }
@@ -1184,7 +1201,7 @@ Perl_sharedsv_locksv(pTHX_ SV *sv)
         sv = SvRV(sv);
     ssv = Perl_sharedsv_find(aTHX_ sv);
     if (!ssv)
-       croak("lock can only be used on shared values");
+        croak("lock can only be used on shared values");
     Perl_sharedsv_lock(aTHX_ ssv);
 }
 
@@ -1219,7 +1236,7 @@ S_shared_signal_hook(pTHX) {
     us = (PL_sharedsv_lock.owner == aTHX);
     MUTEX_UNLOCK(&PL_sharedsv_lock.mutex);
     if (us)
-	return; /* try again later */
+        return; /* try again later */
     prev_signal_hook(aTHX);
 }
 #endif
@@ -1243,8 +1260,8 @@ Perl_sharedsv_init(pTHX)
 #endif
 #ifdef PL_signalhook
     if (!prev_signal_hook) {
-	prev_signal_hook = PL_signalhook;
-	PL_signalhook = &S_shared_signal_hook;
+        prev_signal_hook = PL_signalhook;
+        PL_signalhook = &S_shared_signal_hook;
     }
 #endif
 }
@@ -1261,14 +1278,16 @@ void
 PUSH(SV *obj, ...)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
-        int i;
-        for (i = 1; i < items; i++) {
-            SV* tmp = newSVsv(ST(i));
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
+        int ii;
+        for (ii = 1; ii < items; ii++) {
+            SV* tmp = newSVsv(ST(ii));
             SV *stmp;
+            U32 dualvar_flags = DUALVAR_FLAGS(tmp);
             ENTER_LOCK;
             stmp = S_sharedsv_new_shared(aTHX_ tmp);
             sharedsv_scalar_store(aTHX_ tmp, stmp);
+            SvFLAGS(stmp) |= dualvar_flags;
             SHARED_CONTEXT;
             av_push((AV*) sobj, stmp);
             SvREFCNT_inc_void(stmp);
@@ -1281,18 +1300,20 @@ void
 UNSHIFT(SV *obj, ...)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
-        int i;
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
+        int ii;
         ENTER_LOCK;
         SHARED_CONTEXT;
         av_unshift((AV*)sobj, items - 1);
         CALLER_CONTEXT;
-        for (i = 1; i < items; i++) {
-            SV *tmp = newSVsv(ST(i));
+        for (ii = 1; ii < items; ii++) {
+            SV *tmp = newSVsv(ST(ii));
+            U32 dualvar_flags = DUALVAR_FLAGS(tmp);
             SV *stmp = S_sharedsv_new_shared(aTHX_ tmp);
             sharedsv_scalar_store(aTHX_ tmp, stmp);
             SHARED_CONTEXT;
-            av_store((AV*) sobj, i - 1, stmp);
+            SvFLAGS(stmp) |= dualvar_flags;
+            av_store((AV*) sobj, ii - 1, stmp);
             SvREFCNT_inc_void(stmp);
             CALLER_CONTEXT;
             SvREFCNT_dec(tmp);
@@ -1304,7 +1325,7 @@ void
 POP(SV *obj)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         SV* ssv;
         ENTER_LOCK;
         SHARED_CONTEXT;
@@ -1321,7 +1342,7 @@ void
 SHIFT(SV *obj)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         SV* ssv;
         ENTER_LOCK;
         SHARED_CONTEXT;
@@ -1338,7 +1359,7 @@ void
 EXTEND(SV *obj, IV count)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         SHARED_EDIT;
         av_extend((AV*)sobj, count);
         SHARED_RELEASE;
@@ -1348,7 +1369,7 @@ void
 STORESIZE(SV *obj,IV count)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         SHARED_EDIT;
         av_fill((AV*) sobj, count);
         SHARED_RELEASE;
@@ -1358,7 +1379,7 @@ void
 EXISTS(SV *obj, SV *index)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         bool exists;
         if (SvTYPE(sobj) == SVt_PVAV) {
             SHARED_EDIT;
@@ -1383,7 +1404,7 @@ void
 FIRSTKEY(SV *obj)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         char* key = NULL;
         I32 len = 0;
         HE* entry;
@@ -1408,7 +1429,7 @@ void
 NEXTKEY(SV *obj, SV *oldkey)
     CODE:
         dTHXc;
-        SV *sobj = S_sharedsv_from_obj(aTHX_ obj);
+        SV *sobj = SHAREDSV_FROM_OBJ(obj);
         char* key = NULL;
         I32 len = 0;
         HE* entry;
@@ -1642,7 +1663,7 @@ cond_broadcast(SV *myref)
 
 
 void
-bless(SV* myref, ...);
+bless(SV* myref, ...)
     PROTOTYPE: $;$
     PREINIT:
         HV* stash;

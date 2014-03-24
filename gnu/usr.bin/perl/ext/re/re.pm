@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.19_01";
+our $VERSION     = "0.23";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -235,14 +235,16 @@ re - Perl pragma to alter regular expression behaviour
 
     $pat = '(?{ $foo = 1 })';
     use re 'eval';
-    /foo${pat}bar/;		   # won't fail (when not under -T switch)
+    /foo${pat}bar/;		   # won't fail (when not under -T
+                                   # switch)
 
     {
 	no re 'taint';		   # the default
 	($x) = ($^X =~ /^(.*)$/s); # $x is not tainted here
 
 	no re 'eval';		   # the default
-	/foo${pat}bar/;		   # disallowed (with or without -T switch)
+	/foo${pat}bar/;		   # disallowed (with or without -T
+                                   # switch)
     }
 
     use re '/ix';
@@ -251,22 +253,27 @@ re - Perl pragma to alter regular expression behaviour
     "FOO" =~ /foo/; # just /i implied
 
     use re 'debug';		   # output debugging info during
-    /^(.*)$/s;			   #     compile and run time
+    /^(.*)$/s;			   # compile and run time
 
 
-    use re 'debugcolor';	   # same as 'debug', but with colored output
+    use re 'debugcolor';	   # same as 'debug', but with colored
+                                   # output
     ...
 
-    use re qw(Debug All);          # Finer tuned debugging options.
-    use re qw(Debug More);
-    no re qw(Debug ALL);           # Turn of all re debugging in this scope
+    use re qw(Debug All);          # Same as "use re 'debug'", but you
+                                   # can use "Debug" with things other
+                                   # than 'All'
+    use re qw(Debug More);         # 'All' plus output more details
+    no re qw(Debug ALL);           # Turn on (almost) all re debugging
+                                   # in this scope
 
     use re qw(is_regexp regexp_pattern); # import utility functions
     my ($pat,$mods)=regexp_pattern(qr/foo/i);
     if (is_regexp($obj)) { 
         print "Got regexp: ",
-            scalar regexp_pattern($obj); # just as perl would stringify it
-    }                                    # but no hassle with blessed re's.
+            scalar regexp_pattern($obj); # just as perl would stringify
+    }                                    # it but no hassle with blessed
+                                         # re's.
 
 (We use $^X in these examples because it's tainted by default.)
 
@@ -284,8 +291,9 @@ other transformations.
 
 When C<use re 'eval'> is in effect, a regexp is allowed to contain
 C<(?{ ... })> zero-width assertions and C<(??{ ... })> postponed
-subexpressions, even if the regular expression contains
-variable interpolation.  That is normally disallowed, since it is a
+subexpressions that are derived from variable interpolation, rather than
+appearing literally within the regexp.  That is normally disallowed, since
+it is a
 potential security risk.  Note that this pragma is ignored when the regular
 expression is obtained from tainted data, i.e.  evaluation is always
 disallowed with tainted regular expressions.  See L<perlre/(?{ code })> 
@@ -408,7 +416,7 @@ Extra debugging of how tries execute.
 
 =item INTUIT
 
-Enable debugging of start point optimisations.
+Enable debugging of start-point optimisations.
 
 =back
 
@@ -442,7 +450,7 @@ states as well. This output from this can be quite large.
 
 =item OPTIMISEM
 
-Enable enhanced optimisation debugging and start point optimisations.
+Enable enhanced optimisation debugging and start-point optimisations.
 Probably not useful except when debugging the regexp engine itself.
 
 =item OFFSETS
@@ -475,7 +483,8 @@ These are useful shortcuts to save on the typing.
 
 =item ALL
 
-Enable all options at once except OFFSETS, OFFSETSDBG and BUFFERS
+Enable all options at once except OFFSETS, OFFSETSDBG and BUFFERS.
+(To get every single option without exception, use both ALL and EXTRA.)
 
 =item All
 
@@ -487,14 +496,14 @@ Enable DUMP and all execute options. Equivalent to:
 
 =item More
 
-Enable TRIEM and all execute compile and execute options.
+Enable the options enabled by "All", plus STATE, TRIEC, and TRIEM.
 
 =back
 
 =back
 
 As of 5.9.5 the directive C<use re 'debug'> and its equivalents are
-lexically scoped, as the other directives are.  However they have both
+lexically scoped, as are the other directives.  However they have both
 compile-time and run-time effects.
 
 =head2 Exportable Functions

@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; print "1..10\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -35,15 +35,24 @@ my $objHi = Unicode::Collate::Locale->
 
 ok($objHi->getlocale, 'hi');
 
-$objHi->change(level => 1);
-
-ok($objHi->lt("\x{950}", "\x{902}"));
-ok($objHi->lt("\x{902}", "\x{903}"));
-ok($objHi->lt("\x{903}", "\x{972}"));
-
-ok($objHi->eq("\x{902}", "\x{901}"));
-
 $objHi->change(level => 2);
 
 ok($objHi->lt("\x{902}", "\x{901}"));
 
+$objHi->change(level => 1);
+
+ok($objHi->eq("\x{902}", "\x{901}"));
+
+# 4
+
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objHi->change(highestFFFF => 1) if $h;
+
+    ok($objHi->lt("\x{950}$t", "\x{902}"));
+    ok($objHi->lt("\x{902}$t", "\x{903}"));
+    ok($objHi->lt("\x{903}$t", "\x{972}"));
+}
+
+# 10

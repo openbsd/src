@@ -2,7 +2,7 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta;
-our $VERSION = '2.120630'; # VERSION
+our $VERSION = '2.120921'; # VERSION
 
 
 use Carp qw(carp croak);
@@ -10,7 +10,7 @@ use CPAN::Meta::Feature;
 use CPAN::Meta::Prereqs;
 use CPAN::Meta::Converter;
 use CPAN::Meta::Validator;
-use Parse::CPAN::Meta 1.4400 ();
+use Parse::CPAN::Meta 1.4403 ();
 
 BEGIN { *_dclone = \&CPAN::Meta::Converter::_dclone }
 
@@ -346,7 +346,7 @@ CPAN::Meta - the distribution metadata for a CPAN dist
 
 =head1 VERSION
 
-version 2.120630
+version 2.120921
 
 =head1 SYNOPSIS
 

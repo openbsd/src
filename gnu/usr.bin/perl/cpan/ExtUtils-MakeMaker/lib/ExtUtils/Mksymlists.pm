@@ -10,7 +10,7 @@ use Config;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(&Mksymlists);
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -27,7 +27,7 @@ sub Mksymlists {
         unless ( ($spec{DL_FUNCS} and keys %{$spec{DL_FUNCS}}) or
                  @{$spec{FUNCLIST}});
     if (defined $spec{DL_FUNCS}) {
-        foreach my $package (keys %{$spec{DL_FUNCS}}) {
+        foreach my $package (sort keys %{$spec{DL_FUNCS}}) {
             my($packprefix,$bootseen);
             ($packprefix = $package) =~ s/\W/_/g;
             foreach my $sym (@{$spec{DL_FUNCS}->{$package}}) {
@@ -106,14 +106,20 @@ sub _write_os2 {
     print $def "EXPORTS\n  ";
     print $def join("\n  ",@{$data->{DL_VARS}}, "\n") if @{$data->{DL_VARS}};
     print $def join("\n  ",@{$data->{FUNCLIST}}, "\n") if @{$data->{FUNCLIST}};
-    if (%{$data->{IMPORTS}}) {
+    _print_imports($def, $data);
+    close $def;
+}
+
+sub _print_imports {
+    my ($def, $data)= @_;
+    my $imports= $data->{IMPORTS}
+        or return;
+    if ( keys %$imports ) {
         print $def "IMPORTS\n";
-        my ($name, $exp);
-        while (($name, $exp)= each %{$data->{IMPORTS}}) {
-            print $def "  $name=$exp\n";
+        foreach my $name (sort keys %$imports) {
+            print $def "  $name=$imports->{$name}\n";
         }
     }
-    close $def;
 }
 
 sub _write_win32 {
@@ -150,13 +156,7 @@ sub _write_win32 {
         }
     }
     print $def join("\n  ",@syms, "\n") if @syms;
-    if (%{$data->{IMPORTS}}) {
-        print $def "IMPORTS\n";
-        my ($name, $exp);
-        while (($name, $exp)= each %{$data->{IMPORTS}}) {
-            print $def "  $name=$exp\n";
-        }
-    }
+    _print_imports($def, $data);
     close $def;
 }
 
@@ -212,10 +212,10 @@ ExtUtils::Mksymlists - write linker options files for dynamic extension
 =head1 SYNOPSIS
 
     use ExtUtils::Mksymlists;
-    Mksymlists({ NAME     => $name ,
+    Mksymlists(  NAME     => $name ,
                  DL_VARS  => [ $var1, $var2, $var3 ],
                  DL_FUNCS => { $pkg1 => [ $func1, $func2 ],
-                               $pkg2 => [ $func3 ] });
+                               $pkg2 => [ $func3 ] );
 
 =head1 DESCRIPTION
 
@@ -281,9 +281,9 @@ generation of the bootstrap function for the package. To still create
 the bootstrap name you have to specify the package name in the
 DL_FUNCS hash:
 
-    Mksymlists({ NAME     => $name ,
+    Mksymlists(  NAME     => $name ,
 		 FUNCLIST => [ $func1, $func2 ],
-                 DL_FUNCS => { $pkg => [] } });
+                 DL_FUNCS => { $pkg => [] } );
 
 
 =item IMPORTS

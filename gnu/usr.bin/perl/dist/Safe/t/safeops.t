@@ -40,7 +40,7 @@ while (<$fh>) {
 }
 close $fh;
 
-plan(tests => scalar @op + 2);
+plan(tests => scalar @op + 3);
 
 sub testop {
     my ($op, $opname, $code) = @_;
@@ -81,6 +81,16 @@ foreach (@op) {
 	),
 	qr/Unbalanced/,
 	'No Unbalanced warnings when disallowing ops';
+    unlike
+	runperl(
+	    switches => [ '-MSafe', '-w' ],
+	    prog     => 'Safe->new->reval('
+			. 'q(BEGIN{$^H{foo}=bar};use strict), 0'
+			.')',
+	    stderr   => 1,
+	),
+	qr/Unbalanced/,
+	'No Unbalanced warnings when disallowing ops with %^H set';
 }
 
 # things that begin with SKIP are skipped, for various reasons (notably
@@ -443,7 +453,7 @@ dor		$x // $y
 dorassign	$x //= $y
 once		SKIP {use feature 'state'; state $foo = 42;}
 say		SKIP {use feature 'say'; say "foo";}
-smartmatch	$x ~~ $y
+smartmatch	no warnings 'experimental::smartmatch'; $x ~~ $y
 aeach		SKIP each @t
 akeys		SKIP keys @t
 avalues		SKIP values @t

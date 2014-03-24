@@ -49,9 +49,11 @@ if (exists $ENV{PERLIO} && $ENV{PERLIO} =~ /stdio/  ) {
 # Also skip on release builds, to avoid other possibly problematic
 # platforms
 
-if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O =~ /freebsd/ || 
-     ($^O eq 'solaris' && $Config{osvers} eq '2.8')
-	|| ((int($]*1000) & 1) == 0)
+my ($osmajmin) = $Config{osvers} =~ /^(\d+\.\d+)/;
+if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O =~ /freebsd/ || $^O eq 'midnightbsd' ||
+     ($^O eq 'solaris' && $Config{osvers} eq '2.8') || $^O eq 'nto' ||
+     ($^O eq 'darwin' && $osmajmin < 9) ||
+    ((int($]*1000) & 1) == 0)
 ) {
 	skip_all('various portability issues');
 	exit 0;

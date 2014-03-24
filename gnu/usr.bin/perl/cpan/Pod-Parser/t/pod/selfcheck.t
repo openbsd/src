@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use Test::More;
 use File::Basename;
 use File::Spec;
 use strict;
@@ -6,20 +7,27 @@ my $THISDIR;
 BEGIN {
    $THISDIR = dirname $0;
    unshift @INC, $THISDIR;
-   require "testpchk.pl";
-   import TestPodChecker qw(testpodcheck);
+   eval {
+     require "testpchk.pl";
+     import TestPodChecker qw(testpodcheck);
+   };
+   warn $@ if $@;
+};
+
+my @pods;
+unless($Pod::Checker::VERSION && $Pod::Checker::VERSION > 1.40) {
+  plan skip_all => "we do not have a good Pod::Checker around";
+} else {
+  my $path = File::Spec->catfile($THISDIR,(File::Spec->updir()) x 2, 'lib', 'Pod', '*.pm');
+  print "THISDIR=$THISDIR PATH=$path\n";
+  @pods = glob($path);
+  print "PODS=@pods\n";
+  plan tests => scalar(@pods);
 }
 
 # test that our POD is correct!
-my $path = File::Spec->catfile($THISDIR,(File::Spec->updir()) x 2, 'lib', 'Pod', '*.pm');
-print "THISDIR=$THISDIR PATH=$path\n";
-my @pods = glob($path);
-print "PODS=@pods\n";
-
-print "1..",scalar(@pods),"\n";
-
 my $errs = 0;
-my $testnum = 1;
+
 foreach my $pod (@pods) {
   my $out = File::Spec->catfile($THISDIR, basename($pod));
   $out =~ s{\.pm}{.OUT};
@@ -34,12 +42,12 @@ foreach my $pod (@pods) {
     } else {
       warn "Error: Cannot read output file $out: $!\n";
     }
-    print "not ok $testnum\n";
+    ok(0, $pod);
     $errs++;
   } else {
-    print "ok $testnum\n";
+    ok(1, $pod);
   }
-  $testnum++;
 }
+
 exit( ($errs == 0) ? 0 : -1 )  unless $ENV{HARNESS_ACTIVE};
 

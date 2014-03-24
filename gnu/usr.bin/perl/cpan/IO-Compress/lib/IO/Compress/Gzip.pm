@@ -8,12 +8,12 @@ use bytes;
 
 require Exporter ;
 
-use IO::Compress::RawDeflate 2.048 () ; 
-use IO::Compress::Adapter::Deflate 2.048 ;
+use IO::Compress::RawDeflate 2.060 () ; 
+use IO::Compress::Adapter::Deflate 2.060 ;
 
-use IO::Compress::Base::Common  2.048 qw(:Status :Parse isaScalar createSelfTiedObject);
-use IO::Compress::Gzip::Constants 2.048 ;
-use IO::Compress::Zlib::Extra 2.048 ;
+use IO::Compress::Base::Common  2.060 qw(:Status );
+use IO::Compress::Gzip::Constants 2.060 ;
+use IO::Compress::Zlib::Extra 2.060 ;
 
 BEGIN
 {
@@ -25,7 +25,7 @@ BEGIN
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $GzipError);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $GzipError = '' ;
 
 @ISA    = qw(Exporter IO::Compress::RawDeflate);
@@ -39,7 +39,7 @@ sub new
 {
     my $class = shift ;
 
-    my $obj = createSelfTiedObject($class, \$GzipError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject($class, \$GzipError);
 
     $obj->_create(undef, @_);
 }
@@ -47,7 +47,7 @@ sub new
 
 sub gzip
 {
-    my $obj = createSelfTiedObject(undef, \$GzipError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject(undef, \$GzipError);
     return $obj->_def(@_);
 }
 
@@ -65,17 +65,17 @@ sub getExtraParams
     return (
             # zlib behaviour
             $self->getZlibParams(),
-
+           
             # Gzip header fields
-            'Minimal'   => [0, 1, Parse_boolean,   0],
-            'Comment'   => [0, 1, Parse_any,       undef],
-            'Name'      => [0, 1, Parse_any,       undef],
-            'Time'      => [0, 1, Parse_any,       undef],
-            'TextFlag'  => [0, 1, Parse_boolean,   0],
-            'HeaderCRC' => [0, 1, Parse_boolean,   0],
-            'OS_Code'   => [0, 1, Parse_unsigned,  $Compress::Raw::Zlib::gzip_os_code],
-            'ExtraField'=> [0, 1, Parse_any,       undef],
-            'ExtraFlags'=> [0, 1, Parse_any,       undef],
+            'minimal'   => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'comment'   => [IO::Compress::Base::Common::Parse_any,       undef],
+            'name'      => [IO::Compress::Base::Common::Parse_any,       undef],
+            'time'      => [IO::Compress::Base::Common::Parse_any,       undef],
+            'textflag'  => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'headercrc' => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'os_code'   => [IO::Compress::Base::Common::Parse_unsigned,  $Compress::Raw::Zlib::gzip_os_code],
+            'extrafield'=> [IO::Compress::Base::Common::Parse_any,       undef],
+            'extraflags'=> [IO::Compress::Base::Common::Parse_any,       undef],
 
         );
 }
@@ -87,24 +87,24 @@ sub ckParams
     my $got = shift ;
 
     # gzip always needs crc32
-    $got->value('CRC32' => 1);
+    $got->setValue('crc32' => 1);
 
     return 1
-        if $got->value('Merge') ;
+        if $got->getValue('merge') ;
 
-    my $strict = $got->value('Strict') ;
+    my $strict = $got->getValue('strict') ;
 
 
     {
-        if (! $got->parsed('Time') ) {
+        if (! $got->parsed('time') ) {
             # Modification time defaults to now.
-            $got->value('Time' => time) ;
+            $got->setValue(time => time) ;
         }
 
         # Check that the Name & Comment don't have embedded NULLs
         # Also check that they only contain ISO 8859-1 chars.
-        if ($got->parsed('Name') && defined $got->value('Name')) {
-            my $name = $got->value('Name');
+        if ($got->parsed('name') && defined $got->getValue('name')) {
+            my $name = $got->getValue('name');
                 
             return $self->saveErrorString(undef, "Null Character found in Name",
                                                 Z_DATA_ERROR)
@@ -115,8 +115,8 @@ sub ckParams
                 if $strict && $name =~ /$GZIP_FNAME_INVALID_CHAR_RE/o ;
         }
 
-        if ($got->parsed('Comment') && defined $got->value('Comment')) {
-            my $comment = $got->value('Comment');
+        if ($got->parsed('comment') && defined $got->getValue('comment')) {
+            my $comment = $got->getValue('comment');
 
             return $self->saveErrorString(undef, "Null Character found in Comment",
                                                 Z_DATA_ERROR)
@@ -127,8 +127,8 @@ sub ckParams
                 if $strict && $comment =~ /$GZIP_FCOMMENT_INVALID_CHAR_RE/o;
         }
 
-        if ($got->parsed('OS_Code') ) {
-            my $value = $got->value('OS_Code');
+        if ($got->parsed('os_code') ) {
+            my $value = $got->getValue('os_code');
 
             return $self->saveErrorString(undef, "OS_Code must be between 0 and 255, got '$value'")
                 if $value < 0 || $value > 255 ;
@@ -136,22 +136,22 @@ sub ckParams
         }
 
         # gzip only supports Deflate at present
-        $got->value('Method' => Z_DEFLATED) ;
+        $got->setValue('method' => Z_DEFLATED) ;
 
-        if ( ! $got->parsed('ExtraFlags')) {
-            $got->value('ExtraFlags' => 2) 
-                if $got->value('Level') == Z_BEST_COMPRESSION ;
-            $got->value('ExtraFlags' => 4) 
-                if $got->value('Level') == Z_BEST_SPEED ;
+        if ( ! $got->parsed('extraflags')) {
+            $got->setValue('extraflags' => 2) 
+                if $got->getValue('level') == Z_BEST_COMPRESSION ;
+            $got->setValue('extraflags' => 4) 
+                if $got->getValue('level') == Z_BEST_SPEED ;
         }
 
-        my $data = $got->value('ExtraField') ;
+        my $data = $got->getValue('extrafield') ;
         if (defined $data) {
             my $bad = IO::Compress::Zlib::Extra::parseExtraField($data, $strict, 1) ;
             return $self->saveErrorString(undef, "Error with ExtraField Parameter: $bad", Z_DATA_ERROR)
                 if $bad ;
 
-            $got->value('ExtraField', $data) ;
+            $got->setValue('extrafield' => $data) ;
         }
     }
 
@@ -177,15 +177,15 @@ sub getFileInfo
     my $params = shift;
     my $filename = shift ;
 
-    return if isaScalar($filename);
+    return if IO::Compress::Base::Common::isaScalar($filename);
 
     my $defaultTime = (stat($filename))[9] ;
 
-    $params->value('Name' => $filename)
-        if ! $params->parsed('Name') ;
+    $params->setValue('name' => $filename)
+        if ! $params->parsed('name') ;
 
-    $params->value('Time' => $defaultTime) 
-        if ! $params->parsed('Time') ;
+    $params->setValue('time' => $defaultTime) 
+        if ! $params->parsed('time') ;
 }
 
 
@@ -195,27 +195,27 @@ sub mkHeader
     my $param = shift ;
 
     # stort-circuit if a minimal header is requested.
-    return GZIP_MINIMUM_HEADER if $param->value('Minimal') ;
+    return GZIP_MINIMUM_HEADER if $param->getValue('minimal') ;
 
     # METHOD
-    my $method = $param->valueOrDefault('Method', GZIP_CM_DEFLATED) ;
+    my $method = $param->valueOrDefault('method', GZIP_CM_DEFLATED) ;
 
     # FLAGS
     my $flags       = GZIP_FLG_DEFAULT ;
-    $flags |= GZIP_FLG_FTEXT    if $param->value('TextFlag') ;
-    $flags |= GZIP_FLG_FHCRC    if $param->value('HeaderCRC') ;
-    $flags |= GZIP_FLG_FEXTRA   if $param->wantValue('ExtraField') ;
-    $flags |= GZIP_FLG_FNAME    if $param->wantValue('Name') ;
-    $flags |= GZIP_FLG_FCOMMENT if $param->wantValue('Comment') ;
+    $flags |= GZIP_FLG_FTEXT    if $param->getValue('textflag') ;
+    $flags |= GZIP_FLG_FHCRC    if $param->getValue('headercrc') ;
+    $flags |= GZIP_FLG_FEXTRA   if $param->wantValue('extrafield') ;
+    $flags |= GZIP_FLG_FNAME    if $param->wantValue('name') ;
+    $flags |= GZIP_FLG_FCOMMENT if $param->wantValue('comment') ;
     
     # MTIME
-    my $time = $param->valueOrDefault('Time', GZIP_MTIME_DEFAULT) ;
+    my $time = $param->valueOrDefault('time', GZIP_MTIME_DEFAULT) ;
 
     # EXTRA FLAGS
-    my $extra_flags = $param->valueOrDefault('ExtraFlags', GZIP_XFL_DEFAULT);
+    my $extra_flags = $param->valueOrDefault('extraflags', GZIP_XFL_DEFAULT);
 
     # OS CODE
-    my $os_code = $param->valueOrDefault('OS_Code', GZIP_OS_DEFAULT) ;
+    my $os_code = $param->valueOrDefault('os_code', GZIP_OS_DEFAULT) ;
 
 
     my $out = pack("C4 V C C", 
@@ -230,13 +230,13 @@ sub mkHeader
 
     # EXTRA
     if ($flags & GZIP_FLG_FEXTRA) {
-        my $extra = $param->value('ExtraField') ;
+        my $extra = $param->getValue('extrafield') ;
         $out .= pack("v", length $extra) . $extra ;
     }
 
     # NAME
     if ($flags & GZIP_FLG_FNAME) {
-        my $name .= $param->value('Name') ;
+        my $name .= $param->getValue('name') ;
         $name =~ s/\x00.*$//;
         $out .= $name ;
         # Terminate the filename with NULL unless it already is
@@ -247,7 +247,7 @@ sub mkHeader
 
     # COMMENT
     if ($flags & GZIP_FLG_FCOMMENT) {
-        my $comment .= $param->value('Comment') ;
+        my $comment .= $param->getValue('comment') ;
         $comment =~ s/\x00.*$//;
         $out .= $comment ;
         # Terminate the comment with NULL unless it already is
@@ -257,7 +257,7 @@ sub mkHeader
     }
 
     # HEADER CRC
-    $out .= pack("v", Compress::Raw::Zlib::crc32($out) & 0x00FF ) if $param->value('HeaderCRC') ;
+    $out .= pack("v", Compress::Raw::Zlib::crc32($out) & 0x00FF ) if $param->getValue('headercrc') ;
 
     noUTF8($out);
 
@@ -342,19 +342,20 @@ section.
 
     use IO::Compress::Gzip qw(gzip $GzipError) ;
 
-    gzip $input => $output [,OPTS] 
+    gzip $input_filename_or_reference => $output_filename_or_reference [,OPTS] 
         or die "gzip failed: $GzipError\n";
 
 The functional interface needs Perl5.005 or better.
 
 =head2 gzip $input => $output [, OPTS]
 
-C<gzip> expects at least two parameters, C<$input> and C<$output>.
+C<gzip> expects at least two parameters,
+C<$input_filename_or_reference> and C<$output_filename_or_reference>.
 
-=head3 The C<$input> parameter
+=head3 The C<$input_filename_or_reference> parameter
 
-The parameter, C<$input>, is used to define the source of
-the uncompressed data. 
+The parameter, C<$input_filename_or_reference>, is used to define the
+source of the uncompressed data. 
 
 It can take one of the following forms:
 
@@ -362,25 +363,25 @@ It can take one of the following forms:
 
 =item A filename
 
-If the C<$input> parameter is a simple scalar, it is assumed to be a
-filename. This file will be opened for reading and the input data
-will be read from it.
+If the <$input_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename. This file will be opened for reading and the
+input data will be read from it.
 
 =item A filehandle
 
-If the C<$input> parameter is a filehandle, the input data will be
-read from it.
-The string '-' can be used as an alias for standard input.
+If the C<$input_filename_or_reference> parameter is a filehandle, the input
+data will be read from it.  The string '-' can be used as an alias for
+standard input.
 
 =item A scalar reference 
 
-If C<$input> is a scalar reference, the input data will be read
-from C<$$input>.
+If C<$input_filename_or_reference> is a scalar reference, the input data
+will be read from C<$$input_filename_or_reference>.
 
 =item An array reference 
 
-If C<$input> is an array reference, each element in the array must be a
-filename.
+If C<$input_filename_or_reference> is an array reference, each element in
+the array must be a filename.
 
 The input data will be read from each file in turn. 
 
@@ -389,72 +390,80 @@ contains valid filenames before any data is compressed.
 
 =item An Input FileGlob string
 
-If C<$input> is a string that is delimited by the characters "<" and ">"
-C<gzip> will assume that it is an I<input fileglob string>. The
-input is the list of files that match the fileglob.
+If C<$input_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<gzip> will assume that it is an 
+I<input fileglob string>. The input is the list of files that match the 
+fileglob.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$input> parameter is any other type, C<undef> will be returned.
+If the C<$input_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
-In addition, if C<$input> is a simple filename, the default values for
+In addition, if C<$input_filename_or_reference> is a simple filename, 
+the default values for
 the C<Name> and C<Time> options will be sourced from that file.
 
 If you do not want to use these defaults they can be overridden by
 explicitly setting the C<Name> and C<Time> options or by setting the
 C<Minimal> parameter.
 
-=head3 The C<$output> parameter
+=head3 The C<$output_filename_or_reference> parameter
 
-The parameter C<$output> is used to control the destination of the
-compressed data. This parameter can take one of these forms.
+The parameter C<$output_filename_or_reference> is used to control the
+destination of the compressed data. This parameter can take one of
+these forms.
 
 =over 5
 
 =item A filename
 
-If the C<$output> parameter is a simple scalar, it is assumed to be a
-filename.  This file will be opened for writing and the compressed
-data will be written to it.
+If the C<$output_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename.  This file will be opened for writing and the 
+compressed data will be written to it.
 
 =item A filehandle
 
-If the C<$output> parameter is a filehandle, the compressed data
-will be written to it.
-The string '-' can be used as an alias for standard output.
+If the C<$output_filename_or_reference> parameter is a filehandle, the
+compressed data will be written to it.  The string '-' can be used as
+an alias for standard output.
 
 =item A scalar reference 
 
-If C<$output> is a scalar reference, the compressed data will be
-stored in C<$$output>.
+If C<$output_filename_or_reference> is a scalar reference, the
+compressed data will be stored in C<$$output_filename_or_reference>.
 
 =item An Array Reference
 
-If C<$output> is an array reference, the compressed data will be
-pushed onto the array.
+If C<$output_filename_or_reference> is an array reference, 
+the compressed data will be pushed onto the array.
 
 =item An Output FileGlob
 
-If C<$output> is a string that is delimited by the characters "<" and ">"
-C<gzip> will assume that it is an I<output fileglob string>. The
-output is the list of files that match the fileglob.
+If C<$output_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<gzip> will assume that it is an
+I<output fileglob string>. The output is the list of files that match the
+fileglob.
 
-When C<$output> is an fileglob string, C<$input> must also be a fileglob
-string. Anything else is an error.
+When C<$output_filename_or_reference> is an fileglob string,
+C<$input_filename_or_reference> must also be a fileglob string. Anything
+else is an error.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$output> parameter is any other type, C<undef> will be returned.
+If the C<$output_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
 =head2 Notes
 
-When C<$input> maps to multiple files/buffers and C<$output> is a single
+When C<$input_filename_or_reference> maps to multiple files/buffers and
+C<$output_filename_or_reference> is a single
 file/buffer the input files/buffers will be stored
-in C<$output> as a concatenated series of compressed data streams.
+in C<$output_filename_or_reference> as a concatenated series of compressed data streams.
 
 =head2 Optional Parameters
 
@@ -1234,7 +1243,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

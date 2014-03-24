@@ -1,6 +1,6 @@
 #!perl
 #
-# regression tests for old bugs that don't fit other categories
+# regression tests for old bugs that do not fit other categories
 
 BEGIN {
     require Config; import Config;

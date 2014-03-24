@@ -19,7 +19,8 @@ use Test::More;
 
 use Unicode::UCD 'charinfo';
 
-$/ = 7;
+my $input_record_separator = 7; # Make sure Unicode::UCD isn't affected by
+$/ = $input_record_separator;   # setting this.
 
 my $charinfo;
 
@@ -342,7 +343,7 @@ is($bt->{AL}, 'Right-to-Left Arabic', 'AL is Right-to-Left Arabic');
 
 # If this fails, then maybe one should look at the Unicode changes to see
 # what else might need to be updated.
-is(Unicode::UCD::UnicodeVersion, '6.1.0', 'UnicodeVersion');
+is(Unicode::UCD::UnicodeVersion, '6.2.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -373,9 +374,9 @@ is($casefold->{full}, '0073 0073', 'casefold 0xDF full');
 is($casefold->{simple}, "", 'casefold 0xDF simple');
 is($casefold->{turkic}, "", 'casefold 0xDF turkic');
 
-# Do different tests depending on if version <= 3.1, or not.
-(my $version = Unicode::UCD::UnicodeVersion) =~ /^(\d+)\.(\d+)/;
-if (defined $1 && ($1 <= 2 || $1 == 3 && defined $2 && $2 <= 1)) {
+# Do different tests depending on if version < 3.2, or not.
+my $v_unicode_version = pack "C*", split /\./, Unicode::UCD::UnicodeVersion();
+if ($v_unicode_version lt v3.2.0) {
 	$casefold = casefold(0x130);
 
 	is($casefold->{code}, '0130', 'casefold 0x130 code');
@@ -469,11 +470,13 @@ is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
 
 {
     my $r1 = charscript('Latin');
-    my $n1 = @$r1;
-    is($n1, 30, "number of ranges in Latin script (Unicode 6.1.0)");
-    shift @$r1 while @$r1;
-    my $r2 = charscript('Latin');
-    is(@$r2, $n1, "modifying results should not mess up internal caches");
+    if (ok(defined $r1, "Found Latin script")) {
+        my $n1 = @$r1;
+        is($n1, 30, "number of ranges in Latin script (Unicode 6.1.0)");
+        shift @$r1 while @$r1;
+        my $r2 = charscript('Latin');
+        is(@$r2, $n1, "modifying results should not mess up internal caches");
+    }
 }
 
 {
@@ -550,14 +553,18 @@ is_deeply(\@list,
           ], "prop_aliases('perldecimaldigit') returns Perl_Decimal_Digit as both short and full names");
 
 # Get the official Unicode property name synonyms and test them.
+
+SKIP: {
+skip "PropertyAliases.txt is not in this Unicode version", 1 if $v_unicode_version lt v3.2.0;
 open my $props, "<", "../lib/unicore/PropertyAliases.txt"
                 or die "Can't open Unicode PropertyAliases.txt";
-$/ = "\n";
+local $/ = "\n";
 while (<$props>) {
     s/\s*#.*//;           # Remove comments
     next if /^\s* $/x;    # Ignore empty and comment lines
 
     chomp;
+    local $/ = $input_record_separator;
     my $count = 0;  # 0th field in line is short name; 1th is long name
     my $short_name;
     my $full_name;
@@ -615,6 +622,7 @@ while (<$props>) {
         $count++;
     }
 }
+} # End of SKIP block
 
 # Now test anything we can find that wasn't covered by the tests of the
 # official properties.  We have no way of knowing if mktables omitted a Perl
@@ -701,15 +709,20 @@ is(prop_value_aliases("gc", "isC"), undef, "prop_value_aliases('gc', 'isC') retu
 # correct.
 
 my %pva_tested;   # List of things already tested.
+
+SKIP: {
+skip "PropValueAliases.txt is not in this Unicode version", 1 if $v_unicode_version lt v3.2.0;
 open my $propvalues, "<", "../lib/unicore/PropValueAliases.txt"
      or die "Can't open Unicode PropValueAliases.txt";
+local $/ = "\n";
 while (<$propvalues>) {
     s/\s*#.*//;           # Remove comments
     next if /^\s* $/x;    # Ignore empty and comment lines
     chomp;
+    local $/ = $input_record_separator;
 
     # Fix typo in official input file
-    s/CCC133/CCC132/g if $version eq "6.1.0";
+    s/CCC133/CCC132/g if $v_unicode_version eq v6.1.0;
 
     my @fields = split /\s*;\s*/; # Fields are separated by semi-colons
     my $prop = shift @fields;   # 0th field is the property,
@@ -801,6 +814,7 @@ while (<$propvalues>) {
         $count++;
     }
 }
+}   # End of SKIP block
 
 # And test as best we can, the non-official pva's that mktables generates.
 foreach my $hash (\%utf8::loose_to_file_of, \%utf8::stricter_to_file_of) {
@@ -953,6 +967,7 @@ sub fail_with_diff ($$$$) {
 
     require File::Temp;
     my $off = File::Temp->new();
+    local $/ = "\n";
     chomp $official;
     print $off $official, "\n";
     close $off || die "Can't close official";
@@ -1037,7 +1052,9 @@ foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of
 
         # Get rid of any trailing space and comments in the file.
         $official =~ s/\s*(#.*)?$//mg;
+        local $/ = "\n";
         chomp $official;
+        $/ = $input_record_separator;
 
         # If we are to test against an inverted file, it is easier to invert
         # our array than the file.
@@ -1091,7 +1108,9 @@ foreach my $set_of_tables (\%utf8::stricter_to_file_of, \%utf8::loose_to_file_of
         if ($i == @tested - 1 && $tested[$i] <= 0x10FFFF) {
             $tested .= sprintf("%04X\t10FFFF\n", $tested[$i]);
         }
+        local $/ = "\n";
         chomp $tested;
+        $/ = $input_record_separator;
         if ($tested ne $official) {
             fail_with_diff($mod_table, $official, $tested, "prop_invlist");
             next;
@@ -1407,11 +1426,15 @@ foreach my $prop (keys %props) {
                 }
             }
         }
+        local $/ = "\n";
         chomp $official;
+        $/ = $input_record_separator;
 
-        # If there are any special elements, get a reference to them.
+        # Get the format for the file, and if there are any special elements,
+        # get a reference to them.
         my $swash_name = $utf8::file_to_swash_name{$base_file};
         my $specials_ref;
+        my $file_format;
         if ($swash_name) {
             $specials_ref = $utf8::SwashInfo{$swash_name}{'specials_name'};
             if ($specials_ref) {
@@ -1420,6 +1443,8 @@ foreach my $prop (keys %props) {
                 no strict 'refs';
                 $specials_ref = \%{$specials_ref};
             }
+
+            $file_format = $utf8::SwashInfo{$swash_name}{'format'};
         }
 
         # Certain of the proxy properties have to be adjusted to match the
@@ -1512,15 +1537,14 @@ foreach my $prop (keys %props) {
             # specials are superfluous.
             undef $specials_ref;
         }
-        elsif ($name eq 'bmg') {
+        elsif ($format !~ /^a/ && defined $file_format && $file_format eq 'x') {
 
-            # For this property, the file is output using hex notation for the
-            # map, with all ranges equal to length 1.  Convert from hex to
-            # decimal.
+            # For these properties the file is output using hex notation for the
+            # map.  Convert from hex to decimal.
             my @lines = split "\n", $official;
             foreach my $line (@lines) {
-                my ($code_point, $map) = split "\t\t", $line;
-                $line = $code_point . "\t\t" . hex $map;
+                my ($lower, $upper, $map) = split "\t", $line;
+                $line = "$lower\t$upper\t" . hex $map;
             }
             $official = join "\n", @lines;
         }
@@ -1731,7 +1755,9 @@ foreach my $prop (keys %props) {
 
         # Here are done with generating what the file should look like
 
+        local $/ = "\n";
         chomp $tested_map;
+        $/ = $input_record_separator;
 
         # And compare.
         if ($tested_map ne $official) {
@@ -1801,7 +1827,9 @@ foreach my $prop (keys %props) {
                 $official =~ s/$hex_code_point \t $alias \n //x;
             }
         }
+        local $/ = "\n";
         chomp $official;
+        $/ = $input_record_separator;
 
         # Here have adjusted the file.  We also have to adjust the returned
         # inversion map by checking and deleting all the lines in it that
@@ -1889,7 +1917,9 @@ foreach my $prop (keys %props) {
 
         # Finished creating the string from the inversion map.  Can compare
         # with what the file is.
+        local $/ = "\n";
         chomp $tested_map;
+        $/ = $input_record_separator;
         if ($tested_map ne $official) {
             fail_with_diff($mod_prop, $official, $tested_map, "prop_invmap");
             next PROPERTY;
@@ -1996,4 +2026,5 @@ foreach my $prop (keys %props) {
     pass("prop_invmap('$mod_prop')");
 }
 
+ok($/ eq $input_record_separator,  "The record separator didn't get overridden");
 done_testing();

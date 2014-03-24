@@ -8,13 +8,15 @@ use File::Basename;
 use File::Temp qw/tempfile/;
 use POSIX qw/locale_h/;
 use Test::More tests => 7;
+use Config;
 
 BEGIN {
-    use_ok('version', 0.97);
+    use_ok('version', 0.9902);
 }
 
 SKIP: {
     	skip 'No locale testing for Perl < 5.6.0', 6 if $] < 5.006;
+        skip 'No locale testing without d_setlocale', 6 if(!$Config{d_setlocale});
 	# test locale handling
 	my $warning;
 	local $SIG{__WARN__} = sub { $warning = $_[0] };

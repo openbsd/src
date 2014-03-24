@@ -12,22 +12,22 @@ Pod::Simple::Subclassing -- write a formatter as a Pod::Simple subclass
   use strict;
 
   sub _handle_element_start {
-    my($parser, $element_name, $attr_hash_r) = @_;
-    ...
+	my($parser, $element_name, $attr_hash_r) = @_;
+	...
   }
 
   sub _handle_element_end {
-    my($parser, $element_name, $attr_hash_r) = @_;
-    # NOTE: $attr_hash_r is only present when $element_name is "over" or "begin"
-    # The remaining code excerpts will mostly ignore this $attr_hash_r, as it is
-    # mostly useless. It is documented where "over-*" and "begin" events are 
-    # documented.
-    ...
+	my($parser, $element_name, $attr_hash_r) = @_;
+	# NOTE: $attr_hash_r is only present when $element_name is "over" or "begin"
+	# The remaining code excerpts will mostly ignore this $attr_hash_r, as it is
+	# mostly useless. It is documented where "over-*" and "begin" events are
+	# documented.
+	...
   }
 
   sub _handle_text {
-    my($parser, $text) = @_;
-    ...
+	my($parser, $text) = @_;
+	...
   }
   1;
 
@@ -105,13 +105,13 @@ TODO describe
 Parsing a document produces this event structure:
 
   <Document start_line="543">
-    ...all events...
+	...all events...
   </Document>
 
 The value of the I<start_line> attribute will be the line number of the first
 Pod directive in the document.
 
-If there is no Pod in the given document, then the 
+If there is no Pod in the given document, then the
 event structure will be this:
 
   <Document contentless="1" start_line="543">
@@ -126,9 +126,9 @@ last line in the file.
 Parsing a plain (non-verbatim, non-directive, non-data) paragraph in
 a Pod document produces this event structure:
 
-    <Para start_line="543">
-      ...all events in this paragraph...
-    </Para>
+	<Para start_line="543">
+	  ...all events in this paragraph...
+	</Para>
 
 The value of the I<start_line> attribute will be the line number of the start
 of the paragraph.
@@ -140,14 +140,14 @@ For example, parsing this paragraph of Pod:
 
 produces this event structure:
 
-    <Para start_line="129">
-      The value of the 
-      <I>
-        start_line
-      </I>
-       attribute will be the line number of the first Pod directive
-      in the document.
-    </Para>
+	<Para start_line="129">
+	  The value of the
+	  <I>
+		start_line
+	  </I>
+	   attribute will be the line number of the first Pod directive
+	  in the document.
+	</Para>
 
 =item events with an element_name of B, C, F, or I.
 
@@ -157,9 +157,9 @@ S<BE<lt>E<lt> ... E<gt>E<gt>>,
 or S<BE<lt>E<lt>E<lt>E<lt> ... E<gt>E<gt>E<gt>E<gt>>, etc.)
 produces this event structure:
 
-      <B>
-        ...stuff...
-      </B>
+	  <B>
+		...stuff...
+	  </B>
 
 Currently, there are no attributes conveyed.
 
@@ -175,9 +175,9 @@ any attributes.
 Normally, parsing an SE<lt>...E<gt> sequence produces this event
 structure, just as if it were a B/C/F/I code:
 
-      <S>
-        ...stuff...
-      </S>
+	  <S>
+		...stuff...
+	  </S>
 
 However, Pod::Simple (and presumably all derived parsers) offers the
 C<nbsp_for_S> option which, if enabled, will suppress all S events, and
@@ -191,9 +191,9 @@ means non-breaking space.
 Normally, parsing an XE<lt>...E<gt> sequence produces this event
 structure, just as if it were a B/C/F/I code:
 
-      <X>
-        ...stuff...
-      </X>
+	  <X>
+		...stuff...
+	  </X>
 
 However, Pod::Simple (and presumably all derived parsers) offers the
 C<nix_X_codes> option which, if enabled, will suppress all X events
@@ -219,7 +219,7 @@ When a LE<lt>I<some_url>E<gt> code is parsed, it produces this event
 structure:
 
   <L content-implicit="yes" raw="that_url" to="that_url" type="url">
-    that_url
+	that_url
   </L>
 
 The C<type="url"> attribute is always specified for this type of
@@ -232,14 +232,14 @@ For example, this Pod source:
 produces this event structure:
 
   <L content-implicit="yes" raw="http://www.perl.com/CPAN/authors/" to="http://www.perl.com/CPAN/authors/" type="url">
-    http://www.perl.com/CPAN/authors/
+	http://www.perl.com/CPAN/authors/
   </L>
 
 When a LE<lt>I<manpage(section)>E<gt> code is parsed (and these are
 fairly rare and not terribly useful), it produces this event structure:
 
   <L content-implicit="yes" raw="manpage(section)" to="manpage(section)" type="man">
-    manpage(section)
+	manpage(section)
   </L>
 
 The C<type="man"> attribute is always specified for this type of
@@ -252,7 +252,7 @@ For example, this Pod source:
 produces this event structure:
 
   <L content-implicit="yes" raw="crontab(5)" to="crontab(5)" type="man">
-    crontab(5)
+	crontab(5)
   </L>
 
 In the rare cases where a man page link has a specified, that text appears
@@ -263,7 +263,7 @@ in a I<section> attribute. For example, this Pod source:
 will produce this event structure:
 
   <L content-implicit="yes" raw="crontab(5)/&quot;ENVIRONMENT&quot;" section="ENVIRONMENT" to="crontab(5)" type="man">
-    "ENVIRONMENT" in crontab(5)
+	"ENVIRONMENT" in crontab(5)
   </L>
 
 In the rare case where the Pod document has code like
@@ -283,7 +283,7 @@ For example, this Pod source:
 will produce this event structure:
 
   <L raw="hell itself!|crontab(5)" to="crontab(5)" type="man">
-    hell itself!
+	hell itself!
   </L>
 
 The last type of L structure is for links to/within Pod documents. It is
@@ -295,7 +295,7 @@ In the most common case, the simple case of a LE<lt>podpageE<gt> code
 produces this event structure:
 
   <L content-implicit="yes" raw="podpage" to="podpage" type="pod">
-    podpage
+	podpage
   </L>
 
 For example, this Pod source:
@@ -305,7 +305,7 @@ For example, this Pod source:
 produces this event structure:
 
   <L content-implicit="yes" raw="Net::Ping" to="Net::Ping" type="pod">
-    Net::Ping
+	Net::Ping
   </L>
 
 In cases where there is link-text explicitly specified, it
@@ -318,7 +318,7 @@ case discussed above.  For example, this Pod source:
 produces this event structure:
 
   <L raw="Perl Error Messages|perldiag" to="perldiag" type="pod">
-    Perl Error Messages
+	Perl Error Messages
   </L>
 
 In cases of links to a section in the current Pod document,
@@ -330,7 +330,7 @@ For example, this Pod source:
 produces this event structure:
 
   <L content-implicit="yes" raw="/&quot;Member Data&quot;" section="Member Data" type="pod">
-    "Member Data"
+	"Member Data"
   </L>
 
 As another example, this Pod source:
@@ -340,7 +340,7 @@ As another example, this Pod source:
 produces this event structure:
 
   <L raw="the various attributes|/&quot;Member Data&quot;" section="Member Data" type="pod">
-    the various attributes
+	the various attributes
   </L>
 
 In cases of links to a section in a different Pod document,
@@ -352,7 +352,7 @@ For example, this Pod source:
 produces this event structure:
 
   <L content-implicit="yes" raw="perlsyn/&quot;Basic BLOCKs and Switch Statements&quot;" section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
-    "Basic BLOCKs and Switch Statements" in perlsyn
+	"Basic BLOCKs and Switch Statements" in perlsyn
   </L>
 
 As another example, this Pod source:
@@ -362,7 +362,7 @@ As another example, this Pod source:
 produces this event structure:
 
   <L raw="SWITCH statements|perlsyn/&quot;Basic BLOCKs and Switch Statements&quot;" section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
-    SWITCH statements
+	SWITCH statements
   </L>
 
 Incidentally, note that we do not distinguish between these syntaxes:
@@ -375,21 +375,21 @@ Incidentally, note that we do not distinguish between these syntaxes:
 That is, they all produce the same event structure (for the most part), namely:
 
   <L content-implicit="yes" raw="$depends_on_syntax" section="Member Data" type="pod">
-    &#34;Member Data&#34;
+	&#34;Member Data&#34;
   </L>
 
-The I<raw> attribute depends on what the raw content of the L<> is, so that is
-why the event structure is the same "for the most part".
+The I<raw> attribute depends on what the raw content of the C<LE<lt>E<gt>> is,
+so that is why the event structure is the same "for the most part".
 
 If you have not guessed it yet, the I<raw> attribute contains the raw,
-original, unescaped content of the L<> formatting code. In addition to the
-examples above, take notice of the following event structure produced by
-the following L<> formatting code.
+original, unescaped content of the C<LE<lt>E<gt>> formatting code. In addition
+to the examples above, take notice of the following event structure produced
+by the following C<LE<lt>E<gt>> formatting code.
 
   L<click B<here>|page/About the C<-M> switch>
 
   <L raw="click B<here>|page/About the C<-M> switch" section="About the -M switch" to="page" type="pod">
-    click B<here>
+	click B<here>
   </L>
 
 Specifically, notice that the formatting codes are present and unescaped
@@ -411,7 +411,7 @@ When a Pod verbatim paragraph (AKA "codeblock") is parsed, it
 produces this event structure:
 
   <Verbatim start_line="543" xml:space="preserve">
-    ...text...
+	...text...
   </Verbatim>
 
 The value of the I<start_line> attribute will be the line number of the
@@ -427,7 +427,7 @@ When a "=head1 ..." directive is parsed, it produces this event
 structure:
 
   <head1>
-    ...stuff...
+	...stuff...
   </head1>
 
 For example, a directive consisting of this:
@@ -437,15 +437,22 @@ For example, a directive consisting of this:
 will produce this event structure:
 
   <head1 start_line="543">
-    Options to 
-    <C>
-      new
-    </C>
-     et al.
+	Options to
+	<C>
+	  new
+	</C>
+	 et al.
   </head1>
 
 "=head2" thru "=head4" directives are the same, except for the element
 names in the event structure.
+
+=item events with an element_name of encoding
+
+In the default case, the events corresponding to C<=encoding> directives
+are not emitted. They are emitted if C<keep_encoding_directive> is true.
+In that case they produce event structures like
+L</"events with an element_name of head1 .. head4"> above.
 
 =item events with an element_name of over-bullet
 
@@ -453,10 +460,10 @@ When an "=over ... Z<>=back" block is parsed where the items are
 a bulleted list, it will produce this event structure:
 
   <over-bullet indent="4" start_line="543">
-    <item-bullet start_line="545">
-      ...Stuff...
-    </item-bullet>
-    ...more item-bullets...
+	<item-bullet start_line="545">
+	  ...Stuff...
+	</item-bullet>
+	...more item-bullets...
   </over-bullet fake-closer="1">
 
 The attribute I<fake-closer> is only present if it is a true value; it is not
@@ -509,12 +516,12 @@ For example, this Pod source:
 produces this event structure:
 
   <over-bullet indent="4" start_line="10">
-    <item-bullet start_line="12">
-      Stuff
-    </item-bullet>
-    <item-bullet start_line="14">
-      Bar <I>baz</I>!
-    </item-bullet>
+	<item-bullet start_line="12">
+	  Stuff
+	</item-bullet>
+	<item-bullet start_line="14">
+	  Bar <I>baz</I>!
+	</item-bullet>
   </over-bullet>
 
 =item events with an element_name of over-number
@@ -523,10 +530,10 @@ When an "=over ... Z<>=back" block is parsed where the items are
 a numbered list, it will produce this event structure:
 
   <over-number indent="4" start_line="543">
-    <item-number number="1" start_line="545">
-      ...Stuff...
-    </item-number>
-    ...more item-number...
+	<item-number number="1" start_line="545">
+	  ...Stuff...
+	</item-number>
+	...more item-number...
   </over-bullet>
 
 This is like the "over-bullet" event structure; but note that the contents
@@ -550,12 +557,12 @@ an "=over ... Z<>=back" block is parsed where the items are
 a list of text "subheadings", it will produce this event structure:
 
   <over-text indent="4" start_line="543">
-    <item-text>
-      ...stuff...
-    </item-text>
-    ...stuff (generally Para or Verbatim elements)...
-    <item-text>
-    ...more item-text and/or stuff...
+	<item-text>
+	  ...stuff...
+	</item-text>
+	...stuff (generally Para or Verbatim elements)...
+	<item-text>
+	...more item-text and/or stuff...
   </over-text>
 
 The I<indent> and I<fake-closer> attributes are as with the other over-* events.
@@ -577,22 +584,22 @@ For example, this Pod source:
 produces this event structure:
 
   <over-text indent="4" start_line="20">
-    <item-text start_line="22">
-      Foo
-    </item-text>
-    <Para start_line="24">
-      Stuff
-    </Para>
-    <item-text start_line="26">
-      Bar
-        <I>
-          baz
-        </I>
-      !
-    </item-text>
-    <Para start_line="28">
-      Quux
-    </Para>
+	<item-text start_line="22">
+	  Foo
+	</item-text>
+	<Para start_line="24">
+	  Stuff
+	</Para>
+	<item-text start_line="26">
+	  Bar
+		<I>
+		  baz
+		</I>
+	  !
+	</item-text>
+	<Para start_line="28">
+	  Quux
+	</Para>
   </over-text>
 
 
@@ -605,7 +612,7 @@ an "=over ... Z<>=back" block is parsed where there are no items,
 it will produce this event structure:
 
   <over-block indent="4" start_line="543">
-    ...stuff (generally Para or Verbatim elements)...
+	...stuff (generally Para or Verbatim elements)...
   </over-block>
 
 The I<indent> and I<fake-closer> attributes are as with the other over-* events.
@@ -628,15 +635,15 @@ For example, this Pod source:
 will produce this event structure:
 
   <over-block indent="4" start_line="2">
-    <Para start_line="4">
-      For cutting off our trade with all parts of the world
-    </Para>
-    <Para start_line="6">
-      For transporting us beyond seas to be tried for pretended offenses
-    </Para>
-    <Para start_line="8">
-      He is at this time transporting large armies of [...more text...]
-    </Para>
+	<Para start_line="4">
+	  For cutting off our trade with all parts of the world
+	</Para>
+	<Para start_line="6">
+	  For transporting us beyond seas to be tried for pretended offenses
+	</Para>
+	<Para start_line="8">
+	  He is at this time transporting large armies of [...more text...]
+	</Para>
   </over-block>
 
 =item events with an element_name of over-empty
@@ -666,12 +673,12 @@ For example, this Pod source:
 will produce this event structure:
 
   <over-block indent="4" start_line="1">
-    <over-empty indent="4" start_line="3">
-    </over-empty>
+	<over-empty indent="4" start_line="3">
+	</over-empty>
   </over-block>
 
 Note that the outer C<=over> is a block because it has no C<=item>s but still
-has content: the inner C<=over>. The inner C<=over>, in turn, is completely 
+has content: the inner C<=over>. The inner C<=over>, in turn, is completely
 empty, and is treated as such.
 
 =item events with an element_name of item-bullet
@@ -714,21 +721,21 @@ the ones described in the I<perlpod>.
 
 As the parser sees sections like:
 
-    =for html  <img src="fig1.jpg">
+	=for html  <img src="fig1.jpg">
 
 or
 
-    =begin html
+	=begin html
 
-      <img src="fig1.jpg">
+	  <img src="fig1.jpg">
 
-    =end html
+	=end html
 
 ...the parser will ignore these sections unless your subclass has
-specified that it wants to see sections targetted to "html" (or whatever
+specified that it wants to see sections targeted to "html" (or whatever
 the formatter name is).
 
-If you want to process all sections, even if they're not targetted for you,
+If you want to process all sections, even if they're not targeted for you,
 call this before you start parsing:
 
   $parser->accept_targets('*');
@@ -749,7 +756,7 @@ beyond just the standard ones (I B C L F S X, plus the two weird ones
 you don't actually see in the parse tree, Z and E). For example, to also
 accept codes "N", "R", and "W":
 
-    $parser->accept_codes( qw( N R W ) );
+	$parser->accept_codes( qw( N R W ) );
 
 B<TODO: document how this interacts with =extend, and long element names>
 
@@ -769,11 +776,11 @@ all), or as verbatim (mostly just expanding tabs), or as processed text
 For example, to accept a new directive "=method", you'd presumably
 use:
 
-    $parser->accept_directive_as_processed("method");
+	$parser->accept_directive_as_processed("method");
 
 so that you could have Pod lines like:
 
-    =method I<$whatever> thing B<um>
+	=method I<$whatever> thing B<um>
 
 Making up your own directives breaks compatibility with other Pod
 formatters, in a way that using "=for I<target> ..." lines doesn't;
@@ -787,11 +794,11 @@ Setting this attribute to a true value (and by default it is false) will
 turn "SE<lt>...E<gt>" sequences into sequences of words separated by
 C<\xA0> (non-breaking space) characters. For example, it will take this:
 
-    I like S<Dutch apple pie>, don't you?
+	I like S<Dutch apple pie>, don't you?
 
 and treat it as if it were:
 
-    I like DutchE<nbsp>appleE<nbsp>pie, don't you?
+	I like DutchE<nbsp>appleE<nbsp>pie, don't you?
 
 This is handy for output formats that don't have anything quite like an
 "SE<lt>...E<gt>" code, but which do have a code for non-breaking space.
@@ -808,7 +815,7 @@ L<perlpodspec> requires output formats (wherever possible) to note
 this detail in a comment in the output format.  For example, for
 some kind of SGML output format:
 
-    print OUT "<!-- \n", $parser->version_report, "\n -->";
+	print OUT "<!-- \n", $parser->version_report, "\n -->";
 
 
 =item C<< $parser->pod_para_count() >>
@@ -829,6 +836,15 @@ ignores any "XE<lt>...E<gt>" sequences in the document being parsed.
 Many formats don't actually use the content of these codes, so have
 no reason to process them.
 
+=item C<< $parser->keep_encoding_directive(  I<SOMEVALUE>  ) >>
+
+This attribute, when set to a true value (it is false by default)
+will keep C<=encoding> and its content in the event structure. Most
+formats don't actually need to process the content of an C<=encoding>
+directive, even when this directive sets the encoding and the
+processor makes use of the encoding information. Indeed, it is
+possible to know the encoding without processing the directive
+content.
 
 =item C<< $parser->merge_text(  I<SOMEVALUE>  ) >>
 
@@ -837,7 +853,7 @@ makes sure that only one event (or token, or node) will be created
 for any single contiguous sequence of text.  For example, consider
 this somewhat contrived example:
 
-    I just LOVE Z<>hotE<32>apple pie!
+	I just LOVE Z<>hotE<32>apple pie!
 
 When that is parsed and events are about to be called on it, it may
 actually seem to be four different text events, one right after another:
@@ -853,10 +869,10 @@ This specifies code that should be called when a code line is seen
 that no code should be called.  If you provide a routine, it should
 start out like this:
 
-    sub get_code_line {  # or whatever you'll call it
-      my($line, $line_number, $parser) = @_;
-      ...
-    }
+	sub get_code_line {  # or whatever you'll call it
+	  my($line, $line_number, $parser) = @_;
+	  ...
+	}
 
 Note, however, that sometimes the Pod events aren't processed in exactly
 the same order as the code lines are -- i.e., if you have a file with
@@ -1011,7 +1027,7 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<http://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
+L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
 to clone L<git://github.com/theory/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
@@ -1053,5 +1069,3 @@ Yes, L<...> is hard.
 
 
 =cut
-
-

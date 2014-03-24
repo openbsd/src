@@ -119,6 +119,7 @@ ok $a->can("slèèp");
 
 {
     package Pìckùp;
+    no warnings "deprecated";
     use UNIVERSAL qw( isa can VERSION );
 
     ::ok isa "Pìckùp", UNIVERSAL;

@@ -7,7 +7,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 use XS::APItest;
 
 
@@ -47,4 +47,17 @@ use XS::APItest;
     }
     is($destroyed, 1, "f now destroyed");
 
+}
+
+# [perl #115602]
+# deep recursion realloced the CX stack, but the dMULTICALL local var
+# 'cx' still pointed to the old one.
+# Thius doesn;t actually test the failure (I couldn't think of a way to
+# get the failure to show at the perl level) but it allows valgribnd or
+# similar to spot any errors.
+
+{
+    sub rec { my $c = shift; rec($c-1) if $c > 0 };
+    my @r = XS::APItest::multicall_each { rec(90) } 1,2,3;
+    pass("recursion");
 }

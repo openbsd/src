@@ -1,5 +1,7 @@
 package CPANPLUS::Dist::Build;
 
+use if $] > 5.017, 'deprecate';
+
 use strict;
 use warnings;
 use vars    qw[@ISA $STATUS $VERSION];
@@ -30,7 +32,7 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 local $Params::Check::VERBOSE = 1;
 
-$VERSION = '0.62';
+$VERSION = '0.70';
 
 =pod
 
@@ -320,6 +322,15 @@ sub prepare {
                                 verbose => $verbose )
         ) {
             error( loc( "Build.PL failed: %1", $prep_output ) );
+            if ( $conf->get_conf('cpantest') ) {
+               $status->{stage} = 'prepare';
+               $status->{capture} = $prep_output;
+            }
+            $fail++; last RUN;
+        }
+
+        unless ( BUILD->( $dir ) ) {
+            error( loc( "Build.PL failed to generate a Build script: %1", $prep_output ) );
             if ( $conf->get_conf('cpantest') ) {
                $status->{stage} = 'prepare';
                $status->{capture} = $prep_output;

@@ -20,7 +20,7 @@ haiku_do_debugger(const char* format,...)
 }
 
 static void
-haiku_do_debug_printf(pTHX_ register SV *sv,
+haiku_do_debug_printf(pTHX_ SV *sv,
     void (*printfFunc)(const char*,...))
 {
     dVAR;

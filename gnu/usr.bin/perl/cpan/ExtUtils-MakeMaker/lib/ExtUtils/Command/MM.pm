@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall 
                   warn_if_old_packlist);
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 my $Is_VMS = $^O eq 'VMS';
 
@@ -99,7 +99,7 @@ sub pod2man {
         if( !eval { require Pod::Man } ) {
             warn "Pod::Man is not available: $@".
                  "Man pages will not be generated during this install.\n";
-            return undef;
+            return 0;
         }
     }
     require Getopt::Long;

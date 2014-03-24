@@ -99,8 +99,9 @@ my @dual_tests = (
 ["7 [Enterprise]",                  "7",       2, 6, 1, 0x04         ],
 ["7 [Ultimate]",                    "7",       2, 6, 1, 0x01         ],
 
-
+["8",                               "8",       2, 6, 2               ],
 ["2008 [R2]",                       "2008",    2, 6, 1, 0x00, 2, 89  ],
+["2012",                            "2012",    2, 6, 2, 0x00, 2, 89  ],
 ["[Small Business Server] 2008 R2", "2008",    2, 6, 1, 0x09, 2, 89  ],
 
 );
@@ -127,7 +128,7 @@ sub check {
     # and 2003/2008 start with "Windows Server"
     unless ($pretty eq "Win32s") {
 	my $prefix = "Windows";
-	$prefix .= " Server" if $pretty =~ /^200[38]/;
+	$prefix .= " Server" if $pretty =~ /^20(03|08|12)/;
 	$pretty = "$prefix $pretty";
     }
 

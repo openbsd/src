@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 99 };
+BEGIN { plan tests => 101 };
 
 #use Pod::Simple::Debug (10);
 
@@ -33,6 +33,14 @@ ok($x->_out(qq{=pod\n\nL<Net::Ping>\n}),
 
 ok($x->_out(qq{=pod\n\nL<crontab(5)>\n}),
  '<Document><Para><L content-implicit="yes" raw="crontab(5)" to="crontab(5)" type="man">crontab(5)</L></Para></Document>'
+);
+
+ok($x->_out(qq{=pod\n\nL<login.conf(5)>\n}),
+ '<Document><Para><L content-implicit="yes" raw="login.conf(5)" to="login.conf(5)" type="man">login.conf(5)</L></Para></Document>'
+);
+
+ok($x->_out(qq{=pod\n\nL<foo_bar(5)>\n}),
+ '<Document><Para><L content-implicit="yes" raw="foo_bar(5)" to="foo_bar(5)" type="man">foo_bar(5)</L></Para></Document>'
 );
 
 ok( $x->_out(qq{=pod\n\nL<Net::Ping/Ping-pong>\n}),

@@ -13,6 +13,7 @@
 #if defined(__CYGWIN__) && !defined(USEIMPORTLIB)
   #undef WIN32
 #endif
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #if defined(__CYGWIN__) && !defined(USEIMPORTLIB)
   #define EXTCONST extern const
@@ -20,46 +21,21 @@
 #include "perl.h"
 #include "XSUB.h"
 
-static void
-forward(pTHX_ const char *function)
-{
+
+XS(w32_CORE_all){
     dXSARGS;
     DWORD err = GetLastError();
+    /* capture the XSANY value before Perl_load_module, the CV's any member will
+     * be overwritten by Perl_load_module and subsequent newXSes or pure perl
+     * subs
+     */
+    const char *function  = (const char *) XSANY.any_ptr;
     Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, newSVpvn("Win32",5), newSVnv(0.27));
     SetLastError(err);
     SPAGAIN;
     PUSHMARK(SP-items);
     call_pv(function, GIMME_V);
 }
-
-#define FORWARD(function) XS(w32_##function){ forward(aTHX_ "Win32::"#function); }
-FORWARD(GetCwd)
-FORWARD(SetCwd)
-FORWARD(GetNextAvailDrive)
-FORWARD(GetLastError)
-FORWARD(SetLastError)
-FORWARD(LoginName)
-FORWARD(NodeName)
-FORWARD(DomainName)
-FORWARD(FsType)
-FORWARD(GetOSVersion)
-FORWARD(IsWinNT)
-FORWARD(IsWin95)
-FORWARD(FormatMessage)
-FORWARD(Spawn)
-FORWARD(GetTickCount)
-FORWARD(GetShortPathName)
-FORWARD(GetFullPathName)
-FORWARD(GetLongPathName)
-FORWARD(CopyFile)
-FORWARD(Sleep)
-
-/* Don't forward Win32::SetChildShowWindow().  It accesses the internal variable
- * w32_showwindow in thread_intern and is therefore not implemented in Win32.xs.
- */
-/* FORWARD(SetChildShowWindow) */
-
-#undef FORWARD
 
 XS_EXTERNAL(boot_Win32CORE)
 {
@@ -78,27 +54,84 @@ init_Win32CORE(pTHX)
      * is not yet fully initialized, so don't do anything fancy in here.
      */
 
-    char *file = __FILE__;
+    static const struct {
+	char Win32__GetCwd [sizeof("Win32::GetCwd")];
+	char Win32__SetCwd [sizeof("Win32::SetCwd")];
+	char Win32__GetNextAvailDrive [sizeof("Win32::GetNextAvailDrive")];
+	char Win32__GetLastError [sizeof("Win32::GetLastError")];
+	char Win32__SetLastError [sizeof("Win32::SetLastError")];
+	char Win32__LoginName [sizeof("Win32::LoginName")];
+	char Win32__NodeName [sizeof("Win32::NodeName")];
+	char Win32__DomainName [sizeof("Win32::DomainName")];
+	char Win32__FsType [sizeof("Win32::FsType")];
+	char Win32__GetOSVersion [sizeof("Win32::GetOSVersion")];
+	char Win32__IsWinNT [sizeof("Win32::IsWinNT")];
+	char Win32__IsWin95 [sizeof("Win32::IsWin95")];
+	char Win32__FormatMessage [sizeof("Win32::FormatMessage")];
+	char Win32__Spawn [sizeof("Win32::Spawn")];
+	char Win32__GetTickCount [sizeof("Win32::GetTickCount")];
+	char Win32__GetShortPathName [sizeof("Win32::GetShortPathName")];
+	char Win32__GetFullPathName [sizeof("Win32::GetFullPathName")];
+	char Win32__GetLongPathName [sizeof("Win32::GetLongPathName")];
+	char Win32__CopyFile [sizeof("Win32::CopyFile")];
+	char Win32__Sleep [sizeof("Win32::Sleep")];
+    } fnname_table = {
+	"Win32::GetCwd",
+	"Win32::SetCwd",
+	"Win32::GetNextAvailDrive",
+	"Win32::GetLastError",
+	"Win32::SetLastError",
+	"Win32::LoginName",
+	"Win32::NodeName",
+	"Win32::DomainName",
+	"Win32::FsType",
+	"Win32::GetOSVersion",
+	"Win32::IsWinNT",
+	"Win32::IsWin95",
+	"Win32::FormatMessage",
+	"Win32::Spawn",
+	"Win32::GetTickCount",
+	"Win32::GetShortPathName",
+	"Win32::GetFullPathName",
+	"Win32::GetLongPathName",
+	"Win32::CopyFile",
+	"Win32::Sleep"
+    };
 
-    newXS("Win32::GetCwd", w32_GetCwd, file);
-    newXS("Win32::SetCwd", w32_SetCwd, file);
-    newXS("Win32::GetNextAvailDrive", w32_GetNextAvailDrive, file);
-    newXS("Win32::GetLastError", w32_GetLastError, file);
-    newXS("Win32::SetLastError", w32_SetLastError, file);
-    newXS("Win32::LoginName", w32_LoginName, file);
-    newXS("Win32::NodeName", w32_NodeName, file);
-    newXS("Win32::DomainName", w32_DomainName, file);
-    newXS("Win32::FsType", w32_FsType, file);
-    newXS("Win32::GetOSVersion", w32_GetOSVersion, file);
-    newXS("Win32::IsWinNT", w32_IsWinNT, file);
-    newXS("Win32::IsWin95", w32_IsWin95, file);
-    newXS("Win32::FormatMessage", w32_FormatMessage, file);
-    newXS("Win32::Spawn", w32_Spawn, file);
-    newXS("Win32::GetTickCount", w32_GetTickCount, file);
-    newXS("Win32::GetShortPathName", w32_GetShortPathName, file);
-    newXS("Win32::GetFullPathName", w32_GetFullPathName, file);
-    newXS("Win32::GetLongPathName", w32_GetLongPathName, file);
-    newXS("Win32::CopyFile", w32_CopyFile, file);
-    newXS("Win32::Sleep", w32_Sleep, file);
+    static const unsigned char fnname_lens [] = {
+	sizeof("Win32::GetCwd"),
+	sizeof("Win32::SetCwd"),
+	sizeof("Win32::GetNextAvailDrive"),
+	sizeof("Win32::GetLastError"),
+	sizeof("Win32::SetLastError"),
+	sizeof("Win32::LoginName"),
+	sizeof("Win32::NodeName"),
+	sizeof("Win32::DomainName"),
+	sizeof("Win32::FsType"),
+	sizeof("Win32::GetOSVersion"),
+	sizeof("Win32::IsWinNT"),
+	sizeof("Win32::IsWin95"),
+	sizeof("Win32::FormatMessage"),
+	sizeof("Win32::Spawn"),
+	sizeof("Win32::GetTickCount"),
+	sizeof("Win32::GetShortPathName"),
+	sizeof("Win32::GetFullPathName"),
+	sizeof("Win32::GetLongPathName"),
+	sizeof("Win32::CopyFile"),
+	sizeof("Win32::Sleep")
+    };
+    const unsigned char * len = (const unsigned char *)&fnname_lens;
+    const char * function = (char *)&fnname_table;
+    while (function < (char *)&fnname_table + sizeof(fnname_table)) {
+	const char * const file = __FILE__;
+	CV * const cv = newXS(function, w32_CORE_all, file);
+	XSANY.any_ptr = (void *)function;
+	function += *len++;
+    }
+
+
+    /* Don't forward Win32::SetChildShowWindow().  It accesses the internal variable
+     * w32_showwindow in thread_intern and is therefore not implemented in Win32.xs.
+     */
     /* newXS("Win32::SetChildShowWindow", w32_SetChildShowWindow, file); */
 }

@@ -5,7 +5,7 @@ use strict;
 
 #
 # This test checks for $@ being set early during an exceptional
-# unwinding, and that this early setting doesn't affect the late
+# unwinding, and that this early setting does not affect the late
 # setting used to emit the exception from eval{}.  The early setting is
 # a backward-compatibility hack to satisfy modules that were relying on
 # the historical early setting in order to detect exceptional unwinding.
@@ -29,9 +29,9 @@ $val = eval {
 	my $c = end { $uerr = $@; $@ = "t2\n"; };
 	1;
 }; $err = $@;
-is($uerr, "");
-is($val, 1);
-is($err, "");
+is($uerr, "", "\$@ false at start of 'end' block inside 'eval' block");
+is($val, 1, "successful return from 'eval' block");
+is($err, "", "\$@ still false after 'end' block inside 'eval' block");
 
 $@ = "t0\n";
 $val = eval {
@@ -39,9 +39,9 @@ $val = eval {
 	my $c = end { $uerr = $@; $@ = "t2\n"; };
 	1;
 }; $err = $@;
-is($uerr, "t1\n");
-is($val, 1);
-is($err, "");
+is($uerr, "t1\n", "true value assigned to \$@ before 'end' block inside 'eval' block");
+is($val, 1, "successful return from 'eval' block");
+is($err, "", "\$@ still false after 'end' block inside 'eval' block");
 
 $@ = "";
 $val = eval {
@@ -52,7 +52,7 @@ $val = eval {
 	1;
 }; $err = $@;
 is($uerr, "t3\n");
-is($val, undef);
+is($val, undef, "undefined return value from 'eval' block with 'die'");
 is($err, "t3\n");
 
 $@ = "t0\n";
@@ -65,7 +65,7 @@ $val = eval {
 	1;
 }; $err = $@;
 is($uerr, "t3\n");
-is($val, undef);
+is($val, undef, "undefined return value from 'eval' block with 'die'");
 is($err, "t3\n");
 
 done_testing();

@@ -1,6 +1,6 @@
-#!/usr/bin/perl -Tw
+#!/usr/bin/perl
 #
-# t/stringify.t -- Test suite for stringify interaction.
+# Test suite for stringify interaction.
 #
 # Copyright 2011 Revilo Reegiles
 # Copyright 2011 Russ Allbery <rra@stanford.edu>
@@ -8,31 +8,46 @@
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-# Create a dummy class that implements stringification.
-package Test::Stringify;
-use overload '""' => 'stringify';
-sub new { return bless {} }
-sub stringify { return "Foo Bar\n" }
-package main;
-
 use strict;
+use warnings;
+
 use Test::More tests => 6;
 
+# Create a dummy class that implements stringification.
+## no critic (Modules::ProhibitMultiplePackages)
+package Test::Stringify;
+use overload '""' => 'stringify';
+sub new { return bless {}, 'Test::Stringify' }
+sub stringify { return "Foo Bar\n" }
+
+# Back to the main package.
+package main;
+
+# Load the module.
 BEGIN {
+    delete $ENV{ANSI_COLORS_ALIASES};
     delete $ENV{ANSI_COLORS_DISABLED};
-    use_ok ('Term::ANSIColor',
-            qw/:pushpop color colored uncolor colorstrip colorvalid/);
+    use_ok('Term::ANSIColor', qw(colored));
 }
 
-is (colored ([ 'blue', 'bold' ], 'testing'), "\e[34;1mtesting\e[0m",
-    'colored with an array reference');
-is (colored ("ok\n", 'bold blue'), "\e[1;34mok\n\e[0m",
-    'colored with a following string');
+# Some basic tests of colored without stringification.
+my $result = colored(['blue', 'bold'], 'testing');
+is($result, "\e[34;1mtesting\e[0m", 'colored with an array reference');
+$result = colored("ok\n", 'bold blue');
+is($result, "\e[1;34mok\n\e[0m", 'colored with a following string');
+
+# Create a stringifiable object and repeat the tests.
 my $test = Test::Stringify->new;
-is (colored ($test . "", 'bold blue'), "\e[1;34mFoo Bar\n\e[0m",
-    'colored with forced stringification');
-is (colored ($test, 'bold blue'), "\e[1;34mFoo Bar\n\e[0m",
-    'colored with a non-array reference');
+$result = colored($test . q{}, 'bold blue');
+is($result, "\e[1;34mFoo Bar\n\e[0m", 'colored with forced stringification');
+$result = colored($test, 'bold blue');
+is($result, "\e[1;34mFoo Bar\n\e[0m", 'colored with a non-array reference');
+
+# Create a hash reference and try stringifying it.
 my %foo = (foo => 'bar');
-like (colored (\%foo, 'bold blue'), qr/\e\[1;34mHASH\(.*\)\e\[0m/,
-      'colored with a hash reference');
+$result = colored(\%foo, 'bold blue');
+like(
+    $result,
+    qr{ \e\[1;34m HASH\(.*\) \e\[0m }xms,
+    'colored with a hash reference'
+);

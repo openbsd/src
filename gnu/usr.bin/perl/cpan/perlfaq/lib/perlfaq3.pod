@@ -366,6 +366,13 @@ Perl Editor by EngInSite is a complete integrated development
 environment (IDE) for creating, testing, and  debugging  Perl scripts;
 the tool runs on Windows 9x/NT/2000/XP or later.
 
+=item Kephra
+
+L<http://kephra.sf.net>
+
+GUI Editor written in Perl using wxWidgets and Scintilla with lots of smaller features.
+Aims for an UI based on Perls principles like TIMTWTDI and "easy thinkd should be ..".
+
 =item Komodo
 
 L<http://www.ActiveState.com/Products/Komodo/>
@@ -424,7 +431,7 @@ Visual Perl is a Visual Studio.NET plug-in from ActiveState.
 
 L<http://www.zeusedit.com/lookmain.html>
 
-Zeus for Window is another Win32 multi-language editor/IDE
+Zeus for Windows is another Win32 multi-language editor/IDE
 that comes with support for Perl.
 
 =back

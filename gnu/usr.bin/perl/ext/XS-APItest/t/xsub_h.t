@@ -18,7 +18,7 @@ sub default {
 
 sub expect_good {
     my $package = $_[0];
-    my $version = exists $_[1] ? ", $_[1]" : '';
+    my $version = @_ >= 2 ? ", $_[1]" : '';
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     is_deeply([XS_VERSION_defined(@_)], [],
 	      "Is good for $package$version");
@@ -37,7 +37,7 @@ sub expect_bad {
     } else {
 	$what = 'bootstrap parameter';
     }
-    if (exists $_[1]) {
+    if (@_ >= 2) {
 	$desc = "$_[0], $_[1]";
     } else {
 	$desc = $_[0];

@@ -2,18 +2,20 @@
 #
 # File has two sections, divided by a line of dashes '-'. 
 #
-# Empty rows after #-comment are removed from input are ignored
+# Lines beginning with # are ignored, except for those that start with #*
+# which are included in pod/perldebguts.pod.  # within a line may be part
+# of a description.
 #
 # First section is for regops, second section is for regmatch-states
 #
 # Note that the order in this file is important.
 #
 # Format for first section: 
-# NAME \s+ TYPE, arg-description [flags] [num-args] [longjump-len] ; DESCRIPTION
+# NAME \s+ TYPE, arg-description [num-args] [flags] [longjump-len] ; DESCRIPTION
+#   flag <S> means is REGNODE_SIMPLE; flag <V> means is REGNODE_VARIES
 #
 #
 # run perl regen.pl after editing this file
-# Also update perlredebguts.pod
 
 
 
@@ -31,11 +33,16 @@ EOS         EOL,        no        ; Match "" at end of string.
 EOL         EOL,        no        ; Match "" at end of line.
 MEOL        EOL,        no        ; Same, assuming multiline.
 SEOL        EOL,        no        ; Same, assuming singleline.
+# The regops that have varieties that vary depending on the character set regex
+# modifiers have to ordered thusly: /d, /l, /u, /a, /aa.  This is because code
+# in regcomp.c uses the enum value of the modifier as an offset from the /d
+# version.  The complements must come after the non-complements.
+# BOUND, POSIX and their complements are affected, as well as EXACTF.
 BOUND       BOUND,      no        ; Match "" at any word boundary using native charset semantics for non-utf8
 BOUNDL      BOUND,      no        ; Match "" at any locale word boundary
 BOUNDU      BOUND,      no        ; Match "" at any word boundary using Unicode semantics
 BOUNDA      BOUND,      no         ; Match "" at any word boundary using ASCII semantics
-# All NBOUND nodes are required by a line regexec.c to be greater than all BOUND ones
+# All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
 NBOUND      NBOUND,     no        ; Match "" at any word non-boundary using native charset semantics for non-utf8
 NBOUNDL     NBOUND,     no        ; Match "" at any locale word non-boundary
 NBOUNDU     NBOUND,     no        ; Match "" at any word non-boundary using Unicode semantics
@@ -48,73 +55,66 @@ REG_ANY     REG_ANY,    no 0 S    ; Match any one character (except newline).
 SANY        REG_ANY,    no 0 S    ; Match any one character.
 CANY        REG_ANY,    no 0 S    ; Match any one byte.
 ANYOF       ANYOF,      sv 0 S    ; Match character in (or not in) this class, single char match only
-ANYOFV      ANYOF,      sv 0 V    ; Match character in (or not in) this class, can match-multiple chars
-ALNUM       ALNUM,      no 0 S    ; Match any alphanumeric character using native charset semantics for non-utf8
-ALNUML      ALNUM,      no 0 S    ; Match any alphanumeric char in locale
-ALNUMU      ALNUM,      no 0 S    ; Match any alphanumeric char using Unicode semantics
-ALNUMA      ALNUM,      no 0 S    ; Match [A-Za-z_0-9]
-NALNUM      NALNUM,     no 0 S    ; Match any non-alphanumeric character using native charset semantics for non-utf8
-NALNUML     NALNUM,     no 0 S    ; Match any non-alphanumeric char in locale
-NALNUMU     NALNUM,     no 0 S    ; Match any non-alphanumeric char using Unicode semantics
-NALNUMA     NALNUM,     no 0 S    ; Match [^A-Za-z_0-9]
-SPACE       SPACE,      no 0 S    ; Match any whitespace character using native charset semantics for non-utf8
-SPACEL      SPACE,      no 0 S    ; Match any whitespace char in locale
-SPACEU      SPACE,      no 0 S    ; Match any whitespace char using Unicode semantics
-SPACEA      SPACE,      no 0 S    ; Match [ \t\n\f\r]
-NSPACE      NSPACE,     no 0 S    ; Match any non-whitespace character using native charset semantics for non-utf8
-NSPACEL     NSPACE,     no 0 S    ; Match any non-whitespace char in locale
-NSPACEU     NSPACE,     no 0 S    ; Match any non-whitespace char using Unicode semantics
-NSPACEA     NSPACE,     no 0 S    ; Match [^ \t\n\f\r]
-DIGIT       DIGIT,      no 0 S    ; Match any numeric character using native charset semantics for non-utf8
-DIGITL      DIGIT,      no 0 S    ; Match any numeric character in locale
-DIGITA      DIGIT,      no 0 S    ; Match [0-9]
-NDIGIT      NDIGIT,     no 0 S    ; Match any non-numeric character using native charset semantics for non-utf8
-NDIGITL     NDIGIT,     no 0 S    ; Match any non-numeric character in locale
-NDIGITA     NDIGIT,     no 0 S    ; Match [^0-9]
+ANYOF_WARN_SUPER ANYOF, sv 0 S    ; Match character in (or not in) this class, warn (if enabled) upon matching a char above Unicode max;
+ANYOF_SYNTHETIC ANYOF,  sv 0 S    ; Synthetic start class
+
+# Order of the below is important.  See ordering comment above.
+POSIXD      POSIXD,     none 0 S   ; Some [[:class:]] under /d; the FLAGS field gives which one
+POSIXL      POSIXD,     none 0 S   ; Some [[:class:]] under /l; the FLAGS field gives which one
+POSIXU      POSIXD,     none 0 S   ; Some [[:class:]] under /u; the FLAGS field gives which one
+POSIXA      POSIXD,     none 0 S   ; Some [[:class:]] under /a; the FLAGS field gives which one
+NPOSIXD     NPOSIXD,    none 0 S   ; complement of POSIXD, [[:^class:]]
+NPOSIXL     NPOSIXD,    none 0 S   ; complement of POSIXL, [[:^class:]]
+NPOSIXU     NPOSIXD,    none 0 S   ; complement of POSIXU, [[:^class:]]
+NPOSIXA     NPOSIXD,    none 0 S   ; complement of POSIXA, [[:^class:]]
+# End of order is important
+
 CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 
 #* Alternation
 
-# BRANCH        The set of branches constituting a single choice are hooked
-#               together with their "next" pointers, since precedence prevents
-#               anything being concatenated to any individual branch.  The
-#               "next" pointer of the last BRANCH in a choice points to the
-#               thing following the whole choice.  This is also where the
-#               final "next" pointer of each individual branch points; each
-#               branch starts with the operand node of a BRANCH node.
-#
+#* BRANCH        The set of branches constituting a single choice are
+#*               hooked together with their "next" pointers, since
+#*               precedence prevents anything being concatenated to
+#*               any individual branch.  The "next" pointer of the last
+#*               BRANCH in a choice points to the thing following the
+#*               whole choice.  This is also where the final "next"
+#*               pointer of each individual branch points; each branch
+#*               starts with the operand node of a BRANCH node.
+#*
 BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
 
 #*Back pointer
 
-# BACK          Normal "next" pointers all implicitly point forward; BACK
-#               exists to make loop structures possible.
-# not used
+#* BACK          Normal "next" pointers all implicitly point forward;
+#*               BACK exists to make loop structures possible.
+#* not used
 BACK        BACK,       no 0 V    ; Match "", "next" ptr points backward.
 
-#*Literals - NOTE the relative ordering of these types is important do not change it
+#*Literals
+# NOTE: the relative ordering of these types is important do not change it
 
 EXACT       EXACT,      str       ; Match this string (preceded by length).
 EXACTF      EXACT,      str       ; Match this non-UTF-8 string (not guaranteed to be folded) using /id rules (w/len).
 EXACTFL     EXACT,      str       ; Match this string (not guaranteed to be folded) using /il rules (w/len).
 EXACTFU     EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding doesn't change if not in UTF-8) using /iu rules (w/len).
+EXACTFA     EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
 EXACTFU_SS  EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding may change even if not in UTF-8) using /iu rules (w/len).
 EXACTFU_TRICKYFOLD EXACT,  str	  ; Match this folded UTF-8 string using /iu rules
-EXACTFA     EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
 
 #*Do nothing types
 
 NOTHING     NOTHING,    no        ; Match empty string.
-# A variant of above which delimits a group, thus stops optimizations
+#*A variant of above which delimits a group, thus stops optimizations
 TAIL        NOTHING,    no        ; Match empty string. Can jump here from outside.
 
 #*Loops
 
-# STAR,PLUS    '?', and complex '*' and '+', are implemented as circular
-#               BRANCH structures using BACK.  Simple cases (one character
-#               per match) are implemented with STAR and PLUS for speed
-#               and to minimize recursive plunges.
-#
+#* STAR,PLUS    '?', and complex '*' and '+', are implemented as
+#*               circular BRANCH structures using BACK.  Simple cases
+#*               (one character per match) are implemented with STAR
+#*               and PLUS for speed and to minimize recursive plunges.
+#*
 STAR        STAR,       node 0 V  ; Match this (simple) thing 0 or more times.
 PLUS        PLUS,       node 0 V  ; Match this (simple) thing 1 or more times.
 
@@ -123,12 +123,12 @@ CURLYN      CURLY,      no 2 V    ; Capture next-after-this simple thing
 CURLYM      CURLY,      no 2 V    ; Capture this medium-complex thing {n,m} times. 
 CURLYX      CURLY,      sv 2 V    ; Match this complex thing {n,m} times.
 
-# This terminator creates a loop structure for CURLYX
+#*This terminator creates a loop structure for CURLYX
 WHILEM      WHILEM,     no 0 V    ; Do curly processing and see if rest matches.
 
 #*Buffer related
 
-# OPEN,CLOSE,GROUPP     ...are numbered at compile time.
+#*OPEN,CLOSE,GROUPP     ...are numbered at compile time.
 OPEN        OPEN,       num 1     ; Mark this point in input as start of #n.
 CLOSE       CLOSE,      num 1     ; Analogous to OPEN.
 
@@ -141,7 +141,8 @@ REFFL       REF,        num 1 V   ; Match already matched string, folded in loc.
 REFFU       REF,        num 1 V   ; Match already matched string, folded using unicode semantics for non-utf8
 REFFA       REF,        num 1 V   ; Match already matched string, folded using unicode semantics for non-utf8, no mixing ASCII, non-ASCII
 
-#*Named references.  Code in regcomp.c assumes that these all are after the numbered references
+#*Named references.  Code in regcomp.c assumes that these all are after
+#*the numbered references
 NREF        REF,        no-sv 1 V ; Match some already matched string
 NREFF       REF,        no-sv 1 V ; Match already matched string, folded using native charset semantics for non-utf8
 NREFFL      REF,        no-sv 1 V ; Match already matched string, folded in loc.
@@ -151,7 +152,7 @@ NREFFA      REF,        num   1 V ; Match already matched string, folded using u
 IFMATCH     BRANCHJ,    off 1 . 2 ; Succeeds if the following matches.
 UNLESSM     BRANCHJ,    off 1 . 2 ; Fails if the following matches.
 SUSPEND     BRANCHJ,    off 1 V 1 ; "Independent" sub-RE.
-IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher .
+IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher.
 GROUPP      GROUPP,     num 1     ; Whether the group matched.
 
 #*Support for long RE
@@ -168,13 +169,14 @@ EVAL        EVAL,       evl 1     ; Execute some Perl code.
 MINMOD      MINMOD,     no        ; Next operator is not greedy.
 LOGICAL     LOGICAL,    no        ; Next opcode should set the flag only.
 
-# This is not used yet
+#*This is not used yet
 RENUM       BRANCHJ,    off 1 . 1 ; Group with independently numbered parens.
 
 #*Trie Related
 
-# Behave the same as A|LIST|OF|WORDS would. The '..C' variants have  
-# inline charclass data (ascii only), the 'C' store it in the structure.
+#* Behave the same as A|LIST|OF|WORDS would. The '..C' variants
+#* have inline charclass data (ascii only), the 'C' store it in the
+#* structure.
 # NOTE: the relative order of the TRIE-like regops  is significant
 
 TRIE        TRIE,       trie 1    ; Match many EXACT(F[ALU]?)? at once. flags==type
@@ -212,11 +214,6 @@ KEEPS       KEEPS,      no        ; $& begins here.
 
 #*New charclass like patterns
 LNBREAK     LNBREAK,    none      ; generic newline pattern
-VERTWS      VERTWS,     none 0 S  ; vertical whitespace         (Perl 6)
-NVERTWS     NVERTWS,    none 0 S  ; not vertical whitespace     (Perl 6)
-HORIZWS     HORIZWS,    none 0 S  ; horizontal whitespace       (Perl 6)
-NHORIZWS    NHORIZWS,   none 0 S  ; not horizontal whitespace   (Perl 6)
-
 
 # NEW STUFF SOMEWHERE ABOVE THIS LINE
 
@@ -224,20 +221,20 @@ NHORIZWS    NHORIZWS,   none 0 S  ; not horizontal whitespace   (Perl 6)
 
 #*SPECIAL  REGOPS
 
-# This is not really a node, but an optimized away piece of a "long" node.
-# To simplify debugging output, we mark it as if it were a node
+#* This is not really a node, but an optimized away piece of a "long"
+#* node.  To simplify debugging output, we mark it as if it were a node
 OPTIMIZED   NOTHING,    off       ; Placeholder for dump.
 
-# Special opcode with the property that no opcode in a compiled program
-# will ever be of this type. Thus it can be used as a flag value that
-# no other opcode has been seen. END is used similarly, in that an END
-# node cant be optimized. So END implies "unoptimizable" and PSEUDO mean
-# "not seen anything to optimize yet".
+#* Special opcode with the property that no opcode in a compiled program
+#* will ever be of this type. Thus it can be used as a flag value that
+#* no other opcode has been seen. END is used similarly, in that an END
+#* node cant be optimized. So END implies "unoptimizable" and PSEUDO
+#* mean "not seen anything to optimize yet".
 PSEUDO      PSEUDO,     off       ; Pseudo opcode for internal use.
 
 -------------------------------------------------------------------------------
 # Format for second section:
-# REGOP \t typelist [ \t typelist] [# Comment]
+# REGOP \t typelist [ \t typelist]
 # typelist= namelist
 #         = namelist:FAIL
 #         = name:count

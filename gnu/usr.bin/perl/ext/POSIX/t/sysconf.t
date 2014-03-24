@@ -67,8 +67,15 @@ sub _check_and_report {
 	like($return_val, qr/\A(?:-?[1-9][0-9]*|0 but true)\z/,
 	     'the returned value should be a signed integer');
     } else {
-	cmp_ok($errno, '==', 0, 'errno should be 0 as before the call')
-	    or diag("\$!: $errno");
+      SKIP:
+	{
+	    # POSIX specifies EINVAL is returned if the f?pathconf()
+	    # isn't implemented for the specific path
+	    skip "$description not implemented for this path", 1
+		if $errno == EINVAL && $description =~ /pathconf/;
+	    cmp_ok($errno, '==', 0, 'errno should be 0 as before the call')
+		or diag("\$!: $errno");
+	}
     }
 }
 

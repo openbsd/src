@@ -7,22 +7,32 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with all question marks will only be releases if
 deemed necessary by the Pumpking.
 
-=head2 Perl 5.16
+=head2 Perl 5.18
 
-Code freezes (which happen in the 5.15.X series)
+Code freezes (which happen in the 5.17.X series)
 
-  2011-12-20  5.15.6    Contentious changes freeze
-  2012-02-20  5.15.8    User-visible changes freeze
-  2012-03-20  5.15.9    Full code freeze
+  2013-01-20  5.17.8    Contentious changes freeze
+  2013-02-20  5.17.9    User-visible changes freeze
+  2013-03-20  5.17.10   Full code freeze
 
 Release schedule (with release manager):
 
-  2012-04-??  5.16.0-RC0      Ricardo Signes
+  2013-04-??  5.18.0-RC0      Ricardo Signes
   ...(interim RC releases)...
-  2012-05-16  5.16.0 (final)  Ricardo Signes
+  2013-05-18  5.18.0 (final)  Ricardo Signes
 
 (RC0 will be released once we think that all the blockers have been
-addressed.  This typically means some time in April.)
+addressed.  This typically means some time in April or May.)
+
+=head2 Perl 5.16
+
+Release schedule (with release managers):
+
+  2012-05-20  5.16.0 ✓        Ricardo Signes
+  2012-08-08  5.16.1 ✓        Ricardo Signes
+  2012-11-01  5.16.2 ✓        Ricardo Signes
+  2013-03-11  5.16.3 ✓        Ricardo Signes
+  ????-??-??  5.16.4          ??
 
 =head2 Perl 5.14
 
@@ -31,19 +41,8 @@ Release schedule (with release managers):
   2011-05-14  5.14.0 (final)  Jesse Vincent
   2011-06-16  5.14.1 ✓        Jesse Vincent
   2011-09-14  5.14.2 ✓        Florian Ragwitz
-  2012-0?-??  5.14.3          Ricardo Signes
-  ????-??-??  5.14.4          ??
-
-=head2 Perl 5.12
-
-Release schedule (with release managers):
-
- 2010-04-12   5.12.0 ✓        Jesse Vincent
- 2010-05-16   5.12.1 ✓        Jesse Vincent
- 2010-09-06   5.12.2 ✓        Jesse Vincent
- 2011-01-21   5.12.3 ✓        Ricardo Signes
- 2011-06-20   5.12.4 ✓        Leon Brocard
- ????-??-??   5.12.5          ??
+  2012-10-12  5.14.3 ✓        Dominic Hargreaves
+  2013-03-10  5.14.4 ✓        David Mitchell
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -59,27 +58,31 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.15
-
-Release schedule (with release managers and code freeze points):
-
-  2011-06-20  5.15.0 ✓        David Golden
-  2011-07-20  5.15.1 ✓        Zefram
-  2011-08-20  5.15.2 ✓        Ricardo Signes
-  2011-09-20  5.15.3 ✓        Stevan Little
-  2011-10-20  5.15.4 ✓        Florian Ragwitz
-  2011-11-20  5.15.5 ✓        Steve Hay
-  2011-12-20  5.15.6 ✓        Dave Rolsky (Contentious code freeze)
-  2012-01-20  5.15.7 ✓        Chris Williams
-  2012-02-20  5.15.8 ✓        Max Maischein (User-visible code freeze)
-  2012-03-20  5.15.9          Abigail (Full code freeze)
-
 =head2 Perl 5.17
 
-  2012-04-20  5.17.0          Dave Cross
-  2012-05-20  5.17.1          Zefram
-  2012-06-20  5.17.2          Jesse Luehrs
-  2012-07-20  5.17.3
+  2012-05-26  5.17.0  ✓       Zefram
+  2012-06-20  5.17.1  ✓       Jesse Luehrs
+  2012-07-20  5.17.2  ✓       Tony Cook
+  2012-08-20  5.17.3  ✓       Steve Hay
+  2012-09-20  5.17.4  ✓       Florian Ragwitz
+  2012-10-20  5.17.5  ✓       Florian Ragwitz
+  2012-11-20  5.17.6  ✓       Ricardo Signes
+  2012-12-18  5.17.7  ✓       Dave Rolsky
+  2013-01-20  5.17.8  ✓       Aaron Crane
+  2013-02-20  5.17.9  ✓       Chris Williams
+  2013-03-20  5.17.10         Max Maischein
+  2013-04-20  5.17.11
+
+=head2 Perl 5.19
+
+  2013-05-20  5.19.0          Ricardo Signes
+  2013-06-20  5.19.1          David Golden
+  2013-07-20  5.19.2          Aristotle Pagaltzis
+  2013-08-20  5.19.3          Steve Hay
+  2013-09-20  5.19.4
+  2013-10-20  5.19.5
+  2013-11-20  5.19.6
+  2013-12-20  5.19.7
 
 =head1 VICTIMS
 
@@ -109,6 +112,8 @@ Dave Rolsky <autarch@urth.org>
 Abigail <abigail@abigail.be>
 Max Maischein <corion@cpan.org>
 Dave Cross <dave@perlhacks.com>
+Jesse Luehrs <doy@cpan.org>
+Tony Cook <tony@develop-help.com>
 
 =head1 AUTHOR
 

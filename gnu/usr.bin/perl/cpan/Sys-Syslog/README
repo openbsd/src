@@ -21,16 +21,9 @@ INSTALLATION
 
     An ANSI-compliant compiler is required to compile the extension.
 
-    Sys::Syslog should work on any Perl since 5.6.0. This module has 
-    been tested by the author on the following Perl and system versions
-    but is likely to run on many more:
-
-        Perl    Architecture                            GCC
-        -----------------------------------------------------
-        5.6.2   i686-linux                              3.4.1
-        5.8.5   i386-linux-thread-multi                 3.4.1
-        5.8.8   i386-freebsd-64int                      3.4.4
-        5.8.6   darwin-thread-multi-2level (PowerPC)    4.0.1
+    Sys::Syslog should work on any Perl since 5.6.0. This module is 
+    regularly compiled and tested by the CPAN Testers on various
+    combinations of Perl and operating systems.
 
     See also the corresponding CPAN Testers page:
         http://testers.cpan.org/show/Sys-Syslog.html
@@ -48,8 +41,8 @@ SUPPORT AND DOCUMENTATION
         Search CPAN
             http://search.cpan.org/dist/Sys-Syslog/
 
-        Kobes' CPAN Search
-            http://cpan.uwinnipeg.ca/dist/Sys-Syslog
+        MetaCPAN
+            https://metacpan.org/module/Sys::Syslog
 
         CPAN Request Tracker:
             http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sys-Syslog
@@ -63,7 +56,7 @@ SUPPORT AND DOCUMENTATION
 
 COPYRIGHT AND LICENCE
 
-    Copyright (C) 1990-2009 by Larry Wall and others.
+    Copyright (C) 1990-2012 by Larry Wall and others.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

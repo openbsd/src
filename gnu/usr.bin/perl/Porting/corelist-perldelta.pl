@@ -13,7 +13,7 @@ use Getopt::Long;
   ./perl Porting/corelist-perldelta.pl
   
   # generate a diff between the corelist sections of two perldelta* files:
-  perl Porting/corelist-perldelta.pl --mode=check 5.17.1 5.17.2 <perl5172delta.pod
+  perl Porting/corelist-perldelta.pl --mode=check 5.017001 5.017002 <perl5172delta.pod
 
 =head1 ABOUT
 
@@ -49,15 +49,15 @@ my $deprecated;
 sub added {
   my ($mod, $old_v, $new_v) = @_;
   say "=item *\n";
-  say "C<$mod> $new_v has been added to the Perl core.\n";
+  say "L<$mod> $new_v has been added to the Perl core.\n";
 }
 
 sub updated {
   my ($mod, $old_v, $new_v) = @_;
   say "=item *\n";
-  say "C<$mod> has been upgraded from version $old_v to $new_v.\n";
+  say "L<$mod> has been upgraded from version $old_v to $new_v.\n";
   if ( $deprecated->{$mod} ) {
-    say "NOTE: C<$mod> is deprecated and may be removed from a future version of Perl.\n";
+    say "NOTE: L<$mod> is deprecated and may be removed from a future version of Perl.\n";
   }
 }
 

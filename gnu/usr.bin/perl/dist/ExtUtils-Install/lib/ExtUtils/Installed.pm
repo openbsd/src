@@ -17,7 +17,7 @@ my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
 require VMS::Filespec if $Is_VMS;
 
 use vars qw($VERSION);
-$VERSION = '1.999002';
+$VERSION = '1.999003';
 $VERSION = eval $VERSION;
 
 sub _is_prefix {
@@ -403,7 +403,7 @@ search for installed modules. For instance
     my $installed =
              ExtUtils::Installed->new(extra_libs=>["/my/lib/path"]);
 
-This should only be necessary if C</my/lib/path> is not in PERL5LIB.
+This should only be necessary if F</my/lib/path> is not in PERL5LIB.
 
 Finally there is the 'default', and the related 'default_get' and 'default_set'
 options. These options control the "default" object which is provided by the

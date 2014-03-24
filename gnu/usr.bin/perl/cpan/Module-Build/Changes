@@ -1,5 +1,72 @@
 Revision history for Perl extension Module::Build.
 
+0.4003 - Sat Aug 18 11:17:49 CEST 2012
+
+  [BUG FIXES]
+
+  - Get rid of outdated metadata tests [Steve Hay]
+
+0.4002 - Fri Jul 27 20:04:09 EEST 2012
+
+  [BUG FIXES]
+
+  - Test for TAP::Harness version properly [Leon Timmermans]
+
+  - Install to 'site' on 5.12+ [Leon Timmermans]
+
+  [DOCUMENTATION]
+
+  - Document extra_{compiler|linker}_flags accessors [Nick Wellnhofer]
+
+0.4001 - Tue Jun 26 20:54:15 CEST 2012
+  [BUG FIXES]
+
+  - Parse Pod name a litte more leniently [Paul Evans]
+
+  [DOCUMENTATION]
+
+  - Various spelling fixes [Leon Timmermans, Jonathan Yu]
+
+  - Fixes configuration keys used for script location [Leon Timmermans, reported by Samuel Ferencik]
+
+  [OTHER]
+
+  - use warnings
+
+0.40 - Fri Feb 24 18:47:48 CET 2012
+
+  - Released 0.39_02 as 0.40 without any code changes
+
+0.39_02 - Thu Feb 17 00:33:18 MET 2012
+
+  [BUG FIXES]
+
+  - Fixed bug where modules without $VERSION might have a version of '0'
+    listed in 'provides' metadata, which will be rejected by PAUSE
+    [David Golden, reported by Christopher Fields]
+
+  - Fixed bug in PodParser to allow numerals in module names
+    [Tokuhirom]
+
+  - Fixed bug where giving arguments twice led to them becoming arrays,
+    resulting in install paths like "ARRAY(0xdeadbeef)/lib/Foo.pm"
+    [Leon Timmermans]
+
+  [DOCUMENTATION]
+
+  - Fixed deviance from alphabetical order in documentation of
+    constructor parameters. [Eric Brine]
+
+  - Add documentation for configure_requires constructor parameter.
+    [Eric Brine]
+
+  - Change some of the docs' language describing relationship to
+    MakeMaker. [Ken Williams]
+
+  [OTHER]
+
+    - List Perl-Toolchain-Gang repo as official repo
+
 0.39_01 - Thu Jul 21 16:48:48 EDT 2011
 
   [BUG FIXES]

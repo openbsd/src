@@ -7,7 +7,7 @@ package _charnames;
 use strict;
 use warnings;
 use File::Spec;
-our $VERSION = '1.31';
+our $VERSION = '1.36';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 
 use bytes ();          # for $bytes::hint_bits
@@ -77,11 +77,8 @@ my %system_aliases = (
 #my %loose_system_aliases = (
 #);
 
-my %deprecated_aliases = (
-    # Use of these gives deprecated message.
-    # Unicode 6.0 co-opted this for U+1F514, so deprecate it for now.
-    'BELL'                    => pack("U", 0x07),
-);
+#my %deprecated_aliases;
+#$deprecated_aliases{'BELL'} = pack("U", 0x07) if $^V lt v5.17.0;
 
 #my %loose_deprecated_aliases = (
 #);
@@ -146,8 +143,12 @@ sub carp
 
 sub alias (@) # Set up a single alias
 {
+  my @errors;
+
   my $alias = ref $_[0] ? $_[0] : { @_ };
-  foreach my $name (keys %$alias) {
+  foreach my $name (sort keys %$alias) {  # Sort only because it helps having
+                                          # deterministic output for
+                                          # t/lib/charnames/alias
     my $value = $alias->{$name};
     next unless defined $value;          # Omit if screwed up.
 
@@ -159,18 +160,53 @@ sub alias (@) # Set up a single alias
       $value = CORE::hex $1;
     }
     if ($value =~ $decimal_qr) {
-        no warnings qw(non_unicode surrogate nonchar); # Allow any non-malformed
+        no warnings qw(non_unicode surrogate nonchar); # Allow any of these
         $^H{charnames_ord_aliases}{$name} = pack("U", $value);
 
         # Use a canonical form.
         $^H{charnames_inverse_ords}{sprintf("%05X", $value)} = $name;
     }
     else {
-        # XXX validate syntax when deprecation cycle complete. ie. start
-        # with an alpha only, etc.
-        $^H{charnames_name_aliases}{$name} = $value;
+        # This regex needs to be sync'd with the code in toke.c that checks
+        # for the same thing
+        if ($name !~ / ^
+                       \p{_Perl_Charname_Begin}
+                       \p{_Perl_Charname_Continue}*
+                       $ /x) {
+
+          push @errors, $name;
+        }
+        else {
+          $^H{charnames_name_aliases}{$name} = $value;
+
+          if (warnings::enabled('deprecated')) {
+            if ($name =~ / ( .* \s ) ( \s* ) $ /x) {
+              carp "Trailing white-space in a charnames alias definition is deprecated; marked by <-- HERE in '$1 <-- HERE " . $2 . "'";
+            }
+
+            # Use '+' instead of '*' in this regex, because any trailing
+            # blanks have already been warned about.
+            if ($name =~ / ( .*? \s{2} ) ( .+ ) /x) {
+              carp "A sequence of multiple spaces in a charnames alias definition is deprecated; marked by <-- HERE in '$1 <-- HERE " . $2 . "'";
+            }
+          }
+        }
     }
   }
+
+  # We find and output all errors from this :alias definition, rather than
+  # failing on the first one, so fewer runs are needed to get it to compile
+  if (@errors) {
+    foreach my $name (@errors) {
+      my $ok = "";
+      $ok = $1 if $name =~ / ^ ( \p{Alpha} [-\p{XPosixWord} ():\xa0]* ) /x;
+      my $first_bad = substr($name, length($ok), 1);
+      $name = "Invalid character in charnames alias definition; marked by <-- HERE in '$ok$first_bad<-- HERE " . substr($name, length($ok) + 1) . "'";
+    }
+    croak join "\n", @errors;
+  }
+
+  return;
 } # alias
 
 sub not_legal_use_bytes_msg {
@@ -191,11 +227,11 @@ sub alias_file ($)  # Reads a file containing alias definitions
   if (-f $arg && File::Spec->file_name_is_absolute ($arg)) {
     $file = $arg;
   }
-  elsif ($arg =~ m/^\w+$/) {
+  elsif ($arg =~ m/ ^ \p{_Perl_IDStart} \p{_Perl_IDCont}* $/x) {
     $file = "unicore/${arg}_alias.pl";
   }
   else {
-    croak "Charnames alias files can only have identifier characters";
+    croak "Charnames alias file names can only have identifier characters";
   }
   if (my @alias = do $file) {
     @alias == 1 && !defined $alias[0] and
@@ -320,14 +356,14 @@ sub lookup_name ($$$) {
 #    elsif ($loose && exists $loose_system_aliases{$lookup_name}) {
 #      $utf8 = $loose_system_aliases{$lookup_name};
 #    }
-    if (exists $deprecated_aliases{$lookup_name}) {
-      require warnings;
-      warnings::warnif('deprecated',
-                       "Unicode character name \"$name\" is deprecated, use \""
-                       . viacode(ord $deprecated_aliases{$lookup_name})
-                       . "\" instead");
-      $utf8 = $deprecated_aliases{$lookup_name};
-    }
+#    if (exists $deprecated_aliases{$lookup_name}) {
+#      require warnings;
+#      warnings::warnif('deprecated',
+#                       "Unicode character name \"$name\" is deprecated, use \""
+#                       . viacode(ord $deprecated_aliases{$lookup_name})
+#                       . "\" instead");
+#      $utf8 = $deprecated_aliases{$lookup_name};
+#    }
     # There are currently no entries in this hash, so don't waste time looking
     # for them.  But the code is retained for the unlikely possibility that
     # some will be added in the future.
@@ -457,18 +493,8 @@ sub lookup_name ($$$) {
           }
 
           my $case = $name_has_uppercase ? "CAPITAL" : "SMALL";
-          if (! $scripts_trie
-              || $txt !~
-              /\t (?: $scripts_trie ) \ (?:$case\ )? LETTER \ \U$lookup_name $/xm)
-          {
-            # Here we still don't have it, give up.
-            return if $runtime;
-
-            # May have zapped input name, get it again.
-            $name = (defined $save_input) ? $save_input : $_[0];
-            carp "Unknown charname '$name'";
-            return ($wants_ord) ? 0xFFFD : pack("U", 0xFFFD);
-          }
+          return if (! $scripts_trie || $txt !~
+             /\t (?: $scripts_trie ) \ (?:$case\ )? LETTER \ \U$lookup_name $/xm);
 
           # Here have found the input name in the table.
           @off = ($-[0] + 1, $+[0]);  # The 1 is for the tab
@@ -599,6 +625,7 @@ sub import
         ref $alias eq "HASH" or
           croak "Only HASH reference supported as argument to :alias";
         alias ($alias);
+        $promote = 1;
         next;
       }
       if ($alias =~ m{:(\w+)$}) {
@@ -607,7 +634,7 @@ sub import
         alias_file ($1) and $promote = 1;
         next;
       }
-      alias_file ($alias);
+      alias_file ($alias) and $promote = 1;
       next;
     }
     if (substr($arg, 0, 1) eq ':'
@@ -752,7 +779,9 @@ sub viacode {
   # Here there is no user-defined alias, return any official one.
   return $return if defined $return;
 
-  if (CORE::hex($hex) > 0x10FFFF) {
+  if (CORE::hex($hex) > 0x10FFFF
+      && warnings::enabled('non_unicode'))
+  {
       carp "Unicode characters only allocated up to U+10FFFF (you asked for U+$hex)";
   }
   return;

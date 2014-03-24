@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..7022\n"; }
+BEGIN { $| = 1; print "1..8025\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -65,7 +65,12 @@ my $objS = Unicode::Collate::Locale->
 
 ok($objS->getlocale, 'zh__stroke');
 
-for my $obj ($objDefault, $objB, $objG, $objJ, $objK, $objP, $objS) {
+my $objZ = Unicode::Collate::Locale->
+    new(locale => 'ZH__zhuyin', normalization => undef);
+
+ok($objZ->getlocale, 'zh__zhuyin');
+
+for my $obj ($objDefault, $objB, $objG, $objJ, $objK, $objP, $objS, $objZ) {
     $obj->change(level => 3);
     ok($obj->eq("\x{4E0D}", "\x{F967}"));
     ok($obj->eq("\x{4E26}", "\x{FA70}"));

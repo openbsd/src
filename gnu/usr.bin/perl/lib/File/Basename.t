@@ -154,7 +154,9 @@ can_ok( __PACKAGE__, qw( basename fileparse dirname fileparse_set_fstype ) );
 
 
 ### Test tainting
-{
+SKIP: {
+    skip "A perl without taint support", 2
+        if not ${^TAINT};
     #   The empty tainted value, for tainting strings
     my $TAINT = substr($^X, 0, 0);
 

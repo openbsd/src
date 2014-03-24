@@ -4,7 +4,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..19\n";
+print "1..26\n";
 my $test = 0;
 
 # Historically constant folding was performed by evaluating the ops, and if
@@ -118,3 +118,34 @@ is ($@, '', 'no error');
  ok scalar $jing =~ (0 || y/fo//),
    'lone y/// is not bound via =~ after || folding';
 }
+
+# [perl #78064] or print
+package other { # hide the "ok" sub
+ BEGIN { $^W = 0 }
+ print 0 ? not_ok : ok;
+ print " ", ++$test, " - print followed by const ? BEAR : BEAR\n";
+ print 1 ? ok : not_ok;
+ print " ", ++$test, " - print followed by const ? BEAR : BEAR (again)\n";
+ print 1 && ok;
+ print " ", ++$test, " - print followed by const && BEAR\n";
+ print 0 || ok;
+ print " ", ++$test, " - print followed by const || URSINE\n";
+ BEGIN { $^W = 1 }
+}
+
+# or stat
+print "not " unless stat(1 ? INSTALL : 0) eq stat("INSTALL");
+print "ok ", ++$test, " - stat(const ? word : ....)\n";
+# in case we are in t/
+print "not " unless stat(1 ? TEST : 0) eq stat("TEST");
+print "ok ", ++$test, " - stat(const ? word : ....)\n";
+
+# or truncate
+my $n = "for_fold_dot_t$$";
+open F, ">$n" or die "open: $!";
+print F "bralh blah blah \n";
+close F or die "close $!";
+eval "truncate 1 ? $n : 0, 0;";
+print "not " unless -z $n;
+print "ok ", ++$test, " - truncate(const ? word : ...)\n";
+unlink $n;

@@ -79,7 +79,7 @@ static void sv_soundex_initialize (void)
   sv_soundex_table['r'] = '6';
 }
 
-static SV *sv_soundex (SV *source)
+static SV *sv_soundex (SV* source)
 {
   char *source_p;
   char *source_end;

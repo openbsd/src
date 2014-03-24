@@ -1,20 +1,20 @@
-# ArabicShaping-6.1.0.txt
-# Date: 2011-04-15, 23:16:00 GMT [KW]
+# ArabicShaping-6.2.0.txt
+# Date: 2012-05-15, 21:05:00 GMT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the Joining_Type and Joining_Group
 # property values for Arabic, Syriac, N'Ko, and Mandaic
 # positional shaping, repeating in machine readable form the
 # information exemplified in Tables 8-3, 8-8, 8-9, 8-10, 8-13, 8-14,
-# 8-15, 13-5, 14-5, and 14-6 of The Unicode Standard, Version 6.1.
+# 8-15, 13-5, 14-5, and 14-6 of The Unicode Standard, Version 6.2.
 #
 # See sections 8.2, 8.3, 13.5, and 14.12 of The Unicode Standard, 
-# Version 6.1 for more information.
+# Version 6.2 for more information.
 #
 # Each line contains four fields, separated by a semicolon.
 #

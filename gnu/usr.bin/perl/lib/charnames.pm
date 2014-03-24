@@ -1,7 +1,7 @@
 package charnames;
 use strict;
 use warnings;
-our $VERSION = '1.30';
+our $VERSION = '1.36';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 use _charnames ();    # The submodule for this where most of the work gets done
 
@@ -88,6 +88,8 @@ sub string_vianame {
 1;
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 charnames - access to Unicode character names and named character sequences; also define character names
@@ -110,12 +112,16 @@ charnames - access to Unicode character names and named character sequences; als
  use charnames qw(cyrillic greek);
  print "\N{sigma} is Greek sigma, and \N{be} is Cyrillic b.\n";
 
+ use utf8;
  use charnames ":full", ":alias" => {
    e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE",
    mychar => 0xE8000,  # Private use area
+   "自転車に乗る人" => "BICYCLIST"
  };
  print "\N{e_ACUTE} is a small letter e with an acute.\n";
  print "\N{mychar} allows me to name private use characters.\n";
+ print "And I can create synonyms in other languages,",
+       " such as \N{自転車に乗る人} for "BICYCLIST (U+1F6B4)\n";
 
  use charnames ();
  print charnames::viacode(0x1234); # prints "ETHIOPIC SYLLABLE SEE"
@@ -211,11 +217,11 @@ use variables inside the C<\N{...}>.  If you want similar run-time
 functionality, use
 L<charnames::string_vianame()|/charnames::string_vianame(I<name>)>.
 
-Since Unicode 6.0, it is deprecated to use C<BELL>.  Instead use C<ALERT> (but
-C<BEL> will continue to work).
+Note, starting in Perl 5.18, the name C<BELL> refers to the Unicode character
+U+1F514, instead of the traditional U+0007.  For the latter, use C<ALERT>
+or C<BEL>.
 
-If the input name is unknown, C<\N{NAME}> raises a warning and
-substitutes the Unicode REPLACEMENT CHARACTER (U+FFFD).
+It is a syntax error to use C<\N{NAME}> where C<NAME> is unknown.
 
 For C<\N{NAME}>, it is a fatal error if C<use bytes> is in effect and the
 input name is that of a character that won't fit into a byte (i.e., whose
@@ -248,8 +254,8 @@ C<:loose> slows down look-ups by a factor of 2 to 3 versus
 C<:full>, but the trade-off may be worth it to you.  Each individual look-up
 takes very little time, and the results are cached, so the speed difference
 would become a factor only in programs that do look-ups of many different
-spellings, and probably only when those look-ups are through vianame() and
-string_vianame(), since C<\N{...}> look-ups are done at compile time.
+spellings, and probably only when those look-ups are through C<vianame()> and
+C<string_vianame()>, since C<\N{...}> look-ups are done at compile time.
 
 =head1 ALIASES
 
@@ -270,13 +276,19 @@ conventions.  The aliases override any standard definitions, so, if
 you're twisted enough, you can change C<"\N{LATIN CAPITAL LETTER A}"> to
 mean C<"B">, etc.
 
-Note that an alias should not be something that is a legal curly
-brace-enclosed quantifier (see L<perlreref/QUANTIFIERS>).  For example
-C<\N{123}> means to match 123 non-newline characters, and is not treated as a
-charnames alias.  Aliases are discouraged from beginning with anything
-other than an alphabetic character and from containing anything other
-than alphanumerics, spaces, dashes, parentheses, and underscores.
-Currently they must be ASCII.
+Aliases must begin with a character that is alphabetic.  After that, each may
+contain any combination of word (C<\w>) characters, SPACE (U+0020),
+HYPHEN-MINUS (U+002D), LEFT PARENTHESIS (U+0028), RIGHT PARENTHESIS (U+0029),
+and NO-BREAK SPACE (U+00A0).  These last three should never have been allowed
+in names, and are retained for backwards compatibility only; they may be
+deprecated and removed in future releases of Perl, so don't use them for new
+names.  (More precisely, the first character of a name you specify must be
+something that matches all of C<\p{ID_Start}>, C<\p{Alphabetic}>, and
+C<\p{Gc=Letter}>.  This makes sure it is what any reasonable person would view
+as an alphabetic character.  And, the continuation characters that match C<\w>
+must also match C<\p{ID_Continue}>.)  Starting with Perl v5.18, any Unicode
+characters meeting the above criteria may be used; prior to that only
+Latin1-range characters were acceptable.
 
 An alias can map to either an official Unicode character name (not a loose
 matched name) or to a
@@ -337,14 +349,15 @@ controlling C<"use charnames"> in the same scope apply, like C<:loose> or any
 L<script list, C<:short> option|/DESCRIPTION>, or L<custom aliases|/CUSTOM
 ALIASES> you may have defined.
 
-The only difference is that if the input name is unknown, C<string_vianame>
-returns C<undef> instead of the REPLACEMENT CHARACTER and does not raise a
-warning message.
+The only differences are due to the fact that C<string_vianame> is run-time
+and C<\N{}> is compile time.  You can't interpolate inside a C<\N{}>, (so
+C<\N{$variable}> doesn't work); and if the input name is unknown,
+C<string_vianame> returns C<undef> instead of it being a syntax error.
 
 =head1 charnames::vianame(I<name>)
 
 This is similar to C<string_vianame>.  The main difference is that under most
-circumstances, vianame returns an ordinal code
+circumstances, C<vianame> returns an ordinal code
 point, whereas C<string_vianame> returns a string.  For example,
 
    printf "U+%04X", charnames::vianame("FOUR TEARDROP-SPOKED ASTERISK");
@@ -379,7 +392,7 @@ If you define more than one name for the code point, it is indeterminate
 which one will be returned.
 
 As mentioned, the function returns C<undef> if no name is known for the code
-point.  In Unicode the proper name of these is the empty string, which
+point.  In Unicode the proper name for these is the empty string, which
 C<undef> stringifies to.  (If you ask for a code point past the legal
 Unicode maximum of U+10FFFF that you haven't assigned an alias to, you
 get C<undef> plus a warning.)
@@ -473,10 +486,6 @@ vianame() normally returns an ordinal code point, but when the input name is of
 the form C<U+...>, it returns a chr instead.  In this case, if C<use bytes> is
 in effect and the character won't fit into a byte, it returns C<undef> and
 raises a warning.
-
-Names must be ASCII characters only, which means that you are out of luck if
-you want to create aliases in a language where some or all the characters of
-the desired aliases are non-ASCII.
 
 Since evaluation of the translation function (see L</CUSTOM
 TRANSLATORS>) happens in the middle of compilation (of a string

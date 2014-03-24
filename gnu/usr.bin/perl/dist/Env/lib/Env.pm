@@ -1,6 +1,6 @@
 package Env;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -211,7 +211,7 @@ sub SPLICE {
     my $length = shift;
     my @temp = split($sep, $ENV{$$self});
     if (wantarray) {
-	my @result = splice @temp, $self, $offset, $length, @_;
+	my @result = splice @temp, $offset, $length, @_;
 	$ENV{$$self} = join($sep, @temp);
 	return @result;
     } else {

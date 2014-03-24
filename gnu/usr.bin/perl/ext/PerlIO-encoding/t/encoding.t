@@ -11,7 +11,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 18;
+use Test::More tests => 24;
 
 my $grk = "grk$$";
 my $utf = "utf$$";
@@ -123,6 +123,112 @@ if (ord('A') == 193) { # EBCDIC
 } else {
     is($dstr, "foo\\xF0\\x80\\x80\\x80bar\n:\\x80foo\n");
 }
+
+# Check that PerlIO::encoding can handle custom encodings that do funny
+# things with the buffer.
+use Encode::Encoding;
+package Extensive {
+ @ISA = Encode::Encoding;
+ __PACKAGE__->Define('extensive');
+ sub encode($$;$) {
+  my ($self,$buf,$chk) = @_;
+  my $leftovers = '';
+  if ($buf =~ /(.*\n)(?!\z)/) {
+    $buf = $1;
+    $leftovers = $';
+  }
+  if ($chk) {
+   undef $_[1];
+   my @x = (' ') x 8000; # reuse the just-freed buffer
+   $_[1] = $leftovers;   # SvPVX now points elsewhere and is shorter
+  }                      # than bufsiz
+  $buf;
+ }
+ no warnings 'once'; 
+ *decode = *encode;
+}
+open my $fh, ">:encoding(extensive)", \$buf;
+$fh->autoflush;
+print $fh "doughnut\n";
+print $fh "quaffee\n";
+# Print something longer than the buffer that encode() shrunk:
+print $fh "The beech leaves beech leaves on the beach by the beech.\n";
+close $fh;
+is $buf, "doughnut\nquaffee\nThe beech leaves beech leaves on the beach by"
+        ." the beech.\n", 'buffer realloc during encoding';
+$buf = "Sheila surely shod Sean\nin shoddy shoes.\n";
+open $fh, "<:encoding(extensive)", \$buf;
+is join("", <$fh>), "Sheila surely shod Sean\nin shoddy shoes.\n",
+   'buffer realloc during decoding';
+
+package Cower {
+ @ISA = Encode::Encoding;
+ __PACKAGE__->Define('cower');
+ sub encode($$;$) {
+  my ($self,$buf,$chk) = @_;
+  my $leftovers = '';
+  if ($buf =~ /(.*\n)(?!\z)/) {
+    $buf = $1;
+    $leftovers = $';
+  }
+  if ($chk) {
+   no warnings; # stupid @_[1] warning
+   @_[1] = keys %{{$leftovers=>1}}; # shared hash key (copy-on-write)
+  }
+  $buf;
+ }
+ no warnings 'once'; 
+ *decode = *encode;
+}
+open $fh, ">:encoding(cower)", \$buf;
+$fh->autoflush;
+print $fh $_ for qw "pumping plum pits";
+close $fh;
+is $buf, "pumpingplumpits", 'cowing buffer during encoding';
+$buf = "pumping\nplum\npits\n";
+open $fh, "<:encoding(cower)", \$buf;
+is join("", <$fh>), "pumping\nplum\npits\n",
+  'cowing buffer during decoding';
+
+package Globber {
+ no warnings 'once';
+ @ISA = Encode::Encoding;
+ __PACKAGE__->Define('globber');
+ sub encode($$;$) {
+  my ($self,$buf,$chk) = @_;
+  $_[1] = *foo if $chk;
+  $buf;
+ }
+ *decode = *encode;
+}
+
+# Here we just want to test there is no crash.  The actual output is not so
+# important.
+# We need a double eval, as scope unwinding will close the handle,
+# which croaks.
+# Under debugging builds with PERL_DESTRUCT_LEVEL set, we have to skip this
+# test, as it triggers bug #115692, resulting in string table warnings.
+require Config;
+SKIP: {
+skip "produces string table warnings", 2
+  if "@{[Config::non_bincompat_options()]}" =~ /\bDEBUGGING\b/
+   && $ENV{PERL_DESTRUCT_LEVEL};
+
+eval { eval {
+    open my $fh, ">:encoding(globber)", \$buf;
+    print $fh "Agathopous Goodfoot\n";
+    close $fh;
+}; $e = $@};
+like $@||$e, qr/Close with partial character/,
+     'no crash when assigning glob to buffer in encode';
+$buf = "To hymn him who heard her herd herd\n";
+open $fh, "<:encoding(globber)", \$buf;
+my $x = <$fh>;
+close $fh;
+is $x, "To hymn him who heard her herd herd\n",
+     'no crash when assigning glob to buffer in decode';
+
+} # SKIP
 
 END {
     1 while unlink($grk, $utf, $fail1, $fail2, $russki, $threebyte);

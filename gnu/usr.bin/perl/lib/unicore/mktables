@@ -40,7 +40,7 @@ my $debugging_build = $Config{"ccflags"} =~ /-DDEBUGGING/;
 #
 # mktables -- create the runtime Perl Unicode files (lib/unicore/.../*.pl),
 # from the Unicode database files (lib/unicore/.../*.txt),  It also generates
-# a pod file and a .t file
+# a pod file and .t files, depending on option parameters.
 #
 # The structure of this file is:
 #   First these introductory comments; then
@@ -52,10 +52,10 @@ my $debugging_build = $Config{"ccflags"} =~ /-DDEBUGGING/;
 #   the small actual loop to process the input files and finish up; then
 #   a __DATA__ section, for the .t tests
 #
-# This program works on all releases of Unicode through at least 6.0.  The
-# outputs have been scrutinized most intently for release 5.1.  The others
-# have been checked for somewhat more than just sanity.  It can handle all
-# existing Unicode character properties in those releases.
+# This program works on all releases of Unicode so far.  The outputs have been
+# scrutinized most intently for release 5.1.  The others have been checked for
+# somewhat more than just sanity.  It can handle all non-provisional Unicode
+# character properties in those releases.
 #
 # This program is mostly about Unicode character (or code point) properties.
 # A property describes some attribute or quality of a code point, like if it
@@ -65,8 +65,8 @@ my $debugging_build = $Config{"ccflags"} =~ /-DDEBUGGING/;
 # into some corresponding value.  In the case of it being lowercase or not,
 # the mapping is either to 'Y' or 'N' (or various synonyms thereof).  Each
 # property maps each Unicode code point to a single value, called a "property
-# value".  (Hence each Unicode property is a true mathematical function with
-# exactly one value per code point.)
+# value".  (Some more recently defined properties, map a code point to a set
+# of values.)
 #
 # When using a property in a regular expression, what is desired isn't the
 # mapping of the code point to its property's value, but the reverse (or the
@@ -119,7 +119,7 @@ my $map_directory = 'To';        # Where map files go.
 # are for mappings that don't fit into the normal scheme of things.  Mappings
 # that require a hash entry to communicate with utf8.c are one example;
 # another example is mappings for charnames.pm to use which indicate a name
-# that is algorithmically determinable from its code point (and vice-versa).
+# that is algorithmically determinable from its code point (and the reverse).
 # These are used to significantly compact these tables, instead of listing
 # each one of the tens of thousands individually.
 #
@@ -131,8 +131,8 @@ my $map_directory = 'To';        # Where map files go.
 #
 # Actually, there are two types of range lists, "Range_Map" is the one
 # associated with map tables, and "Range_List" with match tables.
-# Again, this is so that methods can be defined on one and not the other so as
-# to prevent operating on them in incorrect ways.
+# Again, this is so that methods can be defined on one and not the others so
+# as to prevent operating on them in incorrect ways.
 #
 # Eventually, most tables are written out to files to be read by utf8_heavy.pl
 # in the perl core.  All tables could in theory be written, but some are
@@ -154,24 +154,29 @@ my $map_directory = 'To';        # Where map files go.
 # takes every code point and maps it to Y or N (but having ranges cuts the
 # number of entries in that table way down), and two match tables, one
 # which has a list of all the code points that map to Y, and one for all the
-# code points that map to N.  (For each of these, a third table is also
+# code points that map to N.  (For each binary property, a third table is also
 # generated for the pseudo Perl property.  It contains the identical code
-# points as the Y table, but can be written, not in the compound form, but in
-# a "single" form like \p{IsUppercase}.)  Many properties are binary, but some
-# properties have several possible values, some have many, and properties like
-# Name have a different value for every named code point.  Those will not,
-# unless the controlling lists are changed, have their match tables written
-# out.  But all the ones which can be used in regular expression \p{} and \P{}
-# constructs will.  Prior to 5.14, generally a property would have either its
-# map table or its match tables written but not both.  Again, what gets
-# written is controlled by lists which can easily be changed.  Starting in
-# 5.14, advantage was taken of this, and all the map tables needed to
-# reconstruct the Unicode db are now written out, while suppressing the
-# Unicode .txt files that contain the data.  Our tables are much more compact
-# than the .txt files, so a significant space savings was achieved.
+# points as the Y table, but can be written in regular expressions, not in the
+# compound form, but in a "single" form like \p{IsUppercase}.)  Many
+# properties are binary, but some properties have several possible values,
+# some have many, and properties like Name have a different value for every
+# named code point.  Those will not, unless the controlling lists are changed,
+# have their match tables written out.  But all the ones which can be used in
+# regular expression \p{} and \P{} constructs will.  Prior to 5.14, generally
+# a property would have either its map table or its match tables written but
+# not both.  Again, what gets written is controlled by lists which can easily
+# be changed.  Starting in 5.14, advantage was taken of this, and all the map
+# tables needed to reconstruct the Unicode db are now written out, while
+# suppressing the Unicode .txt files that contain the data.  Our tables are
+# much more compact than the .txt files, so a significant space savings was
+# achieved.  Also, tables are not written out that are trivially derivable
+# from tables that do get written.  So, there typically is no file containing
+# the code points not matched by a binary property (the table for \P{} versus
+# lowercase \p{}), since you just need to invert the True table to get the
+# False table.
 
-# Properties have a 'Type', like binary, or string, or enum depending on how
-# many match tables there are and the content of the maps.  This 'Type' is
+# Properties have a 'Type', like 'binary', or 'string', or 'enum' depending on
+# how many match tables there are and the content of the maps.  This 'Type' is
 # different than a range 'Type', so don't get confused by the two concepts
 # having the same name.
 #
@@ -181,21 +186,22 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 
 # As stated earlier, this program will work on any release of Unicode so far.
 # Most obvious problems in earlier data have NOT been corrected except when
-# necessary to make Perl or this program work reasonably.  For example, no
-# folding information was given in early releases, so this program substitutes
-# lower case instead, just so that a regular expression with the /i option
-# will do something that actually gives the right results in many cases.
-# There are also a couple other corrections for version 1.1.5, commented at
-# the point they are made.  As an example of corrections that weren't made
-# (but could be) is this statement from DerivedAge.txt: "The supplementary
-# private use code points and the non-character code points were assigned in
-# version 2.0, but not specifically listed in the UCD until versions 3.0 and
-# 3.1 respectively."  (To be precise it was 3.0.1 not 3.0.0) More information
-# on Unicode version glitches is further down in these introductory comments.
+# necessary to make Perl or this program work reasonably, and to keep out
+# potential security issues.  For example, no folding information was given in
+# early releases, so this program substitutes lower case instead, just so that
+# a regular expression with the /i option will do something that actually
+# gives the right results in many cases.  There are also a couple other
+# corrections for version 1.1.5, commented at the point they are made.  As an
+# example of corrections that weren't made (but could be) is this statement
+# from DerivedAge.txt: "The supplementary private use code points and the
+# non-character code points were assigned in version 2.0, but not specifically
+# listed in the UCD until versions 3.0 and 3.1 respectively."  (To be precise
+# it was 3.0.1 not 3.0.0)  More information on Unicode version glitches is
+# further down in these introductory comments.
 #
-# This program works on all non-provisional properties as of 6.0, though the
-# files for some are suppressed from apparent lack of demand for them.  You
-# can change which are output by changing lists in this program.
+# This program works on all non-provisional properties as of the current
+# Unicode release, though the files for some are suppressed for various
+# reasons.  You can change which are output by changing lists in this program.
 #
 # The old version of mktables emphasized the term "Fuzzy" to mean Unicode's
 # loose matchings rules (from Unicode TR18):
@@ -207,6 +213,7 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #    recognized, and that loose matching of property names be used,
 #    whereby the case distinctions, whitespace, hyphens, and underbar
 #    are ignored.
+#
 # The program still allows Fuzzy to override its determination of if loose
 # matching should be used, but it isn't currently used, as it is no longer
 # needed; the calculations it makes are good enough.
@@ -227,12 +234,13 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #           values.  That is, they list code points and say what the mapping
 #           is under the given property.  Some files give the mappings for
 #           just one property; and some for many.  This program goes through
-#           each file and populates the properties from them.  Some properties
-#           are listed in more than one file, and Unicode has set up a
-#           precedence as to which has priority if there is a conflict.  Thus
-#           the order of processing matters, and this program handles the
-#           conflict possibility by processing the overriding input files
-#           last, so that if necessary they replace earlier values.
+#           each file and populates the properties and their map tables from
+#           them.  Some properties are listed in more than one file, and
+#           Unicode has set up a precedence as to which has priority if there
+#           is a conflict.  Thus the order of processing matters, and this
+#           program handles the conflict possibility by processing the
+#           overriding input files last, so that if necessary they replace
+#           earlier values.
 #        After this is all done, the program creates the property mappings not
 #            furnished by Unicode, but derivable from what it does give.
 #        The tables of code points that match each property value in each
@@ -315,6 +323,11 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #   can't just take the intersection of two map tables, for example, as that
 #   is nonsensical.
 #
+# What about 'fate' and 'status'.  The concept of a table's fate was created
+#   late when it became clear that something more was needed.  The difference
+#   between this and 'status' is unclean, and could be improved if someone
+#   wanted to spend the effort.
+#
 # DEBUGGING
 #
 # This program is written so it will run under miniperl.  Occasionally changes
@@ -327,12 +340,12 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #
 # local $to_trace = 1 if main::DEBUG;
 #
-# can be added to enable tracing in its lexical scope or until you insert
-# another line:
+# can be added to enable tracing in its lexical scope (plus dynamic) or until
+# you insert another line:
 #
 # local $to_trace = 0 if main::DEBUG;
 #
-# then use a line like "trace $a, @b, %c, ...;
+# To actually trace, use a line like "trace $a, @b, %c, ...;
 #
 # Some of the more complex subroutines already have trace statements in them.
 # Permanent trace statements should be like:
@@ -345,7 +358,8 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 # my $debug_skip = 0;
 #
 # to 1, and every file whose object is in @input_file_objects and doesn't have
-# a, 'non_skip => 1,' in its constructor will be skipped.
+# a, 'non_skip => 1,' in its constructor will be skipped.  However, skipping
+# Jamo.txt or UnicodeData.txt will likely cause fatal errors.
 #
 # To compare the output tables, it may be useful to specify the -annotate
 # flag.  This causes the tables to expand so there is one entry for each
@@ -430,7 +444,7 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 # ones.  The program should warn you if its name will clash with others on
 # restrictive file systems, like DOS.  If so, figure out a better name, and
 # add lines to the README.perl file giving that.  If the file is a character
-# property, it should be in the format that Unicode has by default
+# property, it should be in the format that Unicode has implicitly
 # standardized for such files for the more recently introduced ones.
 # If so, the Input_file constructor for @input_file_objects can just be the
 # file name and release it first appeared in.  If not, then it should be
@@ -463,9 +477,24 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 #
 # Here are some observations about some of the issues in early versions:
 #
-# The number of code points in \p{alpha} halved in 2.1.9.  It turns out that
-# the reason is that the CJK block starting at 4E00 was removed from PropList,
-# and was not put back in until 3.1.0
+# Prior to version 3.0, there were 3 character decompositions.  These are not
+# handled by Unicode::Normalize, nor will it compile when presented a version
+# that has them.  However, you can trivially get it to compile by simply
+# ignoring those decompositions, by changing the croak to a carp.  At the time
+# of this writing, the line (in cpan/Unicode-Normalize/mkheader) reads
+#
+#   croak("Weird Canonical Decomposition of U+$h");
+#
+# Simply change to a carp.  It will compile, but will not know about any three
+# character decomposition.
+
+# The number of code points in \p{alpha=True} halved in 2.1.9.  It turns out
+# that the reason is that the CJK block starting at 4E00 was removed from
+# PropList, and was not put back in until 3.1.0.  The Perl extension (the
+# single property name \p{alpha}) has the correct values.  But the compound
+# form is simply not generated until 3.1, as it can be argued that prior to
+# this release, this was not an official property.  The comments for
+# filter_old_style_proplist() give more details.
 #
 # Unicode introduced the synonym Space for White_Space in 4.1.  Perl has
 # always had a \p{Space}.  In release 3.2 only, they are not synonymous.  The
@@ -474,11 +503,11 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 # reclassified it correctly.
 #
 # Another change between 3.2 and 4.0 is the CCC property value ATBL.  In 3.2
-# this was erroneously a synonym for 202.  In 4.0, ATB became 202, and ATBL
-# was left with no code points, as all the ones that mapped to 202 stayed
-# mapped to 202.  Thus if your program used the numeric name for the class,
-# it would not have been affected, but if it used the mnemonic, it would have
-# been.
+# this was erroneously a synonym for 202 (it should be 200).  In 4.0, ATB
+# became 202, and ATBL was left with no code points, as all the ones that
+# mapped to 202 stayed mapped to 202.  Thus if your program used the numeric
+# name for the class, it would not have been affected, but if it used the
+# mnemonic, it would have been.
 #
 # \p{Script=Hrkt} (Katakana_Or_Hiragana) came in 4.0.1.  Before that code
 # points which eventually came to have this script property value, instead
@@ -489,6 +518,12 @@ my $unicode_reference_url = 'http://www.unicode.org/reports/tr44/';
 # in 3.1.1, the derived file DBidiClass.txt handles this, but this program
 # tries to do the best it can for earlier releases.  It is done in
 # process_PropertyAliases()
+#
+# In version 2.1.2, the entry in UnicodeData.txt:
+#   0275;LATIN SMALL LETTER BARRED O;Ll;0;L;;;;;N;;;;019F;
+# should instead be
+#   0275;LATIN SMALL LETTER BARRED O;Ll;0;L;;;;;N;;;019F;;019F
+# Without this change, there are casing problems for this character.
 #
 ##############################################################################
 
@@ -505,6 +540,10 @@ my $MAX_LINE_WIDTH = 78;
 # UnicodeData.txt must not be skipped if you want this program to not die
 # before normal completion.
 my $debug_skip = 0;
+
+
+# Normally these are suppressed.
+my $write_Unicode_deprecated_tables = 0;
 
 # Set to 1 to enable tracing.
 our $to_trace = 0;
@@ -608,6 +647,7 @@ sub uniques {
 $0 = File::Spec->canonpath($0);
 
 my $make_test_script = 0;      # ? Should we output a test script
+my $make_norm_test_script = 0; # ? Should we output a normalization test script
 my $write_unchanged_files = 0; # ? Should we update the output files even if
                                #    we don't think they have changed
 my $use_directory = "";        # ? Should we chdir somewhere.
@@ -667,6 +707,10 @@ while (@ARGV) {
     elsif ($arg eq '-maketest' || ($arg eq '-T' && defined ($t_path = shift)))
     {
         $make_test_script = 1;
+    }
+    elsif ($arg eq '-makenormtest')
+    {
+        $make_norm_test_script = 1;
     }
     elsif ($arg eq '-makelist') {
         $make_list = 1;
@@ -770,6 +814,8 @@ push @tables_that_may_be_empty, 'Script_Extensions=Katakana_Or_Hiragana'
                                                     if $v_version ge v6.0.0;
 push @tables_that_may_be_empty, 'Grapheme_Cluster_Break=Prepend'
                                                     if $v_version ge v6.1.0;
+push @tables_that_may_be_empty, 'Canonical_Combining_Class=CCC133'
+                                                    if $v_version ge v6.2.0;
 
 # The lists below are hashes, so the key is the item in the list, and the
 # value is the reason why it is in the list.  This makes generation of
@@ -950,6 +996,13 @@ my %why_obsolete;    # Documentation only
     }
 }
 
+if ($write_Unicode_deprecated_tables) {
+    foreach my $property (keys %why_suppressed) {
+        delete $why_suppressed{$property} if $property =~
+                                                    / ^ Other | Grapheme /x;
+    }
+}
+
 if ($v_version ge 4.0.0) {
     $why_stabilized{'Hyphen'} = 'Use the Line_Break property instead; see www.unicode.org/reports/tr14';
     if ($v_version ge 6.0.0) {
@@ -968,7 +1021,7 @@ if ($v_version ge v4.1.0) {
     $why_suppressed{'Script=Katakana_Or_Hiragana'} = 'Obsolete.  All code points previously matched by this have been moved to "Script=Common".';
 }
 if ($v_version ge v6.0.0) {
-    $why_suppressed{'Script=Katakana_Or_Hiragana'} .= '  Consider instead using "Script_Extensions=Katakana" or "Script_Extensions=Hiragana (or both)"';
+    $why_suppressed{'Script=Katakana_Or_Hiragana'} .= '  Consider instead using "Script_Extensions=Katakana" or "Script_Extensions=Hiragana" (or both)';
     $why_suppressed{'Script_Extensions=Katakana_Or_Hiragana'} = 'All code points that would be matched by this are matched by either "Script_Extensions=Katakana" or "Script_Extensions=Hiragana"';
 }
 
@@ -1025,7 +1078,7 @@ END
 # The input files don't list every code point.  Those not listed are to be
 # defaulted to some value.  Below are hard-coded what those values are for
 # non-binary properties as of 5.1.  Starting in 5.0, there are
-# machine-parsable comment lines in the files the give the defaults; so this
+# machine-parsable comment lines in the files that give the defaults; so this
 # list shouldn't have to be extended.  The claim is that all missing entries
 # for binary properties will default to 'N'.  Unicode tried to change that in
 # 5.2, but the beta period produced enough protest that they backed off.
@@ -1075,7 +1128,17 @@ my %default_mapping = (
     Word_Break => 'Other',
 );
 
-# Below are files that Unicode furnishes, but this program ignores, and why
+# Below are files that Unicode furnishes, but this program ignores, and why.
+# NormalizationCorrections.txt requires some more explanation.  It documents
+# the cumulative fixes to erroneous normalizations in earlier Unicode
+# versions.  Its main purpose is so that someone running on an earlier version
+# can use this file to override what got published in that earlier release.
+# It would be easy for mktables to read and handle this file.  But all the
+# corrections in it should already be in the other files for the release it
+# is.  To get it to actually mean something useful, someone would have to be
+# using an earlier Unicode release, and copy it to the files for that release
+# and recomplile.  So far there has been no demand to do that, so this hasn't
+# been implemented.
 my %ignored_files = (
     'CJKRadicals.txt' => 'Maps the kRSUnicode property values to corresponding code points',
     'Index.txt' => 'Alphabetical index of Unicode characters',
@@ -1086,6 +1149,8 @@ my %ignored_files = (
     'ReadMe.txt' => 'Documentation',
     'StandardizedVariants.txt' => 'Certain glyph variations for character display are standardized.  This lists the non-Unihan ones; the Unihan ones are also not used by Perl, and are in a separate Unicode data base L<http://www.unicode.org/ivd>',
     'EmojiSources.txt' => 'Maps certain Unicode code points to their legacy Japanese cell-phone values',
+    'USourceData.txt' => 'Documentation of status and cross reference of proposals for encoding by Unicode of Unihan characters',
+    'USourceData.pdf' => 'Documentation of status and cross reference of proposals for encoding by Unicode of Unihan characters',
     'auxiliary/WordBreakTest.html' => 'Documentation of validation tests',
     'auxiliary/SentenceBreakTest.html' => 'Documentation of validation tests',
     'auxiliary/GraphemeBreakTest.html' => 'Documentation of validation tests',
@@ -1228,13 +1293,16 @@ my $ORDINARY = 0;       # The normal fate.
 my $MAP_PROXIED = 1;    # The map table for the property isn't written out,
                         # but there is a file written that can be used to
                         # reconstruct this table
-my $SUPPRESSED = 3;     # The file for this table is not written out.
-my $INTERNAL_ONLY = 4;  # The file for this table is written out, but it is
+my $INTERNAL_ONLY = 2;  # The file for this table is written out, but it is
                         # for Perl's internal use only
-my $PLACEHOLDER = 5;    # A property that is defined as a placeholder in a
-                        # Unicode version that doesn't have it, but we need it
-                        # to be defined, if empty, to have things work.
-                        # Implies no pod entry generated
+my $SUPPRESSED = 3;     # The file for this table is not written out, and as a
+                        # result, we don't bother to do many computations on
+                        # it.
+my $PLACEHOLDER = 4;    # Like $SUPPRESSED, but we go through all the
+                        # computations anyway, as the values are needed for
+                        # things to work.  This happens when we have Perl
+                        # extensions that depend on Unicode tables that
+                        # wouldn't normally be in a given Unicode version.
 
 # The format of the values of the tables:
 my $EMPTY_FORMAT = "";
@@ -1344,6 +1412,9 @@ my %loose_names_ending_in_code_point;   # Same as above, but has blanks, dashes
 # names.  Each element contains the low, high, and base names in an
 # anonymous hash.
 my @code_points_ending_in_code_point;
+
+# To hold Unicode's normalization test suite
+my @normalization_tests;
 
 # Boolean: does this Unicode version have the hangul syllables, and are we
 # writing out a table for them?
@@ -1471,20 +1542,16 @@ sub populate_char_info ($) {
     # point of the range.
     my $end;
     if (! $viacode[$i]) {
-        if ($gc-> table('Surrogate')->contains($i)) {
-            $viacode[$i] = 'Surrogate';
-            $annotate_char_type[$i] = $SURROGATE_TYPE;
-            $printable[$i] = 0;
-            $end = $gc->table('Surrogate')->containing_range($i)->end;
-        }
-        elsif ($gc-> table('Private_use')->contains($i)) {
+        my $nonchar;
+        if ($gc-> table('Private_use')->contains($i)) {
             $viacode[$i] = 'Private Use';
             $annotate_char_type[$i] = $PRIVATE_USE_TYPE;
             $printable[$i] = 0;
             $end = $gc->table('Private_Use')->containing_range($i)->end;
         }
-        elsif (Property::property_ref('Noncharacter_Code_Point')-> table('Y')->
-                                                                contains($i))
+        elsif ((defined ($nonchar =
+                            Property::property_ref('Noncharacter_Code_Point'))
+               && $nonchar->table('Y')->contains($i)))
         {
             $viacode[$i] = 'Noncharacter';
             $annotate_char_type[$i] = $NONCHARACTER_TYPE;
@@ -1493,24 +1560,40 @@ sub populate_char_info ($) {
                                                     containing_range($i)->end;
         }
         elsif ($gc-> table('Control')->contains($i)) {
-            $viacode[$i] = 'Control';
+            $viacode[$i] = property_ref('Name_Alias')->value_of($i) || 'Control';
             $annotate_char_type[$i] = $CONTROL_TYPE;
             $printable[$i] = 0;
-            $end = 0x81 if $i == 0x80;  # Hard-code this one known case
         }
         elsif ($gc-> table('Unassigned')->contains($i)) {
-            $viacode[$i] = 'Unassigned, block=' . $block-> value_of($i);
             $annotate_char_type[$i] = $UNASSIGNED_TYPE;
             $printable[$i] = 0;
+            if ($v_version lt v2.0.0) { # No blocks in earliest releases
+                $viacode[$i] = 'Unassigned';
+                $end = $gc-> table('Unassigned')->containing_range($i)->end;
+            }
+            else {
+                $viacode[$i] = 'Unassigned, block=' . $block-> value_of($i);
 
-            # Because we name the unassigned by the blocks they are in, it
-            # can't go past the end of that block, and it also can't go past
-            # the unassigned range it is in.  The special table makes sure
-            # that the non-characters, which are unassigned, are separated
-            # out.
-            $end = min($block->containing_range($i)->end,
-                       $unassigned_sans_noncharacters-> containing_range($i)->
-                                                                         end);
+                # Because we name the unassigned by the blocks they are in, it
+                # can't go past the end of that block, and it also can't go
+                # past the unassigned range it is in.  The special table makes
+                # sure that the non-characters, which are unassigned, are
+                # separated out.
+                $end = min($block->containing_range($i)->end,
+                           $unassigned_sans_noncharacters->
+                                                    containing_range($i)->end);
+            }
+        }
+        elsif ($v_version lt v2.0.0) {  # No surrogates in earliest releases
+            $viacode[$i] = $gc->value_of($i);
+            $annotate_char_type[$i] = $UNKNOWN_TYPE;
+            $printable[$i] = 0;
+        }
+        elsif ($gc-> table('Surrogate')->contains($i)) {
+            $viacode[$i] = 'Surrogate';
+            $annotate_char_type[$i] = $SURROGATE_TYPE;
+            $printable[$i] = 0;
+            $end = $gc->table('Surrogate')->containing_range($i)->end;
         }
         else {
             Carp::my_carp_bug("Can't figure out how to annotate "
@@ -1959,10 +2042,10 @@ package Input_file;
 # basically be a while(next_line()) {...} loop.
 #
 # You can also set up handlers to
-#   1) call before the first line is read for pre processing
+#   1) call before the first line is read, for pre processing
 #   2) call to adjust each line of the input before the main handler gets them
 #   3) call upon EOF before the main handler exits its loop
-#   4) call at the end for post processing
+#   4) call at the end, for post processing
 #
 # $_ is used to store the input line, and is to be filtered by the
 # each_line_handler()s.  So, if the format of the line is not in the desired
@@ -2013,7 +2096,7 @@ sub trace { return main::trace(@_); }
     my %property;
     # name of property this file is for.  defaults to none, meaning not
     # applicable, or is otherwise determinable, for example, from each line.
-    main::set_access('property', \%property, qw{ c });
+    main::set_access('property', \%property, qw{ c r });
 
     my %optional;
     # If this is true, the file is optional.  If not present, no warning is
@@ -2174,6 +2257,7 @@ sub trace { return main::trace(@_); }
         fallback => 0,
         qw("") => "_operator_stringify",
         "." => \&main::_operator_dot,
+        ".=" => \&main::_operator_dot_equal,
     ;
 
     sub _operator_stringify {
@@ -2840,10 +2924,6 @@ sub trace { return main::trace(@_); }
 
         Carp::carp_extra_args(\%args) if main::DEBUG && %args;
 
-        if (! $type{$addr}) {
-            $standard_form{$addr} = main::standardize($value);
-        }
-
         return $self;
     }
 
@@ -2851,6 +2931,7 @@ sub trace { return main::trace(@_); }
         fallback => 0,
         qw("") => "_operator_stringify",
         "." => \&main::_operator_dot,
+        ".=" => \&main::_operator_dot_equal,
     ;
 
     sub _operator_stringify {
@@ -2872,8 +2953,11 @@ sub trace { return main::trace(@_); }
     }
 
     sub standard_form {
-        # The standard form is the value itself if the standard form is
-        # undefined (that is if the value is special)
+        # Calculate the standard form only if needed, and cache the result.
+        # The standard form is the value itself if the type is special.
+        # This represents a considerable CPU and memory saving - at the time
+        # of writing there are 368676 non-special objects, but the standard
+        # form is only requested for 22047 of them - ie about 6%.
 
         my $self = shift;
         Carp::carp_extra_args(\@_) if main::DEBUG && @_;
@@ -2881,7 +2965,10 @@ sub trace { return main::trace(@_); }
         my $addr = do { no overloading; pack 'J', $self; };
 
         return $standard_form{$addr} if defined $standard_form{$addr};
-        return $value{$addr};
+
+        my $value = $value{$addr};
+        return $value if $type{$addr};
+        return $standard_form{$addr} = main::standardize($value);
     }
 
     sub dump {
@@ -2931,6 +3018,10 @@ sub trace { return main::trace(@_); }
 { # Closure
 
     our $addr;
+
+    # Max is initialized to a negative value that isn't adjacent to 0, for
+    # simpler tests
+    my $max_init = -2;
 
     main::setup_package();
 
@@ -2987,9 +3078,7 @@ sub trace { return main::trace(@_); }
 
         Carp::carp_extra_args(\%args) if main::DEBUG && %args;
 
-        # Max is initialized to a negative value that isn't adjacent to 0,
-        # for simpler tests
-        $max{$addr} = -2;
+        $max{$addr} = $max_init;
 
         $_search_ranges_cache{$addr} = 0;
         $ranges{$addr} = [];
@@ -3001,6 +3090,7 @@ sub trace { return main::trace(@_); }
         fallback => 0,
         qw("") => "_operator_stringify",
         "." => \&main::_operator_dot,
+        ".=" => \&main::_operator_dot_equal,
     ;
 
     sub _operator_stringify {
@@ -3073,7 +3163,7 @@ sub trace { return main::trace(@_); }
                     no overloading;
                     $message .= $owner_name_of{pack 'J', $self};
                 }
-                Carp::my_carp_bug($message .= "Undefined argument to _union.  No union done.");
+                Carp::my_carp_bug($message . "Undefined argument to _union.  No union done.");
                 return;
             }
 
@@ -3444,6 +3534,9 @@ sub trace { return main::trace(@_); }
             Carp::my_carp_bug("$owner_name_of{$addr}End of range (" . sprintf("%04X", $end) . ") must not be before start (" . sprintf("%04X", $start) . ").  No action taken.");
             return;
         }
+        if ($end > $MAX_UNICODE_CODEPOINT && $operation eq '+') {
+            Carp::my_carp("$owner_name_of{$addr}Warning: Range '" . sprintf("%04X..%04X", $start, $end) . ") is above the Unicode maximum of " . sprintf("%04X", $MAX_UNICODE_CODEPOINT) . ".  Adding it anyway");
+        }
         #local $to_trace = 1 if main::DEBUG;
 
         if ($operation eq '-') {
@@ -3471,7 +3564,7 @@ sub trace { return main::trace(@_); }
         # structured so this is common.
         if ($start > $max) {
 
-            trace "$owner_name_of{$addr} $operation", sprintf("%04X", $start) . '..' . sprintf("%04X", $end) . " ($value) type=$type" if main::DEBUG && $to_trace;
+            trace "$owner_name_of{$addr} $operation", sprintf("%04X..%04X (%s) type=%d; prev max=%04X", $start, $end, $value, $type, $max) if main::DEBUG && $to_trace;
             return if $operation eq '-'; # Deleting a non-existing range is a
                                          # no-op
 
@@ -4070,7 +4163,12 @@ sub trace { return main::trace(@_); }
         # otherwise recalculate it.  This is done too rarely to worry about
         # performance.
         if ($operation eq '-' && @return) {
-            $max{$addr} = $r->[-1]->end;
+            if (@$r) {
+                $max{$addr} = $r->[-1]->end;
+            }
+            else {  # Now empty
+                $max{$addr} = $max_init;
+            }
         }
         return @return;
     }
@@ -4174,8 +4272,38 @@ sub trace { return main::trace(@_); }
 
                     return $self->_union($other)
                 },
+        '+=' => sub { my $self = shift;
+                    my $other = shift;
+                    my $reversed = shift;
+
+                    if ($reversed) {
+                        Carp::my_carp_bug("Bad news.  Can't cope with '"
+                        . ref($other)
+                        . ' += '
+                        . ref($self)
+                        . "'.  undef returned.");
+                        return;
+                    }
+
+                    return $self->_union($other)
+                },
         '&' => sub { my $self = shift;
                     my $other = shift;
+
+                    return $self->_intersect($other, 0);
+                },
+        '&=' => sub { my $self = shift;
+                    my $other = shift;
+                    my $reversed = shift;
+
+                    if ($reversed) {
+                        Carp::my_carp_bug("Bad news.  Can't cope with '"
+                        . ref($other)
+                        . ' &= '
+                        . ref($self)
+                        . "'.  undef returned.");
+                        return;
+                    }
 
                     return $self->_intersect($other, 0);
                 },
@@ -4223,10 +4351,12 @@ sub trace { return main::trace(@_); }
         Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
         if ($reversed) {
-            Carp::my_carp_bug("Can't cope with a "
-             .  __PACKAGE__
-             . " being the second parameter in a '-'.  Subtraction ignored.");
-            return $self;
+            Carp::my_carp_bug("Bad news.  Can't cope with '"
+            . ref($other)
+            . ' - '
+            . ref($self)
+            . "'.  undef returned.");
+            return;
         }
 
         my $new = Range_List->new(Initialize => $self);
@@ -4860,6 +4990,7 @@ END
     use overload
         fallback => 0,
         "." => \&main::_operator_dot,
+        ".=" => \&main::_operator_dot_equal,
         '!=' => \&main::_operator_not_equal,
         '==' => \&main::_operator_equal,
     ;
@@ -6178,7 +6309,7 @@ END
         my $comment = "";
 
         my $status = $self->status;
-        if ($status) {
+        if ($status && $status ne $PLACEHOLDER) {
             my $warn = uc $status_past_participles{$status};
             $comment .= <<END;
 
@@ -6797,6 +6928,16 @@ sub trace { return main::trace(@_); }
         '+=' => sub {
                         my $self = shift;
                         my $other = shift;
+                        my $reversed = shift;
+
+                        if ($reversed) {
+                            Carp::my_carp_bug("Bad news.  Can't cope with '"
+                            . ref($other)
+                            . ' += '
+                            . ref($self)
+                            . "'.  undef returned.");
+                            return;
+                        }
 
                         return if $self->carp_if_locked;
 
@@ -6814,14 +6955,33 @@ sub trace { return main::trace(@_); }
                         }
                         return $self;
                     },
+        '&=' => sub {
+                        my $self = shift;
+                        my $other = shift;
+                        my $reversed = shift;
+
+                        if ($reversed) {
+                            Carp::my_carp_bug("Bad news.  Can't cope with '"
+                            . ref($other)
+                            . ' &= '
+                            . ref($self)
+                            . "'.  undef returned.");
+                            return;
+                        }
+
+                        return if $self->carp_if_locked;
+                        $self->_set_range_list($self->_range_list & $other);
+                        return $self;
+                    },
         '-' => sub { my $self = shift;
                     my $other = shift;
                     my $reversed = shift;
-
                     if ($reversed) {
-                        Carp::my_carp_bug("Can't cope with a "
-                            .  __PACKAGE__
-                            . " being the first parameter in a '-'.  Subtraction ignored.");
+                        Carp::my_carp_bug("Bad news.  Can't cope with '"
+                        . ref($other)
+                        . ' - '
+                        . ref($self)
+                        . "'.  undef returned.");
                         return;
                     }
 
@@ -7263,7 +7423,9 @@ END
                     my $flag = $property->status
                                 || $table->status
                                 || $table_alias_object->status;
-                    $flags{$flag} = $status_past_participles{$flag} if $flag;
+                    if ($flag && $flag ne $PLACEHOLDER) {
+                        $flags{$flag} = $status_past_participles{$flag};
+                    }
 
                     $loose_count++;
 
@@ -7661,6 +7823,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         fallback => 0,
         qw("") => "_operator_stringify",
         "." => \&main::_operator_dot,
+        ".=" => \&main::_operator_dot_equal,
         '==' => \&main::_operator_equal,
         '!=' => \&main::_operator_not_equal,
         '=' => sub { return shift },
@@ -7680,16 +7843,16 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
         if (ref $other) {
-            Carp::my_carp_bug("Can't cope with a "
+            Carp::my_carp_bug("Bad news.  Can't cope with a "
                         . ref($other)
                         . " argument to '-='.  Subtraction ignored.");
             return $self;
         }
         elsif ($reversed) {   # Shouldn't happen in a -=, but just in case
-            Carp::my_carp_bug("Can't cope with a "
-            .  __PACKAGE__
-            . " being the first parameter in a '-='.  Subtraction ignored.");
-            return $self;
+            Carp::my_carp_bug("Bad news.  Can't cope with subtracting a "
+            . ref $self
+            . " from a non-object.  undef returned.");
+            return;
         }
         else {
             no overloading;
@@ -8752,6 +8915,24 @@ sub _operator_dot {
             : "$self$other";
 }
 
+sub _operator_dot_equal {
+    # Overloaded '.=' method that is common to all packages.
+
+    my $self = shift;
+    my $other = shift;
+    my $reversed = shift;
+    Carp::carp_extra_args(\@_) if main::DEBUG && @_;
+
+    $other = "" unless defined $other;
+
+    if ($reversed) {
+        return $other .= "$self";
+    }
+    else {
+        return "$self" . "$other";
+    }
+}
+
 sub _operator_equal {
     # Generic overloaded '==' routine.  To be equal, they must be the exact
     # same object
@@ -8806,6 +8987,11 @@ sub process_PropertyAliases($) {
         }
 
     }
+
+    my $scf = property_ref("Simple_Case_Folding");
+    $scf->add_alias("scf");
+    $scf->add_alias("sfc");
+
     return;
 }
 
@@ -8816,11 +9002,20 @@ sub finish_property_setup {
     Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
     # This entry was missing from this file in earlier Unicode versions
-    if (-e 'Jamo.txt') {
-        my $jsn = property_ref('JSN');
-        if (! defined $jsn) {
-            $jsn = Property->new('JSN', Full_Name => 'Jamo_Short_Name');
-        }
+    if (-e 'Jamo.txt' && ! defined property_ref('JSN')) {
+        Property->new('JSN', Full_Name => 'Jamo_Short_Name');
+    }
+
+    # These two properties must be defined in all releases so we can generate
+    # the tables from them to make regex \X work, but suppress their output so
+    # aren't application visible prior to releases where they should be
+    if (! defined property_ref('GCB')) {
+        Property->new('GCB', Full_Name => 'Grapheme_Cluster_Break',
+                      Fate => $PLACEHOLDER);
+    }
+    if (! defined property_ref('hst')) {
+        Property->new('hst', Full_Name => 'Hangul_Syllable_Type',
+                      Fate => $PLACEHOLDER);
     }
 
     # These are used so much, that we set globals for them.
@@ -9001,7 +9196,7 @@ na        ; Name
 na1       ; Unicode_1_Name
 nt        ; Numeric_Type
 nv        ; Numeric_Value
-sfc       ; Simple_Case_Folding
+scf       ; Simple_Case_Folding
 slc       ; Simple_Lowercase_Mapping
 stc       ; Simple_Titlecase_Mapping
 suc       ; Simple_Uppercase_Mapping
@@ -9022,7 +9217,6 @@ END
 
         # This first set is in the original old-style proplist.
         push @return, split /\n/, <<'END';
-Alpha     ; Alphabetic
 Bidi_C    ; Bidi_Control
 Dash      ; Dash
 Dia       ; Diacritic
@@ -9093,6 +9287,7 @@ END
     }
     if (-e 'DCoreProperties.txt') {
         push @return, split /\n/, <<'END';
+Alpha     ; Alphabetic
 IDS       ; ID_Start
 XIDC      ; XID_Continue
 XIDS      ; XID_Start
@@ -9142,6 +9337,34 @@ sub process_PropValueAliases {
     if (! -e 'PropValueAliases.txt') {
         $file->insert_lines(get_old_property_value_aliases());
     }
+
+    if ($v_version lt 4.0.0) {
+        $file->insert_lines(split /\n/, <<'END'
+hst; L                                ; Leading_Jamo
+hst; LV                               ; LV_Syllable
+hst; LVT                              ; LVT_Syllable
+hst; NA                               ; Not_Applicable
+hst; T                                ; Trailing_Jamo
+hst; V                                ; Vowel_Jamo
+END
+        );
+    }
+    if ($v_version lt 4.1.0) {
+        $file->insert_lines(split /\n/, <<'END'
+GCB; CN                               ; Control
+GCB; CR                               ; CR
+GCB; EX                               ; Extend
+GCB; L                                ; L
+GCB; LF                               ; LF
+GCB; LV                               ; LV
+GCB; LVT                              ; LVT
+GCB; T                                ; T
+GCB; V                                ; V
+GCB; XX                               ; Other
+END
+        );
+    }
+
 
     # Add any explicit cjk values
     $file->insert_lines(@cjk_property_values);
@@ -9266,6 +9489,9 @@ bc ; L         ; Left_To_Right
 bc ; ON        ; Other_Neutral
 bc ; R         ; Right_To_Left
 bc ; WS        ; White_Space
+
+Bidi_M; N; No; F; False
+Bidi_M; Y; Yes; T; True
 
 # The standard combining classes are very much different in v1, so only use
 # ones that look right (not checked thoroughly)
@@ -9551,6 +9777,33 @@ END
     }
 
     return @return;
+}
+
+sub process_NormalizationsTest {
+
+    # Each line looks like:
+    #      source code point; NFC; NFD; NFKC; NFKD
+    # e.g.
+    #       1E0A;1E0A;0044 0307;1E0A;0044 0307;
+
+    my $file= shift;
+    Carp::carp_extra_args(\@_) if main::DEBUG && @_;
+
+    # Process each line of the file ...
+    while ($file->next_line) {
+
+        next if /^@/;
+
+        my ($c1, $c2, $c3, $c4, $c5) = split /\s*;\s*/;
+
+        foreach my $var (\$c1, \$c2, \$c3, \$c4, \$c5) {
+            $$var = pack "U0U*", map { hex } split " ", $$var;
+            $$var =~ s/(\\)/$1$1/g;
+        }
+
+        push @normalization_tests,
+                "Test_N(q$c1, q$c2, q$c3, q$c4, q$c5);\n";
+    } # End of looping through the file
 }
 
 sub output_perl_charnames_line ($$) {
@@ -10324,6 +10577,7 @@ END
             $file->carp_bad_line("'$fields[$NUMERIC]' should be a whole or rational number.  Processing as if it were") if $fields[$NUMERIC] !~ qr{ ^ -? \d+ ( / \d+ )? $ }x;
             if ($fields[$PERL_DECIMAL_DIGIT] ne "") {
                 $file->carp_bad_line("$fields[$PERL_DECIMAL_DIGIT] should equal $fields[$NUMERIC].  Processing anyway") if $fields[$PERL_DECIMAL_DIGIT] != $fields[$NUMERIC];
+                $file->carp_bad_line("$fields[$PERL_DECIMAL_DIGIT] should be empty since the general category ($fields[$CATEGORY]) isn't 'Nd'.  Processing as Decimal") if $fields[$CATEGORY] ne "Nd";
                 $fields[$NUMERIC_TYPE_OTHER_DIGIT] = 'Decimal';
             }
             elsif ($fields[$NUMERIC_TYPE_OTHER_DIGIT] ne "") {
@@ -10579,7 +10833,7 @@ END
         Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
         # Flush the buffers.
-        foreach my $i (1 .. $last_field) {
+        foreach my $i (0 .. $last_field) {
             $file->insert_adjusted_lines("$start[$i]..$previous_cp; $field_names[$i]; $previous_fields[$i]");
         }
 
@@ -10597,8 +10851,9 @@ END
             # into it the Hangul syllable mappings.  This is to avoid having
             # to publish a subroutine in it to compute them.  (which would
             # essentially be this code.)  This uses the algorithm published by
-            # Unicode.
-            if (property_ref('Decomposition_Mapping')->to_output_map) {
+            # Unicode.  (No hangul syllables in version 1)
+            if ($v_version ge v2.0.0
+                && property_ref('Decomposition_Mapping')->to_output_map) {
                 for (my $S = $SBase; $S < $SBase + $SCount; $S++) {
                     use integer;
                     my $SIndex = $S - $SBase;
@@ -10638,11 +10893,15 @@ END
         #       the syntax is changed as well as the types to their later
         #       terminology.  Otherwise normalize.pm would be very unhappy
         # 5)    Many ccc classes are different.  These are left intact.
-        # 6)    U+FF10 - U+FF19 are missing their numeric values in all three
+        # 6)    U+FF10..U+FF19 are missing their numeric values in all three
         #       fields.  These are unchanged because it doesn't really cause
         #       problems for Perl.
         # 7)    A number of code points, such as controls, don't have their
-        #       Unicode Version 1 Names in this file.  These are unchanged.
+        #       Unicode Version 1 Names in this file.  These are added.
+        # 8)    A number of Symbols were marked as Lm.  This changes those in
+        #       the Latin1 range, so that regexes work.
+        # 9)    The odd characters U+03DB .. U+03E1 weren't encoded but are
+        #       referred to by their lc equivalents.  Not fixed.
 
         my @corrected_lines = split /\n/, <<'END';
 4E00;<CJK Ideograph, First>;Lo;0;L;;;;;N;;;;;
@@ -10671,7 +10930,12 @@ END
 
             $file->insert_lines(@copy);
         }
+        elsif ($code_point =~ /^00/ && $fields[$CATEGORY] eq 'Lm') {
 
+            # There are no Lm characters in Latin1; these should be 'Sk', but
+            # there isn't that in V1.
+            $fields[$CATEGORY] = 'So';
+        }
 
         if ($fields[$NUMERIC] eq '-') {
             $fields[$NUMERIC] = '-1';  # This is what 2.0 made it.
@@ -10701,7 +10965,7 @@ END
             # If is like '<+circled> 0052 <-circled>', convert to
             # '<circled> 0052'
             $fields[$PERL_DECOMPOSITION] =~
-                            s/ < \+ ( .*? ) > \s* (.*?) \s* <-\1> /<$1> $2/x;
+                            s/ < \+ ( .*? ) > \s* (.*?) \s* <-\1> /<$1> $2/xg;
 
             # Convert '<join> HHHH HHHH <join>' to '<medial> HHHH HHHH', etc.
             $fields[$PERL_DECOMPOSITION] =~
@@ -10725,10 +10989,115 @@ END
 
             # One entry has weird braces
             $fields[$PERL_DECOMPOSITION] =~ s/[{}]//g;
+
+            # One entry at U+2116 has an extra <sup>
+            $fields[$PERL_DECOMPOSITION] =~ s/( < .*? > .* ) < .*? > \ * /$1/x;
         }
 
         $_ = join ';', $code_point, @fields;
         trace $_ if main::DEBUG && $to_trace;
+        return;
+    }
+
+    sub filter_bad_Nd_ucd {
+        # Early versions specified a value in the decimal digit field even
+        # though the code point wasn't a decimal digit.  Clear the field in
+        # that situation, so that the main code doesn't think it is a decimal
+        # digit.
+
+        my ($code_point, @fields) = split /\s*;\s*/, $_, -1;
+        if ($fields[$PERL_DECIMAL_DIGIT] ne "" && $fields[$CATEGORY] ne 'Nd') {
+            $fields[$PERL_DECIMAL_DIGIT] = "";
+            $_ = join ';', $code_point, @fields;
+        }
+        return;
+    }
+
+    my @U1_control_names = split /\n/, <<'END';
+NULL
+START OF HEADING
+START OF TEXT
+END OF TEXT
+END OF TRANSMISSION
+ENQUIRY
+ACKNOWLEDGE
+BELL
+BACKSPACE
+HORIZONTAL TABULATION
+LINE FEED
+VERTICAL TABULATION
+FORM FEED
+CARRIAGE RETURN
+SHIFT OUT
+SHIFT IN
+DATA LINK ESCAPE
+DEVICE CONTROL ONE
+DEVICE CONTROL TWO
+DEVICE CONTROL THREE
+DEVICE CONTROL FOUR
+NEGATIVE ACKNOWLEDGE
+SYNCHRONOUS IDLE
+END OF TRANSMISSION BLOCK
+CANCEL
+END OF MEDIUM
+SUBSTITUTE
+ESCAPE
+FILE SEPARATOR
+GROUP SEPARATOR
+RECORD SEPARATOR
+UNIT SEPARATOR
+DELETE
+BREAK PERMITTED HERE
+NO BREAK HERE
+INDEX
+NEXT LINE
+START OF SELECTED AREA
+END OF SELECTED AREA
+CHARACTER TABULATION SET
+CHARACTER TABULATION WITH JUSTIFICATION
+LINE TABULATION SET
+PARTIAL LINE DOWN
+PARTIAL LINE UP
+REVERSE LINE FEED
+SINGLE SHIFT TWO
+SINGLE SHIFT THREE
+DEVICE CONTROL STRING
+PRIVATE USE ONE
+PRIVATE USE TWO
+SET TRANSMIT STATE
+CANCEL CHARACTER
+MESSAGE WAITING
+START OF GUARDED AREA
+END OF GUARDED AREA
+START OF STRING
+SINGLE CHARACTER INTRODUCER
+CONTROL SEQUENCE INTRODUCER
+STRING TERMINATOR
+OPERATING SYSTEM COMMAND
+PRIVACY MESSAGE
+APPLICATION PROGRAM COMMAND
+END
+
+    sub filter_early_U1_names {
+        # Very early versions did not have the Unicode_1_name field specified.
+        # They differed in which ones were present; make sure a U1 name
+        # exists, so that Unicode::UCD::charinfo will work
+
+        my ($code_point, @fields) = split /\s*;\s*/, $_, -1;
+
+
+        # @U1_control names above are entirely positional, so we pull them out
+        # in the exact order required, with gaps for the ones that don't have
+        # names.
+        if ($code_point =~ /^00[01]/
+            || $code_point eq '007F'
+            || $code_point =~ /^008[2-9A-F]/
+            || $code_point =~ /^009[0-8A-F]/)
+        {
+            my $u1_name = shift @U1_control_names;
+            $fields[$UNICODE_1_NAME] = $u1_name unless $fields[$UNICODE_1_NAME];
+            $_ = join ';', $code_point, @fields;
+        }
         return;
     }
 
@@ -10748,8 +11117,9 @@ END
 
     sub filter_v6_ucd {
 
-        # Unicode 6.0 co-opted the name BELL for U+1F514, but we haven't
-        # accepted that yet to allow for some deprecation cycles.
+        # Unicode 6.0 co-opted the name BELL for U+1F514, but until 5.17,
+        # it wasn't accepted, to allow for some deprecation cycles.  This
+        # function is not called after 5.16
 
         return if $_ !~ /^(?:0007|1F514|070F);/;
 
@@ -10761,7 +11131,7 @@ END
                             # http://www.unicode.org/versions/corrigendum8.html
             $fields[$BIDI] = "AL";
         }
-        elsif ($^V lt v5.17.0) { # For 5.18 will convert to use Unicode's name
+        elsif ($^V lt v5.18.0) { # For 5.18 will convert to use Unicode's name
             $fields[$CHARNAME] = "";
         }
 
@@ -10883,6 +11253,7 @@ sub filter_arabic_shaping_line {
     my $lc; # Table for lowercase mapping
     my $tc;
     my $uc;
+    my %special_casing_code_points;
 
     sub setup_special_casing {
         # SpecialCasing.txt contains the non-simple case change mappings.  The
@@ -10949,13 +11320,24 @@ END
             my $simple_name = 's' . $full_name;
             my $simple = property_ref($simple_name);
             $simple->initialize($full_table) if $simple->to_output_map();
-
-            unless ($simple->to_output_map()) {
-                $full_table->set_proxy_for($simple_name);
-            }
         }
 
         return;
+    }
+
+    sub filter_2_1_8_special_casing_line {
+
+        # This version had duplicate entries in this file.  Delete all but the
+        # first one
+        my @fields = split /\s*;\s*/, $_, -1; # -1 => retain trailing null
+                                              # fields
+        if (exists $special_casing_code_points{$fields[0]}) {
+            $_ = "";
+            return;
+        }
+
+        $special_casing_code_points{$fields[0]} = 1;
+        filter_special_casing_line(@_);
     }
 
     sub filter_special_casing_line {
@@ -11105,7 +11487,7 @@ sub filter_old_style_case_folding {
     # Create the map for simple only if are going to output it, for otherwise
     # it takes no part in anything we do.
     my $to_output_simple;
-    my $non_final_folds;
+    my $all_folds;
 
     sub setup_case_folding($) {
         # Read in the case foldings in CaseFolding.txt.  This handles both
@@ -11118,10 +11500,10 @@ sub filter_old_style_case_folding {
             property_ref('Case_Folding')->set_proxy_for('Simple_Case_Folding');
         }
 
-        $non_final_folds = $perl->add_match_table("_Perl_Non_Final_Folds",
+        $all_folds = $perl->add_match_table("_Perl_Any_Folds",
                            Perl_Extension => 1,
                            Fate => $INTERNAL_ONLY,
-                           Description => "Code points that particpate in a multi-char fold and are not the final character of said fold",
+                           Description => "Code points that particpate in some fold",
                            );
 
         # If we ever wanted to show that these tables were combined, a new
@@ -11161,7 +11543,7 @@ END
             return;
         }
 
-        if ($type eq 'T') {   # Skip Turkic case folding, is locale dependent
+        if ($type =~ / ^ [IT] $/x) {   # Skip Turkic case folding, is locale dependent
             $_ = "";
             return;
         }
@@ -11174,13 +11556,20 @@ END
         # so that _swash_inversion_hash() is able to construct closures
         # without having to worry about F mappings.
         if ($type eq 'C' || $type eq 'F' || $type eq 'I' || $type eq 'S') {
+            my $from = hex $range;  # Assumes range is single
+            $all_folds->add_range($from, $from);
             $_ = "$range; Case_Folding; "
                  . "$CMD_DELIM$REPLACE_CMD=$MULTIPLE_BEFORE$CMD_DELIM$map";
+
             if ($type eq 'F') {
                 my @string = split " ", $map;
                 for my $i (0 .. @string  - 1 -1) {
-                    $non_final_folds->add_range(hex $string[$i], hex $string[$i]);
+                    my $decimal = hex $string[$i];
+                    $all_folds->add_range($decimal, $decimal);
                 }
+            }
+            else {
+                $all_folds->add_range(hex $map, hex $map);
             }
         }
         else {
@@ -11468,26 +11857,26 @@ sub filter_blocks_lines {
         # PropList.txt has been in Unicode since version 2.0.  Until 3.1, it
         # was in a completely different syntax.  Ken Whistler of Unicode says
         # that it was something he used as an aid for his own purposes, but
-        # was never an official part of the standard.  However, comments in
-        # DAge.txt indicate that non-character code points were available in
-        # the UCD as of 3.1.  It is unclear to me (khw) how they could be
-        # there except through this file (but on the other hand, they first
-        # appeared there in 3.0.1), so maybe it was part of the UCD, and maybe
-        # not.  But the claim is that it was published as an aid to others who
-        # might want some more information than was given in the official UCD
-        # of the time.  Many of the properties in it were incorporated into
-        # the later PropList.txt, but some were not.  This program uses this
-        # early file to generate property tables that are otherwise not
-        # accessible in the early UCD's, and most were probably not really
-        # official at that time, so one could argue that it should be ignored,
-        # and you can easily modify things to skip this.  And there are bugs
-        # in this file in various versions.  (For example, the 2.1.9 version
-        # removes from Alphabetic the CJK range starting at 4E00, and they
-        # weren't added back in until 3.1.0.)  Many of this file's properties
-        # were later sanctioned, so this code generates tables for those
-        # properties that aren't otherwise in the UCD of the time but
-        # eventually did become official, and throws away the rest.  Here is a
-        # list of all the ones that are thrown away:
+        # was never an official part of the standard.  Many of the properties
+        # in it were incorporated into the later PropList.txt, but some were
+        # not.  This program uses this early file to generate property tables
+        # that are otherwise not accessible in the early UCD's.  It does this
+        # for the ones that eventually became official, and don't appear to be
+        # too different in their contents from the later official version, and
+        # throws away the rest.  It could be argued that the ones it generates
+        # were probably not really official at that time, so should be
+        # ignored.  You can easily modify things to skip all of them by
+        # changing this function to just set $_ to "", and return; and to skip
+        # certain of them by by simply removing their declarations from
+        # get_old_property_aliases().
+        #
+        # Here is a list of all the ones that are thrown away:
+        #   Alphabetic                   The definitions for this are very
+        #                                defective, so better to not mislead
+        #                                people into thinking it works.
+        #                                Instead the Perl extension of the
+        #                                same name is constructed from first
+        #                                principles.
         #   Bidi=*                       duplicates UnicodeData.txt
         #   Combining                    never made into official property;
         #                                is \P{ccc=0}
@@ -11520,7 +11909,7 @@ sub filter_blocks_lines {
         #   Space                        different definition than eventual
         #                                one.
         #   Titlecase                    duplicates UnicodeData.txt: gc=lt
-        #   Unassigned Code Value        duplicates UnicodeData.txt: gc=cc
+        #   Unassigned Code Value        duplicates UnicodeData.txt: gc=cn
         #   Zero-width                   never made into official property;
         #                                subset of gc=cf
         # Most of the properties have the same names in this file as in later
@@ -11657,18 +12046,148 @@ sub  filter_script_extensions_line {
     return;
 }
 
+sub generate_hst {
+
+    # Populates the Hangul Syllable Type property from first principles
+
+    my $file= shift;
+    Carp::carp_extra_args(\@_) if main::DEBUG && @_;
+
+    # These few ranges are hard-coded in.
+    $file->insert_lines(split /\n/, <<'END'
+1100..1159    ; L
+115F          ; L
+1160..11A2    ; V
+11A8..11F9    ; T
+END
+);
+
+    # The Hangul syllables in version 1 are completely different than what came
+    # after, so just ignore them there.
+    if ($v_version lt v2.0.0) {
+        my $property = property_ref($file->property);
+        push @tables_that_may_be_empty, $property->table('LV')->complete_name;
+        push @tables_that_may_be_empty, $property->table('LVT')->complete_name;
+        return;
+    }
+
+    # The algorithmically derived syllables are almost all LVT ones, so
+    # initialize the whole range with that.
+    $file->insert_lines(sprintf "%04X..%04X; LVT\n",
+                        $SBase, $SBase + $SCount -1);
+
+    # Those ones that aren't LVT are LV, and they occur at intervals of
+    # $TCount code points, starting with the first code point, at $SBase.
+    for (my $i = $SBase; $i < $SBase + $SCount; $i += $TCount) {
+        $file->insert_lines(sprintf "%04X..%04X; LV\n", $i, $i);
+    }
+
+    return;
+}
+
+sub generate_GCB {
+
+    # Populates the Grapheme Cluster Break property from first principles
+
+    my $file= shift;
+    Carp::carp_extra_args(\@_) if main::DEBUG && @_;
+
+    # All these definitions are from
+    # http://www.unicode.org/reports/tr29/tr29-3.html with confirmation
+    # from http://www.unicode.org/reports/tr29/tr29-4.html
+
+    foreach my $range ($gc->ranges) {
+
+        # Extend includes gc=Me and gc=Mn, while Control includes gc=Cc
+        # and gc=Cf
+        if ($range->value =~ / ^ M [en] $ /x) {
+            $file->insert_lines(sprintf "%04X..%04X; Extend",
+                                $range->start,  $range->end);
+        }
+        elsif ($range->value =~ / ^ C [cf] $ /x) {
+            $file->insert_lines(sprintf "%04X..%04X; Control",
+                                $range->start,  $range->end);
+        }
+    }
+    $file->insert_lines("2028; Control"); # Line Separator
+    $file->insert_lines("2029; Control"); # Paragraph Separator
+
+    $file->insert_lines("000D; CR");
+    $file->insert_lines("000A; LF");
+
+    # Also from http://www.unicode.org/reports/tr29/tr29-3.html.
+    foreach my $code_point ( qw{
+                                40000
+                                09BE 09D7 0B3E 0B57 0BBE 0BD7 0CC2 0CD5 0CD6
+                                0D3E 0D57 0DCF 0DDF FF9E FF9F 1D165 1D16E 1D16F
+                                }
+    ) {
+        my $category = $gc->value_of(hex $code_point);
+        next if ! defined $category || $category eq 'Cn'; # But not if
+                                                          # unassigned in this
+                                                          # release
+        $file->insert_lines("$code_point; Extend");
+    }
+
+    my $hst = property_ref('Hangul_Syllable_Type');
+    if ($hst->count > 0) {
+        foreach my $range ($hst->ranges) {
+            $file->insert_lines(sprintf "%04X..%04X; %s",
+                                    $range->start, $range->end, $range->value);
+        }
+    }
+    else {
+        generate_hst($file);
+    }
+
+    return;
+}
+
 sub setup_early_name_alias {
     my $file= shift;
     Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
+    # This has the effect of pretending that the Name_Alias property was
+    # available in all Unicode releases.  Strictly speaking, this property
+    # should not be availabe in early releases, but doing this allows
+    # charnames.pm to work on older releases without change.  Prior to v5.16
+    # it had these names hard-coded inside it.  Unicode 6.1 came along and
+    # created these names, and so they were removed from charnames.
+
     my $aliases = property_ref('Name_Alias');
-    $aliases = Property->new('Name_Alias') if ! defined $aliases;
+    if (! defined $aliases) {
+        $aliases = Property->new('Name_Alias', Default_Map => "");
+    }
+
     $file->insert_lines(get_old_name_aliases());
 
     return;
 }
 
 sub get_old_name_aliases () {
+
+    # The Unicode_1_Name field, contains most of these names.  One would
+    # expect, given the field's name, that its values would be fixed across
+    # versions, giving the true Unicode version 1 name for the character.
+    # Sadly, this is not the case.  Actually Version 1.1.5 had no names for
+    # any of the controls; Version 2.0 introduced names for the C0 controls,
+    # and 3.0 introduced C1 names.  3.0.1 removed the name INDEX; and 3.2
+    # changed some names: it
+    #   changed to parenthesized versions like "NEXT LINE" to
+    #       "NEXT LINE (NEL)";
+    #   changed PARTIAL LINE DOWN to PARTIAL LINE FORWARD
+    #   changed PARTIAL LINE UP to PARTIAL LINE BACKWARD;;
+    #   changed e.g. FILE SEPARATOR to INFORMATION SEPARATOR FOUR
+    # This list contains all the names that were defined so that
+    # charnames::vianame(), etc. understand them all EVEN if this version of
+    # Unicode didn't specify them (this could be construed as a bug).
+    # mktables elsewhere gives preference to the Unicode_1_Name field over
+    # these names, so that viacode() will return the correct value for that
+    # version of Unicode, except when that version doesn't define a name,
+    # viacode() will return one anyway (this also could be construed as a
+    # bug).  But these potential "bugs" allow for the smooth working of code
+    # on earlier Unicode releases.
+
     my @return = split /\n/, <<'END';
 0000;NULL;control
 0000;NUL;abbreviation
@@ -11684,7 +12203,6 @@ sub get_old_name_aliases () {
 0005;ENQ;abbreviation
 0006;ACKNOWLEDGE;control
 0006;ACK;abbreviation
-0007;ALERT;control
 0007;BELL;control
 0007;BEL;abbreviation
 0008;BACKSPACE;control
@@ -11877,6 +12395,19 @@ END
         }
     }
 
+    # ALERT did not come along until 6.0, at which point it became preferred
+    # over BELL, and was never in the Unicode_1_Name field.  For the same
+    # reasons, that the other names are made known to all releases by this
+    # function, we make ALERT known too.  By inserting it
+    # last in early releases, BELL is preferred over it; and vice-vers in 6.0
+    my $alert = '0007; ALERT; control';
+    if ($v_version lt v6.0.0) {
+        push @return, $alert;
+    }
+    else {
+        unshift @return, $alert;
+    }
+
     return @return;
 }
 
@@ -11915,15 +12446,52 @@ sub filter_early_version_name_alias_line {
 sub finish_Unicode() {
     # This routine should be called after all the Unicode files have been read
     # in.  It:
-    # 1) Adds the mappings for code points missing from the files which have
+    # 1) Creates properties that are missing from the version of Unicode being
+    #    compiled, and which, for whatever reason, are needed for the Perl
+    #    core to function properly.  These are minimally populated as
+    #    necessary.
+    # 2) Adds the mappings for code points missing from the files which have
     #    defaults specified for them.
-    # 2) At this this point all mappings are known, so it computes the type of
+    # 3) At this this point all mappings are known, so it computes the type of
     #    each property whose type hasn't been determined yet.
-    # 3) Calculates all the regular expression match tables based on the
+    # 4) Calculates all the regular expression match tables based on the
     #    mappings.
-    # 3) Calculates and adds the tables which are defined by Unicode, but
+    # 5) Calculates and adds the tables which are defined by Unicode, but
     #    which aren't derived by them, and certain derived tables that Perl
     #    uses.
+
+    # Folding information was introduced later into Unicode data.  To get
+    # Perl's case ignore (/i) to work at all in releases that don't have
+    # folding, use the best available alternative, which is lower casing.
+    my $fold = property_ref('Case_Folding');
+    if ($fold->is_empty) {
+        $fold->initialize(property_ref('Lowercase_Mapping'));
+        $fold->add_note(join_lines(<<END
+WARNING: This table uses lower case as a substitute for missing fold
+information
+END
+        ));
+    }
+
+    # Multiple-character mapping was introduced later into Unicode data, so it
+    # is by default the simple version.  If to output the simple versions and
+    # not present, just use the regular (which in these Unicode versions is
+    # the simple as well).
+    foreach my $map (qw {   Uppercase_Mapping
+                            Lowercase_Mapping
+                            Titlecase_Mapping
+                            Case_Folding
+                        } )
+    {
+        my $simple = property_ref("Simple_$map");
+        next if ! $simple->is_empty;
+        if ($simple->to_output_map) {
+            $simple->initialize(property_ref($map));
+        }
+        else {
+            property_ref($map)->set_proxy_for($simple->name);
+        }
+    }
 
     # For each property, fill in any missing mappings, and calculate the re
     # match tables.  If a property has more than one missing mapping, the
@@ -12141,41 +12709,6 @@ END
 
     my $Cs = $gc->table('Cs');
 
-
-    # Folding information was introduced later into Unicode data.  To get
-    # Perl's case ignore (/i) to work at all in releases that don't have
-    # folding, use the best available alternative, which is lower casing.
-    my $fold = property_ref('Simple_Case_Folding');
-    if ($fold->is_empty) {
-        $fold->initialize(property_ref('Simple_Lowercase_Mapping'));
-        $fold->add_note(join_lines(<<END
-WARNING: This table uses lower case as a substitute for missing fold
-information
-END
-        ));
-    }
-
-    # Multiple-character mapping was introduced later into Unicode data.  If
-    # missing, use the single-characters maps as best available alternative
-    foreach my $map (qw {   Uppercase_Mapping
-                            Lowercase_Mapping
-                            Titlecase_Mapping
-                            Case_Folding
-                        } )
-    {
-        my $full = property_ref($map);
-        if ($full->is_empty) {
-            my $simple = property_ref('Simple_' . $map);
-            $full->initialize($simple);
-            $full->add_comment($simple->comment) if ($simple->comment);
-            $full->add_note(join_lines(<<END
-WARNING: This table uses simple mapping (single-character only) as a
-substitute for missing multiple-character information
-END
-            ));
-        }
-    }
-
     # Create digit and case fold tables with the original file names for
     # backwards compatibility with applications that read them directly.
     my $Digit = Property->new("Legacy_Perl_Decimal_Digit",
@@ -12243,6 +12776,29 @@ END
     return;
 }
 
+sub pre_3_dot_1_Nl () {
+
+    # Return a range list for gc=nl for Unicode versions prior to 3.1, which
+    # is when Unicode's became fully usable.  These code points were
+    # determined by inspection and experimentation.  gc=nl is important for
+    # certain Perl-extension properties that should be available in all
+    # releases.
+
+    my $Nl = Range_List->new();
+    if (defined (my $official = $gc->table('Nl'))) {
+        $Nl += $official;
+    }
+    else {
+        $Nl->add_range(0x2160, 0x2182);
+        $Nl->add_range(0x3007, 0x3007);
+        $Nl->add_range(0x3021, 0x3029);
+    }
+    $Nl->add_range(0xFE20, 0xFE23);
+    $Nl->add_range(0x16EE, 0x16F0) if $v_version ge v3.0.0; # 3.0 was when
+                                                            # these were added
+    return $Nl;
+}
+
 sub compile_perl() {
     # Create perl-defined tables.  Almost all are part of the pseudo-property
     # named 'perl' internally to this program.  Many of these are recommended
@@ -12305,24 +12861,50 @@ sub compile_perl() {
     # Very early releases didn't have blocks, so initialize ASCII ourselves if
     # necessary
     if ($ASCII->is_empty) {
-        $ASCII->initialize([ 0..127 ]);
+        $ASCII->add_range(0, 127);
     }
 
     # Get the best available case definitions.  Early Unicode versions didn't
     # have Uppercase and Lowercase defined, so use the general category
-    # instead for them.
+    # instead for them, modified by hard-coding in the code points each is
+    # missing.
     my $Lower = $perl->add_match_table('Lower');
     my $Unicode_Lower = property_ref('Lowercase');
     if (defined $Unicode_Lower && ! $Unicode_Lower->is_empty) {
         $Lower->set_equivalent_to($Unicode_Lower->table('Y'), Related => 1);
-        $Unicode_Lower->table('Y')->set_caseless_equivalent(property_ref('Cased')->table('Y'));
-        $Unicode_Lower->table('N')->set_caseless_equivalent(property_ref('Cased')->table('N'));
-        $Lower->set_caseless_equivalent(property_ref('Cased')->table('Y'));
 
     }
     else {
-        $Lower->set_equivalent_to($gc->table('Lowercase_Letter'),
-                                                                Related => 1);
+        $Lower += $gc->table('Lowercase_Letter');
+
+        # There are quite a few code points in Lower, that aren't in gc=lc,
+        # and not all are in all releases.
+        foreach my $code_point (    0x00AA,
+                                    0x00BA,
+                                    0x02B0 .. 0x02B8,
+                                    0x02C0 .. 0x02C1,
+                                    0x02E0 .. 0x02E4,
+                                    0x0345,
+                                    0x037A,
+                                    0x1D2C .. 0x1D6A,
+                                    0x1D78,
+                                    0x1D9B .. 0x1DBF,
+                                    0x2071,
+                                    0x207F,
+                                    0x2090 .. 0x209C,
+                                    0x2170 .. 0x217F,
+                                    0x24D0 .. 0x24E9,
+                                    0x2C7C .. 0x2C7D,
+                                    0xA770,
+                                    0xA7F8 .. 0xA7F9,
+        ) {
+            # Don't include the code point unless it is assigned in this
+            # release
+            my $category = $gc->value_of(hex $code_point);
+            next if ! defined $category || $category eq 'Cn';
+
+            $Lower += $code_point;
+        }
     }
     $Lower->add_alias('XPosixLower');
     my $Posix_Lower = $perl->add_match_table("PosixLower",
@@ -12334,13 +12916,14 @@ sub compile_perl() {
     my $Unicode_Upper = property_ref('Uppercase');
     if (defined $Unicode_Upper && ! $Unicode_Upper->is_empty) {
         $Upper->set_equivalent_to($Unicode_Upper->table('Y'), Related => 1);
-        $Unicode_Upper->table('Y')->set_caseless_equivalent(property_ref('Cased')->table('Y'));
-        $Unicode_Upper->table('N')->set_caseless_equivalent(property_ref('Cased')->table('N'));
-        $Upper->set_caseless_equivalent(property_ref('Cased')->table('Y'));
     }
     else {
-        $Upper->set_equivalent_to($gc->table('Uppercase_Letter'),
-                                                                Related => 1);
+
+        # Unlike Lower, there are only two ranges in Upper that aren't in
+        # gc=Lu, and all code points were assigned in all releases.
+        $Upper += $gc->table('Uppercase_Letter');
+        $Upper->add_range(0x2160, 0x216F);  # Uppercase Roman numerals
+        $Upper->add_range(0x24B6, 0x24CF);  # Circled Latin upper case letters
     }
     $Upper->add_alias('XPosixUpper');
     my $Posix_Upper = $perl->add_match_table("PosixUpper",
@@ -12358,21 +12941,56 @@ sub compile_perl() {
     # identical code points, but their caseless equivalents are not the same,
     # one being 'Cased' and the other being 'LC', and so now must be kept as
     # separate entities.
-    $Title += $lt if defined $lt;
+    if (defined $lt) {
+        $Title += $lt;
+    }
+    else {
+        push @tables_that_may_be_empty, $Title->complete_name;
+    }
 
-    # If this Unicode version doesn't have Cased, set up our own.  From
-    # Unicode 5.1: Definition D120: A character C is defined to be cased if
-    # and only if C has the Lowercase or Uppercase property or has a
-    # General_Category value of Titlecase_Letter.
     my $Unicode_Cased = property_ref('Cased');
-    unless (defined $Unicode_Cased) {
+    if (defined $Unicode_Cased) {
+        my $yes = $Unicode_Cased->table('Y');
+        my $no = $Unicode_Cased->table('N');
+        $Title->set_caseless_equivalent($yes);
+        if (defined $Unicode_Upper) {
+            $Unicode_Upper->table('Y')->set_caseless_equivalent($yes);
+            $Unicode_Upper->table('N')->set_caseless_equivalent($no);
+        }
+        $Upper->set_caseless_equivalent($yes);
+        if (defined $Unicode_Lower) {
+            $Unicode_Lower->table('Y')->set_caseless_equivalent($yes);
+            $Unicode_Lower->table('N')->set_caseless_equivalent($no);
+        }
+        $Lower->set_caseless_equivalent($yes);
+    }
+    else {
+        # If this Unicode version doesn't have Cased, set up the Perl
+        # extension from first principles.  From Unicode 5.1: Definition D120:
+        # A character C is defined to be cased if and only if C has the
+        # Lowercase or Uppercase property or has a General_Category value of
+        # Titlecase_Letter.
         my $cased = $perl->add_match_table('Cased',
                         Initialize => $Lower + $Upper + $Title,
                         Description => 'Uppercase or Lowercase or Titlecase',
                         );
-        $Unicode_Cased = $cased;
+        # $notcased is purely for the caseless equivalents below
+        my $notcased = $perl->add_match_table('_Not_Cased',
+                                Initialize => ~ $cased,
+                                Fate => $INTERNAL_ONLY,
+                                Description => 'All not-cased code points');
+        $Title->set_caseless_equivalent($cased);
+        if (defined $Unicode_Upper) {
+            $Unicode_Upper->table('Y')->set_caseless_equivalent($cased);
+            $Unicode_Upper->table('N')->set_caseless_equivalent($notcased);
+        }
+        $Upper->set_caseless_equivalent($cased);
+        if (defined $Unicode_Lower) {
+            $Unicode_Lower->table('Y')->set_caseless_equivalent($cased);
+            $Unicode_Lower->table('N')->set_caseless_equivalent($notcased);
+        }
+        $Lower->set_caseless_equivalent($cased);
     }
-    $Title->set_caseless_equivalent($Unicode_Cased->table('Y'));
 
     # Similarly, set up our own Case_Ignorable property if this Unicode
     # version doesn't have it.  From Unicode 5.1: Definition D121: A character
@@ -12437,16 +13055,83 @@ sub compile_perl() {
     }
     else {
 
-        # For early releases, we don't get it exactly right.  The below
-        # includes more than it should, which in 5.2 terms is: L + Nl +
-        # Other_Alphabetic.  Other_Alphabetic contains many characters from
-        # Mn and Mc.  It's better to match more than we should, than less than
-        # we should.
+        # The Alphabetic property doesn't exist for early releases, so
+        # generate it.  The actual definition, in 5.2 terms is:
+        #
+        # gc=L + gc=Nl + Other_Alphabetic
+        #
+        # Other_Alphabetic is also not defined in these early releases, but it
+        # contains one gc=So range plus most of gc=Mn and gc=Mc, so we add
+        # those last two as well, then subtract the relatively few of them that
+        # shouldn't have been added.  (The gc=So range is the circled capital
+        # Latin characters.  Early releases mistakenly didn't also include the
+        # lower-case versions of these characters, and so we don't either, to
+        # maintain consistency with those releases that first had this
+        # property.
         $Alpha->initialize($gc->table('Letter')
-                            + $gc->table('Mn')
-                            + $gc->table('Mc'));
-        $Alpha += $gc->table('Nl') if defined $gc->table('Nl');
+                           + pre_3_dot_1_Nl()
+                           + $gc->table('Mn')
+                           + $gc->table('Mc')
+                        );
+        $Alpha->add_range(0x24D0, 0x24E9);  # gc=So
+        foreach my $range (     [ 0x0300, 0x0344 ],
+                                [ 0x0346, 0x034E ],
+                                [ 0x0360, 0x0362 ],
+                                [ 0x0483, 0x0486 ],
+                                [ 0x0591, 0x05AF ],
+                                [ 0x06DF, 0x06E0 ],
+                                [ 0x06EA, 0x06EC ],
+                                [ 0x0740, 0x074A ],
+                                0x093C,
+                                0x094D,
+                                [ 0x0951, 0x0954 ],
+                                0x09BC,
+                                0x09CD,
+                                0x0A3C,
+                                0x0A4D,
+                                0x0ABC,
+                                0x0ACD,
+                                0x0B3C,
+                                0x0B4D,
+                                0x0BCD,
+                                0x0C4D,
+                                0x0CCD,
+                                0x0D4D,
+                                0x0DCA,
+                                [ 0x0E47, 0x0E4C ],
+                                0x0E4E,
+                                [ 0x0EC8, 0x0ECC ],
+                                [ 0x0F18, 0x0F19 ],
+                                0x0F35,
+                                0x0F37,
+                                0x0F39,
+                                [ 0x0F3E, 0x0F3F ],
+                                [ 0x0F82, 0x0F84 ],
+                                [ 0x0F86, 0x0F87 ],
+                                0x0FC6,
+                                0x1037,
+                                0x1039,
+                                [ 0x17C9, 0x17D3 ],
+                                [ 0x20D0, 0x20DC ],
+                                0x20E1,
+                                [ 0x302A, 0x302F ],
+                                [ 0x3099, 0x309A ],
+                                [ 0xFE20, 0xFE23 ],
+                                [ 0x1D165, 0x1D169 ],
+                                [ 0x1D16D, 0x1D172 ],
+                                [ 0x1D17B, 0x1D182 ],
+                                [ 0x1D185, 0x1D18B ],
+                                [ 0x1D1AA, 0x1D1AD ],
+        ) {
+            if (ref $range) {
+                $Alpha->delete_range($range->[0], $range->[1]);
+            }
+            else {
+                $Alpha->delete_range($range, $range);
+            }
+        }
         $Alpha->add_description('Alphabetic');
+        $Alpha->add_alias('Alphabetic');
     }
     $Alpha->add_alias('XPosixAlpha');
     my $Posix_Alpha = $perl->add_match_table("PosixAlpha",
@@ -12473,7 +13158,19 @@ sub compile_perl() {
                                 );
     $Word->add_alias('XPosixWord');
     my $Pc = $gc->table('Connector_Punctuation'); # 'Pc' Not in release 1
-    $Word += $Pc if defined $Pc;
+    if (defined $Pc) {
+        $Word += $Pc;
+    }
+    else {
+        $Word += ord('_');  # Make sure this is a $Word
+    }
+    my $JC = property_ref('Join_Control');  # Wasn't in release 1
+    if (defined $JC) {
+        $Word += $JC->table('Y');
+    }
+    else {
+        $Word += 0x200C + 0x200D;
+    }
 
     # This is a Perl extension, so the name doesn't begin with Posix.
     my $PerlWord = $perl->add_match_table('PerlWord',
@@ -12512,23 +13209,24 @@ sub compile_perl() {
     # No Posix equivalent for vertical space
 
     my $Space = $perl->add_match_table('Space',
-                Description => '\s including beyond ASCII plus vertical tab',
+                Description => '\s including beyond ASCII and vertical tab',
                 Initialize => $Blank + $VertSpace,
     );
     $Space->add_alias('XPosixSpace');
-    $perl->add_match_table("PosixSpace",
+    my $posix_space = $perl->add_match_table("PosixSpace",
                             Description => "\\t, \\n, \\cK, \\f, \\r, and ' '.  (\\cK is vertical tab)",
                             Initialize => $Space & $ASCII,
                             );
 
-    # Perl's traditional space doesn't include Vertical Tab
+    # Perl's traditional space doesn't include Vertical Tab prior to v5.18
     my $XPerlSpace = $perl->add_match_table('XPerlSpace',
                                   Description => '\s, including beyond ASCII',
-                                  Initialize => $Space - 0x000B,
+                                  #Initialize => $Space - 0x000B,
+                                  Initialize => $Space,
                                 );
     $XPerlSpace->add_alias('SpacePerl');    # A pre-existing synonym
     my $PerlSpace = $perl->add_match_table('PerlSpace',
-                        Description => '\s, restricted to ASCII = [ \f\n\r\t]',
+                        Description => '\s, restricted to ASCII = [ \f\n\r\t] plus vertical tab',
                         Initialize => $XPerlSpace & $ASCII,
                             );
 
@@ -12618,6 +13316,8 @@ sub compile_perl() {
     }
     else {
         $PosixXDigit->initialize($Xdigit & $ASCII);
+        $PosixXDigit->add_alias('AHex');
+        $PosixXDigit->add_alias('Ascii_Hex_Digit');
     }
     $PosixXDigit->add_description('[0-9A-Fa-f]');
 
@@ -12641,7 +13341,8 @@ sub compile_perl() {
     }
     else {
 
-        # This list came from 3.2 Soft_Dotted.
+        # This list came from 3.2 Soft_Dotted; all of these code points are in
+        # all releases
         $CanonDCIJ->initialize([ 0x0069,
                                  0x006A,
                                  0x012F,
@@ -12654,98 +13355,250 @@ sub compile_perl() {
         $CanonDCIJ = $CanonDCIJ & $Assigned;
     }
 
-    # These are used in Unicode's definition of \X
-    my $begin = $perl->add_match_table('_X_Begin', Perl_Extension => 1,
-                                       Fate => $INTERNAL_ONLY);
-    my $extend = $perl->add_match_table('_X_Extend', Perl_Extension => 1,
+    # For backward compatibility, Perl has its own definition for IDStart.
+    # It is regular XID_Start plus the underscore, but all characters must be
+    # Word characters as well
+    my $XID_Start = property_ref('XID_Start');
+    my $perl_xids = $perl->add_match_table('_Perl_IDStart',
+                                            Perl_Extension => 1,
+                                            Fate => $INTERNAL_ONLY,
+                                            Initialize => ord('_')
+                                            );
+    if (defined $XID_Start
+        || defined ($XID_Start = property_ref('ID_Start')))
+    {
+        $perl_xids += $XID_Start->table('Y');
+    }
+    else {
+        # For Unicode versions that don't have the property, construct our own
+        # from first principles.  The actual definition is:
+        #     Letters
+        #   + letter numbers (Nl)
+        #   - Pattern_Syntax
+        #   - Pattern_White_Space
+        #   + stability extensions
+        #   - NKFC modifications
+        #
+        # What we do in the code below is to include the identical code points
+        # that are in the first release that had Unicode's version of this
+        # property, essentially extrapolating backwards.  There were no
+        # stability extensions until v4.1, so none are included; likewise in
+        # no Unicode version so far do subtracting PatSyn and PatWS make any
+        # difference, so those also are ignored.
+        $perl_xids += $gc->table('Letter') + pre_3_dot_1_Nl();
+
+        # We do subtract the NFKC modifications that are in the first version
+        # that had this property.  We don't bother to test if they are in the
+        # version in question, because if they aren't, the operation is a
+        # no-op.  The NKFC modifications are discussed in
+        # http://www.unicode.org/reports/tr31/#NFKC_Modifications
+        foreach my $range ( 0x037A,
+                            0x0E33,
+                            0x0EB3,
+                            [ 0xFC5E, 0xFC63 ],
+                            [ 0xFDFA, 0xFE70 ],
+                            [ 0xFE72, 0xFE76 ],
+                            0xFE78,
+                            0xFE7A,
+                            0xFE7C,
+                            0xFE7E,
+                            [ 0xFF9E, 0xFF9F ],
+        ) {
+            if (ref $range) {
+                $perl_xids->delete_range($range->[0], $range->[1]);
+            }
+            else {
+                $perl_xids->delete_range($range, $range);
+            }
+        }
+    }
+
+    $perl_xids &= $Word;
+
+    my $perl_xidc = $perl->add_match_table('_Perl_IDCont',
+                                        Perl_Extension => 1,
                                         Fate => $INTERNAL_ONLY);
+    my $XIDC = property_ref('XID_Continue');
+    if (defined $XIDC
+        || defined ($XIDC = property_ref('ID_Continue')))
+    {
+        $perl_xidc += $XIDC->table('Y');
+    }
+    else {
+        # Similarly, we construct our own XIDC if necessary for early Unicode
+        # versions.  The definition is:
+        #     everything in XIDS
+        #   + Gc=Mn
+        #   + Gc=Mc
+        #   + Gc=Nd
+        #   + Gc=Pc
+        #   - Pattern_Syntax
+        #   - Pattern_White_Space
+        #   + stability extensions
+        #   - NFKC modifications
+        #
+        # The same thing applies to this as with XIDS for the PatSyn, PatWS,
+        # and stability extensions.  There is a somewhat different set of NFKC
+        # mods to remove (and add in this case).  The ones below make this
+        # have identical code points as in the first release that defined it.
+        $perl_xidc += $perl_xids
+                    + $gc->table('L')
+                    + $gc->table('Mn')
+                    + $gc->table('Mc')
+                    + $gc->table('Nd')
+                    + 0x00B7
+                    ;
+        if (defined (my $pc = $gc->table('Pc'))) {
+            $perl_xidc += $pc;
+        }
+        else {  # 1.1.5 didn't have Pc, but these should have been in it
+            $perl_xidc += 0xFF3F;
+            $perl_xidc->add_range(0x203F, 0x2040);
+            $perl_xidc->add_range(0xFE33, 0xFE34);
+            $perl_xidc->add_range(0xFE4D, 0xFE4F);
+        }
 
-    # For backward compatibility, Perl has its own definition for IDStart
-    # First, we include the underscore, and then the regular XID_Start also
-    # have to be Words
-    $perl->add_match_table('_Perl_IDStart',
-                           Perl_Extension => 1,
-                           Fate => $INTERNAL_ONLY,
-                           Initialize =>
-                             ord('_')
-                             + (property_ref('XID_Start')->table('Y') & $Word)
-                           );
+        # Subtract the NFKC mods
+        foreach my $range ( 0x037A,
+                            [ 0xFC5E, 0xFC63 ],
+                            [ 0xFDFA, 0xFE1F ],
+                            0xFE70,
+                            [ 0xFE72, 0xFE76 ],
+                            0xFE78,
+                            0xFE7A,
+                            0xFE7C,
+                            0xFE7E,
+        ) {
+            if (ref $range) {
+                $perl_xidc->delete_range($range->[0], $range->[1]);
+            }
+            else {
+                $perl_xidc->delete_range($range, $range);
+            }
+        }
+    }
 
+    $perl_xidc &= $Word;
+
+    my $charname_begin = $perl->add_match_table('_Perl_Charname_Begin',
+                    Perl_Extension => 1,
+                    Fate => $INTERNAL_ONLY,
+                    Initialize => $gc->table('Letter') & $Alpha & $perl_xids,
+                    );
+
+    my $charname_continue = $perl->add_match_table('_Perl_Charname_Continue',
+                        Perl_Extension => 1,
+                        Fate => $INTERNAL_ONLY,
+                        Initialize => $perl_xidc
+                                    + 0x0020        # SPACE
+                                    + 0x0028        # (
+                                    + 0x0029        # )
+                                    + 0x002D        # -
+                                    + 0x00A0        # NBSP
+                        );
+
+    # These two tables are for matching \X, which is based on the 'extended'
+    # grapheme cluster, which came in 5.1; create empty ones if not already
+    # present.  The straight 'grapheme cluster' (non-extended) is used prior
+    # to 5.1, and differs from the extended (see
+    # http://www.unicode.org/reports/tr29/) only by these two tables, so we
+    # get the older definition automatically when they are empty.
     my $gcb = property_ref('Grapheme_Cluster_Break');
-
-    # The 'extended' grapheme cluster came in 5.1.  The non-extended
-    # definition differs too much from the traditional Perl one to use.
-    if (defined $gcb && defined $gcb->table('SpacingMark')) {
-
-        # Note that assumes HST is defined; it came in an earlier release than
-        # GCB.  In the line below, two negatives means: yes hangul
-        $begin += ~ property_ref('Hangul_Syllable_Type')
-                                                    ->table('Not_Applicable')
-               + ~ ($gcb->table('Control')
-                    + $gcb->table('CR')
-                    + $gcb->table('LF'));
-        $begin->add_comment('For use in \X; matches: Hangul_Syllable | ! Control');
-
-        $extend += $gcb->table('Extend') + $gcb->table('SpacingMark');
-        $extend->add_comment('For use in \X; matches: Extend | SpacingMark');
+    my $perl_prepend = $perl->add_match_table('_X_GCB_Prepend',
+                                        Perl_Extension => 1,
+                                        Fate => $INTERNAL_ONLY);
+    if (defined (my $gcb_prepend = $gcb->table('Prepend'))) {
+        $perl_prepend->set_equivalent_to($gcb_prepend, Related => 1);
     }
-    else {    # Old definition, used on early releases.
-        $extend += $gc->table('Mark')
-                + 0x200C    # ZWNJ
-                + 0x200D;   # ZWJ
-        $begin += ~ $extend;
+    else {
+        push @tables_that_may_be_empty, $perl_prepend->complete_name;
+    }
 
-        # Here we may have a release that has the regular grapheme cluster
-        # defined, or a release that doesn't have anything defined.
-        # We set things up so the Perl core degrades gracefully, possibly with
-        # placeholders that match nothing.
+    # All the tables with _X_ in their names are used in defining \X handling,
+    # and are based on the Unicode GCB property.  Basically, \X matches:
+    #   CR LF
+    #   | Prepend* Begin Extend*
+    #   | .
+    # Begin is:           ( Special_Begin | ! Control )
+    # Begin is also:      ( Regular_Begin | Special_Begin )
+    #   where Regular_Begin is defined as ( ! Control - Special_Begin )
+    # Special_Begin is:   ( Regional-Indicator+ | Hangul-syllable )
+    # Extend is:          ( Grapheme_Extend | Spacing_Mark )
+    # Control is:         [ GCB_Control | CR | LF ]
+    # Hangul-syllable is: ( T+ | ( L* ( L | ( LVT | ( V | LV ) V* ) T* ) ))
 
-        if (! defined $gcb) {
-            $gcb = Property->new('GCB', Status => $PLACEHOLDER);
-        }
-        my $hst = property_ref('HST');
-        if (!defined $hst) {
-            $hst = Property->new('HST', Status => $PLACEHOLDER);
-            $hst->add_match_table('Not_Applicable',
-                                Initialize => $Any,
-                                Matches_All => 1);
-        }
+    foreach my $gcb_name (qw{ L V T LV LVT }) {
 
-        # On some releases, here we may not have the needed tables for the
-        # perl core, in some releases we may.
-        foreach my $name (qw{ L LV LVT T V prepend }) {
-            my $table = $gcb->table($name);
-            if (! defined $table) {
-                $table = $gcb->add_match_table($name);
-                push @tables_that_may_be_empty, $table->complete_name;
-            }
-
-            # The HST property predates the GCB one, and has identical tables
-            # for some of them, so use it if we can.
-            if ($table->is_empty
-                && defined $hst
-                && defined $hst->table($name))
-            {
-                $table += $hst->table($name);
-            }
+        # The perl internal extension's name is the gcb table name prepended
+        # with an '_X_'
+        my $perl_table = $perl->add_match_table('_X_GCB_' . $gcb_name,
+                                        Perl_Extension => 1,
+                                        Fate => $INTERNAL_ONLY,
+                                        Initialize => $gcb->table($gcb_name),
+                                        );
+        # Version 1 had mostly different Hangul syllables that were removed
+        # from later versions, so some of the tables may not apply.
+        if ($v_version lt v2.0) {
+            push @tables_that_may_be_empty, $perl_table->complete_name;
         }
     }
 
-    # More GCB.  If we found some hangul syllables, populate a combined
-    # table.
+    # More GCB.  Populate a combined hangul syllables table
     my $lv_lvt_v = $perl->add_match_table('_X_LV_LVT_V',
                                           Perl_Extension => 1,
                                           Fate => $INTERNAL_ONLY);
-    my $LV = $gcb->table('LV');
-    if ($LV->is_empty) {
-        push @tables_that_may_be_empty, $lv_lvt_v->complete_name;
-    } else {
-        $lv_lvt_v += $LV + $gcb->table('LVT') + $gcb->table('V');
-        $lv_lvt_v->add_comment('For use in \X; matches: HST=LV | HST=LVT | HST=V');
+    $lv_lvt_v += $gcb->table('LV') + $gcb->table('LVT') + $gcb->table('V');
+    $lv_lvt_v->add_comment('For use in \X; matches: gcb=LV | gcb=LVT | gcb=V');
+
+    my $ri = $perl->add_match_table('_X_RI', Perl_Extension => 1,
+                                    Fate => $INTERNAL_ONLY);
+    if ($v_version ge v6.2) {
+        $ri += $gcb->table('RI');
+    }
+    else {
+        push @tables_that_may_be_empty, $ri->full_name;
     }
 
-    # Was previously constructed to contain both Name and Unicode_1_Name
-    my @composition = ('Name', 'Unicode_1_Name');
+    my $specials_begin = $perl->add_match_table('_X_Special_Begin_Start',
+                                       Perl_Extension => 1,
+                                       Fate => $INTERNAL_ONLY,
+                                       Initialize => $lv_lvt_v
+                                                   + $gcb->table('L')
+                                                   + $gcb->table('T')
+                                                   + $ri
+                                      );
+    $specials_begin->add_comment(join_lines( <<END
+For use in \\X; matches first (perhaps only) character of potential
+multi-character sequences that can begin an extended grapheme cluster.  They
+need special handling because of their complicated nature.
+END
+    ));
+    my $regular_begin = $perl->add_match_table('_X_Regular_Begin',
+                                       Perl_Extension => 1,
+                                       Fate => $INTERNAL_ONLY,
+                                       Initialize => ~ $gcb->table('Control')
+                                                   - $specials_begin
+                                                   - $gcb->table('CR')
+                                                   - $gcb->table('LF')
+                                      );
+    $regular_begin->add_comment(join_lines( <<END
+For use in \\X; matches first character of anything that can begin an extended
+grapheme cluster, except those that require special handling.
+END
+    ));
+
+    my $extend = $perl->add_match_table('_X_Extend', Perl_Extension => 1,
+                                        Fate => $INTERNAL_ONLY,
+                                        Initialize => $gcb->table('Extend')
+                                       );
+    if (defined (my $sm = $gcb->table('SpacingMark'))) {
+        $extend += $sm;
+    }
+    $extend->add_comment('For use in \X; matches: Extend | SpacingMark');
+
+    # End of GCB \X processing
+
+    my @composition = ('Name', 'Unicode_1_Name', 'Name_Alias');
 
     if (@named_sequences) {
         push @composition, 'Named_Sequence';
@@ -12757,56 +13610,54 @@ sub compile_perl() {
     my $alias_sentence = "";
     my %abbreviations;
     my $alias = property_ref('Name_Alias');
-    if (defined $alias) {
-        push @composition, 'Name_Alias';
-        $perl_charname->set_proxy_for('Name_Alias');
+    $perl_charname->set_proxy_for('Name_Alias');
 
-        # Add each entry in Name_Alias to Perl_Charnames.  Where these go with
-        # respect to any existing entry depends on the entry type.
-        # Corrections go before said entry, as they should be returned in
-        # preference over the existing entry.  (A correction to a correction
-        # should be later in the Name_Alias table, so it will correctly
-        # precede the erroneous correction in Perl_Charnames.)
-        #
-        # Abbreviations go after everything else, so they are saved
-        # temporarily in a hash for later.
-        #
-        # Controls are currently added afterwards.  This is because Perl has
-        # previously used the Unicode1 name, and so should still use that.
-        # (Most of them will be the same anyway, in which case we don't add a
-        # duplicate)
+    # Add each entry in Name_Alias to Perl_Charnames.  Where these go with
+    # respect to any existing entry depends on the entry type.  Corrections go
+    # before said entry, as they should be returned in preference over the
+    # existing entry.  (A correction to a correction should be later in the
+    # Name_Alias table, so it will correctly precede the erroneous correction
+    # in Perl_Charnames.)
+    #
+    # Abbreviations go after everything else, so they are saved temporarily in
+    # a hash for later.
+    #
+    # Everything else is added added afterwards, which preserves the input
+    # ordering
 
-        $alias->reset_each_range;
-        while (my ($range) = $alias->each_range) {
-            next if $range->value eq "";
-            my $code_point = $range->start;
-            if ($code_point != $range->end) {
-                Carp::my_carp_bug("Bad News.  Expecting only one code point in the range $range.  Just to keep going, using only the first code point;");
-            }
-            my ($value, $type) = split ': ', $range->value;
-            my $replace_type;
-            if ($type eq 'correction') {
-                $replace_type = $MULTIPLE_BEFORE;
-            }
-            elsif ($type eq 'abbreviation') {
-
-                # Save for later
-                $abbreviations{$value} = $code_point;
-                next;
-            }
-            elsif ($type eq 'control') {
-                $replace_type = $MULTIPLE_AFTER;
-            }
-            else {
-                $replace_type = $MULTIPLE_AFTER;
-            }
-
-            # Actually add; before or after current entry(ies) as determined
-            # above.
-
-            $perl_charname->add_duplicate($code_point, $value, Replace => $replace_type);
+    foreach my $range ($alias->ranges) {
+        next if $range->value eq "";
+        my $code_point = $range->start;
+        if ($code_point != $range->end) {
+            Carp::my_carp_bug("Bad News.  Expecting only one code point in the range $range.  Just to keep going, using only the first code point;");
         }
+        my ($value, $type) = split ': ', $range->value;
+        my $replace_type;
+        if ($type eq 'correction') {
+            $replace_type = $MULTIPLE_BEFORE;
+        }
+        elsif ($type eq 'abbreviation') {
+
+            # Save for later
+            $abbreviations{$value} = $code_point;
+            next;
+        }
+        else {
+            $replace_type = $MULTIPLE_AFTER;
+        }
+
+        # Actually add; before or after current entry(ies) as determined
+        # above.
+
+        $perl_charname->add_duplicate($code_point, $value, Replace => $replace_type);
     }
+    $alias_sentence = <<END;
+The Name_Alias property adds duplicate code point entries that are
+alternatives to the original name.  If an addition is a corrected
+name, it will be physically first in the table.  The original (less correct,
+but still valid) name will be next; then any alternatives, in no particular
+order; and finally any abbreviations, again in no particular order.
+END
 
     # Now add the Unicode_1 names for the controls.  The Unicode_1 names had
     # precedence before 6.1, so should be first in the file; the other names
@@ -12831,23 +13682,27 @@ sub compile_perl() {
         # We only add in the controls.
         next if $gc->value_of($code_point) ne 'Cc';
 
+        # We reject this Unicode1 name for later Perls, as it is used for
+        # another code point
+        next if $unicode_1_value eq 'BELL' && $^V ge v5.17.0;
+
         # This won't add an exact duplicate.
         $perl_charname->add_duplicate($code_point, $unicode_1_value,
                                         Replace => $before_or_after);
     }
 
+    # But in this version only, the ALERT has precedence over BELL, the
+    # Unicode_1_Name that would otherwise have precedence.
+    if ($v_version eq v6.0.0) {
+        $perl_charname->add_duplicate(7, 'ALERT', Replace => $MULTIPLE_BEFORE);
+    }
+
     # Now that have everything added, add in abbreviations after
-    # everything else.
-    foreach my $value (keys %abbreviations) {
+    # everything else.  Sort so results don't change between runs of this
+    # program
+    foreach my $value (sort keys %abbreviations) {
         $perl_charname->add_duplicate($abbreviations{$value}, $value,
                                         Replace => $MULTIPLE_AFTER);
-        $alias_sentence = <<END;
-The Name_Alias property adds duplicate code point entries that are
-alternatives to the original name.  If an addition is a corrected
-name, it will be physically first in the table.  The original (less correct,
-but still valid) name will be next; then any alternatives, in no particular
-order; and finally any abbreviations, again in no particular order.
-END
     }
 
     my $comment;
@@ -13001,8 +13856,10 @@ END
         # This separates out the non-characters from the other unassigneds, so
         # can give different annotations for each.
         $unassigned_sans_noncharacters = Range_List->new(
-         Initialize => $gc->table('Unassigned')
-                       & property_ref('Noncharacter_Code_Point')->table('N'));
+                                    Initialize => $gc->table('Unassigned'));
+        if (defined (my $nonchars = property_ref('Noncharacter_Code_Point'))) {
+            $unassigned_sans_noncharacters &= $nonchars->table('N');
+        }
 
         for (my $i = 0; $i <= $MAX_UNICODE_CODEPOINT; $i++ ) {
             $i = populate_char_info($i);    # Note sets $i so may cause skips
@@ -13237,8 +14094,8 @@ sub add_perl_synonyms() {
                     && ($actual->property != $block || $prefix eq 'In_'))
                 {
                     print simple_fold(join_lines(<<END
-There is already an alias named $proposed_name (from " . $pre_existing . "),
-so not creating this alias for " . $actual
+There is already an alias named $proposed_name (from $pre_existing),
+so not creating this alias for $actual
 END
                     ), "", 4);
                 }
@@ -13662,6 +14519,11 @@ sub make_re_pod_entries($) {
     my $status_info = $input_table->status_info;
     my $caseless_equivalent = $input_table->caseless_equivalent;
 
+    # Don't mention a placeholder equivalent as it isn't to be listed in the
+    # pod
+    $caseless_equivalent = 0 if $caseless_equivalent != 0
+                                && $caseless_equivalent->fate > $ORDINARY;
+
     my $entry_for_first_table; # The entry for the first table output.
                            # Almost certainly, it is the parent.
 
@@ -13675,7 +14537,10 @@ sub make_re_pod_entries($) {
 
         # First, gather all the info that applies to this table as a whole.
 
-        push @zero_match_tables, $table if $count == 0;
+        push @zero_match_tables, $table if $count == 0
+                                            # Don't mention special tables
+                                            # as being zero length
+                                           && $table->fate == $ORDINARY;
 
         my $table_property = $table->property;
 
@@ -14480,7 +15345,7 @@ the left brace completely changes the meaning of the construct, from "match"
 (for C<\\p{}>) to "doesn't match" (for C<\\P{}>).  Casing in this document is
 for improved legibility.
 
-Also, white space, hyphens, and underscores are also normally ignored
+Also, white space, hyphens, and underscores are normally ignored
 everywhere between the {braces}, and hence can be freely added or removed
 even if the C</x> modifier hasn't been specified on the regular expression.
 But $a_bold_stricter at the beginning of an entry in the table below
@@ -14955,8 +15820,8 @@ package charnames;
     my \$run_on_code_point_re = qr/$run_on_code_point_re/;
     my \$code_point_re = qr/$code_point_re/;
 
-    # In the following hash, the keys are the bases of names which includes
-    # the code point in the name, like CJK UNIFIED IDEOGRAPH-4E01.  The values
+    # In the following hash, the keys are the bases of names which include
+    # the code point in the name, like CJK UNIFIED IDEOGRAPH-4E01.  The value
     # of each key is another hash which is used to get the low and high ends
     # for each range of code points that apply to the name.
     my %names_ending_in_code_point = (
@@ -15192,37 +16057,42 @@ sub make_UCD () {
 
     # Make a list of all combinations of properties/values that are suppressed.
     my @suppressed;
-    foreach my $property_name (keys %why_suppressed) {
+    if (! $debug_skip) {    # This tends to fail in this debug mode
+        foreach my $property_name (keys %why_suppressed) {
 
-        # Just the value
-        my $value_name = $1 if $property_name =~ s/ = ( .* ) //x;
+            # Just the value
+            my $value_name = $1 if $property_name =~ s/ = ( .* ) //x;
 
-        # The hash may contain properties not in this release of Unicode
-        next unless defined (my $property = property_ref($property_name));
+            # The hash may contain properties not in this release of Unicode
+            next unless defined (my $property = property_ref($property_name));
 
-        # Find all combinations
-        foreach my $prop_alias ($property->aliases) {
-            my $prop_alias_name = standardize($prop_alias->name);
+            # Find all combinations
+            foreach my $prop_alias ($property->aliases) {
+                my $prop_alias_name = standardize($prop_alias->name);
 
-            # If no =value, there's just one combination possibe for this
-            if (! $value_name) {
+                # If no =value, there's just one combination possibe for this
+                if (! $value_name) {
 
-                # The property may be suppressed, but there may be a proxy for
-                # it, so it shouldn't be listed as suppressed
-                next if $prop_alias->ucd;
-                push @suppressed, $prop_alias_name;
-            }
-            else {  # Otherwise
-                foreach my $value_alias ($property->table($value_name)->aliases)
-                {
-                    next if $value_alias->ucd;
+                    # The property may be suppressed, but there may be a proxy
+                    # for it, so it shouldn't be listed as suppressed
+                    next if $prop_alias->ucd;
+                    push @suppressed, $prop_alias_name;
+                }
+                else {  # Otherwise
+                    foreach my $value_alias
+                                    ($property->table($value_name)->aliases)
+                    {
+                        next if $value_alias->ucd;
 
-                    push @suppressed, "$prop_alias_name="
-                                      .  standardize($value_alias->name);
+                        push @suppressed, "$prop_alias_name="
+                                        .  standardize($value_alias->name);
+                    }
                 }
             }
         }
     }
+    @suppressed = sort @suppressed; # So doesn't change between runs of this
+                                    # program
 
     # Convert the structure below (designed for Name.pm) to a form that UCD
     # wants, so it doesn't have to modify it at all; i.e. so that it includes
@@ -15373,17 +16243,19 @@ sub write_all_tables() {
 
     # For each property ...
     # (sort so that if there is an immutable file name, it has precedence, so
-    # some other property can't come in and take over its file name.  If b's
-    # file name is defined, will return 1, meaning to take it first; don't
-    # care if both defined, as they had better be different anyway.  And the
-    # property named 'Perl' needs to be first (it doesn't have any immutable
-    # file name) because empty properties are defined in terms of it's table
-    # named 'Any'.)
+    # some other property can't come in and take over its file name.  (We
+    # don't care if both defined, as they had better be different anyway.)
+    # The property named 'Perl' needs to be first (it doesn't have any
+    # immutable file name) because empty properties are defined in terms of
+    # it's table named 'Any'.)   We also sort by the property's name.  This is
+    # just for repeatability of the outputs between runs of this program, but
+    # does not affect correctness.
     PROPERTY:
-    foreach my $property (sort { return -1 if $a == $perl;
-                                 return 1 if $b == $perl;
-                                 return defined $b->file
-                                } property_ref('*'))
+    foreach my $property ($perl,
+                          sort { return -1 if defined $a->file;
+                                 return 1 if defined $b->file;
+                                 return $a->name cmp $b->name;
+                                } grep { $_ != $perl } property_ref('*'))
     {
         my $type = $property->type;
 
@@ -15549,17 +16421,18 @@ sub write_all_tables() {
                     }
                 }
             }
-            elsif ($count == $MAX_UNICODE_CODEPOINTS) {
-                if ($table == $property || $table->leader == $table) {
+            elsif ($count == $MAX_UNICODE_CODEPOINTS
+                   && ($table == $property || $table->leader == $table)
+                   && $table->property->status ne $PLACEHOLDER)
+            {
                     Carp::my_carp("$table unexpectedly matches all Unicode code points.  Proceeding anyway.");
-                }
             }
 
-            if ($table->fate == $SUPPRESSED) {
+            if ($table->fate >= $SUPPRESSED) {
                 if (! $is_property) {
                     my @children = $table->children;
                     foreach my $child (@children) {
-                        if ($child->fate != $SUPPRESSED) {
+                        if ($child->fate < $SUPPRESSED) {
                             Carp::my_carp_bug("'$table' is suppressed and has a child '$child' which isn't");
                         }
                     }
@@ -15825,6 +16698,7 @@ sub write_all_tables() {
     make_UCD;
 
     make_property_test_script() if $make_test_script;
+    make_normalization_test_script() if $make_norm_test_script;
     return;
 }
 
@@ -16110,8 +16984,10 @@ sub make_property_test_script() {
     # or multiple lines. main::write doesn't count the lines.
     my @output;
 
-    foreach my $property (property_ref('*')) {
-        foreach my $table ($property->tables) {
+    # Sort these so get results in same order on different runs of this
+    # program
+    foreach my $property (sort { $a->name cmp $b->name } property_ref('*')) {
+        foreach my $table (sort { $a->name cmp $b->name } $property->tables) {
 
             # Find code points that match, and don't match this table.
             my $valid = $table->get_valid_code_point;
@@ -16275,6 +17151,82 @@ sub make_property_test_script() {
     return;
 }
 
+sub make_normalization_test_script() {
+    print "Making normalization test script\n" if $verbosity >= $PROGRESS;
+
+    my $n_path = 'TestNorm.pl';
+
+    unshift @normalization_tests, <<'END';
+use utf8;
+use Test::More;
+
+sub ord_string {    # Convert packed ords to printable string
+    use charnames ();
+    return "'" . join("", map { '\N{' . charnames::viacode($_) . '}' }
+                                                unpack "U*", shift) .  "'";
+    #return "'" . join(" ", map { sprintf "%04X", $_ } unpack "U*", shift) .  "'";
+}
+
+sub Test_N {
+    my ($source, $nfc, $nfd, $nfkc, $nfkd) = @_;
+    my $display_source = ord_string($source);
+    my $display_nfc = ord_string($nfc);
+    my $display_nfd = ord_string($nfd);
+    my $display_nfkc = ord_string($nfkc);
+    my $display_nfkd = ord_string($nfkd);
+
+    use Unicode::Normalize;
+    #    NFC
+    #      nfc ==  toNFC(source) ==  toNFC(nfc) ==  toNFC(nfd)
+    #      nfkc ==  toNFC(nfkc) ==  toNFC(nfkd)
+    #
+    #    NFD
+    #      nfd ==  toNFD(source) ==  toNFD(nfc) ==  toNFD(nfd)
+    #      nfkd ==  toNFD(nfkc) ==  toNFD(nfkd)
+    #
+    #    NFKC
+    #      nfkc == toNFKC(source) == toNFKC(nfc) == toNFKC(nfd) ==
+    #      toNFKC(nfkc) == toNFKC(nfkd)
+    #
+    #    NFKD
+    #      nfkd == toNFKD(source) == toNFKD(nfc) == toNFKD(nfd) ==
+    #      toNFKD(nfkc) == toNFKD(nfkd)
+
+    is(NFC($source), $nfc, "NFC($display_source) eq $display_nfc");
+    is(NFC($nfc), $nfc, "NFC($display_nfc) eq $display_nfc");
+    is(NFC($nfd), $nfc, "NFC($display_nfd) eq $display_nfc");
+    is(NFC($nfkc), $nfkc, "NFC($display_nfkc) eq $display_nfkc");
+    is(NFC($nfkd), $nfkc, "NFC($display_nfkd) eq $display_nfkc");
+
+    is(NFD($source), $nfd, "NFD($display_source) eq $display_nfd");
+    is(NFD($nfc), $nfd, "NFD($display_nfc) eq $display_nfd");
+    is(NFD($nfd), $nfd, "NFD($display_nfd) eq $display_nfd");
+    is(NFD($nfkc), $nfkd, "NFD($display_nfkc) eq $display_nfkd");
+    is(NFD($nfkd), $nfkd, "NFD($display_nfkd) eq $display_nfkd");
+
+    is(NFKC($source), $nfkc, "NFKC($display_source) eq $display_nfkc");
+    is(NFKC($nfc), $nfkc, "NFKC($display_nfc) eq $display_nfkc");
+    is(NFKC($nfd), $nfkc, "NFKC($display_nfd) eq $display_nfkc");
+    is(NFKC($nfkc), $nfkc, "NFKC($display_nfkc) eq $display_nfkc");
+    is(NFKC($nfkd), $nfkc, "NFKC($display_nfkd) eq $display_nfkc");
+
+    is(NFKD($source), $nfkd, "NFKD($display_source) eq $display_nfkd");
+    is(NFKD($nfc), $nfkd, "NFKD($display_nfc) eq $display_nfkd");
+    is(NFKD($nfd), $nfkd, "NFKD($display_nfd) eq $display_nfkd");
+    is(NFKD($nfkc), $nfkd, "NFKD($display_nfkc) eq $display_nfkd");
+    is(NFKD($nfkd), $nfkd, "NFKD($display_nfkd) eq $display_nfkd");
+}
+END
+
+    &write($n_path,
+           1,           # Is utf8;
+           [
+            @normalization_tests,
+            'done_testing();'
+            ]);
+    return;
+}
+
 # This is a list of the input files and how to handle them.  The files are
 # processed in their order in this list.  Some reordering is possible if
 # desired, but the v0 files should be first, and the extracted before the
@@ -16364,9 +17316,24 @@ my @input_file_objects = (
 
                                                 # And for 5.14 Perls with 6.0,
                                                 # have to also make changes
-                                                : ($v_version ge v6.0.0)
+                                                : ($v_version ge v6.0.0
+                                                   && $^V lt v5.17.0)
                                                     ? \&filter_v6_ucd
                                                     : undef),
+
+                                            # Early versions did not have the
+                                            # proper Unicode_1 names for the
+                                            # controls
+                                            (($v_version lt v3.0.0)
+                                            ? \&filter_early_U1_names
+                                            : undef),
+
+                                            # Early versions did not correctly
+                                            # use the later method for giving
+                                            # decimal digit values
+                                            (($v_version le v3.2.0)
+                                            ? \&filter_bad_Nd_ucd
+                                            : undef),
 
                                             # And the main filter
                                             \&filter_UnicodeData_line,
@@ -16398,7 +17365,9 @@ my @input_file_objects = (
                     Each_Line_Handler => \&filter_unihan_line,
                         ),
     Input_file->new('SpecialCasing.txt', v2.1.8,
-                    Each_Line_Handler => \&filter_special_casing_line,
+                    Each_Line_Handler => ($v_version eq 2.1.8)
+                                         ? \&filter_2_1_8_special_casing_line
+                                         : \&filter_special_casing_line,
                     Pre_Handler => \&setup_special_casing,
                     Has_Missings_Defaults => $IGNORED,
                     ),
@@ -16424,9 +17393,17 @@ my @input_file_objects = (
                     ),
     Input_file->new('BidiMirroring.txt', v3.0.1,
                     Property => 'Bidi_Mirroring_Glyph',
+                    Has_Missings_Defaults => ($v_version lt v6.2.0)
+                                              ? $NO_DEFAULTS
+                                              # Is <none> which doesn't mean
+                                              # anything to us, we will use the
+                                              # null string
+                                              : $IGNORED,
+
                     ),
-    Input_file->new("NormalizationTest.txt", v3.0.1,
-                    Skip => 'Validation Tests',
+    Input_file->new("NormTest.txt", v3.0.0,
+                     Handler => \&process_NormalizationsTest,
+                     Skip => ($make_norm_test_script) ? 0 : 'Validation Tests',
                     ),
     Input_file->new('CaseFolding.txt', v3.0.1,
                     Pre_Handler => \&setup_case_folding,
@@ -16454,16 +17431,23 @@ my @input_file_objects = (
                                       ? \&filter_old_style_normalization_lines
                                       : undef),
                     ),
-    Input_file->new('HangulSyllableType.txt', v4.0.0,
+    Input_file->new('HangulSyllableType.txt', v0,
                     Has_Missings_Defaults => $NOT_IGNORED,
-                    Property => 'Hangul_Syllable_Type'),
+                    Property => 'Hangul_Syllable_Type',
+                    Pre_Handler => ($v_version lt v4.0.0)
+                                   ? \&generate_hst
+                                   : undef,
+                    ),
     Input_file->new("$AUXILIARY/WordBreakProperty.txt", v4.1.0,
                     Property => 'Word_Break',
                     Has_Missings_Defaults => $NOT_IGNORED,
                     ),
-    Input_file->new("$AUXILIARY/GraphemeBreakProperty.txt", v4.1.0,
+    Input_file->new("$AUXILIARY/GraphemeBreakProperty.txt", v0,
                     Property => 'Grapheme_Cluster_Break',
                     Has_Missings_Defaults => $NOT_IGNORED,
+                    Pre_Handler => ($v_version lt v4.1.0)
+                                   ? \&generate_GCB
+                                   : undef,
                     ),
     Input_file->new("$AUXILIARY/GCBTest.txt", v4.1.0,
                     Handler => \&process_GCB_test,
@@ -16484,7 +17468,7 @@ my @input_file_objects = (
     Input_file->new('NamedSequences.txt', v4.1.0,
                     Handler => \&process_NamedSequences
                     ),
-    Input_file->new('NameAliases.txt', v5.0.0,
+    Input_file->new('NameAliases.txt', v0,
                     Property => 'Name_Alias',
                     Pre_Handler => ($v_version le v6.0.0)
                                    ? \&setup_early_name_alias
@@ -16700,7 +17684,7 @@ END
 
 # Create the list of input files from the objects we have defined, plus
 # version
-my @input_files = 'version';
+my @input_files = qw(version Makefile);
 foreach my $object (@input_file_objects) {
     my $file = $object->file;
     next if ! defined $file;    # Not all objects have files
@@ -16730,6 +17714,10 @@ foreach my $in (@input_files) {
         construct_filename($file, 'mutable', \@directories);
     }
 }
+
+# We use 'Makefile' just to see if it has changed since the last time we
+# rebuilt.  Now discard it.
+@input_files = grep { $_ ne 'Makefile' } @input_files;
 
 my $rebuild = $write_unchanged_files    # Rebuild: if unconditional rebuild
               || ! scalar @mktables_list_output_files  # or if no outputs known

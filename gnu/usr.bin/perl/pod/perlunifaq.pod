@@ -141,16 +141,16 @@ concern, and you can just C<eval> dumped data as always.
 Starting in Perl 5.14 (and partially in Perl 5.12), just put a
 C<use feature 'unicode_strings'> near the beginning of your program.
 Within its lexical scope you shouldn't have this problem.  It also is
-automatically enabled under C<use feature ':5.12'> or using C<-E> on the
-command line for Perl 5.12 or higher.
+automatically enabled under C<use feature ':5.12'> or C<use v5.12> or
+using C<-E> on the command line for Perl 5.12 or higher.
 
 The rationale for requiring this is to not break older programs that
 rely on the way things worked before Unicode came along.  Those older
 programs knew only about the ASCII character set, and so may not work
 properly for additional characters.  When a string is encoded in UTF-8,
 Perl assumes that the program is prepared to deal with Unicode, but when
-the string isn't, Perl assumes that only ASCII (unless it is an EBCDIC
-platform) is wanted, and so those characters that are not ASCII
+the string isn't, Perl assumes that only ASCII
+is wanted, and so those characters that are not ASCII
 characters aren't recognized as to what they would be in Unicode.
 C<use feature 'unicode_strings'> tells Perl to treat all characters as
 Unicode, whether the string is encoded in UTF-8 or not, thus avoiding

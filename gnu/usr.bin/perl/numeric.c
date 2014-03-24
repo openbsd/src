@@ -376,8 +376,8 @@ number may use '_' characters to separate digits.
 
 =cut
 
-Not documented yet because experimental is C<PERL_SCAN_SILENT_NON_PORTABLE
-which suppresses any message for non-portable numbers that are still valid
+Not documented yet because experimental is C<PERL_SCAN_SILENT_NON_PORTABLE>
+which suppresses any message for non-portable numbers, but which are valid
 on this platform.
  */
 
@@ -803,7 +803,7 @@ S_mulexp10(NV value, I32 exponent)
      * a hammer.  Therefore we need to catch potential overflows before
      * it's too late. */
 
-#if ((defined(VMS) && !defined(__IEEE_FP)) || defined(_UNICOS)) && defined(NV_MAX_10_EXP)
+#if ((defined(VMS) && !defined(_IEEE_FP)) || defined(_UNICOS)) && defined(NV_MAX_10_EXP)
     STMT_START {
 	const NV exp_v = log10(value);
 	if (exponent >= NV_MAX_10_EXP || exponent + exp_v >= NV_MAX_10_EXP)
@@ -847,17 +847,28 @@ Perl_my_atof(pTHX_ const char* s)
 
     PERL_ARGS_ASSERT_MY_ATOF;
 
-    if (PL_numeric_local && IN_SOME_LOCALE_FORM) {
-	NV y;
+    if (PL_numeric_local && PL_numeric_radix_sv && IN_SOME_LOCALE_FORM) {
+        const char *standard = NULL, *local = NULL;
+        bool use_standard_radix;
 
-	/* Scan the number twice; once using locale and once without;
-	 * choose the larger result (in absolute value). */
-	Perl_atof2(s, x);
-	SET_NUMERIC_STANDARD();
-	Perl_atof2(s, y);
-	SET_NUMERIC_LOCAL();
-	if ((y < 0.0 && y < x) || (y > 0.0 && y > x))
-	    return y;
+        /* Look through the string for the first thing that looks like a
+         * decimal point: either the value in the current locale or the
+         * standard fallback of '.'. The one which appears earliest in the
+         * input string is the one that we should have atof look for. Note that
+         * we have to determine this beforehand because on some systems,
+         * Perl_atof2 is just a wrapper around the system's atof. */
+        standard = strchr(s, '.');
+        local = strstr(s, SvPV_nolen(PL_numeric_radix_sv));
+
+        use_standard_radix = standard && (!local || standard < local);
+
+        if (use_standard_radix)
+            SET_NUMERIC_STANDARD();
+
+        Perl_atof2(s, x);
+
+        if (use_standard_radix)
+            SET_NUMERIC_LOCAL();
     }
     else
 	Perl_atof2(s, x);
@@ -1105,8 +1116,8 @@ Perl_signbit(NV x) {
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..10\n"; }
+BEGIN { $| = 1; print "1..24\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -37,13 +37,22 @@ ok($objAs->getlocale, 'as');
 
 $objAs->change(level => 1);
 
-ok($objAs->lt("\x{994}", "\x{982}"));
-ok($objAs->lt("\x{982}", "\x{981}"));
-ok($objAs->lt("\x{981}", "\x{983}"));
-ok($objAs->lt("\x{983}", "\x{995}"));
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objAs->change(highestFFFF => 1) if $h;
 
-ok($objAs->lt("\x{9A3}","\x{9A4}\x{9CD}\x{200D}"));
-ok($objAs->lt("\x{9A4}\x{9CD}\x{200D}","\x{9A4}"));
+    ok($objAs->lt("\x{993}$t", "\x{994}"));
+    ok($objAs->lt("\x{994}$t", "\x{982}"));
+    ok($objAs->lt("\x{982}$t", "\x{981}"));
+    ok($objAs->lt("\x{981}$t", "\x{983}"));
+    ok($objAs->lt("\x{983}$t", "\x{995}"));
 
-ok($objAs->lt("\x{9B9}", "\x{995}\x{9CD}\x{9B7}"));
-ok($objAs->lt("\x{995}\x{9CD}\x{9B7}", "\x{9BD}"));
+    ok($objAs->lt("\x{9A2}$t", "\x{9A3}"));
+    ok($objAs->lt("\x{9A3}$t", "\x{9A4}\x{9CD}\x{200D}"));
+    ok($objAs->lt("\x{9A4}\x{9CD}\x{200D}$t", "\x{9A4}"));
+
+    ok($objAs->lt("\x{9B8}$t", "\x{9B9}"));
+    ok($objAs->lt("\x{9B9}$t", "\x{995}\x{9CD}\x{9B7}"));
+    ok($objAs->lt("\x{995}\x{9CD}\x{9B7}$t", "\x{9BD}"));
+}

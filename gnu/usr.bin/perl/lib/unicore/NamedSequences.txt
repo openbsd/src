@@ -1,8 +1,8 @@
-# NamedSequences-6.1.0.txt
-# Date: 2011-07-26, 19:47:00 GMT [KW]
+# NamedSequences-6.2.0.txt
+# Date: 2012-05-15, 21:23:00 GMT [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -112,8 +112,8 @@ BENGALI LETTER KHINYA;0995 09CD 09B7
 # Additions for Tamil. Provisional 2008-02-08, Approved 2009-08-14
 #
 # A visual display of the Tamil named sequences is available
-# in the documentation for Unicode 5.2. See:
-# http://www.unicode.org/versions/Unicode5.2.0/
+# in the documentation for the Unicode Standard. See Section 9.6, Tamil in
+# http://www.unicode.org/versions/latest/
 
 TAMIL CONSONANT K;  0B95 0BCD
 TAMIL CONSONANT NG; 0B99 0BCD
@@ -500,3 +500,5 @@ KATAKANA LETTER AINU TO;30C8 309A
 KATAKANA LETTER AINU P;31F7 309A
 MODIFIER LETTER EXTRA-HIGH EXTRA-LOW CONTOUR TONE BAR;02E5 02E9
 MODIFIER LETTER EXTRA-LOW EXTRA-HIGH CONTOUR TONE BAR;02E9 02E5
+
+# EOF

@@ -73,8 +73,8 @@ sub try {
   my ($env, $args, $stdout, $stderr) = @_;
   my ($actual_stdout, $actual_stderr) = runperl_and_capture($env, $args);
   local $::Level = $::Level + 1;
-  is ($stdout, $actual_stdout);
-  is ($stderr, $actual_stderr);
+  is $actual_stdout, $stdout;
+  is $actual_stderr, $stderr;
 }
 
 #  PERL5OPT    Command-line options (switches).  Switches in

@@ -37,7 +37,7 @@ print OUT <<'!NO!SUBS!';
 
 # pod2text -- Convert POD data to formatted ASCII text.
 #
-# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010
+# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -53,6 +53,9 @@ use Pod::Text ();
 use Pod::Usage qw(pod2usage);
 
 use strict;
+
+# Clean up $0 for error reporting.
+$0 =~ s%.*/%%;
 
 # Take an initial pass through our options, looking for one of the form
 # -<number>.  We turn that into -w <number> for compatibility with the
@@ -75,10 +78,10 @@ my $stdin;
 my %options;
 $options{sentence} = 0;
 Getopt::Long::config ('bundling');
-GetOptions (\%options, 'alt|a', 'code', 'color|c', 'help|h', 'indent|i=i',
-            'loose|l', 'margin|left-margin|m=i', 'overstrike|o',
-            'quotes|q=s', 'sentence|s', 'stderr', 'termcap|t', 'utf8|u',
-            'width|w=i')
+GetOptions (\%options, 'alt|a', 'code', 'color|c', 'errors=s', 'help|h',
+            'indent|i=i', 'loose|l', 'margin|left-margin|m=i', 'nourls',
+            'overstrike|o', 'quotes|q=s', 'sentence|s', 'stderr', 'termcap|t',
+            'utf8|u', 'width|w=i')
     or exit 1;
 pod2usage (1) if $options{help};
 
@@ -98,27 +101,42 @@ if ($options{color}) {
 }
 delete @options{'color', 'termcap', 'overstrike'};
 
+# If neither stderr nor errors is set, default to errors = die.
+if (!defined $options{stderr} && !defined $options{errors}) {
+    $options{errors} = 'die';
+}
+
 # Initialize and run the formatter.
 my $parser = $formatter->new (%options);
+my $status = 0;
 do {
     my ($input, $output) = splice (@ARGV, 0, 2);
     $parser->parse_from_file ($input, $output);
+    if ($parser->{CONTENTLESS}) {
+        $status = 1;
+        warn "$0: unable to format $input\n";
+        if (defined ($output) and $output ne '-') {
+            unlink $output unless (-s $output);
+        }
+    }
 } while (@ARGV);
+exit $status;
 
 __END__
+
+=for stopwords
+-aclostu --alt --stderr Allbery --overstrike overstrike --termcap --utf8
+UTF-8 subclasses --nourls
 
 =head1 NAME
 
 pod2text - Convert POD data to formatted ASCII text
 
-=for stopwords
--aclostu --alt --stderr Allbery --overstrike overstrike --termcap --utf8
-UTF-8
-
 =head1 SYNOPSIS
 
-pod2text [B<-aclostu>] [B<--code>] [B<-i> I<indent>] S<[B<-q> I<quotes>]>
-    [B<--stderr>] S<[B<-w> I<width>]> [I<input> [I<output> ...]]
+pod2text [B<-aclostu>] [B<--code>] [B<--errors>=I<style>] [B<-i> I<indent>]
+    S<[B<-q> I<quotes>]> [B<--nourls>] [B<--stderr>] S<[B<-w> I<width>]>
+    [I<input> [I<output> ...]]
 
 pod2text B<-h>
 
@@ -161,6 +179,16 @@ requires that Term::ANSIColor be installed on your system.
 Set the number of spaces to indent regular text, and the default indentation
 for C<=over> blocks.  Defaults to 4 spaces if this option isn't given.
 
+=item B<-errors>=I<style>
+
+Set the error handling style.  C<die> says to throw an exception on any
+POD formatting error.  C<stderr> says to report errors on standard error,
+but not to throw an exception.  C<pod> says to include a POD ERRORS
+section in the resulting documentation summarizing the errors.  C<none>
+ignores POD errors entirely, as much as possible.
+
+The default is C<die>.
+
 =item B<-h>, B<--help>
 
 Print out usage information and exit.
@@ -177,6 +205,21 @@ formatting arbitrary text documents, using this option is recommended.
 The width of the left margin in spaces.  Defaults to 0.  This is the margin
 for all text, including headings, not the amount by which regular text is
 indented; for the latter, see B<-i> option.
+
+=item B<--nourls>
+
+Normally, LZ<><> formatting codes with a URL but anchor text are formatted
+to show both the anchor text and the URL.  In other words:
+
+    L<foo|http://example.com/>
+
+is formatted as:
+
+    foo <http://example.com/>
+
+This flag, if given, suppresses the URL when anchor text is given, so this
+example would be formatted as just C<foo>.  This can produce less
+cluttered output in cases where the URLs are not particularly important.
 
 =item B<-o>, B<--overstrike>
 
@@ -205,10 +248,11 @@ is compressed into a single space.
 
 =item B<--stderr>
 
-By default, B<pod2text> puts any errors detected in the POD input in a POD
-ERRORS section in the output manual page.  If B<--stderr> is given, errors
-are sent to standard error instead and the POD ERRORS section is
-suppressed.
+By default, B<pod2text> dies if any errors are detected in the POD input.
+If B<--stderr> is given and no B<--errors> flag is present, errors are
+sent to standard error, but B<pod2text> does not abort.  This is
+equivalent to C<--errors=stderr> and is supported for backward
+compatibility.
 
 =item B<-t>, B<--termcap>
 
@@ -239,6 +283,16 @@ unless B<-t> is given, in which case it's two columns less than the width of
 your terminal device.
 
 =back
+
+=head1 EXIT STATUS
+
+As long as all documents processed result in some output, even if that
+output includes errata (a C<POD ERRORS> section generated with
+C<--errors=pod>), B<pod2text> will exit with status 0.  If any of the
+documents being processed do not result in an output document, B<pod2text>
+will exit with status 1.  If there are syntax errors in a POD document
+being processed and the error handling style is set to the default of
+C<die>, B<pod2text> will abort immediately with exit status 255.
 
 =head1 DIAGNOSTICS
 
@@ -295,8 +349,8 @@ Russ Allbery <rra@stanford.edu>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010 Russ Allbery
-<rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013 Russ
+Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

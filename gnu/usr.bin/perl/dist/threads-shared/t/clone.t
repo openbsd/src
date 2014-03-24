@@ -27,7 +27,7 @@ sub ok {
 
 BEGIN {
     $| = 1;
-    print("1..34\n");   ### Number of tests that will be run ###
+    print("1..40\n");   ### Number of tests that will be run ###
 };
 
 my $test = 1;
@@ -168,6 +168,29 @@ ok($test++, 1, 'Loaded');
     ok($test++, threads::shared::_id($copy) == threads::shared::_id($copy->{'self'}), 'Circular ref in cloned obj');
     ok($test++, $copy->{'ary'}->[3]->{'bar'}->[0] eq 'baz', 'Deeply cloned');
     ok($test++, ref($copy) eq 'Foo', 'Cloned object class');
+}
+
+{
+    my $foo = \*STDIN;
+    my $copy :shared;
+    eval {
+        $copy = shared_clone($foo);
+    };
+    ok($test++, $@ =~ /Unsupported/, 'Cannot clone GLOB - fatal');
+    ok($test++, ! defined($copy), 'Nothing cloned');
+
+    $threads::shared::clone_warn = 1;
+    my $warn;
+    $SIG{'__WARN__'} = sub { $warn = shift; };
+    $copy = shared_clone($foo);
+    ok($test++, $warn =~ /Unsupported/, 'Cannot clone GLOB - warning');
+    ok($test++, ! defined($copy), 'Nothing cloned');
+
+    $threads::shared::clone_warn = 0;
+    undef($warn);
+    $copy = shared_clone($foo);
+    ok($test++, ! defined($warn), 'Cannot clone GLOB - silent');
+    ok($test++, ! defined($copy), 'Nothing cloned');
 }
 
 exit(0);

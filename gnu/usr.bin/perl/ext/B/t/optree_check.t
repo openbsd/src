@@ -26,7 +26,12 @@ cmdline args in 'standard' way across all clients of OptreeCheck.
 
 =cut
 
-plan tests => 5 + 15 + 12 + 16 * $gOpts{selftest};	# pass()s + $#tests
+plan tests =>     11 # REGEX TEST HARNESS SELFTEST
+		+  3 # TEST FATAL ERRS
+		+ 11 # TEST -e \$srcCode
+		+  5 # REFTEXT FIXUP TESTS
+		+  5 # CANONICAL B::Concise EXAMPLE
+		+ 16 * $gOpts{selftest}; # XXX I don't understand this - DAPM
 
 pass("REGEX TEST HARNESS SELFTEST");
 

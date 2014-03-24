@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '3.17';
+$VERSION = '3.19';
 
 use parent qw(Pod::Perldoc::BaseTo);
 

@@ -75,6 +75,8 @@ for my $file ( dir_list("t/cases", qr/^get/ ) ) {
     ok( ! $response->{success}, "$label success flag false" );
   }
 
+  is ( $response->{url}, $url, "$label response URL" );
+
   if (defined $case->{expected_headers}) {
     my %expected = hashify( $case->{expected_headers} );
     is_deeply($response->{headers}, \%expected, "$label expected headers");
@@ -92,6 +94,8 @@ for my $file ( dir_list("t/cases", qr/^get/ ) ) {
         is ( $text, $exp_content, $msg );
       }
     ;
+
+
 
   if ( $options{data_callback} ) {
     $check_expected->( $main::data, "$label cb got content" );

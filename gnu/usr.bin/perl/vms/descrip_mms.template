@@ -326,10 +326,10 @@ x2p : [.x2p]$(DBG)a2p$(E) [.x2p]s2p.com [.x2p]find2perl.com
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5163delta.pod
+PERLDELTA_CURRENT = [.pod]perl5182delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
-	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
+	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
 
 [.pod]perlapi.pod : embed.fnc autodoc.pl $(MINIPERL_EXE)
 	$(MINIPERL) autodoc.pl
@@ -417,8 +417,8 @@ generate_uudmap$(O) : generate_uudmap.c mg_raw.h
 # The song and dance with gen_shrfls.opt accommodates DCL's line length limit.
 $(DBG)perlshr_xtras.ts : perl.h config.h vmsish.h proto.h [.vms]gen_shrfls.pl $(MINIPERL_EXE) $(MAKEFILE) $(CRTL)
 	@ $(MINIPERL) makedef.pl "PLATFORM=vms" > makedef.lis
-	@ $(MINIPERL) -e "print join('|',@ARGV),'|';" "$(CC)$(CFLAGS)" >gen_shrfls.opt
-	@ $(MINIPERL) -e "print join('|',@ARGV);" "$(O)" "$(DBG)" "$(OLB)" "$(EXT)" "$(CRTL)" >>gen_shrfls.opt
+	@ $(MINIPERLQ) -e "print join('|',@ARGV),'|';" "$(CC)$(CFLAGS)" >gen_shrfls.opt
+	@ $(MINIPERLQ) -e "print join('|',@ARGV);" "$(O)" "$(DBG)" "$(OLB)" "$(EXT)" "$(CRTL)" >>gen_shrfls.opt
 	$(MINIPERL) [.vms]gen_shrfls.pl -f gen_shrfls.opt
 	@ Delete/NoLog/NoConfirm gen_shrfls.opt;
 	@ If F$Search("$(DBG)perlshr_xtras.ts").nes."" Then Delete/NoLog/NoConfirm $(DBG)perlshr_xtras.ts;*
@@ -559,7 +559,7 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 # search in same dir as source file
 [.x2p]a2p$(O) : [.x2p]a2p.c [.x2p]a2py.c [.x2p]INTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h config.h handy.h vmsish.h $(MINIPERL_EXE)
 	$(MINIPERL) -pe "s/^#line\s+(\d+)\s+\Q""y.tab.c""/#line $1 ""y_tab.c""/;" $(MMS$SOURCE) >$(MMS$TARGET_NAME)_vms.c
-	$(CC) $(X2PCFLAGS) /Object=$(MMS$TARGET)/Include=([.x2p],[]) $(MMS$TARGET_NAME)_vms.c
+	$(CC) $(X2PCFLAGS) /Object=$(MMS$TARGET)/Include=([.x2p],[],"./x2p") $(MMS$TARGET_NAME)_vms.c
 	Delete/Log/NoConfirm $(MMS$TARGET_NAME)_vms.c;
 
 # gcc cpp broken -- doesn't look in directory of source file for #include ""
@@ -615,8 +615,10 @@ regen_headers :
 perly$(O) : perly.c, perly.h, $(h)
 .endif
 
-[.t.lib]vmsfspec.t : [.vms.ext]filespec.t
-	Copy/NoConfirm/Log $(MMS$SOURCE) $(MMS$TARGET)
+VMSFSPEC_T = [.t.lib]vmsfspec.t
+
+$(VMSFSPEC_T) : [.vms.ext]filespec.t
+	Copy/NoConfirm/Log $(MMS$SOURCE) $(VMSFSPEC_T)
 
 check : test
 	@ Continue

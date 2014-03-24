@@ -36,7 +36,7 @@ if ($IsVMS) {
     $vms_mode = 0 if ($vms_unix_rpt);
 }
 
-my $tests = 30;
+my $tests = 31;
 # _perl_abs_path() currently only works when the directory separator
 # is '/', so don't test it when it won't work.
 my $EXTRA_ABSPATH_TESTS = ($Config{prefix} =~ m/\//) && $^O ne 'cygwin';
@@ -243,6 +243,16 @@ SKIP: {
   is Cwd::fast_abs_path($file), $file, 'fast_abs_path() works on files in the root directory';
   is Cwd::_perl_abs_path($file), $file, '_perl_abs_path() works on files in the root directory'
     if $EXTRA_ABSPATH_TESTS;
+}
+
+SKIP: {
+  my $dir = "${$}a\nx";
+  mkdir $dir or skip "OS does not support dir names containing LF";
+  chdir $dir or skip "OS cannot chdir into LF";
+  eval { Cwd::fast_abs_path() };
+  is $@, "", 'fast_abs_path does not die in dir whose name contains LF';
+  chdir File::Spec->updir;
+  rmdir $dir;
 }
 
 

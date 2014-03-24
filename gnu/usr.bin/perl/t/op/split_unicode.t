@@ -3,7 +3,7 @@
 BEGIN {
     require './test.pl';
     skip_all_if_miniperl("no dynamic loading on miniperl, no File::Spec (used by charnames)");
-    plan(tests => 150);
+    plan(tests => 151);
 }
 
 {
@@ -61,4 +61,18 @@ BEGIN {
         ok(@r3 == 3 && join('-', @r3) eq "-:A:-:B", "$msg - /\\s+/ No.2");
 	is($c3, scalar(@r3), "$msg - /\\s+/ No.2 (count)");
     }
+
+    { # RT #114808
+        warning_is(
+            sub {
+                $p=chr(0x100);
+                for (".","ab\x{101}def") {
+                    @q = split /$p/
+                }
+            },
+            undef,
+            'no warnings when part of split cant match non-utf8'
+        );
+    }
+
 }

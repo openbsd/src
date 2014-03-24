@@ -7,22 +7,30 @@ require Exporter;
 @EXPORT = qw(wrap fill);
 @EXPORT_OK = qw($columns $break $huge);
 
-$VERSION = 2009.0305;
+$VERSION = 2012.0818;
+$SUBVERSION = 'modern';
 
-use vars qw($VERSION $columns $debug $break $huge $unexpand $tabstop
-	$separator $separator2);
+use 5.010_000;
+
+use vars qw($VERSION $SUBVERSION $columns $debug $break $huge $unexpand $tabstop $separator $separator2);
 use strict;
 
 BEGIN	{
 	$columns = 76;  # <= screen width
 	$debug = 0;
-	$break = '\s';
+	$break = '(?=\s)\X';
 	$huge = 'wrap'; # alternatively: 'die' or 'overflow'
 	$unexpand = 1;
 	$tabstop = 8;
 	$separator = "\n";
 	$separator2 = undef;
 }
+
+my $CHUNK = qr/\X/;
+
+sub _xlen(_) { scalar(() = $_[0] =~ /$CHUNK/g) }
+
+sub _xpos(_) { _xlen( substr( $_[0], 0, pos($_[0]) ) ) }
 
 use Text::Tabs qw(expand unexpand);
 
@@ -35,14 +43,14 @@ sub wrap
 	my $tail = pop(@t);
 	my $t = expand(join("", (map { /\s+\z/ ? ( $_ ) : ($_, ' ') } @t), $tail));
 	my $lead = $ip;
-	my $nll = $columns - length(expand($xp)) - 1;
+	my $nll = $columns - _xlen(expand($xp)) - 1;
 	if ($nll <= 0 && $xp ne '') {
-		my $nc = length(expand($xp)) + 2;
+		my $nc = _xlen(expand($xp)) + 2;
 		warnings::warnif "Increasing \$Text::Wrap::columns from $columns to $nc to accommodate length of subsequent tab";
 		$columns = $nc;
 		$nll = 1;
 	}
-	my $ll = $columns - length(expand($ip)) - 1;
+	my $ll = $columns - _xlen(expand($ip)) - 1;
 	$ll = 0 if $ll < 0;
 	my $nl = "";
 	my $remainder = "";
@@ -51,17 +59,17 @@ sub wrap
 
 	pos($t) = 0;
 	while ($t !~ /\G(?:$break)*\Z/gc) {
-		if ($t =~ /\G([^\n]{0,$ll})($break|\n+|\z)/xmgc) {
+		if ($t =~ /\G((?:(?=[^\n])\X){0,$ll})($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = $2;
-		} elsif ($huge eq 'wrap' && $t =~ /\G([^\n]{$ll})/gc) {
+		} elsif ($huge eq 'wrap' && $t =~ /\G((?:(?!=[^\n])\X){$ll})/gc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = defined($separator2) ? $separator2 : $separator;
-		} elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)($break|\n+|\z)/xmgc) {
+		} elsif ($huge eq 'overflow' && $t =~ /\G((?:(?=[^\n])\X)*?)($break|\n+|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
@@ -90,7 +98,9 @@ sub wrap
 
 	print "Finish up with '$lead'\n" if $debug;
 
-	$r .= $lead . substr($t, pos($t), length($t)-pos($t))
+	my($opos) = pos($t);
+
+	$r .= $lead . substr($t, pos($t), length($t) - pos($t))
 		if pos($t) ne length($t);
 
 	print "-----------$r---------\n" if $debug;;
@@ -150,7 +160,7 @@ B<Example 2>
 	$huge = 'overflow';
 
 B<Example 3>
-	
+
 	use Text::Wrap;
 
 	$Text::Wrap::columns = 72;
@@ -165,13 +175,22 @@ all subsequent lines (C<$subsequent_tab>) independently.  Please note:
 C<$initial_tab> and C<$subsequent_tab> are the literal strings that will
 be used: it is unlikely you would want to pass in a number.
 
-Text::Wrap::fill() is a simple multi-paragraph formatter.  It formats
+C<Text::Wrap::fill()> is a simple multi-paragraph formatter.  It formats
 each paragraph separately and then joins them together when it's done.  It
 will destroy any whitespace in the original text.  It breaks text into
-paragraphs by looking for whitespace after a newline.  In other respects
+paragraphs by looking for whitespace after a newline.  In other respects,
 it acts like wrap().
 
+C<wrap()> compresses trailing whitespace into one newline, and C<fill()>
+deletes all trailing whitespace.
+
 Both C<wrap()> and C<fill()> return a single string.
+
+Unlike the old Unix fmt(1) utility, this module correctly accounts for
+any Unicode combining characters (such as diacriticals) that may occur
+in each line for both expansion and unexpansion.  These are overstrike
+characters that do not increment the logical position.  Make sure
+you have the appropriate Unicode settings enabled.
 
 =head1 OVERRIDES
 
@@ -250,16 +269,31 @@ Result:
 
   "This is a bit of|text that forms a|normal book-style|paragraph"
 
+=head1 SUBVERSION
+
+This module comes in two flavors: one for modern perls (5.10 and above)
+and one for ancient obsolete perls.  The version for modern perls has
+support for Unicode.  The version for old perls does not.  You can tell
+which version you have installed by looking at C<$Text::Wrap::SUBVERSION>:
+it is C<old> for obsolete perls and C<modern> for current perls.
+
+This man page is for the version for modern perls and so that's probably
+what you've got.
+
 =head1 SEE ALSO
 
-For wrapping multi-byte characters: L<Text::WrapI18N>.
-For more detailed controls: L<Text::Format>.
+For correct handling of East Asian half- and full-width characters, 
+see L<Text::WrapI18N>.  For more detailed controls: L<Text::Format>.
+
+=head1 AUTHOR
+
+David Muir Sharnoff <cpan@dave.sharnoff.org> with help from Tim Pierce and
+many many others.  
 
 =head1 LICENSE
 
-David Muir Sharnoff <muir@idiom.org> with help from Tim Pierce and
-many many others.  Copyright (C) 1996-2009 David Muir Sharnoff.  
-This module may be modified, used, copied, and redistributed at
-your own risk.  Publicly redistributed versions that are modified 
-must use a different name.
+Copyright (C) 1996-2009 David Muir Sharnoff.  
+Copyright (C) 2012 Google, Inc.
+This module may be modified, used, copied, and redistributed at your own risk.
+Publicly redistributed modified versions must use a different name.
 

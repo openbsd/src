@@ -1,3 +1,100 @@
+3.02
+  - Prepared for v5.19.7
+
+3.01 Wed Nov 20 2013
+  - Finalised for v5.19.6
+
+3.00 Sun Oct 20 2013
+  - Updated for v5.19.5
+  - exported %delta
+  - fixed bug in is_core(): it was naively assuming a linear sequence of releases,
+    rather than the tree with multiple branches.
+
+2.99 Fri Sep 20 2013
+  - Updated for v5.19.4
+  - fixed Module::Build core deprecation
+  - changes_between now has the same API as all other functions
+  - added is_core() which returns true if a module is/was core
+    in a specific version of Perl. Can optionally specify minimum
+    version of the module.
+
+2.98 Wed Aug 21 2013
+  - Prepared for v5.19.4
+
+2.97 Tue Aug 20 2013
+  - Updated for v5.19.3
+
+2.96 Mon Aug 12 2013
+  - Utils module listing all utilities released with core
+  - Updated for v5.18.1
+
+2.95 Mon Jun 22 2013
+  - Prepared for v5.19.3
+
+2.94 Sun Jun 21 2013
+  - Updated for v5.19.2
+
+2.93 Thu 20 Jun 2013
+  - Updated for v5.19.1
+
+2.92 Thu Jun 21 2013
+  - Make switches case-sensitive (keep -d and -D distinct)
+  - correct omission of Text::Soundex and File::CheckTree from deprecations
+  - switch %deprecated to a delta hash
+
+2.91 Mon May 20 2013
+  - Updated for v5.19.0
+
+2.90 Mon May 18 2013
+  - Updated for v5.18.0
+
+2.88 Tue Apr 23 2013
+  - Include deprecations for v5.17.10 and v5.17.11
+
+2.87 Sat Apr 20 2013
+  - Updated for v5.17.11
+2.85 Thu Mar 19 2013
+  - Updated for v5.17.10
+
+2.84 Mon Mar 11 2013
+  - Updated for v5.16.3
+
+2.83 Sun Mar 10 2013
+  - Updated for v5.14.4
+
+2.82 Wed Feb 20 2013
+  - --feature switch added
+  - --upstream switch added
+  - Updated for v5.17.9
+
+2.81 Sun Jan 27 2013
+  - Add modules deprecated with v5.17.9
+
+2.80 Sun Jan 20 2013
+  - Updated for v5.17.8
+
+  - v5.17.7 contained Module::CoreList::TieHashDelta 2.79, not 2.78
+
+2.79 Tue Dec 18 2012
+  - Updated for v5.17.7
+
+  - Errno was added in 5.5, not in 5.5.4
+
+2.78 Sat Nov 12 2012
+  - Updated for v5.17.6
+
+  - Fix hash order dependency bug in deprecated_in().
+    Tests would would fail or succeed depending on what order keys()
+    would return the version list in. List::Utils::min() considers
+    '5.011' and '5.011000' to be equivalent, and returns the first
+    whichever it encounters. Changing to List::Utils::minstr() fixes
+    this.
+
+2.77 Sat Nov 10 2012
+  - Updated for v5.12.5
+  - deprecated_in() function added
+  - corelist reports deprecated data
+
 2.76 Fri Nov  1 2012
   - Updated for v5.16.2
 

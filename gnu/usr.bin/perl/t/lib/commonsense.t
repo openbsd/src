@@ -1,21 +1,26 @@
 #!./perl
 
-chdir 't' if -d 't';
-@INC = '../lib';
-require Config; import Config;
-if (($Config{'extensions'} !~ /\bFcntl\b/) ){
-  print "Bail out! Perl configured without Fcntl module\n";
-  exit 0;
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
 }
-if (($Config{'extensions'} !~ /\bIO\b/) ){
-  print "Bail out! Perl configured without IO module\n";
-  exit 0;
+
+plan( tests => 1);
+
+require Config; import Config;
+
+if (($Config{'extensions'} !~ /\bFcntl\b/) ){
+  BAIL_OUT("Perl configured without Fcntl module");
+}
+##Finds IO submodules when using \b
+if (($Config{'extensions'} !~ /\bIO\s/) ){
+  BAIL_OUT("Perl configured without IO module");
 }
 # hey, DOS users do not need this kind of common sense ;-)
 if ($^O ne 'dos' && ($Config{'extensions'} !~ /\bFile\/Glob\b/) ){
-  print "Bail out! Perl configured without File::Glob module\n";
-  exit 0;
+  BAIL_OUT("Perl configured without File::Glob module");
 }
 
-print "1..1\nok 1\n";
+pass('common sense');
 

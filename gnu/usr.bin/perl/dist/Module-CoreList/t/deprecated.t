@@ -1,6 +1,6 @@
 #!perl -w
 use strict;
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 require_ok('Module::CoreList');
 
@@ -11,7 +11,7 @@ ok(!exists $Module::CoreList::deprecated{5.011000}{'File::Spec'},
 );
 
 ok(! Module::CoreList::is_deprecated('File::Spec'),
-   "File::Spec not deprecated in 5.011000 (function)"
+   "File::Spec currently is not deprecated (function)"
 );
 
 ok(exists $Module::CoreList::deprecated{5.011000}{'Switch'},
@@ -24,4 +24,12 @@ is(!! Module::CoreList::is_deprecated('Switch'), !! ($] >= 5.011 and $] < 5.0130
 
 ok(! Module::CoreList::is_deprecated('Switch', 5.010000), 
    "Switch not deprecated in 5.010000 (function w/ perl version)"
+);
+
+is(Module::CoreList::deprecated_in('Switch'), 5.011000,
+   "Switch was deprecated in 5.011000 (deprecated_in)"
+);
+
+ok(! Module::CoreList::deprecated_in('File::Spec'),
+   "File::Spec currently is not deprecated (deprecated_in)"
 );

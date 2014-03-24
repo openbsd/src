@@ -15,7 +15,7 @@ use feature qw 'unicode_strings evalbytes';
 
 use charnames qw( :full );
 
-plan(9);
+plan(10);
 
 ＬＡＢＥＬ: {
     pass("Sanity check, UTF-8 labels don't throw a syntax error.");
@@ -54,11 +54,13 @@ SKIP: {
     like $@, qr/Label not found for "next Ｅ" at/u, "next's error is UTF-8 clean";
 }
 
-my $d = 4;
+my $d = 2;
 LÁBEL: {
+    my $e = $@;
     my $prog = "redo L\N{LATIN CAPITAL LETTER A WITH ACUTE}BEL";
 
-    if ($d % 2) {
+    if ($d == 1) {
+        is $e, '', "redo UTF8 works";
         utf8::downgrade($prog);
     }
     if ($d--) {
@@ -68,8 +70,8 @@ LÁBEL: {
     }
 }
 
-is $@, '', "redo to downgradeable labels works";
-is $d, -1, "Latin-1 labels reachable regardless of UTF-8ness";
+like $@, qr/Unrecognized character/, "redo to downgradeable labels";
+is $d, 0, "Latin-1 labels are reachable";
 
 {
     no warnings;

@@ -1,8 +1,8 @@
-# NamedSequencesProv-6.1.0.txt
-# Date: 2011-07-26, 19:46:00 GMT [KW]
+# NamedSequencesProv-6.2.0.txt
+# Date: 2012-05-15, 21:29:00 GMT [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -54,3 +54,4 @@
 # the sequence, based on the Lithuanian additions accepted
 # for Unicode 5.0.
 
+# EOF

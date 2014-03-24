@@ -1,11 +1,16 @@
 require "test.pl";
+use strict;
+use warnings;
 
 sub unidump {
     join " ", map { sprintf "%04X", $_ } unpack "U*", $_[0];
 }
 
 sub casetest {
-    my ($already_run, $base, $spec, @funcs) = @_;
+    my ($already_run, $base, @funcs) = @_;
+
+    my %spec;
+
     # For each provided function run it, and run a version with some extra
     # characters afterwards. Use a recycling symbol, as it doesn't change case.
     # $already_run is the number of extra tests the caller has run before this
@@ -20,18 +25,33 @@ sub casetest {
 		    },
 		   )} @funcs;
 
-    my $file = "../lib/unicore/To/$base.pl";
-    my $simple = do $file or die $@;
-    my %simple;
-    for my $i (split(/\n/, $simple)) {
-	my ($k, $v) = split(' ', $i);
+    use Unicode::UCD 'prop_invmap';
 
-        # Add the simple mapping to the simples test list, except the input
-        # may include code points that the specials override, so don't add
-        # those to the test list.  The specials keys are the code points,
-        # encoded in utf8,, but without the utf8 flag on, so pack with C0.
-	$simple{$k} = $v unless exists $spec->{pack("C0U", hex $k)};
+    # Get the case mappings
+    my ($invlist_ref, $invmap_ref, undef, $default) = prop_invmap($base);
+    my %simple;
+
+    for my $i (0 .. @$invlist_ref - 1 - 1) {
+        next if $invmap_ref->[$i] == $default;
+
+        # Add simple mappings to the simples test list
+        if (! ref $invmap_ref->[$i]) {
+
+            # The returned map needs to have adjustments made.  Each
+            # subsequent element of the range requires adjustment of +1 from
+            # the previous element
+            my $adjust = 0;
+            for my $k ($invlist_ref->[$i] .. $invlist_ref->[$i+1] - 1) {
+                $simple{$k} = $invmap_ref->[$i] + $adjust++;
+            }
+        }
+        else {  # The return is a list of the characters mapped-to.
+                # prop_invmap() guarantees a single element in the range in
+                # this case, so no adjustments are needed.
+            $spec{$invlist_ref->[$i]} = pack "U0U*" , @{$invmap_ref->[$i]};
+        }
     }
+
     my %seen;
 
     for my $i (sort keys %simple) {
@@ -39,17 +59,12 @@ sub casetest {
     }
     print "# ", scalar keys %simple, " simple mappings\n";
 
-    my $both;
-
-    for my $i (sort keys %$spec) {
+    for my $i (sort keys %spec) {
 	if (++$seen{$i} == 2) {
 	    warn sprintf "$base: $i seen twice\n";
-	    $both++;
 	}
     }
-    print "# ", scalar keys %$spec, " special mappings\n";
-
-    exit(1) if $both;
+    print "# ", scalar keys %spec, " special mappings\n";
 
     my %none;
     for my $i (map { ord } split //,
@@ -62,101 +77,43 @@ sub casetest {
     my $tests = 
         $already_run +
 	((scalar keys %simple) +
-	 (scalar keys %$spec) +
+	 (scalar keys %spec) +
 	 (scalar keys %none)) * @funcs;
 
     my $test = $already_run + 1;
 
     for my $i (sort keys %simple) {
 	my $w = $simple{$i};
-	my $c = pack "U0U", hex $i;
+	my $c = pack "U0U", $i;
 	foreach my $func (@funcs) {
 	    my $d = $func->($c);
 	    my $e = unidump($d);
-	    print $d eq pack("U0U", hex $simple{$i}) ?
-		"ok $test # $i -> $w\n" : "not ok $test # $i -> $e ($w)\n";
-		$test++;
+	    is( $d, pack("U0U", $simple{$i}), "$i -> $e ($w)" );
 	}
     }
 
-    for my $i (sort keys %$spec) {
-	my $w = unidump($spec->{$i});
-	if (ord('A') == 193 && $i eq "\x8A\x73") {
-	    $w = '0178'; # It's a Latin small Y with diaeresis and not a Latin small letter sharp 's'.
-	}
-	my $u = unpack "C0U", $i;
-	my $h = sprintf "%04X", $u;
-	my $c = chr($u); $c .= chr(0x100); chop $c;
+    for my $i (sort keys %spec) {
+	my $w = unidump($spec{$i});
+	my $h = sprintf "%04X", $i;
+	my $c = chr($i); $c .= chr(0x100); chop $c;
 	foreach my $func (@funcs) {
 	    my $d = $func->($c);
 	    my $e = unidump($d);
-	    if (ord "A" == 193) { # EBCDIC
-		# We need to a little bit of remapping.
-		#
-		# For example, in titlecase (ucfirst) mapping
-		# of U+0149 the Unicode mapping is U+02BC U+004E.
-		# The 4E is N, which in EBCDIC is 2B--
-		# and the ucfirst() does that right.
-		# The problem is that our reference
-		# data is in Unicode code points.
-		#
-		# The Right Way here would be to use, say,
-		# Encode, to remap the less-than 0x100 code points,
-		# but let's try to be Encode-independent here. 
-		#
-		# These are the titlecase exceptions:
-		#
-		#         Unicode   Unicode+EBCDIC  
-		#
-		# 0149 -> 02BC 004E (02BC 002B)
-		# 01F0 -> 004A 030C (00A2 030C)
-		# 1E96 -> 0048 0331 (00E7 0331)
-		# 1E97 -> 0054 0308 (00E8 0308)
-		# 1E98 -> 0057 030A (00EF 030A)
-		# 1E99 -> 0059 030A (00DF 030A)
-		# 1E9A -> 0041 02BE (00A0 02BE)
-		#
-		# The uppercase exceptions are identical.
-		#
-		# The lowercase has one more:
-		#
-		#         Unicode   Unicode+EBCDIC  
-		#
-		# 0130 -> 0069 0307 (00D1 0307)
-		#
-		if ($h =~ /^(0130|0149|01F0|1E96|1E97|1E98|1E99|1E9A)$/) {
-		    $e =~ s/004E/002B/; # N
-		    $e =~ s/004A/00A2/; # J
-		    $e =~ s/0048/00E7/; # H
-		    $e =~ s/0054/00E8/; # T
-		    $e =~ s/0057/00EF/; # W
-		    $e =~ s/0059/00DF/; # Y
-		    $e =~ s/0041/00A0/; # A
-		    $e =~ s/0069/00D1/; # i
-		}
-		# We have to map the output, not the input, because
-		# pack/unpack U has been EBCDICified, too, it would
-		# just undo our remapping.
-	    }
-	    print $w eq $e ?
-		"ok $test # $i -> $w\n" : "not ok $test # $h -> $e ($w)\n";
-		$test++;
+            is( $w, $e, "$h -> $e ($w)" );
 	}
     }
 
     for my $i (sort { $a <=> $b } keys %none) {
+	my $c = pack "U0U", $i;
 	my $w = $i = sprintf "%04X", $i;
-	my $c = pack "U0U", hex $i;
 	foreach my $func (@funcs) {
 	    my $d = $func->($c);
 	    my $e = unidump($d);
-	    print $d eq $c ?
-		"ok $test # $i -> $w\n" : "not ok $test # $i -> $e ($w)\n";
-		$test++;
+            is( $d, $c, "$i -> $e ($w)" );
 	}
     }
 
-    print "1..$tests\n";
+    done_testing();
 }
 
 1;

@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..6\n"; }
+BEGIN { $| = 1; print "1..12\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -37,8 +37,14 @@ ok($objTe->getlocale, 'te');
 
 $objTe->change(level => 1);
 
-ok($objTe->lt("\x{C14}", "\x{C01}"));
-ok($objTe->lt("\x{C01}", "\x{C02}"));
-ok($objTe->lt("\x{C02}", "\x{C03}"));
-ok($objTe->lt("\x{C03}", "\x{C15}"));
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objTe->change(highestFFFF => 1) if $h;
 
+    ok($objTe->lt("\x{C13}$t", "\x{C14}"));
+    ok($objTe->lt("\x{C14}$t", "\x{C01}"));
+    ok($objTe->lt("\x{C01}$t", "\x{C02}"));
+    ok($objTe->lt("\x{C02}$t", "\x{C03}"));
+    ok($objTe->lt("\x{C03}$t", "\x{C15}"));
+}

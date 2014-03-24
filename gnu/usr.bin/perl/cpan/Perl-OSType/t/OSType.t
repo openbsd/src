@@ -61,7 +61,7 @@ can_ok( $test_pkg, @functions );
 
   is(is_os_type('Unix', NON_EXISTENT_OS), '', "$fcn: non-existent OS is false");
 
-  local $^O = 'VOS';
+  local $^O = 'vos';
   ok( ! is_os_type( 'Unix' ), "$fcn: false" );
   ok( is_os_type( 'VOS' ),    "$fcn: true" );
   ok( ! is_os_type(), "$fcn: false if no type provided" );

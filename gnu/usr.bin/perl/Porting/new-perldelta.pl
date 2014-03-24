@@ -88,7 +88,7 @@ my $pod_master = slurp_or_die($filename);
 $pod_master =~ s{^(\s*perl5)($was_major$was_minor)(delta\s+Perl changes in version )(5\.\d+\.\d+)(.*)}
     {$1 . $old_major . $old_minor .$3 . "5.$old_major.$old_minor" . $5 . "\n" .
          "$1$2$3$4$5"}me
-    or die "Can't find perldelta line (for perl5$was_major${was_minor}delta) in $filename";
+    or warn "Couldn't find perldelta line (for perl5$was_major${was_minor}delta) in $filename";
 
 write_or_die($filename, $pod_master);
 git_add_modified($filename);

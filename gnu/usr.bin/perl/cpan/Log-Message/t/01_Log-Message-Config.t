@@ -1,10 +1,10 @@
 ### Log::Message::Config test suite ###
-BEGIN { 
+BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir '../lib/Log/Message' if -d '../lib/Log/Message';
         unshift @INC, '../../..';
     }
-} 
+}
 
 BEGIN { chdir 't' if -d 't' }
 
@@ -81,4 +81,4 @@ use_ok( 'Log::Message'            ) or diag "Module.pm not found.  Dying", die;
                 );
     is_deeply( $mixed, $log->{CONFIG}, q[Config creation from file & options] );
 }
-           
+

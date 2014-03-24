@@ -7,7 +7,7 @@ BEGIN {
 }
 
 BEGIN { require './test.pl'; }
-plan tests => 248;
+plan tests => 254;
 
 while (<DATA>) {
     chomp;
@@ -20,7 +20,10 @@ while (<DATA>) {
 	like( $@, qr/Can't find an opnumber for/, $keyword );
     }
     else {
-	is( "(".prototype("CORE::".$keyword).")", $proto, $keyword );
+	is(
+	    "(".(prototype("CORE::".$keyword) // 'undef').")", $proto,
+	    $keyword
+	);
     }
 }
 
@@ -33,7 +36,13 @@ __PACKAGE__ ()
 __DATA__ undef
 __END__ undef
 __SUB__ ()
+AUTOLOAD undef
+BEGIN undef
 CORE unknown
+DESTROY undef
+END undef
+INIT undef
+CHECK undef
 abs (_)
 accept (**)
 alarm (_)
@@ -120,7 +129,7 @@ getservent ()
 getsockname (*)
 getsockopt (*$$)
 given undef
-glob undef
+glob (_;)
 gmtime (;$)
 goto undef
 grep undef
@@ -168,10 +177,10 @@ pack ($@)
 package undef
 pipe (**)
 pop (;+)
-pos undef
+pos (;\[$*])
 print undef
 printf undef
-prototype undef
+prototype ($)
 push (+@)
 q undef
 qq undef
@@ -198,7 +207,7 @@ rindex ($$;$)
 rmdir (_)
 s undef
 say undef
-scalar undef
+scalar ($)
 seek (*$$)
 seekdir (*$)
 select undef
@@ -233,7 +242,7 @@ sqrt (_)
 srand (;$)
 stat (;*)
 state undef
-study undef
+study (_)
 sub undef
 substr ($$;$$)
 symlink ($$)
@@ -254,7 +263,7 @@ truncate ($$)
 uc (_)
 ucfirst (_)
 umask (;$)
-undef undef
+undef (;\[$@%&*])
 unless undef
 unlink (@)
 unpack ($_)

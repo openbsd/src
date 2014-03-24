@@ -14,12 +14,31 @@ plan 'no_plan';
 
 sub j { join(":",@_) }
 
+# NOTE
+#
+# Hash insertion is currently unstable, in that
+# %hash= %otherhash will not necessarily result in
+# the same internal ordering of the data in the hash.
+# For instance when keys collide the copy may not
+# match the inserted order. So we declare one hash
+# and then make all our copies from that, which should
+# mean all the copies have the same internal structure.
+#
+# And these days, even if all that weren't true, we now
+# per-hash randomize keys/values. So, we cant expect two
+# hashes with the same internal structure to return the
+# same thing at all. All we *can* expect is that keys()
+# and values() use the same ordering.
+our %base_hash;
+
 BEGIN { # in BEGIN for "use constant ..." later
+  # values match keys here so we can easily check that keys(%hash) == values(%hash)
+  %base_hash= (  pi => 'pi', e => 'e', i => 'i' );
   $array = [ qw(pi e i) ];
-  $values = [ 3.14, 2.72, -1 ];
-  $hash  = { pi => 3.14, e => 2.72, i => -1 } ;
+  $values = [ qw(pi e i) ];
+  $hash  = { %base_hash } ;
   $data = {
-    hash => { %$hash },
+    hash => { %base_hash },
     array => [ @$array ],
   };
 }
@@ -27,7 +46,7 @@ BEGIN { # in BEGIN for "use constant ..." later
 package Foo;
 sub new {
   my $self = {
-    hash => {%{$main::hash} },
+    hash => { %base_hash },
     array => [@{$main::array}]
   };
   bless $self, shift;
@@ -58,10 +77,10 @@ use overload '@{}' => sub { $main::array }, fallback => 1;
 
 package main;
 
-use constant CONST_HASH => { %$hash };
+use constant CONST_HASH => { %base_hash };
 use constant CONST_ARRAY => [ @$array ];
 
-my %a_hash = %$hash;
+my %a_hash = %base_hash;
 my @an_array = @$array;
 sub hash_sub { return \%a_hash; }
 sub array_sub { return \@an_array; }
@@ -106,16 +125,25 @@ is(keys $obj->array     ,3, 'Scalar: keys $obj->array');
 
 # Keys -- list
 
-$h_expect = j(keys %$hash);
+$h_expect = j(sort keys %base_hash);
 $a_expect = j(keys @$array);
 
-is(j(keys $hash)                ,$h_expect, 'List: keys $hash');
-is(j(keys $data->{hash})        ,$h_expect, 'List: keys $data->{hash}');
-is(j(keys CONST_HASH)           ,$h_expect, 'List: keys CONST_HASH');
-is(j(keys CONST_HASH())         ,$h_expect, 'List: keys CONST_HASH()');
-is(j(keys hash_sub)             ,$h_expect, 'List: keys hash_sub');
-is(j(keys hash_sub())           ,$h_expect, 'List: keys hash_sub()');
-is(j(keys $obj->hash)           ,$h_expect, 'List: keys $obj->hash');
+is(j(sort keys $hash)           ,$h_expect, 'List: sort keys $hash');
+is(j(sort keys $data->{hash})   ,$h_expect, 'List: sort keys $data->{hash}');
+is(j(sort keys CONST_HASH)      ,$h_expect, 'List: sort keys CONST_HASH');
+is(j(sort keys CONST_HASH())    ,$h_expect, 'List: sort keys CONST_HASH()');
+is(j(sort keys hash_sub)        ,$h_expect, 'List: sort keys hash_sub');
+is(j(sort keys hash_sub())      ,$h_expect, 'List: sort keys hash_sub()');
+is(j(sort keys $obj->hash)      ,$h_expect, 'List: sort keys $obj->hash');
+
+is(j(keys $hash)                ,j(values $hash),           'List: keys $hash == values $hash');
+is(j(keys $data->{hash})        ,j(values $data->{hash}),   'List: keys $data->{hash} == values $data->{hash}');
+is(j(keys CONST_HASH)           ,j(values CONST_HASH),      'List: keys CONST_HASH == values CONST_HASH');
+is(j(keys CONST_HASH())         ,j(values CONST_HASH()),    'List: keys CONST_HASH() == values CONST_HASH()');
+is(j(keys hash_sub)             ,j(values hash_sub),        'List: keys hash_sub == values hash_sub');
+is(j(keys hash_sub())           ,j(values hash_sub()),      'List: keys hash_sub() == values hash_sub()');
+is(j(keys $obj->hash)           ,j(values $obj->hash),      'List: keys $obj->hash == values obj->hash');
+
 is(j(keys $array)               ,$a_expect, 'List: keys $array');
 is(j(keys $data->{array})       ,$a_expect, 'List: keys $data->{array}');
 is(j(keys CONST_ARRAY)          ,$a_expect, 'List: keys CONST_ARRAY');
@@ -168,7 +196,7 @@ ok($@ =~ $errpat,
   'Errors: keys qr/foo/ throws error'
 );
 
-eval "keys $hash qw/fo bar/";
+eval q"keys $hash qw/fo bar/";
 ok($@ =~ qr/syntax error/,
   'Errors: keys $hash, @stuff throws error'
 ) or print "# Got: $@";
@@ -209,16 +237,25 @@ is(values $obj->array     ,3, 'Scalar: values $obj->array');
 
 # Values -- list
 
-$h_expect = j(values %$hash);
+$h_expect = j(sort values %base_hash);
 $a_expect = j(values @$array);
 
-is(j(values $hash)                ,$h_expect, 'List: values $hash');
-is(j(values $data->{hash})        ,$h_expect, 'List: values $data->{hash}');
-is(j(values CONST_HASH)           ,$h_expect, 'List: values CONST_HASH');
-is(j(values CONST_HASH())         ,$h_expect, 'List: values CONST_HASH()');
-is(j(values hash_sub)             ,$h_expect, 'List: values hash_sub');
-is(j(values hash_sub())           ,$h_expect, 'List: values hash_sub()');
-is(j(values $obj->hash)           ,$h_expect, 'List: values $obj->hash');
+is(j(sort values $hash)                ,$h_expect, 'List: sort values $hash');
+is(j(sort values $data->{hash})        ,$h_expect, 'List: sort values $data->{hash}');
+is(j(sort values CONST_HASH)           ,$h_expect, 'List: sort values CONST_HASH');
+is(j(sort values CONST_HASH())         ,$h_expect, 'List: sort values CONST_HASH()');
+is(j(sort values hash_sub)             ,$h_expect, 'List: sort values hash_sub');
+is(j(sort values hash_sub())           ,$h_expect, 'List: sort values hash_sub()');
+is(j(sort values $obj->hash)           ,$h_expect, 'List: sort values $obj->hash');
+
+is(j(values $hash)                ,j(keys $hash),           'List: values $hash == keys $hash');
+is(j(values $data->{hash})        ,j(keys $data->{hash}),   'List: values $data->{hash} == keys $data->{hash}');
+is(j(values CONST_HASH)           ,j(keys CONST_HASH),      'List: values CONST_HASH == keys CONST_HASH');
+is(j(values CONST_HASH())         ,j(keys CONST_HASH()),    'List: values CONST_HASH() == keys CONST_HASH()');
+is(j(values hash_sub)             ,j(keys hash_sub),        'List: values hash_sub == keys hash_sub');
+is(j(values hash_sub())           ,j(keys hash_sub()),      'List: values hash_sub() == keys hash_sub()');
+is(j(values $obj->hash)           ,j(keys $obj->hash),      'List: values $obj->hash == keys $obj->hash');
+
 is(j(values $array)               ,$a_expect, 'List: values $array');
 is(j(values $data->{array})       ,$a_expect, 'List: values $data->{array}');
 is(j(values CONST_ARRAY)          ,$a_expect, 'List: values CONST_ARRAY');
@@ -263,7 +300,7 @@ ok($@ =~ $errpat,
   'Errors: values qr/foo/ throws error'
 );
 
-eval "values $hash qw/fo bar/";
+eval q"values $hash qw/fo bar/";
 ok($@ =~ qr/syntax error/,
   'Errors: values $hash, @stuff throws error'
 ) or print "# Got: $@";
@@ -372,7 +409,7 @@ ok($@ =~ $errpat,
   'Errors: each qr/foo/ throws error'
 );
 
-eval "each $hash qw/foo bar/";
+eval q"each $hash qw/foo bar/";
 ok($@ =~ qr/syntax error/,
   'Errors: each $hash, @stuff throws error'
 ) or print "# Got: $@";

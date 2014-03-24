@@ -14,32 +14,32 @@ sub new1 { bless \@_ }
 {
     my $x = new1("x");
     my $y = new1("y");
-    is("@$y","y");
-    is("@$x","x");
+    is("@$y","y", 'bless');
+    is("@$x","x", 'bless');
 }
 
 sub new2 { splice @_, 0, 0, "a", "b", "c"; return \@_ }
 {
     my $x = new2("x");
     my $y = new2("y");
-    is("@$x","a b c x");
-    is("@$y","a b c y");
+    is("@$x","a b c x", 'splice');
+    is("@$y","a b c y", 'splice');
 }
 
 sub new3 { goto &new1 }
 {
     my $x = new3("x");
     my $y = new3("y");
-    is("@$y","y");
-    is("@$x","x");
+    is("@$y","y", 'goto: single element');
+    is("@$x","x", 'goto: single element');
 }
 
 sub new4 { goto &new2 }
 {
     my $x = new4("x");
     my $y = new4("y");
-    is("@$x","a b c x");
-    is("@$y","a b c y");
+    is("@$x","a b c x", 'goto: multiple elements');
+    is("@$y","a b c y", 'goto: multiple elements');
 }
 
 # see if POPSUB gets to see the right pad across a dounwind() with
@@ -54,24 +54,27 @@ sub method {
     &methimpl;
 }
 
+my $failcount = 0;
 sub try {
     eval { method('foo', 'bar'); };
     print "# $@" if $@;
+    $failcount++;
 }
 
 for (1..5) { try() }
-pass();
+is($failcount, 5,
+    'POPSUB sees right pad across a dounwind() with reified @_');
 
 # bug #21542 local $_[0] causes reify problems and coredumps
 
 sub local1 { local $_[0] }
 my $foo = 'foo'; local1($foo); local1($foo);
-print "got [$foo], expected [foo]\nnot " if $foo ne 'foo';
-pass();
+is($foo, 'foo',
+    "got 'foo' as expected rather than '\$foo': RT \#21542");
 
 sub local2 { local $_[0]; last L }
 L: { local2 }
-pass();
+pass("last to label");
 
 # the following test for local(@_) used to be in t/op/nothr5005.t (because it
 # failed with 5005threads)
@@ -82,9 +85,9 @@ sub foo { local(@_) = ('p', 'q', 'r'); }
 sub bar { unshift @_, 'D'; @_ }
 sub baz { push @_, 'E'; return @_ }
 for (1..3) { 
-    is(join('',foo('a', 'b', 'c')),'pqr');
-    is(join('',bar('d')),'Dd');
-    is(join('',baz('e')),'eE');
+    is(join('',foo('a', 'b', 'c')),'pqr', 'local @_');
+    is(join('',bar('d')),'Dd', 'unshift @_');
+    is(join('',baz('e')),'eE', 'push @_');
 } 
 
 # [perl #28032] delete $_[0] was freeing things too early

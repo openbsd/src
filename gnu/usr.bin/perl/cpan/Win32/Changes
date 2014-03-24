@@ -1,5 +1,24 @@
 Revision history for the Perl extension Win32.
 
+0.47    [2013-02-21]
+        - Make sure %PROCESSOR_ARCHITECTURE% is defined before calling
+          Win32::GetArchName() in t/Names.t.  It may be undefined when
+          the test is running under Cygwin crond.
+        - In t/Names.t don't assume that LoginName or NodeName is at
+          least 2 characters long; it may just be 1.
+
+0.46    [2013-02-19]
+        - add Win2012/Win8 detection (thanks to Michiel Beijen) [rt#82572]
+          [perl#116352]
+
+0.45	[2012-08-07]
+	- add Win32::GetACP(), Win32::GetConsoleCP(),
+	  Win32::GetConsoleOutputCP(), Win32::GetOEMCP(), Win32::SetConsoleCP()
+	  and Win32::SetConsoleOutputCP(). [rt#78820] (Steve Hay)
+	- adjust t/Unicode.t for Cygwin 1.7, where readdir() returns
+	  the utf8 encoded filename without setting the SvUTF8 flag [rt#66751]
+	  [rt#74332]
+
 0.44	[2011-01-12]
 	- fix memory leak introduced in 0.43
 

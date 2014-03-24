@@ -180,6 +180,10 @@ In particular, if you are using Info-Zip you need to have zip version 3.x
 or better to update a Zip64 archive and unzip version 6.x to read a zip64
 archive. 
 
+=head2 Can I write more that 64K entries is a Zip files?
+
+Yes. Zip64 allows this. See previous question.
+
 =head2 Zip Resources
 
 The primary reference for zip files is the "appnote" document available at
@@ -197,12 +201,83 @@ L<http://www.faqs.org/rfcs/rfc1952.html>
 
 The primary site for gzip is F<http://www.gzip.org>.
 
+=head2 Dealing with Concatenated gzip files
+
+If the gunzip program encounters a file containing multiple gzip files
+concatenated together it will automatically uncompress them all.
+The example below illustrates this behaviour
+
+    $ echo abc | gzip -c >x.gz
+    $ echo def | gzip -c >>x.gz
+    $ gunzip -c x.gz 
+    abc
+    def
+
+By default C<IO::Uncompress::Gunzip> will I<not> bahave like the gunzip
+program. It will only uncompress the first gzip data stream in the file, as
+shown below
+
+    $ perl -MIO::Uncompress::Gunzip=:all -e 'gunzip "x.gz" => \*STDOUT'
+    abc
+
+To force C<IO::Uncompress::Gunzip> to uncompress all the gzip data streams,
+include the C<MultiStream> option, as shown below
+
+    $ perl -MIO::Uncompress::Gunzip=:all -e 'gunzip "x.gz" => \*STDOUT, MultiStream => 1'
+    abc
+    def
+
 =head1 ZLIB
 
 =head2 Zlib Resources
 
 The primary site for the I<zlib> compression library is
 F<http://www.zlib.org>.
+
+=head1 Bzip2
+
+=head2 Bzip2 Resources
+
+The primary site for bzip2 is F<http://www.bzip.org>.
+
+=head2 Dealing with Concatenated bzip2 files
+
+If the bunzip2 program encounters a file containing multiple bzip2 files
+concatenated together it will automatically uncompress them all.
+The example below illustrates this behaviour
+
+    $ echo abc | bzip2 -c >x.bz2
+    $ echo def | bzip2 -c >>x.bz2
+    $ bunzip2 -c x.bz2
+    abc
+    def
+
+By default C<IO::Uncompress::Bunzip2> will I<not> bahave like the bunzip2
+program. It will only uncompress the first bunzip2 data stream in the file, as
+shown below
+
+    $ perl -MIO::Uncompress::Bunzip2=:all -e 'bunzip2 "x.bz2" => \*STDOUT'
+    abc
+
+To force C<IO::Uncompress::Bunzip2> to uncompress all the bzip2 data streams,
+include the C<MultiStream> option, as shown below
+
+    $ perl -MIO::Uncompress::Bunzip2=:all -e 'bunzip2 "x.bz2" => \*STDOUT, MultiStream => 1'
+    abc
+    def
+
+=head2 Interoperating with Pbzip2
+
+Pbzip2 (L<http://compression.ca/pbzip2/>) is a parallel implementation of
+bzip2. The output from pbzip2 consists of a series of concatenated bzip2
+data streams.
+
+By default C<IO::Uncompress::Bzip2> will only uncompress the first bzip2
+data stream in a pbzip2 file. To uncompress the complete pbzip2 file you
+must include the C<MultiStream> option, like this.
+
+    bunzip2 $input => \$output, MultiStream => 1 
+        or die "bunzip2 failed: $Bunzip2Error\n";
 
 =head1 HTTP & NETWORK
 
@@ -590,7 +665,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

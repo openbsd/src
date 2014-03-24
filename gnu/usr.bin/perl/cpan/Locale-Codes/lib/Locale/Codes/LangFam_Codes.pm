@@ -2,7 +2,7 @@ package Locale::Codes::LangFam_Codes;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'get_codes' is run.
-#    Generated on: Thu Mar  1 08:08:02 EST 2012
+#    Generated on: Wed Feb 27 10:04:35 EST 2013
 
 =pod
 
@@ -25,7 +25,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2012 Sullivan Beck
+   Copyright (c) 2010-2013 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -33,13 +33,14 @@ modify it under the same terms as Perl itself.
 =cut
 
 use strict;
+require 5.006;
 use warnings;
-require 5.002;
+use utf8;
 
 our($VERSION);
-$VERSION='3.21';
+$VERSION='3.25';
 
-$Locale::Codes::Data{'langfam'}{'id'} = '0115';
+$Locale::Codes::Data{'langfam'}{'id'} = '0116';
 
 $Locale::Codes::Data{'langfam'}{'id2names'} = {
    q(0001) => [
@@ -94,294 +95,297 @@ $Locale::Codes::Data{'langfam'}{'id2names'} = {
       q(Berber languages),
       ],
    q(0018) => [
-      q(Bantu languages),
+      q(Bihari languages),
       ],
    q(0019) => [
-      q(Batak languages),
+      q(Bantu languages),
       ],
    q(0020) => [
-      q(Central American Indian languages),
+      q(Batak languages),
       ],
    q(0021) => [
-      q(Caucasian languages),
+      q(Central American Indian languages),
       ],
    q(0022) => [
-      q(Chibchan languages),
+      q(Caucasian languages),
       ],
    q(0023) => [
-      q(North Caucasian languages),
+      q(Chibchan languages),
       ],
    q(0024) => [
-      q(South Caucasian languages),
+      q(North Caucasian languages),
       ],
    q(0025) => [
-      q(Chadic languages),
+      q(South Caucasian languages),
       ],
    q(0026) => [
-      q(Caddoan languages),
+      q(Chadic languages),
       ],
    q(0027) => [
-      q(Celtic languages),
+      q(Caddoan languages),
       ],
    q(0028) => [
-      q(Chamic languages),
+      q(Celtic languages),
       ],
    q(0029) => [
-      q(Creoles and pidgins, English-based),
+      q(Chamic languages),
       ],
    q(0030) => [
-      q(Creoles and pidgins, French-based),
+      q(Creoles and pidgins, English-based),
       ],
    q(0031) => [
-      q(Creoles and pidgins, Portuguese-based),
+      q(Creoles and pidgins, French-based),
       ],
    q(0032) => [
-      q(Creoles and pidgins),
+      q(Creoles and pidgins, Portuguese-based),
       ],
    q(0033) => [
-      q(Central Sudanic languages),
+      q(Creoles and pidgins),
       ],
    q(0034) => [
-      q(Cushitic languages),
+      q(Central Sudanic languages),
       ],
    q(0035) => [
-      q(Land Dayak languages),
+      q(Cushitic languages),
       ],
    q(0036) => [
-      q(Mande languages),
+      q(Land Dayak languages),
       ],
    q(0037) => [
-      q(Dravidian languages),
+      q(Mande languages),
       ],
    q(0038) => [
-      q(Egyptian languages),
+      q(Dravidian languages),
       ],
    q(0039) => [
-      q(Eskimo-Aleut languages),
+      q(Egyptian languages),
       ],
    q(0040) => [
-      q(Basque (family)),
+      q(Eskimo-Aleut languages),
       ],
    q(0041) => [
-      q(Finno-Ugrian languages),
+      q(Basque (family)),
       ],
    q(0042) => [
-      q(Formosan languages),
+      q(Finno-Ugrian languages),
       ],
    q(0043) => [
-      q(Germanic languages),
+      q(Formosan languages),
       ],
    q(0044) => [
-      q(East Germanic languages),
+      q(Germanic languages),
       ],
    q(0045) => [
-      q(North Germanic languages),
+      q(East Germanic languages),
       ],
    q(0046) => [
-      q(West Germanic languages),
+      q(North Germanic languages),
       ],
    q(0047) => [
-      q(Greek languages),
+      q(West Germanic languages),
       ],
    q(0048) => [
-      q(Hmong-Mien languages),
+      q(Greek languages),
       ],
    q(0049) => [
-      q(Hokan languages),
+      q(Hmong-Mien languages),
       ],
    q(0050) => [
-      q(Armenian (family)),
+      q(Hokan languages),
       ],
    q(0051) => [
-      q(Indo-Iranian languages),
+      q(Armenian (family)),
       ],
    q(0052) => [
-      q(Ijo languages),
+      q(Indo-Iranian languages),
       ],
    q(0053) => [
-      q(Indic languages),
+      q(Ijo languages),
       ],
    q(0054) => [
-      q(Indo-European languages),
+      q(Indic languages),
       ],
    q(0055) => [
-      q(Iranian languages),
+      q(Indo-European languages),
       ],
    q(0056) => [
-      q(Iroquoian languages),
+      q(Iranian languages),
       ],
    q(0057) => [
-      q(Italic languages),
+      q(Iroquoian languages),
       ],
    q(0058) => [
-      q(Japanese (family)),
+      q(Italic languages),
       ],
    q(0059) => [
-      q(Karen languages),
+      q(Japanese (family)),
       ],
    q(0060) => [
-      q(Kordofanian languages),
+      q(Karen languages),
       ],
    q(0061) => [
-      q(Khoisan languages),
+      q(Kordofanian languages),
       ],
    q(0062) => [
-      q(Kru languages),
+      q(Khoisan languages),
       ],
    q(0063) => [
-      q(Austronesian languages),
+      q(Kru languages),
       ],
    q(0064) => [
-      q(Mon-Khmer languages),
+      q(Austronesian languages),
       ],
    q(0065) => [
-      q(Manobo languages),
+      q(Mon-Khmer languages),
       ],
    q(0066) => [
-      q(Munda languages),
+      q(Manobo languages),
       ],
    q(0067) => [
-      q(Mayan languages),
+      q(Munda languages),
       ],
    q(0068) => [
-      q(Nahuatl languages),
+      q(Mayan languages),
       ],
    q(0069) => [
-      q(North American Indian languages),
+      q(Nahuatl languages),
       ],
    q(0070) => [
-      q(Trans-New Guinea languages),
+      q(North American Indian languages),
       ],
    q(0071) => [
-      q(Niger-Kordofanian languages),
+      q(Trans-New Guinea languages),
       ],
    q(0072) => [
-      q(Nubian languages),
+      q(Niger-Kordofanian languages),
       ],
    q(0073) => [
-      q(Oto-Manguean languages),
+      q(Nubian languages),
       ],
    q(0074) => [
-      q(Omotic languages),
+      q(Oto-Manguean languages),
       ],
    q(0075) => [
-      q(Otomian languages),
+      q(Omotic languages),
       ],
    q(0076) => [
-      q(Papuan languages),
+      q(Otomian languages),
       ],
    q(0077) => [
-      q(Philippine languages),
+      q(Papuan languages),
       ],
    q(0078) => [
-      q(Central Malayo-Polynesian languages),
+      q(Philippine languages),
       ],
    q(0079) => [
-      q(Malayo-Polynesian languages),
+      q(Central Malayo-Polynesian languages),
       ],
    q(0080) => [
-      q(Eastern Malayo-Polynesian languages),
+      q(Malayo-Polynesian languages),
       ],
    q(0081) => [
-      q(Western Malayo-Polynesian languages),
+      q(Eastern Malayo-Polynesian languages),
       ],
    q(0082) => [
-      q(Prakrit languages),
+      q(Western Malayo-Polynesian languages),
       ],
    q(0083) => [
-      q(Quechuan (family)),
+      q(Prakrit languages),
       ],
    q(0084) => [
-      q(Romance languages),
+      q(Quechuan (family)),
       ],
    q(0085) => [
-      q(South American Indian languages),
+      q(Romance languages),
       ],
    q(0086) => [
-      q(Salishan languages),
+      q(South American Indian languages),
       ],
    q(0087) => [
-      q(Eastern Sudanic languages),
+      q(Salishan languages),
       ],
    q(0088) => [
-      q(Semitic languages),
+      q(Eastern Sudanic languages),
       ],
    q(0089) => [
-      q(sign languages),
+      q(Semitic languages),
       ],
    q(0090) => [
-      q(Siouan languages),
+      q(sign languages),
       ],
    q(0091) => [
-      q(Sino-Tibetan languages),
+      q(Siouan languages),
       ],
    q(0092) => [
-      q(Slavic languages),
+      q(Sino-Tibetan languages),
       ],
    q(0093) => [
-      q(Sami languages),
+      q(Slavic languages),
       ],
    q(0094) => [
-      q(Songhai languages),
+      q(Sami languages),
       ],
    q(0095) => [
-      q(Albanian languages),
+      q(Songhai languages),
       ],
    q(0096) => [
-      q(Nilo-Saharan languages),
+      q(Albanian languages),
       ],
    q(0097) => [
-      q(Samoyedic languages),
+      q(Nilo-Saharan languages),
       ],
    q(0098) => [
-      q(Tai languages),
+      q(Samoyedic languages),
       ],
    q(0099) => [
-      q(Tibeto-Burman languages),
+      q(Tai languages),
       ],
    q(0100) => [
-      q(Turkic languages),
+      q(Tibeto-Burman languages),
       ],
    q(0101) => [
-      q(Tupi languages),
+      q(Turkic languages),
       ],
    q(0102) => [
-      q(Altaic languages),
+      q(Tupi languages),
       ],
    q(0103) => [
-      q(Tungus languages),
+      q(Altaic languages),
       ],
    q(0104) => [
-      q(Uralic languages),
+      q(Tungus languages),
       ],
    q(0105) => [
-      q(Wakashan languages),
+      q(Uralic languages),
       ],
    q(0106) => [
-      q(Sorbian languages),
+      q(Wakashan languages),
       ],
    q(0107) => [
-      q(Mongolian languages),
+      q(Sorbian languages),
       ],
    q(0108) => [
-      q(Na-Dene languages),
+      q(Mongolian languages),
       ],
    q(0109) => [
-      q(Yupik languages),
+      q(Na-Dene languages),
       ],
    q(0110) => [
-      q(Chinese (family)),
+      q(Yupik languages),
       ],
    q(0111) => [
-      q(East Slavic languages),
+      q(Chinese (family)),
       ],
    q(0112) => [
-      q(South Slavic languages),
+      q(East Slavic languages),
       ],
    q(0113) => [
-      q(West Slavic languages),
+      q(South Slavic languages),
       ],
    q(0114) => [
+      q(West Slavic languages),
+      ],
+   q(0115) => [
       q(Zande languages),
       ],
 };
@@ -396,7 +400,7 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(albanian languages) => [
-      q(0095),
+      q(0096),
       q(0),
       ],
    q(algic languages) => [
@@ -408,7 +412,7 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(altaic languages) => [
-      q(0102),
+      q(0103),
       q(0),
       ],
    q(apache languages) => [
@@ -424,7 +428,7 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(armenian (family)) => [
-      q(0050),
+      q(0051),
       q(0),
       ],
    q(artificial languages) => [
@@ -448,7 +452,7 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(austronesian languages) => [
-      q(0063),
+      q(0064),
       q(0),
       ],
    q(baltic languages) => [
@@ -464,355 +468,359 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(bantu languages) => [
-      q(0018),
+      q(0019),
       q(0),
       ],
    q(basque (family)) => [
-      q(0040),
+      q(0041),
       q(0),
       ],
    q(batak languages) => [
-      q(0019),
+      q(0020),
       q(0),
       ],
    q(berber languages) => [
       q(0017),
       q(0),
       ],
+   q(bihari languages) => [
+      q(0018),
+      q(0),
+      ],
    q(caddoan languages) => [
-      q(0026),
-      q(0),
-      ],
-   q(caucasian languages) => [
-      q(0021),
-      q(0),
-      ],
-   q(celtic languages) => [
       q(0027),
       q(0),
       ],
-   q(central american indian languages) => [
-      q(0020),
-      q(0),
-      ],
-   q(central malayo-polynesian languages) => [
-      q(0078),
-      q(0),
-      ],
-   q(central sudanic languages) => [
-      q(0033),
-      q(0),
-      ],
-   q(chadic languages) => [
-      q(0025),
-      q(0),
-      ],
-   q(chamic languages) => [
-      q(0028),
-      q(0),
-      ],
-   q(chibchan languages) => [
+   q(caucasian languages) => [
       q(0022),
       q(0),
       ],
-   q(chinese (family)) => [
-      q(0110),
+   q(celtic languages) => [
+      q(0028),
       q(0),
       ],
-   q(creoles and pidgins) => [
-      q(0032),
+   q(central american indian languages) => [
+      q(0021),
       q(0),
       ],
-   q(creoles and pidgins, english-based) => [
-      q(0029),
-      q(0),
-      ],
-   q(creoles and pidgins, french-based) => [
-      q(0030),
-      q(0),
-      ],
-   q(creoles and pidgins, portuguese-based) => [
-      q(0031),
-      q(0),
-      ],
-   q(cushitic languages) => [
-      q(0034),
-      q(0),
-      ],
-   q(dravidian languages) => [
-      q(0037),
-      q(0),
-      ],
-   q(east germanic languages) => [
-      q(0044),
-      q(0),
-      ],
-   q(east slavic languages) => [
-      q(0111),
-      q(0),
-      ],
-   q(eastern malayo-polynesian languages) => [
-      q(0080),
-      q(0),
-      ],
-   q(eastern sudanic languages) => [
-      q(0087),
-      q(0),
-      ],
-   q(egyptian languages) => [
-      q(0038),
-      q(0),
-      ],
-   q(eskimo-aleut languages) => [
-      q(0039),
-      q(0),
-      ],
-   q(finno-ugrian languages) => [
-      q(0041),
-      q(0),
-      ],
-   q(formosan languages) => [
-      q(0042),
-      q(0),
-      ],
-   q(germanic languages) => [
-      q(0043),
-      q(0),
-      ],
-   q(greek languages) => [
-      q(0047),
-      q(0),
-      ],
-   q(hmong-mien languages) => [
-      q(0048),
-      q(0),
-      ],
-   q(hokan languages) => [
-      q(0049),
-      q(0),
-      ],
-   q(ijo languages) => [
-      q(0052),
-      q(0),
-      ],
-   q(indic languages) => [
-      q(0053),
-      q(0),
-      ],
-   q(indo-european languages) => [
-      q(0054),
-      q(0),
-      ],
-   q(indo-iranian languages) => [
-      q(0051),
-      q(0),
-      ],
-   q(iranian languages) => [
-      q(0055),
-      q(0),
-      ],
-   q(iroquoian languages) => [
-      q(0056),
-      q(0),
-      ],
-   q(italic languages) => [
-      q(0057),
-      q(0),
-      ],
-   q(japanese (family)) => [
-      q(0058),
-      q(0),
-      ],
-   q(karen languages) => [
-      q(0059),
-      q(0),
-      ],
-   q(khoisan languages) => [
-      q(0061),
-      q(0),
-      ],
-   q(kordofanian languages) => [
-      q(0060),
-      q(0),
-      ],
-   q(kru languages) => [
-      q(0062),
-      q(0),
-      ],
-   q(land dayak languages) => [
-      q(0035),
-      q(0),
-      ],
-   q(malayo-polynesian languages) => [
+   q(central malayo-polynesian languages) => [
       q(0079),
       q(0),
       ],
-   q(mande languages) => [
-      q(0036),
+   q(central sudanic languages) => [
+      q(0034),
       q(0),
       ],
-   q(manobo languages) => [
-      q(0065),
+   q(chadic languages) => [
+      q(0026),
       q(0),
       ],
-   q(mayan languages) => [
-      q(0067),
+   q(chamic languages) => [
+      q(0029),
       q(0),
       ],
-   q(mon-khmer languages) => [
-      q(0064),
-      q(0),
-      ],
-   q(mongolian languages) => [
-      q(0107),
-      q(0),
-      ],
-   q(munda languages) => [
-      q(0066),
-      q(0),
-      ],
-   q(na-dene languages) => [
-      q(0108),
-      q(0),
-      ],
-   q(nahuatl languages) => [
-      q(0068),
-      q(0),
-      ],
-   q(niger-kordofanian languages) => [
-      q(0071),
-      q(0),
-      ],
-   q(nilo-saharan languages) => [
-      q(0096),
-      q(0),
-      ],
-   q(north american indian languages) => [
-      q(0069),
-      q(0),
-      ],
-   q(north caucasian languages) => [
+   q(chibchan languages) => [
       q(0023),
       q(0),
       ],
-   q(north germanic languages) => [
+   q(chinese (family)) => [
+      q(0111),
+      q(0),
+      ],
+   q(creoles and pidgins) => [
+      q(0033),
+      q(0),
+      ],
+   q(creoles and pidgins, english-based) => [
+      q(0030),
+      q(0),
+      ],
+   q(creoles and pidgins, french-based) => [
+      q(0031),
+      q(0),
+      ],
+   q(creoles and pidgins, portuguese-based) => [
+      q(0032),
+      q(0),
+      ],
+   q(cushitic languages) => [
+      q(0035),
+      q(0),
+      ],
+   q(dravidian languages) => [
+      q(0038),
+      q(0),
+      ],
+   q(east germanic languages) => [
       q(0045),
       q(0),
       ],
-   q(nubian languages) => [
-      q(0072),
-      q(0),
-      ],
-   q(omotic languages) => [
-      q(0074),
-      q(0),
-      ],
-   q(oto-manguean languages) => [
-      q(0073),
-      q(0),
-      ],
-   q(otomian languages) => [
-      q(0075),
-      q(0),
-      ],
-   q(papuan languages) => [
-      q(0076),
-      q(0),
-      ],
-   q(philippine languages) => [
-      q(0077),
-      q(0),
-      ],
-   q(prakrit languages) => [
-      q(0082),
-      q(0),
-      ],
-   q(quechuan (family)) => [
-      q(0083),
-      q(0),
-      ],
-   q(romance languages) => [
-      q(0084),
-      q(0),
-      ],
-   q(salishan languages) => [
-      q(0086),
-      q(0),
-      ],
-   q(sami languages) => [
-      q(0093),
-      q(0),
-      ],
-   q(samoyedic languages) => [
-      q(0097),
-      q(0),
-      ],
-   q(semitic languages) => [
-      q(0088),
-      q(0),
-      ],
-   q(sign languages) => [
-      q(0089),
-      q(0),
-      ],
-   q(sino-tibetan languages) => [
-      q(0091),
-      q(0),
-      ],
-   q(siouan languages) => [
-      q(0090),
-      q(0),
-      ],
-   q(slavic languages) => [
-      q(0092),
-      q(0),
-      ],
-   q(songhai languages) => [
-      q(0094),
-      q(0),
-      ],
-   q(sorbian languages) => [
-      q(0106),
-      q(0),
-      ],
-   q(south american indian languages) => [
-      q(0085),
-      q(0),
-      ],
-   q(south caucasian languages) => [
-      q(0024),
-      q(0),
-      ],
-   q(south slavic languages) => [
+   q(east slavic languages) => [
       q(0112),
       q(0),
       ],
-   q(tai languages) => [
-      q(0098),
+   q(eastern malayo-polynesian languages) => [
+      q(0081),
       q(0),
       ],
-   q(tibeto-burman languages) => [
-      q(0099),
+   q(eastern sudanic languages) => [
+      q(0088),
       q(0),
       ],
-   q(trans-new guinea languages) => [
+   q(egyptian languages) => [
+      q(0039),
+      q(0),
+      ],
+   q(eskimo-aleut languages) => [
+      q(0040),
+      q(0),
+      ],
+   q(finno-ugrian languages) => [
+      q(0042),
+      q(0),
+      ],
+   q(formosan languages) => [
+      q(0043),
+      q(0),
+      ],
+   q(germanic languages) => [
+      q(0044),
+      q(0),
+      ],
+   q(greek languages) => [
+      q(0048),
+      q(0),
+      ],
+   q(hmong-mien languages) => [
+      q(0049),
+      q(0),
+      ],
+   q(hokan languages) => [
+      q(0050),
+      q(0),
+      ],
+   q(ijo languages) => [
+      q(0053),
+      q(0),
+      ],
+   q(indic languages) => [
+      q(0054),
+      q(0),
+      ],
+   q(indo-european languages) => [
+      q(0055),
+      q(0),
+      ],
+   q(indo-iranian languages) => [
+      q(0052),
+      q(0),
+      ],
+   q(iranian languages) => [
+      q(0056),
+      q(0),
+      ],
+   q(iroquoian languages) => [
+      q(0057),
+      q(0),
+      ],
+   q(italic languages) => [
+      q(0058),
+      q(0),
+      ],
+   q(japanese (family)) => [
+      q(0059),
+      q(0),
+      ],
+   q(karen languages) => [
+      q(0060),
+      q(0),
+      ],
+   q(khoisan languages) => [
+      q(0062),
+      q(0),
+      ],
+   q(kordofanian languages) => [
+      q(0061),
+      q(0),
+      ],
+   q(kru languages) => [
+      q(0063),
+      q(0),
+      ],
+   q(land dayak languages) => [
+      q(0036),
+      q(0),
+      ],
+   q(malayo-polynesian languages) => [
+      q(0080),
+      q(0),
+      ],
+   q(mande languages) => [
+      q(0037),
+      q(0),
+      ],
+   q(manobo languages) => [
+      q(0066),
+      q(0),
+      ],
+   q(mayan languages) => [
+      q(0068),
+      q(0),
+      ],
+   q(mon-khmer languages) => [
+      q(0065),
+      q(0),
+      ],
+   q(mongolian languages) => [
+      q(0108),
+      q(0),
+      ],
+   q(munda languages) => [
+      q(0067),
+      q(0),
+      ],
+   q(na-dene languages) => [
+      q(0109),
+      q(0),
+      ],
+   q(nahuatl languages) => [
+      q(0069),
+      q(0),
+      ],
+   q(niger-kordofanian languages) => [
+      q(0072),
+      q(0),
+      ],
+   q(nilo-saharan languages) => [
+      q(0097),
+      q(0),
+      ],
+   q(north american indian languages) => [
       q(0070),
       q(0),
       ],
-   q(tungus languages) => [
-      q(0103),
+   q(north caucasian languages) => [
+      q(0024),
       q(0),
       ],
-   q(tupi languages) => [
-      q(0101),
+   q(north germanic languages) => [
+      q(0046),
       q(0),
       ],
-   q(turkic languages) => [
+   q(nubian languages) => [
+      q(0073),
+      q(0),
+      ],
+   q(omotic languages) => [
+      q(0075),
+      q(0),
+      ],
+   q(oto-manguean languages) => [
+      q(0074),
+      q(0),
+      ],
+   q(otomian languages) => [
+      q(0076),
+      q(0),
+      ],
+   q(papuan languages) => [
+      q(0077),
+      q(0),
+      ],
+   q(philippine languages) => [
+      q(0078),
+      q(0),
+      ],
+   q(prakrit languages) => [
+      q(0083),
+      q(0),
+      ],
+   q(quechuan (family)) => [
+      q(0084),
+      q(0),
+      ],
+   q(romance languages) => [
+      q(0085),
+      q(0),
+      ],
+   q(salishan languages) => [
+      q(0087),
+      q(0),
+      ],
+   q(sami languages) => [
+      q(0094),
+      q(0),
+      ],
+   q(samoyedic languages) => [
+      q(0098),
+      q(0),
+      ],
+   q(semitic languages) => [
+      q(0089),
+      q(0),
+      ],
+   q(sign languages) => [
+      q(0090),
+      q(0),
+      ],
+   q(sino-tibetan languages) => [
+      q(0092),
+      q(0),
+      ],
+   q(siouan languages) => [
+      q(0091),
+      q(0),
+      ],
+   q(slavic languages) => [
+      q(0093),
+      q(0),
+      ],
+   q(songhai languages) => [
+      q(0095),
+      q(0),
+      ],
+   q(sorbian languages) => [
+      q(0107),
+      q(0),
+      ],
+   q(south american indian languages) => [
+      q(0086),
+      q(0),
+      ],
+   q(south caucasian languages) => [
+      q(0025),
+      q(0),
+      ],
+   q(south slavic languages) => [
+      q(0113),
+      q(0),
+      ],
+   q(tai languages) => [
+      q(0099),
+      q(0),
+      ],
+   q(tibeto-burman languages) => [
       q(0100),
       q(0),
       ],
-   q(uralic languages) => [
+   q(trans-new guinea languages) => [
+      q(0071),
+      q(0),
+      ],
+   q(tungus languages) => [
       q(0104),
+      q(0),
+      ],
+   q(tupi languages) => [
+      q(0102),
+      q(0),
+      ],
+   q(turkic languages) => [
+      q(0101),
+      q(0),
+      ],
+   q(uralic languages) => [
+      q(0105),
       q(0),
       ],
    q(uto-aztecan languages) => [
@@ -820,27 +828,27 @@ $Locale::Codes::Data{'langfam'}{'alias2id'} = {
       q(0),
       ],
    q(wakashan languages) => [
-      q(0105),
+      q(0106),
       q(0),
       ],
    q(west germanic languages) => [
-      q(0046),
+      q(0047),
       q(0),
       ],
    q(west slavic languages) => [
-      q(0113),
+      q(0114),
       q(0),
       ],
    q(western malayo-polynesian languages) => [
-      q(0081),
+      q(0082),
       q(0),
       ],
    q(yupik languages) => [
-      q(0109),
+      q(0110),
       q(0),
       ],
    q(zande languages) => [
-      q(0114),
+      q(0115),
       q(0),
       ],
 };
@@ -915,392 +923,396 @@ $Locale::Codes::Data{'langfam'}{'code2id'} = {
          q(0017),
          q(0),
          ],
-      q(bnt) => [
+      q(bih) => [
          q(0018),
          q(0),
          ],
-      q(btk) => [
+      q(bnt) => [
          q(0019),
          q(0),
          ],
-      q(cai) => [
+      q(btk) => [
          q(0020),
          q(0),
          ],
-      q(cau) => [
+      q(cai) => [
          q(0021),
          q(0),
          ],
-      q(cba) => [
+      q(cau) => [
          q(0022),
          q(0),
          ],
-      q(ccn) => [
+      q(cba) => [
          q(0023),
          q(0),
          ],
-      q(ccs) => [
+      q(ccn) => [
          q(0024),
          q(0),
          ],
-      q(cdc) => [
+      q(ccs) => [
          q(0025),
          q(0),
          ],
-      q(cdd) => [
+      q(cdc) => [
          q(0026),
          q(0),
          ],
-      q(cel) => [
+      q(cdd) => [
          q(0027),
          q(0),
          ],
-      q(cmc) => [
+      q(cel) => [
          q(0028),
          q(0),
          ],
-      q(cpe) => [
+      q(cmc) => [
          q(0029),
          q(0),
          ],
-      q(cpf) => [
+      q(cpe) => [
          q(0030),
          q(0),
          ],
-      q(cpp) => [
+      q(cpf) => [
          q(0031),
          q(0),
          ],
-      q(crp) => [
+      q(cpp) => [
          q(0032),
          q(0),
          ],
-      q(csu) => [
+      q(crp) => [
          q(0033),
          q(0),
          ],
-      q(cus) => [
+      q(csu) => [
          q(0034),
          q(0),
          ],
-      q(day) => [
+      q(cus) => [
          q(0035),
          q(0),
          ],
-      q(dmn) => [
+      q(day) => [
          q(0036),
          q(0),
          ],
-      q(dra) => [
+      q(dmn) => [
          q(0037),
          q(0),
          ],
-      q(egx) => [
+      q(dra) => [
          q(0038),
          q(0),
          ],
-      q(esx) => [
+      q(egx) => [
          q(0039),
          q(0),
          ],
-      q(euq) => [
+      q(esx) => [
          q(0040),
          q(0),
          ],
-      q(fiu) => [
+      q(euq) => [
          q(0041),
          q(0),
          ],
-      q(fox) => [
+      q(fiu) => [
          q(0042),
          q(0),
          ],
-      q(gem) => [
+      q(fox) => [
          q(0043),
          q(0),
          ],
-      q(gme) => [
+      q(gem) => [
          q(0044),
          q(0),
          ],
-      q(gmq) => [
+      q(gme) => [
          q(0045),
          q(0),
          ],
-      q(gmw) => [
+      q(gmq) => [
          q(0046),
          q(0),
          ],
-      q(grk) => [
+      q(gmw) => [
          q(0047),
          q(0),
          ],
-      q(hmx) => [
+      q(grk) => [
          q(0048),
          q(0),
          ],
-      q(hok) => [
+      q(hmx) => [
          q(0049),
          q(0),
          ],
-      q(hyx) => [
+      q(hok) => [
          q(0050),
          q(0),
          ],
-      q(iir) => [
+      q(hyx) => [
          q(0051),
          q(0),
          ],
-      q(ijo) => [
+      q(iir) => [
          q(0052),
          q(0),
          ],
-      q(inc) => [
+      q(ijo) => [
          q(0053),
          q(0),
          ],
-      q(ine) => [
+      q(inc) => [
          q(0054),
          q(0),
          ],
-      q(ira) => [
+      q(ine) => [
          q(0055),
          q(0),
          ],
-      q(iro) => [
+      q(ira) => [
          q(0056),
          q(0),
          ],
-      q(itc) => [
+      q(iro) => [
          q(0057),
          q(0),
          ],
-      q(jpx) => [
+      q(itc) => [
          q(0058),
          q(0),
          ],
-      q(kar) => [
+      q(jpx) => [
          q(0059),
          q(0),
          ],
-      q(kdo) => [
+      q(kar) => [
          q(0060),
          q(0),
          ],
-      q(khi) => [
+      q(kdo) => [
          q(0061),
          q(0),
          ],
-      q(kro) => [
+      q(khi) => [
          q(0062),
          q(0),
          ],
-      q(map) => [
+      q(kro) => [
          q(0063),
          q(0),
          ],
-      q(mkh) => [
+      q(map) => [
          q(0064),
          q(0),
          ],
-      q(mno) => [
+      q(mkh) => [
          q(0065),
          q(0),
          ],
-      q(mun) => [
+      q(mno) => [
          q(0066),
          q(0),
          ],
-      q(myn) => [
+      q(mun) => [
          q(0067),
          q(0),
          ],
-      q(nah) => [
+      q(myn) => [
          q(0068),
          q(0),
          ],
-      q(nai) => [
+      q(nah) => [
          q(0069),
          q(0),
          ],
-      q(ngf) => [
+      q(nai) => [
          q(0070),
          q(0),
          ],
-      q(nic) => [
+      q(ngf) => [
          q(0071),
          q(0),
          ],
-      q(nub) => [
+      q(nic) => [
          q(0072),
          q(0),
          ],
-      q(omq) => [
+      q(nub) => [
          q(0073),
          q(0),
          ],
-      q(omv) => [
+      q(omq) => [
          q(0074),
          q(0),
          ],
-      q(oto) => [
+      q(omv) => [
          q(0075),
          q(0),
          ],
-      q(paa) => [
+      q(oto) => [
          q(0076),
          q(0),
          ],
-      q(phi) => [
+      q(paa) => [
          q(0077),
          q(0),
          ],
-      q(plf) => [
+      q(phi) => [
          q(0078),
          q(0),
          ],
-      q(poz) => [
+      q(plf) => [
          q(0079),
          q(0),
          ],
-      q(pqe) => [
+      q(poz) => [
          q(0080),
          q(0),
          ],
-      q(pqw) => [
+      q(pqe) => [
          q(0081),
          q(0),
          ],
-      q(pra) => [
+      q(pqw) => [
          q(0082),
          q(0),
          ],
-      q(qwe) => [
+      q(pra) => [
          q(0083),
          q(0),
          ],
-      q(roa) => [
+      q(qwe) => [
          q(0084),
          q(0),
          ],
-      q(sai) => [
+      q(roa) => [
          q(0085),
          q(0),
          ],
-      q(sal) => [
+      q(sai) => [
          q(0086),
          q(0),
          ],
-      q(sdv) => [
+      q(sal) => [
          q(0087),
          q(0),
          ],
-      q(sem) => [
+      q(sdv) => [
          q(0088),
          q(0),
          ],
-      q(sgn) => [
+      q(sem) => [
          q(0089),
          q(0),
          ],
-      q(sio) => [
+      q(sgn) => [
          q(0090),
          q(0),
          ],
-      q(sit) => [
+      q(sio) => [
          q(0091),
          q(0),
          ],
-      q(sla) => [
+      q(sit) => [
          q(0092),
          q(0),
          ],
-      q(smi) => [
+      q(sla) => [
          q(0093),
          q(0),
          ],
-      q(son) => [
+      q(smi) => [
          q(0094),
          q(0),
          ],
-      q(sqj) => [
+      q(son) => [
          q(0095),
          q(0),
          ],
-      q(ssa) => [
+      q(sqj) => [
          q(0096),
          q(0),
          ],
-      q(syd) => [
+      q(ssa) => [
          q(0097),
          q(0),
          ],
-      q(tai) => [
+      q(syd) => [
          q(0098),
          q(0),
          ],
-      q(tbq) => [
+      q(tai) => [
          q(0099),
          q(0),
          ],
-      q(trk) => [
+      q(tbq) => [
          q(0100),
          q(0),
          ],
-      q(tup) => [
+      q(trk) => [
          q(0101),
          q(0),
          ],
-      q(tut) => [
+      q(tup) => [
          q(0102),
          q(0),
          ],
-      q(tuw) => [
+      q(tut) => [
          q(0103),
          q(0),
          ],
-      q(urj) => [
+      q(tuw) => [
          q(0104),
          q(0),
          ],
-      q(wak) => [
+      q(urj) => [
          q(0105),
          q(0),
          ],
-      q(wen) => [
+      q(wak) => [
          q(0106),
          q(0),
          ],
-      q(xgn) => [
+      q(wen) => [
          q(0107),
          q(0),
          ],
-      q(xnd) => [
+      q(xgn) => [
          q(0108),
          q(0),
          ],
-      q(ypk) => [
+      q(xnd) => [
          q(0109),
          q(0),
          ],
-      q(zhx) => [
+      q(ypk) => [
          q(0110),
          q(0),
          ],
-      q(zle) => [
+      q(zhx) => [
          q(0111),
          q(0),
          ],
-      q(zls) => [
+      q(zle) => [
          q(0112),
          q(0),
          ],
-      q(zlw) => [
+      q(zls) => [
          q(0113),
          q(0),
          ],
-      q(znd) => [
+      q(zlw) => [
          q(0114),
+         q(0),
+         ],
+      q(znd) => [
+         q(0115),
          q(0),
          ],
       },
@@ -1325,103 +1337,104 @@ $Locale::Codes::Data{'langfam'}{'id2code'} = {
       q(0015) => q(bai),
       q(0016) => q(bat),
       q(0017) => q(ber),
-      q(0018) => q(bnt),
-      q(0019) => q(btk),
-      q(0020) => q(cai),
-      q(0021) => q(cau),
-      q(0022) => q(cba),
-      q(0023) => q(ccn),
-      q(0024) => q(ccs),
-      q(0025) => q(cdc),
-      q(0026) => q(cdd),
-      q(0027) => q(cel),
-      q(0028) => q(cmc),
-      q(0029) => q(cpe),
-      q(0030) => q(cpf),
-      q(0031) => q(cpp),
-      q(0032) => q(crp),
-      q(0033) => q(csu),
-      q(0034) => q(cus),
-      q(0035) => q(day),
-      q(0036) => q(dmn),
-      q(0037) => q(dra),
-      q(0038) => q(egx),
-      q(0039) => q(esx),
-      q(0040) => q(euq),
-      q(0041) => q(fiu),
-      q(0042) => q(fox),
-      q(0043) => q(gem),
-      q(0044) => q(gme),
-      q(0045) => q(gmq),
-      q(0046) => q(gmw),
-      q(0047) => q(grk),
-      q(0048) => q(hmx),
-      q(0049) => q(hok),
-      q(0050) => q(hyx),
-      q(0051) => q(iir),
-      q(0052) => q(ijo),
-      q(0053) => q(inc),
-      q(0054) => q(ine),
-      q(0055) => q(ira),
-      q(0056) => q(iro),
-      q(0057) => q(itc),
-      q(0058) => q(jpx),
-      q(0059) => q(kar),
-      q(0060) => q(kdo),
-      q(0061) => q(khi),
-      q(0062) => q(kro),
-      q(0063) => q(map),
-      q(0064) => q(mkh),
-      q(0065) => q(mno),
-      q(0066) => q(mun),
-      q(0067) => q(myn),
-      q(0068) => q(nah),
-      q(0069) => q(nai),
-      q(0070) => q(ngf),
-      q(0071) => q(nic),
-      q(0072) => q(nub),
-      q(0073) => q(omq),
-      q(0074) => q(omv),
-      q(0075) => q(oto),
-      q(0076) => q(paa),
-      q(0077) => q(phi),
-      q(0078) => q(plf),
-      q(0079) => q(poz),
-      q(0080) => q(pqe),
-      q(0081) => q(pqw),
-      q(0082) => q(pra),
-      q(0083) => q(qwe),
-      q(0084) => q(roa),
-      q(0085) => q(sai),
-      q(0086) => q(sal),
-      q(0087) => q(sdv),
-      q(0088) => q(sem),
-      q(0089) => q(sgn),
-      q(0090) => q(sio),
-      q(0091) => q(sit),
-      q(0092) => q(sla),
-      q(0093) => q(smi),
-      q(0094) => q(son),
-      q(0095) => q(sqj),
-      q(0096) => q(ssa),
-      q(0097) => q(syd),
-      q(0098) => q(tai),
-      q(0099) => q(tbq),
-      q(0100) => q(trk),
-      q(0101) => q(tup),
-      q(0102) => q(tut),
-      q(0103) => q(tuw),
-      q(0104) => q(urj),
-      q(0105) => q(wak),
-      q(0106) => q(wen),
-      q(0107) => q(xgn),
-      q(0108) => q(xnd),
-      q(0109) => q(ypk),
-      q(0110) => q(zhx),
-      q(0111) => q(zle),
-      q(0112) => q(zls),
-      q(0113) => q(zlw),
-      q(0114) => q(znd),
+      q(0018) => q(bih),
+      q(0019) => q(bnt),
+      q(0020) => q(btk),
+      q(0021) => q(cai),
+      q(0022) => q(cau),
+      q(0023) => q(cba),
+      q(0024) => q(ccn),
+      q(0025) => q(ccs),
+      q(0026) => q(cdc),
+      q(0027) => q(cdd),
+      q(0028) => q(cel),
+      q(0029) => q(cmc),
+      q(0030) => q(cpe),
+      q(0031) => q(cpf),
+      q(0032) => q(cpp),
+      q(0033) => q(crp),
+      q(0034) => q(csu),
+      q(0035) => q(cus),
+      q(0036) => q(day),
+      q(0037) => q(dmn),
+      q(0038) => q(dra),
+      q(0039) => q(egx),
+      q(0040) => q(esx),
+      q(0041) => q(euq),
+      q(0042) => q(fiu),
+      q(0043) => q(fox),
+      q(0044) => q(gem),
+      q(0045) => q(gme),
+      q(0046) => q(gmq),
+      q(0047) => q(gmw),
+      q(0048) => q(grk),
+      q(0049) => q(hmx),
+      q(0050) => q(hok),
+      q(0051) => q(hyx),
+      q(0052) => q(iir),
+      q(0053) => q(ijo),
+      q(0054) => q(inc),
+      q(0055) => q(ine),
+      q(0056) => q(ira),
+      q(0057) => q(iro),
+      q(0058) => q(itc),
+      q(0059) => q(jpx),
+      q(0060) => q(kar),
+      q(0061) => q(kdo),
+      q(0062) => q(khi),
+      q(0063) => q(kro),
+      q(0064) => q(map),
+      q(0065) => q(mkh),
+      q(0066) => q(mno),
+      q(0067) => q(mun),
+      q(0068) => q(myn),
+      q(0069) => q(nah),
+      q(0070) => q(nai),
+      q(0071) => q(ngf),
+      q(0072) => q(nic),
+      q(0073) => q(nub),
+      q(0074) => q(omq),
+      q(0075) => q(omv),
+      q(0076) => q(oto),
+      q(0077) => q(paa),
+      q(0078) => q(phi),
+      q(0079) => q(plf),
+      q(0080) => q(poz),
+      q(0081) => q(pqe),
+      q(0082) => q(pqw),
+      q(0083) => q(pra),
+      q(0084) => q(qwe),
+      q(0085) => q(roa),
+      q(0086) => q(sai),
+      q(0087) => q(sal),
+      q(0088) => q(sdv),
+      q(0089) => q(sem),
+      q(0090) => q(sgn),
+      q(0091) => q(sio),
+      q(0092) => q(sit),
+      q(0093) => q(sla),
+      q(0094) => q(smi),
+      q(0095) => q(son),
+      q(0096) => q(sqj),
+      q(0097) => q(ssa),
+      q(0098) => q(syd),
+      q(0099) => q(tai),
+      q(0100) => q(tbq),
+      q(0101) => q(trk),
+      q(0102) => q(tup),
+      q(0103) => q(tut),
+      q(0104) => q(tuw),
+      q(0105) => q(urj),
+      q(0106) => q(wak),
+      q(0107) => q(wen),
+      q(0108) => q(xgn),
+      q(0109) => q(xnd),
+      q(0110) => q(ypk),
+      q(0111) => q(zhx),
+      q(0112) => q(zle),
+      q(0113) => q(zls),
+      q(0114) => q(zlw),
+      q(0115) => q(znd),
       },
 };
 

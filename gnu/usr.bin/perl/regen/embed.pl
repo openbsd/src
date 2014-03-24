@@ -40,6 +40,15 @@ my $unflagged_pointers;
 # implicit interpreter context argument.
 #
 
+sub full_name ($$) { # Returns the function name with potentially the
+		     # prefixes 'S_' or 'Perl_'
+    my ($func, $flags) = @_;
+
+    return "S_$func" if $flags =~ /[si]/;
+    return "Perl_$func" if $flags =~ /[bp]/;
+    return $func;
+}
+
 sub open_print_header {
     my ($file, $quote) = @_;
 
@@ -76,6 +85,16 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	my @names_of_nn;
 	my $func;
 
+	if (! $can_ignore && $retval eq 'void') {
+	    warn "It is nonsensical to require the return value of a void function ($plain_func) to be checked";
+	}
+
+	my $scope_type_flag_count = 0;
+	$scope_type_flag_count++ if $flags =~ /s/;
+	$scope_type_flag_count++ if $flags =~ /i/;
+	$scope_type_flag_count++ if $flags =~ /p/;
+	warn "$plain_func: i, p, and s flags are all mutually exclusive"
+						   if $scope_type_flag_count > 1;
 	my $splint_flags = "";
 	if ( $SPLINT && !$commented_out ) {
 	    $splint_flags .= '/*@noreturn@*/ ' if $never_returns;
@@ -85,20 +104,24 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	}
 
 	if ($flags =~ /([si])/) {
-	    my $type = ($1 eq 's') ? "STATIC" : "PERL_STATIC_INLINE";
-	    warn "$func: i and s flags are mutually exclusive"
-					    if $flags =~ /s/ && $flags =~ /i/;
+	    my $type;
+	    if ($never_returns) {
+		$type = $1 eq 's' ? "PERL_STATIC_NO_RET" : "PERL_STATIC_INLINE_NO_RET";
+	    }
+	    else {
+		$type = $1 eq 's' ? "STATIC" : "PERL_STATIC_INLINE";
+	    }
 	    $retval = "$type $splint_flags$retval";
-	    $func = "S_$plain_func";
 	}
 	else {
-	    $retval = "PERL_CALLCONV $splint_flags$retval";
-	    if ($flags =~ /[bp]/) {
-		$func = "Perl_$plain_func";
-	    } else {
-		$func = $plain_func;
+	    if ($never_returns) {
+		$retval = "PERL_CALLCONV_NO_RET $splint_flags$retval";
+	    }
+	    else {
+		$retval = "PERL_CALLCONV $splint_flags$retval";
 	    }
 	}
+	$func = full_name($plain_func, $flags);
 	$ret = "$retval\t$func(";
 	if ( $has_context ) {
 	    $ret .= @args ? "pTHX_ " : "pTHX";
@@ -262,19 +285,14 @@ sub embed_h {
 	unless ($flags =~ /[om]/) {
 	    my $args = scalar @args;
 	    if ($flags =~ /n/) {
-		if ($flags =~ /s/) {
-		    $ret = hide($func,"S_$func");
-		}
-		elsif ($flags =~ /p/) {
-		    $ret = hide($func,"Perl_$func");
-		}
+		$ret = hide($func, full_name($func, $flags));
 	    }
 	    elsif ($args and $args[$args-1] =~ /\.\.\./) {
 		if ($flags =~ /p/) {
 		    # we're out of luck for varargs functions under CPP
 		    # So we can only do these macros for no implicit context:
 		    $ret = "#ifndef PERL_IMPLICIT_CONTEXT\n"
-			. hide($func,"Perl_$func") . "#endif\n";
+			. hide($func, full_name($func, $flags)) . "#endif\n";
 		}
 	    }
 	    else {
@@ -282,12 +300,7 @@ sub embed_h {
 		$ret = "#define $func($alist)";
 		my $t = int(length($ret) / 8);
 		$ret .=  "\t" x ($t < 4 ? 4 - $t : 1);
-		if ($flags =~ /[si]/) {
-		    $ret .= "S_$func(aTHX";
-		}
-		elsif ($flags =~ /p/) {
-		    $ret .= "Perl_$func(aTHX";
-		}
+		$ret .= full_name($func, $flags) . "(aTHX";
 		$ret .= "_ " if $alist;
 		$ret .= $alist . ")\n";
 	    }
@@ -429,7 +442,13 @@ END
 my $sym;
 
 for $sym (@intrp) {
+    if ($sym eq 'sawampersand') {
+	print $em "#ifndef PL_sawampersand\n";
+    }
     print $em multon($sym,'I','vTHX->');
+    if ($sym eq 'sawampersand') {
+	print $em "#endif\n";
+    }
 }
 
 print $em <<'END';

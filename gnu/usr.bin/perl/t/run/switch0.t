@@ -1,3 +1,11 @@
 #!./perl -0
-print "1..1\n";
-print ord $/ == 0 ? "ok 1\n" : "not ok 1\n";
+
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 1;
+
+is(ord $/, 0, '$/ set to 0 via switch');

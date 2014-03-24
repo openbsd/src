@@ -6,17 +6,17 @@ esac
 libswanted=`echo $libswanted | sed 's/ malloc / /'`
 
 objformat=`/usr/bin/objformat`
-if [ x$objformat = xelf ]; then
-    libpth="/usr/lib /usr/local/lib"
-    glibpth="/usr/lib /usr/local/lib"
-    ldflags="-Wl,-E "
-    lddlflags="-shared "
-else
+if [ x$objformat = xaout ]; then
     if [ -e /usr/lib/aout ]; then
         libpth="/usr/lib/aout /usr/local/lib /usr/lib"
         glibpth="/usr/lib/aout /usr/local/lib /usr/lib"
     fi
     lddlflags='-Bshareable'
+else
+    libpth="/usr/lib /usr/local/lib"
+    glibpth="/usr/lib /usr/local/lib"
+    ldflags="-Wl,-E "
+    lddlflags="-shared "
 fi
 cccdlflags='-DPIC -fPIC'
 
@@ -33,12 +33,8 @@ d_voidsig='define'
 cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
-        lc_r=`/sbin/ldconfig -r|grep ':-lc_r'|awk '{print $NF}'|sed -n '$p'`
-	    	ldflags="-pthread $ldflags"
-	      d_gethostbyaddr_r="undef"
-	      d_gethostbyaddr_r_proto="0"
-
-	set `echo X "$libswanted "| sed -e 's/ c / c_r /'`
+	ldflags="-pthread $ldflags"
+	set `echo X "$libswanted "| sed -e 's/ c //'`
 	shift
 	libswanted="$*"
 	# Configure will probably pick the wrong libc to use for nm scan.

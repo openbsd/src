@@ -1,4 +1,4 @@
-use warnings; no warnings 'deprecated';
+use warnings; no warnings 'deprecated', 'experimental::lexical_topic';
 use strict;
 
 BEGIN {

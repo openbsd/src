@@ -23,7 +23,7 @@
 BEGIN {
     @INC = '..' if -f '../TestInit.pm';
 }
-use TestInit qw(T A); # T is chdir to the top level, A makes paths absolute
+use TestInit qw(T); # T is chdir to the top level
 use strict;
 
 require 't/test.pl';
@@ -43,9 +43,7 @@ sub get {
     my $key = shift;
     my $value = `git config --get user.$key`;
     unless (defined $value && $value =~ /\S/) {
-	plan(1);
-	like($value, qr/\S/, "git config --get user.$key returned a value");
-	exit 1;
+	skip_all("git config --get user.$key returned nought");
     }
     chomp $value;
     return $value;

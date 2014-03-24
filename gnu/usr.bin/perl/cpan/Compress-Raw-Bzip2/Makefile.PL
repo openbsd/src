@@ -47,7 +47,13 @@ WriteMakefile(
         : ()
     ),
 
-    INSTALLDIRS => ($] > 5.010 ? 'perl' : 'site'),
+    INSTALLDIRS => ($] > 5.010  && $] < 5.011 ? 'perl' : 'site'),
+
+    META_MERGE => {
+        no_index => {
+            directory => [ 't', 'private' ],
+        },
+    },    
 
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
         ('LICENSE'  => 'perl')         : ()),    

@@ -18,7 +18,7 @@ BEGIN
     unshift @INC, $dir;
 }
 
-use Test::More tests => 18;
+use Test::More tests => 21;
 
 sub write_file {
     my ($file, $text) = @_;
@@ -53,6 +53,12 @@ write_file( File::Spec->catfile( $fulldir, 'blechanawilla.al' ), $blechanawilla_
 # to find the above file so we duplicate it where they should find it.
 write_file( File::Spec->catfile( $fulldir, 'blechanawil.al' ), $blechanawilla_text );
 
+write_file( File::Spec->catfile( $fulldir, 'notreached.al' ), <<'EOT' );
+package Foo;
+sub notreached { die "Should not be reached!" }
+1;
+EOT
+
 # Let's define the package
 package Foo;
 require AutoLoader;
@@ -61,6 +67,7 @@ AutoLoader->import( 'AUTOLOAD' );
 sub new { bless {}, shift };
 sub foo;
 sub bazmarkhianish; 
+sub notreached;
 
 package main;
 
@@ -117,6 +124,16 @@ sub b { ::ok( 1, 'adding a new autoloaded method' ) }
 EOT
 
 Foo::a();
+
+# Test whether autoload_sub works without actually executing the function
+ok(!defined(&Foo::notreached), "Foo::notreached unknown to boot");
+AutoLoader::autoload_sub("Foo::notreached");
+ok(defined(&Foo::notreached), "Foo::notreached loaded by autoload_sub");
+
+# Make sure that repeatedly calling autoload_sub is not a problem:
+AutoLoader::autoload_sub("Foo::notreached");
+eval {Foo::notreached;};
+ok($@ && $@ =~ /Should not/, "Foo::notreached works as expected");
 
 package Bar;
 AutoLoader->import();

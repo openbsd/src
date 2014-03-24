@@ -126,7 +126,7 @@ sub reanimate_build_dir {
     my @candidates = map { $_->[0] }
         sort { $b->[1] <=> $a->[1] }
             map { [ $_, -M File::Spec->catfile($d,$_) ] }
-                grep {/\.yml$/} readdir $dh;
+                grep {/(.+)\.yml$/ && -d File::Spec->catfile($d,$1)} readdir $dh;
     unless (@candidates) {
         $CPAN::Frontend->myprint("Build_dir empty, nothing to restore\n");
         return;

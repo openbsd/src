@@ -509,7 +509,7 @@ as L<perldos> on some systems).
 
 MiNT is now supported.  See F<README.mint>.
 
-MPE/iX is now supported.  See F<README.mpeix>.
+MPE/iX is now supported.  See README.mpeix.
 
 MVS (aka OS390, aka Open Edition) is now supported.  See F<README.os390> 
 (installed as L<perlos390> on some systems).

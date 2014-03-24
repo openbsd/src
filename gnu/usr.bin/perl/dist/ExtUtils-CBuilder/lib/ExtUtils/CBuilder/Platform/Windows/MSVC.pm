@@ -1,7 +1,7 @@
 package ExtUtils::CBuilder::Platform::Windows::MSVC;
 
 use vars qw($VERSION);
-$VERSION = '0.280206';
+$VERSION = '0.280209';
 
 sub arg_exec_file {
   my ($self, $file) = @_;
@@ -64,6 +64,7 @@ sub format_linker_cmd {
   }
 
   my $output = $spec{output};
+  my $manifest = $spec{manifest};
 
   $spec{def_file}  &&= '-def:'      . $spec{def_file};
   $spec{output}    &&= '-out:'      . $spec{output};
@@ -93,7 +94,7 @@ sub format_linker_cmd {
 
   # Embed the manifest file if it exists
   push @cmds, [
-    'if', 'exist', $spec{manifest}, 'mt', '-nologo', $spec{manifest}, '-outputresource:' . "$output;2"
+    'if', 'exist', $manifest, 'mt', '-nologo', $spec{manifest}, '-outputresource:' . "$output;2"
   ];
 
   return @cmds;

@@ -231,7 +231,7 @@ properties of bitwise xor on ASCII strings.
 
 And here it is as a subroutine, modeled after the above:
 
-    sub preserve_case($$) {
+    sub preserve_case {
         my ($old, $new) = @_;
         my $mask = uc $old ^ $old;
 
@@ -271,7 +271,7 @@ the case of the last character is used for the rest of the substitution.
 
     # Original by Nathan Torkington, massaged by Jeffrey Friedl
     #
-    sub preserve_case($$)
+    sub preserve_case
     {
         my ($old, $new) = @_;
         my $state = 0; # 0 = no change; 1 = lc; 2 = uc

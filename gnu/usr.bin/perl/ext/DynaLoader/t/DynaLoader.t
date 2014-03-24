@@ -32,6 +32,11 @@ plan tests => 22 + keys(%modules) * 3;
 # Try to load the module
 use_ok( 'DynaLoader' );
 
+# Some tests need to be skipped on old Darwin versions.
+# Commit ce12ed1954 added the skip originally, without specifying which
+# darwin version needed it.  I know OS X 10.6 (Snow Leopard; darwin 10)
+# supports it, so skip anything before that.
+my $old_darwin = $^O eq 'darwin' && ($Config{osvers} =~ /^(\d+)/)[0] < 10;
 
 # Check functions
 can_ok( 'DynaLoader' => 'bootstrap'               ); # defined in Perl section
@@ -43,7 +48,7 @@ if ($Config{usedl}) {
     can_ok( 'DynaLoader' => 'dl_load_file'        ); # defined in XS section
     can_ok( 'DynaLoader' => 'dl_undef_symbols'    ); # defined in XS section
     SKIP: {
-        skip "unloading unsupported on $^O", 1 if ($^O eq 'VMS' || $^O eq 'darwin');
+        skip "unloading unsupported on $^O", 1 if ($old_darwin || $^O eq 'VMS');
         can_ok( 'DynaLoader' => 'dl_unload_file'  ); # defined in XS section
     }
 } else {
@@ -137,8 +142,9 @@ is( scalar @DynaLoader::dl_modules, scalar keys %modules, "checking number of it
 my @loaded_modules = @DynaLoader::dl_modules;
 for my $libref (reverse @DynaLoader::dl_librefs) {
   SKIP: {
-    skip "unloading unsupported on $^O", 2 if ($^O eq 'VMS' || $^O eq 'darwin');
+    skip "unloading unsupported on $^O", 2 if ($old_darwin || $^O eq 'VMS');
     my $module = pop @loaded_modules;
+    skip "File::Glob sets PL_opfreehook", 2 if $module eq 'File::Glob';
     my $r = eval { DynaLoader::dl_unload_file($libref) };
     is( $@, '', "calling dl_unload_file() for $module" );
     is( $r,  1, " - unload was successful" );

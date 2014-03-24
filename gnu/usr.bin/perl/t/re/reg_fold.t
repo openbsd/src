@@ -12,10 +12,50 @@ use warnings;
 my @tests;
 
 my $file="../lib/unicore/CaseFolding.txt";
-open my $fh,"<",$file or die "Failed to read '$file': $!";
-while (<$fh>) {
+my @folds;
+use Unicode::UCD;
+
+# Use the Unicode data file if we are on an ASCII platform (which its data is
+# for), and it is in the modern format (starting in Unicode 3.1.0) and it is
+# available.  This avoids being affected by potential bugs introduced by other
+# layers of Perl
+if (ord('A') == 65
+    && pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v3.1.0
+    && open my $fh, "<", $file)
+{
+    @folds = <$fh>;
+}
+else {
+    my ($invlist_ref, $invmap_ref, undef, $default)
+                                    = Unicode::UCD::prop_invmap('Case_Folding');
+    for my $i (0 .. @$invlist_ref - 1 - 1) {
+        next if $invmap_ref->[$i] == $default;
+        my $adjust = -1;
+        for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
+            $adjust++;
+
+            # Single-code point maps go to a 'C' type
+            if (! ref $invmap_ref->[$i]) {
+                push @folds, sprintf("%04X; C; %04X\n",
+                                     $j,
+                                     $invmap_ref->[$i] + $adjust);
+            }
+            else {  # Multi-code point maps go to 'F'.  prop_invmap()
+                    # guarantees that no adjustment is needed for these,
+                    # as the range will contain just one element
+                push @folds, sprintf("%04X; F; %s\n",
+                                    $j,
+                                    join " ", map { sprintf "%04X", $_ }
+                                                    @{$invmap_ref->[$i]});
+            }
+        }
+    }
+}
+
+for  (@folds) {
     chomp;
     my ($line,$comment)= split/\s+#\s+/, $_;
+    $comment = "" unless defined $comment;
     my ($cp,$type,@folded)=split/[\s;]+/,$line||'';
     next unless $type and ($type eq 'F' or $type eq 'C');
     my $fold_above_latin1 = grep { hex("0x$_") > 255 } @folded;
@@ -36,7 +76,11 @@ while (<$fh>) {
                 $lhs = $chr;
                 $rhs = "";
                 foreach my $rhs_char (@folded) {
-                    $rhs .= '[' if $charclass;
+
+                    # The colon is an unrelated character to the rest of the
+                    # class, and makes sure no optimization into an EXACTish
+                    # node occurs.
+                    $rhs .= '[:' if $charclass;
                     $rhs .=  $rhs_char;
                     $rhs .= ']' if $charclass;
                 }
@@ -111,11 +155,12 @@ for my $i (0 .. 255) {
 
 push @tests, qq[like chr(0x0430), qr/[=\x{0410}-\x{0411}]/i, 'Bug #71752 Unicode /i char in a range'];
 push @tests, qq[like 'a', qr/\\p{Upper}/i, "'a' =~ /\\\\p{Upper}/i"];
-push @tests, q[my $c = "\x{212A}"; my $p = qr/(?:^[\x{004B}_]+$)/i; utf8::upgrade($p); like $c, $p, 'Bug #78994: my $c = "\x{212A}"; my $p = qr/(?:^[\x{004B}_]+$)/i; utf8::upgrade($p); $c =~ $p'];
+push @tests, q[my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); like $c, $p, 'Bug #78994: my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); $c =~ $p'];
 
 use charnames ":full";
-push @tests, q[my $re1 = "\N{WHITE SMILING FACE}";like "\xE8", qr/[\w$re1]/, 'my $re = "\N{WHITE SMILING FACE}"; "\xE8" =~ qr/[\w$re]/'];
-push @tests, q[my $re2 = "\N{WHITE SMILING FACE}";like "\xE8", qr/\w|$re2/, 'my $re = "\N{WHITE SMILING FACE}"; "\xE8" =~ qr/\w|$re/'];
+my $e_grave = latin1_to_native("\xE8");
+push @tests, q[my $re1 = "\N{WHITE SMILING FACE}";like $e_grave, qr/[\w$re1]/, 'my $re = "\N{WHITE SMILING FACE}"; $e_grave =~ qr/[\w$re]/'];
+push @tests, q[my $re2 = "\N{WHITE SMILING FACE}";like $e_grave, qr/\w|$re2/, 'my $re = "\N{WHITE SMILING FACE}"; $e_grave =~ qr/\w|$re/'];
 
 eval join ";\n","plan tests=>". (scalar @tests), @tests, "1"
     or die $@;

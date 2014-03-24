@@ -10,7 +10,7 @@ use Socket qw(
     sockaddr_family
     sockaddr_un
 );
-use Test::More tests => 31;
+use Test::More tests => 33;
 
 # inet_aton, inet_ntoa
 {
@@ -73,6 +73,8 @@ SKIP: {
     is(          (unpack_sockaddr_in($sin))[0] , 100,           'pack_sockaddr_in->unpack_sockaddr_in port');
     is(inet_ntoa((unpack_sockaddr_in($sin))[1]), "10.20.30.40", 'pack_sockaddr_in->unpack_sockaddr_in addr');
 
+    is(inet_ntoa(scalar unpack_sockaddr_in($sin)), "10.20.30.40", 'unpack_sockaddr_in in scalar context yields addr');
+
     is_deeply( [ sockaddr_in($sin) ], [ unpack_sockaddr_in($sin) ],
         'sockaddr_in in list context unpacks' );
 
@@ -83,8 +85,8 @@ SKIP: {
 # pack_sockaddr_in6, unpack_sockaddr_in6
 # sockaddr_in6
 SKIP: {
-    skip "No AF_INET6", 8 unless my $AF_INET6 = eval { Socket::AF_INET6() };
-    skip "Cannot pack_sockaddr_in6()", 8 unless my $sin6 = eval { Socket::pack_sockaddr_in6(0x1234, "0123456789abcdef", 0, 89) };
+    skip "No AF_INET6", 9 unless my $AF_INET6 = eval { Socket::AF_INET6() };
+    skip "Cannot pack_sockaddr_in6()", 9 unless my $sin6 = eval { Socket::pack_sockaddr_in6(0x1234, "0123456789abcdef", 0, 89) };
 
     ok(defined $sin6, 'pack_sockaddr_in6 defined');
 
@@ -94,6 +96,8 @@ SKIP: {
     is((Socket::unpack_sockaddr_in6($sin6))[1], "0123456789abcdef", 'pack_sockaddr_in6->unpack_sockaddr_in6 addr');
     is((Socket::unpack_sockaddr_in6($sin6))[2], 0,                  'pack_sockaddr_in6->unpack_sockaddr_in6 scope_id');
     is((Socket::unpack_sockaddr_in6($sin6))[3], 89,                 'pack_sockaddr_in6->unpack_sockaddr_in6 flowinfo');
+
+    is(scalar Socket::unpack_sockaddr_in6($sin6), "0123456789abcdef", 'unpack_sockaddr_in6 in scalar context yields addr');
 
     is_deeply( [ Socket::sockaddr_in6($sin6) ], [ Socket::unpack_sockaddr_in6($sin6) ],
         'sockaddr_in6 in list context unpacks' );

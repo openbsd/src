@@ -3,7 +3,7 @@ BEGIN {
     @INC = '../lib';
     require './test.pl';
 }
-plan tests=>191;
+plan tests=>192;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -962,3 +962,8 @@ sub ucfr : lvalue {
     }
 }
 ucfr();
+
+# [perl #117947] XSUBs should not be treated as lvalues at run time
+eval { &{\&utf8::is_utf8}("") = 3 };
+like $@, qr/^Can't modify non-lvalue subroutine call at /,
+        'XSUB not seen at compile time dies in lvalue context';

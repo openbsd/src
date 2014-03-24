@@ -1,3 +1,18 @@
+2.35 Thu Feb 21 2013
+    - localize %SIG in the Safe compartment
+    - actually check that we call execution methods on a Safe object
+
+2.34
+    - Test bug #111462, Safe + %^H + disallowed ops (Father Chrysostomos)
+      cf Perl 5 change 42440e3c68e8bafb7e2a74763360939de0fad6be
+
+2.33 Tue Apr  3 2012
+    - Don’t eval code under ‘no strict’ (Father Chrysostomos)
+      cf. Perl 5 change 25dc25e774abbe993644899cf4d9f9925a9fb9a8
+
+2.32 Sat Mar 31 2012
+    - Make Safe play nice with Devel::Cover
+
 2.31 Fri Jan 20 2012
     - Now need to use code points above 255 to get SWASHNEW to load
 

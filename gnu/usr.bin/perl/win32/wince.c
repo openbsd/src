@@ -73,14 +73,14 @@ static BOOL		filetime_from_time(PFILETIME ft, time_t t);
 static char *		get_emd_part(SV **leading, STRLEN *const len,
 				     char *trailing, ...);
 static void		remove_dead_process(long deceased);
-static long		find_pid(int pid);
+static long		find_pid(pTHX_ int pid);
 static char *		qualified_path(const char *cmd);
 static char *		win32_get_xlib(const char *pl, const char *xlib,
 				       const char *libname, STRLEN *const len);
 
 #ifdef USE_ITHREADS
 static void		remove_dead_pseudo_process(long child);
-static long		find_pseudo_pid(int pid);
+static long		find_pseudo_pid(pTHX_ int pid);
 #endif
 
 int _fmode = O_TEXT; /* celib do not provide _fmode, so we define it here */
@@ -261,8 +261,6 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname,
     dTHX;
     char regstr[40];
     char pathstr[MAX_PATH+1];
-    DWORD datalen;
-    int len, newsize;
     SV *sv1 = NULL;
     SV *sv2 = NULL;
 
@@ -417,8 +415,8 @@ tokenize(const char *str, char **dest, char ***destv)
     if (str) {
 	dTHX;
 	int slen = strlen(str);
-	register char *ret;
-	register char **retv;
+	char *ret;
+	char **retv;
 	Newx(ret, slen+2, char);
 	Newx(retv, (slen+3)/2, char*);
 
@@ -891,6 +889,52 @@ DllExport char *
 win32_longpath(char *path)
 {
   return path;
+}
+
+static void
+out_of_memory(void)
+{
+    if (PL_curinterp) {
+        dTHX;
+        /* Can't use PerlIO to write as it allocates memory */
+        PerlLIO_write(PerlIO_fileno(Perl_error_log),
+                      PL_no_mem, strlen(PL_no_mem));
+        my_exit(1);
+    }
+    exit(1);
+}
+
+/* The win32_ansipath() function takes a Unicode filename and converts it
+ * into the current Windows codepage. If some characters cannot be mapped,
+ * then it will convert the short name instead.
+ *
+ * The buffer to the ansi pathname must be freed with win32_free() when it
+ * it no longer needed.
+ *
+ * The argument to win32_ansipath() must exist before this function is
+ * called; otherwise there is no way to determine the short path name.
+ *
+ * Ideas for future refinement:
+ * - Only convert those segments of the path that are not in the current
+ *   codepage, but leave the other segments in their long form.
+ * - If the resulting name is longer than MAX_PATH, start converting
+ *   additional path segments into short names until the full name
+ *   is shorter than MAX_PATH.  Shorten the filename part last!
+ */
+DllExport char *
+win32_ansipath(const WCHAR *widename)
+{
+    char *name;
+    size_t widelen = wcslen(widename)+1;
+    int len = WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, widename, widelen,
+                                  NULL, 0, NULL, NULL);
+    name = win32_malloc(len);
+    if (!name)
+        out_of_memory();
+
+    WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, widename, widelen,
+                        name, len, NULL, NULL);
+    return name;
 }
 
 DllExport char *
@@ -2732,12 +2776,6 @@ char *
 getcwd(char *buf, size_t size)
 {
   return xcegetcwd(buf, size);
-}
-
-int
-isnan(double d)
-{
-  return _isnan(d);
 }
 
 

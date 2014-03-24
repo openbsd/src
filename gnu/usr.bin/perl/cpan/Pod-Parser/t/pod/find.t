@@ -34,14 +34,12 @@ my %pods = pod_find($lib_dir);
 my @results = values %pods;
 print "### found @results\n";
 my @compare = qw(
-    Pod::Checker
     Pod::Find
     Pod::InputObjects
     Pod::ParseUtils
     Pod::Parser
     Pod::PlainText
     Pod::Select
-    Pod::Usage
 );
 if (File::Spec->case_tolerant || $^O eq 'dos') {
     # must downcase before sorting

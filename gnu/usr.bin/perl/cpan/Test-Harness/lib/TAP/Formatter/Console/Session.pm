@@ -28,11 +28,11 @@ TAP::Formatter::Console::Session - Harness output delegate for default console o
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 DESCRIPTION
 
@@ -200,7 +200,7 @@ sub _closures {
                     }
                 }
 
-                $formatter->_output("ok$time_report\n");
+                $formatter->_output( $self->_make_ok_line($time_report) );
             }
         },
     };

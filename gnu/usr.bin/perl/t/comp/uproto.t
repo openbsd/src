@@ -72,7 +72,11 @@ eval q{ f(1,2,3,4) };
 like( $@, qr/Too many arguments for main::f at/ );
 
 {
+    # We have not tested require/use/no yet, so we must avoid this:
+    #    no warnings 'deprecated';
+    BEGIN { $SIG{__WARN__} = sub {} }
     my $_ = "quarante-deux";
+    BEGIN { $SIG{__WARN__} = undef }
     $foo = "FOO";
     $bar = "BAR";
     f("FOO quarante-deux", $foo);
@@ -97,7 +101,9 @@ $_ = $expected;
 g();
 g;
 undef $expected; &g; # $_ not passed
+BEGIN { $SIG{__WARN__} = sub {} }
 { $expected = my $_ = "bar"; g() }
+BEGIN { $SIG{__WARN__} = undef }
 
 eval q{ sub wrong1 (_$); wrong1(1,2) };
 like( $@, qr/Malformed prototype for main::wrong1/, 'wrong1' );
@@ -142,7 +148,9 @@ $_ = 21;
 double();
 is( $_, 42, '$_ is modifiable' );
 {
+    BEGIN { $SIG{__WARN__} = sub {} }
     my $_ = 22;
+    BEGIN { $SIG{__WARN__} = undef }
     double();
     is( $_, 44, 'my $_ is modifiable' );
 }

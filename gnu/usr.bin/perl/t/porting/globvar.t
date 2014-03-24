@@ -18,6 +18,9 @@ my %skip = map { ("PL_$_", 1) }
 	  watchaddr watchok warn_uninit_sv
      );
 
+$skip{PL_hash_rand_bits}= $skip{PL_hash_rand_bits_enabled}= 1; # we can be compiled without these, so skip testing them
+
+
 my $trial = "nm globals$Config{_o} 2>&1";
 my $yes = `$trial`;
 
@@ -57,13 +60,17 @@ foreach my $file (map {$_ . $Config{_o}} qw(globals regcomp)) {
     close $fh or die "Problem running nm $file";
 }
 
-fail("Attempting to export '$_' which is never defined")
-    foreach sort keys %exported;
+foreach (sort keys %exported) {
+ SKIP: {
+    skip("We dont't export '$_' (Perl not built with this enabled?)",1) if $skip{$_};
+    fail("Attempting to export '$_' which is never defined");
+ }
+}
 
 foreach (sort keys %unexported) {
  SKIP: {
-	skip("We don't export $_", 1) if $skip{$_};
-	fail("$_ is defined, but we do not export it");
+        skip("We don't export '$_'", 1) if $skip{$_};
+        fail("'$_' is defined, but we do not export it");
     }
 }
 

@@ -1,9 +1,15 @@
 #!./perl -T
 
+use Test::More;
+BEGIN {
+ plan skip_all => "irrelevant on pre-5.8.4" if $] < 5.008004
+}
+
 # Tests for constant.pm that require the utf8 pragma
 
 use utf8;
-use Test::More tests => 2;
+
+plan tests => 2;
 
 use constant π		=> 4 * atan2 1, 1;
 

@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..25\n"; }
+BEGIN { $| = 1; print "1..55\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -43,13 +43,10 @@ $objTh->change(level => 1);
 ok($objTh->eq("\x{E2F}", ""));
 ok($objTh->eq("\x{E46}", ""));
 ok($objTh->eq("\x{E4F}", ""));
+ok($objTh->eq("\x{E5A}", ""));
+ok($objTh->eq("\x{E5B}", ""));
 
-# 5
-
-$objTh->change(variable => "non-ignorable");
-
-ok($objTh->lt("\x{E2F}", "\x{E46}"));
-ok($objTh->lt("\x{E46}", "\x{E4F}"));
+# 7
 
 ok($objTh->lt("\x{E2E}", "\x{E4D}"));
 ok($objTh->lt("\x{E4D}", "\x{E30}"));
@@ -64,8 +61,9 @@ ok($objTh->eq("\x{E47}", ""));
 ok($objTh->eq("\x{E48}", ""));
 ok($objTh->eq("\x{E49}", ""));
 ok($objTh->eq("\x{E4A}", ""));
+ok($objTh->eq("\x{E4B}", ""));
 
-# 16
+# 17
 
 $objTh->change(level => 2);
 
@@ -77,13 +75,57 @@ ok($objTh->lt("\x{E49}", "\x{E4A}"));
 ok($objTh->lt("\x{E4A}", "\x{E4B}"));
 
 ok($objTh->eq("\x{E32}", "\x{E45}"));
+ok($objTh->eq("\x{E32}\x{E4D}", "\x{E4D}\x{E32}"));
+ok($objTh->eq("\x{E4D}\x{E32}", "\x{E33}"));
+ok($objTh->eq("\x{E4D}\x{E45}", "\x{E45}\x{E4D}"));
 
-# 23
+# 27
 
 $objTh->change(level => 3);
 
 ok($objTh->lt("\x{E32}", "\x{E45}"));
+ok($objTh->lt("\x{E32}\x{E4D}", "\x{E4D}\x{E32}"));
+ok($objTh->lt("\x{E4D}\x{E32}", "\x{E33}"));
+ok($objTh->lt("\x{E4D}\x{E45}", "\x{E45}\x{E4D}"));
 
-ok($objTh->eq("\x{E33}", "\x{E4D}\x{E32}"));
+ok($objTh->eq("\x{E4F}", "\x{E2F}"));
+ok($objTh->eq("\x{E2F}", "\x{E5A}"));
+ok($objTh->eq("\x{E5A}", "\x{E5B}"));
+ok($objTh->eq("\x{E5B}", "\x{E46}"));
 
-# 25
+# 35
+
+$objTh->change(level => 4);
+
+for my $t ("", "\x{E01}") {
+    ok($objTh->lt("\x{E4F}$t", "\x{E2F}$t"));
+    ok($objTh->lt("\x{E2F}$t", "\x{E5A}$t"));
+    ok($objTh->lt("\x{E5A}$t", "\x{E5B}$t"));
+    ok($objTh->lt("\x{E5B}$t", "\x{E46}$t"));
+}
+
+# 43
+
+$objTh->change(level => 1);
+
+ok($objTh->eq("\x{E4F}", "\x{E2F}"));
+ok($objTh->eq("\x{E2F}", "\x{E5A}"));
+ok($objTh->eq("\x{E5A}", "\x{E5B}"));
+ok($objTh->eq("\x{E5B}", "\x{E46}"));
+
+# 47
+
+$objTh->change(variable => "non-ignorable");
+
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objTh->change(highestFFFF => 1) if $h;
+
+    ok($objTh->lt("\x{E4F}$t", "\x{E2F}"));
+    ok($objTh->lt("\x{E2F}$t", "\x{E5A}"));
+    ok($objTh->lt("\x{E5A}$t", "\x{E5B}"));
+    ok($objTh->lt("\x{E5B}$t", "\x{E46}"));
+}
+
+# 55

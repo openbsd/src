@@ -1,6 +1,6 @@
 package B::Xref;
 
-our $VERSION = '1.03';
+our $VERSION = '1.05';
 
 =head1 NAME
 
@@ -192,7 +192,7 @@ sub load_pad {
     my $padlist = shift;
     my ($namelistav, $vallistav, @namelist, $ix);
     @pad = ();
-    return if class($padlist) eq "SPECIAL";
+    return if class($padlist) =~ '^(?:SPECIAL|NULL)\z';
     ($namelistav,$vallistav) = $padlist->ARRAY;
     @namelist = $namelistav->ARRAY;
     for ($ix = 1; $ix < @namelist; $ix++) {
@@ -273,6 +273,15 @@ sub pp_nextstate {
     $file = $op->file;
     $line = $op->line;
     $top = UNKNOWN;
+}
+
+sub pp_padrange {
+    my $op = shift;
+    my $count = $op->private & 127;
+    for my $i (0..$count-1) {
+	$top = $pad[$op->targ + $i];
+	process($top, $op->private & OPpLVAL_INTRO ? "intro" : "used");
+    }
 }
 
 sub pp_padsv {

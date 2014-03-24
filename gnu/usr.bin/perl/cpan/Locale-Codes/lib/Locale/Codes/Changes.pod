@@ -22,7 +22,74 @@ September, December). I will also check on request, so if a code
 changes that you use, feel free to contact me.  Any time there are new
 codes, I will add them to the module and release a new version.
 
-=head1 VERSION 3.22  (yyyy-mm-dd; sbeck)
+=head1 VERSION 3.28  (planned 2013-12-01; sbeck)
+
+=head1 VERSION 3.27  (planned 2013-09-01; sbeck)
+
+=head1 VERSION 3.26  (planned 2013-06-01; sbeck)
+
+=head1 VERSION 3.25  (2013-03-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.24  (2012-12-03; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Syria alias>
+
+Syria added as an alias.  RT 82747
+
+=item B<FIPS-10 country codes deprecated>
+
+The FIPS-10 document is being withdrawn.  It was deprecated in 2008,
+and is being updated now only until all the agencies that use it have
+switched to something else.  The current version no longer lists the
+long names for countries.  These long names (such as 'Republic of
+Albania' for Albania) only appeared in the old FIPS-10 document which
+is no longer available, so they are no longer available in this module.
+
+I will continue to support the FIPS-10 codeset as long as it is available,
+but at that point, it will be withdrawn immediately.  If an official
+end-of-life date is announced, I will include a notice here.  Otherwise, support
+for the codeset will be discontinued when the document is withdrawn.
+
+You are encouraged to no longer use the FIPS-10 codeset.
+
+=item B<Domain country codes now come from ISO 3166>
+
+The IANA domain codes have changed slightly.  The IANA no longer
+publishes a list of countries associated with their codes.  Instead,
+they use the ISO 3166 codes and country names.  However, they support
+a few non-standard codes, so I will continue to maintain this codeset.
+The domain codes are now lowercase to correspond to the ISO 3166 codes.
+
+=back
+
+=head1 VERSION 3.23  (2012-09-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.22  (2012-06-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Updated perl version required>
+
+Changed 'require 5.002' (which dated back to the version 2.xx Locale-Codes)
+to 'require 5.006'.  Some features used in Locale-Codes are not supported that
+far back.  Nicholas Clark
+
+=item B<Sorted deprecated codes>
+
+The codes in the generated deprecated codes modules were not sorted making version
+diffs bigger than they should be.  Nicholas Clark
+
+=back
 
 =head1 VERSION 3.21  (2012-03-01; sbeck)
 
@@ -562,7 +629,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 =head1 COPYRIGHT
 
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2012 Sullivan Beck
+   Copyright (c) 2010-2013 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

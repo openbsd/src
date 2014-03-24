@@ -42,11 +42,11 @@ main(int argc, char **argv)
 void
 sdump(int pagf)
 {
-	register b;
-	register n = 0;
-	register t = 0;
-	register o = 0;
-	register e;
+	int b;
+	int n = 0;
+	int t = 0;
+	int o = 0;
+	int e;
 	char pag[PBLKSIZ];
 
 	while ((b = read(pagf, pag, PBLKSIZ)) > 0) {
@@ -72,9 +72,9 @@ sdump(int pagf)
 int
 pagestat(char *pag)
 {
-	register n;
-	register free;
-	register short *ino = (short *) pag;
+	int n;
+	int free;
+	short *ino = (short *) pag;
 
 	if (!(n = ino[0]))
 		printf("no entries.\n");

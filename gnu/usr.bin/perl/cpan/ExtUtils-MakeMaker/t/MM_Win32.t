@@ -272,12 +272,6 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
 # dist_ci() should look into that
 # dist_core() should look into that
 
-# pasthru()
-{
-    my $pastru = "PASTHRU = " . ($Config{make} =~ /^nmake/i ? "-nologo" : "");
-    is( $MM->pasthru(), $pastru, 'pasthru()' );
-}
-
 # _identify_compiler_environment()
 {
     sub _run_cc_id {

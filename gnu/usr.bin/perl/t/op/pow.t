@@ -37,11 +37,11 @@ is(3**1, 3,      "positive ** 1 = self");
 is(3**2, 9,      "positive ** 2 = positive");
 is(3**3, 27,     "(positive int) ** (odd power) is positive");
 
-# And test order of operations while we're at it
-is(-3**0, -1);
-is(-3**1, -3);
-is(-3**2, -9);
-is(-3**3, -27);
+# And test order of operations while we are at it
+is(-3**0, -1,      "positive ** 0, then negated, = -1");
+is(-3**1, -3,      "positive ** 1, then negated, = negative of self");
+is(-3**2, -9,      "positive ** 2, then negated, = negative of square");
+is(-3**3, -27,     "(positive int) ** (odd power), then negated, is negative");
 
 
 # Ought to be 32, 64, 36 or something like that.

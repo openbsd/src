@@ -25,7 +25,13 @@ typedef datum datum_key_copy;
 
 #define GDBM_BLOCKSIZE 0 /* gdbm defaults to stat blocksize */
 
+#if defined(GDBM_VERSION_MAJOR) && defined(GDBM_VERSION_MINOR) \
+    && GDBM_VERSION_MAJOR > 1 || \
+    (GDBM_VERSION_MAJOR == 1 && GDBM_VERSION_MINOR >= 9)
+typedef void (*FATALFUNC)(const char *);
+#else
 typedef void (*FATALFUNC)();
+#endif
 
 #ifndef GDBM_FAST
 static int
@@ -58,6 +64,11 @@ output_datum(pTHX_ SV *arg, char *str, int size)
 #define gdbm_setopt(db,optflag,optval,optlen) not_here("gdbm_setopt")
 #endif
 
+static void
+croak_string(const char *message) {
+    Perl_croak_nocontext("%s", message);
+}
+
 #include "const-c.inc"
 
 MODULE = GDBM_File	PACKAGE = GDBM_File	PREFIX = gdbm_
@@ -65,18 +76,18 @@ MODULE = GDBM_File	PACKAGE = GDBM_File	PREFIX = gdbm_
 INCLUDE: const-xs.inc
 
 GDBM_File
-gdbm_TIEHASH(dbtype, name, read_write, mode, fatal_func = (FATALFUNC)croak)
+gdbm_TIEHASH(dbtype, name, read_write, mode)
 	char *		dbtype
 	char *		name
 	int		read_write
 	int		mode
-	FATALFUNC	fatal_func
 	CODE:
 	{
 	    GDBM_FILE  	dbp ;
 
 	    RETVAL = NULL ;
-	    if ((dbp =  gdbm_open(name, GDBM_BLOCKSIZE, read_write, mode, fatal_func))) {
+	    if ((dbp =  gdbm_open(name, GDBM_BLOCKSIZE, read_write, mode,
+	       	     	          (FATALFUNC) croak_string))) {
 	        RETVAL = (GDBM_File)safecalloc(1, sizeof(GDBM_File_type)) ;
 		RETVAL->dbp = dbp ;
 	    }

@@ -1,33 +1,41 @@
-# DerivedNumericValues-6.1.0.txt
-# Date: 2011-08-19, 17:58:36 GMT [MD]
+# DerivedNumericValues-6.2.0.txt
+# Date: 2012-08-13, 19:20:22 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
 # Derived Property:   Numeric_Value
-#  The values are based on field 8 of UnicodeData.txt, plus the fields
-#  kAccountingNumeric, kOtherNumeric, kPrimaryNumeric in the Unicode Han Database (Unihan).
-#  The derivations for these values are as follows.
-#     Numeric_Value = the value of kAccountingNumeric, kOtherNumeric, or kPrimaryNumeric, if they exist; otherwise
-#     Numeric_Value = the value of field 8, if it exists; otherwise
-#     Numeric_Value = NaN
+#  Field 1:
+#    The values are based on field 8 of UnicodeData.txt, plus the fields
+#    kAccountingNumeric, kOtherNumeric, kPrimaryNumeric in the Unicode Han Database (Unihan).
+#    The derivations for these values are as follows.
+#      Numeric_Value = the value of kAccountingNumeric, kOtherNumeric, or kPrimaryNumeric, if they exist; otherwise
+#      Numeric_Value = the value of field 8, if it exists; otherwise
+#      Numeric_Value = NaN
+#  Field 2:
+#    This field is empty; it used to be a copy of the numeric type.
 #
-# WARNING: Certain values, such as 0.16666667, are repeating fractions
+#  Field 3:
+#    This field was added to this extracted data as of Unicode 5.1.0,
+#    expressing the same numeric value either as a whole integer
+#    where possible, or as a rational fraction such as "1/6".
+#
+# WARNING: Certain values, such as 0.16666667, are repeating fractions.
 # Although they are only printed with a limited number of decimal places
 # in this file, they should be expressed to the limits of the precision
 # available when used.
 #
-# The third field is empty; it used to be a copy of the numeric type.
-#
-# A fourth field was added to this extracted data as of
-# Unicode 5.1.0, expressing the same numeric value either as
-# a whole integer where possible or as a rational fraction, e.g. "1/6".
-#
-# @missing: 0000..10FFFF; ; NaN
+# @missing: 0000..10FFFF; NaN; ; NaN
+
+# ================================================
+
+12456..12457  ; -1.0 ; ; -1 # Nl   [2] CUNEIFORM NUMERIC SIGN NIGIDAMIN..CUNEIFORM NUMERIC SIGN NIGIDAESH
+
+# Total code points: 2
 
 # ================================================
 
@@ -1771,6 +1779,18 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 # ================================================
 
 2188          ; 100000.0 ; ; 100000 # Nl       ROMAN NUMERAL ONE HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+12432         ; 216000.0 ; ; 216000 # Nl       CUNEIFORM NUMERIC SIGN SHAR2 TIMES GAL PLUS DISH
+
+# Total code points: 1
+
+# ================================================
+
+12433         ; 432000.0 ; ; 432000 # Nl       CUNEIFORM NUMERIC SIGN SHAR2 TIMES GAL PLUS MIN
 
 # Total code points: 1
 

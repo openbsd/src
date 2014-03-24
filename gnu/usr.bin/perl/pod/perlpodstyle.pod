@@ -5,70 +5,37 @@ perlpodstyle - Perl POD style guide
 =head1 DESCRIPTION
 
 These are general guidelines for how to write POD documentation for Perl
-scripts and modules, based on general guidelines for writing good Unix man
+scripts and modules, based on general guidelines for writing good UNIX man
 pages.  All of these guidelines are, of course, optional, but following
 them will make your documentation more consistent with other documentation
 on the system.
 
-Here are some simple guidelines for markup; see L<perlpod> for details.
-
-=over
-
-=item bold (BE<lt>E<gt>)
-
-B<NOTE: Use extremely rarely.>  Do I<not> use bold for emphasis; that's
-what italics are for.  Restrict bold for notices like B<NOTE:> and
-B<WARNING:>.  However, program arguments and options--but I<not> their
-names!--are written in bold (using BE<lt>E<gt>) to distinguish the B<-f>
-command-line option from the C<-f> filetest operator.
-
-=item italic (IE<lt>E<gt>)
-
-Use italic to emphasize text, like I<this>.  Function names are
+The name of the program being documented is conventionally written in bold
+(using BE<lt>E<gt>) wherever it occurs, as are all program options.
+Arguments should be written in italics (IE<lt>E<gt>).  Function names are
 traditionally written in italics; if you write a function as function(),
-Pod::Man will take care of this for you.  Names of programs, including the
-name of the program being documented, are conventionally written in italics
-(using IE<lt>E<gt>) wherever they occur in normal roman text.
-
-=item code (CE<lt>E<gt>)
-
-Literal code should be in CE<lt>E<gt>.  However metasyntactic placeholders
-should furthermore be nested in "italics" (actually, oblique) like
-CE<lt>IE<lt>E<gt>E<gt>.  That way
-CE<lt>accept(IE<lt>NEWSOCKETE<gt>, E<lt>GENERICSOCKETE<gt>)E<gt>
-renders as C<accept(I<NEWSOCKET>, I<GENERICSOCKET>)>.
-
-=item files (FE<lt>E<gt>)
-
-Filenames, whether absolute or relative, are specified with the FE<lt>E<gt>
-markup. This will render as italics, but has other semantic connotations.
-
-=back
-
-References to other man pages should be in the form "manpage(section)" or
-"C<LE<lt>manpage(section)E<gt>>", and Pod::Man will automatically format
-those appropriately.  Both will render as I<manpage>(section).  The second
-form, with LE<lt>E<gt>, is used to request that a POD formatter make a link
-to the man page if possible.  As an exception, one normally omits the
-section when referring to module documentation because not all systems
-place it in section 3, although that is the default.  You may use
-C<LE<lt>Module::NameE<gt>> for module references instead, but this is
-optional because the translators are supposed to recognize module
-references in pod, just as they do variable references like $foo and such.
+Pod::Man will take care of this for you.  Literal code or commands should
+be in CE<lt>E<gt>.  References to other man pages should be in the form
+C<manpage(section)> or C<LE<lt>manpage(section)E<gt>>, and Pod::Man will
+automatically format those appropriately.  The second form, with
+LE<lt>E<gt>, is used to request that a POD formatter make a link to the
+man page if possible.  As an exception, one normally omits the section
+when referring to module documentation since it's not clear what section
+module documentation will be in; use C<LE<lt>Module::NameE<gt>> for module
+references instead.
 
 References to other programs or functions are normally in the form of man
 page references so that cross-referencing tools can provide the user with
 links and the like.  It's possible to overdo this, though, so be careful not
 to clutter your documentation with too much markup.  References to other
 programs that are not given as man page references should be enclosed in
-italics via IE<lt>E<gt>.
+BE<lt>E<gt>.
 
-Major headers should be set out using a C<=head1> directive, and are
-historically written in the rather startling ALL UPPER CASE format; this is
-not mandatory, but it's strongly recommended so that sections have
-consistent naming across different software packages.  The translators are
-supposed to translate all caps into small caps.  Minor headers may be
-included using C<=head2>, and are typically in mixed case.
+The major headers should be set out using a C<=head1> directive, and are
+historically written in the rather startling ALL UPPER CASE format; this
+is not mandatory, but it's strongly recommended so that sections have
+consistent naming across different software packages.  Minor headers may
+be included using C<=head2>, and are typically in mixed case.
 
 The standard sections of a manual page are:
 
@@ -87,7 +54,7 @@ function documented by this POD page should be listed, separated by a
 comma and a space.  For a Perl module, just give the module name.  A
 single dash, and only a single dash, should separate the list of programs
 or functions from the description.  Do not use any markup such as
-CE<lt>E<gt> or IE<lt>E<gt> anywhere in this line.  Functions should not be
+CE<lt>E<gt> or BE<lt>E<gt> anywhere in this line.  Functions should not be
 qualified with C<()> or the like.  The description should ideally fit on a
 single line, even if a man program replaces the dash with a few tabs.
 
@@ -229,7 +196,7 @@ Miscellaneous commentary.
 =item AUTHOR
 
 Who wrote it (use AUTHORS for multiple people).  It's a good idea to
-include your current email address (or some email address to which bug
+include your current e-mail address (or some e-mail address to which bug
 reports should be sent) or some other contact information so that users
 have a way of contacting you.  Remember that program documentation tends
 to roam the wild for far longer than you expect and pick a contact method
@@ -294,22 +261,12 @@ handlers.  These headings are primarily useful when documenting parts of a
 C library.
 
 Finally, as a general note, try not to use an excessive amount of markup.
-As documented here and in L<Pod::Man>, you can safely leave Perl variables,
-module names, function names, man page references, and the like unadorned
-by markup, and the POD translators will figure it all out for you.  This
-makes it much easier to later edit the documentation.  Note that many
-existing translators will do the wrong thing with email addresses when
-wrapped in LE<lt>E<gt>, so don't do that.
-
-You can check whether your documentation looks right by running
-
-    % pod2text -o something.pod | less
-
-If you have I<groff> installed, you can get an even better look this way:
-
-    % pod2man something.pod | groff -Tps -mandoc > something.ps
-
-Now view the resulting Postscript file to see whether everything checks out.
+As documented here and in L<Pod::Man>, you can safely leave Perl
+variables, function names, man page references, and the like unadorned by
+markup and the POD translators will figure it out for you.  This makes it
+much easier to later edit the documentation.  Note that many existing
+translators will do the wrong thing with e-mail addresses when wrapped in
+LE<lt>E<gt>, so don't do that.
 
 =head1 SEE ALSO
 

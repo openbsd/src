@@ -15,11 +15,22 @@ BEGIN {
 use B::Deparse;
 my $bd = new B::Deparse '-p';
 
-my %unsupported = map +($_=>1), qw (CORE and cmp dump eq ge gt le
-                                    lt ne or x xor);
+my %unsupported = map +($_=>1), qw (
+ __DATA__ __END__ AUTOLOAD BEGIN UNITCHECK CORE DESTROY END INIT CHECK and
+  cmp default do dump else elsif eq eval for foreach
+  format ge given goto grep gt if last le local lt m map my ne next
+  no  or  our  package  print  printf  q  qq  qr  qw  qx  redo  require
+  return s say sort state sub tr unless until use
+  when while x xor y
+);
 my %args_for = (
   dbmopen  => '%1,$2,$3',
   dbmclose => '%1',
+  delete   => '$1[2]',
+  exists   => '$1[2]',
+);
+my %desc = (
+  pos => 'match position',
 );
 
 use File::Spec::Functions;
@@ -29,7 +40,7 @@ open my $kh, $keywords_file
 while(<$kh>) {
   if (m?__END__?..${\0} and /^[+-]/) {
     chomp(my $word = $');
-    if($& eq '+' || $unsupported{$word}) {
+    if($unsupported{$word}) {
       $tests ++;
       ok !defined &{"CORE::$word"}, "no CORE::$word";
     }
@@ -44,7 +55,8 @@ while(<$kh>) {
 
       CORE::state $protochar = qr/([^\\]|\\(?:[^[]|\[[^]]+\]))/;
       my $numargs =
-            () = $proto =~ s/;.*//r =~ /\G$protochar/g;
+            $word eq 'delete' || $word eq 'exists' ? 1 :
+            (() = $proto =~ s/;.*//r =~ /\G$protochar/g);
       my $code =
          "#line 1 This-line-makes-__FILE__-easier-to-test.
           sub { () = (my$word("
@@ -83,7 +95,8 @@ while(<$kh>) {
       next if ($proto =~ /\@/);
       # These ops currently accept any number of args, despite their
       # prototypes, if they have any:
-      next if $word =~ /^(?:chom?p|exec|keys|each|not|read(?:lin|pip)e
+      next if $word =~ /^(?:chom?p|exec|keys|each|not
+                           |(?:prototyp|read(?:lin|pip))e
                            |reset|system|values|l?stat)|evalbytes/x;
 
       $tests ++;
@@ -100,7 +113,8 @@ while(<$kh>) {
                )
        . "))}";
       eval $code;
-      like $@, qr/^Too many arguments for $word/,
+      my $desc = $desc{$word} || $word;
+      like $@, qr/^Too many arguments for $desc/,
           "inlined CORE::$word with too many args"
         or warn $code;
 
@@ -120,6 +134,12 @@ is runperl(prog => 'print CORE->lc, qq-\n-'), "core\n",
  'methods calls autovivify coresubs';
 is runperl(prog => '@ISA=CORE; print main->uc, qq-\n-'), "MAIN\n",
  'inherted method calls autovivify coresubs';
+
+{ # RT #117607
+  $tests++;
+  like runperl(prog => '$foo/; \&CORE::lc', stderr => 1),
+    qr/^syntax error/, "RT #117607: \\&CORE::foo doesn't crash in error context";
+}
 
 $tests++;
 ok eval { *CORE::exit = \42 },

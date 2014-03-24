@@ -1,6 +1,6 @@
 package B::Debug;
 
-our $VERSION = '1.17';
+our $VERSION = '1.18';
 
 use strict;
 require 5.006;
@@ -285,11 +285,16 @@ EOT
 sub B::AV::debug {
     my ($av) = @_;
     $av->B::SV::debug;
+    _array_debug($av);
+}
+
+sub _array_debug {
+    my ($av) = @_;
     # tied arrays may leave out FETCHSIZE
     my (@array) = eval { $av->ARRAY; };
     print "\tARRAY\t\t(", join(", ", map("0x" . $$_, @array)), ")\n";
     my $fill = eval { scalar(@array) };
-    if ($Config{'useithreads'}) {
+    if ($Config{'useithreads'} && class($av) ne 'PADLIST') {
       printf <<'EOT', $fill, $av->MAX, $av->OFF;
 	FILL		%d
 	MAX		%d
@@ -351,6 +356,15 @@ sub B::SPECIAL::debug {
     my $sv = shift;
     my $i = ref $sv ? $$sv : 0;
     print exists $specialsv_name[$i] ? $specialsv_name[$i] : "", "\n";
+}
+
+sub B::PADLIST::debug {
+    my ($padlist) = @_;
+    printf <<'EOT', class($padlist), $$padlist, $padlist->REFCNT;
+%s (0x%x)
+	REFCNT		%d
+EOT
+    _array_debug($padlist);
 }
 
 sub compile {
@@ -417,3 +431,4 @@ Copyright (c) 2008, 2010 Reini Urban
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 =cut
+

@@ -7,15 +7,13 @@
 # Paul Green (Paul.Green@stratus.com)
 
 # C compiler and default options.
-cc=gcc
-ccflags="-D_XOPEN_SOURCE=700 -D_VOS_EXTENDED_NAMES"
-ccdlflags="-Wl,-rpath,$shrpdir"
-cccdlflags="-fPIC"
+cc=${CC-gcc}
+ccflags=${CFLAGS-"-D_XOPEN_SOURCE=700 -D_SYSV -D_VOS_EXTENDED_NAMES -D_FILE_OFFSET_BITS=64"}
 
 # Make command.
-make="/system/gnu_library/bin/gmake"
+make=${MAKE-"/system/gnu_library/bin/gmake"}
 # indented to not put it into config.sh
-  _make="/system/gnu_library/bin/gmake"
+  _make=${MAKE-"/system/gnu_library/bin/gmake"}
 
 # Check for the minimum acceptable release of OpenVOS (17.1.0).
 if test `uname -r | sed -e 's/OpenVOS Release //' -e 's/VOS Release //'` \< "17.1.0"; then
@@ -27,7 +25,7 @@ EOF
 exit 1
 fi
 
-# Always X86
+# Architecture name always X86
 archname=`uname -m`
 
 # Executable suffix.
@@ -43,26 +41,16 @@ glibpth="$loclibpth"
 
 # Include library paths
 locincpth=""
-usrinc="/system/include_library"
+usrinc=${USRINC-"/system/include_library"}
 
 # Where to install perl5.
-prefix=/system/ported/perl5
+prefix=/system/ported
 
 # Linker is gcc.
-ld="gcc"
-lddlflags="-shared"
-
-# Shared libraries!
-so="so"
-
-# Build libperl.so
-useshrplib="true"
+ld=${CC-"gcc"}
 
 # Don't use nm. The VOS copy of libc.a is empty.
 usenm="n"
-
-# Make the default be no large file support.
-uselargefiles="n"
 
 # Don't use malloc that comes with perl.
 usemymalloc="n"
@@ -70,8 +58,8 @@ usemymalloc="n"
 # Make bison the default compiler-compiler.
 yacc="/system/gnu_library/bin/bison"
 
-# VOS doesn't have (or need) a pager, but perl needs one.
-pager="/system/gnu_library/bin/cat.pm"
+# VOS doesn't need a pager, but perl does.
+pager="/system/gnu_library/bin/less.pm"
 
 # VOS has a bug that causes _exit() to flush all files.
 # This confuses the tests.  Make 'em happy here.
@@ -89,3 +77,27 @@ test -h vos.c || ln -s vos/vos.c vos.c
 
 # Tell Configure where to find the hosts file.
 hostcat="cat /system/stcp/hosts"
+
+# VOS 17.1 has support for dynamic linking.
+usedl="define"
+
+# Filename suffix for shared libraries.
+so="so"
+
+# Flags used when compiling a module for a shared library.
+cccdlflags="-fPIC"
+
+# Flags passed to $ld to produce shared libraries.
+lddlflags="-shared"
+
+# Flags passed to $cc when linking a program that uses shared libraries.
+ccdlflags="-Wl,-export-dynamic"
+
+# Filename suffix for dynamically-loaded perl modules.
+dlext="so"
+
+# Use dlopen() to open shared libraries.
+dlsrc="dl_dlopen.xs"
+
+# Build a shared libperl?  (Define on Configure cmd line.)
+# useshrplib="true"

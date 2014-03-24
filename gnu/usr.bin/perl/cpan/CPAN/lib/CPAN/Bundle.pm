@@ -228,7 +228,8 @@ Going to $meth that.
         $self->debug("type[$type] s[$s]") if $CPAN::DEBUG;
         my $obj = $CPAN::META->instance($type,$s);
         $obj->{reqtype} = $self->{reqtype};
-        $obj->$meth();
+        # $obj->$meth();
+       CPAN::Queue->queue_item(qmod => $obj->id, reqtype => $self->{reqtype});
     }
 }
 

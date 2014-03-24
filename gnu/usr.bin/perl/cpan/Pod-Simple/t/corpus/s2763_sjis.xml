@@ -1,4 +1,7 @@
 <Document start_line="2">
+  <encoding start_line="2">
+    shiftjis
+  </encoding>
   <head1 start_line="4">
     NAME
   </head1>
@@ -9,8 +12,8 @@
     DESCRIPTION
   </head1>
   <Para start_line="10">
-    This is a test Pod document in Shift-JIS. Its content is
-    some uninteresting product specs I found on the Net.
+    This is a test Pod document in Shift-JIS. Its content is some uninteresting
+    product specs I found on the Net.
   </Para>
   <Para start_line="13">
     It&#39;s an textitem list:
@@ -26,7 +29,8 @@
       &#20809;&#28304;
     </item-text>
     <Para start_line="23">
-      GZ4 &#12480;&#12452;&#12463;&#12525;&#12452;&#12483;&#12463;&#12511;&#12521;&#12540;&#12521;&#12531;&#12503;
+      GZ4
+      &#12480;&#12452;&#12463;&#12525;&#12452;&#12483;&#12463;&#12511;&#12521;&#12540;&#12521;&#12531;&#12503;
       12V 10W&#215;1
     </Para>
     <item-text start_line="25">
@@ -45,7 +49,8 @@
       &#26448;&#36074;
     </item-text>
     <Para start_line="35">
-      &#27193;&#33026; &#12450;&#12523;&#12511;&#12289;&#12450;&#12523;&#12510;&#12452;&#12488;&#20181;&#19978;
+      &#27193;&#33026;
+      &#12450;&#12523;&#12511;&#12289;&#12450;&#12523;&#12510;&#12452;&#12488;&#20181;&#19978;
       &#12460;&#12521;&#12473;
     </Para>
     <item-text start_line="37">

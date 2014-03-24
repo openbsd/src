@@ -4,7 +4,7 @@ package I18N::LangTags::List;
 #  Time-stamp: "2004-10-06 23:26:21 ADT"
 use strict;
 use vars qw(%Name %Is_Disrec $Debug $VERSION);
-$VERSION = '0.35_01';
+$VERSION = '0.39';
 # POD at the end.
 
 #----------------------------------------------------------------------

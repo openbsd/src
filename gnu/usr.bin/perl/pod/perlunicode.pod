@@ -28,8 +28,10 @@ C<use feature 'unicode_strings'> is specified.  (This is automatically
 selected if you use C<use 5.012> or higher.)  Failure to do this can
 trigger unexpected surprises.  See L</The "Unicode Bug"> below.
 
-This pragma doesn't affect I/O, and there are still several places
-where Unicode isn't fully supported, such as in filenames.
+This pragma doesn't affect I/O.  Nor does it change the internal
+representation of strings, only their interpretation.  There are still
+several places where Unicode isn't fully supported, such as in
+filenames.
 
 =item Input and Output Layers
 
@@ -72,8 +74,7 @@ See L</"Byte and Character Semantics"> for more details.
 
 =head2 Byte and Character Semantics
 
-Beginning with version 5.6, Perl uses logically-wide characters to
-represent strings internally.
+Perl uses logically-wide characters to represent strings internally.
 
 Starting in Perl 5.14, Perl-level operations work with
 characters rather than bytes within the scope of a
@@ -97,13 +98,8 @@ while C<use locale ':not_characters'> effectively also selects
 C<use feature 'unicode_strings'> in its scope; see L<perllocale>.)
 Otherwise, Perl uses the platform's native
 byte semantics for characters whose code points are less than 256, and
-Unicode semantics for those greater than 255.  On EBCDIC platforms, this
-is almost seamless, as the EBCDIC code pages that Perl handles are
-equivalent to Unicode's first 256 code points.  (The exception is that
-EBCDIC regular expression case-insensitive matching rules are not as
-as robust as Unicode's.)   But on ASCII platforms, Perl uses US-ASCII
-(or Basic Latin in Unicode terminology) byte semantics, meaning that characters
-whose ordinal numbers are in the range 128 - 255 are undefined except for their
+Unicode semantics for those greater than 255.  That means that non-ASCII
+characters are undefined except for their
 ordinal numbers.  This means that none have case (upper and lower), nor are any
 a member of character classes, like C<[:alpha:]> or C<\w>.  (But all do belong
 to the C<\W> class or the Perl regular expression extension C<[:^alpha:]>.)
@@ -720,7 +716,8 @@ This is a synonym for C<\p{Present_In=*}>
 
 =item B<C<\p{PerlSpace}>>
 
-This is the same as C<\s>, restricted to ASCII, namely C<S<[ \f\n\r\t]>>.
+This is the same as C<\s>, restricted to ASCII, namely C<S<[ \f\n\r\t]>>
+and starting in Perl v5.18, experimentally, a vertical tab.
 
 Mnemonic: Perl's (original) space
 
@@ -807,7 +804,9 @@ L<perlrecharclass/POSIX Character Classes>.
 =head2 User-Defined Character Properties
 
 You can define your own binary character properties by defining subroutines
-whose names begin with "In" or "Is".  The subroutines can be defined in any
+whose names begin with "In" or "Is".  (The experimental feature
+L<perlre/(?[ ])> provides an alternative which allows more complex
+definitions.)  The subroutines can be defined in any
 package.  The user-defined properties can be used in the regular expression
 C<\p> and C<\P> constructs; if you are using a user-defined property from a
 package other than the one you are in, you must specify its package in the
@@ -978,62 +977,93 @@ Level 1 - Basic Unicode Support
  RL1.1   Hex Notation                     - done          [1]
  RL1.2   Properties                       - done          [2][3]
  RL1.2a  Compatibility Properties         - done          [4]
- RL1.3   Subtraction and Intersection     - MISSING       [5]
+ RL1.3   Subtraction and Intersection     - experimental  [5]
  RL1.4   Simple Word Boundaries           - done          [6]
  RL1.5   Simple Loose Matches             - done          [7]
  RL1.6   Line Boundaries                  - MISSING       [8][9]
  RL1.7   Supplementary Code Points        - done          [10]
 
- [1]  \x{...}
- [2]  \p{...} \P{...}
- [3]  supports not only minimal list, but all Unicode character
-      properties (see Unicode Character Properties above)
- [4]  \d \D \s \S \w \W \X [:prop:] [:^prop:]
- [5]  can use regular expression look-ahead [a] or
-      user-defined character properties [b] to emulate set
-      operations
- [6]  \b \B
- [7]  note that Perl does Full case-folding in matching (but with
-      bugs), not Simple: for example U+1F88 is equivalent to
-      U+1F00 U+03B9, instead of just U+1F80.  This difference
-      matters mainly for certain Greek capital letters with certain
-      modifiers: the Full case-folding decomposes the letter,
-      while the Simple case-folding would map it to a single
-      character.
- [8]  should do ^ and $ also on U+000B (\v in C), FF (\f), CR
-      (\r), CRLF (\r\n), NEL (U+0085), LS (U+2028), and PS
-      (U+2029); should also affect <>, $., and script line
-      numbers; should not split lines within CRLF [c] (i.e. there
-      is no empty line between \r and \n)
- [9]  Linebreaking conformant with UAX#14 "Unicode Line Breaking
-      Algorithm" is available through the Unicode::LineBreaking
-      module.
- [10] UTF-8/UTF-EBDDIC used in Perl allows not only U+10000 to
-      U+10FFFF but also beyond U+10FFFF
+=over 4
 
-[a] You can mimic class subtraction using lookahead.
+=item [1]
+
+\x{...}
+
+=item [2]
+
+\p{...} \P{...}
+
+=item [3]
+
+supports not only minimal list, but all Unicode character properties (see Unicode Character Properties above)
+
+=item [4]
+
+\d \D \s \S \w \W \X [:prop:] [:^prop:]
+
+=item [5]
+
+The experimental feature in v5.18 "(?[...])" accomplishes this.  See
+L<perlre/(?[ ])>.  If you don't want to use an experimental feature,
+you can use one of the following:
+
+=over 4
+
+=item * Regular expression look-ahead
+
+You can mimic class subtraction using lookahead.
 For example, what UTS#18 might write as
 
-    [{Greek}-[{UNASSIGNED}]]
+    [{Block=Greek}-[{UNASSIGNED}]]
 
 in Perl can be written as:
 
-    (?!\p{Unassigned})\p{InGreekAndCoptic}
-    (?=\p{Assigned})\p{InGreekAndCoptic}
+    (?!\p{Unassigned})\p{Block=Greek}
+    (?=\p{Assigned})\p{Block=Greek}
 
 But in this particular example, you probably really want
 
-    \p{GreekAndCoptic}
+    \p{Greek}
 
 which will match assigned characters known to be part of the Greek script.
 
-Also see the L<Unicode::Regex::Set> module; it does implement the full
-UTS#18 grouping, intersection, union, and removal (subtraction) syntax.
+=item * CPAN module L<Unicode::Regex::Set>
 
-[b] '+' for union, '-' for removal (set-difference), '&' for intersection
-(see L</"User-Defined Character Properties">)
+It does implement the full UTS#18 grouping, intersection, union, and
+removal (subtraction) syntax.
 
-[c] Try the C<:crlf> layer (see L<PerlIO>).
+=item * L</"User-Defined Character Properties">
+
+'+' for union, '-' for removal (set-difference), '&' for intersection
+
+=back
+
+=item [6]
+
+\b \B
+
+=item [7]
+
+Note that Perl does Full case-folding in matching (but with bugs), not Simple: for example U+1F88 is equivalent to U+1F00 U+03B9, instead of just U+1F80.  This difference matters mainly for certain Greek capital letters with certain modifiers: the Full case-folding decomposes the letter, while the Simple case-folding would map it to a single character.
+
+=item [8]
+
+Should do ^ and $ also on U+000B (\v in C), FF (\f), CR (\r), CRLF
+(\r\n), NEL (U+0085), LS (U+2028), and PS (U+2029); should also affect
+<>, $., and script line numbers; should not split lines within CRLF
+(i.e. there is no empty line between \r and \n).  For CRLF, try the
+C<:crlf> layer (see L<PerlIO>).
+
+=item [9]
+
+Linebreaking conformant with UAX#14 "Unicode Line Breaking Algorithm" is available through the Unicode::LineBreaking module.
+
+=item [10]
+
+UTF-8/UTF-EBDDIC used in Perl allows not only U+10000 to
+U+10FFFF but also beyond U+10FFFF
+
+=back
 
 =item *
 
@@ -1330,7 +1360,7 @@ results, or both, but it is not.
 
 The following are such interfaces.  Also, see L</The "Unicode Bug">.
 For all of these interfaces Perl
-currently (as of 5.8.3) simply assumes byte strings both as arguments
+currently (as of v5.16.0) simply assumes byte strings both as arguments
 and results, or UTF-8 strings if the (problematic) C<encoding> pragma has been used.
 
 One reason that Perl does not attempt to resolve the role of Unicode in
@@ -1544,9 +1574,8 @@ are valid UTF-8.
 
 =item *
 
-C<is_utf8_char(s)> returns true if the pointer points to a valid UTF-8
-character.  However, this function should not be used because of
-security concerns.  Instead, use C<is_utf8_string()>.
+C<is_utf8_char_buf(buf, buf_end)> returns true if the pointer points to
+a valid UTF-8 character.
 
 =item *
 
@@ -1722,7 +1751,7 @@ to work under 5.6, so you should be safe to try them out.
 
 A filehandle that should read or write UTF-8
 
-  if ($] > 5.007) {
+  if ($] > 5.008) {
     binmode $fh, ":encoding(utf8)";
   }
 
@@ -1733,10 +1762,10 @@ A scalar that is going to be passed to some extension
 Be it Compress::Zlib, Apache::Request or any extension that has no
 mention of Unicode in the manpage, you need to make sure that the
 UTF8 flag is stripped off. Note that at the time of this writing
-(October 2002) the mentioned modules are not UTF-8-aware. Please
+(January 2012) the mentioned modules are not UTF-8-aware. Please
 check the documentation to verify if this is still true.
 
-  if ($] > 5.007) {
+  if ($] > 5.008) {
     require Encode;
     $val = Encode::encode_utf8($val); # make octets
   }
@@ -1748,7 +1777,7 @@ A scalar we got back from an extension
 If you believe the scalar comes back as UTF-8, you will most likely
 want the UTF8 flag restored:
 
-  if ($] > 5.007) {
+  if ($] > 5.008) {
     require Encode;
     $val = Encode::decode_utf8($val);
   }
@@ -1757,7 +1786,7 @@ want the UTF8 flag restored:
 
 Same thing, if you are really sure it is UTF-8
 
-  if ($] > 5.007) {
+  if ($] > 5.008) {
     require Encode;
     Encode::_utf8_on($val);
   }
@@ -1770,14 +1799,14 @@ When the database contains only UTF-8, a wrapper function or method is
 a convenient way to replace all your fetchrow_array and
 fetchrow_hashref calls. A wrapper function will also make it easier to
 adapt to future enhancements in your database driver. Note that at the
-time of this writing (October 2002), the DBI has no standardized way
+time of this writing (January 2012), the DBI has no standardized way
 to deal with UTF-8 data. Please check the documentation to verify if
 that is still true.
 
   sub fetchrow {
     # $what is one of fetchrow_{array,hashref}
     my($self, $sth, $what) = @_;
-    if ($] < 5.007) {
+    if ($] < 5.008) {
       return $sth->$what;
     } else {
       require Encode;
@@ -1813,7 +1842,7 @@ Scalars that contain only ASCII and are marked as UTF-8 are sometimes
 a drag to your program. If you recognize such a situation, just remove
 the UTF8 flag:
 
-  utf8::downgrade($val) if $] > 5.007;
+  utf8::downgrade($val) if $] > 5.008;
 
 =back
 

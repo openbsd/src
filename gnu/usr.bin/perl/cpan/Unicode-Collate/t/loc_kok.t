@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..13\n"; }
+BEGIN { $| = 1; print "1..21\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -35,22 +35,6 @@ my $objKok = Unicode::Collate::Locale->
 
 ok($objKok->getlocale, 'kok');
 
-$objKok->change(level => 1);
-
-ok($objKok->lt("\x{950}", "\x{902}"));
-ok($objKok->lt("\x{902}", "\x{903}"));
-ok($objKok->lt("\x{903}", "\x{972}"));
-
-ok($objKok->eq("\x{902}", "\x{901}"));
-
-ok($objKok->lt("\x{939}", "\x{933}"));
-ok($objKok->lt("\x{933}", "\x{915}\x{94D}\x{937}"));
-ok($objKok->lt("\x{915}\x{94D}\x{937}", "\x{93D}"));
-
-ok($objKok->eq("\x{933}", "\x{934}"));
-
-# 10
-
 $objKok->change(level => 2);
 
 ok($objKok->lt("\x{902}", "\x{901}"));
@@ -60,4 +44,26 @@ $objKok->change(level => 3);
 
 ok($objKok->eq("\x{933}\x{93C}", "\x{934}"));
 
-# 13
+$objKok->change(level => 1);
+
+ok($objKok->eq("\x{902}", "\x{901}"));
+ok($objKok->eq("\x{933}", "\x{934}"));
+
+# 7
+
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objKok->change(highestFFFF => 1) if $h;
+
+    ok($objKok->lt("\x{950}$t", "\x{902}"));
+    ok($objKok->lt("\x{902}$t", "\x{903}"));
+    ok($objKok->lt("\x{903}$t", "\x{972}"));
+
+    ok($objKok->lt("\x{938}$t", "\x{939}"));
+    ok($objKok->lt("\x{939}$t", "\x{933}"));
+    ok($objKok->lt("\x{933}$t", "\x{915}\x{94D}\x{937}"));
+    ok($objKok->lt("\x{915}\x{94D}\x{937}$t", "\x{93D}"));
+}
+
+# 21

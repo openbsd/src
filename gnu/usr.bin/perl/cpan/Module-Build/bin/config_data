@@ -162,13 +162,13 @@ Koenig (C<CPAN::Config>), Jon Swartz (C<HTML::Mason::Config>), Andy
 Wardley (C<Template::Config>), and Larry Wall (perl's own Config.pm)
 have developed independently.
 
-The configuration system emplyed here was developed in the context of
+The configuration system employed here was developed in the context of
 C<Module::Build>.  Under this system, configuration information for a
 module C<Foo>, for example, is stored in a module called
 C<Foo::ConfigData>) (I would have called it C<Foo::Config>, but that
 was taken by all those other systems mentioned in the previous
 paragraph...).  These C<...::ConfigData> modules contain the
-configuration data, as well as publically accessible methods for
+configuration data, as well as publicly accessible methods for
 querying and setting (yes, actually re-writing) the configuration
 data.  The C<config_data> script (whose docs you are currently
 reading) is merely a front-end for those methods.  If you wish, you

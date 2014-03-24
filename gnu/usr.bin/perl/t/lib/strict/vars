@@ -518,8 +518,8 @@ Execution of - aborted due to compilation errors.
 use strict 'vars';
 qr/(?{$foo++})/;
 EXPECT
-Global symbol "$foo" requires explicit package name at (re_eval 1) line 1.
-Compilation failed in regexp at - line 3.
+Global symbol "$foo" requires explicit package name at - line 3.
+Execution of - aborted due to compilation errors.
 ########
 # Regex compilation errors weren't UTF-8 clean.
 use strict 'vars';
@@ -527,8 +527,8 @@ use utf8;
 use open qw( :utf8 :std );
 qr/(?{$fòò++})/;
 EXPECT
-Global symbol "$fòò" requires explicit package name at (re_eval 1) line 1.
-Compilation failed in regexp at - line 5.
+Global symbol "$fòò" requires explicit package name at - line 5.
+Execution of - aborted due to compilation errors.
 ########
 # [perl #73712] 'Variable is not imported' should be suppressible
 $dweck;

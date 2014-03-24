@@ -295,7 +295,7 @@ Use the L<Email::MIME> and L<Email::Sender::Simple> modules, like so:
     ],
     attributes => {
       encoding => 'quoted-printable',
-      charset  => 'ISO-8859-1',
+      charset  => 'utf-8',
     },
     body_str => "Happy birthday to you!\n",
   );

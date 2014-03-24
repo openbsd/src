@@ -5,16 +5,22 @@ use Test::More 0.60;
 # Test::More 0.60 required because:
 # - is_deeply(undef, $not_undef); now works. [rt.cpan.org 9441]
 
-BEGIN { plan tests => 1+5*2; }
+BEGIN { plan tests => 1+2*5; }
 
 BEGIN { use_ok('Data::Dumper') };
 
 # RT 39420: Data::Dumper fails to escape bless class name
 
-# test under XS and pure Perl version
-foreach $Data::Dumper::Useperl (0, 1) {
+run_tests_for_bless();
+SKIP: {
+    skip "XS version was unavailable, so we already ran with pure Perl", 5
+        if $Data::Dumper::Useperl;
+    local $Data::Dumper::Useperl = 1;
+    run_tests_for_bless();
+}
 
-#diag("\$Data::Dumper::Useperl = $Data::Dumper::Useperl");
+sub run_tests_for_bless {
+note("\$Data::Dumper::Useperl = $Data::Dumper::Useperl");
 
 {
 my $t = bless( {}, q{a'b} );
@@ -52,4 +58,5 @@ PERL_LEGACY
 is($dt, $o, "We can dump blessed qr//'s properly");
 
 }
-}
+
+} # END sub run_tests_for_bless()

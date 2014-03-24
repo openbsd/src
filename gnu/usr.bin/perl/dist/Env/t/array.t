@@ -6,7 +6,7 @@ use strict;
 use Test::More;
 
 plan(skip_all => "skipped for VMS") if $^O eq 'VMS';
-plan(tests => 11);
+plan(tests => 12);
 
 use Env  qw(@FOO);
 use vars qw(@BAR);
@@ -64,3 +64,7 @@ is_deeply(\@FOO, \@BAR, "Sort");
 splice @FOO, 1, 1, 'B';
 splice @BAR, 1, 1, 'B';
 is_deeply(\@FOO, \@BAR, "Splice");
+
+my $foo = $ENV{FOO};
+() = splice @FOO, 0, 0;
+is $ENV{FOO}, $foo, 'Splice in list context';

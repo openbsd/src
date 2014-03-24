@@ -7,7 +7,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan( tests => 57 );
+plan( tests => 58 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
@@ -60,6 +60,13 @@ package main;
     local $ENV{PERL_DESTRUCT_LEVEL} = 2;
     fresh_perl_is(
 		  'package A; sub a { // }; %::=""',
+		  '',
+		  '',
+		  );
+    # Variant of the above which creates an object that persists until global
+    # destruction.
+    fresh_perl_is(
+		  'use Exporter; package A; sub a { // }; %::=""',
 		  '',
 		  '',
 		  );
@@ -280,11 +287,8 @@ fresh_perl_is(
      'ref() returns the same thing when an object’s stash is moved';
     ::like "$obj", qr "^rile=ARRAY\(0x[\da-f]+\)\z",
      'objects stringify the same way when their stashes are moved';
-    {
-	local $::TODO =  $Config{useithreads} ? "fails under threads" : undef;
-	::is eval '__PACKAGE__', 'rile',
+    ::is eval '__PACKAGE__', 'rile',
 	 '__PACKAGE__ returns the same when the current stash is moved';
-    }
 
     # Now detach it completely from the symtab, making it effect-
     # ively anonymous
@@ -297,11 +301,8 @@ fresh_perl_is(
      'ref() returns the same thing when an object’s stash is detached';
     ::like "$obj", qr "^rile=ARRAY\(0x[\da-f]+\)\z",
      'objects stringify the same way when their stashes are detached';
-    {
-	local $::TODO =  $Config{useithreads} ? "fails under threads" : undef;
-	::is eval '__PACKAGE__', 'rile',
+    ::is eval '__PACKAGE__', 'rile',
 	 '__PACKAGE__ returns the same when the current stash is detached';
-    }
 }
 
 # Setting the name during undef %stash:: should have no effect.

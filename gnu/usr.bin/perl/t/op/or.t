@@ -37,20 +37,20 @@ my $a_num = sprintf "%d", $a;
 
 $c = $a || $b;
 
-is($c, $a_str);
-is($c+0, $a_num);   # force numeric context.
+is($c, $a_str, "comparison of string equality");
+is($c+0, $a_num, "comparison of numeric equality");   # force numeric context.
 
 $a =~ /./g or die "Match failed for some reason"; # Make $a magic
 
 $c = $a || $b;
 
-is($c, $a_str);
-is($c+0, $a_num);   # force numeric context.
+is($c, $a_str, "comparison of string equality");
+is($c+0, $a_num, "comparison of numeric equality");   # force numeric context.
 
 my $val = 3;
 
 $c = $val || $b;
-is($c, 3);
+is($c, 3, "|| short-circuited as expected");
 
 tie $a, 'Countdown', $val;
 

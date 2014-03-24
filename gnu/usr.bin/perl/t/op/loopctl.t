@@ -36,7 +36,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 55 );
+plan( tests => 64 );
 
 my $ok;
 
@@ -1005,4 +1005,102 @@ cmp_ok($ok,'==',1,'dynamically scoped');
         $fail = 1;
     }
     ok(!$fail, "perl 112316: Labels with the same prefix don't get mixed up.");
+}
+
+# [perl #73618]
+{
+    sub foo_73618_0 {
+        while (0) { }
+    }
+    sub bar_73618_0 {
+        my $i = 0;
+        while ($i) { }
+    }
+    sub foo_73618_undef {
+        while (undef) { }
+    }
+    sub bar_73618_undef {
+        my $i = undef;
+        while ($i) { }
+    }
+    sub foo_73618_emptystring {
+        while ("") { }
+    }
+    sub bar_73618_emptystring {
+        my $i = "";
+        while ($i) { }
+    }
+    sub foo_73618_0float {
+        while (0.0) { }
+    }
+    sub bar_73618_0float {
+        my $i = 0.0;
+        while ($i) { }
+    }
+    sub foo_73618_0string {
+        while ("0") { }
+    }
+    sub bar_73618_0string {
+        my $i = "0";
+        while ($i) { }
+    }
+    sub foo_73618_until {
+        until (1) { }
+    }
+    sub bar_73618_until {
+        my $i = 1;
+        until ($i) { }
+    }
+
+    is(scalar(foo_73618_0()), scalar(bar_73618_0()),
+       "constant optimization doesn't change return value");
+    is(scalar(foo_73618_undef()), scalar(bar_73618_undef()),
+       "constant optimization doesn't change return value");
+    is(scalar(foo_73618_emptystring()), scalar(bar_73618_emptystring()),
+       "constant optimization doesn't change return value");
+    is(scalar(foo_73618_0float()), scalar(bar_73618_0float()),
+       "constant optimization doesn't change return value");
+    is(scalar(foo_73618_0string()), scalar(bar_73618_0string()),
+       "constant optimization doesn't change return value");
+    { local $TODO = "until is still wrongly optimized";
+    is(scalar(foo_73618_until()), scalar(bar_73618_until()),
+       "constant optimization doesn't change return value");
+    }
+}
+
+# [perl #113684]
+last_113684:
+{
+    label1:
+    {
+        my $label = "label1";
+        eval { last $label };
+        fail("last with non-constant label");
+        last last_113684;
+    }
+    pass("last with non-constant label");
+}
+next_113684:
+{
+    label2:
+    {
+        my $label = "label2";
+        eval { next $label };
+        fail("next with non-constant label");
+        next next_113684;
+    }
+    pass("next with non-constant label");
+}
+redo_113684:
+{
+    my $count;
+    label3:
+    {
+        if ($count++) {
+            pass("redo with non-constant label"); last redo_113684
+        }
+        my $label = "label3";
+        eval { redo $label };
+        fail("redo with non-constant label");
+    }
 }

@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -170,14 +170,14 @@ L<Encode>.
 
 =item * $flag = utf8::is_utf8(STRING)
 
-(Since Perl 5.8.1)  Test whether STRING is in UTF-8 internally.
+(Since Perl 5.8.1)  Test whether STRING is encoded internally in UTF-8.
 Functionally the same as Encode::is_utf8().
 
 =item * $flag = utf8::valid(STRING)
 
 [INTERNAL] Test whether STRING is in a consistent state regarding
-UTF-8.  Will return true is well-formed UTF-8 and has the UTF-8 flag
-on B<or> if string is held as bytes (both these states are 'consistent').
+UTF-8.  Will return true if it is well-formed UTF-8 and has the UTF-8 flag
+on B<or> if STRING is held as bytes (both these states are 'consistent').
 Main reason for this routine is to allow Perl's testsuite to check
 that operations have left strings in a consistent state.  You most
 probably want to use utf8::is_utf8() instead.

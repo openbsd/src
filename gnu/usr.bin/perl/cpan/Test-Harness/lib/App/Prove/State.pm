@@ -26,11 +26,11 @@ App::Prove::State - State storage for the C<prove> command.
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 DESCRIPTION
 
@@ -77,11 +77,12 @@ sub new {
     my %args = %{ shift || {} };
 
     my $self = bless {
-        select       => [],
-        seq          => 1,
-        store        => delete $args{store},
-        extensions   => ( delete $args{extensions} || ['.t'] ),
-        result_class => ( delete $args{result_class} || 'App::Prove::State::Result' ),
+        select     => [],
+        seq        => 1,
+        store      => delete $args{store},
+        extensions => ( delete $args{extensions} || ['.t'] ),
+        result_class =>
+          ( delete $args{result_class} || 'App::Prove::State::Result' ),
     }, $class;
 
     $self->{_} = $self->result_class->new(
@@ -216,48 +217,70 @@ sub apply_switch {
     my %handler = (
         last => sub {
             $self->_select(
+                limit => shift,
                 where => sub { $_->generation >= $last_gen },
                 order => sub { $_->sequence }
             );
         },
         failed => sub {
             $self->_select(
+                limit => shift,
                 where => sub { $_->result != 0 },
                 order => sub { -$_->result }
             );
         },
         passed => sub {
-            $self->_select( where => sub { $_->result == 0 } );
+            $self->_select(
+                limit => shift,
+                where => sub { $_->result == 0 }
+            );
         },
         all => sub {
-            $self->_select();
+            $self->_select( limit => shift );
         },
         todo => sub {
             $self->_select(
+                limit => shift,
                 where => sub { $_->num_todo != 0 },
                 order => sub { -$_->num_todo; }
             );
         },
         hot => sub {
             $self->_select(
+                limit => shift,
                 where => sub { defined $_->last_fail_time },
                 order => sub { $now - $_->last_fail_time }
             );
         },
         slow => sub {
-            $self->_select( order => sub { -$_->elapsed } );
+            $self->_select(
+                limit => shift,
+                order => sub { -$_->elapsed }
+            );
         },
         fast => sub {
-            $self->_select( order => sub { $_->elapsed } );
+            $self->_select(
+                limit => shift,
+                order => sub { $_->elapsed }
+            );
         },
         new => sub {
-            $self->_select( order => sub { -$_->mtime } );
+            $self->_select(
+                limit => shift,
+                order => sub { -$_->mtime }
+            );
         },
         old => sub {
-            $self->_select( order => sub { $_->mtime } );
+            $self->_select(
+                limit => shift,
+                order => sub { $_->mtime }
+            );
         },
         fresh => sub {
-            $self->_select( where => sub { $_->mtime >= $last_run_time } );
+            $self->_select(
+                limit => shift,
+                where => sub { $_->mtime >= $last_run_time }
+            );
         },
         save => sub {
             $self->{should_save}++;
@@ -344,6 +367,10 @@ sub _query_clause {
           } @got;
     }
 
+    if ( my $limit = $clause->{limit} ) {
+        @got = splice @got, 0, $limit if @got > $limit;
+    }
+
     return @got;
 }
 
@@ -354,7 +381,10 @@ sub _get_raw_tests {
     my @tests;
 
     # Do globbing on Win32.
-    @argv = map { glob "$_" } @argv if NEED_GLOB;
+    if (NEED_GLOB) {
+        eval "use File::Glob::Windows";    # [49732]
+        @argv = map { glob "$_" } @argv;
+    }
     my $extensions = $self->{extensions};
 
     for my $arg (@argv) {
@@ -368,7 +398,8 @@ sub _get_raw_tests {
             sort -d $arg
           ? $recurse
               ? $self->_expand_dir_recursive( $arg, $extensions )
-              : map { glob( File::Spec->catfile( $arg, "*$_" ) ) } @{$extensions}
+              : map { glob( File::Spec->catfile( $arg, "*$_" ) ) }
+              @{$extensions}
           : $arg;
     }
     return @tests;
@@ -378,13 +409,13 @@ sub _expand_dir_recursive {
     my ( $self, $dir, $extensions ) = @_;
 
     my @tests;
-    my $ext_string = join( '|', map { quotemeta } @{$extensions} );
+    my $ext_string = join( '|', map {quotemeta} @{$extensions} );
 
     find(
         {   follow      => 1,      #21938
             follow_skip => 2,
             wanted      => sub {
-                -f
+                -f 
                   && /(?:$ext_string)$/
                   && push @tests => $File::Find::name;
               }

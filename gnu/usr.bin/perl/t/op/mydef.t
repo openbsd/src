@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-no warnings 'misc';
+no warnings 'misc', 'experimental::lexical_topic';
 
 $_ = 'global';
 is($_, 'global', '$_ initial value');

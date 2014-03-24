@@ -120,6 +120,10 @@ my @tests = (
 [  "Unix->abs2rel('/t1/t2/t3', '/t1')",               't2/t3'              ],
 [  "Unix->abs2rel('t1/t2/t3', 't1')",                 't2/t3'              ],
 [  "Unix->abs2rel('t1/t2/t3', 't4')",                 '../t1/t2/t3'        ],
+ [  "Unix->abs2rel('.', '.')",                         '.'                  ],
+ [  "Unix->abs2rel('/', '/')",                         '.'                  ],
+ [  "Unix->abs2rel('../t1', 't2/t3')",                 '../../../t1'        ],
+ [  "Unix->abs2rel('t1', 't2/../t3')",                 '../t1'              ],
 
 [ "Unix->rel2abs('t4','/t1/t2/t3')",             '/t1/t2/t3/t4'    ],
 [ "Unix->rel2abs('t4/t5','/t1/t2/t3')",          '/t1/t2/t3/t4/t5' ],

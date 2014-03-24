@@ -103,9 +103,9 @@ schop		scalar chop		ck_null		stu%	S?
 chomp		chomp			ck_spair	mTs%	L
 schomp		scalar chomp		ck_null		sTu%	S?
 defined		defined operator	ck_defined	isu%	S?
-undef		undef operator		ck_lfun		s%	S?
+undef		undef operator		ck_fun		s%	R?
 study		study			ck_fun		su%	S?
-pos		match position		ck_lfun		stu%	S?
+pos		match position		ck_fun		stu%	R?
 
 preinc		preincrement (++)		ck_lfun		dIs1	S
 i_preinc	integer preincrement (++)	ck_lfun		dis1	S
@@ -126,7 +126,7 @@ divide		division (/)		ck_null		IfsT2	S S
 i_divide	integer division (/)	ck_null		ifsT2	S S
 modulo		modulus (%)		ck_null		IifsT2	S S
 i_modulo	integer modulus (%)	ck_null		ifsT2	S S
-repeat		repeat (x)		ck_repeat	mt2	L S
+repeat		repeat (x)		ck_repeat	fmt2	L S
 
 add		addition (+)		ck_null		IfsT2	S S
 i_add		integer addition (+)	ck_null		ifsT2	S S
@@ -232,12 +232,11 @@ exists		exists			ck_exists	is%	S
 rv2hv		hash dereference	ck_rvconst	dt1	
 helem		hash element		ck_null		s2	H S
 hslice		hash slice		ck_null		m@	H L
-boolkeys	boolkeys		ck_fun		%	H
 
 # Explosives and implosives.
 
 unpack		unpack			ck_fun		u@	S S?
-pack		pack			ck_fun		mst@	S L
+pack		pack			ck_fun		fmst@	S L
 split		split			ck_split	t@	S S S
 join		join or string		ck_join		mst@	S L
 
@@ -413,7 +412,7 @@ ftbinary	-B			ck_ftst		isu-	F-
 # File calls.
 
 # chdir really behaves as if it had both "S?" and "F?"
-chdir		chdir			ck_chdir	isT%	S?
+chdir		chdir			ck_trunc	isT%	S?
 chown		chown			ck_fun		imsT@	L
 chroot		chroot			ck_fun		isTu%	S?
 unlink		unlink			ck_fun		imsTu@	L
@@ -485,7 +484,6 @@ dofile		do "file"		ck_fun		d1	S
 hintseval	eval hints		ck_svconst	s$
 entereval	eval "string"		ck_eval		du%	S?
 leaveeval	eval "string" exit	ck_null		1	S
-#evalonce	eval constant string	ck_null		d1	S
 entertry	eval {block}		ck_eval		d|	
 leavetry	eval {block} exit	ck_null		@	
 
@@ -548,3 +546,8 @@ runcv		__SUB__			ck_null		s0
 
 # fc and \F
 fc		fc			ck_fun		fstu%	S?
+
+padcv		private subroutine	ck_null		d0
+introcv		private subroutine	ck_null		d0
+clonecv		private subroutine	ck_null		d0
+padrange	list of private variables	ck_null		d0

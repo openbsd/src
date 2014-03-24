@@ -131,6 +131,8 @@ sub gimme_conf {
     ### don't load any other configs than the heuristic one
     ### during tests. They might hold broken/incorrect data
     ### for our test suite. Bug [perl #43629] showed this.
+    local $ENV{PERL5_CPANPLUS_HOME} = '';
+
     my $conf = CPANPLUS::Configure->new( load_configs => 0 );
 
     my $dummy_cpan = dummy_cpan_dir();

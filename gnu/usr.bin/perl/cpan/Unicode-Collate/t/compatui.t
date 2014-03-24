@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..631\n"; } # 1 + 70 x @Versions
+BEGIN { $| = 1; print "1..701\n"; } # 1 + 70 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -30,7 +30,7 @@ ok(1);
 
 #########################
 
-my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24);
+my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26);
 
 # 12 compatibility ideographs are treated as unified ideographs:
 # FA0E, FA0F, FA11, FA13, FA14, FA1F, FA21, FA23, FA24, FA27, FA28, FA29.

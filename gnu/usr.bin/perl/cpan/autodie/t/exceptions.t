@@ -9,6 +9,7 @@ BEGIN { plan skip_all => "Perl 5.10 only tests" if $] < 5.010; }
 
 use 5.010;
 use constant NO_SUCH_FILE => 'this_file_had_better_not_exist_xyzzy';
+no if $] >= 5.017011, warnings => "experimental::smartmatch";
 
 plan 'no_plan';
 

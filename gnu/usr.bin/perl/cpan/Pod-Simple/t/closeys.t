@@ -25,6 +25,7 @@ sub nowhine {
   $_[0]->accept_targets("*");
 }
 
+local $Pod::Simple::XMLOutStream::SORT_ATTRS = 1;
 &ok(e(
 "=begin :foo\n\n=begin :bar\n\nZaz\n\n",
 "=begin :foo\n\n=begin :bar\n\nZaz\n\n=end :bar\n\n=end :foo\n\n",

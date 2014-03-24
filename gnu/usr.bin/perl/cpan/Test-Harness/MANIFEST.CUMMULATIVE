@@ -156,6 +156,7 @@ t/compat/040-test-harness-compat.t
 t/compat/060-version.t
 t/compat/base.t
 t/compat/callback.t
+t/compat/env.opts.t
 t/compat/env.t
 t/compat/failure.t
 t/compat/from_line.t
@@ -220,6 +221,7 @@ t/multiplexer.t
 t/nested.t
 t/nofork-mux.t
 t/nofork.t
+t/nowarn.t
 t/object.t
 t/parse.t
 t/parser-config.t

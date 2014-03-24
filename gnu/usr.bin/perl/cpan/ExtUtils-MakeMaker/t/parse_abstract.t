@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 
+use lib 't/lib';
 use ExtUtils::MakeMaker;
-
+use File::Temp qw[tempfile];
 use Test::More 'no_plan';
 
 sub test_abstract {
@@ -12,21 +13,15 @@ sub test_abstract {
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-    my $file = "t/abstract.tmp";
-    {
-        open my $fh, ">", $file or die "Can't open $file";
-        print $fh $code;
-        close $fh;
-    }
+    my ($fh,$file) = tempfile( DIR => 't', UNLINK => 1 );
+    print $fh $code;
+    close $fh;
 
     # Hack up a minimal MakeMaker object.
     my $mm = bless { DISTNAME => $package }, "MM";
     my $have = $mm->parse_abstract($file);
 
     my $ok = is( $have, $want, $name );
-
-    # Clean up the temp file, VMS style
-    1 while unlink $file;
 
     return $ok;
 }

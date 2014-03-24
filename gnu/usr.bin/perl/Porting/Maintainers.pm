@@ -22,7 +22,7 @@ use vars qw(@ISA @EXPORT_OK $VERSION);
 		show_results process_options files_to_modules
 		finish_tap_output
 		reload_manifest);
-$VERSION = 0.06;
+$VERSION = 0.09;
 
 require Exporter;
 
@@ -92,8 +92,9 @@ sub expand_glob {
 sub filter_excluded {
     my ($m, @files) = @_;
 
+    my $excluded = $Modules{$m}{EXCLUDED};
     return @files
-	unless my $excluded = $Modules{$m}{EXCLUDED};
+	unless $excluded and @$excluded;
 
     my ($pat) = map { qr/$_/ } join '|' => map {
 	ref $_ ? $_ : qr/\b\Q$_\E$/
@@ -301,6 +302,8 @@ sub show_results {
 	    }
 	}
     } elsif ($Check or $Checkmani) {
+        require Test::More;
+        Test::More->import;
         if( @Files ) {
 		    missing_maintainers(
 			$Checkmani
@@ -346,22 +349,14 @@ sub maintainers_files {
 
 sub duplicated_maintainers {
     maintainers_files();
-    for my $f (keys %files) {
-	if ($files{$f} > 1) {
-	    print  "not ok ".++$TestCounter." - File $f appears $files{$f} times in Maintainers.pl\n";
-	} else {
-	    print  "ok ".++$TestCounter." - File $f appears $files{$f} times in Maintainers.pl\n";
-	}
+    for my $f (sort keys %files) {
+        cmp_ok($files{$f}, '<=', 1, "File $f appears $files{$f} times in Maintainers.pl");
     }
 }
 
 sub warn_maintainer {
     my $name = shift;
-    if ($files{$name}) {
-	print "ok ".++$TestCounter." - $name has a maintainer\n";
-    } else {
-	print "not ok ".++$TestCounter." - $name has NO maintainer\n";
-    }
+    ok($files{$name}, "$name has a maintainer");
 }
 
 sub missing_maintainers {
@@ -376,17 +371,13 @@ sub missing_maintainers {
 
 sub superfluous_maintainers {
     maintainers_files();
-    for my $f (keys %files) {
-	if ($MANIFEST{$f}) {
-	    print "ok ".++$TestCounter." - Maintained file $f appears in MANIFEST\n";
-	} else {
-	    print "not ok ".++$TestCounter." - File $f has has a maintainer but is not in MANIFEST\n";
-	}
+    for my $f (sort keys %files) {
+        ok($MANIFEST{$f}, "File $f has a maintainer and is in MANIFEST");
     }
 }
 
 sub finish_tap_output {
-    print "1..".$TestCounter."\n"; 
+    done_testing();
 }
 
 1;

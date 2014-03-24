@@ -1,5 +1,7 @@
 package Term::UI;
 
+use if $] > 5.017, 'deprecate';
+
 use Carp;
 use Params::Check qw[check allow];
 use Term::ReadLine;
@@ -11,7 +13,7 @@ use strict;
 BEGIN {
     use vars        qw[$VERSION $AUTOREPLY $VERBOSE $INVALID];
     $VERBOSE    =   1;
-    $VERSION    =   '0.30';
+    $VERSION    =   '0.34';
     $INVALID    =   loc('Invalid selection, please try again: ');
 }
 
@@ -266,9 +268,14 @@ sub _tt_readline {
     history( $print_me ) if $print_me;
 
 
-    ### we might have to add a default value to the prompt, to
-    ### show the user what will be picked by default:
-    $prompt .= " [$prompt_add]: " if $prompt_add;
+    if ($prompt_add) {
+        ### we might have to add a default value to the prompt, to
+        ### show the user what will be picked by default:
+        $prompt .= " [$prompt_add]: " ;
+    }
+    else {
+        $prompt .= " : ";
+    }
 
 
     ### are we in autoreply mode?

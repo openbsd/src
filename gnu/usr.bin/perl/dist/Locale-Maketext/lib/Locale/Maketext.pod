@@ -443,10 +443,6 @@ B<Remember: Don't be afraid to read the Maketext source if there's
 any point on which this documentation is unclear.>  This documentation
 is vastly longer than the module source itself.
 
-=over
-
-=back
-
 =head1 LANGUAGE CLASS HIERARCHIES
 
 These are Locale::Maketext's assumptions about the class
@@ -699,7 +695,7 @@ it's basically turned into:
       ")!\n",
   }
   # to be called by $lh->maketext(KEY, params...)
-   
+
 In other words, text outside bracket groups is turned into string
 literals.  Text in brackets is rather more complex, and currently follows
 these rules:
@@ -999,10 +995,10 @@ The "fail" attribute can be accessed with the C<fail_with> method:
 
   # Set to a method name:
   $lh->fail_with( 'failure_method' );
-  
+
   # Set to nothing (i.e., so failure throws a plain exception)
   $lh->fail_with( undef );
-  
+
   # Get the current value
   $handler = $lh->fail_with();
 
@@ -1115,10 +1111,10 @@ consisting minimally of:
   package Projname::L10N;
   use base qw(Locale::Maketext);
   ...any methods you might want all your languages to share...
-  
+
   # And, assuming you want the base class to be an _AUTO lexicon,
   # as is discussed a few sections up:
-  
+
   1;
 
 =item *

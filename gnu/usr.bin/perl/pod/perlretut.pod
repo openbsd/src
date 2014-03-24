@@ -869,7 +869,7 @@ with one higher than the maximum reached across all the alternatives.
 
 =head2 Position information
 
-In addition to what was matched, Perl (since 5.6.0) also provides the
+In addition to what was matched, Perl also provides the
 positions of what was matched as contents of the C<@-> and C<@+>
 arrays. C<$-[0]> is the position of the start of the entire match and
 C<$+[0]> is the position of the end. Similarly, C<$-[n]> is the
@@ -1874,8 +1874,8 @@ work if they appear in a regular expression embedded directly in a
 program, but not when contained in a string that is interpolated in a
 pattern.
 
-With the advent of 5.6.0, Perl regexps can handle more than just the
-standard ASCII character set.  Perl now supports I<Unicode>, a standard
+Perl regexps can handle more than just the
+standard ASCII character set.  Perl supports I<Unicode>, a standard
 for representing the alphabets from virtually all of the world's written
 languages, and a host of symbols.  Perl's text strings are Unicode strings, so
 they can contain characters with a value (codepoint or character number) higher
@@ -1926,13 +1926,13 @@ Consortium, L<http://www.unicode.org/charts/charindex.html>; explanatory
 material with links to other resources at
 L<http://www.unicode.org/standard/where>.
 
-The answer to requirement 2) is, as of 5.6.0, that a regexp (mostly)
-uses Unicode characters.  (The "mostly" is for messy backward
+The answer to requirement 2) is that a regexp (mostly)
+uses Unicode characters.  The "mostly" is for messy backward
 compatibility reasons, but starting in Perl 5.14, any regex compiled in
 the scope of a C<use feature 'unicode_strings'> (which is automatically
 turned on within the scope of a C<use 5.012> or higher) will turn that
 "mostly" into "always".  If you want to handle Unicode properly, you
-should ensure that C<'unicode_strings'> is turned on.)
+should ensure that C<'unicode_strings'> is turned on.
 Internally, this is encoded to bytes using either UTF-8 or a native 8
 bit encoding, depending on the history of the string, but conceptually
 it is a sequence of characters, not bytes. See L<perlunitut> for a
@@ -2618,23 +2618,23 @@ C<(?((?{...}))yes-regexp|no-regexp)>.  In other words, in the case of a
 code expression, we don't need the extra parentheses around the
 conditional.
 
-If you try to use code expressions with interpolating variables, Perl
-may surprise you:
+If you try to use code expressions where the code text is contained within
+an interpolated variable, rather than appearing literally in the pattern,
+Perl may surprise you:
 
     $bar = 5;
     $pat = '(?{ 1 })';
     /foo(?{ $bar })bar/; # compiles ok, $bar not interpolated
-    /foo(?{ 1 })$bar/;   # compile error!
+    /foo(?{ 1 })$bar/;   # compiles ok, $bar interpolated
     /foo${pat}bar/;      # compile error!
 
     $pat = qr/(?{ $foo = 1 })/;  # precompile code regexp
     /foo${pat}bar/;      # compiles ok
 
-If a regexp has (1) code expressions and interpolating variables, or
-(2) a variable that interpolates a code expression, Perl treats the
-regexp as an error. If the code expression is precompiled into a
-variable, however, interpolating is ok. The question is, why is this
-an error?
+If a regexp has a variable that interpolates a code expression, Perl
+treats the regexp as an error. If the code expression is precompiled into
+a variable, however, interpolating is ok. The question is, why is this an
+error?
 
 The reason is that variable interpolation and code expressions
 together pose a security risk.  The combination is dangerous because
@@ -2657,7 +2657,6 @@ security check by invoking S<C<use re 'eval'>>:
     use re 'eval';       # throw caution out the door
     $bar = 5;
     $pat = '(?{ 1 })';
-    /foo(?{ 1 })$bar/;   # compiles ok
     /foo${pat}bar/;      # compiles ok
 
 Another form of code expression is the I<pattern code expression>.
@@ -2698,8 +2697,9 @@ Ha! Try that with your garden variety regexp package...
 
 Note that the variables C<$z0> and C<$z1> are not substituted when the
 regexp is compiled, as happens for ordinary variables outside a code
-expression.  Rather, the code expressions are evaluated when Perl
-encounters them during the search for a match.
+expression.  Rather, the whole code block is parsed as perl code at the
+same time as perl is compiling the code containing the literal regexp
+pattern.
 
 The regexp without the C<//x> modifier is
 

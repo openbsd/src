@@ -10,7 +10,7 @@ tie *tst,Tie::StdHandle;
 
 $f = 'tst';
 
-print "1..13\n";
+print "1..14\n";
 
 # my $file tests
 
@@ -42,6 +42,10 @@ print "ok 11\n";
 $b = <$f>;
 print "not " unless eof($f);
 print "ok 12\n";
-print "not " unless close($f);
+seek($f,0,0);
+read($f,($b='scrinches'),4,4); # with offset
+print "'$b' not " unless $b eq 'scriSome';
 print "ok 13\n";
+print "not " unless close($f);
+print "ok 14\n";
 unlink("afile");

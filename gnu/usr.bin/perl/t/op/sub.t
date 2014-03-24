@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan( tests => 14 );
+plan( tests => 16 );
 
 sub empty_sub {}
 
@@ -64,3 +64,24 @@ is(scalar(@test), 0, 'Didnt return anything');
     isnt \sub { ()=\@_; return shift }->($x), \$x,
       'result of shift is copied when explicitly returned';
 }
+
+fresh_perl_is
+  <<'end', "main::foo\n", {}, 'sub redefinition sets CvGV';
+*foo = \&baz;
+*bar = *foo;
+eval 'sub bar { print +(caller 0)[3], "\n" }';
+bar();
+end
+
+fresh_perl_is
+  <<'end', "main::foo\nok\n", {}, 'no double free redefining anon stub';
+my $sub = sub { 4 };
+*foo = $sub;
+*bar = *foo;
+undef &$sub;
+eval 'sub bar { print +(caller 0)[3], "\n" }';
+&$sub;
+undef *foo;
+undef *bar;
+print "ok\n";
+end

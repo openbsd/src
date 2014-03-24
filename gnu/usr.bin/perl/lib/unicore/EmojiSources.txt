@@ -1,8 +1,8 @@
-# EmojiSources-6.1.0.txt
-# Date: 2011-08-30, 23:30:00 GMT [MS, KW]
+# EmojiSources-6.2.0.txt
+# Date: 2012-03-08, 21:21:00 GMT [MS, KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -15,8 +15,9 @@
 # Note: It is possible that future versions of this file will include
 # additional data columns providing mappings for additional vendors.
 #
-# Created for Unicode 6.0 by Marcus Scherer.
-# Updated for Unicode 6.1 by Ken Whistler.
+# Created for Unicode 6.0 by Markus Scherer.
+# Updated for Unicode 6.1 by Ken Whistler (no changes to mappings).
+# Updated for Unicode 6.2 by Ken Whistler (no changes to mappings).
 #
 # Format: Semicolon-delimited file with a fixed number of fields.
 # The number of fields may increase in the future.

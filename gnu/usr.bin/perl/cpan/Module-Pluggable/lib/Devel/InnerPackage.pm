@@ -4,13 +4,14 @@ use strict;
 use base qw(Exporter);
 use vars qw($VERSION @EXPORT_OK);
 
+use if $] > 5.017, 'deprecate';
+
 $VERSION = '0.4';
 @EXPORT_OK = qw(list_packages);
 
 =pod
 
 =head1 NAME
-
 
 Devel::InnerPackage - find all the inner packages of a package
 

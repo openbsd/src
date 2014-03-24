@@ -25,11 +25,11 @@ TAP::Formatter::Session - Abstract base class for harness output delegate
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 METHODS
 
@@ -178,6 +178,11 @@ sub _output_test_failure {
     }
 
     $formatter->_output("\n");
+}
+
+sub _make_ok_line {
+    my ( $self, $suffix ) = @_;
+    return "ok$suffix\n";
 }
 
 1;

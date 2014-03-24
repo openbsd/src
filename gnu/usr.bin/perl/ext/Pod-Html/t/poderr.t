@@ -52,7 +52,7 @@ __DATA__
 
 <dl>
 
-<dt id="Around-line-5:">Around line 5:</dt>
+<dt id="Around-line-5">Around line 5:</dt>
 <dd>
 
 <p>You can&#39;t have =items (as at line 9) unless the first thing after the =over is an =item</p>

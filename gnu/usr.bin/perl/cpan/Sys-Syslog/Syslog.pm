@@ -12,7 +12,7 @@ require 5.005;
 
 
 {   no strict 'vars';
-    $VERSION = '0.29';
+    $VERSION = '0.32';
     @ISA     = qw< Exporter >;
 
     %EXPORT_TAGS = (
@@ -91,7 +91,7 @@ my $connected       = 0;        # flag to indicate if we're connected or not
 my $syslog_send;                # coderef of the function used to send messages
 my $syslog_path     = undef;    # syslog path for "stream" and "unix" mechanisms
 my $syslog_xobj     = undef;    # if defined, holds the external object used to send messages
-my $transmit_ok     = 0;        # flag to indicate if the last message was transmited
+my $transmit_ok     = 0;        # flag to indicate if the last message was transmitted
 my $sock_port       = undef;    # socket port
 my $sock_timeout    = 0;        # socket timeout, see below
 my $current_proto   = undef;    # current mechanism used to transmit messages
@@ -139,7 +139,21 @@ my @fallbackMethods = ();
 # happy, the timeout is now zero by default on all systems 
 # except on OSX where it is set to 250 msec, and can be set 
 # with the infamous setlogsock() function.
-$sock_timeout = 0.25 if $^O =~ /darwin/;
+#
+# Update 2011-08: this issue is also been seen on multiprocessor
+# Debian GNU/kFreeBSD systems. See http://bugs.debian.org/627821
+# and https://rt.cpan.org/Ticket/Display.html?id=69997
+# Also, lowering the delay to 1 ms, which should be enough.
+
+$sock_timeout = 0.001 if $^O =~ /darwin|gnukfreebsd/;
+
+
+# Perl 5.6.0's warnings.pm doesn't have warnings::warnif()
+if (not defined &warnings::warnif) {
+    *warnings::warnif = sub {
+        goto &warnings::warn if warnings::enabled(__PACKAGE__)
+    }
+}
 
 # coderef for a nicer handling of errors
 my $err_sub = $options{nofatal} ? \&warnings::warnif : \&croak;
@@ -227,6 +241,8 @@ my %mechanism = (
     },
     tcp => {
         check   => sub {
+            return 1 if defined $sock_port;
+
             if (getservbyname('syslog', 'tcp') || getservbyname('syslogng', 'tcp')) {
                 $host = $syslog_path;
                 return 1
@@ -239,6 +255,8 @@ my %mechanism = (
     },
     udp => {
         check   => sub {
+            return 1 if defined $sock_port;
+
             if (getservbyname('syslog', 'udp')) {
                 $host = $syslog_path;
                 return 1
@@ -284,7 +302,7 @@ sub setlogsock {
         @opt{qw< type path timeout >} = @_;
     }
 
-    # check socket type, remove
+    # check socket type, remove invalid ones
     my $diag_invalid_type = "setlogsock(): Invalid type%s; must be one of "
                           . join ", ", map { "'$_'" } sort keys %mechanism;
     croak sprintf $diag_invalid_type, "" unless defined $opt{type};
@@ -309,24 +327,29 @@ sub setlogsock {
     disconnect_log() if $connected;
     $transmit_ok = 0;
     @fallbackMethods = ();
-    @connectMethods = @defaultMethods;
+    @connectMethods = ();
+    my $found = 0;
 
+    # check each given mechanism and test if it can be used on the current system
     for my $sock_type (@sock_types) {
         if ( $mechanism{$sock_type}{check}->() ) {
-            unshift @connectMethods, $sock_type;
+            push @connectMethods, $sock_type;
+            $found = 1;
         }
         else {
-            warnings::warnif "setlogsock(): type='$sock_type': "
-                           . $mechanism{$sock_type}{err_msg};
+            warnings::warnif("setlogsock(): type='$sock_type': "
+                           . $mechanism{$sock_type}{err_msg});
         }
     }
 
-    return 1;
+    # if no mechanism worked from the given ones, use the default ones
+    @connectMethods = @defaultMethods unless @connectMethods;
+
+    return $found;
 }
 
 sub syslog {
-    my $priority = shift;
-    my $mask = shift;
+    my ($priority, $mask, @args) = @_;
     my ($message, $buf);
     my (@words, $num, $numpri, $numfac, $sum);
     my $failed = undef;
@@ -344,7 +367,7 @@ sub syslog {
 
     if ($priority =~ /^\d+$/) {
         $numpri = LOG_PRI($priority);
-        $numfac = LOG_FAC($priority);
+        $numfac = LOG_FAC($priority) << 3;
     }
     elsif ($priority =~ /^\w+/) {
         # Allow "level" or "level|facility".
@@ -362,17 +385,16 @@ sub syslog {
             if ($num < 0) {
                 croak "syslog: invalid level/facility: $word"
             }
-            elsif (my $pri = LOG_PRI($num)) {
+            elsif ($num <= LOG_PRIMASK() and $word ne "kern") {
                 croak "syslog: too many levels given: $word"
                     if defined $numpri;
                 $numpri = $num;
-                return 0 unless LOG_MASK($numpri) & $maskpri;
             }
             else {
                 croak "syslog: too many facilities given: $word"
                     if defined $numfac;
                 $facility = $word if $word =~ /^[A-Za-z]/;
-                $numfac = LOG_FAC($num);
+                $numfac = $num;
             }
         }
     }
@@ -381,6 +403,9 @@ sub syslog {
     }
 
     croak "syslog: level must be given" unless defined $numpri;
+
+    # don't log if priority is below mask level
+    return 0 unless LOG_MASK($numpri) & $maskpri;
 
     if (not defined $numfac) {  # Facility not specified in this call.
 	$facility = 'user' unless $facility;
@@ -391,13 +416,13 @@ sub syslog {
 
     if ($mask =~ /%m/) {
         # escape percent signs for sprintf()
-        $error =~ s/%/%%/g if @_;
+        $error =~ s/%/%%/g if @args;
         # replace %m with $error, if preceded by an even number of percent signs
         $mask =~ s/(?<!%)((?:%%)*)%m/$1$error/g;
     }
 
     $mask .= "\n" unless $mask =~ /\n$/;
-    $message = @_ ? sprintf($mask, @_) : $mask;
+    $message = @args ? sprintf($mask, @args) : $mask;
 
     if ($current_proto eq 'native') {
         $buf = $message;
@@ -412,7 +437,7 @@ sub syslog {
         $sum = $numpri + $numfac;
         my $oldlocale = setlocale(LC_TIME);
         setlocale(LC_TIME, 'C');
-        my $timestamp = strftime "%b %e %H:%M:%S", localtime;
+        my $timestamp = strftime "%b %d %H:%M:%S", localtime;
         setlocale(LC_TIME, $oldlocale);
 
         # construct the stream that will be transmitted
@@ -875,7 +900,7 @@ Sys::Syslog - Perl interface to the UNIX syslog(3) calls
 
 =head1 VERSION
 
-This is the documentation of version 0.29
+This is the documentation of version 0.32
 
 =head1 SYNOPSIS
 
@@ -893,9 +918,6 @@ This is the documentation of version 0.29
 C<Sys::Syslog> is an interface to the UNIX C<syslog(3)> program.
 Call C<syslog()> with a string priority and a list of C<printf()> args
 just like C<syslog(3)>.
-
-You can find a kind of FAQ in L<"THE RULES OF SYS::SYSLOG">.  Please read 
-it before coding, and again before asking questions. 
 
 
 =head1 EXPORTS
@@ -1521,15 +1543,16 @@ Perl and C<Sys::Syslog> versions.
 
     Sys::Syslog     Perl
     -----------     ----
-       undef        5.0.x -- 5.5.x
-       0.01         5.6.0, 5.6.1, 5.6.2
+       undef        5.0.0 ~ 5.5.4
+       0.01         5.6.*
        0.03         5.8.0
        0.04         5.8.1, 5.8.2, 5.8.3
        0.05         5.8.4, 5.8.5, 5.8.6
        0.06         5.8.7
        0.13         5.8.8
        0.22         5.10.0
-       0.27         5.8.9
+       0.27         5.8.9, 5.10.1 ~ 5.14.2
+       0.29         5.16.0, 5.16.1
 
 
 =head1 SEE ALSO
@@ -1648,9 +1671,9 @@ L<http://rt.cpan.org/Dist/Display.html?Queue=Sys-Syslog>
 
 L<http://search.cpan.org/dist/Sys-Syslog/>
 
-=item * Kobes' CPAN Search
+=item * MetaCPAN
 
-L<http://cpan.uwinnipeg.ca/dist/Sys-Syslog>
+L<https://metacpan.org/module/Sys::Syslog>
 
 =item * Perl Documentation
 
@@ -1661,7 +1684,7 @@ L<http://perldoc.perl.org/Sys/Syslog.html>
 
 =head1 COPYRIGHT
 
-Copyright (C) 1990-2009 by Larry Wall and others.
+Copyright (C) 1990-2012 by Larry Wall and others.
 
 
 =head1 LICENSE

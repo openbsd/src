@@ -23,7 +23,43 @@ not, but if your patch is incorporated, then we'll add your name to the
 F<AUTHORS> file, which ships in the official distribution. How many other
 programming languages offer you 1 line of immortality?
 
+=head1 Tasks that need only a little Perl knowledge
+
+=head2 Fix POD errors in Perl documentation
+
+Perl documentation is furnished in POD (Plain Old Documentation); see
+L<perlpod>.  We also have a utility that checks for various errors in
+this documentation: F<t/porting/podcheck.t>.  Unfortunately many files
+have errors in them, and there is a database of known problems, kept in
+F<t/porting/known_pod_issues.dat>.  The most prevalent errors are lines
+too wide to fit in a standard terminal window, but there are more
+serious problems as well; and there are items listed there that are not
+in fact errors.  The task would be to go through and clean up the
+documentation.  This would be a good way to learn more about Perl.
+
 =head1 Tasks that only need Perl knowledge
+
+=head2 Classify bug tickets by type
+
+Known bugs in Perl are tracked by L<https://rt.perl.org/rt3> (which also
+includes Perl 6).  A summary can be found at
+L<https://rt.perl.org/rt3/NoAuth/perl5/Overview.html>.
+It shows bugs classified by "type".  However, the type of many of the
+bugs is "unknown".  This greatly lowers the chances of them getting
+fixed, as the number of open bugs is overwhelming -- too many to wade
+through for someone to try to find the bugs in the parts of
+Perl that s/he knows well enough to try to fix.  This task involves
+going through these bugs and classifying them into one or more types.
+
+=head2 Ongoing: investigate new bug reports
+
+When a bug report is filed, it would be very helpful to have someone do
+a quick investigation to see if it is a real problem, and to reply to
+the poster about it, asking for example code that reproduces the
+problem.  Such code should be added to the test suite as TODO tests, and
+the ticket should be classified by type.  To get started on this task,
+look at the tickets that are marked as "New Issues" in
+L<https://rt.perl.org/rt3/NoAuth/perl5/Overview.html>.
 
 =head2 Migrate t/ from custom TAP generation
 
@@ -62,6 +98,14 @@ We should have tests for everything. When all the core's modules are tested,
 Schwern has promised to donate to $500 to TPF. We may need volunteers to
 hold him upside down and shake vigorously in order to actually extract the
 cash.
+
+=head2 Write descriptions for all tests
+
+Many individual tests in the test suite lack descriptions (or names, or labels
+-- call them what you will).  Many files completely lack descriptions, meaning
+that the only output you get is the test numbers.  If all tests had
+descriptions, understanding what the tests are testing and why they sometimes
+fail would both get a whole lot easier.
 
 =head2 Improve the coverage of the core tests
 
@@ -149,6 +193,12 @@ whole category.
 
 Many diagnostic messages are not currently documented.  The list is at the end
 of t/porting/diag.t.
+
+=head2 Write TODO tests for open bugs
+
+Sometimes bugs get fixed as a side effect of something else, and
+the bug remains open because no one realizes that it has been fixed.
+Ideally, every open bug should have a TODO test in the core test suite.
 
 =head1 Tasks that need a little sysadmin-type knowledge
 
@@ -416,7 +466,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.18.0.
+options would be nice for perl 5.18.2.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -437,19 +487,6 @@ want to determine what ops I<really> are the most commonly used. And in turn
 suggest evictions and promotions to achieve a better F<pp_hot.c>.
 
 One piece of Perl code that might make a good testbed is F<installman>.
-
-=head2 Allocate OPs from arenas
-
-Currently all new OP structures are individually malloc()ed and free()d.
-All C<malloc> implementations have space overheads, and are now as fast as
-custom allocates so it would both use less memory and less CPU to allocate
-the various OP structures from arenas. The SV arena code can probably be
-re-used for this.
-
-Note that Configuring perl with C<-Accflags=-DPL_OP_SLAB_ALLOC> will use
-Perl_Slab_alloc() to pack optrees into a contiguous block, which is
-probably superior to the use of OP arenas, esp. from a cache locality
-standpoint.  See L<Profile Perl - am I hot or not?>.
 
 =head2 Improve win32/wince.c
 
@@ -723,6 +760,11 @@ L</"Virtualize operating system access">.
 Currently the %ENV entries are always byte strings.
 See L</"Virtualize operating system access">.
 
+(See RT ticket #113536 for information on Win32's handling of %ENV,
+which was fixed to work with native ANSI codepage characters in the
+environment, but still doesn't work with other characters outside of
+that codepage present in the environment.)
+
 =head2 Unicode and glob()
 
 Currently glob patterns and filenames returned from File::Glob::glob()
@@ -852,6 +894,12 @@ I<';' isn't legal inside an expression - if you need multiple statements use a
 do {...} block>. See the thread starting at
 L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2008-09/msg00573.html>
 
+=head2 strict as warnings
+
+See L<http://markmail.org/message/vbrupaslr3bybmvk>, where Josua ben Jore
+writes:  I've been of the opinion that everything strict.pm does ought to be
+able to considered just warnings that have been promoted to 'FATAL'.
+
 =head2 lexicals used only once
 
 This warns:
@@ -877,15 +925,6 @@ huge speed-up.  Only minimal work was done on the optimizer when utf8
 was added, with the result that the synthetic start class often will
 fail to narrow down the possible choices when given non-Latin1 input.
 Karl Williamson has been working on this - talk to him.
-
-=begin todo
-
-Many things are fixed, but is these still true?
-
-    The tokeniser ignores the UTF-8-ness of C<PL_rsfp>, or any SVs
-    returned from source filters.
-
-=end
 
 =head2 state variable initialization in list context
 
@@ -1013,29 +1052,15 @@ implement per-thread working directories: Win32 already does this.
 
 See also L</"Extend PerlIO and PerlIO::Scalar">.
 
-=head2 Store the current pad in the OP slab allocator
-
-=for clarification
-I hope that I got that "current pad" part correct
-
-Currently we leak ops in various cases of parse failure. I suggested that we
-could solve this by always using the op slab allocator, and walking it to
-free ops. Dave comments that as some ops are already freed during optree
-creation one would have to mark which ops are freed, and not double free them
-when walking the slab. He notes that one problem with this is that for some ops
-you have to know which pad was current at the time of allocation, which does
-change. I suggested storing a pointer to the current pad in the memory allocated
-for the slab, and swapping to a new slab each time the pad changes. Dave thinks
-that this would work.
-
 =head2 repack the optree
 
 Repacking the optree after execution order is determined could allow
 removal of NULL ops, and optimal ordering of OPs with respect to cache-line
-filling.  The slab allocator could be reused for this purpose.  I think that
+filling.  I think that
 the best way to do this is to make it an optional step just before the
 completed optree is attached to anything else, and to use the slab allocator
-unchanged, so that freeing ops is identical whether or not this step runs.
+unchanged--but allocate a single slab the right size, avoiding partial
+slabs--, so that freeing ops is identical whether or not this step runs.
 Note that the slab allocator allocates ops downwards in memory, so one would
 have to actually "allocate" the ops in reverse-execution order to get them
 contiguous in memory in execution order.
@@ -1053,7 +1078,7 @@ This code
 
     use warnings;
     my $undef;
-    
+
     if ($undef == 3) {
     } elsif ($undef == 0) {
     }
@@ -1076,7 +1101,7 @@ most common and the most confusing). Ideally this code
 
     use warnings;
     my $undef;
-    
+
     my $a = $undef + 1;
     my $b
       = $undef
@@ -1130,10 +1155,25 @@ It has been proposed that octal constants be specifiable through the syntax
 C<0oddddd>, parallel to the existing construct to specify hex constants
 C<0xddddd>
 
+=head2 Revisit the regex super-linear cache code
+
+Perl executes regexes using the traditional backtracking algorithm, which
+makes it possible to implement a variety of powerful pattern-matching
+features (like embedded code blocks), at the cost of taking exponential time
+to run on some pathological patterns.  The exponential-time problem is
+mitigated by the I<super-linear cache>, which detects when we're processing
+such a pathological pattern, and does some additional bookkeeping to avoid
+much of the work.  However, that code has bit-rotted a little; some patterns
+don't make as much use of it as they should.  The proposal is to analyse
+where the current cache code has problems, and extend it to cover those cases.
+
+See also
+L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
+
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.18.0"
+of 5.18.2"
 
 =head2 make ithreads more robust
 

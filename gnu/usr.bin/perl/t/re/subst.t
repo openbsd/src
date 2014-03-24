@@ -4,10 +4,10 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require Config; import Config;
+    require './test.pl';
 }
 
-require './test.pl';
-plan( tests => 189 );
+plan( tests => 206 );
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -746,6 +746,8 @@ fresh_perl_is( '$_="abcef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'a
     # when substituted with a UTF8 replacement string, due to
     # magic getting called multiple times, and pointers now pointing
     # to stale/freed strings
+    # The original fix for this caused infinite loops for non- or cow-
+    # strings, so we test those, too.
     package FOO;
     my $fc;
     sub TIESCALAR { bless [ "abcdefgh" ] }
@@ -757,6 +759,35 @@ fresh_perl_is( '$_="abcef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'a
     $s =~ s/..../\x{101}/;
     ::is($fc, 1, "tied UTF8 stuff FETCH count");
     ::is("$s", "\x{101}efgh", "tied UTF8 stuff");
+
+    ::watchdog(300);
+    $fc = 0;
+    $s = *foo;
+    $s =~ s/..../\x{101}/;
+    ::is($fc, 1, '$tied_glob =~ s/non-utf8/utf8/ fetch count');
+    ::is("$s", "\x{101}::foo", '$tied_glob =~ s/non-utf8/utf8/ result');
+    $fc = 0;
+    $s = *foo;
+    $s =~ s/(....)/\x{101}/g;
+    ::is($fc, 1, '$tied_glob =~ s/(non-utf8)/utf8/g fetch count');
+    ::is("$s", "\x{101}\x{101}o",
+         '$tied_glob =~ s/(non-utf8)/utf8/g result');
+    $fc = 0;
+    $s = "\xff\xff\xff\xff\xff";
+    $s =~ s/..../\x{101}/;
+    ::is($fc, 1, '$tied_latin1 =~ s/non-utf8/utf8/ fetch count');
+    ::is("$s", "\x{101}\xff", '$tied_latin1 =~ s/non-utf8/utf8/ result');
+    $fc = 0;
+    { package package_name; tied($s)->[0] = __PACKAGE__ };
+    $s =~ s/..../\x{101}/;
+    ::is($fc, 1, '$tied_cow =~ s/non-utf8/utf8/ fetch count');
+    ::is("$s", "\x{101}age_name", '$tied_cow =~ s/non-utf8/utf8/ result');
+    $fc = 0;
+    $s = \1;
+    $s =~ s/..../\x{101}/;
+    ::is($fc, 1, '$tied_ref =~ s/non-utf8/utf8/ fetch count');
+    ::like("$s", qr/^\x{101}AR\(0x.*\)\z/,
+           '$tied_ref =~ s/non-utf8/utf8/ result');
 }
 
 # RT #97954
@@ -798,4 +829,60 @@ is(*bam =~ s/\*//rg, 'main::bam', 'Can s///rg a tyepglob');
  tie my $kror, cowBug =>;
  $kror =~ s/(?:)/""/e;
 }
-pass("s/// on tied var returning a cow")
+pass("s/// on tied var returning a cow");
+
+# a test for 6502e08109cd003b2cdf39bc94ef35e52203240b
+# previously this would segfault
+
+{
+    my $s = "abc";
+    eval { $s =~ s/(.)/die/e; };
+    like($@, qr/Died at/, "s//die/e");
+}
+
+
+# Test problems with constant replacement optimisation
+# [perl #26986] logop in repl resulting in incorrect optimisation
+"g" =~ /(.)/;
+@l{'a'..'z'} = 'A'..':';
+$_ = "hello";
+{ s/(.)/$l{my $a||$1}/g }
+is $_, "HELLO",
+  'logop in s/// repl does not result in "constant" repl optimisation';
+# Aliases to match vars
+"g" =~ /(.)/;
+$_ = "hello";
+{
+    local *a = *1;
+    s/(.)\1/$a/g;
+}
+is $_, 'helo', 's/pat/$alias_to_match_var/';
+"g" =~ /(.)/;
+$_ = "hello";
+{
+    local *a = *1;
+    s/e(.)\1/a$a/g;
+}
+is $_, 'halo', 's/pat/$alias_to_match_var/';
+# Last-used pattern containing re-evals that modify "constant" rhs
+{
+    local *a;
+    $x = "hello";
+    $x =~ /(?{*a = \"a"})./;
+    undef *a;
+    $x =~ s//$a/g;
+    is $x, 'aaaaa',
+	'last-used pattern disables constant repl optimisation';
+}
+
+
+$_ = "\xc4\x80";
+$a = "";
+utf8::upgrade $a;
+$_ =~ s/$/$a/;
+is $_, "\xc4\x80", "empty utf8 repl does not result in mangled utf8";
+
+$@ = "\x{30cb}eval 18";
+$@ =~ s/eval \d+/eval 11/;
+is $@, "\x{30cb}eval 11",
+  'loading utf8 tables does not interfere with matches against $@';

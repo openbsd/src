@@ -10,7 +10,8 @@ BEGIN {
         # XXX that should be fixed
 
     chdir '..' unless -d 't';
-    @INC = qw(lib Porting);
+    @INC = qw(lib Porting t);
+    require 'test.pl';
 }
 
 use strict;
@@ -99,21 +100,16 @@ foreach my $module ( keys %Modules ) {
       next;
     }
     my $should_be = $customised{ $module }->{ $file };
-    if ( $id ne $should_be ) {
-       print  "not ok ".++$TestCounter." - SHA for $file does not match stashed SHA\n";
-    }
-    else {
-       print  "ok ".++$TestCounter." - SHA for $file matched\n";
-    }
+    is( $id, $should_be, "SHA for $file matches stashed SHA" );
   }
 }
 
 if ( $regen ) {
-  print "ok ".++$TestCounter." - regenerated data file\n";
+  pass( "regenerated data file" );
   close $data_fh;
 }
 
-print "1..".$TestCounter."\n";
+done_testing();
 
 =pod
 

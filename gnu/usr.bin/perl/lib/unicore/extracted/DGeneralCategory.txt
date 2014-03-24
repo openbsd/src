@@ -1,8 +1,8 @@
-# DerivedGeneralCategory-6.1.0.txt
-# Date: 2011-11-27, 05:10:22 GMT [MD]
+# DerivedGeneralCategory-6.2.0.txt
+# Date: 2012-05-20, 00:42:34 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -275,7 +275,7 @@
 2072..2073    ; Cn #   [2] <reserved-2072>..<reserved-2073>
 208F          ; Cn #       <reserved-208F>
 209D..209F    ; Cn #   [3] <reserved-209D>..<reserved-209F>
-20BA..20CF    ; Cn #  [22] <reserved-20BA>..<reserved-20CF>
+20BB..20CF    ; Cn #  [21] <reserved-20BB>..<reserved-20CF>
 20F1..20FF    ; Cn #  [15] <reserved-20F1>..<reserved-20FF>
 218A..218F    ; Cn #   [6] <reserved-218A>..<reserved-218F>
 23F4..23FF    ; Cn #  [12] <reserved-23F4>..<reserved-23FF>
@@ -554,7 +554,7 @@ E01F0..EFFFF  ; Cn # [65040] <reserved-E01F0>..<noncharacter-EFFFF>
 FFFFE..FFFFF  ; Cn #   [2] <noncharacter-FFFFE>..<noncharacter-FFFFF>
 10FFFE..10FFFF; Cn #   [2] <noncharacter-10FFFE>..<noncharacter-10FFFF>
 
-# Total code points: 864415
+# Total code points: 864414
 
 # ================================================
 
@@ -3230,7 +3230,7 @@ FFE9..FFEC    ; Sm #   [4] HALFWIDTH LEFTWARDS ARROW..HALFWIDTH DOWNWARDS ARROW
 0BF9          ; Sc #       TAMIL RUPEE SIGN
 0E3F          ; Sc #       THAI CURRENCY SYMBOL BAHT
 17DB          ; Sc #       KHMER CURRENCY SYMBOL RIEL
-20A0..20B9    ; Sc #  [26] EURO-CURRENCY SIGN..INDIAN RUPEE SIGN
+20A0..20BA    ; Sc #  [27] EURO-CURRENCY SIGN..TURKISH LIRA SIGN
 A838          ; Sc #       NORTH INDIC RUPEE MARK
 FDFC          ; Sc #       RIAL SIGN
 FE69          ; Sc #       SMALL DOLLAR SIGN
@@ -3238,7 +3238,7 @@ FF04          ; Sc #       FULLWIDTH DOLLAR SIGN
 FFE0..FFE1    ; Sc #   [2] FULLWIDTH CENT SIGN..FULLWIDTH POUND SIGN
 FFE5..FFE6    ; Sc #   [2] FULLWIDTH YEN SIGN..FULLWIDTH WON SIGN
 
-# Total code points: 48
+# Total code points: 49
 
 # ================================================
 

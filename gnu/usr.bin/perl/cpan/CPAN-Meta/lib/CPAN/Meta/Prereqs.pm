@@ -2,12 +2,12 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::Prereqs;
-our $VERSION = '2.120630'; # VERSION
+our $VERSION = '2.120921'; # VERSION
 
 
 use Carp qw(confess);
 use Scalar::Util qw(blessed);
-use CPAN::Meta::Requirements;
+use CPAN::Meta::Requirements 2.121;
 
 
 sub __legal_phases { qw(configure build test runtime develop)   }
@@ -149,7 +149,7 @@ CPAN::Meta::Prereqs - a set of distribution prerequisites by phase and type
 
 =head1 VERSION
 
-version 2.120630
+version 2.120921
 
 =head1 DESCRIPTION
 

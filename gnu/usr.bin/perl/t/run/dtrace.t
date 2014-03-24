@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use IPC::Open2;
 
-plan(tests => 5);
+plan(tests => 9);
 
 dtrace_like(
     '1',
@@ -62,7 +62,7 @@ dtrace_like(
     'phase changes of a simple script',
 );
 
-# this code taken from t/op/magic_phase.t which tests all of the
+# this code taken from t/opbasic/magic_phase.t which tests all of the
 # transitions of ${^GLOBAL_PHASE}. instead of printing (which will
 # interact nondeterministically with the DTrace output), we increment
 # an unused variable for side effects
@@ -117,6 +117,40 @@ PHASES
      'make sure sub-entry and phase-change interact well',
 );
 
+dtrace_like(<< 'PERL_SCRIPT',
+    my $tmp = "foo";
+    $tmp =~ s/f/b/;
+    chop $tmp;
+PERL_SCRIPT
+    << 'D_SCRIPT',
+    op-entry { printf("op-entry <%s>\n", copyinstr(arg0)) }
+D_SCRIPT
+    [
+        qr/op-entry <subst>/,
+        qr/op-entry <schop>/,
+    ],
+    'basic op probe',
+);
+
+dtrace_like(<< 'PERL_SCRIPT',
+    use strict;
+    require HTTP::Tiny;
+    do "run/dtrace.pl";
+PERL_SCRIPT
+    << 'D_SCRIPT',
+    loading-file { printf("loading-file <%s>\n", copyinstr(arg0)) }
+    loaded-file  { printf("loaded-file <%s>\n", copyinstr(arg0)) }
+D_SCRIPT
+    [
+        # the original test made sure that each file generated a loading-file then a loaded-file,
+        # but that had a race condition when the kernel would push the perl process onto a different
+        # CPU, so the DTrace output would appear out of order
+        qr{loading-file <strict\.pm>.*loading-file <HTTP/Tiny\.pm>.*loading-file <run/dtrace\.pl>}s,
+        qr{loaded-file <strict\.pm>.*loaded-file <HTTP/Tiny\.pm>.*loaded-file <run/dtrace\.pl>}s,
+    ],
+    'loading-file, loaded-file probes',
+);
+
 sub dtrace_like {
     my $perl     = shift;
     my $probes   = shift;
@@ -152,6 +186,11 @@ sub dtrace_like {
     die "Unexpected error from DTrace: $result"
         if $child_exit_status != 0;
 
-    like($result, $expected, $name);
+    if (ref($expected) eq 'ARRAY') {
+        like($result, $_, $name) for @$expected;
+    }
+    else {
+        like($result, $expected, $name);
+    }
 }
 

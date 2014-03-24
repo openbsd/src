@@ -3,7 +3,7 @@ package File::Spec;
 use strict;
 use vars qw(@ISA $VERSION);
 
-$VERSION = '3.39_02';
+$VERSION = '3.40';
 $VERSION =~ tr/_//;
 
 my %module = (MacOS   => 'Mac',
@@ -331,7 +331,7 @@ splitpath(), splitdir(), catpath() and catdir() by Barrie Slaymaker.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2010 by the Perl 5 Porters.  All rights reserved.
+Copyright (c) 2004-2013 by the Perl 5 Porters.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

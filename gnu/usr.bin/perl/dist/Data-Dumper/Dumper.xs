@@ -12,21 +12,29 @@
 #  define DD_USE_OLD_ID_FORMAT
 #endif
 
+#ifndef isWORDCHAR
+#   define isWORDCHAR(c) isALNUM(c)
+#endif
+
 static I32 num_q (const char *s, STRLEN slen);
 static I32 esc_q (char *dest, const char *src, STRLEN slen);
 static I32 esc_q_utf8 (pTHX_ SV *sv, const char *src, STRLEN slen);
-static I32 needs_quote(register const char *s, STRLEN len);
+static I32 needs_quote(const char *s, STRLEN len);
 static SV *sv_x (pTHX_ SV *sv, const char *str, STRLEN len, I32 n);
 static I32 DD_dump (pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval,
 		    HV *seenhv, AV *postav, I32 *levelp, I32 indent,
 		    SV *pad, SV *xpad, SV *apad, SV *sep, SV *pair,
 		    SV *freezer, SV *toaster,
 		    I32 purity, I32 deepcopy, I32 quotekeys, SV *bless,
-		    I32 maxdepth, SV *sortkeys);
+		    I32 maxdepth, SV *sortkeys, int use_sparse_seen_hash);
 
 #ifndef HvNAME_get
 #define HvNAME_get HvNAME
 #endif
+
+/* Perls 7 through portions of 15 used utf8_to_uvchr() which didn't have a
+ * length parameter.  This wrongly allowed reading beyond the end of buffer
+ * given malformed input */
 
 #if PERL_VERSION <= 6 /* Perl 5.6 and earlier */
 
@@ -47,10 +55,32 @@ Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
 # if !defined(PERL_IMPLICIT_CONTEXT)
 #  define utf8_to_uvchr_buf	     Perl_utf8_to_uvchr_buf
 # else
-#  define utf8_to_uvchr_buf(a,b) Perl_utf8_to_uvchr_buf(aTHX_ a,b)
+#  define utf8_to_uvchr_buf(a,b,c) Perl_utf8_to_uvchr_buf(aTHX_ a,b,c)
 # endif
 
 #endif /* PERL_VERSION <= 6 */
+
+/* Perl 5.7 through part of 5.15 */
+#if PERL_VERSION > 6 && PERL_VERSION <= 15 && ! defined(utf8_to_uvchr_buf)
+
+UV
+Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
+{
+    /* We have to discard <send> for these versions; hence can read off the
+     * end of the buffer if there is a malformation that indicates the
+     * character is longer than the space available */
+
+    const UV uv = utf8_to_uvchr(s, retlen);
+    return UNI_TO_NATIVE(uv);
+}
+
+# if !defined(PERL_IMPLICIT_CONTEXT)
+#  define utf8_to_uvchr_buf	     Perl_utf8_to_uvchr_buf
+# else
+#  define utf8_to_uvchr_buf(a,b,c) Perl_utf8_to_uvchr_buf(aTHX_ a,b,c)
+# endif
+
+#endif /* PERL_VERSION > 6 && <= 15 */
 
 /* Changes in 5.7 series mean that now IOK is only set if scalar is
    precisely integer but in 5.6 and earlier we need to do a more
@@ -63,7 +93,7 @@ Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
 
 /* does a string need to be protected? */
 static I32
-needs_quote(register const char *s, STRLEN len)
+needs_quote(const char *s, STRLEN len)
 {
     const char *send = s+len;
 TOP:
@@ -77,7 +107,7 @@ TOP:
     }
     if (isIDFIRST(*s)) {
 	while (++s<send)
-	    if (!isALNUM(*s)) {
+	    if (!isWORDCHAR(*s)) {
 		if (*s == ':')
 		    goto TOP;
 		else
@@ -91,9 +121,9 @@ TOP:
 
 /* count the number of "'"s and "\"s in string */
 static I32
-num_q(register const char *s, register STRLEN slen)
+num_q(const char *s, STRLEN slen)
 {
-    register I32 ret = 0;
+    I32 ret = 0;
 
     while (slen > 0) {
 	if (*s == '\'' || *s == '\\')
@@ -109,9 +139,9 @@ num_q(register const char *s, register STRLEN slen)
 /* slen number of characters in s will be escaped */
 /* destination must be long enough for additional chars */
 static I32
-esc_q(register char *d, register const char *s, register STRLEN slen)
+esc_q(char *d, const char *s, STRLEN slen)
 {
-    register I32 ret = 0;
+    I32 ret = 0;
 
     while (slen > 0) {
 	switch (*s) {
@@ -129,7 +159,7 @@ esc_q(register char *d, register const char *s, register STRLEN slen)
 }
 
 static I32
-esc_q_utf8(pTHX_ SV* sv, register const char *src, register STRLEN slen)
+esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen)
 {
     char *r, *rstart;
     const char *s = src;
@@ -267,7 +297,8 @@ static I32
 DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	AV *postav, I32 *levelp, I32 indent, SV *pad, SV *xpad,
 	SV *apad, SV *sep, SV *pair, SV *freezer, SV *toaster, I32 purity,
-	I32 deepcopy, I32 quotekeys, SV *bless, I32 maxdepth, SV *sortkeys)
+	I32 deepcopy, I32 quotekeys, SV *bless, I32 maxdepth, SV *sortkeys,
+        int use_sparse_seen_hash)
 {
     char tmpbuf[128];
     U32 i;
@@ -317,7 +348,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	{
 	    dSP; ENTER; SAVETMPS; PUSHMARK(sp);
 	    XPUSHs(val); PUTBACK;
-	    i = perl_call_method(SvPVX_const(freezer), G_EVAL|G_VOID);
+	    i = perl_call_method(SvPVX_const(freezer), G_EVAL|G_VOID|G_DISCARD);
 	    SPAGAIN;
 	    if (SvTRUE(ERRSV))
 		warn("WARNING(Freezer method call failed): %"SVf"", ERRSV);
@@ -493,7 +524,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys);
+			maxdepth, sortkeys, use_sparse_seen_hash);
 		sv_catpvn(retval, ")}", 2);
 	    }						     /* plain */
 	    else {
@@ -501,7 +532,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys);
+			maxdepth, sortkeys, use_sparse_seen_hash);
 	    }
 	    SvREFCNT_dec(namesv);
 	}
@@ -513,7 +544,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    DD_dump(aTHX_ ival, SvPVX_const(namesv), SvCUR(namesv), retval, seenhv,
 		    postav, levelp,	indent, pad, xpad, apad, sep, pair,
 		    freezer, toaster, purity, deepcopy, quotekeys, bless,
-		    maxdepth, sortkeys);
+		    maxdepth, sortkeys, use_sparse_seen_hash);
 	    SvREFCNT_dec(namesv);
 	}
 	else if (realtype == SVt_PVAV) {
@@ -586,7 +617,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ elem, iname, ilen, retval, seenhv, postav,
 			levelp,	indent, pad, xpad, apad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys);
+			maxdepth, sortkeys, use_sparse_seen_hash);
 		if (ix < ixmax)
 		    sv_catpvn(retval, ",", 1);
 	    }
@@ -793,7 +824,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		DD_dump(aTHX_ hval, SvPVX_const(sname), SvCUR(sname), retval, seenhv,
 			postav, levelp,	indent, pad, xpad, newapad, sep, pair,
 			freezer, toaster, purity, deepcopy, quotekeys, bless,
-			maxdepth, sortkeys);
+			maxdepth, sortkeys, use_sparse_seen_hash);
 		SvREFCNT_dec(sname);
 		Safefree(nkey_buffer);
 		if (indent >= 2)
@@ -883,7 +914,14 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		    return 1;
 		}
 	    }
-	    else if (val != &PL_sv_undef) {
+            /* If we're allowed to keep only a sparse "seen" hash
+             * (IOW, the user does not expect it to contain everything
+             * after the dump, then only store in seen hash if the SV
+             * ref count is larger than 1. If it's 1, then we know that
+             * there is no other reference, duh. This is an optimization.
+             * Note that we'd have to check for weak-refs, too, but this is
+             * already the branch for non-refs only. */
+	    else if (val != &PL_sv_undef && (!use_sparse_seen_hash || SvREFCNT(val) > 1)) {
 		SV * const namesv = newSVpvn("\\", 1);
 		sv_catpvn(namesv, name, namelen);
 		seenentry = newAV();
@@ -995,7 +1033,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 				seenhv, postav, &nlevel, indent, pad, xpad,
 				newapad, sep, pair, freezer, toaster, purity,
 				deepcopy, quotekeys, bless, maxdepth, 
-				sortkeys);
+				sortkeys, use_sparse_seen_hash);
 			SvREFCNT_dec(e);
 		    }
 		}
@@ -1009,7 +1047,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	}
 #ifdef SvVOK
 	else if (SvMAGICAL(val) && (mg = mg_find(val, 'V'))) {
-# ifndef PL_vtbl_vstring
+# if !defined(PL_vtbl_vstring) && PERL_VERSION < 17
 	    SV * const vecsv = sv_newmortal();
 #  if PERL_VERSION < 10
 	    scan_vstring(mg->mg_ptr, vecsv);
@@ -1077,6 +1115,7 @@ Data_Dumper_Dumpxs(href, ...)
 	    I32 purity, deepcopy, quotekeys, maxdepth = 0;
 	    char tmpbuf[1024];
 	    I32 gimme = GIMME;
+            int use_sparse_seen_hash = 0;
 
 	    if (!SvROK(href)) {		/* call new to get an object first */
 		if (items < 2)
@@ -1086,10 +1125,11 @@ Data_Dumper_Dumpxs(href, ...)
 		SAVETMPS;
 		
 		PUSHMARK(sp);
-		XPUSHs(href);
-		XPUSHs(sv_2mortal(newSVsv(ST(1))));
+                EXTEND(SP, 3); /* 3 == max of all branches below */
+		PUSHs(href);
+		PUSHs(sv_2mortal(newSVsv(ST(1))));
 		if (items >= 3)
-		    XPUSHs(sv_2mortal(newSVsv(ST(2))));
+		    PUSHs(sv_2mortal(newSVsv(ST(2))));
 		PUTBACK;
 		i = perl_call_method("new", G_SCALAR);
 		SPAGAIN;
@@ -1119,6 +1159,10 @@ Data_Dumper_Dumpxs(href, ...)
 
 		if ((svp = hv_fetch(hv, "seen", 4, FALSE)) && SvROK(*svp))
 		    seenhv = (HV*)SvRV(*svp);
+                else
+                    use_sparse_seen_hash = 1;
+		if ((svp = hv_fetch(hv, "noseen", 6, FALSE)))
+		    use_sparse_seen_hash = (SvOK(*svp) && SvIV(*svp) != 0);
 		if ((svp = hv_fetch(hv, "todump", 6, FALSE)) && SvROK(*svp))
 		    todumpav = (AV*)SvRV(*svp);
 		if ((svp = hv_fetch(hv, "names", 5, FALSE)) && SvROK(*svp))
@@ -1236,7 +1280,7 @@ Data_Dumper_Dumpxs(href, ...)
 		    DD_dump(aTHX_ val, SvPVX_const(name), SvCUR(name), valstr, seenhv,
 			    postav, &level, indent, pad, xpad, newapad, sep, pair,
 			    freezer, toaster, purity, deepcopy, quotekeys,
-			    bless, maxdepth, sortkeys);
+			    bless, maxdepth, sortkeys, use_sparse_seen_hash);
 		    SPAGAIN;
 		
 		    if (indent >= 2 && !terse)

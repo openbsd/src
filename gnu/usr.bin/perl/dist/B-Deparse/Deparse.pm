@@ -20,7 +20,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
          CVf_METHOD CVf_LVALUE
 	 PMf_KEEP PMf_GLOBAL PMf_CONTINUE PMf_EVAL PMf_ONCE
 	 PMf_MULTILINE PMf_SINGLELINE PMf_FOLD PMf_EXTENDED);
-$VERSION = '1.14_01';
+$VERSION = '1.20';
 use strict;
 use vars qw/$AUTOLOAD/;
 use warnings ();
@@ -301,6 +301,7 @@ BEGIN {
 #  1             statement modifiers
 #  0.5           statements, but still print scopes as do { ... }
 #  0             statement level
+# -1             format body
 
 # Nonprinting characters with special meaning:
 # \cS - steal parens (see maybe_parens_unop)
@@ -309,6 +310,115 @@ BEGIN {
 # \b - decrease indent ('outdent')
 # \f - flush left (no indent)
 # \cK - kill following semicolon, if any
+
+
+
+
+# _pessimise_walk(): recursively walk the optree of a sub,
+# possibly undoing optimisations along the way.
+
+sub _pessimise_walk {
+    my ($self, $startop) = @_;
+
+    return unless $$startop;
+    my ($op, $prevop);
+    for ($op = $startop; $$op; $prevop = $op, $op = $op->sibling) {
+	my $ppname = $op->name;
+
+	# pessimisations start here
+
+	if ($ppname eq "padrange") {
+	    # remove PADRANGE:
+	    # the original optimisation either (1) changed this:
+	    #    pushmark -> (various pad and list and null ops) -> the_rest
+	    # or (2), for the = @_ case, changed this:
+	    #    pushmark -> gv[_] -> rv2av -> (pad stuff)       -> the_rest
+	    # into this:
+	    #    padrange ----------------------------------------> the_rest
+	    # so we just need to convert the padrange back into a
+	    # pushmark, and in case (1), set its op_next to op_sibling,
+	    # which is the head of the original chain of optimised-away
+	    # pad ops, or for (2), set it to sibling->first, which is
+	    # the original gv[_].
+
+	    $B::overlay->{$$op} = {
+		    name => 'pushmark',
+		    private => ($op->private & OPpLVAL_INTRO),
+		    next    => ($op->flags & OPf_SPECIAL)
+				    ? $op->sibling->first
+				    : $op->sibling,
+	    };
+	}
+
+	# pessimisations end here
+
+	if (class($op) eq 'PMOP'
+	    && ref($op->pmreplroot)
+	    && ${$op->pmreplroot}
+	    && $op->pmreplroot->isa( 'B::OP' ))
+	{
+	    $self-> _pessimise_walk($op->pmreplroot);
+	}
+
+	if ($op->flags & OPf_KIDS) {
+	    $self-> _pessimise_walk($op->first);
+	}
+
+    }
+}
+
+
+# _pessimise_walk_exe(): recursively walk the op_next chain of a sub,
+# possibly undoing optimisations along the way.
+
+sub _pessimise_walk_exe {
+    my ($self, $startop, $visited) = @_;
+
+    return unless $$startop;
+    return if $visited->{$$startop};
+    my ($op, $prevop);
+    for ($op = $startop; $$op; $prevop = $op, $op = $op->next) {
+	last if $visited->{$$op};
+	$visited->{$$op} = 1;
+	my $ppname = $op->name;
+	if ($ppname =~
+	    /^((and|d?or)(assign)?|(map|grep)while|range|cond_expr|once)$/
+	    # entertry is also a logop, but its op_other invariably points
+	    # into the same chain as the main execution path, so we skip it
+	) {
+	    $self->_pessimise_walk_exe($op->other, $visited);
+	}
+	elsif ($ppname eq "subst") {
+	    $self->_pessimise_walk_exe($op->pmreplstart, $visited);
+	}
+	elsif ($ppname =~ /^(enter(loop|iter))$/) {
+	    # redoop and nextop will already be covered by the main block
+	    # of the loop
+	    $self->_pessimise_walk_exe($op->lastop, $visited);
+	}
+
+	# pessimisations start here
+    }
+}
+
+# Go through an optree and and "remove" some optimisations by using an
+# overlay to selectively modify or un-null some ops. Deparsing in the
+# absence of those optimisations is then easier.
+#
+# Note that older optimisations are not removed, as Deparse was already
+# written to recognise them before the pessimise/overlay system was added.
+
+sub pessimise {
+    my ($self, $root, $start) = @_;
+
+    # walk tree in root-to-branch order
+    $self->_pessimise_walk($root);
+
+    my %visited;
+    # walk tree in execution order
+    $self->_pessimise_walk_exe($start, \%visited);
+}
+
 
 sub null {
     my $op = shift;
@@ -376,6 +486,8 @@ sub begin_is_use {
     my ($self, $cv) = @_;
     my $root = $cv->ROOT;
     local @$self{qw'curcv curcvlex'} = ($cv);
+    local $B::overlay = {};
+    $self->pessimise($root, $cv->START);
 #require B::Debug;
 #B::walkoptree($cv->ROOT, "debug");
     my $lineseq = $root->first;
@@ -679,8 +791,12 @@ sub compile {
 	print $self->print_protos;
 	@{$self->{'subs_todo'}} =
 	  sort {$a->[0] <=> $b->[0]} @{$self->{'subs_todo'}};
-	print $self->indent($self->deparse_root(main_root)), "\n"
-	  unless null main_root;
+	my $root = main_root;
+	local $B::overlay = {};
+	unless (null $root) {
+	    $self->pessimise($root, main_start);
+	    print $self->indent($self->deparse_root($root)), "\n";
+	}
 	my @text;
 	while (scalar(@{$self->{'subs_todo'}})) {
 	    push @text, $self->next_todo;
@@ -888,14 +1004,17 @@ Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
     local(@$self{qw'curstash warnings hints hinthash'})
 		= @$self{qw'curstash warnings hints hinthash'};
     my $body;
-    if (not null $cv->ROOT) {
-	my $lineseq = $cv->ROOT->first;
+    my $root = $cv->ROOT;
+    local $B::overlay = {};
+    if (not null $root) {
+	$self->pessimise($root, $cv->START);
+	my $lineseq = $root->first;
 	if ($lineseq->name eq "lineseq") {
 	    my @ops;
 	    for(my$o=$lineseq->first; $$o; $o=$o->sibling) {
 		push @ops, $o;
 	    }
-	    $body = $self->lineseq(undef, @ops).";";
+	    $body = $self->lineseq(undef, 0, @ops).";";
 	    my $scope_en = $self->find_scope_en($lineseq);
 	    if (defined $scope_en) {
 		my $subs = join"", $self->seq_subs($scope_en);
@@ -903,7 +1022,7 @@ Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
 	    }
 	}
 	else {
-	    $body = $self->deparse($cv->ROOT->first, 0);
+	    $body = $self->deparse($root->first, 0);
 	}
     }
     else {
@@ -928,6 +1047,8 @@ sub deparse_format {
     local(@$self{qw'curstash warnings hints hinthash'})
 		= @$self{qw'curstash warnings hints hinthash'};
     my $op = $form->ROOT;
+    local $B::overlay = {};
+    $self->pessimise($op, $form->START);
     my $kid;
     return "\f." if $op->first->name eq 'stub'
                 || $op->first->name eq 'nextstate';
@@ -939,7 +1060,8 @@ sub deparse_format {
 	push @text, "\f".$self->const_sv($kid)->PV;
 	$kid = $kid->sibling;
 	for (; not null $kid; $kid = $kid->sibling) {
-	    push @exprs, $self->deparse($kid, 0);
+	    push @exprs, $self->deparse($kid, -1);
+	    $exprs[-1] =~ s/;\z//;
 	}
 	push @text, "\f".join(", ", @exprs)."\n" if @exprs;
 	$op = $op->sibling;
@@ -1139,7 +1261,7 @@ sub DESTROY {}	#	Do not AUTOLOAD
 # any subroutine declarations to the deparsed ops, otherwise we
 # append appropriate declarations.
 sub lineseq {
-    my($self, $root, @ops) = @_;
+    my($self, $root, $cx, @ops) = @_;
     my($expr, @exprs);
 
     my $out_cop = $self->{'curcop'};
@@ -1160,12 +1282,13 @@ sub lineseq {
     $self->walk_lineseq($root, \@ops,
 		       sub { push @exprs, $_[0]} );
 
-    my $body = join(";\n", grep {length} @exprs);
+    my $sep = $cx ? '; ' : ";\n";
+    my $body = join($sep, grep {length} @exprs);
     my $subs = "";
     if (defined $root && defined $limit_seq && !$self->{'in_format'}) {
 	$subs = join "\n", $self->seq_subs($limit_seq);
     }
-    return join(";\n", grep {length} $body, $subs);
+    return join($sep, grep {length} $body, $subs);
 }
 
 sub scopeop {
@@ -1200,9 +1323,10 @@ sub scopeop {
 	push @kids, $kid;
     }
     if ($cx > 0) { # inside an expression, (a do {} while for lineseq)
-	return "do {\n\t" . $self->lineseq($op, @kids) . "\n\b}";
+	my $body = $self->lineseq($op, 0, @kids);
+	return is_lexical_subs(@kids) ? $body : "do {\n\t$body\n\b}";
     } else {
-	my $lineseq = $self->lineseq($op, @kids);
+	my $lineseq = $self->lineseq($op, $cx, @kids);
 	return (length ($lineseq) ? "$lineseq;" : "");
     }
 }
@@ -1678,6 +1802,17 @@ my %feature_keywords = (
    fc       => 'fc',
 );
 
+# keywords that are strong and also have a prototype
+#
+my %strong_proto_keywords = map { $_ => 1 } qw(
+    glob
+    pos
+    prototype
+    scalar
+    study
+    undef
+);
+
 sub keyword {
     my $self = shift;
     my $name = shift;
@@ -1693,9 +1828,9 @@ sub keyword {
 	 if !$hh
 	 || !$hh->{"feature_$feature_keywords{$name}"}
     }
-    if (
-      $name !~ /^(?:chom?p|do|exec|glob|s(?:elect|ystem))\z/
-       && !defined eval{prototype "CORE::$name"}
+    if ($strong_proto_keywords{$name}
+        || ($name !~ /^(?:chom?p|do|exec|glob|s(?:elect|ystem))\z/
+	    && !defined eval{prototype "CORE::$name"})
     ) { return $name }
     if (
 	exists $self->{subs_declared}{$name}
@@ -2155,10 +2290,10 @@ sub loopex {
     } elsif (class($op) eq "OP") {
 	# no-op
     } elsif (class($op) eq "UNOP") {
-	(my $kid = $self->deparse($op->first, 16)) =~ s/^\cS//;
+	(my $kid = $self->deparse($op->first, 7)) =~ s/^\cS//;
 	$name .= " $kid";
     }
-    return $self->maybe_parens($name, $cx, 16);
+    return $self->maybe_parens($name, $cx, 7);
 }
 
 sub pp_last { loopex(@_, "last") }
@@ -2527,9 +2662,13 @@ sub listop {
     $name = "socketpair" if $name eq "sockpair";
     my $fullname = $self->keyword($name);
     my $proto = prototype("CORE::$name");
-    if (defined $proto
-	&& $proto =~ /^;?\*/
-	&& $kid->name eq "rv2gv" && !($kid->private & OPpLVAL_INTRO)) {
+    if (
+	 (     (defined $proto && $proto =~ /^;?\*/)
+	    || $name eq 'select' # select(F) doesn't have a proto
+	 )
+	 && $kid->name eq "rv2gv"
+	 && !($kid->private & OPpLVAL_INTRO)
+    ) {
 	$first = $self->rv2gv_or_string($kid->first);
     }
     else {
@@ -2554,6 +2693,15 @@ sub listop {
 	return "$exprs[0] = $fullname"
 	         . ($parens ? "($exprs[0])" : " $exprs[0]");
     }
+    if ($name =~ /^(system|exec)$/
+	&& ($op->flags & OPf_STACKED)
+	&& @exprs > 1)
+    {
+	# handle the "system prog a1,a2,.." form
+	my $prog = shift @exprs;
+	$exprs[0] = "$prog $exprs[0]";
+    }
+
     if ($parens && $nollafr) {
 	return "($fullname " . join(", ", @exprs) . ")";
     } elsif ($parens) {
@@ -2750,6 +2898,7 @@ sub indirop {
 	}
     } elsif (
 	!$indir && $name eq "sort"
+      && !null($op->first->sibling)
       && $op->first->sibling->name eq 'entersub'
     ) {
 	# We cannot say sort foo(bar), as foo will be interpreted as a
@@ -2776,7 +2925,8 @@ sub mapop {
     if (is_scope $code) {
 	$code = "{" . $self->deparse($code, 0) . "} ";
     } else {
-	$code = $self->deparse($code, 24) . ", ";
+	$code = $self->deparse($code, 24);
+	$code .= ", " if !null($kid->sibling);
     }
     $kid = $kid->sibling;
     for (; !null($kid); $kid = $kid->sibling) {
@@ -3011,7 +3161,7 @@ sub loop_common {
 	for (; $$state != $$cont; $state = $state->sibling) {
 	    push @states, $state;
 	}
-	$body = $self->lineseq(undef, @states);
+	$body = $self->lineseq(undef, 0, @states);
 	if (defined $cond and not is_scope $cont and $self->{'expand'} < 3) {
 	    $head = "for ($init; $cond; " . $self->deparse($cont, 1) .") ";
 	    $cont = "\cK";
@@ -3277,7 +3427,7 @@ sub is_subscriptable {
 	$kid = $kid->sibling until null $kid->sibling;
 	return 0 if is_scope($kid);
 	$kid = $kid->first;
-	return 0 if $kid->name eq "gv";
+	return 0 if $kid->name eq "gv" || $kid->name eq "padcv";
 	return 0 if is_scalar($kid);
 	return is_subscriptable($kid);	
     } else {
@@ -3641,7 +3791,7 @@ sub pp_entersub {
 	$kid = $self->deparse($kid, 24);
     } else {
 	$prefix = "";
-	my $arrow = is_subscriptable($kid->first) ? "" : "->";
+	my $arrow = is_subscriptable($kid->first) || $kid->first->name eq "padcv" ? "" : "->";
 	$kid = $self->deparse($kid, 24) . $arrow;
     }
 
@@ -4587,7 +4737,10 @@ sub matchop {
 	carp("found ".$kid->name." where regcomp expected");
     } else {
 	($re, $quote) = $self->regcomp($kid, 21, $extended);
-	my $matchop = $kid->first->first;
+	my $matchop = $kid->first;
+	if ($matchop->name eq 'regcrest') {
+	    $matchop = $matchop->first;
+	}
 	if ($matchop->name =~ /^(?:match|transr?|subst)\z/
 	   && $matchop->flags & OPf_SPECIAL) {
 	    $rhs_bound_to_defsv = 1;
@@ -4651,10 +4804,16 @@ sub pp_split {
 
     # handle special case of split(), and split(' ') that compiles to /\s+/
     # Under 5.10, the reflags may be undef if the split regexp isn't a constant
+    # Under 5.17.5-5.17.9, the special flag is on split itself.
     $kid = $op->first;
-    if ( $kid->flags & OPf_SPECIAL
-	 and ( $] < 5.009 ? $kid->pmflags & PMf_SKIPWHITE()
-	      : ($kid->reflags || 0) & RXf_SKIPWHITE() ) ) {
+    if ( $op->flags & OPf_SPECIAL
+         or (
+            $kid->flags & OPf_SPECIAL
+            and ( $] < 5.009 ? $kid->pmflags & PMf_SKIPWHITE()
+                             : ($kid->reflags || 0) & RXf_SKIPWHITE()
+            )
+         )
+    ) {
 	$exprs[0] = "' '";
     }
 
@@ -4691,19 +4850,19 @@ sub pp_subst {
     my $flags = "";
     my $pmflags = $op->pmflags;
     if (null($op->pmreplroot)) {
-	$repl = $self->dq($kid);
+	$repl = $kid;
 	$kid = $kid->sibling;
     } else {
 	$repl = $op->pmreplroot->first; # skip substcont
-	while ($repl->name eq "entereval") {
+    }
+    while ($repl->name eq "entereval") {
 	    $repl = $repl->first;
 	    $flags .= "e";
-	}
-	if ($pmflags & PMf_EVAL) {
+    }
+    if ($pmflags & PMf_EVAL) {
 	    $repl = $self->deparse($repl->first, 0);
-	} else {
+    } else {
 	    $repl = $self->dq($repl);	
-	}
     }
     my $extended = ($pmflags & PMf_EXTENDED);
     if (null $kid) {
@@ -4729,6 +4888,36 @@ sub pp_subst {
     } else {
 	return "s". double_delim($re, $repl) . $flags;	
     }
+}
+
+sub is_lexical_subs {
+    my (@ops) = shift;
+    for my $op (@ops) {
+        return 0 if $op->name !~ /\A(?:introcv|clonecv)\z/;
+    }
+    return 1;
+}
+
+sub pp_introcv {
+    my $self = shift;
+    my($op, $cx) = @_;
+    # For now, deparsing doesn't worry about the distinction between introcv
+    # and clonecv, so pretend this op doesn't exist:
+    return '';
+}
+
+sub pp_clonecv {
+    my $self = shift;
+    my($op, $cx) = @_;
+    my $sv = $self->padname_sv($op->targ);
+    my $name = substr $sv->PVX, 1; # skip &/$/@/%, like $self->padany
+    return "my sub $name";
+}
+
+sub pp_padcv {
+    my $self = shift;
+    my($op, $cx) = @_;
+    return $self->padany($op);
 }
 
 1;
@@ -5221,6 +5410,23 @@ defined within a different scope, although L<PadWalker> is a good start.
 =item *
 
 There are probably many more bugs on non-ASCII platforms (EBCDIC).
+
+=item *
+
+Lexical C<my> subroutines are not deparsed properly at the moment.  They are
+emitted as pure declarations, without their body; and the declaration may
+appear in the wrong place (before any lexicals the body closes over, or
+before the C<use feature> declaration that permits use of this feature).
+
+We expect to resolve this before the lexical-subroutine feature is no longer
+considered experimental.
+
+=item *
+
+Lexical C<state> subroutines are not deparsed at all at the moment.
+
+We expect to resolve this before the lexical-subroutine feature is no longer
+considered experimental.
 
 =back
 

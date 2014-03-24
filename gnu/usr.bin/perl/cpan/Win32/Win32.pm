@@ -8,7 +8,7 @@ package Win32;
     require DynaLoader;
 
     @ISA = qw|Exporter DynaLoader|;
-    $VERSION = '0.44';
+    $VERSION = '0.47';
     $XS_VERSION = $VERSION;
     $VERSION = eval $VERSION;
 
@@ -292,7 +292,7 @@ sub GetOSDisplayName {
 		$desc =~ s/^\s*//;
 		s/(200.)/$name Server $1/;
 	    }
-	    s/^Windows (200[38])/Windows Server $1/;
+	    s/^Windows (20(03|08|12))/Windows Server $1/;
 	}
     }
     $name .= " $desc" if length $desc;
@@ -460,8 +460,16 @@ sub _GetOSName {
 		    $desc = "R2";
 		}
 	    }
+	    elsif ($minor == 2) {
+	    if ($producttype == VER_NT_WORKSTATION) {
+	        $os = "8";
+	    }
+	    else {
+	        $os = "2012";
+	    }
+	    }
 
-            if ($productinfo == PRODUCT_ULTIMATE) {
+        if ($productinfo == PRODUCT_ULTIMATE) {
 		$desc .= " Ultimate";
 	    }
             elsif ($productinfo == PRODUCT_HOME_PREMIUM) {
@@ -686,6 +694,11 @@ Unloads a previously loaded dynamic-link library.  The HANDLE is
 no longer valid after this call.  See L<LoadLibrary|Win32::LoadLibrary(LIBNAME)>
 for information on dynamically loading a library.
 
+=item Win32::GetACP()
+
+Returns the current Windows ANSI code page identifier for the operating
+system.  See also GetOEMCP(), GetConsoleCP() and GetConsoleOutputCP().
+
 =item Win32::GetANSIPathName(FILENAME)
 
 Returns an ANSI version of FILENAME.  This may be the short name
@@ -711,6 +724,20 @@ Returns the processor type: 386, 486 or 586 for x86 processors, 8664
 for the x64 processor and 2200 for the Itanium.  Since it returns the
 native processor type it will return a 64-bit processor type even when
 called from a 32-bit Perl running on 64-bit Windows.
+
+=item Win32::GetConsoleCP()
+
+Returns the input code page used by the console associated with the
+calling process.  To set the console's input code page, see
+SetConsoleCP().  See also GetConsoleOutputCP(), GetACP() and
+GetOEMCP().
+
+=item Win32::GetConsoleOutputCP()
+
+Returns the output code page used by the console associated with the
+calling process.  To set the console's output code page, see
+SetConsoleOutputCP().  See also GetConsoleCP(), GetACP(), and
+GetOEMCP().
 
 =item Win32::GetCwd()
 
@@ -848,6 +875,12 @@ before passing the path to a system call or another program.
 [CORE] Returns a string in the form of "<d>:" where <d> is the first
 available drive letter.
 
+=item Win32::GetOEMCP()
+
+Returns the current original equipment manufacturer (OEM) code page
+identifier for the operating system.  See also GetACP(), GetConsoleCP()
+and GetConsoleOutputCP().
+
 =item Win32::GetOSDisplayName()
 
 Returns the "marketing" name of the Windows operating system version
@@ -945,6 +978,8 @@ Currently known values for ID MAJOR and MINOR are as follows:
     Windows Server 2008      2      6       0
     Windows 7                2      6       1
     Windows Server 2008 R2   2      6       1
+    Windows 8                2      6       2
+    Windows Server 2012      2      6       2
 
 On Windows NT 4 SP6 and later this function returns the following
 additional values: SPMAJOR, SPMINOR, SUITEMASK, PRODUCTTYPE.
@@ -958,6 +993,10 @@ identical; the PRODUCTTYPE field must be used to differentiate between
 them.
 
 The version numbers for Windows 7 and Windows Server 2008 R2 are
+identical; the PRODUCTTYPE field must be used to differentiate between
+them.
+
+The version numbers for Windows 8 and Windows Server 2012 are
 identical; the PRODUCTTYPE field must be used to differentiate between
 them.
 
@@ -991,9 +1030,9 @@ constants.
 PRODUCTTYPE provides additional information about the system.  It should
 be one of the following integer values:
 
-    1 - Workstation (NT 4, 2000 Pro, XP Home, XP Pro, Vista)
+    1 - Workstation (NT 4, 2000 Pro, XP Home, XP Pro, Vista, etc)
     2 - Domaincontroller
-    3 - Server (2000 Server, Server 2003, Server 2008)
+    3 - Server (2000 Server, Server 2003, Server 2008, etc)
 
 Note that a server that is also a domain controller is reported as
 PRODUCTTYPE 2 (Domaincontroller) and not PRODUCTTYPE 3 (Server).
@@ -1166,6 +1205,20 @@ previous setting or C<undef>.
 The following symbolic constants for SHOWWINDOW are available
 (but not exported) from the Win32 module: SW_HIDE, SW_SHOWNORMAL,
 SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED and SW_SHOWNOACTIVATE.
+
+=item Win32::SetConsoleCP(ID)
+
+Sets the input code page used by the console associated with the
+calling process.  The return value of SetConsoleCP() is nonzero on
+success or zero on failure.  To get the console's input code page, see
+GetConsoleCP().
+
+=item Win32::SetConsoleOutputCP(ID)
+
+Sets the output code page used by the console associated with the
+calling process.  The return value of SetConsoleOutputCP() is nonzero on
+success or zero on failure.  To get the console's output code page, see
+GetConsoleOutputCP().
 
 =item Win32::SetCwd(NEWDIRECTORY)
 

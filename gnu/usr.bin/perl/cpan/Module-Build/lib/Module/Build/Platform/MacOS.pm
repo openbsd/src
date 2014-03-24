@@ -2,7 +2,7 @@ package Module::Build::Platform::MacOS;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.39_01';
+$VERSION = '0.4003';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 use vars qw(@ISA);

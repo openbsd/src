@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..208\n"; }
+BEGIN { $| = 1; print "1..203\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -39,10 +39,8 @@ $objUk->change(level => 1);
 
 ok($objUk->gt("\x{491}", "\x{433}"));
 ok($objUk->lt("\x{491}", "\x{434}"));
-ok($objUk->gt("\x{44C}", "\x{44F}"));
-ok($objUk->lt("\x{44C}", "\x{519}"));
 
-# 6
+# 4
 
 ok($objUk->gt("\x{4E5}", "\x{438}")); # not suppressed
 ok($objUk->gt("\x{4E4}", "\x{418}")); # not suppressed
@@ -51,7 +49,7 @@ ok($objUk->gt("\x{407}", "\x{406}")); # not suppressed
 ok($objUk->gt("\x{439}", "\x{438}")); # not suppressed
 ok($objUk->gt("\x{419}", "\x{418}")); # not suppressed
 
-# 12
+# 10
 
 ok($objUk->eq("\x{4D1}", "\x{430}"));
 ok($objUk->eq("\x{4D0}", "\x{410}"));
@@ -100,14 +98,13 @@ ok($objUk->eq("\x{4EC}", "\x{42D}"));
 ok($objUk->eq("\x{477}", "\x{475}"));
 ok($objUk->eq("\x{476}", "\x{474}"));
 
-# 58
+# 56
 
 $objUk->change(level => 2);
 
 ok($objUk->eq("\x{491}", "\x{490}"));
-ok($objUk->eq("\x{44C}", "\x{42C}"));
 
-# 60
+# 57
 
 ok($objUk->gt("\x{4D1}", "\x{430}"));
 ok($objUk->gt("\x{4D0}", "\x{410}"));
@@ -156,14 +153,13 @@ ok($objUk->gt("\x{4EC}", "\x{42D}"));
 ok($objUk->gt("\x{477}", "\x{475}"));
 ok($objUk->gt("\x{476}", "\x{474}"));
 
-# 106
+# 103
 
 $objUk->change(level => 3);
 
 ok($objUk->lt("\x{491}", "\x{490}"));
-ok($objUk->lt("\x{44C}", "\x{42C}"));
 
-# 108
+# 104
 
 ok($objUk->eq("\x{4E5}", "\x{438}\x{308}")); # not suppressed
 ok($objUk->eq("\x{4E4}", "\x{418}\x{308}")); # not suppressed
@@ -172,7 +168,7 @@ ok($objUk->eq("\x{407}", "\x{406}\x{308}")); # not suppressed
 ok($objUk->eq("\x{439}", "\x{438}\x{306}")); # not suppressed
 ok($objUk->eq("\x{419}", "\x{418}\x{306}")); # not suppressed
 
-# 114
+# 110
 
 for my $i ("", "\0") {
   ok($objUk->eq("\x{4D1}", "\x{430}$i\x{306}"));
@@ -223,11 +219,10 @@ for my $i ("", "\0") {
   ok($objUk->eq("\x{476}", "\x{474}$i\x{30F}"));
 }
 
-# 206
+# 202
 
 $objUk->change(upper_before_lower => 1);
 
 ok($objUk->gt("\x{491}", "\x{490}"));
-ok($objUk->gt("\x{44C}", "\x{42C}"));
 
-# 208
+# 203

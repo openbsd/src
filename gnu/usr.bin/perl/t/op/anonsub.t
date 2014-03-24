@@ -86,7 +86,8 @@ EXPECT
 ok 1
 ########
 # [perl #71154] undef &$code makes $code->() die with: Not a CODE reference
+sub __ANON__ { print "42\n" }
 undef &{$x=sub{}};
 $x->();
 EXPECT
-Undefined subroutine called at - line 3.
+Undefined subroutine called at - line 4.

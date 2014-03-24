@@ -2,6 +2,8 @@
 #
 # Regenerate (overwriting only if changed):
 #
+#    mg_names.c
+#    mg_raw.h
 #    mg_vtable.h
 #    pod/perlguts.pod
 #
@@ -25,9 +27,9 @@ my %mg =
     (
      sv => { char => '\0', vtable => 'sv', readonly_acceptable => 1,
 	     desc => 'Special scalar variable' },
-     overload => { char => 'A', vtable => 'amagic', desc => '%OVERLOAD hash' },
-     overload_elem => { char => 'a', vtable => 'amagicelem',
-			desc => '%OVERLOAD hash element' },
+     # overload, or type "A" magic, used to be here.  Hence overloaded is
+     # often called AMAGIC internally, even though it does not use "A"
+     # magic any more.
      overload_table => { char => 'c', vtable => 'ovrld',
 			 desc => 'Holds overload table (AMT) on stash' },
      bm => { char => 'B', vtable => 'regexp', value_magic => 1,
@@ -40,10 +42,8 @@ my %mg =
      env => { char => 'E', vtable => 'env', desc => '%ENV hash' },
      envelem => { char => 'e', vtable => 'envelem',
 		  desc => '%ENV hash element' },
-     fm => { char => 'f', vtable => 'regdata', value_magic => 1,
+     fm => { char => 'f', vtable => 'regexp', value_magic => 1,
 	     readonly_acceptable => 1, desc => "Formline ('compiled' format)" },
-     study => { char => 'G', vtable => 'regexp', value_magic => 1,
-		readonly_acceptable => 1, desc => 'study()ed string' },
      regex_global => { char => 'g', vtable => 'mglob', value_magic => 1,
 		       readonly_acceptable => 1, desc => 'm//g target' },
      hints => { char => 'H', vtable => 'hints', desc => '%^H hash' },
@@ -84,7 +84,7 @@ my %mg =
 		    unknown_to_sv_magic => 1 },
      vec => { char => 'v', vtable => 'vec', value_magic => 1,
 	      desc => 'vec() lvalue' },
-     vstring => { char => 'V', value_magic => 1, vtable => 'vstring',
+     vstring => { char => 'V', value_magic => 1,
 		  desc => 'SV was vstring literal' },
      utf8 => { char => 'w', vtable => 'utf8', value_magic => 1,
 	       desc => 'Cached UTF-8 information' },
@@ -94,6 +94,7 @@ my %mg =
 		  desc => "Shadow \"foreach\" iterator variable /\nsmart parameter vivification" },
      arylen => { char => '#', vtable => 'arylen', value_magic => 1,
 		 desc => 'Array length ($#ary)' },
+     proto => { char => '&', desc => 'my sub prototype CV' },
      pos => { char => '.', vtable => 'pos', value_magic => 1,
 	      desc => 'pos() lvalue' },
      backref => { char => '<', vtable => 'backref', value_magic => 1,
@@ -105,14 +106,14 @@ my %mg =
      arylen_p => { char => '@', value_magic => 1,
 		   desc => 'to move arylen out of XPVAV' },
      ext => { char => '~', desc => 'Available for use by extensions' },
-     checkcall => { char => ']', value_magic => 1,
+     checkcall => { char => ']', value_magic => 1, vtable => 'checkcall',
 		    desc => 'inlining/mutation of call to this CV'},
 );
 
 # These have a subtly different "namespace" from the magic types.
 my %sig =
     (
-     'sv' => {get => 'get', set => 'set', len => 'len'},
+     'sv' => {get => 'get', set => 'set'},
      'env' => {set => 'set_all_env', clear => 'clear_all_env'},
      'envelem' => {set => 'setenv', clear => 'clearenv'},
      'sigelem' => {get => 'getsig', set => 'setsig', clear => 'clearsig',
@@ -123,7 +124,7 @@ my %sig =
      'isa' => {set => 'setisa', clear => 'clearisa'},
      'isaelem' => {set => 'setisa'},
      'arylen' => {get => 'getarylen', set => 'setarylen', const => 1},
-     'arylen_p' => {free => 'freearylen_p'},
+     'arylen_p' => {clear => 'cleararylen_p', free => 'freearylen_p'},
      'mglob' => {set => 'setmglob'},
      'nkeys' => {get => 'getnkeys', set => 'setnkeys'},
      'taint' => {get => 'gettaint', set => 'settaint'},
@@ -135,8 +136,6 @@ my %sig =
      'regexp' => {set => 'setregexp', alias => [qw(bm fm)]},
      'regdata' => {len => 'regdata_cnt'},
      'regdatum' => {get => 'regdatum_get', set => 'regdatum_set'},
-     'amagic' => {set => 'setamagic', free => 'setamagic'},
-     'amagicelem' => {set => 'setamagic', free => 'setamagic'},
      'backref' => {free => 'killbackrefs'},
      'ovrld' => {free => 'freeovrld'},
      'utf8' => {set => 'setutf8'},
@@ -144,7 +143,7 @@ my %sig =
 		    cond => '#ifdef USE_LOCALE_COLLATE'},
      'hintselem' => {set => 'sethint', clear => 'clearhint'},
      'hints' => {clear => 'clearhints'},
-     'vstring' => {set => 'setvstring'},
+     'checkcall' => {copy => 'copycallchecker'},
 );
 
 my ($vt, $raw, $names) = map {
@@ -279,11 +278,11 @@ enum {		/* pass one of these to get_vtbl */
 };
 
 #ifdef DOINIT
-EXTCONST char *PL_magic_vtable_names[magic_vtable_max] = {
+EXTCONST char * const PL_magic_vtable_names[magic_vtable_max] = {
     "$names"
 };
 #else
-EXTCONST char *PL_magic_vtable_names[magic_vtable_max];
+EXTCONST char * const PL_magic_vtable_names[magic_vtable_max];
 #endif
 
 EOH

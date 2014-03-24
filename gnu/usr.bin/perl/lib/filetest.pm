@@ -1,6 +1,6 @@
 package filetest;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -71,7 +71,7 @@ of the operators is a filename, not when it is a filehandle.
 Because access() does not invoke stat() (at least not in a way visible
 to Perl), B<the stat result cache "_" is not set>.  This means that the
 outcome of the following two tests is different.  The first has the stat
-bits of C</etc/passwd> in C<_>, and in the second case this still
+bits of F</etc/passwd> in C<_>, and in the second case this still
 contains the bits of C</etc>.
 
  { -d '/etc';

@@ -10,8 +10,8 @@
 package Data::Dumper;
 
 BEGIN {
-    $VERSION = '2.135_06'; # Don't forget to set version and release
-}			   # date in POD!
+    $VERSION = '2.145'; # Don't forget to set version and release
+}               # date in POD below!
 
 #$| = 1;
 
@@ -30,9 +30,9 @@ BEGIN {
     # XSLoader should be attempted to load, or the pure perl flag
     # toggled on load failure.
     eval {
-	require XSLoader;
-	XSLoader::load( 'Data::Dumper' );
-	1
+        require XSLoader;
+        XSLoader::load( 'Data::Dumper' );
+        1
     }
     or $Useperl = 1;
 }
@@ -55,6 +55,7 @@ $Pair       = ' => '    unless defined $Pair;
 $Useperl    = 0         unless defined $Useperl;
 $Sortkeys   = 0         unless defined $Sortkeys;
 $Deparse    = 0         unless defined $Deparse;
+$Sparseseen = 0         unless defined $Sparseseen;
 
 #
 # expects an arrayref of values to be dumped.
@@ -65,36 +66,37 @@ $Deparse    = 0         unless defined $Deparse;
 sub new {
   my($c, $v, $n) = @_;
 
-  croak "Usage:  PACKAGE->new(ARRAYREF, [ARRAYREF])" 
+  croak "Usage:  PACKAGE->new(ARRAYREF, [ARRAYREF])"
     unless (defined($v) && (ref($v) eq 'ARRAY'));
   $n = [] unless (defined($n) && (ref($n) eq 'ARRAY'));
 
-  my($s) = { 
-             level      => 0,           # current recursive depth
-	     indent     => $Indent,     # various styles of indenting
-	     pad	=> $Pad,        # all lines prefixed by this string
-	     xpad       => "",          # padding-per-level
-	     apad       => "",          # added padding for hash keys n such
-	     sep        => "",          # list separator
-	     pair	=> $Pair,	# hash key/value separator: defaults to ' => '
-	     seen       => {},          # local (nested) refs (id => [name, val])
-	     todump     => $v,          # values to dump []
-	     names      => $n,          # optional names for values []
-	     varname    => $Varname,    # prefix to use for tagging nameless ones
-             purity     => $Purity,     # degree to which output is evalable
-             useqq 	=> $Useqq,      # use "" for strings (backslashitis ensues)
-             terse 	=> $Terse,      # avoid name output (where feasible)
-             freezer	=> $Freezer,    # name of Freezer method for objects
-             toaster	=> $Toaster,    # name of method to revive objects
-             deepcopy	=> $Deepcopy,   # dont cross-ref, except to stop recursion
-             quotekeys	=> $Quotekeys,  # quote hash keys
-             'bless'	=> $Bless,	# keyword to use for "bless"
-#	     expdepth   => $Expdepth,   # cutoff depth for explicit dumping
-	     maxdepth	=> $Maxdepth,   # depth beyond which we give up
-	     useperl    => $Useperl,    # use the pure Perl implementation
-	     sortkeys   => $Sortkeys,   # flag or filter for sorting hash keys
-	     deparse	=> $Deparse,	# use B::Deparse for coderefs
-	   };
+  my($s) = {
+        level      => 0,           # current recursive depth
+        indent     => $Indent,     # various styles of indenting
+        pad        => $Pad,        # all lines prefixed by this string
+        xpad       => "",          # padding-per-level
+        apad       => "",          # added padding for hash keys n such
+        sep        => "",          # list separator
+        pair       => $Pair,    # hash key/value separator: defaults to ' => '
+        seen       => {},          # local (nested) refs (id => [name, val])
+        todump     => $v,          # values to dump []
+        names      => $n,          # optional names for values []
+        varname    => $Varname,    # prefix to use for tagging nameless ones
+        purity     => $Purity,     # degree to which output is evalable
+        useqq      => $Useqq,      # use "" for strings (backslashitis ensues)
+        terse      => $Terse,      # avoid name output (where feasible)
+        freezer    => $Freezer,    # name of Freezer method for objects
+        toaster    => $Toaster,    # name of method to revive objects
+        deepcopy   => $Deepcopy,   # dont cross-ref, except to stop recursion
+        quotekeys  => $Quotekeys,  # quote hash keys
+        'bless'    => $Bless,    # keyword to use for "bless"
+#        expdepth   => $Expdepth,   # cutoff depth for explicit dumping
+        maxdepth   => $Maxdepth,   # depth beyond which we give up
+        useperl    => $Useperl,    # use the pure Perl implementation
+        sortkeys   => $Sortkeys,   # flag or filter for sorting hash keys
+        deparse    => $Deparse,    # use B::Deparse for coderefs
+        noseen     => $Sparseseen, # do not populate the seen hash unless necessary
+       };
 
   if ($Indent > 0) {
     $s->{xpad} = "  ";
@@ -147,21 +149,26 @@ sub Seen {
     init_refaddr_format();
     my($k, $v, $id);
     while (($k, $v) = each %$g) {
-      if (defined $v and ref $v) {
-	$id = format_refaddr($v);
-	if ($k =~ /^[*](.*)$/) {
-	  $k = (ref $v eq 'ARRAY') ? ( "\\\@" . $1 ) :
-	       (ref $v eq 'HASH')  ? ( "\\\%" . $1 ) :
-	       (ref $v eq 'CODE')  ? ( "\\\&" . $1 ) :
-				     (   "\$" . $1 ) ;
-	}
-	elsif ($k !~ /^\$/) {
-	  $k = "\$" . $k;
-	}
-	$s->{seen}{$id} = [$k, $v];
+      if (defined $v) {
+        if (ref $v) {
+          $id = format_refaddr($v);
+          if ($k =~ /^[*](.*)$/) {
+            $k = (ref $v eq 'ARRAY') ? ( "\\\@" . $1 ) :
+                 (ref $v eq 'HASH')  ? ( "\\\%" . $1 ) :
+                 (ref $v eq 'CODE')  ? ( "\\\&" . $1 ) :
+                 (   "\$" . $1 ) ;
+          }
+          elsif ($k !~ /^\$/) {
+            $k = "\$" . $k;
+          }
+          $s->{seen}{$id} = [$k, $v];
+        }
+        else {
+          carp "Only refs supported, ignoring non-ref item \$$k";
+        }
       }
       else {
-	carp "Only refs supported, ignoring non-ref item \$$k";
+        carp "Value of ref must be defined; ignoring undefined item \$$k";
       }
     }
     return $s;
@@ -176,9 +183,14 @@ sub Seen {
 #
 sub Values {
   my($s, $v) = @_;
-  if (defined($v) && (ref($v) eq 'ARRAY'))  {
-    $s->{todump} = [@$v];        # make a copy
-    return $s;
+  if (defined($v)) {
+    if (ref($v) eq 'ARRAY')  {
+      $s->{todump} = [@$v];        # make a copy
+      return $s;
+    }
+    else {
+      croak "Argument to Values, if provided, must be array ref";
+    }
   }
   else {
     return @{$s->{todump}};
@@ -190,9 +202,14 @@ sub Values {
 #
 sub Names {
   my($s, $n) = @_;
-  if (defined($n) && (ref($n) eq 'ARRAY'))  {
-    $s->{names} = [@$n];         # make a copy
-    return $s;
+  if (defined($n)) {
+    if (ref($n) eq 'ARRAY') {
+      $s->{names} = [@$n];         # make a copy
+      return $s;
+    }
+    else {
+      croak "Argument to Names, if provided, must be array ref";
+    }
   }
   else {
     return @{$s->{names}};
@@ -203,9 +220,9 @@ sub DESTROY {}
 
 sub Dump {
     return &Dumpxs
-	unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl}) ||
-	       $Data::Dumper::Useqq   || (ref($_[0]) && $_[0]->{useqq}) ||
-	       $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse});
+    unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl}) ||
+           $Data::Dumper::Useqq   || (ref($_[0]) && $_[0]->{useqq}) ||
+           $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse});
     return &Dumpperl;
 }
 
@@ -223,28 +240,9 @@ sub Dumpperl {
   $s = $s->new(@_) unless ref $s;
 
   for $val (@{$s->{todump}}) {
-    my $out = "";
     @post = ();
     $name = $s->{names}[$i++];
-    if (defined $name) {
-      if ($name =~ /^[*](.*)$/) {
-	if (defined $val) {
-	  $name = (ref $val eq 'ARRAY') ? ( "\@" . $1 ) :
-		  (ref $val eq 'HASH')  ? ( "\%" . $1 ) :
-		  (ref $val eq 'CODE')  ? ( "\*" . $1 ) :
-					  ( "\$" . $1 ) ;
-	}
-	else {
-	  $name = "\$" . $1;
-	}
-      }
-      elsif ($name !~ /^\$/) {
-	$name = "\$" . $name;
-      }
-    }
-    else {
-      $name = "\$" . $s->{varname} . $i;
-    }
+    $name = $s->_refine_name($name, $val, $i);
 
     my $valstr;
     {
@@ -254,9 +252,7 @@ sub Dumpperl {
     }
 
     $valstr = "$name = " . $valstr . ';' if @post or !$s->{terse};
-    $out .= $s->{pad} . $valstr . $s->{sep};
-    $out .= $s->{pad} . join(';' . $s->{sep} . $s->{pad}, @post) 
-      . ';' . $s->{sep} if @post;
+    my $out = $s->_compose_out($valstr, \@post);
 
     push @out, $out;
   }
@@ -282,8 +278,7 @@ use constant _bad_vsmg => defined &_vstring && (_vstring(~v0)||'') eq "v0";
 #
 sub _dump {
   my($s, $val, $name) = @_;
-  my($sname);
-  my($out, $realpack, $realtype, $type, $ipad, $id, $blesspad);
+  my($out, $type, $id, $sname);
 
   $type = ref $val;
   $out = "";
@@ -300,65 +295,64 @@ sub _dump {
     }
 
     require Scalar::Util;
-    $realpack = Scalar::Util::blessed($val);
-    $realtype = $realpack ? Scalar::Util::reftype($val) : ref $val;
+    my $realpack = Scalar::Util::blessed($val);
+    my $realtype = $realpack ? Scalar::Util::reftype($val) : ref $val;
     $id = format_refaddr($val);
 
-    # if it has a name, we need to either look it up, or keep a tab
-    # on it so we know when we hit it later
-    if (defined($name) and length($name)) {
-      # keep a tab on it so that we dont fall into recursive pit
-      if (exists $s->{seen}{$id}) {
-#	if ($s->{expdepth} < $s->{level}) {
-	  if ($s->{purity} and $s->{level} > 0) {
-	    $out = ($realtype eq 'HASH')  ? '{}' :
-	      ($realtype eq 'ARRAY') ? '[]' :
-		'do{my $o}' ;
-	    push @post, $name . " = " . $s->{seen}{$id}[0];
-	  }
-	  else {
-	    $out = $s->{seen}{$id}[0];
-	    if ($name =~ /^([\@\%])/) {
-	      my $start = $1;
-	      if ($out =~ /^\\$start/) {
-		$out = substr($out, 1);
-	      }
-	      else {
-		$out = $start . '{' . $out . '}';
-	      }
-	    }
-          }
-	  return $out;
-#        }
+    # Note: By this point $name is always defined and of non-zero length.
+    # Keep a tab on it so that we dont fall into recursive pit.
+    if (exists $s->{seen}{$id}) {
+      if ($s->{purity} and $s->{level} > 0) {
+        $out = ($realtype eq 'HASH')  ? '{}' :
+               ($realtype eq 'ARRAY') ? '[]' :
+               'do{my $o}' ;
+        push @post, $name . " = " . $s->{seen}{$id}[0];
       }
       else {
-        # store our name
-        $s->{seen}{$id} = [ (($name =~ /^[@%]/)     ? ('\\' . $name ) :
-			     ($realtype eq 'CODE' and
-			      $name =~ /^[*](.*)$/) ? ('\\&' . $1 )   :
-			     $name          ),
-			    $val ];
+        $out = $s->{seen}{$id}[0];
+        if ($name =~ /^([\@\%])/) {
+          my $start = $1;
+          if ($out =~ /^\\$start/) {
+            $out = substr($out, 1);
+          }
+          else {
+            $out = $start . '{' . $out . '}';
+          }
+        }
       }
+      return $out;
     }
-    my $no_bless = 0; 
+    else {
+      # store our name
+      $s->{seen}{$id} = [ (
+          ($name =~ /^[@%]/)
+            ? ('\\' . $name )
+            : ($realtype eq 'CODE' and $name =~ /^[*](.*)$/)
+              ? ('\\&' . $1 )
+              : $name
+        ), $val ];
+    }
+    my $no_bless = 0;
     my $is_regex = 0;
     if ( $realpack and ($] >= 5.009005 ? re::is_regexp($val) : $realpack eq 'Regexp') ) {
         $is_regex = 1;
         $no_bless = $realpack eq 'Regexp';
     }
 
-    # If purity is not set and maxdepth is set, then check depth: 
+    # If purity is not set and maxdepth is set, then check depth:
     # if we have reached maximum depth, return the string
     # representation of the thing we are currently examining
-    # at this depth (i.e., 'Foo=ARRAY(0xdeadbeef)'). 
+    # at this depth (i.e., 'Foo=ARRAY(0xdeadbeef)').
     if (!$s->{purity}
-	and $s->{maxdepth} > 0
-	and $s->{level} >= $s->{maxdepth})
+      and defined($s->{maxdepth})
+      and $s->{maxdepth} > 0
+      and $s->{level} >= $s->{maxdepth})
     {
       return qq['$val'];
     }
 
     # we have a blessed ref
+    my ($blesspad);
     if ($realpack and !$no_bless) {
       $out = $s->{'bless'} . '( ';
       $blesspad = $s->{apad};
@@ -366,13 +360,13 @@ sub _dump {
     }
 
     $s->{level}++;
-    $ipad = $s->{xpad} x $s->{level};
+    my $ipad = $s->{xpad} x $s->{level};
 
     if ($is_regex) {
         my $pat;
-        # This really sucks, re:regexp_pattern is in ext/re/re.xs and not in 
+        # This really sucks, re:regexp_pattern is in ext/re/re.xs and not in
         # universal.c, and even worse we cant just require that re to be loaded
-        # we *have* to use() it. 
+        # we *have* to use() it.
         # We should probably move it to universal.c for 5.10.1 and fix this.
         # Currently we only use re::regexp_pattern when the re is blessed into another
         # package. This has the disadvantage of meaning that a DD dump won't round trip
@@ -382,115 +376,123 @@ sub _dump {
         # But since this means loading the full debugging engine in process we wont
         # bother unless its necessary for accuracy.
         if (($realpack ne 'Regexp') && defined(*re::regexp_pattern{CODE})) {
-            $pat = re::regexp_pattern($val);
-        } else {
-            $pat = "$val";
+          $pat = re::regexp_pattern($val);
+        }
+        else {
+          $pat = "$val";
         }
         $pat =~ s <(\\.)|/> { $1 || '\\/' }ge;
         $out .= "qr/$pat/";
     }
     elsif ($realtype eq 'SCALAR' || $realtype eq 'REF'
-	|| $realtype eq 'VSTRING') {
+    || $realtype eq 'VSTRING') {
       if ($realpack) {
-	$out .= 'do{\\(my $o = ' . $s->_dump($$val, "\${$name}") . ')}';
+        $out .= 'do{\\(my $o = ' . $s->_dump($$val, "\${$name}") . ')}';
       }
       else {
-	$out .= '\\' . $s->_dump($$val, "\${$name}");
+        $out .= '\\' . $s->_dump($$val, "\${$name}");
       }
     }
     elsif ($realtype eq 'GLOB') {
-	$out .= '\\' . $s->_dump($$val, "*{$name}");
+      $out .= '\\' . $s->_dump($$val, "*{$name}");
     }
     elsif ($realtype eq 'ARRAY') {
       my($pad, $mname);
       my($i) = 0;
       $out .= ($name =~ /^\@/) ? '(' : '[';
       $pad = $s->{sep} . $s->{pad} . $s->{apad};
-      ($name =~ /^\@(.*)$/) ? ($mname = "\$" . $1) : 
-	# omit -> if $foo->[0]->{bar}, but not ${$foo->[0]}->{bar}
-	($name =~ /^\\?[\%\@\*\$][^{].*[]}]$/) ? ($mname = $name) :
-	  ($mname = $name . '->');
+      ($name =~ /^\@(.*)$/) ? ($mname = "\$" . $1) :
+    # omit -> if $foo->[0]->{bar}, but not ${$foo->[0]}->{bar}
+        ($name =~ /^\\?[\%\@\*\$][^{].*[]}]$/) ? ($mname = $name) :
+        ($mname = $name . '->');
       $mname .= '->' if $mname =~ /^\*.+\{[A-Z]+\}$/;
       for my $v (@$val) {
-	$sname = $mname . '[' . $i . ']';
-	$out .= $pad . $ipad . '#' . $i if $s->{indent} >= 3;
-	$out .= $pad . $ipad . $s->_dump($v, $sname);
-	$out .= "," if $i++ < $#$val;
+        $sname = $mname . '[' . $i . ']';
+        $out .= $pad . $ipad . '#' . $i
+          if $s->{indent} >= 3;
+        $out .= $pad . $ipad . $s->_dump($v, $sname);
+        $out .= "," if $i++ < $#$val;
       }
       $out .= $pad . ($s->{xpad} x ($s->{level} - 1)) if $i;
       $out .= ($name =~ /^\@/) ? ')' : ']';
     }
     elsif ($realtype eq 'HASH') {
-      my($k, $v, $pad, $lpad, $mname, $pair);
+      my ($k, $v, $pad, $lpad, $mname, $pair);
       $out .= ($name =~ /^\%/) ? '(' : '{';
       $pad = $s->{sep} . $s->{pad} . $s->{apad};
       $lpad = $s->{apad};
       $pair = $s->{pair};
       ($name =~ /^\%(.*)$/) ? ($mname = "\$" . $1) :
-	# omit -> if $foo->[0]->{bar}, but not ${$foo->[0]}->{bar}
-	($name =~ /^\\?[\%\@\*\$][^{].*[]}]$/) ? ($mname = $name) :
-	  ($mname = $name . '->');
+    # omit -> if $foo->[0]->{bar}, but not ${$foo->[0]}->{bar}
+        ($name =~ /^\\?[\%\@\*\$][^{].*[]}]$/) ? ($mname = $name) :
+        ($mname = $name . '->');
       $mname .= '->' if $mname =~ /^\*.+\{[A-Z]+\}$/;
-      my ($sortkeys, $keys, $key) = ("$s->{sortkeys}");
+      my $sortkeys = defined($s->{sortkeys}) ? $s->{sortkeys} : '';
+      my $keys = [];
       if ($sortkeys) {
-	if (ref($s->{sortkeys}) eq 'CODE') {
-	  $keys = $s->{sortkeys}($val);
-	  unless (ref($keys) eq 'ARRAY') {
-	    carp "Sortkeys subroutine did not return ARRAYREF";
-	    $keys = [];
-	  }
-	}
-	else {
-	  $keys = [ sort keys %$val ];
-	}
+        if (ref($s->{sortkeys}) eq 'CODE') {
+          $keys = $s->{sortkeys}($val);
+          unless (ref($keys) eq 'ARRAY') {
+            carp "Sortkeys subroutine did not return ARRAYREF";
+            $keys = [];
+          }
+        }
+        else {
+          $keys = [ sort keys %$val ];
+        }
       }
 
       # Ensure hash iterator is reset
       keys(%$val);
 
+      my $key;
       while (($k, $v) = ! $sortkeys ? (each %$val) :
-	     @$keys ? ($key = shift(@$keys), $val->{$key}) :
-	     () ) 
+         @$keys ? ($key = shift(@$keys), $val->{$key}) :
+         () )
       {
-	my $nk = $s->_dump($k, "");
-	$nk = $1 if !$s->{quotekeys} and $nk =~ /^[\"\']([A-Za-z_]\w*)[\"\']$/;
-	$sname = $mname . '{' . $nk . '}';
-	$out .= $pad . $ipad . $nk . $pair;
+        my $nk = $s->_dump($k, "");
+        $nk = $1
+          if !$s->{quotekeys} and $nk =~ /^[\"\']([A-Za-z_]\w*)[\"\']$/;
+        $sname = $mname . '{' . $nk . '}';
+        $out .= $pad . $ipad . $nk . $pair;
 
-	# temporarily alter apad
-	$s->{apad} .= (" " x (length($nk) + 4)) if $s->{indent} >= 2;
-	$out .= $s->_dump($val->{$k}, $sname) . ",";
-	$s->{apad} = $lpad if $s->{indent} >= 2;
+        # temporarily alter apad
+        $s->{apad} .= (" " x (length($nk) + 4))
+          if $s->{indent} >= 2;
+        $out .= $s->_dump($val->{$k}, $sname) . ",";
+        $s->{apad} = $lpad
+          if $s->{indent} >= 2;
       }
       if (substr($out, -1) eq ',') {
-	chop $out;
-	$out .= $pad . ($s->{xpad} x ($s->{level} - 1));
+        chop $out;
+        $out .= $pad . ($s->{xpad} x ($s->{level} - 1));
       }
       $out .= ($name =~ /^\%/) ? ')' : '}';
     }
     elsif ($realtype eq 'CODE') {
       if ($s->{deparse}) {
-	require B::Deparse;
-	my $sub =  'sub ' . (B::Deparse->new)->coderef2text($val);
-	$pad    =  $s->{sep} . $s->{pad} . $s->{apad} . $s->{xpad} x ($s->{level} - 1);
-	$sub    =~ s/\n/$pad/gse;
-	$out   .=  $sub;
-      } else {
+        require B::Deparse;
+        my $sub =  'sub ' . (B::Deparse->new)->coderef2text($val);
+        $pad    =  $s->{sep} . $s->{pad} . $s->{apad} . $s->{xpad} x ($s->{level} - 1);
+        $sub    =~ s/\n/$pad/gse;
+        $out   .=  $sub;
+      }
+      else {
         $out .= 'sub { "DUMMY" }';
         carp "Encountered CODE ref, using dummy placeholder" if $s->{purity};
       }
     }
     else {
-      croak "Can\'t handle $realtype type.";
+      croak "Can't handle '$realtype' type";
     }
-    
+
     if ($realpack and !$no_bless) { # we have a blessed ref
       $out .= ', ' . _quote($realpack) . ' )';
-      $out .= '->' . $s->{toaster} . '()'  if $s->{toaster} ne '';
+      $out .= '->' . $s->{toaster} . '()'
+        if $s->{toaster} ne '';
       $s->{apad} = $blesspad;
     }
     $s->{level}--;
-
   }
   else {                                 # simple scalar
 
@@ -501,46 +503,46 @@ sub _dump {
       $id = format_refaddr($ref);
       if (exists $s->{seen}{$id}) {
         if ($s->{seen}{$id}[2]) {
-	  $out = $s->{seen}{$id}[0];
-	  #warn "[<$out]\n";
-	  return "\${$out}";
-	}
+          $out = $s->{seen}{$id}[0];
+          #warn "[<$out]\n";
+          return "\${$out}";
+        }
       }
       else {
-	#warn "[>\\$name]\n";
-	$s->{seen}{$id} = ["\\$name", $ref];
+        #warn "[>\\$name]\n";
+        $s->{seen}{$id} = ["\\$name", $ref];
       }
     }
     $ref = \$val;
     if (ref($ref) eq 'GLOB') {  # glob
       my $name = substr($val, 1);
       if ($name =~ /^[A-Za-z_][\w:]*$/ && $name ne 'main::') {
-	$name =~ s/^main::/::/;
-	$sname = $name;
+        $name =~ s/^main::/::/;
+        $sname = $name;
       }
       else {
-	$sname = $s->_dump(
-	  $name eq 'main::' || $] < 5.007 && $name eq "main::\0"
-	    ? ''
-	    : $name,
-	  "",
-	);
-	$sname = '{' . $sname . '}';
+        $sname = $s->_dump(
+          $name eq 'main::' || $] < 5.007 && $name eq "main::\0"
+            ? ''
+            : $name,
+          "",
+        );
+        $sname = '{' . $sname . '}';
       }
       if ($s->{purity}) {
-	my $k;
-	local ($s->{level}) = 0;
-	for $k (qw(SCALAR ARRAY HASH)) {
-	  my $gval = *$val{$k};
-	  next unless defined $gval;
-	  next if $k eq "SCALAR" && ! defined $$gval;  # always there
+        my $k;
+        local ($s->{level}) = 0;
+        for $k (qw(SCALAR ARRAY HASH)) {
+          my $gval = *$val{$k};
+          next unless defined $gval;
+          next if $k eq "SCALAR" && ! defined $$gval;  # always there
 
-	  # _dump can push into @post, so we hold our place using $postlen
-	  my $postlen = scalar @post;
-	  $post[$postlen] = "\*$sname = ";
-	  local ($s->{apad}) = " " x length($post[$postlen]) if $s->{indent} >= 2;
-	  $post[$postlen] .= $s->_dump($gval, "\*$sname\{$k\}");
-	}
+          # _dump can push into @post, so we hold our place using $postlen
+          my $postlen = scalar @post;
+          $post[$postlen] = "\*$sname = ";
+          local ($s->{apad}) = " " x length($post[$postlen]) if $s->{indent} >= 2;
+          $post[$postlen] .= $s->_dump($gval, "\*$sname\{$k\}");
+        }
       }
       $out .= '*' . $sname;
     }
@@ -548,7 +550,7 @@ sub _dump {
       $out .= "undef";
     }
     elsif (defined &_vstring and $v = _vstring($val)
-	and !_bad_vsmg || eval $v eq $val) {
+      and !_bad_vsmg || eval $v eq $val) {
       $out .= $v;
     }
     elsif (!defined &_vstring
@@ -558,10 +560,10 @@ sub _dump {
     elsif ($val =~ /^(?:0|-?[1-9]\d{0,8})\z/) { # safe decimal number
       $out .= $val;
     }
-    else {				 # string
+    else {                 # string
       if ($s->{useqq} or $val =~ tr/\0-\377//c) {
         # Fall back to qq if there's Unicode
-	$out .= qquote($val, $s->{useqq});
+        $out .= qquote($val, $s->{useqq});
       }
       else {
         $out .= _quote($val);
@@ -580,7 +582,7 @@ sub _dump {
   }
   return $out;
 }
-  
+
 #
 # non-OO style of earlier version
 #
@@ -593,12 +595,8 @@ sub DumperX {
   return Data::Dumper->Dumpxs([@_], []);
 }
 
-sub Dumpf { return Data::Dumper->Dump(@_) }
-
-sub Dumpp { print Data::Dumper->Dump(@_) }
-
 #
-# reset the "seen" cache 
+# reset the "seen" cache
 #
 sub Reset {
   my($s) = shift;
@@ -700,8 +698,13 @@ sub Deparse {
   defined($v) ? (($s->{'deparse'} = $v), return $s) : $s->{'deparse'};
 }
 
+sub Sparseseen {
+  my($s, $v) = @_;
+  defined($v) ? (($s->{'noseen'} = $v), return $s) : $s->{'noseen'};
+}
+
 # used by qquote below
-my %esc = (  
+my %esc = (
     "\a" => "\\a",
     "\b" => "\\b",
     "\t" => "\\t",
@@ -717,7 +720,7 @@ sub qquote {
   s/([\\\"\@\$])/\\$1/g;
   my $bytes; { use bytes; $bytes = length }
   s/([^\x00-\x7f])/'\x{'.sprintf("%x",ord($1)).'}'/ge if $bytes > length;
-  return qq("$_") unless 
+  return qq("$_") unless
     /[^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~]/;  # fast exit
 
   my $high = shift || "";
@@ -753,6 +756,45 @@ sub qquote {
 # helper sub to sort hash keys in Perl < 5.8.0 where we don't have
 # access to sortsv() from XS
 sub _sortkeys { [ sort keys %{$_[0]} ] }
+
+sub _refine_name {
+    my $s = shift;
+    my ($name, $val, $i) = @_;
+    if (defined $name) {
+      if ($name =~ /^[*](.*)$/) {
+        if (defined $val) {
+            $name = (ref $val eq 'ARRAY') ? ( "\@" . $1 ) :
+              (ref $val eq 'HASH')  ? ( "\%" . $1 ) :
+              (ref $val eq 'CODE')  ? ( "\*" . $1 ) :
+              ( "\$" . $1 ) ;
+        }
+        else {
+          $name = "\$" . $1;
+        }
+      }
+      elsif ($name !~ /^\$/) {
+        $name = "\$" . $name;
+      }
+    }
+    else { # no names provided
+      $name = "\$" . $s->{varname} . $i;
+    }
+    return $name;
+}
+
+sub _compose_out {
+    my $s = shift;
+    my ($valstr, $postref) = @_;
+    my $out = "";
+    $out .= $s->{pad} . $valstr . $s->{sep};
+    if (@{$postref}) {
+        $out .= $s->{pad} .
+            join(';' . $s->{sep} . $s->{pad}, @{$postref}) .
+            ';' .
+            $s->{sep};
+    }
+    return $out;
+}
 
 1;
 __END__
@@ -794,7 +836,8 @@ variable is output in a single Perl statement.  Handles self-referential
 structures correctly.
 
 The return value can be C<eval>ed to get back an identical copy of the
-original reference structure.
+original reference structure.  (Please do consider the security implications
+of eval'ing code from untrusted sources!)
 
 Any references that are the same as one of those passed in will be named
 C<$VAR>I<n> (where I<n> is a numeric suffix), and other duplicate references
@@ -812,7 +855,7 @@ these references.  Moreover, if C<eval>ed when strictures are in effect,
 you need to ensure that any variables it accesses are previously declared.
 
 In the extended usage form, the references to be dumped can be given
-user-specified names.  If a name begins with a C<*>, the output will 
+user-specified names.  If a name begins with a C<*>, the output will
 describe the dereferenced type of the supplied reference for hashes and
 arrays, and coderefs.  Output of names will be avoided where possible if
 the C<Terse> flag is set.
@@ -822,7 +865,7 @@ object will return the object itself, so method calls can be conveniently
 chained together.
 
 Several styles of output are possible, all controlled by setting
-the C<Indent> flag.  See L<Configuration Variables or Methods> below 
+the C<Indent> flag.  See L<Configuration Variables or Methods> below
 for details.
 
 
@@ -874,15 +917,21 @@ itself.
 
 =item I<$OBJ>->Values(I<[ARRAYREF]>)
 
-Queries or replaces the internal array of values that will be dumped.
-When called without arguments, returns the values.  Otherwise, returns the
-object itself.
+Queries or replaces the internal array of values that will be dumped.  When
+called without arguments, returns the values as a list.  When called with a
+reference to an array of replacement values, returns the object itself.  When
+called with any other type of argument, dies.
 
 =item I<$OBJ>->Names(I<[ARRAYREF]>)
 
 Queries or replaces the internal array of user supplied names for the values
-that will be dumped.  When called without arguments, returns the names.
-Otherwise, returns the object itself.
+that will be dumped.  When called without arguments, returns the names.  When
+called with an array of replacement names, returns the object itself.  If the
+number of replacment names exceeds the number of values to be named, the
+excess names will not be used.  If the number of replacement names falls short
+of the number of values to be named, the list of replacment names will be
+exhausted and remaining values will not be renamed.  When
+called with any other type of argument, dies.
 
 =item I<$OBJ>->Reset
 
@@ -909,7 +958,7 @@ in a list context.
 Several configuration variables can be used to control the kind of output
 generated when using the procedural interface.  These variables are usually
 C<local>ized in a block so that other parts of the code are not affected by
-the change.  
+the change.
 
 These variables determine the default state of the object created by calling
 the C<new> method, but cannot be used to alter the state of the object
@@ -1022,7 +1071,7 @@ Cross-referencing will then only be done when absolutely essential
 $Data::Dumper::Quotekeys  I<or>  $I<OBJ>->Quotekeys(I<[NEWVAL]>)
 
 Can be set to a boolean value to control whether hash keys are quoted.
-A false value will avoid quoting hash keys when it looks like a simple
+A defined false value will avoid quoting hash keys when it looks like a simple
 string.  Default is 1, which will always enclose hash keys in quotes.
 
 =item *
@@ -1054,8 +1103,8 @@ $Data::Dumper::Maxdepth  I<or>  $I<OBJ>->Maxdepth(I<[NEWVAL]>)
 Can be set to a positive integer that specifies the depth beyond which
 we don't venture into a structure.  Has no effect when
 C<Data::Dumper::Purity> is set.  (Useful in debugger when we often don't
-want to see more than enough).  Default is 0, which means there is 
-no maximum depth. 
+want to see more than enough).  Default is 0, which means there is
+no maximum depth.
 
 =item *
 
@@ -1099,6 +1148,26 @@ XSUB implementation doesn't support it.
 Caution : use this option only if you know that your coderefs will be
 properly reconstructed by C<B::Deparse>.
 
+=item *
+
+$Data::Dumper::Sparseseen I<or>  $I<OBJ>->Sparseseen(I<[NEWVAL]>)
+
+By default, Data::Dumper builds up the "seen" hash of scalars that
+it has encountered during serialization. This is very expensive.
+This seen hash is necessary to support and even just detect circular
+references. It is exposed to the user via the C<Seen()> call both
+for writing and reading.
+
+If you, as a user, do not need explicit access to the "seen" hash,
+then you can set the C<Sparseseen> option to allow Data::Dumper
+to eschew building the "seen" hash for scalars that are known not
+to possess more than one reference. This speeds up serialization
+considerably if you use the XS implementation.
+
+Note: If you turn on C<Sparseseen>, then you must not rely on the
+content of the seen hash since its contents will be an
+implementation detail!
+
 =back
 
 =head2 Exports
@@ -1130,7 +1199,7 @@ distribution for more examples.)
     $foo = Foo->new;
     $fuz = Fuz->new;
     $boo = [ 1, [], "abcd", \*foo,
-             {1 => 'a', 023 => 'b', 0x45 => 'c'}, 
+             {1 => 'a', 023 => 'b', 0x45 => 'c'},
              \\"p\q\'r", $foo, $fuz];
 
     ########
@@ -1220,20 +1289,20 @@ distribution for more examples.)
     sub new { bless { state => 'awake' }, shift }
     sub Freeze {
         my $s = shift;
-	print STDERR "preparing to sleep\n";
-	$s->{state} = 'asleep';
-	return bless $s, 'Foo::ZZZ';
+        print STDERR "preparing to sleep\n";
+        $s->{state} = 'asleep';
+        return bless $s, 'Foo::ZZZ';
     }
 
     package Foo::ZZZ;
     sub Thaw {
         my $s = shift;
-	print STDERR "waking up\n";
-	$s->{state} = 'awake';
-	return bless $s, 'Foo';
+        print STDERR "waking up\n";
+        $s->{state} = 'awake';
+        return bless $s, 'Foo';
     }
 
-    package Foo;
+    package main;
     use Data::Dumper;
     $a = Foo->new;
     $b = Data::Dumper->new([$a], ['c']);
@@ -1332,7 +1401,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.135_06  (March 20 2012)
+Version 2.145  (March 15 2013))
 
 =head1 SEE ALSO
 

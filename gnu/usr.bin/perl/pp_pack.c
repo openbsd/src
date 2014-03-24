@@ -920,7 +920,7 @@ S_measure_struct(pTHX_ tempsym_t* symptr)
  * returns char pointer to char after match, or NULL
  */
 STATIC const char *
-S_group_end(pTHX_ register const char *patptr, register const char *patend, char ender)
+S_group_end(pTHX_ const char *patptr, const char *patend, char ender)
 {
     PERL_ARGS_ASSERT_GROUP_END;
 
@@ -951,7 +951,7 @@ S_group_end(pTHX_ register const char *patptr, register const char *patend, char
  * Advances char pointer to 1st non-digit char and returns number
  */
 STATIC const char *
-S_get_num(pTHX_ register const char *patptr, I32 *lenptr )
+S_get_num(pTHX_ const char *patptr, I32 *lenptr )
 {
   I32 len = *patptr++ - '0';
 
@@ -1189,9 +1189,21 @@ first_symbol(const char *pat, const char *patend) {
 /*
 =for apidoc unpackstring
 
-The engine implementing unpack() Perl function. C<unpackstring> puts the
-extracted list items on the stack and returns the number of elements.
-Issue C<PUTBACK> before and C<SPAGAIN> after the call to this function.
+The engine implementing the unpack() Perl function.
+
+Using the template pat..patend, this function unpacks the string
+s..strend into a number of mortal SVs, which it pushes onto the perl
+argument (@_) stack (so you will need to issue a C<PUTBACK> before and
+C<SPAGAIN> after the call to this function). It returns the number of
+pushed elements.
+
+The strend and patend pointers should point to the byte following the last
+character of each string.
+
+Although this function returns its values on the perl argument stack, it
+doesn't take any parameters from that stack (and thus in particular
+there's no need to do a PUSHMARK before calling it, unlike L</call_pv> for
+example).
 
 =cut */
 
@@ -1470,7 +1482,7 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 		if (utf8 && (symptr->flags & FLAG_WAS_UTF8)) {
 		    for (ptr = s+len-1; ptr >= s; ptr--)
 			if (*ptr != 0 && !UTF8_IS_CONTINUATION(*ptr) &&
-			    !is_utf8_space((U8 *) ptr)) break;
+			    !isSPACE_utf8(ptr)) break;
 		    if (ptr >= s) ptr += UTF8SKIP(ptr);
 		    else ptr++;
 		    if (ptr > s+len)
@@ -1690,10 +1702,10 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 		    len = UTF8SKIP(result);
 		    if (!uni_to_bytes(aTHX_ &ptr, strend,
 				      (char *) &result[1], len-1, 'U')) break;
-		    auv = utf8n_to_uvuni(result, len, &retlen, ckWARN(WARN_UTF8) ? 0 : UTF8_ALLOW_ANYUV);
+		    auv = utf8n_to_uvuni(result, len, &retlen, UTF8_ALLOW_DEFAULT);
 		    s = ptr;
 		} else {
-		    auv = utf8n_to_uvuni((U8*)s, strend - s, &retlen, ckWARN(WARN_UTF8) ? 0 : UTF8_ALLOW_ANYUV);
+		    auv = utf8n_to_uvuni((U8*)s, strend - s, &retlen, UTF8_ALLOW_DEFAULT);
 		    if (retlen == (STRLEN) -1 || retlen == 0)
 			Perl_croak(aTHX_ "Malformed UTF-8 string in unpack");
 		    s += retlen;
@@ -2234,7 +2246,7 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 
         if (symptr->flags & FLAG_SLASH){
             if (SP - PL_stack_base - start_sp_offset <= 0)
-                Perl_croak(aTHX_ "'/' must follow a numeric type in unpack");
+		break;
             if( next_symbol(symptr) ){
               if( symptr->howlen == e_number )
 		Perl_croak(aTHX_ "Count after length/code in unpack" );
@@ -2395,7 +2407,7 @@ The engine implementing pack() Perl function.
 */
 
 void
-Perl_packlist(pTHX_ SV *cat, const char *pat, const char *patend, register SV **beglist, SV **endlist )
+Perl_packlist(pTHX_ SV *cat, const char *pat, const char *patend, SV **beglist, SV **endlist )
 {
     dVAR;
     tempsym_t sym;
@@ -2558,18 +2570,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 		if (lookahead.howlen == e_number) count = lookahead.length;
 		else {
 		    if (items > 0) {
-			if (SvGAMAGIC(*beglist)) {
-			    /* Avoid reading the active data more than once
-			       by copying it to a temporary.  */
-			    STRLEN len;
-			    const char *const pv = SvPV_const(*beglist, len);
-			    SV *const temp
-				= newSVpvn_flags(pv, len,
-						 SVs_TEMP | SvUTF8(*beglist));
-			    *beglist = temp;
-			}
-			count = DO_UTF8(*beglist) ?
-			    sv_len_utf8(*beglist) : sv_len(*beglist);
+			count = sv_len_utf8(*beglist);
 		    }
 		    else count = 0;
 		    if (lookahead.code == 'Z') count++;
@@ -3110,23 +3111,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 		NV anv;
 		fromstr = NEXTFROM;
 		anv = SvNV(fromstr);
-#ifdef __VOS__
-		/* VOS does not automatically map a floating-point overflow
-		   during conversion from double to float into infinity, so we
-		   do it by hand.  This code should either be generalized for
-		   any OS that needs it, or removed if and when VOS implements
-		   posix-976 (suggestion to support mapping to infinity).
-		   Paul.Green@stratus.com 02-04-02.  */
-{
-extern const float _float_constants[];
-		if (anv > FLT_MAX)
-		    afloat = _float_constants[0];   /* single prec. inf. */
-		else if (anv < -FLT_MAX)
-		    afloat = _float_constants[0];   /* single prec. inf. */
-		else afloat = (float) anv;
-}
-#else /* __VOS__ */
-# if defined(VMS) && !defined(__IEEE_FP)
+# if defined(VMS) && !defined(_IEEE_FP)
 		/* IEEE fp overflow shenanigans are unavailable on VAX and optional
 		 * on Alpha; fake it if we don't have them.
 		 */
@@ -3138,7 +3123,6 @@ extern const float _float_constants[];
 # else
 		afloat = (float)anv;
 # endif
-#endif /* __VOS__ */
 		DO_BO_PACK_N(afloat, float);
 		PUSH_VAR(utf8, cur, afloat);
 	    }
@@ -3149,23 +3133,7 @@ extern const float _float_constants[];
 		NV anv;
 		fromstr = NEXTFROM;
 		anv = SvNV(fromstr);
-#ifdef __VOS__
-		/* VOS does not automatically map a floating-point overflow
-		   during conversion from long double to double into infinity,
-		   so we do it by hand.  This code should either be generalized
-		   for any OS that needs it, or removed if and when VOS
-		   implements posix-976 (suggestion to support mapping to
-		   infinity).  Paul.Green@stratus.com 02-04-02.  */
-{
-extern const double _double_constants[];
-		if (anv > DBL_MAX)
-		    adouble = _double_constants[0];   /* double prec. inf. */
-		else if (anv < -DBL_MAX)
-		    adouble = _double_constants[0];   /* double prec. inf. */
-		else adouble = (double) anv;
-}
-#else /* __VOS__ */
-# if defined(VMS) && !defined(__IEEE_FP)
+# if defined(VMS) && !defined(_IEEE_FP)
 		/* IEEE fp overflow shenanigans are unavailable on VAX and optional
 		 * on Alpha; fake it if we don't have them.
 		 */
@@ -3177,7 +3145,6 @@ extern const double _double_constants[];
 # else
 		adouble = (double)anv;
 # endif
-#endif /* __VOS__ */
 		DO_BO_PACK_N(adouble, double);
 		PUSH_VAR(utf8, cur, adouble);
 	    }
@@ -3569,7 +3536,7 @@ extern const double _double_constants[];
 	    from_utf8 = DO_UTF8(fromstr);
 	    if (from_utf8) {
 		aend = aptr + fromlen;
-		fromlen = sv_len_utf8(fromstr);
+		fromlen = sv_len_utf8_nomg(fromstr);
 	    } else aend = NULL; /* Unused, but keep compilers happy */
 	    GROWING(utf8, cat, start, cur, (fromlen+2) / 3 * 4 + (fromlen+len-1)/len * 2);
 	    while (fromlen > 0) {
@@ -3615,11 +3582,11 @@ extern const double _double_constants[];
 PP(pp_pack)
 {
     dVAR; dSP; dMARK; dORIGMARK; dTARGET;
-    register SV *cat = TARG;
+    SV *cat = TARG;
     STRLEN fromlen;
     SV *pat_sv = *++MARK;
-    register const char *pat = SvPV_const(pat_sv, fromlen);
-    register const char *patend = pat + fromlen;
+    const char *pat = SvPV_const(pat_sv, fromlen);
+    const char *patend = pat + fromlen;
 
     MARK++;
     sv_setpvs(cat, "");
@@ -3637,8 +3604,8 @@ PP(pp_pack)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

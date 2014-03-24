@@ -15,7 +15,7 @@ BEGIN {
 
 use File::Basename;
 
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -134,13 +134,13 @@ sub guess_name {
                 last;
             }
         }
-        print STDOUT "Warning (non-fatal): Couldn't find package name in ${defpm}.pm;\n\t",
+        print "Warning (non-fatal): Couldn't find package name in ${defpm}.pm;\n\t",
                      "defaulting package name to $defname\n"
             if eof($pm);
         close $pm;
     }
     else {
-        print STDOUT "Warning (non-fatal): Couldn't find ${defpm}.pm;\n\t",
+        print "Warning (non-fatal): Couldn't find ${defpm}.pm;\n\t",
                      "defaulting package name to $defname\n";
     }
     $defname =~ s#[\d.\-_]+$##;
@@ -244,7 +244,7 @@ sub find_perl {
             return "MCR $vmsfile";
         }
     }
-    print STDOUT "Unable to find a perl $ver (by these names: @$names, in these dirs: @$dirs)\n";
+    print "Unable to find a perl $ver (by these names: @$names, in these dirs: @$dirs)\n";
     0; # false and not empty
 }
 
@@ -507,34 +507,6 @@ CODE
     return;
 }
 
-
-=item init_others (override)
-
-Provide VMS-specific forms of various compile and link commands
-
-=cut
-
-sub init_others {
-    my $self = shift;
-
-    # Must come first as we're modifying and deriving from the defaults.
-    $self->SUPER::init_others;
-
-    if ($self->{OBJECT} =~ /\s/) {
-        $self->{OBJECT} =~ s/(\\)?\n+\s+/ /g;
-        $self->{OBJECT} = $self->wraplist(
-            map $self->fixpath($_,0), split /,?\s+/, $self->{OBJECT}
-        );
-    }
-
-    $self->{LDFROM} = $self->wraplist(
-        map $self->fixpath($_,0), split /,?\s+/, $self->{LDFROM}
-    );
-
-    return;
-}
-
-
 =item init_platform (override)
 
 Add PERL_VMS, MM_VMS_REVISION and MM_VMS_VERSION.
@@ -628,12 +600,30 @@ sub constants {
     # Fixup files for MMS macros
     # XXX is this list complete?
     for my $macro (qw/
-                   FULLEXT VERSION_FROM OBJECT LDFROM
+                   FULLEXT VERSION_FROM
 	      /	) {
         next unless defined $self->{$macro};
         $self->{$macro} = $self->fixpath($self->{$macro},0);
     }
 
+
+    for my $macro (qw/
+                   OBJECT LDFROM
+	      /	) {
+        next unless defined $self->{$macro};
+
+        # Must expand macros before splitting on unescaped whitespace.
+        $self->{$macro} = $self->eliminate_macros($self->{$macro});
+        if ($self->{$macro} =~ /(?<!\^)\s/) {
+            $self->{$macro} =~ s/(\\)?\n+\s+/ /g;
+            $self->{$macro} = $self->wraplist(
+                map $self->fixpath($_,0), split /,?(?<!\^)\s+/, $self->{$macro}
+            );
+        }
+        else {
+            $self->{$macro} = $self->fixpath($self->{$macro},0);
+        }
+    }
 
     for my $macro (qw/ XS MAN1PODS MAN3PODS PM /) {
         # Where is the space coming from? --jhi
@@ -697,7 +687,7 @@ sub cflags {
     my($name,$sys,@m);
 
     ( $name = $self->{NAME} . "_cflags" ) =~ s/:/_/g ;
-    print STDOUT "Unix shell script ".$Config{"$self->{'BASEEXT'}_cflags"}.
+    print "Unix shell script ".$Config{"$self->{'BASEEXT'}_cflags"}.
          " required to modify CC command for $self->{'BASEEXT'}\n"
     if ($Config{$name});
 
@@ -1298,23 +1288,12 @@ sub perldepend {
     my($self) = @_;
     my(@m);
 
-    push @m, '
-$(OBJECT) : $(PERL_INC)EXTERN.h, $(PERL_INC)INTERN.h, $(PERL_INC)XSUB.h
-$(OBJECT) : $(PERL_INC)av.h, $(PERL_INC)config.h
-$(OBJECT) : $(PERL_INC)cop.h, $(PERL_INC)cv.h, $(PERL_INC)embed.h
-$(OBJECT) : $(PERL_INC)embedvar.h, $(PERL_INC)form.h
-$(OBJECT) : $(PERL_INC)gv.h, $(PERL_INC)handy.h, $(PERL_INC)hv.h
-$(OBJECT) : $(PERL_INC)intrpvar.h, $(PERL_INC)iperlsys.h, $(PERL_INC)keywords.h
-$(OBJECT) : $(PERL_INC)mg.h, $(PERL_INC)nostdio.h, $(PERL_INC)op.h
-$(OBJECT) : $(PERL_INC)opcode.h, $(PERL_INC)patchlevel.h
-$(OBJECT) : $(PERL_INC)perl.h, $(PERL_INC)perlio.h
-$(OBJECT) : $(PERL_INC)perlsdio.h, $(PERL_INC)perlvars.h
-$(OBJECT) : $(PERL_INC)perly.h, $(PERL_INC)pp.h, $(PERL_INC)pp_proto.h
-$(OBJECT) : $(PERL_INC)proto.h, $(PERL_INC)regcomp.h, $(PERL_INC)regexp.h
-$(OBJECT) : $(PERL_INC)regnodes.h, $(PERL_INC)scope.h, $(PERL_INC)sv.h
-$(OBJECT) : $(PERL_INC)thread.h, $(PERL_INC)util.h, $(PERL_INC)vmsish.h
+    if ($self->{OBJECT}) {
+        # Need to add an object file dependency on the perl headers.
+        # this is very important for XS modules in perl.git development.
 
-' if $self->{OBJECT}; 
+        push @m, $self->_perl_header_files_fragment(""); # empty separator on VMS as its in the $(PERL_INC)
+    }
 
     if ($self->{PERL_SRC}) {
 	my(@macros);
@@ -1513,7 +1492,7 @@ $(MAP_TARGET) :: $(MAKE_APERL_FILE)
     push @optlibs, grep { !/PerlShr/i } split ' ', +($self->ext())[2];
     if ($libperl) {
 	unless (-f $libperl || -f ($libperl = $self->catfile($Config{'installarchlib'},'CORE',$libperl))) {
-	    print STDOUT "Warning: $libperl not found\n";
+	    print "Warning: $libperl not found\n";
 	    undef $libperl;
 	}
     }
@@ -1522,7 +1501,7 @@ $(MAP_TARGET) :: $(MAKE_APERL_FILE)
 	    $libperl = $self->catfile($self->{PERL_SRC},"libperl$self->{LIB_EXT}");
 	} elsif (-f ($libperl = $self->catfile($Config{'installarchlib'},'CORE',"libperl$self->{LIB_EXT}")) ) {
 	} else {
-	    print STDOUT "Warning: $libperl not found
+	    print "Warning: $libperl not found
     If you're going to build a static perl binary, make sure perl is installed
     otherwise ignore this warning\n";
 	}
@@ -1651,23 +1630,23 @@ sub prefixify {
                $Config{lc $var} || $Config{lc $var_no_install};
 
     if( !$path ) {
-        print STDERR "  no Config found for $var.\n" if $Verbose >= 2;
+        warn "  no Config found for $var.\n" if $Verbose >= 2;
         $path = $self->_prefixify_default($rprefix, $default);
     }
     elsif( !$self->{ARGS}{PREFIX} || !$self->file_name_is_absolute($path) ) {
         # do nothing if there's no prefix or if its relative
     }
     elsif( $sprefix eq $rprefix ) {
-        print STDERR "  no new prefix.\n" if $Verbose >= 2;
+        warn "  no new prefix.\n" if $Verbose >= 2;
     }
     else {
 
-        print STDERR "  prefixify $var => $path\n"     if $Verbose >= 2;
-        print STDERR "    from $sprefix to $rprefix\n" if $Verbose >= 2;
+        warn "  prefixify $var => $path\n"     if $Verbose >= 2;
+        warn "    from $sprefix to $rprefix\n" if $Verbose >= 2;
 
         my($path_vol, $path_dirs) = $self->splitpath( $path );
         if( $path_vol eq $Config{vms_prefix}.':' ) {
-            print STDERR "  $Config{vms_prefix}: seen\n" if $Verbose >= 2;
+            warn "  $Config{vms_prefix}: seen\n" if $Verbose >= 2;
 
             $path_dirs =~ s{^\[}{\[.} unless $path_dirs =~ m{^\[\.};
             $path = $self->_catprefix($rprefix, $path_dirs);
@@ -1685,14 +1664,14 @@ sub prefixify {
 sub _prefixify_default {
     my($self, $rprefix, $default) = @_;
 
-    print STDERR "  cannot prefix, using default.\n" if $Verbose >= 2;
+    warn "  cannot prefix, using default.\n" if $Verbose >= 2;
 
     if( !$default ) {
-        print STDERR "No default!\n" if $Verbose >= 1;
+        warn "No default!\n" if $Verbose >= 1;
         return;
     }
     if( !$rprefix ) {
-        print STDERR "No replacement prefix!\n" if $Verbose >= 1;
+        warn "No replacement prefix!\n" if $Verbose >= 1;
         return '';
     }
 

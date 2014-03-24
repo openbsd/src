@@ -24,7 +24,7 @@ BEGIN {
     }
 }
 
-our $VERSION = '1.26';
+our $VERSION = '1.29';
 
 our $MaxEvalLen = 0;
 our $Verbose    = 0;
@@ -130,7 +130,7 @@ sub caller_info {
             = $cgc ? $cgc->($i) : caller($i);
     }
 
-    unless ( defined $call_info{pack} ) {
+    unless ( defined $call_info{file} ) {
         return ();
     }
 
@@ -162,12 +162,19 @@ sub caller_info {
                 = "** Incomplete caller override detected$where; \@DB::args were not set **";
         }
         else {
-            @args = map { Carp::format_arg($_) } @DB::args;
-        }
-        if ( $MaxArgNums and @args > $MaxArgNums )
-        {    # More than we want to show?
-            $#args = $MaxArgNums;
-            push @args, '...';
+            @args = @DB::args;
+            my $overflow;
+            if ( $MaxArgNums and @args > $MaxArgNums )
+            {    # More than we want to show?
+                $#args = $MaxArgNums;
+                $overflow = 1;
+            }
+
+            @args = map { Carp::format_arg($_) } @args;
+
+            if ($overflow) {
+                push @args, '...';
+            }
         }
 
         # Push the args onto the subroutine
@@ -232,6 +239,12 @@ sub get_subname {
         }
     }
 
+    # this can happen on older perls when the sub (or the stash containing it)
+    # has been deleted
+    if ( !defined( $info->{sub} ) ) {
+        return '__ANON__::__ANON__';
+    }
+
     return ( $info->{sub} eq '(eval)' ) ? 'eval {...}' : $info->{sub};
 }
 
@@ -243,7 +256,8 @@ sub long_error_loc {
     {
         ++$i;
         my $cgc = _cgc();
-        my $pkg = $cgc ? $cgc->($i) : caller($i);
+        my @caller = $cgc ? $cgc->($i) : caller($i);
+        my $pkg = $caller[0];
         unless ( defined($pkg) ) {
 
             # This *shouldn't* happen.
@@ -252,9 +266,17 @@ sub long_error_loc {
                 $i = long_error_loc();
                 last;
             }
+            elsif (defined $caller[2]) {
+                # this can happen when the stash has been deleted
+                # in that case, just assume that it's a reasonable place to
+                # stop (the file and line data will still be intact in any
+                # case) - the only issue is that we can't detect if the
+                # deleted package was internal (so don't do that then)
+                # -doy
+                redo unless 0 > --$lvl;
+                last;
+            }
             else {
-
-                # OK, now I am irritated.
                 return 2;
             }
         }
@@ -334,7 +356,20 @@ sub short_error_loc {
         $i++;
         my $caller = $cgc ? $cgc->($i) : caller($i);
 
-        return 0 unless defined($caller);    # What happened?
+        if (!defined($caller)) {
+            my @caller = $cgc ? $cgc->($i) : caller($i);
+            if (@caller) {
+                # if there's no package but there is other caller info, then
+                # the package has been deleted - treat this as a valid package
+                # in this case
+                redo if defined($called) && $CarpInternal{$called};
+                redo unless 0 > --$lvl;
+                last;
+            }
+            else {
+                return 0;
+            }
+        }
         redo if $Internal{$caller};
         redo if $CarpInternal{$caller};
         redo if $CarpInternal{$called};
@@ -435,20 +470,25 @@ Carp - alternative warn and die for modules
     # die of errors with stack backtrace
     confess "not implemented";
 
-    # cluck not exported by default
-    use Carp qw(cluck);
+    # cluck, longmess and shortmess not exported by default
+    use Carp qw(cluck longmess shortmess);
     cluck "This is how we got here!";
+    $long_message   = longmess( "message from cluck() or confess()" );
+    $short_message  = shortmess( "message from carp() or croak()" );
 
 =head1 DESCRIPTION
 
 The Carp routines are useful in your own modules because
-they act like die() or warn(), but with a message which is more
+they act like C<die()> or C<warn()>, but with a message which is more
 likely to be useful to a user of your module.  In the case of
-cluck, confess, and longmess that context is a summary of every
-call in the call-stack.  For a shorter message you can use C<carp>
-or C<croak> which report the error as being from where your module
-was called.  There is no guarantee that that is where the error
-was, but it is a good educated guess.
+C<cluck()> and C<confess()>, that context is a summary of every
+call in the call-stack; C<longmess()> returns the contents of the error
+message.
+
+For a shorter message you can use C<carp()> or C<croak()> which report the
+error as being from where your module was called.  C<shortmess()> returns the
+contents of this error message.  There is no guarantee that that is where the
+error was, but it is a good educated guess.
 
 You can also alter the way the output and logic of C<Carp> works, by
 changing some global variables in the C<Carp> namespace. See the
@@ -546,8 +586,8 @@ Defaults to C<8>.
 
 =head2 $Carp::Verbose
 
-This variable makes C<carp> and C<croak> generate stack backtraces
-just like C<cluck> and C<confess>.  This is how C<use Carp 'verbose'>
+This variable makes C<carp()> and C<croak()> generate stack backtraces
+just like C<cluck()> and C<confess()>.  This is how C<use Carp 'verbose'>
 is implemented internally.
 
 Defaults to C<0>.

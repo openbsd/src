@@ -4,7 +4,7 @@ BEGIN {
     chdir 't';
     @INC = qw(../lib);
     require './test.pl';
-    plan (tests => 13);
+    plan (tests => 17);
 }
 
 is __SUB__, "__SUB__", '__SUB__ is a bareword outside of use feature';
@@ -45,3 +45,33 @@ BEGIN {
     return "begin 2" if @_;
     is &CORE::__SUB__->(0), "begin 2", 'in BEGIN block via & (unoptimised)'
 }
+
+sub bar;
+sub bar {
+    () = sort {
+          is  CORE::__SUB__, \&bar,   'in sort block in sub with forw decl'
+         } 1,2;
+}
+bar();
+sub bur;
+sub bur {
+    () = sort {
+          is &CORE::__SUB__, \&bur, '& in sort block in sub with forw decl'
+         } 1,2;
+}
+bur();
+
+sub squog;
+sub squog {
+    grep { is  CORE::__SUB__, \&squog,
+          'in grep block in sub with forw decl'
+    } 1;
+}
+squog();
+sub squag;
+sub squag {
+    grep { is &CORE::__SUB__, \&squag,
+          '& in grep block in sub with forw decl'
+    } 1;
+}
+squag();

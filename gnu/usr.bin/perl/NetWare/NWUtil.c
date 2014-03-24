@@ -517,8 +517,8 @@ void fnAppendArgument(PCOMMANDLINEPARSER pclp, char *new_arg)
 
 char *fnSkipToken(char *s, char *r)
 {
-	register char *t=NULL;
-	register char quote = '\0'; // NULL, single quote, or double quote
+	char *t=NULL;
+	char quote = '\0'; // NULL, single quote, or double quote
 	char ch = '\0';
 
 	for (t=s; t[0]; t++)
@@ -577,11 +577,11 @@ char *fnSkipToken(char *s, char *r)
 
 char *fnScanToken(char *x, char *r)
 {
-	register char *s = x; // input string position
-	register char *t = x; // output string position
-	register char quote = '\0'; // either NULL, or single quote, or double quote
-	register char ch = '\0';
-	register char c = '\0';
+	char *s = x; // input string position
+	char *t = x; // output string position
+	char quote = '\0'; // either NULL, or single quote, or double quote
+	char ch = '\0';
+	char c = '\0';
 
 	while (*s)
 	{

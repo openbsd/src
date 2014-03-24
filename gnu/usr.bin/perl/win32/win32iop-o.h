@@ -16,11 +16,7 @@
 #endif
 
 #ifndef UNDER_CE
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#  include <sys/utime.h>
-#else
-#  include <utime.h>
-#endif
+#include <sys/utime.h>
 #endif
 
 /*

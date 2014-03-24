@@ -170,10 +170,11 @@ sub ct($) {
             is_dir     => 0,
             is_file    => 1,
             is_symlink => 0,
+
             # Fix for bizarre -k bug in Strawberry Perl
-            sticky     => ( -k $test )[-1] ? 1 : 0,
-            setgid     => -g $test ? 1 : 0,
-            setuid     => -u $test ? 1 : 0,
+            sticky => ( -k $test )[-1] ? 1 : 0,
+            setgid => -g $test         ? 1 : 0,
+            setuid => -u $test         ? 1 : 0,
         },
         '... file->* set'
     );

@@ -1,5 +1,37 @@
 Revision history for Test-Harness
 
+3.26    2013-01-16
+        - Renamed env.opts.t to env_opts.t (for VMS)
+        - Skipped some TAP::Formatter::HTML tests due to this bug: #82738
+
+3.26    2012-06-05
+        - Rereleased to fix CPAN permission problem. No functional change.
+
+3.24    2012-06-03
+        - RT #74393: corrected typo in M::B integration docs.
+        - RT #63473: fix typo.
+        - RT #49732: Attempt to load File::Glob::Windows to get correct
+          glob semantics on Win32.
+        - RT #47890: Don't use Win32::GetShortPathName.
+        - RT #64404: Ignore textness ('-T') of script when reading shebang.
+        - Handle the case where we don't know the wait status of the
+          test more gracefully.
+        - Make the test summary 'ok' line overrideable so that it can be
+          changed to a plugin to make the output of prove idempotent.
+        - Apply upstream patch:
+
+            http://perl5.git.perl.org/perl.git/commit \
+              /6359c64336d99060952232e7e300bd3c31afead8
+
+          In testargs.t in Test::Harness, don't run a world-writable file.
+
+          The test writes a file, then changes the mode, then executes it. The file needs
+          to be +x to be executable (on many platforms). The file will need to be +w to
+          be deletable on some platforms. But setting the file world writable just before
+          running it feels like a bad idea, given that the file's name is as predictable
+          as process IDs, as there's a race condition to break into the account running
+          perl's tests.
+
 3.23    2011-02-20
         - Merge in changes from core. Thanks BinGOs.
         - Made SourceHandler understand that an executable binary file

@@ -94,7 +94,7 @@ To find how (UCS-2|UTF-(16|32))(LE|BE)? differ from one another,
 see L<Encode::Unicode>. 
 
 UTF-7 is a special encoding which "re-encodes" UTF-16BE into a 7-bit
-encoding.  It is implemented seperately by Encode::Unicode::UTF7.
+encoding.  It is implemented separately by Encode::Unicode::UTF7.
 
 =head2 Encode::Byte -- Extended ASCII
 
@@ -420,7 +420,7 @@ at L<http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/> .
 =item (Mac) Indic encodings
 
 The maps for the following are available at L<http://www.unicode.org/>
-but remain unsupport because those encodings need algorithmical
+but remain unsupported because those encodings need an algorithmical
 approach, currently unsupported by F<enc2xs>:
 
   MacDevanagari

@@ -18,7 +18,7 @@ BEGIN {
     $SIG{'__WARN__'} = sub { $warn_msg = $_[0]; warn "# $_[0]"; }
 }
 
-my $test_count = 85;
+my $test_count = 98;
 $test_count += 119 if $symlink_exists;
 $test_count += 26 if $^O eq 'MSWin32';
 $test_count += 2 if $^O eq 'MSWin32' and $symlink_exists;
@@ -107,6 +107,21 @@ sub cleanup {
 	rmdir dir_path('fb', 'fba');
 	rmdir dir_path('fb', 'fbc');
 	rmdir dir_path('fb');
+    }
+    if (-d dir_path('fc')) {
+        unlink (
+            file_path('fc', 'fca', 'match_alpha'),
+            file_path('fc', 'fca', 'match_beta'),
+            file_path('fc', 'fcb', 'match_gamma'),
+            file_path('fc', 'fcb', 'delta'),
+            file_path('fc', 'fcc', 'match_epsilon'),
+            file_path('fc', 'fcc', 'match_zeta'),
+            file_path('fc', 'fcc', 'eta'),
+        );
+        rmdir dir_path('fc', 'fca');
+        rmdir dir_path('fc', 'fcb');
+        rmdir dir_path('fc', 'fcc');
+        rmdir dir_path('fc');
     }
     if ($need_updir) {
         my $updir = $^O eq 'VMS' ? File::Spec::VMS->updir() : File::Spec->updir;
@@ -197,7 +212,7 @@ sub my_preprocess {
     print "# --preprocess--\n";
     print "#   \$File::Find::dir => '$File::Find::dir' \n";
     foreach $file (@files) {
-        $file =~ s/\.(dir)?$// if $^O eq 'VMS';
+        $file =~ s/\.(dir)?$//i if $^O eq 'VMS';
         print "#   $file \n";
         delete $Expect_Dir{ $File::Find::dir }->{$file};
     }
@@ -870,6 +885,41 @@ if ($symlink_exists) {  # Issue 68260
     Check (!$dangling_symlink);
 }
 
+print "# RT 59750\n";
+MkDir( dir_path('fc'), 0770 );
+MkDir( dir_path('fc', 'fca'), 0770 );
+MkDir( dir_path('fc', 'fcb'), 0770 );
+MkDir( dir_path('fc', 'fcc'), 0770 );
+touch( file_path('fc', 'fca', 'match_alpha') );
+touch( file_path('fc', 'fca', 'match_beta') );
+touch( file_path('fc', 'fcb', 'match_gamma') );
+touch( file_path('fc', 'fcb', 'delta') );
+touch( file_path('fc', 'fcc', 'match_epsilon') );
+touch( file_path('fc', 'fcc', 'match_zeta') );
+touch( file_path('fc', 'fcc', 'eta') );
+
+my @files_from_mixed = ();
+sub wantmatch {
+    if ( $File::Find::name =~ m/match/ ) {
+        push @files_from_mixed, $_;
+        print "# \$_ => '$_'\n";
+    }
+}
+find( \&wantmatch, (
+    dir_path('fc', 'fca'),
+    dir_path('fc', 'fcb'),
+    dir_path('fc', 'fcc'),
+) );
+Check( scalar(@files_from_mixed) == 5 );
+
+@files_from_mixed = ();
+find( \&wantmatch, (
+    dir_path('fc', 'fca'),
+    dir_path('fc', 'fcb'),
+    file_path('fc', 'fcc', 'match_epsilon'),
+    file_path('fc', 'fcc', 'eta'),
+) );
+Check( scalar(@files_from_mixed) == 4 );
 
 if ($^O eq 'MSWin32') {
     # Check F:F:f correctly handles a root directory path.

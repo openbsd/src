@@ -46,7 +46,6 @@ BEGIN {
   "www.yahoo.com." => 1,
   "www.about.com." => 1,
   "www.microsoft.com." => 1,
-  "127.0.0.1" => 1,
 );
 }
 
@@ -78,7 +77,7 @@ foreach my $host (keys %webs) {
   # ping() does dns resolution and
   # only sends the SYN at this point
   Alarm(50); # (Plenty for a DNS lookup)
-  is($p->ping($host), 1, "Can reach $host $p->{bad}->{$host}");
+  is($p->ping($host), 1, "Can reach $host [" . ($p->{bad}->{$host} || "") . "]");
 }
 
 Alarm(20);

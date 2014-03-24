@@ -201,6 +201,10 @@ sub reqtype_of {
 
 __END__
 
+=head1 NAME
+
+CPAN::Queue - internal queue support for CPAN.pm
+
 =head1 LICENSE
 
 This program is free software; you can redistribute it and/or

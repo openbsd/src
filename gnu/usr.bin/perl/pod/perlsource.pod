@@ -116,6 +116,13 @@ Tests for perl's method resolution order implementations (see L<mro>).
 Tests for perl's built in functions that don't fit into any of the
 other directories.
 
+=item * F<t/opbasic/>
+
+Tests for perl's built in functions which, like those in F<t/op/>, do not fit
+into any of the other directories, but which, in addition, cannot use
+F<t/test.pl>,as that program depends on functionality which the
+test file itself is testing.
+
 =item * F<t/re/>
 
 Tests for regex related functions or behaviour. (These used to live in

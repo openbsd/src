@@ -2,7 +2,7 @@
 #
 # filehandle.t -- Test the parse_from_filehandle interface.
 #
-# Copyright 2006, 2009 by Russ Allbery <rra@stanford.edu>
+# Copyright 2006, 2009, 2012 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -31,7 +31,7 @@ my $text = Pod::Text->new;
 isa_ok ($text, 'Pod::Text', 'Pod::Text parser object');
 while (<DATA>) {
     next until $_ eq "###\n";
-    open (TMP, '> tmp.pod') or die "Cannot create tmp.pod: $!\n";
+    open (TMP, "> tmp$$.pod") or die "Cannot create tmp.pod: $!\n";
     while (<DATA>) {
         last if $_ eq "###\n";
         print TMP $_;
@@ -39,12 +39,12 @@ while (<DATA>) {
     close TMP;
 
     # Test Pod::Man output.
-    open (IN, '< tmp.pod') or die "Cannot open tmp.pod: $!\n";
-    open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+    open (IN, "< tmp$$.pod") or die "Cannot open tmp$$.pod: $!\n";
+    open (OUT, "> out$$.tmp") or die "Cannot create out$$.tmp: $!\n";
     $man->parse_from_filehandle (\*IN, \*OUT);
     close IN;
     close OUT;
-    open (OUT, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+    open (OUT, "out$$.tmp") or die "Cannot open out$$.tmp: $!\n";
     while (<OUT>) { last if /^\.nh/ }
     my $output;
     {
@@ -60,18 +60,18 @@ while (<DATA>) {
     is ($output, $expected, 'Pod::Man output is correct');
 
     # Test Pod::Text output.
-    open (IN, '< tmp.pod') or die "Cannot open tmp.pod: $!\n";
-    open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+    open (IN, "< tmp$$.pod") or die "Cannot open tmp$$.pod: $!\n";
+    open (OUT, "> out$$.tmp") or die "Cannot create out$$.tmp: $!\n";
     $text->parse_from_filehandle (\*IN, \*OUT);
     close IN;
     close OUT;
-    open (OUT, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+    open (OUT, "out$$.tmp") or die "Cannot open out$$.tmp: $!\n";
     {
         local $/;
         $output = <OUT>;
     }
     close OUT;
-    1 while unlink ('tmp.pod', 'out.tmp');
+    1 while unlink ("tmp$$.pod", "out$$.tmp");
     $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";

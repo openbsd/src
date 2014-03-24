@@ -4,7 +4,7 @@ use warnings;
 use parent qw( Pod::Simple::RTF );
 
 use vars qw($VERSION);
-$VERSION = '3.17';
+$VERSION = '3.19';
 
 sub is_pageable        { 0 }
 sub write_with_binmode { 0 }

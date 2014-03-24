@@ -34,8 +34,6 @@ SKIP:
 		for my $rs_code ('', '$/=undef', '$/=\2', '$/=\1024') {
 		    TODO:
 		    {
-			local $::TODO = "We get RMS\$_IOP at EOF on VMS when \$/ is undef"
-			    if $^O eq 'VMS' && $rs_code eq '$/=undef';
 			is( runperl( prog => "$rs_code; $test_prog",
 						 stdin => $test_in, stderr => 1),
 				$test_in,

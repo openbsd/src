@@ -70,6 +70,33 @@ japanese
    ~
    ja
 
+# Last ones in the list
+
+Zulu
+LOCALE_LANG_ALPHA_2
+   ~
+   zu
+
+Zaza
+LOCALE_LANG_ALPHA_3
+   ~
+   zza
+
+Welsh
+LOCALE_LANG_TERM
+   ~
+   cym
+
+Zande languages
+LOCALE_LANG_ALPHA_3
+   ~
+   znd
+
+Zuojiang Zhuang
+LOCALE_LANG_ALPHA_3
+   ~
+   zzj
+
 ";
 
 print "language2code...\n";

@@ -28,12 +28,14 @@ use strict;
 require Pod::ParseUtils;
 use base qw/ Pod::Select /;
 
+use if $] > 5.017, 'deprecate';
+
 # use Data::Dumper; # for debugging
 use Carp;
 
 use vars qw/ $VERSION %HTML_Escapes @LatexSections /;
 
-$VERSION = '0.60';
+$VERSION = '0.61';
 
 # Definitions of =headN -> latex mapping
 @LatexSections = (qw/

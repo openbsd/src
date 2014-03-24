@@ -1,5 +1,11 @@
 Revision history for Perl suite Locale::Maketext
 
+2012-12-04
+    * Fix misparsing of maketext strings.
+
+2012-11-22
+    * Fix hash order dependency bug in tests
+
 2012-01-14
     * Minor POD documentation update to sync with upstream blead.
 

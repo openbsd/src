@@ -6,21 +6,21 @@ require 5.006 ;
 use strict ;
 use warnings;
 
-use IO::Compress::Base::Common 2.048 ;
+use IO::Compress::Base::Common 2.060 ;
 
-use IO::File qw(SEEK_SET SEEK_END); ;
-use Scalar::Util qw(blessed readonly);
+use IO::File (); ;
+use Scalar::Util ();
 
 #use File::Glob;
 #require Exporter ;
 use Carp() ;
 use Symbol();
-use bytes;
+#use bytes;
 
 our (@ISA, $VERSION);
 @ISA    = qw(Exporter IO::File);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 
 #Can't locate object method "SWASHNEW" via package "utf8" (perhaps you forgot to load "utf8"?) at .../ext/Compress-Zlib/Gzip/blib/lib/Compress/Zlib/Common.pm line 16.
 
@@ -92,11 +92,11 @@ sub writeAt
         my $here = tell(*$self->{FH});
         return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) 
             if $here < 0 ;
-        seek(*$self->{FH}, $offset, SEEK_SET)
+        seek(*$self->{FH}, $offset, IO::Handle::SEEK_SET)
             or return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) ;
         defined *$self->{FH}->write($data, length $data)
             or return $self->saveErrorString(undef, $!, $!) ;
-        seek(*$self->{FH}, $here, SEEK_SET)
+        seek(*$self->{FH}, $here, IO::Handle::SEEK_SET)
             or return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) ;
     }
     else {
@@ -143,10 +143,21 @@ sub output
 
 sub getOneShotParams
 {
-    return ( 'MultiStream' => [1, 1, Parse_boolean,   1],
+    return ( 'multistream' => [IO::Compress::Base::Common::Parse_boolean,   1],
            );
 }
 
+our %PARAMS = (
+            # Generic Parameters
+            'autoclose' => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'encode'    => [IO::Compress::Base::Common::Parse_any,       undef],
+            'strict'    => [IO::Compress::Base::Common::Parse_boolean,   1],
+            'append'    => [IO::Compress::Base::Common::Parse_boolean,   0],
+            'binmodein' => [IO::Compress::Base::Common::Parse_boolean,   0],
+
+            'filtercontainer' => [IO::Compress::Base::Common::Parse_code,  undef],
+        );
+        
 sub checkParams
 {
     my $self = shift ;
@@ -156,20 +167,14 @@ sub checkParams
 
     $got->parse(
         {
-            # Generic Parameters
-            'AutoClose' => [1, 1, Parse_boolean,   0],
-            #'Encode'    => [1, 1, Parse_any,       undef],
-            'Strict'    => [0, 1, Parse_boolean,   1],
-            'Append'    => [1, 1, Parse_boolean,   0],
-            'BinModeIn' => [1, 1, Parse_boolean,   0],
+            %PARAMS,
 
-            'FilterContainer' => [1, 1, Parse_code,  undef],
 
             $self->getExtraParams(),
             *$self->{OneShot} ? $self->getOneShotParams() 
                               : (),
         }, 
-        @_) or $self->croakError("${class}: $got->{Error}")  ;
+        @_) or $self->croakError("${class}: " . $got->getError())  ;
 
     return $got ;
 }
@@ -195,9 +200,9 @@ sub _create
             or return undef ;
     }
 
-    my $lax = ! $got->value('Strict') ;
+    my $lax = ! $got->getValue('strict') ;
 
-    my $outType = whatIsOutput($outValue);
+    my $outType = IO::Compress::Base::Common::whatIsOutput($outValue);
 
     $obj->ckOutputParam($class, $outValue)
         or return undef ;
@@ -211,10 +216,10 @@ sub _create
     }
 
     # Merge implies Append
-    my $merge = $got->value('Merge') ;
-    my $appendOutput = $got->value('Append') || $merge ;
+    my $merge = $got->getValue('merge') ;
+    my $appendOutput = $got->getValue('append') || $merge ;
     *$obj->{Append} = $appendOutput;
-    *$obj->{FilterContainer} = $got->value('FilterContainer') ;
+    *$obj->{FilterContainer} = $got->getValue('filtercontainer') ;
 
     if ($merge)
     {
@@ -229,17 +234,18 @@ sub _create
     #if ($outType eq 'filename' && -e $outValue && ! -w _)
     #  { return $obj->saveErrorString(undef, "Output file '$outValue' is not writable" ) }
 
-
-
-    if ($got->parsed('Encode')) { 
-        my $want_encoding = $got->value('Encode');
-        *$obj->{Encoding} = getEncoding($obj, $class, $want_encoding);
-    }
-
     $obj->ckParams($got)
         or $obj->croakError("${class}: " . $obj->error());
 
-
+    if ($got->getValue('encode')) { 
+        my $want_encoding = $got->getValue('encode');
+        *$obj->{Encoding} = IO::Compress::Base::Common::getEncoding($obj, $class, $want_encoding);
+        my $x = *$obj->{Encoding}; 
+    }
+    else {
+        *$obj->{Encoding} = undef; 
+    }
+    
     $obj->saveStatus(STATUS_OK) ;
 
     my $status ;
@@ -259,11 +265,11 @@ sub _create
             if ($outType eq 'handle') {
                 *$obj->{FH} = $outValue ;
                 setBinModeOutput(*$obj->{FH}) ;
-                $outValue->flush() ;
+                #$outValue->flush() ;
                 *$obj->{Handle} = 1 ;
                 if ($appendOutput)
                 {
-                    seek(*$obj->{FH}, 0, SEEK_END)
+                    seek(*$obj->{FH}, 0, IO::Handle::SEEK_END)
                         or return $obj->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) ;
 
                 }
@@ -292,7 +298,7 @@ sub _create
     }
 
     *$obj->{Closed} = 0 ;
-    *$obj->{AutoClose} = $got->value('AutoClose') ;
+    *$obj->{AutoClose} = $got->getValue('autoclose') ;
     *$obj->{Output} = $outValue;
     *$obj->{ClassName} = $class;
     *$obj->{Got} = $got;
@@ -305,7 +311,7 @@ sub ckOutputParam
 {
     my $self = shift ;
     my $from = shift ;
-    my $outType = whatIsOutput($_[0]);
+    my $outType = IO::Compress::Base::Common::whatIsOutput($_[0]);
 
     $self->croakError("$from: output parameter not a filename, filehandle or scalar ref")
         if ! $outType ;
@@ -314,7 +320,7 @@ sub ckOutputParam
         #if $outType eq 'filename' && (! defined $_[0] || $_[0] eq '')  ;
 
     $self->croakError("$from: output buffer is read-only")
-        if $outType eq 'buffer' && readonly(${ $_[0] });
+        if $outType eq 'buffer' && Scalar::Util::readonly(${ $_[0] });
     
     return 1;    
 }
@@ -490,7 +496,7 @@ sub _wr2
             $fh = new IO::File "<$input"
                 or return $self->saveErrorString(undef, "cannot open file '$input': $!", $!) ;
         }
-        binmode $fh if *$self->{Got}->valueOrDefault('BinModeIn') ;
+        binmode $fh if *$self->{Got}->valueOrDefault('binmodein') ;
 
         my $status ;
         my $buff ;
@@ -523,7 +529,7 @@ sub addInterStream
     my $input = shift ;
     my $inputIsFilename = shift ;
 
-    if (*$self->{Got}->value('MultiStream'))
+    if (*$self->{Got}->getValue('multistream'))
     {
         $self->getFileInfo(*$self->{Got}, $input)
             #if isaFilename($input) and $inputIsFilename ;
@@ -532,7 +538,7 @@ sub addInterStream
         # TODO -- newStream needs to allow gzip/zip header to be modified
         return $self->newStream();
     }
-    elsif (*$self->{Got}->value('AutoFlush'))
+    elsif (*$self->{Got}->getValue('autoflush'))
     {
         #return $self->flush(Z_FULL_FLUSH);
     }
@@ -589,10 +595,6 @@ sub syswrite
         $buffer = \$_[0] ;
     }
 
-    $] >= 5.008 and ( utf8::downgrade($$buffer, 1) 
-        or Carp::croak "Wide character in " .  *$self->{ClassName} . "::write:");
-
-
     if (@_ > 1) {
         my $slen = defined $$buffer ? length($$buffer) : 0;
         my $len = $slen;
@@ -614,10 +616,22 @@ sub syswrite
         $buffer = \substr($$buffer, $offset, $len) ;
     }
 
-    return 0 if ! defined $$buffer || length $$buffer == 0 ;
-
-    if (*$self->{Encoding}) {
+    return 0 if (! defined $$buffer || length $$buffer == 0) && ! *$self->{FlushPending};
+    
+#    *$self->{Pending} .= $$buffer ;
+#    
+#    return length $$buffer
+#        if (length *$self->{Pending} < 1024 * 16 && ! *$self->{FlushPending}) ;
+#
+#    $$buffer = *$self->{Pending} ; 
+#    *$self->{Pending} = '';
+    
+    if (*$self->{Encoding}) {      
         $$buffer = *$self->{Encoding}->encode($$buffer);
+    }
+    else {
+        $] >= 5.008 and ( utf8::downgrade($$buffer, 1) 
+            or Carp::croak "Wide character in " .  *$self->{ClassName} . "::write:");
     }
 
     $self->filterUncompressed($buffer);
@@ -670,9 +684,7 @@ sub printf
     defined $self->syswrite(sprintf($fmt, @_));
 }
 
-
-
-sub flush
+sub _flushCompressed
 {
     my $self = shift ;
 
@@ -690,6 +702,15 @@ sub flush
 
     $self->outputPayload($outBuffer)
         or return 0;
+    return 1;        
+}
+
+sub flush
+{   
+    my $self = shift ;
+
+    $self->_flushCompressed(@_)
+        or return 0;        
 
     if ( defined *$self->{FH} ) {
         defined *$self->{FH}->flush()
@@ -708,12 +729,22 @@ sub _newStream
     my $self = shift ;
     my $got  = shift;
 
+    my $class = ref $self;
+
     $self->_writeTrailer()
         or return 0 ;
 
     $self->ckParams($got)
         or $self->croakError("newStream: $self->{Error}");
 
+    if ($got->getValue('encode')) { 
+        my $want_encoding = $got->getValue('encode');
+        *$self->{Encoding} = IO::Compress::Base::Common::getEncoding($self, $class, $want_encoding);
+    }
+    else {
+        *$self->{Encoding} = undef;
+    }
+    
     *$self->{Compress} = $self->mkComp($got)
         or return 0;
 
@@ -788,13 +819,13 @@ sub _writeFinalTrailer
 sub close
 {
     my $self = shift ;
-
     return 1 if *$self->{Closed} || ! *$self->{Compress} ;
     *$self->{Closed} = 1 ;
 
     untie *$self 
         if $] >= 5.008 ;
 
+    *$self->{FlushPending} = 1 ;
     $self->_writeTrailer()
         or return 0 ;
 
@@ -806,7 +837,6 @@ sub close
 
     if (defined *$self->{FH}) {
 
-        #if (! *$self->{Handle} || *$self->{AutoClose}) {
         if ((! *$self->{Handle} || *$self->{AutoClose}) && ! *$self->{StdIO}) {
             $! = 0 ;
             *$self->{FH}->close()
@@ -1011,7 +1041,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

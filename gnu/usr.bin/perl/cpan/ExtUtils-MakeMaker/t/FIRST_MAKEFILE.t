@@ -31,4 +31,4 @@ cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag @mpl_out;
 ok( -e 'jakefile', 'FIRST_MAKEFILE honored' );
 
 ok( grep(/^Writing jakefile(?:\.)? for Big::Dummy/, @mpl_out) == 1,
-					'Makefile.PL output looks right' );
+    'Makefile.PL output looks right' );

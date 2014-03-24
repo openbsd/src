@@ -5,6 +5,7 @@ END {print "not ok 1\n" unless $loaded;}
 use Config;
 use CGI (':standard','keywords');
 $loaded = 1;
+$CGI::Util::SORT_ATTRIBUTES = 1;
 print "ok 1\n";
 
 ######################### End of black magic.
@@ -103,4 +104,4 @@ test(30, !charset("") && header() eq "Content-Type: text/html${CRLF}${CRLF}", "E
 
 test(31, header(-foo=>'bar') eq "Foo: bar${CRLF}Content-Type: text/html${CRLF}${CRLF}", "Custom header");
 
-test(32, start_form(-action=>'one',name=>'two',onsubmit=>'three') eq qq(<form method="post" action="one" enctype="multipart/form-data" onsubmit="three" name="two">\n), "initial dash followed by undashed arguments");
+test(32, start_form(-action=>'one',name=>'two',onsubmit=>'three') eq qq(<form method="post" action="one" enctype="multipart/form-data" name="two" onsubmit="three">), "initial dash followed by undashed arguments")

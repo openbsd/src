@@ -3,7 +3,7 @@ package Socket;
 use strict;
 { use 5.006001; }
 
-our $VERSION = '2.001';
+our $VERSION = '2.009';
 
 =head1 NAME
 
@@ -86,6 +86,13 @@ functions as sockaddr_family().
 
 Socket type constants to use as the second argument to socket(), or the value
 of the C<SO_TYPE> socket option.
+
+=head2 SOCK_NONBLOCK. SOCK_CLOEXEC
+
+Linux-specific shortcuts to specify the C<O_NONBLOCK> and C<FD_CLOEXEC> flags
+during a C<socket(2)> call.
+
+ socket( my $sockh, PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, 0 )
 
 =head2 SOL_SOCKET
 
@@ -177,6 +184,8 @@ opaque string representing the IP address (you can use inet_ntoa() to convert
 the address to the four-dotted numeric format). Will croak if the structure
 does not represent an C<AF_INET> address.
 
+In scalar context will return just the IP address.
+
 =head2 $sockaddr = sockaddr_in $port, $ip_address
 
 =head2 ($port, $ip_address) = sockaddr_in $sockaddr
@@ -203,6 +212,8 @@ number, an opaque string representing the IPv6 address, the scope ID, and the
 flow label. (You can use inet_ntop() to convert the address to the usual
 string format). Will croak if the structure does not represent an C<AF_INET6>
 address.
+
+In scalar context will return just the IP address.
 
 =head2 $sockaddr = sockaddr_in6 $port, $ip6_address, [$scope_id, [$flowinfo]]
 
@@ -241,13 +252,37 @@ pack_sockaddr_un() or unpack_sockaddr_un() explicitly.
 
 These are only supported if your system has E<lt>F<sys/un.h>E<gt>.
 
-=head2 $ipv6_mreq = pack_ipv6_mreq $ip6_address, $ifindex
+=head2 $ip_mreq = pack_ip_mreq $multiaddr, $interface
 
-Takes an IPv6 address and an interface number. Returns the C<ipv6_mreq>
-structure with those arguments packed in. Suitable for use with the
-C<IPV6_ADD_MEMBERSHIP> and C<IPV6_DROP_MEMBERSHIP> sockopts.
+Takes an IPv4 multicast address and optionally an interface address (or
+C<INADDR_ANY>). Returns the C<ip_mreq> structure with those arguments packed
+in. Suitable for use with the C<IP_ADD_MEMBERSHIP> and C<IP_DROP_MEMBERSHIP>
+sockopts.
 
-=head2 ($ip6_address, $ifindex) = unpack_ipv6_mreq $ipv6_mreq
+=head2 ($multiaddr, $interface) = unpack_ip_mreq $ip_mreq
+
+Takes an C<ip_mreq> structure. Returns a list of two elements; the IPv4
+multicast address and interface address.
+
+=head2 $ip_mreq_source = pack_ip_mreq_source $multiaddr, $source, $interface
+
+Takes an IPv4 multicast address, source address, and optionally an interface
+address (or C<INADDR_ANY>). Returns the C<ip_mreq_source> structure with those
+arguments packed in. Suitable for use with the C<IP_ADD_SOURCE_MEMBERSHIP>
+and C<IP_DROP_SOURCE_MEMBERSHIP> sockopts.
+
+=head2 ($multiaddr, $source, $interface) = unpack_ip_mreq_source $ip_mreq
+
+Takes an C<ip_mreq_source> structure. Returns a list of three elements; the
+IPv4 multicast address, source address and interface address.
+
+=head2 $ipv6_mreq = pack_ipv6_mreq $multiaddr6, $ifindex
+
+Takes an IPv6 multicast address and an interface number. Returns the
+C<ipv6_mreq> structure with those arguments packed in. Suitable for use with
+the C<IPV6_ADD_MEMBERSHIP> and C<IPV6_DROP_MEMBERSHIP> sockopts.
+
+=head2 ($multiaddr6, $ifindex) = unpack_ipv6_mreq $ipv6_mreq
 
 Takes an C<ipv6_mreq> structure. Returns a list of two elements; the IPv6
 address and an interface number.
@@ -715,19 +750,28 @@ our @EXPORT = qw(
 our @EXPORT_OK = qw(
 	CR LF CRLF $CR $LF $CRLF
 
+	SOCK_NONBLOCK SOCK_CLOEXEC
+
+	IP_ADD_MEMBERSHIP IP_ADD_SOURCE_MEMBERSHIP IP_DROP_MEMBERSHIP
+	IP_DROP_SOURCE_MEMBERSHIP IP_MULTICAST_IF IP_MULTICAST_LOOP
+	IP_MULTICAST_TTL
+
 	IPPROTO_IP IPPROTO_IPV6 IPPROTO_RAW IPPROTO_ICMP IPPROTO_TCP
 	IPPROTO_UDP
 
-	TCP_CONGESTION TCP_CORK TCP_DEFER_ACCEPT TCP_INFO TCP_KEEPALIVE
-	TCP_KEEPCNT TCP_KEEPIDLE TCP_KEEPINTVL TCP_LINGER2 TCP_MAXRT TCP_MAXSEG
-	TCP_MD5SIG TCP_NODELAY TCP_QUICKACK TCP_STDURG TCP_SYNCNT
-	TCP_WINDOW_CLAMP 
+	TCP_CONGESTION TCP_CONNECTIONTIMEOUT TCP_CORK TCP_DEFER_ACCEPT TCP_INFO
+	TCP_INIT_CWND TCP_KEEPALIVE TCP_KEEPCNT TCP_KEEPIDLE TCP_KEEPINTVL
+	TCP_LINGER2 TCP_MAXRT TCP_MAXSEG TCP_MD5SIG TCP_NODELAY TCP_NOOPT
+	TCP_NOPUSH TCP_QUICKACK TCP_SACK_ENABLE TCP_STDURG TCP_SYNCNT
+	TCP_WINDOW_CLAMP
 
 	IN6ADDR_ANY IN6ADDR_LOOPBACK
 
-	IPV6_ADD_MEMBERSHIP IPV6_DROP_MEMBERSHIP IPV6_MTU IPV6_MTU_DISCOVER
-	IPV6_MULTICAST_HOPS IPV6_MULTICAST_IF IPV6_MULTICAST_LOOP
-	IPV6_UNICAST_HOPS IPV6_V6ONLY
+	IPV6_ADD_MEMBERSHIP IPV6_DROP_MEMBERSHIP IPV6_JOIN_GROUP
+	IPV6_LEAVE_GROUP IPV6_MTU IPV6_MTU_DISCOVER IPV6_MULTICAST_HOPS
+	IPV6_MULTICAST_IF IPV6_MULTICAST_LOOP IPV6_UNICAST_HOPS IPV6_V6ONLY
+
+	pack_ip_mreq unpack_ip_mreq pack_ip_mreq_source unpack_ip_mreq_source
 
 	pack_ipv6_mreq unpack_ipv6_mreq
 

@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     require 'test.pl';
-    plan(20);
+    plan(24);
 }
 
 sub End::DESTROY { $_[0]->() }
@@ -31,14 +31,45 @@ foreach my $inx ("", "aabbcc\n", [qw(aa bb cc)]) {
     no warnings "misc";
     my $warn = "";
     local $SIG{__WARN__} = sub { $warn .= $_[0] };
-    { my $e = end { die "aa\n"; }; }
+    { my $e = end { no warnings "misc"; die "aa\n"; }; }
     is $warn, "";
+}
+
+{
+    no warnings "misc";
+    my $warn = "";
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
+    { my $e = end { use warnings "misc"; die "aa\n"; }; }
+    is $warn, "\t(in cleanup) aa\n";
 }
 
 {
     my $warn = "";
     local $SIG{__WARN__} = sub { $warn .= $_[0] };
     { my $e = end { no warnings "misc"; die "aa\n"; }; }
+    is $warn, "";
+}
+
+{
+    my $warn = "";
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
+    { my $e = end { use warnings "misc"; die "aa\n"; }; }
+    is $warn, "\t(in cleanup) aa\n";
+}
+
+{
+    use warnings "misc";
+    my $warn = "";
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
+    { my $e = end { no warnings "misc"; die "aa\n"; }; }
+    is $warn, "";
+}
+
+{
+    use warnings "misc";
+    my $warn = "";
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
+    { my $e = end { use warnings "misc"; die "aa\n"; }; }
     is $warn, "\t(in cleanup) aa\n";
 }
 

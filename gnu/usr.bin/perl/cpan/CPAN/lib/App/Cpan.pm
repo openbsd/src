@@ -1,9 +1,11 @@
 package App::Cpan;
+
+use 5.008;
 use strict;
 use warnings;
 use vars qw($VERSION);
 
-$VERSION = '1.5701';
+$VERSION = '1.61';
 
 =head1 NAME
 
@@ -15,10 +17,10 @@ App::Cpan - easily interact with CPAN from the command line
 	cpan module_name [ module_name ... ]
 
 	# with switches, installs modules with extra behavior
-	cpan [-cfFimt] module_name [ module_name ... ]
+	cpan [-cfFimtTw] module_name [ module_name ... ]
 
 	# use local::lib
-	cpan -l module_name [ module_name ... ]
+	cpan -I module_name [ module_name ... ]
 
 	# with just the dot, install from the distribution in the
 	# current directory
@@ -28,7 +30,7 @@ App::Cpan - easily interact with CPAN from the command line
 	cpan
 
 	# without arguments, but some switches
-	cpan [-ahruvACDLO]
+	cpan [-ahpruvACDLOP]
 
 =head1 DESCRIPTION
 
@@ -100,7 +102,13 @@ of the other options and arguments.
 
 =item -i
 
-Install the specified modules.
+Install the specified modules. With no other switches, this switch
+is implied.
+
+=item -I
+
+Load C<local::lib> (think like C<-I> for loading lib paths). Too bad
+C<-l> was already taken.
 
 =item -j Config.pm
 
@@ -116,7 +124,7 @@ for a new, custom configuration.
 
 =item -l
 
-Use C<local::lib>.
+List all installed modules wth their versions
 
 =item -L author [ author ... ]
 
@@ -126,17 +134,33 @@ List the modules by the specified authors.
 
 Make the specified modules.
 
+=item -n
+
+Do a dry run, but don't actually install anything. (unimplemented)
+
 =item -O
 
 Show the out-of-date modules.
+
+=item -p
+
+Ping the configured mirrors
+
+=item -P
+
+Find the best mirrors you could be using (but doesn't configure them just yet)
+
+=item -r
+
+Recompiles dynamically loaded modules with CPAN::Shell->recompile.
 
 =item -t
 
 Run a `make test` on the specified modules.
 
-=item -r
+=item -T
 
-Recompiles dynamically loaded modules with CPAN::Shell->recompile.
+Do not test modules. Simply install them.
 
 =item -u
 
@@ -146,6 +170,17 @@ so keep a backup.
 =item -v
 
 Print the script version and CPAN.pm version then exit.
+
+=item -V
+
+Print detailed information about the cpan client.
+
+=item -w
+
+UNIMPLEMENTED
+
+Turn on cpan warnings. This checks various things, like directory permissions,
+and tells you about problems you might have.
 
 =back
 
@@ -181,11 +216,11 @@ Print the script version and CPAN.pm version then exit.
 
 use autouse Carp => qw(carp croak cluck);
 use CPAN ();
+use Config;
 use autouse Cwd => qw(cwd);
 use autouse 'Data::Dumper' => qw(Dumper);
 use File::Spec::Functions;
 use File::Basename;
-
 use Getopt::Std;
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -209,7 +244,7 @@ BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
 	%Method_table %Method_table_index );
 
-@META_OPTIONS = qw( h v g G C A D O l L a r j: J );
+@META_OPTIONS = qw( h v V I g G C A D O l L a r p P j: J w T);
 
 $Default = 'default';
 
@@ -240,11 +275,15 @@ sub GOOD_EXIT () { 0 }
 	# options that do their thing first, then exit
 	h =>  [ \&_print_help,        NO_ARGS, GOOD_EXIT, 'Printing help'                ],
 	v =>  [ \&_print_version,     NO_ARGS, GOOD_EXIT, 'Printing version'             ],
+	V =>  [ \&_print_details,     NO_ARGS, GOOD_EXIT, 'Printing detailed version'    ],
 
 	# options that affect other options
 	j =>  [ \&_load_config,          ARGS, GOOD_EXIT, 'Use specified config file'    ],
 	J =>  [ \&_dump_config,       NO_ARGS, GOOD_EXIT, 'Dump configuration to stdout' ],
 	F =>  [ \&_lock_lobotomy,     NO_ARGS, GOOD_EXIT, 'Turn off CPAN.pm lock files'  ],
+	I =>  [ \&_load_local_lib,    NO_ARGS, GOOD_EXIT, 'Loading local::lib'           ],
+    w =>  [ \&_turn_on_warnings,  NO_ARGS, GOOD_EXIT, 'Turning on warnings'          ],
+    T =>  [ \&_turn_off_testing,  NO_ARGS, GOOD_EXIT, 'Turning off testing'          ],
 
 	# options that do their one thing
 	g =>  [ \&_download,          NO_ARGS, GOOD_EXIT, 'Download the latest distro'        ],
@@ -254,11 +293,13 @@ sub GOOD_EXIT () { 0 }
 	A =>  [ \&_show_Author,          ARGS, GOOD_EXIT, 'Showing Author'               ],
 	D =>  [ \&_show_Details,         ARGS, GOOD_EXIT, 'Showing Details'              ],
 	O =>  [ \&_show_out_of_date,  NO_ARGS, GOOD_EXIT, 'Showing Out of date'          ],
-
 	l =>  [ \&_list_all_mods,     NO_ARGS, GOOD_EXIT, 'Listing all modules'          ],
 
 	L =>  [ \&_show_author_mods,     ARGS, GOOD_EXIT, 'Showing author mods'          ],
 	a =>  [ \&_create_autobundle, NO_ARGS, GOOD_EXIT, 'Creating autobundle'          ],
+	p =>  [ \&_ping_mirrors,      NO_ARGS, GOOD_EXIT, 'Pinging mirrors'              ],
+	P =>  [ \&_find_good_mirrors, NO_ARGS, GOOD_EXIT, 'Finding good mirrors'         ],
+
 	r =>  [ \&_recompile,         NO_ARGS, GOOD_EXIT, 'Recompiling'                  ],
 	u =>  [ \&_upgrade,           NO_ARGS, GOOD_EXIT, 'Running `make test`'          ],
 
@@ -267,7 +308,6 @@ sub GOOD_EXIT () { 0 }
 	i =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make install`'       ],
    'm' => [ \&_default,              ARGS, GOOD_EXIT, 'Running `make`'               ],
 	t =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make test`'          ],
-
 	);
 
 %Method_table_index = (
@@ -277,6 +317,7 @@ sub GOOD_EXIT () { 0 }
 	description => 3,
 	);
 }
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # finally, do some argument processing
@@ -290,6 +331,8 @@ sub _stupid_interface_hack_for_non_rtfmers
 sub _process_options
 	{
 	my %options;
+
+	push @ARGV, grep $_, split /\s+/, $ENV{CPAN_OPTS} || '';
 
 	# if no arguments, just drop into the shell
 	if( 0 == @ARGV ) { CPAN::shell(); exit 0 }
@@ -313,16 +356,30 @@ sub _process_setup_options
 	else
 		{
 		# this is what CPAN.pm would do otherwise
+		local $CPAN::Be_Silent = 1;
 		CPAN::HandleConfig->load(
-			# be_silent  => 1, # candidate to be ripped out forever
+			# be_silent  => 1, deprecated
 			write_file => 0,
 			);
 		}
 
-	if( $options->{F} )
+	foreach my $o ( qw(F I w T) )
 		{
-		$Method_table{F}[ $Method_table_index{code} ]->( $options->{F} );
-		delete $options->{F};
+		next unless exists $options->{$o};
+		$Method_table{$o}[ $Method_table_index{code} ]->( $options->{$o} );
+		delete $options->{$o};
+		}
+
+	if( $options->{o} )
+		{
+		my @pairs = map { [ split /=/, $_, 2 ] } split /,/, $options->{o};
+		foreach my $pair ( @pairs )
+			{
+			my( $setting, $value ) = @$pair;
+			$CPAN::Config->{$setting} = $value;
+		#	$logger->debug( "Setting [$setting] to [$value]" );
+			}
+		delete $options->{o};
 		}
 
 	my $option_count = grep { $options->{$_} } @option_order;
@@ -392,10 +449,11 @@ sub run
 	}
 
 {
-package Local::Null::Logger;
+package
+  Local::Null::Logger; # hide from PAUSE
 
 sub new { bless \ my $x, $_[0] }
-sub AUTOLOAD { shift; print "NullLogger: ", @_, $/ if $ENV{CPAN_NULL_LOGGER} }
+sub AUTOLOAD { 1 }
 sub DESTROY { 1 }
 }
 
@@ -477,12 +535,13 @@ sub _default
 
 =for comment
 
-CPAN.pm sends all the good stuff either to STDOUT. I have to intercept
-that output so I can find out what happened.
+CPAN.pm sends all the good stuff either to STDOUT, or to a temp
+file if $CPAN::Be_Silent is set. I have to intercept that output
+so I can find out what happened.
 
 =cut
 
-{
+BEGIN {
 my $scalar = '';
 
 sub _hook_into_CPANpm_report
@@ -491,7 +550,7 @@ sub _hook_into_CPANpm_report
 
 	*CPAN::Shell::myprint = sub {
 		my($self,$what) = @_;
-		$scalar .= $what if defined $what;
+		$scalar .= $what;
 		$self->print_ornamented($what,
 			$CPAN::Config->{colorize_print}||'bold blue on_white',
 			);
@@ -499,7 +558,7 @@ sub _hook_into_CPANpm_report
 
 	*CPAN::Shell::mywarn = sub {
 		my($self,$what) = @_;
-		$scalar .= $what if defined $what;
+		$scalar .= $what;
 		$self->print_ornamented($what,
 			$CPAN::Config->{colorize_warn}||'bold red on_white'
 			);
@@ -511,7 +570,6 @@ sub _clear_cpanpm_output { $scalar = '' }
 
 sub _get_cpanpm_output   { $scalar }
 
-BEGIN {
 my @skip_lines = (
 	qr/^\QWarning \(usually harmless\)/,
 	qr/\bwill not store persistent state\b/,
@@ -537,7 +595,7 @@ sub _get_cpanpm_last_line
             redo REGEXES; # we have to go through all of them for every line!
             }
 		}
-    }
+	}
 
     $logger->debug( "Last interesting line of CPAN.pm output is:\n\t$lines[-1]" );
 
@@ -575,7 +633,17 @@ sub _cpanpm_output_is_vague
 	return TRUE;
 	}
 
-}
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+sub _turn_on_warnings {
+	carp "Warnings are implemented yet";
+	return HEY_IT_WORKED;
+	}
+
+sub _turn_off_testing {
+	$logger->debug( 'Trusting test report history' );
+	$CPAN::Config->{trust_test_report_history} = 1;
+	return HEY_IT_WORKED;
+	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 sub _print_help
@@ -584,10 +652,252 @@ sub _print_help
 	exec "perldoc $0";
 	}
 
-sub _print_version
+sub _print_version # -v
 	{
 	$logger->info(
 		"$0 script version $VERSION, CPAN.pm version " . CPAN->VERSION );
+
+	return HEY_IT_WORKED;
+	}
+
+sub _print_details # -V
+	{
+	_print_version();
+
+	_check_install_dirs();
+
+	$logger->info( '-' x 50 . "\nChecking configured mirrors..." );
+	foreach my $mirror ( @{ $CPAN::Config->{urllist} } ) {
+		_print_ping_report( $mirror );
+		}
+
+	$logger->info( '-' x 50 . "\nChecking for faster mirrors..." );
+
+	{
+	require CPAN::Mirrors;
+
+      if ( $CPAN::Config->{connect_to_internet_ok} ) {
+        $CPAN::Frontend->myprint(qq{Trying to fetch a mirror list from the Internet\n});
+        eval { CPAN::FTP->localize('MIRRORED.BY',File::Spec->catfile($CPAN::Config->{keep_source_where},'MIRRORED.BY'),3,1) }
+          or $CPAN::Frontend->mywarn(<<'HERE');
+We failed to get a copy of the mirror list from the Internet.
+You will need to provide CPAN mirror URLs yourself.
+HERE
+        $CPAN::Frontend->myprint("\n");
+      }
+
+	my $mirrors   = CPAN::Mirrors->new(  );
+	$mirrors->parse_mirrored_by( File::Spec->catfile($CPAN::Config->{keep_source_where},'MIRRORED.BY') );
+	my @continents = $mirrors->find_best_continents;
+
+	my @mirrors   = $mirrors->get_mirrors_by_continents( $continents[0] );
+	my @timings   = $mirrors->get_mirrors_timings( \@mirrors );
+
+	foreach my $timing ( @timings ) {
+		$logger->info( sprintf "%s (%0.2f ms)",
+			$timing->hostname, $timing->rtt );
+		}
+	}
+
+	return HEY_IT_WORKED;
+	}
+
+sub _check_install_dirs
+	{
+	my $makepl_arg   = $CPAN::Config->{makepl_arg};
+	my $mbuildpl_arg = $CPAN::Config->{mbuildpl_arg};
+
+	my @custom_dirs;
+	# PERL_MM_OPT
+	push @custom_dirs,
+		$makepl_arg   =~ m/INSTALL_BASE\s*=\s*(\S+)/g,
+		$mbuildpl_arg =~ m/--install_base\s*=\s*(\S+)/g;
+
+	if( @custom_dirs ) {
+		foreach my $dir ( @custom_dirs ) {
+			_print_inc_dir_report( $dir );
+			}
+		}
+
+	# XXX: also need to check makepl_args, etc
+
+	my @checks = (
+		[ 'core',         [ grep $_, @Config{qw(installprivlib installarchlib)}      ] ],
+		[ 'vendor',       [ grep $_, @Config{qw(installvendorlib installvendorarch)} ] ],
+		[ 'site',         [ grep $_, @Config{qw(installsitelib installsitearch)}     ] ],
+		[ 'PERL5LIB',     _split_paths( $ENV{PERL5LIB} ) ],
+		[ 'PERLLIB',      _split_paths( $ENV{PERLLIB} )  ],
+		);
+
+	$logger->info( '-' x 50 . "\nChecking install dirs..." );
+	foreach my $tuple ( @checks ) {
+		my( $label ) = $tuple->[0];
+
+		$logger->info( "Checking $label" );
+		$logger->info( "\tno directories for $label" ) unless @{ $tuple->[1] };
+		foreach my $dir ( @{ $tuple->[1] } ) {
+			_print_inc_dir_report( $dir );
+			}
+		}
+
+	}
+
+sub _split_paths
+	{
+	[ map { _expand_filename( $_ ) } split /$Config{path_sep}/, $_[0] || '' ];
+	}
+
+
+=pod
+
+Stolen from File::Path::Expand
+
+=cut
+
+sub _expand_filename
+	{
+    my( $path ) = @_;
+    no warnings 'uninitialized';
+    $logger->debug( "Expanding path $path\n" );
+    $path =~ s{\A~([^/]+)?}{
+		_home_of( $1 || $> ) || "~$1"
+    	}e;
+    return $path;
+	}
+
+sub _home_of
+	{
+	require User::pwent;
+    my( $user ) = @_;
+    my $ent = User::pwent::getpw($user) or return;
+    return $ent->dir;
+	}
+
+sub _get_default_inc
+	{
+	require Config;
+
+	[ @Config::Config{ _vars() }, '.' ];
+	}
+
+sub _vars {
+	qw(
+	installarchlib
+	installprivlib
+	installsitearch
+	installsitelib
+	);
+	}
+
+sub _ping_mirrors {
+	my $urls   = $CPAN::Config->{urllist};
+	require URI;
+
+	foreach my $url ( @$urls ) {
+		my( $obj ) = URI->new( $url );
+		next unless _is_pingable_scheme( $obj );
+		my $host = $obj->host;
+		_print_ping_report( $obj );
+		}
+
+	}
+
+sub _is_pingable_scheme {
+	my( $uri ) = @_;
+
+	$uri->scheme eq 'file'
+	}
+
+sub _find_good_mirrors {
+	require CPAN::Mirrors;
+
+	my $mirrors = CPAN::Mirrors->new;
+	my $file = do {
+		my $file = 'MIRRORED.BY';
+		my $local_path = File::Spec->catfile(
+			$CPAN::Config->{keep_source_where}, $file );
+
+		if( -e $local_path ) { $local_path }
+		else {
+			require CPAN::FTP;
+			CPAN::FTP->localize( $file, $local_path, 3, 1 );
+			$local_path;
+			}
+		};
+
+	$mirrors->parse_mirrored_by( $file );
+
+	my @mirrors = $mirrors->best_mirrors(
+		how_many   => 3,
+		verbose    => 1,
+		);
+
+	foreach my $mirror ( @mirrors ) {
+		next unless eval { $mirror->can( 'http' ) };
+		_print_ping_report( $mirror->http );
+		}
+
+	}
+
+sub _print_inc_dir_report
+	{
+	my( $dir ) = shift;
+
+	my $writeable = -w $dir ? '+' : '!!! (not writeable)';
+	$logger->info( "\t$writeable $dir" );
+	return -w $dir;
+	}
+
+sub _print_ping_report
+	{
+	my( $mirror ) = @_;
+
+	my $rtt = eval { _get_ping_report( $mirror ) };
+
+	$logger->info(
+		sprintf "\t%s (%4d ms) %s", $rtt  ? '+' : '!',  $rtt * 1000, $mirror
+		);
+	}
+
+sub _get_ping_report
+	{
+	require URI;
+	my( $mirror ) = @_;
+	my( $url ) = ref $mirror ? $mirror : URI->new( $mirror ); #XXX
+	require Net::Ping;
+
+	my $ping = Net::Ping->new( 'tcp', 1 );
+
+	if( $url->scheme eq 'file' ) {
+		return -e $url->file;
+		}
+
+    my( $port ) = $url->port;
+
+    return unless $port;
+
+    if ( $ping->can('port_number') ) {
+        $ping->port_number($port);
+    	}
+    else {
+        $ping->{'port_num'} = $port;
+    	}
+
+    $ping->hires(1) if $ping->can( 'hires' );
+    my( $alive, $rtt ) = eval{ $ping->ping( $url->host ) };
+	$alive ? $rtt : undef;
+	}
+
+sub _load_local_lib # -I
+	{
+	$logger->debug( "Loading local::lib" );
+
+	my $rc = eval { require local::lib; 1; };
+	unless( $rc ) {
+		$logger->die( "Could not load local::lib" );
+		}
+
+	local::lib->import;
 
 	return HEY_IT_WORKED;
 	}
@@ -642,7 +952,7 @@ sub _load_config # -j
 	return HEY_IT_WORKED;
 	}
 
-sub _dump_config
+sub _dump_config # -J
 	{
 	my $args = shift;
 	require Data::Dumper;
@@ -659,7 +969,7 @@ sub _dump_config
 	return HEY_IT_WORKED;
 	}
 
-sub _lock_lobotomy
+sub _lock_lobotomy # -F
 	{
 	no warnings 'redefine';
 
@@ -820,7 +1130,7 @@ sub _show_Author
 		next unless $module->userid;
 
 		printf "%-25s %-8s %-25s %s\n",
-			$arg, $module->userid, $author->email, $author->fullname;
+			$arg, $module->userid, $author->email, $author->name;
 		}
 
 	return HEY_IT_WORKED;
@@ -891,7 +1201,7 @@ sub _show_author_mods
 	return HEY_IT_WORKED;
 	}
 
-sub _list_all_mods
+sub _list_all_mods # -l
 	{
 	require File::Find;
 
@@ -966,8 +1276,10 @@ sub _eval_version
 	{
 	my( $line, $sigil, $var ) = @_;
 
+        # split package line to hide from PAUSE
 	my $eval = qq{
-		package ExtUtils::MakeMaker::_version;
+		package
+                  ExtUtils::MakeMaker::_version;
 
 		local $sigil$var;
 		\$$var=undef; do {
@@ -1029,6 +1341,16 @@ correctly if Log4perl is not installed.
 * When I capture CPAN.pm output, I need to check for errors and
 report them to the user.
 
+* Support local::lib
+
+* Warnings switch
+
+* Check then exit
+
+* ping mirrors support
+
+* no test option
+
 =head1 BUGS
 
 * none noted
@@ -1046,13 +1368,15 @@ This code is in Github:
 
 =head1 CREDITS
 
-Japheth Cleaver added the bits to allow a forced install (-f).
+Japheth Cleaver added the bits to allow a forced install (C<-f>).
 
 Jim Brandt suggest and provided the initial implementation for the
 up-to-date and Changes features.
 
-Adam Kennedy pointed out that exit() causes problems on Windows
+Adam Kennedy pointed out that C<exit()> causes problems on Windows
 where this script ends up with a .bat extension
+
+David Golden helps integrate this into the C<CPAN.pm> repos.
 
 =head1 AUTHOR
 
@@ -1060,7 +1384,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2009, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2013, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

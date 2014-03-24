@@ -39,6 +39,8 @@ if (!@ARGV) {
 	# *.c or */*.c
 	push @ARGV, $prefix . $1 if m!^((?:[^/]+/)?[^/]+\.c)\t!;
     }
+    push @ARGV, $prefix . 'inline.h'; # Special case this '.h' which acts like
+                                      # a '.c'
 }
 
 while (<>) {

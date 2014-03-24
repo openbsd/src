@@ -1,6 +1,67 @@
 CHANGES
 -------
 
+  2.060 7 January 2013
+
+      * Mention SimpleZip in POD
+
+  2.059 24 November 2012
+
+      * Copy-on-write support
+        [#81353]
+
+  2.058 12 November 2012
+
+      * No Changes
+
+  2.057 10 November 2012
+
+      * Compress::Raw::Zlib needs to use PERL_NO_GET_CONTEXT
+        [#80319]
+
+      * Install to 'site' instead of 'perl' when perl version is 5.11+
+        [#79812]
+
+      * update to ppport.h that includes SvPV_nomg_nolen
+        [#78079] 
+      
+  2.056 10 August 2012
+
+      * Fix C++ build issue
+        Thanks to Karl Williamson for supplying the patch.
+      
+  2.055 4 August 2012
+
+      * Fix misuse of magic in API
+        [#78079] 
+      
+  2.054 8 May 2012
+
+      * Build issue on Win32
+        [#77030] 
+      
+  2.053 6 May 2012
+
+      * Include zlib 1.2.7 source.
+      
+  2.052 29 April 2012
+
+      * Fixed build issue when Perl is built with C++
+      
+  2.051 20 February 2012
+
+      * Bug in Compress::Raw::Zlib on Windows
+        [#75222] 
+      
+  2.050 20 February 2012
+
+      * Build failure on Irix & Solaris.
+        [RT #69985]
+      
+  2.049 18 February 2012
+
+      * Include zlib 1.2.6 source.
+
   2.048 29 January 2012
 
       * Set minimum zlib version to 1.2.0

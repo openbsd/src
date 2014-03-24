@@ -83,7 +83,7 @@ $template =~ s/__MAX__/'$max'/g;
 $template =~ s/__TIME__/localtime()/ge;
 print $out $template;
 close $out;
-print "Updated Win32.pm and relevent message files\n";
+print "Updated Win32.pm and relevant message files\n";
 
 __END__
 package Sys::Syslog::Win32;

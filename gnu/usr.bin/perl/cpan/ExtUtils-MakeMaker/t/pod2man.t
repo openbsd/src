@@ -38,7 +38,7 @@ use Test::More tests => 3;
         $warnings .= join '', @_;
     };
 
-    is pod2man(), undef;
+    ok !pod2man();
     is $warnings, <<'END'
 Pod::Man is not available: Simulated Pod::Man failure
 Man pages will not be generated during this install.

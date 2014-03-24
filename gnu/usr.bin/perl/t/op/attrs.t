@@ -313,6 +313,16 @@ foreach my $test (@tests) {
      'Calling closure proto with no @_ that returns a lexical';
 }
 
+# Referencing closure prototypes
+{
+  package buckbuck;
+  my @proto;
+  sub MODIFY_CODE_ATTRIBUTES { push @proto, $_[1], \&{$_[1]}; _: }
+  my $id;
+  () = sub :buck {$id};
+  &::is(@proto, 'referencing closure prototype');
+}
+
 # [perl #68658] Attributes on stately variables
 {
   package thwext;

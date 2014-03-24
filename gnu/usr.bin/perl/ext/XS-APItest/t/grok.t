@@ -5,6 +5,7 @@ use Test::More;
 use Config;
 use XS::APItest;
 use feature 'switch';
+no warnings 'experimental::smartmatch';
 use constant TRUTH => '0 but true';
 
 # Tests for grok_number. Not yet comprehensive.

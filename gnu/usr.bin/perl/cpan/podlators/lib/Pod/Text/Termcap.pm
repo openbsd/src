@@ -1,14 +1,14 @@
 # Pod::Text::Termcap -- Convert POD data to ASCII text with format escapes.
 #
+# This is a simple subclass of Pod::Text that overrides a few key methods to
+# output the right termcap escape sequences for formatted text on the current
+# terminal type.
+#
 # Copyright 1999, 2001, 2002, 2004, 2006, 2008, 2009
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
-#
-# This is a simple subclass of Pod::Text that overrides a few key methods to
-# output the right termcap escape sequences for formatted text on the current
-# terminal type.
 
 ##############################################################################
 # Modules and declarations
@@ -27,7 +27,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '2.06';
+$VERSION = '2.07';
 
 ##############################################################################
 # Overrides

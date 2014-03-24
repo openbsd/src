@@ -11,7 +11,7 @@ package Pod::ParseUtils;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.51'; ## Current version of this package
+$VERSION = '1.60'; ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME

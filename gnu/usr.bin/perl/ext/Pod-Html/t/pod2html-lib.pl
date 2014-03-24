@@ -23,6 +23,7 @@ sub make_test_dir {
 }
 
 sub rem_test_dir {
+    return unless -d 'testdir/test.lib';
     remove_tree('testdir/test.lib')
         or warn "Error removing temporary directory 'testdir/test.lib'";
 }
@@ -32,7 +33,9 @@ sub convert_n_test {
 
     my $cwd = Pod::Html::_unixify( Cwd::cwd() );
     my ($vol, $dir) = splitpath($cwd, 1);
-    my $relcwd = substr($dir, length(File::Spec->rootdir()));
+    my @dirs = splitdir($dir);
+    shift @dirs if $dirs[0] eq '';
+    my $relcwd = join '/', @dirs;
 
     my $new_dir  = catdir $dir, "t";
     my $infile   = catpath $vol, $new_dir, "$podfile.pod";
@@ -48,6 +51,7 @@ sub convert_n_test {
         @p2h_args,
     );
 
+    $cwd =~ s|\/$||;
 
     my ($expect, $result);
     {

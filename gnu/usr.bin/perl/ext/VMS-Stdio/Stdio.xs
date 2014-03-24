@@ -1,8 +1,6 @@
 /* VMS::Stdio - VMS extensions to stdio routines 
  *
- * Version:  2.3
  * Author:   Charles Bailey  bailey@newman.upenn.edu
- * Revised:  14-Jun-2007
  *
  */
 
@@ -15,9 +13,7 @@
 #include <starlet.h>
 
 static bool
-constant(name, pval)
-char *name;
-IV *pval;
+constant(char *name, IV *pval)
 {
     if (strnNE(name, "O_", 2)) return FALSE;
 
@@ -295,7 +291,7 @@ vmsopen(spec,...)
 	PROTOTYPE: @
 	CODE:
 	    char *args[8],mode[3] = {'r','\0','\0'}, type = '<';
-	    register int i, myargc;
+	    int i, myargc;
 	    FILE *fp;
             SV *fh;
            PerlIO *pio_fp;

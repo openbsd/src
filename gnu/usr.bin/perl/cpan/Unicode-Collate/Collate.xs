@@ -1,3 +1,8 @@
+
+#define PERL_NO_GET_CONTEXT /* we want efficiency */
+
+/* I guese no private function needs pTHX_ and aTHX_ */
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -612,10 +617,14 @@ varCE (self, vce)
     else if (*a == 's') { /* shifted or shift-trimmed */
 	totwt = d[1] + d[2] + d[3] + d[4] + d[5] + d[6];
 	if (alen == 7 && totwt != 0) { /* shifted */
-	    d[7] = (U8)(Shift4Wt >> 8);
-	    d[8] = (U8)(Shift4Wt & 0xFF);
-	}
-	else { /* shift-trimmed */
+	    if (d[1] == 0 && d[2] == 1) { /* XXX: CollationAuxiliary-6.2.0 */
+		d[7] = d[1]; /* wt level 1 to 4 */
+		d[8] = d[2];
+	    } else {
+		d[7] = (U8)(Shift4Wt >> 8);
+		d[8] = (U8)(Shift4Wt & 0xFF);
+	    }
+	} else { /* shift-trimmed or completely ignorable */
 	    d[7] = d[8] = '\0';
 	}
     }
@@ -637,7 +646,7 @@ visualizeSortKey (self, key)
     U8 *s, *e, *d;
     STRLEN klen, dlen;
     UV uv;
-    IV uca_vers;
+    IV uca_vers, sep = 0;
     static const char *upperhex = "0123456789ABCDEF";
   CODE:
     if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)
@@ -653,10 +662,13 @@ visualizeSortKey (self, key)
     s = (U8*)SvPV(key, klen);
 
    /* slightly *longer* than the need, but I'm afraid of miscounting;
-      exactly: (klen / 2) * 5 + MaxLevel * 2 - 1 (excluding '\0')
-         = (klen / 2) * 5 - 1  # FFFF (16bit) and ' ' between 16bit units
-         + (MaxLevel - 1) * 2  # ' ' and '|' for level boundaries
-         + 2                   # '[' and ']'
+      = (klen / 2) * 5 - 1
+             # FFFF and ' ' for each 16bit units but ' ' is less by 1;
+             # ' ' and '|' for level boundaries including the identical level
+       + 2   # '[' and ']'
+       + 1   # '\0'
+       (a) if klen is odd (not expected), maybe more 5 bytes.
+       (b) there is not always the identical level.
    */
     dlen = (klen / 2) * 5 + MaxLevel * 2 + 2;
     dst = newSV(dlen);
@@ -666,18 +678,18 @@ visualizeSortKey (self, key)
     *d++ = '[';
     for (e = s + klen; s < e; s += 2) {
 	uv = (U16)(*s << 8 | s[1]);
-	if (uv) {
+	if (uv || sep >= MaxLevel) {
 	    if ((d[-1] != '[') && ((9 <= uca_vers) || (d[-1] != '|')))
 		*d++ = ' ';
 	    *d++ = upperhex[ (s[0] >> 4) & 0xF ];
 	    *d++ = upperhex[  s[0]       & 0xF ];
 	    *d++ = upperhex[ (s[1] >> 4) & 0xF ];
 	    *d++ = upperhex[  s[1]       & 0xF ];
-	}
-	else {
+	} else {
 	    if ((9 <= uca_vers) && (d[-1] != '['))
 		*d++ = ' ';
 	    *d++ = '|';
+	    ++sep;
 	}
     }
     *d++ = ']';

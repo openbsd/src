@@ -159,8 +159,10 @@ for (my $i = $#tests; $i > 0; $i-=3) {
   # 1 test for running it, 1 test for the expected result, and 1 for each file
   # plus 1 to open and 1 to check for the use in lib/$name.pm and Makefile.PL
   # And 1 more for our check for "bonus" files, 2 more for ExtUtil::Manifest.
+  # And 1 more to examine const-c.inc contents in tests that use $header.
   # use the () to force list context and hence count the number of matches.
   $total_tests += 9 + (() = $tests[$i] =~ /(Writing)/sg);
+  $total_tests++ if $tests[$i-2] =~ / \Q$header\E$/;
 }
 
 plan tests => $total_tests;
@@ -169,6 +171,8 @@ ok (open (HEADER, ">$header"), "open '$header'");
 print HEADER <<HEADER or die $!;
 #define Camel 2
 #define Dromedary 1
+#define Bactrian /* empty */
+#define Bactrian2
 HEADER
 ok (close (HEADER), "close '$header'");
 
@@ -215,6 +219,23 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
   pop @INC;
   chdir ($up) or die "chdir $up failed: $!";
  
+  if ($args =~ / \Q$header\E$/) {
+    my $const_c = File::Spec->catfile($name, 'fallback', 'const-c.inc');
+    my ($found, $diag);
+    if (!open FILE, '<', $const_c) {
+      $diag = "can't open $const_c: $!";
+    }
+    else {
+      while (<FILE>) {
+        next unless /\b Bactrian 2? \b/x;
+        $found = 1;
+        last;
+      }
+    }
+    ok (!$found, "generated $const_c has no Bactrian(2)");
+    diag ($diag) if defined $diag;
+  }
+
   foreach my $leaf (File::Spec->catfile('lib', "$name.pm"), 'Makefile.PL') {
     my $file = File::Spec->catfile($name, $leaf);
     if (ok (open (FILE, $file), "open $file")) {

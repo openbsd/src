@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catfile catdir splitdir);
 use vars qw($VERSION @Pagers $Bindir $Pod2man
   $Temp_Files_Created $Temp_File_Lifetime
 );
-$VERSION = '3.17';
+$VERSION = '3.19';
 
 #..........................................................................
 
@@ -798,7 +798,7 @@ sub options_sanity {
     if( $self->opt_f or $self->opt_q ) {
     $self->usage("Only one of -f -or -q") if $self->opt_f and $self->opt_q;
     $self->warn(
-        "Perldoc is only really meant for reading one word at a time.\n",
+        "Perldoc is meant for reading one file at a time.\n",
         "So these parameters are being ignored: ",
         join(' ', @{$self->{'args'}}),
         "\n" )
@@ -1423,7 +1423,7 @@ sub minus_f_nocase {   # i.e., do like -f, but without regard to case
 
      if(!$self->opt_i
         or $self->is_vms or $self->is_mswin32
-        or $self->Is_dos or $self->is_os2
+        or $self->is_dos or $self->is_os2
      ) {
         # On a case-forgiving file system, or if case is important,
     #  that is it, all we can do.
@@ -1514,7 +1514,7 @@ sub pagers_guessing {
        }
     }
 
-    unshift @pagers, $ENV{PERLDOC_PAGER} if $ENV{PERLDOC_PAGER};
+    unshift @pagers, "$ENV{PERLDOC_PAGER} <" if $ENV{PERLDOC_PAGER};
 
     return;
 }

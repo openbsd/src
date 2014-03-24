@@ -1,8 +1,62 @@
 CHANGES
 -------
+2.41  Mar 17 09:35 2013
+        Bugfixes
+        - Windows Vista does not appear to support inet_ntop().  It seems to
+          have InetNtop() instead.  So, working around by using getnameinfo()
+          and passing in the NI_NUMERICHOST to get an IP address.
+        Features
+        - Change Net::Ping to use Time::HiRes::time() instead of CORE::time()
+          by default.  For most successful cases, CORE::time() returned zero.
+2.40  Mar 15 11:20 2013
+        Bugfixes
+        - several fixes to tests to stop the black smoke on Win32's
+          and Cygwin since the core updated the module to Test::More.
+          I had planned a later release, but all the black smoke is
+          forcing a release.
+        - fixes to some skips in tests that were still using the
+          Test style skip's.
+        - Documentation fix for https://rt.cpan.org/Ticket/Display.html?id=48014.
+          Thanks to Keith Taylor <keith@supanet.net.uk>
+        - Instead of using a hard-coded TOS value, import IP_TOS from
+          Socket.  This fixes an outstanding bug on Solaris which uses a
+          different value for IP_TOS in it headers than Linux.  I'm assuming
+          other OS's were fixed with this change as well.
+
+        Features
+        - added TTL handling for icmp pings to allow traceroute like
+          applications to be built with Net::Ping.  Thanks to
+          <rolek@bokxing.nl> for the patch and tests!
+
+       Internals
+        - replaced SOL_IP with IPPROTO_IP.  SOL_IP is not portable and was
+          hard-coded anyway.
+        - added IPPROTO_IP, IP_TOS, IP_TTL, and AF_INET to the list of Socket
+          constants imported.
+        - removed some hard-coded constants.
+        - converted all calls to inet_ntoa() to inet_ntop() in preparation
+          for further ipv6 updates.
+
+        Infrastructure
+        - Makefile.PL updated to require Test::More, Time::HiRes, and a
+          recent Socket
+        - several changes for github hosting
+          - add a .gitignore file
+          - added a .travis.yml file to allow CI testing with changes pushed
+            to github
+          - replaced the README with a README.md which displays the
+            Travis CI build status on github.
+
+
+2.39  Mar 13 09:25 2013
+        - patch from Matthew Musgrove to resolve RT #45812.  Thanks!
+        - pulled in several changes from the Perl core
+
+2.36  Jun 08 12:00 2009
+        - release to include a few fixes from the Perl core
 
 2.35  Feb 08 14:42 2008
-	- Patch in Perl change #33242 by Nicholas Clark 
+	- Patch in Perl change #33242 by Nicholas Clark
 		<http://perl5.git.perl.org/perl.git/commit/5d6b07c5a4c042580b85248d570ee299fd102a79>
 
 2.34  Dec 19 08:51 2007

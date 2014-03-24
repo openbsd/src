@@ -29,8 +29,8 @@ __DATA__
   <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
   <li><a href="#METHODS-OTHER-STUFF">METHODS =&gt; OTHER STUFF</a>
     <ul>
-      <li><a href="#new-">new()</a></li>
-      <li><a href="#old-">old()</a></li>
+      <li><a href="#new">new()</a></li>
+      <li><a href="#old">old()</a></li>
     </ul>
   </li>
   <li><a href="#TESTING-FOR-AND-BEGIN">TESTING FOR AND BEGIN</a></li>
@@ -65,7 +65,7 @@ __DATA__
 
 <p>Here is a list of methods</p>
 
-<h2 id="new-">new()</h2>
+<h2 id="new">new()</h2>
 
 <p>Constructor method. Accepts the following config options:</p>
 
@@ -178,7 +178,7 @@ __DATA__
 </li>
 </ul>
 
-<h2 id="old-">old()</h2>
+<h2 id="old">old()</h2>
 
 <p>Destructor method</p>
 
@@ -219,7 +219,7 @@ HTML
 
 <dl>
 
-<dt id="Around-line-45:">Around line 45:</dt>
+<dt id="Around-line-45">Around line 45:</dt>
 <dd>
 
 <p>You can&#39;t have =items (as at line 49) unless the first thing after the =over is an =item</p>

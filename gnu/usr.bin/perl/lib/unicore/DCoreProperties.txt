@@ -1,8 +1,8 @@
-# DerivedCoreProperties-6.1.0.txt
-# Date: 2011-12-11, 18:26:55 GMT [MD]
+# DerivedCoreProperties-6.2.0.txt
+# Date: 2012-05-20, 00:42:31 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -9228,7 +9228,7 @@ E0100..E01EF  ; Grapheme_Extend # Mn [240] VARIATION SELECTOR-17..VARIATION SELE
 208D          ; Grapheme_Base # Ps       SUBSCRIPT LEFT PARENTHESIS
 208E          ; Grapheme_Base # Pe       SUBSCRIPT RIGHT PARENTHESIS
 2090..209C    ; Grapheme_Base # Lm  [13] LATIN SUBSCRIPT SMALL LETTER A..LATIN SUBSCRIPT SMALL LETTER T
-20A0..20B9    ; Grapheme_Base # Sc  [26] EURO-CURRENCY SIGN..INDIAN RUPEE SIGN
+20A0..20BA    ; Grapheme_Base # Sc  [27] EURO-CURRENCY SIGN..TURKISH LIRA SIGN
 2100..2101    ; Grapheme_Base # So   [2] ACCOUNT OF..ADDRESSED TO THE SUBJECT
 2102          ; Grapheme_Base # L&       DOUBLE-STRUCK CAPITAL C
 2103..2106    ; Grapheme_Base # So   [4] DEGREE CELSIUS..CADA UNA
@@ -9980,7 +9980,7 @@ FFFC..FFFD    ; Grapheme_Base # So   [2] OBJECT REPLACEMENT CHARACTER..REPLACEME
 2B740..2B81D  ; Grapheme_Base # Lo [222] CJK UNIFIED IDEOGRAPH-2B740..CJK UNIFIED IDEOGRAPH-2B81D
 2F800..2FA1D  ; Grapheme_Base # Lo [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 108660
+# Total code points: 108661
 
 # ================================================
 

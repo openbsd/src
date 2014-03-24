@@ -218,8 +218,12 @@ is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
     like($hash, qr/\A0x[0-9a-f]+\z/, "Testing B::hash(\"wibble\")");
     unlike($hash, qr/\A0x0+\z/, "Testing B::hash(\"wibble\")");
 
-    like(B::hash("\0" x $_), qr/\A0x0+\z/, "Testing B::hash(\"0\" x $_)")
-	 for 0..19;
+    SKIP: {
+        skip "Nulls don't hash to the same bucket regardless of length with this PERL_HASH implementation", 20
+            if B::hash("") ne B::hash("\0" x 19);
+        like(B::hash("\0" x $_), qr/\A0x0+\z/, "Testing B::hash(\"0\" x $_)")
+             for 0..19;
+    }
 
     $hash = eval {B::hash(chr 256)};
     is($hash, undef, "B::hash() refuses non-octets");
@@ -268,7 +272,8 @@ is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
 
 is(B::class(bless {}, "Wibble::Bibble"), "Bibble", "Testing B::class()");
 is(B::cast_I32(3.14), 3, "Testing B::cast_I32()");
-is(B::opnumber("chop"), 39, "Testing opnumber with opname (chop)");
+is(B::opnumber("chop"), $] >= 5.015 ? 39 : 38,
+			    "Testing opnumber with opname (chop)");
 
 {
     no warnings 'once';
@@ -277,16 +282,7 @@ is(B::opnumber("chop"), 39, "Testing opnumber with opname (chop)");
     ok( $sg < B::sub_generation, "sub_generation increments" );
 }
 
-{
-    my $ag = B::amagic_generation();
-    {
-
-        package Whatever;
-        require overload;
-        overload->import( '""' => sub {"What? You want more?!"} );
-    }
-    ok( $ag < B::amagic_generation, "amagic_generation increments" );
-}
+like( B::amagic_generation, qr/^\d+\z/, "amagic_generation" );
 
 is(B::svref_2object(sub {})->ROOT->ppaddr, 'PL_ppaddr[OP_LEAVESUB]',
    'OP->ppaddr');
@@ -302,6 +298,121 @@ foo
     my $f = B::svref_2object(*FOO{FORMAT});
     isa_ok $f, 'B::FM';
     can_ok $f, 'LINES';
+}
+
+my $sub1 = sub {die};
+{ no warnings 'once'; no strict; *Peel:: = *{"Pe\0e\x{142}::"} }
+my $sub2 = eval 'package Peel; sub {die}';
+my $cop = B::svref_2object($sub1)->ROOT->first->first;
+my $bobby = B::svref_2object($sub2)->ROOT->first->first;
+is $cop->stash->object_2svref, \%main::, 'COP->stash';
+is $cop->stashpv, 'main', 'COP->stashpv';
+
+SKIP: {
+    skip "no nulls in packages before 5.17", 1 if $] < 5.017;
+    is $bobby->stashpv, "Pe\0e\x{142}", 'COP->stashpv with utf8 and nulls';
+}
+
+SKIP: {
+    skip "no stashoff", 2 if $] < 5.017 || !$Config::Config{useithreads};
+    like $cop->stashoff, qr/^[1-9]\d*\z/a, 'COP->stashoff';
+    isnt $cop->stashoff, $bobby->stashoff,
+	'different COP->stashoff for different stashes';
+}
+
+
+# Test $B::overlay
+{
+    my $methods = {
+	BINOP =>  [ qw(last) ],
+	COP   =>  [ qw(arybase cop_seq file filegv hints hints_hash io
+		       label line stash stashpv
+		       stashoff warnings) ],
+	LISTOP => [ qw(children) ],
+	LOGOP =>  [ qw(other) ],
+	LOOP  =>  [ qw(lastop nextop redoop) ],
+	OP    =>  [ qw(desc flags name next opt ppaddr private sibling
+		       size spare targ type) ],
+	PADOP =>  [ qw(gv padix sv) ],
+	PMOP  =>  [ qw(code_list pmflags pmoffset pmreplroot pmreplstart pmstash pmstashpv precomp reflags) ],
+	PVOP  =>  [ qw(pv) ],
+	SVOP  =>  [ qw(gv sv) ],
+	UNOP  =>  [ qw(first) ],
+    };
+
+    my $overlay = {};
+    my $op = B::svref_2object(sub { my $x = 1 })->ROOT;
+
+    for my $class (sort keys %$methods) {
+	for my $meth (@{$methods->{$class}}) {
+	    my $full = "B::${class}::$meth";
+	    die "Duplicate method '$full'\n"
+		if grep $_ eq $full, @{$overlay->{$meth}};
+	    push @{$overlay->{$meth}}, "B::${class}::$meth";
+	}
+    }
+
+    {
+	local $B::overlay; # suppress 'used once' warning
+	local $B::overlay = { $$op => $overlay };
+
+	for my $class (sort keys %$methods) {
+	    bless $op, "B::$class"; # naughty
+	    for my $meth (@{$methods->{$class}}) {
+		if ($op->can($meth)) {
+		    my $list = $op->$meth;
+		    ok(defined $list
+			    && ref($list) eq "ARRAY"
+			    && grep($_ eq "B::${class}::$meth", @$list),
+			"overlay: B::$class $meth");
+		}
+		else {
+		    pass("overlay: B::$class $meth (skipped; no method)");
+		}
+	    }
+	}
+    }
+    # B::overlay should be disabled again here
+    is($op->name, "leavesub", "overlay: orig name");
+}
+
+{ # [perl #118525]
+    {
+        sub foo {}
+	my $cv = B::svref_2object(\&foo);
+	ok($cv, "make a B::CV from a non-anon sub reference");
+	isa_ok($cv, "B::CV");
+	my $gv = $cv->GV;
+	ok($gv, "we get a GV from a GV on a normal sub");
+	isa_ok($gv, "B::GV");
+	is($gv->NAME, "foo", "check the GV name");
+      SKIP:
+	{ # do we need these version checks?
+	    skip "no HEK before 5.18", 1 if $] < 5.018;
+	    is($cv->NAME_HEK, undef, "no hek for a global sub");
+	}
+    }
+
+SKIP:
+    {
+        skip "no HEK before 5.18", 4 if $] < 5.018;
+        eval <<'EOS'
+    {
+        use feature 'lexical_subs';
+        no warnings 'experimental::lexical_subs';
+        my sub bar {};
+        my $cv = B::svref_2object(\&bar);
+        ok($cv, "make a B::CV from a lexical sub reference");
+        isa_ok($cv, "B::CV");
+        my $gv = $cv->GV;
+        isa_ok($gv, "B::SPECIAL", "GV on a lexical sub");
+        my $hek = $cv->NAME_HEK;
+        is($hek, "bar", "check the NAME_HEK");
+    }
+    1;
+EOS
+	  or die "lexical_subs test failed to compile: $@";
+    }
 }
 
 done_testing();

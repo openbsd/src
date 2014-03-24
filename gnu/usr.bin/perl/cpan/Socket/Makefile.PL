@@ -13,7 +13,8 @@ my $seq = 0;
 sub check_for
 {
     my %args = @_;
-    return if exists $Config{$args{confkey}};
+    return if $ENV{PERL_CORE};
+    return if defined $Config{$args{confkey}};
 
     require ExtUtils::CBuilder;
     $cb ||= ExtUtils::CBuilder->new( quiet => 1 );
@@ -30,10 +31,15 @@ sub check_for
 	open( my $file_source_fh, ">", $file_source ) or die "Cannot write $file_source - $!";
 	print $file_source_fh <<"EOF";
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+# include <ws2tcpip.h>
+# include <winsock.h>
+#else
+# include <sys/socket.h>
+# include <netdb.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+#endif
 int main(int argc, char *argv[])
   {
     (void)argc;
@@ -104,6 +110,19 @@ check_for(
 );
 
 check_for(
+    confkey => "d_ip_mreq",
+    define  => "HAS_IP_MREQ",
+    main    => "struct ip_mreq mreq; mreq.imr_multiaddr.s_addr = INADDR_ANY;"
+);
+
+# TODO: Needs adding to perl5 core before importing dual-life again
+check_for(
+    confkey => "d_ip_mreq_source",
+    define  => "HAS_IP_MREQ_SOURCE",
+    main    => "struct ip_mreq_source mreq; mreq.imr_multiaddr.s_addr = INADDR_ANY;"
+);
+
+check_for(
     confkey => "d_ipv6_mreq",
     define  => "HAS_IPV6_MREQ",
     main    => "struct ipv6_mreq mreq; mreq.ipv6mr_interface = 0;"
@@ -149,12 +168,14 @@ my @names = (
 
 	IOV_MAX
 
-	IP_OPTIONS IP_HDRINCL IP_TOS IP_TTL IP_RECVOPTS IP_RECVRETOPTS
-	IP_RETOPTS
+	IP_ADD_MEMBERSHIP IP_ADD_SOURCE_MEMBERSHIP IP_DROP_MEMBERSHIP
+	IP_DROP_SOURCE_MEMBERSHIP IP_HDRINCL IP_MULTICAST_IF IP_MULTICAST_LOOP
+	IP_MULTICAST_TTL IP_OPTIONS IP_RECVOPTS	IP_RECVRETOPTS IP_RETOPTS IP_TOS
+	IP_TTL 
 
-	IPV6_ADD_MEMBERSHIP IPV6_DROP_MEMBERSHIP IPV6_MTU IPV6_MTU_DISCOVER
-	IPV6_MULTICAST_HOPS IPV6_MULTICAST_IF IPV6_MULTICAST_LOOP
-	IPV6_UNICAST_HOPS IPV6_V6ONLY
+	IPV6_ADD_MEMBERSHIP IPV6_DROP_MEMBERSHIP IPV6_JOIN_GROUP
+	IPV6_LEAVE_GROUP IPV6_MTU IPV6_MTU_DISCOVER IPV6_MULTICAST_HOPS
+	IPV6_MULTICAST_IF IPV6_MULTICAST_LOOP IPV6_UNICAST_HOPS IPV6_V6ONLY
 
 	MSG_BCAST MSG_BTAG MSG_CTLFLAGS MSG_CTLIGNORE MSG_DONTWAIT MSG_EOF
 	MSG_EOR MSG_ERRQUEUE MSG_ETAG MSG_FIN MSG_MAXIOVLEN MSG_MCAST
@@ -172,6 +193,7 @@ my @names = (
 	SCM_CONNECT SCM_CREDENTIALS SCM_CREDS SCM_TIMESTAMP
 
 	SOCK_DGRAM SOCK_RAW SOCK_RDM SOCK_SEQPACKET SOCK_STREAM
+	SOCK_NONBLOCK SOCK_CLOEXEC
 
 	SOL_SOCKET 
 
@@ -186,10 +208,11 @@ my @names = (
 	SO_SECURITY_ENCRYPTION_TRANSPORT SO_SNDBUF SO_SNDLOWAT SO_SNDTIMEO
 	SO_STATE SO_TYPE SO_USELOOPBACK SO_XOPEN SO_XSE
 
-	TCP_KEEPALIVE TCP_MAXRT TCP_MAXSEG TCP_NODELAY TCP_STDURG TCP_CORK
-	TCP_KEEPIDLE TCP_KEEPINTVL TCP_KEEPCNT TCP_SYNCNT TCP_LINGER2
-	TCP_DEFER_ACCEPT TCP_WINDOW_CLAMP TCP_INFO TCP_QUICKACK TCP_CONGESTION
-	TCP_MD5SIG
+	TCP_CONGESTION TCP_CONNECTIONTIMEOUT TCP_CORK TCP_DEFER_ACCEPT TCP_INFO
+	TCP_INIT_CWND TCP_KEEPALIVE TCP_KEEPCNT TCP_KEEPIDLE TCP_KEEPINTVL
+	TCP_LINGER2 TCP_MAXRT TCP_MAXSEG TCP_MD5SIG TCP_NODELAY TCP_NOOPT
+	TCP_NOPUSH TCP_QUICKACK TCP_SACK_ENABLE TCP_STDURG TCP_SYNCNT
+	TCP_WINDOW_CLAMP
 
 	UIO_MAXIOV
     ),

@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.15";
+our $VERSION = "1.18";
 
 my %err = ();
 my %wsa = ();
@@ -125,12 +125,6 @@ sub get_files {
     } elsif ($^O eq 'os390') {
 	# OS/390 C compiler doesn't generate #file or #line directives
 	$file{'/usr/include/errno.h'} = 1;
-    } elsif ($^O eq 'vmesa') {
-	# OS/390 C compiler doesn't generate #file or #line directives
-	$file{'../../vmesa/errno.h'} = 1;
-    } elsif ($Config{archname} eq 'epoc') {
-	# Watch out for cross compiling for EPOC (usually done on linux)
-	$file{'/usr/local/epocemx/epocsdk/include/libc/sys/errno.h'} = 1;
     } elsif ($Config{archname} eq 'arm-riscos') {
 	# Watch out for cross compiling for RISC OS
 	my $dep = `echo "#include <errno.h>" | gcc -E -M -`;
@@ -147,7 +141,7 @@ sub get_files {
 	my $linux_errno_h = -e '/usr/include/errno.h' ?
 	    '/usr/include/errno.h' : '/usr/local/include/errno.h';
 	$file{$linux_errno_h} = 1;
-    } elsif ($^O eq 'beos' || $^O eq 'haiku') {
+    } elsif ($^O eq 'haiku') {
 	# hidden in a special place
 	$file{'/boot/develop/headers/posix/errno.h'} = 1;
 
@@ -239,7 +233,7 @@ sub write_errno_pm {
 
     close(CPPI);
 
-    unless ($^O eq 'beos') {	# trust what we have / get later
+    {	# BeOS (support now removed) did not enter this block
     # invoke CPP and read the output
 
 	if ($^O eq 'VMS') {
@@ -278,42 +272,6 @@ sub write_errno_pm {
 	    delete $err{$name} unless defined $err{$name};
 	}
 	close(CPPO);
-    }
-
-    # Many of the E constants (including ENOENT, which is being
-    # used in the Perl test suite a lot), are available only as
-    # enums in BeOS, so compiling and executing some code is about
-    # only way to find out what the numeric Evalues are. In fact above, we
-    # didn't even bother to get the values of the ones that have numeric
-    # values, since we can get all of them here, anyway.
-
-    if ($^O eq 'beos') {
-	if (open(C, ">errno.c")) {
-	    my @allerrs = keys %err;
-	    print C <<EOF;
-#include <errno.h>
-#include <stdio.h>
-int main() {
-EOF
-            for (@allerrs) {
-		print C qq[printf("$_ %d\n", $_);]
-	    }
-            print C "}\n";
-            close C;
-            system("cc -o errno errno.c");
-            unlink("errno.c");
-            if (open(C, "./errno|")) {
-		while (<C>) {
-		    if (/^(\w+) (-?\d+)$/) { $err{$1} = $2 }
-		}
-		close(C);
-	    } else {
-		die "failed to execute ./errno: $!\n";
-	    }
-            unlink("errno");
-        } else {
-	    die "failed to create errno.c: $!\n";
-	}
     }
 
     # escape $Config{'archname'}

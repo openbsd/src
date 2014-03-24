@@ -3,7 +3,7 @@
 # Checks if the parser behaves correctly in edge cases
 # (including weird syntax errors)
 
-print "1..123\n";
+print "1..155\n";
 
 sub failed {
     my ($got, $expected, $name) = @_;
@@ -69,6 +69,13 @@ eval q/"\Nfoo"/;
 like( $@, qr/^Missing braces on \\N/,
     'syntax error in string with incomplete \N' );
 
+eval q/"\o{"/;
+like( $@, qr/^Missing right brace on \\o/,
+    'syntax error in string with incomplete \o' );
+eval q/"\ofoo"/;
+like( $@, qr/^Missing braces on \\o/,
+    'syntax error in string with incomplete \o' );
+
 eval "a.b.c.d.e.f;sub";
 like( $@, qr/^Illegal declaration of anonymous subroutine/,
     'found by Markov chain stress testing' );
@@ -125,11 +132,11 @@ is( $@, '', 'PL_lex_brackstack' );
     is("${a}[", "A[", "interpolation, qq//");
     my @b=("B");
     is("@{b}{", "B{", "interpolation, qq//");
-    is(qr/${a}{/, '(?^:A{)', "interpolation, qr//");
+    is(qr/${a}\{/, '(?^:A\{)', "interpolation, qr//");
     my $c = "A{";
-    $c =~ /${a}{/;
+    $c =~ /${a}\{/;
     is($&, 'A{', "interpolation, m//");
-    $c =~ s/${a}{/foo/;
+    $c =~ s/${a}\{/foo/;
     is($c, 'foo', "interpolation, s/...//");
     $c =~ s/foo/${a}{/;
     is($c, 'A{', "interpolation, s//.../");
@@ -311,9 +318,9 @@ like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 7' );
   eval qq[ %$xFC ];
   like($@, qr/Identifier too long/, "too long id in % sigil ctx");
 
-  eval qq[ \\&$xFC ]; # take a ref since I don't want to call it
-  is($@, "", "252 character & sigil ident ok");
-  eval qq[ \\&$xFD ];
+  eval qq[ \\&$xFB ]; # take a ref since I don't want to call it
+  is($@, "", "251 character & sigil ident ok");
+  eval qq[ \\&$xFC ];
   like($@, qr/Identifier too long/, "too long id in & sigil ctx");
 
   eval qq[ *$xFC ];
@@ -341,6 +348,12 @@ like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 7' );
   is(defined &zlonk, '', 'but no body defined');
 }
 
+# [perl #113016] CORE::print::foo
+sub CORE'print'foo { 43 } # apostrophes intentional; do not tempt fate
+sub CORE'foo'bar { 43 }
+is CORE::print::foo, 43, 'CORE::print::foo is not CORE::print ::foo';
+is scalar eval "CORE::foo'bar", 43, "CORE::foo'bar is not an error";
+
 # bug #71748
 eval q{
 	$_ = "";
@@ -353,7 +366,99 @@ eval q{
 };
 is($@, "", "multiline whitespace inside substitute expression");
 
-# Add new tests HERE:
+eval '@A =~ s/a/b/; # compilation error
+      sub tahi {}
+      sub rua;
+      sub toru ($);
+      sub wha :lvalue;
+      sub rima ($%&*$&*\$%\*&$%*&) :method;
+      sub ono :lvalue { die }
+      sub whitu (_) { die }
+      sub waru ($;) :method { die }
+      sub iwa { die }
+      BEGIN { }';
+is $::{tahi}, undef, 'empty sub decl ignored after compilation error';
+is $::{rua}, undef, 'stub decl ignored after compilation error';
+is $::{toru}, undef, 'stub+proto decl ignored after compilation error';
+is $::{wha}, undef, 'stub+attr decl ignored after compilation error';
+is $::{rima}, undef, 'stub+proto+attr ignored after compilation error';
+is $::{ono}, undef, 'sub decl with attr ignored after compilation error';
+is $::{whitu}, undef, 'sub decl w proto ignored after compilation error';
+is $::{waru}, undef, 'sub w attr+proto ignored after compilation error';
+is $::{iwa}, undef, 'non-empty sub decl ignored after compilation error';
+is *BEGIN{CODE}, undef, 'BEGIN leaves no stub after compilation error';
+
+$test = $test + 1;
+"ok $test - format inside re-eval" =~ /(?{
+    format =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$_
+.
+write
+}).*/;
+
+eval '
+"${;
+
+=pod
+
+=cut
+
+}";
+';
+is $@, "", 'pod inside string in string eval';
+"${;
+
+=pod
+
+=cut
+
+}";
+print "ok ", ++$test, " - pod inside string outside of string eval\n";
+
+like "blah blah blah\n", qr/${\ <<END
+blah blah blah
+END
+ }/, 'here docs in multiline quoted construct';
+like "blah blah blah\n", eval q|qr/${\ <<END
+blah blah blah
+END
+ }/|, 'here docs in multiline quoted construct in string eval';
+
+# Unterminated here-docs in subst in eval; used to crash
+eval 's/${<<END}//';
+eval 's//${<<END}/';
+print "ok ", ++$test, " - unterminated here-docs in s/// in string eval\n";
+
+sub 'Hello'_he_said (_);
+is prototype "Hello::_he_said", '_', 'initial tick in sub declaration';
+
+{
+    my @x = 'string';
+    is(eval q{ "$x[0]->strung" }, 'string->strung',
+	'literal -> after an array subscript within ""');
+    @x = ['string'];
+    # this used to give "string"
+    like("$x[0]-> [0]", qr/^ARRAY\([^)]*\)-> \[0]\z/,
+	'literal -> [0] after an array subscript within ""');
+}
+
+eval 'no if $] >= 5.17.4 warnings => "deprecated"';
+is 1,1, ' no crash for "no ... syntax error"';
+
+for my $pkg(()){}
+$pkg = 3;
+is $pkg, 3, '[perl #114942] for my $foo()){} $foo';
+
+eval 'Fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+    .'oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+    .'oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+    .'oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+    .'oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+    .'ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo';
+like $@, "^Identifier too long at ", 'ident buffer overflow';
+
+# Add new tests HERE (above this line)
 
 # bug #74022: Loop on characters in \p{OtherIDContinue}
 # This test hangs if it fails.
@@ -437,15 +542,16 @@ eval <<'EOSTANZA'; die $@ if $@;
 check(qr/^Great hail!.*no more\.$/, 61, "Overflow both small buffer checks");
 EOSTANZA
 
-{
-    my @x = 'string';
-    is(eval q{ "$x[0]->strung" }, 'string->strung',
-	'literal -> after an array subscript within ""');
-    @x = ['string'];
-    # this used to give "string"
-    like("$x[0]-> [0]", qr/^ARRAY\([^)]*\)-> \[0]\z/,
-	'literal -> [0] after an array subscript within ""');
-}
+#line 531 parser.t
+<<EOU; check('parser\.t', 531, 'on same line as heredoc');
+EOU
+s//<<EOV/e if 0;
+EOV
+check('parser\.t', 535, 'after here-doc in quotes');
+<<EOW;
+${check('parser\.t', 537, 'first line of interp in here-doc');;
+  check('parser\.t', 538, 'second line of interp in here-doc');}
+EOW
 
 __END__
 # Don't add new tests HERE. See note above

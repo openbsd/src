@@ -1,6 +1,12 @@
 #!./perl
 
-print "1..1\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 1;
 
 # Make sure that case-insensitive matching of any Latin1 chars don't load
 # utf8.pm.  We assume that NULL won't force loading utf8.pm, and since it
@@ -8,5 +14,4 @@ print "1..1\n";
 # a swash if it thought there was one.
 "\0" =~ /[\001-\xFF]/i;
 
-print "not" if exists $INC{"utf8.pm"};
-print "ok 1\n";
+ok(! exists $INC{"utf8.pm"}, 'case insensitive matching of any Latin1 chars does not load utf8.pm');

@@ -27,12 +27,11 @@ BEGIN {
 }
 
 use strict;
-use File::Spec;
 use File::Basename;
 require './test.pl';
 
 
-my $manifest = File::Spec->catfile(File::Spec->updir(), 'MANIFEST');
+my $manifest = '../MANIFEST';
 
 open my $m, '<', $manifest or die "Can't open '$manifest': $!";
 my @files;
@@ -46,59 +45,38 @@ close $m or die $!;
 
 plan(scalar @files);
 
-for my $file (@files) {
-    validate_file_name($file);
-}
-exit 0;
-
-
-sub validate_file_name {
-    my $path = shift;
-    my $filename = basename $path;
-
-    note("testing $path");
-
-    my @path_components = split('/',$path);
-    pop @path_components; # throw away the filename
+PATHNAME: for my $pathname (@files) {
+    my @path_components = split('/',$pathname);
+    my $filename = pop @path_components;
     for my $component (@path_components) {
-	if ($component =~ /\./) {
-	    fail("no directory components containing '.'");
-	    return;
-	}
-	if (length $component > 32) {
-	    fail("no directory with a name over 32 characters (VOS requirement)");
-	    return;
-	}
+        if ($component =~ /\./) {
+            fail("$pathname has directory components containing '.'");
+            next PATHNAME;
+        }
+        if (length $component > 32) {
+            fail("$pathname has a name over 32 characters (VOS requirement)");
+            next PATHNAME;
+        }
     }
 
 
     if ($filename =~ /^\-/) {
-	fail("filename does not start with -");
-	return;
+        fail("$pathname starts with -");
+            next PATHNAME;
     }
 
     my($before, $after) = split /\./, $filename;
     if (length $before > 39) {
-	fail("filename has 39 or fewer characters before the dot");
-	return;
+        fail("$pathname has more than 39 characters before the dot");
+    } elsif ($after && length $after > 39) {
+        fail("$pathname has more than 39 characters after the dot");
+    } elsif ($filename =~ /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\./i) {
+        fail("$pathname has a reserved name");
+    } elsif ($filename =~ /\s|\(|\&/) {
+        fail("$pathname has a reserved character");
+    } else {
+        pass("$pathname ok");
     }
-    if ($after) {
-	if (length $after > 39) {
-	    fail("filename has 39 or fewer characters after the dot");
-	    return;
-	}
-    }
-
-    if ($filename =~ /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\./i) {
-	fail("filename has a reserved name");
-	return;
-    }
-
-    if ($filename =~ /\s|\(|\&/) {
-	fail("filename has a reserved character");
-	return;
-    }
-    pass("filename ok");
 }
 
 # EOF

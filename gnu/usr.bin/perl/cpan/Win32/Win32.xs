@@ -1705,6 +1705,54 @@ XS(w32_GetProductInfo)
     XSRETURN_IV(0);
 }
 
+XS(w32_GetACP)
+{
+    dXSARGS;
+    EXTEND(SP,1);
+    XSRETURN_IV(GetACP());
+}
+
+XS(w32_GetConsoleCP)
+{
+    dXSARGS;
+    EXTEND(SP,1);
+    XSRETURN_IV(GetConsoleCP());
+}
+
+XS(w32_GetConsoleOutputCP)
+{
+    dXSARGS;
+    EXTEND(SP,1);
+    XSRETURN_IV(GetConsoleOutputCP());
+}
+
+XS(w32_GetOEMCP)
+{
+    dXSARGS;
+    EXTEND(SP,1);
+    XSRETURN_IV(GetOEMCP());
+}
+
+XS(w32_SetConsoleCP)
+{
+    dXSARGS;
+
+    if (items != 1)
+	Perl_croak(aTHX_ "usage: Win32::SetConsoleCP($id)");
+
+    XSRETURN_IV(SetConsoleCP((int)SvIV(ST(0))));
+}
+
+XS(w32_SetConsoleOutputCP)
+{
+    dXSARGS;
+
+    if (items != 1)
+	Perl_croak(aTHX_ "usage: Win32::SetConsoleOutputCP($id)");
+
+    XSRETURN_IV(SetConsoleOutputCP((int)SvIV(ST(0))));
+}
+
 MODULE = Win32            PACKAGE = Win32
 
 PROTOTYPES: DISABLE
@@ -1768,6 +1816,12 @@ BOOT:
     newXS("Win32::CreateFile", w32_CreateFile, file);
     newXS("Win32::GetSystemMetrics", w32_GetSystemMetrics, file);
     newXS("Win32::GetProductInfo", w32_GetProductInfo, file);
+    newXS("Win32::GetACP", w32_GetACP, file);
+    newXS("Win32::GetConsoleCP", w32_GetConsoleCP, file);
+    newXS("Win32::GetConsoleOutputCP", w32_GetConsoleOutputCP, file);
+    newXS("Win32::GetOEMCP", w32_GetOEMCP, file);
+    newXS("Win32::SetConsoleCP", w32_SetConsoleCP, file);
+    newXS("Win32::SetConsoleOutputCP", w32_SetConsoleOutputCP, file);
 #ifdef __CYGWIN__
     newXS("Win32::SetChildShowWindow", w32_SetChildShowWindow, file);
 #endif

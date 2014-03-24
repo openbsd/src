@@ -1,5 +1,35 @@
 Revision history for Sys-Syslog
 
+0.32 -- 2012.09.14 -- Sebastien Aperghis-Tramoni (SAPER)
+        [BUGFIX] CPAN-RT#69040: Don't modify @_ in syslog().
+        [BUGFIX] Restore compatibility with Perl 5.6.0.
+        [DOC] Perl-RT#81858: Fix some spelling errors (Peter J. Acklam).
+
+0.31 -- 2012.08.18 -- Sebastien Aperghis-Tramoni (SAPER)
+        [BUGFIX] Level 'emerg' could not be used since v0.29.
+        [BUGFIX] Setting a message facility with syslog() was broken since v0.29
+        (Noel Butler).
+        [BUGFIX] CPAN-RT#69992: Make setlogsock() only use the requested mechanism,
+        restoring way it worked in v0.27 and before (Niko Tyni).
+        [BUGFIX] CPAN-RT#69986: setlogsock() doesn't return undef on failure
+        (Niko Tyni).
+        [BUGFIX] CPAN-RT#69997: Use the default UDP socket timeout on GNU/kFreeBSD
+        as well, and lower it to a more sensible value (Niko Tyni).
+        [BUGFIX] CPAN-RT#75827: syslog() logging everything regardless of log
+        mask when using using numeric LOG_* macros (Bryan Thale).
+        [TESTS] Added t/facilities-routing.t
+        [DOC] Don't highlight "the Rules of Sys::Syslog" from the Description.
+        [DIST] Add meta-information in Makefile.PL
+
+0.30 -- 2012.08.15 -- Sebastien Aperghis-Tramoni (SAPER)
+        [BUGFIX] CPAN-RT#69310: Avoid a POSIX::strftime issue on Windows
+        (Michael Ludwig).
+        [BUGFIX] CPAN-RT#77577: Build on Haiku-OS (Tony Cook).
+        [BUGFIX] CPAN-RT#77578: Silence a compilation warning (Tony Cook).
+        [BUGFIX] CPAN-RT#78044: Don't call getservbyname() when the port is
+        specified (Chan Wilson).
+        [TESTS] t/syslog.t no longer needs to chdir under PERL_CORE.
+
 0.29 -- 2011.04.18 -- Sebastien Aperghis-Tramoni (SAPER) #PerlQA2011
         [BUGFIX] CPAN-RT#55215: Sys::Syslog might call exit which triggers
         DESTROY (Alexander Berger).
@@ -112,7 +142,7 @@ Revision history for Sys-Syslog
         [FEATURE] Each non-standard macro now fall backs to a standard macro.
         [CODE] Merged changes from Jerry D. Hedden to use ppport.h only when not
         built from core distribution (blead@30657).
-        [TESTS] t/syslog.t now generates a more detailled TAP output.
+        [TESTS] t/syslog.t now generates a more detailed TAP output.
         [TESTS] Merged change blead@29176: suppress taint mode from t/constants.t
         [TESTS] Added regression tests for CPAN-RT#21866 and #25488.
         [EG] Added example script eg/syslog.pl
@@ -145,7 +175,7 @@ Revision history for Sys-Syslog
 
 0.15 -- 2006.06.10 -- Sebastien Aperghis-Tramoni (SAPER)
         [FEATURE] CPAN-RT#17316: Added a "nofatal" option to openlog().
-        [FEATURE] Sys::Syslog warnings can now be controled by the warnings
+        [FEATURE] Sys::Syslog warnings can now be controlled by the warnings
         category of the same name.
         [FEATURE] Added support for using the native C syslog(3) functions.
         [CODE] Removed most "our" variables.
@@ -207,7 +237,7 @@ Revision history for Sys-Syslog
         (Ronald J. Kimball).
         [CODE] Now setlogsock() really croak(), as documented.
         [DIST] CPANized from blead@26281.
-        [DIST] Modified Makefile.PL so that ExtUtils::Constant is conditionaly 
+        [DIST] Modified Makefile.PL so that ExtUtils::Constant is conditionally 
         used, with a fallback in the case it's not available.
         [DIST] Bumped version to 0.09
         [DOC] Added support and license information.

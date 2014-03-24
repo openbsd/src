@@ -21,7 +21,7 @@ unless (is_miniperl()) {
 
 use strict;
 
-plan(tests => 49 + !is_miniperl() * (3 + 14 * $can_fork));
+plan(tests => 60 + !is_miniperl() * (3 + 14 * $can_fork));
 
 sub get_temp_fh {
     my $f = tempfile();
@@ -194,12 +194,27 @@ $ret ||= do 'abc.pl';
 is( $ret, 'abc', 'do "abc.pl" sees return value' );
 
 {
-    my $filename = './Foo.pm';
+    my $got;
     #local @INC; # local fails on tied @INC
     my @old_INC = @INC; # because local doesn't work on tied arrays
-    @INC = sub { $filename = 'seen'; return undef; };
-    eval { require $filename; };
-    is( $filename, 'seen', 'the coderef sees fully-qualified pathnames' );
+    @INC = ('lib', 'lib/Devel', sub { $got = $_[1]; return undef; });
+    foreach my $filename ('/test_require.pm', './test_require.pm',
+			  '../test_require.pm') {
+	local %INC;
+	undef $got;
+	undef $test_require::loaded;
+	eval { require $filename; };
+	is($got, $filename, "the coderef sees the pathname $filename");
+	is($test_require::loaded, undef, 'no module is loaded' );
+    }
+
+    local %INC;
+    undef $got;
+    undef $test_require::loaded;
+
+    eval { require 'test_require.pm'; };
+    is($got, undef, 'the directory is scanned for test_require.pm');
+    is($test_require::loaded, 1, 'the module is loaded');
     @INC = @old_INC;
 }
 
@@ -225,6 +240,26 @@ ok( 1, 'returning PVBM ref doesn\'t segfault require' );
 eval 'use foo';
 ok( 1, 'returning PVBM ref doesn\'t segfault use' );
 shift @INC;
+
+# [perl #92252]
+{
+    my $die = sub { die };
+    my $data = [];
+    unshift @INC, sub { $die, $data };
+
+    my $initial_sub_refcnt = &Internals::SvREFCNT($die);
+    my $initial_data_refcnt = &Internals::SvREFCNT($data);
+
+    do "foo";
+    is(&Internals::SvREFCNT($die), $initial_sub_refcnt, "no leaks");
+    is(&Internals::SvREFCNT($data), $initial_data_refcnt, "no leaks");
+
+    do "bar";
+    is(&Internals::SvREFCNT($die), $initial_sub_refcnt, "no leaks");
+    is(&Internals::SvREFCNT($data), $initial_data_refcnt, "no leaks");
+
+    shift @INC;
+}
 
 exit if is_miniperl();
 

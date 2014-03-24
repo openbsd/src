@@ -12,7 +12,7 @@ use strict;
 
 ## These "variables" are used as local "glob aliases" for performance
 use vars qw($VERSION @ISA %myData %myOpts @input_stack);
-$VERSION = '1.51';  ## Current version of this package
+$VERSION = '1.60';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -89,6 +89,10 @@ performing the actual translation of text.
 B<Pod::Parser> parses PODs, and makes method calls to handle the various
 components of the POD. Subclasses of B<Pod::Parser> override these methods
 to translate the POD into whatever output format they desire.
+
+Note: This module is considered as legacy; modern Perl releases (5.18 and
+higher) are going to remove Pod::Parser from core and use L<Pod::Simple>
+for all things POD.
 
 =head1 QUICK OVERVIEW
 

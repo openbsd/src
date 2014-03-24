@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use utf8;
-use Test::More tests => 778;
+use Test::More tests => 780;
 use Encode;
 use Encode::GSM0338;
 
@@ -86,6 +86,10 @@ for my $c ( map { chr } 0 .. 127 ) {
           sprintf( "decode ESC+\\x%02X", ord($c) );
     }
 }
+
+# https://rt.cpan.org/Ticket/Display.html?id=75670
+is decode("gsm0338", "\x09") => chr(0xC7), 'RT75670: decode';
+is encode("gsm0338", chr(0xC7)) => "\x09", 'RT75670: encode';
 
 __END__
 for my $c (map { chr } 0..127){

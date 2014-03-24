@@ -99,7 +99,7 @@ rub
    ~
    Russian Ruble
 
-zmk
+zmw
    ~
    Zambian Kwacha
 

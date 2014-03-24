@@ -12,7 +12,7 @@ package Math::BigFloat;
 #   _a	: accuracy
 #   _p	: precision
 
-$VERSION = '1.997';
+$VERSION = '1.998';
 require 5.006002;
 
 require Exporter;
@@ -4474,7 +4474,7 @@ influence any further operation.
 =head1 SEE ALSO
 
 L<Math::BigInt>, L<Math::BigRat> and L<Math::Big> as well as
-L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
+L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 The pragmas L<bignum>, L<bigint> and L<bigrat> might also be of interest
 because they solve the autoupgrading/downgrading issue, at least partly.

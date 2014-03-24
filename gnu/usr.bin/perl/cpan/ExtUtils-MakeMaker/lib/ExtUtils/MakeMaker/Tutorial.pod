@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::Tutorial;
 
-our $VERSION = 6.63_02;
+our $VERSION = '6.66';
 
 
 =head1 NAME
@@ -19,7 +19,7 @@ ExtUtils::MakeMaker::Tutorial - Writing a module with MakeMaker
 =head1 DESCRIPTION
 
 This is a short tutorial on writing a simple module with MakeMaker.
-Its really not that hard.
+It's really not that hard.
 
 
 =head2 The Mantra
@@ -95,8 +95,8 @@ See L<ExtUtils::Manifest> for more details.
 
 =item lib/
 
-This is the directory where your .pm and .pod files you wish to have
-installed go.  They are layed out according to namespace.  So Foo::Bar
+This is the directory where the .pm and .pod files you wish to have
+installed go.  They are laid out according to namespace.  So Foo::Bar
 is F<lib/Foo/Bar.pm>.
 
 

@@ -9,7 +9,7 @@ use strict;
 use Pod::Simple;
 require Encode;
 use vars qw($VERSION );
-$VERSION = '3.20';
+$VERSION = '3.28';
 
 sub is_dumb  {0}
 sub is_smart {1}
@@ -27,12 +27,12 @@ sub encmodver {
 }
 
 sub make_transcoder {
-  my($e) = $_[1];
+  my $e = Encode::find_encoding($_[1]);
   die "WHAT ENCODING!?!?" unless $e;
   my $x;
   return sub {
     foreach $x (@_) {
-      $x = Encode::decode($e, $x);
+      $x = $e->decode($x) unless Encode::is_utf8($x);
     }
     return;
   };

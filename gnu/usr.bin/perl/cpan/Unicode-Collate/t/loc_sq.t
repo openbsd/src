@@ -69,7 +69,7 @@ ok($objSq->lt("xz","xh"));
 ok($objSq->gt("y", "xh"));
 ok($objSq->lt("z", "zh"));
 ok($objSq->lt("zz","zh"));
-ok($objSq->lt("zh", "\x{1B7}"));
+ok($objSq->lt("zh","\x{1B7}"));
 
 # 35
 

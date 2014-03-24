@@ -115,7 +115,8 @@ __EOD__
             }
         }
 
-	my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir";
+	my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir"
+	 . ' -DPERL_NO_INLINE_FUNCTIONS';
 
 	if ($^O eq 'VMS') {
             $cccmd = "$Config{'cc'} /include=($COREincdir) $tmp.c";

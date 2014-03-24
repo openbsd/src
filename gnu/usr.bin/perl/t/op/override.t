@@ -49,7 +49,6 @@ is( $r, "Foo.pm" );
 eval "use Foo::Bar";
 is( $r, join($dirsep, "Foo", "Bar.pm") );
 
-# use VERSION also loads feature.pm.
 {
     my @r;
     local *CORE::GLOBAL::require = sub { push @r, shift; 1; };
@@ -64,6 +63,11 @@ is( $r, join($dirsep, "Foo", "Bar.pm") );
 }
 
 {
+    BEGIN {
+        # Can’t do ‘no warnings’ with CORE::GLOBAL::require overridden. :-)
+        CORE::require warnings;
+        unimport warnings 'experimental::lexical_topic';
+    }
     my $_ = 'bar.pm';
     require;
     is( $r, 'bar.pm' );

@@ -3,7 +3,7 @@
 use strict ;
 require 5.006 ;
 
-$::VERSION = '2.048' ;
+$::VERSION = '2.060' ;
 
 use private::MakeUtil;
 use ExtUtils::MakeMaker 5.16 ;
@@ -39,7 +39,7 @@ WriteMakefile(
         : ()
     ),
 
-    INSTALLDIRS => ($] >= 5.009 ? 'perl' : 'site'),
+    INSTALLDIRS => ($] >= 5.009 && $] < 5.011 ? 'perl' : 'site'),
 
     EXE_FILES => ['bin/zipdetails'],
     
@@ -48,6 +48,12 @@ WriteMakefile(
         ? (INSTALLPRIVLIB    => '$(INSTALLARCHLIB)')
         : ()
     ),
+
+    META_MERGE => {
+        no_index => {
+            directory => [ 't', 'private' ],
+        },
+    },    
 
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
         ('LICENSE'  => 'perl')         : ()),    

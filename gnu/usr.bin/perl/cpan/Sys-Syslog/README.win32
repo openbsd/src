@@ -11,7 +11,7 @@ DESCRIPTION
     by Sys::Syslog is PerlLog.mc, located in the win32/ subdirectory.
 
     If the message file is updated then you need to go in the win32/ 
-    subdirectory and run the "compile.pl" command to update the relevent 
+    subdirectory and run the "compile.pl" command to update the relevant 
     files. Note that Sys::Syslog::Win32 is built by this process.
 
     The following files are in the win32 directory:

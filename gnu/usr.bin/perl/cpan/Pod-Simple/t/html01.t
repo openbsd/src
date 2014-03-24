@@ -115,7 +115,7 @@ SUBCLASS: {
 ok(
     My::Pod::HTML->_out(
         sub{  $_[0]->bare_output(1)  },
-        "=pod\n\n=over\n\n=item Foo\n\n",
+        "=pod\n\n=over\n\n=item Foo\n\n=back\n",
     ),
     "\n<dl>\n<dt><a name=\"howdy\"\n>Foo</a></dt>\n</dl>\n",
 );

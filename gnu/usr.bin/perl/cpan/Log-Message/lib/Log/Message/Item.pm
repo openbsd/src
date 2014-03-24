@@ -1,4 +1,5 @@
 package Log::Message::Item;
+use if $] > 5.017, 'deprecate';
 
 use strict;
 use vars qw[$VERSION];
@@ -11,7 +12,7 @@ use Carp ();
 BEGIN {
     use vars qw[$AUTOLOAD $VERSION];
 
-    $VERSION    =   '0.04';
+    $VERSION    =   '0.06';
 }
 
 ### create a new item.

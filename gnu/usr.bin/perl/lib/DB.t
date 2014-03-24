@@ -126,7 +126,7 @@ is( DB::_clientname('bar'), undef,
         my @ret = eval { DB->backtrace() };
         like( $ret[0], qr/file.+\Q$0\E/, 'DB::backtrace() should report current file');
         like( $ret[0], qr/line $line/, '... should report calling line number' );
-        like( $ret[0], qr/eval {...}/, '... should catch eval BLOCK' );
+        like( $ret[0], qr/eval\Q {...}/, '... should catch eval BLOCK' );
 
         @ret = eval "one(2)";
         is( scalar @ret, 1, '... should report from provided stack frame number' );

@@ -1,4 +1,22 @@
 
+= 2012/08/18
+
+Packaging fix.
+
+Minor documentation fixes.
+
+= 2012/08/15
+
+Minor fixes to test suites.
+
+Added back versions to support old versions of perl.
+
+= 2009/04/17
+
+Added support for Unicode combining characters to both 
+Text::Tabs and Text::Wrap, plus a new test suite for each
+of these new functionalities.  --tchrist
+
 = 2009/03/05
 
 Test improvements from Dave Mitchel sent back in 2005...

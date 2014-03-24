@@ -7,7 +7,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan (tests => 299);
+    plan (tests => 312);
 }
 
 use strict;
@@ -151,7 +151,10 @@ $dummy  = -e -e -e $var ; check_count '-e -e';
 $_ = "foo";
 $dummy  =  $var =~ m/ / ; check_count 'm//';
 $dummy  =  $var =~ s/ //; check_count 's///';
-$dummy  =  $var ~~    1 ; check_count '~~';
+{
+    no warnings 'experimental::smartmatch';
+    $dummy  =  $var ~~    1 ; check_count '~~';
+}
 $dummy  =  $var =~ y/ //; check_count 'y///';
            $var = \1;
 $dummy  =  $var =~y/ /-/; check_count '$ref =~ y///';
@@ -172,7 +175,7 @@ $dummy  = %$var3        ; check_count '%{}';
 $dummy  = keys $var3    ; check_count 'keys hashref';
 {
     no strict 'refs';
-    tie my $var4 => 'main', **;
+    tie my $var4 => 'main', *];
     $dummy  = *$var4        ; check_count '*{}';
 }
 
@@ -246,6 +249,35 @@ for ([chdir=>''],[chmod=>'0,'],[chown=>'0,0,'],[utime=>'0,0,'],
     $var = undef;
     $dummy  =  select $var, undef, undef, 0
                             ; check_count 'select $tied_undef, ...';
+}
+
+chop(my $u = "\xff\x{100}");
+tie $var, "main", $u;
+$dummy  = pack "u", $var; check_count 'pack "u", $utf8';
+
+tie $var, "main", "\x{100}";
+pos$var = 0             ; check_count 'lvalue pos $utf8';
+$dummy=sprintf"%1s",$var; check_count 'sprintf "%1s", $utf8';
+$dummy=sprintf"%.1s",$var; check_count 'sprintf "%.1s", $utf8';
+$dummy  = substr$var,0,1; check_count 'substr $utf8';
+my $l   =\substr$var,0,1;
+$dummy  = $$l           ; check_count 'reading lvalue substr($utf8)';
+$$l     = 0             ; check_count 'setting lvalue substr($utf8)';
+tie $var, "main", "a";
+$$l     = "\x{100}"     ; check_count 'assigning $utf8 to lvalue substr';
+tie $var1, "main", "a";
+substr$var1,0,0,"\x{100}"; check_count '4-arg substr with utf8 replacement';
+
+{
+    local $SIG{__WARN__} = sub {};
+    $dummy  =  warn $var    ; check_count 'warn $tied';
+    tie $@, => 'main', 1;
+    $dummy  =  warn         ; check_count 'warn() with $@ tied (num)';
+    tie $@, => 'main', \1;
+    $dummy  =  warn         ; check_count 'warn() with $@ tied (ref)';
+    tie $@, => 'main', "foo\n";
+    $dummy  =  warn         ; check_count 'warn() with $@ tied (str)';
+    untie $@;
 }
 
 ###############################################

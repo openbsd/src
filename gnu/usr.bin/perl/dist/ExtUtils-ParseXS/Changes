@@ -1,6 +1,9 @@
 Revision history for Perl extension ExtUtils::ParseXS.
 
+3.18 - Mon Nov 19 07:35:00 CET 2012
   - Restore portability to Perl 5.6, which was lost at EU-PXS 3.00.
+  - [perl #112776] avoid warning on an initialized non-parameter
+  - Only increment PL_amagic_generation before 5.9
 
 3.15 - Thu Feb  2 08:12:00 CET 2012
   - Fix version for PAUSE indexer.

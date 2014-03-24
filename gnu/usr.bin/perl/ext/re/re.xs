@@ -12,6 +12,10 @@
 START_EXTERN_C
 
 extern REGEXP*	my_re_compile (pTHX_ SV * const pattern, const U32 pm_flags);
+extern REGEXP*	my_re_op_compile (pTHX_ SV ** const patternp, int pat_count,
+		    OP *expr, const regexp_engine* eng, REGEXP *VOL old_re,
+		     bool *is_bare_re, U32 rx_flags, U32 pm_flags);
+
 extern I32	my_regexec (pTHX_ REGEXP * const prog, char* stringarg, char* strend,
 			    char* strbeg, I32 minend, SV* screamer,
 			    void* data, U32 flags);
@@ -57,8 +61,9 @@ const struct regexp_engine my_reg_engine = {
         my_reg_named_buff_iter,
         my_reg_qr_package,
 #if defined(USE_ITHREADS)
-        my_regdupe 
+        my_regdupe,
 #endif
+        my_re_op_compile,
 };
 
 MODULE = re	PACKAGE = re
@@ -95,8 +100,9 @@ PPCODE:
         } else if (RX_FLOAT_UTF8(re)) {
             fl = sv_2mortal(newSVsv(RX_FLOAT_UTF8(re)));
         }
-        XPUSHs(an);
-        XPUSHs(fl);
+        EXTEND(SP, 2);
+        PUSHs(an);
+        PUSHs(fl);
         XSRETURN(2);
     }
     XSRETURN_UNDEF;

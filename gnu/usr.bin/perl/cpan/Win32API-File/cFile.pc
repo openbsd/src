@@ -162,4 +162,7 @@ sub SEM_NOOPENFILEERRORBOX () { 32768 }
 sub TRUNCATE_EXISTING () { 5 }
 sub Unknown () { 0 }
 sub VALID_NTFT () { 192 }
+sub STD_ERROR_HANDLE () { 0xfffffff4 }
+sub STD_INPUT_HANDLE () { 0xfffffff6 }
+sub STD_OUTPUT_HANDLE () { 0xfffffff5 }
 1;

@@ -1,13 +1,13 @@
 package Locale::Codes::Script;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2012 Sullivan Beck
+# Copyright (c) 2010-2013 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 use strict;
+require 5.006;
 use warnings;
-require 5.002;
 
 require Exporter;
 use Carp;
@@ -22,7 +22,7 @@ use Locale::Codes::Script_Retired;
 
 our($VERSION,@ISA,@EXPORT,@EXPORT_OK);
 
-$VERSION='3.21';
+$VERSION='3.25';
 @ISA       = qw(Exporter);
 @EXPORT    = qw(code2script
                 script2code

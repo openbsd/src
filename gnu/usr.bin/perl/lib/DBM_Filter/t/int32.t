@@ -55,9 +55,8 @@ is $@, '', "push an 'int32' filter" ;
     no warnings 'uninitialized';
     StoreData(\%h1,
 	{	
-		undef()	=> undef(),
 		"400"	=> "500",
-		0	=> 1,
+                undef()        => 1,
 		1	=> 0,
 		-47	=> -6,
 	});

@@ -9,6 +9,7 @@ BEGIN {
 
 plan tests => 72;
 
+no warnings 'deprecated';
 use encoding "greek"; # iso 8859-7
 
 # U+0391, \xC1, \301, GREEK CAPITAL LETTER ALPHA

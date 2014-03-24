@@ -7,11 +7,11 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..11\n";
+plan tests => 17;
 
-my $test = 0;
 for my $i (undef, 0 .. 2, "", "0 but true") {
     my $true = 1;
     my $false = 0;
@@ -29,37 +29,30 @@ for my $i (undef, 0 .. 2, "", "0 but true") {
 	    and (($i || !$j) != (!$i && $j))
 	);
     }
-    if (not $true) {
-	print "not ";
-    } elsif ($false) {
-	print "not ";
-    }
-    print "ok ", ++$test, "\n";
+    my $m = ! defined $i ? 'undef'
+       : $i eq ''   ? 'empty string'
+       : $i;
+    ok( $true, "true: $m");
+    ok( ! $false, "false: $m");
 }
 
-# $test == 6
 my $i = 0;
 (($i ||= 1) &&= 3) += 4;
-print "not " unless $i == 7;
-print "ok ", ++$test, "\n";
+is( $i, 7, '||=, &&=');
 
 my ($x, $y) = (1, 8);
 $i = !$x || $y;
-print "not " unless $i == 8;
-print "ok ", ++$test, "\n";
+is( $i, 8, 'negation precedence with ||' );
 
 ++$y;
 $i = !$x || !$x || !$x || $y;
-print "not " unless $i == 9;
-print "ok ", ++$test, "\n";
+is( $i, 9, 'negation precedence with ||, multiple operands' );
 
 $x = 0;
 ++$y;
 $i = !$x && $y;
-print "not " unless $i == 10;
-print "ok ", ++$test, "\n";
+is( $i, 10, 'negation precedence with &&' );
 
 ++$y;
 $i = !$x && !$x && !$x && $y;
-print "not " unless $i == 11;
-print "ok ", ++$test, "\n";
+is( $i, 11, 'negation precedence with &&, multiple operands' );

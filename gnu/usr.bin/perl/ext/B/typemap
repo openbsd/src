@@ -36,6 +36,8 @@ PADOFFSET	T_UV
 B::HE		T_HE_OBJ
 B::RHE		T_RHE_OBJ
 
+B::PADLIST	T_PL_OBJ
+
 INPUT
 T_OP_OBJ
 	if (SvROK($arg)) {
@@ -77,6 +79,14 @@ T_RHE_OBJ
 	else
 	    croak(\"$var is not a reference\")
 
+T_PL_OBJ
+	if (SvROK($arg)) {
+	    IV tmp = SvIV((SV*)SvRV($arg));
+	    $var = INT2PTR($type,tmp);
+	}
+	else
+	    croak(\"$var is not a reference\")
+
 OUTPUT
 T_MG_OBJ
 	sv_setiv(newSVrv($arg, "B::MAGIC"), PTR2IV($var));
@@ -86,3 +96,7 @@ T_HE_OBJ
 
 T_RHE_OBJ
 	sv_setiv(newSVrv($arg, "B::RHE"), PTR2IV($var));
+
+T_PL_OBJ
+	sv_setiv(newSVrv($arg, $var ? "B::PADLIST" : "B::NULL"),
+		 PTR2IV($var));

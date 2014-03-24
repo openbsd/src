@@ -1,24 +1,18 @@
-If you read this file _as_is_, just ignore the funny characters you
-see. It is written in the POD format (see perlpod manpage) which is
-specially designed to be readable as is.
-
-The following documentation is written in euc-jp encoding.
-
-=encoding euc-jp
+=encoding utf8
 
 =head1 NAME
 
-perljp - ���ܸ� Perl ������
+perljp - 日本語 Perl ガイド
 
-=head1 ����
+=head1 説明
 
-Perl �������ؤ褦����!
+Perl の世界へようこそ!
 
-Perl 5.8.0 ��ꡢUnicode���ݡ��Ȥ������˶������졢���η�̥�ƥ�ʸ���ʳ���ʸ�������ɤΥ��ݡ��Ȥ� CJK (���졢���ܸ졢�ϥ󥰥�)��ޤ�Ʋä��ޤ�����Unicode���������ʸ�����Ĥ�ʸ�������ɤǰ������Ȥ��ܻؤ���ɸ�൬�ʤǤ��ꡢ�줫�������Ϥ��ޤ����δ֤�ʸ���ʥ��ꥷ��ʸ�������꡼��ʸ��������ӥ�ʸ�����إ֥饤ʸ�����ǥ��������ʥ�����ʸ�����ʤɤʤɡˤ䡢����ޤǤ�OS�٥�������ȼ������Ƥ���ʸ��(PC�����Macintosh)�����Ǥ˴ޤޤ�Ƥ��ޤ���
+Perl 5.8.0 より、Unicodeサポートが大幅に強化され、その結果ラテン文字以外の文字コードのサポートが CJK (中国語、日本語、ハングル)を含めて加わりました。Unicodeは世界中の文字を一つの文字コードで扱うことを目指した標準規格であり、東から西、はたまたその間の文字（ギリシャ文字、キリール文字、アラビア文字、ヘブライ文字、ディーヴァナガーリ文字、などなど）や、これまではOSベンダーが独自に定めていた文字(PCおよびMacintosh)がすでに含まれています。
 
-Perl ���Ȥ� Unicode ��ư��ޤ���Perl ������ץ����ʸ�����ƥ�������ɽ���� Unicode ������Ȥ��Ƥ��ޤ��������������ϤΤ���ˤϡ�����ޤǻȤ��Ƥ������ޤ��ޤ�ʸ�������ɤ��б�����⥸�塼�롢�� Encode �פ�ɸ����������Ƥ��ꡢUnicode �Ȥ�����ʸ�������ɤ�����Ѵ����ñ�˹Ԥ���褦�ˤʤäƤ��ޤ���
+Perl 自身は Unicode で動作します。Perl スクリプト内の文字列リテラルや正規表現は Unicode を前提としています。そして入出力のためには、これまで使われてきたさまざまな文字コードに対応するモジュール、「 Encode 」が標準装備されており、Unicode とこれらの文字コードの相互変換も簡単に行えるようになっています。
 
-�������� Encode �����ݡ��Ȥ���ʸ�������ɤϰʲ��ΤȤ���Ǥ���
+現時点で Encode がサポートする文字コードは以下のとおりです。
 
   7bit-jis      AdobeStandardEncoding AdobeSymbol       AdobeZdingbat
   ascii             big5              big5-hkscs        cp1006
@@ -50,32 +44,32 @@ Perl ���Ȥ� Unicode ��ư��ޤ���Perl ������ץ����ʸ�����ƥ�������ɽ���� 
   UTF-16LE          UTF-32            UTF-32BE          UTF-32LE
   utf8              viscii                              
 
-(��114����)
+(全114種類)
 
-�㤨�С�ʸ��������FOO�Υե������UTF-8���Ѵ�����ˤϡ��ʲ��Τ褦�ˤ��ޤ���
+例えば、文字コードFOOのファイルをUTF-8に変換するには、以下のようにします。
 
     perl -Mencoding=FOO,STDOUT,utf8 -pe1 < file.FOO > file.utf8
 
-�ޤ���Perl�ˤϡ�������Perl�ǽ񤫤줿ʸ���������Ѵ��桼�ƥ���ƥ���piconv����°���Ƥ���Τǡ��ʲ��Τ褦�ˤ��뤳�Ȥ�Ǥ��ޤ���
+また、Perlには、全部がPerlで書かれた文字コード変換ユーティリティ、piconvも付属しているので、以下のようにすることもできます。
 
    piconv -f FOO -t utf8 < file.FOO > file.utf8
    piconv -f utf8 -t FOO < file.utf8 > file.FOO
 
 =head2 About (jcode.pl|Jcode.pm|JPerl)
 
-5.8�����Ρ�������ץȤ�EUC-JP�Ǥ���Х�ƥ������ϰ������Ȥ��Ǥ��ޤ������ޤ��������Ϥ򰷤��⥸�塼��Ȥ��Ƥ�Jcode.pm��( http://openlab.ring.gr.jp/Jcode/ )��perl4�ѤΥ桼�ƥ���ƥ��Ȥ��Ƥ�jcode.pl�����줾��¸�ߤ������ܸ�ΰ�����CGI�Ǥ褯���Ѥ���Ƥ��뤳�Ȥ��¸�������⾯�ʤ��ʤ����Ȼפ��ޤ��������������ܸ�ˤ������ɽ���򤦤ޤ��������Ȥ��Բ�ǽ�Ǥ�����
+5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( http://openlab.ring.gr.jp/Jcode/ )、perl4用のユーティリティとしてはjcode.plがそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
 
-5.005������Perl�ˤϡ����ܸ���ò������������饤���ǡ�Jperl��¸�ߤ��ޤ���( http://homepage2.nifty.com/kipp/perl/jperl/index.html )���ޤ���Mac OS 9.x/Classic�Ѥ�Perl��MacPerl�����ܸ��Ǥ�MacJPerl�Ȥ���¸�ߤ��Ƥޤ�����( http://habilis.net/macjperl/ ).�����Ǥ�ʸ�������ɤȤ���EUC-JP�˲ä�Shift_JIS�⤽�Τޤް������Ȥ��Ǥ����ޤ����ܸ�ˤ������ɽ���򰷤����Ȥ��ǽ�Ǥ�����
+5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( http://homepage2.nifty.com/kipp/perl/jperl/index.html )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( http://habilis.net/macjperl/ ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
 
-Perl5.8�Ǥϡ������ε�ǽ�����٤�Perl���Τ����Ǽ¸��Ǥ����ˡ����ܸ�Τߤʤ餺�嵭114��ʸ�������ɤ򤹤٤ơ�������Ʊ���˰������Ȥ��Ǥ��ޤ�������ˡ�CPAN�ʤɤ��鿷����ʸ���������ѤΥ⥸�塼������ꤹ�뤳�Ȥ��ñ�ˤǤ���褦�ˤʤäƤ��ޤ���
+Perl5.8では、これらの機能がすべてPerl本体だけで実現できる上に、日本語のみならず上記114の文字コードをすべて、しかも同時に扱うことができます。さらに、CPANなどから新しい文字コード用のモジュールを入手することも簡単にできるようになっています。
 
 =over 4
 
 =item *
 
-������
+入出力
 
-�ʲ�����Ϥ��Ť��Shift_JIS�����Ϥ�EUC-JP���Ѵ����ƽ��Ϥ��ޤ���
+以下の例はいづれもShift_JISの入力をEUC-JPに変換して出力します。
 
   # jcode.pl
   require "jcode.pl";
@@ -94,7 +88,7 @@ Perl5.8�Ǥϡ������ε�ǽ�����٤�Perl���Τ����Ǽ¸��Ǥ����ˡ����ܸ�Τߤʤ餺�
     from_to($_, 'shiftjis', 'euc-jp');
     print;
   }
-  # Perl 5.8 - encoding �����Ѥ���
+  # Perl 5.8 - encoding を利用して
   use encoding 'euc-jp', STDIN => 'shiftjis';
   while(<>){
   	print;
@@ -102,33 +96,33 @@ Perl5.8�Ǥϡ������ε�ǽ�����٤�Perl���Τ����Ǽ¸��Ǥ����ˡ����ܸ�Τߤʤ餺�
 
 =item *
 
-Jperl �ߴ�������ץ�
+Jperl 互換スクリプト
 
- ������"shebang"���ѹ���������ǡ�Jperl�Ѥ�script�ΤۤȤ�ɤ��ѹ��ʤ������Ѳ�ǽ���Ȼפ��ޤ���
+いわゆる"shebang"を変更するだけで、Jperl用のscriptのほとんどは変更なしに利用可能だと思われます。
 
    #!/path/to/jperl
-   ��
+   ↓
    #!/path/to/perl -Mencoding=euc-jp
 
- �ܤ����� perldoc encoding �򻲾Ȥ��Ƥ���������
+詳しくは perldoc encoding を参照してください。
 
 =back
 
-=head2 ����˾ܤ���
+=head2 さらに詳しく
 
-Perl�ˤ�����ʻ�������°���Ƥ��ꡢPerl�ο���ǽ��Unicode���ݡ��ȡ�������Encode�⥸�塼��λ���ˡ�ʤɤ��٤������夵��Ƥ��ޤ��ʻ�ǰ�ʤ��顢�ۤȤ�ɱѸ�ǤϤ���ޤ����ˡ��ʲ��Υ��ޥ�ɤǤ����ΰ�����������뤳�Ȥ���ǽ�Ǥ���
+Perlには膨大な資料が付属しており、Perlの新機能やUnicodeサポート、そしてEncodeモジュールの使用法などが細かく網羅されています（残念ながら、ほとんど英語ではありますが）。以下のコマンドでそれらの一部を閲覧することが可能です。
 
-  perldoc perlunicode # Perl��Unicode���ݡ�������
-  perldoc Encode      # Encode�⥸�塼��˴ؤ���
-  perldoc Encode::JP  # �������ܸ�ʸ�������ɤ˴ؤ���
+  perldoc perlunicode # PerlのUnicodeサポート全般
+  perldoc Encode      # Encodeモジュールに関して
+  perldoc Encode::JP  # うち日本語文字コードに関して
 
-=head2 Perl���̤˴ؤ��� URL
+=head2 Perl全般に関する URL
 
 =over 4
 
 =item L<http://www.perl.com/>
 
-Perl �ۡ���ڡ��� (O'Reilly and Associates)
+Perl ホームページ (O'Reilly and Associates)
 
 =item L<http://www.cpan.org/>
 
@@ -136,29 +130,29 @@ CPAN (Comprehensive Perl Archive Network)
 
 =item L<http://lists.perl.org/>
 
-Perl �᡼��󥰥ꥹ�Ƚ�
+Perl メーリングリスト集
 
 =back
 
-=head2 Perl�ν�������Ω�� URL
+=head2 Perlの修得に役立つ URL
 
 =over 4
 
 =item L<http://www.oreilly.com.tw/>
 
-O'Reilly �Ҥ�Perl��Ϣ����(���λ�����)
+O'Reilly 社のPerl関連書籍(繁体字中国語)
 
 =item L<http://www.oreilly.com.cn/>
 
-O'Reilly �Ҥ�Perl��Ϣ����(���λ�����)
+O'Reilly 社のPerl関連書籍(簡体字中国語)
 
 =item L<http://www.oreilly.co.jp/catalog/>
 
-���饤�꡼�Ҥ�Perl��Ϣ����(���ܸ�)
+オライリー社のPerl関連書籍(日本語)
 
 =back
 
-=head2 Perl �桼�������롼��
+=head2 Perl ユーザーグループ
 
 =over 4
 
@@ -166,13 +160,13 @@ O'Reilly �Ҥ�Perl��Ϣ����(���λ�����)
 
 =back
 
-=head2 Unicode��Ϣ��URL
+=head2 Unicode関連のURL
 
 =over 4
 
 =item L<http://www.unicode.org/>
 
-Unicode ���󥽡������� (Unicode���ʤ���������)
+Unicode コンソーシアム (Unicode規格の選定団体)
 
 =item L<http://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
 
@@ -180,13 +174,13 @@ UTF-8 and Unicode FAQ for Unix/Linux
 
 =item L<http://wiki.kldp.org/Translations/html/UTF8-Unicode-KLDP/UTF8-Unicode-KLDP.html>
 
-UTF-8 and Unicode FAQ for Unix/Linux (�ϥ󥰥���)
+UTF-8 and Unicode FAQ for Unix/Linux (ハングル訳)
 
 =back
 
 =head1 AUTHORS
 
 Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
-Dan Kogai (��������) E<lt>dankogai@dan.co.jpE<gt>
+Dan Kogai (小飼　弾) E<lt>dankogai@dan.co.jpE<gt>
 
 =cut

@@ -1,8 +1,8 @@
-# PropertyAliases-6.1.0.txt
-# Date: 2011-12-07, 23:40:57 GMT [MD]
+# PropertyAliases-6.2.0.txt
+# Date: 2012-05-20, 17:41:20 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2011 Unicode, Inc.
+# Copyright (c) 1991-2012 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -57,7 +57,6 @@ nv                       ; Numeric_Value
 # ================================================
 # String Properties
 # ================================================
-bmg                      ; Bidi_Mirroring_Glyph
 cf                       ; Case_Folding
 cjkCompatibilityVariant  ; kCompatibilityVariant
 dm                       ; Decomposition_Mapping
@@ -74,6 +73,7 @@ uc                       ; Uppercase_Mapping
 # ================================================
 # Miscellaneous Properties
 # ================================================
+bmg                      ; Bidi_Mirroring_Glyph
 cjkIICore                ; kIICore
 cjkIRG_GSource           ; kIRG_GSource
 cjkIRG_HSource           ; kIRG_HSource

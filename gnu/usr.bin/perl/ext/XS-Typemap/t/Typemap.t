@@ -6,7 +6,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 140;
+use Test::More tests => 146;
 
 use strict;
 use warnings;
@@ -149,6 +149,25 @@ ok( T_BOOL(52) );
 ok( ! T_BOOL(0) );
 ok( ! T_BOOL('') );
 ok( ! T_BOOL(undef) );
+
+{
+  # these attempt to modify a read-only value
+  ok( !eval { T_BOOL_2(52); 1 } );
+  ok( !eval { T_BOOL_2(0); 1 } );
+  ok( !eval { T_BOOL_2(''); 1 } );
+  ok( !eval { T_BOOL_2(undef); 1 } );
+}
+
+{
+    my ($in, $out);
+    $in = 1;
+    T_BOOL_OUT($out, $in);
+    ok($out, "T_BOOL_OUT, true in");
+    $in = 0;
+    $out = 1;
+    T_BOOL_OUT($out, $in);
+    ok(!$out, "T_BOOL_OUT, false in");
+}
 
 # T_U_SHORT aka U16
 note("T_U_SHORT");

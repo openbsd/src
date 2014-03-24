@@ -786,7 +786,7 @@ EOM
 {
 
 # no without use
-# see Message-ID: <20021106212427.A15377@ttul.org>
+# see Message-ID: <2002110621.427.A15377@ttul.org>
 ####################
 
 writeFile("${module6}.pm", <<EOM);

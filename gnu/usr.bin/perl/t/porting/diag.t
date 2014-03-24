@@ -2,8 +2,10 @@
 use warnings;
 use strict;
 
-chdir 't';
-require './test.pl';
+BEGIN {
+  chdir 't';
+  require './test.pl';
+}
 
 plan('no_plan');
 
@@ -49,21 +51,28 @@ while (<$func_fh>) {
 
 close $func_fh;
 
+my $regcomp_re = "(?<routine>(?:ckWARN(?:\\d+)?reg\\w*|vWARN\\d+))";
 my $function_re = join '|', @functions;
-my $source_msg_re = '(?<routine>\bDIE\b|$function_re)';
+my $regcomp_fail_re = '\b(?:(?:Simple_)?v)?FAIL[2-4]?\b';
+my $source_msg_re =
+   "(?<routine>\\bDIE\\b|$function_re|$regcomp_fail_re)";
 my $text_re = '"(?<text>(?:\\\\"|[^"]|"\s*[A-Z_]+\s*")*)"';
 my $source_msg_call_re = qr/$source_msg_re(?:_nocontext)? \s*
     \(aTHX_ \s*
     (?:packWARN\d*\((?<category>.*?)\),)? \s*
     $text_re /x;
 my $bad_version_re = qr{BADVERSION\([^"]*$text_re};
+   $regcomp_fail_re = qr/$regcomp_fail_re\([^"]*$text_re/;
+my $regcomp_call_re = qr/$regcomp_re.*?$text_re/;
 
 my %entries;
 
 # Get the ignores that are compiled into this file
+my $reading_categorical_exceptions;
 while (<DATA>) {
   chomp;
-  $entries{$_}{todo}=1;
+  $entries{$_}{$reading_categorical_exceptions ? 'cattodo' : 'todo'}=1;
+  /__CATEGORIES__/ and ++$reading_categorical_exceptions;
 }
 
 my $pod = "pod/perldiag.pod";
@@ -71,14 +80,27 @@ my $cur_entry;
 open my $diagfh, "<", $pod
   or die "Can't open $pod: $!";
 
-my $category_re = qr/ [a-z0-9_]+?/;      # Note: requires an initial space
+my $category_re = qr/ [a-z0-9_:]+?/;    # Note: requires an initial space
 my $severity_re = qr/ . (?: \| . )* /x; # A severity is a single char, but can
                                         # be of the form 'S|P|W'
+my @same_descr;
 while (<$diagfh>) {
   if (m/^=item (.*)/) {
     $cur_entry = $1;
 
-    if (exists $entries{$cur_entry}) {
+    # Allow multi-line headers
+    while (<$diagfh>) {
+      if (/^\s*$/) {
+        last;
+      }
+
+      $cur_entry .= $_;
+    }
+
+    $cur_entry =~ s/\n/ /gs; # Fix multi-line headers if they have \n's
+    $cur_entry =~ s/\s+\z//;
+
+    if (exists $entries{$cur_entry} && $entries{$cur_entry}{todo}) {
         TODO: {
             local $::TODO = "Remove the TODO entry \"$cur_entry\" from DATA as it is already in $pod near line $.";
             ok($cur_entry);
@@ -88,7 +110,6 @@ while (<$diagfh>) {
     # overwrites one in DATA.
     $entries{$cur_entry}{todo} = 0;
     $entries{$cur_entry}{line_number} = $.;
-    next;
   }
 
   next if ! defined $cur_entry;
@@ -97,16 +118,28 @@ while (<$diagfh>) {
     if (/^ \( ( $severity_re )
 
         # Can have multiple categories separated by commas
-        (?: ( $category_re ) (?: , $category_re)* )? \) /x)
+        ( $category_re (?: , $category_re)* )? \) /x)
     {
       $entries{$cur_entry}{severity} = $1;
-      $entries{$cur_entry}{category} = $2;
+      $entries{$cur_entry}{category} =
+        $2 && join ", ", sort split " ", $2 =~ y/,//dr;
+
+      # Record it also for other messages sharing the same description
+      @$_{qw<severity category>} =
+        @{$entries{$cur_entry}}{qw<severity category>}
+       for @same_descr;
     }
     elsif (! $entries{$cur_entry}{first_line} && $_ =~ /\S/) {
 
       # Keep track of first line of text if doesn't contain a severity, so
       # that can later examine it to determine if that is ok or not
       $entries{$cur_entry}{first_line} = $_;
+    }
+    if (/\S/) {
+      @same_descr = ();
+    }
+    else {
+      push @same_descr, $entries{$cur_entry};
     }
   }
 }
@@ -158,19 +191,17 @@ my $specialformats =
  join '|', sort { length $b cmp length $a } keys %specialformats;
 my $specialformats_re = qr/%$format_modifiers"\s*($specialformats)(\s*")?/;
 
-# Recursively descend looking for source files.
-my @todo = sort <*>;
-while (@todo) {
-  my $todo = shift @todo;
-  next if $todo ~~ ['t', 'lib', 'ext', 'dist', 'cpan'];
-  # opmini.c is just a copy of op.c, so there's no need to check again.
-  next if $todo eq 'opmini.c';
-  if (-d $todo) {
-    unshift @todo, sort glob "$todo/*";
-  } elsif ($todo =~ m/\.[ch]$/) {
-    check_file($todo);
-  }
+open my $fh, '<', 'MANIFEST' or die "Can't open MANIFEST: $!";
+while (my $file = <$fh>) {
+    chomp $file;
+    $file =~ s/\s+.*//;
+    next unless $file =~ /\.(?:c|cpp|h|xs|y)\z/ or $file =~ /^perly\./;
+    # OS/2 extensions have never been migrated to ext/, hence the special case:
+    next if $file =~ m!\A(?:ext|dist|cpan|lib|t|os2/OS2)/!
+            && $file !~ m!\Aext/DynaLoader/!;
+    check_file($file);
 }
+close $fh or die $!;
 
 # Standardize messages with variants into the form that appears
 # in perldiag.pod -- useful for things without a diag_listed_as annotation
@@ -210,16 +241,15 @@ sub check_file {
       $sub = $_;
     }
     next if $sub =~ m/^XS/;
-    if (m</\* diag_listed_as: (.*) \*/>) {
+    if (m</\*\s*diag_listed_as: (.*?)\s*\*/>) {
       $listed_as = $1;
       $listed_as_line = $.+1;
     }
     next if /^#/;
-    next if /^ +/;
 
     my $multiline = 0;
     # Loop to accumulate the message text all on one line.
-    if (m/$source_msg_re(?:_nocontext)?\s*\(/) {
+    if (m/(?:$source_msg_re(?:_nocontext)?|$regcomp_re)\s*\(/) {
       while (not m/\);$/) {
         my $nextline = <$codefh>;
         # Means we fell off the end of the file.  Not terribly surprising;
@@ -250,24 +280,55 @@ sub check_file {
     # The %"foo" thing needs to happen *before* this regex.
     # diag($_);
     # DIE is just return Perl_die
-    my ($name, $category);
+    my ($name, $category, $routine);
     if (/$source_msg_call_re/) {
-      ($name, $category) = ($+{'text'}, $+{'category'});
+      ($name, $category, $routine) = ($+{'text'}, $+{'category'}, $+{'routine'});
+      # Sometimes the regexp will pick up too much for the category
+      # e.g., WARN_UNINITIALIZED), PL_warn_uninit_sv ... up to the next )
+      $category && $category =~ s/\).*//s;
     }
     elsif (/$bad_version_re/) {
       ($name, $category) = ($+{'text'}, undef);
+    }
+    elsif (/$regcomp_fail_re/) {
+      #  FAIL("foo") -> "foo in regex m/%s/"
+      # vFAIL("foo") -> "foo in regex; marked by <-- HERE in m/%s/"
+      ($name, $category) = ($+{'text'}, undef);
+      $name .=
+        " in regex" . ("; marked by <-- HERE in" x /vFAIL/) . " m/%s/";
+    }
+    elsif (/$regcomp_call_re/) {
+      # vWARN/ckWARNreg("foo") -> "foo in regex; marked by <-- HERE in m/%s/
+      ($name, $category, $routine) = ($+{'text'}, undef, $+{'routine'});
+      $name .= " in regex; marked by <-- HERE in m/%s/";
+      $category = 'WARN_REGEXP';
+      if ($routine =~ /dep/) {
+        $category .= ',WARN_DEPRECATED';
+      }
     }
     else {
       next;
     }
 
-    my $severity = {croak => [qw/P F/],
-                      die   => [qw/P F/],
-                      warn  => [qw/W D S/],
-                     }->{$+{'routine'}||'die'};
-    my @categories;
+    # Try to guess what the severity should be.  In the case of
+    # Perl_ck_warner and other _ck_ functions, we can tell whether it is
+    # a severe/default warning or no by the _d suffix.  In the case of
+    # other warn functions we cannot tell, because Perl_warner may be pre-
+    # ceded by if(ckWARN) or if(ckWARN_d).
+    my $severity = !$routine                   ? '[PFX]'
+                 :  $routine =~ /warn.*_d\z/   ? '[DS]'
+                 :  $routine =~ /ck_warn/      ?  'W'
+                 :  $routine =~ /warn/         ? '[WDS]'
+                 :  $routine =~ /ckWARN.*dep/  ?  'D'
+                 :  $routine =~ /ckWARN\d*reg/ ?  'W'
+                 :  $routine =~ /vWARN\d/      ? '[WDS]'
+                 :                             '[PFX]';
+    my $categories;
     if (defined $category) {
-      @categories = map {s/^WARN_//; lc $_} split /\s*[|,]\s*/, $category;
+      $category =~ s/__/::/g;
+      $categories =
+        join ", ",
+              sort map {s/^WARN_//; lc $_} split /\s*[|,]\s*/, $category;
     }
     if ($listed_as and $listed_as_line == $. - $multiline) {
       $name = $listed_as;
@@ -298,25 +359,39 @@ sub check_file {
     # inside an #if 0 block.
     next if $name eq 'SKIPME';
 
-    check_message(standardize($name),$codefn);
+    next if $name=~/\[TESTING\]/; # ignore these as they are works in progress
+
+    check_message(standardize($name),$codefn,$severity,$categories);
   }
 }
 
 sub check_message {
-    my($name,$codefn,$partial) = @_;
+    my($name,$codefn,$severity,$categories,$partial) = @_;
     my $key = $name =~ y/\n/ /r;
     my $ret;
+
+    # Try to reduce printf() formats to simplest forms
+    # Really this should be matching %s, etc like diagnostics.pm does
+
+    # Kill flags
+    $key =~ s/%[#0\-+]/%/g;
+
+    # Kill width
+    $key =~ s/\%(\d+|\*)/%/g;
+
+    # Kill precision
+    $key =~ s/\%\.(\d+|\*)/%/g;
 
     if (exists $entries{$key}) {
       $ret = 1;
       if ( $entries{$key}{seen}++ ) {
         # no need to repeat entries we've tested
-      } elsif ($entries{$name}{todo}) {
+      } elsif ($entries{$key}{todo}) {
         TODO: {
           no warnings 'once';
           local $::TODO = 'in DATA';
           # There is no listing, but it is in the list of exceptions.  TODO FAIL.
-          fail($name);
+          fail($key);
           diag(
             "    Message '$name'\n    from $codefn line $. is not listed in $pod\n".
             "    (but it wasn't documented in 5.10 either, so marking it TODO)."
@@ -325,6 +400,25 @@ sub check_message {
       } else {
         # We found an actual valid entry in perldiag.pod for this error.
         pass($key);
+
+        # Now check the category and severity
+
+        # Cache our severity qr thingies
+        use 5.01;
+        state %qrs;
+        my $qr = $qrs{$severity} ||= qr/$severity/;
+
+        return $ret
+          if $entries{$key}{cattodo};
+
+        like $entries{$key}{severity}, $qr,
+          $severity =~ /\[/
+            ? "severity is one of $severity for $key"
+            : "severity is $severity for $key";
+
+        is $entries{$key}{category}, $categories,
+           ($categories ? "categories are [$categories]" : "no category")
+             . " for $key";
       }
       # Later, should start checking that the severity is correct, too.
     } elsif ($partial) {
@@ -333,7 +427,8 @@ sub check_message {
       my $ok;
       if ($name =~ /\n/) {
         $ok = 1;
-        check_message($_,$codefn,1) or $ok = 0, last for split /\n/, $name;
+        check_message($_,$codefn,$severity,$categories,1) or $ok = 0, last
+          for split /\n/, $name;
       }
       if ($ok) {
         # noop
@@ -364,19 +459,28 @@ sub check_message {
 # PLEASE DO NOT ADD TO THIS LIST.  Instead, write an entry in
 # pod/perldiag.pod for your new (warning|error).
 
+# Entries after __CATEGORIES__ are those that are in perldiag but fail the
+# severity/category test.
+
 # Also FIXME this test, as the first entry in TODO *is* covered by the
 # description: Malformed UTF-8 character (%s)
 __DATA__
 Malformed UTF-8 character (unexpected non-continuation byte 0x%x, immediately after start byte 0x%x)
 
-%s (%d) does not match %s (%d),
-%s (%d) smaller than %s (%d),
+'%c' allowed only after types %s in %s
 bad top format reference
+Cannot apply "%s" in non-PerlIO perl
+Can't %s big-endian %ss on this
+Can't call mro_isa_changed_in() on anonymous symbol table
+Can't call mro_method_changed_in() on anonymous symbol table
 Can't coerce readonly %s to string
 Can't coerce readonly %s to string in %s
+Can't find string terminator %c%s%c anywhere before EOF
 Can't fix broken locale name "%s"
 Can't get short module name from a handle
 Can't locate object method "%s" via package "%s" (perhaps you forgot to load "%s"?)
+Can't pipe "%s": %s
+Can't spawn: %s
 Can't spawn "%s": %s
 Can't %s script `%s' with ARGV[0] being `%s'
 Can't %s "%s": %s
@@ -384,28 +488,43 @@ Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)
 Can't use string ("%s"%s) as a subroutine ref while "strict refs" in use
 \%c better written as $%c
 Character(s) in '%c' format wrapped in %s
+chown not implemented!
+clear %s
 Code missing after '/' in pack
 Code missing after '/' in unpack
-Corrupted regexp opcode %d > %d
 '%c' outside of string in pack
 Debug leaking scalars child failed%s with errno %d: %s
+'/' does not take a repeat count in %s
+Don't know how to get file name
 Don't know how to handle magic of type \%o
 -Dp not implemented on this platform
 Error reading "%s": %s
+execl not implemented!
+EVAL without pos change exceeded limit in regex
 Filehandle opened only for %sput
 Filehandle %s opened only for %sput
 Filehandle STD%s reopened as %s only for input
+filter_del can only delete in reverse order (currently)
 YOU HAVEN'T DISABLED SET-ID SCRIPTS IN THE KERNEL YET! FIX YOUR KERNEL, PUT A C WRAPPER AROUND THIS SCRIPT, OR USE -u AND UNDUMP!
+fork() not implemented!
+free %s
 Free to wrong pool %p not %p
 get %s %p %p %p
+gethostent not implemented!
+getpwnam returned invalid UIC %o for user "%s"
 glob failed (can't start child: %s)
 glob failed (child exited with status %d%s)
 Goto undefined subroutine
 Goto undefined subroutine &%s
+Got signal %d
+()-group starts with a count in %s
+Illegal binary digit '%c' ignored
 Illegal character %sin prototype for %s : %s
-Integer overflow in version %d
+Illegal hexadecimal digit '%c' ignored
+Illegal octal digit '%c' ignored
+Infinite recursion in regex
 internal %<num>p might conflict with future printf extensions
-invalid control request: '\%o'
+Invalid argument to sv_cat_decode
 Invalid range "%c-%c" in transliteration operator
 Invalid separator character %c%c%c in PerlIO layer specification %s
 Invalid TOKEN object ignored
@@ -413,24 +532,46 @@ Invalid type '%c' in pack
 Invalid type '%c' in %s
 Invalid type '%c' in unpack
 Invalid type ',' in %s
+ioctlsocket not implemented!
 'j' not supported on this platform
 'J' not supported on this platform
+killpg not implemented!
+length() used on %s (did you mean "scalar(%s)"?)
+length() used on %hash (did you mean "scalar(keys %hash)"?)
+length() used on @array (did you mean "scalar(@array)"?)
+List form of pipe open not implemented
+Malformed integer in [] in %s
 Malformed UTF-8 character (fatal)
 Missing (suid) fd script name
 More than one argument to open
 More than one argument to open(,':%s')
 mprotect for %p %u failed with %d
 mprotect RW for %p %u failed with %d
+No %s allowed while running setgid
+No %s allowed with (suid) fdscript
+No such class field "%s"
 Not an XSUB reference
 Operator or semicolon missing before %c%s
+Pattern subroutine nesting without pos change exceeded limit in regex
 Perl %s required--this is only %s, stopped
+PerlApp::TextQuery: no arguments, please
+POSIX syntax [%c %c] is reserved for future extensions in regex; marked by <-- HERE in m/%s/
 ptr wrong %p != %p fl=%x nl=%p e=%p for %d
 Recompile perl with -DDEBUGGING to use -D switch (did you mean -d ?)
+Regexp modifier "%c" may appear a maximum of twice in regex; marked by <-- HERE in m/%s/
+Regexp modifier "%c" may not appear twice in regex; marked by <-- HERE in m/%s/
+Regexp modifiers "%c" and "%c" are mutually exclusive in regex; marked by <-- HERE in m/%s/
+Regexp *+ operand could be empty in regex; marked by <-- HERE in m/%s/
+Repeated format line will never terminate (~~ and @#)
 Reversed %c= operator
-Runaway prototype
 %s(%f) failed
-%sCompilation failed in regexp
 %sCompilation failed in require
+Sequence (?%c...) not implemented in regex; marked by <-- HERE in m/%s/
+Sequence (%s...) not recognized in regex; marked by <-- HERE in m/%s/
+Sequence %s... not terminated in regex; marked by <-- HERE in m/%s/
+Sequence (?%c... not terminated in regex; marked by <-- HERE in m/%s/
+Sequence (?(%c... not terminated in regex; marked by <-- HERE in m/%s/
+Sequence (?R) not terminated in regex m/%s/
 set %s %p %p %p
 %s free() ignored (RMAGIC, PERL_CORE)
 %s has too many errors.
@@ -438,15 +579,20 @@ SIG%s handler "%s" not defined.
 %s in %s
 Size magic not implemented
 %s number > %s non-portable
-%s object version %s does not match %s %s
 %srealloc() %signored
-%s has too many errors.
+%s in regex m/%s/
 %s on %s %s
-%s on %s %s %s
+socketpair not implemented!
 Starting Full Screen process with flag=%d, mytype=%d
 Starting PM process with flag=%d, mytype=%d
+sv_2iv assumed (U_V(fabs((double)SvNVX(sv))) < (UV)IV_MAX) but SvNVX(sv)=%f U_V is 0x%x, IV_MAX is 0x%x
 SWASHNEW didn't return an HV ref
+switching effective gid is not implemented
+switching effective uid is not implemented
+System V IPC is not implemented on this machine
 -T and -B not implemented on filehandles
+Terminating on signal SIG%s(%d)
+The crypt() function is not implemented on NetWare
 The flock() function is not implemented on NetWare
 The rewinddir() function is not implemented on NetWare
 The seekdir() function is not implemented on NetWare
@@ -454,22 +600,49 @@ The telldir() function is not implemented on NetWare
 Too deeply nested ()-groups in %s
 Too many args on %s line of "%s"
 U0 mode on a byte string
-Undefined top format called
+unable to find VMSPIPE.COM for i/o piping
+Unknown Unicode option value %d
+Unrecognized character %s; marked by <-- HERE after %s<-- HERE near column %d
 Unstable directory path, current directory changed unexpectedly
 Unterminated compressed integer in unpack
+Unterminated \g... pattern in regex; marked by <-- HERE in m/%s/
 Usage: CODE(0x%x)(%s)
 Usage: %s(%s)
 Usage: %s::%s(%s)
+Usage: File::Copy::rmscopy(from,to[,date_flag])
+Usage: VMS::Filespec::candelete(spec)
+Usage: VMS::Filespec::fileify(spec)
+Usage: VMS::Filespec::pathify(spec)
+Usage: VMS::Filespec::rmsexpand(spec[,defspec])
+Usage: VMS::Filespec::unixify(spec)
+Usage: VMS::Filespec::unixpath(spec)
 Usage: VMS::Filespec::unixrealpath(spec)
+Usage: VMS::Filespec::vmsify(spec)
+Usage: VMS::Filespec::vmspath(spec)
 Usage: VMS::Filespec::vmsrealpath(spec)
 Use of inherited AUTOLOAD for non-method %s::%s() is deprecated
 utf8 "\x%X" does not map to Unicode
 Value of logical "%s" too long. Truncating to %i bytes
-value of node is %d in Offset macro
-Variable "%c%s" is not imported
+waitpid: process %x is not a child of process %x
 Wide character
 Wide character in $/
-Wide character in print
+Within []-length '*' not allowed in %s
 Within []-length '%c' not allowed in %s
 Wrong syntax (suid) fd script name "%s"
+'X' outside of string in %s
 'X' outside of string in unpack
+
+__CATEGORIES__
+Code point 0x%X is not Unicode, all \p{} matches fail; all \P{} matches succeed
+Code point 0x%X is not Unicode, may not be portable
+Illegal character \%o (carriage return)
+Missing argument in %s
+Unicode non-character U+%X is illegal for open interchange
+Operation "%s" returns its argument for non-Unicode code point 0x%X
+Operation "%s" returns its argument for UTF-16 surrogate U+%X
+Unicode surrogate U+%X is illegal in UTF-8
+UTF-16 surrogate U+%X
+False [] range "%s" in regex; marked by <-- HERE in m/%s/
+\N{} in character class restricted to one character in regex; marked by <-- HERE in m/%s/
+Zero length \N{} in regex; marked by <-- HERE in m/%s/
+Expecting '(?flags:(?[...' in regex; marked by <-- HERE in m/%s/

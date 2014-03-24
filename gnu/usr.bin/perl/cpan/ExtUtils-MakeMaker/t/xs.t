@@ -53,6 +53,6 @@ my $make_out = run("$make");
 is( $?, 0,                                 '  make exited normally' ) || 
     diag $make_out;
 
-my $test_out = run("$make");
+my $test_out = run("$make test");
 is( $?, 0,                                 '  make test exited normally' ) || 
     diag $test_out;

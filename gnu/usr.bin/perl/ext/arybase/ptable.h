@@ -168,7 +168,7 @@ STATIC void PTABLE_PREFIX(_store)(pPTBL_ ptable * const t, const void * const ke
 STATIC void ptable_walk(pTHX_ ptable * const t, void (*cb)(pTHX_ ptable_ent *ent, void *userdata), void *userdata) {
 #define ptable_walk(T, CB, UD) ptable_walk(aTHX_ (T), (CB), (UD))
  if (t && t->items) {
-  register ptable_ent ** const array = t->ary;
+  ptable_ent ** const array = t->ary;
   UV i = t->max;
   do {
    ptable_ent *entry;
@@ -181,7 +181,7 @@ STATIC void ptable_walk(pTHX_ ptable * const t, void (*cb)(pTHX_ ptable_ent *ent
 
 STATIC void PTABLE_PREFIX(_clear)(pPTBL_ ptable * const t) {
  if (t && t->items) {
-  register ptable_ent ** const array = t->ary;
+  ptable_ent ** const array = t->ary;
   UV i = t->max;
 
   do {

@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-2 Secure Hash Standard
  *
- * Copyright (C) 2003-2012 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2013 Mark Shelor, All Rights Reserved
  *
- * Version: 5.71
- * Wed Feb 29 04:06:10 MST 2012
+ * Version: 5.84
+ * Sat Mar  9 17:36:08 MST 2013
  *
  */
 
@@ -102,27 +102,11 @@
 			(SHA64) b[6] <<  8 | (SHA64) b[7]; }
 #endif
 
-/*
- * SHA_STO_CLASS: default to auto storage class for message schedule
- * arrays inside transform routines.  Note that redefining this to
- * static might improve performance on some platforms (e.g. Intel).
- */
+#define SHA_new		New
+#define SHA_newz	Newz
+#define SHA_free	Safefree
 
-#if !defined(SHA_STO_CLASS)
-	#define SHA_STO_CLASS	auto
-#endif
-
-/* Override use of static arrays if compiling for thread-safety */
-#ifdef SHA_THREAD_SAFE
-	#undef  SHA_STO_CLASS
-	#define SHA_STO_CLASS	auto
-#endif
-
-/* Configure memory management and I/O for Perl or standalone C */
-#ifdef SHA_PERL_MODULE
-	#define SHA_new			New
-	#define SHA_newz		Newz
-	#define SHA_free		Safefree
+#ifdef SHA_PerlIO
 	#define SHA_FILE		PerlIO
 	#define SHA_stdin()		PerlIO_stdin()
 	#define SHA_stdout()		PerlIO_stdout()
@@ -132,9 +116,6 @@
 	#define SHA_feof		PerlIO_eof
 	#define SHA_getc		PerlIO_getc
 #else
-	#define SHA_new(id, p, n, t)	p = (t *) malloc(sizeof(t))
-	#define SHA_newz(id, p, n, t)	p = (t *) calloc(n, sizeof(t))
-	#define SHA_free		free
 	#define SHA_FILE		FILE
 	#define SHA_stdin()		stdin
 	#define SHA_stdout()		stdout
@@ -194,53 +175,11 @@ typedef struct SHA {
 	char base64[SHA_MAX_BASE64_LEN+1];
 } SHA;
 
-#define SHA_FMT_RAW 1
-#define SHA_FMT_HEX 2
-#define SHA_FMT_BASE64 3
-
-#define _SHA_STATE	SHA *s
-#define _SHA_ALG	int alg
-#define _SHA_DATA	unsigned char *bitstr, unsigned long bitcnt
-#define _SHA_FNAME	char *filename
-
-SHA		*shaopen	(_SHA_ALG);
-unsigned long	 shawrite	(_SHA_DATA, _SHA_STATE);
-void		 shafinish	(_SHA_STATE);
-void		 sharewind	(_SHA_STATE);
-unsigned char	*shadigest	(_SHA_STATE);
-char		*shahex		(_SHA_STATE);
-char		*shabase64	(_SHA_STATE);
-int		 shadsize	(_SHA_STATE);
-int		 shaalg		(_SHA_STATE);
-SHA		*shadup		(_SHA_STATE);
-int		 shadump	(_SHA_FNAME, _SHA_STATE);
-SHA		*shaload	(_SHA_FNAME);
-int		 shaclose	(_SHA_STATE);
-
-#ifndef SHA_PERL_MODULE
-
-unsigned char	*sha1digest		(_SHA_DATA);
-char		*sha1hex		(_SHA_DATA);
-char		*sha1base64		(_SHA_DATA);
-unsigned char	*sha224digest		(_SHA_DATA);
-char		*sha224hex		(_SHA_DATA);
-char		*sha224base64		(_SHA_DATA);
-unsigned char	*sha256digest		(_SHA_DATA);
-char		*sha256hex		(_SHA_DATA);
-char		*sha256base64		(_SHA_DATA);
-unsigned char	*sha384digest		(_SHA_DATA);
-char		*sha384hex		(_SHA_DATA);
-char		*sha384base64		(_SHA_DATA);
-unsigned char	*sha512digest		(_SHA_DATA);
-char		*sha512hex		(_SHA_DATA);
-char		*sha512base64		(_SHA_DATA);
-unsigned char	*sha512224digest	(_SHA_DATA);
-char		*sha512224hex		(_SHA_DATA);
-char		*sha512224base64	(_SHA_DATA);
-unsigned char	*sha512256digest	(_SHA_DATA);
-char		*sha512256hex		(_SHA_DATA);
-char		*sha512256base64	(_SHA_DATA);
-
-#endif
+typedef struct {
+	SHA *ksha;
+	SHA *isha;
+	SHA *osha;
+	unsigned char key[SHA_MAX_BLOCK_BITS/8];
+} HMAC;
 
 #endif	/* _INCLUDE_SHA_H_ */

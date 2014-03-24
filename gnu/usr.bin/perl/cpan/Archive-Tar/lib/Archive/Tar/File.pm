@@ -13,7 +13,7 @@ use Archive::Tar::Constant;
 
 use vars qw[@ISA $VERSION];
 #@ISA        = qw[Archive::Tar];
-$VERSION    = '1.82';
+$VERSION    = '1.90';
 
 ### set value to 1 to oct() it during the unpack ###
 

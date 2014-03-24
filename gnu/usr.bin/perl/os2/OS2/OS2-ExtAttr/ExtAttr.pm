@@ -3,7 +3,7 @@ package OS2::ExtAttr;
 use strict;
 use XSLoader;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 XSLoader::load 'OS2::ExtAttr', $VERSION;
 
 # Preloaded methods go here.
@@ -122,7 +122,7 @@ OS2::ExtAttr - Perl access to extended attributes.
   tie %ea, 'OS2::ExtAttr', 'my.file';
   print $ea{eaname};
   $ea{myfield} = 'value';
-  
+
   untie %ea;
 
 =head1 DESCRIPTION

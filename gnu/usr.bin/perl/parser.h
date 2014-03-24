@@ -21,6 +21,17 @@ typedef struct {
 #endif
 } yy_stack_frame;
 
+/* Fields that need to be shared with (i.e., visible to) inner lex-
+   ing scopes. */
+typedef struct yy_lexshared {
+    struct yy_lexshared	*ls_prev;
+    SV			*ls_linestr;	/* mirrors PL_parser->linestr */
+    char		*ls_bufptr;	/* mirrors PL_parser->bufptr */
+    char		*re_eval_start;	/* start of "(?{..." text */
+    SV			*re_eval_str;	/* "(?{...})" text */
+    line_t		herelines;	/* number of lines in here-doc */
+} LEXSHARED;
+
 typedef struct yy_parser {
 
     /* parser state */
@@ -52,32 +63,40 @@ typedef struct yy_parser {
     OP		*lex_op;	/* extra info to pass back on op */
     SV		*lex_repl;	/* runtime replacement from s/// */
     U16		lex_inwhat;	/* what kind of quoting are we in */
-    OPCODE	last_lop_op;	/* last list operator */
+    OPCODE	last_lop_op;	/* last named list or unary operator */
     I32		lex_starts;	/* how many interps done on level */
     SV		*lex_stuff;	/* runtime pattern from m// or s/// */
     I32		multi_start;	/* 1st line of multi-line string */
     I32		multi_end;	/* last line of multi-line string */
     char	multi_open;	/* delimiter of said string */
     char	multi_close;	/* delimiter of said string */
-    char	pending_ident;	/* pending identifier lookup */
     bool	preambled;
+    bool        lex_re_reparsing; /* we're doing G_RE_REPARSING */
     I32		lex_allbrackets;/* (), [], {}, ?: bracket count */
     SUBLEXINFO	sublex_info;
+    LEXSHARED	*lex_shared;
     SV		*linestr;	/* current chunk of src text */
-    char	*bufptr;	
-    char	*oldbufptr;	
-    char	*oldoldbufptr;	
+    char	*bufptr;	/* carries the cursor (current parsing
+				   position) from one invocation of yylex
+				   to the next */
+    char	*oldbufptr;	/* in yylex, beginning of current token */
+    char	*oldoldbufptr;	/* in yylex, beginning of previous token */
     char	*bufend;	
     char	*linestart;	/* beginning of most recently read line */
     char	*last_uni;	/* position of last named-unary op */
     char	*last_lop;	/* position of last list operator */
-    line_t	copline;	/* current line number */
+    /* copline is used to pass a specific line number to newSTATEOP.  It
+       is a one-time line number, as newSTATEOP invalidates it (sets it to
+       NOLINE) after using it.  The purpose of this is to report line num-
+       bers in multiline constructs using the number of the first line. */
+    line_t	copline;
     U16		in_my;		/* we're compiling a "my"/"our" declaration */
     U8		lex_state;	/* next token is determined */
     U8		error_count;	/* how many compile errors so far, max 10 */
     HV		*in_my_stash;	/* declared class of this "my" declaration */
     PerlIO	*rsfp;		/* current source file pointer */
     AV		*rsfp_filters;	/* holds chain of active source filters */
+    U8		form_lex_state;	/* remember lex_state when parsing fmt */
 
 #ifdef PERL_MAD
     SV		*endwhite;
@@ -149,8 +168,8 @@ enum {
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

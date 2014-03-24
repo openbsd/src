@@ -95,7 +95,7 @@ static W64 strto64(char *s)
 static void sha512(SHA *s, unsigned char *block) /* SHA-384/512 transform */
 {
 	W64 a, b, c, d, e, f, g, h, T1, T2;
-	SHA_STO_CLASS W64 W[80];
+	W64 W[80];
 	W64 *H = (W64 *) s->H;
 	int t;
 

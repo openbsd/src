@@ -116,7 +116,7 @@ it is interpolated into a regexp. See L<overload>.
 Extension modules can now cleanly hook into the Perl parser to define
 new kinds of keyword-headed expression and compound statement. The
 syntax following the keyword is defined entirely by the extension. This
-allow a completely non-Perl sublanguage to be parsed inline, with the
+allows a completely non-Perl sublanguage to be parsed inline, with the
 correct ops cleanly generated.
 
 See L<perlapi/PL_keyword_plugin> for the mechanism. The Perl core

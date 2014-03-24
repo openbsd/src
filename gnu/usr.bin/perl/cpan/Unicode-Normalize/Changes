@@ -1,5 +1,13 @@
 Revision history for Perl extension Unicode::Normalize.
 
+1.16  Sun Nov  4 17:23:03 2012
+    - XSUB: use PERL_NO_GET_CONTEXT (see perlguts)
+      (see [rt.cpan.org #80312])
+
+1.15  Sun Sep 23 10:43:14 2012
+    - perl 5.11.0 or later: Install to 'site' instead of 'perl'
+      (see [rt.cpan.org #79801])
+
 1.14  Sat Mar 10 13:34:53 2012
     - avoid "use Test".
 

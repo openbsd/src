@@ -1,6 +1,10 @@
-@@@	The Unicode Standard 6.1
-@@@+	U61M111117.lst
-	Final Unicode 6.1 names list.
+; charset=UTF-8
+@@@	The Unicode Standard 6.2
+@@@+	U62M120808.lst
+	Unicode 6.2 names list, third delta (converted to UTF-8).
+	Updated more annotations in the Bengali block.
+	Added clarifying annotations for 0342.
+	Updated alias for 1110E.
 	This file is semi-automatically derived from UnicodeData.txt and
 	a set of manually created annotations using a script to select
 	or suppress information from the data file. The rules used
@@ -117,11 +121,15 @@
 	= pound sign, hash, crosshatch, octothorpe
 	x (l b bar symbol - 2114)
 	x (music sharp sign - 266F)
+	~ 0023 FE0E text style
+	~ 0023 FE0F emoji style
 0024	DOLLAR SIGN
-	= milreis, escudo
+	= milrÃ©is, escudo
+	* used for many peso currencies in Latin America and elsewhere
 	* glyph may have one or two vertical bars
-	* other currency symbol characters: 20A0-20B9
+	* other currency symbol characters: 20A0-20BA
 	x (currency sign - 00A4)
+	x (peso sign - 20B1)
 	x (heavy dollar sign - 1F4B2)
 0025	PERCENT SIGN
 	x (arabic percent sign - 066A)
@@ -184,15 +192,35 @@
 	x (division slash - 2215)
 @		ASCII digits
 0030	DIGIT ZERO
+	~ 0030 FE0E text style
+	~ 0030 FE0F emoji style
 0031	DIGIT ONE
+	~ 0031 FE0E text style
+	~ 0031 FE0F emoji style
 0032	DIGIT TWO
+	~ 0032 FE0E text style
+	~ 0032 FE0F emoji style
 0033	DIGIT THREE
+	~ 0033 FE0E text style
+	~ 0033 FE0F emoji style
 0034	DIGIT FOUR
+	~ 0034 FE0E text style
+	~ 0034 FE0F emoji style
 0035	DIGIT FIVE
+	~ 0035 FE0E text style
+	~ 0035 FE0F emoji style
 0036	DIGIT SIX
+	~ 0036 FE0E text style
+	~ 0036 FE0F emoji style
 0037	DIGIT SEVEN
+	~ 0037 FE0E text style
+	~ 0037 FE0F emoji style
 0038	DIGIT EIGHT
+	~ 0038 FE0E text style
+	~ 0038 FE0F emoji style
 0039	DIGIT NINE
+	~ 0039 FE0E text style
+	~ 0039 FE0F emoji style
 @		ASCII punctuation and symbols
 003A	COLON
 	x (armenian full stop - 0589)
@@ -381,6 +409,7 @@
 @		Control character
 007F	<control>
 	= DELETE
+@~	Standardized Variation Sequences
 @@	0080	C1 Controls and Latin-1 Supplement (Latin-1 Supplement)	00FF
 @		C1 controls
 @+		Alias names are those for ISO/IEC 6429:1992.
@@ -464,9 +493,10 @@
 00A3	POUND SIGN
 	= pound sterling, Irish punt, Italian lira, Turkish lira, etc.
 	x (lira sign - 20A4)
+	x (turkish lira sign - 20BA)
 	x (roman semuncia sign - 10192)
 00A4	CURRENCY SIGN
-	* other currency symbol characters: 20A0-20B9
+	* other currency symbol characters: 20A0-20BA
 	x (dollar sign - 0024)
 00A5	YEN SIGN
 	= yuan sign
@@ -677,7 +707,7 @@
 	: 0061 030A
 00E6	LATIN SMALL LETTER AE
 	= latin small ligature ae (1.0)
-	= ash (from Old English æsc)
+	= ash (from Old English Ã¦sc)
 	* Danish, Norwegian, Icelandic, Faroese, Old English, French, IPA
 	x (latin small ligature oe - 0153)
 	x (cyrillic small ligature a ie - 04D5)
@@ -981,7 +1011,7 @@
 	: 006F 030B
 0152	LATIN CAPITAL LIGATURE OE
 0153	LATIN SMALL LIGATURE OE
-	= ethel (from Old English eðel)
+	= ethel (from Old English eÃ°el)
 	* French, IPA, Old Icelandic, Old English, ...
 	x (latin small letter ae - 00E6)
 	x (latin letter small capital oe - 0276)
@@ -2021,11 +2051,13 @@
 02B9	MODIFIER LETTER PRIME
 	* primary stress, emphasis
 	* transliteration of mjagkij znak (Cyrillic soft sign: palatalization)
+	* transliteration of Hebrew geresh
 	x (apostrophe - 0027)
 	x (acute accent - 00B4)
 	x (modifier letter acute accent - 02CA)
 	x (combining acute accent - 0301)
 	x (greek numeral sign - 0374)
+	x (hebrew punctuation geresh - 05F3)
 	x (prime - 2032)
 02BA	MODIFIER LETTER DOUBLE PRIME
 	* exaggerated stress, contrastive stress
@@ -2060,11 +2092,15 @@
 	x (single high-reversed-9 quotation mark - 201B)
 02BE	MODIFIER LETTER RIGHT HALF RING
 	* transliteration of Arabic hamza (glottal stop)
+	* transliteration of Hebrew alef
 	x (armenian apostrophe - 055A)
+	x (hebrew letter alef - 05D0)
 	x (arabic letter hamza - 0621)
 02BF	MODIFIER LETTER LEFT HALF RING
 	* transliteration of Arabic ain (voiced pharyngeal fricative)
+	* transliteration of Hebrew ayin
 	x (armenian modifier letter left half ring - 0559)
+	x (hebrew letter ayin - 05E2)
 	x (arabic letter ain - 0639)
 02C0	MODIFIER LETTER GLOTTAL STOP
 	* ejective or glottalized
@@ -2442,6 +2478,10 @@
 	: 0301 combining acute accent
 @		Additions for Greek
 0342	COMBINING GREEK PERISPOMENI
+	* Greek-specific form of circumflex for rising-falling accent
+	* alternative glyph is similar to an inverted breve
+	x (combining tilde - 0303)
+	x (combining inverted breve - 0311)
 0343	COMBINING GREEK KORONIS
 	: 0313 combining comma above
 0344	COMBINING GREEK DIALYTIKA TONOS
@@ -4058,6 +4098,7 @@
 0708	SYRIAC SUPRALINEAR COLON SKEWED LEFT
 	* marks a minor phrase division
 0709	SYRIAC SUBLINEAR COLON SKEWED RIGHT
+	% SYRIAC SUBLINEAR COLON SKEWED LEFT
 	* marks the end of a real or rhetorical question
 070A	SYRIAC CONTRACTION
 	* a contraction mark, mostly used in East Syriac
@@ -4857,8 +4898,12 @@
 	= bengali letter va with lower diagonal (1.0)
 @		Currency signs
 09F2	BENGALI RUPEE MARK
+	= taka
+	* historic currency sign
 09F3	BENGALI RUPEE SIGN
+	= Bangladeshi taka
 @		Historic symbols for fractional values
+@+		The use of these signs is not limited to currency, despite the character names.
 09F4	BENGALI CURRENCY NUMERATOR ONE
 	* not in current usage
 09F5	BENGALI CURRENCY NUMERATOR TWO
@@ -4870,7 +4915,11 @@
 09F9	BENGALI CURRENCY DENOMINATOR SIXTEEN
 @		Sign
 09FA	BENGALI ISSHAR
-@		Currency sign
+	= ishvar
+	* represents the name of a deity
+	= svargiya
+	* written before the name of a deceased person
+@		Historic currency sign
 09FB	BENGALI GANDA MARK
 @@	0A00	Gurmukhi	0A7F
 @		Various signs
@@ -5229,10 +5278,12 @@
 0B77	ORIYA FRACTION THREE SIXTEENTHS
 @@	0B80	Tamil	0BFF
 @		Various signs
+@+		The anusvara should not be confused with the use of a circular glyph for the pulli.
 0B82	TAMIL SIGN ANUSVARA
 	* not used in Tamil
 0B83	TAMIL SIGN VISARGA
 	= aytham
+	* in fonts which display the Tamil pulli as a ring shape, the glyph for aytham also uses rings
 @		Independent vowels
 0B85	TAMIL LETTER A
 0B86	TAMIL LETTER AA
@@ -5292,7 +5343,9 @@
 0BCC	TAMIL VOWEL SIGN AU
 	: 0BC6 0BD7
 @		Virama
+@+		The Tamil pulli usually displays as a dot above, but in some fonts displays as a ring above. Do not use 0B82 to represent a ring-shaped pulli.
 0BCD	TAMIL SIGN VIRAMA
+	= pulli
 @		Various signs
 0BD0	TAMIL OM
 0BD7	TAMIL AU LENGTH MARK
@@ -6745,8 +6798,9 @@
 10C3	GEORGIAN CAPITAL LETTER WE
 10C4	GEORGIAN CAPITAL LETTER HAR
 10C5	GEORGIAN CAPITAL LETTER HOE
-@		Additional letters for Ossetian
+@		Additional letter
 10C7	GEORGIAN CAPITAL LETTER YN
+@		Additional letter for Ossetian
 10CD	GEORGIAN CAPITAL LETTER AEN
 @		Mkhedruli
 @+		This is the modern secular alphabet, which is caseless.
@@ -8888,52 +8942,95 @@
 @		Basic letters
 1820	MONGOLIAN LETTER A
 	x (cyrillic small letter a - 0430)
+	~ 1820 180B second form (isolate)
+	~ 1820 180B second form (medial)
+	~ 1820 180B second form (final)
+	~ 1820 180C third form (medial)
 1821	MONGOLIAN LETTER E
 	x (cyrillic small letter e - 044D)
+	~ 1821 180B second form (initial)
+	~ 1821 180B second form (final)
 1822	MONGOLIAN LETTER I
 	x (cyrillic small letter i - 0438)
+	~ 1822 180B second form (medial)
 1823	MONGOLIAN LETTER O
 	x (cyrillic small letter o - 043E)
+	~ 1823 180B second form (medial)
+	~ 1823 180B second form (final)
 1824	MONGOLIAN LETTER U
 	x (cyrillic small letter u - 0443)
+	~ 1824 180B second form (medial)
 1825	MONGOLIAN LETTER OE
 	x (cyrillic small letter barred o - 04E9)
+	~ 1825 180B second form (medial)
+	~ 1825 180B second form (final)
+	~ 1825 180C third form (medial)
 1826	MONGOLIAN LETTER UE
 	x (cyrillic small letter straight u - 04AF)
+	~ 1826 180B second form (isolate)
+	~ 1826 180B second form (medial)
+	~ 1826 180B second form (final)
+	~ 1826 180C third form (medial)
 1827	MONGOLIAN LETTER EE
 1828	MONGOLIAN LETTER NA
 	x (cyrillic small letter en - 043D)
+	~ 1828 180B second form (initial)
+	~ 1828 180B second form (medial)
+	~ 1828 180C third form (medial)
+	~ 1828 180D separate form (medial)
 1829	MONGOLIAN LETTER ANG
 182A	MONGOLIAN LETTER BA
 	x (cyrillic small letter be - 0431)
+	~ 182A 180B alternative form (final)
 182B	MONGOLIAN LETTER PA
 	x (cyrillic small letter pe - 043F)
 182C	MONGOLIAN LETTER QA
 	x (cyrillic small letter ha - 0445)
+	~ 182C 180B second form (initial)
+	~ 182C 180B second form (medial)
+	~ 182C 180B feminine second form (isolate)
+	~ 182C 180C third form (medial)
+	~ 182C 180D fourth form (medial)
 182D	MONGOLIAN LETTER GA
 	x (cyrillic small letter ghe - 0433)
+	~ 182D 180B second form (initial)
+	~ 182D 180B second form (medial)
+	~ 182D 180B feminine form (final)
+	~ 182D 180C third form (medial)
+	~ 182D 180D feminine form (medial)
 182E	MONGOLIAN LETTER MA
 	x (cyrillic small letter em - 043C)
 182F	MONGOLIAN LETTER LA
 	x (cyrillic small letter el - 043B)
 1830	MONGOLIAN LETTER SA
 	x (cyrillic small letter es - 0441)
+	~ 1830 180B second form (final)
+	~ 1830 180C third form (final)
 1831	MONGOLIAN LETTER SHA
 	x (cyrillic small letter sha - 0448)
 1832	MONGOLIAN LETTER TA
 	x (cyrillic small letter te - 0442)
+	~ 1832 180B second form (medial)
 1833	MONGOLIAN LETTER DA
 	x (cyrillic small letter de - 0434)
+	~ 1833 180B second form (initial)
+	~ 1833 180B second form (medial)
+	~ 1833 180B second form (final)
 1834	MONGOLIAN LETTER CHA
 	x (cyrillic small letter che - 0447)
 1835	MONGOLIAN LETTER JA
 	x (cyrillic small letter zhe - 0436)
+	~ 1835 180B second form (medial)
 1836	MONGOLIAN LETTER YA
 	x (cyrillic small letter short i - 0439)
+	~ 1836 180B second form (initial)
+	~ 1836 180B second form (medial)
+	~ 1836 180C third form (medial)
 1837	MONGOLIAN LETTER RA
 	x (cyrillic small letter er - 0440)
 1838	MONGOLIAN LETTER WA
 	x (cyrillic small letter ve - 0432)
+	~ 1838 180B second form (final)
 1839	MONGOLIAN LETTER FA
 	x (cyrillic small letter ef - 0444)
 183A	MONGOLIAN LETTER KA
@@ -8954,16 +9051,29 @@
 @		Todo letters
 1843	MONGOLIAN LETTER TODO LONG VOWEL SIGN
 1844	MONGOLIAN LETTER TODO E
+	~ 1844 180B second form (medial)
 1845	MONGOLIAN LETTER TODO I
+	~ 1845 180B second form (medial)
 1846	MONGOLIAN LETTER TODO O
+	~ 1846 180B second form (medial)
 1847	MONGOLIAN LETTER TODO U
+	~ 1847 180B second form (isolate)
+	~ 1847 180B second form (medial)
+	~ 1847 180B second form (final)
+	~ 1847 180C third form (medial)
 1848	MONGOLIAN LETTER TODO OE
+	~ 1848 180B second form (medial)
 1849	MONGOLIAN LETTER TODO UE
+	~ 1849 180B second form (isolate)
+	~ 1849 180B second form (medial)
 184A	MONGOLIAN LETTER TODO ANG
 184B	MONGOLIAN LETTER TODO BA
 184C	MONGOLIAN LETTER TODO PA
 184D	MONGOLIAN LETTER TODO QA
+	~ 184D 180B feminine form (initial)
+	~ 184D 180B feminine form (medial)
 184E	MONGOLIAN LETTER TODO GA
+	~ 184E 180B second form (medial)
 184F	MONGOLIAN LETTER TODO MA
 1850	MONGOLIAN LETTER TODO TA
 1851	MONGOLIAN LETTER TODO DA
@@ -8980,38 +9090,68 @@
 185C	MONGOLIAN LETTER TODO DZA
 @		Sibe letters
 185D	MONGOLIAN LETTER SIBE E
+	~ 185D 180B second form (medial)
+	~ 185D 180B second form (final)
 185E	MONGOLIAN LETTER SIBE I
+	~ 185E 180B second form (medial)
+	~ 185E 180B second form (final)
+	~ 185E 180C third form (medial)
+	~ 185E 180C third form (final)
 185F	MONGOLIAN LETTER SIBE IY
 1860	MONGOLIAN LETTER SIBE UE
+	~ 1860 180B second form (medial)
+	~ 1860 180B second form (final)
 1861	MONGOLIAN LETTER SIBE U
 1862	MONGOLIAN LETTER SIBE ANG
 1863	MONGOLIAN LETTER SIBE KA
+	~ 1863 180B second form (medial)
 1864	MONGOLIAN LETTER SIBE GA
 1865	MONGOLIAN LETTER SIBE HA
 1866	MONGOLIAN LETTER SIBE PA
 1867	MONGOLIAN LETTER SIBE SHA
 1868	MONGOLIAN LETTER SIBE TA
+	~ 1868 180B second form (initial)
+	~ 1868 180B second form (medial)
+	~ 1868 180C third form (medial)
 1869	MONGOLIAN LETTER SIBE DA
+	~ 1869 180B second form (initial)
+	~ 1869 180B second form (medial)
 186A	MONGOLIAN LETTER SIBE JA
 186B	MONGOLIAN LETTER SIBE FA
 186C	MONGOLIAN LETTER SIBE GAA
 186D	MONGOLIAN LETTER SIBE HAA
 186E	MONGOLIAN LETTER SIBE TSA
 186F	MONGOLIAN LETTER SIBE ZA
+	~ 186F 180B second form (initial)
+	~ 186F 180B second form (medial)
 1870	MONGOLIAN LETTER SIBE RAA
 1871	MONGOLIAN LETTER SIBE CHA
 1872	MONGOLIAN LETTER SIBE ZHA
 @		Manchu letters
 1873	MONGOLIAN LETTER MANCHU I
+	~ 1873 180B second form (medial)
+	~ 1873 180B second form (final)
+	~ 1873 180C third form (medial)
+	~ 1873 180C third form (final)
+	~ 1873 180D fourth form (medial)
 1874	MONGOLIAN LETTER MANCHU KA
+	~ 1874 180B second form (medial)
+	~ 1874 180B feminine first final form (final)
+	~ 1874 180C feminine first medial form (medial)
+	~ 1874 180C feminine second final form (final)
+	~ 1874 180D feminine second medial form (medial)
 1875	MONGOLIAN LETTER MANCHU RA
 1876	MONGOLIAN LETTER MANCHU FA
+	~ 1876 180B second form (initial)
+	~ 1876 180B second form (medial)
 1877	MONGOLIAN LETTER MANCHU ZHA
 @		Extensions for Sanskrit and Tibetan
 1880	MONGOLIAN LETTER ALI GALI ANUSVARA ONE
 	x (tibetan sign sna ldan - 0F83)
+	~ 1880 180B second form
 1881	MONGOLIAN LETTER ALI GALI VISARGA ONE
 	x (tibetan sign rnam bcad - 0F7F)
+	~ 1881 180B second form
 1882	MONGOLIAN LETTER ALI GALI DAMARU
 	x (tibetan sign lce tsa can - 0F88)
 1883	MONGOLIAN LETTER ALI GALI UBADAMA
@@ -9021,9 +9161,16 @@
 	x (tibetan mark paluta - 0F85)
 1886	MONGOLIAN LETTER ALI GALI THREE BALUDA
 1887	MONGOLIAN LETTER ALI GALI A
+	~ 1887 180B second form (isolate)
+	~ 1887 180B second form (final)
+	~ 1887 180C third form (final)
+	~ 1887 180D fourth form (final)
 1888	MONGOLIAN LETTER ALI GALI I
+	~ 1888 180B second form (final)
 1889	MONGOLIAN LETTER ALI GALI KA
 188A	MONGOLIAN LETTER ALI GALI NGA
+	~ 188A 180B second form (initial)
+	~ 188A 180B second form (medial)
 188B	MONGOLIAN LETTER ALI GALI CA
 188C	MONGOLIAN LETTER ALI GALI TTA
 188D	MONGOLIAN LETTER ALI GALI TTHA
@@ -9056,6 +9203,8 @@
 18A8	MONGOLIAN LETTER MANCHU ALI GALI BHA
 18A9	MONGOLIAN LETTER ALI GALI DAGALGA
 18AA	MONGOLIAN LETTER MANCHU ALI GALI LHA
+@~	Standarized Variation Sequences
+@+	Unlike other blocks, these variation sequences use the script-specific variation selectors for Mongolian.
 @@	18B0	Unified Canadian Aboriginal Syllabics Extended	18FF
 @		Syllables for Moose Cree
 18B0	CANADIAN SYLLABICS OY
@@ -9361,7 +9510,7 @@
 @@	19E0	Khmer Symbols	19FF
 @		Lunar date symbols
 19E0	KHMER SYMBOL PATHAMASAT
-	* represents the first August in a leap year
+	* represents the first Ashadha (eighth month of the lunar calendar)
 @+		The following fifteen characters represent the first through the fifteenth waxing days, respectively.
 19E1	KHMER SYMBOL MUOY KOET
 19E2	KHMER SYMBOL PII KOET
@@ -9379,7 +9528,7 @@
 19EE	KHMER SYMBOL DAP-BUON KOET
 19EF	KHMER SYMBOL DAP-PRAM KOET
 19F0	KHMER SYMBOL TUTEYASAT
-	* represents the second August in a leap year
+	* represents the second Ashadha in the lunar calendar during the Adhikameas leap year
 @+		The following fifteen characters represent the first through the fifteenth waning days, respectively.
 19F1	KHMER SYMBOL MUOY ROC
 19F2	KHMER SYMBOL PII ROC
@@ -11833,7 +11982,7 @@
 	x (presentation form for vertical horizontal ellipsis - FE19)
 	# 002E 002E 002E
 2027	HYPHENATION POINT
-	* visible symbol used to indicate correct positions for word breaking, as in dic·tion·ar·ies
+	* visible symbol used to indicate correct positions for word breaking, as in dicÂ·tionÂ·arÂ·ies
 @		Format characters
 2028	LINE SEPARATOR
 	* may be used to represent this semantic unambiguously
@@ -11915,6 +12064,8 @@
 @		Double punctuation for vertical text
 203C	DOUBLE EXCLAMATION MARK
 	x (exclamation mark - 0021)
+	~ 203C FE0E text style
+	~ 203C FE0F emoji style
 	# 0021 0021
 @		General punctuation
 203D	INTERROBANG
@@ -11948,6 +12099,8 @@
 2048	QUESTION EXCLAMATION MARK
 	# 003F 0021
 2049	EXCLAMATION QUESTION MARK
+	~ 2049 FE0E text style
+	~ 2049 FE0F emoji style
 	# 0021 003F
 @		General punctuation
 204A	TIRONIAN SIGN ET
@@ -11966,7 +12119,7 @@
 	* editing mark
 2051	TWO ASTERISKS ALIGNED VERTICALLY
 2052	COMMERCIAL MINUS SIGN
-	= abzüglich (German), med avdrag av (Swedish), piska (Swedish, "whip")
+	= abzÃ¼glich (German), med avdrag av (Swedish), piska (Swedish, "whip")
 	* a common glyph variant and fallback representation looks like ./.
 	* may also be used as a dingbat to indicate correctness
 	* used in Finno-Ugric Phonetic Alphabet to indicate a related borrowed form with different sound
@@ -12037,6 +12190,7 @@
 206D	ACTIVATE ARABIC FORM SHAPING
 206E	NATIONAL DIGIT SHAPES
 206F	NOMINAL DIGIT SHAPES
+@~	Standardized Variation Sequences
 @@	2070	Superscripts and Subscripts	209F
 @		Superscripts
 @+		See also superscript Latin letters in the Spacing Modifier Letters block starting at 02B0.
@@ -12168,6 +12322,7 @@
 	* intended for lira, but not widely used
 	* preferred character for lira is 00A3
 	x (pound sign - 00A3)
+	x (turkish lira sign - 20BA)
 20A5	MILL SIGN
 	* USA (1/10 cent)
 20A6	NAIRA SIGN
@@ -12193,13 +12348,15 @@
 	* Laos
 20AE	TUGRIK SIGN
 	* Mongolia
-	* also transliterated as tugrug, tugric, tugrog, togrog, tögrög
+	* also transliterated as tugrug, tugric, tugrog, togrog, tÃ¶grÃ¶g
 20AF	DRACHMA SIGN
 	* Greece
 20B0	GERMAN PENNY SIGN
 20B1	PESO SIGN
+	= Filipino peso sign
 	* Philippines
-	* the Mexican peso is indicated with the dollar sign
+	* extant and discontinued Latin-American peso currencies (Mexican, Chilean, Colombian, etc.) use the dollar sign
+	x (dollar sign - 0024)
 	x (peseta sign - 20A7)
 20B2	GUARANI SIGN
 	* Paraguay
@@ -12226,6 +12383,8 @@
 	* official rupee currency sign for India
 	* contrasts with script-specific rupee signs and abbreviations
 	x (devanagari letter ra - 0930)
+20BA	TURKISH LIRA SIGN
+	* official lira currency sign for Turkey
 @@	20D0	Combining Diacritical Marks for Symbols	20FF
 @		Combining diacritical marks for symbols
 20D0	COMBINING LEFT HARPOON ABOVE
@@ -12425,7 +12584,7 @@
 212A	KELVIN SIGN
 	: 004B latin capital letter k
 212B	ANGSTROM SIGN
-	* non SI length unit (=0.1 nm) named after A. J. Ångström, Swedish physicist
+	* non SI length unit (=0.1 nm) named after A. J. Ã…ngstrÃ¶m, Swedish physicist
 	* preferred representation is 00C5
 	: 00C5 latin capital letter a with ring above
 212C	SCRIPT CAPITAL B
@@ -12476,6 +12635,8 @@
 @		Additional letterlike symbols
 2139	INFORMATION SOURCE
 	* intended for use with 20DD
+	~ 2139 FE0E text style
+	~ 2139 FE0F emoji style
 	# <font> 0069 latin small letter i
 213A	ROTATED CAPITAL Q
 	* a binding signature mark
@@ -12534,6 +12695,7 @@
 	x (greek small letter digamma - 03DD)
 @		Biblical editorial symbol
 214F	SYMBOL FOR SAMARITAN SOURCE
+@~	Standardized Variation Sequences
 @@	2150	Number Forms	218F
 @		Fractions
 @+		Other fraction number forms are found in the Latin-1 Supplement block.
@@ -12675,11 +12837,23 @@
 	* IPA: ingressive airflow
 2194	LEFT RIGHT ARROW
 	= z notation relation
+	~ 2194 FE0E text style
+	~ 2194 FE0F emoji style
 2195	UP DOWN ARROW
+	~ 2195 FE0E text style
+	~ 2195 FE0F emoji style
 2196	NORTH WEST ARROW
+	~ 2196 FE0E text style
+	~ 2196 FE0F emoji style
 2197	NORTH EAST ARROW
+	~ 2197 FE0E text style
+	~ 2197 FE0F emoji style
 2198	SOUTH EAST ARROW
+	~ 2198 FE0E text style
+	~ 2198 FE0F emoji style
 2199	SOUTH WEST ARROW
+	~ 2199 FE0E text style
+	~ 2199 FE0F emoji style
 @		Arrows with modifications
 219A	LEFTWARDS ARROW WITH STROKE
 	* negation of 2190
@@ -12711,7 +12885,11 @@
 	= depth symbol
 21A8	UP DOWN ARROW WITH BASE
 21A9	LEFTWARDS ARROW WITH HOOK
+	~ 21A9 FE0E text style
+	~ 21A9 FE0F emoji style
 21AA	RIGHTWARDS ARROW WITH HOOK
+	~ 21AA FE0E text style
+	~ 21AA FE0F emoji style
 21AB	LEFTWARDS ARROW WITH LOOP
 21AC	RIGHTWARDS ARROW WITH LOOP
 21AD	LEFT RIGHT WAVE ARROW
@@ -12846,6 +13024,7 @@
 21FD	LEFTWARDS OPEN-HEADED ARROW
 21FE	RIGHTWARDS OPEN-HEADED ARROW
 21FF	LEFT RIGHT OPEN-HEADED ARROW
+@~	Standardized Variation Sequences
 @@	2200	Mathematical Operators	22FF
 @@+
 @		Miscellaneous mathematical symbols
@@ -12973,13 +13152,19 @@
 2229	INTERSECTION
 	= cap, hat
 	x (n-ary intersection - 22C2)
+	~ 2229 FE00 with serifs
 222A	UNION
 	= cup
 	x (n-ary union - 22C3)
+	~ 222A FE00 with serifs
 @		Integrals
 222B	INTEGRAL
 	x (latin small letter esh - 0283)
+;experimenting with variant syntax
+	~ 222B ALT1 slanted style
 222C	DOUBLE INTEGRAL
+;experimenting with variant syntax
+	~ 222C ALT1 slanted style
 	# 222B 222B
 222D	TRIPLE INTEGRAL
 	x (quadruple integral operator - 2A0C)
@@ -13089,7 +13274,9 @@
 2266	LESS-THAN OVER EQUAL TO
 2267	GREATER-THAN OVER EQUAL TO
 2268	LESS-THAN BUT NOT EQUAL TO
+	~ 2268 FE00 with vertical stroke
 2269	GREATER-THAN BUT NOT EQUAL TO
+	~ 2269 FE00 with vertical stroke
 226A	MUCH LESS-THAN
 	x (left-pointing double angle quotation mark - 00AB)
 226B	MUCH GREATER-THAN
@@ -13107,7 +13294,9 @@
 2271	NEITHER GREATER-THAN NOR EQUAL TO
 	: 2265 0338
 2272	LESS-THAN OR EQUIVALENT TO
+	~ 2272 FE00 following the slant of the lower leg
 2273	GREATER-THAN OR EQUIVALENT TO
+	~ 2273 FE00 following the slant of the lower leg
 2274	NEITHER LESS-THAN NOR EQUIVALENT TO
 	: 2272 0338
 2275	NEITHER GREATER-THAN NOR EQUIVALENT TO
@@ -13149,7 +13338,9 @@
 2289	NEITHER A SUPERSET OF NOR EQUAL TO
 	: 2287 0338
 228A	SUBSET OF WITH NOT EQUAL TO
+	~ 228A FE00 with stroke through bottom members
 228B	SUPERSET OF WITH NOT EQUAL TO
+	~ 228B FE00 with stroke through bottom members
 @		Operators
 228C	MULTISET
 228D	MULTISET MULTIPLICATION
@@ -13166,12 +13357,15 @@
 @		Operators
 2293	SQUARE CAP
 	x (n-ary square intersection operator - 2A05)
+	~ 2293 FE00 with serifs
 2294	SQUARE CUP
+	~ 2294 FE00 with serifs
 2295	CIRCLED PLUS
 	= direct sum
 	= vector pointing into page
 	x (n-ary circled plus operator - 2A01)
 	x (alchemical symbol for verdigris - 1F728)
+	~ 2295 FE00 with white rim
 2296	CIRCLED MINUS
 	= symmetric difference
 	x (circle with horizontal bar - 29B5)
@@ -13181,6 +13375,7 @@
 	= vector pointing into page
 	x (circled crossing lanes - 26D2)
 	x (n-ary circled times operator - 2A02)
+	~ 2297 FE00 with white rim
 2298	CIRCLED DIVISION SLASH
 2299	CIRCLED DOT OPERATOR
 	= direct product
@@ -13194,6 +13389,7 @@
 229B	CIRCLED ASTERISK OPERATOR
 	x (apl functional symbol circle star - 235F)
 229C	CIRCLED EQUALS
+	~ 229C FE00 with equal sign touching the circle
 229D	CIRCLED DASH
 229E	SQUARED PLUS
 229F	SQUARED MINUS
@@ -13318,7 +13514,9 @@
 22D8	VERY MUCH LESS-THAN
 22D9	VERY MUCH GREATER-THAN
 22DA	LESS-THAN EQUAL TO OR GREATER-THAN
+	~ 22DA FE00 with slanted equal
 22DB	GREATER-THAN EQUAL TO OR LESS-THAN
+	~ 22DB FE00 with slanted equal
 22DC	EQUAL TO OR LESS-THAN
 22DD	EQUAL TO OR GREATER-THAN
 22DE	EQUAL TO OR PRECEDES
@@ -13367,6 +13565,10 @@
 22FD	CONTAINS WITH OVERBAR
 22FE	SMALL CONTAINS WITH OVERBAR
 22FF	Z NOTATION BAG MEMBERSHIP
+@@~	Alternative Glyph Listing
+@+	Experimental listing
+@~	Standarized Variation Sequences
+@+	Experimental listing
 @@	2300	Miscellaneous Technical	23FF
 @		Miscellaneous technical
 2300	DIAMETER SIGN
@@ -13437,8 +13639,12 @@
 231A	WATCH
 	x (alarm clock - 23F0)
 	x (clock face one oclock - 1F550)
+	~ 231A FE0E text style
+	~ 231A FE0F emoji style
 231B	HOURGLASS
 	= alchemical symbol for hour
+	~ 231B FE0E text style
+	~ 231B FE0F emoji style
 @		Quine corners
 @+		These form a set of four quine corners, for quincuncial arrangement. They are also used in upper and lower pairs in mathematic, or more rarely in editorial usage as alternatives to half brackets.
 231C	TOP LEFT CORNER
@@ -13799,6 +14005,7 @@
 23F2	TIMER CLOCK
 23F3	HOURGLASS WITH FLOWING SAND
 	x (hourglass - 231B)
+@~	Standardized Variation Sequences
 @@	2400	Control Pictures	243F
 @+		The diagonal lettering glyphs are only exemplary; alternate representations may be, and often are used in the visible display of control codes.
 @		Graphic pictures for control codes
@@ -14083,6 +14290,8 @@
 24C1	CIRCLED LATIN CAPITAL LETTER L
 	# <circle> 004C
 24C2	CIRCLED LATIN CAPITAL LETTER M
+	~ 24C2 FE0E text style
+	~ 24C2 FE0F emoji style
 	# <circle> 004D
 24C3	CIRCLED LATIN CAPITAL LETTER N
 	# <circle> 004E
@@ -14192,6 +14401,7 @@
 @		Additional white on black circled number
 24FF	NEGATIVE CIRCLED DIGIT ZERO
 	x (dingbat negative circled digit one - 2776)
+@~	Standardized Variation Sequences
 @@	2500	Box Drawing	257F
 @+	All of these characters are intended for compatibility with old sets oriented toward character cell graphics.
 @		Light and heavy solid lines
@@ -14426,8 +14636,12 @@
 25AA	BLACK SMALL SQUARE
 	= square bullet
 	x (black very small square - 2B1D)
+	~ 25AA FE0E text style
+	~ 25AA FE0F emoji style
 25AB	WHITE SMALL SQUARE
 	x (white very small square - 2B1E)
+	~ 25AB FE0E text style
+	~ 25AB FE0F emoji style
 25AC	BLACK RECTANGLE
 25AD	WHITE RECTANGLE
 25AE	BLACK VERTICAL RECTANGLE
@@ -14450,6 +14664,8 @@
 	x (up-pointing small red triangle - 1F53C)
 25B5	WHITE UP-POINTING SMALL TRIANGLE
 25B6	BLACK RIGHT-POINTING TRIANGLE
+	~ 25B6 FE0E text style
+	~ 25B6 FE0F emoji style
 25B7	WHITE RIGHT-POINTING TRIANGLE
 	= z notation range restriction
 25B8	BLACK RIGHT-POINTING SMALL TRIANGLE
@@ -14470,6 +14686,8 @@
 	x (down-pointing small red triangle - 1F53D)
 25BF	WHITE DOWN-POINTING SMALL TRIANGLE
 25C0	BLACK LEFT-POINTING TRIANGLE
+	~ 25C0 FE0E text style
+	~ 25C0 FE0F emoji style
 25C1	WHITE LEFT-POINTING TRIANGLE
 	= z notation domain restriction
 25C2	BLACK LEFT-POINTING SMALL TRIANGLE
@@ -14573,14 +14791,24 @@
 25FB	WHITE MEDIUM SQUARE
 	= always (modal operator)
 	x (white square - 25A1)
+	~ 25FB FE0E text style
+	~ 25FB FE0F emoji style
 25FC	BLACK MEDIUM SQUARE
 	x (black square - 25A0)
+	~ 25FC FE0E text style
+	~ 25FC FE0F emoji style
 25FD	WHITE MEDIUM SMALL SQUARE
 	x (white small square - 25AB)
+	~ 25FD FE0E text style
+	~ 25FD FE0F emoji style
 25FE	BLACK MEDIUM SMALL SQUARE
 	x (black small square - 25AA)
+	~ 25FE FE0E text style
+	~ 25FE FE0F emoji style
 25FF	LOWER RIGHT TRIANGLE
 	x (right triangle - 22BF)
+@~	Standarized Variation Sequences
+@+	Emoji style variants include rendering of characters in ways not achievable with traditional or even digital typography. The sample glyphs shown here cannot faithfully represent the range of intended appearances.
 @@	2600	Miscellaneous Symbols	26FF
 @@+
 @		Weather and astrological symbols
@@ -14588,8 +14816,12 @@
 	= clear weather
 	x (sun - 2609)
 	x (high brightness symbol - 1F506)
+	~ 2600 FE0E text style
+	~ 2600 FE0F emoji style
 2601	CLOUD
 	= cloudy weather
+	~ 2601 FE0E text style
+	~ 2601 FE0F emoji style
 2602	UMBRELLA
 	= rainy weather
 	x (closed umbrella - 1F302)
@@ -14622,10 +14854,14 @@
 	x (telephone sign - 2121)
 	x (telephone location sign - 2706)
 	x (telephone receiver - 1F4DE)
+	~ 260E FE0E text style
+	~ 260E FE0F emoji style
 260F	WHITE TELEPHONE
 2610	BALLOT BOX
 	x (white square - 25A1)
 2611	BALLOT BOX WITH CHECK
+	~ 2611 FE0E text style
+	~ 2611 FE0F emoji style
 2612	BALLOT BOX WITH X
 	x (squared times - 22A0)
 2613	SALTIRE
@@ -14634,6 +14870,8 @@
 @		Weather symbol
 2614	UMBRELLA WITH RAIN DROPS
 	= showery weather
+	~ 2614 FE0E text style
+	~ 2614 FE0F emoji style
 @		Miscellaneous symbol
 2615	HOT BEVERAGE
 	= tea or coffee, depending on locale
@@ -14641,6 +14879,8 @@
 	x (watch - 231A)
 	x (hourglass - 231B)
 	x (teacup without handle - 1F375)
+	~ 2615 FE0E text style
+	~ 2615 FE0F emoji style
 @		Japanese chess symbols
 2616	WHITE SHOGI PIECE
 2617	BLACK SHOGI PIECE
@@ -14656,6 +14896,8 @@
 261C	WHITE LEFT POINTING INDEX
 	x (white left pointing backhand index - 1F448)
 261D	WHITE UP POINTING INDEX
+	~ 261D FE0E text style
+	~ 261D FE0F emoji style
 261E	WHITE RIGHT POINTING INDEX
 	= fist (typographic term)
 261F	WHITE DOWN POINTING INDEX
@@ -14712,6 +14954,8 @@
 2639	WHITE FROWNING FACE
 263A	WHITE SMILING FACE
 	= have a nice day!
+	~ 263A FE0E text style
+	~ 263A FE0F emoji style
 263B	BLACK SMILING FACE
 @		Miscellaneous symbol
 263C	WHITE SUN WITH RAYS
@@ -14750,21 +14994,45 @@
 2647	PLUTO
 @		Zodiacal symbols
 2648	ARIES
+	~ 2648 FE0E text style
+	~ 2648 FE0F emoji style
 2649	TAURUS
+	~ 2649 FE0E text style
+	~ 2649 FE0F emoji style
 264A	GEMINI
+	~ 264A FE0E text style
+	~ 264A FE0F emoji style
 264B	CANCER
+	~ 264B FE0E text style
+	~ 264B FE0F emoji style
 264C	LEO
+	~ 264C FE0E text style
+	~ 264C FE0F emoji style
 264D	VIRGO
 	= minim (alternate glyph)
+	~ 264D FE0E text style
+	~ 264D FE0F emoji style
 264E	LIBRA
 	x (alchemical symbol for sublimation - 1F75E)
+	~ 264E FE0E text style
+	~ 264E FE0F emoji style
 264F	SCORPIUS
 	= scorpio
 	= minim, drop
+	~ 264F FE0E text style
+	~ 264F FE0F emoji style
 2650	SAGITTARIUS
+	~ 2650 FE0E text style
+	~ 2650 FE0F emoji style
 2651	CAPRICORN
+	~ 2651 FE0E text style
+	~ 2651 FE0F emoji style
 2652	AQUARIUS
+	~ 2652 FE0E text style
+	~ 2652 FE0F emoji style
 2653	PISCES
+	~ 2653 FE0E text style
+	~ 2653 FE0F emoji style
 @		Chess symbols
 2654	WHITE CHESS KING
 2655	WHITE CHESS QUEEN
@@ -14780,22 +15048,32 @@
 265F	BLACK CHESS PAWN
 @		Playing card symbols
 2660	BLACK SPADE SUIT
+	~ 2660 FE0E text style
+	~ 2660 FE0F emoji style
 2661	WHITE HEART SUIT
 2662	WHITE DIAMOND SUIT
 	x (white diamond - 25C7)
 	x (lozenge - 25CA)
 2663	BLACK CLUB SUIT
 	x (shamrock - 2618)
+	~ 2663 FE0E text style
+	~ 2663 FE0F emoji style
 2664	WHITE SPADE SUIT
 2665	BLACK HEART SUIT
 	= valentine
 	x (heavy black heart - 2764)
 	x (blue heart - 1F499)
+	~ 2665 FE0E text style
+	~ 2665 FE0F emoji style
 2666	BLACK DIAMOND SUIT
 	x (black diamond - 25C6)
+	~ 2666 FE0E text style
+	~ 2666 FE0F emoji style
 2667	WHITE CLUB SUIT
 @		Miscellaneous symbol
 2668	HOT SPRINGS
+	~ 2668 FE0E text style
+	~ 2668 FE0F emoji style
 @		Musical symbols
 2669	QUARTER NOTE
 	= crotchet
@@ -14839,6 +15117,8 @@
 	* used together with other text and labels to indicate the type of material to be recycled
 267B	BLACK UNIVERSAL RECYCLING SYMBOL
 	x (clockwise rightwards and leftwards open circle arrows - 1F501)
+	~ 267B FE0E text style
+	~ 267B FE0F emoji style
 267C	RECYCLED PAPER SYMBOL
 	* used to indicate 100% recycled paper content
 267D	PARTIALLY-RECYCLED PAPER SYMBOL
@@ -14846,6 +15126,8 @@
 @		Miscellaneous symbols
 267E	PERMANENT PAPER SIGN
 267F	WHEELCHAIR SYMBOL
+	~ 267F FE0E text style
+	~ 267F FE0F emoji style
 @		Dice
 2680	DIE FACE-1
 	x (game die - 1F3B2)
@@ -14876,6 +15158,8 @@
 	x (pick - 26CF)
 2693	ANCHOR
 	= nautical term, harbor (on maps)
+	~ 2693 FE0E text style
+	~ 2693 FE0F emoji style
 2694	CROSSED SWORDS
 	= military term, battleground (on maps), killed in action
 2695	STAFF OF AESCULAPIUS
@@ -14911,9 +15195,13 @@
 	= background speaking
 @		Miscellaneous symbols
 26A0	WARNING SIGN
+	~ 26A0 FE0E text style
+	~ 26A0 FE0F emoji style
 26A1	HIGH VOLTAGE SIGN
 	= thunder
 	= lightning symbol
+	~ 26A1 FE0E text style
+	~ 26A1 FE0F emoji style
 @		Gender symbols
 26A2	DOUBLED FEMALE SIGN
 	= lesbianism
@@ -14942,8 +15230,12 @@
 	= asexuality, sexless, genderless
 	= engaged, betrothed
 	* base for male or female sign
+	~ 26AA FE0E text style
+	~ 26AA FE0F emoji style
 26AB	MEDIUM BLACK CIRCLE
 	* UI symbol for record function
+	~ 26AB FE0E text style
+	~ 26AB FE0F emoji style
 26AC	MEDIUM SMALL WHITE CIRCLE
 	= engaged, betrothed (genealogy)
 	* can represent wedding ring
@@ -14980,7 +15272,11 @@
 @		Sport symbols
 @+		See other sport symbols in the Miscellaneous Symbols and Pictographs block.
 26BD	SOCCER BALL
+	~ 26BD FE0E text style
+	~ 26BD FE0F emoji style
 26BE	BASEBALL
+	~ 26BE FE0E text style
+	~ 26BE FE0F emoji style
 @		Miscellaneous symbol from ARIB STD B24
 26BF	SQUARED KEY
 	= parental lock
@@ -14993,8 +15289,12 @@
 @		Weather symbols from ARIB STD B24
 26C4	SNOWMAN WITHOUT SNOW
 	= light snow
+	~ 26C4 FE0E text style
+	~ 26C4 FE0F emoji style
 26C5	SUN BEHIND CLOUD
 	= partly cloudy
+	~ 26C5 FE0E text style
+	~ 26C5 FE0F emoji style
 26C6	RAIN
 	= rainy weather
 26C7	BLACK SNOWMAN
@@ -15029,6 +15329,8 @@
 	= tyre chains required
 26D4	NO ENTRY
 	x (no entry sign - 1F6AB)
+	~ 26D4 FE0E text style
+	~ 26D4 FE0F emoji style
 26D5	ALTERNATE ONE-WAY LEFT WAY TRAFFIC
 	* left side traffic
 26D6	BLACK TWO-WAY LEFT WAY TRAFFIC
@@ -15080,6 +15382,8 @@
 26E9	SHINTO SHRINE
 	= torii
 26EA	CHURCH
+	~ 26EA FE0E text style
+	~ 26EA FE0F emoji style
 26EB	CASTLE
 	x (european castle - 1F3F0)
 26EC	HISTORIC SITE
@@ -15098,15 +15402,21 @@
 	x (umbrella - 2602)
 26F2	FOUNTAIN
 	= park
+	~ 26F2 FE0E text style
+	~ 26F2 FE0F emoji style
 26F3	FLAG IN HOLE
 	= golf course
 	x (triangular flag on post - 1F6A9)
+	~ 26F3 FE0E text style
+	~ 26F3 FE0F emoji style
 26F4	FERRY
 	= ferry boat terminal
 	x (ship - 1F6A2)
 26F5	SAILBOAT
 	= marina or yacht harbour
 	x (rowboat - 1F6A3)
+	~ 26F5 FE0E text style
+	~ 26F5 FE0F emoji style
 26F6	SQUARE FOUR CORNERS
 	= intersection
 26F7	SKIER
@@ -15118,18 +15428,23 @@
 	= track and field, gymnasium
 26FA	TENT
 	= camping site
+	~ 26FA FE0E text style
+	~ 26FA FE0F emoji style
 26FB	JAPANESE BANK SYMBOL
 	x (bank - 1F3E6)
 26FC	HEADSTONE GRAVEYARD SYMBOL
 	= graveyard, memorial park, cemetery
 26FD	FUEL PUMP
 	= petrol station, gas station
+	~ 26FD FE0E text style
+	~ 26FD FE0F emoji style
 26FE	CUP ON BLACK SQUARE
 	= drive-in restaurant
 	x (hot beverage - 2615)
 	x (teacup without handle - 1F375)
 26FF	WHITE FLAG WITH HORIZONTAL MIDDLE BLACK STRIPE
 	= Japanese self-defence force site
+@~	Standardized Variation Sequences
 @@	2700	Dingbats	27BF
 @+		ITC Zapf dingbats series 100. Some of the ITC Zapf dingbats have been unified with geometric shape characters. Gaps in the chart have subsequently been filled with other dingbat-like symbols.
 	x (black telephone - 260E)
@@ -15147,6 +15462,8 @@
 @		Miscellaneous
 2701	UPPER BLADE SCISSORS
 2702	BLACK SCISSORS
+	~ 2702 FE0E text style
+	~ 2702 FE0F emoji style
 2703	LOWER BLADE SCISSORS
 2704	WHITE SCISSORS
 2705	WHITE HEAVY CHECK MARK
@@ -15156,8 +15473,12 @@
 	x (telephone receiver - 1F4DE)
 2707	TAPE DRIVE
 2708	AIRPLANE
+	~ 2708 FE0E text style
+	~ 2708 FE0F emoji style
 2709	ENVELOPE
 	x (incoming envelope - 1F4E8)
+	~ 2709 FE0E text style
+	~ 2709 FE0F emoji style
 270A	RAISED FIST
 	= rock in Rock, Paper, Scissors game
 	x (fisted hand sign - 1F44A)
@@ -15166,19 +15487,29 @@
 	x (waving hand sign - 1F44B)
 270C	VICTORY HAND
 	= scissors in Rock, Paper, Scissors game
+	~ 270C FE0E text style
+	~ 270C FE0F emoji style
 270D	WRITING HAND
 270E	LOWER RIGHT PENCIL
 270F	PENCIL
+	~ 270F FE0E text style
+	~ 270F FE0F emoji style
 2710	UPPER RIGHT PENCIL
 2711	WHITE NIB
 2712	BLACK NIB
+	~ 2712 FE0E text style
+	~ 2712 FE0F emoji style
 2713	CHECK MARK
 	x (square root - 221A)
 2714	HEAVY CHECK MARK
+	~ 2714 FE0E text style
+	~ 2714 FE0F emoji style
 2715	MULTIPLICATION X
 	x (multiplication sign - 00D7)
 	x (box drawings light diagonal cross - 2573)
 2716	HEAVY MULTIPLICATION X
+	~ 2716 FE0E text style
+	~ 2716 FE0F emoji style
 2717	BALLOT X
 	x (saltire - 2613)
 2718	HEAVY BALLOT X
@@ -15191,7 +15522,7 @@
 271E	SHADOWED WHITE LATIN CROSS
 271F	OUTLINED LATIN CROSS
 2720	MALTESE CROSS
-	* Historically, the Maltese cross took many forms; the shape shown in the Zapf Dingbats is similar to one known as the Cross Formée.
+	* Historically, the Maltese cross took many forms; the shape shown in the Zapf Dingbats is similar to one known as the Cross FormÃ©e.
 @		Stars, asterisks and snowflakes
 2721	STAR OF DAVID
 	x (six pointed star with middle dot - 1F52F)
@@ -15215,7 +15546,11 @@
 	x (asterisk - 002A)
 2732	OPEN CENTRE ASTERISK
 2733	EIGHT SPOKED ASTERISK
+	~ 2733 FE0E text style
+	~ 2733 FE0F emoji style
 2734	EIGHT POINTED BLACK STAR
+	~ 2734 FE0E text style
+	~ 2734 FE0F emoji style
 2735	EIGHT POINTED PINWHEEL STAR
 2736	SIX POINTED BLACK STAR
 	= sextile
@@ -15235,9 +15570,13 @@
 2742	CIRCLED OPEN CENTRE EIGHT POINTED STAR
 2743	HEAVY TEARDROP-SPOKED PINWHEEL ASTERISK
 2744	SNOWFLAKE
+	~ 2744 FE0E text style
+	~ 2744 FE0F emoji style
 2745	TIGHT TRIFOLIATE SNOWFLAKE
 2746	HEAVY CHEVRON SNOWFLAKE
 2747	SPARKLE
+	~ 2747 FE0E text style
+	~ 2747 FE0F emoji style
 2748	HEAVY SPARKLE
 2749	BALLOON-SPOKED ASTERISK
 	= jack
@@ -15260,6 +15599,8 @@
 2756	BLACK DIAMOND MINUS WHITE X
 2757	HEAVY EXCLAMATION MARK SYMBOL
 	= obstacles on the road, ARIB STD B24
+	~ 2757 FE0E text style
+	~ 2757 FE0F emoji style
 2758	LIGHT VERTICAL BAR
 	x (vertical line - 007C)
 2759	MEDIUM VERTICAL BAR
@@ -15284,6 +15625,8 @@
 2763	HEAVY HEART EXCLAMATION MARK ORNAMENT
 2764	HEAVY BLACK HEART
 	x (black heart suit - 2665)
+	~ 2764 FE0E text style
+	~ 2764 FE0F emoji style
 2765	ROTATED HEAVY BLACK HEART BULLET
 2766	FLORAL HEART
 	= Aldus leaf
@@ -15368,6 +15711,8 @@
 27A1	BLACK RIGHTWARDS ARROW
 	* fonts may harmonize this glyph with the style for other black arrows
 	x (leftwards black arrow - 2B05)
+	~ 27A1 FE0E text style
+	~ 27A1 FE0F emoji style
 27A2	THREE-D TOP-LIGHTED RIGHTWARDS ARROWHEAD
 27A3	THREE-D BOTTOM-LIGHTED RIGHTWARDS ARROWHEAD
 27A4	BLACK RIGHTWARDS ARROWHEAD
@@ -15402,6 +15747,7 @@
 27BE	OPEN-OUTLINED RIGHTWARDS ARROW
 @		Miscellaneous
 27BF	DOUBLE CURLY LOOP
+@~	Standardized Variation Sequences
 @@	27C0	Miscellaneous Mathematical Symbols-A	27EF
 @		Miscellaneous symbols
 27C0	THREE DIMENSIONAL ANGLE
@@ -15928,7 +16274,11 @@
 	x (rightwards wave arrow - 219D)
 	x (wave arrow pointing directly left - 2B3F)
 2934	ARROW POINTING RIGHTWARDS THEN CURVING UPWARDS
+	~ 2934 FE0E text style
+	~ 2934 FE0F emoji style
 2935	ARROW POINTING RIGHTWARDS THEN CURVING DOWNWARDS
+	~ 2935 FE0E text style
+	~ 2935 FE0F emoji style
 2936	ARROW POINTING DOWNWARDS THEN CURVING LEFTWARDS
 2937	ARROW POINTING DOWNWARDS THEN CURVING RIGHTWARDS
 2938	RIGHT-SIDE ARC CLOCKWISE ARROW
@@ -16021,6 +16371,7 @@
 297D	RIGHT FISH TAIL
 297E	UP FISH TAIL
 297F	DOWN FISH TAIL
+@~	Standardized Variation Sequences
 @@	2980	Miscellaneous Mathematical Symbols-B	29FF
 @		Miscellaneous mathematical symbols
 2980	TRIPLE VERTICAL BAR DELIMITER
@@ -16346,9 +16697,11 @@
 2A3B	MULTIPLICATION SIGN IN TRIANGLE
 2A3C	INTERIOR PRODUCT
 	x (right floor - 230B)
+	~ 2A3C FE00 tall variant with narrow foot
 2A3D	RIGHTHAND INTERIOR PRODUCT
 	x (left floor - 230A)
 	x (turned not sign - 2319)
+	~ 2A3D FE00 tall variant with narrow foot
 2A3E	Z NOTATION RELATIONAL COMPOSITION
 	x (z notation schema composition - 2A1F)
 2A3F	AMALGAMATION OR COPRODUCT
@@ -16486,7 +16839,9 @@
 2A9B	DOUBLE-LINE SLANTED EQUAL TO OR LESS-THAN
 2A9C	DOUBLE-LINE SLANTED EQUAL TO OR GREATER-THAN
 2A9D	SIMILAR OR LESS-THAN
+	~ 2A9D FE00 with similar following the slant of the upper leg
 2A9E	SIMILAR OR GREATER-THAN
+	~ 2A9E FE00 with similar following the slant of the upper leg
 2A9F	SIMILAR ABOVE LESS-THAN ABOVE EQUALS SIGN
 2AA0	SIMILAR ABOVE GREATER-THAN ABOVE EQUALS SIGN
 2AA1	DOUBLE NESTED LESS-THAN
@@ -16504,7 +16859,9 @@
 2AAA	SMALLER THAN
 2AAB	LARGER THAN
 2AAC	SMALLER THAN OR EQUAL TO
+	~ 2AAC FE00 with slanted equal
 2AAD	LARGER THAN OR EQUAL TO
+	~ 2AAD FE00 with slanted equal
 2AAE	EQUALS SIGN WITH BUMPY ABOVE
 	x (difference between - 224F)
 2AAF	PRECEDES ABOVE SINGLE-LINE EQUALS SIGN
@@ -16539,7 +16896,9 @@
 2AC9	SUBSET OF ABOVE ALMOST EQUAL TO
 2ACA	SUPERSET OF ABOVE ALMOST EQUAL TO
 2ACB	SUBSET OF ABOVE NOT EQUAL TO
+	~ 2ACB FE00 with stroke through bottom members
 2ACC	SUPERSET OF ABOVE NOT EQUAL TO
+	~ 2ACC FE00 with stroke through bottom members
 2ACD	SQUARE LEFT OPEN BOX OPERATOR
 2ACE	SQUARE RIGHT OPEN BOX OPERATOR
 2ACF	CLOSED SUBSET
@@ -16647,6 +17006,7 @@
 	= Dijkstra choice
 2AFF	N-ARY WHITE VERTICAL BAR
 	= n-ary Dijkstra choice
+@~	Standardized Variation Sequences
 @@	2B00	Miscellaneous Symbols and Arrows	2BFF
 @		White and black arrows
 @+		Other white and black arrows to complete this set can be found in the Arrows and Dingbats blocks.
@@ -16659,8 +17019,14 @@
 	x (up down white arrow - 21F3)
 2B05	LEFTWARDS BLACK ARROW
 	x (black rightwards arrow - 27A1)
+	~ 2B05 FE0E text style
+	~ 2B05 FE0F emoji style
 2B06	UPWARDS BLACK ARROW
+	~ 2B06 FE0E text style
+	~ 2B06 FE0F emoji style
 2B07	DOWNWARDS BLACK ARROW
+	~ 2B07 FE0E text style
+	~ 2B07 FE0F emoji style
 2B08	NORTH EAST BLACK ARROW
 2B09	NORTH WEST BLACK ARROW
 2B0A	SOUTH EAST BLACK ARROW
@@ -16688,8 +17054,12 @@
 2B1A	DOTTED SQUARE
 2B1B	BLACK LARGE SQUARE
 	x (black square - 25A0)
+	~ 2B1B FE0E text style
+	~ 2B1B FE0F emoji style
 2B1C	WHITE LARGE SQUARE
 	x (white square - 25A1)
+	~ 2B1C FE0E text style
+	~ 2B1C FE0F emoji style
 2B1D	BLACK VERY SMALL SQUARE
 	x (black small square - 25AA)
 2B1E	WHITE VERY SMALL SQUARE
@@ -16791,6 +17161,8 @@
 @		Stars
 2B50	WHITE MEDIUM STAR
 	x (star operator - 22C6)
+	~ 2B50 FE0E text style
+	~ 2B50 FE0F emoji style
 2B51	BLACK SMALL STAR
 	x (arabic five pointed star - 066D)
 2B52	WHITE SMALL STAR
@@ -16802,6 +17174,8 @@
 	= basic symbol for speed limit
 	* forms a game tally pair with 274C
 	x (large circle - 25EF)
+	~ 2B55 FE0E text style
+	~ 2B55 FE0F emoji style
 @		Dictionary and map symbols from ARIB STD B24
 2B56	HEAVY OVAL WITH OVAL INSIDE
 	= prefectural office
@@ -16814,6 +17188,7 @@
 2B59	HEAVY CIRCLED SALTIRE
 	= police station
 	x (n-ary circled times operator - 2A02)
+@~	Standardized Variation Sequences
 @@	2C00	Glagolitic	2C5F
 @		Capital letters
 2C00	GLAGOLITIC CAPITAL LETTER AZU
@@ -17155,8 +17530,9 @@
 2D23	GEORGIAN SMALL LETTER WE
 2D24	GEORGIAN SMALL LETTER HAR
 2D25	GEORGIAN SMALL LETTER HOE
-@		Additional letters for Ossetian
+@		Additional letter
 2D27	GEORGIAN SMALL LETTER YN
+@		Additional letter for Ossetian
 2D2D	GEORGIAN SMALL LETTER AEN
 @@	2D30	Tifinagh	2D7F
 @		Letters
@@ -18342,12 +18718,15 @@
 	x (squared rising diagonal slash - 29C4)
 303D	PART ALTERNATION MARK
 	* marks the start of a song part in Japanese
+	~ 303D FE0E text style
+	~ 303D FE0F emoji style
 @		Special CJK indicators
 @+		These are visibly displayed graphic characters, not invisible format control characters.
 303E	IDEOGRAPHIC VARIATION INDICATOR
 	* visual indicator that the following ideograph is to be taken as a variant of the intended character
 303F	IDEOGRAPHIC HALF FILL SPACE
 	* visual indicator of a screen space for half of an ideograph
+@~	Standardized Variation Sequences
 @@	3040	Hiragana	309F
 @		Hiragana letters
 3041	HIRAGANA LETTER SMALL A
@@ -19394,10 +19773,14 @@
 3296	CIRCLED IDEOGRAPH FINANCIAL
 	# <circle> 8CA1
 3297	CIRCLED IDEOGRAPH CONGRATULATION
+	~ 3297 FE0E text style
+	~ 3297 FE0F emoji style
 	# <circle> 795D
 3298	CIRCLED IDEOGRAPH LABOR
 	# <circle> 52B4
 3299	CIRCLED IDEOGRAPH SECRET
+	~ 3299 FE0E text style
+	~ 3299 FE0F emoji style
 	# <circle> 79D8
 329A	CIRCLED IDEOGRAPH MALE
 	# <circle> 7537
@@ -19607,6 +19990,7 @@
 	# <circle> 30F1
 32FE	CIRCLED KATAKANA WO
 	# <circle> 30F2
+@~	Standardized Variation Sequences
 @@	3300	CJK Compatibility	33FF
 @		Squared Katakana words
 3300	SQUARE APAATO
@@ -22127,12 +22511,12 @@ A6E6	BAMUM LETTER MO
 A6E7	BAMUM LETTER MBAA
 	* also used for digit two
 A6E8	BAMUM LETTER TET
-	* tèt
+	* tÃ¨t
 	* also used for digit three
 A6E9	BAMUM LETTER KPA
 	* also used for digit four
 A6EA	BAMUM LETTER TEN
-	* tèn
+	* tÃ¨n
 	* also used for digit five
 A6EB	BAMUM LETTER NTUU
 	* also used for digit six
@@ -22511,6 +22895,7 @@ A855	PHAGS-PA LETTER ZA
 	x (tibetan letter za - 0F5F)
 A856	PHAGS-PA LETTER SMALL A
 	x (tibetan letter -a - 0F60)
+	~ A856 FE00 phags-pa letter reversed shaping small a
 A857	PHAGS-PA LETTER YA
 	x (tibetan letter ya - 0F61)
 A858	PHAGS-PA LETTER RA
@@ -22524,16 +22909,20 @@ A85B	PHAGS-PA LETTER SA
 	x (tibetan letter sa - 0F66)
 A85C	PHAGS-PA LETTER HA
 	x (tibetan letter ha - 0F67)
+	~ A85C FE00 phags-pa letter reversed shaping ha
 @		Letter A
 A85D	PHAGS-PA LETTER A
 	x (tibetan letter a - 0F68)
 @		Vowels
 A85E	PHAGS-PA LETTER I
 	x (tibetan vowel sign i - 0F72)
+	~ A85E FE00 phags-pa letter reversed shaping i
 A85F	PHAGS-PA LETTER U
 	x (tibetan vowel sign u - 0F74)
+	~ A85F FE00 phags-pa letter reversed shaping u
 A860	PHAGS-PA LETTER E
 	x (tibetan vowel sign e - 0F7A)
+	~ A860 FE00 phags-pa letter reversed shaping e
 A861	PHAGS-PA LETTER O
 	x (tibetan vowel sign o - 0F7C)
 @		Consonants
@@ -22557,6 +22946,7 @@ A867	PHAGS-PA SUBJOINED LETTER WA
 A868	PHAGS-PA SUBJOINED LETTER YA
 	* Chinese, Tibetan, Sanskrit
 	x (tibetan subjoined letter ya - 0FB1)
+	~ A868 FE00 phags-pa letter reversed shaping subjoined ya
 @		Consonant additions for Sanskrit
 A869	PHAGS-PA LETTER TTA
 	* Sanskrit
@@ -22613,6 +23003,7 @@ A876	PHAGS-PA MARK SHAD
 A877	PHAGS-PA MARK DOUBLE SHAD
 	* Tibetan
 	x (tibetan mark nyis shad - 0F0E)
+@~	Standardized Variation Sequences
 @@	A880	Saurashtra	A8DF
 @		Various signs
 A880	SAURASHTRA SIGN ANUSVARA
@@ -23264,7 +23655,7 @@ AADE	TAI VIET SYMBOL HO HOI
 AADF	TAI VIET SYMBOL KOI KOI
 	* marks end of text in songs and poems
 @@	AAE0	Meetei Mayek Extensions	AAFF
-@+		The characters in this block are extensions for historical orthographies of Meetei and are not specified in the Manupuri Government order No. 1/2/78-SS/E.
+@+		The characters in this block are extensions for historical orthographies of Meetei and are not specified in the Manipuri Government order No. 1/2/78-SS/E.
 @		Independent vowel signs
 AAE0	MEETEI MAYEK LETTER E
 AAE1	MEETEI MAYEK LETTER O
@@ -23540,7 +23931,7 @@ D7FB	HANGUL JONGSEONG PHIEUPH-THIEUTH
 @@+
 @+		This block, despite its name, contains a number of unified CJK ideographs. Those characters are individually identified by annotations.
 @+		Subheaders identifying sources for subranges do not indicate required usage or preclude mappings to other sources. For example, many pronunciation variants from KS X 1001:1998 are also mapped to a J source.
-@		Pronunciation variants from KS X 1001:1998
+@		Pronunciation variants from KSÂ XÂ 1001:1998
 F900	CJK COMPATIBILITY IDEOGRAPH-F900
 	: 8C48
 F901	CJK COMPATIBILITY IDEOGRAPH-F901
@@ -28731,7 +29122,7 @@ FFFF	<not a character>
 1110D	CHAKMA LETTER CHAA
 	= majaraa chaa
 1110E	CHAKMA LETTER JAA
-	= dvipadalaa haa
+	= dvipadalaa jaa
 1110F	CHAKMA LETTER JHAA
 	= uraauraa jhaa
 11110	CHAKMA LETTER NYAA
@@ -32635,7 +33026,7 @@ FFFF	<not a character>
 1D208	GREEK VOCAL NOTATION SYMBOL-9
 	= Greek instrumental notation symbol-44
 	* vocal second sharp of G
-	* instrumental first sharp of e´
+	* instrumental first sharp of eÂ´
 1D209	GREEK VOCAL NOTATION SYMBOL-10
 	* vocal A
 	* this is a modification of 039F and is therefore not the same as 03D8
@@ -32648,7 +33039,7 @@ FFFF	<not a character>
 1D20D	GREEK VOCAL NOTATION SYMBOL-14
 	= Greek instrumental notation symbol-41
 	* vocal first sharp of B
-	* instrumental first sharp of d´
+	* instrumental first sharp of dÂ´
 	x (latin capital letter v - 0056)
 1D20E	GREEK VOCAL NOTATION SYMBOL-15
 	= Greek instrumental notation symbol-35
@@ -32680,16 +33071,16 @@ FFFF	<not a character>
 1D217	GREEK VOCAL NOTATION SYMBOL-24
 	* vocal second sharp of e
 1D218	GREEK VOCAL NOTATION SYMBOL-50
-	* vocal first sharp of g´
+	* vocal first sharp of gÂ´
 1D219	GREEK VOCAL NOTATION SYMBOL-51
-	* vocal second sharp of g´
+	* vocal second sharp of gÂ´
 1D21A	GREEK VOCAL NOTATION SYMBOL-52
-	* vocal a´
+	* vocal aÂ´
 1D21B	GREEK VOCAL NOTATION SYMBOL-53
-	* vocal first sharp of a´
+	* vocal first sharp of aÂ´
 1D21C	GREEK VOCAL NOTATION SYMBOL-54
 	= Greek instrumental notation symbol-20
-	* vocal second sharp of a´
+	* vocal second sharp of aÂ´
 	* instrumental first sharp of d
 @		Ancient Greek instrumental notation
 1D21D	GREEK INSTRUMENTAL NOTATION SYMBOL-1
@@ -32737,37 +33128,37 @@ FFFF	<not a character>
 1D232	GREEK INSTRUMENTAL NOTATION SYMBOL-36
 	* instrumental second sharp of b
 1D233	GREEK INSTRUMENTAL NOTATION SYMBOL-37
-	* instrumental c´
+	* instrumental cÂ´
 1D234	GREEK INSTRUMENTAL NOTATION SYMBOL-38
-	* instrumental first sharp of c´
+	* instrumental first sharp of cÂ´
 1D235	GREEK INSTRUMENTAL NOTATION SYMBOL-39
-	* instrumental second sharp of c´
+	* instrumental second sharp of cÂ´
 1D236	GREEK INSTRUMENTAL NOTATION SYMBOL-40
-	* instrumental d´
+	* instrumental dÂ´
 1D237	GREEK INSTRUMENTAL NOTATION SYMBOL-42
-	* instrumental second sharp of d´
+	* instrumental second sharp of dÂ´
 1D238	GREEK INSTRUMENTAL NOTATION SYMBOL-43
-	* instrumental e´
+	* instrumental eÂ´
 1D239	GREEK INSTRUMENTAL NOTATION SYMBOL-45
-	* instrumental second sharp of e´
+	* instrumental second sharp of eÂ´
 1D23A	GREEK INSTRUMENTAL NOTATION SYMBOL-47
-	* instrumental first sharp of f´
+	* instrumental first sharp of fÂ´
 	* similar but not identical to 002F
 1D23B	GREEK INSTRUMENTAL NOTATION SYMBOL-48
-	* instrumental second sharp of f´
+	* instrumental second sharp of fÂ´
 	* similar but not identical to 005C
 1D23C	GREEK INSTRUMENTAL NOTATION SYMBOL-49
-	* instrumental g´
+	* instrumental gÂ´
 1D23D	GREEK INSTRUMENTAL NOTATION SYMBOL-50
-	* instrumental first sharp of g´
+	* instrumental first sharp of gÂ´
 1D23E	GREEK INSTRUMENTAL NOTATION SYMBOL-51
-	* instrumental second sharp of g´
+	* instrumental second sharp of gÂ´
 1D23F	GREEK INSTRUMENTAL NOTATION SYMBOL-52
-	* instrumental a´
+	* instrumental aÂ´
 1D240	GREEK INSTRUMENTAL NOTATION SYMBOL-53
-	* instrumental first sharp of a´
+	* instrumental first sharp of aÂ´
 1D241	GREEK INSTRUMENTAL NOTATION SYMBOL-54
-	* instrumental second sharp of a´
+	* instrumental second sharp of aÂ´
 @		Further Greek musical notation symbols
 1D242	COMBINING GREEK MUSICAL TRISEME
 	x (metrical triseme - 23D7)
@@ -35345,6 +35736,8 @@ FFFF	<not a character>
 @		Dragon tiles
 1F004	MAHJONG TILE RED DRAGON
 	= hongzhong
+	~ 1F004 FE0E text style
+	~ 1F004 FE0F emoji style
 1F005	MAHJONG TILE GREEN DRAGON
 	= qingfa
 1F006	MAHJONG TILE WHITE DRAGON
@@ -35400,6 +35793,7 @@ FFFF	<not a character>
 1F02A	MAHJONG TILE JOKER
 	= baida
 1F02B	MAHJONG TILE BACK
+@~	Standardized Variation Sequences
 @@	1F030	Domino Tiles	1F09F
 @		Horizontal tiles
 1F030	DOMINO TILE HORIZONTAL BACK
@@ -35539,10 +35933,10 @@ FFFF	<not a character>
 	= chevalier, Ober, Ritter, cavall, cavaliere
 	= knight of swords
 1F0AD	PLAYING CARD QUEEN OF SPADES
-	= dame, Dame, Königin, regina
+	= dame, Dame, KÃ¶nigin, regina
 	= queen of swords
 1F0AE	PLAYING CARD KING OF SPADES
-	= roi, König, re
+	= roi, KÃ¶nig, re
 	= king of swords
 @		Hearts or cups
 1F0B1	PLAYING CARD ACE OF HEARTS
@@ -35802,7 +36196,7 @@ FFFF	<not a character>
 	= parking space (ARIB STD B24)
 1F160	NEGATIVE CIRCLED LATIN CAPITAL LETTER Q
 1F161	NEGATIVE CIRCLED LATIN CAPITAL LETTER R
-	= Raststätte (rest stop)
+	= RaststÃ¤tte (rest stop)
 1F162	NEGATIVE CIRCLED LATIN CAPITAL LETTER S
 	= Stadtbahn (metropolitan railway)
 1F163	NEGATIVE CIRCLED LATIN CAPITAL LETTER T
@@ -35823,7 +36217,7 @@ FFFF	<not a character>
 	x (trade mark sign - 2122)
 	# <super> 004D 0043
 1F16B	RAISED MD SIGN
-	= marque déposée
+	= marque dÃ©posÃ©e
 	* used in Canada
 	x (registered sign - 00AE)
 	# <super> 004D 0044
@@ -35856,6 +36250,8 @@ FFFF	<not a character>
 	= blood type O
 1F17F	NEGATIVE SQUARED LATIN CAPITAL LETTER P
 	= parking space empty-full (ARIB STD B24)
+	~ 1F17F FE0E text style
+	~ 1F17F FE0F emoji style
 1F180	NEGATIVE SQUARED LATIN CAPITAL LETTER Q
 1F181	NEGATIVE SQUARED LATIN CAPITAL LETTER R
 1F182	NEGATIVE SQUARED LATIN CAPITAL LETTER S
@@ -35927,6 +36323,7 @@ FFFF	<not a character>
 1F1FD	REGIONAL INDICATOR SYMBOL LETTER X
 1F1FE	REGIONAL INDICATOR SYMBOL LETTER Y
 1F1FF	REGIONAL INDICATOR SYMBOL LETTER Z
+@~	Standardized Variation Sequences
 @@	1F200	Enclosed Ideographic Supplement	1F2FF
 @		Squared hiragana from ARIB STD B24
 1F200	SQUARE HIRAGANA HOKA
@@ -35975,6 +36372,8 @@ FFFF	<not a character>
 1F21A	SQUARED CJK UNIFIED IDEOGRAPH-7121
 	= free broadcasting service
 	= non-existence sign
+	~ 1F21A FE0E text style
+	~ 1F21A FE0F emoji style
 	# <square> 7121
 1F21B	SQUARED CJK UNIFIED IDEOGRAPH-6599
 	= pay broadcasting service
@@ -36039,6 +36438,8 @@ FFFF	<not a character>
 1F22F	SQUARED CJK UNIFIED IDEOGRAPH-6307
 	= designated hitter
 	= reserved sign
+	~ 1F22F FE0E text style
+	~ 1F22F FE0F emoji style
 	# <square> 6307
 1F230	SQUARED CJK UNIFIED IDEOGRAPH-8D70
 	= runner
@@ -36111,6 +36512,7 @@ FFFF	<not a character>
 1F251	CIRCLED IDEOGRAPH ACCEPT
 	= accept sign
 	# <circle> 53EF
+@~	Standardized Variation Sequences
 @@	1F300	Miscellaneous Symbols and Pictographs	1F5FF
 @		Weather, landscape, and sky symbols
 1F300	CYCLONE
@@ -37326,7 +37728,7 @@ FFFF	<not a character>
 @@	2A700	CJK Unified Ideographs Extension C	2B734
 @@	2B740	CJK Unified Ideographs Extension D	2B81D
 @@	2F800	CJK Compatibility Ideographs Supplement	2FA1F
-@		Duplicate characters from CNS 11643-1992
+@		Duplicate characters from CNSÂ 11643-1992
 2F800	CJK COMPATIBILITY IDEOGRAPH-2F800
 	: 4E3D
 2F801	CJK COMPATIBILITY IDEOGRAPH-2F801

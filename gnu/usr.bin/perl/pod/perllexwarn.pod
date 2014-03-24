@@ -212,107 +212,111 @@ to be enabled/disabled in isolation.
 
 The current hierarchy is:
 
-  all -+
-       |
-       +- closure
-       |
-       +- deprecated
-       |
-       +- exiting
-       |
-       +- glob
-       |
-       +- io -----------+
-       |                |
-       |                +- closed
-       |                |
-       |                +- exec
-       |                |
-       |                +- layer
-       |                |
-       |                +- newline
-       |                |
-       |                +- pipe
-       |                |
-       |                +- unopened
-       |
-       +- imprecision
-       |
-       +- misc
-       |
-       +- numeric
-       |
-       +- once
-       |
-       +- overflow
-       |
-       +- pack
-       |
-       +- portable
-       |
-       +- recursion
-       |
-       +- redefine
-       |
-       +- regexp
-       |
-       +- severe -------+
-       |                |
-       |                +- debugging
-       |                |
-       |                +- inplace
-       |                |
-       |                +- internal
-       |                |
-       |                +- malloc
-       |
-       +- signal
-       |
-       +- substr
-       |
-       +- syntax -------+
-       |                |
-       |                +- ambiguous
-       |                |
-       |                +- bareword
-       |                |
-       |                +- digit
-       |                |
-       |                +- illegalproto
-       |                |
-       |                +- parenthesis
-       |                |
-       |                +- precedence
-       |                |
-       |                +- printf
-       |                |
-       |                +- prototype
-       |                |
-       |                +- qw
-       |                |
-       |                +- reserved
-       |                |
-       |                +- semicolon
-       |
-       +- taint
-       |
-       +- threads
-       |
-       +- uninitialized
-       |
-       +- unpack
-       |
-       +- untie
-       |
-       +- utf8----------+
-       |                |
-       |                +- surrogate
-       |                |
-       |                +- non_unicode
-       |                |
-       |                +- nonchar
-       |
-       +- void
+    all -+
+         |
+         +- closure
+         |
+         +- deprecated
+         |
+         +- exiting
+         |
+         +- experimental --+
+         |                 |
+         |                 +- experimental::lexical_subs
+         |
+         +- glob
+         |
+         +- imprecision
+         |
+         +- io ------------+
+         |                 |
+         |                 +- closed
+         |                 |
+         |                 +- exec
+         |                 |
+         |                 +- layer
+         |                 |
+         |                 +- newline
+         |                 |
+         |                 +- pipe
+         |                 |
+         |                 +- unopened
+         |
+         +- misc
+         |
+         +- numeric
+         |
+         +- once
+         |
+         +- overflow
+         |
+         +- pack
+         |
+         +- portable
+         |
+         +- recursion
+         |
+         +- redefine
+         |
+         +- regexp
+         |
+         +- severe --------+
+         |                 |
+         |                 +- debugging
+         |                 |
+         |                 +- inplace
+         |                 |
+         |                 +- internal
+         |                 |
+         |                 +- malloc
+         |
+         +- signal
+         |
+         +- substr
+         |
+         +- syntax --------+
+         |                 |
+         |                 +- ambiguous
+         |                 |
+         |                 +- bareword
+         |                 |
+         |                 +- digit
+         |                 |
+         |                 +- illegalproto
+         |                 |
+         |                 +- parenthesis
+         |                 |
+         |                 +- precedence
+         |                 |
+         |                 +- printf
+         |                 |
+         |                 +- prototype
+         |                 |
+         |                 +- qw
+         |                 |
+         |                 +- reserved
+         |                 |
+         |                 +- semicolon
+         |
+         +- taint
+         |
+         +- threads
+         |
+         +- uninitialized
+         |
+         +- unpack
+         |
+         +- untie
+         |
+         +- utf8 ----------+
+         |                 |
+         |                 +- non_unicode
+         |                 |
+         |                 +- nonchar
+         |                 |
+         |                 +- surrogate
+         |
+         +- void
 
 Just like the "strict" pragma any of these categories can be combined
 
@@ -334,7 +338,6 @@ L<perldiag>.
 Note: In Perl 5.6.1, the lexical warnings category "deprecated" was a
 sub-category of the "syntax" category. It is now a top-level category
 in its own right.
-
 
 =head2 Fatal Warnings
 X<warning, fatal>

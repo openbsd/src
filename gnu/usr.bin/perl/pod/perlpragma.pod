@@ -16,22 +16,22 @@ mathematical operators, and would like to provide your own pragma that
 functions much like C<use integer;> You'd like this code
 
     use MyMaths;
-    
+
     my $l = MyMaths->new(1.2);
     my $r = MyMaths->new(3.4);
-    
+
     print "A: ", $l + $r, "\n";
-    
+
     use myint;
     print "B: ", $l + $r, "\n";
-    
+
     {
         no myint;
         print "C: ", $l + $r, "\n";
     }
-    
+
     print "D: ", $l + $r, "\n";
-    
+
     no myint;
     print "E: ", $l + $r, "\n";
 
@@ -63,12 +63,12 @@ this:
             $$l + $$r;
         }
     };
-    
+
     sub new {
         my ($class, $value) = @_;
         bless \$value, $class;
     }
-    
+
     1;
 
 Note how we load the user pragma C<myint> with an empty list C<()> to
@@ -77,24 +77,24 @@ prevent its C<import> being called.
 The interaction with the Perl compilation happens inside package C<myint>:
 
     package myint;
-    
+
     use strict;
     use warnings;
-    
+
     sub import {
         $^H{"myint/in_effect"} = 1;
     }
-    
+
     sub unimport {
         $^H{"myint/in_effect"} = 0;
     }
-    
+
     sub in_effect {
         my $level = shift // 0;
         my $hinthash = (caller($level))[10];
         return $hinthash->{"myint/in_effect"};
     }
-    
+
     1;
 
 As pragmata are implemented as modules, like any other module, C<use myint;>

@@ -81,7 +81,7 @@ $array[128]=1
 ########
 $x=0x0eabcd; print $x->ref;
 EXPECT
-Can't call method "ref" without a package or object reference at - line 1.
+Can't locate object method "ref" via package "961485" (perhaps you forgot to load "961485"?) at - line 1.
 ########
 chop ($str .= <DATA>);
 ########
@@ -349,15 +349,12 @@ sub foo { local $_ = shift; @_ = split; @_ }
 @x = foo(' x  y  z ');
 print "you die joe!\n" unless "@x" eq 'x y z';
 ########
-/(?{"{"})/	# Check it outside of eval too
+"A" =~ /(?{"{"})/	# Check it outside of eval too
 EXPECT
-Sequence (?{...}) not terminated or not {}-balanced in regex; marked by <-- HERE in m/(?{ <-- HERE "{"})/ at - line 1.
 ########
 /(?{"{"}})/	# Check it outside of eval too
 EXPECT
-Unmatched right curly bracket at (re_eval 1) line 1, at end of line
-syntax error at (re_eval 1) line 1, near ""{"}"
-Compilation failed in regexp at - line 1.
+Sequence (?{...}) not terminated with ')' at - line 1.
 ########
 BEGIN { @ARGV = qw(a b c d e) }
 BEGIN { print "argv <@ARGV>\nbegin <",shift,">\n" }
@@ -825,3 +822,55 @@ eval {
 print "If you get here, you didn't crash\n";
 EXPECT
 If you get here, you didn't crash
+######## [perl #112312] crash on syntax error
+# SKIP: !defined &DynaLoader::boot_DynaLoader # miniperl
+#!/usr/bin/perl
+use strict;
+use warnings;
+sub meow (&);
+my %h;
+my $k;
+meow {
+	my $t : need_this;
+	$t = {
+		size =>  $h{$k}{size};
+		used =>  $h{$k}(used}
+	};
+};
+EXPECT
+syntax error at - line 12, near "used"
+syntax error at - line 12, near "used}"
+Unmatched right curly bracket at - line 14, at end of line
+Execution of - aborted due to compilation errors.
+######## [perl #112312] crash on syntax error - another test
+# SKIP: !defined &DynaLoader::boot_DynaLoader # miniperl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+sub meow (&);
+
+my %h;
+my $k;
+
+meow {
+        my $t : need_this;
+        $t = {
+                size => $h{$k}{size};
+                used => $h{$k}(used}
+        };
+};
+
+sub testo {
+        my $value = shift;
+        print;
+        print;
+        print;
+        1;
+}
+
+EXPECT
+syntax error at - line 15, near "used"
+syntax error at - line 15, near "used}"
+Unmatched right curly bracket at - line 17, at end of line
+Execution of - aborted due to compilation errors.

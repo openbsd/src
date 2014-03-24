@@ -6,6 +6,7 @@ use warnings;
 use Test::More tests => 18;
 
 use CGI qw/ autoEscape escapeHTML button textfield password_field textarea popup_menu scrolling_list checkbox_group optgroup checkbox radio_group submit image_button button /;
+$CGI::Util::SORT_ATTRIBUTES = 1;
 
 is (button(-name => 'test<'), '<input type="button"  name="test&lt;" value="test&lt;" />', "autoEscape defaults to On");
 

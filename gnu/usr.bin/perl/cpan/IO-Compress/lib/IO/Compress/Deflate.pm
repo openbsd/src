@@ -8,16 +8,16 @@ use bytes;
 
 require Exporter ;
 
-use IO::Compress::RawDeflate 2.048 ();
-use IO::Compress::Adapter::Deflate 2.048 ;
+use IO::Compress::RawDeflate 2.060 ();
+use IO::Compress::Adapter::Deflate 2.060 ;
 
-use IO::Compress::Zlib::Constants 2.048 ;
-use IO::Compress::Base::Common  2.048 qw(createSelfTiedObject);
+use IO::Compress::Zlib::Constants 2.060 ;
+use IO::Compress::Base::Common  2.060 qw();
 
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $DeflateError);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $DeflateError = '';
 
 @ISA    = qw(Exporter IO::Compress::RawDeflate);
@@ -32,13 +32,13 @@ sub new
 {
     my $class = shift ;
 
-    my $obj = createSelfTiedObject($class, \$DeflateError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject($class, \$DeflateError);
     return $obj->_create(undef, @_);
 }
 
 sub deflate
 {
-    my $obj = createSelfTiedObject(undef, \$DeflateError);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject(undef, \$DeflateError);
     return $obj->_def(@_);
 }
 
@@ -85,8 +85,8 @@ sub mkHeader
     my $self = shift ;
     my $param = shift ;
 
-    my $level = $param->value('Level');
-    my $strategy = $param->value('Strategy');
+    my $level = $param->getValue('level');
+    my $strategy = $param->getValue('strategy');
 
     my $lflag ;
     $level = 6 
@@ -119,7 +119,7 @@ sub ckParams
     my $self = shift ;
     my $got = shift;
     
-    $got->value('ADLER32' => 1);
+    $got->setValue('adler32' => 1);
     return 1 ;
 }
 
@@ -233,19 +233,20 @@ section.
 
     use IO::Compress::Deflate qw(deflate $DeflateError) ;
 
-    deflate $input => $output [,OPTS] 
+    deflate $input_filename_or_reference => $output_filename_or_reference [,OPTS] 
         or die "deflate failed: $DeflateError\n";
 
 The functional interface needs Perl5.005 or better.
 
 =head2 deflate $input => $output [, OPTS]
 
-C<deflate> expects at least two parameters, C<$input> and C<$output>.
+C<deflate> expects at least two parameters,
+C<$input_filename_or_reference> and C<$output_filename_or_reference>.
 
-=head3 The C<$input> parameter
+=head3 The C<$input_filename_or_reference> parameter
 
-The parameter, C<$input>, is used to define the source of
-the uncompressed data. 
+The parameter, C<$input_filename_or_reference>, is used to define the
+source of the uncompressed data. 
 
 It can take one of the following forms:
 
@@ -253,25 +254,25 @@ It can take one of the following forms:
 
 =item A filename
 
-If the C<$input> parameter is a simple scalar, it is assumed to be a
-filename. This file will be opened for reading and the input data
-will be read from it.
+If the <$input_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename. This file will be opened for reading and the
+input data will be read from it.
 
 =item A filehandle
 
-If the C<$input> parameter is a filehandle, the input data will be
-read from it.
-The string '-' can be used as an alias for standard input.
+If the C<$input_filename_or_reference> parameter is a filehandle, the input
+data will be read from it.  The string '-' can be used as an alias for
+standard input.
 
 =item A scalar reference 
 
-If C<$input> is a scalar reference, the input data will be read
-from C<$$input>.
+If C<$input_filename_or_reference> is a scalar reference, the input data
+will be read from C<$$input_filename_or_reference>.
 
 =item An array reference 
 
-If C<$input> is an array reference, each element in the array must be a
-filename.
+If C<$input_filename_or_reference> is an array reference, each element in
+the array must be a filename.
 
 The input data will be read from each file in turn. 
 
@@ -280,65 +281,72 @@ contains valid filenames before any data is compressed.
 
 =item An Input FileGlob string
 
-If C<$input> is a string that is delimited by the characters "<" and ">"
-C<deflate> will assume that it is an I<input fileglob string>. The
-input is the list of files that match the fileglob.
+If C<$input_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<deflate> will assume that it is an 
+I<input fileglob string>. The input is the list of files that match the 
+fileglob.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$input> parameter is any other type, C<undef> will be returned.
+If the C<$input_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
-=head3 The C<$output> parameter
+=head3 The C<$output_filename_or_reference> parameter
 
-The parameter C<$output> is used to control the destination of the
-compressed data. This parameter can take one of these forms.
+The parameter C<$output_filename_or_reference> is used to control the
+destination of the compressed data. This parameter can take one of
+these forms.
 
 =over 5
 
 =item A filename
 
-If the C<$output> parameter is a simple scalar, it is assumed to be a
-filename.  This file will be opened for writing and the compressed
-data will be written to it.
+If the C<$output_filename_or_reference> parameter is a simple scalar, it is
+assumed to be a filename.  This file will be opened for writing and the 
+compressed data will be written to it.
 
 =item A filehandle
 
-If the C<$output> parameter is a filehandle, the compressed data
-will be written to it.
-The string '-' can be used as an alias for standard output.
+If the C<$output_filename_or_reference> parameter is a filehandle, the
+compressed data will be written to it.  The string '-' can be used as
+an alias for standard output.
 
 =item A scalar reference 
 
-If C<$output> is a scalar reference, the compressed data will be
-stored in C<$$output>.
+If C<$output_filename_or_reference> is a scalar reference, the
+compressed data will be stored in C<$$output_filename_or_reference>.
 
 =item An Array Reference
 
-If C<$output> is an array reference, the compressed data will be
-pushed onto the array.
+If C<$output_filename_or_reference> is an array reference, 
+the compressed data will be pushed onto the array.
 
 =item An Output FileGlob
 
-If C<$output> is a string that is delimited by the characters "<" and ">"
-C<deflate> will assume that it is an I<output fileglob string>. The
-output is the list of files that match the fileglob.
+If C<$output_filename_or_reference> is a string that is delimited by the
+characters "<" and ">" C<deflate> will assume that it is an
+I<output fileglob string>. The output is the list of files that match the
+fileglob.
 
-When C<$output> is an fileglob string, C<$input> must also be a fileglob
-string. Anything else is an error.
+When C<$output_filename_or_reference> is an fileglob string,
+C<$input_filename_or_reference> must also be a fileglob string. Anything
+else is an error.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
-If the C<$output> parameter is any other type, C<undef> will be returned.
+If the C<$output_filename_or_reference> parameter is any other type,
+C<undef> will be returned.
 
 =head2 Notes
 
-When C<$input> maps to multiple files/buffers and C<$output> is a single
+When C<$input_filename_or_reference> maps to multiple files/buffers and
+C<$output_filename_or_reference> is a single
 file/buffer the input files/buffers will be stored
-in C<$output> as a concatenated series of compressed data streams.
+in C<$output_filename_or_reference> as a concatenated series of compressed data streams.
 
 =head2 Optional Parameters
 
@@ -924,7 +932,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

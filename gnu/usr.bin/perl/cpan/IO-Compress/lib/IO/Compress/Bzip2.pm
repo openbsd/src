@@ -5,16 +5,16 @@ use warnings;
 use bytes;
 require Exporter ;
 
-use IO::Compress::Base 2.048 ;
+use IO::Compress::Base 2.060 ;
 
-use IO::Compress::Base::Common  2.048 qw(createSelfTiedObject);
-use IO::Compress::Adapter::Bzip2 2.048 ;
+use IO::Compress::Base::Common  2.060 qw();
+use IO::Compress::Adapter::Bzip2 2.060 ;
 
 
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $Bzip2Error);
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $Bzip2Error = '';
 
 @ISA    = qw(Exporter IO::Compress::Base);
@@ -29,13 +29,13 @@ sub new
 {
     my $class = shift ;
 
-    my $obj = createSelfTiedObject($class, \$Bzip2Error);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject($class, \$Bzip2Error);
     return $obj->_create(undef, @_);
 }
 
 sub bzip2
 {
-    my $obj = createSelfTiedObject(undef, \$Bzip2Error);
+    my $obj = IO::Compress::Base::Common::createSelfTiedObject(undef, \$Bzip2Error);
     $obj->_def(@_);
 }
 
@@ -51,12 +51,12 @@ sub getExtraParams
 {
     my $self = shift ;
 
-    use IO::Compress::Base::Common  2.048 qw(:Parse);
+    use IO::Compress::Base::Common  2.060 qw(:Parse);
     
-    return (
-            'BlockSize100K' => [0, 1, Parse_unsigned,  1],
-            'WorkFactor'    => [0, 1, Parse_unsigned,  0],
-            'Verbosity'     => [0, 1, Parse_boolean,   0],
+    return (  
+            'blocksize100k' => [IO::Compress::Base::Common::Parse_unsigned,  1],
+            'workfactor'    => [IO::Compress::Base::Common::Parse_unsigned,  0],
+            'verbosity'     => [IO::Compress::Base::Common::Parse_boolean,   0],
         );
 }
 
@@ -68,16 +68,16 @@ sub ckParams
     my $got = shift;
     
     # check that BlockSize100K is a number between 1 & 9
-    if ($got->parsed('BlockSize100K')) {
-        my $value = $got->value('BlockSize100K');
+    if ($got->parsed('blocksize100k')) {
+        my $value = $got->getValue('blocksize100k');
         return $self->saveErrorString(undef, "Parameter 'BlockSize100K' not between 1 and 9, got $value")
             unless defined $value && $value >= 1 && $value <= 9;
 
     }
 
     # check that WorkFactor between 0 & 250
-    if ($got->parsed('WorkFactor')) {
-        my $value = $got->value('WorkFactor');
+    if ($got->parsed('workfactor')) {
+        my $value = $got->getValue('workfactor');
         return $self->saveErrorString(undef, "Parameter 'WorkFactor' not between 0 and 250, got $value")
             unless $value >= 0 && $value <= 250;
     }
@@ -91,9 +91,9 @@ sub mkComp
     my $self = shift ;
     my $got = shift ;
 
-    my $BlockSize100K = $got->value('BlockSize100K');
-    my $WorkFactor    = $got->value('WorkFactor');
-    my $Verbosity     = $got->value('Verbosity');
+    my $BlockSize100K = $got->getValue('blocksize100k');
+    my $WorkFactor    = $got->getValue('workfactor');
+    my $Verbosity     = $got->getValue('verbosity');
 
     my ($obj, $errstr, $errno) = IO::Compress::Adapter::Bzip2::mkCompObject(
                                                $BlockSize100K, $WorkFactor,

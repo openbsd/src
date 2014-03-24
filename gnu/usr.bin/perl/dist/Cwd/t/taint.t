@@ -8,7 +8,14 @@ chdir 't' unless $ENV{PERL_CORE};
 
 use File::Spec;
 use lib File::Spec->catdir('t', 'lib');
-use Test::More tests => 17;
+use Test::More;
+BEGIN {
+    plan(
+        ${^TAINT}
+        ? (tests => 17)
+        : (skip_all => "A perl without taint support")
+    );
+}
 
 use Scalar::Util qw/tainted/;
 

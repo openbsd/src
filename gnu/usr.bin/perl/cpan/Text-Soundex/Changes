@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Soundex.
 
+3.04  Thu Feb  7 15:53:09 EST 2013 <rjbs@cpan.org>
+
+The module is going to be removed from the core distribution of perl, and will
+now warn (under warnings) if loaded from its installed-to-core location.
+
 3.02  Sun Feb 02 02:54:00 EST 2003 <mark@mielke.cc>
 
 The U8 type was over-used in 3.00 and 3.01. Now, "U8 *" is used only as a

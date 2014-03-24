@@ -603,7 +603,7 @@ Thread.pm
 
 =back
 
-=head2 Platforms with no supporting programmers:
+=head2 Platforms with no supporting programmers
 
 These platforms will probably have their
 special build support removed during the

@@ -8,7 +8,7 @@ BEGIN {
 
 # use strict;
 
-plan tests => 218;
+plan tests => 309;
 
 my @comma = ("key", "value");
 
@@ -280,9 +280,9 @@ foreach my $chr (60, 200, 600, 6000, 60000) {
 	'hash assignment in list context removes duplicates' );
     is( (join ':', %h = qw(a 1 a 2 b 3 c 4 d 5 d 6)), 'a:2:b:3:c:4:d:6',
 	'hash assignment in list context removes duplicates 2' );
-    is( scalar( %h = (1,2,1,3,1,4,1,5) ), 2,
+    is( scalar( %h = (1,2,1,3,1,4,1,5) ), 8,
 	'hash assignment in scalar context' );
-    is( scalar( ($x,%h) = (0,1,2,1,3,1,4,1,5) ), 3,
+    is( scalar( ($x,%h) = (0,1,2,1,3,1,4,1,5) ), 9,
 	'scalar + hash assignment in scalar context' );
     $ar = [ %h = (1,2,1,3,1,4,1,5) ];
     is( $#$ar, 1, 'hash assignment in list context' );
@@ -320,3 +320,217 @@ SKIP: {
  undef %tb;
  is $p, \%tb, "hash undef should not zap weak refs";
 }
+
+# test odd hash assignment warnings
+{
+    my ($s, %h);
+    warning_like(sub {%h = (1..3)}, qr/^Odd number of elements in hash assignment/);
+    warning_like(sub {%h = ({})}, qr/^Reference found where even-sized list expected/);
+
+    warning_like(sub { ($s, %h) = (1..4)}, qr/^Odd number of elements in hash assignment/);
+    warning_like(sub { ($s, %h) = (1, {})}, qr/^Reference found where even-sized list expected/);
+}
+
+# hash assignment in scalar and list context with odd number of elements
+{
+    no warnings 'misc', 'uninitialized';
+    my %h; my $x;
+    is( join( ':', %h = (1..3)), '1:2:3:',
+	'odd hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => undef} ), "correct value stored" );
+    is( scalar( %h = (1..3) ), 3,
+	'odd hash assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => undef} ), "correct value stored" );
+    is( join(':', ($x,%h) = (0,1,2,3) ), '0:1:2:3:',
+	'scalar + odd hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => undef} ), "correct value stored" );
+    is( scalar( ($x,%h) = (0,1,2,3) ), 4,
+	'scalar + odd hash assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => undef} ), "correct value stored" );
+}
+
+# hash assignment in scalar and list context with odd number of elements
+# and duplicates
+{
+    no warnings 'misc', 'uninitialized';
+    my %h; my $x;
+    is( (join ':', %h = (1,1,1)), '1:',
+	'odd hash assignment in list context with duplicates' );
+    ok( eq_hash( \%h, {1 => undef} ), "correct value stored" );
+    is( scalar(%h = (1,1,1)), 3,
+	'odd hash assignment in scalar context with duplicates' );
+    ok( eq_hash( \%h, {1 => undef} ), "correct value stored" );
+    is( join(':', ($x,%h) = (0,1,1,1) ), '0:1:',
+	'scalar + odd hash assignment in list context with duplicates' );
+    ok( eq_hash( \%h, {1 => undef} ), "correct value stored" );
+    is( scalar( ($x,%h) = (0,1,1,1) ), 4,
+	'scalar + odd hash assignment in scalar context with duplicates' );
+    ok( eq_hash( \%h, {1 => undef} ), "correct value stored" );
+}
+
+# hash followed by more elements on LHS of list assignment
+# (%h, ...) = ...;
+{
+    my (%h, %x, @x, $x);
+    is( scalar( (%h,$x) = (1,2,3,4)), 4,
+	'hash+scalar assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+    # this arguable, but this is how it works
+    is( join(':', (%h,$x) = (1,2,3,4)), '1:2:3:4',
+	'hash+scalar assignment in list context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+
+    is( scalar( (%h,%x) = (1,2,3,4)), 4,
+	'hash+hash assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ),               "correct hash" );
+    is( join(':', (%h,%x) = (1,2,3,4)), '1:2:3:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ),               "correct hash" );
+
+    is( scalar( (%h,@x) = (1,2,3,4)), 4,
+	'hash+array assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ),              "correct array" );
+    is( join(':', (%h,@x) = (1,2,3,4)), '1:2:3:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 2, 3 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ),              "correct array" );
+}
+
+# hash followed by more elements on LHS of list assignment
+# and duplicates on RHS
+# (%h, ...) = (1)x10;
+{
+    my (%h, %x, @x, $x);
+    is( scalar( (%h,$x) = (1,2,1,4)), 4,
+	'hash+scalar assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+    # this arguable, but this is how it works
+    is( join(':', (%h,$x) = (1,2,1,4)), '1:4',
+	'hash+scalar assignment in list context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+
+    is( scalar( (%h,%x) = (1,2,1,4)), 4,
+	'hash+hash assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ), "correct hash" );
+    is( join(':', (%h,%x) = (1,2,1,4)), '1:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ),               "correct hash" );
+
+    is( scalar( (%h,@x) = (1,2,1,4)), 4,
+	'hash+array assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ), "correct array" );
+    is( join(':', (%h,@x) = (1,2,1,4)), '1:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ),      "correct array" );
+}
+
+# hash followed by more elements on LHS of list assignment
+# and duplicates with odd number of elements on RHS
+# (%h, ...) = (1,2,3,4,1);
+{
+    no warnings 'misc'; # suppress oddball warnings
+    my (%h, %x, @x, $x);
+    is( scalar( (%h,$x) = (1,2,3,4,1)), 5,
+	'hash+scalar assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+    # this arguable, but this is how it works
+    is( join(':', map $_//'undef', (%h,$x) = (1,2,3,4,1)), '1:undef:3:4',
+	'hash+scalar assignment in list context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    is( $x, undef, "correct scalar" );
+
+    is( scalar( (%h,%x) = (1,2,3,4,1)), 5,
+	'hash+hash assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ), "correct hash" );
+    is( join(':', map $_//'undef', (%h,%x) = (1,2,3,4,1)), '1:undef:3:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    ok( eq_hash( \%x, {} ),               "correct hash" );
+
+    is( scalar( (%h,@x) = (1,2,3,4,1)), 5,
+	'hash+array assignment in scalar context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ), "correct array" );
+    is( join(':', map $_//'undef', (%h,@x) = (1,2,3,4,1)), '1:undef:3:4',
+	'hash+hash assignment in list context' );
+    ok( eq_hash( \%h, {1 => undef, 3 => 4} ), "correct hash" );
+    ok( eq_array( \@x, [] ),      "correct array" );
+}
+
+
+# not enough elements on rhs
+# ($x,$y,$z,...) = (1);
+{
+    my ($x,$y,$z,@a,%h);
+    is( join(':', ($x, $y, %h) = (1)), '1',
+        'only assigned elements are returned in list context');
+    is( join(':', ($x, $y, %h) = (1,1)), '1:1',
+        'only assigned elements are returned in list context');
+    no warnings 'misc'; # suppress oddball warnings
+    is( join(':', map $_//'undef', ($x, $y, %h) = (1,1,1)), '1:1:1:undef',
+        'only assigned elements are returned in list context');
+    is( join(':', ($x, $y, %h) = (1,1,1,1)), '1:1:1:1',
+        'only assigned elements are returned in list context');
+    is( join(':', map $_//'undef', ($x, %h, $y) = (1,2,3,4)),
+        '1:2:3:4:undef',
+        'only assigned elements are returned in list context');
+    is( join(':', ($x, $y, @h) = (1)), '1',
+        'only assigned elements are returned in list context');
+    is( join(':', ($x, @h, $y) = (1,2,3,4)), '1:2:3:4',
+        'only assigned elements are returned in list context');
+}
+
+# lvaluedness of list context
+{
+    my %h; my ($x, $y, $z);
+    $_++ foreach %h = (1,2,3,4);
+    ok( eq_hash( \%h, {1 => 3, 3 => 5} ), "aassign in list context returns lvalues" );
+
+    $_++ foreach %h = (1,2,1,4);
+    ok( eq_hash( \%h, {1 => 5} ), "the same for assignment with duplicates" );
+
+    $_++ foreach ($x, %h) = (0,1,2,3,4);
+    is( $x, 1, "... and leading scalar" );
+    ok( eq_hash( \%h, {1 => 3, 3 => 5} ), "... scalar followed by hash" );
+
+    {
+        no warnings 'misc';
+        $_++ foreach %h = (1,2,3);
+        ok( eq_hash( \%h, {1 => 3, 3 => 1} ), "odd elements also lvalued" );
+    }
+
+    $x = 0;
+    $_++ foreach %h = ($x,$x);
+    is($x, 0, "returned values are not aliased to RHS of the assignment operation");
+
+    %h = ();
+    $x = 0;
+    $_++ foreach sub :lvalue { %h = ($x,$x) }->();
+    is($x, 0,
+     "returned values are not aliased to RHS of assignment in lvalue sub");
+
+    $_++ foreach ($x,$y,%h,$z) = (0);
+    ok( eq_array([$x,$y,%h,$z], [1,undef,undef]), "only assigned values are returned" );
+
+    $_++ foreach ($x,$y,%h,$z) = (0,1);
+    ok( eq_array([$x,$y,%h,$z], [1,2,undef]), "only assigned values are returned" );
+
+    no warnings 'misc'; # suppress oddball warnings
+    $_++ foreach ($x,$y,%h,$z) = (0,1,2);
+    ok( eq_array([$x,$y,%h,$z], [1,2,2,1,undef]), "only assigned values are returned" );
+}
+
+

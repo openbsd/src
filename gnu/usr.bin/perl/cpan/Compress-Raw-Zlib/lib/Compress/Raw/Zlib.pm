@@ -11,7 +11,7 @@ use warnings ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, %EXPORT_TAGS, @EXPORT_OK, $AUTOLOAD, %DEFLATE_CONSTANTS, @DEFLATE_CONSTANTS );
 
-$VERSION = '2.048';
+$VERSION = '2.060';
 $XS_VERSION = $VERSION; 
 $VERSION = eval $VERSION;
 
@@ -138,10 +138,10 @@ use constant Parse_any      => 0x01;
 use constant Parse_unsigned => 0x02;
 use constant Parse_signed   => 0x04;
 use constant Parse_boolean  => 0x08;
-use constant Parse_string   => 0x10;
-use constant Parse_custom   => 0x12;
+#use constant Parse_string   => 0x10;
+#use constant Parse_custom   => 0x12;
 
-use constant Parse_store_ref => 0x100 ;
+#use constant Parse_store_ref => 0x100 ;
 
 use constant OFF_PARSED     => 0 ;
 use constant OFF_TYPE       => 1 ;
@@ -297,14 +297,14 @@ sub Compress::Raw::Zlib::Parameters::_checkType
 
     #local $Carp::CarpLevel = $level ;
     #print "PARSE $type $key $value $validate $sub\n" ;
-    if ( $type & Parse_store_ref)
-    {
-        #$value = $$value
-        #    if ref ${ $value } ;
-
-        $$output = $value ;
-        return 1;
-    }
+#    if ( $type & Parse_store_ref)
+#    {
+#        #$value = $$value
+#        #    if ref ${ $value } ;
+#
+#        $$output = $value ;
+#        return 1;
+#    }
 
     $value = $$value ;
 
@@ -340,11 +340,11 @@ sub Compress::Raw::Zlib::Parameters::_checkType
         $$output =  defined $value ? $value != 0 : 0 ;    
         return 1;
     }
-    elsif ($type & Parse_string)
-    {
-        $$output = defined $value ? $value : "" ;    
-        return 1;
-    }
+#    elsif ($type & Parse_string)
+#    {
+#        $$output = defined $value ? $value : "" ;    
+#        return 1;
+#    }
 
     $$output = $value ;
     return 1;
@@ -375,24 +375,25 @@ sub Compress::Raw::Zlib::Parameters::value
     return $self->{Got}{lc $name}[OFF_FIXED] ;
 }
 
+our $OPTIONS_deflate =   
+    {
+        'AppendOutput'  => [1, 1, Parse_boolean,  0],
+        'CRC32'         => [1, 1, Parse_boolean,  0],
+        'ADLER32'       => [1, 1, Parse_boolean,  0],
+        'Bufsize'       => [1, 1, Parse_unsigned, 4096],
+
+        'Level'         => [1, 1, Parse_signed,   Z_DEFAULT_COMPRESSION()],
+        'Method'        => [1, 1, Parse_unsigned, Z_DEFLATED()],
+        'WindowBits'    => [1, 1, Parse_signed,   MAX_WBITS()],
+        'MemLevel'      => [1, 1, Parse_unsigned, MAX_MEM_LEVEL()],
+        'Strategy'      => [1, 1, Parse_unsigned, Z_DEFAULT_STRATEGY()],
+        'Dictionary'    => [1, 1, Parse_any,      ""],
+    };
+
 sub Compress::Raw::Zlib::Deflate::new
 {
     my $pkg = shift ;
-    my ($got) = ParseParameters(0,
-            {
-                'AppendOutput'  => [1, 1, Parse_boolean,  0],
-                'CRC32'         => [1, 1, Parse_boolean,  0],
-                'ADLER32'       => [1, 1, Parse_boolean,  0],
-                'Bufsize'       => [1, 1, Parse_unsigned, 4096],
- 
-                'Level'         => [1, 1, Parse_signed,   Z_DEFAULT_COMPRESSION()],
-                'Method'        => [1, 1, Parse_unsigned, Z_DEFLATED()],
-                'WindowBits'    => [1, 1, Parse_signed,   MAX_WBITS()],
-                'MemLevel'      => [1, 1, Parse_unsigned, MAX_MEM_LEVEL()],
-                'Strategy'      => [1, 1, Parse_unsigned, Z_DEFAULT_STRATEGY()],
-                'Dictionary'    => [1, 1, Parse_any,      ""],
-            }, @_) ;
-
+    my ($got) = ParseParameters(0, $OPTIONS_deflate, @_);
 
     croak "Compress::Raw::Zlib::Deflate::new: Bufsize must be >= 1, you specified " . 
             $got->value('Bufsize')
@@ -431,22 +432,23 @@ sub Compress::Raw::Zlib::deflateStream::STORABLE_thaw
 }
 
 
+our $OPTIONS_inflate = 
+    {
+        'AppendOutput'  => [1, 1, Parse_boolean,  0],
+        'LimitOutput'   => [1, 1, Parse_boolean,  0],
+        'CRC32'         => [1, 1, Parse_boolean,  0],
+        'ADLER32'       => [1, 1, Parse_boolean,  0],
+        'ConsumeInput'  => [1, 1, Parse_boolean,  1],
+        'Bufsize'       => [1, 1, Parse_unsigned, 4096],
+ 
+        'WindowBits'    => [1, 1, Parse_signed,   MAX_WBITS()],
+        'Dictionary'    => [1, 1, Parse_any,      ""],
+    } ;
+
 sub Compress::Raw::Zlib::Inflate::new
 {
     my $pkg = shift ;
-    my ($got) = ParseParameters(0,
-                    {
-                        'AppendOutput'  => [1, 1, Parse_boolean,  0],
-                        'LimitOutput'   => [1, 1, Parse_boolean,  0],
-                        'CRC32'         => [1, 1, Parse_boolean,  0],
-                        'ADLER32'       => [1, 1, Parse_boolean,  0],
-                        'ConsumeInput'  => [1, 1, Parse_boolean,  1],
-                        'Bufsize'       => [1, 1, Parse_unsigned, 4096],
-                 
-                        'WindowBits'    => [1, 1, Parse_signed,   MAX_WBITS()],
-                        'Dictionary'    => [1, 1, Parse_any,      ""],
-            }, @_) ;
-
+    my ($got) = ParseParameters(0, $OPTIONS_inflate, @_);
 
     croak "Compress::Raw::Zlib::Inflate::new: Bufsize must be >= 1, you specified " . 
             $got->value('Bufsize')
@@ -1452,9 +1454,10 @@ C<$input>.
 =head1 ACCESSING ZIP FILES
 
 Although it is possible (with some effort on your part) to use this module
-to access .zip files, there are other perl modules available that will
-do all the hard work for you. Check out C<Archive::Zip>,
-C<IO::Compress::Zip> and C<IO::Uncompress::Unzip>.
+to access .zip files, there are other perl modules available that will do
+all the hard work for you. Check out C<Archive::Zip>,
+C<Archive::Zip::SimpleZip>, C<IO::Compress::Zip> and
+C<IO::Uncompress::Unzip>.
 
 =head1 FAQ
 
@@ -1589,7 +1592,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2013 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

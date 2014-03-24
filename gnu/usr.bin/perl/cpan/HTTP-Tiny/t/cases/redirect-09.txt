@@ -4,6 +4,8 @@ method
   POST
 expected
   abcdefghijklmnopqrstuvwxyz1234567890abcdef
+expected_url
+  http://example.com/index2.html
 ----------
 POST /index.html HTTP/1.1
 Host: example.com

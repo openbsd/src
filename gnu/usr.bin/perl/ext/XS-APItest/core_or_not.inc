@@ -16,7 +16,7 @@ CAT2(sv_setsv_cow_hashkey_, SUFFIX) () {
     SV *destination = newSV(0);
     bool result;
 
-    if(!SvREADONLY(source) && !SvFAKE(source)) {
+    if(!SvIsCOW(source)) {
 	SvREFCNT_dec(source);
 	Perl_croak(aTHX_ "Creating a shared hash key scalar failed when "
 	       STRINGIFY(SUFFIX) " got flags %"UVxf, (UV)SvFLAGS(source));
@@ -24,7 +24,7 @@ CAT2(sv_setsv_cow_hashkey_, SUFFIX) () {
 
     sv_setsv(destination, source);
 
-    result = SvREADONLY(destination) && SvFAKE(destination);
+    result = !!SvIsCOW(destination);
 
     SvREFCNT_dec(source);
     SvREFCNT_dec(destination);
@@ -37,8 +37,8 @@ CAT2(sv_setsv_cow_hashkey_, SUFFIX) () {
  * mode: c
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -21,10 +21,10 @@ if [[ -z $FOO ]]; then echo 'not ok 1'; fi
 # These lines get executed
 my $test = $ARGV[0];
 if (-f 'switchx.t') {
-    print("ok $test");
+    print("ok $test - perl -l option tested");
 }
 $test++;
-print "ok $test";
+print "ok $test - Second test file utilized";
 
 __END__
 

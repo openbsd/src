@@ -343,10 +343,20 @@ Can't continue cutting file '$file'.
             }
             $system = qq{$tarcommand x${tar_verb}f "$file"};
             $CPAN::Frontend->myprint(qq{Using Tar:$system:\n});
-            if (system($system)==0) {
+            my $ret = system($system);
+            if ($ret==0) {
                 $CPAN::Frontend->myprint(qq{Untarred $file successfully\n});
             } else {
-                $CPAN::Frontend->mydie(qq{Couldn\'t untar $file\n});
+                if ($? == -1) {
+                    $CPAN::Frontend->mydie(sprintf qq{Couldn\'t untar %s: '%s'\n},
+                                           $file, $!);
+                } elsif ($? & 127) {
+                    $CPAN::Frontend->mydie(sprintf qq{Couldn\'t untar %s: child died with signal %d, %s coredump\n},
+                                           $file, ($? & 127),  ($? & 128) ? 'with' : 'without');
+                } else {
+                    $CPAN::Frontend->mydie(sprintf qq{Couldn\'t untar %s: child exited with value %d\n},
+                                           $file, $? >> 8);
+                }
             }
             return 1;
         } else {
@@ -449,6 +459,10 @@ END
 1;
 
 __END__
+
+=head1 NAME
+
+CPAN::Tarzip - internal handling of tar archives for CPAN.pm
 
 =head1 LICENSE
 

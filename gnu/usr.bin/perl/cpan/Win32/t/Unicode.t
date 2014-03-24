@@ -1,6 +1,8 @@
 use strict;
 use Test;
+use Config qw(%Config);
 use Cwd qw(cwd);
+use Encode qw();
 use Win32;
 
 BEGIN {
@@ -48,6 +50,9 @@ ok(-f Win32::GetANSIPathName($file));
 ok(opendir(my $dh, Win32::GetANSIPathName($dir)));
 while ($_ = readdir($dh)) {
     next if /^\./;
+    # On Cygwin 1.7 readdir() returns the utf8 representation of the
+    # filename but doesn't turn on the SvUTF8 bit
+    Encode::_utf8_on($_) if $^O eq "cygwin" && $Config{osvers} !~ /^1.5/;
     ok($file, Win32::GetLongPathName("$dir\\$_"));
 }
 closedir($dh);

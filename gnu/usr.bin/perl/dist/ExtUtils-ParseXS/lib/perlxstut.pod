@@ -1095,7 +1095,7 @@ Mytest.xs:
 	    SvGETMAGIC(paths);
 	    if ((!SvROK(paths))
 		|| (SvTYPE(SvRV(paths)) != SVt_PVAV)
-		|| ((numpaths = av_len((AV *)SvRV(paths))) < 0))
+		|| ((numpaths = av_top_index((AV *)SvRV(paths))) < 0))
 	    {
 		XSRETURN_UNDEF;
 	    }
@@ -1158,7 +1158,7 @@ true, which indicates that paths is a valid reference.  (Simply
 checking C<SvROK> won't trigger FETCH on a tied variable.)  It
 then verifies that the object referenced by paths is an array, using C<SvRV>
 to dereference paths, and C<SvTYPE> to discover its type.  As an added test,
-it checks that the array referenced by paths is non-empty, using the C<av_len>
+it checks that the array referenced by paths is non-empty, using the C<av_top_index>
 function (which returns -1 if the array is empty).  The XSRETURN_UNDEF macro
 is used to abort the XSUB and return the undefined value whenever all three of
 these conditions are not met.
@@ -1167,7 +1167,7 @@ these conditions are not met.
 
 We manipulate several arrays in this XSUB.  Note that an array is represented
 internally by an AV* pointer.  The functions and macros for manipulating
-arrays are similar to the functions in Perl: C<av_len> returns the highest
+arrays are similar to the functions in Perl: C<av_top_index> returns the highest
 index in an AV*, much like $#array; C<av_fetch> fetches a single scalar value
 from an array, given its index; C<av_push> pushes a scalar value onto the
 end of the array, automatically extending the array as necessary.
@@ -1239,7 +1239,7 @@ standard C library function C<fputs()>. This is all we need:
 
 The real work is done in the standard typemap.
 
-B<But> you loose all the fine stuff done by the perlio layers. This
+B<But> you lose all the fine stuff done by the perlio layers. This
 calls the stdio function C<fputs()>, which knows nothing about them.
 
 The standard typemap offers three variants of PerlIO *:

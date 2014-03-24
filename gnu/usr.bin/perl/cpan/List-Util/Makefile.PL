@@ -28,7 +28,7 @@ WriteMakefile(
   ( $PERL_CORE
     ? ()
     : (
-      INSTALLDIRS => q[perl],
+      INSTALLDIRS => ($] < 5.011 ? q[perl] : q[site]),
       PREREQ_PM   => {'Test::More' => 0,},
       (eval { ExtUtils::MakeMaker->VERSION(6.31) } ? (LICENSE => 'perl') : ()),
       ( eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (

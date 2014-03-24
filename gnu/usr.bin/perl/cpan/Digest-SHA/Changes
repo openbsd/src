@@ -1,5 +1,61 @@
 Revision history for Perl extension Digest::SHA.
 
+5.84  Sat Mar  9 17:36:08 MST 2013
+	- untweaked Makefile.PL to remove dependencies of SHA.c
+		-- dependencies were breaking builds on VMS
+		-- retaining dependencies provides too little benefit
+			for cost of portable workaround
+
+5.83  Mon Mar  4 08:12:00 MST 2013
+	- removed code for standalone C operation (no longer used)
+		-- eliminates need for external symbols
+		-- consolidates SHA and HMAC code
+		-- reduces size of object files
+		-- thanks to Marc Lehmann for suggestions
+	- tweaked Makefile.PL to show dependencies of SHA.c
+
+5.82  Thu Jan 24 04:54:12 MST 2013
+	- introduced workaround to SvPVbyte bug in Perl 5.6
+		-- module behavior now consistent under all Perls 5.6+
+			-- ref: new test script t/unicode.t
+		-- SHA routines now always croak on wide chars (5.6+)
+	- removed "static" message schedules from C code
+		-- default "auto" is now just as fast
+		-- thread-safe option (-t) no longer necessary
+			-- still allowed, but ignored
+		-- simplifies source and header files
+			-- eliminates SHA_STO_CLASS and SHA_THREAD_SAFE
+			-- ref. Bug #82784
+		-- thanks to Steve Hay for initial patch
+	- provided documentation to describe Unicode handling
+		-- ref: Bug #82378
+	- updated documentation of NIST statement on SHA-1
+
+5.81  Mon Jan 14 05:17:08 MST 2013
+	- corrected load subroutine (SHA.pm) to prevent double-free
+		-- Bug #82655: Security issue - segfault
+		-- thanks to Victor Efimov and Nicholas Clark
+			for technical expertise and suggestions
+
+5.80  Mon Dec 10 14:15:26 MST 2012
+	- obtained noticeable speedup on Intel/gcc
+		-- by setting -O1 and -fomit-frame-pointer
+		-- SHA-1 about 63% faster, SHA-2 improves 11-20%
+
+5.74  Sat Nov 24 03:10:18 MST 2012
+	- handle wide-string input by converting to bytes first
+		-- viz. use SvPVbyte instead of SvPV in SHA.xs
+		-- thanks to Eric Brine for summary and code
+
+5.73  Wed Oct 31 04:32:44 MST 2012
+	- provided workaround for DEC compiler bug (ref. Makefile.PL)
+
+5.72  Mon Sep 24 15:22:08 MST 2012
+	- adjusted module installation directory for later Perls
+		-- As of 5.11 Perl searches 'site' first, so use that
+			-- ref. INSTALLDIRS in Makefile.PL
+		-- thanks to Robert Sedlacek for patch
+
 5.71  Wed Feb 29 04:06:10 MST 2012
 	- prevented $! from getting clobbered in _bail() routine
 		-- thanks to Zefram for patch

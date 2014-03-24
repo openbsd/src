@@ -1,5 +1,8 @@
 use strict;
 use warnings;
+use Data::Dumper;
+
+*qquote= *Data::Dumper::qquote;
 
 sub StoreData
 {
@@ -36,11 +39,11 @@ sub VerifyData
     while (my ($k, $v) = each %$hashref) {
         no warnings 'uninitialized';
         if ($expected{$k} eq $v) {
-            #diag "Match [$k][$v]"; 
+            #diag "Match " . qquote($k) . " => " . qquote($v);
             delete $expected{$k} ;
         }
         else {
-            #diag "No Match [$k][$v]"; 
+            #diag "No Match " . qquote($k) . " => " . qquote($v) . " want " . qquote($expected{$k});
             $bad{$k} = $v;
         }
     }
@@ -50,17 +53,17 @@ sub VerifyData
         if (keys %expected ) {
             $bad .="  No Match from Expected:\n" ;
             while (my ($k, $v) = each %expected) {
-                $bad .= "\t'$k' =>\t'$v'\n";
+                $bad .= "\t" . qquote($k) . " => " . qquote($v) . "\n";
             }
         }
         if (keys %bad ) {
             $bad .= "\n  No Match from Actual:\n" ;
             while (my ($k, $v) = each %bad) {
                 no warnings 'uninitialized';
-                $bad .= "\t'$k' =>\t'$v'\n";
+                $bad .= "\t" . qquote($k) . " => " . qquote($v) . "\n";
             }
         }
-        diag "${bad}\n" ;
+        diag( "${bad}\n" );
     }
 }
 

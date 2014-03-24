@@ -2,7 +2,8 @@
 # run this file via a shell glob.  The full format of this file is given
 # in regexp.t
 # Prior to the implementation of autoloading of \N{}, tests that used \N{name}
-# could not go in this file, and were farmed out to other .t's.
+# could not go in this file, and were farmed out to other .t's, where they
+# remain
 #
 # pat	string	y/n/etc	expr	expected-expr	skip-reason
 __END__
@@ -107,7 +108,7 @@ a[b-d]e	ace	y	$&	ace
 a[b-d]	aac	y	$&	ac
 a[-b]	a-	y	$&	a-
 a[b-]	a-	y	$&	a-
-a[b-a]	-	c	-	Invalid [] range \"b-a\"
+a[b-a]	-	c	-	Invalid [] range
 a[]b	-	c	-	Unmatched [
 a[	-	c	-	Unmatched [
 a]	a]	y	$&	a]
@@ -162,6 +163,7 @@ ab|cd	abcd	y	$&	ab
 ()ef	def	y	$&-$1	ef-
 ()ef	def	y	$-[0]	1
 ()ef	def	y	$+[0]	3
+()\x{100}\x{1000}	d\x{100}\x{1000}	y	$+[0]	3
 ()ef	def	y	$-[1]	1
 ()ef	def	y	$+[1]	1
 *a	-	c	-	Quantifier follows nothing
@@ -350,7 +352,7 @@ a[-]?c	ac	y	$&	ac
 'a[b-d]'i	AAC	y	$&	AC
 'a[-b]'i	A-	y	$&	A-
 'a[b-]'i	A-	y	$&	A-
-'a[b-a]'i	-	c	-	Invalid [] range \"b-a\"
+'a[b-a]'i	-	c	-	Invalid [] range
 'a[]b'i	-	c	-	Unmatched [
 'a['i	-	c	-	Unmatched [
 'a]'i	A]	y	$&	A]
@@ -480,7 +482,7 @@ a(?:b|(c|e){1,2}?|d)+?(.)	ace	y	$1$2	ce
 (?<!c)b	cb	n	-	-
 (?<!c)b	b	y	-	-
 (?<!c)b	b	y	$&	b
-(?<%)b	-	c	-	Sequence (?<%...) not recognized
+(?<%)b	-	c	-	Group name must start with a non-digit word character
 (?:..)*a	aba	y	$&	aba
 (?:..)*?a	aba	y	$&	a
 ^(?:b|a(?=(.)))*\1	abc	y	$&	ab
@@ -534,12 +536,12 @@ a(?:b|(c|e){1,2}?|d)+?(.)	ace	y	$1$2	ce
 '(ab)\d\1'i	ab4Ab	y	$1	ab
 foo\w*\d{4}baz	foobar1234baz	y	$&	foobar1234baz
 a(?{})b	cabd	y	$&	ab
-a(?{)b	-	c	-	Sequence (?{...}) not terminated or not {}-balanced
-a(?{{})b	-	c	-	Sequence (?{...}) not terminated or not {}-balanced
+a(?{f()+	-	c	-	Missing right curly or square bracket
+a(?{{1}+	-	c	-	Missing right curly or square bracket
 a(?{}})b	-	c	-	
-a(?{"{"})b	-	c	-	Sequence (?{...}) not terminated or not {}-balanced
+a(?{"{"})b	ab	y	-	-
 a(?{"\{"})b	cabd	y	$&	ab
-a(?{"{"}})b	-	c	-	Unmatched right curly bracket
+a(?{"{"}})b	-	c	-	Sequence (?{...}) not terminated with ')'
 a(?{$::bl="\{"}).b	caxbd	y	$::bl	{
 x(~~)*(?:(?:F)?)?	x~~	y	-	-
 ^a(?#xxx){3}c	aaac	y	$&	aaac
@@ -580,8 +582,8 @@ x(~~)*(?:(?:F)?)?	x~~	y	-	-
 ^(\(+)?blah(?(1)(\)))$	blah	y	($2)	()
 ^(\(+)?blah(?(1)(\)))$	blah)	n	-	-
 ^(\(+)?blah(?(1)(\)))$	(blah	n	-	-
-(?(1?)a|b)	a	c	-	Switch condition not recognized
-(?(1)a|b|c)	a	c	-	Switch (?(condition)... contains too many branches
+(?(1?)a|b)	-	c	-	Switch condition not recognized
+(?(1)a|b|c)	-	c	-	Switch (?(condition)... contains too many branches
 (?(?{0})a|b)	a	n	-	-
 (?(?{0})b|a)	a	y	$&	a
 (?(?{1})b|a)	a	n	-	-
@@ -590,6 +592,10 @@ x(~~)*(?:(?:F)?)?	x~~	y	-	-
 (?(?!a)b|a)	a	y	$&	a
 (?(?=a)b|a)	a	n	-	-
 (?(?=a)a|b)	a	y	$&	a
+(?(?!\x{100})\x{100}|b)	\x{100}	n	-	-
+(?(?!\x{100})b|\x{100})	\x{100}	y	$&	\x{100}
+(?(?=\x{100})b|\x{100})	\x{100}	n	-	-
+(?(?=\x{100})\x{100}|b)	\x{100}	y	$&	\x{100}
 (?=(a+?))(\1ab)	aaab	y	$2	aab
 ^(?=(a+?))\1ab	aaab	n	-	-
 (\w+:)+	one:	y	$1	one:
@@ -615,8 +621,7 @@ $(?<=^(a))	a	y	$1	a
 [a[:xyz:	-	c	-	Unmatched [
 [a[:xyz:]	-	c	-	POSIX class [:xyz:] unknown
 [a[:]b[:c]	abc	y	$&	abc
-([a[:xyz:]b]+)	pbaq	c	-	POSIX class [:xyz:] unknown
-[a[:]b[:c]	abc	y	$&	abc
+([a[:xyz:]b]+)	-	c	-	POSIX class [:xyz:] unknown
 ([[:alpha:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd
 ([[:alnum:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy
 ([[:ascii:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--  ${nulnul}
@@ -633,6 +638,7 @@ $(?<=^(a))	a	y	$1	a
 ([[:^alpha:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	01
 ((?a)[[:^alnum:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	__--  ${nulnul}${ffff}
 ([[:^ascii:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${ffff}
+([:[:^ascii:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${ffff}	RT #120799
 ([[:^cntrl:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--  
 ([[:^digit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd
 ([[:^lower:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	AB
@@ -648,8 +654,7 @@ $(?<=^(a))	a	y	$1	a
 (?>(a+))b	aaab	y	$1	aaa
 ((?>[^()]+)|\([^()]*\))+	((abc(ade)ufh()()x	y	$&	abc(ade)ufh()()x
 (?<=x+)y	-	c	-	Variable length lookbehind not implemented
-a{37,17}	-	c	-	Can't do {n,m} with n > m
-a{37,0}	-	c	-	Can't do {n,m} with n > m
+((def){37,17})?ABC	ABC	y	$&	ABC
 \Z	a\nb\n	y	$-[0]	3
 \z	a\nb\n	y	$-[0]	4
 $	a\nb\n	y	$-[0]	3
@@ -848,6 +853,7 @@ abb$	b\nca	n	-	-
 'abb\Z'm	b\nca	n	-	-
 'abb\z'm	b\nca	n	-	-
 'abb$'m	b\nca	n	-	-
+'\Aa$'m	a\n\n	y	$&	a
 (^|x)(c)	ca	y	$2	c
 a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz	x	n	-	-
 a(?{$a=2;$b=3;($b)=$a})b	yabz	y	$b	2
@@ -875,12 +881,18 @@ foo.bart	foo.bart	y	-	-
 .[X](.+)+[X][X]	bbbbXXXaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	n	-	-
 .[X][X](.+)+[X]	bbbbXXXaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	n	-	-
 tt+$	xxxtt	y	-	-
-([a-\d]+)	za-9z	y	$1	a-9
-([\d-z]+)	a0-za	y	$1	0-z
-([\d-\s]+)	a0- z	y	$1	0- 
-([a-[:digit:]]+)	za-9z	y	$1	a-9
-([[:digit:]-z]+)	=0-z=	y	$1	0-z
-([[:digit:]-[:alpha:]]+)	=0-z=	y	$1	0-z
+([a-\d]+)	za-9z	Sy	$1	a-9
+([a-\d]+)	-	sc	-	False [] range
+([\d-z]+)	a0-za	Sy	$1	0-z
+([\d-z]+)	-	sc	$1	False [] range
+([\d-\s]+)	a0- z	Sy	$1	0- 
+([\d-\s]+)	-	sc	$1	False [] range
+([a-[:digit:]]+)	za-9z	Sy	$1	a-9
+([a-[:digit:]]+)	-	sc	-	False [] range
+([[:digit:]-z]+)	=0-z=	Sy	$1	0-z
+([[:digit:]-z]+)	-	sc	c	False [] range
+([[:digit:]-[:alpha:]]+)	=0-z=	Sy	$1	0-z
+([[:digit:]-[:alpha:]]+)	-	sc	-	False [] range
 \GX.*X	aaaXbX	n	-	-
 (\d+\.\d+)	3.1415926	y	$1	3.1415926
 (\ba.{0,10}br)	have a web browser	y	$1	a web br
@@ -995,8 +1007,8 @@ a(b)??	abc	y	<$1>	<>	# undef [perl #16773]
 ^.{2,3}?((?:b|a|r)+?)\1\z	foobarbar	y	$1	bar
 ^(?:f|o|b){2,3}?((?:b|a|r)+?)\1\z	foobarbar	y	$1	bar
 .*a(?!(b|cd)*e).*f	......abef	n	-	-	# [perl #23030]
-x(?#	x	c	-	Sequence (?#... not terminated
-:x(?#:	x	c	-	Sequence (?#... not terminated
+x(?#	-	c	-	Sequence (?#... not terminated
+:x(?#:	-	c	-	Sequence (?#... not terminated
 (WORDS|WORD)S	WORDS	y	$1	WORD
 (X.|WORDS|X.|WORD)S	WORDS	y	$1	WORD
 (WORDS|WORLD|WORD)S	WORDS	y	$1	WORD
@@ -1081,9 +1093,9 @@ X(?<=foo.)[YZ]	..XfooXY..	y	pos	8
 (?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	yM	$+{m}	ew	miniperl cannot load Tie::Hash::NamedCapture
 (?P<n>foo)|(?P<n>bar)|(?P<n>baz)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 (?P<n>foo)(??{ $+{n} })	snofooefoofoowaa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
-(?P<=n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<=...) not recognized
-(?P<!n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<!...) not recognized
-(?PX<n>foo|bar|baz)	snofooewa	c	-	Sequence (?PX<...) not recognized
+(?P<=n>foo|bar|baz)	-	c	-	Group name must start with a non-digit word character
+(?P<!n>foo|bar|baz)	-	c	-	Group name must start with a non-digit word character
+(?PX<n>foo|bar|baz)	-	c	-	Sequence (?PX<...) not recognized
 /(?'n'foo|bar|baz)/	snofooewa	y	$1	foo
 /(?'n'foo|bar|baz)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
@@ -1261,30 +1273,30 @@ a*(*F)	aaaab	n	-	-
 /(?<_>foo) \k<_>/	..foo foo..	yM	$+{_}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?'_0_'foo) \k'_0_'/	..foo foo..	yM	$+{_0_}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?<_0_>foo) \k<_0_>/	..foo foo..	yM	$+{_0_}	foo	miniperl cannot load Tie::Hash::NamedCapture
-/(?'0'foo) bar/	..foo bar..	c	-	Sequence (?'
-/(?<0>foo) bar/	..foo bar..	c	-	Sequence (?<
-/(?'12'foo) bar/	..foo bar..	c	-	Sequence (?'
-/(?<12>foo) bar/	..foo bar..	c	-	Sequence (?<
-/(?'1a'foo) bar/	..foo bar..	c	-	Sequence (?'
-/(?<1a>foo) bar/	..foo bar..	c	-	Sequence (?<
-/(?''foo) bar/	..foo bar..	c	-	Sequence (?''
-/(?<>foo) bar/	..foo bar..	c	-	Sequence (?<>
-/foo \k'n'/	foo foo	c	-	Reference to nonexistent named group
-/foo \k<n>/	foo foo	c	-	Reference to nonexistent named group
-/foo \k'a1'/	foo foo	c	-	Reference to nonexistent named group
-/foo \k<a1>/	foo foo	c	-	Reference to nonexistent named group
-/foo \k'_'/	foo foo	c	-	Reference to nonexistent named group
-/foo \k<_>/	foo foo	c	-	Reference to nonexistent named group
-/foo \k'_0_'/	foo foo	c	-	Reference to nonexistent named group
-/foo \k<_0_>/	foo foo	c	-	Reference to nonexistent named group
-/foo \k'0'/	foo foo	c	-	Sequence \\k'
-/foo \k<0>/	foo foo	c	-	Sequence \\k<
-/foo \k'12'/	foo foo	c	-	Sequence \\k'
-/foo \k<12>/	foo foo	c	-	Sequence \\k<
-/foo \k'1a'/	foo foo	c	-	Sequence \\k'
-/foo \k<1a>/	foo foo	c	-	Sequence \\k<
-/foo \k''/	foo foo	c	-	Sequence \\k'
-/foo \k<>/	foo foo	c	-	Sequence \\k<
+/(?'0'foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?<0>foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?'12'foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?<12>foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?'1a'foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?<1a>foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?''foo) bar/	-	c	-	Group name must start with a non-digit word character
+/(?<>foo) bar/	-	c	-	Group name must start with a non-digit word character
+/foo \k'n'/	-	c	-	Reference to nonexistent named group
+/foo \k<n>/	-	c	-	Reference to nonexistent named group
+/foo \k'a1'/	-	c	-	Reference to nonexistent named group
+/foo \k<a1>/	-	c	-	Reference to nonexistent named group
+/foo \k'_'/	-	c	-	Reference to nonexistent named group
+/foo \k<_>/	-	c	-	Reference to nonexistent named group
+/foo \k'_0_'/	-	c	-	Reference to nonexistent named group
+/foo \k<_0_>/	-	c	-	Reference to nonexistent named group
+/foo \k'0'/	-	c	-	Group name must start with a non-digit word character
+/foo \k<0>/	-	c	-	Group name must start with a non-digit word character
+/foo \k'12'/	-	c	-	Group name must start with a non-digit word character
+/foo \k<12>/	-	c	-	Group name must start with a non-digit word character
+/foo \k'1a'/	-	c	-	Group name must start with a non-digit word character
+/foo \k<1a>/	-	c	-	Group name must start with a non-digit word character
+/foo \k''/	-	c	-	Group name must start with a non-digit word character
+/foo \k<>/	-	c	-	Group name must start with a non-digit word character
 /(?<as>as) (\w+) \k<as> (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
 
 # \g{...} with a name as the argument 
@@ -1433,7 +1445,8 @@ abc\N	abc\n	n
 # and bypasses the lexer.
 /\N{U+}/	-	c	-	Invalid hexadecimal number
 # Below currently gives a misleading message
-/[\N{U+}]/	-	c	-	Unmatched
+/[\N{U+}]/	-	Sc	-	Unmatched
+/[\N{U+}]/	-	sc	-	Syntax error in (?[...])
 /abc\N{def/	-	c	-	Missing right brace
 /\N{U+4AG3}/	-	c	-	Illegal hexadecimal digit
 /[\N{U+4AG3}]/	-	c	-	Illegal hexadecimal digit
@@ -1442,7 +1455,7 @@ abc\N	abc\n	n
 # figures it out.
 \N{U+}	-	c	-	Invalid hexadecimal number
 [\N{U+}]	-	c	-	Invalid hexadecimal number
-\N{U+4AG3}	-	c	-	Illegal hexadecimal digit
+\N{U+4AG3}	-	c	-	Invalid hexadecimal number
 [\N{U+4AG3}]	-	c	-	Invalid hexadecimal number
 abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 
@@ -1456,7 +1469,7 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 
 # Verify works in single quotish context; regex compiler delivers slightly different msg
 # \N{U+BEEF.BEAD} succeeds here, because can't completely hide it from the outside.
-\N{U+0xBEEF}	-	c	-	Illegal hexadecimal digit
+\N{U+0xBEEF}	-	c	-	Invalid hexadecimal number
 \c`	-	c	-	\"\\c`\" is more clearly written simply as \"\\ \"
 \c1	-	c	-	\"\\c1\" is more clearly written simply as \"q\"
 \cA	\001	y	$&	\1
@@ -1474,15 +1487,25 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 [a\o{400}]	\x{100}	y	$&	\x{100}
 [a\o{1000}]	\x{200}	y	$&	\x{200}
 
+# The below were inserting a NULL
+\87	87	y	$&	87
+a\87	a87	y	$&	a87
+a\97	a97	y	$&	a97
+
+
 # The below was inserting a NULL into the character class.
-[\8\9]	\000	n	-	-
-[\8\9]	8	y	$&	8
-[\8\9]	9	y	$&	9
+[\8\9]	\000	Sn	-	-
+[\8\9]	-	sc	$&	Unrecognized escape \\8 in character class
+[\8\9]	8	Sy	$&	8
+[\8\9]	9	Sy	$&	9
 
 # Verify that reads 1-3 octal digits, and that \_ works in char class
-[\0]	\000	y	$&	\000
-[\07]	\007	y	$&	\007
-[\07]	7\000	n	-	-
+[\0]	\000	Sy	$&	\000
+[\0]	-	sc	-	Need exactly 3 octal digits
+[\07]	\007	Sy	$&	\007
+[\07]	-	sc	-	Need exactly 3 octal digits
+[\07]	7\000	Sn	-	-
+[\07]	-	sc	-	Need exactly 3 octal digits
 [\006]	\006	y	$&	\006
 [\006]	6\000	n	-	-
 [\0005]	\0005	y	$&	\000
@@ -1524,7 +1547,7 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 # Normally 1E9E generates a multi-char fold, but not in inverted class;
 # See [perl #89750].  This makes sure that the simple fold gets generated
 # in that case, to DF.
-/[^\x{1E9E}]/i	\x{DF}	n	-	-
+/[^\x{1E9E}]/i	\x{DF}	Sn	-	-
 
 # RT #96354
 /^.*\d\H/	X1	n	-	-
@@ -1536,7 +1559,8 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 /^\p{L}/	\x{3400}	y	$&	\x{3400}
 
 # RT #89774
-/[s\xDF]/ui	\xDFs	ybT	$&	\xDFs
+/[s\xDF]a/ui	ssa	Sy	$&	ssa
+/[s\xDF]a/ui	sa	y	$&	sa
 
 # RT #99928
 /^\R\x0A$/	\x0D\x0A	n	-	-
@@ -1545,6 +1569,20 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 /ff/i	\x{FB01}\x{FB00}	y	$&	\x{FB00}
 /fi/i	\x{FB01}\x{FB00}	y	$&	\x{FB01}
 /fi/i	\x{FB00}\x{FB01}	y	$&	\x{FB01}
+#
+# Make sure we don't see code blocks where there aren't, and vice-versa
+(?#( (?{1+)a	a	y	-	-
+'a# (?{1+'x	a	y	-	-
+ab[(?{1]	ab1	y	-	-
+ab[(?{1\](?{2]	ab2	y	-	-
+ab(?{"["})cd	abcd	y	-	-
+ab(??{"[x]"})cd	abxcd	y	-	-
+ab\[(??{1})c	ab[1c	y	-	-
+ab\\[(??{1;})]c	ab\\;c	y	-	-
+ab\\\[(??{1})c	ab\\[1c	y	-	-
+ab[c\](??{"]d	abcd	y	-	-
+ab[c\\](??{"[x]"})d	ab\\xd	y	-	-
+ab[c\\\](??{"x"})]{3}d	ab\\](d	y	-	-
 
 # These test that doesn't cut-off matching too soon in the string for
 # multi-char folds
@@ -1595,11 +1633,120 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 /[[:word:]]/	\x{2c1}	y	-	-
 /[[:word:]]/	\x{2c2}	n	-	-
 
+# [perl #113400]
+/syntax OK\s+\z/si	t/bin/good.pl syntax OK\n	y	-	-
+
+/^(.*?)\s*\|\s*(?:\/\s*|)'(.+)'$/	text|'sec'	y	<$1><$2>	<text><sec>
+/^(foo|)bar$/	bar	y	<$&>	<bar>
+/^(foo||baz)bar$/	bar	y	<$&>	<bar>
+/^(foo||baz)bar$/	bazbar	y	<$1>	<baz>
+/^(foo||baz)bar$/	foobar	y	<$1>	<foo>
+
+/^(?:foo|)bar$/	bar	y	<$&>	<bar>
+/^(?:foo||baz)bar$/	bar	y	<$&>	<bar>
+/^(?:foo||baz)bar$/	bazbar	y	<$&>	<bazbar>
+/^(?:foo||baz)bar$/	foobar	y	<$&>	<foobar>
+
+/^(?i:foo|)bar$/	bar	y	<$&>	<bar>
+/^(?i:foo||baz)bar$/	bar	y	<$&>	<bar>
+/^(?i:foo||baz)bar$/	bazbar	y	<$&>	<bazbar>
+/^(?i:foo||baz)bar$/	foobar	y	<$&>	<foobar>
+
+# $^N, $+ on backtrackracking
+# BRANCH
+^(.)(?:(..)|B)[CX]	ABCDE	y	$^N-$+	A-A	-
+# TRIE
+^(.)(?:BC(.)|B)[CX]	ABCDE	y	$^N-$+	A-A	-
+# CURLYX
+^(.)(?:(.)+)*[BX]	ABCDE	y	$^N-$+	A-A	-
+# CURLYM
+^(.)(BC)*	ABCDE	y	$^N-$+	BC-BC	-
+^(.)(BC)*[BX]	ABCDE	y	$^N-$+	A-A	-
+# CURLYN
+^(.)(B)*.[DX]	ABCDE	y	$^N-$+	B-B	-
+^(.)(B)*.[CX]	ABCDE	y	$^N-$+	A-A	-
+
+# using 'return' in code blocks
+^(A)(?{"xyz"})B$	AB	y	$1-$^R	A-xyz	-
+^(A)(?{return "xyz"})B$	AB	y	$1-$^R	A-xyz	-
+^(A)((??{"xyz"}))$	Axyz	y	$1-$2	A-xyz	-
+^(A)((??{return "xyz"}))$	Axyz	y	$1-$2	A-xyz	-
+^(A)((?(?{1})abc|xyz))$	Aabc	y	$1-$2	A-abc	-
+^(A)((?(?{0})abc|xyz))$	Axyz	y	$1-$2	A-xyz	-
+^(A)((?(?{return 1})abc|xyz))$	Aabc	y	$1-$2	A-abc	-
+^(A)((?(?{return 0})abc|xyz))$	Axyz	y	$1-$2	A-xyz	-
+
+# pattern modifier flags should propagate into returned (??{}) pattern
+# p,d,l not tested
+
+/^(a)((??{"b"}))$/i	AB	y	$1-$2	A-B	-
+/^(A)((??{'B$'}))(\nC)$/m	AB\nC	y	$1-$2-$3	A-B-\nC	-
+/^(A)((??{'.'}))(B)$/s	A\nB	y	$1-$2-$3	A-\n-B	-
+/^(A) ((??{' .'}))(B)$/x	A B	y	$1-$2-$3	A- -B	-
+/^((??{'\d'}))$/a	\x{660}	n	-	-
+/^(??{"s"})$/i	\x{17F}	y	-	-
+/^(??{"s"})$/ia	\x{17F}	y	-	-
+/^(??{"s"})$/iaa	\x{17F}	n	-	-
+/^(??{'\w'})$/u	\x{AA}	y	-	-
+
+# #113670 ensure any captures to the right are invalidated when CURLY
+# and CURLYM backtrack
+
+^(?:(X)?(\d)|(X)?(\d\d))$	X12	y	$1-$2-$3-$4	--X-12
+^(?:(XX)?(\d)|(XX)?(\d\d))$	XX12	y	$1-$2-$3-$4	--XX-12
+
+# rt 113770
+\A(?>\[(?:(?:)(?:R){1}|T|V?|A)\])\z	[A]	y	$&	[A]
+# rt 114068
+/( [^z] $ [^z]+)/xm	aa\nbb\ncc\n	y	$1	a\nbb\ncc\n
+
 # [perl #114220]
 /[\h]/	\x{A0}	y	$&	\xA0
 /[\H]/	\x{BF}	y	$&	\xBF
 /[\H]/	\x{A0}	n	-	-
 /[\H]/	\x{A1}	y	$&	\xA1
 
+[^\n]+	\nb	y	$&	b
+[^\n]+	a\n	y	$&	a
+
+# /a has no effect on properties
+(?a:\p{Any})	\x{100}	y	$&	\x{100}
+(?aa:\p{Any})	\x{100}	y	$&	\x{100}
+
+\w	\x{200C}	y	$&	\x{200C}
+\W	\x{200C}	n	-	-
+\w	\x{200D}	y	$&	\x{200D}
+\W	\x{200D}	n	-	-
+
+/^(?d:\xdf|_)*_/i	\x{17f}\x{17f}_	y	$&	\x{17f}\x{17f}_
+#
+# check that @-, @+ count chars, not bytes; especially if beginning of
+# string is not copied
+
+(\x{100})	\x{2000}\x{2000}\x{2000}\x{100}	y	$-[0]:$-[1]:$+[0]:$+[1]	3:3:4:4
+
+^\R{2}$	\r\n\r\n	y	$&	\r\n\r\n
+
+/^\D{11}/a	\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}	n	-	-
+/^\S{11}/a	\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}	n	-	-
+/^\W{11}/a	\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}\x{10FFFF}	n	-	-
+
+# [ perl #114272]
+\Vn	\xFFn/	y	$&	\xFFn
+
+/(?l:a?\w)/	b	y	$&	b
+m?^xy\?$?	xy?	y	$&	xy?
 
 # vim: softtabstop=0 noexpandtab
+/[#]/	a#b	y	$&	#
+/[#]b/	a#b	y	$&	#b
+/[#]/x	a#b	y	$&	#
+/[#]b/x	a#b	y	$&	#b
+/[#](?{})/x	a#b	y	$&	#
+/[#](??{'b'})/x	a#b	y	$&	#b
+/(?#)(?{})b/	a#b	y	$&	b
+/(?#)(??{'b'})/	a#b	y	$&	b
+/[(?#](?{})b/	a#b	y	$&	#b
+/[(?#](??{'b'})/	a#b	y	$&	#b
+/(?#)(?{})b/x	a#b	y	$&	b
+/(?#)(??{'b'})/x	a#b	y	$&	b

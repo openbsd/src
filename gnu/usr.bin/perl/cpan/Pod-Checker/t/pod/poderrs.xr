@@ -1,0 +1,53 @@
+*** WARNING: =head2 without preceding higher level at line 20 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 22 in file t/pod/poderrs.t
+*** ERROR: Unknown command 'unknown1' at line 26 in file t/pod/poderrs.t
+*** ERROR: Unknown interior-sequence 'Q' at line 30 in file t/pod/poderrs.t
+*** ERROR: Unknown interior-sequence 'A' at line 31 in file t/pod/poderrs.t
+*** ERROR: Unknown interior-sequence 'Y' at line 32 in file t/pod/poderrs.t
+*** ERROR: Unknown interior-sequence 'V' at line 32 in file t/pod/poderrs.t
+*** ERROR: unterminated B<...> at line 36 in file t/pod/poderrs.t
+*** ERROR: unterminated I<...> at line 35 in file t/pod/poderrs.t
+*** ERROR: unterminated C<...> at line 38 in file t/pod/poderrs.t
+*** WARNING: line containing nothing but whitespace in paragraph at line 46 in file t/pod/poderrs.t
+*** ERROR: =item without previous =over at line 53 in file t/pod/poderrs.t
+*** ERROR: =back without previous =over at line 57 in file t/pod/poderrs.t
+*** ERROR: =over on line 61 without closing =back (at head2) at line 65 in file t/pod/poderrs.t
+*** ERROR: =end without =begin at line 67 in file t/pod/poderrs.t
+*** ERROR: Nested =begin's (first at line 71:html) at line 73 in file t/pod/poderrs.t
+*** ERROR: =end without =begin at line 77 in file t/pod/poderrs.t
+*** ERROR: No argument for =begin at line 83 in file t/pod/poderrs.t
+*** ERROR: =for without formatter specification at line 89 in file t/pod/poderrs.t
+*** WARNING: nested commands C<...C<...>...> at line 95 in file t/pod/poderrs.t
+*** ERROR: garbled entity E<alea iacta est> at line 99 in file t/pod/poderrs.t
+*** ERROR: garbled entity E<C<auml>> at line 100 in file t/pod/poderrs.t
+*** ERROR: garbled entity E<abcI<bla>> at line 101 in file t/pod/poderrs.t
+*** ERROR: Entity number out of range E<0x100> at line 102 in file t/pod/poderrs.t
+*** ERROR: Entity number out of range E<07777> at line 103 in file t/pod/poderrs.t
+*** ERROR: Entity number out of range E<300> at line 104 in file t/pod/poderrs.t
+*** ERROR: malformed link L<> : empty link at line 116 in file t/pod/poderrs.t
+*** WARNING: ignoring leading whitespace in link at line 117 in file t/pod/poderrs.t
+*** WARNING: ignoring trailing whitespace in link at line 118 in file t/pod/poderrs.t
+*** WARNING: (section) in 'passwd(5)' deprecated at line 126 in file t/pod/poderrs.t
+*** WARNING: node '$|' contains non-escaped | or / at line 127 in file t/pod/poderrs.t
+*** WARNING: alternative text '$|' contains non-escaped | or / at line 127 in file t/pod/poderrs.t
+*** ERROR: Spurious character(s) after =back at line 133 in file t/pod/poderrs.t
+*** ERROR: Nonempty Z<> at line 147 in file t/pod/poderrs.t
+*** ERROR: Empty X<> at line 149 in file t/pod/poderrs.t
+*** WARNING: preceding non-item paragraph(s) at line 155 in file t/pod/poderrs.t
+*** WARNING: No argument for =item at line 157 in file t/pod/poderrs.t
+*** WARNING: previous =item has no contents at line 159 in file t/pod/poderrs.t
+*** WARNING: No items in =over (at line 167) / =back list at line 169 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =pod at line 175 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =cut at line 179 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 195 in file t/pod/poderrs.t
+*** ERROR: Apparent command =head2 not preceded by blank line at line 198 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 197 in file t/pod/poderrs.t
+*** ERROR: Apparent command =head2 not preceded by blank line at line 201 in file t/pod/poderrs.t
+*** ERROR: Apparent command =item not preceded by blank line at line 204 in file t/pod/poderrs.t
+*** ERROR: Spurious =cut command at line 230 in file t/pod/poderrs.t
+*** ERROR: Spurious =pod command at line 236 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'begin or begin' at line 108 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'end with begin' at line 109 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'OoPs' at line 110 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'abc def' at line 114 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'I/O Operators' at line 213 in file t/pod/poderrs.t

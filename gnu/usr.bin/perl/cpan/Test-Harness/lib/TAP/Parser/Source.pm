@@ -6,6 +6,8 @@ use vars qw($VERSION @ISA);
 use TAP::Object ();
 use File::Basename qw( fileparse );
 
+use constant BLK_SIZE => 512;
+
 @ISA = qw(TAP::Object);
 
 =head1 NAME
@@ -14,11 +16,11 @@ TAP::Parser::Source - a TAP source & meta data about it
 
 =head1 VERSION
 
-Version 3.23
+Version 3.26
 
 =cut
 
-$VERSION = '3.23';
+$VERSION = '3.26';
 
 =head1 SYNOPSIS
 
@@ -288,8 +290,8 @@ sub assemble_meta {
                 $file->{lc_ext} = lc( $file->{ext} );
                 $file->{basename} .= $file->{ext} if $file->{ext};
 
-                if ( $file->{text} and $file->{read} ) {
-                    eval { $file->{shebang} = $self->_read_shebang($$raw); };
+                if ( !$file->{is_dir} && $file->{read} ) {
+                    eval { $file->{shebang} = $self->shebang($$raw); };
                     if ( my $e = $@ ) {
                         warn $e;
                     }
@@ -323,18 +325,14 @@ May be called as a class method
     my %shebang_for;
 
     sub _read_shebang {
-        my ( $self, $file ) = @_;
-        my $shebang;
-        local *TEST;
-        if ( open( TEST, $file ) ) {
-            $shebang = <TEST>;
-            chomp $shebang;
-            close(TEST) or die "Can't close $file. $!\n";
-        }
-        else {
-            die "Can't open $file. $!\n";
-        }
-        return $shebang;
+        my ( $class, $file ) = @_;
+        open my $fh, '<', $file or die "Can't read $file: $!\n";
+
+        # Might be a binary file - so read a fixed number of bytes.
+        my $got = read $fh, my $buf, BLK_SIZE;
+        defined $got or die "I/O error: $!\n";
+        return $1 if $buf =~ /(.*)/;
+        return;
     }
 
     sub shebang {

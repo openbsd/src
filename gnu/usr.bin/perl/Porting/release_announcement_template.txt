@@ -2,25 +2,26 @@
 
     -- [ATTRIBUTION]
 
-We are [SYNONYM FOR 'pleased'] to announce Perl [VERSION], the [N-TH]
-development release of Perl 5.15.
+We are [SYNONYM FOR 'pleased'] to announce version [VERSION.SUBVERSION],
+the [N-TH] development release of version 17 of Perl 5.
 
-You will soon be able to download Perl [VERSION] from your favorite CPAN
-mirror or find it at:
+You will soon be able to download Perl 5.[VERSION.SUBVERSION] from your
+favorite CPAN mirror or find it at:
 
-https://metacpan.org/release/[AUTHOR]/perl-[VERSION]/
+https://metacpan.org/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/
 
 SHA1 digests for this release are:
 
- [TAR.GZ SHA1]   perl-[VERSION].tar.gz
- [TAR.BZ2 SHA1]  perl-[VERSION].tar.bz2
+ [TAR.GZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.gz
+ [TAR.BZ2 SHA1]  perl-5.[VERSION.SUBVERSION].tar.bz2
 
 You can find a full list of changes in the file "perldelta.pod" located in
 the "pod" directory inside the release and on the web.
 
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
-We expect to release Perl [NEXT BLEAD VERSION] on [FUTURE DATE].  The next
-major stable release of Perl 5, version 5.16.3, should appear in May 2012.
+We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
+DATE].  The next major stable release of Perl 5, version 18.0, should
+appear in May 2013.
 
 [YOUR SALUATION HERE]

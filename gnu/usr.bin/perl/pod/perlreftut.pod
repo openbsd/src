@@ -18,9 +18,9 @@ Fortunately, you only need to know 10% of what's in the main page to get
 
 =head1 Who Needs Complicated Data Structures?
 
-One problem that came up all the time in Perl 4 was how to represent a
-hash whose values were lists.  Perl 4 had hashes, of course, but the
-values had to be scalars; they couldn't be lists.
+One problem that comes up all the time is needing a hash whose values are
+lists.  Perl has hashes, of course, but the values have to be scalars;
+they can't be lists.
 
 Why would you want a hash of lists?  Let's take a simple example: You
 have a file of city and country names, like this:
@@ -47,8 +47,7 @@ country, and append the new city to the list.  When you're done reading
 the input, iterate over the hash as usual, sorting each list of cities
 before you print it out.
 
-If hash values can't be lists, you lose.  In Perl 4, hash values can't
-be lists; they can only be strings.  You lose.  You'd probably have to
+If hash values couldn't be lists, you lose.  You'd probably have to
 combine all the cities into a single string somehow, and then when
 time came to write the output, you'd have to break the string into a
 list, sort the list, and turn it back into a string.  This is messy
@@ -403,7 +402,7 @@ to push C<Athens> onto an array that doesn't exist, so it helpfully
 makes a new, empty, anonymous array for you, installs it into
 C<%table>, and then pushes C<Athens> onto it.  This is called
 'autovivification'--bringing things to life automatically.  Perl saw
-that they key wasn't in the hash, so it created a new hash entry
+that the key wasn't in the hash, so it created a new hash entry
 automatically. Perl saw that you wanted to use the hash value as an
 array, so it created a new empty array and installed a reference to it
 in the hash automatically.  And as usual, Perl made the array one

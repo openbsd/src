@@ -1,10 +1,68 @@
 =head1 NAME
 
-HISTORY - public release history for Data::Dumper
+Changes - public release history for Data::Dumper
 
 =head1 DESCRIPTION
 
 =over 8
+
+=item 2.145 (Mar 15 2013)
+
+Test refactoring and fixing wide and far.
+
+Various old-perl compat fixes.
+
+=item 2.143 (Feb 26 2013)
+
+Address vstring related test failures on 5.8: Skip tests for
+obscure case.
+
+Major improvements to test coverage and significant refactoring.
+
+Make Data::Dumper XS ignore Freezer return value. Fixes RT #116364.
+
+Change call of isALNUM to equivalent but more clearly named isWORDCHAR
+
+=item 2.139 (Dec 12 2012)
+
+Supply an explicit dynamic_config => 0 in META
+
+Properly list BUILD_REQUIRES prereqs (P5-RT#116028)
+
+Some optimizations. Removed useless "register" declarations.
+
+=item 2.136 (Oct 04 2012)
+
+Promote to stable release.
+
+Drop some "register" declarations.
+
+=item 2.135_07 (Aug 06 2012)
+
+Use the new utf8 to code point functions - fixing a potential
+reading buffer overrun.
+
+Data::Dumper: Sparseseen option to avoid building much of the seen
+hash: This has been measured to, in some cases, provide a 50% speed-up
+
+Dumper.xs: Avoid scan_vstring on 5.17.3 and up
+
+Avoid a warning from clang when compiling Data::Dumper
+
+Fix DD's dumping of qr|\/|
+
+Data::Dumper's Perl implementation was not working with overloaded
+blessed globs, which it thought were strings.
+
+Allow Data::Dumper to load on miniperl
+
+=item 2.135_02 (Dec 29 2011)
+
+Makes DD dump *{''} properly.
+
+[perl #101162] DD support for vstrings:
+Support for vstrings to Data::Dumper, in both Perl and XS
+implementations.
 
 =item 2.135_01 (Dec 19 2011)
 

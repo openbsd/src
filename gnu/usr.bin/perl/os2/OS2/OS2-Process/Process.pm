@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.07";
+  our $VERSION = "1.08";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -1750,7 +1750,7 @@ specifies whether region scan should be interruptible by signals.
 Use class C<OS2::localClipbrd> to ensure that clipboard is closed even if
 the code in the block made a non-local exit.
 
-See the L</OS2::localMorphPM, OS2::localFlashWindow, and OS2::localClipbrd classes
+See the L</OS2::localMorphPM, OS2::localFlashWindow, and OS2::localClipbrd classes>
 
 =head2 Control of the PM atom tables
 

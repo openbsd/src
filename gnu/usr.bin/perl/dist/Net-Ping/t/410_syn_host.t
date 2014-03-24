@@ -79,14 +79,14 @@ foreach my $host (keys %webs) {
   # ping() does dns resolution and
   # only sends the SYN at this point
   Alarm(50); # (Plenty for a DNS lookup)
-  is($p->ping($host), 1, "Can reach $host $p->{bad}->{$host}");
+  is($p->ping($host), 1, "Can reach $host [" . ($p->{bad}->{$host} || "") . "]");
 }
 
 Alarm(20);
 foreach my $host (sort keys %webs) {
   my $on = $p->ack($host);
   if ($on) {
-    is($webs{$host}, 1, "supposed to be up: http://$host/");
+    is($webs{$host}, 1, "supposed to be up: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
   } else {   
     is($webs{$host}, 0, "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
   }

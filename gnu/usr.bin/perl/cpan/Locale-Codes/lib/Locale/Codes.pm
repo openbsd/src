@@ -1,13 +1,13 @@
 package Locale::Codes;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2012 Sullivan Beck
+# Copyright (c) 2010-2013 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 use strict;
+require 5.006;
 use warnings;
-require 5.002;
 
 use Carp;
 use Locale::Codes::Constants;
@@ -31,7 +31,7 @@ our($VERSION,%Data,%Retired);
 # $Retired{ TYPE }{ CODESET }{ code }{ CODE } = NAME
 #                            { name }{ NAME } = [CODE,NAME]  (the key is lowercase)
 
-$VERSION='3.21';
+$VERSION='3.25';
 
 #=======================================================================
 #
@@ -486,7 +486,7 @@ sub _delete_alias {
       return 0;
    }
 
-   my $n = $#{ $Data{$type}{'id2names'}{$id} };
+   my $n = $#{ $Data{$type}{'id2names'}{$id} } + 1;
    if ($n == 1) {
       carp "delete_${type}_alias(): only one name defined (use _delete_${type} instead)\n"
         unless ($nowarn);
@@ -686,79 +686,6 @@ sub _delete_code_alias {
 
    return 1;
 }
-
-#=======================================================================
-#
-# alias_code ( ALIAS => CODE [ , CODESET ] )
-#
-# Add an alias for an existing code. If the CODESET isn't specified,
-# then we use the default (currently the alpha-2 codeset).
-#
-#   Locale::Country::alias_code('uk' => 'gb');
-#
-#=======================================================================
-
-# sub alias_code {
-#    my $nowarn   = 0;
-#    $nowarn      = 1, pop  if ($_[$#_] eq "nowarn");
-#    my $alias    = shift;
-#    my $code     = shift;
-#    my $codeset  = @_ > 0 ? shift : LOCALE_CODE_DEFAULT;
-
-#    return 0  if ($codeset !~ /^\d+$/);
-
-#    if      ($codeset == LOCALE_CODE_ALPHA_2) {
-#       $codeset = "alpha2";
-#       $alias   = lc($alias);
-#    } elsif ($codeset == LOCALE_CODE_ALPHA_3) {
-#       $codeset = "alpha3";
-#       $alias   = lc($alias);
-#    } elsif ($codeset == LOCALE_CODE_FIPS) {
-#       $codeset = "fips";
-#       $alias   = uc($alias);
-#    } elsif ($codeset == LOCALE_CODE_NUMERIC) {
-#       $codeset = "num";
-#       return undef if ($alias =~ /\D/);
-#       $alias   = sprintf("%.3d", $alias);
-#    } else {
-#       carp "rename_country(): unknown codeset\n"  unless ($nowarn);
-#       return 0;
-#    }
-
-#    # Check that $code exists in the codeset.
-
-#    my ($id,$i);
-#    if (exists $Data{$type}{'code2id'}{$codeset}{$code}) {
-#       ($id,$i) = @{ $Data{$type}{'code2id'}{$codeset}{$code} };
-#    } else {
-#       carp "alias_code: attempt to alias \"$alias\" to unknown country code \"$code\"\n"
-#       unless ($nowarn);
-#       return 0;
-#    }
-
-#    # Cases:
-#    #   The alias already exists.
-#    #      Error
-#    #
-#    #   It's new
-#    #      Create a new entry in Code2CountryID
-#    #      Replace the entiry in CountryID2Code
-#    #      Regenerate %Codes
-
-#    if (exists $Data{$type}{'code2id'}{$codeset}{$alias}) {
-#       carp "alias_code: attempt to alias \"$alias\" which is already in use\n"
-#       unless ($nowarn);
-#       return 0;
-#    }
-
-#    $Data{$type}{'code2id'}{$codeset}{$alias} = [ $id, $i ];
-#    $Data{$type}{'id2names'}ID2Code{$codeset}{$id} = $alias;
-
-#    my @codes = keys %{ $Data{$type}{'code2id'}{$codeset} };
-#    $Locale::CountryCodes::Codes{$codeset} = [ sort @codes ];
-
-#    return $alias;
-# }
 
 1;
 # Local Variables:

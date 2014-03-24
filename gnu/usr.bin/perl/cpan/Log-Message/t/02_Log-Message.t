@@ -1,10 +1,10 @@
 ### Log::Message test suite ###
-BEGIN { 
+BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir '../lib/Log/Message' if -d '../lib/Log/Message';
         unshift @INC, '../../..';
     }
-} 
+}
 
 BEGIN { chdir 't' if -d 't' }
 
@@ -18,7 +18,7 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
                   Log::Message::Item    Log::Message::Handlers]
 ) {
     use_ok( $pkg ) or diag "'$pkg' not found. Dying";
-}    
+}
 
 ### test global stack
 {
@@ -69,11 +69,11 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
     );
 
     {
-        ok( $log->retrieve( message => qr/baz/ ),   
+        ok( $log->retrieve( message => qr/baz/ ),
                                         q[  Retrieving based on message] );
-        ok( $log->retrieve( tag     => qr/TAG/ ),   
+        ok( $log->retrieve( tag     => qr/TAG/ ),
                                         q[  Retrieving based on tag] );
-        ok( $log->retrieve( level   => qr/test/ ),  
+        ok( $log->retrieve( level   => qr/test/ ),
                                         q[  Retrieving based on level] );
     }
 
@@ -95,7 +95,7 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
         like(   $item->shortmess, qr/\w+/,
                 q[  Item shortmess stored properly]
         );
-        
+
         ok(     $item->longmess,        q[Item longmess stored] );
         like(   $item->longmess, qr/Log::Message::store/s,
                 q[  Item longmess stored properly]
@@ -118,7 +118,7 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
 
     {
         ok( $item->remove,          q[Removing item from stack] );
-        ok( (!grep{ $item eq $_ } $log->retrieve), 
+        ok( (!grep{ $item eq $_ } $log->retrieve),
                                     q[  Item removed from stack] );
     }
 
@@ -127,36 +127,36 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
         ok( @{$log->{STACK}} == 0,  q[Flushing stack] );
     }
 }
-    
-### test errors 
+
+### test errors
 {   my $log = Log::Message->new( private => 1 );
 
-    
+
     ### store errors
     {   ### dont make it print
         my $warnings;
         local $SIG{__WARN__} = sub { $warnings .= "@_" };
-    
+
         my $rv  = $log->store();
         ok( !$rv,                       q[Logging empty message failed] );
         like( $warnings, qr/message/,   q[  Spotted the error] );
     }
-    
+
     ### retrieve errors
     {   ### dont make it print
         my $warnings;
         local $SIG{__WARN__} = sub { $warnings .= "@_" };
-    
+
         ### XXX whitebox test!
         local $Params::Check::VERBOSE = 1; # so the warnings are emitted
         local $Params::Check::VERBOSE = 1; # so the warnings are emitted
-    
+
         my $rv  = $log->retrieve( frobnitz => $$ );
         ok( !$rv,                       q[Retrieval with bogus args] );
-        like( $warnings, qr/not a valid key/,   
+        like( $warnings, qr/not a valid key/,
                                         qq[  Spotted the error] );
     }
-}    
+}
 
 
 

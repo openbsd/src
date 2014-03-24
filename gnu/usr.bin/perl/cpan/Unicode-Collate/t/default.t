@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..60\n"; }
+BEGIN { $| = 1; print "1..70\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -40,8 +40,6 @@ my $acute   = _pack_U(0x0301);
 my $hiragana = "\x{3042}\x{3044}";
 my $katakana = "\x{30A2}\x{30A4}";
 
-##### 2..11
-
 my $Collator = Unicode::Collate->new(
   normalization => undef,
 );
@@ -52,6 +50,8 @@ ok($Collator->version,   Unicode::Collate::Base_Unicode_Version);
 ok($Collator->version(), Unicode::Collate->Base_Unicode_Version);
 ok($Collator->version,          $Collator->Base_Unicode_Version);
 ok($Collator->version(),        $Collator->Base_Unicode_Version());
+
+# 6
 
 ok($Collator->cmp("", ""), 0);
 ok($Collator->eq("", ""));
@@ -67,7 +67,7 @@ ok(
   join(':',                  qw/ ACA ACHA ACIA ACKA ADA / ),
 );
 
-##### 12..22
+# 11
 
 ok($Collator->cmp("A$acute", $A_acute), 0); # @version 3.1.1 (prev: -1)
 ok($Collator->cmp($a_acute, $A_acute), -1);
@@ -85,7 +85,7 @@ ok($Collator->lt("A", $A_acute));
 ok($Collator->lt("A", $a_acute));
 ok($Collator->lt($a_acute, $A_acute));
 
-##### 23..29
+# 22
 
 $Collator->change(level => 2);
 
@@ -98,7 +98,7 @@ ok( $Collator->cmp($hiragana, $katakana), 0);
 ok( $Collator->eq($hiragana, $katakana) );
 ok( $Collator->ge($hiragana, $katakana) );
 
-##### 30..35
+# 29
 
 # hangul
 ok( $Collator->eq("a\x{AC00}b", "a\x{1100}\x{1161}b") );
@@ -108,7 +108,7 @@ ok( $Collator->lt("a\x{AC00}b", "a\x{AE00}b") );
 ok( $Collator->gt("a\x{D7A3}b", "a\x{C544}b") );
 ok( $Collator->lt("a\x{C544}b", "a\x{30A2}b") ); # hangul < hiragana
 
-##### 36..44
+# 35
 
 $Collator->change(%old_level, katakana_before_hiragana => 1);
 
@@ -123,7 +123,7 @@ ok( $Collator->ne($hiragana, $katakana) );
 ok( $Collator->gt($hiragana, $katakana) );
 ok( $Collator->ge($hiragana, $katakana) );
 
-##### 45..50
+# 44
 
 $Collator->change(upper_before_lower => 1);
 
@@ -134,14 +134,14 @@ ok( $Collator->cmp($hiragana, $katakana), 1);
 ok( $Collator->ge($hiragana, $katakana), 1);
 ok( $Collator->gt($hiragana, $katakana), 1);
 
-##### 51..52
+# 50
 
 $Collator->change(katakana_before_hiragana => 0);
 
 ok( $Collator->cmp("abc", "ABC"), 1);
 ok( $Collator->cmp($hiragana, $katakana), -1);
 
-##### 53..54
+# 52
 
 $Collator->change(upper_before_lower => 0);
 
@@ -150,19 +150,44 @@ ok( $Collator->le("abc", "ABC") );
 ok( $Collator->cmp($hiragana, $katakana), -1);
 ok( $Collator->lt($hiragana, $katakana) );
 
-##### 55..60
+# 56
 
 $Collator->change(level => 1);
 
-my $SupCyril = Unicode::Collate->new(
+my $Tailored = Unicode::Collate->new(
   normalization => undef,
   suppress => [0x400..0x4FF],
   level => 1,
+  entry => '0000 ; [.FFFE.0020.0005.0000]',
 );
 
 # Ka vs Kje
 ok($Collator->gt("\x{45C}", "\x{43A}"));
 ok($Collator->gt("\x{40C}", "\x{41A}"));
-ok($SupCyril->gt("\x{45C}", "\x{43A}"));
-ok($SupCyril->gt("\x{40C}", "\x{41A}"));
+ok($Tailored->gt("\x{45C}", "\x{43A}"));
+ok($Tailored->gt("\x{40C}", "\x{41A}"));
 
+# 60
+
+ok($Collator->eq("abc\0", "abc"));
+ok($Tailored->gt("abc\0", "abc\x{4E00}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+
+# 64
+
+$Tailored->change(UCA_Version => 9);
+
+ok($Tailored->gt("abc\0", "abc\x{4E00}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+
+# 67
+
+$Tailored->change(UCA_Version => 8);
+
+ok($Tailored->gt("abc\0", "abc\x{4E00}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+ok($Tailored->gt("abc\0", "abc\x{FFFD}"));
+
+# 70

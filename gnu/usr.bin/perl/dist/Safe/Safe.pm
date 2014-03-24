@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use Scalar::Util qw(reftype refaddr);
 
-$Safe::VERSION = "2.31_01";
+$Safe::VERSION = "2.35";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -21,7 +21,7 @@ sub lexless_anon_sub {
     # Uses a closure (on $__ExPr__) to pass in the code to be executed.
     # (eval on one line to keep line numbers as expected by caller)
     eval sprintf
-    'package %s; %s sub { @_=(); eval q[my $__ExPr__;] . $__ExPr__; }',
+    'package %s; %s sub { @_=(); eval q[local *SIG; my $__ExPr__;] . $__ExPr__; }',
                 $_[0], $_[1] ? 'use strict;' : '';
 }
 
@@ -140,6 +140,9 @@ my $default_share = [qw[
     &Tie::Hash::NamedCapture::SCALAR
     &Tie::Hash::NamedCapture::flags
 ])];
+if (defined $Devel::Cover::VERSION) {
+    push @$default_share, '&Devel::Cover::use_file';
+}
 
 sub new {
     my($class, $root, $mask) = @_;
@@ -352,6 +355,8 @@ sub _clean_stash {
 
 sub reval {
     my ($obj, $expr, $strict) = @_;
+    die "Bad Safe object" unless $obj->isa('Safe');
+
     my $root = $obj->{Root};
 
     my $evalsub = lexless_anon_sub($root, $strict, $expr);
@@ -402,6 +407,7 @@ sub _find_code_refs {
 
 sub wrap_code_ref {
     my ($obj, $sub) = @_;
+    die "Bad safe object" unless $obj->isa('Safe');
 
     # wrap code ref $sub with _safe_call_sv so that, when called, the
     # execution will happen with the compartment fully 'in effect'.
@@ -437,6 +443,8 @@ sub wrap_code_ref {
 
 sub rdo {
     my ($obj, $file) = @_;
+    die "Bad Safe object" unless $obj->isa('Safe');
+
     my $root = $obj->{Root};
 
     my $sg = sub_generation();

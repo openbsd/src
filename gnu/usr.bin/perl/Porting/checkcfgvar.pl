@@ -46,17 +46,13 @@ my @CFG = (
 	   # We can't base our check on $], because that's the version of the
 	   # perl that we are running, not the version of the source tree.
 	   "Cross/config.sh-arm-linux",
-	   "epoc/config.sh",
 	   "NetWare/config.wc",
 	   "symbian/config.sh",
 	   "uconfig.sh",
 	   "uconfig64.sh",
 	   "plan9/config_sh.sample",
 	   "win32/config.gc",
-	   "win32/config.gc64",
-	   "win32/config.gc64nox",
 	   "win32/config.vc",
-	   "win32/config.vc64",
 	   "win32/config.ce",
 	   "configure.com",
 	   "Porting/config.sh",

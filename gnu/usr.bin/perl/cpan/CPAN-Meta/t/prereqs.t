@@ -85,6 +85,7 @@ is_deeply($prereq->as_string_hash, $prereq_struct, "round-trip okay");
     (! grep { 'Test' eq $_ } @req_mod),
     "...but not the build requirements",
   );
+
 }
 
 {

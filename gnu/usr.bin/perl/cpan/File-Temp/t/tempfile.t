@@ -2,9 +2,9 @@
 # Test for File::Temp - tempfile function
 
 use strict;
-use Test;
-BEGIN { plan tests => 22}
+use Test::More tests => 28;
 use File::Spec;
+use Cwd qw/ cwd /;
 
 # Will need to check that all files were unlinked correctly
 # Set up an END block here to do it
@@ -16,17 +16,18 @@ my (@files, @dirs, @still_there);
 # These are tidied up
 END {
   foreach (@still_there) {
-    ok( -f $_ );
-    ok( unlink( $_ ) );
-    ok( !(-f $_) );
+    ($_) = /(^.*)/; # untaint for testing under taint mode
+    ok( -f $_, "File $_ is still present" );
+    ok( unlink( $_ ), "Unlink file" );
+    ok( !(-f $_), "File is no longer present" );
   }
 }
 
 # Loop over an array hoping that the files dont exist
-END { foreach (@files) { ok( !(-e $_) )} }
+END { foreach (@files) { ok( !(-e $_), "File $_ should not be present" )} }
 
 # And a test for directories
-END { foreach (@dirs)  { ok( !(-d $_) )} }
+END { foreach (@dirs)  { ok( !(-d $_), "Dir $_ should not be present" )} }
 
 # Need to make sure that the END blocks are setup before
 # the ones that File::Temp configures since END blocks are evaluated
@@ -35,7 +36,7 @@ END { foreach (@dirs)  { ok( !(-d $_) )} }
 use File::Temp qw/ tempfile tempdir/;
 
 # Now we start the tests properly
-ok(1);
+ok(1, "Start test");
 
 
 # Tempfile
@@ -45,10 +46,10 @@ my ($fh, $tempfile) = tempfile(
 			       SUFFIX => '.txt',
 			      );
 
-ok( (-f $tempfile) );
+ok( (-f $tempfile), "Tempfile exists" );
 # Should still be around after closing
-ok( close( $fh ) ); 
-ok( (-f $tempfile) );
+ok( close( $fh ), "Tempfile closed" );
+ok( (-f $tempfile), "Tempfile exists" );
 # Check again at exit
 push(@files, $tempfile);
 
@@ -63,8 +64,18 @@ my $tempdir = tempdir( $template ,
 
 print "# TEMPDIR: $tempdir\n";
 
-ok( (-d $tempdir) );
-push(@dirs, $tempdir);
+ok( (-d $tempdir), "Local tempdir exists" );
+push(@dirs, File::Spec->rel2abs($tempdir));
+
+my $tempdir2 = tempdir( TEMPLATE => "customXXXXX",
+		       DIR => File::Spec->curdir,
+		       CLEANUP => 1,
+		     );
+
+print "# TEMPDIR2: $tempdir2\n";
+
+like( $tempdir2, qr/custom/, "tempdir with TEMPLATE" );
+push(@dirs, File::Spec->rel2abs($tempdir));
 
 # Create file in the temp dir
 ($fh, $tempfile) = tempfile(
@@ -75,8 +86,8 @@ push(@dirs, $tempdir);
 
 print "# TEMPFILE: Created $tempfile\n";
 
-ok( (-f $tempfile));
-push(@files, $tempfile);
+ok( (-f $tempfile), "Local temp file exists with .dat extension");
+push(@files, File::Spec->rel2abs($tempfile));
 
 # Test tempfile
 # ..and again
@@ -85,8 +96,8 @@ push(@files, $tempfile);
 			   );
 
 
-ok( (-f $tempfile ));
-push(@files, $tempfile);
+ok( (-f $tempfile ), "Local tempfile in tempdir exists");
+push(@files, File::Spec->rel2abs($tempfile));
 
 # Test tempfile
 # ..and another with changed permissions (read-only)
@@ -95,8 +106,8 @@ push(@files, $tempfile);
                           );
 chmod 0444, $tempfile;
 
-ok( (-f $tempfile ));
-push(@files, $tempfile);
+ok( (-f $tempfile ), "Local tempfile in tempdir exists read-only");
+push(@files, File::Spec->rel2abs($tempfile));
 
 print "# TEMPFILE: Created $tempfile\n";
 
@@ -110,17 +121,30 @@ print "# TEMPFILE: Created $tempfile\n";
 
 print "# TEMPFILE: Created $tempfile\n";
 
-ok( (-f $tempfile) );
-push(@files, $tempfile);
+ok( (-f $tempfile), "Local tempfile in tempdir with .dat extension exists" );
+push(@files, File::Spec->rel2abs($tempfile));
 
+
+# and another (with TEMPLATE)
+
+($fh, $tempfile) = tempfile( TEMPLATE => 'goodbyeXXXXXXX',
+			    DIR => $tempdir,
+			    UNLINK => 1,
+			    SUFFIX => '.dat',
+			   );
+
+print "# TEMPFILE: Created $tempfile\n";
+
+ok( (-f $tempfile), "Local tempfile in tempdir with TEMPLATE" );
+push(@files, File::Spec->rel2abs($tempfile));
 
 # Create a temporary file that should stay around after
 # it has been closed
 ($fh, $tempfile) = tempfile( 'permXXXXXXX', UNLINK => 0 );
 print "# TEMPFILE: Created $tempfile\n";
-ok( -f $tempfile );
-ok( close( $fh ) );
-push( @still_there, $tempfile); # check at END
+ok( -f $tempfile, "Long-lived temp file" );
+ok( close( $fh ), "Close long-lived temp file" );
+push( @still_there, File::Spec->rel2abs($tempfile) ); # check at END
 
 # Would like to create a temp file and just retrieve the handle
 # but the test is problematic since:
@@ -135,16 +159,25 @@ $fh = eval { tempfile( 'ftmpXXXXX', DIR => File::Spec->tmpdir ) };
 if ($fh) {
 
   # print something to it to make sure something is there
-  ok( print $fh "Test\n" );
+  ok( print($fh "Test\n"), "Write to temp file" );
 
   # Close it - can not check it is gone since we dont know the name
-  ok( close($fh) );
+  ok( close($fh), "Close temp file" );
 
 } else {
   skip "Skip Failed probably due to NFS", 1;
   skip "Skip Failed probably due to NFS", 1;
 }
 
+# Create temp directory and chdir to it; it should still be removed on exit.
+$tempdir = tempdir(CLEANUP => 1);
+
+print "# TEMPDIR: $tempdir\n";
+
+ok( (-d $tempdir), "Temp directory in temp dir" );
+chdir $tempdir or die $!;
+push(@dirs, File::Spec->rel2abs($tempdir));
+
 # Now END block will execute to test the removal of directories
-print "# End of tests. Execute END blocks\n";
+print "# End of tests. Execute END blocks in directory ". cwd() ."\n";
 

@@ -7,9 +7,9 @@
 BEGIN {
     chdir 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-use strict;
 use warnings;
 use File::Spec::Functions;
 
@@ -27,28 +27,22 @@ if (eval { require Socket }) {
 
 @Core_Modules = sort @Core_Modules;
 
-print "1..".(1+@Core_Modules)."\n";
+plan tests => 1+@Core_Modules;
 
-my $message
-  = "ok 1 - All modules should have tests # TODO Make Schwern Poorer\n";
-if (@Core_Modules) {
-  print "not $message";
-} else {
-  print $message;
-}
-print <<'EOREWARD';
-# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-04/msg01223.html
-# 20010421230349.P2946@blackrider.blackstar.co.uk
-EOREWARD
-
-my $test_num = 2;
+cmp_ok(@Core_Modules, '>', 0, "All modules should have tests");
+note("http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-04/msg01223.html");
+note("20010421230349.P2946\@blackrider.blackstar.co.uk");
 
 foreach my $module (@Core_Modules) {
-    my $todo = '';
-    $todo = "# TODO $module needs porting on $^O" if $module eq 'ByteLoader' && $^O eq 'VMS';
-    print "# $module compile failed\nnot " unless compile_module($module);
-    print "ok $test_num $todo\n";
-    $test_num++;
+    if ($module eq 'ByteLoader' && $^O eq 'VMS') {
+        TODO: {
+            local $TODO = "$module needs porting on $^O";
+            ok(compile_module($module), "compile $module");
+        }
+    }
+    else {
+        ok(compile_module($module), "compile $module");
+    }
 }
 
 # We do this as a separate process else we'll blow the hell
@@ -60,7 +54,6 @@ sub compile_module {
     my $lib     = '-I' . catdir(updir(), 'lib');
 
     my $out = scalar `$^X $lib $compmod $module`;
-    print "# $out";
     return $out =~ /^ok/;
 }
 

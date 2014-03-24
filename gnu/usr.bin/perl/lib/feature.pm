@@ -5,7 +5,7 @@
 
 package feature;
 
-our $VERSION = '1.27';
+our $VERSION = '1.32';
 
 our %feature = (
     fc              => 'feature_fc',
@@ -15,6 +15,7 @@ our %feature = (
     evalbytes       => 'feature_evalbytes',
     array_base      => 'feature_arybase',
     current_sub     => 'feature___SUB__',
+    lexical_subs    => 'feature_lexsubs',
     unicode_eval    => 'feature_unieval',
     unicode_strings => 'feature_unicode',
 );
@@ -23,7 +24,7 @@ our %feature_bundle = (
     "5.10"    => [qw(array_base say state switch)],
     "5.11"    => [qw(array_base say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
+    "all"     => [qw(array_base current_sub evalbytes fc lexical_subs say state switch unicode_eval unicode_strings)],
     "default" => [qw(array_base)],
 );
 
@@ -31,6 +32,8 @@ $feature_bundle{"5.12"} = $feature_bundle{"5.11"};
 $feature_bundle{"5.13"} = $feature_bundle{"5.11"};
 $feature_bundle{"5.14"} = $feature_bundle{"5.11"};
 $feature_bundle{"5.16"} = $feature_bundle{"5.15"};
+$feature_bundle{"5.17"} = $feature_bundle{"5.15"};
+$feature_bundle{"5.18"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
 
 our $hint_shift   = 26;
@@ -77,7 +80,7 @@ pragma.)
 =head2 Lexical effect
 
 Like other pragmas (C<use strict>, for example), features have a lexical
-effect. C<use feature qw(foo)> will only make the feature "foo" available
+effect.  C<use feature qw(foo)> will only make the feature "foo" available
 from that point to the end of the enclosing block.
 
     {
@@ -137,7 +140,8 @@ C<use feature 'unicode_strings'> tells the compiler to use Unicode semantics
 in all string operations executed within its scope (unless they are also
 within the scope of either C<use locale> or C<use bytes>).  The same applies
 to all regular expressions compiled within the scope, even if executed outside
-it.
+it.  It does not change the internal representation of strings, but only how
+they are interpreted.
 
 C<no feature 'unicode_strings'> tells the compiler to use the traditional
 Perl semantics wherein the native character set semantics is used unless it is
@@ -223,6 +227,20 @@ See L<perlfunc/fc> for details.
 
 This feature is available from Perl 5.16 onwards.
 
+=head2 The 'lexical_subs' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::lexical_subs";
+
+This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
+and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
+
+This feature is available from Perl 5.18 onwards.
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -244,6 +262,9 @@ The following feature bundles are available:
   :5.14     say state switch unicode_strings array_base
 
   :5.16     say state switch unicode_strings
+            unicode_eval evalbytes current_sub fc
+
+  :5.18     say state switch unicode_strings
             unicode_eval evalbytes current_sub fc
 
 The C<:default> bundle represents the feature set that is enabled before

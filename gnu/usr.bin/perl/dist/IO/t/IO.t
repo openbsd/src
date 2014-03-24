@@ -49,6 +49,7 @@ local $SIG{__WARN__} = sub { $warn = "@_" } ;
 
 {
     local $^W = 0;
+    no if $^V >= 5.17.4, warnings => "deprecated";
     IO->import();
     is( $warn, '', "... import default, should not warn");
     $warn = '' ;

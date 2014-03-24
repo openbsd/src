@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.19;
+our $VERSION = 0.21;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -240,9 +240,26 @@ will not trigger the "Ambiguous call resolved as CORE::%s" warning.
 
 =item locked
 
-The "locked" attribute has no effect in
-5.10.0 and later.  It was used as part
-of the now-removed "Perl 5.005 threads".
+The "locked" attribute is deprecated, and has no effect in 5.10.0 and later.
+It was used as part of the now-removed "Perl 5.005 threads".
+
+=back
+
+The following are the built-in attributes for variables:
+
+=over 4
+
+=item shared
+
+Indicates that the referenced variable can be shared across different threads
+when used in conjunction with the L<threads> and L<threads::shared> modules.
+
+=item unique
+
+The "unique" attribute is deprecated, and has no effect in 5.10.0 and later.
+It used to indicate that a single copy of an C<our> variable was to be used by
+all interpreters should the program happen to be running in a
+multi-interpreter environment.
 
 =back
 

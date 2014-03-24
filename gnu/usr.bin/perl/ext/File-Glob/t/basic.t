@@ -52,7 +52,7 @@ if (GLOB_ERROR) {
 SKIP: {
     my ($name, $home);
     skip $^O, 1 if $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS'
-	|| $^O eq 'os2' || $^O eq 'beos';
+	|| $^O eq 'os2';
     skip "Can't find user for $>: $@", 1 unless eval {
 	($name, $home) = (getpwuid($>))[0,7];
 	1;
@@ -130,7 +130,7 @@ SKIP: {
 # check bad protections
 # should return an empty list, and set ERROR
 SKIP: {
-    skip $^O, 2 if $^O eq 'mpeix' or $^O eq 'MSWin32' or $^O eq 'NetWare'
+    skip $^O, 2 if $^O eq 'MSWin32' or $^O eq 'NetWare'
 	or $^O eq 'os2' or $^O eq 'VMS' or $^O eq 'cygwin';
     skip "AFS", 2 if Cwd::cwd() =~ m#^$Config{'afsroot'}#s;
     skip "running as root", 2 if not $>;
@@ -159,9 +159,10 @@ is_deeply(\@a, ['a', 'b']);
 @a = grep !/(,v$|~$|\.(pm|ori?g|rej)$)/, @a;
 @a = (grep !/test.pl/, @a) if $^O eq 'VMS';
 
+map { $_  =~ s/test\.?/TEST/i } @a if $^O eq 'VMS';
 print "# @a\n";
 
-is_deeply(\@a, [($vms_mode ? 'test.' : 'TEST'), 'a', 'b']);
+is_deeply(\@a, ['TEST', 'a', 'b']);
 
 # "~" should expand to $ENV{HOME}
 {

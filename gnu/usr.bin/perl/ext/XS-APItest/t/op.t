@@ -10,3 +10,6 @@ use_ok('XS::APItest');
 *hint_fetch = *hint_fetch = \&XS::APItest::Hash::refcounted_he_fetch;
 
 require '../../t/op/caller.pl';
+
+ok test_newFOROP_without_slab(),
+     'no assertion failures when allocating FOROP without slab';

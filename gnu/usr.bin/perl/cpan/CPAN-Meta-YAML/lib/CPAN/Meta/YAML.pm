@@ -1,6 +1,6 @@
 package CPAN::Meta::YAML;
 {
-  $CPAN::Meta::YAML::VERSION = '0.007';
+  $CPAN::Meta::YAML::VERSION = '0.008';
 }
 
 use strict;
@@ -614,8 +614,9 @@ BEGIN {
 	eval {
 		require Scalar::Util;
 	};
-	if ( $@ or $Scalar::Util::VERSION < 1.18 ) {
-		eval <<'END_PERL' if $@;
+	my $v = eval("$Scalar::Util::VERSION") || 0;
+	if ( $@ or $v < 1.18 ) {
+		eval <<'END_PERL';
 # Scalar::Util failed to load or too old
 sub refaddr {
 	my $pkg = ref($_[0]) or return undef;
@@ -647,7 +648,7 @@ CPAN::Meta::YAML - Read and write a subset of YAML for CPAN Meta files
 
 =head1 VERSION
 
-version 0.007
+version 0.008
 
 =head1 SYNOPSIS
 
@@ -689,7 +690,7 @@ L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=YAML-Tiny>
 
 L<YAML::Tiny>, L<YAML>, L<YAML::XS>
 
-=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
 =head1 SUPPORT
 

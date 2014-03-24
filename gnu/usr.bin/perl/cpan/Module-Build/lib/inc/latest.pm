@@ -1,7 +1,7 @@
 package inc::latest;
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.39_01';
+$VERSION = '0.4003';
 $VERSION = eval $VERSION;
 
 use Carp;
@@ -132,7 +132,7 @@ a distribution and are used by Build.PL (or Makefile.PL).
 
 Arguments to C<inc::latest> are module names that are checked against both the
 current C<@INC> array and against specially-named directories in C<inc>.  If
-the bundled verison is newer than the installed one (or the module isn't
+the bundled version is newer than the installed one (or the module isn't
 installed, then, the bundled directory is added to the start of <@INC> and the
 module is loaded from there.
 
@@ -192,7 +192,7 @@ available.  For example:
   my @list = inc::latest->loaded_modules;
 
 This takes no arguments and always returns a list of module names requested for
-loading via "use inc::latest 'MODULE'", regardless of wether the load was
+loading via "use inc::latest 'MODULE'", regardless of whether the load was
 successful or not.
 
 =item write()

@@ -168,6 +168,7 @@ foreach my $f (@testfiles) {
     skip $skippy, 0;
   } else {
     print "#  $outfilename and $xml don't match!\n";
+    print STDERR `diff -u $xml $outfilename`;
     ok 0;
   }
 

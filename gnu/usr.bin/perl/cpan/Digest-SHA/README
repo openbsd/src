@@ -1,4 +1,4 @@
-Digest::SHA version 5.71
+Digest::SHA version 5.84
 ========================
 
 Digest::SHA is a complete implementation of the NIST Secure Hash
@@ -28,13 +28,15 @@ The Makefile.PL options are:
 	-t : build a thread-safe version of module
 	-x : exclude support for SHA-384/512
 
+	NOTE: Option -t is still allowed but no longer necessary.
+
 DEPENDENCIES
 
 	None
 
 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003-2012 Mark Shelor
+Copyright (C) 2003-2013 Mark Shelor
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

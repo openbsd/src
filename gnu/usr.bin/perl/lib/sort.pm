@@ -1,6 +1,6 @@
 package sort;
 
-our $VERSION = '2.01';
+our $VERSION = '2.02';
 
 # The hints for pp_sort are now stored in $^H{sort}; older versions
 # of perl used the global variable $sort::hints. -- rjh 2005-12-19
@@ -180,14 +180,14 @@ So now this code would be written:
   { use sort qw(defaults _quicksort); # force quicksort
     no sort "stable";      # stability not wanted
     my $current;
-    BEGIN { $current = print sort::current; }
+    BEGIN { $current = sort::current; }
     print "$current\n";
     @a = sort @b;
     # Pragmas go out of scope at the end of the block
   }
   { use sort qw(defaults stable);     # force stability
     my $current;
-    BEGIN { $current = print sort::current; }
+    BEGIN { $current = sort::current; }
     print "$current\n";
     @c = sort @d;
   }

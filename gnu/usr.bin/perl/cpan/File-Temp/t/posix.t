@@ -2,8 +2,7 @@
 # Test for File::Temp - POSIX functions
 
 use strict;
-use Test;
-BEGIN { plan tests => 7}
+use Test::More tests => 7;
 
 use File::Temp qw/ :POSIX unlink0 /;
 use FileHandle;

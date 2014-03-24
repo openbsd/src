@@ -410,7 +410,7 @@ L<INSTALL>, L<perlport>, L<perlebcdic>, L<ExtUtils::MakeMaker>.
 
 =head2 Mailing list for Perl on OS/390
 
-If you are interested in the VM/ESA, z/OS (formerly known as OS/390)
+If you are interested in the z/OS (formerly known as OS/390)
 and POSIX-BC (BS2000) ports of Perl then see the perl-mvs mailing list.
 To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 

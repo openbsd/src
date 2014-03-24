@@ -10,7 +10,7 @@ BEGIN {
 
 use strict;
 use warnings;
-plan(tests => 52);
+plan(tests => 53);
 
 {
     package New;
@@ -399,4 +399,12 @@ bless [], "O:";
   'isa(foo) when inheriting from "class:" after string-to-glob assignment';
 }
 
-
+@Bazo::ISA = "Fooo::bar";
+sub Fooo::bar::ber { 'baz' }
+sub UNIVERSAL::ber { "black sheep" }
+Bazo->ber;
+local *Fooo:: = \%Baro::;
+{
+    no warnings;
+    is 'Bazo'->ber, 'black sheep', 'localised *glob=$stashref assignment';
+}

@@ -10,7 +10,6 @@ END {
 
 use strict;
 use Cwd;
-use File::Spec;
 use File::Spec::Functions;
 use Test::More tests => 2;
 
@@ -22,14 +21,17 @@ SKIP: {
     skip "$output", 2 if $output;
 
     my ($v, $d) = splitpath(cwd(), 1);
-    my $relcwd = substr($d, length(File::Spec->rootdir()));
+    my @dirs = splitdir($d);
+    shift @dirs if $dirs[0] eq '';
+    my $relcwd = join '/', @dirs;
 
     my $data_pos = tell DATA; # to read <DATA> twice
 
 
     convert_n_test("htmldir1", "test --htmldir and --htmlroot 1a", 
-     "--podpath=". catdir($relcwd, 't') . ":" . catfile($relcwd, 'testdir/test.lib'),
-     "--podroot=$v". File::Spec->rootdir,
+     "--podpath=". File::Spec::Unix->catdir($relcwd, 't') . ":"
+                 . File::Spec::Unix->catdir($relcwd, 'testdir/test.lib'),
+     "--podroot=". catpath($v, '/', ''),
      "--htmldir=t",
      "--quiet",
     );
@@ -38,7 +40,7 @@ SKIP: {
 
     convert_n_test("htmldir1", "test --htmldir and --htmlroot 1b", 
      "--podpath=$relcwd",
-     "--podroot=$v". File::Spec->rootdir,
+     "--podroot=". catpath($v, '/', ''),
      "--htmldir=". catdir($relcwd, 't'),
      "--htmlroot=/",
      "--quiet",

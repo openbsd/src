@@ -2,7 +2,7 @@ package Locale::Codes::LangExt_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
-#    Generated on: Thu Mar  1 08:11:47 EST 2012
+#    Generated on: Wed Feb 27 10:06:46 EST 2013
 
 =pod
 
@@ -25,7 +25,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2012 Sullivan Beck
+   Copyright (c) 2010-2013 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -33,11 +33,12 @@ modify it under the same terms as Perl itself.
 =cut
 
 use strict;
+require 5.006;
 use warnings;
-require 5.002;
+use utf8;
 
 our($VERSION);
-$VERSION='3.21';
+$VERSION='3.25';
 
 $Locale::Codes::Retired{'langext'}{'alpha'}{'code'} = {
 };

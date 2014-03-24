@@ -10,6 +10,7 @@
  * they won't be available unless used. When new symbols are probed
  * in Configure, this is the way to force them into availability.
  *
+ * BOOTSTRAP_CHARSET
  * CHARBITS
  * HAS_ASCTIME64
  * HAS_CTIME64
@@ -17,7 +18,10 @@
  * HAS_GMTIME64
  * HAS_ISBLANK
  * HAS_LOCALTIME64
+ * HAS_IP_MREQ
+ * HAS_IP_MREQ_SOURCE
  * HAS_IPV6_MREQ
+ * HAS_IPV6_MREQ_SOURCE
  * HAS_MKTIME64
  * HAS_PRCTL
  * HAS_PSEUDOFORK

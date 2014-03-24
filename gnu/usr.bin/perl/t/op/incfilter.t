@@ -13,7 +13,7 @@ use strict;
 use Config;
 use Filter::Util::Call;
 
-plan(tests => 144);
+plan(tests => 145);
 
 unshift @INC, sub {
     no warnings 'uninitialized';
@@ -215,6 +215,11 @@ do [\'pa', \&generator_with_state,
     ["ss('And generators which take state');\n",
      "pass('And return multiple lines');\n",
     ]] or die;
+
+@origlines = keys %{{ "1\n+\n2\n" => 1 }};
+@lines = @origlines;
+do \&generator or die;
+is $origlines[0], "1\n+\n2\n", 'ink filters do not mangle cow buffers';
 
 # d8723a6a74b2c12e wasn't perfect, as the char * returned by SvPV*() can be
 # a temporary, freed at the next FREETMPS. And there is a FREETMPS in

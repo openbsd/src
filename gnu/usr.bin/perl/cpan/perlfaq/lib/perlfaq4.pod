@@ -1266,8 +1266,8 @@ for list operations, so list operations also work on arrays:
     wash_animals( qw( dog cat bird ) );
     wash_animals( @animals );
 
-Array operations, which change the scalars, rearranges them, or adds
-or subtracts some scalars, only work on arrays. These can't work on a
+Array operations, which change the scalars, rearrange them, or add
+or subtract some scalars, only work on arrays. These can't work on a
 list, which is fixed. Array operations include C<shift>, C<unshift>,
 C<push>, C<pop>, and C<splice>.
 

@@ -13,7 +13,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..6\n"; }
+BEGIN { $| = 1; print "1..12\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -37,8 +37,14 @@ ok($objBn->getlocale, 'bn');
 
 $objBn->change(level => 1);
 
-ok($objBn->lt("\x{994}", "\x{982}"));
-ok($objBn->lt("\x{982}", "\x{983}"));
-ok($objBn->lt("\x{983}", "\x{981}"));
-ok($objBn->lt("\x{981}", "\x{995}"));
+for my $h (0, 1) {
+    no warnings 'utf8';
+    my $t = $h ? pack('U', 0xFFFF) : "";
+    $objBn->change(highestFFFF => 1) if $h;
 
+    ok($objBn->lt("\x{993}$t", "\x{994}"));
+    ok($objBn->lt("\x{994}$t", "\x{982}"));
+    ok($objBn->lt("\x{982}$t", "\x{983}"));
+    ok($objBn->lt("\x{983}$t", "\x{981}"));
+    ok($objBn->lt("\x{981}$t", "\x{995}"));
+}

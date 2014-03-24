@@ -143,19 +143,39 @@ Use of comma-less variable list is deprecated at - line 4.
 Use of comma-less variable list is deprecated at - line 4.
 ########
 # toke.c
-$a =~ m/$foo/sand $bar;
-$a =~ s/$foo/fool/sand $bar;
 $a = <<;
 
 no warnings 'deprecated' ;
-$a =~ m/$foo/sand $bar;
-$a =~ s/$foo/fool/sand $bar;
 $a = <<;
 
 EXPECT
-Having no space between pattern and following word is deprecated at - line 2.
-Having no space between pattern and following word is deprecated at - line 3.
-Use of bare << to mean <<"" is deprecated at - line 4.
+Use of bare << to mean <<"" is deprecated at - line 2.
+########
+# toke.c
+$a =~ m/$foo/eq;
+$a =~ s/$foo/fool/seq;
+
+EXPECT
+OPTION fatal
+Unknown regexp modifier "/e" at - line 2, near "=~ "
+Unknown regexp modifier "/q" at - line 2, near "=~ "
+Unknown regexp modifier "/q" at - line 3, near "=~ "
+Execution of - aborted due to compilation errors.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+$a =~ m/$foo/eネq;
+$a =~ s/$foo/fool/seネq;
+
+EXPECT
+OPTION fatal
+Unknown regexp modifier "/e" at - line 4, near "=~ "
+Unknown regexp modifier "/ネ" at - line 4, near "=~ "
+Unknown regexp modifier "/q" at - line 4, near "=~ "
+Unknown regexp modifier "/ネ" at - line 5, near "=~ "
+Unknown regexp modifier "/q" at - line 5, near "=~ "
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -662,6 +682,8 @@ yelp at foo line 30.
 ########
 # toke.c
 my $a = rand + 4 ;
+$a = rand *^H ;
+$a = rand $^H ;
 EXPECT
 Warning: Use of "rand" without parentheses is ambiguous at - line 2.
 ########
@@ -696,6 +718,8 @@ EXPECT
 # toke.c
 sub fred {};
 -fred ;
+sub hank : lvalue {$_}
+--hank; # This should *not* warn [perl #77240]
 EXPECT
 Ambiguous use of -fred resolved as -&fred() at - line 3.
 ########
@@ -1063,7 +1087,7 @@ Number found where operator expected at (eval 1) line 1, near "5 6"
 	(Missing operator before  6?)
 ########
 # toke.c
-use warnings "syntax";
+use warnings "syntax"; no warnings "deprecated";
 $_ = $a = 1;
 $a !=~  /1/;
 $a !=~ m#1#;
@@ -1111,7 +1135,7 @@ Use of :locked is deprecated at - line 4.
 Use of :locked is deprecated at - line 6.
 ########
 # toke.c
-use warnings "syntax";
+use warnings "syntax"; use feature 'lexical_subs';
 sub proto_after_array(@$);
 sub proto_after_arref(\@$);
 sub proto_after_arref2(\[@$]);
@@ -1123,6 +1147,14 @@ sub underscore_last_pos($_);
 sub underscore2($_;$);
 sub underscore_fail($_$);
 sub underscore_after_at(@_);
+our sub hour (@$);
+my sub migh (@$);
+use feature 'state';
+state sub estate (@$);
+package other;
+sub hour (@$);
+sub migh (@$);
+sub estate (@$);
 no warnings "syntax";
 sub proto_after_array(@$);
 sub proto_after_hash(%$);
@@ -1132,6 +1164,15 @@ Prototype after '@' for main::proto_after_array : @$ at - line 3.
 Prototype after '%' for main::proto_after_hash : %$ at - line 7.
 Illegal character after '_' in prototype for main::underscore_fail : $_$ at - line 12.
 Prototype after '@' for main::underscore_after_at : @_ at - line 13.
+The lexical_subs feature is experimental at - line 14.
+Prototype after '@' for hour : @$ at - line 14.
+The lexical_subs feature is experimental at - line 15.
+Prototype after '@' for migh : @$ at - line 15.
+The lexical_subs feature is experimental at - line 17.
+Prototype after '@' for estate : @$ at - line 17.
+Prototype after '@' for hour : @$ at - line 19.
+Prototype after '@' for migh : @$ at - line 20.
+Prototype after '@' for estate : @$ at - line 21.
 ########
 # toke.c
 use warnings "ambiguous";
@@ -1250,3 +1291,45 @@ use warnings;
 CORE::렏;
 EXPECT
 CORE::렏 is not a keyword at - line 5.
+########
+# toke.c
+# [perl #16249]
+print '';
+eval this_method_is_fake ();
+EXPECT
+Undefined subroutine &main::this_method_is_fake called at - line 4.
+########
+# toke.c
+# [perl #107002] Erroneous ambiguity warnings
+sub { # do not actually call require
+  require a::b . 1; # These used to produce erroneous
+  require a::b + 1; # ambiguity warnings.
+}
+EXPECT
+########
+# toke.c
+# [perl #113094]
+print "aa" =~ m{^a\{1,2\}$}, "\n";
+print "aa" =~ m{^a\x\{61\}$}, "\n";
+print "aa" =~ m{^a{1,2}$}, "\n";
+print "aq" =~ m[^a\[a-z\]$], "\n";
+print "aq" =~ m(^a\(q\)$), "\n";
+no warnings 'deprecated';
+print "aa" =~ m{^a\{1,2\}$}, "\n";
+print "aa" =~ m{^a\x\{61\}$}, "\n";
+print "aq" =~ m[^a\[a-z\]$], "\n";
+print "aq" =~ m(^a\(q\)$), "\n";
+EXPECT
+Useless use of '\'; doesn't escape metacharacter '{' at - line 3.
+Useless use of '\'; doesn't escape metacharacter '{' at - line 4.
+Useless use of '\'; doesn't escape metacharacter '[' at - line 6.
+Useless use of '\'; doesn't escape metacharacter '(' at - line 7.
+1
+1
+1
+1
+q
+1
+1
+1
+q

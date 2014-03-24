@@ -5,28 +5,28 @@ perldoc - Look up Perl documentation in Pod format.
 
 =head1 SYNOPSIS
 
-    B<perldoc> [B<-h>] [B<-D>] [B<-t>] [B<-u>] [B<-m>] [B<-l>] [B<-F>]
-        [B<-i>] [B<-V>] [B<-T>] [B<-r>]
-        [B<-dI<destination_file>>]
-        [B<-oI<formatname>>]
-        [B<-MI<FormatterClassName>>]
-        [B<-wI<formatteroption:value>>]
-        [B<-n>I<nroff-replacement>]
-        [B<-X>]
-        [B<-L> I<language_code>]
+    perldoc [-h] [-D] [-t] [-u] [-m] [-l] [-F]
+        [-i] [-V] [-T] [-r]
+        [-d destination_file]
+        [-o formatname]
+        [-M FormatterClassName]
+        [-w formatteroption:value]
+        [-n nroff-replacement]
+        [-X]
+        [-L language_code]
         PageName|ModuleName|ProgramName|URL
 
 Examples:
 
-    B<perldoc> B<-f> BuiltinFunction
+    perldoc -f BuiltinFunction
 
-    B<perldoc> B<-L> it B<-f> BuiltinFunction
+    perldoc -L it -f BuiltinFunction
 
-    B<perldoc> B<-q> FAQ Keyword
+    perldoc -q FAQ Keyword
 
-    B<perldoc> B<-L> fr B<-q> FAQ Keyword
+    perldoc -L fr -q FAQ Keyword
 
-    B<perldoc> B<-v> PerlVariable
+    perldoc -v PerlVariable
 
 See below for more description of the switches.
 
@@ -116,7 +116,7 @@ Examples:
 =item B<-T>
 
 This specifies that the output is not to be sent to a pager, but is to
-be sent right to STDOUT.
+be sent directly to STDOUT.
 
 =item B<-d> I<destination-filename>
 
@@ -219,15 +219,14 @@ drop privileges by setting the effective and real IDs to nobody's
 or nouser's account, or -2 if unavailable.  If it cannot relinquish
 its privileges, it will not run.
 
-
 =head1 ENVIRONMENT
 
 Any switches in the C<PERLDOC> environment variable will be used before the
 command line arguments.
 
-Useful values for C<PERLDOC> include C<-oman>, C<-otext>, C<-otk>, C<-ortf>,
+Useful values for C<PERLDOC> include C<-oterm>, C<-otext>, C<-ortf>,
 C<-oxml>, and so on, depending on what modules you have on hand; or
-the formatter class may be specified exactly with C<-MPod::Perldoc::ToMan>
+the formatter class may be specified exactly with C<-MPod::Perldoc::ToTerm>
 or the like.
 
 C<perldoc> also searches directories
@@ -235,6 +234,12 @@ specified by the C<PERL5LIB> (or C<PERLLIB> if C<PERL5LIB> is not
 defined) and C<PATH> environment variables.
 (The latter is so that embedded pods for executables, such as
 C<perldoc> itself, are available.)
+
+In directories where either C<Makefile.PL> or C<Build.PL> exist, C<perldoc>
+will add C<.> and C<lib> first to its search path, and as long as you're not
+the superuser will add C<blib> too.  This is really helpful if you're working
+inside of a build directory and want to read through the docs even if you
+have a version of a module previously installed.
 
 C<perldoc> will use, in order of preference, the pager defined in
 C<PERLDOC_PAGER>, C<MANPAGER>, or C<PAGER> before trying to find a pager
@@ -244,7 +249,7 @@ plain text or unformatted pod.)
 One useful value for C<PERLDOC_PAGER> is C<less -+C -E>.
 
 Having PERLDOCDEBUG set to a positive integer will make perldoc emit
-even more descriptive output than the C<-v> switch does; the higher the
+even more descriptive output than the C<-D> switch does; the higher the
 number, the more it emits.
 
 

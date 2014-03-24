@@ -11,11 +11,12 @@ my $Is_VMS   = $^O eq 'VMS';
 my $lib;
 
 $lib = 'Bla';
-ok(grep { $_ eq $lib } @INC[0..($#INC-1)]);
+ok do { grep { $_ eq $lib } @INC[0..($#INC-1)] }, 'Identified entry in @INC';
 SKIP: {
   skip 'Double colons not allowed in dir spec', 1 if $Is_VMS;
   $lib = 'Foo::Bar';
-  ok(grep { $_ eq $lib } @INC[0..($#INC-1)]);
+  ok do { grep { $_ eq $lib } @INC[0..($#INC-1)] },
+    'Identified entry in @INC with double colons';
 }
 
 $lib = 'Bla2';

@@ -7,7 +7,7 @@ use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
 
-$VERSION = "0.98";
+$VERSION = "0.99";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -2361,7 +2361,7 @@ will be rewritten in a single pass.
 (Actually, the preceding discussion is something of a fib.  You don't
 need to enable deferred writing to get good performance for this
 common case, because C<Tie::File> will do it for you automatically
-unless you specifically tell it not to.  See L<"autodeferring">,
+unless you specifically tell it not to.  See L<"Autodeferring">,
 below.)
 
 Calling C<-E<gt>flush> returns the array to immediate-write mode.  If

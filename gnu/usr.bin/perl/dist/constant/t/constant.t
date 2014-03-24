@@ -167,7 +167,6 @@ ok $constant::declared{'Other::IN_OTHER_PACK'};
 @warnings = ();
 eval q{
     no warnings;
-    #local $^W if $] < 5.006;
     use warnings 'constant';
     use constant 'BEGIN' => 1 ;
     use constant 'INIT' => 1 ;

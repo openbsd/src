@@ -399,6 +399,8 @@ my $non_pods = qr/ (?: \.
                            | $lib_ext # object libraries
                            | $lib_so  # shared libraries
                            | $dl_ext  # dynamic libraries
+                           | gif      # GIF images (example files from CGI.pm)
+                           | eg       # examples from libnet
                        )
                        $
                     ) | ~$ | \ \(Autosaved\)\.txt$ # Other editor droppings
@@ -456,7 +458,8 @@ sub suppressed {
 
     sub plan {
         my %plan = @_;
-        $planned = $plan{tests};
+        $planned = $plan{tests} + 1;    # +1 for final test that files haven't
+                                        # been removed
         print "1..$planned\n";
         return;
     }
@@ -470,7 +473,7 @@ sub suppressed {
         $current_test++;
         print "not " unless $success;
         print "ok $current_test - $message\n";
-        return;
+        return $success;
     }
 
     sub skip {
@@ -1034,6 +1037,27 @@ package My::Pod::Checker {      # Extend Pod::Checker
         delete $problems{$self->get_filename};
         return;
     }
+
+    sub parse_from_file {
+        # This overrides the super class method so that if an open fails on a
+        # transitory file, it doesn't croak.  It returns 1 if it did find the
+        # file, 0 if it didn't
+
+        my $self = shift;
+        my $filename = shift;
+        # ignores 2nd param, which is output file.  Always uses undef
+
+        if (open my $in_fh, '<:bytes', $filename) {
+            $self->SUPER::parse_from_filehandle($in_fh, undef);
+            close $in_fh;
+            return 1;
+        }
+
+        # If couldn't open file, perhaps it was transitory, and hence not an error
+        return 0 unless -e $filename;
+
+        die "Can't open '$filename': $!\n";
+    }
 }
 
 package Tie_Array_to_FH {  # So printing actually goes to an array
@@ -1227,7 +1251,8 @@ sub my_safer_print {    # print, with error checking for outputting to db
     }
 }
 
-sub extract_pod {   # Extracts just the pod from a file
+sub extract_pod {   # Extracts just the pod from a file; returns undef if file
+                    # doesn't exist
     my $filename = shift;
 
     my @pod;
@@ -1235,30 +1260,33 @@ sub extract_pod {   # Extracts just the pod from a file
     # Arrange for the output of Pod::Parser to be collected in an array we can
     # look at instead of being printed
     tie *ALREADY_FH, 'Tie_Array_to_FH', \@pod;
-    open my $in_fh, '<:bytes', $filename
+    if (open my $in_fh, '<:bytes', $filename) {
+        my $parser = Pod::Parser->new();
+        $parser->parse_from_filehandle($in_fh, *ALREADY_FH);
+        close $in_fh;
 
-        # The file should already have been opened once to get here, so if
-        # fails, just die.  It's possible that a transitory file containing a
-        # pod would get here, but not bothering to add code for that very
-        # unlikely event.
-        or die "Can't open '$filename': $!\n";
+        return join "", @pod
+    }
 
-    my $parser = Pod::Parser->new();
-    $parser->parse_from_filehandle($in_fh, *ALREADY_FH);
-    close $in_fh;
-
-    return join "", @pod
+    # The file should already have been opened once to get here, so if that
+    # fails, something is wrong.  It's possible that a transitory file
+    # containing a pod would get here, so if the file no longer exists just
+    # return undef.
+    return unless -e $filename;
+    die "Can't open '$filename': $!\n";
 }
 
 my $digest = Digest->new($digest_type);
 
+# This is used as a callback from File::Find::find(), which always constructs
+# pathnames using Unix separators
 sub is_pod_file {
     # If $_ is a pod file, add it to the lists and do other prep work.
 
     if (-d) {
         # Don't look at files in directories that are for tests, nor those
         # beginning with a dot
-        if ($_ eq 't' || $_ =~ /^\../) {
+        if (m!/t\z! || m!/\.!) {
             $File::Find::prune = 1;
         }
         return;
@@ -1268,8 +1296,9 @@ sub is_pod_file {
                                # check if 0 length
     return unless -f || -l;    # Weird file types won't be pods
 
-    if ($_ =~ /^\./           # No hidden Unix files
-        || $_ =~ $non_pods) {
+    my ($leaf) = m!([^/]+)\z!;
+    if (m!/\.!                 # No hidden Unix files
+        || $leaf =~ $non_pods) {
         note("Not considering $_") if DEBUG;
         return;
     }
@@ -1277,8 +1306,7 @@ sub is_pod_file {
     my $filename = $File::Find::name;
 
     # $filename is relative, like './path'.  Strip that initial part away.
-    # Assumes that the path separator is exactly one character.
-    $filename =~ s/^\..//;
+    $filename =~ s!^\./!! or die 'Unexpected pathname "$filename"';
 
     return if $excluded_files{canonicalize($filename)};
 
@@ -1393,7 +1421,7 @@ else { # No input files -- go find all the possibilities.
     chdir File::Spec->updir;
 
     # And look in this directory and all its subdirectories
-    find( \&is_pod_file, '.');
+    find( {wanted => \&is_pod_file, no_chdir => 1}, '.');
 
     # Add ourselves to the test
     push @files, "t/porting/podcheck.t";
@@ -1448,6 +1476,7 @@ plan (tests => scalar @files) if ! $regen;
             @files;
 
 # Now go through all the files and parse them
+FILE:
 foreach my $filename (@files) {
     my $parsed = 0;
     note("parsing $filename") if DEBUG;
@@ -1464,8 +1493,12 @@ foreach my $filename (@files) {
     # We have set the name in the checker object if there is a possibility
     # that no further parsing is necessary, but otherwise do the parsing now.
     if (! $checker->name) {
+        if (! $checker->parse_from_file($filename, undef)) {
+            $checker->set_skip("$filename is transitory");
+            next FILE;
+        }
         $parsed = 1;
-        $checker->parse_from_file($filename, undef);
+
     }
 
     if ($checker->num_errors() < 0) {   # Returns negative if not a pod
@@ -1484,7 +1517,12 @@ foreach my $filename (@files) {
         }
         else {
             my $digest = Digest->new($digest_type);
-            $digest->add(extract_pod($filename));
+            my $contents = extract_pod($filename);
+
+            # If the return is undef, it means that $filename was a transitory
+            # file; skip it.
+            next FILE unless defined $contents;
+            $digest->add($contents);
             $id = $digest->digest;
         }
 
@@ -1510,7 +1548,28 @@ foreach my $filename (@files) {
             # reason, but the pods they contain are identical.  Extract the
             # pods and do the comparisons on just those.
             if (! $same && $name) {
-                $same = extract_pod($prior_filename) eq extract_pod($filename);
+                my $contents = extract_pod($filename);
+
+                # If return is <undef>, it means that $filename no longer
+                # exists.  This means it was a transitory file, and should not
+                # be tested.
+                next FILE unless defined $contents;
+
+                my $prior_contents = extract_pod($prior_filename);
+
+                # If return is <undef>, it means that $prior_filename no
+                # longer exists.  This means it was a transitory file, and
+                # should not have been tested, but we already did process it.
+                # What we should do now is to back-out its records, and
+                # process $filename in its stead.  But backing out is not so
+                # simple, and so I'm (khw) skipping that unless and until
+                # experience shows that it is needed.  We do go process
+                # $filename, and there are potential false positive conflicts
+                # with the transitory $prior_contents, and rerunning the test
+                # should cause it to succeed.
+                goto process_this_pod unless defined $prior_contents;
+
+                $same = $prior_contents eq $contents;
             }
 
             if ($same) {
@@ -1544,8 +1603,10 @@ foreach my $filename (@files) {
 
             # In any event, don't process this pod that has the same name as
             # another.
-            next;
+            next FILE;
         }
+
+    process_this_pod:
 
         # A unique pod.
         $id_to_checker{$id} = $checker;
@@ -1557,8 +1618,10 @@ foreach my $filename (@files) {
             if ($filename =~ /^cpan/) {
                 $checker->set_skip("CPAN is upstream for $filename");
             }
-            elsif ($filename =~ /perl\d+delta/ && ! $do_deltas) {
-                $checker->set_skip("$filename is a stable perldelta");
+            elsif ($filename =~ /perl\d+delta/) {
+                if (! $do_deltas) {
+                    $checker->set_skip("$filename is a stable perldelta");
+                }
             }
             elsif ($filename =~ /perltoc/) {
                 $checker->set_skip("$filename dependent on component pods");
@@ -1578,7 +1641,7 @@ foreach my $filename (@files) {
             $checker->poderror( { -msg => $no_name,
                                   -line => '???'
                                 });
-            next;
+            next FILE;
         }
 
         # For skipped files, just get its NAME
@@ -1587,14 +1650,17 @@ foreach my $filename (@files) {
         {
             $checker->node($name) if $name;
         }
-        else {
-            $checker->parse_from_file($filename, undef) if ! $parsed;
+        elsif (! $parsed) {
+            if (! $checker->parse_from_file($filename, undef)) {
+                $checker->set_skip("$filename is transitory");
+                next FILE;
+            }
         }
 
         # Go through everything in the file that could be an anchor that
         # could be a link target.  Count how many there are of the same name.
         foreach my $node ($checker->linkable_nodes) {
-            next if ! $node;        # Can be empty is like '=item *'
+            next FILE if ! $node;        # Can be empty is like '=item *'
             if (exists $nodes{$name}{$node}) {
                 $nodes{$name}{$node}++;
             }
@@ -1738,9 +1804,10 @@ foreach my $filename (@files) {
                 # subtract back this number we previously added in.
                 $total_known -= $problem_count;
 
-                $diagnostic .= $indent . $message;
+                $diagnostic .= $indent . qq{"$message"};
                 if ($problem_count > 2) {
-                    $diagnostic .= "  ($problem_count occurrences)";
+                    $diagnostic .= "  ($problem_count occurrences,"
+			. " expected $known_problems{$canonical}{$message})";
                 }
                 foreach my $problem (@{$problems{$filename}{$message}}) {
                     $diagnostic .= " " if $problem_count == 1;
@@ -1776,7 +1843,19 @@ foreach my $filename (@files) {
             note(join "", @diagnostics,
             "See end of this test output for your options on silencing this");
         }
+
+        delete $known_problems{$canonical};
     }
+}
+
+if (! $regen
+    && ! ok (keys %known_problems == 0, "The known problems data base includes no references to non-existent files"))
+{
+    note("The following files were not found: "
+         . join ", ", keys %known_problems);
+    note("They will automatically be removed from the db the next time");
+    note("  cd t; ./perl -I../lib porting/podcheck.t --regen");
+    note("is run");
 }
 
 my $how_to = <<EOF;

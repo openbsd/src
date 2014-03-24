@@ -10,7 +10,14 @@ BEGIN {
     }
 }
 
-use Test::More tests => 2;
+use Test::More;
+BEGIN {
+    plan(
+        ${^TAINT}
+        ? (tests => 2)
+        : (skip_all => "Appear to running a perl without taint support")
+    );
+}
 
 BEGIN {
     use_ok('File::Glob');

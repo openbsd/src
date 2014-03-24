@@ -9,8 +9,10 @@ t/safe3.t
 t/safeload.t
 t/safenamedcap.t
 t/safeops.t
+t/saferegexp.t
 t/safesort.t
 t/safeuniversal.t
 t/safeutf8.t
 t/safewrap.t
 META.yml                                 Module meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
