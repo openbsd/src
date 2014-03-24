@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.77 2014/03/24 11:05:03 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.78 2014/03/24 11:10:48 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2150,7 +2150,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	kva += sizeof(struct mpii_msg_config_request);
 
 	if (!read)
-		bcopy(page, kva, len);
+		memcpy(kva, page, len);
 
 	ccb->ccb_done = mpii_empty_done;
 	if (ISSET(flags, MPII_PG_POLL)) {
@@ -2191,7 +2191,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	if (letoh16(cp->ioc_status) != MPII_IOCSTATUS_SUCCESS)
 		rv = 1;
 	else if (read)
-		bcopy(kva, page, len);
+		memcpy(page, kva, len);
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	scsi_io_put(&sc->sc_iopool, ccb);
@@ -2717,7 +2717,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	io->tagging = MPII_SCSIIO_ATTR_SIMPLE_Q;
 
-	bcopy(xs->cmd, io->cdb, xs->cmdlen);
+	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
 	io->data_length = htole32(xs->datalen);
 
@@ -2929,7 +2929,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	sense = (struct scsi_sense_data *)((caddr_t)ccb->ccb_cmd +
 	    sc->sc_request_size - sizeof(*sense));
 	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
-		bcopy(sense, &xs->sense, sizeof(xs->sense));
+		memcpy(&xs->sense, sense, sizeof(xs->sense));
 
 	DNPRINTF(MPII_D_CMD, "%s:  xs err: %d status: %#x\n", DEVNAME(sc),
 	    xs->error, xs->status);
