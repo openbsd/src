@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.56 2014/02/10 05:21:41 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.57 2014/03/24 01:00:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1683,8 +1683,6 @@ myx_intr(void *arg)
 	}
 	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
 	    sc->sc_irqclaimoff + sizeof(data), &data, sizeof(data));
-	bus_space_barrier(sc->sc_memt, sc->sc_memh,
-	    sc->sc_irqclaimoff, sizeof(data) * 2, BUS_SPACE_BARRIER_WRITE);
 
 	if (state == MYX_S_DOWN) {
 		/* myx_down is waiting for us */
