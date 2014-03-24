@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.79 2014/03/24 12:06:58 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.80 2014/03/24 12:43:51 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2699,9 +2699,9 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	io->function = MPII_FUNCTION_SCSI_IO_REQUEST;
 	io->sense_buffer_length = sizeof(xs->sense);
 	io->sgl_offset0 = sizeof(struct mpii_msg_scsi_io) / 4;
-	io->io_flags = htole16(xs->cmdlen);
-	io->dev_handle = htole16(ccb->ccb_dev_handle);
-	io->lun[0] = htobe16(link->lun);
+	htolem16(&io->io_flags, xs->cmdlen);
+	htolem16(&io->dev_handle, ccb->ccb_dev_handle);
+	htobem16(&io->lun[0], link->lun);
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
@@ -2718,10 +2718,10 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	memcpy(io->cdb, xs->cmd, xs->cmdlen);
 
-	io->data_length = htole32(xs->datalen);
+	htolem32(&io->data_length, xs->datalen);
 
 	/* sense data is at the end of a request */
-	io->sense_buffer_low_address = htole32(ccb->ccb_cmd_dva +
+	htolem32(&io->sense_buffer_low_address, ccb->ccb_cmd_dva +
 	    sc->sc_request_size - sizeof(struct scsi_sense_data));
 
 	if (mpii_load_xs(ccb) != 0) {
@@ -2873,11 +2873,12 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	    DEVNAME(sc), letoh32(sie->bidirectional_transfer_count));
 
 	xs->status = sie->scsi_status;
-	switch (letoh16(sie->ioc_status) & MPII_IOCSTATUS_MASK) {
+	switch (lemtoh16(&sie->ioc_status) & MPII_IOCSTATUS_MASK) {
 	case MPII_IOCSTATUS_SCSI_DATA_UNDERRUN:
 		switch (xs->status) {
 		case SCSI_OK:
-			xs->resid = xs->datalen - letoh32(sie->transfer_count);
+			xs->resid = xs->datalen -
+			    lemtoh32(&sie->transfer_count);
 			break;
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
