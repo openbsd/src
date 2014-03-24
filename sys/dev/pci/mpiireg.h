@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.5 2014/03/24 12:15:03 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.6 2014/03/24 12:24:30 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -744,7 +744,7 @@ struct mpii_msg_scsi_io {
 	u_int8_t		cdb[MPII_CDB_LEN];
 
 	/* followed by an sgl */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_scsi_io_error {
 	u_int16_t		dev_handle;
@@ -797,7 +797,7 @@ struct mpii_msg_scsi_io_error {
 	u_int32_t		reserved5;
 
 	u_int32_t		reserved6;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_request_descr {
 	u_int8_t		request_flags;
