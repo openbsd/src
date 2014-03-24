@@ -12,7 +12,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd5.5/4.2.1/collect2
 ./usr/lib/gcc-lib/sparc-unknown-openbsd5.5/4.2.1/specs
 ./usr/lib/libasn1.so.20.0
-./usr/lib/libc.so.73.1
+./usr/lib/libc.so.74.0
 ./usr/lib/libcom_err.so.20.0
 ./usr/lib/libcrypto.so.23.0
 ./usr/lib/libcurses.so.14.0
@@ -86,7 +86,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/blf.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/bm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/cpio.ph
@@ -1219,7 +1218,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine
 ./usr/libdata/perl5/site_perl/sparc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/math.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/md4.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/menu.ph

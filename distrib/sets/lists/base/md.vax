@@ -31,7 +31,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/blf.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/bm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/cpio.ph
@@ -1096,7 +1095,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/machine
 ./usr/libdata/perl5/site_perl/vax-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/math.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/md4.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/menu.ph

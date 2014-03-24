@@ -37,7 +37,7 @@
 ./sbin/wsconsctl
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd5.5
 ./usr/lib/libasn1.so.20.0
-./usr/lib/libc.so.73.1
+./usr/lib/libc.so.74.0
 ./usr/lib/libcom_err.so.20.0
 ./usr/lib/libcrypto.so.23.0
 ./usr/lib/libcurses.so.14.0
@@ -567,7 +567,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/blf.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/bm.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/complex.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/cpio.ph
@@ -1754,7 +1753,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/machine
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/math.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/md4.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/menu.ph

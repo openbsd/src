@@ -46,7 +46,6 @@
 ./usr/include/assert.h
 ./usr/include/bitstring.h
 ./usr/include/blf.h
-./usr/include/bm.h
 ./usr/include/bsd_auth.h
 ./usr/include/complex.h
 ./usr/include/cpio.h
@@ -1039,7 +1038,6 @@
 ./usr/include/machine
 ./usr/include/malloc.h
 ./usr/include/math.h
-./usr/include/md4.h
 ./usr/include/md5.h
 ./usr/include/memory.h
 ./usr/include/menu.h
@@ -1693,8 +1691,6 @@
 ./usr/lib/libroken_p.a
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
-./usr/lib/librt.a
-./usr/lib/librt_p.a
 ./usr/lib/libskey.a
 ./usr/lib/libskey_p.a
 ./usr/lib/libsndio.a
@@ -2545,15 +2541,6 @@
 ./usr/share/man/man3/MD2_Init.3
 ./usr/share/man/man3/MD2_Update.3
 ./usr/share/man/man3/MD4.3
-./usr/share/man/man3/MD4Data.3
-./usr/share/man/man3/MD4End.3
-./usr/share/man/man3/MD4File.3
-./usr/share/man/man3/MD4FileChunk.3
-./usr/share/man/man3/MD4Final.3
-./usr/share/man/man3/MD4Init.3
-./usr/share/man/man3/MD4Pad.3
-./usr/share/man/man3/MD4Transform.3
-./usr/share/man/man3/MD4Update.3
 ./usr/share/man/man3/MD4_Final.3
 ./usr/share/man/man3/MD4_Init.3
 ./usr/share/man/man3/MD4_Update.3
@@ -3309,10 +3296,6 @@
 ./usr/share/man/man3/blf_enc.3
 ./usr/share/man/man3/blf_key.3
 ./usr/share/man/man3/blowfish.3
-./usr/share/man/man3/bm.3
-./usr/share/man/man3/bm_comp.3
-./usr/share/man/man3/bm_exec.3
-./usr/share/man/man3/bm_free.3
 ./usr/share/man/man3/bn.3
 ./usr/share/man/man3/bn_add_words.3
 ./usr/share/man/man3/bn_check_top.3
@@ -4073,7 +4056,6 @@
 ./usr/share/man/man3/getrpcent.3
 ./usr/share/man/man3/getrpcport.3
 ./usr/share/man/man3/getrrsetbyname.3
-./usr/share/man/man3/gets.3
 ./usr/share/man/man3/getservbyname.3
 ./usr/share/man/man3/getservbyname_r.3
 ./usr/share/man/man3/getservbyport.3
@@ -4940,7 +4922,6 @@
 ./usr/share/man/man3/mbstowcs.3
 ./usr/share/man/man3/mbtowc.3
 ./usr/share/man/man3/mcprint.3
-./usr/share/man/man3/md4.3
 ./usr/share/man/man3/md5.3
 ./usr/share/man/man3/md5crypt.3
 ./usr/share/man/man3/memccpy.3
