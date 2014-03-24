@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.202 2014/03/17 23:23:37 sthen Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.203 2014/03/24 16:41:27 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -101,10 +101,6 @@
 #include <utmp.h>
 #include <poll.h>
 
-#if defined(TCPWRAPPERS)
-#include <tcpd.h>
-#endif	/* TCPWRAPPERS */
-
 #include "pathnames.h"
 #include "monitor.h"
 #include "extern.h"
@@ -169,11 +165,6 @@ static	login_cap_t *lc;
 static	auth_session_t *as;
 static	volatile sig_atomic_t recvurg;
 
-#if defined(TCPWRAPPERS)
-int	allow_severity = LOG_INFO;
-int	deny_severity = LOG_NOTICE;
-#endif	/* TCPWRAPPERS */
-
 int epsvall = 0;
 
 /*
@@ -229,9 +220,6 @@ static int	 send_data(FILE *, FILE *, off_t, off_t, int);
 static struct passwd *
 		 sgetpwnam(char *, struct passwd *);
 static void	 reapchild(int);
-#if defined(TCPWRAPPERS)
-static int	 check_host(struct sockaddr *);
-#endif /* TCPWRAPPERS */
 static void	 usage(void);
 
 void	 logxfer(char *, off_t, time_t);
@@ -530,11 +518,6 @@ main(int argc, char *argv[])
 		(void)dup2(fd, STDOUT_FILENO);
 		for (i = 0; i < n; i++)
 			close(fds[i]);
-#if defined(TCPWRAPPERS)
-		/* ..in the child. */
-		if (!check_host((struct sockaddr *)&his_addr))
-			exit(1);
-#endif	/* TCPWRAPPERS */
 	} else {
 		addrlen = sizeof(his_addr);
 		if (getpeername(0, (struct sockaddr *)&his_addr,
@@ -2890,37 +2873,6 @@ set_slave_signals(void)
 		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
 #endif
 }
-
-#if defined(TCPWRAPPERS)
-static int
-check_host(struct sockaddr *sa)
-{
-	struct sockaddr_in *sin;
-	struct hostent *hp;
-	char *addr;
-
-	if (sa->sa_family != AF_INET)
-		return 1;	/*XXX*/
-
-	sin = (struct sockaddr_in *)sa;
-	hp = gethostbyaddr((char *)&sin->sin_addr,
-	    sizeof(struct in_addr), AF_INET);
-	addr = inet_ntoa(sin->sin_addr);
-	if (hp) {
-		if (!hosts_ctl("ftpd", hp->h_name, addr, STRING_UNKNOWN)) {
-			syslog(LOG_NOTICE, "tcpwrappers rejected: %s [%s]",
-			    hp->h_name, addr);
-			return (0);
-		}
-	} else {
-		if (!hosts_ctl("ftpd", STRING_UNKNOWN, addr, STRING_UNKNOWN)) {
-			syslog(LOG_NOTICE, "tcpwrappers rejected: [%s]", addr);
-			return (0);
-		}
-	}
-	return (1);
-}
-#endif	/* TCPWRAPPERS */
 
 /*
  * Allocate space and return a copy of the specified dir.
