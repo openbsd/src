@@ -1,3 +1,84 @@
+6.66 Fri Apr 19 17:53:13 BST 2013
+    No changes from 6.65_03
+
+6.65_03 Mon Apr 15 13:44:24 BST 2013
+    Test Fixes
+    * Use File::Temp in parse_* tests to resolve race conditions
+      on 64bit Windows
+      (bingos)
+
+6.65_02 Sun Apr 14 10:56:41 BST 2013
+    Test Fixes
+    * t/xs.t is now running tests against the XS build.
+      (Michael G Schwern) (Leon Timmermans)
+
+
+6.65_01 Tue Mar 19 00:06:17 CET 2013
+    New Features
+    * Improvements perlcritic support. (M. Schwern)
+    * Improvements to dynamic linking for gcc (Tobias Leich)
+      [github #43]
+    * Change $(PERL_HDRS) from a hard coded list of headers to
+      reading install directory for available header files. Allows
+      us to work with any version of Perl properly.
+      (Yves Orton, Craig A. Berry) [github #47]
+
+    Doc Fixes
+    * Numerous typo fixes. (Ben Bullock)
+      [github #33] [github #34] [github #35]
+    * Various FAQ and doc improvements (M. Schwern, Ivan Bessarabov)
+      [github #44]
+
+    Bug Fixes
+    * fixes relating to hash ordering (Yves Orton)
+      [github #46] [rt.cpan.org #83441] [rt.perl.org #116857]
+    * fixes to Mksymlists (Ben Bullock, Yves Orton)
+      [github #48] [github #49] [github #51]
+
+
+6.64  Sun Dec 16 18:27:40 PST 2012
+    Build Fixes
+    * Update the home page in the meta file.  makemaker.org has been
+      unmaintained for a while.
+
+
+6.63_04  Thu Nov 22 13:18:06 PST 2012
+    Test Fixes
+    * Eliminated the problematic and not very useful PASTHRU test
+      on Windows.  A better test will come after stable. [github 41]
+      (Michael G Schwern)
+    * Avoid a new regex warning in 5.17.x in t/MM_OS2.t. (Craig A. Berry)
+
+    VMS Fixes
+    * Better ignore files due to non-case-preserving filesystems.
+      (Craig A. Berry)
+
+
+6.63_03  Thu Nov  1 19:52:30 PDT 2012
+    New Features
+    * Added TEST_REQUIRES keyword to specify prerequisites only needed
+      for testing.  [github 29] (Ricardo Signes)
+
+    Bug Fixes
+    * Update bundled modules: ExtUtils::Install to 1.54, ExtUtils::Manifest
+      to 1.60.
+    * Update CPAN::Meta::YAML to 0.08 for compatibility with older versions
+      of Scalar::Util.
+
+    Misc
+    * Change 'Note' to 'Warning' when libraries aren't found since people
+      often fail to realise that this is the cause of a build failure.
+      [github 20] (Matt Trout)
+
+    Test Fixes
+    * Added an early test to check for a common 5.6 bug where 0.01 is
+      incorrectly stringified to 1.e-02.  [rt.cpan.org 74095]
+
+    Doc Fixes
+    * Clarified NAME. [rt.cpan.org 73361]
+    * SYNOPSIS is a bit more useful.
+
+
 6.63_02  Tue Nov  1 17:02:40 PDT 2011
     Test Fixes
     * Inform BSDPAN (on FreeBSD) to not register modules installed while

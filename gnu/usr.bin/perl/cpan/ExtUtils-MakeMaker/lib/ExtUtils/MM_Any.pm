@@ -1,7 +1,7 @@
 package ExtUtils::MM_Any;
 
 use strict;
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 use Carp;
 use File::Spec;
@@ -999,7 +999,7 @@ sub metafile_data {
         };
     }
 
-    %meta = $self->_add_requirements_to_meta( %meta );
+    %meta = $self->_add_requirements_to_meta_v1_4( %meta );
 
     while( my($key, $val) = each %$meta_add ) {
         $meta{$key} = $val;
@@ -1017,12 +1017,11 @@ sub metafile_data {
 
 =cut
 
-sub _add_requirements_to_meta {
+sub _add_requirements_to_meta_v1_4 {
     my ( $self, %meta ) = @_;
 
     # Check the original args so we can tell between the user setting it
     # to an empty hash and it just being initialized.
-
     if( $self->{ARGS}{BUILD_REQUIRES} ) {
         $meta{build_requires} = _normalize_prereqs($self->{BUILD_REQUIRES});
     } else {
@@ -1031,9 +1030,41 @@ sub _add_requirements_to_meta {
         };
     }
 
+    if( $self->{ARGS}{TEST_REQUIRES} ) {
+        $meta{build_requires} = {
+          %{ $meta{build_requires} },
+          %{ _normalize_prereqs($self->{TEST_REQUIRES}) },
+        };
+    }
+
     $meta{requires} = _normalize_prereqs($self->{PREREQ_PM})
         if defined $self->{PREREQ_PM};
     $meta{requires}{perl} = _normalize_version($self->{MIN_PERL_VERSION})
+        if $self->{MIN_PERL_VERSION};
+
+    return %meta;
+}
+
+sub _add_requirements_to_meta_v2 {
+    my ( $self, %meta ) = @_;
+
+    # Check the original args so we can tell between the user setting it
+    # to an empty hash and it just being initialized.
+    if( $self->{ARGS}{BUILD_REQUIRES} ) {
+        $meta{prereqs}{build}{requires} = _normalize_prereqs($self->{BUILD_REQUIRES});
+    } else {
+        $meta{prereqs}{build}{requires} = {
+            'ExtUtils::MakeMaker'       => 0,
+        };
+    }
+
+    if( $self->{ARGS}{TEST_REQUIRES} ) {
+        $meta{prereqs}{test}{requires} = _normalize_prereqs($self->{TEST_REQUIRES});
+    }
+
+    $meta{prereqs}{runtime}{requires} = _normalize_prereqs($self->{PREREQ_PM})
+        if defined $self->{PREREQ_PM};
+    $meta{prereqs}{runtime}{requires}{perl} = _normalize_version($self->{MIN_PERL_VERSION})
         if $self->{MIN_PERL_VERSION};
 
     return %meta;
@@ -1262,6 +1293,7 @@ sub mymeta {
     my $file = shift || ''; # for testing
 
     my $mymeta = $self->_mymeta_from_meta($file);
+    my $v2 = 1;
 
     unless ( $mymeta ) {
         my @metadata = $self->metafile_data(
@@ -1269,11 +1301,16 @@ sub mymeta {
             $self->{META_MERGE} || {},
         );
         $mymeta = {@metadata};
+        $v2 = 0;
     }
 
     # Overwrite the non-configure dependency hashes
 
-    $mymeta = { $self->_add_requirements_to_meta( %$mymeta ) };
+    my $method = $v2
+               ? '_add_requirements_to_meta_v2'
+               : '_add_requirements_to_meta_v1_4';
+
+    $mymeta = { $self->$method( %$mymeta ) };
 
     $mymeta->{dynamic_config} = 0;
 
@@ -1291,12 +1328,12 @@ sub _mymeta_from_meta {
     for my $file ( $metafile, "META.json", "META.yml" ) {
       next unless -e $file;
       eval {
-          $meta = CPAN::Meta->load_file($file)->as_struct( {version => "1.4"} );
+          $meta = CPAN::Meta->load_file($file)->as_struct( { version => 2 } );
       };
       last if $meta;
     }
-    return undef unless $meta;
-    
+    return unless $meta;
+
     # META.yml before 6.25_01 cannot be trusted.  META.yml lived in the source directory.
     # There was a good chance the author accidentally uploaded a stale META.yml if they
     # rolled their own tarball rather than using "make dist".
@@ -1304,7 +1341,7 @@ sub _mymeta_from_meta {
         $meta->{generated_by} =~ /ExtUtils::MakeMaker version ([\d\._]+)/) {
         my $eummv = do { local $^W = 0; $1+0; };
         if ($eummv < 6.2501) {
-            return undef;
+            return;
         }
     }
 
@@ -1811,7 +1848,7 @@ sub init_INSTALL_from_PREFIX {
         my($s, $t, $d, $style) = @{$layout}{qw(s t d style)};
         my $r = '$('.$type2prefix{$t}.')';
 
-        print STDERR "Prefixing $var\n" if $Verbose >= 2;
+        warn "Prefixing $var\n" if $Verbose >= 2;
 
         my $installvar = "install$var";
         my $Installvar = uc $installvar;
@@ -1820,7 +1857,7 @@ sub init_INSTALL_from_PREFIX {
         $d = "$style/$d" if $style;
         $self->prefixify($installvar, $s, $r, $d);
 
-        print STDERR "  $Installvar == $self->{$Installvar}\n" 
+        warn "  $Installvar == $self->{$Installvar}\n" 
           if $Verbose >= 2;
     }
 
@@ -2383,7 +2420,7 @@ sub arch_check {
 
         my $arch = (grep length, $self->splitdir($pthinks))[-1];
 
-        print STDOUT <<END unless $self->{UNINSTALLED_PERL};
+        print <<END unless $self->{UNINSTALLED_PERL};
 Your perl and your Config.pm seem to have different ideas about the 
 architecture they are running on.
 Perl thinks: [$arch]
@@ -2585,6 +2622,66 @@ sub _all_prereqs {
     my $self = shift;
 
     return { %{$self->{PREREQ_PM}}, %{$self->{BUILD_REQUIRES}} };
+}
+
+=begin private
+
+=head3 _perl_header_files
+
+  my $perl_header_files= $self->_perl_header_files;
+
+returns a sorted list of header files as found in PERL_SRC or $archlibexp/CORE.
+
+Used by perldepend() in MM_Unix and MM_VMS via _perl_header_files_fragment()
+
+=end private
+
+=cut
+
+sub _perl_header_files {
+    my $self = shift;
+
+    my $header_dir = $self->{PERL_SRC} || $self->catdir($Config{archlibexp}, 'CORE');
+    opendir my $dh, $header_dir
+        or die "Failed to opendir '$header_dir' to find header files: $!";
+
+    # we need to use a temporary here as the sort in scalar context would have undefined results.
+    my @perl_headers= sort grep { /\.h\z/ } readdir($dh);
+
+    closedir $dh;
+
+    return @perl_headers;
+}
+
+=begin private
+
+=head3 _perl_header_files_fragment ($o, $separator)
+
+  my $perl_header_files_fragment= $self->_perl_header_files_fragment("/");
+
+return a Makefile fragment which holds the list of perl header files which
+XS code depends on $(PERL_INC), and sets up the dependency for the $(OBJECT) file.
+
+The $separator argument defaults to "". MM_VMS will set it to "" and MM_UNIX to "/"
+in perldepend(). This reason child subclasses need to control this is that in
+VMS the $(PERL_INC) directory will already have delimiters in it, but in
+UNIX $(PERL_INC) will need a slash between it an the filename. Hypothetically
+win32 could use "\\" (but it doesn't need to).
+
+=end private
+
+=cut
+
+sub _perl_header_files_fragment {
+    my ($self, $separator)= @_;
+    $separator ||= "";
+    return join("\\\n",
+                "PERL_HDRS = ",
+                map {
+                    sprintf( "        \$(PERL_INC)%s%s            ", $separator, $_ )
+                } $self->_perl_header_files()
+           ) . "\n\n"
+           . "\$(OBJECT) : \$(PERL_HDRS)\n";
 }
 
 

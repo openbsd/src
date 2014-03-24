@@ -9,7 +9,7 @@ require Exporter;
 use Carp;
 use Symbol qw(gensym qualify);
 
-$VERSION	= '1.12';
+$VERSION	= '1.13';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -163,7 +163,9 @@ sub xopen {
 }
 
 sub xclose {
-    $_[0] =~ /\A=?(\d+)\z/ ? eval { require POSIX; POSIX::close($1); } : close $_[0]
+    $_[0] =~ /\A=?(\d+)\z/
+	? do { my $fh; open($fh, $_[1] . '&=' . $1) and close($fh); }
+	: close $_[0]
 	or croak "$Me: close($_[0]) failed: $!";
 }
 
@@ -264,7 +266,7 @@ sub _open3 {
 			xopen $_->{handle}, $_->{mode} . '&', $_->{parent}
 			    if fileno $_->{handle} != xfileno($_->{parent});
 		    } else {
-			xclose $_->{parent};
+			xclose $_->{parent}, $_->{mode};
 			xopen $_->{handle}, $_->{mode} . '&=',
 			    fileno $_->{open_as};
 		    }
@@ -331,12 +333,12 @@ sub _open3 {
 
     foreach (@handles) {
 	next if $_->{dup} or $_->{dup_of_out};
-	xclose $_->{open_as};
+	xclose $_->{open_as}, $_->{mode};
     }
 
     # If the write handle is a dup give it away entirely, close my copy
     # of it.
-    xclose $handles[0]{parent} if $handles[0]{dup};
+    xclose $handles[0]{parent}, $handles[0]{mode} if $handles[0]{dup};
 
     select((select($handles[0]{parent}), $| = 1)[0]); # unbuffer pipe
     $kidpid;

@@ -683,7 +683,7 @@ either interactively or from the environment or an rc file.
 X<debugger option, recallCommand>
 X<debugger option, ShellBang>
 
-The characters used to recall command or spawn shell.  By
+The characters used to recall a command or spawn a shell.  By
 default, both are set to C<!>, which is unfortunate.
 
 =item C<pager>
@@ -841,6 +841,19 @@ X<debugger option, UsageOnly>
 Rudimentary per-package memory usage dump.  Calculates total
 size of strings found in variables in the package.  This does not
 include lexicals in a module's file scope, or lost in closures.
+
+=item C<HistFile>
+X<debugger option, history, HistFile>
+
+The path of the file from which the history (assuming a usable
+Term::ReadLine backend) will be read on the debugger's startup, and to which
+it will be saved on shutdown (for persistence across sessions). Similar in
+concept to Bash's C<.bash_history> file.
+
+=item C<HistSize>
+X<debugger option, history, HistSize>
+
+The count of the saved lines in the history (assuming C<HistFile> above).
 
 =back
 

@@ -307,7 +307,7 @@ the main program.
 
 C<UNITCHECK> blocks are run just after the unit which defined them has
 been compiled.  The main program file and each module it loads are
-compilation units, as are string C<eval>s, code compiled using the
+compilation units, as are string C<eval>s, run-time code compiled using the
 C<(?{ })> construct in a regex, calls to C<do FILE>, C<require FILE>,
 and code after the C<-e> switch on the command line.
 
@@ -545,15 +545,14 @@ X<threadsafe> X<thread safe>
 X<module, threadsafe> X<module, thread safe>
 X<CLONE> X<CLONE_SKIP> X<thread> X<threads> X<ithread>
 
-Since 5.6.0, Perl has had support for a new type of threads called
-interpreter threads (ithreads). These threads can be used explicitly
-and implicitly.
+Perl supports a type of threads called interpreter threads (ithreads).
+These threads can be used explicitly and implicitly.
 
 Ithreads work by cloning the data tree so that no data is shared
 between different threads. These threads can be used by using the C<threads>
 module or by doing fork() on win32 (fake fork() support). When a
 thread is cloned all Perl data is cloned, however non-Perl data cannot
-be cloned automatically.  Perl after 5.7.2 has support for the C<CLONE>
+be cloned automatically.  Perl after 5.8.0 has support for the C<CLONE>
 special subroutine.  In C<CLONE> you can do whatever
 you need to do,
 like for example handle the cloning of non-Perl data, if necessary.

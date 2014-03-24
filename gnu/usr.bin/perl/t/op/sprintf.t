@@ -6,6 +6,8 @@
 # not-a-number ...), of the effects of locale, and of features
 # specific to multi-byte characters (under the utf8 pragma and such).
 
+# For tests that do not fit this format, use sprintf2.t.
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
@@ -14,9 +16,10 @@ use warnings;
 use version;
 use Config;
 use strict;
+require './test.pl';
 
 my @tests = ();
-my ($i, $template, $data, $result, $comment, $w, $x, $evalData, $n, $p);
+my ($template, $data, $result, $comment, $w, $x, $evalData, $n, $p);
 
 my $Is_VMS_VAX = 0;
 # We use HW_MODEL since ARCH_NAME was not in VMS V5.*
@@ -41,7 +44,7 @@ while (<DATA>) {
     if ($Is_VMS_VAX || $Is_Ultrix_VAX) {
 	# VAX DEC C 5.3 at least since there is no
 	# ccflags =~ /float=ieee/ on VAX.
-	# AXP is unaffected whether or not it's using ieee.
+	# AXP is unaffected whether or not it is using ieee.
         $data   =~ s/([eE])96$/${1}26/;      # smaller exponents
         $result =~ s/([eE]\+)102$/${1}32/;   #  "       "
         $data   =~ s/([eE])\-101$/${1}-24/;  # larger exponents
@@ -53,7 +56,7 @@ while (<DATA>) {
     push @tests, [$template, $evalData, $result, $comment, $data];
 }
 
-print '1..', scalar @tests, "\n";
+plan(scalar @tests);
 
 $SIG{__WARN__} = sub {
     if ($_[0] =~ /^Invalid conversion/) {
@@ -62,13 +65,15 @@ $SIG{__WARN__} = sub {
 	$w .= ' UNINIT';
     } elsif ($_[0] =~ /^Missing argument/) {
 	$w .= ' MISSING';
+    } elsif ($_[0]=~/^vector argument not supported with alpha versions/) {
+	$w .= ' ALPHA';
     } else {
 	warn @_;
     }
 };
 
-for ($i = 1; @tests; $i++) {
-    ($template, $evalData, $result, $comment, $data) = @{shift @tests};
+for (@tests) {
+    ($template, $evalData, $result, $comment, $data) = @$_;
     $w = undef;
     $x = sprintf($template, @$evalData);
     $x = ">$x<" if defined $x;
@@ -101,7 +106,7 @@ for ($i = 1; @tests; $i++) {
 	} elsif ($os =~ /\b$^O(?::(\S+))?\b/i) {
 	    my $vsn = defined $1 ? $1 : "0";
 	    # Only compare on the the first pair of digits, as numeric
-	    # compares don't like 2.6.10-3mdksmp or 2.6.8-24.10-default
+	    # compares do not like 2.6.10-3mdksmp or 2.6.8-24.10-default
 	    s/^(\d+(\.\d+)?).*/$1/ for $osv, $vsn;
 	    $skip = $vsn ? ($osv <= $vsn ? 1 : 0) : 1;
 	}
@@ -109,28 +114,27 @@ for ($i = 1; @tests; $i++) {
     }
 
     if ($x eq ">$result<") {
-        print "ok $i\n";
+        ok(1, ">$result<");
     }
     elsif ($skip) {
-	print "ok $i # skip $comment\n";
+        ok(1, "skip $comment");
     }
     elsif ($y eq ">$result<")	# Some C libraries always give
     {				# three-digit exponent
-		print("ok $i # >$result< $x three-digit exponent accepted\n");
+		ok(1, ">$result< $x three-digit exponent accepted");
     }
 	elsif ($result =~ /[-+]\d{3}$/ &&
 		   # Suppress tests with modulo of exponent >= 100 on platforms
-		   # which can't handle such magnitudes (or where we can't tell).
+		   # which cannot handle such magnitudes (or where we cannot tell).
 		   ((!eval {require POSIX}) || # Costly: only do this if we must!
 			(length(&POSIX::DBL_MAX) - rindex(&POSIX::DBL_MAX, '+')) == 3))
 	{
-		print("ok $i # >$template< >$data< >$result<",
-			  " Suppressed: exponent out of range?\n");
+        ok(1,
+         ">$template< >$data< >$result< Suppressed: exponent out of range?\n");
 	}
     else {
-	$y = ($x eq $y ? "" : " => $y");
-	print("not ok $i >$template< >$data< >$result< $x$y",
-	    $comment ? " # $comment\n" : "\n");
+        $y = ($x eq $y ? "" : " => $y");
+        ok(0, ">$template< >$data< >$result< $x$y $comment");
     }
 }
 
@@ -317,6 +321,7 @@ __END__
 >%vd<       >[version->new("1.002")]< >1.2<
 >%vd<       >[version->new("1048576.5")]< >1048576.5<
 >%vd<       >[version->new("50")]< >50<
+>[%vd]<     >[version->new(v1.1_1)]< >[] ALPHA<
 >%v.3d<     >"\01\02\03"< >001.002.003<
 >%0v3d<     >"\01\02\03"< >001.002.003<
 >%v.3d<     >[version::qv("1.2.3")]< >001.002.003<
@@ -399,7 +404,7 @@ __END__
 > %.0g<     >[]<          > 0 MISSING<
 >%.2g<      >[]<          >0 MISSING<
 >%.2gC<      >[]<          >0C MISSING<
->%.0g<      >-0.0<        >-0<		   >C99 standard mandates minus sign but C89 does not skip: MSWin32 VMS hpux:10.20 openbsd netbsd:1.5 irix darwin<
+>%.0g<      >-0.0<        >-0<		   >C99 standard mandates minus sign but C89 does not skip: MSWin32 VMS hpux:10.20 openbsd netbsd:1.5 irix darwin freebsd:4.9<
 >%.0g<      >12345.6789<  >1e+04<
 >%#.0g<     >12345.6789<  >1.e+04<
 >%.2g<      >12345.6789<  >1.2e+04<

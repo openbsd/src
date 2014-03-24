@@ -1,4 +1,4 @@
-# $Id: enc_utf8.t,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: enc_utf8.t,v 2.2 2013/02/18 02:23:56 dankogai Exp $
 # This is the twin of enc_eucjp.t .
 
 BEGIN {
@@ -17,6 +17,7 @@ BEGIN {
     }
 }
 
+no warnings "deprecated";
 use encoding 'utf8';
 
 my @c = (127, 128, 255, 256);

@@ -414,16 +414,6 @@ $define|true|[yY]*)
     ;;
 esac
 
-# If we are using g++ we must use nm and force ourselves to use
-# the /usr/lib/libc.a (resetting the libc below to an empty string
-# makes Configure to look for the right one) because the symbol
-# scanning tricks of Configure will crash and burn horribly.
-case "$cc" in
-*g++*) usenm=true
-       libc=''
-       ;;
-esac
-
 # If using g++, the Configure scan for dlopen() and (especially)
 # dlerror() might fail, easier just to forcibly hint them in.
 case "$cc" in

@@ -10,7 +10,7 @@ $|  = 1;
 use warnings;
 use Config;
 
-plan tests => 119;
+plan tests => 121;
 
 my $Perl = which_perl();
 
@@ -233,6 +233,10 @@ like( $@, qr/Bad filehandle:\s+$afile/,          '       right error' );
 
     # used to try to open a file [perl #17830]
     ok( open(my $stdin,  "<&", fileno STDIN),   'dup fileno(STDIN) into lexical fh') or _diag $!;
+
+    fileno(STDIN) =~ /(.)/;
+    ok open($stdin, "<&", $1), 'open ... "<&", $magical_fileno',
+	||  _diag $!;
 }
 
 SKIP: {
@@ -267,7 +271,7 @@ SKIP: {
 
     open($fh1{k}, "TEST");
     gimme($fh1{k});
-    like($@, qr/<\$fh1{...}> line 1\./, "autoviv fh package helem");
+    like($@, qr/<\$fh1\{...}> line 1\./, "autoviv fh package helem");
 
     my @fh2;
     open($fh2[0], "TEST");
@@ -277,7 +281,12 @@ SKIP: {
     my %fh3;
     open($fh3{k}, "TEST");
     gimme($fh3{k});
-    like($@, qr/<\$fh3{...}> line 1\./, "autoviv fh lexical helem");
+    like($@, qr/<\$fh3\{...}> line 1\./, "autoviv fh lexical helem");
+
+    local $/ = *F;  # used to cause an assertion failure
+    gimme($fh3{k});
+    like($@, qr/<\$fh3\{...}> chunk 2\./,
+	'<...> line 1 when $/ is set to a glob');
 }
     
 SKIP: {

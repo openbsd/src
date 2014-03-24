@@ -5,7 +5,7 @@ use warnings;
 use parent qw(Pod::Perldoc::BaseTo);
 
 use vars qw($VERSION);
-$VERSION = '3.17';
+$VERSION = '3.19';
 
 use File::Spec::Functions qw(catfile);
 use Pod::Man 2.18;
@@ -305,7 +305,7 @@ sub _filter_through_nroff {
     # Maybe someone set rendering switches as part of the opt_n value
     # Deal with that here.
 
-    my ($render, $switches) = $self->__nroffer() =~ /\A([\/a-zA-Z0-9_-]+)\b(.+)?\z/;
+    my ($render, $switches) = $self->__nroffer() =~ /\A([\/a-zA-Z0-9_\.-]+)\b(.+)?\z/;
 
     $self->die("no nroffer!?") unless $render;
     my @render_switches = $self->_collect_nroff_switches;

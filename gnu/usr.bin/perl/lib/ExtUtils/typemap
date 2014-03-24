@@ -143,12 +143,12 @@ T_HVREF_REFCOUNT_FIXED
 	} STMT_END
 T_CVREF
 	STMT_START {
-		SV* const xsub_tmp_sv = $arg;
+                HV *st;
+                GV *gvp;
+		SV * const xsub_tmp_sv = $arg;
 		SvGETMAGIC(xsub_tmp_sv);
-		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVCV){
-		    $var = (CV*)SvRV(xsub_tmp_sv);
-		}
-		else{
+                $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
+		if (!$var) {
 		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
@@ -156,12 +156,12 @@ T_CVREF
 	} STMT_END
 T_CVREF_REFCOUNT_FIXED
 	STMT_START {
-		SV* const xsub_tmp_sv = $arg;
+                HV *st;
+                GV *gvp;
+		SV * const xsub_tmp_sv = $arg;
 		SvGETMAGIC(xsub_tmp_sv);
-		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVCV){
-		    $var = (CV*)SvRV(xsub_tmp_sv);
-		}
-		else{
+                $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
+		if (!$var) {
 		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
@@ -328,7 +328,7 @@ T_SYSRET
 T_ENUM
 	sv_setiv($arg, (IV)$var);
 T_BOOL
-	$arg = boolSV($var);
+	${"$var" eq "RETVAL" ? \"$arg = boolSV($var);" : \"sv_setsv($arg, boolSV($var));"}
 T_U_INT
 	sv_setuv($arg, (UV)$var);
 T_SHORT

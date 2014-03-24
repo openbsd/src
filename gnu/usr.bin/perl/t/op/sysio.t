@@ -14,8 +14,7 @@ $reopen = ($^O eq 'VMS' ||
            $^O eq 'os2' ||
            $^O eq 'MSWin32' ||
            $^O eq 'NetWare' ||
-           $^O eq 'dos' ||
-	   $^O eq 'mpeix');
+           $^O eq 'dos');
 
 $x = 'abc';
 

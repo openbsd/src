@@ -1,6 +1,30 @@
+2012-06-08   Gisle Aas <gisle@ActiveState.com>
+
+   Gisle Aas (3):
+      Wrong version number in the changelog
+      The t/threads.t was missing from the MANIFEST
+      Update expected digests for files
+
+   Andrew Fresh (1):
+      Remove double the
+
+   Lyle Hopkins (1):
+      Digest::Perl::MD5 OO fallback didn't work [RT#66634]
+
+   Peter J. Acklam (1):
+      Fix typos (spelling errors) in cpan/Digest-MD5/*
+
+   Shlomi Fish (1):
+      Modernize the code in the POD.
+
+   Zefram (1):
+      Makes Digest::MD5 work on Perl 5.6 [RT#75032]
+
+
+
 2010-09-30   Gisle Aas <gisle@ActiveState.com>
 
-   Release 2.50
+   Release 2.51
 
    Florian Ragwitz (1):
       Fix compilation with c++ compilers
@@ -68,7 +92,7 @@
 
    Applied warning fix from Geoff Richards [RT#19643]
 
-   Applied compatiblity fix from Alexandr Ciornii [RT#30348]
+   Applied compatibility fix from Alexandr Ciornii [RT#30348]
 
 
 
@@ -594,7 +618,7 @@
 
    Release 1.99_55
 
-   Grahams HMAC_MD5.pm splitted into two modules.  Digest::HMAC and
+   Grahams HMAC_MD5.pm split into two modules.  Digest::HMAC and
    Digest::HMAC_MD5.  Also provide functional interface.  Documentation
    is still lacking.
 

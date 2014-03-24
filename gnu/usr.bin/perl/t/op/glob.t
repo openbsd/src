@@ -20,7 +20,7 @@ elsif ($^O eq 'VMS') {
 }
 else {
   map { $files{$_}++ } <op/*>;
-  map { delete $files{$_} } split /[\s\n]/, `echo op/*`;
+  map { delete $files{$_} } split /\n/, `ls op/* | cat`;
 }
 ok( !(keys(%files)),'leftover op/* files' ) or diag(join(' ',sort keys %files));
 

@@ -37,9 +37,12 @@ int
 Perl_runops_standard(pTHX)
 {
     dVAR;
-    register OP *op = PL_op;
+    OP *op = PL_op;
+    OP_ENTRY_PROBE(OP_NAME(op));
     while ((PL_op = op = op->op_ppaddr(aTHX))) {
+        OP_ENTRY_PROBE(OP_NAME(op));
     }
+    PERL_ASYNC_CHECK();
 
     TAINT_NOT;
     return 0;
@@ -49,8 +52,8 @@ Perl_runops_standard(pTHX)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

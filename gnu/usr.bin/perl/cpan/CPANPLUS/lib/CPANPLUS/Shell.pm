@@ -1,4 +1,5 @@
 package CPANPLUS::Shell;
+use deprecate;
 
 use strict;
 
@@ -12,8 +13,9 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 $Params::Check::VERBOSE = 1;
 
-use vars qw[@ISA $SHELL $DEFAULT];
+use vars qw[@ISA $SHELL $DEFAULT $VERSION];
 
+$VERSION = "0.9135";
 $DEFAULT    = SHELL_DEFAULT;
 
 =pod

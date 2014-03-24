@@ -1,14 +1,17 @@
-#
+#!perl -w
+use strict;
+
 BEGIN { warn "Running ".__FILE__."\n" };
 BEGIN 
  {
   require "Config.pm";
   die "Config.pm:$@" if $@;
-  Config::->import;
+  Config->import;
  }
 use File::Compare qw(compare);
 use File::Copy qw(copy);
 use File::Basename qw(fileparse);
+
 my ($name, $dir) = fileparse($0);
 $name =~ s#^(.*)\.PL$#../$1.SH#;
 my %opt;
@@ -23,18 +26,12 @@ $opt{CORE_DIR} ||= '../lib/CORE';
 
 warn "Writing $opt{CONFIG_H}\n";
 
-my $patchlevel = $opt{INST_VER};
-$patchlevel =~ s|^[\\/]||;
-$patchlevel =~ s|~VERSION~|$Config{version}|g;
-$patchlevel ||= $Config{version};
-$patchlevel = qq["$patchlevel"];
-
 open(SH,"<$name") || die "Cannot open $name:$!";
 while (<SH>)
  {
   last if /^\s*sed/;
  }
-($term,$file,$pat) = /^\s*sed\s+<<(\S+)\s+>(\S+)\s+(.*)$/;
+my($term,$file,$pat) = /^\s*sed\s+<<(\S+)\s+>(\S+)\s+(.*)$/;
 
 $file =~ s/^\$(\w+)$/$opt{$1}/g;
 
@@ -54,7 +51,6 @@ eval $str;
 die "$str:$@" if $@;
 
 open(H,">$file.new") || die "Cannot open $file.new:$!";
-#binmode H;		# no CRs (which cause a spurious rebuild)
 while (<SH>)
  {
   last if /^$term$/o;
@@ -73,6 +69,10 @@ while (<SH>)
    {
      $_ = "/*#define ". $1 . "_EXP \"\"\t/ **/\n";
    }
+  elsif (/^\s*#define\s+CPP(STDIN|RUN)\s+"gcc(.*)"\s*$/)
+   {
+     $_ = "#define CPP" . $1 . " \"" . $opt{ARCHPREFIX} . "gcc" . $2 . "\"\n";
+   }
   print H;
  }
 close(H);
@@ -89,7 +89,6 @@ if (compare("$file.new",$file))
   chmod(0666,$file);
   unlink($file);
   rename("$file.new",$file);
-  #chmod(0444,$file);
   exit(1);
  }
 else
@@ -112,7 +111,7 @@ sub BackTick
  my $cmd = shift;
  if ($cmd =~ /^echo\s+(.*?)\s*\|\s+sed\s+'(.*)'\s*$/)
   {
-   local ($data,$pat) = ($1,$2);
+   my($data,$pat) = ($1,$2);
    $data =~ s/\s+/ /g;
    eval "\$data =~ $pat";
    return $data;

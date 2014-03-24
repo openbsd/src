@@ -9,9 +9,6 @@
  */
 #include "regcharclass.h"
 
-typedef OP OP_4tree;			/* Will be redefined later. */
-
-
 /* Convert branch sequences to more efficient trie ops? */
 #define PERL_ENABLE_TRIE_OPTIMISATION 1
 
@@ -121,6 +118,8 @@ typedef OP OP_4tree;			/* Will be redefined later. */
                                    Used to make it easier to clone and free arbitrary
                                    data that the regops need. Often the ARG field of
                                    a regop is an index into this structure */
+	struct reg_code_block *code_blocks;/* positions of literal (?{}) */
+	int num_code_blocks;	/* size of code_blocks[] */
 	regnode program[1];	/* Unwarranted chumminess with compiler. */
 } regexp_internal;
 
@@ -138,6 +137,7 @@ typedef OP OP_4tree;			/* Will be redefined later. */
 #define PREGf_NAUGHTY		0x00000004 /* how exponential is this pattern? */
 #define PREGf_VERBARG_SEEN	0x00000008
 #define PREGf_CUTGROUP_SEEN	0x00000010
+#define PREGf_USE_RE_EVAL	0x00000020 /* compiled with "use re 'eval'" */
 
 
 /* this is where the old regcomp.h started */
@@ -178,7 +178,6 @@ struct regnode_2 {
 
 
 #define ANYOF_BITMAP_SIZE	32	/* 256 b/(8 b/B) */
-#define ANYOF_CLASSBITMAP_SIZE	 4	/* up to 32 (8*4) named classes */
 
 /* also used by trie */
 struct regnode_charclass {
@@ -196,7 +195,7 @@ struct regnode_charclass_class {
     U16 next_off;
     U32 arg1;					/* used as ptr in S_regclass */
     char bitmap[ANYOF_BITMAP_SIZE];		/* both compile-time */
-    char classflags[ANYOF_CLASSBITMAP_SIZE];	/* and run-time */
+    U32 classflags;	                        /* and run-time */
 };
 
 /* XXX fix this description.
@@ -307,50 +306,36 @@ struct regnode_charclass_class {
  * ANYOF_NONBITMAP_NON_UTF8 bit is also set. */
 #define ANYOF_NONBITMAP(node)	(ARG(node) != ANYOF_NONBITMAP_EMPTY)
 
-/* Flags for node->flags of ANYOF.  These are in short supply, so some games
- * are done to share them, as described below.  If necessary, the ANYOF_LOCALE
- * and ANYOF_CLASS bits could be shared with a space penalty for locale nodes,
- * but this isn't quite so easy, as the optimizer also uses ANYOF_CLASS.
- * Another option would be to push them into new nodes.  E.g. there could be an
- * ANYOF_LOCALE node that would be in place of the flag of the same name.
- * Once the planned change to compile all the above-latin1 code points is done,
- * then the UNICODE_ALL bit can be freed up, with a small performance penalty.
- * If flags need to be added that are applicable to the synthetic start class
- * only, with some work, they could be put in the next-node field, or in an
- * unused bit of the classflags field. */
+/* Flags for node->flags of ANYOF.  These are in short supply, but there is one
+ * currently available.  If more than this are needed, the ANYOF_LOCALE and
+ * ANYOF_CLASS bits could be shared, making a space penalty for all locale nodes.
+ * Also, the UNICODE_ALL bit could be freed up by resorting to creating a swash
+ * containing everything above 255.  This introduces a performance penalty.
+ * Better would be to split it off into a separate node, which actually would
+ * improve performance a bit by allowing regexec.c to test for a UTF-8
+ * character being above 255 without having to call a function nor calculate
+ * its code point value.  However, this solution might need to have a second
+ * node type, ANYOF_SYNTHETIC_ABOVE_LATIN1_ALL */
 
 #define ANYOF_LOCALE		 0x01	    /* /l modifier */
 
 /* The fold is calculated and stored in the bitmap where possible at compile
- * time.  However there are two cases where it isn't possible.  These share
- * this bit:  1) under locale, where the actual folding varies depending on
- * what the locale is at the time of execution; and 2) where the folding is
- * specified in a swash, not the bitmap, such as characters which aren't
- * specified in the bitmap, or properties that aren't looked at at compile time
- */
-#define ANYOF_LOC_NONBITMAP_FOLD 0x02
+ * time.  However under locale, the actual folding varies depending on
+ * what the locale is at the time of execution, so it has to be deferred until
+ * then */
+#define ANYOF_LOC_FOLD           0x02
 
 #define ANYOF_INVERT		 0x04
 
 /* Set if this is a struct regnode_charclass_class vs a regnode_charclass.  This
  * is used for runtime \d, \w, [:posix:], ..., which are used only in locale
  * and the optimizer's synthetic start class.  Non-locale \d, etc are resolved
- * at compile-time */
-#define ANYOF_CLASS	 0x08
-#define ANYOF_LARGE      ANYOF_CLASS    /* Same; name retained for back compat */
+ * at compile-time.  Could be shared with ANYOF_LOCALE, forcing all locale
+ * nodes to be large */
+#define ANYOF_CLASS	         0x08
+#define ANYOF_LARGE       ANYOF_CLASS   /* Same; name retained for back compat */
 
-/* EOS, meaning that it can match an empty string too, is used for the
- * synthetic start class only. */
-#define ANYOF_EOS		0x10
-
-/* ? Is this node the synthetic start class (ssc).  This bit is shared with
- * ANYOF_EOS, as the latter is used only for the ssc, and then not used by
- * regexec.c.  And, the code is structured so that if it is set, the ssc is
- * not used, so it is guaranteed to be 0 for the ssc by the time regexec.c
- * gets executed, and 0 for a non-ssc ANYOF node, as it only ever gets set for
- * a potential ssc candidate.  Thus setting it to 1 after it has been
- * determined that the ssc will be used is not ambiguous */
-#define ANYOF_IS_SYNTHETIC	ANYOF_EOS
+/* Unused: 0x10.  When using, be sure to change ANYOF_FLAGS_ALL below */
 
 /* Can match something outside the bitmap that isn't in utf8 */
 #define ANYOF_NONBITMAP_NON_UTF8 0x20
@@ -362,62 +347,80 @@ struct regnode_charclass_class {
  * in utf8. */
 #define ANYOF_NON_UTF8_LATIN1_ALL 0x80
 
-#define ANYOF_FLAGS_ALL		0xff
+#define ANYOF_FLAGS_ALL		(0xff & ~0x10)
 
 /* These are the flags that ANYOF_INVERT being set or not doesn't affect
  * whether they are operative or not.  e.g., the node still has LOCALE
  * regardless of being inverted; whereas ANYOF_UNICODE_ALL means something
  * different if inverted */
 #define INVERSION_UNAFFECTED_FLAGS (ANYOF_LOCALE                        \
-	                           |ANYOF_LOC_NONBITMAP_FOLD            \
+	                           |ANYOF_LOC_FOLD                      \
 	                           |ANYOF_CLASS                         \
-	                           |ANYOF_EOS                           \
 	                           |ANYOF_NONBITMAP_NON_UTF8)
 
 /* Character classes for node->classflags of ANYOF */
 /* Should be synchronized with a table in regprop() */
-/* 2n should pair with 2n+1 */
+/* 2n should be the normal one, paired with its complement at 2n+1 */
 
-#define ANYOF_ALNUM	 0	/* \w, PL_utf8_alnum, utf8::IsWord, ALNUM */
-#define ANYOF_NALNUM	 1
-#define ANYOF_SPACE	 2	/* \s */
-#define ANYOF_NSPACE	 3
-#define ANYOF_DIGIT	 4	/* \d */
-#define ANYOF_NDIGIT	 5
-#define ANYOF_ALNUMC	 6	/* [[:alnum:]] isalnum(3), utf8::IsAlnum, ALNUMC */
-#define ANYOF_NALNUMC	 7
-#define ANYOF_ALPHA	 8
-#define ANYOF_NALPHA	 9
-#define ANYOF_ASCII	10
-#define ANYOF_NASCII	11
-#define ANYOF_CNTRL	12
-#define ANYOF_NCNTRL	13
-#define ANYOF_GRAPH	14
-#define ANYOF_NGRAPH	15
-#define ANYOF_LOWER	16
-#define ANYOF_NLOWER	17
-#define ANYOF_PRINT	18
-#define ANYOF_NPRINT	19
-#define ANYOF_PUNCT	20
-#define ANYOF_NPUNCT	21
-#define ANYOF_UPPER	22
-#define ANYOF_NUPPER	23
-#define ANYOF_XDIGIT	24
-#define ANYOF_NXDIGIT	25
-#define ANYOF_PSXSPC	26	/* POSIX space: \s plus the vertical tab */
-#define ANYOF_NPSXSPC	27
-#define ANYOF_BLANK	28	/* GNU extension: space and tab: non-vertical space */
-#define ANYOF_NBLANK	29
+#define ANYOF_ALPHA    ((_CC_ALPHA) * 2)
+#define ANYOF_NALPHA   ((ANYOF_ALPHA) + 1)
+#define ANYOF_ALPHANUMERIC   ((_CC_ALPHANUMERIC) * 2)    /* [[:alnum:]] isalnum(3), utf8::IsAlnum */
+#define ANYOF_NALPHANUMERIC  ((ANYOF_ALPHANUMERIC) + 1)
+#define ANYOF_ASCII    ((_CC_ASCII) * 2)
+#define ANYOF_NASCII   ((ANYOF_ASCII) + 1)
+#define ANYOF_BLANK    ((_CC_BLANK) * 2)     /* GNU extension: space and tab: non-vertical space */
+#define ANYOF_NBLANK   ((ANYOF_BLANK) + 1)
+#define ANYOF_CASED    ((_CC_CASED) * 2)    /* Pseudo class for [:lower:] or
+                                               [:upper:] under /i */
+#define ANYOF_NCASED   ((ANYOF_CASED) + 1)
+#define ANYOF_CNTRL    ((_CC_CNTRL) * 2)
+#define ANYOF_NCNTRL   ((ANYOF_CNTRL) + 1)
+#define ANYOF_DIGIT    ((_CC_DIGIT) * 2)     /* \d */
+#define ANYOF_NDIGIT   ((ANYOF_DIGIT) + 1)
+#define ANYOF_GRAPH    ((_CC_GRAPH) * 2)
+#define ANYOF_NGRAPH   ((ANYOF_GRAPH) + 1)
+#define ANYOF_LOWER    ((_CC_LOWER) * 2)
+#define ANYOF_NLOWER   ((ANYOF_LOWER) + 1)
+#define ANYOF_PRINT    ((_CC_PRINT) * 2)
+#define ANYOF_NPRINT   ((ANYOF_PRINT) + 1)
+#define ANYOF_PSXSPC   ((_CC_PSXSPC) * 2)    /* POSIX space: \s plus the vertical tab */
+#define ANYOF_NPSXSPC  ((ANYOF_PSXSPC) + 1)
+#define ANYOF_PUNCT    ((_CC_PUNCT) * 2)
+#define ANYOF_NPUNCT   ((ANYOF_PUNCT) + 1)
+#define ANYOF_SPACE    ((_CC_SPACE) * 2)     /* \s */
+#define ANYOF_NSPACE   ((ANYOF_SPACE) + 1)
+#define ANYOF_UPPER    ((_CC_UPPER) * 2)
+#define ANYOF_NUPPER   ((ANYOF_UPPER) + 1)
+#define ANYOF_WORDCHAR ((_CC_WORDCHAR) * 2)  /* \w, PL_utf8_alnum, utf8::IsWord, ALNUM */
+#define ANYOF_NWORDCHAR   ((ANYOF_WORDCHAR) + 1)
+#define ANYOF_XDIGIT   ((_CC_XDIGIT) * 2)
+#define ANYOF_NXDIGIT  ((ANYOF_XDIGIT) + 1)
 
-#define ANYOF_MAX	32
-
-/* pseudo classes, not stored in the class bitmap, but used as flags
+/* pseudo classes below this, not stored in the class bitmap, but used as flags
    during compilation of char classes */
 
-#define ANYOF_VERTWS	(ANYOF_MAX+1)
-#define ANYOF_NVERTWS	(ANYOF_MAX+2)
-#define ANYOF_HORIZWS	(ANYOF_MAX+3)
-#define ANYOF_NHORIZWS	(ANYOF_MAX+4)
+#define ANYOF_VERTWS    ((_CC_VERTSPACE) * 2)
+#define ANYOF_NVERTWS   ((ANYOF_VERTWS)+1)
+
+/* It is best if this is the last one, as all above it are stored as bits in a
+ * bitmap, and it isn't part of that bitmap */
+#if _CC_VERTSPACE != _HIGHEST_REGCOMP_DOT_H_SYNC
+#   error Problem with handy.h _HIGHEST_REGCOMP_DOT_H_SYNC #define
+#endif
+
+#define ANYOF_MAX      (ANYOF_VERTWS) /* So upper loop limit is written:
+                                       *       '< ANYOF_MAX'
+                                       * Hence doesn't include VERTWS, as that
+                                       * is a pseudo class */
+#if (ANYOF_MAX > 32)   /* Must fit in 32-bit word */
+#   error Problem with handy.h _CC_foo #defines
+#endif
+
+#define ANYOF_HORIZWS	((ANYOF_MAX)+2) /* = (ANYOF_NVERTWS + 1) */
+#define ANYOF_NHORIZWS	((ANYOF_MAX)+3)
+
+#define ANYOF_UNIPROP   ((ANYOF_MAX)+4)  /* Used to indicate a Unicode
+                                            property: \p{} or \P{} */
 
 /* Backward source code compatibility. */
 
@@ -425,6 +428,8 @@ struct regnode_charclass_class {
 #define ANYOF_NALNUML	 ANYOF_NALNUM
 #define ANYOF_SPACEL	 ANYOF_SPACE
 #define ANYOF_NSPACEL	 ANYOF_NSPACE
+#define ANYOF_ALNUM ANYOF_WORDCHAR
+#define ANYOF_NALNUM ANYOF_NWORDCHAR
 
 /* Utility macros for the bitmap and classes of ANYOF */
 
@@ -435,16 +440,18 @@ struct regnode_charclass_class {
 
 #define ANYOF_BIT(c)		(1 << ((c) & 7))
 
-#define ANYOF_CLASS_BYTE(p, c)	(((struct regnode_charclass_class*)(p))->classflags[((c) >> 3) & 3])
-#define ANYOF_CLASS_SET(p, c)	(ANYOF_CLASS_BYTE(p, c) |=  ANYOF_BIT(c))
-#define ANYOF_CLASS_CLEAR(p, c)	(ANYOF_CLASS_BYTE(p, c) &= ~ANYOF_BIT(c))
-#define ANYOF_CLASS_TEST(p, c)	(ANYOF_CLASS_BYTE(p, c) &   ANYOF_BIT(c))
+#define ANYOF_CLASS_SET(p, c)	(((struct regnode_charclass_class*) (p))->classflags |= (1U << (c)))
+#define ANYOF_CLASS_CLEAR(p, c)	(((struct regnode_charclass_class*) (p))->classflags &= ~ (1U <<(c)))
+#define ANYOF_CLASS_TEST(p, c)	(((struct regnode_charclass_class*) (p))->classflags & (1U << (c)))
 
-#define ANYOF_CLASS_ZERO(ret)	Zero(((struct regnode_charclass_class*)(ret))->classflags, ANYOF_CLASSBITMAP_SIZE, char)
-#define ANYOF_CLASS_SETALL(ret)		\
-	memset (((struct regnode_charclass_class*)(ret))->classflags, 255, ANYOF_CLASSBITMAP_SIZE)
+#define ANYOF_CLASS_ZERO(ret)	STMT_START { ((struct regnode_charclass_class*) (ret))->classflags = 0; } STMT_END
+
+/* Shifts a bit to get, eg. 0x4000_0000, then subtracts 1 to get 0x3FFF_FFFF */
+#define ANYOF_CLASS_SETALL(ret) STMT_START { ((struct regnode_charclass_class*) (ret))->classflags = ((1U << ((ANYOF_MAX) - 1))) - 1; } STMT_END
+
+#define ANYOF_CLASS_OR(source, dest) STMT_START { (dest)->classflags |= source->classflags ; } STMT_END
+
 #define ANYOF_BITMAP_ZERO(ret)	Zero(((struct regnode_charclass*)(ret))->bitmap, ANYOF_BITMAP_SIZE, char)
-
 #define ANYOF_BITMAP(p)		(((struct regnode_charclass*)(p))->bitmap)
 #define ANYOF_BITMAP_BYTE(p, c)	(ANYOF_BITMAP(p)[(((U8)(c)) >> 3) & 31])
 #define ANYOF_BITMAP_SET(p, c)	(ANYOF_BITMAP_BYTE(p, c) |=  ANYOF_BIT(c))
@@ -462,12 +469,9 @@ struct regnode_charclass_class {
 #define ANYOF_SKIP		((ANYOF_SIZE - 1)/sizeof(regnode))
 #define ANYOF_CLASS_SKIP	((ANYOF_CLASS_SIZE - 1)/sizeof(regnode))
 
-#if ANYOF_CLASSBITMAP_SIZE != 4
-#   error ANYOF_CLASSBITMAP_SIZE is expected to be 4
-#endif
-#define ANYOF_CLASS_TEST_ANY_SET(p) ((ANYOF_FLAGS(p) & ANYOF_CLASS)         \
-	&& memNE (((struct regnode_charclass_class*)(p))->classflags,	    \
-		    "\0\0\0\0", ANYOF_CLASSBITMAP_SIZE))
+#define ANYOF_CLASS_TEST_ANY_SET(p)                               \
+        ((ANYOF_FLAGS(p) & ANYOF_CLASS)                           \
+	 && (((struct regnode_charclass_class*)(p))->classflags))
 /*#define ANYOF_CLASS_ADD_SKIP	(ANYOF_CLASS_SKIP - ANYOF_SKIP)
  * */
 
@@ -486,7 +490,7 @@ struct regnode_charclass_class {
 #define REG_SEEN_ZERO_LEN	0x00000001
 #define REG_SEEN_LOOKBEHIND	0x00000002
 #define REG_SEEN_GPOS		0x00000004
-#define REG_SEEN_EVAL		0x00000008
+/* spare */
 #define REG_SEEN_CANY		0x00000010
 #define REG_SEEN_SANY		REG_SEEN_CANY /* src bckwrd cmpt */
 #define REG_SEEN_RECURSE        0x00000020
@@ -521,8 +525,9 @@ EXTCONST regexp_engine PL_core_reg_engine = {
         Perl_reg_named_buff_iter,
         Perl_reg_qr_package,
 #if defined(USE_ITHREADS)        
-        Perl_regdupe_internal
+        Perl_regdupe_internal,
 #endif        
+        Perl_re_op_compile
 };
 #endif /* DOINIT */
 #endif /* PLUGGABLE_RE_EXTENSION */
@@ -535,9 +540,9 @@ END_EXTERN_C
  * The character describes the function of the corresponding .data item:
  *   a - AV for paren_name_list under DEBUGGING
  *   f - start-class data for regstclass optimization
- *   n - Root of op tree for (?{EVAL}) item
- *   o - Start op for (?{EVAL}) item
- *   p - Pad for (?{EVAL}) item
+ *   l - start op for literal (?{EVAL}) item
+ *   L - start op for literal (?{EVAL}) item, with separate CV (qr//)
+ *   r - pointer to an embedded code-containing qr, e.g. /ab$qr/
  *   s - swash for Unicode-style character class, and the multicharacter
  *       strings resulting from casefolding the single-character entries
  *       in the character class
@@ -574,10 +579,10 @@ struct reg_data {
 #define check_offset_max substrs->data[2].max_offset
 #define check_end_shift substrs->data[2].end_shift
 
-#define RX_ANCHORED_SUBSTR(rx)	(((struct regexp *)SvANY(rx))->anchored_substr)
-#define RX_ANCHORED_UTF8(rx)	(((struct regexp *)SvANY(rx))->anchored_utf8)
-#define RX_FLOAT_SUBSTR(rx)	(((struct regexp *)SvANY(rx))->float_substr)
-#define RX_FLOAT_UTF8(rx)	(((struct regexp *)SvANY(rx))->float_utf8)
+#define RX_ANCHORED_SUBSTR(rx)	(ReANY(rx)->anchored_substr)
+#define RX_ANCHORED_UTF8(rx)	(ReANY(rx)->anchored_utf8)
+#define RX_FLOAT_SUBSTR(rx)	(ReANY(rx)->float_substr)
+#define RX_FLOAT_UTF8(rx)	(ReANY(rx)->float_utf8)
 
 /* trie related stuff */
 
@@ -824,11 +829,9 @@ re.pm, especially to the documentation.
     if (re_debug_flags & RE_DEBUG_EXTRA_GPOS) x )
 
 /* initialization */
-/* get_sv() can return NULL during global destruction.  re_debug_flags can get
- * clobbered by a longjmp, so must be initialized */
+/* get_sv() can return NULL during global destruction. */
 #define GET_RE_DEBUG_FLAGS DEBUG_r({ \
         SV * re_debug_flags_sv = NULL; \
-        re_debug_flags = 0;            \
         re_debug_flags_sv = get_sv(RE_DEBUG_FLAGS, 1); \
         if (re_debug_flags_sv) { \
             if (!SvIOK(re_debug_flags_sv)) \
@@ -839,8 +842,8 @@ re.pm, especially to the documentation.
 
 #ifdef DEBUGGING
 
-#define GET_RE_DEBUG_FLAGS_DECL VOL IV re_debug_flags \
-	PERL_UNUSED_DECL = 0; GET_RE_DEBUG_FLAGS;
+#define GET_RE_DEBUG_FLAGS_DECL VOL IV re_debug_flags  = 0; \
+        PERL_UNUSED_VAR(re_debug_flags); GET_RE_DEBUG_FLAGS;
 
 #define RE_PV_COLOR_DECL(rpv,rlen,isuni,dsv,pv,l,m,c1,c2) \
     const char * const rpv =                          \
@@ -881,8 +884,8 @@ re.pm, especially to the documentation.
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

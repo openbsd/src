@@ -71,7 +71,7 @@
 
 %token <ival> GRAMPROG GRAMEXPR GRAMBLOCK GRAMBARESTMT GRAMFULLSTMT GRAMSTMTSEQ
 
-%token <i_tkval> '{' '}' '[' ']' '-' '+' '$' '@' '%' '*' '&' ';'
+%token <i_tkval> '{' '}' '[' ']' '-' '+' '$' '@' '%' '*' '&' ';' '=' '.'
 
 %token <opval> WORD METHOD FUNCMETH THING PMFUNC PRIVATEREF QWLIST
 %token <opval> FUNC0OP FUNC0SUB UNIOPSUB LSTOPSUB
@@ -84,23 +84,22 @@
 %token <i_tkval> FUNC0 FUNC1 FUNC UNIOP LSTOP
 %token <i_tkval> RELOP EQOP MULOP ADDOP
 %token <i_tkval> DOLSHARP DO HASHBRACK NOAMP
-%token <i_tkval> LOCAL MY MYSUB REQUIRE
-%token <i_tkval> COLONATTR
-
-%type <i_tkval> lpar_or_qw
+%token <i_tkval> LOCAL MY REQUIRE
+%token <i_tkval> COLONATTR FORMLBRACK FORMRBRACK
 
 %type <ival> grammar remember mremember
 %type <ival>  startsub startanonsub startformsub
 /* FIXME for MAD - are these two ival? */
-%type <ival> mydefsv mintro
+%type <ival> mintro
 
 %type <opval> stmtseq fullstmt labfullstmt barestmt block mblock else
 %type <opval> expr term subscripted scalar ary hsh arylen star amper sideff
 %type <opval> listexpr nexpr texpr iexpr mexpr mnexpr miexpr
 %type <opval> optlistexpr optexpr indirob listop method
-%type <opval> formname subname proto subbody cont my_scalar
+%type <opval> formname subname proto subbody cont my_scalar formblock
 %type <opval> subattrlist myattrlist myattrterm myterm
 %type <opval> termbinop termunop anonymous termdo
+%type <opval> formstmtseq formline formarg
 
 %nonassoc <i_tkval> PREC_LOW
 %nonassoc LOOPEX
@@ -213,12 +212,18 @@ block	:	'{' remember stmtseq '}'
 			}
 	;
 
-remember:	/* NULL */	/* start a full lexical scope */
-			{ $$ = block_start(TRUE); }
+/* format body */
+formblock:	'=' remember ';' FORMRBRACK formstmtseq ';' '.'
+			{ if (PL_parser->copline > (line_t)IVAL($1))
+			      PL_parser->copline = (line_t)IVAL($1);
+			  $$ = block_end($2, $5);
+			  TOKEN_GETMAD($1,$$,'{');
+			  TOKEN_GETMAD($7,$$,'}');
+			}
 	;
 
-mydefsv:	/* NULL */	/* lexicalize $_ */
-			{ $$ = (I32) Perl_allocmy(aTHX_ STR_WITH_LEN("$_"), 0); }
+remember:	/* NULL */	/* start a full lexical scope */
+			{ $$ = block_start(TRUE); }
 	;
 
 mblock	:	'{' mremember stmtseq '}'
@@ -245,6 +250,17 @@ stmtseq	:	/* NULL */
 			}
 	;
 
+/* A sequence of format lines */
+formstmtseq:	/* NULL */
+			{ $$ = (OP*)NULL; }
+	|	formstmtseq formline
+			{   $$ = op_append_list(OP_LINESEQ, $1, $2);
+			    PL_pad_reset_pending = TRUE;
+			    if ($1 && $2)
+				PL_hints |= HINT_BLOCK_SCOPE;
+			}
+	;
+
 /* A statement in the program, including optional labels */
 fullstmt:	barestmt
 			{
@@ -260,15 +276,17 @@ fullstmt:	barestmt
 
 labfullstmt:	LABEL barestmt
 			{
-			  $$ = newSTATEOP(SvUTF8(((SVOP*)$1)->op_sv),
-                                        savepv(SvPVX(((SVOP*)$1)->op_sv)), $2);
+			  $$ = newSTATEOP(SVf_UTF8
+					   * PVAL($1)[strlen(PVAL($1))+1],
+					  PVAL($1), $2);
 			  TOKEN_GETMAD($1,
 			      $2 ? cLISTOPx($$)->op_first : $$, 'L');
 			}
 	|	LABEL labfullstmt
 			{
-			  $$ = newSTATEOP(SvUTF8(((SVOP*)$1)->op_sv),
-                                        savepv(SvPVX(((SVOP*)$1)->op_sv)), $2);
+			  $$ = newSTATEOP(SVf_UTF8
+					   * PVAL($1)[strlen(PVAL($1))+1],
+					  PVAL($1), $2);
 			  TOKEN_GETMAD($1, cLISTOPx($$)->op_first, 'L');
 			}
 	;
@@ -281,10 +299,9 @@ barestmt:	PLUGSTMT
 			  $$ = newOP(OP_NULL,0);
 			  TOKEN_GETMAD($1,$$,'p');
 			}
-	|	FORMAT startformsub formname block
+	|	FORMAT startformsub formname formblock
 			{
 			  CV *fmtcv = PL_compcv;
-			  SvREFCNT_inc_simple_void(PL_compcv);
 #ifdef MAD
 			  $$ = newFORM($2, $3, $4);
 			  prepend_madprops($1->tk_mad, $$, 'F');
@@ -294,43 +311,60 @@ barestmt:	PLUGSTMT
 			  newFORM($2, $3, $4);
 			  $$ = (OP*)NULL;
 #endif
-			  if (CvOUTSIDE(fmtcv) && !CvUNIQUE(CvOUTSIDE(fmtcv))) {
+			  if (CvOUTSIDE(fmtcv) && !CvEVAL(CvOUTSIDE(fmtcv))) {
 			      SvREFCNT_inc_simple_void(fmtcv);
 			      pad_add_anon(fmtcv, OP_NULL);
 			  }
 			}
-	|	SUB startsub subname proto subattrlist subbody
+	|	SUB subname startsub
+			{
+			  if ($2->op_type == OP_CONST) {
+			    const char *const name =
+				SvPV_nolen_const(((SVOP*)$2)->op_sv);
+			    if (strEQ(name, "BEGIN") || strEQ(name, "END")
+			      || strEQ(name, "INIT") || strEQ(name, "CHECK")
+			      || strEQ(name, "UNITCHECK"))
+			      CvSPECIAL_on(PL_compcv);
+			  }
+			  else
+			  /* State subs inside anonymous subs need to be
+			     clonable themselves. */
+			  if (CvANON(CvOUTSIDE(PL_compcv))
+			   || CvCLONE(CvOUTSIDE(PL_compcv))
+			   || !PadnameIsSTATE(PadlistNAMESARRAY(CvPADLIST(
+						CvOUTSIDE(PL_compcv)
+					     ))[$2->op_targ]))
+			      CvCLONE_on(PL_compcv);
+			  PL_parser->in_my = 0;
+			  PL_parser->in_my_stash = NULL;
+			}
+		proto subattrlist subbody
 			{
 			  SvREFCNT_inc_simple_void(PL_compcv);
 #ifdef MAD
 			  {
 			      OP* o = newSVOP(OP_ANONCODE, 0,
-				(SV*)newATTRSUB($2, $3, $4, $5, $6));
+				(SV*)(
+#endif
+			  $2->op_type == OP_CONST
+			      ? newATTRSUB($3, $2, $5, $6, $7)
+			      : newMYSUB($3, $2, $5, $6, $7)
+#ifdef MAD
+				));
 			      $$ = newOP(OP_NULL,0);
 			      op_getmad(o,$$,'&');
-			      op_getmad($3,$$,'n');
-			      op_getmad($4,$$,'s');
-			      op_getmad($5,$$,'a');
+			      op_getmad($2,$$,'n');
+			      op_getmad($5,$$,'s');
+			      op_getmad($6,$$,'a');
 			      token_getmad($1,$$,'d');
-			      append_madprops($6->op_madprop, $$, 0);
-			      $6->op_madprop = 0;
+			      append_madprops($7->op_madprop, $$, 0);
+			      $7->op_madprop = 0;
 			  }
 #else
-			  newATTRSUB($2, $3, $4, $5, $6);
+			  ;
 			  $$ = (OP*)NULL;
 #endif
-			}
-	|	MYSUB startsub subname proto subattrlist subbody
-			{
-			  /* Unimplemented "my sub foo { }" */
-			  SvREFCNT_inc_simple_void(PL_compcv);
-#ifdef MAD
-			  $$ = newMYSUB($2, $3, $4, $5, $6);
-			  token_getmad($1,$$,'d');
-#else
-			  newMYSUB($2, $3, $4, $5, $6);
-			  $$ = (OP*)NULL;
-#endif
+			  intro_my();
 			}
 	|	PACKAGE WORD WORD ';'
 			{
@@ -364,7 +398,7 @@ barestmt:	PLUGSTMT
 			  $$ = (OP*)NULL;
 #endif
 			}
-	|	IF lpar_or_qw remember mexpr ')' mblock else
+	|	IF '(' remember mexpr ')' mblock else
 			{
 			  $$ = block_end($3,
 			      newCONDOP(0, $4, op_scope($6), $7));
@@ -373,7 +407,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($5,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	UNLESS lpar_or_qw remember miexpr ')' mblock else
+	|	UNLESS '(' remember miexpr ')' mblock else
 			{
 			  $$ = block_end($3,
 			      newCONDOP(0, $4, op_scope($6), $7));
@@ -382,17 +416,22 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($5,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	GIVEN lpar_or_qw remember mydefsv mexpr ')' mblock
+	|	GIVEN '(' remember mexpr ')' mblock
 			{
+			  const PADOFFSET offset = pad_findmy_pvs("$_", 0);
 			  $$ = block_end($3,
-				  newGIVENOP($5, op_scope($7), (PADOFFSET)$4));
+				  newGIVENOP($4, op_scope($6),
+				    offset == NOT_IN_PAD
+				    || PAD_COMPNAME_FLAGS_isOUR(offset)
+				      ? 0
+				      : offset));
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	WHEN lpar_or_qw remember mexpr ')' mblock
+	|	WHEN '(' remember mexpr ')' mblock
 			{ $$ = block_end($3, newWHENOP($4, op_scope($6))); }
 	|	DEFAULT block
 			{ $$ = newWHENOP(0, op_scope($2)); }
-	|	WHILE lpar_or_qw remember texpr ')' mintro mblock cont
+	|	WHILE '(' remember texpr ')' mintro mblock cont
 			{
 			  $$ = block_end($3,
 				  newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
@@ -402,7 +441,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($5,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	UNTIL lpar_or_qw remember iexpr ')' mintro mblock cont
+	|	UNTIL '(' remember iexpr ')' mintro mblock cont
 			{
 			  $$ = block_end($3,
 				  newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
@@ -412,7 +451,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($5,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	FOR lpar_or_qw remember mnexpr ';' texpr ';' mintro mnexpr ')'
+	|	FOR '(' remember mnexpr ';' texpr ';' mintro mnexpr ')'
 		mblock
 			{
 			  OP *initop = IF_MAD($4 ? $4 : newOP(OP_NULL, 0), $4);
@@ -433,7 +472,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($10,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	FOR MY remember my_scalar lpar_or_qw mexpr ')' mblock cont
+	|	FOR MY remember my_scalar '(' mexpr ')' mblock cont
 			{
 			  $$ = block_end($3, newFOROP(0, $4, $6, $8, $9));
 			  TOKEN_GETMAD($1,$$,'W');
@@ -442,7 +481,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($7,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	FOR scalar lpar_or_qw remember mexpr ')' mblock cont
+	|	FOR scalar '(' remember mexpr ')' mblock cont
 			{
 			  $$ = block_end($4, newFOROP(0,
 				      op_lvalue($2, OP_ENTERLOOP), $5, $7, $8));
@@ -451,7 +490,7 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($6,$$,')');
 			  PL_parser->copline = (line_t)IVAL($1);
 			}
-	|	FOR lpar_or_qw remember mexpr ')' mblock cont
+	|	FOR '(' remember mexpr ')' mblock cont
 			{
 			  $$ = block_end($3,
 				  newFOROP(0, (OP*)NULL, $4, $6, $7));
@@ -468,15 +507,9 @@ barestmt:	PLUGSTMT
 			}
 	|	PACKAGE WORD WORD '{' remember
 			{
-			  int save_3_latefree = $3->op_latefree;
-			  $3->op_latefree = 1;
 			  package($3);
-			  $3->op_latefree = save_3_latefree;
 			  if ($2) {
-			      int save_2_latefree = $2->op_latefree;
-			      $2->op_latefree = 1;
 			      package_version($2);
-			      $2->op_latefree = save_2_latefree;
 			  }
 			}
 		stmtseq '}'
@@ -484,9 +517,6 @@ barestmt:	PLUGSTMT
 			  /* a block is a loop that happens once */
 			  $$ = newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
 				  (OP*)NULL, block_end($5, $7), (OP*)NULL, 0);
-			  op_free($3);
-			  if ($2)
-			      op_free($2);
 			  TOKEN_GETMAD($4,$$,'{');
 			  TOKEN_GETMAD($8,$$,'}');
 			  if (PL_parser->copline > (line_t)IVAL($4))
@@ -505,6 +535,36 @@ barestmt:	PLUGSTMT
 			  TOKEN_GETMAD($1,$$,';');
 			  PL_parser->copline = NOLINE;
 			}
+	;
+
+/* Format line */
+formline:	THING formarg
+			{ OP *list;
+			  if ($2) {
+			      OP *term = $2;
+			      DO_MAD(term = newUNOP(OP_NULL, 0, term));
+			      list = op_append_elem(OP_LIST, $1, term);
+			  }
+			  else {
+#ifdef MAD
+			      OP *op = newNULLLIST();
+			      list = op_append_elem(OP_LIST, $1, op);
+#else
+			      list = $1;
+#endif
+			  }
+			  if (PL_parser->copline == NOLINE)
+			       PL_parser->copline = CopLINE(PL_curcop)-1;
+			  else PL_parser->copline--;
+			  $$ = newSTATEOP(0, NULL,
+					  convert(OP_FORMLINE, 0, list));
+			}
+	;
+
+formarg	:	/* NULL */
+			{ $$ = NULL; }
+	|	FORMLBRACK stmtseq FORMRBRACK
+			{ $$ = op_unscope($2); }
 	;
 
 /* An expression which may have a side-effect */
@@ -546,7 +606,7 @@ else	:	/* NULL */
 			  $$ = op_scope($2);
 			  TOKEN_GETMAD($1,$$,'o');
 			}
-	|	ELSIF lpar_or_qw mexpr ')' mblock else
+	|	ELSIF '(' mexpr ')' mblock else
 			{ PL_parser->copline = (line_t)IVAL($1);
 			    $$ = newCONDOP(0,
 				newSTATEOP(OPf_SPECIAL,NULL,$3),
@@ -627,12 +687,8 @@ startformsub:	/* NULL */	/* start a format subroutine scope */
 	;
 
 /* Name of a subroutine - must be a bareword, could be special */
-subname	:	WORD	{ const char *const name = SvPV_nolen_const(((SVOP*)$1)->op_sv);
-			  if (strEQ(name, "BEGIN") || strEQ(name, "END")
-			      || strEQ(name, "INIT") || strEQ(name, "CHECK")
-			      || strEQ(name, "UNITCHECK"))
-			      CvSPECIAL_on(PL_compcv);
-			  $$ = $1; }
+subname	:	WORD
+	|	PRIVATEREF
 	;
 
 /* Subroutine prototype */
@@ -734,7 +790,7 @@ listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
 			  TOKEN_GETMAD($2,$$,'(');
 			  TOKEN_GETMAD($5,$$,')');
 			}
-	|	term ARROW method lpar_or_qw optexpr ')' /* $foo->bar(list) */
+	|	term ARROW method '(' optexpr ')' /* $foo->bar(list) */
 			{ $$ = convert(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST,
 				    op_prepend_elem(OP_LIST, scalar($1), $5),
@@ -860,14 +916,14 @@ subscripted:    star '{' expr ';' '}'        /* *main::{something} */
 			  TOKEN_GETMAD($5,$$,')');
 			}
 
-	|	subscripted lpar_or_qw expr ')'   /* $foo->{bar}->(@args) */
+	|	subscripted '(' expr ')'   /* $foo->{bar}->(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   op_append_elem(OP_LIST, $3,
 					       newCVREF(0, scalar($1))));
 			  TOKEN_GETMAD($2,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
 			}
-	|	subscripted lpar_or_qw ')'        /* $foo->{bar}->() */
+	|	subscripted '(' ')'        /* $foo->{bar}->() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   newCVREF(0, scalar($1)));
 			  TOKEN_GETMAD($2,$$,'(');
@@ -943,7 +999,7 @@ termbinop:	term ASSIGNOP term                     /* $x = $y */
 			      op = (UNOP*)op->op_first;	/* get to flip */
 			      op = (UNOP*)op->op_first;	/* get to range */
 			      token_getmad($2,(OP*)op,'o');
-			    })
+			    });
 			}
 	|	term ANDAND term                       /* $x && $y */
 			{ $$ = newLOGOP(OP_AND, 0, $1, $3);
@@ -1051,7 +1107,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			{ $$ = newUNOP(OP_NULL, OPf_SPECIAL, op_scope($2));
 			  TOKEN_GETMAD($1,$$,'D');
 			}
-	|	DO WORD lpar_or_qw ')'                  /* do somesub() */
+	|	DO subname '(' ')'                  /* do somesub() */
 			{ $$ = newUNOP(OP_ENTERSUB,
 			    OPf_SPECIAL|OPf_STACKED,
 			    op_prepend_elem(OP_LIST,
@@ -1063,7 +1119,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			  TOKEN_GETMAD($3,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
 			}
-	|	DO WORD lpar_or_qw expr ')'             /* do somesub(@args) */
+	|	DO subname '(' expr ')'             /* do somesub(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB,
 			    OPf_SPECIAL|OPf_STACKED,
 			    op_append_elem(OP_LIST,
@@ -1076,7 +1132,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			  TOKEN_GETMAD($3,$$,'(');
 			  TOKEN_GETMAD($5,$$,')');
 			}
-	|	DO scalar lpar_or_qw ')'                /* do $subref () */
+	|	DO scalar '(' ')'                /* do $subref () */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
 			    op_prepend_elem(OP_LIST,
 				scalar(newCVREF(0,scalar($2))), (OP*)NULL)); dep();
@@ -1084,7 +1140,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			  TOKEN_GETMAD($3,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
 			}
-	|	DO scalar lpar_or_qw expr ')'           /* do $subref (@args) */
+	|	DO scalar '(' expr ')'           /* do $subref (@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
 			    op_prepend_elem(OP_LIST,
 				$4,
@@ -1163,12 +1219,12 @@ term	:	termbinop
 			{ $$ = $1; }
 	|	amper                                /* &foo; */
 			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($1)); }
-	|	amper lpar_or_qw ')'                 /* &foo() */
+	|	amper '(' ')'                 /* &foo() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1));
 			  TOKEN_GETMAD($2,$$,'(');
 			  TOKEN_GETMAD($3,$$,')');
 			}
-	|	amper lpar_or_qw expr ')'            /* &foo(@args) */
+	|	amper '(' expr ')'            /* &foo(@args) */
 			{
 			  $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST, $3, scalar($1)));
@@ -1179,9 +1235,9 @@ term	:	termbinop
 			      }
 			      token_getmad($2,op,'(');
 			      token_getmad($4,op,')');
-			  })
+			  });
 			}
-	|	NOAMP WORD optlistexpr               /* foo(@args) */
+	|	NOAMP subname optlistexpr               /* foo(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 			    op_append_elem(OP_LIST, $3, scalar($2)));
 			  TOKEN_GETMAD($1,$$,'o');
@@ -1259,10 +1315,21 @@ term	:	termbinop
 			  TOKEN_GETMAD($2,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
 			}
-	|	PMFUNC '(' listexpr ')'		/* m//, s///, tr/// */
-			{ $$ = pmruntime($1, $3, 1);
-			  TOKEN_GETMAD($2,$$,'(');
-			  TOKEN_GETMAD($4,$$,')');
+	|	PMFUNC /* m//, s///, qr//, tr/// */
+			{
+			    if (   $1->op_type != OP_TRANS
+			        && $1->op_type != OP_TRANSR
+				&& (((PMOP*)$1)->op_pmflags & PMf_HAS_CV))
+			    {
+				$<ival>$ = start_subparse(FALSE, CVf_ANON);
+				SAVEFREESV(PL_compcv);
+			    } else
+				$<ival>$ = 0;
+			}
+		    '(' listexpr ')'
+			{ $$ = pmruntime($1, $4, 1, $<ival>2);
+			  TOKEN_GETMAD($3,$$,'(');
+			  TOKEN_GETMAD($5,$$,')');
 			}
 	|	WORD
 	|	listop
@@ -1282,7 +1349,7 @@ myattrterm:	MY myterm myattrlist
 			      token_getmad($1,$$,'d');
 			      append_madprops($3->op_madprop, $$, 'a');
 			      $3->op_madprop = 0;
-			  )
+			  );
 			}
 	|	MY myterm
 			{ $$ = localize($2,IVAL($1));
@@ -1320,14 +1387,6 @@ optexpr:	/* NULL */
 			{ $$ = (OP*)NULL; }
 	|	expr
 			{ $$ = $1; }
-	;
-
-lpar_or_qw:	'('
-			{ $$ = $1; }
-	|	QWLIST
-			{ munge_qwlist_to_paren_list($1); }
-		'('
-			{ $$ = $3; }
 	;
 
 /* A little bit of trickery to make "for my $foo (@bar)" actually be

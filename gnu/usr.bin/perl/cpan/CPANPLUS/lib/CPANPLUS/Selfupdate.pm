@@ -1,4 +1,5 @@
 package CPANPLUS::Selfupdate;
+use deprecate;
 
 use strict;
 use Params::Check               qw[check];
@@ -8,6 +9,9 @@ use Module::Load::Conditional   qw[check_install];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 use CPANPLUS::Internals::Constants;
+
+use vars qw[$VERSION];
+$VERSION = "0.9135";
 
 $Params::Check::VERBOSE = 1;
 
@@ -47,13 +51,13 @@ CPANPLUS::Selfupdate - self-updating for CPANPLUS
             'Locale::Maketext::Simple'  => '0.01',
             'Log::Message'              => '0.01',
             'Module::Load'              => '0.10',
-            'Module::Load::Conditional' => '0.38', # returns dir for loaded
+            'Module::Load::Conditional' => '0.50', # returns dir for loaded
                                                    # modules
             'version'                   => '0.77', # needed for M::L::C
                                                    # addresses #24630 and
                                                    # #24675
                                                    # Address ~0 overflow issue
-            'Params::Check'             => '0.22',
+            'Params::Check'             => '0.36',
             'Package::Constants'        => '0.01',
             'Term::UI'                  => '0.18', # option parsing
             'Test::Harness'             => '2.62', # due to bug #19505
@@ -62,7 +66,7 @@ CPANPLUS::Selfupdate - self-updating for CPANPLUS
             'Archive::Extract'          => '0.16', # ./Dir bug fix
             'Archive::Tar'              => '1.23',
             'IO::Zlib'                  => '1.04', # needed for Archive::Tar
-            'Object::Accessor'          => '0.34', # mk_aliases support
+            'Object::Accessor'          => '0.44', # mk_aliases support
             'Module::CoreList'          => '2.22', # deprecated core modules
             'Module::Pluggable'         => '2.4',
             'Module::Loaded'            => '0.01',

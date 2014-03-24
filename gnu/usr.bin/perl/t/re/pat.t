@@ -16,10 +16,11 @@ $| = 1;
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib','.');
+    require Config; import Config;
     require './test.pl';
 }
 
-plan tests => 472;  # Update this when adding/deleting tests.
+plan tests => 672;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -152,7 +153,7 @@ sub run_tests {
 
     {
         $_ = 'now is the {time for all} good men to come to.';
-        / {([^}]*)}/;
+        / \{([^}]*)}/;
         is($1, 'time for all', "Match braces");
     }
 
@@ -522,24 +523,52 @@ sub run_tests {
         is(qr/(?u)\b\v$/, '(?^:(?u)\b\v$)', 'Verify (?u) compiles');
 
         my $dual = qr/\b\v$/;
-        use locale;
-        my $locale = qr/\b\v$/;
-        is($locale,    '(?^l:\b\v$)', 'Verify has l modifier when compiled under use locale');
-        no locale;
+        my $locale;
+
+      SKIP: {
+            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+
+            BEGIN {
+                if($Config{d_setlocale}) {
+                    require locale; import locale;
+                }
+            }
+            $locale = qr/\b\v$/;
+            is($locale,    '(?^l:\b\v$)', 'Verify has l modifier when compiled under use locale');
+            no locale;
+        }
 
         use feature 'unicode_strings';
         my $unicode = qr/\b\v$/;
         is($unicode,    '(?^u:\b\v$)', 'Verify has u modifier when compiled under unicode_strings');
         is(qr/abc$dual/,    '(?^u:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
-        is(qr/abc$locale/,    '(?^u:abc(?^l:\b\v$))', 'Verify retains l when interpolated under unicode_strings');
+
+      SKIP: {
+            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+
+            is(qr/abc$locale/,    '(?^u:abc(?^l:\b\v$))', 'Verify retains l when interpolated under unicode_strings');
+        }
 
         no feature 'unicode_strings';
-        is(qr/abc$locale/,    '(?^:abc(?^l:\b\v$))', 'Verify retains l when interpolated outside locale and unicode strings');
+      SKIP: {
+            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+
+            is(qr/abc$locale/,    '(?^:abc(?^l:\b\v$))', 'Verify retains l when interpolated outside locale and unicode strings');
+        }
+
         is(qr/def$unicode/,    '(?^:def(?^u:\b\v$))', 'Verify retains u when interpolated outside locale and unicode strings');
 
-        use locale;
-        is(qr/abc$dual/,    '(?^l:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
-        is(qr/abc$unicode/,    '(?^l:abc(?^u:\b\v$))', 'Verify retains u when interpolated under locale');
+      SKIP: {
+            skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale});
+
+             BEGIN {
+                if($Config{d_setlocale}) {
+                    require locale; import locale;
+                }
+            }
+            is(qr/abc$dual/,    '(?^l:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
+            is(qr/abc$unicode/,    '(?^l:abc(?^u:\b\v$))', 'Verify retains u when interpolated under locale');
+        }
     }
 
     {
@@ -682,10 +711,11 @@ sub run_tests {
         is($#-, 1, $message);
     }
 
-    foreach ('$+[0] = 13', '$-[0] = 13', '@+ = (7, 6, 5)', '@- = qw (foo bar)') {
+    foreach ('$+[0] = 13', '$-[0] = 13', '@+ = (7, 6, 5)',
+	     '@- = qw (foo bar)', '$^N = 42') {
 	is(eval $_, undef);
         like($@, qr/^Modification of a read-only value attempted/,
-	     'Elements of @- and @+ are read-only');
+	     '$^N, @- and @+ are read-only');
     }
 
     {
@@ -990,7 +1020,7 @@ sub run_tests {
         my @space1 = sort grep {$space {$_} =~ /[[:space:]]/} keys %space;
         my @space2 = sort grep {$space {$_} =~ /[[:blank:]]/} keys %space;
 
-        is("@space0", "cr ff lf spc tab", $message);
+        is("@space0", "cr ff lf spc tab vt", $message);
         is("@space1", "cr ff lf spc tab vt", $message);
         is("@space2", "spc tab", $message);
     }
@@ -1071,51 +1101,6 @@ sub run_tests {
         use feature 'unicode_strings';
         ok "\xc0" =~ /\w/, 'Under unicode_strings: "\xc0" =~ /\w/';
         ok "\xc0" !~ /(?d:\w)/, 'Under unicode_strings: "\xc0" !~ /(?d:\w)/';
-    }
-
-    {
-        # Test that a regex followed by an operator and/or a statement modifier work
-        # These tests use string-eval so that it reports a clean error when it fails
-        # (without the string eval the test script might be unparseable)
-
-        # Note: these test check the behaviour that currently is valid syntax
-        # If a new regex modifier is added and a test fails then there is a backwards-compatibility issue
-        # Note-2: a new deprecate warning was added for this with commit e6897b1a5db0410e387ccbf677e89fc4a1d8c97a
-        # which indicate that this syntax will be removed in 5.16.
-        # When this happens the tests can be removed
-
-	foreach (['my $r = "a" =~ m/a/lt 2', 'm', 'lt'],
-		 ['my $r = "a" =~ m/a/le 1', 'm', 'le'],
-		 ['my $r = "a" =~ m/a/eq 1', 'm', 'eq'],
-		 ['my $r = "a" =~ m/a/ne 0', 'm', 'ne'],
-		 ['my $r = "a" =~ m/a/and 1', 'm', 'and'],
-		 ['my $r = "a" =~ m/a/unless 0', 'm', 'unless'],
-		 ['my $c = 1; my $r; $r = "a" =~ m/a/while $c--', 'm', 'while'],
-		 ['my $c = 0; my $r; $r = "a" =~ m/a/until $c++', 'm', 'until'],
-		 ['my $r; $r = "a" =~ m/a/for 1', 'm', 'for'],
-		 ['my $r; $r = "a" =~ m/a/foreach 1', 'm', 'foreach'],
-
-		 ['my $t = "a"; my $r = $t =~ s/a//lt 2', 's', 'lt'],
-		 ['my $t = "a"; my $r = $t =~ s/a//le 1', 's', 'le'],
-		 ['my $t = "a"; my $r = $t =~ s/a//ne 0', 's', 'ne'],
-		 ['my $t = "a"; my $r = $t =~ s/a//and 1', 's', 'and'],
-		 ['my $t = "a"; my $r = $t =~ s/a//unless 0', 's', 'unless'],
-
-		 ['my $c = 1; my $r; my $t = "a"; $r = $t =~ s/a//while $c--', 's', 'while'],
-		 ['my $c = 0; my $r; my $t = "a"; $r = $t =~ s/a//until $c++', 's', 'until'],
-		 ['my $r; my $t = "a"; $r = $t =~ s/a//for 1', 's', 'for'],
-		 ['my $r; my $t = "a"; $r = $t =~ s/a//for 1', 's', 'foreach'],
-		) {
-	    my $message = sprintf 'regex (%s) followed by $_->[2]',
-		$_->[1] eq 'm' ? 'm//' : 's///';
-	    my $code = "$_->[0]; 'eval_ok ' . \$r";
-	    my $result = do {
-		no warnings 'syntax';
-		eval $code;
-	    };
-	    is($@, '', $message);
-	    is($result, 'eval_ok 1', $message);
-	}
     }
 
     {
@@ -1208,7 +1193,7 @@ use utf8;;
 "abc" =~ qr/(?<$char>abc)/;
 EOP
             utf8::encode($prog);
-            fresh_perl_like($prog, qr!Sequence.* not recognized!, "",
+            fresh_perl_like($prog, qr!Group name must start with a non-digit word character!, "",
                         sprintf("'U+%04X not legal IDFirst'", ord($char)));
         }
     }
@@ -1266,6 +1251,162 @@ EOP
         use re '/aa';
         unlike 'k', qr/(?i:\N{KELVIN SIGN})/, "(?i: shouldn't lose the passed in /aa";
     }
+
+    {
+	# the test for whether the pattern should be re-compiled should
+	# consider the UTF8ness of the previous and current pattern
+	# string, as well as the physical bytes of the pattern string
+
+	for my $s ("\xc4\x80", "\x{100}") {
+	    ok($s =~ /^$s$/, "re-compile check is UTF8-aware");
+	}
+    }
+
+    #  #113682 more overloading and qr//
+    # when doing /foo$overloaded/, if $overloaded returns
+    # a qr/(?{})/ via qr or "" overloading, then 'use re 'eval'
+    # shouldn't be required. Via '.', it still is.
+    {
+        package Qr0;
+	use overload 'qr' => sub { qr/(??{50})/ };
+
+        package Qr1;
+	use overload '""' => sub { qr/(??{51})/ };
+
+        package Qr2;
+	use overload '.'  => sub { $_[1] . qr/(??{52})/ };
+
+        package Qr3;
+	use overload '""' => sub { qr/(??{7})/ },
+		     '.'  => sub { $_[1] . qr/(??{53})/ };
+
+        package Qr_indirect;
+	use overload '""'  => sub { $_[0][0] };
+
+	package main;
+
+	for my $i (0..3) {
+	    my $o = bless [], "Qr$i";
+	    if ((0,0,1,1)[$i]) {
+		eval { "A5$i" =~ /^A$o$/ };
+		like($@, qr/Eval-group not allowed/, "Qr$i");
+		eval { "5$i" =~ /$o/ };
+		like($@, ($i == 3 ? qr/^$/ : qr/no method found,/),
+			"Qr$i bare");
+		{
+		    use re 'eval';
+		    ok("A5$i" =~ /^A$o$/, "Qr$i - with use re eval");
+		    eval { "5$i" =~ /$o/ };
+		    like($@, ($i == 3 ? qr/^$/ : qr/no method found,/),
+			    "Qr$i bare - with use re eval");
+		}
+	    }
+	    else {
+		ok("A5$i" =~ /^A$o$/, "Qr$i");
+		ok("5$i" =~ /$o/, "Qr$i bare");
+	    }
+	}
+
+	my $o = bless [ bless [], "Qr1" ], 'Qr_indirect';
+	ok("A51" =~ /^A$o/, "Qr_indirect");
+	ok("51" =~ /$o/, "Qr_indirect bare");
+    }
+
+    {   # Various flags weren't being set when a [] is optimized into an
+        # EXACTish node
+        ;
+        ;
+        ok("\x{017F}\x{017F}" =~ qr/^[\x{00DF}]?$/i, "[] to EXACTish optimization");
+    }
+
+    {
+        for my $char (":", "\x{f7}", "\x{2010}") {
+            my $utf8_char = $char;
+            utf8::upgrade($utf8_char);
+            my $display = $char;
+            $display = display($display);
+            my $utf8_display = "utf8::upgrade(\"$display\")";
+
+            like($char, qr/^$char?$/, "\"$display\" =~ /^$display?\$/");
+            like($char, qr/^$utf8_char?$/, "my \$p = \"$display\"; utf8::upgrade(\$p); \"$display\" =~ /^\$p?\$/");
+            like($utf8_char, qr/^$char?$/, "my \$c = \"$display\"; utf8::upgrade(\$c); \"\$c\" =~ /^$display?\$/");
+            like($utf8_char, qr/^$utf8_char?$/, "my \$c = \"$display\"; utf8::upgrade(\$c); my \$p = \"$display\"; utf8::upgrade(\$p); \"\$c\" =~ /^\$p?\$/");
+        }
+    }
+
+    {
+	# #116148: Pattern utf8ness sticks around globally
+	# the utf8 in the first match was sticking around for the second
+	# match
+
+	use feature 'unicode_strings';
+
+	my $x = "\x{263a}";
+	$x =~ /$x/;
+
+	my $text = "Perl";
+	ok("Perl" =~ /P.*$/i, '#116148');
+    }
+
+    { # 117327: Sequence (?#...) not recognized in regex
+      # The space between the '(' and '?' is now deprecated; this test should
+      # be removed when the deprecation is made fatal.
+        no warnings;
+        like("ab", qr/a( ?#foo)b/x);
+    }
+
+    { # 118297: Mixing up- and down-graded strings in regex
+        utf8::upgrade(my $u = "\x{e5}");
+        utf8::downgrade(my $d = "\x{e5}");
+        my $warned;
+        local $SIG{__WARN__} = sub { $warned++ if $_[0] =~ /\AMalformed UTF-8/ };
+        my $re = qr/$u$d/;
+        ok(!$warned, "no warnings when interpolating mixed up-/downgraded strings in pattern");
+        my $c = "\x{e5}\x{e5}";
+        utf8::downgrade($c);
+        like($c, $re, "mixed up-/downgraded pattern matches downgraded string");
+        utf8::upgrade($c);
+        like($c, $re, "mixed up-/downgraded pattern matches upgraded string");
+    }
+
+    {
+        # if we have 87 capture buffers defined then \87 should refer to the
+        # 87th.  test that this is true for 1..100
+        # Note that this test causes the engine to recurse at runtime, and
+        # hence use a lot of C stack.
+        for my $i (1..100) {
+            my $capture= "a";
+            $capture= "($capture)" for 1 .. $i;
+            for my $mid ("","b") {
+                my $str= "a${mid}a";
+                my $backref= "\\$i";
+                eval {
+                    ok($str=~/$capture$mid$backref/,"\\$i works with $i buffers '$str'=~/...$mid$backref/");
+                    1;
+                } or do {
+                    is("$@","","\\$i works with $i buffers works with $i buffers '$str'=~/...$mid$backref/");
+                };
+            }
+        }
+    }
+
+    {
+	# RT #119125
+	# the earlier fix for /[#](?{})/x, although correct, as a
+	# side-effect fixed another long-standing bug where /[#$x]/x
+	# didn't interpolate the var $x. Although fixing that is good,
+	# it's too big a change for maint, so keep the old buggy behaviour
+	# for now.
+
+	my $b = 'cd';
+	my $s = 'abcd$%#&';
+	$s =~ s/[a#$b%]/X/g;
+	is ($s, 'XbXX$XX&', 'RT #119125 without /x');
+	$s = 'abcd$%#&';
+	$s =~ s/[a#$b%]/X/gx;
+	is ($s, 'XXcdXXX&', 'RT #119125 with /x');
+    }
+
 } # End of sub run_tests
 
 1;

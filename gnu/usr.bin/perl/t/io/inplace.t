@@ -35,9 +35,9 @@ is ( runperl( prog => 'print<>;', args => \@tfiles_bak ),
 
 SKIP:
 {
-    # based on code, dosish and epoc systems can't do no-backup inplace
+    # based on code, dosish systems can't do no-backup inplace
     # edits
-    $^O =~ /^(MSWin32|cygwin|uwin|dos|epoc|os2)$/
+    $^O =~ /^(MSWin32|cygwin|uwin|dos|os2)$/
 	and skip("Can't inplace edit without backups on $^O", 4);
     
     our @ifiles = ( tempfile(), tempfile(), tempfile() );

@@ -5,27 +5,24 @@
  */
 
 #ifdef PERL_CORE
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 2.6.1.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+/* Bison interface for Yacc-like parsers in C
+   
+      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -36,9 +33,17 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -100,33 +105,35 @@
      NOAMP = 309,
      LOCAL = 310,
      MY = 311,
-     MYSUB = 312,
-     REQUIRE = 313,
-     COLONATTR = 314,
-     PREC_LOW = 315,
-     DOROP = 316,
-     OROP = 317,
-     ANDOP = 318,
-     NOTOP = 319,
-     ASSIGNOP = 320,
-     DORDOR = 321,
-     OROR = 322,
-     ANDAND = 323,
-     BITOROP = 324,
-     BITANDOP = 325,
-     SHIFTOP = 326,
-     MATCHOP = 327,
-     REFGEN = 328,
-     UMINUS = 329,
-     POWOP = 330,
-     POSTDEC = 331,
-     POSTINC = 332,
-     PREDEC = 333,
-     PREINC = 334,
-     ARROW = 335,
-     PEG = 336
+     REQUIRE = 312,
+     COLONATTR = 313,
+     FORMLBRACK = 314,
+     FORMRBRACK = 315,
+     PREC_LOW = 316,
+     DOROP = 317,
+     OROP = 318,
+     ANDOP = 319,
+     NOTOP = 320,
+     ASSIGNOP = 321,
+     DORDOR = 322,
+     OROR = 323,
+     ANDAND = 324,
+     BITOROP = 325,
+     BITANDOP = 326,
+     SHIFTOP = 327,
+     MATCHOP = 328,
+     REFGEN = 329,
+     UMINUS = 330,
+     POWOP = 331,
+     POSTDEC = 332,
+     POSTINC = 333,
+     PREDEC = 334,
+     PREINC = 335,
+     ARROW = 336,
+     PEG = 337
    };
 #endif
+
 /* Tokens.  */
 #define GRAMPROG 258
 #define GRAMEXPR 259
@@ -182,39 +189,62 @@
 #define NOAMP 309
 #define LOCAL 310
 #define MY 311
-#define MYSUB 312
-#define REQUIRE 313
-#define COLONATTR 314
-#define PREC_LOW 315
-#define DOROP 316
-#define OROP 317
-#define ANDOP 318
-#define NOTOP 319
-#define ASSIGNOP 320
-#define DORDOR 321
-#define OROR 322
-#define ANDAND 323
-#define BITOROP 324
-#define BITANDOP 325
-#define SHIFTOP 326
-#define MATCHOP 327
-#define REFGEN 328
-#define UMINUS 329
-#define POWOP 330
-#define POSTDEC 331
-#define POSTINC 332
-#define PREDEC 333
-#define PREINC 334
-#define ARROW 335
-#define PEG 336
+#define REQUIRE 312
+#define COLONATTR 313
+#define FORMLBRACK 314
+#define FORMRBRACK 315
+#define PREC_LOW 316
+#define DOROP 317
+#define OROP 318
+#define ANDOP 319
+#define NOTOP 320
+#define ASSIGNOP 321
+#define DORDOR 322
+#define OROR 323
+#define ANDAND 324
+#define BITOROP 325
+#define BITANDOP 326
+#define SHIFTOP 327
+#define MATCHOP 328
+#define REFGEN 329
+#define UMINUS 330
+#define POWOP 331
+#define POSTDEC 332
+#define POSTINC 333
+#define PREDEC 334
+#define PREINC 335
+#define ARROW 336
+#define PEG 337
 
 
-
-
+#ifdef PERL_IN_TOKE_C
+static bool
+S_is_opval_token(int type) {
+    switch (type) {
+    case FUNC0OP:
+    case FUNC0SUB:
+    case FUNCMETH:
+    case LSTOPSUB:
+    case METHOD:
+    case PLUGEXPR:
+    case PLUGSTMT:
+    case PMFUNC:
+    case PRIVATEREF:
+    case QWLIST:
+    case THING:
+    case UNIOPSUB:
+    case WORD:
+	return 1;
+    }
+    return 0;
+}
+#endif /* PERL_IN_TOKE_C */
 #endif /* PERL_CORE */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
+/* Line 2049 of yacc.c  */
+
     I32	ival; /* __DEFAULT__ (marker for regen_perly.pl;
 				must always be 1st union member) */
     char *pval;
@@ -230,18 +260,32 @@ typedef union YYSTYPE
 #ifdef PERL_MAD
     TOKEN* tkval;
 #endif
-}
-/* Line 1529 of yacc.c.  */
-	YYSTYPE;
+
+
+/* Line 2049 of yacc.c  */
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
+#ifdef YYPARSE_PARAM
+#if defined __STDC__ || defined __cplusplus
+int yyparse (void *YYPARSE_PARAM);
+#else
+int yyparse ();
+#endif
+#else /* ! YYPARSE_PARAM */
+#if defined __STDC__ || defined __cplusplus
+int yyparse (void);
+#else
+int yyparse ();
+#endif
+#endif /* ! YYPARSE_PARAM */
 
 
 /* Generated from:
- * 047d7d5048e78a17bc586b7bb9a0f0e9dedd5cd43b30e486482b1ff8f955ddcb perly.y
- * 53f57d7143a42b3c008841a14d158bcf9cab64b2904b07ef5e95051fe9a8a875 regen_perly.pl
+ * 28c2c7738eefc00762e227af0363c729186c992e9127e0c935684cccbf3a3b4f perly.y
+ * 5c9d2a0262457fe9b70073fc8ad6c188f812f38ad57712b7e2f53daa01b297cc regen_perly.pl
  * ex: set ro: */

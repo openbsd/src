@@ -4,7 +4,7 @@
 
 use strict;
 use Config;		# for config options in the makefile
-use File::Spec;
+use File::Spec::Functions qw(rel2abs no_upwards);
 use Getopt::Long;	# for command-line parsing
 use Cwd;
 use Pod::Html 'anchorify';
@@ -362,8 +362,8 @@ sub split_on_item {
 
     print "splitting files by item.\n" if $verbose && $#splititem >= 0;
     $pwd = getcwd();
-    my $splitter = File::Spec->rel2abs("$splitpod/splitpod", $pwd);
-    my $perl = File::Spec->rel2abs($^X, $pwd);
+    my $splitter = rel2abs("$splitpod/splitpod", $pwd);
+    my $perl = rel2abs($^X, $pwd);
     foreach my $pod (@splititem) {
 	# figure out the directory to split into
 	$pod      =~ s,^([^/]*)$,/$1,;
@@ -485,33 +485,33 @@ sub splitpod {
 #
 sub installdir {
     my($dir, $recurse, $podroot, $splitdirs, $ignore) = @_;
-    my(@dirlist, @podlist, @pmlist, $doindex);
 
-    @dirlist = ();	# directories to recurse on
-    @podlist = ();	# .pod files to install
-    @pmlist  = ();	# .pm files to install
+    my @dirlist; # directories to recurse on
+    my @podlist; # .pod files to install
+    my @pmlist;  # .pm files to install
 
     # should files in this directory get an index?
-    $doindex = (grep($_ eq "$podroot/$dir", @$splitdirs) ? 0 : 1);
+    my $doindex = (grep($_ eq "$podroot/$dir", @$splitdirs) ? 0 : 1);
 
     opendir(DIR, "$podroot/$dir")
 	|| die "$0: error opening directory $podroot/$dir: $!\n";
 
-    # find the directories to recurse on
-    @dirlist = map { if ($^O eq 'VMS') {/^(.*)\.dir$/i; "$dir/$1";} else {"$dir/$_";}}
-	grep(-d "$podroot/$dir/$_" && !/^\.{1,2}/, readdir(DIR)) if $recurse;
-    rewinddir(DIR);
-
-    # find all the .pod files within the directory
-    @podlist = map { /^(.*)\.pod$/; "$dir/$1" }
-	grep(! -d "$podroot/$dir/$_" && /\.pod$/, readdir(DIR));
-    rewinddir(DIR);
-
-    # find all the .pm files within the directory
-    @pmlist = map { /^(.*)\.pm$/; "$dir/$1" }
-	grep(! -d "$podroot/$dir/$_" && /\.pm$/, readdir(DIR));
+    while(readdir DIR) {
+	no_upwards($_) or next;
+	my $is_dir = -d "$podroot/$dir/$_";
+	next if $is_dir and not $recurse;
+	my $target = (
+	    $is_dir    ? \@dirlist :
+	    s/\.pod$// ? \@podlist :
+	    s/\.pm$//  ? \@pmlist  :
+	    undef
+	);
+	push @$target, "$dir/$_" if $target;
+    }
 
     closedir(DIR);
+
+    if ($^O eq 'VMS') { s/\.dir$//i for @dirlist }
 
     # recurse on all subdirectories we kept track of
     foreach $dir (@dirlist) {

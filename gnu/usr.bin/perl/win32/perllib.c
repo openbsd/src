@@ -18,7 +18,7 @@
 
 
 /* Register any extra external extensions */
-char *staticlinkmodules[] = {
+const char * const staticlinkmodules[] = {
     "DynaLoader",
     /* other similar records will be included from "perllibst.h" */
 #define STATIC1

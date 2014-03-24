@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 57;
+plan tests => 59;
 
 $h{'abc'} = 'ABC';
 $h{'def'} = 'DEF';
@@ -268,4 +268,23 @@ for my $k (qw(each keys values)) {
     $h{1}=2;
     is join ("-", each %h), '1-2',
 	'each on apparently empty hash does not leave RITER set';
+}
+{
+    my $warned= 0;
+    local $SIG{__WARN__}= sub {
+        /\QUse of each() on hash after insertion without resetting hash iterator results in undefined behavior\E/
+            and $warned++ for @_;
+    };
+    my %h= map { $_ => $_ } "A".."F";
+    while (my ($k, $v)= each %h) {
+        $h{"$k$k"}= $v;
+    }
+    ok($warned,"each() after insert produces warnings");
+    no warnings 'internal';
+    $warned= 0;
+    %h= map { $_ => $_ } "A".."F";
+    while (my ($k, $v)= each %h) {
+        $h{"$k$k"}= $v;
+    }
+    ok(!$warned, "no warnings 'internal' silences each() after insert warnings");
 }

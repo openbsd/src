@@ -14,7 +14,7 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-our $VERSION   = "0.89";
+our $VERSION   = "0.95_01";
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw( set_style set_style_standard add_callback
 		     concise_subref concise_cv concise_main
@@ -47,8 +47,7 @@ my %style =
     "(?(#seq)?)#noise#arg(?([#targarg])?)"],
    "debug" =>
    ["#class (#addr)\n\top_next\t\t#nextaddr\n\top_sibling\t#sibaddr\n\t"
-    . "op_ppaddr\tPL_ppaddr[OP_#NAME]\n\top_type\t\t#typenum\n" .
-    ($] > 5.009 ? '' : "\top_seq\t\t#seqnum\n")
+    . "op_ppaddr\tPL_ppaddr[OP_#NAME]\n\top_type\t\t#typenum\n"
     . "\top_flags\t#flagval\n\top_private\t#privval\t#hintsval\n"
     . "(?(\top_first\t#firstaddr\n)?)(?(\top_last\t\t#lastaddr\n)?)"
     . "(?(\top_sv\t\t#svaddr\n)?)",
@@ -137,7 +136,7 @@ sub concise_subref {
     my $codeobj = svref_2object($coderef);
 
     return concise_stashref(@_)
-	unless ref $codeobj eq 'B::CV';
+	unless ref($codeobj) =~ '^B::(?:CV|FM)\z';
     concise_cv_obj($order, $codeobj, $name);
 }
 
@@ -356,22 +355,30 @@ sub compile {
 	    }
 	    else {
 		# convert function names to subrefs
-		my $objref;
 		if (ref $objname) {
 		    print $walkHandle "B::Concise::compile($objname)\n"
 			if $banner;
-		    $objref = $objname;
+		    concise_subref($order, ($objname)x2);
+		    next;
 		} else {
 		    $objname = "main::" . $objname unless $objname =~ /::/;
-		    print $walkHandle "$objname:\n";
 		    no strict 'refs';
-		    unless (exists &$objname) {
+		    my $glob = \*$objname;
+		    unless (*$glob{CODE} || *$glob{FORMAT}) {
+			print $walkHandle "$objname:\n" if $banner;
 			print $walkHandle "err: unknown function ($objname)\n";
 			return;
 		    }
-		    $objref = \&$objname;
+		    if (my $objref = *$glob{CODE}) {
+			print $walkHandle "$objname:\n" if $banner;
+			concise_subref($order, $objref, $objname);
+		    }
+		    if (my $objref = *$glob{FORMAT}) {
+			print $walkHandle "$objname (FORMAT):\n"
+			    if $banner;
+			concise_subref($order, $objref, $objname);
+		    }
 		}
-		concise_subref($order, $objref, $objname);
 	    }
 	}
 	for my $pkg (@render_packs) {
@@ -502,15 +509,9 @@ sub walk_exec {
 		push @$targ, $ar;
 		push @todo, [$op->pmreplstart, $ar];
 	    } elsif ($name =~ /^enter(loop|iter)$/) {
-		if ($] > 5.009) {
-		    $labels{${$op->nextop}} = "NEXT";
-		    $labels{${$op->lastop}} = "LAST";
-		    $labels{${$op->redoop}} = "REDO";
-		} else {
-		    $labels{$op->nextop->seq} = "NEXT";
-		    $labels{$op->lastop->seq} = "LAST";
-		    $labels{$op->redoop->seq} = "REDO";		
-		}
+		$labels{${$op->nextop}} = "NEXT";
+		$labels{${$op->lastop}} = "LAST";
+		$labels{${$op->redoop}} = "REDO";
 	    }
 	}
     }
@@ -595,10 +596,10 @@ our %priv; # used to display each opcode's BASEOP.op_private values
 $priv{$_}{128} = "LVINTRO"
   for ("pos", "substr", "vec", "threadsv", "gvsv", "rv2sv", "rv2hv", "rv2gv",
        "rv2av", "rv2arylen", "aelem", "helem", "aslice", "hslice", "padsv",
-       "padav", "padhv", "enteriter", "entersub");
+       "padav", "padhv", "enteriter", "entersub", "padrange", "pushmark");
 $priv{$_}{64} = "REFC" for ("leave", "leavesub", "leavesublv", "leavewrite");
 $priv{"aassign"}{64} = "COMMON";
-$priv{"aassign"}{32} = $] < 5.009 ? "PHASH" : "STATE";
+$priv{"aassign"}{32} = "STATE";
 $priv{"sassign"}{32} = "STATE";
 $priv{"sassign"}{64} = "BKWARD";
 $priv{"sassign"}{128}= "CV2GV";
@@ -621,6 +622,7 @@ $priv{$_}{16} = "OURINTR" for ("gvsv", "rv2sv", "rv2av", "rv2hv", "r2gv",
 	"enteriter");
 $priv{$_}{8} = 'LVSUB' for qw(rv2av rv2gv rv2hv padav padhv aelem helem
                         aslice hslice av2arylen keys rkeys substr pos vec);
+@{$priv{$_}}{32,64} = ('BOOL','BOOL?') for 'rv2hv', 'padhv';
 $priv{substr}{16} = 'REPL1ST';
 $priv{$_}{16} = "TARGMY"
   for (map(($_,"s$_"),"chop", "chomp"),
@@ -636,7 +638,7 @@ $priv{$_}{16} = "TARGMY"
        "setpriority", "time", "sleep");
 $priv{$_}{4} = "REVERSED" for ("enteriter", "iter");
 @{$priv{"const"}}{2,4,8,16,64,128} =
-    ("NOVER","SHORT","STRICT","ENTERED","BARE","WARN");
+    ("NOVER","SHORT","STRICT","ENTERED","BARE","FOLD");
 $priv{"flip"}{64} = $priv{"flop"}{64} = "LINENUM";
 $priv{"list"}{64} = "GUESSED";
 $priv{"delete"}{64} = "SLICE";
@@ -650,20 +652,17 @@ $priv{"exit"}{128} = "VMS";
 $priv{$_}{2} = "FTACCESS"
   for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec");
 @{$priv{"entereval"}}{2,4,8,16} = qw "HAS_HH UNI BYTES COPHH";
-if ($] >= 5.009) {
-  # Stacked filetests are post 5.8.x
-  @{$priv{$_}}{4,8,16} = ("FTSTACKED","FTSTACKING","FTAFTERt")
-    for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec",
-         "ftis", "fteowned", "ftrowned", "ftzero", "ftsize", "ftmtime",
-	 "ftatime", "ftctime", "ftsock", "ftchr", "ftblk", "ftfile", "ftdir",
-	 "ftpipe", "ftlink", "ftsuid", "ftsgid", "ftsvtx", "fttty", "fttext",
-	 "ftbinary");
-  # Lexical $_ is post 5.8.x
-  $priv{$_}{2} = "GREPLEX"
-    for ("mapwhile", "mapstart", "grepwhile", "grepstart");
-}
+@{$priv{$_}}{4,8,16} = ("FTSTACKED","FTSTACKING","FTAFTERt")
+for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec",
+     "ftis", "fteowned", "ftrowned", "ftzero", "ftsize", "ftmtime",
+     "ftatime", "ftctime", "ftsock", "ftchr", "ftblk", "ftfile", "ftdir",
+     "ftpipe", "ftlink", "ftsuid", "ftsgid", "ftsvtx", "fttty", "fttext",
+     "ftbinary");
+$priv{$_}{2} = "GREPLEX"
+for ("mapwhile", "mapstart", "grepwhile", "grepstart");
 $priv{$_}{128} = '+1' for qw "caller wantarray runcv";
 @{$priv{coreargs}}{1,2,64,128} = ('DREF1','DREF2','$MOD','MARK');
+$priv{$_}{128} = 'UTF' for qw "last redo next goto dump";
 
 our %hints; # used to display each COP's op_hints values
 
@@ -712,7 +711,14 @@ sub concise_sv {
     $hr->{svaddr} = sprintf("%#x", $$sv);
     if ($hr->{svclass} eq "GV" && $sv->isGV_with_GP()) {
 	my $gv = $sv;
-	my $stash = $gv->STASH->NAME; if ($stash eq "main") {
+	my $stash = $gv->STASH;
+	if (class($stash) eq "SPECIAL") {
+	    $stash = "<none>";
+	}
+	else {
+	    $stash = $stash->NAME;
+	}
+	if ($stash eq "main") {
 	    $stash = "";
 	} else {
 	    $stash = $stash . "::";
@@ -733,13 +739,14 @@ sub concise_sv {
 	}
 	if (class($sv) eq "SPECIAL") {
 	    $hr->{svval} .= ["Null", "sv_undef", "sv_yes", "sv_no"]->[$$sv];
-	} elsif ($preferpv && $sv->FLAGS & SVf_POK) {
+	} elsif ($preferpv
+	      && ($sv->FLAGS & SVf_POK || class($sv) eq "REGEXP")) {
 	    $hr->{svval} .= cstring($sv->PV);
 	} elsif ($sv->FLAGS & SVf_NOK) {
 	    $hr->{svval} .= $sv->NV;
 	} elsif ($sv->FLAGS & SVf_IOK) {
 	    $hr->{svval} .= $sv->int_value;
-	} elsif ($sv->FLAGS & SVf_POK) {
+	} elsif ($sv->FLAGS & SVf_POK || class($sv) eq "REGEXP") {
 	    $hr->{svval} .= cstring($sv->PV);
 	} elsif (class($sv) eq "HV") {
 	    $hr->{svval} .= 'HASH';
@@ -787,38 +794,44 @@ sub concise_op {
 	    $h{targarglife} = $h{targarg} = "$h{targ} $refs";
 	}
     } elsif ($h{targ}) {
-	my $padname = (($curcv->PADLIST->ARRAY)[0]->ARRAY)[$h{targ}];
-	if (defined $padname and class($padname) ne "SPECIAL") {
-	    $h{targarg}  = $padname->PVX;
-	    if ($padname->FLAGS & SVf_FAKE) {
-		if ($] < 5.009) {
-		    $h{targarglife} = "$h{targarg}:FAKE";
-		} else {
+	my $count = $h{name} eq 'padrange' ? ($op->private & 127) : 1;
+	my (@targarg, @targarglife);
+	for my $i (0..$count-1) {
+	    my ($targarg, $targarglife);
+	    my $padname = (($curcv->PADLIST->ARRAY)[0]->ARRAY)[$h{targ}+$i];
+	    if (defined $padname and class($padname) ne "SPECIAL") {
+		$targarg  = $padname->PVX;
+		if ($padname->FLAGS & SVf_FAKE) {
 		    # These changes relate to the jumbo closure fix.
 		    # See changes 19939 and 20005
 		    my $fake = '';
 		    $fake .= 'a'
-		   	if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_ANON;
+			if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_ANON;
 		    $fake .= 'm'
-		   	if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_MULTI;
+			if $padname->PARENT_FAKELEX_FLAGS & PAD_FAKELEX_MULTI;
 		    $fake .= ':' . $padname->PARENT_PAD_INDEX
 			if $curcv->CvFLAGS & CVf_ANON;
-		    $h{targarglife} = "$h{targarg}:FAKE:$fake";
+		    $targarglife = "$targarg:FAKE:$fake";
 		}
+		else {
+		    my $intro = $padname->COP_SEQ_RANGE_LOW - $cop_seq_base;
+		    my $finish = int($padname->COP_SEQ_RANGE_HIGH) - $cop_seq_base;
+		    $finish = "end" if $finish == 999999999 - $cop_seq_base;
+		    $targarglife = "$targarg:$intro,$finish";
+		}
+	    } else {
+		$targarglife = $targarg = "t" . ($h{targ}+$i);
 	    }
-	    else {
-		my $intro = $padname->COP_SEQ_RANGE_LOW - $cop_seq_base;
-		my $finish = int($padname->COP_SEQ_RANGE_HIGH) - $cop_seq_base;
-		$finish = "end" if $finish == 999999999 - $cop_seq_base;
-		$h{targarglife} = "$h{targarg}:$intro,$finish";
-	    }
-	} else {
-	    $h{targarglife} = $h{targarg} = "t" . $h{targ};
+	    push @targarg,     $targarg;
+	    push @targarglife, $targarglife;
 	}
+	$h{targarg}     = join '; ', @targarg;
+	$h{targarglife} = join '; ', @targarglife;
     }
     $h{arg} = "";
     $h{svclass} = $h{svaddr} = $h{svval} = "";
     if ($h{class} eq "PMOP") {
+	my $extra = '';
 	my $precomp = $op->precomp;
 	if (defined $precomp) {
 	    $precomp = cstring($precomp); # Escape literal control sequences
@@ -826,25 +839,30 @@ sub concise_op {
 	} else {
 	    $precomp = "";
 	}
-	my $pmreplroot = $op->pmreplroot;
-	my $pmreplstart;
-	if (ref($pmreplroot) eq "B::GV") {
+	if ($op->name eq 'subst') {
+	    if (class($op->pmreplstart) ne "NULL") {
+		undef $lastnext;
+		$extra = " replstart->" . seq($op->pmreplstart);
+	    }
+	}
+	elsif ($op->name eq 'pushre') {
 	    # with C<@stash_array = split(/pat/, str);>,
 	    #  *stash_array is stored in /pat/'s pmreplroot.
-	    $h{arg} = "($precomp => \@" . $pmreplroot->NAME . ")";
-	} elsif (!ref($pmreplroot) and $pmreplroot) {
-	    # same as the last case, except the value is actually a
-	    # pad offset for where the GV is kept (this happens under
-	    # ithreads)
-	    my $gv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$pmreplroot];
-	    $h{arg} = "($precomp => \@" . $gv->NAME . ")";
-	} elsif ($ {$op->pmreplstart}) {
-	    undef $lastnext;
-	    $pmreplstart = "replstart->" . seq($op->pmreplstart);
-	    $h{arg} = "(" . join(" ", $precomp, $pmreplstart) . ")";
-	} else {
-	    $h{arg} = "($precomp)";
+	    my $gv = $op->pmreplroot;
+	    if (!ref($gv)) {
+		# threaded: the value is actually a pad offset for where
+		# the GV is kept (op_pmtargetoff)
+		if ($gv) {
+		    $gv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$gv]->NAME;
+		}
+	    }
+	    else {
+		# unthreaded: its a GV (if it exists)
+		$gv = (ref($gv) eq "B::GV") ? $gv->NAME : undef;
+	    }
+	    $extra = " => \@$gv" if $gv;
 	}
+	$h{arg} = "($precomp$extra)";
     } elsif ($h{class} eq "PVOP" and $h{name} !~ '^transr?\z') {
 	$h{arg} = '("' . $op->pv . '")';
 	$h{svval} = '"' . $op->pv . '"';
@@ -889,13 +907,8 @@ sub concise_op {
     }
     $h{seq} = $h{hyphseq} = seq($op);
     $h{seq} = "" if $h{seq} eq "-";
-    if ($] > 5.009) {
-	$h{opt} = $op->opt;
-	$h{label} = $labels{$$op};
-    } else {
-	$h{seqnum} = $op->seq;
-	$h{label} = $labels{$op->seq};
-    }
+    $h{opt} = $op->opt;
+    $h{label} = $labels{$$op};
     $h{next} = $op->next;
     $h{next} = (class($h{next}) eq "NULL") ? "(end)" : seq($h{next});
     $h{nextaddr} = sprintf("%#x", $ {$op->next});
@@ -1128,7 +1141,8 @@ on threaded and un-threaded perls.
 =head1 OPTIONS
 
 Arguments that don't start with a hyphen are taken to be the names of
-subroutines to render; if no such functions are specified, the main
+subroutines or formats to render; if no
+such functions are specified, the main
 body of the program (outside any subroutines, and not including use'd
 or require'd files) is rendered.  Passing C<BEGIN>, C<UNITCHECK>,
 C<CHECK>, C<INIT>, or C<END> will cause all of the corresponding

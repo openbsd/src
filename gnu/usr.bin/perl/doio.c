@@ -61,12 +61,12 @@
 #include <signal.h>
 
 bool
-Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
+Perl_do_openn(pTHX_ GV *gv, const char *oname, I32 len, int as_raw,
 	      int rawmode, int rawperm, PerlIO *supplied_fp, SV **svp,
 	      I32 num_svs)
 {
     dVAR;
-    register IO * const io = GvIOn(gv);
+    IO * const io = GvIOn(gv);
     PerlIO *saveifp = NULL;
     PerlIO *saveofp = NULL;
     int savefd = -1;
@@ -320,7 +320,10 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
 		    }
 		    while (isSPACE(*type))
 			type++;
-		    if (num_svs && (SvIOK(*svp) || (SvPOK(*svp) && looks_like_number(*svp)))) {
+		    if (num_svs && (
+			     SvIOK(*svp)
+			  || (SvPOKp(*svp) && looks_like_number(*svp))
+		       )) {
 			fd = SvUV(*svp);
 			num_svs = 0;
 		    }
@@ -620,9 +623,9 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
                 char newname[FILENAME_MAX+1];
                 if (PerlIO_getname(fp, newname)) {
                     if (fd == PerlIO_fileno(PerlIO_stdout()))
-                        Perl_vmssetuserlnm(aTHX_ "SYS$OUTPUT", newname);
+                        vmssetuserlnm("SYS$OUTPUT", newname);
                     if (fd == PerlIO_fileno(PerlIO_stderr()))
-                        Perl_vmssetuserlnm(aTHX_ "SYS$ERROR",  newname);
+                        vmssetuserlnm("SYS$ERROR", newname);
                 }
 	    }
 #endif
@@ -703,10 +706,10 @@ say_false:
 }
 
 PerlIO *
-Perl_nextargv(pTHX_ register GV *gv)
+Perl_nextargv(pTHX_ GV *gv)
 {
     dVAR;
-    register SV *sv;
+    SV *sv;
 #ifndef FLEXFILENAMES
     int filedev;
     int fileino;
@@ -744,6 +747,7 @@ Perl_nextargv(pTHX_ register GV *gv)
 	STRLEN oldlen;
 	sv = av_shift(GvAV(gv));
 	SAVEFREESV(sv);
+	SvTAINTED_off(GvSVn(gv)); /* previous tainting irrelevant */
 	sv_setsv(GvSVn(gv),sv);
 	SvSETMAGIC(GvSV(gv));
 	PL_oldname = SvPVx(GvSV(gv), oldlen);
@@ -802,7 +806,7 @@ Perl_nextargv(pTHX_ register GV *gv)
 		    }
 #endif
 #ifdef HAS_RENAME
-#if !defined(DOSISH) && !defined(__CYGWIN__) && !defined(EPOC)
+#if !defined(DOSISH) && !defined(__CYGWIN__)
 		    if (PerlLIO_rename(PL_oldname,SvPVX_const(sv)) < 0) {
 			Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE),
 					 "Can't rename %s to %"SVf": %s, skipping file",
@@ -904,7 +908,7 @@ Perl_nextargv(pTHX_ register GV *gv)
 	{
 	    GV * const oldout = MUTABLE_GV(av_pop(PL_argvout_stack));
 	    setdefout(oldout);
-	    SvREFCNT_dec(oldout);
+	    SvREFCNT_dec_NN(oldout);
 	    return NULL;
 	}
 	setdefout(gv_fetchpvs("STDOUT", GV_ADD|GV_NOTQUAL, SVt_PVIO));
@@ -990,7 +994,7 @@ bool
 Perl_do_eof(pTHX_ GV *gv)
 {
     dVAR;
-    register IO * const io = GvIO(gv);
+    IO * const io = GvIO(gv);
 
     PERL_ARGS_ASSERT_DO_EOF;
 
@@ -1036,7 +1040,7 @@ Perl_do_tell(pTHX_ GV *gv)
 {
     dVAR;
     IO *const io = GvIO(gv);
-    register PerlIO *fp;
+    PerlIO *fp;
 
     PERL_ARGS_ASSERT_DO_TELL;
 
@@ -1057,7 +1061,7 @@ Perl_do_seek(pTHX_ GV *gv, Off_t pos, int whence)
 {
     dVAR;
     IO *const io = GvIO(gv);
-    register PerlIO *fp;
+    PerlIO *fp;
 
     if (io && (fp = IoIFP(io))) {
 #ifdef ULTRIX_STDIO_BOTCH
@@ -1076,7 +1080,7 @@ Perl_do_sysseek(pTHX_ GV *gv, Off_t pos, int whence)
 {
     dVAR;
     IO *const io = GvIO(gv);
-    register PerlIO *fp;
+    PerlIO *fp;
 
     PERL_ARGS_ASSERT_DO_SYSSEEK;
 
@@ -1195,7 +1199,7 @@ my_chsize(int fd, Off_t length)
 #endif /* !HAS_TRUNCATE && !HAS_CHSIZE */
 
 bool
-Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
+Perl_do_print(pTHX_ SV *sv, PerlIO *fp)
 {
     dVAR;
 
@@ -1219,8 +1223,8 @@ Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
 	U8 *tmpbuf = NULL;
 	bool happy = TRUE;
 
-	if (PerlIO_isutf8(fp)) {
-	    if (!SvUTF8(sv)) {
+	if (PerlIO_isutf8(fp)) { /* If the stream is utf8 ... */
+	    if (!SvUTF8(sv)) {	/* Convert to utf8 if necessary */
 		/* We don't modify the original scalar.  */
 		tmpbuf = bytes_to_utf8((const U8*) tmps, &len);
 		tmps = (char *) tmpbuf;
@@ -1228,17 +1232,22 @@ Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
 	    else if (ckWARN4_d(WARN_UTF8, WARN_SURROGATE, WARN_NON_UNICODE, WARN_NONCHAR)) {
 		(void) check_utf8_print((const U8*) tmps, len);
 	    }
-	}
-	else if (DO_UTF8(sv)) {
+	} /* else stream isn't utf8 */
+	else if (DO_UTF8(sv)) { /* But if is utf8 internally, attempt to
+				   convert to bytes */
 	    STRLEN tmplen = len;
 	    bool utf8 = TRUE;
 	    U8 * const result = bytes_from_utf8((const U8*) tmps, &tmplen, &utf8);
 	    if (!utf8) {
+
+		/* Here, succeeded in downgrading from utf8.  Set up to below
+		 * output the converted value */
 		tmpbuf = result;
 		tmps = (char *) tmpbuf;
 		len = tmplen;
 	    }
-	    else {
+	    else {  /* Non-utf8 output stream, but string only representable in
+		       utf8 */
 		assert((char *)result == tmps);
 		Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),
 				 "Wide character in %s",
@@ -1271,7 +1280,6 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
     GV* gv;
 
     if (PL_op->op_flags & OPf_REF) {
-	EXTEND(SP,1);
 	gv = cGVOP_gv;
       do_fstat:
         if (gv == PL_defgv)
@@ -1292,13 +1300,11 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
 	report_evil_fh(gv);
 	return -1;
     }
-    else {
-      SV* const sv = PL_op->op_private & OPpFT_STACKING ? TOPs : POPs;
-      PUTBACK;
-      if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
+    else if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
 	     == OPpFT_STACKED)
 	return PL_laststatval;
-      else {
+    else {
+	SV* const sv = TOPs;
 	const char *s;
 	STRLEN len;
 	if ((gv = MAYBE_DEREF_GV_flags(sv,flags))) {
@@ -1319,7 +1325,6 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
 	if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && strchr(s, '\n'))
 	    Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "stat");
 	return PL_laststatval;
-      }
     }
 }
 
@@ -1328,15 +1333,14 @@ I32
 Perl_my_lstat_flags(pTHX_ const U32 flags)
 {
     dVAR;
-    static const char no_prev_lstat[] = "The stat preceding -l _ wasn't an lstat";
+    static const char* const no_prev_lstat = "The stat preceding -l _ wasn't an lstat";
     dSP;
-    SV *sv;
     const char *file;
+    SV* const sv = TOPs;
     if (PL_op->op_flags & OPf_REF) {
-	EXTEND(SP,1);
 	if (cGVOP_gv == PL_defgv) {
 	    if (PL_laststype != OP_LSTAT)
-		Perl_croak(aTHX_ no_prev_lstat);
+		Perl_croak(aTHX_ "%s", no_prev_lstat);
 	    return PL_laststatval;
 	}
 	PL_laststatval = -1;
@@ -1347,17 +1351,19 @@ Perl_my_lstat_flags(pTHX_ const U32 flags)
 	}
 	return -1;
     }
-    sv = PL_op->op_private & OPpFT_STACKING ? TOPs : POPs;
-    PUTBACK;
     if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
 	     == OPpFT_STACKED) {
       if (PL_laststype != OP_LSTAT)
-	Perl_croak(aTHX_ no_prev_lstat);
+	Perl_croak(aTHX_ "%s", no_prev_lstat);
       return PL_laststatval;
-    } 
+    }
 
     PL_laststype = OP_LSTAT;
     PL_statgv = NULL;
+    if (SvROK(sv) && isGV_with_GP(SvRV(sv)) && ckWARN(WARN_IO)) {
+        Perl_warner(aTHX_ packWARN(WARN_IO), "Use of -l on filehandle %s",
+           GvENAME((const GV *)SvRV(sv)));
+    }
     file = SvPV_flags_const_nolen(sv, flags);
     sv_setpv(PL_statname,file);
     PL_laststatval = PerlLIO_lstat(file,&PL_statcache);
@@ -1381,7 +1387,7 @@ S_exec_failed(pTHX_ const char *cmd, int fd, int do_report)
 }
 
 bool
-Perl_do_aexec5(pTHX_ SV *really, register SV **mark, register SV **sp,
+Perl_do_aexec5(pTHX_ SV *really, SV **mark, SV **sp,
 	       int fd, int do_report)
 {
     dVAR;
@@ -1436,8 +1442,8 @@ bool
 Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 {
     dVAR;
-    register const char **a;
-    register char *s;
+    const char **a;
+    char *s;
     char *buf;
     char *cmd;
     /* Make a copy so we can change it */
@@ -1498,7 +1504,7 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 	goto doshell;
 
     s = cmd;
-    while (isALNUM(*s))
+    while (isWORDCHAR(*s))
 	s++;	/* catch VAR=val gizmo */
     if (*s == '=')
 	goto doshell;
@@ -1565,18 +1571,25 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 
 #endif /* OS2 || WIN32 */
 
+#ifdef VMS
+#include <starlet.h> /* for sys$delprc */
+#endif
+
 I32
-Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
+Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
 {
     dVAR;
-    register I32 val;
-    register I32 tot = 0;
+    I32 val;
+    I32 tot = 0;
     const char *const what = PL_op_name[type];
     const char *s;
     STRLEN len;
     SV ** const oldmark = mark;
+    bool killgp = FALSE;
 
     PERL_ARGS_ASSERT_APPLY;
+
+    PERL_UNUSED_VAR(what); /* may not be used depending on compile options */
 
     /* Doing this ahead of the switch statement preserves the old behaviour,
        where attempting to use kill as a taint test test would fail on
@@ -1593,11 +1606,11 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
 
 #define APPLY_TAINT_PROPER() \
     STMT_START {							\
-	if (PL_tainted) { TAINT_PROPER(what); }				\
+	if (TAINT_get) { TAINT_PROPER(what); }				\
     } STMT_END
 
     /* This is a first heuristic; it doesn't catch tainting magic. */
-    if (PL_tainting) {
+    if (TAINTING_get) {
 	while (++mark <= sp) {
 	    if (SvTAINTED(*mark)) {
 		TAINT;
@@ -1642,7 +1655,7 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
     case OP_CHOWN:
 	APPLY_TAINT_PROPER();
 	if (sp - mark > 2) {
-            register I32 val2;
+            I32 val2;
 	    val = SvIVx(*++mark);
 	    val2 = SvIVx(*++mark);
 	    APPLY_TAINT_PROPER();
@@ -1685,6 +1698,12 @@ nothing in the core.
 	if (mark == sp)
 	    break;
 	s = SvPVx_const(*++mark, len);
+	if (*s == '-' && isALPHA(s[1]))
+	{
+	    s++;
+	    len--;
+            killgp = TRUE;
+	}
 	if (isALPHA(*s)) {
 	    if (*s == 'S' && s[1] == 'I' && s[2] == 'G') {
 		s += 3;
@@ -1694,21 +1713,26 @@ nothing in the core.
                Perl_croak(aTHX_ "Unrecognized signal name \"%"SVf"\"", SVfARG(*mark));
 	}
 	else
+	{
 	    val = SvIV(*mark);
+	    if (val < 0)
+	    {
+		killgp = TRUE;
+                val = -val;
+	    }
+	}
 	APPLY_TAINT_PROPER();
 	tot = sp - mark;
 #ifdef VMS
 	/* kill() doesn't do process groups (job trees?) under VMS */
-	if (val < 0) val = -val;
 	if (val == SIGKILL) {
-#	    include <starlet.h>
 	    /* Use native sys$delprc() to insure that target process is
 	     * deleted; supervisor-mode images don't pay attention to
 	     * CRTL's emulation of Unix-style signals and kill()
 	     */
 	    while (++mark <= sp) {
 		I32 proc;
-		register unsigned long int __vmssts;
+		unsigned long int __vmssts;
 		SvGETMAGIC(*mark);
 		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
 		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
@@ -1733,34 +1757,19 @@ nothing in the core.
 	    break;
 	}
 #endif
-	if (val < 0) {
-	    val = -val;
-	    while (++mark <= sp) {
-		I32 proc;
-		SvGETMAGIC(*mark);
-		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
-		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV_nomg(*mark);
-		APPLY_TAINT_PROPER();
-#ifdef HAS_KILLPG
-		if (PerlProc_killpg(proc,val))	/* BSD */
-#else
-		if (PerlProc_kill(-proc,val))	/* SYSV */
-#endif
-		    tot--;
+	while (++mark <= sp) {
+	    Pid_t proc;
+	    SvGETMAGIC(*mark);
+	    if (!(SvNIOK(*mark) || looks_like_number(*mark)))
+		Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
+	    proc = SvIV_nomg(*mark);
+	    if (killgp)
+	    {
+                proc = -proc;
 	    }
-	}
-	else {
-	    while (++mark <= sp) {
-		I32 proc;
-		SvGETMAGIC(*mark);
-		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
-		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV_nomg(*mark);
-		APPLY_TAINT_PROPER();
-		if (PerlProc_kill(proc, val))
-		    tot--;
-	    }
+	    APPLY_TAINT_PROPER();
+	    if (PerlProc_kill(proc, val))
+		tot--;
 	}
 	PERL_ASYNC_CHECK();
 	break;
@@ -1872,7 +1881,7 @@ nothing in the core.
 /* Do the permissions allow some operation?  Assumes statcache already set. */
 #ifndef VMS /* VMS' cando is in vms.c */
 bool
-Perl_cando(pTHX_ Mode_t mode, bool effective, register const Stat_t *statbufp)
+Perl_cando(pTHX_ Mode_t mode, bool effective, const Stat_t *statbufp)
 /* effective is a flag, true for EUID, or for checking if the effective gid
  *  is in the list of groups returned from getgroups().
  */
@@ -2153,6 +2162,7 @@ Perl_do_msgsnd(pTHX_ SV **mark, SV **sp)
     PERL_UNUSED_ARG(mark);
     /* diag_listed_as: msg%s not implemented */
     Perl_croak(aTHX_ "msgsnd not implemented");
+    return -1;
 #endif
 }
 
@@ -2195,6 +2205,7 @@ Perl_do_msgrcv(pTHX_ SV **mark, SV **sp)
     PERL_UNUSED_ARG(mark);
     /* diag_listed_as: msg%s not implemented */
     Perl_croak(aTHX_ "msgrcv not implemented");
+    return -1;
 #endif
 }
 
@@ -2282,9 +2293,10 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
     if (optype == OP_SHMREAD) {
 	char *mbuf;
 	/* suppress warning when reading into undef var (tchrist 3/Mar/00) */
+	SvGETMAGIC(mstr);
+	SvUPGRADE(mstr, SVt_PV);
 	if (! SvOK(mstr))
 	    sv_setpvs(mstr, "");
-	SvUPGRADE(mstr, SVt_PV);
 	SvPOK_only(mstr);
 	mbuf = SvGROW(mstr, (STRLEN)msize+1);
 
@@ -2310,6 +2322,7 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 #else
     /* diag_listed_as: shm%s not implemented */
     Perl_croak(aTHX_ "shm I/O not implemented");
+    return -1;
 #endif
 }
 
@@ -2403,8 +2416,8 @@ Perl_vms_start_glob
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

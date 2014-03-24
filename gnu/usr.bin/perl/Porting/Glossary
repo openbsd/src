@@ -164,6 +164,10 @@ bison (Loc.U):
 	full pathname (if any) of the bison program.  After Configure runs,
 	the value is reset to a plain "bison" and is not useful.
 
+bootstrap_charset (ebcdic.U):
+	This variable conditionally defines BOOTSTRAP_CHARSET if
+	this system uses non-ASCII encoding.
+
 byacc (Loc.U):
 	This variable is used internally by Configure to determine the
 	full pathname (if any) of the byacc program.  After Configure runs,
@@ -894,7 +898,7 @@ d_Gconvert (d_gconvert.U):
 	This variable holds what Gconvert is defined as to convert
 	floating point numbers into strings.  By default, Configure
 	sets this macro to use the first of gconvert, gcvt, or sprintf
-	that pass sprintf-%g-like behaviour tests.  If perl is using
+	that pass sprintf-%g-like behavior tests.  If perl is using
 	long doubles, the macro uses the first of the following
 	functions that pass Configure's tests: qgcvt, sprintf (if
 	Configure knows how to make sprintf format long doubles--see
@@ -1271,9 +1275,21 @@ d_inetpton (d_inetpton.U):
 d_int64_t (d_int64_t.U):
 	This symbol will be defined if the C compiler supports int64_t.
 
+d_ip_mreq (d_socket.U):
+	This variable conditionally defines the HAS_IP_MREQ symbol, which
+	indicates the availability of a struct ip_mreq.
+
+d_ip_mreq_source (d_socket.U):
+	This variable conditionally defines the HAS_IP_MREQ_SOURCE symbol,
+	which indicates the availability of a struct ip_mreq_source.
+
 d_ipv6_mreq (d_socket.U):
 	This variable conditionally defines the HAS_IPV6_MREQ symbol, which
 	indicates the availability of a struct ipv6_mreq.
+
+d_ipv6_mreq_source (d_socket.U):
+	This variable conditionally defines the HAS_IPV6_MREQ_SOURCE symbol,
+	which indicates the availability of a struct ipv6_mreq_source.
 
 d_isascii (d_isascii.U):
 	This variable conditionally defines the HAS_ISASCII constant,
@@ -2230,9 +2246,9 @@ d_strctcpy (d_strctcpy.U):
 	structures.
 
 d_strerrm (d_strerror.U):
-	This variable holds what Strerrr is defined as to translate an error
+	This variable holds what Strerror is defined as to translate an error
 	code condition into an error message string. It could be 'strerror'
-	or a more complex macro emulating strrror with sys_errlist[], or the
+	or a more complex macro emulating strerror with sys_errlist[], or the
 	"unknown" string when both strerror and sys_errlist are missing.
 
 d_strerror (d_strerror.U):
@@ -2546,7 +2562,7 @@ direntrytype (i_dirent.U):
 
 dlext (dlext.U):
 	This variable contains the extension that is to be used for the
-	dynamically loaded modules that perl generaties.
+	dynamically loaded modules that perl generates.
 
 dlsrc (dlsrc.U):
 	This variable contains the name of the dynamic loading file that
@@ -2583,9 +2599,7 @@ eagain (nblock_io.U):
 
 ebcdic (ebcdic.U):
 	This variable conditionally defines EBCDIC if this
-	system uses EBCDIC encoding.  Among other things, this
-	means that the character ranges are not contiguous.
-	See trnl.U
+	system uses EBCDIC encoding.
 
 echo (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -3403,7 +3417,7 @@ initialinstalllocation (bin.U):
 	When userelocatableinc is true, this variable holds the location
 	that make install should copy the perl binary to, with all the
 	run-time relocatable paths calculated from this at install time.
-	When used, it is initialised to the original value of binexp, and
+	When used, it is initialized to the original value of binexp, and
 	then binexp is set to '.../', as the other binaries are found
 	relative to the perl binary.
 
@@ -3920,9 +3934,9 @@ myhostname (myhostname.U):
 	The dot comes with mydomain, and need not be supplied by the program.
 
 myuname (Oldconfig.U):
-	The output of 'uname -a' if available, otherwise the hostname. On Xenix,
-	pseudo variables assignments in the output are stripped, thank you. The
-	whole thing is then lower-cased.
+	The output of 'uname -a' if available, otherwise the hostname.
+	The whole thing is then lower-cased and slashes and single quotes are
+	removed.
 
 n (n.U):
 	This variable contains the '-n' flag if that is what causes the echo
@@ -4002,11 +4016,11 @@ nvEUformat (perlxvf.U):
 	a Perl NV using %E-ish floating point format.
 
 nvfformat (perlxvf.U):
-	This variable confains the format string used for printing
+	This variable contains the format string used for printing
 	a Perl NV using %f-ish floating point format.
 
 nvFUformat (perlxvf.U):
-	This variable confains the format string used for printing
+	This variable contains the format string used for printing
 	a Perl NV using %F-ish floating point format.
 
 nvgformat (perlxvf.U):
@@ -4244,7 +4258,7 @@ procselfexe (d_procselfexe.U):
 
 prototype (prototype.U):
 	This variable holds the eventual value of CAN_PROTOTYPE, which
-	indicates the C compiler can handle funciton prototypes.
+	indicates the C compiler can handle function prototypes.
 
 ptrsize (ptrsize.U):
 	This variable contains the value of the PTRSIZE symbol, which
@@ -5135,6 +5149,10 @@ usethreads (usethreads.U):
 usevendorprefix (vendorprefix.U):
 	This variable tells whether the vendorprefix
 	and consequently other vendor* paths are in use.
+
+useversionedarchname (archname.U):
+	This variable indicates whether to include the $api_versionstring
+	as a component of the $archname.
 
 usevfork (d_vfork.U):
 	This variable is set to true when the user accepts to use vfork.

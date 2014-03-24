@@ -182,7 +182,7 @@ examined when Perl does method resolution, which we will cover later.
 It is possible to manually set C<@ISA>, and you may see this in older
 Perl code. Much older code also uses the L<base> pragma. For new code,
 we recommend that you use the L<parent> pragma to declare your parents.
-This pragma will take care of setting C<@ISA>.  It will also load the
+This pragma will take care of setting C<@ISA>. It will also load the
 parent classes and make sure that the package doesn't inherit from
 itself.
 
@@ -232,7 +232,7 @@ object (or class name), and the right hand side is the method name.
   my $pod = File->new( 'perlobj.pod', $data );
   $pod->save();
 
-The C<< -> >> syntax is also used when dereferencing a reference.  It
+The C<< -> >> syntax is also used when dereferencing a reference. It
 looks like the same operator, but these are two different operations.
 
 When you call a method, the thing on the left side of the arrow is
@@ -325,14 +325,12 @@ methods.
   sub speak {
       my $self = shift;
 
-      $self->SUPER::speak();
-
       say 'A';
   }
 
   package B;
 
-  use parent 'A';
+  use parent -norequire, 'A';
 
   sub speak {
       my $self = shift;
@@ -344,7 +342,7 @@ methods.
 
   package C;
 
-  use parent 'B';
+  use parent -norequire, 'B';
 
   sub speak {
       my $self = shift;
@@ -634,7 +632,7 @@ call. That's a mouthful, so let's look at some code:
   $file->${ \'save' };
   $file->${ returns_scalar_ref() };
   $file->${ \( returns_scalar() ) };
-  $file->${ returns_sub_ref() };
+  $file->${ returns_ref_to_sub_ref() };
 
 This works if the dereference produces a string I<or> a subroutine
 reference.
@@ -687,8 +685,8 @@ thing as well:
 =head3 Indirect Object Syntax
 X<indirect object>
 
-B<Outside of the file handle case, use of this syntax is discouraged,
-as it can confuse the Perl interpreter. See below for more details.>
+B<Outside of the file handle case, use of this syntax is discouraged as
+it can confuse the Perl interpreter. See below for more details.>
 
 Perl suports another method invocation syntax called "indirect object"
 notation. This syntax is called "indirect" because the method comes
@@ -877,7 +875,7 @@ you want to refer to do it without a package name prefix under C<strict
 Without the C<our $AUTOLOAD> declaration, this code will not compile
 under the L<strict> pragma.
 
-As the comment says, this is not a good way to implement accessors. 
+As the comment says, this is not a good way to implement accessors.
 It's slow and too clever by far. However, you may see this as a way to
 provide accessors in older Perl code. See L<perlootut> for
 recommendations on OO coding in Perl.
@@ -913,7 +911,7 @@ then the error will change the value of C<$@>.
 Because C<DESTROY> methods can be called at any time, you should
 localize any global variables you might update in your C<DESTROY>. In
 particular, if you use C<eval {}> you should localize C<$@>, and if you
-use C<system> or backticks, you should localize C<$?>.
+use C<system> or backticks you should localize C<$?>.
 
 If you define an C<AUTOLOAD> in your class, then Perl will call your
 C<AUTOLOAD> to handle the C<DESTROY> method. You can prevent this by

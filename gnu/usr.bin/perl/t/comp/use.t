@@ -6,7 +6,7 @@ BEGIN {
     $INC{"feature.pm"} = 1; # so we don't attempt to load feature.pm
 }
 
-print "1..83\n";
+print "1..84\n";
 
 # Can't require test.pl, as we're testing the use/require mechanism here.
 
@@ -166,6 +166,9 @@ ok $@, 'no strict vars allows ver decl to enable subs';
 
 
 { use test_use }	# check that subparse saves pending tokens
+
+use test_use { () };
+is ref $test_use::got[0], 'HASH', 'use parses arguments in term lexing cx';
 
 local $test_use::VERSION = 1.0;
 

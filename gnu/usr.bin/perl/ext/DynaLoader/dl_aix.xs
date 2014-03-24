@@ -210,7 +210,7 @@ void *dlopen(char *path, int mode)
 {
 	dTHX;
 	dMY_CXT;
-	register ModulePtr mp;
+	ModulePtr mp;
 
 	/*
 	 * Upon the first call register a terminate handler that will
@@ -316,7 +316,7 @@ static void caterr(char *s)
 {
 	dTHX;
 	dMY_CXT;
-	register char *p = s;
+	char *p = s;
 
 	while (*p >= '0' && *p <= '9')
 		p++;
@@ -353,9 +353,9 @@ void *dlsym(void *handle, const char *symbol)
 {
 	dTHX;
 	dMY_CXT;
-	register ModulePtr mp = (ModulePtr)handle;
-	register ExportPtr ep;
-	register int i;
+	ModulePtr mp = (ModulePtr)handle;
+	ExportPtr ep;
+	int i;
 
 	/*
 	 * Could speed up search, but I assume that one assigns
@@ -385,9 +385,9 @@ int dlclose(void *handle)
 {
 	dTHX;
 	dMY_CXT;
-	register ModulePtr mp = (ModulePtr)handle;
+	ModulePtr mp = (ModulePtr)handle;
 	int result;
-	register ModulePtr mp1;
+	ModulePtr mp1;
 
 	if (--mp->refCnt > 0)
 		return 0;
@@ -397,8 +397,8 @@ int dlclose(void *handle)
 		strerrorcpy(dl_errbuf, errno);
 	}
 	if (mp->exports) {
-		register ExportPtr ep;
-		register int i;
+		ExportPtr ep;
+		int i;
 		for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
 			if (ep->name)
 				safefree(ep->name);
@@ -688,21 +688,24 @@ BOOT:
     (void)dl_private_init(aTHX);
 
 
-void *
+void
 dl_load_file(filename, flags=0)
 	char *	filename
 	int	flags
-	CODE:
+        PREINIT:
+        void *retv;
+	PPCODE:
 	DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
 	if (flags & 0x01)
 	    Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s",filename);
-	RETVAL = dlopen(filename, RTLD_GLOBAL|RTLD_LAZY) ;
-	DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", RETVAL));
+	retv = dlopen(filename, RTLD_GLOBAL|RTLD_LAZY) ;
+	DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", retv));
 	ST(0) = sv_newmortal() ;
-	if (RETVAL == NULL)
+	if (retv == NULL)
 	    SaveError(aTHX_ "%s",dlerror()) ;
 	else
-	    sv_setiv( ST(0), PTR2IV(RETVAL) );
+	    sv_setiv( ST(0), PTR2IV(retv) );
+        XSRETURN(1);
 
 int
 dl_unload_file(libref)
@@ -716,25 +719,27 @@ dl_unload_file(libref)
   OUTPUT:
     RETVAL
 
-void *
+void
 dl_find_symbol(libhandle, symbolname)
 	void *		libhandle
 	char *		symbolname
-	CODE:
+	PREINIT:
+        void *retv;
+        CODE:
 	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_find_symbol(handle=%x, symbol=%s)\n",
 		libhandle, symbolname));
-	RETVAL = dlsym(libhandle, symbolname);
-	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref = %x\n", RETVAL));
+	retv = dlsym(libhandle, symbolname);
+	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref = %x\n", retv));
 	ST(0) = sv_newmortal() ;
-	if (RETVAL == NULL)
+	if (retv == NULL)
 	    SaveError(aTHX_ "%s",dlerror()) ;
 	else
-	    sv_setiv( ST(0), PTR2IV(RETVAL));
+	    sv_setiv( ST(0), PTR2IV(retv));
 
 
 void
 dl_undef_symbols()
-	PPCODE:
+	CODE:
 
 
 

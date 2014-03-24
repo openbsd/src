@@ -13,7 +13,7 @@
 #define _INC_WIN32_PERL5	/* kludge around win32 stdio layer */
 #endif
 
-#ifdef VMS
+#ifdef __VMS
 #  include "config.h"
 #elif defined(NETWARE)
 #  include "../NetWare/config.h"
@@ -61,14 +61,6 @@
 
 #define MEM_SIZE Size_t
 #ifdef PERL_MEM_LOG
-/* Blindly copied from ../perl.h. -- AD 2/2006. */
-/* Configure gets this right but the UTS compiler gets it wrong.
-   -- Hal Morris <hom00@utsglobal.com> */
-#  ifdef UTS
-#    undef  UVTYPE
-#    define UVTYPE unsigned
-#  endif
-
   typedef IVTYPE IV;
   typedef UVTYPE UV;
 #endif
@@ -129,7 +121,7 @@
 /* All of these are in stdlib.h or time.h for ANSI C */
 Time_t time();
 struct tm *gmtime(), *localtime();
-#if defined(OEMVS) || defined(__OPEN_VM)
+#if defined(OEMVS)
 char *(strchr)(), *(strrchr)();
 char *(strcpy)(), *(strcat)();
 #else
@@ -344,11 +336,7 @@ union u_ops {
     int ival;
     char *cval;
 };
-#if defined(iAPX286) || defined(M_I286) || defined(I80286) 	/* 80286 hack */
-#define OPSMAX (64000/sizeof(union u_ops))	/* approx. max segment size */
-#else
 #define OPSMAX 50000
-#endif						 	/* 80286 hack */
 EXT union u_ops ops[OPSMAX];
 
 typedef struct string STR;

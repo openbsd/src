@@ -1,9 +1,11 @@
 package CPANPLUS::Dist::MM;
+use deprecate;
 
-use warnings;
 use strict;
-use vars    qw[@ISA $STATUS];
+use warnings;
+use vars    qw[@ISA $STATUS $VERSION];
 use base    'CPANPLUS::Dist::Base';
+$VERSION = "0.9135";
 
 use CPANPLUS::Internals::Constants;
 use CPANPLUS::Internals::Constants::Report;
@@ -221,14 +223,14 @@ sub prepare {
     }
 
     my $args;
-    my( $force, $verbose, $perl, @mmflags, $prereq_target, $prereq_format,
+    my( $force, $verbose, $perl, $mmflags, $prereq_target, $prereq_format,
         $prereq_build );
     {   local $Params::Check::ALLOW_UNKNOWN = 1;
         my $tmpl = {
             perl            => {    default => $^X, store => \$perl },
             makemakerflags  => {    default =>
                                         $conf->get_conf('makemakerflags') || '',
-                                    store => \$mmflags[0] },
+                                    store => \$mmflags },
             force           => {    default => $conf->get_conf('force'),
                                     store   => \$force },
             verbose         => {    default => $conf->get_conf('verbose'),
@@ -242,6 +244,7 @@ sub prepare {
         $args = check( $tmpl, \%hash ) or return;
     }
 
+    my @mmflags = $dist->_split_like_shell( $mmflags );
 
     ### maybe we already ran a create on this object? ###
     return 1 if $dist->status->prepared && !$force;
@@ -578,6 +581,8 @@ sub create {
         $args = check( $tmpl, \%hash ) or return;
     }
 
+    my @makeflags = $dist->_split_like_shell( $makeflags );
+
     ### maybe we already ran a create on this object?
     ### make sure we add to include path again, just in case we came from
     ### ->save_state, at which point we need to restore @INC/$PERL5LIB
@@ -641,7 +646,7 @@ sub create {
                     "not running again unless you force",
                     $make, $self->module ), $verbose );
         } else {
-            unless(scalar run(  command => [$make, $makeflags],
+            unless(scalar run(  command => [$make, @makeflags],
                                 buffer  => \$captured,
                                 verbose => $verbose )
             ) {
@@ -687,7 +692,7 @@ sub create {
             ### XXX need to add makeflags here too?
             ### yes, but they should really be split out -- see bug #4143
             if( scalar run(
-                        command => [$make, 'test', $makeflags],
+                        command => [$make, 'test', @makeflags],
                         buffer  => \$captured,
                         verbose => $run_verbose,
             ) ) {
@@ -815,6 +820,7 @@ sub install {
         return;
     }
 
+    my @makeflags = $dist->_split_like_shell( $makeflags );
 
     $dist->status->_install_args( $args );
 
@@ -829,7 +835,7 @@ sub install {
     ### 'make install' section ###
     ### XXX need makeflags here too?
     ### yes, but they should really be split out.. see bug #4143
-    my $cmd     = [$make, 'install', $makeflags];
+    my $cmd     = [$make, 'install', @makeflags];
     my $sudo    = $conf->get_program('sudo');
     unshift @$cmd, $sudo if $sudo and $>;
 
@@ -1016,6 +1022,17 @@ sub dist_dir {
     return $distdir;
 }
 
+sub _split_like_shell {
+  my ($self, $string) = @_;
+
+  return () unless defined($string);
+  return @$string if ref $string eq 'ARRAY';
+  $string =~ s/^\s+|\s+$//g;
+  return () unless length($string);
+
+  require Text::ParseWords;
+  return Text::ParseWords::shellwords($string);
+}
 
 1;
 

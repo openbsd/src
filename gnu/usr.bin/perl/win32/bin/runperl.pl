@@ -21,10 +21,10 @@ runperl.bat - "universal" batch file to run perl scripts
 	C:\> copy runperl.bat foo.bat
 	C:\> foo
 	[..runs the perl script 'foo'..]
-	
+
 	C:\> foo.bat
 	[..runs the perl script 'foo'..]
-	
+
 
 =head1 DESCRIPTION
 

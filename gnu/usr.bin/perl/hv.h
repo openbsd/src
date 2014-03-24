@@ -8,6 +8,26 @@
  *
  */
 
+/* These control hash traversal randomization and the environment variable PERL_PERTURB_KEYS.
+ * Currently disabling this functionality will break a few tests, but should otherwise work fine.
+ * See perlrun for more details. */
+
+#if defined(PERL_PERTURB_KEYS_DISABLED)
+#   define PL_HASH_RAND_BITS_ENABLED        0
+#   define PERL_HASH_ITER_BUCKET(iter)      ((iter)->xhv_riter)
+#else
+#   define PERL_HASH_RANDOMIZE_KEYS         1
+#   if defined(PERL_PERTURB_KEYS_RANDOM)
+#       define PL_HASH_RAND_BITS_ENABLED    1
+#   elif defined(PERL_PERTURB_KEYS_DETERMINISTIC)
+#       define PL_HASH_RAND_BITS_ENABLED    2
+#   else
+#       define USE_PERL_PERTURB_KEYS        1
+#       define PL_HASH_RAND_BITS_ENABLED    PL_hash_rand_bits_enabled
+#   endif
+#   define PERL_HASH_ITER_BUCKET(iter)      (((iter)->xhv_riter) ^ ((iter)->xhv_rand))
+#endif
+
 /* entry in hash value chain */
 struct he {
     /* Keep hent_next first in this structure, because sv_free_arenas take
@@ -61,6 +81,7 @@ struct mro_meta {
     U32     pkg_gen;         /* Bumps when local methods/@ISA change */
     const struct mro_alg *mro_which; /* which mro alg is in use? */
     HV      *isa;            /* Everything this class @ISA */
+    U32     destroy_gen;     /* Generation number of DESTROY cache */
 };
 
 #define MRO_GET_PRIVATE_DATA(smeta, which)		   \
@@ -82,6 +103,7 @@ struct xpvhv_aux {
     AV		*xhv_backreferences; /* back references for weak references */
     HE		*xhv_eiter;	/* current entry of iterator */
     I32		xhv_riter;	/* current root of iterator */
+
 /* Concerning xhv_name_count: When non-zero, xhv_name_u contains a pointer 
  * to an array of HEK pointers, this being the length. The first element is
  * the name of the stash, which may be NULL. If xhv_name_count is positive,
@@ -90,6 +112,12 @@ struct xpvhv_aux {
  */
     I32		xhv_name_count;
     struct mro_meta *xhv_mro_meta;
+    HV *	xhv_super;	/* SUPER method cache */
+#ifdef PERL_HASH_RANDOMIZE_KEYS
+    U32         xhv_rand;       /* random value for hash traversal */
+    U32         xhv_last_rand;  /* last random value for hash traversal,
+                                   used to detect each() after insert for warnings */
+#endif
 };
 
 /* hash structure: */
@@ -100,59 +128,6 @@ struct xpvhv {
     STRLEN      xhv_keys;       /* total keys, including placeholders */
     STRLEN      xhv_max;        /* subscript of last element of xhv_array */
 };
-
-/* hash a key */
-/* FYI: This is the "One-at-a-Time" algorithm by Bob Jenkins
- * from requirements by Colin Plumb.
- * (http://burtleburtle.net/bob/hash/doobs.html) */
-/* The use of a temporary pointer and the casting games
- * is needed to serve the dual purposes of
- * (a) the hashed data being interpreted as "unsigned char" (new since 5.8,
- *     a "char" can be either signed or unsigned, depending on the compiler)
- * (b) catering for old code that uses a "char"
- *
- * The "hash seed" feature was added in Perl 5.8.1 to perturb the results
- * to avoid "algorithmic complexity attacks".
- *
- * If USE_HASH_SEED is defined, hash randomisation is done by default
- * If USE_HASH_SEED_EXPLICIT is defined, hash randomisation is done
- * only if the environment variable PERL_HASH_SEED is set.
- * For maximal control, one can define PERL_HASH_SEED.
- * (see also perl.c:perl_parse()).
- */
-#ifndef PERL_HASH_SEED
-#   if defined(USE_HASH_SEED) || defined(USE_HASH_SEED_EXPLICIT)
-#       define PERL_HASH_SEED	PL_hash_seed
-#   else
-#       define PERL_HASH_SEED	0
-#   endif
-#endif
-
-#define PERL_HASH(hash,str,len) PERL_HASH_INTERNAL_(hash,str,len,0)
-
-/* Only hv.c and mod_perl should be doing this.  */
-#ifdef PERL_HASH_INTERNAL_ACCESS
-#define PERL_HASH_INTERNAL(hash,str,len) PERL_HASH_INTERNAL_(hash,str,len,1)
-#endif
-
-/* Common base for PERL_HASH and PERL_HASH_INTERNAL that parameterises
- * the source of the seed. Not for direct use outside of hv.c. */
-
-#define PERL_HASH_INTERNAL_(hash,str,len,internal) \
-     STMT_START	{ \
-	register const char * const s_PeRlHaSh_tmp = str; \
-	register const unsigned char *s_PeRlHaSh = (const unsigned char *)s_PeRlHaSh_tmp; \
-	register I32 i_PeRlHaSh = len; \
-	register U32 hash_PeRlHaSh = (internal ? PL_rehash_seed : PERL_HASH_SEED); \
-	while (i_PeRlHaSh--) { \
-	    hash_PeRlHaSh += *s_PeRlHaSh++; \
-	    hash_PeRlHaSh += (hash_PeRlHaSh << 10); \
-	    hash_PeRlHaSh ^= (hash_PeRlHaSh >> 6); \
-	} \
-	hash_PeRlHaSh += (hash_PeRlHaSh << 3); \
-	hash_PeRlHaSh ^= (hash_PeRlHaSh >> 11); \
-	(hash) = (hash_PeRlHaSh + (hash_PeRlHaSh << 15)); \
-    } STMT_END
 
 /*
 =head1 Hash Manipulation Functions
@@ -208,7 +183,12 @@ be assigned to. The C<HePV()> macro is usually preferable for finding key
 lengths.
 
 =for apidoc Am|SV*|HeVAL|HE* he
-Returns the value slot (type C<SV*>) stored in the hash entry.
+Returns the value slot (type C<SV*>) stored in the hash entry. Can be assigned
+to.
+
+  SV *foo= HeVAL(hv);
+  HeVAL(hv)= sv;
+
 
 =for apidoc Am|U32|HeHASH|HE* he
 Returns the computed hash stored in the hash entry.
@@ -251,6 +231,8 @@ C<SV*>.
 =cut
 */
 
+#define PERL_HASH_DEFAULT_HvMAX 7
+
 /* these hash entry flags ride on hent_klen (for use only in magic/tied HVs) */
 #define HEf_SVKEY	-2	/* hent_key is an SV* */
 
@@ -269,6 +251,9 @@ C<SV*>.
 #define HvEITER_set(hv,e)	Perl_hv_eiter_set(aTHX_ MUTABLE_HV(hv), e)
 #define HvRITER_get(hv)	(SvOOK(hv) ? HvAUX(hv)->xhv_riter : -1)
 #define HvEITER_get(hv)	(SvOOK(hv) ? HvAUX(hv)->xhv_eiter : NULL)
+#define HvRAND_get(hv)	(SvOOK(hv) ? HvAUX(hv)->xhv_rand : 0)
+#define HvLASTRAND_get(hv)	(SvOOK(hv) ? HvAUX(hv)->xhv_last_rand : 0)
+
 #define HvNAME(hv)	HvNAME_get(hv)
 #define HvNAMELEN(hv)   HvNAMELEN_get(hv)
 #define HvENAME(hv)	HvENAME_get(hv)
@@ -352,10 +337,6 @@ C<SV*>.
 #define HvLAZYDEL_on(hv)	(SvFLAGS(hv) |= SVphv_LAZYDEL)
 #define HvLAZYDEL_off(hv)	(SvFLAGS(hv) &= ~SVphv_LAZYDEL)
 
-#define HvREHASH(hv)		(SvFLAGS(hv) & SVphv_REHASH)
-#define HvREHASH_on(hv)		(SvFLAGS(hv) |= SVphv_REHASH)
-#define HvREHASH_off(hv)	(SvFLAGS(hv) &= ~SVphv_REHASH)
-
 #ifndef PERL_CORE
 #  define Nullhe Null(HE*)
 #endif
@@ -366,7 +347,6 @@ C<SV*>.
 #define HeKLEN(he)		HEK_LEN(HeKEY_hek(he))
 #define HeKUTF8(he)  HEK_UTF8(HeKEY_hek(he))
 #define HeKWASUTF8(he)  HEK_WASUTF8(HeKEY_hek(he))
-#define HeKREHASH(he)  HEK_REHASH(HeKEY_hek(he))
 #define HeKLEN_UTF8(he)  (HeKUTF8(he) ? -HeKLEN(he) : HeKLEN(he))
 #define HeKFLAGS(he)  HEK_FLAGS(HeKEY_hek(he))
 #define HeVAL(he)		(he)->he_valu.hent_val
@@ -401,7 +381,6 @@ C<SV*>.
 
 #define HVhek_UTF8	0x01 /* Key is utf8 encoded. */
 #define HVhek_WASUTF8	0x02 /* Key is bytes here, but was supplied as utf8. */
-#define HVhek_REHASH	0x04 /* This key is in an hv using a custom HASH . */
 #define HVhek_UNSHARED	0x08 /* This key isn't a shared hash key. */
 #define HVhek_FREEKEY	0x100 /* Internal flag to say key is malloc()ed.  */
 #define HVhek_PLACEHOLD	0x200 /* Internal flag to create placeholder.
@@ -411,16 +390,7 @@ C<SV*>.
 				    converted to bytes. */
 #define HVhek_MASK	0xFF
 
-/* Which flags enable HvHASKFLAGS? Somewhat a hack on a hack, as
-   HVhek_REHASH is only needed because the rehash flag has to be duplicated
-   into all keys as hv_iternext has no access to the hash flags. At this
-   point Storable's tests get upset, because sometimes hashes are "keyed"
-   and sometimes not, depending on the order of data insertion, and whether
-   it triggered rehashing. So currently HVhek_REHASH is exempt.
-   Similarly UNSHARED
-*/
-   
-#define HVhek_ENABLEHVKFLAGS	(HVhek_MASK & ~(HVhek_REHASH|HVhek_UNSHARED))
+#define HVhek_ENABLEHVKFLAGS        (HVhek_MASK & ~(HVhek_UNSHARED))
 
 #define HEK_UTF8(hek)		(HEK_FLAGS(hek) & HVhek_UTF8)
 #define HEK_UTF8_on(hek)	(HEK_FLAGS(hek) |= HVhek_UTF8)
@@ -428,8 +398,6 @@ C<SV*>.
 #define HEK_WASUTF8(hek)	(HEK_FLAGS(hek) & HVhek_WASUTF8)
 #define HEK_WASUTF8_on(hek)	(HEK_FLAGS(hek) |= HVhek_WASUTF8)
 #define HEK_WASUTF8_off(hek)	(HEK_FLAGS(hek) &= ~HVhek_WASUTF8)
-#define HEK_REHASH(hek)		(HEK_FLAGS(hek) & HVhek_REHASH)
-#define HEK_REHASH_on(hek)	(HEK_FLAGS(hek) |= HVhek_REHASH)
 
 /* calculate HV array allocation */
 #ifndef PERL_USE_LARGE_HV_ALLOC
@@ -622,12 +590,14 @@ Creates a new HV.  The reference count is set to 1.
 
 #define newHV()	MUTABLE_HV(newSV_type(SVt_PVHV))
 
+#include "hv_func.h"
+
 /*
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

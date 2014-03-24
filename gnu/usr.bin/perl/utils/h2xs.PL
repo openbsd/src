@@ -862,6 +862,10 @@ if( @path_h ){
 	    $rest =~ s!/\*.*?(\*/|\n)|//.*!!g; # Remove comments
 	    $rest =~ s/^\s+//;
 	    $rest =~ s/\s+$//;
+	    if ($rest eq '') {
+	      print("Skip empty $def\n") if $opt_d;
+	      next defines;
+	    }
 	    # Cannot do: (-1) and ((LHANDLE)3) are OK:
 	    #print("Skip non-wordy $def => $rest\n"),
 	    #  next defines if $rest =~ /[^\w\$]/;
@@ -1382,6 +1386,7 @@ if( ! $opt_X ){ # print XS, unless it is disabled
 warn "Writing $ext$modpname/$modfname.xs\n";
 
 print XS <<"END";
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"

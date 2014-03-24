@@ -6,7 +6,7 @@ use strict;
 
 our($VERSION, @ISA, @EXPORT_OK);
 
-$VERSION = "1.23";
+$VERSION = "1.25";
 
 use Carp;
 use Exporter ();
@@ -65,7 +65,7 @@ sub _init_optags {
 
 	# Split into lines, keep only indented lines
 	my @lines = grep { m/^\s/    } split(/\n/);
-	foreach (@lines) { s/--.*//  } # delete comments
+	foreach (@lines) { s/(?:\t|--).*//  } # delete comments
 	my @ops   = map  { split ' ' } @lines; # get op words
 
 	foreach(@ops) {
@@ -288,8 +288,8 @@ invert_opset function.
 
 =head1 TO DO (maybe)
 
-    $bool = opset_eq($opset1, $opset2)	true if opsets are logically eqiv
-
+    $bool = opset_eq($opset1, $opset2)	true if opsets are logically
+					equivalent
     $yes = opset_can($opset, @ops)	true if $opset has all @ops set
 
     @diff = opset_diff($opset1, $opset2) => ('foo', '!bar', ...)
@@ -310,12 +310,12 @@ invert_opset function.
 
     rv2av aassign aelem aelemfast aelemfast_lex aslice av2arylen
 
-    rv2hv helem hslice each values keys exists delete aeach akeys avalues
-    boolkeys reach rvalues rkeys
+    rv2hv helem hslice each values keys exists delete aeach akeys
+    avalues reach rvalues rkeys
 
-    preinc i_preinc predec i_predec postinc i_postinc postdec i_postdec
-    int hex oct abs pow multiply i_multiply divide i_divide
-    modulo i_modulo add i_add subtract i_subtract
+    preinc i_preinc predec i_predec postinc i_postinc
+    postdec i_postdec int hex oct abs pow multiply i_multiply
+    divide i_divide modulo i_modulo add i_add subtract i_subtract
 
     left_shift right_shift bit_and bit_xor bit_or negate i_negate
     not complement
@@ -325,7 +325,8 @@ invert_opset function.
 
     substr vec stringify study pos length index rindex ord chr
 
-    ucfirst lcfirst uc lc fc quotemeta trans transr chop schop chomp schomp
+    ucfirst lcfirst uc lc fc quotemeta trans transr chop schop
+    chomp schomp
 
     match split qr
 
@@ -337,9 +338,11 @@ invert_opset function.
 
     rv2cv anoncode prototype coreargs
 
-    entersub leavesub leavesublv return method method_named -- XXX loops via recursion?
+    entersub leavesub leavesublv return method method_named
+     -- XXX loops via recursion?
 
-    leaveeval -- needed for Safe to operate, is safe without entereval
+    leaveeval -- needed for Safe to operate, is safe
+		 without entereval
 
 =item :base_mem
 
@@ -394,13 +397,14 @@ These are a hotchpotch of opcodes still waiting to be considered
 
     gvsv gv gelem
 
-    padsv padav padhv padany
+    padsv padav padhv padcv padany padrange introcv clonecv
 
     once
 
     rv2gv refgen srefgen ref
 
-    bless -- could be used to change ownership of objects (reblessing)
+    bless -- could be used to change ownership of objects
+	     (reblessing)
 
     pushre regcmaybe regcreset regcomp subst substcont
 
@@ -414,7 +418,8 @@ These are a hotchpotch of opcodes still waiting to be considered
     sselect select
     pipe_op sockpair
 
-    getppid getpgrp setpgrp getpriority setpriority localtime gmtime
+    getppid getpgrp setpgrp getpriority setpriority
+    localtime gmtime
 
     entertry leavetry -- can be used to 'hide' fatal errors
 
@@ -460,9 +465,10 @@ then you should not rely on the definition of this, or indeed any other, optag!
 
     stat lstat readlink
 
-    ftatime ftblk ftchr ftctime ftdir fteexec fteowned fteread
-    ftewrite ftfile ftis ftlink ftmtime ftpipe ftrexec ftrowned
-    ftrread ftsgid ftsize ftsock ftsuid fttty ftzero ftrwrite ftsvtx
+    ftatime ftblk ftchr ftctime ftdir fteexec fteowned
+    fteread ftewrite ftfile ftis ftlink ftmtime ftpipe
+    ftrexec ftrowned ftrread ftsgid ftsize ftsock ftsuid
+    fttty ftzero ftrwrite ftsvtx
 
     fttext ftbinary
 
@@ -506,7 +512,8 @@ information about your system but not be able to change it.
 
     utime chmod chown
 
-    fcntl -- not strictly filesys related, but possibly as dangerous?
+    fcntl -- not strictly filesys related, but possibly as
+	     dangerous?
 
 =item :subprocess
 

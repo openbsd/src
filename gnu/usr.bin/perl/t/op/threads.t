@@ -161,7 +161,7 @@ curr_test(curr_test() + 2);
 
 # the seen_evals field of a regexp was getting zeroed on clone, so
 # within a thread it didn't  know that a regex object contained a 'safe'
-# re_eval expression, so it later died with 'Eval-group not allowed' when
+# code expression, so it later died with 'Eval-group not allowed' when
 # you tried to interpolate the object
 
 sub safe_re {

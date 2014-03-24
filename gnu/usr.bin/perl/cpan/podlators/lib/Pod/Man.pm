@@ -1,12 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
 #
-# Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-#     2010 Russ Allbery <rra@stanford.edu>
-# Substantial contributions by Sean Burke <sburke@cpan.org>
-#
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
-#
 # This module translates POD documentation into *roff markup using the man
 # macro set, and is intended for converting POD documents written as Unix
 # manual pages to manual pages that can be read by the man(1) command.  It is
@@ -17,6 +10,13 @@
 # maintained outside of the Perl core as part of the podlators.  Please send
 # me any patches at the address above in addition to sending them to the
 # standard Perl mailing lists.
+#
+# Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+#     2010, 2012, 2013 Russ Allbery <rra@stanford.edu>
+# Substantial contributions by Sean Burke <sburke@cpan.org>
+#
+# This program is free software; you may redistribute it and/or modify it
+# under the same terms as Perl itself.
 
 ##############################################################################
 # Modules and declarations
@@ -36,7 +36,7 @@ use Pod::Simple ();
 
 @ISA = qw(Pod::Simple);
 
-$VERSION = '2.25';
+$VERSION = '2.27';
 
 # Set the debugging level.  If someone has inserted a debug function into this
 # class already, use that.  Otherwise, use any Pod::Simple debug function
@@ -93,11 +93,30 @@ sub new {
     %$self = (%$self, @_);
 
     # Send errors to stderr if requested.
-    if ($$self{stderr}) {
+    if ($$self{stderr} and not $$self{errors}) {
+        $$self{errors} = 'stderr';
+    }
+    delete $$self{stderr};
+
+    # Validate the errors parameter and act on it.
+    if (not defined $$self{errors}) {
+        $$self{errors} = 'pod';
+    }
+    if ($$self{errors} eq 'stderr' || $$self{errors} eq 'die') {
         $self->no_errata_section (1);
         $self->complain_stderr (1);
-        delete $$self{stderr};
+        if ($$self{errors} eq 'die') {
+            $$self{complain_die} = 1;
+        }
+    } elsif ($$self{errors} eq 'pod') {
+        $self->no_errata_section (0);
+        $self->complain_stderr (0);
+    } elsif ($$self{errors} eq 'none') {
+        $self->no_whining (1);
+    } else {
+        croak (qq(Invalid errors setting: "$$self{errors}"));
     }
+    delete $$self{errors};
 
     # Initialize various other internal constants based on our arguments.
     $self->init_fonts;
@@ -474,11 +493,16 @@ sub guesswork {
     # line or following regular punctuation (like quotes) or whitespace (1),
     # and followed by either similar punctuation, an em-dash, or the end of
     # the line (3).
+    #
+    # Allow the text we're changing to small caps to include double quotes,
+    # commas, newlines, and periods as long as it doesn't otherwise interrupt
+    # the string of small caps and still fits the criteria.  This lets us turn
+    # entire warranty disclaimers in man page output into small caps.
     if ($$self{MAGIC_SMALLCAPS}) {
         s{
-            ( ^ | [\s\(\"\'\`\[\{<>] | \\\  )                   # (1)
-            ( [A-Z] [A-Z] (?: [/A-Z+:\d_\$&] | \\- )* )         # (2)
-            (?= [\s>\}\]\(\)\'\".?!,;] | \\*\(-- | \\\  | $ )   # (3)
+            ( ^ | [\s\(\"\'\`\[\{<>] | \\[ ]  )                     # (1)
+            ( [A-Z] [A-Z] (?: [/A-Z+:\d_\$&] | \\- | [.,\"\s] )* )  # (2)
+            (?= [\s>\}\]\(\)\'\".?!,;] | \\*\(-- | \\[ ] | $ )      # (3)
         } {
             $1 . '\s-1' . $2 . '\s0'
         }egx;
@@ -715,6 +739,7 @@ sub outindex {
     # Print out the .IX commands.
     for (@output) {
         my ($type, $entry) = @$_;
+        $entry =~ s/\s+/ /g;
         $entry =~ s/\"/\"\"/g;
         $entry =~ s/\\/\\\\/g;
         $self->output (".IX $type " . '"' . $entry . '"' . "\n");
@@ -743,6 +768,8 @@ sub start_document {
         DEBUG and print "Document is contentless\n";
         $$self{CONTENTLESS} = 1;
         return;
+    } else {
+        delete $$self{CONTENTLESS};
     }
 
     # When UTF-8 output is set, check whether our output file handle already
@@ -753,8 +780,9 @@ sub start_document {
     if ($$self{utf8}) {
         $$self{ENCODE} = 1;
         eval {
-            my @layers = PerlIO::get_layers ($$self{output_fh});
-            if (grep { $_ eq 'utf8' } @layers) {
+            my @options = (output => 1, details => 1);
+            my $flag = (PerlIO::get_layers ($$self{output_fh}, @options))[-1];
+            if ($flag & PerlIO::F_UTF8 ()) {
                 $$self{ENCODE} = 0;
             }
         }
@@ -784,10 +812,14 @@ sub start_document {
     $$self{PENDING}   = [[]];   # Pending output.
 }
 
-# Handle the end of the document.  This does nothing but print out a final
-# comment at the end of the document under debugging.
+# Handle the end of the document.  This handles dying on POD errors, since
+# Pod::Parser currently doesn't.  Otherwise, does nothing but print out a
+# final comment at the end of the document under debugging.
 sub end_document {
     my ($self) = @_;
+    if ($$self{complain_die} && $self->errors_seen) {
+        croak ("POD document had syntax errors");
+    }
     return if $self->bare_output;
     return if ($$self{CONTENTLESS} && !$$self{ALWAYS_EMIT_SOMETHING});
     $self->output (q(.\" [End document]) . "\n") if DEBUG;
@@ -1108,12 +1140,21 @@ sub cmd_x {
 }
 
 # Links reduce to the text that we're given, wrapped in angle brackets if it's
-# a URL.
+# a URL, followed by the URL.  We take an option to suppress the URL if anchor
+# text is given.  We need to format the "to" value of the link before
+# comparing it to the text since we may escape hyphens.
 sub cmd_l {
     my ($self, $attrs, $text) = @_;
     if ($$attrs{type} eq 'url') {
-        if (not defined($$attrs{to}) or $$attrs{to} eq $text) {
+        my $to = $$attrs{to};
+        if (defined $to) {
+            my $tag = $$self{PENDING}[-1];
+            $to = $self->format_text ($$tag[1], $to);
+        }
+        if (not defined ($to) or $to eq $text) {
             return "<$text>";
+        } elsif ($$self{nourls}) {
+            return $text;
         } else {
             return "$text <$$attrs{to}>";
         }
@@ -1301,7 +1342,18 @@ sub parse_from_file {
 # parse_from_file supports.
 sub parse_from_filehandle {
     my $self = shift;
-    $self->parse_from_file (@_);
+    return $self->parse_from_file (@_);
+}
+
+# Pod::Simple's parse_file doesn't set output_fh.  Wrap the call and do so
+# ourself unless it was already set by the caller, since our documentation has
+# always said that this should work.
+sub parse_file {
+    my ($self, $in) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_file ($in);
 }
 
 ##############################################################################
@@ -1323,7 +1375,7 @@ sub parse_from_filehandle {
     undef, undef, undef, undef,            undef, undef, undef, undef,
     undef, undef, undef, undef,            undef, undef, undef, undef,
 
-    "A\\*`",  "A\\*'", "A\\*^", "A\\*~",   "A\\*:", "A\\*o", "\\*(AE", "C\\*,",
+    "A\\*`",  "A\\*'", "A\\*^", "A\\*~",   "A\\*:", "A\\*o", "\\*(Ae", "C\\*,",
     "E\\*`",  "E\\*'", "E\\*^", "E\\*:",   "I\\*`", "I\\*'", "I\\*^",  "I\\*:",
 
     "\\*(D-", "N\\*~", "O\\*`", "O\\*'",   "O\\*^", "O\\*~", "O\\*:",  undef,
@@ -1384,6 +1436,8 @@ sub preamble_template {
 .    ds PI \(*p
 .    ds L" ``
 .    ds R" ''
+.    ds C`
+.    ds C'
 'br\}
 .\"
 .\" Escape single quotes in literal strings from groff's Unicode transform.
@@ -1394,18 +1448,26 @@ sub preamble_template {
 .\" titles (.TH), headers (.SH), subsections (.SS), items (.Ip), and index
 .\" entries marked with X<> in POD.  Of course, you'll have to process the
 .\" output yourself in some meaningful fashion.
-.ie \nF \{\
-.    de IX
-.    tm Index:\\$1\t\\n%\t"\\$2"
+.\"
+.\" Avoid warning from groff about undefined register 'F'.
+.de IX
 ..
-.    nr % 0
-.    rr F
-.\}
-.el \{\
-.    de IX
+.nr rF 0
+.if \n(.g .if rF .nr rF 1
+.if (\n(rF:(\n(.g==0)) \{
+.    if \nF \{
+.        de IX
+.        tm Index:\\$1\t\\n%\t"\\$2"
 ..
+.        if !\nF==2 \{
+.            nr % 0
+.            nr F 2
+.        \}
+.    \}
 .\}
+.rr rF
 ----END OF PREAMBLE----
+#'# for cperl-mode
 
     if ($accents) {
         $preamble .= <<'----END OF PREAMBLE----'
@@ -1484,14 +1546,14 @@ sub preamble_template {
 1;
 __END__
 
-=head1 NAME
-
-Pod::Man - Convert POD data to formatted *roff input
-
 =for stopwords
 en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8
 UTF-8 Allbery Sean Burke Ossanna Solaris formatters troff uppercased
-Christiansen
+Christiansen nourls
+
+=head1 NAME
+
+Pod::Man - Convert POD data to formatted *roff input
 
 =head1 SYNOPSIS
 
@@ -1553,6 +1615,16 @@ argument.
 Sets the centered page header to use instead of "User Contributed Perl
 Documentation".
 
+=item errors
+
+How to report errors.  C<die> says to throw an exception on any POD
+formatting error.  C<stderr> says to report errors on standard error, but
+not to throw an exception.  C<pod> says to include a POD ERRORS section
+in the resulting documentation summarizing the errors.  C<none> ignores
+POD errors entirely, as much as possible.
+
+The default is C<output>.
+
 =item date
 
 Sets the left-hand footer.  By default, the modification date of the input
@@ -1593,6 +1665,22 @@ module path.  If it is, a path like C<.../lib/Pod/Man.pm> is converted into
 a name like C<Pod::Man>.  This option, if given, overrides any automatic
 determination of the name.
 
+=item nourls
+
+Normally, LZ<><> formatting codes with a URL but anchor text are formatted
+to show both the anchor text and the URL.  In other words:
+
+    L<foo|http://example.com/>
+
+is formatted as:
+
+    foo <http://example.com/>
+
+This option, if set to a true value, suppresses the URL when anchor text
+is given, so this example would be formatted as just C<foo>.  This can
+produce less cluttered output in cases where the URLs are not particularly
+important.
+
 =item quotes
 
 Sets the quote marks used to surround CE<lt>> text.  If the value is a
@@ -1630,7 +1718,9 @@ case section 3 will be selected.
 =item stderr
 
 Send error messages about invalid POD to standard error instead of
-appending a POD ERRORS section to the generated *roff output.
+appending a POD ERRORS section to the generated *roff output.  This is
+equivalent to setting C<errors> to C<stderr> if C<errors> is not already
+set.  It is supported for backward compatibility.
 
 =item utf8
 
@@ -1677,13 +1767,23 @@ method.  See L<Pod::Simple> for the specific details.
 
 (F) You specified a *roff font (using C<fixed>, C<fixedbold>, etc.) that
 wasn't either one or two characters.  Pod::Man doesn't support *roff fonts
-longer than two characters, although some *roff extensions do (the canonical
-versions of B<nroff> and B<troff> don't either).
+longer than two characters, although some *roff extensions do (the
+canonical versions of B<nroff> and B<troff> don't either).
+
+=item Invalid errors setting "%s"
+
+(F) The C<errors> parameter to the constructor was set to an unknown value.
 
 =item Invalid quote specification "%s"
 
-(F) The quote specification given (the quotes option to the constructor) was
-invalid.  A quote specification must be one, two, or four characters long.
+(F) The quote specification given (the C<quotes> option to the
+constructor) was invalid.  A quote specification must be one, two, or four
+characters long.
+
+=item POD document had syntax errors
+
+(F) The POD document being formatted had syntax errors and the C<errors>
+option was set to C<die>.
 
 =back
 
@@ -1745,8 +1845,8 @@ mine).
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+2009, 2010, 2012, 2013 Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

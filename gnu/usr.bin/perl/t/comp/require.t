@@ -22,7 +22,7 @@ krunch.pm krunch.pmc whap.pm whap.pmc);
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 53;
+my $total_tests = 54;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -36,98 +36,103 @@ sub write_file {
 
 eval {require 5.005};
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.005 try 1\n";
 
 eval { require 5.005 };
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.005 try 2\n";
 
 eval { require 5.005; };
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.005 try 3\n";
 
 eval {
     require 5.005
 };
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.005 try 4\n";
 
 # new style version numbers
 
 eval { require v5.5.630; };
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.5.630\n";
+
+sub v5 { die }
+eval { require v5; };
+print "# $@\nnot " if $@;
+print "ok ",$i++," - require v5 ignores sub named v5\n";
 
 eval { require 10.0.2; };
 print "# $@\nnot " unless $@ =~ /^Perl v10\.0\.2 required/;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 10.0.2\n";
 
 my $ver = 5.005_63;
 eval { require $ver; };
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.005_63\n";
 
 # check inaccurate fp
 $ver = 10.2;
 eval { require $ver; };
 print "# $@\nnot " unless $@ =~ /^Perl v10\.200.0 required/;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 10.2\n";
 
 $ver = 10.000_02;
 eval { require $ver; };
 print "# $@\nnot " unless $@ =~ /^Perl v10\.0\.20 required/;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 10.000_02\n";
 
 print "not " unless 5.5.1 gt v5.5;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - 5.5.1 gt v5.5\n";
 
 {
     print "not " unless v5.5.640 eq "\x{5}\x{5}\x{280}";
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - v5.5.640 eq \\x{5}\\x{5}\\x{280}\n";
 
     print "not " unless v7.15 eq "\x{7}\x{f}";
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - v7.15 eq \\x{7}\\x{f}\n";
 
     print "not "
       unless v1.20.300.4000.50000.600000 eq "\x{1}\x{14}\x{12c}\x{fa0}\x{c350}\x{927c0}";
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - v1.20.300.4000.50000.600000 eq ...\n";
 }
 
 # "use 5.11.0" (and higher) loads strictures.
 # check that this doesn't happen with require
 eval 'require 5.11.0; ${"foo"} = "bar";';
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require 5.11.0\n";
 eval 'BEGIN {require 5.11.0} ${"foo"} = "bar";';
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++,"\ - BEGIN { require 5.11.0}\n";
 
 # interaction with pod (see the eof)
-write_file('bleah.pm', "print 'ok $i\n'; 1;\n");
+write_file('bleah.pm', "print 'ok $i - require bleah.pm\n'; 1;\n");
 require "bleah.pm";
 $i++;
 
 # run-time failure in require
 do_require "0;\n";
 print "# $@\nnot " unless $@ =~ /did not return a true/;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - require returning 0\n";
 
 print "not " if exists $INC{'bleah.pm'};
-print "ok ",$i++,"\n";
+print "ok ",$i++," - %INC not updated\n";
 
 my $flag_file = 'bleah.flg';
 # run-time error in require
 for my $expected_compile (1,0) {
     write_file($flag_file, 1);
     print "not " unless -e $flag_file;
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - exp $expected_compile; bleah.flg\n";
     write_file('bleah.pm', "unlink '$flag_file' or die; \$a=0; \$b=1/\$a; 1;\n");
     print "# $@\nnot " if eval { require 'bleah.pm' };
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - exp $expected_compile; require bleah.pm with flag file\n";
     print "not " unless -e $flag_file xor $expected_compile;
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - exp $expected_compile; -e flag_file\n";
     print "not " unless exists $INC{'bleah.pm'};
-    print "ok ",$i++,"\n";
+    print "ok ",$i++," - exp $expected_compile; exists \$INC{'bleah.pm}\n";
 }
 
 # compile-time failure in require
@@ -135,31 +140,31 @@ do_require "1)\n";
 # bison says 'parse error' instead of 'syntax error',
 # various yaccs may or may not capitalize 'syntax'.
 print "# $@\nnot " unless $@ =~ /(syntax|parse) error/mi;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - syntax error\n";
 
 # previous failure cached in %INC
 print "not " unless exists $INC{'bleah.pm'};
-print "ok ",$i++,"\n";
+print "ok ",$i++," - cached %INC\n";
 write_file($flag_file, 1);
 write_file('bleah.pm', "unlink '$flag_file'; 1");
 print "# $@\nnot " if eval { require 'bleah.pm' };
-print "ok ",$i++,"\n";
+print "ok ",$i++," - eval { require 'bleah.pm' }\n";
 print "# $@\nnot " unless $@ =~ /Compilation failed/i;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - Compilation failed\n";
 print "not " unless -e $flag_file;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - -e flag_file\n";
 print "not " unless exists $INC{'bleah.pm'};
-print "ok ",$i++,"\n";
+print "ok ",$i++," - \$INC{'bleah.pm'}\n";
 
 # successful require
 do_require "1";
 print "# $@\nnot " if $@;
-print "ok ",$i++,"\n";
+print "ok ",$i++," - do_require '1';\n";
 
 # do FILE shouldn't see any outside lexicals
-my $x = "ok $i\n";
+my $x = "ok $i - bleah.do\n";
 write_file("bleah.do", <<EOT);
-\$x = "not ok $i\\n";
+\$x = "not ok $i - bleah.do\\n";
 EOT
 do "bleah.do" or die $@;
 dofile();
@@ -189,9 +194,9 @@ my $r = "threads";
 eval { require $r };
 $i++;
 if($@ =~ /Can't locate threads in \@INC/) {
-    print "ok $i\n";
+    print "ok $i - RT #24404\n";
 } else {
-    print "not ok $i\n";
+    print "not ok - RT #24404$i\n";
 }
 
 
@@ -199,15 +204,15 @@ write_file('bleah.pm', qq(die "This is an expected error";\n));
 delete $INC{"bleah.pm"}; ++$::i;
 eval { CORE::require bleah; };
 if ($@ =~ /^This is an expected error/) {
-    print "ok $i\n";
+    print "ok $i - expected error\n";
 } else {
-    print "not ok $i\n";
+    print "not ok $i - expected error\n";
 }
 
 sub write_file_not_thing {
     my ($file, $thing, $test) = @_;
     write_file($file, <<"EOT");
-    print "not ok $test\n";
+    print "not ok $test - write_file_not_thing $file\n";
     die "The $thing file should not be loaded";
 EOT
 }
@@ -226,18 +231,18 @@ EOT
     if ($ccflags =~ /(?:^|\s)-DPERL_DISABLE_PMC\b/) {
 	print "# .pmc files are ignored, so test that\n";
 	write_file_not_thing('krunch.pmc', '.pmc', $pmc_older);
-	write_file('urkkk.pm', qq(print "ok $simple\n"));
+	write_file('urkkk.pm', qq(print "ok $simple - urkkk.pm branch A\n"));
 	write_file('whap.pmc', qq(die "This is not an expected error"));
 
 	print "# Sleeping for 2 seconds before creating some more files\n";
 	sleep 2;
 
-	write_file('krunch.pm', qq(print "ok $pmc_older\n"));
+	write_file('krunch.pm', qq(print "ok $pmc_older - krunch.pm branch A\n"));
 	write_file_not_thing('urkkk.pmc', '.pmc', $simple);
 	write_file('whap.pm', qq(die "This is an expected error"));
     } else {
 	print "# .pmc files should be loaded, so test that\n";
-	write_file('krunch.pmc', qq(print "ok $pmc_older\n";));
+	write_file('krunch.pmc', qq(print "ok $pmc_older - krunch.pm branch B\n";));
 	write_file_not_thing('urkkk.pm', '.pm', $simple);
 	write_file('whap.pmc', qq(die "This is an expected error"));
 
@@ -245,7 +250,7 @@ EOT
 	sleep 2;
 
 	write_file_not_thing('krunch.pm', '.pm', $pmc_older);
-	write_file('urkkk.pmc', qq(print "ok $simple\n";));
+	write_file('urkkk.pmc', qq(print "ok $simple - urkkk.pm branch B\n";));
 	write_file_not_thing('whap.pm', '.pm', $pmc_dies);
     }
     require urkkk;
@@ -253,9 +258,9 @@ EOT
     eval {CORE::require whap; 1} and die;
 
     if ($@ =~ /^This is an expected error/) {
-	print "ok $pmc_dies\n";
+	print "ok $pmc_dies - pmc_dies\n";
     } else {
-	print "not ok $pmc_dies\n";
+	print "not ok $pmc_dies - pmc_dies\n";
     }
 }
 
@@ -268,9 +273,9 @@ if (defined &DynaLoader::boot_DynaLoader) {
      CORE::require(File::Spec::Functions::catfile(Cwd::getcwd(),"bleah.pm"));
     };
     if ($@ =~ /^This is an expected error/) {
-	print "ok $i\n";
+	print "ok $i - require(func())\n";
     } else {
-	print "not ok $i\n";
+	print "not ok $i - require(func())\n";
     }
 } else {
     print "ok $i # SKIP Cwd may not be available in miniperl\n";

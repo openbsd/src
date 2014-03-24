@@ -1,10 +1,16 @@
 #!./perl
 
-print "1..4\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
 
-print 1 ? "ok 1\n" : "not ok 1\n";	# compile time
-print 0 ? "not ok 2\n" : "ok 2\n";
+is( 1 ? 1 : 0, 1, 'compile time, true' );
+is( 0 ? 0 : 1, 1, 'compile time, false' );
 
 $x = 1;
-print $x ? "ok 3\n" : "not ok 3\n";	# run time
-print !$x ? "not ok 4\n" : "ok 4\n";
+is(  $x ? 1 : 0, 1, 'run time, true');
+is( !$x ? 0 : 1, 1, 'run time, false');
+
+done_testing();

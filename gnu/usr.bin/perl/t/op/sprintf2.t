@@ -1,12 +1,14 @@
 #!./perl -w
 
+# Tests for sprintf that do not fit the format of sprintf.t.
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
 }   
 
-plan tests => 1368;
+plan tests => 1370;
 
 use strict;
 use Config;
@@ -180,3 +182,12 @@ for my $width (1,2,3,4,5,6,7) {
         );
     }
 }
+
+# Overload count
+package o { use overload '""', sub { ++our $count; $_[0][0]; } }
+my $o = bless ["\x{100}"], o::;
+() = sprintf "%1s", $o;
+is $o::count, '1', 'sprinf %1s overload count';
+$o::count = 0;
+() = sprintf "%.1s", $o;
+is $o::count, '1', 'sprinf %.1s overload count';

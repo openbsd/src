@@ -2,7 +2,7 @@
 
 # This is written in a peculiar style, since we're trying to avoid
 # most of the constructs we'll be testing for.  (This comment is
-# probably obsolete on the avoidance side, though still currrent
+# probably obsolete on the avoidance side, though still current
 # on the peculiarity side.)
 
 # t/TEST and t/harness need to share code. The logical way to do this would be
@@ -23,8 +23,8 @@ my %dir_to_switch =
      '../ext/File-Glob/t' => '-I.. -MTestInit', # FIXME - tests assume t/
      );
 
-# "not absolute" is the the default, as it saves some fakery within TestInit
-# which can peturb tests, and takes CPU. Working with the upstream author of
+# "not absolute" is the default, as it saves some fakery within TestInit
+# which can perturb tests, and takes CPU. Working with the upstream author of
 # any of these, to figure out how to remove them from this list, considered
 # "a good thing".
 my %abs = (
@@ -430,7 +430,7 @@ unless (@ARGV) {
     # then comp, to validate that require works
     # then run, to validate that -M works
     # then we know we can -MTestInit for everything else, making life simpler
-    foreach my $dir (qw(base comp run cmd io re op uni mro)) {
+    foreach my $dir (qw(base comp run cmd io re opbasic op uni mro)) {
 	_find_tests($dir);
     }
     unless ($::core) {
@@ -468,6 +468,7 @@ unless (@ARGV) {
 	_find_tests('x2p');
 	_find_tests('japh') if $::torture;
 	_find_tests('t/benchmark') if $::benchmark or $ENV{PERL_BENCHMARK};
+	_find_tests('bigmem') if $ENV{PERL_TEST_MEMORY};
     }
 }
 
@@ -547,7 +548,7 @@ EOT
 	    # in BEGIN/END blocks (giving better visibility of self vs
 	    # children of each testprog), but that would require some
 	    # IPC to send results back here, or a completely different
-	    # collection scheme (Storable isnt tuned for incremental use)
+	    # collection scheme (Storable isn't tuned for incremental use)
 	    @starttimes = times;
 	}
 	if ($test =~ /^$/) {
@@ -585,9 +586,9 @@ EOT
 	    next if /^\s*$/; # skip blank lines
 	    if (/^1..$/ && ($^O eq 'VMS')) {
 		# VMS pipe bug inserts blank lines.
-		my $l2 = <RESULTS>;
+		my $l2 = <$results>;
 		if ($l2 =~ /^\s*$/) {
-		    $l2 = <RESULTS>;
+		    $l2 = <$results>;
 		}
 		$_ = '1..' . $l2;
 	    }

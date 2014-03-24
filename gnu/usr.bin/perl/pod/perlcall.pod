@@ -56,7 +56,7 @@ subroutines.  They are
     I32 call_sv(SV* sv, I32 flags);
     I32 call_pv(char *subname, I32 flags);
     I32 call_method(char *methname, I32 flags);
-    I32 call_argv(char *subname, I32 flags, register char **argv);
+    I32 call_argv(char *subname, I32 flags, char **argv);
 
 The key function is I<call_sv>.  All the other functions are
 fairly simple wrappers which make it easier to call Perl subroutines in
@@ -1031,8 +1031,8 @@ Here is a snippet of XSUB which defines I<CallSubPV>.
 	call_pv(name, G_DISCARD|G_NOARGS);
 
 That is fine as far as it goes. The thing is, the Perl subroutine
-can be specified as only a string.  For Perl 4 this was adequate,
-but Perl 5 allows references to subroutines and anonymous subroutines.
+can be specified as only a string, however, Perl allows references
+to subroutines and anonymous subroutines.
 This is where I<call_sv> is useful.
 
 The code below for I<CallSubSV> is identical to I<CallSubPV> except

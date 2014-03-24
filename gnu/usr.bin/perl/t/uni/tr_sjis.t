@@ -12,6 +12,7 @@ BEGIN {
 
 use strict;
 plan(tests => 6);
+no warnings 'deprecated';
 use encoding 'shiftjis';
 
 my @hiragana =  map {chr} ord("‚Ÿ")..ord("‚ñ");

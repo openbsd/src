@@ -35,18 +35,18 @@ int prewalk ( int numit, int level, int node, int *numericptr );
 STR * walk ( int useval, int level, int node, int *numericptr, int minprec );
 #ifdef NETWARE
 char *savestr(char *str);
-char *cpytill(register char *to, register char *from, register int delim);
+char *cpytill(char *to, char *from, int delim);
 char *instr(char *big, const char *little);
 #endif
 
 STR *
-walk(int useval, int level, register int node, int *numericptr, int minprec)
+walk(int useval, int level, int node, int *numericptr, int minprec)
 {
-    register int len;
-    register STR *str;
-    register int type;
-    register int i;
-    register STR *tmpstr;
+    int len;
+    STR *str;
+    int type;
+    int i;
+    STR *tmpstr;
     STR *tmp2str;
     STR *tmp3str;
     char *t;
@@ -69,7 +69,7 @@ walk(int useval, int level, register int node, int *numericptr, int minprec)
 	if (namelist) {
 	    while (isALPHA(*namelist)) {
 		for (d = tokenbuf,s=namelist;
-		  isALPHA(*s) || isDIGIT(*s) || *s == '_';
+		  isWORDCHAR(*s);
 		  *d++ = *s++) ;
 		*d = '\0';
 		while (*s && !isALPHA(*s)) s++;
@@ -584,7 +584,7 @@ sub Pick {\n\
 		    *t &= 127;
 		    if (isLOWER(*t))
 			*t = toUPPER(*t);
-		    if (!isALPHA(*t) && !isDIGIT(*t))
+		    if (!isALPHANUMERIC(*t))
 			*t = '_';
 		}
 		if (!strchr(tokenbuf,'_'))
@@ -1112,7 +1112,7 @@ sub Pick {\n\
 		*t &= 127;
 		if (isLOWER(*t))
 		    *t = toUPPER(*t);
-		if (!isALPHA(*t) && !isDIGIT(*t))
+		if (!isALPHANUMERIC(*t))
 		    *t = '_';
 	    }
 	    if (!strchr(tokenbuf,'_'))
@@ -1149,7 +1149,7 @@ sub Pick {\n\
 		    *t &= 127;
 		    if (isLOWER(*t))
 			*t = toUPPER(*t);
-		    if (!isALPHA(*t) && !isDIGIT(*t))
+		    if (!isALPHANUMERIC(*t))
 			*t = '_';
 		}
 		if (!strchr(tokenbuf,'_'))
@@ -1420,7 +1420,7 @@ sub Pick {\n\
 	i = numarg;
 	if (i) {
 	    t = s = tmpstr->str_ptr;
-	    while (isALPHA(*t) || isDIGIT(*t) || *t == '$' || *t == '_')
+	    while (isWORDCHAR(*t) || *t == '$')
 		t++;
 	    i = t - s;
 	    if (i < 2)
@@ -1546,7 +1546,7 @@ sub Pick {\n\
 }
 
 static void
-tab(register STR *str, register int lvl)
+tab(STR *str, int lvl)
 {
     while (lvl > 1) {
 	str_cat(str,"\t");
@@ -1557,9 +1557,9 @@ tab(register STR *str, register int lvl)
 }
 
 static void
-fixtab(register STR *str, register int lvl)
+fixtab(STR *str, int lvl)
 {
-    register char *s;
+    char *s;
 
     /* strip trailing white space */
 
@@ -1575,9 +1575,9 @@ fixtab(register STR *str, register int lvl)
 }
 
 static void
-addsemi(register STR *str)
+addsemi(STR *str)
 {
-    register char *s;
+    char *s;
 
     s = str->str_ptr+str->str_cur - 1;
     while (s >= str->str_ptr && (*s == ' ' || *s == '\t' || *s == '\n'))
@@ -1587,9 +1587,9 @@ addsemi(register STR *str)
 }
 
 static void
-emit_split(register STR *str, int level)
+emit_split(STR *str, int level)
 {
-    register int i;
+    int i;
 
     if (split_to_array)
 	str_cat(str,"@Fld");
@@ -1620,11 +1620,11 @@ emit_split(register STR *str, int level)
 }
 
 int
-prewalk(int numit, int level, register int node, int *numericptr)
+prewalk(int numit, int level, int node, int *numericptr)
 {
-    register int len;
-    register int type;
-    register int i;
+    int len;
+    int type;
+    int i;
     int numarg;
     int numeric = FALSE;
     STR *tmpstr;
@@ -2037,10 +2037,10 @@ prewalk(int numit, int level, register int node, int *numericptr)
 }
 
 static void
-numericize(register int node)
+numericize(int node)
 {
-    register int len;
-    register int type;
+    int len;
+    int type;
     STR *tmpstr;
     STR *tmp2str;
     int numarg;

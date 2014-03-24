@@ -87,7 +87,7 @@ sub check($$$$) {
 sub check_data { 
 
     binmode(DATA, ":utf8") || die "can't binmode DATA to utf8: $!";
-    local $_;
+    local($_);
     while ( <DATA> ) {
 
 	my $bad = 0;

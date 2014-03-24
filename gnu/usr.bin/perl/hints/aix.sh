@@ -342,7 +342,7 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		    esac
                 # Some 32-bit getconfs will set ccflags to include -qlonglong
                 # but that's no longer needed with an explicit -qextc99.
-                ccflags="`echo $ccflags | sed -e 's@ -qlonglong@@`"
+                ccflags="`echo $ccflags | sed -e 's@ -qlonglong@@'`"
 		;;
 	    *)  # Remove xlc-specific -qflags.
 		ccflags="`echo $ccflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"

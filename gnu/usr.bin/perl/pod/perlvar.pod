@@ -24,7 +24,7 @@ C<W>) is the scalar variable whose name is the single character
 control-C<W>.  This is better than typing a literal control-C<W>
 into your program.
 
-Since Perl 5.6, Perl variable names may be alphanumeric
+Since Perl v5.6.0, Perl variable names may be alphanumeric
 strings that begin with control characters (or better yet, a caret).
 These variables must be written in the form C<${^Foo}>; the braces
 are not optional.  C<${^Foo}> denotes the scalar variable whose
@@ -107,10 +107,11 @@ Here are the places where Perl will assume C<$_> even if you don't use it:
 The following functions use C<$_> as a default argument:
 
 abs, alarm, chomp, chop, chr, chroot,
-cos, defined, eval, evalbytes, exp, glob,
-hex, int, lc, lcfirst, length, log, lstat, mkdir, oct, ord, pos, print,
+cos, defined, eval, evalbytes, exp, fc, glob, hex, int, lc,
+lcfirst, length, log, lstat, mkdir, oct, ord, pos, print, printf,
 quotemeta, readlink, readpipe, ref, require, reverse (in scalar context only),
-rmdir, sin, split (on its second argument), sqrt, stat, study, uc, ucfirst,
+rmdir, say, sin, split (for its second
+argument), sqrt, stat, study, uc, ucfirst,
 unlink, unpack.
 
 =item *
@@ -138,16 +139,26 @@ The implicit variable of C<given()>.
 
 =item *
 
-The default place to put an input record when a C<< <FH> >>
+The default place to put the next value or input record
+when a C<< <FH> >>, C<readline>, C<readdir> or C<each>
 operation's result is tested by itself as the sole criterion of a C<while>
 test.  Outside a C<while> test, this will not happen.
 
 =back
 
-As C<$_> is a global variable, this may lead in some cases to unwanted
-side-effects.  As of perl 5.10, you can now use a lexical version of
+C<$_> is by default a global variable.  However, as
+of perl v5.10.0, you can use a lexical version of
 C<$_> by declaring it in a file or in a block with C<my>.  Moreover,
-declaring C<our $_> restores the global C<$_> in the current scope.
+declaring C<our $_> restores the global C<$_> in the current scope.  Though
+this seemed like a good idea at the time it was introduced, lexical C<$_>
+actually causes more problems than it solves.  If you call a function that
+expects to be passed information via C<$_>, it may or may not work,
+depending on how the function is written, there not being any easy way to
+solve this.  Just avoid lexical C<$_>, unless you are feeling particularly
+masochistic.  For this reason lexical C<$_> is still experimental and will
+produce a warning unless warnings have been disabled.  As with other
+experimental features, the behavior of lexical C<$_> is subject to change
+without notice, including change into a fatal error.
 
 Mnemonic: underline is understood in certain operations.
 
@@ -196,7 +207,7 @@ would emulate POSIX semantics on Linux systems using LinuxThreads, a
 partial implementation of POSIX Threads that has since been superseded
 by the Native POSIX Thread Library (NPTL).
 
-LinuxThreads is now obsolete on Linux, and and caching C<getpid()>
+LinuxThreads is now obsolete on Linux, and caching C<getpid()>
 like this made embedding perl unnecessarily complex (since you'd have
 to manually update the value of $$), so now C<$$> and C<getppid()>
 will always return the same values as the underlying C library.
@@ -250,7 +261,7 @@ have their own copies of it.
 If the program has been given to perl via the switches C<-e> or C<-E>,
 C<$0> will contain the string C<"-e">.
 
-On Linux as of perl 5.14 the legacy process name will be set with
+On Linux as of perl v5.14.0 the legacy process name will be set with
 C<prctl(2)>, in addition to altering the POSIX name via C<argv[0]> as
 perl has done since version 4.000.  Now system utilities that read the
 legacy process name such as ps, top and killall will recognize the
@@ -549,7 +560,7 @@ lest you inadvertently call it.
 If your system has the C<sigaction()> function then signal handlers
 are installed using it.  This means you get reliable signal handling.
 
-The default delivery policy of signals changed in Perl 5.8.0 from
+The default delivery policy of signals changed in Perl v5.8.0 from
 immediate (also known as "unsafe") to deferred, also known as "safe
 signals".  See L<perlipc> for more information.
 
@@ -629,8 +640,8 @@ X<$^V> X<$PERL_VERSION>
 The revision, version, and subversion of the Perl interpreter,
 represented as a C<version> object.
 
-This variable first appeared in perl 5.6.0; earlier versions of perl
-will see an undefined value.  Before perl 5.10.0 C<$^V> was represented
+This variable first appeared in perl v5.6.0; earlier versions of perl
+will see an undefined value.  Before perl v5.10.0 C<$^V> was represented
 as a v-string.
 
 C<$^V> can be used to determine whether the Perl interpreter executing
@@ -648,7 +659,7 @@ for a convenient way to fail if the running Perl interpreter is too old.
 
 See also C<$]> for an older representation of the Perl version.
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 Mnemonic: use ^V for Version Control.
 
@@ -667,7 +678,7 @@ default.  See the documentation for B<-f> in
 L<perlrun|perlrun/"Command Switches"> for more information about site
 customization.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 =item $EXECUTABLE_NAME
 
@@ -785,7 +796,7 @@ The C<Devel::NYTProf> and C<Devel::FindAmpersand>
 modules can help you find uses of these
 problematic match variables in your code.
 
-Since Perl 5.10, you can use the C</p> match operator flag and the
+Since Perl v5.10.0, you can use the C</p> match operator flag and the
 C<${^PREMATCH}>, C<${^MATCH}>, and C<${^POSTMATCH}> variables instead
 so you only suffer the performance penalties.
 
@@ -814,7 +825,7 @@ BLOCK).
 The use of this variable anywhere in a program imposes a considerable
 performance penalty on all regular expression matches.  To avoid this
 penalty, you can extract the same substring by using L</@->.  Starting
-with Perl 5.10, you can use the C</p> match flag and the C<${^MATCH}>
+with Perl v5.10.0, you can use the C</p> match flag and the C<${^MATCH}>
 variable to do the same thing for particular match operations.
 
 This variable is read-only and dynamically-scoped.
@@ -829,7 +840,7 @@ performance penalty associated with that variable, and is only guaranteed
 to return a defined value when the pattern was compiled or executed with
 the C</p> modifier.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 This variable is read-only and dynamically-scoped.
 
@@ -845,7 +856,7 @@ enclosed by the current BLOCK.
 The use of this variable anywhere in a program imposes a considerable
 performance penalty on all regular expression matches.  To avoid this
 penalty, you can extract the same substring by using L</@->.  Starting
-with Perl 5.10, you can use the C</p> match flag and the
+with Perl v5.10.0, you can use the C</p> match flag and the
 C<${^PREMATCH}> variable to do the same thing for particular match
 operations.
 
@@ -861,7 +872,7 @@ performance penalty associated with that variable, and is only guaranteed
 to return a defined value when the pattern was compiled or executed with
 the C</p> modifier.
 
-This variable was added in Perl 5.10
+This variable was added in Perl v5.10.0
 
 This variable is read-only and dynamically-scoped.
 
@@ -881,7 +892,7 @@ enclosed by the current BLOCK).  Example:
 The use of this variable anywhere in a program imposes a considerable
 performance penalty on all regular expression matches.
 To avoid this penalty, you can extract the same substring by
-using L</@->.  Starting with Perl 5.10, you can use the C</p> match flag
+using L</@->.  Starting with Perl v5.10.0, you can use the C</p> match flag
 and the C<${^POSTMATCH}> variable to do the same thing for particular
 match operations.
 
@@ -897,7 +908,7 @@ performance penalty associated with that variable, and is only guaranteed
 to return a defined value when the pattern was compiled or executed with
 the C</p> modifier.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 This variable is read-only and dynamically-scoped.
 
@@ -934,7 +945,7 @@ recently matched.  For example, to effectively capture text to a variable
 By setting and then using C<$var> in this way relieves you from having to
 worry about exactly which numbered set of parentheses they are.
 
-This variable was added in Perl 5.8.
+This variable was added in Perl v5.8.0.
 
 Mnemonic: the (possibly) Nested parenthesis that most recently closed.
 
@@ -954,7 +965,7 @@ past where C<$2> ends, and so on.  You can use C<$#+> to determine
 how many subgroups were in the last successful match.  See the
 examples given for the C<@-> variable.
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 =item %LAST_PAREN_MATCH
 
@@ -981,7 +992,7 @@ iterative access to them via C<each> may have unpredictable results.
 Likewise, if the last successful match changes, then the results may be
 surprising.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 This variable is read-only and dynamically-scoped.
 
@@ -1027,7 +1038,7 @@ After a match against some variable C<$var>:
 
 =back
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 =item %LAST_MATCH_START
 
@@ -1075,7 +1086,7 @@ iterative access to them via C<each> may have unpredictable results.
 Likewise, if the last successful match changes, then the results may be
 surprising.
 
-This variable was added in Perl 5.10
+This variable was added in Perl v5.10.0.
 
 This variable is read-only and dynamically-scoped.
 
@@ -1095,7 +1106,7 @@ X<${^RE_DEBUG_FLAGS}>
 The current value of the regex debugging flags.  Set to 0 for no debug output
 even when the C<re 'debug'> module is loaded.  See L<re> for details.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 =item ${^RE_TRIE_MAXBUF}
 X<${^RE_TRIE_MAXBUF}>
@@ -1109,7 +1120,7 @@ be as conservative of memory as possible but still occur, and set it to a
 negative value to prevent the optimisation and conserve the most memory.
 Under normal situations this variable should be of no interest to you.
 
-This variable was added in Perl 5.10.
+This variable was added in Perl v5.10.0.
 
 =back
 
@@ -1248,7 +1259,7 @@ when doing edit-in-place processing with B<-i>.  Useful when you have
 to do a lot of inserting and don't want to keep modifying C<$_>.  See
 L<perlrun> for the B<-i> switch.
 
-=item Handle->output_field_separator( EXPR )
+=item IO::Handle->output_field_separator( EXPR )
 
 =item $OUTPUT_FIELD_SEPARATOR
 
@@ -1259,6 +1270,9 @@ X<$,> X<$OFS> X<$OUTPUT_FIELD_SEPARATOR>
 
 The output field separator for the print operator.  If defined, this
 value is printed between each of print's arguments.  Default is C<undef>.
+
+You cannot call C<output_field_separator()> on a handle, only as a
+static method.  See L<IO::Handle|IO::Handle>.
 
 Mnemonic: what is printed when there is a "," in your print statement.
 
@@ -1297,7 +1311,7 @@ which handle you last accessed.
 
 Mnemonic: many programs use "." to mean the current line number.
 
-=item HANDLE->input_record_separator( EXPR )
+=item IO::Handle->input_record_separator( EXPR )
 
 =item $INPUT_RECORD_SEPARATOR
 
@@ -1328,13 +1342,13 @@ be better for something. :-)
 Setting C<$/> to a reference to an integer, scalar containing an
 integer, or scalar that's convertible to an integer will attempt to
 read records instead of lines, with the maximum record size being the
-referenced integer.  So this:
+referenced integer number of characters.  So this:
 
     local $/ = \32768; # or \"32768", or \$var_containing_32768
     open my $fh, "<", $myfile or die $!;
     local $_ = <$fh>;
 
-will read a record of no more than 32768 bytes from FILE.  If you're
+will read a record of no more than 32768 characters from $fh.  If you're
 not reading from a record-oriented file (or your OS doesn't have
 record-oriented files), then you'll likely get a full chunk of data
 with every read.  If a record is larger than the record size you've
@@ -1342,22 +1356,18 @@ set, you'll get the record back in pieces.  Trying to set the record
 size to zero or less will cause reading in the (rest of the) whole file.
 
 On VMS only, record reads bypass PerlIO layers and any associated
-buffering,so you must not mix record and non-record reads on the
+buffering, so you must not mix record and non-record reads on the
 same filehandle.  Record mode mixes with line mode only when the
 same buffering layer is in use for both modes.
 
-If you perform a record read on a FILE with an encoding layer such as
-C<:encoding(latin1)> or C<:utf8>, you may get an invalid string as a
-result, may leave the FILE positioned between characters in the stream
-and may not be reading the number of bytes from the underlying file
-that you specified.  This behaviour may change without warning in a
-future version of perl.
+You cannot call C<input_record_separator()> on a handle, only as a
+static method.  See L<IO::Handle|IO::Handle>.
 
-See also L<perlport/"Newlines">. Also see L</$.>.
+See also L<perlport/"Newlines">.  Also see L</$.>.
 
 Mnemonic: / delimits line boundaries when quoting poetry.
 
-=item Handle->output_record_separator( EXPR )
+=item IO::Handle->output_record_separator( EXPR )
 
 =item $OUTPUT_RECORD_SEPARATOR
 
@@ -1368,6 +1378,9 @@ X<$\> X<$ORS> X<$OUTPUT_RECORD_SEPARATOR>
 
 The output record separator for the print operator.  If defined, this
 value is printed after the last of print's arguments.  Default is C<undef>.
+
+You cannot call C<output_record_separator()> on a handle, only as a
+static method.  See L<IO::Handle|IO::Handle>.
 
 Mnemonic: you set C<$\> instead of adding "\n" at the end of the print.
 Also, it's just like C<$/>, but it's what you get "back" from Perl.
@@ -1393,6 +1406,17 @@ how to select the output channel.  See also L<IO::Handle>.
 
 Mnemonic: when you want your pipes to be piping hot.
 
+=item ${^LAST_FH}
+X<${^LAST_FH}>
+
+This read-only variable contains a reference to the last-read filehandle.
+This is set by C<< <HANDLE> >>, C<readline>, C<tell>, C<eof> and C<seek>.
+This is the same handle that C<$.> and C<tell> and C<eof> without arguments
+use.  It is also the handle used when Perl appends ", <STDIN> line 1" to
+an error or warning message.
+
+This variable was added in Perl v5.18.0.
+
 =back
 
 =head3 Variables related to formats
@@ -1415,7 +1439,7 @@ of C<$^A> and empties.  So you never really see the contents of C<$^A>
 unless you call C<formline()> yourself and then look at it.  See
 L<perlform> and L<perlfunc/"formline PICTURE,LIST">.
 
-=item HANDLE->format_formfeed(EXPR)
+=item IO::Handle->format_formfeed(EXPR)
 
 =item $FORMAT_FORMFEED
 
@@ -1423,6 +1447,9 @@ L<perlform> and L<perlfunc/"formline PICTURE,LIST">.
 X<$^L> X<$FORMAT_FORMFEED>
 
 What formats output as a form feed.  The default is C<\f>.
+
+You cannot call C<format_formfeed()> on a handle, only as a static
+method.  See L<IO::Handle|IO::Handle>.
 
 =item HANDLE->format_page_number(EXPR)
 
@@ -1447,7 +1474,7 @@ channel.
 
 Mnemonic: lines_on_page - lines_printed.
 
-=item Handle->format_line_break_characters EXPR
+=item IO::Handle->format_line_break_characters EXPR
 
 =item $FORMAT_LINE_BREAK_CHARACTERS
 
@@ -1457,6 +1484,9 @@ X<$:> X<FORMAT_LINE_BREAK_CHARACTERS>
 The current set of characters after which a string may be broken to
 fill continuation fields (starting with C<^>) in a format.  The default is
 S<" \n-">, to break on a space, newline, or a hyphen.
+
+You cannot call C<format_line_break_characters()> on a handle, only as
+a static method.  See L<IO::Handle|IO::Handle>.
 
 Mnemonic: a "colon" in poetry is a part of a line.
 
@@ -1566,7 +1596,7 @@ WSTOPSIG and WIFCONTINUED functions provided by the L<POSIX> module.
 Under VMS this reflects the actual VMS exit status; i.e. it is the
 same as C<$?> when the pragma C<use vmsish 'status'> is in effect.
 
-This variable was added in Perl 5.8.9.
+This variable was added in Perl v5.10.0.
 
 =item $EXTENDED_OS_ERROR
 
@@ -1607,13 +1637,17 @@ X<$^S> X<$EXCEPTIONS_BEING_CAUGHT>
 Current state of the interpreter.
 
 	$^S         State
-	---------   -------------------
-	undef       Parsing module/eval
+	---------   -------------------------------------
+	undef       Parsing module, eval, or main program
 	true (1)    Executing an eval
 	false (0)   Otherwise
 
 The first state may happen in C<$SIG{__DIE__}> and C<$SIG{__WARN__}>
 handlers.
+
+The English name $EXCEPTIONS_BEING_CAUGHT is slightly misleading, because
+the C<undef> value does not indicate whether exceptions are being caught,
+since compilation of the main program does not catch exceptions.
 
 This variable was added in Perl 5.004.
 
@@ -1637,7 +1671,7 @@ It has the same scoping as the C<$^H> and C<%^H> variables.  The exact
 values are considered internal to the L<warnings> pragma and may change
 between versions of Perl.
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 =item $OS_ERROR
 
@@ -1764,7 +1798,7 @@ when being compiled, such as for example to C<AUTOLOAD> at compile
 time rather than normal, deferred loading.  Setting
 C<$^C = 1> is similar to calling C<B::minus_c>.
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 =item $DEBUGGING
 
@@ -1956,7 +1990,7 @@ A module should use only keys that begin with the module's name (the
 name of its main package) and a "/" character.  For example, a module
 C<Foo::Bar> should use keys such as C<Foo::Bar/baz>.
 
-This variable was added in Perl 5.6.
+This variable was added in Perl v5.6.0.
 
 =item ${^OPEN}
 X<${^OPEN}>
@@ -1965,7 +1999,7 @@ An internal variable used by PerlIO.  A string in two parts, separated
 by a C<\0> byte, the first part describes the input layers, the second
 part describes the output layers.
 
-This variable was added in Perl 5.8.0.
+This variable was added in Perl v5.8.0.
 
 =item $PERLDB
 
@@ -2039,7 +2073,7 @@ B<-t> or B<-TU>).
 
 This variable is read-only.
 
-This variable was added in Perl 5.8.
+This variable was added in Perl v5.8.0.
 
 =item ${^UNICODE}
 X<${^UNICODE}>
@@ -2050,7 +2084,7 @@ the possible values.
 
 This variable is set during Perl startup and is thereafter read-only.
 
-This variable was added in Perl 5.8.2.
+This variable was added in Perl v5.8.2.
 
 =item ${^UTF8CACHE}
 X<${^UTF8CACHE}>
@@ -2059,7 +2093,9 @@ This variable controls the state of the internal UTF-8 offset caching code.
 1 for on (the default), 0 for off, -1 to debug the caching code by checking
 all its results against linear scans, and panicking on any discrepancy.
 
-This variable was added in Perl 5.8.9.
+This variable was added in Perl v5.8.9.  It is subject to change or
+removal without notice, but is currently used to avoid recalculating the
+boundaries of multi-byte UTF-8-encoded characters.
 
 =item ${^UTF8LOCALE}
 X<${^UTF8LOCALE}>
@@ -2069,7 +2105,7 @@ startup.  This information is used by perl when it's in
 adjust-utf8ness-to-locale mode (as when run with the C<-CL> command-line
 switch); see L<perlrun> for more info on this.
 
-This variable was added in Perl 5.8.8.
+This variable was added in Perl v5.8.8.
 
 =back
 
@@ -2093,7 +2129,7 @@ See L<perldiag> for details about error messages.
 X<$#> X<$OFMT>
 
 C<$#> was a variable that could be used to format printed numbers.
-After a deprecation cycle, its magic was removed in Perl 5.10 and
+After a deprecation cycle, its magic was removed in Perl v5.10.0 and
 using it now triggers a warning: C<$# is no longer supported>.
 
 This is not the sigil you use in front of an array name to get the
@@ -2102,19 +2138,19 @@ of an array in Perl.  The two have nothing to do with each other.
 
 Deprecated in Perl 5.
 
-Removed in Perl 5.10.
+Removed in Perl v5.10.0.
 
 =item $*
 X<$*>
 
 C<$*> was a variable that you could use to enable multiline matching.
-After a deprecation cycle, its magic was removed in Perl 5.10.
+After a deprecation cycle, its magic was removed in Perl v5.10.0.
 Using it now triggers a warning: C<$* is no longer supported>.
 You should use the C</s> and C</m> regexp modifiers instead.
 
 Deprecated in Perl 5.
 
-Removed in Perl 5.10.
+Removed in Perl v5.10.0.
 
 =item $ARRAY_BASE
 
@@ -2131,12 +2167,12 @@ directive, and cannot influence the behavior of any other file.
 (That's why you can only assign compile-time constants to it.)
 Its use is highly discouraged.
 
-Prior to Perl 5.10, assignment to C<$[> could be seen from outer lexical
+Prior to Perl v5.10.0, assignment to C<$[> could be seen from outer lexical
 scopes in the same file, unlike other compile-time directives (such as
 L<strict>).  Using local() on it would bind its value strictly to a lexical
 block.  Now it is always lexically scoped.
 
-As of Perl 5.16, it is implemented by the L<arybase> module.  See
+As of Perl v5.16.0, it is implemented by the L<arybase> module.  See
 L<arybase> for more details on its behaviour.
 
 Under C<use v5.16>, or C<no feature "array_base">, C<$[> no longer has any
@@ -2145,7 +2181,7 @@ other value will produce an error.
 
 Mnemonic: [ begins subscripts.
 
-Deprecated in Perl 5.12.
+Deprecated in Perl v5.12.0.
 
 =item $OLD_PERL_VERSION
 

@@ -450,7 +450,7 @@ SKIP: {
 }
 
 {
-    # utf8::decode should stringify refs [perl #91850].
+    # utf8::decode should stringify refs [perl #91852].
 
     package eieifg { use overload '""'      => sub { "\x{c3}\x{b3}" },
                                    fallback => 1 }
@@ -523,9 +523,6 @@ SKIP: {
 
 for my $pos (0..5) {
 
-    my $pos1 = ($pos >= 3)  ? 2 : ($pos >= 1) ? 1 : 0;
-    my $pos2 = ($pos1 == 2) ? 3 : $pos1;
-
     my $p;
     my $s = "A\xc8\x81\xe8\xab\x86\x{100}";
     chop($s);
@@ -540,11 +537,11 @@ for my $pos (0..5) {
     is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::downgrade");
     utf8::decode($s);
     is(length($s), 3,		   "(pos $pos) len after  D; utf8::decode");
-    is(pos($s),    $pos1,	   "(pos $pos) pos after  D; utf8::decode");
+    is(pos($s),    undef,	   "(pos $pos) pos after  D; utf8::decode");
     is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  D; utf8::decode");
     utf8::encode($s);
     is(length($s), 6,		   "(pos $pos) len after  D; utf8::encode");
-    is(pos($s),    $pos2,	   "(pos $pos) pos after  D; utf8::encode");
+    is(pos($s),    undef,	   "(pos $pos) pos after  D; utf8::encode");
     is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  D; utf8::encode");
 
     $s = "A\xc8\x81\xe8\xab\x86";
@@ -558,11 +555,11 @@ for my $pos (0..5) {
     is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::upgrade");
     utf8::decode($s);
     is(length($s), 3,		   "(pos $pos) len after  U; utf8::decode");
-    is(pos($s),    $pos1,	   "(pos $pos) pos after  U; utf8::decode");
+    is(pos($s),    undef,	   "(pos $pos) pos after  U; utf8::decode");
     is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  U; utf8::decode");
     utf8::encode($s);
     is(length($s), 6,		   "(pos $pos) len after  U; utf8::encode");
-    is(pos($s),    $pos2,	   "(pos $pos) pos after  U; utf8::encode");
+    is(pos($s),    undef,	   "(pos $pos) pos after  U; utf8::encode");
     is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  U; utf8::encode");
 }
 

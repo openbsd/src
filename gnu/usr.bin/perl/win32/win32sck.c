@@ -29,13 +29,8 @@
 #include <io.h>
 
 /* thanks to Beverly Brown	(beverly@datacube.com) */
-#ifdef USE_SOCKETS_AS_HANDLES
-#	define OPEN_SOCKET(x)	win32_open_osfhandle(x,O_RDWR|O_BINARY)
-#	define TO_SOCKET(x)	_get_osfhandle(x)
-#else
-#	define OPEN_SOCKET(x)	(x)
-#	define TO_SOCKET(x)	(x)
-#endif	/* USE_SOCKETS_AS_HANDLES */
+#define OPEN_SOCKET(x)	win32_open_osfhandle(x,O_RDWR|O_BINARY)
+#define TO_SOCKET(x)	_get_osfhandle(x)
 
 #define StartSockets() \
     STMT_START {					\
@@ -68,7 +63,6 @@ EndSockets(void)
 void
 start_sockets(void) 
 {
-    dTHX;
     unsigned short version;
     WSADATA retdata;
     int ret;
@@ -87,69 +81,50 @@ start_sockets(void)
     wsock_started = 1;
 }
 
-#ifndef USE_SOCKETS_AS_HANDLES
-#undef fdopen
-FILE *
-my_fdopen(int fd, char *mode)
-{
-    FILE *fp;
-    char sockbuf[256];
-    int optlen = sizeof(sockbuf);
-    int retval;
-
-    if (!wsock_started)
-	return(fdopen(fd, mode));
-
-    retval = getsockopt((SOCKET)fd, SOL_SOCKET, SO_TYPE, sockbuf, &optlen);
-    if(retval == SOCKET_ERROR && WSAGetLastError() == WSAENOTSOCK) {
-	return(fdopen(fd, mode));
-    }
-
-    /*
-     * If we get here, then fd is actually a socket.
-     */
-    Newxz(fp, 1, FILE);	/* XXX leak, good thing this code isn't used */
-    if(fp == NULL) {
-	errno = ENOMEM;
-	return NULL;
-    }
-
-    fp->_file = fd;
-    if(*mode == 'r')
-	fp->_flag = _IOREAD;
-    else
-	fp->_flag = _IOWRT;
-   
-    return fp;
-}
-#endif	/* USE_SOCKETS_AS_HANDLES */
-
-
+/* in no sockets Win32 builds, this fowards to replacements in util.c, dTHX
+ * is required
+ */
 u_long
 win32_htonl(u_long hostlong)
 {
+#ifdef MYSWAP
+    dTHX;
+#else
     StartSockets();
+#endif
     return htonl(hostlong);
 }
 
 u_short
 win32_htons(u_short hostshort)
 {
+#ifdef MYSWAP
+    dTHX;
+#else
     StartSockets();
+#endif
     return htons(hostshort);
 }
 
 u_long
 win32_ntohl(u_long netlong)
 {
+#ifdef MYSWAP
+    dTHX;
+#else
     StartSockets();
+#endif
     return ntohl(netlong);
 }
 
 u_short
 win32_ntohs(u_short netshort)
 {
+#ifdef MYSWAP
+    dTHX;
+#else
     StartSockets();
+#endif
     return ntohs(netshort);
 }
 
@@ -258,7 +233,6 @@ int
 win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const struct timeval* timeout)
 {
     int r;
-#ifdef USE_SOCKETS_AS_HANDLES
     int i, fd, save_errno = errno;
     FD_SET nrd, nwr, nex;
     bool just_sleep = TRUE;
@@ -320,9 +294,6 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 	}
     }
     errno = save_errno;
-#else
-    SOCKET_TEST_ERROR(r = select(nfds, rd, wr, ex, timeout));
-#endif
     return r;
 }
 
@@ -371,9 +342,6 @@ win32_closesocket(SOCKET s)
     SOCKET_TEST_ERROR(r = closesocket(TO_SOCKET(s)));
     return r;
 }
-
-#ifdef USE_SOCKETS_AS_HANDLES
-#define WIN32_OPEN_SOCKET(af, type, protocol) open_ifs_socket(af, type, protocol)
 
 void
 convert_proto_info_w2a(WSAPROTOCOL_INFOW *in, WSAPROTOCOL_INFOA *out)
@@ -433,25 +401,17 @@ open_ifs_socket(int af, int type, int protocol)
     return out;
 }
 
-#else
-#define WIN32_OPEN_SOCKET(af, type, protocol) socket(af, type, protocol)
-#endif
-
 SOCKET
 win32_socket(int af, int type, int protocol)
 {
     SOCKET s;
 
-#ifndef USE_SOCKETS_AS_HANDLES
-    SOCKET_TEST(s = socket(af, type, protocol), INVALID_SOCKET);
-#else
     StartSockets();
 
-    if((s = WIN32_OPEN_SOCKET(af, type, protocol)) == INVALID_SOCKET)
+    if((s = open_ifs_socket(af, type, protocol)) == INVALID_SOCKET)
 	errno = WSAGetLastError();
     else
 	s = OPEN_SOCKET(s);
-#endif	/* USE_SOCKETS_AS_HANDLES */
 
     return s;
 }
@@ -564,11 +524,12 @@ win32_getprotobynumber(int num)
 struct servent *
 win32_getservbyname(const char *name, const char *proto)
 {
-    dTHX;    
+    dTHXa(NULL);    
     struct servent *r;
 
     SOCKET_TEST(r = getservbyname(name, proto), NULL);
     if (r) {
+        aTHXa(PERL_GET_THX);
 	r = win32_savecopyservent(&w32_servent, r, proto);
     }
     return r;
@@ -577,11 +538,12 @@ win32_getservbyname(const char *name, const char *proto)
 struct servent *
 win32_getservbyport(int port, const char *proto)
 {
-    dTHX; 
+    dTHXa(NULL); 
     struct servent *r;
 
     SOCKET_TEST(r = getservbyport(port, proto), NULL);
     if (r) {
+        aTHXa(PERL_GET_THX);
 	r = win32_savecopyservent(&w32_servent, r, proto);
     }
     return r;
@@ -590,7 +552,6 @@ win32_getservbyport(int port, const char *proto)
 int
 win32_ioctl(int i, unsigned int u, char *data)
 {
-    dTHX;
     u_long u_long_arg; 
     int retval;
     
@@ -635,101 +596,88 @@ win32_inet_addr(const char FAR *cp)
 void
 win32_endhostent() 
 {
-    dTHX;
-    Perl_croak_nocontext("endhostent not implemented!\n");
+    win32_croak_not_implemented("endhostent");
 }
 
 void
 win32_endnetent()
 {
-    dTHX;
-    Perl_croak_nocontext("endnetent not implemented!\n");
+    win32_croak_not_implemented("endnetent");
 }
 
 void
 win32_endprotoent()
 {
-    dTHX;
-    Perl_croak_nocontext("endprotoent not implemented!\n");
+    win32_croak_not_implemented("endprotoent");
 }
 
 void
 win32_endservent()
 {
-    dTHX;
-    Perl_croak_nocontext("endservent not implemented!\n");
+    win32_croak_not_implemented("endservent");
 }
 
 
 struct netent *
 win32_getnetent(void) 
 {
-    dTHX;
-    Perl_croak_nocontext("getnetent not implemented!\n");
+    win32_croak_not_implemented("getnetent");
     return (struct netent *) NULL;
 }
 
 struct netent *
 win32_getnetbyname(char *name) 
 {
-    dTHX;
-    Perl_croak_nocontext("getnetbyname not implemented!\n");
+    win32_croak_not_implemented("getnetbyname");
     return (struct netent *)NULL;
 }
 
 struct netent *
 win32_getnetbyaddr(long net, int type) 
 {
-    dTHX;
-    Perl_croak_nocontext("getnetbyaddr not implemented!\n");
+    win32_croak_not_implemented("getnetbyaddr");
     return (struct netent *)NULL;
 }
 
 struct protoent *
 win32_getprotoent(void) 
 {
-    dTHX;
-    Perl_croak_nocontext("getprotoent not implemented!\n");
+    win32_croak_not_implemented("getprotoent");
     return (struct protoent *) NULL;
 }
 
 struct servent *
 win32_getservent(void) 
 {
-    dTHX;
-    Perl_croak_nocontext("getservent not implemented!\n");
+    win32_croak_not_implemented("getservent");
     return (struct servent *) NULL;
 }
 
 void
 win32_sethostent(int stayopen)
 {
-    dTHX;
-    Perl_croak_nocontext("sethostent not implemented!\n");
+    win32_croak_not_implemented("sethostent");
 }
 
 
 void
 win32_setnetent(int stayopen)
 {
-    dTHX;
-    Perl_croak_nocontext("setnetent not implemented!\n");
+    win32_croak_not_implemented("setnetent");
 }
 
 
 void
 win32_setprotoent(int stayopen)
 {
-    dTHX;
-    Perl_croak_nocontext("setprotoent not implemented!\n");
+    win32_croak_not_implemented("setprotoent");
 }
 
 
 void
 win32_setservent(int stayopen)
 {
-    dTHX;
-    Perl_croak_nocontext("setservent not implemented!\n");
+    win32_croak_not_implemented("setservent");
 }
 
 static struct servent*

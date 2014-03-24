@@ -125,16 +125,16 @@ if (@ARGV) {
     #     ]
     # };
 
-    # but for now, run all directories in sequence. In particular, it would be
-    # nice to get the tests in t/op/*.t able to run in parallel.
+    # but for now, run all directories in sequence.
 
     unless (@tests) {
 	my @seq = <base/*.t>;
 
-	my @next = qw(comp run cmd io re op uni mro lib porting);
+	my @next = qw(comp run cmd io re opbasic op uni mro lib porting);
 	push @next, 'japh' if $torture;
 	push @next, 'win32' if $^O eq 'MSWin32';
 	push @next, 'benchmark' if $ENV{PERL_BENCHMARK};
+	push @next, 'bigmem' if $ENV{PERL_TEST_MEMORY};
 	# Hopefully TAP::Parser::Scheduler will support this syntax soon.
 	# my $next = { par => '{' . join (',', @next) . '}/*.t' };
 	my $next = { par => [

@@ -1,4 +1,5 @@
 package CPANPLUS::Shell::Default;
+use deprecate;
 
 use strict;
 
@@ -26,7 +27,7 @@ local $Data::Dumper::Indent     = 1; # for dumpering from !
 BEGIN {
     use vars        qw[ $VERSION @ISA ];
     @ISA        =   qw[ CPANPLUS::Shell::_Base::ReadLine ];
-    $VERSION = "0.9121";
+    $VERSION = "0.9135";
 }
 
 load CPANPLUS::Shell;
@@ -212,6 +213,20 @@ sub new {
 
     ### load all the plugins
     $self->_plugins_init;
+
+    if (my $histfile = $cb->configure_object->get_conf( 'histfile' )) {
+        my $term = $self->term;
+        if ($term->can('AddHistory')) {
+            if (open my $fh, '<', $histfile) {
+                local $/ = "\n";
+                while (my $line = <$fh>) {
+                    chomp($line);
+                    $term->AddHistory($line);
+                }
+                close($fh);
+            }
+        }
+    }
 
     return $self;
 }
@@ -511,9 +526,26 @@ sub __display_results {
 
 sub _quit {
     my $self = shift;
+    my $term = $self->term;
 
     $self->dispatch_on_input( input => $rc->{'logout'} )
             if defined $rc->{'logout'};
+
+    if ($term->can('GetHistory')) {
+        my @history = $term->GetHistory;
+
+        my $histfile = $self->backend->configure_object->get_conf('histfile');
+
+        if (open my $fh, '>', $histfile) {
+            foreach my $line (@history) {
+                print {$fh} "$line\n";
+            }
+            close($fh);
+        }
+        else {
+            warn "Cannot open history file '$histfile' - $!";
+        }
+    }
 
     $self->__print( loc("Exiting CPANPLUS shell"), "\n" );
 

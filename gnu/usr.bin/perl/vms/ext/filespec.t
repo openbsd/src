@@ -116,8 +116,8 @@ __some_/../../__where_/__over_/__the_.__rainbow_       vmsify  [.__some_.--.__wh
 .../__some_/__where_/__over_/__the_.__rainbow_ vmsify  [...__some_.__where_.__over_]__the_.__rainbow_ ^
 __some_/.../__where_/__over_/__the_.__rainbow_ vmsify  [.__some_...__where_.__over_]__the_.__rainbow_  ^
 /__some_/.../__where_/__over_/__the_.__rainbow_        vmsify  __some_:[...__where_.__over_]__the_.__rainbow_ ^
-__some_/__where_/...   vmsify  [.__some_.__where_...] ^*
-/__where_/...  vmsify  __where_:[...] ^*
+__some_/__where_/...   vmsify  [.__some_.__where_...] ^
+/__where_/...  vmsify  __where_:[...] ^
 .	vmsify	[]	^
 ..	vmsify	[-]	^
 ../..	vmsify	[--]	^
@@ -126,7 +126,7 @@ __some_/__where_/...   vmsify  [.__some_.__where_...] ^*
 ./$(macro)/	vmsify	[.$(macro)] ^
 ./$(macro)	vmsify	[]$(macro) ^
 ./$(m+	vmsify	[]$^(m^+	^
-
+foo-bar-0^.01/	vmsify [.foo-bar-0_01] [.foo-bar-0^.01]
 # Fileifying directory specs
 __down_:[__the_.__garden_.__path_]     fileify __down_:[__the_.__garden_]__path_.dir;1 ^
 [.__down_.__the_.__garden_.__path_]    fileify [.__down_.__the_.__garden_]__path_.dir;1 ^

@@ -85,7 +85,7 @@ specified using the -o option, C<-o newfile>.
 
 =head1 SEE ALSO
 
-L<Net::Config>, L<Net::libnetFAQ>
+L<Net::Config>, L<libnetFAQ>
 
 =head1 AUTHORS
 

@@ -42,12 +42,6 @@
 static void xs_init (pTHX);
 static PerlInterpreter *my_perl;
 
-#if defined (atarist)
-/* The Atari operating system doesn't have a dynamic stack.  The
-   stack size is determined from this value.  */
-long _stksize = 64 * 1024;
-#endif
-
 #if defined(PERL_GLOBAL_STRUCT_PRIVATE)
 /* The static struct perl_vars* may seem counterproductive since the
  * whole idea PERL_GLOBAL_STRUCT_PRIVATE was to avoid statics, but note
@@ -120,7 +114,7 @@ main(int argc, char **argv, char **env)
 
 #ifndef PERL_MICRO
     /* Unregister our signal handler before destroying my_perl */
-    for (i = 0; PL_sig_name[i]; i++) {
+    for (i = 1; PL_sig_name[i]; i++) {
 	if (rsignal_state(PL_sig_num[i]) == (Sighandler_t) PL_csighandlerp) {
 	    rsignal(PL_sig_num[i], (Sighandler_t) SIG_DFL);
 	}
@@ -144,11 +138,11 @@ main(int argc, char **argv, char **env)
     environ = env;
 #endif
 
+    PERL_SYS_TERM();
+
 #ifdef PERL_GLOBAL_STRUCT
     free_global_struct(plvarsp);
 #endif /* PERL_GLOBAL_STRUCT */
-
-    PERL_SYS_TERM();
 
     exit(exitstatus);
     return exitstatus;
@@ -169,8 +163,8 @@ xs_init(pTHX)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

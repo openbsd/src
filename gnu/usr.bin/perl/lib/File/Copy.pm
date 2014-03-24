@@ -22,7 +22,7 @@ sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.23';
+$VERSION = '2.26';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -128,9 +128,11 @@ sub copy {
 
     if (_eq($from, $to)) { # works for references, too
 	carp("'$from' and '$to' are identical (not copied)");
-        # The "copy" was a success as the source and destination contain
-        # the same data.
-        return 1;
+        return 0;
+    }
+
+    if (!$from_a_handle && !$to_a_handle && -d $to && ! -d $from) {
+	$to = _catname($from, $to);
     }
 
     if ((($Config{d_symlink} && $Config{d_readlink}) || $Config{d_link}) &&
@@ -144,15 +146,14 @@ sub copy {
 	    }
 	}
     }
-
-    if (!$from_a_handle && !$to_a_handle && -d $to && ! -d $from) {
-	$to = _catname($from, $to);
+    elsif (_eq($from, $to)) {
+	carp("'$from' and '$to' are identical (not copied)");
+	return 0;
     }
 
     if (defined &syscopy && !$Syscopy_is_copy
 	&& !$to_a_handle
 	&& !($from_a_handle && $^O eq 'os2' )	# OS/2 cannot handle handles
-	&& !($from_a_handle && $^O eq 'mpeix')	# and neither can MPE/iX.
 	&& !($from_a_handle && $^O eq 'MSWin32')
 	&& !($from_a_handle && $^O eq 'NetWare')
        )
@@ -410,13 +411,6 @@ sub mv   { _move(@_,\&cp);   }
 unless (defined &syscopy) {
     if ($^O eq 'VMS') {
 	*syscopy = \&rmscopy;
-    } elsif ($^O eq 'mpeix') {
-	*syscopy = sub {
-	    return 0 unless @_ == 2;
-	    # Use the MPE cp program in order to
-	    # preserve MPE file attributes.
-	    return system('/bin/cp', '-f', $_[0], $_[1]) == 0;
-	};
     } elsif ($^O eq 'MSWin32' && defined &DynaLoader::boot_DynaLoader) {
 	# Win32::CopyFile() fill only work if we can load Win32.xs
 	*syscopy = sub {
@@ -468,7 +462,7 @@ glob. Obviously, if the first argument is a filehandle of some
 sort, it will be read from, and if it is a file I<name> it will
 be opened for reading. Likewise, the second argument will be
 written to (and created if need be).  Trying to copy a file on top
-of itself is a fatal error.
+of itself is an error.
 
 If the destination (second argument) already exists and is a directory,
 and the source (first argument) is not a filehandle, then the source
@@ -492,7 +486,7 @@ upon the file, but will generally be the whole file (up to 2MB), or
 
 You may use the syntax C<use File::Copy "cp"> to get at the C<cp>
 alias for this function. The syntax is I<exactly> the same.  The
-behavior is nearly the same as well: as of version 2.15, <cp> will
+behavior is nearly the same as well: as of version 2.15, C<cp> will
 preserve the source file's permission bits like the shell utility
 C<cp(1)> would do, while C<copy> uses the default permissions for the
 target file (which may depend on the process' C<umask>, file
@@ -515,7 +509,7 @@ during this copy-and-delete process, you may be left with a (possibly partial)
 copy of the file under the destination name.
 
 You may use the C<mv> alias for this function in the same way that
-you may use the <cp> alias for C<copy>.
+you may use the C<cp> alias for C<copy>.
 
 =item syscopy
 X<syscopy>

@@ -1,4 +1,3 @@
-
 package Text::Tabs;
 
 require Exporter;
@@ -7,7 +6,7 @@ require Exporter;
 @EXPORT = qw(expand unexpand $tabstop);
 
 use vars qw($VERSION $SUBVERSION $tabstop $debug);
-$VERSION = 2012.0818;
+$VERSION = 2013.0523;
 $SUBVERSION = 'modern';
 
 use strict;
@@ -157,7 +156,7 @@ C<local($Text::Tabs::tabstop)>.
     print unexpand $_;
   }
 
-Instead of the shell's C<expand> comand, use:
+Instead of the shell's C<expand> command, use:
 
   perl -MText::Tabs -n -e 'print expand $_'
 
@@ -186,7 +185,8 @@ or otherwise deal with any other zero-, half-, and full-width characters.
 
 Copyright (C) 1996-2002,2005,2006 David Muir Sharnoff.  
 Copyright (C) 2005 Aristotle Pagaltzis 
-Copyright (C) 2012 Google, Inc.
+Copyright (C) 2012-2013 Google, Inc.
 This module may be modified, used, copied, and redistributed at your own risk.
-Publicly redistributed modified versions must use a different name.
-
+Although allowed by the preceding license, please do not publicly
+redistribute modified versions of this code with the name "Text::Tabs"
+unless it passes the unmodified Text::Tabs test suite.

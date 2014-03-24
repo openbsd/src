@@ -12,15 +12,15 @@ This document aims to record the Perl source code releases.
 
 Perl history in brief, by Larry Wall:
 
-    Perl 0 introduced Perl to my officemates.
-    Perl 1 introduced Perl to the world, and changed /\(...\|...\)/ to
-        /(...|...)/.  \(Dan Faigin still hasn't forgiven me. :-\)
-    Perl 2 introduced Henry Spencer's regular expression package.
-    Perl 3 introduced the ability to handle binary data (embedded nulls).
-    Perl 4 introduced the first Camel book.  Really.  We mostly just
-        switched version numbers so the book could refer to 4.000.
-    Perl 5 introduced everything else, including the ability to
-        introduce everything else.
+   Perl 0 introduced Perl to my officemates.
+   Perl 1 introduced Perl to the world, and changed /\(...\|...\)/ to
+       /(...|...)/.  \(Dan Faigin still hasn't forgiven me. :-\)
+   Perl 2 introduced Henry Spencer's regular expression package.
+   Perl 3 introduced the ability to handle binary data (embedded nulls).
+   Perl 4 introduced the first Camel book.  Really.  We mostly just
+       switched version numbers so the book could refer to 4.000.
+   Perl 5 introduced everything else, including the ability to
+       introduce everything else.
 
 =head1 THE KEEPERS OF THE PUMPKIN
 
@@ -31,8 +31,8 @@ Michael Schwern, Rafael Garcia-Suarez, Nicholas Clark, Richard Clamp,
 Leon Brocard, Dave Mitchell, Jesse Vincent, Ricardo Signes, Steve Hay,
 Matt S Trout, David Golden, Florian Ragwitz, Tatsuhiko Miyagawa,
 Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
-Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs and Tony
-Cook.
+Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
+Dominic Hargreaves, Aaron Crane and Aristotle Pagaltzis.
 
 =head2 PUMPKIN?
 
@@ -444,6 +444,7 @@ the strings?).
  Ricardo  5.12.3        2011-Jan-21
  Leon     5.12.4-RC1    2011-Jun-08
  Leon     5.12.4        2011-Jun-20
+ Dominic  5.12.5        2012-Nov-10
 
  Leon     5.13.0        2010-Apr-20     The 5.13 development track
  Ricardo  5.13.1        2010-May-20
@@ -465,6 +466,10 @@ the strings?).
  Jesse    5.14.1        2011-Jun-16
  Florian  5.14.2-RC1    2011-Sep-19
           5.14.2        2011-Sep-26
+ Dominic  5.14.3        2012-Oct-12
+ David M  5.14.4-RC1    2013-Mar-05
+ David M  5.14.4-RC2    2013-Mar-07
+ David M  5.14.4        2013-Mar-10
 
  David G  5.15.0        2011-Jun-20     The 5.15 development track
  Zefram   5.15.1        2011-Jul-20
@@ -481,7 +486,6 @@ the strings?).
  Ricardo  5.16.0-RC2    2012-May-15
 
  Ricardo  5.16.0        2012-May-20     The 5.16 maintenance track
- Ricardo  5.16.1-RC1    2012-Aug-03
  Ricardo  5.16.1        2012-Aug-08
  Ricardo  5.16.2        2012-Nov-01
  Ricardo  5.16.3-RC1    2013-Mar-06
@@ -497,7 +501,22 @@ the strings?).
  Dave R   5.17.7        2012-Dec-18
  Aaron    5.17.8        2013-Jan-20
  BinGOs   5.17.9        2013-Feb-20
+ Max M    5.17.10       2013-Mar-21
 
+ Ricardo  5.18.0-RC1    2013-May-11     The 5.18 maintenance track
+ Ricardo  5.18.0-RC2    2013-May-12
+ Ricardo  5.18.0-RC3    2013-May-13
+ Ricardo  5.18.0-RC4    2013-May-15
+ Ricardo  5.18.0        2013-May-18
+ Ricardo  5.18.1-RC1    2013-Aug-01
+ Ricardo  5.18.1-RC2    2013-Aug-03
+ Ricardo  5.18.1-RC3    2013-Aug-08
+ Ricardo  5.18.1        2013-Aug-12
+ Ricardo  5.18.2        2014-Jan-06
+
+ Ricardo   5.19.0       2013-May-20     The 5.19 development track
+ David G   5.19.1       2013-Jun-21
+ Aristotle 5.19.2       2013-Jul-22
 
 =head2 SELECTED RELEASE SIZES
 
@@ -575,6 +594,9 @@ explained below.
  5.12.1         5000 100   1146 121  15283 2178   6407 1846   5354 169
  5.12.2         5003 100   1146 121  15404 2178   6413 1846   5376 170
  5.12.3         5004 100   1146 121  15529 2180   6417 1848   5391 171
+ 5.14.0         5328 104   1100 114  17779 2479   7697 2130   5871 188
+ 5.16.0         5562 109   1077  80  20504 2702   8750 2375   4815 152
+ 5.18.0         5892 113   1088  79  20077 2760   9365 2439   4943 154
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -850,32 +872,32 @@ the Perl source distribution for somewhat more selected releases.
 
  ======================================================================
 
-                  5.12.2     5.12.3
+                 5.12.2     5.12.3      5.14.0     5.16.0       5.18.0
 
- apollo          0    3     0    3
- beos            4    4     4    4
- Configure     536    1   536    1
- Cross         118   15   118   15
- djgpp          17    7    17    7
- emacs         402    4   402    4
- epoc           31    8    31    8
- h2pl           12   15    12   15
- hints         368   97   368   97
- mad           174    8   174    8
- mpeix          45    6    45    6
- NetWare       466   61   466   61
- os2           507   70   507   70
- plan9         316   17   316   17
- Porting       750   54   750   54
- qnx             1    4     1    4
- symbian       288   54   288   54
- utils         269   27   269   27
- uts             8    3     8    3
- vmesa          21    4    21    4
- vms           646   18   644   18
- vos            16    8    16    8
- win32        1841   73  1841   73
- x2p           345   19   345   19
+ apollo          0    3     0    3      -    -     -    -      -     -
+ beos            4    4     4    4      5    4     5    4      -     -
+ Configure     536    1   536    1    539    1   547    1    550     1
+ Cross         118   15   118   15    118   15   118   15    118    15
+ djgpp          17    7    17    7     18    7    18    7     18     7
+ emacs         402    4   402    4      -    -     -    -      -     -
+ epoc           31    8    31    8     32    8    30    8      -     -
+ h2pl           12   15    12   15     15   15    15   15     13    15
+ hints         368   97   368   97    370   96   371   96    354    91
+ mad           174    8   174    8    176    8   176    8    174     8
+ mpeix          45    6    45    6     46    6    46    6      -     -
+ NetWare       466   61   466   61    473   61   472   61    469    61
+ os2           507   70   507   70    518   70   519   70    510    70
+ plan9         316   17   316   17    319   17   319   17    318    17
+ Porting       750   54   750   54    855   60  1093   69   1149    70
+ qnx             1    4     1    4      2    4     2    4      1     4
+ symbian       288   54   288   54    292   54   292   54    290    54
+ utils         269   27   269   27    249   29   245   30    246    31
+ uts             8    3     8    3      9    3     9    3      -     -
+ vmesa          21    4    21    4     22    4    22    4      -     -
+ vms           646   18   644   18    639   17   571   15    564    15
+ vos            16    8    16    8     17    8     9    7      8     7
+ win32        1841   73  1841   73   1833   72  1655   67   1157    62
+ x2p           345   19   345   19    346   19   345   19    344    20
 
 =head2 SELECTED PATCH SIZES
 

@@ -303,16 +303,6 @@ if ($Is_VMS) {
 	chmod(0755, "$installbin/${dbg}a2p$exe_ext");
     }
 }
-elsif ($^O eq 'mpeix') {
-    # MPE lacks hard links and requires that executables with special
-    # capabilities reside in the MPE namespace.
-    safe_unlink("$installbin/perl$ver$exe_ext", $Config{perlpath});
-    # Install the primary executable into the MPE namespace as perlpath.
-    copy("perl$exe_ext", $Config{perlpath});
-    chmod(0755, $Config{perlpath});
-    # Create a backup copy with the version number.
-    link($Config{perlpath}, "$installbin/perl$ver$exe_ext");
-}
 elsif ($^O ne 'dos') {
     if (!$Is_NetWare) {
 	install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext",
@@ -393,18 +383,13 @@ elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';
-    if ($^O eq 'mpeix') {
-	# MPE needs mpeixish.h installed as well.
-	mkpath("$installarchlib/CORE/mpeix", $opts{verbose}, 0777);
-	push(@corefiles,'mpeix/mpeixish.h');
-    }
 }
 foreach my $file (@corefiles) {
     # HP-UX (at least) needs to maintain execute permissions
     # on dynamically-loadable libraries. So we do it for all.
     if (copy_if_diff($file,"$installarchlib/CORE/$file")) {
 	if ($file =~ /\.(\Q$so\E|\Q$dlext\E)$/) {
-	    strip("-S", "$installarchlib/CORE/$file") if $^O =~ /^(rhapsody|darwin)$/;
+	    strip("-S", "$installarchlib/CORE/$file") if $^O eq 'darwin';
 	    chmod(0555, "$installarchlib/CORE/$file");
 	} else {
 	    chmod(0444, "$installarchlib/CORE/$file");
@@ -417,11 +402,7 @@ foreach my $file (@corefiles) {
 
 if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS && ! $Is_NetWare) {
     safe_unlink("$installbin/$perl$exe_ext", "$installbin/suid$perl$exe_ext");
-    if ($^O eq 'mpeix') {
-	# MPE doesn't support hard links, so use a symlink.
-	# We don't want another cloned copy.
-	symlink($Config{perlpath}, "$installbin/perl$exe_ext");
-    } elsif ($^O eq 'vos') {
+    if ($^O eq 'vos') {
 	# VOS doesn't support hard links, so use a symlink.
 	symlink("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$perl$exe_ext");
@@ -436,11 +417,7 @@ if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VM
 if ($archname && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS) {
     my $archperl = "$perl_verbase$ver-$Config{archname}$exe_ext";
     safe_unlink("$installbin/$archperl");
-    if ($^O eq 'mpeix') {
-	# MPE doesn't support hard links, so use a symlink.
-	# We don't want another cloned copy.
-	symlink($Config{perlpath}, "$installbin/$archperl");
-    } elsif ($^O eq 'vos') {
+    if ($^O eq 'vos') {
 	# VOS doesn't support hard links, so use a symlink.
 	symlink("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$archperl");
@@ -747,7 +724,7 @@ sub installlib {
     if ( $dir =~ /^unicore/ ) {
       if ( $name =~ /\.txt\z/ ) {
         # We can ignore most, but not all .txt files
-        return unless $name =~ /\A(?:Blocks|CaseFolding|SpecialCasing|NamedSequences)\.txt\z/;
+        return unless $name =~ /\A(?:Blocks|SpecialCasing|NamedSequences)\.txt\z/;
       }
       else {
         # TestProp only needed during testing
@@ -819,7 +796,7 @@ sub installlib {
 	    # on dynamically-loaded libraries.
             if (copy_if_diff($_, "$installlib/$name")) {
                 strip("-S", "$installlib/$name")
-                    if $^O =~ /^(rhapsody|darwin)$/ and /\.(?:so|$dlext|a)$/;
+                    if $^O eq 'darwin' and /\.(?:so|$dlext|a)$/;
                 chmod(/\.(so|$dlext)$/ ? 0555 : 0444, "$installlib/$name");
             }
 	}

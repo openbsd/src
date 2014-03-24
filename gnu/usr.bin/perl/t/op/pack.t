@@ -12,7 +12,7 @@ my $no_endianness = $] > 5.009 ? '' :
 my $no_signedness = $] > 5.009 ? '' :
   "Signed/unsigned pack modifiers not available on this perl";
 
-plan tests => 14700;
+plan tests => 14704;
 
 use strict;
 use warnings qw(FATAL all);
@@ -300,8 +300,6 @@ sub list_eq ($$) {
 
     skip("-- $^O has serious fp indigestion on w-packed infinities", 1)
        if (
-	   ($^O eq 'mpeix')
-	   ||
 	   ($^O eq 'ultrix')
 	   ||
 	   ($^O =~ /^svr4/ && -f "/etc/issue" && -f "/etc/.relid") # NCR MP-RAS
@@ -816,12 +814,20 @@ SKIP: {
 {
   # /
 
-  my ($x, $y, $z);
+  my ($x, $y, $z, @a);
   eval { ($x) = unpack '/a*','hello' };
   like($@, qr!'/' must follow a numeric type!);
   undef $x;
   eval { $x = unpack '/a*','hello' };
   like($@, qr!'/' must follow a numeric type!);
+
+  # [perl #60204] Unhelpful error message from unpack
+  eval { @a = unpack 'v/a*','h' };
+  is($@, '');
+  is(scalar @a, 0);
+  eval { $x = unpack 'v/a*','h' };
+  is($@, '');
+  is($x, undef);
 
   undef $x;
   eval { ($z,$x,$y) = unpack 'a3/A C/a* C/Z', "003ok \003yes\004z\000abc" };

@@ -7,49 +7,47 @@ use warnings;
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require Config; import Config;
     require './test.pl';
 }
 
 use feature 'unicode_strings';
+use Unicode::UCD qw(all_casefolds);
 
 binmode *STDOUT, ":utf8";
 
 our $TODO;
 
+
 plan("no_plan");
 # Read in the official case folding definitions.
-my $CF = '../lib/unicore/CaseFolding.txt';
-
-die qq[$0: failed to open "$CF": $!\n] if ! open(my $fh, "<", $CF);
-
+my $casefolds = all_casefolds();
+my @folds;
 my @CF;
 my @simple_folds;
 my %reverse_fold;
-while (<$fh>) {
-    # We only use 'S' in simple folded fc(), since the regex engine uses
-    # 'F'ull case folding.  I is obsolete starting with Unicode 3.2, but
-    # leaving it in does no harm, and allows backward compatibility
-    next unless my ($code, $type, $mapping, $name) = $_ =~
-            /^([0-9A-F]+); ([CFIS]); ((?:[0-9A-F]+)(?: [0-9A-F]+)*); \# (.+)/;
+use Unicode::UCD;
+use charnames();
 
-    # Convert any 0-255 range chars to native.
-    $code = sprintf("%04X", ord_latin1_to_native(hex $code)) if hex $code < 0x100;
-    $mapping = join " ", map { $_ =
-                                sprintf("%04X", ord_latin1_to_native(hex $_)) }
-                                                            split / /, $mapping;
+foreach my $decimal_code_point (sort { $a <=> $b } keys %$casefolds) {
+    # We only use simple folds in fc(), since the regex engine uses full case
+    # folding.
 
-    if ( $type eq "S" ) {
-        push @simple_folds, [$code, $mapping, $type, $name];
-        next;
+    my $name = charnames::viacode($decimal_code_point);
+    my $type = $casefolds->{$decimal_code_point}{'status'};
+    my $code = $casefolds->{$decimal_code_point}{'code'};
+    my $simple = $casefolds->{$decimal_code_point}{'simple'};
+    my $full = $casefolds->{$decimal_code_point}{'full'};
+
+    if ($simple && $simple ne $full) { # If there is a distinction
+        push @simple_folds, [ $code, $simple, $type, $name ];
     }
 
-    push @CF, [$code, $mapping, $type, $name];
+    push @CF, [ $code, $full, $type, $name ];
 
     # Get the inverse fold for single-char mappings.
-    $reverse_fold{pack "U0U*", hex $mapping} = pack "U0U*", hex $code if $type ne 'F';
+    $reverse_fold{pack "U0U*", hex $simple} = pack "U0U*", $decimal_code_point if $simple;
 }
-
-close($fh) or die "$0 Couldn't close $CF";
 
 foreach my $test_ref ( @simple_folds ) {
     use feature 'fc';
@@ -339,11 +337,16 @@ foreach my $test_ref (@CF) {
         my ($simple_lc, $simple_tc, $simple_uc, $simple_fc) = @{$_}[1, 2, 3, 7];
         my ($orig, $lower, $titlecase, $upper, $fc_turkic, $fc_full) = @{$_}[0,4,5,6,8,9];
 
-        is( fc($orig), $fc_full, 'fc works' );
+        if ($orig =~ /(\P{Assigned})/) {   # So can fail gracefully in earlier
+                                           # Unicode versions
+            fail(sprintf "because U+%04X is unassigned", ord($1));
+            next;
+        }
+        is( fc($orig), $fc_full, "fc('$orig') returns '$fc_full'" );
         is( "\F$orig", $fc_full, '\F works' );
-        is( lc($orig), $lower,   'lc works' );
+        is( lc($orig), $lower,   "lc('$orig') returns '$lower'" );
         is( "\L$orig", $lower,   '\L works' );
-        is( uc($orig), $upper,   'uc works' );
+        is( uc($orig), $upper,   "uc('$orig') returns '$upper'" );
         is( "\U$orig", $upper,   '\U works' );
     }
 }
@@ -425,17 +428,22 @@ foreach my $test_ref (@CF) {
         utf8::upgrade($utf8);
         is(fc($latin1), fc($utf8), "fc() gives the same results for \\x{$_} in Latin-1 and UTF-8 under unicode_strings");
         SKIP: {
+              skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale}) || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/;
+              BEGIN {
+                  if($Config{d_setlocale}) {
+                      require locale; import locale;
+                  }
+              }
+            is(fc($latin1), lc($latin1), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
+            is(fc($utf8), lc($utf8), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
+        }
+        SKIP: {
             if (
                 !$Config::Config{d_setlocale}
             || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
             ) {
                 skip "no locale support", 2
             }
-            use locale;
-            is(fc($latin1), lc($latin1), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
-            is(fc($utf8), lc($utf8), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
-        }
-        {
             no feature 'unicode_strings';
             is(fc($latin1), lc($latin1), "under nothing, fc() for <256 is the same as lc");
         }
@@ -443,7 +451,5 @@ foreach my $test_ref (@CF) {
 }
 
 my $num_tests = curr_test() - 1;
-
-die qq[$0: failed to find casefoldings from "$CF"\n] unless $num_tests > 0;
 
 plan($num_tests);

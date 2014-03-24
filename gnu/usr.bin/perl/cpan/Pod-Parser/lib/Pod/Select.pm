@@ -11,7 +11,7 @@ package Pod::Select;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT $MAX_HEADING_LEVEL %myData @section_headings @selected_sections);
-$VERSION = '1.51'; ## Current version of this package
+$VERSION = '1.60'; ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################

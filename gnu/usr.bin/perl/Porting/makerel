@@ -8,14 +8,12 @@
 # Cygwin and ensure its 'bin' folder is on the PATH in the shell where you run
 # this script. The Cygwin 'bin' folder needs to precede the Windows 'system32'
 # folder so that Cygwin's 'find' command is found in preference to the Windows
-# 'find' command. Your Cygwin installation will need to contain at least the
-# 'cpio' command, in addition to the commands installed by default, and it will
-# also be useful to have 'curl' and 'diffstat' installed too for later stages
-# of the release process (namely, Porting\corelist.pl and generating the commit
-# statistics for the perlXYZdelta.pod file respectively). Finally, ensure that
-# the 'awk' and 'shasum' commands are copies of gawk.exe and sha1sum.exe
-# respectively, rather than the links to them that only work in a Cygwin bash
-# shell which they are by default.
+# 'find' command. In addition to the commands installed by default, your Cygwin
+# installation will need to contain at least the 'cpio' and '7z' commands.
+# Finally, ensure that the 'awk', 'shasum' (if you have it) and '7z' commands
+# are copies of 'gawk.exe', 'sha1sum.exe' and 'lib\p7zip\7z.exe' respectively,
+# rather than the links to them that only work in a Cygwin bash shell which
+# they are by default.
 #
 # No matter how automated this gets, you'll always need to read
 # and re-read pumpkin.pod and release_managers_guide.pod to
@@ -160,10 +158,7 @@ my @writables = qw(
     win32/makefile.mk
     win32/config_H.ce
     win32/config_H.gc
-    win32/config_H.gc64
-    win32/config_H.gc64nox
     win32/config_H.vc
-    win32/config_H.vc64
     utils/Makefile
     uconfig.h
 );

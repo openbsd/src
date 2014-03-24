@@ -1,6 +1,6 @@
 package English;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06_01';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -11,8 +11,9 @@ English - use nice English (or awk) names for ugly punctuation variables
 
 =head1 SYNOPSIS
 
-    use English qw( -no_match_vars ) ;  # Avoids regex performance penalty
     use English;
+    use English qw( -no_match_vars ) ;  # Avoids regex performance penalty
+                                        # in perl 5.16 and earlier
     ...
     if ($ERRNO =~ /denied/) { ... }
 
@@ -31,6 +32,10 @@ $INPUT_RECORD_SEPARATOR if you are using the English module.
 See L<perlvar> for a complete list of these.
 
 =head1 PERFORMANCE
+
+NOTE: This was fixed in perl 5.20.  Mentioning these three variables no
+longer makes a speed difference.  This section still applies if your code
+is to run on perl 5.18 or earlier.
 
 This module can provoke sizeable inefficiencies for regular expressions,
 due to unfortunate implementation details.  If performance matters in

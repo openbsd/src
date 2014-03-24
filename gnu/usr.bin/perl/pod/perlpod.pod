@@ -98,10 +98,8 @@ heading.  For example:
 
   =head2 Object Attributes
 
-The text "Object Attributes" comprises the heading there.  (Note that
-head3 and head4 are recent additions, not supported in older Pod
-translators.)  The text in these heading commands can use
-formatting codes, as seen here:
+The text "Object Attributes" comprises the heading there.
+The text in these heading commands can use formatting codes, as seen here:
 
   =head2 Possible Values for C<$/>
 
@@ -240,7 +238,7 @@ of text (i.e., the text in "=foo targetname text..."), but with
 "=begin targetname" ... "=end targetname", you can have any amount
 of stuff in between.  (Note that there still must be a blank line
 after the "=begin" command and a blank line before the "=end"
-command.
+command.)
 
 Here are some examples of how to use these:
 
@@ -293,9 +291,9 @@ module.  Examples:
   =encoding utf8
 
   =encoding koi8-r
-  
+
   =encoding ShiftJIS
-  
+
   =encoding big5
 
 =back
@@ -533,7 +531,7 @@ EE<lt>...E<gt> code sometimes.  For example, instead of
 "C<NEE<lt>ltE<gt>3>" (for "NE<lt>3") you could write
 "C<NZE<lt>E<gt>E<lt>3>" (the "ZE<lt>E<gt>" breaks up the "N" and
 the "E<lt>" so they can't be considered
-the part of a (fictitious) "NE<lt>...E<gt>" code.
+the part of a (fictitious) "NE<lt>...E<gt>" code).
 
 =for comment
  This was formerly explained as a "zero-width character".  But it in

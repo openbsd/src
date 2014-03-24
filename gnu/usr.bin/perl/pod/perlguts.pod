@@ -37,6 +37,15 @@ they will both be 64 bits.
 An SV can be created and loaded with one command.  There are five types of
 values that can be loaded: an integer value (IV), an unsigned integer
 value (UV), a double (NV), a string (PV), and another scalar (SV).
+("PV" stands for "Pointer Value".  You might think that it is misnamed
+because it is described as pointing only to strings.  However, it is
+possible to have it point to other things.  For example, inversion
+lists, used in regular expression data structures, are scalars, each
+consisting of an array of UVs which are accessed through PVs.  But,
+using it for non-strings requires care, as the underlying assumption of
+much of the internals is that PVs are just for strings.  Often, for
+example, a trailing NUL is tacked on automatically.  The non-string use
+is documented only in this paragraph.)
 
 The seven routines are:
 
@@ -342,11 +351,11 @@ to these new elements.
 
 Here are some other functions:
 
-    I32   av_len(AV*);
+    I32   av_top_index(AV*);
     SV**  av_fetch(AV*, I32 key, I32 lval);
     SV**  av_store(AV*, I32 key, SV* val);
 
-The C<av_len> function returns the highest index value in an array (just
+The C<av_top_index> function returns the highest index value in an array (just
 like $#array in Perl).  If the array is empty, -1 is returned.  The
 C<av_fetch> function returns the value at index C<key>, but if C<lval>
 is non-zero, then C<av_fetch> will store an undef value at that index.
@@ -453,15 +462,13 @@ by using the following:
 
 This returns NULL if the variable does not exist.
 
-The hash algorithm is defined in the C<PERL_HASH(hash, key, klen)> macro:
+The hash algorithm is defined in the C<PERL_HASH> macro:
 
-    hash = 0;
-    while (klen--)
-	hash = (hash * 33) + *key++;
-    hash = hash + (hash >> 5);			/* after 5.6 */
+    PERL_HASH(hash, key, klen)
 
-The last step was added in version 5.6 to improve distribution of
-lower bits in the resulting hash value.
+The exact implementation of this macro varies by architecture and version
+of perl, and the return value may change per invocation, so the value
+is only valid for the duration of a single perl process.
 
 See L<Understanding the Magic of Tied Hashes and Arrays> for more
 information on how to use the hash access functions on tied hashes.
@@ -597,17 +604,13 @@ macro and then check the return value.
 
 The most useful types that will be returned are:
 
-    SVt_IV    Scalar
-    SVt_NV    Scalar
-    SVt_PV    Scalar
-    SVt_RV    Scalar
-    SVt_PVAV  Array
-    SVt_PVHV  Hash
-    SVt_PVCV  Code
-    SVt_PVGV  Glob (possibly a file handle)
-    SVt_PVMG  Blessed or Magical Scalar
+    < SVt_PVAV  Scalar
+    SVt_PVAV    Array
+    SVt_PVHV    Hash
+    SVt_PVCV    Code
+    SVt_PVGV    Glob (possibly a file handle)
 
-See the F<sv.h> header file for more details.
+See L<perlapi/svtype> for more details.
 
 =head2 Blessed References and Class Objects
 
@@ -1048,67 +1051,64 @@ will be lost.
 =for mg_vtable.pl begin
 
  mg_type
- (old-style char and macro)   MGVTBL          Type of magic
- --------------------------   ------          -------------
- \0 PERL_MAGIC_sv             vtbl_sv         Special scalar variable
- #  PERL_MAGIC_arylen         vtbl_arylen     Array length ($#ary)
- %  PERL_MAGIC_rhash          (none)          extra data for restricted
-                                              hashes
- .  PERL_MAGIC_pos            vtbl_pos        pos() lvalue
- :  PERL_MAGIC_symtab         (none)          extra data for symbol
-                                              tables
- <  PERL_MAGIC_backref        vtbl_backref    for weak ref data
- @  PERL_MAGIC_arylen_p       (none)          to move arylen out of
-                                              XPVAV
- A  PERL_MAGIC_overload       vtbl_amagic     %OVERLOAD hash
- a  PERL_MAGIC_overload_elem  vtbl_amagicelem %OVERLOAD hash element
- B  PERL_MAGIC_bm             vtbl_regexp     Boyer-Moore 
-                                              (fast string search)
- c  PERL_MAGIC_overload_table vtbl_ovrld      Holds overload table 
-                                              (AMT) on stash
- D  PERL_MAGIC_regdata        vtbl_regdata    Regex match position data 
-                                              (@+ and @- vars)
- d  PERL_MAGIC_regdatum       vtbl_regdatum   Regex match position data
-                                              element
- E  PERL_MAGIC_env            vtbl_env        %ENV hash
- e  PERL_MAGIC_envelem        vtbl_envelem    %ENV hash element
- f  PERL_MAGIC_fm             vtbl_regdata    Formline 
-                                              ('compiled' format)
- G  PERL_MAGIC_study          vtbl_regexp     study()ed string
- g  PERL_MAGIC_regex_global   vtbl_mglob      m//g target
- H  PERL_MAGIC_hints          vtbl_hints      %^H hash
- h  PERL_MAGIC_hintselem      vtbl_hintselem  %^H hash element
- I  PERL_MAGIC_isa            vtbl_isa        @ISA array
- i  PERL_MAGIC_isaelem        vtbl_isaelem    @ISA array element
- k  PERL_MAGIC_nkeys          vtbl_nkeys      scalar(keys()) lvalue
- L  PERL_MAGIC_dbfile         (none)          Debugger %_<filename
- l  PERL_MAGIC_dbline         vtbl_dbline     Debugger %_<filename
-                                              element
- N  PERL_MAGIC_shared         (none)          Shared between threads
- n  PERL_MAGIC_shared_scalar  (none)          Shared between threads
- o  PERL_MAGIC_collxfrm       vtbl_collxfrm   Locale transformation
- P  PERL_MAGIC_tied           vtbl_pack       Tied array or hash
- p  PERL_MAGIC_tiedelem       vtbl_packelem   Tied array or hash element
- q  PERL_MAGIC_tiedscalar     vtbl_packelem   Tied scalar or handle
- r  PERL_MAGIC_qr             vtbl_regexp     precompiled qr// regex
- S  PERL_MAGIC_sig            (none)          %SIG hash
- s  PERL_MAGIC_sigelem        vtbl_sigelem    %SIG hash element
- t  PERL_MAGIC_taint          vtbl_taint      Taintedness
- U  PERL_MAGIC_uvar           vtbl_uvar       Available for use by
-                                              extensions
- u  PERL_MAGIC_uvar_elem      (none)          Reserved for use by
-                                              extensions
- V  PERL_MAGIC_vstring        vtbl_vstring    SV was vstring literal
- v  PERL_MAGIC_vec            vtbl_vec        vec() lvalue
- w  PERL_MAGIC_utf8           vtbl_utf8       Cached UTF-8 information
- x  PERL_MAGIC_substr         vtbl_substr     substr() lvalue
- y  PERL_MAGIC_defelem        vtbl_defelem    Shadow "foreach" iterator
-                                              variable / smart parameter
-                                              vivification
- ]  PERL_MAGIC_checkcall      (none)          inlining/mutation of call
-                                              to this CV
- ~  PERL_MAGIC_ext            (none)          Available for use by
-                                              extensions
+ (old-style char and macro)   MGVTBL         Type of magic
+ --------------------------   ------         -------------
+ \0 PERL_MAGIC_sv             vtbl_sv        Special scalar variable
+ #  PERL_MAGIC_arylen         vtbl_arylen    Array length ($#ary)
+ %  PERL_MAGIC_rhash          (none)         extra data for restricted
+                                             hashes
+ &  PERL_MAGIC_proto          (none)         my sub prototype CV
+ .  PERL_MAGIC_pos            vtbl_pos       pos() lvalue
+ :  PERL_MAGIC_symtab         (none)         extra data for symbol
+                                             tables
+ <  PERL_MAGIC_backref        vtbl_backref   for weak ref data
+ @  PERL_MAGIC_arylen_p       (none)         to move arylen out of XPVAV
+ B  PERL_MAGIC_bm             vtbl_regexp    Boyer-Moore 
+                                             (fast string search)
+ c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table 
+                                             (AMT) on stash
+ D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data 
+                                             (@+ and @- vars)
+ d  PERL_MAGIC_regdatum       vtbl_regdatum  Regex match position data
+                                             element
+ E  PERL_MAGIC_env            vtbl_env       %ENV hash
+ e  PERL_MAGIC_envelem        vtbl_envelem   %ENV hash element
+ f  PERL_MAGIC_fm             vtbl_regexp    Formline 
+                                             ('compiled' format)
+ g  PERL_MAGIC_regex_global   vtbl_mglob     m//g target
+ H  PERL_MAGIC_hints          vtbl_hints     %^H hash
+ h  PERL_MAGIC_hintselem      vtbl_hintselem %^H hash element
+ I  PERL_MAGIC_isa            vtbl_isa       @ISA array
+ i  PERL_MAGIC_isaelem        vtbl_isaelem   @ISA array element
+ k  PERL_MAGIC_nkeys          vtbl_nkeys     scalar(keys()) lvalue
+ L  PERL_MAGIC_dbfile         (none)         Debugger %_<filename
+ l  PERL_MAGIC_dbline         vtbl_dbline    Debugger %_<filename
+                                             element
+ N  PERL_MAGIC_shared         (none)         Shared between threads
+ n  PERL_MAGIC_shared_scalar  (none)         Shared between threads
+ o  PERL_MAGIC_collxfrm       vtbl_collxfrm  Locale transformation
+ P  PERL_MAGIC_tied           vtbl_pack      Tied array or hash
+ p  PERL_MAGIC_tiedelem       vtbl_packelem  Tied array or hash element
+ q  PERL_MAGIC_tiedscalar     vtbl_packelem  Tied scalar or handle
+ r  PERL_MAGIC_qr             vtbl_regexp    precompiled qr// regex
+ S  PERL_MAGIC_sig            (none)         %SIG hash
+ s  PERL_MAGIC_sigelem        vtbl_sigelem   %SIG hash element
+ t  PERL_MAGIC_taint          vtbl_taint     Taintedness
+ U  PERL_MAGIC_uvar           vtbl_uvar      Available for use by
+                                             extensions
+ u  PERL_MAGIC_uvar_elem      (none)         Reserved for use by
+                                             extensions
+ V  PERL_MAGIC_vstring        (none)         SV was vstring literal
+ v  PERL_MAGIC_vec            vtbl_vec       vec() lvalue
+ w  PERL_MAGIC_utf8           vtbl_utf8      Cached UTF-8 information
+ x  PERL_MAGIC_substr         vtbl_substr    substr() lvalue
+ y  PERL_MAGIC_defelem        vtbl_defelem   Shadow "foreach" iterator
+                                             variable / smart parameter
+                                             vivification
+ ]  PERL_MAGIC_checkcall      vtbl_checkcall inlining/mutation of call
+                                             to this CV
+ ~  PERL_MAGIC_ext            (none)         Available for use by
+                                             extensions
 
 =for mg_vtable.pl end
 
@@ -1536,7 +1536,7 @@ But it also puts the same information in certain fields of the XSUB itself:
     const char *subname = SvPVX(cv);
     STRLEN name_length  = SvCUR(cv); /* in bytes */
     U32 is_utf8         = SvUTF8(cv);
-    
+
 C<SvPVX(cv)> contains just the sub name itself, not including the package.
 For an AUTOLOAD routine in UNIVERSAL or one of its superclasses,
 C<CvSTASH(cv)> returns NULL during a method call on a nonexistent package.
@@ -1554,7 +1554,7 @@ within a C program.  These four are:
     I32  call_sv(SV*, I32);
     I32  call_pv(const char*, I32);
     I32  call_method(const char*, I32);
-    I32  call_argv(const char*, I32, register char**);
+    I32  call_argv(const char*, I32, char**);
 
 The routine most often used is C<call_sv>.  The C<SV*> argument
 contains either the name of the Perl subroutine to be called, or a
@@ -1924,7 +1924,7 @@ per-subroutine or recursive stage, like this:
     static void my_peep(pTHX_ OP *o)
     {
         /* custom per-subroutine optimisation goes here */
-        prev_peepp(o);
+        prev_peepp(aTHX_ o);
         /* custom per-subroutine optimisation may also go here */
     }
     BOOT:
@@ -1938,7 +1938,7 @@ per-subroutine or recursive stage, like this:
         for(; o; o = o->op_next) {
             /* custom per-op optimisation goes here */
         }
-        prev_rpeepp(orig_o);
+        prev_rpeepp(aTHX_ orig_o);
     }
     BOOT:
         prev_rpeepp = PL_rpeepp;
@@ -2637,7 +2637,8 @@ is what makes Unicode input an interesting problem.
 In general, you either have to know what you're dealing with, or you
 have to guess.  The API function C<is_utf8_string> can help; it'll tell
 you if a string contains only valid UTF-8 characters. However, it can't
-do the work for you. On a character-by-character basis, C<is_utf8_char>
+do the work for you. On a character-by-character basis,
+C<is_utf8_char_buf>
 will tell you whether the current character in a string is valid UTF-8. 
 
 =head2 How does UTF-8 represent Unicode characters?
@@ -2811,7 +2812,7 @@ a new string which is UTF-8 encoded, and then combine them.
 
 =head1 Custom Operators
 
-Custom operator support is a new experimental feature that allows you to
+Custom operator support is an experimental feature that allows you to
 define your own ops. This is primarily to allow the building of
 interpreters for other languages in the Perl core, but it also allows
 optimizations through the creation of "macro-ops" (ops which perform the
@@ -2833,7 +2834,7 @@ tree using a C<CHECK> block and the C<B::Generate> module, or by adding
 a custom peephole optimizer with the C<optimize> module.
 
 When you do this, you replace ordinary Perl ops with custom ops by
-creating ops with the type C<OP_CUSTOM> and the C<pp_addr> of your own
+creating ops with the type C<OP_CUSTOM> and the C<op_ppaddr> of your own
 PP function. This should be defined in XS code, and should look like
 the PP ops in C<pp_*.c>. You are responsible for ensuring that your op
 takes the appropriate number of values from the stack, and you are

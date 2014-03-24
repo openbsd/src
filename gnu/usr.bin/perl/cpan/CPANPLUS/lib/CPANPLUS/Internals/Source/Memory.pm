@@ -1,4 +1,5 @@
 package CPANPLUS::Internals::Source::Memory;
+use deprecate;
 
 use base 'CPANPLUS::Internals::Source';
 
@@ -19,6 +20,9 @@ use File::Basename              qw[dirname];
 use Params::Check               qw[allow check];
 use Module::Load::Conditional   qw[can_load];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
+
+use vars qw[$VERSION];
+$VERSION = "0.9135";
 
 $Params::Check::VERBOSE = 1;
 
@@ -122,28 +126,31 @@ sub _add_author_object {
     return $obj;
 }
 
-sub _add_module_object {
-    my $self = shift;
-    my %hash = @_;
-
-    my $class;
+{
     my $tmpl = {
-        class   => { default => 'CPANPLUS::Module', store => \$class },
-        map { $_ => { required => 1 } }
-            qw[ module version path comment author package description dslip mtime ]
+        class => { default => 'CPANPLUS::Module' },
+        map { $_ => { required => 1 } } qw[
+           module version path comment author package description dslip mtime
+        ],
     };
 
-    my $href = do {
-        local $Params::Check::NO_DUPLICATES = 1;
-        check( $tmpl, \%hash ) or return;
-    };
+    sub _add_module_object {
+        my $self = shift;
+        my %hash = @_;
 
-    my $obj = $class->new( %$href, _id => $self->_id );
+        my $href = do {
+            local $Params::Check::SANITY_CHECK_TEMPLATE = 0;
+            check( $tmpl, \%hash ) or return;
+        };
+        my $class = delete $href->{class};
 
-    ### Every module get's stored as a module object ###
-    $self->module_tree->{ $href->{module} } = $obj or return;
+        my $obj = $class->new( %$href, _id => $self->_id );
 
-    return $obj;
+        ### Every module get's stored as a module object ###
+        $self->module_tree->{ $href->{module} } = $obj or return;
+
+        return $obj;
+    }
 }
 
 {   my %map = (

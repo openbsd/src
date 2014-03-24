@@ -2018,7 +2018,9 @@ EBCDIC platforms (z/OS (also known as OS/390), POSIX-BC, and VM/ESA)
 have been regained.  Many test suite tests still fail and the
 co-existence of Unicode and EBCDIC isn't quite settled, but the
 situation is much better than with Perl 5.6.  See L<perlos390>,
-L<perlbs2000> (for POSIX-BC), and L<perlvmesa> for more information.
+L<perlbs2000> (for POSIX-BC), and perlvmesa for more information.
+(B<Note:> support for VM/ESA was removed in Perl v5.18.0. The relevant
+information was in F<README.vmesa>)
 
 =item *
 
@@ -3376,7 +3378,8 @@ The following tests fail on 5.8.0 Perl in BeOS Personal 5.03:
  ext/POSIX/t/sigaction...............FAILED at test 13
  ext/POSIX/t/waitpid.................FAILED at test 1
 
-See L<perlbeos> (README.beos) for more details.
+(B<Note:> more information was available in F<README.beos> until support for
+BeOS was removed in Perl v5.18.0)
 
 =head2 Cygwin "unable to remap"
 
@@ -3631,7 +3634,9 @@ return only three values, not four.
 
 =head2 UTS
 
-There are a few known test failures, see L<perluts> (README.uts).
+There are a few known test failures.  (B<Note:> the relevant information was
+available in F<README.uts> until support for UTS was removed in Perl
+v5.18.0)
 
 =head2 VOS (Stratus)
 

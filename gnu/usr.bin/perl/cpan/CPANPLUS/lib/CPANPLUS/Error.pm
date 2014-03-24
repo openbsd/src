@@ -1,6 +1,9 @@
 package CPANPLUS::Error;
+use deprecate;
 
 use strict;
+use vars qw[$VERSION];
+$VERSION = "0.9135";
 
 use Log::Message private => 0;;
 

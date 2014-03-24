@@ -127,7 +127,7 @@ my_find_image_symbol(struct dsc$descriptor_s *imgname,
                      struct dsc$descriptor_s *defspec)
 {
   unsigned long int retsts;
-  VAXC$ESTABLISH(lib$sig_to_ret);
+  VAXC$ESTABLISH((__vms_handler)lib$sig_to_ret);
   retsts = lib$find_image_symbol(imgname,symname,entry,defspec,DL_CASE_SENSITIVE);
   return retsts;
 }

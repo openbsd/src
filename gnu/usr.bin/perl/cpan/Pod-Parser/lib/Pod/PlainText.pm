@@ -29,7 +29,7 @@ use vars qw(@ISA %ESCAPES $VERSION);
 # by Pod::Usage.
 @ISA = qw(Pod::Select);
 
-$VERSION = '2.05';
+$VERSION = '2.06';
 
 BEGIN {
    if ($] < 5.006) {
@@ -394,6 +394,10 @@ sub cmd_for {
     $self->verbatim ($_, $line);
 }
 
+# just a dummy method for the time being
+sub cmd_encoding {
+  return;
+}
 
 ############################################################################
 # Interior sequences

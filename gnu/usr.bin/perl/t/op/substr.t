@@ -23,7 +23,7 @@ $SIG{__WARN__} = sub {
 
 BEGIN { require './test.pl'; }
 
-plan(381);
+plan(387);
 
 run_tests() unless caller;
 
@@ -786,6 +786,51 @@ ok eval {
     $y = \substr *foo, 0, 0;
     is ref \$x, 'REF', '\substr does not coerce its ref arg just yet';
 }
+
+# Test that UTF8-ness of magic var changing does not confuse substr lvalue
+# assignment.
+# We use overloading for our magic var, but a typeglob would work, too.
+package o {
+    use overload '""' => sub { ++our $count; $_[0][0] }
+}
+my $refee = bless ["\x{100}a"], o::;
+my $substr = \substr $refee, -2;	# UTF8 flag still off for $$substr.
+$$substr = "b";				# UTF8 flag turns on when setsubstr
+is $refee, "b",				# magic stringifies $$substr.
+     'substr lvalue assignment when stringification turns on UTF8ness';
+
+# Test that changing UTF8-ness does not confuse 4-arg substr.
+$refee = bless [], "\x{100}a";
+# stringify without returning on UTF8 flag on $refee:
+my $string = $refee; $string = "$string";
+substr $refee, 0, 0, "\xff";
+is $refee, "\xff$string",
+  '4-arg substr with target UTF8ness turning on when stringified';
+$refee = bless [], "\x{100}";
+() = "$refee"; # UTF8 flag now on
+bless $refee, "\xff";
+$string = $refee; $string = "$string";
+substr $refee, 0, 0, "\xff";
+is $refee, "\xff$string",
+  '4-arg substr with target UTF8ness turning off when stringified';
+
+# Overload count
+$refee = bless ["foo"], o::;
+$o::count = 0;
+substr $refee, 0, 0, "";
+is $o::count, 1, '4-arg substr calls overloading once on the target';
+$refee = bless ["\x{100}"], o::;
+() = "$refee"; # turn UTF8 flag on
+$o::count = 0;
+() = substr $refee, 0;
+is $o::count, 1, 'rvalue substr calls overloading once on utf8 target';
+$o::count = 0;
+$refee = "";
+${\substr $refee, 0} = bless ["\x{100}"], o::;
+is $o::count, 1, 'assigning utf8 overload to substr lvalue calls ovld 1ce';
+
+# [perl #7678] core dump with substr reference and localisation
+{$b="abcde"; local $k; *k=\substr($b, 2, 1);}
 
 } # sub run_tests - put tests above this line that can run in threads
 

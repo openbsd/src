@@ -232,6 +232,9 @@ your subroutine's name.
       return($x * __SUB__->( $x - 1 ) );
     };
 
+The behaviour of C<__SUB__> within a regex code block (such as C</(?{...})/>)
+is subject to change.
+
 Subroutines whose names are in all upper case are reserved to the Perl
 core, as are modules whose names are in all lower case.  A subroutine in
 all capitals is a loosely-held convention meaning it will be called
@@ -451,18 +454,33 @@ if you want to stay compatible with releases older than 5.10.
 
 =head3 Persistent variables via state()
 
-Beginning with Perl 5.9.4, you can declare variables with the C<state>
+Beginning with Perl 5.10.0, you can declare variables with the C<state>
 keyword in place of C<my>.  For that to work, though, you must have
 enabled that feature beforehand, either by using the C<feature> pragma, or
 by using C<-E> on one-liners (see L<feature>).  Beginning with Perl 5.16,
 the C<CORE::state> form does not require the
 C<feature> pragma.
 
+The C<state> keyword creates a lexical variable (following the same scoping
+rules as C<my>) that persists from one subroutine call to the next.  If a
+state variable resides inside an anonymous subroutine, then each copy of
+the subroutine has its own copy of the state variable.  However, the value
+of the state variable will still persist between calls to the same copy of
+the anonymous subroutine.  (Don't forget that C<sub { ... }> creates a new
+subroutine each time it is executed.)
+
 For example, the following code maintains a private counter, incremented
 each time the gimme_another() function is called:
 
     use feature 'state';
     sub gimme_another { state $x; return ++$x }
+
+And this example uses anonymous subroutines to create separate counters:
+
+    use feature 'state';
+    sub create_counter {
+	return sub { state $x; return ++$x }
+    }
 
 Also, since C<$x> is lexical, it can't be reached or modified by any Perl
 code outside.
@@ -616,7 +634,7 @@ This feature allows code like this to work :
     { local $/ = undef; $slurp = <FILE>; }
 
 Note, however, that this restricts localization of some values ; for
-example, the following statement dies, as of perl 5.9.0, with an error
+example, the following statement dies, as of perl 5.10.0, with an error
 I<Modification of a read-only value attempted>, because the $1 variable is
 magical and read-only :
 
@@ -807,6 +825,107 @@ subroutine never gets that chance.  Consider;
 
 =back
 
+=head2 Lexical Subroutines
+X<my sub> X<state sub> X<our sub> X<subroutine, lexical>
+
+B<WARNING>: Lexical subroutines are still experimental.  The feature may be
+modified or removed in future versions of Perl.
+
+Lexical subroutines are only available under the C<use feature
+'lexical_subs'> pragma, which produces a warning unless the
+"experimental::lexical_subs" warnings category is disabled.
+
+Beginning with Perl 5.18, you can declare a private subroutine with C<my>
+or C<state>.  As with state variables, the C<state> keyword is only
+available under C<use feature 'state'> or C<use 5.010> or higher.
+
+These subroutines are only visible within the block in which they are
+declared, and only after that declaration:
+
+    no warnings "experimental::lexical_subs";
+    use feature 'lexical_subs';
+
+    foo();		# calls the package/global subroutine
+    state sub foo {
+	foo();		# also calls the package subroutine
+    }
+    foo();		# calls "state" sub
+    my $ref = \&foo;	# take a reference to "state" sub
+
+    my sub bar { ... }
+    bar();		# calls "my" sub
+
+To use a lexical subroutine from inside the subroutine itself, you must
+predeclare it.  The C<sub foo {...}> subroutine definition syntax respects
+any previous C<my sub;> or C<state sub;> declaration.
+
+    my sub baz;		# predeclaration
+    sub baz {		# define the "my" sub
+	baz();		# recursive call
+    }
+
+=head3 C<state sub> vs C<my sub>
+
+What is the difference between "state" subs and "my" subs?  Each time that
+execution enters a block when "my" subs are declared, a new copy of each
+sub is created.  "State" subroutines persist from one execution of the
+containing block to the next.
+
+So, in general, "state" subroutines are faster.  But "my" subs are
+necessary if you want to create closures:
+
+    no warnings "experimental::lexical_subs";
+    use feature 'lexical_subs';
+
+    sub whatever {
+	my $x = shift;
+	my sub inner {
+	    ... do something with $x ...
+	}
+	inner();
+    }
+
+In this example, a new C<$x> is created when C<whatever> is called, and
+also a new C<inner>, which can see the new C<$x>.  A "state" sub will only
+see the C<$x> from the first call to C<whatever>.
+
+=head3 C<our> subroutines
+
+Like C<our $variable>, C<our sub> creates a lexical alias to the package
+subroutine of the same name.
+
+The two main uses for this are to switch back to using the package sub
+inside an inner scope:
+
+    no warnings "experimental::lexical_subs";
+    use feature 'lexical_subs';
+
+    sub foo { ... }
+
+    sub bar {
+	my sub foo { ... }
+	{
+	    # need to use the outer foo here
+	    our sub foo;
+	    foo();
+	}
+    }
+
+and to make a subroutine visible to other packages in the same scope:
+
+    package MySneakyModule;
+
+    no warnings "experimental::lexical_subs";
+    use feature 'lexical_subs';
+
+    our sub do_something { ... }
+
+    sub do_something_with_caller {
+	package DB;
+	() = caller 1;		# sets @DB::args
+	do_something(@args);	# uses MySneakyModule::do_something
+    }
+
 =head2 Passing Symbol Table Entries (typeglobs)
 X<typeglob> X<*>
 
@@ -923,8 +1042,7 @@ is done on dynamics:
     } 
     # interruptibility automatically restored here
 
-But it also works on lexically declared aggregates.  Prior to 5.005,
-this operation could on occasion misbehave.
+But it also works on lexically declared aggregates.
 
 =back
 

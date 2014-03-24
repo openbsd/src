@@ -5,6 +5,7 @@ use Test::More tests => 33;
 END { ok $loaded; }
 use CGI ( ':standard', '-no_debug', '*h3', 'start_table' );
 $loaded = 1;
+$CGI::Util::SORT_ATTRIBUTES= 1;
 ok 1;
 
 BEGIN {
@@ -98,7 +99,7 @@ is start_html(
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
 <head>
 <title>The world of foo</title>
-<script src="foo.js" charset="utf-8" type="text/javascript"></script>
+<script charset="utf-8" src="foo.js" type="text/javascript"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 </head>
 <body>

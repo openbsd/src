@@ -1,7 +1,10 @@
 # Haiku hints file
 # $Id$
 
-prefix="/boot/common"
+case "$prefix" in
+'') prefix="/boot/common" ;;
+*) ;; # pass the user supplied value through
+esac
 
 libpth='/boot/home/config/lib /boot/common/lib /system/lib'
 usrinc='/boot/develop/headers/posix'
@@ -32,3 +35,10 @@ ld='gcc'
 case "$ldlibpthname" in
 '') ldlibpthname=LIBRARY_PATH ;;
 esac
+
+# as of alpha 4.1 (at the latest) some symbols are versioned,
+# confusing the nm lookup
+case "$usenm" in
+'') usenm='undef' ;;
+esac
+

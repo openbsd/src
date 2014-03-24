@@ -638,24 +638,27 @@ and C<given> assigns the C<$_> variable its topic value.
 
 Exactly what the I<EXPR> argument to C<when> does is hard to describe
 precisely, but in general, it tries to guess what you want done.  Sometimes
-it is interpreted as C<< $_ ~~ I<EXPR> >>, and sometimes it does not.  It
+it is interpreted as C<< $_ ~~ I<EXPR> >>, and sometimes it is not.  It
 also behaves differently when lexically enclosed by a C<given> block than
 it does when dynamically enclosed by a C<foreach> loop.  The rules are far
 too difficult to understand to be described here.  See L</"Experimental Details
 on given and when"> later on.
 
 Due to an unfortunate bug in how C<given> was implemented between Perl 5.10
-and 5.14, under those implementations the version of C<$_> governed by
+and 5.16, under those implementations the version of C<$_> governed by
 C<given> is merely a lexically scoped copy of the original, not a
 dynamically scoped alias to the original, as it would be if it were a
 C<foreach> or under both the original and the current Perl 6 language
-specification.  This bug is expected to be addressed in a future release of
-Perl.  For forwards compatibility, if you really want a lexical C<$_>,
-specify that explicitly:
+specification.  This bug was fixed in Perl
+5.18.  If you really want a lexical C<$_>,
+specify that explicitly, but note that C<my $_>
+is now deprecated and will warn unless warnings
+have been disabled:
 
     given(my $_ = EXPR) { ... }
 
-In the meanwhile, stick to C<foreach> for your topicalizer and
+If your code still needs to run on older versions,
+stick to C<foreach> for your topicalizer and
 you will be less unhappy.
 
 =head2 Goto
@@ -883,9 +886,10 @@ shell:
 
 As previously mentioned, the "switch" feature is considered highly
 experimental; it is subject to change with little notice.  In particular,
-both C<given> and C<when> have tricky behaviours that are expected to
-change to become less tricky in the future.  Do not rely upon their
-current (mis)implementations.
+C<when> has tricky behaviours that are expected to change to become less
+tricky in the future.  Do not rely upon its current (mis)implementation.
+Before Perl 5.18, C<given> also had tricky behaviours that you should still
+beware of if your code must run on older versions of Perl.
 
 Here is a longer example of C<given>:
 
@@ -912,18 +916,18 @@ Here is a longer example of C<given>:
 	}
     }
 
-As currently implemented, C<given(EXPR)> assign the value of I<EXPR> to
+Before Perl 5.18, C<given(EXPR)> assigned the value of I<EXPR> to
 merely a lexically scoped I<B<copy>> (!) of C<$_>, not a dynamically
-scoped alias the way C<foreach> does.  That makes it similar to
+scoped alias the way C<foreach> does.  That made it similar to
 
 	do { my $_ = EXPR; ... }
 
-except that the block is automatically broken out of by a
-successful C<when> or an explicit C<break>.  Because it is only a
-copy, and because it is only lexically scoped, not dynamically
-scoped, you cannot do the things with it that you are used to in
-a C<foreach> loop.  In particular, you probably cannot use
-arbitrary function calls.  Best stick to C<foreach> for that.
+except that the block was automatically broken out of by a successful
+C<when> or an explicit C<break>.  Because it was only a copy, and because
+it was only lexically scoped, not dynamically scoped, you could not do the
+things with it that you are used to in a C<foreach> loop.  In particular,
+it did not work for arbitrary function calls if those functions might try
+to access $_.  Best stick to C<foreach> for that.
 
 Most of the power comes from the implicit smartmatching that can
 sometimes apply.  Most of the time, C<when(EXPR)> is treated as an
@@ -950,7 +954,7 @@ A smart match that uses an explicit C<~~> operator, such as C<EXPR ~~ EXPR>.
 
 =item 4.
 
-A boolean comparison operator such as C<$_ E<lt> 10> or C<$x eq "abc"> The
+A boolean comparison operator such as C<$_ E<lt> 10> or C<$x eq "abc">.  The
 relational operators that this applies to are the six numeric comparisons
 (C<< < >>, C<< > >>, C<< <= >>, C<< >= >>, C<< == >>, and C<< != >>), and
 the six string comparisons (C<lt>, C<gt>, C<le>, C<ge>, C<eq>, and C<ne>).

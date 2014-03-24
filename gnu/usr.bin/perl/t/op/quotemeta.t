@@ -76,7 +76,9 @@ is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
     is(quotemeta("\x{d8}"), "\\\x{d8}", "quotemeta Latin1 no unicode_strings quoted");
     is(length(quotemeta("\x{d8}")), 2, "quotemeta Latin1 no unicode_strings quoted length");
 
-    use locale;
+  SKIP: {
+    skip 'No locale testing without d_setlocale', 8 if(!$Config{d_setlocale});
+    require locale; import locale;
 
     my $char = ":";
     is(quotemeta($char), "\\$char", "quotemeta '$char' locale");
@@ -94,6 +96,7 @@ is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
     $char = "\x{D8}";  # Every non-ASCII Latin1 is quoted in locale.
     is(quotemeta($char), "\\$char", "quotemeta '\\x{D8}' locale");
     is(length(quotemeta($char)), 2, "quotemeta '\\x{D8}' locale length");
+    }
 }
 {
     use feature 'unicode_strings';
@@ -102,7 +105,13 @@ is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
     is(quotemeta("\x{d8}"), "\x{d8}", "quotemeta Latin1 unicode_strings nonquoted");
     is(length(quotemeta("\x{d8}")), 1, "quotemeta Latin1 unicode_strings nonquoted length");
 
-    use locale;
+  SKIP: {
+    skip 'No locale testing without d_setlocale', 12 if(!$Config{d_setlocale});
+    BEGIN {
+        if($Config{d_setlocale}) {
+            require locale; import locale;
+        }
+    }
 
     my $char = ":";
     utf8::upgrade($char);
@@ -136,6 +145,7 @@ is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
     is(length(quotemeta("\x{263a}")), 2, "quotemeta locale Unicode quoted length");
     is(quotemeta("\x{100}"), "\x{100}", "quotemeta locale Unicode nonquoted");
     is(length(quotemeta("\x{100}")), 1, "quotemeta locale Unicode nonquoted length");
+  }
 }
 
 $a = "foo|bar";

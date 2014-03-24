@@ -37,9 +37,16 @@
 
 #include <errno.h> /* See notes in perl.h about avoiding
 			extern int errno; */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern Malloc_t malloc proto((MEM_SIZE));
 extern Free_t free proto((Malloc_t));
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * forward
@@ -72,11 +79,11 @@ static const long masks[] = {
 };
 
 DBM *
-sdbm_open(register char *file, register int flags, register int mode)
+sdbm_open(char *file, int flags, int mode)
 {
-	register DBM *db;
-	register char *dirname;
-	register char *pagname;
+	DBM *db;
+	char *dirname;
+	char *pagname;
 	size_t filelen;
 	const size_t dirfext_size = sizeof(DIRFEXT "");
 	const size_t pagfext_size = sizeof(PAGFEXT "");
@@ -108,7 +115,7 @@ sdbm_open(register char *file, register int flags, register int mode)
 DBM *
 sdbm_prep(char *dirname, char *pagname, int flags, int mode)
 {
-	register DBM *db;
+	DBM *db;
 	struct stat dstat;
 
 	if ((db = (DBM *) malloc(sizeof(DBM))) == NULL)
@@ -165,7 +172,7 @@ sdbm_prep(char *dirname, char *pagname, int flags, int mode)
 }
 
 void
-sdbm_close(register DBM *db)
+sdbm_close(DBM *db)
 {
 	if (db == NULL)
 		errno = EINVAL;
@@ -177,7 +184,7 @@ sdbm_close(register DBM *db)
 }
 
 datum
-sdbm_fetch(register DBM *db, datum key)
+sdbm_fetch(DBM *db, datum key)
 {
 	if (db == NULL || bad(key))
 		return errno = EINVAL, nullitem;
@@ -189,7 +196,7 @@ sdbm_fetch(register DBM *db, datum key)
 }
 
 int
-sdbm_exists(register DBM *db, datum key)
+sdbm_exists(DBM *db, datum key)
 {
 	if (db == NULL || bad(key))
 		return errno = EINVAL, -1;
@@ -201,7 +208,7 @@ sdbm_exists(register DBM *db, datum key)
 }
 
 int
-sdbm_delete(register DBM *db, datum key)
+sdbm_delete(DBM *db, datum key)
 {
 	if (db == NULL || bad(key))
 		return errno = EINVAL, -1;
@@ -225,10 +232,10 @@ sdbm_delete(register DBM *db, datum key)
 }
 
 int
-sdbm_store(register DBM *db, datum key, datum val, int flags)
+sdbm_store(DBM *db, datum key, datum val, int flags)
 {
 	int need;
-	register long hash;
+	long hash;
 
 	if (db == NULL || bad(key))
 		return errno = EINVAL, -1;
@@ -283,7 +290,7 @@ sdbm_store(register DBM *db, datum key, datum val, int flags)
  * giving up.
  */
 static int
-makroom(register DBM *db, long int hash, int need)
+makroom(DBM *db, long int hash, int need)
 {
 	long newp;
 	char twin[PBLKSIZ];
@@ -293,7 +300,7 @@ makroom(register DBM *db, long int hash, int need)
 #endif
 	char *pag = db->pagbuf;
 	char *New = twin;
-	register int smax = SPLTMAX;
+	int smax = SPLTMAX;
 
 	do {
 /*
@@ -379,7 +386,7 @@ makroom(register DBM *db, long int hash, int need)
  * deletions aren't taken into account. (ndbm bug)
  */
 datum
-sdbm_firstkey(register DBM *db)
+sdbm_firstkey(DBM *db)
 {
 	if (db == NULL)
 		return errno = EINVAL, nullitem;
@@ -397,7 +404,7 @@ sdbm_firstkey(register DBM *db)
 }
 
 datum
-sdbm_nextkey(register DBM *db)
+sdbm_nextkey(DBM *db)
 {
 	if (db == NULL)
 		return errno = EINVAL, nullitem;
@@ -408,11 +415,11 @@ sdbm_nextkey(register DBM *db)
  * all important binary trie traversal
  */
 static int
-getpage(register DBM *db, register long int hash)
+getpage(DBM *db, long int hash)
 {
-	register int hbit;
-	register long dbit;
-	register long pagb;
+	int hbit;
+	long dbit;
+	long pagb;
 
 	dbit = 0;
 	hbit = 0;
@@ -447,10 +454,10 @@ getpage(register DBM *db, register long int hash)
 }
 
 static int
-getdbit(register DBM *db, register long int dbit)
+getdbit(DBM *db, long int dbit)
 {
-	register long c;
-	register long dirb;
+	long c;
+	long dirb;
 
 	c = dbit / BYTESIZ;
 	dirb = c / DBLKSIZ;
@@ -471,10 +478,10 @@ getdbit(register DBM *db, register long int dbit)
 }
 
 static int
-setdbit(register DBM *db, register long int dbit)
+setdbit(DBM *db, long int dbit)
 {
-	register long c;
-	register long dirb;
+	long c;
+	long dirb;
 
 	c = dbit / BYTESIZ;
 	dirb = c / DBLKSIZ;
@@ -513,7 +520,7 @@ setdbit(register DBM *db, register long int dbit)
  * the page, try the next page in sequence
  */
 static datum
-getnext(register DBM *db)
+getnext(DBM *db)
 {
 	datum key;
 

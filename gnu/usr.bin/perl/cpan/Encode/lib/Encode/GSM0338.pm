@@ -1,5 +1,5 @@
 #
-# $Id: GSM0338.pm,v 2.1 2008/05/07 20:56:05 dankogai Exp $
+# $Id: GSM0338.pm,v 2.2 2012/08/15 05:36:16 dankogai Exp $
 #
 package Encode::GSM0338;
 
@@ -8,7 +8,7 @@ use warnings;
 use Carp;
 
 use vars qw($VERSION);
-$VERSION = do { my @r = ( q$Revision: 2.1 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.2 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -138,7 +138,8 @@ our %UNI2GSM = (
     "\x{00E4}" => "\x7B",        # LATIN SMALL LETTER A WITH DIAERESIS
     "\x{00E5}" => "\x0F",        # LATIN SMALL LETTER A WITH RING ABOVE
     "\x{00E6}" => "\x1D",        # LATIN SMALL LETTER AE
-    "\x{00E7}" => "\x09",        # LATIN SMALL LETTER C WITH CEDILLA
+    #"\x{00E7}" => "\x09",        # LATIN SMALL LETTER C WITH CEDILLA
+    "\x{00C7}" => "\x09",        # LATIN CAPITAL LETTER C WITH CEDILLA
     "\x{00E8}" => "\x04",        # LATIN SMALL LETTER E WITH GRAVE
     "\x{00E9}" => "\x05",        # LATIN SMALL LETTER E WITH ACUTE
     "\x{00EC}" => "\x07",        # LATIN SMALL LETTER I WITH GRAVE

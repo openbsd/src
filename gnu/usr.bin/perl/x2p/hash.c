@@ -17,12 +17,12 @@ char *savestr(char *str);
 #endif
 
 STR *
-hfetch(register HASH *tb, char *key)
+hfetch(HASH *tb, char *key)
 {
-    register char *s;
-    register int i;
-    register int hash;
-    register HENT *entry;
+    char *s;
+    int i;
+    int hash;
+    HENT *entry;
 
     if (!tb)
 	return NULL;
@@ -43,13 +43,13 @@ hfetch(register HASH *tb, char *key)
 }
 
 bool
-hstore(register HASH *tb, char *key, STR *val)
+hstore(HASH *tb, char *key, STR *val)
 {
-    register char *s;
-    register int i;
-    register int hash;
-    register HENT *entry;
-    register HENT **oentry;
+    char *s;
+    int i;
+    int hash;
+    HENT *entry;
+    HENT **oentry;
 
     if (!tb)
 	return FALSE;
@@ -94,12 +94,12 @@ void
 hsplit(HASH *tb)
 {
     const int oldsize = tb->tbl_max + 1;
-    register int newsize = oldsize * 2;
-    register int i;
-    register HENT **a;
-    register HENT **b;
-    register HENT *entry;
-    register HENT **oentry;
+    int newsize = oldsize * 2;
+    int i;
+    HENT **a;
+    HENT **b;
+    HENT *entry;
+    HENT **oentry;
 
     a = (HENT**) saferealloc((char*)tb->tbl_array, newsize * sizeof(HENT*));
     memset(&a[oldsize], 0, oldsize * sizeof(HENT*)); /* zero second half */
@@ -130,7 +130,7 @@ hsplit(HASH *tb)
 HASH *
 hnew(void)
 {
-    register HASH *tb = (HASH*)safemalloc(sizeof(HASH));
+    HASH *tb = (HASH*)safemalloc(sizeof(HASH));
 
     tb->tbl_array = (HENT**) safemalloc(8 * sizeof(HENT*));
     tb->tbl_fill = 0;
@@ -141,7 +141,7 @@ hnew(void)
 }
 
 int
-hiterinit(register HASH *tb)
+hiterinit(HASH *tb)
 {
     tb->tbl_riter = -1;
     tb->tbl_eiter = (HENT*)NULL;

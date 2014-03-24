@@ -58,10 +58,10 @@ for my $tref ( @NumTests ){
 #---------------------------------------------------------
 
 # number of tests in section 1
-my $bas_tests = 20;
+my $bas_tests = 21;
 
 # number of tests in section 3
-my $bug_tests = 4 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3;
+my $bug_tests = 8 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11;
 
 # number of tests in section 4
 my $hmb_tests = 35;
@@ -277,6 +277,18 @@ open   OUT4, ">Op_write.tmp" or die "Can't create Op_write.tmp";
 write (OUT4);
 close  OUT4 or die "Could not close: $!";
 is cat('Op_write.tmp'), "1\n" and unlink_all "Op_write.tmp";
+
+# More LEX_INTERPNORMAL
+format OUT4a=
+@<<<<<<<<<<<<<<<
+"${; use
+     strict; \'Nasdaq dropping like flies'}"
+.
+open   OUT4a, ">Op_write.tmp" or die "Can't create Op_write.tmp";
+write (OUT4a);
+close  OUT4a or die "Could not close: $!";
+is cat('Op_write.tmp'), "Nasdaq dropping\n", 'skipspace inside "${...}"'
+    and unlink_all "Op_write.tmp";
 
 eval <<'EOFORMAT';
 format OUT10 =
@@ -504,12 +516,49 @@ for my $tref ( @NumTests ){
 {
     local $~ = '';
     eval { write };
-    like $@, qr/Not a format reference/, 'format reference';
+    like $@, qr/Undefined format ""/, 'format with 0-length name';
+
+    $~ = "\0foo";
+    eval { write };
+    like $@, qr/Undefined format "\0foo"/,
+	'no such format beginning with null';
 
     $~ = "NOSUCHFORMAT";
     eval { write };
-    like $@, qr/Undefined format/, 'no such format';
+    like $@, qr/Undefined format "NOSUCHFORMAT"/, 'no such format';
 }
+
+select +(select(OUT21), do {
+    open(OUT21, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+
+    format OUT21 =
+@<<
+$_
+.
+
+    local $^ = '';
+    local $= = 1;
+    $_ = "aataaaaaaaaaaaaaa"; eval { write(OUT21) };
+    like $@, qr/Undefined top format ""/, 'top format with 0-length name';
+
+    $^ = "\0foo";
+    # For some reason, we have to do this twice to get the error again.
+    $_ = "aataaaaaaaaaaaaaa"; eval { write(OUT21) };
+    $_ = "aataaaaaaaaaaaaaa"; eval { write(OUT21) };
+    like $@, qr/Undefined top format "\0foo"/,
+	'no such top format beginning with null';
+
+    $^ = "NOSUCHFORMAT";
+    $_ = "aataaaaaaaaaaaaaa"; eval { write(OUT21) };
+    $_ = "aataaaaaaaaaaaaaa"; eval { write(OUT21) };
+    like $@, qr/Undefined top format "NOSUCHFORMAT"/, 'no such top format';
+
+    # reset things;
+    eval { write(OUT21) };
+    undef $^A;
+
+    close OUT21 or die "Could not close: $!";
+})[0];
 
 {
   package Count;
@@ -784,6 +833,286 @@ formline $zamm;
 printf ">%s<\n", ref $zamm;
 print "$zamm->[0]\n";
 EOP
+
+# [perl #73690]
+
+select +(select(RT73690), do {
+    open(RT73690, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+    format RT73690 =
+@<< @<<
+11, 22
+.
+
+    my @ret;
+
+    @ret = write;
+    is(scalar(@ret), 1);
+    ok($ret[0]);
+    @ret = scalar(write);
+    is(scalar(@ret), 1);
+    ok($ret[0]);
+    @ret = write(RT73690);
+    is(scalar(@ret), 1);
+    ok($ret[0]);
+    @ret = scalar(write(RT73690));
+    is(scalar(@ret), 1);
+    ok($ret[0]);
+
+    @ret = ('a', write, 'z');
+    is(scalar(@ret), 3);
+    is($ret[0], 'a');
+    ok($ret[1]);
+    is($ret[2], 'z');
+    @ret = ('b', scalar(write), 'y');
+    is(scalar(@ret), 3);
+    is($ret[0], 'b');
+    ok($ret[1]);
+    is($ret[2], 'y');
+    @ret = ('c', write(RT73690), 'x');
+    is(scalar(@ret), 3);
+    is($ret[0], 'c');
+    ok($ret[1]);
+    is($ret[2], 'x');
+    @ret = ('d', scalar(write(RT73690)), 'w');
+    is(scalar(@ret), 3);
+    is($ret[0], 'd');
+    ok($ret[1]);
+    is($ret[2], 'w');
+
+    @ret = do { write; 'foo' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'foo');
+    @ret = do { scalar(write); 'bar' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'bar');
+    @ret = do { write(RT73690); 'baz' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'baz');
+    @ret = do { scalar(write(RT73690)); 'quux' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'quux');
+
+    @ret = ('a', do { write; 'foo' }, 'z');
+    is(scalar(@ret), 3);
+    is($ret[0], 'a');
+    is($ret[1], 'foo');
+    is($ret[2], 'z');
+    @ret = ('b', do { scalar(write); 'bar' }, 'y');
+    is(scalar(@ret), 3);
+    is($ret[0], 'b');
+    is($ret[1], 'bar');
+    is($ret[2], 'y');
+    @ret = ('c', do { write(RT73690); 'baz' }, 'x');
+    is(scalar(@ret), 3);
+    is($ret[0], 'c');
+    is($ret[1], 'baz');
+    is($ret[2], 'x');
+    @ret = ('d', do { scalar(write(RT73690)); 'quux' }, 'w');
+    is(scalar(@ret), 3);
+    is($ret[0], 'd');
+    is($ret[1], 'quux');
+    is($ret[2], 'w');
+
+    close RT73690 or die "Could not close: $!";
+})[0];
+
+select +(select(RT73690_2), do {
+    open(RT73690_2, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+    format RT73690_2 =
+@<< @<<
+return
+.
+
+    my @ret;
+
+    @ret = write;
+    is(scalar(@ret), 1);
+    ok(!$ret[0]);
+    @ret = scalar(write);
+    is(scalar(@ret), 1);
+    ok(!$ret[0]);
+    @ret = write(RT73690_2);
+    is(scalar(@ret), 1);
+    ok(!$ret[0]);
+    @ret = scalar(write(RT73690_2));
+    is(scalar(@ret), 1);
+    ok(!$ret[0]);
+
+    @ret = ('a', write, 'z');
+    is(scalar(@ret), 3);
+    is($ret[0], 'a');
+    ok(!$ret[1]);
+    is($ret[2], 'z');
+    @ret = ('b', scalar(write), 'y');
+    is(scalar(@ret), 3);
+    is($ret[0], 'b');
+    ok(!$ret[1]);
+    is($ret[2], 'y');
+    @ret = ('c', write(RT73690_2), 'x');
+    is(scalar(@ret), 3);
+    is($ret[0], 'c');
+    ok(!$ret[1]);
+    is($ret[2], 'x');
+    @ret = ('d', scalar(write(RT73690_2)), 'w');
+    is(scalar(@ret), 3);
+    is($ret[0], 'd');
+    ok(!$ret[1]);
+    is($ret[2], 'w');
+
+    @ret = do { write; 'foo' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'foo');
+    @ret = do { scalar(write); 'bar' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'bar');
+    @ret = do { write(RT73690_2); 'baz' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'baz');
+    @ret = do { scalar(write(RT73690_2)); 'quux' };
+    is(scalar(@ret), 1);
+    is($ret[0], 'quux');
+
+    @ret = ('a', do { write; 'foo' }, 'z');
+    is(scalar(@ret), 3);
+    is($ret[0], 'a');
+    is($ret[1], 'foo');
+    is($ret[2], 'z');
+    @ret = ('b', do { scalar(write); 'bar' }, 'y');
+    is(scalar(@ret), 3);
+    is($ret[0], 'b');
+    is($ret[1], 'bar');
+    is($ret[2], 'y');
+    @ret = ('c', do { write(RT73690_2); 'baz' }, 'x');
+    is(scalar(@ret), 3);
+    is($ret[0], 'c');
+    is($ret[1], 'baz');
+    is($ret[2], 'x');
+    @ret = ('d', do { scalar(write(RT73690_2)); 'quux' }, 'w');
+    is(scalar(@ret), 3);
+    is($ret[0], 'd');
+    is($ret[1], 'quux');
+    is($ret[2], 'w');
+
+    close RT73690_2 or die "Could not close: $!";
+})[0];
+
+open(UNDEF, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+select +(select(UNDEF), $~ = "UNDEFFORMAT")[0];
+format UNDEFFORMAT =
+@
+undef *UNDEFFORMAT
+.
+write UNDEF;
+pass "active format cannot be freed";
+
+select +(select(UNDEF), $~ = "UNDEFFORMAT2")[0];
+format UNDEFFORMAT2 =
+@
+close UNDEF or die "Could not close: $!"; undef *UNDEF
+.
+write UNDEF;
+pass "freeing current handle in format";
+undef $^A;
+
+ok !eval q|
+format foo {
+@<<<
+$a
+}
+;1
+|, 'format foo { ... } is not allowed';
+
+ok !eval q|
+format =
+@<<<
+}
+;1
+|, 'format = ... } is not allowed';
+
+open(NEST, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+format NEST =
+@<<<
+{
+    my $birds = "birds";
+    local *NEST = *BIRDS{FORMAT};
+    write NEST;
+    format BIRDS =
+@<<<<<
+$birds;
+.
+    "nest"
+}
+.
+write NEST;
+close NEST or die "Could not close: $!";
+is cat('Op_write.tmp'), "birds\nnest\n", 'nested formats';
+
+# A compilation error should not create a format
+eval q|
+format ERROR =
+@
+@_ =~ s///
+.
+|;
+eval { write ERROR };
+like $@, qr'Undefined format',
+    'formats with compilation errors are not created';
+
+# This syntax error used to cause a crash, double free, or a least
+# a bad read.
+# See the long-winded explanation at:
+#   https://rt.perl.org/rt3/Ticket/Display.html?id=43425#txn-1144500
+eval q|
+format =
+@
+use;format
+strict
+.
+|;
+pass('no crash with invalid use/format inside format');
+
+
+# Low-precedence operators on argument line
+format AND =
+@
+0 and die
+.
+$- = $=;
+ok eval { local $~ = "AND"; print "# "; write; 1 },
+    "low-prec ops on arg line" or diag $@;
+
+# Anonymous hashes
+open(HASH, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+format HASH =
+@<<<
+${{qw[ Sun 0 Mon 1 Tue 2 Wed 3 Thu 4 Fri 5 Sat 6 ]}}{"Wed"}
+.
+write HASH;
+close HASH or die "Could not close: $!";
+is cat('Op_write.tmp'), "3\n", 'anonymous hashes';
+
+# pragmata inside argument line
+open(STRICT, '>Op_write.tmp') || die "Can't create Op_write.tmp";
+format STRICT =
+@<<<
+no strict; $foo
+.
+$::foo = 'oof::$';
+write STRICT;
+close STRICT or die "Could not close: $!";
+is cat('Op_write.tmp'), "oof:\n", 'pragmata on format line';
+
+SKIP: {
+   skip "no weak refs" unless eval { require Scalar::Util };
+   sub Potshriggley {
+format Potshriggley =
+.
+   }
+   Scalar::Util::weaken(my $x = *Potshriggley{FORMAT});
+   undef *Potshriggley;
+   is $x, undef, 'formats in subs do not leak';
+}
+
 
 #############################
 ## Section 4

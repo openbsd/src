@@ -83,6 +83,18 @@ struct gp {
 
 Return the SV from the GV.
 
+=for apidoc Am|AV*|GvAV|GV* gv
+
+Return the AV from the GV.
+
+=for apidoc Am|HV*|GvHV|GV* gv
+
+Return the HV from the GV.
+
+=for apidoc Am|CV*|GvCV|GV* gv
+
+Return the CV from the GV.
+
 =cut
 */
 
@@ -223,6 +235,9 @@ Return the SV from the GV.
 #define GV_NO_SVGMAGIC	0x800	/* Skip get-magic on an SV argument;
 				   used only by gv_fetchsv(_nomg) */
 
+/* Flags for gv_fetchmeth_pvn and gv_autoload_pvn*/
+#define GV_SUPER	0x1000	/* SUPER::method */
+
 /* Flags for gv_autoload_*/
 #define GV_AUTOLOAD_ISMETHOD 1	/* autoloading a method? */
 
@@ -249,6 +264,13 @@ Return the SV from the GV.
 #define gv_autoload4(stash, name, len, method) \
 	gv_autoload_pvn(stash, name, len, !!(method))
 #define newGVgen(pack)  newGVgen_flags(pack, 0)
+#define gv_method_changed(gv)		    \
+    (					     \
+    	assert_(isGV_with_GP(gv))	      \
+	GvREFCNT(gv) > 1		       \
+	    ? (void)++PL_sub_generation		\
+	    : mro_method_changed_in(GvSTASH(gv)) \
+    )
 
 #define gv_AVadd(gv) gv_add_by_type((gv), SVt_PVAV)
 #define gv_HVadd(gv) gv_add_by_type((gv), SVt_PVHV)
@@ -259,8 +281,8 @@ Return the SV from the GV.
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

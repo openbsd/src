@@ -90,7 +90,7 @@ A similar trick involves the I<env> program, if you have it.
 
 The examples above use a relative path to the perl interpreter,
 getting whatever version is first in the user's path.  If you want
-a specific version of Perl, say, perl5.005_57, you should place
+a specific version of Perl, say, perl5.14.1, you should place
 that directly in the C<#!> line's path.
 
 If the C<#!> line does not contain the word "perl" nor the word "indir"
@@ -205,12 +205,12 @@ In this documentation, C<#!/usr/bin/perl> on the first line of the program
 will stand in for whatever method works on your system.  You are
 advised to use a specific path if you care about a specific version.
 
-    #!/usr/local/bin/perl5.00554
+    #!/usr/local/bin/perl5.14
 
 or if you just want to be running at least version, place a statement
 like this at the top of your program:
 
-    use 5.005_54;
+    use 5.014;
 
 =head2 Command Switches
 X<perl, command switches> X<command switches>
@@ -400,6 +400,7 @@ B<-D14> is equivalent to B<-Dtls>):
      8192  H  Hash dump -- usurps values()
     16384  X  Scratchpad allocation
     32768  D  Cleaning up
+    65536  S  Op slab allocation
    131072  T  Tokenizing
    262144  R  Include reference counts of dumped variables (eg when
               using -Ds)
@@ -505,8 +506,10 @@ default for print() statements.  The extension, if supplied, is used to
 modify the name of the old file to make a backup copy, following these
 rules:
 
-If no extension is supplied, no backup is made and the current file is
-overwritten.
+If no extension is supplied, and your system supports it, the original
+I<file> is kept open without a name while the output is redirected to
+a new file with the original I<filename>.  When perl exits, cleanly or not,
+the original I<file> is unlinked.
 
 If the extension doesn't contain a C<*>, then it is appended to the
 end of the current filename as a suffix.  If the extension does
@@ -976,9 +979,13 @@ X<PERL5LIB>
 
 A list of directories in which to look for Perl library
 files before looking in the standard library and the current
-directory.  Any architecture-specific directories under the specified
-locations are automatically included if they exist, with this lookup
-done at interpreter startup time.
+directory.  Any architecture-specific and version-specific directories,
+such as F<version/archname/>, F<version/>, or F<archname/> under the
+specified locations are automatically included if they exist, with this
+lookup done at interpreter startup time.  In addition, any directories
+matching the entries in C<$Config{inc_version_list}> are added.
+(These typically would be for older compatible perl versions installed
+in the same directory tree.)
 
 If PERL5LIB is not defined, PERLLIB is used.  Directories are separated
 (like in PATH) by a colon on Unixish platforms and by a semicolon on
@@ -999,7 +1006,7 @@ as if they were on every Perl command line.  Only the B<-[CDIMUdmtwW]>
 switches are allowed.  When running taint checks (either because the
 program was running setuid or setgid, or because the B<-T> or B<-t>
 switch was used), this variable is ignored.  If PERL5OPT begins with
-B<- T>, tainting will be enabled and subsequent options ignored.  If
+B<-T>, tainting will be enabled and subsequent options ignored.  If
 PERL5OPT begins with B<-t>, tainting will be enabled, a writable dot
 removed from @INC, and subsequent options honored.
 
@@ -1011,7 +1018,7 @@ to use PerlIO system for IO (the default) these layers affect Perl's IO.
 
 It is conventional to start layer names with a colon (for example, C<:perlio>) to
 emphasize their similarity to variable "attributes". But the code that parses
-layer specification strings,  which is also used to decode the PERLIO
+layer specification strings, which is also used to decode the PERLIO
 environment variable, treats the colon as a separator.
 
 An unset or empty PERLIO is equivalent to the default set of layers for
@@ -1020,7 +1027,7 @@ and C<:unix:crlf> on Windows and other DOS-like systems.
 
 The list becomes the default for I<all> Perl's IO. Consequently only built-in
 layers can appear in this list, as external layers (such as C<:encoding()>) need
-IO in  order to load them!. See L<"open pragma"|open> for how to add external
+IO in order to load them!  See L<"open pragma"|open> for how to add external
 encodings as defaults.
 
 Layers it makes sense to include in the PERLIO environment
@@ -1133,7 +1140,7 @@ is run in taint mode.
 X<PERLIO_DEBUG>
 
 If set to the name of a file or device, certain operations of PerlIO
-subsystem will be logged to that file, which is opened in append mode
+subsystem will be logged to that file, which is opened in append mode.
 Typical uses are in Unix:
 
    % env PERLIO_DEBUG=/dev/tty perl script ...
@@ -1244,45 +1251,70 @@ PERL_ENCODING environment variable is consulted for an encoding name.
 =item PERL_HASH_SEED
 X<PERL_HASH_SEED>
 
-(Since Perl 5.8.1.)  Used to randomize Perl's internal hash function.
-To emulate the pre-5.8.1 behaviour, set to an integer; C<"0"> means
-exactly the same order as in 5.8.0.  "Pre-5.8.1" means, among other
-things, that hash keys will always have the same ordering between
-different runs of Perl.
+(Since Perl 5.8.1, new semantics in Perl 5.18.0)  Used to override
+the randomization of Perl's internal hash function. The value is expressed
+in hexadecimal, and may include a leading 0x. Truncated patterns
+are treated as though they are suffixed with sufficient 0's as required.
 
-Most hashes by default return elements in the same order as in Perl 5.8.0.
-On a hash by hash basis, if pathological data is detected during a hash
-key insertion, then that hash will switch to an alternative random hash
-seed.
-
-The default behaviour is to randomize unless the PERL_HASH_SEED is set.
-If Perl has been compiled with B<-DUSE_HASH_SEED_EXPLICIT>, the default
-behaviour is I<not> to randomize unless the PERL_HASH_SEED is set.
-
-If PERL_HASH_SEED is unset or set to a non-numeric string, Perl uses
-the pseudorandom seed supplied by the operating system and libraries.
+If the option is provided, and C<PERL_PERTURB_KEYS> is NOT set, then
+a value of '0' implies C<PERL_PERTURB_KEYS=0> and any other value
+implies C<PERL_PERTURB_KEYS=2>.
 
 B<PLEASE NOTE: The hash seed is sensitive information>. Hashes are
 randomized to protect against local and remote attacks against Perl
 code. By manually setting a seed, this protection may be partially or
 completely lost.
 
-See L<perlsec/"Algorithmic Complexity Attacks"> and
+See L<perlsec/"Algorithmic Complexity Attacks"> and L</PERL_PERTURB_KEYS>
 L</PERL_HASH_SEED_DEBUG> for more information.
+
+=item PERL_PERTURB_KEYS
+X<PERL_PERTURB_KEYS>
+
+(Since Perl 5.18.0)  Set to C<"0"> or C<"NO"> then traversing keys
+will be repeatable from run to run for the same PERL_HASH_SEED.
+Insertion into a hash will not change the order, except to provide
+for more space in the hash. When combined with setting PERL_HASH_SEED
+this mode is as close to pre 5.18 behavior as you can get.
+
+When set to C<"1"> or C<"RANDOM"> then traversing keys will be randomized.
+Every time a hash is inserted into the key order will change in a random
+fashion. The order may not be repeatable in a following program run
+even if the PERL_HASH_SEED has been specified. This is the default
+mode for perl.
+
+When set to C<"2"> or C<"DETERMINISTIC"> then inserting keys into a hash
+will cause the key order to change, but in a way that is repeatable
+from program run to program run.
+
+B<NOTE:> Use of this option is considered insecure, and is intended only
+for debugging non-deterministic behavior in Perl's hash function. Do
+not use it in production.
+
+See L<perlsec/"Algorithmic Complexity Attacks"> and L</PERL_HASH_SEED>
+and L</PERL_HASH_SEED_DEBUG> for more information. You can get and set the
+key traversal mask for a specific hash by using the C<hash_traversal_mask()>
+function from L<Hash::Util>.
 
 =item PERL_HASH_SEED_DEBUG
 X<PERL_HASH_SEED_DEBUG>
 
-(Since Perl 5.8.1.)  Set to C<"1"> to display (to STDERR) the value of
-the hash seed at the beginning of execution.  This, combined with
-L</PERL_HASH_SEED> is intended to aid in debugging nondeterministic
-behaviour caused by hash randomization.
+(Since Perl 5.8.1.)  Set to C<"1"> to display (to STDERR) information
+about the hash function, seed, and what type of key traversal
+randomization is in effect at the beginning of execution.  This, combined
+with L</PERL_HASH_SEED> and L</PERL_PERTURB_KEYS> is intended to aid in
+debugging nondeterministic behaviour caused by hash randomization.
 
-B<Note that the hash seed is sensitive information>: by knowing it, one
-can craft a denial-of-service attack against Perl code, even remotely;
-see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
-B<Do not disclose the hash seed> to people who don't need to know it.
-See also hash_seed() in L<Hash::Util>.
+B<Note> that any information about the hash function, especially the hash
+seed is B<sensitive information>: by knowing it, one can craft a denial-of-service
+attack against Perl code, even remotely; see L<perlsec/"Algorithmic Complexity Attacks">
+for more information. B<Do not disclose the hash seed> to people who
+don't need to know it. See also C<hash_seed()> and
+C<key_traversal_mask()> in L<Hash::Util>.
+
+An example output might be:
+
+    HASH_FUNCTION = ONE_AT_A_TIME_HARD HASH_SEED = 0x652e9b9349a7a032 PERTURB_KEYS = 1 (RANDOM)
 
 =item PERL_MEM_LOG
 X<PERL_MEM_LOG>

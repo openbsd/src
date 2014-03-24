@@ -31,7 +31,7 @@ For example, to trap an interrupt signal, set up a handler like this:
     $SIG{INT} = __PACKAGE__ . "::catch_zap";  
     $SIG{INT} = \&catch_zap;  # best strategy
 
-Prior to Perl 5.7.3 it was necessary to do as little as you possibly
+Prior to Perl 5.8.0 it was necessary to do as little as you possibly
 could in your handler; notice how all we do is set a global variable
 and then raise an exception.  That's because on most systems,
 libraries are not re-entrant; particularly, memory allocation and I/O
@@ -224,7 +224,7 @@ info to show that it works; it should be replaced with the real code.
 
 =head2 Deferred Signals (Safe Signals)
 
-Before Perl 5.7.3, installing Perl code to deal with signals exposed you to
+Before Perl 5.8.0, installing Perl code to deal with signals exposed you to
 danger from two things.  First, few system library functions are
 re-entrant.  If the signal interrupts while Perl is executing one function
 (like malloc(3) or printf(3)), and your signal handler then calls the same
@@ -244,7 +244,7 @@ The pragmatic approach was to say "I know the risks, but prefer the
 convenience", and to do anything you wanted in your signal handler,
 and be prepared to clean up core dumps now and again.
 
-Perl 5.7.3 and later avoid these problems by "deferring" signals.  That is,
+Perl 5.8.0 and later avoid these problems by "deferring" signals.  That is,
 when the signal is delivered to the process by the system (to the C code
 that implements Perl) a flag is set, and the handler returns immediately.
 Then at strategic "safe" points in the Perl interpreter (e.g. when it is
@@ -293,7 +293,7 @@ that you want to be able to break into with signals. (The C<:perlio> layer
 checks the signal flags and calls %SIG handlers before resuming IO
 operation.)
 
-The default in Perl 5.7.3 and later is to automatically use
+The default in Perl 5.8.0 and later is to automatically use
 the C<:perlio> layer.
 
 Note that it is not advisable to access a file handle within a signal
@@ -328,7 +328,7 @@ On systems that supported it, older versions of Perl used the
 SA_RESTART flag when installing %SIG handlers.  This meant that
 restartable system calls would continue rather than returning when
 a signal arrived.  In order to deliver deferred signals promptly,
-Perl 5.7.3 and later do I<not> use SA_RESTART.  Consequently, 
+Perl 5.8.0 and later do I<not> use SA_RESTART.  Consequently, 
 restartable system calls can fail (with $! set to C<EINTR>) in places
 where they previously would have succeeded.
 
@@ -521,7 +521,7 @@ output doesn't wind up on the user's terminal.
         open(STDOUT, "> /dev/null")     || die "can't write to /dev/null: $!";
         defined(my $pid = fork())       || die "can't fork: $!";
         exit if $pid;                   # non-zero now means I am the parent
-        (setsid() != -1)                || die "Can't start a new session: $!" 
+        (setsid() != -1)                || die "Can't start a new session: $!";
         open(STDERR, ">&STDOUT")        || die "can't dup stdout: $!";
     }
 
@@ -1096,7 +1096,7 @@ living dead.
 Within the while loop we call accept() and check to see if it returns
 a false value.  This would normally indicate a system error needs
 to be reported.  However, the introduction of safe signals (see
-L</Deferred Signals (Safe Signals)> above) in Perl 5.7.3 means that
+L</Deferred Signals (Safe Signals)> above) in Perl 5.8.0 means that
 accept() might also be interrupted when the process receives a signal.
 This typically happens when one of the forked subprocesses exits and
 notifies the parent process with a CHLD signal.  
@@ -1277,10 +1277,8 @@ as a Unix-domain client and connects to your private server.
 =head1 TCP Clients with IO::Socket
 
 For those preferring a higher-level interface to socket programming, the
-IO::Socket module provides an object-oriented approach.  IO::Socket has
-been included in the standard Perl distribution ever since Perl 5.004.  If
-you're running an earlier version of Perl (in which case, how are you
-reading this manpage?), just fetch IO::Socket from CPAN, where you'll also
+IO::Socket module provides an object-oriented approach.  If for some reason
+you lack this module, you can just fetch IO::Socket from CPAN, where you'll also
 find modules providing easy interfaces to the following systems: DNS, FTP,
 Ident (RFC 931), NIS and NISPlus, NNTP, Ping, POP3, SMTP, SNMP, SSLeay,
 Telnet, and Time--to name just a few.
@@ -1700,8 +1698,8 @@ Here's an example of a semaphore:
 
     $IPC_KEY = 1234;
     $id = semget($IPC_KEY, 10, 0666 | IPC_CREAT);
-    defined($id)                    || die "shmget: $!";
-    print "shm key $id\n";
+    defined($id)                    || die "semget: $!";
+    print "sem id $id\n";
 
 Put this code in a separate file to be run in more than one process.
 Call the file F<take>:
@@ -1710,7 +1708,7 @@ Call the file F<take>:
 
     $IPC_KEY = 1234;
     $id = semget($IPC_KEY, 0, 0);
-    defined($id)                    || die "shmget: $!";
+    defined($id)                    || die "semget: $!";
 
     $semnum  = 0;
     $semflag = 0;
@@ -1748,8 +1746,7 @@ Call this file F<give>:
     semop($id, $opstring)   || die "semop: $!";
 
 The SysV IPC code above was written long ago, and it's definitely
-clunky looking.  For a more modern look, see the IPC::SysV module
-which is included with Perl starting from Perl 5.005.
+clunky looking.  For a more modern look, see the IPC::SysV module.
 
 A small example demonstrating SysV message queues:
 

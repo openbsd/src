@@ -19,7 +19,7 @@ and install them on their own computer.
 
 First, are you sure that the module isn't already on your system?  Try
 C<perl -MFoo -e 1>.  (Replace "Foo" with the name of the module; for
-instance, C<perl -MCGI::Carp -e 1>.
+instance, C<perl -MCGI::Carp -e 1>.)
 
 If you don't see an error message, you have the module.  (If you do
 see an error message, it's still possible you have the module, but
@@ -53,7 +53,7 @@ module into your system's repository of Perl modules, but you can
 install modules into any directory you wish.  For instance, where I
 say C<perl Makefile.PL>, you can substitute C<perl Makefile.PL
 PREFIX=/my/perl_directory> to install the modules into
-C</my/perl_directory>.  Then you can use the modules from your Perl
+F</my/perl_directory>.  Then you can use the modules from your Perl
 programs with C<use lib "/my/perl_directory/lib/site_perl";> or
 sometimes just C<use "/my/perl_directory";>.  If you're on a system
 that requires superuser/root access to install modules into the
@@ -117,7 +117,7 @@ that includes the module.  Again, you'll probably need to be root.
 
 =item *
 
-B<If you're running ActivePerl (Win95/98/2K/NT/XP, Linux, Solaris)>
+B<If you're running ActivePerl (Win95/98/2K/NT/XP, Linux, Solaris),>
 
 First, type C<ppm> from a shell and see whether ActiveState's PPM
 repository has your module.  If so, you can install it with C<ppm> and

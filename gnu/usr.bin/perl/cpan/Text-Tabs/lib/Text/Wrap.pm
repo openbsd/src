@@ -7,7 +7,7 @@ require Exporter;
 @EXPORT = qw(wrap fill);
 @EXPORT_OK = qw($columns $break $huge);
 
-$VERSION = 2012.0818;
+$VERSION = 2013.0523;
 $SUBVERSION = 'modern';
 
 use 5.010_000;
@@ -64,7 +64,7 @@ sub wrap
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
 			$remainder = $2;
-		} elsif ($huge eq 'wrap' && $t =~ /\G((?:(?!=[^\n])\X){$ll})/gc) {
+		} elsif ($huge eq 'wrap' && $t =~ /\G((?:(?=[^\n])\X){$ll})/gc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
@@ -293,7 +293,8 @@ many many others.
 =head1 LICENSE
 
 Copyright (C) 1996-2009 David Muir Sharnoff.  
-Copyright (C) 2012 Google, Inc.
+Copyright (C) 2012-2013 Google, Inc.
 This module may be modified, used, copied, and redistributed at your own risk.
-Publicly redistributed modified versions must use a different name.
-
+Although allowed by the preceding license, please do not publicly
+redistribute modified versions of this code with the name "Text::Wrap"
+unless it passes the unmodified Text::Wrap test suite.

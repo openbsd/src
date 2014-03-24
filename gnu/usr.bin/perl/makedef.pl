@@ -87,9 +87,12 @@ process_cc_flags(@Config{qw(ccflags optimize)})
 # the user might have chosen to disable because the canned configs are
 # minimal configs that don't include any of those options.
 
-my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
-print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
-$define{$_} = 1 foreach @options;
+#don't use the host Perl's -V defines for the WinCE Perl
+if($ARGS{PLATFORM} ne 'wince') {
+    my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+    print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
+    $define{$_} = 1 foreach @options;
+}
 
 my %exportperlmalloc =
     (
@@ -101,19 +104,17 @@ my %exportperlmalloc =
 
 my $exportperlmalloc = $ARGS{PLATFORM} eq 'os2';
 
-open(CFG, '<', 'config.h') || die "Cannot open config.h: $!\n";
+my $config_h = $ARGS{PLATFORM} eq 'wince' ? 'xconfig.h' : 'config.h';
+open(CFG, '<', $config_h) || die "Cannot open $config_h: $!\n";
 while (<CFG>) {
     $define{$1} = 1 if /^\s*\#\s*define\s+(MYMALLOC|MULTIPLICITY
                                            |SPRINTF_RETURNS_STRLEN
+                                           |KILL_BY_SIGPRC
                                            |(?:PERL|USE|HAS)_\w+)\b/x;
 }
 close(CFG);
 
 # perl.h logic duplication begins
-
-if ($define{PERL_IMPLICIT_SYS}) {
-    $define{PL_OP_SLAB_ALLOC} = 1;
-}
 
 if ($define{USE_ITHREADS}) {
     if (!$define{MULTIPLICITY}) {
@@ -247,7 +248,6 @@ unless ($define{'DEBUGGING'}) {
 		    Perl_pad_sv
 		    Perl_pad_setsv
 		    Perl_hv_assert
-		    PL_block_type
 		    PL_watchaddr
 		    PL_watchok
 		    PL_watch_pvx
@@ -278,8 +278,13 @@ else {
 			 );
 }
 
-unless ($define{'PERL_OLD_COPY_ON_WRITE'}) {
+unless ($define{'PERL_OLD_COPY_ON_WRITE'}
+     || $define{'PERL_NEW_COPY_ON_WRITE'}) {
     ++$skip{Perl_sv_setsv_cow};
+}
+
+unless ($define{PERL_SAWAMPERSAND}) {
+    ++$skip{PL_sawampersand};
 }
 
 unless ($define{'USE_REENTRANT_API'}) {
@@ -355,6 +360,10 @@ unless ($define{'USE_ITHREADS'}) {
 		    PL_hints_mutex
 		    PL_my_ctx_mutex
 		    PL_perlio_mutex
+		    PL_stashpad
+		    PL_stashpadix
+		    PL_stashpadmax
+		    Perl_alloccopstash
 		    Perl_clone_params_del
 		    Perl_clone_params_new
 		    Perl_parser_dup
@@ -405,23 +414,6 @@ unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
 			 );
 }
 
-unless ($define{'PL_OP_SLAB_ALLOC'}) {
-    ++$skip{$_} foreach qw(
-                     PL_OpPtr
-                     PL_OpSlab
-                     PL_OpSpace
-		     Perl_Slab_Alloc
-		     Perl_Slab_Free
-			 );
-}
-
-unless ($define{'PERL_DEBUG_READONLY_OPS'}) {
-    ++$skip{$_} foreach qw(
-		    PL_slab_count
-		    PL_slabs
-			 );
-}
-
 unless ($define{'PERL_NEED_APPCTX'}) {
     ++$skip{PL_appctx};
 }
@@ -464,7 +456,7 @@ unless ($define{PERL_MAD}) {
 unless ($define{'MULTIPLICITY'}) {
     ++$skip{$_} foreach qw(
 		    PL_interp_size
-		    PL_interp_size_5_16_0
+		    PL_interp_size_5_18_0
 			 );
 }
 
@@ -489,7 +481,17 @@ if ($define{HAS_SIGACTION}) {
     if ($ARGS{PLATFORM} eq 'vms') {
         # FAKE_PERSISTENT_SIGNAL_HANDLERS defined as !defined(HAS_SIGACTION)
         ++$skip{PL_sig_ignoring};
+        ++$skip{PL_sig_handlers_initted} unless $define{KILL_BY_SIGPRC};
     }
+}
+
+if ($ARGS{PLATFORM} eq 'vms' && !$define{KILL_BY_SIGPRC}) {
+    # FAKE_DEFAULT_SIGNAL_HANDLERS defined as KILL_BY_SIGPRC
+    ++$skip{Perl_csighandler_init};
+    ++$skip{Perl_my_kill};
+    ++$skip{Perl_sig_to_vmscondition};
+    ++$skip{PL_sig_defaulting};
+    ++$skip{PL_sig_handlers_initted} unless !$define{HAS_SIGACTION};
 }
 
 unless ($define{USE_LOCALE_COLLATE}) {
@@ -532,7 +534,8 @@ if ($define{'PERL_GLOBAL_STRUCT'}) {
     # is mentioned in perlvar.h and globvar.sym, and always exported.
     delete $skip{PL_sh_path};
     ++$export{Perl_GetVars};
-    try_symbols(qw(PL_Vars PL_VarsPtr)) unless $ARGS{CCTYPE} eq 'GCC';
+    try_symbols(qw(PL_Vars PL_VarsPtr))
+      unless $ARGS{CCTYPE} eq 'GCC' || $define{PERL_GLOBAL_STRUCT_PRIVATE};
 } else {
     ++$skip{$_} foreach qw(Perl_init_global_struct Perl_free_global_struct);
 }
@@ -744,7 +747,7 @@ if ($define{'USE_PERLIO'}) {
     foreach (@$embed) {
 	my ($flags, $retval, $func, @args) = @$_;
 	next unless $func;
-	if ($flags =~ /[AX]/ && $flags !~ /[xm]/ || $flags =~ /b/) {
+	if ($flags =~ /[AX]/ && $flags !~ /[xmi]/ || $flags =~ /b/) {
 	    # public API, so export
 
 	    # If a function is defined twice, for example before and after
@@ -752,7 +755,8 @@ if ($define{'USE_PERLIO'}) {
 	    # within the block, as the *first* definition may have flags which
 	    # mean "don't export"
 	    next if $seen{$func}++;
-	    $func = "Perl_$func" if $flags =~ /[pbX]/;
+	    # Should we also skip adding the Perl_ prefix if $flags =~ /o/ ?
+	    $func = "Perl_$func" if ($flags =~ /[pbX]/ && $func !~ /^Perl_/); 
 	    ++$export{$func} unless exists $skip{$func};
 	}
     }
@@ -804,14 +808,16 @@ try_symbols(qw(
 
 if ($ARGS{PLATFORM} eq 'win32') {
     try_symbols(qw(
-				 setgid
-				 setuid
 				 win32_free_childdir
 				 win32_free_childenv
 				 win32_get_childdir
 				 win32_get_childenv
 				 win32_spawnvp
 		 ));
+}
+
+if ($ARGS{PLATFORM} eq 'wince') {
+    ++$skip{'win32_isatty'}; # commit 4342f4d6df is win32-only
 }
 
 if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {

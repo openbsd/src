@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 2.8 2011/08/09 07:49:44 dankogai Exp dankogai $
+ $Id: Unicode.xs,v 2.9 2012/08/05 23:08:49 dankogai Exp $
  */
 
 #define PERL_NO_GET_CONTEXT
@@ -199,10 +199,6 @@ CODE:
 			  *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 			  ord);
 		}
-		if (s+size <= e) {
-		    /* skip the next one as well */
-		    enc_unpack(aTHX_ &s,e,size,endian);
-		}
 		ord = FBCHAR;
 	    }
 	    else {
@@ -217,12 +213,23 @@ CODE:
 			ord = FBCHAR;
 		    }
 		}
-		else {
-		    if (s+size > e) {
-			/* Partial character */
-			s -= size;   /* back up to 1st half */
-			break;       /* And exit loop */
+		else if (s+size > e) {
+		    if (check) {
+		        if (check & ENCODE_STOP_AT_PARTIAL) {
+		             s -= size;
+		             break;
+		        }
+		        else {
+		             croak("%"SVf":Malformed HI surrogate %"UVxf,
+				   *hv_fetch((HV *)SvRV(obj),"Name",4,0),
+				   ord);
+		        }
 		    }
+		    else {
+		        ord = FBCHAR;
+		    }
+		}
+		else {
 		    lo = enc_unpack(aTHX_ &s,e,size,endian);
 		    if (!isLoSurrogate(lo)) {
 			if (check) {
@@ -231,6 +238,7 @@ CODE:
 				  ord);
 			}
 			else {
+			    s -= size;
 			    ord = FBCHAR;
 			}
 		    }
@@ -348,7 +356,7 @@ CODE:
 		if (ucs2 == -1) {
 		    ucs2 = SvTRUE(attr("ucs2", 4));
 		}
-		if (ucs2) {
+		if (ucs2 || ord > 0x10FFFF) {
 		    if (check) {
 			croak("%"SVf":code point \"\\x{%"UVxf"}\" too high",
 				  *hv_fetch((HV *)SvRV(obj),"Name",4,0),ord);

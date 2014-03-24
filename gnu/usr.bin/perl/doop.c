@@ -632,16 +632,14 @@ Perl_do_trans(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_DO_TRANS;
 
     if (SvREADONLY(sv) && !(PL_op->op_private & OPpTRANS_IDENTICAL)) {
-        if (SvIsCOW(sv))
-            sv_force_normal_flags(sv, 0);
-        if (SvREADONLY(sv))
-            Perl_croak_no_modify(aTHX);
+        if (!SvIsCOW(sv))
+            Perl_croak_no_modify();
     }
     (void)SvPV_const(sv, len);
     if (!len)
 	return 0;
     if (!(PL_op->op_private & OPpTRANS_IDENTICAL)) {
-	if (!SvPOKp(sv))
+	if (!SvPOKp(sv) || SvTHINKFIRST(sv))
 	    (void)SvPV_force_nomg(sv, len);
 	(void)SvPOK_only_UTF8(sv);
     }
@@ -673,12 +671,12 @@ Perl_do_trans(pTHX_ SV *sv)
 }
 
 void
-Perl_do_join(pTHX_ register SV *sv, SV *delim, register SV **mark, register SV **sp)
+Perl_do_join(pTHX_ SV *sv, SV *delim, SV **mark, SV **sp)
 {
     dVAR;
     SV ** const oldmark = mark;
-    register I32 items = sp - mark;
-    register STRLEN len;
+    I32 items = sp - mark;
+    STRLEN len;
     STRLEN delimlen;
 
     PERL_ARGS_ASSERT_DO_JOIN;
@@ -709,7 +707,7 @@ Perl_do_join(pTHX_ register SV *sv, SV *delim, register SV **mark, register SV *
     /* sv_setpv retains old UTF8ness [perl #24846] */
     SvUTF8_off(sv);
 
-    if (PL_tainting && SvMAGICAL(sv))
+    if (TAINTING_get && SvMAGICAL(sv))
 	SvTAINTED_off(sv);
 
     if (items-- > 0) {
@@ -720,7 +718,7 @@ Perl_do_join(pTHX_ register SV *sv, SV *delim, register SV **mark, register SV *
 
     if (delimlen) {
 	for (; items > 0; items--,mark++) {
-	    sv_catsv(sv,delim);
+	    sv_catsv_nomg(sv,delim);
 	    sv_catsv(sv,*mark);
 	}
     }
@@ -760,13 +758,19 @@ Perl_do_sprintf(pTHX_ SV *sv, I32 len, SV **sarg)
 
 /* currently converts input to bytes if possible, but doesn't sweat failure */
 UV
-Perl_do_vecget(pTHX_ SV *sv, I32 offset, I32 size)
+Perl_do_vecget(pTHX_ SV *sv, SSize_t offset, int size)
 {
     dVAR;
     STRLEN srclen, len, uoffset, bitoffs = 0;
-    const unsigned char *s = (const unsigned char *) SvPV_const(sv, srclen);
+    const unsigned char *s = (const unsigned char *) SvPV_flags_const(sv, srclen,
+                             SV_GMAGIC | ((PL_op->op_flags & OPf_MOD || LVRET)
+                                          ? SV_UNDEF_RETURNS_NULL : 0));
     UV retnum = 0;
 
+    if (!s) {
+      s = (const unsigned char *)"";
+    }
+    
     PERL_ARGS_ASSERT_DO_VECGET;
 
     if (offset < 0)
@@ -908,10 +912,10 @@ void
 Perl_do_vecset(pTHX_ SV *sv)
 {
     dVAR;
-    register I32 offset, bitoffs = 0;
-    register I32 size;
-    register unsigned char *s;
-    register UV lval;
+    SSize_t offset, bitoffs = 0;
+    int size;
+    unsigned char *s;
+    UV lval;
     I32 mask;
     STRLEN targlen;
     STRLEN len;
@@ -921,7 +925,8 @@ Perl_do_vecset(pTHX_ SV *sv)
 
     if (!targ)
 	return;
-    s = (unsigned char*)SvPV_force(targ, targlen);
+    s = (unsigned char*)SvPV_force_flags(targ, targlen,
+                                         SV_GMAGIC | SV_UNDEF_RETURNS_NULL);
     if (SvUTF8(targ)) {
 	/* This is handled by the SvPOK_only below...
 	if (!Perl_sv_utf8_downgrade(aTHX_ targ, TRUE))
@@ -995,16 +1000,16 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 {
     dVAR;
 #ifdef LIBERAL
-    register long *dl;
-    register long *ll;
-    register long *rl;
+    long *dl;
+    long *ll;
+    long *rl;
 #endif
-    register char *dc;
+    char *dc;
     STRLEN leftlen;
     STRLEN rightlen;
-    register const char *lc;
-    register const char *rc;
-    register STRLEN len;
+    const char *lc;
+    const char *rc;
+    STRLEN len;
     STRLEN lensave;
     const char *lsave;
     const char *rsave;
@@ -1124,12 +1129,12 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 	    else if (lulen)
 		dcsave = savepvn(lc, lulen);
 	    if (sv == left || sv == right)
-		(void)sv_usepvn(sv, dcorig, needlen); /* Uses Renew(). */
+		(void)sv_usepvn(sv, dcorig, needlen); /* uses Renew(); defaults to nomg */
 	    SvCUR_set(sv, dc - dcorig);
 	    if (rulen)
-		sv_catpvn(sv, dcsave, rulen);
+		sv_catpvn_nomg(sv, dcsave, rulen);
 	    else if (lulen)
-		sv_catpvn(sv, dcsave, lulen);
+		sv_catpvn_nomg(sv, dcsave, lulen);
 	    else
 		*SvEND(sv) = '\0';
 	    Safefree(dcsave);
@@ -1207,9 +1212,9 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 	  mop_up:
 	    len = lensave;
 	    if (rightlen > len)
-		sv_catpvn(sv, rsave + len, rightlen - len);
+		sv_catpvn_nomg(sv, rsave + len, rightlen - len);
 	    else if (leftlen > (STRLEN)len)
-		sv_catpvn(sv, lsave + len, leftlen - len);
+		sv_catpvn_nomg(sv, lsave + len, leftlen - len);
 	    else
 		*SvEND(sv) = '\0';
 	    break;
@@ -1225,7 +1230,7 @@ Perl_do_kv(pTHX)
     dVAR;
     dSP;
     HV * const keys = MUTABLE_HV(POPs);
-    register HE *entry;
+    HE *entry;
     const I32 gimme = GIMME_V;
     const I32 dokv =     (PL_op->op_type == OP_RV2HV || PL_op->op_type == OP_PADHV);
     /* op_type is OP_RKEYS/OP_RVALUES if pp_rkeys delegated to here */
@@ -1290,8 +1295,8 @@ Perl_do_kv(pTHX)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

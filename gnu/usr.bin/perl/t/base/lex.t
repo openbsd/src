@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..57\n";
+print "1..85\n";
 
 $x = 'x';
 
@@ -197,7 +197,7 @@ my $test = 42;
     local $_ = "not ok ";
     eval q{
 	s/^not /<<EOT/e and T '^main:\(eval \d+\):2$', $test++;
-# fuggedaboudit
+# uggedaboudit
 EOT
         print $_, $test++, "\n";
 	T('^main:\(eval \d+\):6$', $test++);
@@ -273,3 +273,130 @@ $test++;
 @a = (1,2,3);
 print "not " unless($a[~~2] == 3);
 print "ok 57\n";
+
+$_ = "";
+eval 's/(?:)/"${\q||}".<<\END/e;
+ok 58 - heredoc after "" in s/// in eval
+END
+';
+print $_ || "not ok 58\n";
+
+$_ = "";
+eval 's|(?:)|"${\<<\END}"
+ok 59 - heredoc in "" in multiline s///e in eval
+END
+|e
+';
+print $_ || "not ok 59\n";
+
+$_ = "";
+eval "s/(?:)/<<foo/e #\0
+ok 60 - null on same line as heredoc in s/// in eval
+foo
+";
+print $_ || "not ok 60\n";
+
+$_ = "";
+eval ' s/(?:)/"${\<<END}"/e;
+ok 61 - heredoc in "" in single-line s///e in eval
+END
+';
+print $_ || "not ok 61\n";
+
+$_ = "";
+s|(?:)|"${\<<END}"
+ok 62 - heredoc in "" in multiline s///e outside eval
+END
+|e;
+print $_ || "not ok 62\n";
+
+$_ = "not ok 63 - s/// in s/// pattern\n";
+s/${s|||;\""}not //;
+print;
+
+/(?{print <<END
+ok 64 - here-doc in re-eval
+END
+})/;
+
+eval '/(?{print <<END
+ok 65 - here-doc in re-eval in string eval
+END
+})/';
+
+eval 'print qq ;ok 66 - eval ending with semicolon\n;'
+  or print "not ok 66 - eval ending with semicolon\n";
+
+print "not " unless qr/(?{<<END})/ eq '(?^:(?{<<END}))';
+foo
+END
+print "ok 67 - here-doc in single-line re-eval\n";
+
+$_ = qr/(?{"${<<END}"
+foo
+END
+})/;
+print "not " unless /foo/;
+print "ok 68 - here-doc in quotes in multiline re-eval\n";
+
+eval 's//<<END/e if 0; $_ = "a
+END
+b"';
+print "not " if $_ =~ /\n\n/;
+print "ok 69 - eval 's//<<END/' does not leave extra newlines\n";
+
+$_ = a;
+eval "s/a/'b\0'#/e";
+print 'not ' unless $_ eq "b\0";
+print "ok 70 - # after null in s/// repl\n";
+
+s//"#" . <<END/e;
+foo
+END
+print "ok 71 - s//'#' . <<END/e\n";
+
+eval "s//3}->{3/e";
+print "not " unless $@;
+print "ok 72 - s//3}->{3/e\n";
+
+$_ = "not ok 73";
+$x{3} = "not ";
+eval 's/${\%x}{3}//e';
+print "$_ - s//\${\\%x}{3}/e\n";
+
+eval 's/${foo#}//e';
+print "not " unless $@;
+print "ok 74 - s/\${foo#}//e\n";
+
+eval 'warn ({$_ => 1} + 1) if 0';
+print "not " if $@;
+print "ok 75 - listop({$_ => 1} + 1)\n";
+print "# $@" if $@;
+
+$test = 76;
+for(qw< require goto last next redo dump >) {
+    eval "sub { $_ foo << 2 }";
+    print "not " if $@;
+    print "ok ", $test++, " - [perl #105924] $_ WORD << ...\n";
+    print "# $@" if $@;
+}
+
+# http://rt.perl.org/rt3/Ticket/Display.html?id=56880
+my $counter = 0;
+eval 'v23: $counter++; goto v23 unless $counter == 2';
+print "not " unless $counter == 2;
+print "ok 82 - Use v[0-9]+ as a label\n";
+$counter = 0;
+eval 'v23 : $counter++; goto v23 unless $counter == 2';
+print "not " unless $counter == 2;
+print "ok 83 - Use v[0-9]+ as a label with space before colon\n";
+ 
+my $output = "";
+eval "package v10::foo; sub test2 { return 'v10::foo' }
+      package v10; sub test { return v10::foo::test2(); }
+      package main; \$output = v10::test(); "; 
+print "not " unless $output eq 'v10::foo';
+print "ok 84 - call a function in package v10::foo\n";
+
+print "not " unless (1?v65:"bar") eq 'A';
+print "ok 85 - colon detection after vstring does not break ? vstring :\n";

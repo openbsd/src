@@ -58,6 +58,10 @@ my_sv_copypv(pTHX_ SV *const dsv, SV *const ssv)
 #  define slu_sv_value(sv) (SvIOK(sv)) ? (NV)(SvIVX(sv)) : (SvNV(sv))
 #endif
 
+#if PERL_VERSION < 13 || (PERL_VERSION == 13 && PERL_SUBVERSION < 9)
+#  define PERL_HAS_BAD_MULTICALL_REFCOUNT
+#endif
+
 MODULE=List::Util	PACKAGE=List::Util
 
 void
@@ -252,6 +256,10 @@ CODE:
             MULTICALL;
             SvSetSV(ret, *PL_stack_sp);
         }
+#ifdef PERL_HAS_BAD_MULTICALL_REFCOUNT
+	if (CvDEPTH(multicall_cv) > 1)
+	    SvREFCNT_inc_simple_void_NN(multicall_cv);
+#endif
         POP_MULTICALL;
     }
     else {
@@ -300,11 +308,19 @@ CODE:
             GvSV(PL_defgv) = args[index];
             MULTICALL;
             if (SvTRUEx(*PL_stack_sp)) {
+#ifdef PERL_HAS_BAD_MULTICALL_REFCOUNT
+		if (CvDEPTH(multicall_cv) > 1)
+		    SvREFCNT_inc_simple_void_NN(multicall_cv);
+#endif
                 POP_MULTICALL;
                 ST(0) = ST(index);
                 XSRETURN(1);
             }
         }
+#ifdef PERL_HAS_BAD_MULTICALL_REFCOUNT
+	if (CvDEPTH(multicall_cv) > 1)
+	    SvREFCNT_inc_simple_void_NN(multicall_cv);
+#endif
         POP_MULTICALL;
     }
     else {
@@ -396,6 +412,16 @@ CODE:
 	ST(0) = TARG;
     XSRETURN(1);
 }
+
+void
+isdual(sv)
+	SV *sv
+PROTOTYPE: $
+CODE:
+    if (SvMAGICAL(sv))
+    mg_get(sv);
+    ST(0) = boolSV((SvPOK(sv) || SvPOKp(sv)) && (SvNIOK(sv) || SvNIOKp(sv)));
+    XSRETURN(1);
 
 char *
 blessed(sv)

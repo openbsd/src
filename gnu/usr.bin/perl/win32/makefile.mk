@@ -6,7 +6,7 @@
 #	Windows SDK 64-bit compiler and tools
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl516.dll).  Also makes individual DLLs for the XS extensions.
+# (perl518.dll).  Also makes individual DLLs for the XS extensions.
 #
 
 ##
@@ -38,7 +38,7 @@ INST_TOP	*= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	*= \5.16.3
+#INST_VER	*= \5.18.2
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -94,28 +94,38 @@ USE_PERLIO	*= define
 USE_LARGE_FILES	*= define
 
 #
+# Uncomment this if you're building a 32-bit perl and want 64-bit integers.
+# (If you're building a 64-bit perl then you will have 64-bit integers whether
+# or not this is uncommented.)
+#USE_64_BIT_INT	*= define
+
+#
 # uncomment exactly one of the following
 #
 # Visual C++ 6.x (aka Visual C++ 98)
 #CCTYPE		*= MSVC60
+# Visual C++ .NET 2002/2003 (aka Visual C++ 7.x) (full version)
+#CCTYPE		*= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.x) (free command-line tools)
 #CCTYPE		*= MSVC70FREE
-# Visual C++ .NET 2003 (aka Visual C++ 7.x) (full version)
-#CCTYPE		*= MSVC70
 # Windows Server 2003 SP1 Platform SDK (April 2005)
 #CCTYPE		= SDK2003SP1
-# Visual C++ 2005 Express Edition (aka Visual C++ 8.x) (free version)
-#CCTYPE		*= MSVC80FREE
 # Visual C++ 2005 (aka Visual C++ 8.x) (full version)
 #CCTYPE		*= MSVC80
-# Visual C++ 2008 Express Edition (aka Visual C++ 9.x) (free version)
-#CCTYPE		*= MSVC90FREE
+# Visual C++ 2005 Express Edition (aka Visual C++ 8.x) (free version)
+#CCTYPE		*= MSVC80FREE
 # Visual C++ 2008 (aka Visual C++ 9.x) (full version)
 #CCTYPE		*= MSVC90
-# Visual C++ 2010 Express Edition (aka Visual C++ 10.x) (free version)
-#CCTYPE		= MSVC100FREE
+# Visual C++ 2008 Express Edition (aka Visual C++ 9.x) (free version)
+#CCTYPE		*= MSVC90FREE
 # Visual C++ 2010 (aka Visual C++ 10.x) (full version)
 #CCTYPE		= MSVC100
+# Visual C++ 2010 Express Edition (aka Visual C++ 10.x) (free version)
+#CCTYPE		= MSVC100FREE
+# Visual C++ 2012 (aka Visual C++ 11.x) (full version)
+#CCTYPE		= MSVC110
+# Visual C++ 2012 Express Edition (aka Visual C++ 11.x) (free version)
+#CCTYPE		= MSVC110FREE
 # MinGW or mingw-w64 with gcc-3.2 or later
 CCTYPE		*= GCC
 
@@ -155,7 +165,7 @@ CCTYPE		*= GCC
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl516s.lib will also be created.
+# variables below. A static library perl518s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	*= define
@@ -194,11 +204,13 @@ CCHOME		*= $(MSVCDIR)
 #
 
 .IF "$(GCCCROSS)" == "define"
-CCINCDIR *= $(CCHOME)\mingw\include
-CCLIBDIR *= $(CCHOME)\mingw\lib
+CCINCDIR *= $(CCHOME)\x86_64-w64-mingw32\include
+CCLIBDIR *= $(CCHOME)\x86_64-w64-mingw32\lib
+CCDLLDIR *= $(CCLIBDIR)
 .ELSE
 CCINCDIR *= $(CCHOME)\include
 CCLIBDIR *= $(CCHOME)\lib
+CCDLLDIR *= $(CCHOME)\bin
 .ENDIF
 
 #
@@ -257,6 +269,7 @@ USE_ITHREADS	*= undef
 USE_IMP_SYS	*= undef
 USE_PERLIO	*= undef
 USE_LARGE_FILES	*= undef
+USE_64_BIT_INT	*= undef
 
 .IF "$(USE_IMP_SYS)" == "define"
 PERL_MALLOC	= undef
@@ -290,7 +303,7 @@ BUILDOPT	+= -DPERL_IMPLICIT_CONTEXT
 BUILDOPT	+= -DPERL_IMPLICIT_SYS
 .ENDIF
 
-.IMPORT .IGNORE : PROCESSOR_ARCHITECTURE PROCESSOR_ARCHITEW6432 WIN64
+.IMPORT .IGNORE : PROCESSOR_ARCHITECTURE PROCESSOR_ARCHITEW6432 WIN64 CCHOME
 
 PROCESSOR_ARCHITECTURE *= x86
 
@@ -306,6 +319,10 @@ WIN64			= define
 .ELSE
 WIN64			= undef
 .ENDIF
+.ENDIF
+
+.IF "$(WIN64)" == "define"
+USE_64_BIT_INT	= define
 .ENDIF
 
 # Treat 64-bit MSVC60 (doesn't really exist) as SDK2003SP1 because
@@ -333,30 +350,19 @@ ARCHNAME	= MSWin32-$(ARCHITECTURE)
 .ENDIF
 .ENDIF
 
+.IF "$(USE_PERLIO)" == "define"
+BUILDOPT       += -DUSE_PERLIO
+.ENDIF
+
 .IF "$(USE_ITHREADS)" == "define"
 ARCHNAME	!:= $(ARCHNAME)-thread
 .ENDIF
 
-# Visual C++ 98, .NET 2003, 2005/2008/2010 specific.
-# VC++ 6/7/8/9/10.x can load DLLs on demand.  Makes the test suite run
-# in about 10% less time.  (The free version of 7.x can't do this, but the free
-# versions of 8/9/10.x can.)
-.IF "$(CCTYPE)" == "MSVC60" || "$(CCTYPE)" == "MSVC70"     || \
-    "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC80FREE" || \
-    "$(CCTYPE)" == "MSVC90" || "$(CCTYPE)" == "MSVC90FREE" || \
-    "$(CCTYPE)" == "MSVC100" || "$(CCTYPE)" == "MSVC100FREE"
-DELAYLOAD	*= -DELAYLOAD:ws2_32.dll delayimp.lib
+.IF "$(WIN64)" != "define"
+.IF "$(USE_64_BIT_INT)" == "define"
+ARCHNAME	!:= $(ARCHNAME)-64int
 .ENDIF
-
-# Visual C++ 2005 and 2008 (VC++ 8.x and 9.x) create manifest files for EXEs and
-# DLLs. These either need copying everywhere with the binaries, or else need
-# embedding in them otherwise MSVCR80.dll or MSVCR90.dll won't be found. For
-# simplicity, embed them if they exist (and delete them afterwards so that they
-# don't get installed too).
-EMBED_EXE_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;1 && \
-		  if exist $@.manifest del $@.manifest
-EMBED_DLL_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2 && \
-		  if exist $@.manifest del $@.manifest
+.ENDIF
 
 ARCHDIR		= ..\lib\$(ARCHNAME)
 COREDIR		= ..\lib\CORE
@@ -433,7 +439,7 @@ LINK_DBG	= -s
 .ENDIF
 
 EXTRACFLAGS	=
-CFLAGS		= $(INCLUDES) $(DEFINES) $(LOCDEFS) $(OPTIMIZE)
+CFLAGS		= $(EXTRACFLAGS) $(INCLUDES) $(DEFINES) $(LOCDEFS) $(OPTIMIZE)
 LINK_FLAGS	= $(LINK_DBG) -L"$(INST_COREDIR)" -L"$(CCLIBDIR)"
 OBJOUT_FLAG	= -o
 EXEOUT_FLAG	= -o
@@ -442,6 +448,31 @@ LIBOUT_FLAG	=
 BUILDOPT	+= -fno-strict-aliasing -mms-bitfields
 
 .ELSE
+
+# All but the free version of VC++ 7.x can load DLLs on demand.  Makes the test
+# suite run in about 10% less time.
+.IF "$(CCTYPE)" != "MSVC70FREE"
+DELAYLOAD	= -DELAYLOAD:ws2_32.dll delayimp.lib
+.ENDIF
+
+# Visual C++ 2005 and 2008 (VC++ 8.x and 9.x) create manifest files for EXEs and
+# DLLs. These either need copying everywhere with the binaries, or else need
+# embedding in them otherwise MSVCR80.dll or MSVCR90.dll won't be found. For
+# simplicity, embed them if they exist (and delete them afterwards so that they
+# don't get installed too).
+EMBED_EXE_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;1 && \
+		  if exist $@.manifest del $@.manifest
+EMBED_DLL_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2 && \
+		  if exist $@.manifest del $@.manifest
+
+# Most relevant compiler-specific options fall into two groups:
+# either pre-MSVC80 or MSVC80 onwards, so define a macro for this.
+.IF "$(CCTYPE)" == "MSVC60" || \
+    "$(CCTYPE)" == "MSVC70" || "$(CCTYPE)" == "MSVC70FREE"
+PREMSVC80	= define
+.ELSE
+PREMSVC80	= undef
+.ENDIF
 
 CC		= cl
 LINK32		= link
@@ -465,7 +496,8 @@ LIBC	= msvcrt.lib
 OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
 LINK_DBG	= -debug
 .ELSE
-OPTIMIZE	= -MD -Zi -DNDEBUG
+# -O1 yields smaller code, which turns out to be faster than -O2 on x86 and x64
+OPTIMIZE	= -O1 -MD -Zi -DNDEBUG
 # we enable debug symbols in release builds also
 LINK_DBG	= -debug -opt:ref,icf
 # you may want to enable this if you want COFF symbols in the executables
@@ -476,12 +508,8 @@ LINK_DBG	= -debug -opt:ref,icf
 #LINK_DBG	= $(LINK_DBG) -debugtype:both
 .IF "$(WIN64)" == "define"
 # enable Whole Program Optimizations (WPO) and Link Time Code Generation (LTCG)
-OPTIMIZE	+= -Ox -GL
+OPTIMIZE	+= -GL
 LINK_DBG	+= -ltcg
-.ELSE
-# -O1 yields smaller code, which turns out to be faster than -O2 on x86
-OPTIMIZE	+= -O1
-#OPTIMIZE	+= -O2
 .ENDIF
 .ENDIF
 
@@ -490,11 +518,9 @@ DEFINES		+= -DWIN64 -DCONSERVATIVE
 OPTIMIZE	+= -fp:precise
 .ENDIF
 
-# For now, silence VC++ 8/9/10.x's warnings about "unsafe" CRT functions
+# For now, silence warnings from VC++ 8.x onwards about "unsafe" CRT functions
 # and POSIX CRT function names being deprecated.
-.IF "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC80FREE" || \
-    "$(CCTYPE)" == "MSVC90" || "$(CCTYPE)" == "MSVC90FREE" || \
-    "$(CCTYPE)" == "MSVC100" || "$(CCTYPE)" == "MSVC100FREE"
+.IF "$(PREMSVC80)" == "undef"
 DEFINES		+= -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 .ENDIF
 
@@ -507,8 +533,7 @@ DEFINES		+= -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 # Perl itself with e.g. VC6 but later installs an XS module using VC8
 # the time_t types will still be compatible.
 .IF "$(WIN64)" == "undef"
-.IF "$(CCTYPE)" == "MSVC60" || \
-    "$(CCTYPE)" == "MSVC70" || "$(CCTYPE)" == "MSVC70FREE"
+.IF "$(PREMSVC80)" == "define"
 BUILDOPT	+= -D_USE_32BIT_TIME_T
 .ENDIF
 .ENDIF
@@ -544,9 +569,7 @@ LIBOUT_FLAG	= /out:
 
 CFLAGS_O	= $(CFLAGS) $(BUILDOPT)
 
-.IF "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC80FREE" || \
-    "$(CCTYPE)" == "MSVC90" || "$(CCTYPE)" == "MSVC90FREE" || \
-    "$(CCTYPE)" == "MSVC100" || "$(CCTYPE)" == "MSVC100FREE"
+.IF "$(PREMSVC80)" == "undef"
 LINK_FLAGS	+= "/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'"
 .ELSE
 RSC_FLAGS	= -DINCLUDE_MANIFEST
@@ -693,38 +716,27 @@ UTILS		=			\
 
 .IF "$(CCTYPE)" == "GCC"
 
-.IF "$(WIN64)" == "define"
-.IF "$(GCCCROSS)" == "define"
-CFGSH_TMPL	= config.gc64
-CFGH_TMPL	= config_H.gc64
-.ELSE
-CFGSH_TMPL	= config.gc64nox
-CFGH_TMPL	= config_H.gc64nox
-.ENDIF
-.ELSE
 CFGSH_TMPL	= config.gc
 CFGH_TMPL	= config_H.gc
-.ENDIF
-PERLIMPLIB	= ..\libperl516$(a)
-PERLSTATICLIB	= ..\libperl516s$(a)
+PERLIMPLIB	= ..\libperl518$(a)
+PERLSTATICLIB	= ..\libperl518s$(a)
+INT64		= long long
+INT64f		= ll
 
 .ELSE
 
-.IF "$(WIN64)" == "define"
-CFGSH_TMPL	= config.vc64
-CFGH_TMPL	= config_H.vc64
-.ELSE
 CFGSH_TMPL	= config.vc
 CFGH_TMPL	= config_H.vc
-.ENDIF
+INT64		= __int64
+INT64f		= I64
 
 .ENDIF
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	*= ..\perl516$(a)
-PERLSTATICLIB	*= ..\perl516s$(a)
-PERLDLL		= ..\perl516.dll
+PERLIMPLIB	*= ..\perl518$(a)
+PERLSTATICLIB	*= ..\perl518s$(a)
+PERLDLL		= ..\perl518.dll
 
 XCOPY		= xcopy /f /r /i /d /y
 RCOPY		= xcopy /f /r /i /e /d /y
@@ -881,7 +893,6 @@ DYNALOADER	= ..\DynaLoader$(o)
 # trying to fit them all on the command line)
 #	-- BKS 10-17-1999
 CFG_VARS	=					\
-		INST_DRV=$(INST_DRV)		~	\
 		INST_TOP=$(INST_TOP)	~	\
 		INST_VER=$(INST_VER)	~	\
 		INST_ARCH=$(INST_ARCH)		~	\
@@ -906,10 +917,13 @@ CFG_VARS	=					\
 		useithreads=$(USE_ITHREADS)	~	\
 		usemultiplicity=$(USE_MULTI)	~	\
 		useperlio=$(USE_PERLIO)		~	\
+		use64bitint=$(USE_64_BIT_INT)	~	\
 		uselargefiles=$(USE_LARGE_FILES)	~	\
 		usesitecustomize=$(USE_SITECUST)	~	\
 		LINK_FLAGS=$(LINK_FLAGS)	~	\
-		optimize=$(OPTIMIZE)
+		optimize=$(OPTIMIZE)	~	\
+		ARCHPREFIX=$(ARCHPREFIX)	~	\
+		WIN64=$(WIN64)
 
 ICWD = -I..\dist\Cwd -I..\dist\Cwd\lib
 
@@ -958,9 +972,82 @@ perlglob$(o)  : perlglob.c
 config.w32 : $(CFGSH_TMPL)
 	copy $(CFGSH_TMPL) config.w32
 
+#
+# Copy the template config.h and set configurables at the end of it
+# as per the options chosen and compiler used.
+# Note: This config.h is only used to build miniperl.exe anyway, but
+# it's as well to have its options correct to be sure that it builds
+# and so that it's "-V" options are correct for use by makedef.pl. The
+# real config.h used to build perl.exe is generated from the top-level
+# config_h.SH by config_h.PL (run by miniperl.exe).
+#
 .\config.h : $(CFGH_TMPL) $(CORE_NOCFG_H)
 	-del /f config.h
 	copy $(CFGH_TMPL) config.h
+	@echo.>>$@
+	@echo #ifndef _config_h_footer_>>$@
+	@echo #define _config_h_footer_>>$@
+	@echo #undef PTRSIZE>>$@
+	@echo #undef SSize_t>>$@
+	@echo #undef HAS_ATOLL>>$@
+	@echo #undef HAS_STRTOLL>>$@
+	@echo #undef HAS_STRTOULL>>$@
+	@echo #undef IVTYPE>>$@
+	@echo #undef UVTYPE>>$@
+	@echo #undef IVSIZE>>$@
+	@echo #undef UVSIZE>>$@
+	@echo #undef NV_PRESERVES_UV>>$@
+	@echo #undef NV_PRESERVES_UV_BITS>>$@
+	@echo #undef IVdf>>$@
+	@echo #undef UVuf>>$@
+	@echo #undef UVof>>$@
+	@echo #undef UVxf>>$@
+	@echo #undef UVXf>>$@
+	@echo #undef USE_64_BIT_INT>>$@
+	@echo #undef Size_t_size>>$@
+.IF "$(WIN64)"=="define"
+	@echo #define PTRSIZE ^8>>$@
+	@echo #define SSize_t $(INT64)>>$@
+	@echo #define HAS_ATOLL>>$@
+	@echo #define HAS_STRTOLL>>$@
+	@echo #define HAS_STRTOULL>>$@
+	@echo #define Size_t_size ^8>>$@
+.ELSE
+	@echo #define PTRSIZE ^4>>$@
+	@echo #define SSize_t int>>$@
+	@echo #undef HAS_ATOLL>>$@
+	@echo #undef HAS_STRTOLL>>$@
+	@echo #undef HAS_STRTOULL>>$@
+	@echo #define Size_t_size ^4>>$@
+.ENDIF
+.IF "$(USE_64_BIT_INT)"=="define"
+	@echo #define IVTYPE $(INT64)>>$@
+	@echo #define UVTYPE unsigned $(INT64)>>$@
+	@echo #define IVSIZE ^8>>$@
+	@echo #define UVSIZE ^8>>$@
+	@echo #undef NV_PRESERVES_UV>>$@
+	@echo #define NV_PRESERVES_UV_BITS 53>>$@
+	@echo #define IVdf "$(INT64f)d">>$@
+	@echo #define UVuf "$(INT64f)u">>$@
+	@echo #define UVof "$(INT64f)o">>$@
+	@echo #define UVxf "$(INT64f)x">>$@
+	@echo #define UVXf "$(INT64f)X">>$@
+	@echo #define USE_64_BIT_INT>>$@
+.ELSE
+	@echo #define IVTYPE long>>$@
+	@echo #define UVTYPE unsigned long>>$@
+	@echo #define IVSIZE ^4>>$@
+	@echo #define UVSIZE ^4>>$@
+	@echo #define NV_PRESERVES_UV>>$@
+	@echo #define NV_PRESERVES_UV_BITS 32>>$@
+	@echo #define IVdf "ld">>$@
+	@echo #define UVuf "lu">>$@
+	@echo #define UVof "lo">>$@
+	@echo #define UVxf "lx">>$@
+	@echo #define UVXf "lX">>$@
+	@echo #undef USE_64_BIT_INT>>$@
+.ENDIF
+	@echo #endif>>$@
 
 ..\git_version.h : $(MINIPERL) ..\make_patchnum.pl
 	cd .. && miniperl -Ilib make_patchnum.pl
@@ -972,21 +1059,16 @@ config.w32 : $(CFGSH_TMPL)
 	$(MINIPERL) -I..\lib config_sh.PL --cfgsh-option-file \
 	    $(mktmp $(CFG_VARS)) config.w32 > ..\config.sh
 
-# this target is for when changes to the main config.sh happen.
-# edit config.gc, then make perl using GCC in a minimal configuration (i.e.
+# This target is for when changes to the main config.sh happen.
+# Edit config.gc, then make perl using GCC in a minimal configuration (i.e.
 # with MULTI, ITHREADS, IMP_SYS, LARGE_FILES and PERLIO off), then make
 # this target to regenerate config_H.gc.
-# unfortunately, some further manual editing is also then required to restore all
-# the special _MSC_VER handling that is otherwise lost.
-# repeat for config.gc64 and config_H.gc64, and again for config.gc64nox and
-# config_H.gc64nox, if you have suitable build environments, otherwise hand-edit
-# them to maintain the same differences with config.gc and config_H.gc as before.
 regen_config_h:
 	$(MINIPERL) -I..\lib config_sh.PL --cfgsh-option-file $(mktmp $(CFG_VARS)) \
 	    $(CFGSH_TMPL) > ..\config.sh
 	$(MINIPERL) -I..\lib ..\configpm --chdir=..
 	-del /f $(CFGH_TMPL)
-	-$(MINIPERL) -I..\lib $(ICWD) config_h.PL "INST_VER=$(INST_VER)"
+	-$(MINIPERL) -I..\lib $(ICWD) config_h.PL "ARCHPREFIX=$(ARCHPREFIX)"
 	rename config.h $(CFGH_TMPL)
 
 $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\minimod.pl
@@ -995,7 +1077,7 @@ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\minimod.pl
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
 	$(XCOPY) *.h $(COREDIR)\*.*
 	$(RCOPY) include $(COREDIR)\*.*
-	$(MINIPERL) -I..\lib $(ICWD) config_h.PL "INST_VER=$(INST_VER)" \
+	$(MINIPERL) -I..\lib $(ICWD) config_h.PL "ARCHPREFIX=$(ARCHPREFIX)" \
 	    || $(MAKE) $(MAKEMACROS) $(CONFIGPM) $(MAKEFILE)
 
 ..\lib\buildcustomize.pl: $(MINIPERL) ..\write_buildcustomize.pl
@@ -1008,7 +1090,7 @@ $(MINIPERL) : $(MINIDIR) $(MINI_OBJ) $(CRTIPMLIBS)
 	    $(mktmp $(LKPRE) $(MINI_OBJ) $(LIBFILES) $(LKPOST))
 .ELSE
 	$(LINK32) -subsystem:console -out:$@ $(BLINK_FLAGS) \
-	    @$(mktmp $(LIBFILES) $(MINI_OBJ))
+	    @$(mktmp $(DELAYLOAD) $(LIBFILES) $(MINI_OBJ))
 	$(EMBED_EXE_MANI)
 .ENDIF
 
@@ -1019,7 +1101,7 @@ $(MINICORE_OBJ) : $(CORE_NOCFG_H)
 	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ ..\$(*B).c
 
 $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
-	$(CC) -c $(CFLAGS) $(OBJOUT_FLAG)$@ $(*B).c
+	$(CC) -c $(CFLAGS) -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $(*B).c
 
 # -DPERL_IMPLICIT_SYS needs C++ for perllib.c
 # rules wrapped in .IFs break Win9X build (we end up with unbalanced []s unless
@@ -1217,7 +1299,7 @@ Extensions_realclean :
 
 doc: $(PERLEXE) ..\pod\perltoc.pod
 	$(PERLEXE) -I..\lib ..\installhtml --podroot=.. --htmldir=$(HTMLDIR) \
-	    --podpath=pod:lib:ext:utils --htmlroot="file://$(INST_HTML:s,:,|,)"\
+	    --podpath=pod:lib:utils --htmlroot="file://$(INST_HTML:s,:,|,)"\
 	    --recurse
 
 # Note that this next section is parsed (and regenerated) by pod/buildtoc
@@ -1226,14 +1308,12 @@ utils: $(PERLEXE) $(X2P)
 	cd ..\utils && $(MAKE) PERL=$(MINIPERL)
 	copy ..\README.aix      ..\pod\perlaix.pod
 	copy ..\README.amiga    ..\pod\perlamiga.pod
-	copy ..\README.beos     ..\pod\perlbeos.pod
 	copy ..\README.bs2000   ..\pod\perlbs2000.pod
 	copy ..\README.ce       ..\pod\perlce.pod
 	copy ..\README.cn       ..\pod\perlcn.pod
 	copy ..\README.cygwin   ..\pod\perlcygwin.pod
 	copy ..\README.dgux     ..\pod\perldgux.pod
 	copy ..\README.dos      ..\pod\perldos.pod
-	copy ..\README.epoc     ..\pod\perlepoc.pod
 	copy ..\README.freebsd  ..\pod\perlfreebsd.pod
 	copy ..\README.haiku    ..\pod\perlhaiku.pod
 	copy ..\README.hpux     ..\pod\perlhpux.pod
@@ -1244,7 +1324,6 @@ utils: $(PERLEXE) $(X2P)
 	copy ..\README.linux    ..\pod\perllinux.pod
 	copy ..\README.macos    ..\pod\perlmacos.pod
 	copy ..\README.macosx   ..\pod\perlmacosx.pod
-	copy ..\README.mpeix    ..\pod\perlmpeix.pod
 	copy ..\README.netware  ..\pod\perlnetware.pod
 	copy ..\README.openbsd  ..\pod\perlopenbsd.pod
 	copy ..\README.os2      ..\pod\perlos2.pod
@@ -1257,11 +1336,9 @@ utils: $(PERLEXE) $(X2P)
 	copy ..\README.symbian  ..\pod\perlsymbian.pod
 	copy ..\README.tru64    ..\pod\perltru64.pod
 	copy ..\README.tw       ..\pod\perltw.pod
-	copy ..\README.uts      ..\pod\perluts.pod
-	copy ..\README.vmesa    ..\pod\perlvmesa.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5163delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5182delta.pod
 	$(PERLEXE) $(PL2BAT) $(UTILS)
 	$(PERLEXE) $(ICWD) ..\autodoc.pl ..
 	$(PERLEXE) $(ICWD) ..\pod\perlmodlib.pl -q
@@ -1353,16 +1430,15 @@ distclean: realclean
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5163delta.pod perlaix.pod perlamiga.pod perlapi.pod \
-	    perlbeos.pod perlbs2000.pod perlce.pod perlcn.pod \
-	    perlcygwin.pod perldgux.pod perldos.pod perlepoc.pod \
-	    perlfreebsd.pod perlhaiku.pod perlhpux.pod perlhurd.pod \
-	    perlintern.pod perlirix.pod perljp.pod perlko.pod perllinux.pod \
-	    perlmacos.pod perlmacosx.pod perlmodlib.pod perlmpeix.pod \
-	    perlnetware.pod perlopenbsd.pod perlos2.pod perlos390.pod \
-	    perlos400.pod perlplan9.pod perlqnx.pod perlriscos.pod \
-	    perlsolaris.pod perlsymbian.pod perltoc.pod perltru64.pod \
-	    perltw.pod perluts.pod perlvmesa.pod perlvos.pod perlwin32.pod
+	    perl5182delta.pod perlaix.pod perlamiga.pod perlapi.pod \
+	    perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
+	    perldgux.pod perldos.pod perlfreebsd.pod perlhaiku.pod \
+	    perlhpux.pod perlhurd.pod perlintern.pod perlirix.pod \
+	    perljp.pod perlko.pod perllinux.pod perlmacos.pod \
+	    perlmacosx.pod perlmodlib.pod perlnetware.pod perlopenbsd.pod \
+	    perlos2.pod perlos390.pod perlos400.pod perlplan9.pod \
+	    perlqnx.pod perlriscos.pod perlsolaris.pod perlsymbian.pod \
+	    perltoc.pod perltru64.pod perltw.pod perlvos.pod perlwin32.pod
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm c2ph pstruct h2xs \
 	    perldoc perlivp libnetcfg enc2xs piconv cpan *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep cpanp-run-perl cpanp cpan2dist shasum corelist config_data zipdetails
@@ -1412,13 +1488,12 @@ minitest : $(MINIPERL) $(GLOBEXE) $(CONFIGPM) $(UNIDATAFILES) utils
 	$(XCOPY) $(GLOBEXE) ..\t\$(NULL)
 	attrib -r ..\t\*.*
 	cd ..\t && \
-	$(MINIPERL) -I..\lib harness base/*.t comp/*.t cmd/*.t io/*.t op/*.t pragma/*.t
+	$(MINIPERL) -I..\lib harness base/*.t comp/*.t cmd/*.t io/*.t opbasic/*.t op/*.t pragma/*.t
 
 test-prep : all utils ..\pod\perltoc.pod
 	$(XCOPY) $(PERLEXE) ..\t\$(NULL)
 	$(XCOPY) $(PERLDLL) ..\t\$(NULL)
 	$(XCOPY) $(GLOBEXE) ..\t\$(NULL)
-
 .IF "$(CCTYPE)" == "GCC"
 # If building with gcc versions 4.x.x or greater, then
 # the GCC helper DLL will also need copied to the test directory.
@@ -1426,11 +1501,9 @@ test-prep : all utils ..\pod\perltoc.pod
 # your compiler, and upon the values of "x".
 # libstdc++-6.dll is copied if it exists as it, too, may then be needed.
 # Without this copying, the op/taint.t test script will fail.
-	if exist $(CCHOME)\bin\libgcc_s_sjlj-1.dll $(XCOPY) $(CCHOME)\bin\libgcc_s_sjlj-1.dll ..\t\$(NULL)
-	if exist $(CCHOME)\bin\libgcc_s_dw2-1.dll $(XCOPY) $(CCHOME)\bin\libgcc_s_dw2-1.dll ..\t\$(NULL)
-	if exist $(CCHOME)\bin\libgcc_s_1.dll $(XCOPY) $(CCHOME)\bin\libgcc_s_1.dll ..\t\$(NULL)
-	if exist $(CCHOME)\bin\w64gcc_s_sjlj-1.dll $(XCOPY) $(CCHOME)\bin\w64gcc_s_sjlj-1.dll ..\t\$(NULL)
-	if exist $(CCHOME)\bin\libstdc++-6.dll $(XCOPY) $(CCHOME)\bin\libstdc++-6.dll ..\t\$(NULL)
+	if exist $(CCDLLDIR)\libgcc_s_sjlj-1.dll $(XCOPY) $(CCDLLDIR)\libgcc_s_sjlj-1.dll ..\t\$(NULL)
+	if exist $(CCDLLDIR)\libgcc_s_dw2-1.dll $(XCOPY) $(CCDLLDIR)\libgcc_s_dw2-1.dll ..\t\$(NULL)
+	if exist $(CCDLLDIR)\libstdc++-6.dll $(XCOPY) $(CCDLLDIR)\libstdc++-6.dll ..\t\$(NULL)
 .ENDIF
 
 test : test-prep

@@ -1,4 +1,4 @@
-# $Id: enc_module.t,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: enc_module.t,v 2.2 2013/02/18 02:23:56 dankogai Exp $
 # This file is in euc-jp
 BEGIN {
     require Config; import Config;
@@ -21,6 +21,7 @@ BEGIN {
 }
 use lib qw(t ext/Encode/t ../ext/Encode/t); # latter 2 for perl core
 use Mod_EUCJP;
+no warnings "deprecated";
 use encoding "euc-jp";
 use Test::More tests => 3;
 use File::Basename;

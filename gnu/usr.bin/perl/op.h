@@ -19,17 +19,11 @@
  *	op_type		The type of the operation.
  *	op_opt		Whether or not the op has been optimised by the
  *			peephole optimiser.
- *
- *			See the comments in S_clear_yystack() for more
- *			details on the following three flags:
- *
- *	op_latefree	tell op_free() to clear this op (and free any kids)
- *			but not yet deallocate the struct. This means that
- *			the op may be safely op_free()d multiple times
- *	op_latefreed	an op_latefree op has been op_free()d
- *	op_attached	this op (sub)tree has been attached to a CV
- *
- *	op_spare	three spare bits!
+ *	op_slabbed	allocated via opslab
+ *	op_static	tell op_free() to skip PerlMemShared_free(), when
+ *                      !op_slabbed.
+ *	op_savefree	on savestack via SAVEFREEOP
+ *	op_spare	Three spare bits
  *	op_flags	Flags common to all operations.  See OPf_* below.
  *	op_private	Flags peculiar to a particular operation (BUT,
  *			by default, set to the number of children until
@@ -59,9 +53,9 @@ typedef PERL_BITFIELD16 Optype;
     PADOFFSET	op_targ;		\
     PERL_BITFIELD16 op_type:9;		\
     PERL_BITFIELD16 op_opt:1;		\
-    PERL_BITFIELD16 op_latefree:1;	\
-    PERL_BITFIELD16 op_latefreed:1;	\
-    PERL_BITFIELD16 op_attached:1;	\
+    PERL_BITFIELD16 op_slabbed:1;	\
+    PERL_BITFIELD16 op_savefree:1;	\
+    PERL_BITFIELD16 op_static:1;	\
     PERL_BITFIELD16 op_spare:3;		\
     U8		op_flags;		\
     U8		op_private;
@@ -72,11 +66,9 @@ typedef PERL_BITFIELD16 Optype;
    then all the other bit-fields before/after it should change their
    types too to let VC pack them into the same 4 byte integer.*/
 
+/* for efficiency, requires OPf_WANT_VOID == G_VOID etc */
 #define OP_GIMME(op,dfl) \
-	(((op)->op_flags & OPf_WANT) == OPf_WANT_VOID   ? G_VOID   : \
-	 ((op)->op_flags & OPf_WANT) == OPf_WANT_SCALAR ? G_SCALAR : \
-	 ((op)->op_flags & OPf_WANT) == OPf_WANT_LIST   ? G_ARRAY   : \
-	 dfl)
+	(((op)->op_flags & OPf_WANT) ? ((op)->op_flags & OPf_WANT) : dfl)
 
 #define OP_GIMME_REVERSE(flags)	((flags) & G_WANT)
 
@@ -123,7 +115,7 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On OP_ENTERSUB || OP_NULL, saw a "do". */
 				/*  On OP_EXISTS, treat av as av, not avhv.  */
 				/*  On OP_(ENTER|LEAVE)EVAL, don't clear $@ */
-				/*  On pushre, rx is used as part of split, e.g. split " " */
+                                /*  On pushre, rx is used as part of split, e.g. split " " */
 				/*  On regcomp, "use re 'eval'" was in scope */
 				/*  On OP_READLINE, was <$filehandle> */
 				/*  On RV2[ACGHS]V, don't create GV--in
@@ -148,6 +140,7 @@ Deprecated.  Use C<GIMME_V> instead.
 				    - Before ck_glob, called as CORE::glob
 				    - After ck_glob, use Perl glob function
 			         */
+                                /*  On OP_PADRANGE, push @_ */
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -183,7 +176,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpASSIGN_BACKWARDS	64	/* Left & right switched. */
 #define OPpASSIGN_CV_TO_GV	128	/* Possible optimisation for constants. */
 
-/* Private for OP_MATCH and OP_SUBST{,CONST} */
+/* Private for OP_MATCH and OP_SUBST{,CONT} */
 #define OPpRUNTIME		64	/* Pattern coming in on the stack */
 
 /* Private for OP_TRANS */
@@ -230,6 +223,11 @@ Deprecated.  Use C<GIMME_V> instead.
   /* OP_RV2[AGH]V, OP_PAD[AH]V, OP_[AH]ELEM, OP_[AH]SLICE OP_AV2ARYLEN,
      OP_R?KEYS, OP_SUBSTR, OP_POS, OP_VEC */
 #define OPpMAYBE_LVSUB		8	/* We might be an lvalue to return */
+  /* OP_RV2HV and OP_PADHV */
+#define OPpTRUEBOOL		32	/* %hash in (%hash || $foo) in
+					   void context */
+#define OPpMAYBE_TRUEBOOL	64	/* %hash in (%hash || $foo) where
+					   cx is not known till run time */
 
   /* OP_SUBSTR only */
 #define OPpSUBSTR_REPL_FIRST	16	/* 1st arg is replacement string */
@@ -237,6 +235,11 @@ Deprecated.  Use C<GIMME_V> instead.
   /* OP_PADSV only */
 #define OPpPAD_STATE		16	/* is a "state" pad */
   /* for OP_RV2?V, lower bits carry hints (currently only HINT_STRICT_REFS) */
+
+  /* OP_PADRANGE only */
+  /* bit 7 is OPpLVAL_INTRO */
+#define OPpPADRANGE_COUNTMASK	127	/* bits 6..0 hold target range, */
+#define OPpPADRANGE_COUNTSHIFT	7	/* 7 bits in total */
 
   /* OP_RV2GV only */
 #define OPpDONT_INIT_GV		4	/* Call gv_fetchpv with GV_NOINIT */
@@ -254,7 +257,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define	OPpCONST_STRICT		8	/* bareword subject to strict 'subs' */
 #define OPpCONST_ENTERED	16	/* Has been entered as symbol. */
 #define OPpCONST_BARE		64	/* Was a bare word (filehandle?). */
-#define OPpCONST_WARNING	128	/* Was a $^W translated to constant. */
+#define OPpCONST_FOLDED		128	/* Result of constant folding */
 
 /* Private for OP_FLIP/FLOP */
 #define OPpFLIP_LINENUM		64	/* Range arg potentially a line num. */
@@ -305,6 +308,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpEVAL_UNICODE		4
 #define OPpEVAL_BYTES		8
 #define OPpEVAL_COPHH		16	/* Construct %^H from cop hints */
+#define OPpEVAL_RE_REPARSING	32	/* eval_sv(..., G_RE_REPARSING) */
     
 /* Private for OP_CALLER, OP_WANTARRAY and OP_RUNCV */
 #define OPpOFFBYONE		128	/* Treat caller(1) as caller(2) */
@@ -368,14 +372,12 @@ struct pmop {
     union {
 	OP *	op_pmreplstart;	/* Only used in OP_SUBST */
 #ifdef USE_ITHREADS
-	struct {
-            char *	op_pmstashpv;	/* Only used in OP_MATCH, with PMf_ONCE set */
-            U32     op_pmstashflags;  /* currently only SVf_UTF8 or 0 */
-        } op_pmstashthr;
+	PADOFFSET op_pmstashoff; /* Only used in OP_MATCH, with PMf_ONCE set */
 #else
 	HV *	op_pmstash;
 #endif
     }		op_pmstashstartu;
+    OP *	op_code_list;	/* list of (?{}) code blocks */
 };
 
 #ifdef USE_ITHREADS
@@ -411,10 +413,7 @@ struct pmop {
  * OP_MATCH and OP_QR */
 #define PMf_ONCE	(1<<(PMf_BASE_SHIFT+1))
 
-/* replacement contains variables */
-#define PMf_MAYBE_CONST (1<<(PMf_BASE_SHIFT+2))
-
-/* PMf_ONCE has matched successfully.  Not used under threading. */
+/* PMf_ONCE, i.e. ?pat?, has matched successfully.  Not used under threading. */
 #define PMf_USED        (1<<(PMf_BASE_SHIFT+3))
 
 /* subst replacement is constant */
@@ -434,36 +433,32 @@ struct pmop {
 /* Return substituted string instead of modifying it. */
 #define PMf_NONDESTRUCT	(1<<(PMf_BASE_SHIFT+9))
 
-#if PMf_BASE_SHIFT+9 > 31
+/* the pattern has a CV attached (currently only under qr/...(?{}).../) */
+#define PMf_HAS_CV	(1<<(PMf_BASE_SHIFT+10))
+
+/* op_code_list is private; don't free it etc. It may well point to
+ * code within another sub, with different pad etc */
+#define PMf_CODELIST_PRIVATE	(1<<(PMf_BASE_SHIFT+11))
+
+/* the PMOP is a QR (we should be able to detect that from the op type,
+ * but the regex compilation API passes just the pm flags, not the op
+ * itself */
+#define PMf_IS_QR	(1<<(PMf_BASE_SHIFT+12))
+#define PMf_USE_RE_EVAL	(1<<(PMf_BASE_SHIFT+13)) /* use re'eval' in scope */
+
+#if PMf_BASE_SHIFT+13 > 31
 #   error Too many PMf_ bits used.  See above and regnodes.h for any spare in middle
 #endif
 
 #ifdef USE_ITHREADS
 
-#  define PmopSTASHPV(o)						\
-    (((o)->op_pmflags & PMf_ONCE) ? (o)->op_pmstashstartu.op_pmstashthr.op_pmstashpv : NULL)
-#  if defined (DEBUGGING) && defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
-#    define PmopSTASHPV_set(o,pv)	({				\
-	assert((o)->op_pmflags & PMf_ONCE);				\
-	((o)->op_pmstashstartu.op_pmstashthr.op_pmstashpv = savesharedpv(pv));	\
-    })
-#  else
-#    define PmopSTASHPV_set(o,pv)					\
-    ((o)->op_pmstashstartu.op_pmstashthr.op_pmstashpv = savesharedpv(pv))
-#  endif
-#  define PmopSTASH_flags(o)           ((o)->op_pmstashstartu.op_pmstashthr.op_pmstashflags)
-#  define PmopSTASH_flags_set(o,flags) ((o)->op_pmstashstartu.op_pmstashthr.op_pmstashflags = flags)
-#  define PmopSTASH(o)         (PmopSTASHPV(o)                                     \
-                                ? gv_stashpv((o)->op_pmstashstartu.op_pmstashthr.op_pmstashpv,   \
-                                            GV_ADD | PmopSTASH_flags(o)) : NULL)
-#  define PmopSTASH_set(o,hv)  (PmopSTASHPV_set(o, (hv) ? HvNAME_get(hv) : NULL), \
-                                PmopSTASH_flags_set(o,                            \
-                                            ((hv) && HvNAME_HEK(hv) &&           \
-                                                        HvNAMEUTF8(hv))           \
-                                                ? SVf_UTF8                        \
-                                                : 0))
-#  define PmopSTASH_free(o)	PerlMemShared_free(PmopSTASHPV(o))
-
+#  define PmopSTASH(o)         ((o)->op_pmflags & PMf_ONCE                         \
+                                ? PL_stashpad[(o)->op_pmstashstartu.op_pmstashoff]   \
+                                : NULL)
+#  define PmopSTASH_set(o,hv)	\
+	(assert_((o)->op_pmflags & PMf_ONCE)				\
+	 (o)->op_pmstashstartu.op_pmstashoff =				\
+	    (hv) ? alloccopstash(hv) : 0)
 #else
 #  define PmopSTASH(o)							\
     (((o)->op_pmflags & PMf_ONCE) ? (o)->op_pmstashstartu.op_pmstash : NULL)
@@ -475,13 +470,10 @@ struct pmop {
 #  else
 #    define PmopSTASH_set(o,hv)	((o)->op_pmstashstartu.op_pmstash = (hv))
 #  endif
-#  define PmopSTASHPV(o)	(PmopSTASH(o) ? HvNAME_get(PmopSTASH(o)) : NULL)
-   /* op_pmstashstartu.op_pmstash is not refcounted */
-#  define PmopSTASHPV_set(o,pv)	PmopSTASH_set((o), gv_stashpv(pv,GV_ADD))
-/* Note that if this becomes non-empty, then S_forget_pmop in op.c will need
-   changing */
-#  define PmopSTASH_free(o)    
 #endif
+#define PmopSTASHPV(o)	(PmopSTASH(o) ? HvNAME_get(PmopSTASH(o)) : NULL)
+   /* op_pmstashstartu.op_pmstash is not refcounted */
+#define PmopSTASHPV_set(o,pv)	PmopSTASH_set((o), gv_stashpv(pv,GV_ADD))
 
 struct svop {
     BASEOP
@@ -556,7 +548,8 @@ struct loop {
 #  define	cGVOPx_gv(o)	((GV*)PAD_SVl(cPADOPx(o)->op_padix))
 #  define	IS_PADGV(v)	(v && SvTYPE(v) == SVt_PVGV && isGV_with_GP(v) \
 				 && GvIN_PAD(v))
-#  define	IS_PADCONST(v)	(v && SvREADONLY(v))
+#  define	IS_PADCONST(v) \
+	(v && (SvREADONLY(v) || (SvIsCOW(v) && !SvLEN(v))))
 #  define	cSVOPx_sv(v)	(cSVOPx(v)->op_sv \
 				 ? cSVOPx(v)->op_sv : PAD_SVl((v)->op_targ))
 #  define	cSVOPx_svp(v)	(cSVOPx(v)->op_sv \
@@ -695,19 +688,66 @@ least an C<UNOP>.
 #include "reentr.h"
 #endif
 
-#if defined(PL_OP_SLAB_ALLOC)
 #define NewOp(m,var,c,type)	\
 	(var = (type *) Perl_Slab_Alloc(aTHX_ c*sizeof(type)))
 #define NewOpSz(m,var,size)	\
 	(var = (OP *) Perl_Slab_Alloc(aTHX_ size))
 #define FreeOp(p) Perl_Slab_Free(aTHX_ p)
-#else
-#define NewOp(m, var, c, type)	\
-	(var = (MEM_WRAP_CHECK_(c,type) \
-	 (type*)PerlMemShared_calloc(c, sizeof(type))))
-#define NewOpSz(m, var, size)	\
-	(var = (OP*)PerlMemShared_calloc(1, size))
-#define FreeOp(p) PerlMemShared_free(p)
+
+/*
+ * The per-CV op slabs consist of a header (the opslab struct) and a bunch
+ * of space for allocating op slots, each of which consists of two pointers
+ * followed by an op.  The first pointer points to the next op slot.  The
+ * second points to the slab.  At the end of the slab is a null pointer,
+ * so that slot->opslot_next - slot can be used to determine the size
+ * of the op.
+ *
+ * Each CV can have multiple slabs; opslab_next points to the next slab, to
+ * form a chain.  All bookkeeping is done on the first slab, which is where
+ * all the op slots point.
+ *
+ * Freed ops are marked as freed and attached to the freed chain
+ * via op_next pointers.
+ *
+ * When there is more than one slab, the second slab in the slab chain is
+ * assumed to be the one with free space available.  It is used when allo-
+ * cating an op if there are no freed ops available or big enough.
+ */
+
+#ifdef PERL_CORE
+struct opslot {
+    /* keep opslot_next first */
+    OPSLOT *	opslot_next;		/* next slot */
+    OPSLAB *	opslot_slab;		/* owner */
+    OP		opslot_op;		/* the op itself */
+};
+
+struct opslab {
+    OPSLOT *	opslab_first;		/* first op in this slab */
+    OPSLAB *	opslab_next;		/* next slab */
+    OP *	opslab_freed;		/* chain of freed ops */
+    size_t	opslab_refcnt;		/* number of ops */
+# ifdef PERL_DEBUG_READONLY_OPS
+    U16		opslab_size;		/* size of slab in pointers */
+    bool	opslab_readonly;
+# endif
+    OPSLOT	opslab_slots;		/* slots begin here */
+};
+
+# define OPSLOT_HEADER		STRUCT_OFFSET(OPSLOT, opslot_op)
+# define OPSLOT_HEADER_P	(OPSLOT_HEADER/sizeof(I32 *))
+# define OpSLOT(o)		(assert_(o->op_slabbed) \
+				 (OPSLOT *)(((char *)o)-OPSLOT_HEADER))
+# define OpSLAB(o)		OpSLOT(o)->opslot_slab
+# define OpslabREFCNT_dec(slab)      \
+	(((slab)->opslab_refcnt == 1) \
+	 ? opslab_free_nopad(slab)     \
+	 : (void)--(slab)->opslab_refcnt)
+  /* Variant that does not null out the pads */
+# define OpslabREFCNT_dec_padok(slab) \
+	(((slab)->opslab_refcnt == 1)  \
+	 ? opslab_free(slab)		\
+	 : (void)--(slab)->opslab_refcnt)
 #endif
 
 struct block_hooks {
@@ -1022,8 +1062,8 @@ struct token {
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

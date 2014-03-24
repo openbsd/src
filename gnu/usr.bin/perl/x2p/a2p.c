@@ -2191,9 +2191,9 @@ EXTERN_C char *getenv(const char *);
 int
 yyparse(void)
 {
-    register int yym, yyn, yystate;
+    int yym, yyn, yystate;
 #if YYDEBUG
-    register const char *yys;
+    const char *yys;
 
     if ((yys = getenv("YYDEBUG")))
     {

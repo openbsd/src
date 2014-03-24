@@ -1,7 +1,21 @@
 /*
  * Globbing for NT.  Relies on the expansion done by the library
- * startup code. 
+ * startup code (provided by Visual C++ by linking in setargv.obj).
  */
+
+/* Enable wildcard expansion for gcc's C-runtime library if not enabled by
+ * default (currently necessary with the automated build of the mingw-w64
+ * cross-compiler, but there's no harm in making sure for others too). */
+#ifdef __MINGW32__
+#include <_mingw.h>
+#if defined(__MINGW64_VERSION_MAJOR) && defined(__MINGW64_VERSION_MINOR)
+    // MinGW-w64
+    int _dowildcard = -1;
+#else
+    // MinGW
+    int _CRT_glob = -1;
+#endif
+#endif
 
 #include <stdio.h>
 #include <io.h>

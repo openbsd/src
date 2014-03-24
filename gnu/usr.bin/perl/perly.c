@@ -38,10 +38,17 @@ typedef signed char yysigned_char;
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
 #define YYINITDEPTH 200
 
+#ifdef YYDEBUG
+#  undef YYDEBUG
+#endif
 #ifdef DEBUGGING
 #  define YYDEBUG 1
 #else
 #  define YYDEBUG 0
+#endif
+
+#ifndef YY_NULL
+# define YY_NULL 0
 #endif
 
 /* contains all the parser state tables; auto-generated from perly.y */
@@ -199,95 +206,10 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 
     YYDPRINTF ((Perl_debug_log, "clearing the parse stack\n"));
 
-    /* Freeing ops on the stack, and the op_latefree / op_latefreed /
-     * op_attached flags:
-     *
-     * When we pop tokens off the stack during error recovery, or when
-     * we pop all the tokens off the stack after a die during a shift or
-     * reduce (i.e. Perl_croak somewhere in yylex() or in one of the
-     * newFOO() functions), then it's possible that some of these tokens are
-     * of type opval, pointing to an OP. All these ops are orphans; each is
-     * its own miniature subtree that has not yet been attached to a
-     * larger tree. In this case, we should clearly free the op (making
-     * sure, for each op we free that we have PL_comppad pointing to the
-     * right place for freeing any SVs attached to the op in threaded
-     * builds.
-     *
-     * However, there is a particular problem if we die in newFOO() called
-     * by a reducing action; e.g.
-     *
-     *    foo : bar baz boz
-     *        { $$ = newFOO($1,$2,$3) }
-     *
-     * where
-     *  OP *newFOO { ....; if (...) croak; .... }
-     *
-     * In this case, when we come to clean bar baz and boz off the stack,
-     * we don't know whether newFOO() has already:
-     *    * freed them
-     *    * left them as is
-     *    * attached them to part of a larger tree
-     *    * attached them to PL_compcv
-     *    * attached them to PL_compcv then freed it (as in BEGIN {die } )
-     *
-     * To get round this problem, we set the flag op_latefree on every op
-     * that gets pushed onto the parser stack. If op_free() sees this
-     * flag, it clears the op and frees any children,, but *doesn't* free
-     * the op itself; instead it sets the op_latefreed flag. This means
-     * that we can safely call op_free() multiple times on each stack op.
-     * So, when clearing the stack, we first, for each op that was being
-     * reduced, call op_free with op_latefree=1. This ensures that all ops
-     * hanging off these op are freed, but the reducing ops themselves are
-     * just undefed. Then we set op_latefreed=0 on *all* ops on the stack
-     * and free them. A little thought should convince you that this
-     * two-part approach to the reducing ops should handle the first three
-     * cases above safely.
-     *
-     * In the case of attaching to PL_compcv (currently just newATTRSUB
-     * does this), then  we set the op_attached flag on the op that has
-     * been so attached, then avoid doing the final op_free during
-     * cleanup, on the assumption that it will happen (or has already
-     * happened) when PL_compcv is freed.
-     *
-     * Note this is fairly fragile mechanism. A more robust approach
-     * would be to use two of these flag bits as 2-bit reference count
-     * field for each op, indicating whether it is pointed to from:
-     *   * a parent op
-     *   * the parser stack
-     *   * a CV
-     * but this would involve reworking all code (core and external) that
-     * manipulate op trees.
-     *
-     * XXX DAPM 17/1/07 I've decided its too fragile for now, and so have
-     * disabled it */
-
-#define DISABLE_STACK_FREE
-
-
-#ifdef DISABLE_STACK_FREE
     for (i=0; i< parser->yylen; i++) {
 	SvREFCNT_dec(ps[-i].compcv);
     }
     ps -= parser->yylen;
-#else
-    /* clear any reducing ops (1st pass) */
-
-    for (i=0; i< parser->yylen; i++) {
-	LEAVE_SCOPE(ps[-i].savestack_ix);
-	if (yy_type_tab[yystos[ps[-i].state]] == toketype_opval
-	    && ps[-i].val.opval) {
-	    if ( ! (ps[-i].val.opval->op_attached
-		    && !ps[-i].val.opval->op_latefreed))
-	    {
-		if (ps[-i].compcv != PL_compcv) {
-		    PL_compcv = ps[-i].compcv;
-		    PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
-		}
-		op_free(ps[-i].val.opval);
-	    }
-	}
-    }
-#endif
 
     /* now free whole the stack, including the just-reduced ops */
 
@@ -301,11 +223,7 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 	    }
 	    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
-#ifndef DISABLE_STACK_FREE
-	    ps->val.opval->op_latefree  = 0;
-	    if (!(ps->val.opval->op_attached && !ps->val.opval->op_latefreed))
-#endif
-		op_free(ps->val.opval);
+	    op_free(ps->val.opval);
 	}
 	SvREFCNT_dec(ps->compcv);
 	ps--;
@@ -327,15 +245,15 @@ Perl_yyparse (pTHX_ int gramtype)
 #endif
 {
     dVAR;
-    register int yystate;
-    register int yyn;
+    int yystate;
+    int yyn;
     int yyresult;
 
     /* Lookahead token as an internal (translated) token number.  */
     int yytoken = 0;
 
-    register yy_parser *parser;	    /* the parser object */
-    register yy_stack_frame  *ps;   /* current parser stack frame */
+    yy_parser *parser;	    /* the parser object */
+    yy_stack_frame  *ps;   /* current parser stack frame */
 
 #define YYPOPSTACK   parser->ps = --ps
 #define YYPUSHSTACK  parser->ps = ++ps
@@ -382,13 +300,6 @@ Perl_yyparse (pTHX_ int gramtype)
     yystate = ps->state;
 
     YYDPRINTF ((Perl_debug_log, "Entering state %d\n", yystate));
-
-#ifndef DISABLE_STACK_FREE
-    if (yy_type_tab[yystos[yystate]] == toketype_opval && ps->val.opval) {
-	ps->val.opval->op_latefree  = 1;
-	ps->val.opval->op_latefreed = 0;
-    }
-#endif
 
     parser->yylen = 0;
 
@@ -546,20 +457,9 @@ Perl_yyparse (pTHX_ int gramtype)
 
     }
 
-    /* any just-reduced ops with the op_latefreed flag cleared need to be
-     * freed; the rest need the flag resetting */
     {
 	int i;
 	for (i=0; i< parser->yylen; i++) {
-#ifndef DISABLE_STACK_FREE
-	    if (yy_type_tab[yystos[ps[-i].state]] == toketype_opval
-		&& ps[-i].val.opval)
-	    {
-		ps[-i].val.opval->op_latefree = 0;
-		if (ps[-i].val.opval->op_latefreed)
-		    op_free(ps[-i].val.opval);
-	    }
-#endif
 	    SvREFCNT_dec(ps[-i].compcv);
 	}
     }
@@ -620,7 +520,6 @@ Perl_yyparse (pTHX_ int gramtype)
 			PL_compcv = ps->compcv;
 			PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 		    }
-		    ps->val.opval->op_latefree  = 0;
 		    op_free(ps->val.opval);
 		}
 		SvREFCNT_dec(ps->compcv);
@@ -630,8 +529,6 @@ Perl_yyparse (pTHX_ int gramtype)
 	}
 
 	YYDSYMPRINTF ("Error: discarding", yytoken, &parser->yylval);
-	if (yy_type_tab[yytoken] == toketype_opval)
-	    op_free(parser->yylval.opval);
 	parser->yychar = YYEMPTY;
 
     }
@@ -670,7 +567,6 @@ Perl_yyparse (pTHX_ int gramtype)
 		PL_compcv = ps->compcv;
 		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
 	    }
-	    ps->val.opval->op_latefree  = 0;
 	    op_free(ps->val.opval);
 	}
 	SvREFCNT_dec(ps->compcv);
@@ -724,8 +620,8 @@ Perl_yyparse (pTHX_ int gramtype)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

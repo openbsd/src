@@ -1,5 +1,11 @@
 #!./perl
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
 @tests = split(/\n/, <<EOF);
 0 3,			0 1 2,		3 4 5 6 7
 0 0 a b c,		,		a b c 0 1 2 3 4 5 6 7
@@ -14,56 +20,56 @@
 -4,			4 5 6 7,	0 1 2 3
 EOF
 
-print "1..", 14 + 2*@tests, "\n";
+plan tests => 16 + @tests*4;
 die "blech" unless @tests;
 
 @x = (1,2,3);
 push(@x,@x);
-if (join(':',@x) eq '1:2:3:1:2:3') {print "ok 1\n";} else {print "not ok 1\n";}
+is( join(':',@x), '1:2:3:1:2:3', 'push array onto array');
 push(@x,4);
-if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 2\n";} else {print "not ok 2\n";}
+is( join(':',@x), '1:2:3:1:2:3:4', 'push integer onto array');
 
 # test for push/pop intuiting @ on array
 {
     no warnings 'deprecated';
     push(x,3);
 }
-if (join(':',@x) eq '1:2:3:1:2:3:4:3') {print "ok 3\n";} else {print "not ok 3\n";}
+is( join(':',@x), '1:2:3:1:2:3:4:3', 'push intuiting @ on array');
 {
     no warnings 'deprecated';
     pop(x);
 }
-if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 4\n";} else {print "not ok 4\n";}
+is( join(':',@x), '1:2:3:1:2:3:4', 'pop intuiting @ on array');
 
 # test for push/pop on arrayref
 push(\@x,5);
-if (join(':',@x) eq '1:2:3:1:2:3:4:5') {print "ok 5\n";} else {print "not ok 5\n";}
+is( join(':',@x), '1:2:3:1:2:3:4:5', 'push arrayref');
 pop(\@x);
-if (join(':',@x) eq '1:2:3:1:2:3:4') {print "ok 6\n";} else {print "not ok 6\n";}
+is( join(':',@x), '1:2:3:1:2:3:4', 'pop arrayref');
 
 # test autovivification
 push @$undef1, 1, 2, 3;
-if (join(':',@$undef1) eq '1:2:3') {print "ok 7\n";} else {print "not ok 7\n";}
+is( join(':',@$undef1), '1:2:3', 'autovivify array');
 
 # test push on undef (error)
 eval { push $undef2, 1, 2, 3 };
-if ($@ =~ /Not an ARRAY/) {print "ok 8\n";} else {print "not ok 8\n";}
+like( $@, qr/Not an ARRAY/, 'push on undef generates an error');
 
 # test constant
 use constant CONST_ARRAYREF => [qw/a b c/];
 push CONST_ARRAYREF(), qw/d e f/;
-if (join(':',@{CONST_ARRAYREF()}) eq 'a:b:c:d:e:f') {print "ok 9\n";} else {print "not ok 9\n";}
+is( join(':',@{CONST_ARRAYREF()}), 'a:b:c:d:e:f', 'test constant');
 
 # test implicit dereference errors
 eval "push 42, 0, 1, 2, 3";
-if ( $@ && $@ =~ /must be array/ ) {print "ok 10\n"} else {print "not ok 10 # \$\@ = $@\n"}
+like ( $@, qr/must be array/, 'push onto a literal integer');
 
 $hashref = { };
 eval { push $hashref, 0, 1, 2, 3 };
-if ( $@ && $@ =~ /Not an ARRAY reference/ ) {print "ok 11\n"} else {print "not ok 11 # \$\@ = $@\n"}
+like( $@, qr/Not an ARRAY reference/, 'push onto a hashref');
 
 eval { push bless([]), 0, 1, 2, 3 };
-if ( $@ && $@ =~ /Not an unblessed ARRAY reference/ ) {print "ok 12\n"} else {print "not ok 12 # \$\@ = $@\n"}
+like( $@, qr/Not an unblessed ARRAY reference/, 'push onto a blessed array ref');
 
 $test = 13;
 
@@ -72,22 +78,12 @@ $test = 13;
     my($first, $second) = ([1], [2]);
     sub two_things { return +($first, $second) }
     push two_things(), 3;
-    if (join(':',@$first) eq '1' &&
-        join(':',@$second) eq '2:3') {
-        print "ok ",$test++,"\n";
-    }
-    else {
-        print "not ok ",$test++," got: \$first = [ @$first ]; \$second = [ @$second ];\n";
-    }
+    is( join(':',@$first), '1', "\$first = [ @$first ];");
+    is( join(':',@$second), '2:3', "\$second = [ @$second ]");
 
     push @{ two_things() }, 4;
-    if (join(':',@$first) eq '1' &&
-        join(':',@$second) eq '2:3:4') {
-        print "ok ",$test++,"\n";
-    }
-    else {
-        print "not ok ",$test++," got: \$first = [ @$first ]; \$second = [ @$second ];\n";
-    }
+    is( join(':',@$first), '1', "\$first = [ @$first ];");
+    is( join(':',@$second), '2:3:4', "\$second = [ @$second ]");
 }
 
 foreach $line (@tests) {
@@ -105,20 +101,10 @@ foreach $line (@tests) {
 	@got = splice(@x, $pos);
 	@got2 = splice($y, $pos);
     }
-    if (join(':',@got) eq join(':',@get) &&
-	join(':',@x) eq join(':',@leave)) {
-	print "ok ",$test++,"\n";
-    }
-    else {
-	print "not ok ",$test++," got: @got == @get left: @x == @leave\n";
-    }
-    if (join(':',@got2) eq join(':',@get) &&
-	join(':',@$y) eq join(':',@leave)) {
-	print "ok ",$test++,"\n";
-    }
-    else {
-	print "not ok ",$test++," got (arrayref): @got2 == @get left: @$y == @leave\n";
-    }
+    is(join(':',@got), join(':',@get),   "got: @got == @get");
+    is(join(':',@x),   join(':',@leave), "left: @x == @leave");
+    is(join(':',@got2), join(':',@get),   "ref got: @got2 == @get");
+    is(join(':',@$y),   join(':',@leave), "ref left: @$y == @leave");
 }
 
 1;  # this file is require'd by lib/tie-stdpush.t

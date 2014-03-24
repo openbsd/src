@@ -5,11 +5,11 @@ BEGIN {
     @INC = qw(. ../lib);
     require './test.pl';
 }
-plan tests => 305;
+plan tests => 310;
 
 my $list_assignment_supported = 1;
 
-#mg.c says list assignment not supported on VMS, EPOC, and SYMBIAN.
+#mg.c says list assignment not supported on VMS and SYMBIAN.
 $list_assignment_supported = 0 if ($^O eq 'VMS');
 
 
@@ -781,6 +781,27 @@ like( runperl(stderr => 1,
                       'index(q(a), foo);' .
                       'local *g=${::}{foo};print q(ok);'), "ok", "[perl #52740]");
 
+# related to perl #112966
+# Magic should not cause elements not to be deleted after scope unwinding
+# when they did not exist before local()
+() = \$#squinch; # $#foo in lvalue context makes array magical
+{
+    local $squinch[0];
+    local @squinch[1..2];
+    package Flibbert;
+    m??; # makes stash magical
+    local $Flibbert::{foo};
+    local @Flibbert::{<bar baz>};
+}
+ok !exists $Flibbert::{foo},
+  'local helem on magic hash does not leave elems on scope exit';
+ok !exists $Flibbert::{bar},
+  'local hslice on magic hash does not leave elems on scope exit';
+ok !exists $squinch[0],
+  'local aelem on magic hash does not leave elems on scope exit';
+ok !exists $squinch[1],
+  'local aslice on magic hash does not leave elems on scope exit';
+
 # Keep these tests last, as they can SEGV
 {
     local *@;
@@ -793,3 +814,14 @@ like( runperl(stderr => 1,
     delete $::{$_} for 'nugguton','netgonch';
 }
 pass ('localised arrays and hashes do not crash if glob is deleted');
+
+# [perl #112966] Rmagic can cause delete local to crash
+package Grompits {
+local $SIG{__WARN__};
+    delete local $ISA[0];
+    delete local @ISA[1..10];
+    m??; # makes stash magical
+    delete local $Grompits::{foo};
+    delete local @Grompits::{<foo bar>};
+}
+pass 'rmagic does not cause delete local to crash on nonexistent elems';

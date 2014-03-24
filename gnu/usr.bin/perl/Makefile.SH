@@ -1,3 +1,14 @@
+#!/bin/sh
+
+# quote() - Creates a shell literal
+# Usage:  echo "...` quote "..." `..."
+quote() {
+	case "$1" in
+	'') echo "''" ;;
+	*)  echo "$1" | sed 's/\([^a-zA-Z0-9.:_\-\/]\)/\\\1/g' ;;
+	esac
+}
+
 case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh
@@ -26,6 +37,7 @@ case "$0" in
 */*) cd `expr X$0 : 'X\(.*\)/'` ;;
 esac
 
+pwd="`pwd`"
 linklibperl='$(LIBPERL)'
 linklibperl_nonshr=''
 shrpldflags='$(LDDLFLAGS)'
@@ -37,10 +49,8 @@ true)
 	# Prefix all runs of 'miniperl' and 'perl' with
 	# $ldlibpth so that ./perl finds *this* shared libperl.
 	case "$LD_LIBRARY_PATH" in
-	'')
-		ldlibpth="LD_LIBRARY_PATH=`pwd`";;
-	*)
-		ldlibpth="LD_LIBRARY_PATH=`pwd`:${LD_LIBRARY_PATH}";;
+	'')  ldlibpth="LD_LIBRARY_PATH=` quote "$pwd" `" ;;
+	*)   ldlibpth="LD_LIBRARY_PATH=` quote "$pwd" `:` quote "$LD_LIBRARY_PATH" `" ;;
 	esac
 
 	pldlflags="$cccdlflags"
@@ -52,7 +62,7 @@ true)
 		-compatibility_version 1 -current_version $patchlevel \
 		-prebind -seg1addr 0x27000000 -install_name \$(shrpdir)/\$@"
 		;;
-	rhapsody*|darwin*)
+	darwin*)
 		shrpldflags="${ldflags} -dynamiclib \
                             -compatibility_version \
 				${api_revision}.${api_version}.${api_subversion} \
@@ -119,18 +129,18 @@ true)
 	        ldlibpth=''
 	        ;;
 	    *)
-		eval "ldlibpth=\"$ldlibpthname=`pwd`:\$$ldlibpthname\""
+		eval "ldlibpthval=\"\$$ldlibpthname\""
+
+		case "$ldlibpthval" in
+		'')  ldlibpth="$ldlibpthname=` quote "$pwd" `" ;;
+		*)   ldlibpth="$ldlibpthname=` quote "$pwd" `:` quote "$ldlibpthval" `" ;;
+		esac
+
 		;;
 	    esac
-	    # Strip off any trailing :'s
-	    ldlibpth=`echo $ldlibpth | sed 's/:*$//'`
+
 	    ;;
         esac
-
-	case "$ldlibpth" in
-	# Protect any spaces
-	*" "*) ldlibpth=`echo $ldlibpth|sed 's/ /\\\\ /g'` ;;
-	esac
 
 	case "$osname" in
 	linux)
@@ -178,7 +188,7 @@ done
 dynamic_list=' '
 dynamic_ext_re="lib/auto/re/re.$dlext"
 extra_dep='
-ext/Pod-Functions/pm_to_blib: cpan/Pod-Escapes/pm_to_blib cpan/Pod-Simple/pm_to_blib pod/perlfunc.pod
+ext/Pod-Functions/pm_to_blib: cpan/Pod-Simple/pm_to_blib cpan/Pod-Escapes/pm_to_blib pod/perlfunc.pod
 '
 for f in $dynamic_ext; do
     : the dependency named here will never exist
@@ -296,7 +306,7 @@ RUN = $run
 
 # These variables may need to be manually set for non-Unix systems.
 AR = $full_ar
-HOST_EXE_EXT = 
+HOST_EXE_EXT = $_exe
 EXE_EXT = $_exe
 LIB_EXT = $_a
 OBJ_EXT = $_o
@@ -456,7 +466,7 @@ unidatafiles = lib/unicore/Decomposition.pl lib/unicore/TestProp.pl \
 unidatadirs = lib/unicore/To lib/unicore/lib
 
 h1 = EXTERN.h INTERN.h XSUB.h av.h $(CONFIGH) cop.h cv.h dosish.h
-h2 = embed.h form.h gv.h handy.h hv.h keywords.h mg.h op.h opcode.h
+h2 = embed.h form.h gv.h handy.h hv.h hv_func.h keywords.h mg.h op.h opcode.h
 h3 = pad.h patchlevel.h perl.h perlapi.h perly.h pp.h proto.h regcomp.h
 h4 = regexp.h scope.h sv.h unixish.h util.h iperlsys.h thread.h
 h5 = utf8.h warnings.h mydtrace.h op_reg_common.h l1_char_class_tab.h
@@ -482,7 +492,7 @@ mini_obj = $(minindt_obj) $(MINIDTRACE_O)
 ndt_obj = $(obj0) $(obj1) $(obj2) $(obj3) $(ARCHOBJS)
 obj = $(ndt_obj) $(DTRACE_O)
 
-perltoc_pod_prereqs = extra.pods pod/perl5163delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
+perltoc_pod_prereqs = extra.pods pod/perl5182delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
 generated_pods = pod/perltoc.pod $(perltoc_pod_prereqs)
 generated_headers = uudmap.h bitcount.h mg_data.h
 
@@ -561,12 +571,13 @@ all: $(FIRSTMAKEFILE) $(MINIPERL_EXE) $(generated_pods) $(private) $(unidatafile
 
 .PHONY: all translators utilities
 
+# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-git_version.h: lib/Config_git.pl
-
-lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-	$(MINIPERL) make_patchnum.pl
+#git_version.h: lib/Config_git.pl
+#
+#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+#	$(MINIPERL) make_patchnum.pl
 
 # make sure that we recompile perl.c if the git version changes
 perl$(OBJ_EXT): git_version.h
@@ -689,7 +700,7 @@ openbsd)
 	$spitshell >>$Makefile <<!GROK!THIS!
 # When building Perl itself, link with the thread library,
 # so that extensions can use thread functions even though Perl
-# is not threaded.
+# is not threaded
 CCDLFLAGS = $ccdlflags -lpthread
 !GROK!THIS!
 	;;
@@ -838,7 +849,7 @@ $(MINIDTRACE_O): perldtrace.d $(minindt_obj) perlmini$(OBJ_EXT)
 !NO!SUBS!
 
 	case "${osname}${osvers}" in
-	aix*|beos*)
+	aix*)
 		$spitshell >>$Makefile <<'!NO!SUBS!'
 $(MINIPERL_EXE): $& $(mini_obj)
 	$(CC) -o $(MINIPERL_EXE) $(CLDFLAGS) $(mini_obj) $(libs)
@@ -1064,8 +1075,9 @@ pod/perlintern.pod: $(MINIPERL_EXE) autodoc.pl embed.fnc
 pod/perlmodlib.pod: $(MINIPERL_EXE) pod/perlmodlib.PL MANIFEST
 	$(MINIPERL) $(Icwd) pod/perlmodlib.PL -q
 
-pod/perl5163delta.pod: pod/perldelta.pod
-	$(LNS) perldelta.pod pod/perl5163delta.pod
+pod/perl5182delta.pod: pod/perldelta.pod
+	$(RMS) pod/perl5182delta.pod
+	$(LNS) perldelta.pod pod/perl5182delta.pod
 
 extra.pods: $(MINIPERL_EXE)
 	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -1183,10 +1195,13 @@ regen_headers regen-headers:	FORCE
 	-perl regen.pl -v
 	-perl regen/uconfig_h.pl -v
 
-regen_meta regen-meta:  META.yml
+regen_meta regen-meta:  META.yml META.json
 
 META.yml:   FORCE
-	PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(RUN_PERL) -Ilib Porting/makemeta
+	PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(RUN_PERL) -Ilib Porting/makemeta -y
+
+META.json:   FORCE
+	PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(RUN_PERL) -Ilib Porting/makemeta -j
 
 
 regen_all regen-all: regen regen_meta
@@ -1213,7 +1228,7 @@ manicheck:	FORCE
 $(DYNALOADER):	$(MINIPERL_EXE) lib/buildcustomize.pl preplibrary FORCE $(nonxs_ext)
 	$(MINIPERL) make_ext.pl $@ MAKE=$(MAKE) LIBPERL_A=$(LIBPERL) LINKTYPE=static $(STATIC_LDFLAGS)
 
-d_dummy $(dynamic_ext):	$(MINIPERL_EXE) lib/buildcustomize.pl preplibrary makeppport $(DYNALOADER) FORCE $(PERLEXPORT)
+d_dummy $(dynamic_ext):	$(MINIPERL_EXE) lib/buildcustomize.pl preplibrary makeppport $(DYNALOADER) FORCE $(PERLEXPORT) $(LIBPERL)
 	$(MINIPERL) make_ext.pl $@ MAKE=$(MAKE) LIBPERL_A=$(LIBPERL) LINKTYPE=dynamic
 
 s_dummy $(static_ext):	$(MINIPERL_EXE) lib/buildcustomize.pl preplibrary makeppport $(DYNALOADER) FORCE
@@ -1449,7 +1464,7 @@ test.torture torturetest:	test_prep
 
 minitest.utf16: minitest.prep
 	- cd t && (rm -f $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE)) \
-		&& $(RUN_PERL) TEST -utf16 base/*.t comp/*.t cmd/*.t run/*.t io/*.t op/*.t uni/*.t </dev/tty
+		&& $(RUN_PERL) TEST -utf16 base/*.t comp/*.t cmd/*.t run/*.t io/*.t opbasic/*.t op/*.t uni/*.t </dev/tty
 
 test.utf16 check.utf16: test_prep
 	TEST_ARGS=-utf16 $(RUN_TESTS) choose
@@ -1518,7 +1533,7 @@ minitest.prep:
 # is crashing.
 minitest: $(MINIPERL_EXE) minitest.prep
 	- cd t && (rm -f $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE)) \
-		&& $(RUN_PERL) TEST base/*.t comp/*.t cmd/*.t run/*.t io/*.t re/*.t op/*.t uni/*.t </dev/tty
+		&& $(RUN_PERL) TEST base/*.t comp/*.t cmd/*.t run/*.t io/*.t re/*.t opbasic/*.t op/*.t uni/*.t </dev/tty
 
 # Test via harness
 
@@ -1650,9 +1665,6 @@ os390|posix-bc)
         fi
         cd ..
     fi
-    ;;
-vmesa)
-    # Do nothing in VM/ESA.
     ;;
 *)
     echo "'$osname' is an EBCDIC system I don't know that well." >&4

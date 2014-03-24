@@ -2,7 +2,7 @@ package vars;
 
 use 5.006;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use warnings::register;
 use strict qw(vars subs);
@@ -48,7 +48,7 @@ __END__
 
 =head1 NAME
 
-vars - Perl pragma to predeclare global variable names (obsolete)
+vars - Perl pragma to predeclare global variable names
 
 =head1 SYNOPSIS
 
@@ -56,9 +56,10 @@ vars - Perl pragma to predeclare global variable names (obsolete)
 
 =head1 DESCRIPTION
 
-NOTE: For variables in the current package, the functionality provided
-by this pragma has been superseded by C<our> declarations, available
-in Perl v5.6.0 or later.  See L<perlfunc/our>.
+NOTE: For use with variables in the current package for a single scope, the
+functionality provided by this pragma has been superseded by C<our>
+declarations, available in Perl v5.6.0 or later, and use of this pragma is
+discouraged.  See L<perlfunc/our>.
 
 This will predeclare all the variables whose names are 
 in the list, allowing you to use them under "use strict", and

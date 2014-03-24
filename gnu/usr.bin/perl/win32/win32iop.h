@@ -13,11 +13,7 @@
 #endif
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#  include <sys/utime.h>
-#else
-#  include <utime.h>
-#endif
+#include <sys/utime.h>
 
 /*
  * defines for flock emulation
@@ -126,6 +122,8 @@ DllExport  void		win32_rewinddir(DIR *dirp);
 DllExport  int		win32_closedir(DIR *dirp);
 DllExport  DIR*		win32_dirp_dup(DIR *const dirp, CLONE_PARAMS *const param);
 
+DllExport  char*        win32_getenvironmentstrings(void);
+/* also see win32_freeenvironmentstrings macro */
 DllExport  char*	win32_getenv(const char *name);
 DllExport  int		win32_putenv(const char *name);
 
@@ -162,6 +160,8 @@ DllExport Sighandler_t	win32_signal(int sig, Sighandler_t subcode);
 
 END_EXTERN_C
 
+/* see comment in win32_getenvironmentstrings */
+#define win32_freeenvironmentstrings(x) win32_free(x)
 #undef alarm
 #define alarm				win32_alarm
 #undef strerror

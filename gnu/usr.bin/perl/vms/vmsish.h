@@ -24,8 +24,11 @@
  * ADDRCONSTEXT,NEEDCONSTEXT: initialization of data with non-constant values
  *                            (e.g. pointer fields of descriptors)
  */
-#if defined(__DECC) || defined(__DECCXX)
+#ifdef __DECC
 #  pragma message disable (ADDRCONSTEXT,NEEDCONSTEXT)
+#endif
+#ifdef __DECCXX
+#  pragma message informational (INTSIGNCHANGE,CASTQUALTYP,ASSCOMMEA,NOCTOBUTCONREFM)
 #endif
 
 /* DEC's C compilers and gcc use incompatible definitions of _to(upp|low)er() */
@@ -211,6 +214,7 @@
 #define vms_realpath(a,b,c)		Perl_vms_realpath(aTHX_ a,b,c)
 #define vmssetenv(a,b,c)		Perl_vmssetenv(aTHX_ a,b,c)
 #define vmstrnenv(a,b,c,d,e)		Perl_vmstrnenv(a,b,c,d,e)
+#define vmssetuserlnm(a,b)		Perl_vmssetuserlnm(a,b)
 
 /* Delete if at all possible, changing protections if necessary. */
 #define unlink(a) kill_file(a)
@@ -306,7 +310,7 @@ struct interp_intern {
 #define PERL__TRNENV_JOIN_SEARCHLIST 0x02
 
 /* Handy way to vet calls to VMS system services and RTL routines. */
-#define _ckvmssts(call) STMT_START { register unsigned long int __ckvms_sts; \
+#define _ckvmssts(call) STMT_START { unsigned long int __ckvms_sts; \
   if (!((__ckvms_sts=(call))&1)) { \
   set_errno(EVMSERR); set_vaxc_errno(__ckvms_sts); \
   Perl_croak(aTHX_ "Fatal VMS error (status=%d) at %s, line %d", \
@@ -314,11 +318,11 @@ struct interp_intern {
 
 /* Same thing, but don't call back to Perl's croak(); useful for errors
  * occurring during startup, before Perl's state is initialized */
-#define _ckvmssts_noperl(call) STMT_START { register unsigned long int __ckvms_sts; \
+#define _ckvmssts_noperl(call) STMT_START { unsigned long int __ckvms_sts; \
   if (!((__ckvms_sts=(call))&1)) { \
   set_errno(EVMSERR); set_vaxc_errno(__ckvms_sts); \
-  fprintf(stderr,"Fatal VMS error (status=%d) at %s, line %d", \
-  __ckvms_sts,__FILE__,__LINE__); lib$signal(__ckvms_sts); } } STMT_END
+  (void)fprintf(stderr,"Fatal VMS error (status=%d) at %s, line %d", \
+  __ckvms_sts,__FILE__,__LINE__); (void)lib$signal(__ckvms_sts); } } STMT_END
 
 #ifdef VMS_DO_SOCKETS
 #define PERL_SOCK_SYSREAD_IS_RECV
@@ -682,6 +686,10 @@ struct mystat
  * their prototypes are already in proto.h.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void	prime_env_iter (void);
 void	init_os_extras (void);
 int	Perl_vms_status_to_unix(int vms_status, int child_flag);
@@ -728,7 +736,7 @@ bool	Perl_vms_do_aexec (pTHX_ SV *, SV **, SV **);
 int	Perl_vms_case_tolerant(void);
 char *	Perl_my_getenv_len (pTHX_ const char *, unsigned long *, bool);
 int	Perl_vmssetenv (pTHX_ const char *, const char *, struct dsc$descriptor_s **);
-void	Perl_vmssetuserlnm(pTHX_ const char *name, const char *eqv);
+void	Perl_vmssetuserlnm(const char *name, const char *eqv);
 char *	Perl_my_crypt (pTHX_ const char *, const char *);
 Pid_t	Perl_my_waitpid (pTHX_ Pid_t, int *, int);
 char *	my_gconvert (double, int, int, char *);
@@ -771,6 +779,11 @@ struct passwd *	Perl_my_getpwnam (pTHX_ const char *name);
 struct passwd *	Perl_my_getpwuid (pTHX_ Uid_t uid);
 void	Perl_my_endpwent (pTHX);
 char *	my_getlogin (void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 #ifndef VMS_DO_SOCKETS

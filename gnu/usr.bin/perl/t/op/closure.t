@@ -9,10 +9,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use Config;
-require './test.pl';
 
 my $i = 1;
 sub foo { $i = shift if @_; $i }
@@ -654,19 +654,21 @@ __EOF__
 }
 
 sub f {
-    my $x if $_[0];
-    sub { \$x }
+    my $x;
+    format ff =
+@
+$r = \$x
+.
 }
 
 {
-    f(1);
-    my $c1= f(0);
-    my $c2= f(0);
-
-    my $r1 = $c1->();
-    my $r2 = $c2->();
+    fileno ff;
+    write ff;
+    my $r1 = $r;
+    write ff;
+    my $r2 = $r;
     isnt($r1, $r2,
-	 "don't copy a stale lexical; crate a fresh undef one instead");
+	 "don't copy a stale lexical; create a fresh undef one instead");
 }
 
 # [perl #63540] Don’t treat sub { if(){.....}; "constant" } as a constant
@@ -681,6 +683,136 @@ BEGIN {
   my $ret = baz();
   is($ret, 0, 'RT #63540');
   is($blonk_was_called, 1, 'RT #63540');
+}
+
+# test PL_cv_has_eval.  Any anon sub that could conceivably contain an
+# eval, should be marked as cloneable
+
+{
+
+    my @s;
+    push @s, sub {  eval '1' } for 1,2;
+    isnt($s[0], $s[1], "cloneable with eval");
+    @s = ();
+    push @s, sub { use re 'eval'; my $x; s/$x/1/; } for 1,2;
+    isnt($s[0], $s[1], "cloneable with use re eval");
+    @s = ();
+    push @s, sub { s/1/1/ee; } for 1,2;
+    isnt($s[0], $s[1], "cloneable with //ee");
+}
+
+# [perl #89544]
+{
+   sub trace::DESTROY {
+       push @trace::trace, "destroyed";
+   }
+
+   my $outer2 = sub {
+       my $a = bless \my $dummy, trace::;
+
+       my $outer = sub {
+	   my $b;
+	   my $inner = sub {
+	       undef $b;
+	   };
+
+	   $a;
+
+	   $inner
+       };
+
+       $outer->()
+   };
+
+   my $inner = $outer2->();
+   is "@trace::trace", "destroyed",
+      'closures only close over named variables, not entire subs';
+}
+
+# [perl #113812] Closure prototypes with no CvOUTSIDE (crash caused by the
+#                fix for #89544)
+do "./op/closure_test.pl" or die $@||$!;
+is $closure_test::s2->()(), '10 cubes',
+  'cloning closure proto with no CvOUTSIDE';
+
+# Also brought up in #113812: Even when being cloned, a closure prototype
+# might have its CvOUTSIDE pointing to the wrong thing.
+{
+    package main::113812;
+    $s1 = sub {
+	my $x = 3;
+	$s2 = sub {
+	    $x;
+	    $s3 = sub { $x };
+	};
+    };
+    $s1->();
+    undef &$s1; # frees $s2’s prototype, causing the $s3 proto to have its
+                # CvOUTSIDE point to $s1
+    ::is $s2->()(), 3, 'cloning closure proto whose CvOUTSIDE has changed';
+}
+
+# This should never emit two different values:
+#     print $x, "\n";
+#     print sub { $x }->(), "\n";
+# This test case started to do just that in commit 33894c1aa3e
+# (5.10.1/5.12.0):
+sub mosquito {
+    my $x if @_;
+    return if @_;
+
+    $x = 17;
+    is sub { $x }->(), $x, 'closing over stale var in 2nd sub call';
+}
+mosquito(1);
+mosquito;
+# And this case in commit adf8f095c588 (5.14):
+sub anything {
+    my $x;
+    sub gnat {
+	$x = 3;
+	is sub { $x }->(), $x,
+	    'closing over stale var before 1st sub call';
+    }
+}
+gnat();
+
+# [perl #114018] Similar to the above, but with string eval
+sub staleval {
+    my $x if @_;
+    return if @_;
+
+    $x = 3;
+    is eval '$x', $x, 'eval closing over stale var in active sub';
+    return # 
+}
+staleval 1;
+staleval;
+
+# [perl #114888]
+# Test that closure creation localises PL_comppad_name properly.  Usually
+# at compile time a BEGIN block will localise PL_comppad_name for use, so
+# pp_anoncode can mess with it without any visible effects.
+# But inside a source filter, it affects the directly enclosing compila-
+# tion scope.
+SKIP: {
+    skip_if_miniperl("no XS on miniperl (for source filters)");
+    fresh_perl_is <<'    [perl #114888]', "ok\n", {stderr=>1},
+	use strict;
+	BEGIN {
+	    package Foo;
+	    use Filter::Util::Call;
+	    sub import { filter_add( sub {
+		my $status = filter_read();
+		sub { $status };
+		$status;
+	    })}
+	    Foo->import
+	}
+	my $x = "ok\n";	# stores $x in the wrong padnamelist
+	print $x;	# cannot find it - strict violation
+    [perl #114888]
+        'closures in source filters do not interfere with pad names';
 }
 
 done_testing();

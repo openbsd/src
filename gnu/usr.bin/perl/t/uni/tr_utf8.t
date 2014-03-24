@@ -13,6 +13,7 @@ BEGIN {
 
 use strict;
 plan(tests => 8);
+no warnings 'deprecated';
 use encoding 'utf8';
 
 my @hiragana =  map {chr} ord("ぁ")..ord("ん");

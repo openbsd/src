@@ -20,7 +20,7 @@ use Carp 'croak';
 
 # The revision is no longer being updated since moving to git. 
 $CGI::revision = '$Id: CGI.pm,v 1.266 2009/07/30 16:32:34 lstein Exp $';
-$CGI::VERSION='3.59';
+$CGI::VERSION='3.63';
 
 # HARD-CODED LOCATION FOR FILE UPLOAD TEMPORARY FILES.
 # UNCOMMENT THIS ONLY IF YOU KNOW WHAT YOU'RE DOING.
@@ -128,10 +128,6 @@ sub initialize_globals {
 }
 
 # ------------------ START OF THE LIBRARY ------------
-
-#### Method: endform
-# This method is DEPRECATED
-*endform = \&end_form;
 
 # make mod_perlhappy
 initialize_globals();
@@ -530,7 +526,7 @@ sub init {
             my $val = $QUERY_PARAM{$name}; # always an arrayref;
             $self->param('-name'=>$name,'-value'=> $val);
             if (defined $val and ref $val eq 'ARRAY') {
-                for my $fh (grep {defined(fileno($_))} @$val) {
+                for my $fh (grep {defined($_) && ref($_) && defined(fileno($_))} @$val) {
                    seek($fh,0,0); # reset the filehandle.  
                 }
 
@@ -812,7 +808,7 @@ sub all_parameters {
 
 # put a filehandle into binary mode (DOS)
 sub binmode {
-    return unless defined($_[1]) && defined fileno($_[1]);
+    return unless defined($_[1]) && ref ($_[1]) && defined fileno($_[1]);
     CORE::binmode($_[1]);
 }
 
@@ -1501,8 +1497,17 @@ sub header {
                             'EXPIRES','NPH','CHARSET',
                             'ATTACHMENT','P3P'],@p);
 
+    # Since $cookie and $p3p may be array references,
+    # we must stringify them before CR escaping is done.
+    my @cookie;
+    for (ref($cookie) eq 'ARRAY' ? @{$cookie} : $cookie) {
+        my $cs = UNIVERSAL::isa($_,'CGI::Cookie') ? $_->as_string : $_;
+        push(@cookie,$cs) if defined $cs and $cs ne '';
+    }
+    $p3p = join ' ',@$p3p if ref($p3p) eq 'ARRAY';
+
     # CR escaping for values, per RFC 822
-    for my $header ($type,$status,$cookie,$target,$expires,$nph,$charset,$attachment,$p3p,@other) {
+    for my $header ($type,$status,@cookie,$target,$expires,$nph,$charset,$attachment,$p3p,@other) {
         if (defined $header) {
             # From RFC 822:
             # Unfolding  is  accomplished  by regarding   CRLF   immediately
@@ -1546,18 +1551,9 @@ sub header {
 
     push(@header,"Status: $status") if $status;
     push(@header,"Window-Target: $target") if $target;
-    if ($p3p) {
-       $p3p = join ' ',@$p3p if ref($p3p) eq 'ARRAY';
-       push(@header,qq(P3P: policyref="/w3c/p3p.xml", CP="$p3p"));
-    }
+    push(@header,"P3P: policyref=\"/w3c/p3p.xml\", CP=\"$p3p\"") if $p3p;
     # push all the cookies -- there may be several
-    if ($cookie) {
-	my(@cookie) = ref($cookie) && ref($cookie) eq 'ARRAY' ? @{$cookie} : $cookie;
-	for (@cookie) {
-            my $cs = UNIVERSAL::isa($_,'CGI::Cookie') ? $_->as_string : $_;
-	    push(@header,"Set-Cookie: $cs") if $cs ne '';
-	}
-    }
+    push(@header,map {"Set-Cookie: $_"} @cookie);
     # if the user indicates an expiration time, then we need
     # both an Expires and a Date header (so that the browser is
     # uses OUR clock)
@@ -1904,7 +1900,7 @@ sub startform {
     $action = qq(action="$action");
     my($other) = @other ? " @other" : '';
     $self->{'.parametersToAdd'}={};
-    return qq/<form method="$method" $action enctype="$enctype"$other>\n/;
+    return qq/<form method="$method" $action enctype="$enctype"$other>/;
 }
 END_OF_FUNC
 
@@ -1938,7 +1934,7 @@ sub start_form {
     $action = qq(action="$action");
     my($other) = @other ? " @other" : '';
     $self->{'.parametersToAdd'}={};
-    return qq/<form method="$method" $action enctype="$enctype"$other>\n/;
+    return qq/<form method="$method" $action enctype="$enctype"$other>/;
 }
 END_OF_FUNC
 
@@ -1960,8 +1956,25 @@ END_OF_FUNC
 
 #### Method: end_form
 # End a form
+# Note: This repeated below under the older name.
 'end_form' => <<'END_OF_FUNC',
 sub end_form {
+    my($self,@p) = self_or_default(@_);
+    if ( $NOSTICKY ) {
+        return wantarray ? ("</form>") : "\n</form>";
+    } else {
+        if (my @fields = $self->get_fields) {
+            return wantarray ? ("<div>",@fields,"</div>","</form>")
+                             : "<div>".(join '',@fields)."</div>\n</form>";
+        } else {
+            return "</form>";
+        }
+    }
+}
+END_OF_FUNC
+
+'endform' => <<'END_OF_FUNC',
+sub endform {
     my($self,@p) = self_or_default(@_);
     if ( $NOSTICKY ) {
         return wantarray ? ("</form>") : "\n</form>";
@@ -2311,7 +2324,7 @@ sub unescapeHTML {
     my $latin = defined $self->{'.charset'} ? $self->{'.charset'} =~ /^(ISO-8859-1|WINDOWS-1252)$/i
                                             : 1;
     # thanks to Randal Schwartz for the correct solution to this one
-    $string=~ s[&(\S*?);]{
+    $string=~ s[&([^\s&]*?);]{
 	local $_ = $1;
 	/^amp$/i	? "&" :
 	/^quot$/i	? '"' :
@@ -2319,7 +2332,7 @@ sub unescapeHTML {
 	/^lt$/i		? "<" :
 	/^#(\d+)$/ && $latin	     ? chr($1) :
 	/^#x([0-9a-f]+)$/i && $latin ? chr(hex($1)) :
-	$_
+	"&$_;"
 	}gex;
     return $string;
 }
@@ -5184,7 +5197,8 @@ header() returns the Content-type: header.  You can provide your own
 MIME type if you choose, otherwise it defaults to text/html.  An
 optional second parameter specifies the status code and a human-readable
 message.  For example, you can specify 204, "No response" to create a
-script that tells the browser to do nothing at all.
+script that tells the browser to do nothing at all. Note that RFC 2616 expects
+the human-readable phase to be there as well as the numeric status code. 
 
 The last example shows the named argument style for passing arguments
 to the CGI methods using named parameters.  Recognized parameters are
@@ -5272,7 +5286,7 @@ You can also use named arguments:
     print $q->redirect(
         -uri=>'http://somewhere.else/in/movie/land',
 	    -nph=>1,
-         -status=>301);
+         -status=>'301 Moved Permanently');
 
 All names arguments recognized by header() are also recognized by
 redirect(). However, most HTTP headers, including those generated by
@@ -5294,6 +5308,9 @@ The default if not specified is 302, which means "moved temporarily."
 You may change the status to another status code if you wish.  Be
 advised that changing the status to anything other than 301, 302 or
 303 will probably break redirection.
+
+Note that the human-readable phrase is also expected to be present to conform
+with RFC 2616, section 6.1.
 
 =head2 CREATING THE HTML DOCUMENT HEADER
 

@@ -46,7 +46,7 @@ $needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 my $skip_mode_checks =
     $^O eq 'cygwin' && $ENV{CYGWIN} !~ /ntsec/;
 
-plan tests => 51;
+plan tests => 52;
 
 my $tmpdir = tempfile();
 my $tmpdir1 = tempfile();
@@ -72,7 +72,7 @@ chdir $tmpdir;
 umask(022);
 
 SKIP: {
-    skip "bogus umask", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare') || ($^O eq 'epoc');
+    skip "bogus umask", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
 
     is((umask(0)&0777), 022, 'umask'),
 }
@@ -275,7 +275,7 @@ sub check_utime_result {
 		is( $atime, 500000001,          'atime' );
 		is( $mtime, 500000000 + $delta, 'mtime' );
 	    }
-	    elsif ($^O eq 'beos' || $^O eq 'haiku') {
+	    elsif ($^O eq 'haiku') {
             SKIP: {
 		    skip "atime not updated", 1;
 		}
@@ -372,7 +372,7 @@ SKIP: {
 
     SKIP: {
         if ($^O eq 'vos') {
-	    skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 5);
+	    skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 6);
 	}
 
 	is(-s $tmpfile, 200, "fh resize to 200 working (filename check)");
@@ -407,6 +407,14 @@ SKIP: {
 	is(-s $tmpfile, 100, "fh resize by IO slot working");
 
 	close FH;
+
+	my $n = "for_fs_dot_t$$";
+	open FH, ">$n" or die "open $n: $!";
+	print FH "bloh blah bla\n";
+	close FH or die "close $n: $!";
+	eval "truncate $n, 0; 1" or die;
+	ok !-z $n, 'truncate(word) does not fall back to file name';
+	unlink $n;
     }
 }
 

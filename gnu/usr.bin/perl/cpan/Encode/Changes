@@ -1,8 +1,76 @@
 # Revision history for Perl extension Encode.
 #
-# $Id: Changes,v 2.44 2011/08/09 07:49:44 dankogai Exp dankogai $
+# $Id: Changes,v 2.49 2013/03/05 03:12:49 dankogai Exp dankogai $
 #
-$Revision: 2.44 $ $Date: 2011/08/09 07:49:44 $
+$Revision: 2.49 $ $Date: 2013/03/05 03:12:49 $
+! Encode.xs
+  Addressed: Encoding objects leak memory if decoding fails
+  https://github.com/dankogai/p5-encode/issues/8
+
+2.48 2013/02/18 02:23:56
+! encoding.pm 
+  t/Mod_EUCJP.pm t/enc_data.t t/enc_eucjp.t t/enc_module.t t/enc_utf8.t
+  t/encoding.t t/jperl.t
+  [PATCH] Deprecate encoding.pm
+  https://rt.cpan.org/Ticket/Display.html?id=81255
+! Encode/Supported.pod
+  Fixed: Pod errors
+  https://rt.cpan.org/Ticket/Display.html?id=81426
+! Encode.pm t/Encode.t
+  [PATCH] Fix for shared hash key scalars
+  https://rt.cpan.org/Ticket/Display.html?id=80608
+! Encode.pm
+  Fixed: Uninitialized value warning from Encode->encodings()
+  https://rt.cpan.org/Ticket/Display.html?id=80181
+! Makefile.PL
+  Install to 'site' instead of 'perl' when perl version is 5.11+
+  https://rt.cpan.org/Ticket/Display.html?id=78917
+! Encode/Makefile_PL.e2x
+  find enc2xs.bat if it works on windows.
+  https://github.com/dankogai/p5-encode/pull/7
+! t/piconv.t
+  Fix finding piconv in t/piconv.t
+  https://github.com/dankogai/p5-encode/pull/6
+
+2.47 2012/08/15 05:36:16
+! Encode.pm
+  POD Fixes: Copyright and mail address
+! Makefile.PL
+  Added LICENSE => 'perl'
+! lib/Encode/GSM0338.pm t/gsm0338.t
+  REALLY fixed RT#75670: Wrong decoding for GSM 3.38 character \x09
+  ucm/gsm0338.ucm is dropped from MANIFEST since 2.25
+  but I was fixing the wrong file!
+  https://rt.cpan.org/Ticket/Display.html?id=75670
+
+! 2.46 2012/08/12 05:49:30
+! Encode.pm
+  Fixed: RT#78917 for I18N-Charset: Fails with Encode 2.45
+  To be more exact, 2.45 broke Encode->encodings(':all')
+  https://rt.cpan.org/Ticket/Display.html?id=78917
+
+2.45 2012/08/05 23:08:49
+! lib/Encode/Alias.pm
+  Addressed RT#78125: Missed Mac Alias x-mac-ce
+  https://rt.cpan.org/Ticket/Display.html?id=78125
+! lib/Encode/Unicode/UTF7.pm
+  Applied the patch in RT#76711
+  https://rt.cpan.org/Ticket/Display.html?id=76711
+! ucm/gsm0338.ucm
+  Addressed RT#75670: Wrong decoding for GSM 3.38 character \x09
+  https://rt.cpan.org/Ticket/Display.html?id=75670
+! Encode.pm
+  Applied the patch in RT#72519
+  https://rt.cpan.org/Ticket/Display.html?id=72519
+! Unicode/Unicode.xs
+  t/Unicode.t
+  Bug fixes in Unicode.xs by chansen
+  https://github.com/dankogai/p5-encode/pull/5
+! Encode.pm
+  various POD improvements by daxim
+  https://github.com/dankogai/p5-encode/pull/4
+
+2.44 2011/08/09 07:49:44
 ! Unicode/Unicode.xs
   Addressed the following:
     Date: Fri, 22 Jul 2011 13:58:43 +0200

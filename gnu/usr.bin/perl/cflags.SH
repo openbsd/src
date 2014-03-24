@@ -1,3 +1,5 @@
+#!/bin/sh
+
 case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh; then TOP=.;
@@ -140,7 +142,7 @@ Intel*) ;; # # Is that you, Intel C++?
        case " $ccflags " in
        *" $opt "*) ;; # Skip if already there.
        *) rm -f _cflags$_exe
-          case "`$cc $cflags $warn $stdflags $opt _cflags.c -o _cflags$_exe 2>&1`" in
+          case "`$cc -DPERL_NO_INLINE_FUNCTIONS $cflags $warn $stdflags $opt _cflags.c -o _cflags$_exe 2>&1`" in
           *"unrecognized"*) ;;
           *"implicit declaration"*) ;; # Was something useful hidden?
           *"Invalid"*) ;;
@@ -273,55 +275,22 @@ for file do
     : or customize here
 
     case "$file" in
-    DB_File) ;;
-    GDBM_File) ;;
-    NDBM_File) ;;
-    ODBM_File) ;;
-    POSIX) ;;
-    SDBM_File) ;;
-    av) ;;
-    byterun) ;;
-    deb) ;;
-    dl) ;;
-    doio) ;;
-    doop) ;;
-    dump) ;;
-    globals) ;;
-    gv) ;;
-    hv) ;;
-    locale) ;;
-    madly) ;;
-    main) ;;
-    malloc) ;;
-    mg) ;;
-    miniperlmain) ;;
-    numeric) ;;
-    op) ;;
-    opmini) ;;
-    pad) ;;
-    perl) ;;
-    perlapi) ;;
-    perlmain) ;;
-    perly) ;;
-    pp) ;;
-    pp_ctl) ;;
-    pp_hot) ;;
-    pp_pack) ;;
-    pp_sort) ;;
-    pp_sys) ;;
-    regcomp) ;;
-    regexec) ;;
-    run) ;;
-    scope) ;;
-    sv) ;;
-    taint) ;;
-    toke) ;;
-    universal) ;;
-    usersub) ;;
-    utf8) ;;
-    util) ;;
     *) ;;
+
+    *) : Customization examples follow: ;;
+    av) ccflags=`echo $ccflags | sed -e s/-pipe//` ;;
+    deb) ccflags="$ccflags -fno-jump-tables" ;;
+    hv) warn=`echo $warn | sed -e s/-Wextra//` ;;
+    toke) optimize=-O0 ;;
     esac
+
+    : The examples are intentionally unreachable as the '*)' case always
+    : matches. To use them, move before the '*)' and edit as appropriate.
+    : It is not a good idea to set ccflags to an absolute value here, as it
+    : often contains general -D defines which are needed for correct
+    : compilation. It is better to edit ccflags as shown, using interpolation
+    : to add flags, or sed to remove flags.
+
 
     case "$cc" in
     *g++*)
@@ -337,6 +306,10 @@ for file do
     cppflags=`echo $cppflags|sed 's/-Wdeclaration-after-statement/ /'`
 
     case "$cc" in
+    *clang)
+      # clang complains a lot about -Wunused-value which are not fixable
+      warn="$warn -Wno-unused-value"
+      ;;
     *g++*)
       # Without -Wno-unused-variable g++ 4.x compiles are rather unwatchable
       # because of all the warnings about Perl___notused, and g++ doesn't do

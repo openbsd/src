@@ -75,7 +75,7 @@ my %Extensions = map {($_,$_)}
 # This is the list from MM_VMS, plus pad.h, parser.h, perlsfio.h utf8.h
 # which it installs. It *doesn't* install perliol.h - FIXME.
 my @header_files = qw(EXTERN.h INTERN.h XSUB.h av.h config.h cop.h cv.h
-		      embed.h embedvar.h form.h gv.h handy.h hv.h intrpvar.h
+		      embed.h embedvar.h form.h gv.h handy.h hv.h hv_func.h intrpvar.h
 		      iperlsys.h keywords.h mg.h nostdio.h op.h opcode.h
 		      pad.h parser.h patchlevel.h perl.h perlio.h perlsdio.h
 		      perlsfio.h perlvars.h perly.h pp.h pp_proto.h proto.h
@@ -154,14 +154,17 @@ die "Can't automatically determine name for Config_heavy.pl from '$Config_PM'"
 my $config_txt;
 my $heavy_txt;
 
-$heavy_txt .= <<'ENDOFBEG';
+my $from = $^O eq 'VMS' ? 'PERLSHR image' : 'binary (from libperl)';
+my $env_cygwin = $^O eq 'cygwin'
+    ? 'push @env, "CYGWIN=\"$ENV{CYGWIN}\"" if $ENV{CYGWIN};' . "\n" : "";
+$heavy_txt .= sprintf <<'ENDOFBEG', $^O, $^O, $from, $^O, $env_cygwin;
 # This file was created by configpm when Perl was built. Any changes
 # made to this file will be lost the next time perl is built.
 
 package Config;
 use strict;
 use warnings;
-use vars '%Config';
+use vars '%%Config';
 
 sub bincompat_options {
     return split ' ', (Internals::V())[0];
@@ -181,6 +184,9 @@ sub local_patches {
 }
 
 sub _V {
+    die "Perl lib was built for '%s' but is being run on '$^O'"
+        unless "%s" eq $^O;
+
     my ($bincompat, $non_bincompat, $date, @patches) = Internals::V();
 
     my $opts = join ' ', sort split ' ', "$bincompat $non_bincompat";
@@ -190,11 +196,7 @@ sub _V {
     $opts =~ s/(?=.{53})(.{1,53}) /$1\n                        /mg;
 
     print Config::myconfig();
-    if ($^O eq 'VMS') {
-        print "\nCharacteristics of this PERLSHR image: \n";
-    } else {
-        print "\nCharacteristics of this binary (from libperl): \n";
-    }
+    print "\nCharacteristics of this %s: \n";
 
     print "  Compile-time options: $opts\n";
 
@@ -203,15 +205,14 @@ sub _V {
         print "\t$_\n" foreach @patches;
     }
 
-    print "  Built under $^O\n";
+    print "  Built under %s\n";
 
     print "  $date\n" if defined $date;
 
-    my @env = map { "$_=\"$ENV{$_}\"" } sort grep {/^PERL/} keys %ENV;
-    push @env, "CYGWIN=\"$ENV{CYGWIN}\"" if $^O eq 'cygwin' and $ENV{CYGWIN};
-
+    my @env = map { "$_=\"$ENV{$_}\"" } sort grep {/^PERL/} keys %%ENV;
+%s
     if (@env) {
-        print "  \%ENV:\n";
+        print "  \%%ENV:\n";
         print "    $_\n" foreach @env;
     }
     print "  \@INC:\n";
@@ -232,7 +233,7 @@ EOT
 
 my %export_ok = eval $export_funcs or die;
 
-$config_txt .= sprintf << 'EOT', $export_funcs;
+$config_txt .= sprintf << 'EOT', $], $export_funcs;
 # This file was created by configpm when Perl was built. Any changes
 # made to this file will be lost the next time perl is built.
 
@@ -243,7 +244,9 @@ $config_txt .= sprintf << 'EOT', $export_funcs;
 package Config;
 use strict;
 use warnings;
-use vars '%%Config';
+use vars '%%Config', '$VERSION';
+
+$VERSION = "%s";
 
 # Skip @Config::EXPORT because it only contains %%Config, which we special
 # case below as it's not a function. @Config::EXPORT won't change in the
@@ -816,8 +819,8 @@ if ($Common{byteorder}) {
 }
 my $fast_config = join '', map { "    $_,\n" } sort values %Common;
 
-# Sanity check needed to stop an infite loop if Config_heavy.pl fails to define
-# &launcher for some reason (eg it got truncated)
+# Sanity check needed to stop an infinite loop if Config_heavy.pl fails to
+# define &launcher for some reason (eg it got truncated)
 $config_txt .= sprintf <<'ENDOFTIE', $fast_config;
 
 sub DESTROY { }

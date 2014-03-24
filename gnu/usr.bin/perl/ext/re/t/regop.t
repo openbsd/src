@@ -14,7 +14,7 @@ our $NUM_SECTS;
 chomp(my @strs= grep { !/^\s*\#/ } <DATA>);
 my $out = runperl(progfile => "t/regop.pl", stderr => 1 );
 # VMS currently embeds linefeeds in the output.
-$out =~ s/\cJ//g if $^O = 'VMS';
+$out =~ s/\cJ//g if $^O == 'VMS';
 my @tests = grep { /\S/ } split /(?=Compiling REx)/, $out;
 # on debug builds we get an EXECUTING... message in there at the top
 shift @tests
@@ -241,21 +241,21 @@ floating ""$ at 3..4 (checking floating)
 #Matching stclass EXACTF <.> against ".exe"
 ---
 #Compiling REx "[q]"
-#size 12 nodes Got 100 bytes for offset annotations.
+#size 3 nodes Got 28 bytes for offset annotations.
 #first at 1
 #Final program:
 #   1: EXACT <q>(3)
 #   3: END(0)
 #anchored "q" at 0 (checking anchored isall) minlen 1
-#Offsets: [12]
+#Offsets: [3]
 #        1:1[3] 3:4[0]
 #Guessing start of match, REx "[q]" against "q"...
 #Found anchored substr "q" at offset 0...
 #Guessed: match at offset 0
 #%MATCHED%
 #Freeing REx: "[q]"
-Got 100 bytes for offset annotations.
-Offsets: [12]
+Got 28 bytes for offset annotations.
+Offsets: [3]
 1:1[3] 3:4[0]
 %MATCHED%        
 Freeing REx: "[q]"

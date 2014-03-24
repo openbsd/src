@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 102;
+plan tests => 118;
 
 $FS = ':';
 
@@ -14,7 +14,7 @@ $_ = 'a:b:c';
 
 ($a,$b,$c) = split($FS,$_);
 
-is(join(';',$a,$b,$c), 'a;b;c');
+is(join(';',$a,$b,$c), 'a;b;c', 'Split a simple string into scalars.');
 
 @ary = split(/:b:/);
 $cnt = split(/:b:/);
@@ -53,18 +53,18 @@ is($cnt, scalar(@ary));
 
 # Can we say how many fields to split to?
 $_ = join(':', split(' ','1 2 3 4 5 6', 3));
-is($_, '1:2:3 4 5 6');
+is($_, '1:2:3 4 5 6', "Split into a specified number of fields, defined by a literal");
 @ary = split(' ','1 2 3 4 5 6', 3);
 $cnt = split(' ','1 2 3 4 5 6', 3);
-is($cnt, scalar(@ary));
+is($cnt, scalar(@ary), "Check element count from previous test");
 
 # Can we do it as a variable?
 $x = 4;
 $_ = join(':', split(' ','1 2 3 4 5 6', $x));
-is($_, '1:2:3:4 5 6');
+is($_, '1:2:3:4 5 6', "Split into a specified number of fields, defined by a scalar variable");
 @ary = split(' ','1 2 3 4 5 6', $x);
 $cnt = split(' ','1 2 3 4 5 6', $x);
-is($cnt, scalar(@ary));
+is($cnt, scalar(@ary), "Check element count from previous test");
 
 # Does the 999 suppress null field chopping?
 $_ = join(':', split(/:/,'1:2:3:4:5:6:::', 999));
@@ -76,7 +76,7 @@ is($cnt, scalar(@ary));
 # Splitting without pattern
 $_ = "1 2 3 4";
 $_ = join(':', split);
-is($_ , '1:2:3:4');
+is($_ , '1:2:3:4', "Split and join without specifying a split pattern");
 
 # Does assignment to a list imply split to one more field than that?
 $foo = runperl( switches => ['-Dt'], stderr => 1, prog => '($a,$b)=split;' );
@@ -85,7 +85,7 @@ ok($foo =~ /DEBUGGING/ || $foo =~ /const\n?\Q(IV(3))\E/);
 # Can we say how many fields to split to when assigning to a list?
 ($a,$b) = split(' ','1 2 3 4 5 6', 2);
 $_ = join(':',$a,$b);
-is($_, '1:2 3 4 5 6');
+is($_, '1:2 3 4 5 6', "Storing split output into list of scalars");
 
 # do subpatterns generate additional fields (without trailing nulls)?
 $_ = join '|', split(/,|(-)/, "1-10,20,,,");
@@ -417,3 +417,74 @@ is($cnt, scalar(@ary));
            # 'my' doesn't trigger the bug
     is "@PATH", "Font GlyphNames", "hybrid scalar-and-array context";
 }
+
+{
+    my @results;
+    my $expr= "foo  bar";
+    my $cond;
+
+    @results= split(0||" ", $expr);
+    is @results, 2, 'split(0||" ") is treated like split(" ")'; #'
+
+    $cond= 0;
+    @results= split $cond ? " " : qr/ /, $expr;
+    is @results, 3, 'split($cond ? " " : qr/ /, $expr) works as expected (like qr/ /)';
+    $cond= 1;
+    @results= split $cond ? " " : qr/ /, $expr;
+    is @results, 2, 'split($cond ? " " : qr/ /, $expr) works as expected (like " ")';
+
+    $expr = ' a b c ';
+    @results = split /\s/, $expr;
+    is @results, 4,
+        "split on regex of single space metacharacter: captured 4 elements";
+    is $results[0], '',
+        "split on regex of single space metacharacter: first element is empty string";
+
+    @results = split / /, $expr;
+    is @results, 4,
+        "split on regex of single whitespace: captured 4 elements";
+    is $results[0], '',
+        "split on regex of single whitespace: first element is empty string";
+
+    @results = split " ", $expr;
+    is @results, 3,
+        "split on string of single whitespace: captured 3 elements";
+    is $results[0], 'a',
+        "split on string of single whitespace: first element is non-empty";
+
+    $expr = " a \tb c ";
+    @results = split " ", $expr;
+    is @results, 3,
+        "split on string of single whitespace: captured 3 elements";
+    is $results[0], 'a',
+        "split on string of single whitespace: first element is non-empty; multiple contiguous space characters";
+
+    my @seq;
+    for my $cond (0,1,0,1,0) {
+        $expr = "  foo  ";
+        @results = split $cond ? qr/ / : " ", $expr;
+        push @seq, scalar(@results) . ":" . $results[-1];
+    }
+    is join(" ", @seq), "1:foo 3:foo 1:foo 3:foo 1:foo",
+        qq{split(\$cond ? qr/ / : " ", "$exp") behaves as expected over repeated similar patterns};
+}
+
+{
+    # 'RT #116086: split "\x20" does not work as documented';
+    my @results;
+    my $expr;
+    $expr = ' a b c ';
+    @results = split "\x20", $expr;
+    is @results, 3,
+        "RT #116086: split on string of single hex-20: captured 3 elements";
+    is $results[0], 'a',
+        "RT #116086: split on string of single hex-20: first element is non-empty";
+
+    $expr = " a \tb c ";
+    @results = split "\x20", $expr;
+    is @results, 3,
+        "RT #116086: split on string of single hex-20: captured 3 elements";
+    is $results[0], 'a',
+        "RT #116086: split on string of single hex-20: first element is non-empty; multiple contiguous space characters";
+}
+

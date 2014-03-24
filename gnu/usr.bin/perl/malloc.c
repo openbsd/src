@@ -197,14 +197,7 @@
 #define MIN_BUC_POW2 (sizeof(void*) > 4 ? 3 : 2) /* Allow for 4-byte arena. */
 #define MIN_BUCKET (MIN_BUC_POW2 * BUCKETS_PER_POW2)
 
-#if !(defined(I286) || defined(atarist))
-	/* take 2k unless the block is bigger than that */
-#  define LOG_OF_MIN_ARENA 11
-#else
-	/* take 16k unless the block is bigger than that 
-	   (80286s like large segments!), probably good on the atari too */
-#  define LOG_OF_MIN_ARENA 14
-#endif
+#define LOG_OF_MIN_ARENA 11
 
 #if defined(DEBUGGING) && !defined(NO_RCHECK)
 #  define RCHECK
@@ -376,8 +369,7 @@
  */
 #define u_short unsigned short
 
-/* 286 and atarist like big chunks, which gives too much overhead. */
-#if (defined(RCHECK) || defined(I286) || defined(atarist)) && defined(PACK_MALLOC)
+#if defined(RCHECK) && defined(PACK_MALLOC)
 #  undef PACK_MALLOC
 #endif 
 
@@ -455,7 +447,7 @@ struct aligner {
   char c;
   void *p;
 };
-#  define ALIGN_SMALL ((int)((caddr_t)&(((struct aligner*)0)->p)))
+#  define ALIGN_SMALL ((IV)((caddr_t)&(((struct aligner*)0)->p)))
 #else
 #  define ALIGN_SMALL MEM_ALIGNBYTES
 #endif
@@ -795,7 +787,7 @@ static const char bucket_of[] =
 #  define SBRK_FAILURE_PRICE 50
 #endif 
 
-static void	morecore	(register int bucket);
+static void	morecore	(int bucket);
 #  if defined(DEBUGGING)
 static void	botch		(const char *diag, const char *s, const char *file, int line);
 #  endif
@@ -1091,7 +1083,7 @@ emergency_sbrk(MEM_SIZE size)
   do_croak:
     MALLOC_UNLOCK;
     emergency_sbrk_croak("Out of memory during request for %"UVuf" bytes, total sbrk() is %"UVuf" bytes", (UV)size, (UV)(goodsbrk + sbrk_slack));
-    /* NOTREACHED */
+    assert(0); /* NOTREACHED */
     return NULL;
 }
 
@@ -1099,11 +1091,8 @@ emergency_sbrk(MEM_SIZE size)
 #  define emergency_sbrk(size)	-1
 #endif	/* defined PERL_EMERGENCY_SBRK */
 
-static void
-write2(const char *mess)
-{
-  write(2, mess, strlen(mess));
-}
+/* Don't use PerlIO buffered writes as they allocate memory. */
+#define MYMALLOC_WRITE2STDERR(s) PerlLIO_write(PerlIO_fileno(PerlIO_stderr()),s,strlen(s))
 
 #ifdef DEBUGGING
 #undef ASSERT
@@ -1121,13 +1110,13 @@ botch(const char *diag, const char *s, const char *file, int line)
 			  "assertion botched (%s?): %s %s:%d\n",
 			  diag, s, file, line) != 0) {
 	 do_write:		/* Can be initializing interpreter */
-	    write2("assertion botched (");
-	    write2(diag);
-	    write2("?): ");
-	    write2(s);
-	    write2(" (");
-	    write2(file);
-	    write2(":");
+	    MYMALLOC_WRITE2STDERR("assertion botched (");
+	    MYMALLOC_WRITE2STDERR(diag);
+	    MYMALLOC_WRITE2STDERR("?): ");
+	    MYMALLOC_WRITE2STDERR(s);
+	    MYMALLOC_WRITE2STDERR(" (");
+	    MYMALLOC_WRITE2STDERR(file);
+	    MYMALLOC_WRITE2STDERR(":");
 	    {
 	      char linebuf[10];
 	      char *s = linebuf + sizeof(linebuf) - 1;
@@ -1136,9 +1125,9 @@ botch(const char *diag, const char *s, const char *file, int line)
 	      do {
 		*--s = '0' + (n % 10);
 	      } while (n /= 10);
-	      write2(s);
+	      MYMALLOC_WRITE2STDERR(s);
 	    }
-	    write2(")\n");
+	    MYMALLOC_WRITE2STDERR(")\n");
 	}
 	PerlProc_abort();
     }
@@ -1271,8 +1260,8 @@ Malloc_t
 Perl_malloc(size_t nbytes)
 {
         dVAR;
-  	register union overhead *p;
-  	register int bucket;
+  	union overhead *p;
+  	int bucket;
 
 #if defined(DEBUGGING) || defined(RCHECK)
 	MEM_SIZE size = nbytes;
@@ -1298,14 +1287,14 @@ Perl_malloc(size_t nbytes)
 		    dTHX;
 		    if (!PL_nomemok) {
 #if defined(PLAIN_MALLOC) && defined(NO_FANCY_MALLOC)
-		        PerlIO_puts(PerlIO_stderr(),"Out of memory!\n");
+		        MYMALLOC_WRITE2STDERR("Out of memory!\n");
 #else
 			char buff[80];
 			char *eb = buff + sizeof(buff) - 1;
 			char *s = eb;
 			size_t n = nbytes;
 
-			PerlIO_puts(PerlIO_stderr(),"Out of memory during request for ");
+			MYMALLOC_WRITE2STDERR("Out of memory during request for ");
 #if defined(DEBUGGING) || defined(RCHECK)
 			n = size;
 #endif
@@ -1313,15 +1302,15 @@ Perl_malloc(size_t nbytes)
 			do {
 			    *--s = '0' + (n % 10);
 			} while (n /= 10);
-			PerlIO_puts(PerlIO_stderr(),s);
-			PerlIO_puts(PerlIO_stderr()," bytes, total sbrk() is ");
+			MYMALLOC_WRITE2STDERR(s);
+			MYMALLOC_WRITE2STDERR(" bytes, total sbrk() is ");
 			s = eb;
 			n = goodsbrk + sbrk_slack;
 			do {
 			    *--s = '0' + (n % 10);
 			} while (n /= 10);
-			PerlIO_puts(PerlIO_stderr(),s);
-			PerlIO_puts(PerlIO_stderr()," bytes!\n");
+			MYMALLOC_WRITE2STDERR(s);
+			MYMALLOC_WRITE2STDERR(" bytes!\n");
 #endif /* defined(PLAIN_MALLOC) && defined(NO_FANCY_MALLOC) */
 			my_exit(1);
 		    }
@@ -1506,7 +1495,7 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	    require = FIRST_SBRK;
 	else if (require < (MEM_SIZE)MIN_SBRK) require = MIN_SBRK;
 
-	if (require < goodsbrk * MIN_SBRK_FRAC1000 / 1000)
+	if (require < (Size_t)(goodsbrk * MIN_SBRK_FRAC1000 / 1000))
 	    require = goodsbrk * MIN_SBRK_FRAC1000 / 1000;
 	require = ((require - 1 + MIN_SBRK) / MIN_SBRK) * MIN_SBRK;
     } else {
@@ -1549,16 +1538,12 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	/* Second, check alignment. */
 	slack = 0;
 
-#if !defined(atarist) /* on the atari we dont have to worry about this */
-#  ifndef I286 	/* The sbrk(0) call on the I286 always returns the next segment */
 	/* WANTED_ALIGNMENT may be more than NEEDED_ALIGNMENT, but this may
 	   improve performance of memory access. */
 	if (PTR2UV(cp) & (WANTED_ALIGNMENT - 1)) { /* Not aligned. */
 	    slack = WANTED_ALIGNMENT - (PTR2UV(cp) & (WANTED_ALIGNMENT - 1));
 	    add += slack;
 	}
-#  endif
-#endif /* !atarist */
 		
 	if (add) {
 	    DEBUG_m(PerlIO_printf(Perl_debug_log, 
@@ -1619,7 +1604,6 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	    fatalcroak("Misalignment of sbrk()\n");
 	else
 #  endif
-#ifndef I286	/* Again, this should always be ok on an 80286 */
 	if (PTR2UV(ovp) & (MEM_ALIGNBYTES - 1)) {
 	    DEBUG_m(PerlIO_printf(Perl_debug_log, 
 				  "fixing sbrk(): %d bytes off machine alignment\n",
@@ -1632,7 +1616,6 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 	    sbrk_slack += (1 << (bucket >> BUCKET_POW2_SHIFT));
 # endif
 	}
-#endif
 	;				/* Finish "else" */
 	sbrked_remains = require - needed;
 	last_op = cp;
@@ -1692,13 +1675,13 @@ getpages_adjacent(MEM_SIZE require)
  * Allocate more memory to the indicated bucket.
  */
 static void
-morecore(register int bucket)
+morecore(int bucket)
 {
         dVAR;
-  	register union overhead *ovp;
-  	register int rnu;       /* 2^rnu bytes will be requested */
+  	union overhead *ovp;
+  	int rnu;       /* 2^rnu bytes will be requested */
   	int nblks;		/* become nblks blocks of the desired size */
-	register MEM_SIZE siz, needed;
+	MEM_SIZE siz, needed;
 	static int were_called = 0;
 
   	if (nextf[bucket])
@@ -1728,9 +1711,10 @@ morecore(register int bucket)
 		    }
 		}
 		if (t && *t) {
-		    write2("Unrecognized part of PERL_MALLOC_OPT: \"");
-		    write2(t);
-		    write2("\"\n");
+		    dTHX;
+		    MYMALLOC_WRITE2STDERR("Unrecognized part of PERL_MALLOC_OPT: \"");
+		    MYMALLOC_WRITE2STDERR(t);
+		    MYMALLOC_WRITE2STDERR("\"\n");
 		}
 		if (changed)
 		    MallocCfg[MallocCfg_cfg_env_read] = 1;
@@ -1830,8 +1814,8 @@ Free_t
 Perl_mfree(Malloc_t where)
 {
         dVAR;
-  	register MEM_SIZE size;
-	register union overhead *ovp;
+  	MEM_SIZE size;
+	union overhead *ovp;
 	char *cp = (char*)where;
 #ifdef PACK_MALLOC
 	u_char bucket;
@@ -1926,11 +1910,11 @@ Malloc_t
 Perl_realloc(void *mp, size_t nbytes)
 {
         dVAR;
-  	register MEM_SIZE onb;
+  	MEM_SIZE onb;
 	union overhead *ovp;
   	char *res;
 	int prev_bucket;
-	register int bucket;
+	int bucket;
 	int incr;		/* 1 if does not fit, -1 if "easily" fits in a
 				   smaller bucket, otherwise 0.  */
 	char *cp = (char*)mp;
@@ -2116,7 +2100,7 @@ Perl_realloc(void *mp, size_t nbytes)
 }
 
 Malloc_t
-Perl_calloc(register size_t elements, register size_t size)
+Perl_calloc(size_t elements, size_t size)
 {
     long sz = elements * size;
     Malloc_t p = Perl_malloc(sz);
@@ -2202,8 +2186,8 @@ int
 Perl_get_mstats(pTHX_ perl_mstats_t *buf, int buflen, int level)
 {
 #ifdef DEBUGGING_MSTATS
-  	register int i, j;
-  	register union overhead *p;
+  	int i, j;
+  	union overhead *p;
 	struct chunk_chain_s* nextchain;
 
 	PERL_ARGS_ASSERT_GET_MSTATS;
@@ -2264,7 +2248,7 @@ void
 Perl_dump_mstats(pTHX_ const char *s)
 {
 #ifdef DEBUGGING_MSTATS
-  	register int i;
+  	int i;
 	perl_mstats_t buffer;
 	UV nf[NBUCKETS];
 	UV nt[NBUCKETS];
@@ -2404,8 +2388,8 @@ Perl_sbrk(int size)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

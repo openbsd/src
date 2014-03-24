@@ -341,6 +341,8 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	SPAGAIN;
 	uni = POPs;
 	PUTBACK;
+	/* No cows allowed. */
+	if (SvTHINKFIRST(e->dataSV)) SvPV_force_nolen(e->dataSV);
 	/* Now get translated string (forced to UTF-8) and use as buffer */
 	if (SvPOK(uni)) {
 	    s = SvPVutf8(uni, len);
@@ -365,6 +367,7 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	    /* Adjust ptr/cnt not taking anything which
 	       did not translate - not clear this is a win */
 	    /* compute amount we took */
+	    if (!SvPOKp(e->dataSV)) (void)SvPV_force_nolen(e->dataSV);
 	    use -= SvCUR(e->dataSV);
 	    PerlIO_set_ptrcnt(n, ptr+use, (avail-use));
 	    /* and as we did not take it it isn't pending */
@@ -440,6 +443,14 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 	    if (PerlIO_flush(PerlIONext(f)) != 0) {
 		code = -1;
 	    }
+	    if (!SvPOKp(e->bufsv) || SvTHINKFIRST(e->bufsv))
+		(void)SvPV_force_nolen(e->bufsv);
+	    if ((STDCHAR *)SvPVX(e->bufsv) != e->base.buf) {
+		e->base.ptr = SvEND(e->bufsv);
+		e->base.end = SvPVX(e->bufsv) + (e->base.end-e->base.buf);
+		e->base.buf = (STDCHAR *)SvPVX(e->bufsv);
+	    }
+	    (void)PerlIOEncode_get_base(aTHX_ f);
 	    if (SvCUR(e->bufsv)) {
 		/* Did not all translate */
 		e->base.ptr = e->base.buf+SvCUR(e->bufsv);

@@ -1,3 +1,16 @@
+1.26_001 -- Sun Dec 23 15:58
+
+  * Fix multicall refcount bug RT#80646
+
+1.26 -- Sun Dec 16 19:39
+
+  * Merge patch from JDHEDDEN - Add Scalar::Util::isdual() RT#76150
+
+1.25_01 -- Wed Nov 21 09:47
+
+  * Fix a hash order dependency bug t/tainted.t
+    (Currently this is a core only version to fix perl5 smokes)
+
 1.25 -- Sat Mar 24 13:10:13 UTC 2012
 
   * Restore back-compat. to perl 5.6 (thanks to Zefram)

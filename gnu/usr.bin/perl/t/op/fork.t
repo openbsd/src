@@ -11,12 +11,31 @@ BEGIN {
 	unless ($Config::Config{d_fork} or $Config::Config{d_pseudofork});
 }
 
-skip_all('fork/status problems on MPE/iX')
-    if $^O eq 'mpeix';
-
 $|=1;
 
 run_multiple_progs('', \*DATA);
+
+my $shell = $ENV{SHELL} || '';
+SKIP: {
+    skip "This test can only be run under bash or zsh"
+        unless $shell =~ m{/(?:ba|z)sh$};
+    my $probe = qx{
+        $shell -c 'ulimit -u 1 2>&1 && echo good'
+    };
+    chomp $probe;
+    skip "Can't set ulimit -u on this system: $probe"
+	unless $probe eq 'good';
+
+    my $out = qx{
+        $shell -c 'ulimit -u 1; exec $^X -e "
+            print((() = fork) == 1 ? q[ok] : q[not ok])
+        "'
+    };
+    # perl #117141
+    skip "fork() didn't fail, maybe you're running as root", 1
+      if $out eq "okok";
+    is($out, "ok", "bash/zsh-only test for 'fork' returning undef on failure");
+}
 
 done_testing();
 

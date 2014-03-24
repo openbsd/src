@@ -12,7 +12,7 @@
 #include "util.h"
 
 void
-str_numset(register STR *str, double num)
+str_numset(STR *str, double num)
 {
     str->str_nval = num;
     str->str_pok = 0;		/* invalidate pointer */
@@ -20,9 +20,9 @@ str_numset(register STR *str, double num)
 }
 
 char *
-str_2ptr(register STR *str)
+str_2ptr(STR *str)
 {
-    register char *s;
+    char *s;
 
     if (!str)
 	return (char *)"";	/* probably safe - won't be written to */
@@ -43,7 +43,7 @@ str_2ptr(register STR *str)
 }
 
 void
-str_sset(STR *dstr, register STR *sstr)
+str_sset(STR *dstr, STR *sstr)
 {
     if (!sstr)
 	str_nset(dstr,No,0);
@@ -56,7 +56,7 @@ str_sset(STR *dstr, register STR *sstr)
 }
 
 void
-str_nset(register STR *str, register const char *ptr, register int len)
+str_nset(STR *str, const char *ptr, int len)
 {
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
     memcpy(str->str_ptr,ptr,len);
@@ -67,9 +67,9 @@ str_nset(register STR *str, register const char *ptr, register int len)
 }
 
 void
-str_set(register STR *str, register const char *ptr)
+str_set(STR *str, const char *ptr)
 {
-    register int len;
+    int len;
 
     if (!ptr)
 	ptr = "";
@@ -82,7 +82,7 @@ str_set(register STR *str, register const char *ptr)
 }
 
 void
-str_ncat(register STR *str, register const char *ptr, register int len)
+str_ncat(STR *str, const char *ptr, int len)
 {
     if (!(str->str_pok))
 	str_2ptr(str);
@@ -95,7 +95,7 @@ str_ncat(register STR *str, register const char *ptr, register int len)
 }
 
 void
-str_scat(STR *dstr, register STR *sstr)
+str_scat(STR *dstr, STR *sstr)
 {
     if (!(sstr->str_pok))
 	str_2ptr(sstr);
@@ -104,9 +104,9 @@ str_scat(STR *dstr, register STR *sstr)
 }
 
 void
-str_cat(register STR *str, register const char *ptr)
+str_cat(STR *str, const char *ptr)
 {
-    register int len;
+    int len;
 
     if (!ptr)
 	return;
@@ -123,7 +123,7 @@ str_cat(register STR *str, register const char *ptr)
 STR *
 str_new(int len)
 {
-    register STR *str;
+    STR *str;
     
     if (freestrroot) {
 	str = freestrroot;
@@ -141,7 +141,7 @@ str_new(int len)
 /* make str point to what nstr did */
 
 void
-str_free(register STR *str)
+str_free(STR *str)
 {
     if (!str)
 	return;
@@ -155,7 +155,7 @@ str_free(register STR *str)
 }
 
 int
-str_len(register STR *str)
+str_len(STR *str)
 {
     if (!str)
 	return 0;
@@ -168,15 +168,15 @@ str_len(register STR *str)
 }
 
 char *
-str_gets(register STR *str, register FILE *fp)
+str_gets(STR *str, FILE *fp)
 {
 #if defined(USE_STDIO_PTR) && defined(STDIO_PTR_LVALUE) && defined(STDIO_CNT_LVALUE)
     /* Here is some breathtakingly efficient cheating */
 
-    register char *bp;		/* we're going to steal some values */
-    register int cnt;		/*  from the stdio struct and put EVERYTHING */
-    register STDCHAR *ptr;	/*   in the innermost loop into registers */
-    register char newline = '\n';	/* (assuming at least 6 registers) */
+    char *bp;		/* we're going to steal some values */
+    int cnt;		/*  from the stdio struct and put EVERYTHING */
+    STDCHAR *ptr;	/*   in the innermost loop into registers */
+    char newline = '\n';	/* (assuming at least 6 registers) */
     int i;
     int bpx;
 
@@ -210,7 +210,7 @@ str_gets(register STR *str, register FILE *fp)
 	}
 	
 	FILE_cnt(fp) = cnt;		/* deregisterize cnt and ptr */
-	FILE_ptr(fp) = (void*)ptr; /* LHS STDCHAR* cast non-portable */
+	FILE_ptr(fp) = ptr;
 	i = getc(fp);		/* get more characters */
 	cnt = FILE_cnt(fp);
 	ptr = (STDCHAR*)FILE_ptr(fp);		/* reregisterize cnt and ptr */
@@ -230,7 +230,7 @@ str_gets(register STR *str, register FILE *fp)
 
 thats_all_folks:
     FILE_cnt(fp) = cnt;			/* put these back or we're in trouble */
-    FILE_ptr(fp) = (void*)ptr; /* LHS STDCHAR* cast non-portable */
+    FILE_ptr(fp) = ptr;
     *bp = '\0';
     str->str_cur = bp - str->str_ptr;	/* set length */
 
@@ -252,7 +252,7 @@ thats_all_folks:
 STR *
 str_make(const char *s)
 {
-    register STR *str = str_new(0);
+    STR *str = str_new(0);
 
     str_set(str,s);
     return str;

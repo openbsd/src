@@ -17,6 +17,8 @@
 #include "../patchlevel.h"
 #endif
 #include "util.h"
+#include "../unicode_constants.h"
+#define DELETE_CHAR DEL_NATIVE
 
 const char *filename;
 const char *myname;
@@ -29,10 +31,10 @@ int oper2(int type, int arg1, int arg2);
 int oper3(int type, int arg1, int arg2, int arg3);
 int oper4(int type, int arg1, int arg2, int arg3, int arg4);
 int oper5(int type, int arg1, int arg2, int arg3, int arg4, int arg5);
-STR *walk(int useval, int level, register int node, int *numericptr, int minprec);
+STR *walk(int useval, int level, int node, int *numericptr, int minprec);
 #ifdef NETWARE
 char *savestr(char *str);
-char *cpy2(register char *to, register char *from, register int delim);
+char *cpy2(char *to, char *from, int delim);
 #endif
 
 #if defined(OS2) || defined(WIN32) || defined(NETWARE)
@@ -59,9 +61,9 @@ usage()
 #endif
 
 int
-main(register int argc, register const char **argv, register const char **env)
+main(int argc, const char **argv, const char **env)
 {
-    register STR *str;
+    STR *str;
     int i;
     STR *tmpstr;
     /* char *namelist;    */
@@ -221,9 +223,9 @@ int idtype;
 int
 yylex(void)
 {
-    register char *s = bufptr;
-    register char *d;
-    register int tmp;
+    char *s = bufptr;
+    char *d;
+    int tmp;
 
   retry:
 #if YYDEBUG
@@ -289,11 +291,7 @@ yylex(void)
     case ':':
 	tmp = *s++;
 	XOP(tmp);
-#ifdef EBCDIC
-    case 7:
-#else
-    case 127:
-#endif
+    case DELETE_CHAR:
 	s++;
 	XTERM('}');
     case '}':
@@ -399,7 +397,7 @@ yylex(void)
 
 #define SNARFWORD \
 	d = tokenbuf; \
-	while (isALPHA(*s) || isDIGIT(*s) || *s == '_') \
+	while (isWORDCHAR(*s)) \
 	    *d++ = *s++; \
 	*d = '\0'; \
 	d = tokenbuf; \
@@ -426,7 +424,7 @@ yylex(void)
 		maxfld = tmp;
 	    XOP(FIELD);
 	}
-	for (d = s; isALPHA(*s) || isDIGIT(*s) || *s == '_'; )
+	for (d = s; isWORDCHAR(*s); )
 	    s++;
 	split_to_array = TRUE;
 	if (d != s)
@@ -826,9 +824,9 @@ yylex(void)
 }
 
 char *
-scanpat(register char *s)
+scanpat(char *s)
 {
-    register char *d;
+    char *d;
 
     switch (*s++) {
     case '/':
@@ -878,9 +876,9 @@ yyerror(const char *s)
 }
 
 char *
-scannum(register char *s)
+scannum(char *s)
 {
-    register char *d;
+    char *d;
 
     switch (*s) {
     case '1': case '2': case '3': case '4': case '5':
@@ -1027,9 +1025,9 @@ int depth = 0;
 void
 dump(int branch)
 {
-    register int type;
-    register int len;
-    register int i;
+    int type;
+    int len;
+    int i;
 
     type = ops[branch].ival;
     len = type >> 8;
@@ -1067,8 +1065,8 @@ bl(int arg, int maybe)
 void
 fixup(STR *str)
 {
-    register char *s;
-    register char *t;
+    char *s;
+    char *t;
 
     for (s = str->str_ptr; *s; s++) {
 	if (*s == ';' && s[1] == ' ' && s[2] == '\n') {
@@ -1092,8 +1090,8 @@ fixup(STR *str)
 void
 putlines(STR *str)
 {
-    register char *d, *s, *t, *e;
-    register int pos, newpos;
+    char *d, *s, *t, *e;
+    int pos, newpos;
 
     d = tokenbuf;
     pos = 0;
@@ -1168,7 +1166,7 @@ putlines(STR *str)
 void
 putone(void)
 {
-    register char *t;
+    char *t;
 
     for (t = tokenbuf; *t; t++) {
 	*t &= 127;

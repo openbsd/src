@@ -7,6 +7,7 @@ chdir 't';
 
 use Test::More;
 use ExtUtils::MakeMaker;
+use File::Temp qw[tempfile];
 
 my $Has_Version = eval 'require version; "version"->import; 1';
 
@@ -88,15 +89,13 @@ for my $code ( sort keys %versions ) {
 sub parse_version_string {
     my $code = shift;
 
-    open(FILE, ">VERSION.tmp") || die $!;
-    print FILE "$code\n";
-    close FILE;
+    my ($fh,$file) = tempfile( DIR => '.', UNLINK => 1 );
+    print $fh "$code\n";
+    close $fh;
 
     $_ = 'foo';
-    my $version = MM->parse_version('VERSION.tmp');
+    my $version = MM->parse_version( $file );
     is( $_, 'foo', '$_ not leaked by parse_version' );
-
-    unlink "VERSION.tmp";
 
     return $version;
 }

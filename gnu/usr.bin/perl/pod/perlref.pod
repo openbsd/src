@@ -46,12 +46,6 @@ hard reference.
 X<reference, hard> X<hard reference>
 
 References are easy to use in Perl.  There is just one overriding
-principle: Perl does no implicit referencing or dereferencing.  When a
-scalar is holding a reference, it always behaves as a simple scalar.  It
-doesn't magically start being an array or hash or subroutine; you have to
-tell it explicitly to do so, by dereferencing it.
-
-References are easy to use in Perl.  There is just one overriding
 principle: in general, Perl does no implicit referencing or dereferencing.
 When a scalar is holding a reference, it always behaves as a simple scalar.
 It doesn't magically start being an array or hash or subroutine; you have to
@@ -268,8 +262,11 @@ known as foo).
     $ioref     = *STDIN{IO};
     $globref   = *foo{GLOB};
     $formatref = *foo{FORMAT};
+    $globname  = *foo{NAME};    # "foo"
+    $pkgname   = *foo{PACKAGE}; # "main"
 
-All of these are self-explanatory except for C<*foo{IO}>.  It returns
+Most of these are self-explanatory, but C<*foo{IO}>
+deserves special attention.  It returns
 the IO handle, used for file handles (L<perlfunc/open>), sockets
 (L<perlfunc/socket> and L<perlfunc/socketpair>), and directory
 handles (L<perlfunc/opendir>).  For compatibility with previous
@@ -281,6 +278,13 @@ C<*foo{THING}> returns undef if that particular THING hasn't been used yet,
 except in the case of scalars.  C<*foo{SCALAR}> returns a reference to an
 anonymous scalar if $foo hasn't been used yet.  This might change in a
 future release.
+
+C<*foo{NAME}> and C<*foo{PACKAGE}> are the exception, in that they return
+strings, rather than references.  These return the package and name of the
+typeglob itself, rather than one that has been assigned to it.  So, after
+C<*foo=*Foo::bar>, C<*foo> will become "*Foo::bar" when used as a string,
+but C<*foo{PACKAGE}> and C<*foo{NAME}> will continue to produce "main" and
+"foo", respectively.
 
 C<*foo{IO}> is an alternative to the C<*HANDLE> mechanism given in
 L<perldata/"Typeglobs and Filehandles"> for passing filehandles
@@ -543,7 +547,7 @@ People frequently expect it to work like this.  So it does.
     ${$name x 2} = 3;		# Sets $foofoo
     $name->[0] = 4;		# Sets $foo[0]
     @$name = ();		# Clears @foo
-    &$name();			# Calls &foo() (as in Perl 4)
+    &$name();			# Calls &foo()
     $pack = "THAT";
     ${"${pack}::$name"} = 5;	# Sets $THAT::foo without eval
 
@@ -575,7 +579,7 @@ variables, which are all "global" to the package.
 
 =head2 Not-so-symbolic references
 
-Since Perl verion 5.001, brackets around a symbolic reference can simply
+Brackets around a symbolic reference can simply
 serve to isolate an identifier or variable name from the rest of an
 expression, just as they always have within a string.  For example,
 
@@ -583,7 +587,7 @@ expression, just as they always have within a string.  For example,
     print "${push}over";
 
 has always meant to print "pop on over", even though push is
-a reserved word.  In 5.001, this was generalized to work the same
+a reserved word.  This is generalized to work the same
 without the enclosing double quotes, so that
 
     print ${push} . "over";
@@ -592,8 +596,7 @@ and even
 
     print ${ push } . "over";
 
-will have the same effect.  (This would have been a syntax error in
-Perl 5.000, though Perl 4 allowed it in the spaceless form.)  This
+will have the same effect.  This
 construct is I<not> considered to be a symbolic reference when you're
 using strict refs:
 

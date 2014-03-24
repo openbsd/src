@@ -1,22 +1,26 @@
 #!./perl
 
-print "1..13\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+##Literal test count since evals below can fail
+plan tests => 13;
 
 $a = 'ab' . 'c';	# compile time
 $b = 'def';
 
 $c = $a . $b;
-print "#1\t:$c: eq :abcdef:\n";
-if ($c eq 'abcdef') {print "ok 1\n";} else {print "not ok 1\n";}
+is( $c, 'abcdef', 'compile time concatenation' );
 
 $c .= 'xyz';
-print "#2\t:$c: eq :abcdefxyz:\n";
-if ($c eq 'abcdefxyz') {print "ok 2\n";} else {print "not ok 2\n";}
+is( $c, 'abcdefxyz', 'concat to self');
 
 $_ = $a;
 $_ .= $b;
-print "#3\t:$_: eq :abcdef:\n";
-if ($_ eq 'abcdef') {print "ok 3\n";} else {print "not ok 3\n";}
+is( $_, 'abcdef', 'concat using $_');
 
 # test that when right argument of concat is UTF8, and is the same
 # variable as the target, and the left argument is not UTF8, it no
@@ -28,7 +32,8 @@ if ($_ eq 'abcdef') {print "ok 3\n";} else {print "not ok 3\n";}
 	$string = "abcdefghijkl$string";
     }
 
-    r2() and print "ok $_\n" for qw/ 4 5 /;
+    isnt(r2(), '', 'UTF8 concat does not free the wrong string');
+    isnt(r2(), '', 'second check');
 }
 
 # test that nul bytes get copied
@@ -38,35 +43,30 @@ if ($_ eq 'abcdef') {print "ok 3\n";} else {print "not ok 3\n";}
 
     my $ub = pack("U0a*", 'b');
 
+    #aa\0b
     my $t1 = $a; $t1 .= $ab;
+    like( $t1, qr/b/, 'null bytes do not stop string copy, aa\0b');
 
-    print $t1 =~ /b/ ? "ok 6\n" : "not ok 6\t# $t1\n";
-    
+    #a\0a\0b
     my $t2 = $a; $t2 .= $uab;
-    
-    print eval '$t2 =~ /$ub/' ? "ok 7\n" : "not ok 7\t# $t2\n";
-    
+    ok( eval '$t2 =~ /$ub/', '... a\0a\0b' );
+
+    #\0aa\0b
     my $t3 = $ua; $t3 .= $ab;
-    
-    print $t3 =~ /$ub/ ? "ok 8\n" : "not ok 8\t# $t3\n";
-    
+    ok( eval '$t3 =~ /$ub/', '... \0aa\0b' );
+
     my $t4 = $ua; $t4 .= $uab;
-    
-    print eval '$t4 =~ /$ub/' ? "ok 9\n" : "not ok 9\t# $t4\n";
-    
+    ok( eval '$t4 =~ /$ub/', '... \0a\0a\0b' );
+
     my $t5 = $a; $t5 = $ab . $t5;
-    
-    print $t5 =~ /$ub/ ? "ok 10\n" : "not ok 10\t# $t5\n";
-    
+    like( $t5, qr/$ub/, '... a\0ba' );
+
     my $t6 = $a; $t6 = $uab . $t6;
-    
-    print eval '$t6 =~ /$ub/' ? "ok 11\n" : "not ok 11\t# $t6\n";
-    
+    ok( eval '$t6 =~ /$ub/', '... \0a\0ba' );
+
     my $t7 = $ua; $t7 = $ab . $t7;
-    
-    print $t7 =~ /$ub/ ? "ok 12\n" : "not ok 12\t# $t7\n";
-    
+    like( $t7, qr/$ub/, '... a\0b\0a' );
+
     my $t8 = $ua; $t8 = $uab . $t8;
-    
-    print eval '$t8 =~ /$ub/' ? "ok 13\n" : "not ok 13\t# $t8\n";
+    ok( eval '$t8 =~ /$ub/', '... \0a\0b\0a' );
 }

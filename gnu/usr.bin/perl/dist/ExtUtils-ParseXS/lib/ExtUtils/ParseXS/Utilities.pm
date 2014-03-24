@@ -5,7 +5,7 @@ use Exporter;
 use File::Spec;
 use ExtUtils::ParseXS::Constants ();
 
-our $VERSION = '3.16';
+our $VERSION = '3.19';
 
 our (@ISA, @EXPORT_OK);
 @ISA = qw(Exporter);
@@ -285,7 +285,7 @@ Process all typemap files.
 =item * Arguments
 
   my $typemaps_object = process_typemaps( $args{typemap}, $pwd );
-      
+
 List of two elements:  C<typemap> element from C<%args>; current working
 directory.
 
@@ -334,7 +334,7 @@ C<process_typemaps()> with respect to its fourth output, C<$output_expr_ref>.
 =item * Arguments
 
   %targetable = make_targetable($output_expr_ref);
-      
+
 Single hash reference:  the fourth such ref returned by C<process_typemaps()>.
 
 =item * Return Value

@@ -7,7 +7,7 @@
 =item * 
 
 LIST_CACHE doesn't work with ties to most DBM implementations, because
-Memouze tries to save a listref, and DB_File etc. can only store
+Memoize tries to save a listref, and DB_File etc. can only store
 strings.  This should at least be documented.  Maybe Memoize could
 detect the problem at TIE time and throw a fatal error.
 
@@ -329,7 +329,7 @@ the function if performance is bad.
 
 =item *
 
-20010517 Option to have normalizer *modify* @_ for use by memoized
+20010517 Option to have normalizer I<modify> @_ for use by memoized
 function.  This would save code and time in cases like the one in the
 manual under 'NORMALIZER', where both f() and normalize_f() do the
 same analysis and make the same adjustments to the hash.  If the

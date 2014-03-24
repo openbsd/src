@@ -400,7 +400,7 @@ however you like.  Not very convenient, but doable.
 =head2 Accessing Formatting Internals
 X<format, internals>
 
-For low-level access to the formatting mechanism.  you may use formline()
+For low-level access to the formatting mechanism, you may use formline()
 and access C<$^A> (the $ACCUMULATOR variable) directly.
 
 For example:
@@ -440,7 +440,7 @@ SMTP cutoff.
 
 Lexical variables (declared with "my") are not visible within a
 format unless the format is declared within the scope of the lexical
-variable.  (They weren't visible at all before version 5.001.)
+variable.
 
 If a program's environment specifies an LC_NUMERIC locale and C<use
 locale> is in effect when the format is declared, the locale is used

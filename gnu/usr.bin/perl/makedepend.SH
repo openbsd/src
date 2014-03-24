@@ -131,13 +131,38 @@ for file in `$cat .clist`; do
     *)   finc= ;;
     esac
     $echo "Finding dependencies for $filebase$_o."
-    ( $echo "#line 1 \"$file\""; \
+    # Below, we strip out all but preprocessor directives.
+    # We have to take care of situations like
+    #       #if defined(FOO) BAR   /* comment line 1
+    #                                 more comment lines */
+    # If we just delete text starting from the '/*' to the end of line, we will
+    # screw up cases like
+    #      #if defined(FOO)    /* comment */ \
+    #          && defined(BAR) /* comment */ \
+    #          && defined(BAZ) /* comment */ \
+    #               etc.
+    # This code processes these latter situations first; it assumes there is
+    # at most one straightforward comment per continued preprocessor line.  (It
+    # would be easier to handle more general cases if sed had a non-greedy '*'
+    # quantifier; but typically preprocessor directive lines are rather
+    # simple.)  The continuation line is joined, and the process repeated on
+    # the enlarged line as long as there are continuations.  At the end, if
+    # there are any comments remaining, they should be like the first situation,
+    # and can just be deleted.  (Subsequent lines of the comment are irrelevant
+    # and get dropped.)
+    ( $echo "#line 2 \"$file\""; \
       $sed -n <$file \
 	-e "/^${filebase}_init(/q" \
+        -e ': testcont'               \
+	-e '/^[	 ]*#/s|/\*.*\*/||'    \
+        -e '/\\$/{'                   \
+            -e 'N'                    \
+            -e 'b testcont'           \
+        -e '}'                        \
+        -e 's/\\\n/ /g'               \
 	-e '/^#line/d' \
-	-e '/^#/{' \
+	-e '/^[	 ]*#/{' \
 	-e 's|/\*.*$||' \
-	-e 's|\\$||' \
 	-e p \
 	-e '}' ) >UU/$file.c
 

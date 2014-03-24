@@ -13,7 +13,6 @@
 struct xpvcv {
     _XPV_HEAD;
     _XPVCV_COMMON;
-    I32	xcv_depth;	/* >= 2 indicates recursive call */
 };
 
 /*
@@ -50,7 +49,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvROOT(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_root
 #define CvXSUB(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_xsub
 #define CvXSUBANY(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_xsubany
-#define CvGV(sv)	(0+((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv)
+#define CvGV(sv)	S_CvGV((CV *)(sv))
 #define CvGV_set(cv,gv)	Perl_cvgv_set(aTHX_ cv, gv)
 #define CvFILE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_file
 #ifdef USE_ITHREADS
@@ -61,14 +60,7 @@ See L<perlguts/Autoloading with XSUBs>.
     (CvFILE(sv) = CopFILE(cop), CvDYNFILE_off(sv))
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
-#  define CvDEPTH(sv) (*({const CV *const _cvdepth = (const CV *)sv; \
-			  assert(SvTYPE(_cvdepth) == SVt_PVCV);	 \
-			  &((XPVCV*)SvANY(_cvdepth))->xcv_depth; \
-			}))
-#else
-#  define CvDEPTH(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_depth
-#endif
+#define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
 #define CvPADLIST(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist
 #define CvOUTSIDE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
 #define CvFLAGS(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
@@ -105,8 +97,13 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_NODEBUG	0x0200	/* no DB::sub indirection for this CV
 				   (esp. useful for special XSUBs) */
 #define CVf_CVGV_RC	0x0400	/* CvGV is reference counted */
+#ifdef PERL_CORE
+# define CVf_SLABBED	0x0800	/* Holds refcount on op slab  */
+#endif
 #define CVf_DYNFILE	0x1000	/* The filename isn't static  */
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
+#define CVf_HASEVAL	0x4000	/* contains string eval  */
+#define CVf_NAMED	0x8000  /* Has a name HEK */
 
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LVALUE)
@@ -123,6 +120,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvANON_on(cv)		(CvFLAGS(cv) |= CVf_ANON)
 #define CvANON_off(cv)		(CvFLAGS(cv) &= ~CVf_ANON)
 
+/* CvEVAL or CvSPECIAL */
 #define CvUNIQUE(cv)		(CvFLAGS(cv) & CVf_UNIQUE)
 #define CvUNIQUE_on(cv)		(CvFLAGS(cv) |= CVf_UNIQUE)
 #define CvUNIQUE_off(cv)	(CvFLAGS(cv) &= ~CVf_UNIQUE)
@@ -139,6 +137,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvLVALUE_on(cv)		(CvFLAGS(cv) |= CVf_LVALUE)
 #define CvLVALUE_off(cv)	(CvFLAGS(cv) &= ~CVf_LVALUE)
 
+/* eval or PL_main_cv */
 #define CvEVAL(cv)		(CvUNIQUE(cv) && !SvFAKE(cv))
 #define CvEVAL_on(cv)		(CvUNIQUE_on(cv),SvFAKE_off(cv))
 #define CvEVAL_off(cv)		CvUNIQUE_off(cv)
@@ -164,6 +163,12 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvCVGV_RC_on(cv)	(CvFLAGS(cv) |= CVf_CVGV_RC)
 #define CvCVGV_RC_off(cv)	(CvFLAGS(cv) &= ~CVf_CVGV_RC)
 
+#ifdef PERL_CORE
+# define CvSLABBED(cv)		(CvFLAGS(cv) & CVf_SLABBED)
+# define CvSLABBED_on(cv)	(CvFLAGS(cv) |= CVf_SLABBED)
+# define CvSLABBED_off(cv)	(CvFLAGS(cv) &= ~CVf_SLABBED)
+#endif
+
 #define CvDYNFILE(cv)		(CvFLAGS(cv) & CVf_DYNFILE)
 #define CvDYNFILE_on(cv)	(CvFLAGS(cv) |= CVf_DYNFILE)
 #define CvDYNFILE_off(cv)	(CvFLAGS(cv) &= ~CVf_DYNFILE)
@@ -172,8 +177,40 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvAUTOLOAD_on(cv)	(CvFLAGS(cv) |= CVf_AUTOLOAD)
 #define CvAUTOLOAD_off(cv)	(CvFLAGS(cv) &= ~CVf_AUTOLOAD)
 
+#define CvHASEVAL(cv)		(CvFLAGS(cv) & CVf_HASEVAL)
+#define CvHASEVAL_on(cv)	(CvFLAGS(cv) |= CVf_HASEVAL)
+#define CvHASEVAL_off(cv)	(CvFLAGS(cv) &= ~CVf_HASEVAL)
+
+#define CvNAMED(cv)		(CvFLAGS(cv) & CVf_NAMED)
+#define CvNAMED_on(cv)		(CvFLAGS(cv) |= CVf_NAMED)
+#define CvNAMED_off(cv)		(CvFLAGS(cv) &= ~CVf_NAMED)
+
 /* Flags for newXS_flags  */
 #define XS_DYNAMIC_FILENAME	0x01	/* The filename isn't static  */
+
+PERL_STATIC_INLINE GV *
+S_CvGV(CV *sv)
+{
+    return CvNAMED(sv)
+	? 0
+	: ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv_u.xcv_gv;
+}
+PERL_STATIC_INLINE HEK *
+CvNAME_HEK(CV *sv)
+{
+    return CvNAMED(sv)
+	? ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv_u.xcv_hek
+	: 0;
+}
+/* This lowers the refernce count of the previous value, but does *not*
+   increment the reference count of the new value. */
+#define CvNAME_HEK_set(cv, hek) ( \
+	CvNAME_HEK((CV *)(cv))						 \
+	    ? unshare_hek(SvANY((CV *)(cv))->xcv_gv_u.xcv_hek)	  \
+	    : (void)0,						   \
+	((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_gv_u.xcv_hek = (hek), \
+	CvNAMED_on(cv)						     \
+    )
 
 /*
 =head1 CV reference counts and CvOUTSIDE
@@ -236,8 +273,8 @@ typedef OP *(*Perl_call_checker)(pTHX_ OP *, GV *, SV *);
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

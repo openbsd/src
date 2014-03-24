@@ -373,9 +373,11 @@ typedef struct termios* POSIX__Termios;
 
 /* Possibly needed prototypes */
 #ifndef WIN32
+START_EXTERN_C
 double strtod (const char *, char **);
 long strtol (const char *, char **, int);
 unsigned long strtoul (const char *, char **, int);
+END_EXTERN_C
 #endif
 
 #ifndef HAS_DIFFTIME
@@ -546,7 +548,7 @@ const struct lconv_offset lconv_integers[] = {
  * as expected. The better solution would be not to use the W*() macros
  * in the first place, though. -- Ingo Weinhold
  */
-#if defined(__BEOS__) || defined(__HAIKU__)
+#if defined(__HAIKU__)
 #    define WMUNGE(x) (((x) & 0xFF00) >> 8 | ((x) & 0x00FF) << 8)
 #else
 #    define WMUNGE(x) (x)

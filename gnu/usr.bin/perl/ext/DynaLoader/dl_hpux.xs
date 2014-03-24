@@ -51,7 +51,7 @@ BOOT:
     (void)dl_private_init(aTHX);
 
 
-void *
+void
 dl_load_file(filename, flags=0)
     char *	filename
     int		flags
@@ -115,7 +115,7 @@ dl_unload_file(libref)
     RETVAL
 
 
-void *
+void
 dl_find_symbol(libhandle, symbolname)
     void *	libhandle
     char *	symbolname
@@ -150,7 +150,7 @@ dl_find_symbol(libhandle, symbolname)
 
 void
 dl_undef_symbols()
-    PPCODE:
+    CODE:
 
 
 

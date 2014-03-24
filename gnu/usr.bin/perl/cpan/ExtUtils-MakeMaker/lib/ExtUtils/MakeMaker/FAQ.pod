@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '6.63_02';
+our $VERSION = '6.66';
 
 1;
 __END__
@@ -47,6 +47,9 @@ reason, do it the long way.
 Module::Build, as of 0.28, supports two ways to install to the same
 location as MakeMaker.
 
+We highly recommend the install_base method, its the simplest and most
+closely approximates the expected behavior of an installation prefix.
+
 1) Use INSTALL_BASE / C<--install_base>
 
 MakeMaker (as of 6.31) and Module::Build (as of 0.28) both can install
@@ -58,6 +61,9 @@ C<--install_base> in MB to the same location.
     perl Makefile.PL INSTALL_BASE=/whatever
     perl Build.PL    --install_base /whatever
 
+This works most like other language's behavior when you specify a
+prefix.  We recommend this method.
+
 2) Use PREFIX / C<--prefix>
 
 Module::Build 0.28 added support for C<--prefix> which works like
@@ -66,10 +72,14 @@ MakeMaker's PREFIX.
     perl Makefile.PL PREFIX=/whatever
     perl Build.PL    --prefix /whatever
 
+We highly discourage this method.  It should only be used if you know
+what you're doing and specifically need the PREFIX behavior.  The
+PREFIX algorithm is complicated and focused on matching the system
+installation.
 
 =item How do I keep from installing man pages?
 
-Recent versions of MakeMaker will only install man pages on Unix like
+Recent versions of MakeMaker will only install man pages on Unix-like
 operating systems.
 
 For an individual module:
@@ -119,6 +129,22 @@ installation structure matching INSTALL_BASE and using that instead.
 
 =back
 
+=head2 Common errors and problems
+
+=over 4
+
+=item "No rule to make target `/usr/lib/perl5/CORE/config.h', needed by `Makefile'"
+
+Just what it says, you're missing that file.  MakeMaker uses it to
+determine if perl has been rebuilt since the Makefile was made.  It's
+a bit of a bug that it halts installation.
+
+Some operating systems don't ship the CORE directory with their base
+perl install.  To solve the problem, you likely need to install a perl
+development package such as perl-devel (CentOS, Fedora and other
+Redhat systems) or perl (Ubuntu and other Debian systems).
+
+=back
 
 =head2 Philosophy and History
 
@@ -196,7 +222,7 @@ and 1.10 to 1.010 which compare properly.
 
     $VERSION = sprintf "%d.%03d", q$Revision$ =~ /(\d+)\.(\d+)/g;
 
-If branches are involved (ie. $Revision: 1.5.3.4$) its a little more
+If branches are involved (ie. $Revision: 1.5.3.4$) it's a little more
 complicated.
 
     # must be all on one line or MakeMaker will get confused.
@@ -204,9 +230,9 @@ complicated.
 
 In SVN, $Revision$ should be the same for every file in the project so
 they would all have the same $VERSION.  CVS and RCS have a different
-$Revision$ per file so each file will have a differnt $VERSION.
+$Revision$ per file so each file will have a different $VERSION.
 Distributed version control systems, such as SVK, may have a different
-$Revision$ based on who checks out the file leading to a different $VERSION
+$Revision$ based on who checks out the file, leading to a different $VERSION
 on each machine!  Finally, some distributed version control systems, such
 as darcs, have no concept of revision number at all.
 
@@ -222,7 +248,7 @@ To shut off its generation, pass the C<NO_META> flag to C<WriteMakefile()>.
 
 =item How do I delete everything not in my F<MANIFEST>?
 
-Some folks are surpried that C<make distclean> does not delete
+Some folks are surprised that C<make distclean> does not delete
 everything not listed in their MANIFEST (thus making a clean
 distribution) but only tells them what they need to delete.  This is
 done because it is considered too dangerous.  While developing your
@@ -269,7 +295,7 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
 
 =item Which tar should I use on Windows?
 
-We recommend ptar from Archive::Tar not older that 1.66 with '-C' option. 
+We recommend ptar from Archive::Tar not older than 1.66 with '-C' option. 
 
 =item Which zip should I use on Windows for '[nd]make zipdist'?
 
@@ -282,12 +308,12 @@ We recommend InfoZIP: L<http://www.info-zip.org/Zip.html>
 
 =over 4
 
-=item How to I prevent "object version X.XX does not match bootstrap parameter Y.YY" errors?
+=item How do I prevent "object version X.XX does not match bootstrap parameter Y.YY" errors?
 
 XS code is very sensitive to the module version number and will
 complain if the version number in your Perl module doesn't match.  If
 you change your module's version # without rerunning Makefile.PL the old
-version number will remain in the Makefile causing the XS code to be built
+version number will remain in the Makefile, causing the XS code to be built
 with the wrong number.
 
 To avoid this, you can force the Makefile to be rebuilt whenever you

@@ -1,4 +1,20 @@
 
+= 2013/05/23
+
+Change module 'NAME'
+
+= 2013/05/22
+
+Typos
+
+= 2013/04/26
+
+Minor test suite fixes - bug 81698.
+
+Fixed bug 79766 -- an extraneous "=" in a regex.
+
+Changed the license to qualify as an "open source" license.
+
 = 2012/08/18
 
 Packaging fix.

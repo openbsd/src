@@ -87,8 +87,6 @@ cpan2dist:	cpan2dist.PL ../config.sh
 
 pl2pm:		pl2pm.PL ../config.sh
 
-splain:		splain.PL ../config.sh ../lib/diagnostics.pm
-
 libnetcfg:	libnetcfg.PL ../config.sh
 
 piconv:		piconv.PL ../config.sh

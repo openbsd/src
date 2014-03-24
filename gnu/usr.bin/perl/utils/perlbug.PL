@@ -356,8 +356,8 @@ note to $thanksaddress instead of a bug report, please use the -T flag.
 Please do not use $0 to send test messages, test whether perl
 works, or to report bugs in perl modules from CPAN.
 
-For help using perl, try posting to the Usenet newsgroup 
-comp.lang.perl.misc.
+Suggestions for how to find help using Perl can be found at
+http://perldoc.perl.org/perlcommunity.html
 EOF
 	}
     }
@@ -1460,12 +1460,12 @@ Kenneth Albanowski (E<lt>kjahds@kjahds.comE<gt>), subsequently
 I<doc>tored by Gurusamy Sarathy (E<lt>gsar@activestate.comE<gt>),
 Tom Christiansen (E<lt>tchrist@perl.comE<gt>), Nathan Torkington
 (E<lt>gnat@frii.comE<gt>), Charles F. Randall (E<lt>cfr@pobox.comE<gt>),
-Mike Guy (E<lt>mjtg@cam.a.ukE<gt>), Dominic Dunlop
-(E<lt>domo@computer.orgE<gt>), Hugo van der Sanden (E<lt>hv@crypt.org<gt>),
+Mike Guy (E<lt>mjtg@cam.ac.ukE<gt>), Dominic Dunlop
+(E<lt>domo@computer.orgE<gt>), Hugo van der Sanden (E<lt>hv@crypt.orgE<gt>),
 Jarkko Hietaniemi (E<lt>jhi@iki.fiE<gt>), Chris Nandor
 (E<lt>pudge@pobox.comE<gt>), Jon Orwant (E<lt>orwant@media.mit.eduE<gt>,
 Richard Foley (E<lt>richard.foley@rfi.netE<gt>), and Jesse Vincent
-(E<lt>jesse@bestpractical.com<gt>).
+(E<lt>jesse@bestpractical.comE<gt>).
 
 =head1 SEE ALSO
 

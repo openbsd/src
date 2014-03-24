@@ -490,7 +490,7 @@ been wrapped here):
      SvREFCNT_dec(command);
 
      *match_list = get_av("array", 0);
-     num_matches = av_len(*match_list) + 1;
+     num_matches = av_top_index(*match_list) + 1;
 
      return num_matches;
  }

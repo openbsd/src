@@ -439,7 +439,7 @@ case "$ccisgcc" in
 			B3910B*A.06.15)
 			# > cc --version
 			# cc: HP C/aC++ B3910B A.06.15 [May 16 2007]
-			# Has optimizing problems with +O2 for blead (5.16.3),
+			# Has optimizing problems with +O2 for blead (5.17.4),
 			# see https://rt.perl.org:443/rt3/Ticket/Display.html?id=103668.
 			#
 			# +O2 +Onolimit +Onoprocelim  +Ostore_ordering \

@@ -1,4 +1,4 @@
-# $Id: enc_data.t,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: enc_data.t,v 2.2 2013/02/18 02:23:56 dankogai Exp $
 
 BEGIN {
     require Config; import Config;
@@ -22,6 +22,7 @@ BEGIN {
 
 
 use strict;
+no warnings "deprecated";
 use encoding 'euc-jp';
 use Test::More tests => 4;
 

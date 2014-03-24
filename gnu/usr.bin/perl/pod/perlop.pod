@@ -48,7 +48,7 @@ values only, not array values.
     left	|| //
     nonassoc	..  ...
     right	?:
-    right	= += -= *= etc.
+    right	= += -= *= etc. goto last next redo dump
     left	, =>
     nonassoc	list operators (rightward)
     right	not
@@ -561,7 +561,7 @@ the table is sorted on the right operand instead of on the left.
                 like: exists HASH->{Any}
 
  Right operand is CODE:
-   
+
  Left      Right      Description and pseudocode                               
  ===============================================================
  ARRAY     CODE       sub returns true on all ARRAY elements[1]
@@ -1408,7 +1408,7 @@ table:
    \c?      chr(127)
 
 In other words, it's the character whose code point has had 64 xor'd with
-its uppercase.  C<\c?> is DELETE because C<ord("@") ^ 64> is 127, and
+its uppercase.  C<\c?> is DELETE because C<ord("?") ^ 64> is 127, and
 C<\c@> is NULL because the ord of "@" is 64, so xor'ing 64 itself produces 0.
 
 Also, C<\c\I<X>> yields C< chr(28) . "I<X>"> for any I<X>, but cannot come at the
@@ -1489,7 +1489,9 @@ otherwise to Unicode.
 =back
 
 B<NOTE>: Unlike C and other languages, Perl has no C<\v> escape sequence for
-the vertical tab (VT - ASCII 11), but you may use C<\ck> or C<\x0b>.  (C<\v>
+the vertical tab (VT, which is 11 in both ASCII and EBCDIC), but you may
+use C<\ck> or
+C<\x0b>.  (C<\v>
 does have meaning in regular expression patterns in Perl, see L<perlre>.)
 
 The following escape sequences are available in constructs that interpolate,
@@ -1618,7 +1620,8 @@ is equivalent to
 The result may be used as a subpattern in a match:
 
     $re = qr/$pattern/;
-    $string =~ /foo${re}bar/;	# can be interpolated in other patterns
+    $string =~ /foo${re}bar/;	# can be interpolated in other
+                                # patterns
     $string =~ $re;		# or used standalone
     $string =~ /$re/;		# or this way
 
@@ -1651,14 +1654,15 @@ Options (specified by the following modifiers) are:
     i	Do case-insensitive pattern matching.
     x	Use extended regular expressions.
     p	When matching preserve a copy of the matched string so
-        that ${^PREMATCH}, ${^MATCH}, ${^POSTMATCH} will be defined.
+        that ${^PREMATCH}, ${^MATCH}, ${^POSTMATCH} will be
+        defined.
     o	Compile pattern only once.
-    a   ASCII-restrict: Use ASCII for \d, \s, \w; specifying two a's
-        further restricts /i matching so that no ASCII character will
-        match a non-ASCII one
-    l   Use the locale
-    u   Use Unicode rules
-    d   Use Unicode or native charset, as in 5.12 and earlier
+    a   ASCII-restrict: Use ASCII for \d, \s, \w; specifying two
+        a's further restricts /i matching so that no ASCII
+        character will match a non-ASCII one.
+    l   Use the locale.
+    u   Use Unicode rules.
+    d   Use Unicode or native charset, as in 5.12 and earlier.
 
 If a precompiled pattern is embedded in a larger pattern then the effect
 of "msixpluad" will be propagated appropriately.  The effect the "o"
@@ -1693,7 +1697,8 @@ Options are as described in C<qr//> above; in addition, the following match
 process modifiers are available:
 
  g  Match globally, i.e., find all occurrences.
- c  Do not reset search position on a failed match when /g is in effect.
+ c  Do not reset search position on a failed match when /g is
+    in effect.
 
 If "/" is the delimiter then the initial C<m> is optional.  With the C<m>
 you can use any pair of non-whitespace (ASCII) characters
@@ -1734,6 +1739,18 @@ you want the pattern to use the initial values of the variables
 regardless of whether they change or not.  (But there are saner ways
 of accomplishing this than using C</o>.)
 
+=item 3
+
+If the pattern contains embedded code, such as
+
+    use re 'eval';
+    $code = 'foo(?{ $x })';
+    /$code/
+
+then perl will recompile each time, even though the pattern string hasn't
+changed, to ensure that the current value of C<$x> is seen each time.
+Use C</o> if you want to avoid this.
+
 =back
 
 The bottom line is that using C</o> is almost never a good idea.
@@ -1760,30 +1777,29 @@ regex with an C<m> (so C<//> becomes C<m//>).
 
 If the C</g> option is not used, C<m//> in list context returns a
 list consisting of the subexpressions matched by the parentheses in the
-pattern, that is, (C<$1>, C<$2>, C<$3>...).  (Note that here C<$1> etc. are
-also set, and that this differs from Perl 4's behavior.)  When there are
-no parentheses in the pattern, the return value is the list C<(1)> for
-success.  With or without parentheses, an empty list is returned upon
-failure.
+pattern, that is, (C<$1>, C<$2>, C<$3>...)  (Note that here C<$1> etc. are
+also set).  When there are no parentheses in the pattern, the return
+value is the list C<(1)> for success.  
+With or without parentheses, an empty list is returned upon failure.
 
 Examples:
 
-    open(TTY, "+</dev/tty")
-	|| die "can't access /dev/tty: $!";
+ open(TTY, "+</dev/tty")
+    || die "can't access /dev/tty: $!";
 
-    <TTY> =~ /^y/i && foo();	# do foo if desired
+ <TTY> =~ /^y/i && foo();	# do foo if desired
 
-    if (/Version: *([0-9.]*)/) { $version = $1; }
+ if (/Version: *([0-9.]*)/) { $version = $1; }
 
-    next if m#^/usr/spool/uucp#;
+ next if m#^/usr/spool/uucp#;
 
-    # poor man's grep
-    $arg = shift;
-    while (<>) {
-	print if /$arg/o;	# compile only once (no longer needed!)
-    }
+ # poor man's grep
+ $arg = shift;
+ while (<>) {
+    print if /$arg/o; # compile only once (no longer needed!)
+ }
 
-    if (($F1, $F2, $Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))
+ if (($F1, $F2, $Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))
 
 This last example splits $foo into the first two words and the
 remainder of the line, and assigns those three fields to $F1, $F2, and
@@ -1835,26 +1851,30 @@ Examples:
 
 Here's another way to check for sentences in a paragraph:
 
-    my $sentence_rx = qr{
-	(?: (?<= ^ ) | (?<= \s ) )  # after start-of-string or whitespace
-	\p{Lu}                      # capital letter
-	.*?                         # a bunch of anything
-	(?<= \S )                   # that ends in non-whitespace
-	(?<! \b [DMS]r  )           # but isn't a common abbreviation
-	(?<! \b Mrs )
-	(?<! \b Sra )
-	(?<! \b St  )
-	[.?!]                       # followed by a sentence ender
-	(?= $ | \s )                # in front of end-of-string or whitespace
-    }sx;
-    local $/ = "";
-    while (my $paragraph = <>) {
-	say "NEW PARAGRAPH";
-	my $count = 0;
-	while ($paragraph =~ /($sentence_rx)/g) {
-	    printf "\tgot sentence %d: <%s>\n", ++$count, $1;
-	}
+ my $sentence_rx = qr{
+    (?: (?<= ^ ) | (?<= \s ) )  # after start-of-string or
+                                # whitespace
+    \p{Lu}                      # capital letter
+    .*?                         # a bunch of anything
+    (?<= \S )                   # that ends in non-
+                                # whitespace
+    (?<! \b [DMS]r  )           # but isn't a common abbr.
+    (?<! \b Mrs )
+    (?<! \b Sra )
+    (?<! \b St  )
+    [.?!]                       # followed by a sentence
+                                # ender
+    (?= $ | \s )                # in front of end-of-string
+                                # or whitespace
+ }sx;
+ local $/ = "";
+ while (my $paragraph = <>) {
+    say "NEW PARAGRAPH";
+    my $count = 0;
+    while ($paragraph =~ /($sentence_rx)/g) {
+        printf "\tgot sentence %d: <%s>\n", ++$count, $1;
     }
+ }
 
 Here's how to use C<m//gc> with C<\G>:
 
@@ -1891,26 +1911,31 @@ doing different actions depending on which regexp matched.  Each
 regexp tries to match where the previous one leaves off.
 
  $_ = <<'EOL';
-    $url = URI::URL->new( "http://example.com/" ); die if $url eq "xXx";
+    $url = URI::URL->new( "http://example.com/" );
+    die if $url eq "xXx";
  EOL
 
  LOOP: {
      print(" digits"),       redo LOOP if /\G\d+\b[,.;]?\s*/gc;
-     print(" lowercase"),    redo LOOP if /\G\p{Ll}+\b[,.;]?\s*/gc;
-     print(" UPPERCASE"),    redo LOOP if /\G\p{Lu}+\b[,.;]?\s*/gc;
-     print(" Capitalized"),  redo LOOP if /\G\p{Lu}\p{Ll}+\b[,.;]?\s*/gc;
+     print(" lowercase"),    redo LOOP
+                                    if /\G\p{Ll}+\b[,.;]?\s*/gc;
+     print(" UPPERCASE"),    redo LOOP
+                                    if /\G\p{Lu}+\b[,.;]?\s*/gc;
+     print(" Capitalized"),  redo LOOP
+                              if /\G\p{Lu}\p{Ll}+\b[,.;]?\s*/gc;
      print(" MiXeD"),        redo LOOP if /\G\pL+\b[,.;]?\s*/gc;
-     print(" alphanumeric"), redo LOOP if /\G[\p{Alpha}\pN]+\b[,.;]?\s*/gc;
+     print(" alphanumeric"), redo LOOP
+                            if /\G[\p{Alpha}\pN]+\b[,.;]?\s*/gc;
      print(" line-noise"),   redo LOOP if /\G\W+/gc;
      print ". That's all!\n";
  }
 
 Here is the output (split into several lines):
 
-    line-noise lowercase line-noise UPPERCASE line-noise UPPERCASE
-    line-noise lowercase line-noise lowercase line-noise lowercase
-    lowercase line-noise lowercase lowercase line-noise lowercase
-    lowercase line-noise MiXeD line-noise. That's all!
+ line-noise lowercase line-noise UPPERCASE line-noise UPPERCASE
+ line-noise lowercase line-noise lowercase line-noise lowercase
+ lowercase line-noise lowercase lowercase line-noise lowercase
+ lowercase line-noise MiXeD line-noise. That's all!
 
 =item m?PATTERN?msixpodualgc
 X<?> X<operator, match-once>
@@ -1978,13 +2003,15 @@ Options are as with m// with the addition of the following replacement
 specific options:
 
     e	Evaluate the right side as an expression.
-    ee  Evaluate the right side as a string then eval the result.
-    r   Return substitution and leave the original string untouched.
+    ee  Evaluate the right side as a string then eval the
+        result.
+    r   Return substitution and leave the original string
+        untouched.
 
 Any non-whitespace delimiter may replace the slashes.  Add space after
 the C<s> when using a character allowed in identifiers.  If single quotes
 are used, no interpretation is done on the replacement string (the C</e>
-modifier overrides this, however).  Unlike Perl 4, Perl 5 treats backticks
+modifier overrides this, however).  Note that Perl treats backticks
 as normal delimiters; the replacement text is not evaluated as a command.
 If the PATTERN is delimited by bracketing quotes, the REPLACEMENT has
 its own pair of quotes, which may or may not be bracketing quotes, for example,
@@ -1996,20 +2023,24 @@ to be C<eval>ed before being run as a Perl expression.
 
 Examples:
 
-    s/\bgreen\b/mauve/g;		# don't change wintergreen
+    s/\bgreen\b/mauve/g;	      # don't change wintergreen
 
     $path =~ s|/usr/bin|/usr/local/bin|;
 
     s/Login: $foo/Login: $bar/; # run-time pattern
 
-    ($foo = $bar) =~ s/this/that/;	# copy first, then change
-    ($foo = "$bar") =~ s/this/that/;	# convert to string, copy, then change
+    ($foo = $bar) =~ s/this/that/;	# copy first, then
+                                        # change
+    ($foo = "$bar") =~ s/this/that/;	# convert to string,
+                                        # copy, then change
     $foo = $bar =~ s/this/that/r;	# Same as above using /r
     $foo = $bar =~ s/this/that/r
-                =~ s/that/the other/r;	# Chained substitutes using /r
-    @foo = map { s/this/that/r } @bar	# /r is very useful in maps
+                =~ s/that/the other/r;	# Chained substitutes
+                                        # using /r
+    @foo = map { s/this/that/r } @bar	# /r is very useful in
+                                        # maps
 
-    $count = ($paragraph =~ s/Mister\b/Mr./g);  # get change-count
+    $count = ($paragraph =~ s/Mister\b/Mr./g);  # get change-cnt
 
     $_ = 'abc123xyz';
     s/\d+/$&*2/e;		# yields 'abc246xyz'
@@ -2046,9 +2077,11 @@ Examples:
 	\*/	# Match the closing delimiter.
     } []gsx;
 
-    s/^\s*(.*?)\s*$/$1/;	# trim whitespace in $_, expensively
+    s/^\s*(.*?)\s*$/$1/;	# trim whitespace in $_,
+                                # expensively
 
-    for ($variable) {		# trim whitespace in $variable, cheap
+    for ($variable) {		# trim whitespace in $variable,
+                                # cheap
 	s/^\s+//;
 	s/\s+$//;
     }
@@ -2067,14 +2100,6 @@ to occur that you might want.  Here are two common cases:
 
     # expand tabs to 8-column spacing
     1 while s/\t+/' ' x (length($&)*8 - length($`)%8)/e;
-
-C<s///le> is treated as a substitution followed by the C<le> operator, not
-the C</le> flags.  This may change in a future version of Perl.  It
-produces a warning if warnings are enabled.  To disambiguate, use a space
-or change the order of the flags:
-
-    s/foo/bar/ le 5;  # "le" infix operator
-    s/foo/bar/el;     # "e" and "l" flags
 
 =back
 
@@ -2114,7 +2139,7 @@ X<qx> X<`> X<``> X<backtick>
 =item `STRING`
 
 A string which is (possibly) interpolated and then executed as a
-system command with C</bin/sh> or its equivalent.  Shell wildcards,
+system command with F</bin/sh> or its equivalent.  Shell wildcards,
 pipes, and redirections will be honored.  The collected standard
 output of the command is returned; standard error is unaffected.  In
 scalar context, it comes back as a single (potentially multi-line)
@@ -2177,7 +2202,7 @@ multiple commands in a single line by separating them with the command
 separator character, if your shell supports that (for example, C<;> on 
 many Unix shells and C<&> on the Windows NT C<cmd> shell).
 
-Beginning with v5.6.0, Perl will attempt to flush all files opened for
+Perl will attempt to flush all files opened for
 output before starting the child process, but this may not be supported
 on some platforms (see L<perlport>).  To be safe, you may need to set
 C<$|> ($AUTOFLUSH in English) or call the C<autoflush()> method of
@@ -2449,24 +2474,24 @@ you'll need to remove leading whitespace from each line manually:
     FINIS
 
 If you use a here-doc within a delimited construct, such as in C<s///eg>,
-the quoted material must come on the lines following the final delimiter.
-So instead of
+the quoted material must still come on the line following the
+C<<< <<FOO >>> marker, which means it may be inside the delimited
+construct:
 
     s/this/<<E . 'that'
     the other
     E
      . 'more '/eg;
 
-you have to write
+It works this way as of Perl 5.18.  Historically, it was inconsistent, and
+you would have to write
 
     s/this/<<E . 'that'
      . 'more '/eg;
     the other
     E
 
-If the terminating identifier is on the last line of the program, you
-must be sure there is a newline after it; otherwise, Perl will give the
-warning B<Can't find string terminator "END" anywhere before EOF...>.
+outside of string evals.
 
 Additionally, quoting rules for the end-of-string identifier are
 unrelated to Perl's quoting rules. C<q()>, C<qq()>, and the like are not
@@ -2545,7 +2570,7 @@ and C<\[> are all skipped, and nested C<[> and C<]> are skipped as well.
 However, when backslashes are used as the delimiters (like C<qq\\> and
 C<tr\\\>), nothing is skipped.
 During the search for the end, backslashes that escape delimiters or
-backslashes are removed (exactly speaking, they are not copied to the
+other backslashes are removed (exactly speaking, they are not copied to the
 safe location).
 
 For constructs with three-part delimiters (C<s///>, C<y///>, and
@@ -2629,7 +2654,7 @@ expansions.
 
 Let it be stressed that I<whatever falls between C<\Q> and C<\E>>
 is interpolated in the usual way.  Something like C<"\Q\\E"> has
-no C<\E> inside.  instead, it has C<\Q>, C<\\>, and C<E>, so the
+no C<\E> inside.  Instead, it has C<\Q>, C<\\>, and C<E>, so the
 result is the same as for C<"\\\\E">.  As a general rule, backslashes
 between C<\Q> and C<\E> may lead to counterintuitive results.  So,
 C<"\Q\t\E"> is converted to C<quotemeta("\t")>, which is the same
@@ -2696,6 +2721,10 @@ as regular expressions at the following step.
 As C<\c> is skipped at this step, C<@> of C<\c@> in RE is possibly
 treated as an array symbol (for example C<@foo>),
 even though the same text in C<qq//> gives interpolation of C<\c@>.
+
+Code blocks such as C<(?{BLOCK})> are handled by temporarily passing control
+back to the perl parser, in a similar way that an interpolated array
+subscript expression such as C<"foo$array[1+f("[xyz")]bar"> would be.
 
 Moreover, inside C<(?{BLOCK})>, C<(?# comment )>, and
 a C<#>-comment in a C<//x>-regular expression, no processing is
@@ -2765,9 +2794,11 @@ rather different than the rule used for the rest of the pattern.
 The terminator of this construct is found using the same rules as
 for finding the terminator of a C<{}>-delimited construct, the only
 exception being that C<]> immediately following C<[> is treated as
-though preceded by a backslash.  Similarly, the terminator of
-C<(?{...})> is found using the same rules as for finding the
-terminator of a C<{}>-delimited construct.
+though preceded by a backslash.
+
+The terminator of runtime C<(?{...})> is found by temporarily switching
+control to the perl parser, which should stop at the point where the
+logically balancing terminating C<}> is found.
 
 It is possible to inspect both the string given to RE engine and the
 resulting finite automaton.  See the arguments C<debug>/C<debugcolor>
@@ -3169,7 +3200,7 @@ need yourself.
 X<number, arbitrary precision>
 
 The standard C<Math::BigInt>, C<Math::BigRat>, and C<Math::BigFloat> modules,
-along with the C<bigint>, C<bigrat>, and C<bitfloat> pragmas, provide
+along with the C<bignum>, C<bigint>, and C<bigrat> pragmas, provide
 variable-precision arithmetic and overloaded operators, although
 they're currently pretty slow. At the cost of some space and
 considerable speed, they avoid the normal pitfalls associated with
@@ -3198,17 +3229,19 @@ provide faster implementations via external C libraries.
 
 Here is a short, but incomplete summary:
 
-  Math::Fraction         big, unlimited fractions like 9973 / 12967
   Math::String           treat string sequences like numbers
   Math::FixedPrecision   calculate with a fixed precision
   Math::Currency         for currency calculations
   Bit::Vector            manipulate bit vectors fast (uses C)
   Math::BigIntFast       Bit::Vector wrapper for big numbers
   Math::Pari             provides access to the Pari C library
-  Math::BigInteger       uses an external C library
-  Math::Cephes           uses external Cephes C library (no big numbers)
+  Math::Cephes           uses the external Cephes C library (no
+                         big numbers)
   Math::Cephes::Fraction fractions via the Cephes library
   Math::GMP              another one using an external C library
+  Math::GMPz             an alternative interface to libgmp's big ints
+  Math::GMPq             an interface to libgmp's fraction numbers
+  Math::GMPf             an interface to libgmp's floating point numbers
 
 Choose wisely.
 

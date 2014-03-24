@@ -48,15 +48,6 @@
  * repeated in makedef.pl, so be certain to update
  * both places when editing. */
 
-#ifdef PERL_IMPLICIT_SYS
-/* PERL_IMPLICIT_SYS implies PerlMemShared != PerlMem
-   so use slab allocator to avoid lots of MUTEX overhead
- */
-#  ifndef PL_OP_SLAB_ALLOC
-#    define PL_OP_SLAB_ALLOC
-#  endif
-#endif
-
 #ifdef USE_ITHREADS
 #  if !defined(MULTIPLICITY)
 #    define MULTIPLICITY
@@ -100,8 +91,8 @@
 /* Any stack-challenged places.  The limit varies (and often
  * is configurable), but using more than a kilobyte of stack
  * is usually dubious in these systems. */
-#if defined(EPOC) || defined(__SYMBIAN32__)
-/* EPOC/Symbian: need to work around the SDK features. *
+#if defined(__SYMBIAN32__)
+/* Symbian: need to work around the SDK features. *
  * On WINS: MS VC5 generates calls to _chkstk,         *
  * if a "large" stack frame is allocated.              *
  * gcc on MARM does not generate calls like these.     */
@@ -166,7 +157,7 @@
 #  endif
 #endif
 
-#define pVAR    register struct perl_vars* my_vars PERL_UNUSED_DECL
+#define pVAR    struct perl_vars* my_vars PERL_UNUSED_DECL
 
 #ifdef PERL_GLOBAL_STRUCT
 #  define dVAR		pVAR    = (struct perl_vars*)PERL_GET_VARS()
@@ -179,8 +170,9 @@
 #    define MULTIPLICITY
 #  endif
 #  define tTHX	PerlInterpreter*
-#  define pTHX  register tTHX my_perl PERL_UNUSED_DECL
+#  define pTHX  tTHX my_perl PERL_UNUSED_DECL
 #  define aTHX	my_perl
+#  define aTHXa(a) aTHX = (tTHX)a
 #  ifdef PERL_GLOBAL_STRUCT
 #    define dTHXa(a)	dVAR; pTHX = (tTHX)a
 #  else
@@ -359,7 +351,11 @@
 /* Rats: if dTHR is just blank then the subsequent ";" throws an error */
 /* Declaring a *function*, instead of a variable, ensures that we don't rely
    on being able to suppress "unused" warnings.  */
+#ifdef __cplusplus
+#define dNOOP (void)0
+#else
 #define dNOOP extern int Perl___notused(void)
+#endif
 
 #ifndef pTHX
 /* Don't bother defining tTHX and sTHX; using them outside
@@ -369,6 +365,7 @@
 #  define pTHX_
 #  define aTHX
 #  define aTHX_
+#  define aTHXa(a)      NOOP
 #  define dTHXa(a)	dNOOP
 #  define dTHX		dNOOP
 #  define pTHX_1	1	
@@ -397,7 +394,7 @@
 #endif
 
 #ifndef pTHXx
-#  define pTHXx		register PerlInterpreter *my_perl
+#  define pTHXx		PerlInterpreter *my_perl
 #  define pTHXx_	pTHXx,
 #  define aTHXx		my_perl
 #  define aTHXx_	aTHXx,
@@ -445,7 +442,7 @@
 #  ifdef __GNUC__
 #    define stringify_immed(s) #s
 #    define stringify(s) stringify_immed(s)
-register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
+struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #  endif
 #endif
 
@@ -515,15 +512,15 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
  */
 
 /* define this once if either system, instead of cluttering up the src */
-#if defined(MSDOS) || defined(atarist) || defined(WIN32) || defined(NETWARE)
+#if defined(MSDOS) || defined(WIN32) || defined(NETWARE)
 #define DOSISH 1
 #endif
 
-#if defined(__STDC__) || defined(_AIX) || defined(__stdc__) || defined(__cplusplus) || defined(EPOC) || defined(NETWARE) || defined(__SYMBIAN32__)
+#if defined(__STDC__) || defined(_AIX) || defined(__stdc__) || defined(__cplusplus) || defined(NETWARE) || defined(__SYMBIAN32__)
 # define STANDARD_C 1
 #endif
 
-#if defined(__cplusplus) || defined(WIN32) || defined(__sgi) || defined(__EMX__) || defined(__DGUX) || defined(EPOC) || defined(__QNX__) || defined(NETWARE) || defined(PERL_MICRO)
+#if defined(__cplusplus) || defined(WIN32) || defined(__sgi) || defined(__EMX__) || defined(__DGUX) || defined(__QNX__) || defined(NETWARE) || defined(PERL_MICRO)
 # define DONT_DECLARE_STD 1
 #endif
 
@@ -533,11 +530,54 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #   define VOL
 #endif
 
-#define TAINT		(PL_tainted = TRUE)
-#define TAINT_NOT	(PL_tainted = FALSE)
-#define TAINT_IF(c)	if (c) { PL_tainted = TRUE; }
-#define TAINT_ENV()	if (PL_tainting) { taint_env(); }
-#define TAINT_PROPER(s)	if (PL_tainting) { taint_proper(NULL, s); }
+/* By compiling a perl with -DNO_TAINT_SUPPORT or -DSILENT_NO_TAINT_SUPPORT,
+ * you get a perl without taint support, but doubtlessly with a lesser
+ * degree of support. Do not do so unless you know exactly what it means
+ * technically, have a good reason to do so, and know exactly how the
+ * perl will be used. perls with -DSILENT_NO_TAINT_SUPPORT are considered
+ * a potential security risk due to flat out ignoring the security-relevant
+ * taint flags. This being said, a perl without taint support compiled in
+ * has marginal run-time performance benefits.
+ * SILENT_NO_TAINT_SUPPORT implies NO_TAINT_SUPPORT.
+ * SILENT_NO_TAINT_SUPPORT is the same as NO_TAINT_SUPPORT except it
+ * silently ignores -t/-T instead of throwing an exception.
+ *
+ * DANGER! Using NO_TAINT_SUPPORT or SILENT_NO_TAINT_SUPPORT
+ *         voids your nonexistent warranty!
+ */
+#if SILENT_NO_TAINT_SUPPORT && !defined(NO_TAINT_SUPPORT)
+#  define NO_TAINT_SUPPORT 1
+#endif
+
+/* NO_TAINT_SUPPORT can be set to transform virtually all taint-related
+ * operations into no-ops for a very modest speed-up. Enable only if you
+ * know what you're doing: tests and CPAN modules' tests are bound to fail.
+ */
+#if NO_TAINT_SUPPORT
+#   define TAINT		NOOP
+#   define TAINT_NOT		NOOP
+#   define TAINT_IF(c)		NOOP
+#   define TAINT_ENV()		NOOP
+#   define TAINT_PROPER(s)	NOOP
+#   define TAINT_set(s)		NOOP
+#   define TAINT_get		0
+#   define TAINTING_get		0
+#   define TAINTING_set(s)	NOOP
+#   define TAINT_WARN_get       0
+#   define TAINT_WARN_set(s)    NOOP
+#else
+#   define TAINT		(PL_tainted = TRUE)
+#   define TAINT_NOT	(PL_tainted = FALSE)
+#   define TAINT_IF(c)	if (UNLIKELY(c)) { PL_tainted = TRUE; }
+#   define TAINT_ENV()	if (UNLIKELY(PL_tainting)) { taint_env(); }
+#   define TAINT_PROPER(s)	if (UNLIKELY(PL_tainting)) { taint_proper(NULL, s); }
+#   define TAINT_set(s)		(PL_tainted = (s))
+#   define TAINT_get		(PL_tainted)
+#   define TAINTING_get		(PL_tainting)
+#   define TAINTING_set(s)	(PL_tainting = (s))
+#   define TAINT_WARN_get       (PL_taint_warn)
+#   define TAINT_WARN_set(s)    (PL_taint_warn = (s))
+#endif
 
 /* flags used internally only within pp_subst and pp_substcont */
 #ifdef PERL_CORE
@@ -734,6 +774,8 @@ EXTERN_C int usleep(unsigned int);
 #   define U64_CONST(x) ((U64)x##UL)
 #  elif QUADKIND == QUAD_IS_LONG_LONG
 #   define U64_CONST(x) ((U64)x##ULL)
+#  elif QUADKIND == QUAD_IS___INT64
+#   define U64_CONST(x) ((U64)x##UI64)
 #  else /* best guess we can make */
 #   define U64_CONST(x) ((U64)x##UL)
 #  endif
@@ -970,7 +1012,7 @@ EXTERN_C int usleep(unsigned int);
 #define PERL_USES_PL_PIDSTATUS
 #endif
 
-#if !defined(OS2) && !defined(WIN32) && !defined(DJGPP) && !defined(EPOC) && !defined(__SYMBIAN32__)
+#if !defined(OS2) && !defined(WIN32) && !defined(DJGPP) && !defined(__SYMBIAN32__)
 #define PERL_DEFAULT_DO_EXEC3_IMPLEMENTATION
 #endif
 
@@ -1175,7 +1217,7 @@ EXTERN_C int usleep(unsigned int);
 #   define S_IFIFO _S_IFIFO
 #endif
 
-/* The stat macros for Amdahl UTS, Unisoft System V/88 (and derivatives
+/* The stat macros for Unisoft System V/88 (and derivatives
    like UTekV) are broken, sometimes giving false positives.  Undefine
    them here and let the code below set them to proper values.
 
@@ -1184,7 +1226,7 @@ EXTERN_C int usleep(unsigned int);
    This header file bug is corrected in gcc-2.5.8 and later versions.
    --Kaveh Ghazi (ghazi@noc.rutgers.edu) 10/3/94.  */
 
-#if defined(uts) || (defined(m88k) && defined(ghs))
+#if defined(m88k) && defined(ghs)
 #   undef S_ISDIR
 #   undef S_ISCHR
 #   undef S_ISBLK
@@ -1381,13 +1423,13 @@ EXTERN_C char *crypt(const char *, const char *);
 #endif
 
 #ifdef HAS_STRERROR
+#ifndef DONT_DECLARE_STD
 #       ifdef VMS
 	char *strerror (int,...);
 #       else
-#ifndef DONT_DECLARE_STD
 	char *strerror (int);
-#endif
 #       endif
+#endif
 #       ifndef Strerror
 #           define Strerror strerror
 #       endif
@@ -1599,15 +1641,15 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define S_IRWXO (S_IROTH|S_IWOTH|S_IXOTH)
 #endif
 
-/* BeOS 5.0 and Haiku R1 seem to define S_IREAD and S_IWRITE in <posix/fcntl.h>
+/* Haiku R1 seems to define S_IREAD and S_IWRITE in <posix/fcntl.h>
  * which would get included through <sys/file.h >, but that is 3000
  * lines in the future.  --jhi */
 
-#if !defined(S_IREAD) && !(defined(__BEOS__) || defined(__HAIKU__))
+#if !defined(S_IREAD) && !defined(__HAIKU__)
 #   define S_IREAD S_IRUSR
 #endif
 
-#if !defined(S_IWRITE) && !(defined(__BEOS__) || defined(__HAIKU__))
+#if !defined(S_IWRITE) && !defined(__HAIKU__)
 #   define S_IWRITE S_IWUSR
 #endif
 
@@ -1625,10 +1667,6 @@ EXTERN_C char *crypt(const char *, const char *);
 
 #ifdef UV
 #undef UV
-#endif
-
-#ifdef	SPRINTF_E_BUG
-#  define sprintf UTS_sprintf_wrap
 #endif
 
 /* For the times when you want the return value of sprintf, and you want it
@@ -1671,7 +1709,7 @@ EXTERN_C char *crypt(const char *, const char *);
 
 #if defined(HAS_VSNPRINTF) && defined(HAS_C99_VARIADIC_MACROS) && !(defined(DEBUGGING) && !defined(PERL_USE_GCC_BRACE_GROUPS)) && !defined(PERL_GCC_PEDANTIC)
 #  ifdef PERL_USE_GCC_BRACE_GROUPS
-#      define my_vsnprintf(buffer, len, ...) ({ int __len__ = vsnprintf(buffer, len, __VA_ARGS__); if ((len) > 0 && (Size_t)__len__ >= (len)) Perl_croak_nocontext("panic: vsnprintf buffer overflow"); __len__; })
+#      define my_vsnprintf(buffer, len, ...) ({ int __len__ = vsnprintf(buffer, len, __VA_ARGS__); if ((len) > 0 && (Size_t)__len__ >= (Size_t)(len)) Perl_croak_nocontext("panic: vsnprintf buffer overflow"); __len__; })
 #      define PERL_MY_VSNPRINTF_GUARDED
 #  else
 #    define my_vsnprintf(buffer, len, ...) vsnprintf(buffer, len, __VA_ARGS__)
@@ -1691,13 +1729,6 @@ EXTERN_C char *crypt(const char *, const char *);
 #  define my_strlcpy	strlcpy
 #else
 #  define my_strlcpy	Perl_my_strlcpy
-#endif
-
-/* Configure gets this right but the UTS compiler gets it wrong.
-   -- Hal Morris <hom00@utsglobal.com> */
-#ifdef UTS
-#  undef  UVTYPE
-#  define UVTYPE unsigned
 #endif
 
 /*
@@ -1763,11 +1794,6 @@ typedef UVTYPE UV;
 # undef PERL_NEED_MY_LETOH64
 # undef PERL_NEED_MY_HTOBE64
 # undef PERL_NEED_MY_BETOH64
-#endif
-
-#if defined(uts) || defined(UTS)
-#	undef UV_MAX
-#	define UV_MAX (4294967295u)
 #endif
 
 #define IV_DIG (BIT_DIGITS(IVSIZE * 8))
@@ -2414,14 +2440,18 @@ typedef struct padop PADOP;
 typedef struct pvop PVOP;
 typedef struct loop LOOP;
 
+#ifdef PERL_CORE
+typedef struct opslab OPSLAB;
+typedef struct opslot OPSLOT;
+#endif
+
 typedef struct block_hooks BHK;
 typedef struct custom_op XOP;
 
 typedef struct interpreter PerlInterpreter;
 
-/* Amdahl's <ksync.h> has struct sv */
 /* SGI's <sys/sema.h> has struct sv */
-#if defined(UTS) || defined(__sgi)
+#if defined(__sgi)
 #   define STRUCT_SV perl_sv
 #else
 #   define STRUCT_SV sv
@@ -2456,6 +2486,29 @@ typedef union any ANY;
 typedef struct ptr_tbl_ent PTR_TBL_ENT_t;
 typedef struct ptr_tbl PTR_TBL_t;
 typedef struct clone_params CLONE_PARAMS;
+
+/* a pad or name pad is currently just an AV; but that might change,
+ * so hide the type.  */
+typedef struct padlist PADLIST;
+typedef AV PAD;
+typedef AV PADNAMELIST;
+typedef SV PADNAME;
+
+/* XXX for 5.18, disable the COW by default
+ * #if !defined(PERL_OLD_COPY_ON_WRITE) && !defined(PERL_NEW_COPY_ON_WRITE) && !defined(PERL_NO_COW)
+ * # define PERL_NEW_COPY_ON_WRITE
+ * #endif
+ */
+
+#if defined(PERL_OLD_COPY_ON_WRITE) || defined(PERL_NEW_COPY_ON_WRITE)
+# if defined(PERL_OLD_COPY_ON_WRITE) && defined(PERL_NEW_COPY_ON_WRITE)
+#  error PERL_OLD_COPY_ON_WRITE and PERL_NEW_COPY_ON_WRITE are exclusive
+# else
+#  define PERL_ANY_COW
+# endif
+#else
+# define PERL_SAWAMPERSAND
+#endif
 
 #include "handy.h"
 
@@ -2563,11 +2616,6 @@ typedef struct clone_params CLONE_PARAMS;
 #  include "iperlsys.h"
 #endif
 
-#if defined(__OPEN_VM)
-#   include "vmesa/vmesaish.h"
-#   define ISHISH "vmesa"
-#endif
-
 #ifdef DOSISH
 #   if defined(OS2)
 #       include "os2ish.h"
@@ -2587,11 +2635,6 @@ typedef struct clone_params CLONE_PARAMS;
 #   define ISHISH "plan9"
 #endif
 
-#if defined(MPE)
-#  include "mpeix/mpeixish.h"
-#  define ISHISH "mpeix"
-#endif
-
 #if defined(__VOS__)
 #   ifdef __GNUC__
 #     include "./vos/vosish.h"
@@ -2599,11 +2642,6 @@ typedef struct clone_params CLONE_PARAMS;
 #     include "vos/vosish.h"
 #   endif
 #   define ISHISH "vos"
-#endif
-
-#if defined(EPOC)
-#   include "epocish.h"
-#   define ISHISH "epoc"
 #endif
 
 #ifdef __SYMBIAN32__
@@ -2615,9 +2653,6 @@ typedef struct clone_params CLONE_PARAMS;
 #if defined(__HAIKU__)
 #   include "haiku/haikuish.h"
 #   define ISHISH "haiku"
-#elif defined(__BEOS__)
-#   include "beos/beosish.h"
-#   define ISHISH "beos"
 #endif
 
 #ifndef ISHISH
@@ -2721,12 +2756,12 @@ typedef struct clone_params CLONE_PARAMS;
 #endif
 
 /*
-=for apidoc Am|void|PERL_SYS_INIT|int argc|char** argv
+=for apidoc Am|void|PERL_SYS_INIT|int *argc|char*** argv
 Provides system-specific tune up of the C runtime environment necessary to
 run Perl interpreters. This should be called only once, before creating
 any Perl interpreters.
 
-=for apidoc Am|void|PERL_SYS_INIT3|int argc|char** argv|char** env
+=for apidoc Am|void|PERL_SYS_INIT3|int *argc|char*** argv|char*** env
 Provides system-specific tune up of the C runtime environment necessary to
 run Perl interpreters. This should be called only once, before creating
 any Perl interpreters.
@@ -3277,9 +3312,9 @@ typedef pthread_key_t	perl_key;
    appropriate to call return.  In either case, include the lint directive.
  */
 #ifdef HASATTRIBUTE_NORETURN
-#  define NORETURN_FUNCTION_END /* NOTREACHED */
+#  define NORETURN_FUNCTION_END assert(0); /* NOTREACHED */
 #else
-#  define NORETURN_FUNCTION_END /* NOTREACHED */ return 0
+#  define NORETURN_FUNCTION_END assert(0); /* NOTREACHED */ return 0
 #endif
 
 /* Some OS warn on NULL format to printf */
@@ -3464,8 +3499,7 @@ struct _sublex_info {
     U8 super_state;	/* lexer state to save */
     U16 sub_inwhat;	/* "lex_inwhat" to use */
     OP *sub_op;		/* "lex_op" to use */
-    char *super_bufptr;	/* PL_parser->bufptr that was */
-    char *super_bufend;	/* PL_parser->bufend that was */
+    SV *repl;		/* replacement of s/// or y/// */
 };
 
 #include "parser.h"
@@ -3489,10 +3523,6 @@ struct ptr_tbl {
     struct ptr_tbl_ent		*tbl_arena_next;
     struct ptr_tbl_ent		*tbl_arena_end;
 };
-
-#if defined(iAPX286) || defined(M_I286) || defined(I80286)
-#   define I286
-#endif
 
 #if defined(htonl) && !defined(HAS_HTONL)
 #define HAS_HTONL
@@ -3619,7 +3649,7 @@ long vtohl(long n);
 #endif
 
 #ifndef __cplusplus
-#if !(defined(UNDER_CE) || defined(SYMBIAN))
+#if !(defined(WIN32) || defined(UNDER_CE) || defined(SYMBIAN))
 Uid_t getuid (void);
 Uid_t geteuid (void);
 Gid_t getgid (void);
@@ -3658,7 +3688,7 @@ Gid_t getegid (void);
 #define DEBUG_H_FLAG		0x00002000 /*   8192 */
 #define DEBUG_X_FLAG		0x00004000 /*  16384 */
 #define DEBUG_D_FLAG		0x00008000 /*  32768 */
-/* 0x00010000 is unused, used to be S */
+#define DEBUG_S_FLAG		0x00010000 /*  65536 */
 #define DEBUG_T_FLAG		0x00020000 /* 131072 */
 #define DEBUG_R_FLAG		0x00040000 /* 262144 */
 #define DEBUG_J_FLAG		0x00080000 /* 524288 */
@@ -3668,7 +3698,7 @@ Gid_t getegid (void);
 #define DEBUG_q_FLAG		0x00800000 /*8388608 */
 #define DEBUG_M_FLAG		0x01000000 /*16777216*/
 #define DEBUG_B_FLAG		0x02000000 /*33554432*/
-#define DEBUG_MASK		0x03FEEFFF /* mask of all the standard flags */
+#define DEBUG_MASK		0x03FFEFFF /* mask of all the standard flags */
 
 #define DEBUG_DB_RECURSE_FLAG	0x40000000
 #define DEBUG_TOP_FLAG		0x80000000 /* XXX what's this for ??? Signal
@@ -3690,6 +3720,7 @@ Gid_t getegid (void);
 #  define DEBUG_H_TEST_ (PL_debug & DEBUG_H_FLAG)
 #  define DEBUG_X_TEST_ (PL_debug & DEBUG_X_FLAG)
 #  define DEBUG_D_TEST_ (PL_debug & DEBUG_D_FLAG)
+#  define DEBUG_S_TEST_ (PL_debug & DEBUG_S_FLAG)
 #  define DEBUG_T_TEST_ (PL_debug & DEBUG_T_FLAG)
 #  define DEBUG_R_TEST_ (PL_debug & DEBUG_R_FLAG)
 #  define DEBUG_J_TEST_ (PL_debug & DEBUG_J_FLAG)
@@ -3721,6 +3752,7 @@ Gid_t getegid (void);
 #  define DEBUG_H_TEST DEBUG_H_TEST_
 #  define DEBUG_X_TEST DEBUG_X_TEST_
 #  define DEBUG_D_TEST DEBUG_D_TEST_
+#  define DEBUG_S_TEST DEBUG_S_TEST_
 #  define DEBUG_T_TEST DEBUG_T_TEST_
 #  define DEBUG_R_TEST DEBUG_R_TEST_
 #  define DEBUG_J_TEST DEBUG_J_TEST_
@@ -3772,6 +3804,7 @@ Gid_t getegid (void);
 #  define DEBUG_Uv(a) DEBUG__(DEBUG_Uv_TEST, a)
 #  define DEBUG_Pv(a) DEBUG__(DEBUG_Pv_TEST, a)
 
+#  define DEBUG_S(a) DEBUG__(DEBUG_S_TEST, a)
 #  define DEBUG_T(a) DEBUG__(DEBUG_T_TEST, a)
 #  define DEBUG_R(a) DEBUG__(DEBUG_R_TEST, a)
 #  define DEBUG_v(a) DEBUG__(DEBUG_v_TEST, a)
@@ -3799,6 +3832,7 @@ Gid_t getegid (void);
 #  define DEBUG_H_TEST (0)
 #  define DEBUG_X_TEST (0)
 #  define DEBUG_D_TEST (0)
+#  define DEBUG_S_TEST (0)
 #  define DEBUG_T_TEST (0)
 #  define DEBUG_R_TEST (0)
 #  define DEBUG_J_TEST (0)
@@ -3830,6 +3864,7 @@ Gid_t getegid (void);
 #  define DEBUG_H(a)
 #  define DEBUG_X(a)
 #  define DEBUG_D(a)
+#  define DEBUG_S(a)
 #  define DEBUG_T(a)
 #  define DEBUG_R(a)
 #  define DEBUG_v(a)
@@ -3865,6 +3900,11 @@ Gid_t getegid (void);
 
 #ifndef assert
 #  define assert(what)	Perl_assert(what)
+#endif
+#ifdef DEBUGGING
+#  define assert_(what)	assert(what),
+#else
+#  define assert_(what)
 #endif
 
 struct ufuncs {
@@ -3907,7 +3947,7 @@ double atof (const char*);
 /* All of these are in stdlib.h or time.h for ANSI C */
 Time_t time();
 struct tm *gmtime(), *localtime();
-#if defined(OEMVS) || defined(__OPEN_VM)
+#if defined(OEMVS)
 char *(strchr)(), *(strrchr)();
 char *(strcpy)(), *(strcat)();
 #else
@@ -3998,7 +4038,7 @@ char *crypt (const char*, const char*);
 #    ifndef getenv
 char *getenv (const char*);
 #    endif /* !getenv */
-#    if !defined(HAS_LSEEK_PROTO) && !defined(EPOC) && !defined(__hpux)
+#    if !defined(HAS_LSEEK_PROTO) && !defined(__hpux)
 #      ifdef _FILE_OFFSET_BITS
 #        if _FILE_OFFSET_BITS == 64
 Off_t lseek (int,Off_t,int);
@@ -4006,9 +4046,11 @@ Off_t lseek (int,Off_t,int);
 #      endif
 #    endif
 #  endif /* !DONT_DECLARE_STD */
-#ifndef getlogin
+#  ifndef WIN32
+#    ifndef getlogin
 char *getlogin (void);
-#endif
+#    endif
+#  endif /* !WIN32 */
 #endif /* !__cplusplus */
 
 /* Fixme on VMS.  This needs to be a run-time, not build time options */
@@ -4235,7 +4277,7 @@ EXTCONST char PL_no_helem_sv[]
   INIT("Modification of non-creatable hash value attempted, subscript \"%"SVf"\"");
 EXTCONST char PL_no_modify[]
   INIT("Modification of a read-only value attempted");
-EXTCONST char PL_no_mem[]
+EXTCONST char PL_no_mem[sizeof("Out of memory!\n")]
   INIT("Out of memory!\n");
 EXTCONST char PL_no_security[]
   INIT("Insecure dependency in %s%s");
@@ -4472,8 +4514,10 @@ EXTCONST  unsigned char PL_mod_latin1_uc[] = {
 	248-32,	249-32,	250-32,	251-32,	252-32,	253-32,	254-32,	255
 };
 #else	/* ! DOINIT */
+#ifndef EBCDIC
 EXTCONST unsigned char PL_fold[];
 EXTCONST unsigned char PL_fold_latin1[];
+#endif
 EXTCONST unsigned char PL_mod_latin1_uc[];
 EXTCONST unsigned char PL_latin1_lc[];
 #endif
@@ -4595,7 +4639,9 @@ EXTCONST unsigned char PL_freq[] = {	/* letter frequencies for mixed English/C *
 EXTCONST unsigned char PL_freq[];
 #endif
 
-#ifdef DEBUGGING
+/* Although only used for debugging, these constants must be available in
+ * non-debugging builds too, since they're used in ext/re/re_exec.c,
+ * which has DEBUGGING enabled always */
 #ifdef DOINIT
 EXTCONST char* const PL_block_type[] = {
 	"NULL",
@@ -4613,7 +4659,6 @@ EXTCONST char* const PL_block_type[] = {
 };
 #else
 EXTCONST char* PL_block_type[];
-#endif
 #endif
 
 /* These are all the compile time options that affect binary compatibility.
@@ -4677,17 +4722,20 @@ EXTCONST char PL_bincompat_options[] =
 #  ifdef PERL_OLD_COPY_ON_WRITE
 			     " PERL_OLD_COPY_ON_WRITE"
 #  endif
+#  ifdef PERL_NEW_COPY_ON_WRITE
+			     " PERL_NEW_COPY_ON_WRITE"
+#  endif
 #  ifdef PERL_POISON
 			     " PERL_POISON"
+#  endif
+#  ifdef PERL_SAWAMPERSAND
+			     " PERL_SAWAMPERSAND"
 #  endif
 #  ifdef PERL_TRACK_MEMPOOL
 			     " PERL_TRACK_MEMPOOL"
 #  endif
 #  ifdef PERL_USES_PL_PIDSTATUS
 			     " PERL_USES_PL_PIDSTATUS"
-#  endif
-#  ifdef PL_OP_SLAB_ALLOC
-			     " PL_OP_SLAB_ALLOC"
 #  endif
 #  ifdef USE_64_BIT_ALL
 			     " USE_64_BIT_ALL"
@@ -4776,6 +4824,8 @@ EXTCONST char *const PL_phase_names[];
  * instead of using the newer PL_phase, which provides everything PL_dirty
  * provided, and more. */
 #  define PL_dirty (PL_phase == PERL_PHASE_DESTRUCT)
+
+#  define PL_amagic_generation PL_na
 #endif /* !PERL_CORE */
 
 END_EXTERN_C
@@ -4861,6 +4911,17 @@ typedef enum {
 #define HINT_SORT_QUICKSORT	0x00000001
 #define HINT_SORT_MERGESORT	0x00000002
 #define HINT_SORT_STABLE	0x00000100 /* sort styles (currently one) */
+
+/* flags for PL_sawampersand */
+
+#define SAWAMPERSAND_LEFT       1   /* saw $` */
+#define SAWAMPERSAND_MIDDLE     2   /* saw $& */
+#define SAWAMPERSAND_RIGHT      4   /* saw $' */
+
+#ifndef PERL_SAWAMPERSAND
+# define PL_sawampersand \
+	(SAWAMPERSAND_LEFT|SAWAMPERSAND_MIDDLE|SAWAMPERSAND_RIGHT)
+#endif
 
 /* Various states of the input record separator SV (rs) */
 #define RsSNARF(sv)   (! SvOK(sv))
@@ -4948,8 +5009,14 @@ struct interpreter {
 
 /* Set up PERLVAR macros for populating structs */
 #  define PERLVAR(prefix,var,type) type prefix##var;
+
+/* 'var' is an array of length 'n' */
 #  define PERLVARA(prefix,var,n,type) type prefix##var[n];
+
+/* initialize 'var' to init' */
 #  define PERLVARI(prefix,var,type,init) type prefix##var;
+
+/* like PERLVARI, but make 'var' a const */
 #  define PERLVARIC(prefix,var,type,init) type prefix##var;
 
 struct interpreter {
@@ -4966,8 +5033,8 @@ EXTCONST U16 PL_interp_size
 /* This will be useful for subsequent releases, because this has to be the
    same in your libperl as in main(), else you have a mismatch and must abort.
 */
-EXTCONST U16 PL_interp_size_5_16_0
-  INIT(PERL_INTERPRETER_SIZE_UPTO_MEMBER(PERL_LAST_5_16_0_INTERP_MEMBER));
+EXTCONST U16 PL_interp_size_5_18_0
+  INIT(PERL_INTERPRETER_SIZE_UPTO_MEMBER(PERL_LAST_5_18_0_INTERP_MEMBER));
 
 
 #  ifdef PERL_GLOBAL_STRUCT
@@ -5018,6 +5085,24 @@ struct tempsym; /* defined in pp_pack.c */
 #    define PERL_CALLCONV
 #  endif
 #endif
+#ifndef PERL_CALLCONV_NO_RET
+#    define PERL_CALLCONV_NO_RET PERL_CALLCONV
+#endif
+
+/* PERL_STATIC_NO_RET is supposed to be equivalent to STATIC on builds that
+   dont have a noreturn as a declaration specifier
+*/
+#ifndef PERL_STATIC_NO_RET
+#  define PERL_STATIC_NO_RET STATIC
+#endif
+/* PERL_STATIC_NO_RET is supposed to be equivalent to PERL_STATIC_INLINE on
+   builds that dont have a noreturn as a declaration specifier
+*/
+#ifndef PERL_STATIC_INLINE_NO_RET
+#  define PERL_STATIC_INLINE_NO_RET PERL_STATIC_INLINE
+#endif
+
+
 #undef PERL_CKDEF
 #undef PERL_PPDEF
 #define PERL_CKDEF(s)	PERL_CALLCONV OP *s (pTHX_ OP *o);
@@ -5135,7 +5220,7 @@ PL_valid_types_IVX[]    = { 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
 EXTCONST bool
 PL_valid_types_NVX[]    = { 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0 };
 EXTCONST bool
-PL_valid_types_PVX[]    = { 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1 };
+PL_valid_types_PVX[]    = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1 };
 EXTCONST bool
 PL_valid_types_RV[]     = { 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1 };
 EXTCONST bool
@@ -5154,6 +5239,21 @@ EXTCONST bool PL_valid_types_NV_set[];
 
 #endif
 
+#ifndef PERL_NO_INLINE_FUNCTIONS
+/* Static inline funcs that depend on includes and declarations above.
+   Some of these reference functions in the perl object files, and some
+   compilers aren't smart enough to eliminate unused static inline
+   functions, so including this file in source code can cause link errors
+   even if the source code uses none of the functions. Hence including these
+   can be be suppressed by setting PERL_NO_INLINE_FUNCTIONS. Doing this will
+   (obviously) result in unworkable XS code, but allows simple probing code
+   to continue to work, because it permits tests to include the perl headers
+   for definitions without creating a link dependency on the perl library
+   (which may not exist yet).
+*/
+
+#  include "inline.h"
+#endif
 
 #include "overload.h"
 
@@ -5164,7 +5264,6 @@ struct am_table {
   U8 fallback;
   U16 spare;
   U32 was_ok_sub;
-  long was_ok_am;
   CV* table[NofAMmeth];
 };
 struct am_table_short {
@@ -5172,7 +5271,6 @@ struct am_table_short {
   U8 fallback;
   U16 spare;
   U32 was_ok_sub;
-  long was_ok_am;
 };
 typedef struct am_table AMT;
 typedef struct am_table_short AMTS;
@@ -5182,13 +5280,9 @@ typedef struct am_table_short AMTS;
 #define AMGfallYES	3
 
 #define AMTf_AMAGIC		1
-#define AMTf_OVERLOADED		2
 #define AMT_AMAGIC(amt)		((amt)->flags & AMTf_AMAGIC)
 #define AMT_AMAGIC_on(amt)	((amt)->flags |= AMTf_AMAGIC)
 #define AMT_AMAGIC_off(amt)	((amt)->flags &= ~AMTf_AMAGIC)
-#define AMT_OVERLOADED(amt)	((amt)->flags & AMTf_OVERLOADED)
-#define AMT_OVERLOADED_on(amt)	((amt)->flags |= AMTf_OVERLOADED)
-#define AMT_OVERLOADED_off(amt)	((amt)->flags &= ~AMTf_OVERLOADED)
 
 #define StashHANDLER(stash,meth)	gv_handler((stash),CAT2(meth,_amg))
 
@@ -5315,7 +5409,8 @@ typedef struct am_table_short AMTS;
 
 #endif /* !USE_LOCALE_NUMERIC */
 
-#if !defined(Strtol) && defined(USE_64_BIT_INT) && defined(IV_IS_QUAD) && QUADKIND == QUAD_IS_LONG_LONG
+#if !defined(Strtol) && defined(USE_64_BIT_INT) && defined(IV_IS_QUAD) && \
+	(QUADKIND == QUAD_IS_LONG_LONG || QUADKIND == QUAD_IS___INT64)
 #    ifdef __hpux
 #        define strtoll __strtoll	/* secret handshake */
 #    endif
@@ -5337,7 +5432,8 @@ typedef struct am_table_short AMTS;
 /* It would be more fashionable to use Strtol() to define atol()
  * (as is done for Atoul(), see below) but for backward compatibility
  * we just assume atol(). */
-#   if defined(USE_64_BIT_INT) && defined(IV_IS_QUAD) && QUADKIND == QUAD_IS_LONG_LONG && defined(HAS_ATOLL)
+#   if defined(USE_64_BIT_INT) && defined(IV_IS_QUAD) && defined(HAS_ATOLL) && \
+	(QUADKIND == QUAD_IS_LONG_LONG || QUADKIND == QUAD_IS___INT64)
 #    ifdef WIN64
 #       define atoll    _atoi64		/* secret handshake */
 #    endif
@@ -5347,7 +5443,8 @@ typedef struct am_table_short AMTS;
 #   endif
 #endif
 
-#if !defined(Strtoul) && defined(USE_64_BIT_INT) && defined(UV_IS_QUAD) && QUADKIND == QUAD_IS_LONG_LONG
+#if !defined(Strtoul) && defined(USE_64_BIT_INT) && defined(UV_IS_QUAD) && \
+	(QUADKIND == QUAD_IS_LONG_LONG || QUADKIND == QUAD_IS___INT64)
 #    ifdef __hpux
 #        define strtoull __strtoull	/* secret handshake */
 #    endif
@@ -5591,10 +5688,9 @@ int flock(int fd, int op);
 #if O_TEXT != O_BINARY
     /* If you have different O_TEXT and O_BINARY and you are a CLRF shop,
      * that is, you are somehow DOSish. */
-#   if defined(__BEOS__) || defined(__HAIKU__) || defined(__VOS__) || \
-	defined(__CYGWIN__)
-    /* BeOS/Haiku has O_TEXT != O_BINARY but O_TEXT and O_BINARY have no effect;
-     * BeOS/Haiku is always UNIXoid (LF), not DOSish (CRLF). */
+#   if defined(__HAIKU__) || defined(__VOS__) || defined(__CYGWIN__)
+    /* Haiku has O_TEXT != O_BINARY but O_TEXT and O_BINARY have no effect;
+     * Haiku is always UNIXoid (LF), not DOSish (CRLF). */
     /* VOS has O_TEXT != O_BINARY, and they have effect,
      * but VOS always uses LF, never CRLF. */
     /* If you have O_TEXT different from your O_BINARY but you still are
@@ -5648,15 +5744,7 @@ extern void moncontrol(int);
 
 /* ISO 6429 NEL - C1 control NExt Line */
 /* See http://www.unicode.org/unicode/reports/tr13/ */
-#ifdef EBCDIC	/* In EBCDIC NEL is just an alias for LF */
-#   if '^' == 95	/* CP 1047: MVS OpenEdition - OS/390 - z/OS */
-#       define NEXT_LINE_CHAR	0x15
-#   else		/* CDRA */
-#       define NEXT_LINE_CHAR	0x25
-#   endif
-#else
-#   define NEXT_LINE_CHAR	0x85
-#endif
+#define NEXT_LINE_CHAR	NEXT_LINE_NATIVE
 
 /* The UTF-8 bytes of the Unicode LS and PS, U+2028 and U+2029 */
 #define UNICODE_LINE_SEPA_0	0xE2
@@ -5829,8 +5917,8 @@ extern void moncontrol(int);
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -34,6 +34,8 @@
 
   Reference is already weak			[Perl_sv_rvweaken] <<TODO
 
+  vector argument not supported with alpha versions
+
   Mandatory Warnings
   ------------------
   Malformed UTF-8 character [sv_pos_b2u] (not tested: difficult to produce
@@ -385,3 +387,13 @@ sub 짐 {}
 *짐 = \&조Ȩ ;
 EXPECT
 Subroutine main::ｆ렏 redefined at - line 7.
+########
+# sv.c
+sprintf "%vd", new version v1.1_0;
+use warnings 'printf' ;
+sprintf "%vd", new version v1.1_0;
+no warnings 'printf' ;
+sprintf "%vd", new version v1.1_0;
+EXPECT
+vector argument not supported with alpha versions at - line 2.
+vector argument not supported with alpha versions at - line 4.

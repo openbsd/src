@@ -12,13 +12,19 @@ use strict;
 require Exporter;
 
 our @ISA        = qw(Exporter);
-our @EXPORT_OK  = qw(first min max minstr maxstr reduce sum shuffle);
-our $VERSION    = "1.25";
+our @EXPORT_OK  = qw(first min max minstr maxstr reduce sum sum0 shuffle);
+our $VERSION    = "1.27";
 our $XS_VERSION = $VERSION;
 $VERSION    = eval $VERSION;
 
 require XSLoader;
 XSLoader::load('List::Util', $XS_VERSION);
+
+sub sum0
+{
+   return 0 unless @_;
+   goto &sum;
+}
 
 1;
 
@@ -163,6 +169,11 @@ make sure that you always pass C<0> as the first argument to prevent
 C<undef> being returned
 
   $foo = sum 0, @values;
+
+=item sum0 LIST
+
+Similar to C<sum>, except this returns 0 when given an empty list, rather
+than C<undef>.
 
 =back
 

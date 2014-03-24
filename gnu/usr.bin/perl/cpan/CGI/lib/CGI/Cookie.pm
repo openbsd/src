@@ -473,7 +473,7 @@ passing the request object to fetch() like this:
    CGI::Cookie->fetch($r);
 
 If the value passed to parse() is undefined, an empty array will returned in list
-contact, and an empty hashref will be returned in scalar context.
+context, and an empty hashref will be returned in scalar context.
 
 =head2 Manipulating Cookies
 

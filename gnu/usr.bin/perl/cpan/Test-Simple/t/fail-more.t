@@ -248,22 +248,22 @@ ERR
 
 #line 248
 isa_ok(42,    "Wibble", "My Wibble");
-out_ok( <<OUT, <<ERR );
+out_like( <<OUT, <<ERR );
 not ok - My Wibble isa Wibble
 OUT
 #   Failed test 'My Wibble isa Wibble'
 #   at $0 line 248.
-#     My Wibble isn't a class or reference
+#     My Wibble isn't a .*
 ERR
 
 #line 248
 isa_ok(42,    "Wibble");
-out_ok( <<OUT, <<ERR );
-not ok - The thing isa Wibble
+out_like( <<OUT, <<ERR );
+not ok - The (thing|class) isa Wibble
 OUT
-#   Failed test 'The thing isa Wibble'
+#   Failed test 'The (thing|class) isa Wibble'
 #   at $0 line 248.
-#     The thing isn't a class or reference
+#     The (thing|class) isn't a .*
 ERR
 
 #line 258

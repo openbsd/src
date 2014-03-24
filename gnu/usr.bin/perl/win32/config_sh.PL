@@ -1,4 +1,7 @@
+#!perl -w
+use strict;
 use FindExt;
+
 # take a semicolon separated path list and turn it into a quoted
 # list of paths that Text::Parsewords will grok
 sub mungepath {
@@ -18,7 +21,7 @@ sub loadopts {
     if ($ARGV[0] =~ /--cfgsh-option-file/) {
 	shift @ARGV;
 	my $optfile = shift @ARGV;
-	local (*F);
+	local (*OPTF);
 	open OPTF, $optfile or die "Can't open $optfile: $!\n";
 	my @opts;
 	chomp(my $line = <OPTF>);
@@ -45,13 +48,13 @@ while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
 FindExt::scan_ext("../cpan");
 FindExt::scan_ext("../dist");
 FindExt::scan_ext("../ext");
-FindExt::set_static_extensions(split ' ', $opt{'static_ext'});
+FindExt::set_static_extensions(split ' ', $opt{static_ext});
 
-$opt{'nonxs_ext'}        = join(' ',FindExt::nonxs_ext()) || ' ';
-$opt{'static_ext'}       = join(' ',FindExt::static_ext()) || ' ';
-$opt{'dynamic_ext'}      = join(' ',FindExt::dynamic_ext()) || ' ';
-$opt{'extensions'}       = join(' ',FindExt::extensions()) || ' ';
-$opt{'known_extensions'} = join(' ',FindExt::known_extensions()) || ' ';
+$opt{nonxs_ext}        = join(' ',FindExt::nonxs_ext()) || ' ';
+$opt{static_ext}       = join(' ',FindExt::static_ext()) || ' ';
+$opt{dynamic_ext}      = join(' ',FindExt::dynamic_ext()) || ' ';
+$opt{extensions}       = join(' ',FindExt::extensions()) || ' ';
+$opt{known_extensions} = join(' ',FindExt::known_extensions()) || ' ';
 
 my $pl_h = '../patchlevel.h';
 
@@ -76,17 +79,16 @@ if (-e $patch_file) {
     close $fh;
 }
 
-$opt{VERSION} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
-$opt{INST_VER} =~ s|~VERSION~|$opt{VERSION}|g;
-$opt{'version_patchlevel_string'} = "version $opt{PERL_VERSION} subversion $opt{PERL_SUBVERSION}";
-$opt{'version_patchlevel_string'} .= " patch $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
+$opt{version} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
+$opt{version_patchlevel_string} = "version $opt{PERL_VERSION} subversion $opt{PERL_SUBVERSION}";
+$opt{version_patchlevel_string} .= " patch $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
 
 my $ver = `ver 2>nul`;
 if ($ver =~ /Version (\d+\.\d+)/) {
-    $opt{'osvers'} = $1;
+    $opt{osvers} = $1;
 }
 else {
-    $opt{'osvers'} = '4.0';
+    $opt{osvers} = '4.0';
 }
 
 if (exists $opt{cc}) {
@@ -100,31 +102,94 @@ if (exists $opt{cc}) {
     }
 }
 
-$opt{'cf_by'} = $ENV{USERNAME} unless $opt{'cf_by'};
-$opt{'cf_email'} = $opt{'cf_by'} . '@' . (gethostbyname('localhost'))[0]
-	unless $opt{'cf_email'};
-$opt{'usemymalloc'} = 'y' if $opt{'d_mymalloc'} eq 'define';
+$opt{cf_by} = $ENV{USERNAME} unless $opt{cf_by};
+if (!$opt{cf_email}) {
+    my $computername = eval{(gethostbyname('localhost'))[0]};
+# gethostbyname might not be implemented in miniperl
+    $computername = $ENV{COMPUTERNAME} if $@;    
+    $opt{cf_email} = $opt{cf_by} . '@' . $computername;
+}
+$opt{usemymalloc} = 'y' if $opt{d_mymalloc} eq 'define';
 
 $opt{libpth} = mungepath($opt{libpth}) if exists $opt{libpth};
 $opt{incpath} = mungepath($opt{incpath}) if exists $opt{incpath};
 
-# some functions are not available on Win9x
-unless (defined $ENV{SYSTEMROOT}) { # SystemRoot has been introduced by WinNT
-    $opt{d_flock} = 'undef';
-    $opt{d_link} = 'undef';
+my($int64, $int64f);
+if ($opt{cc} eq 'cl') {
+    $int64  = '__int64';
+    $int64f = 'I64';
+}
+elsif ($opt{cc} =~ /\bgcc\b/) {
+    $int64  = 'long long';
+    $int64f = 'll';
 }
 
-# change the lseeksize and lseektype from their canned default values (which
-# are set-up for a non-uselargefiles build) if we are building with
-# uselargefiles.
+# set large files options
 if ($opt{uselargefiles} eq 'define') {
     $opt{lseeksize} = 8;
-    if ($opt{cc} eq 'cl') {
-	$opt{lseektype} = '__int64';
-    }
-    elsif ($opt{cc} =~ /\bgcc\b/) {
-	$opt{lseektype} = 'long long';
-    }
+    $opt{lseektype} = $int64;
+}
+else {
+    $opt{lseeksize} = 4;
+    $opt{lseektype} = 'long';
+}
+
+# set 64-bit options
+if ($opt{WIN64} eq 'define') {
+    $opt{d_atoll} = 'define';
+    $opt{d_strtoll} = 'define';
+    $opt{d_strtoull} = 'define';
+    $opt{ptrsize} = 8;
+    $opt{sizesize} = 8;
+    $opt{ssizetype} = $int64;
+    $opt{st_ino_size} = 8;
+}
+else {
+    $opt{d_atoll} = 'undef';
+    $opt{d_strtoll} = 'undef';
+    $opt{d_strtoull} = 'undef';
+    $opt{ptrsize} = 4;
+    $opt{sizesize} = 4;
+    $opt{ssizetype} = 'int';
+    $opt{st_ino_size} = 4;
+}
+if ($opt{use64bitint} eq 'define') {
+    $opt{d_nv_preserves_uv} = 'undef';
+    $opt{ivdformat} = qq{"${int64f}d"};
+    $opt{ivsize} = 8;
+    $opt{ivtype} = $int64;
+    $opt{nv_preserves_uv_bits} = 53;
+    $opt{sPRIXU64} = qq{"${int64f}X"};
+    $opt{sPRId64} = qq{"${int64f}d"};
+    $opt{sPRIi64} = qq{"${int64f}i"};
+    $opt{sPRIo64} = qq{"${int64f}o"};
+    $opt{sPRIu64} = qq{"${int64f}u"};
+    $opt{sPRIx64} = qq{"${int64f}x"};
+    $opt{uvXUformat} = qq{"${int64f}X"};
+    $opt{uvoformat} = qq{"${int64f}o"};
+    $opt{uvsize} = 8;
+    $opt{uvtype} = qq{unsigned $int64};
+    $opt{uvuformat} = qq{"${int64f}u"};
+    $opt{uvxformat} = qq{"${int64f}x"};
+}
+else {
+    $opt{d_nv_preserves_uv} = 'define';
+    $opt{ivdformat} = '"ld"';
+    $opt{ivsize} = 4;
+    $opt{ivtype} = 'long';
+    $opt{nv_preserves_uv_bits} = 32;
+    $opt{sPRIXU64} = '"lX"';
+    $opt{sPRId64} = '"ld"';
+    $opt{sPRIi64} = '"li"';
+    $opt{sPRIo64} = '"lo"';
+    $opt{sPRIu64} = '"lu"';
+    $opt{sPRIx64} = '"lx"';
+    $opt{uvXUformat} = '"lX"';
+    $opt{uvoformat} = '"lo"';
+    $opt{uvsize} = 4;
+    $opt{uvtype} = 'unsigned long';
+    $opt{uvuformat} = '"lu"';
+    $opt{uvxformat} = '"lx"';
 }
 
 # change the s{GM|LOCAL}TIME_{min|max} for VS2005 (aka VC 8) and
@@ -143,7 +208,7 @@ if ($opt{useithreads} eq 'define' && $opt{ccflags} =~ /-DPERL_IMPLICIT_SYS\b/) {
 }
 
 while (<>) {
-    s/~([\w_]+)~/$opt{$1}/g;
+    s/~([\w_]+)~/exists $opt{$1} ? $opt{$1} : ''/eg;
     if (/^([\w_]+)=(.*)$/) {
 	my($k,$v) = ($1,$2);
 	# this depends on cf_time being empty in the template (or we'll

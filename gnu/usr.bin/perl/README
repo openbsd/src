@@ -1,6 +1,6 @@
 Perl is Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-by Larry Wall and others.  All rights reserved.
+2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
+2013 by Larry Wall and others.  All rights reserved.
 
 
 
@@ -70,6 +70,8 @@ adds new features that you might find useful.
 You can always find the latest version of perl on a CPAN (Comprehensive Perl
 Archive Network) site near you at http://www.cpan.org/src/
 
+If you want to submit a simple patch to the perl source, see the "SUPER
+QUICK PATCH GUIDE" in pod/perlhack.pod.
 
 Just a personal note:  I want you to know that I create nice things like this
 because it pleases the Author of my story.  If this bothers you, then your

@@ -93,7 +93,7 @@ The keys of a hash are B<never> tainted.
 For example:
 
     $arg = shift;		# $arg is tainted
-    $hid = $arg, 'bar';		# $hid is also tainted
+    $hid = $arg . 'bar';	# $hid is also tainted
     $line = <>;			# Tainted
     $line = <STDIN>;		# Also tainted
     open FOO, "/home/me/bar" or die $!;
@@ -134,10 +134,8 @@ For example:
     @files = <*.c>;		# insecure (uses readdir() or similar)
     @files = glob('*.c');	# insecure (uses readdir() or similar)
 
-    # In Perl releases older than 5.6.0 the <*.c> and glob('*.c') would
-    # have used an external program to do the filename expansion; but in
-    # either case the result is tainted since the list of filenames comes
-    # from outside of the program.
+    # In either case, the results of glob are tainted, since the list of
+    # filenames comes from outside of the program.
 
     $bad = ($arg, 23);		# $bad will be tainted
     $arg, `true`;		# Insecure (although it isn't really)
@@ -456,41 +454,84 @@ I<Denial of Service> (DoS) attacks.
 
 =item *
 
-Hash Function - the algorithm used to "order" hash elements has been
-changed several times during the development of Perl, mainly to be
-reasonably fast.  In Perl 5.8.1 also the security aspect was taken
-into account.
+Hash Algorithm - Hash algorithms like the one used in Perl are well
+known to be vulnerable to collision attacks on their hash function.
+Such attacks involve constructing a set of keys which collide into
+the same bucket producing inefficient behavior. Such attacks often
+depend on discovering the seed of the hash function used to map the
+keys to buckets. That seed is then used to brute-force a key set which
+can be used to mount a denial of service attack. In Perl 5.8.1 changes
+were introduced to harden Perl to such attacks, and then later in
+Perl 5.18.0 these features were enhanced and additional protections
+added.
 
-In Perls before 5.8.1 one could rather easily generate data that as
-hash keys would cause Perl to consume large amounts of time because
-internal structure of hashes would badly degenerate.  In Perl 5.8.1
-the hash function is randomly perturbed by a pseudorandom seed which
-makes generating such naughty hash keys harder.
-See L<perlrun/PERL_HASH_SEED> for more information.
+At the time of this writing, Perl 5.18.0 is considered to be
+well-hardened against algorithmic complexity attacks on its hash
+implementation. This is largely owed to the following measures
+mitigate attacks:
 
-In Perl 5.8.1 the random perturbation was done by default, but as of
-5.8.2 it is only used on individual hashes if the internals detect the
-insertion of pathological data. If one wants for some reason emulate the
-old behaviour (and expose oneself to DoS attacks) one can set the
-environment variable PERL_HASH_SEED to zero to disable the protection
-(or any other integer to force a known perturbation, rather than random). 
-One possible reason for wanting to emulate the old behaviour is that in the
-new behaviour consecutive runs of Perl will order hash keys differently,
-which may confuse some applications (like Data::Dumper: the outputs of two
-different runs are no longer identical).
+=over 4
 
-B<Perl has never guaranteed any ordering of the hash keys>, and the
-ordering has already changed several times during the lifetime of
-Perl 5.  Also, the ordering of hash keys has always been, and
-continues to be, affected by the insertion order.
+=item Hash Seed Randomization
+
+In order to make it impossible to know what seed to generate an attack
+key set for, this seed is randomly initialized at process start. This
+may be overridden by using the PERL_HASH_SEED environment variable, see
+L<perlrun/PERL_HASH_SEED>. This environment variable controls how
+items are actually stored, not how they are presented via
+C<keys>, C<values> and C<each>.
+
+=item Hash Traversal Randomization
+
+Independent of which seed is used in the hash function, C<keys>,
+C<values>, and C<each> return items in a per-hash randomized order.
+Modifying a hash by insertion will change the iteration order of that hash.
+This behavior can be overridden by using C<hash_traversal_mask()> from
+L<Hash::Util> or by using the PERL_PERTURB_KEYS environment variable,
+see L<perlrun/PERL_PERTURB_KEYS>. Note that this feature controls the
+"visible" order of the keys, and not the actual order they are stored in.
+
+=item Bucket Order Perturbance
+
+When items collide into a given hash bucket the order they are stored in
+the chain is no longer predictable in Perl 5.18. This has the intention
+to make it harder to observe a collisions. This behavior can be overridden by using
+the PERL_PERTURB_KEYS environment variable, see L<perlrun/PERL_PERTURB_KEYS>.
+
+=item New Default Hash Function
+
+The default hash function has been modified with the intention of making
+it harder to infer the hash seed.
+
+=item Alternative Hash Functions
+
+The source code includes multiple hash algorithms to choose from.  While we
+believe that the default perl hash is robust to attack, we have included the
+hash function Siphash as a fall-back option. At the time of release of
+Perl 5.18.0 Siphash is believed to be of cryptographic strength.  This is
+not the default as it is much slower than the default hash.
+
+=back
+
+Without compiling a special Perl, there is no way to get the exact same
+behavior of any versions prior to Perl 5.18.0. The closest one can get
+is by setting PERL_PERTURB_KEYS to 0 and setting the PERL_HASH_SEED
+to a known value. We do not advise those settings for production use
+due to the above security considerations.
+
+B<Perl has never guaranteed any ordering of the hash keys>, and
+the ordering has already changed several times during the lifetime of
+Perl 5.  Also, the ordering of hash keys has always been, and continues
+to be, affected by the insertion order and the history of changes made
+to the hash over its lifetime.
 
 Also note that while the order of the hash elements might be
-randomised, this "pseudoordering" should B<not> be used for
-applications like shuffling a list randomly (use List::Util::shuffle()
+randomized, this "pseudo-ordering" should B<not> be used for
+applications like shuffling a list randomly (use C<List::Util::shuffle()>
 for that, see L<List::Util>, a standard core module since Perl 5.8.0;
-or the CPAN module Algorithm::Numerical::Shuffle), or for generating
-permutations (use e.g. the CPAN modules Algorithm::Permute or
-Algorithm::FastPermute), or for any cryptographic applications.
+or the CPAN module C<Algorithm::Numerical::Shuffle>), or for generating
+permutations (use e.g. the CPAN modules C<Algorithm::Permute> or
+C<Algorithm::FastPermute>), or for any cryptographic applications.
 
 =item *
 

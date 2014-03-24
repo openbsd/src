@@ -8,18 +8,16 @@ use vars qw(@ISA @EXPORT $VERSION
             $def_timeout $def_proto $def_factor
             $max_datasize $pingstring $hires $source_verify $syn_forking);
 use Fcntl qw( F_GETFL F_SETFL O_NONBLOCK );
-use Socket qw( SOCK_DGRAM SOCK_STREAM SOCK_RAW PF_INET SOL_SOCKET SO_ERROR
-               inet_aton inet_ntoa sockaddr_in );
+use Socket qw( SOCK_DGRAM SOCK_STREAM SOCK_RAW PF_INET SOL_SOCKET SO_ERROR IPPROTO_IP IP_TOS IP_TTL
+               inet_aton getnameinfo NI_NUMERICHOST sockaddr_in );
 use POSIX qw( ENOTCONN ECONNREFUSED ECONNRESET EINPROGRESS EWOULDBLOCK EAGAIN WNOHANG );
 use FileHandle;
 use Carp;
+use Time::HiRes;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(pingecho);
-$VERSION = "2.38";
-
-sub SOL_IP { 0; };
-sub IP_TOS { 1; };
+$VERSION = "2.41";
 
 # Constants
 
@@ -87,6 +85,7 @@ sub new
       $data_size,         # Optional additional bytes of data
       $device,            # Optional device to use
       $tos,               # Optional ToS to set
+      $ttl,               # Optional TTL to set
       ) = @_;
   my  $class = ref($this) || $this;
   my  $self = {};
@@ -109,6 +108,12 @@ sub new
   $self->{"device"} = $device;
 
   $self->{"tos"} = $tos;
+
+  if ($self->{"proto"} eq 'icmp') {
+    croak('TTL must be from 0 to 255')
+      if ($ttl && ($ttl < 0 || $ttl > 255));
+    $self->{"ttl"} = $ttl;
+  }
 
   $min_datasize = ($proto eq "udp") ? 1 : 0;  # Determine data size
   $data_size = $min_datasize unless defined($data_size) && $proto ne "tcp";
@@ -143,7 +148,7 @@ sub new
         or croak "error binding to device $self->{'device'} $!";
     }
     if ($self->{'tos'}) {
-      setsockopt($self->{"fh"}, SOL_IP, IP_TOS(), pack("I*", $self->{'tos'}))
+      setsockopt($self->{"fh"}, IPPROTO_IP, IP_TOS, pack("I*", $self->{'tos'}))
         or croak "error configuring tos to $self->{'tos'} $!";
     }
   }
@@ -161,8 +166,12 @@ sub new
         or croak "error binding to device $self->{'device'} $!";
     }
     if ($self->{'tos'}) {
-      setsockopt($self->{"fh"}, SOL_IP, IP_TOS(), pack("I*", $self->{'tos'}))
+      setsockopt($self->{"fh"}, IPPROTO_IP, IP_TOS, pack("I*", $self->{'tos'}))
         or croak "error configuring tos to $self->{'tos'} $!";
+    }
+    if ($self->{'ttl'}) {
+      setsockopt($self->{"fh"}, IPPROTO_IP, IP_TTL, pack("I*", $self->{'ttl'}))
+        or croak "error configuring ttl to $self->{'ttl'} $!";
     }
   }
   elsif ($self->{"proto"} eq "tcp" || $self->{"proto"} eq "stream")
@@ -304,13 +313,12 @@ sub retrans
 # Description: allows the module to use milliseconds as returned by
 # the Time::HiRes module
 
-$hires = 0;
+$hires = 1;
 sub hires
 {
   my $self = shift;
   $hires = 1 unless defined
     ($hires = ((defined $self) && (ref $self)) ? shift() : $self);
-  require Time::HiRes if $hires;
 }
 
 sub time
@@ -392,7 +400,7 @@ sub ping
     croak("Unknown protocol \"$self->{proto}\" in ping()");
   }
 
-  return wantarray ? ($ret, &time() - $ping_time, inet_ntoa($ip)) : $ret;
+  return wantarray ? ($ret, &time() - $ping_time, $self->ntop($ip)) : $ret;
 }
 
 # Uses Net::Ping::External to do an external ping.
@@ -410,6 +418,8 @@ sub ping_external {
 use constant ICMP_ECHOREPLY   => 0; # ICMP packet types
 use constant ICMP_UNREACHABLE => 3; # ICMP packet types
 use constant ICMP_ECHO        => 8;
+use constant ICMP_TIME_EXCEEDED => 11; # ICMP packet types
+use constant ICMP_PARAMETER_PROBLEM => 12; # ICMP packet types
 use constant ICMP_STRUCT      => "C2 n3 A"; # Structure of a minimal ICMP packet
 use constant SUBCODE          => 0; # No ICMP subcode for ECHO and ECHOREPLY
 use constant ICMP_FLAGS       => 0; # No special flags for send or recv
@@ -489,13 +499,16 @@ sub ping_icmp
       $self->{"from_ip"} = $from_ip;
       $self->{"from_type"} = $from_type;
       $self->{"from_subcode"} = $from_subcode;
-      if (($from_pid == $self->{"pid"}) && # Does the packet check out?
-          (! $source_verify || (inet_ntoa($from_ip) eq inet_ntoa($ip))) &&
-          ($from_seq == $self->{"seq"})) {
+      next if ($from_pid != $self->{"pid"});
+      next if ($from_seq != $self->{"seq"});
+      if (! $source_verify || ($self->ntop($from_ip) eq $self->ntop($ip))) { # Does the packet check out?
         if ($from_type == ICMP_ECHOREPLY) {
           $ret = 1;
-	  $done = 1;
+	        $done = 1;
         } elsif ($from_type == ICMP_UNREACHABLE) {
+          $done = 1;
+        } elsif ($from_type == ICMP_TIME_EXCEEDED) {
+          $ret = 0;
           $done = 1;
         }
       }
@@ -510,7 +523,7 @@ sub icmp_result {
   my ($self) = @_;
   my $ip = $self->{"from_ip"} || "";
   $ip = "\0\0\0\0" unless 4 == length $ip;
-  return (inet_ntoa($ip),($self->{"from_type"} || 0), ($self->{"from_subcode"} || 0));
+  return ($self->ntop($ip),($self->{"from_type"} || 0), ($self->{"from_subcode"} || 0));
 }
 
 # Description:  Do a checksum on the message.  Basically sum all of
@@ -593,7 +606,7 @@ sub tcp_connect
         or croak("error binding to device $self->{'device'} $!");
     }
     if ($self->{'tos'}) {
-      setsockopt($self->{"fh"}, SOL_IP, IP_TOS(), pack("I*", $self->{'tos'}))
+      setsockopt($self->{"fh"}, IPPROTO_IP, IP_TOS, pack("I*", $self->{'tos'}))
         or croak "error configuring tos to $self->{'tos'} $!";
     }
   };
@@ -1037,7 +1050,7 @@ sub ping_syn
       or croak("error binding to device $self->{'device'} $!");
   }
   if ($self->{'tos'}) {
-    setsockopt($fh, SOL_IP, IP_TOS(), pack("I*", $self->{'tos'}))
+    setsockopt($fh, IPPROTO_IP, IP_TOS, pack("I*", $self->{'tos'}))
       or croak "error configuring tos to $self->{'tos'} $!";
   }
   # Set O_NONBLOCK property on filehandle
@@ -1106,7 +1119,7 @@ sub ping_syn_fork {
           or croak("error binding to device $self->{'device'} $!");
       }
       if ($self->{'tos'}) {
-        setsockopt($self->{"fh"}, SOL_IP, IP_TOS(), pack("I*", $self->{'tos'}))
+        setsockopt($self->{"fh"}, IPPROTO_IP, IP_TOS, pack("I*", $self->{'tos'}))
           or croak "error configuring tos to $self->{'tos'} $!";
       }
 
@@ -1247,7 +1260,7 @@ sub ack
           }
           # Everything passed okay, return the answer
           return wantarray ?
-            ($entry->[0], &time() - $entry->[3], inet_ntoa($entry->[1]))
+            ($entry->[0], &time() - $entry->[3], $self->ntop($entry->[1]))
             : $entry->[0];
         } else {
           warn "Corrupted SYN entry: unknown fd [$fd] ready!";
@@ -1283,7 +1296,7 @@ sub ack_unfork {
     # Host passed as arg
     if (my $entry = $self->{"good"}->{$host}) {
       delete $self->{"good"}->{$host};
-      return ($entry->[0], &time() - $entry->[3], inet_ntoa($entry->[1]));
+      return ($entry->[0], &time() - $entry->[3], $self->ntop($entry->[1]));
     }
   }
 
@@ -1327,7 +1340,7 @@ sub ack_unfork {
               # And wait for the next winner
               next;
             }
-            return ($entry->[0], &time() - $entry->[3], inet_ntoa($entry->[1]));
+            return ($entry->[0], &time() - $entry->[3], $self->ntop($entry->[1]));
           }
         } else {
           # Should never happen
@@ -1374,6 +1387,8 @@ sub close
     delete $self->{"syn"};
   } elsif ($self->{"proto"} eq "tcp") {
     # The connection will already be closed
+  } elsif ($self->{"proto"} eq "external") {
+    # Nothing to close
   } else {
     $self->{"fh"}->close();
   }
@@ -1388,6 +1403,23 @@ sub port_number {
    return $self->{port_num};
 }
 
+sub ntop {
+    my($self, $ip) = @_;
+
+    # Vista doesn't define a inet_ntop.  It has InetNtop instead.
+    # Not following ANSI... priceless.  getnameinfo() is defined
+    # for Windows 2000 and later, so that may be the choice.
+
+    # Any port will work, even undef, but this will work for now.
+    # Socket warns when undef is passed in, but it still works.
+    my $port = getservbyname('echo', 'udp');
+    my $sockaddr = sockaddr_in $port, $ip;
+    my ($error, $address) = getnameinfo($sockaddr, NI_NUMERICHOST);
+    if($error) {
+      croak $error;
+    }
+    return $address;
+}
 
 1;
 __END__
@@ -1417,7 +1449,7 @@ Net::Ping - check a remote host for reachability
 
     $p = Net::Ping->new("tcp", 2);
     # Try connecting to the www port instead of the echo port
-    $p->port_number(getservbyname("http", "tcp"));
+    $p->port_number(scalar(getservbyname("http", "tcp")));
     while ($stop_time > time())
     {
         print "$host not reachable ", scalar(localtime()), "\n"
@@ -1509,7 +1541,7 @@ This protocol does not require any special privileges.
 
 =over 4
 
-=item Net::Ping->new([$proto [, $def_timeout [, $bytes [, $device [, $tos ]]]]]);
+=item Net::Ping->new([$proto [, $def_timeout [, $bytes [, $device [, $tos [, $ttl ]]]]]]);
 
 Create a new ping object.  All of the parameters are optional.  $proto
 specifies the protocol to use when doing a ping.  The current choices
@@ -1532,6 +1564,8 @@ before sending the ping packet.  I believe this only works with
 superuser privileges and with udp and icmp protocols at this time.
 
 If $tos is given, this ToS is configured into the socket.
+
+For icmp, $ttl can be specified to set the TTL of the outgoing packet.
 
 =item $p->ping($host [, $timeout]);
 

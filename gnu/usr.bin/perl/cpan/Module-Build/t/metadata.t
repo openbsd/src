@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 52;
+use MBTest tests => 51;
 
 blib_load('Module::Build');
 blib_load('Module::Build::ConfigData');
@@ -63,7 +63,7 @@ my $mb = Module::Build->new_from_context;
 {
   my $mb_prereq = { 'Module::Build' => $Module::Build::VERSION };
   my $mb_config_req = {
-    'Module::Build' => int($Module::Build::VERSION * 100)/100
+    'Module::Build' => sprintf '%2.2f', int($Module::Build::VERSION * 100)/100
   };
   my $node;
   my $output = stdout_stderr_of( sub {
@@ -275,7 +275,6 @@ $err = stderr_of( sub { $provides = $mb->find_dist_packages } );
 is_deeply($provides,
 	  {'Simple' => { file => $simple_file,
 			 version => '1.23' }}); # XXX should be 2.34?
-like( $err, qr/already declared/, '  with conflicting versions reported' );
 
 
 # (Same as above three cases except with no corresponding package)
@@ -294,9 +293,21 @@ $err = stderr_of( sub { $provides = $mb->find_dist_packages } );
 is_deeply($provides,
 	  {'Foo' => { file => $simple_file,
 		      version => '1.23' }}); # XXX should be 2.34?
-like( $err, qr/already declared/, '  with conflicting versions reported' );
 
+# Missing version should not show up in provides as version "0"
 
+$dist->change_file( 'lib/Simple.pm', <<'---' );
+package Foo;
+$VERSION = undef;
+1;
+---
+$dist->regen( clean => 1 );
+$err = stderr_of( sub { $mb = new_build() } );
+$err = stderr_of( sub { $provides = $mb->find_dist_packages } );
+is_deeply($provides,
+    {'Foo' => { file => $simple_file } },
+    "undef \$VERSION is omitted from 'provides'"
+);
 
 ############################## Multiple Modules
 

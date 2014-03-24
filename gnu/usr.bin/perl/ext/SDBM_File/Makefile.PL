@@ -23,6 +23,12 @@ WriteMakefile(
 	      PERL_MALLOC_OK => 1,
              );
 
+# We don't want the default subdir rule, as it creates a race condition with the
+# rule we add below.
+sub MY::subdir_x {
+    return '';
+}
+
 sub MY::postamble {
   if ($^O =~ /MSWin32/ && !defined($ENV{SYSTEMROOT})) {
 	if ($Config{'make'} =~ /dmake/i) {

@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan(tests => 126);
+plan(tests => 128);
 
 eval 'pass();';
 
@@ -437,7 +437,7 @@ is($got, "ok\n", 'eval and last');
 
 {
     no warnings;
-    eval "/ /b;";
+    eval "&& $b;";
     like($@, qr/^syntax error/, 'eval syntax error, no warnings');
 }
 
@@ -496,7 +496,7 @@ END_EVAL_TEST
 
     is($tombstone, "Done\n", 'Program completed successfully');
 
-    $first =~ s/,pNOK//;
+    $first =~ s/p?[NI]OK,//g;
     s/ PV = 0x[0-9a-f]+/ PV = 0x/ foreach $first, $second;
     s/ LEN = [0-9]+/ LEN = / foreach $first, $second;
     # Dump may double newlines through pipes, though not files
@@ -608,4 +608,13 @@ pass("phew! dodged the assertion after a parsing (not lexing) error");
      ),
      qr/Unbalanced string table/,
     'Errors in finalize_optree do not leak string eval op tree';
+}
+
+# [perl #114658] Line numbers at end of string eval
+for("{;", "{") {
+    eval $_; is $@ =~ s/eval \d+/eval 1/rag, <<'EOE',
+Missing right curly or square bracket at (eval 1) line 1, at end of line
+syntax error at (eval 1) line 1, at EOF
+EOE
+	qq'Right line number for eval "$_"';
 }

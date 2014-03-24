@@ -2,7 +2,7 @@
 
 BEGIN {
 	if ($] <= 5.010) {
-		print "1..0 # skip this test requires perl 5.010 or greater\n";
+		print "1..0 # skip this test requires perl 5.010 or greater ($])\n";
 		exit 0;
 	}
 }
@@ -105,8 +105,8 @@ sub check($$$$) {
 
 sub check_data { 
 
-    local $_;
     binmode(DATA, ":utf8") || die "can't binmode DATA to utf8: $!";
+    local($_);
     while ( <DATA> ) {
 
 	my $bad = 0;

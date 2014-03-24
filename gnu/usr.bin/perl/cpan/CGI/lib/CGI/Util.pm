@@ -1,14 +1,18 @@
 package CGI::Util;
+use base 'Exporter';
 require 5.008001;
 use strict;
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape 
-		expires ebcdic2ascii ascii2ebcdic);
+our @EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape
+        expires ebcdic2ascii ascii2ebcdic);
 
-our $VERSION = '3.53';
+our $VERSION = '3.62';
 
 use constant EBCDIC => "\t" ne "\011";
+
+# This option is not documented and may change or go away.
+# The HTML spec does not require attributes to be sorted,
+# but it's useful for testing to get a predictable order back.
+our $SORT_ATTRIBUTES;
 
 # (ord('^') == 95) for codepage 1047 as on os390, vmesa
 our @A2E = (
@@ -28,7 +32,7 @@ our @A2E = (
  172,105,237,238,235,239,236,191,128,253,254,251,252,186,174, 89,
   68, 69, 66, 70, 67, 71,156, 72, 84, 81, 82, 83, 88, 85, 86, 87,
  140, 73,205,206,203,207,204,225,112,221,222,219,220,141,142,223
-	 );
+     );
 our @E2A = (
    0,  1,  2,  3,156,  9,134,127,151,141,142, 11, 12, 13, 14, 15,
   16, 17, 18, 19,157, 10,  8,135, 24, 25,146,143, 28, 29, 30, 31,
@@ -46,7 +50,7 @@ our @E2A = (
  125, 74, 75, 76, 77, 78, 79, 80, 81, 82,185,251,252,249,250,255,
   92,247, 83, 84, 85, 86, 87, 88, 89, 90,178,212,214,210,211,213,
   48, 49, 50, 51, 52, 53, 54, 55, 56, 57,179,219,220,217,218,159
-	 );
+     );
 
 if (EBCDIC && ord('^') == 106) { # as in the BS2000 posix-bc coded character set
      $A2E[91] = 187;   $A2E[92] = 188;  $A2E[94] = 106;  $A2E[96] = 74;
@@ -77,7 +81,7 @@ sub rearrange {
     my ($order,@param) = @_;
     my ($result, $leftover) = _rearrange_params( $order, @param );
     push @$result, make_attributes( $leftover, defined $CGI::Q ? $CGI::Q->{escape} : 1 ) 
-	if keys %$leftover;
+    if keys %$leftover;
     @$result;
 }
 
@@ -95,30 +99,30 @@ sub _rearrange_params {
     return [] unless @param;
 
     if (ref($param[0]) eq 'HASH') {
-	@param = %{$param[0]};
+    @param = %{$param[0]};
     } else {
-	return \@param 
-	    unless (defined($param[0]) && substr($param[0],0,1) eq '-');
+    return \@param 
+        unless (defined($param[0]) && substr($param[0],0,1) eq '-');
     }
 
     # map parameters into positional indices
     my ($i,%pos);
     $i = 0;
     foreach (@$order) {
-	foreach (ref($_) eq 'ARRAY' ? @$_ : $_) { $pos{lc($_)} = $i; }
-	$i++;
+    foreach (ref($_) eq 'ARRAY' ? @$_ : $_) { $pos{lc($_)} = $i; }
+    $i++;
     }
 
     my (@result,%leftover);
     $#result = $#$order;  # preextend
     while (@param) {
-	my $key = lc(shift(@param));
-	$key =~ s/^\-//;
-	if (exists $pos{$key}) {
-	    $result[$pos{$key}] = shift(@param);
-	} else {
-	    $leftover{$key} = shift(@param);
-	}
+    my $key = lc(shift(@param));
+    $key =~ s/^\-//;
+    if (exists $pos{$key}) {
+        $result[$pos{$key}] = shift(@param);
+    } else {
+        $leftover{$key} = shift(@param);
+    }
     }
 
     return \@result, \%leftover;
@@ -132,18 +136,22 @@ sub make_attributes {
 
     my $quote = $do_not_quote ? '' : '"';
 
+    my @attr_keys= keys %$attr;
+    if ($SORT_ATTRIBUTES) {
+        @attr_keys= sort @attr_keys;
+    }
     my(@att);
-    foreach (keys %{$attr}) {
-	my($key) = $_;
-	$key=~s/^\-//;     # get rid of initial - if present
+    foreach (@attr_keys) {
+    my($key) = $_;
+    $key=~s/^\-//;     # get rid of initial - if present
 
-	# old way: breaks EBCDIC!
-	# $key=~tr/A-Z_/a-z-/; # parameters are lower case, use dashes
+    # old way: breaks EBCDIC!
+    # $key=~tr/A-Z_/a-z-/; # parameters are lower case, use dashes
 
-	($key="\L$key") =~ tr/_/-/; # parameters are lower case, use dashes
+    ($key="\L$key") =~ tr/_/-/; # parameters are lower case, use dashes
 
-	my $value = $escape ? simple_escape($attr->{$_}) : $attr->{$_};
-	push(@att,defined($attr->{$_}) ? qq/$key=$quote$value$quote/ : qq/$key/);
+    my $value = $escape ? simple_escape($attr->{$_}) : $attr->{$_};
+    push(@att,defined($attr->{$_}) ? qq/$key=$quote$value$quote/ : qq/$key/);
     }
     return @att;
 }
@@ -176,19 +184,19 @@ sub unescape {
     if (EBCDIC) {
       $todecode =~ s/%([0-9a-fA-F]{2})/chr $A2E[hex($1)]/ge;
     } else {
-	# handle surrogate pairs first -- dankogai. Ref: http://unicode.org/faq/utf_bom.html#utf16-2
-	$todecode =~ s{
-			%u([Dd][89a-bA-B][0-9a-fA-F]{2}) # hi
-		        %u([Dd][c-fC-F][0-9a-fA-F]{2})   # lo
-		      }{
-			  utf8_chr(
-				   0x10000 
-				   + (hex($1) - 0xD800) * 0x400 
-				   + (hex($2) - 0xDC00)
-				  )
-		      }gex;
+    # handle surrogate pairs first -- dankogai. Ref: http://unicode.org/faq/utf_bom.html#utf16-2
+    $todecode =~ s{
+            %u([Dd][89a-bA-B][0-9a-fA-F]{2}) # hi
+                %u([Dd][c-fC-F][0-9a-fA-F]{2})   # lo
+              }{
+              utf8_chr(
+                   0x10000 
+                   + (hex($1) - 0xD800) * 0x400 
+                   + (hex($2) - 0xDC00)
+                  )
+              }gex;
       $todecode =~ s/%(?:([0-9a-fA-F]{2})|u([0-9a-fA-F]{4}))/
-	defined($1)? chr hex($1) : utf8_chr(hex($2))/ge;
+    defined($1)? chr hex($1) : utf8_chr(hex($2))/ge;
     }
   return $todecode;
 }

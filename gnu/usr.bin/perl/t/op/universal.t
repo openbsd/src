@@ -10,7 +10,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 133;
+plan tests => 139;
 
 $a = {};
 bless $a, "Bob";
@@ -107,7 +107,10 @@ for ($p=0; $p < @refs; $p++) {
     };
 };
 
-ok ! UNIVERSAL::can(23, "can");
+ok UNIVERSAL::can(23, "can");
+++${"23::foo"};
+ok UNIVERSAL::can("23", "can"), '"23" can can when the pack exists';
+ok UNIVERSAL::can(23, "can"), '23 can can when the pack exists';
 
 ok $a->can("VERSION");
 
@@ -164,7 +167,7 @@ if ('a' lt 'A') {
 eval 'sub UNIVERSAL::sleep {}';
 ok $a->can("sleep");
 
-ok ! UNIVERSAL::can($b, "can");
+ok UNIVERSAL::can($b, "can");
 
 ok ! $a->can("export_tags");	# a method in Exporter
 
@@ -172,6 +175,7 @@ ok ! UNIVERSAL::isa("\xff\xff\xff\0", 'HASH');
 
 {
     package Pickup;
+    no warnings "deprecated";
     use UNIVERSAL qw( isa can VERSION );
 
     ::ok isa "Pickup", UNIVERSAL;
@@ -328,3 +332,10 @@ use warnings "deprecated";
     @RT66112::T6::ISA = qw/RT66112::E/;
     ok(RT66112::T6->isa('RT66112::A'), "modify \@ISA in isa (RT66112::T6 isa RT66112::A)");
 }
+
+ok(Undeclared->can("can"));
+sub Undeclared::foo { }
+ok(Undeclared->can("foo"));
+ok(!Undeclared->can("something_else"));
+
+ok(Undeclared->isa("UNIVERSAL"));

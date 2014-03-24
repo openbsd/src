@@ -1,25 +1,31 @@
 #!./perl
 
-print "1..22\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 22;
 
 @x = (1, 2, 3);
-if (join(':',@x) eq '1:2:3') {print "ok 1\n";} else {print "not ok 1\n";}
+is( join(':',@x), '1:2:3', 'join an array with character');
 
-if (join('',1,2,3) eq '123') {print "ok 2\n";} else {print "not ok 2\n";}
+is( join('',1,2,3), '123', 'join list with no separator');
 
-if (join(':',split(/ /,"1 2 3")) eq '1:2:3') {print "ok 3\n";} else {print "not ok 3\n";}
+is( join(':',split(/ /,"1 2 3")), '1:2:3', 'join implicit array with character');
 
 my $f = 'a';
 $f = join ',', 'b', $f, 'e';
-if ($f eq 'b,a,e') {print "ok 4\n";} else {print "# '$f'\nnot ok 4\n";}
+is( $f, 'b,a,e', 'join list back to self, middle of list');
 
 $f = 'a';
 $f = join ',', $f, 'b', 'e';
-if ($f eq 'a,b,e') {print "ok 5\n";} else {print "not ok 5\n";}
+is( $f, 'a,b,e', 'join list back to self, beginning of list');
 
 $f = 'a';
 $f = join $f, 'b', 'e', 'k';
-if ($f eq 'baeak') {print "ok 6\n";} else {print "# '$f'\nnot ok 6\n";}
+is( $f, 'baeak', 'join back to self, self is join character');
 
 # 7,8 check for multiple read of tied objects
 { package X;
@@ -27,42 +33,34 @@ if ($f eq 'baeak') {print "ok 6\n";} else {print "# '$f'\nnot ok 6\n";}
   sub FETCH { my $y = shift; $$y += 5 };
   tie my $t, 'X';
   my $r = join ':', $t, 99, $t, 99;
-  print "# expected '12:99:17:99' got '$r'\nnot " if $r ne '12:99:17:99';
-  print "ok 7\n";
+  main::is($r, '12:99:17:99', 'check for multiple read of tied objects, with separator');
   $r = join '', $t, 99, $t, 99;
-  print "# expected '22992799' got '$r'\nnot " if $r ne '22992799';
-  print "ok 8\n";
+  main::is($r, '22992799', 'check for multiple read of tied objects, w/o separator, and magic');
 };
 
 # 9,10 and for multiple read of undef
 { my $s = 5;
   local ($^W, $SIG{__WARN__}) = ( 1, sub { $s+=4 } );
   my $r = join ':', 'a', undef, $s, 'b', undef, $s, 'c';
-  print "# expected 'a::9:b::13:c' got '$r'\nnot " if $r ne 'a::9:b::13:c';
-  print "ok 9\n";
+  is( $r, 'a::9:b::13:c', 'multiple read of undef, with separator');
   my $r = join '', 'a', undef, $s, 'b', undef, $s, 'c';
-  print "# expected 'a17b21c' got '$r'\nnot " if $r ne 'a17b21c';
-  print "ok 10\n";
+  is( $r, 'a17b21c', '... and without separator');
 };
 
 { my $s = join("", chr(0x1234), chr(0xff));
-  print "not " unless length($s) == 2 && $s eq "\x{1234}\x{ff}";
-  print "ok 11\n";
+  is( $s, "\x{1234}\x{ff}", 'join two characters with multiple bytes, get two characters');
 }
 
 { my $s = join(chr(0xff), chr(0x1234), "");
-  print "not " unless length($s) == 2 && $s eq "\x{1234}\x{ff}";
-  print "ok 12\n";
+  is( $s, "\x{1234}\x{ff}", 'high byte character as separator, 1 multi-byte character in front');
 }
 
 { my $s = join(chr(0x1234), chr(0xff), chr(0x2345));
-  print "not " unless length($s) == 3 && $s eq "\x{ff}\x{1234}\x{2345}";
-  print "ok 13\n";
+  is( $s, "\x{ff}\x{1234}\x{2345}", 'multibyte character as separator');
 }
 
 { my $s = join(chr(0xff), chr(0x1234), chr(0xfe));
-  print "not " unless length($s) == 3 && $s eq "\x{1234}\x{ff}\x{fe}";
-  print "ok 14\n";
+  is( $s, "\x{1234}\x{ff}\x{fe}", 'high byte as separator, multi-byte and high byte list');
 }
 
 { # [perl #24846] $jb2 should be in bytes, not in utf8.
@@ -74,40 +72,28 @@ if ($f eq 'baeak') {print "ok 6\n";} else {print "# '$f'\nnot ok 6\n";}
     return $r;
   }
 
+  sub byte_is {
+    use bytes;
+    return $_[0] eq $_[1] ? pass($_[2]) : fail($_[2]);
+  }
+
   my $jb1 = join_into_my_variable("", $b);
   my $ju1 = join_into_my_variable("", $u);
   my $jb2 = join_into_my_variable("", $b);
   my $ju2 = join_into_my_variable("", $u);
 
-  {
-      use bytes;
-      print "not " unless $jb1 eq $b;
-      print "ok 15\n";
-  }
-  print "not " unless $jb1 eq $b;
-  print "ok 16\n";
+  note( 'utf8 and byte checks, perl #24846' );
 
-  {
-      use bytes;
-      print "not " unless $ju1 eq $u;
-      print "ok 17\n";
-  }
-  print "not " unless $ju1 eq $u;
-  print "ok 18\n";
+  byte_is($jb1, $b);
+  is( $jb1, $b );
 
-  {
-      use bytes;
-      print "not " unless $jb2 eq $b;
-      print "ok 19\n";
-  }
-  print "not " unless $jb2 eq $b;
-  print "ok 20\n";
+  byte_is($ju1, $u);
+  is( $ju1, $u );
 
-  {
-      use bytes;
-      print "not " unless $ju2 eq $u;
-      print "ok 21\n";
-  }
-  print "not " unless $ju2 eq $u;
-  print "ok 22\n";
+  byte_is($jb2, $b);
+  is( $jb2, $b );
+
+  byte_is($ju2, $u);
+  is( $ju2, $u );
 }
+

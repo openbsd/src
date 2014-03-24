@@ -1,4 +1,4 @@
-require 5.002;			# For (defined ref)
+require 5.014;			# For more reliable $@ after eval
 package dumpvar;
 
 # Needed for PrettyPrinter only:
@@ -58,6 +58,15 @@ sub uniescape {
 }
 
 sub stringify {
+  my $string;
+  if (eval { $string = _stringify(@_); 1 }) {
+    return $string;
+  }
+
+  return "<< value could not be dumped: $@ >>";
+}
+
+sub _stringify {
     (my $__, local $noticks) = @_;
     for ($__) {
 	local($v) ; 
@@ -160,6 +169,7 @@ sub unwrap {
     $sp = " " x $s ;
     $s += 3 ; 
 
+    eval {
     # Check for reused addresses
     if (ref $v) { 
       my $val = $v;
@@ -312,6 +322,12 @@ sub unwrap {
 	print( (' ' x $s) .  "FileHandle({$v}) => fileno($fileno)\n" );
       }
     }
+    };
+    if ($@) {
+      print( (' ' x $s) .  "<< value could not be dumped: $@ >>\n");
+    }
+
+    return;
 }
 
 sub matchlex {

@@ -5,6 +5,8 @@
 # without using 'eval' as much as possible, which might cloud the issue,  the
 # crucial parts of the code are duplicated in a block for each pragma.
 
+# To make a TODO test, add the string 'TODO' to its %test_names value
+
 binmode STDOUT, ':utf8';
 binmode STDERR, ':utf8';
 
@@ -24,6 +26,10 @@ use strict;
 use feature 'fc';
 
 my $debug = 0;
+
+# Certain tests have been shown to be problematical for a few locales.  Don't
+# fail them unless at least this percentage of the tested locales fail.
+my $acceptable_fold_failure_percentage = 5;
 
 use Dumpvalue;
 
@@ -89,13 +95,21 @@ sub is_tainted { # hello, camel two.
     not eval { $dummy = join("", @_), kill 0; 1 }
 }
 
-sub check_taint ($) {
-    ok is_tainted($_[0]), "verify that is tainted";
+sub check_taint ($;$) {
+    my $message_tail = $_[1] // "";
+    $message_tail = ": $message_tail" if $message_tail;
+    ok is_tainted($_[0]), "verify that is tainted$message_tail";
 }
 
-sub check_taint_not ($) {
-    ok((not is_tainted($_[0])), "verify that isn't tainted");
+sub check_taint_not ($;$) {
+    my $message_tail = $_[1] // "";
+    $message_tail = ": $message_tail" if $message_tail;
+    ok((not is_tainted($_[0])), "verify that isn't tainted$message_tail");
 }
+
+"\tb\t" =~ /^m?(\s)(.*)\1$/;
+check_taint_not   $&, "not tainted outside 'use locale'";
+;
 
 use locale;	# engage locale and therefore locale taint.
 
@@ -452,7 +466,7 @@ Chinese:zh:cn tw:cn.EUC eucCN eucTW euc.CN euc.TW Big5 GB2312 tw.EUC
 Hrvatski Croatian:hr:hr:2
 Cymraeg Welsh:cy:cy:1 14 15
 Czech:cs:cz:2
-Dansk Danish:dk:da:1 15
+Dansk Danish:da:dk:1 15
 Nederlands Dutch:nl:be nl:1 15
 English American British:en:au ca gb ie nz us uk zw:1 15 cp850
 Esperanto:eo:eo:3
@@ -467,7 +481,7 @@ Frysk:fy:nl:1 15
 Greenlandic:kl:gl:4 6
 Hebrew:iw:il:8 hebrew8
 Hungarian:hu:hu:2
-Indonesian:in:id:1 15
+Indonesian:id:id:1 15
 Gaeilge Irish:ga:IE:1 14 15
 Italiano Italian:it:ch it:1 15
 Nihongo Japanese:ja:jp:euc eucJP jp.EUC sjis
@@ -478,7 +492,7 @@ Lithuanian:lt:lt:4 6 13
 Macedonian:mk:mk:1 15
 Maltese:mt:mt:3
 Moldovan:mo:mo:2
-Norsk Norwegian:no no\@nynorsk:no:1 15
+Norsk Norwegian:no no\@nynorsk nb nn:no:1 15
 Occitan:oc:es:1 15
 Polski Polish:pl:pl:2
 Rumanian:ro:ro:2
@@ -668,10 +682,12 @@ my @Neoalpha;   # Alnums that aren't in the C locale.
 my %test_names;
 
 sub tryneoalpha {
-    my ($Locale, $i, $test) = @_;
+    my ($Locale, $i, $test, $message) = @_;
+    $message //= "";
+    $message = "  ($message)" if $message;
     unless ($test) {
 	$Problem{$i}{$Locale} = 1;
-	debug "# failed $i with locale '$Locale'\n";
+	debug "# failed $i with locale '$Locale'$message\n";
     } else {
 	push @{$Okay{$i}}, $Locale;
     }
@@ -680,6 +696,8 @@ sub tryneoalpha {
 my $first_locales_test_number = $final_without_setlocale + 1;
 my $locales_test_number;
 my $not_necessarily_a_problem_test_number;
+my $first_casing_test_number;
+my $final_casing_test_number;
 my %setlocale_failed;   # List of locales that setlocale() didn't work on
 
 foreach $Locale (@Locale) {
@@ -750,6 +768,70 @@ foreach $Locale (@Locale) {
     debug "# lower    = ", join("", sort keys %lower   ), "\n";
     debug "# BoThCaSe = ", join("", sort keys %BoThCaSe), "\n";
 
+    my @failures;
+    my @fold_failures;
+    foreach my $x (sort keys %UPPER) {
+        my $ok;
+        my $fold_ok;
+        if ($is_utf8_locale) {
+            use locale ':not_characters';
+            $ok = $x =~ /[[:upper:]]/;
+            $fold_ok = $x =~ /[[:lower:]]/i;
+        }
+        else {
+            use locale;
+            $ok = $x =~ /[[:upper:]]/;
+            $fold_ok = $x =~ /[[:lower:]]/i;
+        }
+        push @failures, $x unless $ok;
+        push @fold_failures, $x unless $fold_ok;
+    }
+    my $message = "";
+    $locales_test_number++;
+    $first_casing_test_number = $locales_test_number;
+    $test_names{$locales_test_number} = 'Verify that /[[:upper:]]/ matches sieved uppercase characters.';
+    $message = 'Failed for ' . join ", ", @failures if @failures;
+    tryneoalpha($Locale, $locales_test_number, scalar @failures == 0, $message);
+
+    $message = "";
+    $locales_test_number++;
+
+    $test_names{$locales_test_number} = 'Verify that /[[:lower:]]/i matches sieved uppercase characters.';
+    $message = 'Failed for ' . join ", ", @fold_failures if @fold_failures;
+    tryneoalpha($Locale, $locales_test_number, scalar @fold_failures == 0, $message);
+
+    $message = "";
+    undef @failures;
+    undef @fold_failures;
+
+    foreach my $x (sort keys %lower) {
+        my $ok;
+        my $fold_ok;
+        if ($is_utf8_locale) {
+            use locale ':not_characters';
+            $ok = $x =~ /[[:lower:]]/;
+            $fold_ok = $x =~ /[[:upper:]]/i;
+        }
+        else {
+            use locale;
+            $ok = $x =~ /[[:lower:]]/;
+            $fold_ok = $x =~ /[[:upper:]]/i;
+        }
+        push @failures, $x unless $ok;
+        push @fold_failures, $x unless $fold_ok;
+    }
+
+    $locales_test_number++;
+    $test_names{$locales_test_number} = 'Verify that /[[:lower:]]/ matches sieved lowercase characters.';
+    $message = 'Failed for ' . join ", ", @failures if @failures;
+    tryneoalpha($Locale, $locales_test_number, scalar @failures == 0, $message);
+    $message = "";
+    $locales_test_number++;
+    $final_casing_test_number = $locales_test_number;
+    $test_names{$locales_test_number} = 'Verify that /[[:upper:]]/i matches sieved lowercase characters.';
+    $message = 'Failed for ' . join ", ", @fold_failures if @fold_failures;
+    tryneoalpha($Locale, $locales_test_number, scalar @fold_failures == 0, $message);
+
     {   # Find the alphabetic characters that are not considered alphabetics
         # in the default (C) locale.
 
@@ -765,11 +847,11 @@ foreach $Locale (@Locale) {
 
     debug "# Neoalpha = ", join("",@Neoalpha), "\n";
 
-    my $first_Neoalpha_test_number =  $locales_test_number;
-    my $final_Neoalpha_test_number =  $first_Neoalpha_test_number + 4;
+    my $first_Neoalpha_test_number =  $locales_test_number + 1;
+    my $final_Neoalpha_test_number =  $first_Neoalpha_test_number + 3;
     if (@Neoalpha == 0) {
 	# If we have no Neoalphas the remaining tests are no-ops.
-	debug "# no Neoalpha, skipping tests $locales_test_number..$final_Neoalpha_test_number for locale '$Locale'\n";
+	debug "# no Neoalpha, skipping tests $first_Neoalpha_test_number..$final_Neoalpha_test_number for locale '$Locale'\n";
 	foreach ($locales_test_number+1..$final_Neoalpha_test_number) {
 	    push @{$Okay{$_}}, $Locale;
             $locales_test_number++;
@@ -1247,6 +1329,39 @@ foreach $Locale (@Locale) {
 	    print "# failed $locales_test_number locale '$Locale' characters @f\n"
 	}
     }
+
+    # [perl #109318]
+    {
+        my @f = ();
+        ++$locales_test_number;
+        $test_names{$locales_test_number} = 'Verify atof with locale radix and negative exponent';
+
+        my $radix = POSIX::localeconv()->{decimal_point};
+        my @nums = (
+             "3.14e+9",  "3${radix}14e+9",  "3.14e-9",  "3${radix}14e-9",
+            "-3.14e+9", "-3${radix}14e+9", "-3.14e-9", "-3${radix}14e-9",
+        );
+
+        if (! $is_utf8_locale) {
+            use locale;
+            for my $num (@nums) {
+                push @f, $num
+                    unless sprintf("%g", $num) =~ /3.+14/;
+            }
+        }
+        else {
+            use locale ':not_characters';
+            for my $num (@nums) {
+                push @f, $num
+                    unless sprintf("%g", $num) =~ /3.+14/;
+            }
+        }
+
+	tryneoalpha($Locale, $locales_test_number, @f == 0);
+	if (@f) {
+	    print "# failed $locales_test_number locale '$Locale' numbers @f\n"
+	}
+    }
 }
 
 my $final_locales_test_number = $locales_test_number;
@@ -1265,10 +1380,27 @@ foreach ($first_locales_test_number..$final_locales_test_number) {
 	    print "# It usually indicates a problem in the environment,\n";
 	    print "# not in Perl itself.\n";
 	}
+        if ($Okay{$_} && ($_ >= $first_casing_test_number
+                          && $_ <= $final_casing_test_number))
+        {
+            my $percent_fail = int(.5 + (100 * scalar(keys $Problem{$_})
+                                             / scalar(@{$Okay{$_}})));
+            if ($percent_fail < $acceptable_fold_failure_percentage) {
+                $test_names{$_} .= 'TODO';
+                print "# ", 100 - $percent_fail, "% of locales pass the following test, so it is likely that the failures\n";
+                print "# are errors in the locale definitions.  The test is marked TODO, as the\n";
+                print "# problem is not likely to be Perl's\n";
+            }
+        }
 	print "not ";
     }
     print "ok $_";
-    print " $test_names{$_}" if defined $test_names{$_};
+    if (defined $test_names{$_}) {
+        # If TODO is in the test name, make it thus
+        my $todo = $test_names{$_} =~ s/TODO\s*//;
+        print " $test_names{$_}";
+        print " # TODO" if $todo;
+    }
     print "\n";
 }
 

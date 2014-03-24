@@ -23,14 +23,19 @@ POD = perl.pod	\
 	perl5122delta.pod	\
 	perl5123delta.pod	\
 	perl5124delta.pod	\
+	perl5125delta.pod	\
 	perl5140delta.pod	\
 	perl5141delta.pod	\
 	perl5142delta.pod	\
 	perl5143delta.pod	\
+	perl5144delta.pod	\
 	perl5160delta.pod	\
 	perl5161delta.pod	\
 	perl5162delta.pod	\
 	perl5163delta.pod	\
+	perl5180delta.pod	\
+	perl5181delta.pod	\
+	perl5182delta.pod	\
 	perl561delta.pod	\
 	perl56delta.pod	\
 	perl581delta.pod	\
@@ -110,6 +115,7 @@ POD = perl.pod	\
 	perlref.pod	\
 	perlreftut.pod	\
 	perlreguts.pod	\
+	perlrepository.pod	\
 	perlrequick.pod	\
 	perlreref.pod	\
 	perlretut.pod	\
@@ -145,14 +151,19 @@ MAN = perl.man	\
 	perl5122delta.man	\
 	perl5123delta.man	\
 	perl5124delta.man	\
+	perl5125delta.man	\
 	perl5140delta.man	\
 	perl5141delta.man	\
 	perl5142delta.man	\
 	perl5143delta.man	\
+	perl5144delta.man	\
 	perl5160delta.man	\
 	perl5161delta.man	\
 	perl5162delta.man	\
 	perl5163delta.man	\
+	perl5180delta.man	\
+	perl5181delta.man	\
+	perl5182delta.man	\
 	perl561delta.man	\
 	perl56delta.man	\
 	perl581delta.man	\
@@ -232,6 +243,7 @@ MAN = perl.man	\
 	perlref.man	\
 	perlreftut.man	\
 	perlreguts.man	\
+	perlrepository.man	\
 	perlrequick.man	\
 	perlreref.man	\
 	perlretut.man	\
@@ -267,14 +279,19 @@ HTML = perl.html	\
 	perl5122delta.html	\
 	perl5123delta.html	\
 	perl5124delta.html	\
+	perl5125delta.html	\
 	perl5140delta.html	\
 	perl5141delta.html	\
 	perl5142delta.html	\
 	perl5143delta.html	\
+	perl5144delta.html	\
 	perl5160delta.html	\
 	perl5161delta.html	\
 	perl5162delta.html	\
 	perl5163delta.html	\
+	perl5180delta.html	\
+	perl5181delta.html	\
+	perl5182delta.html	\
 	perl561delta.html	\
 	perl56delta.html	\
 	perl581delta.html	\
@@ -354,6 +371,7 @@ HTML = perl.html	\
 	perlref.html	\
 	perlreftut.html	\
 	perlreguts.html	\
+	perlrepository.html	\
 	perlrequick.html	\
 	perlreref.html	\
 	perlretut.html	\
@@ -389,14 +407,19 @@ TEX = perl.tex	\
 	perl5122delta.tex	\
 	perl5123delta.tex	\
 	perl5124delta.tex	\
+	perl5125delta.tex	\
 	perl5140delta.tex	\
 	perl5141delta.tex	\
 	perl5142delta.tex	\
 	perl5143delta.tex	\
+	perl5144delta.tex	\
 	perl5160delta.tex	\
 	perl5161delta.tex	\
 	perl5162delta.tex	\
 	perl5163delta.tex	\
+	perl5180delta.tex	\
+	perl5181delta.tex	\
+	perl5182delta.tex	\
 	perl561delta.tex	\
 	perl56delta.tex	\
 	perl581delta.tex	\
@@ -476,6 +499,7 @@ TEX = perl.tex	\
 	perlref.tex	\
 	perlreftut.tex	\
 	perlreguts.tex	\
+	perlrepository.tex	\
 	perlrequick.tex	\
 	perlreref.tex	\
 	perlretut.tex	\

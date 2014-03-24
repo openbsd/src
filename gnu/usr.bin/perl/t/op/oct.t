@@ -1,6 +1,6 @@
 #!./perl
 
-# tests 51 onwards aren't all warnings clean. (intentionally)
+# Tests 51 onwards are intentionally not all-warnings-clean
 
 require './test.pl';
 use strict;
@@ -105,33 +105,37 @@ foreach(['01_234', 0b_1001000110100],
 
 
 $_ = "\0_7_7";
-is(length, 5);
-is($_, "\0"."_"."7"."_"."7");
+is(length, 5,
+    "length() correctly calculated string with nul character in octal");
+is($_, "\0"."_"."7"."_"."7", "string concatenation with nul character");
 chop, chop, chop, chop;
-is($_, "\0");
+is($_, "\0", "repeated chop() eliminated all but nul character");
 if (ord("\t") != 9) {
-    # question mark is 111 in 1047, 037, && POSIX-BC
-    is("\157_", "?_");
+    is("\157_", "?_",
+        "question mark is 111 in 1047, 037, && POSIX-BC");
 }
 else {
-    is("\077_", "?_");
+    is("\077_", "?_",
+        "question mark is 077 in other than 1047, 037, && POSIX-BC");
 }
 
 $_ = "\x_7_7";
-is(length, 5);
-is($_, "\0"."_"."7"."_"."7");
+is(length, 5,
+    "length() correctly calculated string with nul character in hex");
+is($_, "\0"."_"."7"."_"."7", "string concatenation with nul character");
 chop, chop, chop, chop;
-is($_, "\0");
+is($_, "\0", "repeated chop() eliminated all but nul character");
 if (ord("\t") != 9) {
-    # / is 97 in 1047, 037, && POSIX-BC
-    is("\x61_", "/_");
+    is("\x61_", "/_",
+        "/ is 97 in 1047, 037, && POSIX-BC");
 }
 else {
-    is("\x2F_", "/_");
+    is("\x2F_", "/_",
+        "/ is 79 in other than 1047, 037, && POSIX-BC");
 }
 
 eval '$a = oct "10\x{100}"';
-like($@, qr/Wide character/);
+like($@, qr/Wide character/, "wide character - oct");
 
 eval '$a = hex "ab\x{100}"';
-like($@, qr/Wide character/);
+like($@, qr/Wide character/, "wide character - hex");

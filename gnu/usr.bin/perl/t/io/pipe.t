@@ -27,11 +27,7 @@ printf PIPE "oY %d -    again\n", curr_test();
 next_test();
 close PIPE;
 
-SKIP: {
-    # Technically this should be TODO.  Someone try it if you happen to
-    # have a vmesa machine.
-    skip "Doesn't work here yet", 6 if $^O eq 'vmesa';
-
+{
     if (open(PIPE, "-|")) {
 	while(<PIPE>) {
 	    s/^not //;
@@ -153,11 +149,9 @@ SKIP: {
     SKIP: {
         # Sfio doesn't report failure when closing a broken pipe
         # that has pending output.  Go figure.
-        # BeOS will not write to broken pipes, either.
         # Nor does POSIX-BC.
         skip "Won't report failure on broken pipe", 1
-          if $Config{d_sfio} || $^O eq 'beos' ||
-             $^O eq 'posix-bc';
+          if $Config{d_sfio} || $^O eq 'posix-bc';
 
         local $SIG{PIPE} = 'IGNORE';
         open NIL, qq{|$Perl -e "exit 0"} or die "open failed: $!";
@@ -171,9 +165,7 @@ SKIP: {
         }
     }
 
-    SKIP: {
-        skip "Don't work yet", 9 if $^O eq 'vmesa';
-
+    {
         # check that errno gets forced to 0 if the piped program exited 
         # non-zero
         open NIL, qq{|$Perl -e "exit 23";} or die "fork failed: $!";
@@ -182,9 +174,8 @@ SKIP: {
         is($!, '',      '       errno');
         isnt($?, 0,     '       status');
 
-        SKIP: {
-            skip "Don't work yet", 6 if $^O eq 'mpeix';
-
+	# Former skip block:
+        {
             # check that status for the correct process is collected
             my $zombie;
             unless( $zombie = fork ) {

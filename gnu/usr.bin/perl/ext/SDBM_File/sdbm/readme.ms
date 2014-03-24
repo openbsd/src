@@ -263,7 +263,7 @@ for various inputs:
 	 */
 	long
 	dbm_hash(char *str, int len) {
-		register unsigned long n = 0;
+		unsigned long n = 0;
 	
 		while (len--)
 			n = n * 65599 + *str++;

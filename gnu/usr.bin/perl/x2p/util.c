@@ -82,7 +82,7 @@ safefree(Malloc_t where)
 /* copy a string up to some (non-backslashed) delimiter, if any */
 
 char *
-cpytill(register char *to, register char *from, register int delim)
+cpytill(char *to, char *from, int delim)
 {
     for (; *from; from++,to++) {
 	if (*from == '\\') {
@@ -101,7 +101,7 @@ cpytill(register char *to, register char *from, register int delim)
 
 
 char *
-cpy2(register char *to, register char *from, register int delim)
+cpy2(char *to, char *from, int delim)
 {
     for (; *from; from++,to++) {
 	if (*from == '\\')
@@ -121,8 +121,8 @@ cpy2(register char *to, register char *from, register int delim)
 char *
 instr(char *big, const char *little)
 {
-    register char *t, *x;
-    register const char *s;
+    char *t, *x;
+    const char *s;
 
     for (t = big; *t; t++) {
 	for (x=t,s=little; *s; x++,s++) {
@@ -142,7 +142,7 @@ instr(char *big, const char *little)
 char *
 savestr(const char *str)
 {
-    register char * const newaddr = (char *) safemalloc((MEM_SIZE)(strlen(str)+1));
+    char * const newaddr = (char *) safemalloc((MEM_SIZE)(strlen(str)+1));
 
     (void)strcpy(newaddr,str);
     return newaddr;

@@ -7,7 +7,7 @@ perlthrtut - Tutorial on threads in Perl
 =head1 DESCRIPTION
 
 This tutorial describes the use of Perl interpreter threads (sometimes
-referred to as I<ithreads>) that was first introduced in Perl 5.6.0.  In this
+referred to as I<ithreads>).  In this
 model, each thread runs in its own Perl interpreter, and any data sharing
 between threads must be explicit.  The user-level interface for I<ithreads>
 uses the L<threads> class.

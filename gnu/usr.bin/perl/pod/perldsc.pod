@@ -5,19 +5,8 @@ perldsc - Perl Data Structures Cookbook
 
 =head1 DESCRIPTION
 
-The single feature most sorely lacking in the Perl programming language
-prior to its 5.0 release was complex data structures.  Even without direct
-language support, some valiant programmers did manage to emulate them, but
-it was hard work and not for the faint of heart.  You could occasionally
-get away with the C<$m{$AoA,$b}> notation borrowed from B<awk> in which the
-keys are actually more like a single concatenated string C<"$AoA$b">, but
-traversal and sorting were difficult.  More desperate programmers even
-hacked Perl's internal symbol table directly, a strategy that proved hard
-to develop and maintain--to put it mildly.
-
-The 5.0 release of Perl let us have complex data structures.  You
-may now write something like this and all of a sudden, you'd have an array
-with three dimensions!
+Perl lets us have complex data structures.  You can write something like
+this and all of a sudden, you'd have an array with three dimensions!
 
     for $x (1 .. 10) {
 	for $y (1 .. 10) {
@@ -309,11 +298,8 @@ X<AoA, debugging> X<HoA, debugging> X<AoH, debugging> X<HoH, debugging>
 X<array of arrays, debugging> X<hash of arrays, debugging>
 X<array of hashes, debugging> X<hash of hashes, debugging>
 
-Before version 5.002, the standard Perl debugger didn't do a very nice job of
-printing out complex data structures.  With 5.002 or above, the
-debugger includes several new features, including command line editing as
-well as the C<x> command to dump out complex data structures.  For
-example, given the assignment to $AoA above, here's the debugger output:
+You can use the debugger's C<x> command to dump out complex data structures.
+For example, given the assignment to $AoA above, here's the debugger output:
 
     DB<1> x $AoA
     $AoA = ARRAY(0x13b5a0)
@@ -842,6 +828,3 @@ L<perlref>, L<perllol>, L<perldata>, L<perlobj>
 =head1 AUTHOR
 
 Tom Christiansen <F<tchrist@perl.com>>
-
-Last update:
-Wed Oct 23 04:57:50 MET DST 1996

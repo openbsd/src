@@ -64,11 +64,6 @@
  */
 #include <stdio.h>
 
-#ifdef __BEOS__
-int fseeko(FILE *stream, off_t offset, int whence);
-off_t ftello(FILE *stream);
-#endif
-
 #if defined(USE_64_BIT_STDIO) && defined(HAS_FTELLO) && !defined(USE_FTELL64)
 #define ftell ftello
 #endif
@@ -392,8 +387,8 @@ END_EXTERN_C
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

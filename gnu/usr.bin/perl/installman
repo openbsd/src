@@ -139,7 +139,7 @@ sub pod2man {
 
 	unless ($has_pod)
 	{
-	    warn "no documentation in $mod\n";
+	    warn "no documentation in $mod\n" unless $opts{silent};
 	    next;
 	}
 
@@ -155,7 +155,7 @@ sub pod2man {
                                   );
 	my $xmanpage = $manpage;
 	$xmanpage =~ s/^\Q$opts{'destdir'}\E// if $opts{'destdir'};
-        print "  $xmanpage\n";
+        print "  $xmanpage\n" unless $opts{silent};
         if (!$opts{notify} && $parser->parse_from_file($mod, $tmp)) {
             if (-s $tmp) {
                 if (rename($tmp, $manpage)) {

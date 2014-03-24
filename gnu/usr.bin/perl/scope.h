@@ -8,56 +8,77 @@
  *
  */
 
-#define SAVEt_ITEM		0
-#define SAVEt_SV		1
-#define SAVEt_AV		2
-#define SAVEt_HV		3
-#define SAVEt_INT		4
-#define SAVEt_LONG		5
-#define SAVEt_I32		6
-#define SAVEt_IV		7
-#define SAVEt_SPTR		8
-#define SAVEt_APTR		9
-#define SAVEt_HPTR		10
-#define SAVEt_PPTR		11
-#define SAVEt_NSTAB		12
-#define SAVEt_SVREF		13
-#define SAVEt_GP		14
-#define SAVEt_FREESV		15
-#define SAVEt_FREEOP		16
-#define SAVEt_FREEPV		17
-#define SAVEt_CLEARSV		18
-#define SAVEt_DELETE		19
-#define SAVEt_DESTRUCTOR	20
-#define SAVEt_REGCONTEXT	21
-#define SAVEt_STACK_POS		22
-#define SAVEt_I16		23
-#define SAVEt_AELEM		24
-#define SAVEt_HELEM		25
-#define SAVEt_OP		26
-#define SAVEt_HINTS		27
-#define SAVEt_ALLOC		28
-#define SAVEt_GENERIC_SVREF	29
-#define SAVEt_DESTRUCTOR_X	30
-#define SAVEt_VPTR		31
-#define SAVEt_I8		32
-#define SAVEt_COMPPAD		33
-#define SAVEt_GENERIC_PVREF	34
-#define SAVEt_PADSV_AND_MORTALIZE	35
-#define SAVEt_MORTALIZESV	36
-#define SAVEt_SHARED_PVREF	37
-#define SAVEt_BOOL		38
-#define SAVEt_SET_SVFLAGS	39
-#define SAVEt_SAVESWITCHSTACK	40
-#define SAVEt_RE_STATE		42
-#define SAVEt_COMPILE_WARNINGS	43
-#define SAVEt_STACK_CXPOS	44
-#define SAVEt_PARSER		45
-#define SAVEt_ADELETE		46
-#define SAVEt_I32_SMALL		47
-#define SAVEt_INT_SMALL		48
-#define SAVEt_GVSV		49
-#define SAVEt_FREECOPHH		50
+/* *** these are ordered by number of of auto-popped args */
+
+/* zero args */
+
+#define SAVEt_ALLOC		0
+#define SAVEt_CLEARPADRANGE	1
+#define SAVEt_CLEARSV		2
+#define SAVEt_REGCONTEXT	3
+#define SAVEt_RE_STATE		4
+
+#define SAVEt_ARG0_MAX		4
+
+/* one arg */
+
+#define SAVEt_BOOL		5
+#define SAVEt_COMPILE_WARNINGS	6
+#define SAVEt_COMPPAD		7
+#define SAVEt_FREECOPHH		8
+#define SAVEt_FREEOP		9
+#define SAVEt_FREEPV		10
+#define SAVEt_FREESV		11
+#define SAVEt_I16		12
+#define SAVEt_I32_SMALL		13
+#define SAVEt_I8		14
+#define SAVEt_INT_SMALL		15
+#define SAVEt_MORTALIZESV	16
+#define SAVEt_NSTAB		17
+#define SAVEt_OP		18
+#define SAVEt_PARSER		19
+#define SAVEt_STACK_POS		20
+
+#define SAVEt_ARG1_MAX		20
+
+/* two args */
+
+#define SAVEt_ADELETE		21
+#define SAVEt_APTR		22
+#define SAVEt_AV		23
+#define SAVEt_DESTRUCTOR	24
+#define SAVEt_DESTRUCTOR_X	25
+#define SAVEt_GENERIC_PVREF	26
+#define SAVEt_GENERIC_SVREF	27
+#define SAVEt_GP		28
+#define SAVEt_GVSV		29
+#define SAVEt_HINTS		30
+#define SAVEt_HPTR		31
+#define SAVEt_HV		32
+#define SAVEt_I32		33
+#define SAVEt_INT		34
+#define SAVEt_ITEM		35
+#define SAVEt_IV		36
+#define SAVEt_LONG		37
+#define SAVEt_PPTR		38
+#define SAVEt_SAVESWITCHSTACK	39
+#define SAVEt_SHARED_PVREF	40
+#define SAVEt_SPTR		41
+#define SAVEt_STACK_CXPOS	42
+#define SAVEt_SV		43
+#define SAVEt_SVREF		44
+#define SAVEt_VPTR		45
+
+#define SAVEt_ARG2_MAX		45
+
+/* three args */
+
+#define SAVEt_AELEM		46
+#define SAVEt_DELETE		47
+#define SAVEt_HELEM		48
+#define SAVEt_PADSV_AND_MORTALIZE 49
+#define SAVEt_SET_SVFLAGS	50
+#define SAVEt_GVSLOT		51
 
 #define SAVEf_SETMAGIC		1
 #define SAVEf_KEEPOLDELEM	2
@@ -72,8 +93,12 @@
 #define SCOPE_SAVES_SIGNAL_MASK 0
 #endif
 
-#define SSCHECK(need) if (PL_savestack_ix + (I32)(need) > PL_savestack_max) savestack_grow()
-#define SSGROW(need) if (PL_savestack_ix + (I32)(need) > PL_savestack_max) savestack_grow_cnt(need)
+/* the maximum number of entries that might be pushed using the SS_ADD*
+ * macros */
+#define SS_MAXPUSH 4
+
+#define SSCHECK(need) if (PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max) savestack_grow()
+#define SSGROW(need) if (PL_savestack_ix + (I32)(need) + SS_MAXPUSH > PL_savestack_max) savestack_grow_cnt(need + SS_MAXPUSH)
 #define SSPUSHINT(i) (PL_savestack[PL_savestack_ix++].any_i32 = (I32)(i))
 #define SSPUSHLONG(i) (PL_savestack[PL_savestack_ix++].any_long = (long)(i))
 #define SSPUSHBOOL(p) (PL_savestack[PL_savestack_ix++].any_bool = (p))
@@ -82,6 +107,40 @@
 #define SSPUSHPTR(p) (PL_savestack[PL_savestack_ix++].any_ptr = (void*)(p))
 #define SSPUSHDPTR(p) (PL_savestack[PL_savestack_ix++].any_dptr = (p))
 #define SSPUSHDXPTR(p) (PL_savestack[PL_savestack_ix++].any_dxptr = (p))
+
+/* SS_ADD*: newer, faster versions of the above. Don't mix the two sets of
+ * macros. These are fast because they save reduce accesses to the PL_
+ * vars and move the size check to the end. Doing the check last means
+ * that values in registers will have been pushed and no longer needed, so
+ * don't need saving around the call to grow. Also, tail-call elimination
+ * of the grow() can be done. These changes reduce the code of something
+ * like save_pushptrptr() to half its former size.
+ * Of course, doing the size check *after* pushing means we must always
+ * ensure there are SS_MAXPUSH free slots on the savestack
+ *
+ * These are for internal core use only and are subject to change */
+
+#define dSS_ADD \
+    I32 ix = PL_savestack_ix;     \
+    ANY *ssp = &PL_savestack[ix];
+
+#define SS_ADD_END(need) \
+    assert((need) <= SS_MAXPUSH);                               \
+    ix += (need);                                               \
+    PL_savestack_ix = ix;                                       \
+    assert(ix <= PL_savestack_max);                             \
+    if ((ix + SS_MAXPUSH) > PL_savestack_max) savestack_grow(); \
+    assert(PL_savestack_ix + SS_MAXPUSH <= PL_savestack_max);
+
+#define SS_ADD_INT(i)   ((ssp++)->any_i32 = (I32)(i))
+#define SS_ADD_LONG(i)  ((ssp++)->any_long = (long)(i))
+#define SS_ADD_BOOL(p)  ((ssp++)->any_bool = (p))
+#define SS_ADD_IV(i)    ((ssp++)->any_iv = (IV)(i))
+#define SS_ADD_UV(u)    ((ssp++)->any_uv = (UV)(u))
+#define SS_ADD_PTR(p)   ((ssp++)->any_ptr = (void*)(p))
+#define SS_ADD_DPTR(p)  ((ssp++)->any_dptr = (p))
+#define SS_ADD_DXPTR(p) ((ssp++)->any_dxptr = (p))
+
 #define SSPOPINT (PL_savestack[--PL_savestack_ix].any_i32)
 #define SSPOPLONG (PL_savestack[--PL_savestack_ix].any_long)
 #define SSPOPBOOL (PL_savestack[--PL_savestack_ix].any_bool)
@@ -90,6 +149,7 @@
 #define SSPOPPTR (PL_savestack[--PL_savestack_ix].any_ptr)
 #define SSPOPDPTR (PL_savestack[--PL_savestack_ix].any_dptr)
 #define SSPOPDXPTR (PL_savestack[--PL_savestack_ix].any_dxptr)
+
 
 /*
 =head1 Callback Functions
@@ -162,7 +222,9 @@ scope has the given name. Name must be a literal string.
 #define ENTER_with_name(name) ENTER
 #define LEAVE_with_name(name) LEAVE
 #endif
-#define LEAVE_SCOPE(old) if (PL_savestack_ix > old) leave_scope(old)
+#define LEAVE_SCOPE(old) STMT_START { \
+	if (PL_savestack_ix > old) leave_scope(old); \
+    } STMT_END
 
 #define SAVEI8(i)	save_I8((I8*)&(i))
 #define SAVEI16(i)	save_I16((I16*)&(i))
@@ -198,10 +260,11 @@ scope has the given name. Name must be a literal string.
 	  save_destructor_x((DESTRUCTORFUNC_t)(f), (void*)(p))
 
 #define SAVESTACK_POS() \
-    STMT_START {				\
-	SSCHECK(2);				\
-	SSPUSHINT(PL_stack_sp - PL_stack_base);	\
-	SSPUSHUV(SAVEt_STACK_POS);		\
+    STMT_START {				   \
+        dSS_ADD;                                   \
+        SS_ADD_INT(PL_stack_sp - PL_stack_base);   \
+        SS_ADD_UV(SAVEt_STACK_POS);                \
+        SS_ADD_END(2);                             \
     } STMT_END
 
 #define SAVEOP()	save_op()
@@ -225,25 +288,23 @@ scope has the given name. Name must be a literal string.
 #define SAVECOMPILEWARNINGS() save_pushptr(PL_compiling.cop_warnings, SAVEt_COMPILE_WARNINGS)
 
 #define SAVESTACK_CXPOS() \
-    STMT_START {                                  \
-        SSCHECK(3);                               \
-        SSPUSHINT(cxstack[cxstack_ix].blk_oldsp); \
-        SSPUSHINT(cxstack_ix);                    \
-        SSPUSHUV(SAVEt_STACK_CXPOS);              \
+    STMT_START {                                   \
+        dSS_ADD;                                   \
+        SS_ADD_INT(cxstack[cxstack_ix].blk_oldsp); \
+        SS_ADD_INT(cxstack_ix);                    \
+        SS_ADD_UV(SAVEt_STACK_CXPOS);              \
+        SS_ADD_END(3);                             \
     } STMT_END
 
 #define SAVEPARSER(p) save_pushptr((p), SAVEt_PARSER)
 
 #ifdef USE_ITHREADS
-#  define SAVECOPSTASH(c)	(SAVEPPTR(CopSTASHPV(c)), \
-				 SAVEI32(CopSTASH_len(c)))
-#  define SAVECOPSTASH_FREE(c)	(SAVESHAREDPV(CopSTASHPV(c)), \
-	                         SAVEI32(CopSTASH_len(c)))
+#  define SAVECOPSTASH_FREE(c)	SAVEIV((c)->cop_stashoff)
 #  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
 #  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
 #else
-#  define SAVECOPSTASH(c)	SAVESPTR(CopSTASH(c))
-#  define SAVECOPSTASH_FREE(c)	SAVECOPSTASH(c)	/* XXX not refcounted */
+#  /* XXX not refcounted */
+#  define SAVECOPSTASH_FREE(c)	SAVESPTR(CopSTASH(c))
 #  define SAVECOPFILE(c)	SAVESPTR(CopFILEGV(c))
 #  define SAVECOPFILE_FREE(c)	SAVEGENERICSV(CopFILEGV(c))
 #endif
@@ -272,7 +333,14 @@ scope has the given name. Name must be a literal string.
 
 #define save_freesv(op)		save_pushptr((void *)(op), SAVEt_FREESV)
 #define save_mortalizesv(op)	save_pushptr((void *)(op), SAVEt_MORTALIZESV)
-#define save_freeop(op)		save_pushptr((void *)(op), SAVEt_FREEOP)
+
+# define save_freeop(op)                    \
+STMT_START {                                 \
+      OP * const _o = (OP *)(op);             \
+      assert(!_o->op_savefree);               \
+      _o->op_savefree = 1;                     \
+      save_pushptr((void *)(_o), SAVEt_FREEOP); \
+    } STMT_END
 #define save_freepv(pv)		save_pushptr((void *)(pv), SAVEt_FREEPV)
 #define save_op()		save_pushptr((void *)(PL_op), SAVEt_OP)
 
@@ -280,8 +348,8 @@ scope has the given name. Name must be a literal string.
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

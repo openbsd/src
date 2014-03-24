@@ -300,7 +300,7 @@ doesn't work, you should use -B/usr/ccs/bin/ instead.
 
 END
 		ccdlflags="$ccdlflags -Wl,-E"
-		lddlflags="$lddlflags -Wl,-E -G"
+		lddlflags="$lddlflags -Wl,-E -shared"
 	    fi
 	fi
 
@@ -327,25 +327,18 @@ EOM
 	if $tryworkshopcc >/dev/null 2>&1; then
 		cc_name=`./try`
 		if test "$cc_name" = "workshop"; then
-			ccversion="`${cc:-cc} -V 2>&1|sed -n -e '1s/^cc: //ip'`"
-			if test ! "$use64bitall_done"; then
-				loclibpth="/usr/lib /usr/ccs/lib `$getworkshoplibs` $loclibpth"
-			fi
-			# Sun cc doesn't support gcc attributes
-			d_attribute_format='undef'
-			d_attribute_malloc='undef'
-			d_attribute_nonnull='undef'
-			d_attribute_noreturn='undef'
-			d_attribute_pure='undef'
-			d_attribute_unused='undef'
-			d_attribute_warn_unused_result='undef'
+			ccversion="`${cc:-cc} -V 2>&1|sed -n -e '1s/^[Cc][Cc]: //p'`"
 		fi
 		if test "$cc_name" = "workshop CC"; then
-			ccversion="`${cc:-CC} -V 2>&1|sed -n -e '1s/^CC: //ip'`"
+			ccversion="`${cc:-CC} -V 2>&1|sed -n -e '1s/^[Cc][C]: //p'`"
+		fi
+		case "$cc_name" in
+		workshop*)
+			# Settings for either cc or CC
 			if test ! "$use64bitall_done"; then
 				loclibpth="/usr/lib /usr/ccs/lib `$getworkshoplibs` $loclibpth"
 			fi
-			# Sun CC doesn't support gcc attributes
+			# Sun CC/cc don't support gcc attributes
 			d_attribute_format='undef'
 			d_attribute_malloc='undef'
 			d_attribute_nonnull='undef'
@@ -353,7 +346,8 @@ EOM
 			d_attribute_pure='undef'
 			d_attribute_unused='undef'
 			d_attribute_warn_unused_result='undef'
-		fi
+			;;
+		esac
 	fi
 
 	# See if as(1) is GNU as(1).  GNU might not work for this job.
@@ -594,7 +588,17 @@ EOM
 #		    ccflags="$ccflags -Wa,`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"
 #		fi
 		ldflags="$ldflags -m64"
-		lddlflags="$lddlflags -G -m64"
+
+		# See [perl #66604]:  On Solaris 11, gcc -m64 on amd64
+		# appears not to understand -G.  (gcc -G has not caused
+		# problems on other platforms in the past.)  gcc versions
+		# at least as old as 3.4.3 support -shared, so just
+		# use that with Solaris 11 and later, but keep
+		# the old behavior for older Solaris versions.
+		case "$osvers" in
+			2.?|2.10) lddlflags="$lddlflags -G -m64" ;;
+			*) lddlflags="$lddlflags -shared -m64" ;;
+		esac
 		;;
 	    *)
 		getconfccflags="`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"

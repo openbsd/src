@@ -1,4 +1,5 @@
 package CPANPLUS::Internals;
+use deprecate;
 
 ### we /need/ perl5.6.1 or higher -- we use coderefs in @INC,
 ### and 5.6.0 is just too buggy
@@ -6,7 +7,6 @@ use 5.006001;
 
 use strict;
 use Config;
-
 
 use CPANPLUS::Error;
 
@@ -19,7 +19,6 @@ use CPANPLUS::Internals::Constants;
 use CPANPLUS::Internals::Search;
 use CPANPLUS::Internals::Report;
 
-
 require base;
 use Cwd                         qw[cwd];
 use Module::Load                qw[load];
@@ -28,7 +27,6 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 use Module::Load::Conditional   qw[can_load];
 
 use Object::Accessor;
-
 
 local $Params::Check::VERBOSE = 1;
 
@@ -42,7 +40,7 @@ use vars qw[@ISA $VERSION];
             CPANPLUS::Internals::Report
         ];
 
-$VERSION = "0.9121";
+$VERSION = "0.9135";
 
 =pod
 
@@ -79,7 +77,7 @@ Get/set the id
 =cut
 
 ### autogenerate accessors ###
-for my $key ( qw[_conf _id _modules _hosts _methods _status
+for my $key ( qw[_conf _id _modules _hosts _methods _status _path
                  _callbacks _selfupdate _mtree _atree]
 ) {
     no strict 'refs';
@@ -139,6 +137,7 @@ Returns the object on success, or dies on failure.
         _methods    => { default => {},                 no_override => 1 },
         _status     => { default => '<empty>',          no_override => 1 },
         _callbacks  => { default => '<empty>',          no_override => 1 },
+        _path       => { default => $ENV{PATH} || '',   no_override => 1 },
     };
 
     sub _init {
@@ -254,6 +253,7 @@ be flushed.
             if( $what eq 'lib' ) {
                 $ENV{PERL5LIB}  = $conf->_perl5lib || '';
                 @INC            = @{$conf->_lib};
+                $ENV{PATH}      = $self->_path || '';
 
             ### give all modules a new status object -- this is slightly
             ### costly, but the best way to make sure all statuses are
@@ -433,6 +433,45 @@ sub _add_to_includepath {
         local $^W;
         $ENV{'PERL5LIB'} .= $s . $lib
             unless $ENV{'PERL5LIB'} =~ qr|\Q$s$lib\E|;
+    }
+
+    return 1;
+}
+
+=pod
+
+=head2 $bool = $internals->_add_to_path( directories => \@dirs )
+
+Adds a list of directories to the PATH, but only if they actually
+contain anything.
+
+Returns true on success, false on failure.
+
+=cut
+
+sub _add_to_path {
+    my $self = shift;
+    my %hash = @_;
+
+    my $dirs;
+    my $tmpl = {
+        directories => { required => 1, default => [], store => \$dirs,
+                         strict_type => 1 },
+    };
+
+    check( $tmpl, \%hash ) or return;
+
+    my $s = $Config{'path_sep'};
+
+    require File::Glob;
+
+    ### only add if it's not added yet
+    for my $dir (@$dirs) {
+        $dir =~ s![\\/]*$!!g;
+        next if $ENV{PATH} =~ qr|\Q$dir\E|;
+        next unless -d $dir;
+        next unless File::Glob::bsd_glob( $dir . q{/*} );
+        $ENV{PATH} = join $s, $dir, $ENV{PATH};
     }
 
     return 1;

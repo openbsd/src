@@ -732,7 +732,7 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
       Char *pattern, Char *pattern_last,
       Char *restpattern, Char *restpattern_last, glob_t *pglob, size_t *limitp)
 {
-	register Direntry_t *dp;
+	Direntry_t *dp;
 	DIR *dirp;
 	int err;
 	int nocase;
@@ -789,8 +789,8 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 	else
 		readdirfunc = (Direntry_t *(*)(DIR *))my_readdir;
 	while ((dp = (*readdirfunc)(dirp))) {
-		register U8 *sc;
-		register Char *dc;
+		U8 *sc;
+		Char *dc;
 
 		/* Initial BG_DOT must be matched literally. */
 		if (dp->d_name[0] == BG_DOT && *pattern != BG_DOT)
@@ -840,8 +840,8 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 static int
 globextend(const Char *path, glob_t *pglob, size_t *limitp)
 {
-	register char **pathv;
-	register int i;
+	char **pathv;
+	int i;
 	STRLEN newsize, len;
 	char *copy;
 	const Char *p;
@@ -903,7 +903,7 @@ globextend(const Char *path, glob_t *pglob, size_t *limitp)
  * pattern causes a recursion level.
  */
 static int
-match(register Char *name, register Char *pat, register Char *patend, int nocase)
+match(Char *name, Char *pat, Char *patend, int nocase)
 {
 	int ok, negate_range;
 	Char c, k;
@@ -959,8 +959,8 @@ match(register Char *name, register Char *pat, register Char *patend, int nocase
 void
 bsd_globfree(glob_t *pglob)
 {
-	register int i;
-	register char **pp;
+	int i;
+	char **pp;
 
 	if (pglob->gl_pathv != NULL) {
 		pp = pglob->gl_pathv + pglob->gl_offs;
@@ -973,7 +973,7 @@ bsd_globfree(glob_t *pglob)
 }
 
 static DIR *
-g_opendir(register Char *str, glob_t *pglob)
+g_opendir(Char *str, glob_t *pglob)
 {
 	char buf[MAXPATHLEN];
 
@@ -991,7 +991,7 @@ g_opendir(register Char *str, glob_t *pglob)
 }
 
 static int
-g_lstat(register Char *fn, Stat_t *sb, glob_t *pglob)
+g_lstat(Char *fn, Stat_t *sb, glob_t *pglob)
 {
 	char buf[MAXPATHLEN];
 
@@ -1007,7 +1007,7 @@ g_lstat(register Char *fn, Stat_t *sb, glob_t *pglob)
 }
 
 static int
-g_stat(register Char *fn, Stat_t *sb, glob_t *pglob)
+g_stat(Char *fn, Stat_t *sb, glob_t *pglob)
 {
 	char buf[MAXPATHLEN];
 
@@ -1029,7 +1029,7 @@ g_strchr(Char *str, int ch)
 }
 
 static int
-g_Ctoc(register const Char *str, char *buf, STRLEN len)
+g_Ctoc(const Char *str, char *buf, STRLEN len)
 {
 	while (len--) {
 		if ((*buf++ = (char)*str++) == BG_EOS)
@@ -1040,9 +1040,9 @@ g_Ctoc(register const Char *str, char *buf, STRLEN len)
 
 #ifdef GLOB_DEBUG
 static void
-qprintf(const char *str, register Char *s)
+qprintf(const char *str, Char *s)
 {
-	register Char *p;
+	Char *p;
 
 	(void)printf("%s:\n", str);
 	for (p = s; *p; p++)

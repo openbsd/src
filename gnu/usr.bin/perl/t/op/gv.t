@@ -12,7 +12,7 @@ BEGIN {
 
 use warnings;
 
-plan( tests => 239 );
+plan( tests => 245 );
 
 # type coercion on assignment
 $foo = 'foo';
@@ -166,6 +166,8 @@ XXX This text isn't used. Should it be?
 curr_test($test);
 
 is (ref *x{FORMAT}, "FORMAT");
+is ("@{sub { *_{ARRAY} }->(1..3)}", "1 2 3",
+    'returning *_{ARRAY} from sub');
 *x = *STDOUT;
 is (*{*x{GLOB}}, "*main::STDOUT");
 
@@ -185,6 +187,12 @@ is (*{*x{GLOB}}, "*main::STDOUT");
     curr_test(++$test);
 }
 
+is *x{NAME}, 'x', '*foo{NAME}';
+is *x{PACKAGE}, 'main', '*foo{PACKAGE}';
+{ no warnings 'once'; *x = *Foo::y; }
+is *x, '*Foo::y', 'glob stringifies as assignee after glob-to-glob assign';
+is *x{NAME}, 'x', 'but *foo{NAME} still returns the original name';
+is *x{PACKAGE}, 'main', 'and *foo{PACKAGE} the original package';
 
 {
     # test if defined() doesn't create any new symbols

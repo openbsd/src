@@ -38,7 +38,7 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"UVuf" %"UVuf"\n",
-			       s, PL_tainted, uid, euid));
+			       s, TAINT_get, uid, euid));
     }
 #   else
     {
@@ -47,12 +47,12 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"IVdf" %"IVdf"\n",
-			       s, PL_tainted, uid, euid));
+			       s, TAINT_get, uid, euid));
     }
 #   endif
 #endif
 
-    if (PL_tainted) {
+    if (TAINT_get) {
 	const char *ug;
 
 	if (!f)
@@ -61,11 +61,11 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 	    ug = " while running setuid";
 	else if (PerlProc_getgid() != PerlProc_getegid())
 	    ug = " while running setgid";
-	else if (PL_taint_warn)
+	else if (TAINT_WARN_get)
             ug = " while running with -t switch";
         else
 	    ug = " while running with -T switch";
-	if (PL_unsafe || PL_taint_warn) {
+	if (PL_unsafe || TAINT_WARN_get) {
 	    Perl_ck_warner_d(aTHX_ packWARN(WARN_TAINT), f, s, ug);
         }
         else {
@@ -95,13 +95,13 @@ Perl_taint_env(pTHX)
     /* Don't bother if there's no *ENV glob */
     if (!PL_envgv)
 	return;
-    /* If there's no %ENV hash of if it's not magical, croak, because
+    /* If there's no %ENV hash or if it's not magical, croak, because
      * it probably doesn't reflect the actual environment */
     if (!GvHV(PL_envgv) || !(SvRMAGICAL(GvHV(PL_envgv))
 	    && mg_find((const SV *)GvHV(PL_envgv), PERL_MAGIC_env))) {
-	const bool was_tainted = PL_tainted;
+	const bool was_tainted = TAINT_get;
 	const char * const name = GvENAME(PL_envgv);
-	PL_tainted = TRUE;
+	TAINT;
 	if (strEQ(name,"ENV"))
 	    /* hash alias */
 	    taint_proper("%%ENV is aliased to %s%s", "another variable");
@@ -109,7 +109,10 @@ Perl_taint_env(pTHX)
 	    /* glob alias: report it in the error message */
 	    taint_proper("%%ENV is aliased to %%%s%s", name);
 	/* this statement is reached under -t or -U */
-	PL_tainted = was_tainted;
+	TAINT_set(was_tainted);
+#ifdef NO_TAINT_SUPPORT
+        PERL_UNUSED_VAR(was_tainted);
+#endif
     }
 
 #ifdef VMS
@@ -154,13 +157,17 @@ Perl_taint_env(pTHX)
     svp = hv_fetchs(GvHVn(PL_envgv),"TERM",FALSE);
     if (svp && *svp && SvTAINTED(*svp)) {
 	STRLEN len;
-	const bool was_tainted = PL_tainted;
+	const bool was_tainted = TAINT_get;
 	const char *t = SvPV_const(*svp, len);
 	const char * const e = t + len;
-	PL_tainted = was_tainted;
-	if (t < e && isALNUM(*t))
+
+	TAINT_set(was_tainted);
+#ifdef NO_TAINT_SUPPORT
+        PERL_UNUSED_VAR(was_tainted);
+#endif
+	if (t < e && isWORDCHAR(*t))
 	    t++;
-	while (t < e && (isALNUM(*t) || strchr("-_.+", *t)))
+	while (t < e && (isWORDCHAR(*t) || strchr("-_.+", *t)))
 	    t++;
 	if (t < e) {
 	    TAINT;
@@ -182,8 +189,8 @@ Perl_taint_env(pTHX)
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4
- * indent-tabs-mode: t
+ * indent-tabs-mode: nil
  * End:
  *
- * ex: set ts=8 sts=4 sw=4 noet:
+ * ex: set ts=8 sts=4 sw=4 et:
  */

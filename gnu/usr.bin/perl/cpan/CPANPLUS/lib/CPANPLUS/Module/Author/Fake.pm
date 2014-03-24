@@ -1,4 +1,5 @@
 package CPANPLUS::Module::Author::Fake;
+use deprecate;
 
 
 use CPANPLUS::Module::Author;
@@ -6,8 +7,10 @@ use CPANPLUS::Internals;
 use CPANPLUS::Error;
 
 use strict;
-use vars            qw[@ISA];
+use vars            qw[@ISA $VERSION];
 use Params::Check   qw[check];
+
+$VERSION = "0.9135";
 
 @ISA = qw[CPANPLUS::Module::Author];
 

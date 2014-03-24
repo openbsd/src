@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.93 2013/08/13 05:52:09 guenther Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.94 2014/03/24 15:05:12 afresh1 Exp $
 #
 # Build wrapper for Perl 5.16.2
 #
@@ -149,6 +149,14 @@ maninstall:
 # Need -fPIC, not -fpic on sparc
 .if ($(TARGET_MACHINE_ARCH) == sparc)
 PICFLAG=-fPIC
+.endif
+
+# Unaligned access on alpha with -ftree-ter
+# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59679
+# More details
+# https://rt.perl.org/Public/Bug/Display.html?id=120888
+.if ($(TARGET_MACHINE_ARCH) == alpha)
+CFLAGS+= -fno-tree-ter
 .endif
 
 # The DynaLoader extension is now compiled statically into libperl

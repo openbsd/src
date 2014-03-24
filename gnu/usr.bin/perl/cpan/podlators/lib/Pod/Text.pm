@@ -1,11 +1,5 @@
 # Pod::Text -- Convert POD data to formatted ASCII text.
 #
-# Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009
-#     Russ Allbery <rra@stanford.edu>
-#
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
-#
 # This module converts POD to formatted text.  It replaces the old Pod::Text
 # module that came with versions of Perl prior to 5.6.0 and attempts to match
 # its output except for some specific circumstances where other decisions
@@ -16,6 +10,12 @@
 # maintained outside of the Perl core as part of the podlators.  Please send
 # me any patches at the address above in addition to sending them to the
 # standard Perl mailing lists.
+#
+# Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009, 2012, 2013
+#     Russ Allbery <rra@stanford.edu>
+#
+# This program is free software; you may redistribute it and/or modify it
+# under the same terms as Perl itself.
 
 ##############################################################################
 # Modules and declarations
@@ -38,7 +38,7 @@ use Pod::Simple ();
 # We have to export pod2text for backward compatibility.
 @EXPORT = qw(pod2text);
 
-$VERSION = '3.15';
+$VERSION = '3.17';
 
 ##############################################################################
 # Initialization
@@ -87,11 +87,30 @@ sub new {
     %$self = (%$self, @opts);
 
     # Send errors to stderr if requested.
-    if ($$self{opt_stderr}) {
+    if ($$self{opt_stderr} and not $$self{opt_errors}) {
+        $$self{opt_errors} = 'stderr';
+    }
+    delete $$self{opt_stderr};
+
+    # Validate the errors parameter and act on it.
+    if (not defined $$self{opt_errors}) {
+        $$self{opt_errors} = 'pod';
+    }
+    if ($$self{opt_errors} eq 'stderr' || $$self{opt_errors} eq 'die') {
         $self->no_errata_section (1);
         $self->complain_stderr (1);
-        delete $$self{opt_stderr};
+        if ($$self{opt_errors} eq 'die') {
+            $$self{complain_die} = 1;
+        }
+    } elsif ($$self{opt_errors} eq 'pod') {
+        $self->no_errata_section (0);
+        $self->complain_stderr (0);
+    } elsif ($$self{opt_errors} eq 'none') {
+        $self->no_whining (1);
+    } else {
+        croak (qq(Invalid errors setting: "$$self{errors}"));
     }
+    delete $$self{errors};
 
     # Initialize various things from our parameters.
     $$self{opt_alt}      = 0  unless defined $$self{opt_alt};
@@ -279,7 +298,13 @@ sub output_code { $_[0]->output ($_[1]) }
 
 # Set up various things that have to be initialized on a per-document basis.
 sub start_document {
-    my $self = shift;
+    my ($self, $attrs) = @_;
+    if ($$attrs{contentless} && !$$self{ALWAYS_EMIT_SOMETHING}) {
+        $$self{CONTENTLESS} = 1;
+        return;
+    } else {
+        delete $$self{CONTENTLESS};
+    }
     my $margin = $$self{opt_indent} + $$self{opt_margin};
 
     # Initialize a few per-document variables.
@@ -298,14 +323,24 @@ sub start_document {
     if ($$self{opt_utf8}) {
         $$self{ENCODE} = 1;
         eval {
-            my @layers = PerlIO::get_layers ($$self{output_fh});
-            if (grep { $_ eq 'utf8' } @layers) {
+            my @options = (output => 1, details => 1);
+            my $flag = (PerlIO::get_layers ($$self{output_fh}, @options))[-1];
+            if ($flag & PerlIO::F_UTF8 ()) {
                 $$self{ENCODE} = 0;
             }
         };
     }
 
     return '';
+}
+
+# Handle the end of the document.  The only thing we do is handle dying on POD
+# errors, since Pod::Parser currently doesn't.
+sub end_document {
+    my ($self) = @_;
+    if ($$self{complain_die} && $self->errors_seen) {
+        croak ("POD document had syntax errors");
+    }
 }
 
 ##############################################################################
@@ -583,6 +618,8 @@ sub cmd_l {
     if ($$attrs{type} eq 'url') {
         if (not defined($$attrs{to}) or $$attrs{to} eq $text) {
             return "<$text>";
+        } elsif ($$self{opt_nourls}) {
+            return $text;
         } else {
             return "$text <$$attrs{to}>";
         }
@@ -679,6 +716,17 @@ sub parse_from_filehandle {
     $self->parse_from_file (@_);
 }
 
+# Pod::Simple's parse_file doesn't set output_fh.  Wrap the call and do so
+# ourself unless it was already set by the caller, since our documentation has
+# always said that this should work.
+sub parse_file {
+    my ($self, $in) = @_;
+    unless (defined $$self{output_fh}) {
+        $self->output_fh (\*STDOUT);
+    }
+    return $self->SUPER::parse_file ($in);
+}
+
 ##############################################################################
 # Module return value and documentation
 ##############################################################################
@@ -686,12 +734,12 @@ sub parse_from_filehandle {
 1;
 __END__
 
+=for stopwords
+alt stderr Allbery Sean Burke's Christiansen UTF-8 pre-Unicode utf8 nourls
+
 =head1 NAME
 
 Pod::Text - Convert POD data to formatted ASCII text
-
-=for stopwords
-alt stderr Allbery Sean Burke's Christiansen UTF-8 pre-Unicode utf8
 
 =head1 SYNOPSIS
 
@@ -732,6 +780,16 @@ If set to a true value, the non-POD parts of the input file will be included
 in the output.  Useful for viewing code documented with POD blocks with the
 POD rendered and the code left intact.
 
+=item errors
+
+How to report errors.  C<die> says to throw an exception on any POD
+formatting error.  C<stderr> says to report errors on standard error, but
+not to throw an exception.  C<pod> says to include a POD ERRORS section
+in the resulting documentation summarizing the errors.  C<none> ignores
+POD errors entirely, as much as possible.
+
+The default is C<output>.
+
 =item indent
 
 The number of spaces to indent regular text, and the default indentation for
@@ -752,6 +810,22 @@ The width of the left margin in spaces.  Defaults to 0.  This is the margin
 for all text, including headings, not the amount by which regular text is
 indented; for the latter, see the I<indent> option.  To set the right
 margin, see the I<width> option.
+
+=item nourls
+
+Normally, LZ<><> formatting codes with a URL but anchor text are formatted
+to show both the anchor text and the URL.  In other words:
+
+    L<foo|http://example.com/>
+
+is formatted as:
+
+    foo <http://example.com/>
+
+This option, if set to a true value, suppresses the URL when anchor text
+is given, so this example would be formatted as just C<foo>.  This can
+produce less cluttered output in cases where the URLs are not particularly
+important.
 
 =item quotes
 
@@ -774,7 +848,9 @@ single space.  Defaults to true.
 =item stderr
 
 Send error messages about invalid POD to standard error instead of
-appending a POD ERRORS section to the generated output.
+appending a POD ERRORS section to the generated output.  This is
+equivalent to setting C<errors> to C<stderr> if C<errors> is not already
+set.  It is supported for backward compatibility.
 
 =item utf8
 
@@ -816,10 +892,20 @@ messages indicate a bug in Pod::Text; you should never see them.
 (F) Pod::Text was invoked via the compatibility mode pod2text() interface
 and the input file it was given could not be opened.
 
+=item Invalid errors setting "%s"
+
+(F) The C<errors> parameter to the constructor was set to an unknown value.
+
 =item Invalid quote specification "%s"
 
-(F) The quote specification given (the quotes option to the constructor) was
-invalid.  A quote specification must be one, two, or four characters long.
+(F) The quote specification given (the C<quotes> option to the
+constructor) was invalid.  A quote specification must be one, two, or four
+characters long.
+
+=item POD document had syntax errors
+
+(F) The POD document being formatted had syntax errors and the C<errors>
+option was set to C<die>.
 
 =back
 
@@ -877,8 +963,8 @@ how to use Pod::Simple.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009 Russ Allbery
-<rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009, 2012, 2013 Russ
+Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

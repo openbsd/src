@@ -291,7 +291,6 @@ EXTCONST char* const PL_op_name[] = {
 	"rv2hv",
 	"helem",
 	"hslice",
-	"boolkeys",
 	"unpack",
 	"pack",
 	"split",
@@ -522,6 +521,11 @@ EXTCONST char* const PL_op_name[] = {
 	"coreargs",
 	"runcv",
 	"fc",
+	"padcv",
+	"introcv",
+	"clonecv",
+	"padrange",
+	"freed",
 };
 #endif
 
@@ -672,7 +676,6 @@ EXTCONST char* const PL_op_desc[] = {
 	"hash dereference",
 	"hash element",
 	"hash slice",
-	"boolkeys",
 	"unpack",
 	"pack",
 	"split",
@@ -903,6 +906,11 @@ EXTCONST char* const PL_op_desc[] = {
 	"CORE:: subroutine",
 	"__SUB__",
 	"fc",
+	"private subroutine",
+	"private subroutine",
+	"private subroutine",
+	"list of private variables",
+	"freed op",
 };
 #endif
 
@@ -1067,7 +1075,6 @@ EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
 	Perl_pp_rv2hv,	/* implemented by Perl_pp_rv2av */
 	Perl_pp_helem,
 	Perl_pp_hslice,
-	Perl_pp_boolkeys,
 	Perl_pp_unpack,
 	Perl_pp_pack,
 	Perl_pp_split,
@@ -1298,6 +1305,10 @@ EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
 	Perl_pp_coreargs,
 	Perl_pp_runcv,
 	Perl_pp_fc,
+	Perl_pp_padcv,
+	Perl_pp_introcv,
+	Perl_pp_clonecv,
+	Perl_pp_padrange,
 }
 #endif
 #ifdef PERL_PPADDR_INITED
@@ -1360,9 +1371,9 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_spair,		/* chomp */
 	Perl_ck_null,		/* schomp */
 	Perl_ck_defined,	/* defined */
-	Perl_ck_lfun,		/* undef */
+	Perl_ck_fun,		/* undef */
 	Perl_ck_fun,		/* study */
-	Perl_ck_lfun,		/* pos */
+	Perl_ck_fun,		/* pos */
 	Perl_ck_lfun,		/* preinc */
 	Perl_ck_lfun,		/* i_preinc */
 	Perl_ck_lfun,		/* predec */
@@ -1459,7 +1470,6 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_rvconst,	/* rv2hv */
 	Perl_ck_null,		/* helem */
 	Perl_ck_null,		/* hslice */
-	Perl_ck_fun,		/* boolkeys */
 	Perl_ck_fun,		/* unpack */
 	Perl_ck_fun,		/* pack */
 	Perl_ck_split,		/* split */
@@ -1596,7 +1606,7 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_ftst,		/* fttty */
 	Perl_ck_ftst,		/* fttext */
 	Perl_ck_ftst,		/* ftbinary */
-	Perl_ck_chdir,		/* chdir */
+	Perl_ck_trunc,		/* chdir */
 	Perl_ck_fun,		/* chown */
 	Perl_ck_fun,		/* chroot */
 	Perl_ck_fun,		/* unlink */
@@ -1690,6 +1700,10 @@ EXT Perl_check_t PL_check[] /* or perlvars.h */
 	Perl_ck_null,		/* coreargs */
 	Perl_ck_null,		/* runcv */
 	Perl_ck_fun,		/* fc */
+	Perl_ck_null,		/* padcv */
+	Perl_ck_null,		/* introcv */
+	Perl_ck_null,		/* clonecv */
+	Perl_ck_null,		/* padrange */
 }
 #endif
 #ifdef PERL_CHECK_INITED
@@ -1746,9 +1760,9 @@ EXTCONST U32 PL_opargs[] = {
 	0x00002b1d,	/* chomp */
 	0x00009b9c,	/* schomp */
 	0x00009b84,	/* defined */
-	0x00009b04,	/* undef */
+	0x0000fb04,	/* undef */
 	0x00009b84,	/* study */
-	0x00009b8c,	/* pos */
+	0x0000fb8c,	/* pos */
 	0x00001164,	/* preinc */
 	0x00001144,	/* i_preinc */
 	0x00001164,	/* predec */
@@ -1764,7 +1778,7 @@ EXTCONST U32 PL_opargs[] = {
 	0x0001121e,	/* i_divide */
 	0x0001123e,	/* modulo */
 	0x0001121e,	/* i_modulo */
-	0x00012209,	/* repeat */
+	0x0001220b,	/* repeat */
 	0x0001123e,	/* add */
 	0x0001121e,	/* i_add */
 	0x0001123e,	/* subtract */
@@ -1845,9 +1859,8 @@ EXTCONST U32 PL_opargs[] = {
 	0x00000148,	/* rv2hv */
 	0x00014204,	/* helem */
 	0x00024401,	/* hslice */
-	0x00004b00,	/* boolkeys */
 	0x00091480,	/* unpack */
-	0x0002140d,	/* pack */
+	0x0002140f,	/* pack */
 	0x00111408,	/* split */
 	0x0002140d,	/* join */
 	0x00002401,	/* list */
@@ -2076,6 +2089,10 @@ EXTCONST U32 PL_opargs[] = {
 	0x00000600,	/* coreargs */
 	0x00000004,	/* runcv */
 	0x00009b8e,	/* fc */
+	0x00000040,	/* padcv */
+	0x00000040,	/* introcv */
+	0x00000040,	/* clonecv */
+	0x00000040,	/* padrange */
 };
 #endif
 

@@ -1,5 +1,5 @@
 #
-# $Id: Unicode.t,v 2.2 2009/11/16 14:08:13 dankogai Exp $
+# $Id: Unicode.t,v 2.3 2012/08/05 23:08:49 dankogai Exp $
 #
 # This script is written entirely in ASCII, even though quoted literals
 # do include non-BMP unicode characters -- Are you happy, jhi?
@@ -20,7 +20,7 @@ BEGIN {
 
 use strict;
 #use Test::More 'no_plan';
-use Test::More tests => 38;
+use Test::More tests => 56;
 use Encode qw(encode decode find_encoding);
 
 #
@@ -30,7 +30,7 @@ use Encode qw(encode decode find_encoding);
 
 my $dankogai   = "\x{5c0f}\x{98fc}\x{3000}\x{5f3e}";
 my $nasty      = "$dankogai\x{1abcd}";
-my $fallback   = "$dankogai\x{fffd}";
+my $fallback   = "$dankogai\x{fffd}\x{fffd}";
 
 #hi: (0x1abcd - 0x10000) / 0x400 + 0xD800 = 0xd82a
 #lo: (0x1abcd - 0x10000) % 0x400 + 0xDC00 = 0xdfcd
@@ -84,6 +84,50 @@ eval { encode('UCS-2BE', $nasty, 1) };
 is(index($@, 'UCS-2BE'), 0, "encode UCS-2BE: exception");
 eval { encode('UCS-2LE', $nasty, 1) }; 
 is(index($@, 'UCS-2LE'), 0, "encode UCS-2LE: exception");
+
+{
+    my %tests = (
+        'UCS-2BE'  => 'n*',
+        'UCS-2LE'  => 'v*',
+        'UTF-16BE' => 'n*',
+        'UTF-16LE' => 'v*',
+        'UTF-32BE' => 'N*',
+        'UTF-32LE' => 'V*',
+    );
+
+    while (my ($enc, $pack) = each(%tests)) {
+        is(decode($enc, pack($pack, 0xD800, 0x263A)), "\x{FFFD}\x{263A}",
+          "decode $enc (HI surrogate followed by WHITE SMILING FACE)");
+        is(decode($enc, pack($pack, 0xDC00, 0x263A)), "\x{FFFD}\x{263A}", 
+          "decode $enc (LO surrogate followed by WHITE SMILING FACE)");
+    }
+}
+
+{
+    my %tests = (
+        'UTF-16BE' => 'n*',
+        'UTF-16LE' => 'v*',
+    );
+
+    while (my ($enc, $pack) = each(%tests)) {
+        is(decode($enc, pack($pack, 0xD800)), "\x{FFFD}",
+          "decode $enc (HI surrogate)");
+        is(decode($enc, pack($pack, 0x263A, 0xD800)), "\x{263A}\x{FFFD}",
+          "decode $enc (WHITE SMILING FACE followed by HI surrogate)");
+    }
+}
+
+{
+    my %tests = (
+        'UTF-16BE' => 'n*',
+        'UTF-16LE' => 'v*',
+    );
+
+    while (my ($enc, $pack) = each(%tests)) {
+        is(encode($enc, "\x{110000}"), pack($pack, 0xFFFD), 
+          "ordinals greater than U+10FFFF is replaced with U+FFFD");
+    }
+}
 
 #
 # SvGROW test for (en|de)code_xs

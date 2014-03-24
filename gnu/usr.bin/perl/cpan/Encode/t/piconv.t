@@ -1,5 +1,5 @@
 #
-# $Id: piconv.t,v 0.3 2009/11/16 14:08:13 dankogai Exp $
+# $Id: piconv.t,v 0.4 2013/02/18 02:23:56 dankogai Exp $
 #
 
 BEGIN {
@@ -27,8 +27,8 @@ sub run_cmd (;$$);
 
 my $blib =
   File::Spec->rel2abs(
-    File::Spec->catdir( $FindBin::RealBin, File::Spec->updir, 'blib' ) );
-my $script = File::Spec->catdir($blib, 'script', 'piconv');
+    File::Spec->catdir( $FindBin::RealBin, File::Spec->updir ) );
+my $script = File::Spec->catdir($blib, 'bin', 'piconv');
 my @base_cmd = ( $^X, "-Mblib=$blib", $script );
 
 plan tests => 5;

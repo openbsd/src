@@ -317,18 +317,18 @@ PerlIOWin32_dup(pTHX_ PerlIO *f, PerlIO *o, CLONE_PARAMS *params, int flags)
 {
  PerlIOWin32 *os = PerlIOSelf(f,PerlIOWin32);
  HANDLE proc = GetCurrentProcess();
- HANDLE new;
- if (DuplicateHandle(proc, os->h, proc, &new, 0, FALSE,  DUPLICATE_SAME_ACCESS))
+ HANDLE new_h;
+ if (DuplicateHandle(proc, os->h, proc, &new_h, 0, FALSE,  DUPLICATE_SAME_ACCESS))
   {
    char mode[8];
-   int fd = win32_open_osfhandle((intptr_t) new, PerlIOUnix_oflags(PerlIO_modestr(o,mode)));
+   int fd = win32_open_osfhandle((intptr_t) new_h, PerlIOUnix_oflags(PerlIO_modestr(o,mode)));
    if (fd >= 0)
     {
      f = PerlIOBase_dup(aTHX_ f, o, params, flags);
      if (f)
       {
        PerlIOWin32 *fs = PerlIOSelf(f,PerlIOWin32);
-       fs->h  = new;
+       fs->h  = new_h;
        fs->fd = fd;
        fs->refcnt = 1;
        fdtable[fd] = fs;
@@ -342,7 +342,7 @@ PerlIOWin32_dup(pTHX_ PerlIO *f, PerlIO *o, CLONE_PARAMS *params, int flags)
     }
    else
     {
-     CloseHandle(new);
+     CloseHandle(new_h);
     }
   }
  return f;

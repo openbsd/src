@@ -48,6 +48,7 @@ ok(!-d);
 $_ = 'lfrulb';
 
 {
+    no warnings 'experimental::lexical_topic';
     my $_ = 'blurfl';
     ok(mkdir);
     ok(-d);

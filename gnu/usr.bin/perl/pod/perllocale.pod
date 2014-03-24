@@ -22,7 +22,7 @@ these kinds of matters is called B<internationalization> (often
 abbreviated as B<i18n>); telling such an application about a particular
 set of preferences is known as B<localization> (B<l10n>).
 
-Perl was extended, starting in 5.004, to support the locale system.  This
+Perl was extended to support the locale system.  This
 is controlled per application by using one pragma, one function call,
 and several environment variables.
 
@@ -76,7 +76,7 @@ This for the most part is beyond the scope of Perl
 
 =item Category LC_COLLATE: Collation
 
-This indicates the ordering of letters for comparision and sorting.
+This indicates the ordering of letters for comparison and sorting.
 In Latin alphabets, for example, "b", generally follows "a".
 
 =item Category LC_CTYPE: Character Types
@@ -245,9 +245,6 @@ untrustworthy.  See L<"SECURITY">.
 
 You can switch locales as often as you wish at run time with the
 POSIX::setlocale() function:
-
-        # This functionality not usable prior to Perl 5.004
-        require 5.004;
 
         # Import locale-handling tool set from POSIX module.
         # This example uses: setlocale -- the function call
@@ -506,8 +503,6 @@ current locale.
 Here's a simple-minded example program that rewrites its command-line
 parameters as integers correctly formatted in the current locale:
 
-    # See comments in previous example
-    require 5.004;
     use POSIX qw(locale_h);
 
     # Get some of locale's numeric formatting parameters
@@ -582,7 +577,7 @@ C<use locale ':not_characters'>), Perl looks to the C<LC_COLLATE>
 environment variable to determine the application's notions on collation
 (ordering) of characters.  For example, "b" follows "a" in Latin
 alphabets, but where do "E<aacute>" and "E<aring>" belong?  And while
-"color" follows "chocolate" in English, what about in Spanish?
+"color" follows "chocolate" in English, what about in traditional Spanish?
 
 The following collations all make sense and you may meet any of them
 if you "use locale".
@@ -682,6 +677,12 @@ from the "C" locale to a 7-bit Scandinavian one, you may find--possibly
 to your surprise--that "|" moves from the ispunct() class to isalpha().
 Unfortunately, this creates big problems for regular expressions. "|" still
 means alternation even though it matches C<\w>.
+
+Note that there are quite a few things that are unaffected by the
+current locale.  All the escape sequences for particular characters,
+C<\n> for example, always mean the platform's native one.  This means,
+for example, that C<\N> in regular expressions (every character
+but new-line) work on the platform character set.
 
 B<Note:> A broken or malicious C<LC_CTYPE> locale definition may result
 in clearly ineligible characters being considered to be alphanumeric by
@@ -915,7 +916,7 @@ when taint checks are enabled.
         $tainted_output_file = shift;
 
         open(F, ">$tainted_output_file")
-            or warn "Open of $untainted_output_file failed: $!\n";
+            or warn "Open of $tainted_output_file failed: $!\n";
 
 The program can be made to run by "laundering" the tainted value through
 a regular expression: the second example--which still ignores locale

@@ -1,8 +1,9 @@
 package CPANPLUS::Module;
+use deprecate;
 
 use strict;
-use vars qw[@ISA];
-
+use vars qw[@ISA $VERSION];
+$VERSION = "0.9135";
 
 use CPANPLUS::Dist;
 use CPANPLUS::Error;
@@ -1697,7 +1698,10 @@ sub _extutils_installed {
 Adds the current modules path to C<@INC> and C<$PERL5LIB>. This allows
 you to add the module from its build dir to your path.
 
-You can reset C<@INC> and C<$PERL5LIB> to its original state when you
+It also adds the current modules C<bin> and/or C<script> paths to
+the PATH.
+
+You can reset C<$PATH>, C<@INC> and C<$PERL5LIB> to their original state when you
 started the program, by calling:
 
     $self->parent->flush('lib');
@@ -1715,6 +1719,13 @@ sub add_to_includepath {
                         File::Spec->catdir(BLIB->($dir), LIB),
                         File::Spec->catdir(BLIB->($dir), ARCH),
                         BLIB->($dir),
+                    ]
+            ) or return;
+
+            $cb->_add_to_path(
+                    directories => [
+                        File::Spec->catdir(BLIB->($dir), SCRIPT),
+                        File::Spec->catdir(BLIB->($dir), BIN),
                     ]
             ) or return;
 

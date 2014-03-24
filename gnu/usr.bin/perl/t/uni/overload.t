@@ -3,6 +3,7 @@
 BEGIN {
     chdir 't';
     @INC = '../lib';
+    require Config; import Config;
     require './test.pl';
 }
 
@@ -95,8 +96,10 @@ is ($uc, "\351", "e acute -> E acute");
 my $have_setlocale = 0;
 eval {
     require POSIX;
-    import POSIX ':locale_h';
-    $have_setlocale++;
+    if($Config{d_setlocale}) {
+        import POSIX ':locale_h';
+        $have_setlocale++;
+    }
 };
 if (
     !$Config::Config{d_setlocale}
@@ -113,7 +116,11 @@ SKIP: {
     } elsif ($^O eq 'dec_osf' || $^O eq 'VMS') {
 	skip "$^O has broken en_GB.ISO8859-1 locale", 24;
     } else {
-	use locale;
+        BEGIN {
+            if($Config{d_setlocale}) {
+                require locale; import locale;
+            }
+        }
 	my $u = UTF8Toggle->new("\311");
 	my $lc = lc $u;
 	is (length $lc, 1);
