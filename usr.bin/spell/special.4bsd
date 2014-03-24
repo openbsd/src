@@ -1242,8 +1242,6 @@ tbrconfig
 tc
 tclose
 tcopy
-tcpdchk
-tcpdmatch
 tcpdump
 teachjove
 tee
