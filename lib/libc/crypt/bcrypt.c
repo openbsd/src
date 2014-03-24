@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.35 2014/03/23 23:27:52 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.36 2014/03/24 00:00:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -73,7 +73,7 @@ bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 	else if (log_rounds > 31)
 		log_rounds = 31;
 
-	snprintf(salt, 4, "$2a$%2.2u$", log_rounds);
+	snprintf(salt, saltbuflen, "$2a$%2.2u$", log_rounds);
 	encode_base64((uint8_t *)salt + 7, csalt, sizeof(csalt));
 
 	return 0;
