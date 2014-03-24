@@ -1,5 +1,5 @@
 
-set rcsid {$Id: omittest.tcl,v 1.1.1.2 2012/11/29 05:12:06 espie Exp $}
+set rcsid {$Id: omittest.tcl,v 1.1.1.3 2014/03/24 01:37:45 jturner Exp $}
 
 # Documentation for this script. This may be output to stderr
 # if the script is invoked incorrectly.
@@ -190,6 +190,7 @@ proc main {argv} {
     SQLITE_OMIT_COMPILEOPTION_DIAGS \
     SQLITE_OMIT_COMPLETE \
     SQLITE_OMIT_COMPOUND_SELECT \
+    SQLITE_OMIT_CTE \
     SQLITE_OMIT_DATETIME_FUNCS \
     SQLITE_OMIT_DECLTYPE \
     SQLITE_OMIT_DEPRECATED \
