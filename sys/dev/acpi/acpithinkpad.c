@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.34 2013/11/04 11:57:26 mpi Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.35 2014/03/24 23:22:54 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -30,7 +30,8 @@
 #include "audio.h"
 #include "wskbd.h"
 
-#define	THINKPAD_HKEY_VERSION		0x0100
+#define	THINKPAD_HKEY_VERSION1		0x0100
+#define	THINKPAD_HKEY_VERSION2		0x0200
 
 #define	THINKPAD_CMOS_VOLUME_DOWN	0x00
 #define	THINKPAD_CMOS_VOLUME_UP		0x01
@@ -65,6 +66,15 @@
 #define	THINKPAD_BUTTON_MICROPHONE_MUTE	0x101b
 #define	THINKPAD_BUTTON_FN_F11		0x100b
 #define	THINKPAD_BUTTON_HIBERNATE	0x100c
+#define	THINKPAD_ADAPTIVE_NEXT		0x1101
+#define	THINKPAD_ADAPTIVE_QUICK		0x1102
+#define	THINKPAD_ADAPTIVE_SNIP		0x1105
+#define	THINKPAD_ADAPTIVE_VOICE		0x1108
+#define	THINKPAD_ADAPTIVE_GESTURES	0x110a
+#define	THINKPAD_ADAPTIVE_SETTINGS	0x110e
+#define	THINKPAD_ADAPTIVE_TAB		0x110f
+#define	THINKPAD_ADAPTIVE_REFRESH	0x1110
+#define	THINKPAD_ADAPTIVE_BACK		0x1111
 #define THINKPAD_PORT_REPL_DOCKED	0x4010
 #define THINKPAD_PORT_REPL_UNDOCKED	0x4011
 #define	THINKPAD_LID_OPEN		0x5001
@@ -84,6 +94,9 @@
 
 #define THINKPAD_ECOFFSET_FANLO		0x84
 #define THINKPAD_ECOFFSET_FANHI		0x85
+
+#define	THINKPAD_ADAPTIVE_MODE_HOME	1
+#define	THINKPAD_ADAPTIVE_MODE_FUNCTION	3
 
 struct acpithinkpad_softc {
 	struct device		 sc_dev;
@@ -110,6 +123,8 @@ int	thinkpad_volume_up(struct acpithinkpad_softc *);
 int	thinkpad_volume_mute(struct acpithinkpad_softc *);
 int	thinkpad_brightness_up(struct acpithinkpad_softc *);
 int	thinkpad_brightness_down(struct acpithinkpad_softc *);
+int	thinkpad_adaptive_change(struct acpithinkpad_softc *);
+int	thinkpad_activate(struct device *, int);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
@@ -119,7 +134,8 @@ extern int wskbd_set_mixervolume(long, long);
 #endif
 
 struct cfattach acpithinkpad_ca = {
-	sizeof(struct acpithinkpad_softc), thinkpad_match, thinkpad_attach
+	sizeof(struct acpithinkpad_softc), thinkpad_match, thinkpad_attach,
+	NULL, thinkpad_activate
 };
 
 struct cfdriver acpithinkpad_cd = {
@@ -144,7 +160,7 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 	    "MHKV", 0, NULL, &res))
 		return (0);
 
-	if (res != THINKPAD_HKEY_VERSION)
+	if (!(res == THINKPAD_HKEY_VERSION1 || res == THINKPAD_HKEY_VERSION2))
 		return (0);
 
 	return (1);
@@ -328,6 +344,18 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 #endif
 			handled = 1;
 			break;
+		case THINKPAD_ADAPTIVE_NEXT:
+		case THINKPAD_ADAPTIVE_QUICK:
+			thinkpad_adaptive_change(sc);
+			handled = 1;
+			break;
+		case THINKPAD_ADAPTIVE_BACK:
+		case THINKPAD_ADAPTIVE_GESTURES:
+		case THINKPAD_ADAPTIVE_REFRESH:
+		case THINKPAD_ADAPTIVE_SETTINGS:
+		case THINKPAD_ADAPTIVE_SNIP:
+		case THINKPAD_ADAPTIVE_TAB:
+		case THINKPAD_ADAPTIVE_VOICE:
 		case THINKPAD_BACKLIGHT_CHANGED:
 		case THINKPAD_BRIGHTNESS_CHANGED:
 		case THINKPAD_BUTTON_BATTERY_INFO:
@@ -453,4 +481,50 @@ int
 thinkpad_brightness_down(struct acpithinkpad_softc *sc)
 {
 	return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN));
+}
+
+int
+thinkpad_adaptive_change(struct acpithinkpad_softc *sc)
+{
+	struct aml_value arg;
+	int64_t	mode;
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "GTRW",
+	    0, NULL, &mode)) {
+		printf("%s: couldn't get adaptive keyboard mode\n", DEVNAME(sc));
+		return (1);
+	}
+
+	bzero(&arg, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+
+	if (mode == THINKPAD_ADAPTIVE_MODE_FUNCTION)
+		arg.v_integer = THINKPAD_ADAPTIVE_MODE_HOME;
+	else
+		arg.v_integer = THINKPAD_ADAPTIVE_MODE_FUNCTION;
+
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "STRW",
+	    1, &arg, NULL)) {
+		printf("%s: couldn't set adaptive keyboard mode\n", DEVNAME(sc));
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+thinkpad_activate(struct device *self, int act)
+{
+
+	struct acpithinkpad_softc *sc = (struct acpithinkpad_softc *)self;
+	int64_t res;
+
+	switch(act) {
+	case DVACT_WAKEUP:
+		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "GTRW",
+		    0, NULL, &res) == 0)
+			thinkpad_adaptive_change(sc);
+		break;
+	}
+	return (0);
 }
