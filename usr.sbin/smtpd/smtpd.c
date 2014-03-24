@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.214 2014/03/22 09:41:28 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.215 2014/03/24 14:55:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -72,7 +72,7 @@ static int	offline_add(char *);
 static void	offline_done(void);
 static int	offline_enqueue(char *);
 
-static void	purge_task(int, short, void *);
+static void	purge_task(void);
 static void	log_imsg(int, int, struct imsg *);
 static int	parent_auth_user(const char *, const char *);
 static void	load_pki_tree(void);
@@ -107,9 +107,7 @@ static struct event		config_ev;
 static struct event		offline_ev;
 static struct timeval		offline_timeout;
 
-static pid_t			purge_pid;
-static struct timeval		purge_timeout;
-static struct event		purge_ev;
+static pid_t			purge_pid = -1;
 
 extern char	**environ;
 void		(*imsg_callback)(struct mproc *, struct imsg *);
@@ -618,6 +616,7 @@ main(int argc, char *argv[])
 
 	if (!queue_init(backend_queue, 1))
 		errx(1, "could not initialize queue backend");
+	purge_task();
 
 	env->sc_stat = stat_backend_lookup(backend_stat);
 	if (env->sc_stat == NULL)
@@ -688,12 +687,6 @@ main(int argc, char *argv[])
 	offline_timeout.tv_sec = 1;
 	offline_timeout.tv_usec = 0;
 	evtimer_add(&offline_ev, &offline_timeout);
-
-	purge_pid = -1;
-	evtimer_set(&purge_ev, purge_task, NULL);
-	purge_timeout.tv_sec = 10;
-	purge_timeout.tv_usec = 0;
-	evtimer_add(&purge_ev, &purge_timeout);
 
 	if (pidfile(NULL) < 0)
 		err(1, "pidfile");
@@ -783,7 +776,7 @@ child_add(pid_t pid, int type, const char *title)
 }
 
 static void
-purge_task(int fd, short ev, void *arg)
+purge_task(void)
 {
 	struct passwd	*pw;
 	DIR		*d;
@@ -791,44 +784,39 @@ purge_task(int fd, short ev, void *arg)
 	uid_t		 uid;
 	gid_t		 gid;
 
-	if (purge_pid == -1) {
-
-		n = 0;
-		if ((d = opendir(PATH_SPOOL PATH_PURGE))) {
-			while (readdir(d) != NULL)
-				n++;
-			closedir(d);
-		} else
-			log_warn("warn: purge_task: opendir");
-
-		if (n > 2) {
-			switch (purge_pid = fork()) {
-			case -1:
-				log_warn("warn: purge_task: fork");
-				break;
-			case 0:
-				if ((pw = getpwnam(SMTPD_USER)) == NULL)
-					fatalx("unknown user " SMTPD_USER);
-				if (chroot(PATH_SPOOL PATH_PURGE) == -1)
-					fatal("smtpd: chroot");
-				if (chdir("/") == -1)
-					fatal("smtpd: chdir");
-				uid = pw->pw_uid;
-				gid = pw->pw_gid;
-				if (setgroups(1, &gid) ||
-				    setresgid(gid, gid, gid) ||
-				    setresuid(uid, uid, uid))
-					fatal("smtpd: cannot drop privileges");
-				rmtree("/", 1);
-				_exit(0);
-				break;
-			default:
-				break;
-			}
+	n = 0;
+	if ((d = opendir(PATH_SPOOL PATH_PURGE))) {
+		while (readdir(d) != NULL)
+			n++;
+		closedir(d);
+	} else
+		log_warn("warn: purge_task: opendir");
+	
+	if (n > 2) {
+		switch (purge_pid = fork()) {
+		case -1:
+			log_warn("warn: purge_task: fork");
+			break;
+		case 0:
+			if ((pw = getpwnam(SMTPD_USER)) == NULL)
+				fatalx("unknown user " SMTPD_USER);
+			if (chroot(PATH_SPOOL PATH_PURGE) == -1)
+				fatal("smtpd: chroot");
+			if (chdir("/") == -1)
+				fatal("smtpd: chdir");
+			uid = pw->pw_uid;
+			gid = pw->pw_gid;
+			if (setgroups(1, &gid) ||
+			    setresgid(gid, gid, gid) ||
+			    setresuid(uid, uid, uid))
+				fatal("smtpd: cannot drop privileges");
+			rmtree("/", 1);
+			_exit(0);
+			break;
+		default:
+			break;
 		}
 	}
-
-	evtimer_add(&purge_ev, &purge_timeout);
 }
 
 static void
