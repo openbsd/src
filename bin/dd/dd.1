@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.29 2014/02/14 17:27:58 schwarze Exp $
+.\"	$OpenBSD: dd.1,v 1.30 2014/03/24 21:42:41 tedu Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: February 14 2014 $
+.Dd $Mdocdate: March 24 2014 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -305,11 +305,13 @@ or
 .Sq m
 or
 .Sq M ,
+.Sq g
+or
+.Sq G ,
 or
 .Sq w ,
-the number
-is multiplied by 512, 1024 (1K), 1048576 (1M), or the number of bytes
-in an integer, respectively.
+the number is multiplied by 512, 1024 (1K), 1048576 (1M), 1073741824 (1G),
+or the number of bytes in an integer, respectively.
 Two or more numbers may be separated by an
 .Sq x
 to indicate a product.
@@ -405,6 +407,8 @@ the size multipliers
 .Sq K ,
 .Sq m ,
 .Sq M ,
+.Sq g ,
+.Sq G ,
 and
 .Sq w ,
 and
