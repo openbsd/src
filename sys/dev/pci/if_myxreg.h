@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.5 2011/06/21 10:23:35 dlg Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.6 2014/03/24 01:18:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -146,16 +146,16 @@ struct myx_status {
 	u_int8_t	ms_linkdown;
 	u_int8_t	ms_statusupdated;
 	u_int8_t	ms_isvalid;
-} __packed;
+} __packed __aligned(4);
 
 struct myx_intrq_desc {
 	u_int16_t	iq_csum;
 	u_int16_t	iq_length;
-} __packed;
+} __packed __aligned(4);
 
 struct myx_rx_desc {
 	u_int64_t	rx_addr;
-} __packed;
+} __packed __aligned(8);
 
 struct myx_tx_desc {
 	u_int64_t	tx_addr;
@@ -175,7 +175,7 @@ struct myx_tx_desc {
 #define  MYXTXD_FLAGS_TSO_LAST	(1<<3)
 #define  MYXTXD_FLAGS_TSO_CHOP	(1<<4)
 #define  MYXTXD_FLAGS_TSO_PLD	(1<<5)
-} __packed;
+} __packed __aligned(8);
 
 enum {
 	MYXCMD_NONE			= 0,
