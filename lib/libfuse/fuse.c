@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.20 2014/02/05 20:47:38 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.21 2014/03/24 07:24:32 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -401,8 +401,10 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 	if (fuse_opt_parse(args, &opt, fuse_core_opts, ifuse_process_opt) == -1)
 		return (-1);
 
-	if (opt.mp == NULL)
+	if (opt.mp == NULL) {
+		fprintf(stderr, "fuse: missing mountpoint parameter\n");
 		return (-1);
+	}
 
 	*mp = strdup(opt.mp);
 	*mt = 0;
