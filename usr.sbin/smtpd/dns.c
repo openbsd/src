@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.72 2014/03/25 09:01:11 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.73 2014/03/25 19:50:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -54,14 +54,14 @@ struct dns_session {
 };
 
 struct async_event;
-struct async_event * async_run_event(struct async *,
-	void (*)(int, struct async_res *, void *), void *);
+struct async_event * async_run_event(struct asr_query *,
+	void (*)(struct asr_result *, void *), void *);
 
 static void dns_lookup_host(struct dns_session *, const char *, int);
-static void dns_dispatch_host(int, struct async_res *, void *);
-static void dns_dispatch_ptr(int, struct async_res *, void *);
-static void dns_dispatch_mx(int, struct async_res *, void *);
-static void dns_dispatch_mx_preference(int, struct async_res *, void *);
+static void dns_dispatch_host(struct asr_result *, void *);
+static void dns_dispatch_ptr(struct asr_result *, void *);
+static void dns_dispatch_mx(struct asr_result *, void *);
+static void dns_dispatch_mx_preference(struct asr_result *, void *);
 
 struct unpack {
 	const char	*buf;
@@ -230,7 +230,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 	struct sockaddr_storage	 ss;
 	struct dns_session	*s;
 	struct sockaddr		*sa;
-	struct async		*as;
+	struct asr_query	*as;
 	struct msg		 m;
 	const char		*domain, *mx, *host;
 	socklen_t		 sl;
@@ -325,7 +325,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 }
 
 static void
-dns_dispatch_host(int ev, struct async_res *ar, void *arg)
+dns_dispatch_host(struct asr_result *ar, void *arg)
 {
 	struct dns_session	*s;
 	struct dns_lookup	*lookup = arg;
@@ -359,7 +359,7 @@ dns_dispatch_host(int ev, struct async_res *ar, void *arg)
 }
 
 static void
-dns_dispatch_ptr(int ev, struct async_res *ar, void *arg)
+dns_dispatch_ptr(struct asr_result *ar, void *arg)
 {
 	struct dns_session	*s = arg;
 
@@ -374,10 +374,10 @@ dns_dispatch_ptr(int ev, struct async_res *ar, void *arg)
 }
 
 static void
-dns_dispatch_mx(int ev, struct async_res *ar, void *arg)
+dns_dispatch_mx(struct asr_result *ar, void *arg)
 {
 	struct dns_session	*s = arg;
-	struct unpack	 pack;
+	struct unpack		 pack;
 	struct dns_header	 h;
 	struct dns_query	 q;
 	struct dns_rr	 rr;
@@ -422,7 +422,7 @@ dns_dispatch_mx(int ev, struct async_res *ar, void *arg)
 }
 
 static void
-dns_dispatch_mx_preference(int ev, struct async_res *ar, void *arg)
+dns_dispatch_mx_preference(struct asr_result *ar, void *arg)
 {
 	struct dns_session	*s = arg;
 	struct unpack		 pack;
@@ -475,7 +475,7 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 {
 	struct dns_lookup	*lookup;
 	struct addrinfo		 hints;
-	struct async		*as;
+	void			*as;
 
 	lookup = xcalloc(1, sizeof *lookup, "dns_lookup_host");
 	lookup->preference = preference;
@@ -492,17 +492,17 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 /* Generic libevent glue for asr */
 
 struct async_event {
-	struct async	*async;
+	struct asr_query *async;
 	struct event	 ev;
-	void		(*callback)(int, struct async_res *, void *);
+	void		(*callback)(struct asr_result *, void *);
 	void		*arg;
 };
 
 static void async_event_dispatch(int, short, void *);
 
 struct async_event *
-async_run_event(struct async * async,
-    void (*cb)(int, struct async_res *, void *), void *arg)
+async_run_event(struct asr_query * async,
+    void (*cb)(struct asr_result *, void *), void *arg)
 {
 	struct async_event	*aev;
 	struct timeval		 tv;
@@ -524,23 +524,20 @@ static void
 async_event_dispatch(int fd, short ev, void *arg)
 {
 	struct async_event	*aev = arg;
-	struct async_res	 ar;
-	int			 r;
+	struct asr_result	 ar;
 	struct timeval		 tv;
 
-	while ((r = asr_async_run(aev->async, &ar)) == ASYNC_YIELD)
-		aev->callback(r, &ar, aev->arg);
-
 	event_del(&aev->ev);
-	if (r == ASYNC_COND) {
+
+	if (asr_run(aev->async, &ar) == 0) {
 		event_set(&aev->ev, ar.ar_fd,
-			  ar.ar_cond == ASYNC_READ ? EV_READ : EV_WRITE,
-			  async_event_dispatch, aev);
+		  ar.ar_cond == ASR_WANT_READ ? EV_READ : EV_WRITE,
+		  async_event_dispatch, aev);
 		tv.tv_sec = ar.ar_timeout / 1000;
 		tv.tv_usec = (ar.ar_timeout % 1000) * 1000;
 		event_add(&aev->ev, &tv);
-	} else { /* ASYNC_DONE */
-		aev->callback(r, &ar, aev->arg);
+	} else {
+		aev->callback(&ar, aev->arg);
 		free(aev);
 	}
 }
