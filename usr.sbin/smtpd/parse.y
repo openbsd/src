@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.137 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.138 2014/03/25 10:28:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -670,8 +670,8 @@ table		: TABLE STRING STRING	{
 			}
 			table = table_create(backend, $2, NULL, config);
 			if (!table_config(table)) {
-				yyerror("invalid backend configuration for table %s",
-				    table->t_name);
+				yyerror("invalid configuration file %s for table %s",
+				    config, table->t_name);
 				free($2);
 				free($3);
 				YYERROR;
