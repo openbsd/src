@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.local.8,v 1.29 2010/09/03 11:35:08 jmc Exp $
+.\"	$OpenBSD: mail.local.8,v 1.30 2014/03/25 14:19:49 jmc Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: March 25 2014 $
 .Dt MAIL.LOCAL 8
 .Os
 .Sh NAME
@@ -125,7 +125,8 @@ user's mailbox directory
 .Xr flock 2 ,
 .Xr getservbyname 3 ,
 .Xr comsat 8 ,
-.Xr sendmail 8
+.Xr sendmail 8 ,
+.Xr smtpd 8
 .Sh HISTORY
 A superset of
 .Nm
@@ -134,17 +135,12 @@ A superset of
 as the program
 .Xr mail 1 .
 .Sh BUGS
-Since
-.Xr sendmail 8
-bases its idea of whether a message has been delivered or not
-on the return value from
-.Nm mail.local ,
-using quotas in
+Using quotas in
 .Pa /var/mail
-can be problematic.
-By default,
+can be problematic if using
 .Xr sendmail 8
-will ask
+as an MTA,
+since it asks
 .Nm
 to deliver a message to multiple recipients if possible.
 This causes problems in a quota environment since a message may be
@@ -157,8 +153,13 @@ to attempt redelivery later.
 That means that some users will keep getting the same message every time
 .Xr sendmail 8
 runs its queue.
+This problem does not exist for
+.Xr smtpd 8
+users.
 .Pp
-If you are running with disk quotas on
+If you are running
+.Xr sendmail 8
+and have disk quotas on
 .Pa /var/mail
 it is imperative that you unset the
 .Dq m
