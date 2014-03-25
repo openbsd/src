@@ -3438,6 +3438,7 @@
 ./usr/share/zoneinfo/Antarctica/Rothera
 ./usr/share/zoneinfo/Antarctica/South_Pole
 ./usr/share/zoneinfo/Antarctica/Syowa
+./usr/share/zoneinfo/Antarctica/Troll
 ./usr/share/zoneinfo/Antarctica/Vostok
 ./usr/share/zoneinfo/Arctic
 ./usr/share/zoneinfo/Arctic/Longyearbyen
@@ -4045,6 +4046,7 @@
 ./usr/share/zoneinfo/posix/Antarctica/Rothera
 ./usr/share/zoneinfo/posix/Antarctica/South_Pole
 ./usr/share/zoneinfo/posix/Antarctica/Syowa
+./usr/share/zoneinfo/posix/Antarctica/Troll
 ./usr/share/zoneinfo/posix/Antarctica/Vostok
 ./usr/share/zoneinfo/posix/Arctic
 ./usr/share/zoneinfo/posix/Arctic/Longyearbyen
@@ -4653,6 +4655,7 @@
 ./usr/share/zoneinfo/right/Antarctica/Rothera
 ./usr/share/zoneinfo/right/Antarctica/South_Pole
 ./usr/share/zoneinfo/right/Antarctica/Syowa
+./usr/share/zoneinfo/right/Antarctica/Troll
 ./usr/share/zoneinfo/right/Antarctica/Vostok
 ./usr/share/zoneinfo/right/Arctic
 ./usr/share/zoneinfo/right/Arctic/Longyearbyen
