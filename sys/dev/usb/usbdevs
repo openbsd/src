@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.627 2014/03/20 15:05:04 abieber Exp $
+$OpenBSD: usbdevs,v 1.628 2014/03/25 03:16:38 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2090,6 +2090,7 @@ product HP 4200C		0x0105	ScanJet 4200C
 product HP CDWRITERPLUS		0x0107	CD-Writer Plus
 product HP KBDHUB		0x010c	Multimedia Keyboard Hub
 product HP HN210W		0x011c	HN210W
+product HP HPX9GP		0x0121	HP-x9G+
 product HP 6200C		0x0201	ScanJet 6200C
 product HP S20b			0x0202	PhotoSmart S20
 product HP 815C			0x0204	DeskJet 815C
