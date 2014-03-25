@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 2014/03/14 10:47:21 dlg Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 2014/03/25 03:53:35 dlg Exp $	*/
 
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
@@ -14,7 +14,7 @@ __mswap16(volatile __uint16_t *m)
 {
 	__uint16_t v;
 
-	__asm __volatile("lduha [%1] %2, %0 ! %3"
+	__asm("lduha [%1] %2, %0 ! %3"
 	    : "=r" (v)
 	    : "r" (m), "n" (ASI_P_L), "m" (*m));
 
@@ -26,7 +26,7 @@ __mswap32(volatile __uint32_t *m)
 {
 	__uint32_t v;
 
-	__asm __volatile("lduwa [%1] %2, %0 ! %3"
+	__asm("lduwa [%1] %2, %0 ! %3"
 	    : "=r" (v)
 	    : "r" (m), "n" (ASI_P_L), "m" (*m));
 
@@ -38,7 +38,7 @@ __mswap64(volatile __uint64_t *m)
 {
 	__uint64_t v;
 
-	__asm __volatile("ldxa [%1] %2, %0 ! %3"
+	__asm("ldxa [%1] %2, %0 ! %3"
 	    : "=r" (v)
 	    : "r" (m), "n" (ASI_P_L), "m" (*m));
 
@@ -48,7 +48,7 @@ __mswap64(volatile __uint64_t *m)
 static inline void
 __swapm16(volatile __uint16_t *m, __uint16_t v)
 {
-	__asm __volatile("stha %1, [%2] %3 ! %0"
+	__asm("stha %1, [%2] %3 ! %0"
 	    : "=m" (*m)
 	    : "r" (v), "r" (m), "n" (ASI_P_L));
 }
@@ -56,7 +56,7 @@ __swapm16(volatile __uint16_t *m, __uint16_t v)
 static inline void
 __swapm32(volatile __uint32_t *m, __uint32_t v)
 {
-	__asm __volatile("stwa %1, [%2] %3 ! %0"
+	__asm("stwa %1, [%2] %3 ! %0"
 	    : "=m" (*m)
 	    : "r" (v), "r" (m), "n" (ASI_P_L));
 }
@@ -64,7 +64,7 @@ __swapm32(volatile __uint32_t *m, __uint32_t v)
 static inline void
 __swapm64(volatile __uint64_t *m, __uint64_t v)
 {
-	__asm __volatile("stxa %1, [%2] %3 ! %0"
+	__asm("stxa %1, [%2] %3 ! %0"
 	    : "=m" (*m)
 	    : "r" (v), "r" (m), "n" (ASI_P_L));
 }
