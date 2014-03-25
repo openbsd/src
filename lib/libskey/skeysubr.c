@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.32 2014/03/20 20:39:13 naddy Exp $
+ * $OpenBSD: skeysubr.c,v 1.33 2014/03/25 04:28:28 lteo Exp $
  */
 
 #include <stdio.h>
@@ -25,9 +25,9 @@
 
 #include "skey.h"
 
-/* Default hash function to use (index into skey_hash_types array) */
+/* Default hash function to use (index into skey_algorithm_table array) */
 #ifndef SKEY_HASH_DEFAULT
-#define SKEY_HASH_DEFAULT	1
+#define SKEY_HASH_DEFAULT	0	/* md5 */
 #endif
 
 static int keycrunch_md5(char *, char *, char *);
@@ -37,14 +37,13 @@ static void lowcase(char *);
 static void skey_echo(int);
 static void trapped(int);
 
-/* Current hash type (index into skey_hash_types array) */
+/* Current hash type (index into skey_algorithm_table array) */
 static int skey_hash_type = SKEY_HASH_DEFAULT;
 
 /*
  * Hash types we support.
  * Each has an associated keycrunch() and f() function.
  */
-#define SKEY_ALGORITH_LAST	4
 struct skey_algorithm_table {
 	const char *name;
 	int (*keycrunch)(char *, char *, char *);
@@ -52,7 +51,8 @@ struct skey_algorithm_table {
 static struct skey_algorithm_table skey_algorithm_table[] = {
 	{ "md5", keycrunch_md5 },
 	{ "sha1", keycrunch_sha1 },
-	{ "rmd160", keycrunch_rmd160 }
+	{ "rmd160", keycrunch_rmd160 },
+	{ NULL }
 };
 
 
@@ -390,7 +390,7 @@ skey_set_algorithm(char *new)
 {
 	int i;
 
-	for (i = 0; i < SKEY_ALGORITH_LAST; i++) {
+	for (i = 0; skey_algorithm_table[i].name; i++) {
 		if (strcmp(new, skey_algorithm_table[i].name) == 0) {
 			skey_hash_type = i;
 			return(new);
