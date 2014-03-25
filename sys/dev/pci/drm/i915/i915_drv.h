@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.50 2014/02/19 01:20:12 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.51 2014/03/25 17:44:39 mpi Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -37,6 +37,7 @@
 #include "intel_ringbuffer.h"
 
 #include <sys/task.h>
+#include <dev/pci/vga_pcivar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.172 2014/03/24 17:06:49 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.173 2014/03/25 17:44:39 mpi Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -44,28 +44,21 @@
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/stat.h>
 #include <sys/proc.h>
-#include <sys/resource.h>
-#include <sys/resourcevar.h>
+#include <sys/conf.h>
 #include <sys/mutex.h>
-#include <sys/fcntl.h>
-#include <sys/filio.h>
-#include <sys/signalvar.h>
-#include <sys/poll.h>
 #include <sys/tree.h>
 #include <sys/endian.h>
-#include <sys/mman.h>
 #include <sys/stdint.h>
 #include <sys/memrange.h>
 #include <sys/extent.h>
-#include <sys/vnode.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
+
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
-#include <dev/pci/vga_pcivar.h>
 #include <machine/bus.h>
 
 #include "drm_linux_list.h"
@@ -646,9 +639,6 @@ struct drm_gem_object {
 #define	DRM_BUSY	0x00000001
 #define	DRM_WANTED	0x00000002
 	u_int				 do_flags;
-#ifdef DRMLOCKDEBUG			/* to tell owner */
-	struct proc			*holding_proc;
-#endif
 	uint32_t			 read_domains;
 	uint32_t			 write_domain;
 
