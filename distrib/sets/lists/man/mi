@@ -2147,6 +2147,7 @@
 ./usr/share/man/man4/urtwn.4
 ./usr/share/man/man4/usb.4
 ./usr/share/man/man4/usbf.4
+./usr/share/man/man4/uscom.4
 ./usr/share/man/man4/uslcom.4
 ./usr/share/man/man4/usps.4
 ./usr/share/man/man4/uthum.4
