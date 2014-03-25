@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.44 2014/03/24 04:26:58 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.45 2014/03/25 05:41:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -141,7 +141,7 @@ struct mpi_fw_tce {
 	u_int32_t		image_offset;
 
 	u_int32_t		image_size;
-} __packed;
+} __packed __aligned(4);
 
 /*
  * Messages
@@ -336,7 +336,7 @@ struct mpi_msg_request {
 	u_int8_t		msg_flags;
 
 	u_int32_t		msg_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_reply {
 	u_int8_t		reserved1;
@@ -356,7 +356,7 @@ struct mpi_msg_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 /* ioc init */
 
@@ -392,7 +392,7 @@ struct mpi_msg_iocinit_request {
 
 	u_int8_t		hdr_version_unit;
 	u_int8_t		hdr_version_dev;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_iocinit_reply {
 	u_int8_t		whoinit;
@@ -411,7 +411,7 @@ struct mpi_msg_iocinit_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 
 /* ioc facts */
@@ -427,7 +427,7 @@ struct mpi_msg_iocfacts_request {
 	u_int8_t		msg_flags;
 
 	u_int32_t		msg_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_iocfacts_reply {
 	u_int8_t		msg_version_min;
@@ -503,7 +503,7 @@ struct mpi_msg_iocfacts_reply {
 	struct mpi_sge		host_page_buffer_sge;
 
 	u_int32_t		reply_fifo_host_signalling_addr;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_portfacts_request {
 	u_int8_t		reserved1;
@@ -518,7 +518,7 @@ struct mpi_msg_portfacts_request {
 
 	u_int32_t		msg_context;
 
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_portfacts_reply {
 	u_int16_t		reserved1;
@@ -560,7 +560,7 @@ struct mpi_msg_portfacts_reply {
 	u_int16_t		reserved5;
 
 	u_int32_t		reserved6;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_portenable_request {
 	u_int16_t		reserved1;
@@ -572,7 +572,7 @@ struct mpi_msg_portenable_request {
 	u_int8_t		msg_flags;
 
 	u_int32_t		msg_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_portenable_reply {
 	u_int16_t		reserved1;
@@ -589,7 +589,7 @@ struct mpi_msg_portenable_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_event_request {
 	u_int8_t		event_switch;
@@ -603,7 +603,7 @@ struct mpi_msg_event_request {
 	u_int8_t		msg_flags;
 
 	u_int32_t		msg_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_event_reply {
 	u_int16_t		data_length;
@@ -628,12 +628,12 @@ struct mpi_msg_event_reply {
 	u_int32_t		event_context;
 
 	/* event data follows */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_change {
 	u_int8_t		event_state;
 	u_int8_t		reserved[3];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_link_status_change {
 	u_int8_t		state;
@@ -644,7 +644,7 @@ struct mpi_evt_link_status_change {
 	u_int8_t		_reserved2[1];
 	u_int8_t		port;
 	u_int8_t		_reserved3[2];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_loop_status_change {
 	u_int8_t		character4;
@@ -658,7 +658,7 @@ struct mpi_evt_loop_status_change {
 	u_int8_t		_reserved2[1];
 	u_int8_t		port;
 	u_int8_t		_reserved3[2];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_logout {
 	u_int32_t		n_portid;
@@ -666,7 +666,7 @@ struct mpi_evt_logout {
 	u_int8_t		alias_index;
 	u_int8_t		port;
 	u_int8_t		_reserved[2];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_sas_phy {
 	u_int8_t		phy_num;
@@ -682,7 +682,7 @@ struct mpi_evt_sas_phy {
 	u_int16_t		dev_handle;
 
 	u_int64_t		sas_addr;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_evt_sas_change {
 	u_int8_t		target;
@@ -723,7 +723,7 @@ struct mpi_evt_sas_change {
 	u_int8_t		reserved2;
 
 	u_int64_t		sas_addr;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_eventack_request {
 	u_int16_t		reserved1;
@@ -738,7 +738,7 @@ struct mpi_msg_eventack_request {
 	u_int32_t		event;
 
 	u_int32_t		event_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_eventack_reply {
 	u_int16_t		reserved1;
@@ -754,7 +754,7 @@ struct mpi_msg_eventack_reply {
 	u_int32_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_fwupload_request {
 	u_int8_t		image_type;
@@ -776,7 +776,7 @@ struct mpi_msg_fwupload_request {
 	struct mpi_fw_tce	tce;
 
 	/* followed by an sgl */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_fwupload_reply {
 	u_int8_t		image_type;
@@ -795,7 +795,7 @@ struct mpi_msg_fwupload_reply {
 	u_int32_t		ioc_loginfo;
 
 	u_int32_t		actual_image_size;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_scsi_io {
 	u_int8_t		target_id;
@@ -911,7 +911,7 @@ struct mpi_msg_scsi_task_request {
 	u_int32_t		reserved3[7]; /* wtf? */
 
 	u_int32_t		target_msg_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_scsi_task_reply {
 	u_int8_t		target_id;
@@ -932,7 +932,7 @@ struct mpi_msg_scsi_task_reply {
 	u_int32_t		ioc_loginfo;
 
 	u_int32_t		termination_count;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_raid_action_request {
 	u_int8_t		action;
@@ -972,7 +972,7 @@ struct mpi_msg_raid_action_request {
 
 	u_int32_t		data_word;
 	u_int32_t		data_sge;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_raid_action_reply {
 	u_int8_t		action;
@@ -999,7 +999,7 @@ struct mpi_msg_raid_action_reply {
 	u_int32_t		volume_status;
 
 	u_int32_t		action_data;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_hdr {
 	u_int8_t		page_version;
@@ -1021,7 +1021,7 @@ struct mpi_cfg_hdr {
 #define MPI_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0A)
 #define MPI_CONFIG_REQ_PAGE_TYPE_INBAND			(0x0B)
 #define MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0F)
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_ecfg_hdr {
 	u_int8_t		page_version;
@@ -1032,7 +1032,7 @@ struct mpi_ecfg_hdr {
 	u_int16_t		ext_page_length;
 	u_int8_t		ext_page_type;
 	u_int8_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_config_request {
 	u_int8_t		action;
@@ -1066,7 +1066,7 @@ struct mpi_msg_config_request {
 /* XXX lots of defns here */
 
 	struct mpi_sge		page_buffer;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_msg_config_reply {
 	u_int8_t		action;
@@ -1086,7 +1086,7 @@ struct mpi_msg_config_reply {
 	u_int32_t		ioc_loginfo;
 
 	struct mpi_cfg_hdr	config_header;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_port_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1112,7 +1112,7 @@ struct mpi_cfg_spi_port_pg0 {
 	u_int8_t		connected_id;
 #define  MPI_CFG_SPI_PORT_0_CONNECTEDID_BUSFREE		(0xfe)
 #define  MPI_CFG_SPI_PORT_0_CONNECTEDID_UNKNOWN		(0xff)
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_port_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1129,7 +1129,7 @@ struct mpi_cfg_spi_port_pg1 {
 #define MPI_CFG_SPI_PORT_1_TARGCFG_INIT_TARGET		(0x02)
 	u_int8_t		reserved2;
 	u_int16_t		id_config;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_port_pg2 {
 	struct mpi_cfg_hdr	config_header;
@@ -1197,7 +1197,7 @@ struct mpi_cfg_spi_dev_pg0 {
 #define MPI_CFG_SPI_DEV_0_INFO_SDTR_REJECTED		(1<<1)
 #define MPI_CFG_SPI_DEV_0_INFO_WDTR_REJECTED		(1<<2)
 #define MPI_CFG_SPI_DEV_0_INFO_PPR_REJECTED		(1<<3)
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_dev_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1227,7 +1227,7 @@ struct mpi_cfg_spi_dev_pg1 {
 #define MPI_CFG_SPI_DEV_1_CONF_SDTR_DISALLOWED		(1<<2)
 #define MPI_CFG_SPI_DEV_1_CONF_EXTPARAMS		(1<<3)
 #define MPI_CFG_SPI_DEV_1_CONF_FORCE_PPR		(1<<4)
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_dev_pg2 {
 	struct mpi_cfg_hdr	config_header;
@@ -1248,7 +1248,7 @@ struct mpi_cfg_spi_dev_pg2 {
 	u_int32_t		data_pipe_select;
 #define MPI_CFG_SPI_DEV_2_DATA_PIPE_SELECT(x)		(0x3<<((x)*2))
 
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_spi_dev_pg3 {
 	struct mpi_cfg_hdr	config_header;
@@ -1258,7 +1258,7 @@ struct mpi_cfg_spi_dev_pg3 {
 
 	u_int16_t		parity_error_count;
 	u_int16_t		reserved;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_manufacturing_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1268,7 +1268,7 @@ struct mpi_cfg_manufacturing_pg0 {
 	char			board_name[16];
 	char			board_assembly[16];
 	char			board_tracer_number[16];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_ioc_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1282,7 +1282,7 @@ struct mpi_cfg_ioc_pg1 {
 	u_int8_t		coalescing_depth;
 	u_int8_t		pci_slot_num;
 	u_int8_t		_reserved[2];
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_ioc_pg2 {
 	struct mpi_cfg_hdr	config_header;
@@ -1304,7 +1304,7 @@ struct mpi_cfg_ioc_pg2 {
 	u_int8_t		max_physdisks;
 
 	/* followed by a list of mpi_cfg_raid_vol structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_vol {
 	u_int8_t		vol_id;
@@ -1323,7 +1323,7 @@ struct mpi_cfg_raid_vol {
 	u_int8_t		flags;
 #define MPI_CFG_RAID_VOL_INACTIVE	(1<<3)
 	u_int16_t		reserved;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_ioc_pg3 {
 	struct mpi_cfg_hdr	config_header;
@@ -1332,14 +1332,14 @@ struct mpi_cfg_ioc_pg3 {
 	u_int8_t		reserved[3];
 
 	/* followed by a list of mpi_cfg_raid_physdisk structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_physdisk {
 	u_int8_t		phys_disk_id;
 	u_int8_t		phys_disk_bus;
 	u_int8_t		phys_disk_ioc;
 	u_int8_t		phys_disk_num;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_fc_port_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1377,7 +1377,7 @@ struct mpi_cfg_fc_port_pg0 {
 	u_int8_t		max_hard_aliases_supported;
 	u_int8_t		num_current_aliases;
 	u_int8_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_fc_port_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1418,7 +1418,7 @@ struct mpi_cfg_fc_port_pg1 {
 	u_int8_t		rr_tov;
 	u_int8_t		initiator_dev_to;
 	u_int8_t		initiator_lo_pend_to;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_fc_device_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1444,7 +1444,7 @@ struct mpi_cfg_fc_device_pg0 {
 	u_int8_t		fc_ph_high_version;
 	u_int8_t		current_target_id;
 	u_int8_t		current_bus;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_raid_settings {
 	u_int16_t		volume_settings;
@@ -1458,7 +1458,7 @@ struct mpi_raid_settings {
 #define MPI_CFG_RAID_VOL_0_SETTINGS_DEFAULTS		(1<<15)
 	u_int8_t		hot_spare_pool;
 	u_int8_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_vol_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1505,13 +1505,13 @@ struct mpi_cfg_raid_vol_pg0 {
 #define MPI_CFG_RAID_VOL_0_INACTIVE_INSUF_META		(0x05)
 
 	/* followed by a list of mpi_cfg_raid_vol_pg0_physdisk structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_vol_pg0_physdisk {
 	u_int16_t		reserved;
 	u_int8_t		phys_disk_map;
 	u_int8_t		phys_disk_num;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_vol_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1530,7 +1530,7 @@ struct mpi_cfg_raid_vol_pg1 {
 	u_int32_t		reserved2;
 
 	u_int32_t		reserved3;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_physdisk_pg0 {
 	struct mpi_cfg_hdr	config_header;
@@ -1589,7 +1589,7 @@ struct mpi_cfg_raid_physdisk_pg0 {
 	u_int16_t		smart_count;
 	u_int8_t		smart_asc;
 	u_int8_t		smart_ascq;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_physdisk_pg1 {
 	struct mpi_cfg_hdr	config_header;
@@ -1601,7 +1601,7 @@ struct mpi_cfg_raid_physdisk_pg1 {
 	u_int32_t		reserved2;
 
 	/* followed by mpi_cfg_raid_physdisk_path structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_raid_physdisk_path {
 	u_int8_t		phys_disk_id;
@@ -1617,7 +1617,7 @@ struct mpi_cfg_raid_physdisk_path {
 	u_int16_t		flags;
 #define MPI_CFG_RAID_PHYDISK_PATH_INVALID		(1<<0)
 #define MPI_CFG_RAID_PHYDISK_PATH_BROKEN		(1<<1)
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_sas_iou_pg0 {
 	struct mpi_ecfg_hdr	config_header;
@@ -1629,7 +1629,7 @@ struct mpi_cfg_sas_iou_pg0 {
 	u_int8_t		_reserved1[3];
 
 	/* followed by mpi_cfg_sas_iou_pg0_phy structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_sas_iou_pg0_phy {
 	u_int8_t		port;
@@ -1643,7 +1643,7 @@ struct mpi_cfg_sas_iou_pg0_phy {
 	u_int16_t		controller_dev_handle;
 
 	u_int32_t		discovery_status;
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_sas_iou_pg1 {
 	struct mpi_ecfg_hdr	config_header;
@@ -1660,7 +1660,7 @@ struct mpi_cfg_sas_iou_pg1 {
 	u_int8_t		io_dev_missing_delay;
 
 	/* followed by mpi_cfg_sas_iou_pg1_phy structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpi_cfg_sas_iou_pg1_phy {
 	u_int8_t		port;
@@ -1672,7 +1672,7 @@ struct mpi_cfg_sas_iou_pg1_phy {
 
 	u_int16_t		max_target_port_connect_time;
 	u_int16_t		_reserved1;
-} __packed;
+} __packed __aligned(4);
 
 #define MPI_CFG_SAS_DEV_ADDR_NEXT		(0<<28)
 #define MPI_CFG_SAS_DEV_ADDR_BUS		(1<<28)
@@ -1726,4 +1726,4 @@ struct mpi_cfg_sas_dev_pg0 {
 #define MPI_CFG_SAS_DEV_0_FLAGS_SATA_SETTINGS		(1<<9)
 	u_int8_t		physical_port;
 	u_int8_t		reserved;
-} __packed;
+} __packed __aligned(4);
