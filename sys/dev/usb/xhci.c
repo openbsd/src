@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.3 2014/03/18 15:47:23 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.4 2014/03/25 17:23:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -69,6 +69,7 @@ struct xhci_pipe {
 };
 
 int	xhci_reset(struct xhci_softc *);
+void	xhci_config(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
 void	xhci_waitintr(struct xhci_softc *, struct usbd_xfer *);
 void	xhci_event_dequeue(struct xhci_softc *);
@@ -204,7 +205,6 @@ xhci_dump_trb(struct xhci_trb *trb)
 int
 xhci_init(struct xhci_softc *sc)
 {
-	uint64_t paddr;
 	uint32_t hcr;
 	int npage, error;
 
@@ -249,12 +249,6 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_noslot = XHCI_HCS1_DEVSLOT_MAX(hcr);
 	DPRINTF(("%s: %d ports and %d slots\n", DEVNAME(sc), sc->sc_noport,
 	    sc->sc_noslot));
-
-	/* Make sure to program a number of device slots we can handle. */
-	if (sc->sc_noslot > USB_MAX_DEVICES)
-		sc->sc_noslot = USB_MAX_DEVICES;
-	hcr = XOREAD4(sc, XHCI_CONFIG) & ~XHCI_CONFIG_SLOTS_MASK;
-	XOWRITE4(sc, XHCI_CONFIG, hcr | sc->sc_noslot);
 
 	/*
 	 * Section 6.1 - Device Context Base Address Array
@@ -321,6 +315,24 @@ xhci_init(struct xhci_softc *sc)
 		return (ENOMEM);
 	}
 
+
+	xhci_config(sc);
+
+	return (0);
+}
+
+void
+xhci_config(struct xhci_softc *sc)
+{
+	uint64_t paddr;
+	uint32_t hcr;
+
+	/* Make sure to program a number of device slots we can handle. */
+	if (sc->sc_noslot > USB_MAX_DEVICES)
+		sc->sc_noslot = USB_MAX_DEVICES;
+	hcr = XOREAD4(sc, XHCI_CONFIG) & ~XHCI_CONFIG_SLOTS_MASK;
+	XOWRITE4(sc, XHCI_CONFIG, hcr | sc->sc_noslot);
+
 	/* Set the device context base array address. */
 	paddr = (uint64_t)DMAADDR(&sc->sc_dcbaa.dma, 0);
 	XOWRITE4(sc, XHCI_DCBAAP_LO, (uint32_t)paddr);
@@ -368,18 +380,15 @@ xhci_init(struct xhci_softc *sc)
 
 	DPRINTF(("%s: USBCMD=%08lx\n", DEVNAME(sc), XOREAD4(sc, XHCI_USBCMD)));
 	DPRINTF(("%s: IMAN=%08lx\n", DEVNAME(sc), XRREAD4(sc, XHCI_IMAN(0))));
-
-	return (0);
 }
 
 int
-xhci_detach(struct xhci_softc *sc, int flags)
+xhci_detach(struct device *self, int flags)
 {
+	struct xhci_softc *sc = (struct xhci_softc *)self;
 	int rv;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
-
+	rv = config_detach_children(self, flags);
 	if (rv != 0) {
 		printf("%s: error while detaching %d\n", DEVNAME(sc), rv);
 		return (rv);
@@ -428,10 +437,12 @@ xhci_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		sc->sc_bus.dying = 1;
+	case DVACT_RESUME:
+		xhci_reset(sc);
+		xhci_ring_reset(sc, &sc->sc_cmd_ring);
+		xhci_ring_reset(sc, &sc->sc_evt_ring);
+		xhci_config(sc);
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);

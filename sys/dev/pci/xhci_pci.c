@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.1 2014/03/08 14:34:12 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.2 2014/03/25 17:23:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	psc->sc.sc_child = config_found(self, &psc->sc.sc_bus, usbctlprint);
+	config_found(self, &psc->sc.sc_bus, usbctlprint);
 
 	return;
 
@@ -161,7 +161,7 @@ xhci_pci_detach(struct device *self, int flags)
 	struct xhci_pci_softc *psc = (struct xhci_pci_softc *)self;
 	int rv;
 
-	rv = xhci_detach(&psc->sc, flags);
+	rv = xhci_detach(self, flags);
 	if (rv)
 		return (rv);
 	if (psc->sc_ih != NULL) {

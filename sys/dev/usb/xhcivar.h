@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.1 2014/03/08 14:34:11 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.2 2014/03/25 17:23:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -109,12 +109,11 @@ struct xhci_softc {
 
 	char			 sc_vendor[16];	/* Vendor string for root hub */
 	int			 sc_id_vendor;	/* Vendor ID for root hub */
-	struct device		*sc_child;	/* /dev/usb# device */
 };
 
 int	xhci_init(struct xhci_softc *);
 int	xhci_intr(void *);
-int	xhci_detach(struct xhci_softc *, int);
+int	xhci_detach(struct device *, int);
 int	xhci_activate(struct device *, int);
 
 #define	XREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
