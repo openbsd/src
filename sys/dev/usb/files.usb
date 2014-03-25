@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.113 2014/03/17 18:40:46 andre Exp $
+#	$OpenBSD: files.usb,v 1.114 2014/03/25 03:29:23 jsg Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -318,6 +318,11 @@ file	dev/usb/uark.c			uark
 device	moscom: ucombus
 attach	moscom at uhub
 file	dev/usb/moscom.c		moscom
+
+# simple serial
+device	uscom: ucombus
+attach	uscom at uhub
+file	dev/usb/uscom.c			uscom
 
 # iPAQ PDAs
 # Generic ipaq support
