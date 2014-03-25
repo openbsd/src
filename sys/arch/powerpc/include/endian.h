@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.18 2014/03/14 10:47:21 dlg Exp $ */
+/*	$OpenBSD: endian.h,v 1.19 2014/03/25 04:25:06 dlg Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -34,7 +34,7 @@ __mswap16(volatile __uint16_t *m)
 {
 	__uint16_t v;
 
-	__asm volatile("lhbrx %0, 0, %1"
+	__asm("lhbrx %0, 0, %1"
 	    : "=r" (v)
             : "r" (m), "m" (*m));
 
@@ -46,7 +46,7 @@ __mswap32(volatile __uint32_t *m)
 {
 	__uint32_t v;
 
-	__asm volatile("lwbrx %0, 0, %1"
+	__asm("lwbrx %0, 0, %1"
 	    : "=r" (v)
             : "r" (m), "m" (*m));
 
@@ -68,7 +68,7 @@ __mswap64(volatile __uint64_t *m)
 static inline void
 __swapm16(volatile __uint16_t *m, __uint16_t v)
 {
-	__asm __volatile("sthbrx %1, 0, %2"
+	__asm("sthbrx %1, 0, %2"
 	    : "=m" (*m)
 	    : "r" (v), "r" (m));
 }
@@ -76,7 +76,7 @@ __swapm16(volatile __uint16_t *m, __uint16_t v)
 static inline void
 __swapm32(volatile __uint32_t *m, __uint32_t v)
 {
-	__asm __volatile("stwbrx %1, 0, %2"
+	__asm("stwbrx %1, 0, %2"
 	    : "=m" (*m)
 	    : "r" (v), "r" (m));
 }
