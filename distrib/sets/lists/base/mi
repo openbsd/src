@@ -249,7 +249,6 @@
 ./usr/bin/fgen
 ./usr/bin/fgrep
 ./usr/bin/file
-./usr/bin/file2c
 ./usr/bin/find
 ./usr/bin/find2perl
 ./usr/bin/finger
