@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.46 2013/03/30 04:53:09 guenther Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.47 2014/03/25 04:04:36 guenther Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -57,8 +57,10 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <dev/systrace.h>
 #include "systrace.h"
+#if NSYSTRACE > 0
+#include <dev/systrace.h>
+#endif
 
 /*
  * Convert a pathname into a pointer to a vnode.
