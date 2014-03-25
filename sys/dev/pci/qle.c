@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.17 2014/03/25 07:15:52 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.18 2014/03/25 12:01:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2388,7 +2388,7 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 	if (xs->cmdlen > 16) {
 		htolem16(&req->req_fcp_cmnd_len, 12 + xs->cmdlen + 4);
 		cmnd->fcp_add_cdb_len = xs->cmdlen - 16;
-		memcpy(cmnd->fcp_cdb + xs->datalen, &fcp_dl, sizeof(fcp_dl));
+		memcpy(cmnd->fcp_cdb + xs->cmdlen, &fcp_dl, sizeof(fcp_dl));
 	} else {
 		htolem16(&req->req_fcp_cmnd_len, 12 + 16 + 4);
 		cmnd->fcp_add_cdb_len = 0;
