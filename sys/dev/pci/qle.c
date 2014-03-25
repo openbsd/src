@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.16 2014/03/25 04:34:42 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.17 2014/03/25 07:15:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2319,31 +2319,30 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 	int seg;
 	int target = xs->sc_link->target;
 	int lun = xs->sc_link->lun;
+	u_int16_t flags;
 
 	memset(req, 0, sizeof(*req));
 	req->entry_type = QLE_IOCB_CMD_TYPE_6;
 	req->entry_count = 1;
 
 	req->req_handle = ccb->ccb_id;
-	req->req_nport_handle = htole16(target);
+	htolem16(&req->req_nport_handle, target);
 	
 	/*
 	 * timeout is in seconds.  make sure it's at least 1 if a timeout
 	 * was specified in xs
 	 */
 	if (xs->timeout != 0)
-		req->req_timeout = htole16(MAX(1, xs->timeout/1000));
+		htolem16(&req->req_timeout, MAX(1, xs->timeout/1000));
 
 	if (xs->datalen > 0) {
-		req->req_data_seg_count = htole16(dmap->dm_nsegs);
-		req->req_ctrl_flags = htole16(xs->flags & SCSI_DATA_IN ?
-		    QLE_IOCB_CTRL_FLAG_READ : QLE_IOCB_CTRL_FLAG_WRITE);
+		flags = (xs->flags & SCSI_DATA_IN) ?
+		    QLE_IOCB_CTRL_FLAG_READ : QLE_IOCB_CTRL_FLAG_WRITE;
 		if (dmap->dm_nsegs == 1) {
 			qle_sge(&req->req_data_seg, dmap->dm_segs[0].ds_addr,
 			    dmap->dm_segs[0].ds_len);
 		} else {
-			req->req_ctrl_flags |=
-			    htole16(QLE_IOCB_CTRL_FLAG_EXT_SEG);
+			flags |= QLE_IOCB_CTRL_FLAG_EXT_SEG;
 			qle_sge(&req->req_data_seg,
 			    QLE_DMA_DVA(sc->sc_segments) +
 			     ccb->ccb_seg_offset,
@@ -2362,23 +2361,24 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 			    sizeof(*ccb->ccb_segs) * ccb->ccb_dmamap->dm_nsegs,
 			    BUS_DMASYNC_PREWRITE);
 		}
-		req->req_data_len = htole32(xs->datalen);
-	}
-	req->req_fcp_lun[0] = htobe16(lun & 0xffff);
-	req->req_fcp_lun[1] = htobe16((lun >> 16) & 0xffff);
 
-	req->req_target_id = htole32(target_port & 0xffffff);
+		htolem16(&req->req_data_seg_count, dmap->dm_nsegs);
+		htolem32(&req->req_data_len, xs->datalen);
+		htolem16(&req->req_ctrl_flags, flags);
+	}
+
+	htobem16(&req->req_fcp_lun[0], lun);
+	htobem16(&req->req_fcp_lun[1], lun >> 16);
+	htolem32(&req->req_target_id, target_port & 0xffffff);
 
 	fcp_cmnd_offset = ccb->ccb_id * sizeof(*cmnd);
-	req->req_fcp_cmnd_addr = htole64(QLE_DMA_DVA(sc->sc_fcp_cmnds)
-	    + fcp_cmnd_offset);
-
 	/* set up FCP_CMND */
 	cmnd = (struct qle_fcp_cmnd *)QLE_DMA_KVA(sc->sc_fcp_cmnds) +
 	    ccb->ccb_id;
 
 	memset(cmnd, 0, sizeof(*cmnd));
-	memcpy(cmnd->fcp_lun, req->req_fcp_lun, sizeof(cmnd->fcp_lun));
+	htobem16(&cmnd->fcp_lun[0], lun);
+	htobem16(&cmnd->fcp_lun[1], lun >> 16);
 	/* cmnd->fcp_task_attr = TSK_SIMPLE; */
 	/* cmnd->fcp_task_mgmt = 0; */
 	memcpy(cmnd->fcp_cdb, xs->cmd, xs->cmdlen);
@@ -2386,11 +2386,11 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 	/* FCP_DL goes after the cdb */
 	fcp_dl = htobe32(xs->datalen);
 	if (xs->cmdlen > 16) {
-		req->req_fcp_cmnd_len = htole16(12 + xs->cmdlen + 4);
+		htolem16(&req->req_fcp_cmnd_len, 12 + xs->cmdlen + 4);
 		cmnd->fcp_add_cdb_len = xs->cmdlen - 16;
 		memcpy(cmnd->fcp_cdb + xs->datalen, &fcp_dl, sizeof(fcp_dl));
 	} else {
-		req->req_fcp_cmnd_len = htole16(12 + 16 + 4);
+		htolem16(&req->req_fcp_cmnd_len, 12 + 16 + 4);
 		cmnd->fcp_add_cdb_len = 0;
 		memcpy(cmnd->fcp_cdb + 16, &fcp_dl, sizeof(fcp_dl));
 	}
@@ -2400,6 +2400,11 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 	bus_dmamap_sync(sc->sc_dmat,
 	    QLE_DMA_MAP(sc->sc_fcp_cmnds), fcp_cmnd_offset,
 	    sizeof(*cmnd), BUS_DMASYNC_PREWRITE);
+
+	/* link req to cmnd */
+	fcp_cmnd_offset += QLE_DMA_DVA(sc->sc_fcp_cmnds);
+	htolem32(&req->req_fcp_cmnd_addr_lo, fcp_cmnd_offset);
+	htolem32(&req->req_fcp_cmnd_addr_hi, fcp_cmnd_offset >> 32);
 }
 
 int

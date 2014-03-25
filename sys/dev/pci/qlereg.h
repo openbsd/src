@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.3 2014/03/25 04:34:42 dlg Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.4 2014/03/25 07:15:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -550,15 +550,21 @@ struct qle_iocb_req6 {
 	u_int16_t	req_resp_seg_count;
 
 	u_int16_t	req_fcp_lun[4];
+
 	u_int16_t	req_ctrl_flags;
 	u_int16_t	req_fcp_cmnd_len;
-	u_int64_t	req_fcp_cmnd_addr;
-	u_int64_t	req_resp_seg_addr;
+
+	u_int32_t	req_fcp_cmnd_addr_lo;
+	u_int32_t	req_fcp_cmnd_addr_hi;
+
+	u_int32_t	req_resp_seg_addr_lo;
+	u_int32_t	req_resp_seg_addr_hi;
+
 	u_int32_t	req_data_len;
 
 	u_int32_t	req_target_id;
 	struct qle_iocb_seg req_data_seg;
-} __packed;
+} __packed __aligned(4);
 
 struct qle_fcp_cmnd {
 	u_int16_t	fcp_lun[4];
