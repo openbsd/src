@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.47 2014/03/25 15:24:12 tedu Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.48 2014/03/25 15:55:15 tedu Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -246,7 +246,7 @@ ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
 ssize_t	 getline(char ** __restrict, size_t * __restrict,
 	    FILE * __restrict);
 #endif
-
+char	*gets(char *);
 #if __BSD_VISIBLE && !defined(__SYS_ERRLIST)
 #define __SYS_ERRLIST
 
