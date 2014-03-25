@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.188 2014/03/24 04:26:58 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.189 2014/03/25 07:26:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2503,7 +2503,7 @@ mpi_fc_rescan(void *xsc, void *xarg)
 		    pg.current_bus == 0)
 			setbit(devmap, pg.current_target_id);
 
-		id = htole32(pg.port_id);
+		id = letoh32(pg.port_id);
 	} while (id <= 0xff0000);
 
 	for (i = 0; i < sc->sc_buswidth; i++) {
