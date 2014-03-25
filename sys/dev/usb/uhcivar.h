@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.28 2013/11/01 17:29:02 mpi Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.29 2014/03/25 20:27:37 mpi Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -142,7 +142,6 @@ struct uhci_softc {
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
-	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
 	u_int8_t sc_saved_sof;

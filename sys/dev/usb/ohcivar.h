@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.34 2013/11/01 12:00:54 mpi Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.35 2014/03/25 20:27:37 mpi Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -97,7 +97,6 @@ struct ohci_softc {
 	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
 
 	int sc_noport;
-	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
 	char sc_softwake;

@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.4 2014/03/25 17:23:40 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.5 2014/03/25 20:27:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1839,7 +1839,6 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 			err = USBD_IOERROR;
 			goto ret;
 		}
-		sc->sc_addr = value;
 		break;
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
 		if (value != 0 && value != 1) {

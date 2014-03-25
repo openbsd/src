@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.28 2013/11/07 10:15:15 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.29 2014/03/25 20:27:37 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ struct ehci_softc {
 	LIST_HEAD(sc_freeitds, ehci_soft_itd) sc_freeitds;
 
 	int sc_noport;
-	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 	struct usbd_xfer *sc_intrxfer;
 	char sc_isreset;

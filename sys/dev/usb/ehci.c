@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.145 2014/03/15 09:49:28 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.146 2014/03/25 20:27:37 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1460,8 +1460,8 @@ ehci_open(struct usbd_pipe *pipe)
 	int ival, speed, naks;
 	int hshubaddr, hshubport;
 
-	DPRINTFN(1, ("ehci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
-	    pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+	DPRINTFN(1, ("ehci_open: pipe=%p, addr=%d, endpt=%d\n",
+	    pipe, addr, ed->bEndpointAddress));
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
@@ -1474,7 +1474,8 @@ ehci_open(struct usbd_pipe *pipe)
 		hshubport = 0;
 	}
 
-	if (addr == sc->sc_addr) {
+	/* Root Hub */
+	if (pipe->device->depth == 0) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
 			pipe->methods = &ehci_root_ctrl_methods;
@@ -2025,7 +2026,6 @@ ehci_root_ctrl_start(struct usbd_xfer *xfer)
 			err = USBD_IOERROR;
 			goto ret;
 		}
-		sc->sc_addr = value;
 		break;
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
 		if (value != 0 && value != 1) {

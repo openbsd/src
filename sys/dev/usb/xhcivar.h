@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.2 2014/03/25 17:23:40 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.3 2014/03/25 20:27:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -87,7 +87,6 @@ struct xhci_softc {
 
 	int			 sc_noport;	/* Maximum number of ports */
 
-	u_int8_t		 sc_addr;	/* Device address */
 	u_int8_t		 sc_conf;	/* Device configuration */
 	struct usbd_xfer	*sc_intrxfer;	/* Root HUB interrupt xfer */
 
