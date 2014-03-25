@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.2 2014/02/23 08:59:09 jmatthew Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.3 2014/03/25 04:34:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -466,9 +466,10 @@ struct qle_ct_rft_id_resp {
 #define QLE_IOCB_MARKER_SYNC_ALL	2
 
 struct qle_iocb_seg {
-	u_int64_t	seg_addr;
+	u_int32_t	seg_addr_lo;
+	u_int32_t	seg_addr_hi;
 	u_int32_t	seg_len;
-} __packed;
+} __packed __aligned(4);
 
 struct qle_iocb_status {
 	u_int8_t	entry_type;	/* QLE_IOCB_STATUS */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.15 2014/03/09 20:23:43 kettenis Exp $ */
+/*	$OpenBSD: qle.c,v 1.16 2014/03/25 04:34:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -281,7 +281,7 @@ void		qle_put_marker(struct qle_softc *, void *);
 void		qle_put_cmd(struct qle_softc *, void *, struct scsi_xfer *,
 		    struct qle_ccb *, u_int32_t);
 struct qle_ccb *qle_handle_resp(struct qle_softc *, u_int32_t);
-void		qle_put_data_seg(struct qle_iocb_seg *, bus_dmamap_t, int);
+void		qle_sge(struct qle_iocb_seg *, u_int64_t, u_int32_t);
 
 struct qle_fc_port *qle_next_fabric_port(struct qle_softc *, u_int32_t *,
 		    u_int32_t *);
@@ -323,7 +323,6 @@ void		qle_put_ccb(void *, void *);
 void		qle_dump_stuff(struct qle_softc *, void *, int);
 void		qle_dump_iocb(struct qle_softc *, void *);
 void		qle_dump_iocb_segs(struct qle_softc *, void *, int);
-
 
 static const struct pci_matchid qle_devices[] = {
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2422 },
@@ -1725,10 +1724,8 @@ qle_ct_pass_through(struct qle_softc *sc, u_int32_t port_handle,
 	iocb->req_resp_dsd_count = htole16(1);
 	iocb->req_cmd_byte_count = htole32(req_size);
 	iocb->req_resp_byte_count = htole32(resp_size);
-	iocb->req_cmd_seg.seg_addr = htole64(QLE_DMA_DVA(mem));
-	iocb->req_cmd_seg.seg_len = htole32(req_size);
-	iocb->req_resp_seg.seg_addr = htole64(QLE_DMA_DVA(mem) + req_size);
-	iocb->req_resp_seg.seg_len = htole32(resp_size);
+	qle_sge(&iocb->req_cmd_seg, QLE_DMA_DVA(mem), req_size);
+	qle_sge(&iocb->req_resp_seg, QLE_DMA_DVA(mem) + req_size, resp_size);
 
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(mem), 0, QLE_DMA_LEN(mem),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -2303,16 +2300,18 @@ qle_put_marker(struct qle_softc *sc, void *buf)
 }
 
 void
-qle_put_data_seg(struct qle_iocb_seg *seg, bus_dmamap_t dmap, int num)
+qle_sge(struct qle_iocb_seg *seg, u_int64_t addr, u_int32_t len)
 {
-	seg->seg_addr = htole64(dmap->dm_segs[num].ds_addr);
-	seg->seg_len = htole32(dmap->dm_segs[num].ds_len);
+	htolem32(&seg->seg_addr_lo, addr);
+	htolem32(&seg->seg_addr_hi, addr >> 32);
+	htolem32(&seg->seg_len, len);
 }
 
 void
 qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
     struct qle_ccb *ccb, u_int32_t target_port)
 {
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	struct qle_iocb_req6 *req = buf;
 	struct qle_fcp_cmnd *cmnd;
 	u_int64_t fcp_cmnd_offset;
@@ -2336,26 +2335,28 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 		req->req_timeout = htole16(MAX(1, xs->timeout/1000));
 
 	if (xs->datalen > 0) {
-		req->req_data_seg_count = htole16(ccb->ccb_dmamap->dm_nsegs);
+		req->req_data_seg_count = htole16(dmap->dm_nsegs);
 		req->req_ctrl_flags = htole16(xs->flags & SCSI_DATA_IN ?
 		    QLE_IOCB_CTRL_FLAG_READ : QLE_IOCB_CTRL_FLAG_WRITE);
-		if (ccb->ccb_dmamap->dm_nsegs == 1) {
-			qle_put_data_seg(&req->req_data_seg,
-			    ccb->ccb_dmamap, 0);
+		if (dmap->dm_nsegs == 1) {
+			qle_sge(&req->req_data_seg, dmap->dm_segs[0].ds_addr,
+			    dmap->dm_segs[0].ds_len);
 		} else {
 			req->req_ctrl_flags |=
 			    htole16(QLE_IOCB_CTRL_FLAG_EXT_SEG);
-			req->req_data_seg.seg_addr =
-			    htole64(QLE_DMA_DVA(sc->sc_segments) +
-			    ccb->ccb_seg_offset);
-			req->req_data_seg.seg_len = (ccb->ccb_dmamap->dm_nsegs
-			    + 1) * sizeof(struct qle_iocb_seg);
-			for (seg = 0; seg < ccb->ccb_dmamap->dm_nsegs; seg++) {
-				qle_put_data_seg(&ccb->ccb_segs[seg],
-				    ccb->ccb_dmamap, seg);
+			qle_sge(&req->req_data_seg,
+			    QLE_DMA_DVA(sc->sc_segments) +
+			     ccb->ccb_seg_offset,
+			    (ccb->ccb_dmamap->dm_nsegs + 1) *
+			     sizeof(struct qle_iocb_seg));
+
+			for (seg = 0; seg < dmap->dm_nsegs; seg++) {
+				qle_sge(&ccb->ccb_segs[seg],
+				    dmap->dm_segs[seg].ds_addr,
+				    dmap->dm_segs[seg].ds_len);
 			}
-			ccb->ccb_segs[ccb->ccb_dmamap->dm_nsegs].seg_addr = 0;
-			ccb->ccb_segs[ccb->ccb_dmamap->dm_nsegs].seg_len = 0;
+			qle_sge(&ccb->ccb_segs[seg], 0, 0);
+
 			bus_dmamap_sync(sc->sc_dmat,
 			    QLE_DMA_MAP(sc->sc_segments), ccb->ccb_seg_offset,
 			    sizeof(*ccb->ccb_segs) * ccb->ccb_dmamap->dm_nsegs,
