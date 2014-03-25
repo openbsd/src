@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.5 2013/07/12 14:36:22 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.6 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -31,15 +31,15 @@
 #include "asr.h"
 #include "asr_private.h"
 
-static int getrrsetbyname_async_run(struct async *, struct async_res *);
-static void get_response(struct async_res *, const char *, int);
+static int getrrsetbyname_async_run(struct asr_query *, struct asr_result *);
+static void get_response(struct asr_result *, const char *, int);
 
-struct async *
+struct asr_query *
 getrrsetbyname_async(const char *hostname, unsigned int rdclass,
-    unsigned int rdtype, unsigned int flags, struct asr *asr)
+    unsigned int rdtype, unsigned int flags, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	ac = asr_use_resolver(asr);
 	if ((as = asr_async_new(ac, ASR_GETRRSETBYNAME)) == NULL)
@@ -64,7 +64,7 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 }
 
 static int
-getrrsetbyname_async_run(struct async *as, struct async_res *ar)
+getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 {
     next:
 	switch (as->as_state) {
@@ -109,7 +109,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((asr_async_run(as->as.rrset.subq, ar)) == ASYNC_COND)
+		if ((asr_run(as->as.rrset.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		as->as.rrset.subq = NULL;
@@ -169,7 +169,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.5 2013/07/12 14:36:22 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.6 2014/03/25 19:48:11 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -254,7 +254,7 @@ static void free_dns_response(struct dns_response *);
 static int count_dns_rr(struct dns_rr *, u_int16_t, u_int16_t);
 
 static void
-get_response(struct async_res *ar, const char *pkt, int pktlen)
+get_response(struct asr_result *ar, const char *pkt, int pktlen)
 {
 	struct rrsetinfo *rrset = NULL;
 	struct dns_response *response = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.26 2014/03/14 11:07:33 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.27 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -49,7 +49,7 @@ struct hostent_ext {
 	char		*pos;
 };
 
-static int gethostnamadr_async_run(struct async *, struct async_res *);
+static int gethostnamadr_async_run(struct asr_query *, struct asr_result *);
 static struct hostent_ext *hostent_alloc(int);
 static int hostent_set_cname(struct hostent_ext *, const char *, int);
 static int hostent_add_alias(struct hostent_ext *, const char *, int);
@@ -63,17 +63,17 @@ static struct hostent_ext *_yp_gethostnamadr(int, const void *);
 static struct hostent_ext *hostent_from_yp(int, char *);
 #endif
 
-struct async *
-gethostbyname_async(const char *name, struct asr *asr)
+struct asr_query *
+gethostbyname_async(const char *name, void *asr)
 {
 	return gethostbyname2_async(name, AF_INET, asr);
 }
 
-struct async *
-gethostbyname2_async(const char *name, int af, struct asr *asr)
+struct asr_query *
+gethostbyname2_async(const char *name, int af, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	/* the original segfaults */
 	if (name == NULL) {
@@ -105,11 +105,11 @@ gethostbyname2_async(const char *name, int af, struct asr *asr)
 	return (NULL);
 }
 
-struct async *
-gethostbyaddr_async(const void *addr, socklen_t len, int af, struct asr *asr)
+struct asr_query *
+gethostbyaddr_async(const void *addr, socklen_t len, int af, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	ac = asr_use_resolver(asr);
 	as = gethostbyaddr_async_ctx(addr, len, af, ac);
@@ -118,11 +118,11 @@ gethostbyaddr_async(const void *addr, socklen_t len, int af, struct asr *asr)
 	return (as);
 }
 
-struct async *
+struct asr_query *
 gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,
     struct asr_ctx *ac)
 {
-	struct async	*as;
+	struct asr_query *as;
 
 	if ((as = asr_async_new(ac, ASR_GETHOSTBYADDR)) == NULL)
 		goto abort; /* errno set */
@@ -142,7 +142,7 @@ gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,
 }
 
 static int
-gethostnamadr_async_run(struct async *as, struct async_res *ar)
+gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 {
 	struct hostent_ext	*h;
 	int			 r, type, saved_errno;
@@ -306,7 +306,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 
 		/* Run the DNS subquery. */
 
-		if ((r = asr_async_run(as->as.hostnamadr.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as.hostnamadr.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		/* Done. */

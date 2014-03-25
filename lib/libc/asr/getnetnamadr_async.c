@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.12 2014/03/14 11:07:33 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.13 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -40,18 +40,18 @@ struct netent_ext {
 	char		*pos;
 };
 
-static int getnetnamadr_async_run(struct async *, struct async_res *);
+static int getnetnamadr_async_run(struct asr_query *, struct asr_result *);
 static struct netent_ext *netent_alloc(int);
 static int netent_set_cname(struct netent_ext *, const char *, int);
 static int netent_add_alias(struct netent_ext *, const char *, int);
 static struct netent_ext *netent_file_match(FILE *, int, const char *);
 static struct netent_ext *netent_from_packet(int, char *, size_t);
 
-struct async *
-getnetbyname_async(const char *name, struct asr *asr)
+struct asr_query *
+getnetbyname_async(const char *name, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	/* The current resolver segfaults. */
 	if (name == NULL) {
@@ -79,11 +79,11 @@ getnetbyname_async(const char *name, struct asr *asr)
 	return (NULL);
 }
 
-struct async *
-getnetbyaddr_async(in_addr_t net, int family, struct asr *asr)
+struct asr_query *
+getnetbyaddr_async(in_addr_t net, int family, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	ac = asr_use_resolver(asr);
 	if ((as = asr_async_new(ac, ASR_GETNETBYADDR)) == NULL)
@@ -104,7 +104,7 @@ getnetbyaddr_async(in_addr_t net, int family, struct asr *asr)
 }
 
 static int
-getnetnamadr_async_run(struct async *as, struct async_res *ar)
+getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 {
 	struct netent_ext	*n;
 	int			 r, type, saved_errno;
@@ -201,7 +201,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = asr_async_run(as->as.netnamadr.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as.netnamadr.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 		as->as.netnamadr.subq = NULL;
 

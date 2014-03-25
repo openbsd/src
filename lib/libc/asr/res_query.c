@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.6 2013/11/12 06:09:50 deraadt Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.7 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -28,8 +28,8 @@
 int
 res_query(const char *name, int class, int type, u_char *ans, int anslen)
 {
-	struct async	*as;
-	struct async_res ar;
+	struct asr_query *as;
+	struct asr_result ar;
 	size_t		 len;
 
 	res_init();
@@ -49,7 +49,7 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 		return (-1); /* errno set */
 	}
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	if (ar.ar_errno)
 		errno = ar.ar_errno;
@@ -70,8 +70,8 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 int
 res_search(const char *name, int class, int type, u_char *ans, int anslen)
 {
-	struct async	*as;
-	struct async_res ar;
+	struct asr_query *as;
+	struct asr_result ar;
 	size_t		 len;
 
 	res_init();
@@ -91,7 +91,7 @@ res_search(const char *name, int class, int type, u_char *ans, int anslen)
 		return (-1); /* errno set */
 	}
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	if (ar.ar_errno)
 		errno = ar.ar_errno;

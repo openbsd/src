@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.6 2013/07/12 14:36:22 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.7 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -80,8 +80,8 @@ _fillnetent(const struct netent *e, struct netent *r, char *buf, size_t len)
 struct netent *
 getnetbyname(const char *name)
 {
-	struct async	*as;
-	struct async_res ar;
+	struct asr_query *as;
+	struct asr_result ar;
 
 	res_init();
 
@@ -91,7 +91,7 @@ getnetbyname(const char *name)
 		return (NULL);
 	}
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	h_errno = ar.ar_h_errno;
@@ -107,8 +107,8 @@ getnetbyname(const char *name)
 struct netent *
 getnetbyaddr(in_addr_t net, int type)
 {
-	struct async	*as;
-	struct async_res ar;
+	struct asr_query *as;
+	struct asr_result ar;
 
 	res_init();
 
@@ -118,7 +118,7 @@ getnetbyaddr(in_addr_t net, int type)
 		return (NULL);
 	}
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	h_errno = ar.ar_h_errno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.9 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.10 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012,2013 Eric Faurot <eric@openbsd.org>
  *
@@ -102,9 +102,9 @@ static int
 _gethostbyname(const char *name, int af, struct hostent *ret, char *buf,
     size_t buflen, int *h_errnop)
 {
-	struct async		*as;
-	struct async_res	 ar;
-	int			 r;
+	struct asr_query *as;
+	struct asr_result ar;
+	int r;
 
 	if (af == -1)
 		as = gethostbyname_async(name, NULL);
@@ -114,7 +114,7 @@ _gethostbyname(const char *name, int af, struct hostent *ret, char *buf,
 	if (as == NULL)
 		return (errno);
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	*h_errnop = ar.ar_h_errno;
@@ -164,9 +164,9 @@ gethostbyname2(const char *name, int af)
 struct hostent *
 gethostbyaddr(const void *addr, socklen_t len, int af)
 {
-	struct async	*as;
-	struct async_res ar;
-	int		 r;
+	struct asr_query *as;
+	struct asr_result ar;
+	int r;
 
 	res_init();
 
@@ -176,7 +176,7 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 		return (NULL);
 	}
 
-	asr_async_run_sync(as, &ar);
+	asr_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
 	h_errno = ar.ar_h_errno;

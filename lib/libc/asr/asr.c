@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.31 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.32 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -86,7 +86,7 @@ static void *__THREAD_NAME(_asr);
 static struct asr *_asr = NULL;
 
 /* Allocate and configure an async "resolver". */
-struct asr *
+void *
 asr_resolver(const char *conf)
 {
 	static int	 init = 0;
@@ -156,8 +156,9 @@ asr_resolver(const char *conf)
  * Drop the reference to the current context.
  */
 void
-asr_resolver_done(struct asr *asr)
+asr_resolver_done(void *arg)
 {
+	struct asr *asr = arg;
 	struct asr **priv;
 
 	if (asr == NULL) {
@@ -177,26 +178,26 @@ asr_resolver_done(struct asr *asr)
  * Cancel an async query.
  */
 void
-asr_async_abort(struct async *as)
+asr_abort(struct asr_query *as)
 {
 	asr_async_free(as);
 }
 
 /*
  * Resume the "as" async query resolution.  Return one of ASYNC_COND,
- * ASYNC_YIELD or ASYNC_DONE and put query-specific return values in
- * the user-allocated memory at "ar".
+ * or ASYNC_DONE and put query-specific return values in the user-allocated
+ * memory at "ar".
  */
 int
-asr_async_run(struct async *as, struct async_res *ar)
+asr_run(struct asr_query *as, struct asr_result *ar)
 {
 	int	r, saved_errno = errno;
 
-	DPRINT("asr: async_run(%p, %p) %s ctx=[%p]\n", as, ar,
+	DPRINT("asr: asr_run(%p, %p) %s ctx=[%p]\n", as, ar,
 	    asr_querystr(as->as_type), as->as_ctx);
 	r = as->as_run(as, ar);
 
-	DPRINT("asr: async_run(%p, %p) -> %s", as, ar, asr_transitionstr(r));
+	DPRINT("asr: asr_run(%p, %p) -> %s", as, ar, asr_transitionstr(r));
 #ifdef DEBUG
 	if (r == ASYNC_COND)
 #endif
@@ -214,20 +215,20 @@ asr_async_run(struct async *as, struct async_res *ar)
  * Same as above, but run in a loop that handles the fd conditions result.
  */
 int
-asr_async_run_sync(struct async *as, struct async_res *ar)
+asr_run_sync(struct asr_query *as, struct asr_result *ar)
 {
 	struct pollfd	 fds[1];
 	int		 r, saved_errno = errno;
 
-	while ((r = asr_async_run(as, ar)) == ASYNC_COND) {
+	while ((r = asr_run(as, ar)) == ASYNC_COND) {
 		fds[0].fd = ar->ar_fd;
-		fds[0].events = (ar->ar_cond == ASYNC_READ) ? POLLIN : POLLOUT;
+		fds[0].events = (ar->ar_cond == ASR_WANT_READ) ? POLLIN:POLLOUT;
 	again:
 		r = poll(fds, 1, ar->ar_timeout);
 		if (r == -1 && errno == EINTR)
 			goto again;
 		/*
-		 * Otherwise, just ignore the error and let asr_async_run()
+		 * Otherwise, just ignore the error and let asr_run()
 		 * catch the failure.
 		 */
 	}
@@ -242,10 +243,10 @@ asr_async_run_sync(struct async *as, struct async_res *ar)
  * Take a reference on it so it does not gets deleted while the async query
  * is running.
  */
-struct async *
+struct asr_query *
 asr_async_new(struct asr_ctx *ac, int type)
 {
-	struct async	*as;
+	struct asr_query	*as;
 
 	DPRINT("asr: asr_async_new(ctx=%p) type=%i refcount=%i\n", ac, type,
 	    ac ? ac->ac_refcount : 0);
@@ -265,7 +266,7 @@ asr_async_new(struct asr_ctx *ac, int type)
  * Free an async query and unref the associated context.
  */
 void
-asr_async_free(struct async *as)
+asr_async_free(struct asr_query *as)
 {
 	DPRINT("asr: asr_async_free(%p)\n", as);
 	switch (as->as_type) {
@@ -339,8 +340,9 @@ asr_async_free(struct async *as)
  * using this context.
  */
 struct asr_ctx *
-asr_use_resolver(struct asr *asr)
+asr_use_resolver(void *arg)
 {
+	struct asr *asr = arg;
 	struct asr **priv;
 
 	if (asr == NULL) {
@@ -886,7 +888,7 @@ asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
  * Return 0 on success, or -1 if no more DBs is available.
  */
 int
-asr_iter_db(struct async *as)
+asr_iter_db(struct asr_query *as)
 {
 	if (as->as_db_idx >= as->as_ctx->ac_dbcount) {
 		DPRINT("asr_iter_db: done\n");

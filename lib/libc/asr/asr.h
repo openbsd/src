@@ -1,6 +1,6 @@
-/*	$OpenBSD: asr.h,v 1.7 2013/07/12 14:36:21 eric Exp $	*/
+/*	$OpenBSD: asr.h,v 1.8 2014/03/25 19:48:11 eric Exp $	*/
 /*
- * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2012-2014 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,83 +18,75 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <netinet/in.h>
 
 /*
- * This part is the generic API for the async mechanism.  It could be useful
- * beyond the resolver.
+ * Expected fd conditions
  */
-
-/* Return values for async_run() */
-#define ASYNC_COND	0 /* wait for fd condition */
-#define ASYNC_YIELD	1 /* partial result */
-#define ASYNC_DONE	2 /* done */
-
-/* Expected fd conditions  */
-#define ASYNC_READ	1
-#define ASYNC_WRITE	2
-
-/* This opaque structure holds an async query state. */
-struct async;
+#define ASR_WANT_READ	1
+#define ASR_WANT_WRITE	2
 
 /*
- * This is the structure through which async_run() returns async
- * results to the caller.
+ * Structure through which asynchronous query results are returned when
+ * calling asr_run().
  */
-struct async_res {
-	int	 ar_cond;
-	int	 ar_fd;
-	int	 ar_timeout;
+struct asr_result {
+	/* Fields set if the query is not done yet (asr_run returns 0) */
+	int	 ar_cond;	/* ASR_WANT_READ or ASR_WANT_WRITE */
+	int	 ar_fd;		/* the fd waiting for io condition */
+	int	 ar_timeout;	/* time to wait for in milliseconds */
 
+	/* Error fields.  Depends on the query type. */
 	int	 ar_errno;
 	int	 ar_h_errno;
 	int	 ar_gai_errno;
 	int	 ar_rrset_errno;
 
-	int	 ar_count;
+	/* Result for res_*_async() calls */
+	int	 ar_count;	/* number of answers in the dns reply */
+	int	 ar_rcode;	/* response code in the dns reply */
+	void	*ar_data;	/* raw reply packet (must be freed) */
+	int	 ar_datalen;	/* reply packet length */
+	struct sockaddr_storage ar_ns; /* nameserver that responded */
 
-	int	 ar_rcode;
-	void	*ar_data;
-	int	 ar_datalen;
-	union {
-		struct sockaddr		sa;
-		struct sockaddr_in	sain;
-		struct sockaddr_in6	sain6;
-	}	 ar_sa;
-
+	/* Result for other calls. Must be freed properly. */
 	struct addrinfo	 *ar_addrinfo;
 	struct rrsetinfo *ar_rrsetinfo;
 	struct hostent	 *ar_hostent;
 	struct netent	 *ar_netent;
 };
 
-int  asr_async_run(struct async *, struct async_res *);
-int  asr_async_run_sync(struct async *, struct async_res *);
-void asr_async_abort(struct async *);
+/*
+ * Asynchronous query management.
+ */
 
-/* This opaque structure holds an async resolver context. */
-struct asr;
+/* Forward declaration. The API uses opaque pointers as query handles. */
+struct asr_query;
 
-struct asr *asr_resolver(const char *);
-void	    asr_resolver_done(struct asr *);
+int asr_run(struct asr_query *, struct asr_result *);
+int asr_run_sync(struct asr_query *, struct asr_result *);
+void asr_abort(struct asr_query *);
 
-/* Async version of the resolver API */
+/*
+ * Asynchronous version of the resolver functions. Similar prototypes, with
+ * an extra context parameter at the end which must currently be set to NULL.
+ * All functions return a handle suitable for use with the management functions
+ * above.
+ */
+struct asr_query *res_send_async(const unsigned char *, int, void *);
+struct asr_query *res_query_async(const char *, int, int, void *);
+struct asr_query *res_search_async(const char *, int, int, void *);
 
-struct async *res_send_async(const unsigned char *, int, struct asr *);
-struct async *res_query_async(const char *, int, int, struct asr *);
-struct async *res_search_async(const char *, int, int, struct asr *);
+struct asr_query *getrrsetbyname_async(const char *, unsigned int, unsigned int,
+    unsigned int, void *);
 
-struct async *getrrsetbyname_async(const char *, unsigned int, unsigned int,
-    unsigned int, struct asr *);
+struct asr_query *gethostbyname_async(const char *, void *);
+struct asr_query *gethostbyname2_async(const char *, int, void *);
+struct asr_query *gethostbyaddr_async(const void *, socklen_t, int, void *);
 
-struct async *gethostbyname_async(const char *, struct asr *);
-struct async *gethostbyname2_async(const char *, int, struct asr *);
-struct async *gethostbyaddr_async(const void *, socklen_t, int, struct asr *);
+struct asr_query *getnetbyname_async(const char *, void *);
+struct asr_query *getnetbyaddr_async(in_addr_t, int, void *);
 
-struct async *getnetbyname_async(const char *, struct asr *);
-struct async *getnetbyaddr_async(in_addr_t, int, struct asr *);
-
-struct async *getaddrinfo_async(const char *, const char *,
-    const struct addrinfo *, struct asr *);
-struct async *getnameinfo_async(const struct sockaddr *, socklen_t, char *,
-    size_t, char *, size_t, int, struct asr *);
+struct asr_query *getaddrinfo_async(const char *, const char *,
+    const struct addrinfo *, void *);
+struct asr_query *getnameinfo_async(const struct sockaddr *, socklen_t, char *,
+    size_t, char *, size_t, int, void *);

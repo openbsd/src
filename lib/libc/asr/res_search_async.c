@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.11 2014/02/24 20:23:27 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.12 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -28,19 +28,19 @@
 #include "asr.h"
 #include "asr_private.h"
 
-static int res_search_async_run(struct async *, struct async_res *);
+static int res_search_async_run(struct asr_query *, struct asr_result *);
 static size_t domcat(const char *, const char *, char *, size_t);
-static int iter_domain(struct async *, const char *, char *, size_t);
+static int iter_domain(struct asr_query *, const char *, char *, size_t);
 
 /*
  * Unlike res_query_async(), this function returns a valid packet only if
  * h_errno is NETDB_SUCCESS.
  */
-struct async *
-res_search_async(const char *name, int class, int type, struct asr *asr)
+struct asr_query *
+res_search_async(const char *name, int class, int type, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	DPRINT("asr: res_search_async(\"%s\", %i, %i)\n", name, class, type);
 
@@ -51,11 +51,11 @@ res_search_async(const char *name, int class, int type, struct asr *asr)
 	return (as);
 }
 
-struct async *
+struct asr_query *
 res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 {
-	struct async	*as;
-	char		 alias[MAXDNAME];
+	struct asr_query	*as;
+	char			 alias[MAXDNAME];
 
 	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class,
 	    type);
@@ -82,7 +82,7 @@ res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 #define HERRNO_UNSET	-2
 
 static int
-res_search_async_run(struct async *as, struct async_res *ar)
+res_search_async_run(struct asr_query *as, struct asr_result *ar)
 {
 	int	r;
 	char	fqdn[MAXDNAME];
@@ -134,7 +134,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = asr_async_run(as->as.search.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as.search.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 		as->as.search.subq = NULL;
 
@@ -239,7 +239,7 @@ enum {
  * error generating the next name, or the resulting name length.
  */
 int
-iter_domain(struct async *as, const char *name, char * buf, size_t len)
+iter_domain(struct asr_query *as, const char *name, char * buf, size_t len)
 {
 	const char	*c;
 	int		 dots;

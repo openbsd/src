@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.7 2013/07/12 14:36:22 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.8 2014/03/25 19:48:11 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -31,16 +31,16 @@
 #include "asr.h"
 #include "asr_private.h"
 
-static int getnameinfo_async_run(struct async *, struct async_res *);
-static int _servname(struct async *);
-static int _numerichost(struct async *);
+static int getnameinfo_async_run(struct asr_query *, struct asr_result *);
+static int _servname(struct asr_query *);
+static int _numerichost(struct asr_query *);
 
-struct async *
+struct asr_query *
 getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
-    size_t hostlen, char *serv, size_t servlen, int flags, struct asr *asr)
+    size_t hostlen, char *serv, size_t servlen, int flags, void *asr)
 {
-	struct asr_ctx	*ac;
-	struct async	*as;
+	struct asr_ctx	 *ac;
+	struct asr_query *as;
 
 	ac = asr_use_resolver(asr);
 	if ((as = asr_async_new(ac, ASR_GETNAMEINFO)) == NULL)
@@ -70,7 +70,7 @@ getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
 }
 
 static int
-getnameinfo_async_run(struct async *as, struct async_res *ar)
+getnameinfo_async_run(struct asr_query *as, struct asr_result *ar)
 {
 	void		*addr;
 	socklen_t	 addrlen;
@@ -153,7 +153,7 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = asr_async_run(as->as.ni.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as.ni.subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		/*
@@ -206,7 +206,7 @@ getnameinfo_async_run(struct async *as, struct async_res *ar)
  * return (-1) if the buffer is too small.
  */
 static int
-_servname(struct async *as)
+_servname(struct asr_query *as)
 {
 	struct servent		 s;
 	struct servent_data	 sd;
@@ -244,7 +244,7 @@ _servname(struct async *as)
  * Write the numeric address
  */
 static int
-_numerichost(struct async *as)
+_numerichost(struct asr_query *as)
 {
 	unsigned int	ifidx;
 	char		scope[IF_NAMESIZE + 1], *ifname;
