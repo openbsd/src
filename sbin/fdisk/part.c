@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.62 2014/03/22 15:40:04 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.63 2014/03/25 12:59:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -175,32 +175,29 @@ PRT_ascii_id(int id)
 }
 
 void
-PRT_parse(struct disk *disk, void *prt, off_t offset, off_t reloff,
-    struct prt *partn)
+PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
+    off_t reloff, struct prt *partn)
 {
-	unsigned char *p = prt;
 	off_t off;
 
-	partn->flag = *p++;
-	partn->shead = *p++;
+	partn->flag = prt->dp_flag;
+	partn->shead = prt->dp_shd;
 
-	partn->ssect = (*p) & 0x3F;
-	partn->scyl = ((*p << 2) & 0xFF00) | (*(p+1));
-	p += 2;
+	partn->ssect = (prt->dp_ssect) & 0x3F;
+	partn->scyl = ((prt->dp_ssect << 2) & 0xFF00) | prt->dp_scyl;
 
-	partn->id = *p++;
-	partn->ehead = *p++;
-	partn->esect = (*p) & 0x3F;
-	partn->ecyl = ((*p << 2) & 0xFF00) | (*(p+1));
-	p += 2;
+	partn->id = prt->dp_typ;
+	partn->ehead = prt->dp_ehd;
+	partn->esect = (prt->dp_esect) & 0x3F;
+	partn->ecyl = ((prt->dp_esect << 2) & 0xFF00) | prt->dp_ecyl;
 
 	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
 		off = reloff;
 	else
 		off = offset;
 
-	partn->bs = getlong(p) + off;
-	partn->ns = getlong(p+4);
+	partn->bs = getlong(&prt->dp_start) + off;
+	partn->ns = getlong(&prt->dp_size);
 
 	PRT_fix_CHS(disk, partn);
 }
@@ -220,9 +217,9 @@ PRT_check_chs(struct prt *partn)
 	return 1;
 }
 void
-PRT_make(struct prt *partn, off_t offset, off_t reloff, void *prt)
+PRT_make(struct prt *partn, off_t offset, off_t reloff,
+    struct dos_partition *prt)
 {
-	unsigned char *p = prt;
 	off_t off;
 	u_int32_t ecsave, scsave;
 
@@ -240,32 +237,25 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff, void *prt)
 		off = offset;
 
 	if (PRT_check_chs(partn)) {
-		*p++ = partn->flag & 0xFF;
-
-		*p++ = partn->shead & 0xFF;
-		*p++ = (partn->ssect & 0x3F) | ((partn->scyl & 0x300) >> 2);
-		*p++ = partn->scyl & 0xFF;
-
-		*p++ = partn->id & 0xFF;
-
-		*p++ = partn->ehead & 0xFF;
-		*p++ = (partn->esect & 0x3F) | ((partn->ecyl & 0x300) >> 2);
-		*p++ = partn->ecyl & 0xFF;
+		prt->dp_shd = partn->shead & 0xFF;
+		prt->dp_ssect = (partn->ssect & 0x3F) |
+		    ((partn->scyl & 0x300) >> 2);
+		prt->dp_scyl = partn->scyl & 0xFF;
+		prt->dp_ehd = partn->ehead & 0xFF;
+		prt->dp_esect = (partn->esect & 0x3F) |
+		    ((partn->ecyl & 0x300) >> 2);
+		prt->dp_ecyl = partn->ecyl & 0xFF;
 	} else {
 		/* should this really keep flag, id and set others to 0xff? */
-		*p++ = partn->flag & 0xFF;
-		*p++ = 0xFF;
-		*p++ = 0xFF;
-		*p++ = 0xFF;
-		*p++ = partn->id & 0xFF;
-		*p++ = 0xFF;
-		*p++ = 0xFF;
-		*p++ = 0xFF;
+		memset(prt, 0xFF, sizeof(*prt));
 		printf("Warning CHS values out of bounds only saving LBA values\n");
 	}
 
-	putlong(p, partn->bs - off);
-	putlong(p+4, partn->ns);
+	prt->dp_flag = partn->flag & 0xFF;
+	prt->dp_typ = partn->id & 0xFF;
+
+	putlong(&prt->dp_start, partn->bs - off);
+	putlong(&prt->dp_size, partn->ns);
 
 	partn->scyl = scsave;
 	partn->ecyl = ecsave;
