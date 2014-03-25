@@ -1,6 +1,7 @@
-/*	$OpenBSD: malloc.c,v 1.150 2013/11/12 06:57:54 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.151 2014/03/25 17:00:02 beck Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+ * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,16 +17,8 @@
  */
 
 /*
- * Parts of this code, mainly the sub page sized chunk management code is
- * derived from the malloc implementation with the following license:
- */
-/*
- * ----------------------------------------------------------------------------
- * "THE BEER-WARE LICENSE" (Revision 42):
- * <phk@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
- * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.  Poul-Henning Kamp
- * ----------------------------------------------------------------------------
+ * If we meet some day, and you think this stuff is worth it, you
+ * can buy me a beer in return. Poul-Henning Kamp
  */
 
 /* #define MALLOC_STATS */
