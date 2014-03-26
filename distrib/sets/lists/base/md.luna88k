@@ -540,6 +540,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/blf.ph

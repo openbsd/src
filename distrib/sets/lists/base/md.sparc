@@ -82,6 +82,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/blf.ph

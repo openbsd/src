@@ -43,6 +43,7 @@
 ./usr/include/arpa/nameser.h
 ./usr/include/arpa/telnet.h
 ./usr/include/arpa/tftp.h
+./usr/include/asr.h
 ./usr/include/assert.h
 ./usr/include/bitstring.h
 ./usr/include/blf.h
@@ -3195,6 +3196,9 @@
 ./usr/share/man/man3/asinhl.3
 ./usr/share/man/man3/asinl.3
 ./usr/share/man/man3/asprintf.3
+./usr/share/man/man3/asr_abort.3
+./usr/share/man/man3/asr_run.3
+./usr/share/man/man3/asr_run_sync.3
 ./usr/share/man/man3/assert.3
 ./usr/share/man/man3/assume_default_colors.3
 ./usr/share/man/man3/atan.3
@@ -3973,6 +3977,7 @@
 ./usr/share/man/man3/get_wch.3
 ./usr/share/man/man3/get_wstr.3
 ./usr/share/man/man3/getaddrinfo.3
+./usr/share/man/man3/getaddrinfo_async.3
 ./usr/share/man/man3/getarg.3
 ./usr/share/man/man3/getbegx.3
 ./usr/share/man/man3/getbegy.3
@@ -4004,8 +4009,11 @@
 ./usr/share/man/man3/getgrnam_r.3
 ./usr/share/man/man3/getgrouplist.3
 ./usr/share/man/man3/gethostbyaddr.3
+./usr/share/man/man3/gethostbyaddr_async.3
 ./usr/share/man/man3/gethostbyname.3
 ./usr/share/man/man3/gethostbyname2.3
+./usr/share/man/man3/gethostbyname2_async.3
+./usr/share/man/man3/gethostbyname_async.3
 ./usr/share/man/man3/gethostent.3
 ./usr/share/man/man3/gethostid.3
 ./usr/share/man/man3/gethostname.3
@@ -4021,8 +4029,11 @@
 ./usr/share/man/man3/getmouse.3
 ./usr/share/man/man3/getn_wstr.3
 ./usr/share/man/man3/getnameinfo.3
+./usr/share/man/man3/getnameinfo_async.3
 ./usr/share/man/man3/getnetbyaddr.3
+./usr/share/man/man3/getnetbyaddr_async.3
 ./usr/share/man/man3/getnetbyname.3
+./usr/share/man/man3/getnetbyname_async.3
 ./usr/share/man/man3/getnetent.3
 ./usr/share/man/man3/getnetgrent.3
 ./usr/share/man/man3/getnstr.3
@@ -4053,6 +4064,7 @@
 ./usr/share/man/man3/getrpcent.3
 ./usr/share/man/man3/getrpcport.3
 ./usr/share/man/man3/getrrsetbyname.3
+./usr/share/man/man3/getrrsetbyname_async.3
 ./usr/share/man/man3/getservbyname.3
 ./usr/share/man/man3/getservbyname_r.3
 ./usr/share/man/man3/getservbyport.3
@@ -5436,8 +5448,11 @@
 ./usr/share/man/man3/res_init.3
 ./usr/share/man/man3/res_mkquery.3
 ./usr/share/man/man3/res_query.3
+./usr/share/man/man3/res_query_async.3
 ./usr/share/man/man3/res_search.3
+./usr/share/man/man3/res_search_async.3
 ./usr/share/man/man3/res_send.3
+./usr/share/man/man3/res_send_async.3
 ./usr/share/man/man3/reset_prog_mode.3
 ./usr/share/man/man3/reset_shell_mode.3
 ./usr/share/man/man3/resetty.3

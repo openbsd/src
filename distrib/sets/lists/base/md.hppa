@@ -603,6 +603,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/blf.ph

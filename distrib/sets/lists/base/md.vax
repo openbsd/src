@@ -28,6 +28,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/blf.ph

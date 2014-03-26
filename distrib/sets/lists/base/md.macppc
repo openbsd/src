@@ -605,6 +605,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/blf.ph

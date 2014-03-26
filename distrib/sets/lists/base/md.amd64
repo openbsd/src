@@ -681,6 +681,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/blf.ph

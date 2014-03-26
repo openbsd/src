@@ -609,6 +609,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/arpa/nameser.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/arpa/tftp.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/asr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/assert.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/blf.ph
