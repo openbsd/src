@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.132 2014/03/22 06:05:45 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.133 2014/03/26 05:23:42 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -493,7 +493,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (copyout(&gsigf, sigf, sizeof(gsigf)))
 		sigexit(p, SIGILL);
 
-	syscf->pc = p->p_sigcode;
+	syscf->pc = p->p_p->ps_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
 	/*
 	 * Place sp at the beginning of sigf; this ensures that possible

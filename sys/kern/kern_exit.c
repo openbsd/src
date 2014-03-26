@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.136 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.137 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -250,10 +250,10 @@ exit1(struct proc *p, int rv, int flags)
 #endif
 
 	/*
-	 * If emulation has process exit hook, call it now.
+	 * If emulation has thread exit hook, call it now.
 	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
+	if (pr->ps_emul->e_proc_exit)
+		(*pr->ps_emul->e_proc_exit)(p);
 
         /*
 	 * Remove proc from pidhash chain and allproc so looking

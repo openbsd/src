@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.159 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.160 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -370,10 +370,10 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 		sigstkinit(&p->p_sigstk);
 
 	/*
-	 * If emulation has process fork hook, call it now.
+	 * If emulation has thread fork hook, call it now.
 	 */
-	if (p->p_emul->e_proc_fork)
-		(*p->p_emul->e_proc_fork)(p, curp);
+	if (pr->ps_emul->e_proc_fork)
+		(*pr->ps_emul->e_proc_fork)(p, curp);
 
 	p->p_addr = (struct user *)uaddr;
 

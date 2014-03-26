@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.48 2014/02/13 13:10:34 mpi Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.49 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ linux_bind(p, v, retval)
 	namlen = lba.namelen;
 	if (lba.name) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p);
 
 		error = linux_sa_get(p, &sg, &sa, lba.name, &namlen);
 		if (error)
@@ -335,7 +335,7 @@ linux_connect(p, v, retval)
 	struct linux_connect_args lca;
 	struct sys_connect_args bca;
 	struct sockaddr *sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p);
 	int namlen;
 	int error;
 
@@ -816,7 +816,7 @@ linux_sendto(p, v, retval)
 	struct sys_sendto_args bsa;
 	int error;
 	int tolen;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p);
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
@@ -1224,7 +1224,7 @@ linux_sendmsg(p, v, retval)
 
 	if (msg.msg_name) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p);
 
 		nmsg = (struct msghdr *)stackgap_alloc(&sg,
 		    sizeof(struct msghdr));

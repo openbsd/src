@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2012/12/31 06:46:14 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2014/03/26 05:23:42 guenther Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -788,8 +788,8 @@ syscall(code, tf, pc)
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	nsys = p->p_p->ps_emul->e_nsysent;
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -820,7 +820,7 @@ syscall(code, tf, pc)
 	}
 
 	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 	else {
 		callp += code;
 		i = callp->sy_argsize / sizeof(register_t);

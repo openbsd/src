@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.44 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.45 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ linux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = p->p_sigcode;
+	tf->tf_eip = p->p_p->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -283,7 +283,7 @@ linux_read_ldt(struct proc *p, struct linux_sys_modify_ldt_args *uap,
 	if (user_ldt_enable == 0)
 		return (ENOSYS);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 
 	gl.start = 0;
 	gl.desc = SCARG(uap, ptr);
@@ -333,7 +333,7 @@ linux_write_ldt(struct proc *p, struct linux_sys_modify_ldt_args *uap,
 	if (ldt_info.contents == 3)
 		return (EINVAL);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 
 	sd.sd_lobase = ldt_info.base_addr & 0xffffff;
 	sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
@@ -529,7 +529,7 @@ linux_machdepioctl(struct proc *p, void *v, register_t *retval)
 			return error;
 		lvt.frsig = sig;
 
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
 			return error;

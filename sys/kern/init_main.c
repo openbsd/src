@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.205 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.206 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ main(void *framep)
 	atomic_setbits_int(&p->p_flag, P_SYSTEM);
 	p->p_stat = SONPROC;
 	pr->ps_nice = NZERO;
-	p->p_emul = &emul_native;
+	pr->ps_emul = &emul_native;
 	bcopy("swapper", p->p_comm, sizeof ("swapper"));
 
 	/* Init timeouts. */

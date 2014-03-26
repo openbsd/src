@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.142 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.143 2014/03/26 05:23:41 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ do {									\
 	(kp)->p_acflag = (pr)->ps_acflag;				\
 									\
 	/* XXX depends on e_name being an array and not a pointer */	\
-	copy_str((kp)->p_emul, (char *)(p)->p_emul +			\
+	copy_str((kp)->p_emul, (char *)(pr)->ps_emul +			\
 	    offsetof(struct emul, e_name), sizeof((kp)->p_emul));	\
 	strlcpy((kp)->p_comm, (p)->p_comm, sizeof((kp)->p_comm));	\
 	strlcpy((kp)->p_login, (sess)->s_login,			\

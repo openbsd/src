@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.58 2014/01/21 01:48:45 tedu Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.59 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -397,7 +397,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		case PIOD_READ_AUXV:
 			req = PT_READ_D;
 			uio.uio_rw = UIO_READ;
-			temp = t->p_emul->e_arglen * sizeof(char *);
+			temp = tr->ps_emul->e_arglen * sizeof(char *);
 			if (uio.uio_offset > temp)
 				return (EIO);
 			if (uio.uio_resid > temp - uio.uio_offset)

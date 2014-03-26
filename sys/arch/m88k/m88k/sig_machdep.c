@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.17 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.18 2014/03/26 05:23:42 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -154,7 +154,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	/*
 	 * Set up registers for the signal handler invocation.
 	 */
-	tf->tf_r[1] = p->p_sigcode;		/* return to sigcode */
+	tf->tf_r[1] = p->p_p->ps_sigcode;	/* return to sigcode */
 	tf->tf_r[2] = sig;			/* first arg is signo */
 	tf->tf_r[3] = psp->ps_siginfo & sigmask(sig) ? (vaddr_t)&fp->sf_si : 0;
 	tf->tf_r[4] = (vaddr_t)&fp->sf_sc;

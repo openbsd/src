@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.178 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.179 2014/03/26 05:23:41 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -196,6 +196,8 @@ struct process {
 
 	struct	plimit *ps_limit;	/* Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
+	struct	emul *ps_emul;		/* Emulation information */
+	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	u_int	ps_rtableid;		/* Process routing table/domain. */
 	char	ps_nice;		/* Process "nice" value. */
 
@@ -324,9 +326,7 @@ struct proc {
 # define TCB_GET(p)		((p)->p_tcb)
 #endif
 
-	struct	emul *p_emul;		/* Emulation information */
 	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
-	vaddr_t	p_sigcode;		/* user pointer to the signal code. */
 
 	u_long	p_prof_addr;	/* tmp storage for profiling addr until AST */
 	u_long	p_prof_ticks;	/* tmp storage for profiling ticks until AST */

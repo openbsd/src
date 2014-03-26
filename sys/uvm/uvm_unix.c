@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.47 2013/01/16 21:47:08 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.48 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 		}
 
 		if (!(entry->protection & VM_PROT_WRITE) &&
-		    entry->start != p->p_sigcode)
+		    entry->start != p->p_p->ps_sigcode)
 			continue;
 
 		/*
@@ -287,7 +287,7 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 		}
 
 		if (!(entry->protection & VM_PROT_WRITE) &&
-		    entry->start != p->p_sigcode)
+		    entry->start != p->p_p->ps_sigcode)
 			continue;
 
 		/*

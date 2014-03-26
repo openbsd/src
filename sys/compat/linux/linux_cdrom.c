@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.10 2014/01/21 01:49:13 tedu Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.11 2014/03/26 05:23:42 guenther Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -135,7 +135,7 @@ linux_ioctl_cdrom(p, v, retval)
 		if (error)
 		        goto out;
 
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		
 		memset(&tmpb.tes, 0, sizeof tmpb.tes);
 		tmpb.tes.starting_track = tmpl.te.cdte_track;
@@ -164,7 +164,7 @@ linux_ioctl_cdrom(p, v, retval)
 		if (error)
 			goto out;
 
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		
 		memset(&tmpb.sc, 0, sizeof tmpb.sc);
 		tmpb.sc.data_format = CD_CURRENT_POSITION;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.160 2014/03/24 03:48:00 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.161 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -742,7 +742,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		}
 #endif
 		p->p_ru.ru_nsignals++;
-		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
+		(*pr->ps_emul->e_sendsig)(ps->ps_sigact[signum], signum,
 		    p->p_sigmask, trapno, code, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
@@ -1286,7 +1286,8 @@ void
 postsig(int signum)
 {
 	struct proc *p = curproc;
-	struct sigacts *ps = p->p_p->ps_sigacts;
+	struct process *pr = p->p_p;
+	struct sigacts *ps = pr->ps_sigacts;
 	sig_t action;
 	u_long trapno;
 	int mask, returnmask;
@@ -1375,7 +1376,7 @@ postsig(int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, trapno,
+		(*pr->ps_emul->e_sendsig)(action, signum, returnmask, trapno,
 		    code, sigval);
 	}
 
@@ -1431,6 +1432,7 @@ coredump(struct proc *p)
 #ifdef SMALL_KERNEL
 	return EPERM;
 #else
+	struct process *pr = p->p_p;
 	struct vnode *vp;
 	struct ucred *cred = p->p_ucred;
 	struct vmspace *vm = p->p_vmspace;
@@ -1441,15 +1443,15 @@ coredump(struct proc *p)
 	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
 	char *dir = "";
 
-	p->p_p->ps_flags |= PS_COREDUMP;
+	pr->ps_flags |= PS_COREDUMP;
 
 	/*
 	 * Don't dump if not root and the process has used set user or
 	 * group privileges, unless the nosuidcoredump sysctl is set to 2,
 	 * in which case dumps are put into /var/crash/.
 	 */
-	if (((p->p_p->ps_flags & PS_SUGID) && (error = suser(p, 0))) ||
-	   ((p->p_p->ps_flags & PS_SUGID) && nosuidcoredump)) {
+	if (((pr->ps_flags & PS_SUGID) && (error = suser(p, 0))) ||
+	   ((pr->ps_flags & PS_SUGID) && nosuidcoredump)) {
 		if (nosuidcoredump == 2)
 			dir = "/var/crash/";
 		else
@@ -1500,7 +1502,7 @@ coredump(struct proc *p)
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
 	VOP_SETATTR(vp, &vattr, cred, p);
-	p->p_p->ps_acflag |= ACORE;
+	pr->ps_acflag |= ACORE;
 
 	io.io_proc = p;
 	io.io_vp = vp;
@@ -1510,7 +1512,7 @@ coredump(struct proc *p)
 	vref(vp);
 	error = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
-		error = (*p->p_emul->e_coredump)(p, &io);
+		error = (*pr->ps_emul->e_coredump)(p, &io);
 	vrele(vp);
 out:
 	crfree(cred);

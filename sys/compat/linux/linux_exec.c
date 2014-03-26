@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.40 2013/12/02 19:47:28 deraadt Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.41 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -165,7 +165,7 @@ void
 linux_e_proc_fork(struct proc *p, struct proc *parent)
 {
 	struct linux_emuldata *emul;
-	struct linux_emuldata *p_emul;
+	struct linux_emuldata *parent_emul;
 
 	/* Allocate new emuldata for the new process. */
 	p->p_emuldata = NULL;
@@ -174,12 +174,12 @@ linux_e_proc_fork(struct proc *p, struct proc *parent)
 	linux_e_proc_init(p, parent->p_vmspace);
 
 	emul = p->p_emuldata;
-	p_emul = parent->p_emuldata;
+	parent_emul = parent->p_emuldata;
 
-	emul->my_set_tid = p_emul->child_set_tid;
-	emul->my_clear_tid = p_emul->child_clear_tid;
-	emul->my_tls_base = p_emul->child_tls_base;
-	emul->set_tls_base = p_emul->set_tls_base;
+	emul->my_set_tid = parent_emul->child_set_tid;
+	emul->my_clear_tid = parent_emul->child_clear_tid;
+	emul->my_tls_base = parent_emul->child_tls_base;
+	emul->set_tls_base = parent_emul->set_tls_base;
 }
 
 int
@@ -256,7 +256,7 @@ linux_sys_execve(struct proc *p, void *v, register_t *retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);

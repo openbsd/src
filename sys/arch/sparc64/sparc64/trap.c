@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2013/04/02 13:24:57 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1241,8 +1241,8 @@ syscall(tf, code, pc)
 	new = code & SYSCALL_G2RFLAG;
 	code &= ~SYSCALL_G2RFLAG;
 
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	nsys = p->p_p->ps_emul->e_nsysent;
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -1264,8 +1264,8 @@ syscall(tf, code, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (code < nsys &&
-		    callp[code].sy_call != callp[p->p_emul->e_nosys].sy_call)
+		if (code < nsys && callp[code].sy_call !=
+		    callp[p->p_p->ps_emul->e_nosys].sy_call)
 			break; /* valid system call */
 		if (tf->tf_out[6] & 1L) {
 			/* longs *are* quadwords */
@@ -1281,7 +1281,7 @@ syscall(tf, code, pc)
 	}
 
 	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
 		register_t *argp;
 

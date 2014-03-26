@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.18 2014/01/24 04:26:51 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.19 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ __END_DECLS
 #else
 
 void ktrcsw(struct proc *, int, int);
-void ktremul(struct proc *, char *);
+void ktremul(struct proc *);
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, ssize_t);
 void ktrnamei(struct proc *, char *);
 void ktrpsig(struct proc *, int, sig_t, int, int, siginfo_t *);

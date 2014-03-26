@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.94 2012/12/31 06:46:13 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.95 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -402,8 +402,8 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			
 			uvmexp.syscalls++;
 			
-			nsys = p->p_emul->e_nsysent;
-			callp = p->p_emul->e_sysent;
+			nsys = p->p_p->ps_emul->e_nsysent;
+			callp = p->p_p->ps_emul->e_sysent;
 			
 			code = frame->fixreg[0];
 			params = frame->fixreg + FIRSTARG;
@@ -431,7 +431,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 				break;
 			}
 			if (code < 0 || code >= nsys)
-				callp += p->p_emul->e_nosys;
+				callp += p->p_p->ps_emul->e_nosys;
 			else
 				callp += code;
 			argsize = callp->sy_argsize;

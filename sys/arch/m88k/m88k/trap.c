@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2013/09/05 20:40:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2014/03/26 05:23:42 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1181,8 +1181,8 @@ m88100_syscall(register_t code, struct trapframe *tf)
 
 	uvmexp.syscalls++;
 
-	callp = p->p_emul->e_sysent;
-	nsys  = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	nsys  = p->p_p->ps_emul->e_nsysent;
 
 	p->p_md.md_tf = tf;
 
@@ -1211,7 +1211,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	}
 
 	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 	else
 		callp += code;
 
@@ -1302,8 +1302,8 @@ m88110_syscall(register_t code, struct trapframe *tf)
 
 	uvmexp.syscalls++;
 
-	callp = p->p_emul->e_sysent;
-	nsys  = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	nsys  = p->p_p->ps_emul->e_nsysent;
 
 	p->p_md.md_tf = tf;
 
@@ -1332,7 +1332,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	}
 
 	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 	else
 		callp += code;
 

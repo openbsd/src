@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.16 2014/01/21 01:49:13 tedu Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.17 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ linux_sys_sigaction(p, v, retval)
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX__NSIG)
 		return (EINVAL);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 	nlsa = SCARG(uap, nsa);
 	olsa = SCARG(uap, osa);
 
@@ -468,7 +468,7 @@ linux_sys_rt_sigaction(p, v, retval)
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX__NSIG)
 		return (EINVAL);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 	nlsa = SCARG(uap, nsa);
 	olsa = SCARG(uap, osa);
 
@@ -540,7 +540,7 @@ linux_sys_signal(p, v, retval)
 	if (SCARG(uap, sig) < 0 || SCARG(uap, sig) >= LINUX__NSIG)
 		return (EINVAL);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 	nsa = stackgap_alloc(&sg, sizeof *nsa);
 	osa = stackgap_alloc(&sg, sizeof *osa);
 
@@ -844,7 +844,7 @@ linux_sys_sigaltstack(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 
 	if (SCARG(uap, nss) != NULL) {
 		bsd_nss = stackgap_alloc(&sg, sizeof *bsd_nss);

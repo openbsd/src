@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.55 2014/01/20 21:19:28 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.56 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 				case 'w':
 					db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
-					    p->p_emul->e_name, p->p_wchan,
+					    pr->ps_emul->e_name, p->p_wchan,
 					    (p->p_wchan && p->p_wmesg) ? 
 						p->p_wmesg : "");
 					break;

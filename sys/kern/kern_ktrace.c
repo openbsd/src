@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.63 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.64 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -50,8 +50,10 @@
 
 #include <uvm/uvm_extern.h>
 
+void	ktrinitheaderraw(struct ktr_header *, uint, pid_t, pid_t);
 void	ktrinitheader(struct ktr_header *, struct proc *, int);
 void	ktrstart(struct proc *, struct vnode *, struct ucred *);
+void	ktremulraw(struct proc *, struct process *, pid_t);
 int	ktrops(struct proc *, struct process *, int, int, struct vnode *,
 	    struct ucred *);
 int	ktrsetchildren(struct proc *, struct process *, int, int,
@@ -118,13 +120,20 @@ ktrsettrace(struct process *pr, int facs, struct vnode *newvp,
 }
 
 void
-ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
+ktrinitheaderraw(struct ktr_header *kth, uint type, pid_t pid, pid_t tid)
 {
 	memset(kth, 0, sizeof(struct ktr_header));
 	kth->ktr_type = type;
 	nanotime(&kth->ktr_time);
-	kth->ktr_pid = p->p_p->ps_pid;
-	kth->ktr_tid = p->p_pid + THREAD_PID_OFFSET;
+	kth->ktr_pid = pid;
+	kth->ktr_tid = tid;
+}
+
+void
+ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
+{
+	ktrinitheaderraw(kth, type, p->p_p->ps_pid,
+	    p->p_pid + THREAD_PID_OFFSET);
 	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);
 }
 
@@ -133,14 +142,8 @@ ktrstart(struct proc *p, struct vnode *vp, struct ucred *cred)
 {
 	struct ktr_header kth;
 
-	memset(&kth, 0, sizeof(kth));
-	kth.ktr_type = htobe32(KTR_START);
-	nanotime(&kth.ktr_time);
-	kth.ktr_pid = (pid_t)-1;
-	kth.ktr_tid = (pid_t)-1;
-	atomic_setbits_int(&p->p_flag, P_INKTR);
+	ktrinitheaderraw(&kth, htobe32(KTR_START), -1, -1);
 	ktrwriteraw(p, vp, cred, &kth, NULL);
-	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
 void
@@ -153,7 +156,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	u_int nargs = 0;
 	int i;
 
-	if (code == SYS___sysctl && (p->p_emul->e_flags & EMUL_NATIVE)) {
+	if (code == SYS___sysctl && (p->p_p->ps_emul->e_flags & EMUL_NATIVE)) {
 		/*
 		 * The native sysctl encoding stores the mib[]
 		 * array because it is interesting.
@@ -170,9 +173,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
-	if (code == SYS___sysctl && (p->p_emul->e_flags & EMUL_NATIVE) &&
-	    nargs &&
-	    copyin((void *)args[0], argp, nargs * sizeof(int)))
+	if (nargs && copyin((void *)args[0], argp, nargs * sizeof(int)))
 		memset(argp, 0, nargs * sizeof(int));
 	kth.ktr_len = len;
 	ktrwrite(p, &kth, ktp);
@@ -212,15 +213,22 @@ ktrnamei(struct proc *p, char *path)
 }
 
 void
-ktremul(struct proc *p, char *emul)
+ktremulraw(struct proc *curp, struct process *pr, pid_t tid)
 {
 	struct ktr_header kth;
+	char *emul = pr->ps_emul->e_name;
 
-	atomic_setbits_int(&p->p_flag, P_INKTR);
-	ktrinitheader(&kth, p, KTR_EMUL);
+	ktrinitheaderraw(&kth, KTR_EMUL, pr->ps_pid, tid);
 	kth.ktr_len = strlen(emul);
 
-	ktrwrite(p, &kth, emul);
+	ktrwriteraw(curp, pr->ps_tracevp, pr->ps_tracecred, &kth, emul);
+}
+
+void
+ktremul(struct proc *p)
+{
+	atomic_setbits_int(&p->p_flag, P_INKTR);
+	ktremulraw(p, p->p_p, p->p_pid + THREAD_PID_OFFSET);
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -413,7 +421,6 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	int error = 0;
 	struct nameidata nd;
 
-	atomic_setbits_int(&curp->p_flag, P_INKTR);
 	if (ops != KTROP_CLEAR) {
 		/*
 		 * an operation which requires a file argument.
@@ -498,7 +505,6 @@ done:
 		(void) vn_close(vp, FREAD|FWRITE, cred, curp);
 	if (cred != NULL)
 		crfree(cred);
-	atomic_clearbits_int(&curp->p_flag, P_INKTR);
 	return (error);
 }
 
@@ -506,8 +512,6 @@ int
 ktrops(struct proc *curp, struct process *pr, int ops, int facs,
     struct vnode *vp, struct ucred *cred)
 {
-	struct proc *p;
-
 	if (!ktrcanset(curp, pr))
 		return (0);
 	if (ops == KTROP_SET)
@@ -522,15 +526,11 @@ ktrops(struct proc *curp, struct process *pr, int ops, int facs,
 	}
 
 	/*
-	 * Emit an emulation record, every time there is a ktrace
-	 * change/attach request. 
-	 * XXX an EMUL record for each thread?  Perhaps should have
-	 * XXX a record type to say "this pid is really a thread of this
-	 * XXX other pid" and only generate an EMUL record for the main pid
+	 * Emit an emulation record every time there is a ktrace
+	 * change/attach request.
 	 */
-	TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link)
-		if (KTRPOINT(p, KTR_EMUL))
-			ktremul(p, p->p_emul->e_name);
+	if (pr->ps_traceflag & KTRFAC_EMUL)
+		ktremulraw(curp, pr, -1);
 
 	return (1);
 }
@@ -581,7 +581,7 @@ ktrwrite(struct proc *p, struct ktr_header *kth, void *aux)
 }
 
 int
-ktrwriteraw(struct proc *p, struct vnode *vp, struct ucred *cred,
+ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
     struct ktr_header *kth, void *aux)
 {
 	struct uio auio;
@@ -597,14 +597,14 @@ ktrwriteraw(struct proc *p, struct vnode *vp, struct ucred *cred,
 	aiov[0].iov_len = sizeof(struct ktr_header);
 	auio.uio_resid = sizeof(struct ktr_header);
 	auio.uio_iovcnt = 1;
-	auio.uio_procp = p;
+	auio.uio_procp = curp;
 	if (kth->ktr_len > 0) {
 		auio.uio_iovcnt++;
 		aiov[1].iov_base = aux;
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
-	vget(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vget(vp, LK_EXCLUSIVE | LK_RETRY, curp);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, cred);
 	if (!error) {
 		vput(vp);

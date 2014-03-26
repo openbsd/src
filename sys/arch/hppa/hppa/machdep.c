@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.215 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.216 2014/03/26 05:23:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1302,7 +1302,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_arg2 = tf->tf_r4 = scp;
 	tf->tf_arg3 = (register_t)catcher;
 	tf->tf_ipsw &= ~(PSL_N|PSL_B|PSL_T);
-	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
+	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_p->ps_sigcode;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	tf->tf_iisq_tail = tf->tf_iisq_head = pcb->pcb_space;
 	/* disable tracing in the trapframe */

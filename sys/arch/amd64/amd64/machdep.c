@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.175 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.176 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -608,7 +608,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_rsi = sip;
 	tf->tf_rdx = scp;
 
-	tf->tf_rip = (u_int64_t)p->p_sigcode;
+	tf->tf_rip = (u_int64_t)p->p_p->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_rsp = scp;

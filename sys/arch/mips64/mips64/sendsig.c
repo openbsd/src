@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.21 2014/03/22 06:05:45 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.22 2014/03/26 05:23:42 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -191,7 +191,7 @@ bail:
 	regs->t9 = (register_t)catcher;
 	regs->sp = (register_t)fp;
 
-	regs->ra = p->p_sigcode;
+	regs->ra = p->p_p->ps_sigcode;
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))

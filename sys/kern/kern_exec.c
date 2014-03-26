@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.138 2014/03/19 00:01:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.139 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -658,9 +658,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * same, the exec hook code should deallocate any old emulation
 	 * resources held previously by this process.
 	 */
-	if (p->p_emul && p->p_emul->e_proc_exit &&
-	    p->p_emul != pack.ep_emul)
-		(*p->p_emul->e_proc_exit)(p);
+	if (pr->ps_emul && pr->ps_emul->e_proc_exit &&
+	    pr->ps_emul != pack.ep_emul)
+		(*pr->ps_emul->e_proc_exit)(p);
 
 	p->p_descfd = 255;
 	if ((pack.ep_flags & EXEC_HASFD) && pack.ep_fd < 255)
@@ -673,12 +673,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pack.ep_emul->e_proc_exec)
 		(*pack.ep_emul->e_proc_exec)(p, &pack);
 
-	/* update p_emul, the old value is no longer needed */
-	p->p_emul = pack.ep_emul;
+	/* update ps_emul, the old value is no longer needed */
+	pr->ps_emul = pack.ep_emul;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p, p->p_emul->e_name);
+		ktremul(p);
 #endif
 
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
@@ -832,9 +832,9 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
 
-	p->p_sigcode = 0; /* no hint */
+	p->p_p->ps_sigcode = 0; /* no hint */
 	uao_reference(e->e_sigobject);
-	if (uvm_map(&p->p_vmspace->vm_map, &p->p_sigcode, round_page(sz),
+	if (uvm_map(&p->p_vmspace->vm_map, &p->p_p->ps_sigcode, round_page(sz),
 	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) {
 		uao_detach(e->e_sigobject);

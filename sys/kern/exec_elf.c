@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.95 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.96 2014/03/26 05:23:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1192,7 +1192,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 
 	/* Second, write an NT_OPENBSD_AUXV note. */
 	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
-	    elfround(p->p_emul->e_arglen * sizeof(char *));
+	    elfround(pr->ps_emul->e_arglen * sizeof(char *));
 	if (iocookie) {
 		iov.iov_base = &pss;
 		iov.iov_len = sizeof(pss);
@@ -1212,7 +1212,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 			return (EIO);
 
 		nhdr.namesz = sizeof("OpenBSD");
-		nhdr.descsz = p->p_emul->e_arglen * sizeof(char *);
+		nhdr.descsz = pr->ps_emul->e_arglen * sizeof(char *);
 		nhdr.type = NT_OPENBSD_AUXV;
 
 		error = coredump_write(iocookie, UIO_SYSSPACE,

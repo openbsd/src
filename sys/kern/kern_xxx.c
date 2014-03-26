@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.23 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.24 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ scdebug_call(struct proc *p, register_t code, const register_t args[])
 	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
-	em = p->p_emul;
+	em = p->p_p->ps_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	     sy->sy_call == sys_nosys))
@@ -125,7 +125,7 @@ scdebug_ret(struct proc *p, register_t code, int error,
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
-	em = p->p_emul;
+	em = p->p_p->ps_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	    sy->sy_call == sys_nosys))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.c,v 1.16 2013/05/10 10:31:16 pirofti Exp $	*/
+/*	$OpenBSD: linux_ipc.c,v 1.17 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ linux_semctl(p, v, retval)
 		if ((error = copyin(ldsp, (caddr_t)&lm, sizeof lm)))
 			return error;
 		linux_to_bsd_semid_ds(&lm, &bm);
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		unptr = stackgap_alloc(&sg, sizeof (union semun));
 		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
 		if ((error = copyout((caddr_t)&bm, dsp, sizeof bm)))
@@ -333,7 +333,7 @@ linux_semctl(p, v, retval)
 		SCARG(&bsa, arg) = (union semun *)unptr;
 		return sys___semctl(p, &bsa, retval);
 	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		unptr = stackgap_alloc(&sg, sizeof (union semun));
 		dsp = stackgap_alloc(&sg, sizeof (struct semid_ds));
 		if ((error = copyout((caddr_t)&dsp, unptr, sizeof dsp)))
@@ -507,14 +507,14 @@ linux_msgctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, ptr), (caddr_t)&lm, sizeof lm)))
 			return error;
 		linux_to_bsd_msqid_ds(&lm, &bm);
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		umsgptr = stackgap_alloc(&sg, sizeof bm);
 		if ((error = copyout((caddr_t)&bm, umsgptr, sizeof bm)))
 			return error;
 		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
 		return sys_msgctl(p, &bma, retval);
 	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		umsgptr = stackgap_alloc(&sg, sizeof (struct msqid_ds));
 		SCARG(&bma, buf) = (struct msqid_ds *)umsgptr;
 		if ((error = sys_msgctl(p, &bma, retval)))
@@ -693,7 +693,7 @@ linux_shmctl(p, v, retval)
 
 	switch (SCARG(uap, a2)) {
 	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
 		SCARG(&bsa, shmid) = SCARG(uap, a1);
 		SCARG(&bsa, cmd) = IPC_STAT;
@@ -710,7 +710,7 @@ linux_shmctl(p, v, retval)
 		     sizeof lseg)))
 			return error;
 		linux_to_bsd_shmid_ds(&lseg, &bs);
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
 		if ((error = copyout((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
 			return error;

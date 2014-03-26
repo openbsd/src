@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.89 2014/03/22 00:01:04 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.90 2014/03/26 05:23:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -490,8 +490,8 @@ fault_common_no_miss:
 			    trapframe->pc, 0, 0);
 		else
 			locr0->pc += 4;
-		callp = p->p_emul->e_sysent;
-		numsys = p->p_emul->e_nsysent;
+		callp = p->p_p->ps_emul->e_sysent;
+		numsys = p->p_p->ps_emul->e_nsysent;
 		code = locr0->v0;
 		switch (code) {
 		case SYS_syscall:
@@ -504,7 +504,7 @@ fault_common_no_miss:
 			 */
 			code = locr0->a0;
 			if (code >= numsys)
-				callp += p->p_emul->e_nosys; /* (illegal) */
+				callp += p->p_p->ps_emul->e_nosys; /* (illegal) */
 			else
 				callp += code;
 			i = callp->sy_argsize / sizeof(register_t);
@@ -524,7 +524,7 @@ fault_common_no_miss:
 			break;
 		default:
 			if (code >= numsys)
-				callp += p->p_emul->e_nosys; /* (illegal) */
+				callp += p->p_p->ps_emul->e_nosys; /* (illegal) */
 			else
 				callp += code;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2012/12/31 06:46:14 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -528,8 +528,8 @@ syscall(struct proc *p, struct trapframe *tf)
 	opc = tf->tf_spc;
 	ocode = code = tf->tf_r0;
 
-	nsys = p->p_emul->e_nsysent;
-	callp = p->p_emul->e_sysent;
+	nsys = p->p_p->ps_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
 
 	params = (caddr_t)tf->tf_r15;
 
@@ -557,13 +557,13 @@ syscall(struct proc *p, struct trapframe *tf)
 		break;
 	}
 	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;		/* illegal */
+		callp += p->p_p->ps_emul->e_nosys;		/* illegal */
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef DIAGNOSTIC
 	if (argsize > sizeof args) {
-		callp += p->p_emul->e_nosys - code;
+		callp += p->p_p->ps_emul->e_nosys - code;
 		argsize = callp->sy_argsize;
 	}
 #endif

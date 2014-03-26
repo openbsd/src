@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_util.h,v 1.8 2014/01/15 05:31:51 deraadt Exp $	*/
+/*	$OpenBSD: compat_util.h,v 1.9 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: compat_util.h,v 1.1 1995/06/24 20:16:05 christos Exp $	*/
 
 /*
@@ -35,9 +35,9 @@
 
 #include <sys/exec.h>
 
-struct emul;
+struct proc;
 
-caddr_t stackgap_init(struct emul *);
+caddr_t stackgap_init(struct proc *);
 void    *stackgap_alloc(caddr_t *, size_t);
 
 int emul_find(struct proc *, caddr_t *, const char *, char *, char **, int);

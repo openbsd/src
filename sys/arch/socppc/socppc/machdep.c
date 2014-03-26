@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2014/03/23 15:28:10 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -927,11 +927,12 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->fixreg[3] = (int)sig;
 	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : 0;
 	tf->fixreg[5] = (int)&fp->sf_sc;
-	tf->srr0 = p->p_sigcode;
+	tf->srr0 = p->p_p->ps_sigcode;
 
 #if WHEN_WE_ONLY_FLUSH_DATA_WHEN_DOING_PMAP_ENTER
 	pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),tf->srr0, &pa);
-	syncicache(pa, (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
+	syncicache(pa, (p->p_p->ps_emul->e_esigcode -
+	    p->p_p->ps_emul->e_sigcode));
 #endif
 }
 

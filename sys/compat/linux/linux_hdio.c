@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.c,v 1.8 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_hdio.c,v 1.9 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_hdio.c,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	switch (com) {
 	case LINUX_HDIO_OBSOLETE_IDENTITY:
 	case LINUX_HDIO_GET_IDENTITY:
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		atap = stackgap_alloc(&sg, DEV_BSIZE);
 		if (atap == NULL) {
 			error = ENOMEM;

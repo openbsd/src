@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.69 2014/02/06 05:14:12 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.70 2014/03/26 05:23:42 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -549,8 +549,8 @@ syscall(code, framep)
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
 
-	callp = p->p_emul->e_sysent;
-	numsys = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	numsys = p->p_p->ps_emul->e_nsysent;
 
 	switch(code) {
 	case SYS_syscall:
@@ -570,7 +570,7 @@ syscall(code, framep)
 	if (code < numsys)
 		callp += code;
 	else
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {

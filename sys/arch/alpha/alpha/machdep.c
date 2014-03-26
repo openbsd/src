@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.151 2014/03/22 06:05:45 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.152 2014/03/26 05:23:42 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1524,7 +1524,7 @@ trash:
 	/*
 	 * Set up the registers to return to sigcode.
 	 */
-	frame->tf_regs[FRAME_PC] = p->p_sigcode;
+	frame->tf_regs[FRAME_PC] = p->p_p->ps_sigcode;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = (u_int64_t)sip;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;

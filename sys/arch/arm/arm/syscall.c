@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.15 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.16 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ swi_handler(trapframe_t *frame)
 	code = frame->tf_r12;
 
 	ap = &frame->tf_r0;
-	callp = p->p_emul->e_sysent;
+	callp = p->p_p->ps_emul->e_sysent;
 
 	switch (code) {	
 	case SYS_syscall:
@@ -126,8 +126,8 @@ swi_handler(trapframe_t *frame)
 		break;
 	}
 
-	if (code < 0 || code >= p->p_emul->e_nsysent) {
-		callp += p->p_emul->e_nosys;
+	if (code < 0 || code >= p->p_p->ps_emul->e_nsysent) {
+		callp += p->p_p->ps_emul->e_nosys;
 	} else {
 		callp += code;
 	}

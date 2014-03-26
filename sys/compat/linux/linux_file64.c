@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.8 2013/05/10 10:31:16 pirofti Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.9 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ linux_sys_fstat64(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 
 	st = stackgap_alloc(&sg, sizeof (struct stat));
 
@@ -159,7 +159,7 @@ linux_do_stat64(p, v, retval, dolstat)
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p);
 	st = stackgap_alloc(&sg, sizeof (struct stat));
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -221,7 +221,7 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct sys_truncate_args ta;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p);
 
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -321,7 +321,7 @@ linux_sys_fcntl64(p, v, retval)
 
 	switch (cmd) {
 	case LINUX_F_GETLK64:
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		if ((error = copyin(arg, &lfl, sizeof lfl)))
 			return error;
 		linux_to_bsd_flock64(&lfl, &bfl);
@@ -344,7 +344,7 @@ linux_sys_fcntl64(p, v, retval)
 		if ((error = copyin(arg, &lfl, sizeof lfl)))
 			return error;
 		linux_to_bsd_flock64(&lfl, &bfl);
-		sg = stackgap_init(p->p_emul);
+		sg = stackgap_init(p);
 		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
 		if ((error = copyout(&bfl, bfp, sizeof bfl)))
 			return error;

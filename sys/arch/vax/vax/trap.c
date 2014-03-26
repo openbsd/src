@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2013/11/24 22:08:25 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.49 2014/03/26 05:23:42 guenther Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -336,8 +336,8 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	uvmexp.syscalls++;
 
 	exptr = p->p_addr->u_pcb.framep = frame;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
+	callp = p->p_p->ps_emul->e_sysent;
+	nsys = p->p_p->ps_emul->e_nsysent;
 
 	if(frame->code == SYS___syscall){
 		int g = *(int *)(frame->ap);
@@ -348,7 +348,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	}
 
 	if(frame->code < 0 || frame->code >= nsys)
-		callp += p->p_emul->e_nosys;
+		callp += p->p_p->ps_emul->e_nosys;
 	else
 		callp += frame->code;
 

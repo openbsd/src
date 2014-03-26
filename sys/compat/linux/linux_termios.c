@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.16 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.17 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ linux_ioctl_termios(p, v, retval)
 			if (c == _POSIX_VDISABLE)
 				goto out;
 
-			sg = stackgap_init(p->p_emul);
+			sg = stackgap_init(p);
 			cp = (char *) stackgap_alloc(&sg, 1);
 			if ((error = copyout(&c, cp, 1)))
 				goto out;

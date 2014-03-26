@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.149 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.150 2014/03/26 05:23:42 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -456,7 +456,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	caddr = p->p_sigcode;
+	caddr = p->p_p->ps_sigcode;
 	tf->tf_global[1] = (int)catcher;
 	tf->tf_pc = caddr;
 	tf->tf_npc = caddr + 4;
