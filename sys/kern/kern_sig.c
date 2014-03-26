@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.161 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.162 2014/03/26 05:27:18 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -79,30 +79,32 @@ void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 struct timeout proc_stop_to;
 
-int cansignal(struct proc *, struct pcred *, struct proc *, int);
+int cansignal(struct process *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
 
 /*
- * Can process p, with pcred pc, send the signal signum to process q?
+ * Can process pr, send the signal signum to process qr?
  */
 int
-cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
+cansignal(struct process *pr, struct process *qr, int signum)
 {
+	struct pcred *pc = pr->ps_cred;
+
 	if (pc->pc_ucred->cr_uid == 0)
 		return (1);		/* root can always signal */
 
-	if (p == q)
+	if (pr == qr)
 		return (1);		/* process can always signal itself */
 
-	if (signum == SIGCONT && q->p_p->ps_session == p->p_p->ps_session)
+	if (signum == SIGCONT && qr->ps_session == pr->ps_session)
 		return (1);		/* SIGCONT in session */
 
 	/*
 	 * Using kill(), only certain signals can be sent to setugid
 	 * child processes
 	 */
-	if (q->p_p->ps_flags & PS_SUGID) {
+	if (qr->ps_flags & PS_SUGID) {
 		switch (signum) {
 		case 0:
 		case SIGKILL:
@@ -116,17 +118,17 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 		case SIGHUP:
 		case SIGUSR1:
 		case SIGUSR2:
-			if (pc->p_ruid == q->p_cred->p_ruid ||
-			    pc->pc_ucred->cr_uid == q->p_cred->p_ruid)
+			if (pc->p_ruid == qr->ps_cred->p_ruid ||
+			    pc->pc_ucred->cr_uid == qr->ps_cred->p_ruid)
 				return (1);
 		}
 		return (0);
 	}
 
-	if (pc->p_ruid == q->p_cred->p_ruid ||
-	    pc->p_ruid == q->p_cred->p_svuid ||
-	    pc->pc_ucred->cr_uid == q->p_cred->p_ruid ||
-	    pc->pc_ucred->cr_uid == q->p_cred->p_svuid)
+	if (pc->p_ruid == qr->ps_cred->p_ruid ||
+	    pc->p_ruid == qr->ps_cred->p_svuid ||
+	    pc->pc_ucred->cr_uid == qr->ps_cred->p_ruid ||
+	    pc->pc_ucred->cr_uid == qr->ps_cred->p_svuid)
 		return (1);
 	return (0);
 }
@@ -556,7 +558,6 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 		syscallarg(int) signum;
 	} */ *uap = v;
 	struct proc *p;
-	struct pcred *pc = cp->p_cred;
 	int pid = SCARG(uap, pid);
 	int signum = SCARG(uap, signum);
 
@@ -582,7 +583,7 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
 				return (ESRCH);
-			if (!cansignal(cp, pc, p, signum))
+			if (!cansignal(cp->p_p, p->p_p, signum))
 				return (EPERM);
 		}
 
@@ -611,7 +612,6 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 {
 	struct proc *p;
 	struct process *pr;
-	struct pcred *pc = cp->p_cred;
 	struct pgrp *pgrp;
 	int nfound = 0;
 
@@ -621,8 +621,8 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		 */
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			p = pr->ps_mainproc;
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    p == cp || !cansignal(cp, pc, p, signum))
+			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
+			    pr == cp->p_p || !cansignal(cp->p_p, pr, signum))
 				continue;
 			nfound++;
 			if (signum)
@@ -641,8 +641,8 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		}
 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist) {
 			p = pr->ps_mainproc;
-			if (p->p_pid <= 1 || p->p_flag & (P_SYSTEM|P_THREAD) ||
-			    !cansignal(cp, pc, p, signum))
+			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
+			    !cansignal(cp->p_p, pr, signum))
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
