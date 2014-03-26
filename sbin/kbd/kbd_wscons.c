@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.26 2012/07/13 10:15:19 shadchin Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.27 2014/03/26 05:22:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -51,7 +51,7 @@ char *kbtype_tab[] = {
 	"sun5",
 	"hil",
 	"gsc",
-	"domain"
+	"sgi"
 };
 enum {	SA_PCKBD,
 	SA_UKBD,
@@ -61,7 +61,7 @@ enum {	SA_PCKBD,
 	SA_SUN5KBD,
 	SA_HILKBD,
 	SA_GSCKBD,
-	SA_DOMAINKBD,
+	SA_SGIKBD,
 
 	SA_MAX
 };
@@ -76,7 +76,7 @@ struct nlist nl[] = {
 	{ "_sunkbd5_keydesctab" },
 	{ "_hilkbd_keydesctab" },
 	{ "_gsckbd_keydesctab" },
-	{ "_dnkbd_keydesctab" },
+	{ "_wssgi_keydesctab" },
 	{ NULL },
 };
 #endif /* NOKVM */
@@ -223,8 +223,8 @@ kbd_list(void)
 			case WSKBD_TYPE_GSC:
 				kbds[SA_GSCKBD]++;
 				break;
-			case WSKBD_TYPE_DOMAIN:
-				kbds[SA_DOMAINKBD]++;
+			case WSKBD_TYPE_SGI:
+				kbds[SA_SGIKBD]++;
 				break;
 			};
 			close(fd);
