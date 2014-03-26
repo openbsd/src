@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rt_timer_add.9,v 1.3 2014/03/21 11:24:11 jmc Exp $
+.\"     $OpenBSD: rt_timer_add.9,v 1.4 2014/03/26 14:50:30 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2014 $
+.Dd $Mdocdate: March 26 2014 $
 .Dt RT_TIMER_ADD 9
 .Os
 .Sh NAME
@@ -82,6 +82,15 @@ Remove all timeouts from the routing timer queue
 .Fa rtq ,
 execute their associated callback and destroy it.
 .El
+.Sh CONTEXT
+.Fn rt_timer_add ,
+.Fn rt_timer_remove_all ,
+.Fn rt_timer_queue_create ,
+.Fn rt_timer_queue_count ,
+.Fn rt_timer_queue_change ,
+and
+.Fn rt_timer_queue_destroy
+can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn rt_timer_add
 may fail with
