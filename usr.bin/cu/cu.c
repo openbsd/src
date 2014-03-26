@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.15 2013/11/20 20:55:09 deraadt Exp $ */
+/* $OpenBSD: cu.c,v 1.16 2014/03/26 13:00:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -41,6 +41,8 @@ FILE			*record_file;
 struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
+const char		*line_path = NULL;
+int			 line_speed = -1;
 int			 line_fd;
 struct termios		 line_tio;
 struct bufferevent	*line_ev;
@@ -58,11 +60,12 @@ void		stream_read(struct bufferevent *, void *);
 void		stream_error(struct bufferevent *, short, void *);
 void		line_read(struct bufferevent *, void *);
 void		line_error(struct bufferevent *, short, void *);
+void		try_remote(const char *, const char *);
 
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-l line] [-s speed | -speed]\n",
+	fprintf(stderr, "usage: %s [-l line] [-s speed | -speed] [host]\n",
 	    __progname);
 	exit(1);
 }
@@ -70,12 +73,12 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	const char	*line, *errstr;
-	char		*tmp;
-	int		 opt, speed, i;
+	const char	*errstr;
+	char		*tmp, *s;
+	int		 opt, i;
 
-	line = "/dev/cua00";
-	speed = 9600;
+	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
+		err(1, "tcgetattr");
 
 	/*
 	 * Convert obsolescent -### speed to modern -s### syntax which getopt()
@@ -94,10 +97,10 @@ main(int argc, char **argv)
 	while ((opt = getopt(argc, argv, "l:s:")) != -1) {
 		switch (opt) {
 		case 'l':
-			line = optarg;
+			line_path = optarg;
 			break;
 		case 's':
-			speed = strtonum(optarg, 0, UINT_MAX, &errstr);
+			line_speed = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "speed is %s: %s", errstr, optarg);
 			break;
@@ -107,27 +110,38 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 0)
+	if (argc != 0 && argc != 1)
 		usage();
 
-	if (strchr(line, '/') == NULL) {
-		if (asprintf(&tmp, "%s%s", _PATH_DEV, line) == -1)
+	s = getenv("REMOTE");
+	if (argc == 1) {
+		if (s != NULL && *s == '/')
+			try_remote(argv[0], s);
+		else
+			try_remote(argv[0], NULL);
+	} else if (s != NULL && *s != '/')
+		try_remote(s, NULL);
+
+	if (line_path == NULL)
+		line_path = "/dev/cua00";
+	if (line_speed == -1)
+		line_speed = 9600;
+
+	if (strchr(line_path, '/') == NULL) {
+		if (asprintf(&tmp, "%s%s", _PATH_DEV, line_path) == -1)
 			err(1, "asprintf");
-		line = tmp;
+		line_path = tmp;
 	}
 
-	line_fd = open(line, O_RDWR);
+	line_fd = open(line_path, O_RDWR);
 	if (line_fd < 0)
-		err(1, "open(\"%s\")", line);
+		err(1, "open(\"%s\")", line_path);
 	if (ioctl(line_fd, TIOCEXCL) != 0)
 		err(1, "ioctl(TIOCEXCL)");
 	if (tcgetattr(line_fd, &line_tio) != 0)
 		err(1, "tcgetattr");
-	if (set_line(speed) != 0)
+	if (set_line(line_speed) != 0)
 		err(1, "tcsetattr");
-
-	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
-		err(1, "tcgetattr");
 
 	event_init();
 
@@ -154,7 +168,7 @@ main(int argc, char **argv)
 	    NULL);
 	bufferevent_enable(line_ev, EV_READ|EV_WRITE);
 
-	printf("Connected (speed %d)\r\n", speed);
+	printf("Connected to %s (speed %d)\r\n", line_path, line_speed);
 	event_dispatch();
 
 	restore_termios();
@@ -289,6 +303,43 @@ void
 line_error(struct bufferevent *bufev, short what, void *data)
 {
 	event_loopexit(NULL);
+}
+
+void
+try_remote(const char *host, const char *path)
+{
+	const char	*paths[] = { "/etc/remote", NULL, NULL };
+	char		*cp, *s;
+	long		 l;
+	int		 error;
+
+	if (path != NULL) {
+		paths[0] = path;
+		paths[1] = "/etc/remote";
+	}
+
+	error = cgetent(&cp, (char**)paths, (char*)host);
+	if (error < 0) {
+		switch (error) {
+		case -1:
+			cu_errx(1, "unknown host %s", host);
+		case -2:
+			cu_errx(1, "can't open remote file");
+		case -3:
+			cu_errx(1, "loop in remote file");
+		default:
+			cu_errx(1, "unknown error in remote file");
+		}
+	}
+
+	if (line_path == NULL && cgetstr(cp, "dv", &s) >= 0)
+		line_path = s;
+
+	if (line_speed == -1 && cgetnum(cp, "br", &l) >= 0) {
+		if (l < 0 || l > INT_MAX)
+			cu_errx(1, "speed out of range");
+		line_speed = l;
+	}
 }
 
 /* Expands tildes in the file name. Based on code from ssh/misc.c. */
