@@ -1,6 +1,6 @@
-.\"	$OpenBSD: asr_resolver.3,v 1.1 2013/08/08 06:55:42 jmc Exp $
+.\"	$OpenBSD: asr_run.3,v 1.1 2014/03/26 10:57:19 eric Exp $
 .\"
-.\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
+.\" Copyright (c) 2012-2014, Eric Faurot <eric@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2013 $
-.Dt ASR_RESOLVER 3
+.Dd $Mdocdate: March 26 2014 $
+.Dt ASR_RUN 3
 .Os
 .Sh NAME
-.Nm asr_resolver ,
-.Nm asr_resolver_done ,
-.Nm asr_async_run ,
-.Nm asr_async_run_sync ,
-.Nm asr_async_abort ,
+.Nm asr_run ,
+.Nm asr_run_sync ,
+.Nm asr_abort ,
 .Nm res_send_async ,
 .Nm res_query_async ,
 .Nm res_search_async ,
@@ -37,38 +35,34 @@
 .Nd asynchronous resolver functions
 .Sh SYNOPSIS
 .In asr.h
-.Ft struct asr *
-.Fn asr_resolver "const char *conf"
-.Ft void
-.Fn asr_resolver_done "struct asr *asr"
 .Ft int
-.Fn asr_async_run "struct async *as" "struct async_res *ar"
+.Fn asr_run "struct asr_query *aq" "struct asr_result *ar"
 .Ft int
-.Fn asr_async_run_sync "struct async *as" "struct async_res *ar"
+.Fn asr_run_sync "struct asr_query *aq" "struct asr_result *ar"
 .Ft void
-.Fn asr_async_abort "struct async *as"
-.Ft struct async *
-.Fn res_send_async "const unsigned char *pkt" "int pktlen" "struct asr *asr"
-.Ft struct async *
-.Fn res_query_async "const char *name" "int class" "int type" "struct asr *asr"
-.Ft struct async *
-.Fn res_search_async "const char *name" "int class" "int type" "struct asr *asr"
-.Ft struct async *
-.Fn getrrsetbyname_async "const char *hostname" "unsigned int rdclass" "unsigned int rdtype" "unsigned int flags" "struct asr *asr"
-.Ft struct async *
-.Fn gethostbyname_async "const char *name" "struct asr *asr"
-.Ft struct async *
-.Fn gethostbyname2_async "const char *name" "int af" "struct asr *asr"
-.Ft struct async *
-.Fn gethostbyaddr_async "const void *addr" "socklen_t len" "int af" "struct asr *asr"
-.Ft struct async *
-.Fn getnetbyname_async "const char *name" "struct asr *asr"
-.Ft struct async *
-.Fn getnetbyaddr_async "in_addr_t net" "int type" "struct asr *asr"
-.Ft struct async *
-.Fn getaddrinfo_async "const char *hostname" "const char *servname" "const struct addrinfo *hints" "struct asr *asr"
-.Ft struct async *
-.Fn getnameinfo_async "const struct sockaddr *sa" "socklen_t salen" "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags" "struct asr *asr"
+.Fn asr_abort "struct asr_query *aq"
+.Ft struct asr_query *
+.Fn res_send_async "const unsigned char *pkt" "int pktlen" "void *asr"
+.Ft struct asr_query *
+.Fn res_query_async "const char *name" "int class" "int type" "void *asr"
+.Ft struct asr_query *
+.Fn res_search_async "const char *name" "int class" "int type" "void *asr"
+.Ft struct asr_query *
+.Fn getrrsetbyname_async "const char *hostname" "unsigned int rdclass" "unsigned int rdtype" "unsigned int flags" "void *asr"
+.Ft struct asr_query *
+.Fn gethostbyname_async "const char *name" "void *asr"
+.Ft struct asr_query *
+.Fn gethostbyname2_async "const char *name" "int af" "void *asr"
+.Ft struct asr_query *
+.Fn gethostbyaddr_async "const void *addr" "socklen_t len" "int af" "void *asr"
+.Ft struct asr_query *
+.Fn getnetbyname_async "const char *name" "void *asr"
+.Ft struct asr_query *
+.Fn getnetbyaddr_async "in_addr_t net" "int type" "void *asr"
+.Ft struct asr_query *
+.Fn getaddrinfo_async "const char *hostname" "const char *servname" "const struct addrinfo *hints" "void *asr"
+.Ft struct asr_query *
+.Fn getnameinfo_async "const struct sockaddr *sa" "socklen_t salen" "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags" "void *asr"
 .Sh DESCRIPTION
 The
 .Nm asr
@@ -82,7 +76,8 @@ All async requests are made against an
 .Nm asr
 context which basically defines a list of sources to query and a
 strategy to do so.
-The user creates a query through one of the dedicated functions.
+The user creates a query through one of the dedicated functions, and
+gets a handle representing the internal query.
 A query is a state-machine that can be run to try to fulfill a
 particular request.
 This is done by calling in a generic API that performs the state
@@ -90,79 +85,44 @@ transitions until it needs to give the control back to the user,
 either because a result is available, or because the next transition
 implies a blocking call (a file descriptor needs to be read from or
 written to).
-The user is responsible for dealing with the situation (fetch the result,
-or wait until the fd conditions are met), and call back into the resolving
-machinery when it is ready to proceed.
-.Pp
-.Fn asr_resolver
-is the function used to create a new resolver context.
-The
-.Fa conf
-argument is a path to the resolver configuration file
-as described in
-.Xr resolv.conf 5 .
-If NULL, the default
-.Pa /etc/resolv.conf
-file is used.
-The context tracks file changes to automatically update its configuration
-if needed, replacing the current setup if a valid one can be reloaded from
-the file.
-If the configuration file cannot be loaded at context creation time, it falls
-back to:
-.Bd -literal -offset indent
-lookup file
-.Ed
-.Pp
-If the first character of the
-.Fa conf
-string is a '!', the configuration is read from the rest of the string rather
-than loaded from a file.
-No further update occurs in this case.
-.Pp
-.Fn asr_resolver_done
-is used to discard the
-.Fa asr
-context when it is not used anymore.
-Once called, that context is invalidated and cannot be used to create new
-queries.
-Internally, the context is refcounted, so that existing queries made against
-it will be able to complete safely.
-All relevant resources are effectively freed when all such queries are cleared.
+The user is responsible for dealing with the situation: either get
+the result, or wait until the fd conditions are met, and then call
+back into the resolving machinery when it is ready to proceed.
 .Pp
 The
-.Fn asr_async_run
+.Fn asr_run
 function drives the resolving process.
-It runs the
-.Fa as
-asynchronous query until an answer is available, or until it cannot continue
+It runs the asynchronous query represented by the
+.Fa aq
+handle until a result is available, or until it cannot continue
 without blocking.
 The results are returned to the user through the
 .Fa ar
 parameter, which must be a valid pointer to user allocated memory.
 .Fa ar
 is defined as:
-.Bd -literal -offset indent
-struct async_res {
-	int	 ar_cond;
-	int	 ar_fd;
-	int	 ar_timeout;
+.Bd -literal
+struct asr_result {
 
+	/* Fields set if the query is not done yet (asr_run returns 0) */
+	int	 ar_cond;	/* ASR_WANT_READ or ASR_WANT_WRITE */
+	int	 ar_fd;		/* the fd waiting for io condition */
+	int	 ar_timeout;	/* time to wait for in milliseconds */
+
+	/* Error fields.  Depends on the query type. */
 	int	 ar_errno;
 	int	 ar_h_errno;
 	int	 ar_gai_errno;
 	int	 ar_rrset_errno;
 
-	int	 ar_count;
+	/* Result for res_*_async() calls */
+	int	 ar_count;	/* number of answers in the dns reply */
+	int	 ar_rcode;	/* response code in the dns reply */
+	void	*ar_data;	/* raw reply packet (must be freed) */
+	int	 ar_datalen;	/* reply packet length */
+	struct sockaddr_storage ar_ns; /* nameserver that responded */
 
-	int	 ar_rcode;
-	void	*ar_data;
-	int	 ar_datalen;
-	union {
-		struct sockaddr		sa;
-		struct sockaddr_in	sain;
-		struct sockaddr_in6	sain6;
-	}	 ar_sa;
-
+	/* Result for other calls. Must be freed properly. */
 	struct addrinfo	 *ar_addrinfo;
 	struct rrsetinfo *ar_rrsetinfo;
 	struct hostent	 *ar_hostent;
@@ -171,8 +131,8 @@ struct async_res {
 .Ed
 .Pp
 The function returns one of the following values:
-.Bl -tag -width "ASYNC_YIELD " -offset indent
-.It ASYNC_COND
+.Bl -tag -width "0 " -offset indent
+.It 0
 The query cannot be processed further until a specific condition on a
 file descriptor becomes true.
 The following members of the
@@ -181,57 +141,47 @@ structure are filled:
 .Pp
 .Bl -tag -width "ar_timeout " -compact
 .It Fa ar_cond
-One of ASYNC_READ or ASYNC_WRITE.
+one of ASR_WANT_READ or ASR_WANT_WRITE,
 .It Fa ar_fd
-The file descriptor waiting for an IO operation.
+the file descriptor waiting for an IO operation,
 .It Fa ar_timeout
-The timeout, expressed in milliseconds.
+the amount of time to wait for in milliseconds.
 .El
 .Pp
 The caller is expected to call
-.Fn asr_async_run
+.Fn asr_run
 again once the condition holds or the timeout expires.
-.It ASYNC_DONE
+.It 1
 The query is completed.
 The members relevant to the actual async query type are set accordingly,
 including error conditions.
-In any case, the query is cleared and its address is invalidated.
-.It ASR_YIELD
-A partial result is available.
-This code is used for async queries that behave as iterators over the result
-set.
-The query-specific members of
-.Fa ar
-are set accordingly and the resolving process can be resumed by calling
-.Fn asr_async_run .
+In any case, the query is cleared and its handle is invalidated.
 .El
 .Pp
 Note that although the query itself may fail (the error being properly reported
 in the
 .Fa ar
 structure), the
-.Fn asr_async_run
+.Fn asr_run
 function itself cannot fail and it always preserves errno.
 .Pp
 The
-.Fn asr_async_run_sync
+.Fn asr_run_sync
 function is a wrapper around
-.Fn asr_async_run
+.Fn asr_run
 that handles the read/write conditions, thus falling back to a blocking
 interface.
-It only returns partial and complete results through ASYNC_YIELD and ASYNC_DONE
-respectively.
+It only returns 1.
 It also preserves errno.
 .Pp
 The
-.Fn asr_async_abort
+.Fn asr_abort
 function clears a running query.
-It can be called after a partial result has been retrieved or when the query
-is waiting on a file descriptor.
+It can be called when the query is waiting on a file descriptor.
 Note that a completed query is already cleared when
-.Fn asr_async_run
+.Fn asr_run
 returns, so
-.Fn asr_async_abort
+.Fn asr_abort
 must not be called in this case.
 .Pp
 The remaining functions are used to initiate different kinds of query
@@ -239,16 +189,16 @@ on the
 .Fa asr
 resolver context.
 The specific operational details for each of them are described below.
-All functions return NULL if they could not allocate the necessary resources
-to initiate the query.
-All other errors (especially invalid parameters)
-are reported when calling
-.Fn asr_async_run .
+All functions return a handle to an internal query, or NULL if they could
+not allocate the necessary resources to initiate the query.
+All other errors (especially invalid parameters) are reported when calling
+.Fn asr_run .
 They usually have the same interface as an existing resolver function, with
 an additional
 .Ar asr
-contex argument, which specifies the context to use for this request.
-If NULL, the default thread-local context is used.
+argument, which specifies the context to use for this request.
+For now, the argument must always be NULL, which will use the default
+context for the current thread.
 .Pp
 The
 .Fn res_send_async ,
@@ -262,8 +212,8 @@ The return value is found upon completion in the
 .Fa ar_datalen
 member of the response structure.
 In addition, the
-.Fa ar_sa
-union contains the address of the DNS server that sent the response,
+.Fa ar_ns
+structure contains the address of the DNS server that sent the response,
 .Fa ar_rcode
 contains the code returned by the server in the DNS response packet, and
 .Fa ar_count
@@ -342,9 +292,6 @@ On success, the
 member points to a newly allocated list of addrinfo.
 This list must be freed with
 .Xr freeaddrinfo 3 .
-The
-.Fa ar_count
-contains the number of elements in the list.
 .Sh WORKING WITH THREADS
 This implementation of the asynchronous resolver interface is thread-safe
 and lock-free internally, but the following restriction applies:
@@ -356,9 +303,6 @@ that context.
 It is generally not a problem since the main point of the asynchronous
 resolver is to multiplex queries within a single thread of control,
 so sharing a resolver among threads is not useful.
-.Pp
-Note that this restriction only applies to resolver contexts explicitly
-created by the caller, as a thread-local context is used by default.
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
 .Xr gethostbyname 3 ,
