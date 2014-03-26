@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.37 2014/03/11 07:50:49 jasper Exp $ */
+/*	$OpenBSD: exception.S,v 1.38 2014/03/26 19:38:18 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,72 +56,88 @@
 	.text
 
 k_exception_table:
-	PTR_VAL	k_intr
+	PTR_VAL	k_intr			/* T_INT */
+	PTR_VAL	k_general		/* T_TLB_MOD */
+	PTR_VAL	k_tlb_inv		/* T_TLB_LD_MISS */
+	PTR_VAL	k_tlb_inv		/* T_TLB_ST_MISS */
+	PTR_VAL	k_general		/* T_ADDR_ERR_LD */
+	PTR_VAL	k_general		/* T_ADDR_ERR_ST */
+	PTR_VAL	k_general		/* T_BUS_ERR_IFETCH */
+	PTR_VAL	k_general		/* T_BUS_ERR_LD_ST */
+	PTR_VAL	k_general		/* T_SYSCALL */
+	PTR_VAL	k_general		/* T_BREAK */
+	PTR_VAL	k_general		/* T_RES_INST */
+	PTR_VAL	k_general		/* T_COP_UNUSABLE */
+	PTR_VAL	k_general		/* T_OVFLOW */
+	PTR_VAL	k_general		/* T_TRAP */
+#ifdef CPU_R4000
+	PTR_VAL	vcei			/* T_VCEI */
+#else
+	PTR_VAL	k_general		/* T_VCEI */
+#endif
+	PTR_VAL	k_general		/* T_FPE */
+	PTR_VAL	k_general		/* T_IWATCH */
 	PTR_VAL	k_general
-	PTR_VAL	k_tlb_inv
-	PTR_VAL	k_tlb_inv
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
-	PTR_VAL	k_general
+	PTR_VAL	k_general		/* T_C2E */
 	PTR_VAL	k_general
 	PTR_VAL	k_general
 	PTR_VAL	k_general
+	PTR_VAL	k_general		/* T_MDMX */
+	PTR_VAL	k_general		/* T_DWATCH */
+	PTR_VAL	k_general		/* T_MCHECK */
 	PTR_VAL	k_general
 	PTR_VAL	k_general
 	PTR_VAL	k_general
 	PTR_VAL	k_general
+	PTR_VAL	k_general
+	PTR_VAL	k_general		/* T_CACHEERR */
+#ifdef CPU_R4000
+	PTR_VAL	vced			/* T_VCED */
+#else
+	PTR_VAL	k_general		/* T_VCED */
+#endif
 
 u_exception_table:
-	PTR_VAL	u_intr
+	PTR_VAL	u_intr			/* T_INT */
+	PTR_VAL	u_general		/* T_TLB_MOD */
+	PTR_VAL	u_general		/* T_TLB_LD_MISS */
+	PTR_VAL	u_general		/* T_TLB_ST_MISS */
+	PTR_VAL	u_general		/* T_ADDR_ERR_LD */
+	PTR_VAL	u_general		/* T_ADDR_ERR_ST */
+	PTR_VAL	u_general		/* T_BUS_ERR_IFETCH */
+	PTR_VAL	u_general		/* T_BUS_ERR_LD_ST */
+	PTR_VAL	u_general		/* T_SYSCALL */
+	PTR_VAL	u_general		/* T_BREAK */
+	PTR_VAL	u_general		/* T_RES_INST */
+	PTR_VAL	u_general		/* T_COP_UNUSABLE */
+	PTR_VAL	u_general		/* T_OVFLOW */
+	PTR_VAL	u_general		/* T_TRAP */
+#ifdef CPU_R4000
+	PTR_VAL	vcei			/* T_VCEI */
+#else
+	PTR_VAL	u_general		/* T_VCEI */
+#endif
+	PTR_VAL	u_general		/* T_FPE */
+	PTR_VAL	u_general		/* T_IWATCH */
+	PTR_VAL	u_general
+	PTR_VAL	u_general		/* T_C2E */
+	PTR_VAL	u_general
+	PTR_VAL	u_general
+	PTR_VAL	u_general
+	PTR_VAL	u_general		/* T_MDMX */
+	PTR_VAL	u_general		/* T_DWATCH */
+	PTR_VAL	u_general		/* T_MCHECK */
 	PTR_VAL	u_general
 	PTR_VAL	u_general
 	PTR_VAL	u_general
 	PTR_VAL	u_general
 	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
-	PTR_VAL	u_general
+	PTR_VAL	u_general		/* T_CACHEERR */
+#ifdef CPU_R4000
+	PTR_VAL	vced			/* T_VCED */
+#else
+	PTR_VAL	u_general		/* T_VCED */
+#endif
 
 	.set	noreorder		# Noreorder is default style!
 
@@ -253,6 +269,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 #ifdef PERFCNTRS
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do perf save.
+	nop
 
 	mfc0	v0, COP_0_PC_CTRL
 	PTR_L	t0, curproc
@@ -405,6 +422,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 #ifdef PERFCNTRS
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do perf save.
+	nop
 
 	mfc0	v0, COP_0_PC_CTRL
 	PTR_L	t0, CI_CURPROC(k1)
@@ -488,3 +506,27 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	ERET
 	.set	at
 END(u_general)
+
+#ifdef CPU_R4000
+LEAF(vced, 0)
+	.set	noat
+	dmfc0	k0, COP_0_BAD_VADDR
+	ori	k0, k0, 3		# need to align badvaddr...
+	xori	k0, k0, 3		# ...to a word boundary.
+	cache	0x17, 0(k0)		# HitWBInvalidate_S
+	cache	0x11, 0(k0)		# HitWBInvalidate_D
+	LI	k0, 0
+	ERET
+	.set	at
+END(vced)
+
+LEAF(vcei, 0)
+	.set	noat
+	dmfc0	k0, COP_0_BAD_VADDR
+	cache	0x17, 0(k0)		# HitWBInvalidate_S
+	cache	0x10, 0(k0)		# HitInvalidate_I
+	LI	k0, 0
+	ERET
+	.set	at
+END(vcei)
+#endif

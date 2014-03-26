@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.90 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.91 2014/03/26 19:38:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -787,34 +787,6 @@ fault_common_no_miss:
 		}
 		goto err;
 
-#ifdef CPU_R4000
-	case T_VCEI:
-	case T_VCEI+T_USER:
-	    {
-		vaddr_t va = trapframe->badvaddr;
-#ifdef DEBUG
-		printf("VCEI trap, badvaddr %p\n", trapframe->badvaddr);
-#endif
-		/* HitWBInvalidate_S */
-		__asm__ __volatile__ ("cache 0x17, 0(%0)" :: "r"(va));
-		/* HitInvalidate_I */
-		__asm__ __volatile__ ("cache 0x10, 0(%0)" :: "r"(va));
-	    }
-		return;
-	case T_VCED:
-	case T_VCED+T_USER:
-	    {
-		vaddr_t va = trapframe->badvaddr & ~3;
-#ifdef DEBUG
-		printf("VCED trap, badvaddr %p\n", trapframe->badvaddr);
-#endif
-		/* HitWBInvalidate_S */
-		__asm__ __volatile__ ("cache 0x17, 0(%0)" :: "r"(va));
-		/* HitInvalidate_D */
-		__asm__ __volatile__ ("cache 0x11, 0(%0)" :: "r"(va));
-	    }
-		return;
-#endif	/* CPU_R4000 */
 	default:
 	err:
 		disableintr();
@@ -918,7 +890,8 @@ trapDump(const char *msg)
 			(*pr)("%s: PC %p CR 0x%08lx SR 0x%08lx\n",
 			    trap_type[(ptrp->cause & CR_EXC_CODE) >>
 			      CR_EXC_CODE_SHIFT],
-			    ptrp->pc, ptrp->cause, ptrp->status);
+			    ptrp->pc, ptrp->cause & 0xffffffff,
+			    ptrp->status & 0xffffffff);
 #endif
 			(*pr)(" RA %p SP %p ADR %p\n",
 			    ptrp->ra, ptrp->sp, ptrp->vadr);
