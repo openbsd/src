@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.85 2013/12/19 19:09:27 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.86 2014/03/26 22:02:06 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 19 2013 $
+.Dd $Mdocdate: March 26 2014 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -867,11 +867,9 @@ Switch to buffer in another window.
 .It toggle-read-only
 Toggle the read-only flag on the current buffer.
 .It transpose-chars
-Transpose the two characters on either side of dot.
-If dot is at the end of the line, transpose the two characters before it.
-Return with an error if dot is at the beginning of line;
-it seems to be a bit pointless to
-make this work.
+Transpose the two characters in front of and under dot,
+then move forward one character.
+Treat new-line characters the same as any other.
 .It undo
 Undo the most recent action.
 If invoked again without an intervening command,

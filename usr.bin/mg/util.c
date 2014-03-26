@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2013/03/25 11:41:44 florian Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2014/03/26 22:02:06 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -103,11 +103,9 @@ getcolpos(struct mgwin *wp)
 }
 
 /*
- * Twiddle the two characters on either side of dot.  If dot is at the end
- * of the line twiddle the two characters before it.  Return with an error
- * if dot is at the beginning of line; it seems to be a bit pointless to
- * make this work.  This fixes up a very common typo with a single stroke.
- * Normally bound to "C-T".  This always works within a line, so "WFEDIT"
+ * Twiddle the two characters in front of and under dot, then move forward
+ * one character.  Treat new-line characters the same as any other.
+ * Normally bound to "C-t".  This always works within a line, so "WFEDIT"
  * is good enough.
  */
 /* ARGSUSED */
@@ -116,26 +114,40 @@ twiddle(int f, int n)
 {
 	struct line	*dotp;
 	int	 doto, cr;
-	int	 fudge = FALSE;
 
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
-	if (doto == llength(dotp)) {
-		if (--doto <= 0)
-			return (FALSE);
-		(void)backchar(FFRAND, 1);
-		fudge = TRUE;
-	} else {
-		if (doto == 0)
-			return (FALSE);
+
+	/* Don't twiddle if the dot is on the first char of buffer */
+	if (doto == 0 && lback(dotp) == curbp->b_headp) {
+		dobeep();
+		ewprintf("Beginning of buffer");
+		return(FALSE);
+	}
+	/* Don't twiddle if the dot is on the last char of buffer */
+	if (doto == llength(dotp) && lforw(dotp) == curbp->b_headp) {
+		dobeep();
+		return(FALSE);
 	}
 	undo_boundary_enable(FFRAND, 0);
-	cr = lgetc(dotp, doto - 1);
-	(void)backdel(FFRAND, 1);
-	(void)forwchar(FFRAND, 1);
-	linsert(1, cr);
-	if (fudge != TRUE)
-		(void)backchar(FFRAND, 1);
+	if (doto == 0 && doto == llength(dotp)) { /* only '\n' on this line */
+		(void)forwline(FFRAND, 1);
+		curwp->w_doto = 0;
+	} else {
+		if (doto == 0) { /* 1st twiddle is on 1st character of a line */
+			cr = lgetc(dotp, doto);
+			(void)backdel(FFRAND, 1);
+			(void)forwchar(FFRAND, 1);
+			lnewline();
+			linsert(1, cr);
+			(void)backdel(FFRAND, 1);
+		} else {	/* twiddle is elsewhere in line */	
+			cr = lgetc(dotp, doto - 1);
+			(void)backdel(FFRAND, 1);
+			(void)forwchar(FFRAND, 1);
+			linsert(1, cr);
+		}
+	}
 	undo_boundary_enable(FFRAND, 1);
 	lchange(WFEDIT);
 	return (TRUE);
