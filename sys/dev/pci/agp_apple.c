@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.3 2014/03/17 22:01:56 kettenis Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.4 2014/03/26 14:41:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -17,11 +17,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

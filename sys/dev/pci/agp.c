@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.42 2014/03/17 22:01:56 kettenis Exp $ */
+/* $OpenBSD: agp.c,v 1.43 2014/03/26 14:41:41 mpi Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -28,9 +28,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/rwlock.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

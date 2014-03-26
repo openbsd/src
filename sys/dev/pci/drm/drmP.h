@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.173 2014/03/25 17:44:39 mpi Exp $ */
+/* $OpenBSD: drmP.h,v 1.174 2014/03/26 14:41:41 mpi Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -52,6 +52,7 @@
 #include <sys/stdint.h>
 #include <sys/memrange.h>
 #include <sys/extent.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>

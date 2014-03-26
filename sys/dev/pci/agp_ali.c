@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.13 2014/03/17 22:01:56 kettenis Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.14 2014/03/26 14:41:41 mpi Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -31,12 +31,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

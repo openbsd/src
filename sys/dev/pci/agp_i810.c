@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.84 2014/03/17 22:01:56 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.85 2014/03/26 14:41:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -31,10 +31,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

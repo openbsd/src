@@ -27,10 +27,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.15 2013/12/09 19:52:11 kettenis Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.16 2014/03/26 14:41:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -43,8 +43,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
