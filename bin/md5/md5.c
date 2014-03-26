@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.74 2014/03/20 22:03:56 tedu Exp $	*/
+/*	$OpenBSD: md5.c,v 1.75 2014/03/26 03:16:39 lteo Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -330,7 +330,7 @@ main(int argc, char **argv)
 		}
 		if (hf->name == NULL)
 			hf = &functions[0];	/* default to cksum */
-		hash_insert(&hl, hf, bflag);
+		hash_insert(&hl, hf, (hf->base64 == -1 ? 0 : bflag));
 	}
 
 	if (rflag || qflag) {
