@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.73 2014/03/25 19:50:17 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.74 2014/03/26 18:14:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -27,14 +27,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "asr.h"
 #include "smtpd.h"
 #include "log.h"
 

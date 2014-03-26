@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2014/02/04 15:44:06 eric Exp $
+#	$OpenBSD: Makefile,v 1.70 2014/03/26 18:14:22 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -39,7 +39,7 @@ BINDIR=		/usr/sbin
 
 LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz
 DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ}
-CFLAGS+=	-g3 -ggdb -I${.CURDIR}/.. -I${.CURDIR}/../../../lib/libc/asr
+CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
