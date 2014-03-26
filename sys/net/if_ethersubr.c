@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.162 2014/02/17 14:48:48 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.163 2014/03/26 10:46:53 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -228,14 +228,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
-		struct ifaddr *ifa;
-
-		/* loop back if this is going to the carp interface */
-		if (dst != NULL && LINK_STATE_IS_UP(ifp0->if_link_state) &&
-		    (ifa = ifa_ifwithaddr(dst, ifp->if_rdomain)) != NULL &&
-		    ifa->ifa_ifp == ifp0)
-			return (looutput(ifp0, m, dst, rt0));
-
 		ifp = ifp->if_carpdev;
 		ac = (struct arpcom *)ifp;
 
