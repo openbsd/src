@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.80 2014/03/26 20:53:31 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.81 2014/03/26 21:39:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -111,6 +111,7 @@ struct	mlink {
 	char		*fsec;    /* section from file name suffix */
 	struct mlink	*next;    /* singly linked list */
 	struct mpage	*mpage;   /* parent */
+	int		 gzip;	  /* filename has a .gz suffix */
 };
 
 enum	stmt {
@@ -143,7 +144,7 @@ static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
 static	void	 mpages_free(void);
 static	void	 mpages_merge(struct mchars *, struct mparse *);
-static	void	 parse_cat(struct mpage *);
+static	void	 parse_cat(struct mpage *, int);
 static	void	 parse_man(struct mpage *, const struct man_node *);
 static	void	 parse_mdoc(struct mpage *, const struct mdoc_node *);
 static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_node *);
@@ -528,7 +529,7 @@ treescan(void)
 	FTS		*f;
 	FTSENT		*ff;
 	struct mlink	*mlink;
-	int		 dform;
+	int		 dform, gzip;
 	char		*dsec, *arch, *fsec, *cp;
 	const char	*path;
 	const char	*argv[2];
@@ -563,8 +564,18 @@ treescan(void)
 				if (warnings)
 					say(path, "Extraneous file");
 				continue;
-			} else if (NULL == (fsec =
-					strrchr(ff->fts_name, '.'))) {
+			}
+			gzip = 0;
+			fsec = NULL;
+			while (NULL == fsec) {
+				fsec = strrchr(ff->fts_name, '.');
+				if (NULL == fsec || strcmp(fsec+1, "gz"))
+					break;
+				gzip = 1;
+				*fsec = '\0';
+				fsec = NULL;
+			}
+			if (NULL == fsec) {
 				if ( ! use_all) {
 					if (warnings)
 						say(path,
@@ -574,10 +585,6 @@ treescan(void)
 			} else if (0 == strcmp(++fsec, "html")) {
 				if (warnings)
 					say(path, "Skip html");
-				continue;
-			} else if (0 == strcmp(fsec, "gz")) {
-				if (warnings)
-					say(path, "Skip gz");
 				continue;
 			} else if (0 == strcmp(fsec, "ps")) {
 				if (warnings)
@@ -603,6 +610,7 @@ treescan(void)
 			mlink->arch = arch;
 			mlink->name = ff->fts_name;
 			mlink->fsec = fsec;
+			mlink->gzip = gzip;
 			mlink_add(mlink, ff->fts_statp);
 			continue;
 		} else if (FTS_D != ff->fts_info &&
@@ -956,13 +964,15 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 {
 	char			 any[] = "any";
 	struct ohash_info	 str_info;
+	int			 fd[2];
 	struct mpage		*mpage, *mpage_dest;
 	struct mlink		*mlink, *mlink_dest;
 	struct mdoc		*mdoc;
 	struct man		*man;
 	char			*sodest;
 	char			*cp;
-	int			 match;
+	pid_t			 child_pid;
+	int			 match, status;
 	unsigned int		 pslot;
 	enum mandoclevel	 lvl;
 
@@ -986,6 +996,41 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		mparse_reset(mp);
 		mdoc = NULL;
 		man = NULL;
+		sodest = NULL;
+		child_pid = 0;
+		fd[0] = -1;
+		fd[1] = -1;
+
+		if (mpage->mlinks->gzip) {
+			if (-1 == pipe(fd)) {
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				say(mpage->mlinks->file, "&pipe gunzip");
+				goto nextpage;
+			}
+			switch (child_pid = fork()) {
+			case (-1):
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				say(mpage->mlinks->file, "&fork gunzip");
+				child_pid = 0;
+				close(fd[1]);
+				close(fd[0]);
+				goto nextpage;
+			case (0):
+				close(fd[0]);
+				if (-1 == dup2(fd[1], STDOUT_FILENO)) {
+					say(mpage->mlinks->file,
+					    "&dup gunzip");
+					exit(1);
+				}
+				execlp("gunzip", "gunzip", "-c",
+				    mpage->mlinks->file, NULL);
+				say(mpage->mlinks->file, "&exec gunzip");
+				exit(1);
+			default:
+				close(fd[1]);
+				break;
+			}
+		}
 
 		/*
 		 * Try interpreting the file as mdoc(7) or man(7)
@@ -994,7 +1039,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		 */
 		if (FORM_CAT != mpage->mlinks->dform ||
 		    FORM_CAT != mpage->mlinks->fform) {
-			lvl = mparse_readfd(mp, -1, mpage->mlinks->file);
+			lvl = mparse_readfd(mp, fd[0], mpage->mlinks->file);
 			if (lvl < MANDOCLEVEL_FATAL)
 				mparse_result(mp, &mdoc, &man, &sodest);
 		}
@@ -1034,9 +1079,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 				mlink_dest->next = mpage->mlinks;
 				mpage->mlinks = NULL;
 			}
-			ohash_delete(&strings);
-			mpage = ohash_next(&mpages, &pslot);
-			continue;
+			goto nextpage;
 		} else if (NULL != mdoc) {
 			mpage->form = FORM_SRC;
 			mpage->sec =
@@ -1096,9 +1139,27 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 		} else if (NULL != man)
 			parse_man(mpage, man_node(man));
 		else
-			parse_cat(mpage);
+			parse_cat(mpage, fd[0]);
 
 		dbadd(mpage, mc);
+
+nextpage:
+		if (child_pid) {
+			if (-1 == waitpid(child_pid, &status, 0)) {
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				say(mpage->mlinks->file, "&wait gunzip");
+			} else if (WIFSIGNALED(status)) {
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				say(mpage->mlinks->file,
+				    "gunzip died from signal %d",
+				    WTERMSIG(status));
+			} else if (WEXITSTATUS(status)) {
+				exitcode = (int)MANDOCLEVEL_SYSERR;
+				say(mpage->mlinks->file,
+				    "gunzip failed with code %d",
+				    WEXITSTATUS(status));
+			}
+		}
 		ohash_delete(&strings);
 		mpage = ohash_next(&mpages, &pslot);
 	}
@@ -1108,13 +1169,16 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 }
 
 static void
-parse_cat(struct mpage *mpage)
+parse_cat(struct mpage *mpage, int fd)
 {
 	FILE		*stream;
 	char		*line, *p, *title;
 	size_t		 len, plen, titlesz;
 
-	if (NULL == (stream = fopen(mpage->mlinks->file, "r"))) {
+	stream = (-1 == fd) ?
+	    fopen(mpage->mlinks->file, "r") :
+	    fdopen(fd, "r");
+	if (NULL == stream) {
 		if (warnings)
 			say(mpage->mlinks->file, "&fopen");
 		return;
