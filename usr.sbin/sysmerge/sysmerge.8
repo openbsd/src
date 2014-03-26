@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.44 2014/01/28 09:42:42 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.45 2014/03/26 23:03:59 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2014 $
+.Dd $Mdocdate: March 26 2014 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -106,7 +106,6 @@ It automatically installs missing files and binaries,
 and updates files differing only by CVS Id.
 Files whose reference sources have matching CVS Id are skipped from comparison.
 .Pa /etc/fbtab ,
-.Pa /etc/login.conf ,
 .Pa /etc/sysctl.conf ,
 and
 .Pa /etc/ttys
