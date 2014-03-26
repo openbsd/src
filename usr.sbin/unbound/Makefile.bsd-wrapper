@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2014/03/21 00:23:15 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2014/03/26 21:36:40 sthen Exp $
 
 .include <bsd.own.mk>
 
@@ -56,10 +56,6 @@ config: .FORCE
 		${XCFLAGS} \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
-	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
-		cp ${.CURDIR}/doc/unbound-host.1 \
-			${.OBJDIR}/doc/unbound-host.1; \
-	fi
 
 ${.OBJDIR}/config.status:
 	cd ${.OBJDIR} && \
@@ -67,10 +63,6 @@ ${.OBJDIR}/config.status:
 		${XCFLAGS} \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		sh ${.CURDIR}/configure ${CONFIGURE_OPTS_UNBOUND}
-	if [ ! -e ${.OBJDIR}/doc/unbound-host.1 ]; then \
-		cp ${.CURDIR}/doc/unbound-host.1 \
-			${.OBJDIR}/doc/unbound-host.1; \
-	fi
 
 .ifdef NOMAN
 maninstall:
