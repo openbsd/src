@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.350 2014/03/24 20:40:03 sthen Exp $
+#	$OpenBSD: Makefile,v 1.351 2014/03/26 20:17:00 tedu Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -36,6 +36,7 @@ BIN1=	changelist csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	netstart networks newsyslog.conf printcap protocols \
 	rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc services shells syslog.conf weekly \
+	etc.${MACHINE}/login.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf mixerctl.conf
 
@@ -104,10 +105,6 @@ distribution-etc-root-var: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
 	    chmod 644 ${DESTDIR}/etc/fbtab
-	awk -f mklogin.conf `test -f etc.${MACHINE}/login.conf.overrides && echo etc.${MACHINE}/login.conf.overrides` < login.conf.in > \
-	    ${DESTDIR}/etc/login.conf && \
-	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/login.conf && \
-	    chmod 644 ${DESTDIR}/etc/login.conf
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hosts.equiv ${DESTDIR}/etc
 	${INSTALL} -c -o root -g crontab -m 600 crontab ${DESTDIR}/var/cron/tabs/root
