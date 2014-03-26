@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.420 2014/02/26 21:53:37 markus Exp $ */
+/* $OpenBSD: sshd.c,v 1.421 2014/03/26 19:58:37 tedu Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -105,13 +105,6 @@
 #include "roaming.h"
 #include "ssh-sandbox.h"
 #include "version.h"
-
-#ifdef LIBWRAP
-#include <tcpd.h>
-#include <syslog.h>
-int allow_severity = LOG_INFO;
-int deny_severity = LOG_WARNING;
-#endif /* LIBWRAP */
 
 #ifndef O_NOCTTY
 #define O_NOCTTY	0
@@ -1918,23 +1911,6 @@ main(int ac, char **av)
 	 * the socket goes away.
 	 */
 	remote_ip = get_remote_ipaddr();
-
-#ifdef LIBWRAP
-	/* Check whether logins are denied from this host. */
-	if (packet_connection_is_on_socket()) {
-		struct request_info req;
-
-		request_init(&req, RQ_DAEMON, __progname, RQ_FILE, sock_in, 0);
-		fromhost(&req);
-
-		if (!hosts_access(&req)) {
-			debug("Connection refused by tcp wrapper");
-			refuse(&req);
-			/* NOTREACHED */
-			fatal("libwrap refuse returns");
-		}
-	}
-#endif /* LIBWRAP */
 
 	/* Log the connection. */
 	verbose("Connection from %s port %d on %s port %d",
