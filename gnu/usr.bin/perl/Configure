@@ -22400,8 +22400,8 @@ find_extensions='
 		    fi;
 		fi;
 	    else
-		echo " $known_extensions $nonxs_extensions" > $$.tmp;
-		if $contains " $this_ext " $$.tmp; then
+		echo " $known_extensions $nonxs_extensions" > $tdir/$$.tmp;
+		if $contains " $this_ext " $tdir/$$.tmp; then
 		    echo >&4;
 		    echo "Duplicate directories detected for extension $xxx" >&4;
 		    echo "Configure cannot correctly recover from this - shall I abort?" >&4;
@@ -22419,15 +22419,15 @@ find_extensions='
 		    esac;
 		    echo "Ok.  You will need to correct config.sh before running make." >&4;
 		fi;
-		$ls -1 $xxx > $$.tmp;
-		if   $contains "\.xs$" $$.tmp > /dev/null 2>&1; then
+		$ls -1 $xxx > $tdir/$$.tmp;
+		if   $contains "\.xs$" $tdir/$$.tmp > /dev/null 2>&1; then
 		    known_extensions="$known_extensions $this_ext";
-		elif $contains "\.c$"  $$.tmp > /dev/null 2>&1; then
+		elif $contains "\.c$"  $tdir/$$.tmp > /dev/null 2>&1; then
 		    known_extensions="$known_extensions $this_ext";
 		elif $test -d $xxx; then
 		    nonxs_extensions="$nonxs_extensions $this_ext";
 		fi;
-		$rm -f $$.tmp;
+		$rm -f $tdir/$$.tmp;
 	    fi
 	    ;;
 	esac;
