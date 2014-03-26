@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.16 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.17 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -20,10 +20,11 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <resolv.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 static const char *rcodetostr(uint16_t);

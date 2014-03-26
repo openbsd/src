@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.11 2014/03/14 11:07:33 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.12 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -21,7 +21,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdint.h>
@@ -30,7 +32,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 static int dname_check_label(const char *, size_t);

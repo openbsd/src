@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.6 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.7 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,19 +16,20 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <err.h>
 #include <errno.h>
-#include <netdb.h>
 #include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 static int getrrsetbyname_async_run(struct asr_query *, struct asr_result *);
@@ -169,7 +170,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.6 2014/03/25 19:48:11 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.7 2014/03/26 18:13:15 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

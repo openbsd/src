@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.21 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.22 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,10 +16,13 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -29,7 +32,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 #define OP_QUERY    (0)

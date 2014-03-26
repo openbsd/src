@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.25 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.26 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -26,7 +27,9 @@
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 #endif
+#include <netdb.h>
 
+#include <asr.h>
 #include <err.h>
 #include <errno.h>
 #include <resolv.h> /* for res_hnok */
@@ -34,7 +37,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 struct match {

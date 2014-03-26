@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.8 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.9 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -21,14 +21,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "asr.h"
 #include "asr_private.h"
 
 static int getnameinfo_async_run(struct asr_query *, struct asr_result *);

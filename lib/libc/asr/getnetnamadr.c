@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.7 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.8 2014/03/26 18:13:15 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,14 +16,15 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
+#include <asr.h>
 #include <errno.h>
 #include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "asr.h"
 
 static void _fillnetent(const struct netent *, struct netent *, char *buf,
     size_t);
