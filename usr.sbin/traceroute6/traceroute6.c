@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.68 2014/03/24 11:11:49 mpi Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.69 2014/03/27 09:32:18 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -314,7 +314,6 @@ int datalen;			/* How much data */
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
 struct ip6_rthdr *rth;
-struct cmsghdr *cmsg;
 
 char *source = 0;
 char *hostname;
@@ -647,9 +646,6 @@ main(int argc, char *argv[])
 
 		Nxt = Dst;
 		Nxt.sin6_port = htons(DUMMY_PORT);
-		if (cmsg != NULL)
-			bcopy(inet6_rthdr_getaddr(cmsg, 1), &Nxt.sin6_addr,
-			    sizeof(Nxt.sin6_addr));
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 			perror("socket");
 			exit(1);
