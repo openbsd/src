@@ -121,7 +121,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::fwrite;
   using ::getc;
   using ::getchar;
-  using ::gets;
   using ::perror;
   using ::printf;
   using ::putc;
