@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.179 2014/03/26 05:23:41 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.180 2014/03/27 04:12:28 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -193,7 +193,6 @@ struct process {
 
 /* The following fields are all copied upon creation in process_new. */
 #define	ps_startcopy	ps_limit
-
 	struct	plimit *ps_limit;	/* Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	struct	emul *ps_emul;		/* Emulation information */
@@ -212,11 +211,10 @@ struct process {
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
+	int	ps_refcnt;		/* Number of references. */
 
 	struct	timespec ps_start;	/* starting time. */
 	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
-
-	int	ps_refcnt;		/* Number of references. */
 };
 
 #define	ps_pid		ps_mainproc->p_pid
@@ -277,7 +275,6 @@ struct proc {
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_dupfd
-
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
 	int	p_sigwait;	/* signal handled by sigwait() */
@@ -313,7 +310,6 @@ struct proc {
 
 /* The following fields are all copied upon creation in fork. */
 #define	p_startcopy	p_sigmask
-
 	sigset_t p_sigmask;	/* Current signal mask. */
 
 	u_char	p_priority;	/* Process priority. */
@@ -333,7 +329,6 @@ struct proc {
 
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr
-
 	struct	user *p_addr;	/* Kernel virtual addr of u-area */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
