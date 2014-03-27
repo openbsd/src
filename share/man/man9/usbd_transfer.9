@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_transfer.9,v 1.2 2014/03/26 14:25:35 mpi Exp $
+.\" $OpenBSD: usbd_transfer.9,v 1.3 2014/03/27 13:33:02 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2014 $
+.Dd $Mdocdate: March 27 2014 $
 .Dt USBD_TRANSFER 9
 .Os
 .Sh NAME
@@ -99,13 +99,11 @@ host controller to perform I/O with devices.
 can be called during autoconf, from process context, or from interrupt context.
 .Pp
 .Fn usbd_transfer
-can be called during autoconf, or from process context if
+can be called during autoconf, from process context, or from interrupt context
+if
 .Dv USBD_SYNCHRONOUS
-has been passed via
-.Fa flags
-when initializing
-.Fa xfer ,
-or during autoconf, from process context, or from interrupt context otherwise.
+has not been passed via
+.Fa flags .
 .Sh SEE ALSO
 .Xr ehci 4 ,
 .Xr ohci 4 ,
