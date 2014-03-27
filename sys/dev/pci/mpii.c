@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.87 2014/03/27 07:12:52 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.88 2014/03/27 10:15:43 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -127,7 +127,6 @@ struct mpii_device {
 
 struct mpii_ccb {
 	struct mpii_softc	*ccb_sc;
-	int			ccb_smid;
 
 	void *			ccb_cookie;
 	bus_dmamap_t		ccb_dmamap;
@@ -136,6 +135,7 @@ struct mpii_ccb {
 	void			*ccb_cmd;
 	bus_addr_t		ccb_cmd_dva;
 	u_int16_t		ccb_dev_handle;
+	u_int16_t		ccb_smid;
 
 	volatile enum {
 		MPII_CCB_FREE,
@@ -2384,7 +2384,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		}
 
 		ccb->ccb_sc = sc;
-		ccb->ccb_smid = i;
+		htolem16(&ccb->ccb_smid, i);
 		ccb->ccb_offset = sc->sc_request_size * i;
 
 		ccb->ccb_cmd = &cmd[ccb->ccb_offset];
@@ -2499,10 +2499,16 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
 	struct mpii_request_header	*rhp;
 	struct mpii_request_descr	descr;
-	u_int32_t			*rdp = (u_int32_t *)&descr;
+	u_long				 *rdp = (u_long *)&descr;
 
 	DNPRINTF(MPII_D_RW, "%s: mpii_start %#x\n", DEVNAME(sc),
 	    ccb->ccb_cmd_dva);
+
+	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_requests),
+	    ccb->ccb_offset, sc->sc_request_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	ccb->ccb_state = MPII_CCB_QUEUED;
 
 	rhp = ccb->ccb_cmd;
 
@@ -2511,7 +2517,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	switch (rhp->function) {
 	case MPII_FUNCTION_SCSI_IO_REQUEST:
 		descr.request_flags = MPII_REQ_DESCR_SCSI_IO;
-		htolem16(&descr.dev_handle, ccb->ccb_dev_handle);
+		descr.dev_handle = htole16(ccb->ccb_dev_handle);
 		break;
 	case MPII_FUNCTION_SCSI_TASK_MGMT:
 		descr.request_flags = MPII_REQ_DESCR_HIGH_PRIORITY;
@@ -2521,13 +2527,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	}
 
 	descr.vf_id = sc->sc_vf_id;
-	htolem16(&descr.smid, ccb->ccb_smid);
-
-	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_requests),
-	    ccb->ccb_offset, sc->sc_request_size,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	ccb->ccb_state = MPII_CCB_QUEUED;
+	descr.smid = ccb->ccb_smid;
 
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESCR_POST_LOW (0x%08x) write "
 	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESCR_POST_LOW, *rdp);
@@ -2535,10 +2535,22 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESCR_POST_HIGH (0x%08x) write "
 	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESCR_POST_HIGH, *(rdp+1));
 
+#if defined(__LP64__)
+	bus_space_write_raw_8(sc->sc_iot, sc->sc_ioh,
+	    MPII_REQ_DESCR_POST_LOW, *rdp);
+#else
 	mtx_enter(&sc->sc_req_mtx);
-	mpii_write(sc, MPII_REQ_DESCR_POST_LOW, htole32(*rdp));
-	mpii_write(sc, MPII_REQ_DESCR_POST_HIGH, htole32(*(rdp+1)));
+	bus_space_write_raw_4(sc->sc_iot, sc->sc_ioh,
+	    MPII_REQ_DESCR_POST_LOW, rdp[0]);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+	    MPII_REQ_DESCR_POST_LOW, 8, BUS_SPACE_BARRIER_WRITE);
+
+	bus_space_write_raw_4(sc->sc_iot, sc->sc_ioh,
+	    MPII_REQ_DESCR_POST_HIGH, rdp[1]);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+	    MPII_REQ_DESCR_POST_LOW, 8, BUS_SPACE_BARRIER_WRITE);
 	mtx_leave(&sc->sc_req_mtx);
+#endif
 }
 
 int
