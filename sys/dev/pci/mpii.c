@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.84 2014/03/27 05:34:07 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.85 2014/03/27 05:53:37 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -182,8 +182,8 @@ struct mpii_softc {
 
 	ushort			sc_max_cmds;
 	ushort			sc_num_reply_frames;
-	ushort			sc_reply_free_qdepth;
-	ushort			sc_reply_post_qdepth;
+	u_int			sc_reply_free_qdepth;
+	u_int			sc_reply_post_qdepth;
 
 	ushort			sc_chain_sge;
 	ushort			sc_max_sgl;
@@ -1321,17 +1321,20 @@ void
 mpii_push_reply(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	u_int32_t		*rfp;
+	u_int			idx;
 
 	if (rcb == NULL)
 		return;
 
+	idx = sc->sc_reply_free_host_index;
+
 	rfp = MPII_DMA_KVA(sc->sc_reply_freeq);
-	htolem32(&rfp[sc->sc_reply_free_host_index], rcb->rcb_reply_dva);
+	htolem32(&rfp[idx], rcb->rcb_reply_dva);
 
-	sc->sc_reply_free_host_index = (sc->sc_reply_free_host_index + 1) %
-	    sc->sc_reply_free_qdepth;
+	if (++idx > sc->sc_reply_free_qdepth)
+		idx = 0;
 
-	mpii_write_reply_free(sc, sc->sc_reply_free_host_index);
+	mpii_write_reply_free(sc, sc->sc_reply_free_host_index = idx);
 }
 
 int
