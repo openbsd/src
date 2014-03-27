@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.7 2013/05/21 20:05:30 tedu Exp $	*/
+/*	$OpenBSD: lock.h,v 1.8 2014/03/27 10:24:40 dlg Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -50,6 +50,6 @@
 
 #include <machine/atomic.h>
 
-#define rw_cas(p, o, n) (x86_atomic_cas_ul(p, o, n) != o)
+#define rw_cas(p, o, n) (atomic_cas_ulong(p, o, n) != o)
 
 #endif /* _MACHINE_LOCK_H_ */

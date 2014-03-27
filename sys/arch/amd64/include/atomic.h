@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2014/02/17 10:01:32 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2014/03/27 10:24:40 dlg Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -55,6 +55,42 @@
 #define LOCK
 #endif
 
+static inline unsigned int
+_atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
+{
+	__asm __volatile(LOCK " cmpxchgl %2, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "r" (n), "a" (e), "m" (*p)
+	    : "memory");
+
+	return (n);
+}
+#define atomic_cas_uint(_p, _e, _n) _atomic_cas_uint((_p), (_e), (_n))
+
+static inline unsigned long
+_atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
+{
+	__asm __volatile(LOCK " cmpxchgq %2, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "r" (n), "a" (e), "m" (*p)
+	    : "memory");
+
+	return (n);
+}
+#define atomic_cas_ulong(_p, _e, _n) _atomic_cas_ulong((_p), (_e), (_n))
+
+static inline void *
+_atomic_cas_ptr(volatile void **p, void *e, void *n)
+{
+	__asm __volatile(LOCK " cmpxchgq %2, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "r" (n), "a" (e), "m" (*p)
+	    : "memory");
+
+	return (n);
+}
+#define atomic_cas_ptr(_p, _e, _n) _atomic_cas_ptr((_p), (_e), (_n))
+
 static __inline u_int64_t
 x86_atomic_testset_u64(volatile u_int64_t *ptr, u_int64_t val)
 {
@@ -80,28 +116,6 @@ static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 {
 	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
-}
-
-static __inline int
-x86_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
-{
-	int res;
-
-	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
-	    : "r" (set), "a" (expect), "m" (*ptr) : "memory");
-
-	return (res);
-}
-
-static __inline u_long
-x86_atomic_cas_ul(volatile u_long *ptr, u_long expect, u_long set)
-{
-	u_long res;
-
-	__asm volatile(LOCK " cmpxchgq %2, %1" : "=a" (res), "=m" (*ptr)
-	    : "r" (set), "a" (expect), "m" (*ptr) : "memory");
-
-	return (res);
 }
 
 /*
