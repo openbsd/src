@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.85 2014/03/27 05:53:37 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.86 2014/03/27 07:06:33 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1331,7 +1331,7 @@ mpii_push_reply(struct mpii_softc *sc, struct mpii_rcb *rcb)
 	rfp = MPII_DMA_KVA(sc->sc_reply_freeq);
 	htolem32(&rfp[idx], rcb->rcb_reply_dva);
 
-	if (++idx > sc->sc_reply_free_qdepth)
+	if (++idx >= sc->sc_reply_free_qdepth)
 		idx = 0;
 
 	mpii_write_reply_free(sc, sc->sc_reply_free_host_index = idx);
