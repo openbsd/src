@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.86 2014/03/27 07:06:33 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.87 2014/03/27 07:12:52 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -221,10 +221,10 @@ struct mpii_softc {
 
 	struct mpii_dmamem	*sc_reply_postq;
 	struct mpii_reply_descr	*sc_reply_postq_kva;
-	int			sc_reply_post_host_index;
+	u_int			sc_reply_post_host_index;
 
 	struct mpii_dmamem	*sc_reply_freeq;
-	int			sc_reply_free_host_index;
+	u_int			sc_reply_free_host_index;
 
 	struct mpii_rcb_list	sc_evt_sas_queue;
 	struct mutex		sc_evt_sas_mtx;
@@ -663,16 +663,18 @@ mpii_intr(void *arg)
 	struct mpii_ccb			*ccb;
 	struct mpii_rcb			*rcb;
 	int				smid;
+	u_int				idx;
 	int				rv = 0;
 
 	mtx_enter(&sc->sc_rep_mtx);
 	bus_dmamap_sync(sc->sc_dmat,
 	    MPII_DMA_MAP(sc->sc_reply_postq),
-	    0, 8 * sc->sc_reply_post_qdepth,
+	    0, sc->sc_reply_post_qdepth * sizeof(*rdp),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
+	idx = sc->sc_reply_post_host_index;
 	for (;;) {
-		rdp = &postq[sc->sc_reply_post_host_index];
+		rdp = &postq[idx];
 		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
 		    MPII_REPLY_DESCR_UNUSED)
 			break;
@@ -695,18 +697,19 @@ mpii_intr(void *arg)
 		} else
 			SIMPLEQ_INSERT_TAIL(&evts, rcb, rcb_link);
 
-		sc->sc_reply_post_host_index++;
-		sc->sc_reply_post_host_index %= sc->sc_reply_post_qdepth;
+		if (++idx >= sc->sc_reply_post_qdepth)
+			idx = 0;
+
 		rv = 1;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat,
 	    MPII_DMA_MAP(sc->sc_reply_postq),
-	    0, 8 * sc->sc_reply_post_qdepth,
+	    0, sc->sc_reply_post_qdepth * sizeof(*rdp),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (rv)
-		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
+		mpii_write_reply_post(sc, sc->sc_reply_post_host_index = idx);
 
 	mtx_leave(&sc->sc_rep_mtx);
 
