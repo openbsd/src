@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.5 2014/03/20 13:19:06 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.6 2014/03/27 10:39:23 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -290,11 +290,12 @@ struct ifaddr {
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 					/* check or clean routes (+ or -)'d */
 	void	(*ifa_rtrequest)(int, struct rtentry *);
-	u_int	ifa_flags;		/* mostly rt_flags for cloning */
+	u_int	ifa_flags;		/* interface flags, see below */
 	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
-#define	IFA_ROUTE	RTF_UP		/* route installed */
+
+#define	IFA_ROUTE		0x01	/* Auto-magically installed route */
 
 /*
  * Interface multicast address.

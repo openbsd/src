@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.79 2014/03/18 10:47:34 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.80 2014/03/27 10:39:23 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1630,16 +1630,11 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
 	/* rtrequest1() will probably set RTF_UP, but we're not sure. */
-	rtflags = ifa->ifa_flags | RTF_UP;
-	if (nd6_need_cache(ifp)) {
-		/* explicitly set in case ifa_flags does not set the flag. */
+	rtflags = RTF_UP;
+	if (nd6_need_cache(ifp))
 		rtflags |= RTF_CLONING;
-	} else {
-		/*
-		 * explicitly clear the cloning bit in case ifa_flags sets it.
-		 */
+	else
 		rtflags &= ~RTF_CLONING;
-	}
 
 	bzero(&info, sizeof(info));
 	info.rti_flags = rtflags;

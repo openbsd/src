@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.112 2014/03/11 10:31:29 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.113 2014/03/27 10:39:23 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -689,8 +689,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			 * called in rtrequest1 via ifa->ifa_rtrequest.
 			 */
 			bzero(&info, sizeof(info));
-			info.rti_flags = (ifa->ifa_flags | RTF_HOST |
-			    RTF_LLINFO) & ~RTF_CLONING;
+			info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.224 2014/03/21 13:48:28 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.225 2014/03/27 10:39:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -459,7 +459,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			case RTM_ADD:
 				if (hr_otherif) {
 					ifa->ifa_rtrequest = NULL;
-					ifa->ifa_flags &= ~RTF_CLONING;
 					memset(&info, 0, sizeof(info));
 					info.rti_info[RTAX_DST] = ifa->ifa_addr;
 					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
@@ -485,7 +484,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					}
 
 					ifa->ifa_rtrequest = arp_rtrequest;
-					ifa->ifa_flags |= RTF_CLONING;
 
 					memset(&info, 0, sizeof(info));
 					info.rti_info[RTAX_DST] = &sa;
@@ -2222,7 +2220,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			 * request so that the routes are setup correctly.
 			 */
 			ifa->ifa_rtrequest = arp_rtrequest;
-			ifa->ifa_flags |= RTF_CLONING;
 
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;

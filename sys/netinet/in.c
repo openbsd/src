@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.93 2014/03/21 10:32:17 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.94 2014/03/27 10:39:23 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -329,9 +329,9 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
 			ia->ia_ifa.ifa_dstaddr = sintosa(&oldaddr);
-			rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
+			rtinit(&ia->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
-			rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
+			rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
 		}
 		splx(s);
 		break;
@@ -807,7 +807,7 @@ in_scrubhost(struct in_ifaddr *ia0)
 		if ((ia->ia_flags & IFA_ROUTE) != 0)
 			continue;
 
-		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_HOST);
+		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
 		ia0->ia_flags &= ~IFA_ROUTE;
 		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
 		if (!error)
@@ -816,7 +816,7 @@ in_scrubhost(struct in_ifaddr *ia0)
 		return (error);
 	}
 
-	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_HOST);
+	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
 	ia0->ia_flags &= ~IFA_ROUTE;
 
 	return (0);
@@ -858,7 +858,7 @@ in_addprefix(struct in_ifaddr *ia0)
 		/* move to a real interface instead of carp interface */
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ia0->ia_ifp->if_type != IFT_CARP) {
-			rtinit(&ia->ia_ifa, RTM_DELETE, 0);
+			rtinit(&ia->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
 			ia->ia_flags &= ~IFA_ROUTE;
 			break;
 		}
@@ -873,7 +873,7 @@ in_addprefix(struct in_ifaddr *ia0)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP);
+	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP | RTF_CLONING);
 	if (!error)
 		ia0->ia_flags |= IFA_ROUTE;
 	return error;
@@ -918,9 +918,9 @@ in_scrubprefix(struct in_ifaddr *ia0)
 		/*
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
-		rtinit(&ia0->ia_ifa, RTM_DELETE, 0);
+		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
 		ia0->ia_flags &= ~IFA_ROUTE;
-		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP);
+		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_CLONING);
 		if (error == 0)
 			ia->ia_flags |= IFA_ROUTE;
 		return error;
@@ -929,7 +929,7 @@ in_scrubprefix(struct in_ifaddr *ia0)
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rtinit(&ia0->ia_ifa, RTM_DELETE, 0);
+	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
 	ia0->ia_flags &= ~IFA_ROUTE;
 	return 0;
 }
