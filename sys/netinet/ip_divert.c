@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.16 2014/01/09 06:29:06 tedu Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.17 2014/03/27 13:27:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -180,10 +180,8 @@ divert_output(struct mbuf *m, ...)
 		schednetisr(NETISR_IP);
 		splx(s);
 	} else {
-		error = ip_output(m, (void *)NULL, &inp->inp_route,
-		    ((so->so_options & SO_DONTROUTE) ? IP_ROUTETOIF : 0)
-		    | IP_ALLOWBROADCAST | IP_RAWOUTPUT, (void *)NULL,
-		    (void *)NULL);
+		error = ip_output(m, NULL, &inp->inp_route,
+		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 		if (error == EACCES)	/* translate pf(4) error for userland */
 			error = EHOSTUNREACH;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.49 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.50 2014/03/27 13:27:28 mpi Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -215,8 +215,6 @@ linux_to_bsd_msg_flags(int lflags)
 		flags |= MSG_OOB;
 	if (lflags & LINUX_MSG_PEEK)
 		flags |= MSG_PEEK;
-	if (lflags & LINUX_MSG_DONTROUTE)
-		flags |= MSG_DONTROUTE;
 	if (lflags & LINUX_MSG_DONTWAIT)
 		flags |= MSG_DONTWAIT;
 	if (lflags & LINUX_MSG_WAITALL)

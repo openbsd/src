@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.27 2012/10/05 01:30:28 yasuoka Exp $
+.\"	$OpenBSD: send.2,v 1.28 2014/03/27 13:27:28 mpi Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: October 5 2012 $
+.Dd $Mdocdate: March 27 2014 $
 .Dt SEND 2
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ parameter may include one or more of the following:
 .It Dv MSG_OOB
 process out-of-band data
 .It Dv MSG_DONTROUTE
-bypass routing, use direct interface
+bypass routing tables, silently ignored
 .It Dv MSG_NOSIGNAL
 don't send
 .Dv SIGPIPE
@@ -116,8 +116,6 @@ data on sockets that support this notion (e.g.,
 the underlying protocol must also support
 .Dq out-of-band
 data.
-.Dv MSG_DONTROUTE
-is usually used only by diagnostic or routing programs.
 .Dv MSG_NOSIGNAL
 is used to request not to send the
 .Dv SIGPIPE
