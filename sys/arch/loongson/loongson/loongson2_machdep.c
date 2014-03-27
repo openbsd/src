@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.14 2013/06/02 21:46:04 pirofti Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.15 2014/03/27 21:58:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -152,9 +152,6 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	if (memhi != 0) {
 		/* do NOT stomp on exception area */
 		mem_layout[0].mem_first_page = atop(DDR_WINDOW_BASE) + 1;
-#ifdef HIBERNATE
-		mem_layout[0].mem_first_page += HIBERNATE_RESERVED_PAGES;
-#endif
 		mem_layout[0].mem_last_page = atop(DDR_WINDOW_BASE) +
 		    memlo + memhi;
 		loongson_dma_base = PCI_DDR_BASE ^ DDR_WINDOW_BASE;
@@ -162,9 +159,12 @@ loongson2f_setup(u_long memlo, u_long memhi)
 		/* do NOT stomp on exception area */
 		mem_layout[0].mem_first_page = atop(DDR_PHYSICAL_BASE) + 1;
 		mem_layout[0].mem_last_page = atop(DDR_PHYSICAL_BASE) +
-		    memlo + memhi;
+		    memlo /* + memhi */;
 		loongson_dma_base = PCI_DDR_BASE ^ DDR_PHYSICAL_BASE;
 	}
+#ifdef HIBERNATE
+	mem_layout[0].mem_first_page += HIBERNATE_RESERVED_PAGES;
+#endif
 
 	/*
 	 * Allow access to memory beyond 256MB, by programming the
