@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.83 2014/03/27 05:20:27 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.84 2014/03/27 05:34:07 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -383,10 +383,12 @@ void		mpii_refresh_sensors(void *);
 #define mpii_reply_waiting(s)	((mpii_read_intr((s)) & MPII_INTR_STATUS_REPLY)\
 				    == MPII_INTR_STATUS_REPLY)
 
-#define mpii_write_reply_free(s, v)	mpii_write((s), \
-						MPII_REPLY_FREE_HOST_INDEX, (v))
-#define mpii_write_reply_post(s, v)	mpii_write((s), \
-						MPII_REPLY_POST_HOST_INDEX, (v))
+#define mpii_write_reply_free(s, v) \
+    bus_space_write_4((s)->sc_iot, (s)->sc_ioh, \
+    MPII_REPLY_FREE_HOST_INDEX, (v))
+#define mpii_write_reply_post(s, v) \
+    bus_space_write_4((s)->sc_iot, (s)->sc_ioh, \
+    MPII_REPLY_POST_HOST_INDEX, (v))
 
 #define mpii_wait_db_int(s)	mpii_wait_ne((s), MPII_INTR_STATUS, \
 				    MPII_INTR_STATUS_IOC2SYSDB, 0)
