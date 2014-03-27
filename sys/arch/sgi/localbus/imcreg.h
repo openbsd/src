@@ -1,4 +1,4 @@
-/*	$OpenBSD: imcreg.h,v 1.3 2012/05/27 14:27:10 miod Exp $	*/
+/*	$OpenBSD: imcreg.h,v 1.4 2014/03/27 21:24:22 miod Exp $	*/
 /*	$NetBSD: imcreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
 
 /*
@@ -97,7 +97,7 @@
 #define IMC_GIO64ARB_HPC64	0x00000001	/* HPC addr size (32/64bit) */
 #define IMC_GIO64ARB_GRX64	0x00000002	/* Gfx addr size (32/64bit) */
 #define IMC_GIO64ARB_EXP064	0x00000004	/* EXP0 addr size (32/64bit) */
-#define IMC_GIO64ARB_EXP164	0x00000008	/* EXP0 addr size (32/64bit) */
+#define IMC_GIO64ARB_EXP164	0x00000008	/* EXP1 addr size (32/64bit) */
 #define IMC_GIO64ARB_EISA64	0x00000010	/* EISA addr size (32/64bit) */
 #define IMC_GIO64ARB_HPCEXP64	0x00000020	/* HPC2 addr size (32/64bit) */
 #define IMC_GIO64ARB_GRXRT	0x00000040	/* Gfx is realtime device */

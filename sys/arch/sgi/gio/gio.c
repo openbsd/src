@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.16 2013/09/28 14:03:13 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.17 2014/03/27 21:24:22 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -226,8 +226,9 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Try and attach graphics devices first.
-	 * Unfortunately, they - not being GIO devices after all - do not
-	 * contain a Product Identification Word, nor have a slot number.
+	 * Unfortunately, they - not being GIO devices after all (except for
+	 * Impact) - do not contain a Product Identification Word, nor have
+	 * a slot number.
 	 *
 	 * Record addresses to which graphics devices attach so that
 	 * we do not confuse them with expansion slots, should the

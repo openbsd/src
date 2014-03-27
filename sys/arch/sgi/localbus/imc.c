@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.14 2013/12/11 19:36:12 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.15 2014/03/27 21:24:22 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -559,6 +559,13 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	imc_write(IMC_CPUCTRL0, reg);
 
 	/* Setup the MC write buffer depth */
+	/*
+	 * XXX This hardcoded value is not documented anywhere, and can be
+	 * XXX traced back to DaveM's internship at SGI in 1996, so it can
+	 * XXX be considered correct at least for IP24 (and, to a lesser
+	 * XXX extent, IP22). IP20 and IP28 systems seem to run happy with
+	 * XXX this value as well.
+	 */
 	reg = imc_read(IMC_CPUCTRL1);
 	reg = (reg & ~IMC_CPUCTRL1_MCHWMSK) | 13;
 
