@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2012/12/04 02:27:00 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2014/03/27 15:32:13 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ extern size_t cbsz;
 extern u_int ddflags;
 extern size_t files_cnt;
 extern const u_char *ctab;
-extern const u_char a2e_32V[], a2e_POSIX[];
-extern const u_char e2a_32V[], e2a_POSIX[];
-extern const u_char a2ibm_32V[], a2ibm_POSIX[];
+extern const u_char a2e_POSIX[];
+extern const u_char e2a_POSIX[];
+extern const u_char a2ibm_POSIX[];
 extern u_char casetab[];
