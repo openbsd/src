@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.8 2014/03/27 11:21:01 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.9 2014/03/27 12:19:55 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -345,11 +345,14 @@ struct mpii_msg_iocinit_request {
 
 	u_int32_t		system_reply_address_high;
 
-	u_int64_t		system_request_frame_base_address;
+	u_int32_t		system_request_frame_base_address_lo;
+	u_int32_t		system_request_frame_base_address_hi;
 
-	u_int64_t		reply_descriptor_post_queue_address;
+	u_int32_t		reply_descriptor_post_queue_address_lo;
+	u_int32_t		reply_descriptor_post_queue_address_hi;
 
-	u_int64_t		reply_free_queue_address;
+	u_int32_t		reply_free_queue_address_lo;
+	u_int32_t		reply_free_queue_address_hi;
 
 	u_int64_t		timestamp;
 } __packed __aligned(4);

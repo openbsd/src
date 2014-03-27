@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.88 2014/03/27 10:15:43 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.89 2014/03/27 12:19:55 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -93,9 +93,9 @@ struct mpii_dmamem {
 	size_t			mdm_size;
 	caddr_t			mdm_kva;
 };
-#define MPII_DMA_MAP(_mdm)	(_mdm)->mdm_map
-#define MPII_DMA_DVA(_mdm)	(_mdm)->mdm_map->dm_segs[0].ds_addr
-#define MPII_DMA_KVA(_mdm)	(void *)(_mdm)->mdm_kva
+#define MPII_DMA_MAP(_mdm) ((_mdm)->mdm_map)
+#define MPII_DMA_DVA(_mdm) ((u_int64_t)(_mdm)->mdm_map->dm_segs[0].ds_addr)
+#define MPII_DMA_KVA(_mdm) ((void *)(_mdm)->mdm_kva)
 
 struct mpii_softc;
 
@@ -1247,7 +1247,6 @@ mpii_iocinit(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocinit_request		iiq;
 	struct mpii_msg_iocinit_reply		iip;
-	u_int32_t				hi_addr;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_iocinit\n", DEVNAME(sc));
 
@@ -1274,20 +1273,26 @@ mpii_iocinit(struct mpii_softc *sc)
 
 	htolem16(&iiq.reply_free_queue_depth, sc->sc_reply_free_qdepth);
 
-	hi_addr = (u_int32_t)((u_int64_t)MPII_DMA_DVA(sc->sc_requests) >> 32);
-	htolem32(&iiq.sense_buffer_address_high, hi_addr);
+	htolem32(&iiq.sense_buffer_address_high,
+	    MPII_DMA_DVA(sc->sc_requests) >> 32);
 
-	hi_addr = (u_int32_t)((u_int64_t)MPII_DMA_DVA(sc->sc_replies) >> 32);
-	htolem32(&iiq.system_reply_address_high, hi_addr);
+	htolem32(&iiq.system_reply_address_high,
+	    MPII_DMA_DVA(sc->sc_replies) >> 32);
 
-	iiq.system_request_frame_base_address =
-	    htole64(MPII_DMA_DVA(sc->sc_requests));
+	htolem32(&iiq.system_request_frame_base_address_lo,
+	    MPII_DMA_DVA(sc->sc_requests));
+	htolem32(&iiq.system_request_frame_base_address_hi,
+	    MPII_DMA_DVA(sc->sc_requests) >> 32);
 
-	iiq.reply_descriptor_post_queue_address =
-	    htole64(MPII_DMA_DVA(sc->sc_reply_postq));
+	htolem32(&iiq.reply_descriptor_post_queue_address_lo,
+	    MPII_DMA_DVA(sc->sc_reply_postq));
+	htolem32(&iiq.reply_descriptor_post_queue_address_hi,
+	    MPII_DMA_DVA(sc->sc_reply_postq) >> 32);
 
-	iiq.reply_free_queue_address =
-	    htole64(MPII_DMA_DVA(sc->sc_reply_freeq));
+	htolem32(&iiq.reply_free_queue_address_lo,
+	    MPII_DMA_DVA(sc->sc_reply_freeq));
+	htolem32(&iiq.reply_free_queue_address_hi,
+	    MPII_DMA_DVA(sc->sc_reply_freeq) >> 32);
 
 	if (mpii_handshake_send(sc, &iiq, dwordsof(iiq)) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_iocinit send failed\n",
