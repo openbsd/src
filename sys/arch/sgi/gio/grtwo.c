@@ -1,8 +1,8 @@
-/*	$OpenBSD: grtwo.c,v 1.7 2013/10/21 10:36:17 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.8 2014/03/27 20:15:00 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
- * Copyright (c) 2012 Miodrag Vallat.
+ * Copyright (c) 2012, 2014 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -72,6 +72,7 @@
 #include <sgi/gio/gioreg.h>
 #include <sgi/gio/giovar.h>
 #include <sgi/gio/grtworeg.h>
+#include <dev/ic/bt458reg.h>
 #include <sgi/gio/grtwovar.h>
 #include <sgi/localbus/intreg.h>
 #include <sgi/localbus/intvar.h>
@@ -134,6 +135,7 @@ int	grtwo_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 int	grtwo_load_font(void *, void *, struct wsdisplay_font *);
 int	grtwo_list_font(void *, struct wsdisplay_font *);
+void	grtwo_burner(void *, u_int, u_int);
 
 static struct wsdisplay_accessops grtwo_accessops = {
 	.ioctl = grtwo_ioctl,
@@ -142,7 +144,8 @@ static struct wsdisplay_accessops grtwo_accessops = {
 	.free_screen = grtwo_free_screen,
 	.show_screen = grtwo_show_screen,
 	.load_font = grtwo_load_font,
-	.list_font = grtwo_list_font
+	.list_font = grtwo_list_font,
+	.burn_screen = grtwo_burner
 };
 
 int	grtwo_cursor(void *, int, int, int);
@@ -157,7 +160,6 @@ static __inline__
 void	grtwo_set_color(bus_space_tag_t, bus_space_handle_t, int);
 void	grtwo_fillrect(struct grtwo_devconfig *, int, int, int, int, int);
 void	grtwo_copyrect(struct grtwo_devconfig *, int, int, int, int, int, int);
-void	grtwo_cmap_setrgb(struct grtwo_devconfig *, int, uint, uint, uint);
 int	grtwo_setup_hw(struct grtwo_devconfig *);
 static __inline__
 int	grtwo_attach_common(struct grtwo_devconfig *, struct gio_attach_args *);
@@ -258,26 +260,12 @@ grtwo_copyrect(struct grtwo_devconfig *dc, int x1, int y1, int x2,
 	}
 }
 
-void
-grtwo_cmap_setrgb(struct grtwo_devconfig *dc, int index, uint r,
-    uint g, uint b)
-{
-	grtwo_wait_gfifo(dc);
-	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_ADDRHI,
-	    ((index & 0x1f00) >> 8));
-	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_ADDRLO,
-	    (index & 0xff));
-	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, r);
-	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, g);
-	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, b);
-}
-
 int
 grtwo_setup_hw(struct grtwo_devconfig *dc)
 {
 	int i = 0;
 	uint8_t rd0, rd1, rd2, rd3;
-	uint32_t vc1;
+	uint32_t vc1, xmapmode;
 
 	rd0 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD0);
 	rd1 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD1);
@@ -333,10 +321,45 @@ grtwo_setup_hw(struct grtwo_devconfig *dc)
 	bus_space_write_4(dc->iot, dc->ioh, VC1_SYSCTL,
 	    VC1_SYSCTL_VC1 | VC1_SYSCTL_DID);
 
-	/* Setup CMAP */
-	for (i = 0; i < 8 /* 256 */; i++)
-		grtwo_cmap_setrgb(dc, i, rasops_cmap[i * 3],
-		    rasops_cmap[i * 3 + 1], rasops_cmap[i * 3 + 2]);
+	xmapmode = bus_space_read_4(dc->iot, dc->ioh,
+	    XMAP5_BASEALL + XMAP5_MODE);
+	if ((xmapmode & 0x80000000) == 0)
+		bus_space_write_4(dc->iot, dc->ioh, XMAP5_BASEALL + XMAP5_MODE,
+		    (xmapmode & 0xf0f0f000) | 0x82828200);
+
+	/*
+	 * Setup Bt457 RAMDACs
+	 */
+	/* enable all planes */
+	bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_CTRL, 0xff);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_CTRL, 0xff);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_CTRL, 0xff);
+	/* setup a regular gamma ramp */
+	bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_ADDR, 0);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_ADDR, 0);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_ADDR, 0);
+	for (i = 0; i < 256; i++) {
+		bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_CMAPDATA,
+		    i);
+		bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_CMAPDATA,
+		    i);
+		bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_CMAPDATA,
+		    i);
+	}
+
+	/*
+	 * Setup Bt479 RAMDAC
+	 */
+	grtwo_wait_gfifo(dc);
+	bus_space_write_1(dc->iot, dc->ioh, XMAP5_BASEALL + XMAP5_ADDRHI,
+	    GR2_CMAP8 >> 8);
+	bus_space_write_1(dc->iot, dc->ioh, XMAP5_BASEALL + XMAP5_ADDRLO,
+	    GR2_CMAP8 & 0xff);
+	bus_space_write_multi_1(dc->iot, dc->ioh, XMAP5_BASEALL + XMAP5_CLUT,
+	    rasops_cmap, sizeof(rasops_cmap));
 
 	return 0;
 }
@@ -484,8 +507,6 @@ grtwo_init_screen(struct grtwo_devconfig *dc, int malloc_flags)
 	ri->ri_height = GRTWO_HEIGHT;
 
 	rasops_init(ri, 160, 160);
-	/* we can only use 8 colors so far */
-	ri->ri_caps &= ~WSSCREEN_HILIT;
 
 	/*
 	 * Allocate backing store to remember character cells, to
@@ -765,8 +786,7 @@ grtwo_eraserows(void *c, int startrow, int nrow, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
 	if (nrow == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		grtwo_fillrect(dc, 0, 0, GRTWO_WIDTH - 1,
-		    GRTWO_HEIGHT - 1, bg);
+		grtwo_fillrect(dc, 0, 0, GRTWO_WIDTH - 1, GRTWO_HEIGHT - 1, bg);
 		return 0;
 	}
 
@@ -850,6 +870,7 @@ grtwo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 grtwo_mmap(void *v, off_t offset, int prot)
 {
+	/* no directly accessible frame buffer memory */
 	return -1;
 }
 
@@ -869,4 +890,19 @@ grtwo_list_font(void *v, struct wsdisplay_font *font)
 	struct rasops_info *ri = &dc->dc_ri;
 
 	return rasops_list_font(ri, font);
+}
+
+void
+grtwo_burner(void *v, u_int on, u_int flags)
+{
+	struct grtwo_devconfig *dc = v;
+
+	on = on ? 0xff : 0x00;
+
+	bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_R + BT457_CTRL, on);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_G + BT457_CTRL, on);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_ADDR, BT_RMR);
+	bus_space_write_1(dc->iot, dc->ioh, BT457_B + BT457_CTRL, on);
 }

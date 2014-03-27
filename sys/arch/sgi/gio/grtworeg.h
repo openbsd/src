@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtworeg.h,v 1.2 2012/04/30 21:29:33 miod Exp $	*/
+/*	$OpenBSD: grtworeg.h,v 1.3 2014/03/27 20:15:00 miod Exp $	*/
 /* $NetBSD: grtworeg.h,v 1.2 2005/12/11 12:18:53 christos Exp $	 */
 
 /*
@@ -186,7 +186,43 @@
 #define GR2_REVISION_RD3_VMB		0x0c
 #define GR2_REVISION_RD3_VMC		0x30
 
-/* XMAP5 -- five of them, 0x1f06c100 - 0x1f06c1a0 */
+/* Bt479 */
+
+#define	BT479_R			0x6c060
+#define	BT479_W			0x6c080
+
+#define	BT479_WRADDR			0x00
+#define	BT479_CMAPDATA			0x04
+#define	BT479_MASK			0x08	/* pixel read mask */
+#define	BT479_RDADDR			0x0c
+#define	BT479_OVWRADDR			0x10
+#define	BT479_OVDATA			0x14
+#define	BT479_CTL			0x18
+#define	BT479_OVRDADDR			0x1c
+
+#define	GR2_CMAP12		0x0000
+#define	GR2_CMAP8		0x1000
+#define	GR2_CMAP4		0x1400
+
+/* Bt457 */
+
+#define	BT457_R			0x6c0a0
+#define	BT457_G			0x6c0c0
+#define	BT457_B			0x6c0e0
+
+#define	BT457_ADDR		0x00
+#define	BT457_CMAPDATA		0x04
+#define	BT457_CTRL		0x08
+#define	BT457_OVDATA		0x0c
+
+/* XMAP5 */
+
+#define	XMAP5_BASE0		0x6c100
+#define	XMAP5_BASE1		0x6c120
+#define	XMAP5_BASE2		0x6c140
+#define	XMAP5_BASE3		0x6c160
+#define	XMAP5_BASE4		0x6c180
+#define	XMAP5_BASEALL		0x6c1a0
 
 #define XMAP5_MISC		0x00
 #define XMAP5_MODE		0x04
@@ -196,15 +232,6 @@
 #define XMAP5_ADDRHI		0x14
 #define XMAP5_BYTECOUNT		0x18
 #define XMAP5_FIFOSTATUS	0x1c
-
-#define XMAPALL_MISC		0x6c1a0
-#define XMAPALL_MODE		0x6c1a4
-#define XMAPALL_CLUT		0x6c1a8
-#define XMAPALL_CRC		0x6c1ac
-#define XMAPALL_ADDRLO		0x6c190
-#define XMAPALL_ADDRHI		0x6c194
-#define XMAPALL_BYTECOUNT	0x6c198
-#define XMAPALL_FIFOSTATUS	0x6c19c
 
 /*
  * FIFO operation constraints.
