@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.64 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.65 2014/03/27 04:38:40 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1251,7 +1251,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	traced. This is good security.]
 	 */
 	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
-		ISSET(proc->p_flag, PS_SUGID | PS_SUGIDEXEC)) &&
+		ISSET(proc->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC)) &&
 	    (error = suser(p, 0)) != 0)
 		goto out;
 
