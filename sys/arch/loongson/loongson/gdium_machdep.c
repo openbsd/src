@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdium_machdep.c,v 1.7 2012/10/03 21:44:51 miod Exp $	*/
+/*	$OpenBSD: gdium_machdep.c,v 1.8 2014/03/27 22:16:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -41,6 +41,7 @@ void	gdium_device_register(struct device *, void *);
 int	gdium_intr_map(int, int, int);
 void	gdium_powerdown(void);
 void	gdium_reset(void);
+void	gdium_setup(void);
 
 const struct bonito_config gdium_bonito = {
 	.bc_adbase = 11,
@@ -65,7 +66,7 @@ const struct platform gdium_platform = {
 	.isa_chipset = NULL,
 	.legacy_io_ranges = NULL,
 
-	.setup = NULL,
+	.setup = gdium_setup,
 	.device_register = gdium_device_register,
 
 	.powerdown = gdium_powerdown,
@@ -273,4 +274,10 @@ gdium_reset()
 {
 	REGVAL(BONITO_GPIODATA) &= ~0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
+}
+
+void
+gdium_setup()
+{
+	bonito_early_setup();
 }

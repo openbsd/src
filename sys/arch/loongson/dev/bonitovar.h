@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitovar.h,v 1.5 2010/05/08 21:59:56 miod Exp $	*/
+/*	$OpenBSD: bonitovar.h,v 1.6 2014/03/27 22:16:03 miod Exp $	*/
 /*	$NetBSD: bonitovar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
 
 /*-
@@ -73,6 +73,8 @@ int	 bonito_print(void *, const char *);
 struct extent
 	*bonito_get_resource_extent(pci_chipset_tag_t, int);
 void	 bonito_setintrmask(int);
+
+void	 bonito_early_setup(void);
 #endif /* _KERNEL */
 
 #endif /* _LOONGSON_DEV_BONITOVAR_H_ */

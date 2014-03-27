@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.9 2012/10/03 21:44:51 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.10 2014/03/27 22:16:03 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -85,6 +85,9 @@ struct mainbus_attach_args {
 extern struct device *bootdv;
 extern char bootdev[];
 extern enum devclass bootdev_class;
+
+extern bus_space_tag_t early_mem_t;
+extern bus_space_tag_t early_io_t;
 
 #include <mips64/autoconf.h>
 

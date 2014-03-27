@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.5 2012/10/03 21:44:51 miod Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.6 2014/03/27 22:16:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -353,6 +353,8 @@ generic2e_setup(void)
                 comconsrate = 115200; /* default PMON console speed */
 	}
 #endif
+
+	bonito_early_setup();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.24 2013/08/25 08:18:05 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.25 2014/03/27 22:16:03 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -1208,14 +1208,27 @@ out:
  * Functions used during early system configuration (before bonito attaches).
  */
 
+pcitag_t bonito_make_tag_early(int, int, int);
+pcireg_t bonito_conf_read_early(pcitag_t, int);
+
 pcitag_t
-pci_make_tag_early(int b, int d, int f)
+bonito_make_tag_early(int b, int d, int f)
 {
 	return bonito_make_tag(NULL, b, d, f);
 }
 
 pcireg_t
-pci_conf_read_early(pcitag_t tag, int reg)
+bonito_conf_read_early(pcitag_t tag, int reg)
 {
 	return bonito_conf_read_internal(sys_platform->bonito_config, tag, reg);
+}
+
+void
+bonito_early_setup()
+{
+	pci_make_tag_early = bonito_make_tag_early;
+	pci_conf_read_early = bonito_conf_read_early;
+
+	early_mem_t = &bonito_pci_mem_space_tag;
+	early_io_t = &bonito_pci_io_space_tag;
 }

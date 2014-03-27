@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2014/03/13 03:52:55 dlg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.45 2014/03/27 22:16:03 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -125,6 +125,11 @@ caddr_t	esym;
 caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
+
+pcitag_t (*pci_make_tag_early)(int, int, int);
+pcireg_t (*pci_conf_read_early)(pcitag_t, int);
+bus_space_tag_t early_mem_t;
+bus_space_tag_t early_io_t;
 
 static u_long atoi(const char *, uint);
 static void dobootopts(int);

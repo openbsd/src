@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.23 2013/01/16 20:28:06 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.24 2014/03/27 22:16:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -58,6 +58,8 @@ extern struct mips_bus_space bonito_pci_io_space_tag;
 
 void	 lemote_device_register(struct device *, void *);
 void	 lemote_reset(void);
+
+void	 ebenton_setup(void);
 
 void	 fuloong_powerdown(void);
 void	 fuloong_setup(void);
@@ -218,7 +220,7 @@ const struct platform ebenton_platform = {
 	.isa_chipset = &lemote_isa_chipset,
 	.legacy_io_ranges = yeeloong_legacy_ranges,
 
-	.setup = NULL,
+	.setup = ebenton_setup,
 	.device_register = lemote_device_register,
 
 	.powerdown = yeeloong_powerdown,
@@ -510,12 +512,22 @@ fuloong_setup(void)
 #endif
 
 	cpu_setperf = loongson2f_setperf;
+
+	bonito_early_setup();
 }
 
 void
 yeeloong_setup(void)
 {
 	cpu_setperf = loongson2f_setperf;
+
+	bonito_early_setup();
+}
+
+void
+ebenton_setup(void)
+{
+	bonito_early_setup();
 }
 
 void

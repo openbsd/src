@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.10 2012/10/03 21:44:51 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.11 2014/03/27 22:16:03 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -134,8 +134,6 @@ static	int initted;
 	pcitag_t tag;
 	pcireg_t id, class;
 	int dev, rc;
-	extern struct mips_bus_space bonito_pci_io_space_tag;
-	extern struct mips_bus_space bonito_pci_mem_space_tag;
 	extern struct consdev pmoncons;
 
 	if (initted)
@@ -170,21 +168,21 @@ static	int initted;
 		/* bitmapped frame buffer won't be of PREHISTORIC class */
 		if (PCI_CLASS(class) == PCI_CLASS_DISPLAY) {
 #if NSISFB > 0
-			if (rc != 0)
-				rc = sisfb_cnattach(&bonito_pci_mem_space_tag,
-				    &bonito_pci_io_space_tag, tag, id);
+			if (rc != 0 && early_io_t != NULL)
+				rc = sisfb_cnattach(early_mem_t,
+				    early_io_t, tag, id);
 #endif
 #if NSMFB > 0
-			if (rc != 0)
-				rc = smfb_cnattach(&bonito_pci_mem_space_tag,
-				    &bonito_pci_io_space_tag, tag, id);
+			if (rc != 0 && early_io_t != NULL)
+				rc = smfb_cnattach(early_mem_t,
+				    early_io_t, tag, id);
 #endif
-		}
+			}
 #if NVGA > 0
-		if (rc != 0) {
+		if (rc != 0 && early_io_t != NULL) {
 			/* thanks $DEITY the pci_chipset_tag_t arg is ignored */
-			rc = vga_pci_cnattach(&bonito_pci_io_space_tag,
-			    &bonito_pci_mem_space_tag, NULL, 0, dev, 0);
+			rc = vga_pci_cnattach(early_io_t,
+			    early_mem_t, NULL, 0, dev, 0);
 		}
 #endif
 		if (rc == 0)
@@ -205,9 +203,8 @@ setup_kbd:
 	rc = ENXIO;
 
 #if NPCKBC > 0
-	if (rc != 0)
-		rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
-		    KBCMDP, 0);
+	if (rc != 0 && early_io_t != NULL)
+		rc = pckbc_cnattach(early_io_t, IO_KBD, KBCMDP, 0);
 #endif
 #if NUKBD > 0
 	if (rc != 0)
