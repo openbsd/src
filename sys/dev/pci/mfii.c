@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.13 2013/08/30 08:51:56 haesbaert Exp $ */
+/* $OpenBSD: mfii.c,v 1.14 2014/03/27 23:17:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -998,14 +998,18 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	    htole16(sc->sc_reply_postq_depth);
 	iiq->reply_free_queue_depth = htole16(0);
 
-	iiq->sense_buffer_address_high =
-	    htole32(MFII_DMA_DVA(sc->sc_sense) >> 32);
+	htolem32(&iiq->sense_buffer_address_high,
+	    MFII_DMA_DVA(sc->sc_sense) >> 32);
 
-	iiq->reply_descriptor_post_queue_address =
-	    htole64(MFII_DMA_DVA(sc->sc_reply_postq));
+	htolem32(&iiq->reply_descriptor_post_queue_address_lo,
+	    MFII_DMA_DVA(sc->sc_reply_postq));
+	htolem32(&iiq->reply_descriptor_post_queue_address_hi,
+	    MFII_DMA_DVA(sc->sc_reply_postq) >> 32);
 
-	iiq->system_request_frame_base_address =
-	    htole64(MFII_DMA_DVA(sc->sc_requests));
+	htolem32(&iiq->system_request_frame_base_address_lo,
+	    MFII_DMA_DVA(sc->sc_requests));
+	htolem32(&iiq->system_request_frame_base_address_lo,
+	    MFII_DMA_DVA(sc->sc_requests) >> 32);
 
 	iiq->timestamp = htole64(time_uptime);
 
