@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.98 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.99 2014/03/27 11:32:29 daniel Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2032,6 +2032,7 @@ ipw_init(struct ifnet *ifp)
 	}
 	sc->sc_flags |= IPW_FLAG_FW_INITED;
 	free(fw.data, M_DEVBUF);
+	fw.data = NULL;
 
 	/* retrieve information tables base addresses */
 	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
@@ -2042,7 +2043,7 @@ ipw_init(struct ifnet *ifp)
 	if ((error = ipw_config(sc)) != 0) {
 		printf("%s: device configuration failed\n",
 		    sc->sc_dev.dv_xname);
-		goto fail2;
+		goto fail1;
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -2056,6 +2057,7 @@ ipw_init(struct ifnet *ifp)
 	return 0;
 
 fail2:	free(fw.data, M_DEVBUF);
+	fw.data = NULL;
 fail1:	ipw_stop(ifp, 0);
 	return error;
 }
