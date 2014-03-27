@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.227 2014/03/21 10:44:42 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.228 2014/03/27 10:44:23 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -122,7 +122,9 @@ struct pool ipq_pool;
 struct ipstat ipstat;
 
 void	ip_ours(struct mbuf *);
-int	in_ouraddr(struct in_addr, struct mbuf *);
+int	ip_dooptions(struct mbuf *, struct ifnet *);
+int	in_ouraddr(struct mbuf *, struct ifnet *, struct in_addr);
+void	ip_forward(struct mbuf *, struct ifnet *, int);
 
 /*
  * Used to save the IP options in case a protocol wants to respond
@@ -223,6 +225,7 @@ ipintr(void)
 void
 ipv4_input(struct mbuf *m)
 {
+	struct ifnet *ifp;
 	struct ip *ip;
 	int hlen, len;
 	in_addr_t pfrdr = 0;
@@ -232,6 +235,8 @@ ipv4_input(struct mbuf *m)
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
 #endif /* IPSEC */
+
+	ifp = m->m_pkthdr.rcvif;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -266,7 +271,7 @@ ipv4_input(struct mbuf *m)
 	/* 127/8 must not appear on wire - RFC1122 */
 	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
-		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			ipstat.ips_badaddr++;
 			goto bad;
 		}
@@ -315,9 +320,8 @@ ipv4_input(struct mbuf *m)
 	}
 
 #if NCARP > 0
-	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    ip->ip_p != IPPROTO_ICMP && carp_lsdrop(m, AF_INET,
-	    &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
+	if (ifp->if_type == IFT_CARP && ip->ip_p != IPPROTO_ICMP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
 		goto bad;
 #endif
 
@@ -326,7 +330,7 @@ ipv4_input(struct mbuf *m)
 	 * Packet filter
 	 */
 	pfrdr = ip->ip_dst.s_addr;
-	if (pf_test(AF_INET, PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
+	if (pf_test(AF_INET, PF_IN, ifp, &m, NULL) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;
@@ -342,11 +346,11 @@ ipv4_input(struct mbuf *m)
 	 * error was detected (causing an icmp message
 	 * to be sent and the original packet to be freed).
 	 */
-	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
+	if (hlen > sizeof (struct ip) && ip_dooptions(m, ifp)) {
 	        return;
 	}
 
-	if (in_ouraddr(ip->ip_dst, m)) {
+	if (in_ouraddr(m, ifp, ip->ip_dst)) {
 		ip_ours(m);
 		return;
 	}
@@ -374,7 +378,7 @@ ipv4_input(struct mbuf *m)
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
+			if (ip_mforward(m, ifp) != 0) {
 				ipstat.ips_cantforward++;
 				goto bad;
 			}
@@ -395,7 +399,7 @@ ipv4_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN_LOOKUP_MULTI(ip->ip_dst, m->m_pkthdr.rcvif, inm);
+		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
 		if (inm == NULL) {
 			ipstat.ips_notmember++;
 			if (!IN_LOCAL_GROUP(ip->ip_dst.s_addr))
@@ -413,9 +417,8 @@ ipv4_input(struct mbuf *m)
 	}
 
 #if NCARP > 0
-	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    ip->ip_p == IPPROTO_ICMP && carp_lsdrop(m, AF_INET,
-	    &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
+	if (ifp->if_type == IFT_CARP && ip->ip_p == IPPROTO_ICMP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
 		goto bad;
 #endif
 	/*
@@ -454,7 +457,7 @@ ipv4_input(struct mbuf *m)
 	}
 #endif /* IPSEC */
 
-	ip_forward(m, pfrdr);
+	ip_forward(m, ifp, pfrdr);
 	return;
 bad:
 	m_freem(m);
@@ -645,7 +648,7 @@ bad:
 }
 
 int
-in_ouraddr(struct in_addr ina, struct mbuf *m)
+in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 {
 	struct in_ifaddr	*ia;
 	struct sockaddr_in	 sin;
@@ -685,14 +688,14 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 		    !IN_CLASSFULBROADCAST(ina.s_addr, ina.s_addr))
 			return (0);
 
-		if (m->m_pkthdr.rcvif->if_rdomain != m->m_pkthdr.rdomain)
+		if (ifp->if_rdomain != m->m_pkthdr.rdomain)
 			return (0);
 		/*
 		 * The check in the loop assumes you only rx a packet on an UP
 		 * interface, and that M_BCAST will only be set on a BROADCAST
 		 * interface.
 		 */
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 
@@ -710,7 +713,7 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 		 * If directedbcast is enabled we only consider it local if it
 		 * is received on the interface with that address.
 		 */
-		if (ip_directedbcast && ia->ia_ifp != m->m_pkthdr.rcvif)
+		if (ip_directedbcast && ia->ia_ifp != ifp)
 			return (0);
 
 		/* Make sure M_BCAST is set */
@@ -1003,7 +1006,7 @@ ip_flush(void)
  * 0 if the packet should be processed further.
  */
 int
-ip_dooptions(struct mbuf *m)
+ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	u_char *cp;
@@ -1173,7 +1176,7 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				ipaddr.sin_addr = dst;
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
-				    m->m_pkthdr.rcvif));
+				    ifp));
 				if (ia == 0)
 					continue;
 				memcpy(&sin, &ia->ia_addr.sin_addr,
@@ -1205,7 +1208,7 @@ ip_dooptions(struct mbuf *m)
 		}
 	}
 	if (forward && ipforwarding) {
-		ip_forward(m, 1);
+		ip_forward(m, ifp, 1);
 		return (1);
 	}
 	return (0);
@@ -1378,7 +1381,7 @@ int inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(struct mbuf *m, int srcrt)
+ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 {
 	struct mbuf mfake, *mcopy = NULL;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1451,7 +1454,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	 * Don't send redirect if we advertise destination's arp address
 	 * as ours (proxy arp).
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
+	if (rt->rt_ifp == ifp &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt &&
@@ -1685,8 +1688,8 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		struct sockaddr_dl sdl;
 		struct ifnet *ifp;
 
-		if ((ifp = m->m_pkthdr.rcvif) == NULL ||
-		    ifp->if_sadl == NULL) {
+		ifp = m->m_pkthdr.rcvif;
+		if (ifp == NULL || ifp->if_sadl == NULL) {
 			memset(&sdl, 0, sizeof(sdl));
 			sdl.sdl_len = offsetof(struct sockaddr_dl, sdl_data[0]);
 			sdl.sdl_family = AF_LINK;
