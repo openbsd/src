@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.6 2014/03/24 12:24:30 dlg Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.7 2014/03/27 09:42:57 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -811,7 +811,7 @@ struct mpii_request_descr {
 
 	u_int16_t		lmid;
 	u_int16_t		dev_handle;
-} __packed;
+} __packed __aligned(8);
 
 struct mpii_reply_descr {
 	u_int8_t		reply_flags;
@@ -828,7 +828,7 @@ struct mpii_reply_descr {
 		u_int32_t	data;
 		u_int32_t	frame_addr;	/* Address Reply */
 	};
-} __packed;
+} __packed __aligned(8);
 
 struct mpii_request_header {
 	u_int16_t		function_dependent1;
