@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.132 2014/03/26 23:03:59 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.133 2014/03/27 07:27:04 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -59,6 +59,7 @@ restore_sum() {
 			rm ${DESTDIR}/${DBDIR}/${_i#.}
 		fi
 	done
+	rm -f ${WRKDIR}/*sum
 }
 
 usage() {
