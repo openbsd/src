@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.15 2014/02/28 15:59:38 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.16 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland E
 #include <sys/poll.h>
 #include <sys/file.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <tmpfs/tmpfs_vnops.h>

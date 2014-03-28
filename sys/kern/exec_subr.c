@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.31 2013/10/15 05:30:53 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.32 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/mman.h>
 #include <sys/resourcevar.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <dev/rndvar.h>
 
 #ifdef DEBUG

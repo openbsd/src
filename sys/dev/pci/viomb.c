@@ -1,5 +1,6 @@
-/* $OpenBSD: viomb.c,v 1.7 2013/10/31 01:54:43 dlg Exp $	 */
+/* $OpenBSD: viomb.c,v 1.8 2014/03/28 17:57:11 mpi Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
+
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
  * Copyright (c) 2010 Minoura Makoto.
@@ -32,7 +33,9 @@
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/pool.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 

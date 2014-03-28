@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.7 2014/02/13 23:48:30 pelikan Exp $ */
+/*	$OpenBSD: ahci.c,v 1.8 2014/03/28 17:57:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -46,7 +46,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #endif
 
 #ifdef HIBERNATE
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/hibernate.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>

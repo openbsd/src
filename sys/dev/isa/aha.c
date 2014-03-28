@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.75 2013/01/06 22:06:54 martynas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.76 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -59,7 +59,6 @@
 #include <sys/proc.h>
 #include <sys/timeout.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>

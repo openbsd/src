@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.70 2014/03/18 22:36:37 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.71 2014/03/28 17:57:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,5 @@
-/*	$OpenBSD: video.c,v 1.28 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: video.c,v 1.29 2014/03/28 17:57:11 mpi Exp $	*/
+
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -29,7 +30,8 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/videoio.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
 
 #include <dev/video_if.h>

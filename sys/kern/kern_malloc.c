@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.104 2014/01/21 01:48:44 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.105 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #include <dev/rndvar.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 static __inline__ long BUCKETINDX(size_t sz)
 {

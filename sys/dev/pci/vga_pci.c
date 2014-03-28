@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.76 2014/03/26 14:41:41 mpi Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.77 2014/03/28 17:57:11 mpi Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -74,8 +74,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
-
-#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.110 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.111 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -397,14 +397,22 @@ extern struct uvmexp uvmexp;
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <uvm/uvm_param.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
+
+#include <uvm/uvm_param.h>
 #include <uvm/uvm_pmap.h>
+#include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_pager.h>
+
+/* Constraint ranges, set by MD code. */
+extern struct uvm_constraint_range  isa_constraint;
+extern struct uvm_constraint_range  dma_constraint;
+extern struct uvm_constraint_range  no_constraint;
+extern struct uvm_constraint_range *uvm_md_constraints[];
 
 /*
  * Shareable process virtual address space.

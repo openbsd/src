@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.52 2013/11/09 06:52:15 guenther Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.53 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -39,33 +39,16 @@
 #define _UVM_UVM_H_
 
 #include <uvm/uvm_extern.h>
-
-/*
- * pull in prototypes
- */
-
 #include <uvm/uvm_amap.h>
 #include <uvm/uvm_aobj.h>
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_glue.h>
 #include <uvm/uvm_km.h>
-#include <uvm/uvm_map.h>
-#include <uvm/uvm_object.h>
-#include <uvm/uvm_page.h>
-#include <uvm/uvm_pager.h>
 #include <uvm/uvm_swap.h>
 #include <uvm/uvm_pmemrange.h>
 #ifdef UVM_SWAP_ENCRYPT
 #include <uvm/uvm_swap_encrypt.h>
 #endif
-
-#include <machine/vmparam.h>
-
-/* Constraint ranges, set by MD code. */
-extern struct uvm_constraint_range  isa_constraint;
-extern struct uvm_constraint_range  dma_constraint;
-extern struct uvm_constraint_range  no_constraint;
-extern struct uvm_constraint_range *uvm_md_constraints[];
 
 /*
  * uvm structure (vm global state: collected in one structure for ease

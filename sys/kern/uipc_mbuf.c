@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.179 2014/03/27 10:30:58 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.180 2014/03/28 17:57:11 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 #include <net/if.h>
 
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #ifdef DDB
