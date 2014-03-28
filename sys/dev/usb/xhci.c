@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.5 2014/03/25 20:27:37 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.6 2014/03/28 14:14:11 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -688,13 +688,15 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 void
 xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 {
-	uint32_t flags = letoh32(sc->sc_cmd_trb->trb_flags);
 	struct usbd_xfer *xfer;
 	struct xhci_pipe *xp;
+	uint32_t flags;
 	uint8_t dci, slot;
 	int i;
 
 	KASSERT(paddr == TRBADDR(sc->sc_cmd_ring, sc->sc_cmd_trb));
+
+	flags = letoh32(sc->sc_cmd_trb->trb_flags);
 
 	slot = XHCI_TRB_GET_SLOT(flags);
 	dci = XHCI_TRB_GET_EP(flags);
@@ -1331,13 +1333,12 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 	    (timeout*hz+999)/ 1000 + 1);
 	if (error) {
 #ifdef XHCI_DEBUG
+		printf("%s: tsleep() = %d\n", __func__, error);
 		printf("cmd = %d " ,XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
 		xhci_dump_trb(trb);
 #endif
-#ifdef DIAGNOSTIC
-		printf("%s: tsleep() = %d\n", __func__, error);
-#endif
-		goto timedout;
+		sc->sc_cmd_trb = NULL;
+		return (error);
 	}
 
 	memcpy(trb0, &sc->sc_result_trb, sizeof(struct xhci_trb));
@@ -1348,7 +1349,6 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 		error = EIO;
 	}
 
-timedout:
 #ifdef XHCI_DEBUG
 	if (error) {
 		printf("result = %d ", XHCI_TRB_TYPE(letoh32(trb0->trb_flags)));
