@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.124 2014/03/27 13:27:28 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.125 2014/03/28 08:33:51 sthen Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	struct mbuf *m;
 	long space, len, mlen, clen = 0;
 	quad_t resid;
-	int error, s;
+	int error, s, dontroute;
 	int atomic = sosendallatonce(so) || top;
 
 	if (uio)
@@ -405,6 +405,9 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		error = EINVAL;
 		goto out;
 	}
+	dontroute =
+	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
+	    (so->so_proto->pr_flags & PR_ATOMIC);
 	if (uio && uio->uio_procp)
 		uio->uio_procp->p_ru.ru_msgsnd++;
 	if (control) {
@@ -519,6 +522,8 @@ nopages:
 					break;
 				}
 			} while (space > 0 && atomic);
+			if (dontroute)
+				so->so_options |= SO_DONTROUTE;
 			s = splsoftnet();		/* XXX */
 			if (resid <= 0)
 				so->so_state &= ~SS_ISSENDING;
@@ -526,6 +531,8 @@ nopages:
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, addr, control, curproc);
 			splx(s);
+			if (dontroute)
+				so->so_options &= ~SO_DONTROUTE;
 			clen = 0;
 			control = 0;
 			top = 0;
@@ -1476,6 +1483,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_BINDANY:
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
+		case SO_DONTROUTE:
 		case SO_USELOOPBACK:
 		case SO_BROADCAST:
 		case SO_REUSEADDR:
@@ -1490,15 +1498,6 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				so->so_options |= optname;
 			else
 				so->so_options &= ~optname;
-			break;
-
-		case SO_DONTROUTE:
-			if (m == NULL || m->m_len < sizeof (int)) {
-				error = EINVAL;
-				goto bad;
-			}
-			if (*mtod(m, int *))
-				error = EOPNOTSUPP;
 			break;
 
 		case SO_SNDBUF:
@@ -1659,6 +1658,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 
 		case SO_BINDANY:
 		case SO_USELOOPBACK:
+		case SO_DONTROUTE:
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
 		case SO_REUSEADDR:
@@ -1667,10 +1667,6 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
 			*mtod(m, int *) = so->so_options & optname;
-			break;
-
-		case SO_DONTROUTE:
-			*mtod(m, int *) = 0;
 			break;
 
 		case SO_TYPE:

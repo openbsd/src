@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.18 2014/03/27 13:27:28 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.19 2014/03/28 08:33:51 sthen Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -180,7 +180,8 @@ divert6_output(struct mbuf *m, ...)
 		splx(s);
 	} else {
 		error = ip6_output(m, NULL, &inp->inp_route6,
-		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, NULL);
+		    ((so->so_options & SO_DONTROUTE) ? IP_ROUTETOIF : 0)
+		    | IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, NULL);
 	}
 
 	div6stat.divs_opackets++;

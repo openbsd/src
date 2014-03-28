@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.68 2014/03/27 13:27:28 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.69 2014/03/28 08:33:51 sthen Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ rip_output(struct mbuf *m, ...)
 	va_end(ap);
 
 	inp = sotoinpcb(so);
-	flags = IP_ALLOWBROADCAST;
+	flags = (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST;
 
 	/*
 	 * If the user handed us a complete IP packet, use it.
