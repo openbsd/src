@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.157 2014/03/12 00:44:10 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.158 2014/03/28 02:42:18 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -354,6 +354,12 @@ ch*	at scsibus?
 safte*	at scsibus?
 ses*	at scsibus?
 uk*	at scsibus?
+
+mpath0	at root
+#emc*	at scsibus?
+#hds*	at scsibus?
+rdac*	at scsibus?
+sym*	at scsibus?
 
 # 1-Wire devices
 option ONEWIREVERBOSE

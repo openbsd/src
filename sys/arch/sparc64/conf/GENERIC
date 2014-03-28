@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.279 2014/03/19 09:07:06 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.280 2014/03/28 02:42:18 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -416,6 +416,12 @@ ch*		at scsibus?		# SCSI changer devices
 safte*		at scsibus?		# SCSI accessed fault-tolerant encl
 ses*		at scsibus?		# SCSI enclosure services
 uk*		at scsibus?		# unknown SCSI devices
+
+mpath0		at root
+#emc*		at scsibus?
+#hds*		at scsibus?
+rdac*		at scsibus?
+sym*		at scsibus?
 
 # Media Independent Interface (mii) drivers
 acphy*	at mii?				# Altima AC101 PHYs
