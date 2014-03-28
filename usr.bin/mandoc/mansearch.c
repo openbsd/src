@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.15 2014/03/21 22:52:21 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.16 2014/03/28 19:16:15 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -302,6 +302,7 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 	size_t		 i;
 	int		 c;
 
+	mpage->file = NULL;
 	mpage->names = NULL;
 	prevsec = prevarch = NULL;
 	i = 1;
