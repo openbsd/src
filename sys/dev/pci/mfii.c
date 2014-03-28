@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.14 2014/03/27 23:17:40 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.15 2014/03/28 22:25:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1008,7 +1008,7 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 
 	htolem32(&iiq->system_request_frame_base_address_lo,
 	    MFII_DMA_DVA(sc->sc_requests));
-	htolem32(&iiq->system_request_frame_base_address_lo,
+	htolem32(&iiq->system_request_frame_base_address_hi,
 	    MFII_DMA_DVA(sc->sc_requests) >> 32);
 
 	iiq->timestamp = htole64(time_uptime);
