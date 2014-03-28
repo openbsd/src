@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.7 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: net.h,v 1.8 2014/03/28 01:12:58 guenther Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -68,7 +68,10 @@
  * That's 42 but let's pad it out to 48 bytes.
  */
 #define ETHER_SIZE 14
-#define	HEADER_SIZE 48
+struct packet_header {
+	/* guarantee int alignment */
+	int	pad[48 / sizeof(int)];
+};
 
 extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];

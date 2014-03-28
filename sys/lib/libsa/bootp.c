@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.12 2006/02/06 17:37:28 jmc Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.13 2014/03/28 01:12:58 guenther Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -70,11 +70,11 @@ bootp(int sock)
 	struct iodesc *d;
 	struct bootp *bp;
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct bootp wbootp;
 	} wbuf;
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct bootp rbootp;
 	} rbuf;
 

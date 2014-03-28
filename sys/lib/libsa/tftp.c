@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.3 2009/03/02 00:00:56 krw Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.4 2014/03/28 01:12:58 guenther Exp $	*/
 /*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
 
 /*
@@ -74,7 +74,7 @@ struct tftp_handle {
 	int             off;
 	const char     *path;	/* saved for re-requests */
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct tftphdr t;
 		u_char space[RSPACE];
 	} lastdata;
@@ -153,7 +153,7 @@ int
 tftp_makereq(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct tftphdr  t;
 		u_char space[FNAME_SIZE + 6];
 	} wbuf;
@@ -198,7 +198,7 @@ int
 tftp_getnextblock(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct tftphdr t;
 	} wbuf;
 	char           *wtail;
@@ -233,7 +233,7 @@ void
 tftp_terminate(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		struct packet_header header;
 		struct tftphdr t;
 	} wbuf;
 	char           *wtail;
