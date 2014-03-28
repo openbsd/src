@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.4 2014/03/25 07:15:52 dlg Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.5 2014/03/28 04:59:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -249,7 +249,7 @@ struct qle_nvram {
 	u_int16_t	subsystem_device_id;
 
 	u_int32_t	checksum;
-} __packed;
+} __packed __aligned(4);
 
 /* init firmware control block */
 #define QLE_ICB_VERSION			1
@@ -317,7 +317,7 @@ struct qle_init_cb {
 	u_int32_t	icb_fwoptions2;
 	u_int32_t	icb_fwoptions3;
 	u_int8_t	icb_reserved3[24];
-} __packed;
+} __packed __aligned(4);
 
 #define QLE_FW_OPTION1_ASYNC_LIP_F8	0x0001
 #define QLE_FW_OPTION1_ASYNC_LIP_RESET	0x0002
@@ -353,7 +353,7 @@ struct qle_get_port_db {
 	u_int64_t	port_name;
 	u_int64_t	node_name;
 	u_int8_t	reserved3[24];
-} __packed;
+} __packed __aligned(4);
 
 #define QLE_SVC3_TARGET_ROLE		0x0010
 
@@ -374,7 +374,7 @@ struct qle_ct_cmd_hdr {
 	u_int8_t	ct_gs_subtype;
 	u_int8_t	ct_gs_options;
 	u_int8_t	ct_gs_reserved;
-} __packed;
+} __packed __aligned(4);
 
 struct qle_ct_ga_nxt_req {
 	struct qle_ct_cmd_hdr header;
@@ -382,7 +382,7 @@ struct qle_ct_ga_nxt_req {
 	u_int16_t	max_word;
 	u_int32_t	reserved3;
 	u_int32_t	port_id;
-} __packed;
+} __packed __aligned(4);
 
 struct qle_ct_ga_nxt_resp {
 	struct qle_ct_cmd_hdr header;
@@ -407,7 +407,7 @@ struct qle_ct_ga_nxt_resp {
 	u_int8_t	ip_addr[16];
 	u_int64_t	fabric_port_name;
 	u_int32_t	hard_address;
-} __packed;
+} __packed __aligned(4);
 
 struct qle_ct_rft_id_req {
 	struct qle_ct_cmd_hdr header;
@@ -416,7 +416,7 @@ struct qle_ct_rft_id_req {
 	u_int32_t	reserved3;
 	u_int32_t	port_id;
 	u_int32_t	fc4_types[8];
-} __packed;
+} __packed __aligned(4);
 
 struct qle_ct_rft_id_resp {
 	struct qle_ct_cmd_hdr header;
@@ -426,7 +426,7 @@ struct qle_ct_rft_id_resp {
 	u_int8_t	reason_code;
 	u_int8_t	explanation_code;
 	u_int8_t	vendor_unique;
-} __packed;
+} __packed __aligned(4);
 
 /* available handle ranges */
 #define QLE_MIN_HANDLE			0x81
@@ -490,7 +490,7 @@ struct qle_iocb_status {
 
 	u_int32_t	fcp_rsp_len;
 	u_int8_t	data[28];
-} __packed;
+} __packed __aligned(64);
 
 /* completion */
 #define QLE_IOCB_STATUS_COMPLETE	0x0000
@@ -526,7 +526,7 @@ struct qle_iocb_marker {
 	u_int16_t	marker_flags;
 	u_int16_t	lun;
 	u_int8_t	reserved2[48];
-} __packed;
+} __packed __aligned(64);
 
 struct qle_iocb_status_cont {
 	u_int8_t	entry_type;	/* QLE_IOCB_STATUS_CONT */
@@ -535,7 +535,7 @@ struct qle_iocb_status_cont {
 	u_int8_t	flags;
 
 	u_int8_t	sense[44];
-} __packed;
+} __packed __aligned(64);
 
 struct qle_iocb_req6 {
 	u_int8_t	entry_type;	/* QLE_IOCB_CMD_TYPE_6 */
@@ -564,7 +564,7 @@ struct qle_iocb_req6 {
 
 	u_int32_t	req_target_id;
 	struct qle_iocb_seg req_data_seg;
-} __packed __aligned(4);
+} __packed __aligned(64);
 
 struct qle_fcp_cmnd {
 	u_int16_t	fcp_lun[4];
@@ -575,7 +575,7 @@ struct qle_fcp_cmnd {
 	
 	u_int8_t	fcp_cdb[52];
 	/* 64 bytes total */
-} __packed;
+} __packed __aligned(64);
 
 struct qle_iocb_ct_passthrough {
 	u_int8_t	entry_type;	/* QLE_IOCB_CT_PASSTHROUGH */
@@ -597,7 +597,7 @@ struct qle_iocb_ct_passthrough {
 	u_int32_t	req_cmd_byte_count;
 	struct qle_iocb_seg req_cmd_seg;
 	struct qle_iocb_seg req_resp_seg;
-} __packed;
+} __packed __aligned(64);
 
 struct qle_iocb_plogx {
 	u_int8_t	entry_type;	/* QLE_IOCB_PLOGX */
@@ -615,4 +615,4 @@ struct qle_iocb_plogx {
 	u_int8_t	req_port_id_hi;
 	u_int8_t	req_rspsize;
 	u_int16_t	req_ioparms[22];
-} __packed;
+} __packed __aligned(64);
