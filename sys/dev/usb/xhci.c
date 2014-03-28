@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.6 2014/03/28 14:14:11 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.7 2014/03/28 16:19:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1588,7 +1588,7 @@ xhci_softdev_free(struct xhci_softc *sc, uint8_t slot)
 }
 
 /* Root hub descriptors. */
-const usb_device_descriptor_t xhci_devd = {
+usb_device_descriptor_t xhci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x03},		/* USB version */
