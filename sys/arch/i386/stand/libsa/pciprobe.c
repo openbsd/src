@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.9 2008/10/04 23:08:22 deraadt Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.10 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,7 +42,7 @@ pciprobe(void)
 	u_int32_t entry32;
 
 	/* PCI BIOS v2.0c+ - Installation Check */
-	__asm __volatile(DOINT(0x1A) "; shll $8,%2; setc %b2"
+	__asm volatile(DOINT(0x1A) "; shll $8,%2; setc %b2"
 		: "=a" (hw_chars), "=b" (rev), "=c" (rc),
 		  "=d" (sig), "=D" (entry32)
 		: "0" (0xB101), "4" (0x0)

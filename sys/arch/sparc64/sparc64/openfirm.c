@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.14 2010/04/10 14:02:49 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.15 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ void OF_sym2val(cells)
 	db_expr_t value;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :); 
+	__asm volatile("clr %%g4" : :); 
 
 	/* No args?  Nothing to do. */
 	if (!args->nargs || 
@@ -807,7 +807,7 @@ void OF_val2sym(cells)
 	db_expr_t offset;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :);
+	__asm volatile("clr %%g4" : :);
 
 	if (obp_symbol_debug)
 		prom_printf("OF_val2sym: nargs %lx nreturns %lx\r\n",

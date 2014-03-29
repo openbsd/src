@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.103 2013/11/02 15:02:27 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.104 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -644,7 +644,7 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 		return 0;
 
 	base = 0;
-	__asm __volatile("lcall *(%4)"
+	__asm volatile("lcall *(%4)"
 	    : "+a" (service), "+b" (base), "=c" (count), "=d" (off)
 	    : "D" (&bios32_entry)
 	    : "%esi", "cc", "memory");

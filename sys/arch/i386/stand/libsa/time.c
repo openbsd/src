@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.17 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: time.c,v 1.18 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -76,7 +76,7 @@ compute(int year, u_int8_t month, u_int8_t day, u_int8_t hour,
 static int
 bios_time_date(int f, u_int8_t *b)
 {
-	__asm __volatile(DOINT(0x1a) "\n\t"
+	__asm volatile(DOINT(0x1a) "\n\t"
 	    "setc %b0\n\t"
 	    "movb %%ch, 0(%2)\n\t"
 	    "movb %%cl, 1(%2)\n\t"

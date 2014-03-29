@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.3 2013/10/16 16:59:35 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.4 2014/03/29 18:09:29 guenther Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -40,7 +40,7 @@ void	scm_getenaddr(u_char *);
  */
 
 #define SCM_CALL(x) \
-	__asm__ __volatile__ ("or %%r9,%%r0," __STRING(x) "; tb0 0,%%r0,496" \
+	__asm__ volatile ("or %%r9,%%r0," __STRING(x) "; tb0 0,%%r0,496" \
 	    :::	"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
 		"r9", "r10", "r11", "r12", "r13")
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.117 2012/08/29 20:33:16 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.118 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1267,7 +1267,7 @@ void
 callrom()
 {
 
-	__asm __volatile("wrpr	%%g0, 0, %%tl" : );
+	__asm volatile("wrpr	%%g0, 0, %%tl" : );
 	OF_enter();
 }
 

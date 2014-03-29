@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.22 2014/01/21 09:40:54 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.23 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -109,7 +109,7 @@ x86_64_ipi_halt(struct cpu_info *ci)
 	wbinvd();
 
 	for(;;) {
-		__asm __volatile("hlt");
+		__asm volatile("hlt");
 	}
 }
 

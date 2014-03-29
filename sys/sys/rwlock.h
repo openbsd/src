@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.14 2013/05/01 17:13:05 tedu Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.15 2014/03/29 18:09:31 guenther Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -62,7 +62,7 @@
 struct proc;
 
 struct rwlock {
-	__volatile unsigned long rwl_owner;
+	volatile unsigned long rwl_owner;
 	const char *rwl_name;
 };
 

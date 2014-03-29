@@ -1,4 +1,4 @@
-/*	$OpenBSD: putc.c,v 1.2 2013/09/28 21:59:39 miod Exp $	*/
+/*	$OpenBSD: putc.c,v 1.3 2014/03/29 18:09:29 guenther Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -34,7 +34,7 @@ putchar(int c)
 	if (c == '\n') {
 		SCM_CALL(SCM_OCRLF);
 	} else {
-		__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (c));
+		__asm__ volatile ("or %%r2, %%r0, %0" : : "r" (c));
 		SCM_CALL(SCM_OCHAR);
 	}
 }

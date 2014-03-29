@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.4 2007/10/24 17:56:56 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.5 2014/03/29 18:09:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -59,11 +59,11 @@ pctrrd(struct pctrst *st)
 	reg = pctr_isamd ? MSR_K7_EVNTSEL0 : MSR_EVNTSEL0;
 	for (i = 0; i < num; i++)
 		st->pctr_fn[i] = rdmsr(reg + i);
-	__asm __volatile("cli");
+	__asm volatile("cli");
 	st->pctr_tsc = rdtsc();
 	for (i = 0; i < num; i++)
 		st->pctr_hwc[i] = rdpmc(i);
-	__asm __volatile("sti");
+	__asm volatile("sti");
 }
 
 void
@@ -79,14 +79,14 @@ pctrattach(int num)
 
 	if (usepctr) {
 		/* Enable RDTSC and RDPMC instructions from user-level. */
-		__asm __volatile("movq %%cr4,%%rax\n"
+		__asm volatile("movq %%cr4,%%rax\n"
 				 "\tandq %0,%%rax\n"
 				 "\torq %1,%%rax\n"
 				 "\tmovq %%rax,%%cr4"
 				 :: "i" (~CR4_TSD), "i" (CR4_PCE) : "rax");
 	} else if (usetsc) {
 		/* Enable RDTSC instruction from user-level. */
-		__asm __volatile("movq %%cr4,%%rax\n"
+		__asm volatile("movq %%cr4,%%rax\n"
 				 "\tandq %0,%%rax\n"
 				 "\tmovq %%rax,%%cr4"
 				 :: "i" (~CR4_TSD) : "rax");

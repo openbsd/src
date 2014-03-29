@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosprobe.c,v 1.2 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: biosprobe.c,v 1.3 2014/03/29 18:09:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Tobias Weingartner
@@ -41,7 +41,7 @@ getSYSCONFaddr(void)
 	u_int32_t status;
 	u_int8_t *vers;
 
-	__asm __volatile(DOINT(0x15) "\n\t"
+	__asm volatile(DOINT(0x15) "\n\t"
 	    "setc %%al\n\t"
 	    : "=a" (status)
 	    : "0" (0xC000)
@@ -67,7 +67,7 @@ getEBDAaddr(void)
 	if (!info)
 		return NULL;
 
-	__asm __volatile(DOINT(0x15) "\n\t"
+	__asm volatile(DOINT(0x15) "\n\t"
 	    "setc %%al"
 	    : "=a" (status)
 	    : "0" (0xC100)

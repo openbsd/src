@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.12 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.13 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -36,7 +36,7 @@
 #define	HitWBInvalidate_S	0x17
 
 #define	cache(op,addr) \
-    __asm__ __volatile__ ("cache %0, 0(%1)" :: "i"(op), "r"(addr) : "memory")
+    __asm__ volatile ("cache %0, 0(%1)" :: "i"(op), "r"(addr) : "memory")
 
 static __inline__ void	mips4k_hitinv_primary(vaddr_t, vsize_t, vsize_t);
 static __inline__ void	mips4k_hitinv_secondary(vaddr_t, vsize_t, vsize_t);

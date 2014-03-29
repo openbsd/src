@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.15 2011/03/03 21:48:49 kettenis Exp $ */
+/* $OpenBSD: zts.c,v 1.16 2014/03/29 18:09:30 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -271,8 +271,8 @@ pxa2x0_ccnt_enable(int on)
 	u_int32_t rv;
 
 	on = on ? 0x1 : 0x0;
-	__asm __volatile("mrc p14, 0, %0, c0, c1, 0" : "=r" (rv));
-	__asm __volatile("mcr p14, 0, %0, c0, c1, 0" : : "r" (on));
+	__asm volatile("mrc p14, 0, %0, c0, c1, 0" : "=r" (rv));
+	__asm volatile("mcr p14, 0, %0, c0, c1, 0" : : "r" (on));
 	return ((int)(rv & 0x1));
 }
 
@@ -281,7 +281,7 @@ pxa2x0_read_ccnt(void)
 {
 	u_int32_t rv;
 
-	__asm __volatile("mrc p14, 0, %0, c1, c1, 0" : "=r" (rv));
+	__asm volatile("mrc p14, 0, %0, c1, c1, 0" : "=r" (rv));
 	return (rv);
 }
 

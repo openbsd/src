@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.7 2011/10/15 23:35:29 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.8 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ struct trapframe;
 struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;
-	__volatile int md_astpending;
+	volatile int md_astpending;
 };
 
 /* md_flags */

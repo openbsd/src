@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.1 2013/09/04 14:38:30 patrick Exp $ */
+/*	$OpenBSD: intc.h,v 1.2 2014/03/29 18:09:28 guenther Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,8 +25,8 @@
 #include <machine/intr.h>
 #include <arm/softintr.h>
 
-extern __volatile int current_spl_level;
-extern __volatile int softint_pending;
+extern volatile int current_spl_level;
+extern volatile int softint_pending;
 void intc_do_pending(void);
 
 #define SI_TO_IRQBIT(si)  (1U<<(si))

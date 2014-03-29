@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.11 2014/03/18 21:09:28 kettenis Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.12 2014/03/29 18:09:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -40,7 +40,7 @@ try_lock(struct mutex *mtx)
 #ifdef MULTIPROCESSOR
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"1:	ldl_l	%0, %3		\n"	/* t0 = mtx->mtx_lock */
 		"	bne	%0, 2f		\n"
 		"	bis	$31, 1, %0	\n"	/* t0 = 1 */

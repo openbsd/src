@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: fault.c,v 1.2 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -43,14 +43,14 @@ static __inline__ uint32_t
 get_vbr()
 {
 	uint32_t vbr;
-	__asm__ __volatile__ ("ldcr %0, %%cr7" : "=r"(vbr));
+	__asm__ volatile ("ldcr %0, %%cr7" : "=r"(vbr));
 	return vbr;
 }
 
 static __inline__ void
 set_vbr(uint32_t vbr)
 {
-	__asm__ __volatile__ ("stcr %0, %%cr7" :: "r"(vbr));
+	__asm__ volatile ("stcr %0, %%cr7" :: "r"(vbr));
 }
 
 /*

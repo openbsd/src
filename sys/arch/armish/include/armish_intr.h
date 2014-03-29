@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_intr.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $ */
+/*	$OpenBSD: armish_intr.h,v 1.8 2014/03/29 18:09:28 guenther Exp $ */
 /*	$NetBSD: i80321_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /*
@@ -47,8 +47,8 @@
 #include <arm/cpufunc.h>
 #include <arm/softintr.h>
 
-extern __volatile int current_ipl_level;
-extern __volatile int softint_pending;
+extern volatile int current_ipl_level;
+extern volatile int softint_pending;
 extern int i80321_imask[];
 void i80321_do_pending(void);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.28 2013/03/25 19:59:22 deraadt Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.29 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -68,37 +68,37 @@
 /* Get space register for an address */
 static __inline register_t ldsid(vaddr_t p) {
 	register_t ret;
-	__asm __volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
+	__asm volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
 	return ret;
 }
 
-#define mtctl(v,r) __asm __volatile("mtctl %0,%1":: "r" (v), "i" (r))
-#define mfctl(r,v) __asm __volatile("mfctl %1,%0": "=r" (v): "i" (r))
+#define mtctl(v,r) __asm volatile("mtctl %0,%1":: "r" (v), "i" (r))
+#define mfctl(r,v) __asm volatile("mfctl %1,%0": "=r" (v): "i" (r))
 
 #define	mfcpu(r,v)	/* XXX for the lack of the mnemonics */		\
-	__asm __volatile(".word	%1\n\t"					\
+	__asm volatile(".word	%1\n\t"					\
 			 "copy	%%r22, %0"				\
 	    : "=r" (v) : "i" ((0x14001400 | ((r) << 21) | (22)))	\
 	    : "r22")
 
-#define mtsp(v,r) __asm __volatile("mtsp %0,%1":: "r" (v), "i" (r))
-#define mfsp(r,v) __asm __volatile("mfsp %1,%0": "=r" (v): "i" (r))
+#define mtsp(v,r) __asm volatile("mtsp %0,%1":: "r" (v), "i" (r))
+#define mfsp(r,v) __asm volatile("mfsp %1,%0": "=r" (v): "i" (r))
 
-#define ssm(v,r) __asm __volatile("ssm %1,%0": "=r" (r): "i" (v))
-#define rsm(v,r) __asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
+#define ssm(v,r) __asm volatile("ssm %1,%0": "=r" (r): "i" (v))
+#define rsm(v,r) __asm volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 /* Move to system mask. Old value of system mask is returned. */
 static __inline register_t
 mtsm(register_t mask) {
 	register_t ret;
-	__asm __volatile("ssm 0,%0\n\t"
+	__asm volatile("ssm 0,%0\n\t"
 			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
 
-#define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
-#define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
-#define sync_caches() __asm __volatile(\
+#define	fdce(sp,off) __asm volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
+#define	fice(sp,off) __asm volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
+#define sync_caches() __asm volatile(\
     "sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop":::"memory")
 
 static __inline void

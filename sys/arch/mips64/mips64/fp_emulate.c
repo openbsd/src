@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.8 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.9 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -148,8 +148,8 @@ MipsFPTrap(struct trap_frame *tf)
 	sr = getsr();
 	setsr(sr | SR_COP_1_BIT);
 
-	__asm__ __volatile__ ("cfc1 %0, $31" : "=r" (fsr));
-	__asm__ __volatile__ ("cfc1 %0, $31" : "=r" (fsr));
+	__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
+	__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
 
 	/*
 	 * If this is not an unimplemented operation, but a genuine
@@ -380,7 +380,7 @@ deliver:
 	if (update_pcb)
 		tf->fsr = fsr;
 #ifndef FPUEMUL
-	__asm__ __volatile__ ("ctc1 %0, $31" :: "r" (fsr));
+	__asm__ volatile ("ctc1 %0, $31" :: "r" (fsr));
 	/* disable fpu before returning to trap() */
 	setsr(sr);
 #endif

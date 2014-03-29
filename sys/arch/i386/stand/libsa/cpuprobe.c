@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuprobe.c,v 1.1 2004/06/26 05:19:37 tom Exp $	*/
+/*	$OpenBSD: cpuprobe.c,v 1.2 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -35,7 +35,7 @@ static char cpu_vendor[13];		/* 12 chars plus NUL term */
 u_int32_t
 cpuid(u_int32_t eax, u_int32_t *regs)
 {
-	__asm __volatile(
+	__asm volatile(
 	    "cpuid\n\t"
 	    "movl	%%eax, 0(%2)\n\t"
 	    "movl	%%ebx, 4(%2)\n\t"
@@ -71,7 +71,7 @@ cpuprobe(void)
 	 *     does not support cpuid but which does allow the PSL_ID bit
 	 *     in eflags to be toggled.
 	 */
-	__asm __volatile(
+	__asm volatile(
 	    "pushfl\n\t"
 	    "popl	%2\n\t"
 	    "xorl	%2, %0\n\t"

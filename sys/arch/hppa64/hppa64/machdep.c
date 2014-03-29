@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -475,10 +475,10 @@ fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 	for (; c_count--; c_base += c_stride)
 		for (loop = c_loop; loop--; )
 			if (data)
-				__asm __volatile("fdce 0(%%sr0,%0)"
+				__asm volatile("fdce 0(%%sr0,%0)"
 				    :: "r" (c_base));
 			else
-				__asm __volatile("fice 0(%%sr0,%0)"
+				__asm volatile("fice 0(%%sr0,%0)"
 				    :: "r" (c_base));
 }
 
@@ -592,7 +592,7 @@ haltsys:
 
 		printf("System halted!\n");
 		DELAY(2000000);
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (HPPA_LBCAST + iomod_command));
 	} else {
 		printf("rebooting...");
@@ -602,9 +602,9 @@ haltsys:
                 pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
 
 		/* forcably reset module if that fails */
-		__asm __volatile(".export hppa_reset, entry\n\t"
+		__asm volatile(".export hppa_reset, entry\n\t"
 		    ".label hppa_reset");
-		__asm __volatile("stwas %0, 0(%1)"
+		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 

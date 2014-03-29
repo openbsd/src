@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.57 2014/03/14 14:11:31 pirofti Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.58 2014/03/29 18:09:31 guenther Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -186,7 +186,7 @@ struct usbd_xfer {
 	u_int32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	__volatile char		done;
+	volatile char		done;
 #ifdef DIAGNOSTIC
 	u_int32_t		busy_free;
 #define XFER_FREE 0x46524545

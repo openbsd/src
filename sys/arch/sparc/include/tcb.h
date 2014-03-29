@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.3 2011/11/08 22:46:07 kettenis Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -68,7 +68,7 @@ __sparc_read_tcb(int offset)
 #define TCB_GET_MEMBER(member)	\
 	__sparc_read_tcb(offsetof(struct thread_control_block, member))
 
-#define TCB_SET(tcb)	__asm __volatile("mov %0, %%g7" : : "r" (tcb))
+#define TCB_SET(tcb)	__asm volatile("mov %0, %%g7" : : "r" (tcb))
 
 #endif /* 0 */
 

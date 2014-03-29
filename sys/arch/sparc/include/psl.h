@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.27 2013/05/17 19:38:52 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.28 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -119,7 +119,7 @@ getpsr()
 {
 	int psr;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	return (psr);
 }
 
@@ -128,7 +128,7 @@ getmid()
 {
 	int mid;
 
-	__asm __volatile("rd %%tbr,%0" : "=r" (mid));
+	__asm volatile("rd %%tbr,%0" : "=r" (mid));
 	return ((mid >> 20) & 0x3);
 }
 
@@ -136,10 +136,10 @@ static __inline void
 setpsr(newpsr)
 	int newpsr;
 {
-	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
+	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr));
+	__asm volatile("nop");
+	__asm volatile("nop");
+	__asm volatile("nop");
 }
 
 static __inline int
@@ -152,15 +152,15 @@ spl0()
 	 * which gives us the same value as the old psr but with all
 	 * the old PIL bits turned off.
 	 */
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
 	oldipl = psr & PSR_PIL;
-	__asm __volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
+	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
 
 	/*
 	 * Three instructions must execute before we can depend
 	 * on the bits to be changed.
 	 */
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 	return (oldipl);
 }
 
@@ -193,13 +193,13 @@ static __inline int name(void); \
 static __inline int name() \
 { \
 	int psr, oldipl; \
-	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
+	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
 	psr &= ~oldipl; \
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm __volatile("nop; nop; nop"); \
-	__asm __volatile("":::"memory");	/* protect from reordering */ \
+	__asm volatile("nop; nop; nop"); \
+	__asm volatile("":::"memory");	/* protect from reordering */ \
 	return (oldipl); \
 }
 /* A non-priority-decreasing version of SPL */
@@ -208,15 +208,15 @@ static __inline int name(void); \
 static __inline int name() \
 { \
 	int psr, oldipl; \
-	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
+	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
 	if ((newipl << 8) <= oldipl) \
 		return oldipl; \
 	psr &= ~oldipl; \
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm __volatile("nop; nop; nop"); \
-	__asm __volatile("":::"memory");	/* protect from reordering */ \
+	__asm volatile("nop; nop; nop"); \
+	__asm volatile("":::"memory");	/* protect from reordering */ \
 	return (oldipl); \
 }
 
@@ -240,11 +240,11 @@ static __inline int splhigh()
 {
 	int psr, oldipl;
 
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
-	__asm __volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
+	__asm volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
 	    "r" (psr), "n" (PSR_PIL));
-	__asm __volatile("":::"memory");	/* protect from reordering */
+	__asm volatile("":::"memory");	/* protect from reordering */
 	return (oldipl);
 }
 
@@ -254,11 +254,11 @@ static __inline void splx(newipl)
 {
 	int psr;
 
-	__asm __volatile("":::"memory");	/* protect from reordering */
-	__asm __volatile("rd %%psr,%0" : "=r" (psr));
-	__asm __volatile("wr %0,%1,%%psr" : : \
+	__asm volatile("":::"memory");	/* protect from reordering */
+	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
-	__asm __volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop");
 }
 #endif /* KERNEL && !_LOCORE */
 

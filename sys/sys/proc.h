@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.180 2014/03/27 04:12:28 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.181 2014/03/29 18:09:31 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -292,7 +292,7 @@ struct proc {
 	u_int	p_uticks;		/* Statclock hits in user mode. */
 	u_int	p_sticks;		/* Statclock hits in system mode. */
 	u_int	p_iticks;		/* Statclock hits processing intr. */
-	struct	cpu_info * __volatile p_cpu; /* CPU we're running on. */
+	struct	cpu_info * volatile p_cpu; /* CPU we're running on. */
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.51 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.52 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -192,17 +192,17 @@ syncicache(void *from, int len)
 	l = len;
 
 	do {
-		__asm __volatile ("dcbst 0,%0" :: "r"(p));
+		__asm volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 	p = from;
 	l = len;
 	do {
-		__asm __volatile ("icbi 0,%0" :: "r"(p));
+		__asm volatile ("icbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm __volatile ("isync");
+	__asm volatile ("isync");
 }
 
 static __inline void
@@ -215,22 +215,22 @@ invdcache(void *from, int len)
 	l = len;
 
 	do {
-		__asm __volatile ("dcbi 0,%0" :: "r"(p));
+		__asm volatile ("dcbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm __volatile ("sync");
+	__asm volatile ("sync");
 }
 
 #define FUNC_SPR(n, name) \
 static __inline u_int32_t ppc_mf ## name (void)			\
 {								\
 	u_int32_t ret;						\
-	__asm __volatile ("mfspr %0," # n : "=r" (ret));	\
+	__asm volatile ("mfspr %0," # n : "=r" (ret));		\
 	return ret;						\
 }								\
 static __inline void ppc_mt ## name (u_int32_t val)		\
 {								\
-	__asm __volatile ("mtspr "# n ",%0" :: "r" (val));	\
+	__asm volatile ("mtspr "# n ",%0" :: "r" (val));	\
 }								\
 
 FUNC_SPR(0, mq)
@@ -297,7 +297,7 @@ static __inline u_int32_t
 ppc_mftbl (void)
 {
 	int ret;
-	__asm __volatile ("mftb %0" : "=r" (ret));
+	__asm volatile ("mftb %0" : "=r" (ret));
 	return ret;
 }
 
@@ -307,7 +307,7 @@ ppc_mftb(void)
 	u_long scratch;
 	u_int64_t tb;
 
-	__asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1;"
+	__asm volatile ("1: mftbu %0; mftb %0+1; mftbu %1;"
 	    " cmpw 0,%0,%1; bne 1b" : "=r"(tb), "=r"(scratch));
 	return tb;
 }
@@ -316,20 +316,20 @@ static __inline u_int32_t
 ppc_mfmsr (void)
 {
 	int ret;
-        __asm __volatile ("mfmsr %0" : "=r" (ret));
+        __asm volatile ("mfmsr %0" : "=r" (ret));
 	return ret;
 }
 
 static __inline void
 ppc_mtmsr (u_int32_t val)
 {
-        __asm __volatile ("mtmsr %0" :: "r" (val));
+        __asm volatile ("mtmsr %0" :: "r" (val));
 }
 
 static __inline void
 ppc_mtsrin(u_int32_t val, u_int32_t sn_shifted)
 {
-	__asm __volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted));
+	__asm volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted));
 }
 
 u_int64_t ppc64_mfscomc(void);

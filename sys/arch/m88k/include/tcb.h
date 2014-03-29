@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2013/08/26 21:38:08 miod Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -78,7 +78,7 @@ __m88k_read_tcb(size_t offset)
 }
 
 #define TCB_GET()	__m88k_get_tcb()
-#define TCB_SET(tcb)	__asm __volatile("or %%r27,%0,%r0" : : "r" (tcb))
+#define TCB_SET(tcb)	__asm volatile("or %%r27,%0,%r0" : : "r" (tcb))
 
 #define TCB_GET_MEMBER(member)	\
 	__m88k_read_tcb(offsetof(struct thread_control_block, member))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.21 2014/03/11 19:45:27 guenther Exp $ */
+/*	$OpenBSD: macros.h,v 1.22 2014/03/29 18:09:30 guenther Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ ffs(int reg)
 {
 	register int val;
 
-	__asm__ __volatile ("ffs	$0,$32,%1,%0;"
+	__asm__ volatile ("ffs	$0,$32,%1,%0;"
 		"	bneq	1f;"
 		"	mnegl	$1,%0;"
 		"1:	incl	%0"
@@ -57,7 +57,7 @@ strlen(const char *cp)
 {
 	register size_t ret;
 
-	__asm__ __volatile("locc $0,$65535,(%1);subl3 %%r0,$65535,%0"
+	__asm__ volatile("locc $0,$65535,(%1);subl3 %%r0,$65535,%0"
 			: "=r" (ret)
 			: "r" (cp)
 			: "r0","r1","cc" );
@@ -68,7 +68,7 @@ strlen(const char *cp)
 static __inline__ char *
 strncat(char *cp, const char *c2, size_t count)
 {
-	__asm__ __volatile("locc $0,%2,(%1);subl3 %%r0,%2,%%r2;"
+	__asm__ volatile("locc $0,%2,(%1);subl3 %%r0,%2,%%r2;"
 			   "locc $0,$65535,(%0);movc3 %%r2,(%1),(%%r1);"
 			   "movb $0,(%%r3)"
 			:
@@ -81,7 +81,7 @@ strncat(char *cp, const char *c2, size_t count)
 static __inline__ char *
 strncpy(char *cp, const char *c2, size_t len)
 {
-	__asm__ __volatile("movl %2,%%r2;locc $0,%%r2,(%1);beql 1f;"
+	__asm__ volatile("movl %2,%%r2;locc $0,%%r2,(%1);beql 1f;"
 			   "subl3 %%r0,%2,%%r2;clrb (%0)[%%r2];1:"
 			   "movc3 %%r2,(%1),(%0)"
 			:
@@ -94,7 +94,7 @@ static __inline__ void *
 memchr(const void *cp, int c, size_t len)
 {
 	void *ret;
-	__asm__ __volatile("locc %2,%3,(%1);bneq 1f;clrl %%r1;1:movl %%r1,%0"
+	__asm__ volatile("locc %2,%3,(%1);bneq 1f;clrl %%r1;1:movl %%r1,%0"
 			: "=g"(ret)
 			: "r" (cp), "r" (c), "g"(len)
 			: "r0","r1","cc");
@@ -105,7 +105,7 @@ static __inline__ int
 strcmp(const char *cp, const char *c2)
 {
 	register int ret;
-	__asm__ __volatile("locc $0,$65535,(%1);subl3 %%r0,$65535,%%r0;"
+	__asm__ volatile("locc $0,$65535,(%1);subl3 %%r0,$65535,%%r0;"
 			   "incl %%r0;cmpc3 %%r0,(%1),(%2);beql 1f;"
 			   "movl $1,%%r2;cmpb (%%r1),(%%r3);bcc 1f;"
 			   "movl $-1,%%r2;1:movl %%r2,%0"
@@ -122,7 +122,7 @@ locc(int mask, char *cp, size_t size)
 {
 	register ret;
 
-	__asm__ __volatile("locc %1,%2,(%3);movl %%r0,%0"
+	__asm__ volatile("locc %1,%2,(%3);movl %%r0,%0"
 			: "=r" (ret)
 			: "r" (mask),"r"(size),"r"(cp)
 			: "r0","r1" );
@@ -135,7 +135,7 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 {
 	register int ret;
 
-	__asm__ __volatile("scanc %1,(%2),(%3),%4;movl %%r0,%0"
+	__asm__ volatile("scanc %1,(%2),(%3),%4;movl %%r0,%0"
 			: "=g"(ret)
 			: "r"(size),"r"(cp),"r"(table),"r"(mask)
 			: "r0","r1","r2","r3" );
@@ -147,7 +147,7 @@ skpc(int mask, size_t size, u_char *cp)
 {
 	register int ret;
 
-	__asm__ __volatile("skpc %1,%2,(%3);movl %%r0,%0"
+	__asm__ volatile("skpc %1,%2,(%3);movl %%r0,%0"
 			: "=g"(ret)
 			: "r"(mask),"r"(size),"r"(cp)
 			: "r0","r1" );
@@ -155,7 +155,7 @@ skpc(int mask, size_t size, u_char *cp)
 }
 
 #define	cpu_switchto(o, n) \
-	__asm__ __volatile__( \
+	__asm__ volatile( \
 	    "movl %0, %%r0; movl %1, %%r1; movpsl -(%%sp); jsb __cpu_switchto" \
 	    :: "g"(o), "g"(n) : "r0", "r1");
 
@@ -172,7 +172,7 @@ static __inline__ int
 insqti(void *entry, void *header) {
 	register int ret;
 
-	__asm__ __volatile(
+	__asm__ volatile(
 		"	mnegl $1,%0;"
 		"	insqti (%1),(%2);"
 		"	bcs 1f;			# failed insert"
@@ -197,7 +197,7 @@ static __inline__ void *
 remqhi(void *header) {
 	register void *ret;
 
-	__asm__ __volatile(
+	__asm__ volatile(
 		"	remqhi (%1),%0;"
 		"	bcs 1f;			# failed interlock"
 		"	bvs 2f;			# nothing was removed"

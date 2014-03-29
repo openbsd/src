@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.30 2011/01/01 15:20:19 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.31 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -1736,7 +1736,7 @@ dinoattach(parent, self, aux)
 	data = r->irr0;
 	data = r->irr1;
 	r->imr = 0;
-	__asm __volatile ("" ::: "memory");
+	__asm volatile ("" ::: "memory");
 	r->icr = 0;
 	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
 	splx(s);

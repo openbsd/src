@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate_pci.c,v 1.6 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: irongate_pci.c,v 1.7 2014/03/29 18:09:28 guenther Exp $	*/
 /* $NetBSD: irongate_pci.c,v 1.2 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -64,7 +64,7 @@ void		irongate_conf_write(void *, pcitag_t, int, pcireg_t);
 #define	PCI_CONF_ADDR	(IRONGATE_IO_BASE|IRONGATE_CONFADDR)
 #define	PCI_CONF_DATA	(IRONGATE_IO_BASE|IRONGATE_CONFDATA)
 
-#define	REGVAL(r)	(*(__volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 void
 irongate_pci_init(pci_chipset_tag_t pc, void *v)

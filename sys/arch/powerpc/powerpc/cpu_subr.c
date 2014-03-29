@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_subr.c,v 1.2 2005/11/26 22:40:31 kettenis Exp $	*/
+/*	$OpenBSD: cpu_subr.c,v 1.3 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -26,7 +26,7 @@ ppc_mtscomc(u_int32_t val)
 	int s;
 
 	s = ppc_intr_disable();
-	__asm __volatile ("mtspr 276,%0; isync" :: "r" (val));
+	__asm volatile ("mtspr 276,%0; isync" :: "r" (val));
 	ppc_intr_enable(s);
 }
 
@@ -36,7 +36,7 @@ ppc_mtscomd(u_int32_t val)
 	int s;
 
 	s = ppc_intr_disable();
-	__asm __volatile ("mtspr 277,%0; isync" :: "r" (val));
+	__asm volatile ("mtspr 277,%0; isync" :: "r" (val));
 	ppc_intr_enable(s);
 }
 
@@ -47,7 +47,7 @@ ppc64_mfscomc(void)
 	int s;
 
 	s = ppc_intr_disable();
-	__asm __volatile ("mfspr %0,276;"
+	__asm volatile ("mfspr %0,276;"
 	    " mr %0+1, %0; srdi %0,%0,32" : "=r" (ret));
 	ppc_intr_enable(s);
 	return ret;
@@ -59,7 +59,7 @@ ppc64_mtscomc(u_int64_t val)
 	int s;
 
 	s = ppc_intr_disable();
-	__asm __volatile ("sldi %0,%0,32; or %0,%0,%0+1;"
+	__asm volatile ("sldi %0,%0,32; or %0,%0,%0+1;"
 	    " mtspr 276,%0; isync" :: "r" (val));
 	ppc_intr_enable(s);
 }
@@ -71,7 +71,7 @@ ppc64_mfscomd(void)
 	int s;
 
 	s = ppc_intr_disable();
-	__asm __volatile ("mfspr %0,277;"
+	__asm volatile ("mfspr %0,277;"
             " mr %0+1, %0; srdi %0,%0,32" : "=r" (ret));
 	ppc_intr_enable(s);
 	return ret;

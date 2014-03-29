@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2014/03/29 18:09:28 guenther Exp $	*/
 
 /* Public Domain */
 
@@ -12,8 +12,8 @@
  * in the kernel and atomic updates are necessary without full mutexes
  */
 
-void atomic_setbits_int(__volatile unsigned int *, unsigned int);
-void atomic_clearbits_int(__volatile unsigned int *, unsigned int);
+void atomic_setbits_int(volatile unsigned int *, unsigned int);
+void atomic_clearbits_int(volatile unsigned int *, unsigned int);
 
 #endif /* defined(_KERNEL) */
 #endif /* _ARM_ATOMIC_H_ */

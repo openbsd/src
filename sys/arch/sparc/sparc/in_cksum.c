@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.12 2008/02/16 23:02:41 miod Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.13 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 1996/10/05 23:44:34 mrg Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  * Zubin Dittia (zubin@dworkin.wustl.edu)
  */
 
-#define Asm	__asm __volatile
+#define Asm	__asm volatile
 #define ADD64		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
 				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
 				ld [%4+ 8],%1;   ld [%4+12],%2;		\

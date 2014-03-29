@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $ */
+/* $OpenBSD: bwx.h,v 1.7 2014/03/29 18:09:28 guenther Exp $ */
 /* $NetBSD: bwx.h,v 1.3 2000/06/08 02:55:37 thorpej Exp $ */
 
 /*-
@@ -48,11 +48,11 @@
 #define BWX_EV56_INT1	(3L << 37)
 
 static __inline u_int8_t
-alpha_ldbu(__volatile u_int8_t *a0)
+alpha_ldbu(volatile u_int8_t *a0)
 {
 	u_int8_t v0;
 
-	__asm __volatile("ldbu %0, %1"
+	__asm volatile("ldbu %0, %1"
 		: "=r" (v0)
 		: "m" (*a0));
 
@@ -60,11 +60,11 @@ alpha_ldbu(__volatile u_int8_t *a0)
 }
 
 static __inline u_int16_t
-alpha_ldwu(__volatile u_int16_t *a0)
+alpha_ldwu(volatile u_int16_t *a0)
 {
 	u_int16_t v0;
 
-	__asm __volatile("ldwu %0, %1"
+	__asm volatile("ldwu %0, %1"
 		: "=r" (v0)
 		: "m" (*a0));
 
@@ -72,36 +72,36 @@ alpha_ldwu(__volatile u_int16_t *a0)
 }
 
 static __inline u_int32_t
-alpha_ldlu(__volatile u_int32_t *a0)
+alpha_ldlu(volatile u_int32_t *a0)
 {
 	return (*a0);
 }
 
 static __inline void
-alpha_stb(__volatile u_int8_t *a0, u_int8_t a1)
+alpha_stb(volatile u_int8_t *a0, u_int8_t a1)
 {
 
-	__asm __volatile("stb %1, %0"
+	__asm volatile("stb %1, %0"
 		: "=m" (*a0)
 		: "r" (a1)
 		: "memory");
 }
 
 static __inline void
-alpha_stw(__volatile u_int16_t *a0, u_int16_t a1)
+alpha_stw(volatile u_int16_t *a0, u_int16_t a1)
 {
 
-	__asm __volatile("stw %1, %0"
+	__asm volatile("stw %1, %0"
 		: "=m" (*a0)
 		: "r" (a1)
 		: "memory");
 }
 
 static __inline void
-alpha_stl(__volatile u_int32_t *a0, u_int32_t a1)
+alpha_stl(volatile u_int32_t *a0, u_int32_t a1)
 {
 
-	__asm __volatile("stl %1, %0"
+	__asm volatile("stl %1, %0"
 		: "=m" (*a0)
 		: "r" (a1)
 		: "memory");
@@ -112,7 +112,7 @@ alpha_sextb(u_int8_t a0)
 {
 	u_int8_t v0;
 
-	__asm __volatile("sextb %1, %0"
+	__asm volatile("sextb %1, %0"
 		: "=r" (v0)
 		: "r" (a0)
 		: "memory");
@@ -125,7 +125,7 @@ alpha_sextw(u_int16_t a0)
 {
 	u_int16_t v0;
 
-	__asm __volatile("sextw %1, %0"
+	__asm volatile("sextw %1, %0"
 		: "=r" (v0)
 		: "r" (a0)
 		: "memory");

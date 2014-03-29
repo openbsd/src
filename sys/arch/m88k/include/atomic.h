@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.9 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.10 2014/03/29 18:09:29 guenther Exp $	*/
 
 /* Public Domain */
 
@@ -10,8 +10,8 @@
 #ifdef MULTIPROCESSOR
 
 /* actual implementation is hairy, see atomic.S */
-void	atomic_setbits_int(__volatile unsigned int *, unsigned int);
-void	atomic_clearbits_int(__volatile unsigned int *, unsigned int);
+void	atomic_setbits_int(volatile unsigned int *, unsigned int);
+void	atomic_clearbits_int(volatile unsigned int *, unsigned int);
 
 #else
 
@@ -19,7 +19,7 @@ void	atomic_clearbits_int(__volatile unsigned int *, unsigned int);
 #include <machine/psl.h>
 
 static __inline void
-atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	u_int psr;
 
@@ -30,7 +30,7 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 static __inline void
-atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	u_int psr;
 
@@ -43,12 +43,12 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 #endif	/* MULTIPROCESSOR */
 
 static __inline__ unsigned int
-atomic_clear_int(__volatile unsigned int *uip)
+atomic_clear_int(volatile unsigned int *uip)
 {
 	u_int oldval;
 
 	oldval = 0;
-	__asm__ __volatile__
+	__asm__ volatile
 	    ("xmem %0, %2, %%r0" : "+r"(oldval), "+m"(*uip) : "r"(uip));
 	return oldval;
 }

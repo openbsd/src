@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.6 2013/07/14 18:22:07 kettenis Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.7 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -32,7 +32,7 @@
  *	 as the lock to save some space.
  */
 struct mutex {
-	__volatile int mtx_lock;
+	volatile int mtx_lock;
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;

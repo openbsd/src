@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.4 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -55,7 +55,7 @@
 #define	IndexStoreData_S	0x1f
 
 #define	cache(op,set,addr) \
-    __asm__ __volatile__ \
+    __asm__ volatile \
       ("cache %0, %1(%2)" :: "i"(op), "i"(set), "r"(addr) : "memory")
 
 static __inline__ void	ls2f_hitinv_primary(vaddr_t, vsize_t);

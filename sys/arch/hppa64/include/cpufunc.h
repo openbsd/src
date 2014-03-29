@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.3 2011/04/05 17:17:06 jsing Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.4 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -29,9 +29,9 @@
 #ifndef _MACHINE_CPUFUNC_H_
 #define _MACHINE_CPUFUNC_H_
 
-#define	mtsp(v,r)	__asm __volatile ("mtsp %0,%1":: "r" (v), "i" (r))
+#define	mtsp(v,r)	__asm volatile ("mtsp %0,%1":: "r" (v), "i" (r))
 
-#define	ssm(v,r)	__asm __volatile("ssm %1,%0": "=r" (r): "i" (v))
-#define	rsm(v,r)	__asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
+#define	ssm(v,r)	__asm volatile("ssm %1,%0": "=r" (r): "i" (v))
+#define	rsm(v,r)	__asm volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 #endif

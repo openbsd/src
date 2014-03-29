@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2012/08/24 10:05:25 jsg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -161,7 +161,7 @@ bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*addr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -171,9 +171,9 @@ bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int16_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lhbrx %0, 0, %1" :
+		__asm volatile("lhbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -183,9 +183,9 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int32_t *s = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("lwbrx %0, 0, %1" :
+		__asm volatile("lwbrx %0, 0, %1" :
 			"=r"(*addr++) : "r"(s++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
@@ -210,7 +210,7 @@ bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*d++ = *addr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -220,9 +220,9 @@ bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int16_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("sthbrx %0, 0, %1" ::
+		__asm volatile("sthbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -232,9 +232,9 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int32_t *d = __BA(tag, bsh, offset);
 
 	while (count--)
-		__asm __volatile("stwbrx %0, 0, %1" ::
+		__asm volatile("stwbrx %0, 0, %1" ::
 			"r"(*addr++), "r"(d++));
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0
@@ -261,7 +261,7 @@ bus_space_read_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*laddr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -275,7 +275,7 @@ bus_space_read_raw_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*laddr++ = *s++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0	/* Cause a link error for bus_space_read_raw_region_8 */
@@ -304,7 +304,7 @@ bus_space_write_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*d++ = *laddr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 static __inline void
@@ -318,7 +318,7 @@ bus_space_write_raw_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*d++ = *laddr++;
-	__asm __volatile("eieio; sync");
+	__asm volatile("eieio; sync");
 }
 
 #if 0

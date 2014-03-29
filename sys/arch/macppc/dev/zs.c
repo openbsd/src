@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.22 2013/10/21 08:25:42 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.23 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ zs_dma_setup(cs, pa, len)
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
-	__asm __volatile("eieio");
+	__asm volatile("eieio");
 
 	dbdma_start(zsc->zsc_txdmareg[ch], zsc->zsc_txdmacmd[ch]);
 }

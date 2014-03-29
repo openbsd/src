@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.34 2014/02/08 22:13:45 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.35 2014/03/29 18:09:30 guenther Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -456,7 +456,7 @@ bios_get_system_type()
 	 * register has bits sets in the upper 32 bits, which is not the
 	 * case of the R8000 PrId register).
 	 */
-	__asm__ __volatile__ ("mfc0 %0, $15" /* COP_0_PRID */ : "=r" (prid));
+	__asm__ volatile ("mfc0 %0, $15" /* COP_0_PRID */ : "=r" (prid));
 	if ((prid & 0xff00) == (MIPS_R8000 << 8))
 		bios_base = (void *)PHYS_TO_XKPHYS(ARCBIOS_BASE, CCA_CACHED);
 	else

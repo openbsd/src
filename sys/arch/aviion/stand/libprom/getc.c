@@ -1,4 +1,4 @@
-/*	$OpenBSD: getc.c,v 1.2 2013/09/28 21:59:38 miod Exp $	*/
+/*	$OpenBSD: getc.c,v 1.3 2014/03/29 18:09:29 guenther Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -34,7 +34,7 @@ getchar(void)
 	u_int ret;
 
 	SCM_CALL(SCM_CHAR);
-	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
+	__asm__ volatile ("or %0, %%r0, %%r2" : "=r" (ret));
 
 	return (ret & 0xff);
 }

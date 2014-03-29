@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.32 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.33 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -426,7 +426,7 @@ void db_print_dtlb_entry(int entry, int i, int endc);
 extern __inline__ unsigned long db_get_dtlb_data(int entry)
 {
 	unsigned long r;
-	__asm__ __volatile__("ldxa [%1] %2,%0"
+	__asm__ volatile("ldxa [%1] %2,%0"
 		: "=r" (r)
 		: "r" (entry <<3), "i" (ASI_DMMU_TLB_DATA));
 	return r;
@@ -434,7 +434,7 @@ extern __inline__ unsigned long db_get_dtlb_data(int entry)
 extern __inline__ unsigned long db_get_dtlb_tag(int entry)
 {
 	unsigned long r;
-	__asm__ __volatile__("ldxa [%1] %2,%0"
+	__asm__ volatile("ldxa [%1] %2,%0"
 		: "=r" (r)
 		: "r" (entry <<3), "i" (ASI_DMMU_TLB_TAG));
 	return r;
@@ -442,7 +442,7 @@ extern __inline__ unsigned long db_get_dtlb_tag(int entry)
 extern __inline__ unsigned long db_get_itlb_data(int entry)
 {
 	unsigned long r;
-	__asm__ __volatile__("ldxa [%1] %2,%0"
+	__asm__ volatile("ldxa [%1] %2,%0"
 		: "=r" (r)
 		: "r" (entry <<3), "i" (ASI_IMMU_TLB_DATA));
 	return r;
@@ -450,7 +450,7 @@ extern __inline__ unsigned long db_get_itlb_data(int entry)
 extern __inline__ unsigned long db_get_itlb_tag(int entry)
 {
 	unsigned long r;
-	__asm__ __volatile__("ldxa [%1] %2,%0"
+	__asm__ volatile("ldxa [%1] %2,%0"
 		: "=r" (r)
 		: "r" (entry <<3), "i" (ASI_IMMU_TLB_TAG));
 	return r;

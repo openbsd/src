@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.71 2014/02/01 21:21:54 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.72 2014/03/29 18:09:28 guenther Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2185,7 +2185,7 @@ pmap_zero_page(struct vm_page *pg)
 	 * Do only 8 back-to-back stores, and alternate registers.
 	 */
 	do {
-		__asm __volatile(
+		__asm volatile(
 		"# BEGIN loop body\n"
 		"	addq	%2, (8 * 8), %1		\n"
 		"	stq	$31, (0 * 8)(%0)	\n"

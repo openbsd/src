@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.43 2011/07/05 17:11:07 oga Exp $	*/
+/*	$OpenBSD: intr.h,v 1.44 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ extern void softintr(int);
  * this "instruction", acting as a sequence point for code generation.
  */
 
-#define	__splbarrier() __asm __volatile("":::"memory")
+#define	__splbarrier() __asm volatile("":::"memory")
 
 /* SPL asserts */
 #ifdef DIAGNOSTIC

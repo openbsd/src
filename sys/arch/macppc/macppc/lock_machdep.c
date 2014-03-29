@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.2 2013/12/05 01:28:45 uebayasi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.3 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -84,7 +84,7 @@ __mp_lock(struct __mp_lock *mpl)
 
 		s = ppc_intr_disable();
 		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0) {
-			__asm __volatile("eieio" ::: "memory");
+			__asm volatile("eieio" ::: "memory");
 			mpl->mpl_cpu = curcpu();
 		}
 
@@ -114,7 +114,7 @@ __mp_unlock(struct __mp_lock *mpl)
 	s = ppc_intr_disable();
 	if (--mpl->mpl_count == 1) {
 		mpl->mpl_cpu = NULL;
-		__asm __volatile("eieio" ::: "memory");
+		__asm volatile("eieio" ::: "memory");
 		mpl->mpl_count = 0;
 	}
 	ppc_intr_enable(s);
@@ -135,7 +135,7 @@ __mp_release_all(struct __mp_lock *mpl)
 
 	s = ppc_intr_disable();
 	mpl->mpl_cpu = NULL;
-	__asm __volatile("eieio" ::: "memory");
+	__asm volatile("eieio" ::: "memory");
 	mpl->mpl_count = 0;
 	ppc_intr_enable(s);
 

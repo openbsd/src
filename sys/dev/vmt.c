@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.16 2013/11/11 09:15:34 mpi Exp $ */
+/*	$OpenBSD: vmt.c,v 1.17 2014/03/29 18:09:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -653,7 +653,7 @@ out:
 }
 
 #define BACKDOOR_OP_I386(op, frame)		\
-	__asm__ __volatile__ (			\
+	__asm__ volatile (			\
 		"pushal;"			\
 		"pushl %%eax;"			\
 		"movl 0x18(%%eax), %%ebp;"	\
@@ -677,7 +677,7 @@ out:
 	)
 
 #define BACKDOOR_OP_AMD64(op, frame)		\
-	__asm__ __volatile__ (			\
+	__asm__ volatile (			\
 		"pushq %%rbp;			\n\t" \
 		"pushq %%rax;			\n\t" \
 		"movq 0x30(%%rax), %%rbp;	\n\t" \

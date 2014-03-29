@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.14 2013/06/02 16:38:05 guenther Exp $	*/
+/*	$OpenBSD: via.c,v 1.15 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -325,8 +325,8 @@ viac3_cbc(void *cw, void *src, void *dst, void *key, int rep,
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
 	/* Do the deed */
-	__asm __volatile("pushfq; popfq");
-	__asm __volatile("rep xcryptcbc" :
+	__asm volatile("pushfq; popfq");
+	__asm volatile("rep xcryptcbc" :
 	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
 
@@ -533,7 +533,7 @@ viac3_rnd(void *v)
 	 * sure that we turn on maximum whitening (%edx[0,1] == "11"), so
 	 * that we get the best random data possible.
 	 */
-	__asm __volatile("rep xstorerng"
+	__asm volatile("rep xstorerng"
 	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
 	    : "memory", "cc");
 

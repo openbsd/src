@@ -46,7 +46,7 @@
 struct mdproc {
 	struct	trapframe64 *md_tf;	/* trap/syscall registers */
 	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
-	__volatile int md_astpending;
+	volatile int md_astpending;
 };
 
 #define	__HAVE_MD_TCB

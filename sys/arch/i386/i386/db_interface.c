@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.29 2013/07/04 19:06:48 sf Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -196,28 +196,28 @@ db_sysregs_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	uint32_t cr;
 	uint16_t ldtr, tr;
 
-	__asm__ __volatile__("sidt %0" : "=m" (idtr));
+	__asm__ volatile("sidt %0" : "=m" (idtr));
 	db_printf("idtr:   0x%08llx/%04llx\n", idtr >> 16, idtr & 0xffff);
 
-	__asm__ __volatile__("sgdt %0" : "=m" (gdtr));
+	__asm__ volatile("sgdt %0" : "=m" (gdtr));
 	db_printf("gdtr:   0x%08llx/%04llx\n", gdtr >> 16, gdtr & 0xffff);
 
-	__asm__ __volatile__("sldt %0" : "=g" (ldtr));
+	__asm__ volatile("sldt %0" : "=g" (ldtr));
 	db_printf("ldtr:   0x%04x\n", ldtr);
 
-	__asm__ __volatile__("str %0" : "=g" (tr));
+	__asm__ volatile("str %0" : "=g" (tr));
 	db_printf("tr:     0x%04x\n", tr);
 
-	__asm__ __volatile__("movl %%cr0,%0" : "=r" (cr));
+	__asm__ volatile("movl %%cr0,%0" : "=r" (cr));
 	db_printf("cr0:    0x%08x\n", cr);
 
-	__asm__ __volatile__("movl %%cr2,%0" : "=r" (cr));
+	__asm__ volatile("movl %%cr2,%0" : "=r" (cr));
 	db_printf("cr2:    0x%08x\n", cr);
 
-	__asm__ __volatile__("movl %%cr3,%0" : "=r" (cr));
+	__asm__ volatile("movl %%cr3,%0" : "=r" (cr));
 	db_printf("cr3:    0x%08x\n", cr);
 
-	__asm__ __volatile__("movl %%cr4,%0" : "=r" (cr));
+	__asm__ volatile("movl %%cr4,%0" : "=r" (cr));
 	db_printf("cr4:    0x%08x\n", cr);
 }
 

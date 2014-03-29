@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.7 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2014/03/29 18:09:30 guenther Exp $	*/
 
 /* Public Domain */
 
@@ -9,11 +9,11 @@
 
 /* wait until the bits to set are clear, and set them */
 static __inline void
-atomic_wait_and_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_wait_and_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int tmp0, tmp1;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	"1:	ll	%0,	0(%2)\n"
 	"	and	%1,	%0,	%3\n"
 	"	bnez	%1,	1b\n"
@@ -26,11 +26,11 @@ atomic_wait_and_setbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 static __inline void
-atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int tmp;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	"1:	ll	%0,	0(%1)\n"
 	"	or	%0,	%2,	%0\n"
 	"	sc	%0,	0(%1)\n"
@@ -41,11 +41,11 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 static __inline void
-atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int tmp;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	"1:	ll	%0,	0(%1)\n"
 	"	and	%0,	%2,	%0\n"
 	"	sc	%0,	0(%1)\n"
@@ -56,11 +56,11 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 static __inline void
-atomic_add_int(__volatile unsigned int *uip, unsigned int v)
+atomic_add_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int tmp;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	"1:	ll	%0,	0(%1)\n"
 	"	addu	%0,	%2,	%0\n"
 	"	sc	%0,	0(%1)\n"
@@ -70,11 +70,11 @@ atomic_add_int(__volatile unsigned int *uip, unsigned int v)
 		"r"(uip), "r"(v) : "memory");
 }
 static __inline void
-atomic_add_uint64(__volatile uint64_t *uip, uint64_t v)
+atomic_add_uint64(volatile uint64_t *uip, uint64_t v)
 {
 	uint64_t tmp;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	"1:	lld	%0,	0(%1)\n"
 	"	daddu	%0,	%2,	%0\n"
 	"	scd	%0,	0(%1)\n"

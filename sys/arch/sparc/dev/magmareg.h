@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.11 2009/04/10 20:53:51 miod Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.12 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -75,7 +75,7 @@ struct magma_board_info {
  * cd1400 chip data
  */
 struct cd1400 {
-	__volatile u_char *cd_reg;	/* chip registers */
+	volatile u_char *cd_reg;	/* chip registers */
 	int cd_chiprev;			/* chip revision */
 	int cd_clock;			/* clock speed in MHz */
 	int cd_parmode;			/* parallel mode operation */
@@ -85,7 +85,7 @@ struct cd1400 {
  * cd1190 chip data
  */
 struct cd1190 {
-	__volatile u_char *cd_reg;	/* chip registers */
+	volatile u_char *cd_reg;	/* chip registers */
 	int cd_chiprev;			/* chip revision */
 };
 
@@ -96,9 +96,9 @@ struct magma_softc {
 	/* cd1400 chip info */
 	int ms_ncd1400;
 	struct cd1400 ms_cd1400[MAGMA_MAX_CD1400];
-	__volatile u_char *ms_svcackr;	/* CD1400 service acknowledge receive */
-	__volatile u_char *ms_svcackt;	/* CD1400 service acknowledge transmit */
-	__volatile u_char *ms_svcackm;	/* CD1400 service acknowledge modem */
+	volatile u_char *ms_svcackr;	/* CD1400 service acknowledge receive */
+	volatile u_char *ms_svcackt;	/* CD1400 service acknowledge transmit */
+	volatile u_char *ms_svcackm;	/* CD1400 service acknowledge modem */
 
 	/* cd1190 chip info */
 	int ms_ncd1190;

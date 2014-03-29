@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.4 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -167,7 +167,7 @@ agp_apple_set_aperture(void *dev, bus_size_t aperture)
 	return (0);
 }
 
-#define flushd(p) __asm __volatile("dcbst 0,%0; sync" ::"r"(p) : "memory")
+#define flushd(p) __asm volatile("dcbst 0,%0; sync" ::"r"(p) : "memory")
 
 void
 agp_apple_bind_page(void *v, bus_addr_t off, paddr_t pa, int flags)

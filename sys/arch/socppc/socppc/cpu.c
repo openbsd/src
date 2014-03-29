@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2014/01/19 12:45:36 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -76,7 +76,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable data cache. */
 	hid0 = ppc_mfhid0();
 	if ((hid0 & HID0_DCE) == 0) {
-		__asm __volatile (
+		__asm volatile (
 		    "sync; mtspr 1008,%0; mtspr 1008,%1"
 		    :: "r" (hid0 | HID0_DCFI), "r" (hid0 | HID0_DCE));
 	}
@@ -84,7 +84,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable instruction cache. */
 	hid0 = ppc_mfhid0();
 	if ((hid0 & HID0_ICE) == 0) {
-		__asm __volatile (
+		__asm volatile (
 		    "isync; mtspr 1008,%0; mtspr 1008,%1"
 		    :: "r" (hid0 | HID0_ICFI), "r" (hid0 | HID0_ICE));
 	}

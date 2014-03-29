@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.8 2008/05/15 22:17:08 brad Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.9 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 				 * Since the `sum' may contain full 32 bit
 				 * value, we can't simply add any value.
 				 */
-				__asm __volatile(
+				__asm volatile(
 				    "lhz 7,0(%1);"	/* load current data
 							   half word */
 				    "addc %0,%0,7;"	/* add to sum */
@@ -133,7 +133,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 
 		if (mlen >= 64) {
 			n = mlen >> 6;
-			__asm __volatile(
+			__asm volatile(
 			    "addic 0,0,0;"		/* clear carry */
 			    "mtctr %1;"			/* load loop count */
 			    "1:"
@@ -182,7 +182,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 
 		if (mlen >= 8) {
 			n = mlen >> 3;
-			__asm __volatile(
+			__asm volatile(
 			    "addic 0,0,0;"		/* clear carry */
 			    "mtctr %1;"			/* load loop count */
 			    "1:"

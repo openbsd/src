@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.21 2013/12/06 22:56:20 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.22 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -71,38 +71,38 @@ static __inline void breakpoint(void);
 static __inline void 
 invlpg(u_int addr)
 { 
-        __asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
+        __asm volatile("invlpg (%0)" : : "r" (addr) : "memory");
 }  
 
 static __inline void
 lidt(void *p)
 {
-	__asm __volatile("lidt (%0)" : : "r" (p) : "memory");
+	__asm volatile("lidt (%0)" : : "r" (p) : "memory");
 }
 
 static __inline void
 lldt(u_short sel)
 {
-	__asm __volatile("lldt %0" : : "r" (sel));
+	__asm volatile("lldt %0" : : "r" (sel));
 }
 
 static __inline void
 ltr(u_short sel)
 {
-	__asm __volatile("ltr %0" : : "r" (sel));
+	__asm volatile("ltr %0" : : "r" (sel));
 }
 
 static __inline void
 lcr0(u_int val)
 {
-	__asm __volatile("movl %0,%%cr0" : : "r" (val));
+	__asm volatile("movl %0,%%cr0" : : "r" (val));
 }
 
 static __inline u_int
 rcr0(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr0,%0" : "=r" (val));
+	__asm volatile("movl %%cr0,%0" : "=r" (val));
 	return val;
 }
 
@@ -110,35 +110,35 @@ static __inline u_int
 rcr2(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr2,%0" : "=r" (val));
+	__asm volatile("movl %%cr2,%0" : "=r" (val));
 	return val;
 }
 
 static __inline void
 lcr3(u_int val)
 {
-	__asm __volatile("movl %0,%%cr3" : : "r" (val));
+	__asm volatile("movl %0,%%cr3" : : "r" (val));
 }
 
 static __inline u_int
 rcr3(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr3,%0" : "=r" (val));
+	__asm volatile("movl %%cr3,%0" : "=r" (val));
 	return val;
 }
 
 static __inline void
 lcr4(u_int val)
 {
-	__asm __volatile("movl %0,%%cr4" : : "r" (val));
+	__asm volatile("movl %0,%%cr4" : : "r" (val));
 }
 
 static __inline u_int
 rcr4(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr4,%0" : "=r" (val));
+	__asm volatile("movl %%cr4,%0" : "=r" (val));
 	return val;
 }
 
@@ -146,8 +146,8 @@ static __inline void
 tlbflush(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr3,%0" : "=r" (val));
-	__asm __volatile("movl %0,%%cr3" : : "r" (val));
+	__asm volatile("movl %%cr3,%0" : "=r" (val));
+	__asm volatile("movl %0,%%cr3" : : "r" (val));
 }
 
 static __inline void
@@ -191,13 +191,13 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 static __inline void
 disable_intr(void)
 {
-	__asm __volatile("cli");
+	__asm volatile("cli");
 }
 
 static __inline void
 enable_intr(void)
 {
-	__asm __volatile("sti");
+	__asm volatile("sti");
 }
 
 static __inline u_int
@@ -205,38 +205,38 @@ read_eflags(void)
 {
 	u_int ef;
 
-	__asm __volatile("pushfl; popl %0" : "=r" (ef));
+	__asm volatile("pushfl; popl %0" : "=r" (ef));
 	return (ef);
 }
 
 static __inline void
 write_eflags(u_int ef)
 {
-	__asm __volatile("pushl %0; popfl" : : "r" (ef));
+	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
 static __inline void
 wbinvd(void)
 {
-        __asm __volatile("wbinvd");
+        __asm volatile("wbinvd");
 }
 
 static __inline void
 clflush(u_int32_t addr)
 {
-	__asm __volatile("clflush %0" : "+m" (*(volatile char *)addr));
+	__asm volatile("clflush %0" : "+m" (*(volatile char *)addr));
 }
 
 static __inline void
 mfence(void)
 {
-	__asm __volatile("mfence" : : : "memory");
+	__asm volatile("mfence" : : : "memory");
 }
 
 static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
-        __asm __volatile("wrmsr" : : "A" (newval), "c" (msr));
+        __asm volatile("wrmsr" : : "A" (newval), "c" (msr));
 }
 
 static __inline u_int64_t
@@ -244,21 +244,21 @@ rdmsr(u_int msr)
 {
         u_int64_t rv;
 
-        __asm __volatile("rdmsr" : "=A" (rv) : "c" (msr));
+        __asm volatile("rdmsr" : "=A" (rv) : "c" (msr));
         return (rv);
 }
 
 static __inline void
 monitor(const volatile void *addr, u_long extensions, u_int hints)
 {
-	__asm __volatile("monitor"
+	__asm volatile("monitor"
 	    : : "a" (addr), "c" (extensions), "d" (hints));
 }
 
 static __inline void
 mwait(u_long extensions, u_int hints)
 {
-	__asm __volatile("mwait" : : "a" (hints), "c" (extensions));
+	__asm volatile("mwait" : : "a" (hints), "c" (extensions));
 }
 
 /* 
@@ -291,7 +291,7 @@ wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
 static __inline void
 breakpoint(void)
 {
-	__asm __volatile("int $3");
+	__asm volatile("int $3");
 }
 
 #define read_psl()	read_eflags()

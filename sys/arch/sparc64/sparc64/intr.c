@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.46 2014/01/21 10:19:31 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.47 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -359,7 +359,7 @@ splassert_check(int wantipl, const char *func)
 	struct cpu_info *ci = curcpu();
 	int oldipl;
 
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldipl));
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldipl));
 
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);

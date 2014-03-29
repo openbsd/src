@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.2 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.3 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -26,5 +26,5 @@
 void
 agp_flush_cache(void)
 {
-	__asm __volatile("sync" : : : "memory");
+	__asm volatile("sync" : : : "memory");
 }

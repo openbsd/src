@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.98 2014/03/22 00:01:04 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.99 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -310,10 +310,10 @@ void	cp0_calibrate(struct cpu_info *);
 #define	aston(p)		p->p_md.md_astpending = 1
 
 #ifdef CPU_R8000
-#define	mips_sync()		__asm__ __volatile__ ("lw $0, 0(%0)" :: \
+#define	mips_sync()		__asm__ volatile ("lw $0, 0(%0)" :: \
 				    "r" (PHYS_TO_XKPHYS(0, CCA_NC)) : "memory")
 #else
-#define	mips_sync()		__asm__ __volatile__ ("sync" ::: "memory")
+#define	mips_sync()		__asm__ volatile ("sync" ::: "memory")
 #endif
 
 #endif /* _KERNEL && !_LOCORE */

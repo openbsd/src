@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.41 2014/03/13 03:52:56 dlg Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.42 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -364,7 +364,7 @@ read_ttb(void)
 {
   long ttb;
 
-  __asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+  __asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
 
   return (pd_entry_t *)(ttb & ~((1<<14)-1));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.5 2005/05/10 04:04:39 brad Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.6 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 2003/08/07 16:30:19 agc Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #define ADVANCE(n)	{w += n; mlen -= n;}
 #define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
 
-#define Asm     __asm __volatile
+#define Asm     __asm volatile
 #define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))

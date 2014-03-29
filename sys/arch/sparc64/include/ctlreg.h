@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.25 2012/11/07 16:31:03 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.26 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -522,11 +522,11 @@
  * D$ so we need to flush the D$ to make sure we don't get data pollution.
  */
 
-#define sparc_membar(mask) do {                                         \
-        if (mask)                                                       \
-                __asm __volatile("membar %0" : : "n" (mask) : "memory");\
-        else                                                            \
-                __asm __volatile("" : : : "memory");                    \
+#define sparc_membar(mask) do {						\
+	if (mask)							\
+		__asm volatile("membar %0" : : "n" (mask) : "memory");	\
+	else								\
+		__asm volatile("" : : : "memory");			\
 } while(0)
 
 #define membar sparc_membar
@@ -541,22 +541,22 @@
 #define sparc_wr(name, val, xor)					\
 do {									\
 	if (__builtin_constant_p(xor))					\
-		__asm __volatile("wr %%g0, %0, %%" #name		\
+		__asm volatile("wr %%g0, %0, %%" #name			\
 		    : : "rI" ((val) ^ (xor)) : "%g0");			\
 	else								\
-		__asm __volatile("wr %0, %1, %%" #name			\
+		__asm volatile("wr %0, %1, %%" #name			\
 		    : : "r" (val), "rI" (xor) : "%g0");			\
 } while(0)
 
 #define sparc_wrpr(name, val, xor)					\
 do {									\
 	if (__builtin_constant_p(xor))					\
-		__asm __volatile("wrpr %%g0, %0, %%" #name		\
+		__asm volatile("wrpr %%g0, %0, %%" #name		\
 		    : : "rI" ((val) ^ (xor)) : "%g0");			\
 	else								\
-		__asm __volatile("wrpr %0, %1, %%" #name		\
+		__asm volatile("wrpr %0, %1, %%" #name			\
 		    : : "r" (val), "rI" (xor) : "%g0");			\
-	__asm __volatile("" : : : "memory");				\
+	__asm volatile("" : : : "memory");				\
 } while(0)
 
 
@@ -567,7 +567,7 @@ extern __inline u_int64_t						\
 sparc_rd_ ## name()							\
 {									\
 	u_int64_t r;							\
-	__asm __volatile("rd %%" #name ", %0" :				\
+	__asm volatile("rd %%" #name ", %0" :				\
 	    "=r" (r) : : "%g0");					\
 	return (r);							\
 }
@@ -579,7 +579,7 @@ extern __inline u_int64_t						\
 sparc_rdpr_ ## name()							\
 {									\
 	u_int64_t r;							\
-	__asm __volatile("rdpr %%" #name ", %0" :			\
+	__asm volatile("rdpr %%" #name ", %0" :				\
 	    "=r" (r) : : "%g0");					\
 	return (r);							\
 }
@@ -612,7 +612,7 @@ GEN_RDPR(ver);
 	o ## _asi(paddr_t va)						\
 	{								\
 		tp r;							\
-		__asm __volatile(					\
+		__asm volatile(						\
 		    #o " [%1] %%asi, %0"				\
 		    : "=r" (r)						\
 		    : "r" ((volatile tp *)va)				\
@@ -640,7 +640,7 @@ LDNC_GEN(int, lda);
 	    (sizeof(type) == 1 && asi == ASI_PRIMARY_LITTLE))		\
 		__r ## op ## type = *((volatile type *)va);		\
 	else								\
-		__asm __volatile(#opa " [%1] " #asi ", %0"		\
+		__asm volatile(#opa " [%1] " #asi ", %0"		\
 		    : "=r" (__r ## op ## type)				\
 		    : "r" ((volatile type *)va)				\
 		    : "%g0");						\
@@ -664,7 +664,7 @@ LDNC_GEN(int, lda);
 	extern __inline void						\
 	o ## _asi(paddr_t va, tp val)					\
 	{								\
-		__asm __volatile(					\
+		__asm volatile(						\
 		    #o " %0, [%1] %%asi"				\
 		    :							\
 		    : "r" (val), "r" ((volatile tp *)va)		\
@@ -690,7 +690,7 @@ STNC_GEN(u_int, sta);
 	    (sizeof(type) == 1 && asi == ASI_PRIMARY_LITTLE))		\
 		*((volatile type *)va) = val;				\
 	else								\
-		__asm __volatile(#opa " %0, [%1] " #asi			\
+		__asm volatile(#opa " %0, [%1] " #asi			\
 		    : : "r" (val), "r" ((volatile type *)va)		\
 		    : "memory");					\
 	})
@@ -728,7 +728,7 @@ extern __inline void flush(void *);
 extern __inline
 void flush(void *p)
 {
-	__asm __volatile("flush %0"
+	__asm volatile("flush %0"
 	    : : "r" (p)
 	    : "memory");
 }

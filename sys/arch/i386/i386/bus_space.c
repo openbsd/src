@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.4 2009/07/16 21:07:41 mk Exp $ */
+/*	$OpenBSD: bus_space.c,v 1.5 2014/03/29 18:09:29 guenther Exp $ */
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,7 +102,7 @@ bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	} else {
 		void *_addr=a;
 		int _cnt=cnt;
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movb (%2),%%al				;"
 		"	stosb					;"
 		"	loop 1b"				:
@@ -120,7 +120,7 @@ bus_space_read_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	} else {
 		void *_addr=a;
 		int _cnt=cnt;
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movw (%2),%%ax				;"
 		"	stosw					;"
 		"	loop 1b"				:
@@ -137,7 +137,7 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	} else {
 		void *_addr=a;
 		int _cnt=cnt;
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movl (%2),%%eax				;"
 		"	stosl					;"
 		"	loop 1b"				:
@@ -155,7 +155,7 @@ bus_space_read_region_1(bus_space_tag_t t, bus_space_handle_t h,
 	int _port = h + o;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	inb %w2,%%al				;"
 		"	stosb					;"
 		"	incl %2					;"
@@ -175,7 +175,7 @@ bus_space_read_region_2(bus_space_tag_t t, bus_space_handle_t h,
 	int _port = h + o;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	inw %w2,%%ax				;"
 		"	stosw					;"
 		"	addl $2,%2				;"
@@ -195,7 +195,7 @@ bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t h,
 	int _port = h + o;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	inl %w2,%%eax				;"
 		"	stosl					;"
 		"	addl $4,%2				;"
@@ -246,7 +246,7 @@ bus_space_write_multi_1(bus_space_tag_t t, bus_space_handle_t h,
 		const void *_addr=a;
 		int _cnt=cnt;
 
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsb					;"
 		"	movb %%al,(%2)				;"
 		"	loop 1b"				:
@@ -265,7 +265,7 @@ bus_space_write_multi_2(bus_space_tag_t t, bus_space_handle_t h,
 		const void *_addr = a;
 		int _cnt = cnt;
 
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsw					;"
 		"	movw %%ax,(%2)				;"
 		"	loop 1b"				:
@@ -283,7 +283,7 @@ bus_space_write_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 		const void *_addr=a;
 		int _cnt=cnt;
 
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsl					;"
 		"	movl %%eax,(%2)				;"
 		"	loop 1b"				:
@@ -301,7 +301,7 @@ bus_space_write_region_1(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsb					;"
 		"	outb %%al,%w0				;"
 		"	incl %0					;"
@@ -321,7 +321,7 @@ bus_space_write_region_2(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsw					;"
 		"	outw %%ax,%w0				;"
 		"	addl $2,%0				;"
@@ -341,7 +341,7 @@ bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	lodsl					;"
 		"	outl %%eax,%w0				;"
 		"	addl $4,%0				;"
@@ -359,13 +359,13 @@ bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	outb %b2, %w1				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "d" (h + o), "a" (v)		:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movb %b2, (%1)				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "D" (h + o), "a" (v)		:
@@ -380,13 +380,13 @@ bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	outw %w2, %w1				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "d" (h + o), "a" (v)	:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movw %w2, (%1)				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "D" (h + o), "a" (v)		:
@@ -401,13 +401,13 @@ bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	outl %2,%w1				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "d" (h + o), "a" (v)	:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"1:	movl %2,(%1)				;"
 		"	loop 1b"				:
 		    "+c" (_cnt) : "D" (h + o), "a" (v)	:
@@ -423,14 +423,14 @@ bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	outb %%al,%w0				;"
 		"	incl %0					;"
 		"	loop 1b"				:
 		    "+d" (_port), "+c" (_cnt) : "a" (v)	:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"	repne					;"
 		"	stosb"					:
 		    "+D" (_port), "+c" (_cnt) : "a" (v)	:
@@ -446,14 +446,14 @@ bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	outw %%ax,%w0				;"
 		"	addl $2, %0				;"
 		"	loop 1b"				:
 		    "+d" (_port), "+c" (_cnt) : "a" (v)		:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"	repne					;"
 		"	stosw"					:
 		    "+D" (_port), "+c" (_cnt) : "a" (v)	:
@@ -469,14 +469,14 @@ bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	outl %%eax,%w0				;"
 		"	addl $4, %0				;"
 		"	loop 1b"				:
 		    "+d" (_port), "+c" (_cnt) : "a" (v)		:
 		    "cc");
 	} else {
-		__asm __volatile("cld				;"
+		__asm volatile("cld				;"
 		"	repne					;"
 		"	stosl"					:
 		    "+D" (_port), "+c" (_cnt) : "a" (v)	:
@@ -493,7 +493,7 @@ bus_space_copy_1(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	movl %k1,%%edx				;"
 		"	inb  %%dx,%%al				;"
 		"	movl %k0,%%edx				;"
@@ -515,7 +515,7 @@ bus_space_copy_2(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 	int _port2 = h2 + o2;
 	int _cnt=cnt;
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	movl %k1,%%edx				;"
 		"	inw  %%dx,%%ax				;"
 		"	movl %k0,%%edx				;"
@@ -538,7 +538,7 @@ bus_space_copy_4(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 	int _cnt = cnt;
 
 	if (t == I386_BUS_SPACE_IO) {
-		__asm __volatile(
+		__asm volatile(
 		"1:	movl %k1,%%edx				;"
 		"	inl  %%dx,%%eax				;"
 		"	movl %k0,%%edx				;"

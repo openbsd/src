@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2014/03/11 19:45:27 guenther Exp $	*/
+/*	$OpenBSD: intr.h,v 1.18 2014/03/29 18:09:30 guenther Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #define _splset(reg)						\
 ({								\
 	register int val;					\
-	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
+	__asm volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
 				: "=&g" (val)			\
 				: "g" (reg));			\
 	val;							\
@@ -72,11 +72,11 @@
 #define	_splraise(reg)						\
 ({								\
 	register int val;					\
-	__asm __volatile ("mfpr $0x12,%0"			\
+	__asm volatile ("mfpr $0x12,%0"				\
 				: "=&g" (val)			\
 				: );				\
 	if ((reg) > val) {					\
-		__asm __volatile ("mtpr %0,$0x12"		\
+		__asm volatile ("mtpr %0,$0x12"			\
 				:				\
 				: "g" (reg));			\
 	}							\
@@ -84,7 +84,7 @@
 })
 
 #define	splx(reg)						\
-	__asm __volatile ("mtpr %0,$0x12" : : "g" (reg))
+	__asm volatile ("mtpr %0,$0x12" : : "g" (reg))
 
 #define	spl0()		_splset(IPL_NONE)
 #define splsoftclock()	_splraise(IPL_SOFTCLOCK)

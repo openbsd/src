@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.3 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -130,10 +130,10 @@ tcc_bus_error(uint32_t hwpend, struct trap_frame *tf)
  */
 
 #define	tcc_cache_hit(addr,op) \
-__asm__ __volatile__ ("lw $0, %0(%1)" :: "i" (TCC_CACHEOP_HIT), \
+__asm__ volatile ("lw $0, %0(%1)" :: "i" (TCC_CACHEOP_HIT), \
     "r" (PHYS_TO_XKPHYS(TCC_CACHEOP_BASE | (addr) | (op), CCA_NC)) : "memory")
 #define	tcc_cache_index(s,i,op) \
-__asm__ __volatile__ ("lw $0, %0(%1)" :: "i" (TCC_CACHEOP_INDEX | (op)), \
+__asm__ volatile ("lw $0, %0(%1)" :: "i" (TCC_CACHEOP_INDEX | (op)), \
     "r" (PHYS_TO_XKPHYS(TCC_CACHEOP_BASE | ((s) << TCC_CACHEOP_SET_SHIFT) | \
 	 ((i) << TCC_CACHEOP_INDEX_SHIFT), CCA_NC)) : "memory")
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.34 2014/02/03 18:42:05 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.35 2014/03/29 18:09:28 guenther Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -87,9 +87,9 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *cpu_info[ALPHA_MAXPROCS];
 
 /* Bitmask of CPUs booted, currently running, and paused. */
-__volatile u_long cpus_booted;
-__volatile u_long cpus_running;
-__volatile u_long cpus_paused;
+volatile u_long cpus_booted;
+volatile u_long cpus_running;
+volatile u_long cpus_paused;
 
 void	cpu_boot_secondary(struct cpu_info *);
 #endif /* MULTIPROCESSOR */
@@ -639,8 +639,8 @@ cpu_iccb_send(cpuid_t cpu_id, const char *msg)
 	strlcpy(pcsp->pcs_iccb.iccb_rxbuf, msg,
 	    sizeof pcsp->pcs_iccb.iccb_rxbuf);
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
-	/* XXX cast to __volatile */
-	atomic_setbits_ulong((__volatile u_long *)&hwrpb->rpb_rxrdy, cpumask);
+	/* XXX cast to volatile */
+	atomic_setbits_ulong((volatile u_long *)&hwrpb->rpb_rxrdy, cpumask);
 	alpha_mb();
 
 	/* Wait for the message to be received. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuid.c,v 1.1 2013/10/16 16:59:35 miod Exp $	*/
+/*	$OpenBSD: cpuid.c,v 1.2 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -26,7 +26,7 @@ cpuid(void)
 	uint ret;
 
 	SCM_CALL(SCM_CPUID);
-	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
+	__asm__ volatile ("or %0, %%r0, %%r2" : "=r" (ret));
 
 	return ret;
 }

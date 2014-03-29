@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.16 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.17 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -58,7 +58,7 @@ struct pctrst {
 #define rdtsc()							\
 ({								\
 	pctrval v;						\
-	__asm __volatile ("rdtsc" : "=A" (v));			\
+	__asm volatile ("rdtsc" : "=A" (v));			\
 	v;							\
 })
 
@@ -66,7 +66,7 @@ struct pctrst {
 #define rdpmc(ctr)						\
 ({								\
 	pctrval v;						\
-	__asm __volatile ("rdpmc\n"				\
+	__asm volatile ("rdpmc\n"				\
 	    "\tandl $0xff, %%edx"				\
 	    : "=A" (v) : "c" (ctr));				\
 	v;							\
@@ -77,12 +77,12 @@ struct pctrst {
 #define rdmsr(msr)						\
 ({								\
 	pctrval v;						\
-	__asm __volatile ("rdmsr" : "=A" (v) : "c" (msr));	\
+	__asm volatile ("rdmsr" : "=A" (v) : "c" (msr));	\
 	v;							\
 })
 
 #define wrmsr(msr, v) \
-	__asm __volatile ("wrmsr" :: "A" ((u_int64_t) (v)), "c" (msr));
+	__asm volatile ("wrmsr" :: "A" ((u_int64_t) (v)), "c" (msr));
 
 void	pctrattach(int);
 int	pctropen(dev_t, int, int, struct proc *);

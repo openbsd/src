@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2014/03/27 10:24:40 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 static inline unsigned int
 _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
 {
-	__asm __volatile(LOCK " cmpxchgl %2, %1"
+	__asm volatile(LOCK " cmpxchgl %2, %1"
 	    : "=a" (n), "=m" (*p)
 	    : "r" (n), "a" (e), "m" (*p)
 	    : "memory");
@@ -70,7 +70,7 @@ _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
 static inline unsigned long
 _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 {
-	__asm __volatile(LOCK " cmpxchgq %2, %1"
+	__asm volatile(LOCK " cmpxchgq %2, %1"
 	    : "=a" (n), "=m" (*p)
 	    : "r" (n), "a" (e), "m" (*p)
 	    : "memory");
@@ -82,7 +82,7 @@ _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 static inline void *
 _atomic_cas_ptr(volatile void **p, void *e, void *n)
 {
-	__asm __volatile(LOCK " cmpxchgq %2, %1"
+	__asm volatile(LOCK " cmpxchgq %2, %1"
 	    : "=a" (n), "=m" (*p)
 	    : "r" (n), "a" (e), "m" (*p)
 	    : "memory");
@@ -109,13 +109,13 @@ x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val)
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 {
-	__asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 {
-	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+	__asm volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 /*
@@ -128,13 +128,13 @@ x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits)
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 {
-	__asm __volatile(LOCK " orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(LOCK " orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits)
 {
-	__asm __volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+	__asm volatile(LOCK " andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u64

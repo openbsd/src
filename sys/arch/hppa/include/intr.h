@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.38 2013/05/17 19:38:51 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.39 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -91,7 +91,7 @@ static __inline int
 spllower(int ncpl)
 {
 	register int ocpl asm("r28") = ncpl;
-	__asm __volatile("copy  %0, %%arg0\n\tbreak %1, %2"
+	__asm volatile("copy  %0, %%arg0\n\tbreak %1, %2"
 	    : "+r" (ocpl) : "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SPLLOWER)
 	    : "r26", "memory");
 	return (ocpl);
@@ -105,7 +105,7 @@ splraise(int ncpl)
 
 	if (ocpl < ncpl)
 		ci->ci_cpl = ncpl;
-	__asm __volatile ("sync" : "+r" (ci->ci_cpl));
+	__asm volatile ("sync" : "+r" (ci->ci_cpl));
 
 	return (ocpl);
 }
@@ -121,8 +121,8 @@ hppa_intr_disable(void)
 {
 	register_t eiem;
 
-	__asm __volatile("mfctl %%cr15, %0": "=r" (eiem));
-	__asm __volatile("mtctl %r0, %cr15");
+	__asm volatile("mfctl %%cr15, %0": "=r" (eiem));
+	__asm volatile("mtctl %r0, %cr15");
 
 	return eiem;
 }
@@ -130,7 +130,7 @@ hppa_intr_disable(void)
 static __inline void
 hppa_intr_enable(register_t eiem)
 {
-	__asm __volatile("mtctl %0, %%cr15":: "r" (eiem));
+	__asm volatile("mtctl %0, %%cr15":: "r" (eiem));
 }
 
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)

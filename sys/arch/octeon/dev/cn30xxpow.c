@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.3 2013/06/01 22:20:35 jasper Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -262,7 +262,7 @@ cn30xxpow_tag_sw_poll(void)
 {
 	uint64_t result;
 
-	__asm __volatile (
+	__asm volatile (
 		"	.set	push		\n"
 		"	.set	noreorder	\n"
 		"	.set	arch=mips64r2	\n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.26 2008/11/21 03:22:29 mikeb Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.27 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -47,11 +47,11 @@ p5ctrrd(struct pctrst *st)
 	msr11 = rdmsr(P5MSR_CTRSEL);
 	st->pctr_fn[0] = msr11 & 0xffff;
 	st->pctr_fn[1] = msr11 >> 16;
-	__asm __volatile("cli");
+	__asm volatile("cli");
 	st->pctr_tsc = rdtsc();
 	st->pctr_hwc[0] = rdmsr(P5MSR_CTR0);
 	st->pctr_hwc[1] = rdmsr(P5MSR_CTR1);
-	__asm __volatile("sti");
+	__asm volatile("sti");
 }
 
 static void
@@ -63,11 +63,11 @@ pctrrd(struct pctrst *st)
 	reg = pctr_isamd ? MSR_K7_EVNTSEL0 : P6MSR_CTRSEL0;
 	for (i = 0; i < num; i++)
 			st->pctr_fn[i] = rdmsr(reg + i);
-	__asm __volatile("cli");
+	__asm volatile("cli");
 	st->pctr_tsc = rdtsc();
 	for (i = 0; i < num; i++)
 		st->pctr_hwc[i] = rdpmc(i);
-	__asm __volatile("sti");
+	__asm volatile("sti");
 }
 
 void
@@ -83,14 +83,14 @@ pctrattach(int num)
 
 	if (usepctr) {
 		/* Enable RDTSC and RDPMC instructions from user-level. */
-		__asm __volatile ("movl %%cr4,%%eax\n"
+		__asm volatile ("movl %%cr4,%%eax\n"
 				  "\tandl %0,%%eax\n"
 				  "\torl %1,%%eax\n"
 				  "\tmovl %%eax,%%cr4"
 				  :: "i" (~CR4_TSD), "i" (CR4_PCE) : "eax");
 	} else if (usetsc) {
 		/* Enable RDTSC instruction from user-level. */
-		__asm __volatile ("movl %%cr4,%%eax\n"
+		__asm volatile ("movl %%cr4,%%eax\n"
 				  "\tandl %0,%%eax\n"
 				  "\tmovl %%eax,%%cr4"
 				  :: "i" (~CR4_TSD) : "eax");

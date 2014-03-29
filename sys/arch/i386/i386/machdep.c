@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.535 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.536 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -364,7 +364,7 @@ cyrix_write_reg(u_char reg, u_char data)
 void
 cpuid(u_int32_t ax, u_int32_t *regs)
 {
-	__asm __volatile(
+	__asm volatile(
 	    "cpuid\n\t"
 	    "movl	%%eax, 0(%2)\n\t"
 	    "movl	%%ebx, 4(%2)\n\t"
@@ -3436,7 +3436,7 @@ cpu_reset()
 	bzero((caddr_t)idt, sizeof(idt_region));
 	setregion(&region, idt, sizeof(idt_region) - 1);
 	lidt(&region);
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 1
 	/*
@@ -3929,7 +3929,7 @@ softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
 
-	__asm __volatile("orl %1, %0" :
+	__asm volatile("orl %1, %0" :
 	    "=m" (ci->ci_ipending) : "ir" (1 << sir));
 }
 

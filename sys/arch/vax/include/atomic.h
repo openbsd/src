@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.5 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.6 2014/03/29 18:09:30 guenther Exp $	*/
 
 /* Public Domain */
 
@@ -11,7 +11,7 @@
 #include <machine/intr.h>
 
 static __inline void
-atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	int s;
 
@@ -21,7 +21,7 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 static __inline void
-atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	int s;
 

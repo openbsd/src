@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2012/11/19 15:18:06 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2014/03/29 18:09:29 guenther Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -75,14 +75,14 @@ i386_atomic_testset_i(volatile int *ptr, unsigned long val)
 static __inline void
 i386_atomic_setbits_l(volatile u_int32_t *ptr, unsigned long bits)
 {
-	__asm __volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 i386_atomic_clearbits_l(volatile u_int32_t *ptr, unsigned long bits)
 {
 	bits = ~bits;
-	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 /*

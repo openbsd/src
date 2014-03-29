@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.13 2009/02/12 18:53:14 miod Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.14 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -86,7 +86,7 @@ sun4u_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		shift = (itid & 0x3) * 2;
 
 	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift)) {
-		__asm __volatile("ta 1; nop");
+		__asm volatile("ta 1; nop");
 	}
 
 	/* Schedule an interrupt. */
@@ -120,7 +120,7 @@ sun4u_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 	else
 		panic("ipi_send: couldn't send ipi");
 #else
-	__asm __volatile("ta 1; nop" : :);
+	__asm volatile("ta 1; nop" : :);
 #endif
 }
 

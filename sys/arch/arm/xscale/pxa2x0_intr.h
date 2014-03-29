@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.13 2009/08/26 20:31:43 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.14 2014/03/29 18:09:28 guenther Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -54,8 +54,8 @@ extern vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
 #define write_icu(offset,value) \
  (*(volatile uint32_t *)(pxaic_base+(offset))=(value))
 
-extern __volatile int current_spl_level;
-extern __volatile int softint_pending;
+extern volatile int current_spl_level;
+extern volatile int softint_pending;
 extern int pxa2x0_imask[];
 void pxa2x0_do_pending(void);
 

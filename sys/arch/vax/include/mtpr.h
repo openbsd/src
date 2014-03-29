@@ -1,4 +1,4 @@
-/*      $OpenBSD: mtpr.h,v 1.8 2013/06/29 13:00:05 miod Exp $     */
+/*      $OpenBSD: mtpr.h,v 1.9 2014/03/29 18:09:30 guenther Exp $     */
 /*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
@@ -161,7 +161,7 @@
 static inline void
 mtpr(register_t val, int reg)
 {
-	__asm__ __volatile ("mtpr %0,%1"
+	__asm__ volatile ("mtpr %0,%1"
 			: /* No output */
 			: "g" (val), "g" (reg)
 			: "memory");
@@ -171,7 +171,7 @@ static inline register_t
 mfpr(int reg)
 {
 	register_t __val;
-	__asm__ __volatile ("mfpr %1,%0"
+	__asm__ volatile ("mfpr %1,%0"
 			: "=g" (__val)
 			: "g" (reg));
 	return __val;

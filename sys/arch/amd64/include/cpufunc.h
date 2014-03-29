@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.10 2013/12/06 22:56:20 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.11 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -54,32 +54,32 @@ extern int cpu_feature;
 static __inline void 
 invlpg(u_int64_t addr)
 { 
-        __asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
+        __asm volatile("invlpg (%0)" : : "r" (addr) : "memory");
 }  
 
 static __inline void
 lidt(void *p)
 {
-	__asm __volatile("lidt (%0)" : : "r" (p) : "memory");
+	__asm volatile("lidt (%0)" : : "r" (p) : "memory");
 }
 
 static __inline void
 lldt(u_short sel)
 {
-	__asm __volatile("lldt %0" : : "r" (sel));
+	__asm volatile("lldt %0" : : "r" (sel));
 }
 
 static __inline void
 ltr(u_short sel)
 {
-	__asm __volatile("ltr %0" : : "r" (sel));
+	__asm volatile("ltr %0" : : "r" (sel));
 }
 
 static __inline void
 lcr8(u_int val)
 {
 	u_int64_t val64 = val;
-	__asm __volatile("movq %0,%%cr8" : : "r" (val64));
+	__asm volatile("movq %0,%%cr8" : : "r" (val64));
 }
 
 /*
@@ -89,7 +89,7 @@ static __inline void
 lcr0(u_int val)
 {
 	u_int64_t val64 = val;
-	__asm __volatile("movq %0,%%cr0" : : "r" (val64));
+	__asm volatile("movq %0,%%cr0" : : "r" (val64));
 }
 
 static __inline u_int
@@ -97,7 +97,7 @@ rcr0(void)
 {
 	u_int64_t val64;
 	u_int val;
-	__asm __volatile("movq %%cr0,%0" : "=r" (val64));
+	__asm volatile("movq %%cr0,%0" : "=r" (val64));
 	val = val64;
 	return val;
 }
@@ -106,21 +106,21 @@ static __inline u_int64_t
 rcr2(void)
 {
 	u_int64_t val;
-	__asm __volatile("movq %%cr2,%0" : "=r" (val));
+	__asm volatile("movq %%cr2,%0" : "=r" (val));
 	return val;
 }
 
 static __inline void
 lcr3(u_int64_t val)
 {
-	__asm __volatile("movq %0,%%cr3" : : "r" (val));
+	__asm volatile("movq %0,%%cr3" : : "r" (val));
 }
 
 static __inline u_int64_t
 rcr3(void)
 {
 	u_int64_t val;
-	__asm __volatile("movq %%cr3,%0" : "=r" (val));
+	__asm volatile("movq %%cr3,%0" : "=r" (val));
 	return val;
 }
 
@@ -132,7 +132,7 @@ lcr4(u_int val)
 {
 	u_int64_t val64 = val;
 
-	__asm __volatile("movq %0,%%cr4" : : "r" (val64));
+	__asm volatile("movq %0,%%cr4" : : "r" (val64));
 }
 
 static __inline u_int
@@ -140,7 +140,7 @@ rcr4(void)
 {
 	u_int val;
 	u_int64_t val64;
-	__asm __volatile("movq %%cr4,%0" : "=r" (val64));
+	__asm volatile("movq %%cr4,%0" : "=r" (val64));
 	val = val64;
 	return val;
 }
@@ -149,8 +149,8 @@ static __inline void
 tlbflush(void)
 {
 	u_int64_t val;
-	__asm __volatile("movq %%cr3,%0" : "=r" (val));
-	__asm __volatile("movq %0,%%cr3" : : "r" (val));
+	__asm volatile("movq %%cr3,%0" : "=r" (val));
+	__asm volatile("movq %0,%%cr3" : : "r" (val));
 }
 
 static __inline void
@@ -194,13 +194,13 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 static __inline void
 disable_intr(void)
 {
-	__asm __volatile("cli");
+	__asm volatile("cli");
 }
 
 static __inline void
 enable_intr(void)
 {
-	__asm __volatile("sti");
+	__asm volatile("sti");
 }
 
 static __inline u_long
@@ -208,28 +208,28 @@ read_rflags(void)
 {
 	u_long	ef;
 
-	__asm __volatile("pushfq; popq %0" : "=r" (ef));
+	__asm volatile("pushfq; popq %0" : "=r" (ef));
 	return (ef);
 }
 
 static __inline void
 write_rflags(u_long ef)
 {
-	__asm __volatile("pushq %0; popfq" : : "r" (ef));
+	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
 static __inline u_int64_t
 rdmsr(u_int msr)
 {
 	uint32_t hi, lo;
-	__asm __volatile("rdmsr" : "=d" (hi), "=a" (lo) : "c" (msr));
+	__asm volatile("rdmsr" : "=d" (hi), "=a" (lo) : "c" (msr));
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
 static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
-	__asm __volatile("wrmsr" :
+	__asm volatile("wrmsr" :
 	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr));
 }
 
@@ -245,7 +245,7 @@ static __inline u_int64_t
 rdmsr_locked(u_int msr, u_int code)
 {
 	uint32_t hi, lo;
-	__asm __volatile("rdmsr"
+	__asm volatile("rdmsr"
 	    : "=d" (hi), "=a" (lo)
 	    : "c" (msr), "D" (code));
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
@@ -254,26 +254,26 @@ rdmsr_locked(u_int msr, u_int code)
 static __inline void
 wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
 {
-	__asm __volatile("wrmsr" :
+	__asm volatile("wrmsr" :
 	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr), "D" (code));
 }
 
 static __inline void
 wbinvd(void)
 {
-	__asm __volatile("wbinvd");
+	__asm volatile("wbinvd");
 }
 
 static __inline void
 clflush(u_int64_t addr)
 {
-	__asm __volatile("clflush %0" : "+m" (*(volatile char *)addr));
+	__asm volatile("clflush %0" : "+m" (*(volatile char *)addr));
 }
 
 static __inline void
 mfence(void)
 {
-	__asm __volatile("mfence" : : : "memory");
+	__asm volatile("mfence" : : : "memory");
 }
 
 static __inline u_int64_t
@@ -281,7 +281,7 @@ rdtsc(void)
 {
 	uint32_t hi, lo;
 
-	__asm __volatile("rdtsc" : "=d" (hi), "=a" (lo));
+	__asm volatile("rdtsc" : "=d" (hi), "=a" (lo));
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
@@ -290,7 +290,7 @@ rdpmc(u_int pmc)
 {
 	uint32_t hi, lo;
 
-	__asm __volatile("rdpmc" : "=d" (hi), "=a" (lo) : "c" (pmc));
+	__asm volatile("rdpmc" : "=d" (hi), "=a" (lo) : "c" (pmc));
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
@@ -298,7 +298,7 @@ static __inline void
 monitor(const volatile void *addr, u_long extensions, u_int hints)
 {
 
-	__asm __volatile("monitor"
+	__asm volatile("monitor"
 	    : : "a" (addr), "c" (extensions), "d" (hints));
 }
 
@@ -306,14 +306,14 @@ static __inline void
 mwait(u_long extensions, u_int hints)
 {
 
-	__asm __volatile("mwait" : : "a" (hints), "c" (extensions));
+	__asm volatile("mwait" : : "a" (hints), "c" (extensions));
 }
 
 /* Break into DDB/KGDB. */
 static __inline void
 breakpoint(void)
 {
-	__asm __volatile("int $3");
+	__asm volatile("int $3");
 }
 
 #define read_psl()	read_rflags()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2013/11/04 00:35:30 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3002,8 +3002,8 @@ pmap_activate(struct proc *p)
 	if (p == curproc) {
 		u_int cur_dacr, cur_ttb;
 
-		__asm __volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
-		__asm __volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
+		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
+		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
 
 		cur_ttb &= ~(L1_TABLE_SIZE - 1);
 
@@ -4767,9 +4767,9 @@ pmap_pte_init_armv7(void)
 	pmap_copy_page_func = pmap_copy_page_v7;
 
 	/* probe L1 dcache */
-	__asm __volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (0) );
+	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (0) );
 	/* read the arm v7 cache control register, is writhru is supported? */
-	__asm __volatile("mrc p15, 1, %0, c0, c0, 0"
+	__asm volatile("mrc p15, 1, %0, c0, c0, 0"
 		: "=r" (cachereg) :);
 
 	if ((cachereg & 0x80000000) == 0)
@@ -4902,9 +4902,9 @@ pmap_pte_init_xscale(void)
 	/*
 	 * Disable ECC protection of page table access, for now.
 	 */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl &= ~XSCALE_AUXCTL_P;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 
 	pmap_needs_pte_sync = 1;
 }
@@ -4966,10 +4966,10 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 	 */
 
 	/* Invalidate data and mini-data. */
-	__asm __volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 }
 
 /*

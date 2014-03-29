@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.19 2012/10/18 16:54:35 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.20 2014/03/29 18:09:30 guenther Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -219,7 +219,7 @@ arcbios_init()
 	 * case of the R8000 PrId register).
 	 */
 #ifdef __LP64__
-	__asm__ __volatile__ ("mfc0 %0, $15" /* COP_0_PRID */ : "=r" (prid));
+	__asm__ volatile ("mfc0 %0, $15" /* COP_0_PRID */ : "=r" (prid));
 	if ((prid & 0xff00) == (MIPS_R8000 << 8))
 		bios_base = (void *)PHYS_TO_XKPHYS(ARCBIOS_BASE, CCA_CACHED);
 	else

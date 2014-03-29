@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.34 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.35 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -75,7 +75,7 @@ pc_getc(dev_t dev)
 	register int rv;
 
 	if (dev & 0x80) {
-		__asm __volatile(DOINT(0x16) "; setnz %b0" : "=a" (rv) :
+		__asm volatile(DOINT(0x16) "; setnz %b0" : "=a" (rv) :
 		    "0" (0x100) : "%ecx", "%edx", "cc" );
 		return (rv & 0xff);
 	}
@@ -85,11 +85,11 @@ pc_getc(dev_t dev)
 	 * be necessary on (at least) the Intel Mac Mini.
 	 */
 	do {
-		__asm __volatile(DOINT(0x16) "; setnz %b0" : "=a" (rv) :
+		__asm volatile(DOINT(0x16) "; setnz %b0" : "=a" (rv) :
 		    "0" (0x100) : "%ecx", "%edx", "cc" );
 	} while ((rv & 0xff) == 0);
 
-	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
+	__asm volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "%edx", "cc" );
 
 	return (rv & 0xff);
@@ -100,7 +100,7 @@ pc_getshifts(dev_t dev)
 {
 	register int rv;
 
-	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x200) :
+	__asm volatile(DOINT(0x16) : "=a" (rv) : "0" (0x200) :
 	    "%ecx", "%edx", "cc" );
 
 	return (rv & 0xff);
@@ -109,7 +109,7 @@ pc_getshifts(dev_t dev)
 void
 pc_putc(dev_t dev, int c)
 {
-	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (1) :
+	__asm volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (1) :
 	    "%ecx", "%edx", "cc" );
 }
 
@@ -121,7 +121,7 @@ com_probe(struct consdev *cn)
 	register int i, n;
 
 	/* get equip. (9-11 # of coms) */
-	__asm __volatile(DOINT(0x11) : "=a" (n) : : "%ecx", "%edx", "cc");
+	__asm volatile(DOINT(0x11) : "=a" (n) : : "%ecx", "%edx", "cc");
 	n >>= 9;
 	n &= 7;
 	for (i = 0; i < n; i++)

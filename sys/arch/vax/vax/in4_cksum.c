@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.4 2008/05/15 22:17:08 brad Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ int in4_cksum_md_debug(struct mbuf *m, u_int8_t nxt, int off, int len);
 #define ADVANCE(n)	{w += n; mlen -= n;}
 #define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
 
-#define Asm     __asm __volatile
+#define Asm     __asm volatile
 #define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))
@@ -122,7 +122,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: bad mbuf chain");
 #endif
 
-		__asm __volatile(
+		__asm volatile(
 			"movzwl	%3,%0;"	/* mov len to sum */
 			"addb2	%4,%0;"	/* add proto to sum */
 			"rotl	$8,%0,%0;"	/* htons, carry is preserved */

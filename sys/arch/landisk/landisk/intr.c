@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2011/04/15 20:40:07 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -377,7 +377,7 @@ splassert_check(int wantipl, const char *func)
 	register_t sr;
         int oldipl;
 
-	__asm__ __volatile__ ("stc sr,%0" : "=r" (sr));
+	__asm__ volatile ("stc sr,%0" : "=r" (sr));
 
 	oldipl = (sr & 0xf0) >> 4;
         if (oldipl < wantipl) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.5 2004/06/11 12:53:09 mickey Exp $	*/
+/*	$OpenBSD: power.c,v 1.6 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -167,7 +167,7 @@ power_thread_reg(void *v)
 	u_int32_t r;
 
 	for (;;) {
-		__asm __volatile("ldwas 0(%1), %0"
+		__asm volatile("ldwas 0(%1), %0"
 		    : "=&r" (r) : "r" (sc->sc_pwr_reg));
 
 		if (!(r & 1))

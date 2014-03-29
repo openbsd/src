@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.27 2012/08/30 16:10:32 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.28 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -262,7 +262,7 @@ fpudna(struct cpu_info *ci)
 		 * thus leaking other process's execution history.
 		 */
 		fnclex();
-		__asm __volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
+		__asm volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
 		fxrstor(sfp);
 	}
 }

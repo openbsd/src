@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.12 2013/03/21 21:51:00 deraadt Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.13 2014/03/29 18:09:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -73,7 +73,7 @@ bios_E820(bios_memmap_t *mp)
 
 	do {
 		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);
-		__asm __volatile(DOINT(0x15) "; setc %b1"
+		__asm volatile(DOINT(0x15) "; setc %b1"
 		    : "=a" (sig), "=d" (rc), "=b" (off)
 		    : "0" (0xE820), "1" (0x534d4150), "b" (off),
 		      "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xf)
@@ -125,7 +125,7 @@ bios_E801(bios_memmap_t *mp)
 		return NULL;
 
 	/* We might have this call */
-	__asm __volatile(DOINT(0x15) "; mov %%ax, %%si; setc %b0"
+	__asm volatile(DOINT(0x15) "; mov %%ax, %%si; setc %b0"
 	    : "=a" (rc), "=S" (m1), "=b" (m2), "=c" (m3), "=d" (m4)
 	    : "0" (0xE801));
 
@@ -166,7 +166,7 @@ bios_8800(bios_memmap_t *mp)
 {
 	int rc, mem;
 
-	__asm __volatile(DOINT(0x15) "; setc %b0"
+	__asm volatile(DOINT(0x15) "; setc %b0"
 	    : "=c" (rc), "=a" (mem) : "a" (0x8800));
 
 	if (rc & 0xff)
@@ -194,7 +194,7 @@ bios_int12(bios_memmap_t *mp)
 #ifdef DEBUG
 	printf("0x12 ");
 #endif
-	__asm __volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
+	__asm volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
 
 	/* Fill out a bios_memmap_t */
 	mp->addr = 0;
@@ -227,7 +227,7 @@ const u_int addrprobe_pat[] = {
 static int
 addrprobe(u_int kloc)
 {
-	__volatile u_int *loc;
+	volatile u_int *loc;
 	register u_int i, ret = 0;
 	u_int save[nitems(addrprobe_pat)];
 

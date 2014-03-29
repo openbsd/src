@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.4 2013/12/05 01:28:45 uebayasi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.5 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -115,7 +115,7 @@ __mp_lock(struct __mp_lock *mpl)
 	while (1) {
 		s = hppa_intr_disable();
 		if (__cpu_cas(mpl, &mpl->mpl_count, 0, 1) == 0) {
-			__asm __volatile("sync" ::: "memory");
+			__asm volatile("sync" ::: "memory");
 			mpl->mpl_cpu = curcpu();
 		}
 		if (mpl->mpl_cpu == curcpu()) {
@@ -145,7 +145,7 @@ __mp_unlock(struct __mp_lock *mpl)
 	s = hppa_intr_disable();
 	if (--mpl->mpl_count == 1) {
 		mpl->mpl_cpu = NULL;
-		__asm __volatile("sync" ::: "memory");
+		__asm volatile("sync" ::: "memory");
 		mpl->mpl_count = 0;
 	}
 	hppa_intr_enable(s);
@@ -167,7 +167,7 @@ __mp_release_all(struct __mp_lock *mpl)
 
 	s = hppa_intr_disable();
 	mpl->mpl_cpu = NULL;
-	__asm __volatile("sync" ::: "memory");
+	__asm volatile("sync" ::: "memory");
 	mpl->mpl_count = 0;
 	hppa_intr_enable(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps2probe.c,v 1.1 2004/03/19 13:48:18 tom Exp $	*/
+/*	$OpenBSD: ps2probe.c,v 1.2 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -36,7 +36,7 @@ ps2probe(void)
 	char *p;
 	int r;
 
-	__asm __volatile(DOINT(0x15) "\n\t"
+	__asm volatile(DOINT(0x15) "\n\t"
 			 "setc %b0\n\t"
 			 : "=a" (r), "=b" (p)
 			 : "0" (0xc000)

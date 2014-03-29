@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.132 2014/02/13 23:11:06 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.133 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ curcpu(void)
 	struct cpu_info *ci;
 
 	/* Can't include sys/param.h for offsetof() since it includes us */
-	__asm __volatile("movl %%fs:%1, %0" :
+	__asm volatile("movl %%fs:%1, %0" :
 		"=r" (ci) : "m"
 		(*(struct cpu_info * const *)&((struct cpu_info *)0)->ci_self));
 	return ci;

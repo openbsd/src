@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.34 2014/01/30 20:14:27 miod Exp $	*/
+/*	$OpenBSD: sched.h,v 1.35 2014/03/29 18:09:31 guenther Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -95,7 +95,7 @@
  */
 struct schedstate_percpu {
 	struct timespec spc_runtime;	/* time curproc started running */
-	__volatile int spc_schedflags;	/* flags; see below */
+	volatile int spc_schedflags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */

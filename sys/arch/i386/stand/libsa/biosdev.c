@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.88 2013/12/28 02:40:41 jsing Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.89 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -76,7 +76,7 @@ biosdreset(int dev)
 {
 	int rv;
 
-	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
+	__asm volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
 	    : "0" (0), "d" (dev) : "%ecx", "cc");
 
 	return ((rv & 0xff)? rv >> 8 : 0);
@@ -99,7 +99,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	if (debug)
 		printf("getinfo: try #8, 0x%x, %p\n", dev, pdi);
 #endif
-	__asm __volatile (DOINT(0x13) "\n\t"
+	__asm volatile (DOINT(0x13) "\n\t"
 	    "setc %b0; movzbl %h1, %1\n\t"
 	    "movzbl %%cl, %3; andb $0x3f, %b3\n\t"
 	    "xchgb %%cl, %%ch; rolb $2, %%ch"
@@ -142,7 +142,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 			printf("getinfo: try #41, 0x%x\n", dev);
 #endif
 		/* EDD support check */
-		__asm __volatile(DOINT(0x13) "; setc %b0"
+		__asm volatile(DOINT(0x13) "; setc %b0"
 			 : "=a" (rv), "=c" (bm)
 			 : "0" (0x4100), "b" (0x55aa), "d" (dev) : "cc");
 		if (!(rv & 0xff) && (BIOS_regs.biosr_bx & 0xffff) == 0xaa55)
@@ -190,7 +190,7 @@ CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 
 	rw = rw == F_READ ? 2 : 3;
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
-	__asm __volatile ("movb %b7, %h1\n\t"
+	__asm volatile ("movb %b7, %h1\n\t"
 	    "movb %b6, %%dh\n\t"
 	    "andl $0xf, %4\n\t"
 	    /* cylinder; the highest 2 bits of cyl is in %cl */
@@ -232,7 +232,7 @@ EDD_rw(int rw, int dev, u_int32_t daddr, u_int32_t nblk, void *buf)
 
 	/* Call extended read/write (with disk packet) */
 	BIOS_regs.biosr_ds = (u_int32_t)&cb >> 4;
-	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
+	__asm volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
 	    : "0" ((rw == F_READ)? 0x4200: 0x4300),
 	      "d" (dev), "S" ((int) (&cb) & 0xf) : "%ecx", "cc");
 	return ((rv & 0xff)? rv >> 8 : 0);

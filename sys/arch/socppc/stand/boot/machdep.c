@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2013/11/08 13:05:21 fgsch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -145,7 +145,7 @@ _rtt(void)
 	uint32_t v;
 
 	*((volatile uint32_t *)(RPR)) = RPR_RSTE;
-	__asm __volatile("eieio");
+	__asm volatile("eieio");
 	*((volatile uint32_t *)(RCR)) = RCR_SWHR;
 
 	printf("RESET FAILED\n");

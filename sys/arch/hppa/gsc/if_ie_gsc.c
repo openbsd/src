@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.25 2004/10/28 19:13:30 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.26 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -224,7 +224,7 @@ ie_gsc_read16(sc, offset)
 {
 	volatile u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
 
-	asm __volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr));
+	asm volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr));
 	return *addr;
 }
 
@@ -237,7 +237,7 @@ ie_gsc_write16(sc, offset, v)
 	volatile u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
 
 	*addr = v;
-	asm __volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr));
+	asm volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr));
 }
 
 void
@@ -250,8 +250,8 @@ ie_gsc_write24(sc, offset, v)
 
 	addr[0] = (v      ) & 0xffff;
 	addr[1] = (v >> 16) & 0xffff;
-	asm __volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr+0));
-	asm __volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr+1));
+	asm volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr+0));
+	asm volatile ("fdc	%%r0(%%sr0, %0)" :: "r" (addr+1));
 }
 
 void

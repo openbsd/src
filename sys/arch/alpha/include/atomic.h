@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2014/01/26 17:40:11 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2014/03/29 18:09:28 guenther Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -46,11 +46,11 @@
  *	Atomically set bits in a `unsigned long'.
  */
 static __inline void
-atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_setbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_setbits_ulong\n"
 		"1:	ldq_l	%0, %1		\n"
 		"	or	%0, %2, %0	\n"
@@ -72,11 +72,11 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically clear bits in a `unsigned long'.
  */
 static __inline void
-atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_clearbits_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_clearbits_ulong\n"
 		"1:	ldq_l	%0, %1		\n"
 		"	and	%0, %2, %0	\n"
@@ -98,11 +98,11 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically add a value to a `unsigned long'.
  */
 static __inline void
-atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_add_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_add_ulong\n"
 		"1:	ldq_l	%0, %1		\n"
 		"	addq	%0, %2, %0	\n"
@@ -124,11 +124,11 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically subtract a value from a `unsigned long'.
  */
 static __inline void
-atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_sub_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_sub_ulong\n"
 		"1:	ldq_l	%0, %1		\n"
 		"	subq	%0, %2, %0	\n"
@@ -150,11 +150,11 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically load and latch a `unsigned long' value.
  */
 static __inline unsigned long
-atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
+atomic_loadlatch_ulong(volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0, v0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_loadlatch_ulong\n"
 		"1:	mov	%3, %0		\n"
 		"	ldq_l	%1, %2		\n"
@@ -178,11 +178,11 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
  *	Atomically set bits in a `unsigned int'.
  */
 static __inline void
-atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_setbits_ulong\n"
 		"1:	ldl_l	%0, %1		\n"
 		"	or	%0, %2, %0	\n"
@@ -204,11 +204,11 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
  *	Atomically clear bits in a `unsigned int'.
  */
 static __inline void
-atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	unsigned int t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_clearbits_int\n"
 		"1:	ldl_l	%0, %1		\n"
 		"	and	%0, %2, %0	\n"
@@ -230,11 +230,11 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
  *	Atomically add a value to an `int'.
  */
 static __inline void
-atomic_add_int(__volatile int *ulp, int v)
+atomic_add_int(volatile int *ulp, int v)
 {
 	unsigned long t0;
 
-	__asm __volatile(
+	__asm volatile(
 		"# BEGIN atomic_add_int\n"
 		"1:	ldl_l	%0, %1		\n"
 		"	addl	%0, %2, %0	\n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1653,7 +1653,7 @@ cpu_reset(void)
 	 * invalid and causing a fault.
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getenaddr.c,v 1.2 2013/09/28 21:59:38 miod Exp $	*/
+/*	$OpenBSD: getenaddr.c,v 1.3 2014/03/29 18:09:29 guenther Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -34,7 +34,7 @@ scm_getenaddr(u_char *ea)
 	u_char *addr;
 
 	SCM_CALL(SCM_COMMID);
-	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (addr));
+	__asm__ volatile ("or %0, %%r0, %%r2" : "=r" (addr));
 
 	ea[0] = addr[0];
 	ea[1] = addr[1];

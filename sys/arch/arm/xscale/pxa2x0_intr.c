@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.23 2012/12/05 23:20:11 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.24 2014/03/29 18:09:28 guenther Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -110,8 +110,8 @@ static struct intrhandler{
 #endif
 } handler[ICU_LEN];
 
-__volatile int softint_pending;
-__volatile int current_spl_level;
+volatile int softint_pending;
+volatile int current_spl_level;
 /* interrupt masks for each level */
 int pxa2x0_imask[NIPL];
 static int extirq_level[ICU_LEN];

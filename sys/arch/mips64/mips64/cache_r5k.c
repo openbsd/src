@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.11 2014/03/11 20:32:42 miod Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.12 2014/03/29 18:09:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -108,31 +108,31 @@
 #define	CTYPE_HAS_XL2		0x02	/* External L2 Cache present */
 #define	CTYPE_HAS_XL3		0x04	/* External L3 Cache present */
 
-#define	nop4()			__asm__ __volatile__ \
+#define	nop4()			__asm__ volatile \
 	("nop; nop; nop; nop")
-#define	nop10()			__asm__ __volatile__ \
+#define	nop10()			__asm__ volatile \
 	("nop; nop; nop; nop; nop; nop; nop; nop; nop; nop")
 
-#define	cache(op,offs,addr)	__asm__ __volatile__ \
+#define	cache(op,offs,addr)	__asm__ volatile \
 	("cache %0, %1(%2)" :: "i"(op), "i"(offs), "r"(addr) : "memory")
 
-#define	reset_taglo()		__asm__ __volatile__ \
+#define	reset_taglo()		__asm__ volatile \
 	("mtc0 $zero, $28")	/* COP_0_TAG_LO */
-#define	reset_taghi()		__asm__ __volatile__ \
+#define	reset_taghi()		__asm__ volatile \
 	("mtc0 $zero, $29")	/* COP_0_TAG_HI */
 
 static __inline__ register_t
 get_config(void)
 {
 	register_t cfg;
-	__asm__ __volatile__ ("mfc0 %0, $16" : "=r"(cfg)); /* COP_0_CONFIG */
+	__asm__ volatile ("mfc0 %0, $16" : "=r"(cfg)); /* COP_0_CONFIG */
 	return cfg;
 }
 
 static __inline__ void
 set_config(register_t cfg)
 {
-	__asm__ __volatile__ ("mtc0 %0, $16" :: "r"(cfg)); /* COP_0_CONFIG */
+	__asm__ volatile ("mtc0 %0, $16" :: "r"(cfg)); /* COP_0_CONFIG */
 	/* MTC0_HAZARD */
 #ifdef CPU_RM7000
 	nop10();
@@ -232,7 +232,7 @@ mips7k_l2_init(register_t l2size)
 	va = PHYS_TO_XKPHYS(0, CCA_CACHED);
 	eva = va + l2size;
 	while (va != eva) {
-		__asm__ __volatile__
+		__asm__ volatile
 		    ("lw $zero, 0(%0)" :: "r"(va));
 		va += R5K_LINE;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2014/03/29 18:09:30 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -257,7 +257,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		int fpscr, sigi;
 
 		/* XXX worth putting in the trapframe? */
-		__asm__ __volatile__ ("sts fpscr, %0" : "=r" (fpscr));
+		__asm__ volatile ("sts fpscr, %0" : "=r" (fpscr));
 		fpscr = (fpscr & FPSCR_CAUSE_MASK) >> FPSCR_CAUSE_SHIFT;
 		if (fpscr & FPEXC_E)
 			sigi = FPE_FLTINV;	/* XXX any better value? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.23 2011/05/15 09:10:26 mpi Exp $	*/
+/*	$OpenBSD: smu.c,v 1.24 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -408,7 +408,7 @@ smu_do_cmd(struct smu_softc *sc, int timo)
 	    sc->sc_cmdmap->dm_segs->ds_addr);
 
 	/* Flush to RAM. */
-	asm __volatile__ ("dcbst 0,%0; sync" :: "r"(sc->sc_cmd): "memory");
+	asm volatile ("dcbst 0,%0; sync" :: "r"(sc->sc_cmd): "memory");
 
 	/* Ring doorbell.  */
 	bus_space_write_1(sc->sc_memt, sc->sc_gpioh, 0, GPIO_DDR_OUTPUT);
@@ -421,7 +421,7 @@ smu_do_cmd(struct smu_softc *sc, int timo)
 	} while (!(gpio & (GPIO_DATA)));
 
 	/* CPU might have brought back the cache line. */
-	asm __volatile__ ("dcbf 0,%0; sync" :: "r"(sc->sc_cmd) : "memory");
+	asm volatile ("dcbf 0,%0; sync" :: "r"(sc->sc_cmd) : "memory");
 
 	if (cmd->cmd != ack)
 		return (EIO);

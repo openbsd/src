@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.49 2013/05/06 00:15:11 dlg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.50 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -342,7 +342,7 @@ i8254_delay(int n)
 	n -= 5;
 	if (n < 0)
 		return;
-	__asm __volatile("mul %2\n\tdiv %3"
+	__asm volatile("mul %2\n\tdiv %3"
 			 : "=a" (n)
 			 : "0" (n), "r" (TIMER_FREQ), "r" (1000000)
 			 : "%edx", "cc");
@@ -422,9 +422,9 @@ calibrate_cyclecounter(void)
 	if (calibrate_cyclecounter_ctr() == 0)
 		return;
 
-	__asm __volatile("rdtsc" : "=A" (last_count));
+	__asm volatile("rdtsc" : "=A" (last_count));
 	delay(1000000);
-	__asm __volatile("rdtsc" : "=A" (count));
+	__asm volatile("rdtsc" : "=A" (count));
 
 	cpuspeed = ((count - last_count) + 999999) / 1000000;
 }

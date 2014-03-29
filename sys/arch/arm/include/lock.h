@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2010/04/21 03:03:25 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: lock.h,v 1.3 2002/10/07 23:19:49 bjh21 Exp $	*/
 
 /*-
@@ -44,16 +44,16 @@
 
 #include <arm/atomic.h>
 
-typedef __volatile int          __cpu_simple_lock_t;
+typedef volatile int		__cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED     1
 #define __SIMPLELOCK_UNLOCKED   0
 
 static __inline int
-__swp(int __val, __volatile int *__ptr)
+__swp(int __val, volatile int *__ptr)
 {
 
-	__asm __volatile("swp %0, %1, [%2]"
+	__asm volatile("swp %0, %1, [%2]"
 	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }

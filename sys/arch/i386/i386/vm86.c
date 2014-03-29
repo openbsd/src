@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.c,v 1.21 2011/07/05 04:48:01 guenther Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.22 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static __inline int is_bitset(int, caddr_t);
 
 
 #define putword(base, ptr, val) \
-__asm__ __volatile__( \
+__asm__ volatile( \
 	"decw %w0\n\t" \
 	"movb %h2,0(%1,%0)\n\t" \
 	"decw %w0\n\t" \
@@ -82,7 +82,7 @@ __asm__ __volatile__( \
 	: "r" (base), "q" (val), "0" (ptr))
 
 #define putdword(base, ptr, val) \
-__asm__ __volatile__( \
+__asm__ volatile( \
 	"rorl $16,%2\n\t" \
 	"decw %w0\n\t" \
 	"movb %h2,0(%1,%0)\n\t" \
@@ -98,7 +98,7 @@ __asm__ __volatile__( \
 
 #define getbyte(base, ptr) \
 ({ unsigned long __res; \
-__asm__ __volatile__( \
+__asm__ volatile( \
 	"movb 0(%1,%0),%b2\n\t" \
 	"incw %w0" \
 	: "=r" (ptr), "=r" (base), "=q" (__res) \
@@ -107,7 +107,7 @@ __res; })
 
 #define getword(base, ptr) \
 ({ unsigned long __res; \
-__asm__ __volatile__( \
+__asm__ volatile( \
 	"movb 0(%1,%0),%b2\n\t" \
 	"incw %w0\n\t" \
 	"movb 0(%1,%0),%h2\n\t" \
@@ -118,7 +118,7 @@ __res; })
 
 #define getdword(base, ptr) \
 ({ unsigned long __res; \
-__asm__ __volatile__( \
+__asm__ volatile( \
 	"movb 0(%1,%0),%b2\n\t" \
 	"incw %w0\n\t" \
 	"movb 0(%1,%0),%h2\n\t" \
@@ -143,7 +143,7 @@ is_bitset(int nr, caddr_t bitmap)
 	nr = nr % NBBY;
 	copyin(bitmap, &byte, sizeof(u_char));
 
-	__asm__ __volatile__("btl %2,%1\n\tsbbl %0,%0"
+	__asm__ volatile("btl %2,%1\n\tsbbl %0,%0"
 			     :"=r" (nr)
 			     :"r" (byte),"r" (nr));
 	return (nr);

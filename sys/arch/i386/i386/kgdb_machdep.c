@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.9 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.10 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.6 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 		 */
 		gdb_regs[ 4] = (kgdb_reg_t)&regs->tf_esp; /* kernel stack
 							     pointer */
-		__asm __volatile("movw %%ss,%w0" : "=r" (gdb_regs[11]));
+		__asm volatile("movw %%ss,%w0" : "=r" (gdb_regs[11]));
 	}
 }
 

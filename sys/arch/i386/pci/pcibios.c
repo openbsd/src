@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.43 2013/11/28 19:30:46 brad Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.44 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ pcibios_get_status(struct pcibios_softc *sc, u_int32_t *rev_maj,
 	u_int32_t ax, bx, cx, edx;
 	int rv;
 
-	__asm __volatile("pushl	%%es\n\t"
+	__asm volatile("pushl	%%es\n\t"
 			 "pushl	%%ds\n\t"
 			 "movw	4(%%edi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
@@ -395,7 +395,7 @@ pcibios_get_intr_routing(struct pcibios_softc *sc,
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("pushl	%%es\n\t"
+	__asm volatile("pushl	%%es\n\t"
 			 "pushl	%%ds\n\t"
 			 "movw	4(%%esi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"

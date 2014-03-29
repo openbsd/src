@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.16 2013/03/21 21:51:00 deraadt Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.17 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -73,7 +73,7 @@ apm_check(void)
 	register u_int detail;
 	register u_int8_t f;
 
-	__asm __volatile(DOINT(0x15) "\n\t"
+	__asm volatile(DOINT(0x15) "\n\t"
 	    "setc %b1\n\t"
 	    "movzwl %%ax, %0\n\t"
 	    "shll $16, %%ecx\n\t"
@@ -98,7 +98,7 @@ apm_disconnect(void)
 {
 	register u_int16_t rv;
 
-	__asm __volatile(DOINT(0x15) "\n\t"
+	__asm volatile(DOINT(0x15) "\n\t"
 	    "setc %b0"
 	    : "=a" (rv)
 	    : "0" (APM_DISCONNECT), "b" (APM_DEV_APM_BIOS)
@@ -112,7 +112,7 @@ apm_connect(bios_apminfo_t *ai)
 {
 	register u_int16_t f;
 
-	__asm __volatile (DOINT(0x15) "\n\t"
+	__asm volatile (DOINT(0x15) "\n\t"
 	    "setc %b1\n\t"
 	    "movb %%ah, %h1\n\t"
 	    "movzwl %%ax, %%eax\n\tshll $4, %0\n\t"
@@ -149,7 +149,7 @@ apm_connect(bios_apminfo_t *ai)
 		    ai->apm_data_base,   ai->apm_data_len);
 #endif
 	/* inform apm bios about our driver version */
-	__asm __volatile (DOINT(0x15) "\n\t"
+	__asm volatile (DOINT(0x15) "\n\t"
 	    "setc %b1\n\t"
 	    "movb %%ah, %h1"
 	    : "=b" (f)

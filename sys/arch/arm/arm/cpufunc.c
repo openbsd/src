@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.24 2013/09/03 16:48:26 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.25 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ get_cachetype_cp15()
 	u_int ctype, isize, dsize;
 	u_int multiplier;
 
-	__asm __volatile("mrc p15, 0, %0, c0, c0, 1"
+	__asm volatile("mrc p15, 0, %0, c0, c0, 1"
 		: "=r" (ctype));
 
 	/*
@@ -786,7 +786,7 @@ arm_get_cachetype_cp15v7(void)
 	uint32_t sel, level;
 
 	/* CLIDR - Cache Level ID Register */
-	__asm __volatile("mrc p15, 1, %0, c0, c0, 1"
+	__asm volatile("mrc p15, 1, %0, c0, c0, 1"
 		: "=r" (cache_level_id) :);
 	cpu_drain_writebuf();
 
@@ -802,11 +802,11 @@ arm_get_cachetype_cp15v7(void)
 		    cache_level_id & (0x2 << level)) {
 			sel = level << 1 | 0 << 0; /* L1 | unified/data cache */
 			/* CSSELR - Cache Size Selection Register */
-			__asm __volatile("mcr p15, 2, %0, c0, c0, 0"
+			__asm volatile("mcr p15, 2, %0, c0, c0, 0"
 				:: "r" (sel));
 			cpu_drain_writebuf();
 			/* CCSIDR - Cache Size Identification Register */
-			__asm __volatile("mrc p15, 1, %0, c0, c0, 0"
+			__asm volatile("mrc p15, 1, %0, c0, c0, 0"
 			: "=r" (cachereg) :);
 			cpu_drain_writebuf();
 			sets = ((cachereg >> 13) & 0x7fff) + 1;
@@ -831,11 +831,11 @@ arm_get_cachetype_cp15v7(void)
 		if (cache_level_id & (0x1 << level)) {
 			sel = level << 1 | 1 << 0; /* L1 | instruction cache */
 			/* CSSELR - Cache Size Selection Register */
-			__asm __volatile("mcr p15, 2, %0, c0, c0, 0"
+			__asm volatile("mcr p15, 2, %0, c0, c0, 0"
 				:: "r" (sel));
 			cpu_drain_writebuf();
 			/* CCSIDR - Cache Size Identification Register */
-			__asm __volatile("mrc p15, 1, %0, c0, c0, 0"
+			__asm volatile("mrc p15, 1, %0, c0, c0, 0"
 			: "=r" (cachereg) :);
 			cpu_drain_writebuf();
 			sets = ((cachereg >> 13) & 0x7fff) + 1;
@@ -860,7 +860,7 @@ armv7_idcache_wbinv_all()
 {
 	uint32_t arg;
 	arg = 0;
-	__asm __volatile("mcr	p15, 0, r0, c7, c5, 0" :: "r" (arg));
+	__asm volatile("mcr	p15, 0, r0, c7, c5, 0" :: "r" (arg));
 	armv7_dcache_wbinv_all();
 }
 /* brute force cache flushing */
@@ -892,7 +892,7 @@ armv7_dcache_wbinv_all()
 			word = wayval | setval | lvl;
 
 			/* Clean D cache SE with Set/Index */
-			__asm __volatile("mcr	p15, 0, %0, c7, c10, 2"
+			__asm volatile("mcr	p15, 0, %0, c7, c10, 2"
 			    : : "r" (word));
 			wayval += wayincr;
 		}
@@ -1067,7 +1067,7 @@ set_cpufuncs()
 		 *	- overflow indications cleared
 		 *	- all counters disabled
 		 */
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
@@ -1077,7 +1077,7 @@ set_cpufuncs()
 		/*
 		 * Crank CCLKCFG to maximum legal value.
 		 */
-		__asm __volatile ("mcr p14, 0, %0, c6, c0, 0"
+		__asm volatile ("mcr p14, 0, %0, c6, c0, 0"
 			:
 			: "r" (XSCALE_CCLKCFG));
 #endif
@@ -1087,7 +1087,7 @@ set_cpufuncs()
 		 * don't really support it, yet.  Clear any pending
 		 * error indications.
 		 */
-		__asm __volatile("mcr p13, 0, %0, c0, c1, 0"
+		__asm volatile("mcr p13, 0, %0, c0, c1, 0"
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
@@ -1126,7 +1126,7 @@ set_cpufuncs()
 		 *	- overflow indications cleared
 		 *	- all counters disabled
 		 */
-		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+		__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 			:
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
@@ -1282,7 +1282,7 @@ arm9e_setup()
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
-	__asm __volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -1300,7 +1300,7 @@ arm10_setup()
 	arm9e_setup();
 
 	/* Allow detection code to find the VFP if it's fitted.  */
-	__asm __volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 }
 #endif	/* CPU_ARM10 */
 
@@ -1473,14 +1473,14 @@ xscale_setup()
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* Make sure write coalescing is turned on */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+	__asm volatile("mrc p15, 0, %0, c1, c0, 1"
 		: "=r" (auxctl));
 #ifdef XSCALE_NO_COALESCE_WRITES
 	auxctl |= XSCALE_AUXCTL_K;
 #else
 	auxctl &= ~XSCALE_AUXCTL_K;
 #endif
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+	__asm volatile("mcr p15, 0, %0, c1, c0, 1"
 		: : "r" (auxctl));
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 || CPU_XSCALE_IXP425 */

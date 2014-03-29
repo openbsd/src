@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.17 2013/05/30 16:15:01 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.18 2014/03/29 18:09:28 guenther Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -272,7 +272,7 @@ static inline uint32_t
 read_clock_counter(void)
 {
   uint32_t x;
-  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x));
+  __asm volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x));
 
   return x;
 }
@@ -288,9 +288,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	ioh = sc->sc_bush_rtc;
 	irq = disable_interrupts(I32_bit|F32_bit);
 
-	__asm __volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
+	__asm volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
 	/* Enable clock counter */
-	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (0x0001));
+	__asm volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (0x0001));
 
 	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
@@ -301,7 +301,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
-	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
+	__asm volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
 
 	return end - start;
@@ -310,7 +310,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 void
 pxa2x0_turbo_mode(int f)
 {
-	__asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
+	__asm volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
 }
 
 void

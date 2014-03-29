@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.28 2011/01/09 19:37:51 jasper Exp $	*/
+/*	$OpenBSD: clock.c,v 1.29 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -97,8 +97,8 @@ cpu_hardclock(void *v)
 	 */
 	eta = ci->ci_itmr + cpu_hzticks;
 	wrap = eta < ci->ci_itmr;	/* watch out for a wraparound */
-	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
-	__asm __volatile("mtctl	%r0, %cr15");
+	__asm volatile("mfctl	%%cr15, %0": "=r" (eiem));
+	__asm volatile("mtctl	%r0, %cr15");
 	mtctl(eta, CR_ITMR);
 	mfctl(CR_ITMR, __itmr);
 	/*
@@ -123,7 +123,7 @@ cpu_hardclock(void *v)
 		eta += cpu_hzticks;
 		mtctl(eta, CR_ITMR);
 	}
-	__asm __volatile("mtctl	%0, %%cr15":: "r" (eiem));
+	__asm volatile("mtctl	%0, %%cr15":: "r" (eiem));
 
 	return (1);
 }

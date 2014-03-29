@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.51 2014/01/26 17:40:11 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.52 2014/03/29 18:09:28 guenther Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -167,8 +167,8 @@ void	cpu_resume(unsigned long);
  * Machine check information.
  */
 struct mchkinfo {
-	__volatile int mc_expected;	/* machine check is expected */
-	__volatile int mc_received;	/* machine check was received */
+	volatile int mc_expected;	/* machine check is expected */
+	volatile int mc_received;	/* machine check was received */
 };
 
 struct cpu_info {
@@ -203,8 +203,8 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 
 #if defined(MULTIPROCESSOR)
-	__volatile u_long ci_flags;	/* flags; see below */
-	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
+	volatile u_long ci_flags;	/* flags; see below */
+	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
@@ -230,8 +230,8 @@ extern	struct cpu_info *cpu_info_list;
 #define MAXCPUS	ALPHA_MAXPROCS
 
 #if defined(MULTIPROCESSOR)
-extern	__volatile u_long cpus_running;
-extern	__volatile u_long cpus_paused;
+extern	volatile u_long cpus_running;
+extern	volatile u_long cpus_paused;
 extern	struct cpu_info *cpu_info[];
 
 #define	curcpu()			((struct cpu_info *)alpha_pal_rdval())

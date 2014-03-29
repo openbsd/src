@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2013/05/16 16:20:00 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.26 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ void softintr(int);
  * this "instruction", acting as a sequence point for code generation.
  */
 
-#define	__splbarrier() __asm __volatile("":::"memory")
+#define	__splbarrier() __asm volatile("":::"memory")
 
 /*
  * Hardware interrupt masks

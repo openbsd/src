@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: pio.h,v 1.11 2014/03/29 18:09:29 guenther Exp $	*/
 /*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ static __inline u_int8_t
 __inbc(int port)
 {
 	u_int8_t data;
-	__asm __volatile("inb %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inb %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -69,14 +69,14 @@ static __inline u_int8_t
 __inb(int port)
 {
 	u_int8_t data;
-	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
 insb(int port, void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\tinsb"
+	__asm volatile("cld\n\trepne\n\tinsb"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -87,7 +87,7 @@ static __inline u_int16_t
 __inwc(int port)
 {
 	u_int16_t data;
-	__asm __volatile("inw %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inw %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -95,14 +95,14 @@ static __inline u_int16_t
 __inw(int port)
 {
 	u_int16_t data;
-	__asm __volatile("inw %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inw %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
 insw(int port, void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\tinsw"
+	__asm volatile("cld\n\trepne\n\tinsw"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -113,7 +113,7 @@ static __inline u_int32_t
 __inlc(int port)
 {
 	u_int32_t data;
-	__asm __volatile("inl %w1,%0" : "=a" (data) : "id" (port));
+	__asm volatile("inl %w1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -121,14 +121,14 @@ static __inline u_int32_t
 __inl(int port)
 {
 	u_int32_t data;
-	__asm __volatile("inl %w1,%0" : "=a" (data) : "d" (port));
+	__asm volatile("inl %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
 static __inline void
 insl(int port, void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\tinsl"
+	__asm volatile("cld\n\trepne\n\tinsl"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -138,19 +138,19 @@ insl(int port, void *addr, int cnt)
 static __inline void
 __outbc(int port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outb %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outb(int port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
 outsb(int port, const void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\toutsb"
+	__asm volatile("cld\n\trepne\n\toutsb"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
@@ -160,19 +160,19 @@ outsb(int port, const void *addr, int cnt)
 static __inline void
 __outwc(int port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outw %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outw(int port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outw %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
 outsw(int port, const void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\toutsw"
+	__asm volatile("cld\n\trepne\n\toutsw"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
@@ -182,19 +182,19 @@ outsw(int port, const void *addr, int cnt)
 static __inline void
 __outlc(int port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%w1" : : "a" (data), "id" (port));
+	__asm volatile("outl %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outl(int port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
+	__asm volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
 outsl(int port, const void *addr, int cnt)
 {
-	__asm __volatile("cld\n\trepne\n\toutsl"
+	__asm volatile("cld\n\trepne\n\toutsl"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.81 2010/06/19 14:06:54 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.82 2014/03/29 18:09:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1024,7 +1024,7 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off, bus_size_t len,
 		}
 
 	/* for either operation sync the shit away */
-	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
+	__asm volatile ("sync\n\tsyncdma\n\tsync\n\t"
 	    "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop");
 }
 

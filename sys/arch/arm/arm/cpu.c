@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2013/08/06 23:15:43 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -570,7 +570,7 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
  * on the CPU.
  */
 void
-atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	int oldirqstate;
 	oldirqstate = disable_interrupts(I32_bit|F32_bit);
@@ -579,7 +579,7 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 void
-atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
+atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 {
 	int oldirqstate;
 	oldirqstate = disable_interrupts(I32_bit|F32_bit);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2014/01/19 12:45:35 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.60 2014/03/29 18:09:28 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -932,7 +932,7 @@ rdrand(void *v)
 	int i;
 
 	for (i = 0; i < 2; i++) {
-		__asm __volatile(
+		__asm volatile(
 		    "xor	%1, %1\n\t"
 		    "rdrand	%0\n\t"
 		    "rcl	$1, %1\n"

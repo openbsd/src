@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2013/04/17 18:35:47 gerhard Exp $	*/
+/*	$OpenBSD: clock.c,v 1.21 2014/03/29 18:09:28 guenther Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -259,10 +259,10 @@ i8254_delay(int n)
 		 * quantity to prevent loss of significance.
 		 */
 		int m;
-		__asm __volatile("mul %3"
+		__asm volatile("mul %3"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "r" (TIMER_FREQ));
-		__asm __volatile("div %4"
+		__asm volatile("div %4"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "1" (m), "r" (1000000));
 #else

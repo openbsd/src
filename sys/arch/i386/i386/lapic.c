@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.34 2014/01/24 21:20:23 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.35 2014/03/29 18:09:29 guenther Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -433,7 +433,7 @@ i82489_icr_wait(void)
 #endif /* DIAGNOSTIC */
 
 	while ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
-		__asm __volatile("pause": : :"memory");
+		__asm volatile("pause": : :"memory");
 #ifdef DIAGNOSTIC
 		j--;
 		if (j == 0)
