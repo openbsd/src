@@ -1,4 +1,4 @@
-.\" $OpenBSD: pflow.4,v 1.18 2014/01/21 21:27:14 benno Exp $
+.\" $OpenBSD: pflow.4,v 1.19 2014/03/29 11:26:03 florian Exp $
 .\"
 .\" Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2008 Joerg Goltermann <jg@osn.de>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: March 29 2014 $
 .Dt PFLOW 4
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ accounting data from the kernel using
 .Xr udp 4
 packets.
 .Nm
-is compatible with netflow version 5, 9, and IPFIX (10).
+is compatible with netflow version 5 and IPFIX (10).
 The data is extracted from the
 .Xr pf 4
 state table.
@@ -112,13 +112,6 @@ The protocol is set to IPFIX with the following command:
 .Xr ifconfig 8 ,
 .Xr tcpdump 8
 .Sh STANDARDS
-.Rs
-.%A B. Claise
-.%D October 2004
-.%R RFC 3954
-.%T Cisco Systems NetFlow Services Export Version 9
-.Re
-.Pp
 .Rs
 .%A B. Claise
 .%D January 2008

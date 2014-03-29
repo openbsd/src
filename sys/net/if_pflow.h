@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.10 2014/01/20 10:46:53 benno Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.11 2014/03/29 11:26:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -29,7 +29,6 @@
 #define PFLOW_TIMEOUT 30
 #define PFLOW_TMPL_TIMEOUT 30 /* rfc 5101 10.3.6 (p.40) recommends 600 */
 
-#define PFLOW_V9_TMPL_SET_ID 0
 #define PFLOW_IPFIX_TMPL_SET_ID 2
 
 /* RFC 5102 Information Element Identifiers */
@@ -87,56 +86,10 @@ struct pflow_tmpl_hdr {
 	u_int16_t	field_count;
 } __packed;
 
-/* field specifier rfc5101 sec 3.2, v9 uses the same format*/
 struct pflow_tmpl_fspec {
 	u_int16_t	field_id;
 	u_int16_t	len;
 } __packed;
-
-/* update pflow_clone_create() when changing pflow_v9_tmpl_ipv4 */
-struct pflow_v9_tmpl_ipv4 {
-	struct pflow_tmpl_hdr	h;
-	struct pflow_tmpl_fspec	src_ip;
-	struct pflow_tmpl_fspec	dest_ip;
-	struct pflow_tmpl_fspec	if_index_in;
-	struct pflow_tmpl_fspec	if_index_out;
-	struct pflow_tmpl_fspec	packets;
-	struct pflow_tmpl_fspec	octets;
-	struct pflow_tmpl_fspec	start;
-	struct pflow_tmpl_fspec	finish;
-	struct pflow_tmpl_fspec	src_port;
-	struct pflow_tmpl_fspec	dest_port;
-	struct pflow_tmpl_fspec	tos;
-	struct pflow_tmpl_fspec	protocol;
-#define PFLOW_V9_TMPL_IPV4_FIELD_COUNT 12
-#define PFLOW_V9_TMPL_IPV4_ID 256
-} __packed;
-
-/* update pflow_clone_create() when changing pflow_v9_tmpl_v6 */
-struct pflow_v9_tmpl_ipv6 {
-	struct pflow_tmpl_hdr 	h;
-	struct pflow_tmpl_fspec	src_ip;
-	struct pflow_tmpl_fspec	dest_ip;
-	struct pflow_tmpl_fspec	if_index_in;
-	struct pflow_tmpl_fspec	if_index_out;
-	struct pflow_tmpl_fspec	packets;
-	struct pflow_tmpl_fspec	octets;
-	struct pflow_tmpl_fspec	start;
-	struct pflow_tmpl_fspec	finish;
-	struct pflow_tmpl_fspec	src_port;
-	struct pflow_tmpl_fspec	dest_port;
-	struct pflow_tmpl_fspec	tos;
-	struct pflow_tmpl_fspec	protocol;
-#define PFLOW_V9_TMPL_IPV6_FIELD_COUNT 12
-#define PFLOW_V9_TMPL_IPV6_ID 257
-} __packed;
-
-struct pflow_v9_tmpl {
-	struct pflow_set_header	set_header;
-	struct pflow_v9_tmpl_ipv4	ipv4_tmpl;
-	struct pflow_v9_tmpl_ipv6	ipv6_tmpl;
-} __packed;
-
 
 /* update pflow_clone_create() when changing pflow_ipfix_tmpl_ipv4 */
 struct pflow_ipfix_tmpl_ipv4 {
@@ -180,38 +133,6 @@ struct pflow_ipfix_tmpl {
 	struct pflow_set_header	set_header;
 	struct pflow_ipfix_tmpl_ipv4	ipv4_tmpl;
 	struct pflow_ipfix_tmpl_ipv6	ipv6_tmpl;
-} __packed;
-
-struct pflow_v9_flow4 {
-	u_int32_t	src_ip;		/* sourceIPv4Address*/
-	u_int32_t	dest_ip;	/* destinationIPv4Address */
-	u_int32_t	if_index_in;	/* ingressInterface */
-	u_int32_t	if_index_out;	/* egressInterface */
-	u_int64_t	flow_packets;	/* packetDeltaCount */
-	u_int64_t	flow_octets;	/* octetDeltaCount */
-	u_int32_t	flow_start;	/* flowStartSysUpTime */
-	u_int32_t	flow_finish;	/* flowEndSysUpTime */
-	u_int16_t	src_port;	/* sourceTransportPort */
-	u_int16_t	dest_port;	/* destinationTransportPort */
-	u_int8_t	tos;		/* ipClassOfService */
-	u_int8_t	protocol;	/* protocolIdentifier */
-	/* XXX padding needed? */
-} __packed;
-
-struct pflow_v9_flow6 {
-	struct in6_addr src_ip;		/* sourceIPv6Address */
-	struct in6_addr dest_ip;	/* destinationIPv6Address */
-	u_int32_t	if_index_in;	/* ingressInterface */
-	u_int32_t	if_index_out;	/* egressInterface */
-	u_int64_t	flow_packets;	/* packetDeltaCount */
-	u_int64_t	flow_octets;	/* octetDeltaCount */
-	u_int32_t	flow_start;	/* flowStartSysUpTime */
-	u_int32_t	flow_finish;	/* flowEndSysUpTime */
-	u_int16_t	src_port;	/* sourceTransportPort */
-	u_int16_t	dest_port;	/* destinationTransportPort */
-	u_int8_t	tos;		/* ipClassOfService */
-	u_int8_t	protocol;	/* protocolIdentifier */
-	/* XXX padding needed? */
 } __packed;
 
 struct pflow_ipfix_flow4 {
@@ -268,7 +189,6 @@ struct pflow_softc {
 	struct in_addr		 sc_receiver_ip;
 	u_int16_t		 sc_receiver_port;
 	u_char			 sc_send_templates;
-	struct pflow_v9_tmpl	 sc_tmpl_v9;
 	struct pflow_ipfix_tmpl	 sc_tmpl_ipfix;
 	u_int8_t		 sc_version;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
@@ -305,17 +225,6 @@ struct pflow_v10_header {
 
 #define PFLOW_IPFIX_HDRLEN sizeof(struct pflow_v10_header)
 
-struct pflow_v9_header {
-	u_int16_t	version;
-	u_int16_t	count;
-	u_int32_t	uptime_ms;
-	u_int32_t	time_sec;
-	u_int32_t	flow_sequence;
-	u_int32_t	observation_dom;
-} __packed;
-
-#define PFLOW_V9_HDRLEN sizeof(struct pflow_v9_header)
-
 struct pflowstats {
 	u_int64_t	pflow_flows;
 	u_int64_t	pflow_packets;
@@ -325,7 +234,6 @@ struct pflowstats {
 
 /* Supported flow protocols */
 #define PFLOW_PROTO_5	5	/* original pflow */
-#define PFLOW_PROTO_9	9	/* version 9 */
 #define PFLOW_PROTO_10	10	/* ipfix */
 #define PFLOW_PROTO_MAX	11
 
@@ -338,7 +246,6 @@ struct pflow_protos {
 
 #define PFLOW_PROTOS {                                 \
 		{ "5",	PFLOW_PROTO_5 },	       \
-		{ "9",	PFLOW_PROTO_9 },	       \
 		{ "10",	PFLOW_PROTO_10 },	       \
 }
 
