@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2014/03/27 22:16:03 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.11 2014/03/29 23:59:49 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,6 +57,7 @@ struct platform {
 #define	LOONGSON_FULOONG	0x0003	/* Lemote Fuloong */
 #define	LOONGSON_LYNLOONG	0x0004	/* Lemote Lynloong */
 #define	LOONGSON_EBT700		0x0005	/* eBenton EBT700 */
+#define	LOONGSON_3A		0x0066	/* Loongson 2Gq or 3A based system */
 
 	char				*vendor;
 	char				*product;

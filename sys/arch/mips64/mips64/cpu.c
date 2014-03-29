@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.53 2014/03/09 10:12:17 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.54 2014/03/29 23:59:49 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -281,7 +281,20 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			printf("R14000 FPU");
 		break;
 	case MIPS_LOONGSON2:
-		printf("STC Loongson2%c FPU", 'C' + vers_min);
+		switch (ch->c1prid & 0xff) {
+		case 0x00:
+		case 0x02:
+		case 0x03:
+			printf("STC Loongson2%c FPU", 'C' + vers_min);
+			break;
+		case 0x05:
+			printf("STC Loongson3%c FPU", 'A' + vers_min - 5);
+			break;
+		default:
+			printf("Unknown STC Loongson FPU type (%02x)",
+			    ch->c1prid & 0xff);
+			break;
+		}
 		displayver = 0;
 		break;
 	default:

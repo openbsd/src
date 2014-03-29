@@ -1,7 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.45 2014/03/27 22:16:03 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.46 2014/03/29 23:59:49 miod Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 Miodrag Vallat.
+ * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -93,9 +93,10 @@ char	cpu_model[30];
 char	pmon_bootp[80];
 
 /*
- * Even though the system is 64bit, the hardware is constrained to up
- * to 2G of contigous physical memory (direct 2GB DMA area), so there
- * is no particular constraint. paddr_t is long so:
+ * Even though the system is 64bit, 2E- and 2F-based hardware is constrained
+ * to up to 2G of contigous physical memory (direct 2GB DMA area). 2Gq- and
+ * 3A-based hardware only supports 32-bit DMA addresses, even though
+ * physical memory may exist beyond 4GB.
  */
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -137,11 +138,12 @@ static void dobootopts(int);
 void	dumpsys(void);
 void	dumpconf(void);
 extern	void parsepmonbp(void);
-const struct platform *loongson_identify(const char *);
-vaddr_t	mips_init(int32_t, int32_t, int32_t, int32_t, char *);
+const struct platform *loongson_identify(const char *, int);
+vaddr_t	mips_init(uint64_t, uint64_t, uint64_t, uint64_t, char *);
 
 extern	void loongson2e_setup(u_long, u_long);
 extern	void loongson2f_setup(u_long, u_long);
+extern	void loongson3a_setup(u_long, u_long);
 
 cons_decl(pmon);
 
@@ -170,10 +172,12 @@ extern const struct platform ebenton_platform;
 extern const struct platform fuloong_platform;
 extern const struct platform gdium_platform;
 extern const struct platform generic2e_platform;
+extern const struct platform lemote3a_platform;
 extern const struct platform lynloong_platform;
 extern const struct platform yeeloong_platform;
 
 const struct bonito_flavour bonito_flavours[] = {
+#ifdef CPU_LOONGSON2
 	/* eBenton EBT700 netbook */
 	{ "EBT700",	&ebenton_platform },	/* prefix added by user */
 	/* Lemote Fuloong 2F mini-PC */
@@ -190,6 +194,16 @@ const struct bonito_flavour bonito_flavours[] = {
 	{ "LM8101",	&yeeloong_platform },
 	/* Lemote Lynloong all-in-one computer */
 	{ "LM9001",	&lynloong_platform },
+#endif
+#ifdef CPU_LOONGSON3
+	/* Laptops */
+	{ "A1004",	&lemote3a_platform },	/* 3A */
+	{ "A1201",	&lemote3a_platform },	/* 2Gq */
+	/* Lemote Xinghuo 6100 (mini-ITX PC) */
+	{ "A1101",	&lemote3a_platform },	/* 3A */
+	/* All-in-one PC */
+	{ "A1205",	&lemote3a_platform },	/* 2Gq */
+#endif
 	{ NULL }
 };
 
@@ -198,82 +212,101 @@ const struct bonito_flavour bonito_flavours[] = {
  * scarce PMON version information and whatever else we can figure.
  */
 const struct platform *
-loongson_identify(const char *version)
+loongson_identify(const char *version, int envtype)
 {
 	const struct bonito_flavour *f;
 
-	if (version == NULL) {
-		/*
-		 * If there is no `Version' variable, we expect to be running
-		 * on a 2E system, use the generic code and hope for the best.
-		 */
-		if (loongson_ver == 0x2e) {
-			return &generic2e_platform;
-		} else {
-			pmon_printf("Unable to figure out model!\n");
-			return NULL;
+	switch (envtype) {
+	case PMON_ENVTYPE_EFI:
+		return NULL;
+		break;
+
+	default:
+	case PMON_ENVTYPE_ENVP:
+		if (version == NULL) {
+			/*
+		 	 * If there is no `Version' variable, we expect to be
+			 * running on a 2E system, use the generic code and
+			 * hope for the best.
+		 	 */
+			if (loongson_ver == 0x2e) {
+				return &generic2e_platform;
+			} else {
+				pmon_printf("Unable to figure out model!\n");
+				return NULL;
+			}
 		}
-	}
 
-	for (f = bonito_flavours; f->prefix != NULL; f++)
-		if (strncmp(version, f->prefix, strlen(f->prefix)) == 0)
-			return f->platform;
+		for (f = bonito_flavours; f->prefix != NULL; f++)
+			if (strncmp(version, f->prefix, strlen(f->prefix)) == 0)
+				return f->platform;
 
-	/*
-	 * Early Lemote designs shipped without a model prefix.
-	 *
-	 * We can reasonably expect these to be close enough to either the
-	 * first generation Fuloong 2F design (LM6002), or the 7 inch
-	 * first netbook model; we can tell them apart by looking at which
-	 * video chip they embed.
-	 *
-	 * Note that this is only worth doing if the version string is
-	 * 1.2.something (1.3 onwards are expected to have a model prefix,
-	 * and there are currently no reports of 1.1 and
-	 * below being 2F systems).
-	 *
-	 * LM6002 users are encouraged to add the system model prefix to
-	 * the `Version' variable.
-	 */
-	if (strncmp(version, "1.2.", 4) == 0) {
-		const struct platform *p = NULL;
-		pcitag_t tag;
-		pcireg_t id, class;
-		int dev;
+		/*
+	 	 * Early Lemote designs shipped without a model prefix.
+	 	 *
+	 	 * We can reasonably expect these to be close enough to either
+		 * the first generation Fuloong 2F design (LM6002), or the 7
+		 * inch first netbook model; we can tell them apart by looking
+		 * at which video chip they embed.
+	 	 *
+	 	 * Note that this is only worth doing if the version string is
+	 	 * 1.2.something (1.3 onwards are expected to have a model
+		 * prefix, and there are currently no reports of 1.1 and
+	 	 * below being 2F systems).
+	 	 *
+	 	 * LM6002 users are encouraged to add the system model prefix to
+	 	 * the `Version' variable.
+	 	 */
+		if (strncmp(version, "1.2.", 4) == 0) {
+			const struct platform *p = NULL;
+			pcitag_t tag;
+			pcireg_t id, class;
+			int dev;
 
-		pmon_printf("No model prefix in version string \"%s\".\n",
-		    version);
+			pmon_printf("No model prefix "
+			    "in version string \"%s\".\n", version);
 
-		for (dev = 0; dev < 32; dev++) {
-			tag = pci_make_tag_early(0, dev, 0);
-			id = pci_conf_read_early(tag, PCI_ID_REG);
-			if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-				continue;
+			if (loongson_ver == 0x2f)
+				for (dev = 0; dev < 32; dev++) {
+					tag = pci_make_tag_early(0, dev, 0);
+					id = pci_conf_read_early(tag,
+					    PCI_ID_REG);
+					if (id == 0 || PCI_VENDOR(id) ==
+					    PCI_VENDOR_INVALID)
+						continue;
 
-			/* no need to check for DEVICE_IS_VGA_PCI here
-			   since we expect a linear framebuffer */
-			class = pci_conf_read_early(tag, PCI_CLASS_REG);
-			if (PCI_CLASS(class) != PCI_CLASS_DISPLAY ||
-			    (PCI_SUBCLASS(class) != PCI_SUBCLASS_DISPLAY_VGA &&
-			     PCI_SUBCLASS(class) != PCI_SUBCLASS_DISPLAY_MISC))
-				continue;
+					/*
+					 * No need to check for
+					 * DEVICE_IS_VGA_PCI here, since we
+					 * expect a linear framebuffer.
+					 */
+					class = pci_conf_read_early(tag,
+					    PCI_CLASS_REG);
+					if (PCI_CLASS(class) !=
+					    PCI_CLASS_DISPLAY ||
+					    (PCI_SUBCLASS(class) !=
+					     PCI_SUBCLASS_DISPLAY_VGA &&
+					     PCI_SUBCLASS(class) !=
+					     PCI_SUBCLASS_DISPLAY_MISC))
+						continue;
 
-			switch (id) {
-			case PCI_ID_CODE(PCI_VENDOR_SIS,
-			    PCI_PRODUCT_SIS_315PRO_VGA):
-				p = &fuloong_platform;
-				break;
-			case PCI_ID_CODE(PCI_VENDOR_SMI,
-			    PCI_PRODUCT_SMI_SM712):
-				p = &ebenton_platform;
-				break;
-			}
+					switch (id) {
+					case PCI_ID_CODE(PCI_VENDOR_SIS,
+				    	    PCI_PRODUCT_SIS_315PRO_VGA):
+						p = &fuloong_platform;
+						break;
+					case PCI_ID_CODE(PCI_VENDOR_SMI,
+			    		    PCI_PRODUCT_SMI_SM712):
+						p = &ebenton_platform;
+						break;
+					}
+				}
 
-			if (p != NULL) {
-				pmon_printf("Attempting to match as %s %s\n",
-				    p->vendor, p->product);
-				return p;
-			}
+				if (p != NULL) {
+					pmon_printf("Attempting to match as "
+					    "%s %s\n", p->vendor, p->product);
+					return p;
+				}
 		}
 	}
 
@@ -288,10 +321,10 @@ loongson_identify(const char *version)
  */
 
 vaddr_t
-mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
+mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
     char *boot_esym)
 {
-	uint prid;
+	uint32_t prid;
 	u_long memlo, memhi, cpuspeed;
 	vaddr_t xtlb_handler;
 	const char *envvar;
@@ -320,7 +353,9 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	 * Set up early console output.
 	 */
 
-	pmon_init(argc, argv, envp, cv);
+	prid = cp0_get_prid();
+	pmon_init((int32_t)argc, (int32_t)argv, (int32_t)envp, (int32_t)cv,
+	    prid);
 	cn_tab = &pmoncons;
 
 	/*
@@ -352,48 +387,38 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	}
 
 	/*
-	 * Try and figure out what kind of hardware we are.
-	 */
-
-	envvar = pmon_getenv("systype");
-	if (envvar == NULL) {
-		pmon_printf("Unable to figure out system type!\n");
-		goto unsupported;
-	}
-	if (strcmp(envvar, "Bonito") != 0) {
-		pmon_printf("This kernel doesn't support system type \"%s\".\n",
-		    envvar);
-		goto unsupported;
-	}
-
-	/*
 	 * While the kernel supports other processor types than Loongson,
-	 * we are not expecting a Bonito-based system with a different
-	 * processor.  Just to be on the safe side, refuse to run on
-	 * non Loongson2 processors for now.
+	 * we are currently not expecting to run on a system with a
+	 * different processor.  Just to be on the safe side, refuse to
+	 * run on non-Loongson2 processors for now.
 	 */
 
-	prid = cp0_get_prid();
 	switch ((prid >> 8) & 0xff) {
 	case MIPS_LOONGSON2:
 		switch (prid & 0xff) {
+#ifdef CPU_LOONGSON2
+#ifdef CPU_LOONGSON2C
 		case 0x00:
 			loongson_ver = 0x2c;
 			break;
+#endif
 		case 0x02:
 			loongson_ver = 0x2e;
 			break;
 		case 0x03:
 			loongson_ver = 0x2f;
 			break;
+#endif
+#ifdef CPU_LOONGSON3
 		case 0x05:
 			loongson_ver = 0x3a;
 			break;
-		}
-		if (loongson_ver == 0x2e || loongson_ver == 0x2f)
+#endif
+		default:
 			break;
-		/* FALLTHROUGH */
-	default:
+		}
+	}
+	if (loongson_ver == 0) {
 		pmon_printf("This kernel doesn't support processor type 0x%x"
 		    ", version %d.%d.\n",
 		    (prid >> 8) & 0xff, (prid >> 4) & 0x0f, prid & 0x0f);
@@ -401,11 +426,42 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	}
 
 	/*
+	 * Try and figure out what kind of hardware we are.
+	 */
+
+	switch (pmon_getenvtype()) {
+	default:
+		pmon_printf("Unable to figure out "
+		    "firmware environment information!\n");
+		goto unsupported;
+
+	case PMON_ENVTYPE_EFI:
+		/*
+		 * We can reasonably expect to be running on a beast we can
+		 * tame, here.
+		 */
+		break;
+
+	case PMON_ENVTYPE_ENVP:
+		envvar = pmon_getenv("systype");
+		if (envvar == NULL) {
+			pmon_printf("Unable to figure out system type!\n");
+			goto unsupported;
+		}
+		if (strcmp(envvar, "Bonito") != 0) {
+			pmon_printf("This kernel doesn't support system type \"%s\".\n",
+		    	envvar);
+			goto unsupported;
+		}
+	}
+
+	/*
 	 * Try to figure out what particular machine we run on, depending
 	 * on the PMON version information.
 	 */
 
-	if ((sys_platform = loongson_identify(pmon_getenv("Version"))) == NULL)
+	if ((sys_platform = loongson_identify(pmon_getenv("Version"),
+	    pmon_getenvtype())) == NULL)
 		goto unsupported;
 
 	hw_vendor = sys_platform->vendor;
@@ -471,14 +527,20 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 		memhi = 0;
 
 	switch (loongson_ver) {
+	default:
+#ifdef CPU_LOONGSON2
 	case 0x2e:
 		loongson2e_setup(memlo, memhi);
 		break;
-	default:
 	case 0x2f:
-	case 0x3a:
 		loongson2f_setup(memlo, memhi);
 		break;
+#endif
+#ifdef CPU_LOONGSON3
+	case 0x3a:
+		loongson3a_setup(memlo, memhi);
+		break;
+#endif
 	}
 
 	if (sys_platform->setup != NULL)
@@ -543,14 +605,33 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	bootcpu_hwinfo.type = (prid >> 8) & 0xff;
 	/* FPU reports itself as type 5, version 0.1... */
 	bootcpu_hwinfo.c1prid = bootcpu_hwinfo.c0prid;
-	bootcpu_hwinfo.tlbsize = 64;
 
 	/*
-	 * Configure cache.
+	 * Configure cache and tlb.
 	 */
 
-	Loongson2_ConfigCache(curcpu());
-	Loongson2_SyncCache(curcpu());
+	switch (loongson_ver) {
+	default:
+#ifdef CPU_LOONGSON2
+#ifdef CPU_LOONGSON2C
+	case 0x2c:
+#endif
+	case 0x2e:
+	case 0x2f:
+		bootcpu_hwinfo.tlbsize = 64;
+		Loongson2_ConfigCache(curcpu());
+		Loongson2_SyncCache(curcpu());
+		break;
+#endif
+#ifdef CPU_LOONGSON3
+	case 0x3a:
+		bootcpu_hwinfo.tlbsize =
+		    1 + ((cp0_get_config_1() >> 25) & 0x3f);
+		Loongson3_ConfigCache(curcpu());
+		Loongson3_SyncCache(curcpu());
+		break;
+#endif
+	}
 
 	tlb_init(bootcpu_hwinfo.tlbsize);
 
@@ -739,6 +820,7 @@ consinit()
 	static int console_ok = 0;
 
 	if (console_ok == 0) {
+		cn_tab = NULL;
 		cninit();
 		console_ok = 1;
 	}
