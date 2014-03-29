@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2014/03/29 09:20:30 jasper Exp $
+#	$OpenBSD: Makefile,v 1.42 2014/03/29 09:25:39 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -471,8 +471,8 @@ variables-2:
 
 variables-3:
 	# Test --variable + --define-variable
-	@echo '${foodir}/pkgconfig-plugins.0' > ${WANT}
-	@${VPCONFIG} --define-variable=libdir='${foodir}' --variable=plugindir variables
+	@echo '$${foodir}/pkgconfig-plugins.0' > ${WANT}
+	${VPCONFIG} --define-variable=libdir='$${foodir}' --variable=plugindir variables
 	@diff -u ${WANT} ${GOT}
 
 variables-4:
