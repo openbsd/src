@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2013/09/13 14:51:50 florian Exp $
+# $OpenBSD: Makefile,v 1.4 2014/03/29 11:49:41 florian Exp $
 #
-#  template_v{9,10}
+#  template_v10
 #  ----------------
 #  * create pflow0 sending from 127.0.0.1 to 127.0.0.1:9996
 #  * wait for first template and compare it to known good template
 #  * destroy pflow0
 #
-#  flow_{9,10}_{4,6}
+#  flow_10_{4,6}
 #  -----------------
 #  * create pflow0 sending from 127.0.0.1 to 127.0.0.1:9996
 #  * add 10.11.12.13 and 2001:db8::13 to lo0
@@ -26,25 +26,15 @@
 # Take up pflow0 and test various combinations of flowdst, flowsrc and proto.
 # Destroy it in the end.
 
-REGRESS_TARGETS=template_v9 template_v10 flow_9_4 flow_9_6 flow_10_4 flow_10_6
-REGRESS_TARGETS+=ifconfig
+REGRESS_TARGETS=template_v10 flow_10_4 flow_10_6 ifconfig
 
 PROG=   gen_traffic
 LDADD=  -levent
 
-template_v9:
-	perl -I ${.CURDIR} ${.CURDIR}/template.pl 9 \
-	    | cmp -s ${.CURDIR}/template.v9 /dev/stdin
 template_v10:
 	perl -I ${.CURDIR} ${.CURDIR}/template.pl 10 \
 	    | cmp -s ${.CURDIR}/template.v10 /dev/stdin
 
-flow_9_4: gen_traffic
-	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 9 4 \
-	    | cmp -s ${.CURDIR}/flow.9_4 /dev/stdin
-flow_9_6: gen_traffic
-	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 9 6 \
-	    | cmp -s ${.CURDIR}/flow.9_6 /dev/stdin
 flow_10_4: gen_traffic
 	perl -I ${.CURDIR} ${.CURDIR}/flow.pl 10 4 \
 	    | cmp -s ${.CURDIR}/flow.10_4 /dev/stdin
