@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2014/03/29 08:56:21 jasper Exp $
+#	$OpenBSD: Makefile,v 1.41 2014/03/29 09:20:30 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -64,7 +64,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variable-get-1 \
 		variable-set \
 		variables-1 \
-		variables-2
+		variables-2 \
+		variables-3 \
+		variables-4
 
 PKG_CONFIG?=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -471,6 +473,12 @@ variables-3:
 	# Test --variable + --define-variable
 	@echo '${foodir}/pkgconfig-plugins.0' > ${WANT}
 	@${VPCONFIG} --define-variable=libdir='${foodir}' --variable=plugindir variables
+	@diff -u ${WANT} ${GOT}
+
+variables-4:
+	# Test --variable + --define-variable
+	@echo '$${libdir}/pkgconfig-plugins.0' > ${WANT}
+	@${VPCONFIG} --define-variable=libdir='$${libdir}' --variable=plugindir variables
 	@diff -u ${WANT} ${GOT}
 
 clean:
