@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.8 2014/03/27 20:15:00 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.9 2014/03/29 13:01:31 miod Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -100,6 +100,8 @@ struct grtwo_devconfig {
 	uint32_t			dc_addr;
 	bus_space_tag_t			iot;
 	bus_space_handle_t		ioh;
+
+	uint32_t			xmapmode;
 
 	uint8_t				boardrev;
 	uint8_t				backendrev;
@@ -210,10 +212,8 @@ void
 grtwo_fillrect(struct grtwo_devconfig *dc, int x1, int y1, int x2,
     int y2, int bg)
 {
-	struct rasops_info *ri = &dc->dc_ri;
-
 	grtwo_wait_gfifo(dc);
-	grtwo_set_color(dc->iot, dc->ioh, ri->ri_devcmap[bg] & 0xff);
+	grtwo_set_color(dc->iot, dc->ioh, bg);
 
 	grtwo_wait_gfifo(dc);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTI2D, x1);
@@ -265,7 +265,7 @@ grtwo_setup_hw(struct grtwo_devconfig *dc)
 {
 	int i = 0;
 	uint8_t rd0, rd1, rd2, rd3;
-	uint32_t vc1, xmapmode;
+	uint32_t vc1;
 
 	rd0 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD0);
 	rd1 = bus_space_read_1(dc->iot, dc->ioh, GR2_REVISION_RD1);
@@ -321,11 +321,8 @@ grtwo_setup_hw(struct grtwo_devconfig *dc)
 	bus_space_write_4(dc->iot, dc->ioh, VC1_SYSCTL,
 	    VC1_SYSCTL_VC1 | VC1_SYSCTL_DID);
 
-	xmapmode = bus_space_read_4(dc->iot, dc->ioh,
+	dc->xmapmode = bus_space_read_4(dc->iot, dc->ioh,
 	    XMAP5_BASEALL + XMAP5_MODE);
-	if ((xmapmode & 0x80000000) == 0)
-		bus_space_write_4(dc->iot, dc->ioh, XMAP5_BASEALL + XMAP5_MODE,
-		    (xmapmode & 0xf0f0f000) | 0x82828200);
 
 	/*
 	 * Setup Bt457 RAMDACs
@@ -505,7 +502,6 @@ grtwo_init_screen(struct grtwo_devconfig *dc, int malloc_flags)
 	ri->ri_stride = GRTWO_WIDTH;
 	ri->ri_width = GRTWO_WIDTH;
 	ri->ri_height = GRTWO_HEIGHT;
-
 	rasops_init(ri, 160, 160);
 
 	/*
@@ -536,7 +532,7 @@ grtwo_init_screen(struct grtwo_devconfig *dc, int malloc_flags)
 	dc->dc_wsd.capabilities = ri->ri_caps;
 
 	grtwo_fillrect(dc, 0, 0, GRTWO_WIDTH - 1, GRTWO_HEIGHT - 1,
-	    WSCOL_BLACK);
+	    ri->ri_devcmap[WSCOL_BLACK]);
 
 	return 0;
 }
@@ -557,11 +553,11 @@ grtwo_cursor(void *c, int on, int row, int col)
 	if (on) {
 		/* redraw the existing character with inverted colors */
 		return grtwo_putchar_internal(ri, row, col, cell->uc,
-		    bg, fg, ul);
+		    ~ri->ri_devcmap[fg], ~ri->ri_devcmap[bg], ul);
 	} else {
 		/* redraw the existing character with correct colors */
 		return grtwo_putchar_internal(ri, row, col, cell->uc,
-		    fg, bg, ul);
+		    ri->ri_devcmap[fg], ri->ri_devcmap[bg], ul);
 	}
 }
 
@@ -579,7 +575,8 @@ grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
 	cell->attr = attr;
 
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, &ul);
-	return grtwo_putchar_internal(ri, row, col, ch, fg, bg, ul);
+	return grtwo_putchar_internal(ri, row, col, ch, ri->ri_devcmap[fg],
+	    ri->ri_devcmap[bg], ul);
 }
 
 int
@@ -608,7 +605,7 @@ grtwo_putchar_internal(struct rasops_info *ri, int row, int col, u_int ch,
 
 	/* Set the drawing color */
 	grtwo_wait_gfifo(dc);
-	grtwo_set_color(dc->iot, dc->ioh, ri->ri_devcmap[fg] & 0xff);
+	grtwo_set_color(dc->iot, dc->ioh, fg);
 
 	/*
 	 * This character drawing operation apparently expects a 18 pixel
@@ -641,7 +638,7 @@ grtwo_putchar_internal(struct rasops_info *ri, int row, int col, u_int ch,
 				if (h != 0) {
 					bitmap -= font->stride;
 					if (ul && h == font->fontheight - 1)
-						pattern = 0xff00;
+						pattern = 0xff << 8;
 					else
 						pattern = *bitmap << 8;
 					h--;
@@ -682,19 +679,25 @@ grtwo_copycols(void *c, int row, int src, int dst, int ncol)
 	struct wsdisplay_font *font = ri->ri_font;
 	struct wsdisplay_charcell *cell;
 	int y = ri->ri_yorigin + row * font->fontheight;
-	int i;
+	int delta, chunk;
 
 	/* Copy columns in backing store. */
 	cell = dc->dc_bs + row * ri->ri_cols;
 	memmove(cell + dst, cell + src, ncol * sizeof(*cell));
 
 	if (src > dst) {
-		/* may overlap, copy cell by cell */
-		for (i = 0; i < ncol; i++)
+		/* may overlap, copy in non-overlapping blocks */
+		delta = src - dst;
+		while (ncol > 0) {
+			chunk = ncol <= delta ? ncol : delta;
 			grtwo_copyrect(dc,
-			    ri->ri_xorigin + (src + i) * font->fontwidth, y,
-			    ri->ri_xorigin + (dst + i) * font->fontwidth, y,
-			    font->fontwidth, font->fontheight);
+			    ri->ri_xorigin + src * font->fontwidth, y,
+			    ri->ri_xorigin + dst * font->fontwidth, y,
+			    chunk * font->fontwidth, font->fontheight);
+			src += chunk;
+			dst += chunk;
+			ncol -= chunk;
+		}
 	} else {
 		grtwo_copyrect(dc,
 		    ri->ri_xorigin + src * font->fontwidth, y,
@@ -726,7 +729,7 @@ grtwo_erasecols(void *c, int row, int startcol, int ncol, long attr)
 
 	grtwo_fillrect(dc, ri->ri_xorigin + startcol * font->fontwidth, y,
 	    ri->ri_xorigin + (startcol + ncol) * font->fontwidth - 1,
-	    y + font->fontheight - 1, bg);
+	    y + font->fontheight - 1, ri->ri_devcmap[bg]);
 
 	return 0;
 }
@@ -738,7 +741,7 @@ grtwo_copyrows(void *c, int src, int dst, int nrow)
 	struct grtwo_devconfig *dc = ri->ri_hw;
 	struct wsdisplay_font *font = ri->ri_font;
 	struct wsdisplay_charcell *cell;
-	int i;
+	int delta, chunk;
 
 	/* Copy rows in backing store. */
 	cell = dc->dc_bs + dst * ri->ri_cols;
@@ -746,13 +749,19 @@ grtwo_copyrows(void *c, int src, int dst, int nrow)
 	    nrow * ri->ri_cols * sizeof(*cell));
 
 	if (src > dst) {
-		/* may overlap, copy row by row */
-		for (i = 0; i < nrow; i++)
+		/* may overlap, copy in non-overlapping blocks */
+		delta = src - dst;
+		while (nrow > 0) {
+			chunk = nrow <= delta ? nrow : delta;
 			grtwo_copyrect(dc, ri->ri_xorigin,
-			    ri->ri_yorigin + (src + i) * font->fontheight,
+			    ri->ri_yorigin + src * font->fontheight,
 			    ri->ri_xorigin,
-			    ri->ri_yorigin + (dst + i) * font->fontheight,
-			    ri->ri_emuwidth, font->fontheight);
+			    ri->ri_yorigin + dst * font->fontheight,
+			    ri->ri_emuwidth, chunk * font->fontheight);
+			src += chunk;
+			dst += chunk;
+			nrow -= chunk;
+		}
 	} else {
 		grtwo_copyrect(dc, ri->ri_xorigin,
 		    ri->ri_yorigin + src * font->fontheight, ri->ri_xorigin,
@@ -786,14 +795,16 @@ grtwo_eraserows(void *c, int startrow, int nrow, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
 	if (nrow == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		grtwo_fillrect(dc, 0, 0, GRTWO_WIDTH - 1, GRTWO_HEIGHT - 1, bg);
+		grtwo_fillrect(dc, 0, 0, GRTWO_WIDTH - 1, GRTWO_HEIGHT - 1,
+		    ri->ri_devcmap[bg]);
 		return 0;
 	}
 
 	grtwo_fillrect(dc, ri->ri_xorigin,
 	    ri->ri_yorigin + startrow * font->fontheight,
 	    ri->ri_xorigin + ri->ri_emuwidth - 1,
-	    ri->ri_yorigin + (startrow + nrow) * font->fontheight - 1, bg);
+	    ri->ri_yorigin + (startrow + nrow) * font->fontheight - 1,
+	    ri->ri_devcmap[bg]);
 
 	return 0;
 }
