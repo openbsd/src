@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.96 2014/03/29 11:18:39 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.97 2014/03/29 11:19:41 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -269,6 +269,7 @@ void print_asn(struct sockaddr_storage *);
 u_short in_cksum(u_short *, int);
 char *pr_type(u_int8_t);
 int map_tos(char *, int *);
+double deltaT(struct timeval *, struct timeval *);
 void usage(void);
 
 int rcvsock;			/* receive (icmp) socket file descriptor */
@@ -646,12 +647,7 @@ main(int argc, char *argv[])
 					    hbuf, sizeof(hbuf)));
 					lastaddr = from.sin_addr.s_addr;
 				}
-				dt = (quad_t)(t2.tv_sec - t1.tv_sec) * 1000000 +
-				    (quad_t)(t2.tv_usec - t1.tv_usec);
-				printf("  %u", (u_int)(dt / 1000));
-				if (dt % 1000)
-					printf(".%u", (u_int)(dt % 1000));
-				printf(" ms");
+				printf("  %g ms", deltaT(&t1, &t2));
 				ip = (struct ip *)packet;
 				if (ttl_flag)
 					printf(" (%u)", ip->ip_ttl);
@@ -983,6 +979,16 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 		    datalen, i);
 		(void) fflush(stdout);
 	}
+}
+
+double
+deltaT(struct timeval *t1p, struct timeval *t2p)
+{
+	double dt;
+
+	dt = (double)(t2p->tv_sec - t1p->tv_sec) * 1000.0 +
+	    (double)(t2p->tv_usec - t1p->tv_usec) / 1000.0;
+	return (dt);
 }
 
 static char *ttab[] = {
