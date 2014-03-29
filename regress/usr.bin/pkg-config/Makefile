@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2013/06/02 16:12:27 jasper Exp $
+#	$OpenBSD: Makefile,v 1.40 2014/03/29 08:56:21 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -42,8 +42,6 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		static-libs3 \
 		static-libs4 \
 		static-order \
-		variable-get-1 \
-		variable-set \
 		missing-req-1 \
 		missing-req-2 \
 		missing-req-3 \
@@ -62,7 +60,11 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		max-version-1 \
 		max-version-2 \
 		find-config-1 \
-		find-config-2
+		find-config-2 \
+		variable-get-1 \
+		variable-set \
+		variables-1 \
+		variables-2
 
 PKG_CONFIG?=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -337,20 +339,6 @@ static-order:
 	@${VPCONFIG} --static --libs static-order1
 	@diff -u ${WANT} ${GOT}
 
-# Misc. tests
-variable-get-1:
-	# Test --variable
-	@echo "/tmp" > ${WANT}
-	@${VPCONFIG} --variable prefix sysroot
-	@diff -u ${WANT} ${GOT}
-
-variable-set:
-	# Test --define-variable
-	@echo "-I/usr/local2/include -I/usr/local2/include/foo" > ${WANT}
-	@${VPCONFIG} --define-variable=prefix=/usr/local2 \
-		--cflags sysroot
-	@diff -u ${WANT} ${GOT}
-
 # This fails as we read and check Requires as well as Requires.private where
 # only Requires needs to be checked here as we ask for Libs and not Cflags.
 missing-req-1:
@@ -452,6 +440,37 @@ find-config-2:
 	@echo "1.0.0" > ${WANT}
 	@${PKG_CONFIG} --errors-to-stdout --print-errors --modversion \
 		${.CURDIR}/pcdir/public-dep.pc > ${GOT}
+	@diff -u ${WANT} ${GOT}
+
+variable-get-1:
+	# Test --variable
+	@echo "/tmp" > ${WANT}
+	@${VPCONFIG} --variable prefix sysroot
+	@diff -u ${WANT} ${GOT}
+
+variable-set:
+	# Test --define-variable
+	@echo "-I/usr/local2/include -I/usr/local2/include/foo" > ${WANT}
+	@${VPCONFIG} --define-variable=prefix=/usr/local2 \
+		--cflags sysroot
+	@diff -u ${WANT} ${GOT}
+
+variables-1:
+	# Test --variable without any options
+	@echo "/usr/local/lib/pkgconfig-plugins.0" > ${WANT}
+	@${VPCONFIG} --variable=plugindir variables
+	@diff -u ${WANT} ${GOT}
+
+variables-2:
+	# Test --variable + --define-variable
+	@echo "/chroot/lib/pkgconfig-plugins.0" > ${WANT}
+	@${VPCONFIG} --define-variable=libdir='/chroot/lib' --variable=plugindir variables
+	@diff -u ${WANT} ${GOT}
+
+variables-3:
+	# Test --variable + --define-variable
+	@echo '${foodir}/pkgconfig-plugins.0' > ${WANT}
+	@${VPCONFIG} --define-variable=libdir='${foodir}' --variable=plugindir variables
 	@diff -u ${WANT} ${GOT}
 
 clean:
