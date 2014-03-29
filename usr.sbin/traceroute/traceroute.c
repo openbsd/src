@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.95 2014/03/24 11:11:49 mpi Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.96 2014/03/29 11:18:39 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -207,6 +207,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
@@ -225,6 +226,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <poll.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -255,7 +257,7 @@ int32_t usec_perturb;
 
 u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
-int wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+int wait_for_reply(int, struct msghdr *);
 void dump_packet(void);
 void send_probe(int, u_int8_t, int, struct sockaddr_in *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
@@ -271,6 +273,9 @@ void usage(void);
 
 int rcvsock;			/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */
+
+struct msghdr rcvmhdr;
+struct iovec rcviov[2];
 
 int datalen;			/* How much data */
 int headerlen;			/* How long packet's header is */
@@ -534,6 +539,15 @@ main(int argc, char *argv[])
 	if ((outpacket = calloc(1, datalen)) == NULL)
 		err(1, "calloc");
 
+	rcviov[0].iov_base = (caddr_t)packet;
+	rcviov[0].iov_len = sizeof(packet);
+	rcvmhdr.msg_name = (caddr_t)&from;
+	rcvmhdr.msg_namelen = sizeof(from);
+	rcvmhdr.msg_iov = rcviov;
+	rcvmhdr.msg_iovlen = 1;
+	rcvmhdr.msg_control = NULL;
+	rcvmhdr.msg_controllen = 0;
+
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
 		u_char *p = (u_char *)(ip + 1);
@@ -618,12 +632,8 @@ main(int argc, char *argv[])
 
 			(void) gettimeofday(&t1, NULL);
 			send_probe(++seq, ttl, incflag, &to);
-			while ((cc = wait_for_reply(rcvsock, &from, &t1))) {
+			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				if (t2.tv_sec - t1.tv_sec > waittime) {
-					cc = 0;
-					break;
-				}
 				i = packet_ok(packet, cc, &from, seq, incflag);
 				/* Skip short packet */
 				if (i == 0)
@@ -865,33 +875,18 @@ print_exthdr(u_char *buf, int cc)
 }
 
 int
-wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
+wait_for_reply(int sock, struct msghdr *mhdr)
 {
-	socklen_t fromlen = sizeof (*from);
-	struct timeval now, wait;
-	int cc = 0, fdsn;
-	fd_set *fdsp;
+	struct pollfd pfd[1];
+	int cc = 0;
 
-	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
-	memset(fdsp, 0, fdsn);
-	FD_SET(sock, fdsp);
-	gettimeofday(&now, NULL);
-	wait.tv_sec = (sent->tv_sec + waittime) - now.tv_sec;
-	wait.tv_usec =  sent->tv_usec - now.tv_usec;
-	if (wait.tv_usec < 0) {
-		wait.tv_usec += 1000000;
-		wait.tv_sec--;
-	}
-	if (wait.tv_sec < 0)
-		timerclear(&wait);
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
 
-	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
-		cc = recvfrom(rcvsock, (char *)packet, sizeof(packet), 0,
-		    (struct sockaddr *)from, &fromlen);
+	if (poll(pfd, 1, waittime * 1000) > 0)
+		cc = recvmsg(rcvsock, mhdr, 0);
 
-	free(fdsp);
 	return (cc);
 }
 
