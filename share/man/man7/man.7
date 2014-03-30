@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.37 2014/02/16 14:26:51 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.38 2014/03/30 23:57:43 dlg Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2014 $
+.Dd $Mdocdate: March 30 2014 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -106,6 +106,8 @@ file for a utility
 \efBprogname\efR [\efB\e-options\efR] \efIfile ...\efR
 \&.SH DESCRIPTION
 The \efBfoo\efR utility processes files ...
+\&.\e\(dq .Sh CONTEXT
+\&.\e\(dq For section 9 functions only.
 \&.\e\(dq .SH IMPLEMENTATION NOTES
 \&.\e\(dq Not used in OpenBSD.
 \&.\e\(dq .SH RETURN VALUES
@@ -171,6 +173,9 @@ This expands upon the brief, one-line description in
 .Em NAME .
 It usually contains a break-down of the options (if documenting a
 command).
+.It Em CONTEXT
+This section lists the contexts in which functions can be called in section 9.
+The contexts are autoconf, process, or interrupt.
 .It Em IMPLEMENTATION NOTES
 Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side

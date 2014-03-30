@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.109 2014/03/18 22:36:31 miod Exp $
+.\"	$OpenBSD: mdoc.7,v 1.110 2014/03/30 23:57:43 dlg Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: March 30 2014 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -135,6 +135,8 @@ file for a utility
 The
 \&.Nm
 utility processes files ...
+\&.\e\(dq .Sh CONTEXT
+\&.\e\(dq For section 9 functions only.
 \&.\e\(dq .Sh IMPLEMENTATION NOTES
 \&.\e\(dq Not used in OpenBSD.
 \&.\e\(dq .Sh RETURN VALUES
@@ -318,6 +320,9 @@ macro followed by a non-standard section name, and each having
 several subsections, like in the present
 .Nm
 manual.
+.It Em CONTEXT
+This section lists the contexts in which functions can be called in section 9.
+The contexts are autoconf, process, or interrupt.
 .It Em IMPLEMENTATION NOTES
 Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side
