@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2012/06/02 23:18:31 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2014/03/30 19:43:19 schwarze Exp $
 
 REGRESS_TARGETS=TH Dd
 
@@ -23,10 +23,10 @@ ascii-diff-opt: TH.mandoc_ascii_opt Dd.mandoc_ascii_opt
 	${DIFF} ${.CURDIR}/Dd.out_ascii_opt Dd.mandoc_ascii_opt
 
 TH.mandoc_ascii_opt: TH.in
-	${MANDOC} -man ${.ALLSRC} > ${.TARGET}
+	${MANDOC} -Tascii -man ${.ALLSRC} > ${.TARGET}
 
 Dd.mandoc_ascii_opt: Dd.in
-	${MANDOC} -mdoc ${.ALLSRC} > ${.TARGET}
+	${MANDOC} -Tascii -mdoc ${.ALLSRC} > ${.TARGET}
 
 ascii-clean-opt:
 	rm -f TH.mandoc_ascii_opt Dd.mandoc_ascii_opt
