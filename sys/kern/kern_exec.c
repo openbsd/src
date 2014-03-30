@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.139 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.140 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -494,10 +494,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * If process does execve() while it has a mismatched real,
 	 * effective, or saved uid/gid, we set PS_SUGIDEXEC.
 	 */
-	if (p->p_ucred->cr_uid != p->p_cred->p_ruid ||
-	    p->p_ucred->cr_uid != p->p_cred->p_svuid ||
-	    p->p_ucred->cr_gid != p->p_cred->p_rgid ||
-	    p->p_ucred->cr_gid != p->p_cred->p_svgid)
+	if (cred->cr_uid != cred->cr_ruid ||
+	    cred->cr_uid != cred->cr_svuid ||
+	    cred->cr_gid != cred->cr_rgid ||
+	    cred->cr_gid != cred->cr_svgid)
 		atomic_setbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 	else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
@@ -519,11 +519,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		if (pr->ps_tracevp && !(pr->ps_traceflag & KTRFAC_ROOT))
 			ktrcleartrace(pr);
 #endif
-		p->p_ucred = crcopy(cred);
+		p->p_ucred = cred = crcopy(cred);
 		if (attr.va_mode & VSUID)
-			p->p_ucred->cr_uid = attr.va_uid;
+			cred->cr_uid = attr.va_uid;
 		if (attr.va_mode & VSGID)
-			p->p_ucred->cr_gid = attr.va_gid;
+			cred->cr_gid = attr.va_gid;
 
 		/*
 		 * For set[ug]id processes, a few caveats apply to
@@ -574,7 +574,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 					closef(fp, p);
 					break;
 				}
-				if ((error = VOP_OPEN(vp, flags, p->p_ucred, p)) != 0) {
+				if ((error = VOP_OPEN(vp, flags, cred, p)) != 0) {
 					fdremove(p->p_fd, indx);
 					closef(fp, p);
 					vrele(vp);
@@ -594,8 +594,15 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			goto exec_abort;
 	} else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGID);
-	p->p_cred->p_svuid = p->p_ucred->cr_uid;
-	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+
+	/* reset the saved ugids */
+	if (cred->cr_uid != cred->cr_svuid ||
+	    cred->cr_gid != cred->cr_svgid) {
+		/* make sure we have unshared ucreds */
+		p->p_ucred = cred = crcopy(cred);
+		cred->cr_svuid = cred->cr_uid;
+		cred->cr_svgid = cred->cr_gid;
+	}
 
 	if (pr->ps_flags & PS_SUGIDEXEC) {
 		int i, s = splclock();

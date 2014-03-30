@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.70 2014/03/26 05:23:42 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.71 2014/03/30 21:54:48 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -463,10 +463,9 @@ do_fault:
 			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;
 			if (rv == ENOMEM) {
-				printf("UVM: pid %u (%s), uid %u killed: "
-				       "out of swap\n", p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
+				printf("UVM: pid %u (%s), uid %d killed: "
+			           "out of swap\n", p->p_pid, p->p_comm,
+			           p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 				i = SIGKILL;
 			} else {
 				i = SIGSEGV;

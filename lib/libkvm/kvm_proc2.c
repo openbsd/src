@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.20 2014/03/22 11:18:05 florian Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.21 2014/03/30 21:54:49 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 {
 	struct kinfo_proc kp;
 	struct session sess;
-	struct pcred pcred;
 	struct ucred ucred;
 	struct proc proc, proc2, *p;
 	struct process process, process2;
@@ -142,15 +141,10 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		}
 		if (proc.p_stat == SIDL)
 			continue;
-		if (KREAD(kd, (u_long)process.ps_cred, &pcred)) {
-			_kvm_err(kd, kd->program, "can't read pcred at %lx",
-			    (u_long)process.ps_cred);
-			return (-1);
-		}
 		process_pid = proc.p_pid;
-		if (KREAD(kd, (u_long)pcred.pc_ucred, &ucred)) {
+		if (KREAD(kd, (u_long)process.ps_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %lx",
-			    (u_long)pcred.pc_ucred);
+			    (u_long)process.ps_ucred);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)process.ps_pgrp, &pgrp)) {
@@ -245,7 +239,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			break;
 
 		case KERN_PROC_RUID:
-			if (pcred.p_ruid != (uid_t)arg)
+			if (ucred.cr_ruid != (uid_t)arg)
 				continue;
 			break;
 
@@ -286,7 +280,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			vmp = &vm;
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
-		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
+		FILL_KPROC(&kp, do_copy_str, &proc, &process,
 		    &ucred, &pgrp, process.ps_mainproc, proc.p_p, &sess,
 		    vmp, limp, sap, 0, 1);
 
@@ -343,7 +337,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 				    (u_long)p);
 				return (-1);
 			}
-			FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
+			FILL_KPROC(&kp, do_copy_str, &proc, &process,
 			    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
 			    1, 1);
 

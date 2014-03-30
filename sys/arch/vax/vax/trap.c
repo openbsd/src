@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2014/03/26 05:23:42 guenther Exp $     */
+/*	$OpenBSD: trap.c,v 1.50 2014/03/30 21:54:49 guenther Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -199,11 +199,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
 			if (rv == ENOMEM) {
-				printf("UVM: pid %d (%s), uid %u killed: "
-				       "out of swap\n",
-				       p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
+				printf("UVM: pid %d (%s), uid %d killed: "
+			           "out of swap\n", p->p_pid, p->p_comm,
+			           p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 				sig = SIGKILL;
 				typ = 0;
 			} else {

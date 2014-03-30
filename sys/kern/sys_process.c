@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.59 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.60 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 *	process which revokes its special privileges using
 		 *	setuid() from being traced.  This is good security.]
 		 */
-		if ((tr->ps_cred->p_ruid != p->p_cred->p_ruid ||
+		if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 		    (error = suser(p, 0)) != 0)
 			return (error);
@@ -688,7 +688,7 @@ process_checkioperm(struct proc *p, struct process *tr)
 {
 	int error;
 
-	if ((tr->ps_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 	    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
 	    (error = suser(p, 0)) != 0)
 		return (error);

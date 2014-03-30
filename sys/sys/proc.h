@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.181 2014/03/29 18:09:31 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.182 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -154,7 +154,7 @@ struct process {
 	 * pid semantics we have right now, it's unavoidable.
 	 */
 	struct	proc *ps_mainproc;
-	struct	pcred *ps_cred;		/* Process owner's identity. */
+	struct	ucred *ps_ucred;	/* Process owner's identity. */
 
 	LIST_ENTRY(process) ps_list;	/* List of all processes. */
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
@@ -260,8 +260,7 @@ struct proc {
 	/* substructures: */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
 	struct	vmspace *p_vmspace;	/* Address space. */
-#define	p_cred		p_p->ps_cred
-#define	p_ucred		p_cred->pc_ucred
+#define	p_ucred		p_p->ps_ucred
 #define	p_rlimit	p_p->ps_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
@@ -382,21 +381,6 @@ struct proc {
 
 #define	THREAD_PID_OFFSET	1000000
 
-/*
- * MOVE TO ucred.h?
- *
- * Shareable process credentials (always resident).  This includes a reference
- * to the current user credentials as well as real and saved ids that may be
- * used to change ids.
- */
-struct	pcred {
-	struct	ucred *pc_ucred;	/* Current credentials. */
-	uid_t	p_ruid;			/* Real user id. */
-	uid_t	p_svuid;		/* Saved effective user id. */
-	gid_t	p_rgid;			/* Real group id. */
-	gid_t	p_svgid;		/* Saved effective group id. */
-};
-
 #ifdef _KERNEL
 
 struct uidinfo {
@@ -472,7 +456,6 @@ extern struct pool rusage_pool;		/* memory pool for zombies */
 extern struct pool ucred_pool;		/* memory pool for ucreds */
 extern struct pool session_pool;	/* memory pool for sessions */
 extern struct pool pgrp_pool;		/* memory pool for pgrps */
-extern struct pool pcred_pool;		/* memory pool for pcreds */
 
 int	ispidtaken(pid_t);
 pid_t	allocpid(void);

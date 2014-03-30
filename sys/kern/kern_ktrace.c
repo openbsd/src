@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.64 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.65 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -635,16 +635,16 @@ ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
 int
 ktrcanset(struct proc *callp, struct process *targetpr)
 {
-	struct pcred *caller = callp->p_cred;
-	struct pcred *target = targetpr->ps_cred;
+	struct ucred *caller = callp->p_ucred;
+	struct ucred *target = targetpr->ps_ucred;
 
-	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
-	    target->p_ruid == target->p_svuid &&
-	    caller->p_rgid == target->p_rgid &&	/* XXX */
-	    target->p_rgid == target->p_svgid &&
+	if ((caller->cr_uid == target->cr_ruid &&
+	    target->cr_ruid == target->cr_svuid &&
+	    caller->cr_rgid == target->cr_rgid &&	/* XXX */
+	    target->cr_rgid == target->cr_svgid &&
 	    (targetpr->ps_traceflag & KTRFAC_ROOT) == 0 &&
 	    !ISSET(targetpr->ps_flags, PS_SUGID)) ||
-	    caller->pc_ucred->cr_uid == 0)
+	    caller->cr_uid == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2014/03/30 21:54:49 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -434,8 +434,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		if (err == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    p->p_cred && p->p_ucred ?
-				(int)p->p_ucred->cr_uid : -1);
+			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, tf->tf_expevt, SEGV_MAPERR, sv);
 		} else
 			trapsignal(p, SIGSEGV, tf->tf_expevt, SEGV_MAPERR, sv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucred.h,v 1.7 2014/03/24 00:19:48 guenther Exp $	*/
+/*	$OpenBSD: ucred.h,v 1.8 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
@@ -41,7 +41,11 @@
 struct ucred {
 	u_int	cr_ref;			/* reference count */
 	uid_t	cr_uid;			/* effective user id */
+	uid_t	cr_ruid;		/* Real user id. */
+	uid_t	cr_svuid;		/* Saved effective user id. */
 	gid_t	cr_gid;			/* effective group id */
+	gid_t	cr_rgid;		/* Real group id. */
+	gid_t	cr_svgid;		/* Saved effective group id. */
 	short	cr_ngroups;		/* number of groups */
 	gid_t	cr_groups[NGROUPS];	/* groups */
 };

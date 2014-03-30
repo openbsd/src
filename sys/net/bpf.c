@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.90 2013/12/24 23:29:38 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.91 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -869,7 +869,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 */
 	case TIOCSPGRP:		/* Process or group to send signals to */
 		d->bd_pgid = *(int *)addr;
-		d->bd_siguid = p->p_cred->p_ruid;
+		d->bd_siguid = p->p_ucred->cr_ruid;
 		d->bd_sigeuid = p->p_ucred->cr_uid;
 		break;
 

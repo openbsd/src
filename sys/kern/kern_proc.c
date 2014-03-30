@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.56 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.57 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ struct pool rusage_pool;
 struct pool ucred_pool;
 struct pool pgrp_pool;
 struct pool session_pool;
-struct pool pcred_pool;
 
 static void orphanpg(struct pgrp *);
 #ifdef DEBUG
@@ -105,8 +104,6 @@ procinit(void)
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
 	    &pool_allocator_nointr);
 	pool_init(&session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
-	    &pool_allocator_nointr);
-	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    &pool_allocator_nointr);
 }
 
@@ -477,7 +474,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 					    "%-12.12s  %-16s\n",
 					    ppr ? ppr->ps_pid : -1,
 					    pr->ps_pgrp ? pr->ps_pgrp->pg_id : -1,
-					    pr->ps_cred->p_ruid, p->p_stat,
+					    pr->ps_ucred->cr_ruid, p->p_stat,
 					    p->p_flag | pr->ps_flags,
 					    (p->p_wchan && p->p_wmesg) ?
 						p->p_wmesg : "", p->p_comm);

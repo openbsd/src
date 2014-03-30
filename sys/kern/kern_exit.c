@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.137 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.138 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ process_zap(struct process *pr)
 	/*
 	 * Decrement the count of procs running with this uid.
 	 */
-	(void)chgproccnt(pr->ps_cred->p_ruid, -1);
+	(void)chgproccnt(pr->ps_ucred->cr_ruid, -1);
 
 	/*
 	 * Release reference to text vnode
@@ -654,8 +654,7 @@ process_zap(struct process *pr)
 	pool_put(&rusage_pool, pr->ps_ru);
 	KASSERT(TAILQ_EMPTY(&pr->ps_threads));
 	limfree(pr->ps_limit);
-	crfree(pr->ps_cred->pc_ucred);
-	pool_put(&pcred_pool, pr->ps_cred);
+	crfree(pr->ps_ucred);
 	pool_put(&process_pool, pr);
 	nprocesses--;
 

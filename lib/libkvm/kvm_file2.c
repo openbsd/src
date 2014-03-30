@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.34 2014/02/05 03:49:00 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.35 2014/03/30 21:54:49 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -271,7 +271,6 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct processlist allprocess;
 	struct proc proc;
 	struct process *pr, process;
-	struct pcred pcred;
 	struct ucred ucred;
 	char *filebuf = NULL;
 	int i, nfiles;
@@ -335,20 +334,14 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 				continue;
 		}
 
-		if (KREAD(kd, (u_long)process.ps_cred, &pcred)) {
-			_kvm_err(kd, kd->program, "can't read pcred at %lx",
-			    (u_long)process.ps_cred);
-			goto cleanup;
-		}
-		if (KREAD(kd, (u_long)pcred.pc_ucred, &ucred)) {
+		if (KREAD(kd, (u_long)process.ps_ucred, &ucred)) {
 			_kvm_err(kd, kd->program, "can't read ucred at %lx",
-			    (u_long)pcred.pc_ucred);
+			    (u_long)process.ps_ucred);
 			goto cleanup;
 		}
 		process.ps_mainproc = &proc;
 		proc.p_p = &process;
-		process.ps_cred = &pcred;
-		pcred.pc_ucred = &ucred;
+		process.ps_ucred = &ucred;
 
 		if (op == KERN_FILE_BYUID && arg >= 0 &&
 		    proc.p_ucred->cr_uid != (uid_t)arg) {

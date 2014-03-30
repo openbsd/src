@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.16 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.17 2014/03/30 21:54:49 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -211,16 +211,16 @@ linux_sys_sched_setparam(struct proc *cp, void *v, register_t *retval)
 		return (error);
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct ucred *uc = cp->p_ucred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 		if (!(cp == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      uc->cr_uid == 0 ||
+		      uc->cr_ruid == p->p_ucred->cr_ruid ||
+		      uc->cr_uid == p->p_ucred->cr_ruid ||
+		      uc->cr_ruid == p->p_ucred->cr_uid ||
+		      uc->cr_uid == p->p_ucred->cr_uid))
 			return (EPERM);
 	}
 
@@ -245,16 +245,16 @@ linux_sys_sched_getparam(struct proc *cp, void *v, register_t *retval)
 		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct ucred *uc = cp->p_ucred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 		if (!(cp == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      uc->cr_uid == 0 ||
+		      uc->cr_ruid == p->p_ucred->cr_ruid ||
+		      uc->cr_uid == p->p_ucred->cr_ruid ||
+		      uc->cr_ruid == p->p_ucred->cr_uid ||
+		      uc->cr_uid == p->p_ucred->cr_uid))
 			return (EPERM);
 	}
 
@@ -286,16 +286,16 @@ linux_sys_sched_setscheduler(struct proc *cp, void *v, register_t *retval)
 		return (error);
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct ucred *uc = cp->p_ucred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 		if (!(cp == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      uc->cr_uid == 0 ||
+		      uc->cr_ruid == p->p_ucred->cr_ruid ||
+		      uc->cr_uid == p->p_ucred->cr_ruid ||
+		      uc->cr_ruid == p->p_ucred->cr_uid ||
+		      uc->cr_uid == p->p_ucred->cr_uid))
 			return (EPERM);
 	}
 
@@ -323,16 +323,16 @@ linux_sys_sched_getscheduler(struct proc *cp, void *v, register_t *retval)
 	 */
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct ucred *uc = cp->p_ucred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 		if (!(cp == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      uc->cr_uid == 0 ||
+		      uc->cr_ruid == p->p_ucred->cr_ruid ||
+		      uc->cr_uid == p->p_ucred->cr_ruid ||
+		      uc->cr_ruid == p->p_ucred->cr_uid ||
+		      uc->cr_uid == p->p_ucred->cr_uid))
 			return (EPERM);
 	}
 

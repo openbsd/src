@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.203 2014/03/08 22:54:30 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.204 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1662,8 +1662,8 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 
 		if (!(flag & AT_EACCESS)) {
 			cred = crcopy(cred);
-			cred->cr_uid = p->p_cred->p_ruid;
-			cred->cr_gid = p->p_cred->p_rgid;
+			cred->cr_uid = cred->cr_ruid;
+			cred->cr_gid = cred->cr_rgid;
 		}
 
 		if (amode & R_OK)

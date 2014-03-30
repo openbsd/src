@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.32 2013/12/12 19:00:10 tedu Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.33 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -1002,14 +1002,14 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 	int cmd, type, error;
 
 	if (uid == -1)
-		uid = p->p_cred->p_ruid;
+		uid = p->p_ucred->cr_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
 
 	switch (cmd) {
 	case Q_SYNC:
 		break;
 	case Q_GETQUOTA:
-		if (uid == p->p_cred->p_ruid)
+		if (uid == p->p_ucred->cr_ruid)
 			break;
 		/* FALLTHROUGH */
 	default:

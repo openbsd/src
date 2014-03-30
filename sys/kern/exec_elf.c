@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.96 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.97 2014/03/30 21:54:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1169,13 +1169,13 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 		else
 			cpi.cpi_sid = 0;
 
-		cpi.cpi_ruid = p->p_cred->p_ruid;
+		cpi.cpi_ruid = p->p_ucred->cr_ruid;
 		cpi.cpi_euid = p->p_ucred->cr_uid;
-		cpi.cpi_svuid = p->p_cred->p_svuid;
+		cpi.cpi_svuid = p->p_ucred->cr_svuid;
 
-		cpi.cpi_rgid = p->p_cred->p_rgid;
+		cpi.cpi_rgid = p->p_ucred->cr_rgid;
 		cpi.cpi_egid = p->p_ucred->cr_gid;
-		cpi.cpi_svgid = p->p_cred->p_svgid;
+		cpi.cpi_svgid = p->p_ucred->cr_svgid;
 
 		(void)strlcpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
 

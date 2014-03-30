@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.120 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.121 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -671,7 +671,7 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case TIOCSPGRP:
 		tp->tun_pgid = *(int *)data;
-		tp->tun_siguid = p->p_cred->p_ruid;
+		tp->tun_siguid = p->p_ucred->cr_ruid;
 		tp->tun_sigeuid = p->p_ucred->cr_uid;
 		break;
 	case TIOCGPGRP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.125 2014/03/28 08:33:51 sthen Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.126 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -120,9 +120,9 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_type = type;
 	if (suser(p, 0) == 0)
 		so->so_state = SS_PRIV;
-	so->so_ruid = p->p_cred->p_ruid;
+	so->so_ruid = p->p_ucred->cr_ruid;
 	so->so_euid = p->p_ucred->cr_uid;
-	so->so_rgid = p->p_cred->p_rgid;
+	so->so_rgid = p->p_ucred->cr_rgid;
 	so->so_egid = p->p_ucred->cr_gid;
 	so->so_cpid = p->p_p->ps_pid;
 	so->so_proto = prp;

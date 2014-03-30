@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.208 2014/03/29 18:09:31 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.209 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -114,7 +114,6 @@ struct	session session0;
 struct	pgrp pgrp0;
 struct	proc proc0;
 struct	process process0;
-struct	pcred cred0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
@@ -293,9 +292,8 @@ main(void *framep)
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 
 	/* Create credentials. */
-	p->p_cred = &cred0;
-	p->p_ucred = crget();
-	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+	pr->ps_ucred = crget();
+	pr->ps_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Initialize signal state for process 0. */
 	signal_init();

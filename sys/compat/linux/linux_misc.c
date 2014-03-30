@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.88 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.89 2014/03/30 21:54:49 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1484,7 +1484,7 @@ linux_sys_setfsuid(p, v, retval)
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (p->p_cred->p_ruid != uid)
+	 if (p->p_ucred->cr_ruid != uid)
 		 return sys_nosys(p, v, retval);
 	 else
 		 return (0);
@@ -1542,7 +1542,7 @@ linux_sys_getuid(p, v, retval)
 	register_t *retval;
 {
 
-	*retval = p->p_cred->p_ruid;
+	*retval = p->p_ucred->cr_ruid;
 	return (0);
 }
 
@@ -1553,7 +1553,7 @@ linux_sys_getgid(p, v, retval)
 	register_t *retval;
 {
 
-	*retval = p->p_cred->p_rgid;
+	*retval = p->p_ucred->cr_rgid;
 	return (0);
 }
 

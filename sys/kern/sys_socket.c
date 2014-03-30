@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.17 2013/09/28 15:21:55 millert Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.18 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	case SIOCSPGRP:
 		so->so_pgid = *(int *)data;
-		so->so_siguid = p->p_cred->p_ruid;
+		so->so_siguid = p->p_ucred->cr_ruid;
 		so->so_sigeuid = p->p_ucred->cr_uid;
 		return (0);
 

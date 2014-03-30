@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.49 2014/01/24 04:26:51 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.50 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ sys_getpriority(struct proc *curp, void *v, register_t *retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		LIST_FOREACH(pr, &allprocess, ps_list)
-			if (pr->ps_cred->pc_ucred->cr_uid == SCARG(uap, who) &&
+			if (pr->ps_ucred->cr_uid == SCARG(uap, who) &&
 			    pr->ps_nice < low)
 				low = pr->ps_nice;
 		break;
@@ -161,7 +161,7 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		LIST_FOREACH(pr, &allprocess, ps_list)
-			if (pr->ps_cred->pc_ucred->cr_uid == SCARG(uap, who)) {
+			if (pr->ps_ucred->cr_uid == SCARG(uap, who)) {
 				error = donice(curp, pr, SCARG(uap, prio));
 				found++;
 			}
@@ -178,13 +178,13 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 int
 donice(struct proc *curp, struct process *chgpr, int n)
 {
-	struct pcred *pcred = curp->p_cred;
+	struct ucred *ucred = curp->p_ucred;
 	struct proc *p;
 	int s;
 
-	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
-	    pcred->pc_ucred->cr_uid != chgpr->ps_cred->pc_ucred->cr_uid &&
-	    pcred->p_ruid != chgpr->ps_cred->pc_ucred->cr_uid)
+	if (ucred->cr_uid != 0 && ucred->cr_ruid != 0 &&
+	    ucred->cr_uid != chgpr->ps_ucred->cr_uid &&
+	    ucred->cr_ruid != chgpr->ps_ucred->cr_uid)
 		return (EPERM);
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;

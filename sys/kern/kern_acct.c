@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.27 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.28 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -202,8 +202,8 @@ acct_process(struct proc *p)
 	acct.ac_io = encode_comp_t(r->ru_inblock + r->ru_oublock, 0);
 
 	/* (6) The UID and GID of the process */
-	acct.ac_uid = p->p_cred->p_ruid;
-	acct.ac_gid = p->p_cred->p_rgid;
+	acct.ac_uid = pr->ps_ucred->cr_ruid;
+	acct.ac_gid = pr->ps_ucred->cr_rgid;
 
 	/* (7) The terminal from which the process was started */
 	if ((pr->ps_flags & PS_CONTROLT) &&

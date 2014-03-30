@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.161 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.162 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -175,9 +175,8 @@ process_new(struct proc *p, struct process *parent, int flags)
 	    (caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy);
 
 	/* post-copy fixups */
-	pr->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
-	memcpy(pr->ps_cred, parent->ps_cred, sizeof(*pr->ps_cred));
-	crhold(parent->ps_cred->pc_ucred);
+	pr->ps_ucred = parent->ps_ucred;
+	crhold(pr->ps_ucred);
 	pr->ps_limit->p_refcnt++;
 
 	/* bump references to the text vnode (for procfs) */
@@ -251,7 +250,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * the variable nthreads is the current number of procs, maxthread is
 	 * the limit.
 	 */
-	uid = curp->p_cred->p_ruid;
+	uid = curp->p_ucred->cr_ruid;
 	if ((nthreads >= maxthread - 5 && uid != 0) || nthreads >= maxthread) {
 		static struct timeval lasttfm;
 

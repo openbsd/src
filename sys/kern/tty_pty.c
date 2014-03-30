@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.64 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.65 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1133,7 +1133,7 @@ retry:
 		if ((snd.ni_vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			gid = tty_gid;
 			/* get real uid */
-			uid = p->p_cred->p_ruid;
+			uid = p->p_ucred->cr_ruid;
 
 			VATTR_NULL(&vattr);
 			vattr.va_uid = uid;

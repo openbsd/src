@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.162 2014/03/26 05:27:18 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.163 2014/03/30 21:54:48 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -84,18 +84,23 @@ int cansignal(struct process *, struct process *, int);
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
 
 /*
- * Can process pr, send the signal signum to process qr?
+ * Can thread p, send the signal signum to process qr?
  */
 int
 cansignal(struct process *pr, struct process *qr, int signum)
 {
-	struct pcred *pc = pr->ps_cred;
+	struct ucred *uc = pr->ps_ucred;
+	struct ucred *quc = qr->ps_ucred;
 
-	if (pc->pc_ucred->cr_uid == 0)
+	if (uc->cr_uid == 0)
 		return (1);		/* root can always signal */
 
 	if (pr == qr)
 		return (1);		/* process can always signal itself */
+
+	/* optimization: if the same creds then the tests below will pass */
+	if (uc == quc)
+		return (1);
 
 	if (signum == SIGCONT && qr->ps_session == pr->ps_session)
 		return (1);		/* SIGCONT in session */
@@ -118,17 +123,17 @@ cansignal(struct process *pr, struct process *qr, int signum)
 		case SIGHUP:
 		case SIGUSR1:
 		case SIGUSR2:
-			if (pc->p_ruid == qr->ps_cred->p_ruid ||
-			    pc->pc_ucred->cr_uid == qr->ps_cred->p_ruid)
+			if (uc->cr_ruid == quc->cr_ruid ||
+			    uc->cr_uid == quc->cr_ruid)
 				return (1);
 		}
 		return (0);
 	}
 
-	if (pc->p_ruid == qr->ps_cred->p_ruid ||
-	    pc->p_ruid == qr->ps_cred->p_svuid ||
-	    pc->pc_ucred->cr_uid == qr->ps_cred->p_ruid ||
-	    pc->pc_ucred->cr_uid == qr->ps_cred->p_svuid)
+	if (uc->cr_ruid == quc->cr_ruid ||
+	    uc->cr_ruid == quc->cr_svuid ||
+	    uc->cr_uid == quc->cr_ruid ||
+	    uc->cr_uid == quc->cr_svuid)
 		return (1);
 	return (0);
 }
@@ -579,6 +584,7 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 				return (ESRCH);
 			type = STHREAD;
 		} else {
+			/* XXX use prfind() */
 			if ((p = pfind(pid)) == NULL)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
@@ -654,12 +660,12 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 
 #define CANDELIVER(uid, euid, pr) \
 	(euid == 0 || \
-	(uid) == (pr)->ps_cred->p_ruid || \
-	(uid) == (pr)->ps_cred->p_svuid || \
-	(uid) == (pr)->ps_cred->pc_ucred->cr_uid || \
-	(euid) == (pr)->ps_cred->p_ruid || \
-	(euid) == (pr)->ps_cred->p_svuid || \
-	(euid) == (pr)->ps_cred->pc_ucred->cr_uid)
+	(uid) == (pr)->ps_ucred->cr_ruid || \
+	(uid) == (pr)->ps_ucred->cr_svuid || \
+	(uid) == (pr)->ps_ucred->cr_uid || \
+	(euid) == (pr)->ps_ucred->cr_ruid || \
+	(euid) == (pr)->ps_ucred->cr_svuid || \
+	(euid) == (pr)->ps_ucred->cr_uid)
 
 /*
  * Deliver signum to pgid, but first check uid/euid against each
@@ -1471,8 +1477,8 @@ coredump(struct proc *p)
 	 * ... but actually write it as UID
 	 */
 	cred = crdup(cred);
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	cred->cr_uid = cred->cr_ruid;
+	cred->cr_gid = cred->cr_rgid;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
