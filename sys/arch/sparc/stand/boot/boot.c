@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2014/02/25 21:28:30 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2014/03/30 19:48:04 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -192,8 +192,18 @@ loadk(char *file, u_long *marks)
 		 * one.
 		 */
 		if (rnd_loaded == 0) {
+			/*
+			 * Some PROM do not like having a network device
+			 * open()ed twice; better close and reopen after
+			 * trying to get randomness.
+			 */
+			close(fd);
+
 			rnd_loaded = loadrandom(BOOTRANDOM, rnddata,
 			    sizeof(rnddata));
+
+			if ((fd = open(file, O_RDONLY)) < 0)
+				return (errno ? errno : ENOENT);
 		}
 
 		flags = LOAD_KERNEL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.8 2014/02/25 21:28:30 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.9 2014/03/30 19:48:04 miod Exp $	*/
 /*	$NetBSD: version.c,v 1.4 1995/09/16 23:20:39 pk Exp $ */
 
 /*
@@ -48,6 +48,7 @@
  *	2.6	Support for larger kernels when booting from tape, and avoid
  *		stomping on PROM data below 4MB on sun4c
  *	2.7	/etc/random.seed support
+ *	2.8	Fix network boot broken on some PROM by the 2.7 changes
  */
 
-char *version = "2.7";
+char *version = "2.8";
