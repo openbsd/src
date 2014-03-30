@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.19 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.20 2014/03/30 00:58:24 jsg Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -1480,6 +1480,27 @@ int intel_ring_begin(struct intel_ring_buffer *ring,
 	}
 
 	ring->space -= n;
+	return 0;
+}
+
+/* Align the ring tail to a cacheline boundary */
+int intel_ring_cacheline_align(struct intel_ring_buffer *ring)
+{
+	int num_dwords = (64 - (ring->tail & 63)) / sizeof(uint32_t);
+	int ret;
+
+	if (num_dwords == 0)
+		return 0;
+
+	ret = intel_ring_begin(ring, num_dwords);
+	if (ret)
+		return ret;
+
+	while (num_dwords--)
+		intel_ring_emit(ring, MI_NOOP);
+
+	intel_ring_advance(ring);
+
 	return 0;
 }
 

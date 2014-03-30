@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.h,v 1.2 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.h,v 1.3 2014/03/30 00:58:24 jsg Exp $	*/
 
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
@@ -198,6 +198,7 @@ u32 intel_read_status_page(struct intel_ring_buffer *ring, int reg);
 void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring);
 
 int __must_check intel_ring_begin(struct intel_ring_buffer *ring, int n);
+int __must_check intel_ring_cacheline_align(struct intel_ring_buffer *ring);
 #ifdef notyet
 static inline void intel_ring_emit(struct intel_ring_buffer *ring,
 				   u32 data)
