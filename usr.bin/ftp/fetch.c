@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.114 2014/03/02 17:57:18 tedu Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.115 2014/03/30 22:37:41 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -605,7 +605,6 @@ again:
 		}
 		SSL_library_init();
 		SSL_load_error_strings();
-		SSLeay_add_ssl_algorithms();
 		ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 		if (ssl_ctx == NULL) {
 			ERR_print_errors_fp(ttyout);
