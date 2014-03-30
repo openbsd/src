@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.14 2014/01/18 08:25:06 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.15 2014/03/30 00:37:11 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -55,7 +55,11 @@
 #define DRM_IOC_READWRITE	IOC_INOUT
 #define DRM_IOC(dir, group, nr, size) _IOC(dir, group, nr, size)
 
+#ifdef __i386__
 #define DRM_MAJOR       88
+#else
+#define DRM_MAJOR       87
+#endif
 #define DRM_MAX_MINOR   15
 
 #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */
