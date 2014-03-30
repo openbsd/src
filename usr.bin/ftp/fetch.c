@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.115 2014/03/30 22:37:41 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.116 2014/03/30 22:39:42 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -623,8 +623,11 @@ again:
 				SSL_CTX_set_verify_depth(ssl_ctx,
 				    ssl_verify_depth);
 		}
-		if (ssl_ciphers != NULL)
-			SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers);
+		if (ssl_ciphers != NULL &&
+		    SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers) == -1) {
+			ERR_print_errors_fp(ttyout);
+			goto cleanup_url_get;
+		}
 		ssl = SSL_new(ssl_ctx);
 		if (ssl == NULL) {
 			ERR_print_errors_fp(ttyout);
