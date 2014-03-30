@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.16 2014/02/18 02:48:57 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.17 2014/03/30 01:06:31 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -508,7 +508,7 @@ intel_dp_aux_native_write(struct intel_dp *intel_dp,
 		if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_ACK)
 			break;
 		else if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_DEFER)
-			udelay(100);
+			usleep_range(400, 500);
 		else
 			return -EIO;
 	}
@@ -557,7 +557,7 @@ intel_dp_aux_native_read(struct intel_dp *intel_dp,
 			return ret - 1;
 		}
 		else if ((ack & AUX_NATIVE_REPLY_MASK) == AUX_NATIVE_REPLY_DEFER)
-			udelay(100);
+			usleep_range(400, 500);
 		else
 			return -EIO;
 	}
