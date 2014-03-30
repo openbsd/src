@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.116 2014/03/30 22:39:42 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.117 2014/03/30 22:40:38 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -598,6 +598,8 @@ again:
 
 #ifndef SMALL
 	if (ishttpsurl) {
+		union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
+
 		if (proxyenv && sslpath) {
 			ishttpsurl = 0;
 			proxyurl = NULL;
@@ -636,6 +638,17 @@ again:
 		if (SSL_set_fd(ssl, s) == 0) {
 			ERR_print_errors_fp(ttyout);
 			goto cleanup_url_get;
+		}
+		/*
+		 * RFC4366 (SNI): Literal IPv4 and IPv6 addresses are not
+		 * permitted in "HostName".
+		 */
+		if (inet_pton(AF_INET,  host, &addrbuf) != 1 &&
+		    inet_pton(AF_INET6, host, &addrbuf) != 1) {
+			if (SSL_set_tlsext_host_name(ssl, host) == 0) {
+				ERR_print_errors_fp(ttyout);
+				goto cleanup_url_get;
+			}
 		}
 		if (SSL_connect(ssl) <= 0) {
 			ERR_print_errors_fp(ttyout);
