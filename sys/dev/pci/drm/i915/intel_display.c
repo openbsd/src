@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.32 2014/03/16 03:34:32 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.33 2014/03/30 01:03:05 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7502,6 +7502,20 @@ static int intel_gen7_queue_flip(struct drm_device *dev,
 		ret = -ENODEV;
 		goto err_unpin;
 	}
+
+	/*
+	 * BSpec MI_DISPLAY_FLIP for IVB:
+	 * "The full packet must be contained within the same cache line."
+	 *
+	 * Currently the LRI+SRM+MI_DISPLAY_FLIP all fit within the same
+	 * cacheline, if we ever start emitting more commands before
+	 * the MI_DISPLAY_FLIP we may need to first emit everything else,
+	 * then do the cacheline alignment, and finally emit the
+	 * MI_DISPLAY_FLIP.
+	 */
+	ret = intel_ring_cacheline_align(ring);
+	if (ret)
+		goto err_unpin;
 
 	ret = intel_ring_begin(ring, 4);
 	if (ret)
