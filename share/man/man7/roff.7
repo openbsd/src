@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.29 2014/03/30 19:47:32 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.30 2014/03/30 21:27:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -876,12 +876,14 @@ request are discarded.
 Change the output line length.
 Its syntax is as follows:
 .Pp
-.D1 Pf . Cm \&ll Op Ar width
+.D1 Pf . Cm \&ll Op Oo +|- Oc Ns Ar width
 .Pp
 If the
 .Ar width
 argument is omitted, the line length is reset to its previous value.
 The default setting for terminal output is 78n.
+If a sign is given, the line length is added to or subtracted from;
+otherwise, it is set to the provided value.
 Using this request in new manuals is discouraged for several reasons,
 among others because it overrides the
 .Xr mandoc 1

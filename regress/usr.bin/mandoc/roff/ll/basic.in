@@ -16,10 +16,10 @@ In ASCII mode, it is expected to break at column 38.
 This is a longer text after switching back to the default line length.
 In ASCII mode, it is expected to break at column 78.
 .Pp
-.ll 200n
+.ll +100n
 This is another long text to demonstrate longer lines.
 In ASCII mode, it is not expected to break at all.
 .Pp
-.ll
-This is a longer text after switching back to the default line length.
+.ll FOO
+This is a longer text after switching to an invalid line length.
 In ASCII mode, it is expected to break at column 78.

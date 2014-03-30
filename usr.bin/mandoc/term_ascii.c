@@ -1,4 +1,4 @@
-/*	$Id: term_ascii.c,v 1.12 2014/03/30 19:47:32 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.13 2014/03/30 21:27:59 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,7 +39,7 @@ static	void		  ascii_begin(struct termp *);
 static	void		  ascii_end(struct termp *);
 static	void		  ascii_endline(struct termp *);
 static	void		  ascii_letter(struct termp *, int);
-static	void		  ascii_setwidth(struct termp *, size_t);
+static	void		  ascii_setwidth(struct termp *, int, size_t);
 
 static	void		  locale_advance(struct termp *, size_t);
 static	void		  locale_endline(struct termp *);
@@ -138,14 +138,18 @@ locale_alloc(char *outopts)
 }
 
 static void
-ascii_setwidth(struct termp *p, size_t width)
+ascii_setwidth(struct termp *p, int iop, size_t width)
 {
-	size_t	 lastwidth;
 
-	lastwidth = p->defrmargin;
-	p->rmargin = p->maxrmargin = p->defrmargin =
-	    width ? width : p->lastrmargin;
-	p->lastrmargin = lastwidth;
+	p->rmargin = p->defrmargin;
+	if (0 < iop)
+		p->defrmargin += width;
+	else if (0 > iop)
+		p->defrmargin -= width;
+	else
+		p->defrmargin = width ? width : p->lastrmargin;
+	p->lastrmargin = p->rmargin;
+	p->rmargin = p->maxrmargin = p->defrmargin;
 }
 
 /* ARGSUSED */

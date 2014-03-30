@@ -17,7 +17,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      This is another long text to demonstrate longer lines.  In ASCII mode, it is not expected to break at all.
 
-     This is a longer text after switching back to the default line length.
-     In ASCII mode, it is expected to break at column 78.
+     This is a longer text after switching to an invalid line length.  In
+     ASCII mode, it is expected to break at column 78.
 
 OpenBSD                        February 5, 2014                        OpenBSD
