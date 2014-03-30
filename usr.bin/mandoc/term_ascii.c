@@ -1,6 +1,7 @@
-/*	$Id: term_ascii.c,v 1.11 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: term_ascii.c,v 1.12 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +39,7 @@ static	void		  ascii_begin(struct termp *);
 static	void		  ascii_end(struct termp *);
 static	void		  ascii_endline(struct termp *);
 static	void		  ascii_letter(struct termp *, int);
+static	void		  ascii_setwidth(struct termp *, size_t);
 
 static	void		  locale_advance(struct termp *, size_t);
 static	void		  locale_endline(struct termp *);
@@ -54,7 +56,7 @@ ascii_init(enum termenc enc, char *outopts)
 	p = mandoc_calloc(1, sizeof(struct termp));
 
 	p->tabwidth = 5;
-	p->defrmargin = 78;
+	p->defrmargin = p->lastrmargin = 78;
 
 	p->begin = ascii_begin;
 	p->end = ascii_end;
@@ -65,6 +67,7 @@ ascii_init(enum termenc enc, char *outopts)
 	p->advance = ascii_advance;
 	p->endline = ascii_endline;
 	p->letter = ascii_letter;
+	p->setwidth = ascii_setwidth;
 	p->width = ascii_width;
 
 	if (TERMENC_ASCII != enc) {
@@ -132,6 +135,17 @@ locale_alloc(char *outopts)
 {
 
 	return(ascii_init(TERMENC_LOCALE, outopts));
+}
+
+static void
+ascii_setwidth(struct termp *p, size_t width)
+{
+	size_t	 lastwidth;
+
+	lastwidth = p->defrmargin;
+	p->rmargin = p->maxrmargin = p->defrmargin =
+	    width ? width : p->lastrmargin;
+	p->lastrmargin = lastwidth;
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.59 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.60 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -86,6 +86,7 @@ static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_lk(DECL_ARGS);
 static	int	  pre_li(DECL_ARGS);
+static	int	  pre_ll(DECL_ARGS);
 static	int	  pre_nm(DECL_ARGS);
 static	int	  pre_no(DECL_ARGS);
 static	int	  pre_ns(DECL_ARGS);
@@ -237,6 +238,7 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
+	{ NULL, pre_ll, post_sp, NULL, NULL }, /* ll */
 	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
 };
 
@@ -1408,6 +1410,14 @@ pre_lk(DECL_ARGS)
 	print_word(link->string);
 	font_pop();
 	return(0);
+}
+
+static int
+pre_ll(DECL_ARGS)
+{
+
+	print_line(".ll", 0);
+	return(1);
 }
 
 static int

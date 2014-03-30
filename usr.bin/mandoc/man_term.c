@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.96 2014/03/08 16:19:59 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.97 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -80,6 +80,7 @@ static	int		  pre_ft(DECL_ARGS);
 static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_in(DECL_ARGS);
 static	int		  pre_literal(DECL_ARGS);
+static	int		  pre_ll(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
 
 static	void		  post_IP(DECL_ARGS);
@@ -129,6 +130,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_literal, NULL, 0 }, /* EE */
 	{ pre_UR, post_UR, 0 }, /* UR */
 	{ NULL, NULL, 0 }, /* UE */
+	{ pre_ll, NULL, MAN_NOTEXT }, /* ll */
 };
 
 
@@ -227,6 +229,16 @@ static int
 pre_ign(DECL_ARGS)
 {
 
+	return(0);
+}
+
+
+/* ARGSUSED */
+static int
+pre_ll(DECL_ARGS)
+{
+
+	(*p->setwidth)(p, n->nchild ? a2width(p, n->child->string) : 0);
 	return(0);
 }
 

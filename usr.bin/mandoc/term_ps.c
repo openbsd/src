@@ -1,6 +1,7 @@
-/*	$Id: term_ps.c,v 1.21 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.22 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -71,6 +72,7 @@ struct	termp_ps {
 	size_t		  bottom;	/* body bottom (AFM units) */
 	size_t		  height;	/* page height (AFM units */
 	size_t		  width;	/* page width (AFM units) */
+	size_t		  lastwidth;	/* page width before last ll */
 	size_t		  left;		/* body left (AFM units) */
 	size_t		  header;	/* header pos (AFM units) */
 	size_t		  footer;	/* footer pos (AFM units) */
@@ -97,6 +99,7 @@ static	void		  ps_pletter(struct termp *, int);
 static	void		  ps_printf(struct termp *, const char *, ...);
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
+static	void		  ps_setwidth(struct termp *, size_t);
 static	struct termp	 *pspdf_alloc(char *);
 static	void		  pdf_obj(struct termp *, size_t);
 
@@ -442,6 +445,7 @@ pspdf_alloc(char *outopts)
 	p->endline = ps_endline;
 	p->hspan = ps_hspan;
 	p->letter = ps_letter;
+	p->setwidth = ps_setwidth;
 	p->width = ps_width;
 	
 	toks[0] = "paper";
@@ -510,7 +514,7 @@ pspdf_alloc(char *outopts)
 
 	lineheight = PNT2AFM(p, ((double)p->ps->scale * 1.4));
 
-	p->ps->width = (size_t)pagex;
+	p->ps->width = p->ps->lastwidth = (size_t)pagex;
 	p->ps->height = (size_t)pagey;
 	p->ps->header = pagey - (marginy / 2) - (lineheight / 2);
 	p->ps->top = pagey - marginy;
@@ -521,6 +525,17 @@ pspdf_alloc(char *outopts)
 
 	p->defrmargin = pagex - (marginx * 2);
 	return(p);
+}
+
+
+static void
+ps_setwidth(struct termp *p, size_t width)
+{
+	size_t	 lastwidth;
+
+	lastwidth = p->ps->width;
+	p->ps->width = width ? width : p->ps->lastwidth;
+	p->ps->lastwidth = lastwidth;
 }
 
 

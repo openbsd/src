@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.161 2014/02/16 12:30:51 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.162 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -100,6 +100,7 @@ static	int	  termp_ft_pre(DECL_ARGS);
 static	int	  termp_in_pre(DECL_ARGS);
 static	int	  termp_it_pre(DECL_ARGS);
 static	int	  termp_li_pre(DECL_ARGS);
+static	int	  termp_ll_pre(DECL_ARGS);
 static	int	  termp_lk_pre(DECL_ARGS);
 static	int	  termp_nd_pre(DECL_ARGS);
 static	int	  termp_nm_pre(DECL_ARGS);
@@ -240,6 +241,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* sp */ 
 	{ NULL, termp____post }, /* %U */ 
 	{ NULL, NULL }, /* Ta */ 
+	{ termp_ll_pre, NULL }, /* ll */
 };
 
 
@@ -380,8 +382,10 @@ print_mdoc_node(DECL_ARGS)
 	if (MDOC_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;
 
-	p->offset = offset;
-	p->rmargin = rmargin;
+	if (MDOC_ll != n->tok) {
+		p->offset = offset;
+		p->rmargin = rmargin;
+	}
 }
 
 
@@ -606,6 +610,16 @@ print_bvspace(struct termp *p,
 		}
 
 	term_vspace(p);
+}
+
+
+/* ARGSUSED */
+static int
+termp_ll_pre(DECL_ARGS)
+{
+
+	(*p->setwidth)(p, n->nchild ? a2width(p, n->child->string) : 0);
+	return(0);
 }
 
 

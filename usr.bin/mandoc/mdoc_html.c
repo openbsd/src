@@ -1,6 +1,7 @@
-/*	$Id: mdoc_html.c,v 1.69 2013/12/24 20:45:21 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.70 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -91,6 +92,7 @@ static	int		  mdoc_it_pre(MDOC_ARGS);
 static	int		  mdoc_lb_pre(MDOC_ARGS);
 static	int		  mdoc_li_pre(MDOC_ARGS);
 static	int		  mdoc_lk_pre(MDOC_ARGS);
+static	int		  mdoc_ll_pre(MDOC_ARGS);
 static	int		  mdoc_mt_pre(MDOC_ARGS);
 static	int		  mdoc_ms_pre(MDOC_ARGS);
 static	int		  mdoc_nd_pre(MDOC_ARGS);
@@ -238,6 +240,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_sp_pre, NULL}, /* sp */ 
 	{mdoc__x_pre, mdoc__x_post}, /* %U */ 
 	{NULL, NULL}, /* Ta */ 
+	{mdoc_ll_pre, NULL}, /* ll */
 };
 
 static	const char * const lists[LIST_MAX] = {
@@ -1595,12 +1598,19 @@ mdoc_sm_pre(MDOC_ARGS)
 
 /* ARGSUSED */
 static int
+mdoc_ll_pre(MDOC_ARGS)
+{
+
+	return(0);
+}
+
+/* ARGSUSED */
+static int
 mdoc_pp_pre(MDOC_ARGS)
 {
 
 	print_otag(h, TAG_P, 0, NULL);
 	return(0);
-
 }
 
 /* ARGSUSED */

@@ -1,0 +1,25 @@
+.Dd February 5, 2014
+.Dt LL-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm ll-basic
+.Nd changing the line length
+.Sh DESCRIPTION
+This is a longer text to demonstrate the default line length.
+In ASCII mode, it is expected to break at column 78.
+.Pp
+.ll 38n
+This is another long text to demonstrate shorter lines.
+In ASCII mode, it is expected to break at column 38.
+.Pp
+.ll
+This is a longer text after switching back to the default line length.
+In ASCII mode, it is expected to break at column 78.
+.Pp
+.ll 200n
+This is another long text to demonstrate longer lines.
+In ASCII mode, it is not expected to break at all.
+.Pp
+.ll
+This is a longer text after switching back to the default line length.
+In ASCII mode, it is expected to break at column 78.

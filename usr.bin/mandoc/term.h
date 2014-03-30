@@ -1,7 +1,7 @@
-/*	$Id: term.h,v 1.41 2013/12/25 00:39:13 schwarze Exp $ */
+/*	$Id: term.h,v 1.42 2014/03/30 19:47:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -57,6 +57,7 @@ struct	termp {
 	int		  mdocstyle;	/* imitate mdoc(7) output */
 	size_t		  defindent;	/* Default indent for text. */
 	size_t		  defrmargin;	/* Right margin of the device. */
+	size_t		  lastrmargin;	/* Right margin before the last ll. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
 	size_t		  maxcols;	/* Max size of buf. */
@@ -94,6 +95,7 @@ struct	termp {
 	void		(*end)(struct termp *);
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
+	void		(*setwidth)(struct termp *, size_t);
 	size_t		(*width)(const struct termp *, int);
 	double		(*hspan)(const struct termp *,
 				const struct roffsu *);
@@ -112,6 +114,7 @@ void		  term_begin(struct termp *, term_margin,
 			term_margin, const void *);
 void		  term_end(struct termp *);
 
+void		  term_setwidth(struct termp *, size_t);
 size_t		  term_hspan(const struct termp *, 
 			const struct roffsu *);
 size_t		  term_vspan(const struct termp *,

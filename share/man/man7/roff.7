@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.28 2014/03/08 04:43:38 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.29 2014/03/30 19:47:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2014 $
+.Dd $Mdocdate: March 30 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -872,6 +872,21 @@ Otherwise, it only terminates the
 and arguments following it or the
 .Sq \&..
 request are discarded.
+.Ss \&ll
+Change the output line length.
+Its syntax is as follows:
+.Pp
+.D1 Pf . Cm \&ll Op Ar width
+.Pp
+If the
+.Ar width
+argument is omitted, the line length is reset to its previous value.
+The default setting for terminal output is 78n.
+Using this request in new manuals is discouraged for several reasons,
+among others because it overrides the
+.Xr mandoc 1
+.Fl O Cm width
+command line option.
 .Ss \&ne
 Declare the need for the specified minimum vertical space
 before the next trap or the bottom of the page.
