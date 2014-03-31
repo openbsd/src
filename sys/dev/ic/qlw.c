@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.19 2014/03/18 23:17:28 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.20 2014/03/31 22:17:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -49,7 +49,7 @@
 #define QLW_D_PORT		0x04
 #define QLW_D_IO		0x08
 #define QLW_D_IOCB		0x10
-int qlwdebug = QLW_D_PORT | QLW_D_INTR;
+int qlwdebug = QLW_D_PORT | QLW_D_INTR | QLW_D_MBOX;
 #else
 #define DPRINTF(m, f...)
 #endif
@@ -119,7 +119,7 @@ void		qlw_free_ccbs(struct qlw_softc *);
 void		*qlw_get_ccb(void *);
 void		qlw_put_ccb(void *, void *);
 
-void		qlw_dump_iocb(struct qlw_softc *, void *);
+void		qlw_dump_iocb(struct qlw_softc *, void *, int);
 void		qlw_dump_iocb_segs(struct qlw_softc *, void *, int);
 
 static inline int
@@ -567,8 +567,6 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 	    QLW_DMA_MAP(sc->sc_responses), id * QLW_QUEUE_ENTRY_SIZE,
 	    QLW_QUEUE_ENTRY_SIZE, BUS_DMASYNC_POSTREAD);
 
-	qlw_dump_iocb(sc, hdr);
-
 	qlw_get_header(sc, hdr, &entry_type, &flags);
 	switch (entry_type) {
 	case QLW_IOCB_STATUS:
@@ -584,6 +582,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 		if (xs == NULL) {
 			DPRINTF(QLW_D_INTR, "%s: got status for inactive"
 			    " ccb %d\n", DEVNAME(sc), handle);
+			qlw_dump_iocb(sc, hdr, QLW_D_INTR);
 			ccb = NULL;
 			break;
 		}
@@ -630,20 +629,20 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			break;
 
 		case QLW_IOCB_STATUS_RESET:
-			DPRINTF(QLW_D_IO, "%s: reset destroyed command\n",
+			DPRINTF(QLW_D_INTR, "%s: reset destroyed command\n",
 			    DEVNAME(sc));
 			sc->sc_marker_required[bus] = 1;
 			xs->error = XS_RESET;
 			break;
 
 		case QLW_IOCB_STATUS_ABORTED:
-			DPRINTF(QLW_D_IO, "%s: aborted\n", DEVNAME(sc));
+			DPRINTF(QLW_D_INTR, "%s: aborted\n", DEVNAME(sc));
 			sc->sc_marker_required[bus] = 1;
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
 		case QLW_IOCB_STATUS_TIMEOUT:
-			DPRINTF(QLW_D_IO, "%s: command timed out\n",
+			DPRINTF(QLW_D_INTR, "%s: command timed out\n",
 			    DEVNAME(sc));
 			xs->error = XS_TIMEOUT;
 			break;
@@ -655,12 +654,12 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			break;
 
 		case QLW_IOCB_STATUS_QUEUE_FULL:
-			DPRINTF(QLW_D_IO, "%s: queue full\n", DEVNAME(sc));
+			DPRINTF(QLW_D_INTR, "%s: queue full\n", DEVNAME(sc));
 			xs->error = XS_BUSY;
 			break;
 
 		case QLW_IOCB_STATUS_WIDE_FAILED:
-			DPRINTF(QLW_D_IO, "%s: wide failed\n", DEVNAME(sc));
+			DPRINTF(QLW_D_INTR, "%s: wide failed\n", DEVNAME(sc));
 			sc->sc_link->quirks |= SDEV_NOWIDE;
 			atomic_setbits_int(&sc->sc_update_required[bus],
 			    1 << xs->sc_link->target);
@@ -670,7 +669,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			break;
 
 		case QLW_IOCB_STATUS_SYNCXFER_FAILED:
-			DPRINTF(QLW_D_IO, "%s: sync failed\n", DEVNAME(sc));
+			DPRINTF(QLW_D_INTR, "%s: sync failed\n", DEVNAME(sc));
 			sc->sc_link->quirks |= SDEV_NOSYNC;
 			atomic_setbits_int(&sc->sc_update_required[bus],
 			    1 << xs->sc_link->target);
@@ -683,6 +682,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 			DPRINTF(QLW_D_INTR, "%s: unexpected completion"
 			    " status %x\n", DEVNAME(sc),
 			    qlw_swap16(sc, status->completion));
+			qlw_dump_iocb(sc, hdr, QLW_D_INTR);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
@@ -691,6 +691,7 @@ qlw_handle_resp(struct qlw_softc *sc, u_int16_t id)
 	default:
 		DPRINTF(QLW_D_INTR, "%s: unexpected response entry type %x\n",
 		    DEVNAME(sc), entry_type);
+		qlw_dump_iocb(sc, hdr, QLW_D_INTR);
 		break;
 	}
 
@@ -1235,14 +1236,14 @@ qlw_async(struct qlw_softc *sc, u_int16_t info)
 }
 
 void
-qlw_dump_iocb(struct qlw_softc *sc, void *buf)
+qlw_dump_iocb(struct qlw_softc *sc, void *buf, int flags)
 {
 #ifdef QLW_DEBUG
 	u_int8_t *iocb = buf;
 	int l;
 	int b;
 
-	if ((qlwdebug & QLW_D_IOCB) == 0)
+	if ((qlwdebug & flags) == 0)
 		return;
 
 	printf("%s: iocb:\n", DEVNAME(sc));
@@ -1331,7 +1332,7 @@ qlw_put_marker(struct qlw_softc *sc, int bus, void *buf)
 	/* could be more specific here; isp(4) isn't */
 	marker->device = qlw_swap16(sc, (bus << 7) << 8);
 	marker->modifier = qlw_swap16(sc, QLW_IOCB_MARKER_SYNC_ALL);
-	qlw_dump_iocb(sc, buf);
+	qlw_dump_iocb(sc, buf, QLW_D_IOCB);
 }
 
 void
@@ -1392,7 +1393,7 @@ qlw_put_cmd(struct qlw_softc *sc, void *buf, struct scsi_xfer *xs,
 
 	req->handle = qlw_swap32(sc, ccb->ccb_id);
 
-	qlw_dump_iocb(sc, buf);
+	qlw_dump_iocb(sc, buf, QLW_D_IOCB);
 }
 
 void
