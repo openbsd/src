@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.38 2013/05/30 16:34:32 guenther Exp $	*/
+/*	$OpenBSD: ls.c,v 1.39 2014/03/31 20:54:37 sobrado Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -186,6 +186,9 @@ ls_main(int argc, char *argv[])
 		case 'R':
 			f_recursive = 1;
 			break;
+		case 'f':
+			f_nosort = 1;
+			/* FALLTHROUGH */
 		case 'a':
 			fts_options |= FTS_SEEDOT;
 			/* FALLTHROUGH */
@@ -196,9 +199,6 @@ ls_main(int argc, char *argv[])
 		case 'd':
 			f_listdir = 1;
 			f_recursive = 0;
-			break;
-		case 'f':
-			f_nosort = 1;
 			break;
 		case 'h':
 			f_humanval = 1;
