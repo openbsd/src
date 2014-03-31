@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.12 2010/04/10 13:46:12 oga Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.13 2014/03/31 21:10:10 kettenis Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -60,8 +60,9 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap_t pmap;
 	bus_addr_t dmaoffset, sgva;
 	bus_size_t sgvalen, boundary, alignment;
+	struct extent_region *regions = map->_dm_cookie;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int s, pteidx, error, spill;
+	int pteidx, error, spill;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
@@ -127,10 +128,10 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    (endva - va), sgvalen, map->_dm_boundary, boundary);
 #endif
 
-	s = splvm();
-	error = extent_alloc(sgmap->aps_ex, sgvalen, alignment, 0, boundary,
-	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &sgva);
-	splx(s);
+	mtx_enter(&sgmap->aps_mtx);
+	error = extent_alloc_with_descr(sgmap->aps_ex, sgvalen, alignment,
+	    0, boundary, EX_NOWAIT, &regions[seg], &sgva);
+	mtx_leave(&sgmap->aps_mtx);
 	if (error)
 		return (error);
 
@@ -393,7 +394,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	bus_addr_t osgva, sgva, esgva;
-	int s, error, spill, seg, pteidx;
+	int error, spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		/*
@@ -429,10 +430,10 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		alpha_mb();
 
 		/* Free the virtual address space used by the mapping. */
-		s = splvm();
+		mtx_enter(&sgmap->aps_mtx);
 		error = extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
 		    EX_NOWAIT);
-		splx(s);
+		mtx_leave(&sgmap->aps_mtx);
 		if (error != 0)
 			panic(__S(__C(SGMAP_TYPE,_unload)));
 	}

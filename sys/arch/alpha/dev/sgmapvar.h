@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmapvar.h,v 1.5 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: sgmapvar.h,v 1.6 2014/03/31 21:10:10 kettenis Exp $ */
 /* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
@@ -35,6 +35,7 @@
 #define	_ALPHA_COMMON_SGMAPVAR_H
 
 #include <sys/extent.h>
+#include <sys/mutex.h>
 #include <machine/bus.h>
 
 /*
@@ -54,6 +55,7 @@
  */
 struct alpha_sgmap {
 	struct extent *aps_ex;		/* extent map to manage sgva space */
+	struct mutex aps_mtx;
 	void	*aps_pt;		/* page table */
 	bus_addr_t aps_ptpa;		/* page table physical address */
 	bus_addr_t aps_sgvabase;	/* base of the sgva space */
