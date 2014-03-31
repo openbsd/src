@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.16 2014/03/26 13:00:50 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.17 2014/03/31 09:09:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -60,7 +60,7 @@ void		stream_read(struct bufferevent *, void *);
 void		stream_error(struct bufferevent *, short, void *);
 void		line_read(struct bufferevent *, void *);
 void		line_error(struct bufferevent *, short, void *);
-void		try_remote(const char *, const char *);
+void		try_remote(const char *, const char *, const char *);
 
 __dead void
 usage(void)
@@ -74,7 +74,7 @@ int
 main(int argc, char **argv)
 {
 	const char	*errstr;
-	char		*tmp, *s;
+	char		*tmp, *s, *host;
 	int		 opt, i;
 
 	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
@@ -113,14 +113,17 @@ main(int argc, char **argv)
 	if (argc != 0 && argc != 1)
 		usage();
 
-	s = getenv("REMOTE");
-	if (argc == 1) {
+	if (argc == 1)
+		host = argv[0];
+	else
+		host = getenv("HOST");
+	if (host != NULL && *host != '\0') {
+		s = getenv("REMOTE");
 		if (s != NULL && *s == '/')
-			try_remote(argv[0], s);
+			try_remote(host, s, NULL);
 		else
-			try_remote(argv[0], NULL);
-	} else if (s != NULL && *s != '/')
-		try_remote(s, NULL);
+			try_remote(host, NULL, s);
+	}
 
 	if (line_path == NULL)
 		line_path = "/dev/cua00";
@@ -306,7 +309,7 @@ line_error(struct bufferevent *bufev, short what, void *data)
 }
 
 void
-try_remote(const char *host, const char *path)
+try_remote(const char *host, const char *path, const char *entry)
 {
 	const char	*paths[] = { "/etc/remote", NULL, NULL };
 	char		*cp, *s;
@@ -318,6 +321,8 @@ try_remote(const char *host, const char *path)
 		paths[1] = "/etc/remote";
 	}
 
+	if (entry != NULL && cgetset(entry) != 0)
+		cu_errx(1, "cgetset failed");
 	error = cgetent(&cp, (char**)paths, (char*)host);
 	if (error < 0) {
 		switch (error) {
