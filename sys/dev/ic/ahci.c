@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.11 2014/03/31 04:46:59 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.12 2014/03/31 06:18:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -990,10 +990,9 @@ ahci_port_softreset(struct ahci_port *ap)
 	fis[15] = ATA_FIS_CONTROL_SRST;
 
 	cmd_slot->prdtl = 0;
-	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
-	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C); /* Clear busy on OK */
-	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R); /* Reset */
-	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W); /* Write */
+	htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+	    AHCI_CMD_LIST_FLAG_C | AHCI_CMD_LIST_FLAG_R |
+	    AHCI_CMD_LIST_FLAG_W);
 
 	ccb->ccb_xa.state = ATA_S_PENDING;
 	if (ahci_poll(ccb, 1000, NULL) != 0)
@@ -1004,8 +1003,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	fis[15] = 0;
 
 	cmd_slot->prdtl = 0;
-	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
-	cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+	htolem16(&cmd_slot->flags, 5 | AHCI_CMD_LIST_FLAG_W);
 
 	ccb->ccb_xa.state = ATA_S_PENDING;
 	if (ahci_poll(ccb, 1000, NULL) != 0)
@@ -1090,11 +1088,9 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		fis[15] = ATA_FIS_CONTROL_SRST | ATA_FIS_CONTROL_4BIT;
 
 		cmd_slot->prdtl = 0;
-		cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C);
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R);
-		cmd_slot->flags |= htole16(pmp_port <<
-		    AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+		htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+		    AHCI_CMD_LIST_FLAG_C | AHCI_CMD_LIST_FLAG_R |
+		    (pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT));
 
 		ccb->ccb_xa.state = ATA_S_PENDING;
 
@@ -1119,9 +1115,8 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		fis[15] = ATA_FIS_CONTROL_4BIT;
 
 		cmd_slot->prdtl = 0;
-		cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
-		cmd_slot->flags |= htole16(pmp_port <<
-		    AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+		htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+		    (pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT));
 
 		DPRINTF(AHCI_D_VERBOSE, "%s.%d: sending PMP probe status cmd\n",
 		    PORTNAME(ap), pmp_port);
@@ -1525,10 +1520,9 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		fis[15] = ATA_FIS_CONTROL_SRST | ATA_FIS_CONTROL_4BIT;
 
 		cmd_slot->prdtl = 0;
-		cmd_slot->flags = htole16(5); /* FIS length: 5 DWORDS */
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_C);
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_R);
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_PMP);
+		htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+		    AHCI_CMD_LIST_FLAG_C | AHCI_CMD_LIST_FLAG_R |
+		    AHCI_CMD_LIST_FLAG_PMP);
 
 		DPRINTF(AHCI_D_VERBOSE, "%s: sending PMP reset cmd\n",
 		    PORTNAME(ap));
@@ -1563,8 +1557,8 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		fis[15] = ATA_FIS_CONTROL_4BIT;
 
 		cmd_slot->prdtl = 0;
-		cmd_slot->flags = htole16(5); /* FIS length: 5 DWORDS */
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_PMP);
+		htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+		    AHCI_CMD_LIST_FLAG_PMP);
 
 		DPRINTF(AHCI_D_VERBOSE, "%s: sending PMP probe status cmd\n",
 		    PORTNAME(ap));
@@ -2505,8 +2499,8 @@ ahci_port_read_ncq_error(struct ahci_port *ap, int *err_slotp, int pmp_port)
 	fis->lba_mid_exp = 0;
 	fis->device = 0;
 
-	cmd_slot->flags = htole16(5);	/* FIS length: 5 DWORDS */
-	cmd_slot->flags |= htole16(pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+	htolem16(&cmd_slot->flags, 5 /* FIS length: 5 DWORDS */ |
+	    (pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT));
 
 	if (ahci_load_prdt(ccb) != 0) {
 		rc = ENOMEM;	/* XXX caller must abort all commands */
@@ -2738,6 +2732,7 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
 	struct ahci_cmd_hdr		*cmd_slot;
 	int				s;
+	u_int16_t			flags;
 
 	if (ccb->ccb_port->ap_state == AP_S_FATAL_ERROR)
 		goto failcmd;
@@ -2745,15 +2740,16 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	ccb->ccb_done = ahci_ata_cmd_done;
 
 	cmd_slot = ccb->ccb_cmd_hdr;
-	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
-	cmd_slot->flags |= htole16(xa->pmp_port <<
-	    AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+	flags = 5 /* FIS length (in DWORDs) */;
+	flags |= xa->pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT;
 
 	if (xa->flags & ATA_F_WRITE)
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+		flags |= AHCI_CMD_LIST_FLAG_W;
 
 	if (xa->flags & ATA_F_PACKET)
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_A);
+		flags |= AHCI_CMD_LIST_FLAG_A;
+
+	htolem16(&cmd_slot->flags, flags);
 
 	if (ahci_load_prdt(ccb) != 0)
 		goto failcmd;
@@ -3139,7 +3135,7 @@ ahci_hibernate_load_prdt(struct ahci_ccb *ccb)
 		buflen -= seglen;
 	}
 
-	cmd_slot->prdtl = htole16(i);
+	htolem16(&cmd_slot->prdtl, i);
 }
 
 int
@@ -3167,6 +3163,7 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	struct ahci_cmd_hdr *cmd_slot;
 	int rc;
 	int timeout;
+	u_int16_t flags;
 
 	if (op == HIB_INIT) {
 		struct device *disk;
@@ -3331,12 +3328,13 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	my->ccb->ccb_xa.flags |= ATA_F_POLL;
 
 	cmd_slot = my->ccb->ccb_cmd_hdr;
-	cmd_slot->flags = htole16(5); /* FIS length (in DWORDs) */
-	cmd_slot->flags |=
-	    htole16(my->pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT);
+	flags = 5; /* FIS length (in DWORDs) */
+	flags |= my->pmp_port << AHCI_CMD_LIST_FLAG_PMP_SHIFT;
 
 	if (op == HIB_W)
-		cmd_slot->flags |= htole16(AHCI_CMD_LIST_FLAG_W);
+		flags |= AHCI_CMD_LIST_FLAG_W;
+
+	htolem16(&cmd_slot->flags, flags);
 
 	ahci_hibernate_load_prdt(my->ccb);
 
