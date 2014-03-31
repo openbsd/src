@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.182 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.183 2014/03/31 22:20:15 matthew Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -247,7 +247,7 @@ struct process {
     ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
      "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
      "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND" \
-     "\017NOZOMBIE\018STOPPED")
+     "\017NOZOMBIE\020STOPPED")
 
 
 struct proc {
