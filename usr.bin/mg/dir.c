@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.25 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: dir.c,v 1.26 2014/03/31 18:00:58 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -112,6 +112,8 @@ do_makedir(void)
 	slash = strrchr(path, '\0');
 	while (--slash > path && *slash == '/')
 		*slash = '\0';
+
+	slash = path;
 
 	oumask = umask(0);
 	mode = 0777 & ~oumask;
