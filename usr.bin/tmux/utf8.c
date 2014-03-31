@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.7 2013/04/12 12:50:36 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.8 2014/03/31 21:43:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -311,7 +311,7 @@ utf8_combine(const struct utf8_data *utf8data)
 		value = utf8data->data[3] & 0x3f;
 		value |= (utf8data->data[2] & 0x3f) << 6;
 		value |= (utf8data->data[1] & 0x3f) << 12;
-		value |= (utf8data->data[0] & 0x3f) << 18;
+		value |= (utf8data->data[0] & 0x07) << 18;
 		break;
 	}
 	return (value);
