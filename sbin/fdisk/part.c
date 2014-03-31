@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.63 2014/03/25 12:59:03 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.64 2014/03/31 19:50:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -196,8 +196,8 @@ PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
 	else
 		off = offset;
 
-	partn->bs = getlong(&prt->dp_start) + off;
-	partn->ns = getlong(&prt->dp_size);
+	partn->bs = letoh32(prt->dp_start) + off;
+	partn->ns = letoh32(prt->dp_size);
 
 	PRT_fix_CHS(disk, partn);
 }
@@ -254,8 +254,8 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	prt->dp_flag = partn->flag & 0xFF;
 	prt->dp_typ = partn->id & 0xFF;
 
-	putlong(&prt->dp_start, partn->bs - off);
-	putlong(&prt->dp_size, partn->ns);
+	prt->dp_start = htole32(partn->bs - off);
+	prt->dp_size = htole32(partn->ns);
 
 	partn->scyl = scsave;
 	partn->ecyl = ecsave;

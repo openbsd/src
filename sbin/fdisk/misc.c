@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.41 2014/03/20 13:18:21 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.42 2014/03/31 19:50:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -194,42 +194,6 @@ ask_yn(const char *str)
 		errx(1, "eof");
 
 	return (first == 'y' || first == 'Y');
-}
-
-u_int16_t
-getshort(void *p)
-{
-	unsigned char *cp = p;
-
-	return (cp[0] | (cp[1] << 8));
-}
-
-void
-putshort(void *p, u_int16_t l)
-{
-	unsigned char *cp = p;
-
-	*cp++ = l;
-	*cp++ = l >> 8;
-}
-
-u_int32_t
-getlong(void *p)
-{
-	unsigned char *cp = p;
-
-	return (cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24));
-}
-
-void
-putlong(void *p, u_int32_t l)
-{
-	unsigned char *cp = p;
-
-	*cp++ = l;
-	*cp++ = l >> 8;
-	*cp++ = l >> 16;
-	*cp++ = l >> 24;
 }
 
 /*

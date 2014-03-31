@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.38 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.39 2014/03/31 19:50:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -111,29 +111,37 @@ void
 MBR_parse(struct disk *disk, struct dos_mbr *dos_mbr, off_t offset,
     off_t reloff, struct mbr *mbr)
 {
+	struct dos_partition dos_partition;
 	int i;
 
 	memcpy(mbr->code, dos_mbr->dmbr_boot, sizeof(mbr->code));
 	mbr->offset = offset;
 	mbr->reloffset = reloff;
-	mbr->signature = getshort(&dos_mbr->dmbr_sign);
+	mbr->signature = letoh16(dos_mbr->dmbr_sign);
 
-	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(disk, &dos_mbr->dmbr_parts[i], offset, reloff,
+	for (i = 0; i < NDOSPART; i++) {
+		memcpy(&dos_partition, &dos_mbr->dmbr_parts[i],
+		    sizeof(dos_partition));
+		PRT_parse(disk, &dos_partition, offset, reloff,
 		    &mbr->part[i]);
+	}
 }
 
 void
 MBR_make(struct mbr *mbr, struct dos_mbr *dos_mbr)
 {
+	struct dos_partition dos_partition;
 	int i;
 
 	memcpy(dos_mbr->dmbr_boot, mbr->code, sizeof(dos_mbr->dmbr_boot));
-	putshort(&dos_mbr->dmbr_sign, DOSMBR_SIGNATURE);
+	dos_mbr->dmbr_sign = htole16(DOSMBR_SIGNATURE);
 
-	for (i = 0; i < NDOSPART; i++)
+	for (i = 0; i < NDOSPART; i++) {
 		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
-		    &dos_mbr->dmbr_parts[i]);
+		    &dos_partition);
+		memcpy(&dos_mbr->dmbr_parts[i], &dos_partition,
+		    sizeof(dos_mbr->dmbr_parts[i]));
+	}
 }
 
 void
