@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cache_r10k.c,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -99,6 +99,8 @@ Mips10k_ConfigCache(struct cpu_info *ci)
 
 	ci->ci_SyncCache = Mips10k_SyncCache;
 	ci->ci_InvalidateICache = Mips10k_InvalidateICache;
+	ci->ci_InvalidateICachePage = Mips10k_InvalidateICachePage;
+	ci->ci_SyncICache = Mips10k_SyncICache;
 	ci->ci_SyncDCachePage = Mips10k_SyncDCachePage;
 	ci->ci_HitSyncDCache = Mips10k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips10k_HitInvalidateDCache;
@@ -207,6 +209,70 @@ Mips10k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		cache(IndexInvalidate_I, 0, sva);
 		cache(IndexInvalidate_I, 1, sva);
 		sva += R10K_L1I_LINE;
+	}
+}
+
+/*
+ * Register a given page for I$ invalidation.
+ */
+void
+Mips10k_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
+{
+#if PAGE_SHIFT < 14
+	/*
+	 * Mark the particular page index bits as needing to be flushed.
+	 */
+	ci->ci_cachepending_l1i |=
+	    1ULL << ((va & ((1UL << 14) - 1)) >> PAGE_SHIFT);
+#else
+	/*
+	 * Since the page size matches the I$ set size, all we need to do
+	 * here is remember there are postponed flushes.
+	 */
+	ci->ci_cachepending_l1i = 1;
+#endif
+}
+
+/*
+ * Perform postponed I$ invalidation.
+ */
+void
+Mips10k_SyncICache(struct cpu_info *ci)
+{
+	vaddr_t sva, eva;
+
+	if (ci->ci_cachepending_l1i != 0) {
+#if PAGE_SHIFT < 14
+		/*
+		 * Iterate on all pending page index bits.
+		 */
+		uint64_t idx;
+
+		for (idx = 0; ci->ci_cachepending_l1i != 0; idx++) {
+			if ((ci->ci_cachepending_l1i & (1ULL << idx)) == 0)
+				continue;
+
+			sva = PHYS_TO_XKPHYS(idx << PAGE_SHIFT, CCA_CACHED);
+			eva = sva + PAGE_SIZE;
+			while (sva != eva) {
+				cache(IndexInvalidate_I, 0, sva);
+				cache(IndexInvalidate_I, 1, sva);
+				sva += R10K_L1I_LINE;
+			}
+
+			ci->ci_cachepending_l1i &= ~(1ULL << idx);
+		}
+#else
+		/* inline Mips10k_InvalidateICache(ci, 0, PAGE_SIZE); */
+		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
+		eva = sva + PAGE_SIZE;
+		while (sva != eva) {
+			cache(IndexInvalidate_I, 0, sva);
+			cache(IndexInvalidate_I, 1, sva);
+			sva += R10K_L1I_LINE;
+		}
+		ci->ci_cachepending_l1i = 0;
+#endif
 	}
 }
 

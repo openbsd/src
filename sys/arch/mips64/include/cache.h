@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.5 2012/09/29 21:37:03 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -36,6 +36,10 @@ void	chip##_ConfigCache(struct cpu_info *); \
 void  	chip##_SyncCache(struct cpu_info *); \
 /* Invalidate all I$ for the given range */ \
 void	chip##_InvalidateICache(struct cpu_info *, vaddr_t, size_t); \
+/* Register a given page for I$ invalidation */ \
+void	chip##_InvalidateICachePage(struct cpu_info *, vaddr_t); \
+/* Perform postponed I$ invalidation */ \
+void	chip##_SyncICache(struct cpu_info *); \
 /* Writeback all D$ for the given page */ \
 void	chip##_SyncDCachePage(struct cpu_info *, vaddr_t, paddr_t); \
 /* Writeback all D$ for the given range */ \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.c,v 1.12 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cache_r5k.c,v 1.13 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -412,6 +412,8 @@ Mips5k_ConfigCache(struct cpu_info *ci)
 
 	ci->ci_SyncCache = Mips5k_SyncCache;
 	ci->ci_InvalidateICache = Mips5k_InvalidateICache;
+	ci->ci_InvalidateICachePage = Mips5k_InvalidateICachePage;
+	ci->ci_SyncICache = Mips5k_SyncICache;
 	ci->ci_SyncDCachePage = Mips5k_SyncDCachePage;
 	ci->ci_HitSyncDCache = Mips5k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips5k_HitInvalidateDCache;
@@ -554,6 +556,127 @@ Mips5k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	setsr(sr);
 #endif
 	mips_sync();
+}
+
+/*
+ * Register a given page for I$ invalidation.
+ */
+void
+Mips5k_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
+{
+	/*
+	 * Mark the particular page index bits as needing to be flushed.
+	 */
+	ci->ci_cachepending_l1i |=
+	    1ULL << ((va & (ci->ci_l1inst.setsize - 1)) >> PAGE_SHIFT);
+}
+
+/*
+ * Perform postponed I$ invalidation.
+ */
+void
+Mips5k_SyncICache(struct cpu_info *ci)
+{
+	vaddr_t sva, eva, iva;
+	vsize_t offs;
+	uint64_t idx;
+#ifdef CPU_R4600
+	register_t sr;
+#endif
+
+	if (ci->ci_cachepending_l1i == 0)
+		return;
+
+#ifdef CPU_R4600
+	/*
+	 * Revision 1 R4600 need to perform `Index' cache operations with
+	 * interrupt disabled, to make sure both ways are correctly updated.
+	 */
+	sr = disableintr();
+#endif
+
+	offs = ci->ci_l1inst.setsize;
+
+	if (ci->ci_l1inst.setsize <= PAGE_SIZE) {
+		ci->ci_cachepending_l1i = 0;
+		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
+		eva = sva + offs;
+		switch (ci->ci_l1inst.sets) {
+		default:
+#ifdef CPU_RM7000
+		case 4:
+			while (sva != eva) {
+				iva = sva;
+				cache(IndexInvalidate_I, 0, iva);
+				iva += offs;
+				cache(IndexInvalidate_I, 0, iva);
+				iva += offs;
+				cache(IndexInvalidate_I, 0, iva);
+				iva += offs;
+				cache(IndexInvalidate_I, 0, iva);
+				sva += R5K_LINE;
+			}
+			break;
+#endif
+#if defined(CPU_R5000) || defined(CPU_R4600)
+		case 2:
+			iva = sva + offs;
+			while (sva != eva) {
+				cache(IndexInvalidate_I, 0, iva);
+				cache(IndexInvalidate_I, 0, sva);
+				iva += R5K_LINE;
+				sva += R5K_LINE;
+			}
+			break;
+#endif
+		}
+	} else {
+		/*
+		 * Iterate on all pending page index bits.
+		 */
+		for (idx = 0; ci->ci_cachepending_l1i != 0; idx++) {
+			if ((ci->ci_cachepending_l1i & (1ULL << idx)) == 0)
+				continue;
+
+			sva = PHYS_TO_XKPHYS(idx << PAGE_SHIFT, CCA_CACHED);
+			eva = sva + offs;
+			switch (ci->ci_l1inst.sets) {
+			default:
+#ifdef CPU_RM7000
+			case 4:
+				while (sva != eva) {
+					iva = sva;
+					cache(IndexInvalidate_I, 0, iva);
+					iva += offs;
+					cache(IndexInvalidate_I, 0, iva);
+					iva += offs;
+					cache(IndexInvalidate_I, 0, iva);
+					iva += offs;
+					cache(IndexInvalidate_I, 0, iva);
+					sva += R5K_LINE;
+				}
+				break;
+#endif
+#if defined(CPU_R5000) || defined(CPU_R4600)
+			case 2:
+				iva = sva + offs;
+				while (sva != eva) {
+					cache(IndexInvalidate_I, 0, iva);
+					cache(IndexInvalidate_I, 0, sva);
+					iva += R5K_LINE;
+					sva += R5K_LINE;
+				}
+				break;
+#endif
+			}
+
+			ci->ci_cachepending_l1i &= ~(1ULL << idx);
+		}
+	}
+
+#ifdef CPU_R4600
+	setsr(sr);
+#endif
 }
 
 static __inline__ void

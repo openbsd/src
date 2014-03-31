@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.99 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.100 2014/03/31 20:21:19 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -155,8 +155,9 @@ struct cpu_info {
 	struct cpu_hwinfo
 			ci_hw;
 
-	/* cache information */
+	/* cache information and pending flush state */
 	uint		ci_cacheconfiguration;
+	uint64_t	ci_cachepending_l1i;
 	struct cache_info
 			ci_l1inst,
 			ci_l1data,
@@ -167,6 +168,8 @@ struct cpu_info {
 	void		(*ci_SyncCache)(struct cpu_info *);
 	void		(*ci_InvalidateICache)(struct cpu_info *, vaddr_t,
 			    size_t);
+	void		(*ci_InvalidateICachePage)(struct cpu_info *, vaddr_t);
+	void		(*ci_SyncICache)(struct cpu_info *);
 	void		(*ci_SyncDCachePage)(struct cpu_info *, vaddr_t,
 			    paddr_t);
 	void		(*ci_HitSyncDCache)(struct cpu_info *, vaddr_t, size_t);
@@ -481,6 +484,14 @@ u_int	cp1_get_prid(void);
 #ifndef	Mips_InvalidateICache
 #define	Mips_InvalidateICache(ci, va, l) \
 	((ci)->ci_InvalidateICache)(ci, va, l)
+#endif
+#ifndef	Mips_InvalidateICachePage
+#define	Mips_InvalidateICachePage(ci, va) \
+	((ci)->ci_InvalidateICachePage)(ci, va)
+#endif
+#ifndef	Mips_SyncICache
+#define	Mips_SyncICache(ci) \
+	((ci)->ci_SyncICache)(ci)
 #endif
 #ifndef	Mips_SyncDCachePage
 #define	Mips_SyncDCachePage(ci, va, pa) \

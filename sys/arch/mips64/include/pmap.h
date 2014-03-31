@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.34 2014/03/22 00:01:04 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.35 2014/03/31 20:21:19 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -153,8 +153,6 @@ extern vaddr_t pmap_prefer_mask;
 	(pmap_prefer_mask ? pmap_prefer_mask + 1 : 0)
 /* pmap prefer offset in alignment */
 #define	PMAP_PREFER_OFFSET(of)		((of) & pmap_prefer_mask)
-
-#define	pmap_update(x)			do { /* nothing */ } while (0)
 
 void	pmap_bootstrap(void);
 int	pmap_is_page_ro( pmap_t, vaddr_t, pt_entry_t);

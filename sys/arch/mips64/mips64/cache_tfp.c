@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.3 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.4 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -87,6 +87,8 @@ tfp_ConfigCache(struct cpu_info *ci)
 
 	ci->ci_SyncCache = tfp_SyncCache;
 	ci->ci_InvalidateICache = tfp_InvalidateICache;
+	ci->ci_InvalidateICachePage = tfp_InvalidateICachePage;
+	ci->ci_SyncICache = tfp_SyncICache;
 	ci->ci_SyncDCachePage = tfp_SyncDCachePage;
 	ci->ci_HitSyncDCache = tfp_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = tfp_HitInvalidateDCache;
@@ -133,6 +135,31 @@ tfp_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 		inval_subr = (void (*)(vsize_t))
 		    ((vaddr_t)tfp_inval_icache + va);
 		(*inval_subr)(sz);
+	}
+}
+
+/*
+ * Register a given page for I$ invalidation.
+ */
+void
+tfp_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
+{
+	/*
+	 * Since the page size matches the size of the instruction cache,
+	 * all we need to do here is remember there are postponed flushes.
+	 */
+	ci->ci_cachepending_l1i = 1;
+}
+
+/*
+ * Perform postponed I$ invalidation.
+ */
+void
+tfp_SyncICache(struct cpu_info *ci)
+{
+	if (ci->ci_cachepending_l1i != 0) {
+		tfp_inval_icache(ci->ci_l1inst.size);
+		ci->ci_cachepending_l1i = 0;
 	}
 }
 

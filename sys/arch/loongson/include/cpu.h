@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.3 2012/04/21 12:20:30 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.4 2014/03/31 20:21:18 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,10 @@
 	Loongson2_SyncCache((ci))
 #define	Mips_InvalidateICache(ci, va, l)	\
 	Loongson2_InvalidateICache((ci), (va), (l))
+#define	Mips_InvalidateICachePage(ci, va)	\
+	Loongson2_InvalidateICachePage((ci), (va))
+#define	Mips_SyncICache(ci)			\
+	Loongson2_SyncICache((ci))
 #define	Mips_SyncDCachePage(ci, va, pa)		\
 	Loongson2_SyncDCachePage((ci), (va), (pa))
 #define	Mips_HitSyncDCache(ci, va, l)	\

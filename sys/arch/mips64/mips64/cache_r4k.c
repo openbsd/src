@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r4k.c,v 1.13 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cache_r4k.c,v 1.14 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -118,6 +118,8 @@ Mips4k_ConfigCache(struct cpu_info *ci)
 
 	ci->ci_SyncCache = Mips4k_SyncCache;
 	ci->ci_InvalidateICache = Mips4k_InvalidateICache;
+	ci->ci_InvalidateICachePage = Mips4k_InvalidateICachePage;
+	ci->ci_SyncICache = Mips4k_SyncICache;
 	ci->ci_SyncDCachePage = Mips4k_SyncDCachePage;
 	ci->ci_HitSyncDCache = Mips4k_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Mips4k_HitInvalidateDCache;
@@ -199,6 +201,62 @@ Mips4k_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	}
 
 	mips_sync();
+}
+
+/*
+ * Register a given page for I$ invalidation.
+ */
+void
+Mips4k_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
+{
+	/*
+	 * Mark the particular page index bits as needing to be flushed.
+	 */
+	ci->ci_cachepending_l1i |=
+	    1ULL << ((va & ((1UL << 15) - 1)) >> PAGE_SHIFT);
+}
+
+/*
+ * Perform postponed I$ invalidation.
+ */
+void
+Mips4k_SyncICache(struct cpu_info *ci)
+{
+	vaddr_t sva, eva;
+	vsize_t line;
+	uint64_t idx;
+
+	if (ci->ci_cachepending_l1i != 0) {
+		line = ci->ci_l1inst.linesize;
+
+		if (ci->ci_l1inst.size <= PAGE_SIZE) {
+			ci->ci_cachepending_l1i = 0;
+			sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
+			eva = sva + ci->ci_l1inst.size;
+			while (sva != eva) {
+				cache(IndexInvalidate_I, sva);
+				sva += line;
+			}
+			return;
+		}
+
+		/*
+		 * Iterate on all pending page index bits.
+		 */
+		for (idx = 0; ci->ci_cachepending_l1i != 0; idx++) {
+			if ((ci->ci_cachepending_l1i & (1ULL << idx)) == 0)
+				continue;
+
+			sva = PHYS_TO_XKPHYS(idx << PAGE_SHIFT, CCA_CACHED);
+			eva = sva + PAGE_SIZE;
+			while (sva != eva) {
+				cache(IndexInvalidate_I, sva);
+				sva += line;
+			}
+
+			ci->ci_cachepending_l1i &= ~(1ULL << idx);
+		}
+	}
 }
 
 /*

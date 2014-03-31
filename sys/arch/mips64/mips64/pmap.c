@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2014/03/22 00:01:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.73 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1842,3 +1842,9 @@ pmap_unmap_direct(vaddr_t va)
 	return pg;
 }
 #endif
+
+void
+pmap_update(struct pmap *pmap)
+{
+	Mips_SyncICache(curcpu());
+}

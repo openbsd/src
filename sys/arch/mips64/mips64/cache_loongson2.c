@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.c,v 1.5 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: cache_loongson2.c,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -98,6 +98,8 @@ Loongson2_ConfigCache(struct cpu_info *ci)
 
 	ci->ci_SyncCache = Loongson2_SyncCache;
 	ci->ci_InvalidateICache = Loongson2_InvalidateICache;
+	ci->ci_InvalidateICachePage = Loongson2_InvalidateICachePage;
+	ci->ci_SyncICache = Loongson2_SyncICache;
 	ci->ci_SyncDCachePage = Loongson2_SyncDCachePage;
 	ci->ci_HitSyncDCache = Loongson2_HitSyncDCache;
 	ci->ci_HitInvalidateDCache = Loongson2_HitInvalidateDCache;
@@ -162,6 +164,41 @@ Loongson2_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	while (sva != eva) {
 		cache(IndexInvalidate_I, 0, sva);
 		sva += LS2F_CACHE_LINE;
+	}
+}
+
+/*
+ * Register a given page for I$ invalidation.
+ */
+void
+Loongson2_InvalidateICachePage(struct cpu_info *ci, vaddr_t va)
+{
+	/*
+	 * Since the page size matches the I$ set size, and I$ maintainance
+	 * operations always operate on all the sets, all we need to do here
+	 * is remember there are postponed flushes.
+	 */
+	ci->ci_cachepending_l1i = 1;
+}
+
+/*
+ * Perform postponed I$ invalidation.
+ */
+void
+Loongson2_SyncICache(struct cpu_info *ci)
+{
+	vaddr_t sva, eva;
+
+	if (ci->ci_cachepending_l1i != 0) {
+		/* inline Loongson2_InvalidateICache(ci, 0, PAGE_SIZE); */
+		sva = PHYS_TO_XKPHYS(0, CCA_CACHED);
+		eva = sva + PAGE_SIZE;
+		while (sva != eva) {
+			cache(IndexInvalidate_I, 0, sva);
+			sva += LS2F_CACHE_LINE;
+		}
+
+		ci->ci_cachepending_l1i = 0;
 	}
 }
 

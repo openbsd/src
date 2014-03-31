@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.5 2014/03/09 10:12:17 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.6 2014/03/31 20:21:19 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -65,11 +65,15 @@ void hw_ipi_intr_clear(u_long);
 	Octeon_SyncCache((ci))
 #define	Mips_InvalidateICache(ci, va, l)	\
 	Octeon_InvalidateICache((ci), (va), (l))
+#define	Mips_InvalidateICachePage(ci, va)	\
+	Octeon_InvalidateICachePage((ci), (va))
+#define	Mips_SyncICache(ci)			\
+	Octeon_SyncICache((ci))
 #define	Mips_SyncDCachePage(ci, va, pa)		\
 	Octeon_SyncDCachePage((ci), (va), (pa))
-#define	Mips_HitSyncDCache(ci, va, l)	\
+#define	Mips_HitSyncDCache(ci, va, l)		\
 	Octeon_HitSyncDCache((ci), (va), (l))
-#define	Mips_IOSyncDCache(ci, va, l, h)	\
+#define	Mips_IOSyncDCache(ci, va, l, h)		\
 	Octeon_IOSyncDCache((ci), (va), (l), (h))
 #define	Mips_HitInvalidateDCache(ci, va, l)	\
 	Octeon_HitInvalidateDCache((ci), (va), (l))
