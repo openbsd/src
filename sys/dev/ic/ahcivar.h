@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.5 2014/03/31 03:38:46 dlg Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.6 2014/03/31 04:46:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -40,11 +40,10 @@ struct ahci_cmd_hdr {
 
 	u_int32_t		prdbc; /* transferred byte count */
 
-	u_int32_t		ctba_lo;
-	u_int32_t		ctba_hi;
+	u_int64_t		ctba;
 
 	u_int32_t		reserved[4];
-} __packed;
+} __packed __aligned(8);
 
 struct ahci_rfis {
 	u_int8_t		dsfis[28];

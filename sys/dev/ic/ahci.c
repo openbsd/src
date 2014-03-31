@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.10 2014/03/31 03:58:35 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.11 2014/03/31 04:46:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -570,10 +570,9 @@ nomem:
 		ccb->ccb_port = ap;
 		ccb->ccb_cmd_hdr = &hdr[i];
 		ccb->ccb_cmd_table = &table[i];
-		dva = AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
-		    ccb->ccb_slot * sizeof(struct ahci_cmd_table);
-		ccb->ccb_cmd_hdr->ctba_hi = htole32((u_int32_t)(dva >> 32));
-		ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)dva);
+		htolem64(&ccb->ccb_cmd_hdr->ctba,
+		    AHCI_DMA_DVA(ap->ap_dmamem_cmd_table) +
+		    ccb->ccb_slot * sizeof(struct ahci_cmd_table));
 
 		ccb->ccb_xa.fis =
 		    (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
@@ -3270,9 +3269,7 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		my->ccb->ccb_cmd_table = &my->cmd_table;
 		item_phys = page_phys + ((void *)&my->cmd_table - page);
 #endif
-		my->ccb->ccb_cmd_hdr->ctba_hi =
-		    htole32((u_int32_t)(item_phys >> 32));
-		my->ccb->ccb_cmd_hdr->ctba_lo = htole32((u_int32_t)item_phys);
+		htolem64(&my->ccb->ccb_cmd_hdr->ctba, item_phys);
 
 		my->ccb->ccb_xa.fis =
 		    (struct ata_fis_h2d *)my->ccb->ccb_cmd_table->cfis;
