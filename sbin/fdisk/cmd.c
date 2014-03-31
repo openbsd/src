@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.70 2014/03/31 22:03:29 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.71 2014/03/31 23:04:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -102,41 +102,38 @@ Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 {
 	const char *errstr;
 	char *from, *to;
-	int pf, pt, ret;
+	int pf, pt;
 	struct prt pp;
-
-	ret = CMD_CONT;
 
 	to = args;
 	from = strsep(&to, " \t");
 
 	if (to == NULL) {
 		printf("partition number is invalid:\n");
-		return (ret);
+		return (CMD_CONT);
 	}
 
 	pf = strtonum(from, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, from);
-		return (ret);
+		return (CMD_CONT);
 	}
 	pt = strtonum(to, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, to);
-		return (ret);
+		return (CMD_CONT);
 	}
 
 	if (pt == pf) {
 		printf("%d same partition as %d, doing nothing.\n", pt, pf);
-		return (ret);
+		return (CMD_CONT);
 	}
 
 	pp = mbr->part[pt];
 	mbr->part[pt] = mbr->part[pf];
 	mbr->part[pf] = pp;
 
-	ret = CMD_DIRTY;
-	return (ret);
+	return (CMD_DIRTY);
 }
 
 int
@@ -206,15 +203,13 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
 {
 	const char *errstr;
-	int pn, num, ret;
+	int pn, num;
 	struct prt *pp;
-
-	ret = CMD_CONT;
 
 	pn = strtonum(args, 0, 3, &errstr);
 	if (errstr) {
 		printf("partition number is %s: %s\n", errstr, args);
-		return (ret);
+		return (CMD_CONT);
 	}
 	pp = &mbr->part[pn];
 
@@ -224,12 +219,11 @@ Xsetpid(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 
 	/* Ask for partition type */
 	num = ask_pid(pp->id);
-	if (num != pp->id)
-		ret = CMD_DIRTY;
+	if (num == pp->id)
+		return (CMD_CONT);
 
 	pp->id = num;
-
-	return (ret);
+	return (CMD_DIRTY);
 }
 
 int
