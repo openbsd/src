@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.26 2014/01/31 14:19:24 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.27 2014/03/31 21:34:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -381,7 +381,7 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp)
 		for (j = 0; j < 5; j++) {
 			for (i = px; i < px + 5; i++) {
 				tty_cursor(tty, xoff + i, yoff + py + j);
-				if (clock_table[idx][j][i - px])
+				if (window_clock_table[idx][j][i - px])
 					tty_putc(tty, ' ');
 			}
 		}
