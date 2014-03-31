@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.19 2014/03/27 03:52:46 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.20 2014/03/31 07:41:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -575,11 +575,20 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	htolem16(&icb->icb_req_queue_len, sc->sc_maxcmds);
 	htolem16(&icb->icb_resp_queue_len, sc->sc_maxcmds);
 	htolem16(&icb->icb_pri_req_queue_len, 8); /* apparently the minimum */
-	icb->icb_req_queue_addr = htole64(QLE_DMA_DVA(sc->sc_requests));
-	icb->icb_resp_queue_addr = htole64(QLE_DMA_DVA(sc->sc_responses));
-	icb->icb_pri_req_queue_addr = htole64(QLE_DMA_DVA(sc->sc_pri_requests));
+	htolem32(&icb->icb_req_queue_addr_lo,
+	    QLE_DMA_DVA(sc->sc_requests));
+	htolem32(&icb->icb_req_queue_addr_hi,
+	    QLE_DMA_DVA(sc->sc_requests) >> 32);
+	htolem32(&icb->icb_resp_queue_addr_lo,
+	    QLE_DMA_DVA(sc->sc_responses));
+	htolem32(&icb->icb_resp_queue_addr_hi,
+	    QLE_DMA_DVA(sc->sc_responses) >> 32);
+	htolem32(&icb->icb_pri_req_queue_addr_lo,
+	    QLE_DMA_DVA(sc->sc_pri_requests));
+	htolem32(&icb->icb_pri_req_queue_addr_hi,
+	    QLE_DMA_DVA(sc->sc_pri_requests) >> 32);
 
-	icb->icb_link_down_nos = htole16(200);
+	htolem16(&icb->icb_link_down_nos, 200);
 	icb->icb_int_delay = 0;
 	icb->icb_login_timeout = 0;
 

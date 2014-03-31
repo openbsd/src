@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.5 2014/03/28 04:59:34 dlg Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.6 2014/03/31 07:41:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -304,9 +304,12 @@ struct qle_init_cb {
 	u_int16_t	icb_req_queue_len;
 	u_int16_t	icb_link_down_nos;
 	u_int16_t	icb_pri_req_queue_len;
-	u_int64_t	icb_req_queue_addr;
-	u_int64_t	icb_resp_queue_addr;
-	u_int64_t	icb_pri_req_queue_addr;
+	u_int32_t	icb_req_queue_addr_lo;
+	u_int32_t	icb_req_queue_addr_hi;
+	u_int32_t	icb_resp_queue_addr_lo;
+	u_int32_t	icb_resp_queue_addr_hi;
+	u_int32_t	icb_pri_req_queue_addr_lo;
+	u_int32_t	icb_pri_req_queue_addr_hi;
 	u_int8_t	icb_reserved2[8];
 	u_int16_t	icb_atio_queue_in;
 	u_int16_t	icb_atio_queue_len;
