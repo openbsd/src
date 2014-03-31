@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.50 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.51 2014/03/31 21:36:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -678,6 +678,29 @@ window_choose_key(struct window_pane *wp, unused struct session *sess, int key)
 			break;
 		window_choose_prompt_input(WINDOW_CHOOSE_GOTO_ITEM,
 		    "Goto Item", wp, key);
+		break;
+	case MODEKEYCHOICE_STARTOFLIST:
+		data->selected = 0;
+		data->top = 0;
+		window_choose_redraw_screen(wp);
+		break;
+	case MODEKEYCHOICE_TOPLINE:
+		data->selected = data->top;
+		window_choose_redraw_screen(wp);
+		break;
+	case MODEKEYCHOICE_BOTTOMLINE:
+		data->selected = data->top + screen_size_y(s) - 1;
+		if (data->selected > items - 1)
+			data->selected = items - 1;
+		window_choose_redraw_screen(wp);
+		break;
+	case MODEKEYCHOICE_ENDOFLIST:
+		data->selected = items - 1;
+		if (screen_size_y(s) < items)
+			data->top = items - screen_size_y(s);
+		else
+			data->top = 0;
+		window_choose_redraw_screen(wp);
 		break;
 	default:
 		idx = window_choose_index_key(data, key);
