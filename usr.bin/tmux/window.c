@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.102 2014/02/22 18:01:10 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.103 2014/03/31 21:41:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -423,10 +423,15 @@ window_pane_active_set(struct window_pane *wp, struct window_pane *nextwp)
 void
 window_pane_active_lost(struct window_pane *wp, struct window_pane *nextwp)
 {
-	struct layout_cell	*lc, *lc2;
+	struct layout_cell	*lc, *lc2, *lcparent;
+
+	/* Get the parent cell. */
+	lcparent = nextwp->layout_cell->parent;
+	if (lcparent == NULL)
+		return;
 
 	/* Save the target pane in its parent. */
-	nextwp->layout_cell->parent->lastwp = nextwp;
+	lcparent->lastwp = nextwp;
 
 	/*
 	 * Save the source pane in all of its parents up to, but not including,
@@ -435,8 +440,7 @@ window_pane_active_lost(struct window_pane *wp, struct window_pane *nextwp)
 	if (wp == NULL)
 		return;
 	for (lc = wp->layout_cell->parent; lc != NULL; lc = lc->parent) {
-		lc2 = nextwp->layout_cell->parent;
-		for (; lc2 != NULL; lc2 = lc2->parent) {
+		for (lc2 = lcparent; lc2 != NULL; lc2 = lc2->parent) {
 			if (lc == lc2)
 				return;
 		}
