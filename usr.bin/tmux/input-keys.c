@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.33 2013/05/07 11:00:16 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.34 2014/03/31 21:42:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -143,7 +143,7 @@ input_key(struct window_pane *wp, int key)
 	char			       *out;
 	u_char				ch;
 
-	log_debug2("writing key 0x%x", key);
+	log_debug("writing key 0x%x", key);
 
 	/*
 	 * If this is a normal 7-bit key, just send it, with a leading escape
@@ -186,11 +186,11 @@ input_key(struct window_pane *wp, int key)
 			break;
 	}
 	if (i == nitems(input_keys)) {
-		log_debug2("key 0x%x missing", key);
+		log_debug("key 0x%x missing", key);
 		return;
 	}
 	dlen = strlen(ike->data);
-	log_debug2("found key 0x%x: \"%s\"", key, ike->data);
+	log_debug("found key 0x%x: \"%s\"", key, ike->data);
 
 	/* Prefix a \033 for escape. */
 	if (key & KEYC_ESCAPE)
