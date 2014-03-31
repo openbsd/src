@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.8 2014/03/28 17:57:11 mpi Exp $ */
+/*	$OpenBSD: ahci.c,v 1.9 2014/03/31 03:38:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -86,6 +86,8 @@ int			ahci_pmp_port_portreset(struct ahci_port *, int);
 int			ahci_pmp_port_probe(struct ahci_port *ap, int pmp_port);
 
 int			ahci_load_prdt(struct ahci_ccb *);
+void			ahci_load_prdt_seg(struct ahci_prdt *, u_int64_t,
+			    u_int32_t, u_int32_t);
 void			ahci_unload_prdt(struct ahci_ccb *);
 
 int			ahci_poll(struct ahci_ccb *, int, void (*)(void *));
@@ -1640,16 +1642,25 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 	return (rc);
 }
 
+void
+ahci_load_prdt_seg(struct ahci_prdt *prd, u_int64_t addr, u_int32_t len,
+    u_int32_t flags)
+{
+	flags |= len - 1;
+
+	htolem64(&prd->dba, addr);
+	htolem32(&prd->flags, flags);
+}
+
 int
 ahci_load_prdt(struct ahci_ccb *ccb)
 {
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
 	struct ata_xfer			*xa = &ccb->ccb_xa;
-	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt, *prd;
+	struct ahci_prdt		*prdt = ccb->ccb_cmd_table->prdt;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	struct ahci_cmd_hdr		*cmd_slot = ccb->ccb_cmd_hdr;
-	u_int64_t			addr;
 	int				i, error;
 
 	if (xa->datalen == 0) {
@@ -1664,42 +1675,22 @@ ahci_load_prdt(struct ahci_ccb *ccb)
 		return (1);
 	}
 
-	for (i = 0; i < dmap->dm_nsegs; i++) {
-		prd = &prdt[i];
-
-		addr = dmap->dm_segs[i].ds_addr;
-		prd->dba_hi = htole32((u_int32_t)(addr >> 32));
-		prd->dba_lo = htole32((u_int32_t)addr);
-#ifdef DIAGNOSTIC
-		if (addr & 1) {
-			printf("%s: requested DMA at an odd address %llx\n",
-			    PORTNAME(ap), (unsigned long long)addr);
-			goto diagerr;
-		}
-		if (dmap->dm_segs[i].ds_len & 1) {
-			printf("%s: requested DMA length %d is not even\n",
-			    PORTNAME(ap), (int)dmap->dm_segs[i].ds_len);
-			goto diagerr;
-		}
-#endif
-		prd->flags = htole32(dmap->dm_segs[i].ds_len - 1);
+	for (i = 0; i < dmap->dm_nsegs - 1; i++) {
+		ahci_load_prdt_seg(&prdt[i], dmap->dm_segs[i].ds_addr,
+		    dmap->dm_segs[i].ds_len, 0);
 	}
-	if (xa->flags & ATA_F_PIO)
-		prd->flags |= htole32(AHCI_PRDT_FLAG_INTR);
 
-	cmd_slot->prdtl = htole16(dmap->dm_nsegs);
+	ahci_load_prdt_seg(&prdt[i],
+	    dmap->dm_segs[i].ds_addr, dmap->dm_segs[i].ds_len,
+	    ISSET(xa->flags, ATA_F_PIO) ? AHCI_PRDT_FLAG_INTR : 0);
+
+	htolem16(&cmd_slot->prdtl, dmap->dm_nsegs);
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xa->flags & ATA_F_READ) ? BUS_DMASYNC_PREREAD :
 	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
-
-#ifdef DIAGNOSTIC
-diagerr:
-	bus_dmamap_unload(sc->sc_dmat, dmap);
-	return (1);
-#endif
 }
 
 void
@@ -1721,7 +1712,7 @@ ahci_unload_prdt(struct ahci_ccb *ccb)
 			xa->resid = 0;
 		else
 			xa->resid = xa->datalen -
-			    letoh32(ccb->ccb_cmd_hdr->prdbc);
+			    lemtoh32(&ccb->ccb_cmd_hdr->prdbc);
 	}
 }
 
@@ -3143,9 +3134,8 @@ ahci_hibernate_load_prdt(struct ahci_ccb *ccb)
 		if (buflen < seglen)
 			seglen = buflen;
 
-		prd->dba_hi = htole32((u_int32_t)(data_bus_phys >> 32));
-		prd->dba_lo = htole32((u_int32_t)data_bus_phys);
-		prd->flags = htole32(seglen - 1);
+		ahci_load_prdt_seg(&prdt[i], data_bus_phys, seglen, 0);
+
 		data_addr += seglen;
 		buflen -= seglen;
 	}

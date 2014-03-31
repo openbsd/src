@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.4 2014/03/31 00:19:30 dlg Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.5 2014/03/31 03:38:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -59,12 +59,11 @@ struct ahci_rfis {
 } __packed;
 
 struct ahci_prdt {
-	u_int32_t		dba_lo;
-	u_int32_t		dba_hi;
+	u_int64_t		dba;
 	u_int32_t		reserved;
 	u_int32_t		flags;
 #define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
-} __packed;
+} __packed __aligned(8);
 
 /* this makes ahci_cmd_table 512 bytes, supporting 128-byte alignment */
 #define AHCI_MAX_PRDT		24
