@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.65 2014/01/31 11:17:20 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.66 2014/03/31 21:32:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1147,7 +1147,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 	case INPUT_CSI_DA_TWO:
 		switch (input_get(ictx, 0, 0, 0)) {
 		case 0:
-			input_reply(ictx, "\033[>0;95;0c");
+			input_reply(ictx, "\033[>84;0;0c");
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
