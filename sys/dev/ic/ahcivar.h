@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.6 2014/03/31 04:46:59 dlg Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.7 2014/03/31 06:58:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -73,7 +73,7 @@ struct ahci_cmd_table {
 	u_int8_t		reserved[48];
 
 	struct ahci_prdt	prdt[AHCI_MAX_PRDT];
-} __packed;
+} __packed __aligned(128);
 
 #define AHCI_MAX_PORTS		32
 
