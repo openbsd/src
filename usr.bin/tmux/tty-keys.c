@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.62 2014/02/10 11:20:41 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.63 2014/03/31 21:40:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -748,21 +748,21 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 	m->sgr_rel = sgr_rel;
 	m->x = x;
 	m->y = y;
-	if (b & 64) { /* wheel button */
-		b &= 3;
+	if (b & MOUSE_MASK_WHEEL) {
+		b &= MOUSE_MASK_BUTTONS;
 		if (b == 0)
 			m->wheel = MOUSE_WHEEL_UP;
 		else if (b == 1)
 			m->wheel = MOUSE_WHEEL_DOWN;
 		m->event = MOUSE_EVENT_WHEEL;
-	} else if ((b & 3) == 3) {
+	} else if ((b & MOUSE_MASK_BUTTONS) == 3) {
 		if (~m->event & MOUSE_EVENT_DRAG && x == m->x && y == m->y) {
 			m->event = MOUSE_EVENT_CLICK;
 		} else
 			m->event = MOUSE_EVENT_DRAG;
 		m->event |= MOUSE_EVENT_UP;
 	} else {
-		if (b & 32) /* drag motion */
+		if (b & MOUSE_MASK_DRAG)
 			m->event = MOUSE_EVENT_DRAG;
 		else {
 			if (m->event & MOUSE_EVENT_UP && x == m->x && y == m->y)
@@ -773,7 +773,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 			m->sy = y;
 			m->event = MOUSE_EVENT_DOWN;
 		}
-		m->button = (b & 3);
+		m->button = (b & MOUSE_MASK_BUTTONS);
 	}
 
 	return (0);
