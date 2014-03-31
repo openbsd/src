@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.110 2014/02/14 13:59:01 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.111 2014/03/31 21:41:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -655,7 +655,6 @@ void printflike2
 status_message_set(struct client *c, const char *fmt, ...)
 {
 	struct timeval		 tv;
-	struct session		*s = c->session;
 	struct message_entry	*msg;
 	va_list			 ap;
 	int			 delay;
@@ -673,10 +672,7 @@ status_message_set(struct client *c, const char *fmt, ...)
 	msg->msg_time = time(NULL);
 	msg->msg = xstrdup(c->message_string);
 
-	if (s == NULL)
-		limit = 0;
-	else
-		limit = options_get_number(&s->options, "message-limit");
+	limit = options_get_number(&global_options, "message-limit");
 	if (ARRAY_LENGTH(&c->message_log) > limit) {
 		limit = ARRAY_LENGTH(&c->message_log) - limit;
 		for (i = 0; i < limit; i++) {

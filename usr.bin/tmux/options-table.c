@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.45 2014/02/23 00:53:06 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.46 2014/03/31 21:41:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,6 +79,13 @@ const struct options_table_entry server_options_table[] = {
 	{ .name = "focus-events",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
+	},
+
+	{ .name = "message-limit",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 100
 	},
 
 	{ .name = "quiet",
@@ -241,13 +248,6 @@ const struct options_table_entry session_options_table[] = {
 	  .type = OPTIONS_TABLE_COLOUR,
 	  .default_num = 0,
 	  .style = "message-style"
-	},
-
-	{ .name = "message-limit",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .minimum = 0,
-	  .maximum = INT_MAX,
-	  .default_num = 20
 	},
 
 	{ .name = "message-style",
