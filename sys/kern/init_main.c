@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.209 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.210 2014/03/31 19:37:15 kettenis Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -343,6 +343,9 @@ main(void *framep)
 	/* Initialize the interface/address trees */
 	ifinit();
 
+	/* Lock the kernel on behalf of proc0. */
+	KERNEL_LOCK();
+
 #if NMPATH > 0
 	/* Attach mpath before hardware */
 	config_rootfound("mpath", NULL);
@@ -362,9 +365,6 @@ main(void *framep)
 
 	/* Start real time and statistics clocks. */
 	initclocks();
-
-	/* Lock the kernel on behalf of proc0. */
-	KERNEL_LOCK();
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
