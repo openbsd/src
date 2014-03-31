@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.240 2014/03/12 00:44:10 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.241 2014/03/31 04:22:26 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -195,7 +195,6 @@ cy*	at pci?				# PCI cyclom card
 
 # PCI SCSI devices
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
-isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
 qlw*	at pci?				# QLogic ISP SCSI
 qla*	at pci?				# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel

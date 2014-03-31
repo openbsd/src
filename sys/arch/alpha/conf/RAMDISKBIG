@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.92 2014/03/14 05:38:31 jmatthew Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.93 2014/03/31 04:22:26 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -159,7 +159,7 @@ cy*	at pci?				# PCI cyclom card
 
 # PCI SCSI devices
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
-isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
+qlw*	at pci?				# QLogic ISP SCSI
 qla*	at pci?				# Qlogic ISP 2[123]xx SCSI/FibreChannel
 qle*	at pci?				# Qlogic ISP 2[45]xx SCSI/FibreChannel
 siop*	at pci?				# NCR 53c8xx SCSI

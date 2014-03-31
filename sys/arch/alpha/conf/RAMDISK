@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.75 2014/03/14 05:38:31 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.76 2014/03/31 04:22:26 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -90,12 +90,11 @@ sio*	at pci?				# Intel PCI-ISA bridge
 tga*	at pci?				# DEC ZLXp-E[123] graphics
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
 
-isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
 qlw*	at pci?				# QLogic ISP SCSI
 qla*	at pci?				# QLogic ISP 2[123]xx FibreChannel
-qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel
 option ISP_NOFIRMWARE
-option QLE_NOFIRMWARE
+#qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel
+#option QLE_NOFIRMWARE
 
 # Media Independent Interface (mii) drivers
 amphy*	at mii?				# AMD 79C873 PHYs
