@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.9 2011/06/23 20:44:39 ariane Exp $	*/
+/*	$OpenBSD: dma.c,v 1.10 2014/03/31 18:58:41 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -43,10 +43,10 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_page.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+
 int _dmamem_alloc_range( bus_dma_tag_t t, bus_size_t size,
     bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
     int nsegs, int *rsegs, int flags, vaddr_t low, vaddr_t high);

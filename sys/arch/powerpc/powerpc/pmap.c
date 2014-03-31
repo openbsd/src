@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2014/02/09 11:25:58 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.126 2014/03/31 18:58:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -81,7 +81,7 @@
 #include <sys/systm.h>
 #include <sys/pool.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
