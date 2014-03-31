@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.2 2012/11/09 10:55:01 espie Exp $
+# $OpenBSD: Library.pm,v 1.3 2014/03/31 13:44:04 ajacoutot Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -41,6 +41,8 @@ sub link
 
 	tsay {"creating link command for library (linked ",
 		($shared) ? "dynamically" : "statically", ")"};
+
+	my $RPdirs = $self->{RPdirs};
 
 	my @libflags;
 	my @cmd;
@@ -138,6 +140,22 @@ sub link
 		$libcounter++;
 	}
 
+	$libdirs = reverse_zap_duplicates_ref($libdirs);
+	# add libdirs to rpath if they are not in standard lib path
+	for my $l (@$libdirs) {
+		if (!LT::OSConfig->is_search_dir($l)) {
+			push @$RPdirs, $l;
+		}
+	}
+	$RPdirs = reverse_zap_duplicates_ref($RPdirs) if $RPdirs;
+
+	my @linkeropts = ();
+	if (!$ltconfig->noshared) {
+		for my $d (@$RPdirs) {
+			push(@linkeropts, '-rpath', $d);
+		}
+	}
+
 	@cmd = @$ltprog;
 	push @cmd, $ltconfig->sharedflag, @{$ltconfig->picflags};
 	push @cmd, '-o', $dst;
@@ -151,6 +169,7 @@ sub link
 	my @e = $linker->export_symbols($ltconfig, 
 	    "$odir/$ltdir/$la", $gp, @$objs, @$staticlibs);
 	push(@cmd, join(',', "-Wl", @e)) if @e;
+	push @cmd, join(',', "-Wl", @linkeropts) if @linkeropts;
 	LT::Exec->link(@cmd);
 }
 
