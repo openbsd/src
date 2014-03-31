@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.40 2013/11/24 11:29:09 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.41 2014/03/31 21:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -401,10 +401,8 @@ format_session(struct format_tree *ft, struct session *s)
 	*strchr(tim, '\n') = '\0';
 	format_add(ft, "session_created_string", "%s", tim);
 
-	if (s->flags & SESSION_UNATTACHED)
-		format_add(ft, "session_attached", "%d", 0);
-	else
-		format_add(ft, "session_attached", "%d", 1);
+	format_add(ft, "session_attached", "%u", s->attached);
+	format_add(ft, "session_many_attached", "%u", s->attached > 1);
 }
 
 /* Set default format keys for a client. */

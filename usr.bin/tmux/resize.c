@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.11 2013/10/10 11:46:00 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.12 2014/03/31 21:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,6 +55,7 @@ recalculate_sizes(void)
 	RB_FOREACH(s, sessions, &sessions) {
 		has_status = options_get_number(&s->options, "status");
 
+		s->attached = 0;
 		ssx = ssy = UINT_MAX;
 		for (j = 0; j < ARRAY_LENGTH(&clients); j++) {
 			c = ARRAY_ITEM(&clients, j);
@@ -69,6 +70,7 @@ recalculate_sizes(void)
 					ssy = c->tty.sy - 1;
 				else if (c->tty.sy < ssy)
 					ssy = c->tty.sy;
+				s->attached++;
 			}
 		}
 		if (ssx == UINT_MAX || ssy == UINT_MAX) {

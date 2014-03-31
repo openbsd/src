@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.439 2014/03/31 21:36:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.440 2014/03/31 21:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1085,6 +1085,8 @@ struct session {
 
 #define SESSION_UNATTACHED 0x1	/* not attached to any clients */
 	int		 flags;
+
+	u_int            attached;
 
 	struct termios	*tio;
 
