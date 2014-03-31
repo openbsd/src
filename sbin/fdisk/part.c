@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.64 2014/03/31 19:50:52 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.65 2014/03/31 22:03:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -216,6 +216,7 @@ PRT_check_chs(struct prt *partn)
 	}
 	return 1;
 }
+
 void
 PRT_make(struct prt *partn, off_t offset, off_t reloff,
     struct dos_partition *prt)
@@ -360,4 +361,3 @@ PRT_fix_CHS(struct disk *disk, struct prt *part)
 	part->ehead = head;
 	part->esect = sect;
 }
-

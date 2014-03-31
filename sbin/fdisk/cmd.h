@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.12 2014/03/17 16:40:00 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.13 2014/03/31 22:03:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,5 +59,3 @@ int Xflag(char *, struct disk *, struct mbr *, struct mbr *, int);
 int Xupdate(char *, struct disk *, struct mbr *, struct mbr *, int);
 
 #endif /* _CMD_H */
-
-

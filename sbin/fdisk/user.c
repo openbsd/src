@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.34 2014/03/20 13:18:21 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.35 2014/03/31 22:03:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,7 +58,6 @@ struct cmd cmd_table[] = {
 	{"abort",  Xabort,	"Abort program without saving current changes"},
 	{NULL,     NULL,	NULL}
 };
-
 
 int
 USER_init(struct disk *disk, struct mbr *tt, int preserve)
@@ -193,4 +192,3 @@ USER_print_disk(struct disk *disk)
 
 	return (close(fd));
 }
-

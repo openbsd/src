@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.69 2014/03/20 13:18:21 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.70 2014/03/31 22:03:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -138,7 +138,6 @@ Xswap(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	ret = CMD_DIRTY;
 	return (ret);
 }
-
 
 int
 Xedit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
@@ -339,7 +338,6 @@ Xabort(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	return (CMD_CONT);
 }
 
-
 int
 Xexit(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
     int offset)
@@ -438,4 +436,3 @@ Xmanual(char *args, struct disk *disk, struct mbr *mbr, struct mbr *tt,
 	signal(SIGPIPE, opipe);
 	return (CMD_CONT);
 }
-
