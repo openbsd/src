@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.17 2014/03/31 09:09:19 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.18 2014/03/31 09:16:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -118,11 +118,15 @@ main(int argc, char **argv)
 	else
 		host = getenv("HOST");
 	if (host != NULL && *host != '\0') {
-		s = getenv("REMOTE");
-		if (s != NULL && *s == '/')
-			try_remote(host, s, NULL);
-		else
-			try_remote(host, NULL, s);
+		if (*host == '/')
+			line_path = host;
+		else {
+			s = getenv("REMOTE");
+			if (s != NULL && *s == '/')
+				try_remote(host, s, NULL);
+			else
+				try_remote(host, NULL, s);
+		}
 	}
 
 	if (line_path == NULL)
