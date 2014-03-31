@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.3 2014/01/02 08:00:35 gilles Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.4 2014/03/31 00:19:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -86,7 +86,7 @@ struct ahci_dmamem {
 	caddr_t			adm_kva;
 };
 #define AHCI_DMA_MAP(_adm)	((_adm)->adm_map)
-#define AHCI_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
+#define AHCI_DMA_DVA(_adm)	((u_int64_t)(_adm)->adm_map->dm_segs[0].ds_addr)
 #define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
 struct ahci_softc;
