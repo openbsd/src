@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.14 2014/02/16 14:26:51 schwarze Exp $
+.\"	$OpenBSD: mdoc.template,v 1.15 2014/03/31 00:09:54 dlg Exp $
 .\"
 .\" Copyright (c) YYYY YOUR NAME HERE <user@your.dom.ain>
 .\"
@@ -33,6 +33,8 @@ The
 .Nm
 utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
+.\" .Sh CONTEXT
+.\" For section 9 functions only.
 .\" .Sh RETURN VALUES
 .\" For sections 2, 3, and 9 function return values only.
 .\" .Sh ENVIRONMENT
