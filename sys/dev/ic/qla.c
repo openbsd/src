@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.30 2014/02/23 10:40:19 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.31 2014/03/31 11:25:45 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -95,6 +95,7 @@ void		qla_put_cmd(struct qla_softc *, void *, struct scsi_xfer *,
 struct qla_ccb *qla_handle_resp(struct qla_softc *, u_int16_t);
 void		qla_put_data_seg(struct qla_iocb_seg *, bus_dmamap_t, int);
 
+int		qla_get_port_name_list(struct qla_softc *, u_int32_t);
 struct qla_fc_port *qla_next_fabric_port(struct qla_softc *, u_int32_t *,
 		    u_int32_t *);
 int		qla_add_port(struct qla_softc *, u_int16_t, u_int32_t,
@@ -311,6 +312,7 @@ qla_attach(struct qla_softc *sc)
 	TAILQ_INIT(&sc->sc_ports);
 	TAILQ_INIT(&sc->sc_ports_new);
 	TAILQ_INIT(&sc->sc_ports_gone);
+	TAILQ_INIT(&sc->sc_ports_found);
 
 	switch (sc->sc_isp_gen) {
 	case QLA_GEN_ISP2100:
@@ -523,37 +525,37 @@ qla_attach(struct qla_softc *sc)
 	}
 
 	if (sc->sc_loop_up) {
-		int i;
+		struct qla_fc_port *port;
 
 		qla_update_topology(sc);
-		for (i = 0; i < sc->sc_loop_max_id; i++) {
-			if (i != sc->sc_loop_id) {
-				qla_add_port(sc, i, 0,
-				    QLA_LOCATION_LOOP_ID(i));
-			}
+		qla_get_port_name_list(sc, QLA_LOCATION_LOOP);
+		while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
+			port = TAILQ_FIRST(&sc->sc_ports_found);
+			TAILQ_REMOVE(&sc->sc_ports_found, port, update);
+			qla_add_port(sc, port->loopid, port->portid,
+			    QLA_LOCATION_LOOP_ID(port->loopid));
+			free(port, M_DEVBUF);
 		}
 
 		if (qla_update_fabric(sc) == 0) {
-			TAILQ_HEAD(, qla_fc_port) found;
 			u_int32_t firstport = 0xffffffff;
 			u_int32_t lastport = 0;
-			struct qla_fc_port *port;
 
-			TAILQ_INIT(&found);
 			do {
 				port = qla_next_fabric_port(sc, &firstport,
 				    &lastport);
 				if (port != NULL)
-					TAILQ_INSERT_TAIL(&found, port, update);
+					TAILQ_INSERT_TAIL(&sc->sc_ports_found,
+					    port, update);
 			} while (lastport != 0xffffffff);
 
-			while (!TAILQ_EMPTY(&found)) {
-				port = TAILQ_FIRST(&found);
+			while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
+				port = TAILQ_FIRST(&sc->sc_ports_found);
 				if (qla_fabric_plogi(sc, port) == 0) {
 					qla_add_port(sc, port->loopid,
 					    port->portid, port->location);
 				}
-				TAILQ_REMOVE(&found, port, update);
+				TAILQ_REMOVE(&sc->sc_ports_found, port, update);
 				free(port, M_DEVBUF);
 			}
 		}
@@ -1380,6 +1382,53 @@ qla_update_fabric(struct qla_softc *sc)
 	if (qla_sns_req(sc, sc->sc_scratch, sizeof(*rft))) {
 		DPRINTF(QLA_D_PORT, "%s: RFT_ID failed\n", DEVNAME(sc));
 		/* we might be able to continue after this fails */
+	}
+
+	return (0);
+}
+
+int
+qla_get_port_name_list(struct qla_softc *sc, u_int32_t match)
+{
+	int i;
+	struct qla_port_name_list *l;
+	struct qla_fc_port *port;
+
+	sc->sc_mbox[0] = QLA_MBOX_GET_PORT_NAME_LIST;
+	sc->sc_mbox[1] = 0x08;	/* include initiators */
+	if (match & QLA_LOCATION_FABRIC)
+		sc->sc_mbox[1] |= 0x02;	 /* return all loop ids */
+	qla_mbox_putaddr(sc->sc_mbox, sc->sc_scratch);
+	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_scratch), 0,
+	    QLA_DMA_LEN(sc->sc_scratch), BUS_DMASYNC_PREREAD);
+	if (qla_mbox(sc, 0x04f, 0x003)) {
+		DPRINTF(QLA_D_PORT, "%s: get port name list failed: %x\n",
+		    DEVNAME(sc), sc->sc_mbox[0]);
+		return (1);
+	}
+	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_scratch), 0,
+	    QLA_DMA_LEN(sc->sc_scratch), BUS_DMASYNC_PREREAD);
+
+	i = 0;
+	l = QLA_DMA_KVA(sc->sc_scratch);
+	while (i * sizeof(*l) < sc->sc_mbox[1]) {
+		u_int16_t loopid;
+		u_int32_t loc;
+
+		loopid = letoh16(l[i].loop_id);
+
+		loc = (loopid < QLA_MIN_HANDLE) ? QLA_LOCATION_LOOP :
+		    QLA_LOCATION_FABRIC;
+		if (match & loc) {
+			port = malloc(sizeof(*port), M_DEVBUF, M_ZERO |
+			    M_NOWAIT);
+			port->loopid = loopid;
+			port->port_name = letoh64(l[i].port_name);
+			DPRINTF(QLA_D_PORT, "%s: loop id %d, port name %llx\n",
+			    DEVNAME(sc), port->loopid, port->port_name);
+			TAILQ_INSERT_TAIL(&sc->sc_ports_found, port, update);
+		}
+		i++;
 	}
 
 	return (0);

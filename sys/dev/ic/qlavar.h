@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.5 2014/02/20 00:23:00 dlg Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.6 2014/03/31 11:25:45 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -73,8 +73,10 @@ enum qla_port_disp {
 #define QLA_UPDATE_FABRIC_SCAN		4
 #define QLA_UPDATE_FABRIC_RELOGIN	5
 
-#define QLA_LOCATION_LOOP_ID(l)		(l | (1 << 24))
-#define QLA_LOCATION_PORT_ID(p)		(p | (2 << 24))
+#define QLA_LOCATION_LOOP		(1 << 24)
+#define QLA_LOCATION_FABRIC		(2 << 24)
+#define QLA_LOCATION_LOOP_ID(l)		(l | QLA_LOCATION_LOOP)
+#define QLA_LOCATION_PORT_ID(p)		(p | QLA_LOCATION_FABRIC)
 
 struct qla_fc_port {
 	TAILQ_ENTRY(qla_fc_port) ports;
@@ -158,6 +160,7 @@ struct qla_softc {
 	TAILQ_HEAD(, qla_fc_port) sc_ports;
 	TAILQ_HEAD(, qla_fc_port) sc_ports_new;
 	TAILQ_HEAD(, qla_fc_port) sc_ports_gone;
+	TAILQ_HEAD(, qla_fc_port) sc_ports_found;
 	struct qla_fc_port	*sc_targets[QLA_MAX_TARGETS];
 	struct taskq		*sc_scan_taskq;
 

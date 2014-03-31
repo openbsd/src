@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.4 2014/02/06 21:05:54 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.5 2014/03/31 11:25:45 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -421,6 +421,11 @@ struct qla_get_port_db {
 	u_int16_t	loop_id;
 	u_int16_t	ext_lun_list_ptr;
 	u_int16_t	ext_lun_stop_ptr;
+} __packed;
+
+struct qla_port_name_list {
+	u_int64_t	port_name;
+	u_int16_t	loop_id;
 } __packed;
 
 #define QLA_SVC3_TARGET_ROLE		0x0010
