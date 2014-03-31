@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.8 2012/05/18 02:13:44 lum Exp $ */
+/* $OpenBSD: cmode.c,v 1.9 2014/03/31 14:26:03 bcallah Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -463,8 +463,6 @@ findnonblank(struct line *lp)
 		 * comments. If one is found, ignore it and
 		 * test for nonblankness from where it starts.
 		 */
-		slashp = FALSE;
-		/* Scan backwards from end to find C-style comment */
 		for (lo = llength(lp) - 1; lo >= 0; lo--) {
 			if (!isspace(c = lgetc(lp, lo))) {
 				if (commentp) { /* find comment "open" */
