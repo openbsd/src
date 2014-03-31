@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.25 2014/03/13 03:52:56 dlg Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.26 2014/03/31 12:11:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -569,8 +569,8 @@ zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
 {
 	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
 
-	bufq_quiesce();
 	config_suspend(device_mainbus(), DVACT_QUIESCE);
+	bufq_quiesce();
 
 	/* Poll in suspended mode and forget the discharge timeout. */
 	sc->sc_suspended = 1;
