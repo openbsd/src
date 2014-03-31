@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.444 2014/03/31 21:42:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.445 2014/03/31 21:42:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -662,16 +662,6 @@ struct utf8_data {
 
 	u_int	width;
 };
-
-/* Grid output. */
-#if defined(DEBUG) && \
-    ((defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-     (defined(__GNUC__) && __GNUC__ >= 3))
-#define GRID_DEBUG(gd, fmt, ...) log_debug2("%s: (sx=%u, sy=%u, hsize=%u) " \
-    fmt, __func__, (gd)->sx, (gd)->sy, (gd)->hsize, ## __VA_ARGS__)
-#else
-#define GRID_DEBUG(...)
-#endif
 
 /* Grid attributes. */
 #define GRID_ATTR_BRIGHT 0x1
