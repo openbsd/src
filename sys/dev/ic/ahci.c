@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.9 2014/03/31 03:38:46 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.10 2014/03/31 03:58:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -258,7 +258,7 @@ noccc:
 			goto freeports;
 	}
 
-	bzero(&aaa, sizeof(aaa));
+	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_cookie = sc;
 	aaa.aaa_methods = &ahci_atascsi_methods;
 	aaa.aaa_minphys = NULL;
@@ -984,7 +984,7 @@ ahci_port_softreset(struct ahci_port *ap)
 	/* Prep first D2H command with SRST feature & clear busy/reset flags */
 	ccb = ahci_get_err_ccb(ap);
 	cmd_slot = ccb->ccb_cmd_hdr;
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+	memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 
 	fis = ccb->ccb_cmd_table->cfis;
 	fis[0] = ATA_FIS_TYPE_H2D;
@@ -1083,7 +1083,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		/* send first softreset FIS */
 		ccb = ahci_get_pmp_ccb(ap);
 		cmd_slot = ccb->ccb_cmd_hdr;
-		bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+		memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 
 		fis = ccb->ccb_cmd_table->cfis;
 		fis[0] = ATA_FIS_TYPE_H2D;
@@ -1114,7 +1114,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		}
 
 		/* send signature FIS */
-		bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+		memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 		fis[0] = ATA_FIS_TYPE_H2D;
 		fis[1] = pmp_port;
 		fis[15] = ATA_FIS_CONTROL_4BIT;
@@ -1517,7 +1517,7 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		 */
 		ccb = ahci_get_pmp_ccb(ap);
 		cmd_slot = ccb->ccb_cmd_hdr;
-		bzero(ccb->ccb_cmd_table,
+		memset(ccb->ccb_cmd_table, 0,
 		    sizeof(struct ahci_cmd_table));
 
 		fis = ccb->ccb_cmd_table->cfis;
@@ -1557,7 +1557,7 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		/* Prep second command to read status and
 		 * complete reset sequence
 		 */
-		bzero(ccb->ccb_cmd_table,
+		memset(ccb->ccb_cmd_table, 0,
 		    sizeof(struct ahci_cmd_table));
 		fis[0] = ATA_FIS_TYPE_H2D;
 		fis[1] = SATA_PMP_CONTROL_PORT;
@@ -2493,7 +2493,7 @@ ahci_port_read_ncq_error(struct ahci_port *ap, int *err_slotp, int pmp_port)
 	ccb->ccb_xa.data = ap->ap_err_scratch;
 	ccb->ccb_xa.datalen = 512;
 	cmd_slot = ccb->ccb_cmd_hdr;
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+	memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 
 	fis = (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
 	fis->type = ATA_FIS_TYPE_H2D;
@@ -2931,7 +2931,7 @@ ahci_pmp_read(struct ahci_port *ap, int target, int which, u_int32_t *datap)
 	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
 	ccb->ccb_xa.state = ATA_S_PENDING;
 	
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+	memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 	fis = (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
 	fis->type = ATA_FIS_TYPE_H2D;
 	fis->flags = ATA_H2D_FLAGS_CMD | SATA_PMP_CONTROL_PORT;
@@ -2969,7 +2969,7 @@ ahci_pmp_write(struct ahci_port *ap, int target, int which, u_int32_t data)
 	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
 	ccb->ccb_xa.state = ATA_S_PENDING;
 
-	bzero(ccb->ccb_cmd_table, sizeof(struct ahci_cmd_table));
+	memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 	fis = (struct ata_fis_h2d *)ccb->ccb_cmd_table->cfis;
 	fis->type = ATA_FIS_TYPE_H2D;
 	fis->flags = ATA_H2D_FLAGS_CMD | SATA_PMP_CONTROL_PORT;
