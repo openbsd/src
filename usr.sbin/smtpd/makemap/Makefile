@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2014/03/19 21:10:27 tedu Exp $
+#	$OpenBSD: Makefile,v 1.24 2014/04/01 23:14:25 fgsch Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ BINMODE?=555
 BINDIR=	/usr/libexec/smtpd
 MAN=	aliases.5 forward.5 makemap.8 newaliases.8
 
-CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
+CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual

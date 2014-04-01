@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2014/02/04 16:32:36 eric Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/04/01 23:14:25 fgsch Exp $
 
 .PATH: ${.CURDIR}/..
 
@@ -16,7 +16,7 @@ BINDIR=	/usr/libexec/smtpd
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
-CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
+CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
