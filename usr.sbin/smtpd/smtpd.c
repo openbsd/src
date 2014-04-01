@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.215 2014/03/24 14:55:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.216 2014/04/01 09:00:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -833,8 +833,14 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	    ": \"%s\" as %s", id, deliver->to, deliver->user);
 
 	db = delivery_backend_lookup(deliver->mode);
-	if (db == NULL)
+	if (db == NULL) {
+		snprintf(ebuf, sizeof ebuf, "could not find delivery backend");
+		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_mda,	id);
+		m_add_string(p_mda, ebuf);
+		m_close(p_mda);
 		return;
+	}
 
 	if (deliver->userinfo.uid == 0 && ! db->allow_root) {
 		snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
@@ -846,14 +852,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		return;
 	}
 
-	/* lower privs early to allow fork fail due to ulimit */
-	if (seteuid(deliver->userinfo.uid) < 0)
-		fatal("smtpd: forkmda: cannot lower privileges");
-
 	if (pipe(pipefd) < 0) {
 		snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
-		if (seteuid(0) < 0)
-			fatal("smtpd: forkmda: cannot restore privileges");
 		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_mda,	id);
 		m_add_string(p_mda, ebuf);
@@ -868,8 +868,6 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	umask(omode);
 	if (allout < 0) {
 		snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
-		if (seteuid(0) < 0)
-			fatal("smtpd: forkmda: cannot restore privileges");
 		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_mda,	id);
 		m_add_string(p_mda, ebuf);
@@ -883,8 +881,6 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	pid = fork();
 	if (pid < 0) {
 		snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
-		if (seteuid(0) < 0)
-			fatal("smtpd: forkmda: cannot restore privileges");
 		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_mda,	id);
 		m_add_string(p_mda, ebuf);
@@ -897,8 +893,6 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 
 	/* parent passes the child fd over to mda */
 	if (pid > 0) {
-		if (seteuid(0) < 0)
-			fatal("smtpd: forkmda: cannot restore privileges");
 		child = child_add(pid, CHILD_MDA, NULL);
 		child->mda_out = allout;
 		child->mda_id = id;
@@ -909,38 +903,32 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		return;
 	}
 
-#define error(m) { perror(m); _exit(1); }
-	if (seteuid(0) < 0)
-		error("forkmda: cannot restore privileges");
 	if (chdir(deliver->userinfo.directory) < 0 && chdir("/") < 0)
-		error("chdir");
-	if (dup2(pipefd[0], STDIN_FILENO) < 0 ||
-	    dup2(allout, STDOUT_FILENO) < 0 ||
-	    dup2(allout, STDERR_FILENO) < 0)
-		error("forkmda: dup2");
-	if (closefrom(STDERR_FILENO + 1) < 0)
-		error("closefrom");
+		err(1, "chdir");
 	if (setgroups(1, &deliver->userinfo.gid) ||
 	    setresgid(deliver->userinfo.gid, deliver->userinfo.gid, deliver->userinfo.gid) ||
 	    setresuid(deliver->userinfo.uid, deliver->userinfo.uid, deliver->userinfo.uid))
-		error("forkmda: cannot drop privileges");
+		err(1, "forkmda: cannot drop privileges");
+	if (dup2(pipefd[0], STDIN_FILENO) < 0 ||
+	    dup2(allout, STDOUT_FILENO) < 0 ||
+	    dup2(allout, STDERR_FILENO) < 0)
+		err(1, "forkmda: dup2");
+	if (closefrom(STDERR_FILENO + 1) < 0)
+		err(1, "closefrom");
 	if (setsid() < 0)
-		error("setsid");
+		err(1, "setsid");
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
 	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
 	    signal(SIGTERM, SIG_DFL) == SIG_ERR ||
 	    signal(SIGCHLD, SIG_DFL) == SIG_ERR ||
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
-		error("signal");
+		err(1, "signal");
 
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
 	db->open(deliver);
-
-	error("forkmda: unknown mode");
 }
-#undef error
 
 static void
 offline_scan(int fd, short ev, void *arg)
