@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.39 2013/12/06 13:39:49 markus Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.40 2014/04/01 02:05:27 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	int key_fd[NUM_KEYTYPES], i, found, version = 2, fd;
 	u_char *signature, *data;
-	char *host;
+	char *host, *fp;
 	u_int slen, dlen;
 	u_int32_t rnd[256];
 
@@ -194,8 +194,7 @@ main(int argc, char **argv)
 		fatal("could not open any host key");
 
 	OpenSSL_add_all_algorithms();
-	for (i = 0; i < 256; i++)
-		rnd[i] = arc4random();
+	arc4random_buf(rnd, sizeof(rnd));
 	RAND_seed(rnd, sizeof(rnd));
 
 	found = 0;
@@ -236,8 +235,11 @@ main(int argc, char **argv)
 			break;
 		}
 	}
-	if (!found)
-		fatal("no matching hostkey found");
+	if (!found) {
+		fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+		fatal("no matching hostkey found for key %s %s",
+		    key_type(key), fp);
+	}
 
 	if (key_sign(keys[i], &signature, &slen, data, dlen) != 0)
 		fatal("key_sign failed");
