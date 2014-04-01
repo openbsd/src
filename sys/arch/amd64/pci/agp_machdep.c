@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.10 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.11 2014/04/01 09:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -51,10 +51,11 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
-
-#include <uvm/uvm.h>
+#include <machine/pmap.h>
 
 void
 agp_flush_cache(void)

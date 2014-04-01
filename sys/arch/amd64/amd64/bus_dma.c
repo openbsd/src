@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.41 2013/12/12 21:04:50 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.42 2014/04/01 09:05:03 mpi Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include "ioapic.h"
 

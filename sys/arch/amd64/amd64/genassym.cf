@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.29 2012/04/17 16:02:33 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.30 2014/04/01 09:05:03 mpi Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -7,7 +7,7 @@ include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
 
-include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 include <machine/trap.h>
 include <machine/pmap.h>
@@ -29,8 +29,6 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
 export	VM_MAXUSER_ADDRESS
 export	VM_MIN_KERNEL_ADDRESS
-
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 struct	proc
 member	p_addr

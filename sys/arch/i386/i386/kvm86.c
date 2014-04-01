@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.6 2012/12/05 23:20:12 deraadt Exp $ */
+/* $OpenBSD: kvm86.c,v 1.7 2014/04/01 09:05:03 mpi Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -33,7 +33,9 @@
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/lock.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/pcb.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
