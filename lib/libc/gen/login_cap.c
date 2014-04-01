@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.29 2008/10/02 16:01:58 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.30 2014/04/01 02:16:37 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -632,15 +632,16 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 
 	if (flags & LOGIN_SETGROUP) {
-		if (setgid(pwd->pw_gid) < 0) {
-			syslog(LOG_ERR, "setgid(%u): %m", (u_int)pwd->pw_gid);
+		if (setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) < 0) {
+			syslog(LOG_ERR, "setresgid(%u,%u,%u): %m",
+			    pwd->pw_gid, pwd->pw_gid, pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
 
 		if (initgroups(pwd->pw_name, pwd->pw_gid) < 0) {
 			syslog(LOG_ERR, "initgroups(%s,%u): %m",
-			    pwd->pw_name, (u_int)pwd->pw_gid);
+			    pwd->pw_name, pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
@@ -655,9 +656,9 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 		}
 
 	if (flags & LOGIN_SETUSER) {
-		(void) seteuid(uid);	/* just in case */
-		if (setuid(uid) < 0) {
-			syslog(LOG_ERR, "setuid(%u): %m", uid);
+		if (setresuid(uid, uid, uid) < 0) {
+			syslog(LOG_ERR, "setresuid(%u,%u,%u): %m",
+			    uid, uid, uid);
 			login_close(flc);
 			return (-1);
 		}
