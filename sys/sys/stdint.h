@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdint.h,v 1.8 2013/06/11 15:59:16 matthew Exp $	*/
+/*	$OpenBSD: stdint.h,v 1.9 2014/04/01 05:04:50 matthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,11 @@ typedef	__int_fast64_t		int_fast64_t;
 typedef	__uint_fast64_t		uint_fast64_t;
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
+#ifndef	_INTPTR_T_DEFINED_
+#define	_INTPTR_T_DEFINED_
 typedef	__intptr_t		intptr_t;
+#endif
+
 typedef	__uintptr_t		uintptr_t;
 
 /* 7.18.1.5 Greatest-width integer types */
