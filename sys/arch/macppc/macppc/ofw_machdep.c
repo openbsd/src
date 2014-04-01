@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.45 2014/02/08 13:17:38 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.46 2014/04/01 20:27:14 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/powerpc.h>
+#include <powerpc/powerpc.h>
 #include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
@@ -68,22 +68,7 @@
 /* XXX, called from asm */
 int save_ofw_mapping(void);
 
-void OF_exit(void) __attribute__((__noreturn__));
-void OF_boot(char *bootspec) __attribute__((__noreturn__));
-void ofw_mem_regions(struct mem_region **memp, struct mem_region **availp);
-void ofw_vmon(void);
-
 extern char *hw_prod;
-
-struct firmware ofw_firmware = {
-	ofw_mem_regions,
-	OF_exit,
-	OF_boot,
-	ofw_vmon
-#ifdef FW_HAS_PUTC
-	ofwcnputc;
-#endif
-};
 
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
@@ -113,7 +98,7 @@ static struct ofwfb ofwfb;
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
+ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle, rhandle;
 	int nreg, navail;
@@ -205,12 +190,6 @@ extern fwcall_f *fwcall;
 fwcall_f fwentry;
 extern u_int32_t ofmsr;
 
-void
-ofw_vmon()
-{
-	fwcall = &fwentry;
-}
-
 int OF_stdout;
 int OF_stdin;
 
@@ -244,7 +223,6 @@ save_ofw_mapping()
 	}
 	OF_stdout = stdout;
 
-	fw = &ofw_firmware;
 	fwcall = &fwentry;
 	return 0;
 }

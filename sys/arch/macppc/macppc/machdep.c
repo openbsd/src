@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.148 2014/03/31 18:58:41 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.149 2014/04/01 20:27:14 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 #include <machine/bat.h>
 #include <machine/pmap.h>
-#include <machine/powerpc.h>
+#include <powerpc/powerpc.h>
 #include <machine/trap.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -309,8 +309,6 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	(fw->vmon)();
-
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
@@ -677,7 +675,7 @@ dumpconf(void)
 }
 
 #define BYTES_PER_DUMP  (PAGE_SIZE)  /* must be a multiple of pagesize */
-vaddr_t dumpspace;
+static vaddr_t dumpspace;
 
 int
 reserve_dumppages(caddr_t p)
@@ -858,7 +856,7 @@ haltsys:
 		}
 
 		printf("halted\n\n");
-		(fw->exit)();
+		OF_exit();
 	}
 	printf("rebooting\n\n");
 

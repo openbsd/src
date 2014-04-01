@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2013/10/09 17:43:50 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.36 2014/04/01 20:27:14 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/vmparam.h>
-#include <machine/powerpc.h>
 #include <dev/ofw/openfirm.h>
 
 void decr_intr(struct clockframe *frame);

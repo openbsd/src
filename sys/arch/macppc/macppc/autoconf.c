@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2013/09/13 07:29:01 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2014/04/01 20:27:14 mpi Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.41 2013/09/13 07:29:01 mpi Exp $
+ *      $Id: autoconf.c,v 1.42 2014/04/01 20:27:14 mpi Exp $
  */
 
 /*
@@ -58,7 +58,6 @@
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
-#include <machine/powerpc.h>
 
 #include <sys/disk.h>
 #include <scsi/scsi_all.h>
@@ -81,9 +80,6 @@ struct device *bootdv = NULL;
 enum devclass bootdev_class = DV_DULL;
 int	bootdev_type = 0;
 int	bootdev_unit = 0;
-
-struct dumpmem dumpmem[VM_PHYSSEG_MAX];
-u_int ndumpmem;
 
 /*
  *  Configure all devices found that we know about.

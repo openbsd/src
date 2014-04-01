@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.70 2014/03/31 18:58:41 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.71 2014/04/01 20:27:14 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -50,9 +50,9 @@
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
-#include <machine/powerpc.h>
-#include <macppc/dev/openpicreg.h>
 #include <dev/ofw/openfirm.h>
+
+#include <macppc/dev/openpicreg.h>
 
 #define ICU_LEN 128
 int openpic_numirq = ICU_LEN;

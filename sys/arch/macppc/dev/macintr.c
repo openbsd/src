@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.45 2014/03/31 18:58:41 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.46 2014/04/01 20:27:14 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -50,7 +50,6 @@
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
-#include <machine/powerpc.h>
 
 #include <dev/ofw/openfirm.h>
 
