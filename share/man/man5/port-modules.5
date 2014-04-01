@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.168 2014/04/01 15:31:32 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.169 2014/04/01 17:03:57 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1148,31 +1148,6 @@ will default to .tar.xz if unset.
 Also unconditionally sets
 .Ev USE_GMAKE .
 .Pp
-If
-.Li MODGNOME_DESKTOP_FILE=Yes ,
-a dependency on
-.Pa devel/desktop-file-utils
-is appended to
-.Ev MODGNOME_RUN_DEPENDS
-and a link to /usr/bin/true is created under
-.Pa ${WRKDIR}/bin/desktop-file-validate .
-.Pp
-If
-.Li MODGNOME_ICON_CACHE=Yes ,
-a dependency on
-.Pa x11/gtk+2,-guic
-is appended to
-.Ev MODGNOME_RUN_DEPENDS .
-.Pp
-If
-.Li MODGNOME_MIME_FILE=Yes ,
-a dependency on
-.Pa misc/shared-mime-info
-is appended to
-.Ev MODGNOME_RUN_DEPENDS
-and a link to /usr/bin/true is created under
-.Pa ${WRKDIR}/bin/update-mime-database .
-.Pp
 Unless
 .Li NO_BUILD=Yes ,
 .Ev CONFIGURE_SHARED
@@ -1196,11 +1171,19 @@ are defined, then "--disable-maintainer-mode" is appended to
 .Ev CONFIGURE_ARGS .
 .Pp
 Certain build/run dependencies and configure arguments and environment
-can be set by appending docbook, gobject-introspection, gtk-doc, vala and/or
-yelp to
+can be set by appending desktop-file-utils, docbook, gobject-introspection,
+gtk-doc, gtk-update-icon-cache, shared-mime-info, vala and/or yelp to
 .Ev MODGNOME_TOOLS .
 They are disabled otherwise.
 If
+.EV MODGNOME_TOOLS
+is set to desktop-file-utils,
+a dependency on
+.Pa devel/desktop-file-utils
+is appended to
+.Ev MODGNOME_RUN_DEPENDS
+and a link to /usr/bin/true is created under
+.Pa ${WRKDIR}/bin/desktop-file-validate .
 .Ev MODGNOME_TOOLS
 is set to docbook,
 .Pa textproc/docbook-xsl
@@ -1208,6 +1191,20 @@ is appended to
 .Ev MODGNOME_BUILD_DEPENDS .
 This option is used when the generation of the man pages included in the
 source tarball requires docbook XML/SGML/XSL definitions and stylesheets.
+If
+.Ev MODGNOME_TOOLS
+is set to gtk-update-icon-cache, a dependency on
+.Pa x11/gtk+2,-guic
+is appended to
+.Ev MODGNOME_RUN_DEPENDS .
+If
+.Ev MODGNOME_TOOLS
+is set to shared-mime-info, a dependency on
+.Pa misc/shared-mime-info
+is appended to
+.Ev MODGNOME_RUN_DEPENDS
+and a link to /usr/bin/true is created under
+.Pa ${WRKDIR}/bin/update-mime-database .
 If
 .Ev MODGNOME_TOOLS
 is set to yelp,
@@ -1221,8 +1218,8 @@ Furthermore,
 is appended to
 .Ev MODGNOME_RUN_DEPENDS
 if
-.Ev MODGNOME_DESKTOP_FILE
-is also set to "Yes".
+.Ev MODGNOME_TOOLS
+also contains "desktop-file-utils"
 This option is to be used when any files are installed into
 .Pa share/gnome/help/
 or page files are installed into
