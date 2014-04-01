@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.126 2014/03/31 18:58:41 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.127 2014/04/01 20:42:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -84,7 +84,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/pcb.h>
-#include <machine/powerpc.h>
+#include <powerpc/powerpc.h>
 #include <machine/pmap.h>
 
 #include <machine/db_machdep.h>
@@ -92,6 +92,9 @@
 #include <ddb/db_output.h>
 
 #include <powerpc/lock.h>
+
+struct dumpmem dumpmem[VM_PHYSSEG_MAX];
+u_int ndumpmem;
 
 struct pmap kernel_pmap_;
 static struct mem_region *pmap_mem, *pmap_avail;
@@ -1398,7 +1401,7 @@ pmap_avail_setup(void)
 	struct mem_region *mp;
 	int pmap_physmem;
 
-	(fw->mem_regions) (&pmap_mem, &pmap_avail);
+	ppc_mem_regions(&pmap_mem, &pmap_avail);
 	pmap_cnt_avail = 0;
 	pmap_physmem = 0;
 

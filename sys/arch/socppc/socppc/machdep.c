@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2014/03/31 18:58:41 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2014/04/01 20:42:39 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/pio.h>
-#include <machine/powerpc.h>
+#include <powerpc/powerpc.h>
 #include <machine/trap.h>
 
 #include <dev/cons.h>
@@ -108,18 +108,6 @@ struct bd_info {
 
 extern struct bd_info **fwargsave;
 extern struct fdt_head *fwfdtsave;
-
-void uboot_mem_regions(struct mem_region **, struct mem_region **);
-void uboot_vmon(void);
-
-struct firmware uboot_firmware = {
-	uboot_mem_regions,
-	NULL,
-	NULL,
-	uboot_vmon
-};
-
-struct firmware *fw = &uboot_firmware;
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -372,8 +360,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	(fw->vmon)();
-
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
@@ -1030,7 +1016,7 @@ dumpconf(void)
 }
 
 #define BYTES_PER_DUMP  (PAGE_SIZE)  /* must be a multiple of pagesize */
-vaddr_t dumpspace;
+static vaddr_t dumpspace;
 
 int
 reserve_dumppages(caddr_t p)
@@ -1094,7 +1080,7 @@ haltsys:
 		}
 
 		printf("halted\n\n");
-		(fw->exit)();
+		for (;;);
 	}
 	printf("rebooting\n\n");
 
@@ -1179,7 +1165,7 @@ kcopy(const void *from, void *to, size_t size)
 struct mem_region uboot_mem[2], uboot_avail[4];
 
 void
-uboot_mem_regions(struct mem_region **memp, struct mem_region **availp)
+ppc_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	uboot_mem[0].start = bootinfo.bi_memstart;
 	uboot_mem[0].size = bootinfo.bi_memsize;
@@ -1193,11 +1179,6 @@ uboot_mem_regions(struct mem_region **memp, struct mem_region **availp)
 
 	*memp = uboot_mem;
 	*availp = uboot_avail;
-}
-
-void
-uboot_vmon(void)
-{
 }
 
 void

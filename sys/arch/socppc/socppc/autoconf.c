@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2009/10/01 20:19:19 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2014/04/01 20:42:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -22,14 +22,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/powerpc.h>
-
 void	dumpconf(void);
 
 int	cold = 1;
-
-struct dumpmem dumpmem[VM_PHYSSEG_MAX];
-u_int ndumpmem;
 
 void
 cpu_configure(void)

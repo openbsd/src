@@ -1,10 +1,8 @@
-/*	$OpenBSD: intr.h,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2014/04/01 20:42:39 mpi Exp $	*/
 
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
-
-void softtty(void);
 
 void *intr_establish(int, int, int,  int (*)(void *), void *, const char *);
 

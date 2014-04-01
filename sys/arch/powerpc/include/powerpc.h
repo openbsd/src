@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.8 2014/04/01 20:42:39 mpi Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -32,63 +32,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_POWERPC_H_
-#define	_MACHINE_POWERPC_H_
+#ifndef	_POWERPC_POWERPC_H_
+#define	_POWERPC_POWERPC_H_
 
 struct mem_region {
 	vaddr_t start;
 	vsize_t size;
 };
 
-void mem_regions(struct mem_region **, struct mem_region **);
-
-/*
- * These two functions get used solely in boot() in machdep.c.
- *
- * Not sure whether boot itself should be implementation dependent instead.	XXX
- */
-typedef void (exit_f)(void) /*__attribute__((__noreturn__))*/ ;
-typedef void (boot_f)(char *bootspec) /* __attribute__((__noreturn__))*/ ;
-typedef void (vmon_f)(void);
-
-/* firmware interface.
- * regardless of type of firmware used several items
- * are need from firmware to boot up.
- * these include:
- *	memory information
- *	vmsetup for firmware calls.
- *	default character print mechanism ???
- *	firmware exit (return)
- *	firmware boot (reset)
- *	vmon - tell firmware the bsd vm is active.
- */
-
-typedef void (mem_regions_f)(struct mem_region **memp,
-	struct mem_region **availp);
-
-struct firmware {
-	mem_regions_f	*mem_regions;
-	exit_f		*exit;
-	boot_f		*boot;
-	vmon_f		*vmon;
-	
-#ifdef FW_HAS_PUTC
-	boot_f		*putc;
-#endif
-};
-extern  struct firmware *fw;
-int ppc_open_pci_bridge(void);
-void ppc_close_pci_bridge(int);
-void install_extint(void (*handler) (void));
-void ppc_intr_enable(int enable);
-int ppc_intr_disable(void);
+void ppc_mem_regions(struct mem_region **, struct mem_region **);
 
 struct dumpmem {
 	vaddr_t         start;
 	vsize_t         end;
 };
+
 extern struct dumpmem dumpmem[VM_PHYSSEG_MAX];
 extern u_int ndumpmem;
-extern vaddr_t dumpspace;
 
-#endif	/* _MACHINE_POWERPC_H_ */
+#endif	/* _POWERPC_POWERPC_H_ */
