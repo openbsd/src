@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.71 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.72 2014/04/01 20:16:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -323,31 +323,6 @@ kunmap(void *addr)
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, va, PAGE_SIZE);
-#endif
-}
-
-static inline void *
-kmap_atomic(struct vm_page *pg)
-{
-	vaddr_t va;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	va = pmap_map_direct(pg);
-#else
-	extern vaddr_t pmap_tmpmap_pa(paddr_t);
-	va = pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pg));
-#endif
-	return (void *)va;
-}
-
-static inline void
-kunmap_atomic(void *addr)
-{
-#if defined (__HAVE_PMAP_DIRECT)
-	pmap_unmap_direct((vaddr_t)addr);
-#else
-	extern void pmap_tmpunmap_pa(void);
-	pmap_tmpunmap_pa();
 #endif
 }
 

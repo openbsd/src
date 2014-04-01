@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.27 2014/03/17 22:15:24 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.28 2014/04/01 20:16:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -53,51 +53,6 @@
 
 #include <sys/queue.h>
 #include <sys/task.h>
-
-static inline void
-pagefault_disable(void)
-{
-	KASSERT(curcpu()->ci_inatomic == 0);
-	curcpu()->ci_inatomic = 1;
-}
-
-static inline void
-pagefault_enable(void)
-{
-	KASSERT(curcpu()->ci_inatomic == 1);
-	curcpu()->ci_inatomic = 0;
-}
-
-static inline int
-in_atomic(void)
-{
-	return curcpu()->ci_inatomic;
-}
-
-static inline void *
-kmap_atomic(struct vm_page *pg)
-{
-	vaddr_t va;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	va = pmap_map_direct(pg);
-#else
-	extern vaddr_t pmap_tmpmap_pa(paddr_t);
-	va = pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pg));
-#endif
-	return (void *)va;
-}
-
-static inline void
-kunmap_atomic(void *addr)
-{
-#if defined (__HAVE_PMAP_DIRECT)
-	pmap_unmap_direct((vaddr_t)addr);
-#else
-	extern void pmap_tmpunmap_pa(void);
-	pmap_tmpunmap_pa();
-#endif
-}
 
 static inline struct vm_page *i915_gem_object_get_page(struct drm_i915_gem_object *, int);
 
