@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.19 2013/12/06 21:03:02 deraadt Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.20 2014/04/02 10:37:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -281,6 +281,7 @@ rdac_mpath_checksense(struct scsi_xfer *xs)
 
 	/* i wish i knew what the magic numbers meant */
 
+	/* invalid request due to current lu ownership */
 	if (skey == SKEY_ILLEGAL_REQUEST && ASC_ASCQ(sense) == 0x9401)
 		return (MPATH_SENSE_FAILOVER);
 
