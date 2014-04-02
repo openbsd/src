@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_rdac.c,v 1.20 2014/04/02 10:37:59 dlg Exp $ */
+/*	$OpenBSD: mpath_rdac.c,v 1.21 2014/04/02 11:31:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -305,7 +305,7 @@ rdac_status(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct rdac_softc *sc = link->device_softc;
 
-        scsi_init_inquiry(xs, SI_EVPD, RDAC_VPD_VOLACCESSCTL,
+	scsi_init_inquiry(xs, SI_EVPD, RDAC_VPD_VOLACCESSCTL,
 	    sc->sc_pg, sizeof(*sc->sc_pg));
 
 	xs->done = rdac_status_done;
