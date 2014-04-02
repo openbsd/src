@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.232 2014/03/19 09:07:06 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.233 2014/04/02 16:40:54 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -390,6 +390,12 @@ ch*		at scsibus?
 safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
+
+mpath0	at root
+#emc*	at scsibus?
+hds*	at scsibus?
+rdac*	at scsibus?
+sym*	at scsibus?
 
 # 1-Wire devices
 option ONEWIREVERBOSE
