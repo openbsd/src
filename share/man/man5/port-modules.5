@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.171 2014/04/02 08:25:24 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.172 2014/04/02 15:00:27 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -442,7 +442,7 @@ and
 .Ev RUN_DEPENDS .
 This module is used by ports installing gsettings schemas under
 .Pa ${PREFIX}/share/glib-2.0/schemas/ .
-It requires the following goos in the PLIST:
+It requires the following goo in the PLIST:
 .Bd -literal -offset indent
 @exec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
 @unexec-delete %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
@@ -1233,7 +1233,7 @@ corresponding
 and
 .Ev RUN_DEPENDS .
 .Pp
-Some tools require the following goos in the PLIST:
+Some tools require the following goo in the PLIST:
 .Pp
 .Ar desktop-file-utils
 .Bd -literal -offset indent
