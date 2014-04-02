@@ -1,0 +1,139 @@
+.\"     $OpenBSD: rtrequest1.9,v 1.1 2014/04/02 13:10:48 mpi Exp $
+.\"
+.\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 2 2014 $
+.Dt RTREQUEST1 9
+.Os
+.Sh NAME
+.Nm rtrequest1
+.Nd add or remove routes from a routing table
+.Sh SYNOPSIS
+.In net/route.h
+.Ft int
+.Fn rtrequest1 "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
+"struct rtentry **rtp" "u_int rtableid"
+.Bd -literal
+struct rt_addrinfo {
+	int	rti_addrs;
+	struct	sockaddr *rti_info[RTAX_MAX];
+	int	rti_flags;
+	struct	ifaddr *rti_ifa;
+	struct	ifnet *rti_ifp;
+	struct	rt_msghdr *rti_rtm;
+	u_char	rti_mpls;
+};
+
+#define RTAX_DST	0	/* destination sockaddr present */
+#define RTAX_GATEWAY	1	/* gateway sockaddr present */
+#define RTAX_NETMASK	2	/* netmask sockaddr present */
+#define RTAX_IFP	4	/* interface name sockaddr present */
+#define RTAX_IFA	5	/* interface addr sockaddr present */
+#define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
+#define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest */
+#define RTAX_SRC	8	/* source sockaddr present */
+#define RTAX_SRCMASK	9	/* source netmask present */
+#define RTAX_LABEL	10	/* route label present */
+#define RTAX_MAX	11	/* size of array to allocate */
+.Ed
+.Sh DESCRIPTION
+The
+.Fn rtrequest1
+function is used to add or remove routes from a specific routing table.
+It takes the following arguments:
+.Bl -tag -width rtableid
+.It Fa req
+One of the following actions to perform:
+.Bl -tag -width RTM_RESOLVE -offset indent
+.It Dv RTM_ADD
+Add a route to a given routing table.
+.It Dv RTM_DELETE
+Remove a route from a given routing table.
+In case of a cloning route, all its children are deleted.
+.It Dv RTM_RESOLVE
+Add a cloned route, based on the parent cloning route pointed by
+.Fa rtp ,
+to a given routing table.
+.El
+.It Fa info
+Describes the route to add or remove.
+.It Fa prio
+Specifies the priority of the route described by
+.Fa info .
+If it is
+.Dv 0
+and the requested action is
+.Dv RTM_ADD
+then a default priority based on the priority of the associated
+interface is chosen.
+.It Fa rtp
+Points to the cloning route if the action is
+.Dv RTM_RESOLVE
+or, if the action is
+.Dv RTM_DELETE
+and it is non-NULL, a pointer to the removed route is placed there.
+In this case, the caller must take care of releasing the returned route by
+calling
+.Xr rtfree 9 .
+.It Fa rtableid
+The ID of the routing table to modify.
+.El
+.Sh CONTEXT
+.Fn rtrequest1
+can be called during autoconf, from process context, or from interrupt context.
+.Sh RETURN VALUES
+.Fn rtrequest1
+may fail with:
+.Pp
+.Bl -tag -width Er -compact
+.It Bq Er EAFNOSUPPORT
+The routing table with ID of
+.Fa rtableid
+does not exist or it does not support the protocol specified in
+.Fa info .
+.It Bq Er ESRCH
+No route corresponding to
+.Fa info
+could be found.
+.It Bq Er ESRCH
+Multipath route with no gateway provided in
+.Fa info .
+.It Bq Er ESRCH
+The route could not be found in the routing table of ID
+.Fa rtableid .
+specified
+.It Bq Er EINVAL
+The route pointed by
+.Fa rtp
+is not valid or does not point to a cloning route in the
+.Dv RTM_RESOLVE
+case.
+.It Bq Er EEXIST
+Multipath route conflicts with existing multipath route.
+.It Bq Er EEXIST
+The route could not be entered into the routing table.
+.It Bq Er ENOMEM
+Space for MPLS protocol data could not be allocated.
+.It Bq Er ENOBUFS
+Space for a new route could not be allocated.
+.It Bq Er ENETUNREACH
+An interface address corresponding to the route described by
+.Fa info
+could not be found.
+.El
+.Sh SEE ALSO
+.Xr rtable_get 9 ,
+.Xr rtfree 9

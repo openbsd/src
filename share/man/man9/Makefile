@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.205 2014/03/21 10:44:42 mpi Exp $
+#	$OpenBSD: Makefile,v 1.206 2014/04/02 13:10:48 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -25,8 +25,8 @@ MAN=	altq.9 aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
-	route.9 rt_timer_add.9 rtable_add.9 rtlabel_id2name.9 rwlock.9 \
-	sensor_attach.9 \
+	route.9 rt_timer_add.9 rtable_add.9 rtlabel_id2name.9 rtrequest1.9 \
+	rwlock.9 sensor_attach.9 \
 	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
@@ -310,11 +310,9 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_updatestats.9
-MLINKS+=route.9 rt_lookup.9 route.9 rtalloc.9 \
-	route.9 rtalloc_noclone.9 route.9 rtalloc1.9 \
-	route.9 rtfree.9 route.9 rtrequest1.9 \
-	route.9 rt_setgate.9 route.9 rtredirect.9 \
-	route.9 rtdeletemsg.9
+MLINKS+=route.9 rt_lookup.9 route.9 rtalloc.9 route.9 rtalloc_noclone.9 \
+	route.9 rtalloc1.9 route.9 rtfree.9 route.9 rt_setgate.9 \
+	route.9 rtredirect.9 route.9 rtdeletemsg.9
 MLINKS+=rtable_add.9 rtable_exists.9 rtable_add.9 rtable_get.9 \
 	rtable_add.9 rtable_l2.9 rtable_add.9 rtable_l2set.9
 MLINKS+=rt_timer_add.9 rt_timer_queue_create.9 \

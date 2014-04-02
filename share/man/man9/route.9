@@ -1,4 +1,4 @@
-.\"     $OpenBSD: route.9,v 1.9 2014/03/18 09:01:11 mpi Exp $
+.\"     $OpenBSD: route.9,v 1.10 2014/04/02 13:10:48 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2014 $
+.Dd $Mdocdate: April 2 2014 $
 .Dt ROUTE 9
 .Os
 .Sh NAME
@@ -35,9 +35,6 @@
 .Fn rtfree "struct rtentry *rt"
 .Fn RTFREE "struct rtentry *rt"
 .Ft int
-.Fn rtrequest1 "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
-"struct rtentry **ret_nrt" "u_int tableid"
-.Ft int
 .Fn rt_setgate "struct rtentry *rt0" "struct sockaddr *dst" \
 "struct sockaddr *gate" "u_int tableid"
 .Ft void
@@ -46,29 +43,6 @@
 "struct rtentry **rtp" "u_int rdomain"
 .Ft int
 .Fn rtdeletemsg "struct rtentry *rt" "u_int tableid"
-.Bd -literal
-struct rt_addrinfo {
-	int	rti_addrs;
-	struct	sockaddr *rti_info[RTAX_MAX];
-	int	rti_flags;
-	struct	ifaddr *rti_ifa;
-	struct	ifnet *rti_ifp;
-	struct	rt_msghdr *rti_rtm;
-	u_char	rti_mpls;
-};
-
-#define RTAX_DST	0	/* destination sockaddr present */
-#define RTAX_GATEWAY	1	/* gateway sockaddr present */
-#define RTAX_NETMASK	2	/* netmask sockaddr present */
-#define RTAX_IFP	4	/* interface name sockaddr present */
-#define RTAX_IFA	5	/* interface addr sockaddr present */
-#define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
-#define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest */
-#define RTAX_SRC	8	/* source sockaddr present */
-#define RTAX_SRCMASK	9	/* source netmask present */
-#define RTAX_LABEL	10	/* route label present */
-#define RTAX_MAX	11	/* size of array to allocate */
-.Ed
 .Sh DESCRIPTION
 Routing entries describe the routes to be taken by packets in a router.
 .Bl -tag -width Ds
@@ -79,30 +53,6 @@ with a mask of
 .Fa mask
 from table
 .Fa tableid .
-.It Fn rtrequest1 "int req" "struct rt_addrinfo *info" "u_int8_t prio" \
-"struct rtentry **ret_nrt" "u_int tableid"
-Perform the action specified in
-.Fa req
-on table
-.Fa tableid .
-.Fa req
-can be any of the following:
-.Bl -tag -width "RTM_RESOLVEXXX" -offset indent
-.It RTM_ADD
-.\" XXX Describe adding an entry.
-.It RTM_RESOLVE
-.\" XXX Describe resolving an entry.
-.It RTM_DELETE
-.\" XXX Describe deleting an entry.
-.El
-.Pp
-If
-.Fa ret_nrt
-is non-NULL, a pointer to the routing entry which satisfied the request is
-placed there.
-If
-.Fa prio
-is 0, a default priority based on the egress interface is used.
 .It Fn rt_setgate "struct rtentry *rt0" "struct sockaddr *dst" \
 "struct sockaddr *gate" "u_int tableid"
 Set the address of the gateway for routes described by
@@ -146,45 +96,6 @@ A macro which calls
 .Fn rtfree .
 .El
 .Sh RETURN VALUES
-.Fn rtrequest1
-may fail with:
-.Pp
-.Bl -tag -width Er -compact
-.It Bq Er EAFNOSUPPORT
-The protocol used by
-.Fa info
-is not supported in table with ID of
-.Fa tableid .
-.It Bq Er ESEARCH
-No routing entry corresponding to
-.Fa info
-could be found.
-.It Bq Er ESEARCH
-Multipath route with no gateway provided in
-.Fa info .
-.It Bq Er ESEARCH
-The routing entry could not be found in the routing table.
-.It Bq Er EINVAL
-.Fa req
-specified
-.Fa RTM_RESOLVE
-with a
-.Fa ret_nrt
-argument which does not point to a cloneable routing entry.
-.It Bq Er EEXIST
-Multipath route conflicts with existing multipath route.
-.It Bq Er EEXIST
-The route could not be entered into the routing table.
-.It Bq Er ENOMEM
-Space for MPLS protocol data could not be allocated.
-.It Bq Er ENOBUFS
-Space for a new routing entry could not be allocated.
-.It Bq Er ENETUNREACH
-An interface address corresponding to the route described by
-.Fa info
-could not be found.
-.El
-.Pp
 .Fn rt_setgate
 returns non-0 if it cannot allocate memory.
 .Pp
@@ -210,7 +121,5 @@ is a multipath route that conflicts with existing multipath route.
 .Xr route 8 ,
 .Xr rt_timer_add 9 ,
 .Xr rtable_add 9 ,
-.Xr rtlabel_id2name 9
-.Sh BUGS
-The current route entry reference counting code, while not incorrect, is also
-likely not correct either.
+.Xr rtlabel_id2name 9 ,
+.Xr rtrequest1 9
