@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.111 2014/03/31 21:41:35 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.112 2014/04/02 17:08:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -396,9 +396,6 @@ status_replace1(struct client *c, char **iptr, char **optr, char *out,
 	case '{':
 		ptr = (char *) "#{";
 		goto do_replace;
-	case '#':
-		*(*optr)++ = '#';
-		break;
 	default:
 		xsnprintf(tmp, sizeof tmp, "#%c", *(*iptr - 1));
 		ptr = tmp;
