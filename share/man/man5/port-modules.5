@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.170 2014/04/01 18:01:19 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.171 2014/04/02 08:25:24 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 1 2014 $
+.Dd $Mdocdate: April 2 2014 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -442,7 +442,7 @@ and
 .Ev RUN_DEPENDS .
 This module is used by ports installing gsettings schemas under
 .Pa ${PREFIX}/share/glib-2.0/schemas/ .
-It requires the following goo in the PLIST:
+It requires the following goos in the PLIST:
 .Bd -literal -offset indent
 @exec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
 @unexec-delete %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
@@ -1232,6 +1232,27 @@ corresponding
 .Ev BUILD_DEPENDS
 and
 .Ev RUN_DEPENDS .
+.Pp
+Some tools require the following goos in the PLIST:
+.Pp
+.Ar desktop-file-utils
+.Bd -literal -offset indent
+@exec %D/bin/update-desktop-database
+@unexec-delete %D/bin/update-desktop-database
+.Ed
+.Pp
+.Ar gtk-update-icon-cache
+($icon-theme is the theme directory)
+.Bd -literal -offset indent
+@exec %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
+@unexec-delete %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
+.Ed
+.Pp
+.Ar shared-mime-info
+.Bd -literal -offset indent
+@exec %D/bin/update-mime-database %D/share/mime
+@unexec-delete %D/bin/update-mime-database %D/share/mime
+.Ed
 .It x11/gnustep
 .It x11/kde
 .It x11/kde4
