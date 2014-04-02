@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.54 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.55 2014/04/02 20:32:00 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -956,7 +956,7 @@ skipwhite(char *s)
 {
 	while (*s == ' ' || *s == '\t' || *s == ')' || *s == '(')
 		s++;
-	if (*s == ';')
+	if ((*s == ';') || (*s == '#'))
 		*s = '\0';
 	return (s);
 }

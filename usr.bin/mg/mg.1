@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.87 2014/03/27 07:30:25 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.88 2014/04/02 20:32:00 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 27 2014 $
+.Dd $Mdocdate: April 2 2014 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -1033,6 +1033,12 @@ set-default-mode fill
 set-fill-column 72
 auto-execute *.c c-mode
 .Ed
+.Pp
+Comments can be added to the startup files by placing
+.Dq \;
+or
+.Dq #
+as the first character of a line.
 .Sh FILES
 .Bl -tag -width /usr/share/doc/mg/tutorial -compact
 .It Pa ~/.mg
