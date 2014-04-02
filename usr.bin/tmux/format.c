@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.41 2014/03/31 21:37:55 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.42 2014/04/02 18:12:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -601,12 +601,14 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 
 /* Set default format keys for paste buffer. */
 void
-format_paste_buffer(struct format_tree *ft, struct paste_buffer *pb)
+format_paste_buffer(struct format_tree *ft, struct paste_buffer *pb,
+    int utf8flag)
 {
-	char	*pb_print = paste_print(pb, 50);
+	char	*s;
 
 	format_add(ft, "buffer_size", "%zu", pb->size);
-	format_add(ft, "buffer_sample", "%s", pb_print);
 
-	free(pb_print);
+	s = paste_make_sample(pb, utf8flag);
+	format_add(ft, "buffer_sample", "%s", s);
+	free(s);
 }

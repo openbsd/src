@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.18 2013/10/10 12:00:20 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.19 2014/04/02 18:12:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,7 +55,7 @@ cmd_list_buffers_exec(unused struct cmd *self, struct cmd_q *cmdq)
 	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {
 		ft = format_create();
 		format_add(ft, "line", "%u", idx - 1);
-		format_paste_buffer(ft, pb);
+		format_paste_buffer(ft, pb, 0);
 
 		line = format_expand(ft, template);
 		cmdq_print(cmdq, "%s", line);
