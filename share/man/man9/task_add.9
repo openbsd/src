@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.10 2014/02/13 11:56:44 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.11 2014/04/02 13:19:01 mpi Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2014 $
+.Dd $Mdocdate: April 2 2014 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -172,6 +172,7 @@ will return 1 if the task
 was removed from the taskq
 .Fa tq
 or 0 if the task was not already on the queue.
+.Sh SEE ALSO
 .Xr autoconf 9 ,
 .Xr spl 9
 .Sh HISTORY
