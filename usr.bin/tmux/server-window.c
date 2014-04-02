@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.29 2014/02/14 12:44:45 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.30 2014/04/02 17:14:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,10 +85,11 @@ server_window_check_bell(struct session *s, struct winlink *wl)
 		return (0);
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
-		if (c == NULL || c->session != s || (c->flags & CLIENT_CONTROL))
+		if (c == NULL || c->session != s || c->flags & CLIENT_CONTROL)
 			continue;
 		if (!visual) {
-			tty_bell(&c->tty);
+			if (c->session->curw->window == w || action == BELL_ANY)
+				tty_bell(&c->tty);
 			continue;
 		}
 		if (c->session->curw->window == w)
