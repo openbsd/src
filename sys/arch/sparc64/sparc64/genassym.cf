@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.34 2010/09/28 20:27:55 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.35 2014/04/03 09:15:06 mpi Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -79,7 +79,7 @@ include <sys/device.h>
 include <sys/disklabel.h>
 include <sys/disk.h>
 
-include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 ifdef DDB
 include <machine/db_machdep.h>
@@ -119,9 +119,6 @@ define	USIZ		sizeof(struct user)
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-
-# UVM structure fields
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # pmap structure fields
 struct	pmap

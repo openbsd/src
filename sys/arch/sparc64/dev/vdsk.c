@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.36 2014/01/22 23:57:59 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.37 2014/04/03 09:15:06 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -24,7 +24,7 @@
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>

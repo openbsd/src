@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.6 2012/10/27 21:47:52 kettenis Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.7 2014/04/03 09:15:06 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -27,7 +27,7 @@
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>

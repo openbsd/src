@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.33 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.34 2014/04/03 09:15:06 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -35,8 +35,6 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 
@@ -1097,9 +1095,6 @@ struct db_command db_machine_command_table[] = {
 	{ "tf",		db_dump_trap,	0,	0 },
 	{ "ts",		db_dump_ts,	0,	0 },
 	{ "traptrace",	db_traptrace,	0,	0 },
-#ifdef UVMHIST
-	{ "uvmdump",	db_uvmhistdump,	0,	0 },
-#endif
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
 	{ "xir",	db_xir,		0,	0 },

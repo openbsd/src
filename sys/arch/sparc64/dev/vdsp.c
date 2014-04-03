@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.24 2014/01/24 09:58:03 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.25 2014/04/03 09:15:06 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -33,7 +33,7 @@
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.29 2013/08/21 05:21:42 dlg Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.30 2014/04/03 09:15:06 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -42,7 +42,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>

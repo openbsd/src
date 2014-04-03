@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.3 2009/05/10 12:37:01 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.4 2014/04/03 09:15:06 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -20,7 +20,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
