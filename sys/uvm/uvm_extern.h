@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.111 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.112 2014/04/03 21:40:10 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -527,6 +527,7 @@ int			uvm_vslock_device(struct proc *, void *, size_t,
 			    vm_prot_t, void **);
 void			uvm_vsunlock_device(struct proc *, void *, size_t,
 			    void *);
+void			uvm_pause(void);
 
 
 /* uvm_init.c */
