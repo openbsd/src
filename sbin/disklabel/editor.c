@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.282 2014/02/22 13:27:46 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.283 2014/04/03 16:15:38 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2042,7 +2042,7 @@ get_bsize(struct disklabel *lp, int partno)
 
 	for (;;) {
 		ui = getuint64(lp, "block size",
-		    "Size of ffs blocks. A multiple of the ffs fragment size.",
+		    "Size of ffs blocks. 1, 2, 4 or 8 times ffs fragment size.",
 		    fsize * frag, ULLONG_MAX - 2, 0, 0);
 
 		/* sanity checks */
@@ -2055,14 +2055,16 @@ get_bsize(struct disklabel *lp, int partno)
 			fprintf(stderr,
 			    "Error: block size must be at least as big "
 			    "as page size (%d).\n", getpagesize());
-		else if (ui < fsize || (ui % fsize) != 0)
-			fprintf(stderr, "Error: block size must be a multiple "
-			    "of the fragment size (%llu).\n",
+		else if (ui < fsize || (fsize != ui && fsize * 2 != ui &&
+		    fsize * 4 != ui && fsize * 8 != ui))
+			fprintf(stderr, "Error: block size must be 1, 2, 4 or "
+			    "8 times fragment size (%llu).\n",
 			    (unsigned long long) fsize);
 		else
 			break;
 	}
-	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui / frag, frag);
+	frag = ui / fsize;
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
 
 #ifndef SUN_CYLCHECK
 	p = getstring("Align partition to block size",
