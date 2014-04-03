@@ -1,3 +1,5 @@
+/*	$OpenBSD: kern_tc.c,v 1.24 2014/04/03 17:58:31 beck Exp $ */
+
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
  *
