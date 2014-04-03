@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.35 2014/03/31 20:21:19 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.36 2014/04/03 18:29:37 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -133,7 +133,7 @@ typedef struct pmap {
 #define	PGF_ATTR_REF	PG_PMAP3
 #define	PGF_EOP_CHECKED	PG_PMAP4
 #define	PGF_EOP_VULN	PG_PMAP5
-#define	PGF_PRESERVE	(PGF_ATTR_MOD | PGF_ATTR_REF | PGF_EOP_CHECKED | PGF_EOP_VULN)
+#define	PGF_PRESERVE	(PGF_ATTR_MOD | PGF_ATTR_REF)
 
 #define	PMAP_NOCACHE	PMAP_MD0
 
