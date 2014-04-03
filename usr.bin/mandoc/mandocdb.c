@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.82 2014/04/03 15:37:14 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.83 2014/04/03 16:26:53 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -349,7 +349,7 @@ mandocdb(int argc, char *argv[])
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
-	while (-1 != (ch = getopt(argc, argv, "aC:Dd:nQT:tu:W")))
+	while (-1 != (ch = getopt(argc, argv, "aC:Dd:npQT:tu:v")))
 		switch (ch) {
 		case ('a'):
 			use_all = 1;
@@ -369,6 +369,9 @@ mandocdb(int argc, char *argv[])
 			break;
 		case ('n'):
 			nodb = 1;
+			break;
+		case ('p'):
+			warnings = 1;
 			break;
 		case ('Q'):
 			mparse_options |= MPARSE_QUICK;
@@ -392,8 +395,8 @@ mandocdb(int argc, char *argv[])
 			path_arg = optarg;
 			op = OP_DELETE;
 			break;
-		case ('W'):
-			warnings = 1;
+		case ('v'):
+			/* Compatibility with espie@'s makewhatis. */
 			break;
 		default:
 			goto usage;
@@ -498,10 +501,10 @@ out:
 	ohash_delete(&mlinks);
 	return(exitcode);
 usage:
-	fprintf(stderr, "usage: %s [-aDnQW] [-C file] [-Tutf8]\n"
-			"       %s [-aDnQW] [-Tutf8] dir ...\n"
-			"       %s [-DnQW] [-Tutf8] -d dir [file ...]\n"
-			"       %s [-DnW] -u dir [file ...]\n"
+	fprintf(stderr, "usage: %s [-aDnpQ] [-C file] [-Tutf8]\n"
+			"       %s [-aDnpQ] [-Tutf8] dir ...\n"
+			"       %s [-DnpQ] [-Tutf8] -d dir [file ...]\n"
+			"       %s [-Dnp] -u dir [file ...]\n"
 			"       %s [-Q] -t file ...\n",
 		       progname, progname, progname, 
 		       progname, progname);
