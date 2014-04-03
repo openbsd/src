@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.81 2014/03/26 21:39:33 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.82 2014/04/03 15:37:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -171,7 +171,7 @@ static	char		*progname;
 static	int		 nodb; /* no database changes */
 static	int		 mparse_options; /* abort the parse early */
 static	int	 	 use_all; /* use all found files */
-static	int	  	 verb; /* print what we're doing */
+static	int	  	 debug; /* print what we're doing */
 static	int	  	 warnings; /* warn about crap */
 static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
@@ -349,7 +349,7 @@ mandocdb(int argc, char *argv[])
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
-	while (-1 != (ch = getopt(argc, argv, "aC:d:nQT:tu:vW")))
+	while (-1 != (ch = getopt(argc, argv, "aC:Dd:nQT:tu:W")))
 		switch (ch) {
 		case ('a'):
 			use_all = 1;
@@ -358,6 +358,9 @@ mandocdb(int argc, char *argv[])
 			CHECKOP(op, ch);
 			path_arg = optarg;
 			op = OP_CONFFILE;
+			break;
+		case ('D'):
+			debug++;
 			break;
 		case ('d'):
 			CHECKOP(op, ch);
@@ -388,9 +391,6 @@ mandocdb(int argc, char *argv[])
 			CHECKOP(op, ch);
 			path_arg = optarg;
 			op = OP_DELETE;
-			break;
-		case ('v'):
-			verb++;
 			break;
 		case ('W'):
 			warnings = 1;
@@ -498,10 +498,10 @@ out:
 	ohash_delete(&mlinks);
 	return(exitcode);
 usage:
-	fprintf(stderr, "usage: %s [-anQvW] [-C file] [-Tutf8]\n"
-			"       %s [-anQvW] [-Tutf8] dir ...\n"
-			"       %s [-nQvW] [-Tutf8] -d dir [file ...]\n"
-			"       %s [-nvW] -u dir [file ...]\n"
+	fprintf(stderr, "usage: %s [-aDnQW] [-C file] [-Tutf8]\n"
+			"       %s [-aDnQW] [-Tutf8] dir ...\n"
+			"       %s [-DnQW] [-Tutf8] -d dir [file ...]\n"
+			"       %s [-DnW] -u dir [file ...]\n"
 			"       %s [-Q] -t file ...\n",
 		       progname, progname, progname, 
 		       progname, progname);
@@ -1615,7 +1615,7 @@ putkeys(const struct mpage *mpage,
 	if (0 == sz)
 		return;
 
-	if (verb > 1) {
+	if (debug > 1) {
 		for (i = 0, mask = 1;
 		     i < mansearch_keymax;
 		     i++, mask <<= 1)
@@ -1842,7 +1842,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	size_t		 i;
 	unsigned int	 slot;
 
-	if (verb)
+	if (debug)
 		say(mpage->mlinks->file, "Adding to database");
 
 	if (nodb)
@@ -1888,7 +1888,7 @@ dbprune(void)
 	for (mpage = ohash_first(&mpages, &slot); NULL != mpage;
 	     mpage = ohash_next(&mpages, &slot)) {
 		mlink = mpage->mlinks;
-		if (verb)
+		if (debug)
 			say(mlink->file, "Deleting from database");
 		if (nodb)
 			continue;

@@ -1,4 +1,4 @@
-.\"	$Id: makewhatis.8,v 1.6 2014/03/17 11:29:11 schwarze Exp $
+.\"	$Id: makewhatis.8,v 1.7 2014/04/03 15:37:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2014 $
+.Dd $Mdocdate: April 3 2014 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -23,20 +23,20 @@
 .Nd index UNIX manuals
 .Sh SYNOPSIS
 .Nm
-.Op Fl anQvW
+.Op Fl aDnQW
 .Op Fl T Cm utf8
 .Op Fl C Ar file
 .Nm
-.Op Fl anQvW
+.Op Fl aDnQW
 .Op Fl T Cm utf8
 .Ar dir ...
 .Nm
-.Op Fl nQvW
+.Op Fl DnQW
 .Op Fl T Cm utf8
 .Fl d Ar dir
 .Op Ar
 .Nm
-.Op Fl nvW
+.Op Fl DnW
 .Op Fl T Cm utf8
 .Fl u Ar dir
 .Op Ar
@@ -92,6 +92,11 @@ Specify an alternative configuration
 in
 .Xr man.conf 5
 format.
+.It Fl D
+Display all files added or removed to the index.
+With a second
+.Fl D ,
+also show all keyswords added for each file.
 .It Fl d Ar dir
 Merge (remove and re-add)
 .Ar
@@ -122,11 +127,6 @@ Remove
 .Ar
 from the database in
 .Ar dir .
-.It Fl v
-Display all files added or removed to the index.
-With a second
-.Fl v ,
-also show all keyswords added for each file.
 .It Fl W
 Print warnings about potential problems with manual pages
 to the standard error output.
@@ -191,7 +191,7 @@ the options
 in
 .Ox 2.7 ;
 and the options
-.Fl aCnQTvW
+.Fl aCDnQTW
 in
 .Ox 5.6 .
 .Sh AUTHORS
