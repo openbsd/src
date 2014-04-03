@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.206 2014/04/02 13:10:48 mpi Exp $
+#	$OpenBSD: Makefile,v 1.207 2014/04/03 03:57:42 tedu Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -230,10 +230,7 @@ MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 MLINKS+=ktrace.9 ktrcsw.9 ktrace.9 ktremul.9 ktrace.9 ktrgenio.9 \
 	ktrace.9 ktrnamei.9 ktrace.9 ktrpsig.9 ktrace.9 ktrsyscall.9 \
 	ktrace.9 ktrsysret.9 ktrace.9 KTRPOINT.9
-MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9 \
-	lock.9 lockmgr_printinfo.9 \
-	lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
-	lock.9 simple_lock_try.9 lock.9 simple_unlock.9
+MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9
 MLINKS+=log.9 addlog.9
 MLINKS+=malloc.9 free.9
 MLINKS+=membar_sync.9 membar_enter.9 membar_sync.9 membar_exit.9 \
