@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.118 2014/03/18 10:47:34 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.119 2014/04/03 06:06:56 yasuoka Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -445,7 +445,7 @@ spppattach(struct ifnet *ifp)
 void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ppp_header *h, ht;
+	struct ppp_header ht;
 	struct ifqueue *inq = 0;
 	struct sppp *sp = (struct sppp *)ifp;
 	struct timeval tv;
@@ -477,14 +477,13 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (sp->pp_flags & PP_NOFRAMING) {
-		memcpy(&ht.protocol, mtod(m, char *), sizeof(ht.protocol));
+		m_copydata(m, 0, sizeof(ht.protocol), (caddr_t)&ht.protocol);
 		m_adj(m, 2);
 		ht.control = PPP_UI;
 		ht.address = PPP_ALLSTATIONS;
-		h = &ht;
 	} else {
 		/* Get PPP header. */
-		h = mtod (m, struct ppp_header*);
+		m_copydata(m, 0, sizeof(ht), (caddr_t)&ht);
 		m_adj (m, PPP_HEADER_LEN);
 	}
 
@@ -501,9 +500,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		}
 	}
 
-	switch (h->address) {
+	switch (ht.address) {
 	case PPP_ALLSTATIONS:
-		if (h->control != PPP_UI)
+		if (ht.control != PPP_UI)
 			goto invalid;
 		if (sp->pp_flags & PP_CISCO) {
 			if (debug)
@@ -511,20 +510,20 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				    SPP_FMT "PPP packet in Cisco mode "
 				    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
 				    SPP_ARGS(ifp),
-				    h->address, h->control, ntohs(h->protocol));
+				    ht.address, ht.control, ntohs(ht.protocol));
 			goto drop;
 		}
-		switch (ntohs (h->protocol)) {
+		switch (ntohs (ht.protocol)) {
 		default:
 			if (sp->state[IDX_LCP] == STATE_OPENED)
 				sppp_cp_send (sp, PPP_LCP, PROTO_REJ,
-				    ++sp->pp_seq, 2, &h->protocol);
+				    ++sp->pp_seq, 2, &ht.protocol);
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "invalid input protocol "
 				    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
 				    SPP_ARGS(ifp),
-				    h->address, h->control, ntohs(h->protocol));
+				    ht.address, ht.control, ntohs(ht.protocol));
 			++ifp->if_noproto;
 			goto drop;
 		case PPP_LCP:
@@ -580,10 +579,10 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				    SPP_FMT "Cisco packet in PPP mode "
 				    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
 				    SPP_ARGS(ifp),
-				    h->address, h->control, ntohs(h->protocol));
+				    ht.address, ht.control, ntohs(ht.protocol));
 			goto drop;
 		}
-		switch (ntohs (h->protocol)) {
+		switch (ntohs (ht.protocol)) {
 		default:
 			++ifp->if_noproto;
 			goto invalid;
@@ -612,7 +611,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    SPP_FMT "invalid input packet "
 			    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
 			    SPP_ARGS(ifp),
-			    h->address, h->control, ntohs(h->protocol));
+			    ht.address, ht.control, ntohs(ht.protocol));
 		goto drop;
 	}
 
