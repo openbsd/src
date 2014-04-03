@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2014/03/13 03:52:55 dlg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.44 2014/04/03 08:07:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -64,7 +64,7 @@
 #endif
 
 #include <net/if.h>
-#include <uvm/uvm.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>

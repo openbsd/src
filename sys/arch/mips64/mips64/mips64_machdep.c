@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.14 2014/03/21 23:05:41 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.15 2014/04/03 08:07:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -54,7 +54,7 @@
 #include <mips64/mips_cpu.h>
 #include <mips64/mips_opcode.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <mips64/dev/clockvar.h>
 

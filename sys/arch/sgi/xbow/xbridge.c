@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.87 2014/01/22 00:03:06 jsg Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.88 2014/04/03 08:07:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -45,7 +45,7 @@
 #include <machine/intr.h>
 #include <machine/mnode.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

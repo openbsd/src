@@ -1,4 +1,4 @@
-/*	$OpenBSD: r4000_errata.c,v 1.2 2014/03/24 17:12:52 miod Exp $	*/
+/*	$OpenBSD: r4000_errata.c,v 1.3 2014/04/03 08:07:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -83,7 +83,7 @@
 
 #include <machine/cpu.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 int	r4000_errata;
 

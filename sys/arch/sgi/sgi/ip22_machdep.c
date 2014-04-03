@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.16 2014/03/23 00:00:32 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.17 2014/04/03 08:07:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -27,7 +27,7 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

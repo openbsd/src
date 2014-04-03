@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.32 2014/03/21 21:49:45 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.33 2014/04/03 08:07:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <mips64/cache.h>
 #include <machine/cpu.h>

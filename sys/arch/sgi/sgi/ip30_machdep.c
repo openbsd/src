@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.59 2014/03/09 10:12:17 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.60 2014/04/03 08:07:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -36,7 +36,7 @@
 #include <mips64/mips_cpu.h>
 #include <machine/memconf.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sgi/sgi/ip30.h>
 #include <sgi/xbow/widget.h>
