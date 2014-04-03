@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.157 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.158 2014/04/03 08:22:10 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -149,6 +149,9 @@ int	rtable_init(struct radix_node_head ***, u_int);
 int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *, u_int);
+
+int	rt_ifa_add(struct ifaddr *, int, struct sockaddr *);
+int	rt_ifa_del(struct ifaddr *, int, struct sockaddr *);
 
 #define	LABELID_MAX	50000
 
@@ -1083,67 +1086,46 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 int
 rtinit(struct ifaddr *ifa, int cmd, int flags)
 {
-	struct rtentry		*rt;
-	struct sockaddr		*dst, *deldst;
-	struct mbuf		*m = NULL;
-	struct rtentry		*nrt = NULL;
-	int			 error;
-	struct rt_addrinfo	 info;
-	struct sockaddr_rtlabel	 sa_rl;
-	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
+	struct sockaddr		*dst;
+	int error;
+
+	KASSERT(cmd == RTM_ADD || cmd == RTM_DELETE);
 
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
-	if (cmd == RTM_DELETE) {
-		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
-			m = m_get(M_DONTWAIT, MT_SONAME);
-			if (m == NULL)
-				return (ENOBUFS);
-			deldst = mtod(m, struct sockaddr *);
-			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
-			dst = deldst;
-		}
-		if ((rt = rtalloc1(dst, 0, rtableid)) != NULL) {
-			rt->rt_refcnt--;
-			/* try to find the right route */
-			while (rt && rt->rt_ifa != ifa)
-				rt = (struct rtentry *)
-				    ((struct radix_node *)rt)->rn_dupedkey;
-			if (!rt) {
-				if (m != NULL)
-					(void) m_free(m);
-				return (flags & RTF_HOST ? EHOSTUNREACH
-							: ENETUNREACH);
-			}
-		}
-	}
-	bzero(&info, sizeof(info));
+
+	if (cmd == RTM_ADD)
+		error = rt_ifa_add(ifa, flags, dst);
+	else
+		error = rt_ifa_del(ifa, flags, dst);
+
+	return (error);
+}
+
+int
+rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
+{
+	struct rtentry		*rt, *nrt = NULL;
+	struct sockaddr_rtlabel	 sa_rl;
+	struct rt_addrinfo	 info;
+	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
+	int			 error;
+
+	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
-	if (cmd == RTM_ADD)
-		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	error = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, rtableid);
-	if (cmd == RTM_DELETE) {
-		if (error == 0 && (rt = nrt) != NULL) {
-			rt_newaddrmsg(cmd, ifa, error, nrt);
-			if (rt->rt_refcnt <= 0) {
-				rt->rt_refcnt++;
-				rtfree(rt);
-			}
-		}
-		if (m != NULL)
-			(void) m_free(m);
-	}
-	if (cmd == RTM_ADD && error == 0 && (rt = nrt) != NULL) {
+	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &nrt, rtableid);
+	if (error == 0 && (rt = nrt) != NULL) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%p) was (%p)\n",
+			printf("%s: wrong ifa (%p) was (%p)\n", __func__,
 			    ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt);
@@ -1154,9 +1136,107 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
-		rt_newaddrmsg(cmd, ifa, error, nrt);
+		rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
 	}
 	return (error);
+}
+
+int
+rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
+{
+	struct rtentry		*rt, *nrt = NULL;
+	struct mbuf		*m = NULL;
+	struct sockaddr		*deldst;
+	struct rt_addrinfo	 info;
+	struct sockaddr_rtlabel	 sa_rl;
+	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
+	int			 error;
+
+	if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
+		m = m_get(M_DONTWAIT, MT_SONAME);
+		if (m == NULL)
+			return (ENOBUFS);
+		deldst = mtod(m, struct sockaddr *);
+		rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
+		dst = deldst;
+	}
+	if ((rt = rtalloc1(dst, 0, rtableid)) != NULL) {
+		rt->rt_refcnt--;
+		/* try to find the right route */
+		while (rt && rt->rt_ifa != ifa)
+			rt = (struct rtentry *)
+			    ((struct radix_node *)rt)->rn_dupedkey;
+		if (!rt) {
+			if (m != NULL)
+				(void) m_free(m);
+			return (flags & RTF_HOST ? EHOSTUNREACH
+						: ENETUNREACH);
+		}
+	}
+
+	memset(&info, 0, sizeof(info));
+	info.rti_ifa = ifa;
+	info.rti_flags = flags;
+	info.rti_info[RTAX_DST] = dst;
+	info.rti_info[RTAX_LABEL] =
+	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
+
+	if ((flags & RTF_HOST) == 0)
+		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+
+	error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &nrt, rtableid);
+	if (error == 0 && (rt = nrt) != NULL) {
+		rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
+		if (rt->rt_refcnt <= 0) {
+			rt->rt_refcnt++;
+			rtfree(rt);
+		}
+	}
+	if (m != NULL)
+		m_free(m);
+
+	return (error);
+}
+
+/*
+ * Add ifa's address as a loopback rtentry.
+ */
+void
+rt_ifa_addloop(struct ifaddr *ifa)
+{
+	struct rtentry *rt;
+
+	/* If there is no loopback entry, allocate one. */
+	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
+	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+		rt_ifa_add(ifa, RTF_UP| RTF_HOST | RTF_LLINFO, ifa->ifa_addr);
+	if (rt)
+		rt->rt_refcnt--;
+}
+
+/*
+ * Remove loopback rtentry of ifa's addresss if it exists.
+ */
+void
+rt_ifa_delloop(struct ifaddr *ifa)
+{
+	struct rtentry *rt;
+
+	/*
+	 * Before deleting, check if a corresponding loopbacked host
+	 * route surely exists.  With this check, we can avoid to
+	 * delete an interface direct route whose destination is same
+	 * as the address being removed.  This can happen when removing
+	 * a subnet-router anycast address on an interface attached
+	 * to a shared medium.
+	 */
+	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
+	if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0)
+		rt_ifa_del(ifa,  RTF_HOST | RTF_LLINFO,  ifa->ifa_addr);
+	if (rt)
+		rt->rt_refcnt--;
 }
 
 /*

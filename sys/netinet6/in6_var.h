@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.48 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.49 2014/04/03 08:22:10 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -524,8 +524,6 @@ int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purgeprefix(struct ifnet *);
-void	in6_ifaddloop(struct ifaddr *);
-void	in6_ifremloop(struct ifaddr *);
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */
