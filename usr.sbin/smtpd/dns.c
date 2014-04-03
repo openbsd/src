@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.74 2014/03/26 18:14:22 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.75 2014/04/03 11:32:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -53,10 +53,6 @@ struct dns_session {
 	int			 error;
 	int			 refcount;
 };
-
-struct async_event;
-struct async_event * async_run_event(struct asr_query *,
-	void (*)(struct asr_result *, void *), void *);
 
 static void dns_lookup_host(struct dns_session *, const char *, int);
 static void dns_dispatch_host(struct asr_result *, void *);
@@ -257,7 +253,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 		as = getnameinfo_async(sa, sa->sa_len, s->name, sizeof(s->name),
 		    NULL, 0, 0, NULL);
-		async_run_event(as, dns_dispatch_ptr, s);
+		event_asr_run(as, dns_dispatch_ptr, s);
 		return;
 
 	case IMSG_DNS_MX:
@@ -294,7 +290,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		async_run_event(as, dns_dispatch_mx, s);
+		event_asr_run(as, dns_dispatch_mx, s);
 		return;
 
 	case IMSG_DNS_MX_PREFERENCE:
@@ -316,7 +312,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		async_run_event(as, dns_dispatch_mx_preference, s);
+		event_asr_run(as, dns_dispatch_mx_preference, s);
 		return;
 
 	default:
@@ -487,60 +483,7 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	as = getaddrinfo_async(host, NULL, &hints, NULL);
-	async_run_event(as, dns_dispatch_host, lookup);
-}
-
-/* Generic libevent glue for asr */
-
-struct async_event {
-	struct asr_query *async;
-	struct event	 ev;
-	void		(*callback)(struct asr_result *, void *);
-	void		*arg;
-};
-
-static void async_event_dispatch(int, short, void *);
-
-struct async_event *
-async_run_event(struct asr_query * async,
-    void (*cb)(struct asr_result *, void *), void *arg)
-{
-	struct async_event	*aev;
-	struct timeval		 tv;
-
-	aev = calloc(1, sizeof *aev);
-	if (aev == NULL)
-		return (NULL);
-	aev->async = async;
-	aev->callback = cb;
-	aev->arg = arg;
-	tv.tv_sec = 0;
-	tv.tv_usec = 1;
-	evtimer_set(&aev->ev, async_event_dispatch, aev);
-	evtimer_add(&aev->ev, &tv);
-	return (aev);
-}
-
-static void
-async_event_dispatch(int fd, short ev, void *arg)
-{
-	struct async_event	*aev = arg;
-	struct asr_result	 ar;
-	struct timeval		 tv;
-
-	event_del(&aev->ev);
-
-	if (asr_run(aev->async, &ar) == 0) {
-		event_set(&aev->ev, ar.ar_fd,
-		  ar.ar_cond == ASR_WANT_READ ? EV_READ : EV_WRITE,
-		  async_event_dispatch, aev);
-		tv.tv_sec = ar.ar_timeout / 1000;
-		tv.tv_usec = (ar.ar_timeout % 1000) * 1000;
-		event_add(&aev->ev, &tv);
-	} else {
-		aev->callback(&ar, aev->arg);
-		free(aev);
-	}
+	event_asr_run(as, dns_dispatch_host, lookup);
 }
 
 static char *
