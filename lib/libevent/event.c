@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.27 2013/04/17 15:31:49 deraadt Exp $	*/
+/*	$OpenBSD: event.c,v 1.28 2014/04/03 11:27:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -36,6 +36,7 @@
 #undef WIN32_LEAN_AND_MEAN
 #endif
 #include <sys/types.h>
+#include <sys/socket.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else 
@@ -52,6 +53,8 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <netdb.h>
+#include <asr.h>
 
 #include "event.h"
 #include "event-internal.h"
@@ -1032,4 +1035,66 @@ const char *
 event_get_method(void)
 {
 	return (current_base->evsel->name);
+}
+
+
+/*
+ * Libevent glue for ASR.
+ */
+struct event_asr {
+	struct event	 ev;
+	struct asr_query *async;
+	void		(*cb)(struct asr_result *, void *);
+	void		*arg;
+};
+
+static void
+event_asr_dispatch(int fd __attribute__((__unused__)),
+    short ev __attribute__((__unused__)), void *arg)
+{
+	struct event_asr	*eva = arg;
+	struct asr_result	 ar;
+	struct timeval		 tv;
+
+	event_del(&eva->ev);
+
+	if (asr_run(eva->async, &ar)) {
+		eva->cb(&ar, eva->arg);
+		free(eva);
+	} else {
+		event_set(&eva->ev, ar.ar_fd,
+		    ar.ar_cond == ASR_WANT_READ ? EV_READ : EV_WRITE,
+		    event_asr_dispatch, eva);
+		tv.tv_sec = ar.ar_timeout / 1000;
+		tv.tv_usec = (ar.ar_timeout % 1000) * 1000;
+		event_add(&eva->ev, &tv);
+	}
+}
+
+struct event_asr *
+event_asr_run(struct asr_query *async, void (*cb)(struct asr_result *, void *),
+    void *arg)
+{
+	struct event_asr *eva;
+	struct timeval tv;
+
+	eva = calloc(1, sizeof *eva);
+	if (eva == NULL)
+		return (NULL);
+	eva->async = async;
+	eva->cb = cb;
+	eva->arg = arg;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	evtimer_set(&eva->ev, event_asr_dispatch, eva);
+	evtimer_add(&eva->ev, &tv);
+	return (eva);
+}
+
+void
+event_asr_abort(struct event_asr *eva)
+{
+	asr_abort(eva->async);
+	event_del(&eva->ev);
+	free(eva);
 }

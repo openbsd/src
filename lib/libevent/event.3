@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.41 2010/04/22 16:35:45 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.42 2014/04/03 11:27:02 eric Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2010 $
+.Dd $Mdocdate: April 3 2014 $
 .Dt EVENT 3
 .Os
 .Sh NAME
@@ -76,7 +76,9 @@
 .Nm evbuffer_write ,
 .Nm evbuffer_read ,
 .Nm evbuffer_find ,
-.Nm evbuffer_readline
+.Nm evbuffer_readline ,
+.Nm event_asr_run ,
+.Nm event_asr_abort
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -181,6 +183,10 @@
 .Fn "evbuffer_find" "struct evbuffer *buf" "const u_char *data" "size_t size"
 .Ft "char *"
 .Fn "evbuffer_readline" "struct evbuffer *buf"
+.Ft "struct event_asr *"
+.Fn event_asr_run "struct asr_query *aq" "void (*fn)(struct asr_result *, void *)" "void *"
+.Ft "void"
+.Fn event_asr_abort "struct event_asr *eva"
 .Sh DESCRIPTION
 The
 .Nm event
@@ -398,6 +404,26 @@ will proceed normally.
 .Pp
 It is the responsibility of the caller to provide these functions with
 pre-allocated event structures.
+.Pp
+The
+.Fn event_asr_run
+function is used to schedule the asynchronous resolver query
+.Ar aq
+to run within a libevent event loop, and call the
+.Ar fn
+callback when the result is available.
+The extra
+.Ar arg
+parameter is passed to the callback.
+The user does not need to set up an event structure for using this function.
+It returns an opaque handle representing the running query.
+This handle becomes invalid before the callback is run.
+It can be cancelled by calling the
+.Fn event_asr_abort
+function.
+See
+.Xr asr_run 3
+for details on constructing asynchronous resolver queries.
 .Sh EVENT PRIORITIES
 By default
 .Nm libevent
@@ -535,6 +561,7 @@ return 0.
 Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
 .Sh SEE ALSO
+.Xr asr_run 3 ,
 .Xr kqueue 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,

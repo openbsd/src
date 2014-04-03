@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.25 2012/08/28 09:09:56 pascal Exp $	*/
+/*	$OpenBSD: event.h,v 1.26 2014/04/03 11:27:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -701,6 +701,27 @@ int	event_base_priority_init(struct event_base *, int);
   @see event_priority_init()
   */
 int	event_priority_set(struct event *, int);
+
+
+/* Simple helpers for ASR async resolution API. */
+
+/* We don't want to pull asr.h here */
+struct asr_query;
+struct asr_result;
+
+struct event_asr;
+
+/**
+ * Schedule an async query to run in the libevent event loop, and trigger
+ * a callback when done. Returns an opaque async event handle.
+ */
+struct event_asr * event_asr_run(struct asr_query *,
+    void (*)(struct asr_result *, void *), void *);
+
+/**
+ * Cancel a running async query associated to an handle.
+ */
+void event_asr_abort(struct event_asr *);
 
 
 /* These functions deal with buffering input and output */

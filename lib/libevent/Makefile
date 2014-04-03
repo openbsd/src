@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2012/08/02 13:38:38 okan Exp $
+#	$OpenBSD: Makefile,v 1.32 2014/04/03 11:27:02 eric Exp $
 
 LIB=	event
 SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
@@ -54,7 +54,9 @@ MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 signal_del.3 \
 	event.3 signal_initialized.3 \
 	event.3 signal_pending.3 \
-	event.3 signal_set.3
+	event.3 signal_set.3 \
+	event.3 event_asr_run.3 \
+	event.3 event_asr_abort.3
 
 CFLAGS+= -I${.CURDIR} -DNDEBUG \
 	-DHAVE_CLOCK_GETTIME \
