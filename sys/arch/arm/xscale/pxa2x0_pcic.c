@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_pcic.c,v 1.19 2013/11/20 17:36:06 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_pcic.c,v 1.20 2014/04/03 10:17:34 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -22,11 +22,12 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-        
+
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>

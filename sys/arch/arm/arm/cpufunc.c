@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.25 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.26 2014/04/03 10:17:34 mpi Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -50,8 +50,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
+#include <machine/pmap.h>
 #include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 

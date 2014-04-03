@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.15 2014/03/29 18:09:28 guenther Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.16 2014/04/03 10:17:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/malloc.h>
 #include <sys/evcount.h>
 
-#include <uvm/uvm.h>	/* uvmexp */
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 
