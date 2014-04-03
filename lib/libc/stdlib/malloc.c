@@ -1,6 +1,8 @@
-/*	$OpenBSD: malloc.c,v 1.151 2014/03/25 17:00:02 beck Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.152 2014/04/03 16:18:11 schwarze Exp $	*/
 /*
- * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+ * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
+ * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
+ * Copyright (c) 2008 Damien Miller <djm@openbsd.org>
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
