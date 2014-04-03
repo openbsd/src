@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.105 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.106 2014/04/03 21:36:59 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -180,14 +180,18 @@ malloc(unsigned long size, int type, int flags)
 
 	KASSERT(flags & (M_WAITOK | M_NOWAIT));
 
-#ifdef DIAGNOSTIC
 	if ((flags & M_NOWAIT) == 0) {
+#ifdef DIAGNOSTIC
 		extern int pool_debug;
 		assertwaitok();
 		if (pool_debug == 2)
 			yield();
-	}
 #endif
+		if (!cold) {
+			KERNEL_UNLOCK();
+			KERNEL_LOCK();
+		}
+	}
 
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, type, flags, (void **)&va)) {
