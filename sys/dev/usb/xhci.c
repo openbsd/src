@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.7 2014/03/28 16:19:26 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.8 2014/04/03 14:42:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -1806,7 +1806,7 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 				totlen = usbd_str(buf, len, sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = usbd_str(buf, len, "XHCI root hub");
+				totlen = usbd_str(buf, len, "xHCI root hub");
 				break;
 			}
 			break;
