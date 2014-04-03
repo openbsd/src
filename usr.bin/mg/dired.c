@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.66 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.67 2014/04/03 20:17:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -648,7 +648,7 @@ d_create_directory(int f, int n)
 	int ret;
 	struct buffer	*bp;
 
-	ret = do_makedir();
+	ret = ask_makedir();
 	if (ret != TRUE)
 		return(ret);
 

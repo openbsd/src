@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.93 2014/03/31 21:29:59 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.94 2014/04/03 20:17:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -231,10 +231,10 @@ readin(char *fname)
 		(void)xdirname(dp, fname, sizeof(dp));
 		(void)strlcat(dp, "/", sizeof(dp));
 
+		/* Missing directory; keep buffer read-write, like emacs */
 		if (stat(dp, &statbuf) == -1 && errno == ENOENT) {
-			/* not read-only; like emacs */
-			ewprintf("Use M-x make-directory RET RET to create the"
-			    " directory and its parents");
+			if (eyorn("Missing directory, create") == TRUE)
+				(void)do_makedir(dp);
 		} else if (access(dp, W_OK) == -1 && errno == EACCES) {
 			ewprintf("File not found and directory"
 			    " write-protected");
