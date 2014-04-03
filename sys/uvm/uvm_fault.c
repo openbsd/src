@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.70 2014/03/31 20:16:39 miod Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.71 2014/04/03 20:21:01 miod Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -152,22 +152,15 @@
  */
 
 struct uvm_advice {
-	int advice;
 	int nback;
 	int nforw;
 };
 
 /*
- * page range array:
- * note: index in array must match "advice" value 
- * XXX: borrowed numbers from freebsd.   do they work well for us?
+ * page range array: set up in uvmfault_init().
  */
 
-static struct uvm_advice uvmadvice[] = {
-	{ MADV_NORMAL, 3, 4 },
-	{ MADV_RANDOM, 0, 0 },
-	{ MADV_SEQUENTIAL, 8, 7},
-};
+static struct uvm_advice uvmadvice[UVM_ADV_MASK + 1];
 
 #define UVM_MAXRANGE 16	/* must be max() of nback+nforw+1 */
 
@@ -218,6 +211,30 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 /*
  * normal functions
  */
+
+/*
+ * uvmfault_init: compute proper values for the uvmadvice[] array.
+ */
+
+void
+uvmfault_init()
+{
+	int npages;
+
+	npages = atop(16384);
+	if (npages > 0) {
+		KASSERT(npages <= UVM_MAXRANGE / 2);
+		uvmadvice[UVM_ADV_NORMAL].nforw = npages;
+		uvmadvice[UVM_ADV_NORMAL].nback = npages - 1;
+	}
+
+	npages = atop(32768);
+	if (npages > 0) {
+		KASSERT(npages <= UVM_MAXRANGE / 2);
+		uvmadvice[UVM_ADV_SEQUENTIAL].nforw = npages - 1;
+		uvmadvice[UVM_ADV_SEQUENTIAL].nback = npages;
+	}
+}
 
 /*
  * uvmfault_amapcopy: clear "needs_copy" in a map.
@@ -687,8 +704,6 @@ ReFault:
 	if (narrow == FALSE) {
 
 		/* wide fault (!narrow) */
-		KASSERT(uvmadvice[ufi.entry->advice].advice ==
-			 ufi.entry->advice);
 		nback = min(uvmadvice[ufi.entry->advice].nback,
 			    (ufi.orig_rvaddr - ufi.entry->start) >> PAGE_SHIFT);
 		startva = ufi.orig_rvaddr - (nback << PAGE_SHIFT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.30 2012/03/15 17:52:28 ariane Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.31 2014/04/03 20:21:01 miod Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -112,6 +112,12 @@ uvm_init(void)
 	 */
 
 	uvm_km_init(kvm_start, kvm_end);
+
+	/*
+	 * step 4.5: init (tune) the fault recovery code.
+	 */
+
+	uvmfault_init();
 
 	/*
 	 * step 5: init the pmap module.   the pmap module is free to allocate
