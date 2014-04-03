@@ -1,3 +1,5 @@
+/*	$OpenBSD: helper.c,v 1.11 2014/04/03 17:55:27 beck Exp $ */
+
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
  *
