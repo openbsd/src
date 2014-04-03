@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.14 2013/12/06 21:03:02 deraadt Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.15 2014/04/03 04:02:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@
 #define HDS_VPD			0xe0
 
 struct hds_vpd {
-        struct scsi_vpd_hdr	hdr; /* HDS_VPD */
+	struct scsi_vpd_hdr	hdr; /* HDS_VPD */
 	u_int8_t		state;
 #define HDS_VPD_VALID			0x80
 #define HDS_VPD_PREFERRED		0x40
@@ -61,7 +61,10 @@ struct hds_vpd {
 struct hds_softc {
 	struct device		sc_dev;
 	struct mpath_path	sc_path;
+	struct scsi_xshandler	sc_xsh;
+	struct hds_vpd		*sc_vpd;
 	int			sc_mode;
+	int			sc_ctrl;
 };
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -101,7 +104,9 @@ struct hds_device {
 
 int		hds_inquiry(struct scsi_link *, int *);
 int		hds_info(struct hds_softc *);
-int		hds_preferred(struct hds_softc *, int *);
+
+void		hds_status(struct scsi_xfer *);
+void		hds_status_done(struct scsi_xfer *);
 
 struct hds_device hds_devices[] = {
 /*	  " vendor "  "     device     " */
@@ -140,7 +145,6 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	struct hds_softc *sc = (struct hds_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
-	int preferred = 1;
 
 	printf("\n");
 
@@ -150,6 +154,10 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 	/* init path */
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, hds_mpath_start);
 	sc->sc_path.p_link = link;
+
+	/* init status handler */
+	scsi_xsh_set(&sc->sc_xsh, link, hds_status);
+	sc->sc_vpd = dma_alloc(sizeof(*sc->sc_vpd), PR_WAITOK);
 
 	if (hds_inquiry(link, &sc->sc_mode) != 0) {
 		printf("%s: unable to query controller mode\n", DEVNAME(sc));
@@ -161,22 +169,19 @@ hds_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (hds_preferred(sc, &preferred) != 0) {
-		printf("%s: unable to query preferred path\n", DEVNAME(sc));
-		return;
-	}
-
-	if (!preferred)
-		return;
-
-	/* XXX id isnt real, needs to come from hds_info */
-	if (mpath_path_attach(&sc->sc_path, 0, &hds_mpath_ops) != 0)
+	if (mpath_path_attach(&sc->sc_path,
+	    (sc->sc_mode == HDS_SYMMETRIC) ? 0 : sc->sc_ctrl,
+	    &hds_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 
 int
 hds_detach(struct device *self, int flags)
 {
+	struct hds_softc *sc = (struct hds_softc *)self;
+
+	dma_free(sc->sc_vpd, sizeof(*sc->sc_vpd));
+
 	return (0);
 }
 
@@ -214,7 +219,45 @@ hds_mpath_status(struct scsi_link *link)
 {
 	struct hds_softc *sc = link->device_softc;
 
-	mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);
+	if (sc->sc_mode == HDS_SYMMETRIC)
+		mpath_path_status(&sc->sc_path, MPATH_S_ACTIVE);
+	else
+		scsi_xsh_add(&sc->sc_xsh);
+}
+
+void
+hds_status(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct hds_softc *sc = link->device_softc;
+
+	scsi_init_inquiry(xs, SI_EVPD, HDS_VPD,
+	    sc->sc_vpd, sizeof(*sc->sc_vpd));
+
+	xs->done = hds_status_done;
+
+	scsi_xs_exec(xs);
+}
+
+void
+hds_status_done(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct hds_softc *sc = link->device_softc;
+	struct hds_vpd *vpd = sc->sc_vpd;
+	int status;
+
+	scsi_xs_put(xs);
+
+	if (_2btol(vpd->hdr.page_length) < sizeof(vpd->state) ||
+	    !ISSET(vpd->state, HDS_VPD_VALID))
+		status = MPATH_S_UNKNOWN;
+	else if (ISSET(vpd->state, HDS_VPD_PREFERRED))
+		status = MPATH_S_ACTIVE;
+	else
+		status = MPATH_S_PASSIVE;
+
+	mpath_path_status(&sc->sc_path, status);
 }
 
 int
@@ -281,41 +324,12 @@ hds_info(struct hds_softc *sc)
 		printf("%s: ldev %s, controller %c, port %c, %s\n",
 		    DEVNAME(sc), ldev, ctrl, port,
 		    sc->sc_mode == HDS_SYMMETRIC ? "symmetric" : "asymmetric");
+
+		sc->sc_ctrl = ctrl;
 	} else
 		error = ENXIO;
 
 done:
 	dma_free(buf, len);
-	return (error);
-}
-
-int
-hds_preferred(struct hds_softc *sc, int *preferred)
-{
-	struct scsi_link *link = sc->sc_path.p_link;
-	struct hds_vpd *pg;
-	int error;
-
-	if (sc->sc_mode == HDS_SYMMETRIC) {
-		*preferred = 1;
-		return (0);
-	}
-
-	pg = dma_alloc(sizeof(*pg), PR_WAITOK);
-
-	error = scsi_inquire_vpd(link, pg, sizeof(*pg), HDS_VPD, scsi_autoconf);
-	if (error)
-		goto done;
-
-	if (_2btol(pg->hdr.page_length) < sizeof(pg->state) ||
-	     !ISSET(pg->state, HDS_VPD_VALID)) {
-		error = ENXIO;
-		goto done;
-	}
-
-	*preferred = ISSET(pg->state, HDS_VPD_PREFERRED);
-
-done:
-	dma_free(pg, sizeof(*pg));
 	return (error);
 }
