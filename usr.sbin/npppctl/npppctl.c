@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.2 2014/03/22 04:30:31 yasuoka Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.3 2014/04/03 07:10:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -155,8 +155,8 @@ show_clear_session(struct parse_result *result, FILE *out)
 		res = (struct npppd_who_list *)ctl_imsg.data;
 		if (ctl_imsg.hdr.len - IMSG_HEADER_SIZE <
 		    offsetof(struct npppd_who_list,
-			    entry[res->entry_count + 1])) {
-			err(1, "response size %d is too small for "
+			    entry[res->entry_count])) {
+			errx(1, "response size %d is too small for "
 			    "the entry count %d",
 			    (int)(ctl_imsg.hdr.len - IMSG_HEADER_SIZE),
 			    res->entry_count);
