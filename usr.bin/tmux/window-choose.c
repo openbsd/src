@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.51 2014/03/31 21:36:43 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.52 2014/04/03 08:20:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -721,7 +721,17 @@ window_choose_mouse(
 	struct window_choose_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
 	struct window_choose_mode_item	*item;
-	u_int				 idx;
+	u_int				 i, idx;
+
+	if (m->event == MOUSE_EVENT_WHEEL) {
+		for (i = 0; i < m->scroll; i++) {
+			if (m->wheel == MOUSE_WHEEL_UP)
+				window_choose_key(wp, sess, KEYC_UP);
+			else
+				window_choose_key(wp, sess, KEYC_DOWN);
+		}
+		return;
+	}
 
 	if (~m->event & MOUSE_EVENT_CLICK)
 		return;

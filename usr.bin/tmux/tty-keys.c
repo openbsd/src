@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.64 2014/04/03 08:15:17 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.65 2014/04/03 08:20:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -749,6 +749,15 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size)
 	m->x = x;
 	m->y = y;
 	if (b & MOUSE_MASK_WHEEL) {
+		if (b & MOUSE_MASK_SHIFT)
+			m->scroll = 1;
+		else
+			m->scroll = 3;
+		if (b & MOUSE_MASK_META)
+			m->scroll *= 3;
+		if (b & MOUSE_MASK_CTRL)
+			m->scroll *= 3;
+
 		b &= MOUSE_MASK_BUTTONS;
 		if (b == 0)
 			m->wheel = MOUSE_WHEEL_UP;
