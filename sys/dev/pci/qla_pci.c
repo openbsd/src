@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.7 2014/03/09 20:23:43 kettenis Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.8 2014/04/03 20:01:47 brad Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ static const struct pci_matchid qla_devices[] = {
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2312 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP2322 },
 	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP6312 },
+	{ PCI_VENDOR_QLOGIC,	PCI_PRODUCT_QLOGIC_ISP6322 },
 };
 
 int
@@ -179,6 +180,7 @@ qla_pci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case PCI_PRODUCT_QLOGIC_ISP2322:
+	case PCI_PRODUCT_QLOGIC_ISP6322:
 		sc->sc_isp_type = QLA_ISP2322;
 		sc->sc_isp_gen = QLA_GEN_ISP23XX;
 		break;
