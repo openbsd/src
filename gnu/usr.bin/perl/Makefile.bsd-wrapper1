@@ -808,8 +808,8 @@ _quick3p=
     vmsish 3p				lib/vmsish.pm \
     warnings 3p				lib/warnings.pm \
     warnings::register 3p		lib/warnings/register.pm \
-    XS::APItest 3p			lib/XS/APItest.pm \
-    XS::Typemap 3p			lib/XS/Typemap.pm \
+    XS::APItest 3p			ext/XS-APItest/APItest.pm \
+    XS::Typemap 3p			ext/XS-Typemap/Typemap.pm \
     XSLoader 3p				lib/XSLoader.pm
 .  ifndef NOMAN
 MAN+= ${page}.${sect}
