@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppctl.8,v 1.4 2014/04/03 07:12:58 yasuoka Exp $
+.\"	$OpenBSD: npppctl.8,v 1.5 2014/04/03 14:47:03 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Internet Initiative Japan Inc.
 .\"
@@ -19,8 +19,7 @@
 .Os
 .Sh NAME
 .Nm npppctl
-.Nd control the npppd daemon
-.Xr npppd 8
+.Nd control npppd
 .Sh SYNOPSIS
 .Nm
 .Op Fl n
@@ -47,40 +46,40 @@ instead of the default
 to communicate with
 .Xr npppd 8 .
 .El
-.Sh NPPPD CONTROL COMMANDS
+.Pp
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm clear Ar all | filter ...
+.It Cm clear all | Ar filter ...
 Disconnect PPP sessions.
 If
 .Ar filter
 is specified, only matching PPP sessions are disconnected.
 If
-.Ar all
+.Cm all
 is specified, all PPP sessions are disconnected.
 See
 .Cm session all
 for the types of
 .Ar filter .
-.It Cm monitor all | filter ...
+.It Cm monitor all | Ar filter ...
 Monitor start and stop of PPP sessions.
 If
 .Ar filter
 is specified, only matching PPP sessions are monitored.
 If
-.Ar all
+.Cm all
 is specified, all PPP sessions are monitored.
 See
 .Cm session all
 for the types of
 .Ar filter .
-.It Cm monitor all | filter ...
+.It Cm monitor all | Ar filter ...
 Monitor start and stop of PPP sessions.
 If
 .Ar filter
 is specified, only matching PPP sessions are monitored.
 If
-.Ar all
+.Cm all
 is specified, all PPP sessions are monitored.
 See
 .Cm session all
