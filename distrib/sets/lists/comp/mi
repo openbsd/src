@@ -528,6 +528,7 @@
 ./usr/include/dev/pci/drm/drm_fourcc.h
 ./usr/include/dev/pci/drm/drm_global.h
 ./usr/include/dev/pci/drm/drm_hashtab.h
+./usr/include/dev/pci/drm/drm_linux.h
 ./usr/include/dev/pci/drm/drm_linux_list.h
 ./usr/include/dev/pci/drm/drm_mem_util.h
 ./usr/include/dev/pci/drm/drm_mm.h
@@ -3744,6 +3745,8 @@
 ./usr/share/man/man3/evbuffer_write.3
 ./usr/share/man/man3/event.3
 ./usr/share/man/man3/event_add.3
+./usr/share/man/man3/event_asr_abort.3
+./usr/share/man/man3/event_asr_run.3
 ./usr/share/man/man3/event_base_dispatch.3
 ./usr/share/man/man3/event_base_free.3
 ./usr/share/man/man3/event_base_loop.3
@@ -6578,7 +6581,6 @@
 ./usr/share/man/man9/lock.9
 ./usr/share/man/man9/lockinit.9
 ./usr/share/man/man9/lockmgr.9
-./usr/share/man/man9/lockmgr_printinfo.9
 ./usr/share/man/man9/lockstatus.9
 ./usr/share/man/man9/log.9
 ./usr/share/man/man9/m_adj.9
@@ -6754,10 +6756,6 @@
 ./usr/share/man/man9/setdisklabel.9
 ./usr/share/man/man9/shutdownhook_disestablish.9
 ./usr/share/man/man9/shutdownhook_establish.9
-./usr/share/man/man9/simple_lock.9
-./usr/share/man/man9/simple_lock_init.9
-./usr/share/man/man9/simple_lock_try.9
-./usr/share/man/man9/simple_unlock.9
 ./usr/share/man/man9/skpc.9
 ./usr/share/man/man9/snprintf.9
 ./usr/share/man/man9/sobind.9

@@ -10,7 +10,7 @@
 ./usr/lib/libcrypto.so.23.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.0
-./usr/lib/libevent.so.4.0
+./usr/lib/libevent.so.4.1
 ./usr/lib/libexpat.so.11.0
 ./usr/lib/libform.so.6.0
 ./usr/lib/libformw.so.6.0
@@ -1078,6 +1078,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_fourcc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_global.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_hashtab.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_linux.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_linux_list.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_mem_util.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/drm/drm_mm.ph

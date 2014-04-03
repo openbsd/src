@@ -513,6 +513,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_fourcc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_global.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_hashtab.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_linux.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_linux_list.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_mem_util.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/drm_mm.ph
