@@ -1,4 +1,4 @@
-/*	$Id: mansearch_const.c,v 1.1 2014/01/19 00:09:33 schwarze Exp $ */
+/*	$Id: mansearch_const.c,v 1.2 2014/04/04 15:55:17 schwarze Exp $ */
 /*
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -20,12 +20,13 @@
 #include "manpath.h"
 #include "mansearch.h"
 
-const int mansearch_keymax = 40;
+const int mansearch_keymax = 41;
 
-const char *const mansearch_keynames[40] = {
-	"Nm",	"Nd",	"arch", "sec",	"Xr",	"Ar",	"Fa",	"Fl",
-	"Dv",	"Fn",	"Ic",	"Pa",	"Cm",	"Li",	"Em",	"Cd",
-	"Va",	"Ft",	"Tn",	"Er",	"Ev",	"Sy",	"Sh",	"In",
-	"Ss",	"Ox",	"An",	"Mt",	"St",	"Bx",	"At",	"Nx",
-	"Fx",	"Lk",	"Ms",	"Bsx",	"Dx",	"Rs",	"Vt",	"Lb"
+const char *const mansearch_keynames[41] = {
+	"NAME",	"Nm",	"Nd",	"arch", "sec",	"Xr",	"Ar",	"Fa",
+	"Fl",	"Dv",	"Fn",	"Ic",	"Pa",	"Cm",	"Li",	"Em",
+	"Cd",	"Va",	"Ft",	"Tn",	"Er",	"Ev",	"Sy",	"Sh",
+	"In",	"Ss",	"Ox",	"An",	"Mt",	"St",	"Bx",	"At",
+	"Nx",	"Fx",	"Lk",	"Ms",	"Bsx",	"Dx",	"Rs",	"Vt",
+	"Lb"
 };
