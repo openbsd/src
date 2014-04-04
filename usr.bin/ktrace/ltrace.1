@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.4 2013/09/12 09:27:27 jmc Exp $
+.\"	$OpenBSD: ltrace.1,v 1.5 2014/04/04 21:34:47 miod Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 12 2013 $
+.Dd $Mdocdate: April 4 2014 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -53,6 +53,7 @@
 .Nm ltrace
 .Op Fl ai
 .Op Fl f Ar trfile
+.Op Fl t Ar trstr
 .Op Fl u Ar trspec
 .Ar command
 .Sh DESCRIPTION
@@ -99,6 +100,41 @@ instead of
 .It Fl i
 Inherit; pass the trace flags to all future children of the designated
 processes.
+.It Fl t Ar trstr
+The string argument represents the kernel trace points, one per letter.
+The default flags are
+.Cm c ,
+.Cm e ,
+.Cm i ,
+.Cm n ,
+.Cm s ,
+.Cm t ,
+and
+.Cm u .
+The following table equates the letters with the tracepoints:
+.Pp
+.Bl -tag -width flag -offset indent -compact
+.It Cm c
+trace system calls
+.It Cm e
+trace emulation changes
+.It Cm i
+trace I/O
+.It Cm n
+trace namei translations
+.It Cm s
+trace signal processing
+.It Cm t
+trace various structures
+.It Cm u
+trace user data coming from
+.Xr utrace 2
+.It Cm w
+trace context switch points
+.It Cm +
+trace the default points
+.Pq everything but context switch points
+.El
 .It Fl u Ar trspec
 Restrict the trace to a list of shared objects and/or function names, as
 specified by the
@@ -146,8 +182,16 @@ Trace all the shared library function calls but those in
 Trace all the shared library function calls with names starting
 .Qq fmt :
 .Dl $ ltrace -u \(dq:fmt*\(dq wc -lh /etc/motd
+.Pp
+Trace all shared library function calls, as well as all system calls:
+.Dl $ ltrace -t cu wc -lh /etc/motd
 .Sh SEE ALSO
 .Xr kdump 1 ,
 .Xr ktrace 1 ,
 .Xr ktrace 2 ,
 .Xr utrace 2
+.Sh HISTORY
+The
+.Nm ltrace
+command appeared in
+.Ox 5.4 .
