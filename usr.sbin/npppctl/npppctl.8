@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppctl.8,v 1.5 2014/04/03 14:47:03 jmc Exp $
+.\"	$OpenBSD: npppctl.8,v 1.6 2014/04/04 02:49:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2014 $
+.Dd $Mdocdate: April 4 2014 $
 .Dt NPPPCTL 8
 .Os
 .Sh NAME
@@ -73,18 +73,6 @@ See
 .Cm session all
 for the types of
 .Ar filter .
-.It Cm monitor all | Ar filter ...
-Monitor start and stop of PPP sessions.
-If
-.Ar filter
-is specified, only matching PPP sessions are monitored.
-If
-.Cm all
-is specified, all PPP sessions are monitored.
-See
-.Cm session all
-for the types of
-.Ar filter .
 .It Cm session all Op Ar filter ...
 Show detailed information for PPP sessions.
 If
@@ -117,17 +105,10 @@ Show brief information for all PPP sessions.
 .It Cm session packets
 Show I/O statistics for all PPP sessions.
 .El
-.\" The following requests should be uncommented and used where appropriate.
-.\" This next request is for sections 2, 3, and 9 function return values only.
-.\" .Sh RETURN VALUES
-.\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
 .\" .Sh FILES
 .\" .Sh EXAMPLES
-.\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
-.\" The next request is for sections 2, 3, and 9 error and signal handling only.
-.\" .Sh ERRORS
 .\" .Sh SEE ALSO
 .\" .Xr npppd 8
 .\" .Sh STANDARDS
