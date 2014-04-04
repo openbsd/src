@@ -2454,7 +2454,6 @@
 ./usr/share/man/man8/alpha/MAKEDEV.8
 ./usr/share/man/man8/alpha/boot_alpha.8
 ./usr/share/man/man8/alpha/installboot.8
-./usr/share/man/man8/alpha/kbd.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/alpha/wsmoused.8
 ./usr/share/man/man8/amd.8
@@ -2468,7 +2467,6 @@
 ./usr/share/man/man8/amd64/boot_amd64.8
 ./usr/share/man/man8/amd64/cdboot.8
 ./usr/share/man/man8/amd64/gpioctl.8
-./usr/share/man/man8/amd64/kbd.8
 ./usr/share/man/man8/amd64/memconfig.8
 ./usr/share/man/man8/amd64/pxeboot.8
 ./usr/share/man/man8/amd64/wsmoused.8
@@ -2552,7 +2550,6 @@
 ./usr/share/man/man8/hppa/MAKEDEV.8
 ./usr/share/man/man8/hppa/boot.8
 ./usr/share/man/man8/hppa/boot_hppa.8
-./usr/share/man/man8/hppa/kbd.8
 ./usr/share/man/man8/hppa/mkboot.8
 ./usr/share/man/man8/hppa64
 ./usr/share/man/man8/hppa64/MAKEDEV.8
@@ -2571,7 +2568,6 @@
 ./usr/share/man/man8/i386/boot_i386.8
 ./usr/share/man/man8/i386/cdboot.8
 ./usr/share/man/man8/i386/gpioctl.8
-./usr/share/man/man8/i386/kbd.8
 ./usr/share/man/man8/i386/memconfig.8
 ./usr/share/man/man8/i386/pxeboot.8
 ./usr/share/man/man8/i386/wsmoused.8
@@ -2608,7 +2604,6 @@
 ./usr/share/man/man8/landisk
 ./usr/share/man/man8/landisk/MAKEDEV.8
 ./usr/share/man/man8/landisk/boot.8
-./usr/share/man/man8/landisk/kbd.8
 ./usr/share/man/man8/landisk/mbr.8
 ./usr/share/man/man8/landisk/xxboot.8
 ./usr/share/man/man8/ldapctl.8
@@ -2644,7 +2639,6 @@
 ./usr/share/man/man8/luna88k
 ./usr/share/man/man8/luna88k/MAKEDEV.8
 ./usr/share/man/man8/luna88k/boot_luna88k.8
-./usr/share/man/man8/luna88k/kbd.8
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/macppc/MAKEDEV.8
 ./usr/share/man/man8/macppc/ZZZ.8
@@ -2654,7 +2648,6 @@
 ./usr/share/man/man8/macppc/boot_macppc.8
 ./usr/share/man/man8/macppc/eeprom.8
 ./usr/share/man/man8/macppc/gpioctl.8
-./usr/share/man/man8/macppc/kbd.8
 ./usr/share/man/man8/macppc/pdisk.8
 ./usr/share/man/man8/macppc/zzz.8
 ./usr/share/man/man8/mail.local.8
@@ -2800,7 +2793,6 @@
 ./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/sgi
 ./usr/share/man/man8/sgi/MAKEDEV.8
-./usr/share/man/man8/sgi/kbd.8
 ./usr/share/man/man8/sgi/sgivol.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/shutdown.8
@@ -2820,7 +2812,7 @@
 ./usr/share/man/man8/socppc
 ./usr/share/man/man8/socppc/MAKEDEV.8
 ./usr/share/man/man8/socppc/boot.8
-./usr/share/man/man8/socppc/kbd.8
+./usr/share/man/man8/kbd.8
 ./usr/share/man/man8/socppc/mkboot.8
 ./usr/share/man/man8/spamd-setup.8
 ./usr/share/man/man8/spamd.8
@@ -2834,7 +2826,6 @@
 ./usr/share/man/man8/sparc/boot_sparc.8
 ./usr/share/man/man8/sparc/eeprom.8
 ./usr/share/man/man8/sparc/installboot.8
-./usr/share/man/man8/sparc/kbd.8
 ./usr/share/man/man8/sparc/zzz.8
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sparc64/MAKEDEV.8
@@ -2844,7 +2835,6 @@
 ./usr/share/man/man8/sparc64/boot_sparc64.8
 ./usr/share/man/man8/sparc64/eeprom.8
 ./usr/share/man/man8/sparc64/installboot.8
-./usr/share/man/man8/sparc64/kbd.8
 ./usr/share/man/man8/sparc64/ldomctl.8
 ./usr/share/man/man8/sparc64/ldomd.8
 ./usr/share/man/man8/sparc64/zzz.8
@@ -2888,7 +2878,6 @@
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
-./usr/share/man/man8/vax/kbd.8
 ./usr/share/man/man8/verify_krb5_conf.8
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/visudo.8
@@ -2920,7 +2909,6 @@
 ./usr/share/man/man8/zaurus/apmd.8
 ./usr/share/man/man8/zaurus/boot.8
 ./usr/share/man/man8/zaurus/boot_zaurus.8
-./usr/share/man/man8/zaurus/kbd.8
 ./usr/share/man/man8/zaurus/ztsscale.8
 ./usr/share/man/man8/zaurus/zzz.8
 ./usr/share/man/man8/zdump.8
