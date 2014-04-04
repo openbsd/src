@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.74 2014/04/04 20:52:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -319,8 +319,14 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 	u_long asid = pmap->pm_asid[cpuid].pma_asid << PG_ASID_SHIFT;
 
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
-	    pmap_asid_info[cpuid].pma_asidgen)
-		tlb_flush_addr(va | asid);
+	    pmap_asid_info[cpuid].pma_asidgen) {
+#ifdef CPU_R4000
+		if (r4000_errata != 0)
+			eop_tlb_flush_addr(pmap, va, asid);
+		else
+#endif
+			tlb_flush_addr(va | asid);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.100 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.101 2014/04/04 20:52:05 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -444,6 +444,7 @@ int	classify_insn(uint32_t);
 
 extern int r4000_errata;
 u_int	eop_page_check(paddr_t);
+void	eop_tlb_flush_addr(struct pmap *, vaddr_t, u_long);
 int	eop_tlb_miss_handler(struct trap_frame *, struct cpu_info *,
 	    struct proc *);
 void	eop_cleanup(struct trap_frame *, struct proc *);

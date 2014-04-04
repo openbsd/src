@@ -1,4 +1,4 @@
-/*	$OpenBSD: r4000_errata.c,v 1.3 2014/04/03 08:07:16 mpi Exp $	*/
+/*	$OpenBSD: r4000_errata.c,v 1.4 2014/04/04 20:52:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -87,6 +87,16 @@
 
 int	r4000_errata;
 
+static inline void eop_undo(struct pcb *);
+
+static inline void
+eop_undo(struct pcb *pcb)
+{
+	tlb_set_wired(UPAGES / 2);
+	tlb_flush((UPAGES / 2) + pcb->pcb_nwired);
+	pcb->pcb_nwired = 0;
+}
+
 /*
  * Check for an R4000 end-of-page errata condition in an executable code page.
  * Returns a bitmask to set in the given page pg_flags.
@@ -101,6 +111,33 @@ eop_page_check(paddr_t pa)
 		return PGF_EOP_VULN;
 
 	return 0;
+}
+
+/*
+ * Invalidate a TLB entry. If it is part of a wired pair, drop all wired
+ * entries.
+ *
+ * Note that, in case of heavy swapping, this can cause the page following
+ * a vulnerable page to be swapped out and immediately faulted back in,
+ * iff the userland pc is in the vulnerable page. Help me, Obi Wan LRU.
+ * You are my only hope.
+ */
+void
+eop_tlb_flush_addr(struct pmap *pmap, vaddr_t va, u_long asid)
+{
+	struct proc *p = curproc;
+	struct pcb *pcb;
+
+	if (p->p_vmspace->vm_map.pmap == pmap) {
+		pcb = &p->p_addr->u_pcb;
+		if (pcb->pcb_nwired != 0 &&
+		    (va - pcb->pcb_wiredva) < ptoa(pcb->pcb_nwired * 2)) {
+			eop_undo(pcb);
+			return;
+		}
+	}
+
+	tlb_flush_addr(va | asid);
 }
 
 /*
@@ -235,11 +272,7 @@ eop_cleanup(struct trap_frame *trapframe, struct proc *p)
 
 	pcb = &p->p_addr->u_pcb;
 	if (pcb->pcb_nwired != 0) {
-		if (trunc_page(trapframe->pc) != pcb->pcb_wiredpc) {
-			tlb_set_wired(UPAGES / 2);
-			tlb_flush((UPAGES / 2) + pcb->pcb_nwired);
-			pcb->pcb_nwired = 0;
-		}
+		if (trunc_page(trapframe->pc) != pcb->pcb_wiredpc)
+			eop_undo(pcb);
 	}
 }
-
