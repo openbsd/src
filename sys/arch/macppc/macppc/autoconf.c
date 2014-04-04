@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2014/04/01 20:27:14 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2014/04/04 01:50:25 dlg Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.42 2014/04/01 20:27:14 mpi Exp $
+ *      $Id: autoconf.c,v 1.43 2014/04/04 01:50:25 dlg Exp $
  */
 
 /*
@@ -47,6 +47,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include "sd.h"
+#include "mpath.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +66,10 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <dev/ata/atavar.h>
+
+#if NMPATH > 0
+#include <scsi/mpathvar.h>
+#endif
 
 void	dumpconf(void);
 static	struct devmap *findtype(char **);
@@ -223,6 +230,9 @@ getpno(char **cp)
 void
 device_register(struct device *dev, void *aux)
 {
+#if NSD > 0
+	extern struct cfdriver scsibus_cd;
+#endif
 	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
 	const char *name = dev->dv_xname;
 
@@ -230,13 +240,15 @@ device_register(struct device *dev, void *aux)
 		return;
 
 	switch (bootdev_type) {
+#if NSD > 0
 	case T_SCSI:
-		if (strcmp(drvrname, "sd") == 0) {
+		if (dev->dv_parent->dv_cfdata->cf_driver == &scsibus_cd) {
 			struct scsi_attach_args *sa = aux;
 
 			if (sa->sa_sc_link->target == bootdev_unit)
 				bootdv = dev;
 		}
+#endif
 	case T_IDE:
 		if (strcmp(drvrname, "wd") == 0) {
 			struct ata_atapi_attach *aa = aux;
@@ -258,6 +270,11 @@ void
 diskconf(void)
 {
 	printf("bootpath: %s\n", bootpath);
+
+#if NMPATH > 0
+	if (bootdv != NULL)
+		bootdv = mpath_bootdv(bootdv);
+#endif
 
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
