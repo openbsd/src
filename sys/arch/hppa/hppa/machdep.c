@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.217 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.218 2014/04/04 20:25:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -167,7 +167,6 @@ int   safepri = 0;
  * wide used hardware params
  */
 struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
-struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 struct pdc_model pdc_model PDC_ALIGNMENT;
@@ -206,7 +205,6 @@ int pbtlb_u(int i);
 int hpti_l(vaddr_t, vsize_t);
 int hpti_u(vaddr_t, vsize_t);
 int hpti_g(vaddr_t, vsize_t);
-int desidhash_x(void);
 int desidhash_s(void);
 int desidhash_t(void);
 int desidhash_l(void);
@@ -420,6 +418,7 @@ cpuid()
 	extern u_int fpu_enable;
 	extern int cpu_fpuena;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
+	struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 	const struct hppa_cpu_typed *p = NULL;
 	u_int cpu_features;
 	int error;
@@ -452,9 +451,23 @@ cpuid()
 	/* locate coprocessors and SFUs */
 	bzero(&pdc_coproc, sizeof(pdc_coproc));
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
-	    &pdc_coproc, 0, 0, 0, 0)) < 0) {
-		printf("WARNING: PDC_COPROC error %d\n", error);
-		cpu_fpuena = 0;
+	    &pdc_coproc, 0, 0, 0, 0, 0)) < 0) {
+		/*
+		 * Some 1.1 systems fail the PDC_COPROC call with error == -3,
+		 * when booting from disk (but not when netbooting).
+		 * Until the cause of this misbehaviour is found, assume the
+		 * usual 1.1 FPU settings, so that userland gets a chance to
+		 * run.
+		 */
+		if ((pdc_model.hvers >> 4) != 0 && pdc_model.arch_rev == 4) {
+			printf("WARNING: PDC_COPROC error %d,"
+			    " assuming 1.1 FPU\n", error);
+			fpu_enable = 0xc0;
+			cpu_fpuena = 1;
+		} else {
+			printf("WARNING: PDC_COPROC error %d\n", error);
+			cpu_fpuena = 0;
+		}
 	} else {
 		printf("pdc_coproc: 0x%x, 0x%x; model %x rev %x\n",
 		    pdc_coproc.ccr_enable, pdc_coproc.ccr_present,
