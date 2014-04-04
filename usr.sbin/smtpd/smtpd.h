@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.451 2014/03/22 09:41:28 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.452 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -31,7 +31,7 @@
 #define MAILNAME_FILE		 "/etc/mail/mailname"
 #define CA_FILE			 "/etc/ssl/cert.pem"
 
-#define PROC_COUNT		 10
+#define PROC_COUNT		 7
 
 #define MAX_HOPS_COUNT		 100
 #define	DEFAULT_MAX_BODY_SIZE	(35*1024*1024)
@@ -45,7 +45,7 @@
 #ifndef SMTPD_NAME
 #define	SMTPD_NAME		 "OpenSMTPD"
 #endif
-#define	SMTPD_VERSION		 "5.4.2"
+#define	SMTPD_VERSION		 "5.4.3"
 #define SMTPD_BANNER		 "220 %s ESMTP %s"
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
@@ -150,34 +150,18 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		9
+#define	IMSG_VERSION		10
 
 enum imsg_type {
 	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to smtpctl requests */
+
+	IMSG_CTL_OK,
 	IMSG_CTL_FAIL,
-	IMSG_CTL_SHUTDOWN,
-	IMSG_CTL_VERBOSE,
-	IMSG_CTL_PAUSE_EVP,
-	IMSG_CTL_PAUSE_MDA,
-	IMSG_CTL_PAUSE_MTA,
-	IMSG_CTL_PAUSE_SMTP,
-	IMSG_CTL_RESUME_EVP,
-	IMSG_CTL_RESUME_MDA,
-	IMSG_CTL_RESUME_MTA,
-	IMSG_CTL_RESUME_SMTP,
-	IMSG_CTL_RESUME_ROUTE,
+
+	IMSG_CTL_GET_DIGEST,
+	IMSG_CTL_GET_STATS,
 	IMSG_CTL_LIST_MESSAGES,
 	IMSG_CTL_LIST_ENVELOPES,
-	IMSG_CTL_REMOVE,
-	IMSG_CTL_SCHEDULE,
-	IMSG_CTL_SHOW_STATUS,
-
-	IMSG_CTL_TRACE,
-	IMSG_CTL_UNTRACE,
-	IMSG_CTL_PROFILE,
-	IMSG_CTL_UNPROFILE,
-
 	IMSG_CTL_MTA_SHOW_HOSTS,
 	IMSG_CTL_MTA_SHOW_RELAYS,
 	IMSG_CTL_MTA_SHOW_ROUTES,
@@ -185,91 +169,122 @@ enum imsg_type {
 	IMSG_CTL_MTA_BLOCK,
 	IMSG_CTL_MTA_UNBLOCK,
 	IMSG_CTL_MTA_SHOW_BLOCK,
+	IMSG_CTL_PAUSE_EVP,
+	IMSG_CTL_PAUSE_MDA,
+	IMSG_CTL_PAUSE_MTA,
+	IMSG_CTL_PAUSE_SMTP,
+	IMSG_CTL_PROFILE,
+	IMSG_CTL_PROFILE_DISABLE,
+	IMSG_CTL_PROFILE_ENABLE,
+	IMSG_CTL_RESUME_EVP,
+	IMSG_CTL_RESUME_MDA,
+	IMSG_CTL_RESUME_MTA,
+	IMSG_CTL_RESUME_SMTP,
+	IMSG_CTL_RESUME_ROUTE,
+	IMSG_CTL_REMOVE,
+	IMSG_CTL_SCHEDULE,
+	IMSG_CTL_SHOW_STATUS,
+	IMSG_CTL_SHUTDOWN,
+	IMSG_CTL_TRACE_DISABLE,
+	IMSG_CTL_TRACE_ENABLE,
+	IMSG_CTL_UPDATE_TABLE,
+	IMSG_CTL_VERBOSE,
+
+	IMSG_CTL_SMTP_SESSION,
 
 	IMSG_CONF_START,
-	IMSG_CONF_SSL,
-	IMSG_CONF_LISTENER,
-	IMSG_CONF_TABLE,
-	IMSG_CONF_TABLE_CONTENT,
-	IMSG_CONF_RULE,
-	IMSG_CONF_RULE_SOURCE,
-	IMSG_CONF_RULE_SENDER,
-	IMSG_CONF_RULE_DESTINATION,
-	IMSG_CONF_RULE_RECIPIENT,
-	IMSG_CONF_RULE_MAPPING,
-	IMSG_CONF_RULE_USERS,
-	IMSG_CONF_FILTER,
 	IMSG_CONF_END,
-
-	IMSG_LKA_UPDATE_TABLE,
-	IMSG_LKA_EXPAND_RCPT,
-	IMSG_LKA_SECRET,
-	IMSG_LKA_SOURCE,
-	IMSG_LKA_HELO,
-	IMSG_LKA_USERINFO,
-	IMSG_LKA_AUTHENTICATE,
-	IMSG_LKA_SSL_INIT,
-	IMSG_LKA_SSL_VERIFY_CERT,
-	IMSG_LKA_SSL_VERIFY_CHAIN,
-	IMSG_LKA_SSL_VERIFY,
-
-	IMSG_DELIVERY_OK,
-	IMSG_DELIVERY_TEMPFAIL,
-	IMSG_DELIVERY_PERMFAIL,
-	IMSG_DELIVERY_LOOP,
-	IMSG_DELIVERY_HOLD,
-	IMSG_DELIVERY_RELEASE,
-
-	IMSG_BOUNCE_INJECT,
-
-	IMSG_MDA_DELIVER,
-	IMSG_MDA_DONE,
-
-	IMSG_MFA_REQ_CONNECT,
-	IMSG_MFA_REQ_HELO,
-	IMSG_MFA_REQ_MAIL,
-	IMSG_MFA_REQ_RCPT,
-	IMSG_MFA_REQ_DATA,
-	IMSG_MFA_REQ_EOM,
-	IMSG_MFA_EVENT_RSET,
-	IMSG_MFA_EVENT_COMMIT,
-	IMSG_MFA_EVENT_ROLLBACK,
-	IMSG_MFA_EVENT_DISCONNECT,
-	IMSG_MFA_SMTP_RESPONSE,
-
-	IMSG_MTA_TRANSFER,
-	IMSG_MTA_SCHEDULE,
-
-	IMSG_QUEUE_CREATE_MESSAGE,
-	IMSG_QUEUE_SUBMIT_ENVELOPE,
-	IMSG_QUEUE_COMMIT_ENVELOPES,
-	IMSG_QUEUE_REMOVE_MESSAGE,
-	IMSG_QUEUE_COMMIT_MESSAGE,
-	IMSG_QUEUE_MESSAGE_FD,
-	IMSG_QUEUE_MESSAGE_FILE,
-	IMSG_QUEUE_REMOVE,
-	IMSG_QUEUE_EXPIRE,
-	IMSG_QUEUE_BOUNCE,
-
-	IMSG_PARENT_FORWARD_OPEN,
-	IMSG_PARENT_FORK_MDA,
-	IMSG_PARENT_KILL_MDA,
-
-	IMSG_SMTP_ENQUEUE_FD,
-
-	IMSG_DNS_HOST,
-	IMSG_DNS_HOST_END,
-	IMSG_DNS_PTR,
-	IMSG_DNS_MX,
-	IMSG_DNS_MX_PREFERENCE,
 
 	IMSG_STAT_INCREMENT,
 	IMSG_STAT_DECREMENT,
 	IMSG_STAT_SET,
 
-	IMSG_DIGEST,
-	IMSG_STATS,
-	IMSG_STATS_GET,
+	IMSG_LKA_AUTHENTICATE,
+	IMSG_LKA_OPEN_FORWARD,
+	IMSG_LKA_ENVELOPE_SUBMIT,
+	IMSG_LKA_ENVELOPE_COMMIT,
+
+	IMSG_QUEUE_DELIVER,
+	IMSG_QUEUE_DELIVERY_OK,
+	IMSG_QUEUE_DELIVERY_TEMPFAIL,
+	IMSG_QUEUE_DELIVERY_PERMFAIL,
+	IMSG_QUEUE_DELIVERY_LOOP,
+	IMSG_QUEUE_ENVELOPE_COMMIT,
+	IMSG_QUEUE_ENVELOPE_REMOVE,
+	IMSG_QUEUE_ENVELOPE_SCHEDULE,
+	IMSG_QUEUE_ENVELOPE_SUBMIT,
+	IMSG_QUEUE_HOLDQ_HOLD,
+	IMSG_QUEUE_HOLDQ_RELEASE,
+	IMSG_QUEUE_MESSAGE_COMMIT,
+	IMSG_QUEUE_MESSAGE_ROLLBACK,
+	IMSG_QUEUE_SMTP_SESSION,
+	IMSG_QUEUE_TRANSFER,
+
+	IMSG_MDA_DELIVERY_OK,
+	IMSG_MDA_DELIVERY_TEMPFAIL,
+	IMSG_MDA_DELIVERY_PERMFAIL,
+	IMSG_MDA_DELIVERY_LOOP,
+	IMSG_MDA_DELIVERY_HOLD,
+	IMSG_MDA_DONE,
+	IMSG_MDA_FORK,
+	IMSG_MDA_HOLDQ_RELEASE,
+	IMSG_MDA_LOOKUP_USERINFO,
+	IMSG_MDA_KILL,
+	IMSG_MDA_OPEN_MESSAGE,
+
+	IMSG_MFA_SMTP_RESPONSE,
+
+	IMSG_MTA_DELIVERY_OK,
+	IMSG_MTA_DELIVERY_TEMPFAIL,
+	IMSG_MTA_DELIVERY_PERMFAIL,
+	IMSG_MTA_DELIVERY_LOOP,
+	IMSG_MTA_DELIVERY_HOLD,
+	IMSG_MTA_DNS_HOST,
+	IMSG_MTA_DNS_HOST_END,
+	IMSG_MTA_DNS_PTR,
+	IMSG_MTA_DNS_MX,
+	IMSG_MTA_DNS_MX_PREFERENCE,
+	IMSG_MTA_HOLDQ_RELEASE,
+	IMSG_MTA_LOOKUP_CREDENTIALS,
+	IMSG_MTA_LOOKUP_SOURCE,
+	IMSG_MTA_LOOKUP_HELO,
+	IMSG_MTA_OPEN_MESSAGE,
+	IMSG_MTA_SCHEDULE,
+	IMSG_MTA_SSL_INIT,
+	IMSG_MTA_SSL_VERIFY_CERT,
+	IMSG_MTA_SSL_VERIFY_CHAIN,
+	IMSG_MTA_SSL_VERIFY,
+
+	IMSG_SCHED_ENVELOPE_BOUNCE,
+	IMSG_SCHED_ENVELOPE_DELIVER,
+	IMSG_SCHED_ENVELOPE_EXPIRE,
+	IMSG_SCHED_ENVELOPE_INJECT,
+	IMSG_SCHED_ENVELOPE_REMOVE,
+	IMSG_SCHED_ENVELOPE_TRANSFER,
+
+	IMSG_SMTP_AUTHENTICATE,
+	IMSG_SMTP_DNS_PTR,
+	IMSG_SMTP_MESSAGE_COMMIT,
+	IMSG_SMTP_MESSAGE_CREATE,
+	IMSG_SMTP_MESSAGE_ROLLBACK,
+	IMSG_SMTP_MESSAGE_OPEN,
+	IMSG_SMTP_EXPAND_RCPT,
+	IMSG_SMTP_LOOKUP_HELO,
+	IMSG_SMTP_SSL_INIT,
+	IMSG_SMTP_SSL_VERIFY_CERT,
+	IMSG_SMTP_SSL_VERIFY_CHAIN,
+	IMSG_SMTP_SSL_VERIFY,
+
+	IMSG_SMTP_REQ_CONNECT,
+	IMSG_SMTP_REQ_HELO,
+	IMSG_SMTP_REQ_MAIL,
+	IMSG_SMTP_REQ_RCPT,
+	IMSG_SMTP_REQ_DATA,
+	IMSG_SMTP_REQ_EOM,
+	IMSG_SMTP_EVENT_RSET,
+	IMSG_SMTP_EVENT_COMMIT,
+	IMSG_SMTP_EVENT_ROLLBACK,
+	IMSG_SMTP_EVENT_DISCONNECT,
 };
 
 enum blockmodes {
@@ -279,14 +294,12 @@ enum blockmodes {
 
 enum smtp_proc_type {
 	PROC_PARENT = 0,
-	PROC_SMTP,
 	PROC_MFA,
 	PROC_LKA,
 	PROC_QUEUE,
-	PROC_MDA,
-	PROC_MTA,
 	PROC_CONTROL,
 	PROC_SCHEDULER,
+	PROC_PONY,
 
 	PROC_FILTER,
 	PROC_CLIENT,
@@ -961,12 +974,10 @@ extern int profiling;
 extern struct mproc *p_control;
 extern struct mproc *p_parent;
 extern struct mproc *p_lka;
-extern struct mproc *p_mda;
 extern struct mproc *p_mfa;
-extern struct mproc *p_mta;
 extern struct mproc *p_queue;
 extern struct mproc *p_scheduler;
-extern struct mproc *p_smtp;
+extern struct mproc *p_pony;
 
 extern struct smtpd	*env;
 extern void (*imsg_callback)(struct mproc *, struct imsg *);
@@ -1103,10 +1114,6 @@ struct delivery_backend *delivery_backend_lookup(enum action_type);
 
 
 /* dns.c */
-void dns_query_host(uint64_t, const char *);
-void dns_query_ptr(uint64_t, const struct sockaddr *);
-void dns_query_mx(uint64_t, const char *);
-void dns_query_mx_preference(uint64_t, const char *, const char *);
 void dns_imsg(struct mproc *, struct imsg *);
 
 
@@ -1164,12 +1171,15 @@ void vlog(int, const char *, va_list);
 
 
 /* mda.c */
-pid_t mda(void);
+void mda_postfork(void);
+void mda_postprivdrop(void);
+void mda_imsg(struct mproc *, struct imsg *);
 
 
 /* mfa.c */
 pid_t mfa(void);
 void mfa_ready(void);
+
 
 /* mfa_session.c */
 void mfa_filter_prepare(void);
@@ -1182,6 +1192,7 @@ void mfa_filter_eom(uint64_t, int, size_t);
 void mfa_filter(uint64_t, int);
 void mfa_filter_event(uint64_t, int);
 void mfa_build_fd_chain(uint64_t, int);
+
 
 /* mproc.c */
 int mproc_fork(struct mproc *, const char*, const char *);
@@ -1225,7 +1236,9 @@ void m_get_envelope(struct msg *, struct envelope *);
 
 
 /* mta.c */
-pid_t mta(void);
+void mta_postfork(void);
+void mta_postprivdrop(void);
+void mta_imsg(struct mproc *, struct imsg *);
 void mta_route_ok(struct mta_relay *, struct mta_route *);
 void mta_route_error(struct mta_relay *, struct mta_route *);
 void mta_route_down(struct mta_relay *, struct mta_route *);
@@ -1249,10 +1262,6 @@ int cmdline_symset(char *);
 
 /* queue.c */
 pid_t queue(void);
-void queue_ok(uint64_t);
-void queue_tempfail(uint64_t, const char *, enum enhanced_status_code);
-void queue_permfail(uint64_t, const char *, enum enhanced_status_code);
-void queue_loop(uint64_t);
 void queue_flow_control(void);
 
 
@@ -1287,8 +1296,15 @@ void scheduler_info(struct scheduler_info *, struct envelope *);
 time_t scheduler_compute_schedule(struct scheduler_info *);
 
 
+/* pony.c */
+pid_t pony(void);
+
+
 /* smtp.c */
-pid_t smtp(void);
+void smtp_postfork(void);
+void smtp_postprivdrop(void);
+void smtp_imsg(struct mproc *, struct imsg *);
+void smtp_configure(void);
 void smtp_collect(void);
 
 

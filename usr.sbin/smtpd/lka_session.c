@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.64 2014/02/28 16:00:11 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.65 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -229,20 +229,20 @@ lka_resume(struct lka_session *lks)
 	}
     error:
 	if (lks->error) {
-		m_create(p_smtp, IMSG_LKA_EXPAND_RCPT, 0, 0, -1);
-		m_add_id(p_smtp, lks->id);
-		m_add_int(p_smtp, lks->error);
+		m_create(p_pony, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
+		m_add_id(p_pony, lks->id);
+		m_add_int(p_pony, lks->error);
 
 		if (lks->errormsg)
-			m_add_string(p_smtp, lks->errormsg);
+			m_add_string(p_pony, lks->errormsg);
 		else {
 			if (lks->error == LKA_PERMFAIL)
-				m_add_string(p_smtp, "550 Invalid recipient");
+				m_add_string(p_pony, "550 Invalid recipient");
 			else if (lks->error == LKA_TEMPFAIL)
-				m_add_string(p_smtp, "451 Temporary failure");
+				m_add_string(p_pony, "451 Temporary failure");
 		}
 
-		m_close(p_smtp);
+		m_close(p_pony);
 		while ((ep = TAILQ_FIRST(&lks->deliverylist)) != NULL) {
 			TAILQ_REMOVE(&lks->deliverylist, ep, entry);
 			free(ep);
@@ -252,14 +252,14 @@ lka_resume(struct lka_session *lks)
 		/* Process the delivery list and submit envelopes to queue */
 		while ((ep = TAILQ_FIRST(&lks->deliverylist)) != NULL) {
 			TAILQ_REMOVE(&lks->deliverylist, ep, entry);
-			m_create(p_queue, IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1);
+			m_create(p_queue, IMSG_LKA_ENVELOPE_SUBMIT, 0, 0, -1);
 			m_add_id(p_queue, lks->id);
 			m_add_envelope(p_queue, ep);
 			m_close(p_queue);
 			free(ep);
 		}
 
-		m_create(p_queue, IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1);
+		m_create(p_queue, IMSG_LKA_ENVELOPE_COMMIT, 0, 0, -1);
 		m_add_id(p_queue, lks->id);
 		m_close(p_queue);
 	}
@@ -415,7 +415,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		fwreq.uid = lk.userinfo.uid;
 		fwreq.gid = lk.userinfo.gid;
 
-		m_compose(p_parent, IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
+		m_compose(p_parent, IMSG_LKA_OPEN_FORWARD, 0, 0, -1,
 		    &fwreq, sizeof(fwreq));
 		lks->flags |= F_WAITING;
 		break;

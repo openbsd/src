@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.102 2014/02/04 15:44:05 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.103 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -83,16 +83,17 @@ struct mda_session {
 	FILE			*datafp;
 };
 
-static void mda_imsg(struct mproc *, struct imsg *);
 static void mda_io(struct io *, int);
-static void mda_shutdown(void);
-static void mda_sig_handler(int, short, void *);
 static int mda_check_loop(FILE *, struct mda_envelope *);
 static int mda_getlastline(int, char *, size_t);
 static void mda_done(struct mda_session *);
 static void mda_fail(struct mda_user *, int, const char *, enum enhanced_status_code);
 static void mda_drain(void);
 static void mda_log(const struct mda_envelope *, const char *, const char *);
+static void mda_queue_ok(uint64_t);
+static void mda_queue_tempfail(uint64_t, const char *, enum enhanced_status_code);
+static void mda_queue_permfail(uint64_t, const char *, enum enhanced_status_code);
+static void mda_queue_loop(uint64_t);
 static struct mda_user *mda_user(const struct envelope *);
 static void mda_user_free(struct mda_user *);
 static const char *mda_user_to_text(const struct mda_user *);
@@ -105,7 +106,7 @@ static struct tree	users;
 
 static TAILQ_HEAD(, mda_user)	runnable;
 
-static void
+void
 mda_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct mda_session	*s;
@@ -120,12 +121,12 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 reqid;
 	size_t			 sz;
 	char			 out[256], buf[SMTPD_MAXLINESIZE];
-	int			 n, v;
+	int			 n;
 	enum lka_resp_status	status;
 
 	if (p->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
-		case IMSG_LKA_USERINFO:
+		case IMSG_MDA_LOOKUP_USERINFO:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_int(&m, (int *)&status);
@@ -157,7 +158,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 
-		case IMSG_MDA_DELIVER:
+		case IMSG_QUEUE_DELIVER:
 			m_msg(&m, imsg);
 			m_get_envelope(&m, &evp);
 			m_end(&m);
@@ -175,7 +176,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (u->flags & USER_ONHOLD) {
 				u->flags |= USER_HOLDQ;
-				m_create(p_queue, IMSG_DELIVERY_HOLD, 0, 0, -1);
+				m_create(p_queue, IMSG_MDA_DELIVERY_HOLD, 0, 0, -1);
 				m_add_evpid(p_queue, evp.id);
 				m_add_id(p_queue, u->id);
 				m_close(p_queue);
@@ -196,7 +197,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			mda_drain();
 			return;
 
-		case IMSG_QUEUE_MESSAGE_FD:
+		case IMSG_MDA_OPEN_MESSAGE:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_end(&m);
@@ -206,7 +207,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (imsg->fd == -1) {
 				log_debug("debug: mda: cannot get message fd");
-				queue_tempfail(e->id, "Cannot get message fd",
+				mda_queue_tempfail(e->id, "Cannot get message fd",
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Cannot get message fd");
 				mda_done(s);
@@ -220,7 +221,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if ((s->datafp = fdopen(imsg->fd, "r")) == NULL) {
 				log_warn("warn: mda: fdopen");
 				close(imsg->fd);
-				queue_tempfail(e->id, "fdopen failed",
+				mda_queue_tempfail(e->id, "fdopen failed",
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "fdopen failed");
 				mda_done(s);
@@ -230,7 +231,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			/* check delivery loop */
 			if (mda_check_loop(s->datafp, e)) {
 				log_debug("debug: mda: loop detected");
-				queue_loop(e->id);
+				mda_queue_loop(e->id);
 				mda_log(e, "PermFail", "Loop detected");
 				mda_done(s);
 				return;
@@ -249,7 +250,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if (n == -1) {
 				log_warn("warn: mda: "
 				    "fail to write delivery info");
-				queue_tempfail(e->id, "Out of memory",
+				mda_queue_tempfail(e->id, "Out of memory",
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Out of memory");
 				mda_done(s);
@@ -322,7 +323,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			    "for session %016"PRIx64 " evpid %016"PRIx64,
 			    s->id, s->evp->id);
 
-			m_create(p_parent, IMSG_PARENT_FORK_MDA, 0, 0, -1);
+			m_create(p_parent, IMSG_MDA_FORK, 0, 0, -1);
 			m_add_id(p_parent, reqid);
 			m_add_data(p_parent, &deliver, sizeof(deliver));
 			m_close(p_parent);
@@ -332,7 +333,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
-		case IMSG_PARENT_FORK_MDA:
+		case IMSG_MDA_FORK:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_end(&m);
@@ -341,7 +342,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			e = s->evp;
 			if (imsg->fd == -1) {
 				log_warn("warn: mda: fail to retrieve mda fd");
-				queue_tempfail(e->id, "Cannot get mda fd",
+				mda_queue_tempfail(e->id, "Cannot get mda fd",
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				mda_log(e, "TempFail", "Cannot get mda fd");
 				mda_done(s);
@@ -385,30 +386,16 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 
 			/* update queue entry */
 			if (error) {
-				queue_tempfail(e->id, error,
+				mda_queue_tempfail(e->id, error,
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
 				snprintf(buf, sizeof buf, "Error (%s)", error);
 				mda_log(e, "TempFail", buf);
 			}
 			else {
-				queue_ok(e->id);
+				mda_queue_ok(e->id);
 				mda_log(e, "Ok", "Delivered");
 			}
 			mda_done(s);
-			return;
-
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_verbose(v);
-			return;
-
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
 			return;
 		}
 	}
@@ -416,86 +403,17 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	errx(1, "mda_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
-static void
-mda_sig_handler(int sig, short event, void *p)
+void
+mda_postfork()
 {
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		mda_shutdown();
-		break;
-	default:
-		fatalx("mda_sig_handler: unexpected signal");
-	}
 }
 
-static void
-mda_shutdown(void)
+void
+mda_postprivdrop()
 {
-	log_info("info: mail delivery agent exiting");
-	_exit(0);
-}
-
-pid_t
-mda(void)
-{
-	pid_t		 pid;
-	struct passwd	*pw;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("mda: cannot fork");
-	case 0:
-		post_fork(PROC_MDA);
-		break;
-	default:
-		return (pid);
-	}
-
-	purge_config(PURGE_EVERYTHING);
-
-	if ((pw = getpwnam(SMTPD_USER)) == NULL)
-		fatalx("unknown user " SMTPD_USER);
-
-	if (chroot(PATH_CHROOT) == -1)
-		fatal("mda: chroot");
-	if (chdir("/") == -1)
-		fatal("mda: chdir(\"/\")");
-
-	config_process(PROC_MDA);
-
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("mda: cannot drop privileges");
-
 	tree_init(&sessions);
 	tree_init(&users);
 	TAILQ_INIT(&runnable);
-
-	imsg_callback = mda_imsg;
-	event_init();
-
-	signal_set(&ev_sigint, SIGINT, mda_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, mda_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-
-	config_peer(PROC_PARENT);
-	config_peer(PROC_QUEUE);
-	config_peer(PROC_LKA);
-	config_peer(PROC_CONTROL);
-	config_done();
-
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	mda_shutdown();
-
-	return (0);
 }
 
 static void
@@ -525,7 +443,7 @@ mda_io(struct io *io, int evt)
 			if ((ln = fgetln(s->datafp, &len)) == NULL)
 				break;
 			if (iobuf_queue(&s->iobuf, ln, len) == -1) {
-				m_create(p_parent, IMSG_PARENT_KILL_MDA,
+				m_create(p_parent, IMSG_MDA_KILL,
 				    0, 0, -1);
 				m_add_id(p_parent, s->id);
 				m_add_string(p_parent, "Out of memory");
@@ -543,7 +461,7 @@ mda_io(struct io *io, int evt)
 		if (ferror(s->datafp)) {
 			log_debug("debug: mda: ferror on session %016"PRIx64,
 			    s->id);
-			m_create(p_parent, IMSG_PARENT_KILL_MDA, 0, 0, -1);
+			m_create(p_parent, IMSG_MDA_KILL, 0, 0, -1);
 			m_add_id(p_parent, s->id);
 			m_add_string(p_parent, "Error reading body");
 			m_close(p_parent);
@@ -677,11 +595,11 @@ mda_fail(struct mda_user *user, int permfail, const char *error, enum enhanced_s
 		TAILQ_REMOVE(&user->envelopes, e, entry);
 		if (permfail) {
 			mda_log(e, "PermFail", error);
-			queue_permfail(e->id, error, code);
+			mda_queue_permfail(e->id, error, code);
 		}
 		else {
 			mda_log(e, "TempFail", error);
-			queue_tempfail(e->id, error, code);
+			mda_queue_tempfail(e->id, error, code);
 		}
 		mda_envelope_free(e);
 	}
@@ -736,7 +654,7 @@ mda_drain(void)
 				u->flags &= ~USER_ONHOLD;
 			}
 			if (u->flags & USER_HOLDQ) {
-				m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+				m_create(p_queue, IMSG_MDA_HOLDQ_RELEASE, 0, 0, -1);
 				m_add_id(p_queue, u->id);
 				m_add_int(p_queue, env->sc_mda_task_release);
 				m_close(p_queue);
@@ -813,6 +731,42 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 	    status);
 }
 
+static void
+mda_queue_ok(uint64_t evpid)
+{
+	m_create(p_queue, IMSG_MDA_DELIVERY_OK, 0, 0, -1);
+	m_add_evpid(p_queue, evpid);
+	m_close(p_queue);
+}
+
+static void
+mda_queue_tempfail(uint64_t evpid, const char *reason, enum enhanced_status_code code)
+{
+	m_create(p_queue, IMSG_MDA_DELIVERY_TEMPFAIL, 0, 0, -1);
+	m_add_evpid(p_queue, evpid);
+	m_add_string(p_queue, reason);
+	m_add_int(p_queue, (int)code);
+	m_close(p_queue);
+}
+
+static void
+mda_queue_permfail(uint64_t evpid, const char *reason, enum enhanced_status_code code)
+{
+	m_create(p_queue, IMSG_MDA_DELIVERY_PERMFAIL, 0, 0, -1);
+	m_add_evpid(p_queue, evpid);
+	m_add_string(p_queue, reason);
+	m_add_int(p_queue, (int)code);
+	m_close(p_queue);
+}
+
+static void
+mda_queue_loop(uint64_t evpid)
+{
+	m_create(p_queue, IMSG_MDA_DELIVERY_LOOP, 0, 0, -1);
+	m_add_evpid(p_queue, evpid);
+	m_close(p_queue);
+}
+
 static struct mda_user *
 mda_user(const struct envelope *evp)
 {
@@ -835,7 +789,7 @@ mda_user(const struct envelope *evp)
 
 	tree_xset(&users, u->id, u);
 
-	m_create(p_lka, IMSG_LKA_USERINFO, 0, 0, -1);
+	m_create(p_lka, IMSG_MDA_LOOKUP_USERINFO, 0, 0, -1);
 	m_add_id(p_lka, u->id);
 	m_add_string(p_lka, evp->agent.mda.usertable);
 	m_add_string(p_lka, evp->agent.mda.username);
@@ -855,7 +809,7 @@ mda_user_free(struct mda_user *u)
 	tree_xpop(&users, u->id);
 
 	if (u->flags & USER_HOLDQ) {
-		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_create(p_queue, IMSG_MDA_HOLDQ_RELEASE, 0, 0, -1);
 		m_add_id(p_queue, u->id);
 		m_add_int(p_queue, 0);
 		m_close(p_queue);
@@ -942,7 +896,7 @@ mda_session(struct mda_user * u)
 	    " for user \"%s\" evpid %016" PRIx64, s->id,
 	    mda_user_to_text(u), s->evp->id);
 
-	m_create(p_queue, IMSG_QUEUE_MESSAGE_FD, 0, 0, -1);
+	m_create(p_queue, IMSG_MDA_OPEN_MESSAGE, 0, 0, -1);
 	m_add_id(p_queue, s->id);
 	m_add_msgid(p_queue, evpid_to_msgid(s->evp->id));
 	m_close(p_queue);

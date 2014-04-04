@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.217 2014/04/04 13:13:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.218 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,7 +58,7 @@ static void parent_shutdown(int);
 static void parent_send_config(int, short, void *);
 static void parent_send_config_lka(void);
 static void parent_send_config_mfa(void);
-static void parent_send_config_smtp(void);
+static void parent_send_config_pony(void);
 static void parent_sig_handler(int, short, void *);
 static void forkmda(struct mproc *, uint64_t, struct deliver *);
 static int parent_forward_open(char *, char *, uid_t, gid_t);
@@ -118,13 +118,11 @@ struct smtpd	*env = NULL;
 
 struct mproc	*p_control = NULL;
 struct mproc	*p_lka = NULL;
-struct mproc	*p_mda = NULL;
 struct mproc	*p_mfa = NULL;
-struct mproc	*p_mta = NULL;
 struct mproc	*p_parent = NULL;
 struct mproc	*p_queue = NULL;
 struct mproc	*p_scheduler = NULL;
-struct mproc	*p_smtp = NULL;
+struct mproc	*p_pony = NULL;
 
 const char	*backend_queue = "fs";
 const char	*backend_scheduler = "ramqueue";
@@ -154,7 +152,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 
 	if (p->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
-		case IMSG_PARENT_FORWARD_OPEN:
+		case IMSG_LKA_OPEN_FORWARD:
 			fwreq = imsg->data;
 			fd = parent_forward_open(fwreq->user, fwreq->directory,
 			    fwreq->uid, fwreq->gid);
@@ -165,7 +163,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			else
 				fwreq->status = 1;
-			m_compose(p, IMSG_PARENT_FORWARD_OPEN, 0, 0, fd,
+			m_compose(p, IMSG_LKA_OPEN_FORWARD, 0, 0, fd,
 			    fwreq, sizeof *fwreq);
 			return;
 
@@ -190,9 +188,9 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		}
 	}
 
-	if (p->proc == PROC_MDA) {
+	if (p->proc == PROC_PONY) {
 		switch (imsg->hdr.type) {
-		case IMSG_PARENT_FORK_MDA:
+		case IMSG_MDA_FORK:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_data(&m, &data, &sz);
@@ -203,7 +201,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			forkmda(p, reqid, &deliver);
 			return;
 
-		case IMSG_PARENT_KILL_MDA:
+		case IMSG_MDA_KILL:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_string(&m, &cause);
@@ -237,14 +235,12 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			m_end(&m);
 			log_verbose(v);
 			m_forward(p_lka, imsg);
-			m_forward(p_mda, imsg);
 			m_forward(p_mfa, imsg);
-			m_forward(p_mta, imsg);
 			m_forward(p_queue, imsg);
-			m_forward(p_smtp, imsg);
+			m_forward(p_pony, imsg);
 			return;
 
-		case IMSG_CTL_TRACE:
+		case IMSG_CTL_TRACE_ENABLE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
@@ -253,7 +249,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			parent_broadcast_verbose(verbose);
 			return;
 
-		case IMSG_CTL_UNTRACE:
+		case IMSG_CTL_TRACE_DISABLE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
@@ -262,7 +258,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			parent_broadcast_verbose(verbose);
 			return;
 
-		case IMSG_CTL_PROFILE:
+		case IMSG_CTL_PROFILE_ENABLE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
@@ -270,7 +266,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			parent_broadcast_profile(profiling);
 			return;
 
-		case IMSG_CTL_UNPROFILE:
+		case IMSG_CTL_PROFILE_DISABLE:
 			m_msg(&m, imsg);
 			m_get_int(&m, &v);
 			m_end(&m);
@@ -324,30 +320,23 @@ parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_lka();
 	parent_send_config_mfa();
-	parent_send_config_smtp();
+	parent_send_config_pony();
 	purge_config(PURGE_PKI);
 }
 
 static void
-parent_send_config_smtp(void)
+parent_send_config_pony(void)
 {
-	log_debug("debug: parent_send_config: configuring smtp");
-	m_compose(p_smtp, IMSG_CONF_START, 0, 0, -1, NULL, 0);
-	m_compose(p_smtp, IMSG_CONF_END, 0, 0, -1, NULL, 0);
+	log_debug("debug: parent_send_config: configuring pony process");
+	m_compose(p_pony, IMSG_CONF_START, 0, 0, -1, NULL, 0);
+	m_compose(p_pony, IMSG_CONF_END, 0, 0, -1, NULL, 0);
 }
 
 void
 parent_send_config_mfa()
 {
-	struct filter	       *f;
-	void		       *iter_dict = NULL;
-
 	log_debug("debug: parent_send_config_mfa: reloading");
 	m_compose(p_mfa, IMSG_CONF_START, 0, 0, -1, NULL, 0);
-
-	while (dict_iter(&env->sc_filters, &iter_dict, NULL, (void **)&f))
-		m_compose(p_mfa, IMSG_CONF_FILTER, 0, 0, -1, f, sizeof(*f));
-
 	m_compose(p_mfa, IMSG_CONF_END, 0, 0, -1, NULL, 0);
 }
 
@@ -425,11 +414,11 @@ parent_sig_handler(int sig, short event, void *p)
 				log_debug("debug: smtpd: mda process done "
 				    "for session %016"PRIx64 ": %s",
 				    child->mda_id, cause);
-				m_create(p_mda, IMSG_MDA_DONE, 0, 0,
+				m_create(p_pony, IMSG_MDA_DONE, 0, 0,
 				    child->mda_out);
-				m_add_id(p_mda, child->mda_id);
-				m_add_string(p_mda, cause);
-				m_close(p_mda);
+				m_add_id(p_pony, child->mda_id);
+				m_add_string(p_pony, cause);
+				m_close(p_pony);
 				/* free(cause); */
 				break;
 
@@ -670,11 +659,9 @@ main(int argc, char *argv[])
 
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_LKA);
-	config_peer(PROC_MDA);
 	config_peer(PROC_MFA);
-	config_peer(PROC_MTA);
-	config_peer(PROC_SMTP);
 	config_peer(PROC_QUEUE);
+	config_peer(PROC_PONY);
 	config_done();
 
 	evtimer_set(&config_ev, parent_send_config, NULL);
@@ -738,12 +725,9 @@ fork_peers(void)
 	child_add(queue(), CHILD_DAEMON, proc_title(PROC_QUEUE));
 	child_add(control(), CHILD_DAEMON, proc_title(PROC_CONTROL));
 	child_add(lka(), CHILD_DAEMON, proc_title(PROC_LKA));
-	child_add(mda(), CHILD_DAEMON, proc_title(PROC_MDA));
 	child_add(mfa(), CHILD_DAEMON, proc_title(PROC_MFA));
-	child_add(mta(), CHILD_DAEMON, proc_title(PROC_MTA));
 	child_add(scheduler(), CHILD_DAEMON, proc_title(PROC_SCHEDULER));
-	child_add(smtp(), CHILD_DAEMON, proc_title(PROC_SMTP));
-
+	child_add(pony(), CHILD_DAEMON, proc_title(PROC_PONY));
 	post_fork(PROC_PARENT);
 }
 
@@ -836,29 +820,29 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	db = delivery_backend_lookup(deliver->mode);
 	if (db == NULL) {
 		snprintf(ebuf, sizeof ebuf, "could not find delivery backend");
-		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_mda,	id);
-		m_add_string(p_mda, ebuf);
-		m_close(p_mda);
+		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_pony, id);
+		m_add_string(p_pony, ebuf);
+		m_close(p_pony);
 		return;
 	}
 
 	if (deliver->userinfo.uid == 0 && ! db->allow_root) {
 		snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
 		    deliver->user);
-		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_mda,	id);
-		m_add_string(p_mda, ebuf);
-		m_close(p_mda);
+		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_pony, id);
+		m_add_string(p_pony, ebuf);
+		m_close(p_pony);
 		return;
 	}
 
 	if (pipe(pipefd) < 0) {
 		snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
-		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_mda,	id);
-		m_add_string(p_mda, ebuf);
-		m_close(p_mda);
+		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_pony, id);
+		m_add_string(p_pony, ebuf);
+		m_close(p_pony);
 		return;
 	}
 
@@ -869,10 +853,10 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	umask(omode);
 	if (allout < 0) {
 		snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
-		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_mda,	id);
-		m_add_string(p_mda, ebuf);
-		m_close(p_mda);
+		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_pony, id);
+		m_add_string(p_pony, ebuf);
+		m_close(p_pony);
 		close(pipefd[0]);
 		close(pipefd[1]);
 		return;
@@ -882,10 +866,10 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	pid = fork();
 	if (pid < 0) {
 		snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
-		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_mda,	id);
-		m_add_string(p_mda, ebuf);
-		m_close(p_mda);
+		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_pony, id);
+		m_add_string(p_pony, ebuf);
+		m_close(p_pony);
 		close(pipefd[0]);
 		close(pipefd[1]);
 		close(allout);
@@ -898,7 +882,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		child->mda_out = allout;
 		child->mda_id = id;
 		close(pipefd[0]);
-		m_create(p, IMSG_PARENT_FORK_MDA, 0, 0, pipefd[1]);
+		m_create(p, IMSG_MDA_FORK, 0, 0, pipefd[1]);
 		m_add_id(p, id);
 		m_close(p);
 		return;
@@ -1226,22 +1210,18 @@ proc_title(enum smtp_proc_type proc)
 	switch (proc) {
 	case PROC_PARENT:
 		return "[priv]";
-	case PROC_SMTP:
-		return "smtp";
 	case PROC_MFA:
 		return "filter";
 	case PROC_LKA:
 		return "lookup";
 	case PROC_QUEUE:
 		return "queue";
-	case PROC_MDA:
-		return "delivery";
-	case PROC_MTA:
-		return "transfer";
 	case PROC_CONTROL:
 		return "control";
 	case PROC_SCHEDULER:
 		return "scheduler";
+	case PROC_PONY:
+		return "pony express";
 	default:
 		return "unknown";
 	}
@@ -1253,23 +1233,18 @@ proc_name(enum smtp_proc_type proc)
 	switch (proc) {
 	case PROC_PARENT:
 		return "parent";
-	case PROC_SMTP:
-		return "smtp";
 	case PROC_MFA:
 		return "mfa";
 	case PROC_LKA:
 		return "lka";
 	case PROC_QUEUE:
 		return "queue";
-	case PROC_MDA:
-		return "mda";
-	case PROC_MTA:
-		return "mta";
 	case PROC_CONTROL:
 		return "control";
 	case PROC_SCHEDULER:
 		return "scheduler";
-
+	case PROC_PONY:
+		return "pony";
 	case PROC_FILTER:
 		return "filter-proc";
 	case PROC_CLIENT:
@@ -1288,30 +1263,14 @@ imsg_to_str(int type)
 
 	switch (type) {
 	CASE(IMSG_NONE);
+
 	CASE(IMSG_CTL_OK);
 	CASE(IMSG_CTL_FAIL);
-	CASE(IMSG_CTL_SHUTDOWN);
-	CASE(IMSG_CTL_VERBOSE);
-	CASE(IMSG_CTL_PAUSE_EVP);
-	CASE(IMSG_CTL_PAUSE_MDA);
-	CASE(IMSG_CTL_PAUSE_MTA);
-	CASE(IMSG_CTL_PAUSE_SMTP);
-	CASE(IMSG_CTL_RESUME_EVP);
-	CASE(IMSG_CTL_RESUME_MDA);
-	CASE(IMSG_CTL_RESUME_MTA);
-	CASE(IMSG_CTL_RESUME_SMTP);
-	CASE(IMSG_CTL_RESUME_ROUTE);
+
+	CASE(IMSG_CTL_GET_DIGEST);
+	CASE(IMSG_CTL_GET_STATS);
 	CASE(IMSG_CTL_LIST_MESSAGES);
 	CASE(IMSG_CTL_LIST_ENVELOPES);
-	CASE(IMSG_CTL_REMOVE);
-	CASE(IMSG_CTL_SCHEDULE);
-	CASE(IMSG_CTL_SHOW_STATUS);
-
-	CASE(IMSG_CTL_TRACE);
-	CASE(IMSG_CTL_UNTRACE);
-	CASE(IMSG_CTL_PROFILE);
-	CASE(IMSG_CTL_UNPROFILE);
-
 	CASE(IMSG_CTL_MTA_SHOW_HOSTS);
 	CASE(IMSG_CTL_MTA_SHOW_RELAYS);
 	CASE(IMSG_CTL_MTA_SHOW_ROUTES);
@@ -1319,92 +1278,122 @@ imsg_to_str(int type)
 	CASE(IMSG_CTL_MTA_BLOCK);
 	CASE(IMSG_CTL_MTA_UNBLOCK);
 	CASE(IMSG_CTL_MTA_SHOW_BLOCK);
+	CASE(IMSG_CTL_PAUSE_EVP);
+	CASE(IMSG_CTL_PAUSE_MDA);
+	CASE(IMSG_CTL_PAUSE_MTA);
+	CASE(IMSG_CTL_PAUSE_SMTP);
+	CASE(IMSG_CTL_PROFILE);
+	CASE(IMSG_CTL_PROFILE_DISABLE);
+	CASE(IMSG_CTL_PROFILE_ENABLE);
+	CASE(IMSG_CTL_RESUME_EVP);
+	CASE(IMSG_CTL_RESUME_MDA);
+	CASE(IMSG_CTL_RESUME_MTA);
+	CASE(IMSG_CTL_RESUME_SMTP);
+	CASE(IMSG_CTL_RESUME_ROUTE);
+	CASE(IMSG_CTL_REMOVE);
+	CASE(IMSG_CTL_SCHEDULE);
+	CASE(IMSG_CTL_SHOW_STATUS);
+	CASE(IMSG_CTL_SHUTDOWN);
+	CASE(IMSG_CTL_TRACE_DISABLE);
+	CASE(IMSG_CTL_TRACE_ENABLE);
+	CASE(IMSG_CTL_UPDATE_TABLE);
+	CASE(IMSG_CTL_VERBOSE);
+
+	CASE(IMSG_CTL_SMTP_SESSION);
 
 	CASE(IMSG_CONF_START);
-	CASE(IMSG_CONF_SSL);
-	CASE(IMSG_CONF_LISTENER);
-	CASE(IMSG_CONF_TABLE);
-	CASE(IMSG_CONF_TABLE_CONTENT);
-	CASE(IMSG_CONF_RULE);
-	CASE(IMSG_CONF_RULE_SOURCE);
-	CASE(IMSG_CONF_RULE_SENDER);
-	CASE(IMSG_CONF_RULE_DESTINATION);
-	CASE(IMSG_CONF_RULE_RECIPIENT);
-	CASE(IMSG_CONF_RULE_MAPPING);
-	CASE(IMSG_CONF_RULE_USERS);
-	CASE(IMSG_CONF_FILTER);
 	CASE(IMSG_CONF_END);
-
-	CASE(IMSG_LKA_UPDATE_TABLE);
-	CASE(IMSG_LKA_EXPAND_RCPT);
-	CASE(IMSG_LKA_SECRET);
-	CASE(IMSG_LKA_SOURCE);
-	CASE(IMSG_LKA_HELO);
-	CASE(IMSG_LKA_USERINFO);
-	CASE(IMSG_LKA_AUTHENTICATE);
-	CASE(IMSG_LKA_SSL_INIT);
-	CASE(IMSG_LKA_SSL_VERIFY_CERT);
-	CASE(IMSG_LKA_SSL_VERIFY_CHAIN);
-	CASE(IMSG_LKA_SSL_VERIFY);
-
-	CASE(IMSG_DELIVERY_OK);
-	CASE(IMSG_DELIVERY_TEMPFAIL);
-	CASE(IMSG_DELIVERY_PERMFAIL);
-	CASE(IMSG_DELIVERY_LOOP);
-	CASE(IMSG_DELIVERY_HOLD);
-	CASE(IMSG_DELIVERY_RELEASE);
-
-	CASE(IMSG_BOUNCE_INJECT);
-
-	CASE(IMSG_MDA_DELIVER);
-	CASE(IMSG_MDA_DONE);
-
-	CASE(IMSG_MFA_REQ_CONNECT);
-	CASE(IMSG_MFA_REQ_HELO);
-	CASE(IMSG_MFA_REQ_MAIL);
-	CASE(IMSG_MFA_REQ_RCPT);
-	CASE(IMSG_MFA_REQ_DATA);
-	CASE(IMSG_MFA_REQ_EOM);
-	CASE(IMSG_MFA_EVENT_RSET);
-	CASE(IMSG_MFA_EVENT_COMMIT);
-	CASE(IMSG_MFA_EVENT_ROLLBACK);
-	CASE(IMSG_MFA_EVENT_DISCONNECT);
-	CASE(IMSG_MFA_SMTP_RESPONSE);
-
-	CASE(IMSG_MTA_TRANSFER);
-	CASE(IMSG_MTA_SCHEDULE);
-
-	CASE(IMSG_QUEUE_CREATE_MESSAGE);
-	CASE(IMSG_QUEUE_SUBMIT_ENVELOPE);
-	CASE(IMSG_QUEUE_COMMIT_ENVELOPES);
-	CASE(IMSG_QUEUE_REMOVE_MESSAGE);
-	CASE(IMSG_QUEUE_COMMIT_MESSAGE);
-	CASE(IMSG_QUEUE_MESSAGE_FD);
-	CASE(IMSG_QUEUE_MESSAGE_FILE);
-	CASE(IMSG_QUEUE_REMOVE);
-	CASE(IMSG_QUEUE_EXPIRE);
-	CASE(IMSG_QUEUE_BOUNCE);
-
-	CASE(IMSG_PARENT_FORWARD_OPEN);
-	CASE(IMSG_PARENT_FORK_MDA);
-	CASE(IMSG_PARENT_KILL_MDA);
-
-	CASE(IMSG_SMTP_ENQUEUE_FD);
-
-	CASE(IMSG_DNS_HOST);
-	CASE(IMSG_DNS_HOST_END);
-	CASE(IMSG_DNS_PTR);
-	CASE(IMSG_DNS_MX);
-	CASE(IMSG_DNS_MX_PREFERENCE);
 
 	CASE(IMSG_STAT_INCREMENT);
 	CASE(IMSG_STAT_DECREMENT);
 	CASE(IMSG_STAT_SET);
 
-	CASE(IMSG_DIGEST);
-	CASE(IMSG_STATS);
-	CASE(IMSG_STATS_GET);
+	CASE(IMSG_LKA_AUTHENTICATE);
+	CASE(IMSG_LKA_OPEN_FORWARD);
+	CASE(IMSG_LKA_ENVELOPE_SUBMIT);
+	CASE(IMSG_LKA_ENVELOPE_COMMIT);
 
+	CASE(IMSG_QUEUE_DELIVER);
+	CASE(IMSG_QUEUE_DELIVERY_OK);
+	CASE(IMSG_QUEUE_DELIVERY_TEMPFAIL);
+	CASE(IMSG_QUEUE_DELIVERY_PERMFAIL);
+	CASE(IMSG_QUEUE_DELIVERY_LOOP);
+	CASE(IMSG_QUEUE_ENVELOPE_COMMIT);
+	CASE(IMSG_QUEUE_ENVELOPE_REMOVE);
+	CASE(IMSG_QUEUE_ENVELOPE_SCHEDULE);
+	CASE(IMSG_QUEUE_ENVELOPE_SUBMIT);
+	CASE(IMSG_QUEUE_HOLDQ_HOLD);
+	CASE(IMSG_QUEUE_HOLDQ_RELEASE);
+	CASE(IMSG_QUEUE_MESSAGE_COMMIT);
+	CASE(IMSG_QUEUE_MESSAGE_ROLLBACK);
+	CASE(IMSG_QUEUE_SMTP_SESSION);
+	CASE(IMSG_QUEUE_TRANSFER);
+
+	CASE(IMSG_MDA_DELIVERY_OK);
+	CASE(IMSG_MDA_DELIVERY_TEMPFAIL);
+	CASE(IMSG_MDA_DELIVERY_PERMFAIL);
+	CASE(IMSG_MDA_DELIVERY_LOOP);
+	CASE(IMSG_MDA_DELIVERY_HOLD);
+	CASE(IMSG_MDA_DONE);
+	CASE(IMSG_MDA_FORK);
+	CASE(IMSG_MDA_HOLDQ_RELEASE);
+	CASE(IMSG_MDA_LOOKUP_USERINFO);
+	CASE(IMSG_MDA_KILL);
+	CASE(IMSG_MDA_OPEN_MESSAGE);
+
+	CASE(IMSG_MFA_SMTP_RESPONSE);
+
+	CASE(IMSG_MTA_DELIVERY_OK);
+	CASE(IMSG_MTA_DELIVERY_TEMPFAIL);
+	CASE(IMSG_MTA_DELIVERY_PERMFAIL);
+	CASE(IMSG_MTA_DELIVERY_LOOP);
+	CASE(IMSG_MTA_DELIVERY_HOLD);
+	CASE(IMSG_MTA_DNS_HOST);
+	CASE(IMSG_MTA_DNS_HOST_END);
+	CASE(IMSG_MTA_DNS_PTR);
+	CASE(IMSG_MTA_DNS_MX);
+	CASE(IMSG_MTA_DNS_MX_PREFERENCE);
+	CASE(IMSG_MTA_HOLDQ_RELEASE);
+	CASE(IMSG_MTA_LOOKUP_CREDENTIALS);
+	CASE(IMSG_MTA_LOOKUP_SOURCE);
+	CASE(IMSG_MTA_LOOKUP_HELO);
+	CASE(IMSG_MTA_OPEN_MESSAGE);
+	CASE(IMSG_MTA_SCHEDULE);
+	CASE(IMSG_MTA_SSL_INIT);
+	CASE(IMSG_MTA_SSL_VERIFY_CERT);
+	CASE(IMSG_MTA_SSL_VERIFY_CHAIN);
+	CASE(IMSG_MTA_SSL_VERIFY);
+
+	CASE(IMSG_SCHED_ENVELOPE_BOUNCE);
+	CASE(IMSG_SCHED_ENVELOPE_DELIVER);
+	CASE(IMSG_SCHED_ENVELOPE_EXPIRE);
+	CASE(IMSG_SCHED_ENVELOPE_INJECT);
+	CASE(IMSG_SCHED_ENVELOPE_REMOVE);
+	CASE(IMSG_SCHED_ENVELOPE_TRANSFER);
+
+	CASE(IMSG_SMTP_AUTHENTICATE);
+	CASE(IMSG_SMTP_DNS_PTR);
+	CASE(IMSG_SMTP_MESSAGE_COMMIT);
+	CASE(IMSG_SMTP_MESSAGE_CREATE);
+	CASE(IMSG_SMTP_MESSAGE_ROLLBACK);
+	CASE(IMSG_SMTP_MESSAGE_OPEN);
+	CASE(IMSG_SMTP_EXPAND_RCPT);
+	CASE(IMSG_SMTP_LOOKUP_HELO);
+	CASE(IMSG_SMTP_SSL_INIT);
+	CASE(IMSG_SMTP_SSL_VERIFY_CERT);
+	CASE(IMSG_SMTP_SSL_VERIFY_CHAIN);
+	CASE(IMSG_SMTP_SSL_VERIFY);
+
+	CASE(IMSG_SMTP_REQ_CONNECT);
+	CASE(IMSG_SMTP_REQ_HELO);
+	CASE(IMSG_SMTP_REQ_MAIL);
+	CASE(IMSG_SMTP_REQ_RCPT);
+	CASE(IMSG_SMTP_REQ_DATA);
+	CASE(IMSG_SMTP_REQ_EOM);
+	CASE(IMSG_SMTP_EVENT_RSET);
+	CASE(IMSG_SMTP_EVENT_COMMIT);
+	CASE(IMSG_SMTP_EVENT_ROLLBACK);
+	CASE(IMSG_SMTP_EVENT_DISCONNECT);
 	default:
 		snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 
@@ -1435,25 +1424,17 @@ parent_broadcast_verbose(uint32_t v)
 	m_add_int(p_lka, v);
 	m_close(p_lka);
 	
-	m_create(p_mda, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_mda, v);
-	m_close(p_mda);
+	m_create(p_pony, IMSG_CTL_VERBOSE, 0, 0, -1);
+	m_add_int(p_pony, v);
+	m_close(p_pony);
 	
 	m_create(p_mfa, IMSG_CTL_VERBOSE, 0, 0, -1);
 	m_add_int(p_mfa, v);
 	m_close(p_mfa);
 	
-	m_create(p_mta, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_mta, v);
-	m_close(p_mta);
-	
 	m_create(p_queue, IMSG_CTL_VERBOSE, 0, 0, -1);
 	m_add_int(p_queue, v);
 	m_close(p_queue);
-	
-	m_create(p_smtp, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_smtp, v);
-	m_close(p_smtp);
 }
 
 static void
@@ -1463,23 +1444,15 @@ parent_broadcast_profile(uint32_t v)
 	m_add_int(p_lka, v);
 	m_close(p_lka);
 	
-	m_create(p_mda, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_mda, v);
-	m_close(p_mda);
+	m_create(p_pony, IMSG_CTL_PROFILE, 0, 0, -1);
+	m_add_int(p_pony, v);
+	m_close(p_pony);
 	
 	m_create(p_mfa, IMSG_CTL_PROFILE, 0, 0, -1);
 	m_add_int(p_mfa, v);
 	m_close(p_mfa);
 	
-	m_create(p_mta, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_mta, v);
-	m_close(p_mta);
-	
 	m_create(p_queue, IMSG_CTL_PROFILE, 0, 0, -1);
 	m_add_int(p_queue, v);
 	m_close(p_queue);
-	
-	m_create(p_smtp, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_smtp, v);
-	m_close(p_smtp);
 }

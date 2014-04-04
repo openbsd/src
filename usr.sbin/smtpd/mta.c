@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.184 2014/03/08 15:47:52 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.185 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,10 +55,6 @@
 
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
-
-static void mta_imsg(struct mproc *, struct imsg *);
-static void mta_shutdown(void);
-static void mta_sig_handler(int, short, void *);
 
 static void mta_query_mx(struct mta_relay *);
 static void mta_query_secret(struct mta_relay *);
@@ -205,7 +201,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 
-		case IMSG_MTA_TRANSFER:
+		case IMSG_QUEUE_TRANSFER:
 			m_msg(&m, imsg);
 			m_get_envelope(&m, &evp);
 			m_end(&m);
@@ -227,7 +223,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			 */
 			if (relay->state & RELAY_ONHOLD) {
 				relay->state |= RELAY_HOLDQ;
-				m_create(p_queue, IMSG_DELIVERY_HOLD, 0, 0, -1);
+				m_create(p_queue, IMSG_MTA_DELIVERY_HOLD, 0, 0, -1);
 				m_add_evpid(p_queue, evp.id);
 				m_add_id(p_queue, relay->id);
 				m_close(p_queue);
@@ -287,7 +283,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			mta_relay_unref(relay); /* from here */
 			return;
 
-		case IMSG_QUEUE_MESSAGE_FD:
+		case IMSG_MTA_OPEN_MESSAGE:
 			mta_session_imsg(p, imsg);
 			return;
 		}
@@ -296,7 +292,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
 
-		case IMSG_LKA_SECRET:
+		case IMSG_MTA_LOOKUP_CREDENTIALS:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_string(&m, &secret);
@@ -305,7 +301,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			mta_on_secret(relay, secret[0] ? secret : NULL);
 			return;
 
-		case IMSG_LKA_SOURCE:
+		case IMSG_MTA_LOOKUP_SOURCE:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_int(&m, &status);
@@ -318,11 +314,11 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			    mta_source((struct sockaddr *)&ss) : NULL);
 			return;
 
-		case IMSG_LKA_HELO:
+		case IMSG_MTA_LOOKUP_HELO:
 			mta_session_imsg(p, imsg);
 			return;
 
-		case IMSG_DNS_HOST:
+		case IMSG_MTA_DNS_HOST:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_sockaddr(&m, (struct sockaddr*)&ss);
@@ -341,7 +337,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			TAILQ_INSERT_TAIL(&domain->mxs, mx, entry);
 			return;
 
-		case IMSG_DNS_HOST_END:
+		case IMSG_MTA_DNS_HOST_END:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_int(&m, &dnserror);
@@ -364,7 +360,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			waitq_run(&domain->mxs, domain);
 			return;
 
-		case IMSG_DNS_MX_PREFERENCE:
+		case IMSG_MTA_DNS_MX_PREFERENCE:
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
 			m_get_int(&m, &dnserror);
@@ -382,15 +378,15 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			mta_on_preference(relay, preference);
 			return;
 
-		case IMSG_DNS_PTR:
+		case IMSG_MTA_DNS_PTR:
 			mta_session_imsg(p, imsg);
 			return;
 
-		case IMSG_LKA_SSL_INIT:
+		case IMSG_MTA_SSL_INIT:
 			mta_session_imsg(p, imsg);
 			return;
 
-		case IMSG_LKA_SSL_VERIFY:
+		case IMSG_MTA_SSL_VERIFY:
 			mta_session_imsg(p, imsg);
 			return;
 		}
@@ -562,61 +558,14 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	errx(1, "mta_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
-static void
-mta_sig_handler(int sig, short event, void *p)
+void
+mta_postfork(void)
 {
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		mta_shutdown();
-		break;
-	default:
-		fatalx("mta_sig_handler: unexpected signal");
-	}
 }
 
-static void
-mta_shutdown(void)
+void
+mta_postprivdrop(void)
 {
-	log_info("info: mail transfer agent exiting");
-	_exit(0);
-}
-
-pid_t
-mta(void)
-{
-	pid_t		 pid;
-	struct passwd	*pw;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("mta: cannot fork");
-	case 0:
-		post_fork(PROC_MTA);
-		break;
-	default:
-		return (pid);
-	}
-
-	purge_config(PURGE_EVERYTHING);
-
-	if ((pw = getpwnam(SMTPD_USER)) == NULL)
-		fatalx("unknown user " SMTPD_USER);
-
-	if (chroot(PATH_CHROOT) == -1)
-		fatal("mta: chroot");
-	if (chdir("/") == -1)
-		fatal("mta: chdir(\"/\")");
-
-	config_process(PROC_MTA);
-
-	if (setgroups(1, &pw->pw_gid) ||
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("mta: cannot drop privileges");
-
 	SPLAY_INIT(&relays);
 	SPLAY_INIT(&domains);
 	SPLAY_INIT(&hosts);
@@ -631,35 +580,14 @@ mta(void)
 	tree_init(&flush_evp);
 	dict_init(&hoststat);
 
-	imsg_callback = mta_imsg;
-	event_init();
-
 	evtimer_set(&ev_flush_evp, mta_delivery_flush_event, NULL);
 
 	runq_init(&runq_relay, mta_on_timeout);
 	runq_init(&runq_connector, mta_on_timeout);
 	runq_init(&runq_route, mta_on_timeout);
 	runq_init(&runq_hoststat, mta_on_timeout);
-
-	signal_set(&ev_sigint, SIGINT, mta_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, mta_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-
-	config_peer(PROC_PARENT);
-	config_peer(PROC_QUEUE);
-	config_peer(PROC_LKA);
-	config_peer(PROC_CONTROL);
-	config_done();
-
-	if (event_dispatch() < 0)
-		fatal("event_dispatch");
-	mta_shutdown();
-
-	return (0);
 }
+
 
 /*
  * Local error on the given source.
@@ -763,14 +691,14 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 				relay->state &= ~RELAY_ONHOLD;
 			}
 			if (relay->state & RELAY_HOLDQ) {
-				m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+				m_create(p_queue, IMSG_MTA_HOLDQ_RELEASE, 0, 0, -1);
 				m_add_id(p_queue, relay->id);
 				m_add_int(p_queue, relay->limits->task_release);
 				m_close(p_queue);
 			}
 		}
 		else if (relay->ntask == 0 && relay->state & RELAY_HOLDQ) {
-			m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+			m_create(p_queue, IMSG_MTA_HOLDQ_RELEASE, 0, 0, -1);
 			m_add_id(p_queue, relay->id);
 			m_add_int(p_queue, 0);
 			m_close(p_queue);
@@ -788,17 +716,30 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 
 	if (tree_poproot(&flush_evp, NULL, (void**)(&e))) {
 
-		if (e->delivery == IMSG_DELIVERY_OK) {
-			m_create(p_queue, IMSG_DELIVERY_OK, 0, 0, -1);
+		if (e->delivery == IMSG_MTA_DELIVERY_OK) {
+			m_create(p_queue, IMSG_MTA_DELIVERY_OK, 0, 0, -1);
 			m_add_evpid(p_queue, e->id);
 			m_add_int(p_queue, e->ext);
 			m_close(p_queue);
-		} else if (e->delivery == IMSG_DELIVERY_TEMPFAIL)
-			queue_tempfail(e->id, e->status, ESC_OTHER_STATUS);
-		else if (e->delivery == IMSG_DELIVERY_PERMFAIL)
-			queue_permfail(e->id, e->status, ESC_OTHER_STATUS);
-		else if (e->delivery == IMSG_DELIVERY_LOOP)
-			queue_loop(e->id);
+		} else if (e->delivery == IMSG_MTA_DELIVERY_TEMPFAIL) {
+			m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+			m_add_evpid(p_queue, e->id);
+			m_add_string(p_queue, e->status);
+			m_add_int(p_queue, ESC_OTHER_STATUS);
+			m_close(p_queue);
+		}
+		else if (e->delivery == IMSG_MTA_DELIVERY_PERMFAIL) {
+			m_create(p_queue, IMSG_MTA_DELIVERY_PERMFAIL, 0, 0, -1);
+			m_add_evpid(p_queue, e->id);
+			m_add_string(p_queue, e->status);
+			m_add_int(p_queue, ESC_OTHER_STATUS);
+			m_close(p_queue);
+		}
+		else if (e->delivery == IMSG_MTA_DELIVERY_LOOP) {
+			m_create(p_queue, IMSG_MTA_DELIVERY_LOOP, 0, 0, -1);
+			m_add_evpid(p_queue, e->id);
+			m_close(p_queue);
+		}
 		else {
 			log_warnx("warn: bad delivery type %i for %016" PRIx64,
 			    e->delivery, e->id);
@@ -822,13 +763,13 @@ void
 mta_delivery_log(struct mta_envelope *e, const char *source, const char *relay,
     int delivery, const char *status)
 {
-	if (delivery == IMSG_DELIVERY_OK)
+	if (delivery == IMSG_MTA_DELIVERY_OK)
 		mta_log(e, "Ok", source, relay, status);
-	else if (delivery == IMSG_DELIVERY_TEMPFAIL)
+	else if (delivery == IMSG_MTA_DELIVERY_TEMPFAIL)
 		mta_log(e, "TempFail", source, relay, status);
-	else if (delivery == IMSG_DELIVERY_PERMFAIL)
+	else if (delivery == IMSG_MTA_DELIVERY_PERMFAIL)
 		mta_log(e, "PermFail", source, relay, status);
-	else if (delivery == IMSG_DELIVERY_LOOP)
+	else if (delivery == IMSG_MTA_DELIVERY_LOOP)
 		mta_log(e, "PermFail", source, relay, "Loop detected");
 	else {
 		log_warnx("warn: bad delivery type %i for %016" PRIx64,
@@ -869,9 +810,12 @@ mta_query_mx(struct mta_relay *relay)
 		id = generate_uid();
 		tree_xset(&wait_mx, id, relay->domain);
 		if (relay->domain->flags)
-			dns_query_host(id, relay->domain->name);
+			m_create(p_lka,  IMSG_MTA_DNS_HOST, 0, 0, -1);
 		else
-			dns_query_mx(id, relay->domain->name);
+			m_create(p_lka,  IMSG_MTA_DNS_MX, 0, 0, -1);
+		m_add_id(p_lka, id);
+		m_add_string(p_lka, relay->domain->name);
+		m_close(p_lka);
 	}
 	relay->status |= RELAY_WAIT_MX;
 	mta_relay_ref(relay);
@@ -905,7 +849,7 @@ mta_query_secret(struct mta_relay *relay)
 	tree_xset(&wait_secret, relay->id, relay);
 	relay->status |= RELAY_WAIT_SECRET;
 
-	m_create(p_lka, IMSG_LKA_SECRET, 0, 0, -1);
+	m_create(p_lka, IMSG_MTA_LOOKUP_CREDENTIALS, 0, 0, -1);
 	m_add_id(p_lka, relay->id);
 	m_add_string(p_lka, relay->authtable);
 	m_add_string(p_lka, relay->authlabel);
@@ -925,8 +869,13 @@ mta_query_preference(struct mta_relay *relay)
 
 	tree_xset(&wait_preference, relay->id, relay);
 	relay->status |= RELAY_WAIT_PREFERENCE;
-	dns_query_mx_preference(relay->id, relay->domain->name,
-		relay->backupname);
+
+	m_create(p_lka,  IMSG_MTA_DNS_MX_PREFERENCE, 0, 0, -1);
+	m_add_id(p_lka, relay->id);
+	m_add_string(p_lka, relay->domain->name);
+	m_add_string(p_lka, relay->backupname);
+	m_close(p_lka);
+
 	mta_relay_ref(relay);
 }
 
@@ -948,7 +897,7 @@ mta_query_source(struct mta_relay *relay)
 		return;
 	}
 
-	m_create(p_lka, IMSG_LKA_SOURCE, 0, 0, -1);
+	m_create(p_lka, IMSG_MTA_LOOKUP_SOURCE, 0, 0, -1);
 	m_add_id(p_lka, relay->id);
 	m_add_string(p_lka, relay->sourcetable);
 	m_close(p_lka);
@@ -971,19 +920,19 @@ mta_on_mx(void *tag, void *arg, void *data)
 	case DNS_OK:
 		break;
 	case DNS_RETRY:
-		relay->fail = IMSG_DELIVERY_TEMPFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
 		relay->failstr = "Temporary failure in MX lookup";
 		break;
 	case DNS_EINVAL:
-		relay->fail = IMSG_DELIVERY_PERMFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_PERMFAIL;
 		relay->failstr = "Invalid domain name";
 		break;
 	case DNS_ENONAME:
-		relay->fail = IMSG_DELIVERY_PERMFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_PERMFAIL;
 		relay->failstr = "Domain does not exist";
 		break;
 	case DNS_ENOTFOUND:
-		relay->fail = IMSG_DELIVERY_TEMPFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
 		relay->failstr = "No MX found for domain";
 		break;
 	default:
@@ -1012,7 +961,7 @@ mta_on_secret(struct mta_relay *relay, const char *secret)
 	if (relay->secret == NULL) {
 		log_warnx("warn: Failed to retrieve secret "
 			    "for %s", mta_relay_to_text(relay));
-		relay->fail = IMSG_DELIVERY_TEMPFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
 		relay->failstr = "Could not retrieve credentials";
 	}
 
@@ -1066,11 +1015,11 @@ mta_on_source(struct mta_relay *relay, struct mta_source *source)
 	}
 
 	if (tree_count(&relay->connectors) == 0) {
-		relay->fail = IMSG_DELIVERY_TEMPFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
 		relay->failstr = "Could not retrieve source address";
 	}
 	if (tree_count(&relay->connectors) < relay->sourceloop) {
-		relay->fail = IMSG_DELIVERY_TEMPFAIL;
+		relay->fail = IMSG_MTA_DELIVERY_TEMPFAIL;
 		relay->failstr = "No valid route to remote MX";
 
 		errmask = 0;
@@ -1411,7 +1360,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 	log_debug("debug: mta_flush(%s, %d, \"%s\")",
 	    mta_relay_to_text(relay), fail, error);
 
-	if (fail != IMSG_DELIVERY_TEMPFAIL && fail != IMSG_DELIVERY_PERMFAIL)
+	if (fail != IMSG_MTA_DELIVERY_TEMPFAIL && fail != IMSG_MTA_DELIVERY_PERMFAIL)
 		errx(1, "unexpected delivery status %d", fail);
 
 	n = 0;
@@ -1426,7 +1375,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 			 * that domain.
 			 */
 			domain = strchr(e->dest, '@');
-			if (fail == IMSG_DELIVERY_TEMPFAIL && domain) {
+			if (fail == IMSG_MTA_DELIVERY_TEMPFAIL && domain) {
 				r = 0;
 				iter = NULL;
 				while (tree_iter(&relay->connectors, &iter,
@@ -1453,7 +1402,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 
 	/* release all waiting envelopes for the relay */
 	if (relay->state & RELAY_HOLDQ) {
-		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_create(p_queue, IMSG_MTA_HOLDQ_RELEASE, 0, 0, -1);
 		m_add_id(p_queue, relay->id);
 		m_add_int(p_queue, -1);
 		m_close(p_queue);
@@ -1760,7 +1709,7 @@ mta_relay_unref(struct mta_relay *relay)
 
 	/* Make sure they are no envelopes held for this relay */
 	if (relay->state & RELAY_HOLDQ) {
-		m_create(p_queue, IMSG_DELIVERY_RELEASE, 0, 0, -1);
+		m_create(p_queue, IMSG_MTA_HOLDQ_RELEASE, 0, 0, -1);
 		m_add_id(p_queue, relay->id);
 		m_add_int(p_queue, 0);
 		m_close(p_queue);

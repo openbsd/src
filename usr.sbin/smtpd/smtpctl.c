@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.116 2014/02/17 13:33:56 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.117 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -414,8 +414,8 @@ do_monitor(int argc, struct parameter *argv)
 	count = 0;
 
 	while (1) {
-		srv_send(IMSG_DIGEST, NULL, 0);
-		srv_recv(IMSG_DIGEST);
+		srv_send(IMSG_CTL_GET_DIGEST, NULL, 0);
+		srv_recv(IMSG_CTL_GET_DIGEST);
 		srv_read(&digest, sizeof(digest));
 		srv_end();
 
@@ -711,8 +711,8 @@ do_show_stats(int argc, struct parameter *argv)
 	memset(&kv, 0, sizeof kv);
 
 	while (1) {
-		srv_send(IMSG_STATS_GET, &kv, sizeof kv);
-		srv_recv(IMSG_STATS_GET);
+		srv_send(IMSG_CTL_GET_STATS, &kv, sizeof kv);
+		srv_recv(IMSG_CTL_GET_STATS);
 		srv_read(&kv, sizeof(kv));
 		srv_end();
 
@@ -786,7 +786,7 @@ do_trace(int argc, struct parameter *argv)
 
 	v = str_to_trace(argv[0].u.u_str);
 
-	srv_send(IMSG_CTL_TRACE, &v, sizeof(v));
+	srv_send(IMSG_CTL_TRACE_ENABLE, &v, sizeof(v));
 	return srv_check_result(1);
 }
 
@@ -797,7 +797,7 @@ do_unprofile(int argc, struct parameter *argv)
 
 	v = str_to_profile(argv[0].u.u_str);
 
-	srv_send(IMSG_CTL_UNPROFILE, &v, sizeof(v));
+	srv_send(IMSG_CTL_PROFILE_DISABLE, &v, sizeof(v));
 	return srv_check_result(1);
 }
 
@@ -808,7 +808,7 @@ do_untrace(int argc, struct parameter *argv)
 
 	v = str_to_trace(argv[0].u.u_str);
 
-	srv_send(IMSG_CTL_UNTRACE, &v, sizeof(v));
+	srv_send(IMSG_CTL_TRACE_DISABLE, &v, sizeof(v));
 	return srv_check_result(1);
 }
 
@@ -817,7 +817,7 @@ do_update_table(int argc, struct parameter *argv)
 {
 	const char	*name = argv[0].u.u_str;
 
-	srv_send(IMSG_LKA_UPDATE_TABLE, name, strlen(name) + 1);
+	srv_send(IMSG_CTL_UPDATE_TABLE, name, strlen(name) + 1);
 	return srv_check_result(1);
 }
 

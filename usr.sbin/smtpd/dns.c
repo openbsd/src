@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.75 2014/04/03 11:32:02 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.76 2014/04/04 16:10:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -138,43 +138,6 @@ static int unpack_query(struct unpack *, struct dns_query *);
 static int unpack_rr(struct unpack *, struct dns_rr *);
 
 
-void
-dns_query_host(uint64_t id, const char *host)
-{
-	m_create(p_lka,  IMSG_DNS_HOST, 0, 0, -1);
-	m_add_id(p_lka, id);
-	m_add_string(p_lka, host);
-	m_close(p_lka);
-}
-
-void
-dns_query_ptr(uint64_t id, const struct sockaddr *sa)
-{
-	m_create(p_lka,  IMSG_DNS_PTR, 0, 0, -1);
-	m_add_id(p_lka, id);
-	m_add_sockaddr(p_lka, sa);
-	m_close(p_lka);
-}
-
-void
-dns_query_mx(uint64_t id, const char *domain)
-{
-	m_create(p_lka,  IMSG_DNS_MX, 0, 0, -1);
-	m_add_id(p_lka, id);
-	m_add_string(p_lka, domain);
-	m_close(p_lka);
-}
-
-void
-dns_query_mx_preference(uint64_t id, const char *domain, const char *mx)
-{
-	m_create(p_lka,  IMSG_DNS_MX_PREFERENCE, 0, 0, -1);
-	m_add_id(p_lka, id);
-	m_add_string(p_lka, domain);
-	m_add_string(p_lka, mx);
-	m_close(p_lka);
-}
-
 static int
 domainname_is_addr(const char *s, struct sockaddr *sa, socklen_t *sl)
 {
@@ -241,13 +204,14 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 
 	switch (s->type) {
 
-	case IMSG_DNS_HOST:
+	case IMSG_MTA_DNS_HOST:
 		m_get_string(&m, &host);
 		m_end(&m);
 		dns_lookup_host(s, host, -1);
 		return;
 
-	case IMSG_DNS_PTR:
+	case IMSG_MTA_DNS_PTR:
+	case IMSG_SMTP_DNS_PTR:
 		sa = (struct sockaddr *)&ss;
 		m_get_sockaddr(&m, sa);
 		m_end(&m);
@@ -256,7 +220,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		event_asr_run(as, dns_dispatch_ptr, s);
 		return;
 
-	case IMSG_DNS_MX:
+	case IMSG_MTA_DNS_MX:
 		m_get_string(&m, &domain);
 		m_end(&m);
 		strlcpy(s->name, domain, sizeof(s->name));
@@ -265,13 +229,13 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		sl = sizeof(ss);
 
 		if (domainname_is_addr(domain, sa, &sl)) {
-			m_create(s->p, IMSG_DNS_HOST, 0, 0, -1);
+			m_create(s->p, IMSG_MTA_DNS_HOST, 0, 0, -1);
 			m_add_id(s->p, s->reqid);
 			m_add_sockaddr(s->p, sa);
 			m_add_int(s->p, -1);
 			m_close(s->p);
 
-			m_create(s->p, IMSG_DNS_HOST_END, 0, 0, -1);
+			m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 			m_add_id(s->p, s->reqid);
 			m_add_int(s->p, DNS_OK);
 			m_close(s->p);
@@ -282,7 +246,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		as = res_query_async(s->name, C_IN, T_MX, NULL);
 		if (as ==  NULL) {
 			log_warn("warn: req_query_async: %s", s->name);
-			m_create(s->p, IMSG_DNS_HOST_END, 0, 0, -1);
+			m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 			m_add_id(s->p, s->reqid);
 			m_add_int(s->p, DNS_EINVAL);
 			m_close(s->p);
@@ -293,7 +257,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		event_asr_run(as, dns_dispatch_mx, s);
 		return;
 
-	case IMSG_DNS_MX_PREFERENCE:
+	case IMSG_MTA_DNS_MX_PREFERENCE:
 		m_get_string(&m, &domain);
 		m_get_string(&m, &mx);
 		m_end(&m);
@@ -304,7 +268,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 
 		as = res_query_async(domain, C_IN, T_MX, NULL);
 		if (as == NULL) {
-			m_create(s->p, IMSG_DNS_MX_PREFERENCE, 0, 0, -1);
+			m_create(s->p, IMSG_MTA_DNS_MX_PREFERENCE, 0, 0, -1);
 			m_add_id(s->p, s->reqid);
 			m_add_int(s->p, DNS_ENOTFOUND);
 			m_close(s->p);
@@ -332,7 +296,7 @@ dns_dispatch_host(struct asr_result *ar, void *arg)
 
 	for (ai = ar->ar_addrinfo; ai; ai = ai->ai_next) {
 		s->mxfound++;
-		m_create(s->p, IMSG_DNS_HOST, 0, 0, -1);
+		m_create(s->p, IMSG_MTA_DNS_HOST, 0, 0, -1);
 		m_add_id(s->p, s->reqid);
 		m_add_sockaddr(s->p, ai->ai_addr);
 		m_add_int(s->p, lookup->preference);
@@ -348,7 +312,7 @@ dns_dispatch_host(struct asr_result *ar, void *arg)
 	if (--s->refcount)
 		return;
 
-	m_create(s->p, IMSG_DNS_HOST_END, 0, 0, -1);
+	m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 	m_add_id(s->p, s->reqid);
 	m_add_int(s->p, s->mxfound ? DNS_OK : DNS_ENOTFOUND);
 	m_close(s->p);
@@ -361,7 +325,7 @@ dns_dispatch_ptr(struct asr_result *ar, void *arg)
 	struct dns_session	*s = arg;
 
 	/* The error code could be more precise, but we don't currently care */
-	m_create(s->p,  IMSG_DNS_PTR, 0, 0, -1);
+	m_create(s->p,  s->type, 0, 0, -1);
 	m_add_id(s->p, s->reqid);
 	m_add_int(s->p, ar->ar_gai_errno ? DNS_ENOTFOUND : DNS_OK);
 	if (ar->ar_gai_errno == 0)
@@ -383,7 +347,7 @@ dns_dispatch_mx(struct asr_result *ar, void *arg)
 
 	if (ar->ar_h_errno && ar->ar_h_errno != NO_DATA) {
 
-		m_create(s->p,  IMSG_DNS_HOST_END, 0, 0, -1);
+		m_create(s->p,  IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 		m_add_id(s->p, s->reqid);
 		if (ar->ar_rcode == NXDOMAIN)
 			m_add_int(s->p, DNS_ENONAME);
@@ -458,7 +422,7 @@ dns_dispatch_mx_preference(struct asr_result *ar, void *arg)
 
 	free(ar->ar_data);
 
-	m_create(s->p, IMSG_DNS_MX_PREFERENCE, 0, 0, -1);
+	m_create(s->p, IMSG_MTA_DNS_MX_PREFERENCE, 0, 0, -1);
 	m_add_id(s->p, s->reqid);
 	m_add_int(s->p, error);
 	if (error == DNS_OK)
