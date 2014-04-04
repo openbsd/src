@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.87 2014/04/04 16:43:08 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.88 2014/04/04 18:23:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -139,7 +139,7 @@ static	void	*hash_alloc(size_t, void *);
 static	void	 hash_free(void *, size_t, void *);
 static	void	*hash_halloc(size_t, void *);
 static	void	 mlink_add(struct mlink *, const struct stat *);
-static	int	 mlink_check(struct mpage *, struct mlink *);
+static	void	 mlink_check(struct mpage *, struct mlink *);
 static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
 static	void	 mpages_free(void);
@@ -916,12 +916,11 @@ nextlink:
 	}
 }
 
-static int
+static void
 mlink_check(struct mpage *mpage, struct mlink *mlink)
 {
-	int	 match;
-
-	match = 1;
+	struct str	*str;
+	unsigned int	 slot;
 
 	/*
 	 * Check whether the manual section given in a file
@@ -933,11 +932,9 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
 	 */
 
 	if (FORM_SRC == mpage->form &&
-	    strcasecmp(mpage->sec, mlink->dsec)) {
-		match = 0;
+	    strcasecmp(mpage->sec, mlink->dsec))
 		say(mlink->file, "Section \"%s\" manual in %s directory",
 		    mpage->sec, mlink->dsec);
-	}
 
 	/*
 	 * Manual page directories exist for each kernel
@@ -952,16 +949,28 @@ mlink_check(struct mpage *mpage, struct mlink *mlink)
 	 * on amd64, i386, sparc, and sparc64.
 	 */
 
-	if (strcasecmp(mpage->arch, mlink->arch)) {
-		match = 0;
+	if (strcasecmp(mpage->arch, mlink->arch))
 		say(mlink->file, "Architecture \"%s\" manual in "
 		    "\"%s\" directory", mpage->arch, mlink->arch);
-	}
 
-	if (strcasecmp(mpage->title, mlink->name))
-		match = 0;
+	/*
+	 * XXX
+	 * parse_cat() doesn't set TYPE_Nm and TYPE_NAME yet.
+	 */
 
-	return(match);
+	if (FORM_CAT == mpage->form)
+		return;
+
+	/*
+	 * Check whether this mlink
+	 * appears as a name in the NAME section.
+	 */
+
+	slot = ohash_qlookup(&strings, mlink->name);
+	str = ohash_find(&strings, slot);
+	assert(NULL != str);
+	if ( ! (TYPE_NAME & str->mask))
+		say(mlink->file, "Name missing in NAME section");
 }
 
 /*
@@ -984,7 +993,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 	char			*sodest;
 	char			*cp;
 	pid_t			 child_pid;
-	int			 match, status;
+	int			 status;
 	unsigned int		 pslot;
 	enum mandoclevel	 lvl;
 
@@ -1132,15 +1141,6 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			putkey(mpage, mlink->name, TYPE_Nm);
 		}
 
-		if (warnings && !use_all) {
-			match = 0;
-			for (mlink = mpage->mlinks; mlink;
-			     mlink = mlink->next)
-				if (mlink_check(mpage, mlink))
-					match = 1;
-		} else
-			match = 1;
-
 		if (NULL != mdoc) {
 			if (NULL != (cp = mdoc_meta(mdoc)->name))
 				putkey(mpage, cp, TYPE_Nm);
@@ -1152,6 +1152,11 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 			parse_man(mpage, man_node(man));
 		else
 			parse_cat(mpage, fd[0]);
+
+		if (warnings && !use_all)
+			for (mlink = mpage->mlinks; mlink;
+			     mlink = mlink->next)
+				mlink_check(mpage, mlink);
 
 		dbadd(mpage, mc);
 
