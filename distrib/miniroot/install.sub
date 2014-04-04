@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.757 2014/03/22 02:42:00 krw Exp $
+#	$OpenBSD: install.sub,v 1.758 2014/04/04 19:44:02 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1373,10 +1373,12 @@ install_http() {
 	local _file_list _prompt _mirror _url_base
 
 	waitcgiinfo
+	# N.B.: 'http_proxy' is an environment variable used by ftp(1). DON'T
+	# change the name or case!
 	ask "HTTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
-		"${HTTP_PROXY:-none}"
-	unset HTTP_PROXY
-	[[ $resp == none ]] || export HTTP_PROXY=$resp
+		"${http_proxy:-none}"
+	unset http_proxy
+	[[ $resp == none ]] || export http_proxy=$resp
 
 	if [[ -s $HTTP_LIST ]]; then
 		_prompt="Server? (hostname, list#, 'done' or '?')"
