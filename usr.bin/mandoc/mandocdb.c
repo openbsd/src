@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.84 2014/04/03 21:45:27 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.85 2014/04/04 02:31:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1850,11 +1850,43 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	size_t		 i;
 	unsigned int	 slot;
 
-	if (debug)
-		say(mpage->mlinks->file, "Adding to database");
+	mlink = mpage->mlinks;
 
-	if (nodb)
+	if (nodb) {
+		while (NULL != mlink) {
+			fputs(mlink->name, stdout);
+			if (NULL == mlink->next ||
+			    strcmp(mlink->dsec, mlink->next->dsec) ||
+			    strcmp(mlink->fsec, mlink->next->fsec) ||
+			    strcmp(mlink->arch, mlink->next->arch)) {
+				putchar('(');
+				if ('\0' == *mlink->dsec)
+					fputs(mlink->fsec, stdout);
+				else
+					fputs(mlink->dsec, stdout);
+				if ('\0' != *mlink->arch)
+					printf("/%s", mlink->arch);
+				putchar(')');
+			}
+			mlink = mlink->next;
+			if (NULL != mlink)
+				fputs(", ", stdout);
+		}
+		for (key = ohash_first(&strings, &slot); NULL != key;
+		     key = ohash_next(&strings, &slot)) {
+			if (TYPE_Nd & key->mask) {
+				if (NULL == key->rendered)
+					render_key(mc, key);
+				printf(" - %s", key->rendered);
+				break;
+			}
+		}
+		putchar('\n');
 		return;
+	}
+
+	if (debug)
+		say(mlink->file, "Adding to database");
 
 	i = 1;
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
@@ -1862,8 +1894,10 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	mpage->recno = sqlite3_last_insert_rowid(db);
 	sqlite3_reset(stmts[STMT_INSERT_PAGE]);
 
-	for (mlink = mpage->mlinks; mlink; mlink = mlink->next)
+	while (NULL != mlink) {
 		dbadd_mlink(mlink);
+		mlink = mlink->next;
+	}
 
 	for (key = ohash_first(&strings, &slot); NULL != key;
 	     key = ohash_next(&strings, &slot)) {

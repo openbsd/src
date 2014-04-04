@@ -1,4 +1,4 @@
-.\"	$Id: makewhatis.8,v 1.8 2014/04/03 16:26:53 schwarze Exp $
+.\"	$Id: makewhatis.8,v 1.9 2014/04/04 02:31:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2014 $
+.Dd $Mdocdate: April 4 2014 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -103,8 +103,8 @@ Merge (remove and re-add)
 to the database in
 .Ar dir .
 .It Fl n
-Do not create or modify any database;
-scan and parse only.
+Do not create or modify any database; scan and parse only,
+and print manual page names and descriptions to standard output.
 .It Fl p
 Print warnings about potential problems with manual pages
 to the standard error output.
