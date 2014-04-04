@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.86 2014/04/04 15:55:17 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.87 2014/04/04 16:43:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -144,6 +144,7 @@ static	void	 mlink_free(struct mlink *);
 static	void	 mlinks_undupe(struct mpage *);
 static	void	 mpages_free(void);
 static	void	 mpages_merge(struct mchars *, struct mparse *);
+static	void	 names_check(void);
 static	void	 parse_cat(struct mpage *, int);
 static	void	 parse_man(struct mpage *, const struct man_node *);
 static	void	 parse_mdoc(struct mpage *, const struct mdoc_node *);
@@ -487,6 +488,9 @@ mandocdb(int argc, char *argv[])
 				goto out;
 
 			mpages_merge(mc, mp);
+			if (warnings &&
+			    ! (MPARSE_QUICK & mparse_options))
+				names_check();
 			dbclose(0);
 
 			if (j + 1 < dirs.sz) {
@@ -1174,6 +1178,42 @@ nextpage:
 
 	if (0 == nodb)
 		SQL_EXEC("END TRANSACTION");
+}
+
+static void
+names_check(void)
+{
+	sqlite3_stmt	*stmt;
+	const char	*name, *sec, *arch, *key;
+	size_t		 i;
+	int		 irc;
+
+	sqlite3_prepare_v2(db,
+	  "SELECT name, sec, arch, key FROM ("
+	    "SELECT key, pageid FROM keys "
+	    "WHERE bits & ? AND NOT EXISTS ("
+	      "SELECT pageid FROM mlinks "
+	      "WHERE mlinks.pageid == keys.pageid "
+	      "AND mlinks.name == keys.key"
+	    ")"
+	  ") JOIN ("
+	    "SELECT * FROM mlinks GROUP BY pageid"
+	  ") USING (pageid);",
+	  -1, &stmt, NULL);
+
+	i = 1;
+	SQL_BIND_INT64(stmt, i, TYPE_NAME);
+
+	while (SQLITE_ROW == (irc = sqlite3_step(stmt))) {
+		name = sqlite3_column_text(stmt, 0);
+		sec  = sqlite3_column_text(stmt, 1);
+		arch = sqlite3_column_text(stmt, 2);
+		key  = sqlite3_column_text(stmt, 3);
+		say("", "%s(%s%s%s) lacks mlink \"%s\"", name, sec,
+		    '\0' == *arch ? "" : "/",
+		    '\0' == *arch ? "" : arch, key);
+	}
+	sqlite3_finalize(stmt);
 }
 
 static void
