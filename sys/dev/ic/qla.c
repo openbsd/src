@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.31 2014/03/31 11:25:45 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.32 2014/04/04 11:27:41 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -67,7 +67,6 @@ struct cfdriver qla_cd = {
 };
 
 void		qla_scsi_cmd(struct scsi_xfer *);
-struct qla_ccb *qla_scsi_cmd_poll(struct qla_softc *);
 int		qla_scsi_probe(struct scsi_link *);
 
 u_int16_t	qla_read(struct qla_softc *, bus_size_t);
@@ -857,8 +856,8 @@ qla_scsi_cmd(struct scsi_xfer *xs)
 	struct qla_ccb		*ccb;
 	struct qla_iocb_req34	*iocb;
 	struct qla_ccb_list	list;
-	u_int16_t		req;
-	int			offset, error;
+	u_int16_t		req, rspin;
+	int			offset, error, done;
 	bus_dmamap_t		dmap;
 
 	if (xs->cmdlen > sizeof(iocb->req_cdb)) {
@@ -931,27 +930,9 @@ qla_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	done = 0;
 	SIMPLEQ_INIT(&list);
 	do {
-		ccb = qla_scsi_cmd_poll(sc);
-		SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_link);
-	} while (xs->io != ccb);
-
-	mtx_leave(&sc->sc_queue_mtx);
-
-	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&list, ccb_link);
-		scsi_done(ccb->ccb_xs);
-	}
-}
-
-struct qla_ccb *
-qla_scsi_cmd_poll(struct qla_softc *sc)
-{
-	u_int16_t rspin;
-	struct qla_ccb *ccb = NULL;
-
-	while (ccb == NULL) {
 		u_int16_t isr, info;
 
 		delay(100);
@@ -966,21 +947,28 @@ qla_scsi_cmd_poll(struct qla_softc *sc)
 		}
 
 		rspin = qla_queue_read(sc, sc->sc_regs->res_in);
-		if (rspin != sc->sc_last_resp_id) {
+		while (rspin != sc->sc_last_resp_id) {
 			ccb = qla_handle_resp(sc, sc->sc_last_resp_id);
 
 			sc->sc_last_resp_id++;
 			if (sc->sc_last_resp_id == sc->sc_maxcmds)
 				sc->sc_last_resp_id = 0;
 
-			qla_queue_write(sc, sc->sc_regs->res_out,
-			    sc->sc_last_resp_id);
+			if (ccb != NULL)
+				SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_link);
+			if (ccb == xs->io)
+				done = 1;
 		}
-
+		qla_queue_write(sc, sc->sc_regs->res_out, rspin);
 		qla_clear_isr(sc, isr);
-	}
+	} while (done == 0);
 
-	return (ccb);
+	mtx_leave(&sc->sc_queue_mtx);
+
+	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, ccb_link);
+		scsi_done(ccb->ccb_xs);
+	}
 }
 
 u_int16_t
