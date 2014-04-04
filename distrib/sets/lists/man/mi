@@ -2592,6 +2592,7 @@
 ./usr/share/man/man8/iscsid.8
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
+./usr/share/man/man8/kbd.8
 ./usr/share/man/man8/kdc.8
 ./usr/share/man/man8/kerberos.8
 ./usr/share/man/man8/kfd.8
@@ -2812,7 +2813,6 @@
 ./usr/share/man/man8/socppc
 ./usr/share/man/man8/socppc/MAKEDEV.8
 ./usr/share/man/man8/socppc/boot.8
-./usr/share/man/man8/kbd.8
 ./usr/share/man/man8/socppc/mkboot.8
 ./usr/share/man/man8/spamd-setup.8
 ./usr/share/man/man8/spamd.8

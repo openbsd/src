@@ -574,6 +574,7 @@
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pio.h
 ./usr/include/powerpc/pmap.h
+./usr/include/powerpc/powerpc.h
 ./usr/include/powerpc/proc.h
 ./usr/include/powerpc/profile.h
 ./usr/include/powerpc/psl.h
@@ -621,7 +622,6 @@
 ./usr/include/socppc/pci_machdep.h
 ./usr/include/socppc/pio.h
 ./usr/include/socppc/pmap.h
-./usr/include/socppc/powerpc.h
 ./usr/include/socppc/proc.h
 ./usr/include/socppc/profile.h
 ./usr/include/socppc/psl.h

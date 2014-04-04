@@ -1776,7 +1776,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pci_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pmap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/powerpc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/proc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/profile.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/psl.ph
@@ -2086,6 +2085,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pmap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/powerpc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/proc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/profile.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/psl.ph

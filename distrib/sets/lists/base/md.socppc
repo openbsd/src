@@ -2025,6 +2025,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pmap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/powerpc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/proc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/profile.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/psl.ph
@@ -2151,7 +2152,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/pci_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/pio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/pmap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/powerpc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/proc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/profile.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/psl.ph

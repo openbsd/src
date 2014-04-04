@@ -581,7 +581,6 @@
 ./usr/include/macppc/pci_machdep.h
 ./usr/include/macppc/pio.h
 ./usr/include/macppc/pmap.h
-./usr/include/macppc/powerpc.h
 ./usr/include/macppc/proc.h
 ./usr/include/macppc/profile.h
 ./usr/include/macppc/psl.h
@@ -628,6 +627,7 @@
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pio.h
 ./usr/include/powerpc/pmap.h
+./usr/include/powerpc/powerpc.h
 ./usr/include/powerpc/proc.h
 ./usr/include/powerpc/profile.h
 ./usr/include/powerpc/psl.h
