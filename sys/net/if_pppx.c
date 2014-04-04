@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.26 2013/10/19 14:46:30 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.27 2014/04/04 03:34:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -590,7 +590,8 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	rw_enter_write(&pppx_devs_lk);
 
-	pxd = pppx_dev_lookup(dev);
+	if ((pxd = pppx_dev_lookup(dev)) == NULL)
+		return (ENXIO);
 
 	/* XXX */
 	while ((pxi = LIST_FIRST(&pxd->pxd_pxis)))
