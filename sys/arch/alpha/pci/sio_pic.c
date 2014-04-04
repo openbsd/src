@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.36 2014/02/18 19:37:33 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.37 2014/04/04 20:00:12 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -116,6 +116,15 @@ u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
 #endif
 
+/*
+ * Overrides for ELCR settings.
+ * These are used on ES40 and similar systems suffering from a PCI USB HCI
+ * interrupt being routed through the ISA logic with actual logic to
+ * make it behave an edge-triggered interrupt, although PCI interrupts are
+ * supposed to be level-triggered.
+ */
+u_int8_t elcr_override[2] = { 0x00, 0x00 };
+
 void		sio_setirqstat(int, int, int);
 int		sio_intr_alloc(void *, int, int, int *);
 int		sio_intr_check(void *, int, int);
@@ -135,6 +144,9 @@ bus_space_handle_t sio_ioh_elcr;
 int
 i82378_setup_elcr()
 {
+	int device, maxndevs;
+	pcitag_t tag;
+	pcireg_t id;
 	int rv;
 
 	/*
@@ -145,12 +157,30 @@ i82378_setup_elcr()
 
 	rv = bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr);
 
-	if (rv == 0) {
-		sio_read_elcr = i82378_read_elcr;
-		sio_write_elcr = i82378_write_elcr;
+	if (rv != 0)
+		return 0;
+
+	sio_read_elcr = i82378_read_elcr;
+	sio_write_elcr = i82378_write_elcr;
+
+	/*
+	 * Search PCI configuration space for an ALI M5237 USB controller
+	 * on the first bus.
+	 */
+
+	maxndevs = pci_bus_maxdevs(sio_pc, 0);
+
+	for (device = 0; device < maxndevs; device++) {
+		tag = pci_make_tag(sio_pc, 0, device, 0);
+		id = pci_conf_read(sio_pc, tag, PCI_ID_REG);
+
+		if (id == PCI_ID_CODE(PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237)) {
+			elcr_override[10 / 8] |= 1 << (10 % 8);
+			break;
+		}
 	}
 
-	return (rv);
+	return (0);
 }
 
 u_int8_t
@@ -203,31 +233,13 @@ cy82c693_setup_elcr()
 		tag = pci_make_tag(sio_pc, 0, device, 0);
 		id = pci_conf_read(sio_pc, tag, PCI_ID_REG);
 
-		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
-		/* XXX Not invalid, but we've done this ~forever. */
-		if (PCI_VENDOR(id) == 0)
-			continue;
-
-		if (PCI_VENDOR(id) != PCI_VENDOR_CONTAQ ||
-		    PCI_PRODUCT(id) != PCI_PRODUCT_CONTAQ_82C693)
-			continue;
-
-		/*
-		 * Found one!
-		 */
-
-#if 0
-		printf("cy82c693_setup_elcr: found 82C693 at device %d\n",
-		    device);
-#endif
-
-		sio_cy82c693_handle = cy82c693_init(sio_iot);
-		sio_read_elcr = cy82c693_read_elcr;
-		sio_write_elcr = cy82c693_write_elcr;
-
-		return (0);
+		if (id ==
+		    PCI_ID_CODE(PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693)) {
+			sio_cy82c693_handle = cy82c693_init(sio_iot);
+			sio_read_elcr = cy82c693_read_elcr;
+			sio_write_elcr = cy82c693_write_elcr;
+			return (0);
+		}
 	}
 
 	/*
@@ -300,12 +312,17 @@ sio_setirqstat(irq, enabled, type)
 		ocw1[icu] |= 1 << bit;
 
 	/*
-	 * interrupt type select: set bit to get level-triggered.
+	 * interrupt type select: set bit to get level-triggered...
 	 */
 	if (type == IST_LEVEL)
 		elcr[icu] |= 1 << bit;
 	else
 		elcr[icu] &= ~(1 << bit);
+
+	/*
+	 * ...unless we pretend to know better.
+	 */
+	elcr[icu] &= ~elcr_override[icu];
 
 #ifdef not_here
 	/* see the init function... */
@@ -325,9 +342,6 @@ sio_intr_setup(pc, iot)
 	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
-#ifdef notyet
-	char *cp;
-#endif
 	int i;
 
 	sio_iot = iot;
