@@ -1,0 +1,15 @@
+.TH NR-RR 1 "April 5, 2014" OpenBSD
+.SH NAME
+nr-rr \- defining and undefining number registers
+.SH DESCRIPTION
+.nr key1 1
+.nr key2 2
+.nr key3 3
+.nr key4 4
+.nr key5 5
+.rr key1
+.rr key3
+.rr key5
+non-null values: \n[key2] \n[key4]
+.br
+unset values: \n[key1] \n[key3] \n[key5]

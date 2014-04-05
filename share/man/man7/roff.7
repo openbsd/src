@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.30 2014/03/30 21:27:59 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.31 2014/04/05 20:33:38 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2014 $
+.Dd $Mdocdate: April 5 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -896,12 +896,6 @@ This line-scoped request is currently ignored.
 .Ss \&nh
 Turn off automatic hyphenation mode.
 This line-scoped request is currently ignored.
-.Ss \&rm
-Remove a request, macro or string.
-This request is intended to have one argument,
-the name of the request, macro or string to be undefined.
-Currently, it is ignored including its arguments,
-and the number of arguments is not checked.
 .Ss \&nr
 Define or change a register.
 A register is an arbitrary string value that defines some sort of state,
@@ -947,6 +941,16 @@ Change point size.
 This line-scoped request is intended to take one numerical argument.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
+.Ss \&rm
+Remove a request, macro or string.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Cm \&rm Ar name
+.Ss \&rr
+Remove a register.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Cm \&rr Ar name
 .Ss \&so
 Include a source file.
 Its syntax is as follows:
