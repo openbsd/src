@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.38 2014/03/21 21:39:36 miod Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.39 2014/04/05 17:18:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1645,7 +1645,7 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 	 * Cache the lower page, so we can page-walk later.
 	 */
 	low = root;
-	low_next = RB_RIGHT(low, objt);
+	low_next = RB_LEFT(low, objt);
 	while (low_next != NULL && PMR_INTERSECTS_WITH(
 	    atop(VM_PAGE_TO_PHYS(low_next)),
 	    atop(VM_PAGE_TO_PHYS(low_next)) + low_next->fpgsz,
@@ -1653,8 +1653,11 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 		low = low_next;
 		if (uvm_pmr_pg_to_memtype(low) == memtype)
 			return low;
-		low_next = RB_RIGHT(low, objt);
+		low_next = RB_LEFT(low, objt);
 	}
+
+	if (low == high)
+		return NULL;
 
 	/*
 	 * Ack, no hits. Walk the address tree until to find something usable.
