@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.366 2014/03/28 02:42:18 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.367 2014/04/05 16:34:10 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -360,7 +360,6 @@ mfii*	at pci?				# LSI MegaRAID SAS Fusion controllers
 ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
 iha*	at pci?				# Initio Ultra/UltraWide SCSI controllers
 ips*	at pci?				# IBM ServeRAID controllers
-isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
 qlw*	at pci?				# QLogic ISP SCSI
 qla*	at pci?				# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel
@@ -384,7 +383,7 @@ uk*	at scsibus?			# unknown SCSI
 
 mpath0	at root
 #emc*	at scsibus?
-#hds*	at scsibus?
+hds*	at scsibus?
 rdac*	at scsibus?
 sym*	at scsibus?
 

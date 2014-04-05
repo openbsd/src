@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.108 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: RAMDISKC,v 1.109 2014/04/05 16:33:54 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -172,7 +172,6 @@ com2	at isa? port 0x3e8 irq 5
 #ahc*	at pci?			# Adaptec 2940 SCSI controllers
 #gdt*	at pci?			# ICP Vortex GDT RAID controllers
 #twe*	at pci?			# 3ware Escalade RAID controllers
-#isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 #aic*	at isapnp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers

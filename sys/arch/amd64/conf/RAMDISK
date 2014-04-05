@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.60 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: RAMDISK,v 1.61 2014/04/05 16:34:10 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -143,7 +143,6 @@ mfi*	at pci?			# LSI MegaRAID SAS controllers
 #ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 #twe*	at pci?			# 3ware Escalade RAID controllers
 #iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
-#isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #aic*	at pcmcia?		# PCMCIA Adaptec 152[02] SCSI
 #siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI

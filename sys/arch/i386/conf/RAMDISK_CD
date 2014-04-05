@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.213 2014/03/27 20:38:16 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.214 2014/04/05 16:33:54 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -218,7 +218,6 @@ ciss*	at pci?			# Compaq Smart ARRAY [56]* RAID controllers
 twe*	at pci?			# 3ware Escalade RAID controllers
 #iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
 ips*	at pci?			# IBM ServeRAID controllers
-isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 qlw*	at pci?			# QLogic ISP SCSI
 qla*	at pci?			# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?			# QLogic ISP 2[45]xx FibreChannel
