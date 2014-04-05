@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.79 2014/04/04 20:25:44 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.80 2014/04/05 13:43:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -195,7 +195,8 @@ send_header(FILE *fout, const char *line, size_t len)
 	else {
 		parse_addr_terminal(0);
 		for (i = 0; i < msg.rcpt_cnt; ++i)
-			send_line(fout, 0, "%s%s\n", msg.rcpts[i], i < msg.rcpt_cnt - 1 ? "," : "");
+			send_line(fout, 0, "%s%s%s\n", i > 0 ? "\t" : "",
+			    msg.rcpts[i], i < msg.rcpt_cnt - 1 ? "," : "");
 	}
 }
 
