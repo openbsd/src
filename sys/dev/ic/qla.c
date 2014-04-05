@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.32 2014/04/04 11:27:41 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.33 2014/04/05 12:49:27 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -566,9 +566,13 @@ qla_attach(struct qla_softc *sc)
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &qla_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = QLA_MAX_TARGETS;
-	sc->sc_link.adapter_buswidth = QLA_MAX_TARGETS;
-	sc->sc_link.openings = sc->sc_maxcmds; /* / sc->sc_buswidth? */
+	if (sc->sc_2k_logins) {
+		sc->sc_link.adapter_buswidth = QLA_2KL_BUSWIDTH;
+	} else {
+		sc->sc_link.adapter_buswidth = QLA_BUSWIDTH;
+	}
+	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
+	sc->sc_link.openings = sc->sc_maxcmds;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.port_wwn = sc->sc_port_name;
 	sc->sc_link.node_wwn = sc->sc_node_name;

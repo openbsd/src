@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.6 2014/03/31 11:25:45 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.7 2014/04/05 12:49:27 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -20,9 +20,6 @@
 #define QLA_DEFAULT_PORT_NAME		0x400000007F000003ULL /* from isp(4) */
 
 #define QLA_WAIT_FOR_LOOP		10
-
-/* rounded up range of assignable handles for 2k login firmware */
-#define QLA_MAX_TARGETS			2048
 
 /* maximum number of segments allowed for in a single io */
 #define QLA_MAX_SEGS			16
@@ -161,7 +158,7 @@ struct qla_softc {
 	TAILQ_HEAD(, qla_fc_port) sc_ports_new;
 	TAILQ_HEAD(, qla_fc_port) sc_ports_gone;
 	TAILQ_HEAD(, qla_fc_port) sc_ports_found;
-	struct qla_fc_port	*sc_targets[QLA_MAX_TARGETS];
+	struct qla_fc_port	*sc_targets[QLA_2KL_BUSWIDTH];
 	struct taskq		*sc_scan_taskq;
 
 	int			sc_maxcmds;
