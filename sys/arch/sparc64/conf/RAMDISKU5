@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.17 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: RAMDISKU5,v 1.18 2014/04/05 16:33:14 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -59,7 +59,6 @@ wd*	at pciide? flags 0x0a00
 atapiscsi* at pciide?
 
 siop*	at pci?
-#isp*	at pci?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
