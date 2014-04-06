@@ -3974,7 +3974,10 @@ static int whereLoopAddBtreeIndex(
     pNew->aLTerm[pNew->nLTerm++] = 0;
     pNew->wsFlags |= WHERE_SKIPSCAN;
     nIter = sqlite3LogEst(pProbe->aiRowEst[0]/pProbe->aiRowEst[saved_nEq+1]);
+    pNew->rRun = rLogSize + nIter;
+    pNew->nOut += nIter;
     whereLoopAddBtreeIndex(pBuilder, pSrc, pProbe, nIter);
+    pNew->nOut = saved_nOut;
   }
   for(; rc==SQLITE_OK && pTerm!=0; pTerm = whereScanNext(&scan)){
     int nIn = 0;
@@ -5877,7 +5880,7 @@ void sqlite3WhereEnd(WhereInfo *pWInfo){
       for(; k<last; k++, pOp++){
         if( pOp->p1!=pLevel->iTabCur ) continue;
         if( pOp->opcode==OP_Column ){
-          pOp->opcode = OP_SCopy;
+          pOp->opcode = OP_Copy;
           pOp->p1 = pOp->p2 + pTabItem->regResult;
           pOp->p2 = pOp->p3;
           pOp->p3 = 0;
