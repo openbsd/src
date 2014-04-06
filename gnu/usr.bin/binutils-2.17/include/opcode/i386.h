@@ -980,6 +980,8 @@ static const template i386_optab[] =
 {"fcompi",  0, 0xdff1, X, Cpu686, FP|ShortForm,		{ 0, 0, 0} },
 {"fcompi",  1, 0xdff0, X, Cpu686, FP|ShortForm,		{ FloatReg, 0, 0} },
 {"fucomip", 2, 0xdfe8, X, Cpu686, FP|ShortForm,		{ FloatReg, FloatAcc, 0} },
+{"fucomip", 0, 0xdfe9, X, Cpu686, FP|ShortForm,		{ 0, 0, 0} },
+{"fucomip", 1, 0xdfe8, X, Cpu686, FP|ShortForm,		{ FloatReg, 0, 0} },
 {"fucompi", 2, 0xdfe8, X, Cpu686, FP|ShortForm,		{ FloatReg, FloatAcc, 0} },
 {"fucompi", 0, 0xdfe9, X, Cpu686, FP|ShortForm,		{ 0, 0, 0} },
 {"fucompi", 1, 0xdfe8, X, Cpu686, FP|ShortForm,		{ FloatReg, 0, 0} },
