@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.20 2014/03/31 22:17:07 kettenis Exp $ */
+/*	$OpenBSD: qlw.c,v 1.21 2014/04/06 18:28:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -708,9 +708,11 @@ qlw_handle_intr(struct qlw_softc *sc, u_int16_t isr, u_int16_t info)
 	switch (isr) {
 	case QLW_INT_TYPE_ASYNC:
 		qlw_async(sc, info);
+		qlw_clear_isr(sc, isr);
 		break;
 
 	case QLW_INT_TYPE_IO:
+		qlw_clear_isr(sc, isr);
 		rspin = qlw_queue_read(sc, QLW_RESP_IN);
 		if (rspin == sc->sc_last_resp_id) {
 			/* seems to happen a lot on 2200s when mbox commands
@@ -761,14 +763,13 @@ qlw_handle_intr(struct qlw_softc *sc, u_int16_t isr, u_int16_t info)
 			DPRINTF(QLW_D_MBOX, "%s: unexpected mbox interrupt:"
 			    " %x\n", DEVNAME(sc), info);
 		}
+		qlw_clear_isr(sc, isr);
 		break;
 
 	default:
 		/* maybe log something? */
 		break;
 	}
-
-	qlw_clear_isr(sc, isr);
 }
 
 int
