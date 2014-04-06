@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.176 2014/03/28 08:33:51 sthen Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.177 2014/04/06 17:40:36 chrisz Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -967,11 +967,12 @@ udp_output(struct mbuf *m, ...)
 {
 	struct inpcb *inp;
 	struct mbuf *addr, *control;
+	struct sockaddr_in *sin = NULL;
 	struct udpiphdr *ui;
 	u_int32_t ipsecflowinfo = 0;
 	int len = m->m_pkthdr.len;
-	struct in_addr laddr;
-	int s = 0, error = 0;
+	struct in_addr laddr = { INADDR_ANY };
+	int error = 0;
 	va_list ap;
 
 	va_start(ap, m);
@@ -995,19 +996,23 @@ udp_output(struct mbuf *m, ...)
 	}
 
 	if (addr) {
-		laddr = inp->inp_laddr;
+		sin = mtod(addr, struct sockaddr_in *);
+		if (addr->m_len != sizeof(*sin)) {
+			error = EINVAL;
+			goto release;
+		}
 		if (inp->inp_faddr.s_addr != INADDR_ANY) {
 			error = EISCONN;
 			goto release;
 		}
-		/*
-		 * Must block input while temporarily connected.
-		 */
-		s = splsoftnet();
-		error = in_pcbconnect(inp, addr);
-		if (error) {
-			splx(s);
+		if ((error = in_fixaddr(inp, sin, &laddr)))
 			goto release;
+
+		if (inp->inp_lport == 0) {
+			int s = splsoftnet();
+			error = in_pcbbind(inp, NULL, curproc);
+			splx(s);
+			if (error) goto release;
 		}
 	} else {
 		if (inp->inp_faddr.s_addr == INADDR_ANY) {
@@ -1028,7 +1033,7 @@ udp_output(struct mbuf *m, ...)
 		 */
 		if (control->m_next) {
 			error = EINVAL;
-			goto bail;
+			goto release;
 		}
 
 		clen = control->m_len;
@@ -1036,13 +1041,13 @@ udp_output(struct mbuf *m, ...)
 		do {
 			if (clen < CMSG_LEN(0)) {
 				error = EINVAL;
-				goto bail;
+				goto release;
 			}
 			cm = (struct cmsghdr *)cmsgs;
 			if (cm->cmsg_len < CMSG_LEN(0) ||
 			    CMSG_ALIGN(cm->cmsg_len) > clen) {
 				error = EINVAL;
-				goto bail;
+				goto release;
 			}
 			if (cm->cmsg_len == CMSG_LEN(sizeof(ipsecflowinfo)) &&
 			    cm->cmsg_level == IPPROTO_IP &&
@@ -1073,10 +1078,10 @@ udp_output(struct mbuf *m, ...)
 	bzero(ui->ui_x1, sizeof ui->ui_x1);
 	ui->ui_pr = IPPROTO_UDP;
 	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
-	ui->ui_src = inp->inp_laddr;
-	ui->ui_dst = inp->inp_faddr;
+	ui->ui_src = laddr;
+	ui->ui_dst = sin ? sin->sin_addr : inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
-	ui->ui_dport = inp->inp_fport;
+	ui->ui_dport = sin ? sin->sin_port : inp->inp_fport;
 	ui->ui_ulen = ui->ui_len;
 	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;
@@ -1096,20 +1101,13 @@ udp_output(struct mbuf *m, ...)
 		error = EHOSTUNREACH;
 
 bail:
-	if (addr) {
-		inp->inp_laddr = laddr;
-		in_pcbdisconnect(inp);
-		splx(s);
-	}
 	if (control)
 		m_freem(control);
 	return (error);
 
 release:
 	m_freem(m);
-	if (control)
-		m_freem(control);
-	return (error);
+	goto bail;
 }
 
 /*ARGSUSED*/
