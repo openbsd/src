@@ -1,0 +1,11 @@
+DS-NESTED(1)               OpenBSD Reference Manual               DS-NESTED(1)
+
+NNAAMMEE
+     ddss--nneesstteedd - nested string expansion
+
+DDEESSCCRRIIPPTTIIOONN
+     This is the output.
+
+     This is surprising.  This is surprising.
+
+OpenBSD                          April 7, 2010                         OpenBSD

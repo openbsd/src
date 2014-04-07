@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.77 2014/04/07 15:05:12 schwarze Exp $ */
+/*	$Id: roff.c,v 1.78 2014/04/07 21:00:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -489,32 +489,44 @@ static enum rofferr
 roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 {
 	char		 ubuf[12]; /* buffer to print the number */
+	const char	*start;	/* start of the string to process */
 	const char	*stesc;	/* start of an escape sequence ('\\') */
 	const char	*stnam;	/* start of the name, after "[(*" */
 	const char	*cp;	/* end of the name, e.g. before ']' */
 	const char	*res;	/* the string to be substituted */
 	char		*nbuf;	/* new buffer to copy bufp to */
-	size_t		 nsz;	/* size of the new buffer */
 	size_t		 maxl;  /* expected length of the escape name */
 	size_t		 naml;	/* actual length of the escape name */
+	size_t		 ressz;	/* size of the replacement string */
 	int		 expand_count;	/* to avoid infinite loops */
 
 	expand_count = 0;
+	start = *bufp + pos;
+	stesc = strchr(start, '\0') - 1;
+	while (stesc-- > start) {
 
-again:
-	cp = *bufp + pos;
-	while (NULL != (cp = strchr(cp, '\\'))) {
-		stesc = cp++;
+		/* Search backwards for the next backslash. */
+
+		if ('\\' != *stesc)
+			continue;
+
+		/* If it is escaped, skip it. */
+
+		for (cp = stesc - 1; cp >= start; cp--)
+			if ('\\' != *cp)
+				break;
+
+		if (0 == (stesc - cp) % 2) {
+			stesc = cp;
+			continue;
+		}
 
 		/*
-		 * The second character must be an asterisk or an n.
-		 * If it isn't, skip it anyway:  It is escaped,
-		 * so it can't start another escape sequence.
+		 * Everything except user-defined strings and number
+		 * registers is only checked, not expanded.
 		 */
 
-		if ('\0' == *cp)
-			return(ROFF_CONT);
-
+		cp = stesc + 1;
 		switch (*cp) {
 		case ('*'):
 			res = NULL;
@@ -523,15 +535,17 @@ again:
 			res = ubuf;
 			break;
 		default:
-			if (ESCAPE_ERROR != mandoc_escape(&cp, NULL, NULL))
-				continue;
-			mandoc_msg
-				(MANDOCERR_BADESCAPE, r->parse, 
-				 ln, (int)(stesc - *bufp), NULL);
-			return(ROFF_CONT);
+			if (ESCAPE_ERROR == mandoc_escape(&cp, NULL, NULL))
+				mandoc_msg(MANDOCERR_BADESCAPE, r->parse,
+				    ln, (int)(stesc - *bufp), NULL);
+			continue;
 		}
 
-		cp++;
+		if (EXPAND_LIMIT < ++expand_count) {
+			mandoc_msg(MANDOCERR_ROFFLOOP, r->parse,
+			    ln, (int)(stesc - *bufp), NULL);
+			return(ROFF_IGN);
+		}
 
 		/*
 		 * The third character decides the length
@@ -539,9 +553,9 @@ again:
 		 * Save a pointer to the name.
 		 */
 
-		switch (*cp) {
+		switch (*++cp) {
 		case ('\0'):
-			return(ROFF_CONT);
+			continue;
 		case ('('):
 			cp++;
 			maxl = 2;
@@ -564,7 +578,7 @@ again:
 					(MANDOCERR_BADESCAPE, 
 					 r->parse, ln, 
 					 (int)(stesc - *bufp), NULL);
-				return(ROFF_CONT);
+				continue;
 			}
 			if (0 == maxl && ']' == *cp)
 				break;
@@ -587,29 +601,23 @@ again:
 				 ln, (int)(stesc - *bufp), NULL);
 			res = "";
 		}
+		ressz = strlen(res);
 
 		/* Replace the escape sequence by the string. */
 
-		pos = stesc - *bufp;
-
-		nsz = *szp + strlen(res) + 1;
-		nbuf = mandoc_malloc(nsz);
+		*szp += ressz + 1;
+		nbuf = mandoc_malloc(*szp);
 
 		strlcpy(nbuf, *bufp, (size_t)(stesc - *bufp + 1));
-		strlcat(nbuf, res, nsz);
-		strlcat(nbuf, cp + (maxl ? 0 : 1), nsz);
+		strlcat(nbuf, res, *szp);
+		strlcat(nbuf, cp + (maxl ? 0 : 1), *szp);
 
+		/* Prepare for the next replacement. */
+
+		start = nbuf + pos;
+		stesc = nbuf + (stesc - *bufp) + ressz;
 		free(*bufp);
-
 		*bufp = nbuf;
-		*szp = nsz;
-
-		if (EXPAND_LIMIT >= ++expand_count)
-			goto again;
-
-		/* Just leave the string unexpanded. */
-		mandoc_msg(MANDOCERR_ROFFLOOP, r->parse, ln, pos, NULL);
-		return(ROFF_IGN);
 	}
 	return(ROFF_CONT);
 }

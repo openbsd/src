@@ -1,0 +1,14 @@
+.Dd April 7, 2010
+.Dt DS-NESTED 1
+.Os OpenBSD
+.Sh NAME
+.Nm ds-nested
+.Nd nested string expansion
+.Sh DESCRIPTION
+.ds foo bar
+.ds bar output
+This is the \*[\*[foo]].
+.Pp
+.ds pi surprising
+This is \*[\*[Pi]].
+This is \*(\*(Pi.
