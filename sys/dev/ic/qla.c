@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.33 2014/04/05 12:49:27 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.34 2014/04/07 00:38:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -120,6 +120,7 @@ int		qla_load_firmware_2200(struct qla_softc *);
 int		qla_load_fwchunk_2300(struct qla_softc *,
 		    struct qla_dmamem *, const u_int16_t *, u_int32_t);
 int		qla_load_firmware_2300(struct qla_softc *);
+int		qla_load_firmware_2322(struct qla_softc *);
 int		qla_read_nvram(struct qla_softc *);
 
 struct qla_dmamem *qla_dmamem_alloc(struct qla_softc *, size_t);
@@ -336,7 +337,8 @@ qla_attach(struct qla_softc *sc)
 		sc->sc_mbox_base = QLA_MBOX_BASE_23XX;
 		sc->sc_regs = &qla_regs_23XX;
 #ifndef ISP_NOFIRMWARE
-		loadfirmware = qla_load_firmware_2300;
+		if (sc->sc_isp_type != QLA_ISP2322)
+			loadfirmware = qla_load_firmware_2300;
 #endif
 		firmware_addr = QLA_2300_CODE_ORG;
 		break;
@@ -386,7 +388,15 @@ qla_attach(struct qla_softc *sc)
 	/* execute firmware */
 	sc->sc_mbox[0] = QLA_MBOX_EXEC_FIRMWARE;
 	sc->sc_mbox[1] = firmware_addr;
-	if (qla_mbox(sc, 0x0003, 0x0001)) {
+#ifdef ISP_NOFIRMWARE
+	sc->sc_mbox[2] = 1;
+#else
+	if (loadfirmware)
+		sc->sc_mbox[2] = 0;
+	else
+		sc->sc_mbox[2] = 1;
+#endif
+	if (qla_mbox(sc, 0x0007, 0x0001)) {
 		printf("ISP couldn't exec firmware: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
@@ -1887,6 +1897,24 @@ qla_load_firmware_2300(struct qla_softc *sc)
 {
 	struct qla_dmamem *mem;
 	const u_int16_t *fw = isp_2300_risc_code;
+	int rv;
+
+	mem = qla_dmamem_alloc(sc, 65536);
+	rv = qla_load_fwchunk_2300(sc, mem, fw, QLA_2300_CODE_ORG);
+	qla_dmamem_free(sc, mem);
+
+	return (rv);
+}
+
+int
+qla_load_firmware_2322(struct qla_softc *sc)
+{
+	/* we don't have the 2322 firmware image yet */
+#if 0
+	struct qla_dmamem *mem;
+	const u_int16_t *fw = isp_2322_risc_code;
+	u_int32_t addr;
+	int i;
 
 	mem = qla_dmamem_alloc(sc, 65536);
 	if (qla_load_fwchunk_2300(sc, mem, fw, QLA_2300_CODE_ORG)) {
@@ -1894,22 +1922,17 @@ qla_load_firmware_2300(struct qla_softc *sc)
 		return (1);
 	}
 
-	/* additional firmware chunks for 2322 */
-	if (sc->sc_isp_type == QLA_ISP2322) {
-		u_int32_t addr;
-		int i;
-
-		for (i = 0; i < 2; i++) {
-			fw += fw[3];
-			addr = fw[5] | ((fw[4] & 0x3f) << 16);
-			if (qla_load_fwchunk_2300(sc, mem, fw, addr)) {
-				qla_dmamem_free(sc, mem);
-				return (1);
-			}
+	for (i = 0; i < 2; i++) {
+		fw += fw[3];
+		addr = fw[5] | ((fw[4] & 0x3f) << 16);
+		if (qla_load_fwchunk_2300(sc, mem, fw, addr)) {
+			qla_dmamem_free(sc, mem);
+			return (1);
 		}
 	}
 
 	qla_dmamem_free(sc, mem);
+#endif
 	return (0);
 }
 
