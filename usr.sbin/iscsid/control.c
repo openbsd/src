@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2013/03/11 17:40:11 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.5 2014/04/07 19:55:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -99,6 +99,13 @@ control_init(char *path)
 		return (-1);
 	}
 
+	if (listen(fd, CONTROL_BACKLOG) == -1) {
+		log_warn("control_init: listen");
+		close(fd);
+		(void)unlink(path);
+		return (-1);
+	}
+
 	socket_setblockmode(fd, 1);
 	control_state->fd = fd;
 	TAILQ_INIT(&controls);
@@ -124,20 +131,13 @@ control_cleanup(char *path)
 	free(control_state);
 }
 
-int
-control_listen(void)
+void
+control_event_init(void)
 {
-	if (listen(control_state->fd, CONTROL_BACKLOG) == -1) {
-		log_warn("control_listen: listen");
-		return (-1);
-	}
-
 	event_set(&control_state->ev, control_state->fd, EV_READ,
 	    control_accept, NULL);
 	event_add(&control_state->ev, NULL);
 	evtimer_set(&control_state->evt, control_accept, NULL);
-
-	return (0);
 }
 
 /* ARGSUSED */

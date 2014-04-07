@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.9 2011/05/04 21:00:04 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.10 2014/04/07 19:55:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -295,7 +295,7 @@ char	*default_initiator_name(void);
 
 int	control_init(char *);
 void	control_cleanup(char *);
-int	control_listen(void);
+void	control_event_init(void);
 int	control_queue(void *, struct pdu *);
 int	control_compose(void *, u_int16_t, void *, size_t);
 
