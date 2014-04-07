@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.5 2014/03/20 13:07:01 andre Exp $ */
+/*	$OpenBSD: upd.c,v 1.6 2014/04/07 21:54:13 andre Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -39,75 +39,58 @@
 #define DPRINTF(x)
 #endif
 
-enum upd_sensor_id {
-	UPD_SENSOR_UNKNOWN,
-	UPD_SENSOR_RELCHARGE,
-	UPD_SENSOR_ABSCHARGE,
-	UPD_SENSOR_REMCAPACI,
-	UPD_SENSOR_FULLCHARG,
-	UPD_SENSOR_CHARGING,
-	UPD_SENSOR_DISCHARG,
-	UPD_SENSOR_BATTPRESENT,
-	UPD_SENSOR_SHUTIMMINENT,
-	UPD_SENSOR_ACPRESENT,
-	UPD_SENSOR_TIMETOFULL,
-	UPD_SENSOR_NUM
-	/*
-	 * TODO
-	 * - atratetimetofull
-	 * - atratetimetoempty
-	 * - cyclecount
-	 */
-};
-
 struct upd_usage_entry {
-	enum upd_sensor_id	upd_sid;
 	uint8_t			usage_pg;
 	uint8_t			usage_id;
 	enum sensor_type	senstype;
 	char			*usage_name; /* sensor string */
 };
 
-static struct upd_usage_entry upd_usage_table[UPD_SENSOR_NUM] = {
-	{ UPD_SENSOR_UNKNOWN,	  HUP_UNDEFINED,HUP_UNDEFINED,
-	    -1,			 "unknown" },
-	{ UPD_SENSOR_RELCHARGE,	  HUP_BATTERY,	HUB_REL_STATEOF_CHARGE,
+static struct upd_usage_entry upd_usage_table[] = {
+	{ HUP_BATTERY,	HUB_REL_STATEOF_CHARGE,
 	    SENSOR_PERCENT,	 "RelativeStateOfCharge" },
-	{ UPD_SENSOR_ABSCHARGE,	  HUP_BATTERY,	HUB_ABS_STATEOF_CHARGE,
+	{ HUP_BATTERY,	HUB_ABS_STATEOF_CHARGE,
 	    SENSOR_PERCENT,	 "AbsoluteStateOfCharge" },
-	{ UPD_SENSOR_REMCAPACI,	  HUP_BATTERY,	HUB_REM_CAPACITY,
+	{ HUP_BATTERY,	HUB_REM_CAPACITY,
 	    SENSOR_PERCENT,	 "RemainingCapacity" },
-	{ UPD_SENSOR_FULLCHARG,	  HUP_BATTERY,	HUB_FULLCHARGE_CAPACITY,
+	{ HUP_BATTERY,	HUB_FULLCHARGE_CAPACITY,
 	    SENSOR_PERCENT,	 "FullChargeCapacity" },
-	{ UPD_SENSOR_CHARGING,	  HUP_BATTERY,	HUB_CHARGING,
+	{ HUP_BATTERY,	HUB_CHARGING,
 	    SENSOR_INDICATOR,	 "Charging" },
-	{ UPD_SENSOR_DISCHARG,	  HUP_BATTERY,	HUB_DISCHARGING,
+	{ HUP_BATTERY,	HUB_DISCHARGING,
 	    SENSOR_INDICATOR,	 "Discharging" },
-	{ UPD_SENSOR_BATTPRESENT, HUP_BATTERY,	HUB_BATTERY_PRESENT,
+	{ HUP_BATTERY,	HUB_BATTERY_PRESENT,
 	    SENSOR_INDICATOR,	 "BatteryPresent" },
-	{ UPD_SENSOR_SHUTIMMINENT,HUP_POWER,	HUP_SHUTDOWN_IMMINENT,
+	{ HUP_POWER,	HUP_SHUTDOWN_IMMINENT,
 	    SENSOR_INDICATOR,	 "ShutdownImminent" },
-	{ UPD_SENSOR_ACPRESENT,	  HUP_BATTERY,	HUB_AC_PRESENT,
+	{ HUP_BATTERY,	HUB_AC_PRESENT,
 	    SENSOR_INDICATOR,	 "ACPresent" },
-	{ UPD_SENSOR_TIMETOFULL,  HUP_BATTERY,	HUB_ATRATE_TIMETOFULL,
+	{ HUP_BATTERY,	HUB_ATRATE_TIMETOFULL,
 	    SENSOR_TIMEDELTA,	 "AtRateTimeToFull" }
 };
 
+struct upd_report {
+	size_t		size;
+	int		enabled;
+};
+
 struct upd_sensor {
+	struct ksensor		ksensor;
+	struct hid_item		hitem;
 	int			attached;
-	struct ksensor		sensor;
-	struct hid_item		item;
-	size_t			flen;
 };
 
 struct upd_softc {
 	struct uhidev		 sc_hdev;
 	int			 sc_num_sensors;
+	u_int			 sc_max_repid;
+	u_int			 sc_max_sensors;
 
 	/* sensor framework */
-	struct upd_sensor	 sc_sensors[UPD_SENSOR_NUM];
 	struct ksensordev	 sc_sensordev;
 	struct sensor_task	*sc_sensortask;
+	struct upd_report	*sc_reports;
+	struct upd_sensor	*sc_sensors;
 };
 
 static const struct usb_devno upd_devs[] = {
@@ -147,9 +130,11 @@ int  upd_match(struct device *, void *, void *);
 void upd_attach(struct device *, struct device *, void *);
 int  upd_detach(struct device *, int);
 
-void upd_add_sensor(struct upd_softc *, const struct hid_item *, void *, int);
 void upd_refresh(void *);
+void upd_update_sensors(struct upd_softc *, uint8_t *, int);
 void upd_intr(struct uhidev *, void *, uint);
+struct upd_usage_entry *upd_lookup_usage_entry(const struct hid_item *);
+struct upd_sensor *upd_lookup_sensor(struct upd_softc *, int, int);
 
 struct cfdriver upd_cd = {
 	NULL, "upd", DV_DULL
@@ -166,17 +151,35 @@ int
 upd_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
+	int			  size;
+	void			 *desc;
+	struct hid_data		 *hdata;
+	struct hid_item		  item;
+	int			  ret = UMATCH_NONE;
 
 	if (uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
-		return (UMATCH_NONE);
+		return (ret);
 
 	if (upd_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
-		return (UMATCH_NONE);
+		return (ret);
 
-	DPRINTF(("upd: vendor=0x%x, product=0x%x\n", uha->uaa->vendor,
+	DPRINTF(("upd: vendor=0x%04x, product=0x%04x\n", uha->uaa->vendor,
 	    uha->uaa->product));
 
-	return (UMATCH_VENDOR_PRODUCT);
+	/*
+	 * look for at least one sensor of our table, otherwise do not attach
+	 */
+	uhidev_get_report_desc(uha->parent, &desc, &size);
+	for (hdata = hid_start_parse(desc, size, hid_feature);
+	     hid_get_item(hdata, &item); ) {
+		if (upd_lookup_usage_entry(&item) != NULL) {
+			ret = UMATCH_VENDOR_PRODUCT;
+			break;
+		}
+	}
+	hid_end_parse(hdata);
+
+	return (ret);
 }
 
 void
@@ -186,36 +189,77 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct hid_item		  item;
 	struct hid_data		 *hdata;
+	struct upd_usage_entry	 *entry;
+	struct upd_sensor	 *sensor;
 	int			  size;
 	void			 *desc;
 
 	sc->sc_hdev.sc_intr = upd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_num_sensors = 0;
+	sc->sc_reports = NULL;
+	sc->sc_sensors = NULL;
+	sc->sc_max_sensors = nitems(upd_usage_table);
 
 	strlcpy(sc->sc_sensordev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	DPRINTF(("upd: devname=%s sc_nrepid=%d\n", sc->sc_hdev.sc_dev.dv_xname,
-	    uha->parent->sc_nrepid));
+	sc->sc_max_repid = uha->parent->sc_nrepid;
+	DPRINTF(("\nupd: devname=%s sc_max_repid=%d\n",
+	    sc->sc_hdev.sc_dev.dv_xname, sc->sc_max_repid));
 
+	sc->sc_reports = malloc(sc->sc_max_repid * sizeof(struct upd_report),
+	    M_USBDEV, M_WAITOK | M_ZERO);
+	size = sc->sc_max_sensors * sizeof(struct upd_sensor);
+	sc->sc_sensors = malloc(size, M_USBDEV, M_WAITOK | M_ZERO);
+	sc->sc_num_sensors = 0;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	hdata = hid_start_parse(desc, size, hid_feature);
-	/* lookup for item in our sensors list */
-	while (hid_get_item(hdata, &item))
-		upd_add_sensor(sc, &item, desc, size);
+	for (hdata = hid_start_parse(desc, size, hid_feature);
+	     hid_get_item(hdata, &item) &&
+	     sc->sc_num_sensors < sc->sc_max_sensors; ) {
+		DPRINTF(("upd: repid=%d\n", item.report_ID));
+		if (item.kind != hid_feature ||
+		    item.report_ID < 0)
+			continue;
 
+		if ((entry = upd_lookup_usage_entry(&item)) == NULL)
+			continue;
+
+		/* filter repeated usages, avoid duplicated sensors */
+		sensor = upd_lookup_sensor(sc, entry->usage_pg,
+		    entry->usage_id);
+		if (sensor && sensor->attached)
+			continue;
+
+		sensor = &sc->sc_sensors[sc->sc_num_sensors];
+		/* keep our copy of hid_item */
+		memcpy(&sensor->hitem, &item, sizeof(struct hid_item));
+		strlcpy(sensor->ksensor.desc, entry->usage_name,
+		    sizeof(sensor->ksensor.desc));
+		sensor->ksensor.type = entry->senstype;
+		sensor->ksensor.flags |= SENSOR_FINVALID;
+		sensor->ksensor.status = SENSOR_S_UNKNOWN;
+		sensor->ksensor.value = 0;
+		sensor_attach(&sc->sc_sensordev, &sensor->ksensor);
+		sensor->attached = 1;
+		sc->sc_num_sensors++;
+
+		if (item.report_ID >= sc->sc_max_repid ||
+		    sc->sc_reports[item.report_ID].enabled)
+			continue;
+
+		sc->sc_reports[item.report_ID].size = hid_report_size(desc,
+		    size, item.kind, item.report_ID);
+		sc->sc_reports[item.report_ID].enabled = 1;
+	}
 	hid_end_parse(hdata);
 	DPRINTF(("upd: sc_num_sensors=%d\n", sc->sc_num_sensors));
 
-	if (sc->sc_num_sensors > 0) {
-		sc->sc_sensortask = sensor_task_register(sc, upd_refresh, 6);
-		if (sc->sc_sensortask == NULL) {
-			printf(", unable to register update task\n");
-			return;
-		}
-		sensordev_install(&sc->sc_sensordev);
+	sc->sc_sensortask = sensor_task_register(sc, upd_refresh, 6);
+	if (sc->sc_sensortask == NULL) {
+		printf(", unable to register update task\n");
+		return;
 	}
+	sensordev_install(&sc->sc_sensordev);
 
 	printf("\n");
 
@@ -229,9 +273,6 @@ upd_detach(struct device *self, int flags)
 	struct upd_sensor	*sensor;
 	int			 i;
 
-	if (sc->sc_num_sensors <= 0)
-		goto finish;
-
 	if (sc->sc_sensortask != NULL) {
 		wakeup(&sc->sc_sensortask);
 		sensor_task_unregister(sc->sc_sensortask);
@@ -239,16 +280,15 @@ upd_detach(struct device *self, int flags)
 
 	sensordev_deinstall(&sc->sc_sensordev);
 
-	for (i = 0; i < UPD_SENSOR_NUM; i++) {
+	for (i = 0; i < sc->sc_num_sensors; i++) {
 		sensor = &sc->sc_sensors[i];
-		if (!sensor->attached)
-			continue;
-
-		sensor_detach(&sc->sc_sensordev, &sensor->sensor);
-		DPRINTF(("upd_detach: %s\n", sensor->sensor.desc));
+		if (sensor->attached)
+			sensor_detach(&sc->sc_sensordev, &sensor->ksensor);
+		DPRINTF(("upd_detach: %s\n", sensor->ksensor.desc));
 	}
 
-finish:
+	free(sc->sc_reports, M_USBDEV);
+	free(sc->sc_sensors, M_USBDEV);
 	DPRINTF(("upd_detach: complete\n"));
 	return (0);
 }
@@ -257,96 +297,117 @@ void
 upd_refresh(void *arg)
 {
 	struct upd_softc	*sc = (struct upd_softc *)arg;
-	struct hid_location	*loc;
-	struct upd_sensor	*sensor;
-	ulong			hdata;
-	ulong 			adjust;
+	struct upd_report	*report;
 	uint8_t			buf[256];
-	int			i, err;
+	int			repid, err;
 
-	for (i = 0; i < UPD_SENSOR_NUM; i++) {
-		sensor = &sc->sc_sensors[i];
-		if (sensor && !sensor->attached)
+	for (repid = 0; repid < sc->sc_max_repid; repid++) {
+		report = &sc->sc_reports[repid];
+		if (!report->enabled)
 			continue;
 
-		switch (i) {
-		case UPD_SENSOR_RELCHARGE:
-		case UPD_SENSOR_ABSCHARGE:
-		case UPD_SENSOR_REMCAPACI:
-		case UPD_SENSOR_FULLCHARG:
-			adjust = 1000; /* scale adjust */
-			/* FALLTHROUGH */
-		case UPD_SENSOR_CHARGING:
-		case UPD_SENSOR_DISCHARG:
-		case UPD_SENSOR_TIMETOFULL:
-			/*
-			 * don't query nor show battery dependent sensors if no
-			 * battery
-			 */
-			if (sc->sc_sensors[UPD_SENSOR_BATTPRESENT].sensor.value
-			    <= 0) {
-				sensor->sensor.flags |= SENSOR_FINVALID;
-				continue;
-			}
-			break;
-		default:
-			adjust = 1; /* no scale adjust */
-		}
-
-		loc = &sensor->item.loc;
-		sc->sc_hdev.sc_report_id = sensor->item.report_ID;
 		memset(buf, 0x0, sizeof(buf));
+		sc->sc_hdev.sc_report_id = repid;
 		err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT, buf,
-		    sensor->flen);
+		    report->size + 1); /*
+					* cheating with an extra byte on size
+					* here, hid_report_size() * is
+					* incorrectly telling us report lengths
+					* are 1 byte smaller
+					*/
 		if (err) {
-			DPRINTF(("read failure: sens=%02x reportid=%02x "
-			    "err=%d\n", i, sc->sc_hdev.sc_report_id, err));
+			DPRINTF(("read failure: reportid=%02x err=%d\n", repid,
+			    err));
 			continue;
 		}
 
-		hdata = hid_get_data(buf + 1, loc);
-
-		sensor->sensor.flags &= ~SENSOR_FINVALID;
-		sensor->sensor.value = hdata * adjust;
-		DPRINTF(("%s: %s: hidget data: %d\n", sc->sc_sensordev.xname,
-		    upd_usage_table[i].usage_name, hdata));
+		upd_update_sensors(sc, buf, repid);
 	}
+}
+
+struct upd_usage_entry *
+upd_lookup_usage_entry(const struct hid_item *hitem)
+{
+	struct upd_usage_entry	*entry = NULL;
+	int			 i;
+
+	for (i = 0; i < nitems(upd_usage_table); i++) {
+		entry = &upd_usage_table[i];
+		if (entry->usage_pg == HID_GET_USAGE_PAGE(hitem->usage) &&
+		    entry->usage_id == HID_GET_USAGE(hitem->usage))
+			return (entry);
+	}
+	return (NULL);
+}
+
+struct upd_sensor *
+upd_lookup_sensor(struct upd_softc *sc, int page, int usage)
+{
+	struct upd_sensor	*sensor = NULL;
+	int			 i;
+
+	for (i = 0; i < sc->sc_num_sensors; i++) {
+		sensor = &sc->sc_sensors[i];
+		if (page == HID_GET_USAGE_PAGE(sensor->hitem.usage) &&
+		    usage == HID_GET_USAGE(sensor->hitem.usage))
+			return (sensor);
+	}
+	return (NULL);
 }
 
 void
-upd_add_sensor(struct upd_softc *sc, const struct hid_item *item, void *desc,
-    int dsiz)
+upd_update_sensors(struct upd_softc *sc, uint8_t *buf, int repid)
 {
-	struct upd_usage_entry	*entry = NULL;
-	struct upd_sensor	*sensor = NULL;
-	int i;
+	struct upd_sensor	*sensor;
+	struct hid_location	*loc;
+	ulong			hdata, batpres;
+	ulong 			adjust;
+	int			i;
 
-	for (i = 0; i < UPD_SENSOR_NUM; i++) {
-		entry = &upd_usage_table[i];
-		if (entry->upd_sid == UPD_SENSOR_UNKNOWN ||
-		    entry->usage_pg != HID_GET_USAGE_PAGE(item->usage) ||
-		    entry->usage_id != HID_GET_USAGE(item->usage))
-			continue;
+	sensor = upd_lookup_sensor(sc, HUP_BATTERY, HUB_BATTERY_PRESENT);
+	batpres = sensor ? sensor->ksensor.value : -1;
 
+	for (i = 0; i < sc->sc_num_sensors; i++) {
 		sensor = &sc->sc_sensors[i];
-		if (sensor && sensor->attached)
+		if (!(sensor->hitem.report_ID == repid && sensor->attached))
 			continue;
 
-		/* keep our copy of hid_item */
-		memset(&sensor->item, 0x0, sizeof(struct hid_item));
-		memcpy(&sensor->item, item, sizeof(struct hid_item));
-		sensor->flen = hid_report_size(desc, dsiz, hid_feature,
-		    item->report_ID) + 1;
-		strlcpy(sensor->sensor.desc, entry->usage_name,
-		    sizeof(sensor->sensor.desc));
-		sensor->sensor.type = entry->senstype;
-		sensor->sensor.flags |= SENSOR_FINVALID;
-		sensor->sensor.value = 0;
-		sensor_attach(&sc->sc_sensordev, &sensor->sensor);
-		sensor->attached = 1;
-		sc->sc_num_sensors++;
+		/* invalidate battery dependent sensors */
+		if (HID_GET_USAGE_PAGE(sensor->hitem.usage) == HUP_BATTERY &&
+		    batpres <= 0) {
+			/* exception to the battery sensor itself */
+			if (HID_GET_USAGE(sensor->hitem.usage) !=
+			    HUB_BATTERY_PRESENT) {
+				sensor->ksensor.status = SENSOR_S_UNKNOWN;
+				sensor->ksensor.flags |= SENSOR_FINVALID;
+				continue;
+			}
+		}
+
+		switch (HID_GET_USAGE(sensor->hitem.usage)) {
+		case HUB_REL_STATEOF_CHARGE:
+		case HUB_ABS_STATEOF_CHARGE:
+		case HUB_REM_CAPACITY:
+		case HUB_FULLCHARGE_CAPACITY:
+			adjust = 1000; /* scale adjust */
+			break;
+		default:
+			adjust = 1; /* no scale adjust */
+			break;
+		}
+
+		loc = &sensor->hitem.loc;
+		/* first byte which is the report id */
+		hdata = hid_get_data(buf + 1, loc);
+
+		sensor->ksensor.value = hdata * adjust;
+		sensor->ksensor.status = SENSOR_S_OK;
+		sensor->ksensor.flags &= ~SENSOR_FINVALID;
+		DPRINTF(("%s: hidget data: %d\n",
+		    sc->sc_sensordev.xname, hdata));
 	}
 }
+
 
 void
 upd_intr(struct uhidev *uh, void *p, uint len)
