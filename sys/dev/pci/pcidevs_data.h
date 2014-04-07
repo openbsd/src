@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1720 2014/03/17 17:24:02 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1721 2014/04/07 09:30:52 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7942,6 +7942,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1009,
 	    "FL1009 xHCI",
+	},
+	{
+	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1400,
+	    "FL1400 xHCI",
 	},
 	{
 	    PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PW008GE5,
