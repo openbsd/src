@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1720 2014/03/17 17:24:02 jasper Exp $
+$OpenBSD: pcidevs,v 1.1721 2014/04/07 09:30:52 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2550,6 +2550,7 @@ product FREESCALE MPC8343	0x0087	MPC8343
 /* Fresco Logic products */
 product FRESCO FL1000		0x1000	FL1000 xHCI
 product FRESCO FL1009		0x1009	FL1009 xHCI
+product FRESCO FL1400		0x1400	FL1400 xHCI
 
 /* Fujitsu products */
 product FUJITSU PW008GE5	0x11a1	PW008GE5
