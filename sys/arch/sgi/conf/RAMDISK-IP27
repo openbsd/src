@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.32 2014/03/15 04:09:21 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.33 2014/04/07 08:27:24 brad Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -122,6 +122,7 @@ uhid*		at uhidev?	# USB generic HID support
 atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?	# ASIX Electronics AX88179 USB Ethernet
 cdce*		at uhub?	# CDC Ethernet
 cue*		at uhub?	# CATC USB-EL1201A based Ethernet
 kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet

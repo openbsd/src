@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.8 2014/03/18 07:34:17 syl Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.9 2014/04/07 08:27:23 brad Exp $
 #
 # GENERIC machine description file
 #
@@ -126,6 +126,7 @@ uhid*		at uhidev?		# USB generic HID support
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76c50x based 802.11b
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet

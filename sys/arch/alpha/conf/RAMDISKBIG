@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.93 2014/03/31 04:22:26 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.94 2014/04/07 08:27:23 brad Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -89,6 +89,7 @@ umass*	at uhub?
 # USB Ethernet adapters
 aue*	at uhub?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub?			# ASIX Electronics AX88172 USB Ethernet
+axen*	at uhub?			# ASIX Electronics AX88179 USB Ethernet
 cdce*	at uhub?			# CDC Ethernet
 cue*	at uhub?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub?			# Kawasaki KL5KUSB101B based Ethernet

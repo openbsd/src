@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.90 2013/11/15 19:42:20 sasano Exp $
+#	$OpenBSD: GENERIC,v 1.91 2014/04/07 08:27:24 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -109,6 +109,7 @@ uhid*		at uhidev?		# USB generic HID support
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76C50x based 802.11b
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet

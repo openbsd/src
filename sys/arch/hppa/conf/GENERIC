@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.159 2014/04/02 16:41:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.160 2014/04/07 08:27:23 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -145,6 +145,7 @@ midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*	at uhub?		# SMSC LAN95xx Ethernet
