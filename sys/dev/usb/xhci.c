@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.8 2014/04/03 14:42:15 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.9 2014/04/07 15:34:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -438,10 +438,14 @@ xhci_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_RESUME:
+		sc->sc_bus.use_polling++;
+
 		xhci_reset(sc);
 		xhci_ring_reset(sc, &sc->sc_cmd_ring);
 		xhci_ring_reset(sc, &sc->sc_evt_ring);
 		xhci_config(sc);
+
+		sc->sc_bus.use_polling--;
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_POWERDOWN:
