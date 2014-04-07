@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.259 2014/03/28 08:33:51 sthen Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.260 2014/04/07 10:04:17 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -194,23 +194,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			ro->ro_tableid = m->m_pkthdr.rdomain;
 		}
 
-		/*
-		 * If routing to interface only, short-circuit routing lookup.
-		 */
-		if (flags & IP_ROUTETOIF) {
-			if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst),
-			    m->m_pkthdr.rdomain))) == 0 &&
-			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst),
-			    m->m_pkthdr.rdomain))) == 0) {
-				ipstat.ips_noroute++;
-				error = ENETUNREACH;
-				goto bad;
-			}
-
-			ifp = ia->ia_ifp;
-			mtu = ifp->if_mtu;
-			ip->ip_ttl = 1;
-		} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
+		if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
 		    imo != NULL && imo->imo_multicast_ifp != NULL) {
 			ifp = imo->imo_multicast_ifp;
@@ -360,23 +344,7 @@ reroute:
 			ro->ro_tableid = m->m_pkthdr.rdomain;
 		}
 
-		/*
-		 * If routing to interface only, short-circuit routing lookup.
-		 */
-		if (flags & IP_ROUTETOIF) {
-			if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst),
-			    m->m_pkthdr.rdomain))) == 0 &&
-			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst),
-			    m->m_pkthdr.rdomain))) == 0) {
-				ipstat.ips_noroute++;
-				error = ENETUNREACH;
-				goto bad;
-			}
-
-			ifp = ia->ia_ifp;
-			mtu = ifp->if_mtu;
-			ip->ip_ttl = 1;
-		} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
+		if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
 		    imo != NULL && imo->imo_multicast_ifp != NULL) {
 			ifp = imo->imo_multicast_ifp;
@@ -752,7 +720,7 @@ sendit:
 		ipstat.ips_fragmented++;
 
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt)
+	if (ro == &iproute && ro->ro_rt)
 		RTFREE(ro->ro_rt);
 	return (error);
 bad:

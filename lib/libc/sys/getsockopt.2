@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.45 2014/03/28 08:33:51 sthen Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.46 2014/04/07 10:04:17 mpi Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 28 2014 $
+.Dd $Mdocdate: April 7 2014 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ enables duplicate address and port bindings
 .It Dv SO_KEEPALIVE
 enables keep connections alive
 .It Dv SO_DONTROUTE
-enables routing bypass for outgoing messages
+enables routing bypass; not supported
 .It Dv SO_LINGER
 linger on close if data present
 .It Dv SO_BROADCAST
@@ -195,11 +195,6 @@ Should the connected party fail to respond to these messages, the connection
 is considered broken and processes using the socket are notified via a
 .Dv SIGPIPE
 signal when attempting to send data.
-.Dv SO_DONTROUTE
-indicates that outgoing messages should
-bypass the standard routing facilities.
-Instead, messages are directed to the appropriate network interface
-according to the network portion of the destination address.
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages
@@ -471,6 +466,8 @@ The argument
 is a file, not a socket.
 .It Bq Er ENOPROTOOPT
 The option is unknown at the level indicated.
+.It Bq Er EOPNOTSUPP
+The option is unsupported.
 .It Bq Er EFAULT
 The address pointed to by
 .Fa optval
