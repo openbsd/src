@@ -1,4 +1,4 @@
-.TH COND-NUMERIC 1 "October 3, 2013" OpenBSD
+.TH COND-NUMERIC 1 "April 7, 2014" OpenBSD
 .SH NAME
 cond-numeric \- roff conditions involving numbers
 .SH DESCRIPTION
@@ -97,4 +97,32 @@ mp
 .el (f)
 pm
 .ie 1>-2 (t)
+.el (f)
+.PP
+operator "&":
+00
+.ie 0&0 (t)
+.el (f)
+01
+.ie 0&1 (t)
+.el (f)
+10
+.ie 1&0 (t)
+.el (f)
+11
+.ie 1&1 (t)
+.el (f)
+.PP
+operator ":":
+00
+.ie 0:0 (t)
+.el (f)
+01
+.ie 0:1 (t)
+.el (f)
+10
+.ie 1:0 (t)
+.el (f)
+11
+.ie 1:1 (t)
 .el (f)

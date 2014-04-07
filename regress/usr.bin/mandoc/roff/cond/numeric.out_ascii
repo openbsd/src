@@ -26,6 +26,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        with negative numbers: mm (t) mp (t) pm (t)
 
+       operator "&": 00 (f) 01 (f) 10 (f) 11 (t)
+
+       operator ":": 00 (f) 01 (t) 10 (t) 11 (t)
 
 
-OpenBSD                         October 3, 2013                COND-NUMERIC(1)
+
+OpenBSD                          April 7, 2014                 COND-NUMERIC(1)

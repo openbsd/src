@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.31 2014/04/05 20:33:38 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.32 2014/04/07 15:05:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 5 2014 $
+.Dd $Mdocdate: April 7 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -749,18 +749,12 @@ or
 .Pq troff mode ,
 COND evaluates to false.
 .It
-If COND starts with a digit, optionally prefixed by a minus sign,
-it is evaluated as a numerical expression of the form
-.Ar number operator number ,
-where
-.Ar operator
-is one of
-.Sq < ,
-.Sq <= ,
-.Sq = ,
-.Sq >= ,
-or
-.Sq > .
+If COND starts with a parenthesis or with an optionally signed
+integer number, it is evaluated according to the rules of
+.Sx Numerical expressions
+explained below.
+It evaluates to true if the the result is positive,
+or to false if the result is zero or negative.
 .It
 Otherwise, the first character of COND is regarded as a delimiter
 and COND evaluates to true if the string extending from its first
@@ -902,11 +896,13 @@ A register is an arbitrary string value that defines some sort of state,
 which influences parsing and/or formatting.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Cm \&nr Ar name Oo +|- Oc Ns Ar value
+.D1 Pf \. Cm \&nr Ar name Oo +|- Oc Ns Ar expression
 .Pp
-The
-.Ar value
-may, at the moment, only be an integer.
+For the syntax of
+.Ar expression ,
+see
+.Sx Numerical expressions
+below.
 If it is prefixed by a sign, the register will be
 incremented or decremented instead of assigned to.
 .Pp
@@ -1019,6 +1015,73 @@ Begin a table, which formats input in aligned rows and columns.
 See
 .Xr tbl 7
 for a description of the tbl language.
+.Ss Numerical expressions
+The
+.Sx \&nr ,
+.Sx \&if ,
+and
+.Sx \&ie
+requests accept integer numerical expressions as arguments.
+These are always evaluated using the C
+.Vt int
+type; integer overflow works the same way as in the C language.
+Numbers consist of an arbitrary number of digits
+.Sq 0
+to
+.Sq 9
+prefixed by an optional sign
+.Sq +
+or
+.Sq - .
+.Pp
+The following binary operators are implemented.
+Unless otherwise stated, they behave as in the C language:
+.Pp
+.Bl -tag -width 2n -compact
+.It Ic +
+addition
+.It Ic -
+subtraction
+.It Ic *
+multiplication
+.It Ic /
+division
+.It Ic %
+remainder of division
+.It Ic <
+less than
+.It Ic >
+greater than
+.It Ic ==
+equal to
+.It Ic =
+equal to, same effect as
+.Ic ==
+(this differs from C)
+.It Ic <=
+less than or equal to
+.It Ic >=
+greater than or equal to
+.It Ic <>
+not equal to (corresponds to C
+.Ic != ;
+this one is of limited portability, it is supported by Heirloom roff,
+but not by groff)
+.It Ic &
+logical and (corresponds to C
+.Ic && )
+.It Ic \&:
+logical or (corresponds to C
+.Ic \&|| )
+.It Ic <?
+minimum (not available in C)
+.It Ic >?
+maximum (not available in C)
+.El
+.Pp
+There is no concept of precendence; evaluation proceeds from left to right,
+except when subexpressions are enclosed in parantheses.
+Inside parentheses, whitespace is ignored.
 .Sh ESCAPE SEQUENCE REFERENCE
 The
 .Xr mandoc 1

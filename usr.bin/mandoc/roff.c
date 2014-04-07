@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.76 2014/04/05 20:33:38 schwarze Exp $ */
+/*	$Id: roff.c,v 1.77 2014/04/07 15:05:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -177,6 +177,8 @@ static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
 static	int		 roff_evalcond(const char *, int *);
+static	int		 roff_evalnum(const char *, int *, int *, int);
+static	int		 roff_evalpar(const char *, int *, int *);
 static	int		 roff_evalstrcond(const char *, int *);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
@@ -1103,6 +1105,12 @@ roff_cond_text(ROFF_ARGS)
 	return(rr ? ROFF_CONT : ROFF_IGN);
 }
 
+/*
+ * Parse a single signed integer number.  Stop at the first non-digit.
+ * If there is at least one digit, return success and advance the
+ * parse point, else return failure and let the parse point unchanged.
+ * Ignore overflows, treat them just like the C language.
+ */
 static int
 roff_getnum(const char *v, int *pos, int *res)
 {
@@ -1114,7 +1122,7 @@ roff_getnum(const char *v, int *pos, int *res)
 		p++;
 
 	for (*res = 0; isdigit((unsigned char)v[p]); p++)
-		*res += 10 * *res + v[p] - '0';
+		*res = 10 * *res + v[p] - '0';
 	if (p == *pos + n)
 		return 0;
 
@@ -1123,34 +1131,6 @@ roff_getnum(const char *v, int *pos, int *res)
 
 	*pos = p;
 	return 1;
-}
-
-static int
-roff_getop(const char *v, int *pos, char *res)
-{
-	int e;
-
-	*res = v[*pos];
-	e = v[*pos + 1] == '=';
-
-	switch (*res) {
-	case '=':
-		break;
-	case '>':
-		if (e)
-			*res = 'g';
-		break;
-	case '<':
-		if (e)
-			*res = 'l';
-		break;
-	default:
-		return(0);
-	}
-
-	*pos += 1 + e;
-
-	return(*res);
 }
 
 /*
@@ -1196,11 +1176,14 @@ out:
 	return(match);
 }
 
+/*
+ * Evaluate an optionally negated single character, numerical,
+ * or string condition.
+ */
 static int
 roff_evalcond(const char *v, int *pos)
 {
-	int	 wanttrue, lh, rh;
-	char	 op;
+	int	 wanttrue, number;
 
 	if ('!' == v[*pos]) {
 		wanttrue = 0;
@@ -1229,27 +1212,10 @@ roff_evalcond(const char *v, int *pos)
 		break;
 	}
 
-	if (!roff_getnum(v, pos, &lh))
+	if (roff_evalnum(v, pos, &number, 0))
+		return((number > 0) == wanttrue);
+	else
 		return(roff_evalstrcond(v, pos) == wanttrue);
-	if (!roff_getop(v, pos, &op))
-		return((lh > 0) == wanttrue);
-	if (!roff_getnum(v, pos, &rh))
-		return(0);
-
-	switch (op) {
-	case 'g':
-		return((lh >= rh) == wanttrue);
-	case 'l':
-		return((lh <= rh) == wanttrue);
-	case '=':
-		return((lh == rh) == wanttrue);
-	case '>':
-		return((lh > rh) == wanttrue);
-	case '<':
-		return((lh < rh) == wanttrue);
-	default:
-		return(0);
-	}
 }
 
 /* ARGSUSED */
@@ -1367,6 +1333,194 @@ roff_ds(ROFF_ARGS)
 	return(ROFF_IGN);
 }
 
+/*
+ * Parse a single operator, one or two characters long.
+ * If the operator is recognized, return success and advance the
+ * parse point, else return failure and let the parse point unchanged.
+ */
+static int
+roff_getop(const char *v, int *pos, char *res)
+{
+
+	*res = v[*pos];
+
+	switch (*res) {
+	case ('+'):
+		/* FALLTHROUGH */
+	case ('-'):
+		/* FALLTHROUGH */
+	case ('*'):
+		/* FALLTHROUGH */
+	case ('/'):
+		/* FALLTHROUGH */
+	case ('%'):
+		/* FALLTHROUGH */
+	case ('&'):
+		/* FALLTHROUGH */
+	case (':'):
+		break;
+	case '<':
+		switch (v[*pos + 1]) {
+		case ('='):
+			*res = 'l';
+			(*pos)++;
+			break;
+		case ('>'):
+			*res = '!';
+			(*pos)++;
+			break;
+		case ('?'):
+			*res = 'i';
+			(*pos)++;
+			break;
+		default:
+			break;
+		}
+		break;
+	case '>':
+		switch (v[*pos + 1]) {
+		case ('='):
+			*res = 'g';
+			(*pos)++;
+			break;
+		case ('?'):
+			*res = 'a';
+			(*pos)++;
+			break;
+		default:
+			break;
+		}
+		break;
+	case '=':
+		if ('=' == v[*pos + 1])
+			(*pos)++;
+		break;
+	default:
+		return(0);
+	}
+	(*pos)++;
+
+	return(*res);
+}
+
+/*
+ * Evaluate either a parenthesized numeric expression
+ * or a single signed integer number.
+ */
+static int
+roff_evalpar(const char *v, int *pos, int *res)
+{
+
+	if ('(' != v[*pos])
+		return(roff_getnum(v, pos, res));
+
+	(*pos)++;
+	if ( ! roff_evalnum(v, pos, res, 1))
+		return(0);
+
+	/* If the trailing parenthesis is missing, ignore the error. */
+	if (')' == v[*pos])
+		(*pos)++;
+
+	return(1);
+}
+
+/*
+ * Evaluate a complete numeric expression.
+ * Proceed left to right, there is no concept of precedence.
+ */
+static int
+roff_evalnum(const char *v, int *pos, int *res, int skipwhite)
+{
+	int		 mypos, operand2;
+	char		 operator;
+
+	if (NULL == pos) {
+		mypos = 0;
+		pos = &mypos;
+	}
+
+	if (skipwhite)
+		while (isspace((unsigned char)v[*pos]))
+			(*pos)++;
+
+	if ( ! roff_evalpar(v, pos, res))
+		return(0);
+
+	while (1) {
+		if (skipwhite)
+			while (isspace((unsigned char)v[*pos]))
+				(*pos)++;
+
+		if ( ! roff_getop(v, pos, &operator))
+			break;
+
+		if (skipwhite)
+			while (isspace((unsigned char)v[*pos]))
+				(*pos)++;
+
+		if ( ! roff_evalpar(v, pos, &operand2))
+			return(0);
+
+		if (skipwhite)
+			while (isspace((unsigned char)v[*pos]))
+				(*pos)++;
+
+		switch (operator) {
+		case ('+'):
+			*res += operand2;
+			break;
+		case ('-'):
+			*res -= operand2;
+			break;
+		case ('*'):
+			*res *= operand2;
+			break;
+		case ('/'):
+			*res /= operand2;
+			break;
+		case ('%'):
+			*res %= operand2;
+			break;
+		case ('<'):
+			*res = *res < operand2;
+			break;
+		case ('>'):
+			*res = *res > operand2;
+			break;
+		case ('l'):
+			*res = *res <= operand2;
+			break;
+		case ('g'):
+			*res = *res >= operand2;
+			break;
+		case ('='):
+			*res = *res == operand2;
+			break;
+		case ('!'):
+			*res = *res != operand2;
+			break;
+		case ('&'):
+			*res = *res && operand2;
+			break;
+		case (':'):
+			*res = *res || operand2;
+			break;
+		case ('i'):
+			if (operand2 < *res)
+				*res = operand2;
+			break;
+		case ('a'):
+			if (operand2 > *res)
+				*res = operand2;
+			break;
+		default:
+			abort();
+		}
+	}
+	return(1);
+}
+
 void
 roff_setreg(struct roff *r, const char *name, int val, char sign)
 {
@@ -1476,13 +1630,11 @@ roff_freereg(struct roffreg *reg)
 	}
 }
 
-/* ARGSUSED */
 static enum rofferr
 roff_nr(ROFF_ARGS)
 {
 	const char	*key;
 	char		*val;
-	size_t		 sz;
 	int		 iv;
 	char		 sign;
 
@@ -1493,10 +1645,8 @@ roff_nr(ROFF_ARGS)
 	if ('+' == sign || '-' == sign)
 		val++;
 
-	sz = strspn(val, "0123456789");
-	iv = sz ? mandoc_strntoi(val, sz, 10) : 0;
-
-	roff_setreg(r, key, iv, sign);
+	if (roff_evalnum(val, NULL, &iv, 0))
+		roff_setreg(r, key, iv, sign);
 
 	return(ROFF_IGN);
 }
