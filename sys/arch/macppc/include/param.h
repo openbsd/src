@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 2013/03/23 16:12:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 2014/04/07 16:29:06 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,6 +47,6 @@
 
 #define	KERNBASE	0x100000
 
-#define	MSGBUFSIZE	(2 * PAGE_SIZE)
+#define	MSGBUFSIZE	(4 * PAGE_SIZE)
 
 #endif /* _MACHINE_PARAM_H_ */
