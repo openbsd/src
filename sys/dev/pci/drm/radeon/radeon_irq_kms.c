@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.3 2014/01/23 03:15:09 kettenis Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -194,27 +194,27 @@ radeon_msi_ok(struct radeon_device *rdev)
 
 	/* Quirks */
 	/* HP RS690 only seems to work with MSIs. */
-	if ((rdev->ddev->pci_device == 0x791f) &&
-	    (rdev->ddev->pci_subvendor == 0x103c) &&
-	    (rdev->ddev->pci_subdevice == 0x30c2))
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x103c) &&
+	    (rdev->pdev->subsystem_device == 0x30c2))
 		return true;
 
 	/* Dell RS690 only seems to work with MSIs. */
-	if ((rdev->ddev->pci_device == 0x791f) &&
-	    (rdev->ddev->pci_subvendor == 0x1028) &&
-	    (rdev->ddev->pci_subdevice == 0x01fc))
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x1028) &&
+	    (rdev->pdev->subsystem_device == 0x01fc))
 		return true;
 
 	/* Dell RS690 only seems to work with MSIs. */
-	if ((rdev->ddev->pci_device == 0x791f) &&
-	    (rdev->ddev->pci_subvendor == 0x1028) &&
-	    (rdev->ddev->pci_subdevice == 0x01fd))
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x1028) &&
+	    (rdev->pdev->subsystem_device == 0x01fd))
 		return true;
 
 	/* Gateway RS690 only seems to work with MSIs. */
-	if ((rdev->ddev->pci_device == 0x791f) &&
-	    (rdev->ddev->pci_subvendor == 0x107b) &&
-	    (rdev->ddev->pci_subdevice == 0x0185))
+	if ((rdev->pdev->device == 0x791f) &&
+	    (rdev->pdev->subsystem_vendor == 0x107b) &&
+	    (rdev->pdev->subsystem_device == 0x0185))
 		return true;
 
 	/* try and enable MSIs by default on all RS690s */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.5 2014/02/09 13:01:09 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.6 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1949,9 +1949,9 @@ atombios_apply_encoder_quirks(struct drm_encoder *encoder,
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(encoder->crtc);
 
 	/* Funky macbooks */
-	if ((dev->pci_device == 0x71C5) &&
-	    (dev->pci_subvendor == 0x106b) &&
-	    (dev->pci_subdevice == 0x0080)) {
+	if ((dev->pdev->device == 0x71C5) &&
+	    (dev->pdev->subsystem_vendor == 0x106b) &&
+	    (dev->pdev->subsystem_device == 0x0080)) {
 		if (radeon_encoder->devices & ATOM_DEVICE_LCD1_SUPPORT) {
 			uint32_t lvtma_bit_depth_control = RREG32(AVIVO_LVTMA_BIT_DEPTH_CONTROL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.11 2014/02/09 12:33:44 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.12 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -1822,7 +1822,6 @@ static int evergreen_cp_resume(struct radeon_device *rdev)
  */
 static void evergreen_gpu_init(struct radeon_device *rdev)
 {
-	struct drm_device *ddev = rdev->ddev;
 	u32 gb_addr_config;
 	u32 mc_shared_chmap, mc_arb_ramcfg;
 	u32 sx_debug_1;
@@ -1959,10 +1958,10 @@ static void evergreen_gpu_init(struct radeon_device *rdev)
 		rdev->config.evergreen.num_ses = 1;
 		rdev->config.evergreen.max_pipes = 4;
 		rdev->config.evergreen.max_tile_pipes = 4;
-		if (ddev->pci_device == 0x9648)
+		if (rdev->pdev->device == 0x9648)
 			rdev->config.evergreen.max_simds = 3;
-		else if ((ddev->pci_device == 0x9647) ||
-			 (ddev->pci_device == 0x964a))
+		else if ((rdev->pdev->device == 0x9647) ||
+			 (rdev->pdev->device == 0x964a))
 			rdev->config.evergreen.max_simds = 4;
 		else
 			rdev->config.evergreen.max_simds = 5;

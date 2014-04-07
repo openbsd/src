@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.5 2014/02/09 12:50:09 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.6 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -441,7 +441,7 @@ bool radeon_card_posted(struct radeon_device *rdev)
 
 #ifdef notyet
 	if (efi_enabled(EFI_BOOT) &&
-	    ddev->pci_subvendor == PCI_VENDOR_ID_APPLE)
+	    rdev->pdev->subsystem_vendor == PCI_VENDOR_ID_APPLE)
 		return false;
 #endif
 
@@ -1014,6 +1014,7 @@ static const struct vga_switcheroo_client_ops radeon_switcheroo_ops = {
 int radeon_device_init(struct radeon_device *rdev,
 		       struct drm_device *ddev)
 {
+	struct pci_dev *pdev = ddev->pdev;
 	int r, i;
 	int dma_bits;
 
@@ -1029,8 +1030,8 @@ int radeon_device_init(struct radeon_device *rdev,
 	}
 
 	DRM_INFO("initializing kernel modesetting (%s 0x%04X:0x%04X 0x%04X:0x%04X).\n",
-		radeon_family_name[rdev->family], ddev->pci_vendor, ddev->pci_device,
-		ddev->pci_subvendor, ddev->pci_subdevice);
+		radeon_family_name[rdev->family], pdev->vendor, pdev->device,
+		pdev->subsystem_vendor, pdev->subsystem_device);
 
 	/* rwlock initialization are all done here so we
 	 * can recall function without having locking issues */

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.126 2014/03/25 17:44:39 mpi Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.127 2014/04/07 06:43:11 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -210,10 +210,11 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->irq = da->irq;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
-	dev->pci_vendor = da->pci_vendor;
-	dev->pci_device = da->pci_device;
-	dev->pci_subvendor = da->pci_subvendor;
-	dev->pci_subdevice = da->pci_subdevice;
+	dev->pdev = &dev->drm_pci;
+	dev->pci_vendor = dev->pdev->vendor = da->pci_vendor;
+	dev->pci_device = dev->pdev->device = da->pci_device;
+	dev->pdev->subsystem_vendor = da->pci_subvendor;
+	dev->pdev->subsystem_device = da->pci_subdevice;
 
 	dev->pc = da->pc;
 	dev->bridgetag = da->bridgetag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_encoders.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_legacy_encoders.c,v 1.3 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -967,9 +967,9 @@ static void radeon_legacy_tmds_ext_mode_set(struct drm_encoder *encoder,
 
 		/* XXX: these are oem specific */
 		if (ASIC_IS_R300(rdev)) {
-			if ((dev->pci_device == 0x4850) &&
-			    (dev->pci_subvendor == 0x1028) &&
-			    (dev->pci_subdevice == 0x2001)) /* Dell Inspiron 8600 */
+			if ((dev->pdev->device == 0x4850) &&
+			    (dev->pdev->subsystem_vendor == 0x1028) &&
+			    (dev->pdev->subsystem_device == 0x2001)) /* Dell Inspiron 8600 */
 				fp2_gen_cntl |= R300_FP2_DVO_CLOCK_MODE_SINGLE;
 			else
 				fp2_gen_cntl |= RADEON_FP2_PAD_FLOP_EN | R300_FP2_DVO_CLOCK_MODE_SINGLE;

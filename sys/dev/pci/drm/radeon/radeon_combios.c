@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.4 2014/02/10 00:17:30 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.5 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -907,13 +907,13 @@ struct radeon_encoder_primary_dac *radeon_combios_get_primary_dac_info(struct
 
 	/* quirks */
 	/* Radeon 7000 (RV100) */
-	if (((dev->pci_device == 0x5159) &&
-	    (dev->pci_subvendor == 0x174B) &&
-	    (dev->pci_subdevice == 0x7c28)) ||
+	if (((dev->pdev->device == 0x5159) &&
+	    (dev->pdev->subsystem_vendor == 0x174B) &&
+	    (dev->pdev->subsystem_device == 0x7c28)) ||
 	/* Radeon 9100 (R200) */
-	   ((dev->pci_device == 0x514D) &&
-	    (dev->pci_subvendor == 0x174B) &&
-	    (dev->pci_subdevice == 0x7149))) {
+	   ((dev->pdev->device == 0x514D) &&
+	    (dev->pdev->subsystem_vendor == 0x174B) &&
+	    (dev->pdev->subsystem_device == 0x7149))) {
 		/* vbios value is bad, use the default */
 		found = 0;
 	}
@@ -1513,21 +1513,21 @@ bool radeon_get_legacy_connector_info_from_table(struct drm_device *dev)
 			/* PowerMac8,1 ? */
 			/* imac g5 isight */
 			rdev->mode_info.connector_table = CT_IMAC_G5_ISIGHT;
-		} else if ((rdev->ddev->pci_device == 0x4a48) &&
-			   (rdev->ddev->pci_subvendor == 0x1002) &&
-			   (rdev->ddev->pci_subdevice == 0x4a48)) {
+		} else if ((rdev->pdev->device == 0x4a48) &&
+			   (rdev->pdev->subsystem_vendor == 0x1002) &&
+			   (rdev->pdev->subsystem_device == 0x4a48)) {
 			/* Mac X800 */
 			rdev->mode_info.connector_table = CT_MAC_X800;
 		} else if ((of_machine_is_compatible("PowerMac7,2") ||
 			    of_machine_is_compatible("PowerMac7,3")) &&
-			   (rdev->ddev->pci_device == 0x4150) &&
-			   (rdev->ddev->pci_subvendor == 0x1002) &&
-			   (rdev->ddev->pci_subdevice == 0x4150)) {
+			   (rdev->pdev->device == 0x4150) &&
+			   (rdev->pdev->subsystem_vendor == 0x1002) &&
+			   (rdev->pdev->subsystem_device == 0x4150)) {
 			/* Mac G5 tower 9600 */
 			rdev->mode_info.connector_table = CT_MAC_G5_9600;
-		} else if ((rdev->ddev->pci_device == 0x4c66) &&
-			   (rdev->ddev->pci_subvendor == 0x1002) &&
-			   (rdev->ddev->pci_subdevice == 0x4c66)) {
+		} else if ((rdev->pdev->device == 0x4c66) &&
+			   (rdev->pdev->subsystem_vendor == 0x1002) &&
+			   (rdev->pdev->subsystem_device == 0x4c66)) {
 			/* SAM440ep RV250 embedded board */
 			rdev->mode_info.connector_table = CT_SAM440EP;
 		} else
@@ -2233,17 +2233,17 @@ static bool radeon_apply_legacy_quirks(struct drm_device *dev,
 
 	/* Certain IBM chipset RN50s have a BIOS reporting two VGAs,
 	   one with VGA DDC and one with CRT2 DDC. - kill the CRT2 DDC one */
-	if (dev->pci_device == 0x515e &&
-	    dev->pci_subvendor == 0x1014) {
+	if (dev->pdev->device == 0x515e &&
+	    dev->pdev->subsystem_vendor == 0x1014) {
 		if (*legacy_connector == CONNECTOR_CRT_LEGACY &&
 		    ddc_i2c->mask_clk_reg == RADEON_GPIO_CRT2_DDC)
 			return false;
 	}
 
 	/* X300 card with extra non-existent DVI port */
-	if (dev->pci_device == 0x5B60 &&
-	    dev->pci_subvendor == 0x17af &&
-	    dev->pci_subdevice == 0x201e && bios_index == 2) {
+	if (dev->pdev->device == 0x5B60 &&
+	    dev->pdev->subsystem_vendor == 0x17af &&
+	    dev->pdev->subsystem_device == 0x201e && bios_index == 2) {
 		if (*legacy_connector == CONNECTOR_DVI_I_LEGACY)
 			return false;
 	}
@@ -2254,21 +2254,21 @@ static bool radeon_apply_legacy_quirks(struct drm_device *dev,
 static bool radeon_apply_legacy_tv_quirks(struct drm_device *dev)
 {
 	/* Acer 5102 has non-existent TV port */
-	if (dev->pci_device == 0x5975 &&
-	    dev->pci_subvendor == 0x1025 &&
-	    dev->pci_subdevice == 0x009f)
+	if (dev->pdev->device == 0x5975 &&
+	    dev->pdev->subsystem_vendor == 0x1025 &&
+	    dev->pdev->subsystem_device == 0x009f)
 		return false;
 
 	/* HP dc5750 has non-existent TV port */
-	if (dev->pci_device == 0x5974 &&
-	    dev->pci_subvendor == 0x103c &&
-	    dev->pci_subdevice == 0x280a)
+	if (dev->pdev->device == 0x5974 &&
+	    dev->pdev->subsystem_vendor == 0x103c &&
+	    dev->pdev->subsystem_device == 0x280a)
 		return false;
 
 	/* MSI S270 has non-existent TV port */
-	if (dev->pci_device == 0x5955 &&
-	    dev->pci_subvendor == 0x1462 &&
-	    dev->pci_subdevice == 0x0131)
+	if (dev->pdev->device == 0x5955 &&
+	    dev->pdev->subsystem_vendor == 0x1462 &&
+	    dev->pdev->subsystem_device == 0x0131)
 		return false;
 
 	return true;
@@ -2422,9 +2422,9 @@ bool radeon_get_legacy_connector_info_from_bios(struct drm_device *dev)
 				/* RV100 board with external TDMS bit mis-set.
 				 * Actually uses internal TMDS, clear the bit.
 				 */
-				if (dev->pci_device == 0x5159 &&
-				    dev->pci_subvendor == 0x1014 &&
-				    dev->pci_subdevice == 0x029A) {
+				if (dev->pdev->device == 0x5159 &&
+				    dev->pdev->subsystem_vendor == 0x1014 &&
+				    dev->pdev->subsystem_device == 0x029A) {
 					tmp &= ~(1 << 4);
 				}
 				if ((tmp >> 4) & 0x1) {
@@ -2715,9 +2715,9 @@ void radeon_combios_get_power_modes(struct radeon_device *rdev)
 		/* boards with a thermal chip, but no overdrive table */
 
 		/* Asus 9600xt has an f75375 on the monid bus */
-		if ((dev->pci_device == 0x4152) &&
-		    (dev->pci_subvendor == 0x1043) &&
-		    (dev->pci_subdevice == 0xc002)) {
+		if ((dev->pdev->device == 0x4152) &&
+		    (dev->pdev->subsystem_vendor == 0x1043) &&
+		    (dev->pdev->subsystem_device == 0xc002)) {
 			i2c_bus = combios_setup_i2c_bus(rdev, DDC_MONID, 0, 0);
 			rdev->pm.i2c_bus = radeon_i2c_lookup(rdev, &i2c_bus);
 #ifdef notyet
@@ -3379,24 +3379,24 @@ void radeon_combios_asic_init(struct drm_device *dev)
 	 * - it hangs on resume inside the dynclk 1 table.
 	 */
 	if (rdev->family == CHIP_RS480 &&
-	    dev->pci_subvendor == 0x103c &&
-	    dev->pci_subdevice == 0x308b)
+	    rdev->pdev->subsystem_vendor == 0x103c &&
+	    rdev->pdev->subsystem_device == 0x308b)
 		return;
 
 	/* quirk for rs4xx HP dv5000 laptop to make it resume
 	 * - it hangs on resume inside the dynclk 1 table.
 	 */
 	if (rdev->family == CHIP_RS480 &&
-	    dev->pci_subvendor == 0x103c &&
-	    dev->pci_subdevice == 0x30a4)
+	    rdev->pdev->subsystem_vendor == 0x103c &&
+	    rdev->pdev->subsystem_device == 0x30a4)
 		return;
 
 	/* quirk for rs4xx Compaq Presario V5245EU laptop to make it resume
 	 * - it hangs on resume inside the dynclk 1 table.
 	 */
 	if (rdev->family == CHIP_RS480 &&
-	    dev->pci_subvendor == 0x103c &&
-	    dev->pci_subdevice == 0x30ae)
+	    rdev->pdev->subsystem_vendor == 0x103c &&
+	    rdev->pdev->subsystem_device == 0x30ae)
 		return;
 
 	/* DYN CLK 1 */

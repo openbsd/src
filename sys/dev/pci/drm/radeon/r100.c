@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.6 2014/02/10 01:01:23 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.7 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -2738,7 +2738,7 @@ void r100_set_common_regs(struct radeon_device *rdev)
 	 * don't report it in the bios connector
 	 * table.
 	 */
-	switch (dev->pci_device) {
+	switch (dev->pdev->device) {
 		/* RN50 */
 	case 0x515e:
 	case 0x5969:
@@ -2748,17 +2748,17 @@ void r100_set_common_regs(struct radeon_device *rdev)
 	case 0x5159:
 	case 0x515a:
 		/* DELL triple head servers */
-		if ((dev->pci_subvendor == 0x1028 /* DELL */) &&
-		    ((dev->pci_subdevice == 0x016c) ||
-		     (dev->pci_subdevice == 0x016d) ||
-		     (dev->pci_subdevice == 0x016e) ||
-		     (dev->pci_subdevice == 0x016f) ||
-		     (dev->pci_subdevice == 0x0170) ||
-		     (dev->pci_subdevice == 0x017d) ||
-		     (dev->pci_subdevice == 0x017e) ||
-		     (dev->pci_subdevice == 0x0183) ||
-		     (dev->pci_subdevice == 0x018a) ||
-		     (dev->pci_subdevice == 0x019a)))
+		if ((dev->pdev->subsystem_vendor == 0x1028 /* DELL */) &&
+		    ((dev->pdev->subsystem_device == 0x016c) ||
+		     (dev->pdev->subsystem_device == 0x016d) ||
+		     (dev->pdev->subsystem_device == 0x016e) ||
+		     (dev->pdev->subsystem_device == 0x016f) ||
+		     (dev->pdev->subsystem_device == 0x0170) ||
+		     (dev->pdev->subsystem_device == 0x017d) ||
+		     (dev->pdev->subsystem_device == 0x017e) ||
+		     (dev->pdev->subsystem_device == 0x0183) ||
+		     (dev->pdev->subsystem_device == 0x018a) ||
+		     (dev->pdev->subsystem_device == 0x019a)))
 			force_dac2 = true;
 		break;
 	}

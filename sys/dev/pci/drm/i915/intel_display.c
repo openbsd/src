@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.33 2014/03/30 01:03:05 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.34 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -9052,15 +9052,16 @@ static struct intel_quirk intel_quirks[] = {
 
 static void intel_init_quirks(struct drm_device *dev)
 {
+	struct pci_dev *d = dev->pdev;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(intel_quirks); i++) {
 		struct intel_quirk *q = &intel_quirks[i];
 
-		if (dev->pci_device == q->device &&
-		    (dev->pci_subvendor == q->subsystem_vendor ||
+		if (d->device == q->device &&
+		    (d->subsystem_vendor == q->subsystem_vendor ||
 		     q->subsystem_vendor == PCI_ANY_ID) &&
-		    (dev->pci_subdevice == q->subsystem_device ||
+		    (d->subsystem_device == q->subsystem_device ||
 		     q->subsystem_device == PCI_ANY_ID))
 			q->hook(dev);
 	}

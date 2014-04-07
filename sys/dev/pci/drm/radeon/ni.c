@@ -1,4 +1,4 @@
-/*	$OpenBSD: ni.c,v 1.6 2014/02/15 14:28:13 jsg Exp $	*/
+/*	$OpenBSD: ni.c,v 1.7 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -417,7 +417,6 @@ out:
  */
 static void cayman_gpu_init(struct radeon_device *rdev)
 {
-	struct drm_device *ddev = rdev->ddev;
 	u32 gb_addr_config = 0;
 	u32 mc_shared_chmap, mc_arb_ramcfg;
 	u32 cgts_tcc_disable;
@@ -458,48 +457,48 @@ static void cayman_gpu_init(struct radeon_device *rdev)
 		rdev->config.cayman.max_shader_engines = 1;
 		rdev->config.cayman.max_pipes_per_simd = 4;
 		rdev->config.cayman.max_tile_pipes = 2;
-		if ((ddev->pci_device == 0x9900) ||
-		    (ddev->pci_device == 0x9901) ||
-		    (ddev->pci_device == 0x9905) ||
-		    (ddev->pci_device == 0x9906) ||
-		    (ddev->pci_device == 0x9907) ||
-		    (ddev->pci_device == 0x9908) ||
-		    (ddev->pci_device == 0x9909) ||
-		    (ddev->pci_device == 0x990B) ||
-		    (ddev->pci_device == 0x990C) ||
-		    (ddev->pci_device == 0x990F) ||
-		    (ddev->pci_device == 0x9910) ||
-		    (ddev->pci_device == 0x9917) ||
-		    (ddev->pci_device == 0x9999) ||
-		    (ddev->pci_device == 0x999C)) {
+		if ((rdev->pdev->device == 0x9900) ||
+		    (rdev->pdev->device == 0x9901) ||
+		    (rdev->pdev->device == 0x9905) ||
+		    (rdev->pdev->device == 0x9906) ||
+		    (rdev->pdev->device == 0x9907) ||
+		    (rdev->pdev->device == 0x9908) ||
+		    (rdev->pdev->device == 0x9909) ||
+		    (rdev->pdev->device == 0x990B) ||
+		    (rdev->pdev->device == 0x990C) ||
+		    (rdev->pdev->device == 0x990F) ||
+		    (rdev->pdev->device == 0x9910) ||
+		    (rdev->pdev->device == 0x9917) ||
+		    (rdev->pdev->device == 0x9999) ||
+		    (rdev->pdev->device == 0x999C)) {
 			rdev->config.cayman.max_simds_per_se = 6;
 			rdev->config.cayman.max_backends_per_se = 2;
 			rdev->config.cayman.max_hw_contexts = 8;
 			rdev->config.cayman.sx_max_export_size = 256;
 			rdev->config.cayman.sx_max_export_pos_size = 64;
 			rdev->config.cayman.sx_max_export_smx_size = 192;
-		} else if ((ddev->pci_device == 0x9903) ||
-			   (ddev->pci_device == 0x9904) ||
-			   (ddev->pci_device == 0x990A) ||
-			   (ddev->pci_device == 0x990D) ||
-			   (ddev->pci_device == 0x990E) ||
-			   (ddev->pci_device == 0x9913) ||
-			   (ddev->pci_device == 0x9918) ||
-			   (ddev->pci_device == 0x999D)) {
+		} else if ((rdev->pdev->device == 0x9903) ||
+			   (rdev->pdev->device == 0x9904) ||
+			   (rdev->pdev->device == 0x990A) ||
+			   (rdev->pdev->device == 0x990D) ||
+			   (rdev->pdev->device == 0x990E) ||
+			   (rdev->pdev->device == 0x9913) ||
+			   (rdev->pdev->device == 0x9918) ||
+			   (rdev->pdev->device == 0x999D)) {
 			rdev->config.cayman.max_simds_per_se = 4;
 			rdev->config.cayman.max_backends_per_se = 2;
 			rdev->config.cayman.max_hw_contexts = 8;
 			rdev->config.cayman.sx_max_export_size = 256;
 			rdev->config.cayman.sx_max_export_pos_size = 64;
 			rdev->config.cayman.sx_max_export_smx_size = 192;
-		} else if ((ddev->pci_device == 0x9919) ||
-			   (ddev->pci_device == 0x9990) ||
-			   (ddev->pci_device == 0x9991) ||
-			   (ddev->pci_device == 0x9994) ||
-			   (ddev->pci_device == 0x9995) ||
-			   (ddev->pci_device == 0x9996) ||
-			   (ddev->pci_device == 0x999A) ||
-			   (ddev->pci_device == 0x99A0)) {
+		} else if ((rdev->pdev->device == 0x9919) ||
+			   (rdev->pdev->device == 0x9990) ||
+			   (rdev->pdev->device == 0x9991) ||
+			   (rdev->pdev->device == 0x9994) ||
+			   (rdev->pdev->device == 0x9995) ||
+			   (rdev->pdev->device == 0x9996) ||
+			   (rdev->pdev->device == 0x999A) ||
+			   (rdev->pdev->device == 0x99A0)) {
 			rdev->config.cayman.max_simds_per_se = 3;
 			rdev->config.cayman.max_backends_per_se = 1;
 			rdev->config.cayman.max_hw_contexts = 4;

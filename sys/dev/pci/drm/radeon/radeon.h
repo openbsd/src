@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.7 2014/02/10 01:59:48 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.8 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1555,6 +1555,7 @@ typedef void (*radeon_wreg_t)(struct radeon_device*, uint32_t, uint32_t);
 struct radeon_device {
 	struct device			dev;
 	struct drm_device		*ddev;
+	struct pci_dev			*pdev;
 
 	pci_chipset_tag_t		pc;
 	pcitag_t			pa_tag;
@@ -1764,8 +1765,8 @@ void r100_pll_errata_after_index(struct radeon_device *rdev);
 /*
  * ASICs helpers.
  */
-#define ASIC_IS_RN50(rdev) ((rdev->ddev->pci_device == 0x515e) || \
-			    (rdev->ddev->pci_device == 0x5969))
+#define ASIC_IS_RN50(rdev) ((rdev->pdev->device == 0x515e) || \
+			    (rdev->pdev->device == 0x5969))
 #define ASIC_IS_RV100(rdev) ((rdev->family == CHIP_RV100) || \
 		(rdev->family == CHIP_RV200) || \
 		(rdev->family == CHIP_RS100) || \
@@ -1782,14 +1783,14 @@ void r100_pll_errata_after_index(struct radeon_device *rdev);
 		(rdev->family == CHIP_RV410) ||			\
 		(rdev->family == CHIP_RS400) ||			\
 		(rdev->family == CHIP_RS480))
-#define ASIC_IS_X2(rdev) ((rdev->ddev->pci_device == 0x9441) || \
-		(rdev->ddev->pci_device == 0x9443) || \
-		(rdev->ddev->pci_device == 0x944B) || \
-		(rdev->ddev->pci_device == 0x9506) || \
-		(rdev->ddev->pci_device == 0x9509) || \
-		(rdev->ddev->pci_device == 0x950F) || \
-		(rdev->ddev->pci_device == 0x689C) || \
-		(rdev->ddev->pci_device == 0x689D))
+#define ASIC_IS_X2(rdev) ((rdev->ddev->pdev->device == 0x9441) || \
+		(rdev->ddev->pdev->device == 0x9443) || \
+		(rdev->ddev->pdev->device == 0x944B) || \
+		(rdev->ddev->pdev->device == 0x9506) || \
+		(rdev->ddev->pdev->device == 0x9509) || \
+		(rdev->ddev->pdev->device == 0x950F) || \
+		(rdev->ddev->pdev->device == 0x689C) || \
+		(rdev->ddev->pdev->device == 0x689D))
 #define ASIC_IS_AVIVO(rdev) ((rdev->family >= CHIP_RS600))
 #define ASIC_IS_DCE2(rdev) ((rdev->family == CHIP_RS600)  ||	\
 			    (rdev->family == CHIP_RS690)  ||	\

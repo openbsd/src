@@ -1,4 +1,4 @@
-/*	$OpenBSD: r420.c,v 1.3 2014/02/09 12:33:44 jsg Exp $	*/
+/*	$OpenBSD: r420.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -99,8 +99,8 @@ void r420_pipes_init(struct radeon_device *rdev)
 	num_pipes = ((gb_pipe_select >> 12) & 3) + 1;
 
 	/* SE chips have 1 pipe */
-	if ((rdev->ddev->pci_device == 0x5e4c) ||
-	    (rdev->ddev->pci_device == 0x5e4f))
+	if ((rdev->pdev->device == 0x5e4c) ||
+	    (rdev->pdev->device == 0x5e4f))
 		num_pipes = 1;
 
 	rdev->num_gb_pipes = num_pipes;

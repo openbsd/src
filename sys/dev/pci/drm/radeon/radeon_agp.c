@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_agp.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: radeon_agp.c,v 1.2 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
@@ -186,10 +186,10 @@ int radeon_agp_init(struct radeon_device *rdev)
 	while (p && p->chip_device != 0) {
 		if (info.id_vendor == p->hostbridge_vendor &&
 		    info.id_device == p->hostbridge_device &&
-		    ddev->pci_vendor == p->chip_vendor &&
-		    ddev->pci_device == p->chip_device &&
-		    ddev->pci_subvendor == p->subsys_vendor &&
-		    ddev->pci_subdevice == p->subsys_device) {
+		    rdev->pdev->vendor == p->chip_vendor &&
+		    rdev->pdev->device == p->chip_device &&
+		    rdev->pdev->subsystem_vendor == p->subsys_vendor &&
+		    rdev->pdev->subsystem_device == p->subsys_device) {
 			default_mode = p->default_mode;
 		}
 		++p;

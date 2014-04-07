@@ -1,4 +1,4 @@
-/*	$OpenBSD: r300.c,v 1.3 2014/02/09 12:33:44 jsg Exp $	*/
+/*	$OpenBSD: r300.c,v 1.4 2014/04/07 06:43:11 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -324,11 +324,10 @@ int r300_mc_wait_for_idle(struct radeon_device *rdev)
 
 static void r300_gpu_init(struct radeon_device *rdev)
 {
-	struct drm_device *ddev = rdev->ddev;
 	uint32_t gb_tile_config, tmp;
 
-	if ((rdev->family == CHIP_R300 && ddev->pci_device != 0x4144) ||
-	    (rdev->family == CHIP_R350 && ddev->pci_device != 0x4148)) {
+	if ((rdev->family == CHIP_R300 && rdev->pdev->device != 0x4144) ||
+	    (rdev->family == CHIP_R350 && rdev->pdev->device != 0x4148)) {
 		/* r300,r350 */
 		rdev->num_gb_pipes = 2;
 	} else {
