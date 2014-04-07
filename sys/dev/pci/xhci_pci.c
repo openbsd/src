@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.2 2014/03/25 17:23:40 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.3 2014/04/07 23:32:41 brad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -109,8 +109,18 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_tag = pa->pa_tag;
 	psc->sc.sc_bus.dmatag = pa->pa_dmat;
 
+	/* Handle quirks */
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_FRESCO:
+		/* FL1000 / FL1400 claim MSI support but do not support MSI */
+                if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FRESCO_FL1000 ||
+                    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FRESCO_FL1400)
+			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		break;
+	}
+
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		goto unmap_ret;
 	}
