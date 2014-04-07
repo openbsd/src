@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.160 2014/04/07 08:27:23 brad Exp $
+#	$OpenBSD: GENERIC,v 1.161 2014/04/07 22:20:43 andre Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -113,6 +113,7 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
+upd*	at uhidev?		# USB Power Devices sensors
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU

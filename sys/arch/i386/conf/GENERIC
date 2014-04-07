@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.774 2014/04/07 08:27:23 brad Exp $
+#	$OpenBSD: GENERIC,v 1.775 2014/04/07 22:20:43 andre Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -272,6 +272,7 @@ ucom*	at ucycom?
 uticom* at uhub?		# TI serial
 ucom*	at uticom?
 uhid*	at uhidev?		# USB generic HID support
+upd*	at uhidev?		# USB Power Devices sensors
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
