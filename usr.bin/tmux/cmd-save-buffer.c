@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.21 2013/10/10 12:26:35 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.22 2014/04/07 10:32:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -112,7 +112,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (fd != -1)
 			f = fdopen(fd, "ab");
 	} else {
-		fd = openat(cwd, path, O_CREAT|O_RDWR, 0600);
+		fd = openat(cwd, path, O_CREAT|O_RDWR|O_TRUNC, 0600);
 		if (fd != -1)
 			f = fdopen(fd, "wb");
 	}
