@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.178 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.179 2014/04/07 19:51:15 chrisz Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1019,6 +1019,8 @@ udp_output(struct mbuf *m, ...)
 			error = ENOTCONN;
 			goto release;
 		}
+		if (laddr.s_addr == INADDR_ANY)
+			laddr = inp->inp_laddr;
 	}
 
 #ifdef IPSEC
