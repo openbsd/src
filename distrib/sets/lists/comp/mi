@@ -3177,7 +3177,6 @@
 ./usr/share/man/man3/addchstr.3
 ./usr/share/man/man3/addnstr.3
 ./usr/share/man/man3/addnwstr.3
-./usr/share/man/man3/addr.3
 ./usr/share/man/man3/addstr.3
 ./usr/share/man/man3/addwstr.3
 ./usr/share/man/man3/adler32.3
@@ -5110,7 +5109,6 @@
 ./usr/share/man/man3/nearbyint.3
 ./usr/share/man/man3/nearbyintf.3
 ./usr/share/man/man3/nearbyintl.3
-./usr/share/man/man3/network.3
 ./usr/share/man/man3/new_field.3
 ./usr/share/man/man3/new_fieldtype.3
 ./usr/share/man/man3/new_form.3
@@ -5141,7 +5139,6 @@
 ./usr/share/man/man3/noraw.3
 ./usr/share/man/man3/notimeout.3
 ./usr/share/man/man3/nrand48.3
-./usr/share/man/man3/ntoa.3
 ./usr/share/man/man3/ntohl.3
 ./usr/share/man/man3/ntohs.3
 ./usr/share/man/man3/ocurses.3
