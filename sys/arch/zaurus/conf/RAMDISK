@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2014/04/07 08:27:24 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2014/04/08 02:25:33 brad Exp $
 
 machine	zaurus	arm
 
@@ -146,7 +146,7 @@ eephy* at mii?			# Marvell 88E1000 series PHY
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 nsgphy*	at mii?			# NS gigabit PHYs
 urlphy*	at mii?			# Realtek RTL8150L internal PHY
-#rgephy* at mii?		# Realtek 8169S/8110S PHY
+rgephy* at mii?			# Realtek 8169S/8110S PHY
 #ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
