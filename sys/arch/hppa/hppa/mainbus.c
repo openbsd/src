@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.82 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.83 2014/04/08 09:34:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -39,8 +39,7 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_page.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/pdc.h>

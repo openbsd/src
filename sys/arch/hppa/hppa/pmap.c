@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.160 2012/06/03 13:28:40 jsing Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.161 2014/04/08 09:34:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -40,7 +40,7 @@
 #include <sys/pool.h>
 #include <sys/extent.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/iomod.h>

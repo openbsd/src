@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2014/01/30 18:16:41 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2014/04/08 09:34:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -20,11 +20,10 @@
 #ifndef _MACHINE_PMAP_H_
 #define _MACHINE_PMAP_H_
 
-#include <machine/pte.h>
-#include <uvm/uvm_page.h>
 #include <uvm/uvm_object.h>
 
 #ifdef _KERNEL
+#include <machine/pte.h>
 
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.39 2014/04/08 09:34:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -35,8 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

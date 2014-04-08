@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.45 2013/03/31 17:04:28 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.46 2014/04/08 09:34:23 mpi Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -40,7 +40,7 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
 
-include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
 include <machine/frame.h>
@@ -149,9 +149,6 @@ member	pcb_ksp
 
 struct	user
 member	u_pcb
-
-struct	uvm
-member	page_idle_zero
 
 struct	uvmexp
 member	fpswtch

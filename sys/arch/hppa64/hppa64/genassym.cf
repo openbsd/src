@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2011/04/16 22:02:32 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2014/04/08 09:34:23 mpi Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -44,7 +44,7 @@ include <machine/vmparam.h>
 include <machine/frame.h>
 include <machine/pcb.h>
 
-include <uvm/uvm.h>
+include <uvm/uvm_extern.h>
 
 # `break' entry points
 export	HPPA_BREAK_KERNEL
@@ -136,9 +136,6 @@ member	ci_fpu_state
 struct	hppa_fpstate
 member	hfp_regs
 member	hfp_cpu
-
-struct	uvm
-member	page_idle_zero
 
 struct	uvmexp
 member	fpswtch
