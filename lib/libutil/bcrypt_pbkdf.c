@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.6 2014/01/31 16:56:32 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.7 2014/04/08 14:20:01 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -104,6 +104,7 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 	uint8_t countsalt[4];
 	size_t i, j, amt, stride;
 	uint32_t count;
+	size_t origkeylen = keylen;
 
 	/* nothing crazy */
 	if (rounds < 1)
@@ -149,9 +150,13 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 		 * pbkdf2 deviation: ouput the key material non-linearly.
 		 */
 		amt = MIN(amt, keylen);
-		for (i = 0; i < amt; i++)
-			key[i * stride + (count - 1)] = out[i];
-		keylen -= amt;
+		for (i = 0; i < amt; i++) {
+			size_t dest = i * stride + (count - 1);
+			if (dest >= origkeylen)
+				break;
+			key[dest] = out[i];
+		}
+		keylen -= i;
 	}
 
 	/* zap */
