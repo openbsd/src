@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.25 2010/07/10 19:32:25 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.26 2014/04/08 13:23:51 mpi Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -44,7 +44,7 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pmap.h>
 
