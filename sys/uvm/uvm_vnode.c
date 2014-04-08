@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.79 2013/05/30 16:39:26 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.80 2014/04/08 18:48:41 beck Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1282,7 +1282,9 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		if (rw == UIO_READ)
 			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
 		else
-			result = VOP_WRITE(vn, &uio, 0, curproc->p_ucred);
+			result = VOP_WRITE(vn, &uio,
+			    (flags & PGO_PDFREECLUST) ? IO_NOCACHE : 0,
+			    curproc->p_ucred);
 
 		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
 			VOP_UNLOCK(vn, 0, curproc);
