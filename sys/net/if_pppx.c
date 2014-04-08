@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.28 2014/04/05 13:30:59 miod Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.29 2014/04/08 04:26:53 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -256,6 +256,7 @@ pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	pxd = malloc(sizeof(*pxd), M_DEVBUF, M_WAITOK | M_ZERO);
 
+	pxd->pxd_unit = minor(dev);
 	mtx_init(&pxd->pxd_rsel_mtx, IPL_NET);
 	mtx_init(&pxd->pxd_wsel_mtx, IPL_NET);
 	LIST_INIT(&pxd->pxd_pxis);
@@ -590,10 +591,7 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	rw_enter_write(&pppx_devs_lk);
 
-	if ((pxd = pppx_dev_lookup(dev)) == NULL) {
-		rw_exit_write(&pppx_devs_lk);
-		return (ENXIO);
-	}
+	pxd = pppx_dev_lookup(dev);
 
 	/* XXX */
 	while ((pxi = LIST_FIRST(&pxd->pxd_pxis)))
