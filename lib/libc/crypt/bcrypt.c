@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.36 2014/03/24 00:00:29 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.37 2014/04/08 20:14:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -52,8 +52,8 @@
 
 char   *bcrypt_gensalt(u_int8_t);
 
-static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
-static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
+static int encode_base64(char *, const u_int8_t *, size_t);
+static int decode_base64(u_int8_t *, size_t, const char *);
 
 /*
  * Generates a salt for this version of crypt.
@@ -74,7 +74,7 @@ bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 		log_rounds = 31;
 
 	snprintf(salt, saltbuflen, "$2a$%2.2u$", log_rounds);
-	encode_base64((uint8_t *)salt + 7, csalt, sizeof(csalt));
+	encode_base64(salt + 7, csalt, sizeof(csalt));
 
 	return 0;
 }
@@ -141,7 +141,7 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 		return -1;
 
 	/* We dont want the base64 salt but the raw data */
-	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
+	decode_base64(csalt, BCRYPT_MAXSALT, salt);
 	salt_len = BCRYPT_MAXSALT;
 	if (minor <= 'a')
 		key_len = (u_int8_t)(strlen(key) + (minor >= 'a' ? 1 : 0));
@@ -194,8 +194,8 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 
 	snprintf(encrypted + i, 4, "%2.2u$", logr);
 
-	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
-	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
+	encode_base64(encrypted + i + 3, csalt, BCRYPT_MAXSALT);
+	encode_base64(encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
 	memset(&state, 0, sizeof(state));
 	memset(ciphertext, 0, sizeof(ciphertext));
@@ -260,19 +260,23 @@ const static u_int8_t index_64[128] = {
 };
 #define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
 
-static void
-decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
+/*
+ * read buflen (after decoding) bytes of data from b64data
+ */
+static int
+decode_base64(u_int8_t *buffer, size_t len, const char *b64data)
 {
 	u_int8_t *bp = buffer;
-	u_int8_t *p = data;
+	const u_int8_t *p = b64data;
 	u_int8_t c1, c2, c3, c4;
+
 	while (bp < buffer + len) {
 		c1 = CHAR64(*p);
 		c2 = CHAR64(*(p + 1));
 
 		/* Invalid data */
 		if (c1 == 255 || c2 == 255)
-			break;
+			return -1;
 
 		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
 		if (bp >= buffer + len)
@@ -293,14 +297,20 @@ decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
 
 		p += 4;
 	}
+	return 0;
 }
 
-static void
-encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
+/*
+ * Turn len bytes of data into base64 encoded data.
+ * This works without = padding.
+ */
+static int
+encode_base64(char *b64buffer, const u_int8_t *data, size_t len)
 {
-	u_int8_t *bp = buffer;
-	u_int8_t *p = data;
+	u_int8_t *bp = b64buffer;
+	const u_int8_t *p = data;
 	u_int8_t c1, c2;
+
 	while (p < data + len) {
 		c1 = *p++;
 		*bp++ = Base64Code[(c1 >> 2)];
@@ -323,6 +333,7 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 		*bp++ = Base64Code[c2 & 0x3f];
 	}
 	*bp = '\0';
+	return 0;
 }
 
 /*
