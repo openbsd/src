@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.2 2014/04/07 21:57:12 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.3 2014/04/08 22:39:02 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,12 @@
 .\"
 .\"	@(#)more.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: April 8 2014 $
 .Dt MORE 1
 .Os
 .Sh NAME
 .Nm more
-.Nd file perusal filter for crt viewing
+.Nd view files
 .Sh SYNOPSIS
 .Nm more
 .Op Fl ceisu
@@ -62,74 +62,49 @@ the standard input is used.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
-Normally,
-.Nm
-will repaint the screen by scrolling from the bottom of the screen.
-If the
-.Fl c
-option is set, when
-.Nm
-needs to change the entire display, it will paint from the top line down.
+When changing the display, paint from the top line down.
+The default is to scroll from the bottom of the screen.
 .It Fl e
-Normally, if displaying a single file,
-.Nm
-exits as soon as it reaches end-of-file.
-The
-.Fl e
-option tells more to
-exit if it reaches end-of-file twice without an intervening operation.
+Exit on reaching end-of-file twice
+without an intervening operation.
+The default is to exit as soon as end-of-file is reached.
 If the file is shorter than a single screen
 .Nm
-will exit at end-of-file regardless.
+exits at end-of-file regardless.
 .It Fl i
-The
-.Fl i
-option causes searches to ignore case; that is,
-uppercase and lowercase are considered identical.
+Ignore case.
+Upper case and lower case are considered identical.
 .It Fl n Ar number
-The
-.Fl n
-option causes
-.Nm
-to page
+Page
 .Ar number
 of lines per screenful.
 By default,
 .Nm
-will use the terminal window size.
+uses the terminal window size.
 .It Fl p Ar command
 Execute the specified
 .Nm
 .Ar command
 when the file is first opened.
 .It Fl s
-The
-.Fl s
-option causes
-consecutive blank lines to be squeezed into a single blank line.
+Squeeze consecutive blank lines into a single blank line.
 .It Fl t Ar tag
-The
-.Fl t
-option, followed immediately by a tag, will edit the file
-containing that tag.
-For more information, see the
-.Xr ctags  1
-command.
+Edit the file containing
+.Ar tag .
+For more information, see
+.Xr ctags  1 .
 .It Fl u
+Display backspaces as control characters
+.Pq Sq ^H
+and leave CR-LF sequences alone.
 By default,
 .Nm
-treats backspaces and CR-LF sequences specially.
-Backspaces which appear adjacent to an underscore character are
-displayed as underlined text.
-Backspaces which appear between two identical characters are displayed
-as emboldened text.
-CR-LF sequences are compressed to a single linefeed character.
-The
-.Fl u
-option causes backspaces to always be displayed as
-control characters, i.e. as the two character sequence
-.Sq ^H ,
-and CR-LF to be left alone.
+treats backspaces and CR-LF sequences specially:
+backspaces which appear adjacent to an underscore character are
+displayed as underlined text;
+backspaces which appear between two identical characters are displayed
+as emboldened text;
+and CR-LF sequences are compressed to a single linefeed character.
 .El
 .Sh COMMANDS
 Interactive commands for
