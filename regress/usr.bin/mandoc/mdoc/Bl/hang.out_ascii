@@ -35,6 +35,9 @@ DDEESSCCRRIIPPTTIIOONN
      zehn__zehn x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x x x x x x x x x x
+
+     This is a very long text contained in the hanged item head, it is so long
+            that it overruns the line - and here comes the item body.
      Compact hanged list:
      one     first line
      second  second line
@@ -43,4 +46,4 @@ DDEESSCCRRIIPPTTIIOONN
 
      tag     text
 
-OpenBSD                        October 28, 2009                        OpenBSD
+OpenBSD                          April 8, 2014                         OpenBSD

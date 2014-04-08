@@ -1,0 +1,11 @@
+.Dd April 4, 2014
+.Dt NM-LONG 1
+.Os OpenBSD
+.Sh NAME
+.Nm \&Nm-long
+.Nd long \&Nm in the SYNOPSIS
+.Sh SYNOPSIS
+.Nm "This is a terribly long name, it is so long that it does not fit \
+one one single line -"
+.Fl o
+.Ar

@@ -10,11 +10,21 @@ SSYYNNOOPPSSIISS
      mmyy__lloonngg__ffuunnccttiioonn(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t,
          _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t);
 
+     _v_o_i_d
+     tthhiiss ffuunnccttiioonn nnaammee iiss ssoo rriiddiiccuulloouussllyy lloonngg tthhaatt iitt wwiillll nnoott ffiitt oonn tthhee
+         lliinnee(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t, _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t,
+         _m_y___l_o_n_g___t_y_p_e _t_h_i_r_d___a_r_g_u_m_e_n_t);
+
      uussiinngg FFoo aanndd ssiinnggllee--aarrgguummeenntt FFaa::
 
      _m_y___l_o_n_g___r_e_t_u_r_n___t_y_p_e _*
      mmyy__lloonngg__ffuunnccttiioonn(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t,
          _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t);
+
+     _v_o_i_d
+     tthhiiss ffuunnccttiioonn nnaammee iiss ssoo rriiddiiccuulloouussllyy lloonngg tthhaatt iitt wwiillll nnoott ffiitt oonn tthhee
+         lliinnee(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t, _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t,
+         _m_y___l_o_n_g___t_y_p_e _t_h_i_r_d___a_r_g_u_m_e_n_t);
 
      uussiinngg FFoo aanndd mmuullttii--aarrgguummeenntt FFaa::
 
@@ -35,4 +45,4 @@ DDEESSCCRRIIPPTTIIOONN
      mmyy__lloonngg__ffuunnccttiioonn(_m_y___l_o_n_g___t_y_p_e _f_i_r_s_t___a_r_g_u_m_e_n_t,
      _m_y___l_o_n_g___t_y_p_e _s_e_c_o_n_d___a_r_g_u_m_e_n_t)
 
-OpenBSD                        December 25, 2013                       OpenBSD
+OpenBSD                          April 8, 2014                         OpenBSD

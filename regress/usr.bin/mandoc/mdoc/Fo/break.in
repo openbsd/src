@@ -1,4 +1,4 @@
-.Dd $Mdocdate: December 25 2013 $
+.Dd April 8, 2014
 .Dt FO-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -8,11 +8,22 @@
 .Fd using \&Fn:
 .Ft my_long_return_type *
 .Fn my_long_function "my_long_type first_argument" "my_long_type second_argument"
+.Ft void
+.Fn "this function name is so ridiculously long \
+that it will not fit on the line" "my_long_type first_argument" \
+"my_long_type second_argument" "my_long_type third_argument"
 .Fd using \&Fo and single-argument \&Fa:
 .Ft my_long_return_type *
 .Fo my_long_function
 .Fa "my_long_type first_argument"
 .Fa "my_long_type second_argument"
+.Fc
+.Ft void
+.Fo "this function name is so ridiculously long \
+that it will not fit on the line"
+.Fa "my_long_type first_argument"
+.Fa "my_long_type second_argument"
+.Fa "my_long_type third_argument"
 .Fc
 .Fd using \&Fo and multi-argument \&Fa:
 .Ft my_long_return_type *

@@ -33,6 +33,10 @@ DDEESSCCRRIIPPTTIIOONN
             x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
             x x x x x x x
 
+     This is a very long text contained in the tag, it is so long that it
+            overruns the line -
+            and here comes the item body.
+
      hundred                                                                                               text
                                                                                                            text
 
@@ -62,4 +66,4 @@ DDEESSCCRRIIPPTTIIOONN
 
              second paragraph
 
-OpenBSD                        February 16, 2014                       OpenBSD
+OpenBSD                          April 8, 2014                         OpenBSD

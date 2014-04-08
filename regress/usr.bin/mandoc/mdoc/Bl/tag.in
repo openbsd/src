@@ -1,4 +1,4 @@
-.Dd February 16, 2014
+.Dd April 8, 2014
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -36,6 +36,11 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .Bl -tag -width 5n
 .It zehn_ zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It This is a very long text contained in the tag, it is so long \
+that it overruns the line -
+and here comes the item body.
 .El
 .Bl -tag -width 100n
 .It hundred

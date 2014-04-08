@@ -28,9 +28,12 @@ DDEESSCCRRIIPPTTIIOONN
      zzeehhnn____zzeehhnn  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
      x x x x x x x x x
 
+     TThhiiss iiss aa vveerryy lloonngg tteexxtt ccoonnttaaiinneedd iinn tthhee ddiiaagg iitteemm hheeaadd,, iitt iiss ssoo lloonngg
+     tthhaatt iitt oovveerrrruunnss tthhee lliinnee --  and here comes the item body.
+
      Check that It is not parsed in Bl:
      NNxx  NetBSD
      OOxx  OpenBSD
      FFxx  FreeBSD
 
-OpenBSD                         January 4, 2012                        OpenBSD
+OpenBSD                          April 8, 2014                         OpenBSD

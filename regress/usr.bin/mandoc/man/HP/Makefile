@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2012/07/10 19:53:12 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2014/04/08 04:45:50 schwarze Exp $
 
-REGRESS_TARGETS = literal spacing manyargs macrotag
+REGRESS_TARGETS = break literal macrotag manyargs spacing
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-.Dd October 28, 2009
+.Dd April 8, 2014
 .Dt BL-HANG 1
 .Os OpenBSD
 .Sh NAME
@@ -44,6 +44,11 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .It zehn__zehn
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -hang -width 5n
+.It This is a very long text contained in the hanged item head, it is \
+so long that it overruns the line -
+and here comes the item body.
 .El
 Compact hanged list:
 .Bl -hang -width 6n -compact
