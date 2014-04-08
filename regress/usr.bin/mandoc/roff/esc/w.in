@@ -1,0 +1,14 @@
+.Dd April 8, 2014
+.Dt ESC-W 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-w
+.Nd the roff escape w sequence: text width
+.Sh DESCRIPTION
+empty: \w''
+.br
+character: \w'n'
+.br
+blank: \w' '
+.br
+text: \w'text'

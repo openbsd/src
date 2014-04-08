@@ -1,7 +1,7 @@
-/*	$Id: mandoc.c,v 1.46 2014/04/07 17:50:43 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.47 2014/04/08 01:36:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -157,20 +157,17 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	/*
 	 * These escapes are of the form \X'Y', where 'X' is the trigger
 	 * and 'Y' is any string.  These have opaque sub-strings.
+	 * The \B and \w escapes are handled in roff.c, roff_res().
 	 */
 	case ('A'):
 		/* FALLTHROUGH */
 	case ('b'):
-		/* FALLTHROUGH */
-	case ('B'):
 		/* FALLTHROUGH */
 	case ('D'):
 		/* FALLTHROUGH */
 	case ('o'):
 		/* FALLTHROUGH */
 	case ('R'):
-		/* FALLTHROUGH */
-	case ('w'):
 		/* FALLTHROUGH */
 	case ('X'):
 		/* FALLTHROUGH */

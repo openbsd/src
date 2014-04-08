@@ -1,0 +1,22 @@
+ESC-B(1)                   OpenBSD Reference Manual                   ESC-B(1)
+
+NNAAMMEE
+     eesscc--BB - the roff escape B sequence: validate numerical expression
+
+DDEESSCCRRIIPPTTIIOONN
+     empty: 0
+     digit: 1
+     no number: 0
+     trailing garbage: 0
+     trailing operator: 0
+     infix operator: 1
+     infix and trailing operator: 0
+     chain of operations: 1
+     trailing para: 0
+     unclosed para: 0
+     empty pair of parentheses: 0
+     parentheses containing number: 1
+     complex expression: 1
+     other delimiter: 1
+
+OpenBSD                          April 8, 2014                         OpenBSD

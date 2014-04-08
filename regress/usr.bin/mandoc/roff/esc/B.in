@@ -1,0 +1,34 @@
+.Dd April 8, 2014
+.Dt ESC-B 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-B
+.Nd the roff escape B sequence: validate numerical expression
+.Sh DESCRIPTION
+empty: \B''
+.br
+digit: \B'0'
+.br
+no number: \B'no number'
+.br
+trailing garbage: \B'1X'
+.br
+trailing operator: \B'1+'
+.br
+infix operator: \B'1+1'
+.br
+infix and trailing operator: \B'1+1+'
+.br
+chain of operations: \B'1+2+3+4'
+.br
+trailing para: \B'1+('
+.br
+unclosed para: \B'(1'
+.br
+empty pair of parentheses: \B'()'
+.br
+parentheses containing number: \B'(42)'
+.br
+complex expression: \B'3+(3*(5==5*2)*4)+(3*5)/2'
+.br
+other delimiter: \Bx1+1x

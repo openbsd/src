@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.32 2014/04/07 15:05:12 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.33 2014/04/08 01:36:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: April 8 2014 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1170,10 +1170,15 @@ Digit width space character.
 Anchor definition; ignored by
 .Xr mandoc 1 .
 .Ss \eB\(aq Ns Ar string Ns \(aq
-Test whether
+Interpolate
+.Sq 1
+if
 .Ar string
-is a numerical expession; ignored by
-.Xr mandoc 1 .
+conforms to the syntax of
+.Sx Numerical expressions
+explained above and
+.Sq 0
+otherwise.
 .Ss \eb\(aq Ns Ar string Ns \(aq
 Bracket building function; ignored by
 .Xr mandoc 1 .
@@ -1297,9 +1302,13 @@ Vertical motion; ignored by
 .Xr mandoc 1 .
 .Ss \ew\(aq Ns Ar string Ns \(aq
 Interpolate the width of the
-.Ar string ;
-ignored by
-.Xr mandoc 1 .
+.Ar string .
+The
+.Xr mandoc 1
+implementation assumes that after expansion of user-defined strings, the
+.Ar string
+only contains normal characters, no escape sequences, and that each
+character has a width of 24 basic units.
 .Ss \eX\(aq Ns Ar string Ns \(aq
 Output
 .Ar string
