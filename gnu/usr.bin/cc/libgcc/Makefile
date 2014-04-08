@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.25 2013/05/08 15:30:38 miod Exp $
+# $OpenBSD: Makefile,v 1.26 2014/04/08 23:18:21 martynas Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,8 @@ CFLAGS+=	-DIN_GCC -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED \
 		-DHAVE_GTHR_DEFAULT \
 		-I${GCCLIB}/include \
 		-I${GCCDIR}/config -I${GCCDIR} -I. \
-		-I${.CURDIR}/../cc_tools
+		-I${.CURDIR}/../cc_tools \
+		-fno-stack-protector
 
 LDFLAGS+=	-nodefaultlibs
 LDADD+=		-lc
