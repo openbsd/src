@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.43 2014/03/30 21:27:59 schwarze Exp $ */
+/*	$Id: term.h,v 1.44 2014/04/08 07:13:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -77,11 +77,12 @@ struct	termp {
 #define	TERMP_PREKEEP	 (1 << 6)	/* ...starting with the next one. */
 #define	TERMP_SKIPCHAR	 (1 << 7)	/* Skip the next character. */
 #define	TERMP_NOBREAK	 (1 << 8)	/* See term_flushln(). */
-#define	TERMP_DANGLE	 (1 << 9)	/* See term_flushln(). */
-#define	TERMP_HANG	 (1 << 10)	/* See term_flushln(). */
-#define	TERMP_NOSPLIT	 (1 << 11)	/* See termp_an_pre/post(). */
-#define	TERMP_SPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
-#define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
+#define	TERMP_BRIND	 (1 << 9)	/* See term_flushln(). */
+#define	TERMP_DANGLE	 (1 << 10)	/* See term_flushln(). */
+#define	TERMP_HANG	 (1 << 11)	/* See term_flushln(). */
+#define	TERMP_NOSPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
+#define	TERMP_SPLIT	 (1 << 13)	/* See termp_an_pre/post(). */
+#define	TERMP_ANPREC	 (1 << 14)	/* See termp_an_pre(). */
 	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	struct mchars	 *symtab;	/* Encoded-symbol table. */

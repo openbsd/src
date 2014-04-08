@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.98 2014/03/30 21:27:59 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.99 2014/04/08 07:13:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -274,7 +274,7 @@ pre_literal(DECL_ARGS)
 		p->offset = p->rmargin;
 		p->rmargin = p->maxrmargin;
 		p->trailspace = 0;
-		p->flags &= ~TERMP_NOBREAK;
+		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 		p->flags |= TERMP_NOSPACE;
 	}
 
@@ -543,7 +543,7 @@ pre_HP(DECL_ARGS)
 	}
 
 	if ( ! (MANT_LITERAL & mt->fl)) {
-		p->flags |= TERMP_NOBREAK;
+		p->flags |= TERMP_NOBREAK | TERMP_BRIND;
 		p->trailspace = 2;
 	}
 
@@ -578,7 +578,7 @@ post_HP(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BODY):
 		term_newln(p);
-		p->flags &= ~TERMP_NOBREAK;
+		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 		p->trailspace = 0;
 		p->offset = mt->offset;
 		p->rmargin = p->maxrmargin;

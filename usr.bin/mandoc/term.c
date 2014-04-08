@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.81 2014/04/05 21:17:48 schwarze Exp $ */
+/*	$Id: term.c,v 1.82 2014/04/08 07:13:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,34 +68,27 @@ term_end(struct termp *p)
 }
 
 /*
- * Flush a line of text.  A "line" is loosely defined as being something
- * that should be followed by a newline, regardless of whether it's
- * broken apart by newlines getting there.  A line can also be a
- * fragment of a columnar list (`Bl -tag' or `Bl -column'), which does
- * not have a trailing newline.
- *
+ * Flush a chunk of text.  By default, break the output line each time
+ * the right margin is reached, and continue output on the next line
+ * at the same offset as the chunk itself.  By default, also break the
+ * output line at the end of the chunk.
  * The following flags may be specified:
  *
- *  - TERMP_NOBREAK: this is the most important and is used when making
- *    columns.  In short: don't print a newline and instead expect the
- *    next call to do the padding up to the start of the next column.
- *    p->trailspace may be set to 0, 1, or 2, depending on how many
- *    space characters are required at the end of the column.
- *
- *  - TERMP_DANGLE: don't newline when TERMP_NOBREAK is specified and
- *    the line is overrun, and don't pad-right if it's underrun.
- *
- *  - TERMP_HANG: like TERMP_DANGLE, but doesn't newline when
- *    overrunning, instead save the position and continue at that point
- *    when the next invocation.
- *
- *  In-line line breaking:
- *
- *  If TERMP_NOBREAK is specified and the line overruns the right
- *  margin, it will break and pad-right to the right margin after
- *  writing.  If maxrmargin is violated, it will break and continue
- *  writing from the right-margin, which will lead to the above scenario
- *  upon exit.  Otherwise, the line will break at the right margin.
+ *  - TERMP_NOBREAK: Do not break the output line at the right margin,
+ *    but only at the max right margin.  Also, do not break the output
+ *    line at the end of the chunk, such that the next call can pad to
+ *    the next column.  However, if less than p->trailspace blanks,
+ *    which can be 0, 1, or 2, remain to the right margin, the line
+ *    will be broken.
+ *  - TERMP_BRIND: If the chunk does not fit and the output line has
+ *    to be broken, start the next line at the right margin instead
+ *    of at the offset.  Used together with TERMP_NOBREAK for the tags
+ *    in various kinds of tagged lists.
+ *  - TERMP_DANGLE: Do not break the output line at the right margin,
+ *    append the next chunk after it even if this one is too long.
+ *    To be used together with TERMP_NOBREAK.
+ *  - TERMP_HANG: Like TERMP_DANGLE, and also suppress padding before
+ *    the next chunk if this column is not full.
  */
 void
 term_flushln(struct termp *p)
@@ -197,7 +190,7 @@ term_flushln(struct termp *p)
 			vend -= vis;
 			(*p->endline)(p);
 			p->viscol = 0;
-			if (TERMP_NOBREAK & p->flags) {
+			if (TERMP_BRIND & p->flags) {
 				vbl = p->rmargin;
 				vend += p->rmargin - p->offset;
 			} else

@@ -1,0 +1,10 @@
+.TH IP-LONGHEAD 1 "April 8, 2014" OpenBSD
+.SH NAME
+IP-longhead \- indented paragraph with a long head
+.SH DESCRIPTION
+normal text
+.IP "This indented paragraph has ridiculously long text \
+in its head, such that it doesn't even fit on the line" 6n
+paragraph body
+.PP
+normal text
