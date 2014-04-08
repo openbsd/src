@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.58 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.59 2014/04/08 12:44:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1602,6 +1602,7 @@ dsn_strnotify(uint8_t arg)
 	static char	buf[32];
 	size_t		sz;
 
+	buf[0] = '\0';
 	if (arg & DSN_SUCCESS)
 		strlcat(buf, "SUCCESS,", sizeof(buf));
 
