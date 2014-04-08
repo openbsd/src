@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <util.h>
 
@@ -112,6 +113,14 @@ main()
 	struct test *t;
 
 	fails = 0;
+
+	memset(key, 0, 1024);
+	bcrypt_pbkdf("password", 8, "salt", 4, key, 88, 4);
+	if (key[88] || key[89] || key[90]) {
+		printf("OVERWRITE\n");
+		fails++;
+	}
+
 	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		t = &tests[i];
 		bcrypt_pbkdf(t->password, t->passlen, t->salt, t->saltlen,
