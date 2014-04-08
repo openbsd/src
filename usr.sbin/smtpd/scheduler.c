@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.43 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.44 2014/04/08 15:25:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -300,7 +300,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		    0, -1, NULL, 0);
 		return;
 
-	case IMSG_MTA_SCHEDULE:
+	case IMSG_QUEUE_ENVELOPE_SCHEDULE:
 		id = *(uint64_t *)(imsg->data);
 		backend->schedule(id);
 		scheduler_reset_events();

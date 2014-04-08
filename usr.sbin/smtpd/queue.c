@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.160 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.161 2014/04/08 15:25:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -441,7 +441,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 
 		case IMSG_MTA_DELIVERY_HOLD:
 		case IMSG_MDA_DELIVERY_HOLD:
-			imsg->hdr.type = IMSG_QUEUE_HOLDQ_RELEASE;
+			imsg->hdr.type = IMSG_QUEUE_HOLDQ_HOLD;
 			m_forward(p_scheduler, imsg);
 			return;
 
