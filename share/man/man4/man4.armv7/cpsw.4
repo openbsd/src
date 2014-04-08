@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpsw.4,v 1.1 2013/09/04 19:39:20 patrick Exp $
+.\" $OpenBSD: cpsw.4,v 1.2 2014/04/08 01:18:19 brad Exp $
 .\" Copyright (c) 2013 Brandon Mercer <bmercer@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2013 $
+.Dd $Mdocdate: April 8 2014 $
 .Dt CPSW 4 armv7
 .Os
 .Sh NAME
@@ -21,7 +21,6 @@
 .Nd Texas Instruments CPSW Ethernet device
 .Sh SYNOPSIS
 .Cd "cpsw* at omap?"
-.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,7 +30,6 @@ For more information on configuring this device, see
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
-.Xr ukphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
