@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.199 2014/01/23 03:00:04 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.200 2014/04/08 14:04:11 mpi Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/tty.h>
 #include <sys/namei.h>
 #include <sys/sensors.h>
+#include <sys/vmmeter.h>
 #include <net/route.h>
 #include <net/if.h>
 

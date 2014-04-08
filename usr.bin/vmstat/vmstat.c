@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.127 2013/11/26 21:08:12 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.128 2014/04/08 14:04:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -42,6 +42,8 @@
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/pool.h>
+#include <sys/vmmeter.h>
+
 #include <time.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -358,7 +360,8 @@ dovmstat(u_int interval, int reps)
 #define	rate(x)	((unsigned)((((unsigned)x) + halfuptime) / uptime)) /* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
 		(void)printf("%6u %7u ",
-		    pgtok(total.t_avm), pgtok(total.t_free));
+		    pgtok(uvmexp.active + uvmexp.swpginuse),
+		    pgtok(uvmexp.free));
 		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
 		(void)printf("%3u ", rate(uvmexp.pageins - ouvmexp.pageins));

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.76 2013/03/23 21:12:32 tedu Exp $	 */
+/* $OpenBSD: machine.c,v 1.77 2014/04/08 14:04:11 mpi Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -209,10 +209,10 @@ void
 get_system_info(struct system_info *si)
 {
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
-	static int vmtotal_mib[] = {CTL_VM, VM_METER};
+	static int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 	static int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
 	struct loadavg sysload;
-	struct vmtotal vmtotal;
+	struct uvmexp uvmexp;
 	struct bcachestats bcstats;
 	double *infoloadp;
 	size_t size;
@@ -255,10 +255,10 @@ get_system_info(struct system_info *si)
 
 
 	/* get total -- systemwide main memory usage structure */
-	size = sizeof(vmtotal);
-	if (sysctl(vmtotal_mib, 2, &vmtotal, &size, NULL, 0) < 0) {
+	size = sizeof(uvmexp);
+	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 		warn("sysctl failed");
-		bzero(&vmtotal, sizeof(vmtotal));
+		bzero(&uvmexp, sizeof(uvmexp));
 	}
 	size = sizeof(bcstats);
 	if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
@@ -267,10 +267,10 @@ get_system_info(struct system_info *si)
 	}
 	/* convert memory stats to Kbytes */
 	memory_stats[0] = -1;
-	memory_stats[1] = pagetok(vmtotal.t_arm);
-	memory_stats[2] = pagetok(vmtotal.t_rm);
+	memory_stats[1] = pagetok(uvmexp.active);
+	memory_stats[2] = pagetok(uvmexp.npages - uvmexp.free);
 	memory_stats[3] = -1;
-	memory_stats[4] = pagetok(vmtotal.t_free);
+	memory_stats[4] = pagetok(uvmexp.free);
 	memory_stats[5] = -1;
 	memory_stats[6] = pagetok(bcstats.numbufpages);
 	memory_stats[7] = -1;

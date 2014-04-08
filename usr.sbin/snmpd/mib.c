@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.66 2013/10/01 12:41:47 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.67 2014/04/08 14:04:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -573,7 +573,6 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	int			 mib[] = { CTL_HW, 0 };
 	u_int64_t		 physmem, realmem;
 	struct uvmexp		 uvm;
-	struct vmtotal		 vm;
 	size_t			 len;
 	static struct ber_oid	*sop, so[] = {
 		{ { MIB_hrStorageOther } },
@@ -595,10 +594,6 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	mib[1] = VM_UVMEXP;
 	len = sizeof(uvm);
 	if (sysctl(mib, sizeofa(mib), &uvm, &len, NULL, 0) == -1)
-		return (-1);
-	mib[1] = VM_METER;
-	len = sizeof(vm);
-	if (sysctl(mib, sizeofa(mib), &vm, &len, NULL, 0) == -1)
 		return (-1);
 	maxsize = 10;
 
@@ -628,7 +623,7 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		descr = "Physical memory";
 		units = uvm.pagesize;
 		size = physmem / uvm.pagesize;
-		used = size - vm.t_free;
+		used = size - uvm.free;
 		sop = &so[1];
 		break;
 	case 2:
