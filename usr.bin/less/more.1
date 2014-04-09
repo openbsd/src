@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.6 2014/04/09 16:14:41 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.7 2014/04/09 21:42:39 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,6 +106,14 @@ backspaces which appear between two identical characters are displayed
 as emboldened text;
 and CR-LF sequences are compressed to a single linefeed character.
 .El
+.Pp
+This version of the
+.Nm
+utility is actually
+.Xr less 1
+in disguise.
+As such, it will also accept options documented in
+.Xr less 1 .
 .Sh COMMANDS
 Interactive commands for
 .Nm
@@ -287,13 +295,8 @@ utility is compliant with the
 specification,
 though its presence is optional.
 .Pp
-This version of the
-.Nm
-utility is actually
-.Xr less 1
-in disguise.
-As such, it will also accept options documented in
-.Xr less 1 .
+Functionality allowing the user to skip (as opposed to scroll)
+forward is not currently implemented.
 .Pp
 Behavior for the
 .Fl e
@@ -301,9 +304,6 @@ and
 .Fl p
 flags differs between this implementation and
 .St -p1003.1-2008 .
-The
-.Sq s
-command also has a different meaning.
 .Sh HISTORY
 A
 .Nm
