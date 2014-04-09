@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.219 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.220 2014/04/09 19:12:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1125,7 +1125,8 @@ parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 void
 imsg_dispatch(struct mproc *p, struct imsg *imsg)
 {
-	struct timespec		 t0, t1, dt;
+	struct timespec	t0, t1, dt;
+	int		msg;
 
 	if (imsg == NULL) {
 		exit(1);
@@ -1137,6 +1138,7 @@ imsg_dispatch(struct mproc *p, struct imsg *imsg)
 	if (profiling & PROFILE_IMSG)
 		clock_gettime(CLOCK_MONOTONIC, &t0);
 
+	msg = imsg->hdr.type;
 	imsg_callback(p, imsg);
 
 	if (profiling & PROFILE_IMSG) {
@@ -1146,7 +1148,7 @@ imsg_dispatch(struct mproc *p, struct imsg *imsg)
 		log_debug("profile-imsg: %s %s %s %d %lld.%06ld",
 		    proc_name(smtpd_process),
 		    proc_name(p->proc),
-		    imsg_to_str(imsg->hdr.type),
+		    imsg_to_str(msg),
 		    (int)imsg->hdr.len,
 		    (long long)dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
 		    dt.tv_nsec % 1000000);
@@ -1161,7 +1163,7 @@ imsg_dispatch(struct mproc *p, struct imsg *imsg)
 				"profiling.imsg.%s.%s.%s",
 				proc_name(smtpd_process),
 				proc_name(p->proc),
-				imsg_to_str(imsg->hdr.type)))
+				imsg_to_str(msg)))
 				return;
 			stat_set(key, stat_timespec(&dt));
 		}
