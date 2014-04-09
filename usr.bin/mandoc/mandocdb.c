@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.88 2014/04/04 18:23:07 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.89 2014/04/09 21:49:31 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -216,7 +216,7 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, TYPE_Ic },  /* Ic */
 	{ NULL, TYPE_In },  /* In */
 	{ NULL, TYPE_Li },  /* Li */
-	{ parse_mdoc_Nd, TYPE_Nd },  /* Nd */
+	{ parse_mdoc_Nd, 0 },  /* Nd */
 	{ parse_mdoc_Nm, 0 },  /* Nm */
 	{ NULL, 0 },  /* Op */
 	{ NULL, 0 },  /* Ot */
@@ -1146,8 +1146,9 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 				putkey(mpage, cp, TYPE_Nm);
 			assert(NULL == mpage->desc);
 			parse_mdoc(mpage, mdoc_node(mdoc));
-			putkey(mpage, NULL != mpage->desc ?
-			    mpage->desc : mpage->mlinks->name, TYPE_Nd);
+			if (NULL == mpage->desc)
+				mpage->desc = mandoc_strdup(
+				    mpage->mlinks->name);
 		} else if (NULL != man)
 			parse_man(mpage, man_node(man));
 		else
@@ -1290,7 +1291,6 @@ parse_cat(struct mpage *mpage, int fd)
 			    "Cannot find NAME section");
 		assert(NULL == mpage->desc);
 		mpage->desc = mandoc_strdup(mpage->mlinks->name);
-		putkey(mpage, mpage->mlinks->name, TYPE_Nd);
 		fclose(stream);
 		free(title);
 		return;
@@ -1331,7 +1331,6 @@ parse_cat(struct mpage *mpage, int fd)
 
 	assert(NULL == mpage->desc);
 	mpage->desc = mandoc_strdup(p);
-	putkey(mpage, mpage->desc, TYPE_Nd);
 	fclose(stream);
 	free(title);
 }
@@ -1472,7 +1471,6 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 
 			assert(NULL == mpage->desc);
 			mpage->desc = mandoc_strdup(start);
-			putkey(mpage, mpage->desc, TYPE_Nd);
 			free(title);
 			return;
 		}
@@ -1920,16 +1918,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 			if (NULL != mlink)
 				fputs(", ", stdout);
 		}
-		for (key = ohash_first(&strings, &slot); NULL != key;
-		     key = ohash_next(&strings, &slot)) {
-			if (TYPE_Nd & key->mask) {
-				if (NULL == key->rendered)
-					render_key(mc, key);
-				printf(" - %s", key->rendered);
-				break;
-			}
-		}
-		putchar('\n');
+		printf(" - %s\n", mpage->desc);
 		return;
 	}
 
@@ -1937,6 +1926,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 		say(mlink->file, "Adding to database");
 
 	i = 1;
+	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->desc);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
 	mpage->recno = sqlite3_last_insert_rowid(db);
@@ -2149,6 +2139,7 @@ dbopen(int real)
 
 create_tables:
 	sql = "CREATE TABLE \"mpages\" (\n"
+	      " \"desc\" TEXT NOT NULL,\n"
 	      " \"form\" INTEGER NOT NULL,\n"
 	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
 	      ");\n"
@@ -2181,7 +2172,7 @@ prepare_statements:
 		"sec=? AND arch=? AND name=?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_DELETE_PAGE], NULL);
 	sql = "INSERT INTO mpages "
-		"(form) VALUES (?)";
+		"(desc,form) VALUES (?,?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_INSERT_PAGE], NULL);
 	sql = "INSERT INTO mlinks "
 		"(sec,arch,name,pageid) VALUES (?,?,?,?)";

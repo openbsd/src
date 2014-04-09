@@ -1,4 +1,4 @@
-/*	$Id: mansearch_const.c,v 1.2 2014/04/04 15:55:17 schwarze Exp $ */
+/*	$Id: mansearch_const.c,v 1.3 2014/04/09 21:49:31 schwarze Exp $ */
 /*
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -23,10 +23,10 @@
 const int mansearch_keymax = 41;
 
 const char *const mansearch_keynames[41] = {
-	"NAME",	"Nm",	"Nd",	"arch", "sec",	"Xr",	"Ar",	"Fa",
-	"Fl",	"Dv",	"Fn",	"Ic",	"Pa",	"Cm",	"Li",	"Em",
-	"Cd",	"Va",	"Ft",	"Tn",	"Er",	"Ev",	"Sy",	"Sh",
-	"In",	"Ss",	"Ox",	"An",	"Mt",	"St",	"Bx",	"At",
-	"Nx",	"Fx",	"Lk",	"Ms",	"Bsx",	"Dx",	"Rs",	"Vt",
-	"Lb"
+	"NAME",	"Nm",	"arch", "sec",	"Xr",	"Ar",	"Fa",	"Fl",
+	"Dv",	"Fn",	"Ic",	"Pa",	"Cm",	"Li",	"Em",	"Cd",
+	"Va",	"Ft",	"Tn",	"Er",	"Ev",	"Sy",	"Sh",	"In",
+	"Ss",	"Ox",	"An",	"Mt",	"St",	"Bx",	"At",	"Nx",
+	"Fx",	"Lk",	"Ms",	"Bsx",	"Dx",	"Rs",	"Vt",	"Lb",
+	"Nd"
 };
