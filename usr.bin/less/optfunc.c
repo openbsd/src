@@ -67,6 +67,7 @@ extern int ul_fg_color, ul_bg_color;
 extern int so_fg_color, so_bg_color;
 extern int bl_fg_color, bl_bg_color;
 #endif
+extern char *every_first_cmd;
 
 
 #if LOGFILE
@@ -366,14 +367,17 @@ opt_p(type, s)
 		 * {{ This won't work if the "/" command is
 		 *    changed or invalidated by a .lesskey file. }}
 		 */
-		plusoption = TRUE;
-		ungetsc(s);
-		/*
-		 * In "more" mode, the -p argument is a command,
-		 * not a search string, so we don't need a slash.
-		 */
-		if (!less_is_more)
+		if (less_is_more) {
+			/*
+			 * In "more" mode, the -p argument is a command,
+			 * not a search string, run for each file.
+			 */
+			every_first_cmd = save(s);
+		} else {
+			plusoption = TRUE;
+			ungetsc(s);
 			ungetsc("/");
+		}
 		break;
 	}
 }
