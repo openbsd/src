@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.198 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.199 2014/04/09 12:47:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1562,7 +1562,7 @@ smtp_connected(struct smtp_session *s)
 static void
 smtp_send_banner(struct smtp_session *s)
 {
-	smtp_reply(s, SMTPD_BANNER, s->smtpname, SMTPD_NAME);
+	smtp_reply(s, "220 %s ESMTP %s", s->smtpname, SMTPD_NAME);
 	io_reload(&s->io);
 }
 
