@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.117 2014/03/30 22:40:38 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.118 2014/04/09 10:10:57 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@
 #ifndef SMALL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/x509v3.h>
 #else /* !SMALL */
 #define SSL void
 #endif /* !SMALL */
@@ -82,6 +83,10 @@ size_t		ftp_read(FILE *, SSL *, char *, size_t);
 int		proxy_connect(int, char *, char *);
 int		SSL_vprintf(SSL *, const char *, va_list);
 char		*SSL_readline(SSL *, size_t *);
+int		ssl_match_hostname(char *, char *);
+int		ssl_check_subject_altname(X509 *, char *);
+int		ssl_check_common_name(X509 *, char *);
+int		ssl_check_hostname(X509 *, char *);
 #endif /* !SMALL */
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
@@ -166,6 +171,165 @@ url_encode(const char *path)
 	*epathp = '\0';
 	return (epath);
 }
+
+#ifndef SMALL
+int
+ssl_match_hostname(char *cert_hostname, char *hostname)
+{
+	if (strcasecmp(cert_hostname, hostname) == 0)
+			return 0;
+
+	/* wildcard match? */
+	if (cert_hostname[0] == '*') {
+		char	*cert_domain, *domain;
+
+		cert_domain = &cert_hostname[1];
+		if (cert_domain[0] != '.')
+			return -1;
+		if (strlen(cert_domain) == 1)
+			return -1;
+
+		domain = strchr(hostname, '.');
+		/* no wildcard match against a hostname with no domain part */
+		if (domain == NULL || strlen(domain) == 1)
+			return -1;
+
+		if (strcasecmp(cert_domain, domain) == 0)
+			return 0;
+	}
+
+	return -1;
+}
+
+int
+ssl_check_subject_altname(X509 *cert, char *host)
+{
+	STACK_OF(GENERAL_NAME)	*altname_stack = NULL;
+	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
+	int	addrlen, type;
+	int	count, i;
+	int	rv = -1;
+
+	altname_stack =
+	    X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if (altname_stack == NULL)
+		return -1;
+
+	if (inet_pton(AF_INET, host, &addrbuf) == 1) {
+		type = GEN_IPADD;
+		addrlen = 4;
+	} else if (inet_pton(AF_INET6, host, &addrbuf) == 1) {
+		type = GEN_IPADD;
+		addrlen = 16;
+	} else
+		type = GEN_DNS;
+
+	count = sk_GENERAL_NAME_num(altname_stack);
+	for (i = 0; i < count; i++) {
+		GENERAL_NAME	*altname;
+
+		altname = sk_GENERAL_NAME_value(altname_stack, i);
+
+		if (altname->type != type)
+			continue;
+
+		if (type == GEN_DNS) {
+			unsigned char	*data;
+			int		 format;
+
+			format = ASN1_STRING_type(altname->d.dNSName);
+			if (format == V_ASN1_IA5STRING) {
+				data = ASN1_STRING_data(altname->d.dNSName);
+
+				if (ASN1_STRING_length(altname->d.dNSName) !=
+				    (int)strlen(data)) {
+					fprintf(ttyout, "%s: NUL byte in "
+					    "subjectAltName, probably a "
+					    "malicious certificate.\n",
+					    getprogname());
+					rv = -2;
+					break;
+				}
+
+				if (ssl_match_hostname(data, host) == 0) {
+					rv = 0;
+					break;
+				}
+			} else
+				fprintf(ttyout, "%s: unhandled subjectAltName "
+				    "dNSName encoding (%d)\n", getprogname(),
+				    format);
+
+		} else if (type == GEN_IPADD) {
+			unsigned char	*data;
+			int		 datalen;
+
+			datalen = ASN1_STRING_length(altname->d.iPAddress);
+			data = ASN1_STRING_data(altname->d.iPAddress);
+
+			if (datalen == addrlen &&
+			    memcmp(data, &addrbuf, addrlen) == 0) {
+				rv = 0;
+				break;
+			}
+		}
+	}
+
+	sk_GENERAL_NAME_free(altname_stack);
+	return rv;
+}
+
+int
+ssl_check_common_name(X509 *cert, char *host)
+{
+	X509_NAME	*name;
+	char		*common_name = NULL;
+	int		 common_name_len;
+	int		 rv = -1;
+
+	name = X509_get_subject_name(cert);
+	if (name == NULL)
+		goto out;
+
+	common_name_len = X509_NAME_get_text_by_NID(name, NID_commonName,
+	    NULL, 0);
+	if (common_name_len < 0)
+		goto out;
+
+	common_name = calloc(common_name_len + 1, 1);
+	if (common_name == NULL)
+		goto out;
+
+	X509_NAME_get_text_by_NID(name, NID_commonName, common_name,
+	    common_name_len + 1);
+
+	/* NUL bytes in CN? */
+	if (common_name_len != (int)strlen(common_name)) {
+		fprintf(ttyout, "%s: NUL byte in Common Name field, "
+		    "probably a malicious certificate.\n", getprogname());
+		rv = -2;
+		goto out;
+	}
+
+	if (ssl_match_hostname(common_name, host) == 0)
+		rv = 0;
+out:
+	free(common_name);
+	return rv;
+}
+
+int
+ssl_check_hostname(X509 *cert, char *host)
+{
+	int	rv;
+
+	rv = ssl_check_subject_altname(cert, host);
+	if (rv == 0 || rv == -2)
+		return rv;
+
+	return ssl_check_common_name(cert, host);
+}
+#endif
 
 /*
  * Retrieve URL, via the proxy in $proxyvar if necessary.
@@ -653,6 +817,25 @@ again:
 		if (SSL_connect(ssl) <= 0) {
 			ERR_print_errors_fp(ttyout);
 			goto cleanup_url_get;
+		}
+		if (ssl_verify) {
+			X509	*cert;
+
+			cert = SSL_get_peer_certificate(ssl);
+			if (cert == NULL) {
+				fprintf(ttyout, "%s: no server certificate\n",
+				    getprogname());
+				goto cleanup_url_get;
+			}
+
+			if (ssl_check_hostname(cert, host) != 0) {
+				fprintf(ttyout, "%s: host `%s' not present in"
+				    " server certificate\n",
+				    getprogname(), host);
+				goto cleanup_url_get;
+			}
+
+			X509_free(cert);
 		}
 	} else {
 		fin = fdopen(s, "r+");
