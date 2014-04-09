@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1721 2014/04/07 09:30:52 brad Exp $
+$OpenBSD: pcidevs,v 1.1722 2014/04/09 06:30:26 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ vendor	TOSHIBA		0x102f	Toshiba
 vendor	MIRO		0x1031	Miro Computer Products AG
 vendor	NEC		0x1033	NEC
 vendor	FUTUREDOMAIN	0x1036	Future Domain
+vendor	HITACHI_M	0x1037	Hitachi Micro
 vendor	SIS		0x1039	SiS
 vendor	HP		0x103c	Hewlett-Packard
 vendor	PCTECH		0x1042	PC Technology
@@ -2681,6 +2682,9 @@ product HINT VXPRO_II_EIDE	0x8013	EIDE
 product HITACHI SWC		0x0101	MSVCC01 Video Capture
 product HITACHI SH7751		0x3505	SH7751 PCI
 product HITACHI SH7751R		0x350e	SH7751R PCI
+
+/* Hitachi Micro products */
+product HITACHI_M ISP2100	0x2100	ISP2100
 
 /* IBM products */
 product IBM 0x0002		0x0002	MCA
