@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.94 2014/04/03 20:17:12 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.95 2014/04/09 20:50:03 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -225,20 +225,22 @@ readin(char *fname)
 	 */
 	if (fisdir(fname) == TRUE) {
 		ro = TRUE;
-	} else if ((access(fname, W_OK) == -1) && (errno != ENOENT)) {
-		ro = TRUE;
-	} else if (errno == ENOENT) {
-		(void)xdirname(dp, fname, sizeof(dp));
-		(void)strlcat(dp, "/", sizeof(dp));
-
-		/* Missing directory; keep buffer read-write, like emacs */
-		if (stat(dp, &statbuf) == -1 && errno == ENOENT) {
-			if (eyorn("Missing directory, create") == TRUE)
-				(void)do_makedir(dp);
-		} else if (access(dp, W_OK) == -1 && errno == EACCES) {
-			ewprintf("File not found and directory"
-			    " write-protected");
+	} else if ((access(fname, W_OK) == -1)) {
+		if (errno != ENOENT) {
 			ro = TRUE;
+		} else if (errno == ENOENT) {
+			(void)xdirname(dp, fname, sizeof(dp));
+			(void)strlcat(dp, "/", sizeof(dp));
+
+			/* Missing directory; keep buffer rw, like emacs */
+			if (stat(dp, &statbuf) == -1 && errno == ENOENT) {
+				if (eyorn("Missing directory, create") == TRUE)
+					(void)do_makedir(dp);
+			} else if (access(dp, W_OK) == -1 && errno == EACCES) {
+				ewprintf("File not found and directory"
+				    " write-protected");
+				ro = TRUE;
+			}
 		}
 	}
 	if (ro == TRUE)
