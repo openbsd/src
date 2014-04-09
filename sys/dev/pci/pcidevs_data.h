@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1721 2014/04/07 09:30:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1722 2014/04/09 06:30:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8370,6 +8370,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751R,
 	    "SH7751R PCI",
+	},
+	{
+	    PCI_VENDOR_HITACHI_M, PCI_PRODUCT_HITACHI_M_ISP2100,
+	    "ISP2100",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
@@ -23566,6 +23570,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_FUTUREDOMAIN,
 	    "Future Domain",
+	},
+	{
+	    PCI_VENDOR_HITACHI_M,
+	    "Hitachi Micro",
 	},
 	{
 	    PCI_VENDOR_SIS,

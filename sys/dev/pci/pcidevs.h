@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1721 2014/04/07 09:30:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1722 2014/04/09 06:30:26 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -83,6 +83,7 @@
 #define	PCI_VENDOR_MIRO	0x1031		/* Miro Computer Products AG */
 #define	PCI_VENDOR_NEC	0x1033		/* NEC */
 #define	PCI_VENDOR_FUTUREDOMAIN	0x1036		/* Future Domain */
+#define	PCI_VENDOR_HITACHI_M	0x1037		/* Hitachi Micro */
 #define	PCI_VENDOR_SIS	0x1039		/* SiS */
 #define	PCI_VENDOR_HP	0x103c		/* Hewlett-Packard */
 #define	PCI_VENDOR_PCTECH	0x1042		/* PC Technology */
@@ -2686,6 +2687,9 @@
 #define	PCI_PRODUCT_HITACHI_SWC	0x0101		/* MSVCC01 Video Capture */
 #define	PCI_PRODUCT_HITACHI_SH7751	0x3505		/* SH7751 PCI */
 #define	PCI_PRODUCT_HITACHI_SH7751R	0x350e		/* SH7751R PCI */
+
+/* Hitachi Micro products */
+#define	PCI_PRODUCT_HITACHI_M_ISP2100	0x2100		/* ISP2100 */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */
