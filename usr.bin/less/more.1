@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.7 2014/04/09 21:42:39 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.8 2014/04/09 22:53:20 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,8 +84,11 @@ uses the terminal window size.
 .It Fl p Ar command
 Execute the specified
 .Nm
-.Ar command
-when the file is first opened.
+commands when a file is first examined (or reexamined, such as with the 
+.Ic :e
+or
+.Ic :p
+commands).
 .It Fl s
 Squeeze consecutive blank lines into a single blank line.
 .It Fl t Ar tag
@@ -300,9 +303,7 @@ forward is not currently implemented.
 .Pp
 Behavior for the
 .Fl e
-and
-.Fl p
-flags differs between this implementation and
+flag differs between this implementation and
 .St -p1003.1-2008 .
 .Sh HISTORY
 A
