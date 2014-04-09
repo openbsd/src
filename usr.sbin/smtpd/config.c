@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2014/04/04 16:10:41 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.27 2014/04/09 18:55:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -135,8 +135,6 @@ config_peer(enum smtp_proc_type proc)
 		p_control = p;
 	else if (proc == PROC_LKA)
 		p_lka = p;
-	else if (proc == PROC_MFA)
-		p_mfa = p;
 	else if (proc == PROC_PARENT)
 		p_parent = p;
 	else if (proc == PROC_QUEUE)
@@ -205,7 +203,6 @@ process_stat_event(int fd, short ev, void *arg)
 
 	process_stat(p_control);
 	process_stat(p_lka);
-	process_stat(p_mfa);
 	process_stat(p_parent);
 	process_stat(p_queue);
 	process_stat(p_scheduler);

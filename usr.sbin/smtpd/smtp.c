@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.134 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.135 2014/04/09 18:55:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -66,14 +66,6 @@ smtp_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_SMTP_AUTHENTICATE:
 		case IMSG_SMTP_SSL_INIT:
 		case IMSG_SMTP_SSL_VERIFY:
-			smtp_session_imsg(p, imsg);
-			return;
-		}
-	}
-
-	if (p->proc == PROC_MFA) {
-		switch (imsg->hdr.type) {
-		case IMSG_MFA_SMTP_RESPONSE:
 			smtp_session_imsg(p, imsg);
 			return;
 		}

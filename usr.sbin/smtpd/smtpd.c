@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.218 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.219 2014/04/09 18:55:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -57,7 +57,6 @@ static void usage(void);
 static void parent_shutdown(int);
 static void parent_send_config(int, short, void *);
 static void parent_send_config_lka(void);
-static void parent_send_config_mfa(void);
 static void parent_send_config_pony(void);
 static void parent_sig_handler(int, short, void *);
 static void forkmda(struct mproc *, uint64_t, struct deliver *);
@@ -118,7 +117,6 @@ struct smtpd	*env = NULL;
 
 struct mproc	*p_control = NULL;
 struct mproc	*p_lka = NULL;
-struct mproc	*p_mfa = NULL;
 struct mproc	*p_parent = NULL;
 struct mproc	*p_queue = NULL;
 struct mproc	*p_scheduler = NULL;
@@ -235,7 +233,6 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			m_end(&m);
 			log_verbose(v);
 			m_forward(p_lka, imsg);
-			m_forward(p_mfa, imsg);
 			m_forward(p_queue, imsg);
 			m_forward(p_pony, imsg);
 			return;
@@ -319,7 +316,6 @@ static void
 parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_lka();
-	parent_send_config_mfa();
 	parent_send_config_pony();
 	purge_config(PURGE_PKI);
 }
@@ -330,14 +326,6 @@ parent_send_config_pony(void)
 	log_debug("debug: parent_send_config: configuring pony process");
 	m_compose(p_pony, IMSG_CONF_START, 0, 0, -1, NULL, 0);
 	m_compose(p_pony, IMSG_CONF_END, 0, 0, -1, NULL, 0);
-}
-
-void
-parent_send_config_mfa()
-{
-	log_debug("debug: parent_send_config_mfa: reloading");
-	m_compose(p_mfa, IMSG_CONF_START, 0, 0, -1, NULL, 0);
-	m_compose(p_mfa, IMSG_CONF_END, 0, 0, -1, NULL, 0);
 }
 
 void
@@ -659,7 +647,6 @@ main(int argc, char *argv[])
 
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_LKA);
-	config_peer(PROC_MFA);
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_PONY);
 	config_done();
@@ -725,7 +712,6 @@ fork_peers(void)
 	child_add(queue(), CHILD_DAEMON, proc_title(PROC_QUEUE));
 	child_add(control(), CHILD_DAEMON, proc_title(PROC_CONTROL));
 	child_add(lka(), CHILD_DAEMON, proc_title(PROC_LKA));
-	child_add(mfa(), CHILD_DAEMON, proc_title(PROC_MFA));
 	child_add(scheduler(), CHILD_DAEMON, proc_title(PROC_SCHEDULER));
 	child_add(pony(), CHILD_DAEMON, proc_title(PROC_PONY));
 	post_fork(PROC_PARENT);
@@ -1210,8 +1196,6 @@ proc_title(enum smtp_proc_type proc)
 	switch (proc) {
 	case PROC_PARENT:
 		return "[priv]";
-	case PROC_MFA:
-		return "filter";
 	case PROC_LKA:
 		return "lookup";
 	case PROC_QUEUE:
@@ -1233,8 +1217,6 @@ proc_name(enum smtp_proc_type proc)
 	switch (proc) {
 	case PROC_PARENT:
 		return "parent";
-	case PROC_MFA:
-		return "mfa";
 	case PROC_LKA:
 		return "lka";
 	case PROC_QUEUE:
@@ -1428,10 +1410,6 @@ parent_broadcast_verbose(uint32_t v)
 	m_add_int(p_pony, v);
 	m_close(p_pony);
 	
-	m_create(p_mfa, IMSG_CTL_VERBOSE, 0, 0, -1);
-	m_add_int(p_mfa, v);
-	m_close(p_mfa);
-	
 	m_create(p_queue, IMSG_CTL_VERBOSE, 0, 0, -1);
 	m_add_int(p_queue, v);
 	m_close(p_queue);
@@ -1447,10 +1425,6 @@ parent_broadcast_profile(uint32_t v)
 	m_create(p_pony, IMSG_CTL_PROFILE, 0, 0, -1);
 	m_add_int(p_pony, v);
 	m_close(p_pony);
-	
-	m_create(p_mfa, IMSG_CTL_PROFILE, 0, 0, -1);
-	m_add_int(p_mfa, v);
-	m_close(p_mfa);
 	
 	m_create(p_queue, IMSG_CTL_PROFILE, 0, 0, -1);
 	m_add_int(p_queue, v);

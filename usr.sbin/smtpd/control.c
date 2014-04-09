@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.98 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.99 2014/04/09 18:55:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -283,7 +283,6 @@ control(void)
 
 	config_peer(PROC_SCHEDULER);
 	config_peer(PROC_QUEUE);
-	config_peer(PROC_MFA);
 	config_peer(PROC_PARENT);
 	config_peer(PROC_LKA);
 	config_peer(PROC_PONY);

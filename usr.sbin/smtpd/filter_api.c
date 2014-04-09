@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.12 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.13 2014/04/09 18:55:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -415,7 +415,7 @@ filter_api_init(void)
 	event_init();
 
 	memset(&fi, 0, sizeof(fi));
-	fi.p.proc = PROC_MFA;
+	fi.p.proc = PROC_PONY;
 	fi.p.name = "filter";
 	fi.p.handler = filter_dispatch;
 	fi.uid = pw->pw_uid;
