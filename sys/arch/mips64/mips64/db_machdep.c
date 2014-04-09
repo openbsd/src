@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.37 2014/03/21 23:05:41 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.38 2014/04/09 21:10:35 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -387,7 +387,7 @@ next_instr_address(db_addr_t pc, boolean_t bd)
 void
 db_trap_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 {
-	trapDump("ddb trap trace");
+	trapDump("ddb trap trace", db_printf);
 }
 
 void

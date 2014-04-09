@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.2 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.3 2014/04/09 21:10:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -363,6 +363,7 @@ k_intr:
 
 	LA	sp, start-FRAMESZ(CF_SZ)
 #ifdef DDB
+	LA	a1, db_printf
 	LA	a0, 2f
 	jal	trapDump
 	 NOP

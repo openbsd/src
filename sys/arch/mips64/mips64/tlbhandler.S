@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.42 2014/03/24 17:12:01 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.43 2014/04/09 21:10:35 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -350,16 +350,18 @@ sys_stk_chk:
 	REG_S	a3, CF_ARGSZ+1*REGSZ(sp)
 	PTR_S	sp, CF_ARGSZ+2*REGSZ(a0)
 #endif
+	move	sp, a0
 	dmfc0	a3, COP_0_BAD_VADDR
 	move	a2, ra
 	dmfc0	a1, COP_0_EXC_PC
 	LA	a0, 1f
 	jal	printf
-	move	sp, a0
+	nop
 
 	LA	sp, start-FRAMESZ(CF_SZ)	# set sp to a valid place
 
 #ifdef DDB
+	LA	a1, db_printf
 	LA	a0, 2f
 	jal	trapDump
 	nop
