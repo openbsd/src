@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.90 2014/04/09 03:59:28 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.91 2014/04/09 05:00:28 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -290,7 +290,6 @@ void		mpii_scsi_cmd_tmo(void *);
 void		mpii_scsi_cmd_tmo_handler(void *, void *);
 void		mpii_scsi_cmd_tmo_done(struct mpii_ccb *);
 
-int		mpii_alloc_dev(struct mpii_softc *);
 int		mpii_insert_dev(struct mpii_softc *, struct mpii_device *);
 int		mpii_remove_dev(struct mpii_softc *, struct mpii_device *);
 struct mpii_device *
@@ -554,7 +553,9 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (mpii_alloc_dev(sc) != 0) {
+	sc->sc_devs = malloc(sc->sc_max_devices *
+	    sizeof(struct mpii_device *), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->sc_devs == NULL) {
 		printf("%s: unable to allocate memory for mpii_device\n",
 		    DEVNAME(sc));
 		goto free_queues;
@@ -562,7 +563,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 
 	if (mpii_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
-		goto free_dev;
+		goto free_devs;
 	}
 
 	/* we should be good to go now, attach scsibus */
@@ -580,7 +581,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
 	    mpii_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
-		goto free_dev;
+		goto free_devs;
 
 	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
@@ -607,9 +608,9 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-free_dev:
-	if (sc->sc_devs)
-		free(sc->sc_devs, M_DEVBUF);
+free_devs:
+	free(sc->sc_devs, M_DEVBUF);
+	sc->sc_devs = NULL;
 
 free_queues:
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_freeq),
@@ -2291,16 +2292,6 @@ mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 	bus_dmamem_free(sc->sc_dmat, &mdm->mdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
 	free(mdm, M_DEVBUF);
-}
-
-int
-mpii_alloc_dev(struct mpii_softc *sc)
-{
-	sc->sc_devs = malloc(sc->sc_max_devices *
-	    sizeof(struct mpii_device *), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_devs == NULL)
-		return (1);
-	return (0);
 }
 
 int
