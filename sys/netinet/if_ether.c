@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.123 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.124 2014/04/10 14:36:25 mikeb Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -767,7 +767,6 @@ arptfree(struct llinfo_arp *la)
 {
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
-	struct rt_addrinfo info;
 	u_int tid = 0;
 
 	if (rt == NULL)
@@ -779,14 +778,11 @@ arptfree(struct llinfo_arp *la)
 		rt->rt_flags &= ~RTF_REJECT;
 		return;
 	}
-	memset(&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 
 	if (rt->rt_ifp)
 		tid = rt->rt_ifp->if_rdomain;
 
-	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, tid);
+	rtdeletemsg(rt, tid);
 }
 
 /*
