@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.91 2014/04/09 05:00:28 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.92 2014/04/10 01:28:32 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -578,7 +578,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 	    mpii_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		goto free_devs;
