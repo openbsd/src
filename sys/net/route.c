@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.159 2014/04/10 13:47:21 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.160 2014/04/10 13:55:55 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -683,11 +683,12 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 	 * ifp may be specified by sockaddr_dl when protocol address
 	 * is ambiguous
 	 */
-	if (info->rti_ifp == NULL && info->rti_info[RTAX_IFP] != NULL
-	    && info->rti_info[RTAX_IFP]->sa_family == AF_LINK &&
-	    (ifa = ifa_ifwithnet((struct sockaddr *)info->rti_info[RTAX_IFP],
-	    rtid)) != NULL)
-		info->rti_ifp = ifa->ifa_ifp;
+	if (info->rti_ifp == NULL && info->rti_info[RTAX_IFP] != NULL) {
+		struct sockaddr_dl *sdl;
+
+		sdl = (struct sockaddr_dl *)info->rti_info[RTAX_IFP];
+		info->rti_ifp = if_get(sdl->sdl_index);
+	}
 
 	if (info->rti_ifa == NULL && info->rti_info[RTAX_IFA] != NULL)
 		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
