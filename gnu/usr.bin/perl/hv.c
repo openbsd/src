@@ -1728,12 +1728,13 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
     dVAR;
     XPVHV* xhv;
     const char *name;
-    const bool save = !!SvREFCNT(hv);
+    bool save;
 
     if (!hv)
 	return;
     DEBUG_A(Perl_hv_assert(aTHX_ hv));
     xhv = (XPVHV*)SvANY(hv);
+    save = !!SvREFCNT(hv);
 
     /* The name must be deleted before the call to hfreeeeentries so that
        CVs are anonymised properly. But the effective name must be pre-
