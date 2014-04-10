@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.5 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.6 2014/04/10 14:03:57 jsg Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -212,8 +212,10 @@ cscreatelist(int f, int n)
 
 	clen = snprintf(title, sizeof(title), "%s%s",
 	    "Creating cscope file list 'cscope.files' in: ", dir);
-	if (clen < 0 || clen >= sizeof(title))
+	if (clen < 0 || clen >= sizeof(title)) {
+		pclose(fpipe);
 		return (FALSE);
+	}
 	addline(bp, title);
 	addline(bp, "");
 	/* All lines are NUL terminated */
@@ -436,8 +438,10 @@ do_cscope(int i)
 	bp->b_flag |= BFREADONLY;
 
 	clen = snprintf(title, sizeof(title), "%s%s", csprompt[i], pattern);
-	if (clen < 0 || clen >= sizeof(title))
+	if (clen < 0 || clen >= sizeof(title)) {
+		pclose(fpipe);
 		return (FALSE);
+	}
 	addline(bp, title);
 	addline(bp, "");
 	addline(bp, "-------------------------------------------------------------------------------");
