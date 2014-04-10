@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.99 2014/03/12 14:28:09 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.100 2014/04/10 16:08:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -370,7 +370,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
-	if (hdr == NULL || (ssize_t)ibuf_size(msg->msg_data) <
+	if (hdr == NULL || ibuf_size(msg->msg_data) <
 	    (betoh32(hdr->ike_length) - msg->msg_offset))
 		return;
 

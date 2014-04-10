@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.70 2014/02/21 20:52:38 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.71 2014/04/10 16:08:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -434,7 +434,7 @@ RB_HEAD(iked_addrpool, iked_sa);
 
 struct iked_message {
 	struct ibuf		*msg_data;
-	off_t			 msg_offset;
+	size_t			 msg_offset;
 
 	struct sockaddr_storage	 msg_local;
 	socklen_t		 msg_locallen;
@@ -784,7 +784,7 @@ struct iked_message *
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,
-	    struct iked_message *, off_t);
+	    struct iked_message *, size_t);
 
 /* eap.c */
 ssize_t	 eap_identity_request(struct ibuf *);

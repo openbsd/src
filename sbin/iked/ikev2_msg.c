@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.29 2014/02/17 11:00:14 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.30 2014/04/10 16:08:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -135,11 +135,14 @@ ikev2_msg_copy(struct iked *env, struct iked_message *msg)
 {
 	struct iked_message		*m = NULL;
 	struct ibuf			*buf;
-	ssize_t				 len;
+	size_t				 len;
 	void				*ptr;
 
-	if ((len = ibuf_size(msg->msg_data) - msg->msg_offset) <= 0 ||
-	    (ptr = ibuf_seek(msg->msg_data, msg->msg_offset, len)) == NULL ||
+	if (ibuf_size(msg->msg_data) < msg->msg_offset)
+		return (NULL);
+	len = ibuf_size(msg->msg_data) - msg->msg_offset;
+
+	if ((ptr = ibuf_seek(msg->msg_data, msg->msg_offset, len)) == NULL ||
 	    (m = malloc(sizeof(*m))) == NULL ||
 	    (buf = ikev2_msg_init(env, m, &msg->msg_peer, msg->msg_peerlen,
 	     &msg->msg_local, msg->msg_locallen, msg->msg_response)) == NULL ||
