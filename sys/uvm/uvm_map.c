@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.165 2014/04/03 21:40:10 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.166 2014/04/10 01:40:04 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1381,11 +1381,11 @@ void
 uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 {
 	struct vm_map_entry *entry;
-	int waitable;
+	int waitok;
 
-	waitable = flags & UVM_PLA_WAITOK;
+	waitok = flags & UVM_PLA_WAITOK;
 	while ((entry = TAILQ_FIRST(deadq)) != NULL) {
-		if (waitable)
+		if (waitok)
 			uvm_pause();
 		/*
 		 * Drop reference to amap, if we've got one.
@@ -2326,15 +2326,15 @@ void
 uvm_map_teardown(struct vm_map *map)
 {
 	struct uvm_map_deadq	 dead_entries;
-	int			 i, waitable = 0;
+	int			 i, waitok = 0;
 	struct vm_map_entry	*entry, *tmp;
 #ifdef VMMAP_DEBUG
 	size_t			 numq, numt;
 #endif
 
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		waitable = 1;
-	if (waitable) {
+		waitok = 1;
+	if (waitok) {
 		if (rw_enter(&map->lock, RW_NOSLEEP | RW_WRITE) != 0)
 			panic("uvm_map_teardown: rw_enter failed on free map");
 	}
@@ -2372,7 +2372,7 @@ uvm_map_teardown(struct vm_map *map)
 	if ((entry = RB_ROOT(&map->addr)) != NULL)
 		DEAD_ENTRY_PUSH(&dead_entries, entry);
 	while (entry != NULL) {
-		if (waitable)
+		if (waitok)
 			uvm_pause();
 		uvm_unmap_kill_entry(map, entry);
 		if ((tmp = RB_LEFT(entry, daddrs.addr_entry)) != NULL)
@@ -2383,7 +2383,7 @@ uvm_map_teardown(struct vm_map *map)
 		entry = TAILQ_NEXT(entry, dfree.deadq);
 	}
 
-	if (waitable)
+	if (waitok)
 		rw_exit(&map->lock);
 
 #ifdef VMMAP_DEBUG
@@ -2394,7 +2394,7 @@ uvm_map_teardown(struct vm_map *map)
 		numq++;
 	KASSERT(numt == numq);
 #endif
-	uvm_unmap_detach(&dead_entries, waitable ? UVM_PLA_WAITOK : 0);
+	uvm_unmap_detach(&dead_entries, waitok ? UVM_PLA_WAITOK : 0);
 	pmap_destroy(map->pmap);
 	map->pmap = NULL;
 }
