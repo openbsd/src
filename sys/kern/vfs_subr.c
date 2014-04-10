@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.212 2014/03/24 00:19:48 guenther Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.213 2014/04/10 13:48:24 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2147,10 +2147,10 @@ vfs_buf_print(void *b, int full,
 	    bp->b_vp, (int64_t)bp->b_lblkno, (int64_t)bp->b_blkno, bp->b_dev,
 	    bp->b_proc, bp->b_error, bp->b_flags, B_BITS);
 
-	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx sync 0x%llx\n"
+	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n"
 	      "  data %p saveaddr %p dep %p iodone %p\n",
 	    bp->b_bufsize, bp->b_bcount, (long)bp->b_resid,
-	    (long long)bp->b_synctime, bp->b_data, bp->b_saveaddr,
+	    bp->b_data, bp->b_saveaddr,
 	    LIST_FIRST(&bp->b_dep), bp->b_iodone);
 
 	(*pr)("  dirty {off 0x%x end 0x%x} valid {off 0x%x end 0x%x}\n",

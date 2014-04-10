@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.93 2013/11/21 01:16:52 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.94 2014/04/10 13:48:24 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ struct buf {
 	LIST_ENTRY(buf) b_list;		/* All allocated buffers. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	time_t	b_synctime;		/* Time this buffer should be flushed */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
@@ -284,7 +283,7 @@ int bread(struct vnode *, daddr_t, int, struct buf **);
 int breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
     struct buf **);
 void	brelse(struct buf *);
-void	bremfree(struct buf *);
+#define bremfree bufcache_take
 void	bufinit(void);
 void	buf_dirty(struct buf *);
 void    buf_undirty(struct buf *);
@@ -292,6 +291,17 @@ int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
 struct buf *incore(struct vnode *, daddr_t);
+
+/*
+ * bufcache functions
+ */
+void bufcache_init(void);
+
+void bufcache_take(struct buf *);
+void bufcache_release(struct buf *);
+
+struct buf *bufcache_getcleanbuf(void);
+struct buf *bufcache_getdirtybuf(void);
 
 /*
  * buf_kvm_init initializes the kvm handling for buffers.
