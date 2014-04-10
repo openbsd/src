@@ -1,0 +1,103 @@
+.\"	$OpenBSD: rt_ifa_add.9,v 1.1 2014/04/10 13:47:21 mpi Exp $
+.\"
+.\" Copyright (c) 2014 Martin Pieuchot 
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 10 2014 $
+.Dt RT_IFA_ADD 9
+.Os
+.Sh NAME
+.Nm rt_ifa_add ,
+.Nm rt_ifa_del ,
+.Nm rt_ifa_addloop ,
+.Nm rt_ifa_delloop
+.Nd add or delete routes associated with an address
+.Sh SYNOPSIS
+.In sys/socket.h
+.In net/if.h
+.In net/route.h
+.Ft int
+.Fn rt_ifa_add "struct ifaddr *ifa" "int flags" "struct sockaddr *dst"
+.Ft int
+.Fn rt_ifa_del "struct ifaddr *ifa" "int flags" "struct sockaddr *dst"
+.Ft void
+.Fn rt_ifa_addloop "struct ifaddr *ifa"
+.Ft void
+.Fn rt_ifa_delloop "struct ifaddr *ifa"
+.Sh DESCRIPTION
+These functions create and delete routes required by the network stack
+and managed by the kernel.
+.Bl -tag -width rt_ifa_addloopxx
+.It Fn rt_ifa_add
+Creates and associates a connected route with
+.Fa ifa .
+.Pp
+Connected routes are mostly routes to prefixes and should be created with
+.Dv RTF_CLONING
+in
+.Fa flags
+and the address of
+.Fa ifa
+in
+.Fa dst .
+But for Point-to-Point interfaces, connected routes are routes to hosts and
+should be created
+with
+.Dv RTF_HOST
+in
+.Fa flags
+and the destination address in
+.Fa dst .
+Connected routes have a priority of
+.Dv RTP_CONNECTED .
+.It Fn rt_ifa_del
+Removes the connected route associated with
+.Fa ifa .
+.It Fn rt_ifa_addloop
+Creates and associates a local route
+with
+.Fa ifa .
+.Pp
+Local routes are used to not send packets destined to a local address on the
+wire and instead redirect them to
+.Xr lo 4 .
+They have the lowest priority available,
+.Dv RTP_LOCAL ,
+and contain a special flag,
+.Dv RTF_LOCAL ,
+that can be checked to determine if the address is configured on the system.
+.It Fn rt_ifa_delloop
+Removes the local route associated with
+.Fa ifa .
+.El
+.Sh CONTEXT
+.Fn rt_ifa_add ,
+.Fn rt_ifa_del ,
+.Fn rt_ifa_addloop ,
+and
+.Fn rt_ifa_delloop
+can be called during autoconf, from process context, or from interrupt context.
+.Sh RETURN VALUES
+.Fn rt_ifa_add
+and
+.Fn rt_ifa_del
+will return
+.Dv 0
+on success and the return value of
+.Xr rtrequest1 9
+otherwise.
+.Sh SEE ALSO
+.Xr lo 4 ,
+.Xr route 4 ,
+.Xr rtrequest1 9

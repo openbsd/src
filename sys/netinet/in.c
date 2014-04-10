@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.94 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.95 2014/04/10 13:47:21 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -328,10 +328,9 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
-			ia->ia_ifa.ifa_dstaddr = sintosa(&oldaddr);
-			rtinit(&ia->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
-			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
-			rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
+			rt_ifa_del(&ia->ia_ifa, RTF_HOST, sintosa(&oldaddr));
+			rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_HOST,
+			    ia->ia_ifa.ifa_dstaddr);
 		}
 		splx(s);
 		break;
@@ -773,7 +772,8 @@ in_addhost(struct in_ifaddr *ia0)
 		return (0);
 	}
 
-	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
+	error = rt_ifa_add(&ia0->ia_ifa, RTF_UP | RTF_HOST,
+	    ia0->ia_ifa.ifa_dstaddr);
 	if (!error)
 		ia0->ia_flags |= IFA_ROUTE;
 
@@ -807,16 +807,17 @@ in_scrubhost(struct in_ifaddr *ia0)
 		if ((ia->ia_flags & IFA_ROUTE) != 0)
 			continue;
 
-		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
+		rt_ifa_del(&ia0->ia_ifa, RTF_HOST, ia0->ia_ifa.ifa_dstaddr);
 		ia0->ia_flags &= ~IFA_ROUTE;
-		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST);
+		error = rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_HOST,
+		    ia->ia_ifa.ifa_dstaddr);
 		if (!error)
 			ia->ia_flags |= IFA_ROUTE;
 
 		return (error);
 	}
 
-	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST);
+	rt_ifa_del(&ia0->ia_ifa, RTF_HOST, ia0->ia_ifa.ifa_dstaddr);
 	ia0->ia_flags &= ~IFA_ROUTE;
 
 	return (0);
@@ -858,7 +859,7 @@ in_addprefix(struct in_ifaddr *ia0)
 		/* move to a real interface instead of carp interface */
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ia0->ia_ifp->if_type != IFT_CARP) {
-			rtinit(&ia->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
+			rt_ifa_del(&ia->ia_ifa, 0, ia->ia_ifa.ifa_addr);
 			ia->ia_flags &= ~IFA_ROUTE;
 			break;
 		}
@@ -873,7 +874,8 @@ in_addprefix(struct in_ifaddr *ia0)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&ia0->ia_ifa, RTM_ADD, RTF_UP | RTF_CLONING);
+	error = rt_ifa_add(&ia0->ia_ifa, RTF_UP | RTF_CLONING,
+	    ia0->ia_ifa.ifa_addr);
 	if (!error)
 		ia0->ia_flags |= IFA_ROUTE;
 	return error;
@@ -918,9 +920,10 @@ in_scrubprefix(struct in_ifaddr *ia0)
 		/*
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
-		rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
+		rt_ifa_del(&ia0->ia_ifa, 0, ia0->ia_ifa.ifa_addr);
 		ia0->ia_flags &= ~IFA_ROUTE;
-		error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | RTF_CLONING);
+		error = rt_ifa_add(&ia->ia_ifa, RTF_UP | RTF_CLONING,
+		    ia->ia_ifa.ifa_addr);
 		if (error == 0)
 			ia->ia_flags |= IFA_ROUTE;
 		return error;
@@ -929,7 +932,7 @@ in_scrubprefix(struct in_ifaddr *ia0)
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rtinit(&ia0->ia_ifa, RTM_DELETE, RTF_UP | RTF_CLONING);
+	rt_ifa_del(&ia0->ia_ifa, 0, ia0->ia_ifa.ifa_addr);
 	ia0->ia_flags &= ~IFA_ROUTE;
 	return 0;
 }

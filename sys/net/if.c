@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.282 2014/03/20 13:19:06 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.283 2014/04/10 13:47:21 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ if_free_sadl(struct ifnet *ifp)
 		return;
 
 	s = splnet();
-	rtinit(ifa, RTM_DELETE, 0);
+	rt_ifa_del(ifa, 0, ifa->ifa_addr);
 	ifa_del(ifp, ifa);
 	ifafree(ifp->if_lladdr);
 	ifp->if_lladdr = NULL;

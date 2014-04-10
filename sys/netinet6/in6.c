@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.134 2014/04/03 08:22:10 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.135 2014/04/10 13:47:21 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -750,9 +750,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 */
 	if (dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_dstaddr.sin6_addr)) {
+	    	struct ifaddr *ifa = &ia6->ia_ifa;
 
 		if ((ia6->ia_flags & IFA_ROUTE) != 0 &&
-		    rtinit(&ia6->ia_ifa, RTM_DELETE, RTF_UP | RTF_HOST)) {
+		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr) != 0) {
 			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
 			    "a route to the old destination: %s\n",
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
@@ -1020,8 +1021,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 	if ((ia6->ia_flags & IFA_ROUTE) != 0 && ia6->ia_dstaddr.sin6_len != 0) {
 		int e;
 
-		if ((e = rtinit(&ia6->ia_ifa, RTM_DELETE,
-		    RTF_UP | RTF_HOST)) != 0) {
+		if ((e = rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr)) != 0) {
 			char addr[INET6_ADDRSTRLEN];
 			log(LOG_ERR, "in6_purgeaddr: failed to remove "
 			    "a route to the p2p destination: %s on %s, "
@@ -1388,7 +1388,9 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	 */
 	plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL); /* XXX */
 	if (plen == 128 && ia6->ia_dstaddr.sin6_family == AF_INET6) {
-		if ((error = rtinit(&ia6->ia_ifa, RTM_ADD, RTF_UP | RTF_HOST)))
+		ifa = &ia6->ia_ifa;
+		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST, ifa->ifa_dstaddr);
+		if (error != 0)
 			return (error);
 		ia6->ia_flags |= IFA_ROUTE;
 	}

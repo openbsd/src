@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.158 2014/04/03 08:22:10 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.159 2014/04/10 13:47:21 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -149,9 +149,6 @@ int	rtable_init(struct radix_node_head ***, u_int);
 int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *, u_int);
-
-int	rt_ifa_add(struct ifaddr *, int, struct sockaddr *);
-int	rt_ifa_del(struct ifaddr *, int, struct sockaddr *);
 
 #define	LABELID_MAX	50000
 
@@ -1077,28 +1074,6 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
 		bzero((caddr_t)cp2, (unsigned)(cplim2 - cp2));
-}
-
-/*
- * Set up a routing table entry, normally
- * for an interface.
- */
-int
-rtinit(struct ifaddr *ifa, int cmd, int flags)
-{
-	struct sockaddr		*dst;
-	int error;
-
-	KASSERT(cmd == RTM_ADD || cmd == RTM_DELETE);
-
-	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
-
-	if (cmd == RTM_ADD)
-		error = rt_ifa_add(ifa, flags, dst);
-	else
-		error = rt_ifa_del(ifa, flags, dst);
-
-	return (error);
 }
 
 int
