@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.17 2014/04/09 21:49:31 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.18 2014/04/10 02:45:04 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -213,7 +213,7 @@ mansearch(const struct mansearch *search,
 				SQL_BIND_BLOB(db, s, j, ep->regexp);
 			} else
 				SQL_BIND_TEXT(db, s, j, ep->substr);
-			if (0 == (TYPE_Nd & ep->bits))
+			if (0 == ((TYPE_Nd | TYPE_Nm) & ep->bits))
 				SQL_BIND_INT64(db, s, j, ep->bits);
 		}
 
@@ -496,6 +496,12 @@ sql_statement(const struct expr *e)
 		    ? (NULL == e->substr
 			? "desc REGEXP ?"
 			: "desc MATCH ?")
+		    : TYPE_Nm == e->bits
+		    ? (NULL == e->substr
+			? "id IN (SELECT pageid FROM names "
+			  "WHERE name REGEXP ?)"
+			: "id IN (SELECT pageid FROM names "
+			  "WHERE name MATCH ?)")
 		    : (NULL == e->substr
 			? "id IN (SELECT pageid FROM keys "
 			  "WHERE key REGEXP ? AND bits & ?)"
@@ -517,8 +523,9 @@ sql_statement(const struct expr *e)
 static struct expr *
 exprcomp(const struct mansearch *search, int argc, char *argv[])
 {
+	uint64_t	 mask;
 	int		 i, toopen, logic, igncase, toclose;
-	struct expr	*first, *next, *cur;
+	struct expr	*first, *prev, *cur, *next;
 
 	first = cur = NULL;
 	logic = igncase = toclose = 0;
@@ -561,6 +568,7 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 			first = next;
 		else
 			cur->next = next;
+		prev = cur = next;
 
 		/*
 		 * Searching for descriptions must be split out
@@ -568,18 +576,23 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 		 * not in the keys table.
 		 */
 
-		if (TYPE_Nd & next->bits && ~TYPE_Nd & next->bits) {
-			cur = mandoc_calloc(1, sizeof(struct expr));
-			memcpy(cur, next, sizeof(struct expr));
-			next->open = 1;
-			next->bits = TYPE_Nd;
-			next->next = cur;
-			cur->bits &= ~TYPE_Nd;
+		for (mask = TYPE_Nm; mask <= TYPE_Nd; mask <<= 1) {
+			if (mask & cur->bits && ~mask & cur->bits) {
+				next = mandoc_calloc(1,
+				    sizeof(struct expr));
+				memcpy(next, cur, sizeof(struct expr));
+				prev->open = 1;
+				cur->bits = mask;
+				cur->next = next;
+				cur = next;
+				cur->bits &= ~mask;
+			}
+		}
+		prev->and = (1 == logic);
+		prev->open += toopen;
+		if (cur != prev)
 			cur->close = 1;
-		} else
-			cur = next;
-		next->and = (1 == logic);
-		next->open += toopen;
+
 		toopen = logic = igncase = 0;
 	}
 	if (toopen || logic || igncase || toclose)
