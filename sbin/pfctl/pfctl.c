@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.323 2014/02/28 22:18:23 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.324 2014/04/11 02:56:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1563,6 +1563,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	}
 
 	free(path);
+	path = NULL;
 
 	if (altqsupport && loadaltq && check_commit_altq(dev, opts) != 0)
 		ERRX("errors in altq config");
