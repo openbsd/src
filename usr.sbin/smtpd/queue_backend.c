@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.49 2014/03/14 05:27:00 halex Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.50 2014/04/11 02:58:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -317,7 +317,9 @@ queue_message_fd_r(uint32_t msgid)
 			goto err;
 
 		fclose(ifp);
+		ifp = NULL;
 		fclose(ofp);
+		ofp = NULL;
 		lseek(fdin, SEEK_SET, 0);
 	}
 
@@ -337,7 +339,9 @@ queue_message_fd_r(uint32_t msgid)
 			goto err;
 
 		fclose(ifp);
+		ifp = NULL;
 		fclose(ofp);
+		ofp = NULL;
 		lseek(fdin, SEEK_SET, 0);
 	}
 
