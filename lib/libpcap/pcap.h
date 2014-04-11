@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.15 2012/05/25 01:58:08 lteo Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.16 2014/04/11 04:08:58 lteo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.15 2012/05/25 01:58:08 lteo Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h

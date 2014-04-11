@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.15 2008/06/11 15:02:21 dtucker Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.16 2014/04/11 04:08:58 lteo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -19,8 +19,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.15 2008/06/11 15:02:21 dtucker Exp $ (LBL)
  */
 
 /* Address qualifiers. */

@@ -1,6 +1,5 @@
-$OpenBSD: README,v 1.6 2000/04/26 21:25:52 jakob Exp $
+$OpenBSD: README,v 1.7 2014/04/11 04:08:58 lteo Exp $
 $NetBSD: README,v 1.2 1995/03/06 11:38:07 mycroft Exp $
-@(#) $Header: /home/cvs/src/lib/libpcap/README,v 1.6 2000/04/26 21:25:52 jakob Exp $ (LBL)
 
 LIBPCAP 0.5
 Now maintained by "The Tcpdump Group"

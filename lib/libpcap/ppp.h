@@ -1,6 +1,5 @@
-/*	$OpenBSD: ppp.h,v 1.2 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: ppp.h,v 1.3 2014/04/11 04:08:58 lteo Exp $	*/
 
-/* @(#) $Header: /home/cvs/src/lib/libpcap/ppp.h,v 1.2 2000/04/26 21:25:53 jakob Exp $ (LBL) */
 /*
  * Point to Point Protocol (PPP) RFC1331
  *
