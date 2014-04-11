@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.8 2014/04/11 22:51:53 miod Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.1 2014/04/11 22:51:53 miod Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -51,40 +51,25 @@ if [ ! -w "${objdir}" ]; then
 fi
 
 version_re="s/^#define[[:blank:]]+SHLIB_VERSION_NUMBER[[:blank:]]+\"(.*)\".*/\1/p"
-version_file=${curdir}/src/crypto/opensslv.h
+#version_file=${curdir}/src/crypto/opensslv.h
+version_file=${curdir}/../libssl/src/crypto/opensslv.h
 lib_version=$(sed -nE ${version_re} ${version_file})
 
 # Put -I${includedir} into Cflags so configure script tests like
 #   test -n "`pkg-config --cflags openssl`"
 # don't assume that OpenSSL isn't available.
 
-pc_file="${objdir}/libssl.pc"
+pc_file="${objdir}/libcrypto.pc"
 cat > ${pc_file} << __EOF__
 prefix=/usr
 exec_prefix=\${prefix}
 libdir=\${exec_prefix}/lib
 includedir=\${prefix}/include
 
-Name: OpenSSL
-Description: Secure Sockets Layer and cryptography libraries
+Name: OpenSSL-libcrypto
+Description: OpenSSL cryptography library
 Version: ${lib_version}
 Requires: 
-Libs: -L\${libdir} -lssl -lcrypto
-Cflags: -I\${includedir}
-__EOF__
-
-
-pc_file="${objdir}/openssl.pc"
-cat > ${pc_file} << __EOF__
-prefix=/usr
-exec_prefix=\${prefix}
-libdir=\${exec_prefix}/lib
-includedir=\${prefix}/include
-
-Name: OpenSSL
-Description: Secure Sockets Layer and cryptography libraries and tools
-Version: ${lib_version}
-Requires: 
-Libs: -L\${libdir} -lssl -lcrypto
+Libs: -L\${libdir} -lcrypto
 Cflags: -I\${includedir}
 __EOF__

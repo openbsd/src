@@ -1,16 +1,15 @@
-# $OpenBSD: Makefile,v 1.30 2014/04/10 20:00:27 deraadt Exp $
+# $OpenBSD: Makefile,v 1.31 2014/04/11 22:51:54 miod Exp $
 
 LIB=	ssl
 
-SSLEAYDIST= src
-
-LSSL_SRC= ${.CURDIR}/../${SSLEAYDIST}/ssl
+SSL_SRC=	${.CURDIR}/../../libssl/src
+LSSL_SRC=	${SSL_SRC}/ssl
 
 CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -DOPENSSL_NO_BUF_FREELISTS -DOPENSSL_NO_HEARTBEATS
-CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST} -I${.CURDIR}/../${SSLEAYDIST}/crypto
+CFLAGS+= -I${SSL_SRC} -I${SSL_SRC}/crypto
 
 SRCS=\
 	s2_meth.c s2_srvr.c s2_clnt.c s2_lib.c s2_enc.c s2_pkt.c \

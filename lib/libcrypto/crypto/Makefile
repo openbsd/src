@@ -1,9 +1,8 @@
-# $OpenBSD: Makefile,v 1.64 2013/07/13 16:34:43 miod Exp $
+# $OpenBSD: Makefile,v 1.1 2014/04/11 22:51:53 miod Exp $
 
 LIB=	crypto
 
-SSLEAYDIST=	src
-SSL_SRC=	${.CURDIR}/../${SSLEAYDIST}
+SSL_SRC=	${.CURDIR}/../../libssl/src
 LCRYPTO_SRC=	${SSL_SRC}/crypto
 
 # arm and sh default to little endian, mips defaults to big endian
@@ -38,7 +37,7 @@ CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 CFLAGS+= -DOPENSSL_NO_HW_SUREWARE
 CFLAGS+= -DOPENSSL_NO_HW_UBSEC
 
-CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
+CFLAGS+= -I${SSL_SRC}
 CFLAGS+= -I${LCRYPTO_SRC}
 CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 
