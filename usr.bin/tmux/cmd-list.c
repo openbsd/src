@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.12 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.13 2014/04/11 19:35:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -103,7 +103,7 @@ size_t
 cmd_list_print(struct cmd_list *cmdlist, char *buf, size_t len)
 {
 	struct cmd	*cmd;
-	size_t		 off;
+	size_t		 off, used;
 
 	off = 0;
 	TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
@@ -112,8 +112,12 @@ cmd_list_print(struct cmd_list *cmdlist, char *buf, size_t len)
 		off += cmd_print(cmd, buf + off, len - off);
 		if (off >= len)
 			break;
-		if (TAILQ_NEXT(cmd, qentry) != NULL)
-			off += xsnprintf(buf + off, len - off, " ; ");
+		if (TAILQ_NEXT(cmd, qentry) != NULL) {
+			used = xsnprintf(buf + off, len - off, " ; ");
+			if (used > len - off)
+				used = len - off;
+			off += used;
+		}
 	}
 	return (off);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.104 2014/04/03 08:20:29 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.105 2014/04/11 19:35:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1194,8 +1194,8 @@ window_copy_write_line(
 		screen_write_puts(ctx, &gc, "%s", hdr);
 	} else if (py == last && data->inputtype != WINDOW_COPY_OFF) {
 		limit = sizeof hdr;
-		if (limit > screen_size_x(s))
-			limit = screen_size_x(s);
+		if (limit > screen_size_x(s) + 1)
+			limit = screen_size_x(s) + 1;
 		if (data->inputtype == WINDOW_COPY_NUMERICPREFIX) {
 			xoff = size = xsnprintf(hdr, limit,
 			    "Repeat: %u", data->numprefix);
@@ -1208,10 +1208,12 @@ window_copy_write_line(
 	} else
 		size = 0;
 
-	screen_write_cursormove(ctx, xoff, py);
-	screen_write_copy(ctx, data->backing, xoff,
-	    (screen_hsize(data->backing) - data->oy) + py,
-	    screen_size_x(s) - size, 1);
+	if (size < screen_size_x(s)) {
+		screen_write_cursormove(ctx, xoff, py);
+		screen_write_copy(ctx, data->backing, xoff,
+		    (screen_hsize(data->backing) - data->oy) + py,
+		    screen_size_x(s) - size, 1);
+	}
 
 	if (py == data->cy && data->cx == screen_size_x(s)) {
 		memcpy(&gc, &grid_default_cell, sizeof gc);
