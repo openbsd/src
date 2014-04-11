@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.18 2014/04/10 02:45:04 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.19 2014/04/11 15:45:39 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/mman.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -91,6 +92,53 @@ static	void		 sql_match(sqlite3_context *context,
 static	void		 sql_regexp(sqlite3_context *context,
 				int argc, sqlite3_value **argv);
 static	char		*sql_statement(const struct expr *);
+
+int
+mansearch_setup(int start)
+{
+	static void	*pagecache;
+	int		 c;
+
+#define	PC_PAGESIZE	1280
+#define	PC_NUMPAGES	256
+
+	if (start) {
+		if (NULL != pagecache) {
+			fprintf(stderr, "pagecache already enabled\n");
+			return((int)MANDOCLEVEL_BADARG);
+		}
+
+		pagecache = mmap(NULL, PC_PAGESIZE * PC_NUMPAGES,
+		    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+
+		if (MAP_FAILED == pagecache) {
+			perror("mmap");
+			pagecache = NULL;
+			return((int)MANDOCLEVEL_SYSERR);
+		}
+
+		c = sqlite3_config(SQLITE_CONFIG_PAGECACHE,
+		    pagecache, PC_PAGESIZE, PC_NUMPAGES);
+
+		if (SQLITE_OK == c)
+			return((int)MANDOCLEVEL_OK);
+
+		fprintf(stderr, "pagecache: %s\n", sqlite3_errstr(c));
+
+	} else if (NULL == pagecache) {
+		fprintf(stderr, "pagecache missing\n");
+		return((int)MANDOCLEVEL_BADARG);
+	}
+
+	if (-1 == munmap(pagecache, PC_PAGESIZE * PC_NUMPAGES)) {
+		perror("munmap");
+		pagecache = NULL;
+		return((int)MANDOCLEVEL_SYSERR);
+	}
+
+	pagecache = NULL;
+	return((int)MANDOCLEVEL_OK);
+}
 
 int
 mansearch(const struct mansearch *search,
