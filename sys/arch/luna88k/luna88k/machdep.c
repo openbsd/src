@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2014/03/13 03:52:55 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.96 2014/04/12 11:26:42 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -822,12 +822,11 @@ luna88k_ext_int(struct trapframe *eframe)
 #else
 	u_int cpu = cpu_number();
 #endif
-	u_int32_t cur_isr, ign_mask;
+	u_int32_t cur_isr;
 	u_int level, cur_int_level, old_spl;
 	int unmasked = 0;
 
 	cur_isr = *int_mask_reg[cpu];
-	ign_mask = 0;
 	old_spl = eframe->tf_mask;
 
 	cur_int_level = cur_isr >> 29;
