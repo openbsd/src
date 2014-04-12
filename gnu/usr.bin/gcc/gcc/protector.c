@@ -1154,7 +1154,7 @@ copy_args_for_protection ()
 
 		    /* move_arg_location may change the contents of
 		       DECL_RTL (parms). to avoid this, copies the contents */
-		    /* SET_DECL_RTL (parms, copy_rtx (DECL_RTL (parms))); */
+		    SET_DECL_RTL (parms, copy_rtx (DECL_RTL (parms)));
 
 		    /* generate codes for copying the content */
 		    store_expr (parms, temp_rtx, 0);
