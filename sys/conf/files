@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.569 2014/03/18 22:36:37 miod Exp $
+#	$OpenBSD: files,v 1.570 2014/04/12 05:06:58 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -211,6 +211,10 @@ file	dev/microcode/isp/isp_fw2300.c	qla | isp_pci
 # Advanced Host Controller Interface for Serial ATA
 device	ahci: scsi, atascsi
 file	dev/ic/ahci.c			ahci | ahci_pci | ahci_jmb needs-flag
+
+# NVM Express Controller
+device	nvme: scsi
+file	dev/ic/nvme.c			nvme
 
 # LSI Logic Fusion-MPT Message Passing Interface
 device	mpi: scsi
