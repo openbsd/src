@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.6 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.7 2014/04/12 06:05:53 jsg Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1280,7 +1280,7 @@ atombios_dig_transmitter_setup(struct drm_encoder *encoder, int action, uint8_t 
 			}
 			if (is_dp)
 				args.v5.ucLaneNum = dp_lane_count;
-			else if (radeon_encoder->pixel_clock > 165000)
+			else if (radeon_dig_monitor_is_duallink(encoder, radeon_encoder->pixel_clock))
 				args.v5.ucLaneNum = 8;
 			else
 				args.v5.ucLaneNum = 4;
