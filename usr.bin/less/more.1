@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.11 2014/04/12 16:41:10 schwarze Exp $
+.\"	$OpenBSD: more.1,v 1.12 2014/04/12 18:13:49 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,8 +170,10 @@ All marks are lost when a new file is examined.
 .It Ic / Ns Ar pattern
 Search forward in the file for the N-th line containing the pattern.
 N defaults to 1.
-The pattern is a regular expression, as recognized by
-.Xr ed 1 .
+The pattern is a basic regular expression (BRE).
+See
+.Xr re_format 7
+for more information on regular expressions.
 The search starts at the second line displayed.
 .It Ic ?\& Ns Ar pattern
 Search backward in the file for the N-th line containing the pattern.
@@ -267,7 +269,8 @@ to get the terminal characteristics necessary to manipulate the screen.
 .Sh SEE ALSO
 .Xr ctags 1 ,
 .Xr less 1 ,
-.Xr vi 1
+.Xr vi 1 ,
+.Xr re_format 7
 .Sh STANDARDS
 The
 .Nm
