@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.9 2014/04/10 06:42:21 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.10 2014/04/12 15:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)more.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 10 2014 $
+.Dd $Mdocdate: April 12 2014 $
 .Dt MORE 1
 .Os
 .Sh NAME
@@ -125,30 +125,25 @@ In the following descriptions, ^X means control-X.
 .Bl -tag -width Ic
 .It Ic h
 Help: display a summary of these commands.
-If you forget all the other commands, remember this one.
-.It Xo
-.Ic SPACE
-.No or
-.Ic f
-.No or
-.Ic ^F
-.Xc
+.It Ic SPACE | f | ^F
 Scroll forward N lines, default one window.
 If N is more than the screen size, only the final screenful is displayed.
-.It Ic b No or Ic ^B
-Scroll backward N lines, default one window (see option -z below).
+.It Ic b | ^B
+Scroll backward N lines, default one window (see the
+.Fl n
+option).
 If N is more than the screen size, only the final screenful is displayed.
-.It Ic j No or Ic RETURN
+.It Ic j | RETURN
 Scroll forward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
 .It Ic k
 Scroll backward N lines, default 1.
 The entire N lines are displayed, even if N is more than the screen size.
-.It Ic d No or Ic ^D
+.It Ic d | ^D
 Scroll forward N lines, default one half of the screen size.
 If N is specified, it becomes the new default for
 subsequent d and u commands.
-.It Ic u No or Ic ^U
+.It Ic u | ^U
 Scroll backward N lines, default one half of the screen size.
 If N is specified, it becomes the new default for
 subsequent d and u commands.
@@ -156,7 +151,7 @@ subsequent d and u commands.
 Go to line N in the file, default 1 (beginning of file).
 .It Ic G
 Go to line N in the file, default the end of the file.
-.It Ic r No or Ic ^L
+.It Ic r | ^L
 Repaint the screen.
 .It Ic R
 Repaint the screen, discarding any buffered input.
@@ -221,7 +216,7 @@ The editor is taken from the environment variable
 .Ev EDITOR ,
 or defaults to
 .Xr vi 1 .
-.It Ic = No or Ic ^G
+.It Ic = | ^G
 These options print out the number of the file currently being displayed
 relative to the total number of files there are to display, the current
 line number, the current byte number and the total bytes to display, and
@@ -233,13 +228,7 @@ or the file is shorter than a single screen, some
 of these items may not be available.
 Note, all of these items reference the first byte of the last line
 displayed on the screen.
-.It Xo
-.Ic q
-.No or
-.Ic :q
-.No or
-.Ic ZZ
-.Xc
+.It Ic q | :q | ZZ
 Exits
 .Nm .
 .El
@@ -253,14 +242,8 @@ variable,
 but may be overridden by window systems which support
 .Dv TIOCGWINSZ .
 .It Ev EDITOR
-Specifies the default editor if
-.Ev VISUAL
-is not set.
-If neither
-.Ev VISUAL
-nor
-.Ev EDITOR
-are set,
+Specifies the default editor.
+If not set,
 .Xr vi 1
 is used.
 .It Ev LINES
@@ -278,8 +261,6 @@ Specifies the terminal type.
 Used by
 .Nm
 to get the terminal characteristics necessary to manipulate the screen.
-.It Ev VISUAL
-Specifies the default editor.
 .El
 .Sh EXIT STATUS
 .Ex -std more
