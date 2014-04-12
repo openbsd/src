@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.7 2014/02/10 02:35:09 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.8 2014/04/12 06:08:22 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -450,9 +450,11 @@ static int ttm_bo_handle_move_mem(struct ttm_buffer_object *bo,
 
 moved:
 	if (bo->evicted) {
-		ret = bdev->driver->invalidate_caches(bdev, bo->mem.placement);
-		if (ret)
-			printf("Can not flush read caches\n");
+		if (bdev->driver->invalidate_caches) {
+			ret = bdev->driver->invalidate_caches(bdev, bo->mem.placement);
+			if (ret)
+				printf("Can not flush read caches\n");
+		}
 		bo->evicted = false;
 	}
 
