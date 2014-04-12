@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.1 2014/04/12 05:06:58 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.2 2014/04/12 05:23:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -127,3 +127,16 @@ struct nvme_sqe {
 	u_int32_t	cdw14;
 	u_int32_t	cdw15;
 } __packed __aligned(8);
+
+#define NMV_ADMIN_DEL_IOSQ	0x00 /* Delete I/O Submission Queue */
+#define NMV_ADMIN_ADD_IOSQ	0x01 /* Create I/O Submission Queue */
+#define NMV_ADMIN_GET_LOG_PG	0x02 /* Get Log Page */
+#define NMV_ADMIN_DEL_IOCQ	0x04 /* Delete I/O Completion Queue */ 
+#define NMV_ADMIN_ADD_IOCQ	0x05 /* Create I/O Completion Queue */ 
+#define NMV_ADMIN_IDENTIFY	0x06 /* Identify */
+#define NMV_ADMIN_ABORT		0x08 /* Abort */
+#define NMV_ADMIN_SET_FEATURES	0x09 /* Set Features */
+#define NMV_ADMIN_GET_FEATURES	0x0a /* Get Features */
+#define NMV_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
+#define NMV_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
+#define NMV_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
