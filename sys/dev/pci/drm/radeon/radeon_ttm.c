@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ttm.c,v 1.4 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: radeon_ttm.c,v 1.5 2014/04/12 06:03:30 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -791,6 +791,9 @@ int radeon_ttm_init(struct radeon_device *rdev)
 		DRM_ERROR("Failed initializing VRAM heap.\n");
 		return r;
 	}
+	/* Change the size here instead of the init above so only lpfn is affected */
+	radeon_ttm_set_active_vram_size(rdev, rdev->mc.visible_vram_size);
+
 #ifdef __sparc64__
 	r = radeon_bo_create(rdev, rdev->fb_offset, PAGE_SIZE, true,
 			     RADEON_GEM_DOMAIN_VRAM,
