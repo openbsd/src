@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.204 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.205 2014/04/12 14:18:11 espie Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -841,15 +841,17 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct vnode *vp;
 	struct vattr vattr;
 	int flags, cmode;
-	int type, indx, error, fpuberr, localtrunc = 0;
+	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
 
 	fdplock(fdp);
 
-	if ((error = fcreate(p, &fp)) != 0)
+	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
 	flags = FFLAGS(oflags);
+	if (flags & O_CLOEXEC)
+		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
 
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
@@ -858,22 +860,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		localtrunc = 1;
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
-
-	fdpunlock(fdp);
-	error = vn_open(&nd, flags, cmode);
-	fdplock(fdp);
-
-	if ((fpuberr = fpublish(p, fp, &indx)) != 0) {
-		/* should never happen; just in case */
-		if (error == 0)
-			vn_close(nd.ni_vp, flags & FMASK, p->p_ucred, p);
-		closef(fp, p);
-		error = fpuberr;
-		goto out;
-	}
-	if (flags & O_CLOEXEC)
-		fdp->fd_ofileflags[indx] |= UF_EXCLOSE;
-	if (error != 0) {
+	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.106 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.107 2014/04/12 14:18:11 espie Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -820,28 +820,20 @@ fdexpand(struct proc *p)
 int
 falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
-	int error;
-
-	if ((error = fcreate(p, resultfp)))
-		return (error);
-	if ((error = fpublish(p, *resultfp, resultfd)))
-		closef(*resultfp, p);
-	return (error);
-}
-
-int
-fcreate(struct proc *p, struct file **resultfp)
-{
-	struct filedesc *fdp = p->p_fd;
 	struct file *fp, *fq;
-	int lim;
+	int error, i;
 
-	fdpassertlocked(fdp);
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	if (fdp->fd_openfd >= lim)
-		return (EMFILE);
-
+	fdpassertlocked(p->p_fd);
+restart:
+	if ((error = fdalloc(p, 0, &i)) != 0) {
+		if (error == ENOSPC) {
+			fdexpand(p);
+			goto restart;
+		}
+		return (error);
+	}
 	if (nfiles >= maxfiles) {
+		fd_unused(p->p_fd, i);
 		tablefull("file");
 		return (ENFILE);
 	}
@@ -851,7 +843,6 @@ fcreate(struct proc *p, struct file **resultfp)
 	 * of open files at that point, otherwise put it at the front of
 	 * the list of open files.
 	 */
-	fdp->fd_openfd++;
 	nfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
 	fp->f_iflags = FIF_LARVAL;
@@ -860,35 +851,15 @@ fcreate(struct proc *p, struct file **resultfp)
 	} else {
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
+	p->p_fd->fd_ofiles[i] = fp;
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
 	if (resultfp)
 		*resultfp = fp;
-	FREF(fp);
-	return (0);
-}
-
-int
-fpublish(struct proc *p, struct file *fp, int *resultfd)
-{
-	struct filedesc *fdp = p->p_fd;
-	int i, error;
-
-	fdpassertlocked(fdp);
-	fdp->fd_openfd--; /* undo previous increase by fcreate */
-restart:
-	if ((error = fdalloc(p, 0, &i)) != 0) {
-		if (error == ENOSPC) {
-			fdexpand(p);
-			goto restart;
-		}
-		return (error);
-	}
-
-	fdp->fd_ofiles[i] = fp;
 	if (resultfd)
 		*resultfd = i;
+	FREF(fp);
 	return (0);
 }
 
