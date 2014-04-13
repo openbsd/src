@@ -82,7 +82,7 @@
 #undef PROG
 #define PROG gendh_main
 
-static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb);
+static int dh_cb(int p, int n, BN_GENCB *cb);
 
 int MAIN(int, char **);
 
@@ -217,7 +217,7 @@ end:
 	OPENSSL_EXIT(ret);
 	}
 
-static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
+static int dh_cb(int p, int n, BN_GENCB *cb)
 	{
 	char c='*';
 

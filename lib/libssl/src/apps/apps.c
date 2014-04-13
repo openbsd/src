@@ -1590,7 +1590,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 	{
 	BIO *in=NULL;
 	BIGNUM *ret=NULL;
-	MS_STATIC char buf[1024];
+	char buf[1024];
 	ASN1_INTEGER *ai=NULL;
 
 	ai=ASN1_INTEGER_new();

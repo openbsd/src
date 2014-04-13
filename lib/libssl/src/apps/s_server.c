@@ -202,7 +202,7 @@ typedef unsigned int u_int;
 #endif
 
 #ifndef OPENSSL_NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
+static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
@@ -392,7 +392,7 @@ typedef struct srpsrvparm_st
    (which would normally occur after a worker has finished) and we
    set the user parameters. 
 */
-static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
+static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 	{
 	srpsrvparm *p = (srpsrvparm *)arg;
 	if (p->login == NULL && p->user == NULL )
@@ -727,7 +727,7 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const char * servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -2386,7 +2386,7 @@ static int init_ssl_connection(SSL *con)
 	const char *str;
 	X509 *peer;
 	long verify_error;
-	MS_STATIC char buf[BUFSIZ];
+	char buf[BUFSIZ];
 #ifndef OPENSSL_NO_KRB5
 	char *client_princ;
 #endif
@@ -2956,7 +2956,7 @@ err:
 	}
 
 #ifndef OPENSSL_NO_RSA
-static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
+static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	BIGNUM *bn = NULL;
 	static RSA *rsa_tmp=NULL;

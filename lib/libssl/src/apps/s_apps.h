@@ -150,7 +150,7 @@ typedef fd_mask fd_set;
 
 int do_server(int port, int type, int *ret, int (*cb) (char *hostname, int s, unsigned char *context), unsigned char *context);
 #ifdef HEADER_X509_H
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
+int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
 #ifdef HEADER_SSL_H
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
@@ -161,16 +161,16 @@ int should_retry(int i);
 int extract_port(char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,char **p);
 
-long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
+long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 				   int argi, long argl, long ret);
 
 #ifdef HEADER_SSL_H
-void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret);
-void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg);
-void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
+void apps_ssl_info_callback(const SSL *s, int where, int ret);
+void msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg);
+void tlsext_cb(SSL *s, int client_server, int type,
 					unsigned char *data, int len,
 					void *arg);
 #endif
 
-int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len);
-int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len);
+int generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len);
+int verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len);

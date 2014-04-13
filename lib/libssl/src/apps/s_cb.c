@@ -130,7 +130,7 @@ int verify_return_error=0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized=0;
 
-int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
+int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	X509 *err_cert;
 	int err,depth;
@@ -278,7 +278,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 	return 1;
 	}
 
-long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
+long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 				   int argi, long argl, long ret)
 	{
 	BIO *out;
@@ -302,7 +302,7 @@ long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
 	return(ret);
 	}
 
-void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
+void apps_ssl_info_callback(const SSL *s, int where, int ret)
 	{
 	const char *str;
 	int w;
@@ -339,7 +339,7 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 	}
 
 
-void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
+void msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
 	{
 	BIO *bio = arg;
 	const char *str_write_p, *str_version, *str_content_type = "", *str_details1 = "", *str_details2= "";
@@ -655,7 +655,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 	(void)BIO_flush(bio);
 	}
 
-void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
+void tlsext_cb(SSL *s, int client_server, int type,
 					unsigned char *data, int len,
 					void *arg)
 	{
@@ -760,7 +760,7 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 	(void)BIO_flush(bio);
 	}
 
-int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+int generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 	{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;
@@ -848,7 +848,7 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 	return 1;
 	}
 
-int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
+int verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
 	{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;

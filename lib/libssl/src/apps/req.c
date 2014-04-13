@@ -1444,7 +1444,7 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def, char *value,
 	     int nid, int n_min, int n_max, unsigned long chtype, int mval)
 	{
 	int i,ret=0;
-	MS_STATIC char buf[1024];
+	char buf[1024];
 start:
 	if (!batch) BIO_printf(bio_err,"%s [%s]:",text,def);
 	(void)BIO_flush(bio_err);

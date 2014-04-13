@@ -228,8 +228,8 @@ int main(int Argc, char *ARGV[])
 #define PROG_NAME_SIZE	39
 	char pname[PROG_NAME_SIZE+1];
 	FUNCTION f,*fp;
-	MS_STATIC const char *prompt;
-	MS_STATIC char buf[1024];
+	const char *prompt;
+	char buf[1024];
 	char *to_free=NULL;
 	int n,i,ret=0;
 	int argc;
@@ -696,13 +696,13 @@ static void list_md(BIO *out)
 	EVP_MD_do_all_sorted(list_md_fn, out);
 	}
 
-static int MS_CALLBACK function_cmp(const FUNCTION *a, const FUNCTION *b)
+static int function_cmp(const FUNCTION *a, const FUNCTION *b)
 	{
 	return strncmp(a->name,b->name,8);
 	}
 static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
 
-static unsigned long MS_CALLBACK function_hash(const FUNCTION *a)
+static unsigned long function_hash(const FUNCTION *a)
 	{
 	return lh_strhash(a->name);
 	}	
