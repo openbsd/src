@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2014/04/13 15:49:47 miod Exp $
+# $OpenBSD: Makefile,v 1.3 2014/04/13 16:03:30 miod Exp $
 
 LIB=	crypto
 
@@ -347,7 +347,6 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/x509v3
 
 HDRS=\
-	e_os.h \
 	e_os2.h \
 	crypto/aes/aes.h \
 	crypto/asn1/asn1.h \
