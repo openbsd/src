@@ -26,10 +26,9 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec padlock capi
+LIBNAMES= aep atalla cswift gmp chil nuron sureware ubsec padlock capi
 
-LIBSRC=	e_4758cca.c \
-	e_aep.c \
+LIBSRC=	e_aep.c \
 	e_atalla.c \
 	e_cswift.c \
 	e_gmp.c \
@@ -39,8 +38,7 @@ LIBSRC=	e_4758cca.c \
 	e_ubsec.c \
 	e_padlock.c \
 	e_capi.c
-LIBOBJ= e_4758cca.o \
-	e_aep.o \
+LIBOBJ= e_aep.o \
 	e_atalla.o \
 	e_cswift.o \
 	e_gmp.o \
@@ -54,8 +52,7 @@ LIBOBJ= e_4758cca.o \
 SRC= $(LIBSRC)
 
 EXHEADER= 
-HEADER=	e_4758cca_err.c e_4758cca_err.h \
-	e_aep_err.c e_aep_err.h \
+HEADER=	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
 	e_cswift_err.c e_cswift_err.h \
 	e_gmp_err.c e_gmp_err.h \
@@ -164,22 +161,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-e_4758cca.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_4758cca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_4758cca.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-e_4758cca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_4758cca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_4758cca.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_4758cca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_4758cca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_4758cca.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_4758cca.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_4758cca.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_4758cca.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_4758cca.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_4758cca.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-e_4758cca.o: e_4758cca.c e_4758cca_err.c e_4758cca_err.h
-e_4758cca.o: vendor_defns/hw_4758_cca.h
 e_aep.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_aep.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_aep.o: ../include/openssl/crypto.h ../include/openssl/dh.h
