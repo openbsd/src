@@ -103,7 +103,6 @@ extern "C" {
 #    define SSLEAY_CONF		OPENSSL_CONF
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ':'
-#    define NUL_DEV		"/dev/null"
 #    define EXIT(n)		exit(n)
 #  define SSLeay_getpid()	getpid()
 
