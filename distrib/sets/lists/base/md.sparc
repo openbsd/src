@@ -360,6 +360,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/nec765reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ns16550reg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/nvmereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/nvmevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/oosiopreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/oosiopvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/osiopreg.ph

@@ -1,3 +1,5 @@
+./usr/include/dev/ic/nvmereg.h
+./usr/include/dev/ic/nvmevar.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
