@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.255 2014/03/31 12:11:42 mpi Exp $ */
+/* $OpenBSD: acpi.c,v 1.256 2014/04/13 14:43:01 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2292,7 +2292,7 @@ acpi_thread(void *arg)
 	while (thread->running) {
 		s = spltty();
 		while (sc->sc_threadwaiting) {
-			dnprintf(10, "acpi going to sleep...\n");
+			dnprintf(10, "acpi thread going to sleep...\n");
 			rw_exit_write(&sc->sc_lck);
 			tsleep(sc, PWAIT, "acpi0", 0);
 			rw_enter_write(&sc->sc_lck);
