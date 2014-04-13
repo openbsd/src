@@ -845,18 +845,6 @@ case "$GUESSOS" in
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
-# NB: This atalla support has been superceded by the ENGINE support
-# That contains its own header and definitions anyway. Support can
-# be enabled or disabled on any supported platform without external
-# headers, eg. by adding the "hw-atalla" switch to ./config or
-# perl Configure
-#
-# See whether we can compile Atalla support
-#if [ -f /usr/include/atasi.h ]
-#then
-#  options="$options -DATALLA"
-#fi
-
 if expr "$options" : '.*no\-asm' > /dev/null; then :; else
   sh -c "$CROSS_COMPILE${CC:-gcc} -Wa,--help -c -o /tmp/null.$$.o -x assembler /dev/null && rm /tmp/null.$$.o" 2>&1 | \
   grep \\--noexecstack >/dev/null && \

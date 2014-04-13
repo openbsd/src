@@ -85,9 +85,6 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_AEP
 	ENGINE_load_aep();
 #endif
-#ifndef OPENSSL_NO_HW_ATALLA
-	ENGINE_load_atalla();
-#endif
 #ifndef OPENSSL_NO_HW_NCIPHER
 	ENGINE_load_chil();
 #endif
