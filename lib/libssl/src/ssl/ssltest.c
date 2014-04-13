@@ -193,11 +193,7 @@
 				     get screwed...
 				  */
 
-#ifdef OPENSSL_SYS_WINDOWS
-#include <winsock.h>
-#else
 #include OPENSSL_UNISTD
-#endif
 
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"
