@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.147 2014/03/23 17:29:06 pascal Exp $
+#	$OpenBSD: bsd.own.mk,v 1.148 2014/04/13 08:35:27 brad Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -16,13 +16,8 @@ SKEY?=		yes
 KERBEROS5?=	yes
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
-# Set `TCP_WRAPPERS' to `yes' to build certain networking daemons with
-# integrated support for libwrap.
-TCP_WRAPPERS?=	no
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
-# Set toolchain to be able to know differences.
-ELF_TOOLCHAIN?=	yes
 
 GCC3_ARCH=m88k vax
 BINUTILS217_ARCH=hppa64 ia64
@@ -147,8 +142,6 @@ PICFLAG?=-fpic
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 ASPICFLAG=-KPIC
-.elif ${ELF_TOOLCHAIN:L} == "no"
-ASPICFLAG=-k
 .endif
 
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \

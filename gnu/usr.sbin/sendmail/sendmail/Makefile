@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.30 2014/03/19 21:10:27 tedu Exp $
+#	$OpenBSD: Makefile,v 1.31 2014/04/13 08:35:27 brad Exp $
 
 PROG=	sendmail
 
 .include <bsd.own.mk>
 
-WANT_LIBWRAP=1
 WANT_LIBSM=1
 WANT_LIBSMUTIL=1
 
