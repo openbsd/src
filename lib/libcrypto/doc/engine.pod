@@ -30,7 +30,6 @@ engine - ENGINE cryptographic module support
  void ENGINE_load_cswift(void);
  void ENGINE_load_gmp(void);
  void ENGINE_load_nuron(void);
- void ENGINE_load_sureware(void);
  #endif
  void ENGINE_load_cryptodev(void);
  void ENGINE_load_builtin_engines(void);
