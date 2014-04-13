@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.44 2012/10/31 16:35:36 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.45 2014/04/13 06:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -65,9 +65,11 @@ struct acpitz_softc {
 
 int	acpitz_match(struct device *, void *, void *);
 void	acpitz_attach(struct device *, struct device *, void *);
+int	acpitz_activate(struct device *, int);
 
 struct cfattach acpitz_ca = {
-	sizeof(struct acpitz_softc), acpitz_match, acpitz_attach
+	sizeof(struct acpitz_softc), acpitz_match, acpitz_attach,
+	NULL, acpitz_activate
 };
 
 struct cfdriver acpitz_cd = {
@@ -234,6 +236,19 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	 * fully attached
 	 */
 	kthread_create_deferred(acpitz_init_perf, sc);
+}
+
+int
+acpitz_activate(struct device *self, int act)
+{
+	struct acpitz_softc	*sc = (struct acpitz_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		acpitz_init(sc, ACPITZ_INIT);
+		break;
+	}
+	return 0;
 }
 
 int
