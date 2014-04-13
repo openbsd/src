@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.90 2014/04/10 02:45:03 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.91 2014/04/13 21:21:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,22 +47,22 @@ extern const char *const mansearch_keynames[];
 
 #define	SQL_EXEC(_v) \
 	if (SQLITE_OK != sqlite3_exec(db, (_v), NULL, NULL, NULL)) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db))
+		say("", "%s: %s", (_v), sqlite3_errmsg(db))
 #define	SQL_BIND_TEXT(_s, _i, _v) \
 	if (SQLITE_OK != sqlite3_bind_text \
 		((_s), (_i)++, (_v), -1, SQLITE_STATIC)) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db))
+		say(mlink->file, "%s", sqlite3_errmsg(db))
 #define	SQL_BIND_INT(_s, _i, _v) \
 	if (SQLITE_OK != sqlite3_bind_int \
 		((_s), (_i)++, (_v))) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db))
+		say(mlink->file, "%s", sqlite3_errmsg(db))
 #define	SQL_BIND_INT64(_s, _i, _v) \
 	if (SQLITE_OK != sqlite3_bind_int64 \
 		((_s), (_i)++, (_v))) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db))
+		say(mlink->file, "%s", sqlite3_errmsg(db))
 #define SQL_STEP(_s) \
 	if (SQLITE_DONE != sqlite3_step((_s))) \
-		fprintf(stderr, "%s\n", sqlite3_errmsg(db))
+		say(mlink->file, "%s", sqlite3_errmsg(db))
 
 enum	op {
 	OP_DEFAULT = 0, /* new dbs from dir list or default config */
@@ -1197,7 +1197,6 @@ names_check(void)
 {
 	sqlite3_stmt	*stmt;
 	const char	*name, *sec, *arch, *key;
-	size_t		 i;
 	int		 irc;
 
 	sqlite3_prepare_v2(db,
@@ -1213,8 +1212,8 @@ names_check(void)
 	  ") USING (pageid);",
 	  -1, &stmt, NULL);
 
-	i = 1;
-	SQL_BIND_INT64(stmt, i, NAME_TITLE);
+	if (SQLITE_OK != sqlite3_bind_int64(stmt, 1, NAME_TITLE))
+		say("", "%s", sqlite3_errmsg(db));
 
 	while (SQLITE_ROW == (irc = sqlite3_step(stmt))) {
 		name = sqlite3_column_text(stmt, 0);
@@ -1949,6 +1948,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 		dbadd_mlink(mlink);
 		mlink = mlink->next;
 	}
+	mlink = mpage->mlinks;
 
 	for (key = ohash_first(&names, &slot); NULL != key;
 	     key = ohash_next(&names, &slot)) {
