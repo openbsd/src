@@ -172,7 +172,7 @@ static void acpt_close_socket(BIO *bio)
 	c=(BIO_ACCEPT *)bio->ptr;
 	if (c->accept_sock != -1)
 		{
-		shutdown(c->accept_sock,2);
+		shutdown(c->accept_sock, SHUT_RDWR);
 		close(c->accept_sock);
 		c->accept_sock=-1;
 		bio->num=-1;
