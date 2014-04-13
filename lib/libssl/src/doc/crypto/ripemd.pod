@@ -56,7 +56,7 @@ ISO/IEC 10118-3 (draft) (??)
 
 =head1 SEE ALSO
 
-L<SHA1(3)|SHA1(3)>, L<HMAC(3)|HMAC(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
+L<sha(3)|sha(3)>, L<hmac(3)|hmac(3)>, L<EVP_DigestInit(3)|EVP_DigestInit(3)>
 
 =head1 HISTORY
 

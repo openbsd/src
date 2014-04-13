@@ -252,9 +252,9 @@ digest name passed on the command line.
 
 =head1 SEE ALSO
 
-L<evp(3)|evp(3)>, L<HMAC(3)|HMAC(3)>, L<MD2(3)|MD2(3)>,
-L<MD5(3)|MD5(3)>, L<MDC2(3)|MDC2(3)>, L<RIPEMD160(3)|RIPEMD160(3)>,
-L<SHA1(3)|SHA1(3)>
+L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
+L<md5(3)|md5(3)>, L<mdc2(3)|mdc2(3)>, L<ripemd(3)|ripemd(3)>,
+L<sha(3)|sha(3)>, L<dgst(1)|dgst(1)>
 
 =head1 HISTORY
 

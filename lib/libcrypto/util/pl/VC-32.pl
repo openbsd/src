@@ -27,6 +27,8 @@ $zlib_lib="zlib1.lib";
 $l_flags =~ s/-L("\[^"]+")/\/libpath:$1/g;
 $l_flags =~ s/-L(\S+)/\/libpath:$1/g;
 
+my $ff = "";
+
 # C compiler stuff
 $cc='cl';
 if ($FLAVOR =~ /WIN64/)
@@ -118,7 +120,7 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
     $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
-    $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
+    $dbg_cflags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
@@ -126,6 +128,7 @@ else	# Win32
     $base_cflags= " $mf_cflag";
     my $f = $shlib || $fips ?' /MD':' /MT';
     $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+    $ff = "/fixed";
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
@@ -318,7 +321,7 @@ sub do_lib_rule
 			$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
 			$ret.="\tSET FIPS_TARGET=$target\n";
 			$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
-			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) /map $base_arg $efile$target ";
+			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $ff /map $base_arg $efile$target ";
 			$ret.="$name @<<\n  \$(SHLIB_EX_OBJ) $objs \$(EX_LIBS) ";
 			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
 			}
@@ -355,7 +358,7 @@ sub do_link_rule
 		$ret.="\tSET FIPS_TARGET=$target\n";
 		$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
 		$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
-		$ret.="\t\$(FIPSLINK) \$(LFLAGS) /map $efile$target @<<\n";
+		$ret.="\t\$(FIPSLINK) \$(LFLAGS) $ff /map $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
 	else

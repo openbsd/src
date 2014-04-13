@@ -53,10 +53,7 @@ ghash-x86_64.s:	asm/ghash-x86_64.pl
 ghash-sparcv9.s:	asm/ghash-sparcv9.pl
 	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
 ghash-alpha.s:	asm/ghash-alpha.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
-	$(PERL) asm/ghash-alpha.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
-
+	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 ghash-parisc.s:	asm/ghash-parisc.pl
 	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 

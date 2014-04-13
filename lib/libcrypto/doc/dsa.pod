@@ -101,7 +101,8 @@ Standard, DSS), ANSI X9.30
 =head1 SEE ALSO
 
 L<bn(3)|bn(3)>, L<dh(3)|dh(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>,
-L<rsa(3)|rsa(3)>, L<SHA1(3)|SHA1(3)>, L<DSA_new(3)|DSA_new(3)>,
+L<rsa(3)|rsa(3)>, L<sha(3)|sha(3)>, L<engine(3)|engine(3)>,
+L<DSA_new(3)|DSA_new(3)>,
 L<DSA_size(3)|DSA_size(3)>,
 L<DSA_generate_parameters(3)|DSA_generate_parameters(3)>,
 L<DSA_dup_DH(3)|DSA_dup_DH(3)>,

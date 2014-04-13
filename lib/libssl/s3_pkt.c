@@ -335,7 +335,7 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 			if (version != s->version)
 				{
 				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
-                                if ((s->version & 0xFF00) == (version & 0xFF00))
+                                if ((s->version & 0xFF00) == (version & 0xFF00) && !s->enc_write_ctx && !s->write_hash)
                                 	/* Send back error using their minor version number :-) */
 					s->version = (unsigned short)version;
 				al=SSL_AD_PROTOCOL_VERSION;
@@ -407,7 +407,7 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 	if (enc_err == 0)
 		{
 		al=SSL_AD_DECRYPTION_FAILED;
-		SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
+		SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
 		goto f_err;
 		}
 
@@ -467,7 +467,7 @@ printf("\n");
 			}
 
 		i=s->method->ssl3_enc->mac(s,md,0 /* not send */);
-		if (i < 0 || mac == NULL || timingsafe_bcmp(md, mac, (size_t)mac_size) != 0)
+		if (i < 0 || mac == NULL || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra+mac_size)
 			enc_err = -1;
@@ -748,6 +748,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * bytes and record version number > TLS 1.0
 	 */
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_B
+				&& !s->renegotiate
 				&& TLS1_get_version(s) > TLS1_VERSION)
 		*(p++) = 0x1;
 	else
@@ -1054,7 +1055,7 @@ start:
 				{
 				s->rstate=SSL_ST_READ_HEADER;
 				rr->off=0;
-				if (s->mode & SSL_MODE_RELEASE_BUFFERS && s->s3->rbuf.left == 0)
+				if (s->mode & SSL_MODE_RELEASE_BUFFERS)
 					ssl3_release_read_buffer(s);
 				}
 			}
@@ -1242,7 +1243,7 @@ start:
 				goto f_err;
 				}
 #ifdef SSL_AD_MISSING_SRP_USERNAME
-			if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
+			else if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
 				return(0);
 #endif
 			}

@@ -361,7 +361,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 	{
         int i;
         for (i=0; i<s->s3->tmp.key_block_length; i++)
-		printf("%02x", key_block[i]);  printf("\n");
+		printf("%02x", s->s3->tmp.key_block[i]);  printf("\n");
         }
 #endif	/* KSSL_DEBUG */
 
@@ -427,7 +427,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			s->write_hash = mac_ctx;
 			}
 		else
-		       mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
+			mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
 #ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
@@ -929,8 +929,8 @@ int tls1_final_finish_mac(SSL *s,
 			else
 				{
 				if (!EVP_MD_CTX_copy_ex(&ctx, hdgst) ||
-				    !EVP_DigestFinal_ex(&ctx,q,&i) ||
-				    (i != (unsigned int)hashsize))
+					!EVP_DigestFinal_ex(&ctx,q,&i) ||
+					(i != (unsigned int)hashsize))
 					err = 1;
 				q+=hashsize;
 				}
@@ -986,7 +986,8 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		}
 		else
 		{
-			EVP_MD_CTX_copy(&hmac,hash);
+			if (!EVP_MD_CTX_copy(&hmac,hash))
+				return -1;
 			mac_ctx = &hmac;
 		}
 

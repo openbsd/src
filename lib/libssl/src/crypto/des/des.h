@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_DES_H
-#define HEADER_DES_H
+#ifndef HEADER_NEW_DES_H
+#define HEADER_NEW_DES_H
 
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN, OPENSSL_NO_DES,
 				   DES_LONG (via openssl/opensslconf.h */
@@ -70,8 +70,6 @@
 # undef OPENSSL_EXTERN
 # define OPENSSL_EXTERN OPENSSL_EXPORT
 #endif
-
-#define des_SPtrans DES_SPtrans
 
 #ifdef  __cplusplus
 extern "C" {

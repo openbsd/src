@@ -216,10 +216,10 @@ int MAIN(int argc, char **argv)
 			out_bin = 1;
 		else if (strcmp(*argv,"-d") == 0)
 			debug=1;
-		else if (strcmp(*argv,"-non-fips-allow") == 0)
-			non_fips_allow=1;
 		else if (!strcmp(*argv,"-fips-fingerprint"))
 			hmac_key = "etaonrishdlcupfm";
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow=1;
 		else if (!strcmp(*argv,"-hmac"))
 			{
 			if (--argc < 1)
@@ -427,9 +427,9 @@ int MAIN(int argc, char **argv)
 			goto end;
 			}
 		if (do_verify)
-			r = EVP_DigestVerifyInit(mctx, &pctx, md, e, sigkey);
+			r = EVP_DigestVerifyInit(mctx, &pctx, md, NULL, sigkey);
 		else
-			r = EVP_DigestSignInit(mctx, &pctx, md, e, sigkey);
+			r = EVP_DigestSignInit(mctx, &pctx, md, NULL, sigkey);
 		if (!r)
 			{
 			BIO_printf(bio_err, "Error setting context\n");

@@ -455,7 +455,7 @@ printf("\n");
 		     orig_len < mac_size+1))
 			{
 			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_LENGTH_TOO_SHORT);
+			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
 			}
 
@@ -480,7 +480,7 @@ printf("\n");
 			}
 
 		i=s->method->ssl3_enc->mac(s,md,0 /* not send */);
-		if (i < 0 || mac == NULL || timingsafe_bcmp(md, mac, (size_t)mac_size) != 0)
+		if (i < 0 || mac == NULL || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
 			enc_err = -1;
@@ -847,6 +847,12 @@ start:
 			}
 		}
 
+	if (s->d1->listen && rr->type != SSL3_RT_HANDSHAKE)
+		{
+		rr->length = 0;
+		goto start;
+		}
+
 	/* we now have a packet which can be read and processed */
 
 	if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
@@ -1051,6 +1057,7 @@ start:
 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 			!s->s3->renegotiate)
 			{
+			s->d1->handshake_read_seq++;
 			s->new_session = 1;
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s))

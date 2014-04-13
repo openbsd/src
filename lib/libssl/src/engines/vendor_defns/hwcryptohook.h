@@ -65,7 +65,7 @@
  * please contact nCipher.
  *
  *
- * $Id: hwcryptohook.h,v 1.2 2010/10/01 22:58:58 djm Exp $
+ * $Id: hwcryptohook.h,v 1.3 2014/04/13 15:25:34 miod Exp $
  */
 
 #ifndef HWCRYPTOHOOK_H
