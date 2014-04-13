@@ -2213,9 +2213,5 @@ char *kssl_ctx_get0_client_princ(KSSL_CTX *kctx)
 
 #else /* !OPENSSL_NO_KRB5 */
 
-#if defined(PEDANTIC) || defined(OPENSSL_SYS_VMS)
-static void *dummy=&dummy;
-#endif
-
 #endif	/* !OPENSSL_NO_KRB5	*/
 

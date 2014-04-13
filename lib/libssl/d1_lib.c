@@ -66,10 +66,6 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
-#include <sys/timeb.h>
-#endif
-
 static void get_current_time(struct timeval *t);
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 int dtls1_listen(SSL *s, struct sockaddr *client);
@@ -462,12 +458,6 @@ static void get_current_time(struct timeval *t)
 	_ftime(&tb);
 	t->tv_sec = (long)tb.time;
 	t->tv_usec = (long)tb.millitm * 1000;
-#elif defined(OPENSSL_SYS_VMS)
-	struct timeb tb;
-	ftime(&tb);
-	t->tv_sec = (long)tb.time;
-	t->tv_usec = (long)tb.millitm * 1000;
-#else
 	gettimeofday(t, NULL);
 #endif
 }

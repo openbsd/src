@@ -39,8 +39,6 @@
 
 #if defined OPENSSL_SYS_UNIX || defined OPENSSL_SYS_WIN32 || defined OPENSSL_SYS_WINCE
 #define CURRDIR "."
-#elif defined OPENSSL_SYS_VMS
-#define CURRDIR "SYS$DISK:[]"
 #else
 #error "No supported platform defined!"
 #endif

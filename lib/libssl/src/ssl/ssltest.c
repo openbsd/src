@@ -158,11 +158,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef OPENSSL_SYS_VMS
-#define _XOPEN_SOURCE 500	/* Or isascii won't be declared properly on
-				   VMS (at least with DECompHP C).  */
-#endif
-
 #include <ctype.h>
 
 #include <openssl/opensslconf.h>
@@ -204,19 +199,8 @@
 #include OPENSSL_UNISTD
 #endif
 
-#ifdef OPENSSL_SYS_VMS
-#  define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
-#  define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"
-#elif defined(OPENSSL_SYS_WINCE)
-#  define TEST_SERVER_CERT "\\OpenSSL\\server.pem"
-#  define TEST_CLIENT_CERT "\\OpenSSL\\client.pem"
-#elif defined(OPENSSL_SYS_NETWARE)
-#  define TEST_SERVER_CERT "\\openssl\\apps\\server.pem"
-#  define TEST_CLIENT_CERT "\\openssl\\apps\\client.pem"
-#else
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"
-#endif
 
 /* There is really no standard for this, so let's assign some tentative
    numbers.  In any case, these numbers are only for this test */
