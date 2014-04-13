@@ -182,19 +182,19 @@ static STACK_OF(OPENSSL_STRING) *app_locks=NULL;
 static STACK_OF(CRYPTO_dynlock) *dyn_locks=NULL;
 
 
-static void (MS_FAR *locking_callback)(int mode,int type,
+static void (*locking_callback)(int mode,int type,
 	const char *file,int line)=0;
-static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
+static int (*add_lock_callback)(int *pointer,int amount,
 	int type,const char *file,int line)=0;
 #ifndef OPENSSL_NO_DEPRECATED
-static unsigned long (MS_FAR *id_callback)(void)=0;
+static unsigned long (*id_callback)(void)=0;
 #endif
-static void (MS_FAR *threadid_callback)(CRYPTO_THREADID *)=0;
-static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
+static void (*threadid_callback)(CRYPTO_THREADID *)=0;
+static struct CRYPTO_dynlock_value *(*dynlock_create_callback)
 	(const char *file,int line)=0;
-static void (MS_FAR *dynlock_lock_callback)(int mode,
+static void (*dynlock_lock_callback)(int mode,
 	struct CRYPTO_dynlock_value *l, const char *file,int line)=0;
-static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
+static void (*dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
 	const char *file,int line)=0;
 
 int CRYPTO_get_new_lockid(char *name)

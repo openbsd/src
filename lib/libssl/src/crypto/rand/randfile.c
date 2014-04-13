@@ -110,7 +110,7 @@ int RAND_load_file(const char *file, long bytes)
 	/* If bytes >= 0, read up to 'bytes' bytes.
 	 * if bytes == -1, read complete file. */
 
-	MS_STATIC unsigned char buf[BUFSIZE];
+	unsigned char buf[BUFSIZE];
 #ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
 #endif
