@@ -121,7 +121,7 @@ int ssl23_read(SSL *s, void *buf, int len)
 	{
 	int n;
 
-	clear_sys_error();
+	errno = 0;
 	if (SSL_in_init(s) && (!s->in_handshake))
 		{
 		n=s->handshake_func(s);
@@ -144,7 +144,7 @@ int ssl23_peek(SSL *s, void *buf, int len)
 	{
 	int n;
 
-	clear_sys_error();
+	errno = 0;
 	if (SSL_in_init(s) && (!s->in_handshake))
 		{
 		n=s->handshake_func(s);
@@ -167,7 +167,7 @@ int ssl23_write(SSL *s, const void *buf, int len)
 	{
 	int n;
 
-	clear_sys_error();
+	errno = 0;
 	if (SSL_in_init(s) && (!s->in_handshake))
 		{
 		n=s->handshake_func(s);

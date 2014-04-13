@@ -4167,7 +4167,7 @@ int ssl3_write(SSL *s, const void *buf, int len)
 		return(0);
 		}
 #endif
-	clear_sys_error();
+	errno = 0;
 	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
 
 	/* This is an experimental flag that sends the
@@ -4213,7 +4213,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	{
 	int ret;
 	
-	clear_sys_error();
+	errno = 0;
 	if (s->s3->renegotiate) ssl3_renegotiate_check(s);
 	s->s3->in_read_app_data=1;
 	ret=s->method->ssl_read_bytes(s,SSL3_RT_APPLICATION_DATA,buf,len,peek);

@@ -114,13 +114,13 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include <sys/types.h>
+
 #include <stdio.h>
+#include <unistd.h>
 
-#include "e_os.h"
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-
+#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #include "o_dir.h"
 #include <openssl/objects.h>
 #include <openssl/bio.h>
@@ -837,7 +837,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 
 	if (errno)
 		{
-		SYSerr(SYS_F_OPENDIR, get_last_sys_error());
+		SYSerr(SYS_F_OPENDIR, errno);
 		ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
 		goto err;

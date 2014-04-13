@@ -114,6 +114,8 @@
  * Author: Dave Jones
  * Date:   22-JUL-1996
  */
+#include <sys/types.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <iodef.h>		/* VMS IO$_ definitions */
@@ -123,9 +125,10 @@ int LIB$INIT_TIMER(), LIB$SHOW_TIMER();
 
 #include <string.h>		/* from ssltest.c */
 #include <errno.h>
+#include <unistd.h>
 
-#include "e_os.h"
-
+#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>

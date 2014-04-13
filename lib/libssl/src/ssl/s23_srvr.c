@@ -154,7 +154,7 @@ int ssl23_accept(SSL *s)
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
-	clear_sys_error();
+	errno = 0;
 
 	if (s->info_callback != NULL)
 		cb=s->info_callback;

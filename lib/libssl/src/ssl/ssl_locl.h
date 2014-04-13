@@ -142,13 +142,17 @@
 
 #ifndef HEADER_SSL_LOCL_H
 #define HEADER_SSL_LOCL_H
+
+#include <sys/types.h>
+
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
-#include "e_os.h"
-
+#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #include <openssl/buffer.h>
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>

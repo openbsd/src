@@ -142,17 +142,21 @@
 
 #define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#define USE_SOCKETS
-#include "e_os.h"
+#include <unistd.h>
 
 #ifdef OPENSSL_SYS_VMS
 #define _XOPEN_SOURCE 500	/* Or isascii won't be declared properly on
@@ -161,6 +165,8 @@
 
 #include <ctype.h>
 
+#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -586,7 +592,7 @@ int main(int argc, char *argv[])
 			fips_mode=1;
 #else
 			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
-			EXIT(0);
+			exit(0);
 #endif
 			}
 		else if (strcmp(*argv,"-server_auth") == 0)
@@ -785,7 +791,7 @@ bad:
 		{
 		/* ensure that the cipher list are correctly sorted and exit */
 		if (do_test_cipherlist() == 0)
-			EXIT(1);
+			exit(1);
 		ret = 0;
 		goto end;
 		}
@@ -796,7 +802,7 @@ bad:
 			"the test anyway (and\n-d to see what happens), "
 			"or add one of -ssl2, -ssl3, -tls1, -reuse\n"
 			"to avoid protocol mismatch.\n");
-		EXIT(1);
+		exit(1);
 		}
 
 #ifdef OPENSSL_FIPS
@@ -806,7 +812,7 @@ bad:
 			{
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-			EXIT(1);
+			exit(1);
 			}
 		else
 			fprintf(stderr,"*** IN FIPS MODE ***\n");
@@ -1150,7 +1156,7 @@ end:
 	EVP_cleanup();
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) BIO_free(bio_err);
-	EXIT(ret);
+	exit(ret);
 	return ret;
 	}
 
@@ -2144,7 +2150,7 @@ static int process_proxy_cond_multipliers(unsigned int letters[26],
 			default:
 				fprintf(stderr, "SOMETHING IS SERIOUSLY WRONG!"
 					" STOPPING\n");
-				EXIT(1);
+				exit(1);
 				}
 			}
 			break;
@@ -2207,7 +2213,7 @@ static int process_proxy_cond_adders(unsigned int letters[26],
 			default:
 				fprintf(stderr, "SOMETHING IS SERIOUSLY WRONG!"
 					" STOPPING\n");
-				EXIT(1);
+				exit(1);
 				}
 			}
 			break;
@@ -2306,7 +2312,7 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 				cb_arg->proxy_cond, &cond_end);
 
 			if (ok < 0)
-				EXIT(3);
+				exit(3);
 			if (*cond_end)
 				{
 				fprintf(stderr, "Stopped processing condition before it's end.\n");

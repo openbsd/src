@@ -113,7 +113,6 @@
 #ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
 
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
 static int n_do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len);
@@ -144,7 +143,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 			}
 		}
 
-	clear_sys_error();
+	errno = 0;
 	s->rwstate=SSL_NOTHING;
 	if (len <= 0) return(len);
 
@@ -372,7 +371,7 @@ static int read_n(SSL *s, unsigned int n, unsigned int max,
 	s->packet=s->s2->rbuf;
 	while (newb < (int)n)
 		{
-		clear_sys_error();
+		errno = 0;
 		if (s->rbio != NULL)
 			{
 			s->rwstate=SSL_READING;
@@ -438,7 +437,7 @@ int ssl2_write(SSL *s, const void *_buf, int len)
 			return(-1);
 		}
 
-	clear_sys_error();
+	errno = 0;
 	s->rwstate=SSL_NOTHING;
 	if (len <= 0) return(len);
 
@@ -483,7 +482,7 @@ static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 
 	for (;;)
 		{
-		clear_sys_error();
+		errno = 0;
 		if (s->wbio != NULL)
 			{
 			s->rwstate=SSL_WRITING;

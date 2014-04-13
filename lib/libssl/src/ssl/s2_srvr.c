@@ -153,7 +153,7 @@ int ssl2_accept(SSL *s)
 
 	RAND_add(&l,sizeof(l),0);
 	ERR_clear_error();
-	clear_sys_error();
+	errno = 0;
 
 	if (s->info_callback != NULL)
 		cb=s->info_callback;
@@ -170,7 +170,7 @@ int ssl2_accept(SSL *s)
 		return(-1);
 		}
 
-	clear_sys_error();
+	errno = 0;
 	for (;;)
 		{
 		state=s->state;
