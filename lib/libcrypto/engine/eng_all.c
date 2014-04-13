@@ -82,9 +82,6 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_AEP
-	ENGINE_load_aep();
-#endif
 #ifndef OPENSSL_NO_HW_NCIPHER
 	ENGINE_load_chil();
 #endif

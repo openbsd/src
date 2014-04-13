@@ -333,7 +333,6 @@ ENGINE *ENGINE_by_id(const char *id);
 void ENGINE_load_openssl(void);
 void ENGINE_load_dynamic(void);
 #ifndef OPENSSL_NO_STATIC_ENGINE
-void ENGINE_load_aep(void);
 void ENGINE_load_chil(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_padlock(void);
