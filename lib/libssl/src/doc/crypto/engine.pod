@@ -27,7 +27,6 @@ engine - ENGINE cryptographic module support
  void ENGINE_load_aep(void);
  void ENGINE_load_atalla(void);
  void ENGINE_load_chil(void);
- void ENGINE_load_cswift(void);
  void ENGINE_load_gmp(void);
  void ENGINE_load_nuron(void);
  #endif
@@ -319,8 +318,6 @@ functions, eg.
 
  /* Make the "dynamic" ENGINE available */
  void ENGINE_load_dynamic(void);
- /* Make the CryptoSwift hardware acceleration support available */
- void ENGINE_load_cswift(void);
  /* Make support for nCipher's "CHIL" hardware available */
  void ENGINE_load_chil(void);
  ...

@@ -26,11 +26,10 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= aep atalla cswift gmp chil nuron padlock capi
+LIBNAMES= aep atalla gmp chil nuron padlock capi
 
 LIBSRC=	e_aep.c \
 	e_atalla.c \
-	e_cswift.c \
 	e_gmp.c \
 	e_chil.c \
 	e_nuron.c \
@@ -38,7 +37,6 @@ LIBSRC=	e_aep.c \
 	e_capi.c
 LIBOBJ= e_aep.o \
 	e_atalla.o \
-	e_cswift.o \
 	e_gmp.o \
 	e_chil.o \
 	e_nuron.o \
@@ -50,7 +48,6 @@ SRC= $(LIBSRC)
 EXHEADER= 
 HEADER=	e_aep_err.c e_aep_err.h \
 	e_atalla_err.c e_atalla_err.h \
-	e_cswift_err.c e_cswift_err.h \
 	e_gmp_err.c e_gmp_err.h \
 	e_chil_err.c e_chil_err.h \
 	e_nuron_err.c e_nuron_err.h \
@@ -216,22 +213,6 @@ e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_chil.c
 e_chil.o: e_chil_err.c e_chil_err.h vendor_defns/hwcryptohook.h
-e_cswift.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_cswift.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_cswift.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_cswift.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_cswift.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_cswift.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_cswift.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_cswift.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_cswift.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_cswift.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_cswift.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_cswift.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-e_cswift.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_cswift.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_cswift.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_cswift.c
-e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
 e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h

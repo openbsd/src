@@ -336,7 +336,6 @@ void ENGINE_load_dynamic(void);
 void ENGINE_load_aep(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_chil(void);
-void ENGINE_load_cswift(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_capi(void);
