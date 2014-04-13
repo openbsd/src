@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_user.c,v 1.11 2007/04/27 17:01:54 art Exp $	*/
+/*	$OpenBSD: uvm_user.c,v 1.12 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_user.c,v 1.8 2000/06/27 17:29:37 mrg Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 /*
  * uvm_deallocate: deallocate memory (unmap)
  */
-
 void
 uvm_deallocate(struct vm_map *map, vaddr_t start, vsize_t size)
 {

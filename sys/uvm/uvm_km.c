@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.111 2013/05/30 18:02:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.112 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -152,7 +152,6 @@ struct uvm_constraint_range	no_constraint = { 0x0, (paddr_t)-1 };
 /*
  * local data structues
  */
-
 static struct vm_map		kernel_map_store;
 
 /*
@@ -163,15 +162,12 @@ static struct vm_map		kernel_map_store;
  *    we assume that [min -> start] has already been allocated and that
  *    "end" is the end.
  */
-
 void
 uvm_km_init(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
 
-	/*
-	 * next, init kernel memory objects.
-	 */
+	/* next, init kernel memory objects. */
 
 	/* kernel_object: for pageable anonymous kernel memory */
 	uao_init();
@@ -196,10 +192,6 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != 0)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
-	/*
-	 * install!
-	 */
-
 	kernel_map = &kernel_map_store;
 }
 
@@ -221,26 +213,17 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
 
 	size = round_page(size);	/* round up to pagesize */
 
-	/*
-	 * first allocate a blank spot in the parent map
-	 */
-
+	/* first allocate a blank spot in the parent map */
 	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, mapflags)) != 0) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
 	}
 
-	/*
-	 * set VM bounds (min is filled in by uvm_map)
-	 */
-
+	/* set VM bounds (min is filled in by uvm_map) */
 	*max = *min + size;
 
-	/*
-	 * add references to pmap and create or init the submap
-	 */
-
+	/* add references to pmap and create or init the submap */
 	pmap_reference(vm_map_pmap(map));
 	if (submap == NULL) {
 		submap = uvm_map_create(vm_map_pmap(map), *min, *max, flags);
@@ -251,10 +234,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
 		submap->pmap = vm_map_pmap(map);
 	}
 
-	/*
-	 * now let uvm_map_submap plug in it...
-	 */
-
+	/* now let uvm_map_submap plug in it...  */
 	if (uvm_map_submap(map, *min, *max, submap) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
@@ -309,7 +289,6 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
  *    be on the active or inactive queues (because these objects are
  *    never allowed to "page").
  */
-
 void
 uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 {
@@ -341,7 +320,6 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
  *	to uvm_pglistalloc
  * => flags: ZERO - correspond to uvm_pglistalloc flags
  */
-
 vaddr_t
 uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
     vsize_t valign, int flags, paddr_t low, paddr_t high, paddr_t alignment,
@@ -358,37 +336,25 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	KASSERT(!(flags & UVM_KMF_VALLOC) ||
 	    !(flags & UVM_KMF_ZERO));
 
-	/*
-	 * setup for call
-	 */
-
+	/* setup for call */
 	size = round_page(size);
 	kva = vm_map_min(map);	/* hint */
 	if (nsegs == 0)
 		nsegs = atop(size);
 
-	/*
-	 * allocate some virtual space
-	 */
-
+	/* allocate some virtual space */
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	      valign, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) != 0)) {
 		return(0);
 	}
 
-	/*
-	 * if all we wanted was VA, return now
-	 */
-
+	/* if all we wanted was VA, return now */
 	if (flags & UVM_KMF_VALLOC) {
 		return(kva);
 	}
 
-	/*
-	 * recover object offset from virtual address
-	 */
-
+	/* recover object offset from virtual address */
 	if (obj != NULL)
 		offset = kva - vm_map_min(kernel_map);
 	else
@@ -428,7 +394,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 		 * map it in: note that we call pmap_enter with the map and
 		 * object unlocked in case we are kmem_map.
 		 */
-
 		if (obj == NULL) {
 			pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
 			    UVM_PROT_RW);
@@ -449,7 +414,6 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 /*
  * uvm_km_free: free an area of kernel memory
  */
-
 void
 uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
 {
@@ -462,7 +426,6 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size)
  *
  * => XXX: "wanted" bit + unlock&wait on other end?
  */
-
 void
 uvm_km_free_wakeup(struct vm_map *map, vaddr_t addr, vsize_t size)
 {
@@ -483,7 +446,6 @@ uvm_km_free_wakeup(struct vm_map *map, vaddr_t addr, vsize_t size)
  *
  * => we can sleep if needed
  */
-
 vaddr_t
 uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 {
@@ -496,26 +458,17 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	size = round_page(size);
 	kva = vm_map_min(map);		/* hint */
 
-	/*
-	 * allocate some virtual space
-	 */
-
+	/* allocate some virtual space */
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) != 0)) {
 		return(0);
 	}
 
-	/*
-	 * recover object offset from virtual address
-	 */
-
+	/* recover object offset from virtual address */
 	offset = kva - vm_map_min(kernel_map);
 
-	/*
-	 * now allocate the memory.  we must be careful about released pages.
-	 */
-
+	/* now allocate the memory.  we must be careful about released pages. */
 	loopva = kva;
 	while (size) {
 		/* allocate ram */
@@ -556,7 +509,6 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	 * zero on request (note that "size" is now zero due to the above loop
 	 * so we need to subtract kva from loopva to reconstruct the size).
 	 */
-
 	if (zeroit)
 		memset((caddr_t)kva, 0, loopva - kva);
 
@@ -591,9 +543,7 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
 	size = round_page(size);
 	kva = vm_map_min(map);		/* hint */
 
-	/*
-	 * allocate some virtual space.  will be demand filled by kernel_object.
-	 */
+	/* allocate some virtual space, demand filled by kernel_object. */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
@@ -611,7 +561,6 @@ uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
  * => if no room in map, wait for space to free, unless requested size
  *    is larger than map (in which case we return 0)
  */
-
 vaddr_t
 uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 {
@@ -630,17 +579,13 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		 * allocate some virtual space.   will be demand filled
 		 * by kernel_object.
 		 */
-
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
 		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)) {
 			return(kva);
 		}
 
-		/*
-		 * failed.  sleep for a while (on map)
-		 */
-
+		/* failed.  sleep for a while (on map) */
 		tsleep(map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/

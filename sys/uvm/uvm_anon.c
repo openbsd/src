@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.37 2013/05/30 16:29:46 tedu Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.38 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -89,10 +89,7 @@ uvm_anfree(struct vm_anon *anon)
 {
 	struct vm_page *pg;
 
-	/*
-	 * get page
-	 */
-
+	/* get page */
 	pg = anon->an_page;
 
 	/*
@@ -100,7 +97,6 @@ uvm_anfree(struct vm_anon *anon)
 	 * own it.   call out to uvm_anon_lockpage() to ensure the real owner
  	 * of the page has been identified and locked.
 	 */
-
 	if (pg && pg->loan_count)
 		pg = uvm_anon_lockloanpg(anon);
 
@@ -108,14 +104,11 @@ uvm_anfree(struct vm_anon *anon)
 	 * if we have a resident page, we must dispose of it before freeing
 	 * the anon.
 	 */
-
 	if (pg) {
-
 		/*
 		 * if the page is owned by a uobject, then we must 
 		 * kill the loan on the page rather than free it.
 		 */
-
 		if (pg->uobject) {
 			uvm_lock_pageq();
 			KASSERT(pg->loan_count > 0);
@@ -123,7 +116,6 @@ uvm_anfree(struct vm_anon *anon)
 			pg->uanon = NULL;
 			uvm_unlock_pageq();
 		} else {
-
 			/*
 			 * page has no uobject, so we must be the owner of it.
 			 *
@@ -132,7 +124,6 @@ uvm_anfree(struct vm_anon *anon)
 			 * wake up).    if the page is not busy then we can
 			 * free it now.
 			 */
-
 			if ((pg->pg_flags & PG_BUSY) != 0) {
 				/* tell them to dump it when done */
 				atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
@@ -150,9 +141,7 @@ uvm_anfree(struct vm_anon *anon)
 		uvmexp.swpgonly--;
 	}
 
-	/*
-	 * free any swap resources.
-	 */
+	/* free any swap resources. */
 	uvm_anon_dropswap(anon);
 
 	/*
@@ -207,26 +196,17 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 	 * result may cause us to do more work than we need to, but it will
 	 * not produce an incorrect result.
 	 */
-
 	while (((pg = anon->an_page) != NULL) && pg->loan_count != 0) {
-
-
 		/*
 		 * if page is un-owned [i.e. the object dropped its ownership],
 		 * then we can take over as owner!
 		 */
-
 		if (pg->uobject == NULL && (pg->pg_flags & PQ_ANON) == 0) {
 			uvm_lock_pageq();
 			atomic_setbits_int(&pg->pg_flags, PQ_ANON);
 			pg->loan_count--;	/* ... and drop our loan */
 			uvm_unlock_pageq();
 		}
-
-		/*
-		 * we did it!   break the loop
-		 */
-
 		break;
 	}
 	return(pg);
@@ -250,18 +230,14 @@ uvm_anon_pagein(struct vm_anon *anon)
 	switch (rv) {
 	case VM_PAGER_OK:
 		break;
-
 	case VM_PAGER_ERROR:
 	case VM_PAGER_REFAULT:
-
 		/*
 		 * nothing more to do on errors.
 		 * VM_PAGER_REFAULT can only mean that the anon was freed,
 		 * so again there's nothing to do.
 		 */
-
 		return FALSE;
-
 	default:
 #ifdef DIAGNOSTIC
 		panic("anon_pagein: uvmfault_anonget -> %d", rv);
@@ -274,17 +250,13 @@ uvm_anon_pagein(struct vm_anon *anon)
 	 * ok, we've got the page now.
 	 * mark it as dirty, clear its swslot and un-busy it.
 	 */
-
 	pg = anon->an_page;
 	uobj = pg->uobject;
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
 	atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 
-	/*
-	 * deactivate the page (to put it on a page queue)
-	 */
-
+	/* deactivate the page (to put it on a page queue) */
 	pmap_clear_reference(pg);
 	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.61 2014/04/03 21:40:10 tedu Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.62 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -89,7 +89,6 @@
  *
  * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
  */
-
 boolean_t
 uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
@@ -366,7 +365,6 @@ uvm_init_limits(struct proc *p)
 	 * This causes any single, large process to start random page
 	 * replacement once it fills memory.
 	 */
-
 	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
 	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
 	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;

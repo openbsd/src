@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.6 2014/02/04 01:04:03 tedu Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.7 2014/04/13 23:14:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -70,9 +70,7 @@ struct uaddr_rnd_state {
 	TAILQ_HEAD(, vm_map_entry)	 ur_free;
 };
 
-/*
- * Definition of a pivot in pivot selector.
- */
+/* Definition of a pivot in pivot selector. */
 struct uaddr_pivot {
 	vaddr_t				 addr;	/* End of prev. allocation. */
 	int				 expire;/* Best before date. */
@@ -106,11 +104,7 @@ uvm_mapent_fspace_cmp(struct vm_map_entry *e1, struct vm_map_entry *e2)
 extern const struct uvm_addr_functions uaddr_kernel_functions;
 struct uvm_addr_state uaddr_kbootstrap;
 
-
-/*
- * Support functions.
- */
-
+/* Support functions. */
 #ifndef SMALL_KERNEL
 struct vm_map_entry	*uvm_addr_entrybyspace(struct uaddr_free_rbtree*,
 			    vsize_t);
@@ -258,9 +252,7 @@ uvm_addr_fitspace(vaddr_t *min_result, vaddr_t *max_result,
 	if (fspace < sz + before_gap + after_gap)
 		return ENOMEM;
 
-	/*
-	 * Calculate lowest address.
-	 */
+	/* Calculate lowest address. */
 	low_addr += before_gap;
 	low_addr = uvm_addr_align_forward(tmp = low_addr, align, offset);
 	if (low_addr < tmp)	/* Overflow during alignment. */
@@ -268,9 +260,7 @@ uvm_addr_fitspace(vaddr_t *min_result, vaddr_t *max_result,
 	if (high_addr - after_gap - sz < low_addr)
 		return ENOMEM;
 
-	/*
-	 * Calculate highest address.
-	 */
+	/* Calculate highest address. */
 	high_addr -= after_gap + sz;
 	high_addr = uvm_addr_align_backward(tmp = high_addr, align, offset);
 	if (high_addr > tmp)	/* Overflow during alignment. */
@@ -369,9 +359,7 @@ uvm_addr_linsearch(struct vm_map *map, struct uvm_addr_state *uaddr,
 	    (before_gap & PAGE_MASK) == 0 && (after_gap & PAGE_MASK) == 0);
 	KASSERT(high + sz > high); /* Check for overflow. */
 
-	/*
-	 * Hint magic.
-	 */
+	/* Hint magic. */
 	if (hint == 0)
 		hint = (direction == 1 ? low : high);
 	else if (hint > high) {
@@ -492,7 +480,6 @@ uaddr_destroy(struct uvm_addr_state *uaddr)
  * If hint is set, search will start at the hint position.
  * Only searches forward.
  */
-
 const struct uvm_addr_functions uaddr_lin_functions = {
 	.uaddr_select = &uaddr_lin_select,
 	.uaddr_destroy = &uaddr_destroy,
@@ -519,9 +506,7 @@ uaddr_lin_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 {
 	vaddr_t guard_sz;
 
-	/*
-	 * Deal with guardpages: search for space with one extra page.
-	 */
+	/* Deal with guardpages: search for space with one extra page. */
 	guard_sz = ((map->flags & VM_MAP_GUARDPAGES) == 0 ? 0 : PAGE_SIZE);
 
 	if (uaddr->uaddr_maxaddr - uaddr->uaddr_minaddr < sz + guard_sz)
@@ -739,7 +724,6 @@ uaddr_rnd_print(struct uvm_addr_state *uaddr_p, boolean_t full,
  *
  * If no hint is given, the allocator refuses to allocate.
  */
-
 const struct uvm_addr_functions uaddr_hint_functions = {
 	.uaddr_select = &uaddr_hint_select,
 	.uaddr_destroy = &uaddr_hint_destroy,
@@ -792,9 +776,7 @@ uaddr_hint_select(struct vm_map *map, struct uvm_addr_state *uaddr_param,
 	if (hint == 0)
 		return ENOMEM;
 
-	/*
-	 * Calculate upper and lower bound for selected address.
-	 */
+	/* Calculate upper and lower bound for selected address. */
 	high = hint + uaddr->max_dist;
 	if (high < hint)	/* overflow */
 		high = map->max_offset;
@@ -849,7 +831,6 @@ uaddr_hint_select(struct vm_map *map, struct uvm_addr_state *uaddr_param,
 /*
  * Kernel allocation bootstrap logic.
  */
-
 const struct uvm_addr_functions uaddr_kernel_functions = {
 	.uaddr_select = &uaddr_kbootstrap_select,
 	.uaddr_destroy = &uaddr_kbootstrap_destroy,
@@ -971,9 +952,7 @@ uaddr_bestfit_select(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 	if (entry == NULL)
 		return ENOMEM;
 
-	/*
-	 * Walk the tree until we find an entry that fits.
-	 */
+	/* Walk the tree until we find an entry that fits.  */
 	while (uvm_addr_fitspace(&min, &max,
 	    VMMAP_FREE_START(entry), VMMAP_FREE_END(entry),
 	    sz, align, offset, 0, guardsz) != 0) {
@@ -982,9 +961,7 @@ uaddr_bestfit_select(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 			return ENOMEM;
 	}
 
-	/*
-	 * Return the address that generates the least fragmentation.
-	 */
+	/* Return the address that generates the least fragmentation. */
 	*entry_out = entry;
 	*addr_out = (min - VMMAP_FREE_START(entry) <=
 	    VMMAP_FREE_END(entry) - guardsz - sz - max ?
@@ -1257,9 +1234,7 @@ uaddr_pivot_select(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 	if (pivot->addr == 0 || pivot->entry == NULL || pivot->expire == 0)
 		goto expired;	/* Pivot is invalid (null or expired). */
 
-	/*
-	 * Attempt to use the pivot to map the entry.
-	 */
+	/* Attempt to use the pivot to map the entry. */
 	entry = pivot->entry;
 	if (pivot->dir > 0) {
 		if (uvm_addr_fitspace(&min, &max,
@@ -1472,7 +1447,6 @@ struct uaddr_bs_strat {
  * select which one (stack or brk area) to try. If the allocation fails,
  * the other one is tested.
  */
-
 const struct uvm_addr_functions uaddr_stack_brk_functions = {
 	.uaddr_select = &uaddr_stack_brk_select,
 	.uaddr_destroy = &uaddr_destroy,
@@ -1511,9 +1485,7 @@ uaddr_stack_brk_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 		stack_idx = 1;
 	}
 
-	/*
-	 * Set up stack search strategy.
-	 */
+	/* Set up stack search strategy. */
 	s = &strat[stack_idx];
 	s->start = MAX(map->s_start, uaddr->uaddr_minaddr);
 	s->end = MIN(map->s_end, uaddr->uaddr_maxaddr);
@@ -1523,17 +1495,13 @@ uaddr_stack_brk_select(struct vm_map *map, struct uvm_addr_state *uaddr,
 	s->dir =  1;
 #endif
 
-	/*
-	 * Set up brk search strategy.
-	 */
+	/* Set up brk search strategy. */
 	s = &strat[brk_idx];
 	s->start = MAX(map->b_start, uaddr->uaddr_minaddr);
 	s->end = MIN(map->b_end, uaddr->uaddr_maxaddr);
 	s->dir = -1;	/* Opposite of brk() growth. */
 
-	/*
-	 * Linear search for space.
-	 */
+	/* Linear search for space.  */
 	for (s = &strat[0]; s < &strat[nitems(strat)]; s++) {
 		if (s->end - s->start < sz)
 			continue;

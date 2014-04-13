@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.20 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.21 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 	 * large chunk size.  if we have trouble finding vm space we will
 	 * reduce it.
 	 */
-
 	if (uio->uio_resid == 0)
 		return(0);
 	togo = uio->uio_resid;
@@ -97,16 +96,9 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 	if (flags & UVM_IO_FIXPROT)
 		extractflags |= UVM_EXTRACT_FIXPROT;
 
-	/*
-	 * step 1: main loop...  while we've got data to move
-	 */
-
+	/* step 1: main loop...  while we've got data to move */
 	for (/*null*/; togo > 0 ; pageoffset = 0) {
-
-		/*
-		 * step 2: extract mappings from the map into kernel_map
-		 */
-
+		/* step 2: extract mappings from the map into kernel_map */
 		error = uvm_map_extract(map, baseva, chunksz, &kva,
 		    extractflags);
 		if (error) {
@@ -122,10 +114,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 			break;
 		}
 
-		/*
-		 * step 3: move a chunk of data
-		 */
-
+		/* step 3: move a chunk of data */
 		sz = chunksz - pageoffset;
 		if (sz > togo)
 			sz = togo;
@@ -133,11 +122,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		togo -= sz;
 		baseva += chunksz;
 
-
-		/*
-		 * step 4: unmap the area of kernel memory
-		 */
-
+		/* step 4: unmap the area of kernel memory */
 		vm_map_lock(kernel_map);
 		TAILQ_INIT(&dead_entries);
 		uvm_unmap_remove(kernel_map, kva, kva+chunksz,
@@ -152,10 +137,6 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		if (error)
 			break;
 	}
-
-	/*
-	 * done
-	 */
 
 	return (error);
 }

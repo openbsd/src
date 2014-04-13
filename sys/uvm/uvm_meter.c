@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.30 2013/03/23 16:12:31 deraadt Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.31 2014/04/13 23:14:15 tedu Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ static fixpt_t cexp[3] = {
 /*
  * prototypes
  */
-
 static void uvm_loadav(struct loadavg *);
 
 /*
@@ -258,10 +257,7 @@ uvm_total(struct vmtotal *totalp)
 
 	memset(totalp, 0, sizeof *totalp);
 
-	/*
-	 * calculate process statistics
-	 */
-
+	/* calculate process statistics */
 	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_flag & P_SYSTEM)
 			continue;
@@ -278,7 +274,6 @@ uvm_total(struct vmtotal *totalp)
 			if (p->p_slptime >= maxslp)
 				continue;
 			break;
-
 		case SRUN:
 		case SIDL:
 		case SONPROC:
