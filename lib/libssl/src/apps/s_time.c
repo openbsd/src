@@ -88,9 +88,6 @@
 #undef PROG
 #define PROG s_time_main
 
-#undef ioctl
-#define ioctl ioctlsocket
-
 #define SSL_CONNECT_NAME	"localhost:4433"
 
 /*#define TEST_CERT "client.pem" */ /* no default cert. */
@@ -424,7 +421,8 @@ int MAIN(int argc, char **argv)
 #else
 		SSL_shutdown(scon);
 #endif
-		SHUTDOWN2(SSL_get_fd(scon));
+		shutdown(SSL_get_fd(scon), SHUT_RDWR);
+		close(SSL_get_fd(scon));
 
 		nConn += 1;
 		if (SSL_session_reused(scon))
@@ -478,7 +476,8 @@ next:
 #else
 	SSL_shutdown(scon);
 #endif
-	SHUTDOWN2(SSL_get_fd(scon));
+	shutdown(SSL_get_fd(scon), SHUT_RDWR);
+	close(SSL_get_fd(scon));
 
 	nConn = 0;
 	totalTime = 0.0;
@@ -517,7 +516,8 @@ next:
 #else
 		SSL_shutdown(scon);
 #endif
-		SHUTDOWN2(SSL_get_fd(scon));
+		shutdown(SSL_get_fd(scon), SHUT_RDWR);
+		close(SSL_get_fd(scon));
 	
 		nConn += 1;
 		if (SSL_session_reused(scon))

@@ -210,9 +210,9 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 			c->state=BIO_CONN_S_CREATE_SOCKET;
 
 			ret=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-			if (ret == INVALID_SOCKET)
+			if (ret == -1)
 				{
-				SYSerr(SYS_F_SOCKET,get_last_socket_error());
+				SYSerr(SYS_F_SOCKET,errno);
 				ERR_add_error_data(4,"host=",c->param_hostname,
 					":",c->param_port);
 				BIOerr(BIO_F_CONN_STATE,BIO_R_UNABLE_TO_CREATE_SOCKET);
@@ -241,7 +241,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 			i=setsockopt(b->num,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 			if (i < 0)
 				{
-				SYSerr(SYS_F_SOCKET,get_last_socket_error());
+				SYSerr(SYS_F_SOCKET,errno);
 				ERR_add_error_data(4,"host=",c->param_hostname,
 					":",c->param_port);
 				BIOerr(BIO_F_CONN_STATE,BIO_R_KEEPALIVE);
@@ -266,7 +266,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 					}
 				else
 					{
-					SYSerr(SYS_F_CONNECT,get_last_socket_error());
+					SYSerr(SYS_F_CONNECT,errno);
 					ERR_add_error_data(4,"host=",
 						c->param_hostname,
 						":",c->param_port);
@@ -358,7 +358,7 @@ BIO_METHOD *BIO_s_connect(void)
 static int conn_new(BIO *bi)
 	{
 	bi->init=0;
-	bi->num=INVALID_SOCKET;
+	bi->num=-1;
 	bi->flags=0;
 	if ((bi->ptr=(char *)BIO_CONNECT_new()) == NULL)
 		return(0);
@@ -371,13 +371,13 @@ static void conn_close_socket(BIO *bio)
 	BIO_CONNECT *c;
 
 	c=(BIO_CONNECT *)bio->ptr;
-	if (bio->num != INVALID_SOCKET)
+	if (bio->num != -1)
 		{
 		/* Only do a shutdown if things were established */
 		if (c->state == BIO_CONN_S_OK)
 			shutdown(bio->num,2);
-		closesocket(bio->num);
-		bio->num=INVALID_SOCKET;
+		close(bio->num);
+		bio->num=-1;
 		}
 	}
 
@@ -414,8 +414,8 @@ static int conn_read(BIO *b, char *out, int outl)
 
 	if (out != NULL)
 		{
-		clear_socket_error();
-		ret=readsocket(b->num,out,outl);
+		errno = 0;
+		ret=read(b->num,out,outl);
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
 			{
@@ -438,8 +438,8 @@ static int conn_write(BIO *b, const char *in, int inl)
 		if (ret <= 0) return(ret);
 		}
 
-	clear_socket_error();
-	ret=writesocket(b->num,in,inl);
+	errno = 0;
+	ret=write(b->num,in,inl);
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{

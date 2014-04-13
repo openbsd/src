@@ -166,7 +166,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 #endif
 	if (file == NULL)
 		{
-		SYSerr(SYS_F_FOPEN,get_last_sys_error());
+		SYSerr(SYS_F_FOPEN, errno);
 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
 		if (errno == ENOENT)
 			BIOerr(BIO_F_BIO_NEW_FILE,BIO_R_NO_SUCH_FILE);
@@ -242,7 +242,7 @@ static int file_read(BIO *b, char *out, int outl)
 			ret=fread(out,1,(int)outl,(FILE *)b->ptr);
 		if(ret == 0 && (b->flags&BIO_FLAGS_UPLINK)?UP_ferror((FILE *)b->ptr):ferror((FILE *)b->ptr))
 			{
-			SYSerr(SYS_F_FREAD,get_last_sys_error());
+			SYSerr(SYS_F_FREAD, errno);
 			BIOerr(BIO_F_FILE_READ,ERR_R_SYS_LIB);
 			ret=-1;
 			}
@@ -395,7 +395,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		fp=fopen(ptr,p);
 		if (fp == NULL)
 			{
-			SYSerr(SYS_F_FOPEN,get_last_sys_error());
+			SYSerr(SYS_F_FOPEN, errno);
 			ERR_add_error_data(5,"fopen('",ptr,"','",p,"')");
 			BIOerr(BIO_F_FILE_CTRL,ERR_R_SYS_LIB);
 			ret=0;

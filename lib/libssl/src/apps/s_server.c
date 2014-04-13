@@ -2182,7 +2182,8 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				if ((i <= 0) || (buf[0] == 'Q'))
 					{
 					BIO_printf(bio_s_out,"DONE\n");
-					SHUTDOWN(s);
+					shutdown(s, SHUT_RD);
+					close(s);
 					close_accept_socket();
 					ret= -11;
 					goto err;
@@ -2190,8 +2191,10 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				if ((i <= 0) || (buf[0] == 'q'))
 					{
 					BIO_printf(bio_s_out,"DONE\n");
-					if (SSL_version(con) != DTLS1_VERSION)
-                        SHUTDOWN(s);
+					if (SSL_version(con) != DTLS1_VERSION) {
+			                        shutdown(s, SHUT_RD);
+						close(s);
+					}
 	/*				close_accept_socket();
 					ret= -11;*/
 					goto err;
@@ -2376,7 +2379,8 @@ static void close_accept_socket(void)
 	BIO_printf(bio_err,"shutdown accept socket\n");
 	if (accept_socket >= 0)
 		{
-		SHUTDOWN2(accept_socket);
+		shutdown(accept_socket, SHUT_RDWR);
+		close(accept_socket);
 		}
 	}
 

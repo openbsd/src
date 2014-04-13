@@ -258,7 +258,7 @@ int init_client(int *sock, char *host, char *port, int type, int af)
 	for (ai = ai_top; ai != NULL; ai = ai->ai_next)
 		{
 		s=socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (s == INVALID_SOCKET) { continue; }
+		if (s == -1) { continue; }
 #ifndef OPENSSL_SYS_MPE
 	if (type == SOCK_STREAM)
 		{
@@ -299,7 +299,8 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 			{
 			if (do_accept(accept_socket,&sock,&name) == 0)
 				{
-				SHUTDOWN(accept_socket);
+				shutdown(accept_socket, SHUT_RD);
+				close(accept_socket);
 				return(0);
 				}
 			}
@@ -307,11 +308,14 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 			sock = accept_socket;
 		i=(*cb)(name,sock, context);
 		if (name != NULL) OPENSSL_free(name);
-		if (type==SOCK_STREAM)
-			SHUTDOWN2(sock);
+		if (type==SOCK_STREAM) {
+			shutdown(sock, SHUT_RDWR);
+			close(sock);
+		}
 		if (i < 0)
 			{
-			SHUTDOWN2(accept_socket);
+			shutdown(accept_socket, SHUT_RDWR);
+			close(accept_socket);
 			return(i);
 			}
 		}
@@ -343,7 +347,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 		else /* type == SOCK_DGRAM */
 			s=socket(AF_INET, SOCK_DGRAM,IPPROTO_UDP);
 
-	if (s == INVALID_SOCKET) goto err;
+	if (s == -1) goto err;
 #if defined SOL_SOCKET && defined SO_REUSEADDR
 		{
 		int j = 1;
@@ -365,7 +369,8 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 err:
 	if ((ret == 0) && (s != -1))
 		{
-		SHUTDOWN(s);
+		shutdown(s, SHUT_RD);
+		close(s);
 		}
 	return(ret);
 	}
@@ -397,7 +402,7 @@ redoit:
 	 * have a cast then you can either go for (int *) or (void *).
 	 */
 	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
-	if (ret == INVALID_SOCKET)
+	if (ret == -1)
 		{
 #if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 		int i;

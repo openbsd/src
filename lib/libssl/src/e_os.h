@@ -88,15 +88,6 @@ extern "C" {
 #define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 #endif
 
-#define get_last_sys_error()	errno
-#define clear_sys_error()	errno=0
-#define get_last_socket_error()	errno
-#define clear_socket_error()	errno=0
-#define ioctlsocket(a,b,c)	ioctl(a,b,c)
-#define closesocket(s)		close(s)
-#define readsocket(s,b,n)	read((s),(b),(n))
-#define writesocket(s,b,n)	write((s),(b),(n))
-
 #      include <unistd.h>
 #      include <sys/types.h>
 #    define OPENSSL_CONF	"openssl.cnf"
@@ -104,26 +95,15 @@ extern "C" {
 #    define RFILE		".rnd"
 #    define LIST_SEPARATOR_CHAR ':'
 #    define EXIT(n)		exit(n)
-#  define SSLeay_getpid()	getpid()
 
 
 #ifdef USE_SOCKETS
-#      include <sys/param.h>
-#      include <sys/time.h> /* Needed under linux for FD_XXX */
+#    include <sys/param.h>
+#    include <sys/time.h> /* Needed under linux for FD_XXX */
 #    include <netdb.h>
-#      include <sys/socket.h>
-#      ifdef FILIO_H
-#        include <sys/filio.h> /* Added for FIONBIO under unixware */
-#      endif
-#      include <netinet/in.h>
-#        include <sys/ioctl.h>
-#    define SSLeay_Read(a,b,c)     read((a),(b),(c))
-#    define SSLeay_Write(a,b,c)    write((a),(b),(c))
-#    define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
-#    define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
-#    ifndef INVALID_SOCKET
-#    define INVALID_SOCKET	(-1)
-#    endif /* INVALID_SOCKET */
+#    include <sys/socket.h>
+#    include <netinet/in.h>
+#    include <sys/ioctl.h>
 #endif
 
 /* Some IPv6 implementations are broken, disable them in known bad

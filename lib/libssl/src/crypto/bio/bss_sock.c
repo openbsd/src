@@ -138,8 +138,8 @@ static int sock_read(BIO *b, char *out, int outl)
 
 	if (out != NULL)
 		{
-		clear_socket_error();
-		ret=readsocket(b->num,out,outl);
+		errno = 0;
+		ret=read(b->num,out,outl);
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
 			{
@@ -154,8 +154,8 @@ static int sock_write(BIO *b, const char *in, int inl)
 	{
 	int ret;
 	
-	clear_socket_error();
-	ret=writesocket(b->num,in,inl);
+	errno = 0;
+	ret=write(b->num,in,inl);
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{
@@ -220,7 +220,7 @@ int BIO_sock_should_retry(int i)
 
 	if ((i == 0) || (i == -1))
 		{
-		err=get_last_socket_error();
+		err=errno;
 
 #if defined(OPENSSL_SYS_WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
 		if ((i == -1) && (err == 0))

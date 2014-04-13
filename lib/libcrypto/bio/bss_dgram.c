@@ -383,7 +383,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 
 	if (out != NULL)
 		{
-		clear_socket_error();
+		errno = 0;
 		memset(&sa.peer, 0x00, sizeof(sa.peer));
 		dgram_adjust_rcv_timeout(b);
 		ret=recvfrom(b->num,out,outl,0,&sa.peer.sa,(void *)&sa.len);
@@ -402,7 +402,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 			if (BIO_dgram_should_retry(ret))
 				{
 				BIO_set_retry_read(b);
-				data->_errno = get_last_socket_error();
+				data->_errno = errno;
 				}
 			}
 
@@ -415,10 +415,10 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	{
 	int ret;
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-	clear_socket_error();
+	errno = 0;
 
 	if ( data->connected )
-		ret=writesocket(b->num,in,inl);
+		ret=write(b->num,in,inl);
 	else
 		{
 		int peerlen = sizeof(data->peer);
@@ -442,7 +442,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
 		if (BIO_dgram_should_retry(ret))
 			{
 			BIO_set_retry_write(b);  
-			data->_errno = get_last_socket_error();
+			data->_errno = errno;
 
 #if 0 /* higher layers are responsible for querying MTU, if necessary */
 			if ( data->_errno == EMSGSIZE)
@@ -1018,7 +1018,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
 	if (out != NULL)
 		{
-		clear_socket_error();
+		errno = 0;
 
 		do
 			{
@@ -1180,7 +1180,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			if (BIO_dgram_should_retry(ret))
 				{
 				BIO_set_retry_read(b);
-				data->_errno = get_last_socket_error();
+				data->_errno = errno;
 				}
 			}
 
@@ -1238,7 +1238,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
 	struct sctp_sndrcvinfo *sndrcvinfo;
 #endif
 
-	clear_socket_error();
+	errno = 0;
 
 	/* If we're send anything else than application data,
 	 * disable all user parameters and flags.
@@ -1321,7 +1321,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
 		if (BIO_dgram_should_retry(ret))
 			{
 			BIO_set_retry_write(b);  
-			data->_errno = get_last_socket_error();
+			data->_errno = errno;
 			}
 		}
 	return(ret);
@@ -1596,7 +1596,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 	n = recvmsg(b->num, &msg, MSG_PEEK);
 	if (n <= 0)
 		{
-		if ((n < 0) && (get_last_socket_error() != EAGAIN) && (get_last_socket_error() != EWOULDBLOCK))
+		if ((n < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK))
 			return -1;
 		else
 			return 0;
@@ -1619,7 +1619,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 		n = recvmsg(b->num, &msg, 0);
 		if (n <= 0)
 			{
-			if ((n < 0) && (get_last_socket_error() != EAGAIN) && (get_last_socket_error() != EWOULDBLOCK))
+			if ((n < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK))
 				return -1;
 			else
 				return is_dry;
@@ -1686,7 +1686,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 
 		if (n <= 0)
 			{
-			if ((n < 0) && (get_last_socket_error() != EAGAIN) && (get_last_socket_error() != EWOULDBLOCK))
+			if ((n < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK))
 				return -1;
 			else
 				return is_dry;
@@ -1773,7 +1773,7 @@ static int BIO_dgram_should_retry(int i)
 
 	if ((i == 0) || (i == -1))
 		{
-		err=get_last_socket_error();
+		err=errno;
 
 #if defined(OPENSSL_SYS_WINDOWS)
 	/* If the socket return value (i) is -1

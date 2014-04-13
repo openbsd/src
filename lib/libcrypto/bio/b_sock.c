@@ -221,7 +221,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 #endif
 			else
 				{
-				SYSerr(SYS_F_GETSERVBYNAME,get_last_socket_error());
+				SYSerr(SYS_F_GETSERVBYNAME,errno);
 				ERR_add_error_data(3,"service='",str,"'");
 				return(0);
 				}
@@ -549,7 +549,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 	int i;
 
 #ifdef __DJGPP__
-	i=ioctlsocket(fd,type,(char *)arg);
+	i=ioctl(fd,type,(char *)arg);
 #else
 # if defined(OPENSSL_SYS_VMS)
 	/* 2011-02-18 SMS.
@@ -574,10 +574,10 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #  define ARG arg
 # endif /* defined(OPENSSL_SYS_VMS) [else] */
 
-	i=ioctlsocket(fd,type,ARG);
+	i=ioctl(fd,type,ARG);
 #endif /* __DJGPP__ */
 	if (i < 0)
-		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
+		SYSerr(SYS_F_IOCTLSOCKET,errno);
 	return(i);
 	}
 #endif /* __VMS_VER */
@@ -629,7 +629,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		struct sockaddr_in6 sa_in6;
 #endif
 	} server,client;
-	int s=INVALID_SOCKET,cs,addrlen;
+	int s=-1,cs,addrlen;
 	unsigned char ip[4];
 	unsigned short port;
 	char *str=NULL,*e;
@@ -637,9 +637,9 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	unsigned long l;
 	int err_num;
 
-	if (BIO_sock_init() != 1) return(INVALID_SOCKET);
+	if (BIO_sock_init() != 1) return(-1);
 
-	if ((str=BUF_strdup(host)) == NULL) return(INVALID_SOCKET);
+	if ((str=BUF_strdup(host)) == NULL) return(-1);
 
 	h=p=NULL;
 	h=str;
@@ -736,9 +736,9 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
 again:
 	s=socket(server.sa.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
-	if (s == INVALID_SOCKET)
+	if (s == -1)
 		{
-		SYSerr(SYS_F_SOCKET,get_last_socket_error());
+		SYSerr(SYS_F_SOCKET,errno);
 		ERR_add_error_data(3,"port='",host,"'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
@@ -756,7 +756,7 @@ again:
 	if (bind(s,&server.sa,addrlen) == -1)
 		{
 #ifdef SO_REUSEADDR
-		err_num=get_last_socket_error();
+		err_num=errno;
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
 #ifdef OPENSSL_SYS_WINDOWS
 			/* Some versions of Windows define EADDRINUSE to
@@ -785,15 +785,15 @@ again:
 				else	goto err;
 				}
 			cs=socket(client.sa.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
-			if (cs != INVALID_SOCKET)
+			if (cs != -1)
 				{
 				int ii;
 				ii=connect(cs,&client.sa,addrlen);
-				closesocket(cs);
-				if (ii == INVALID_SOCKET)
+				close(cs);
+				if (ii == -1)
 					{
 					bind_mode=BIO_BIND_REUSEADDR;
-					closesocket(s);
+					close(s);
 					goto again;
 					}
 				/* else error */
@@ -808,7 +808,7 @@ again:
 		}
 	if (listen(s,MAX_LISTEN) == -1)
 		{
-		SYSerr(SYS_F_BIND,get_last_socket_error());
+		SYSerr(SYS_F_BIND,errno);
 		ERR_add_error_data(3,"port='",host,"'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET,BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
@@ -816,17 +816,17 @@ again:
 	ret=1;
 err:
 	if (str != NULL) OPENSSL_free(str);
-	if ((ret == 0) && (s != INVALID_SOCKET))
+	if ((ret == 0) && (s != -1))
 		{
-		closesocket(s);
-		s= INVALID_SOCKET;
+		close(s);
+		s= -1;
 		}
 	return(s);
 	}
 
 int BIO_accept(int sock, char **addr)
 	{
-	int ret=INVALID_SOCKET;
+	int ret=-1;
 	unsigned long l;
 	unsigned short port;
 	char *p;
@@ -873,10 +873,10 @@ int BIO_accept(int sock, char **addr)
 		sa.len.i = (int)sa.len.s;
 		/* use sa.len.i from this point */
 		}
-	if (ret == INVALID_SOCKET)
+	if (ret == -1)
 		{
 		if(BIO_sock_should_retry(ret)) return -2;
-		SYSerr(SYS_F_ACCEPT,get_last_socket_error());
+		SYSerr(SYS_F_ACCEPT,errno);
 		BIOerr(BIO_F_BIO_ACCEPT,BIO_R_ACCEPT_ERROR);
 		goto end;
 		}

@@ -131,7 +131,7 @@ static int acpt_new(BIO *bi)
 	BIO_ACCEPT *ba;
 
 	bi->init=0;
-	bi->num=INVALID_SOCKET;
+	bi->num=-1;
 	bi->flags=0;
 	if ((ba=BIO_ACCEPT_new()) == NULL)
 		return(0);
@@ -149,7 +149,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 		return(NULL);
 
 	memset(ret,0,sizeof(BIO_ACCEPT));
-	ret->accept_sock=INVALID_SOCKET;
+	ret->accept_sock=-1;
 	ret->bind_mode=BIO_BIND_NORMAL;
 	return(ret);
 	}
@@ -170,12 +170,12 @@ static void acpt_close_socket(BIO *bio)
 	BIO_ACCEPT *c;
 
 	c=(BIO_ACCEPT *)bio->ptr;
-	if (c->accept_sock != INVALID_SOCKET)
+	if (c->accept_sock != -1)
 		{
 		shutdown(c->accept_sock,2);
-		closesocket(c->accept_sock);
-		c->accept_sock=INVALID_SOCKET;
-		bio->num=INVALID_SOCKET;
+		close(c->accept_sock);
+		c->accept_sock=-1;
+		bio->num=-1;
 		}
 	}
 
@@ -213,14 +213,14 @@ again:
 			return(-1);
 			}
 		s=BIO_get_accept_socket(c->param_addr,c->bind_mode);
-		if (s == INVALID_SOCKET)
+		if (s == -1)
 			return(-1);
 
 		if (c->accept_nbio)
 			{
 			if (!BIO_socket_nbio(s,1))
 				{
-				closesocket(s);
+				close(s);
 				BIOerr(BIO_F_ACPT_STATE,BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET);
 				return(-1);
 				}
@@ -282,7 +282,7 @@ err:
 		if (bio != NULL)
 			BIO_free(bio);
 		else if (s >= 0)
-			closesocket(s);
+			close(s);
 		return(0);
 		/* break; */
 	case ACPT_S_OK:
