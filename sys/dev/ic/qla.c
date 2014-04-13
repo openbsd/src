@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.35 2014/04/07 08:43:54 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.36 2014/04/13 12:48:01 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -257,7 +257,7 @@ qla_add_port(struct qla_softc *sc, u_int16_t loopid, u_int32_t portid,
 	    sizeof(struct qla_get_port_db), BUS_DMASYNC_PREREAD);
 	if (qla_mbox(sc, 0x00cf, 0x0001)) {
 		if (portid != 0)
-			DPRINTF(QLA_D_PORT, "%s: get port db %x failed: %x\n",
+			DPRINTF(QLA_D_PORT, "%s: get port db %d failed: %x\n",
 			    DEVNAME(sc), loopid, sc->sc_mbox[0]);
 		return (1);
 	}
@@ -1454,8 +1454,8 @@ qla_next_fabric_port(struct qla_softc *sc, u_int32_t *firstport,
 	ga->port_id = htole32(*lastport);
 	result = qla_sns_req(sc, sc->sc_scratch, sizeof(*ga));
 	if (result) {
-		DPRINTF(QLA_D_PORT, "%s: GA_NXT %x failed: %x\n", DEVNAME(sc),
-		    lastport, result);
+		DPRINTF(QLA_D_PORT, "%s: GA_NXT %06x failed: %x\n", DEVNAME(sc),
+		    *lastport, result);
 		*lastport = 0xffffffff;
 		return (NULL);
 	}
@@ -1477,7 +1477,7 @@ qla_next_fabric_port(struct qla_softc *sc, u_int32_t *firstport,
 	if (*firstport == 0xffffffff)
 		*firstport = *lastport;
 
-	DPRINTF(QLA_D_PORT, "%s: GA_NXT: port id: %x, wwpn %llx, wwnn %llx\n",
+	DPRINTF(QLA_D_PORT, "%s: GA_NXT: port id: %06x, wwpn %llx, wwnn %llx\n",
 	    DEVNAME(sc), *lastport, betoh64(gar->port_name),
 	    betoh64(gar->node_name));
 
@@ -1530,10 +1530,9 @@ qla_fabric_plogi(struct qla_softc *sc, struct qla_fc_port *port)
 	}
 
 	if (qla_mbox(sc, mboxin, 0x00c7)) {
-		DPRINTF(QLA_D_PORT, "%s: port %x login failed: %x %x %x %x\n",
-		    DEVNAME(sc), port->portid, sc->sc_mbox[0],
-		    sc->sc_mbox[1], sc->sc_mbox[2],
-		    sc->sc_mbox[6]);
+		DPRINTF(QLA_D_PORT, "%s: port %06x login %d failed: %x %x %x\n",
+		    DEVNAME(sc), port->portid, loopid, sc->sc_mbox[0],
+		    sc->sc_mbox[1], sc->sc_mbox[2]);
 		return (1);
 	}
 	port->loopid = loopid;
@@ -1554,7 +1553,7 @@ qla_fabric_plogo(struct qla_softc *sc, struct qla_fc_port *port)
 	}
 
 	if (qla_mbox(sc, mboxin, 0x03))
-		DPRINTF(QLA_D_PORT, "%s: port %x logout failed\n",
+		DPRINTF(QLA_D_PORT, "%s: loop id %d logout failed\n",
 		    DEVNAME(sc), port->loopid);
 }
 
