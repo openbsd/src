@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2014/03/18 22:36:30 miod Exp $
+#	$OpenBSD: Makefile,v 1.56 2014/04/13 15:29:21 schwarze Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -17,7 +17,7 @@ manual.c:
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .else
 disklabel.cat8:	disklabel.8
-	mandoc ${.ALLSRC} > ${.TARGET}
+	mandoc -Tascii ${.ALLSRC} > ${.TARGET}
 
 manual.c:	disklabel.cat8
 	(echo 'const unsigned char manpage[] = {'; \

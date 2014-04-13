@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.39 2013/10/31 22:37:17 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.40 2014/04/13 15:29:21 schwarze Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -40,7 +40,7 @@ manual.c:
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .else
 fdisk.cat8:	fdisk.8
-	mandoc ${.ALLSRC} > ${.TARGET}
+	mandoc -Tascii ${.ALLSRC} > ${.TARGET}
 
 manual.c:	fdisk.cat8
 	(echo 'const unsigned char manpage[] = {'; \
