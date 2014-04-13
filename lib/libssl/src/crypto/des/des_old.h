@@ -105,8 +105,6 @@
 #error <openssl/des_old.h> replaces <kerberos/des.h>.
 #endif
 
-#include <openssl/symhacks.h>
-
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 # undef OPENSSL_EXTERN
 # define OPENSSL_EXTERN OPENSSL_EXPORT

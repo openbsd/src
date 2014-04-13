@@ -134,10 +134,6 @@
 #include <openssl/ebcdic.h>
 #endif
 
-/* Resolve problems on some operating systems with symbol names that clash
-   one way or another */
-#include <openssl/symhacks.h>
-
 #ifdef  __cplusplus
 extern "C" {
 #endif

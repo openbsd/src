@@ -71,7 +71,6 @@
 #endif
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {

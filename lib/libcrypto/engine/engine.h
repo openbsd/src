@@ -93,7 +93,6 @@
 #endif
 
 #include <openssl/ossl_typ.h>
-#include <openssl/symhacks.h>
 
 #include <openssl/x509.h>
 

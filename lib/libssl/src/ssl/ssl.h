@@ -164,7 +164,6 @@
 
 #include <openssl/kssl.h>
 #include <openssl/safestack.h>
-#include <openssl/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
