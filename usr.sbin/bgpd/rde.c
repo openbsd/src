@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.327 2014/01/22 04:08:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.328 2014/04/13 10:36:41 blambert Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -739,7 +739,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			TAILQ_INIT(&r->set);
 			if ((r->peer.ribid = rib_find(r->rib)) == RIB_FAILED) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
-				    "for not existsing rib %s", r->rib);
+				    "for nonexistent rib %s", r->rib);
 				parent_set = NULL;
 				free(r);
 				break;
