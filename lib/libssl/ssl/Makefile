@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2014/04/11 22:51:54 miod Exp $
+# $OpenBSD: Makefile,v 1.32 2014/04/13 15:49:50 miod Exp $
 
 LIB=	ssl
 
@@ -9,7 +9,7 @@ CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -DOPENSSL_NO_BUF_FREELISTS -DOPENSSL_NO_HEARTBEATS
-CFLAGS+= -I${SSL_SRC} -I${SSL_SRC}/crypto
+CFLAGS+= -I${SSL_SRC}
 
 SRCS=\
 	s2_meth.c s2_srvr.c s2_clnt.c s2_lib.c s2_enc.c s2_pkt.c \
@@ -23,6 +23,7 @@ SRCS=\
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
 	bio_ssl.c ssl_err.c kssl.c tls_srp.c t1_reneg.c
 SRCS+=	s3_cbc.c
+SRCS+=	o_dir.c
 
 HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h
 

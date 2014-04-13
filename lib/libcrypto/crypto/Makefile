@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2014/04/11 22:51:53 miod Exp $
+# $OpenBSD: Makefile,v 1.2 2014/04/13 15:49:47 miod Exp $
 
 LIB=	crypto
 
@@ -43,7 +43,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 
 # crypto/
 SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c
-SRCS+= ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fips.c o_init.c fips_ers.c
+SRCS+= ebcdic.c uid.c o_time.c o_str.c o_fips.c o_init.c fips_ers.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
