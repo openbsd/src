@@ -1,5 +1,3 @@
-./usr/include/dev/ic/nvmereg.h
-./usr/include/dev/ic/nvmevar.h
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -323,6 +321,8 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/nvmereg.h
+./usr/include/dev/ic/nvmevar.h
 ./usr/include/dev/ic/oosiopreg.h
 ./usr/include/dev/ic/oosiopvar.h
 ./usr/include/dev/ic/osiopreg.h
@@ -1241,7 +1241,6 @@
 ./usr/include/openssl/dsa.h
 ./usr/include/openssl/dso.h
 ./usr/include/openssl/dtls1.h
-./usr/include/openssl/e_os.h
 ./usr/include/openssl/e_os2.h
 ./usr/include/openssl/ebcdic.h
 ./usr/include/openssl/ec.h

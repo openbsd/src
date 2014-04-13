@@ -74,7 +74,7 @@
 ./usr/lib/libasn1.so.20.0
 ./usr/lib/libc.so.74.0
 ./usr/lib/libcom_err.so.20.0
-./usr/lib/libcrypto.so.23.0
+./usr/lib/libcrypto.so.23.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.0
 ./usr/lib/libevent.so.4.1
@@ -113,7 +113,7 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.27.0
-./usr/lib/libssl.so.21.0
+./usr/lib/libssl.so.22.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
@@ -1482,7 +1482,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/e_os.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/openssl/ec.ph
