@@ -2071,7 +2071,6 @@ PKCS7_ATTR_SIGN_it                      2632	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTI
 UI_add_error_string                     2633	EXIST::FUNCTION:
 KRB5_CHECKSUM_free                      2634	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext                    2635	EXIST::FUNCTION:
-ENGINE_load_ubsec                       2636	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 ENGINE_register_all_digests             2637	EXIST::FUNCTION:ENGINE
 PKEY_USAGE_PERIOD_it                    2638	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKEY_USAGE_PERIOD_it                    2638	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:

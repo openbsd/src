@@ -26,7 +26,7 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= aep atalla cswift gmp chil nuron sureware ubsec padlock capi
+LIBNAMES= aep atalla cswift gmp chil nuron sureware padlock capi
 
 LIBSRC=	e_aep.c \
 	e_atalla.c \
@@ -35,7 +35,6 @@ LIBSRC=	e_aep.c \
 	e_chil.c \
 	e_nuron.c \
 	e_sureware.c \
-	e_ubsec.c \
 	e_padlock.c \
 	e_capi.c
 LIBOBJ= e_aep.o \
@@ -45,7 +44,6 @@ LIBOBJ= e_aep.o \
 	e_chil.o \
 	e_nuron.o \
 	e_sureware.o \
-	e_ubsec.o \
 	e_padlock.o \
 	e_capi.o
 
@@ -59,7 +57,6 @@ HEADER=	e_aep_err.c e_aep_err.h \
 	e_chil_err.c e_chil_err.h \
 	e_nuron_err.c e_nuron_err.h \
 	e_sureware_err.c e_sureware_err.h \
-	e_ubsec_err.c e_ubsec_err.h \
 	e_capi_err.c e_capi_err.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -298,19 +295,3 @@ e_sureware.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 e_sureware.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 e_sureware.o: e_sureware.c e_sureware_err.c e_sureware_err.h
 e_sureware.o: vendor_defns/sureware.h
-e_ubsec.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_ubsec.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_ubsec.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_ubsec.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_ubsec.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_ubsec.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_ubsec.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_ubsec.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_ubsec.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_ubsec.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_ubsec.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_ubsec.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_ubsec.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_ubsec.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_ubsec.o: ../include/openssl/x509_vfy.h e_ubsec.c e_ubsec_err.c e_ubsec_err.h
-e_ubsec.o: vendor_defns/hw_ubsec.h

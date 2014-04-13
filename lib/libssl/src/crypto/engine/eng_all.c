@@ -100,9 +100,6 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_SUREWARE
 	ENGINE_load_sureware();
 #endif
-#ifndef OPENSSL_NO_HW_UBSEC
-	ENGINE_load_ubsec();
-#endif
 #ifndef OPENSSL_NO_HW_PADLOCK
 	ENGINE_load_padlock();
 #endif
