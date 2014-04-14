@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2014/03/31 06:44:23 jasper Exp $
+#	$OpenBSD: Makefile,v 1.45 2014/04/14 13:20:46 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -484,7 +484,7 @@ variables-4:
 
 variables-5:
 	# Test --variable
-	@echo ' -lfoo-0' > ${WANT}
+	@echo ' -lfoo-1' > ${WANT}
 	@${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
