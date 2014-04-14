@@ -210,12 +210,11 @@ int
 ssl3_accept(SSL *s)
 {
 	BUF_MEM *buf;
-	unsigned long alg_k, Time = (unsigned long)time(NULL);
+	unsigned long alg_k;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int ret = -1;
 	int new_state, state, skip = 0;
 
-	RAND_add(&Time, sizeof(Time), 0);
 	ERR_clear_error();
 	errno = 0;
 

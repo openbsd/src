@@ -146,13 +146,11 @@ IMPLEMENT_ssl2_meth_func(SSLv2_client_method,
 int
 ssl2_connect(SSL *s)
 {
-	unsigned long l = (unsigned long)time(NULL);
 	BUF_MEM *buf = NULL;
 	int ret = -1;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int new_state, state;
 
-	RAND_add(&l, sizeof(l), 0);
 	ERR_clear_error();
 	errno = 0;
 

@@ -145,7 +145,6 @@ int
 dtls1_accept(SSL *s)
 {
 	BUF_MEM *buf;
-	unsigned long Time = (unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	unsigned long alg_k;
 	int ret = -1;
@@ -156,7 +155,6 @@ dtls1_accept(SSL *s)
 	char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
 #endif
 
-	RAND_add(&Time, sizeof(Time), 0);
 	ERR_clear_error();
 	errno = 0;
 

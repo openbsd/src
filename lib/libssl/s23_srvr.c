@@ -147,12 +147,10 @@ int
 ssl23_accept(SSL *s)
 {
 	BUF_MEM *buf;
-	unsigned long Time = (unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 	int ret = -1;
 	int new_state, state;
 
-	RAND_add(&Time, sizeof(Time), 0);
 	ERR_clear_error();
 	errno = 0;
 

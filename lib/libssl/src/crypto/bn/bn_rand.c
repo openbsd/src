@@ -119,7 +119,6 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	{
 	unsigned char *buf=NULL;
 	int ret=0,bit,bytes,mask;
-	time_t tim;
 
 	if (bits == 0)
 		{
@@ -139,8 +138,6 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 		}
 
 	/* make a random number and set the top and bottom bits */
-	time(&tim);
-	RAND_add(&tim,sizeof(tim),0.0);
 
 	if (pseudorand)
 		{
