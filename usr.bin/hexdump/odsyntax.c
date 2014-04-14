@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.22 2013/11/20 21:21:50 deraadt Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.23 2014/04/14 22:51:20 sobrado Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ oldsyntax(int argc, char ***argvp)
 	deprecated = 1;
 	argv = *argvp;
 	while ((ch = getopt(argc, argv,
-	    "A:aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
+	    "A:aBbcDdeFfHhIij:LlN:Oot:vXx")) != -1)
 		switch (ch) {
 		case 'A':
 			switch (*optarg) {
@@ -177,18 +177,7 @@ oldsyntax(int argc, char ***argvp)
 		case 'v':
 			vflag = ALL;
 			break;
-		case 'P':
-		case 'p':
-		case 's':
-		case 'w':
-		case '?':
 		default:
-			warnx("od(1) has been deprecated for hexdump(1).");
-			if (ch != '?')
-				warnx(
-				    "hexdump(1) compatibility doesn't"
-				    " support the -%c option%s",
-				    ch, ch == 's' ? "; see strings(1)." : ".");
 			oldusage();
 		}
 
