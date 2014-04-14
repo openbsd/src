@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.139 2013/09/09 17:57:44 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.140 2014/04/14 12:58:04 blambert Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2013 $
+.Dd $Mdocdate: April 14 2014 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -147,15 +147,22 @@ to a relay.
 .Xr relayd 8
 runs 5 relay processes by default and every process will handle
 all configured relays.
-.It Ic send trap
+.It Xo Ic snmp Oo Ic trap Oc Ic Oo Qo Ar path Qc Oc
 Send an SNMP trap when the state of a host changes.
 .Xr relayd 8
 will try to connect to
 .Xr snmpd 8
-and request it send a trap to the registered trap receivers;
-see
+over the AgentX SNMP socket specified by
+.Ar path
+and request it send a trap to the registered trap receivers.
+If
+.Ar path
+is not specified, a default path of
+.Ar /var/run/agentx.sock
+will be used.
+See
 .Xr snmpd.conf 5
-for more information about the configuration.
+for more information about SNMP configuration.
 .It Ic timeout Ar number
 Set the global timeout in milliseconds for checks.
 This can be overridden by the timeout value in the table definitions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.175 2014/01/22 00:21:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.176 2014/04/14 12:58:04 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@
 #include <openssl/ssl.h>
 
 #include "relayd.h"
+#include "snmp.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -156,14 +157,14 @@ typedef struct {
 %token	LOADBALANCE LOG LOOKUP MARK MARKED MODE NAT NO DESTINATION
 %token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PRIORITY PROTO
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
-%token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET SPLICE
+%token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SNMP SOCKET SPLICE
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
 %token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE MATCH
 %token	RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH CURVE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	hostname interface table
-%type	<v.number>	http_type loglevel mark
+%type	<v.string>	hostname interface table optstring
+%type	<v.number>	http_type loglevel mark restricted trap
 %type	<v.number>	direction dstmode flag forwardmode retry
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto match
@@ -369,12 +370,23 @@ main		: INTERVAL NUMBER	{
 			}
 			conf->sc_prefork_relay = $2;
 		}
-		| SEND TRAP		{
+		| SNMP trap optstring	{
 			if (loadcfg)
 				break;
-			conf->sc_flags |= F_TRAP;
+			conf->sc_flags |= F_SNMP;
+			if ($2)
+				conf->sc_snmp_flags |= FSNMP_TRAPONLY;
+			if ($3)
+				conf->sc_snmp_path = $3;
+			else
+				conf->sc_snmp_path = strdup(AGENTX_SOCKET);
+			if (conf->sc_snmp_path == NULL)
+				fatal("out of memory");
 		}
 		;
+
+trap		: /* nothing */		{ $$ = 0; }
+		| TRAP			{ $$ = 1; }
 
 loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 		| ALL			{ $$ = RELAYD_OPT_LOGALL; }
@@ -1797,6 +1809,9 @@ optnl		: '\n' optnl
 nl		: '\n' optnl
 		;
 
+optstring	: STRING		{ $$ = $1; }
+		| /* nothing */		{ $$ = NULL; }
+		;
 %%
 
 struct keywords {
@@ -1909,6 +1924,7 @@ lookup(char *s)
 		{ "script",		SCRIPT },
 		{ "send",		SEND },
 		{ "session",		SESSION },
+		{ "snmp",		SNMP },
 		{ "socket",		SOCKET },
 		{ "source-hash",	SRCHASH },
 		{ "splice",		SPLICE },

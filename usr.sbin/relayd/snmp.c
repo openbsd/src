@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.13 2013/01/17 20:34:18 bluhm Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.14 2014/04/14 12:58:04 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -45,11 +45,21 @@
 		goto done;					\
 } while (0)
 
-static struct imsgev	*iev_snmp = NULL;
-enum privsep_procid	 snmp_procid;
+static struct snmp_oid	hosttrapoid = {
+	{ 1, 3, 6, 1, 4, 1, 30155, 3, 1, 0 },
+	10
+};
+
+static struct agentx_handle	*snmp_agentx = NULL;
+enum privsep_procid		 snmp_procid;
 
 void	 snmp_sock(int, short, void *);
-int	 snmp_element(const char *, enum snmp_type, void *, int64_t);
+int	 snmp_element(const char *, enum snmp_type, void *, int64_t,
+	    struct agentx_pdu *);
+int	 snmp_string2oid(const char *, struct snmp_oid *);
+void	 snmp_event_add(struct relayd *, int);
+void	 snmp_agentx_process(struct agentx_handle *, struct agentx_pdu *,
+	    void *);
 
 void
 snmp_init(struct relayd *env, enum privsep_procid id)
@@ -59,21 +69,26 @@ snmp_init(struct relayd *env, enum privsep_procid id)
 	if (event_initialized(&env->sc_snmpto))
 		event_del(&env->sc_snmpto);
 	if (env->sc_snmp != -1) {
+		if (snmp_agentx) {
+			snmp_agentx_close(snmp_agentx, AGENTX_CLOSE_OTHER);
+			snmp_agentx = NULL;
+		}
 		close(env->sc_snmp);
 		env->sc_snmp = -1;
 	}
 
-	if ((env->sc_flags & F_TRAP) == 0)
+	if ((env->sc_flags & F_SNMP) == 0)
 		return;
 
 	snmp_procid = id;
-	snmp_sock(-1, -1, env);
+
+	proc_compose_imsg(env->sc_ps, snmp_procid, -1,
+	    IMSG_SNMPSOCK, -1, NULL, 0);
 }
 
-int
+void
 snmp_setsock(struct relayd *env, enum privsep_procid id)
 {
-	struct imsgev		 tmpiev;
 	struct sockaddr_un	 sun;
 	int			 s = -1;
 
@@ -82,28 +97,23 @@ snmp_setsock(struct relayd *env, enum privsep_procid id)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, SNMP_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, env->sc_snmp_path, sizeof(sun.sun_path));
+
+	socket_set_blockmode(s, BM_NONBLOCK);
 
 	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		close(s);
 		s = -1;
-		goto done;
 	}
-
-	/* enable restricted snmp socket mode */
-	bzero(&tmpiev, sizeof(tmpiev));
-	imsg_init(&tmpiev.ibuf, s);
-	imsg_compose_event(&tmpiev, IMSG_SNMP_LOCK, 0, 0, -1, NULL, 0);
-
  done:
 	proc_compose_imsg(env->sc_ps, id, -1, IMSG_SNMPSOCK, s, NULL, 0);
-	return (-1);
 }
 
 int
 snmp_getsock(struct relayd *env, struct imsg *imsg)
 {
-	struct timeval	 tv = SNMP_RECONNECT_TIMEOUT;
+	struct timeval		 tv = SNMP_RECONNECT_TIMEOUT;
+	struct agentx_pdu	*pdu;
 
 	if (imsg->fd == -1)
 		goto retry;
@@ -111,14 +121,16 @@ snmp_getsock(struct relayd *env, struct imsg *imsg)
 	env->sc_snmp = imsg->fd;
 
 	log_debug("%s: got new snmp socket %d", __func__, imsg->fd);
-	if (iev_snmp == NULL &&
-	    (iev_snmp = calloc(1, sizeof(*iev_snmp))) == NULL)
-		fatal("snmp_getsock: calloc");
-	imsg_init(&iev_snmp->ibuf, env->sc_snmp);
 
-	event_set(&env->sc_snmpev, env->sc_snmp,
-	    EV_READ|EV_TIMEOUT, snmp_sock, env);
-	event_add(&env->sc_snmpev, NULL);
+	if ((snmp_agentx = snmp_agentx_alloc(env->sc_snmp)) == NULL)
+		fatal("snmp_getsock: agentx alloc");
+	if ((pdu = snmp_agentx_open_pdu(snmp_agentx, "relayd", NULL)) == NULL)
+		fatal("snmp_getsock: agentx pdu");
+	(void)snmp_agentx_send(snmp_agentx, pdu);
+
+	snmp_agentx_set_callback(snmp_agentx, snmp_agentx_process, env);
+	snmp_event_add(env, EV_WRITE);
+
 	return (0);
  retry:
 	evtimer_set(&env->sc_snmpto, snmp_sock, env);
@@ -127,88 +139,181 @@ snmp_getsock(struct relayd *env, struct imsg *imsg)
 }
 
 void
+snmp_event_add(struct relayd *env, int wflag)
+{
+	event_del(&env->sc_snmpev);
+	event_set(&env->sc_snmpev, env->sc_snmp, EV_READ|wflag, snmp_sock, env);
+	event_add(&env->sc_snmpev, NULL);
+}
+
+void
 snmp_sock(int fd, short event, void *arg)
 {
 	struct relayd	*env = arg;
-	struct timeval	 tv = SNMP_RECONNECT_TIMEOUT;
+	int		 evflags = 0;
 
-	switch (event) {
-	case -1:
-		bzero(&tv, sizeof(tv));
-		goto retry;
-	case EV_READ:
-		log_debug("%s: snmp socket closed %d", __func__, env->sc_snmp);
-		(void)close(env->sc_snmp);
-		break;
+	if (event & EV_TIMEOUT) {
+		goto reopen;
+	}
+	if (event & EV_WRITE) {
+		if (snmp_agentx_send(snmp_agentx, NULL) == -1) {
+			if (errno != EAGAIN)
+				goto close;
+
+			/* short write */
+			evflags |= EV_WRITE;
+		}
+	}
+	if (event & EV_READ) {
+		if (snmp_agentx_recv(snmp_agentx) == NULL) {
+			if (snmp_agentx->error) {
+				log_warnx("agentx protocol error '%i'",
+				    snmp_agentx->error);
+				goto close;
+			}
+			if (errno != EAGAIN) {
+				log_warn("agentx socket error");
+				goto close;
+			}
+
+			/* short read */
+		}
+
+		/* PDU handled in the registered callback */
 	}
 
+	snmp_event_add(env, evflags);
+	return;
+
+ close:
+	log_debug("%s: snmp socket closed %d", __func__, env->sc_snmp);
+	snmp_agentx_free(snmp_agentx);
+	env->sc_snmp = -1;
+	snmp_agentx = NULL;
+ reopen:
 	proc_compose_imsg(env->sc_ps, snmp_procid, -1,
 	    IMSG_SNMPSOCK, -1, NULL, 0);
 	return;
- retry:
-	evtimer_set(&env->sc_snmpto, snmp_sock, arg);
-	evtimer_add(&env->sc_snmpto, &tv);
 }
 
-int
-snmp_element(const char *oid, enum snmp_type type, void *buf, int64_t val)
+void
+snmp_agentx_process(struct agentx_handle *h, struct agentx_pdu *pdu, void *arg)
 {
-	struct iovec		 iov[2];
-	int			 iovcnt = 2;
+	struct agentx_close_request_data	 close_hdr;
+	struct relayd				*env = arg;
+
+	switch (pdu->request->hdr->type) {
+
+	case AGENTX_NOTIFY:
+		if (snmp_agentx_response(h, pdu) == -1)
+			break;
+		break;
+
+	case AGENTX_OPEN:
+		if (snmp_agentx_open_response(h, pdu) == -1)
+			break;
+		break;
+
+	case AGENTX_CLOSE:
+		snmp_agentx_read_raw(pdu, &close_hdr, sizeof(close_hdr));
+		log_info("snmp: agentx master has closed connection (%i)",
+		    close_hdr.reason);
+
+		snmp_agentx_free(snmp_agentx);
+		env->sc_snmp = -1;
+		snmp_agentx = NULL;
+		proc_compose_imsg(env->sc_ps, snmp_procid, -1,
+		    IMSG_SNMPSOCK, -1, NULL, 0);
+		break;
+
+	default:
+		if (snmp_agentx_response(h, pdu) == -1)
+			break;
+		break;
+	}
+
+	snmp_agentx_pdu_free(pdu);
+	return;
+}
+
+
+int
+snmp_element(const char *oidstr, enum snmp_type type, void *buf, int64_t val,
+    struct agentx_pdu *pdu)
+{
 	u_int32_t		 d;
 	u_int64_t		 l;
-	struct snmp_imsg	 sm;
+	struct snmp_oid		 oid;
 
 	DPRINTF("%s: oid %s type %d buf %p val %lld", __func__,
 	    oid, type, buf, val);
 
-	bzero(&iov, sizeof(iov));
+	if (snmp_string2oid(oidstr, &oid) == -1)
+		return (-1);
 
 	switch (type) {
-	case SNMP_COUNTER32:
 	case SNMP_GAUGE32:
-	case SNMP_TIMETICKS:
-	case SNMP_OPAQUE:
-	case SNMP_UINTEGER32:
+	case SNMP_NSAPADDR:
 	case SNMP_INTEGER32:
+	case SNMP_UINTEGER32:
 		d = (u_int32_t)val;
-		iov[1].iov_base = &d;
-		iov[1].iov_len = sizeof(d);
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_INTEGER,
+		    &d, sizeof(d)) == -1)
+			return (-1);
 		break;
+
+	case SNMP_COUNTER32:
+		d = (u_int32_t)val;
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_COUNTER32,
+		    &d, sizeof(d)) == -1)
+			return (-1);
+		break;
+
+	case SNMP_TIMETICKS:
+		d = (u_int32_t)val;
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_TIME_TICKS,
+		    &d, sizeof(d)) == -1)
+			return (-1);
+		break;
+
 	case SNMP_COUNTER64:
 		l = (u_int64_t)val;
-		iov[1].iov_base = &l;
-		iov[1].iov_len = sizeof(l);
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_COUNTER64,
+		    &l, sizeof(l)) == -1)
+			return (-1);
 		break;
-	case SNMP_NSAPADDR:
-	case SNMP_BITSTRING:
-	case SNMP_OCTETSTRING:
+
 	case SNMP_IPADDR:
-	case SNMP_OBJECT:
-		iov[1].iov_base = buf;
-		if (val == 0)
-			iov[1].iov_len = strlen((char *)buf);
-		else
-			iov[1].iov_len = val;
+	case SNMP_OPAQUE:
+		d = (u_int32_t)val;
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_OPAQUE,
+		    buf, strlen(buf)) == -1)
+			return (-1);
 		break;
-	case SNMP_NULL:
-		iovcnt--;
-		break;
+
+	case SNMP_OBJECT: {
+		struct snmp_oid		oid1;
+
+		if (snmp_string2oid(buf, &oid1) == -1)
+			return (-1);
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_OBJECT_IDENTIFIER,
+		    &oid1, sizeof(oid1)) == -1)
+			return (-1);
 	}
 
-	bzero(&sm, sizeof(sm));
-	if (strlcpy(sm.snmp_oid, oid, sizeof(sm.snmp_oid)) >=
-	    sizeof(sm.snmp_oid))
-		return (-1);
-	sm.snmp_type = type;
-	sm.snmp_len = iov[1].iov_len;
-	iov[0].iov_base = &sm;
-	iov[0].iov_len = sizeof(sm);
+	case SNMP_BITSTRING:
+	case SNMP_OCTETSTRING:
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_OCTET_STRING,
+		    buf, strlen(buf)) == -1)
+			return (-1);
+		break;
 
-	if (imsg_composev(&iev_snmp->ibuf, IMSG_SNMP_ELEMENT, 0, 0, -1,
-	    iov, iovcnt) == -1)
-		return (-1);
-	imsg_event_add(iev_snmp);
+	case SNMP_NULL:
+		/* no data beyond the OID itself */
+		if (snmp_agentx_varbind(pdu, &oid, AGENTX_NULL,
+		    NULL, 0) == -1)
+			return (-1);
+	}
 
 	return (0);
 }
@@ -220,7 +325,9 @@ snmp_element(const char *oid, enum snmp_type type, void *buf, int64_t val)
 void
 snmp_hosttrap(struct relayd *env, struct table *table, struct host *host)
 {
-	if (iev_snmp == NULL || env->sc_snmp == -1)
+	struct agentx_pdu *pdu;
+
+	if (snmp_agentx == NULL || env->sc_snmp == -1)
 		return;
 
 	/*
@@ -228,21 +335,44 @@ snmp_hosttrap(struct relayd *env, struct table *table, struct host *host)
 	 * XXX The trap format needs some tweaks and other OIDs
 	 */
 
-	imsg_compose_event(iev_snmp, IMSG_SNMP_TRAP, 0, 0, -1, NULL, 0);
+	if ((pdu = snmp_agentx_notify_pdu(&hosttrapoid)) == NULL)
+		return;
 
-	SNMP_ELEMENT(".1.0", SNMP_NULL, NULL, 0);
-	SNMP_ELEMENT(".1.1.0", SNMP_OCTETSTRING, host->conf.name, 0);
-	SNMP_ELEMENT(".1.2.0", SNMP_INTEGER32, NULL, host->up);
-	SNMP_ELEMENT(".1.3.0", SNMP_INTEGER32, NULL, host->last_up);
-	SNMP_ELEMENT(".1.4.0", SNMP_INTEGER32, NULL, host->up_cnt);
-	SNMP_ELEMENT(".1.5.0", SNMP_INTEGER32, NULL, host->check_cnt);
-	SNMP_ELEMENT(".1.6.0", SNMP_OCTETSTRING, table->conf.name, 0);
-	SNMP_ELEMENT(".1.7.0", SNMP_INTEGER32, NULL, table->up);
+	SNMP_ELEMENT(".1.0", SNMP_NULL, NULL, 0, pdu);
+	SNMP_ELEMENT(".1.1.0", SNMP_OCTETSTRING, host->conf.name, 0, pdu);
+	SNMP_ELEMENT(".1.2.0", SNMP_INTEGER32, NULL, host->up, pdu);
+	SNMP_ELEMENT(".1.3.0", SNMP_INTEGER32, NULL, host->last_up, pdu);
+	SNMP_ELEMENT(".1.4.0", SNMP_INTEGER32, NULL, host->up_cnt, pdu);
+	SNMP_ELEMENT(".1.5.0", SNMP_INTEGER32, NULL, host->check_cnt, pdu);
+	SNMP_ELEMENT(".1.6.0", SNMP_OCTETSTRING, table->conf.name, 0, pdu);
+	SNMP_ELEMENT(".1.7.0", SNMP_INTEGER32, NULL, table->up, pdu);
 	if (!host->conf.retry)
 		goto done;
-	SNMP_ELEMENT(".1.8.0", SNMP_INTEGER32, NULL, host->conf.retry);
-	SNMP_ELEMENT(".1.9.0", SNMP_INTEGER32, NULL, host->retry_cnt);
+	SNMP_ELEMENT(".1.8.0", SNMP_INTEGER32, NULL, host->conf.retry, pdu);
+	SNMP_ELEMENT(".1.9.0", SNMP_INTEGER32, NULL, host->retry_cnt, pdu);
 
  done:
-	imsg_compose_event(iev_snmp, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
+	snmp_agentx_send(snmp_agentx, pdu);
+	snmp_event_add(env, EV_WRITE);
+}
+
+int
+snmp_string2oid(const char *oidstr, struct snmp_oid *o)
+{
+	char			*sp, *p, str[BUFSIZ];
+	const char		*errstr;
+
+	if (strlcpy(str, oidstr, sizeof(str)) >= sizeof(str))
+		return (-1);
+	bzero(o, sizeof(*o));
+
+	for (p = sp = str; p != NULL; sp = p) {
+		if ((p = strpbrk(p, ".-")) != NULL)
+			*p++ = '\0';
+		o->o_id[o->o_n++] = strtonum(sp, 0, UINT_MAX, &errstr);
+		if (errstr || o->o_n > SNMP_MAX_OID_LEN)
+			return (-1);
+	}
+
+	return (0);
 }

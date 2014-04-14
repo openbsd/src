@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.172 2014/02/14 10:21:00 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.173 2014/04/14 12:58:04 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -277,7 +277,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_DEMOTED		0x00008000
 #define F_UDP			0x00010000
 #define F_RETURN		0x00020000
-#define F_TRAP			0x00040000
+#define F_SNMP			0x00040000
 #define F_NEEDPF		0x00080000
 #define F_PORT			0x00100000
 #define F_SSLCLIENT		0x00200000
@@ -913,6 +913,8 @@ struct relayd {
 	struct timeval		 sc_statinterval;
 
 	int			 sc_snmp;
+	const char		*sc_snmp_path;
+	int			 sc_snmp_flags;
 	struct event		 sc_snmpto;
 	struct event		 sc_snmpev;
 
@@ -926,6 +928,8 @@ struct relayd {
 	struct privsep		*sc_ps;
 	int			 sc_reload;
 };
+
+#define	FSNMP_TRAPONLY			0x01
 
 #define RELAYD_OPT_VERBOSE		0x01
 #define RELAYD_OPT_NOACTION		0x04
@@ -1129,7 +1133,7 @@ void		 pn_ref(u_int16_t);
 
 /* snmp.c */
 void	 snmp_init(struct relayd *, enum privsep_procid);
-int	 snmp_setsock(struct relayd *, enum privsep_procid);
+void	 snmp_setsock(struct relayd *, enum privsep_procid);
 int	 snmp_getsock(struct relayd *, struct imsg *);
 void	 snmp_hosttrap(struct relayd *, struct table *, struct host *);
 
