@@ -246,22 +246,6 @@ extern "C" {
  * commands from this value. (ie. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc). */
 #define ENGINE_CMD_BASE				200
 
-/* NB: These 2 nCipher "chil" control commands are deprecated, and their
- * functionality is now available through ENGINE-specific control commands
- * (exposed through the above-mentioned 'CMD'-handling). Code using these 2
- * commands should be migrated to the more general command handling before these
- * are removed. */
-
-/* Flags specific to the nCipher "chil" engine */
-#define ENGINE_CTRL_CHIL_SET_FORKCHECK		100
-	/* Depending on the value of the (long)i argument, this sets or
-	 * unsets the SimpleForkCheck flag in the CHIL API to enable or
-	 * disable checking and workarounds for applications that fork().
-	 */
-#define ENGINE_CTRL_CHIL_NO_LOCKING		101
-	/* This prevents the initialisation function from providing mutex
-	 * callbacks to the nCipher library. */
-
 /* If an ENGINE supports its own specific control commands and wishes the
  * framework to handle the above 'ENGINE_CMD_***'-manipulation commands on its
  * behalf, it should supply a null-terminated array of ENGINE_CMD_DEFN entries
@@ -332,7 +316,6 @@ ENGINE *ENGINE_by_id(const char *id);
 void ENGINE_load_openssl(void);
 void ENGINE_load_dynamic(void);
 #ifndef OPENSSL_NO_STATIC_ENGINE
-void ENGINE_load_chil(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_capi(void);

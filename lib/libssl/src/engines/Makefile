@@ -29,12 +29,10 @@ LIB=$(TOP)/libcrypto.a
 LIBNAMES= gmp chil nuron padlock capi
 
 LIBSRC=	e_gmp.c \
-	e_chil.c \
 	e_nuron.c \
 	e_padlock.c \
 	e_capi.c
 LIBOBJ= e_gmp.o \
-	e_chil.o \
 	e_nuron.o \
 	e_padlock.o \
 	e_capi.o
@@ -43,7 +41,6 @@ SRC= $(LIBSRC)
 
 EXHEADER= 
 HEADER=	e_gmp_err.c e_gmp_err.h \
-	e_chil_err.c e_chil_err.h \
 	e_nuron_err.c e_nuron_err.h \
 	e_capi_err.c e_capi_err.h
 
@@ -158,23 +155,6 @@ e_capi.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
 e_capi.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 e_capi.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 e_capi.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_capi.c
-e_chil.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_chil.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_chil.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_chil.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
-e_chil.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_chil.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_chil.o: ../include/openssl/err.h ../include/openssl/evp.h
-e_chil.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-e_chil.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-e_chil.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-e_chil.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-e_chil.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-e_chil.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_chil.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_chil.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-e_chil.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_chil.c
-e_chil.o: e_chil_err.c e_chil_err.h vendor_defns/hwcryptohook.h
 e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
