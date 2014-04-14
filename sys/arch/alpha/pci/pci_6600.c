@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.19 2009/09/30 20:16:30 miod Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.20 2014/04/14 07:36:12 mpi Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -37,8 +37,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE

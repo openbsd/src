@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.25 2009/09/30 20:18:06 miod Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.26 2014/04/14 07:36:12 mpi Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -66,8 +66,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
-
-#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
