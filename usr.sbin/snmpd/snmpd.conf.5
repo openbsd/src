@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.29 2014/04/14 12:55:10 blambert Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.30 2014/04/14 15:34:48 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -77,30 +77,20 @@ listen on $ext_addr
 .Ed
 .Sh GLOBAL CONFIGURATION
 The following options can be set globally:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Ic listen on Ar address
 Specify the local address
 .Xr snmpd 8
 should listen on for incoming SNMP messages.
-.Pp
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 The default value is
 .Ar public .
-.Pp
-.It Xo
-.Ic read-write
-.Pq Ic community Ar string Ic \*(Ba disabled
-.Xc
+.It Ic read-write Pq Ic community Ar string Ic | disabled
 Specify the name of the read-write community, or disallow writes completely.
 The default value is
 .Ar private .
-.Pp
-.It Xo
-.Ic filter-routes
-.Pq Ic yes \*(Ba\ no
-.Xc
+.It Ic filter-routes Pq Ic yes | no
 If set to
 .Ic yes ,
 ask the kernel to filter route update messages on the routing socket.
@@ -108,11 +98,7 @@ Routing table information will not be available, but CPU use will be
 reduced during bulk updates.
 The default is
 .Ic no .
-.Pp
-.It Xo
-.Ic seclevel
-.Pq Ic none \*(Ba\ auth \*(Ba\ enc
-.Xc
+.It Ic seclevel Pq Ic none | auth | enc
 Specify the lowest security level that
 .Xr snmpd 8
 accepts:
@@ -135,8 +121,7 @@ If the chosen value is different from
 .Xr snmpd 8
 will accept only SNMPv3 requests since older versions neither support
 authentication nor encryption.
-.Pp
-.It Ic socket Qo Ar path Qc Op Ic restricted | Ic agentx
+.It Ic socket Qo Ar path Qc Op Ic restricted | agentx
 Create a control socket at
 .Ar path .
 If
@@ -153,14 +138,12 @@ sockets may be created.
 By default
 .Pa /var/run/snmpd.sock
 is created and no other sockets are created.
-.Pp
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a
 name or an e-mail address.
 The default value is
 .Ar root@hostname
 using the hostname of the local machine.
-.Pp
 .It Ic system description Ar string
 Specify a description of the local system.
 The default value is the operating system identification as printed by the
@@ -171,17 +154,14 @@ flag:
 .Bd -literal -offset indent
 OpenBSD myhost.example.com 4.2 GENERIC#595 i386
 .Ed
-.Pp
 .It Ic system location Ar string
 Specify the string describing the location of the local system,
 typically a physical location.
 The default value is an empty string.
-.Pp
 .It Ic system name Ar string
 Specify the name of the local system, typically a fully-qualified
 domain name.
 The default value is the hostname of the local system.
-.Pp
 .It Ic system oid Ar oid-string
 Specify the authoritative identification of the local system.
 The default value is
@@ -190,7 +170,6 @@ The default value is
 identifying a common
 .Ox
 system.
-.Pp
 .It Ic system services Ar number
 Specify a magic value which indicates the set of services that the local
 system may provide.
@@ -198,12 +177,10 @@ Refer to the
 .Ar sysServices
 description in the SNMP MIB for details.
 .\"XXX describe the complicated services alg here
-.Pp
 .It Ic trap community Ar string
 Specify the name of the trap community.
 The default value is
 .Ar public .
-.Pp
 .It Xo
 .Ic trap receiver Ar string
 .Op Ic oid Ar oid-string
@@ -265,12 +242,11 @@ be enabled too.
 .El
 .Sh OID CONFIGURATION
 It is possible to specify user-defined OIDs in the configuration file:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Xo
 .Ic oid Ar oid-string
 .Ic name Ar name
-.Op Ic read-only \*(Ba\ read-write
+.Op Ic read-only | read-write
 .Op Ar type
 .Ar value
 .Xc
@@ -284,7 +260,7 @@ or
 .Ic integer .
 .El
 .Sh FILES
-.Bl -tag -width "/etc/snmpd.conf" -compact
+.Bl -tag -width "/etc/snmpd.conf"
 .It Pa /etc/snmpd.conf
 Default location of the configuration file.
 .El
