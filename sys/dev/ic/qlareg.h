@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.6 2014/04/05 12:49:27 jmatthew Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.7 2014/04/14 04:14:11 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -195,14 +195,6 @@
 #define QLA_MBOX_GET_PORT_NAME_LIST	0x0075
 #define QLA_MBOX_LUN_RESET		0x007E
 
-/* mailbox operation register bitfields */
-#define QLA_MBOX_ABOUT_FIRMWARE_IN	0x0001
-#define QLA_MBOX_ABOUT_FIRMWARE_OUT	0x004f
-#define QLA_MBOX_INIT_FIRMWARE_IN	0x00fd
-#define QLA_MBOX_SET_FIRMWARE_OPTIONS_IN 0x000f
-#define QLA_MBOX_GET_LOOP_ID_OUT	0x00cf
-
-#define QLA_MBOX_COUNT			32
 
 /* nvram layout */
 struct qla_nvram {

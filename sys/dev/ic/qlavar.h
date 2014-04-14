@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.7 2014/04/05 12:49:27 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.8 2014/04/14 04:14:11 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -145,6 +145,7 @@ struct qla_softc {
 	int			sc_mbox_base;
 	u_int16_t		sc_mbox[12];
 	int			sc_mbox_pending;
+	struct mutex		sc_mbox_mtx;
 
 	int			sc_loop_up;
 	int			sc_topology;
