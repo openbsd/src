@@ -26,10 +26,10 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= padlock
+LIBNAMES=
 
-LIBSRC=	e_padlock.c
-LIBOBJ= e_padlock.o
+LIBSRC=
+LIBOBJ=
 
 SRC= $(LIBSRC)
 
