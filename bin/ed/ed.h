@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.12 2012/12/04 02:40:47 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.13 2014/04/14 22:12:01 tedu Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -164,20 +164,16 @@ void clear_undo_stack(void);
 int close_sbuf(void);
 int copy_lines(int);
 int delete_lines(int, int);
-void des_error(char *);
 int display_lines(int, int, int);
 line_t *dup_line_node(line_t *);
 int exec_command(void);
 int exec_global(int, int);
-void expand_des_key(char *, char *);
 int extract_addr_range(void);
 char *extract_pattern(int);
 int extract_subst_tail(int *, int *);
 char *extract_subst_template(void);
-int flush_des_file(FILE *);
 line_t *get_addressed_line_node(int);
 pattern_t *get_compiled_pattern(void);
-int get_des_char(FILE *);
 char *get_extended_line(int *, int);
 char *get_filename(void);
 int get_keyword(void);
@@ -194,7 +190,6 @@ void handle_winch(int);
 int has_trailing_escape(char *, char *);
 int hex_to_binary(int, int);
 void init_buffers(void);
-void init_des_cipher(void);
 int is_legal_filename(char *);
 int join_lines(int, int);
 int mark_line_node(line_t *, int);
@@ -205,7 +200,6 @@ int open_sbuf(void);
 char *parse_char_class(char *);
 int pop_undo_stack(void);
 undo_t *push_undo_stack(int, int, int);
-int put_des_char(int, FILE *);
 char *put_sbuf_line(char *);
 int put_stream_line(FILE *, char *, int);
 int put_tty_line(char *, int, int, int);
@@ -214,7 +208,6 @@ int read_file(char *, int);
 int read_stream(FILE *, int);
 int search_and_replace(pattern_t *, int, int);
 int set_active_node(line_t *);
-void set_des_key(char *);
 void seterrmsg(char *);
 void signal_hup(int);
 void signal_int(int);

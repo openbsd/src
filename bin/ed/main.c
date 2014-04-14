@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2014/04/14 22:12:01 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,10 +39,6 @@
  *	The buffering algorithm is attributed to Rodney Ruddock of
  *	the University of Guelph, Guelph, Ontario.
  *
- *	The cbc.c encryption code is adapted from
- *	the bdes program by Matt Bishop of Dartmouth College,
- *	Hanover, NH.
- *
  */
 
 #include <sys/ioctl.h>
@@ -72,7 +68,6 @@ int ibufsz;			/* ed command-line buffer size */
 char *ibufp;			/* pointer to ed command-line buffer */
 
 /* global flags */
-int des = 0;			/* if set, use crypt(3) for i/o */
 int garrulous = 0;		/* if set, print all error messages */
 int isbinary;			/* if set, buffer contains ASCII NULs */
 int isglobal;			/* if set, doing a global command */
@@ -123,13 +118,8 @@ top:
 			scripted = 1;
 			break;
 		case 'x':				/* use crypt */
-#ifdef DES
-			des = get_keyword();
-#else
 			fprintf(stderr, "crypt unavailable\n?\n");
-#endif
 			break;
-
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);
@@ -859,13 +849,8 @@ exec_command(void)
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
-#ifdef DES
-		des = get_keyword();
-#else
 		seterrmsg("crypt unavailable");
 		return ERR;
-#endif
-		break;
 	case 'z':
 		first_addr = 1;
 #ifdef BACKWARDS

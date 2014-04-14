@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.59 2014/03/06 17:37:43 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.60 2014/04/14 22:12:01 tedu Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 6 2014 $
+.Dd $Mdocdate: April 14 2014 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -144,11 +144,6 @@ Suppress diagnostics.
 This should be used if
 .Nm
 standard input is from a script.
-.It Fl x
-Prompt for an encryption key to be used in subsequent reads and writes
-(see the
-.Ic x
-command).
 .It Ar file
 Specifies the name of a file to read.
 If
@@ -671,13 +666,6 @@ This is similar to the
 .Ic w
 command, except that the previous contents of file are not clobbered.
 The current address is unchanged.
-.It Ic x
-Prompts for an encryption key which is used in subsequent reads and writes.
-If a newline alone is entered as the key, then encryption is turned off.
-Otherwise, echoing is disabled while a key is read.
-Encryption/decryption is done using the
-.Xr bdes 1
-algorithm.
 .It (.+1) Ns Ic z Ns Ar n
 Scrolls
 .Ar n
