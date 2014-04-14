@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2014/01/22 00:21:17 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2014/04/14 12:55:10 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,11 @@
 
 #include "snmpd.h"
 #include "mib.h"
+
+enum socktype {
+	SOCK_TYPE_RESTRICTED = 1,
+	SOCK_TYPE_AGENTX = 2
+};
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -120,11 +125,11 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED
+%token	SOCKET RESTRICTED AGENTX
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
-%type	<v.number>	optwrite yesno seclevel restricted
+%type	<v.number>	optwrite yesno seclevel socktype
 %type	<v.data>	objtype
 %type	<v.oid>		oid hostoid
 %type	<v.auth>	auth
@@ -266,7 +271,7 @@ main		: LISTEN ON STRING		{
 			}
 			user = NULL;
 		}
-		| SOCKET STRING restricted {
+		| SOCKET STRING socktype {
 			if ($3) {
 				struct control_sock *rcsock;
 
@@ -276,7 +281,10 @@ main		: LISTEN ON STRING		{
 					YYERROR;
 				}
 				rcsock->cs_name = $2;
-				rcsock->cs_restricted = 1;
+				if ($3 == SOCK_TYPE_RESTRICTED)
+					rcsock->cs_restricted = 1;
+				else if ($3 == SOCK_TYPE_AGENTX)
+					rcsock->cs_agentx = 1;
 				TAILQ_INSERT_TAIL(&conf->sc_ps.ps_rcsocks,
 				    rcsock, cs_entry);
 			} else {
@@ -475,7 +483,8 @@ enc		: STRING			{
 		}
 		;
 
-restricted	: RESTRICTED		{ $$ = 1; }
+socktype	: RESTRICTED		{ $$ = SOCK_TYPE_RESTRICTED; }
+		| AGENTX		{ $$ = SOCK_TYPE_AGENTX; }
 		| /* nothing */		{ $$ = 0; }
 		;
 
@@ -513,6 +522,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "agentx",		AGENTX },
 		{ "auth",		AUTH },
 		{ "authkey",		AUTHKEY },
 		{ "community",		COMMUNITY },

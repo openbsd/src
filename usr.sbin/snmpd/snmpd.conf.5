@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.28 2013/10/17 09:14:01 blambert Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.29 2014/04/14 12:55:10 blambert Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2013 $
+.Dd $Mdocdate: April 14 2014 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -136,18 +136,23 @@ If the chosen value is different from
 will accept only SNMPv3 requests since older versions neither support
 authentication nor encryption.
 .Pp
-.It Ic socket Qo Ar path Qc Op Ic restricted
+.It Ic socket Qo Ar path Qc Op Ic restricted | Ic agentx
 Create a control socket at
 .Ar path .
 If
 .Ic restricted
-is specified a restricted control socket will be created.
+is specified, a restricted control socket will be created.
+If
+.Ic agentx
+is specified, a socket which speaks the AgentX protocol will be created.
 Multiple
 .Ic restricted
+and
+.Ic agentx
 sockets may be created.
 By default
 .Pa /var/run/snmpd.sock
-is used and no restricted socket is created.
+is created and no other sockets are created.
 .Pp
 .It Ic system contact Ar string
 Specify the name or description of the system contact, typically a

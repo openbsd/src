@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.49 2014/02/14 10:38:09 florian Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.50 2014/04/14 12:55:10 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -100,6 +100,7 @@ struct control_sock {
 	struct event	 cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
+	int		 cs_agentx;
 	void		*cs_env;
 
 	TAILQ_ENTRY(control_sock) cs_entry;
@@ -162,7 +163,8 @@ struct ctl_conn {
 #define CTL_CONN_NOTIFY		 0x01
 #define CTL_CONN_LOCKED		 0x02	/* restricted mode */
 	struct imsgev		 iev;
-
+	void 			*data;
+	struct control_sock	*cs;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;
@@ -336,7 +338,14 @@ struct pfr_buffer {
 #define MSG_REPORT(m)		(((m)->sm_flags & SNMP_MSGFLAG_REPORT) != 0)
 
 struct snmp_message {
+	struct sockaddr_storage	 sm_ss;
+	socklen_t		 sm_slen;
+	char			 sm_host[MAXHOSTNAMELEN];
+
+	struct ber		 sm_ber;
+	struct ber_element	*sm_req;
 	struct ber_element	*sm_resp;
+
 	u_int8_t		 sm_data[READ_BUF_SIZE];
 	size_t			 sm_datalen;
 
@@ -366,6 +375,7 @@ struct snmp_message {
 
 	long long		 sm_request;
 
+	const char		*sm_errstr;
 	long long		 sm_error;
 #define sm_nonrepeaters		 sm_error
 	long long		 sm_errorindex;
@@ -547,6 +557,8 @@ void		 snmpe_shutdown(struct privsep *, struct privsep_proc *);
 /* trap.c */
 void		 trap_init(void);
 int		 trap_imsg(struct imsgev *, pid_t);
+int		 trap_agentx(struct agentx_handle *, struct agentx_pdu *,
+		    int *, char **, int *);
 int		 trap_send(struct ber_oid *, struct ber_element *);
 
 /* mps.c */
@@ -554,6 +566,8 @@ struct ber_element *
 		 mps_getreq(struct ber_element *, struct ber_oid *, u_int);
 struct ber_element *
 		 mps_getnextreq(struct ber_element *, struct ber_oid *);
+struct ber_element *
+		 mps_getbulkreq(struct ber_element *, struct ber_oid *, int);
 int		 mps_setreq(struct ber_element *, struct ber_oid *);
 int		 mps_set(struct ber_oid *, void *, long long);
 int		 mps_getstr(struct oid *, struct ber_oid *,
@@ -650,4 +664,6 @@ int	 proc_composev_imsg(struct privsep *, enum privsep_procid,
 	    u_int16_t, int, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
 	    enum privsep_procid);
+void	 proc_flush_imsg(struct privsep *, enum privsep_procid);
+
 #endif /* _SNMPD_H */

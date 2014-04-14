@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.10 2012/09/17 16:43:59 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.11 2014/04/14 12:55:10 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -19,12 +19,17 @@
 #ifndef SNMP_HEADER
 #define SNMP_HEADER
 
+#include <sys/types.h>
+#include <machine/endian.h>
+
 /*
  * SNMP IMSG interface
  */
 
-#define SNMP_MAX_OID_LEN	128	/* max size of the OID _string_ */
+#define SNMP_MAX_OID_STRLEN	128	/* max size of the OID _string_ */
 #define SNMP_SOCKET		"/var/run/snmpd.sock"
+#define AGENTX_SOCKET		"/var/run/agentx.sock"
+#define SNMP_RESTRICTED_SOCKET	"/var/run/snmpd.rsock"
 
 enum snmp_type {
 	SNMP_IPADDR		= 0,
@@ -45,10 +50,11 @@ enum snmp_type {
 };
 
 enum snmp_imsg_ctl {
-	IMSG_SNMP_TRAP		= 1000,	/* something that works everywhere */
+	IMSG_SNMP_DUMMY		= 1000,	/* something that works everywhere */
 	IMSG_SNMP_ELEMENT,
 	IMSG_SNMP_END,
-	IMSG_SNMP_LOCK			/* enable restricted mode */
+	IMSG_SNMP_LOCK,			/* enable restricted mode */
+	IMSG_SNMP_AGENTX
 };
 
 struct snmp_imsg_hdr {
@@ -60,7 +66,7 @@ struct snmp_imsg_hdr {
 };
 
 struct snmp_imsg {
-	char		 snmp_oid[SNMP_MAX_OID_LEN];
+	char		 snmp_oid[SNMP_MAX_OID_STRLEN];
 	u_int8_t	 snmp_type;
 	u_int16_t	 snmp_len;
 };
@@ -149,5 +155,269 @@ enum snmp_security_model {
 #define SNMP_MSGFLAG_REPORT	0x04
 
 #define SNMP_MAX_TIMEWINDOW	150	/* RFC3414 */
+
+#define SNMP_MIN_OID_LEN	2	/* OBJECT */
+#define SNMP_MAX_OID_LEN	32	/* OBJECT */
+
+struct snmp_oid {
+	u_int32_t	o_id[SNMP_MAX_OID_LEN + 1];
+	size_t		o_n;
+};
+
+/* AgentX protocol, as outlined in RFC 2741 */
+
+/* version */
+#define AGENTX_VERSION			1
+
+/* type */
+#define	AGENTX_OPEN			1
+#define	AGENTX_CLOSE			2
+#define	AGENTX_REGISTER			3
+#define	AGENTX_UNREGISTER		4
+#define	AGENTX_GET			5
+#define	AGENTX_GET_NEXT			6
+#define	AGENTX_GET_BULK			7
+#define	AGENTX_TEST_SET			8
+#define	AGENTX_COMMIT_SET		9
+#define	AGENTX_UNDO_SET			10
+#define	AGENTX_CLEANUP_SET		11
+#define	AGENTX_NOTIFY			12
+#define	AGENTX_PING			13
+#define	AGENTX_INDEX_ALLOCATE		14
+#define	AGENTX_INDEX_DEALLOCATE		15
+#define	AGENTX_ADD_AGENT_CAPS		16
+#define	AGENTX_REMOVE_AGENT_CAPS	17
+#define	AGENTX_RESPONSE			18
+
+/* error return codes */
+#define	AGENTX_ERR_NONE				0
+#define	AGENTX_ERR_OPEN_FAILED			256
+#define	AGENTX_ERR_NOT_OPEN			257
+#define	AGENTX_ERR_INDEX_WRONG_TYPE		258
+#define	AGENTX_ERR_INDEX_ALREADY_ALLOCATED	259
+#define	AGENTX_ERR_INDEX_NONE_AVAILABLE		260
+#define	AGENTX_ERR_INDEX_NOT_ALLOCATED		261
+#define	AGENTX_ERR_UNSUPPORTED_CONTEXT		262
+#define	AGENTX_ERR_DUPLICATE_REGISTRATION	263
+#define	AGENTX_ERR_UNKNOWN_REGISTRATION		264
+#define	AGENTX_ERR_UNKNOWN_AGENT_CAPS		265
+#define	AGENTX_ERR_PARSE_ERROR			266
+#define	AGENTX_ERR_REQUEST_DENIED		267
+#define	AGENTX_ERR_PROCESSING_ERROR		268
+
+/* flags */
+#define	AGENTX_INSTANCE_REGISTRATION	0x01
+#define	AGENTX_NEW_INDEX		0x02
+#define	AGENTX_ANY_INDEX		0x04
+#define	AGENTX_NON_DEFAULT_CONTEXT	0x08
+#define	AGENTX_NETWORK_BYTE_ORDER	0x10
+#define	AGENTX_FLAGS_MASK		0x1f
+
+/* encoded data types */
+#define	AGENTX_INTEGER			2
+#define	AGENTX_OCTET_STRING		4
+#define	AGENTX_NULL			5
+#define	AGENTX_OBJECT_IDENTIFIER	6
+#define	AGENTX_IP_ADDRESS		64
+#define	AGENTX_COUNTER32		65
+#define	AGENTX_GAUGE32			66
+#define	AGENTX_TIME_TICKS		67
+#define	AGENTX_OPAQUE			68
+#define	AGENTX_COUNTER64		70
+#define	AGENTX_NO_SUCH_OBJECT		128
+#define	AGENTX_NO_SUCH_INSTANCE		129
+#define	AGENTX_END_OF_MIB_VIEW		130
+
+/* for registered MIB overlap */
+#define	AGENTX_REGISTER_PRIO_DEFAULT	127
+
+/* reasons for request of close */
+#define AGENTX_CLOSE_OTHER		1
+#define AGENTX_CLOSE_PARSE_ERROR	2
+#define AGENTX_CLOSE_PROTOCOL_ERROR	3
+#define AGENTX_CLOSE_TIMEOUTS		4
+#define AGENTX_CLOSE_SHUTDOWN		5
+#define AGENTX_CLOSE_BY_MANAGER		6
+
+#define	AGENTX_DEFAULT_TIMEOUT		3
+
+#define	MIN_OID_LEN		2       /* OBJECT */
+#define	MAX_OID_LEN		32      /* OBJECT */
+
+/*
+ * Protocol header prefixed to all messages
+ */
+struct agentx_hdr {
+	uint8_t		version;
+	uint8_t		type;
+	uint8_t		flags;
+	uint8_t		reserved;
+	uint32_t	sessionid;	/* chosen by agent */
+	uint32_t	transactid;	/* chosen by subagent */
+	uint32_t	packetid;	/* per-request id */
+	uint32_t	length;
+} __packed;
+
+/*
+ * Prefixed to a series of 4-byte values indicating the OID
+ */
+struct agentx_oid_hdr {
+	uint8_t		n_subid;	/* # of oid elements (named in RFC) */
+	uint8_t		prefix;		/* if not 0, OID is 1.3.6.1.<prefix> */
+	uint8_t		include;	/* ??? */
+	uint8_t		reserved;	/* always 0 */
+} __packed;
+
+struct agentx_response_data {
+	uint32_t	sysuptime;	/* uptime of SNMP context */
+	uint16_t	error;		/* status of request */
+	uint16_t	index;		/* index of failed variable binding */
+} __packed;
+
+struct agentx_open_timeout {
+	uint8_t		timeout;
+	uint8_t		reserved[3];
+} __packed;
+
+struct agentx_register_hdr {
+	uint8_t		timeout;
+	uint8_t		priority;
+	uint8_t		subrange;
+	uint8_t		reserved;
+} __packed;
+
+struct agentx_null_oid {
+	uint8_t		padding[4];
+} __packed;
+
+#define	AGENTX_NULL_OID	{ 0, 0, 0, 0 }
+
+struct agentx_varbind_hdr {
+	uint16_t	type;
+	uint16_t	reserved;
+} __packed;
+
+struct agentx_response {
+	struct agentx_hdr		hdr;
+	struct agentx_response_data	data;
+} __packed;
+
+struct agentx_close_request_data {
+	uint8_t			reason;
+	uint8_t			padding[3];
+} __packed;
+
+struct agentx_close_request {
+	struct agentx_hdr		hdr;
+	struct agentx_close_request_data data;
+} __packed;
+
+struct agentx_pdu {
+	uint8_t		*buffer;
+	uint8_t		*ptr;
+	uint8_t		*ioptr;
+	size_t		 buflen;
+	size_t		 datalen;
+	struct agentx_hdr *hdr;
+
+	struct agentx_pdu *request;	/* request this is a response to */
+	TAILQ_ENTRY(agentx_pdu) entry;
+};
+TAILQ_HEAD(agentx_pdulist, agentx_pdu);
+
+struct agentx_handle {
+	int		 fd;
+	uint32_t	 sessionid;
+	uint32_t	 transactid;
+	uint32_t	 packetid;
+	int		 timeout;	/* in seconds */
+	int		 error;
+	int		 erridx;
+
+	struct agentx_pdulist w;
+	struct agentx_pdulist inflight;
+
+	struct agentx_pdu *r;
+
+	void		(*cb)(struct agentx_handle *, struct agentx_pdu *, void *);
+	void		*cb_arg;
+};
+
+struct agentx_handle *
+	snmp_agentx_alloc(int);
+struct agentx_handle *
+	snmp_agentx_open(const char *, char *, struct snmp_oid *);
+struct agentx_handle *
+	snmp_agentx_fdopen(int, char *, struct snmp_oid *);
+int	snmp_agentx_response(struct agentx_handle *, struct agentx_pdu *);
+int	snmp_agentx_open_response(struct agentx_handle *, struct agentx_pdu *);
+struct agentx_pdu *
+	snmp_agentx_open_pdu(struct agentx_handle *, char *descr,
+	    struct snmp_oid *);
+void	snmp_agentx_set_callback(struct agentx_handle *,
+	    void (*)(struct agentx_handle *, struct agentx_pdu *, void *),
+	    void *);
+struct agentx_pdu *
+	snmp_agentx_close_pdu(struct agentx_handle *, uint8_t);
+int	snmp_agentx_close(struct agentx_handle *, uint8_t);
+void	snmp_agentx_free(struct agentx_handle *);
+int	snmp_agentx_ping(struct agentx_handle *);
+struct agentx_pdu *
+	snmp_agentx_ping_pdu(void);
+struct agentx_pdu *
+	snmp_agentx_notify_pdu(struct snmp_oid *);
+struct agentx_pdu *
+	snmp_agentx_request(struct agentx_handle *, struct agentx_pdu *);
+int	snmp_agentx_varbind(struct agentx_pdu *, struct snmp_oid *, int,
+	    void *, int);
+int	snmp_agentx_send(struct agentx_handle *, struct agentx_pdu *);
+struct agentx_pdu *
+	snmp_agentx_recv(struct agentx_handle *);
+struct agentx_pdu *
+	snmp_agentx_response_pdu(int, int, int);
+struct agentx_pdu *
+	snmp_agentx_register_pdu(struct snmp_oid *, int, int, int);
+char	*snmp_agentx_read_octetstr(struct agentx_pdu *, int *);
+int	snmp_agentx_read_oid(struct agentx_pdu *, struct snmp_oid *);
+int	snmp_agentx_read_raw(struct agentx_pdu *, void *, int);
+int	snmp_agentx_copy_raw(struct agentx_pdu *, void *, int);
+char	*snmp_agentx_type2name(int);
+int	snmp_agentx_read_int(struct agentx_pdu *, uint32_t *);
+int	snmp_agentx_read_int64(struct agentx_pdu *, uint64_t *);
+int	snmp_agentx_raw(struct agentx_pdu *, void *, int);
+int	snmp_agentx_read_vbhdr(struct agentx_pdu *, struct
+	    agentx_varbind_hdr *);
+struct agentx_pdu *snmp_agentx_pdu_alloc(void);
+void	snmp_agentx_pdu_free(struct agentx_pdu *);
+
+#if BYTE_ORDER == BIG_ENDIAN
+
+static __inline int
+snmp_agentx_byteorder_native(struct agentx_hdr *h)
+{
+	return ((h->flags & AGENTX_NETWORK_BYTE_ORDER) != 0);
+}
+
+#define AGENTX_LOCAL_BYTE_ORDER_FLAG AGENTX_NETWORK_BYTE_ORDER
+#define snmp_agentx_int_byteswap(_i)	htole32(_i)
+#define snmp_agentx_int16_byteswap(_i)	htole16(_i)
+#define snmp_agentx_int64_byteswap(_i)	htole64(_i)
+
+#elif BYTE_ORDER == LITTLE_ENDIAN
+
+static __inline int
+snmp_agentx_byteorder_native(struct agentx_hdr *h)
+{
+	return ((h->flags & AGENTX_NETWORK_BYTE_ORDER) == 0);
+}
+
+#define AGENTX_LOCAL_BYTE_ORDER_FLAG 0
+#define snmp_agentx_int_byteswap(_i)	htobe32(_i)
+#define snmp_agentx_int16_byteswap(_i)	htobe16(_i)
+#define snmp_agentx_int64_byteswap(_i)	htobe64(_i)
+
+#else
+#error "Unknown host byte order"
+#endif
 
 #endif /* SNMP_HEADER */

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.11 2014/01/18 05:54:52 martynas Exp $
+#	$OpenBSD: Makefile,v 1.12 2014/04/14 12:55:10 blambert Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
 SRCS=		parse.y ber.c log.c control.c snmpe.c \
 		    mps.c trap.c mib.c smi.c kroute.c snmpd.c timer.c \
-		    pf.c proc.c usm.c
+		    pf.c proc.c usm.c agentx.c
 
 LDADD=		-levent -lutil -lkvm -lcrypto
 DPADD=		${LIBEVENT} ${LIBUTIL}

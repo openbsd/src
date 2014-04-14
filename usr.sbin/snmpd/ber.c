@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.25 2013/10/01 12:41:47 reyk Exp $ */
+/*	$OpenBSD: ber.c,v 1.26 2014/04/14 12:55:10 blambert Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -651,6 +651,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ret++;
 			break;
+		case 'd':
 		case 'i':
 			i = va_arg(ap, long long *);
 			if (ber_get_integer(ber, i) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2013/10/19 14:18:39 blambert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2014/04/14 12:55:10 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -55,146 +55,162 @@ trap_init(void)
 }
 
 int
-trap_imsg(struct imsgev *iev, pid_t pid)
+trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
+    char **varcpy, int *vcpylen)
 {
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	int			 ret = -1, n, x = 0, state = 0;
-	int			 done = 0;
-	struct snmp_imsg	*sm;
-	u_int32_t		 d;
-	u_int64_t		 l;
-	u_int8_t		*c;
-	char			 ostr[SNMP_MAX_OID_LEN];
-	struct ber_element	*ber = NULL, *varbind = NULL, *a;
-	size_t			 len = 0;
-	struct			 ber_oid o;
+	struct agentx_varbind_hdr	 vbhdr;
+	struct ber_oid			 o, oid;
+	struct ber_oid			 uptime = OID(MIB_sysUpTime);
+	struct ber_oid			 trapoid = OID(MIB_snmpTrapOID);
+	u_int32_t			 d;
+	u_int64_t			 l;
+	char				*str;
+	int				 slen;
+	struct ber_element		*a, *ber, *varbind;
+	int				 x = 0, state = 0;
+	int				 ret = AGENTX_ERR_NONE;
+	int				 seensysuptime, seentrapoid;
+	size_t				 len = 0;
+	pid_t				 pid = -1;
+	char				*v = NULL;
 
-	ibuf = &iev->ibuf;
-	while (!done) {
-		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				goto done;
-			if (n == 0)
-				break;
+	*varcpy = NULL;
+	ber = varbind = NULL;
+	seensysuptime = seentrapoid = 0;
 
-			switch (imsg.hdr.type) {
-			case IMSG_SNMP_ELEMENT:
-				if (imsg.hdr.len < (IMSG_HEADER_SIZE +
-				    sizeof(struct snmp_imsg)))
-					goto imsgdone;
+	if (pdu->hdr->flags & AGENTX_NON_DEFAULT_CONTEXT) {
+		ret = AGENTX_ERR_UNSUPPORTED_CONTEXT;
+		goto done;
+	}
 
-				sm = (struct snmp_imsg *)imsg.data;
+	if ((v = malloc(pdu->hdr->length)) == NULL ||
+	    snmp_agentx_copy_raw(pdu, v, pdu->hdr->length) == -1) {
+		ret = AGENTX_ERR_PROCESSING_ERROR;
+		goto done;
+	}
 
-				if (!state++) {
-					/* First element must be the trap OID */
-					if (sm->snmp_type != SNMP_NULL)
-						goto imsgdone;
-					ber_string2oid(sm->snmp_oid, &o);
-					break;
-				}
+	while (pdu->datalen > sizeof(struct agentx_hdr)) {
+		x++;
 
-				ber = ber_add_sequence(ber);
-				if (varbind == NULL)
-					varbind = ber;
-				a = ber_add_oidstring(ber, sm->snmp_oid);
-
-				switch (sm->snmp_type) {
-				case SNMP_OBJECT:
-					if (sm->snmp_len > sizeof(ostr) - 1)
-						goto imsgdone;
-					bzero(&ostr, sizeof(ostr));
-					bcopy(sm + 1, &ostr, sm->snmp_len);
-					a = ber_add_oidstring(a, ostr);
-					break;
-				case SNMP_BITSTRING:
-					if (sm->snmp_len < 1)
-						goto imsgdone;
-					/* FALLTHROUGH */
-				case SNMP_OCTETSTRING:
-				case SNMP_IPADDR:
-					if (sm->snmp_len >= SNMPD_MAXSTRLEN)
-						goto imsgdone;
-					c = (u_int8_t *)(sm + 1);
-					if (sm->snmp_type == SNMP_BITSTRING)
-						a = ber_add_bitstring(a, c,
-						    sm->snmp_len);
-					else
-						a = ber_add_nstring(a, c,
-						    sm->snmp_len);
-					break;
-				case SNMP_NULL:
-					a = ber_add_null(a);
-					break;
-				case SNMP_INTEGER32:
-				case SNMP_COUNTER32:
-				case SNMP_GAUGE32:
-				case SNMP_TIMETICKS:
-				case SNMP_OPAQUE:
-				case SNMP_UINTEGER32:
-					if (sm->snmp_len != sizeof(d))
-						goto imsgdone;
-					bcopy(sm + 1, &d, sm->snmp_len);
-					a = ber_add_integer(a, d);
-					break;
-				case SNMP_COUNTER64:
-					if (sm->snmp_len != sizeof(l))
-						goto imsgdone;
-					bcopy(sm + 1, &l, sm->snmp_len);
-					a = ber_add_integer(a, l);
-					break;
-				default:
-					log_debug("trap_imsg: illegal type %d",
-					    sm->snmp_type);
-					imsg_free(&imsg);
-					goto imsgdone;
-				}
-				switch (sm->snmp_type) {
-				case SNMP_INTEGER32:
-				case SNMP_BITSTRING:
-				case SNMP_OCTETSTRING:
-				case SNMP_NULL:
-				case SNMP_OBJECT:
-					/* universal types */
-					break;
-				default:
-					/* application-specific types */
-					ber_set_header(a, BER_CLASS_APPLICATION,
-					    sm->snmp_type);
-					break;
-				}
-				x++;
-				break;
-			case IMSG_SNMP_END:
-				done = 1;
-				break;
-			default:
-				log_debug("trap_imsg: illegal imsg %d",
-				    imsg.hdr.type);
-				goto imsgdone;
-			}
-			imsg_free(&imsg);
+		if (snmp_agentx_read_vbhdr(pdu, &vbhdr) == -1 ||
+		    snmp_agentx_read_oid(pdu, (struct snmp_oid *)&oid) == -1) {
+			ret = AGENTX_ERR_PARSE_ERROR;
+			goto done;
 		}
-		if (done)
+		if (state < 2) {
+			if (state == 0 && ber_oid_cmp(&oid, &uptime) == 0) {
+				if (snmp_agentx_read_int(pdu, &d) == -1) {
+					ret = AGENTX_ERR_PARSE_ERROR;
+					goto done;
+				}
+				state = 1;
+				continue;
+			} else if (ber_oid_cmp(&oid, &trapoid) == 0) {
+				if (snmp_agentx_read_oid(pdu,
+				    (struct snmp_oid *)&o) == -1) {
+					ret = AGENTX_ERR_PARSE_ERROR;
+					goto done;
+				}
+				state = 2;
+				continue;
+			} else {
+				ret = AGENTX_ERR_PROCESSING_ERROR;
+				goto done;
+			}
+		}
+
+		ber = ber_add_sequence(ber);
+		if (varbind == NULL)
+		varbind = ber;
+
+		a = ber_add_oid(ber, &oid);
+
+		switch (vbhdr.type) {
+		case AGENTX_NO_SUCH_OBJECT:
+		case AGENTX_NO_SUCH_INSTANCE:
+		case AGENTX_END_OF_MIB_VIEW:
+		case AGENTX_NULL:
+			a = ber_add_null(a);
 			break;
-		if ((n = imsg_read(ibuf)) == -1)
+
+		case AGENTX_IP_ADDRESS:
+		case AGENTX_OPAQUE:
+		case AGENTX_OCTET_STRING:
+			str = snmp_agentx_read_octetstr(pdu, &slen);
+			if (str == NULL) {
+				ret = AGENTX_ERR_PARSE_ERROR;
+				goto done;
+			}
+			a = ber_add_nstring(a, str, slen);
+			break;
+
+		case AGENTX_OBJECT_IDENTIFIER:
+			if (snmp_agentx_read_oid(pdu,
+			    (struct snmp_oid *)&oid) == -1) {
+				ret = AGENTX_ERR_PARSE_ERROR;
+				goto done;
+			}
+			a = ber_add_oid(a, &oid);
+			break;
+
+		case AGENTX_INTEGER:
+		case AGENTX_COUNTER32:
+		case AGENTX_GAUGE32:
+		case AGENTX_TIME_TICKS:
+			if (snmp_agentx_read_int(pdu, &d) == -1) {
+				ret = AGENTX_ERR_PARSE_ERROR;
+				goto done;
+			}
+			a = ber_add_integer(a, d);
+			break;
+
+		case AGENTX_COUNTER64:
+			if (snmp_agentx_read_int64(pdu, &l) == -1) {
+				ret = AGENTX_ERR_PARSE_ERROR;
+				goto done;
+			}
+			a = ber_add_integer(a, l);
+			break;
+
+		default:
+			log_debug("unknown data type '%i'", vbhdr.type);
+			ret = AGENTX_ERR_PARSE_ERROR;
 			goto done;
-		if (n == 0)
-			goto done;
+		}
+
+		/* AgentX types correspond to BER types */
+		switch (vbhdr.type) {
+		case BER_TYPE_INTEGER:
+		case BER_TYPE_BITSTRING:
+		case BER_TYPE_OCTETSTRING:
+		case BER_TYPE_NULL:
+		case BER_TYPE_OBJECT:
+			/* universal types */
+			break;
+		default:
+			/* application-specific types */
+			ber_set_header(a, BER_CLASS_APPLICATION, vbhdr.type);
+			break;
+		}
 	}
 
 	if (varbind != NULL)
 		len = ber_calc_len(varbind);
-	log_debug("trap_imsg: from pid %u len %d elements %d",
+	log_debug("trap_agentx: from pid %u len %d elements %d",
 	    pid, len, x);
-	trap_send(&o, varbind);
-	return (0);
 
- imsgdone:
-	imsg_free(&imsg);
+	trap_send(&o, varbind);
+
+	*varcpy = v;
+	*vcpylen = pdu->hdr->length;
+
+	return (AGENTX_ERR_NONE);
  done:
 	if (varbind != NULL)
 		ber_free_elements(varbind);
+	if (v)
+		free(v);
+	*idx = x;
 	return (ret);
 }
 
@@ -210,7 +226,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	u_int8_t		*ptr;
 	struct			 ber_oid uptime = OID(MIB_sysUpTime);
 	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
-	char			 ostr[SNMP_MAX_OID_LEN];
+	char			 ostr[SNMP_MAX_OID_STRLEN];
 	struct oid		 oa, ob;
 
 	if (TAILQ_EMPTY(&env->sc_trapreceivers))
@@ -270,7 +286,6 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 #ifdef DEBUG
 		smi_debug_elements(root);
 #endif
-
 		len = ber_write_elements(&ber, root);
 		if (ber_get_writebuf(&ber, (void *)&ptr) > 0 &&
 		    sendto(s, ptr, len, 0, (struct sockaddr *)&tr->ss,
