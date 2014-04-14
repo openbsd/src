@@ -2056,7 +2056,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/stack.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/store.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ts.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/txt_db.ph

@@ -1995,7 +1995,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/stack.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/store.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ts.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/txt_db.ph

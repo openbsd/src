@@ -1287,7 +1287,6 @@
 ./usr/include/openssl/ssl3.h
 ./usr/include/openssl/stack.h
 ./usr/include/openssl/store.h
-./usr/include/openssl/symhacks.h
 ./usr/include/openssl/tls1.h
 ./usr/include/openssl/ts.h
 ./usr/include/openssl/txt_db.h

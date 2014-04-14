@@ -2043,7 +2043,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ssl3.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/stack.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/store.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/tls1.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ts.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/txt_db.ph
