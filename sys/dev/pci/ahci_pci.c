@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.4 2014/03/28 17:57:11 mpi Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.5 2014/04/14 04:42:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -38,6 +38,7 @@
 #include <dev/ata/atascsi.h>
 #include <dev/ata/pmreg.h>
 
+#include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>
 
 #define AHCI_PCI_BAR		0x24

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcivar.h,v 1.7 2014/03/31 06:58:10 dlg Exp $ */
+/*	$OpenBSD: ahcivar.h,v 1.8 2014/04/14 04:42:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -24,58 +24,6 @@
 
 /* change to AHCI_DEBUG for dmesg spam */
 #define NO_AHCI_DEBUG
-
-struct ahci_cmd_hdr {
-	u_int16_t		flags;
-#define AHCI_CMD_LIST_FLAG_CFL		0x001f /* Command FIS Length */
-#define AHCI_CMD_LIST_FLAG_A		(1<<5) /* ATAPI */
-#define AHCI_CMD_LIST_FLAG_W		(1<<6) /* Write */
-#define AHCI_CMD_LIST_FLAG_P		(1<<7) /* Prefetchable */
-#define AHCI_CMD_LIST_FLAG_R		(1<<8) /* Reset */
-#define AHCI_CMD_LIST_FLAG_B		(1<<9) /* BIST */
-#define AHCI_CMD_LIST_FLAG_C		(1<<10) /* Clear Busy upon R_OK */
-#define AHCI_CMD_LIST_FLAG_PMP		0xf000 /* Port Multiplier Port */
-#define AHCI_CMD_LIST_FLAG_PMP_SHIFT	12
-	u_int16_t		prdtl; /* sgl len */
-
-	u_int32_t		prdbc; /* transferred byte count */
-
-	u_int64_t		ctba;
-
-	u_int32_t		reserved[4];
-} __packed __aligned(8);
-
-struct ahci_rfis {
-	u_int8_t		dsfis[28];
-	u_int8_t		reserved1[4];
-	u_int8_t		psfis[24];
-	u_int8_t		reserved2[8];
-	u_int8_t		rfis[24];
-	u_int8_t		reserved3[4];
-	u_int8_t		sdbfis[4];
-	u_int8_t		ufis[64];
-	u_int8_t		reserved4[96];
-} __packed;
-
-struct ahci_prdt {
-	u_int64_t		dba;
-	u_int32_t		reserved;
-	u_int32_t		flags;
-#define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
-} __packed __aligned(8);
-
-/* this makes ahci_cmd_table 512 bytes, supporting 128-byte alignment */
-#define AHCI_MAX_PRDT		24
-
-struct ahci_cmd_table {
-	u_int8_t		cfis[64];	/* Command FIS */
-	u_int8_t		acmd[16];	/* ATAPI Command */
-	u_int8_t		reserved[48];
-
-	struct ahci_prdt	prdt[AHCI_MAX_PRDT];
-} __packed __aligned(128);
-
-#define AHCI_MAX_PORTS		32
 
 struct ahci_dmamem {
 	bus_dmamap_t		adm_map;

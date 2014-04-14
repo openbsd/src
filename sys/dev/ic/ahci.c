@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.12 2014/03/31 06:18:30 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.13 2014/04/14 04:42:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,8 +30,8 @@
 
 #include <machine/bus.h>
 
-#include <dev/ic/ahcivar.h>
 #include <dev/ic/ahcireg.h>
+#include <dev/ic/ahcivar.h>
 
 #ifdef AHCI_DEBUG
 #define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } \
