@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.47 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.48 2014/04/14 21:55:37 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -78,7 +78,7 @@ sub basic_check
 {
 	my ($self, $state) = @_;
 
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$state->{known}{dirname($name)}{basename($name)} = 1;
 	if ($self->{symlink}) {
 		if (!-l $name) {
@@ -108,7 +108,7 @@ sub basic_check
 	}
 	if ($self->{link}) {
 		my ($a, $b) = (stat _)[0, 1];
-		if (!-f $state->{destdir}.$self->{link}) {
+		if (!-f $state->destdir($self->{link})) {
 			$state->log("#1 should link to non-existent #2",
 			    $name, $self->{link});
 		} else {
@@ -126,7 +126,7 @@ sub basic_check
 sub thorough_check
 {
 	my ($self, $state) = @_;
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$self->basic_check($state);
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (!-r $name) {
@@ -158,7 +158,7 @@ package OpenBSD::PackingElement::DirlikeObject;
 sub basic_check
 {
 	my ($self, $state) = @_;
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$state->{known}{$name} //= {};
 	if (!-e $name) {
 		$state->log("#1 should exist", $name);
@@ -173,7 +173,7 @@ use File::Basename;
 sub basic_check
 {
 	my ($self, $state) = @_;
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$state->{known}{dirname($name)}{basename($name)} = 1;
 }
 
@@ -181,7 +181,7 @@ package OpenBSD::PackingElement::Sampledir;
 sub basic_check
 {
 	my ($self, $state) = @_;
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$state->{known}{$name} //= {};
 }
 
@@ -190,7 +190,7 @@ sub basic_check
 {
 	my ($self, $state) = @_;
 	$self->SUPER::basic_check($state);
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	for my $file (OpenBSD::Paths::man_cruft()) {
 		$state->{known}{$name}{$file} = 1;
 	}
@@ -201,7 +201,7 @@ sub basic_check
 {
 	my ($self, $state) = @_;
 	$self->SUPER::basic_check($state);
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	for my $i (qw(fonts.alias fonts.scale fonts.dir)) {
 		$state->{known}{$name}{$i} = 1;
 	}
@@ -212,7 +212,7 @@ sub basic_check
 {
 	my ($self, $state) = @_;
 	$self->SUPER::basic_check($state);
-	my $name = $state->{destdir}.$self->fullname;
+	my $name = $state->destdir($self->fullname);
 	$state->{known}{$name}{'dir'} = 1;
 }
 
@@ -272,7 +272,9 @@ sub find_dependencies
 package OpenBSD::PkgCheck::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
+use File::Spec;
 use OpenBSD::Log;
+use File::Basename;
 
 sub init
 {
@@ -303,8 +305,8 @@ sub handle_options
 	my $self = shift;
 	$self->{no_exports} = 1;
 
-	$self->SUPER::handle_options('fB:Iiq',
-		'[-fIimnqvx] [-B pkg-destdir] [-D value]');
+	$self->SUPER::handle_options('fB:Iiqs:X:',
+		'[-fIimnqvx] [-s src] [-X x11] [-B pkg-destdir] [-D value]');
 	if ($self->opt('i')) {
 		$self->{interactive} = 1;
 	} elsif ($self->opt('I')) {
@@ -322,6 +324,33 @@ sub handle_options
 	} else {
 		$self->{destdir} = '';
 	}
+	if (defined $self->opt('s')) {
+		require OpenBSD::SetList;
+		OpenBSD::SetList::Source->walk($self, $self->opt('s'));
+		$self->{wholefs} = 1;
+	}
+	if (defined $self->opt('X')) {
+		require OpenBSD::SetList;
+		OpenBSD::SetList::Xenocara->walk($self, $self->opt('X'));
+		$self->{wholefs} = 1;
+	}
+}
+
+sub build_tag
+{
+}
+
+sub destdir
+{
+	my ($self, $path) = @_;
+	return File::Spec->canonpath($self->{destdir}.$path);
+}
+
+sub process_entry
+{
+	my ($self, $entry) = @_;
+	my $name = $self->destdir($entry);
+	$self->{known}{dirname($name)}{basename($name)} = 1;
 }
 
 package OpenBSD::DependencyCheck;
@@ -777,11 +806,9 @@ sub locate_unknown
 	$locator->result;
 }
 
-sub localbase_check
+sub fill_localbase
 {
-	my ($self, $state) = @_;
-	$state->{known} //= {};
-	my $base = $state->{destdir}.OpenBSD::Paths->localbase;
+	my ($self, $state, $base) = @_;
 	for my $file (OpenBSD::Paths::man_cruft()) {
 		$state->{known}{$base."/man"}{$file} = 1;
 	}
@@ -792,22 +819,52 @@ sub localbase_check
 	# XXX
 	OpenBSD::Mtree::parse($state->{known}, $base,
 	    "/etc/mtree/BSD.local.dist", 1);
+}
+
+sub fill_root
+{
+	my ($self, $state, $root) = @_;
+	OpenBSD::Mtree::parse($state->{known}, $root, 
+	    '/etc/mtree/4.4BSD.dist', 1);
+	OpenBSD::Mtree::parse($state->{known}, $root,
+	    '/etc/mtree/BSD.x11.dist', 1);
+}
+
+sub localbase_check
+{
+	my ($self, $state) = @_;
+	$state->{known} //= {};
+	my $root = $state->destdir(OpenBSD::Paths->localbase);
+	$self->fill_localbase($state, $root);
+	if ($state->{wholefs}) {
+		$root = $state->{destdir} || '/';
+		$self->fill_root($state, $root);
+	}
+
 	$state->progress->set_header("Checking file system");
 	find(sub {
 		$state->progress->working(1024);
 		if (-d $_) {
-			if ($File::Find::name eq
-			    OpenBSD::Paths->localbase."/lost+found") {
+			if ($_ eq "lost+found") {
 				$state->say("fsck(8) info found: #1",
 				    $File::Find::name);
 				$File::Find::prune = 1;
 				return;
+			}
+			if ($state->{wholefs}) {
+				# some directories we've got to ignore
+				for my $i ('/dev', '/home', OpenBSD::Paths->pkgdb, '/var/log', '/var/backups', '/var/cron', '/var/run', '/tmp', '/var/tmp') {
+					if ($File::Find::name eq $state->destdir($i)) {
+						$File::Find::prune = 1;
+					}
+				}
 			}
 			return if defined $state->{known}{$File::Find::name};
 			if (-l $_) {
 				return if $state->{known}{$File::Find::dir}{$_};
 			}
 			push(@{$state->{unknown}{dir}}, $File::Find::name);
+			$File::Find::prune = 1;
 		} else {
 			return if $state->{known}{$File::Find::dir}{$_};
 			if (m/^pkg\..{10}$/) {
@@ -817,7 +874,7 @@ sub localbase_check
 				    $File::Find::name);
 			}
 		}
-	}, OpenBSD::Paths->localbase);
+	}, $root);
 	if (defined $state->{tmps}) {
 		$self->display_tmps($state);
 	}
