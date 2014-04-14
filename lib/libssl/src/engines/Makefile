@@ -26,20 +26,17 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp padlock capi
+LIBNAMES= gmp padlock
 
 LIBSRC=	e_gmp.c \
-	e_padlock.c \
-	e_capi.c
+	e_padlock.c
 LIBOBJ= e_gmp.o \
-	e_padlock.o \
-	e_capi.o
+	e_padlock.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= 
-HEADER=	e_gmp_err.c e_gmp_err.h \
-	e_capi_err.c e_capi_err.h
+HEADER=	e_gmp_err.c e_gmp_err.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -140,18 +137,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-e_capi.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_capi.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_capi.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-e_capi.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_capi.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_capi.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_capi.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_capi.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_capi.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_capi.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-e_capi.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-e_capi.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h e_capi.c
 e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h

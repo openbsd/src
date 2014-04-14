@@ -317,7 +317,6 @@ void ENGINE_load_openssl(void);
 void ENGINE_load_dynamic(void);
 #ifndef OPENSSL_NO_STATIC_ENGINE
 void ENGINE_load_padlock(void);
-void ENGINE_load_capi(void);
 #ifndef OPENSSL_NO_GMP
 void ENGINE_load_gmp(void);
 #endif
