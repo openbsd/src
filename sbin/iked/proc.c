@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.11 2014/02/14 10:23:43 benno Exp $	*/
+/*	$OpenBSD: proc.c,v 1.12 2014/04/14 07:18:05 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -262,6 +262,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 
 	arc4random_buf(seed, sizeof(seed));
 	RAND_seed(seed, sizeof(seed));
+	explicit_bzero(seed, sizeof(seed));
 
 	if (p->p_id == PROC_CONTROL) {
 		TAILQ_INIT(&ctl_conns);
