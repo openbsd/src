@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SetList.pm,v 1.1 2014/04/14 10:56:11 espie Exp $
+# $OpenBSD: SetList.pm,v 1.2 2014/04/14 12:37:00 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ sub walk
 	for my $set ($class->sets) {
 		$state->build_tag($class->base_tag, $set, $rev);
 		my $output = 0;
-		for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
+		for my $f ($class->files_for_set($dir, $set)) {
 			open my $l, '<', $f or next;
 			while (my $e = <$l>) {
 				chomp $e;
@@ -56,11 +56,17 @@ sub walk
 	}
 }
 
+sub files_for_set
+{
+	my ($self, $dir, $set) = @_;
+	return ("$dir/$set/mi", "$dir/$set/md.$arch");
+}
+
 package OpenBSD::SetList::Source;
 our @ISA = qw(OpenBSD::SetList);
 sub sets
 {
-	return (qw(base comp etc game));
+	return (qw(base comp man etc game));
 }
 
 sub base_tag
@@ -78,6 +84,16 @@ sub sets
 sub base_tag
 {
 	return 'xenocara';
+}
+
+sub files_for_set
+{
+	my ($self, $dir, $set) = @_;
+	if ($set eq 'xfont') {
+		return ("$dir/$set/mi", "$dir/$set/md.x11r7");
+	} else {
+		return $self->SUPER::files_for_set($dir, $set);
+	}
 }
 
 1;
