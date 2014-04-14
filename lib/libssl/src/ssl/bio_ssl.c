@@ -72,8 +72,7 @@ static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ssl_new(BIO *h);
 static int ssl_free(BIO *data);
 static long ssl_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
-typedef struct bio_ssl_st
-	{
+typedef struct bio_ssl_st {
 	SSL *ssl; /* The ssl handle :-) */
 	/* re-negotiate every time the total number of bytes is this size */
 	int num_renegotiates;
@@ -81,11 +80,10 @@ typedef struct bio_ssl_st
 	unsigned long byte_count;
 	unsigned long renegotiate_timeout;
 	unsigned long last_time;
-	} BIO_SSL;
+} BIO_SSL;
 
-static BIO_METHOD methods_sslp=
-	{
-	BIO_TYPE_SSL,"ssl",
+static BIO_METHOD methods_sslp = {
+	BIO_TYPE_SSL, "ssl",
 	ssl_write,
 	ssl_read,
 	ssl_puts,
@@ -94,106 +92,105 @@ static BIO_METHOD methods_sslp=
 	ssl_new,
 	ssl_free,
 	ssl_callback_ctrl,
-	};
+};
 
-BIO_METHOD *BIO_f_ssl(void)
-	{
-	return(&methods_sslp);
-	}
+BIO_METHOD
+*BIO_f_ssl(void)
+{
+	return (&methods_sslp);
+}
 
-static int ssl_new(BIO *bi)
-	{
+static int
+ssl_new(BIO *bi)
+{
 	BIO_SSL *bs;
 
-	bs=(BIO_SSL *)OPENSSL_malloc(sizeof(BIO_SSL));
-	if (bs == NULL)
-		{
-		BIOerr(BIO_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	memset(bs,0,sizeof(BIO_SSL));
-	bi->init=0;
-	bi->ptr=(char *)bs;
-	bi->flags=0;
-	return(1);
+	bs = (BIO_SSL *)OPENSSL_malloc(sizeof(BIO_SSL));
+	if (bs == NULL) {
+		BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
+		return (0);
 	}
+	memset(bs, 0, sizeof(BIO_SSL));
+	bi->init = 0;
+	bi->ptr = (char *)bs;
+	bi->flags = 0;
+	return (1);
+}
 
-static int ssl_free(BIO *a)
-	{
+static int
+ssl_free(BIO *a)
+{
 	BIO_SSL *bs;
 
-	if (a == NULL) return(0);
-	bs=(BIO_SSL *)a->ptr;
-	if (bs->ssl != NULL) SSL_shutdown(bs->ssl);
-	if (a->shutdown)
-		{
+	if (a == NULL)
+		return (0);
+	bs = (BIO_SSL *)a->ptr;
+	if (bs->ssl != NULL)
+		SSL_shutdown(bs->ssl);
+	if (a->shutdown) {
 		if (a->init && (bs->ssl != NULL))
 			SSL_free(bs->ssl);
-		a->init=0;
-		a->flags=0;
-		}
+		a->init = 0;
+		a->flags = 0;
+	}
 	if (a->ptr != NULL)
 		OPENSSL_free(a->ptr);
-	return(1);
-	}
-	
-static int ssl_read(BIO *b, char *out, int outl)
-	{
-	int ret=1;
+	return (1);
+}
+
+static int
+ssl_read(BIO *b, char *out, int outl)
+{
+	int ret = 1;
 	BIO_SSL *sb;
 	SSL *ssl;
-	int retry_reason=0;
-	int r=0;
+	int retry_reason = 0;
+	int r = 0;
 
-	if (out == NULL) return(0);
-	sb=(BIO_SSL *)b->ptr;
-	ssl=sb->ssl;
+	if (out == NULL)
+		return (0);
+	sb = (BIO_SSL *)b->ptr;
+	ssl = sb->ssl;
 
 	BIO_clear_retry_flags(b);
 
 #if 0
-	if (!SSL_is_init_finished(ssl))
-		{
+	if (!SSL_is_init_finished(ssl)) {
 /*		ret=SSL_do_handshake(ssl); */
-		if (ret > 0)
-			{
+		if (ret > 0) {
 
-			outflags=(BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
-			ret= -1;
+			outflags = (BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
+			ret = -1;
 			goto end;
-			}
 		}
+	}
 #endif
 /*	if (ret > 0) */
-	ret=SSL_read(ssl,out,outl);
+	ret = SSL_read(ssl, out, outl);
 
-	switch (SSL_get_error(ssl,ret))
-		{
+	switch (SSL_get_error(ssl, ret)) {
 	case SSL_ERROR_NONE:
-		if (ret <= 0) break;
-		if (sb->renegotiate_count > 0)
-			{
-			sb->byte_count+=ret;
-			if (sb->byte_count > sb->renegotiate_count)
-				{
-				sb->byte_count=0;
+		if (ret <= 0)
+			break;
+		if (sb->renegotiate_count > 0) {
+			sb->byte_count += ret;
+			if (sb->byte_count > sb->renegotiate_count) {
+				sb->byte_count = 0;
 				sb->num_renegotiates++;
 				SSL_renegotiate(ssl);
-				r=1;
-				}
+				r = 1;
 			}
-		if ((sb->renegotiate_timeout > 0) && (!r))
-			{
+		}
+		if ((sb->renegotiate_timeout > 0) && (!r)) {
 			unsigned long tm;
 
-			tm=(unsigned long)time(NULL);
-			if (tm > sb->last_time+sb->renegotiate_timeout)
-				{
-				sb->last_time=tm;
+			tm = (unsigned long)time(NULL);
+			if (tm > sb->last_time + sb->renegotiate_timeout) {
+				sb->last_time = tm;
 				sb->num_renegotiates++;
 				SSL_renegotiate(ssl);
-				}
 			}
+		}
 
 		break;
 	case SSL_ERROR_WANT_READ:
@@ -204,71 +201,69 @@ static int ssl_read(BIO *b, char *out, int outl)
 		break;
 	case SSL_ERROR_WANT_X509_LOOKUP:
 		BIO_set_retry_special(b);
-		retry_reason=BIO_RR_SSL_X509_LOOKUP;
+		retry_reason = BIO_RR_SSL_X509_LOOKUP;
 		break;
 	case SSL_ERROR_WANT_ACCEPT:
 		BIO_set_retry_special(b);
-		retry_reason=BIO_RR_ACCEPT;
+		retry_reason = BIO_RR_ACCEPT;
 		break;
 	case SSL_ERROR_WANT_CONNECT:
 		BIO_set_retry_special(b);
-		retry_reason=BIO_RR_CONNECT;
+		retry_reason = BIO_RR_CONNECT;
 		break;
 	case SSL_ERROR_SYSCALL:
 	case SSL_ERROR_SSL:
 	case SSL_ERROR_ZERO_RETURN:
 	default:
 		break;
-		}
-
-	b->retry_reason=retry_reason;
-	return(ret);
 	}
 
-static int ssl_write(BIO *b, const char *out, int outl)
-	{
-	int ret,r=0;
-	int retry_reason=0;
+	b->retry_reason = retry_reason;
+	return (ret);
+}
+
+static int
+ssl_write(BIO *b, const char *out, int outl)
+{
+	int ret, r = 0;
+	int retry_reason = 0;
 	SSL *ssl;
 	BIO_SSL *bs;
 
-	if (out == NULL) return(0);
-	bs=(BIO_SSL *)b->ptr;
-	ssl=bs->ssl;
+	if (out == NULL)
+		return (0);
+	bs = (BIO_SSL *)b->ptr;
+	ssl = bs->ssl;
 
 	BIO_clear_retry_flags(b);
 
 /*	ret=SSL_do_handshake(ssl);
 	if (ret > 0) */
-	ret=SSL_write(ssl,out,outl);
+		ret = SSL_write(ssl, out, outl);
 
-	switch (SSL_get_error(ssl,ret))
-		{
+	switch (SSL_get_error(ssl, ret)) {
 	case SSL_ERROR_NONE:
-		if (ret <= 0) break;
-		if (bs->renegotiate_count > 0)
-			{
-			bs->byte_count+=ret;
-			if (bs->byte_count > bs->renegotiate_count)
-				{
-				bs->byte_count=0;
+		if (ret <= 0)
+			break;
+		if (bs->renegotiate_count > 0) {
+			bs->byte_count += ret;
+			if (bs->byte_count > bs->renegotiate_count) {
+				bs->byte_count = 0;
 				bs->num_renegotiates++;
 				SSL_renegotiate(ssl);
-				r=1;
-				}
+				r = 1;
 			}
-		if ((bs->renegotiate_timeout > 0) && (!r))
-			{
+		}
+		if ((bs->renegotiate_timeout > 0) && (!r)) {
 			unsigned long tm;
 
-			tm=(unsigned long)time(NULL);
-			if (tm > bs->last_time+bs->renegotiate_timeout)
-				{
-				bs->last_time=tm;
+			tm = (unsigned long)time(NULL);
+			if (tm > bs->last_time + bs->renegotiate_timeout) {
+				bs->last_time = tm;
 				bs->num_renegotiates++;
 				SSL_renegotiate(ssl);
-				}
 			}
+		}
 		break;
 	case SSL_ERROR_WANT_WRITE:
 		BIO_set_retry_write(b);
@@ -278,34 +273,34 @@ static int ssl_write(BIO *b, const char *out, int outl)
 		break;
 	case SSL_ERROR_WANT_X509_LOOKUP:
 		BIO_set_retry_special(b);
-		retry_reason=BIO_RR_SSL_X509_LOOKUP;
+		retry_reason = BIO_RR_SSL_X509_LOOKUP;
 		break;
 	case SSL_ERROR_WANT_CONNECT:
 		BIO_set_retry_special(b);
-		retry_reason=BIO_RR_CONNECT;
+		retry_reason = BIO_RR_CONNECT;
 	case SSL_ERROR_SYSCALL:
 	case SSL_ERROR_SSL:
 	default:
 		break;
-		}
-
-	b->retry_reason=retry_reason;
-	return(ret);
 	}
 
-static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
-	{
-	SSL **sslp,*ssl;
-	BIO_SSL *bs;
-	BIO *dbio,*bio;
-	long ret=1;
+	b->retry_reason = retry_reason;
+	return (ret);
+}
 
-	bs=(BIO_SSL *)b->ptr;
-	ssl=bs->ssl;
+static long
+ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+	SSL **sslp, *ssl;
+	BIO_SSL *bs;
+	BIO *dbio, *bio;
+	long ret = 1;
+
+	bs = (BIO_SSL *)b->ptr;
+	ssl = bs->ssl;
 	if ((ssl == NULL)  && (cmd != BIO_C_SET_SSL))
-		return(0);
-	switch (cmd)
-		{
+		return (0);
+	switch (cmd) {
 	case BIO_CTRL_RESET:
 		SSL_shutdown(ssl);
 
@@ -317,14 +312,14 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		SSL_clear(ssl);
 
 		if (b->next_bio != NULL)
-			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+			ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
 		else if (ssl->rbio != NULL)
-			ret=BIO_ctrl(ssl->rbio,cmd,num,ptr);
+			ret = BIO_ctrl(ssl->rbio, cmd, num, ptr);
 		else
-			ret=1;
+			ret = 1;
 		break;
 	case BIO_CTRL_INFO:
-		ret=0;
+		ret = 0;
 		break;
 	case BIO_C_SSL_MODE:
 		if (num) /* client mode */
@@ -333,273 +328,273 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 			SSL_set_accept_state(ssl);
 		break;
 	case BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT:
-		ret=bs->renegotiate_timeout;
-		if (num < 60) num=5;
-		bs->renegotiate_timeout=(unsigned long)num;
-		bs->last_time=(unsigned long)time(NULL);
+		ret = bs->renegotiate_timeout;
+		if (num < 60)
+			num = 5;
+		bs->renegotiate_timeout = (unsigned long)num;
+		bs->last_time = (unsigned long)time(NULL);
 		break;
 	case BIO_C_SET_SSL_RENEGOTIATE_BYTES:
-		ret=bs->renegotiate_count;
+		ret = bs->renegotiate_count;
 		if ((long)num >=512)
-			bs->renegotiate_count=(unsigned long)num;
+			bs->renegotiate_count = (unsigned long)num;
 		break;
 	case BIO_C_GET_SSL_NUM_RENEGOTIATES:
-		ret=bs->num_renegotiates;
+		ret = bs->num_renegotiates;
 		break;
 	case BIO_C_SET_SSL:
-		if (ssl != NULL)
-			{
+		if (ssl != NULL) {
 			ssl_free(b);
 			if (!ssl_new(b))
 				return 0;
-			}
-		b->shutdown=(int)num;
-		ssl=(SSL *)ptr;
-		((BIO_SSL *)b->ptr)->ssl=ssl;
-		bio=SSL_get_rbio(ssl);
-		if (bio != NULL)
-			{
+		}
+		b->shutdown = (int)num;
+		ssl = (SSL *)ptr;
+		((BIO_SSL *)b->ptr)->ssl = ssl;
+		bio = SSL_get_rbio(ssl);
+		if (bio != NULL) {
 			if (b->next_bio != NULL)
-				BIO_push(bio,b->next_bio);
-			b->next_bio=bio;
-			CRYPTO_add(&bio->references,1,CRYPTO_LOCK_BIO);
-			}
-		b->init=1;
+				BIO_push(bio, b->next_bio);
+			b->next_bio = bio;
+			CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO);
+		}
+		b->init = 1;
 		break;
 	case BIO_C_GET_SSL:
-		if (ptr != NULL)
-			{
-			sslp=(SSL **)ptr;
-			*sslp=ssl;
-			}
-		else
-			ret=0;
+		if (ptr != NULL) {
+			sslp = (SSL **)ptr;
+			*sslp = ssl;
+		} else
+			ret = 0;
 		break;
 	case BIO_CTRL_GET_CLOSE:
-		ret=b->shutdown;
+		ret = b->shutdown;
 		break;
 	case BIO_CTRL_SET_CLOSE:
-		b->shutdown=(int)num;
+		b->shutdown = (int)num;
 		break;
 	case BIO_CTRL_WPENDING:
-		ret=BIO_ctrl(ssl->wbio,cmd,num,ptr);
+		ret = BIO_ctrl(ssl->wbio, cmd, num, ptr);
 		break;
 	case BIO_CTRL_PENDING:
-		ret=SSL_pending(ssl);
+		ret = SSL_pending(ssl);
 		if (ret == 0)
-			ret=BIO_pending(ssl->rbio);
+			ret = BIO_pending(ssl->rbio);
 		break;
 	case BIO_CTRL_FLUSH:
 		BIO_clear_retry_flags(b);
-		ret=BIO_ctrl(ssl->wbio,cmd,num,ptr);
+		ret = BIO_ctrl(ssl->wbio, cmd, num, ptr);
 		BIO_copy_next_retry(b);
 		break;
 	case BIO_CTRL_PUSH:
-		if ((b->next_bio != NULL) && (b->next_bio != ssl->rbio))
-			{
-			SSL_set_bio(ssl,b->next_bio,b->next_bio);
-			CRYPTO_add(&b->next_bio->references,1,CRYPTO_LOCK_BIO);
-			}
+		if ((b->next_bio != NULL) && (b->next_bio != ssl->rbio)) {
+			SSL_set_bio(ssl, b->next_bio, b->next_bio);
+			CRYPTO_add(&b->next_bio->references, 1, CRYPTO_LOCK_BIO);
+		}
 		break;
 	case BIO_CTRL_POP:
 		/* Only detach if we are the BIO explicitly being popped */
-		if (b == ptr)
-			{
+		if (b == ptr) {
 			/* Shouldn't happen in practice because the
 			 * rbio and wbio are the same when pushed.
 			 */
 			if (ssl->rbio != ssl->wbio)
 				BIO_free_all(ssl->wbio);
 			if (b->next_bio != NULL)
-				CRYPTO_add(&b->next_bio->references,-1,CRYPTO_LOCK_BIO);
-			ssl->wbio=NULL;
-			ssl->rbio=NULL;
-			}
+				CRYPTO_add(&b->next_bio->references, -1, CRYPTO_LOCK_BIO);
+			ssl->wbio = NULL;
+			ssl->rbio = NULL;
+		}
 		break;
 	case BIO_C_DO_STATE_MACHINE:
 		BIO_clear_retry_flags(b);
 
-		b->retry_reason=0;
-		ret=(int)SSL_do_handshake(ssl);
+		b->retry_reason = 0;
+		ret = (int)SSL_do_handshake(ssl);
 
-		switch (SSL_get_error(ssl,(int)ret))
-			{
+		switch (SSL_get_error(ssl,(int)ret)) {
 		case SSL_ERROR_WANT_READ:
 			BIO_set_flags(b,
-				BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
+			BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
 			break;
 		case SSL_ERROR_WANT_WRITE:
 			BIO_set_flags(b,
-				BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY);
+			BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY);
 			break;
 		case SSL_ERROR_WANT_CONNECT:
 			BIO_set_flags(b,
-				BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY);
-			b->retry_reason=b->next_bio->retry_reason;
+			BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY);
+			b->retry_reason = b->next_bio->retry_reason;
 			break;
 		default:
 			break;
-			}
+		}
 		break;
 	case BIO_CTRL_DUP:
-		dbio=(BIO *)ptr;
+		dbio = (BIO *)ptr;
 		if (((BIO_SSL *)dbio->ptr)->ssl != NULL)
 			SSL_free(((BIO_SSL *)dbio->ptr)->ssl);
-		((BIO_SSL *)dbio->ptr)->ssl=SSL_dup(ssl);
-		((BIO_SSL *)dbio->ptr)->renegotiate_count=
-			((BIO_SSL *)b->ptr)->renegotiate_count;
-		((BIO_SSL *)dbio->ptr)->byte_count=
-			((BIO_SSL *)b->ptr)->byte_count;
-		((BIO_SSL *)dbio->ptr)->renegotiate_timeout=
-			((BIO_SSL *)b->ptr)->renegotiate_timeout;
-		((BIO_SSL *)dbio->ptr)->last_time=
-			((BIO_SSL *)b->ptr)->last_time;
-		ret=(((BIO_SSL *)dbio->ptr)->ssl != NULL);
+		((BIO_SSL *)dbio->ptr)->ssl = SSL_dup(ssl);
+		((BIO_SSL *)dbio->ptr)->renegotiate_count =
+		    ((BIO_SSL *)b->ptr)->renegotiate_count;
+		((BIO_SSL *)dbio->ptr)->byte_count =
+		    ((BIO_SSL *)b->ptr)->byte_count;
+		((BIO_SSL *)dbio->ptr)->renegotiate_timeout =
+		    ((BIO_SSL *)b->ptr)->renegotiate_timeout;
+		((BIO_SSL *)dbio->ptr)->last_time =
+		    ((BIO_SSL *)b->ptr)->last_time;
+		ret = (((BIO_SSL *)dbio->ptr)->ssl != NULL);
 		break;
 	case BIO_C_GET_FD:
-		ret=BIO_ctrl(ssl->rbio,cmd,num,ptr);
+		ret = BIO_ctrl(ssl->rbio, cmd, num, ptr);
 		break;
 	case BIO_CTRL_SET_CALLBACK:
 		{
 #if 0 /* FIXME: Should this be used?  -- Richard Levitte */
-		SSLerr(SSL_F_SSL_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		ret = -1;
+			SSLerr(SSL_F_SSL_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+			ret = -1;
 #else
-		ret=0;
+			ret = 0;
 #endif
 		}
 		break;
 	case BIO_CTRL_GET_CALLBACK:
 		{
-		void (**fptr)(const SSL *xssl,int type,int val);
+			void (**fptr)(const SSL *xssl, int type, int val);
 
-		fptr=(void (**)(const SSL *xssl,int type,int val))ptr;
-		*fptr=SSL_get_info_callback(ssl);
+			fptr = (void (**)(const SSL *xssl, int type, int val))ptr;
+			*fptr = SSL_get_info_callback(ssl);
 		}
 		break;
 	default:
-		ret=BIO_ctrl(ssl->rbio,cmd,num,ptr);
+		ret = BIO_ctrl(ssl->rbio, cmd, num, ptr);
 		break;
-		}
-	return(ret);
 	}
+	return (ret);
+}
 
-static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
-	{
+static long
+ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+{
 	SSL *ssl;
 	BIO_SSL *bs;
-	long ret=1;
+	long ret = 1;
 
-	bs=(BIO_SSL *)b->ptr;
-	ssl=bs->ssl;
-	switch (cmd)
-		{
+	bs = (BIO_SSL *)b->ptr;
+	ssl = bs->ssl;
+	switch (cmd) {
 	case BIO_CTRL_SET_CALLBACK:
 		{
 		/* FIXME: setting this via a completely different prototype
 		   seems like a crap idea */
-		SSL_set_info_callback(ssl,(void (*)(const SSL *,int,int))fp);
+			SSL_set_info_callback(ssl,(void (*)(const SSL *, int, int))fp);
 		}
 		break;
 	default:
-		ret=BIO_callback_ctrl(ssl->rbio,cmd,fp);
+		ret = BIO_callback_ctrl(ssl->rbio, cmd, fp);
 		break;
-		}
-	return(ret);
 	}
+	return (ret);
+}
 
-static int ssl_puts(BIO *bp, const char *str)
-	{
-	int n,ret;
+static int
+ssl_puts(BIO *bp, const char *str)
+{
+	int n, ret;
 
-	n=strlen(str);
-	ret=BIO_write(bp,str,n);
-	return(ret);
-	}
+	n = strlen(str);
+	ret = BIO_write(bp, str, n);
+	return (ret);
+}
 
-BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
-	{
+BIO
+*BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
+{
 #ifndef OPENSSL_NO_SOCK
-	BIO *ret=NULL,*buf=NULL,*ssl=NULL;
+	BIO *ret = NULL, *buf = NULL, *ssl = NULL;
 
-	if ((buf=BIO_new(BIO_f_buffer())) == NULL)
-		return(NULL);
-	if ((ssl=BIO_new_ssl_connect(ctx)) == NULL)
+	if ((buf = BIO_new(BIO_f_buffer())) == NULL)
+		return (NULL);
+	if ((ssl = BIO_new_ssl_connect(ctx)) == NULL)
 		goto err;
-	if ((ret=BIO_push(buf,ssl)) == NULL)
+	if ((ret = BIO_push(buf, ssl)) == NULL)
 		goto err;
-	return(ret);
+	return (ret);
 err:
-	if (buf != NULL) BIO_free(buf);
-	if (ssl != NULL) BIO_free(ssl);
+	if (buf != NULL)
+		BIO_free(buf);
+	if (ssl != NULL)
+		BIO_free(ssl);
 #endif
-	return(NULL);
-	}
+	return (NULL);
+}
 
-BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
-	{
+BIO
+*BIO_new_ssl_connect(SSL_CTX *ctx)
+{
 #ifndef OPENSSL_NO_SOCK
-	BIO *ret=NULL,*con=NULL,*ssl=NULL;
+	BIO *ret = NULL, *con = NULL, *ssl = NULL;
 
-	if ((con=BIO_new(BIO_s_connect())) == NULL)
-		return(NULL);
-	if ((ssl=BIO_new_ssl(ctx,1)) == NULL)
+	if ((con = BIO_new(BIO_s_connect())) == NULL)
+		return (NULL);
+	if ((ssl = BIO_new_ssl(ctx, 1)) == NULL)
 		goto err;
-	if ((ret=BIO_push(ssl,con)) == NULL)
+	if ((ret = BIO_push(ssl, con)) == NULL)
 		goto err;
-	return(ret);
+	return (ret);
 err:
-	if (con != NULL) BIO_free(con);
+	if (con != NULL)
+		BIO_free(con);
 #endif
-	return(NULL);
-	}
+	return (NULL);
+}
 
-BIO *BIO_new_ssl(SSL_CTX *ctx, int client)
-	{
+BIO
+*BIO_new_ssl(SSL_CTX *ctx, int client)
+{
 	BIO *ret;
 	SSL *ssl;
 
-	if ((ret=BIO_new(BIO_f_ssl())) == NULL)
-		return(NULL);
-	if ((ssl=SSL_new(ctx)) == NULL)
-		{
+	if ((ret = BIO_new(BIO_f_ssl())) == NULL)
+		return (NULL);
+	if ((ssl = SSL_new(ctx)) == NULL) {
 		BIO_free(ret);
-		return(NULL);
-		}
+		return (NULL);
+	}
 	if (client)
 		SSL_set_connect_state(ssl);
 	else
 		SSL_set_accept_state(ssl);
-		
-	BIO_set_ssl(ret,ssl,BIO_CLOSE);
-	return(ret);
-	}
 
-int BIO_ssl_copy_session_id(BIO *t, BIO *f)
-	{
-	t=BIO_find_type(t,BIO_TYPE_SSL);
-	f=BIO_find_type(f,BIO_TYPE_SSL);
+	BIO_set_ssl(ret, ssl, BIO_CLOSE);
+	return (ret);
+}
+
+int
+BIO_ssl_copy_session_id(BIO *t, BIO *f)
+{
+	t = BIO_find_type(t, BIO_TYPE_SSL);
+	f = BIO_find_type(f, BIO_TYPE_SSL);
 	if ((t == NULL) || (f == NULL))
-		return(0);
-	if (	(((BIO_SSL *)t->ptr)->ssl == NULL) || 
-		(((BIO_SSL *)f->ptr)->ssl == NULL))
-		return(0);
+		return (0);
+	if ((((BIO_SSL *)t->ptr)->ssl == NULL) ||
+	    (((BIO_SSL *)f->ptr)->ssl == NULL))
+		return (0);
 	SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl,((BIO_SSL *)f->ptr)->ssl);
-	return(1);
-	}
+	return (1);
+}
 
-void BIO_ssl_shutdown(BIO *b)
-	{
+void
+BIO_ssl_shutdown(BIO *b)
+{
 	SSL *s;
 
-	while (b != NULL)
-		{
-		if (b->method->type == BIO_TYPE_SSL)
-			{
-			s=((BIO_SSL *)b->ptr)->ssl;
+	while (b != NULL) {
+		if (b->method->type == BIO_TYPE_SSL) {
+			s = ((BIO_SSL *)b->ptr)->ssl;
 			SSL_shutdown(s);
 			break;
-			}
-		b=b->next_bio;
 		}
+		b = b->next_bio;
 	}
+}
