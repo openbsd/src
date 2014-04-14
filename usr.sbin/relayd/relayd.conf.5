@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.140 2014/04/14 12:58:04 blambert Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.141 2014/04/14 15:24:25 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -147,7 +147,7 @@ to a relay.
 .Xr relayd 8
 runs 5 relay processes by default and every process will handle
 all configured relays.
-.It Xo Ic snmp Oo Ic trap Oc Ic Oo Qo Ar path Qc Oc
+.It Ic snmp Oo Ic trap Oc Op Qq Ar path
 Send an SNMP trap when the state of a host changes.
 .Xr relayd 8
 will try to connect to
