@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.17 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.18 2014/04/14 22:25:40 beck Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ ufs_ihashins(struct inode *ip)
 	}
 
 	ipp = INOHASH(dev, inum);
+	SET(ip->i_flag, IN_HASHED);
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	/* XXXLOCKING unlock hash list? */
 
@@ -145,8 +146,10 @@ ufs_ihashrem(struct inode *ip)
 
 	if (ip->i_hash.le_prev == NULL)
 		return;
-
-	LIST_REMOVE(ip, i_hash);
+	if (ISSET(ip->i_flag, IN_HASHED)) {
+		LIST_REMOVE(ip, i_hash);
+		CLR(ip->i_flag, IN_HASHED);
+	}
 #ifdef DIAGNOSTIC
 	ip->i_hash.le_next = NULL;
 	ip->i_hash.le_prev = NULL;

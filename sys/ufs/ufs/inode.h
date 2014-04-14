@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.43 2014/03/19 04:17:33 guenther Exp $	*/
+/*	$OpenBSD: inode.h,v 1.44 2014/04/14 22:25:40 beck Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -251,6 +251,7 @@ struct inode_vtbl {
 #define IN_SHLOCK       0x0020          /* File has shared lock. */
 #define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
 #define	IN_LAZYMOD	0x0080		/* Modified, but don't write yet. */
+#define	IN_HASHED	0x0100		/* Inode is on the hash chain */
 
 #define	i_devvp i_ump->um_devvp
 
