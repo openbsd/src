@@ -26,7 +26,7 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp chil nuron padlock capi
+LIBNAMES= gmp nuron padlock capi
 
 LIBSRC=	e_gmp.c \
 	e_nuron.c \
