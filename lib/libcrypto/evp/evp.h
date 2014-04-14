@@ -723,15 +723,6 @@ const EVP_CIPHER *EVP_des_cbc(void);
 const EVP_CIPHER *EVP_des_ede_cbc(void);
 const EVP_CIPHER *EVP_des_ede3_cbc(void);
 const EVP_CIPHER *EVP_desx_cbc(void);
-/* This should now be supported through the dev_crypto ENGINE. But also, why are
- * rc4 and md5 declarations made here inside a "NO_DES" precompiler branch? */
-#if 0
-# ifdef OPENSSL_OPENBSD_DEV_CRYPTO
-const EVP_CIPHER *EVP_dev_crypto_des_ede3_cbc(void);
-const EVP_CIPHER *EVP_dev_crypto_rc4(void);
-const EVP_MD *EVP_dev_crypto_md5(void);
-# endif
-#endif
 #endif
 #ifndef OPENSSL_NO_RC4
 const EVP_CIPHER *EVP_rc4(void);
