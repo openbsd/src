@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.41 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.42 2014/04/14 20:40:41 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -31,11 +31,11 @@ sub handle_options
 {
 	my $state = shift;
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('aCd:Knqs:x:r:p:Pu', 
+	$state->SUPER::handle_options('aCd:Knqs:x:X:r:p:Pu', 
 	    '[-aCKnPqu] [-d repository] [-p portsdir] [-r release] [-s src] ',
-	    '[-x X11src] [pkg-name [...]]');
+	    '[-X X11src] [pkg-name [...]]');
 	$state->{srcdir} = $state->opt('s');
-	$state->{xdir} = $state->opt('x');
+	$state->{xdir} = $state->opt('X') // $state->opt('x');
 	$state->{releasedir} = $state->opt('r');
 	$state->{portsdir} = $state->opt('p');
 	$state->{pkgdir} = $state->opt('d');
@@ -53,6 +53,42 @@ sub handle_options
 	}
 }
 
+sub build_tag
+{
+	my ($state, $dir, $set, $rev) = @_;
+	my $r;
+	if ($state->{allinfo}) {
+		$r = "$dir/$set:$set$rev";
+	} elsif ($state->{pkgpath}) {
+		$r = "$dir/$set";
+	} else {
+		$r = "$set$rev";
+	}
+	$state->errsay($r) unless $state->{quiet};
+	$state->{current_set} = $set;
+	$state->{current_tag} = $r;
+}
+
+sub process_entry
+{
+	my ($state, $e) = @_;
+	if ($state->{check} && !-e $e) {
+		$state->sync_error($e);
+	}
+	print {$state->{out}} "$state->{current_tag}:$e\n";
+}
+
+sub sync_error
+{
+	my ($state, $e) = @_;
+	my $set = $state->{current_set};
+	if ($set =~ m/etc/) {
+		$state->errsay("Couldn't find #1 from set #2:\n\tDid you run sysmerge recently ?", $e, $set);
+	} else {
+		$state->errsay("Couldn't find #1 from set #2:\n\tsrc and installation out of synch ?", $e, $set);
+		$state->{fatals}++;
+	}
+}
 
 package OpenBSD::PackingElement;
 sub print_name {}
@@ -121,29 +157,6 @@ sub print_name
 }
 
 package main;
-sub tag
-{
-	my ($state, $dir, $set, $rev) = @_;
-	my $r;
-	if ($state->{allinfo}) {
-		$r = "$dir/$set:$set$rev";
-	} elsif ($state->{pkgpath}) {
-		$r = "$dir/$set";
-	} else {
-		$r = "$set$rev";
-	}
-	$state->errsay($r) unless $state->{quiet};
-	return $r;
-}
-
-my ($rev, $arch);
-sub findos
-{
-	my $cmd = OpenBSD::Paths->uname." -mr";
-	($rev, $arch) = split(/\s+/o, `$cmd`);
-	chomp $arch;
-	$rev =~ s/\.//;
-}
 
 sub open_output
 {
@@ -158,46 +171,6 @@ sub open_output
 		open $state->{out}, "|-", $MKLOCATEDB, $MKLOCATEDB or 
 		    $state->fatal("couldn't open pipe to mklocatedb: #1", $!);
 	}
-}
-
-sub sync_error
-{
-	my ($state, $e, $set) = @_;
-	if ($set =~ m/etc/) {
-		$state->errsay("Couldn't find #1 from set #2:\n\tDid you run sysmerge recently ?", $e, $set);
-	} else {
-		$state->errsay("Couldn't find #1 from set #2:\n\tsrc and installation out of synch ?", $e, $set);
-		$state->{fatals}++;
-	}
-}
-
-sub do_source
-{
-	my ($state, $src, $tag, @sets) = @_;
-	findos() if !defined $arch;
-	my $dir = "$src/distrib/sets/lists";
-	for my $set (@sets) {
-		my $tag = tag($state, $tag, $set, $rev);
-		my $output = 0;
-		for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
-			open my $l, '<', $f or next;
-			while (my $e = <$l>) {
-				chomp $e;
-				$e =~ s/^\.//;
-				if ($state->{check} && !-e $e) {
-					sync_error($state, $e, $set);
-				}
-				print {$state->{out}} "$tag:$e\n";
-				$output = 1;
-			}
-		}
-		if (!$output) {
-			$state->fatal("Couldn't find set #1", $set);
-		}
-	}
-	if ($state->{fatals}) {
-		$state->fatal("Files not found, can't continue");
-    	}
 }
 
 sub do_release
@@ -297,13 +270,17 @@ $state->handle_options;
 open_output($state);
 
 if ($state->{srcdir}) {
-	do_source($state, $state->{srcdir}, 'src', 
-	    qw(base comp etc game));
+	require OpenBSD::SetList;
+	OpenBSD::SetList::Source->walk($state, $state->{srcdir});
 }
 if ($state->{xdir}) {
-	do_source($state, $state->{xdir}, 'xenocara', 
-	    qw(xbase xetc xfont xserv xshare));
+	require OpenBSD::SetList;
+	OpenBSD::SetList::Xenocara->walk($state, $state->{xdir});
 }
+if ($state->{fatals}) {
+	$state->fatal("Files not found, can't continue");
+}
+
 if ($state->{releasedir}) {
 	do_release($state);
 }

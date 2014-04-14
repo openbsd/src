@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.15 2013/01/27 11:39:22 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.16 2014/04/14 20:40:41 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2013 $
+.Dd $Mdocdate: April 14 2014 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Op Fl p Ar portsdir
 .Op Fl r Ar release
 .Op Fl s Ar src
-.Op Fl x Ar X11src
+.Op Fl X Ar X11src
 .Op Ar pkg-name Op Ar ...
 .Ek
 .Sh DESCRIPTION
@@ -131,7 +131,7 @@ The list must come from standard input, and contain pkgpath information
 for items to be replaced.
 This can also be used to supplement an existing database with source and
 x11 information.
-.It Fl x Ar X11src
+.It Fl X Ar X11src
 Specify the location of X11 source.
 .Nm
 will list sets found under that X11 source directory.
