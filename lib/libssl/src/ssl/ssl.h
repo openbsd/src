@@ -684,11 +684,6 @@ struct ssl_session_st
 #define SSL_get_secure_renegotiation_support(ssl) \
 	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
 
-#ifndef OPENSSL_NO_HEARTBEATS
-#define SSL_heartbeat(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
-#endif
-
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
@@ -1595,11 +1590,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME		79
 #define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH		80
 #define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD		81
-#ifndef OPENSSL_NO_HEARTBEATS
-#define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT				85
-#define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING		86
-#define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS	87
-#endif
 #endif
 
 #define DTLS_CTRL_GET_TIMEOUT		73

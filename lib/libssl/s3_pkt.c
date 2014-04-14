@@ -1022,19 +1022,6 @@ start:
 			dest = s->s3->alert_fragment;
 			dest_len = &s->s3->alert_fragment_len;
 		}
-#ifndef OPENSSL_NO_HEARTBEATS
-		else if (rr->type == TLS1_RT_HEARTBEAT) {
-			tls1_process_heartbeat(s);
-
-			/* Exit and notify application to read again */
-			rr->length = 0;
-			s->rwstate = SSL_READING;
-			BIO_clear_retry_flags(SSL_get_rbio(s));
-			BIO_set_retry_read(SSL_get_rbio(s));
-			return (-1);
-		}
-#endif
-
 		if (dest_maxlen > 0) {
 			n = dest_maxlen - *dest_len; /* available space in 'dest' */
 			if (rr->length < n)

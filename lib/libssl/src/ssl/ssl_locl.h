@@ -1108,13 +1108,6 @@ int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 
-#ifndef OPENSSL_NO_HEARTBEATS
-int tls1_heartbeat(SSL *s);
-int dtls1_heartbeat(SSL *s);
-int tls1_process_heartbeat(SSL *s);
-int dtls1_process_heartbeat(SSL *s);
-#endif
-
 #ifdef OPENSSL_NO_SHA256
 #define tlsext_tick_md	EVP_sha1
 #else
