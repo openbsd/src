@@ -134,18 +134,3 @@ clean:
 	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
-e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-e_padlock.o: ../include/openssl/bio.h ../include/openssl/buffer.h
-e_padlock.o: ../include/openssl/crypto.h ../include/openssl/dso.h
-e_padlock.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_padlock.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_padlock.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_padlock.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_padlock.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_padlock.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_padlock.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_padlock.o: ../include/openssl/rand.h ../include/openssl/safestack.h
-e_padlock.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_padlock.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_padlock.o: ../include/openssl/x509_vfy.h e_padlock.c
