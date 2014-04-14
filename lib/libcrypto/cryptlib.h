@@ -59,6 +59,7 @@
 #ifndef HEADER_CRYPTLIB_H
 #define HEADER_CRYPTLIB_H
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
