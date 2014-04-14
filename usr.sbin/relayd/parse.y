@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.176 2014/04/14 12:58:04 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.177 2014/04/14 14:39:18 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -164,7 +164,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table optstring
-%type	<v.number>	http_type loglevel mark restricted trap
+%type	<v.number>	http_type loglevel mark trap
 %type	<v.number>	direction dstmode flag forwardmode retry
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto match
