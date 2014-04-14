@@ -25,7 +25,6 @@ engine - ENGINE cryptographic module support
  void ENGINE_load_dynamic(void);
  #ifndef OPENSSL_NO_STATIC_ENGINE
  void ENGINE_load_gmp(void);
- void ENGINE_load_nuron(void);
  #endif
  void ENGINE_load_cryptodev(void);
  void ENGINE_load_builtin_engines(void);

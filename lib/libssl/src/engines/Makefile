@@ -26,14 +26,12 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp nuron padlock capi
+LIBNAMES= gmp padlock capi
 
 LIBSRC=	e_gmp.c \
-	e_nuron.c \
 	e_padlock.c \
 	e_capi.c
 LIBOBJ= e_gmp.o \
-	e_nuron.o \
 	e_padlock.o \
 	e_capi.o
 
@@ -41,7 +39,6 @@ SRC= $(LIBSRC)
 
 EXHEADER= 
 HEADER=	e_gmp_err.c e_gmp_err.h \
-	e_nuron_err.c e_nuron_err.h \
 	e_capi_err.c e_capi_err.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -168,21 +165,6 @@ e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_gmp.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_gmp.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 e_gmp.o: ../include/openssl/x509_vfy.h e_gmp.c
-e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_nuron.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-e_nuron.o: ../include/openssl/dsa.h ../include/openssl/dso.h
-e_nuron.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_nuron.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-e_nuron.o: ../include/openssl/engine.h ../include/openssl/err.h
-e_nuron.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_nuron.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_nuron.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_nuron.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_nuron.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_nuron.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_nuron.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_nuron.o: ../include/openssl/x509_vfy.h e_nuron.c e_nuron_err.c e_nuron_err.h
 e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_padlock.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 e_padlock.o: ../include/openssl/crypto.h ../include/openssl/dso.h
