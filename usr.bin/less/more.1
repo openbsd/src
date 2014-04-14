@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.12 2014/04/12 18:13:49 millert Exp $
+.\"	$OpenBSD: more.1,v 1.13 2014/04/14 18:23:28 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)more.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 12 2014 $
+.Dd $Mdocdate: April 14 2014 $
 .Dt MORE 1
 .Os
 .Sh NAME
@@ -86,6 +86,17 @@ commands when a file is first examined (or re-examined, such as with the
 or
 .Ic :p
 commands).
+Multiple commands have to be concatenated into one single argument.
+Search patterns may contain blank characters and can be terminated
+by newline characters embedded in the
+.Ar command
+argument.
+Any other blank and newline characters contained in the argument are
+interpreted as
+.Ic SPACE
+and
+.Ic RETURN
+commands, respectively.
 .It Fl s
 Squeeze consecutive blank lines into a single blank line.
 .It Fl t Ar tag
@@ -266,6 +277,19 @@ to get the terminal characteristics necessary to manipulate the screen.
 .El
 .Sh EXIT STATUS
 .Ex -std more
+.Sh EXAMPLES
+Examine the ends of all files in the current directory, showing line
+and byte counts for each:
+.Pp
+.Dl $ more -p G= *
+.Pp
+Examine several manual pages, starting from the options description
+in the DESCRIPTION section:
+.Bd -literal -offset indent
+$ more -p '/DESCRIPTION
+> /options
+> ' *.1
+.Ed
 .Sh SEE ALSO
 .Xr ctags 1 ,
 .Xr less 1 ,
