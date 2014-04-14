@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.1 2014/04/14 12:55:10 blambert Exp $    */
+/*      $OpenBSD: agentx.c,v 1.2 2014/04/14 15:11:24 andre Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -31,7 +31,6 @@
 #include <unistd.h>
 
 #include "snmp.h"
-#include "ber.h"
 
 int	snmp_agentx_octetstring(struct agentx_pdu *, char *, int);
 int	snmp_agentx_buffercheck(struct agentx_pdu *, size_t);
