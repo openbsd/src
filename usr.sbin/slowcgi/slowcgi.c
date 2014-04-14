@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.29 2014/04/13 08:46:20 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.30 2014/04/14 19:25:48 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -696,8 +696,8 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 			buf++;
 		} else {
 			if (n > 3) {
-				name_len = ((buf[3] & 0x7f) << 24) +
-				    (buf[2] << 16) + (buf[1] << 8) + buf[0];
+				name_len = ((buf[0] & 0x7f) << 24) +
+				    (buf[1] << 16) + (buf[2] << 8) + buf[3];
 				n -= 4;
 				buf += 4;
 			} else
@@ -711,9 +711,9 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 				buf++;
 			} else {
 				if (n > 3) {
-					val_len = ((buf[3] & 0x7f) << 24) +
-					    (buf[2] << 16) + (buf[1] << 8) +
-					     buf[0];
+					val_len = ((buf[0] & 0x7f) << 24) +
+					    (buf[1] << 16) + (buf[2] << 8) +
+					     buf[3];
 					n -= 4;
 					buf += 4;
 				} else
