@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.152 2014/04/03 16:18:11 schwarze Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.153 2014/04/14 10:29:41 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -235,28 +235,32 @@ static void
 wrterror(char *msg, void *p)
 {
 	char		*q = " error: ";
-	struct iovec	iov[6];
+	struct iovec	iov[7];
+	char		pidbuf[20];
 	char		buf[20];
 	int		saved_errno = errno;
 
 	iov[0].iov_base = __progname;
 	iov[0].iov_len = strlen(__progname);
-	iov[1].iov_base = malloc_func;
-	iov[1].iov_len = strlen(malloc_func);
-	iov[2].iov_base = q;
-	iov[2].iov_len = strlen(q);
-	iov[3].iov_base = msg;
-	iov[3].iov_len = strlen(msg);
-	iov[4].iov_base = buf;
+	iov[1].iov_base = pidbuf;
+	snprintf(pidbuf, sizeof(pidbuf), "(%d)", getpid());
+	iov[1].iov_len = strlen(pidbuf);
+	iov[2].iov_base = malloc_func;
+	iov[2].iov_len = strlen(malloc_func);
+	iov[3].iov_base = q;
+	iov[3].iov_len = strlen(q);
+	iov[4].iov_base = msg;
+	iov[4].iov_len = strlen(msg);
+	iov[5].iov_base = buf;
 	if (p == NULL)
-		iov[4].iov_len = 0;
+		iov[5].iov_len = 0;
 	else {
 		snprintf(buf, sizeof(buf), " %p", p);
-		iov[4].iov_len = strlen(buf);
+		iov[5].iov_len = strlen(buf);
 	}
-	iov[5].iov_base = "\n";
-	iov[5].iov_len = 1;
-	writev(STDERR_FILENO, iov, 6);
+	iov[6].iov_base = "\n";
+	iov[6].iov_len = 1;
+	writev(STDERR_FILENO, iov, 7);
 
 #ifdef MALLOC_STATS
 	if (mopts.malloc_stats)
