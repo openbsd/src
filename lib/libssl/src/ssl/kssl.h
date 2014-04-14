@@ -116,10 +116,10 @@ typedef unsigned char krb5_octet;
 #define	KSSL_CLOCKSKEW	300;
 #endif
 
-#define	KSSL_ERR_MAX	255
+#define	KSSL_ERR_MAX	256
 typedef struct kssl_err_st  {
 	int  reason;
-	char text[KSSL_ERR_MAX+1];
+	char text[KSSL_ERR_MAX];
 	} KSSL_ERR;
 
 

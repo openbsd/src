@@ -1499,7 +1499,7 @@ const char *rule_str)
 char
 *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-	int is_export, pkl, kl;
+	int is_export, pkl, kl, l;
 	const char *ver, *exp_str;
 	const char *kx, *au, *enc, *mac;
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
@@ -1672,11 +1672,14 @@ char
 	return("Buffer too small");
 
 #ifdef KSSL_DEBUG
-	BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl);
+	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl);
 #else
-	BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str);
+	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str);
 #endif /* KSSL_DEBUG */
-	return (buf);
+	if (l >= len || l == -1)
+		return("Buffer too small");
+	else
+		return (buf);
 }
 
 char

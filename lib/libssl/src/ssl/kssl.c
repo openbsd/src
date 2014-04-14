@@ -273,7 +273,7 @@ unsigned char
 
 
 /*	Set kssl_err error info when reason text is a simple string
-**		kssl_err = struct { int reason; char text[KSSL_ERR_MAX+1]; }
+**		kssl_err = struct { int reason; char text[KSSL_ERR_MAX]; }
 */
 void
 kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text)
@@ -282,7 +282,7 @@ kssl_err_set(KSSL_ERR *kssl_err, int reason, char *text)
 		return;
 
 	kssl_err->reason = reason;
-	BIO_snprintf(kssl_err->text, KSSL_ERR_MAX, "%s", text);
+	(void) snprintf(kssl_err->text, KSSL_ERR_MAX, "%s", text);
 	return;
 }
 
@@ -420,20 +420,20 @@ kssl_cget_tkt(
 	}
 
 	if ((krb5rc = krb5_init_context(&krb5context)) != 0) {
-		BIO_snprintf(kssl_err->text,KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text,KSSL_ERR_MAX,
 		    "krb5_init_context() fails: %d\n", krb5rc);
 		kssl_err->reason = SSL_R_KRB5_C_INIT;
 		goto err;
 	}
 
-	if ((krb5rc = krb5_sname_to_principal(
-	    krb5context, kssl_ctx->service_host,
-	    (kssl_ctx->service_name) ? kssl_ctx->service_name : KRB5SVC,
-	    KRB5_NT_SRV_HST, &krb5creds.server)) != 0) {
-		BIO_snprintf(kssl_err->text,KSSL_ERR_MAX,
+	if ((krb5rc = krb5_sname_to_principal(krb5context,
+	    kssl_ctx->service_host,
+	    (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC,
+            KRB5_NT_SRV_HST, &krb5creds.server)) != 0) {
+		(void) snprintf(kssl_err->text,KSSL_ERR_MAX,
 		    "krb5_sname_to_principal() fails for %s/%s\n",
 		    kssl_ctx->service_host,
-		    (kssl_ctx->service_name) ? kssl_ctx->service_name: KRB5SVC);
+		    (kssl_ctx->service_name)? kssl_ctx->service_name: KRB5SVC);
 		kssl_err->reason = SSL_R_KRB5_C_INIT;
 		goto err;
 	}
@@ -566,7 +566,7 @@ kssl_TKT2tkt(
 	if (asn1ticket == NULL || asn1ticket->realm == NULL ||
 	    asn1ticket->sname == NULL ||
 	    sk_ASN1_GENERALSTRING_num(asn1ticket->sname->namestring) < 2) {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Null field in asn1ticket.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		return KRB5KRB_ERR_GENERIC;
@@ -574,7 +574,7 @@ kssl_TKT2tkt(
 
 	if ((new5ticket =
 	    (krb5_ticket *)calloc(1, sizeof(krb5_ticket))) == NULL) {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Unable to allocate new krb5_ticket.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		return ENOMEM; /*  or  KRB5KRB_ERR_GENERIC; */
@@ -588,7 +588,7 @@ kssl_TKT2tkt(
 	    gstr_svc->length, (char *)gstr_svc->data, gstr_host->length,
 	    (char *)gstr_host->data)) != 0) {
 		free(new5ticket);
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Error building ticket server principal.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		return krb5rc; /*  or  KRB5KRB_ERR_GENERIC; */
@@ -603,7 +603,7 @@ kssl_TKT2tkt(
 	if ((new5ticket->enc_part.ciphertext.data =
 	    calloc(1, asn1ticket->encdata->cipher->length)) == NULL) {
 		free(new5ticket);
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Error allocating cipher in krb5ticket.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		return KRB5KRB_ERR_GENERIC;
@@ -743,7 +743,7 @@ kssl_sget_tkt(
 	p = (unsigned char *)indata->data;
 	if ((asn1ticket = (KRB5_TKTBODY *) d2i_KRB5_TICKET(NULL, &p,
 	    (long)indata->length)) == NULL) {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "d2i_KRB5_TICKET() ASN.1 decode failure.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
@@ -752,7 +752,7 @@ kssl_sget_tkt(
 	/* Was:  krb5rc = krb5_decode_ticket(krb5in_data,&krb5ticket)) != 0) */
 	if ((krb5rc = kssl_TKT2tkt(krb5context, asn1ticket, &krb5ticket,
 	    kssl_err)) != 0) {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Error converting ASN.1 ticket to krb5_ticket.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
@@ -761,7 +761,7 @@ kssl_sget_tkt(
 	if (!krb5_principal_compare(krb5context, krb5server,
 	    krb5ticket->server))  {
 		krb5rc = KRB5_PRINC_NOMATCH;
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "server principal != ticket principal\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
@@ -769,14 +769,14 @@ kssl_sget_tkt(
 	if ((krb5rc = krb5_kt_get_entry(krb5context, krb5keytab,
 	    krb5ticket->server, krb5ticket->enc_part.kvno,
 	    krb5ticket->enc_part.enctype, &kt_entry)) != 0)  {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "krb5_kt_get_entry() fails with %x.\n", krb5rc);
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
 	}
 	if ((krb5rc = krb5_decrypt_tkt_part(krb5context, &kt_entry.key,
 	    krb5ticket)) != 0)  {
-		BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
+		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "krb5_decrypt_tkt_part() failed.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
 		goto err;
