@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.60 2014/04/14 22:12:01 tedu Exp $
+.\"	$OpenBSD: ed.1,v 1.61 2014/04/14 23:19:51 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm ed
 .Op Fl
-.Op Fl sx
+.Op Fl s
 .Op Fl p Ar string
 .Op Ar file
 .Sh DESCRIPTION
@@ -775,7 +775,6 @@ or edit another file before writing a modified buffer results in an error.
 If the command is entered a second time, it succeeds,
 but any changes to the buffer are lost.
 .Sh SEE ALSO
-.Xr bdes 1 ,
 .Xr sed 1 ,
 .Xr sh 1 ,
 .Xr vi 1 ,
@@ -794,13 +793,10 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
-The flag
-.Op Fl x ,
-the commands
-.Cm W ,
-.Cm x ,
+The commands
+.Cm W
 and
-.Cm z ,
+.Cm z
 and the address specifier
 .Sq %
 are extensions to that specification.

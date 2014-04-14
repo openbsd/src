@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2014/04/14 22:12:01 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2014/04/14 23:19:51 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -88,7 +88,7 @@ int lineno;			/* script line number */
 char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
 
-char *usage = "usage: %s [-] [-sx] [-p string] [file]\n";
+char *usage = "usage: %s [-] [-s] [-p string] [file]\n";
 
 char *home;		/* home directory */
 
