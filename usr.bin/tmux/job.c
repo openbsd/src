@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.32 2013/10/10 12:35:31 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.33 2014/04/14 22:27:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -60,6 +60,8 @@ job_run(const char *cmd, struct session *s,
 	switch (pid = fork()) {
 	case -1:
 		environ_free(&env);
+		close(out[0]);
+		close(out[1]);
 		return (NULL);
 	case 0:		/* child */
 		clear_signals(1);
