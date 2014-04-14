@@ -26,17 +26,15 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp padlock
+LIBNAMES= padlock
 
-LIBSRC=	e_gmp.c \
-	e_padlock.c
-LIBOBJ= e_gmp.o \
-	e_padlock.o
+LIBSRC=	e_padlock.c
+LIBOBJ= e_padlock.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= 
-HEADER=	e_gmp_err.c e_gmp_err.h
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -137,19 +135,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-e_gmp.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_gmp.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_gmp.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_gmp.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_gmp.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_gmp.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_gmp.o: ../include/openssl/x509_vfy.h e_gmp.c
 e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_padlock.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 e_padlock.o: ../include/openssl/crypto.h ../include/openssl/dso.h
