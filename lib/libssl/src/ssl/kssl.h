@@ -70,15 +70,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <krb5.h>
-#ifdef OPENSSL_SYS_WIN32
-/* These can sometimes get redefined indirectly by krb5 header files
- * after they get undefed in ossl_typ.h
- */
-#undef X509_NAME
-#undef X509_EXTENSIONS
-#undef OCSP_REQUEST
-#undef OCSP_RESPONSE
-#endif
 
 #ifdef  __cplusplus
 extern "C" {
