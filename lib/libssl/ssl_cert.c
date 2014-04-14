@@ -118,6 +118,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include <openssl/opensslconf.h>
 #include <openssl/e_os2.h>
@@ -798,42 +799,31 @@ int
 SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     const char *dir)
 {
-	OPENSSL_DIR_CTX *d = NULL;
-	const char *filename;
+	DIR *dirp = NULL;
+	char *path = NULL;
 	int ret = 0;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
-
-	/* Note that a side effect is that the CAs will be sorted by name */
-
-	while ((filename = OPENSSL_DIR_read(&d, dir))) {
-		char buf[1024];
-		int r;
-
-		if (strlen(dir) + strlen(filename) + 2 > sizeof buf) {
-			SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, SSL_R_PATH_TOO_LONG);
-			goto err;
+	dirp = opendir(dir);
+	if (dirp) {
+		struct dirent * dp;
+		while ((dp = readdir(dirp)) != NULL) {
+			if (asprintf(&path, "%s/%s", dir, dp->d_name) != -1) {
+				ret = SSL_add_file_cert_subjects_to_stack
+				    (stack,path);
+				free(path);
+			}
+			if (!ret)
+				break;
 		}
-		r = BIO_snprintf(buf, sizeof buf, "%s/%s", dir, filename);
-		if (r <= 0 || r >= (int)sizeof(buf))
-			goto err;
-		if (!SSL_add_file_cert_subjects_to_stack(stack, buf))
-			goto err;
+		(void) closedir(dirp);
 	}
-
-	if (errno) {
-		SYSerr(SYS_F_OPENDIR, errno);
-		ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
-		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
-		goto err;
+	if (!ret) {
+ 		SYSerr(SYS_F_OPENDIR, errno);
+		ERR_add_error_data(3, "opendir ('", dir, "')");
+		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK,
+		    ERR_R_SYS_LIB);
 	}
-
-	ret = 1;
-
-err:
-	if (d)
-		OPENSSL_DIR_end(&d);
 	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 }
-
