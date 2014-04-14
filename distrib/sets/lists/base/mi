@@ -1067,6 +1067,7 @@
 ./usr/libdata/perl5/OpenBSD/Replace.pm
 ./usr/libdata/perl5/OpenBSD/RequiredBy.pm
 ./usr/libdata/perl5/OpenBSD/Search.pm
+./usr/libdata/perl5/OpenBSD/SetList.pm
 ./usr/libdata/perl5/OpenBSD/SharedItems.pm
 ./usr/libdata/perl5/OpenBSD/SharedLibs.pm
 ./usr/libdata/perl5/OpenBSD/Signature.pm
