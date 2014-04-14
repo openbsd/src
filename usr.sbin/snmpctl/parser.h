@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.8 2013/10/07 11:40:09 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.9 2014/04/14 12:56:21 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -32,11 +32,28 @@ struct parse_val {
 };
 TAILQ_HEAD(parse_vals, parse_val);
 
+struct parse_varbind {
+	struct snmp_imsg		 sm;
+	union {
+		uint32_t	 	 u;
+		int32_t	 	 	 d;
+		uint64_t	 	 l;
+		struct in_addr	 	 in4;
+		struct in6_addr	 	 in6;
+		char			*str;
+	} u;
+
+	TAILQ_ENTRY(parse_varbind)	 vb_entry;
+};
+TAILQ_HEAD(parse_varbinds, parse_varbind);
+
 struct parse_result {
 	enum actions		 action;
 	struct imsgbuf		*ibuf;
 	char			*host;
+	char			*trapoid;
 	struct parse_vals	 oids;
+	struct parse_varbinds	 varbinds;
 	char			*community;
 	int			 version;
 };
