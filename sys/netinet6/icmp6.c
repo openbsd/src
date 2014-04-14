@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.141 2014/03/21 10:44:42 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.142 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1061,7 +1061,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		ctlfunc = inet6sw[ip6_protox[nxt]].pr_ctlinput;
 		if (ctlfunc)
 			(*ctlfunc)(code, sin6tosa(&icmp6dst),
-			    m->m_pkthdr.rdomain, &ip6cp);
+			    m->m_pkthdr.ph_rtableid, &ip6cp);
 	}
 	return (0);
 
@@ -1120,7 +1120,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	sin6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
 	    &sin6.sin6_addr);
 
-	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.rdomain);
+	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.ph_rtableid);
 
 	if (rt && (rt->rt_flags & RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
@@ -1140,7 +1140,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 */
 	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list))
-		(*mc->mc_func)(&sin6, m->m_pkthdr.rdomain);
+		(*mc->mc_func)(&sin6, m->m_pkthdr.ph_rtableid);
 }
 
 /*
@@ -1190,7 +1190,7 @@ ni6_input(struct mbuf *m, int off)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&ip6->ip6_dst, &sin6.sin6_addr, sizeof(sin6.sin6_addr));
 	/* XXX scopeid */
-	if (ifa_ifwithaddr(sin6tosa(&sin6), m->m_pkthdr.rdomain))
+	if (ifa_ifwithaddr(sin6tosa(&sin6), m->m_pkthdr.ph_rtableid))
 		; /* unicast/anycast, fine */
 	else if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr))
 		; /* link-local multicast, fine */
@@ -2072,7 +2072,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		 */
 		bzero(&ro, sizeof(ro));
 		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e,
-		    m->m_pkthdr.rdomain);
+		    m->m_pkthdr.ph_rtableid);
 		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
 			RTFREE(ro.ro_rt); /* XXX: we could use this */
 		}
@@ -2226,7 +2226,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&reddst6, &sin6.sin6_addr, sizeof(reddst6));
-	rt = rtalloc1(sin6tosa(&sin6), 0, m->m_pkthdr.rdomain);
+	rt = rtalloc1(sin6tosa(&sin6), 0, m->m_pkthdr.ph_rtableid);
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
@@ -2338,11 +2338,11 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		bcopy(&src6, &ssrc.sin6_addr, sizeof(struct in6_addr));
 		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), NULL,
 		    RTF_GATEWAY | RTF_HOST, sin6tosa(&ssrc),
-		    &newrt, m->m_pkthdr.rdomain);
+		    &newrt, m->m_pkthdr.ph_rtableid);
 
 		if (newrt) {
 			(void)rt_timer_add(newrt, icmp6_redirect_timeout,
-			    icmp6_redirect_timeout_q, m->m_pkthdr.rdomain);
+			    icmp6_redirect_timeout_q, m->m_pkthdr.ph_rtableid);
 			rtfree(newrt);
 		}
 	}

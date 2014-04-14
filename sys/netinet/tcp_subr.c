@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.125 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.126 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -397,11 +397,11 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	th->th_win = htons((u_int16_t)win);
 	th->th_urp = 0;
 
-	/* force routing domain */
+	/* force routing table */
 	if (tp)
-		m->m_pkthdr.rdomain = tp->t_inpcb->inp_rtableid;
+		m->m_pkthdr.ph_rtableid = tp->t_inpcb->inp_rtableid;
 	else
-		m->m_pkthdr.rdomain = rtableid;
+		m->m_pkthdr.ph_rtableid = rtableid;
 
 	switch (af) {
 #ifdef INET6

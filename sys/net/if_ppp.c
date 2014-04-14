@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.71 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.72 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -694,10 +694,10 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     }
 
 #ifdef DIAGNOSTIC
-    if (ifp->if_rdomain != rtable_l2(m0->m_pkthdr.rdomain)) {
+    if (ifp->if_rdomain != rtable_l2(m0->m_pkthdr.ph_rtableid)) {
 	printf("%s: trying to send packet on wrong domain. "
 	    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-	    rtable_l2(m0->m_pkthdr.rdomain), dst->sa_family);
+	    rtable_l2(m0->m_pkthdr.ph_rtableid), dst->sa_family);
     }
 #endif
 
@@ -1429,8 +1429,8 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
 
-    /* mark incoming routing domain */
-    m->m_pkthdr.rdomain = ifp->if_rdomain;
+    /* mark incoming routing table */
+    m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
     if ((proto & 0x8000) == 0) {
 #if NBPFILTER > 0

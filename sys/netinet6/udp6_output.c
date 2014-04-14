@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.24 2014/04/09 08:44:08 chrisz Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.25 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -239,8 +239,8 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 		udpstat.udps_opackets++;
 
-		/* force routing domain */
-		m->m_pkthdr.rdomain = in6p->inp_rtableid;
+		/* force routing table */
+		m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
 
 		error = ip6_output(m, optp, &in6p->inp_route6,
 		    flags, in6p->inp_moptions6, NULL, in6p);

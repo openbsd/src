@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.70 2014/01/09 06:29:06 tedu Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.71 2014/04/14 09:06:42 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -95,7 +95,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	struct ipsec_ref *dstid = NULL, *srcid = NULL;
 	struct tdb *tdbin = NULL;
 	int signore = 0, dignore = 0;
-	u_int rdomain = rtable_l2(m->m_pkthdr.rdomain);
+	u_int rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
 	/*
 	 * If there are no flows in place, there's no point

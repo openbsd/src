@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.11 2014/04/11 08:44:37 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.12 2014/04/14 09:06:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -508,7 +508,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
 		    vni == sc->sc_vnetid &&
-		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.rdomain))
+		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid))
 			goto found;
 	}
 
@@ -628,7 +628,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
-	m->m_pkthdr.rdomain = sc->sc_rdomain;
+	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);

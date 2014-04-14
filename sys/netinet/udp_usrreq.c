@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.179 2014/04/07 19:51:15 chrisz Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.180 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -406,10 +406,11 @@ udp_input(struct mbuf *m, ...)
 	if ((ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) ||
 	    (ip && IN_MULTICAST(ip->ip_dst.s_addr)) ||
 	    (ip && in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif,
-	    m->m_pkthdr.rdomain))) {
+	    m->m_pkthdr.ph_rtableid))) {
 #else /* INET6 */
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif, m->m_pkthdr.rdomain)) {
+	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif,
+		m->m_pkthdr.ph_rtableid)) {
 #endif /* INET6 */
 		struct inpcb *last;
 		/*
@@ -446,7 +447,7 @@ udp_input(struct mbuf *m, ...)
 				continue;
 #endif
 			if (rtable_l2(inp->inp_rtableid) !=
-			    rtable_l2(m->m_pkthdr.rdomain))
+			    rtable_l2(m->m_pkthdr.ph_rtableid))
 				continue;
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
@@ -563,11 +564,11 @@ udp_input(struct mbuf *m, ...)
 		if (ip6)
 			inp = in6_pcbhashlookup(&udbtable, &ip6->ip6_src,
 			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport,
-			    m->m_pkthdr.rdomain);
+			    m->m_pkthdr.ph_rtableid);
 		else
 #endif /* INET6 */
 		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.rdomain);
+		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.ph_rtableid);
 #if NPF > 0
 		if (m->m_pkthdr.pf.statekey && inp) {
 			m->m_pkthdr.pf.statekey->inp = inp;
@@ -584,12 +585,12 @@ udp_input(struct mbuf *m, ...)
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
 			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse, m,
-			    m->m_pkthdr.rdomain);
+			    m->m_pkthdr.ph_rtableid);
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
 		    ip->ip_dst, uh->uh_dport, inpl_reverse, m,
-		    m->m_pkthdr.rdomain);
+		    m->m_pkthdr.ph_rtableid);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -1093,8 +1094,8 @@ udp_output(struct mbuf *m, ...)
 
 	udpstat.udps_opackets++;
 
-	/* force routing domain */
-	m->m_pkthdr.rdomain = inp->inp_rtableid;
+	/* force routing table */
+	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    (inp->inp_socket->so_options & SO_BROADCAST) | IP_IPSECFLOW,

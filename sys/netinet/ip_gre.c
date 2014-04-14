@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.48 2013/12/31 03:24:44 tedu Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.49 2014/04/14 09:06:42 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -118,7 +118,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	gip = mtod(m, struct greip *);
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
-	m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
+	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -363,7 +363,7 @@ gre_lookup(struct mbuf *m, u_int8_t proto)
 		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
 		    (sc->g_proto == proto) &&
 		    (rtable_l2(sc->g_rtableid) ==
-		    rtable_l2(m->m_pkthdr.rdomain)) &&
+		    rtable_l2(m->m_pkthdr.ph_rtableid)) &&
 		    ((sc->sc_if.if_flags & IFF_UP) != 0))
 			return (sc);
 	}

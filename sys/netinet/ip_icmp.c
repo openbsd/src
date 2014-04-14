@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.118 2014/03/21 10:44:42 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.119 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -218,8 +218,8 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	}
 	if (m == NULL)
 		goto freeit;
-	/* keep in same domain and rtable (the latter is a bit unclear) */
-	m->m_pkthdr.rdomain = n->m_pkthdr.rdomain;
+	/* keep in same rtable */
+	m->m_pkthdr.ph_rtableid = n->m_pkthdr.ph_rtableid;
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
@@ -491,7 +491,7 @@ icmp_input(struct mbuf *m, ...)
 		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(code, sintosa(&sin), m->m_pkthdr.rdomain,
+			(*ctlfunc)(code, sintosa(&sin), m->m_pkthdr.ph_rtableid,
 			    &icp->icmp_ip);
 		break;
 
@@ -638,10 +638,10 @@ reflect:
 #endif
 		rtredirect(sintosa(&sdst), sintosa(&sgw), NULL,
 		    RTF_GATEWAY | RTF_HOST, sintosa(&ssrc),
-		    &newrt, m->m_pkthdr.rdomain);
+		    &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp_redirtimeout != 0) {
 			(void)rt_timer_add(newrt, icmp_redirect_timeout,
-			    icmp_redirect_timeout_q, m->m_pkthdr.rdomain);
+			    icmp_redirect_timeout_q, m->m_pkthdr.ph_rtableid);
 		}
 		if (newrt != NULL)
 			rtfree(newrt);
@@ -709,7 +709,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 	if (ia == NULL) {
 		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 			if (ia->ia_ifp->if_rdomain !=
-			    rtable_l2(m->m_pkthdr.rdomain))
+			    rtable_l2(m->m_pkthdr.ph_rtableid))
 				continue;
 			if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
 				break;
@@ -729,7 +729,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		struct route ro;
 
 		memset(&ro, 0, sizeof(ro));
-		ro.ro_tableid = m->m_pkthdr.rdomain;
+		ro.ro_tableid = m->m_pkthdr.ph_rtableid;
 		dst = satosin(&ro.ro_dst);
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
@@ -737,7 +737,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 
 		/* keep packet in the original virtual instance */
 		ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT,
-		     m->m_pkthdr.rdomain);
+		     m->m_pkthdr.ph_rtableid);
 		if (ro.ro_rt == 0) {
 			ipstat.ips_noroute++;
 			m_freem(m);

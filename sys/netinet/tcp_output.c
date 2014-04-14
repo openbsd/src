@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.104 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.105 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1050,8 +1050,8 @@ send:
 	}
 #endif
 
-	/* force routing domain */
-	m->m_pkthdr.rdomain = tp->t_inpcb->inp_rtableid;
+	/* force routing table */
+	m->m_pkthdr.ph_rtableid = tp->t_inpcb->inp_rtableid;
 
 #if NPF > 0
 	m->m_pkthdr.pf.inp = tp->t_inpcb;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.37 2014/01/24 12:20:22 naddy Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.38 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	mh->m_next = md;
 
 	mh->m_pkthdr.rcvif = NULL;
-	mh->m_pkthdr.rdomain = ifp->if_rdomain;
+	mh->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);
 	MH_ALIGN(mh, sizeof(struct ip6_hdr));

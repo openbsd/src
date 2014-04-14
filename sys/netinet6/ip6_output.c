@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.153 2014/01/23 23:51:29 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.154 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -496,7 +496,7 @@ reroute:
 		 * packet gets tunneled?
 		 */
 
-		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
+		tdb = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
 		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			error = EHOSTUNREACH;
@@ -544,9 +544,9 @@ reroute:
 	dstsock.sin6_family = AF_INET6;
 	dstsock.sin6_addr = ip6->ip6_dst;
 	dstsock.sin6_len = sizeof(dstsock);
-	ro->ro_tableid = m->m_pkthdr.rdomain;
+	ro->ro_tableid = m->m_pkthdr.ph_rtableid;
 	if ((error = in6_selectroute(&dstsock, opt, im6o, ro, &ifp,
-	    &rt, m->m_pkthdr.rdomain)) != 0) {
+	    &rt, m->m_pkthdr.ph_rtableid)) != 0) {
 		switch (error) {
 		case EHOSTUNREACH:
 			ip6stat.ip6s_noroute++;
@@ -2475,7 +2475,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 *   XXX: is it a good approach?
 			 */
 			bzero(&ro, sizeof(ro));
-			ro.ro_tableid = m->m_pkthdr.rdomain;
+			ro.ro_tableid = m->m_pkthdr.ph_rtableid;
 			dst = &ro.ro_dst;
 			dst->sin6_len = sizeof(struct sockaddr_in6);
 			dst->sin6_family = AF_INET6;

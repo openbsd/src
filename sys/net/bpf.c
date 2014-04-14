@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.91 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.92 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -543,7 +543,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EMSGSIZE);
 	}
 
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (d->bd_hdrcmplt)
 		dst.ss_family = pseudo_AF_HDRCMPLT;

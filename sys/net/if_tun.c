@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.121 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.122 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -888,7 +888,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top->m_data += sizeof(*th);
 	top->m_len  -= sizeof(*th);
 	top->m_pkthdr.len -= sizeof(*th);
-	top->m_pkthdr.rdomain = ifp->if_rdomain;
+	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	switch (ntohl(*th)) {
 #ifdef INET

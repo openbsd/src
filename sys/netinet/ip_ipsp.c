@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.193 2014/01/09 06:29:06 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.194 2014/04/14 09:06:42 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1182,7 +1182,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 					    sizeof(struct sockaddr_in6);
 					tdbi->dst.sin6.sin6_addr = ip6_dst;
 					tdbi->rdomain =
-					    rtable_l2(m->m_pkthdr.rdomain);
+					    rtable_l2(m->m_pkthdr.ph_rtableid);
 					SLIST_INSERT_HEAD(&tags,
 					    mtag, m_tag_link);
 				}
@@ -1275,7 +1275,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 				    (caddr_t) &tdbi->spi);
 
 			tdbi->proto = proto; /* AH or ESP */
-			tdbi->rdomain = rtable_l2(m->m_pkthdr.rdomain);
+			tdbi->rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
 #ifdef INET
 			/* Last network header was IPv4. */

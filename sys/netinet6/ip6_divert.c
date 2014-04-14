@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.20 2014/04/07 10:04:17 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.21 2014/04/14 09:06:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -102,7 +102,7 @@ divert6_output(struct mbuf *m, ...)
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
-	m->m_pkthdr.rdomain = inp->inp_rtableid;
+	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 	if (control)
 		m_freem(control);
@@ -165,7 +165,8 @@ divert6_output(struct mbuf *m, ...)
 
 	if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		ip6addr.sin6_addr = sin6->sin6_addr;
-		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr), m->m_pkthdr.rdomain);
+		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr),
+		    m->m_pkthdr.ph_rtableid);
 		if (ifa == NULL) {
 			error = EADDRNOTAVAIL;
 			goto fail;

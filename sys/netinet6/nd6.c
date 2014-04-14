@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.113 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.114 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1637,7 +1637,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(sin6tosa(dst),
-			    RT_REPORT, m->m_pkthdr.rdomain)) != NULL)
+			    RT_REPORT, m->m_pkthdr.ph_rtableid)) != NULL)
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1676,7 +1676,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 				rtfree(rt); rt = rt0;
 			lookup:
 				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
-				    RT_REPORT, m->m_pkthdr.rdomain);
+				    RT_REPORT, m->m_pkthdr.ph_rtableid);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}

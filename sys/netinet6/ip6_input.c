@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.123 2014/02/13 11:20:54 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.124 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ ip6_input(struct mbuf *m)
 	}
 
 #if NPF > 0
-	rtableid = m->m_pkthdr.rdomain;
+	rtableid = m->m_pkthdr.ph_rtableid;
 #endif
 
 	/*

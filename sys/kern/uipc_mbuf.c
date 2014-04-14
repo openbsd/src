@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.180 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.181 2014/04/14 09:06:41 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1362,8 +1362,8 @@ m_print(void *v,
 		    m->m_pkthdr.tagsset, MTAG_BITS);
 		(*pr)("m_pkthdr.csum_flags: %hb\n",
 		    m->m_pkthdr.csum_flags, MCS_BITS);
-		(*pr)("m_pkthdr.ether_vtag: %hu\tm_ptkhdr.rdomain: %u\n",
-		    m->m_pkthdr.ether_vtag, m->m_pkthdr.rdomain);
+		(*pr)("m_pkthdr.ether_vtag: %hu\tm_ptkhdr.ph_rtableid: %u\n",
+		    m->m_pkthdr.ether_vtag, m->m_pkthdr.ph_rtableid);
 		(*pr)("m_pkthdr.pf.hdr: %p\n",
 		    m->m_pkthdr.pf.hdr);
 		(*pr)("m_pkthdr.pf.statekey: %p\tm_pkthdr.pf.inp %p\n",

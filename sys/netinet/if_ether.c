@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.124 2014/04/10 14:36:25 mikeb Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.125 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 		return;
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;
@@ -630,7 +630,7 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 	}
 	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0,
-	    rtable_l2(m->m_pkthdr.rdomain));
+	    rtable_l2(m->m_pkthdr.ph_rtableid));
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
 		    if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
@@ -729,7 +729,7 @@ out:
 		memcpy(ea->arp_sha, enaddr, sizeof(ea->arp_sha));
 	} else {
 		la = arplookup(itaddr.s_addr, 0, SIN_PROXY,
-		    rtable_l2(m->m_pkthdr.rdomain));
+		    rtable_l2(m->m_pkthdr.ph_rtableid));
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;

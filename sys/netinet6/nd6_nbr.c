@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.76 2014/03/21 09:45:09 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.77 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
 
-		rt = rtalloc1(sin6tosa(&tsin6), 0, m->m_pkthdr.rdomain);
+		rt = rtalloc1(sin6tosa(&tsin6), 0, m->m_pkthdr.ph_rtableid);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*
@@ -384,7 +384,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = NULL;
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
@@ -457,7 +457,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 			bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
 			src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL,
-			    &error, m->m_pkthdr.rdomain);
+			    &error, m->m_pkthdr.ph_rtableid);
 			if (src0 == NULL) {
 				char addr[INET6_ADDRSTRLEN];
 
@@ -927,7 +927,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = NULL;
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
@@ -969,7 +969,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	 */
 	bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
 	src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, &error,
-	    m->m_pkthdr.rdomain);
+	    m->m_pkthdr.ph_rtableid);
 	if (src0 == NULL) {
 		char addr[INET6_ADDRSTRLEN];
 

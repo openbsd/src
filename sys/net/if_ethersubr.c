@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.164 2014/03/26 15:13:59 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.165 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -211,10 +211,10 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	struct ifnet *ifp = ifp0;
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
 		printf("%s: trying to send packet on wrong domain. "
 		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid),
 		    dst->sa_family);
 	}
 #endif
@@ -242,7 +242,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, RT_REPORT,
-			    m->m_pkthdr.rdomain)) != NULL)
+			    m->m_pkthdr.ph_rtableid)) != NULL)
 				rt->rt_refcnt--;
 			else
 				senderr(EHOSTUNREACH);
@@ -454,8 +454,8 @@ ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 
 	m_cluncount(m, 1);
 
-	/* mark incoming routing domain */
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	/* mark incoming routing table */
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (eh == NULL) {
 		eh = mtod(m, struct ether_header *);

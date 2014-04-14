@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.50 2013/10/23 15:12:42 mpi Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.51 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -414,10 +414,10 @@ sloutput(ifp, m, dst, rtp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
 		printf("%s: trying to send packet on wrong domain. "
 		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid),
 		    dst->sa_family);
 	}
 #endif
@@ -819,8 +819,8 @@ slinput(c, tp)
 		if (m == NULL)
 			goto error;
 
-		/* mark incoming routing domain */
-		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
+		/* mark incoming routing table */
+		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 #if NBPFILTER > 0
 		if (sc->sc_bpf) {

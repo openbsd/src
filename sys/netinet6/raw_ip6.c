@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.64 2014/01/08 22:38:29 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.65 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -468,8 +468,8 @@ rip6_output(struct mbuf *m, ...)
 	if (in6p->inp_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 
-	/* force routing domain */
-	m->m_pkthdr.rdomain = in6p->inp_rtableid;
+	/* force routing table */
+	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
 
 	error = ip6_output(m, optp, &in6p->inp_route6, flags,
 	    in6p->inp_moptions6, &oifp, in6p);

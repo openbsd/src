@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.39 2011/06/19 17:55:37 jsg Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.40 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -81,10 +81,10 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	}
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
 		printf("%s: trying to send packet on wrong domain. "
 		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid),
 		    family);
 	}
 #endif
@@ -145,7 +145,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 
 	m = *m0;
 
-	m->m_pkthdr.rdomain = sc->gif_rtableid;
+	m->m_pkthdr.ph_rtableid = sc->gif_rtableid;
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
@@ -179,7 +179,7 @@ in_gif_input(struct mbuf *m, ...)
 		    sc->gif_psrc->sa_family != AF_INET ||
 		    sc->gif_pdst->sa_family != AF_INET ||
 		    rtable_l2(sc->gif_rtableid) !=
-		    rtable_l2(m->m_pkthdr.rdomain)) {
+		    rtable_l2(m->m_pkthdr.ph_rtableid)) {
 			continue;
 		}
 
@@ -195,7 +195,7 @@ in_gif_input(struct mbuf *m, ...)
 
 	if (gifp) {
 		m->m_pkthdr.rcvif = gifp;
-		m->m_pkthdr.rdomain = gifp->if_rdomain;
+		m->m_pkthdr.ph_rtableid = gifp->if_rdomain;
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;
 		/* We have a configured GIF */

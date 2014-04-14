@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.174 2014/03/27 10:30:58 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.175 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ struct	pkthdr {
 	u_int16_t		 pad;
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
-	u_int			 rdomain;	/* routing domain id */
+	u_int			 ph_rtableid;	/* routing table id */
 	void			*ph_cookie;	/* additional data */
 	struct pkthdr_pf	 pf;
 };

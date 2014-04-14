@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.32 2013/10/24 11:31:43 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.33 2014/04/14 09:06:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -208,15 +208,15 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_int8_t	op = 0;
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
 		printf("%s: trying to send packet on wrong domain. "
 		    "if %d vs. mbuf %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain));
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid));
 	}
 #endif
 	m->m_pkthdr.rcvif = ifp;
 	/* XXX assumes MPLS is always in rdomain 0 */
-	m->m_pkthdr.rdomain = 0;
+	m->m_pkthdr.ph_rtableid = 0;
 
 	error = 0;
 	switch (dst->sa_family) {
@@ -394,9 +394,9 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		ip->ip_sum = in_cksum(m, hlen);
 	}
 	
-	/* new receive if and move into correct rdomain */
+	/* new receive if and move into correct rtable */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
 	if (ifp && ifp->if_bpf)
@@ -429,9 +429,9 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		ip6hdr->ip6_hlim = ttl;
 	}
 
-	/* new receive if and move into correct rdomain */
+	/* new receive if and move into correct rtable */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.rdomain = ifp->if_rdomain;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
 	if (ifp && ifp->if_bpf)

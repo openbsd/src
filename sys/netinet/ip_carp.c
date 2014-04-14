@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.225 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.226 2014/04/14 09:06:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1133,7 +1133,7 @@ carp_send_ad(void *v)
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
-		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
+		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
@@ -1225,7 +1225,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m->m_pkthdr.rcvif = NULL;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
-		m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
+		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		m->m_flags |= M_MCAST;

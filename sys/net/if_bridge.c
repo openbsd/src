@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.221 2014/01/24 18:54:58 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.222 2014/04/14 09:06:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1394,7 +1394,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			}
 			if (ifl != NULL) {
 				m->m_pkthdr.rcvif = ifl->ifp;
-				m->m_pkthdr.rdomain = ifl->ifp->if_rdomain;
+				m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
 #if NBPFILTER > 0
 				if (ifl->ifp->if_bpf)
 					bpf_mtap(ifl->ifp->if_bpf, m,
@@ -1457,7 +1457,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			sc->sc_if.if_ibytes += ETHER_HDR_LEN + m->m_pkthdr.len;
 
 			m->m_pkthdr.rcvif = ifl->ifp;
-			m->m_pkthdr.rdomain = ifl->ifp->if_rdomain;
+			m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
 			if (ifp->if_type == IFT_GIF) {
 				m->m_flags |= M_PROTO1;
 				ether_input(ifl->ifp, eh, m);
@@ -1632,7 +1632,7 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	}
 	/* fixup header a bit */
 	m1->m_pkthdr.rcvif = ifp;
-	m1->m_pkthdr.rdomain = ifp->if_rdomain;
+	m1->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	m1->m_flags |= M_PROTO1;
 
 #if NBPFILTER > 0

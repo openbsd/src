@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.64 2014/01/29 00:50:56 dlg Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.65 2014/04/14 09:06:42 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ reroute:
 #endif /* IPSEC */
 
 #if NPF > 0
-	rtableid = m->m_pkthdr.rdomain;
+	rtableid = m->m_pkthdr.ph_rtableid;
 #endif
 
 	dst = &ip6_forward_rt.ro_dst;
@@ -333,7 +333,7 @@ reroute:
 	 * PMTU notification.  is it okay?
 	 */
 	if (sproto != 0) {
-		tdb = gettdb(rtable_l2(m->m_pkthdr.rdomain),
+		tdb = gettdb(rtable_l2(m->m_pkthdr.ph_rtableid),
 		    sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			error = EHOSTUNREACH;
