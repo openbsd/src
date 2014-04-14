@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.69 2014/03/17 15:19:06 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.70 2014/04/14 00:35:32 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -248,7 +248,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 }
 
 static void
-kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin,
+kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin, int confirm,
     uint8_t *key, size_t keylen)
 {
 	char pass[1024];
@@ -265,6 +265,15 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin,
 		errx(1, "unable to read passphrase");
 	if (strlen(pass) == 0)
 		errx(1, "please provide a password");
+	if (confirm && !(rppflags & RPP_STDIN)) {
+		char pass2[1024];
+		if (!readpassphrase("confirm passphrase: ", pass2,
+		    sizeof(pass2), rppflags))
+			errx(1, "unable to read passphrase");
+		if (strcmp(pass, pass2) != 0)
+			errx(1, "passwords don't match");
+		explicit_bzero(pass2, sizeof(pass2));
+	}
 	if (bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
 	    keylen, rounds) == -1)
 		errx(1, "bcrypt pbkdf");
@@ -309,7 +318,7 @@ generate(const char *pubkeyfile, const char *seckeyfile, int rounds,
 	enckey.kdfrounds = htonl(rounds);
 	memcpy(enckey.fingerprint, fingerprint, FPLEN);
 	arc4random_buf(enckey.salt, sizeof(enckey.salt));
-	kdf(enckey.salt, sizeof(enckey.salt), rounds, 1, xorkey, sizeof(xorkey));
+	kdf(enckey.salt, sizeof(enckey.salt), rounds, 1, 1, xorkey, sizeof(xorkey));
 	memcpy(enckey.checksum, digest, sizeof(enckey.checksum));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
@@ -353,7 +362,7 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 		errx(1, "unsupported KDF");
 	rounds = ntohl(enckey.kdfrounds);
 	kdf(enckey.salt, sizeof(enckey.salt), rounds, strcmp(msgfile, "-") != 0,
-	    xorkey, sizeof(xorkey));
+	    0, xorkey, sizeof(xorkey));
 	for (i = 0; i < sizeof(enckey.seckey); i++)
 		enckey.seckey[i] ^= xorkey[i];
 	explicit_bzero(xorkey, sizeof(xorkey));
