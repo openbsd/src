@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.26 2014/03/19 08:59:37 mpi Exp $   */
+/*	$OpenBSD: uthum.c,v 1.27 2014/04/15 09:14:27 mpi Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -291,19 +291,19 @@ uthum_issue_cmd(struct uthum_softc *sc, uint8_t target_cmd, int delay)
 	bzero(cmdbuf, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_issue, sizeof(cmd_issue));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen))
 		return EIO;
 
 	bzero(cmdbuf, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen))
 		return EIO;
 
 	bzero(cmdbuf, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
 		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-		    cmdbuf, sc->sc_olen))
+		    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen))
 			return EIO;
 	}
 
@@ -330,7 +330,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 	bzero(cmdbuf, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_query, sizeof(cmd_query));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    sc->sc_hdev.sc_report_id, cmdbuf, sc->sc_olen))
 		return EIO;
 
 	/* wait if required */
@@ -339,7 +339,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 
 	/* get answer */
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    report, sc->sc_flen))
+	    sc->sc_hdev.sc_report_id, report, sc->sc_flen))
 		return EIO;
 	memcpy(buf, report, len);
 	return 0;

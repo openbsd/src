@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.3 2013/03/28 03:58:03 tedu Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.4 2014/04/15 09:14:27 mpi Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -52,7 +52,7 @@ int
 uoak_check_device_ready(struct uoak_softc *sc)
 {
 	if (uhidev_get_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-	    &sc->sc_buf, sc->sc_flen))
+	        sc->sc_hdev->sc_report_id, &sc->sc_buf, sc->sc_flen))
 		return EIO;
 
 	if (sc->sc_buf[0] != 0xff)
@@ -70,7 +70,7 @@ uoak_set_cmd(struct uoak_softc *sc)
 		usbd_delay_ms(sc->sc_udev, UOAK_RETRY_DELAY);
 
 	if (uhidev_set_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-	    &sc->sc_rcmd, sc->sc_flen))
+	    sc->sc_hdev->sc_report_id, &sc->sc_rcmd, sc->sc_flen))
 		return EIO;
 
 	return 0;
@@ -87,7 +87,7 @@ uoak_get_cmd(struct uoak_softc *sc)
 
 	/* issue request */
 	if (uhidev_set_report(sc->sc_hdev, UHID_FEATURE_REPORT,
-	    &sc->sc_rcmd, sc->sc_flen))
+	    sc->sc_hdev->sc_report_id, &sc->sc_rcmd, sc->sc_flen))
 		return EIO;
 
 	/* wait till the device ready to return the request */

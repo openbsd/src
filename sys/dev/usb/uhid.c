@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.56 2014/03/19 08:59:37 mpi Exp $ */
+/*	$OpenBSD: uhid.c,v 1.57 2014/04/15 09:14:27 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -269,7 +269,8 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 		DPRINTFN(1, ("uhidread immed\n"));
 		extra = sc->sc_hdev.sc_report_id != 0;
 		err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
-					buffer, sc->sc_hdev.sc_isize + extra);
+		    sc->sc_hdev.sc_report_id, buffer,
+		    sc->sc_hdev.sc_isize + extra);
 		if (err)
 			return (EIO);
 		return (uiomove(buffer+extra, sc->sc_hdev.sc_isize, uio));
@@ -346,7 +347,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 	error = uiomove(sc->sc_obuf, size, uio);
 	if (!error) {
 		err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-					sc->sc_obuf, size);
+		    sc->sc_hdev.sc_report_id, sc->sc_obuf, size);
 		if (err)
 			error = EIO;
 	}
@@ -410,7 +411,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (*(int *)addr) {
 			extra = sc->sc_hdev.sc_report_id != 0;
 			err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
-			    buffer, sc->sc_hdev.sc_isize + extra);
+			    sc->sc_hdev.sc_report_id, buffer,
+			    sc->sc_hdev.sc_isize + extra);
 			if (err)
 				return (EOPNOTSUPP);
 

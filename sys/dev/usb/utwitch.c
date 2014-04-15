@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.10 2014/03/19 08:59:37 mpi Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.11 2014/04/15 09:14:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -270,8 +270,8 @@ utwitch_set_mode(struct utwitch_softc *sc, uint8_t val)
 	req[0] = CMD_MODE;
 	req[1] = val;
 	req[2] = CMD_EOF;
-	err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, req,
-		sc->sc_olen);
+	err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	    sc->sc_hdev.sc_report_id, req, sc->sc_olen);
 	if (err) {
 		printf("uhidev_set_report error:EIO\n");
 		return;
@@ -291,8 +291,8 @@ utwitch_read_value_request(struct utwitch_softc *sc)
 	req[1] = CMD_EOF;
 	sc->issueing_cmd = CMD_READ;
 	sc->accepted_cmd = CMD_NONE;
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, req,
-		sc->sc_olen))
+	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	    sc->sc_hdev.sc_report_id, req, sc->sc_olen))
 		return;
 
 	/* wait till sensor data are updated, 500ms will be enough */
@@ -314,8 +314,8 @@ utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
 
 	sc->issueing_cmd = CMD_WRITE;
 	sc->accepted_cmd = CMD_NONE;
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, req,
-		sc->sc_olen))
+	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	    sc->sc_hdev.sc_report_id, req, sc->sc_olen))
 		return;
 
 	/* wait till sensor data are updated, 250ms will be enough */

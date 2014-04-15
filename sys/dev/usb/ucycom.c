@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.25 2014/03/19 08:59:36 mpi Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.26 2014/04/15 09:14:27 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	report[3] = (baud >> 24) & 0xff;
 	report[4] = cfg;
 	err = uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    report, sc->sc_flen);
+	    sc->sc_hdev.sc_report_id, report, sc->sc_flen);
 	if (err != 0) {
 		DPRINTF(("ucycom_param: uhidev_set_report %d %s\n",
 		    err, usbd_errstr(err)));
@@ -562,7 +562,7 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 	uint8_t report[5];
 
 	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    report, sc->sc_flen);
+	    sc->sc_hdev.sc_report_id, report, sc->sc_flen);
 	cfg = report[4];
 	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) + report[0];
 	DPRINTF(("ucycom_configure: device reports %d baud, %d-%c-%d (%d)\n", baud,

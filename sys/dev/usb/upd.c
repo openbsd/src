@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.6 2014/04/07 21:54:13 andre Exp $ */
+/*	$OpenBSD: upd.c,v 1.7 2014/04/15 09:14:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -307,14 +307,12 @@ upd_refresh(void *arg)
 			continue;
 
 		memset(buf, 0x0, sizeof(buf));
-		sc->sc_hdev.sc_report_id = repid;
-		err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT, buf,
-		    report->size + 1); /*
-					* cheating with an extra byte on size
-					* here, hid_report_size() * is
-					* incorrectly telling us report lengths
-					* are 1 byte smaller
-					*/
+		/*
+		 * XXX uhidev_get_report() is not clever enough to handle
+		 * non-NUl reportID, so add an extra byte for it.
+		 */
+		err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
+		    repid, buf, report->size + 1);
 		if (err) {
 			DPRINTF(("read failure: reportid=%02x err=%d\n", repid,
 			    err));

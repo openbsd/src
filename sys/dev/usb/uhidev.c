@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.57 2014/03/23 12:20:14 andre Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.58 2014/04/15 09:14:27 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -602,21 +602,21 @@ uhidev_close(struct uhidev *scd)
 }
 
 usbd_status
-uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
+uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
 	char *buf;
 	usbd_status retstat;
 
-	if (scd->sc_report_id == 0)
+	if (id == 0)
 		return usbd_set_report(scd->sc_parent->sc_iface, type,
-				       scd->sc_report_id, data, len);
+				       id, data, len);
 
 	buf = malloc(len + 1, M_TEMP, M_WAITOK);
-	buf[0] = scd->sc_report_id;
+	buf[0] = id;
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
-				  scd->sc_report_id, buf, len + 1);
+				  id, buf, len + 1);
 
 	free(buf, M_TEMP);
 
@@ -624,23 +624,24 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 }
 
 usbd_status
-uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
+uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
+    int len)
 {
 	char *buf;
 	usbd_status retstat;
 
-	if (scd->sc_report_id == 0)
+	if (id == 0)
 		return usbd_set_report_async(scd->sc_parent->sc_iface, type,
-					     scd->sc_report_id, data, len);
+					     id, data, len);
 
 	buf = malloc(len + 1, M_TEMP, M_NOWAIT);
 	if (buf == NULL)
 		return (USBD_NOMEM);
-	buf[0] = scd->sc_report_id;
+	buf[0] = id;
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report_async(scd->sc_parent->sc_iface, type,
-					scd->sc_report_id, buf, len + 1);
+					id, buf, len + 1);
 
 	/*
 	 * Since report requests are write-only it is safe to free
@@ -653,10 +654,9 @@ uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
 }
 
 usbd_status
-uhidev_get_report(struct uhidev *scd, int type, void *data, int len)
+uhidev_get_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
-	return usbd_get_report(scd->sc_parent->sc_iface, type,
-			       scd->sc_report_id, data, len);
+	return usbd_get_report(scd->sc_parent->sc_iface, type, id, data, len);
 }
 
 usbd_status
@@ -724,8 +724,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 			return EINVAL;
 		}
 		extra = sc->sc_report_id != 0;
-		err = uhidev_get_report(sc, re->ucr_report, re->ucr_data,
-		    size + extra);
+		err = uhidev_get_report(sc, re->ucr_report, sc->sc_report_id,
+		    re->ucr_data, size + extra);
 		if (extra)
 			memcpy(re->ucr_data, re->ucr_data + 1, size);
 		if (err)
@@ -746,7 +746,8 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		default:
 			return EINVAL;
 		}
-		err = uhidev_set_report(sc, re->ucr_report, re->ucr_data, size);
+		err = uhidev_set_report(sc, re->ucr_report,
+		    sc->sc_report_id, re->ucr_data, size);
 		if (err)
 			return EIO;
 		break;
