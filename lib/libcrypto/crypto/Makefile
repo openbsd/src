@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2014/04/15 20:13:07 miod Exp $
+# $OpenBSD: Makefile,v 1.11 2014/04/15 20:19:55 miod Exp $
 
 LIB=	crypto
 
@@ -51,7 +51,7 @@ SRCS+= aes_ctr.c aes_ige.c aes_wrap.c
 
 # asn1/
 SRCS+= a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c
-SRCS+= a_print.c a_type.c a_set.c a_dup.c a_d2i_fp.c a_i2d_fp.c
+SRCS+= a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c
 SRCS+= a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c
 SRCS+= x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c
 SRCS+= x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c
