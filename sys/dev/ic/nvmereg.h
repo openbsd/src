@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.2 2014/04/12 05:23:35 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.3 2014/04/15 10:28:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -78,8 +78,8 @@
 #define NVME_ADMIN_Q		0
 /* Submission Queue Tail Doorbell */
 #define NVME_SQTDBL(_q, _s)	(0x1000 + (2 * (_q) + 0) * (_s))
-/* Completion Queue Tail Doorbell */
-#define NVME_CQTDBL(_q, _s)	(0x1000 + (2 * (_q) + 1) * (_s))
+/* Completion Queue Head Doorbell */
+#define NVME_CQHDBL(_q, _s)	(0x1000 + (2 * (_q) + 1) * (_s))
 
 struct nvme_sge {
 	u_int8_t	id;
@@ -128,15 +128,126 @@ struct nvme_sqe {
 	u_int32_t	cdw15;
 } __packed __aligned(8);
 
-#define NMV_ADMIN_DEL_IOSQ	0x00 /* Delete I/O Submission Queue */
-#define NMV_ADMIN_ADD_IOSQ	0x01 /* Create I/O Submission Queue */
-#define NMV_ADMIN_GET_LOG_PG	0x02 /* Get Log Page */
-#define NMV_ADMIN_DEL_IOCQ	0x04 /* Delete I/O Completion Queue */ 
-#define NMV_ADMIN_ADD_IOCQ	0x05 /* Create I/O Completion Queue */ 
-#define NMV_ADMIN_IDENTIFY	0x06 /* Identify */
-#define NMV_ADMIN_ABORT		0x08 /* Abort */
-#define NMV_ADMIN_SET_FEATURES	0x09 /* Set Features */
-#define NMV_ADMIN_GET_FEATURES	0x0a /* Get Features */
-#define NMV_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
-#define NMV_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
-#define NMV_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+struct nvme_cqe {
+	u_int32_t	cdw0;
+
+	u_int32_t	_reserved;
+
+	u_int16_t	sqhd; /* SQ Head Pointer */
+	u_int16_t	sqid; /* SQ Identifier */
+
+	u_int16_t	cid; /* Command Identifier */
+	u_int16_t	flags;
+#define NVME_CQE_DNR		(1 << 15)
+#define NVME_CQE_M		(1 << 14)
+#define NVME_CQE_SQT(_f)	(((_f) >> 8) & 0x7)
+#define NVME_CQE_SC(_f)		(((_f) >> 1) & 0x7f)
+#define NVME_CQE_PHASE		(1 << 0)
+} __packed __aligned(8);
+
+#define NVM_ADMIN_DEL_IOSQ	0x00 /* Delete I/O Submission Queue */
+#define NVM_ADMIN_ADD_IOSQ	0x01 /* Create I/O Submission Queue */
+#define NVM_ADMIN_GET_LOG_PG	0x02 /* Get Log Page */
+#define NVM_ADMIN_DEL_IOCQ	0x04 /* Delete I/O Completion Queue */ 
+#define NVM_ADMIN_ADD_IOCQ	0x05 /* Create I/O Completion Queue */ 
+#define NVM_ADMIN_IDENTIFY	0x06 /* Identify */
+#define NVM_ADMIN_ABORT		0x08 /* Abort */
+#define NVM_ADMIN_SET_FEATURES	0x09 /* Set Features */
+#define NVM_ADMIN_GET_FEATURES	0x0a /* Get Features */
+#define NVM_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
+#define NVM_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
+#define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+
+/* Power State Descriptor Data */
+struct nvm_identify_psd {
+	u_int16_t	mp;		/* Max Power */
+	u_int16_t	flags;
+
+	u_int32_t	enlat;		/* Entry Latency */
+
+	u_int32_t	exlat;		/* Exit Latency */
+
+	u_int8_t	rrt;		/* Relative Read Throughput */
+	u_int8_t	rrl;		/* Relative Read Latency */
+	u_int8_t	rwt;		/* Relative Write Throughput */
+	u_int8_t	rwl;		/* Relative Write Latency */
+
+	u_int8_t	_reserved[16];
+} __packed __aligned(8);
+
+struct nvm_identify_controller {
+	/* Controller Capabilities and Features */
+
+	u_int16_t	vid;		/* PCI Vendor ID */
+	u_int16_t	ssvid;		/* PCI Subsystem Vendor ID */
+
+	u_int8_t	sn[20];		/* Serial Number */
+	u_int8_t	mn[40];		/* Model Number */
+	u_int8_t	fr[40];		/* Firmware Revision */
+
+	u_int8_t	rab;		/* Recommended Arbitration Burst */
+	u_int8_t	ieee[3];	/* IEEE OUI Identifier */
+
+	u_int8_t	cmic;		/* Controller Multi-Path I/O and
+					   Namespace Sharing Capabilities */
+	u_int8_t	mdts;		/* Maximum Data Transfer Size */
+	u_int16_t	cntlid;		/* Controller ID */
+
+	u_int8_t	_reserved1[176];
+
+	/* Admin Command Set Attributes & Optional Controller Capabilities */
+
+	u_int16_t	oacs;		/* Optional Admin Command Support */
+	u_int8_t	acl;		/* Abort Command Limit */
+	u_int8_t	aerl;		/* Asynchronous Event Request Limit */
+
+	u_int8_t	frmw;		/* Firmware Updates */
+	u_int8_t	lpa;		/* Log Page Attributes */
+	u_int8_t	elpe;		/* Error Log Page Entries */
+	u_int8_t	npss;		/* Number of Power States Support */
+
+	u_int8_t	avscc;		/* Admin Vendor Specific Command
+					   Configuration */
+	u_int8_t	apsta;		/* Autonomous Power State Transition
+					   Attributes */
+
+	u_int8_t	_reserved2[246];
+
+	/* NVM Command Set Attributes */
+
+	u_int8_t	sqes;		/* Submission Queue Entry Size */
+	u_int8_t	cqes;		/* Completion Queue Entry Size */
+	u_int8_t	_reserved3[2];
+
+	u_int32_t	nn;		/* Number of Namespaces */
+
+	u_int16_t	oncs;		/* Optional NVM Command Support */
+	u_int16_t	fuses;		/* Fused Operation Support */
+
+	u_int8_t	fna;		/* Format NVM Attributes */
+	u_int8_t	vwc;		/* Volatile Write Cache */
+	u_int16_t	awun;		/* Atomic Write Unit Normal */
+
+	u_int16_t	awupf;		/* Atomic Write Unit Power Fail */
+	u_int8_t	nvscc;		/* NVM Vendor Specific Command */
+	u_int8_t	_reserved4[1];
+
+	u_int16_t	acwu;		/* Atomic Compare & Write Unit */
+	u_int8_t	_reserved5[2];
+
+	u_int32_t	sgls;		/* SGL Support */
+
+	u_int8_t	_reserved6[164];
+
+	/* I/O Command Set Attributes */
+
+	u_int8_t	_reserved7[1344];
+
+	/* Power State Descriptors */
+
+	struct nvm_identify_psd psd[32]; /* Power State Descriptors */
+
+	/* Vendor Specific */
+
+	u_int8_t	_reserved8[1024];
+} __packed __aligned(8);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.1 2014/04/12 05:06:58 dlg Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.2 2014/04/15 10:28:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -23,17 +23,37 @@ struct nvme_dmamem {
 	caddr_t			ndm_kva;
 };
 #define NVME_DMA_MAP(_ndm)	((_ndm)->ndm_map)
+#define NVME_DMA_LEN(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_len)
 #define NVME_DMA_DVA(_ndm)	((u_int64_t)(_ndm)->ndm_map->dm_segs[0].ds_addr)
 #define NVME_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
+struct nvme_softc;
+struct nvme_queue;
+
+struct nvme_ccb {
+	SIMPLEQ_ENTRY(nvme_ccb)	ccb_entry;
+
+	bus_dmamap_t		ccb_dmamap;
+
+	void			*ccb_cookie;
+	void			(*ccb_done)(struct nvme_softc *sc,
+				    struct nvme_ccb *, struct nvme_cqe *);
+
+	u_int16_t		ccb_id;
+};
+SIMPLEQ_HEAD(nvme_ccb_list, nvme_ccb);
+
 struct nvme_queue {
+	struct mutex		q_sq_mtx;
+	struct mutex		q_cq_mtx;
 	struct nvme_dmamem	*q_sq_dmamem;
 	struct nvme_dmamem	*q_cq_dmamem;
 	bus_size_t 		q_sqtdbl; /* submission queue tail doorbell */
 	bus_size_t 		q_cqhdbl; /* completion queue head doorbell */
-	u_int			q_entries;
-	u_int			q_sq_head;
-	u_int			q_cq_tail;
+	u_int32_t		q_entries;
+	u_int32_t		q_sq_tail;
+	u_int32_t		q_cq_head;
+	u_int16_t		q_cq_phase;
 };
 
 struct nvme_softc {
@@ -47,9 +67,17 @@ struct nvme_softc {
 	void			*sc_ih;
 
 	u_int			sc_rdy_to;
+	size_t			sc_mps;
+	size_t			sc_mdts;
+	u_int			sc_max_sgl;
 
 	struct nvme_queue	*sc_admin_q;
 	struct nvme_queue	*sc_q;
+
+	struct mutex		sc_ccb_mtx;
+	struct nvme_ccb		*sc_ccbs;
+	struct nvme_ccb_list	sc_ccb_list;
+	struct scsi_iopool	sc_iopool;
 };
 
 int	nvme_attach(struct nvme_softc *);

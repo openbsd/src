@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.1 2014/04/12 05:06:58 dlg Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.2 2014/04/15 10:28:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -33,6 +33,10 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
 
 #define NVME_PCI_BAR		0x10
