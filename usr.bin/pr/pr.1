@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.23 2010/10/01 07:06:16 jmc Exp $
+.\"	$OpenBSD: pr.1,v 1.24 2014/04/15 17:27:37 jmc Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 1 2010 $
+.Dd $Mdocdate: April 15 2014 $
 .Dt PR 1
 .Os
 .Sh NAME
@@ -41,40 +41,18 @@
 .Nd print files
 .Sh SYNOPSIS
 .Nm pr
-.Bk -words
 .Op Ar +page
 .Op Fl Ar column
 .Op Fl adFfmrt
-.Xo Oo
-.Fl e
-.Op Ar char
-.Op Ar gap
-.Oc
-.Xc
+.Op Fl e Ns Oo Ar char Oc Ns Op Ar gap
 .Op Fl h Ar header
-.Xo Oo
-.Fl i
-.Op Ar char
-.Op Ar gap
-.Oc
-.Xc
+.Op Fl i Ns Oo Ar char Oc Ns Op Ar gap
 .Op Fl l Ar lines
-.Xo Oo
-.Fl n
-.Op Ar char
-.Op Ar width
-.Oc
-.Xc
+.Op Fl n Ns Oo Ar char Oc Ns Op Ar width
 .Op Fl o Ar offset
-.Xo Oo
-.Fl s
-.Op Ar char
-.Oc
-.Xc
+.Op Fl s Ns Op Ar char
 .Op Fl w Ar width
-.Op -
 .Op Ar
-.Ek
 .Sh DESCRIPTION
 The
 .Nm pr
@@ -168,10 +146,7 @@ An extra
 character is output following every
 .Em <newline>
 found in the input.
-.It Xo Fl e
-.Op Ar char
-.Op Ar gap
-.Xc
+.It Fl e Ns Oo Ar char Oc Ns Op Ar gap
 Expand each input
 .Em <tab>
 to the next greater column
@@ -209,10 +184,7 @@ Use the string
 to replace the
 .Ar file name
 in the header line.
-.It Xo Fl i
-.Op Ar char
-.Op Ar gap
-.Xc
+.It Fl i Ns Oo Ar char Oc Ns Op Ar gap
 In output, replace multiple
 .Em <space> Ns s
 with
@@ -260,10 +232,7 @@ The options
 and
 .Fl i
 are assumed.
-.It Xo Fl n
-.Op Ar char
-.Op Ar width
-.Xc
+.It Fl n Ns Oo Ar char Oc Ns Op Ar width
 Provide
 .Ar width
 digit line numbering.
@@ -296,7 +265,7 @@ option is not specified, the default is zero.
 The space taken is in addition to the output line width.
 .It Fl r
 Write no diagnostic reports on failure to open a file.
-.It Fl s Op Ar char
+.It Fl s Ns Op Ar char
 Separate text columns by the single character
 .Ar char
 instead of by the appropriate number of
