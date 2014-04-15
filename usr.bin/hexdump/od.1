@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.26 2014/04/14 22:51:20 sobrado Exp $
+.\"  $OpenBSD: od.1,v 1.27 2014/04/15 15:35:24 sobrado Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: April 14 2014 $
+.Dd $Mdocdate: April 15 2014 $
 .Dt OD 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Nm od
 .Bk -words
-.Op Fl aBbcDdeFfHhIiLlOovXx
+.Op Fl aBbcDdeFfHhIiLlOosvXx
 .Op Fl A Ar base
 .Op Fl j Ar offset
 .Op Fl N Ar length
@@ -99,7 +99,7 @@ if no c escape exists for the character.
 Display the input offset in octal, followed by four space-separated,
 ten column, space filled, four-byte units of input data, in octal, per line.
 .It Fl d
-.Em Two-byte decimal display .
+.Em Two-byte unsigned decimal display .
 Display the input offset in octal, followed by eight
 space-separated, five column, zero-filled, two-byte units
 of input data, in unsigned decimal, per line.
@@ -186,6 +186,11 @@ of input data, in octal, per line.
 Display the input offset in octal, followed by eight
 space-separated, six column, zero-filled, two-byte units
 of input data, in octal, per line.
+.It Fl s
+.Em Two-byte signed decimal display .
+Display the input offset in octal, followed by eight
+space-separated, five column, zero-filled, two-byte units
+of input data, in signed decimal, per line.
 .It Fl t Ar type_string
 Specify one or more output types.
 The
@@ -298,8 +303,7 @@ option.
 .Sh EXIT STATUS
 .Ex -std od
 .Sh SEE ALSO
-.Xr hexdump 1 ,
-.Xr strings 1
+.Xr hexdump 1
 .Sh HISTORY
 The
 .Nm

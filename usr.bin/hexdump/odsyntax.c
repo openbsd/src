@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.23 2014/04/14 22:51:20 sobrado Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.24 2014/04/15 15:35:24 sobrado Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ oldsyntax(int argc, char ***argvp)
 	deprecated = 1;
 	argv = *argvp;
 	while ((ch = getopt(argc, argv,
-	    "A:aBbcDdeFfHhIij:LlN:Oot:vXx")) != -1)
+	    "A:aBbcDdeFfHhIij:LlN:Oost:vXx")) != -1)
 		switch (ch) {
 		case 'A':
 			switch (*optarg) {
@@ -170,6 +170,9 @@ oldsyntax(int argc, char ***argvp)
 			break;
 		case 'O':
 			odadd("4/4 \"    %011o \" \"\\n\"");
+			break;
+		case 's':
+			odadd("8/2 \"  %05d \" \"\\n\"");
 			break;
 		case 't':
 			posixtypes(optarg);
@@ -294,7 +297,7 @@ void
 oldusage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-A base] "
+	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOosvXx] [-A base] "
 	    "[-j offset] [-N length]\n"
 	    "\t[-t type_string] [[+]offset[.][Bb]] [file ...]\n", __progname);
 	exit(1);
