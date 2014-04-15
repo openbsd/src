@@ -56,16 +56,6 @@
  *
  */
 
-/* We need to do this early, because stdio.h includes the header files
-   that handle _GNU_SOURCE and other similar macros.  Defining it later
-   is simply too late, because those headers are protected from re-
-   inclusion.  */
-#ifdef __linux
-# ifndef _GNU_SOURCE
-#  define _GNU_SOURCE	/* make sure dladdr is declared */
-# endif
-#endif
-
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
@@ -78,18 +68,8 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #else
 
 #ifdef HAVE_DLFCN_H
-# ifdef __osf__
-#  define __EXTENSIONS__
-# endif
 # include <dlfcn.h>
 # define HAVE_DLINFO 1
-# if defined(_AIX) || defined(__CYGWIN__) || \
-     defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
-     (defined(__osf__) && !defined(RTLD_NEXT))     || \
-     (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
-	defined(__ANDROID__)
-#  undef HAVE_DLINFO
-# endif
 #endif
 
 /* Part of the hack in "dlfcn_load" ... */
@@ -136,30 +116,6 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 	return(&dso_meth_dlfcn);
 	}
 
-/* Prior to using the dlopen() function, we should decide on the flag
- * we send. There's a few different ways of doing this and it's a
- * messy venn-diagram to match up which platforms support what. So
- * as we don't have autoconf yet, I'm implementing a hack that could
- * be hacked further relatively easily to deal with cases as we find
- * them. Initially this is to cope with OpenBSD. */
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-#	ifdef DL_LAZY
-#		define DLOPEN_FLAG DL_LAZY
-#	else
-#		ifdef RTLD_NOW
-#			define DLOPEN_FLAG RTLD_NOW
-#		else
-#			define DLOPEN_FLAG 0
-#		endif
-#	endif
-#else
-#	ifdef OPENSSL_SYS_SUNOS
-#		define DLOPEN_FLAG 1
-#	else
-#		define DLOPEN_FLAG RTLD_NOW /* Hope this works everywhere else */
-#	endif
-#endif
-
 /* For this DSO_METHOD, our meth_data STACK will contain;
  * (i) the handle (void*) returned from dlopen().
  */
@@ -169,7 +125,7 @@ static int dlfcn_load(DSO *dso)
 	void *ptr = NULL;
 	/* See applicable comments in dso_dl.c */
 	char *filename = DSO_convert_filename(dso, NULL);
-	int flags = DLOPEN_FLAG;
+	int flags = RTLD_LAZY;
 
 	if(filename == NULL)
 		{
@@ -177,10 +133,8 @@ static int dlfcn_load(DSO *dso)
 		goto err;
 		}
 
-#ifdef RTLD_GLOBAL
 	if (dso->flags & DSO_FLAG_GLOBAL_SYMBOLS)
 		flags |= RTLD_GLOBAL;
-#endif
 	ptr = dlopen(filename, flags);
 	if(ptr == NULL)
 		{
@@ -362,14 +316,8 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	return(merged);
 	}
 
-#ifdef OPENSSL_SYS_MACOSX
-#define DSO_ext	".dylib"
-#define DSO_extlen 6
-#else
 #define DSO_ext	".so"
 #define DSO_extlen 3
-#endif
-
 
 static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	{
@@ -405,48 +353,8 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
-#if defined(__sgi) && !defined(__OpenBSD__)
-/*
-This is a quote from IRIX manual for dladdr(3c):
-
-     <dlfcn.h> does not contain a prototype for dladdr or definition of
-     Dl_info.  The #include <dlfcn.h>  in the SYNOPSIS line is traditional,
-     but contains no dladdr prototype and no IRIX library contains an
-     implementation.  Write your own declaration based on the code below.
-
-     The following code is dependent on internal interfaces that are not
-     part of the IRIX compatibility guarantee; however, there is no future
-     intention to change this interface, so on a practical level, the code
-     below is safe to use on IRIX.
-*/
-#include <rld_interface.h>
-#ifndef _RLD_INTERFACE_DLFCN_H_DLADDR
-#define _RLD_INTERFACE_DLFCN_H_DLADDR
-typedef struct Dl_info {
-    const char * dli_fname;
-    void       * dli_fbase;
-    const char * dli_sname;
-    void       * dli_saddr;
-    int          dli_version;
-    int          dli_reserved1;
-    long         dli_reserved[4];
-} Dl_info;
-#else
-typedef struct Dl_info Dl_info;
-#endif
-#define _RLD_DLADDR             14
-
-static int dladdr(void *address, Dl_info *dl)
-{
-	void *v;
-	v = _rld_new_interface(_RLD_DLADDR,address,dl);
-	return (int)v;
-}
-#endif /* __sgi */
-
 static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 	{
-#ifdef HAVE_DLINFO
 	Dl_info dli;
 	int len;
 
@@ -468,7 +376,6 @@ static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 		}
 
 	ERR_add_error_data(4, "dlfcn_pathbyaddr(): ", dlerror());
-#endif
 	return -1;
 	}
 

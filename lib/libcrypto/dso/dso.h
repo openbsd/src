@@ -290,17 +290,6 @@ DSO_METHOD *DSO_METHOD_null(void);
  * this method. If not, this method will return NULL. */
 DSO_METHOD *DSO_METHOD_dlfcn(void);
 
-/* If DSO_DL is defined, the standard dl.h-style functions (shl_load, 
- * shl_unload, shl_findsym, etc) will be used and incorporated into
- * this method. If not, this method will return NULL. */
-DSO_METHOD *DSO_METHOD_dl(void);
-
-/* If WIN32 is defined, use DLLs. If not, return NULL. */
-DSO_METHOD *DSO_METHOD_win32(void);
-
-/* If VMS is defined, use shared images. If not, return NULL. */
-DSO_METHOD *DSO_METHOD_vms(void);
-
 /* This function writes null-terminated pathname of DSO module
  * containing 'addr' into 'sz' large caller-provided 'path' and
  * returns the number of characters [including trailing zero]

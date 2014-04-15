@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2014/04/15 20:06:09 tedu Exp $
+# $OpenBSD: Makefile,v 1.10 2014/04/15 20:13:07 miod Exp $
 
 LIB=	crypto
 
@@ -123,8 +123,8 @@ SRCS+= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c
 SRCS+= dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
 
 # dso/
-SRCS+= dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
-SRCS+= dso_openssl.c dso_win32.c dso_vms.c dso_beos.c
+SRCS+= dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
+SRCS+= dso_openssl.c
 
 # ec/
 SRCS+= ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c
