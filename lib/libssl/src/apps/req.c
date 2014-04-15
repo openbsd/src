@@ -1230,6 +1230,7 @@ static int prompt_info(X509_REQ *req,
 		i= -1;
 start:		for (;;)
 			{
+			int ret;
 			i++;
 			if (sk_CONF_VALUE_num(dn_sk) <= i) break;
 
@@ -1258,8 +1259,8 @@ start:		for (;;)
 				mval = 0;
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
-			if (BIO_snprintf(buf,sizeof buf,"%s_default",v->name)
-				>= (int)sizeof(buf))
+			ret = snprintf(buf,sizeof buf,"%s_default",v->name);
+			if (ret == -1 || ret >= sizeof(buf))
 			   {
 			   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
 			   return 0;
@@ -1313,6 +1314,7 @@ start:		for (;;)
 			i= -1;
 start2:			for (;;)
 				{
+				int ret;
 				i++;
 				if ((attr_sk == NULL) ||
 					    (sk_CONF_VALUE_num(attr_sk) <= i))
@@ -1322,9 +1324,8 @@ start2:			for (;;)
 				type=v->name;
 				if ((nid=OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
-
-				if (BIO_snprintf(buf,sizeof buf,"%s_default",type)
-					>= (int)sizeof(buf))
+				ret = snprintf(buf,sizeof buf,"%s_default",type);
+				if (ret == -1 || ret >= sizeof(buf))
 				   {
 				   BIO_printf(bio_err,"Name '%s' too long\n",v->name);
 				   return 0;
@@ -1346,14 +1347,14 @@ start2:			for (;;)
 					value=NULL;
 					}
 
-				BIO_snprintf(buf,sizeof buf,"%s_min",type);
+				(void) snprintf(buf,sizeof buf,"%s_min",type);
 				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_min))
 					{
 					ERR_clear_error();
 					n_min = -1;
 					}
 
-				BIO_snprintf(buf,sizeof buf,"%s_max",type);
+				(void) snprintf(buf,sizeof buf,"%s_max",type);
 				if (!NCONF_get_number(req_conf,attr_sect,buf, &n_max))
 					{
 					ERR_clear_error();
