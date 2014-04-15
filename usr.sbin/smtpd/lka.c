@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.166 2014/04/09 15:23:49 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.167 2014/04/15 08:32:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -209,7 +209,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			ret = lka_authenticate(tablename, username, password);
 
-			m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1);
+			m_create(p, IMSG_SMTP_AUTHENTICATE, 0, 0, -1);
 			m_add_id(p, reqid);
 			m_add_int(p, ret);
 			m_close(p);
