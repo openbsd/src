@@ -240,9 +240,9 @@ extern "C" {
 #define TLSEXT_TYPE_session_ticket		35
 
 /* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
-#if 0 /* will have to be provided externally for now ,
-       * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
-       * using whatever extension number you'd like to try */
+#if 0   /* will have to be provided externally for now ,
+	 * i.e. build with - DTLSEXT_TYPE_opaque_prf_input = 38183
+	 * using whatever extension number you'd like to try */
 # define TLSEXT_TYPE_opaque_prf_input		?? */
 #endif
 
@@ -295,8 +295,8 @@ int SSL_get_servername_type(const SSL *s);
  * It returns 1 on success and zero otherwise.
  */
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
-	const char *label, size_t llen, const unsigned char *p, size_t plen,
-	int use_context);
+    const char *label, size_t llen, const unsigned char *p, size_t plen,
+    int use_context);
 
 #define SSL_set_tlsext_host_name(s,name) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
@@ -719,11 +719,10 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #endif
 
 /* TLS Session Ticket extension struct */
-struct tls_session_ticket_ext_st
-	{
+struct tls_session_ticket_ext_st {
 	unsigned short length;
 	void *data;
-	};
+};
 
 #ifdef  __cplusplus
 }

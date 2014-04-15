@@ -163,13 +163,13 @@ extern "C" {
 #define SSL3_CK_ADH_DES_192_CBC_SHA		0x0300001B
 
 #if 0
-	#define SSL3_CK_FZA_DMS_NULL_SHA		0x0300001C
-	#define SSL3_CK_FZA_DMS_FZA_SHA			0x0300001D
-	#if 0 /* Because it clashes with KRB5, is never used any more, and is safe
-		 to remove according to David Hopwood <david.hopwood@zetnet.co.uk>
-		 of the ietf-tls list */
-	#define SSL3_CK_FZA_DMS_RC4_SHA			0x0300001E
-	#endif
+#define SSL3_CK_FZA_DMS_NULL_SHA		0x0300001C
+#define SSL3_CK_FZA_DMS_FZA_SHA			0x0300001D
+#if 0 /* Because it clashes with KRB5, is never used any more, and is safe
+	 to remove according to David Hopwood <david.hopwood@zetnet.co.uk>
+	 of the ietf-tls list */
+#define SSL3_CK_FZA_DMS_RC4_SHA			0x0300001E
+#endif
 #endif
 
 /*    VRS Additional Kerberos5 entries
@@ -222,9 +222,9 @@ extern "C" {
 #define SSL3_TXT_ADH_DES_192_CBC_SHA		"ADH-DES-CBC3-SHA"
 
 #if 0
-	#define SSL3_TXT_FZA_DMS_NULL_SHA		"FZA-NULL-SHA"
-	#define SSL3_TXT_FZA_DMS_FZA_SHA		"FZA-FZA-CBC-SHA"
-	#define SSL3_TXT_FZA_DMS_RC4_SHA		"FZA-RC4-SHA"
+#define SSL3_TXT_FZA_DMS_NULL_SHA		"FZA-NULL-SHA"
+#define SSL3_TXT_FZA_DMS_FZA_SHA		"FZA-FZA-CBC-SHA"
+#define SSL3_TXT_FZA_DMS_RC4_SHA		"FZA-RC4-SHA"
 #endif
 
 #define SSL3_TXT_KRB5_DES_64_CBC_SHA		"KRB5-DES-CBC-SHA"
@@ -342,11 +342,10 @@ extern "C" {
 
 #define TLS1_HB_REQUEST		1
 #define TLS1_HB_RESPONSE	2
-	
+
 #ifndef OPENSSL_NO_SSL_INTERN
 
-typedef struct ssl3_record_st
-	{
+typedef struct ssl3_record_st {
 /*r */	int type;               /* type of record */
 /*rw*/	unsigned int length;    /* How many bytes available */
 /*r */	unsigned int off;       /* read/write offset into 'buf' */
@@ -355,16 +354,15 @@ typedef struct ssl3_record_st
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
 /*r */  unsigned char seq_num[8]; /* sequence number, needed by DTLS1 */
-	} SSL3_RECORD;
+} SSL3_RECORD;
 
-typedef struct ssl3_buffer_st
-	{
-	unsigned char *buf;     /* at least SSL3_RT_MAX_PACKET_SIZE bytes,
+typedef struct ssl3_buffer_st {
+	unsigned char *buf;	/* at least SSL3_RT_MAX_PACKET_SIZE bytes,
 	                         * see ssl3_setup_buffers() */
-	size_t len;             /* buffer size */
-	int offset;             /* where to 'copy from' */
-	int left;               /* how many bytes left */
-	} SSL3_BUFFER;
+	size_t len;		/* buffer size */
+	int offset;		/* where to 'copy from' */
+	int left;		/* how many bytes left */
+} SSL3_BUFFER;
 
 #endif
 
@@ -388,7 +386,7 @@ typedef struct ssl3_buffer_st
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
 #define TLS1_FLAGS_KEEP_HANDSHAKE		0x0020
- 
+
 /* SSL3_FLAGS_SGC_RESTART_DONE is set when we
  * restart a handshake because of MS SGC and so prevents us
  * from restarting the handshake in a loop. It's reset on a
@@ -402,8 +400,7 @@ typedef struct ssl3_buffer_st
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
-typedef struct ssl3_state_st
-	{
+typedef struct ssl3_state_st {
 	long flags;
 	int delay_buf_pop_ret;
 
@@ -471,7 +468,8 @@ typedef struct ssl3_state_st
 
 	/* Opaque PRF input as used for the current handshake.
 	 * These fields are used only if TLSEXT_TYPE_opaque_prf_input is defined
-	 * (otherwise, they are merely present to improve binary compatibility) */
+	 * (otherwise, they are merely present to improve binary compatibility)
+	 */
 	void *client_opaque_prf_input;
 	size_t client_opaque_prf_input_len;
 	void *server_opaque_prf_input;
@@ -501,7 +499,7 @@ typedef struct ssl3_state_st
 #endif
 
 		/* used when SSL_ST_FLUSH_DATA is entered */
-		int next_state;			
+		int next_state;
 
 		int reuse_message;
 
@@ -526,17 +524,18 @@ typedef struct ssl3_state_st
 		char *new_compression;
 #endif
 		int cert_request;
-		} tmp;
+	} tmp;
 
-        /* Connection binding to prevent renegotiation attacks */
-        unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
-        unsigned char previous_client_finished_len;
-        unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
-        unsigned char previous_server_finished_len;
-        int send_connection_binding; /* TODOEKR */
+	/* Connection binding to prevent renegotiation attacks */
+	unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
+	unsigned char previous_client_finished_len;
+	unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
+	unsigned char previous_server_finished_len;
+	int send_connection_binding; /* TODOEKR */
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-	/* Set if we saw the Next Protocol Negotiation extension from our peer. */
+	/* Set if we saw the Next Protocol Negotiation extension from our peer.
+	 */
 	int next_proto_neg_seen;
 #endif
 
@@ -548,7 +547,7 @@ typedef struct ssl3_state_st
 	char is_probably_safari;
 #endif /* !OPENSSL_NO_EC */
 #endif /* !OPENSSL_NO_TLSEXT */
-	} SSL3_STATE;
+} SSL3_STATE;
 
 #endif
 
@@ -690,4 +689,3 @@ typedef struct ssl3_state_st
 }
 #endif
 #endif
-

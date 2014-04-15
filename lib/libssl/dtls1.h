@@ -100,30 +100,27 @@ extern "C" {
 #define DTLS1_SCTP_AUTH_LABEL	"EXPORTER_DTLS_OVER_SCTP"
 #endif
 
-typedef struct dtls1_bitmap_st
-	{
+typedef struct dtls1_bitmap_st {
 	unsigned long map;		/* track 32 packets on 32-bit systems
 					   and 64 - on 64-bit systems */
 	unsigned char max_seq_num[8];	/* max record number seen so far,
 					   64-bit value in big-endian
 					   encoding */
-	} DTLS1_BITMAP;
+} DTLS1_BITMAP;
 
-struct dtls1_retransmit_state
-	{
+struct dtls1_retransmit_state {
 	EVP_CIPHER_CTX *enc_write_ctx;	/* cryptographic state */
-	EVP_MD_CTX *write_hash;			/* used for mac generation */
+	EVP_MD_CTX *write_hash;		/* used for mac generation */
 #ifndef OPENSSL_NO_COMP
-	COMP_CTX *compress;				/* compression */
+	COMP_CTX *compress;		/* compression */
 #else
-	char *compress;	
+	char *compress;
 #endif
 	SSL_SESSION *session;
 	unsigned short epoch;
-	};
+};
 
-struct hm_header_st
-	{
+struct hm_header_st {
 	unsigned char type;
 	unsigned long msg_len;
 	unsigned short seq;
@@ -131,41 +128,36 @@ struct hm_header_st
 	unsigned long frag_len;
 	unsigned int is_ccs;
 	struct dtls1_retransmit_state saved_retransmit_state;
-	};
+};
 
-struct ccs_header_st
-	{
+struct ccs_header_st {
 	unsigned char type;
 	unsigned short seq;
-	};
+};
 
-struct dtls1_timeout_st
-	{
+struct dtls1_timeout_st {
 	/* Number of read timeouts so far */
 	unsigned int read_timeouts;
-	
+
 	/* Number of write timeouts so far */
 	unsigned int write_timeouts;
-	
+
 	/* Number of alerts received so far */
 	unsigned int num_alerts;
-	};
+};
 
-typedef struct record_pqueue_st
-	{
+typedef struct record_pqueue_st {
 	unsigned short epoch;
 	pqueue q;
-	} record_pqueue;
+} record_pqueue;
 
-typedef struct hm_fragment_st
-	{
+typedef struct hm_fragment_st {
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
 	unsigned char *reassembly;
-	} hm_fragment;
+} hm_fragment;
 
-typedef struct dtls1_state_st
-	{
+typedef struct dtls1_state_st {
 	unsigned int send_cookie;
 	unsigned char cookie[DTLS1_COOKIE_LENGTH];
 	unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
@@ -244,10 +236,9 @@ typedef struct dtls1_state_st
 	int shutdown_received;
 #endif
 
-	} DTLS1_STATE;
+} DTLS1_STATE;
 
-typedef struct dtls1_record_data_st
-	{
+typedef struct dtls1_record_data_st {
 	unsigned char *packet;
 	unsigned int   packet_length;
 	SSL3_BUFFER    rbuf;
@@ -255,7 +246,7 @@ typedef struct dtls1_record_data_st
 #ifndef OPENSSL_NO_SCTP
 	struct bio_dgram_sctp_rcvinfo recordinfo;
 #endif
-	} DTLS1_RECORD_DATA;
+} DTLS1_RECORD_DATA;
 
 #endif
 
@@ -269,4 +260,3 @@ typedef struct dtls1_record_data_st
 }
 #endif
 #endif
-

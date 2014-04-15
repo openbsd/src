@@ -100,7 +100,7 @@ extern "C" {
 #define SSL2_CK_DES_192_EDE3_CBC_WITH_MD5	0x020700c0
 #define SSL2_CK_DES_192_EDE3_CBC_WITH_SHA	0x020701c0 /* v3 */
 #define SSL2_CK_RC4_64_WITH_MD5			0x02080080 /* MS hack */
- 
+
 #define SSL2_CK_DES_64_CFB64_WITH_MD5_1		0x02ff0800 /* SSLeay */
 #define SSL2_CK_NULL				0x02ff0810 /* SSLeay */
 
@@ -133,8 +133,8 @@ extern "C" {
 
 /* Upper/Lower Bounds */
 #define SSL2_MAX_MASTER_KEY_LENGTH_IN_BITS	256
-#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	32767u  /* 2^15-1 */
-#define SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER	16383 /* 2^14-1 */
+#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	32767u	/* 2^15-1 */
+#define SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER	16383	/* 2^14-1 */
 
 #define SSL2_CHALLENGE_LENGTH	16
 /*#define SSL2_CHALLENGE_LENGTH	32 */
@@ -153,8 +153,7 @@ extern "C" {
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
-typedef struct ssl2_state_st
-	{
+typedef struct ssl2_state_st {
 	int three_byte_header;
 	int clear_text;		/* clear text */
 	int escape;		/* not used in SSLv2 */
@@ -167,8 +166,8 @@ typedef struct ssl2_state_st
 	const unsigned char *wpend_buf;
 
 	int wpend_off;	/* offset to data to write */
-	int wpend_len; 	/* number of bytes passwd to write */
-	int wpend_ret; 	/* number of bytes to return to caller */
+	int wpend_len;	/* number of bytes passwd to write */
+	int wpend_ret;	/* number of bytes to return to caller */
 
 	/* buffer raw data */
 	int rbuf_left;
@@ -191,7 +190,7 @@ typedef struct ssl2_state_st
 	unsigned char *read_key;
 	unsigned char *write_key;
 
-		/* Stuff specifically to do with this SSL session */
+	/* Stuff specifically to do with this SSL session */
 	unsigned int challenge_length;
 	unsigned char challenge[SSL2_MAX_CHALLENGE_LENGTH];
 	unsigned int conn_id_length;
@@ -202,20 +201,23 @@ typedef struct ssl2_state_st
 	unsigned long read_sequence;
 	unsigned long write_sequence;
 
-	struct	{
+	struct {
 		unsigned int conn_id_length;
-		unsigned int cert_type;	
+		unsigned int cert_type;
+
 		unsigned int cert_length;
-		unsigned int csl; 
+		unsigned int csl;
+
 		unsigned int clear;
-		unsigned int enc; 
+		unsigned int enc;
+
 		unsigned char ccl[SSL2_MAX_CERT_CHALLENGE_LENGTH];
 		unsigned int cipher_spec_length;
 		unsigned int session_id_length;
 		unsigned int clen;
 		unsigned int rlen;
-		} tmp;
-	} SSL2_STATE;
+	} tmp;
+} SSL2_STATE;
 
 #endif
 
@@ -265,4 +267,3 @@ typedef struct ssl2_state_st
 }
 #endif
 #endif
-
