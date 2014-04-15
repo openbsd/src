@@ -86,9 +86,6 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_padlock();
 #endif
 #endif
-#ifndef OPENSSL_NO_GOST
-	ENGINE_load_gost();
-#endif
 #endif
 	ENGINE_register_all_complete();
 	}

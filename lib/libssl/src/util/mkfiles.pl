@@ -67,7 +67,6 @@ my @dirs = (
 "ssl",
 "apps",
 "engines",
-"engines/ccgost",
 "test",
 "tools"
 );
