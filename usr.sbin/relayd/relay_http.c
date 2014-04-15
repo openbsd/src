@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.16 2013/09/04 22:21:32 bluhm Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.17 2014/04/15 22:35:11 andre Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1103,10 +1103,11 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
 			con->se_hashkey = HASHINIT;
 		con->se_hashkey = hash32_str(pk->value, con->se_hashkey);
 		con->se_hashkeyset = 1;
+		log_debug("%s: hash 0x%04x", __func__, con->se_hashkey);
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_LOG:
-		log_info("%s: log '%s: %s'", __func__, pn->key, pk->value);
+		log_debug("%s: log '%s: %s'", __func__, pn->key, pk->value);
 		ret = PN_PASS;
 		break;
 	case NODE_ACTION_MARK:
