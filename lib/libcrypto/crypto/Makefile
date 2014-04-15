@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2014/04/15 20:49:00 tedu Exp $
+# $OpenBSD: Makefile,v 1.13 2014/04/15 22:44:15 tedu Exp $
 
 LIB=	crypto
 
@@ -155,9 +155,9 @@ SRCS+= err.c err_all.c err_prn.c
 # evp/
 SRCS+= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c
 SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
-SRCS+= e_rc4.c e_aes.c names.c e_seed.c
+SRCS+= e_rc4.c e_aes.c names.c
 SRCS+= e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c
-SRCS+= m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
+SRCS+= m_null.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
 SRCS+= m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
@@ -172,17 +172,11 @@ SRCS+= hmac.c hm_ameth.c hm_pmeth.c
 # idea/
 SRCS+= i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
 
-# jpake/
-#SRCS+= jpake.c jpake_err.c
-
 # krb5/
 SRCS+= krb5_asn.c
 
 # lhash/
 SRCS+= lhash.c lh_stats.c
-
-# md2
-##SRCS+= md2_dgst.c md2_one.c
 
 # md4/
 SRCS+= md4_dgst.c md4_one.c
@@ -240,9 +234,6 @@ SRCS+= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c
 SRCS+= rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c
 SRCS+= rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c
 SRCS+= rsa_pmeth.c rsa_crpt.c
-
-# seed/
-#SRCS+= seed.c seed_ecb.c seed_cbc.c seed_cfb.c seed_ofb.c
 
 # sha/
 SRCS+= sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
@@ -311,10 +302,8 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/engine \
 	${LCRYPTO_SRC}/err \
 	${LCRYPTO_SRC}/evp \
-	${LCRYPTO_SRC}/md2 \
 	${LCRYPTO_SRC}/hmac \
 	${LCRYPTO_SRC}/idea \
-	${LCRYPTO_SRC}/jpake \
 	${LCRYPTO_SRC}/krb5 \
 	${LCRYPTO_SRC}/lhash \
 	${LCRYPTO_SRC}/md4 \
@@ -334,7 +323,6 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/rc5 \
 	${LCRYPTO_SRC}/ripemd \
 	${LCRYPTO_SRC}/rsa \
-	${LCRYPTO_SRC}/seed \
 	${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/stack \
 	${LCRYPTO_SRC}/store \
@@ -378,7 +366,6 @@ HDRS=\
 	crypto/idea/idea.h \
 	crypto/krb5/krb5_asn.h \
 	crypto/lhash/lhash.h \
-	crypto/md2/md2.h \
 	crypto/md4/md4.h \
 	crypto/md5/md5.h \
 	crypto/mdc2/mdc2.h \
@@ -398,7 +385,6 @@ HDRS=\
 	crypto/rc5/rc5.h \
 	crypto/ripemd/ripemd.h \
 	crypto/rsa/rsa.h \
-	crypto/seed/seed.h \
 	crypto/sha/sha.h \
 	crypto/srp/srp.h \
 	crypto/stack/safestack.h \
