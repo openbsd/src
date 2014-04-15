@@ -299,9 +299,6 @@ sv_usage(void)
 {
 	fprintf(stderr, "usage: ssltest [args ...]\n");
 	fprintf(stderr, "\n");
-#ifdef OPENSSL_FIPS
-	fprintf(stderr, "-F             - run test in FIPS mode\n");
-#endif
 	fprintf(stderr, " -server_auth  - check server certificate\n");
 	fprintf(stderr, " -client_auth  - do client authentication\n");
 	fprintf(stderr, " -proxy        - allow proxy certificates\n");
@@ -526,9 +523,6 @@ main(int argc, char *argv[])
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #endif
 	int test_cipherlist = 0;
-#ifdef OPENSSL_FIPS
-	int fips_mode = 0;
-#endif
 
 	verbose = 0;
 	debug = 0;
@@ -558,12 +552,8 @@ main(int argc, char *argv[])
 
 	while (argc >= 1) {
 		if (!strcmp(*argv, "-F")) {
-#ifdef OPENSSL_FIPS
-			fips_mode = 1;
-#else
 			fprintf(stderr, "not compiled with FIPS support, so exitting without running.\n");
 			exit(0);
-#endif
 		} else if (strcmp(*argv, "-server_auth") == 0)
 			server_auth = 1;
 		else if (strcmp(*argv, "-client_auth") == 0)
@@ -738,17 +728,6 @@ bad:
 		    "to avoid protocol mismatch.\n");
 		exit(1);
 	}
-
-#ifdef OPENSSL_FIPS
-	if (fips_mode) {
-		if (!FIPS_mode_set(1)) {
-			ERR_load_crypto_strings();
-			ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
-			exit(1);
-		} else
-			fprintf(stderr, "*** IN FIPS MODE ***\n");
-	}
-#endif
 
 	if (print_time) {
 		if (!bio_pair) {
