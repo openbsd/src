@@ -1,4 +1,4 @@
-.Dd October 28, 2009
+.Dd April 15, 2014
 .Dt RS-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -12,6 +12,13 @@ reference on the same line:
 .%N 42
 .Re
 .Sh SEE ALSO
+reference after a blank line:
+.Rs
+.%A author
+.%J journal
+.%N 42
+.Re
+.Sh SEE Em ALSO
 reference after a blank line:
 .Rs
 .%A author
