@@ -70,10 +70,6 @@
 #include <openssl/dh.h>
 #endif
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 const char DSA_version[]="DSA" OPENSSL_VERSION_PTEXT;
 
 static const DSA_METHOD *default_DSA_method = NULL;
@@ -87,14 +83,7 @@ const DSA_METHOD *DSA_get_default_method(void)
 	{
 	if(!default_DSA_method)
 		{
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode())
-			return FIPS_dsa_openssl();
-		else
-			return DSA_OpenSSL();
-#else
 		default_DSA_method = DSA_OpenSSL();
-#endif
 		}
 	return default_DSA_method;
 	}

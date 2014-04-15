@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2014/04/15 17:46:16 beck Exp $
+# $OpenBSD: Makefile,v 1.9 2014/04/15 20:06:09 tedu Exp $
 
 LIB=	crypto
 
@@ -43,7 +43,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 
 # crypto/
 SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c
-SRCS+= uid.c o_time.c o_str.c o_fips.c o_init.c fips_ers.c
+SRCS+= uid.c o_time.c o_str.c o_fips.c o_init.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
@@ -163,7 +163,7 @@ SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
 SRCS+= c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c
 SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
-SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c evp_fips.c
+SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 
 # hmac/

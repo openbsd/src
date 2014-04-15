@@ -198,13 +198,6 @@ static const seed_word KC[] = {
 	KC8,	KC9,	KC10,	KC11,	KC12,	KC13,	KC14,	KC15	};
 #endif
 void SEED_set_key(const unsigned char rawkey[SEED_KEY_LENGTH], SEED_KEY_SCHEDULE *ks)
-#ifdef OPENSSL_FIPS
-	{
-	fips_cipher_abort(SEED);
-	private_SEED_set_key(rawkey, ks);
-	}
-void private_SEED_set_key(const unsigned char rawkey[SEED_KEY_LENGTH], SEED_KEY_SCHEDULE *ks)
-#endif
 {
 	seed_word x1, x2, x3, x4;
 	seed_word t0, t1;

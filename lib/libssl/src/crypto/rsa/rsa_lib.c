@@ -67,10 +67,6 @@
 #include <openssl/engine.h>
 #endif
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 const char RSA_version[]="RSA" OPENSSL_VERSION_PTEXT;
 
 static const RSA_METHOD *default_RSA_meth=NULL;
@@ -91,17 +87,10 @@ const RSA_METHOD *RSA_get_default_method(void)
 	{
 	if (default_RSA_meth == NULL)
 		{
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode())
-			return FIPS_rsa_pkcs1_ssleay();
-		else
-			return RSA_PKCS1_SSLeay();
-#else
 #ifdef RSA_NULL
 		default_RSA_meth=RSA_null_method();
 #else
 		default_RSA_meth=RSA_PKCS1_SSLeay();
-#endif
 #endif
 		}
 
