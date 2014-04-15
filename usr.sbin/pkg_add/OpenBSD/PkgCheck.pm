@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.48 2014/04/14 21:55:37 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.49 2014/04/15 11:02:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -858,6 +858,11 @@ sub localbase_check
 						$File::Find::prune = 1;
 					}
 				}
+			}
+			if (! -r -x _) {
+				$File::Find::prune = 1;
+				$state->errsay("can't enter #1", 
+				    $File::Find::name);
 			}
 			return if defined $state->{known}{$File::Find::name};
 			if (-l $_) {
