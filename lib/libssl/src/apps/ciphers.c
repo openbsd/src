@@ -96,13 +96,7 @@ int MAIN(int argc, char **argv)
 	char buf[512];
 	BIO *STDout=NULL;
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
-	meth=SSLv23_server_method();
-#elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_server_method();
-#elif !defined(OPENSSL_NO_SSL2)
-	meth=SSLv2_server_method();
-#endif
 
 	apps_startup();
 
@@ -126,18 +120,10 @@ int MAIN(int argc, char **argv)
 			verbose=1;
 		else if (strcmp(*argv,"-V") == 0)
 			verbose=Verbose=1;
-#ifndef OPENSSL_NO_SSL2
-		else if (strcmp(*argv,"-ssl2") == 0)
-			meth=SSLv2_client_method();
-#endif
-#ifndef OPENSSL_NO_SSL3
 		else if (strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
-#endif
-#ifndef OPENSSL_NO_TLS1
 		else if (strcmp(*argv,"-tls1") == 0)
 			meth=TLSv1_client_method();
-#endif
 		else if ((strncmp(*argv,"-h",2) == 0) ||
 			 (strcmp(*argv,"-?") == 0))
 			{

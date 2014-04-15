@@ -337,9 +337,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -srp_moregroups   - Tolerate other than the known g N values.\n");
 	BIO_printf(bio_err," -srp_strength int - minimal mength in bits for N (default %d).\n",SRP_MINIMAL_N);
 #endif
-#ifndef OPENSSL_NO_SSL2
-	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
-#endif
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1_2       - just use TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - just use TLSv1.1\n");
@@ -348,9 +345,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
 	BIO_printf(bio_err," -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
-#ifndef OPENSSL_NO_SSL2
-	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
-#endif
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
@@ -811,22 +805,14 @@ int MAIN(int argc, char **argv)
 			meth=TLSv1_client_method();
 			}
 #endif
-#ifndef OPENSSL_NO_SSL2
-		else if	(strcmp(*argv,"-ssl2") == 0)
-			meth=SSLv2_client_method();
-#endif
-#ifndef OPENSSL_NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
-#endif
-#ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1_2") == 0)
 			meth=TLSv1_2_client_method();
 		else if	(strcmp(*argv,"-tls1_1") == 0)
 			meth=TLSv1_1_client_method();
 		else if	(strcmp(*argv,"-tls1") == 0)
 			meth=TLSv1_client_method();
-#endif
 #ifndef OPENSSL_NO_DTLS1
 		else if	(strcmp(*argv,"-dtls1") == 0)
 			{

@@ -279,14 +279,8 @@ static int parseArgs(int argc, char **argv)
 		}
 	else if(strcmp(*argv,"-bugs") == 0)
 	    st_bugs=1;
-#ifndef OPENSSL_NO_SSL2
-	else if(strcmp(*argv,"-ssl2") == 0)
-	    s_time_meth=SSLv2_client_method();
-#endif
-#ifndef OPENSSL_NO_SSL3
 	else if(strcmp(*argv,"-ssl3") == 0)
 	    s_time_meth=SSLv3_client_method();
-#endif
 	else if( strcmp(*argv,"-time") == 0) {
 
 	    if (--argc < 1) goto bad;
@@ -346,13 +340,7 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
-	s_time_meth=SSLv23_client_method();
-#elif !defined(OPENSSL_NO_SSL3)
 	s_time_meth=SSLv3_client_method();
-#elif !defined(OPENSSL_NO_SSL2)
-	s_time_meth=SSLv2_client_method();
-#endif
 
 	/* parse the command line arguments */
 	if( parseArgs( argc, argv ) < 0 )

@@ -69,11 +69,7 @@ ssl23_default_timeout(void)
 int
 ssl23_num_ciphers(void)
 {
-	return(ssl3_num_ciphers()
-#ifndef OPENSSL_NO_SSL2
-	+ ssl2_num_ciphers()
-#endif
-	);
+	return(ssl3_num_ciphers());
 }
 
 const SSL_CIPHER
@@ -84,11 +80,7 @@ const SSL_CIPHER
 	if (u < uu)
 		return (ssl3_get_cipher(u));
 	else
-#ifndef OPENSSL_NO_SSL2
-	return (ssl2_get_cipher(u - uu));
-#else
-	return (NULL);
-#endif
+		return (NULL);
 }
 
 /* This function needs to check if the ciphers required are actually
@@ -99,10 +91,6 @@ const SSL_CIPHER
 	const SSL_CIPHER *cp;
 
 	cp = ssl3_get_cipher_by_char(p);
-#ifndef OPENSSL_NO_SSL2
-	if (cp == NULL)
-		cp = ssl2_get_cipher_by_char(p);
-#endif
 	return (cp);
 }
 

@@ -350,10 +350,6 @@ extern "C" {
 extern "C" {
 #endif
 
-#if (defined(OPENSSL_NO_RSA) || defined(OPENSSL_NO_MD5)) && !defined(OPENSSL_NO_SSL2)
-#define OPENSSL_NO_SSL2
-#endif
-
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
 #define SSL_FILETYPE_PEM	X509_FILETYPE_PEM
 
@@ -1838,12 +1834,6 @@ const char *SSL_get_version(const SSL *s);
 
 /* This sets the 'default' SSL version that SSL_new() will create */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
-
-#ifndef OPENSSL_NO_SSL2
-const SSL_METHOD *SSLv2_method(void);		/* SSLv2 */
-const SSL_METHOD *SSLv2_server_method(void);	/* SSLv2 */
-const SSL_METHOD *SSLv2_client_method(void);	/* SSLv2 */
-#endif
 
 const SSL_METHOD *SSLv3_method(void);		/* SSLv3 */
 const SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
