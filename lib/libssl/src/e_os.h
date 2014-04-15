@@ -76,18 +76,6 @@ extern "C" {
 #define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
 #endif
 
-#ifndef DEVRANDOM
-/* set this to a comma-separated list of 'random' device files to try out.
- * My default, we will try to read at least one of these files */
-#define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
-#endif
-#ifndef DEVRANDOM_EGD
-/* set this to a comma-seperated list of 'egd' sockets to try out. These
- * sockets will be tried in the order listed in case accessing the device files
- * listed in DEVRANDOM did not return enough entropy. */
-#define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
-#endif
-
 #      include <unistd.h>
 #      include <sys/types.h>
 #    define OPENSSL_CONF	"openssl.cnf"
