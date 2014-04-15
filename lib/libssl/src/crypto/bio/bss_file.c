@@ -320,13 +320,7 @@ file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		else
 #endif
 		{
-#if defined(OPENSSL_SYS_WINDOWS)
-			int fd = _fileno((FILE*)ptr);
-			if (num & BIO_FP_TEXT)
-				_setmode(fd, _O_TEXT);
-			else
-				_setmode(fd, _O_BINARY);
-#elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
+#if   defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
 			int fd = fileno((FILE*)ptr);
 			/* Under CLib there are differences in file modes */
 			if (num & BIO_FP_TEXT)

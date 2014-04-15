@@ -457,27 +457,6 @@ end:
 int
 BIO_sock_init(void)
 {
-#ifdef OPENSSL_SYS_WINDOWS
-	static struct WSAData wsa_state;
-
-	if (!wsa_init_done) {
-		int err;
-
-		wsa_init_done = 1;
-		memset(&wsa_state, 0, sizeof(wsa_state));
-		/* Not making wsa_state available to the rest of the
-		 * code is formally wrong. But the structures we use
-		 * are [beleived to be] invariable among Winsock DLLs,
-		 * while API availability is [expected to be] probed
-		 * at run-time with DSO_global_lookup. */
-		if (WSAStartup(0x0202, &wsa_state) != 0) {
-			err = WSAGetLastError();
-			SYSerr(SYS_F_WSASTARTUP, err);
-			BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
-			return (-1);
-		}
-	}
-#endif /* OPENSSL_SYS_WINDOWS */
 #ifdef WATT32
 	extern int _watt_do_exit;
 	_watt_do_exit = 0;
@@ -509,15 +488,7 @@ BIO_sock_init(void)
 void
 BIO_sock_cleanup(void)
 {
-#ifdef OPENSSL_SYS_WINDOWS
-	if (wsa_init_done) {
-		wsa_init_done = 0;
-#if 0		/* this call is claimed to be non-present in Winsock2 */
-		WSACancelBlockingCall();
-#endif
-		WSACleanup();
-	}
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
+#if   defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 	if (wsa_init_done) {
 		wsa_init_done = 0;
 		WSACleanup();
@@ -738,14 +709,7 @@ again:
 #ifdef SO_REUSEADDR
 		err_num = errno;
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
-#ifdef OPENSSL_SYS_WINDOWS
-			/* Some versions of Windows define EADDRINUSE to
-			 * a dummy value.
-			 */
-		(err_num == WSAEADDRINUSE))
-#else
 		(err_num == EADDRINUSE))
-#endif
 		{
 			client = server;
 			if (h == NULL || strcmp(h, "*") == 0) {
