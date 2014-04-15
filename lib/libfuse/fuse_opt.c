@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.8 2014/01/21 22:26:11 jca Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.9 2014/04/15 08:48:11 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -259,7 +259,7 @@ int
 fuse_opt_parse(struct fuse_args *args, void *data,
     const struct fuse_opt *opt, fuse_opt_proc_t f)
 {
-	struct fuse_args outargs = FUSE_ARGS_INIT(args->argc, args->argv);
+	struct fuse_args outargs;
 	const char *arg;
 	int ret = 0;
 	int i;
@@ -267,7 +267,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 	if (!f || !args || !args->argc || !args->argv)
 		return (0);
 
-	bzero(&outargs, sizeof(args));
+	bzero(&outargs, sizeof(outargs));
 	fuse_opt_add_arg(&outargs, args->argv[0]);
 
 	for (i = 1; i < args->argc; i++) {
