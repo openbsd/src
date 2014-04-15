@@ -1664,13 +1664,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial, ASN1_INTEGER **r
 	if (suffix == NULL)
 		BUF_strlcpy(buf[0], serialfile, BSIZE);
 	else
-		{
-#ifndef OPENSSL_SYS_VMS
-		j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
-#else
-		j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, suffix);
-#endif
-		}
+		(void) snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
 #endif
@@ -1719,20 +1713,10 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		goto err;
 		}
 
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s",
+	(void) snprintf(buf[0], sizeof buf[0], "%s.%s",
 		serialfile, new_suffix);
-#else
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s",
-		serialfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s",
+	(void) snprintf(buf[1], sizeof buf[1], "%s.%s",
 		serialfile, old_suffix);
-#else
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s",
-		serialfile, old_suffix);
-#endif
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		serialfile, buf[1]);
@@ -1816,11 +1800,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 	if ((tmpdb = TXT_DB_read(in,DB_NUMBER)) == NULL)
 		goto err;
 
-#ifndef OPENSSL_SYS_VMS
-	BIO_snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);
-#else
-	BIO_snprintf(buf[0], sizeof buf[0], "%s-attr", dbfile);
-#endif
+	(void) snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);
 	dbattr_conf = NCONF_new(NULL);
 	if (NCONF_load(dbattr_conf,buf[0],&errorline) <= 0)
 		{
@@ -1915,21 +1895,9 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
 		goto err;
 		}
 
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr", dbfile);
-#else
-	j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr", dbfile);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
-#else
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-attr-%s", dbfile, suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
-#else
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, suffix);
-#endif
+	(void) snprintf(buf[2], sizeof buf[2], "%s.attr", dbfile);
+	(void) snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
+	(void) snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
 #endif
@@ -1977,39 +1945,15 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 		goto err;
 		}
 
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[4], sizeof buf[4], "%s.attr", dbfile);
-#else
-	j = BIO_snprintf(buf[4], sizeof buf[4], "%s-attr", dbfile);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr.%s",
+	(void) snprintf(buf[4], sizeof buf[4], "%s.attr", dbfile);
+	(void) snprintf(buf[2], sizeof buf[2], "%s.attr.%s",
 		dbfile, new_suffix);
-#else
-	j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr-%s",
+	(void) snprintf(buf[0], sizeof buf[0], "%s.%s",
 		dbfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s",
-		dbfile, new_suffix);
-#else
-	j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s",
-		dbfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s",
+	(void) snprintf(buf[1], sizeof buf[1], "%s.%s",
 		dbfile, old_suffix);
-#else
-	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s",
+	(void) snprintf(buf[3], sizeof buf[3], "%s.attr.%s",
 		dbfile, old_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-	j = BIO_snprintf(buf[3], sizeof buf[3], "%s.attr.%s",
-		dbfile, old_suffix);
-#else
-	j = BIO_snprintf(buf[3], sizeof buf[3], "%s-attr-%s",
-		dbfile, old_suffix);
-#endif
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		dbfile, buf[1]);
