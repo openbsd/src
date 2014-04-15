@@ -322,14 +322,14 @@ doit(io_channel chan, SSL_CTX *s_ctx )
 			}
 			if (length < RPC_HDR_SIZE ) {
 				printf("Error in main loop get size: %d\n", length );
-				break;
 				link_state = 3;
+				break;
 			}
 			if (msg.channel != 'A' ) {
 				printf("Error in main loop, unexpected channel: %c\n",
 				msg.channel );
-				break;
 				link_state = 3;
+				break;
 			}
 			if (msg.function == 'G' ) {
 				link_state = 1;
