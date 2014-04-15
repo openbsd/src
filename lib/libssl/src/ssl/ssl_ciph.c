@@ -459,9 +459,9 @@ load_builtin_compressions(void)
 				comp = (SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
 				if (comp != NULL) {
 					comp->method = COMP_zlib();
-					if (comp->method
-						&& comp->method->type == NID_undef)
-					OPENSSL_free(comp);
+					if (comp->method &&
+					    comp->method->type == NID_undef)
+						OPENSSL_free(comp);
 					else {
 						comp->id = SSL_COMP_ZLIB_IDX;
 						comp->name = comp->method->name;
@@ -508,8 +508,8 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		}
 	}
 
-	if ((enc == NULL)
-		|| (md == NULL)) return (0);
+	if ((enc == NULL) || (md == NULL))
+		return (0);
 
 	switch (c->algorithm_enc) {
 	case SSL_DES:
@@ -609,26 +609,26 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	}
 
 	if ((*enc != NULL) &&
-		(*md != NULL || (EVP_CIPHER_flags(*enc)&EVP_CIPH_FLAG_AEAD_CIPHER)) &&
-	(!mac_pkey_type || *mac_pkey_type != NID_undef)) {
+	    (*md != NULL || (EVP_CIPHER_flags(*enc)&EVP_CIPH_FLAG_AEAD_CIPHER)) &&
+	    (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
 		const EVP_CIPHER *evp;
 
 		if (s->ssl_version >> 8 != TLS1_VERSION_MAJOR ||
-			s->ssl_version < TLS1_VERSION)
-		return 1;
+		    s->ssl_version < TLS1_VERSION)
+			return 1;
 
 		if (c->algorithm_enc == SSL_RC4 &&
-			c->algorithm_mac == SSL_MD5 &&
-		(evp = EVP_get_cipherbyname("RC4-HMAC-MD5")))
-		*enc = evp, *md = NULL;
+		    c->algorithm_mac == SSL_MD5 &&
+		    (evp = EVP_get_cipherbyname("RC4-HMAC-MD5")))
+			*enc = evp, *md = NULL;
 		else if (c->algorithm_enc == SSL_AES128 &&
-			c->algorithm_mac == SSL_SHA1 &&
-		(evp = EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
-		*enc = evp, *md = NULL;
+		    c->algorithm_mac == SSL_SHA1 &&
+		    (evp = EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
+			*enc = evp, *md = NULL;
 		else if (c->algorithm_enc == SSL_AES256 &&
-			c->algorithm_mac == SSL_SHA1 &&
-		(evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
-		*enc = evp, *md = NULL;
+		    c->algorithm_mac == SSL_SHA1 &&
+		    (evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
+			*enc = evp, *md = NULL;
 		return (1);
 	} else
 		return (0);
@@ -793,11 +793,11 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 		c = ssl_method->get_cipher(i);
 		/* drop those that use any of that is not available */
 		if ((c != NULL) && c->valid &&
-		!(c->algorithm_mkey & disabled_mkey) &&
-		!(c->algorithm_auth & disabled_auth) &&
-		!(c->algorithm_enc & disabled_enc) &&
-		!(c->algorithm_mac & disabled_mac) &&
-		!(c->algorithm_ssl & disabled_ssl)) {
+		    !(c->algorithm_mkey & disabled_mkey) &&
+		    !(c->algorithm_auth & disabled_auth) &&
+		    !(c->algorithm_enc & disabled_enc) &&
+		    !(c->algorithm_mac & disabled_mac) &&
+		    !(c->algorithm_ssl & disabled_ssl)) {
 			co_list[co_list_num].cipher = c;
 			co_list[co_list_num].next = NULL;
 			co_list[co_list_num].prev = NULL;
@@ -837,12 +837,10 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 }
 
 static void
-ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
-    int num_of_group_aliases,
-unsigned long disabled_mkey, unsigned long disabled_auth,
+ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list, int num_of_group_aliases,
+    unsigned long disabled_mkey, unsigned long disabled_auth,
     unsigned long disabled_enc, unsigned long disabled_mac,
-unsigned long disabled_ssl,
-    CIPHER_ORDER *head)
+    unsigned long disabled_ssl, CIPHER_ORDER *head)
 {
 	CIPHER_ORDER *ciph_curr;
 	const SSL_CIPHER **ca_curr;
@@ -905,13 +903,10 @@ unsigned long disabled_ssl,
 }
 
 static void
-ssl_cipher_apply_rule(unsigned long cipher_id,
-    unsigned long alg_mkey, unsigned long alg_auth,
-unsigned long alg_enc, unsigned long alg_mac,
-    unsigned long alg_ssl,
-unsigned long algo_strength,
-    int rule, int strength_bits,
-CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
+    unsigned long alg_auth, unsigned long alg_enc, unsigned long alg_mac,
+    unsigned long alg_ssl, unsigned long algo_strength,
+    int rule, int strength_bits, CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 {
 	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
 	const SSL_CIPHER *cp;
@@ -1023,8 +1018,7 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 }
 
 static int
-ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
-    CIPHER_ORDER **tail_p)
+ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 {
 	int max_strength_bits, i, *number_uses;
 	CIPHER_ORDER *curr;
@@ -1038,8 +1032,8 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 	curr = *head_p;
 	while (curr != NULL) {
 		if (curr->active &&
-			(curr->cipher->strength_bits > max_strength_bits))
-		max_strength_bits = curr->cipher->strength_bits;
+		    (curr->cipher->strength_bits > max_strength_bits))
+			max_strength_bits = curr->cipher->strength_bits;
 		curr = curr->next;
 	}
 
@@ -1123,9 +1117,9 @@ const SSL_CIPHER **ca_list)
 			buf = l;
 			buflen = 0;
 			while (((ch >= 'A') && (ch <= 'Z')) ||
-			((ch >= '0') && (ch <= '9')) ||
-			((ch >= 'a') && (ch <= 'z')) ||
-			(ch == '-') || (ch == '.'))
+			    ((ch >= '0') && (ch <= '9')) ||
+			    ((ch >= 'a') && (ch <= 'z')) ||
+			    (ch == '-') || (ch == '.'))
 			{
 				ch = *(++l);
 				buflen++;
@@ -1171,7 +1165,7 @@ const SSL_CIPHER **ca_list)
 			cipher_id = 0;
 			while (ca_list[j]) {
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
-					(ca_list[j]->name[buflen] == '\0')) {
+				    (ca_list[j]->name[buflen] == '\0')) {
 					found = 1;
 					break;
 				} else
@@ -1276,7 +1270,7 @@ const SSL_CIPHER **ca_list)
 		 * Ok, we have the rule, now apply it
 		 */
 		if (rule == CIPHER_SPECIAL)
-				{	/* special command */
+		{	/* special command */
 			ok = 0;
 			if ((buflen == 8) &&
 				!strncmp(buf, "STRENGTH", 8))
@@ -1310,9 +1304,9 @@ const SSL_CIPHER **ca_list)
 
 STACK_OF(SSL_CIPHER)
 *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
-STACK_OF(SSL_CIPHER) **cipher_list,
+    STACK_OF(SSL_CIPHER) **cipher_list,
     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
-const char *rule_str)
+    const char *rule_str)
 {
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl;
@@ -1777,14 +1771,14 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	comp->id = id;
 	comp->method = cm;
 	load_builtin_compressions();
-	if (ssl_comp_methods
-		&& sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
+	if (ssl_comp_methods &&
+	    sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
 		OPENSSL_free(comp);
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, SSL_R_DUPLICATE_COMPRESSION_ID);
 		return (1);
-	} else if ((ssl_comp_methods == NULL)
-	|| !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+	} else if ((ssl_comp_methods == NULL) ||
+	    !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
 		OPENSSL_free(comp);
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
