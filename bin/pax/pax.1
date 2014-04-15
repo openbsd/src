@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.65 2014/04/15 17:02:54 jmc Exp $
+.\"	$OpenBSD: pax.1,v 1.66 2014/04/15 21:21:20 jmc Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,6 @@
 .Nm pax
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
-.Bk -words
 .Nm pax
 .Op Fl 0cdjnOvz
 .Op Fl E Ar limit
@@ -86,7 +85,6 @@
 .Op Fl U Ar user
 .Op Ar
 .Ar directory
-.Ek
 .Sh DESCRIPTION
 .Nm
 will read, write, and list the members of an archive file
@@ -109,7 +107,7 @@ will operate under:
 and
 .Em copy .
 .Bl -tag -width 6n
-.It \*(Ltnone\*(Gt
+.It Aq none
 .Em List .
 .Nm
 will write to standard output
@@ -185,11 +183,7 @@ The result of a
 under these conditions is unpredictable.
 .El
 .Pp
-While processing a damaged archive during a
-.Em read
-or
-.Em list
-operation,
+While processing a damaged archive during a read or list operation,
 .Nm
 will attempt to recover from media defects and will search through the archive
 to locate and process the largest number of archive members possible (see the
@@ -299,15 +293,13 @@ limits can be separated by
 .Sq Li x
 to indicate a product.
 .Pp
-.Em Warning :
+.Sy Warning :
 Only use this option when writing an archive to a device which supports
 an end of file read condition based on last (or largest) write offset
 (such as a regular file or a tape drive).
 The use of this option with a floppy or hard disk is not recommended.
 .It Fl b Ar blocksize
-When
-.Em writing
-an archive,
+When writing an archive,
 block the output at a positive decimal integer number of
 bytes per write to the archive file.
 The
@@ -323,9 +315,7 @@ can end with
 or
 .Sq Li b
 to specify multiplication by 1024 (1K) or 512, respectively.
-A pair of
-.Ar blocksizes
-can be separated by
+A pair of blocksizes can be separated by
 .Sq Li x
 to indicate a product.
 A specific archive device may impose additional restrictions on the size
@@ -380,7 +370,7 @@ The default
 .Ar limit
 is a small positive number of retries.
 .Pp
-.Em Warning :
+.Sy Warning :
 Using this option with
 .Li NONE
 should be used with extreme caution as
@@ -390,13 +380,9 @@ may get stuck in an infinite loop on a very badly flawed archive.
 Specify
 .Ar archive
 as the pathname of the input or output archive, overriding the default
-standard input (for
-.Em list
-and
-.Em read )
+standard input (for list and read)
 or standard output
-(for
-.Em write ) .
+(for write).
 A single archive may span multiple files and different archive devices.
 When required,
 .Nm
@@ -455,9 +441,7 @@ Follow all symbolic links to perform a logical file system traversal.
 (The lowercase letter
 .Dq ell . )
 Link files.
-In the
-.Em copy
-mode
+In copy mode
 .Pq Fl r Fl w ,
 hard links are made between the source and destination file hierarchies
 whenever possible.
@@ -488,10 +472,10 @@ take the form:
 .Ar name Ns = Ns Ar value .
 .Pp
 The following options are available for the
-.Em ustar
+.Cm ustar
 and old
 .Bx
-.Em tar
+.Cm tar
 formats:
 .Pp
 .Bl -tag -width Ds -compact
@@ -525,8 +509,7 @@ By default, file access times are preserved whenever possible.
 .Dq Preserve everything ,
 the user ID, group ID, file mode bits,
 file access time, and file modification time.
-This is intended to be used by
-.Em root ,
+This is intended to be used by root,
 someone with all the appropriate privileges, in order to preserve all
 aspects of the files as they are recorded in the archive.
 The
@@ -544,10 +527,8 @@ Preserve the user ID and group ID.
 .It Cm p
 .Dq Preserve
 the file mode bits.
-This is intended to be used by a
-.Em user
-with regular privileges who wants to preserve all aspects of the file other
-than the ownership.
+This is intended to be used by a user with regular privileges
+who wants to preserve all aspects of the file other than the ownership.
 The file times are preserved by default, but two other flags are offered to
 disable this and use the time of extraction instead.
 .El
@@ -568,11 +549,9 @@ preserved for any reason,
 .Nm
 will not set the
 .Dv S_ISUID
-.Em ( setuid )
-and
+(setuid) and
 .Dv S_ISGID
-.Em ( setgid )
-bits of the file mode.
+(setgid) bits of the file mode.
 If the preservation of any of these items fails for any reason,
 .Nm
 will write a diagnostic message to standard error.
@@ -659,7 +638,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 standard error in the following format:
 .Pp
-.D1 Em original-pathname No \*(Gt\*(Gt Em new-pathname
+.D1 Em original-pathname No >> Em new-pathname
 .Pp
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
@@ -697,11 +676,7 @@ time will be selected.
 .Pp
 When
 .Nm
-is in the
-.Em write
-or
-.Em copy
-mode, the optional trailing field
+is in write or copy mode, the optional trailing field
 .Oo Cm c Oc Ns Op Cm m
 can be used to determine which file time (inode change, file modification or
 both) are used in the comparison.
@@ -792,23 +767,18 @@ options may be supplied and checking stops with the first match.
 .It Fl u
 Ignore files that are older (having a less recent file modification time)
 than a pre-existing file or archive member with the same name.
-During
-.Em read ,
+During read,
 an archive member with the same name as a file in the file system will be
 extracted if the archive member is newer than the file.
-During
-.Em write ,
+During write,
 a file system member with the same name as an archive member will be
 written to the archive if it is newer than the archive member.
-During
-.Em copy ,
+During copy,
 the file in the destination hierarchy is replaced by the file in the source
 hierarchy or by a link to the file in the source hierarchy if the file in
 the source hierarchy is newer.
 .It Fl v
-During a
-.Em list
-operation, produce a verbose table of contents using the format of the
+During a list operation, produce a verbose table of contents using the format of the
 .Xr ls 1
 utility with the
 .Fl l
@@ -816,11 +786,11 @@ option.
 For pathnames representing a hard link to a previous member of the archive,
 the output has the format:
 .Pp
-.Dl Em ls -l listing Li == Em link-name
+.Dl Em ls -l listing No == Em link-name
 .Pp
 For pathnames representing a symbolic link, the output has the format:
 .Pp
-.Dl Em ls -l listing Li -\*(Gt Em link-name
+.Dl Em ls -l listing No -> Em link-name
 .Pp
 Where
 .Em ls -l listing
@@ -830,8 +800,7 @@ utility when used with the
 .Fl l
 option.
 Otherwise for all the other operational modes
-.Po Em read , write , No and Em copy
-.Pc ,
+(read, write, and copy),
 pathnames are written and flushed to standard error
 without a trailing newline
 as soon as processing begins on that file or
@@ -900,12 +869,7 @@ tar format as found in
 .Bx 4.3 .
 The default blocksize for this format is 10240 bytes.
 Pathnames stored by this format must be 100 characters or less in length.
-Only
-.Em regular
-files,
-.Em hard links , soft links ,
-and
-.Em directories
+Only regular files, hard links, soft links, and directories
 will be archived (other file system types are not supported).
 For backwards compatibility with even older tar formats, a
 .Fl o
@@ -965,9 +929,7 @@ and
 .Pc
 interact as follows.
 .Pp
-When extracting files during a
-.Em read
-operation, archive members are
+When extracting files during a read operation, archive members are
 .Sq selected ,
 based only on the user specified pattern operands as modified by the
 .Fl c ,
@@ -992,11 +954,9 @@ Finally, the
 .Fl v
 option will write the names resulting from these modifications.
 .Pp
-When archiving files during a
-.Em write
-operation, or copying files during a
-.Em copy
-operation, archive members are
+When archiving files during a write operation,
+or copying files during a copy operation,
+archive members are
 .Sq selected ,
 based only on the user specified pathnames as modified by the
 .Fl n ,
@@ -1014,9 +974,7 @@ Then any
 and
 .Fl i
 options will modify in that order, the names of these selected files.
-Then during a
-.Em copy
-operation the
+Then during a copy operation the
 .Fl Y
 and the
 .Fl Z
@@ -1039,16 +997,7 @@ than the file to which it is compared.
 Path in which to store temporary files.
 .El
 .Sh EXIT STATUS
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It 0
-All files were processed successfully.
-.It 1
-An error occurred.
-.El
+.Ex -std pax
 .Sh EXAMPLES
 Copy the contents of the current directory to the device
 .Pa /dev/rst0 :
@@ -1093,7 +1042,7 @@ with group
 .Em bin
 and preserve all file permissions:
 .Pp
-.Dl "$ pax -r -pe -U root -G bin -f a.pax"
+.Dl $ pax -r -pe -U root -G bin -f a.pax
 .Pp
 Update (and list) only those files in the destination directory
 .Pa /backup
@@ -1101,7 +1050,7 @@ which are older (less recent inode change or file modification times) than
 files with the same name found in the source file tree
 .Pa home :
 .Pp
-.Dl "$ pax -r -w -v -Y -Z home /backup"
+.Dl $ pax -r -w -v -Y -Z home /backup
 .Sh DIAGNOSTICS
 Whenever
 .Nm
@@ -1130,8 +1079,7 @@ If the creation of an archive is prematurely terminated by a signal or error,
 may have only partially created the archive, which may violate the specific
 archive format specification.
 .Pp
-If while doing a
-.Em copy ,
+If while doing a copy,
 .Nm
 detects a file is about to overwrite itself, the file is not copied,
 a diagnostic message is written to standard error
@@ -1148,19 +1096,21 @@ utility is compliant with the
 .St -p1003.1-2008
 specification,
 except that the
-.Em pax
-archive format is unsupported and the
+.Cm pax
+archive format and the
+.Cm listopt
+keyword are unsupported, and the
 .Ev TZ
 environment variable is unused.
 .Pp
 The flags
 .Op Fl 0BDEGjOPTUYZz ,
 the archive formats
-.Em bcpio ,
-.Em sv4cpio ,
-.Em sv4crc ,
+.Cm bcpio ,
+.Cm sv4cpio ,
+.Cm sv4crc ,
 and
-.Em tar ,
+.Cm tar ,
 the
 .Cm b , k ,
 and
@@ -1168,11 +1118,7 @@ and
 additions to the
 .Fl b
 flag,
-and the flawed archive handling during
-.Em list
-and
-.Em read
-operations
+and the flawed archive handling during list and read operations
 are extensions to that specification.
 .Sh AUTHORS
 Keith Muller at the University of California, San Diego.
