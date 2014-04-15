@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.19 2014/04/11 15:45:39 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.20 2014/04/15 23:47:57 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -202,7 +202,7 @@ mansearch(const struct mansearch *search,
 	 */
 
 	if (NULL == getcwd(buf, PATH_MAX)) {
-		perror(NULL);
+		perror("getcwd");
 		goto out;
 	} else if (-1 == (fd = open(buf, O_RDONLY, 0))) {
 		perror(buf);
@@ -339,9 +339,12 @@ mansearch(const struct mansearch *search,
 	}
 	rc = 1;
 out:
-	exprfree(e);
-	if (-1 != fd)
+	if (-1 != fd) {
+		if (-1 == fchdir(fd))
+			perror(buf);
 		close(fd);
+	}
+	exprfree(e);
 	free(sql);
 	*sz = cur;
 	return(rc);
