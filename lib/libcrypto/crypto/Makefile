@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2014/04/15 20:19:55 miod Exp $
+# $OpenBSD: Makefile,v 1.12 2014/04/15 20:49:00 tedu Exp $
 
 LIB=	crypto
 
@@ -111,7 +111,7 @@ SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c
 SRCS+= ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c
 SRCS+= fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c
 SRCS+= qud_cksm.c rand_key.c rpc_enc.c  set_key.c xcbc_enc.c
-SRCS+= str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c des_old2.c
+SRCS+= str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c
 SRCS+= read2pwd.c
 
 # dh/
@@ -365,7 +365,6 @@ HDRS=\
 	crypto/conf/conf_api.h \
 	crypto/crypto.h \
 	crypto/des/des.h \
-	crypto/des/des_old.h \
 	crypto/dh/dh.h \
 	crypto/dsa/dsa.h \
 	crypto/dso/dso.h \

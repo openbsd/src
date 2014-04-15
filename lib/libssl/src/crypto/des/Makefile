@@ -28,7 +28,7 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
 	des_enc.c fcrypt_b.c \
 	xcbc_enc.c \
-	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c des_old2.c \
+	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c \
 	read2pwd.c
 
 LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
@@ -37,11 +37,11 @@ LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 	ofb_enc.o  str2key.o  pcbc_enc.o qud_cksm.o rand_key.o \
 	${DES_ENC} \
 	fcrypt.o xcbc_enc.o rpc_enc.o  cbc_cksm.o \
-	ede_cbcm_enc.o des_old.o des_old2.o read2pwd.o
+	ede_cbcm_enc.o read2pwd.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= des.h des_old.h
+EXHEADER= des.h
 HEADER=	des_locl.h rpc_des.h spr.h des_ver.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
