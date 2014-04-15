@@ -425,7 +425,7 @@ bad:
 			{
 			char buf[200];
 
-			BIO_snprintf(buf,sizeof buf,"enter %s %s password:",
+			(void) snprintf(buf,sizeof buf,"enter %s %s password:",
 				     OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
 				     (enc)?"encryption":"decryption");
 			strbuf[0]='\0';

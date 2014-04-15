@@ -665,22 +665,22 @@ print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 	if (options & V_CRYPTO_MDEBUG_TIME) {
 		lcl = localtime(&m->time);
 
-		BIO_snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
+		(void) snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
 		lcl->tm_hour, lcl->tm_min, lcl->tm_sec);
 		bufp += strlen(bufp);
 	}
 
-	BIO_snprintf(bufp, BUF_REMAIN, "%5lu file=%s, line=%d, ",
+	(void) snprintf(bufp, BUF_REMAIN, "%5lu file=%s, line=%d, ",
 	m->order, m->file, m->line);
 	bufp += strlen(bufp);
 
 	if (options & V_CRYPTO_MDEBUG_THREAD) {
-		BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ",
+		(void) snprintf(bufp, BUF_REMAIN, "thread=%lu, ",
 		CRYPTO_THREADID_hash(&m->threadid));
 		bufp += strlen(bufp);
 	}
 
-	BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%08lX\n",
+	(void) snprintf(bufp, BUF_REMAIN, "number=%d, address=%08lX\n",
 	m->num,(unsigned long)m->addr);
 	bufp += strlen(bufp);
 
@@ -701,7 +701,7 @@ print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
 		ami_cnt++;
 		memset(buf, '>', ami_cnt);
-		BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
+		(void) snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
 		" thread=%lu, file=%s, line=%d, info=\"",
 		CRYPTO_THREADID_hash(&amip->threadid), amip->file,
 		amip->line);
@@ -715,7 +715,7 @@ print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 			sizeof buf - buf_len);
 			buf_len = strlen(buf);
 		}
-		BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
+		(void) snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
 
 		BIO_puts(l->bio, buf);
 

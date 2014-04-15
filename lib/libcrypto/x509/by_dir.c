@@ -379,13 +379,13 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 				{
 				/* This is special.  When c == '\0', no
 				   directory separator should be added. */
-				BIO_snprintf(b->data,b->max,
+				(void) snprintf(b->data,b->max,
 					"%s%08lx.%s%d",ent->dir,h,
 					postfix,k);
 				}
 			else
 				{
-				BIO_snprintf(b->data,b->max,
+				(void) snprintf(b->data,b->max,
 					"%s%c%08lx.%s%d",ent->dir,c,h,
 					postfix,k);
 				}

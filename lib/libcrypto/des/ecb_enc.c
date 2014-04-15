@@ -97,7 +97,7 @@ const char *DES_options(void)
 			size="int";
 		else
 			size="long";
-		BIO_snprintf(buf,sizeof buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,
+		(void) snprintf(buf,sizeof buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,
 			     size);
 		init=0;
 		}

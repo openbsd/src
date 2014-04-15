@@ -1330,7 +1330,7 @@ bad:
 					{
 					if (n >= &(buf[2][sizeof(buf[2])]))
 						break;
-					BIO_snprintf(n,
+					(void) snprintf(n,
 						     &buf[2][0] + sizeof(buf[2]) - n,
 						     "%02X",(unsigned char)*(p++));
 					n+=2;

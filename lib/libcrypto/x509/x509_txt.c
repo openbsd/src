@@ -185,7 +185,7 @@ const char *X509_verify_cert_error_string(long n)
 		return("CRL path validation error");
 
 	default:
-		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
+		(void) snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);
 		}
 	}

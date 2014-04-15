@@ -107,7 +107,7 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 		{
 		buf[0]='\0';	/* start with empty string */
 		BUF_strlcpy(buf,str,sizeof buf);
-		BIO_snprintf(tmp,sizeof tmp,"%04x - ",i*dump_width);
+		(void) snprintf(tmp,sizeof tmp,"%04x - ",i*dump_width);
 		BUF_strlcat(buf,tmp,sizeof buf);
 		for(j=0;j<dump_width;j++)
 			{
@@ -118,7 +118,7 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 			else
 				{
 				ch=((unsigned char)*(s+i*dump_width+j)) & 0xff;
-				BIO_snprintf(tmp,sizeof tmp,"%02x%c",ch,
+				(void) snprintf(tmp,sizeof tmp,"%02x%c",ch,
 					j==7?'-':' ');
 				BUF_strlcat(buf,tmp,sizeof buf);
 				}
@@ -130,10 +130,10 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 				break;
 			ch=((unsigned char)*(s+i*dump_width+j)) & 0xff;
 #ifndef CHARSET_EBCDIC
-			BIO_snprintf(tmp,sizeof tmp,"%c",
+			(void) snprintf(tmp,sizeof tmp,"%c",
 				((ch>=' ')&&(ch<='~'))?ch:'.');
 #else
-			BIO_snprintf(tmp,sizeof tmp,"%c",
+			(void) snprintf(tmp,sizeof tmp,"%c",
 				((ch>=os_toascii[' '])&&(ch<=os_toascii['~']))
 				? os_toebcdic[ch]
 				: '.');
@@ -149,7 +149,7 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 #ifdef TRUNCATE
 	if (trc > 0)
 		{
-		BIO_snprintf(buf,sizeof buf,"%s%04x - <SPACES/NULS>\n",str,
+		(void) snprintf(buf,sizeof buf,"%s%04x - <SPACES/NULS>\n",str,
 			len+trc);
 		ret+=cb((void *)buf,strlen(buf),u);
 		}

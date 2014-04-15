@@ -1271,21 +1271,21 @@ start:		for (;;)
 				def="";
 				}
 				
-			BIO_snprintf(buf,sizeof buf,"%s_value",v->name);
+			(void) snprintf(buf,sizeof buf,"%s_value",v->name);
 			if ((value=NCONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				{
 				ERR_clear_error();
 				value=NULL;
 				}
 
-			BIO_snprintf(buf,sizeof buf,"%s_min",v->name);
+			(void) snprintf(buf,sizeof buf,"%s_min",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_min))
 				{
 				ERR_clear_error();
 				n_min = -1;
 				}
 
-			BIO_snprintf(buf,sizeof buf,"%s_max",v->name);
+			(void) snprintf(buf,sizeof buf,"%s_max",v->name);
 			if (!NCONF_get_number(req_conf,dn_sect,buf, &n_max))
 				{
 				ERR_clear_error();
@@ -1338,7 +1338,7 @@ start2:			for (;;)
 					}
 				
 				
-				BIO_snprintf(buf,sizeof buf,"%s_value",type);
+				(void) snprintf(buf,sizeof buf,"%s_value",type);
 				if ((value=NCONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					{

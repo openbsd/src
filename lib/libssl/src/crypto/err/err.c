@@ -872,13 +872,13 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 	rs=ERR_reason_error_string(e);
 
 	if (ls == NULL) 
-		BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
+		(void) snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
 	if (fs == NULL)
-		BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
+		(void) snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
 	if (rs == NULL)
-		BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+		(void) snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
 
-	BIO_snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
+	(void) snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
 		fs?fs:fsbuf, rs?rs:rsbuf);
 	if (strlen(buf) == len-1)
 		{
