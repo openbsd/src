@@ -182,18 +182,18 @@ typedef struct DIST_POINT_st DIST_POINT;
 typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
 typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
-  /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
+/* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
 #define DECLARE_PKCS12_STACK_OF(type) /* Nothing */
 #define IMPLEMENT_PKCS12_STACK_OF(type) /* Nothing */
 
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 /* Callback types for crypto.h */
 typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
+    int idx, long argl, void *argp);
 typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-					int idx, long argl, void *argp);
-typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
-					int idx, long argl, void *argp);
+    int idx, long argl, void *argp);
+typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+    void *from_d, int idx, long argl, void *argp);
 
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;

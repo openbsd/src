@@ -62,18 +62,20 @@
 #include <openssl/rand.h>
 #endif
 
-int FIPS_mode(void)
-	{
+int
+FIPS_mode(void)
+{
 	OPENSSL_init();
 #ifdef OPENSSL_FIPS
 	return FIPS_module_mode();
 #else
 	return 0;
 #endif
-	}
+}
 
-int FIPS_mode_set(int r)
-	{
+int
+FIPS_mode_set(int r)
+{
 	OPENSSL_init();
 #ifdef OPENSSL_FIPS
 #ifndef FIPS_AUTH_USER_PASS
@@ -92,5 +94,4 @@ int FIPS_mode_set(int r)
 	CRYPTOerr(CRYPTO_F_FIPS_MODE_SET, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED);
 	return 0;
 #endif
-	}
-
+}

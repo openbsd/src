@@ -63,8 +63,9 @@
  * Currently only sets FIPS callbacks
  */
 
-void OPENSSL_init(void)
-	{
+void
+OPENSSL_init(void)
+{
 	static int done = 0;
 	if (done)
 		return;
@@ -78,5 +79,4 @@ void OPENSSL_init(void)
 #if 0
 	fprintf(stderr, "Called OPENSSL_init\n");
 #endif
-	}
-
+}

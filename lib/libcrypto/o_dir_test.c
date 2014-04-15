@@ -43,26 +43,24 @@
 #error "No supported platform defined!"
 #endif
 
-int main()
+int
+main()
 {
-  OPENSSL_DIR_CTX *ctx = NULL;
-  const char *result;
+	OPENSSL_DIR_CTX *ctx = NULL;
+	const char *result;
 
-  while((result = OPENSSL_DIR_read(&ctx, CURRDIR)) != NULL)
-    {
-      printf("%s\n", result);
-    }
+	while ((result = OPENSSL_DIR_read(&ctx, CURRDIR)) != NULL) {
+		printf("%s\n", result);
+	}
 
-  if (errno)
-    {
-      perror("test_dir");
-      exit(1);
-    }
+	if (errno) {
+		perror("test_dir");
+		exit(1);
+	}
 
-  if (!OPENSSL_DIR_end(&ctx))
-    {
-      perror("test_dir");
-      exit(2);
-    }
-  exit(0);
+	if (!OPENSSL_DIR_end(&ctx)) {
+		perror("test_dir");
+		exit(2);
+	}
+	exit(0);
 }
