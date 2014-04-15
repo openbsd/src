@@ -72,10 +72,6 @@ int main(int argc, char *argv[])
 #include <openssl/ripemd.h>
 #include <openssl/evp.h>
 
-#ifdef CHARSET_EBCDIC
-#include <openssl/ebcdic.h>
-#endif
-
 static char *test[]={
 	"",
 	"a",
@@ -112,9 +108,6 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-#ifdef CHARSET_EBCDIC
-		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
-#endif
 		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_ripemd160(), NULL);
 		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)

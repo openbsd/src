@@ -705,22 +705,6 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base_, int num,
 		else
 			break;
 		}
-#ifdef CHARSET_EBCDIC
-/* THIS IS A KLUDGE - Because the *_obj is sorted in ASCII order, and
- * I don't have perl (yet), we revert to a *LINEAR* search
- * when the object wasn't found in the binary search.
- */
-	if (c != 0)
-		{
-		for (i=0; i<num; ++i)
-			{
-			p= &(base[i*size]);
-			c = (*cmp)(key,p);
-			if (c == 0 || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
-				return p;
-			}
-		}
-#endif
 	if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
 		p = NULL;
 	else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH))

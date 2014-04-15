@@ -1130,14 +1130,10 @@ const SSL_CIPHER **ca_list)
 			ch = *l;
 			buf = l;
 			buflen = 0;
-#ifndef CHARSET_EBCDIC
 			while (((ch >= 'A') && (ch <= 'Z')) ||
 			((ch >= '0') && (ch <= '9')) ||
 			((ch >= 'a') && (ch <= 'z')) ||
 			(ch == '-') || (ch == '.'))
-#else
-			while (isalnum(ch) || (ch == '-') || (ch == '.'))
-#endif
 			{
 				ch = *(++l);
 				buflen++;

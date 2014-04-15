@@ -130,10 +130,6 @@
 #include <openssl/opensslv.h>
 #include <openssl/ossl_typ.h>
 
-#ifdef CHARSET_EBCDIC
-#include <openssl/ebcdic.h>
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif

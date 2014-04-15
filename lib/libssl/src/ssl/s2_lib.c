@@ -475,10 +475,6 @@ ssl2_generate_key_material(SSL *s)
 
 	md5 = EVP_md5();
 
-#ifdef CHARSET_EBCDIC
-	c = os_toascii['0']; /* Must be an ASCII '0', not EBCDIC '0',
-				see SSLv2 docu */
-#endif
 	EVP_MD_CTX_init(&ctx);
 	km = s->s2->key_material;
 

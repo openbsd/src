@@ -1,6 +1,6 @@
 /* apps/passwd.c */
 
-#if defined OPENSSL_NO_MD5 || defined CHARSET_EBCDIC
+#if defined OPENSSL_NO_MD5
 # define NO_MD5CRYPT_1
 #endif
 
@@ -440,10 +440,6 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 			(*salt_p)[0] = cov_2char[(*salt_p)[0] & 0x3f]; /* 6 bits */
 			(*salt_p)[1] = cov_2char[(*salt_p)[1] & 0x3f]; /* 6 bits */
 			(*salt_p)[2] = 0;
-#ifdef CHARSET_EBCDIC
-			ascii2ebcdic(*salt_p, *salt_p, 2); /* des_crypt will convert
-			                                    * back to ASCII */
-#endif
 			}
 #endif /* !OPENSSL_NO_DES */
 

@@ -72,10 +72,6 @@ int main(int argc, char *argv[])
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-#ifdef CHARSET_EBCDIC
-#include <openssl/ebcdic.h>
-#endif
-
 #undef SHA_0 /* FIPS 180 */
 #define  SHA_1 /* FIPS 180-1 */
 
@@ -112,11 +108,6 @@ int main(int argc, char *argv[])
 	EVP_MD_CTX c;
 	unsigned char md[SHA_DIGEST_LENGTH];
 
-#ifdef CHARSET_EBCDIC
-	ebcdic2ascii(test[0], test[0], strlen(test[0]));
-	ebcdic2ascii(test[1], test[1], strlen(test[1]));
-#endif
-
 	EVP_MD_CTX_init(&c);
 	P=test;
 	R=ret;
@@ -139,9 +130,6 @@ int main(int argc, char *argv[])
 		}
 
 	memset(buf,'a',1000);
-#ifdef CHARSET_EBCDIC
-	ebcdic2ascii(buf, buf, 1000);
-#endif /*CHARSET_EBCDIC*/
 	EVP_DigestInit_ex(&c,EVP_sha1(), NULL);
 	for (i=0; i<1000; i++)
 		EVP_DigestUpdate(&c,buf,1000);

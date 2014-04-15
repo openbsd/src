@@ -125,14 +125,8 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 			if (((i*dump_width) + j) >= len)
 				break;
 			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-#ifndef CHARSET_EBCDIC
 			(void) snprintf(tmp, sizeof tmp, "%c",
 			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
-#else
-			(void) snprintf(tmp, sizeof tmp, "%c",
-			    ((ch >= os_toascii[' ']) && (ch <= os_toascii['~']))
-			    ? os_toebcdic[ch] : '.');
-#endif
 			BUF_strlcat(buf, tmp, sizeof buf);
 		}
 		BUF_strlcat(buf, "\n", sizeof buf);
