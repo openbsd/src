@@ -1,13 +1,10 @@
-# $OpenBSD: Makefile.inc,v 1.21 2013/08/06 19:05:57 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.22 2014/04/15 20:55:42 miod Exp $
 
 KRB5DIR=	${.CURDIR}/../../../kerberosV/src
 KRB5SUBST=	${KRB5DIR}/../varsub
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -DNO_NTLM
 CPPFLAGS+=	-I${.CURDIR}/../../include -I/usr/include/kerberosV
-.if ${MACHINE} == "vax"
-LDFLAGS+=	-Wl,--no-keep-memory
-.endif
 
 LIBHEIMIPCC=	${.OBJDIR}/../../lib/libheimipcc/libheimipcc.a
 LIBHEIMIPCS=	${.OBJDIR}/../../lib/libheimipcs/libheimipcs.a

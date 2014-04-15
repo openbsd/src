@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2013/08/06 19:05:57 miod Exp $
+#	$OpenBSD: Makefile,v 1.29 2014/04/15 20:55:42 miod Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -49,9 +49,6 @@ DPADD+= ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 LDADD+= -lkrb5 -lasn1 -lcrypto
 LDADD+= -lwind -lroken -lcom_err -lheimbase
 SRCS+= kerberos5.c enc_des.c
-.if ${MACHINE} == "vax"
-LDFLAGS+=-Wl,--no-keep-memory
-.endif
 .endif
 
 .include <bsd.prog.mk>

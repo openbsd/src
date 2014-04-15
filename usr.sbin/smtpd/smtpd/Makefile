@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2014/04/09 18:55:19 eric Exp $
+#	$OpenBSD: Makefile,v 1.74 2014/04/15 20:55:42 miod Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -48,9 +48,5 @@ CFLAGS+=	-Wsign-compare
 CFLAGS+=	-DIO_SSL
 CFLAGS+=	-DQUEUE_PROFILING
 YFLAGS=
-
-.if ${MACHINE} == "vax"
-LDFLAGS+=	-Wl,--no-keep-memory
-.endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.49 2013/11/11 22:58:53 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.50 2014/04/15 20:55:42 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -21,9 +21,6 @@ KRB5=
 # .endif
 
 LDFLAGS=${LDSTATIC}
-.if ${MACHINE} == "vax"
-LDFLAGS+=-Wl,--no-keep-memory
-.endif
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS="${LDFLAGS}" all info
