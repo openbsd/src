@@ -80,7 +80,7 @@
 #    if __INITIAL_POINTER_SIZE == 64
 #      pragma pointer_size save
 #      pragma pointer_size 32
-    void * _malloc32  (__size_t);
+void * _malloc32  (__size_t);
 #      pragma pointer_size restore
 #    endif /* __INITIAL_POINTER_SIZE == 64 */
 #  endif /* __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE */
@@ -131,9 +131,8 @@ static void xopenlog(BIO* bp, char* name, int level);
 static void xsyslog(BIO* bp, int priority, const char* string);
 static void xcloselog(BIO* bp);
 
-static BIO_METHOD methods_slg=
-	{
-	BIO_TYPE_MEM,"syslog",
+static BIO_METHOD methods_slg = {
+	BIO_TYPE_MEM, "syslog",
 	slg_write,
 	NULL,
 	slg_puts,
@@ -142,43 +141,46 @@ static BIO_METHOD methods_slg=
 	slg_new,
 	slg_free,
 	NULL,
-	};
+};
 
-BIO_METHOD *BIO_s_log(void)
-	{
-	return(&methods_slg);
-	}
+BIO_METHOD
+*BIO_s_log(void)
+{
+	return (&methods_slg);
+}
 
-static int slg_new(BIO *bi)
-	{
-	bi->init=1;
-	bi->num=0;
-	bi->ptr=NULL;
+static int
+slg_new(BIO *bi)
+{
+	bi->init = 1;
+	bi->num = 0;
+	bi->ptr = NULL;
 	xopenlog(bi, "application", LOG_DAEMON);
-	return(1);
-	}
+	return (1);
+}
 
-static int slg_free(BIO *a)
-	{
-	if (a == NULL) return(0);
+static int
+slg_free(BIO *a)
+{
+	if (a == NULL)
+		return (0);
 	xcloselog(a);
-	return(1);
-	}
-	
-static int slg_write(BIO *b, const char *in, int inl)
-	{
-	int ret= inl;
+	return (1);
+}
+
+static int
+slg_write(BIO *b, const char *in, int inl)
+{
+	int ret = inl;
 	char* buf;
 	char* pp;
 	int priority, i;
-	static const struct
-		{
+	static const struct {
 		int strl;
 		char str[10];
 		int log_level;
-		}
-	mapping[] =
-		{
+	}
+	mapping[] = {
 		{ 6, "PANIC ", LOG_EMERG },
 		{ 6, "EMERG ", LOG_EMERG },
 		{ 4, "EMR ", LOG_EMERG },
@@ -199,69 +201,72 @@ static int slg_write(BIO *b, const char *in, int inl)
 		{ 6, "DEBUG ", LOG_DEBUG },
 		{ 4, "DBG ", LOG_DEBUG },
 		{ 0, "", LOG_ERR } /* The default */
-		};
+	};
 
-	if((buf= (char *)OPENSSL_malloc(inl+ 1)) == NULL){
-		return(0);
+	if ((buf = (char *)OPENSSL_malloc(inl + 1)) == NULL) {
+		return (0);
 	}
 	strncpy(buf, in, inl);
-	buf[inl]= '\0';
+	buf[inl] = '\0';
 
 	i = 0;
-	while(strncmp(buf, mapping[i].str, mapping[i].strl) != 0) i++;
+	while (strncmp(buf, mapping[i].str, mapping[i].strl) != 0)
+		i++;
 	priority = mapping[i].log_level;
 	pp = buf + mapping[i].strl;
 
 	xsyslog(b, priority, pp);
 
 	OPENSSL_free(buf);
-	return(ret);
-	}
+	return (ret);
+}
 
-static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
-	{
-	switch (cmd)
-		{
+static long
+slg_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+	switch (cmd) {
 	case BIO_CTRL_SET:
 		xcloselog(b);
 		xopenlog(b, ptr, num);
 		break;
 	default:
 		break;
-		}
-	return(0);
 	}
+	return (0);
+}
 
-static int slg_puts(BIO *bp, const char *str)
-	{
-	int n,ret;
+static int
+slg_puts(BIO *bp, const char *str)
+{
+	int n, ret;
 
-	n=strlen(str);
-	ret=slg_write(bp,str,n);
-	return(ret);
-	}
+	n = strlen(str);
+	ret = slg_write(bp, str, n);
+	return (ret);
+}
 
 #if defined(OPENSSL_SYS_WIN32)
 
-static void xopenlog(BIO* bp, char* name, int level)
+static void
+xopenlog(BIO* bp, char* name, int level)
 {
 	if (check_winnt())
-		bp->ptr = RegisterEventSourceA(NULL,name);
+		bp->ptr = RegisterEventSourceA(NULL, name);
 	else
 		bp->ptr = NULL;
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void
+xsyslog(BIO *bp, int priority, const char *string)
 {
 	LPCSTR lpszStrings[2];
-	WORD evtype= EVENTLOG_ERROR_TYPE;
-	char pidbuf[DECIMAL_SIZE(DWORD)+4];
+	WORD evtype = EVENTLOG_ERROR_TYPE;
+	char pidbuf[DECIMAL_SIZE(DWORD) + 4];
 
 	if (bp->ptr == NULL)
 		return;
 
-	switch (priority)
-		{
+	switch (priority) {
 	case LOG_EMERG:
 	case LOG_ALERT:
 	case LOG_CRIT:
@@ -280,33 +285,37 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 				   as error anyway. */
 		evtype = EVENTLOG_ERROR_TYPE;
 		break;
-		}
+	}
 
 	sprintf(pidbuf, "[%u] ", GetCurrentProcessId());
 	lpszStrings[0] = pidbuf;
 	lpszStrings[1] = string;
 
 	ReportEventA(bp->ptr, evtype, 0, 1024, NULL, 2, 0,
-				lpszStrings, NULL);
+	lpszStrings, NULL);
 }
-	
-static void xcloselog(BIO* bp)
+
+static void
+xcloselog(BIO* bp)
 {
-	if(bp->ptr)
+	if (bp->ptr)
 		DeregisterEventSource((HANDLE)(bp->ptr));
-	bp->ptr= NULL;
+	bp->ptr = NULL;
 }
 
 #elif defined(OPENSSL_SYS_VMS)
 
 static int VMS_OPC_target = LOG_DAEMON;
 
-static void xopenlog(BIO* bp, char* name, int level)
+static void
+xopenlog(BIO* bp, char* name, int level)
 {
-	VMS_OPC_target = level; 
+	VMS_OPC_target = level;
+
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void
+xsyslog(BIO *bp, int priority, const char *string)
 {
 	struct dsc$descriptor_s opc_dsc;
 
@@ -329,21 +338,28 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
 	char buf[10240];
 	unsigned int len;
-        struct dsc$descriptor_s buf_dsc;
+	struct dsc$descriptor_s buf_dsc;
 	$DESCRIPTOR(fao_cmd, "!AZ: !AZ");
 	char *priority_tag;
 
-	switch (priority)
-	  {
-	  case LOG_EMERG: priority_tag = "Emergency"; break;
-	  case LOG_ALERT: priority_tag = "Alert"; break;
-	  case LOG_CRIT: priority_tag = "Critical"; break;
-	  case LOG_ERR: priority_tag = "Error"; break;
-	  case LOG_WARNING: priority_tag = "Warning"; break;
-	  case LOG_NOTICE: priority_tag = "Notice"; break;
-	  case LOG_INFO: priority_tag = "Info"; break;
-	  case LOG_DEBUG: priority_tag = "DEBUG"; break;
-	  }
+	switch (priority) {
+	case LOG_EMERG:
+		priority_tag = "Emergency"; break;
+	case LOG_ALERT:
+		priority_tag = "Alert"; break;
+	case LOG_CRIT:
+		priority_tag = "Critical"; break;
+	case LOG_ERR:
+		priority_tag = "Error"; break;
+	case LOG_WARNING:
+		priority_tag = "Warning"; break;
+	case LOG_NOTICE:
+		priority_tag = "Notice"; break;
+	case LOG_INFO:
+		priority_tag = "Info"; break;
+	case LOG_DEBUG:
+		priority_tag = "DEBUG"; break;
+	}
 
 	buf_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
 	buf_dsc.dsc$b_class = DSC$K_CLASS_S;
@@ -353,7 +369,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	lib$sys_fao(&fao_cmd, &len, &buf_dsc, priority_tag, string);
 
 	/* We know there's an 8-byte header.  That's documented. */
-	opcdef_p = OPCDEF_MALLOC( 8+ len);
+	opcdef_p = OPCDEF_MALLOC( 8 + len);
 	opcdef_p->opc$b_ms_type = OPC$_RQ_RQST;
 	memcpy(opcdef_p->opc$z_ms_target_classes, &VMS_OPC_target, 3);
 	opcdef_p->opc$l_ms_rqstid = 0;
@@ -369,13 +385,15 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 	OPENSSL_free(opcdef_p);
 }
 
-static void xcloselog(BIO* bp)
+static void
+xcloselog(BIO* bp)
 {
 }
 
 #else /* Unix/Watt32 */
 
-static void xopenlog(BIO* bp, char* name, int level)
+static void
+xopenlog(BIO* bp, char* name, int level)
 {
 #ifdef WATT32   /* djgpp/DOS */
 	openlog(name, LOG_PID|LOG_CONS|LOG_NDELAY, level);
@@ -384,12 +402,14 @@ static void xopenlog(BIO* bp, char* name, int level)
 #endif
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void
+xsyslog(BIO *bp, int priority, const char *string)
 {
 	syslog(priority, "%s", string);
 }
 
-static void xcloselog(BIO* bp)
+static void
+xcloselog(BIO* bp)
 {
 	closelog();
 }
