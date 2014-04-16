@@ -1687,41 +1687,11 @@ int
 BIO_dgram_non_fatal_error(int err)
 {
 	switch (err) {
-
-#ifdef EWOULDBLOCK
-# ifdef WSAEWOULDBLOCK
-#  if WSAEWOULDBLOCK != EWOULDBLOCK
-	case EWOULDBLOCK:
-#  endif
-# else
-	case EWOULDBLOCK:
-# endif
-#endif
-
-#ifdef EINTR
 	case EINTR:
-#endif
-
-#ifdef EAGAIN
-#if EWOULDBLOCK != EAGAIN
 	case EAGAIN:
-# endif
-#endif
-
-#ifdef EPROTO
-	case EPROTO:
-#endif
-
-#ifdef EINPROGRESS
 	case EINPROGRESS:
-#endif
-
-#ifdef EALREADY
 	case EALREADY:
-#endif
-
 		return (1);
-		/* break; */
 	default:
 		break;
 	}
