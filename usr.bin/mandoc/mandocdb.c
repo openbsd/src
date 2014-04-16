@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.93 2014/04/16 18:59:38 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.94 2014/04/16 21:35:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -92,7 +92,7 @@ struct	inodev {
 
 struct	mpage {
 	struct inodev	 inodev;  /* used for hashing routine */
-	int64_t		 recno;   /* id in mpages SQL table */
+	int64_t		 pageid;  /* pageid in mpages SQL table */
 	enum form	 form;    /* format from file content */
 	char		*sec;     /* section from file content */
 	char		*arch;    /* architecture from file content */
@@ -1091,7 +1091,7 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 					 * to the target.
 					 */
 
-					if (mpage_dest->recno)
+					if (mpage_dest->pageid)
 						dbadd_mlink(mlink);
 
 					if (NULL == mlink->next)
@@ -1884,7 +1884,7 @@ dbadd_mlink(const struct mlink *mlink)
 	SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->dsec);
 	SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->arch);
 	SQL_BIND_TEXT(stmts[STMT_INSERT_LINK], i, mlink->name);
-	SQL_BIND_INT64(stmts[STMT_INSERT_LINK], i, mlink->mpage->recno);
+	SQL_BIND_INT64(stmts[STMT_INSERT_LINK], i, mlink->mpage->pageid);
 	SQL_STEP(stmts[STMT_INSERT_LINK]);
 	sqlite3_reset(stmts[STMT_INSERT_LINK]);
 }
@@ -1936,7 +1936,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->desc);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
-	mpage->recno = sqlite3_last_insert_rowid(db);
+	mpage->pageid = sqlite3_last_insert_rowid(db);
 	sqlite3_reset(stmts[STMT_INSERT_PAGE]);
 
 	while (NULL != mlink) {
@@ -1953,7 +1953,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 		i = 1;
 		SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, key->mask);
 		SQL_BIND_TEXT(stmts[STMT_INSERT_NAME], i, key->rendered);
-		SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mpage->recno);
+		SQL_BIND_INT64(stmts[STMT_INSERT_NAME], i, mpage->pageid);
 		SQL_STEP(stmts[STMT_INSERT_NAME]);
 		sqlite3_reset(stmts[STMT_INSERT_NAME]);
 		if (key->rendered != key->key)
@@ -1968,7 +1968,7 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 		i = 1;
 		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, key->mask);
 		SQL_BIND_TEXT(stmts[STMT_INSERT_KEY], i, key->rendered);
-		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, mpage->recno);
+		SQL_BIND_INT64(stmts[STMT_INSERT_KEY], i, mpage->pageid);
 		SQL_STEP(stmts[STMT_INSERT_KEY]);
 		sqlite3_reset(stmts[STMT_INSERT_KEY]);
 		if (key->rendered != key->key)
@@ -2164,14 +2164,14 @@ create_tables:
 	sql = "CREATE TABLE \"mpages\" (\n"
 	      " \"desc\" TEXT NOT NULL,\n"
 	      " \"form\" INTEGER NOT NULL,\n"
-	      " \"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
+	      " \"pageid\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n"
 	      ");\n"
 	      "\n"
 	      "CREATE TABLE \"mlinks\" (\n"
 	      " \"sec\" TEXT NOT NULL,\n"
 	      " \"arch\" TEXT NOT NULL,\n"
 	      " \"name\" TEXT NOT NULL,\n"
-	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
+	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(pageid) "
 		"ON DELETE CASCADE\n"
 	      ");\n"
 	      "CREATE INDEX mlinks_pageid_idx ON mlinks (pageid);\n"
@@ -2179,14 +2179,14 @@ create_tables:
 	      "CREATE TABLE \"names\" (\n"
 	      " \"bits\" INTEGER NOT NULL,\n"
 	      " \"name\" TEXT NOT NULL,\n"
-	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
+	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(pageid) "
 		"ON DELETE CASCADE\n"
 	      ");\n"
 	      "\n"
 	      "CREATE TABLE \"keys\" (\n"
 	      " \"bits\" INTEGER NOT NULL,\n"
 	      " \"key\" TEXT NOT NULL,\n"
-	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
+	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(pageid) "
 		"ON DELETE CASCADE\n"
 	      ");\n"
 	      "CREATE INDEX keys_pageid_idx ON keys (pageid);\n";
@@ -2199,7 +2199,7 @@ create_tables:
 
 prepare_statements:
 	SQL_EXEC("PRAGMA foreign_keys = ON");
-	sql = "DELETE FROM mpages WHERE id IN "
+	sql = "DELETE FROM mpages WHERE pageid IN "
 		"(SELECT pageid FROM mlinks WHERE "
 		"sec=? AND arch=? AND name=?)";
 	sqlite3_prepare_v2(db, sql, -1, &stmts[STMT_DELETE_PAGE], NULL);

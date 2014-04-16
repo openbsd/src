@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.21 2014/04/16 00:33:24 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.22 2014/04/16 21:35:48 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -66,7 +66,7 @@ struct	expr {
 };
 
 struct	match {
-	uint64_t	 id; /* identifier in database */
+	uint64_t	 pageid; /* identifier in database */
 	char		*desc; /* manual page description */
 	int		 form; /* 0 == catpage */
 };
@@ -148,7 +148,7 @@ mansearch(const struct mansearch *search,
 		struct manpage **res, size_t *sz)
 {
 	int		 fd, rc, c, indexbit;
-	int64_t		 id;
+	int64_t		 pageid;
 	uint64_t	 outbit, iterbit;
 	char		 buf[PATH_MAX];
 	char		*sql;
@@ -167,7 +167,7 @@ mansearch(const struct mansearch *search,
 	info.halloc = hash_halloc;
 	info.alloc = hash_alloc;
 	info.hfree = hash_free;
-	info.key_offset = offsetof(struct match, id);
+	info.key_offset = offsetof(struct match, pageid);
 
 	*sz = cur = maxres = 0;
 	sql = NULL;
@@ -279,16 +279,16 @@ mansearch(const struct mansearch *search,
 		 * distribution of buckets in the table.
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
-			id = sqlite3_column_int64(s, 2);
+			pageid = sqlite3_column_int64(s, 2);
 			idx = ohash_lookup_memory
-				(&htab, (char *)&id,
-				 sizeof(uint64_t), (uint32_t)id);
+				(&htab, (char *)&pageid,
+				 sizeof(uint64_t), (uint32_t)pageid);
 
 			if (NULL != ohash_find(&htab, idx))
 				continue;
 
 			mp = mandoc_calloc(1, sizeof(struct match));
-			mp->id = id;
+			mp->pageid = pageid;
 			mp->form = sqlite3_column_int(s, 1);
 			if (TYPE_Nd == outbit)
 				mp->desc = mandoc_strdup(
@@ -324,11 +324,11 @@ mansearch(const struct mansearch *search,
 			}
 			mpage = *res + cur;
 			mpage->form = mp->form;
-			buildnames(mpage, db, s, mp->id,
+			buildnames(mpage, db, s, mp->pageid,
 			    paths->paths[i], mp->form);
 			mpage->output = TYPE_Nd & outbit ?
 			    mp->desc : outbit ?
-			    buildoutput(db, s2, mp->id, outbit) : NULL;
+			    buildoutput(db, s2, mp->pageid, outbit) : NULL;
 
 			free(mp);
 			cur++;
@@ -354,7 +354,7 @@ out:
 
 static void
 buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
-		uint64_t id, const char *path, int form)
+		uint64_t pageid, const char *path, int form)
 {
 	char		*newnames, *prevsec, *prevarch;
 	const char	*oldnames, *sep1, *name, *sec, *sep2, *arch, *fsec;
@@ -365,7 +365,7 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 	mpage->names = NULL;
 	prevsec = prevarch = NULL;
 	i = 1;
-	SQL_BIND_INT64(db, s, i, id);
+	SQL_BIND_INT64(db, s, i, pageid);
 	while (SQLITE_ROW == (c = sqlite3_step(s))) {
 
 		/* Decide whether we already have some names. */
@@ -447,7 +447,7 @@ buildnames(struct manpage *mpage, sqlite3 *db, sqlite3_stmt *s,
 }
 
 static char *
-buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t id, uint64_t outbit)
+buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t pageid, uint64_t outbit)
 {
 	char		*output, *newoutput;
 	const char	*oldoutput, *sep1, *data;
@@ -456,7 +456,7 @@ buildoutput(sqlite3 *db, sqlite3_stmt *s, uint64_t id, uint64_t outbit)
 
 	output = NULL;
 	i = 1;
-	SQL_BIND_INT64(db, s, i, id);
+	SQL_BIND_INT64(db, s, i, pageid);
 	SQL_BIND_INT64(db, s, i, outbit);
 	while (SQLITE_ROW == (c = sqlite3_step(s))) {
 		if (NULL == output) {
@@ -551,14 +551,14 @@ sql_statement(const struct expr *e)
 			: "desc MATCH ?")
 		    : TYPE_Nm == e->bits
 		    ? (NULL == e->substr
-			? "id IN (SELECT pageid FROM names "
+			? "pageid IN (SELECT pageid FROM names "
 			  "WHERE name REGEXP ?)"
-			: "id IN (SELECT pageid FROM names "
+			: "pageid IN (SELECT pageid FROM names "
 			  "WHERE name MATCH ?)")
 		    : (NULL == e->substr
-			? "id IN (SELECT pageid FROM keys "
+			? "pageid IN (SELECT pageid FROM keys "
 			  "WHERE key REGEXP ? AND bits & ?)"
-			: "id IN (SELECT pageid FROM keys "
+			: "pageid IN (SELECT pageid FROM keys "
 			  "WHERE key MATCH ? AND bits & ?)"), 1);
 		if (e->close)
 			sql_append(&sql, &sz, ")", e->close);
