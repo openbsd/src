@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.2 2014/04/15 10:28:07 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.3 2014/04/16 00:26:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -49,8 +49,6 @@ void			nvme_dumpregs(struct nvme_softc *);
 int			nvme_identify(struct nvme_softc *);
 void			nvme_fill_identify(struct nvme_softc *,
 			    struct nvme_ccb *, void *);
-void			nvme_identify_done(struct nvme_softc *,
-			    struct nvme_ccb *, struct nvme_cqe *);
 
 int			nvme_ccbs_alloc(struct nvme_softc *, u_int);
 void			nvme_ccbs_free(struct nvme_softc *);
@@ -65,6 +63,8 @@ int			nvme_poll(struct nvme_softc *, struct nvme_queue *,
 void			nvme_poll_fill(struct nvme_softc *,
 			    struct nvme_ccb *, void *);
 void			nvme_poll_done(struct nvme_softc *,
+			    struct nvme_ccb *, struct nvme_cqe *);
+void			nvme_empty_done(struct nvme_softc *,
 			    struct nvme_ccb *, struct nvme_cqe *);
 
 struct nvme_queue *	nvme_q_alloc(struct nvme_softc *,
@@ -354,6 +354,7 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	struct nvme_poll_state state;
 	void (*done)(struct nvme_softc *, struct nvme_ccb *, struct nvme_cqe *);
 	void *cookie;
+	u_int16_t flags;
 
 	memset(&state, 0, sizeof(state));
 	state.s.cid = ccb->ccb_id;
@@ -376,7 +377,9 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	ccb->ccb_cookie = cookie;
 	done(sc, ccb, &state.c);
 
-	return (0);
+	flags = lemtoh16(&state.c.flags);
+
+	return (NVME_CQE_SCT(flags) | NVME_CQE_SC(flags));
 }
 
 void
@@ -396,6 +399,12 @@ nvme_poll_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 
 	SET(cqe->flags, htole16(NVME_CQE_PHASE));
 	state->c = *cqe;
+}
+
+void
+nvme_empty_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
 }
 
 int
@@ -438,23 +447,41 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 int
 nvme_identify(struct nvme_softc *sc)
 {
-	struct nvme_ccb *ccb;
+	char sn[41], mn[81], fr[17];
+	struct nvm_identify_controller *identify;
 	struct nvme_dmamem *mem;
+	struct nvme_ccb *ccb;
 	int rv = 1;
 
 	ccb = nvme_ccb_get(sc);
 	if (ccb == NULL)
 		panic("nvme_identify: nvme_ccb_get returned NULL");
 
-	mem = nvme_dmamem_alloc(sc, sizeof(struct nvm_identify_controller));
+	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
 	if (mem == NULL)
 		return (1);
 
-	ccb->ccb_done = nvme_identify_done;
+	identify = NVME_DMA_KVA(mem);
+
+	ccb->ccb_done = nvme_empty_done;
 	ccb->ccb_cookie = mem;
 
+	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(mem),
+	    0, sizeof(*identify), BUS_DMASYNC_PREREAD);
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_fill_identify);
+	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(mem),
+	    0, sizeof(*identify), BUS_DMASYNC_POSTREAD);
 
+	if (rv != 0)
+		goto done;
+
+	scsi_strvis(sn, identify->sn, sizeof(identify->sn));
+	scsi_strvis(mn, identify->mn, sizeof(identify->mn));
+	scsi_strvis(fr, identify->fr, sizeof(identify->fr));
+
+	printf("%s: %s, firmware %s, serial %s\n", DEVNAME(sc), mn, fr, sn);
+
+done:
 	nvme_dmamem_free(sc, mem);
 
 	return (rv);
@@ -465,34 +492,10 @@ nvme_fill_identify(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 {
 	struct nvme_sqe *sqe = slot;
 	struct nvme_dmamem *mem = ccb->ccb_cookie;
-	struct nvm_identify_controller *identify = NVME_DMA_KVA(mem);
-
-	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(mem),
-	    0, sizeof(*identify), BUS_DMASYNC_PREREAD);
 
 	sqe->opcode = NVM_ADMIN_IDENTIFY;
 	htolem64(&sqe->entry.prp[0], NVME_DMA_DVA(mem));
 	htolem32(&sqe->cdw10, 1);
-}
-
-void
-nvme_identify_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_cqe *cqe)
-{
-	struct nvme_dmamem *mem = ccb->ccb_cookie;
-	struct nvm_identify_controller *identify = NVME_DMA_KVA(mem);
-	u_int64_t flags = lemtoh16(&cqe->flags);
-
-	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(mem),
-	    0, sizeof(*identify), BUS_DMASYNC_POSTREAD);
-
-	printf("%s: dnr %c m %c sqt %x sc %x\n", DEVNAME(sc),
-	    ISSET(flags, NVME_CQE_DNR) ? 'Y' : 'N',
-	    ISSET(flags, NVME_CQE_M) ? 'Y' : 'N',
-	    NVME_CQE_SQT(flags), NVME_CQE_SC(flags));
-
-	printf("%s: identify %p sn %s mn %s fr %s\n", DEVNAME(sc), mem,
-	    identify->sn, identify->mn, identify->fr);
 }
 
 int

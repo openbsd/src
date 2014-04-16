@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.3 2014/04/15 10:28:07 dlg Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.4 2014/04/16 00:26:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -140,8 +140,34 @@ struct nvme_cqe {
 	u_int16_t	flags;
 #define NVME_CQE_DNR		(1 << 15)
 #define NVME_CQE_M		(1 << 14)
-#define NVME_CQE_SQT(_f)	(((_f) >> 8) & 0x7)
-#define NVME_CQE_SC(_f)		(((_f) >> 1) & 0x7f)
+#define NVME_CQE_SCT(_f)	((_f) & (0x07 << 8))
+#define  NVME_CQE_SCT_GENERIC		(0x00 << 8)
+#define  NVME_CQE_SCT_COMMAND		(0x01 << 8)
+#define  NVME_CQE_SCT_MEDIAERR		(0x02 << 8)
+#define  NVME_CQE_SCT_VENDOR		(0x07 << 8)
+#define NVME_CQE_SC(_f)		((_f) & (0x7f << 1))
+#define  NVME_CQE_SC_SUCCESS		(0x00 << 1)
+#define  NVME_CQE_SC_INVALID_OPCODE	(0x01 << 1)
+#define  NVME_CQE_SC_INVALID_FIELD	(0x02 << 1)
+#define  NVME_CQE_SC_CID_CONFLICT	(0x03 << 1)
+#define  NVME_CQE_SC_DATA_XFER_ERR	(0x04 << 1)
+#define  NVME_CQE_SC_ABRT_BY_NO_PWR	(0x05 << 1)
+#define  NVME_CQE_SC_INTERNAL_DEV_ERR	(0x06 << 1)
+#define  NVME_CQE_SC_CMD_ABRT_REQD	(0x07 << 1)
+#define  NVME_CQE_SC_CMD_ABDR_SQ_DEL	(0x08 << 1)
+#define  NVME_CQE_SC_CMD_ABDR_FUSE_ERR	(0x09 << 1)
+#define  NVME_CQE_SC_CMD_ABDR_FUSE_MISS	(0x0a << 1)
+#define  NVME_CQE_SC_INVALID_NS		(0x0b << 1)
+#define  NVME_CQE_SC_CMD_SEQ_ERR	(0x0c << 1)
+#define  NVME_CQE_SC_INVALID_LAST_SGL	(0x0d << 1)
+#define  NVME_CQE_SC_INVALID_NUM_SGL	(0x0e << 1)
+#define  NVME_CQE_SC_DATA_SGL_LEN	(0x0f << 1)
+#define  NVME_CQE_SC_MDATA_SGL_LEN	(0x10 << 1)
+#define  NVME_CQE_SC_SGL_TYPE_INVALID	(0x11 << 1)
+#define  NVME_CQE_SC_LBA_RANGE		(0x80 << 1)
+#define  NVME_CQE_SC_CAP_EXCEEDED	(0x81 << 1)
+#define  NVME_CQE_NS_NOT_RDY		(0x82 << 1)
+#define  NVME_CQE_RSV_CONFLICT		(0x83 << 1)
 #define NVME_CQE_PHASE		(1 << 0)
 } __packed __aligned(8);
 
@@ -183,7 +209,7 @@ struct nvm_identify_controller {
 
 	u_int8_t	sn[20];		/* Serial Number */
 	u_int8_t	mn[40];		/* Model Number */
-	u_int8_t	fr[40];		/* Firmware Revision */
+	u_int8_t	fr[8];		/* Firmware Revision */
 
 	u_int8_t	rab;		/* Recommended Arbitration Burst */
 	u_int8_t	ieee[3];	/* IEEE OUI Identifier */
