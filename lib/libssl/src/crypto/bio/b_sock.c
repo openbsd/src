@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -240,7 +240,7 @@ BIO_sock_error(int sock)
 	 * a cast it will choke the compiler: if you do have a cast then
 	 * you can either go for (char *) or (void *).
 	 */
-	i = getsockopt(sock, SOL_SOCKET, SO_ERROR,(void *)&j,(void *)&size);
+	i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, (void *)&size);
 	if (i < 0)
 		return (1);
 	else
@@ -317,12 +317,14 @@ static struct hostent
 	memset(ret->h_addr_list, 0, i*sizeof(char *));
 
 	j = strlen(a->h_name) + 1;
-	if ((ret->h_name = OPENSSL_malloc(j)) == NULL) goto err;
-		memcpy((char *)ret->h_name, a->h_name, j);
+	if ((ret->h_name = OPENSSL_malloc(j)) == NULL)
+		goto err;
+	memcpy((char *)ret->h_name, a->h_name, j);
 	for (i = 0; a->h_aliases[i] != NULL; i++) {
 		j = strlen(a->h_aliases[i]) + 1;
-		if ((ret->h_aliases[i] = OPENSSL_malloc(j)) == NULL) goto err;
-			memcpy(ret->h_aliases[i], a->h_aliases[i], j);
+		if ((ret->h_aliases[i] = OPENSSL_malloc(j)) == NULL)
+			goto err;
+		memcpy(ret->h_aliases[i], a->h_aliases[i], j);
 	}
 	ret->h_length = a->h_length;
 	ret->h_addrtype = a->h_addrtype;
@@ -367,7 +369,8 @@ ghbn_free(struct hostent *a)
 #endif
 
 struct hostent
-*BIO_gethostbyname(const char *name) {
+*BIO_gethostbyname(const char *name)
+{
 #if 1
 	/* Caching gethostbyname() results forever is wrong,
 	 * so we have to let the true gethostbyname() worry about this */
@@ -504,7 +507,7 @@ BIO_socket_ioctl(int fd, long type, void *arg)
 	int i;
 
 #ifdef __DJGPP__
-	i = ioctl(fd, type,(char *)arg);
+	i = ioctl(fd, type, (char *)arg);
 #else
 # if defined(OPENSSL_SYS_VMS)
 	/* 2011-02-18 SMS.
@@ -562,7 +565,7 @@ get_ip(const char *str, unsigned char ip[4])
 			num++;
 			ok = 0;
 		} else if (c == '\0' && (num == 3) && ok)
-		break;
+			break;
 		else
 			return (0);
 	}
@@ -618,8 +621,8 @@ BIO_get_accept_socket(char *host, int bind_mode)
 		static union {
 			void *p;
 			int (WSAAPI *f)(const char *, const char *,
-			const struct addrinfo *,
-			struct addrinfo **);
+			    const struct addrinfo *,
+			    struct addrinfo **);
 		} p_getaddrinfo = {NULL};
 		static union {
 			void *p;
@@ -630,9 +633,10 @@ BIO_get_accept_socket(char *host, int bind_mode)
 		if (p_getaddrinfo.p == NULL) {
 			if ((p_getaddrinfo.p = DSO_global_lookup("getaddrinfo"))==NULL ||
 			    (p_freeaddrinfo.p = DSO_global_lookup("freeaddrinfo"))==NULL)
-			p_getaddrinfo.p = (void*) - 1;
+				p_getaddrinfo.p = (void*) - 1;
 		}
-		if (p_getaddrinfo.p == (void *) - 1) break;
+		if (p_getaddrinfo.p == (void *) - 1)
+			break;
 
 		/* '::port' enforces IPv6 wildcard listener. Some OSes,
 		 * e.g. Solaris, default to IPv6 without any hint. Also
@@ -680,8 +684,7 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	else {
 		if (!BIO_get_host_ip(h, &(ip[0])))
 			goto err;
-		l = (unsigned long)
-		    ((unsigned long)ip[0]<<24L)|
+		l = (unsigned long)((unsigned long)ip[0]<<24L)|
 		    ((unsigned long)ip[1]<<16L)|
 		    ((unsigned long)ip[2]<< 8L)|
 		    ((unsigned long)ip[3]);
@@ -701,7 +704,7 @@ again:
 	if (bind_mode == BIO_BIND_REUSEADDR) {
 		int i = 1;
 
-		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR,(char *)&i, sizeof(i));
+		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i));
 		bind_mode = BIO_BIND_NORMAL;
 	}
 #endif
@@ -709,8 +712,7 @@ again:
 #ifdef SO_REUSEADDR
 		err_num = errno;
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
-		(err_num == EADDRINUSE))
-		{
+		    (err_num == EADDRINUSE)) {
 			client = server;
 			if (h == NULL || strcmp(h, "*") == 0) {
 #if OPENSSL_USE_IPV6
@@ -807,15 +809,16 @@ BIO_accept(int sock, char **addr)
 	sa.len.s = 0;
 	sa.len.i = sizeof(sa.from);
 	memset(&sa.from, 0, sizeof(sa.from));
-	ret = accept(sock, &sa.from.sa,(void *)&sa.len);
+	ret = accept(sock, &sa.from.sa, (void *)&sa.len);
 	if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
 		OPENSSL_assert(sa.len.s <= sizeof(sa.from));
 		sa.len.i = (int)sa.len.s;
 		/* use sa.len.i from this point */
 	}
 	if (ret == -1) {
-		if (BIO_sock_should_retry(ret)) return -2;
-			SYSerr(SYS_F_ACCEPT, errno);
+		if (BIO_sock_should_retry(ret))
+			return -2;
+		SYSerr(SYS_F_ACCEPT, errno);
 		BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
 		goto end;
 	}
@@ -830,7 +833,7 @@ BIO_accept(int sock, char **addr)
 		static union {
 			void *p;
 			int (WSAAPI *f)(const struct sockaddr *,
-			    size_t/*socklen_t*/, char *, size_t,
+			size_t/*socklen_t*/, char *, size_t,
 			    char *, size_t, int);
 		} p_getnameinfo = {NULL};
 		/* 2nd argument to getnameinfo is specified to
@@ -900,7 +903,7 @@ BIO_set_tcp_ndelay(int s, int on)
 #endif
 #endif
 
-	ret = setsockopt(s, opt, TCP_NODELAY,(char *)&on, sizeof(on));
+	ret = setsockopt(s, opt, TCP_NODELAY, (char *)&on, sizeof(on));
 #endif
 	return (ret == 0);
 }

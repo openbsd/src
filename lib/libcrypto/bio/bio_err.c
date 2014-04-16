@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -68,7 +68,7 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_BIO,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_BIO,0,reason)
 
-static ERR_STRING_DATA BIO_str_functs[]= {
+static ERR_STRING_DATA BIO_str_functs[] = {
 	{ERR_FUNC(BIO_F_ACPT_STATE),	"ACPT_STATE"},
 	{ERR_FUNC(BIO_F_BIO_ACCEPT),	"BIO_accept"},
 	{ERR_FUNC(BIO_F_BIO_BER_GET_HEADER),	"BIO_BER_GET_HEADER"},
@@ -105,7 +105,7 @@ static ERR_STRING_DATA BIO_str_functs[]= {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA BIO_str_reasons[]= {
+static ERR_STRING_DATA BIO_str_reasons[] = {
 	{ERR_REASON(BIO_R_ACCEPT_ERROR)          , "accept error"},
 	{ERR_REASON(BIO_R_BAD_FOPEN_MODE)        , "bad fopen mode"},
 	{ERR_REASON(BIO_R_BAD_HOSTNAME_LOOKUP)   , "bad hostname lookup"},

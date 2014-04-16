@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -338,8 +338,8 @@ BIO_indent(BIO *b, int indent, int max)
 	if (indent > max)
 		indent = max;
 	while (indent--)
-	if (BIO_puts(b, " ") != 1)
-		return 0;
+		if (BIO_puts(b, " ") != 1)
+			return 0;
 	return 1;
 }
 
@@ -349,7 +349,7 @@ BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
 	int i;
 
 	i = iarg;
-	return (BIO_ctrl(b, cmd, larg,(char *)&i));
+	return (BIO_ctrl(b, cmd, larg, (char *)&i));
 }
 
 char
@@ -357,7 +357,7 @@ char
 {
 	char *p = NULL;
 
-	if (BIO_ctrl(b, cmd, larg,(char *)&p) <= 0)
+	if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
 		return (NULL);
 	else
 		return (p);
@@ -408,13 +408,13 @@ BIO_callback_ctrl(BIO *b, int cmd,
 	cb = b->callback;
 
 	if ((cb != NULL) &&
-	    ((ret = cb(b, BIO_CB_CTRL,(void *)&fp, cmd, 0, 1L)) <= 0))
+	    ((ret = cb(b, BIO_CB_CTRL, (void *)&fp, cmd, 0, 1L)) <= 0))
 		return (ret);
 
 	ret = b->method->callback_ctrl(b, cmd, fp);
 
 	if (cb != NULL)
-		ret = cb(b, BIO_CB_CTRL|BIO_CB_RETURN,(void *)&fp, cmd, 0, ret);
+		ret = cb(b, BIO_CB_CTRL|BIO_CB_RETURN, (void *)&fp, cmd, 0, ret);
 	return (ret);
 }
 
@@ -444,7 +444,7 @@ BIO
 		return (bio);
 	lb = b;
 	while (lb->next_bio != NULL)
-	lb = lb->next_bio;
+		lb = lb->next_bio;
 	lb->next_bio = bio;
 	if (bio != NULL)
 		bio->prev_bio = lb;
@@ -482,8 +482,9 @@ BIO
 
 	b = last = bio;
 	for (;;) {
-		if (!BIO_should_retry(b)) break;
-			last = b;
+		if (!BIO_should_retry(b))
+			break;
+		last = b;
 		b = b->next_bio;
 		if (b == NULL)
 			break;
@@ -552,8 +553,9 @@ BIO
 	BIO *ret = NULL, *eoc = NULL, *bio, *new_bio;
 
 	for (bio = in; bio != NULL; bio = bio->next_bio) {
-		if ((new_bio = BIO_new(bio->method)) == NULL) goto err;
-			new_bio->callback = bio->callback;
+		if ((new_bio = BIO_new(bio->method)) == NULL)
+			goto err;
+		new_bio->callback = bio->callback;
 		new_bio->cb_arg = bio->cb_arg;
 		new_bio->init = bio->init;
 		new_bio->shutdown = bio->shutdown;
@@ -562,7 +564,7 @@ BIO
 		/* This will let SSL_s_sock() work with stdin/stdout */
 		new_bio->num = bio->num;
 
-		if (!BIO_dup_state(bio,(char *)new_bio)) {
+		if (!BIO_dup_state(bio, (char *)new_bio)) {
 			BIO_free(new_bio);
 			goto err;
 		}
