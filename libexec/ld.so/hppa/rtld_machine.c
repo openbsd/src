@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2013/06/13 04:13:47 brad Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.29 2014/04/16 10:52:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -370,12 +370,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		 */
 		got[-7] = PLT_STUB_INSN1;
 		got[-6] = PLT_STUB_INSN2;
-		__asm __volatile("fdc 0(%0)" :: "r" (&got[-7]));
-		__asm __volatile("fdc 0(%0)" :: "r" (&got[-6]));
-		__asm __volatile("sync");
-		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-7]));
-		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-6]));
-		__asm __volatile("sync");
+		__asm volatile("fdc 0(%0)" :: "r" (&got[-7]));
+		__asm volatile("fdc 0(%0)" :: "r" (&got[-6]));
+		__asm volatile("sync");
+		__asm volatile("fic 0(%%sr0,%0)" :: "r" (&got[-7]));
+		__asm volatile("fic 0(%%sr0,%0)" :: "r" (&got[-6]));
+		__asm volatile("sync");
 
 		/*
 		 * Fill in the PLT stub such that it invokes the
@@ -391,12 +391,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		 * There may be instructions in the same cache line
 		 * and they end up being corrupted otherwise.
 		 */
-		__asm __volatile("fdc 0(%0)" :: "r" (&got[-2]));
-		__asm __volatile("fdc 0(%0)" :: "r" (&got[-1]));
-		__asm __volatile("sync");
-		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-2]));
-		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-1]));
-		__asm __volatile("sync");
+		__asm volatile("fdc 0(%0)" :: "r" (&got[-2]));
+		__asm volatile("fdc 0(%0)" :: "r" (&got[-1]));
+		__asm volatile("sync");
+		__asm volatile("fic 0(%%sr0,%0)" :: "r" (&got[-2]));
+		__asm volatile("fic 0(%%sr0,%0)" :: "r" (&got[-1]));
+		__asm volatile("sync");
 		for (i = 0; i < numrela; i++, rela++) {
 			Elf_Addr *r_addr = (Elf_Addr *)(ooff + rela->r_offset);
 

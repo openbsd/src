@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.50 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.51 2014/04/16 10:52:58 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -185,7 +185,7 @@ resolve_failed:
 		if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
 			fails++;
 	}
-	__asm __volatile("imb" : : : "memory");
+	__asm volatile("imb" : : : "memory");
 
 	/* reprotect the unprotected segments */
 	if ((object->dyn.textrel == 1) && (rel == DT_REL || rel == DT_RELA)) {

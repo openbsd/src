@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.38 2014/04/16 10:52:59 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -164,13 +164,13 @@ _dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
 #define NOP	0x01000000
 	where[2] = JMP   | (value & 0x000003ff);
 	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm __volatile("iflush %0+8" : : "r" (where));
-	__asm __volatile("iflush %0+4" : : "r" (where));
+	__asm volatile("iflush %0+8" : : "r" (where));
+	__asm volatile("iflush %0+4" : : "r" (where));
 	/*
 	 * iflush requires 5 subsequent cycles to be sure all copies
 	 * are flushed from the CPU and the icache.
 	 */
-	__asm __volatile("nop;nop;nop;nop;nop");
+	__asm volatile("nop;nop;nop;nop;nop");
 }
 
 int
@@ -414,14 +414,14 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		    ((Elf_Addr)&_dl_bind_start - (Elf_Addr)&pltgot[1]) >> 2;
 		pltgot[2] = NOP;
 		pltgot[3] = (Elf_Addr) object;
-		__asm __volatile("iflush %0+8"  : : "r" (pltgot));
-		__asm __volatile("iflush %0+4"  : : "r" (pltgot));
-		__asm __volatile("iflush %0+0"  : : "r" (pltgot));
+		__asm volatile("iflush %0+8"  : : "r" (pltgot));
+		__asm volatile("iflush %0+4"  : : "r" (pltgot));
+		__asm volatile("iflush %0+0"  : : "r" (pltgot));
 		/*
 		 * iflush requires 5 subsequent cycles to be sure all copies
 		 * are flushed from the CPU and the icache.
 		 */
-		__asm __volatile("nop;nop;nop;nop;nop");
+		__asm volatile("nop;nop;nop;nop;nop");
 	}
 
 	object->got_addr = 0;
