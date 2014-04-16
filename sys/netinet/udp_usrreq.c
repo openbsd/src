@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.180 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.181 2014/04/16 13:04:38 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -972,7 +972,7 @@ udp_output(struct mbuf *m, ...)
 	struct udpiphdr *ui;
 	u_int32_t ipsecflowinfo = 0;
 	int len = m->m_pkthdr.len;
-	struct in_addr laddr = { INADDR_ANY };
+	struct in_addr *laddr;
 	int error = 0;
 	va_list ap;
 
@@ -998,30 +998,46 @@ udp_output(struct mbuf *m, ...)
 
 	if (addr) {
 		sin = mtod(addr, struct sockaddr_in *);
+
 		if (addr->m_len != sizeof(*sin)) {
 			error = EINVAL;
 			goto release;
 		}
+		if (sin->sin_family != AF_INET) {
+			error = EAFNOSUPPORT;
+			goto release;
+		}
+		if (sin->sin_port == 0) {
+			error = EADDRNOTAVAIL;
+			goto release;
+		}
+
 		if (inp->inp_faddr.s_addr != INADDR_ANY) {
 			error = EISCONN;
 			goto release;
 		}
-		if ((error = in_fixaddr(inp, sin, &laddr)))
+
+		laddr = in_selectsrc(sin, inp->inp_moptions, &inp->inp_route,
+		    &inp->inp_laddr, &error, inp->inp_rtableid);
+		if (laddr == NULL) {
+			if (error == 0)
+				error = EADDRNOTAVAIL;
 			goto release;
+		}
 
 		if (inp->inp_lport == 0) {
 			int s = splsoftnet();
 			error = in_pcbbind(inp, NULL, curproc);
 			splx(s);
-			if (error) goto release;
+			if (error)
+				goto release;
 		}
 	} else {
 		if (inp->inp_faddr.s_addr == INADDR_ANY) {
 			error = ENOTCONN;
 			goto release;
 		}
-		if (laddr.s_addr == INADDR_ANY)
-			laddr = inp->inp_laddr;
+		laddr = &inp->inp_laddr;
 	}
 
 #ifdef IPSEC
@@ -1081,7 +1097,7 @@ udp_output(struct mbuf *m, ...)
 	bzero(ui->ui_x1, sizeof ui->ui_x1);
 	ui->ui_pr = IPPROTO_UDP;
 	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
-	ui->ui_src = laddr;
+	ui->ui_src = *laddr;
 	ui->ui_dst = sin ? sin->sin_addr : inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = sin ? sin->sin_port : inp->inp_fport;

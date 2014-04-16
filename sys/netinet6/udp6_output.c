@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.25 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.26 2014/04/16 13:04:38 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -118,14 +118,6 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		optp = in6p->inp_outputopts6;
 
 	if (addr6) {
-		/*
-		 * IPv4 version of udp_output calls in_pcbconnect in this case,
-		 * which needs splnet and affects performance.
-		 * Since we saw no essential reason for calling in_pcbconnect,
-		 * we get rid of such kind of logic, and call in6_selectsrc
-		 * and in6_pcbsetport in order to fill in the local address
-		 * and the local port.
-		 */
 		struct sockaddr_in6 *sin6 = mtod(addr6, struct sockaddr_in6 *);
 
 		if (addr6->m_len != sizeof(*sin6)) {
@@ -159,12 +151,10 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			goto release;
 		}
 
-		if (1) {	/* we don't support IPv4 mapped address */
-			laddr = in6_selectsrc(sin6, optp,
-			    in6p->inp_moptions6, &in6p->inp_route6,
-			    &in6p->inp_laddr6, &error, in6p->inp_rtableid);
-		} else
-			laddr = &in6p->inp_laddr6;	/*XXX*/
+		/* we don't support IPv4 mapped address */
+		laddr = in6_selectsrc(sin6, optp,
+		    in6p->inp_moptions6, &in6p->inp_route6,
+		    &in6p->inp_laddr6, &error, in6p->inp_rtableid);
 		if (laddr == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;

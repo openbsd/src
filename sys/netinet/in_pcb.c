@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.152 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.153 2014/04/16 13:04:38 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -370,8 +370,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 int
 in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
+	struct in_addr *ina = NULL;
 	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-	struct in_addr laddr;
 	int error;
 
 #ifdef INET6
@@ -383,19 +383,30 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (nam->m_len != sizeof (*sin))
 		return (EINVAL);
+	if (sin->sin_family != AF_INET)
+		return (EAFNOSUPPORT);
+	if (sin->sin_port == 0)
+		return (EADDRNOTAVAIL);
 
-	if ((error = in_fixaddr(inp, sin, &laddr)))
+	ina = in_selectsrc(sin, inp->inp_moptions, &inp->inp_route,
+	    &inp->inp_laddr, &error, inp->inp_rtableid);
+	if (ina == NULL) {
+		if (error == 0)
+			error = EADDRNOTAVAIL;
 		return (error);
+	}
 
 	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
-	    laddr, inp->inp_lport, inp->inp_rtableid) != 0)
+	    *ina, inp->inp_lport, inp->inp_rtableid) != 0)
 		return (EADDRINUSE);
-	KASSERT(inp->inp_laddr.s_addr == INADDR_ANY || inp->inp_lport != 0);
+
+	KASSERT(inp->inp_laddr.s_addr == INADDR_ANY || inp->inp_lport);
+
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		if (inp->inp_lport == 0 &&
 		    in_pcbbind(inp, NULL, curproc) == EADDRNOTAVAIL)
 			return (EADDRNOTAVAIL);
-		inp->inp_laddr = laddr;
+		inp->inp_laddr = *ina;
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
@@ -759,12 +770,36 @@ in_pcbrtentry(struct inpcb *inp)
 	return (ro->ro_rt);
 }
 
-struct sockaddr_in *
-in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
-    struct ip_moptions *mopts, int *errorp, u_int rtableid)
+/*
+ * Return an IPv4 address, which is the most appropriate for a given
+ * destination.
+ * If necessary, this function lookups the routing table and returns
+ * an entry to the caller for later use.
+ */
+struct in_addr *
+in_selectsrc(struct sockaddr_in *sin, struct ip_moptions *mopts,
+    struct route *ro, struct in_addr *laddr, int *errorp, u_int rtableid)
 {
 	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
+
+	if (!TAILQ_EMPTY(&in_ifaddr)) {
+		if (sin->sin_addr.s_addr == INADDR_ANY)
+			sin->sin_addr =
+			    TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
+		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
+		  (TAILQ_FIRST(&in_ifaddr)->ia_ifp->if_flags & IFF_BROADCAST) &&
+		  TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr.s_addr)
+			sin->sin_addr =
+			    TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr;
+	}
+
+	/*
+	 * If the source address is not specified but the socket(if any)
+	 * is already bound, use the bound address.
+	 */
+	if (laddr && laddr->s_addr != INADDR_ANY)
+		return (laddr);
 
 	/*
 	 * If the destination address is multicast and an outgoing
@@ -781,9 +816,9 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 
 			if (ia == NULL) {
 				*errorp = EADDRNOTAVAIL;
-				return NULL;
+				return (NULL);
 			}
-			return (&ia->ia_addr);
+			return (&ia->ia_addr.sin_addr);
 		}
 	}
 	/*
@@ -823,60 +858,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 			return (NULL);
 		}
 	}
-	return (&ia->ia_addr);
-}
 
-/*
- * Fix up source (*laddr) and destination addresses (*sin).
- *
- * If the destination address is INADDR_ANY, use the primary local address.
- * If the supplied address is INADDR_BROADCAST
- * and the primary interface supports broadcast,
- * choose the broadcast address for that interface.
- *
- * If *inp is already bound to a local address, return it in *laddr,
- * otherwise call in_selectsrc() to get a suitable local address.
- */
-int
-in_fixaddr(struct inpcb *inp,
-    struct sockaddr_in *sin, struct in_addr *laddr)
-{
-	if (sin->sin_family != AF_INET)
-		return (EAFNOSUPPORT);
-	if (sin->sin_port == 0)
-		return (EADDRNOTAVAIL);
-	if (!TAILQ_EMPTY(&in_ifaddr)) {
-		if (sin->sin_addr.s_addr == INADDR_ANY)
-			sin->sin_addr = TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
-		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
-		  (TAILQ_FIRST(&in_ifaddr)->ia_ifp->if_flags & IFF_BROADCAST) &&
-		  TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr.s_addr)
-			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr;
-	}
-
-	if (laddr != NULL) {
-		if (inp->inp_laddr.s_addr != INADDR_ANY) {
-			*laddr = inp->inp_laddr;
-		}
-		else {
-			struct sockaddr_in *ifaddr;
-			int error;
-
-			ifaddr = in_selectsrc(sin, &inp->inp_route,
-					inp->inp_socket->so_options,
-					inp->inp_moptions,
-					&error, inp->inp_rtableid);
-			if (ifaddr == NULL) {
-				if (error == 0)
-					error = EADDRNOTAVAIL;
-				return (error);
-			}
-			*laddr = ifaddr->sin_addr;
-		}
-	}
-
-	return (0);
+	return (&ia->ia_addr.sin_addr);
 }
 
 void
