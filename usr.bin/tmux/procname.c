@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.11 2013/10/10 12:39:24 nicm Exp $ */
+/* $OpenBSD: procname.c,v 1.12 2014/04/16 23:05:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -96,7 +96,7 @@ get_proc_name(int fd, char *tty)
 
 retry:
 	if (sysctl(mib, nitems(mib), NULL, &len, NULL, 0) == -1)
-		return (NULL);
+		goto error;
 	len = (len * 5) / 4;
 
 	if ((newbuf = realloc(buf, len)) == NULL)

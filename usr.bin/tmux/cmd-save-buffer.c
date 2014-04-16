@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.22 2014/04/07 10:32:16 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.23 2014/04/16 23:05:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -142,7 +142,6 @@ do_print:
 		return (CMD_RETURN_ERROR);
 	}
 	msg = NULL;
-	msglen = 0;
 
 	used = 0;
 	while (used != pb->size) {

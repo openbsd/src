@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.36 2014/03/31 21:42:27 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.37 2014/04/16 23:05:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -624,7 +624,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		off += size;
 	}
 
-        if (trim) {
+	if (trim) {
 		while (off > 0 && buf[off - 1] == ' ')
 			off--;
 	}
