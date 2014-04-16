@@ -953,8 +953,9 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	time_t time_sec = (time_t) sec;
 	struct tm *tm = NULL;	
 	char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
-	char *p = genTime_str;
-	char *p_end = genTime_str + sizeof(genTime_str);
+	char usecstr[TS_MAX_CLOCK_PRECISION_DIGITS + 2];
+	char *p;
+	int rv;
 
 	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
 		goto err;
@@ -970,18 +971,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	 * meet the rfc3161 requirement: "GeneralizedTime syntax can include 
 	 * fraction-of-second details". 
 	 */                   
-	p += BIO_snprintf(p, p_end - p,
-			  "%04d%02d%02d%02d%02d%02d",
-			  tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, 
-			  tm->tm_hour, tm->tm_min, tm->tm_sec);
-	if (precision > 0)
-	{
-		/* Add fraction of seconds (leave space for dot and null). */
-		BIO_snprintf(p, 2 + precision, ".%ld", usec);
-		/* We cannot use the snprintf return value, 
-		   because it might have been truncated. */
-		p += strlen(p);
-
+	if (precision > 0) {
 		/* To make things a bit harder, X.690 | ISO/IEC 8825-1 provides
 		   the following restrictions for a DER-encoding, which OpenSSL
 		   (specifically ASN1_GENERALIZEDTIME_check() function) doesn't 
@@ -993,16 +983,26 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 		   if the elements correspond to 0, they MUST be wholly
 		   omitted, and the decimal point element also MUST be
 		   omitted." */
-		/* Remove trailing zeros. The dot guarantees the exit
-		   condition of this loop even if all the digits are zero. */
-		while (*--p == '0')
-			/* empty */;
-		/* p points to either the dot or the last non-zero digit. */
-		if (*p != '.') ++p;
-		}
-	/* Add the trailing Z and the terminating null. */
-	*p++ = 'Z';
-	*p++ = '\0';
+		(void)snprintf(usecstr, sizeof(usecstr), ".%ld", usec);
+		/* truncate and trim trailing 0 */
+		usecstr[precision + 1] = '\0';
+		p = usecstr + strlen(usecstr) - 1;
+		while (p > usecstr && *p == '0')
+			*p-- = '\0';
+		/* if we've reached the beginning, delete the . too */
+		if (p == usecstr)
+			*p = '\0';
+
+	} else {
+		/* empty */
+		usecstr[0] = '\0';
+	}
+	rv = snprintf(genTime_str, sizeof(genTime_str),
+	    "%04d%02d%02d%02d%02d%02d%sZ",
+	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, 
+	    tm->tm_hour, tm->tm_min, tm->tm_sec, usecstr);
+	if (rv == -1 || rv >= sizeof(genTime_str))
+		goto err;
 
 	/* Now call OpenSSL to check and set our genTime value */
 	if (!asn1_time && !(asn1_time = M_ASN1_GENERALIZEDTIME_new()))
