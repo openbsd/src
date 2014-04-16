@@ -2584,7 +2584,7 @@ next_protos_parse(unsigned short *outlen, const char *in)
 		return NULL;
 
 	for (i = 0; i <= len; ++i) {
-		if (i == len || in[i] == ', ') {
+		if (i == len || in[i] == ',') {
 			if (i - start > 255) {
 				OPENSSL_free(out);
 				return NULL;
