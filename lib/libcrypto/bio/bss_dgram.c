@@ -66,10 +66,6 @@
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_DGRAM
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
-#include <sys/timeb.h>
-#endif
-
 #ifndef OPENSSL_NO_SCTP
 #include <netinet/sctp.h>
 #include <fcntl.h>
@@ -89,12 +85,6 @@
         (((a)->s6_addr32[0] == 0) &&          \
          ((a)->s6_addr32[1] == 0) &&          \
          ((a)->s6_addr32[2] == htonl(0x0000ffff)))
-#endif
-
-#ifdef WATT32
-#define sock_write SockWrite  /* Watt-32 uses same names */
-#define sock_read  SockRead
-#define sock_puts  SockPuts
 #endif
 
 static int dgram_write(BIO *h, const char *buf, int num);
