@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.8 2013/10/07 11:40:09 reyk Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.9 2014/04/16 08:52:28 blambert Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -290,12 +290,13 @@ snmpc_sendreq(struct snmpc *sc, u_long type)
 
 	/* SNMP header */
 	sc->sc_msgid = arc4random();
-	if ((root = ber_add_sequence(NULL)) == NULL ||
-	    (b = ber_printf_elements(root, "ds{tddd{{O0}}",
+	if ((root = ber_add_sequence(NULL)) == NULL)
+		return (-1);
+	if ((b = ber_printf_elements(root, "ds{tddd{{O0}}",
 	    sc->sc_version, sc->sc_community, BER_CLASS_CONTEXT, type,
 	    sc->sc_msgid, 0, erroridx, &sc->sc_oid)) == NULL) {
 		errno = EINVAL;
-		return (-1);
+		goto fail;
 	}
 
 #ifdef DEBUG
@@ -308,13 +309,21 @@ snmpc_sendreq(struct snmpc *sc, u_long type)
 
 	len = ber_write_elements(&ber, root);
 	if (ber_get_writebuf(&ber, (void *)&ptr) < 1)
-		return (-1);
+		goto berfail;
 
 	if (sendto(sc->sc_fd, ptr, len, 0,
 	    (struct sockaddr *)&sc->sc_addr, sc->sc_addr_len) == -1)
-		return (-1);
+		goto berfail;
 
+	ber_free_elements(root);
+	ber_free(&ber);
 	return (0);
+
+berfail:
+	ber_free(&ber);
+fail:
+	ber_free_elements(root);
+	return (-1);
 }
 
 int
