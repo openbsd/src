@@ -118,12 +118,10 @@
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
 
-static int mh_mode = CRYPTO_MEM_CHECK_OFF;
-
 int
 CRYPTO_mem_ctrl(int mode)
 {
-	return (mh_mode);
+	return (CRYPTO_MEM_CHECK_OFF);
 }
 
 int
@@ -163,8 +161,6 @@ CRYPTO_remove_all_info(void)
 	return(0);
 }
 
-
-static unsigned long break_order_num = 0;
 void
 CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
     int before_p)
