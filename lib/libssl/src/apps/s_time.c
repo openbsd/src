@@ -160,7 +160,7 @@ static void s_time_init(void)
  */
 static void s_time_usage(void)
 {
-	static char umsg[] = "\
+	static const char umsg[] = "\
 -time arg     - max number of seconds to collect data, default %d\n\
 -verify arg   - turn on peer certificate verification, arg == depth\n\
 -cert arg     - certificate file to use, PEM format assumed\n\
@@ -332,7 +332,7 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
-	s_time_meth=SSLv3_client_method();
+	s_time_meth=SSLv23_client_method();
 
 	/* parse the command line arguments */
 	if( parseArgs( argc, argv ) < 0 )

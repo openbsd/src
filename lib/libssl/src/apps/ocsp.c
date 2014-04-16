@@ -1257,7 +1257,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port
 
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	{
-	char http_resp[] = 
+	static const char http_resp[] = 
 		"HTTP/1.0 200 OK\r\nContent-type: application/ocsp-response\r\n"
 		"Content-Length: %d\r\n\r\n";
 	if (!cbio)
@@ -1383,7 +1383,7 @@ OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 	if (use_ssl == 1)
 		{
 		BIO *sbio;
-		ctx = SSL_CTX_new(SSLv3_client_method());
+		ctx = SSL_CTX_new(SSLv23_client_method());
 		if (ctx == NULL)
 			{
 			BIO_printf(err, "Error creating SSL context.\n");
