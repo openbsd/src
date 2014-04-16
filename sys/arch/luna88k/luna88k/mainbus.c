@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.9 2012/02/28 13:40:53 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.10 2014/04/16 12:01:33 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -42,6 +42,7 @@
 #include <machine/cpu.h>
 
 #include "lcd.h"
+#include "pcex.h"
 
 static const struct mainbus_attach_args devs[] = {
 	{ "clock", 0x45000000, 6,  LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
@@ -55,6 +56,9 @@ static const struct mainbus_attach_args devs[] = {
 	{ "spc",   0xe1000040, 3,  LUNA_88K2 },          /* ditto, LUNA-88K2 only */
 #if NPCM > 0
 	{ "pcm",   0x91000000, 4,  LUNA_88K|LUNA_88K2 }, /* NEC-9801-86 Sound board (under testing) */
+#endif
+#if NPCEX > 0
+	{ "pcex",  0x91000000, 4,  LUNA_88K|LUNA_88K2 }, /* PC-9801 extension slot */
 #endif
 };
 

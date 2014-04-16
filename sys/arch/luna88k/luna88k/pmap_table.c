@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.10 2014/01/02 15:30:34 aoyama Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.11 2014/04/16 12:01:33 aoyama Exp $	*/
 
 /* 
  * Mach Operating System
@@ -60,8 +60,8 @@ luna88k_board_table[] = {
 #if 0
 	{ EXT_A_ADDR,		EXT_A_SPACE,		RW,	CI },
 	{ EXT_B_ADDR,		EXT_B_SPACE,		RW,	CI },
-	{ PC_BASE,		PC_SPACE,		RW,	CI },
 #endif
+	{ PC_BASE,		PC_SPACE,		RW,	CI },
 	{ MROM_ADDR,		MROM_SPACE,		R,	CI },
 	{ BMAP_RFCNT,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_BMSEL,		PAGE_SIZE,		RW,	CI },
