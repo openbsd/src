@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.3 2014/04/16 00:26:59 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.4 2014/04/16 01:28:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -46,7 +46,7 @@ int			nvme_disable(struct nvme_softc *);
 
 void			nvme_version(struct nvme_softc *, u_int32_t);
 void			nvme_dumpregs(struct nvme_softc *);
-int			nvme_identify(struct nvme_softc *);
+int			nvme_identify(struct nvme_softc *, u_int);
 void			nvme_fill_identify(struct nvme_softc *,
 			    struct nvme_ccb *, void *);
 
@@ -299,7 +299,7 @@ nvme_attach(struct nvme_softc *sc)
 		goto free_ccbs;
 	}
 
-	if (nvme_identify(sc) != 0) {
+	if (nvme_identify(sc, NVME_CAP_MPSMIN(cap)) != 0) {
 		printf("%s: unable to identify controller\n", DEVNAME(sc));
 		goto disable;
 	}
@@ -445,12 +445,13 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 }
 
 int
-nvme_identify(struct nvme_softc *sc)
+nvme_identify(struct nvme_softc *sc, u_int mps)
 {
 	char sn[41], mn[81], fr[17];
 	struct nvm_identify_controller *identify;
 	struct nvme_dmamem *mem;
 	struct nvme_ccb *ccb;
+	u_int mdts;
 	int rv = 1;
 
 	ccb = nvme_ccb_get(sc);
@@ -480,6 +481,12 @@ nvme_identify(struct nvme_softc *sc)
 	scsi_strvis(fr, identify->fr, sizeof(identify->fr));
 
 	printf("%s: %s, firmware %s, serial %s\n", DEVNAME(sc), mn, fr, sn);
+
+	if (identify->mdts > 0) {
+		mdts = (1 << identify->mdts) * (1 << mps);
+		if (mdts < sc->sc_mdts)
+			sc->sc_mdts = mdts;
+	}
 
 done:
 	nvme_dmamem_free(sc, mem);
