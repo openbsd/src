@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2014/04/16 09:50:10 mpi Exp $
+# $OpenBSD: Makefile,v 1.3 2014/04/16 12:08:46 sthen Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -537,7 +537,7 @@ MLINKS+=\
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_keygen_info.3 \
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_set_app_data.3 \
 	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_app_data.3 \
-	EVP_PKEY_print_private.3 EVP_PKEY_print_private.3 \
+	EVP_PKEY_print_private.3 EVP_PKEY_print_public.3 \
 	EVP_PKEY_print_private.3 EVP_PKEY_print_params.3 \
 	EVP_PKEY_sign.3 EVP_PKEY_sign_init.3 \
 	EVP_PKEY_verify.3 EVP_PKEY_verify_init.3 \
