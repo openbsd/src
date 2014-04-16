@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.6 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.7 2014/04/16 04:59:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -101,19 +101,19 @@ mschap_des_addparity(u_int8_t *key, u_int8_t *des_key)
 	des_key[6] = get7bits(key, 42);
 	des_key[7] = get7bits(key, 49);
 
-	DES_set_odd_parity((des_cblock *)des_key);
+	DES_set_odd_parity((DES_cblock *)des_key);
 }
 
 void
 mschap_des_encrypt(u_int8_t *clear, u_int8_t *key, u_int8_t *cipher)
 {
-	des_cblock		des_key;
-	des_key_schedule	key_schedule;
+	DES_cblock		des_key;
+	DES_key_schedule	key_schedule;
 
 	mschap_des_addparity(key, des_key);
 
 	DES_set_key(&des_key, &key_schedule);
-	DES_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher,
+	DES_ecb_encrypt((DES_cblock *)clear, (DES_cblock *)cipher,
 	    &key_schedule, 1);
 }
 
