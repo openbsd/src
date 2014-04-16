@@ -1826,23 +1826,6 @@ SSL_CTX
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_init(ret);
 #endif
-#ifndef OPENSSL_NO_BUF_FREELISTS
-	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
-	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
-	if (!ret->rbuf_freelist)
-		goto err;
-	ret->rbuf_freelist->chunklen = 0;
-	ret->rbuf_freelist->len = 0;
-	ret->rbuf_freelist->head = NULL;
-	ret->wbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
-	if (!ret->wbuf_freelist) {
-		OPENSSL_free(ret->rbuf_freelist);
-		goto err;
-	}
-	ret->wbuf_freelist->chunklen = 0;
-	ret->wbuf_freelist->len = 0;
-	ret->wbuf_freelist->head = NULL;
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	ret->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
@@ -1880,19 +1863,6 @@ err2:
 static void
 SSL_COMP_free(SSL_COMP *comp)
 	{ OPENSSL_free(comp);
-}
-#endif
-
-#ifndef OPENSSL_NO_BUF_FREELISTS
-static void
-ssl_buf_freelist_free(SSL3_BUF_FREELIST *list)
-{
-	SSL3_BUF_FREELIST_ENTRY *ent, *next;
-	for (ent = list->head; ent; ent = next) {
-		next = ent->next;
-		OPENSSL_free(ent);
-	}
-	OPENSSL_free(list);
 }
 #endif
 
@@ -1971,13 +1941,6 @@ SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
 		ENGINE_finish(a->client_cert_engine);
-#endif
-
-#ifndef OPENSSL_NO_BUF_FREELISTS
-	if (a->wbuf_freelist)
-		ssl_buf_freelist_free(a->wbuf_freelist);
-	if (a->rbuf_freelist)
-		ssl_buf_freelist_free(a->rbuf_freelist);
 #endif
 
 	OPENSSL_free(a);
