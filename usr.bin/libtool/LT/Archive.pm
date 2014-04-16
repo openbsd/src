@@ -1,4 +1,4 @@
-# $OpenBSD: Archive.pm,v 1.5 2012/11/09 10:51:47 espie Exp $
+# $OpenBSD: Archive.pm,v 1.6 2014/04/16 10:31:27 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -22,6 +22,7 @@ use feature qw(say switch state);
 package LT::Archive;
 use LT::Trace;
 use LT::Exec;
+use LT::UList;
 use LT::Util;
 use File::Path;
 
@@ -58,6 +59,7 @@ sub get_symbollist
 	tsay {"generating symbol list in file: $filepath"};
 	tsay {"object list is @$objlist" };
 	my $symbols = [];
+	tie (@$symbols, 'LT::UList');
 	open(my $sh, '-|', 'nm', '--', @$objlist) or 
 	    die "Error running nm on object list @$objlist\n";
 	my $c = 0;
@@ -73,10 +75,8 @@ sub get_symbollist
 		}
 		$c++;
 	}
-	$symbols = reverse_zap_duplicates_ref($symbols);
-	@$symbols = sort @$symbols;
 	open(my $fh, '>', $filepath) or die "Cannot open $filepath\n";
-	print $fh map { "$_\n" } @$symbols;
+	print $fh map { "$_\n" } sort @$symbols;
 }
 
 1;

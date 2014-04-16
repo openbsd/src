@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.9 2014/03/19 02:16:22 afresh1 Exp $
+# $OpenBSD: Library.pm,v 1.10 2014/04/16 10:31:27 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -95,17 +95,12 @@ sub resolve_library
 			    "points to nonexistent file ", $libfile, " !"};
 		}
 	} else {
-		# otherwise, search the filesystem
-		# sort dir search order by priority
-		# XXX not fully correct yet
-		my @sdirs = sort { $dirs->{$b} <=> $dirs->{$a} } keys %$dirs;
 		# search in .libs when priority is high
-		map { $_ = "$_/$ltdir" if (exists $dirs->{$_} && $dirs->{$_} > 3) } @sdirs;
-		push @sdirs, $gp->libsearchdirs if $gp;
+		push @$dirs, $gp->libsearchdirs if $gp;
 		tsay {"searching for $libtofind"};
-		tsay {"search path= ", join(':', @sdirs)};
+		tsay {"search path= ", join(':', @$dirs)};
 		tsay {"search type= ", $shared ? 'shared' : 'static'};
-		foreach my $sd (@sdirs) {
+		foreach my $sd (@$dirs) {
 		       if ($shared) {
 				# select correct library by sorting by version number only
 				my $bestlib = $self->findbest($sd, $libtofind);

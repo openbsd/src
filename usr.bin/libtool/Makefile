@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2012/07/13 11:56:12 espie Exp $
+# $OpenBSD: Makefile,v 1.7 2014/04/16 10:31:27 zhuk Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ PACKAGES= \
     LT/Mode/Link/Library.pm \
     LT/Program.pm \
     LT/Trace.pm \
+    LT/UList.pm \
     LT/Util.pm
 
 LIBBASE=/usr/libdata/perl5

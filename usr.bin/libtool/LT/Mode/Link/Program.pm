@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.3 2012/11/09 10:55:01 espie Exp $
+# $OpenBSD: Program.pm,v 1.4 2014/04/16 10:31:27 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -68,17 +68,15 @@ sub link
 		$dst = ($odir eq '.') ? $fname : "$odir/$fname";
 	}
 
-	$libdirs = reverse_zap_duplicates_ref($libdirs);
-	my $rpath_link = {};
+	tie(my @rpath_link, 'LT::UList');
 	# add libdirs to rpath if they are not in standard lib path
 	for my $l (@$libdirs) {
 		if (LT::OSConfig->is_search_dir($l)) {
-			$rpath_link->{$l} = 1;
+			push @rpath_link, $l;
 		} else {
 			push @$RPdirs, $l;
 		}
 	}
-	$RPdirs = reverse_zap_duplicates_ref($RPdirs);
 	foreach my $k (keys %$libs) {
 		tprint {"key = $k - "};
 		my $r = ref($libs->{$k});
@@ -107,7 +105,7 @@ sub link
 		for my $d (@$RPdirs) {
 			push(@linkeropts, '-rpath', $d);
 		}
-		for my $d (keys %$rpath_link) {
+		for my $d (@rpath_link) {
 			push(@linkeropts, '-rpath-link', $d);
 		}
 	}

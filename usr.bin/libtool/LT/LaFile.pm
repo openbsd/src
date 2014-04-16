@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.20 2014/03/06 08:58:43 ajacoutot Exp $
+# $OpenBSD: LaFile.pm,v 1.21 2014/04/16 10:31:27 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -128,14 +128,11 @@ sub find
 {
 	my ($self, $l, $dirs) = @_;
 
-	# sort dir search order by priority
-	# XXX not fully correct yet
-	my @sdirs = sort { $dirs->{$b} <=> $dirs->{$a} } keys %$dirs;
 	# search in cwd as well
-	unshift @sdirs, '.';
+	unshift @$dirs, '.';
 	tsay {"searching .la for $l"};
-	tsay {"search path= ", join(':', @sdirs)};
-	foreach my $d (@sdirs) {
+	tsay {"search path= ", join(':', @$dirs)};
+	foreach my $d (@$dirs) {
 		foreach my $la_candidate ("$d/lib$l.la", "$d/$l.la") {
 			if (-f $la_candidate) {
 				tsay {"found $la_candidate"};
