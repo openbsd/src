@@ -67,19 +67,7 @@
  * BIO_s_fd here...
  */
 #else
-/*
- * As for unconditional usage of "UPLINK" interface in this module.
- * Trouble is that unlike Unix file descriptors [which are indexes
- * in kernel-side per-process table], corresponding descriptors on
- * platforms which require "UPLINK" interface seem to be indexes
- * in a user-land, non-global table. Well, in fact they are indexes
- * in stdio _iob[], and recall that _iob[] was the very reason why
- * "UPLINK" interface was introduced in first place. But one way on
- * another. Neither libcrypto or libssl use this BIO meaning that
- * file descriptors can only be provided by application. Therefore
- * "UPLINK" calls are due...
- */
-#include "bio_lcl.h"
+#include <openssl/bio.h>
 
 static int fd_write(BIO *h, const char *buf, int num);
 static int fd_read(BIO *h, char *buf, int size);
@@ -125,7 +113,7 @@ fd_new(BIO *bi)
 	bi->init = 0;
 	bi->num = -1;
 	bi->ptr = NULL;
-	bi->flags=BIO_FLAGS_UPLINK; /* essentially redundant */
+	bi->flags=0;
 	return (1);
 }
 
@@ -136,10 +124,10 @@ fd_free(BIO *a)
 		return (0);
 	if (a->shutdown) {
 		if (a->init) {
-			UP_close(a->num);
+			close(a->num);
 		}
 		a->init = 0;
-		a->flags = BIO_FLAGS_UPLINK;
+		a->flags = 0;
 	}
 	return (1);
 }
@@ -151,7 +139,7 @@ fd_read(BIO *b, char *out, int outl)
 
 	if (out != NULL) {
 		errno = 0;
-		ret = UP_read(b->num, out, outl);
+		ret = read(b->num, out, outl);
 		BIO_clear_retry_flags(b);
 		if (ret <= 0) {
 			if (BIO_fd_should_retry(ret))
@@ -166,7 +154,7 @@ fd_write(BIO *b, const char *in, int inl)
 {
 	int ret;
 	errno = 0;
-	ret = UP_write(b->num, in, inl);
+	ret = write(b->num, in, inl);
 	BIO_clear_retry_flags(b);
 	if (ret <= 0) {
 		if (BIO_fd_should_retry(ret))
@@ -185,11 +173,11 @@ fd_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_RESET:
 		num = 0;
 	case BIO_C_FILE_SEEK:
-		ret = (long)UP_lseek(b->num, num, 0);
+		ret = (long)lseek(b->num, num, 0);
 		break;
 	case BIO_C_FILE_TELL:
 	case BIO_CTRL_INFO:
-		ret = (long)UP_lseek(b->num, 0, 1);
+		ret = (long)lseek(b->num, 0, 1);
 		break;
 	case BIO_C_SET_FD:
 		fd_free(b);

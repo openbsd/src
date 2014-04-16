@@ -62,7 +62,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio_lcl.h"
+#include <openssl/bio.h>
 
 #define TRUNCATE
 #define DUMP_WIDTH	16
@@ -149,7 +149,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 static int
 write_fp(const void *data, size_t len, void *fp)
 {
-	return UP_fwrite(data, len, 1, fp);
+	return fwrite(data, len, 1, fp);
 }
 
 int
