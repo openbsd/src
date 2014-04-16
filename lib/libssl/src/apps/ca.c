@@ -76,15 +76,7 @@
 #include <openssl/pem.h>
 
 #ifndef W_OK
-#  ifdef OPENSSL_SYS_VMS
-#    if defined(__DECC)
-#      include <unistd.h>
-#    else
-#      include <unixlib.h>
-#    endif
-#  elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_NETWARE)
 #    include <sys/file.h>
-#  endif
 #endif
 
 #include "apps.h"
@@ -587,16 +579,10 @@ bad:
 		const char *s=X509_get_default_cert_area();
 		size_t len;
 
-#ifdef OPENSSL_SYS_VMS
-		len = strlen(s)+sizeof(CONFIG_FILE);
-		tofree=OPENSSL_malloc(len);
-		strcpy(tofree,s);
-#else
 		len = strlen(s)+sizeof(CONFIG_FILE)+1;
 		tofree=OPENSSL_malloc(len);
 		BUF_strlcpy(tofree,s,len);
 		BUF_strlcat(tofree,"/",len);
-#endif
 		BUF_strlcat(tofree,CONFIG_FILE,len);
 		configfile=tofree;
 		}
@@ -854,7 +840,6 @@ bad:
 			BIO_printf(bio_err,"there needs to be defined a directory for new certificate to be placed in\n");
 			goto err;
 			}
-#ifndef OPENSSL_SYS_VMS
 	    /* outdir is a directory spec, but access() for VMS demands a
 	       filename.  In any case, stat(), below, will catch the problem
 	       if outdir is not a directory spec, and the fopen() or open()
@@ -882,7 +867,6 @@ bad:
 			perror(outdir);
 			goto err;
 			}
-#endif
 		}
 
 	/*****************************************************************/
@@ -943,12 +927,6 @@ bad:
 	if (verbose)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT); /* cannot fail */
-#ifdef OPENSSL_SYS_VMS
-		{
-		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-		out = BIO_push(tmpbio, out);
-		}
-#endif
 		TXT_DB_write(out,db->db);
 		BIO_printf(bio_err,"%d entries loaded from the database\n",
 			   sk_OPENSSL_PSTRING_num(db->db->data));
@@ -1026,12 +1004,6 @@ bad:
 		else
 			{
 			BIO_set_fp(Sout,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
-#ifdef OPENSSL_SYS_VMS
-			{
-			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-			Sout = BIO_push(tmpbio, Sout);
-			}
-#endif
 			}
 		}
 
@@ -1319,9 +1291,7 @@ bad:
 
 			strlcpy(buf[2],outdir,sizeof(buf[2]));
 
-#ifndef OPENSSL_SYS_VMS
 			BUF_strlcat(buf[2],"/",sizeof(buf[2]));
-#endif
 
 			n=(char *)&(buf[2][strlen(buf[2])]);
 			if (j > 0)

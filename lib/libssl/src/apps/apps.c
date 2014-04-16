@@ -109,12 +109,6 @@
  *
  */
 
-#if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
-#define _POSIX_C_SOURCE 2	/* On VMS, you need to define this to get
-				   the declaration of fileno().  The value
-				   2 is to make sure no function defined
-				   in POSIX-2 is left undefined. */
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -335,34 +329,6 @@ void program_name(char *in, char *out, int size)
 	out[n]='\0';
 	}
 #else
-#ifdef OPENSSL_SYS_VMS
-void program_name(char *in, char *out, int size)
-	{
-	char *p=in, *q;
-	char *chars=":]>";
-
-	while(*chars != '\0')
-		{
-		q=strrchr(p,*chars);
-		if (q > p)
-			p = q + 1;
-		chars++;
-		}
-
-	q=strrchr(p,'.');
-	if (q == NULL)
-		q = p + strlen(p);
-	strncpy(out,p,size-1);
-	if (q-p >= size)
-		{
-		out[size-1]='\0';
-		}
-	else
-		{
-		out[q-p]='\0';
-		}
-	}
-#else
 void program_name(char *in, char *out, int size)
 	{
 	char *p;
@@ -374,7 +340,6 @@ void program_name(char *in, char *out, int size)
 		p=in;
 	BUF_strlcpy(out,p,size);
 	}
-#endif
 #endif
 
 int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
@@ -1543,9 +1508,7 @@ char *make_config_name()
 	len=strlen(t)+strlen(OPENSSL_CONF)+2;
 	p=OPENSSL_malloc(len);
 	BUF_strlcpy(p,t,len);
-#ifndef OPENSSL_SYS_VMS
 	BUF_strlcat(p,"/",len);
-#endif
 	BUF_strlcat(p,OPENSSL_CONF,len);
 
 	return p;

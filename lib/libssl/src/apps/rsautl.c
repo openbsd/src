@@ -247,12 +247,6 @@ int MAIN(int argc, char **argv)
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-		{
-		    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-		    out = BIO_push(tmpbio, out);
-		}
-#endif
 	}
 
 	keysize = RSA_size(rsa);

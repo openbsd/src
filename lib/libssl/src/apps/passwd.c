@@ -85,12 +85,6 @@ int MAIN(int argc, char **argv)
 	if (out == NULL)
 		goto err;
 	BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
-#ifdef OPENSSL_SYS_VMS
-	{
-	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	out = BIO_push(tmpbio, out);
-	}
-#endif
 
 	badopt = 0, opt_done = 0;
 	i = 0;

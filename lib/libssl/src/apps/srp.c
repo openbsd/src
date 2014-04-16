@@ -443,16 +443,10 @@ bad:
 			const char *s=X509_get_default_cert_area();
 			size_t len;
 
-#ifdef OPENSSL_SYS_VMS
-			len = strlen(s)+sizeof(CONFIG_FILE);
-			tofree=OPENSSL_malloc(len);
-			strcpy(tofree,s);
-#else
 			len = strlen(s)+sizeof(CONFIG_FILE)+1;
 			tofree=OPENSSL_malloc(len);
 			BUF_strlcpy(tofree,s,len);
 			BUF_strlcat(tofree,"/",len);
-#endif
 			BUF_strlcat(tofree,CONFIG_FILE,len);
 			configfile=tofree;
 			}

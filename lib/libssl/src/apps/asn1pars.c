@@ -224,12 +224,6 @@ bad:
 		goto end;
 		}
 	BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
-#ifdef OPENSSL_SYS_VMS
-	{
-	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	out = BIO_push(tmpbio, out);
-	}
-#endif
 
 	if (oidfile != NULL)
 		{

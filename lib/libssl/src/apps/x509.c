@@ -221,12 +221,6 @@ int MAIN(int argc, char **argv)
 	if (!load_config(bio_err, NULL))
 		goto end;
 	STDout=BIO_new_fp(stdout,BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-	{
-	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-	STDout = BIO_push(tmpbio, STDout);
-	}
-#endif
 
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
@@ -682,12 +676,6 @@ bad:
 		if (outfile == NULL)
 			{
 			BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef OPENSSL_SYS_VMS
-			{
-			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-			out = BIO_push(tmpbio, out);
-			}
-#endif
 			}
 		else
 			{

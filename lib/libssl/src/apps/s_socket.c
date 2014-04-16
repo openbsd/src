@@ -68,15 +68,6 @@
 #include "../e_os2.h"
 #endif
 
-/* With IPv6, it looks like Digital has mixed up the proper order of
-   recursive header file inclusion, resulting in the compiler complaining
-   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
-   is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
-#define __U_INT
-typedef unsigned int u_int;
-#endif
-
 #define USE_SOCKETS
 #define NON_MAIN
 #include "apps.h"

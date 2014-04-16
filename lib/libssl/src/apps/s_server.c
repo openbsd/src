@@ -161,15 +161,6 @@
 #include <sys/types.h>
 #endif
 
-/* With IPv6, it looks like Digital has mixed up the proper order of
-   recursive header file inclusion, resulting in the compiler complaining
-   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
-   is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
-#define __U_INT
-typedef unsigned int u_int;
-#endif
-
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
 #define USE_SOCKETS
@@ -191,11 +182,6 @@ typedef unsigned int u_int;
 #endif
 #include "s_apps.h"
 #include "timeouts.h"
-
-#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
-/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
-#undef FIONBIO
-#endif
 
 #if defined(OPENSSL_SYS_BEOS_R5)
 #include <fcntl.h>
