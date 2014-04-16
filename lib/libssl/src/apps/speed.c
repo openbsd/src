@@ -288,49 +288,11 @@ static SIGRETTYPE sig_done(int sig)
 #define START	0
 #define STOP	1
 
-#if defined(_WIN32)
-
-#if !defined(SIGALRM)
-# define SIGALRM
-#endif
-static unsigned int lapse,schlock;
-static void alarm_win32(unsigned int secs) { lapse = secs*1000; }
-#define alarm alarm_win32
-
-static DWORD WINAPI sleepy(VOID *arg)
-	{
-	schlock = 1;
-	Sleep(lapse);
-	run = 0;
-	return 0;
-	}
-
-static double Time_F(int s)
-	{
-	if (s == START)
-		{
-		HANDLE	thr;
-		schlock = 0;
-		thr = CreateThread(NULL,4096,sleepy,NULL,0,NULL);
-		if (thr==NULL)
-			{
-			DWORD ret=GetLastError();
-			BIO_printf(bio_err,"unable to CreateThread (%d)",ret);
-			ExitProcess(ret);
-			}
-		CloseHandle(thr);		/* detach the thread	*/
-		while (!schlock) Sleep(0);	/* scheduler spinlock	*/
-		}
-
-	return app_tminterval(s,usertime);
-	}
-#else
 
 static double Time_F(int s)
 	{
 	return app_tminterval(s,usertime);
 	}
-#endif
 
 
 #ifndef OPENSSL_NO_ECDH
@@ -1486,9 +1448,7 @@ int MAIN(int argc, char **argv)
 #else
 #define COND(c)	(run && count<0x7fffffff)
 #define COUNT(d) (count)
-#ifndef _WIN32
 	signal(SIGALRM,sig_done);
-#endif
 #endif /* SIGALRM */
 
 #ifndef OPENSSL_NO_MD2
