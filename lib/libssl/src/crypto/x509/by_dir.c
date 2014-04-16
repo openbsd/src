@@ -246,13 +246,11 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 				return 0;
 			ent->dir_type = type;
 			ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
-			ent->dir = OPENSSL_malloc((unsigned int)len + 1);
+			ent->dir = strdup(ss);
 			if (!ent->dir || !ent->hashes) {
 				by_dir_entry_free(ent);
 				return 0;
 			}
-			strncpy(ent->dir, ss,(unsigned int)len);
-			ent->dir[len] = '\0';
 			if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
 				by_dir_entry_free(ent);
 				return 0;

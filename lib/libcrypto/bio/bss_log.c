@@ -160,9 +160,7 @@ slg_write(BIO *b, const char *in, int inl)
 	if ((buf = (char *)OPENSSL_malloc(inl + 1)) == NULL) {
 		return (0);
 	}
-	strncpy(buf, in, inl);
-	buf[inl] = '\0';
-
+	strlcpy(buf, in, inl + 1);
 	i = 0;
 	while (strncmp(buf, mapping[i].str, mapping[i].strl) != 0)
 		i++;

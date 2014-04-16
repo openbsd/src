@@ -165,8 +165,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *metho
 			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		strncpy(objtmp, cnf->name, objlen);
-		objtmp[objlen] = 0;
+		strlcpy(objtmp, cnf->name, objlen + 1);
 		acc->method = OBJ_txt2obj(objtmp, 0);
 		if(!acc->method) {
 			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,X509V3_R_BAD_OBJECT);

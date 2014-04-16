@@ -90,8 +90,7 @@ int i;
 		buf=b->data;
 		OPENSSL_free(b);
 		}
-	    strncpy(buf,"NO X509_NAME",len);
-	    buf[len-1]='\0';
+	    strlcpy(buf,"NO X509_NAME",len);
 	    return buf;
 	    }
 

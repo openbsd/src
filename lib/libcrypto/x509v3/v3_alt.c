@@ -579,10 +579,12 @@ static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 		return 0;
 	objlen = p - value;
 	objtmp = OPENSSL_malloc(objlen + 1);
-	strncpy(objtmp, value, objlen);
-	objtmp[objlen] = 0;
-	gen->d.otherName->type_id = OBJ_txt2obj(objtmp, 0);
-	OPENSSL_free(objtmp);	
+	if (objtmp) {
+		strlcpy(objtmp, value, objlen + 1);
+		gen->d.otherName->type_id = OBJ_txt2obj(objtmp, 0);
+		OPENSSL_free(objtmp);
+	} else
+		gen->d.otherName->type_id = NULL;
 	if (!gen->d.otherName->type_id)
 		return 0;
 	return 1;

@@ -538,7 +538,6 @@ static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 	int i;
 	unsigned int length = 0;
 	char *result = NULL;
-	char *p;
 
 	/* Determine length first. */
 	for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i)
@@ -554,17 +553,14 @@ static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 		return NULL;
 		}
 	/* Concatenate the descriptions. */
-	for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i)
+	result[0] = '\0';
+	for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i)
 		{
 		ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
-		length = ASN1_STRING_length(current);
-		if (i > 0) *p++ = '/';
-		strncpy(p, (const char *)ASN1_STRING_data(current), length);
-		p += length;
+		if (i > 0)
+			strlcat(result, "/", length);
+		strlcat(result, ASN1_STRING_data(current), length);
 		}
-	/* We do have space for this, too. */
-	*p = '\0';
-	
 	return result;
 	}
 
