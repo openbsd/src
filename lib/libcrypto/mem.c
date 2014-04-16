@@ -180,7 +180,8 @@ CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 	return 1;
 }
 
-int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t, const char *, int),
+int
+CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t, const char *, int),
     void (*f)(void *))
 {
 	if (!allow_customize)
@@ -222,7 +223,8 @@ CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
 		*f = free_func;
 }
 
-void CRYPTO_get_mem_ex_functions(void *(**m)(size_t, const char *, int),
+void
+CRYPTO_get_mem_ex_functions(void *(**m)(size_t, const char *, int),
     void *(**r)(void *, size_t, const char *, int), void (**f)(void *))
 {
 	if (m != NULL)
@@ -244,7 +246,8 @@ CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
 		*f = free_locked_func;
 }
 
-void CRYPTO_get_locked_mem_ex_functions(void *(**m)(size_t, const char *, int),
+void
+CRYPTO_get_locked_mem_ex_functions(void *(**m)(size_t, const char *, int),
     void (**f)(void *))
 {
 	if (m != NULL)
@@ -272,8 +275,8 @@ CRYPTO_get_mem_debug_functions(void (**m)(void *, int, const char *, int, int),
 }
 
 
-void
-*CRYPTO_malloc_locked(int num, const char *file, int line)
+void *
+CRYPTO_malloc_locked(int num, const char *file, int line)
 {
 	void *ret = NULL;
 
@@ -292,16 +295,6 @@ void
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
 
-#ifndef OPENSSL_CPUID_OBJ
-        /* Create a dependency on the value of 'cleanse_ctr' so our memory
-         * sanitisation function can't be optimised out. NB: We only do
-         * this for >2Kb so the overhead doesn't bother us. */
-	if (ret && (num > 2048)) {
-		extern unsigned char cleanse_ctr;
-		((unsigned char *)ret)[0] = cleanse_ctr;
-	}
-#endif
-
 	return ret;
 }
 
@@ -318,8 +311,8 @@ CRYPTO_free_locked(void *str)
 		free_debug_func(NULL, 1);
 }
 
-void
-*CRYPTO_malloc(int num, const char *file, int line)
+void *
+CRYPTO_malloc(int num, const char *file, int line)
 {
 	void *ret = NULL;
 
@@ -338,21 +331,11 @@ void
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
 
-#ifndef OPENSSL_CPUID_OBJ
-        /* Create a dependency on the value of 'cleanse_ctr' so our memory
-         * sanitisation function can't be optimised out. NB: We only do
-         * this for >2Kb so the overhead doesn't bother us. */
-	if (ret && (num > 2048)) {
-		extern unsigned char cleanse_ctr;
-		((unsigned char *)ret)[0] = cleanse_ctr;
-	}
-#endif
-
 	return ret;
 }
 
-char
-*CRYPTO_strdup(const char *str, const char *file, int line)
+char *
+CRYPTO_strdup(const char *str, const char *file, int line)
 {
 	size_t len = strlen(str) + 1;
 	char *ret = CRYPTO_malloc(len, file, line);
@@ -361,8 +344,8 @@ char
 	return ret;
 }
 
-void
-*CRYPTO_realloc(void *str, int num, const char *file, int line)
+void *
+CRYPTO_realloc(void *str, int num, const char *file, int line)
 {
 	void *ret = NULL;
 
@@ -384,8 +367,8 @@ void
 	return ret;
 }
 
-void
-*CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
+void *
+CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
 int line)
 {
 	void *ret = NULL;
@@ -433,8 +416,8 @@ CRYPTO_free(void *str)
 		free_debug_func(NULL, 1);
 }
 
-void
-*CRYPTO_remalloc(void *a, int num, const char *file, int line)
+void *
+CRYPTO_remalloc(void *a, int num, const char *file, int line)
 {
 	if (a != NULL)
 		OPENSSL_free(a);
