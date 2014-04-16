@@ -1,4 +1,4 @@
-/*     $OpenBSD: enc_des.c,v 1.2 2010/10/15 10:18:42 jsg Exp $ */
+/*     $OpenBSD: enc_des.c,v 1.3 2014/04/16 05:49:55 jsg Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -502,7 +502,7 @@ void fb64_stream_iv(DES_cblock seed, struct stinfo *stp)
 void fb64_stream_key(DES_cblock key, struct stinfo *stp)
 {
 	memcpy(stp->str_ikey, key, sizeof(DES_cblock));
-	DES_key_sched((des_cblock*)key, &stp->str_sched);
+	DES_key_sched((DES_cblock*)key, &stp->str_sched);
 
 	memcpy(stp->str_output, stp->str_iv, sizeof(DES_cblock));
 
