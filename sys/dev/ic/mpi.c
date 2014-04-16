@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.190 2014/03/25 09:36:37 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.191 2014/04/16 01:19:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -134,6 +134,7 @@ int			mpi_portenable(struct mpi_softc *);
 int			mpi_cfg_coalescing(struct mpi_softc *);
 void			mpi_get_raid(struct mpi_softc *);
 int			mpi_fwupload(struct mpi_softc *);
+int			mpi_manufacturing(struct mpi_softc *);
 int			mpi_scsi_probe_virtual(struct scsi_link *);
 
 int			mpi_eventnotify(struct mpi_softc *);
@@ -297,6 +298,10 @@ mpi_attach(struct mpi_softc *sc)
 	if (mpi_fwupload(sc) != 0) {
 		printf("%s: unable to upload firmware\n", DEVNAME(sc));
 		goto free_replies;
+	}
+
+	if (mpi_manufacturing(sc) != 0) {
+		printf("%s: unable to fetch manufacturing info\n", DEVNAME(sc));		goto free_replies;
 	}
 
 	switch (sc->sc_porttype) {
@@ -2031,6 +2036,12 @@ mpi_iocfacts(struct mpi_softc *sc)
 	    letoh32(ifp.host_page_buffer_sge.sg_hdr),
 	    letoh32(ifp.host_page_buffer_sge.sg_addr_hi),
 	    letoh32(ifp.host_page_buffer_sge.sg_addr_lo));
+
+	sc->sc_fw_maj = ifp.fw_version_maj;
+	sc->sc_fw_min = ifp.fw_version_min;
+	sc->sc_fw_unit = ifp.fw_version_unit;
+	sc->sc_fw_dev = ifp.fw_version_dev;
+
 	sc->sc_maxcmds = lemtoh16(&ifp.global_credits);
 	sc->sc_maxchdepth = ifp.max_chain_depth;
 	sc->sc_ioc_number = ifp.ioc_number;
@@ -2677,6 +2688,42 @@ mpi_fwupload(struct mpi_softc *sc)
 err:
 	mpi_dmamem_free(sc, sc->sc_fw);
 	return (1);
+}
+
+int
+mpi_manufacturing(struct mpi_softc *sc)
+{
+	char board_name[33];
+	struct mpi_cfg_hdr hdr;
+	struct mpi_cfg_manufacturing_pg0 *pg;
+	size_t pagelen;
+	int rv = 1;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_MANUFACTURING,
+	    0, 0, &hdr) != 0)
+		return (1);
+
+	pagelen = hdr.page_length * 4; /* dwords to bytes */
+	if (pagelen < sizeof(*pg))
+		return (1);
+
+	pg = malloc(pagelen, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (pg == NULL)
+		return (1);
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, pg, pagelen) != 0)
+		goto out;
+
+	scsi_strvis(board_name, pg->board_name, sizeof(pg->board_name));
+
+	printf("%s: %s, firmware %d.%d.%d.%d\n", DEVNAME(sc), board_name,
+	    sc->sc_fw_maj, sc->sc_fw_min, sc->sc_fw_unit, sc->sc_fw_dev);
+
+	rv = 0;
+
+out:
+	free(pg, M_TEMP);
+	return (rv);
 }
 
 void
