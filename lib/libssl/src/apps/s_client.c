@@ -166,9 +166,6 @@
 #include "s_apps.h"
 #include "timeouts.h"
 
-#if defined(OPENSSL_SYS_BEOS_R5)
-#include <fcntl.h>
-#endif
 
 #undef PROG
 #define PROG	s_client_main
@@ -595,9 +592,6 @@ int MAIN(int argc, char **argv)
 	ENGINE *e=NULL;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
-#if defined(OPENSSL_SYS_BEOS_R5)
-	int stdin_set = 0;
-#endif
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
@@ -1610,35 +1604,6 @@ SSL_set_tlsext_status_ids(con, ids);
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					 NULL,timeoutp);
 			}
-#elif defined(OPENSSL_SYS_NETWARE)
-			if(!write_tty) {
-				if(read_tty) {
-					tv.tv_sec = 1;
-					tv.tv_usec = 0;
-					i=select(width,(void *)&readfds,(void *)&writefds,
-						NULL,&tv);
-				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					NULL,timeoutp);
-			}
-#elif defined(OPENSSL_SYS_BEOS_R5)
-			/* Under BeOS-R5 the situation is similar to DOS */
-			i=0;
-			stdin_set = 0;
-			(void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
-			if(!write_tty) {
-				if(read_tty) {
-					tv.tv_sec = 1;
-					tv.tv_usec = 0;
-					i=select(width,(void *)&readfds,(void *)&writefds,
-						 NULL,&tv);
-					if (read(fileno(stdin), sbuf, 0) >= 0)
-						stdin_set = 1;
-					if (!i && (stdin_set != 1 || !read_tty))
-						continue;
-				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					 NULL,timeoutp);
-			}
-			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,timeoutp);
@@ -1812,10 +1777,6 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #else
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #endif
-#elif defined (OPENSSL_SYS_NETWARE)
-		else if (_kbhit())
-#elif defined(OPENSSL_SYS_BEOS_R5)
-		else if (stdin_set)
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif

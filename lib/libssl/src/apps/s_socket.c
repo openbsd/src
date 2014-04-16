@@ -97,65 +97,14 @@ static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
 
-#ifdef OPENSSL_SYS_WIN16
-#define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
-#else
 #define SOCKET_PROTOCOL	IPPROTO_TCP
-#endif
 
 #if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 static int wsa_init_done=0;
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
-static struct WSAData wsa_state;
-static int wsa_init_done=0;
 
-#ifdef OPENSSL_SYS_WIN16
-static HWND topWnd=0;
-static FARPROC lpTopWndProc=NULL;
-static FARPROC lpTopHookProc=NULL;
-extern HINSTANCE _hInstance;  /* nice global CRT provides */
-
-static LONG FAR PASCAL topHookProc(HWND hwnd, UINT message, WPARAM wParam,
-	     LPARAM lParam)
-	{
-	if (hwnd == topWnd)
-		{
-		switch(message)
-			{
-		case WM_DESTROY:
-		case WM_CLOSE:
-			SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopWndProc);
-			ssl_sock_cleanup();
-			break;
-			}
-		}
-	return CallWindowProc(lpTopWndProc,hwnd,message,wParam,lParam);
-	}
-
-static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
-	{
-	topWnd=hwnd;
-	return(FALSE);
-	}
-
-#endif /* OPENSSL_SYS_WIN32 */
-#endif /* OPENSSL_SYS_WINDOWS */
-
-#ifdef OPENSSL_SYS_WINDOWS
-static void ssl_sock_cleanup(void)
-	{
-	if (wsa_init_done)
-		{
-		wsa_init_done=0;
-#ifndef OPENSSL_SYS_WINCE
-		WSACancelBlockingCall();
-#endif
-		WSACleanup();
-		}
-	}
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
+#if   defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
 static void sock_cleanup(void)
     {
     if (wsa_init_done)
@@ -173,31 +122,6 @@ static int ssl_sock_init(void)
 	_watt_do_exit = 0;
 	if (sock_init())
 		return (0);
-#elif defined(OPENSSL_SYS_WINDOWS)
-	if (!wsa_init_done)
-		{
-		int err;
-	  
-#ifdef SIGINT
-		signal(SIGINT,(void (*)(int))ssl_sock_cleanup);
-#endif
-		wsa_init_done=1;
-		memset(&wsa_state,0,sizeof(wsa_state));
-		if (WSAStartup(0x0101,&wsa_state)!=0)
-			{
-			err=WSAGetLastError();
-			BIO_printf(bio_err,"unable to start WINSOCK, error code=%d\n",err);
-			return(0);
-			}
-
-#ifdef OPENSSL_SYS_WIN16
-		EnumTaskWindows(GetCurrentTask(),enumproc,0L);
-		lpTopWndProc=(FARPROC)GetWindowLong(topWnd,GWL_WNDPROC);
-		lpTopHookProc=MakeProcInstance((FARPROC)topHookProc,_hInstance);
-
-		SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopHookProc);
-#endif /* OPENSSL_SYS_WIN16 */
-		}
 #elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
    WORD wVerReq;
    WSADATA wsaData;
@@ -348,9 +272,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 #endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
-#ifndef OPENSSL_SYS_WINDOWS
 		perror("bind");
-#endif
 		goto err;
 		}
 	/* Make it 128 for linux */
@@ -381,9 +303,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
 
 	if (!ssl_sock_init()) return(0);
 
-#ifndef OPENSSL_SYS_WINDOWS
 redoit:
-#endif
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);

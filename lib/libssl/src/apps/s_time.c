@@ -81,9 +81,7 @@
 #include "winmain.h"
 #include "wintext.h"
 #endif
-#if !defined(OPENSSL_SYS_MSDOS)
 #include OPENSSL_UNISTD
-#endif
 
 #undef PROG
 #define PROG s_time_main
@@ -134,9 +132,6 @@ static int perform=0;
 #ifdef FIONBIO
 static int t_nbio=0;
 #endif
-#ifdef OPENSSL_SYS_WIN32
-static int exitNow = 0;		/* Set when it's time to exit main */
-#endif
 
 static void s_time_init(void)
 	{
@@ -157,9 +152,6 @@ static void s_time_init(void)
 
 #ifdef FIONBIO
 	t_nbio=0;
-#endif
-#ifdef OPENSSL_SYS_WIN32
-	exitNow = 0;		/* Set when it's time to exit main */
 #endif
 	}
 

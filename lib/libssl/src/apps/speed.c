@@ -100,13 +100,9 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#if !defined(OPENSSL_SYS_MSDOS)
 #include OPENSSL_UNISTD
-#endif
 
-#ifndef OPENSSL_SYS_NETWARE
 #include <signal.h>
-#endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
