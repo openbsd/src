@@ -301,29 +301,19 @@ ssl_get_new_session(SSL *s, int session)
 	}
 
 	if (session) {
-		if (s->version == SSL2_VERSION) {
-			ss->ssl_version = SSL2_VERSION;
-			ss->session_id_length = SSL2_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == SSL3_VERSION) {
-			ss->ssl_version = SSL3_VERSION;
+		switch (s->version) {
+		case SSL3_VERSION:
+		case TLS1_VERSION:
+		case TLS1_1_VERSION:
+		case TLS1_2_VERSION:
+		case DTLS1_BAD_VER:
+		case DTLS1_VERSION:
+			ss->ssl_version = s->version;
 			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == TLS1_VERSION) {
-			ss->ssl_version = TLS1_VERSION;
-			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == TLS1_1_VERSION) {
-			ss->ssl_version = TLS1_1_VERSION;
-			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == TLS1_2_VERSION) {
-			ss->ssl_version = TLS1_2_VERSION;
-			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == DTLS1_BAD_VER) {
-			ss->ssl_version = DTLS1_BAD_VER;
-			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else if (s->version == DTLS1_VERSION) {
-			ss->ssl_version = DTLS1_VERSION;
-			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
-		} else {
-			SSLerr(SSL_F_SSL_GET_NEW_SESSION, SSL_R_UNSUPPORTED_SSL_VERSION);
+			break;
+		default:
+			SSLerr(SSL_F_SSL_GET_NEW_SESSION,
+			    SSL_R_UNSUPPORTED_SSL_VERSION);
 			SSL_SESSION_free(ss);
 			return (0);
 		}
@@ -359,11 +349,7 @@ ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return (0);
 		}
-		/* If the session length was shrunk and we're SSLv2, pad it */
-		if ((tmp < ss->session_id_length) && (s->version == SSL2_VERSION))
-			memset(ss->session_id + tmp, 0, ss->session_id_length - tmp);
-		else
-			ss->session_id_length = tmp;
+		ss->session_id_length = tmp;
 		/* Finally, check for a conflict */
 		if (SSL_has_matching_session_id(s, ss->session_id,
 			ss->session_id_length)) {

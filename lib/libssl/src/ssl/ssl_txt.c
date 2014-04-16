@@ -114,9 +114,7 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		goto err;
 	if (BIO_puts(bp, "SSL-Session:\n")
 		<= 0) goto err;
-	if (x->ssl_version == SSL2_VERSION)
-		s="SSLv2";
-	else if (x->ssl_version == SSL3_VERSION)
+	if (x->ssl_version == SSL3_VERSION)
 		s="SSLv3";
 	else if (x->ssl_version == TLS1_2_VERSION)
 		s="TLSv1.2";

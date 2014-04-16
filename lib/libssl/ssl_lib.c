@@ -250,7 +250,7 @@ SSL_clear(SSL *s)
 	return (1);
 }
 
-/** Used to change an SSL_CTXs default SSL method type */
+/* Used to change an SSL_CTXs default SSL method type */
 int
 SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 {
@@ -259,8 +259,7 @@ SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 	ctx->method = meth;
 
 	sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
-	&(ctx->cipher_list_by_id),
-	meth->version == SSL2_VERSION ? "SSLv2" : SSL_DEFAULT_CIPHER_LIST);
+	    &(ctx->cipher_list_by_id), SSL_DEFAULT_CIPHER_LIST);
 	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
 		SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return (0);
@@ -437,11 +436,13 @@ int
 SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     unsigned int id_len)
 {
-	/* A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
-	 * we can "construct" a session to give us the desired check - ie. to
-	 * find if there's a session in the hash table that would conflict with
-	 * any new session built out of this id/id_len and the ssl_version in
-	 * use by this SSL. */
+	/*
+	 * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp
+	 * shows how we can "construct" a session to give us the desired
+	 * check - ie. to find if there's a session in the hash table
+	 * that would conflict with any new session built out of this
+	 * id/id_len and the ssl_version in use by this SSL.
+	 */
 	SSL_SESSION r, *p;
 
 	if (id_len > sizeof r.session_id)
@@ -450,16 +451,6 @@ SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 	r.ssl_version = ssl->version;
 	r.session_id_length = id_len;
 	memcpy(r.session_id, id, id_len);
-	/* NB: SSLv2 always uses a fixed 16-byte session ID, so even if a
-	 * callback is calling us to check the uniqueness of a shorter ID, it
-	 * must be compared as a padded-out ID because that is what it will be
-	 * converted to when the callback has finished choosing it. */
-	if ((r.ssl_version == SSL2_VERSION) &&
-		(id_len < SSL2_SSL_SESSION_ID_LENGTH)) {
-		memset(r.session_id + id_len, 0,
-		SSL2_SSL_SESSION_ID_LENGTH - id_len);
-		r.session_id_length = SSL2_SSL_SESSION_ID_LENGTH;
-	}
 
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 	p = lh_SSL_SESSION_retrieve(ssl->ctx->sessions, &r);
@@ -1777,11 +1768,10 @@ SSL_CTX
 	if (ret->cert_store == NULL)
 		goto err;
 
-	ssl_create_cipher_list(ret->method,
-	&ret->cipher_list, &ret->cipher_list_by_id,
-	meth->version == SSL2_VERSION ? "SSLv2" : SSL_DEFAULT_CIPHER_LIST);
-	if (ret->cipher_list == NULL
-		|| sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
+	ssl_create_cipher_list(ret->method, &ret->cipher_list,
+	    &ret->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
+	if (ret->cipher_list == NULL ||
+	    sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
 		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
 		goto err2;
 	}
@@ -1790,10 +1780,6 @@ SSL_CTX
 	if (!ret->param)
 		goto err;
 
-	if ((ret->rsa_md5 = EVP_get_digestbyname("ssl2-md5")) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL2_MD5_ROUTINES);
-		goto err2;
-	}
 	if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
 		goto err2;
@@ -2483,15 +2469,16 @@ SSL_get_error(const SSL *s, int i)
 		if (BIO_should_read(bio))
 			return (SSL_ERROR_WANT_READ);
 		else if (BIO_should_write(bio))
-			/* This one doesn't make too much sense ... We never try
-			 * to write to the rbio, and an application program where
-			 * rbio and wbio are separate couldn't even know what it
-			 * should wait for.
-			 * However if we ever set s->rwstate incorrectly
-			 * (so that we have SSL_want_read(s) instead of
-			 * SSL_want_write(s)) and rbio and wbio *are* the same,
-			 * this test works around that bug; so it might be safer
-			 * to keep it. */
+			/*
+			 * This one doesn't make too much sense...  We never
+			 * try to write to the rbio, and an application
+			 * program where rbio and wbio are separate couldn't
+			 * even know what it should wait for.  However if we
+			 * ever set s->rwstate incorrectly (so that we have
+			 * SSL_want_read(s) instead of SSL_want_write(s))
+			 * and rbio and wbio *are* the same, this test works
+			 * around that bug; so it might be safer to keep it.
+			 */
 		return (SSL_ERROR_WANT_WRITE);
 		else if (BIO_should_io_special(bio)) {
 			reason = BIO_get_retry_reason(bio);
@@ -2526,14 +2513,9 @@ SSL_get_error(const SSL *s, int i)
 	}
 
 	if (i == 0) {
-		if (s->version == SSL2_VERSION) {
-			/* assume it is the socket being closed */
-			return (SSL_ERROR_ZERO_RETURN);
-		} else {
-			if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
-				(s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
-			return (SSL_ERROR_ZERO_RETURN);
-		}
+		if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
+		    (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
+		return (SSL_ERROR_ZERO_RETURN);
 	}
 	return (SSL_ERROR_SYSCALL);
 }
@@ -2605,15 +2587,15 @@ ssl_undefined_const_function(const SSL *s)
 	return (0);
 }
 
-SSL_METHOD
-*ssl_bad_method(int ver)
+SSL_METHOD *
+ssl_bad_method(int ver)
 {
 	SSLerr(SSL_F_SSL_BAD_METHOD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return (NULL);
 }
 
-const char
-*SSL_get_version(const SSL *s)
+const char *
+SSL_get_version(const SSL *s)
 {
 	if (s->version == TLS1_2_VERSION)
 		return("TLSv1.2");
@@ -2623,14 +2605,12 @@ const char
 		return("TLSv1");
 	else if (s->version == SSL3_VERSION)
 		return("SSLv3");
-	else if (s->version == SSL2_VERSION)
-		return("SSLv2");
 	else
 		return("unknown");
 }
 
-SSL
-*SSL_dup(SSL *s)
+SSL *
+SSL_dup(SSL *s)
 {
 	STACK_OF(X509_NAME) *sk;
 	X509_NAME *xn;

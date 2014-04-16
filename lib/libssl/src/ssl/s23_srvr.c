@@ -118,8 +118,8 @@
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
-static const SSL_METHOD
-*ssl23_get_server_method(int ver)
+static const SSL_METHOD *
+ssl23_get_server_method(int ver)
 {
 	if (ver == SSL3_VERSION)
 		return (SSLv3_server_method());
@@ -402,7 +402,8 @@ ssl23_get_client_hello(SSL *s)
 
 		ssl3_finish_mac(s, s->packet + 2, s->packet_length - 2);
 		if (s->msg_callback)
-			s->msg_callback(0, SSL2_VERSION, 0, s->packet + 2, s->packet_length-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
+			s->msg_callback(0, SSL2_VERSION, 0, s->packet + 2,
+			    s->packet_length-2, s, s->msg_callback_arg);
 
 		p = s->packet;
 		p += 5;
@@ -410,11 +411,15 @@ ssl23_get_client_hello(SSL *s)
 		n2s(p, sil);
 		n2s(p, cl);
 		d = (unsigned char *)s->init_buf->data;
-		if ((csl + sil + cl + 11) != s->packet_length) /* We can't have TLS extensions in SSL 2.0 format
-			* Client Hello, can we ? Error condition should be
-		                                          * '>' otherweise */
+		if ((csl + sil + cl + 11) != s->packet_length)
 		{
-			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
+			/*
+			 * We can't have TLS extensions in SSL 2.0 format
+			 * Client Hello, can we ? Error condition should be
+			 * '>' otherwise
+			 */
+			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+			    SSL_R_RECORD_LENGTH_MISMATCH);
 			goto err;
 		}
 

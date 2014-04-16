@@ -521,7 +521,7 @@ typedef struct cert_st {
 
 
 typedef struct sess_cert_st {
-	STACK_OF(X509) *cert_chain; /* as received from peer (not for SSL2) */
+	STACK_OF(X509) *cert_chain; /* as received from peer */
 
 	/* The 'peer_...' members are used only by clients. */
 	int peer_cert_type;
@@ -727,43 +727,6 @@ const SSL_METHOD *func_name(void)  \
 	ssl_undefined_void_function, \
 	ssl3_callback_ctrl, \
 	ssl3_ctx_callback_ctrl, \
-	}; \
-	return &func_name##_data; \
-	}
-
-#define IMPLEMENT_ssl2_meth_func(func_name, s_accept, s_connect, s_get_meth) \
-const SSL_METHOD *func_name(void)  \
-	{ \
-	static const SSL_METHOD func_name##_data= { \
-		SSL2_VERSION, \
-		ssl2_new,	/* local */ \
-		ssl2_clear,	/* local */ \
-		ssl2_free,	/* local */ \
-		s_accept, \
-		s_connect, \
-		ssl2_read, \
-		ssl2_peek, \
-		ssl2_write, \
-		ssl2_shutdown, \
-		ssl_ok,	/* NULL - renegotiate */ \
-		ssl_ok,	/* NULL - check renegotiate */ \
-		NULL, /* NULL - ssl_get_message */ \
-		NULL, /* NULL - ssl_get_record */ \
-		NULL, /* NULL - ssl_write_bytes */ \
-		NULL, /* NULL - dispatch_alert */ \
-		ssl2_ctrl,	/* local */ \
-		ssl2_ctx_ctrl,	/* local */ \
-		ssl2_get_cipher_by_char, \
-		ssl2_put_cipher_by_char, \
-		ssl2_pending, \
-		ssl2_num_ciphers, \
-		ssl2_get_cipher, \
-		s_get_meth, \
-		ssl2_default_timeout, \
-		&ssl3_undef_enc_method, \
-		ssl_undefined_void_function, \
-		ssl2_callback_ctrl,	/* local */ \
-		ssl2_ctx_callback_ctrl,	/* local */ \
 	}; \
 	return &func_name##_data; \
 	}

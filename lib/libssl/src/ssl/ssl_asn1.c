@@ -165,16 +165,9 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		l = in->cipher_id;
 	else
 		l = in->cipher->id;
-	if (in->ssl_version == SSL2_VERSION) {
-		a.cipher.length = 3;
-		buf[0] = ((unsigned char)(l >> 16L))&0xff;
-		buf[1] = ((unsigned char)(l >> 8L))&0xff;
-		buf[2] = ((unsigned char)(l     ))&0xff;
-	} else {
-		a.cipher.length = 2;
-		buf[0] = ((unsigned char)(l >> 8L))&0xff;
-		buf[1] = ((unsigned char)(l    ))&0xff;
-	}
+	a.cipher.length = 2;
+	buf[0] = ((unsigned char)(l >> 8L))&0xff;
+	buf[1] = ((unsigned char)(l    ))&0xff;
 
 #ifndef OPENSSL_NO_COMP
 	if (in->compress_meth) {
@@ -400,16 +393,7 @@ long length)
 	os.data = NULL;
 	os.length = 0;
 	M_ASN1_D2I_get_x(ASN1_OCTET_STRING, osp, d2i_ASN1_OCTET_STRING);
-	if (ssl_version == SSL2_VERSION) {
-		if (os.length != 3) {
-			c.error = SSL_R_CIPHER_CODE_WRONG_LENGTH;
-			goto err;
-		}
-		id = 0x02000000L|
-		((unsigned long)os.data[0]<<16L)|
-		((unsigned long)os.data[1]<< 8L)|
-		(unsigned long)os.data[2];
-	} else if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR) {
+	if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR) {
 		if (os.length != 2) {
 			c.error = SSL_R_CIPHER_CODE_WRONG_LENGTH;
 			goto err;
@@ -426,10 +410,7 @@ long length)
 	ret->cipher_id = id;
 
 	M_ASN1_D2I_get_x(ASN1_OCTET_STRING, osp, d2i_ASN1_OCTET_STRING);
-	if ((ssl_version >> 8) >= SSL3_VERSION_MAJOR)
-		i = SSL3_MAX_SSL_SESSION_ID_LENGTH;
-	else /* if (ssl_version>>8 == SSL2_VERSION_MAJOR) */
-	i = SSL2_MAX_SSL_SESSION_ID_LENGTH;
+	i = SSL3_MAX_SSL_SESSION_ID_LENGTH;
 
 	if (os.length > i)
 		os.length = i;
