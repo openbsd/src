@@ -1823,6 +1823,9 @@ SSL_CTX
 	ret->psk_client_callback = NULL;
 	ret->psk_server_callback = NULL;
 #endif
+#ifndef OPENSSL_NO_SRP
+	SSL_CTX_SRP_CTX_init(ret);
+#endif
 #ifndef OPENSSL_NO_BUF_FREELISTS
 	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
 	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
@@ -1961,6 +1964,9 @@ SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_PSK
 	if (a->psk_identity_hint)
 		OPENSSL_free(a->psk_identity_hint);
+#endif
+#ifndef OPENSSL_NO_SRP
+	SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
