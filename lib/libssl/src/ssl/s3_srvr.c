@@ -269,9 +269,7 @@ ssl3_accept(SSL *s)
 				ssl3_init_finished_mac(s);
 				s->state = SSL3_ST_SR_CLNT_HELLO_A;
 				s->ctx->stats.sess_accept++;
-			} else if (!s->s3->send_connection_binding &&
-			    !(s->options &
-			    SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
+			} else if (!s->s3->send_connection_binding) {
 				/*
 				 * Server attempting to renegotiate with
 				 * client that doesn't support secure
