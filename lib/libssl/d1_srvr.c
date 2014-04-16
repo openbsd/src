@@ -1018,6 +1018,9 @@ dtls1_send_server_key_exchange(SSL *s)
 	BN_CTX *bn_ctx = NULL;
 
 #endif
+#ifndef OPENSSL_NO_PSK
+	size_t pskhintlen;
+#endif
 	EVP_PKEY *pkey;
 	unsigned char *p, *d;
 	int al, i;
@@ -1226,8 +1229,9 @@ dtls1_send_server_key_exchange(SSL *s)
 #endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
+			pskhintlen = strlen(s->ctx->psk_identity_hint);
 			/* reserve size for record length and PSK identity hint*/
-			n += 2 + strlen(s->ctx->psk_identity_hint);
+			n += 2 + pskhintlen;
 		} else
 #endif /* !OPENSSL_NO_PSK */
 		{
@@ -1293,10 +1297,10 @@ dtls1_send_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
 			/* copy PSK identity hint */
-			s2n(strlen(s->ctx->psk_identity_hint), p);
+			s2n(pskhintlen, p);
 
-			strncpy((char *)p, s->ctx->psk_identity_hint, strlen(s->ctx->psk_identity_hint));
-			p += strlen(s->ctx->psk_identity_hint);
+			memcpy(p, s->ctx->psk_identity_hint, pskhintlen);
+			p += pskhintlen;
 		}
 #endif
 
