@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.294 2014/04/16 13:57:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.295 2014/04/16 18:46:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -389,7 +389,7 @@ int
 main(int argc, char *argv[])
 {
 	struct stat sb;
-	int	 ch, fd, quiet = 0, i = 0, socket_fd[2];
+	int	 ch, fd, i = 0, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
 	char *ignore_list = NULL;
@@ -430,7 +430,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			quiet = 1;
+			log_perror = 0;
 			break;
 		case 'u':
 			unknown_ok = 0;
@@ -462,9 +462,6 @@ main(int argc, char *argv[])
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
-
-	if (quiet)
-		log_perror = 0;
 
 	tzset();
 
