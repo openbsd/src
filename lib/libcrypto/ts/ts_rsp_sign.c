@@ -983,7 +983,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 		   if the elements correspond to 0, they MUST be wholly
 		   omitted, and the decimal point element also MUST be
 		   omitted." */
-		(void)snprintf(usecstr, sizeof(usecstr), ".%ld", usec);
+		(void)snprintf(usecstr, sizeof(usecstr), ".%06ld", usec);
 		/* truncate and trim trailing 0 */
 		usecstr[precision + 1] = '\0';
 		p = usecstr + strlen(usecstr) - 1;
