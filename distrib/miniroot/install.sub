@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.758 2014/04/04 19:44:02 krw Exp $
+#	$OpenBSD: install.sub,v 1.759 2014/04/16 13:12:22 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -741,8 +741,8 @@ configure_ifs() {
 			chmod 640 $_hn
 			((NIFS++))
 			: ${_first:=$_ifs}
-			_p=done
 		fi
+		_p=done
 	done
 }
 
