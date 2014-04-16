@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc4_rand.c,v 1.1 2014/04/15 16:52:50 miod Exp $	*/
+/*	$OpenBSD: rc4_rand.c,v 1.2 2014/04/16 13:57:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -29,16 +29,24 @@ arc4_rand_bytes(unsigned char *buf, int num)
 	return 1;
 }
 
+static int 
+arc4_rand_status(void)
+{
+	/* no possible error condition */
+	return 1;
+}
+
 static RAND_METHOD rand_arc4_meth = {
 	.seed = NULL,		/* no external seed allowed */
 	.bytes = arc4_rand_bytes,
 	.cleanup = NULL,	/* no cleanup necessary */
 	.add = NULL,		/* no external feed allowed */
 	.pseudorand = arc4_rand_bytes,
-	.status = NULL		/* no possible error condition */
+	.status =  arc4_rand_status
 };
 
 RAND_METHOD *RAND_SSLeay(void)
 {
 	return &rand_arc4_meth;
 }
+
