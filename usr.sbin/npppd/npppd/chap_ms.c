@@ -1,9 +1,8 @@
-/*	$OpenBSD: chap_ms.c,v 1.5 2012/12/05 23:20:26 deraadt Exp $	*/
-/*	$vantronix: chap_ms.c,v 1.7 2010/06/02 12:22:58 reyk Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.6 2014/04/16 05:57:05 jsg Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
- * Copyright (c) 1997 - 2001 Brian Somers <brian@Awfulhak.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 1997-2001 Brian Somers <brian@Awfulhak.org>
  * Copyright (c) 1997 Gabor Kincses <gabor@acm.org>
  * Copyright (c) 1995 Eric Rosenquist
  *
@@ -102,19 +101,19 @@ mschap_des_addparity(u_int8_t *key, u_int8_t *des_key)
 	des_key[6] = get7bits(key, 42);
 	des_key[7] = get7bits(key, 49);
 
-	DES_set_odd_parity((des_cblock *)des_key);
+	DES_set_odd_parity((DES_cblock *)des_key);
 }
 
 void
 mschap_des_encrypt(u_int8_t *clear, u_int8_t *key, u_int8_t *cipher)
 {
-	des_cblock		des_key;
-	des_key_schedule	key_schedule;
+	DES_cblock		des_key;
+	DES_key_schedule	key_schedule;
 
 	mschap_des_addparity(key, des_key);
 
 	DES_set_key(&des_key, &key_schedule);
-	DES_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher,
+	DES_ecb_encrypt((DES_cblock *)clear, (DES_cblock *)cipher,
 	    &key_schedule, 1);
 }
 
@@ -122,7 +121,7 @@ void
 mschap_challenge_response(u_int8_t *challenge, u_int8_t *pwhash,
     u_int8_t *response)
 {
-	u_int8_t	 padpwhash[21];
+	u_int8_t	 padpwhash[21 + 1];
 
 	bzero(&padpwhash, sizeof(padpwhash));
 	memcpy(padpwhash, pwhash, MSCHAP_HASH_SZ);
@@ -158,7 +157,7 @@ mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
 		name++;
 
 	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ); 
+	EVP_DigestUpdate(&ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ);
 	EVP_DigestUpdate(&ctx, auth_challenge, MSCHAPV2_CHALLENGE_SZ);
 	EVP_DigestUpdate(&ctx, name, strlen(name));
 	EVP_DigestFinal(&ctx, md, &mdlen);
@@ -365,14 +364,13 @@ void
 mschap_lanman(u_int8_t *digest, u_int8_t *challenge, u_int8_t *secret)
 {
 	static u_int8_t	 salt[] = "KGS!@#$%"; /* RASAPI32.dll */
-	u_int8_t	 SECRET[14], *ptr, *end;
+	u_int8_t	 SECRET[14 + 1], *ptr, *end;
 	u_int8_t	 hash[MSCHAP_HASH_SZ];
 
-	end = SECRET + sizeof(SECRET);
+	bzero(&SECRET, sizeof(SECRET));
+	end = SECRET + (sizeof(SECRET) - 1);
 	for (ptr = SECRET; *secret && ptr < end; ptr++, secret++)
 		*ptr = toupper(*secret);
-	if (ptr < end)
-		memset(ptr, '\0', end - ptr);
 
 	mschap_des_encrypt(salt, SECRET, hash);
 	mschap_des_encrypt(salt, SECRET + 7, hash + 8);
@@ -394,7 +392,7 @@ mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
 	EVP_DigestUpdate(&ctx, crypted, 2);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
-	for(i = 0; i < mdlen; i++) {
+	for (i = 0; i < mdlen; i++) {
 		p[i] = b[i] ^ crypted[i+2];
 	}
 
@@ -403,7 +401,7 @@ mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
 	EVP_DigestUpdate(&ctx, crypted + 2, mdlen);
 	EVP_DigestFinal(&ctx, b, &mdlen);
 
-	for(i = 0; i < mdlen; i++) {
+	for (i = 0; i < mdlen; i++) {
 		p[i+16] = b[i] ^ crypted[i+18];
 	}
 
