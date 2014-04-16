@@ -1944,13 +1944,11 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/crypto.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/des.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/des_old.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/e_os2.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ecdsa.ph
@@ -1962,7 +1960,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/lhash.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/md5.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/mdc2.ph
@@ -1985,7 +1982,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/safestack.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/srp.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/srtp.ph

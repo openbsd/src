@@ -1417,13 +1417,11 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/crypto.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/des.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/des_old.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/e_os2.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ecdsa.ph
@@ -1435,7 +1433,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/lhash.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/md2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/md5.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/mdc2.ph
@@ -1458,7 +1455,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/safestack.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/srp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/srtp.ph

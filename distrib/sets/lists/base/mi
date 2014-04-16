@@ -857,6 +857,7 @@
 ./usr/libdata/perl5/LT/Mode/Link/Program.pm
 ./usr/libdata/perl5/LT/Program.pm
 ./usr/libdata/perl5/LT/Trace.pm
+./usr/libdata/perl5/LT/UList.pm
 ./usr/libdata/perl5/LT/Util.pm
 ./usr/libdata/perl5/Locale
 ./usr/libdata/perl5/Locale/Codes

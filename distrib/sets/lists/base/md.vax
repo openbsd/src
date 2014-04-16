@@ -1293,13 +1293,11 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/crypto.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/des.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/des_old.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/e_os2.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ecdsa.ph
@@ -1311,7 +1309,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/lhash.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/mdc2.ph
@@ -1334,7 +1331,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/safestack.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/srp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/srtp.ph

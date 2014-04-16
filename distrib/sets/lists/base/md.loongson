@@ -2006,13 +2006,11 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/crypto.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/des.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/des_old.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/dh.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/dtls1.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/e_os2.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ecdsa.ph
@@ -2024,7 +2022,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/krb5_asn.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/lhash.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/md2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/md5.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/mdc2.ph
@@ -2047,7 +2044,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/ripemd.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/rsa.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/safestack.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/seed.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/sha.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/srp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/srtp.ph
