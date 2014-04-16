@@ -191,21 +191,24 @@ args_from_file(char *file, int *argc, char **argv[])
 	*argc = 0;
 	*argv = NULL;
 
-	if (buf != NULL) OPENSSL_free(buf);
-		buf = (char *)OPENSSL_malloc(len + 1);
+	if (buf != NULL)
+		OPENSSL_free(buf);
+	buf = (char *)OPENSSL_malloc(len + 1);
 	if (buf == NULL)
 		return (0);
 
 	len = fread(buf, 1, len, fp);
-	if (len <= 1) return (0);
-		buf[len] = '\0';
+	if (len <= 1)
+		return (0);
+	buf[len] = '\0';
 
 	i = 0;
 	for (p = buf; *p; p++)
 		if (*p == '\n')
 			i++;
-	if (arg != NULL) OPENSSL_free(arg);
-		arg = (char **)OPENSSL_malloc(sizeof(char *)*(i*2));
+	if (arg != NULL)
+		OPENSSL_free(arg);
+	arg = (char **)OPENSSL_malloc(sizeof(char *)*(i*2));
 
 	*argv = arg;
 	num = 0;
@@ -384,7 +387,7 @@ chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 		if ((*p == '\'') || (*p == '\"')) /* scan for closing quote */
 		{
 			i= *(p++);
-			arg->data[num-1]++; /* jump over quote */
+			arg->data[num - 1]++; /* jump over quote */
 			while (*p && (*p != i))
 				p++;
 			*p = '\0';
@@ -448,7 +451,7 @@ ui_read(UI *ui, UI_STRING *uis)
 		case UIT_VERIFY:
 			{
 				const char *password =
-				((PW_CB_DATA *)UI_get0_user_data(ui))->password;
+				    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
 				if (password && password[0] != '\0') {
 					UI_set_result(ui, uis, password);
 					return 1;
@@ -590,18 +593,23 @@ int
 app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2)
 {
 	int same;
-	if (!arg2 || !arg1 || strcmp(arg1, arg2)) same = 0;
-		else
+	if (!arg2 || !arg1 || strcmp(arg1, arg2))
+		same = 0;
+	else
 		same = 1;
 	if (arg1) {
 		*pass1 = app_get_pass(err, arg1, same);
-		if (!*pass1) return 0;
-		} else if (pass1) *pass1 = NULL;
-			if (arg2) {
+		if (!*pass1)
+			return 0;
+	} else if (pass1)
+		*pass1 = NULL;
+	if (arg2) {
 		*pass2 = app_get_pass(err, arg2, same ? 2 : 0);
-		if (!*pass2) return 0;
-		} else if (pass2) *pass2 = NULL;
-		return 1;
+		if (!*pass2)
+			return 0;
+	} else if (pass2)
+		*pass2 = NULL;
+	return 1;
 }
 
 static char *
@@ -639,7 +647,8 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 		} else if (!strncmp(arg, "fd:", 3)) {
 			BIO *btmp;
 			i = atoi(arg + 3);
-			if (i >= 0) pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
+			if (i >= 0)
+				pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
 			if ((i < 0) || !pwdbio) {
 				BIO_printf(err, "Can't access file descriptor %s\n", arg + 3);
 				return NULL;
@@ -669,8 +678,9 @@ app_get_pass(BIO *err, char *arg, int keepbio)
 		return NULL;
 	}
 	tmp = strchr(tpass, '\n');
-	if (tmp) *tmp = 0;
-		return BUF_strdup(tpass);
+	if (tmp)
+		*tmp = 0;
+	return BUF_strdup(tpass);
 }
 
 int
@@ -790,7 +800,7 @@ load_cert(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
 		    (pem_password_cb *)password_callback, NULL);
 	else if (format == FORMAT_PKCS12) {
 		if (!load_pkcs12(err, cert, cert_descrip, NULL, NULL,
-			    NULL, &x, NULL))
+		    NULL, &x, NULL))
 			goto end;
 	} else {
 		BIO_printf(err, "bad input format specified for %s\n",
@@ -802,8 +812,9 @@ end:
 		BIO_printf(err, "unable to load certificate\n");
 		ERR_print_errors(err);
 	}
-	if (cert != NULL) BIO_free(cert);
-		return (x);
+	if (cert != NULL)
+		BIO_free(cert);
+	return (x);
 }
 
 EVP_PKEY *
@@ -978,9 +989,10 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 end:
-	if (key != NULL) BIO_free(key);
-		if (pkey == NULL)
-			BIO_printf(err, "unable to load %s\n", key_descrip);
+	if (key != NULL)
+		BIO_free(key);
+	if (pkey == NULL)
+		BIO_printf(err, "unable to load %s\n", key_descrip);
 	return (pkey);
 }
 
@@ -1273,8 +1285,9 @@ set_multi_opts(unsigned long *flags, const char *arg, const NAME_EX_TBL *in_tbl)
 	STACK_OF(CONF_VALUE) *vals;
 	CONF_VALUE *val;
 	int i, ret = 1;
-	if (!arg) return 0;
-		vals = X509V3_parse_list(arg);
+	if (!arg)
+		return 0;
+	vals = X509V3_parse_list(arg);
 	for (i = 0; i < sk_CONF_VALUE_num(vals); i++) {
 		val = sk_CONF_VALUE_value(vals, i);
 		if (!set_table_opts(flags, val->name, in_tbl))
@@ -1560,9 +1573,11 @@ load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 		ai = NULL;
 	}
 err:
-	if (in != NULL) BIO_free(in);
-		if (ai != NULL) ASN1_INTEGER_free(ai);
-		return (ret);
+	if (in != NULL)
+		BIO_free(in);
+	if (ai != NULL)
+		ASN1_INTEGER_free(ai);
+	return (ret);
 }
 
 int
@@ -1934,8 +1949,9 @@ void
 free_index(CA_DB *db)
 {
 	if (db) {
-		if (db->db) TXT_DB_free(db->db);
-			OPENSSL_free(db);
+		if (db->db)
+			TXT_DB_free(db->db);
+		OPENSSL_free(db);
 	}
 }
 
@@ -2641,8 +2657,9 @@ WIN32_rename(const char *from, const char *to)
 err:
 	ret = -1;
 ok:
-	if (tfrom != NULL && tfrom != (TCHAR *)from)	free(tfrom);
-		return ret;
+	if (tfrom != NULL && tfrom != (TCHAR *)from)
+		free(tfrom);
+	return ret;
 }
 #endif
 
@@ -2662,10 +2679,11 @@ app_tminterval(int stop, int usertime)
 		if (check_winnt())
 			proc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE,
 			    GetCurrentProcessId());
-		if (proc == NULL) proc = (HANDLE) - 1;
-		}
+		if (proc == NULL)
+			proc = (HANDLE) - 1;
+	}
 
-		if (usertime && proc != (HANDLE) - 1) {
+	if (usertime && proc != (HANDLE) - 1) {
 		FILETIME junk;
 		GetProcessTimes(proc, &junk, &junk, &junk, &now);
 	} else
@@ -2685,8 +2703,7 @@ app_tminterval(int stop, int usertime)
 	if (stop == TM_START) {
 		tmstart.u.LowPart = now.dwLowDateTime;
 		tmstart.u.HighPart = now.dwHighDateTime;
-	}
-	else	{
+	} else {
 		ULARGE_INTEGER tmstop;
 
 		tmstop.u.LowPart = now.dwLowDateTime;
@@ -2817,7 +2834,7 @@ app_tminterval(int stop, int usertime)
 		tmstart = now;
 	else
 		ret = ((now.tv_sec + now.tv_usec * 1e-6) -
-		    (tmstart.tv_sec + tmstart.tv_usec * 1e-6) );
+		    (tmstart.tv_sec + tmstart.tv_usec * 1e-6));
 
 	return ret;
 }
