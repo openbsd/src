@@ -80,9 +80,13 @@
  * Entropy devices and EGD sockets are handled in rand_unix.c */
 
 int RAND_load_file(const char *file, long bytes)
-	{
-	return(0);
-	}
+{
+	/* the "whole" file */
+	if (bytes == -1)
+		return 123456;
+	else
+		return bytes;
+}
 
 int RAND_write_file(const char *file)
 	{
