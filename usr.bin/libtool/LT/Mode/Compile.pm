@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.12 2012/07/12 12:35:21 espie Exp $
+# $OpenBSD: Compile.pm,v 1.13 2014/04/16 14:39:06 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -67,7 +67,7 @@ sub run
 		    },
 		'pie|fpie|fPIE',
 		    sub {
-		    	push(@pie_flags, $_[3]);
+			push(@pie_flags, $_[3]);
 		    },
 		'no-suppress', # we just ignore that one
 		'prefer-pic', sub { $pic_mode = 1; },

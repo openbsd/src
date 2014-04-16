@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.10 2014/04/16 10:31:27 zhuk Exp $
+# $OpenBSD: Library.pm,v 1.11 2014/04/16 14:39:05 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -67,7 +67,7 @@ sub resolve_library
 		my $oldlib = $lainfo->{old_library};
 		my $libdir = $lainfo->{libdir};
 		my $installed = $lainfo->{installed};
- 		my $d = abs_dir($self->{lafile});
+		my $d = abs_dir($self->{lafile});
 		# get the name we need (this may include a -release)
 		if (!$dlname && !$oldlib) {
 			die "Link error: neither static nor shared library found in $self->{lafile}\n";
@@ -91,7 +91,7 @@ sub resolve_library
 			$libfile = "$d/$oldlib";
 		}
 		if (! -f $libfile) {
-			tsay {".la file ", $self->{lafile}, 
+			tsay {".la file ", $self->{lafile},
 			    "points to nonexistent file ", $libfile, " !"};
 		}
 	} else {
@@ -101,14 +101,14 @@ sub resolve_library
 		tsay {"search path= ", join(':', @$dirs)};
 		tsay {"search type= ", $shared ? 'shared' : 'static'};
 		foreach my $sd (@$dirs) {
-		       if ($shared) {
+			if ($shared) {
 				# select correct library by sorting by version number only
 				my $bestlib = $self->findbest($sd, $libtofind);
 				if ($bestlib) {
 					tsay {"found $libtofind in $sd"};
 					$libfile = $bestlib;
 					last;
-				} else {	
+				} else {
 					# XXX find static library instead?
 					my $spath = "$sd/lib$libtofind$pic.a";
 					if (-f $spath) {
@@ -117,7 +117,7 @@ sub resolve_library
 						last;
 					}
 				}
-		       } else {
+			} else {
 				# look for a static library
 				my $spath = "$sd/lib$libtofind.a";
 				if (-f $spath) {
@@ -125,7 +125,7 @@ sub resolve_library
 					$libfile = $spath;
 					last;
 				}
-		       }
+			}
 		}
 	}
 	if (!$libfile) {
@@ -138,7 +138,7 @@ sub resolve_library
 		}
 	} else {
 		$self->{fullpath} = $libfile;
-		tsay {"\$libs->{$self->{key}}->{fullpath} = ", 
+		tsay {"\$libs->{$self->{key}}->{fullpath} = ",
 		    $self->{fullpath}};
 	}
 }

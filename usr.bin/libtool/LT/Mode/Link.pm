@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.26 2014/04/16 10:31:27 zhuk Exp $
+# $OpenBSD: Link.pm,v 1.27 2014/04/16 14:39:06 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -451,7 +451,7 @@ sub build_cache
 	tie @{$o->{deplibs}}, 'LT::UList';
 	tie @{$o->{libdirs}}, 'LT::UList';
 	tie @{$o->{result}},  'LT::UList';
-	$self->internal_resolve_la($o, $lainfo->deplib_list, 
+	$self->internal_resolve_la($o, $lainfo->deplib_list,
 	    $level+1);
 	push(@{$o->{deplibs}}, @{$lainfo->deplib_list});
 	if ($lainfo->{libdir} ne '') {
@@ -569,7 +569,7 @@ sub internal_parse_linkargs1
 				if ($lafile) {
 					$libs->{$key}->{lafile} = $lafile;
 					my $absla = abs_path($lafile);
-					tsay {"    adding $absla to deplibs"} 
+					tsay {"    adding $absla to deplibs"}
 					    if $level == 0;
 					push(@$deplibs, $absla);
 					push(@$result, $lafile);
@@ -589,7 +589,7 @@ sub internal_parse_linkargs1
 			push(@$deplibs, $arg);
 			push(@$result, $arg);
 			my $dummy = []; # no need to add deplibs recursively
-			$self->internal_parse_linkargs1($dummy, $gp, $dirs, 
+			$self->internal_parse_linkargs1($dummy, $gp, $dirs,
 			    $libs, \@largs, $level+1) if @largs;
 		} elsif ($arg =~ m/(\S+\/)*(\S+)\.a$/) {
 			(my $key = $2) =~ s/^lib//;
@@ -629,9 +629,9 @@ sub parse_linkargs1
 {
 	my ($self, $deplibs, $gp, $dirs, $libs, $args) = @_;
 	$self->{result} = [];
-	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs, 
+	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs,
 	    $self->{args});
-    	push(@$deplibs, '-pthread') if $self->{pthread};
+	push(@$deplibs, '-pthread') if $self->{pthread};
 	$self->{args} = $self->{result};
 }
 
@@ -753,7 +753,7 @@ sub create_symlinks
 			push @$libnames, split(/\s/, $librarynames);
 		} else {
 			push @$libnames, basename($f);
-		}	
+		}
 		foreach my $libfile (@$libnames) {
 			my $link = "$dir/$libfile";
 			tsay {"ln -s $f $link"};
@@ -776,7 +776,7 @@ sub common1
 	my $orderedlibs = [];
 	tie(@$orderedlibs, 'LT::UList');
 	my $staticlibs = [];
-	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs, 
+	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs,
 	    $libs);
 	tsay {"staticlibs = \n", join("\n", @$staticlibs)};
 	tsay {"orderedlibs = @$orderedlibs"};
