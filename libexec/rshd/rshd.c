@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.54 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.55 2014/04/16 19:03:14 okan Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -418,10 +418,10 @@ doit(struct sockaddr *fromp)
 		hostname = hostnamebuf;
 		if (res0)
 			freeaddrinfo(res0);
-	} else
+	} else {
 		strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
 		errorhost = hostname = hostnamebuf;
-
+	}
 #ifdef	KERBEROS
 	if (use_kerberos) {
 		kdata = (AUTH_DAT *) authbuf;
