@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.30 2014/04/14 19:25:48 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.31 2014/04/16 14:43:43 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -894,10 +894,15 @@ exec_cgi(struct request *c)
 
 		path = strrchr(c->script_name, '/');
 		if (path != NULL) {
-			*path = '\0';
-			if (chdir(c->script_name) == -1)
-				lwarn("cannot chdir to %s", c->script_name);
-			*path = '/';
+			if (path != c->script_name) {
+				*path = '\0';
+				if (chdir(c->script_name) == -1)
+					lwarn("cannot chdir to %s",
+					    c->script_name);
+				*path = '/';
+			} else
+				if (chdir("/") == -1)
+					lwarn("cannot chdir to /");
 		}
 
 		argv[0] = c->script_name;
