@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2014/04/11 22:51:53 miod Exp $
+# $OpenBSD: Makefile,v 1.2 2014/04/16 09:50:10 mpi Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -11,6 +11,8 @@ MAN=	\
 	ASN1_STRING_new.3 \
 	ASN1_STRING_print_ex.3 \
 	ASN1_generate_nconf.3 \
+	BF_set_key.3 \
+	BIO.3 \
 	BIO_ctrl.3 \
 	BIO_f_base64.3 \
 	BIO_f_buffer.3 \
@@ -49,9 +51,12 @@ MAN=	\
 	BN_set_bit.3 \
 	BN_swap.3 \
 	BN_zero.3 \
+	BUF_MEM_new.3 \
 	CONF_modules_free.3 \
 	CONF_modules_load_file.3 \
 	CRYPTO_set_ex_data.3 \
+	CRYPTO_set_locking_callback.3 \
+	DES_set_key.3 \
 	DH_generate_key.3 \
 	DH_generate_parameters.3 \
 	DH_get_ex_new_index.3 \
@@ -68,6 +73,7 @@ MAN=	\
 	DSA_set_method.3 \
 	DSA_sign.3 \
 	DSA_size.3 \
+	ERR.3 \
 	ERR_GET_LIB.3 \
 	ERR_clear_error.3 \
 	ERR_error_string.3 \
@@ -84,28 +90,48 @@ MAN=	\
 	EVP_DigestVerifyInit.3 \
 	EVP_EncryptInit.3 \
 	EVP_OpenInit.3 \
+	EVP_PKEY_CTX_ctrl.3 \
+	EVP_PKEY_CTX_new.3 \
+	EVP_PKEY_cmp.3 \
+	EVP_PKEY_decrypt.3 \
+	EVP_PKEY_derive.3 \
+	EVP_PKEY_encrypt.3 \
+	EVP_PKEY_get_default_digest.3 \
+	EVP_PKEY_keygen.3 \
 	EVP_PKEY_new.3 \
+	EVP_PKEY_print_private.3 \
 	EVP_PKEY_set1_RSA.3 \
+	EVP_PKEY_sign.3 \
+	EVP_PKEY_verify.3 \
+	EVP_PKEY_verify_recover.3 \
 	EVP_SealInit.3 \
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
+	HMAC.3 \
+	MD5.3 \
 	OBJ_nid2obj.3 \
 	OPENSSL_VERSION_NUMBER.3 \
 	OPENSSL_config.3 \
 	OPENSSL_load_builtin_modules.3 \
 	OpenSSL_add_all_algorithms.3 \
+	PEM_read_bio_PrivateKey.3 \
+	PEM_write_bio_PKCS7_stream.3 \
 	PKCS12_create.3 \
 	PKCS12_parse.3 \
 	PKCS7_decrypt.3 \
 	PKCS7_encrypt.3 \
 	PKCS7_sign.3 \
+	PKCS7_sign_add_signer.3 \
 	PKCS7_verify.3 \
+	RAND.3 \
 	RAND_add.3 \
 	RAND_bytes.3 \
 	RAND_cleanup.3 \
 	RAND_egd.3 \
 	RAND_load_file.3 \
 	RAND_set_rand_method.3 \
+	RC4.3 \
+	RIPEMD160.3 \
 	RSA_blinding_on.3 \
 	RSA_check_key.3 \
 	RSA_generate_key.3 \
@@ -119,19 +145,20 @@ MAN=	\
 	RSA_sign.3 \
 	RSA_sign_ASN1_OCTET_STRING.3 \
 	RSA_size.3 \
+	SHA1.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_PKCS7.3 \
 	X509_NAME_ENTRY_get_object.3 \
 	X509_NAME_add_entry_by_txt.3 \
 	X509_NAME_get_index_by_NID.3 \
 	X509_NAME_print_ex.3 \
-	X509_new.3 \
 	X509_STORE_CTX_get_error.3 \
 	X509_STORE_CTX_get_ex_new_index.3 \
 	X509_STORE_CTX_new.3 \
 	X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_set_verify_cb_func.3 \
 	X509_VERIFY_PARAM_set_flags.3 \
+	X509_new.3 \
 	X509_verify_cert.3 \
 	bn.3 \
 	bn_internal.3 \
@@ -152,66 +179,35 @@ MAN=	\
 	ecdsa.3 \
 	engine.3 \
 	evp.3 \
+	i2d_PKCS7_bio_stream.3 \
 	lh_stats.3 \
 	lhash.3 \
-	pem.3 \
 	rsa.3 \
 	ui.3 \
 	ui_compat.3 \
 	x509.3 \
-	BF_set_key.3 \
-	BIO.3 \
-	BUF_MEM_new.3 \
-	CRYPTO_set_locking_callback.3 \
-	DES_set_key.3 \
-	ERR.3 \
-	HMAC.3 \
-	MD5.3 \
-	PEM_read_bio_PrivateKey.3 \
-	RAND.3 \
-	RC4.3 \
-	RIPEMD160.3 \
-	SHA1.3
 
-# These pages removed/renamed
-#	OPENSSL_ia32cap.cat3 \	# i386-only, internal API
-#	OPENSSL_Applink.cat3 \	# Win32 only
-#	bio.cat3 \		# conflict; see below
-#	blowfish.cat3 \		# conflict; see below
-#	buffer.cat3 \		# conflict; see below
-#	des.cat3 \		# conflict; see below
-#	des_modes.cat3 \	# fairly pointless
-#	hmac.cat3 \		# conflict; see below
-#	md5.cat3 \		# conflict; see below
-#	mdc2.cat3 \		# patents; removed
-#	rand.cat3 \		# conflict; see below
-#	rc4.cat3 \		# conflict; see below
-#	ripemd.cat3 \		# conflict; see below
-#	sha.cat3 \		# conflict; see below
-
-
-# these are a real problem, since they re-document functions described in
-# other pages.
-
-.for page src in \
-	BF_set_key blowfish \
-	BIO bio \
-	BUF_MEM_new buffer \
-	CRYPTO_set_locking_callback threads \
-	DES_set_key des \
-	ERR err \
-	HMAC hmac \
-	MD5 md5 \
-	PEM_read_bio_PrivateKey pem \
-	RAND rand \
-	RC4 rc4 \
-	RIPEMD160 ripemd \
-	SHA1 sha
-
-${page}.3: ${src}.pod
-	@echo '${POD2MAN} --section=3 --name=${page:U} $? > $@'
-	@${POD2MAN} --section=3 --name=${page:U} $? > $@.tmp && mv $@.tmp $@
-.endfor
+#MAN+=	BIO_new_CMS.3 \
+#	CMS_add0_cert.3 \
+#	CMS_add1_recipient_cert.3 \
+#	CMS_compress.3 \
+#	CMS_decrypt.3 \
+#	CMS_encrypt.3 \
+#	CMS_final.3 \
+#	CMS_get0_RecipientInfos.3 \
+#	CMS_get0_SignerInfos.3 \
+#	CMS_get0_type.3 \
+#	CMS_get1_ReceiptRequest.3 \
+#	CMS_sign.3 \
+#	CMS_sign_add1_signer.3 \
+#	CMS_sign_receipt.3 \
+#	CMS_uncompress.3 \
+#	CMS_verify.3 \
+#	CMS_verify_receipt.3 \
+#	PEM_write_bio_CMS_stream.3 \
+#	SMIME_read_CMS.3 \
+#	SMIME_write_CMS.3 \
+#	i2d_CMS_bio_stream.3 \
 
 MLINKS+=\
 	ASN1_OBJECT_new.3 ASN1_OBJECT_free.3 \
@@ -520,7 +516,32 @@ MLINKS+=\
 	EVP_EncryptInit.3 OBJ_obj2nid.3 \
 	EVP_OpenInit.3 EVP_OpenFinal.3 \
 	EVP_OpenInit.3 EVP_OpenUpdate.3 \
+	EVP_PKEY_CTX_ctrl.3 EVP_PKEY_ctrl_str.3 \
+	EVP_PKEY_CTX_new.3 EVP_PKEY_CTX_new_id.3 \
+	EVP_PKEY_CTX_new.3 EVP_PKEY_CTX_dup.3 \
+	EVP_PKEY_CTX_new.3 EVP_PKEY_CTX_free.3 \
+	EVP_PKEY_cmp.3 EVP_PKEY_copy_parameters.3 \
+	EVP_PKEY_cmp.3 EVP_PKEY_missing_parameters.3 \
+	EVP_PKEY_cmp.3 EVP_PKEY_cmp_parameters.3 \
 	EVP_PKEY_new.3 EVP_PKEY_free.3 \
+	EVP_PKEY_decrypt.3 EVP_PKEY_decrypt_init.3 \
+	EVP_PKEY_derive.3 EVP_PKEY_derive_init.3 \
+	EVP_PKEY_derive.3 EVP_PKEY_derive_set_peer.3 \
+	EVP_PKEY_get_default_digest.3 EVP_PKEY_get_default_digest_nid.3 \
+	EVP_PKEY_encrypt.3 EVP_PKEY_encrypt_init.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_keygen_init.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_paramgen_init.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_paramgen.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_CTX_set_cb.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_cb.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_keygen_info.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_CTX_set_app_data.3 \
+	EVP_PKEY_keygen.3 EVP_PKEY_CTX_get_app_data.3 \
+	EVP_PKEY_print_private.3 EVP_PKEY_print_private.3 \
+	EVP_PKEY_print_private.3 EVP_PKEY_print_params.3 \
+	EVP_PKEY_sign.3 EVP_PKEY_sign_init.3 \
+	EVP_PKEY_verify.3 EVP_PKEY_verify_init.3 \
+	EVP_PKEY_verify_recover.3 EVP_PKEY_verify_recover_init.3 \
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_DH.3 \
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_DSA.3 \
 	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_EC_KEY.3 \
@@ -887,7 +908,6 @@ maninstall:
 
 .endif
 
-# XXX .PATH order is critical because of non-unique filenames
 .PATH: ${.CURDIR}/../../libssl/src/doc/crypto
 .SUFFIXES: .pod .1 .3 .7
 .for sect in 1 3 7
