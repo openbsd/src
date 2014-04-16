@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.92 2014/04/13 22:02:54 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.93 2014/04/16 18:59:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2174,6 +2174,7 @@ create_tables:
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
 		"ON DELETE CASCADE\n"
 	      ");\n"
+	      "CREATE INDEX mlinks_pageid_idx ON mlinks (pageid);\n"
 	      "\n"
 	      "CREATE TABLE \"names\" (\n"
 	      " \"bits\" INTEGER NOT NULL,\n"
@@ -2187,7 +2188,8 @@ create_tables:
 	      " \"key\" TEXT NOT NULL,\n"
 	      " \"pageid\" INTEGER NOT NULL REFERENCES mpages(id) "
 		"ON DELETE CASCADE\n"
-	      ");\n";
+	      ");\n"
+	      "CREATE INDEX keys_pageid_idx ON keys (pageid);\n";
 
 	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, NULL)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
