@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.293 2014/02/09 20:45:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.294 2014/04/16 13:57:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
-char		*option_as_string(unsigned int code, unsigned char *data, int len);
+
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
 char		*resolv_conf_contents(struct option_data  *,
@@ -1904,45 +1904,6 @@ res_hnok(const char *name)
 		pch = ch, ch = nch;
 	}
 	return (1);
-}
-
-char *
-option_as_string(unsigned int code, unsigned char *data, int len)
-{
-	static char optbuf[32768]; /* XXX */
-	char *op = optbuf;
-	int opleft = sizeof(optbuf);
-	unsigned char *dp = data;
-
-	if (code > 255)
-		error("option_as_string: bad code %u", code);
-
-	for (; dp < data + len; dp++) {
-		if (!isascii(*dp) || !isprint(*dp)) {
-			if (dp + 1 != data + len || *dp != 0) {
-				size_t oplen;
-				snprintf(op, opleft, "\\%03o", *dp);
-				oplen = strlen(op);
-				op += oplen;
-				opleft -= oplen;
-			}
-		} else if (*dp == '"' || *dp == '\'' || *dp == '$' ||
-		    *dp == '`' || *dp == '\\') {
-			*op++ = '\\';
-			*op++ = *dp;
-			opleft -= 2;
-		} else {
-			*op++ = *dp;
-			opleft--;
-		}
-	}
-	if (opleft < 1)
-		goto toobig;
-	*op = 0;
-	return optbuf;
-toobig:
-	warning("dhcp option too large");
-	return "<error>";
 }
 
 void
