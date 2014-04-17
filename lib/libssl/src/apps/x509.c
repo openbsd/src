@@ -1089,7 +1089,7 @@ end:
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
 	if (passin) free(passin);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create)

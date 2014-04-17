@@ -335,7 +335,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf (bio_err, "-engine e     use engine e, possibly a hardware device.\n");
 #endif
-	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err,  "-rand file%cfile%c...\n", ':', ':');
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
 	BIO_printf(bio_err,  "-CSP name     Microsoft CSP name\n");
@@ -692,7 +692,7 @@ int MAIN(int argc, char **argv)
     if(passin) free(passin);
     if(passout) free(passout);
     apps_shutdown();
-    OPENSSL_EXIT(ret);
+    exit(ret);
 }
 
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,

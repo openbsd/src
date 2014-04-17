@@ -260,7 +260,7 @@ end:
 	sk_X509_pop_free(trusted, X509_free);
 	sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	apps_shutdown();
-	OPENSSL_EXIT(ret < 0 ? 2 : ret);
+	exit(ret < 0 ? 2 : ret);
 	}
 
 static int check(X509_STORE *ctx, char *file,

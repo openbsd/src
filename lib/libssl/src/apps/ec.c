@@ -353,7 +353,7 @@ end:
 	if (passout)
 		free(passout);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 #else /* !OPENSSL_NO_EC */
 

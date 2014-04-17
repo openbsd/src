@@ -151,6 +151,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_STDIO
@@ -161,7 +162,6 @@
 
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -523,7 +523,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err," -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
-	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err," -rand file%cfile%c...\n", ':', ':');
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -servername host - servername for HostName TLS extension\n");
 	BIO_printf(bio_err," -servername_fatal - on mismatch send fatal alert (default warning alert)\n");
@@ -1744,7 +1744,7 @@ end:
 		bio_s_out=NULL;
 		}
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)

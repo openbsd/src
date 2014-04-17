@@ -141,13 +141,16 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <openssl/e_os2.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
@@ -338,7 +341,7 @@ static void sc_usage(void)
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
-	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err," -rand file%cfile%c...\n", ':', ':');
 	BIO_printf(bio_err," -sess_out arg - file to write SSL session to\n");
 	BIO_printf(bio_err," -sess_in arg  - file to read SSL session from\n");
 #ifndef OPENSSL_NO_TLSEXT
@@ -1862,7 +1865,7 @@ end:
 		bio_c_out=NULL;
 		}
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 

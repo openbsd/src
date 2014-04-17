@@ -741,7 +741,7 @@ err:
 
 	OBJ_cleanup();
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 

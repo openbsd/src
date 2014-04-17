@@ -507,7 +507,7 @@ end:
 	if (bmd != NULL)
 		BIO_free(bmd);
 	apps_shutdown();
-	OPENSSL_EXIT(err);
+	exit(err);
 }
 
 int

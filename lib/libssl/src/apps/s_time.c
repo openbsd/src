@@ -66,8 +66,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
-#define USE_SOCKETS
 #include "apps.h"
 #ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
@@ -533,7 +533,7 @@ end:
 		tm_ctx=NULL;
 		}
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 /***********************************************************************

@@ -213,5 +213,5 @@ int MAIN(int argc, char **argv)
 	if (dir)  printf("%s\n",SSLeay_version(SSLEAY_DIR));
 end:
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}

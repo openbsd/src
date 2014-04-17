@@ -269,7 +269,7 @@ end:
 	if (out != NULL) BIO_free_all(out);
 	if (x != NULL) SSL_SESSION_free(x);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 static SSL_SESSION *load_sess_id(char *infile, int format)

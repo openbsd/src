@@ -420,7 +420,7 @@ end:
 	if (dsa != NULL)
 		DSA_free(dsa);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 
 static int

@@ -204,5 +204,5 @@ end:
 	if (STDout != NULL)
 		BIO_free_all(STDout);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }

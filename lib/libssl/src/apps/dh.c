@@ -322,7 +322,7 @@ end:
 	if (dh != NULL)
 		DH_free(dh);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 #else /* !OPENSSL_NO_DH */
 

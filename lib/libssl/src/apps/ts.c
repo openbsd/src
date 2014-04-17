@@ -371,7 +371,7 @@ int MAIN(int argc, char **argv)
 		   "[-md2|-md4|-md5|-sha|-sha1|-mdc2|-ripemd160] "
 		   "[-policy object_id] [-no_nonce] [-cert] "
 		   "[-in request.tsq] [-out request.tsq] [-text]\n",
-		   LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		   ':', ':');
 	BIO_printf(bio_err, "or\n"
 		   "ts -reply [-config configfile] [-section tsa_section] "
 		   "[-queryfile request.tsq] [-passin password] "
@@ -397,7 +397,7 @@ int MAIN(int argc, char **argv)
 		bio_err = NULL;
 		}
 
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 /*

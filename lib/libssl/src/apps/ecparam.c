@@ -689,7 +689,7 @@ end:
 	if (group != NULL)
 		EC_GROUP_free(group);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 
 static int ecparam_print_var(BIO *out, BIGNUM *in, const char *var,

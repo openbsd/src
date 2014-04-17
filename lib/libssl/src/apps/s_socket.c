@@ -61,6 +61,9 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #ifdef FLAT_INC
 #include "e_os2.h"
@@ -68,10 +71,8 @@
 #include "../e_os2.h"
 #endif
 
-#define USE_SOCKETS
 #define NON_MAIN
 #include "apps.h"
-#undef USE_SOCKETS
 #undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>

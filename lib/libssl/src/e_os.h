@@ -61,10 +61,14 @@
 
 #include <openssl/opensslconf.h>
 
+/*
+ * <openssl/e_os2.h> contains what we can justify to make visible
+ * to the outside
+ * <openssl/e_os2.h> is not exported interface (except to the openssl
+ * command)
+ */
+
 #include <openssl/e_os2.h>
-/* <openssl/e_os2.h> contains what we can justify to make visible
- * to the outside; this file e_os.h is not part of the exported
- * interface. */
 
 #ifdef  __cplusplus
 extern "C" {
@@ -76,44 +80,10 @@ extern "C" {
 #define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
 #endif
 
-#      include <unistd.h>
-#      include <sys/types.h>
-#    define OPENSSL_CONF	"openssl.cnf"
-#    define SSLEAY_CONF		OPENSSL_CONF
-#    define RFILE		".rnd"
-#    define LIST_SEPARATOR_CHAR ':'
-#    define EXIT(n)		exit(n)
+#define OPENSSL_CONF	"openssl.cnf"
+#define RFILE		".rnd"
 
-
-#ifdef USE_SOCKETS
-#    include <sys/param.h>
-#    include <sys/time.h> /* Needed under linux for FD_XXX */
-#    include <netdb.h>
-#    include <sys/socket.h>
-#    include <netinet/in.h>
-#    include <sys/ioctl.h>
-#endif
-
-/* Some IPv6 implementations are broken, disable them in known bad
- * versions.
- */
-#  if !defined(OPENSSL_USE_IPV6)
-#    if defined(AF_INET6)
-#      define OPENSSL_USE_IPV6 1
-#    else
-#      define OPENSSL_USE_IPV6 0
-#    endif
-#  endif
-
-#ifndef OPENSSL_EXIT
-# if defined(MONOLITH) && !defined(OPENSSL_C)
-#  define OPENSSL_EXIT(n) return(n)
-# else
-#  define OPENSSL_EXIT(n) do { EXIT(n); return(n); } while(0)
-# endif
-#endif
-
-/***********************************************/
+#define OPENSSL_USE_IPV6 1
 
 #ifdef  __cplusplus
 }

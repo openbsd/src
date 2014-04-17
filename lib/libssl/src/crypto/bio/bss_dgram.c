@@ -60,10 +60,12 @@
 
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
 #include "cryptlib.h"
-
 #include <openssl/bio.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #ifndef OPENSSL_NO_DGRAM
 
 #ifndef OPENSSL_NO_SCTP

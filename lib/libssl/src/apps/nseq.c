@@ -102,7 +102,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-in file  input file\n");
 		BIO_printf (bio_err, "-out file output file\n");
 		BIO_printf (bio_err, "-toseq    output NS Sequence file\n");
-		OPENSSL_EXIT(1);
+		exit(1);
 	}
 
 	if (infile) {
@@ -156,6 +156,6 @@ end:
 	BIO_free_all(out);
 	NETSCAPE_CERT_SEQUENCE_free(seq);
 
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 

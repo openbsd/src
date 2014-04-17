@@ -218,7 +218,7 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 	s = dir;
 	p = s;
 	do {
-		if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0')) {
+		if ((*p == ':') || (*p == '\0')) {
 			BY_DIR_ENTRY *ent;
 			ss = s;
 			s = p + 1;

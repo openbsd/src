@@ -126,7 +126,6 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
-#define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
@@ -267,11 +266,11 @@ int main(int Argc, char *ARGV[])
 		if (!FIPS_mode_set(1)) {
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
-			EXIT(1);
+			exit(1);
 		}
 #else
 		fprintf(stderr, "FIPS mode not supported.\n");
-		EXIT(1);
+		exit(1);
 #endif
 		}
 
@@ -391,7 +390,7 @@ end:
 		BIO_free(bio_err);
 		bio_err=NULL;
 		}
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 #define LIST_STANDARD_COMMANDS "list-standard-commands"

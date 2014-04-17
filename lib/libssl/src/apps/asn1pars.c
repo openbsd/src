@@ -355,7 +355,7 @@ end:
 		sk_OPENSSL_STRING_free(osk);
 	OBJ_cleanup();
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 
 static int

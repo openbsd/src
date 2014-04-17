@@ -57,8 +57,6 @@
  */
 #ifndef OPENSSL_NO_OCSP
 
-#define USE_SOCKETS
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -922,7 +920,7 @@ end:
 		free(path);
 		}
 
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_md,X509 *issuer,

@@ -190,7 +190,7 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e - use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err, " -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+		BIO_printf(bio_err, " -rand file%cfile%c...\n", ':', ':');
 		BIO_printf(bio_err, "           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err, "             the random number generator\n");
 		BIO_printf(bio_err, " dsaparam-file\n");
@@ -263,7 +263,7 @@ end:
 	if (passout)
 		free(passout);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 }
 #else /* !OPENSSL_NO_DSA */
 

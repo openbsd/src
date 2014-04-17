@@ -111,11 +111,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define USE_SOCKETS
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
-#undef USE_SOCKETS
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>

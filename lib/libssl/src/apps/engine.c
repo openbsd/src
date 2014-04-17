@@ -532,7 +532,7 @@ end:
 	sk_OPENSSL_STRING_pop_free(post_cmds, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 #else
 

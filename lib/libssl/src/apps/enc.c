@@ -686,7 +686,7 @@ end:
 #endif
 	if(pass) free(pass);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 
 int set_hex(char *in, unsigned char *out, int size)

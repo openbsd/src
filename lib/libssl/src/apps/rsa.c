@@ -433,7 +433,7 @@ end:
 	if(passin) free(passin);
 	if(passout) free(passout);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	return(ret);
 	}
 #else /* !OPENSSL_NO_RSA */
 
