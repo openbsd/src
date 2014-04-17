@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.38 2014/04/16 21:16:33 tedu Exp $
+# $OpenBSD: Makefile,v 1.39 2014/04/17 20:44:04 tedu Exp $
 
 LIB=	ssl
 
 SSL_SRC=	${.CURDIR}/../../libssl/src
 LSSL_SRC=	${SSL_SRC}/ssl
 
+CFLAGS+= -Wall
 CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -I${SSL_SRC}

@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile,v 1.20 2014/04/17 18:16:45 miod Exp $
+# $OpenBSD: Makefile,v 1.21 2014/04/17 20:43:42 tedu Exp $
 
 LIB=	crypto
 
 SSL_SRC=	${.CURDIR}/../../libssl/src
 LCRYPTO_SRC=	${SSL_SRC}/crypto
+
+CFLAGS+= -Wall
 
 # arm and sh default to little endian, mips defaults to big endian
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \

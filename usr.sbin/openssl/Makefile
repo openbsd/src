@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2014/04/15 20:55:42 miod Exp $
+#	$OpenBSD: Makefile,v 1.24 2014/04/17 20:46:29 tedu Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -9,6 +9,7 @@ SSLEAYDIST= lib/libssl/src
 SSLEAY_SRC= ${.CURDIR}/../../${SSLEAYDIST}/apps
 SSLEAY_SRC_TOP= ${.CURDIR}/../../${SSLEAYDIST}
 
+CFLAGS+= -Wall
 CFLAGS+= -DMONOLITH -DTERMIOS -DANSI_SOURCE -DOPENSSL_NO_RC5
 CFLAGS+= -DOPENSSL_NO_SSL2
 CFLAGS+= -I${SSLEAY_SRC_TOP}
