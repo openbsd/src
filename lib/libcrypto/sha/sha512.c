@@ -318,13 +318,11 @@ static const SHA_LONG64 K512[80] = {
 				: "=r"(ret)		\
 				: "J"(n),"0"(a)		\
 				: "cc"); ret;		})
-#   if !defined(B_ENDIAN)
 #    define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
 				asm ("bswapq	%0"		\
 				: "=r"(ret)			\
 				: "0"(ret)); ret;		})
-#   endif
-#  elif (defined(__i386) || defined(__i386__)) && !defined(B_ENDIAN)
+#  elif (defined(__i386) || defined(__i386__))
 #   if defined(I386_ONLY)
 #    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
 			 unsigned int hi=p[0],lo=p[1];		\
@@ -421,11 +419,7 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 
 	for (i=0;i<16;i++,F--)
 		{
-#ifdef B_ENDIAN
-		T = W[i];
-#else
 		T = PULL64(W[i]);
-#endif
 		F[0] = A;
 		F[4] = E;
 		F[8] = T;
