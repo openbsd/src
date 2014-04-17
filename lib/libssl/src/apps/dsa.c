@@ -266,7 +266,7 @@ bad:
 			    passin, e, "Public Key");
 		else
 			pkey = load_key(bio_err, infile, informat, 1,
-		    passin, e, "Private Key");
+			    passin, e, "Private Key");
 
 		if (pkey) {
 			dsa = EVP_PKEY_get1_DSA(pkey);
@@ -288,11 +288,12 @@ bad:
 		}
 	}
 
-	if (text)
+	if (text) {
 		if (!DSA_print(out, dsa, 0)) {
-		perror(outfile);
-		ERR_print_errors(bio_err);
-		goto end;
+			perror(outfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
 	}
 
 	if (modulus) {
@@ -338,12 +339,17 @@ bad:
 	} else
 		ret = 0;
 end:
-	if (in != NULL) BIO_free(in);
-		if (out != NULL) BIO_free_all(out);
-		if (dsa != NULL) DSA_free(dsa);
-		if (passin) free(passin);
-		if (passout) free(passout);
-		apps_shutdown();
+	if (in != NULL)
+		BIO_free(in);
+	if (out != NULL)
+		BIO_free_all(out);
+	if (dsa != NULL)
+		DSA_free(dsa);
+	if (passin)
+		free(passin);
+	if (passout)
+		free(passout);
+	apps_shutdown();
 	OPENSSL_EXIT(ret);
 }
 #else /* !OPENSSL_NO_DSA */
