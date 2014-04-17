@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.296 2014/04/17 09:59:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.297 2014/04/17 13:46:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -84,6 +84,7 @@ struct in_addr deleting;
 struct in_addr adding;
 
 const struct in_addr inaddr_any = { INADDR_ANY };
+const struct in_addr inaddr_broadcast = { INADDR_BROADCAST };
 
 struct interface_info *ifi;
 struct client_state *client;
@@ -1219,7 +1220,7 @@ send_discover(void)
 	note("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
 
-	send_packet(inaddr_any, inaddr_any);
+	send_packet(inaddr_any, inaddr_broadcast);
 
 	set_timeout_interval(client->interval, send_discover);
 }
@@ -1421,7 +1422,7 @@ send_decline(void)
 {
 	note("DHCPDECLINE on %s", ifi->name);
 
-	send_packet(inaddr_any, inaddr_any);
+	send_packet(inaddr_any, inaddr_broadcast);
 }
 
 void
