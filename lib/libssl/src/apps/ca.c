@@ -2351,23 +2351,23 @@ get_certificate_status(const char *serial, CA_DB *db)
 		ok = -1;
 		goto err;
 	} else if (rrow[DB_type][0]=='V') {
-		BIO_printf(bio_err, "%s = Valid (%c)\n",
+		BIO_printf(bio_err, "%s=Valid (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
 	} else if (rrow[DB_type][0]=='R') {
-		BIO_printf(bio_err, "%s = Revoked (%c)\n",
+		BIO_printf(bio_err, "%s=Revoked (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
 	} else if (rrow[DB_type][0]=='E') {
-		BIO_printf(bio_err, "%s = Expired (%c)\n",
+		BIO_printf(bio_err, "%s=Expired (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
 	} else if (rrow[DB_type][0]=='S') {
-		BIO_printf(bio_err, "%s = Suspended (%c)\n",
+		BIO_printf(bio_err, "%s=Suspended (%c)\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		goto err;
 	} else {
-		BIO_printf(bio_err, "%s = Unknown (%c).\n",
+		BIO_printf(bio_err, "%s=Unknown (%c).\n",
 		    row[DB_serial], rrow[DB_type][0]);
 		ok = -1;
 	}
@@ -2421,7 +2421,7 @@ static int do_updatedb (CA_DB *db)
 					rrow[DB_type][1] = '\0';
 					cnt++;
 
-					BIO_printf(bio_err, "%s = Expired\n",
+					BIO_printf(bio_err, "%s=Expired\n",
 					    rrow[DB_serial]);
 				}
 			} else if (db_y2k < a_y2k) {
@@ -2429,7 +2429,7 @@ static int do_updatedb (CA_DB *db)
 				rrow[DB_type][1] = '\0';
 				cnt++;
 
-				BIO_printf(bio_err, "%s = Expired\n",
+				BIO_printf(bio_err, "%s=Expired\n",
 				    rrow[DB_serial]);
 			}
 

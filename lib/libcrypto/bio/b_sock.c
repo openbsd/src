@@ -209,7 +209,7 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 #endif
 			else {
 				SYSerr(SYS_F_GETSERVBYNAME, errno);
-				ERR_add_error_data(3, "service = '", str, "'");
+				ERR_add_error_data(3, "service='", str, "'");
 				return (0);
 			}
 		}
@@ -430,7 +430,7 @@ again:
 	s = socket(server.sa.sa_family, SOCK_STREAM, SOCKET_PROTOCOL);
 	if (s == -1) {
 		SYSerr(SYS_F_SOCKET, errno);
-		ERR_add_error_data(3, "port = '", host, "'");
+		ERR_add_error_data(3, "port='", host, "'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 	}
@@ -477,13 +477,13 @@ again:
 		}
 #endif
 		SYSerr(SYS_F_BIND, err_num);
-		ERR_add_error_data(3, "port = '", host, "'");
+		ERR_add_error_data(3, "port='", host, "'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
 	}
 	if (listen(s, MAX_LISTEN) == -1) {
 		SYSerr(SYS_F_BIND, errno);
-		ERR_add_error_data(3, "port = '", host, "'");
+		ERR_add_error_data(3, "port='", host, "'");
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
 	}

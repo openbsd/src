@@ -70,7 +70,7 @@ walk_nodename(di_node_t node, di_node_name_t di_node_name)
 	char *name = (*di_node_name)(node);
 
 	/* This is expected to catch all UltraSPARC flavors prior T1 */
-	if (!strcmp (name, "SUNW, UltraSPARC") ||
+	if (!strcmp (name, "SUNW,UltraSPARC") ||
 	    !strncmp(name,"SUNW,UltraSPARC-I",17))  /* covers II,III,IV */
 	{
 		OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
@@ -82,7 +82,7 @@ walk_nodename(di_node_t node, di_node_name_t di_node_name)
 		return DI_WALK_TERMINATE;
 	}
 	/* This is expected to catch remaining UltraSPARCs, such as T1 */
-	else if (!strncmp(name, "SUNW, UltraSPARC", 15)) {
+	else if (!strncmp(name, "SUNW,UltraSPARC", 15)) {
 		OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
 
 		return DI_WALK_TERMINATE;
