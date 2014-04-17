@@ -74,7 +74,7 @@ BUF_strdup(const char *str)
 	char *ret = NULL;
 	if (str != NULL) {
 		if (!(ret = strdup(str)))
-			BUFerr(BUF_F_BUF_STRDUP,ERR_R_MALLOC_FAILURE);
+			BUFerr(BUF_F_BUF_STRDUP, ERR_R_MALLOC_FAILURE);
 	}
 	return ret;
 }
@@ -85,7 +85,7 @@ BUF_strndup(const char *str, size_t siz)
 	char *ret = NULL;
 	if (str != NULL) {
 		if (!(ret = strndup(str, siz)))
-			BUFerr(BUF_F_BUF_STRNDUP,ERR_R_MALLOC_FAILURE);
+			BUFerr(BUF_F_BUF_STRNDUP, ERR_R_MALLOC_FAILURE);
 	}
 	return ret;
 }
@@ -96,7 +96,7 @@ BUF_memdup(const void *data, size_t siz)
 	void *ret = NULL;
 	if (data != NULL) {
 		if (!(ret = malloc(siz)))
-			BUFerr(BUF_F_BUF_MEMDUP,ERR_R_MALLOC_FAILURE);
+			BUFerr(BUF_F_BUF_MEMDUP, ERR_R_MALLOC_FAILURE);
 		else
 			(void) memcpy(ret, data, siz);
 	}
