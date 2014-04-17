@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.295 2014/04/16 18:46:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.296 2014/04/17 09:59:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -83,8 +83,7 @@ volatile sig_atomic_t quit;
 struct in_addr deleting;
 struct in_addr adding;
 
-struct in_addr inaddr_any;
-struct sockaddr_in sockaddr_broadcast;
+const struct in_addr inaddr_any = { INADDR_ANY };
 
 struct interface_info *ifi;
 struct client_state *client;
@@ -464,13 +463,6 @@ main(int argc, char *argv[])
 		error("asprintf");
 
 	tzset();
-
-	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
-	sockaddr_broadcast.sin_family = AF_INET;
-	sockaddr_broadcast.sin_port = htons(REMOTE_PORT);
-	sockaddr_broadcast.sin_addr.s_addr = INADDR_BROADCAST;
-	sockaddr_broadcast.sin_len = sizeof(sockaddr_broadcast);
-	inaddr_any.s_addr = INADDR_ANY;
 
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
@@ -1224,12 +1216,10 @@ send_discover(void)
 		client->bootrequest_packet.secs = htons(65535);
 	client->secs = client->bootrequest_packet.secs;
 
-	note("DHCPDISCOVER on %s to %s port %hu interval %lld",
-	    ifi->name, inet_ntoa(sockaddr_broadcast.sin_addr),
-	    ntohs(sockaddr_broadcast.sin_port),
+	note("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
 
-	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
+	send_packet(inaddr_any, inaddr_any);
 
 	set_timeout_interval(client->interval, send_discover);
 }
@@ -1402,9 +1392,6 @@ send_request(void)
 		destination.sin_addr.s_addr = INADDR_BROADCAST;
 	else
 		destination.sin_addr.s_addr = client->destination.s_addr;
-	destination.sin_port = htons(REMOTE_PORT);
-	destination.sin_family = AF_INET;
-	destination.sin_len = sizeof(destination);
 
 	if (client->state != S_REQUESTING)
 		from.s_addr = client->active->address.s_addr;
@@ -1424,7 +1411,7 @@ send_request(void)
 	note("DHCPREQUEST on %s to %s port %hu", ifi->name,
 	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
 
-	send_packet(from, &destination, NULL);
+	send_packet(from, destination.sin_addr);
 
 	set_timeout_interval(client->interval, send_request);
 }
@@ -1432,11 +1419,9 @@ send_request(void)
 void
 send_decline(void)
 {
-	note("DHCPDECLINE on %s to %s port %hu", ifi->name,
-	    inet_ntoa(sockaddr_broadcast.sin_addr),
-	    ntohs(sockaddr_broadcast.sin_port));
+	note("DHCPDECLINE on %s", ifi->name);
 
-	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
+	send_packet(inaddr_any, inaddr_any);
 }
 
 void

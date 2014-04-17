@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.31 2013/12/12 00:22:06 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.32 2014/04/17 09:59:30 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -261,9 +261,9 @@ if_register_receive(void)
 }
 
 ssize_t
-send_packet(struct in_addr from, struct sockaddr_in *to,
-    struct ether_addr *hto)
+send_packet(struct in_addr from, struct in_addr to)
 {
+	struct sockaddr_in dest;
 	struct ether_header eh;
 	struct ip ip;
 	struct udphdr udp;
@@ -273,8 +273,13 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 	ssize_t result;
 	int iovcnt = 0, len;
 
-	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
-		assemble_eh_header(&eh, hto);
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_family = AF_INET;
+	dest.sin_port = htons(REMOTE_PORT);
+	dest.sin_addr.s_addr = to.s_addr;
+
+	if (to.s_addr == INADDR_BROADCAST) {
+		assemble_eh_header(&eh);
 		iov[0].iov_base = &eh;
 		iov[0].iov_len = sizeof(eh);
 		iovcnt++;
@@ -293,14 +298,14 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 	ip.ip_p = IPPROTO_UDP;
 	ip.ip_sum = 0;
 	ip.ip_src.s_addr = from.s_addr;
-	ip.ip_dst.s_addr = to->sin_addr.s_addr;
+	ip.ip_dst.s_addr = to.s_addr;
 	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
 	iov[iovcnt].iov_base = &ip;
 	iov[iovcnt].iov_len = sizeof(ip);
 	iovcnt++;
 
 	udp.uh_sport = htons(LOCAL_PORT);
-	udp.uh_dport = to->sin_port;
+	udp.uh_dport = htons(REMOTE_PORT);
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	udp.uh_sum = 0;
 	udp.uh_sum = wrapsum(checksum((unsigned char *)&udp, sizeof(udp),
@@ -315,12 +320,12 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
+	if (to.s_addr == INADDR_BROADCAST) {
 		result = writev(ifi->wfdesc, iov, iovcnt);
 	} else {
 		memset(&msg, 0, sizeof(msg));
-		msg.msg_name = (struct sockaddr *)to;
-		msg.msg_namelen = sizeof(*to);
+		msg.msg_name = (struct sockaddr *)&dest;
+		msg.msg_namelen = sizeof(to);
 		msg.msg_iov = iov;
 		msg.msg_iovlen = iovcnt;
 		result = sendmsg(ifi->ufdesc, &msg, 0);

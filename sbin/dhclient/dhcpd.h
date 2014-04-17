@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.136 2014/02/09 20:45:56 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.137 2014/04/17 09:59:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -249,7 +249,7 @@ time_t parse_date(FILE *);
 /* bpf.c */
 void if_register_send(void);
 void if_register_receive(void);
-ssize_t send_packet(struct in_addr, struct sockaddr_in *, struct ether_addr *);
+ssize_t send_packet(struct in_addr, struct in_addr);
 ssize_t receive_packet(struct sockaddr_in *, struct ether_addr *);
 
 /* dispatch.c */
@@ -288,7 +288,7 @@ void free_client_lease(struct client_lease *);
 void routehandler(void);
 
 /* packet.c */
-void assemble_eh_header(struct ether_header *, struct ether_addr *);
+void assemble_eh_header(struct ether_header *);
 ssize_t decode_hw_header(unsigned char *, int, struct ether_addr *);
 ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
     int);
