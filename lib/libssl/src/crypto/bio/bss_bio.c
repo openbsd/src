@@ -85,14 +85,6 @@
 
 #include "e_os.h"
 
-/* VxWorks defines SSIZE_MAX with an empty value causing compile errors */
-#if defined(OPENSSL_SYS_VXWORKS)
-# undef SSIZE_MAX
-#endif
-#ifndef SSIZE_MAX
-# define SSIZE_MAX INT_MAX
-#endif
-
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);
