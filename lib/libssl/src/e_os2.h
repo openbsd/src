@@ -62,53 +62,7 @@
 extern "C" {
 #endif
 
-/******************************************************************************
- * Detect operating systems.  This probably needs completing.
- * The result is that at least one OPENSSL_SYS_os macro should be defined.
- * However, if none is defined, Unix is assumed.
- **/
-
 #define OPENSSL_SYS_UNIX
-
-/* --------------------------------- Unix ---------------------------------- */
-#ifdef OPENSSL_SYS_UNIX
-# if defined(linux) || defined(__linux__) || defined(OPENSSL_SYSNAME_LINUX)
-#  define OPENSSL_SYS_LINUX
-# endif
-# ifdef OPENSSL_SYSNAME_MPE
-#  define OPENSSL_SYS_MPE
-# endif
-# ifdef OPENSSL_SYSNAME_SNI
-#  define OPENSSL_SYS_SNI
-# endif
-# ifdef OPENSSL_SYSNAME_ULTRASPARC
-#  define OPENSSL_SYS_ULTRASPARC
-# endif
-# ifdef OPENSSL_SYSNAME_NEWS4
-#  define OPENSSL_SYS_NEWS4
-# endif
-# ifdef OPENSSL_SYSNAME_MACOSX
-#  define OPENSSL_SYS_MACOSX
-# endif
-# ifdef OPENSSL_SYSNAME_MACOSX_RHAPSODY
-#  define OPENSSL_SYS_MACOSX_RHAPSODY
-#  define OPENSSL_SYS_MACOSX
-# endif
-# ifdef OPENSSL_SYSNAME_SUNOS
-#  define OPENSSL_SYS_SUNOS
-#endif
-# if defined(_CRAY) || defined(OPENSSL_SYSNAME_CRAY)
-#  define OPENSSL_SYS_CRAY
-# endif
-# if defined(_AIX) || defined(OPENSSL_SYSNAME_AIX)
-#  define OPENSSL_SYS_AIX
-# endif
-#endif
-
-/**
- * That's it for OS-specific stuff
- *****************************************************************************/
-
 
 /* Specials for I/O an exit */
 # define OPENSSL_EXPORT extern

@@ -165,12 +165,7 @@ extern "C" {
  * For machines with only one compiler (or shared libraries), this should
  * be on.  Again this in only really a problem on machines
  * using "long long's", are 32bit, and are not using my assembler code. */
-#if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
-    defined(OPENSSL_SYS_WIN32) || defined(linux)
-# ifndef BN_DIV2W
-#  define BN_DIV2W
-# endif
-#endif
+/* #define BN_DIV2W */
 
 /* assuming long is 64bit - this is the DEC Alpha
  * unsigned long long is only 64 bits :-(, don't define
