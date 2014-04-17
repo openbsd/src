@@ -472,7 +472,7 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
 
 	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY,
 		attributes, parameters);
-	if (!object || !object->data.key || !object->data.key)
+	if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GET_PRIVATE_KEY,
 			STORE_R_FAILED_GETTING_KEY);
@@ -613,7 +613,7 @@ EVP_PKEY *STORE_list_private_key_next(STORE *s, void *handle)
 		list_object_next,STORE_R_NO_LIST_OBJECT_NEXT_FUNCTION);
 
 	object = s->meth->list_object_next(s, handle);
-	if (!object || !object->data.key || !object->data.key)
+	if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_LIST_PRIVATE_KEY_NEXT,
 			STORE_R_FAILED_LISTING_KEYS);
@@ -667,7 +667,7 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
 
 	object = s->meth->get_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY,
 		attributes, parameters);
-	if (!object || !object->data.key || !object->data.key)
+	if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_GET_PUBLIC_KEY,
 			STORE_R_FAILED_GETTING_KEY);
@@ -808,7 +808,7 @@ EVP_PKEY *STORE_list_public_key_next(STORE *s, void *handle)
 		list_object_next,STORE_R_NO_LIST_OBJECT_NEXT_FUNCTION);
 
 	object = s->meth->list_object_next(s, handle);
-	if (!object || !object->data.key || !object->data.key)
+	if (!object || !object->data.key)
 		{
 		STOREerr(STORE_F_STORE_LIST_PUBLIC_KEY_NEXT,
 			STORE_R_FAILED_LISTING_KEYS);
