@@ -112,10 +112,6 @@ $ymm=1 if ($xmm &&
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 		$1>=2.19);	# first version supporting AVX
 
-$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" && 
-		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
-		$1>=2.03);	# first version supporting AVX
-
 &external_label("OPENSSL_ia32cap_P") if ($xmm);
 
 
