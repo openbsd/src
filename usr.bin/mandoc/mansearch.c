@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.22 2014/04/16 21:35:48 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.23 2014/04/17 19:19:54 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -582,7 +582,7 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 
 	first = cur = NULL;
 	logic = igncase = toclose = 0;
-	toopen = 1;
+	toopen = NULL != search->sec || NULL != search->arch;
 
 	for (i = 0; i < argc; i++) {
 		if (0 == strcmp("(", argv[i])) {
@@ -651,9 +651,12 @@ exprcomp(const struct mansearch *search, int argc, char *argv[])
 	if (toopen || logic || igncase || toclose)
 		goto fail;
 
-	cur->close++;
-	cur = exprspec(cur, TYPE_arch, search->arch, "^(%s|any)$");
-	exprspec(cur, TYPE_sec, search->sec, "^%s$");
+	if (NULL != search->sec || NULL != search->arch)
+		cur->close++;
+	if (NULL != search->arch)
+		cur = exprspec(cur, TYPE_arch, search->arch, "^(%s|any)$");
+	if (NULL != search->sec)
+		exprspec(cur, TYPE_sec, search->sec, "^%s$");
 
 	return(first);
 
@@ -670,9 +673,6 @@ exprspec(struct expr *cur, uint64_t key, const char *value,
 	char	 errbuf[BUFSIZ];
 	char	*cp;
 	int	 irc;
-
-	if (NULL == value)
-		return(cur);
 
 	mandoc_asprintf(&cp, format, value);
 	cur->next = mandoc_calloc(1, sizeof(struct expr));
