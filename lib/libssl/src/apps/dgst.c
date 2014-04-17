@@ -74,7 +74,8 @@
 #undef PROG
 #define PROG	dgst_main
 
-int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
+int
+do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *md_name,
     const char *file, BIO *bmd);
@@ -361,7 +362,7 @@ MAIN(int argc, char **argv)
 			goto mac_end;
 		}
 		r = 1;
-		mac_end:
+mac_end:
 		if (mac_ctx)
 			EVP_PKEY_CTX_free(mac_ctx);
 		if (r == 0)
@@ -475,10 +476,11 @@ MAIN(int argc, char **argv)
 				perror(argv[i]);
 				err++;
 				continue;
-			} else
+			} else {
 				r = do_fp(out, buf, inp, separator, out_bin,
 				    sigkey, sigbuf, siglen, sig_name, md_name,
 				    argv[i], bmd);
+			}
 			if (r)
 				err = r;
 			(void)BIO_reset(bmd);
@@ -500,9 +502,10 @@ end:
 		sk_OPENSSL_STRING_free(sigopts);
 	if (macopts)
 		sk_OPENSSL_STRING_free(macopts);
-	if (sigbuf) free(sigbuf);
-		if (bmd != NULL)
-			BIO_free(bmd);
+	if (sigbuf)
+		free(sigbuf);
+	if (bmd != NULL)
+		BIO_free(bmd);
 	apps_shutdown();
 	OPENSSL_EXIT(err);
 }
@@ -559,8 +562,9 @@ do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 		}
 	}
 
-	if (binout) BIO_write(out, buf, len);
-		else if (sep == 2) {
+	if (binout)
+		BIO_write(out, buf, len);
+	else if (sep == 2) {
 		for (i = 0; i < (int)len; i++)
 			BIO_printf(out, "%02x", buf[i]);
 		BIO_printf(out, " *%s\n", file);

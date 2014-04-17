@@ -300,9 +300,10 @@ bad:
 
 			BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", num);
 			if (!dsa || !DSA_generate_parameters_ex(dsa, num,
-				    NULL, 0, NULL, NULL, &cb)) {
-				if (dsa) DSA_free(dsa);
-					ERR_print_errors(bio_err);
+			    NULL, 0, NULL, NULL, &cb)) {
+				if (dsa)
+					DSA_free(dsa);
+				ERR_print_errors(bio_err);
 				goto end;
 			}
 
