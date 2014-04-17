@@ -111,7 +111,6 @@ extern "C" {
 
 
 /* Specials for I/O an exit */
-# define OPENSSL_DECLARE_EXIT /* declared in unistd.h */
 # define OPENSSL_EXPORT extern
 # define OPENSSL_IMPORT extern
 # define OPENSSL_GLOBAL
