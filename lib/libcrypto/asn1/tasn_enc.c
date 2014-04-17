@@ -455,6 +455,8 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 						* sizeof(*derlst));
 			tmpdat = malloc(skcontlen);
 			if (!derlst || !tmpdat)
+				free(derlst);
+				free(tmpdat);
 				return 0;
 			}
 		}

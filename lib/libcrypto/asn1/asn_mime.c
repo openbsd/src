@@ -823,8 +823,10 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 		}
 	} else tmpval = NULL;
 	mhdr = (MIME_HEADER *) malloc(sizeof(MIME_HEADER));
-	if (!mhdr)
+	if (!mhdr) {
+		OPENSSL_free(tmpname);
 		return NULL;
+	}
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
 	if (!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp))) {

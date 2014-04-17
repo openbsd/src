@@ -188,6 +188,7 @@ X509_STORE *X509_STORE_new(void)
 	ret->verify_cb=0;
 
 	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
+		sk_X509_OBJECT_free(ret->objs);
 		free(ret);
 		return NULL;
 	}
