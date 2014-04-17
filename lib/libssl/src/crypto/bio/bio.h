@@ -629,9 +629,12 @@ BIO *	BIO_new(BIO_METHOD *type);
 int	BIO_set(BIO *a, BIO_METHOD *type);
 int	BIO_free(BIO *a);
 void	BIO_vfree(BIO *a);
-int	BIO_read(BIO *b, void *data, int len);
-int	BIO_gets(BIO *bp, char *buf, int size);
-int	BIO_write(BIO *b, const void *data, int len);
+int	BIO_read(BIO *b, void *data, int len)
+		__attribute__((__bounded__(__buffer__,2,3)));
+int	BIO_gets(BIO *bp, char *buf, int size)
+		__attribute__((__bounded__ (__string__,2,3)));
+int	BIO_write(BIO *b, const void *data, int len)
+		__attribute__((__bounded__(__buffer__,2,3)));
 int	BIO_puts(BIO *bp, const char *buf);
 int	BIO_indent(BIO *b, int indent, int max);
 long	BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
