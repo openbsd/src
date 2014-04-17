@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.20 2014/03/31 07:41:48 dlg Exp $ */
+/*	$OpenBSD: qle.c,v 1.21 2014/04/17 13:18:41 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -782,7 +782,7 @@ qle_get_port_db(struct qle_softc *sc, u_int16_t loopid, struct qle_dmamem *mem)
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(mem), 0,
 	    sizeof(struct qle_get_port_db), BUS_DMASYNC_PREREAD);
 	if (qle_mbox(sc, 0x00cf, 0x0001)) {
-		DPRINTF(QLE_D_PORT, "%s: get port db for %x failed: %x\n",
+		DPRINTF(QLE_D_PORT, "%s: get port db for %d failed: %x\n",
 		    DEVNAME(sc), loopid, sc->sc_mbox[0]);
 		return (1);
 	}
@@ -1784,8 +1784,8 @@ qle_next_fabric_port(struct qle_softc *sc, u_int32_t *firstport,
 	result = qle_ct_pass_through(sc, QLE_SNS_HANDLE, sc->sc_scratch,
 	    sizeof(*ga), sizeof(*gar));
 	if (result) {
-		DPRINTF(QLE_D_PORT, "%s: GA_NXT %x failed: %x\n", DEVNAME(sc),
-		    lastport, result);
+		DPRINTF(QLE_D_PORT, "%s: GA_NXT %06x failed: %x\n", DEVNAME(sc),
+		    *lastport, result);
 		*lastport = 0xffffffff;
 		return (NULL);
 	}
@@ -1807,8 +1807,8 @@ qle_next_fabric_port(struct qle_softc *sc, u_int32_t *firstport,
 	if (*firstport == 0xffffffff)
 		*firstport = *lastport;
 
-	DPRINTF(QLE_D_PORT, "%s: GA_NXT: port type/id: %x, wwpn %llx, wwnn "
-	    "%llx\n", DEVNAME(sc), *lastport, betoh64(gar->port_name),
+	DPRINTF(QLE_D_PORT, "%s: GA_NXT: port id: %06x, wwpn %llx, wwnn %llx\n",
+	    DEVNAME(sc), *lastport, betoh64(gar->port_name),
 	    betoh64(gar->node_name));
 
 	/* don't try to log in to ourselves */
@@ -1903,7 +1903,7 @@ qle_fabric_plogo(struct qle_softc *sc, struct qle_fc_port *port)
 	sc->sc_mbox[10] = 0;
 
 	if (qle_mbox(sc, 0x0403, 0x03))
-		printf("%s: PLOGO %x failed\n", DEVNAME(sc), port->loopid);
+		printf("%s: PLOGO %d failed\n", DEVNAME(sc), port->loopid);
 #endif
 }
 
@@ -2032,7 +2032,7 @@ qle_do_update(void *xsc, void *x)
 		}
 
 		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCANNING_LOOP) {
-			DPRINTF(QLE_D_PORT, "%s: scanning loop id %x\n",
+			DPRINTF(QLE_D_PORT, "%s: scanning loop id %d\n",
 			    DEVNAME(sc), step);
 			qle_add_loop_port(sc, step);
 			if (step == sc->sc_loop_max_id) {
