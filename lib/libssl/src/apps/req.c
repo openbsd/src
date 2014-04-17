@@ -422,7 +422,7 @@ bad:
 		BIO_printf(bio_err," -key file      use the private key contained in file\n");
 		BIO_printf(bio_err," -keyform arg   key file format\n");
 		BIO_printf(bio_err," -keyout arg    file to send the key to\n");
-		BIO_printf(bio_err," -rand file%cfile%c...\n", ':', ':');
+		BIO_printf(bio_err," -rand file:file:...\n");
 		BIO_printf(bio_err,"                load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err,"                the random number generator\n");
 		BIO_printf(bio_err," -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
