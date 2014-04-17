@@ -81,21 +81,6 @@
 #define MAX_LISTEN  32
 #endif
 
-#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
-static int wsa_init_done = 0;
-#endif
-
-/*
- * WSAAPI specifier is required to make indirect calls to run-time
- * linked WinSock 2 functions used in this module, to be specific
- * [get|free]addrinfo and getnameinfo. This is because WinSock uses
- * uses non-C calling convention, __stdcall vs. __cdecl, on x86
- * Windows. On non-WinSock platforms WSAAPI needs to be void.
- */
-#ifndef WSAAPI
-#define WSAAPI
-#endif
-
 static int get_ip(const char *str, unsigned char *ip);
 
 int
@@ -324,13 +309,13 @@ BIO_get_accept_socket(char *host, int bind_mode)
 	do {
 		static union {
 			void *p;
-			int (WSAAPI *f)(const char *, const char *,
+			int (*f)(const char *, const char *,
 			    const struct addrinfo *,
 			    struct addrinfo **);
 		} p_getaddrinfo = {NULL};
 		static union {
 			void *p;
-			void (WSAAPI *f)(struct addrinfo *);
+			void (*f)(struct addrinfo *);
 		} p_freeaddrinfo = {NULL};
 		struct addrinfo *res, hint;
 
@@ -536,7 +521,7 @@ BIO_accept(int sock, char **addr)
 		size_t nl;
 		static union {
 			void *p;
-			int (WSAAPI *f)(const struct sockaddr *,
+			int (*f)(const struct sockaddr *,
 			size_t/*socklen_t*/, char *, size_t,
 			    char *, size_t, int);
 		} p_getnameinfo = {NULL};

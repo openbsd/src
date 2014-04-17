@@ -398,11 +398,7 @@ dgram_write(BIO *b, const char *in, int inl)
 		else if (data->peer.sa.sa_family == AF_INET6)
 			peerlen = sizeof(data->peer.sa_in6);
 #endif
-#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-		ret = sendto(b->num, (char *)in, inl, 0, &data->peer.sa, peerlen);
-#else
 		ret = sendto(b->num, in, inl, 0, &data->peer.sa, peerlen);
-#endif
 	}
 
 	BIO_clear_retry_flags(b);
