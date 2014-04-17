@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.25 2014/03/25 19:48:11 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.26 2014/04/17 15:28:26 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,10 +16,6 @@
  */
 
 #include <stdio.h>
-
-#ifndef ASRNODEBUG
-#define DEBUG
-#endif
 
 #define QR_MASK		(0x1 << 15)
 #define OPCODE_MASK	(0xf << 11)
