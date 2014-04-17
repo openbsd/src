@@ -352,17 +352,8 @@ ssl_cert_free(CERT *c)
 		return;
 
 	i = CRYPTO_add(&c->references, -1, CRYPTO_LOCK_SSL_CERT);
-#ifdef REF_PRINT
-	REF_PRINT("CERT", c);
-#endif
 	if (i > 0)
 		return;
-#ifdef REF_CHECK
-	if (i < 0) {
-		fprintf(stderr, "ssl_cert_free, bad reference count\n");
-		abort(); /* ok */
-	}
-#endif
 
 #ifndef OPENSSL_NO_RSA
 	if (c->rsa_tmp)
@@ -444,17 +435,8 @@ ssl_sess_cert_free(SESS_CERT *sc)
 		return;
 
 	i = CRYPTO_add(&sc->references, -1, CRYPTO_LOCK_SSL_SESS_CERT);
-#ifdef REF_PRINT
-	REF_PRINT("SESS_CERT", sc);
-#endif
 	if (i > 0)
 		return;
-#ifdef REF_CHECK
-	if (i < 0) {
-		fprintf(stderr, "ssl_sess_cert_free, bad reference count\n");
-		abort(); /* ok */
-	}
-#endif
 
 	/* i == 0 */
 	if (sc->cert_chain != NULL)

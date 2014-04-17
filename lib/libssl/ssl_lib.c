@@ -142,9 +142,6 @@
  * OTHERWISE.
  */
 
-#ifdef REF_CHECK
-#  include <assert.h>
-#endif
 #include <stdio.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
@@ -503,17 +500,8 @@ SSL_free(SSL *s)
 		return;
 
 	i = CRYPTO_add(&s->references, -1, CRYPTO_LOCK_SSL);
-#ifdef REF_PRINT
-	REF_PRINT("SSL", s);
-#endif
 	if (i > 0)
 		return;
-#ifdef REF_CHECK
-	if (i < 0) {
-		fprintf(stderr, "SSL_free, bad reference count\n");
-		abort(); /* ok */
-	}
-#endif
 
 	if (s->param)
 		X509_VERIFY_PARAM_free(s->param);
@@ -1875,17 +1863,8 @@ SSL_CTX_free(SSL_CTX *a)
 		return;
 
 	i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_SSL_CTX);
-#ifdef REF_PRINT
-	REF_PRINT("SSL_CTX", a);
-#endif
 	if (i > 0)
 		return;
-#ifdef REF_CHECK
-	if (i < 0) {
-		fprintf(stderr, "SSL_CTX_free, bad reference count\n");
-		abort(); /* ok */
-	}
-#endif
 
 	if (a->param)
 		X509_VERIFY_PARAM_free(a->param);
@@ -2814,9 +2793,6 @@ ssl_free_wbio_buffer(SSL *s)
 	if (s->bbio == s->wbio) {
 		/* remove buffering */
 		s->wbio = BIO_pop(s->wbio);
-#ifdef REF_CHECK /* not the usual REF_CHECK, but this avoids adding one more preprocessor symbol */
-		assert(s->wbio != NULL);
-#endif
 	}
 	BIO_free(s->bbio);
 	s->bbio = NULL;

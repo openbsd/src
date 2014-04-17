@@ -131,17 +131,7 @@ void X509_PKEY_free(X509_PKEY *x)
 	if (x == NULL) return;
 
 	i=CRYPTO_add(&x->references,-1,CRYPTO_LOCK_X509_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("X509_PKEY",x);
-#endif
 	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"X509_PKEY_free, bad reference count\n");
-		abort();
-		}
-#endif
 
 	if (x->enc_algor != NULL) X509_ALGOR_free(x->enc_algor);
 	if (x->enc_pkey != NULL) M_ASN1_OCTET_STRING_free(x->enc_pkey);

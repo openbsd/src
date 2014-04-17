@@ -178,17 +178,7 @@ void DH_free(DH *r)
 	int i;
 	if(r == NULL) return;
 	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
-#ifdef REF_PRINT
-	REF_PRINT("DH",r);
-#endif
 	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"DH_free, bad reference count\n");
-		abort();
-	}
-#endif
 
 	if (r->meth->finish)
 		r->meth->finish(r);
@@ -213,16 +203,6 @@ void DH_free(DH *r)
 int DH_up_ref(DH *r)
 	{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
-#ifdef REF_PRINT
-	REF_PRINT("DH",r);
-#endif
-#ifdef REF_CHECK
-	if (i < 2)
-		{
-		fprintf(stderr, "DH_up, bad reference count\n");
-		abort();
-		}
-#endif
 	return ((i > 1) ? 1 : 0);
 	}
 

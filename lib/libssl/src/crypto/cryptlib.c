@@ -293,12 +293,6 @@ CRYPTO_destroy_dynlockid(int i)
 	pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
 	if (pointer != NULL) {
 		--pointer->references;
-#ifdef REF_CHECK
-		if (pointer->references < 0) {
-			fprintf(stderr, "CRYPTO_destroy_dynlockid, bad reference count\n");
-			abort();
-		} else
-#endif
 		if (pointer->references <= 0) {
 			(void)sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
 		} else

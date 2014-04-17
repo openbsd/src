@@ -118,13 +118,7 @@ int engine_free_util(ENGINE *e, int locked)
 		i = --e->struct_ref;
 	engine_ref_debug(e, 0, -1)
 	if (i > 0) return 1;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"ENGINE_free, bad structural reference count\n");
-		abort();
-		}
-#endif
+
 	/* Free up any dynamically allocated public key methods */
 	engine_pkey_meths_free(e);
 	engine_pkey_asn1_meths_free(e);

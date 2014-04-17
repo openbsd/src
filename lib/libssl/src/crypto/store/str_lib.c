@@ -269,9 +269,6 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.x509.certificate->references,1,CRYPTO_LOCK_X509);
-#ifdef REF_PRINT
-	REF_PRINT("X509",data);
-#endif
 	x = object->data.x509.certificate;
 	STORE_OBJECT_free(object);
 	return x;
@@ -295,9 +292,6 @@ int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
 		}
 	
 	CRYPTO_add(&data->references,1,CRYPTO_LOCK_X509);
-#ifdef REF_PRINT
-	REF_PRINT("X509",data);
-#endif
 	object->data.x509.certificate = data;
 
 	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CERTIFICATE,
@@ -399,9 +393,6 @@ X509 *STORE_list_certificate_next(STORE *s, void *handle)
 		return 0;
 		}
 	CRYPTO_add(&object->data.x509.certificate->references,1,CRYPTO_LOCK_X509);
-#ifdef REF_PRINT
-	REF_PRINT("X509",data);
-#endif
 	x = object->data.x509.certificate;
 	STORE_OBJECT_free(object);
 	return x;
@@ -453,9 +444,6 @@ EVP_PKEY *STORE_generate_key(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.key->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	pkey = object->data.key;
 	STORE_OBJECT_free(object);
 	return pkey;
@@ -479,9 +467,6 @@ EVP_PKEY *STORE_get_private_key(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.key->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	pkey = object->data.key;
 	STORE_OBJECT_free(object);
 	return pkey;
@@ -512,9 +497,6 @@ int STORE_store_private_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 		}
 	
 	CRYPTO_add(&data->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	object->data.key = data;
 
 	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PRIVATE_KEY, object,
@@ -620,9 +602,6 @@ EVP_PKEY *STORE_list_private_key_next(STORE *s, void *handle)
 		return 0;
 		}
 	CRYPTO_add(&object->data.key->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	pkey = object->data.key;
 	STORE_OBJECT_free(object);
 	return pkey;
@@ -674,9 +653,6 @@ EVP_PKEY *STORE_get_public_key(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.key->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	pkey = object->data.key;
 	STORE_OBJECT_free(object);
 	return pkey;
@@ -707,9 +683,6 @@ int STORE_store_public_key(STORE *s, EVP_PKEY *data, OPENSSL_ITEM attributes[],
 		}
 	
 	CRYPTO_add(&data->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	object->data.key = data;
 
 	i = s->meth->store_object(s, STORE_OBJECT_TYPE_PUBLIC_KEY, object,
@@ -815,9 +788,6 @@ EVP_PKEY *STORE_list_public_key_next(STORE *s, void *handle)
 		return 0;
 		}
 	CRYPTO_add(&object->data.key->references,1,CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-	REF_PRINT("EVP_PKEY",data);
-#endif
 	pkey = object->data.key;
 	STORE_OBJECT_free(object);
 	return pkey;
@@ -869,9 +839,6 @@ X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.crl->references,1,CRYPTO_LOCK_X509_CRL);
-#ifdef REF_PRINT
-	REF_PRINT("X509_CRL",data);
-#endif
 	crl = object->data.crl;
 	STORE_OBJECT_free(object);
 	return crl;
@@ -895,9 +862,6 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[],
 		return 0;
 		}
 	CRYPTO_add(&object->data.crl->references,1,CRYPTO_LOCK_X509_CRL);
-#ifdef REF_PRINT
-	REF_PRINT("X509_CRL",data);
-#endif
 	crl = object->data.crl;
 	STORE_OBJECT_free(object);
 	return crl;
@@ -921,9 +885,6 @@ int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
 		}
 	
 	CRYPTO_add(&data->references,1,CRYPTO_LOCK_X509_CRL);
-#ifdef REF_PRINT
-	REF_PRINT("X509_CRL",data);
-#endif
 	object->data.crl = data;
 
 	i = s->meth->store_object(s, STORE_OBJECT_TYPE_X509_CRL, object,
@@ -1009,9 +970,6 @@ X509_CRL *STORE_list_crl_next(STORE *s, void *handle)
 		return 0;
 		}
 	CRYPTO_add(&object->data.crl->references,1,CRYPTO_LOCK_X509_CRL);
-#ifdef REF_PRINT
-	REF_PRINT("X509_CRL",data);
-#endif
 	crl = object->data.crl;
 	STORE_OBJECT_free(object);
 	return crl;

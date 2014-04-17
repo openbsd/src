@@ -188,17 +188,7 @@ void DSA_free(DSA *r)
 	if (r == NULL) return;
 
 	i=CRYPTO_add(&r->references,-1,CRYPTO_LOCK_DSA);
-#ifdef REF_PRINT
-	REF_PRINT("DSA",r);
-#endif
 	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"DSA_free, bad reference count\n");
-		abort();
-		}
-#endif
 
 	if(r->meth->finish)
 		r->meth->finish(r);
@@ -222,16 +212,6 @@ void DSA_free(DSA *r)
 int DSA_up_ref(DSA *r)
 	{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
-#ifdef REF_PRINT
-	REF_PRINT("DSA",r);
-#endif
-#ifdef REF_CHECK
-	if (i < 2)
-		{
-		fprintf(stderr, "DSA_up_ref, bad reference count\n");
-		abort();
-		}
-#endif
 	return ((i > 1) ? 1 : 0);
 	}
 

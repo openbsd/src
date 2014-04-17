@@ -139,17 +139,7 @@ int DSO_free(DSO *dso)
 		}
  
 	i=CRYPTO_add(&dso->references,-1,CRYPTO_LOCK_DSO);
-#ifdef REF_PRINT
-	REF_PRINT("DSO",dso);
-#endif
 	if(i > 0) return(1);
-#ifdef REF_CHECK
-	if(i < 0)
-		{
-		fprintf(stderr,"DSO_free, bad reference count\n");
-		abort();
-		}
-#endif
 
 	if((dso->meth->dso_unload != NULL) && !dso->meth->dso_unload(dso))
 		{

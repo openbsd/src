@@ -109,17 +109,7 @@ void EC_KEY_free(EC_KEY *r)
 	if (r == NULL) return;
 
 	i=CRYPTO_add(&r->references,-1,CRYPTO_LOCK_EC);
-#ifdef REF_PRINT
-	REF_PRINT("EC_KEY",r);
-#endif
 	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"EC_KEY_free, bad reference count\n");
-		abort();
-		}
-#endif
 
 	if (r->group    != NULL) 
 		EC_GROUP_free(r->group);
@@ -218,16 +208,6 @@ EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 int EC_KEY_up_ref(EC_KEY *r)
 	{
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
-#ifdef REF_PRINT
-	REF_PRINT("EC_KEY",r);
-#endif
-#ifdef REF_CHECK
-	if (i < 2)
-		{
-		fprintf(stderr, "EC_KEY_up, bad reference count\n");
-		abort();
-		}
-#endif
 	return ((i > 1) ? 1 : 0);
 	}
 

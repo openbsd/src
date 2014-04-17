@@ -116,17 +116,8 @@ BIO_free(BIO *a)
 		return (0);
 
 	i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_BIO);
-#ifdef REF_PRINT
-	REF_PRINT("BIO", a);
-#endif
 	if (i > 0)
 		return (1);
-#ifdef REF_CHECK
-	if (i < 0) {
-		fprintf(stderr, "BIO_free, bad reference count\n");
-		abort();
-	}
-#endif
 	if ((a->callback != NULL) &&
 	    ((i = (int)a->callback(a, BIO_CB_FREE, NULL, 0, 0L, 1L)) <= 0))
 		return (i);

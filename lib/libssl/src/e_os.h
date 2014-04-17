@@ -74,12 +74,6 @@
 extern "C" {
 #endif
 
-/* Used to checking reference counts, most while doing perl5 stuff :-) */
-#ifdef REF_PRINT
-#undef REF_PRINT
-#define REF_PRINT(a,b)	fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
-#endif
-
 #define OPENSSL_CONF	"openssl.cnf"
 #define RFILE		".rnd"
 
