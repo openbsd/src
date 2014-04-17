@@ -358,8 +358,6 @@ extract_host_port(char *str, char **host_ptr, unsigned char *ip,
 		*port_ptr = p;
 
 	return (1);
-err:
-	return (0);
 }
 
 int
