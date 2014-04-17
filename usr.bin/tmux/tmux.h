@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.451 2014/04/17 07:36:45 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.452 2014/04/17 07:55:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1851,7 +1851,6 @@ size_t		 cmd_list_print(struct cmd_list *, char *, size_t);
 struct cmd_q	*cmdq_new(struct client *);
 int		 cmdq_free(struct cmd_q *);
 void printflike2 cmdq_print(struct cmd_q *, const char *, ...);
-void printflike2 cmdq_info(struct cmd_q *, const char *, ...);
 void printflike2 cmdq_error(struct cmd_q *, const char *, ...);
 int		 cmdq_guard(struct cmd_q *, const char *, int);
 void		 cmdq_run(struct cmd_q *, struct cmd_list *);

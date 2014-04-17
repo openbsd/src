@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.20 2014/02/12 20:26:13 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.21 2014/04/17 07:55:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,13 +71,10 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_ERROR);
 
 	if (args_has(args, 'r')) {
-		if (c->flags & CLIENT_READONLY) {
+		if (c->flags & CLIENT_READONLY)
 			c->flags &= ~CLIENT_READONLY;
-			cmdq_info(cmdq, "made client writable");
-		} else {
+		else
 			c->flags |= CLIENT_READONLY;
-			cmdq_info(cmdq, "made client read-only");
-		}
 	}
 
 	tflag = args_get(args, 't');
