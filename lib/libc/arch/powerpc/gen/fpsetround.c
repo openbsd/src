@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.3 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.4 2014/04/17 09:01:25 guenther Exp $	*/
 /*	$NetBSD: fpsetround.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
 
 /*
@@ -40,9 +40,9 @@ fpsetround(rnd_dir)
 	u_int64_t fpscr;
 	fp_rnd old;
 
-	__asm__ __volatile("mffs %0" : "=f"(fpscr));
+	__asm__ volatile("mffs %0" : "=f"(fpscr));
 	old = fpscr & 0x3;
 	fpscr = (fpscr & 0xfffffffcULL) | rnd_dir;
-	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
+	__asm__ volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }

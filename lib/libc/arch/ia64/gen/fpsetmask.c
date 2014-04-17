@@ -35,9 +35,9 @@ fpsetmask(fp_except mask)
 	int64_t fpsr;
 	int64_t oldmask;
 
-	__asm __volatile("mov %0=ar.fpsr" : "=r" (fpsr));
+	__asm volatile("mov %0=ar.fpsr" : "=r" (fpsr));
 	oldmask = ~fpsr & 0x3d;
 	fpsr = (fpsr & ~0x3d) | (~mask & 0x3d);
-	__asm __volatile("mov ar.fpsr=%0" :: "r" (fpsr));
+	__asm volatile("mov ar.fpsr=%0" :: "r" (fpsr));
 	return (oldmask);
 }

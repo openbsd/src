@@ -35,6 +35,6 @@ fpgetmask(void)
 {
 	uint64_t fpsr;
 
-	__asm __volatile("mov %0=ar.fpsr" : "=r" (fpsr));
+	__asm volatile("mov %0=ar.fpsr" : "=r" (fpsr));
 	return (~fpsr & 0x3d);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.c,v 1.2 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: fpgetmask.c,v 1.3 2014/04/17 09:01:25 guenther Exp $	*/
 /*	$NetBSD: fpgetmask.c,v 1.1 1999/07/07 01:55:07 danw Exp $	*/
 
 /*
@@ -38,6 +38,6 @@ fpgetmask()
 {
 	u_int64_t fpscr;
 
-	__asm__ __volatile("mffs %0" : "=f"(fpscr));
+	__asm__ volatile("mffs %0" : "=f"(fpscr));
 	return ((fpscr >> 3) & 0x1f);
 }

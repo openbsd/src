@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.4 2012/06/25 17:01:11 deraadt Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.5 2014/04/17 09:01:25 guenther Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.5 2001/05/25 12:14:05 simonb Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ __flt_rounds()
 	double tmp;
 	int x;
 
-	__asm__ __volatile("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
+	__asm__ volatile("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
 	return map[x & 0x03];
 #endif
 }

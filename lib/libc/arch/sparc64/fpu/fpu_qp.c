@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.4 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.5 2014/04/17 09:01:25 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -43,7 +43,7 @@ _Qp_ ## op(u_int *c, u_int *a, u_int *b) \
 { \
 	struct fpemu fe; \
 	struct fpn *r; \
-	__asm __volatile("stx %%fsr, [%0]" : : "r" (&fe.fe_fsr)); \
+	__asm volatile("stx %%fsr, [%0]" : : "r" (&fe.fe_fsr)); \
 	fe.fe_f1.fp_sign = a[0] >> 31; \
 	fe.fe_f1.fp_sticky = 0; \
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, a[0], a[1], a[2], a[3]); \
@@ -61,7 +61,7 @@ _Qp_ ## qname ## toq(u_int *c, ntype n) \
 { \
 	struct fpemu fe; \
 	atype *a; \
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	a = (atype *)&n; \
 	fe.fe_f1.fp_sign = signed ? a[0] >> 31 : 0; \
 	fe.fe_f1.fp_sticky = 0; \
@@ -77,7 +77,7 @@ _Qp_qto ## qname(u_int *c) \
 	struct fpemu fe; \
 	u_int *a; \
 	type n; \
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	a = (u_int *)&n; \
 	fe.fe_f1.fp_sign = c[0] >> 31; \
 	fe.fe_f1.fp_sticky = 0; \
@@ -94,7 +94,7 @@ _Qp_qto ## qname(u_int *c) \
 	struct fpemu fe; \
 	u_int *a; \
 	type n; \
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	a = (u_int *)&n; \
 	fe.fe_f1.fp_sign = c[0] >> 31; \
 	fe.fe_f1.fp_sticky = 0; \
@@ -111,7 +111,7 @@ _Qp_qto ## qname(u_int *c) \
 	struct fpemu fe; \
 	u_int *a; \
 	type n; \
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	a = (u_int *)&n; \
 	fe.fe_f1.fp_sign = c[0] >> 31; \
 	fe.fe_f1.fp_sticky = 0; \
@@ -136,7 +136,7 @@ int \
 _Qp_ ## name(u_int *a, u_int *b) \
 { \
 	struct fpemu fe; \
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	fe.fe_f1.fp_sign = a[0] >> 31; \
 	fe.fe_f1.fp_sticky = 0; \
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, a[0], a[1], a[2], a[3]); \
@@ -153,7 +153,7 @@ _Qp_sqrt(u_int *c, u_int *a)
 {
 	struct fpemu fe;
 	struct fpn *r;
-	__asm __volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :);
+	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :);
 	fe.fe_f1.fp_sign = a[0] >> 31;
 	fe.fe_f1.fp_sticky = 0;
 	fe.fe_f1.fp_class = __fpu_qtof(&fe.fe_f1, a[0], a[1], a[2], a[3]);

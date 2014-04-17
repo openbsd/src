@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_arith.h,v 1.2 2011/09/17 08:38:07 miod Exp $	*/
+/*	$OpenBSD: fpu_arith.h,v 1.3 2014/04/17 09:01:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,19 +80,19 @@
  * into carry; GET_CARRY sets its argument to 0 or 1.
  */
 #define	FPU_ADDC(r, x, y) \
-	__asm __volatile("addx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("addx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_ADDS(r, x, y) \
-	__asm __volatile("addcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("addcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_ADDCS(r, x, y) \
-	__asm __volatile("addxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("addxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBC(r, x, y) \
-	__asm __volatile("subx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBS(r, x, y) \
-	__asm __volatile("subcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 #define	FPU_SUBCS(r, x, y) \
-	__asm __volatile("subxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
+	__asm volatile("subxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
 
-#define	FPU_GET_CARRY(r) __asm __volatile("addx %%g0,%%g0,%0" : "=r"(r))
-#define	FPU_SET_CARRY(v) __asm __volatile("addcc %0,-1,%%g0" : : "r"(v))
+#define	FPU_GET_CARRY(r) __asm volatile("addx %%g0,%%g0,%0" : "=r"(r))
+#define	FPU_SET_CARRY(v) __asm volatile("addcc %0,-1,%%g0" : : "r"(v))
 
 #define	FPU_SHL1_BY_ADD	/* shift left 1 faster by ADDC than (a<<1)|(b>>31) */

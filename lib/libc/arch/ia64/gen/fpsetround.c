@@ -35,9 +35,9 @@ fpsetround(fp_rnd rnd)
 	uint64_t fpsr;
 	fp_rnd prev;
 
-	__asm __volatile("mov %0=ar.fpsr" : "=r"(fpsr));
+	__asm volatile("mov %0=ar.fpsr" : "=r"(fpsr));
 	prev = (fp_rnd)((fpsr >> 10) & 3);
 	fpsr = (fpsr & ~0xC00ULL) | ((unsigned int)rnd << 10);
-	__asm __volatile("mov ar.fpsr=%0" :: "r"(fpsr));
+	__asm volatile("mov ar.fpsr=%0" :: "r"(fpsr));
 	return (prev);
 }
