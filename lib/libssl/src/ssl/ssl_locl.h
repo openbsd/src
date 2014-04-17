@@ -1061,11 +1061,7 @@ int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 
-#ifdef OPENSSL_NO_SHA256
-#define tlsext_tick_md	EVP_sha1
-#else
 #define tlsext_tick_md	EVP_sha256
-#endif
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
     const unsigned char *limit, SSL_SESSION **ret);
 

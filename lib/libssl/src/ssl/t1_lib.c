@@ -334,14 +334,10 @@ tls1_ec_nid2curve_id(int nid)
 		tlsext_sigalg_ecdsa(md)
 
 static unsigned char tls12_sigalgs[] = {
-#ifndef OPENSSL_NO_SHA512
 	tlsext_sigalg(TLSEXT_hash_sha512)
 	tlsext_sigalg(TLSEXT_hash_sha384)
-#endif
-#ifndef OPENSSL_NO_SHA256
 	tlsext_sigalg(TLSEXT_hash_sha256)
 	tlsext_sigalg(TLSEXT_hash_sha224)
-#endif
 #ifndef OPENSSL_NO_SHA
 	tlsext_sigalg(TLSEXT_hash_sha1)
 #endif
@@ -2205,14 +2201,10 @@ static tls12_lookup tls12_md[] = {
 #ifndef OPENSSL_NO_SHA
 	{NID_sha1, TLSEXT_hash_sha1},
 #endif
-#ifndef OPENSSL_NO_SHA256
 	{NID_sha224, TLSEXT_hash_sha224},
 	{NID_sha256, TLSEXT_hash_sha256},
-#endif
-#ifndef OPENSSL_NO_SHA512
 	{NID_sha384, TLSEXT_hash_sha384},
 	{NID_sha512, TLSEXT_hash_sha512}
-#endif
 };
 
 static tls12_lookup tls12_sig[] = {
@@ -2283,20 +2275,16 @@ const EVP_MD
 	case TLSEXT_hash_sha1:
 		return EVP_sha1();
 #endif
-#ifndef OPENSSL_NO_SHA256
 	case TLSEXT_hash_sha224:
 		return EVP_sha224();
 
 	case TLSEXT_hash_sha256:
 		return EVP_sha256();
-#endif
-#ifndef OPENSSL_NO_SHA512
 	case TLSEXT_hash_sha384:
 		return EVP_sha384();
 
 	case TLSEXT_hash_sha512:
 		return EVP_sha512();
-#endif
 	default:
 		return NULL;
 
