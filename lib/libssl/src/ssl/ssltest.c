@@ -355,9 +355,7 @@ print_details(SSL *c_ssl, const char *prefix)
 	if (cert != NULL) {
 		EVP_PKEY *pkey = X509_get_pubkey(cert);
 		if (pkey != NULL) {
-			if (0)
-;
-			else if (pkey->type == EVP_PKEY_RSA &&
+			if (pkey->type == EVP_PKEY_RSA &&
 			    pkey->pkey.rsa != NULL &&
 			    pkey->pkey.rsa->n != NULL) {
 				BIO_printf(bio_stdout, ", %d bit RSA",

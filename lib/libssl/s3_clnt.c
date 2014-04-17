@@ -1535,8 +1535,7 @@ ssl3_get_key_exchange(SSL *s)
 		 * the use of DSA to sign ECParameters in the server
 		 * key exchange message. We do support RSA and ECDSA.
 		 */
-		if (0);
-		else if (alg_a & SSL_aRSA)
+		if (alg_a & SSL_aRSA)
 			pkey = X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 #ifndef OPENSSL_NO_ECDSA
 		else if (alg_a & SSL_aECDSA)
@@ -2031,10 +2030,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-		/* Fool emacs indentation */
-		if (0) {
-		}
-		else if (alg_k & SSL_kRSA) {
+		if (alg_k & SSL_kRSA) {
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 

@@ -945,10 +945,7 @@ dtls1_send_client_key_exchange(SSL *s)
 
 		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-		/* Fool emacs indentation */
-		if (0) {
-		}
-		else if (alg_k & SSL_kRSA) {
+		if (alg_k & SSL_kRSA) {
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 
