@@ -72,7 +72,7 @@ void policy_data_free(X509_POLICY_DATA *data)
 		sk_POLICYQUALINFO_pop_free(data->qualifier_set,
 					POLICYQUALINFO_free);
 	sk_ASN1_OBJECT_pop_free(data->expected_policy_set, ASN1_OBJECT_free);
-	OPENSSL_free(data);
+	free(data);
 	}
 
 /* Create a data based on an existing policy. If 'id' is NULL use the
@@ -97,13 +97,13 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
 		}
 	else
 		id = NULL;
-	ret = OPENSSL_malloc(sizeof(X509_POLICY_DATA));
+	ret = malloc(sizeof(X509_POLICY_DATA));
 	if (!ret)
 		return NULL;
 	ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
 	if (!ret->expected_policy_set)
 		{
-		OPENSSL_free(ret);
+		free(ret);
 		if (id)
 			ASN1_OBJECT_free(id);
 		return NULL;

@@ -141,8 +141,8 @@ AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
 	unsigned char *otmp = NULL, *ptmp = NULL;
 	int r, ret = 0;
 	AES_KEY wctx;
-	otmp = OPENSSL_malloc(keylen + 8);
-	ptmp = OPENSSL_malloc(keylen);
+	otmp = malloc(keylen + 8);
+	ptmp = malloc(keylen);
 	if (!otmp || !ptmp)
 		return 0;
 	if (AES_set_encrypt_key(kek, keybits, &wctx))
@@ -165,9 +165,9 @@ AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
 
 err:
 	if (otmp)
-		OPENSSL_free(otmp);
+		free(otmp);
 	if (ptmp)
-		OPENSSL_free(ptmp);
+		free(ptmp);
 
 	return ret;
 }

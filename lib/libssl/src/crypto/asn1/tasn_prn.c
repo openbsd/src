@@ -85,7 +85,7 @@ ASN1_PCTX default_pctx =
 ASN1_PCTX *ASN1_PCTX_new(void)
 	{
 	ASN1_PCTX *ret;
-	ret = OPENSSL_malloc(sizeof(ASN1_PCTX));
+	ret = malloc(sizeof(ASN1_PCTX));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -101,7 +101,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 
 void ASN1_PCTX_free(ASN1_PCTX *p)
 	{
-	OPENSSL_free(p);
+	free(p);
 	}
 
 unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p)
@@ -480,7 +480,7 @@ static int asn1_print_integer_ctx(BIO *out, ASN1_INTEGER *str,
 	s = i2s_ASN1_INTEGER(NULL, str);
 	if (BIO_puts(out, s) <= 0)
 		ret = 0;
-	OPENSSL_free(s);
+	free(s);
 	return ret;
 	}
 

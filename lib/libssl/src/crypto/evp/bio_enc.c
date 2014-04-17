@@ -109,7 +109,7 @@ static int enc_new(BIO *bi)
 	{
 	BIO_ENC_CTX *ctx;
 
-	ctx=(BIO_ENC_CTX *)OPENSSL_malloc(sizeof(BIO_ENC_CTX));
+	ctx=(BIO_ENC_CTX *)malloc(sizeof(BIO_ENC_CTX));
 	if (ctx == NULL) return(0);
 	EVP_CIPHER_CTX_init(&ctx->cipher);
 
@@ -133,7 +133,7 @@ static int enc_free(BIO *a)
 	b=(BIO_ENC_CTX *)a->ptr;
 	EVP_CIPHER_CTX_cleanup(&(b->cipher));
 	OPENSSL_cleanse(a->ptr,sizeof(BIO_ENC_CTX));
-	OPENSSL_free(a->ptr);
+	free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

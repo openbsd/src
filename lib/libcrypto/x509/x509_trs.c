@@ -169,15 +169,15 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	idx = X509_TRUST_get_by_id(id);
 	/* Need a new entry */
 	if(idx == -1) {
-		if(!(trtmp = OPENSSL_malloc(sizeof(X509_TRUST)))) {
+		if(!(trtmp = malloc(sizeof(X509_TRUST)))) {
 			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
 	} else trtmp = X509_TRUST_get0(idx);
 
-	/* OPENSSL_free existing name if dynamic */
-	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) OPENSSL_free(trtmp->name);
+	/* free existing name if dynamic */
+	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) free(trtmp->name);
 	/* dup supplied name */
 	if(!(trtmp->name = BUF_strdup(name))) {
 		X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
@@ -213,8 +213,8 @@ static void trtable_free(X509_TRUST *p)
 	if (p->flags & X509_TRUST_DYNAMIC) 
 		{
 		if (p->flags & X509_TRUST_DYNAMIC_NAME)
-			OPENSSL_free(p->name);
-		OPENSSL_free(p);
+			free(p->name);
+		free(p);
 		}
 	}
 

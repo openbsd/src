@@ -710,9 +710,9 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 		ERR_print_errors(err);
 	if (aia)
 		{
-		OPENSSL_free(host);
-		OPENSSL_free(path);
-		OPENSSL_free(port);
+		free(host);
+		free(path);
+		free(port);
 		X509_email_free(aia);
 		}
 	if (id)
@@ -1720,18 +1720,18 @@ end:
 	if (s_dkey)
 		EVP_PKEY_free(s_dkey);
 	if (pass)
-		OPENSSL_free(pass);
+		free(pass);
 	if (dpass)
-		OPENSSL_free(dpass);
+		free(dpass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 #ifndef OPENSSL_NO_TLSEXT
 	if (tlscstatp.host)
-		OPENSSL_free(tlscstatp.host);
+		free(tlscstatp.host);
 	if (tlscstatp.port)
-		OPENSSL_free(tlscstatp.port);
+		free(tlscstatp.port);
 	if (tlscstatp.path)
-		OPENSSL_free(tlscstatp.path);
+		free(tlscstatp.path);
 	if (ctx2 != NULL) SSL_CTX_free(ctx2);
 	if (s_cert2)
 		X509_free(s_cert2);
@@ -1791,7 +1791,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	struct timeval *timeoutp;
 #endif
 
-	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
+	if ((buf=malloc(bufsize)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto err;
@@ -2162,7 +2162,7 @@ err:
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,bufsize);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
@@ -2288,7 +2288,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
 		BIO_printf(bio_s_out, "    Length: %i bytes\n",
 			   keymatexportlen);
-		exportedkeymat = OPENSSL_malloc(keymatexportlen);
+		exportedkeymat = malloc(keymatexportlen);
 		if (exportedkeymat != NULL)
 			{
 			if (!SSL_export_keying_material(con, exportedkeymat,
@@ -2307,7 +2307,7 @@ static int init_ssl_connection(SSL *con)
 						   exportedkeymat[i]);
 				BIO_printf(bio_s_out, "\n");
 				}
-			OPENSSL_free(exportedkeymat);
+			free(exportedkeymat);
 			}
 		}
 
@@ -2365,7 +2365,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	KSSL_CTX *kctx;
 #endif
 
-	buf=OPENSSL_malloc(bufsize);
+	buf=malloc(bufsize);
 	if (buf == NULL) return(0);
 	io=BIO_new(BIO_f_buffer());
 	ssl_bio=BIO_new(BIO_f_ssl());
@@ -2743,7 +2743,7 @@ err:
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
-	if (buf != NULL) OPENSSL_free(buf);
+	if (buf != NULL) free(buf);
 	if (io != NULL) BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return(ret);

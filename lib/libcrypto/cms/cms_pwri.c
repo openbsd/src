@@ -237,7 +237,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
 		/* Invalid size */
 		return 0;
 		}
-	tmp = OPENSSL_malloc(inlen);
+	tmp = malloc(inlen);
 	/* setup IV by decrypting last two blocks */
 	EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
 				in  + inlen - 2 * blocklen, blocklen * 2);
@@ -270,7 +270,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
 	rv = 1;
 	err:
 	OPENSSL_cleanse(tmp, inlen);
-	OPENSSL_free(tmp);
+	free(tmp);
 	return rv;
 
 	}
@@ -405,7 +405,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		if (!kek_wrap_key(NULL, &keylen, ec->key, ec->keylen, &kekctx))
 			goto err;
 
-		key = OPENSSL_malloc(keylen);
+		key = malloc(keylen);
 
 		if (!key)
 			goto err;
@@ -417,7 +417,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 		}
 	else
 		{
-		key = OPENSSL_malloc(pwri->encryptedKey->length);
+		key = malloc(pwri->encryptedKey->length);
 
 		if (!key)
 			{
@@ -446,7 +446,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	EVP_CIPHER_CTX_cleanup(&kekctx);
 
 	if (!r && key)
-		OPENSSL_free(key);
+		free(key);
 	X509_ALGOR_free(kekalg);
 
 	return r;

@@ -185,7 +185,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	f = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
 	num=BN_num_bytes(rsa->n);
-	buf = OPENSSL_malloc(num);
+	buf = malloc(num);
 	if (!f || !ret || !buf)
 		{
 		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT,ERR_R_MALLOC_FAILURE);
@@ -247,7 +247,7 @@ err:
 	if (buf != NULL) 
 		{
 		OPENSSL_cleanse(buf,num);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	return(r);
 	}
@@ -366,7 +366,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	f   = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
 	num = BN_num_bytes(rsa->n);
-	buf = OPENSSL_malloc(num);
+	buf = malloc(num);
 	if(!f || !ret || !buf)
 		{
 		RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT,ERR_R_MALLOC_FAILURE);
@@ -484,7 +484,7 @@ err:
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	return(r);
 	}
@@ -509,7 +509,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	f   = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
 	num = BN_num_bytes(rsa->n);
-	buf = OPENSSL_malloc(num);
+	buf = malloc(num);
 	if(!f || !ret || !buf)
 		{
 		RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT,ERR_R_MALLOC_FAILURE);
@@ -624,7 +624,7 @@ err:
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	return(r);
 	}
@@ -666,7 +666,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 	f = BN_CTX_get(ctx);
 	ret = BN_CTX_get(ctx);
 	num=BN_num_bytes(rsa->n);
-	buf = OPENSSL_malloc(num);
+	buf = malloc(num);
 	if(!f || !ret || !buf)
 		{
 		RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT,ERR_R_MALLOC_FAILURE);
@@ -729,7 +729,7 @@ err:
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,num);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	return(r);
 	}

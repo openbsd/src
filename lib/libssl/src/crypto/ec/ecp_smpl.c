@@ -1205,7 +1205,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 	 * We need twice that. */
 	pow2 <<= 1;
 
-	heap = OPENSSL_malloc(pow2 * sizeof heap[0]);
+	heap = malloc(pow2 * sizeof heap[0]);
 	if (heap == NULL) goto err;
 	
 	/* The array is used as a binary tree, exactly as in heapsort:
@@ -1333,7 +1333,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 			if (heap[i] != NULL)
 				BN_clear_free(heap[i]);
 			}
-		OPENSSL_free(heap);
+		free(heap);
 		}
 	return ret;
 	}

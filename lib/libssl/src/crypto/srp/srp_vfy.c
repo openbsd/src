@@ -185,14 +185,14 @@ static void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
 		return;
 	BN_free(user_pwd->s);
 	BN_clear_free(user_pwd->v);
-	OPENSSL_free(user_pwd->id);
-	OPENSSL_free(user_pwd->info);
-	OPENSSL_free(user_pwd);
+	free(user_pwd->id);
+	free(user_pwd->info);
+	free(user_pwd);
 	}
 
 static SRP_user_pwd *SRP_user_pwd_new()
 	{
-	SRP_user_pwd *ret = OPENSSL_malloc(sizeof(SRP_user_pwd));
+	SRP_user_pwd *ret = malloc(sizeof(SRP_user_pwd));
 	if (ret == NULL)
 		return NULL;								
 	ret->N = NULL;
@@ -243,14 +243,14 @@ static int SRP_user_pwd_set_sv_BN(SRP_user_pwd *vinfo, BIGNUM *s, BIGNUM *v)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key)
 	{
-	SRP_VBASE *vb = (SRP_VBASE *) OPENSSL_malloc(sizeof(SRP_VBASE));
+	SRP_VBASE *vb = (SRP_VBASE *) malloc(sizeof(SRP_VBASE));
 
 	if (vb == NULL)
 		return NULL;
 	if (!(vb->users_pwd = sk_SRP_user_pwd_new_null()) ||
 		!(vb->gN_cache = sk_SRP_gN_cache_new_null()))
 		{
-		OPENSSL_free(vb);
+		free(vb);
 		return NULL;
 		}
 	vb->default_g = NULL;
@@ -261,7 +261,7 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
 		{
 		sk_SRP_user_pwd_free(vb->users_pwd);
 		sk_SRP_gN_cache_free(vb->gN_cache);
-		OPENSSL_free(vb);
+		free(vb);
 		return NULL;
 		}
 	return vb;
@@ -272,8 +272,8 @@ int SRP_VBASE_free(SRP_VBASE *vb)
 	{
 	sk_SRP_user_pwd_pop_free(vb->users_pwd,SRP_user_pwd_free);
 	sk_SRP_gN_cache_free(vb->gN_cache);
-	OPENSSL_free(vb->seed_key);
-	OPENSSL_free(vb);
+	free(vb->seed_key);
+	free(vb);
 	return 0;
 	}
 
@@ -283,7 +283,7 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
 	unsigned char tmp[MAX_LEN];
 	int len;
 
-	SRP_gN_cache *newgN = (SRP_gN_cache *)OPENSSL_malloc(sizeof(SRP_gN_cache));
+	SRP_gN_cache *newgN = (SRP_gN_cache *)malloc(sizeof(SRP_gN_cache));
 	if (newgN == NULL)
 		return NULL;
 
@@ -294,9 +294,9 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
 	if ((newgN->bn = BN_bin2bn(tmp, len, NULL)))
 		return newgN;
 
-	OPENSSL_free(newgN->b64_bn);
+	free(newgN->b64_bn);
 err:
-	OPENSSL_free(newgN);
+	free(newgN);
 	return NULL;
 	}
 
@@ -305,9 +305,9 @@ static void SRP_gN_free(SRP_gN_cache *gN_cache)
 	{
 	if (gN_cache == NULL)
 		return;
-	OPENSSL_free(gN_cache->b64_bn);
+	free(gN_cache->b64_bn);
 	BN_free(gN_cache->bn);
-	OPENSSL_free(gN_cache);
+	free(gN_cache);
 	}
 
 static SRP_gN *SRP_get_gN_by_id(const char *id, STACK_OF(SRP_gN) *gN_tab)
@@ -395,7 +395,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 			{
 			/*we add this couple in the internal Stack */
 
-			if ((gN = (SRP_gN *)OPENSSL_malloc(sizeof(SRP_gN))) == NULL) 
+			if ((gN = (SRP_gN *)malloc(sizeof(SRP_gN))) == NULL) 
  				goto err;
 
 			if  (!(gN->id = BUF_strdup(pp[DB_srpid]))
@@ -456,8 +456,8 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
 	if (gN != NULL)
 		{
-		OPENSSL_free(gN->id);
-		OPENSSL_free(gN);
+		free(gN->id);
+		free(gN);
 		}
 
 	SRP_user_pwd_free(user_pwd);
@@ -573,7 +573,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 	if(!SRP_create_verifier_BN(user, pass, &s, &v, N_bn, g_bn)) goto err;
 
 	BN_bn2bin(v,tmp);
-	if (((vf = OPENSSL_malloc(BN_num_bytes(v)*2)) == NULL))
+	if (((vf = malloc(BN_num_bytes(v)*2)) == NULL))
 		goto err;
 	t_tob64(vf, tmp, BN_num_bytes(v));
 
@@ -582,9 +582,9 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 		{
 		char *tmp_salt;
 
-		if ((tmp_salt = OPENSSL_malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL)
+		if ((tmp_salt = malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL)
 			{
-			OPENSSL_free(vf);
+			free(vf);
 			goto err;
 			}
 		t_tob64(tmp_salt, tmp2, SRP_RANDOM_SALT_LEN);

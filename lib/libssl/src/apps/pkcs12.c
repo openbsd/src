@@ -689,8 +689,8 @@ int MAIN(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     if (canames) sk_OPENSSL_STRING_free(canames);
-    if(passin) OPENSSL_free(passin);
-    if(passout) OPENSSL_free(passout);
+    if(passin) free(passin);
+    if(passout) free(passout);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
@@ -927,7 +927,7 @@ int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,const char *name)
         			value = OPENSSL_uni2asc(av->value.bmpstring->data,
                                 	       av->value.bmpstring->length);
 				BIO_printf(out, "%s\n", value);
-				OPENSSL_free(value);
+				free(value);
 				break;
 
 				case V_ASN1_OCTET_STRING:

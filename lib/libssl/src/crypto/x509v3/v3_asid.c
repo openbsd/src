@@ -125,17 +125,17 @@ static int i2r_ASIdentifierChoice(BIO *out,
 	if ((s = i2s_ASN1_INTEGER(NULL, aor->u.id)) == NULL)
 	  return 0;
 	BIO_printf(out, "%*s%s\n", indent + 2, "", s);
-	OPENSSL_free(s);
+	free(s);
 	break;
       case ASIdOrRange_range:
 	if ((s = i2s_ASN1_INTEGER(NULL, aor->u.range->min)) == NULL)
 	  return 0;
 	BIO_printf(out, "%*s%s-", indent + 2, "", s);
-	OPENSSL_free(s);
+	free(s);
 	if ((s = i2s_ASN1_INTEGER(NULL, aor->u.range->max)) == NULL)
 	  return 0;
 	BIO_printf(out, "%s\n", s);
-	OPENSSL_free(s);
+	free(s);
 	break;
       default:
 	return 0;
@@ -471,7 +471,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
       ASRange *r;
       switch (a->type) {
       case ASIdOrRange_id:
-	if ((r = OPENSSL_malloc(sizeof(ASRange))) == NULL) {
+	if ((r = malloc(sizeof(ASRange))) == NULL) {
 	  X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
 		    ERR_R_MALLOC_FAILURE);
 	  goto done;
@@ -620,7 +620,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
       s[i1] = '\0';
       min = s2i_ASN1_INTEGER(NULL, s);
       max = s2i_ASN1_INTEGER(NULL, s + i2);
-      OPENSSL_free(s);
+      free(s);
       if (min == NULL || max == NULL) {
 	X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
 	goto err;

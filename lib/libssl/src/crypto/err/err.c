@@ -572,7 +572,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 static void build_SYS_str_reasons(void)
 	{
-	/* OPENSSL_malloc cannot be used here, use static storage instead */
+	/* malloc cannot be used here, use static storage instead */
 	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
 	int i;
 	static int init = 1;
@@ -625,7 +625,7 @@ static void build_SYS_str_reasons(void)
 	if (((p)->err_data[i] != NULL) && \
 		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
 		{  \
-		OPENSSL_free((p)->err_data[i]); \
+		free((p)->err_data[i]); \
 		(p)->err_data[i]=NULL; \
 		} \
 	(p)->err_data_flags[i]=0; \
@@ -651,7 +651,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 		{
 		err_clear_data(s,i);
 		}
-	OPENSSL_free(s);
+	free(s);
 	}
 
 void ERR_load_ERR_strings(void)
@@ -1015,7 +1015,7 @@ ERR_STATE *ERR_get_state(void)
 	/* ret == the error state, if NULL, make a new one */
 	if (ret == NULL)
 		{
-		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
+		ret=(ERR_STATE *)malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
 		CRYPTO_THREADID_cpy(&ret->tid, &tid);
 		ret->top=0;
@@ -1076,7 +1076,7 @@ void ERR_add_error_vdata(int num, va_list args)
 	char *str,*p,*a;
 
 	s=80;
-	str=OPENSSL_malloc(s+1);
+	str=malloc(s+1);
 	if (str == NULL) return;
 	str[0]='\0';
 
@@ -1091,10 +1091,10 @@ void ERR_add_error_vdata(int num, va_list args)
 			if (n > s)
 				{
 				s=n+20;
-				p=OPENSSL_realloc(str,s+1);
+				p=realloc(str,s+1);
 				if (p == NULL)
 					{
-					OPENSSL_free(str);
+					free(str);
 					return;
 					}
 				else

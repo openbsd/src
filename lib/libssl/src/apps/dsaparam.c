@@ -325,9 +325,9 @@ bad:
 
 		len = BN_num_bytes(dsa->p);
 		bits_p = BN_num_bits(dsa->p);
-		data = (unsigned char *)OPENSSL_malloc(len + 20);
+		data = (unsigned char *)malloc(len + 20);
 		if (data == NULL) {
-			perror("OPENSSL_malloc");
+			perror("malloc");
 			goto end;
 		}
 		l = BN_bn2bin(dsa->p, data);

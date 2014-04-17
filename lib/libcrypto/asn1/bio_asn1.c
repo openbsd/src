@@ -150,7 +150,7 @@ BIO_METHOD *BIO_f_asn1(void)
 static int asn1_bio_new(BIO *b)
 	{
 	BIO_ASN1_BUF_CTX *ctx;
-	ctx = OPENSSL_malloc(sizeof(BIO_ASN1_BUF_CTX));
+	ctx = malloc(sizeof(BIO_ASN1_BUF_CTX));
 	if (!ctx)
 		return 0;
 	if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE))
@@ -163,7 +163,7 @@ static int asn1_bio_new(BIO *b)
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 	{
-	ctx->buf = OPENSSL_malloc(size);
+	ctx->buf = malloc(size);
 	if (!ctx->buf)
 		return 0;
 	ctx->bufsize = size;
@@ -186,8 +186,8 @@ static int asn1_bio_free(BIO *b)
 	if (ctx == NULL)
 		return 0;
 	if (ctx->buf)
-		OPENSSL_free(ctx->buf);
-	OPENSSL_free(ctx);
+		free(ctx->buf);
+	free(ctx);
 	b->init = 0;
 	b->ptr = NULL;
 	b->flags = 0;

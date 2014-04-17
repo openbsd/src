@@ -67,7 +67,7 @@ int
 SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx) {
 	if (ctx == NULL)
 		return 0;
-	OPENSSL_free(ctx->srp_ctx.login);
+	free(ctx->srp_ctx.login);
 	BN_free(ctx->srp_ctx.N);
 	BN_free(ctx->srp_ctx.g);
 	BN_free(ctx->srp_ctx.s);
@@ -99,7 +99,7 @@ int
 SSL_SRP_CTX_free(struct ssl_st *s) {
 	if (s == NULL)
 		return 0;
-	OPENSSL_free(s->srp_ctx.login);
+	free(s->srp_ctx.login);
 	BN_free(s->srp_ctx.N);
 	BN_free(s->srp_ctx.g);
 	BN_free(s->srp_ctx.s);
@@ -181,7 +181,7 @@ SSL_SRP_CTX_init(struct ssl_st *s) {
 
 	return (1);
 err:
-	OPENSSL_free(s->srp_ctx.login);
+	free(s->srp_ctx.login);
 	BN_free(s->srp_ctx.N);
 	BN_free(s->srp_ctx.g);
 	BN_free(s->srp_ctx.s);
@@ -338,14 +338,14 @@ SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
 		goto err;
 
 	tmp_len = BN_num_bytes(K);
-	if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
+	if ((tmp = malloc(tmp_len)) == NULL)
 		goto err;
 	BN_bn2bin(K, tmp);
 	ret = s->method->ssl3_enc->generate_master_secret(s, master_key, tmp, tmp_len);
 err:
 	if (tmp) {
 		OPENSSL_cleanse(tmp, tmp_len);
-		OPENSSL_free(tmp);
+		free(tmp);
 	}
 	BN_clear_free(K);
 	BN_clear_free(u);
@@ -379,20 +379,20 @@ SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
 		goto err;
 
 	tmp_len = BN_num_bytes(K);
-	if ((tmp = OPENSSL_malloc(tmp_len)) == NULL) goto err;
+	if ((tmp = malloc(tmp_len)) == NULL) goto err;
 		BN_bn2bin(K, tmp);
 	ret = s->method->ssl3_enc->generate_master_secret(s, master_key,
 	    tmp, tmp_len);
 err:
 	if (tmp) {
 		OPENSSL_cleanse(tmp, tmp_len);
-		OPENSSL_free(tmp);
+		free(tmp);
 	}
 	BN_clear_free(K);
 	BN_clear_free(x);
 	if (passwd) {
 		OPENSSL_cleanse(passwd, strlen(passwd));
-		OPENSSL_free(passwd);
+		free(passwd);
 	}
 	BN_clear_free(u);
 	return ret;

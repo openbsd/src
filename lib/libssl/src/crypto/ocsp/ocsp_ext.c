@@ -274,7 +274,7 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 	if (data)
 	        {
 		if ((i=i2d(data,NULL)) <= 0) goto err;
-		if (!(b=p=OPENSSL_malloc((unsigned int)i)))
+		if (!(b=p=malloc((unsigned int)i)))
 			goto err;
 	        if (i2d(data, &p) <= 0) goto err;
 		}
@@ -285,7 +285,7 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 						   V_ASN1_SEQUENCE,
 						   V_ASN1_UNIVERSAL,
 						   IS_SEQUENCE))<=0) goto err;
-		if (!(b=p=OPENSSL_malloc((unsigned int)i)))
+		if (!(b=p=malloc((unsigned int)i)))
 			goto err;
 		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk,&p,(I2D_OF(ASN1_OBJECT))i2d,
 						V_ASN1_SEQUENCE,
@@ -299,10 +299,10 @@ ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 		}
 	if (!s && !(s = ASN1_STRING_new())) goto err;
 	if (!(ASN1_STRING_set(s, b, i))) goto err;
-	OPENSSL_free(b);
+	free(b);
 	return s;
 err:
-	if (b) OPENSSL_free(b);
+	if (b) free(b);
 	return NULL;
 	}
 #endif
@@ -327,7 +327,7 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, 
          * it relies on library internals.
 	 */
 	os.length = ASN1_object_size(0, len, V_ASN1_OCTET_STRING);
-	os.data = OPENSSL_malloc(os.length);
+	os.data = malloc(os.length);
 	if (os.data == NULL)
 		goto err;
 	tmpval = os.data;
@@ -342,7 +342,7 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, 
 	ret = 1;
 	err:
 	if (os.data)
-		OPENSSL_free(os.data);
+		free(os.data);
 	return ret;
 	}
 

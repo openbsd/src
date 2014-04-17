@@ -222,7 +222,7 @@ int ASN1_STRING_TABLE_add(int nid,
 		return 0;
 	}
 	if(!(tmp = ASN1_STRING_TABLE_get(nid))) {
-		tmp = OPENSSL_malloc(sizeof(ASN1_STRING_TABLE));
+		tmp = malloc(sizeof(ASN1_STRING_TABLE));
 		if(!tmp) {
 			ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD,
 							ERR_R_MALLOC_FAILURE);
@@ -250,7 +250,7 @@ void ASN1_STRING_TABLE_cleanup(void)
 
 static void st_free(ASN1_STRING_TABLE *tbl)
 {
-	if(tbl->flags & STABLE_FLAGS_MALLOC) OPENSSL_free(tbl);
+	if(tbl->flags & STABLE_FLAGS_MALLOC) free(tbl);
 }
 
 

@@ -245,12 +245,12 @@ void BN_clear_free(BIGNUM *a)
 		{
 		OPENSSL_cleanse(a->d,a->dmax*sizeof(a->d[0]));
 		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
-			OPENSSL_free(a->d);
+			free(a->d);
 		}
 	i=BN_get_flags(a,BN_FLG_MALLOCED);
 	OPENSSL_cleanse(a,sizeof(BIGNUM));
 	if (i)
-		OPENSSL_free(a);
+		free(a);
 	}
 
 void BN_free(BIGNUM *a)
@@ -258,9 +258,9 @@ void BN_free(BIGNUM *a)
 	if (a == NULL) return;
 	bn_check_top(a);
 	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
-		OPENSSL_free(a->d);
+		free(a->d);
 	if (a->flags & BN_FLG_MALLOCED)
-		OPENSSL_free(a);
+		free(a);
 	else
 		{
 #ifndef OPENSSL_NO_DEPRECATED
@@ -280,7 +280,7 @@ BIGNUM *BN_new(void)
 	{
 	BIGNUM *ret;
 
-	if ((ret=(BIGNUM *)OPENSSL_malloc(sizeof(BIGNUM))) == NULL)
+	if ((ret=(BIGNUM *)malloc(sizeof(BIGNUM))) == NULL)
 		{
 		BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
@@ -314,7 +314,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 		BNerr(BN_F_BN_EXPAND_INTERNAL,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return(NULL);
 		}
-	a=A=(BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG)*words);
+	a=A=(BN_ULONG *)malloc(sizeof(BN_ULONG)*words);
 	if (A == NULL)
 		{
 		BNerr(BN_F_BN_EXPAND_INTERNAL,ERR_R_MALLOC_FAILURE);
@@ -401,7 +401,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 			else
 				{
 				/* r == NULL, BN_new failure */
-				OPENSSL_free(a);
+				free(a);
 				}
 			}
 		/* If a == NULL, there was an error in allocation in
@@ -431,7 +431,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		{
 		BN_ULONG *a = bn_expand_internal(b, words);
 		if(!a) return NULL;
-		if(b->d) OPENSSL_free(b->d);
+		if(b->d) free(b->d);
 		b->d=a;
 		b->dmax=words;
 		}

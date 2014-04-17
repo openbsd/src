@@ -97,7 +97,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 	X509_signature_print(out, x->sig_alg, NULL);
 	p=X509_NAME_oneline(X509_CRL_get_issuer(x),NULL,0);
 	BIO_printf(out,"%8sIssuer: %s\n","",p);
-	OPENSSL_free(p);
+	free(p);
 	BIO_printf(out,"%8sLast Update: ","");
 	ASN1_TIME_print(out,X509_CRL_get_lastUpdate(x));
 	BIO_printf(out,"\n%8sNext Update: ","");

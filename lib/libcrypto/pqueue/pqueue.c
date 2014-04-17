@@ -70,7 +70,7 @@ typedef struct _pqueue
 pitem *
 pitem_new(unsigned char *prio64be, void *data)
 	{
-	pitem *item = (pitem *) OPENSSL_malloc(sizeof(pitem));
+	pitem *item = (pitem *) malloc(sizeof(pitem));
 	if (item == NULL) return NULL;
 
 	memcpy(item->priority,prio64be,sizeof(item->priority));
@@ -86,13 +86,13 @@ pitem_free(pitem *item)
 	{
 	if (item == NULL) return;
 
-	OPENSSL_free(item);
+	free(item);
 	}
 
 pqueue_s *
 pqueue_new()
 	{
-	pqueue_s *pq = (pqueue_s *) OPENSSL_malloc(sizeof(pqueue_s));
+	pqueue_s *pq = (pqueue_s *) malloc(sizeof(pqueue_s));
 	if (pq == NULL) return NULL;
 
 	memset(pq, 0x00, sizeof(pqueue_s));
@@ -104,7 +104,7 @@ pqueue_free(pqueue_s *pq)
 	{
 	if (pq == NULL) return;
 
-	OPENSSL_free(pq);
+	free(pq);
 	}
 
 pitem *

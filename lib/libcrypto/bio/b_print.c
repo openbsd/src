@@ -706,7 +706,7 @@ doapr_outch(char **sbuffer, char **buffer, size_t *currlen, size_t *maxlen,
 			if (*buffer == NULL) {
 				if (*maxlen == 0)
 					*maxlen = 1024;
-				*buffer = OPENSSL_malloc(*maxlen);
+				*buffer = malloc(*maxlen);
 				if (*currlen > 0) {
 					assert(*sbuffer != NULL);
 					memcpy(*buffer, *sbuffer, *currlen);
@@ -714,7 +714,7 @@ doapr_outch(char **sbuffer, char **buffer, size_t *currlen, size_t *maxlen,
 				*sbuffer = NULL;
 			} else {
 				*maxlen += 1024;
-				*buffer = OPENSSL_realloc(*buffer, *maxlen);
+				*buffer = realloc(*buffer, *maxlen);
 			}
 		}
 		/* What to do if *buffer is NULL? */
@@ -764,7 +764,7 @@ int BIO_vprintf (BIO *bio, const char *format, va_list args)
 	    format, args);
 	if (dynbuf) {
 		ret = BIO_write(bio, dynbuf, (int)retlen);
-		OPENSSL_free(dynbuf);
+		free(dynbuf);
 	} else {
 		ret = BIO_write(bio, hugebuf, (int)retlen);
 	}

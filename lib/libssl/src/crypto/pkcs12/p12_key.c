@@ -95,7 +95,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
 	    return 0;
 	if(unipass) {
 		OPENSSL_cleanse(unipass, uniplen);	/* Clear password from memory */
-		OPENSSL_free(unipass);
+		free(unipass);
 	}
 	return ret;
 }
@@ -135,14 +135,14 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 	u = EVP_MD_size (md_type);
 	if (u < 0)
 	    return 0;
-	D = OPENSSL_malloc (v);
-	Ai = OPENSSL_malloc (u);
-	B = OPENSSL_malloc (v + 1);
+	D = malloc (v);
+	Ai = malloc (u);
+	B = malloc (v + 1);
 	Slen = v * ((saltlen+v-1)/v);
 	if(passlen) Plen = v * ((passlen+v-1)/v);
 	else Plen = 0;
 	Ilen = Slen + Plen;
-	I = OPENSSL_malloc (Ilen);
+	I = malloc (Ilen);
 	Ij = BN_new();
 	Bpl1 = BN_new();
 	if (!D || !Ai || !B || !I || !Ij || !Bpl1)
@@ -209,10 +209,10 @@ err:
 	PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI,ERR_R_MALLOC_FAILURE);
 
 end:
-	OPENSSL_free (Ai);
-	OPENSSL_free (B);
-	OPENSSL_free (D);
-	OPENSSL_free (I);
+	free (Ai);
+	free (B);
+	free (D);
+	free (I);
 	BN_free (Ij);
 	BN_free (Bpl1);
 	EVP_MD_CTX_cleanup(&ctx);

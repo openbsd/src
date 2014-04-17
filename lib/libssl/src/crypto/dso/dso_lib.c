@@ -100,7 +100,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		 * to stealing the "best available" method. Will fallback
 		 * to DSO_METH_null() in the worst case. */
 		default_DSO_meth = DSO_METHOD_openssl();
-	ret = (DSO *)OPENSSL_malloc(sizeof(DSO));
+	ret = (DSO *)malloc(sizeof(DSO));
 	if(ret == NULL)
 		{
 		DSOerr(DSO_F_DSO_NEW_METHOD,ERR_R_MALLOC_FAILURE);
@@ -112,7 +112,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		{
 		/* sk_new doesn't generate any errors so we do */
 		DSOerr(DSO_F_DSO_NEW_METHOD,ERR_R_MALLOC_FAILURE);
-		OPENSSL_free(ret);
+		free(ret);
 		return(NULL);
 		}
 	if(meth == NULL)
@@ -122,7 +122,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 	ret->references = 1;
 	if((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		OPENSSL_free(ret);
+		free(ret);
 		ret=NULL;
 		}
 	return(ret);
@@ -165,11 +165,11 @@ int DSO_free(DSO *dso)
 	
 	sk_void_free(dso->meth_data);
 	if(dso->filename != NULL)
-		OPENSSL_free(dso->filename);
+		free(dso->filename);
 	if(dso->loaded_filename != NULL)
-		OPENSSL_free(dso->loaded_filename);
+		free(dso->loaded_filename);
  
-	OPENSSL_free(dso);
+	free(dso);
 	return(1);
 	}
 
@@ -377,7 +377,7 @@ int DSO_set_filename(DSO *dso, const char *filename)
 		return(0);
 		}
 	/* We'll duplicate filename */
-	copied = OPENSSL_malloc(strlen(filename) + 1);
+	copied = malloc(strlen(filename) + 1);
 	if(copied == NULL)
 		{
 		DSOerr(DSO_F_DSO_SET_FILENAME,ERR_R_MALLOC_FAILURE);
@@ -385,7 +385,7 @@ int DSO_set_filename(DSO *dso, const char *filename)
 		}
 	BUF_strlcpy(copied, filename, strlen(filename) + 1);
 	if(dso->filename)
-		OPENSSL_free(dso->filename);
+		free(dso->filename);
 	dso->filename = copied;
 	return(1);
 	}
@@ -435,7 +435,7 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
 		}
 	if(result == NULL)
 		{
-		result = OPENSSL_malloc(strlen(filename) + 1);
+		result = malloc(strlen(filename) + 1);
 		if(result == NULL)
 			{
 			DSOerr(DSO_F_DSO_CONVERT_FILENAME,

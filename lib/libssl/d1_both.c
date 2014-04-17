@@ -179,14 +179,14 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 	unsigned char *buf = NULL;
 	unsigned char *bitmask = NULL;
 
-	frag = (hm_fragment *)OPENSSL_malloc(sizeof(hm_fragment));
+	frag = (hm_fragment *)malloc(sizeof(hm_fragment));
 	if (frag == NULL)
 		return NULL;
 
 	if (frag_len) {
-		buf = (unsigned char *)OPENSSL_malloc(frag_len);
+		buf = (unsigned char *)malloc(frag_len);
 		if (buf == NULL) {
-			OPENSSL_free(frag);
+			free(frag);
 			return NULL;
 		}
 	}
@@ -196,11 +196,11 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 
 	/* Initialize reassembly bitmask if necessary */
 	if (reassembly) {
-		bitmask = (unsigned char *)OPENSSL_malloc(RSMBLY_BITMASK_SIZE(frag_len));
+		bitmask = (unsigned char *)malloc(RSMBLY_BITMASK_SIZE(frag_len));
 		if (bitmask == NULL) {
 			if (buf != NULL)
-				OPENSSL_free(buf);
-			OPENSSL_free(frag);
+				free(buf);
+			free(frag);
 			return NULL;
 		}
 		memset(bitmask, 0, RSMBLY_BITMASK_SIZE(frag_len));
@@ -220,10 +220,10 @@ dtls1_hm_fragment_free(hm_fragment *frag)
 		EVP_MD_CTX_destroy(frag->msg_header.saved_retransmit_state.write_hash);
 	}
 	if (frag->fragment)
-		OPENSSL_free(frag->fragment);
+		free(frag->fragment);
 	if (frag->reassembly)
-		OPENSSL_free(frag->reassembly);
-	OPENSSL_free(frag);
+		free(frag->reassembly);
+	free(frag);
 }
 
 /* send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or SSL3_RT_CHANGE_CIPHER_SPEC) */
@@ -636,7 +636,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok) {
 	is_complete);
 
 	if (is_complete) {
-		OPENSSL_free(frag->reassembly);
+		free(frag->reassembly);
 		frag->reassembly = NULL;
 	}
 
@@ -660,7 +660,7 @@ err:
 	if (frag != NULL)
 		dtls1_hm_fragment_free(frag);
 	if (item != NULL)
-		OPENSSL_free(item);
+		free(item);
 	*ok = 0;
 	return i;
 }
@@ -742,7 +742,7 @@ err:
 	if (frag != NULL)
 		dtls1_hm_fragment_free(frag);
 	if (item != NULL)
-		OPENSSL_free(item);
+		free(item);
 	*ok = 0;
 	return i;
 }

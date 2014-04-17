@@ -226,7 +226,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	/* Allocate buffer for new encoding */
 
-	new_der = OPENSSL_malloc(len);
+	new_der = malloc(len);
 	if (!new_der)
 		goto err;
 
@@ -266,9 +266,9 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	err:
 	if (orig_der)
-		OPENSSL_free(orig_der);
+		free(orig_der);
 	if (new_der)
-		OPENSSL_free(new_der);
+		free(new_der);
 
 	return ret;
 
@@ -499,7 +499,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	bad:
 
 	if (der)
-		OPENSSL_free(der);
+		free(der);
 
 	if (sk)
 		sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);

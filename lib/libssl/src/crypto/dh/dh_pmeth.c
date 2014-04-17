@@ -80,7 +80,7 @@ typedef struct
 static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 	{
 	DH_PKEY_CTX *dctx;
-	dctx = OPENSSL_malloc(sizeof(DH_PKEY_CTX));
+	dctx = malloc(sizeof(DH_PKEY_CTX));
 	if (!dctx)
 		return 0;
 	dctx->prime_len = 1024;
@@ -111,7 +111,7 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DH_PKEY_CTX *dctx = ctx->data;
 	if (dctx)
-		OPENSSL_free(dctx);
+		free(dctx);
 	}
 
 static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)

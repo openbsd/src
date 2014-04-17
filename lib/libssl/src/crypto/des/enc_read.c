@@ -106,17 +106,17 @@ int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=OPENSSL_malloc(BSIZE);
+		tmpbuf=malloc(BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
 		{
-		net=OPENSSL_malloc(BSIZE);
+		net=malloc(BSIZE);
 		if (net == NULL) return(-1);
 		}
 	if (unnet == NULL)
 		{
-		unnet=OPENSSL_malloc(BSIZE);
+		unnet=malloc(BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */

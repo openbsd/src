@@ -1760,7 +1760,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			    NULL, 0, NULL);
 
 			encodedPoint = (unsigned char *)
-			OPENSSL_malloc(encodedlen*sizeof(unsigned char));
+			malloc(encodedlen*sizeof(unsigned char));
 
 			bn_ctx = BN_CTX_new();
 			if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
@@ -1891,7 +1891,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			p += 1;
 			memcpy((unsigned char*)p,
 			    (unsigned char *)encodedPoint, encodedlen);
-			OPENSSL_free(encodedPoint);
+			free(encodedPoint);
 			encodedPoint = NULL;
 			p += encodedlen;
 		}
@@ -2012,7 +2012,7 @@ f_err:
 err:
 #ifndef OPENSSL_NO_ECDH
 	if (encodedPoint != NULL)
-		OPENSSL_free(encodedPoint);
+		free(encodedPoint);
 	BN_CTX_free(bn_ctx);
 #endif
 	EVP_MD_CTX_cleanup(&md_ctx);
@@ -2706,7 +2706,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		s2n(psk_len, t);
 
 		if (s->session->psk_identity != NULL)
-			OPENSSL_free(s->session->psk_identity);
+			free(s->session->psk_identity);
 		s->session->psk_identity = BUF_strdup((char *)p);
 		if (s->session->psk_identity == NULL) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2715,7 +2715,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		}
 
 		if (s->session->psk_identity_hint != NULL)
-			OPENSSL_free(s->session->psk_identity_hint);
+			free(s->session->psk_identity_hint);
 		s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
 		if (s->ctx->psk_identity_hint != NULL &&
 			s->session->psk_identity_hint == NULL) {
@@ -2752,7 +2752,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			goto err;
 		}
 		if (s->session->srp_username != NULL)
-			OPENSSL_free(s->session->srp_username);
+			free(s->session->srp_username);
 		s->session->srp_username = BUF_strdup(s->srp_ctx.login);
 		if (s->session->srp_username == NULL) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -3314,7 +3314,7 @@ ssl3_send_newsession_ticket(SSL *s)
  		 */
 		if (slen_full > 0xFF00)
 			return -1;
-		senc = OPENSSL_malloc(slen_full);
+		senc = malloc(slen_full);
 		if (!senc)
 			return -1;
 		p = senc;
@@ -3327,7 +3327,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		const_p = senc;
 		sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
 		if (sess == NULL) {
-			OPENSSL_free(senc);
+			free(senc);
 			return -1;
 		}
 
@@ -3337,7 +3337,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		slen = i2d_SSL_SESSION(sess, NULL);
 		if (slen > slen_full) {
 			/* shouldn't ever happen */
-			OPENSSL_free(senc);
+			free(senc);
 			return -1;
 		}
 		p = senc;
@@ -3372,7 +3372,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		if (tctx->tlsext_ticket_key_cb) {
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 			    &hctx, 1) < 0) {
-				OPENSSL_free(senc);
+				free(senc);
 				return -1;
 			}
 		} else {
@@ -3426,7 +3426,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		s->init_num = len;
 		s->state = SSL3_ST_SW_SESSION_TICKET_B;
 		s->init_off = 0;
-		OPENSSL_free(senc);
+		free(senc);
 	}
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
@@ -3529,7 +3529,7 @@ ssl3_get_next_proto(SSL *s)
 	if (proto_len + padding_len + 2 != s->init_num)
 		return 0;
 
-	s->next_proto_negotiated = OPENSSL_malloc(proto_len);
+	s->next_proto_negotiated = malloc(proto_len);
 	if (!s->next_proto_negotiated) {
 		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, ERR_R_MALLOC_FAILURE);
 		return 0;

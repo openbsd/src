@@ -251,8 +251,8 @@ int MAIN(int argc, char **argv)
 
 	keysize = RSA_size(rsa);
 
-	rsa_in = OPENSSL_malloc(keysize * 2);
-	rsa_out = OPENSSL_malloc(keysize);
+	rsa_in = malloc(keysize * 2);
+	rsa_out = malloc(keysize);
 
 	/* Read the input data */
 	rsa_inlen = BIO_read(in, rsa_in, keysize * 2);
@@ -305,9 +305,9 @@ int MAIN(int argc, char **argv)
 	RSA_free(rsa);
 	BIO_free(in);
 	BIO_free_all(out);
-	if(rsa_in) OPENSSL_free(rsa_in);
-	if(rsa_out) OPENSSL_free(rsa_out);
-	if(passin) OPENSSL_free(passin);
+	if(rsa_in) free(rsa_in);
+	if(rsa_out) free(rsa_out);
+	if(passin) free(passin);
 	return ret;
 }
 

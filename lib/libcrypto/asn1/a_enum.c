@@ -77,8 +77,8 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 	if (a->length < (int)(sizeof(long)+1))
 		{
 		if (a->data != NULL)
-			OPENSSL_free(a->data);
-		if ((a->data=(unsigned char *)OPENSSL_malloc(sizeof(long)+1)) != NULL)
+			free(a->data);
+		if ((a->data=(unsigned char *)malloc(sizeof(long)+1)) != NULL)
 			memset((char *)a->data,0,sizeof(long)+1);
 		}
 	if (a->data == NULL)
@@ -155,7 +155,7 @@ ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai)
 	len=((j == 0)?0:((j/8)+1));
 	if (ret->length < len+4)
 		{
-		unsigned char *new_data=OPENSSL_realloc(ret->data, len+4);
+		unsigned char *new_data=realloc(ret->data, len+4);
 		if (!new_data)
 			{
 			ASN1err(ASN1_F_BN_TO_ASN1_ENUMERATED,ERR_R_MALLOC_FAILURE);

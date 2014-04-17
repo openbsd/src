@@ -182,7 +182,7 @@ static int pkey_cmac_ctrl_str(EVP_PKEY_CTX *ctx,
 		if (!key)
 			return 0;
 		r = pkey_cmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
-		OPENSSL_free(key);
+		free(key);
 		return r;
 		}
 	return -2;

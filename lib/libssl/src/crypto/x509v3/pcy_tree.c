@@ -219,13 +219,13 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 
 	/* If we get this far initialize the tree */
 
-	tree = OPENSSL_malloc(sizeof(X509_POLICY_TREE));
+	tree = malloc(sizeof(X509_POLICY_TREE));
 
 	if (!tree)
 		return 0;
 
 	tree->flags = 0;
-	tree->levels = OPENSSL_malloc(sizeof(X509_POLICY_LEVEL) * n);
+	tree->levels = malloc(sizeof(X509_POLICY_LEVEL) * n);
 	tree->nlevel = 0;
 	tree->extra_data = NULL;
 	tree->auth_policies = NULL;
@@ -233,7 +233,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 
 	if (!tree->levels)
 		{
-		OPENSSL_free(tree);
+		free(tree);
 		return 0;
 		}
 
@@ -516,7 +516,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 			if (node->data->flags & POLICY_DATA_FLAG_MAP_MASK)
 				{
 				node->parent->nchild--;
-				OPENSSL_free(node);
+				free(node);
 				(void)sk_X509_POLICY_NODE_delete(nodes,i);
 				}
 			}
@@ -531,7 +531,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 			if (node->nchild == 0)
 				{
 				node->parent->nchild--;
-				OPENSSL_free(node);
+				free(node);
 				(void)sk_X509_POLICY_NODE_delete(nodes, i);
 				}
 			}
@@ -539,7 +539,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 			{
 			if (curr->anyPolicy->parent)
 				curr->anyPolicy->parent->nchild--;
-			OPENSSL_free(curr->anyPolicy);
+			free(curr->anyPolicy);
 			curr->anyPolicy = NULL;
 			}
 		if (curr == tree->levels)
@@ -721,7 +721,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
 static void exnode_free(X509_POLICY_NODE *node)
 	{
 	if (node->data && (node->data->flags & POLICY_DATA_FLAG_EXTRA_NODE))
-		OPENSSL_free(node);
+		free(node);
 	}
 
 
@@ -751,8 +751,8 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
 		sk_X509_POLICY_DATA_pop_free(tree->extra_data,
 						policy_data_free);
 
-	OPENSSL_free(tree->levels);
-	OPENSSL_free(tree);
+	free(tree->levels);
+	free(tree);
 
 	}
 

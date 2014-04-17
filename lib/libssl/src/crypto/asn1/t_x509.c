@@ -239,7 +239,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		}
 	ret=1;
 err:
-	if (m != NULL) OPENSSL_free(m);
+	if (m != NULL) free(m);
 	return(ret);
 	}
 
@@ -256,7 +256,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 	if (BIO_printf(bp,"        Subject OCSP hash: ") <= 0)
 		goto err;
 	derlen = i2d_X509_NAME(x->cert_info->subject, NULL);
-	if ((der = dertmp = (unsigned char *)OPENSSL_malloc (derlen)) == NULL)
+	if ((der = dertmp = (unsigned char *)malloc (derlen)) == NULL)
 		goto err;
 	i2d_X509_NAME(x->cert_info->subject, &dertmp);
 
@@ -266,7 +266,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 		{
 		if (BIO_printf(bp,"%02X",SHA1md[i]) <= 0) goto err;
 		}
-	OPENSSL_free (der);
+	free (der);
 	der=NULL;
 
 	/* display the hash of the public key as it would appear
@@ -287,7 +287,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 
 	return (1);
 err:
-	if (der != NULL) OPENSSL_free(der);
+	if (der != NULL) free(der);
 	return(0);
 	}
 
@@ -477,7 +477,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	b=X509_NAME_oneline(name,NULL,0);
 	if (!*b)
 		{
-		OPENSSL_free(b);
+		free(b);
 		return 1;
 		}
 	s=b+1; /* skip the first slash */
@@ -513,6 +513,6 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 err:
 		X509err(X509_F_X509_NAME_PRINT,ERR_R_BUF_LIB);
 		}
-	OPENSSL_free(b);
+	free(b);
 	return(ret);
 	}

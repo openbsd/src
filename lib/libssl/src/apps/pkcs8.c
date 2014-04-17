@@ -425,9 +425,9 @@ int MAIN(int argc, char **argv)
 	BIO_free_all(out);
 	BIO_free(in);
 	if (passin)
-		OPENSSL_free(passin);
+		free(passin);
 	if (passout)
-		OPENSSL_free(passout);
+		free(passout);
 
 	return ret;
 	}

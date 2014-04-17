@@ -110,7 +110,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
 		return NULL;
 		}
-	ndef_aux = OPENSSL_malloc(sizeof(NDEF_SUPPORT));
+	ndef_aux = malloc(sizeof(NDEF_SUPPORT));
 	asn_bio = BIO_new(BIO_f_asn1());
 
 	/* ASN1 bio needs to be next to output BIO */
@@ -148,7 +148,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	if (asn_bio)
 		BIO_free(asn_bio);
 	if (ndef_aux)
-		OPENSSL_free(ndef_aux);
+		free(ndef_aux);
 	return NULL;
 	}
 
@@ -164,7 +164,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	ndef_aux = *(NDEF_SUPPORT **)parg;
 
 	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
-	p = OPENSSL_malloc(derlen);
+	p = malloc(derlen);
 	ndef_aux->derbuf = p;
 	*pbuf = p;
 	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
@@ -187,7 +187,7 @@ static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	ndef_aux = *(NDEF_SUPPORT **)parg;
 
 	if (ndef_aux->derbuf)
-		OPENSSL_free(ndef_aux->derbuf);
+		free(ndef_aux->derbuf);
 
 	ndef_aux->derbuf = NULL;
 	*pbuf = NULL;
@@ -200,7 +200,7 @@ static int ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	NDEF_SUPPORT **pndef_aux = (NDEF_SUPPORT **)parg;
 	if (!ndef_prefix_free(b, pbuf, plen, parg))
 		return 0;
-	OPENSSL_free(*pndef_aux);
+	free(*pndef_aux);
 	*pndef_aux = NULL;
 	return 1;
 	}
@@ -229,7 +229,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 		return 0;
 
 	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
-	p = OPENSSL_malloc(derlen);
+	p = malloc(derlen);
 	ndef_aux->derbuf = p;
 	*pbuf = p;
 	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);

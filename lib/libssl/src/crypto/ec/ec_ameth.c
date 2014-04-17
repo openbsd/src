@@ -116,7 +116,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	penclen = i2o_ECPublicKey(ec_key, NULL);
 	if (penclen <= 0)
 		goto err;
-	penc = OPENSSL_malloc(penclen);
+	penc = malloc(penclen);
 	if (!penc)
 		goto err;
 	p = penc;
@@ -132,7 +132,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	else
 		ASN1_STRING_free(pval);
 	if (penc)
-		OPENSSL_free(penc);
+		free(penc);
 	return 0;
 	}
 
@@ -339,7 +339,7 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 		ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
 		return 0;
 	}
-	ep = (unsigned char *) OPENSSL_malloc(eplen);
+	ep = (unsigned char *) malloc(eplen);
 	if (!ep)
 	{
 		EC_KEY_set_enc_flags(ec_key, old_flags);
@@ -350,7 +350,7 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	if (!i2d_ECPrivateKey(ec_key, &p))
 	{
 		EC_KEY_set_enc_flags(ec_key, old_flags);
-		OPENSSL_free(ep);
+		free(ep);
 		ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
 	}
 	/* restore old encoding flags */
@@ -474,7 +474,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 	if (ktype > 0)
 		{
 		buf_len += 10;
-		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+		if ((buffer = malloc(buf_len)) == NULL)
 			{
 			reason = ERR_R_MALLOC_FAILURE;
 			goto err;
@@ -515,7 +515,7 @@ err:
 	if (ctx)
 		BN_CTX_free(ctx);
 	if (buffer != NULL)
-		OPENSSL_free(buffer);
+		free(buffer);
 	return(ret);
 	}
 

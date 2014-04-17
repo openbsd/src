@@ -475,7 +475,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 static char * ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	{
 	SRP_ARG *srp_arg = (SRP_ARG *)arg;
-	char *pass = (char *)OPENSSL_malloc(PWD_STRLEN+1);
+	char *pass = (char *)malloc(PWD_STRLEN+1);
 	PW_CB_DATA cb_tmp;
 	int l;
 
@@ -484,7 +484,7 @@ static char * ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp))<0)
 		{
 		BIO_printf (bio_err, "Can't read Password\n");
-		OPENSSL_free(pass);
+		free(pass);
 		return NULL;
 		}
 	*(pass+l)= '\0';
@@ -628,9 +628,9 @@ int MAIN(int argc, char **argv)
 	if (!load_config(bio_err, NULL))
 		goto end;
 
-	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
-		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
-		((mbuf=OPENSSL_malloc(BUFSIZZ + 1)) == NULL))	/* NUL byte */
+	if (	((cbuf=malloc(BUFSIZZ)) == NULL) ||
+		((sbuf=malloc(BUFSIZZ)) == NULL) ||
+		((mbuf=malloc(BUFSIZZ + 1)) == NULL))	/* NUL byte */
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -1842,7 +1842,7 @@ end:
 		}
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
-		OPENSSL_free(next_proto.data);
+		free(next_proto.data);
 #endif
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cert)
@@ -1850,12 +1850,12 @@ end:
 	if (key)
 		EVP_PKEY_free(key);
 	if (pass)
-		OPENSSL_free(pass);
+		free(pass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
-	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
-	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
-	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }
+	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); free(cbuf); }
+	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); free(sbuf); }
+	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); free(mbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);
@@ -2033,7 +2033,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_printf(bio, "Keying material exporter:\n");
 		BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
 		BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
-		exportedkeymat = OPENSSL_malloc(keymatexportlen);
+		exportedkeymat = malloc(keymatexportlen);
 		if (exportedkeymat != NULL)
 			{
 			if (!SSL_export_keying_material(s, exportedkeymat,
@@ -2052,7 +2052,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 						   exportedkeymat[i]);
 				BIO_printf(bio, "\n");
 				}
-			OPENSSL_free(exportedkeymat);
+			free(exportedkeymat);
 			}
 		}
 	BIO_printf(bio,"---\n");

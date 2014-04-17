@@ -78,7 +78,7 @@ static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 				V_ASN1_NULL, NULL, penc, penclen))
 		return 1;
 
-	OPENSSL_free(penc);
+	free(penc);
 	return 0;
 	}
 
@@ -201,7 +201,7 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 		update_buflen(x->iqmp, &buf_len);
 		}
 
-	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
+	m=(unsigned char *)malloc(buf_len+10);
 	if (m == NULL)
 		{
 		RSAerr(RSA_F_DO_RSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -248,7 +248,7 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 		}
 	ret=1;
 err:
-	if (m != NULL) OPENSSL_free(m);
+	if (m != NULL) free(m);
 	return(ret);
 	}
 

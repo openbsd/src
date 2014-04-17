@@ -176,7 +176,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 	err:
 	if (penc)
-		OPENSSL_free(penc);
+		free(penc);
 	if (pval)
 		ASN1_STRING_free(pval);
 
@@ -344,7 +344,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 err:
 	if (dp != NULL)
-		OPENSSL_free(dp);
+		free(dp);
 	if (params != NULL)
 		ASN1_STRING_free(params);
 	if (prkey != NULL)
@@ -459,7 +459,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	update_buflen(priv_key, &buf_len);
 	update_buflen(pub_key, &buf_len);
 
-	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
+	m=(unsigned char *)malloc(buf_len+10);
 	if (m == NULL)
 		{
 		DSAerr(DSA_F_DO_DSA_PRINT,ERR_R_MALLOC_FAILURE);
@@ -483,7 +483,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	if (!ASN1_bn_print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) OPENSSL_free(m);
+	if (m != NULL) free(m);
 	return(ret);
 	}
 
@@ -564,7 +564,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 		unsigned char *m=NULL;
 		update_buflen(dsa_sig->r, &buf_len);
 		update_buflen(dsa_sig->s, &buf_len);
-		m = OPENSSL_malloc(buf_len+10);
+		m = malloc(buf_len+10);
 		if (m == NULL)
 			{
 			DSAerr(DSA_F_DSA_SIG_PRINT,ERR_R_MALLOC_FAILURE);
@@ -581,7 +581,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 		rv = 1;
 		err:
 		if (m)
-			OPENSSL_free(m);
+			free(m);
 		DSA_SIG_free(dsa_sig);
 		return rv;
 		}

@@ -144,7 +144,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 
 	if (len-- > 1) /* using one because of the bits left byte */
 		{
-		s=(unsigned char *)OPENSSL_malloc((int)len);
+		s=(unsigned char *)malloc((int)len);
 		if (s == NULL)
 			{
 			i=ERR_R_MALLOC_FAILURE;
@@ -158,7 +158,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 		s=NULL;
 
 	ret->length=(int)len;
-	if (ret->data != NULL) OPENSSL_free(ret->data);
+	if (ret->data != NULL) free(ret->data);
 	ret->data=s;
 	ret->type=V_ASN1_BIT_STRING;
 	if (a != NULL) (*a)=ret;
@@ -192,7 +192,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		{
 		if (!value) return(1); /* Don't need to set */
 		if (a->data == NULL)
-			c=(unsigned char *)OPENSSL_malloc(w+1);
+			c=(unsigned char *)malloc(w+1);
 		else
 			c=(unsigned char *)OPENSSL_realloc_clean(a->data,
 								 a->length,

@@ -490,7 +490,7 @@ again:
 	ret = 1;
 err:
 	if (str != NULL)
-		OPENSSL_free(str);
+		free(str);
 	if ((ret == 0) && (s != -1)) {
 		close(s);
 		s = -1;
@@ -591,9 +591,9 @@ BIO_accept(int sock, char **addr)
 		p = *addr;
 		if (p) {
 			*p = '\0';
-			p = OPENSSL_realloc(p, nl);
+			p = realloc(p, nl);
 		} else {
-			p = OPENSSL_malloc(nl);
+			p = malloc(nl);
 		}
 		if (p == NULL) {
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
@@ -609,7 +609,7 @@ BIO_accept(int sock, char **addr)
 	l = ntohl(sa.from.sa_in.sin_addr.s_addr);
 	port = ntohs(sa.from.sa_in.sin_port);
 	if (*addr == NULL) {
-		if ((p = OPENSSL_malloc(24)) == NULL) {
+		if ((p = malloc(24)) == NULL) {
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
 		}

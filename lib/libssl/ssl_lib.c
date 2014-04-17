@@ -281,7 +281,7 @@ SSL
 		return (NULL);
 	}
 
-	s = (SSL *)OPENSSL_malloc(sizeof(SSL));
+	s = (SSL *)malloc(sizeof(SSL));
 	if (s == NULL)
 		goto err;
 	memset(s, 0, sizeof(SSL));
@@ -380,7 +380,7 @@ err:
 			ssl_cert_free(s->cert);
 		if (s->ctx != NULL)
 			SSL_CTX_free(s->ctx); /* decrement reference count */
-		OPENSSL_free(s);
+		free(s);
 	}
 	SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
 	return (NULL);
@@ -558,24 +558,24 @@ SSL_free(SSL *s)
 
 #ifndef OPENSSL_NO_TLSEXT
 	if (s->tlsext_hostname)
-		OPENSSL_free(s->tlsext_hostname);
+		free(s->tlsext_hostname);
 	if (s->initial_ctx)
 		SSL_CTX_free(s->initial_ctx);
 #ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist)
-		OPENSSL_free(s->tlsext_ecpointformatlist);
+		free(s->tlsext_ecpointformatlist);
 	if (s->tlsext_ellipticcurvelist)
-		OPENSSL_free(s->tlsext_ellipticcurvelist);
+		free(s->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
 	if (s->tlsext_opaque_prf_input)
-		OPENSSL_free(s->tlsext_opaque_prf_input);
+		free(s->tlsext_opaque_prf_input);
 	if (s->tlsext_ocsp_exts)
 		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
 	X509_EXTENSION_free);
 	if (s->tlsext_ocsp_ids)
 		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
 	if (s->tlsext_ocsp_resp)
-		OPENSSL_free(s->tlsext_ocsp_resp);
+		free(s->tlsext_ocsp_resp);
 #endif
 
 	if (s->client_CA != NULL)
@@ -594,7 +594,7 @@ SSL_free(SSL *s)
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (s->next_proto_negotiated)
-		OPENSSL_free(s->next_proto_negotiated);
+		free(s->next_proto_negotiated);
 #endif
 
 #ifndef OPENSSL_NO_SRTP
@@ -602,7 +602,7 @@ SSL_free(SSL *s)
 		sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 #endif
 
-	OPENSSL_free(s);
+	free(s);
 }
 
 void
@@ -1703,7 +1703,7 @@ SSL_CTX
 		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
 		goto err;
 	}
-	ret = (SSL_CTX *)OPENSSL_malloc(sizeof(SSL_CTX));
+	ret = (SSL_CTX *)malloc(sizeof(SSL_CTX));
 	if (ret == NULL)
 		goto err;
 
@@ -1862,7 +1862,7 @@ err2:
 #if 0
 static void
 SSL_COMP_free(SSL_COMP *comp)
-	{ OPENSSL_free(comp);
+	{ free(comp);
 }
 #endif
 
@@ -1933,7 +1933,7 @@ SSL_CTX_free(SSL_CTX *a)
 
 #ifndef OPENSSL_NO_PSK
 	if (a->psk_identity_hint)
-		OPENSSL_free(a->psk_identity_hint);
+		free(a->psk_identity_hint);
 #endif
 #ifndef OPENSSL_NO_SRP
 	SSL_CTX_SRP_CTX_free(a);
@@ -1943,7 +1943,7 @@ SSL_CTX_free(SSL_CTX *a)
 		ENGINE_finish(a->client_cert_engine);
 #endif
 
-	OPENSSL_free(a);
+	free(a);
 }
 
 void
@@ -2696,12 +2696,12 @@ ssl_clear_cipher_ctx(SSL *s)
 {
 	if (s->enc_read_ctx != NULL) {
 		EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
-		OPENSSL_free(s->enc_read_ctx);
+		free(s->enc_read_ctx);
 		s->enc_read_ctx = NULL;
 	}
 	if (s->enc_write_ctx != NULL) {
 		EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
-		OPENSSL_free(s->enc_write_ctx);
+		free(s->enc_write_ctx);
 		s->enc_write_ctx = NULL;
 	}
 #ifndef OPENSSL_NO_COMP
@@ -3095,7 +3095,7 @@ SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
 		return 0;
 	}
 	if (ctx->psk_identity_hint != NULL)
-		OPENSSL_free(ctx->psk_identity_hint);
+		free(ctx->psk_identity_hint);
 	if (identity_hint != NULL) {
 		ctx->psk_identity_hint = BUF_strdup(identity_hint);
 		if (ctx->psk_identity_hint == NULL)
@@ -3119,7 +3119,7 @@ SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
 		return 0;
 	}
 	if (s->session->psk_identity_hint != NULL)
-		OPENSSL_free(s->session->psk_identity_hint);
+		free(s->session->psk_identity_hint);
 	if (identity_hint != NULL) {
 		s->session->psk_identity_hint = BUF_strdup(identity_hint);
 		if (s->session->psk_identity_hint == NULL)

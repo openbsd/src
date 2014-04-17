@@ -146,14 +146,14 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		fnd = lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate);
 		if(!fnd)
 			{
-			fnd = OPENSSL_malloc(sizeof(ENGINE_PILE));
+			fnd = malloc(sizeof(ENGINE_PILE));
 			if(!fnd) goto end;
 			fnd->uptodate = 1;
 			fnd->nid = *nids;
 			fnd->sk = sk_ENGINE_new_null();
 			if(!fnd->sk)
 				{
-				OPENSSL_free(fnd);
+				free(fnd);
 				goto end;
 				}
 			fnd->funct = NULL;
@@ -218,7 +218,7 @@ static void int_cleanup_cb_doall(ENGINE_PILE *p)
 	sk_ENGINE_free(p->sk);
 	if(p->funct)
 		engine_unlocked_finish(p->funct, 0);
-	OPENSSL_free(p);
+	free(p);
 	}
 static IMPLEMENT_LHASH_DOALL_FN(int_cleanup_cb, ENGINE_PILE)
 

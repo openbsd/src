@@ -278,12 +278,12 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg, ASN1_STRING 
 	t.type = str->type;
 	t.value.ptr = (char *)str;
 	der_len = i2d_ASN1_TYPE(&t, NULL);
-	der_buf = OPENSSL_malloc(der_len);
+	der_buf = malloc(der_len);
 	if(!der_buf) return -1;
 	p = der_buf;
 	i2d_ASN1_TYPE(&t, &p);
 	outlen = do_hex_dump(io_ch, arg, der_buf, der_len);
-	OPENSSL_free(der_buf);
+	free(der_buf);
 	if(outlen < 0) return -1;
 	return outlen + 1;
 }

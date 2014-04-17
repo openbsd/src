@@ -93,7 +93,7 @@ typedef struct
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	{
 	RSA_PKEY_CTX *rctx;
-	rctx = OPENSSL_malloc(sizeof(RSA_PKEY_CTX));
+	rctx = malloc(sizeof(RSA_PKEY_CTX));
 	if (!rctx)
 		return 0;
 	rctx->nbits = 1024;
@@ -135,7 +135,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 	{
 	if (ctx->tbuf)
 		return 1;
-	ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey));
+	ctx->tbuf = malloc(EVP_PKEY_size(pk->pkey));
 	if (!ctx->tbuf)
 		return 0;
 	return 1;
@@ -149,8 +149,8 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 		if (rctx->pub_exp)
 			BN_free(rctx->pub_exp);
 		if (rctx->tbuf)
-			OPENSSL_free(rctx->tbuf);
-		OPENSSL_free(rctx);
+			free(rctx->tbuf);
+		free(rctx);
 		}
 	}
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,

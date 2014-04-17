@@ -917,9 +917,9 @@ end:
 
 	if (use_ssl != -1)
 		{
-		OPENSSL_free(host);
-		OPENSSL_free(port);
-		OPENSSL_free(path);
+		free(host);
+		free(port);
+		free(path);
 		}
 
 	OPENSSL_EXIT(ret);
@@ -1165,7 +1165,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 	row[DB_serial] = itmp;
 	BN_free(bn);
 	rrow=TXT_DB_get_by_index(db->db,DB_serial,row);
-	OPENSSL_free(itmp);
+	free(itmp);
 	return rrow;
 	}
 

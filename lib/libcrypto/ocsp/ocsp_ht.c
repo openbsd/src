@@ -114,8 +114,8 @@ void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 	if (rctx->mem)
 		BIO_free(rctx->mem);
 	if (rctx->iobuf)
-		OPENSSL_free(rctx->iobuf);
-	OPENSSL_free(rctx);
+		free(rctx->iobuf);
+	free(rctx);
 	}
 
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req)
@@ -157,7 +157,7 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 	static const char post_hdr[] = "POST %s HTTP/1.0\r\n";
 
 	OCSP_REQ_CTX *rctx;
-	rctx = OPENSSL_malloc(sizeof(OCSP_REQ_CTX));
+	rctx = malloc(sizeof(OCSP_REQ_CTX));
 	rctx->state = OHS_ERROR;
 	rctx->mem = BIO_new(BIO_s_mem());
 	rctx->io = io;
@@ -166,7 +166,7 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 		rctx->iobuflen = maxline;
 	else
 		rctx->iobuflen = OCSP_MAX_LINE_LEN;
-	rctx->iobuf = OPENSSL_malloc(rctx->iobuflen);
+	rctx->iobuf = malloc(rctx->iobuflen);
 	if (!rctx->iobuf)
 		return 0;
 	if (!path)

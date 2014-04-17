@@ -179,7 +179,7 @@ static int update_index(CA_DB *db, BIO *bio, char **row)
 	char ** irow;
 	int i;
 
-	if ((irow=(char **)OPENSSL_malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
+	if ((irow=(char **)malloc(sizeof(char *)*(DB_NUMBER+1))) == NULL)
 		{
 		BIO_printf(bio_err,"Memory allocation failure\n");
 		return 0;
@@ -196,7 +196,7 @@ static int update_index(CA_DB *db, BIO *bio, char **row)
 		{
 		BIO_printf(bio,"failed to update srpvfile\n");
 		BIO_printf(bio,"TXT_DB error number %ld\n",db->db->error);
-		OPENSSL_free(irow);
+		free(irow);
 		return 0;
 		}
 	return 1;
@@ -233,7 +233,7 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
 			{
 			if (strcmp(verifier, srp_verifier))
 				gNid = NULL;
-			OPENSSL_free(verifier);
+			free(verifier);
 			}
 		}
 	return gNid;
@@ -444,7 +444,7 @@ bad:
 			size_t len;
 
 			len = strlen(s)+sizeof(CONFIG_FILE)+1;
-			tofree=OPENSSL_malloc(len);
+			tofree=malloc(len);
 			BUF_strlcpy(tofree,s,len);
 			BUF_strlcat(tofree,"/",len);
 			BUF_strlcat(tofree,CONFIG_FILE,len);
@@ -465,7 +465,7 @@ bad:
 			}
 		if(tofree)
 			{
-			OPENSSL_free(tofree);
+			free(tofree);
 			tofree = NULL;
 			}
 
@@ -607,12 +607,12 @@ bad:
 					(userinfo && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))) || 
 					!update_index(db, bio_err, row))
 					{
-					if (row[DB_srpid]) OPENSSL_free(row[DB_srpid]);
-					if (row[DB_srpgN]) OPENSSL_free(row[DB_srpgN]);
-					if (row[DB_srpinfo]) OPENSSL_free(row[DB_srpinfo]);
-					if (row[DB_srptype]) OPENSSL_free(row[DB_srptype]);
-					if (row[DB_srpverifier]) OPENSSL_free(row[DB_srpverifier]);
-					if (row[DB_srpsalt]) OPENSSL_free(row[DB_srpsalt]);
+					if (row[DB_srpid]) free(row[DB_srpid]);
+					if (row[DB_srpgN]) free(row[DB_srpgN]);
+					if (row[DB_srpinfo]) free(row[DB_srpinfo]);
+					if (row[DB_srptype]) free(row[DB_srptype]);
+					if (row[DB_srpverifier]) free(row[DB_srpverifier]);
+					if (row[DB_srpsalt]) free(row[DB_srpsalt]);
 					goto err;
 					}
 				doupdatedb = 1;
@@ -733,7 +733,7 @@ err:
 
 	VERBOSE BIO_printf(bio_err,"SRP terminating with code %d.\n",ret);
 	if(tofree)
-		OPENSSL_free(tofree);
+		free(tofree);
 	if (ret) ERR_print_errors(bio_err);
 	if (randfile) app_RAND_write_file(randfile, bio_err);
 	if (conf) NCONF_free(conf);

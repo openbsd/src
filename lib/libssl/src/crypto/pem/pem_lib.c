@@ -288,9 +288,9 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char
 			return 0;
 		}
 		if(check_pem(nm, name)) break;
-		OPENSSL_free(nm);
-		OPENSSL_free(header);
-		OPENSSL_free(data);
+		free(nm);
+		free(header);
+		free(data);
 		}
 	if (!PEM_get_EVP_CIPHER_INFO(header,&cipher)) goto err;
 	if (!PEM_do_header(&cipher,data,&len,cb,u)) goto err;
@@ -304,9 +304,9 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char
 	ret = 1;
 
 err:
-	if (!ret || !pnm) OPENSSL_free(nm);
-	OPENSSL_free(header);
-	if (!ret) OPENSSL_free(data);
+	if (!ret || !pnm) free(nm);
+	free(header);
+	if (!ret) free(data);
 	return ret;
 	}
 
@@ -360,7 +360,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 		}
 	/* dzise + 8 bytes are needed */
 	/* actually it needs the cipher block size extra... */
-	data=(unsigned char *)OPENSSL_malloc((unsigned int)dsize+20);
+	data=(unsigned char *)malloc((unsigned int)dsize+20);
 	if (data == NULL)
 		{
 		PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,ERR_R_MALLOC_FAILURE);
@@ -427,7 +427,7 @@ err:
 	if (data != NULL)
 		{
 		OPENSSL_cleanse(data,(unsigned int)dsize);
-		OPENSSL_free(data);
+		free(data);
 		}
 	return(ret);
 	}
@@ -599,7 +599,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 			goto err;
 		}
 
-	buf = OPENSSL_malloc(PEM_BUFSIZE*8);
+	buf = malloc(PEM_BUFSIZE*8);
 	if (buf == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -620,7 +620,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 	EVP_EncodeFinal(&ctx,buf,&outl);
 	if ((outl > 0) && (BIO_write(bp,(char *)buf,outl) != outl)) goto err;
 	OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
-	OPENSSL_free(buf);
+	free(buf);
 	buf = NULL;
 	if (	(BIO_write(bp,"-----END ",9) != 9) ||
 		(BIO_write(bp,name,nlen) != nlen) ||
@@ -630,7 +630,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 err:
 	if (buf) {
 		OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
-		OPENSSL_free(buf);
+		free(buf);
 	}
 	PEMerr(PEM_F_PEM_WRITE_BIO,reason);
 	return(0);
@@ -809,9 +809,9 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 	*header=headerB->data;
 	*data=(unsigned char *)dataB->data;
 	*len=bl;
-	OPENSSL_free(nameB);
-	OPENSSL_free(headerB);
-	OPENSSL_free(dataB);
+	free(nameB);
+	free(headerB);
+	free(dataB);
 	return(1);
 err:
 	BUF_MEM_free(nameB);

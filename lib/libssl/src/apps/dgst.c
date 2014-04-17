@@ -133,7 +133,7 @@ MAIN(int argc, char **argv)
 
 	apps_startup();
 
-	if ((buf = (unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL) {
+	if ((buf = (unsigned char *)malloc(BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
@@ -428,7 +428,7 @@ MAIN(int argc, char **argv)
 		BIO *sigbio;
 		sigbio = BIO_new_file(sigfile, "rb");
 		siglen = EVP_PKEY_size(sigkey);
-		sigbuf = OPENSSL_malloc(siglen);
+		sigbuf = malloc(siglen);
 		if (!sigbio) {
 			BIO_printf(bio_err, "Error opening signature file %s\n",
 			    sigfile);
@@ -488,19 +488,19 @@ MAIN(int argc, char **argv)
 end:
 	if (buf != NULL) {
 		OPENSSL_cleanse(buf, BUFSIZE);
-		OPENSSL_free(buf);
+		free(buf);
 	}
 	if (in != NULL)
 		BIO_free(in);
 	if (passin)
-		OPENSSL_free(passin);
+		free(passin);
 	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
 	if (sigopts)
 		sk_OPENSSL_STRING_free(sigopts);
 	if (macopts)
 		sk_OPENSSL_STRING_free(macopts);
-	if (sigbuf) OPENSSL_free(sigbuf);
+	if (sigbuf) free(sigbuf);
 		if (bmd != NULL)
 			BIO_free(bmd);
 	apps_shutdown();

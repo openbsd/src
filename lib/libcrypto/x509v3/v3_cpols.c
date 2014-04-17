@@ -426,7 +426,7 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
 			if(i) BIO_puts(out, ", ");
 			tmp = i2s_ASN1_INTEGER(NULL, num);
 			BIO_puts(out, tmp);
-			OPENSSL_free(tmp);
+			free(tmp);
 		}
 		BIO_puts(out, "\n");
 	}

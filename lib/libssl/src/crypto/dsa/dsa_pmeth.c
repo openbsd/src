@@ -81,7 +81,7 @@ typedef struct
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 	{
 	DSA_PKEY_CTX *dctx;
-	dctx = OPENSSL_malloc(sizeof(DSA_PKEY_CTX));
+	dctx = malloc(sizeof(DSA_PKEY_CTX));
 	if (!dctx)
 		return 0;
 	dctx->nbits = 1024;
@@ -114,7 +114,7 @@ static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DSA_PKEY_CTX *dctx = ctx->data;
 	if (dctx)
-		OPENSSL_free(dctx);
+		free(dctx);
 	}
 
 static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,

@@ -131,9 +131,9 @@ p8err:
 	if (ret == NULL)
 		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,ERR_R_ASN1_LIB);
 err:
-	OPENSSL_free(nm);
+	free(nm);
 	OPENSSL_cleanse(data, len);
-	OPENSSL_free(data);
+	free(data);
 	return(ret);
 	}
 
@@ -188,8 +188,8 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 err:
 	if (ret == NULL)
 		PEMerr(PEM_F_PEM_READ_BIO_PARAMETERS,ERR_R_ASN1_LIB);
-	OPENSSL_free(nm);
-	OPENSSL_free(data);
+	free(nm);
+	free(data);
 	return(ret);
 	}
 

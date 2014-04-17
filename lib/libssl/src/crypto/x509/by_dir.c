@@ -153,10 +153,10 @@ new_dir(X509_LOOKUP *lu)
 {
 	BY_DIR *a;
 
-	if ((a = (BY_DIR *)OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
+	if ((a = (BY_DIR *)malloc(sizeof(BY_DIR))) == NULL)
 		return (0);
 	if ((a->buffer = BUF_MEM_new()) == NULL) {
-		OPENSSL_free(a);
+		free(a);
 		return (0);
 	}
 	a->dirs = NULL;
@@ -167,7 +167,7 @@ new_dir(X509_LOOKUP *lu)
 static void
 by_dir_hash_free(BY_DIR_HASH *hash)
 {
-	OPENSSL_free(hash);
+	free(hash);
 }
 
 static int
@@ -185,10 +185,10 @@ static void
 by_dir_entry_free(BY_DIR_ENTRY *ent)
 {
 	if (ent->dir)
-		OPENSSL_free(ent->dir);
+		free(ent->dir);
 	if (ent->hashes)
 		sk_BY_DIR_HASH_pop_free(ent->hashes, by_dir_hash_free);
-	OPENSSL_free(ent);
+	free(ent);
 }
 
 static void
@@ -201,7 +201,7 @@ free_dir(X509_LOOKUP *lu)
 		sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
 	if (a->buffer != NULL)
 		BUF_MEM_free(a->buffer);
-	OPENSSL_free(a);
+	free(a);
 }
 
 static int
@@ -241,7 +241,7 @@ add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 					return 0;
 				}
 			}
-			ent = OPENSSL_malloc(sizeof(BY_DIR_ENTRY));
+			ent = malloc(sizeof(BY_DIR_ENTRY));
 			if (!ent)
 				return 0;
 			ent->dir_type = type;
@@ -411,12 +411,12 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 					    ent->hashes, idx);
 			}
 			if (!hent) {
-				hent = OPENSSL_malloc(sizeof(BY_DIR_HASH));
+				hent = malloc(sizeof(BY_DIR_HASH));
 				hent->hash = h;
 				hent->suffix = k;
 				if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
 					CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-					OPENSSL_free(hent);
+					free(hent);
 					ok = 0;
 					goto finish;
 				}

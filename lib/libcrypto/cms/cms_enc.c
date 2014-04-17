@@ -143,7 +143,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	/* Generate random session key */
 	if (!enc || !ec->key)
 		{
-		tkey = OPENSSL_malloc(tkeylen);
+		tkey = malloc(tkeylen);
 		if (!tkey)
 			{
 			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
@@ -184,7 +184,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 				{
 				/* Use random key */
 				OPENSSL_cleanse(ec->key, ec->keylen);
-				OPENSSL_free(ec->key);
+				free(ec->key);
 				ec->key = tkey;
 				ec->keylen = tkeylen;
 				tkey = NULL;
@@ -222,13 +222,13 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	if (ec->key && !keep_key)
 		{
 		OPENSSL_cleanse(ec->key, ec->keylen);
-		OPENSSL_free(ec->key);
+		free(ec->key);
 		ec->key = NULL;
 		}
 	if (tkey)
 		{
 		OPENSSL_cleanse(tkey, tkeylen);
-		OPENSSL_free(tkey);
+		free(tkey);
 		}
 	if (ok)
 		return b;
@@ -243,7 +243,7 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 	ec->cipher = cipher;
 	if (key)
 		{
-		ec->key = OPENSSL_malloc(keylen);
+		ec->key = malloc(keylen);
 		if (!ec->key)
 			return 0;
 		memcpy(ec->key, key, keylen);

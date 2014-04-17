@@ -72,7 +72,7 @@ char *BUF_strndup(const char *str, size_t siz)
 
 	if (str == NULL) return(NULL);
 
-	ret=OPENSSL_malloc(siz+1);
+	ret=malloc(siz+1);
 	if (ret == NULL) 
 		{
 		BUFerr(BUF_F_BUF_STRNDUP,ERR_R_MALLOC_FAILURE);
@@ -88,7 +88,7 @@ void *BUF_memdup(const void *data, size_t siz)
 
 	if (data == NULL) return(NULL);
 
-	ret=OPENSSL_malloc(siz);
+	ret=malloc(siz);
 	if (ret == NULL) 
 		{
 		BUFerr(BUF_F_BUF_MEMDUP,ERR_R_MALLOC_FAILURE);

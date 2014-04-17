@@ -62,7 +62,7 @@
 
 STORE_METHOD *STORE_create_method(char *name)
 	{
-	STORE_METHOD *store_method = (STORE_METHOD *)OPENSSL_malloc(sizeof(STORE_METHOD));
+	STORE_METHOD *store_method = (STORE_METHOD *)malloc(sizeof(STORE_METHOD));
 
 	if (store_method)
 		{
@@ -78,9 +78,9 @@ STORE_METHOD *STORE_create_method(char *name)
 void STORE_destroy_method(STORE_METHOD *store_method)
 	{
 	if (!store_method) return;
-	OPENSSL_free(store_method->name);
+	free(store_method->name);
 	store_method->name = NULL;
-	OPENSSL_free(store_method);
+	free(store_method);
 	}
 
 int STORE_method_set_initialise_function(STORE_METHOD *sm, STORE_INITIALISE_FUNC_PTR init_f)

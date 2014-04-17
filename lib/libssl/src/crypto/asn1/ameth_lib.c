@@ -289,7 +289,7 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 					const char *pem_str, const char *info)
 	{
 	EVP_PKEY_ASN1_METHOD *ameth;
-	ameth = OPENSSL_malloc(sizeof(EVP_PKEY_ASN1_METHOD));
+	ameth = malloc(sizeof(EVP_PKEY_ASN1_METHOD));
 	if (!ameth)
 		return NULL;
 
@@ -393,10 +393,10 @@ void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC))
 		{
 		if (ameth->pem_str)
-			OPENSSL_free(ameth->pem_str);
+			free(ameth->pem_str);
 		if (ameth->info)
-			OPENSSL_free(ameth->info);
-		OPENSSL_free(ameth);
+			free(ameth->info);
+		free(ameth);
 		}
 	}
 

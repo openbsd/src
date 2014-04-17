@@ -154,7 +154,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		}
 
 	OPENSSL_cleanse(buf_in,(unsigned int)inl);
-	OPENSSL_free(buf_in);
+	free(buf_in);
 
 	if (EVP_DigestVerifyFinal(&ctx,signature->data,
 			(size_t)signature->length) <= 0)

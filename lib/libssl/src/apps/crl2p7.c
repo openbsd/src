@@ -209,7 +209,7 @@ bad:
 	p7s->crl = crl_stack;
 	if (crl != NULL) {
 		sk_X509_CRL_push(crl_stack, crl);
-		crl=NULL; /* now part of p7 for OPENSSL_freeing */
+		crl=NULL; /* now part of p7 for freeing */
 	}
 
 	if ((cert_stack = sk_X509_new_null()) == NULL)
@@ -311,7 +311,7 @@ add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 	ret = count;
 
 end:
-	/* never need to OPENSSL_free x */
+	/* never need to free x */
 	if (in != NULL)
 		BIO_free(in);
 	if (sk != NULL)

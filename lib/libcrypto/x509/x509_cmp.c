@@ -90,7 +90,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 		goto err;
 	if (!EVP_DigestUpdate(&ctx,(unsigned char *)f,strlen(f)))
 		goto err;
-	OPENSSL_free(f);
+	free(f);
 	if(!EVP_DigestUpdate(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
 		(unsigned long)a->cert_info->serialNumber->length))
 		goto err;

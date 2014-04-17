@@ -37,7 +37,7 @@ static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
 {
 	void *p;
 	
-	p=OPENSSL_malloc(no*size);
+	p=malloc(no*size);
 	if (p)
 		memset(p, 0, no*size);
 	return p;
@@ -46,7 +46,7 @@ static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
 
 static void zlib_zfree(void* opaque, void* address)
 {
-	OPENSSL_free(address);
+	free(address);
 }
 
 #if 0
@@ -140,7 +140,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	{
 	int err;
 	struct zlib_state *state =
-		(struct zlib_state *)OPENSSL_malloc(sizeof(struct zlib_state));
+		(struct zlib_state *)malloc(sizeof(struct zlib_state));
 
 	if (state == NULL)
 		goto err;
@@ -173,7 +173,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
 	return 1;
  err:
-	if (state) OPENSSL_free(state);
+	if (state) free(state);
 	return 0;
 	}
 
@@ -184,7 +184,7 @@ static void zlib_stateful_finish(COMP_CTX *ctx)
 			zlib_stateful_ex_idx);
 	inflateEnd(&state->istream);
 	deflateEnd(&state->ostream);
-	OPENSSL_free(state);
+	free(state);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
 	}
 
@@ -479,7 +479,7 @@ static int bio_zlib_new(BIO *bi)
 		return 0;
 		}
 #endif
-	ctx = OPENSSL_malloc(sizeof(BIO_ZLIB_CTX));
+	ctx = malloc(sizeof(BIO_ZLIB_CTX));
 	if(!ctx)
 		{
 		COMPerr(COMP_F_BIO_ZLIB_NEW, ERR_R_MALLOC_FAILURE);
@@ -518,15 +518,15 @@ static int bio_zlib_free(BIO *bi)
 		{
 		/* Destroy decompress context */
 		inflateEnd(&ctx->zin);
-		OPENSSL_free(ctx->ibuf);
+		free(ctx->ibuf);
 		}
 	if(ctx->obuf)
 		{
 		/* Destroy compress context */
 		deflateEnd(&ctx->zout);
-		OPENSSL_free(ctx->obuf);
+		free(ctx->obuf);
 		}
-	OPENSSL_free(ctx);
+	free(ctx);
 	bi->ptr = NULL;
 	bi->init = 0;
 	bi->flags = 0;
@@ -544,7 +544,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
 	BIO_clear_retry_flags(b);
 	if(!ctx->ibuf)
 		{
-		ctx->ibuf = OPENSSL_malloc(ctx->ibufsize);
+		ctx->ibuf = malloc(ctx->ibufsize);
 		if(!ctx->ibuf)
 			{
 			COMPerr(COMP_F_BIO_ZLIB_READ, ERR_R_MALLOC_FAILURE);
@@ -606,7 +606,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
 	BIO_clear_retry_flags(b);
 	if(!ctx->obuf)
 		{
-		ctx->obuf = OPENSSL_malloc(ctx->obufsize);
+		ctx->obuf = malloc(ctx->obufsize);
 		/* Need error here */
 		if(!ctx->obuf)
 			{
@@ -754,7 +754,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 			{
 			if (ctx->ibuf)
 				{
-				OPENSSL_free(ctx->ibuf);
+				free(ctx->ibuf);
 				ctx->ibuf = NULL;
 				}
 			ctx->ibufsize = ibs;
@@ -764,7 +764,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 			{
 			if (ctx->obuf)
 				{
-				OPENSSL_free(ctx->obuf);
+				free(ctx->obuf);
 				ctx->obuf = NULL;
 				}
 			ctx->obufsize = obs;

@@ -129,7 +129,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	{
 	ECDH_DATA *ret;
 
-	ret=(ECDH_DATA *)OPENSSL_malloc(sizeof(ECDH_DATA));
+	ret=(ECDH_DATA *)malloc(sizeof(ECDH_DATA));
 	if (ret == NULL)
 		{
 		ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -150,7 +150,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 			{
 			ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
-			OPENSSL_free(ret);
+			free(ret);
 			return NULL;
 			}
 		}
@@ -162,7 +162,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDH, ret, &ret->ex_data);
-		OPENSSL_free(ret);
+		free(ret);
 		ret=NULL;
 		}
 #endif	
@@ -198,7 +198,7 @@ void ecdh_data_free(void *data)
 
 	OPENSSL_cleanse((void *)r, sizeof(ECDH_DATA));
 
-	OPENSSL_free(r);
+	free(r);
 	}
 
 ECDH_DATA *ecdh_check(EC_KEY *key)

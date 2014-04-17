@@ -342,14 +342,14 @@ bad:
 
 		crv_len = EC_get_builtin_curves(NULL, 0);
 
-		curves = OPENSSL_malloc((int)(sizeof(EC_builtin_curve) * crv_len));
+		curves = malloc((int)(sizeof(EC_builtin_curve) * crv_len));
 
 		if (curves == NULL)
 			goto end;
 
 		if (!EC_get_builtin_curves(curves, crv_len))
 			{
-			OPENSSL_free(curves);
+			free(curves);
 			goto end;
 			}
 
@@ -369,7 +369,7 @@ bad:
 			BIO_printf(out, "%s\n", comment);
 			} 
 
-		OPENSSL_free(curves);
+		free(curves);
 		ret = 0;
 		goto end;
 		}
@@ -480,7 +480,7 @@ bad:
 		    (ec_order = BN_new()) == NULL || 
 		    (ec_cofactor = BN_new()) == NULL )
 			{
-			perror("OPENSSL_malloc");
+			perror("malloc");
 			goto end;
 			}
 
@@ -529,11 +529,11 @@ bad:
 		if ((tmp_len = (size_t)BN_num_bytes(ec_cofactor)) > buf_len)
 			buf_len = tmp_len;
 
-		buffer = (unsigned char *)OPENSSL_malloc(buf_len);
+		buffer = (unsigned char *)malloc(buf_len);
 
 		if (buffer == NULL)
 			{
-			perror("OPENSSL_malloc");
+			perror("malloc");
 			goto end;
 			}
 
@@ -681,7 +681,7 @@ end:
 	if (ec_cofactor)
 		BN_free(ec_cofactor);
 	if (buffer)
-		OPENSSL_free(buffer);
+		free(buffer);
 	if (in != NULL)
 		BIO_free(in);
 	if (out != NULL)

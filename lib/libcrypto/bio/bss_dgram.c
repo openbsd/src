@@ -212,7 +212,7 @@ dgram_new(BIO *bi)
 
 	bi->init = 0;
 	bi->num = 0;
-	data = OPENSSL_malloc(sizeof(bio_dgram_data));
+	data = malloc(sizeof(bio_dgram_data));
 	if (data == NULL)
 		return 0;
 	memset(data, 0x00, sizeof(bio_dgram_data));
@@ -234,7 +234,7 @@ dgram_free(BIO *a)
 
 	data = (bio_dgram_data *)a->ptr;
 	if (data != NULL)
-		OPENSSL_free(data);
+		free(data);
 
 	return (1);
 }
@@ -805,7 +805,7 @@ BIO
 	 * SCTP-AUTH has to be activated for the listening socket
 	 * already, otherwise the connected socket won't use it. */
 	sockopt_len = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-	authchunks = OPENSSL_malloc(sockopt_len);
+	authchunks = malloc(sockopt_len);
 	memset(authchunks, 0, sizeof(sockopt_len));
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
 	OPENSSL_assert(ret >= 0);
@@ -819,7 +819,7 @@ BIO
 			auth_forward = 1;
 	}
 
-	OPENSSL_free(authchunks);
+	free(authchunks);
 
 	OPENSSL_assert(auth_data);
 	OPENSSL_assert(auth_forward);
@@ -866,7 +866,7 @@ dgram_sctp_new(BIO *bi)
 
 	bi->init = 0;
 	bi->num = 0;
-	data = OPENSSL_malloc(sizeof(bio_dgram_sctp_data));
+	data = malloc(sizeof(bio_dgram_sctp_data));
 	if (data == NULL)
 		return 0;
 	memset(data, 0x00, sizeof(bio_dgram_sctp_data));
@@ -891,7 +891,7 @@ dgram_sctp_free(BIO *a)
 
 	data = (bio_dgram_sctp_data *)a->ptr;
 	if (data != NULL)
-		OPENSSL_free(data);
+		free(data);
 
 	return (1);
 }
@@ -998,7 +998,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 					if (data->saved_message.length > 0) {
 						dgram_sctp_write(data->saved_message.bio, data->saved_message.data,
 						data->saved_message.length);
-						OPENSSL_free(data->saved_message.data);
+						free(data->saved_message.data);
 						data->saved_message.length = 0;
 					}
 
@@ -1087,7 +1087,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 			struct sctp_authchunks *authchunks;
 
 			optlen = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-			authchunks = OPENSSL_malloc(optlen);
+			authchunks = malloc(optlen);
 			memset(authchunks, 0, sizeof(optlen));
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
 			OPENSSL_assert(ii >= 0);
@@ -1101,7 +1101,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 					auth_forward = 1;
 			}
 
-			OPENSSL_free(authchunks);
+			free(authchunks);
 
 			if (!auth_data || !auth_forward) {
 				BIOerr(BIO_F_DGRAM_SCTP_READ, BIO_R_CONNECT_ERROR);
@@ -1154,7 +1154,7 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
 		data->saved_message.bio = b;
 		data->saved_message.length = inl;
-		data->saved_message.data = OPENSSL_malloc(inl);
+		data->saved_message.data = malloc(inl);
 		memcpy(data->saved_message.data, in, inl);
 		return inl;
 	}
@@ -1282,7 +1282,7 @@ dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 		/* Add new key */
 		sockopt_len = sizeof(struct sctp_authkey) + 64 * sizeof(uint8_t);
-		authkey = OPENSSL_malloc(sockopt_len);
+		authkey = malloc(sockopt_len);
 		memset(authkey, 0x00, sockopt_len);
 		authkey->sca_keynumber = authkeyid.scact_keynumber + 1;
 #ifndef __FreeBSD__

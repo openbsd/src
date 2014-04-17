@@ -145,7 +145,7 @@ static int do_create(char *value, char *name)
 			p--;
 			}
 		p++;
-		lntmp = OPENSSL_malloc((p - ln) + 1);
+		lntmp = malloc((p - ln) + 1);
 		if (lntmp == NULL)
 			return 0;
 		memcpy(lntmp, ln, p - ln);

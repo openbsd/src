@@ -169,7 +169,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 
 
 	/* Since its RC4 encrypted length is actual length */
-	if ((zz=(unsigned char *)OPENSSL_malloc(rsalen)) == NULL)
+	if ((zz=(unsigned char *)malloc(rsalen)) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_RSA_NET,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -179,7 +179,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	/* Write out private key encoding */
 	i2d_RSAPrivateKey(a,&zz);
 
-	if ((zz=OPENSSL_malloc(pkeylen)) == NULL)
+	if ((zz=malloc(pkeylen)) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_RSA_NET,ERR_R_MALLOC_FAILURE);
 		goto err;

@@ -112,7 +112,7 @@ typedef struct dso_st DSO;
  * (or NULL if they are to be used independantly of a DSO object) and a
  * filename to transform. They should either return NULL (if there is an error
  * condition) or a newly allocated string containing the transformed form that
- * the caller will need to free with OPENSSL_free() when done. */
+ * the caller will need to free with free() when done. */
 typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
 /* The function prototype used for method functions (or caller-provided
  * callbacks) that merge two file specifications. They are passed a
@@ -120,7 +120,7 @@ typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
  * a DSO object) and two file specifications to merge. They should
  * either return NULL (if there is an error condition) or a newly allocated
  * string containing the result of merging that the caller will need
- * to free with OPENSSL_free() when done.
+ * to free with free() when done.
  * Here, merging means that bits and pieces are taken from each of the
  * file specifications and added together in whatever fashion that is
  * sensible for the DSO method in question.  The only rule that really
@@ -136,7 +136,7 @@ typedef struct dso_meth_st
 	const char *name;
 	/* Loads a shared library, NB: new DSO_METHODs must ensure that a
 	 * successful load populates the loaded_filename field, and likewise a
-	 * successful unload OPENSSL_frees and NULLs it out. */
+	 * successful unload frees and NULLs it out. */
 	int (*dso_load)(DSO *dso);
 	/* Unloads a shared library */
 	int (*dso_unload)(DSO *dso);
@@ -242,12 +242,12 @@ int	DSO_set_filename(DSO *dso, const char *filename);
  * simply duplicated. NB: This function is usually called from within a
  * DSO_METHOD during the processing of a DSO_load() call, and is exposed so that
  * caller-created DSO_METHODs can do the same thing. A non-NULL return value
- * will need to be OPENSSL_free()'d. */
+ * will need to be free()'d. */
 char	*DSO_convert_filename(DSO *dso, const char *filename);
 /* This function will invoke the DSO's merger callback to merge two file
  * specifications, or if the callback isn't set it will instead use the
  * DSO_METHOD's merger.  A non-NULL return value will need to be
- * OPENSSL_free()'d. */
+ * free()'d. */
 char	*DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
 /* If the DSO is currently loaded, this returns the filename that it was loaded
  * under, otherwise it returns NULL. So it is also useful as a test as to

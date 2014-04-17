@@ -203,14 +203,14 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 	p=(char *)s->data;
 	if ((p == NULL) || ((size_t)s->length < len))
 		{
-		p=OPENSSL_malloc(len);
+		p=malloc(len);
 		if (p == NULL)
 			{
 			ASN1err(ASN1_F_ASN1_UTCTIME_ADJ,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
 		if (s->data != NULL)
-			OPENSSL_free(s->data);
+			free(s->data);
 		s->data=(unsigned char *)p;
 		}
 

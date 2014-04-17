@@ -1986,7 +1986,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
 	X509_STORE_CTX *ctx;
-	ctx = (X509_STORE_CTX *)OPENSSL_malloc(sizeof(X509_STORE_CTX));
+	ctx = (X509_STORE_CTX *)malloc(sizeof(X509_STORE_CTX));
 	if (!ctx)
 		{
 		X509err(X509_F_X509_STORE_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1999,7 +1999,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
 	X509_STORE_CTX_cleanup(ctx);
-	OPENSSL_free(ctx);
+	free(ctx);
 }
 
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
@@ -2122,7 +2122,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if(!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
 				&(ctx->ex_data)))
 		{
-		OPENSSL_free(ctx);
+		free(ctx);
 		X509err(X509_F_X509_STORE_CTX_INIT,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}

@@ -180,7 +180,7 @@ CERT
 {
 	CERT *ret;
 
-	ret = (CERT *)OPENSSL_malloc(sizeof(CERT));
+	ret = (CERT *)malloc(sizeof(CERT));
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
@@ -199,7 +199,7 @@ CERT
 	CERT *ret;
 	int i;
 
-	ret = (CERT *)OPENSSL_malloc(sizeof(CERT));
+	ret = (CERT *)malloc(sizeof(CERT));
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
 		return (NULL);
@@ -387,7 +387,7 @@ ssl_cert_free(CERT *c)
 			EVP_PKEY_free(c->pkeys[i].publickey);
 #endif
 	}
-	OPENSSL_free(c);
+	free(c);
 }
 
 int
@@ -422,7 +422,7 @@ SESS_CERT
 {
 	SESS_CERT *ret;
 
-	ret = OPENSSL_malloc(sizeof *ret);
+	ret = malloc(sizeof *ret);
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_SESS_CERT_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -483,7 +483,7 @@ ssl_sess_cert_free(SESS_CERT *sc)
 		EC_KEY_free(sc->peer_ecdh_tmp);
 #endif
 
-	OPENSSL_free(sc);
+	free(sc);
 }
 
 int

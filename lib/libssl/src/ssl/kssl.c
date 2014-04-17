@@ -92,16 +92,16 @@ kssl_calloc(size_t nmemb, size_t size)
 {
 	void* p;
 
-	p = OPENSSL_malloc(nmemb*size);
+	p = malloc(nmemb*size);
 	if (p){
 		memset(p, 0, nmemb*size);
 	}
 	return p;
 }
 
-#define kssl_malloc(size) OPENSSL_malloc((size))
-#define kssl_realloc(ptr, size) OPENSSL_realloc(ptr, size)
-#define kssl_free(ptr) OPENSSL_free((ptr))
+#define kssl_malloc(size) malloc((size))
+#define kssl_realloc(ptr, size) realloc(ptr, size)
+#define kssl_free(ptr) free((ptr))
 
 
 char

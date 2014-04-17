@@ -129,11 +129,11 @@ static CONF *def_create(CONF_METHOD *meth)
 	{
 	CONF *ret;
 
-	ret = OPENSSL_malloc(sizeof(CONF) + sizeof(unsigned short *));
+	ret = malloc(sizeof(CONF) + sizeof(unsigned short *));
 	if (ret)
 		if (meth->init(ret) == 0)
 			{
-			OPENSSL_free(ret);
+			free(ret);
 			ret = NULL;
 			}
 	return ret;
@@ -167,7 +167,7 @@ static int def_destroy(CONF *conf)
 	{
 	if (def_destroy_data(conf))
 		{
-		OPENSSL_free(conf);
+		free(conf);
 		return 1;
 		}
 	return 0;
@@ -228,7 +228,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 		goto err;
 		}
 
-	section=(char *)OPENSSL_malloc(10);
+	section=(char *)malloc(10);
 	if (section == NULL)
 		{
 		CONFerr(CONF_F_DEF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
@@ -373,14 +373,14 @@ again:
 			p++;
 			*p='\0';
 
-			if (!(v=(CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE))))
+			if (!(v=(CONF_VALUE *)malloc(sizeof(CONF_VALUE))))
 				{
 				CONFerr(CONF_F_DEF_LOAD_BIO,
 							ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
 			if (psection == NULL) psection=section;
-			v->name=(char *)OPENSSL_malloc(strlen(pname)+1);
+			v->name=(char *)malloc(strlen(pname)+1);
 			v->value=NULL;
 			if (v->name == NULL)
 				{
@@ -424,20 +424,20 @@ again:
 			if (vv != NULL)
 				{
 				sk_CONF_VALUE_delete_ptr(ts,vv);
-				OPENSSL_free(vv->name);
-				OPENSSL_free(vv->value);
-				OPENSSL_free(vv);
+				free(vv->name);
+				free(vv->value);
+				free(vv);
 				}
 #endif
 			v=NULL;
 			}
 		}
 	if (buff != NULL) BUF_MEM_free(buff);
-	if (section != NULL) OPENSSL_free(section);
+	if (section != NULL) free(section);
 	return(1);
 err:
 	if (buff != NULL) BUF_MEM_free(buff);
-	if (section != NULL) OPENSSL_free(section);
+	if (section != NULL) free(section);
 	if (line != NULL) *line=eline;
 	(void) snprintf(btmp,sizeof btmp,"%ld",eline);
 	ERR_add_error_data(2,"line ",btmp);
@@ -448,9 +448,9 @@ err:
 		}
 	if (v != NULL)
 		{
-		if (v->name != NULL) OPENSSL_free(v->name);
-		if (v->value != NULL) OPENSSL_free(v->value);
-		if (v != NULL) OPENSSL_free(v);
+		if (v->name != NULL) free(v->name);
+		if (v->value != NULL) free(v->value);
+		if (v != NULL) free(v);
 		}
 	return(0);
 	}
@@ -637,9 +637,9 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 			buf->data[to++]= *(from++);
 		}
 	buf->data[to]='\0';
-	if (*pto != NULL) OPENSSL_free(*pto);
+	if (*pto != NULL) free(*pto);
 	*pto=buf->data;
-	OPENSSL_free(buf);
+	free(buf);
 	return(1);
 err:
 	if (buf != NULL) BUF_MEM_free(buf);

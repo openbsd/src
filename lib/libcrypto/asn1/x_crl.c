@@ -493,7 +493,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(
 	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk))
 	{
 	X509_CRL_METHOD *m;
-	m = OPENSSL_malloc(sizeof(X509_CRL_METHOD));
+	m = malloc(sizeof(X509_CRL_METHOD));
 	if (!m)
 		return NULL;
 	m->crl_init = crl_init;
@@ -508,7 +508,7 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m)
 	{
 	if (!(m->flags & X509_CRL_METHOD_DYNAMIC))
 		return;
-	OPENSSL_free(m);
+	free(m);
 	}
 
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat)

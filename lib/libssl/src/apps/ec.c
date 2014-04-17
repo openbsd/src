@@ -385,9 +385,9 @@ end:
 	if (eckey)
 		EC_KEY_free(eckey);
 	if (passin)
-		OPENSSL_free(passin);
+		free(passin);
 	if (passout)
-		OPENSSL_free(passout);
+		free(passout);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 }

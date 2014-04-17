@@ -84,16 +84,16 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 	if ((buf=BUF_MEM_new()) == NULL) goto err;
 	if (!BUF_MEM_grow(buf,size)) goto err;
 
-	if ((ret=OPENSSL_malloc(sizeof(TXT_DB))) == NULL)
+	if ((ret=malloc(sizeof(TXT_DB))) == NULL)
 		goto err;
 	ret->num_fields=num;
 	ret->index=NULL;
 	ret->qual=NULL;
 	if ((ret->data=sk_OPENSSL_PSTRING_new_null()) == NULL)
 		goto err;
-	if ((ret->index=OPENSSL_malloc(sizeof(*ret->index)*num)) == NULL)
+	if ((ret->index=malloc(sizeof(*ret->index)*num)) == NULL)
 		goto err;
-	if ((ret->qual=OPENSSL_malloc(sizeof(*(ret->qual))*num)) == NULL)
+	if ((ret->qual=malloc(sizeof(*(ret->qual))*num)) == NULL)
 		goto err;
 	for (i=0; i<num; i++)
 		{
@@ -123,7 +123,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 		else
 			{
 			buf->data[offset-1]='\0'; /* blat the '\n' */
-			if (!(p=OPENSSL_malloc(add+offset))) goto err;
+			if (!(p=malloc(add+offset))) goto err;
 			offset=0;
 			}
 		pp=(char **)p;
@@ -178,14 +178,14 @@ err:
 	if (er)
 		{
 #if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
-		if (er == 1) fprintf(stderr,"OPENSSL_malloc failure\n");
+		if (er == 1) fprintf(stderr,"malloc failure\n");
 #endif
 		if (ret != NULL)
 			{
 			if (ret->data != NULL) sk_OPENSSL_PSTRING_free(ret->data);
-			if (ret->index != NULL) OPENSSL_free(ret->index);
-			if (ret->qual != NULL) OPENSSL_free(ret->qual);
-			if (ret != NULL) OPENSSL_free(ret);
+			if (ret->index != NULL) free(ret->index);
+			if (ret->qual != NULL) free(ret->qual);
+			if (ret != NULL) free(ret);
 			}
 		return(NULL);
 		}
@@ -354,10 +354,10 @@ void TXT_DB_free(TXT_DB *db)
 		{
 		for (i=db->num_fields-1; i>=0; i--)
 			if (db->index[i] != NULL) lh_OPENSSL_STRING_free(db->index[i]);
-		OPENSSL_free(db->index);
+		free(db->index);
 		}
 	if (db->qual != NULL)
-		OPENSSL_free(db->qual);
+		free(db->qual);
 	if (db->data != NULL)
 		{
 		for (i=sk_OPENSSL_PSTRING_num(db->data)-1; i>=0; i--)
@@ -369,7 +369,7 @@ void TXT_DB_free(TXT_DB *db)
 			if (max == NULL) /* new row */
 				{
 				for (n=0; n<db->num_fields; n++)
-					if (p[n] != NULL) OPENSSL_free(p[n]);
+					if (p[n] != NULL) free(p[n]);
 				}
 			else
 				{
@@ -377,12 +377,12 @@ void TXT_DB_free(TXT_DB *db)
 					{
 					if (((p[n] < (char *)p) || (p[n] > max))
 						&& (p[n] != NULL))
-						OPENSSL_free(p[n]);
+						free(p[n]);
 					}
 				}
-			OPENSSL_free(sk_OPENSSL_PSTRING_value(db->data,i));
+			free(sk_OPENSSL_PSTRING_value(db->data,i));
 			}
 		sk_OPENSSL_PSTRING_free(db->data);
 		}
-	OPENSSL_free(db);
+	free(db);
 	}

@@ -168,7 +168,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 	err:
 	if (penc)
-		OPENSSL_free(penc);
+		free(penc);
 	if (pval)
 		ASN1_STRING_free(pval);
 
@@ -277,7 +277,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 err:
 	if (dp != NULL)
-		OPENSSL_free(dp);
+		free(dp);
 	if (params != NULL)
 		ASN1_STRING_free(params);
 	if (prkey != NULL)
@@ -353,7 +353,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 	else
 		ktype = "PKCS#3 DH Parameters";
 
-	m= OPENSSL_malloc(buf_len+10);
+	m= malloc(buf_len+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -384,7 +384,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 err:
 		DHerr(DH_F_DO_DH_PRINT,reason);
 		}
-	if (m != NULL) OPENSSL_free(m);
+	if (m != NULL) free(m);
 	return(ret);
 	}
 

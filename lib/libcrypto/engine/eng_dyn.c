@@ -153,7 +153,7 @@ struct st_dynamic_data_ctx
  * structure. */
 static int dynamic_ex_data_idx = -1;
 
-static void int_free_str(char *s) { OPENSSL_free(s); }
+static void int_free_str(char *s) { free(s); }
 /* Because our ex_data element may or may not get allocated depending on whether
  * a "first-use" occurs before the ENGINE is freed, we have a memory leak
  * problem to solve. We can't declare a "new" handler for the ex_data as we
@@ -170,12 +170,12 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 		if(ctx->dynamic_dso)
 			DSO_free(ctx->dynamic_dso);
 		if(ctx->DYNAMIC_LIBNAME)
-			OPENSSL_free((void*)ctx->DYNAMIC_LIBNAME);
+			free((void*)ctx->DYNAMIC_LIBNAME);
 		if(ctx->engine_id)
-			OPENSSL_free((void*)ctx->engine_id);
+			free((void*)ctx->engine_id);
 		if(ctx->dirs)
 			sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
-		OPENSSL_free(ctx);
+		free(ctx);
 		}
 	}
 
@@ -186,7 +186,7 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	{
 	dynamic_data_ctx *c;
-	c = OPENSSL_malloc(sizeof(dynamic_data_ctx));
+	c = malloc(sizeof(dynamic_data_ctx));
 	if(!c)
 		{
 		ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
@@ -207,7 +207,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	if(!c->dirs)
 		{
 		ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX,ERR_R_MALLOC_FAILURE);
-		OPENSSL_free(c);
+		free(c);
 		return 0;
 		}
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
@@ -223,7 +223,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 	/* If we lost the race to set the context, c is non-NULL and *ctx is the
 	 * context of the thread that won. */
 	if(c)
-		OPENSSL_free(c);
+		free(c);
 	return 1;
 	}
 
@@ -337,7 +337,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
 		if(ctx->DYNAMIC_LIBNAME)
-			OPENSSL_free((void*)ctx->DYNAMIC_LIBNAME);
+			free((void*)ctx->DYNAMIC_LIBNAME);
 		if(p)
 			ctx->DYNAMIC_LIBNAME = BUF_strdup(p);
 		else
@@ -351,7 +351,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
 		if(ctx->engine_id)
-			OPENSSL_free((void*)ctx->engine_id);
+			free((void*)ctx->engine_id);
 		if(p)
 			ctx->engine_id = BUF_strdup(p);
 		else
@@ -422,10 +422,10 @@ static int int_load(dynamic_data_ctx *ctx)
 		if(DSO_load(ctx->dynamic_dso, merge, NULL, 0))
 			{
 			/* Found what we're looking for */
-			OPENSSL_free(merge);
+			free(merge);
 			return 1;
 			}
-		OPENSSL_free(merge);
+		free(merge);
 		}
 	return 0;
 	}

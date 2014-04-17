@@ -75,7 +75,7 @@ ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 	} else octmp = *oct;
 
 	if(octmp->data) {
-		OPENSSL_free(octmp->data);
+		free(octmp->data);
 		octmp->data = NULL;
 	}
 		

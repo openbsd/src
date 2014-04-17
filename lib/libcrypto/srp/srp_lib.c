@@ -89,7 +89,7 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
 	int longg ;
 	int longN = BN_num_bytes(N);
 
-	if ((tmp = OPENSSL_malloc(longN)) == NULL)
+	if ((tmp = malloc(longN)) == NULL)
 		return NULL;
 	BN_bn2bin(N,tmp) ;
 
@@ -102,7 +102,7 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
         /* use the zeros behind to pad on left */
 	EVP_DigestUpdate(&ctxt, tmp + longg, longN-longg);
 	EVP_DigestUpdate(&ctxt, tmp, longg);
-	OPENSSL_free(tmp);
+	free(tmp);
 
 	EVP_DigestFinal_ex(&ctxt, digest, NULL);
 	EVP_MD_CTX_cleanup(&ctxt);
@@ -123,7 +123,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 
 	longN= BN_num_bytes(N);
 
-	if ((cAB = OPENSSL_malloc(2*longN)) == NULL) 
+	if ((cAB = malloc(2*longN)) == NULL) 
 		return NULL;
 
 	memset(cAB, 0, longN);
@@ -132,7 +132,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 	EVP_DigestInit_ex(&ctxt, EVP_sha1(), NULL);
 	EVP_DigestUpdate(&ctxt, cAB + BN_bn2bin(A,cAB+longN), longN);
 	EVP_DigestUpdate(&ctxt, cAB + BN_bn2bin(B,cAB+longN), longN);
-	OPENSSL_free(cAB);
+	free(cAB);
 	EVP_DigestFinal_ex(&ctxt, cu, NULL);
 	EVP_MD_CTX_cleanup(&ctxt);
 
@@ -215,7 +215,7 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
 		(pass == NULL))
 		return NULL;
 
-	if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
+	if ((cs = malloc(BN_num_bytes(s))) == NULL)
 		return NULL;
 
 	EVP_MD_CTX_init(&ctxt);
@@ -228,7 +228,7 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
 	EVP_DigestInit_ex(&ctxt, EVP_sha1(), NULL);
 	BN_bn2bin(s,cs);
 	EVP_DigestUpdate(&ctxt, cs, BN_num_bytes(s));
-	OPENSSL_free(cs);
+	free(cs);
 	EVP_DigestUpdate(&ctxt, dig, sizeof(dig));
 	EVP_DigestFinal_ex(&ctxt, dig, NULL);
 	EVP_MD_CTX_cleanup(&ctxt);

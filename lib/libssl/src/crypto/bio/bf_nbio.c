@@ -104,7 +104,7 @@ nbiof_new(BIO *bi)
 {
 	NBIO_TEST *nt;
 
-	if (!(nt = (NBIO_TEST *)OPENSSL_malloc(sizeof(NBIO_TEST))))
+	if (!(nt = (NBIO_TEST *)malloc(sizeof(NBIO_TEST))))
 		return (0);
 	nt->lrn = -1;
 	nt->lwn = -1;
@@ -120,7 +120,7 @@ nbiof_free(BIO *a)
 	if (a == NULL)
 		return (0);
 	if (a->ptr != NULL)
-		OPENSSL_free(a->ptr);
+		free(a->ptr);
 	a->ptr = NULL;
 	a->init = 0;
 	a->flags = 0;

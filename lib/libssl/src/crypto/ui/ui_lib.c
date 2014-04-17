@@ -77,7 +77,7 @@ UI *UI_new_method(const UI_METHOD *method)
 	{
 	UI *ret;
 
-	ret=(UI *)OPENSSL_malloc(sizeof(UI));
+	ret=(UI *)malloc(sizeof(UI));
 	if (ret == NULL)
 		{
 		UIerr(UI_F_UI_NEW_METHOD,ERR_R_MALLOC_FAILURE);
@@ -99,19 +99,19 @@ static void free_string(UI_STRING *uis)
 	{
 	if (uis->flags & OUT_STRING_FREEABLE)
 		{
-		OPENSSL_free((char *)uis->out_string);
+		free((char *)uis->out_string);
 		switch(uis->type)
 			{
 		case UIT_BOOLEAN:
-			OPENSSL_free((char *)uis->_.boolean_data.action_desc);
-			OPENSSL_free((char *)uis->_.boolean_data.ok_chars);
-			OPENSSL_free((char *)uis->_.boolean_data.cancel_chars);
+			free((char *)uis->_.boolean_data.action_desc);
+			free((char *)uis->_.boolean_data.ok_chars);
+			free((char *)uis->_.boolean_data.cancel_chars);
 			break;
 		default:
 			break;
 			}
 		}
-	OPENSSL_free(uis);
+	free(uis);
 	}
 
 void UI_free(UI *ui)
@@ -120,7 +120,7 @@ void UI_free(UI *ui)
 		return;
 	sk_UI_STRING_pop_free(ui->strings,free_string);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI, ui, &ui->ex_data);
-	OPENSSL_free(ui);
+	free(ui);
 	}
 
 static int allocate_string_stack(UI *ui)
@@ -151,7 +151,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
 		{
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,UI_R_NO_RESULT_BUFFER);
 		}
-	else if ((ret = (UI_STRING *)OPENSSL_malloc(sizeof(UI_STRING))))
+	else if ((ret = (UI_STRING *)malloc(sizeof(UI_STRING))))
 		{
 		ret->out_string=prompt;
 		ret->flags=prompt_freeable ? OUT_STRING_FREEABLE : 0;
@@ -354,10 +354,10 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
 		ok_chars_copy, cancel_chars_copy, 1, UIT_BOOLEAN, flags,
 		result_buf);
  err:
-	if (prompt_copy) OPENSSL_free(prompt_copy);
-	if (action_desc_copy) OPENSSL_free(action_desc_copy);
-	if (ok_chars_copy) OPENSSL_free(ok_chars_copy);
-	if (cancel_chars_copy) OPENSSL_free(cancel_chars_copy);
+	if (prompt_copy) free(prompt_copy);
+	if (action_desc_copy) free(action_desc_copy);
+	if (ok_chars_copy) free(ok_chars_copy);
+	if (cancel_chars_copy) free(cancel_chars_copy);
 	return -1;
 	}
 
@@ -430,7 +430,7 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
 			len += sizeof(prompt2) - 1 + strlen(object_name);
 		len += sizeof(prompt3) - 1;
 
-		prompt = (char *)OPENSSL_malloc(len + 1);
+		prompt = (char *)malloc(len + 1);
 		BUF_strlcpy(prompt, prompt1, len + 1);
 		BUF_strlcat(prompt, object_desc, len + 1);
 		if (object_name)
@@ -618,7 +618,7 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
 
 UI_METHOD *UI_create_method(char *name)
 	{
-	UI_METHOD *ui_method = (UI_METHOD *)OPENSSL_malloc(sizeof(UI_METHOD));
+	UI_METHOD *ui_method = (UI_METHOD *)malloc(sizeof(UI_METHOD));
 
 	if (ui_method)
 		{
@@ -633,9 +633,9 @@ UI_METHOD *UI_create_method(char *name)
    anything Murphy can throw at you and more!  You have been warned. */
 void UI_destroy_method(UI_METHOD *ui_method)
 	{
-	OPENSSL_free(ui_method->name);
+	free(ui_method->name);
 	ui_method->name = NULL;
-	OPENSSL_free(ui_method);
+	free(ui_method);
 	}
 
 int UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui))

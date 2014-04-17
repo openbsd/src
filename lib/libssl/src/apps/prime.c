@@ -127,7 +127,7 @@ int MAIN(int argc, char **argv)
 	BN_generate_prime_ex(bn,bits,safe,NULL,NULL,NULL);
 	s=hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
 	BIO_printf(bio_out,"%s\n",s);
-	OPENSSL_free(s);
+	free(s);
 	}
     else
 	{

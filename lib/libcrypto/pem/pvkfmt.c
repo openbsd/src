@@ -93,14 +93,14 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 	unsigned char *tmpbuf, *q;
 	unsigned int i;
 	p = *in + nbyte - 1;
-	tmpbuf = OPENSSL_malloc(nbyte);
+	tmpbuf = malloc(nbyte);
 	if (!tmpbuf)
 		return 0;
 	q = tmpbuf;
 	for (i = 0; i < nbyte; i++)
 		*q++ = *p--;
 	*r = BN_bin2bn(tmpbuf, nbyte, NULL);
-	OPENSSL_free(tmpbuf);
+	free(tmpbuf);
 	if (*r)
 		{
 		*in += nbyte;
@@ -284,7 +284,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
 		return NULL;
 
 	length = blob_length(bitlen, isdss, ispub);
-	buf = OPENSSL_malloc(length);
+	buf = malloc(length);
 	if (!buf)
 		{
 		PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
@@ -304,7 +304,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
 
 	err:
 	if (buf)
-		OPENSSL_free(buf);
+		free(buf);
 	return ret;
 	}
 
@@ -508,7 +508,7 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
 		p = *out;
 	else
 		{
-		p = OPENSSL_malloc(outlen);
+		p = malloc(outlen);
 		if (!p)
 			return -1;
 		*out = p;
@@ -541,7 +541,7 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 	if (outlen < 0)
 		return -1;
 	wrlen = BIO_write(out, tmp, outlen);
-	OPENSSL_free(tmp);
+	free(tmp);
 	if (wrlen == outlen)
 		return outlen;
 	return -1;
@@ -746,7 +746,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 			PEMerr(PEM_F_DO_PVK_BODY,PEM_R_BAD_PASSWORD_READ);
 			return NULL;
 			}
-		enctmp = OPENSSL_malloc(keylen + 8);
+		enctmp = malloc(keylen + 8);
 		if (!enctmp)
 			{
 			PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
@@ -797,7 +797,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 	err:
 	EVP_CIPHER_CTX_cleanup(&cctx);
 	if (enctmp && saltlen)
-		OPENSSL_free(enctmp);
+		free(enctmp);
 	return ret;
 	}
 
@@ -819,7 +819,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 	if (!do_PVK_header(&p, 24, 0, &saltlen, &keylen))
 		return 0;
 	buflen = (int) keylen + saltlen;
-	buf = OPENSSL_malloc(buflen);
+	buf = malloc(buflen);
 	if (!buf)
 		{
 		PEMerr(PEM_F_B2I_PVK_BIO, ERR_R_MALLOC_FAILURE);
@@ -837,7 +837,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 	if (buf)
 		{
 		OPENSSL_cleanse(buf, buflen);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	return ret;
 	}
@@ -863,7 +863,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel,
 		p = *out;
 	else
 		{
-		p = OPENSSL_malloc(outlen);
+		p = malloc(outlen);
 		if (!p)
 			{
 			PEMerr(PEM_F_I2B_PVK,ERR_R_MALLOC_FAILURE);
@@ -936,7 +936,7 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 	if (outlen < 0)
 		return -1;
 	wrlen = BIO_write(out, tmp, outlen);
-	OPENSSL_free(tmp);
+	free(tmp);
 	if (wrlen == outlen)
 		{
 		PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);

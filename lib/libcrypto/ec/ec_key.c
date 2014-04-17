@@ -69,7 +69,7 @@ EC_KEY *EC_KEY_new(void)
 	{
 	EC_KEY *ret;
 
-	ret=(EC_KEY *)OPENSSL_malloc(sizeof(EC_KEY));
+	ret=(EC_KEY *)malloc(sizeof(EC_KEY));
 	if (ret == NULL)
 		{
 		ECerr(EC_F_EC_KEY_NEW, ERR_R_MALLOC_FAILURE);
@@ -132,7 +132,7 @@ void EC_KEY_free(EC_KEY *r)
 
 	OPENSSL_cleanse((void *)r, sizeof(EC_KEY));
 
-	OPENSSL_free(r);
+	free(r);
 	}
 
 EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)

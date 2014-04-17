@@ -113,7 +113,7 @@ static int b64_new(BIO *bi)
 	{
 	BIO_B64_CTX *ctx;
 
-	ctx=(BIO_B64_CTX *)OPENSSL_malloc(sizeof(BIO_B64_CTX));
+	ctx=(BIO_B64_CTX *)malloc(sizeof(BIO_B64_CTX));
 	if (ctx == NULL) return(0);
 
 	ctx->buf_len=0;
@@ -134,7 +134,7 @@ static int b64_new(BIO *bi)
 static int b64_free(BIO *a)
 	{
 	if (a == NULL) return(0);
-	OPENSSL_free(a->ptr);
+	free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

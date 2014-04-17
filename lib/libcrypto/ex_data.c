@@ -290,7 +290,7 @@ ex_data_check(void)
 static void
 def_cleanup_util_cb(CRYPTO_EX_DATA_FUNCS *funcs)
 {
-	OPENSSL_free(funcs);
+	free(funcs);
 }
 
 /* This callback is used in lh_doall to destroy all EX_CLASS_ITEM values from
@@ -301,7 +301,7 @@ def_cleanup_cb(void *a_void)
 {
 	EX_CLASS_ITEM *item = (EX_CLASS_ITEM *)a_void;
 	sk_CRYPTO_EX_DATA_FUNCS_pop_free(item->meth, def_cleanup_util_cb);
-	OPENSSL_free(item);
+	free(item);
 }
 
 /* Return the EX_CLASS_ITEM from the "ex_data" hash table that corresponds to a
@@ -315,13 +315,13 @@ static EX_CLASS_ITEM
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
 	p = lh_EX_CLASS_ITEM_retrieve(ex_data, &d);
 	if (!p) {
-		gen = OPENSSL_malloc(sizeof(EX_CLASS_ITEM));
+		gen = malloc(sizeof(EX_CLASS_ITEM));
 		if (gen) {
 			gen->class_index = class_index;
 			gen->meth_num = 0;
 			gen->meth = sk_CRYPTO_EX_DATA_FUNCS_new_null();
 			if (!gen->meth)
-				OPENSSL_free(gen);
+				free(gen);
 			else {
 				/* Because we're inside the ex_data lock, the
 				 * return value from the insert will be NULL */
@@ -343,7 +343,7 @@ def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
 	int toret = -1;
-	CRYPTO_EX_DATA_FUNCS *a = (CRYPTO_EX_DATA_FUNCS *)OPENSSL_malloc(
+	CRYPTO_EX_DATA_FUNCS *a = (CRYPTO_EX_DATA_FUNCS *)malloc(
 	sizeof(CRYPTO_EX_DATA_FUNCS));
 	if (!a) {
 		CRYPTOerr(CRYPTO_F_DEF_ADD_INDEX, ERR_R_MALLOC_FAILURE);
@@ -358,7 +358,7 @@ def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
 	while (sk_CRYPTO_EX_DATA_FUNCS_num(item->meth) <= item->meth_num) {
 		if (!sk_CRYPTO_EX_DATA_FUNCS_push(item->meth, NULL)) {
 			CRYPTOerr(CRYPTO_F_DEF_ADD_INDEX, ERR_R_MALLOC_FAILURE);
-			OPENSSL_free(a);
+			free(a);
 			goto err;
 		}
 	}
@@ -422,7 +422,7 @@ int_new_ex_data(int class_index, void *obj,
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
 	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
 	if (mx > 0) {
-		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
@@ -442,7 +442,7 @@ skip:
 		}
 	}
 	if (storage)
-		OPENSSL_free(storage);
+		free(storage);
 	return 1;
 }
 
@@ -466,7 +466,7 @@ int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 	if (j < mx)
 		mx = j;
 	if (mx > 0) {
-		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
@@ -486,7 +486,7 @@ skip:
 		CRYPTO_set_ex_data(to, i, ptr);
 	}
 	if (storage)
-		OPENSSL_free(storage);
+		free(storage);
 	return 1;
 }
 
@@ -503,7 +503,7 @@ int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
 	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
 	if (mx > 0) {
-		storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
+		storage = malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS*));
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
@@ -523,7 +523,7 @@ skip:
 		}
 	}
 	if (storage)
-		OPENSSL_free(storage);
+		free(storage);
 	if (ad->sk) {
 		sk_void_free(ad->sk);
 		ad->sk = NULL;

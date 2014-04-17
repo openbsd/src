@@ -389,7 +389,7 @@ int MAIN(int argc, char **argv)
 	/* Clean up. */
 	app_RAND_write_file(NULL, bio_err);
 	NCONF_free(conf);
-	OPENSSL_free(password);
+	free(password);
 	OBJ_cleanup();
 	if (free_bio_err)
 		{
@@ -589,7 +589,7 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
 		}
 	TS_MSG_IMPRINT_free(msg_imprint);
 	X509_ALGOR_free(algo);
-	OPENSSL_free(data);
+	free(data);
 	ASN1_OBJECT_free(policy_obj);
 	ASN1_INTEGER_free(nonce_asn1);
 	return ts_req;
@@ -610,7 +610,7 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
 		unsigned char buffer[4096];
 		int length;
 
-		*md_value = OPENSSL_malloc(md_value_len);
+		*md_value = malloc(md_value_len);
 		if (*md_value == 0) goto err;
 
 		EVP_DigestInit(&md_ctx, md);
@@ -627,7 +627,7 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
 		*md_value = string_to_hex(digest, &digest_len);
 		if (!*md_value || md_value_len != digest_len)
 			{
-			OPENSSL_free(*md_value);
+			free(*md_value);
 			*md_value = NULL;
 			BIO_printf(bio_err, "bad digest, %d bytes "
 				   "must be specified\n", md_value_len);
@@ -654,10 +654,10 @@ static ASN1_INTEGER *create_nonce(int bits)
 	/* Find the first non-zero byte and creating ASN1_INTEGER object. */
 	for (i = 0; i < len && !buf[i]; ++i);
 	if (!(nonce = ASN1_INTEGER_new())) goto err;
-	OPENSSL_free(nonce->data);
+	free(nonce->data);
 	/* Allocate at least one byte. */
 	nonce->length = len - i;
-	if (!(nonce->data = OPENSSL_malloc(nonce->length + 1))) goto err;
+	if (!(nonce->data = malloc(nonce->length + 1))) goto err;
 	memcpy(nonce->data, buf + i, nonce->length);
 
 	return nonce;

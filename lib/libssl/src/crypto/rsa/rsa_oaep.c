@@ -70,7 +70,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	   20);
 #endif
 
-	dbmask = OPENSSL_malloc(emlen - SHA_DIGEST_LENGTH);
+	dbmask = malloc(emlen - SHA_DIGEST_LENGTH);
 	if (dbmask == NULL)
 		{
 		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
@@ -87,7 +87,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 		seed[i] ^= seedmask[i];
 
-	OPENSSL_free(dbmask);
+	free(dbmask);
 	return 1;
 	}
 
@@ -121,7 +121,7 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 		}
 
 	dblen = num - SHA_DIGEST_LENGTH;
-	db = OPENSSL_malloc(dblen + num);
+	db = malloc(dblen + num);
 	if (db == NULL)
 		{
 		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
@@ -172,14 +172,14 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 				memcpy(to, db + i, mlen);
 			}
 		}
-	OPENSSL_free(db);
+	free(db);
 	return mlen;
 
 decoding_err:
 	/* to avoid chosen ciphertext attacks, the error message should not reveal
 	 * which kind of decoding error happened */
 	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
-	if (db != NULL) OPENSSL_free(db);
+	if (db != NULL) free(db);
 	return -1;
 	}
 

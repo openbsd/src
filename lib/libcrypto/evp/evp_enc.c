@@ -78,7 +78,7 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 	{
-	EVP_CIPHER_CTX *ctx=OPENSSL_malloc(sizeof *ctx);
+	EVP_CIPHER_CTX *ctx=malloc(sizeof *ctx);
 	if (ctx)
 		EVP_CIPHER_CTX_init(ctx);
 	return ctx;
@@ -164,7 +164,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)
 			{
-			ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
+			ctx->cipher_data=malloc(ctx->cipher->ctx_size);
 			if (!ctx->cipher_data)
 				{
 				EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
@@ -546,7 +546,7 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 	if (ctx)
 		{
 		EVP_CIPHER_CTX_cleanup(ctx);
-		OPENSSL_free(ctx);
+		free(ctx);
 		}
 	}
 
@@ -561,7 +561,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 			OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
 		}
 	if (c->cipher_data)
-		OPENSSL_free(c->cipher_data);
+		free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
 	if (c->engine)
 		/* The EVP_CIPHER we used belongs to an ENGINE, release the
@@ -644,7 +644,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
 	if (in->cipher_data && in->cipher->ctx_size)
 		{
-		out->cipher_data=OPENSSL_malloc(in->cipher->ctx_size);
+		out->cipher_data=malloc(in->cipher->ctx_size);
 		if (!out->cipher_data)
 			{
 			EVPerr(EVP_F_EVP_CIPHER_CTX_COPY,ERR_R_MALLOC_FAILURE);

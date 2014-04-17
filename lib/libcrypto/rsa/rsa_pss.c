@@ -133,7 +133,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		}
 	maskedDBLen = emLen - hLen - 1;
 	H = EM + maskedDBLen;
-	DB = OPENSSL_malloc(maskedDBLen);
+	DB = malloc(maskedDBLen);
 	if (!DB)
 		{
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, ERR_R_MALLOC_FAILURE);
@@ -177,7 +177,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 
 	err:
 	if (DB)
-		OPENSSL_free(DB);
+		free(DB);
 	EVP_MD_CTX_cleanup(&ctx);
 
 	return ret;
@@ -239,7 +239,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 		}
 	if (sLen > 0)
 		{
-		salt = OPENSSL_malloc(sLen);
+		salt = malloc(sLen);
 		if (!salt)
 			{
 			RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,ERR_R_MALLOC_FAILURE);
@@ -289,7 +289,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
 	err:
 	if (salt)
-		OPENSSL_free(salt);
+		free(salt);
 
 	return ret;
 

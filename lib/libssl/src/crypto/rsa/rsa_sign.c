@@ -120,7 +120,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 	if(type != NID_md5_sha1) {
-		tmps=(unsigned char *)OPENSSL_malloc((unsigned int)j+1);
+		tmps=(unsigned char *)malloc((unsigned int)j+1);
 		if (tmps == NULL)
 			{
 			RSAerr(RSA_F_RSA_SIGN,ERR_R_MALLOC_FAILURE);
@@ -138,7 +138,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 
 	if(type != NID_md5_sha1) {
 		OPENSSL_cleanse(tmps,(unsigned int)j+1);
-		OPENSSL_free(tmps);
+		free(tmps);
 	}
 	return(ret);
 	}
@@ -169,7 +169,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 		return 1;
 		}
 
-	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
+	s=(unsigned char *)malloc((unsigned int)siglen);
 	if (s == NULL)
 		{
 		RSAerr(RSA_F_INT_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
@@ -281,7 +281,7 @@ err:
 	if (s != NULL)
 		{
 		OPENSSL_cleanse(s,(unsigned int)siglen);
-		OPENSSL_free(s);
+		free(s);
 		}
 	return(ret);
 	}

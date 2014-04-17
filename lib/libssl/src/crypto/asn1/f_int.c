@@ -157,14 +157,14 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 		if (num+i > slen)
 			{
 			if (s == NULL)
-				sp=(unsigned char *)OPENSSL_malloc(
+				sp=(unsigned char *)malloc(
 					(unsigned int)num+i*2);
 			else
 				sp=OPENSSL_realloc_clean(s,slen,num+i*2);
 			if (sp == NULL)
 				{
 				ASN1err(ASN1_F_A2I_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
-				if (s != NULL) OPENSSL_free(s);
+				if (s != NULL) free(s);
 				goto err;
 				}
 			s=sp;

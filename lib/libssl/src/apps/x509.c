@@ -858,7 +858,7 @@ bad:
 				BIO_printf(STDout,"/* issuer :%s */\n",buf);
 
 				z=i2d_X509(x,NULL);
-				m=OPENSSL_malloc(z);
+				m=malloc(z);
 
 				d=(unsigned char *)m;
 				z=i2d_X509_NAME(X509_get_subject_name(x),&d);
@@ -896,7 +896,7 @@ bad:
 				if (y%16 != 0) BIO_printf(STDout,"\n");
 				BIO_printf(STDout,"};\n");
 
-				OPENSSL_free(m);
+				free(m);
 				}
 			else if (text == i)
 				{
@@ -1087,7 +1087,7 @@ end:
 	ASN1_INTEGER_free(sno);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-	if (passin) OPENSSL_free(passin);
+	if (passin) free(passin);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
@@ -1102,7 +1102,7 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create
 	len = ((serialfile == NULL)
 		?(strlen(CAfile)+strlen(POSTFIX)+1)
 		:(strlen(serialfile)))+1;
-	buf=OPENSSL_malloc(len);
+	buf=malloc(len);
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
 	if (serialfile == NULL)
 		{
@@ -1127,7 +1127,7 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile, int create
 	if (!save_serial(buf, NULL, serial, &bs)) goto end;
 
  end:
-	if (buf) OPENSSL_free(buf);
+	if (buf) free(buf);
 	BN_free(serial);
 	return bs;
 	}

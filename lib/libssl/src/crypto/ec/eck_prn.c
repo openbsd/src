@@ -263,7 +263,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 			seed_len = EC_GROUP_get_seed_len(x);
 
 		buf_len += 10;
-		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+		if ((buffer = malloc(buf_len)) == NULL)
 			{
 			reason = ERR_R_MALLOC_FAILURE;
 			goto err;
@@ -349,7 +349,7 @@ err:
 	if (ctx)
 		BN_CTX_free(ctx);
 	if (buffer != NULL) 
-		OPENSSL_free(buffer);
+		free(buffer);
 	return(ret);	
 	}
 

@@ -533,10 +533,10 @@ ssl23_get_client_hello(SSL *s)
 	s->init_num = 0;
 
 	if (buf != buf_space)
-		OPENSSL_free(buf);
+		free(buf);
 	return (SSL_accept(s));
 err:
 	if (buf != buf_space)
-		OPENSSL_free(buf);
+		free(buf);
 	return (-1);
 }

@@ -167,7 +167,7 @@ TS_RESP_CTX *TS_RESP_CTX_new()
 	{
 	TS_RESP_CTX *ctx;
 
-	if (!(ctx = (TS_RESP_CTX *) OPENSSL_malloc(sizeof(TS_RESP_CTX))))
+	if (!(ctx = (TS_RESP_CTX *) malloc(sizeof(TS_RESP_CTX))))
 		{
 		TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -195,7 +195,7 @@ void TS_RESP_CTX_free(TS_RESP_CTX *ctx)
 	ASN1_INTEGER_free(ctx->seconds);
 	ASN1_INTEGER_free(ctx->millis);
 	ASN1_INTEGER_free(ctx->micros);
-	OPENSSL_free(ctx);
+	free(ctx);
 	}
 
 int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
@@ -922,7 +922,7 @@ static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 	int len;
 
 	len = i2d_ESS_SIGNING_CERT(sc, NULL);
-	if (!(pp = (unsigned char *) OPENSSL_malloc(len)))
+	if (!(pp = (unsigned char *) malloc(len)))
 		{
 		TSerr(TS_F_ESS_ADD_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -934,13 +934,13 @@ static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 		TSerr(TS_F_ESS_ADD_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	OPENSSL_free(pp); pp = NULL;
+	free(pp); pp = NULL;
 	return PKCS7_add_signed_attribute(si, 
 					  NID_id_smime_aa_signingCertificate,
 					  V_ASN1_SEQUENCE, seq);
  err:
 	ASN1_STRING_free(seq);
-	OPENSSL_free(pp);
+	free(pp);
 
 	return 0;
 	}

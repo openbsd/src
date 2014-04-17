@@ -301,7 +301,7 @@ int MAIN(int argc, char **argv)
 		BIO_free_all(out);
 	BIO_free(in);
 	if (pass)
-		OPENSSL_free(pass);
+		free(pass);
 
 	return ret;
 	}

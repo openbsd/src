@@ -180,9 +180,9 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 			if (blsize > tmpsize)
 				{
 				if (tmp != ftmp)
-					OPENSSL_free(tmp);
+					free(tmp);
 				tmpsize = blsize + 32;
-				tmp = OPENSSL_malloc(tmpsize);
+				tmp = malloc(tmpsize);
 				if (!tmp)
 					goto err;
 				}
@@ -215,13 +215,13 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 			len+=i;
 		}
 	if (tmp != ftmp)
-		OPENSSL_free(tmp);
+		free(tmp);
 	if (bl)
 		BN_free(bl);
 	return(len);
 err:
 	if (tmp != ftmp)
-		OPENSSL_free(tmp);
+		free(tmp);
 	if (bl)
 		BN_free(bl);
 	return(0);
@@ -242,7 +242,7 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	i=i2t_ASN1_OBJECT(buf,sizeof buf,a);
 	if (i > (int)(sizeof(buf) - 1))
 		{
-		p = OPENSSL_malloc(i + 1);
+		p = malloc(i + 1);
 		if (!p)
 			return -1;
 		i2t_ASN1_OBJECT(p,i + 1,a);
@@ -251,7 +251,7 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 		return BIO_write(bp, "<INVALID>", 9);
 	BIO_write(bp,p,i);
 	if (p != buf)
-		OPENSSL_free(p);
+		free(p);
 	return(i);
 	}
 
@@ -319,8 +319,8 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	if ((data == NULL) || (ret->length < len))
 		{
 		ret->length=0;
-		if (data != NULL) OPENSSL_free(data);
-		data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
+		if (data != NULL) free(data);
+		data=(unsigned char *)malloc(len ? (int)len : 1);
 		if (data == NULL)
 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
@@ -348,7 +348,7 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 	{
 	ASN1_OBJECT *ret;
 
-	ret=(ASN1_OBJECT *)OPENSSL_malloc(sizeof(ASN1_OBJECT));
+	ret=(ASN1_OBJECT *)malloc(sizeof(ASN1_OBJECT));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_OBJECT_NEW,ERR_R_MALLOC_FAILURE);
@@ -369,19 +369,19 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
 		{
 #ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause memory leaks */
-		if (a->sn != NULL) OPENSSL_free((void *)a->sn);
-		if (a->ln != NULL) OPENSSL_free((void *)a->ln);
+		if (a->sn != NULL) free((void *)a->sn);
+		if (a->ln != NULL) free((void *)a->ln);
 #endif
 		a->sn=a->ln=NULL;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
 		{
-		if (a->data != NULL) OPENSSL_free((void *)a->data);
+		if (a->data != NULL) free((void *)a->data);
 		a->data=NULL;
 		a->length=0;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
-		OPENSSL_free(a);
+		free(a);
 	}
 
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,

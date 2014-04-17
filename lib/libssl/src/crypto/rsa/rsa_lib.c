@@ -125,7 +125,7 @@ RSA *RSA_new_method(ENGINE *engine)
 	{
 	RSA *ret;
 
-	ret=(RSA *)OPENSSL_malloc(sizeof(RSA));
+	ret=(RSA *)malloc(sizeof(RSA));
 	if (ret == NULL)
 		{
 		RSAerr(RSA_F_RSA_NEW_METHOD,ERR_R_MALLOC_FAILURE);
@@ -139,7 +139,7 @@ RSA *RSA_new_method(ENGINE *engine)
 		if (!ENGINE_init(engine))
 			{
 			RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
-			OPENSSL_free(ret);
+			free(ret);
 			return NULL;
 			}
 		ret->engine = engine;
@@ -154,7 +154,7 @@ RSA *RSA_new_method(ENGINE *engine)
 			RSAerr(RSA_F_RSA_NEW_METHOD,
 				ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
-			OPENSSL_free(ret);
+			free(ret);
 			return NULL;
 			}
 		}
@@ -184,7 +184,7 @@ RSA *RSA_new_method(ENGINE *engine)
 	if (ret->engine)
 		ENGINE_finish(ret->engine);
 #endif
-		OPENSSL_free(ret);
+		free(ret);
 		return(NULL);
 		}
 
@@ -195,7 +195,7 @@ RSA *RSA_new_method(ENGINE *engine)
 			ENGINE_finish(ret->engine);
 #endif
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
-		OPENSSL_free(ret);
+		free(ret);
 		ret=NULL;
 		}
 	return(ret);
@@ -240,7 +240,7 @@ void RSA_free(RSA *r)
 	if (r->blinding != NULL) BN_BLINDING_free(r->blinding);
 	if (r->mt_blinding != NULL) BN_BLINDING_free(r->mt_blinding);
 	if (r->bignum_data != NULL) OPENSSL_free_locked(r->bignum_data);
-	OPENSSL_free(r);
+	free(r);
 	}
 
 int RSA_up_ref(RSA *r)

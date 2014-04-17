@@ -76,7 +76,7 @@ main()
 		fgets(buf,256,stdin);
 		if (buf[0] == '\0') break;
 		i=strlen(buf);
-		p=OPENSSL_malloc(i+1);
+		p=malloc(i+1);
 		memcpy(p,buf,i+1);
 		lh_insert(conf,p);
 		}

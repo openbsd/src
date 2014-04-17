@@ -650,7 +650,7 @@ ssl3_setup_read_buffer(SSL *s)
 		if (!(s->options & SSL_OP_NO_COMPRESSION))
 			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
-		if ((p = OPENSSL_malloc(len)) == NULL)
+		if ((p = malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;
 		s->s3->rbuf.len = len;
@@ -690,7 +690,7 @@ ssl3_setup_write_buffer(SSL *s)
 			len += headerlen + align +
 			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 
-		if ((p = OPENSSL_malloc(len)) == NULL)
+		if ((p = malloc(len)) == NULL)
 			goto err;
 		s->s3->wbuf.buf = p;
 		s->s3->wbuf.len = len;
@@ -718,7 +718,7 @@ int
 ssl3_release_write_buffer(SSL *s)
 {
 	if (s->s3->wbuf.buf != NULL) {
-		OPENSSL_free(s->s3->wbuf.buf);
+		free(s->s3->wbuf.buf);
 		s->s3->wbuf.buf = NULL;
 	}
 	return 1;
@@ -728,7 +728,7 @@ int
 ssl3_release_read_buffer(SSL *s)
 {
 	if (s->s3->rbuf.buf != NULL) {
-		OPENSSL_free(s->s3->rbuf.buf);
+		free(s->s3->rbuf.buf);
 		s->s3->rbuf.buf = NULL;
 	}
 	return 1;

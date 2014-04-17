@@ -88,7 +88,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 	{
 	X509_VERIFY_PARAM *param;
-	param = OPENSSL_malloc(sizeof(X509_VERIFY_PARAM));
+	param = malloc(sizeof(X509_VERIFY_PARAM));
 	memset(param, 0, sizeof(X509_VERIFY_PARAM));
 	x509_verify_param_zero(param);
 	return param;
@@ -97,7 +97,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 	{
 	x509_verify_param_zero(param);
-	OPENSSL_free(param);
+	free(param);
 	}
 
 /* This function determines how parameters are "inherited" from one structure
@@ -210,7 +210,7 @@ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 	{
 	if (param->name)
-		OPENSSL_free(param->name);
+		free(param->name);
 	param->name = BUF_strdup(name);
 	if (param->name)
 		return 1;

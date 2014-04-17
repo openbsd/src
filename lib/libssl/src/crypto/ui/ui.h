@@ -173,7 +173,7 @@ int UI_dup_error_string(UI *ui, const char *text);
    and object_name is the name of the object (might be a card name or
    a file name.
    The returned string shall always be allocated on the heap with
-   OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
+   malloc(), and need to be free'd with free().
 
    If the ui_method doesn't contain a pointer to a user-defined prompt
    constructor, a default string is built, looking like this:

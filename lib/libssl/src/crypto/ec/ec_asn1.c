@@ -485,7 +485,7 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 		}
 	else
 		{
-		if ((buffer_1 = OPENSSL_malloc(len_1)) == NULL)
+		if ((buffer_1 = malloc(len_1)) == NULL)
 			{
 			ECerr(EC_F_EC_ASN1_GROUP2CURVE,
 			      ERR_R_MALLOC_FAILURE);
@@ -507,7 +507,7 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 		}
 	else
 		{
-		if ((buffer_2 = OPENSSL_malloc(len_2)) == NULL)
+		if ((buffer_2 = malloc(len_2)) == NULL)
 			{
 			ECerr(EC_F_EC_ASN1_GROUP2CURVE,
 			      ERR_R_MALLOC_FAILURE);
@@ -559,9 +559,9 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 	ok = 1;
 
 err:	if (buffer_1)
-		OPENSSL_free(buffer_1);
+		free(buffer_1);
 	if (buffer_2)
-		OPENSSL_free(buffer_2);
+		free(buffer_2);
 	if (tmp_1)
 		BN_free(tmp_1);
 	if (tmp_2)
@@ -630,7 +630,7 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 		ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
 		goto err;
 		}
-	if ((buffer = OPENSSL_malloc(len)) == NULL)
+	if ((buffer = malloc(len)) == NULL)
 		{
 		ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -686,7 +686,7 @@ err :	if(!ok)
 	if (tmp)
 		BN_free(tmp);
 	if (buffer)
-		OPENSSL_free(buffer);
+		free(buffer);
 	return(ret);
 	}
 
@@ -925,8 +925,8 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 	if (params->curve->seed != NULL)
 		{
 		if (ret->seed != NULL)
-			OPENSSL_free(ret->seed);
-		if (!(ret->seed = OPENSSL_malloc(params->curve->seed->length)))
+			free(ret->seed);
+		if (!(ret->seed = malloc(params->curve->seed->length)))
 			{
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, 
 			      ERR_R_MALLOC_FAILURE);
@@ -1247,7 +1247,7 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 	priv_key->version = a->version;
 
 	buf_len = (size_t)BN_num_bytes(a->priv_key);
-	buffer = OPENSSL_malloc(buf_len);
+	buffer = malloc(buf_len);
 	if (buffer == NULL)
 		{
 		ECerr(EC_F_I2D_ECPRIVATEKEY,
@@ -1292,7 +1292,7 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 
 		if (tmp_len > buf_len)
 			{
-			unsigned char *tmp_buffer = OPENSSL_realloc(buffer, tmp_len);
+			unsigned char *tmp_buffer = realloc(buffer, tmp_len);
 			if (!tmp_buffer)
 				{
 				ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
@@ -1327,7 +1327,7 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 	ok=1;
 err:
 	if (buffer)
-		OPENSSL_free(buffer);
+		free(buffer);
 	if (priv_key)
 		EC_PRIVATEKEY_free(priv_key);
 	return(ok?ret:0);
@@ -1424,7 +1424,7 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 
 	if (*out == NULL)
 		{
-		if ((*out = OPENSSL_malloc(buf_len)) == NULL)
+		if ((*out = malloc(buf_len)) == NULL)
 			{
 			ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -1435,7 +1435,7 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
 				*out, buf_len, NULL))
 		{
 		ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_EC_LIB);
-		OPENSSL_free(*out);
+		free(*out);
 		*out = NULL;
 		return 0;
 		}

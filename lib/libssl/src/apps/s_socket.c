@@ -222,7 +222,7 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 		else
 			sock = accept_socket;
 		i=(*cb)(name,sock, context);
-		if (name != NULL) OPENSSL_free(name);
+		if (name != NULL) free(name);
 		if (type==SOCK_STREAM) {
 			shutdown(sock, SHUT_RDWR);
 			close(sock);
@@ -358,9 +358,9 @@ redoit:
 		}
 	else
 		{
-		if ((*host=(char *)OPENSSL_malloc(strlen(h1->h_name)+1)) == NULL)
+		if ((*host=(char *)malloc(strlen(h1->h_name)+1)) == NULL)
 			{
-			perror("OPENSSL_malloc");
+			perror("malloc");
 			return(0);
 			}
 		BUF_strlcpy(*host,h1->h_name,strlen(h1->h_name)+1);

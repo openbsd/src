@@ -165,7 +165,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		return NULL;
 		}
 
-	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
+	ret = malloc(sizeof(EVP_PKEY_CTX));
 	if (!ret)
 		{
 #ifndef OPENSSL_NO_ENGINE
@@ -200,7 +200,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags)
 	{
 	EVP_PKEY_METHOD *pmeth;
-	pmeth = OPENSSL_malloc(sizeof(EVP_PKEY_METHOD));
+	pmeth = malloc(sizeof(EVP_PKEY_METHOD));
 	if (!pmeth)
 		return NULL;
 
@@ -291,7 +291,7 @@ void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 	{
 	if (pmeth && (pmeth->flags & EVP_PKEY_FLAG_DYNAMIC))
-		OPENSSL_free(pmeth);
+		free(pmeth);
 	}
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
@@ -317,7 +317,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 		return 0;
 		}
 #endif
-	rctx = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
+	rctx = malloc(sizeof(EVP_PKEY_CTX));
 	if (!rctx)
 		return NULL;
 
@@ -378,7 +378,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 		 * functional reference we held for this reason. */
 		ENGINE_finish(ctx->engine);
 #endif
-	OPENSSL_free(ctx);
+	free(ctx);
 	}
 
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,

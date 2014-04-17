@@ -178,7 +178,7 @@ static int ok_new(BIO *bi)
 	{
 	BIO_OK_CTX *ctx;
 
-	ctx=(BIO_OK_CTX *)OPENSSL_malloc(sizeof(BIO_OK_CTX));
+	ctx=(BIO_OK_CTX *)malloc(sizeof(BIO_OK_CTX));
 	if (ctx == NULL) return(0);
 
 	ctx->buf_len=0;
@@ -203,7 +203,7 @@ static int ok_free(BIO *a)
 	if (a == NULL) return(0);
 	EVP_MD_CTX_cleanup(&((BIO_OK_CTX *)a->ptr)->md);
 	OPENSSL_cleanse(a->ptr,sizeof(BIO_OK_CTX));
-	OPENSSL_free(a->ptr);
+	free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;

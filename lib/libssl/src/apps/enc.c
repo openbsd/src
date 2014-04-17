@@ -371,11 +371,11 @@ bad:
 		if (verbose) BIO_printf(bio_err,"bufsize=%d\n",bsize);
 		}
 
-	strbuf=OPENSSL_malloc(SIZE);
-	buff=(unsigned char *)OPENSSL_malloc(EVP_ENCODE_LENGTH(bsize));
+	strbuf=malloc(SIZE);
+	buff=(unsigned char *)malloc(EVP_ENCODE_LENGTH(bsize));
 	if ((buff == NULL) || (strbuf == NULL))
 		{
-		BIO_printf(bio_err,"OPENSSL_malloc failure %ld\n",(long)EVP_ENCODE_LENGTH(bsize));
+		BIO_printf(bio_err,"malloc failure %ld\n",(long)EVP_ENCODE_LENGTH(bsize));
 		goto end;
 		}
 
@@ -675,8 +675,8 @@ bad:
 		}
 end:
 	ERR_print_errors(bio_err);
-	if (strbuf != NULL) OPENSSL_free(strbuf);
-	if (buff != NULL) OPENSSL_free(buff);
+	if (strbuf != NULL) free(strbuf);
+	if (buff != NULL) free(buff);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
 	if (benc != NULL) BIO_free(benc);
@@ -684,7 +684,7 @@ end:
 #ifdef ZLIB
 	if (bzl != NULL) BIO_free(bzl);
 #endif
-	if(pass) OPENSSL_free(pass);
+	if(pass) free(pass);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}

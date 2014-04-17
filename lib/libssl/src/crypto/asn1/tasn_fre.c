@@ -126,7 +126,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
 		if (!combine)
 			{
-			OPENSSL_free(*pval);
+			free(*pval);
 			*pval = NULL;
 			}
 		break;
@@ -173,7 +173,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
 		if (!combine)
 			{
-			OPENSSL_free(*pval);
+			free(*pval);
 			*pval = NULL;
 			}
 		break;
@@ -254,7 +254,7 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 		case V_ASN1_ANY:
 		ASN1_primitive_free(pval, NULL);
-		OPENSSL_free(*pval);
+		free(*pval);
 		break;
 
 		default:

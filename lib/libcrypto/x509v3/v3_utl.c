@@ -85,7 +85,7 @@ int X509V3_add_value(const char *name, const char *value,
 	char *tname = NULL, *tvalue = NULL;
 	if(name && !(tname = BUF_strdup(name))) goto err;
 	if(value && !(tvalue = BUF_strdup(value))) goto err;
-	if(!(vtmp = (CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE)))) goto err;
+	if(!(vtmp = (CONF_VALUE *)malloc(sizeof(CONF_VALUE)))) goto err;
 	if(!*extlist && !(*extlist = sk_CONF_VALUE_new_null())) goto err;
 	vtmp->section = NULL;
 	vtmp->name = tname;
@@ -94,9 +94,9 @@ int X509V3_add_value(const char *name, const char *value,
 	return 1;
 	err:
 	X509V3err(X509V3_F_X509V3_ADD_VALUE,ERR_R_MALLOC_FAILURE);
-	if(vtmp) OPENSSL_free(vtmp);
-	if(tname) OPENSSL_free(tname);
-	if(tvalue) OPENSSL_free(tvalue);
+	if(vtmp) free(vtmp);
+	if(tname) free(tname);
+	if(tvalue) free(tvalue);
 	return 0;
 }
 
@@ -111,10 +111,10 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
 void X509V3_conf_free(CONF_VALUE *conf)
 {
 	if(!conf) return;
-	if(conf->name) OPENSSL_free(conf->name);
-	if(conf->value) OPENSSL_free(conf->value);
-	if(conf->section) OPENSSL_free(conf->section);
-	OPENSSL_free(conf);
+	if(conf->name) free(conf->name);
+	if(conf->value) free(conf->value);
+	if(conf->section) free(conf->section);
+	free(conf);
 }
 
 int X509V3_add_value_bool(const char *name, int asn1_bool,
@@ -206,7 +206,7 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 	if(!aint) return 1;
 	if(!(strtmp = i2s_ASN1_INTEGER(NULL, aint))) return 0;
 	ret = X509V3_add_value(name, strtmp, extlist);
-	OPENSSL_free(strtmp);
+	free(strtmp);
 	return ret;
 }
 
@@ -328,11 +328,11 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
 		}
 		X509V3_add_value(ntmp, NULL, &values);
 	}
-OPENSSL_free(linebuf);
+free(linebuf);
 return values;
 
 err:
-OPENSSL_free(linebuf);
+free(linebuf);
 sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
 return NULL;
 
@@ -355,7 +355,7 @@ static char *strip_spaces(char *name)
 
 /* hex string utilities */
 
-/* Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
+/* Given a buffer of length 'len' return a malloc'ed string with its
  * hex representation
  * @@@ (Contents of buffer are always kept in ASCII, also on EBCDIC machines)
  */
@@ -367,7 +367,7 @@ char *hex_to_string(const unsigned char *buffer, long len)
 	int i;
 	const static char hexdig[] = "0123456789ABCDEF";
 	if(!buffer || !len) return NULL;
-	if(!(tmp = OPENSSL_malloc(len * 3 + 1))) {
+	if(!(tmp = malloc(len * 3 + 1))) {
 		X509V3err(X509V3_F_HEX_TO_STRING,ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -393,14 +393,14 @@ unsigned char *string_to_hex(const char *str, long *len)
 		X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_INVALID_NULL_ARGUMENT);
 		return NULL;
 	}
-	if(!(hexbuf = OPENSSL_malloc(strlen(str) >> 1))) goto err;
+	if(!(hexbuf = malloc(strlen(str) >> 1))) goto err;
 	for(p = (unsigned char *)str, q = hexbuf; *p;) {
 		ch = *p++;
 		if(ch == ':') continue;
 		cl = *p++;
 		if(!cl) {
 			X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ODD_NUMBER_OF_DIGITS);
-			OPENSSL_free(hexbuf);
+			free(hexbuf);
 			return NULL;
 		}
 		if(isupper(ch)) ch = tolower(ch);
@@ -422,12 +422,12 @@ unsigned char *string_to_hex(const char *str, long *len)
 	return hexbuf;
 
 	err:
-	if(hexbuf) OPENSSL_free(hexbuf);
+	if(hexbuf) free(hexbuf);
 	X509V3err(X509V3_F_STRING_TO_HEX,ERR_R_MALLOC_FAILURE);
 	return NULL;
 
 	badhex:
-	OPENSSL_free(hexbuf);
+	free(hexbuf);
 	X509V3err(X509V3_F_STRING_TO_HEX,X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
 
@@ -531,7 +531,7 @@ static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens)
 
 static void str_free(OPENSSL_STRING str)
 {
-	OPENSSL_free(str);
+	free(str);
 }
 
 static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email)
@@ -608,7 +608,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 
 	iplen2 = a2i_ipadd(ipout + iplen1, p);
 
-	OPENSSL_free(iptmp);
+	free(iptmp);
 	iptmp = NULL;
 
 	if (!iplen2 || (iplen1 != iplen2))
@@ -624,7 +624,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 
 	err:
 	if (iptmp)
-		OPENSSL_free(iptmp);
+		free(iptmp);
 	if (ret)
 		ASN1_OCTET_STRING_free(ret);
 	return NULL;

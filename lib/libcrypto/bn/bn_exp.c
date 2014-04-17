@@ -636,7 +636,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		powerbufFree = alloca(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
 	else
 #endif
-	if ((powerbufFree=(unsigned char*)OPENSSL_malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
+	if ((powerbufFree=(unsigned char*)malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
 		goto err;
 		
 	powerbuf = MOD_EXP_CTIME_ALIGN(powerbufFree);
@@ -823,7 +823,7 @@ err:
 	if (powerbuf!=NULL)
 		{
 		OPENSSL_cleanse(powerbuf,powerbufLen);
-		if (powerbufFree) OPENSSL_free(powerbufFree);
+		if (powerbufFree) free(powerbufFree);
 		}
 	BN_CTX_end(ctx);
 	return(ret);

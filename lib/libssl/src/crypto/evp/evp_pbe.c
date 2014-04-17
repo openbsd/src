@@ -238,7 +238,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 	EVP_PBE_CTL *pbe_tmp;
 	if (!pbe_algs)
 		pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-	if (!(pbe_tmp = (EVP_PBE_CTL*) OPENSSL_malloc (sizeof(EVP_PBE_CTL))))
+	if (!(pbe_tmp = (EVP_PBE_CTL*) malloc (sizeof(EVP_PBE_CTL))))
 		{
 		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE,ERR_R_MALLOC_FAILURE);
 		return 0;
@@ -306,7 +306,7 @@ int EVP_PBE_find(int type, int pbe_nid,
 
 static void free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
 	 {
-	 OPENSSL_freeFunc(pbe);
+	 free(pbe);
 	 }
 
 void EVP_PBE_cleanup(void)

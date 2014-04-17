@@ -298,7 +298,7 @@ err:
 	if (bn) BN_free(bn);
 	if (rsa) RSA_free(rsa);
 	if (out) BIO_free_all(out);
-	if(passout) OPENSSL_free(passout);
+	if(passout) free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	apps_shutdown();

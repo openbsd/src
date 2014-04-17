@@ -145,7 +145,7 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
 	/* Note that I cheat in the following 2 assignments.  I know
 	 * that if the ASN1_INTEGER passed to ASN1_INTEGER_set
-	 * is > sizeof(long)+1, the buffer will not be re-OPENSSL_malloc()ed.
+	 * is > sizeof(long)+1, the buffer will not be re-malloc()ed.
 	 * This is a bit evil but makes things simple, no dynamic allocation
 	 * to clean up :-) */
 	a.version.length = LSIZE2;
@@ -375,7 +375,7 @@ long length)
 	ai.length = 0;
 	M_ASN1_D2I_get_x(ASN1_INTEGER, aip, d2i_ASN1_INTEGER);
 	if (ai.data != NULL) {
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	}
@@ -385,7 +385,7 @@ long length)
 	ssl_version = (int)ASN1_INTEGER_get(aip);
 	ret->ssl_version = ssl_version;
 	if (ai.data != NULL) {
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	}
@@ -439,7 +439,7 @@ long length)
 		else
 			ret->krb5_client_princ_len = os.length;
 		memcpy(ret->krb5_client_princ, os.data, ret->krb5_client_princ_len);
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else
@@ -453,13 +453,13 @@ long length)
 		ret->key_arg_length = os.length;
 	memcpy(ret->key_arg, os.data, ret->key_arg_length);
 	if (os.data != NULL)
-		OPENSSL_free(os.data);
+		free(os.data);
 
 	ai.length = 0;
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 1);
 	if (ai.data != NULL) {
 		ret->time = ASN1_INTEGER_get(aip);
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	} else
@@ -469,7 +469,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 2);
 	if (ai.data != NULL) {
 		ret->timeout = ASN1_INTEGER_get(aip);
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	} else
@@ -493,7 +493,7 @@ long length)
 			ret->sid_ctx_length = os.length;
 			memcpy(ret->sid_ctx, os.data, os.length);
 		}
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else
@@ -503,7 +503,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 5);
 	if (ai.data != NULL) {
 		ret->verify_result = ASN1_INTEGER_get(aip);
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	} else
@@ -515,7 +515,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 6);
 	if (os.data) {
 		ret->tlsext_hostname = BUF_strndup((char *)os.data, os.length);
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else
@@ -528,7 +528,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 7);
 	if (os.data) {
 		ret->psk_identity_hint = BUF_strndup((char *)os.data, os.length);
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else
@@ -539,7 +539,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 8);
 	if (os.data) {
 		ret->psk_identity = BUF_strndup((char *)os.data, os.length);
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else
@@ -551,7 +551,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 9);
 	if (ai.data != NULL) {
 		ret->tlsext_tick_lifetime_hint = ASN1_INTEGER_get(aip);
-		OPENSSL_free(ai.data);
+		free(ai.data);
 		ai.data = NULL;
 		ai.length = 0;
 	} else if (ret->tlsext_ticklen && ret->session_id_length)
@@ -575,7 +575,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 11);
 	if (os.data) {
 		ret->compress_meth = os.data[0];
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 	}
 #endif
@@ -586,7 +586,7 @@ long length)
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 12);
 	if (os.data) {
 		ret->srp_username = BUF_strndup((char *)os.data, os.length);
-		OPENSSL_free(os.data);
+		free(os.data);
 		os.data = NULL;
 		os.length = 0;
 	} else

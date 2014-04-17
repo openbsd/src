@@ -175,7 +175,7 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_INTERNAL_ERROR);
 		goto err;
 		}
-	if ((buf = OPENSSL_malloc(buflen)) == NULL)
+	if ((buf = malloc(buflen)) == NULL)
 		{
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -210,6 +210,6 @@ err:
 	if (tmp) EC_POINT_free(tmp);
 	if (ctx) BN_CTX_end(ctx);
 	if (ctx) BN_CTX_free(ctx);
-	if (buf) OPENSSL_free(buf);
+	if (buf) free(buf);
 	return(ret);
 	}

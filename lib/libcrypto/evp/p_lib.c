@@ -183,7 +183,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 	{
 	EVP_PKEY *ret;
 
-	ret=(EVP_PKEY *)OPENSSL_malloc(sizeof(EVP_PKEY));
+	ret=(EVP_PKEY *)malloc(sizeof(EVP_PKEY));
 	if (ret == NULL)
 		{
 		EVPerr(EVP_F_EVP_PKEY_NEW,ERR_R_MALLOC_FAILURE);
@@ -405,7 +405,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
 	EVP_PKEY_free_it(x);
 	if (x->attributes)
 		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
-	OPENSSL_free(x);
+	free(x);
 	}
 
 static void EVP_PKEY_free_it(EVP_PKEY *x)

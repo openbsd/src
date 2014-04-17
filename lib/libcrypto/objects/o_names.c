@@ -83,7 +83,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 	for (i=sk_NAME_FUNCS_num(name_funcs_stack); i<names_type_num; i++)
 		{
 		MemCheck_off();
-		name_funcs = OPENSSL_malloc(sizeof(NAME_FUNCS));
+		name_funcs = malloc(sizeof(NAME_FUNCS));
 		MemCheck_on();
 		if (!name_funcs)
 			{
@@ -192,7 +192,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 	alias=type&OBJ_NAME_ALIAS;
 	type&= ~OBJ_NAME_ALIAS;
 
-	onp=(OBJ_NAME *)OPENSSL_malloc(sizeof(OBJ_NAME));
+	onp=(OBJ_NAME *)malloc(sizeof(OBJ_NAME));
 	if (onp == NULL)
 		{
 		/* ERROR */
@@ -217,7 +217,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
 			sk_NAME_FUNCS_value(name_funcs_stack,
 				ret->type)->free_func(ret->name,ret->type,ret->data);
 			}
-		OPENSSL_free(ret);
+		free(ret);
 		}
 	else
 		{
@@ -252,7 +252,7 @@ int OBJ_NAME_remove(const char *name, int type)
 			sk_NAME_FUNCS_value(name_funcs_stack,
 				ret->type)->free_func(ret->name,ret->type,ret->data);
 			}
-		OPENSSL_free(ret);
+		free(ret);
 		return(1);
 		}
 	else
@@ -318,7 +318,7 @@ void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 	int n;
 
 	d.type=type;
-	d.names=OPENSSL_malloc(lh_OBJ_NAME_num_items(names_lh)*sizeof *d.names);
+	d.names=malloc(lh_OBJ_NAME_num_items(names_lh)*sizeof *d.names);
 	d.n=0;
 	OBJ_NAME_do_all(type,do_all_sorted_fn,&d);
 
@@ -327,7 +327,7 @@ void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
 	for(n=0 ; n < d.n ; ++n)
 		fn(d.names[n],arg);
 
-	OPENSSL_free((void *)d.names);
+	free((void *)d.names);
 	}
 
 static int free_type;
@@ -345,7 +345,7 @@ static IMPLEMENT_LHASH_DOALL_FN(names_lh_free, OBJ_NAME)
 
 static void name_funcs_free(NAME_FUNCS *ptr)
 	{
-	OPENSSL_free(ptr);
+	free(ptr);
 	}
 
 void OBJ_NAME_cleanup(int type)

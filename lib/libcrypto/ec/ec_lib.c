@@ -88,7 +88,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 		return NULL;
 		}
 
-	ret = OPENSSL_malloc(sizeof *ret);
+	ret = malloc(sizeof *ret);
 	if (ret == NULL)
 		{
 		ECerr(EC_F_EC_GROUP_NEW, ERR_R_MALLOC_FAILURE);
@@ -112,7 +112,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 	if (!meth->group_init(ret))
 		{
-		OPENSSL_free(ret);
+		free(ret);
 		return NULL;
 		}
 	
@@ -135,9 +135,9 @@ void EC_GROUP_free(EC_GROUP *group)
 	BN_free(&group->cofactor);
 
 	if (group->seed)
-		OPENSSL_free(group->seed);
+		free(group->seed);
 
-	OPENSSL_free(group);
+	free(group);
 	}
  
 
@@ -160,11 +160,11 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 	if (group->seed)
 		{
 		OPENSSL_cleanse(group->seed, group->seed_len);
-		OPENSSL_free(group->seed);
+		free(group->seed);
 		}
 
 	OPENSSL_cleanse(group, sizeof *group);
-	OPENSSL_free(group);
+	free(group);
 	}
 
 
@@ -226,8 +226,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	if (src->seed)
 		{
 		if (dest->seed)
-			OPENSSL_free(dest->seed);
-		dest->seed = OPENSSL_malloc(src->seed_len);
+			free(dest->seed);
+		dest->seed = malloc(src->seed_len);
 		if (dest->seed == NULL)
 			return 0;
 		if (!memcpy(dest->seed, src->seed, src->seed_len))
@@ -237,7 +237,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	else
 		{
 		if (dest->seed)
-			OPENSSL_free(dest->seed);
+			free(dest->seed);
 		dest->seed = NULL;
 		dest->seed_len = 0;
 		}
@@ -375,7 +375,7 @@ size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 	{
 	if (group->seed)
 		{
-		OPENSSL_free(group->seed);
+		free(group->seed);
 		group->seed = NULL;
 		group->seed_len = 0;
 		}
@@ -383,7 +383,7 @@ size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 	if (!len || !p)
 		return 1;
 
-	if ((group->seed = OPENSSL_malloc(len)) == NULL)
+	if ((group->seed = malloc(len)) == NULL)
 		return 0;
 	memcpy(group->seed, p, len);
 	group->seed_len = len;
@@ -567,7 +567,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
 		/* no explicit entry needed */
 		return 1;
 
-	d = OPENSSL_malloc(sizeof *d);
+	d = malloc(sizeof *d);
 	if (d == NULL)
 		return 0;
 
@@ -613,7 +613,7 @@ void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
 			EC_EXTRA_DATA *next = (*p)->next;
 
 			(*p)->free_func((*p)->data);
-			OPENSSL_free(*p);
+			free(*p);
 			
 			*p = next;
 			return;
@@ -637,7 +637,7 @@ void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
 			EC_EXTRA_DATA *next = (*p)->next;
 
 			(*p)->clear_free_func((*p)->data);
-			OPENSSL_free(*p);
+			free(*p);
 			
 			*p = next;
 			return;
@@ -659,7 +659,7 @@ void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **ex_data)
 		EC_EXTRA_DATA *next = d->next;
 		
 		d->free_func(d->data);
-		OPENSSL_free(d);
+		free(d);
 		
 		d = next;
 		}
@@ -680,7 +680,7 @@ void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **ex_data)
 		EC_EXTRA_DATA *next = d->next;
 		
 		d->clear_free_func(d->data);
-		OPENSSL_free(d);
+		free(d);
 		
 		d = next;
 		}
@@ -705,7 +705,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 		return NULL;
 		}
 
-	ret = OPENSSL_malloc(sizeof *ret);
+	ret = malloc(sizeof *ret);
 	if (ret == NULL)
 		{
 		ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
@@ -716,7 +716,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 	
 	if (!ret->meth->point_init(ret))
 		{
-		OPENSSL_free(ret);
+		free(ret);
 		return NULL;
 		}
 	
@@ -730,7 +730,7 @@ void EC_POINT_free(EC_POINT *point)
 
 	if (point->meth->point_finish != 0)
 		point->meth->point_finish(point);
-	OPENSSL_free(point);
+	free(point);
 	}
  
 
@@ -743,7 +743,7 @@ void EC_POINT_clear_free(EC_POINT *point)
 	else if (point->meth->point_finish != 0)
 		point->meth->point_finish(point);
 	OPENSSL_cleanse(point, sizeof *point);
-	OPENSSL_free(point);
+	free(point);
 	}
 
 

@@ -338,7 +338,7 @@ int MAIN(int argc, char **argv)
 			      buf_in, (size_t)buf_inlen);
 		if (rv > 0)
 			{
-			buf_out = OPENSSL_malloc(buf_outlen);
+			buf_out = malloc(buf_outlen);
 			if (!buf_out)
 				rv = -1;
 			else
@@ -371,11 +371,11 @@ int MAIN(int argc, char **argv)
 	BIO_free(in);
 	BIO_free_all(out);
 	if (buf_in)
-		OPENSSL_free(buf_in);
+		free(buf_in);
 	if (buf_out)
-		OPENSSL_free(buf_out);
+		free(buf_out);
 	if (sig)
-		OPENSSL_free(sig);
+		free(sig);
 	return ret;
 }
 
@@ -497,7 +497,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 	end:
 
 	if (passin)
-		OPENSSL_free(passin);
+		free(passin);
 
 	return ctx;
 

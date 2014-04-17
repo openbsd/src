@@ -382,7 +382,7 @@ bad:
 
 		i=1;
 		size=i2d_RSA_NET(rsa,NULL,NULL, sgckey);
-		if ((p=(unsigned char *)OPENSSL_malloc(size)) == NULL)
+		if ((p=(unsigned char *)malloc(size)) == NULL)
 			{
 			BIO_printf(bio_err,"Memory allocation failure\n");
 			goto end;
@@ -390,7 +390,7 @@ bad:
 		pp=p;
 		i2d_RSA_NET(rsa,&p,NULL, sgckey);
 		BIO_write(out,(char *)pp,size);
-		OPENSSL_free(pp);
+		free(pp);
 		}
 #endif
 	else if (outformat == FORMAT_PEM) {
@@ -430,8 +430,8 @@ bad:
 end:
 	if(out != NULL) BIO_free_all(out);
 	if(rsa != NULL) RSA_free(rsa);
-	if(passin) OPENSSL_free(passin);
-	if(passout) OPENSSL_free(passout);
+	if(passin) free(passin);
+	if(passout) free(passout);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}

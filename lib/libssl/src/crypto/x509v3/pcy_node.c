@@ -115,7 +115,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 			X509_POLICY_TREE *tree)
 	{
 	X509_POLICY_NODE *node;
-	node = OPENSSL_malloc(sizeof(X509_POLICY_NODE));
+	node = malloc(sizeof(X509_POLICY_NODE));
 	if (!node)
 		return NULL;
 	node->data = data;
@@ -164,7 +164,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 
 void policy_node_free(X509_POLICY_NODE *node)
 	{
-	OPENSSL_free(node);
+	free(node);
 	}
 
 /* See if a policy node matches a policy OID. If mapping enabled look through

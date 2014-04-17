@@ -132,7 +132,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
 	X509_NAME *ret = NULL;
-	ret = OPENSSL_malloc(sizeof(X509_NAME));
+	ret = malloc(sizeof(X509_NAME));
 	if(!ret) goto memerr;
 	if ((ret->entries=sk_X509_NAME_ENTRY_new_null()) == NULL)
 		goto memerr;
@@ -149,7 +149,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 		{
 		if (ret->entries)
 			sk_X509_NAME_ENTRY_free(ret->entries);
-		OPENSSL_free(ret);
+		free(ret);
 		}
 	return 0;
 }
@@ -164,8 +164,8 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	BUF_MEM_free(a->bytes);
 	sk_X509_NAME_ENTRY_pop_free(a->entries,X509_NAME_ENTRY_free);
 	if (a->canon_enc)
-		OPENSSL_free(a->canon_enc);
-	OPENSSL_free(a);
+		free(a->canon_enc);
+	free(a);
 	*pval = NULL;
 }
 
@@ -325,7 +325,7 @@ static int x509_name_canon(X509_NAME *a)
 
 	if (a->canon_enc)
 		{
-		OPENSSL_free(a->canon_enc);
+		free(a->canon_enc);
 		a->canon_enc = NULL;
 		}
 	/* Special case: empty X509_NAME => null encoding */
@@ -362,7 +362,7 @@ static int x509_name_canon(X509_NAME *a)
 
 	a->canon_enclen = i2d_name_canon(intname, NULL);
 
-	p = OPENSSL_malloc(a->canon_enclen);
+	p = malloc(a->canon_enclen);
 
 	if (!p)
 		goto err;

@@ -217,7 +217,7 @@ bad:
 			goto end;
 		}
 		BIO_printf(out, "SPKAC=%s\n", spkstr);
-		OPENSSL_free(spkstr);
+		free(spkstr);
 		ret = 0;
 		goto end;
 	}
@@ -290,7 +290,7 @@ end:
 	BIO_free(in);
 	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
-	if(passin) OPENSSL_free(passin);
+	if(passin) free(passin);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}

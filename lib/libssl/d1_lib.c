@@ -100,7 +100,7 @@ dtls1_new(SSL *s)
 
 	if (!ssl3_new(s))
 		return (0);
-	if ((d1 = OPENSSL_malloc(sizeof *d1)) == NULL) return (0);
+	if ((d1 = malloc(sizeof *d1)) == NULL) return (0);
 		memset(d1, 0, sizeof *d1);
 
 	/* d1->handshake_epoch=0; */
@@ -128,7 +128,7 @@ dtls1_new(SSL *s)
 			pqueue_free(d1->sent_messages);
 		if (d1->buffered_app_data.q)
 			pqueue_free(d1->buffered_app_data.q);
-		OPENSSL_free(d1);
+		free(d1);
 		return (0);
 	}
 
@@ -147,39 +147,39 @@ dtls1_clear_queues(SSL *s)
 	while ((item = pqueue_pop(s->d1->unprocessed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA *) item->data;
 		if (rdata->rbuf.buf) {
-			OPENSSL_free(rdata->rbuf.buf);
+			free(rdata->rbuf.buf);
 		}
-		OPENSSL_free(item->data);
+		free(item->data);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(s->d1->processed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA *) item->data;
 		if (rdata->rbuf.buf) {
-			OPENSSL_free(rdata->rbuf.buf);
+			free(rdata->rbuf.buf);
 		}
-		OPENSSL_free(item->data);
+		free(item->data);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(s->d1->buffered_messages)) != NULL) {
 		frag = (hm_fragment *)item->data;
-		OPENSSL_free(frag->fragment);
-		OPENSSL_free(frag);
+		free(frag->fragment);
+		free(frag);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
 		frag = (hm_fragment *)item->data;
-		OPENSSL_free(frag->fragment);
-		OPENSSL_free(frag);
+		free(frag->fragment);
+		free(frag);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL) {
 		frag = (hm_fragment *)item->data;
-		OPENSSL_free(frag->fragment);
-		OPENSSL_free(frag);
+		free(frag->fragment);
+		free(frag);
 		pitem_free(item);
 	}
 }
@@ -197,7 +197,7 @@ dtls1_free(SSL *s)
 	pqueue_free(s->d1->sent_messages);
 	pqueue_free(s->d1->buffered_app_data.q);
 
-	OPENSSL_free(s->d1);
+	free(s->d1);
 	s->d1 = NULL;
 }
 

@@ -75,7 +75,7 @@ typedef struct
 static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 	{
 	HMAC_PKEY_CTX *hctx;
-	hctx = OPENSSL_malloc(sizeof(HMAC_PKEY_CTX));
+	hctx = malloc(sizeof(HMAC_PKEY_CTX));
 	if (!hctx)
 		return 0;
 	hctx->md = NULL;
@@ -119,10 +119,10 @@ static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 		{
 		if (hctx->ktmp.length)
 			OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
-		OPENSSL_free(hctx->ktmp.data);
+		free(hctx->ktmp.data);
 		hctx->ktmp.data = NULL;
 		}
-	OPENSSL_free(hctx);
+	free(hctx);
 	}
 
 static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -229,7 +229,7 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
 		if (!key)
 			return 0;
 		r = pkey_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
-		OPENSSL_free(key);
+		free(key);
 		return r;
 		}
 	return -2;

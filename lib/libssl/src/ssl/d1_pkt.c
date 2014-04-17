@@ -200,7 +200,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 	rdata = (DTLS1_RECORD_DATA *)item->data;
 
 	if (s->s3->rbuf.buf != NULL)
-		OPENSSL_free(s->s3->rbuf.buf);
+		free(s->s3->rbuf.buf);
 
 	s->packet = rdata->packet;
 	s->packet_length = rdata->packet_length;
@@ -224,11 +224,11 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	if (pqueue_size(queue->q) >= 100)
 		return 0;
 
-	rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
+	rdata = malloc(sizeof(DTLS1_RECORD_DATA));
 	item = pitem_new(priority, rdata);
 	if (rdata == NULL || item == NULL) {
 		if (rdata != NULL)
-			OPENSSL_free(rdata);
+			free(rdata);
 		if (item != NULL)
 			pitem_free(item);
 
@@ -253,7 +253,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	/* insert should not fail, since duplicates are dropped */
 	if (pqueue_insert(queue->q, item) == NULL) {
-		OPENSSL_free(rdata);
+		free(rdata);
 		pitem_free(item);
 		return (0);
 	}
@@ -265,7 +265,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	if (!ssl3_setup_buffers(s)) {
 		SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
-		OPENSSL_free(rdata);
+		free(rdata);
 		pitem_free(item);
 		return (0);
 	}
@@ -283,7 +283,7 @@ dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
 	if (item) {
 		dtls1_copy_record(s, item);
 
-		OPENSSL_free(item->data);
+		free(item->data);
 		pitem_free(item);
 
 		return (1);
@@ -360,14 +360,14 @@ dtls1_get_buffered_record(SSL *s)
 		rdata = (DTLS1_RECORD_DATA *)item->data;
 
 		if (s->s3->rbuf.buf != NULL)
-			OPENSSL_free(s->s3->rbuf.buf);
+			free(s->s3->rbuf.buf);
 
 		s->packet = rdata->packet;
 		s->packet_length = rdata->packet_length;
 		memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
 		memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
 
-		OPENSSL_free(item->data);
+		free(item->data);
 		pitem_free(item);
 
 		/* s->d1->next_expected_seq_num++; */
@@ -810,7 +810,7 @@ start:
 
 			dtls1_copy_record(s, item);
 
-			OPENSSL_free(item->data);
+			free(item->data);
 			pitem_free(item);
 		}
 	}

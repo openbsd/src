@@ -135,7 +135,7 @@ static int process_pci_value(CONF_VALUE *val,
 				goto err;
 				}
 
-			tmp_data = OPENSSL_realloc((*policy)->data,
+			tmp_data = realloc((*policy)->data,
 				(*policy)->length + val_len + 1);
 			if (tmp_data)
 				{
@@ -147,7 +147,7 @@ static int process_pci_value(CONF_VALUE *val,
 				}
 			else
 				{
-				OPENSSL_free(tmp_data2);
+				free(tmp_data2);
 				/* realloc failure implies the original data space is b0rked too! */
 				(*policy)->data = NULL;
 				(*policy)->length = 0;
@@ -155,7 +155,7 @@ static int process_pci_value(CONF_VALUE *val,
 				X509V3_conf_err(val);
 				goto err;
 				}
-			OPENSSL_free(tmp_data2);
+			free(tmp_data2);
 			}
 		else if (strncmp(val->value, "file:", 5) == 0)
 			{
@@ -173,7 +173,7 @@ static int process_pci_value(CONF_VALUE *val,
 				{
 				if (!n) continue;
 
-				tmp_data = OPENSSL_realloc((*policy)->data,
+				tmp_data = realloc((*policy)->data,
 					(*policy)->length + n + 1);
 
 				if (!tmp_data)
@@ -197,7 +197,7 @@ static int process_pci_value(CONF_VALUE *val,
 		else if (strncmp(val->value, "text:", 5) == 0)
 			{
 			val_len = strlen(val->value + 5);
-			tmp_data = OPENSSL_realloc((*policy)->data,
+			tmp_data = realloc((*policy)->data,
 				(*policy)->length + val_len + 1);
 			if (tmp_data)
 				{

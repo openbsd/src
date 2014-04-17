@@ -80,7 +80,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 		OBJerr(OBJ_F_OBJ_DUP,ERR_R_ASN1_LIB);
 		return(NULL);
 		}
-	data=OPENSSL_malloc(o->length);
+	data=malloc(o->length);
 	if (data == NULL)
 		goto err;
 	if (o->data != NULL)
@@ -93,7 +93,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	if (o->ln != NULL)
 		{
 		i=strlen(o->ln)+1;
-		ln=OPENSSL_malloc(i);
+		ln=malloc(i);
 		if (ln == NULL) goto err;
 		memcpy(ln,o->ln,i);
 		r->ln=ln;
@@ -102,7 +102,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	if (o->sn != NULL)
 		{
 		i=strlen(o->sn)+1;
-		sn=OPENSSL_malloc(i);
+		sn=malloc(i);
 		if (sn == NULL) goto err;
 		memcpy(sn,o->sn,i);
 		r->sn=sn;
@@ -112,10 +112,10 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	return(r);
 err:
 	OBJerr(OBJ_F_OBJ_DUP,ERR_R_MALLOC_FAILURE);
-	if (ln != NULL)		OPENSSL_free(ln);
-	if (sn != NULL)		OPENSSL_free(sn);
-	if (data != NULL)	OPENSSL_free(data);
-	if (r != NULL)		OPENSSL_free(r);
+	if (ln != NULL)		free(ln);
+	if (sn != NULL)		free(sn);
+	if (data != NULL)	free(data);
+	if (r != NULL)		free(r);
 	return(NULL);
 	}
 

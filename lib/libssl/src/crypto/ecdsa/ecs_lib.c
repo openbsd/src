@@ -108,7 +108,7 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 {
 	ECDSA_DATA *ret;
 
-	ret=(ECDSA_DATA *)OPENSSL_malloc(sizeof(ECDSA_DATA));
+	ret=(ECDSA_DATA *)malloc(sizeof(ECDSA_DATA));
 	if (ret == NULL)
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -129,7 +129,7 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 		{
 			ECDSAerr(ECDSA_F_ECDSA_DATA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
-			OPENSSL_free(ret);
+			free(ret);
 			return NULL;
 		}
 	}
@@ -141,7 +141,7 @@ static ECDSA_DATA *ECDSA_DATA_new_method(ENGINE *engine)
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 	{
 		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
-		OPENSSL_free(ret);
+		free(ret);
 		ret=NULL;
 	}
 #endif	
@@ -176,7 +176,7 @@ static void ecdsa_data_free(void *data)
 
 	OPENSSL_cleanse((void *)r, sizeof(ECDSA_DATA));
 
-	OPENSSL_free(r);
+	free(r);
 }
 
 ECDSA_DATA *ecdsa_check(EC_KEY *key)

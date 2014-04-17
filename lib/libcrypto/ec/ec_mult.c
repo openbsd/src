@@ -102,7 +102,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 	if (!group)
 		return NULL;
 
-	ret = (EC_PRE_COMP *)OPENSSL_malloc(sizeof(EC_PRE_COMP));
+	ret = (EC_PRE_COMP *)malloc(sizeof(EC_PRE_COMP));
 	if (!ret)
 		{
 		ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -147,9 +147,9 @@ static void ec_pre_comp_free(void *pre_)
 
 		for (p = pre->points; *p != NULL; p++)
 			EC_POINT_free(*p);
-		OPENSSL_free(pre->points);
+		free(pre->points);
 		}
-	OPENSSL_free(pre);
+	free(pre);
 	}
 
 static void ec_pre_comp_clear_free(void *pre_)
@@ -173,10 +173,10 @@ static void ec_pre_comp_clear_free(void *pre_)
 			EC_POINT_clear_free(*p);
 			OPENSSL_cleanse(p, sizeof *p);
 			}
-		OPENSSL_free(pre->points);
+		free(pre->points);
 		}
 	OPENSSL_cleanse(pre, sizeof *pre);
-	OPENSSL_free(pre);
+	free(pre);
 	}
 
 
@@ -201,7 +201,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 	
 	if (BN_is_zero(scalar))
 		{
-		r = OPENSSL_malloc(1);
+		r = malloc(1);
 		if (!r)
 			{
 			ECerr(EC_F_COMPUTE_WNAF, ERR_R_MALLOC_FAILURE);
@@ -233,7 +233,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 		}
 
 	len = BN_num_bits(scalar);
-	r = OPENSSL_malloc(len + 1); /* modified wNAF may be one digit longer than binary representation
+	r = malloc(len + 1); /* modified wNAF may be one digit longer than binary representation
 	                              * (*ret_len will be set to the actual length, i.e. at most
 	                              * BN_num_bits(scalar) + 1) */
 	if (r == NULL)
@@ -315,7 +315,7 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
  err:
 	if (!ok)
 		{
-		OPENSSL_free(r);
+		free(r);
 		r = NULL;
 		}
 	if (ok)
@@ -441,10 +441,10 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	
 	totalnum = num + numblocks;
 
-	wsize    = OPENSSL_malloc(totalnum * sizeof wsize[0]);
-	wNAF_len = OPENSSL_malloc(totalnum * sizeof wNAF_len[0]);
-	wNAF     = OPENSSL_malloc((totalnum + 1) * sizeof wNAF[0]); /* includes space for pivot */
-	val_sub  = OPENSSL_malloc(totalnum * sizeof val_sub[0]);
+	wsize    = malloc(totalnum * sizeof wsize[0]);
+	wNAF_len = malloc(totalnum * sizeof wNAF_len[0]);
+	wNAF     = malloc((totalnum + 1) * sizeof wNAF[0]); /* includes space for pivot */
+	val_sub  = malloc(totalnum * sizeof val_sub[0]);
 		 
 	if (!wsize || !wNAF_len || !wNAF || !val_sub)
 		{
@@ -560,11 +560,11 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 						wNAF_len[i] = tmp_len;
 					
 					wNAF[i + 1] = NULL;
-					wNAF[i] = OPENSSL_malloc(wNAF_len[i]);
+					wNAF[i] = malloc(wNAF_len[i]);
 					if (wNAF[i] == NULL)
 						{
 						ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
-						OPENSSL_free(tmp_wNAF);
+						free(tmp_wNAF);
 						goto err;
 						}
 					memcpy(wNAF[i], pp, wNAF_len[i]);
@@ -574,14 +574,14 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 					if (*tmp_points == NULL)
 						{
 						ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
-						OPENSSL_free(tmp_wNAF);
+						free(tmp_wNAF);
 						goto err;
 						}
 					val_sub[i] = tmp_points;
 					tmp_points += pre_points_per_block;
 					pp += blocksize;
 					}
-				OPENSSL_free(tmp_wNAF);
+				free(tmp_wNAF);
 				}
 			}
 		}
@@ -589,7 +589,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	/* All points we precompute now go into a single array 'val'.
 	 * 'val_sub[i]' is a pointer to the subarray for the i-th point,
 	 * or to a subarray of 'pre_comp->points' if we already have precomputation. */
-	val = OPENSSL_malloc((num_val + 1) * sizeof val[0]);
+	val = malloc((num_val + 1) * sizeof val[0]);
 	if (val == NULL)
 		{
 		ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
@@ -716,28 +716,28 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	if (tmp != NULL)
 		EC_POINT_free(tmp);
 	if (wsize != NULL)
-		OPENSSL_free(wsize);
+		free(wsize);
 	if (wNAF_len != NULL)
-		OPENSSL_free(wNAF_len);
+		free(wNAF_len);
 	if (wNAF != NULL)
 		{
 		signed char **w;
 		
 		for (w = wNAF; *w != NULL; w++)
-			OPENSSL_free(*w);
+			free(*w);
 		
-		OPENSSL_free(wNAF);
+		free(wNAF);
 		}
 	if (val != NULL)
 		{
 		for (v = val; *v != NULL; v++)
 			EC_POINT_clear_free(*v);
 
-		OPENSSL_free(val);
+		free(val);
 		}
 	if (val_sub != NULL)
 		{
-		OPENSSL_free(val_sub);
+		free(val_sub);
 		}
 	return ret;
 	}
@@ -825,7 +825,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	pre_points_per_block = (size_t)1 << (w - 1);
 	num = pre_points_per_block * numblocks; /* number of points to compute and store */
 
-	points = OPENSSL_malloc(sizeof (EC_POINT*)*(num + 1));
+	points = malloc(sizeof (EC_POINT*)*(num + 1));
 	if (!points)
 		{
 		ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
@@ -921,7 +921,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
 		for (p = points; *p != NULL; p++)
 			EC_POINT_free(*p);
-		OPENSSL_free(points);
+		free(points);
 		}
 	if (tmp_point)
 		EC_POINT_free(tmp_point);

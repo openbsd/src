@@ -76,7 +76,7 @@ int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 DSA_SIG *DSA_SIG_new(void)
 	{
 	DSA_SIG *sig;
-	sig = OPENSSL_malloc(sizeof(DSA_SIG));
+	sig = malloc(sizeof(DSA_SIG));
 	if (!sig)
 		return NULL;
 	sig->r = NULL;
@@ -92,7 +92,7 @@ void DSA_SIG_free(DSA_SIG *sig)
 			BN_free(sig->r);
 		if (sig->s)
 			BN_free(sig->s);
-		OPENSSL_free(sig);
+		free(sig);
 		}
 	}
 

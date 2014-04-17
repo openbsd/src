@@ -1533,7 +1533,7 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
 static NISTP521_PRE_COMP *nistp521_pre_comp_new()
 	{
 	NISTP521_PRE_COMP *ret = NULL;
-	ret = (NISTP521_PRE_COMP *)OPENSSL_malloc(sizeof(NISTP521_PRE_COMP));
+	ret = (NISTP521_PRE_COMP *)malloc(sizeof(NISTP521_PRE_COMP));
 	if (!ret)
 		{
 		ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -1566,7 +1566,7 @@ static void nistp521_pre_comp_free(void *pre_)
 	if (i > 0)
 		return;
 
-	OPENSSL_free(pre);
+	free(pre);
 	}
 
 static void nistp521_pre_comp_clear_free(void *pre_)
@@ -1582,7 +1582,7 @@ static void nistp521_pre_comp_clear_free(void *pre_)
 		return;
 
 	OPENSSL_cleanse(pre, sizeof(*pre));
-	OPENSSL_free(pre);
+	free(pre);
 	}
 
 /******************************************************************************/
@@ -1766,10 +1766,10 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
 			 * converting those into affine form is time well spent  */
 			mixed = 1;
 			}
-		secrets = OPENSSL_malloc(num_points * sizeof(felem_bytearray));
-		pre_comp = OPENSSL_malloc(num_points * 17 * 3 * sizeof(felem));
+		secrets = malloc(num_points * sizeof(felem_bytearray));
+		pre_comp = malloc(num_points * 17 * 3 * sizeof(felem));
 		if (mixed)
-			tmp_felems = OPENSSL_malloc((num_points * 17 + 1) * sizeof(felem));
+			tmp_felems = malloc((num_points * 17 + 1) * sizeof(felem));
 		if ((secrets == NULL) || (pre_comp == NULL) || (mixed && (tmp_felems == NULL)))
 			{
 			ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -1891,11 +1891,11 @@ err:
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
 	if (secrets != NULL)
-		OPENSSL_free(secrets);
+		free(secrets);
 	if (pre_comp != NULL)
-		OPENSSL_free(pre_comp);
+		free(pre_comp);
 	if (tmp_felems != NULL)
-		OPENSSL_free(tmp_felems);
+		free(tmp_felems);
 	return ret;
 	}
 

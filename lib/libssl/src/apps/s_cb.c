@@ -784,7 +784,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cook
 		OPENSSL_assert(0);
 		break;
 		}
-	buffer = OPENSSL_malloc(length);
+	buffer = malloc(length);
 
 	if (buffer == NULL)
 		{
@@ -820,7 +820,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cook
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
 	     buffer, length, result, &resultlength);
-	OPENSSL_free(buffer);
+	free(buffer);
 
 	memcpy(cookie, result, resultlength);
 	*cookie_len = resultlength;
@@ -865,7 +865,7 @@ int verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_
 		OPENSSL_assert(0);
 		break;
 		}
-	buffer = OPENSSL_malloc(length);
+	buffer = malloc(length);
 	
 	if (buffer == NULL)
 		{
@@ -901,7 +901,7 @@ int verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
 	     buffer, length, result, &resultlength);
-	OPENSSL_free(buffer);
+	free(buffer);
 
 	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
 		return 1;

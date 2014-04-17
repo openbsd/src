@@ -66,7 +66,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
 	X509_LOOKUP *ret;
 
-	ret=(X509_LOOKUP *)OPENSSL_malloc(sizeof(X509_LOOKUP));
+	ret=(X509_LOOKUP *)malloc(sizeof(X509_LOOKUP));
 	if (ret == NULL) return NULL;
 
 	ret->init=0;
@@ -76,7 +76,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	ret->store_ctx=NULL;
 	if ((method->new_item != NULL) && !method->new_item(ret))
 		{
-		OPENSSL_free(ret);
+		free(ret);
 		return NULL;
 		}
 	return ret;
@@ -88,7 +88,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
 	if (	(ctx->method != NULL) &&
 		(ctx->method->free != NULL))
 		(*ctx->method->free)(ctx);
-	OPENSSL_free(ctx);
+	free(ctx);
 	}
 
 int X509_LOOKUP_init(X509_LOOKUP *ctx)
@@ -179,7 +179,7 @@ X509_STORE *X509_STORE_new(void)
 	{
 	X509_STORE *ret;
 
-	if ((ret=(X509_STORE *)OPENSSL_malloc(sizeof(X509_STORE))) == NULL)
+	if ((ret=(X509_STORE *)malloc(sizeof(X509_STORE))) == NULL)
 		return NULL;
 	ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
 	ret->cache=1;
@@ -203,7 +203,7 @@ X509_STORE *X509_STORE_new(void)
 	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
 		{
 		sk_X509_OBJECT_free(ret->objs);
-		OPENSSL_free(ret);
+		free(ret);
 		return NULL;
 		}
 
@@ -226,7 +226,7 @@ static void cleanup(X509_OBJECT *a)
 		/* abort(); */
 		}
 
-	OPENSSL_free(a);
+	free(a);
 	}
 
 void X509_STORE_free(X509_STORE *vfy)
@@ -251,7 +251,7 @@ void X509_STORE_free(X509_STORE *vfy)
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
 	if (vfy->param)
 		X509_VERIFY_PARAM_free(vfy->param);
-	OPENSSL_free(vfy);
+	free(vfy);
 	}
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
@@ -337,7 +337,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	int ret=1;
 
 	if (x == NULL) return 0;
-	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
+	obj=(X509_OBJECT *)malloc(sizeof(X509_OBJECT));
 	if (obj == NULL)
 		{
 		X509err(X509_F_X509_STORE_ADD_CERT,ERR_R_MALLOC_FAILURE);
@@ -353,7 +353,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj))
 		{
 		X509_OBJECT_free_contents(obj);
-		OPENSSL_free(obj);
+		free(obj);
 		X509err(X509_F_X509_STORE_ADD_CERT,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;
 		} 
@@ -370,7 +370,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	int ret=1;
 
 	if (x == NULL) return 0;
-	obj=(X509_OBJECT *)OPENSSL_malloc(sizeof(X509_OBJECT));
+	obj=(X509_OBJECT *)malloc(sizeof(X509_OBJECT));
 	if (obj == NULL)
 		{
 		X509err(X509_F_X509_STORE_ADD_CRL,ERR_R_MALLOC_FAILURE);
@@ -386,7 +386,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	if (X509_OBJECT_retrieve_match(ctx->objs, obj))
 		{
 		X509_OBJECT_free_contents(obj);
-		OPENSSL_free(obj);
+		free(obj);
 		X509err(X509_F_X509_STORE_ADD_CRL,X509_R_CERT_ALREADY_IN_HASH_TABLE);
 		ret=0;
 		}

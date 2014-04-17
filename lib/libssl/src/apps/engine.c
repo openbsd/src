@@ -104,7 +104,7 @@ static int append_buf(char **buf, const char *s, int *size, int step)
 	if (*buf == NULL)
 		{
 		*size = step;
-		*buf = OPENSSL_malloc(*size);
+		*buf = malloc(*size);
 		if (*buf == NULL)
 			return 0;
 		**buf = '\0';
@@ -116,7 +116,7 @@ static int append_buf(char **buf, const char *s, int *size, int step)
 	if (strlen(*buf) + strlen(s) >= (unsigned int)*size)
 		{
 		*size += step;
-		*buf = OPENSSL_realloc(*buf, *size);
+		*buf = realloc(*buf, *size);
 		}
 
 	if (*buf == NULL)
@@ -227,7 +227,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
                         if((len = ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_LEN_FROM_CMD, num,
                                 NULL, NULL)) <= 0)
                                 goto err;
-                        if((name = OPENSSL_malloc(len + 1)) == NULL)
+                        if((name = malloc(len + 1)) == NULL)
                                 goto err;
                         if(ENGINE_ctrl(e, ENGINE_CTRL_GET_NAME_FROM_CMD, num, name,
                                 NULL) <= 0)
@@ -238,7 +238,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
                                 goto err;
                         if(len > 0)
                                 {
-                                if((desc = OPENSSL_malloc(len + 1)) == NULL)
+                                if((desc = malloc(len + 1)) == NULL)
                                         goto err;
                                 if(ENGINE_ctrl(e, ENGINE_CTRL_GET_DESC_FROM_CMD, num, desc,
                                         NULL) <= 0)
@@ -274,8 +274,8 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
                                 xpos = 0;
                                 }
                         }
-		OPENSSL_free(name); name = NULL;
-		if(desc) { OPENSSL_free(desc); desc = NULL; }
+		free(name); name = NULL;
+		if(desc) { free(desc); desc = NULL; }
 		/* Move to the next command */
 		num = ENGINE_ctrl(e, ENGINE_CTRL_GET_NEXT_CMD_TYPE,
 					num, NULL, NULL);
@@ -285,8 +285,8 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 	ret = 1;
 err:
 	if(cmds) sk_OPENSSL_STRING_pop_free(cmds, identity);
-	if(name) OPENSSL_free(name);
-	if(desc) OPENSSL_free(desc);
+	if(name) free(name);
+	if(desc) free(desc);
 	return ret;
 	}
 
@@ -496,7 +496,7 @@ skip_pmeths:
 				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]\n", cap_buf);
 
-				OPENSSL_free(cap_buf);
+				free(cap_buf);
 				}
 			if(test_avail)
 				{

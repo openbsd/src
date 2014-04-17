@@ -69,7 +69,7 @@ BUF_MEM *BUF_MEM_new(void)
 	{
 	BUF_MEM *ret;
 
-	ret=OPENSSL_malloc(sizeof(BUF_MEM));
+	ret=malloc(sizeof(BUF_MEM));
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_NEW,ERR_R_MALLOC_FAILURE);
@@ -89,9 +89,9 @@ void BUF_MEM_free(BUF_MEM *a)
 	if (a->data != NULL)
 		{
 		memset(a->data,0,(unsigned int)a->max);
-		OPENSSL_free(a->data);
+		free(a->data);
 		}
-	OPENSSL_free(a);
+	free(a);
 	}
 
 int BUF_MEM_grow(BUF_MEM *str, size_t len)
@@ -118,9 +118,9 @@ int BUF_MEM_grow(BUF_MEM *str, size_t len)
 		}
 	n=(len+3)/3*4;
 	if (str->data == NULL)
-		ret=OPENSSL_malloc(n);
+		ret=malloc(n);
 	else
-		ret=OPENSSL_realloc(str->data,n);
+		ret=realloc(str->data,n);
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);
@@ -161,7 +161,7 @@ int BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 		}
 	n=(len+3)/3*4;
 	if (str->data == NULL)
-		ret=OPENSSL_malloc(n);
+		ret=malloc(n);
 	else
 		ret=OPENSSL_realloc_clean(str->data,str->max,n);
 	if (ret == NULL)

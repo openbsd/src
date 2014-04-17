@@ -456,12 +456,12 @@ load_builtin_compressions(void)
 			MemCheck_off();
 			ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 			if (ssl_comp_methods != NULL) {
-				comp = (SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+				comp = (SSL_COMP *)malloc(sizeof(SSL_COMP));
 				if (comp != NULL) {
 					comp->method = COMP_zlib();
 					if (comp->method &&
 					    comp->method->type == NID_undef)
-						OPENSSL_free(comp);
+						free(comp);
 					else {
 						comp->id = SSL_COMP_ZLIB_IDX;
 						comp->name = comp->method->name;
@@ -1037,7 +1037,7 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 		curr = curr->next;
 	}
 
-	number_uses = OPENSSL_malloc((max_strength_bits + 1) * sizeof(int));
+	number_uses = malloc((max_strength_bits + 1) * sizeof(int));
 	if (!number_uses) {
 		SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT, ERR_R_MALLOC_FAILURE);
 		return (0);
@@ -1061,7 +1061,7 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 		if (number_uses[i] > 0)
 			ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ORD, i, head_p, tail_p);
 
-	OPENSSL_free(number_uses);
+	free(number_uses);
 	return (1);
 }
 
@@ -1336,7 +1336,7 @@ STACK_OF(SSL_CIPHER)
 #ifdef KSSL_DEBUG
 	printf("ssl_create_cipher_list() for %d ciphers\n", num_of_ciphers);
 #endif    /* KSSL_DEBUG */
-	co_list = (CIPHER_ORDER *)OPENSSL_malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
+	co_list = (CIPHER_ORDER *)malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
 	if (co_list == NULL) {
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
@@ -1380,7 +1380,7 @@ STACK_OF(SSL_CIPHER)
 	/* Now sort by symmetric encryption strength.  The above ordering remains
 	 * in force within each class */
 	if (!ssl_cipher_strength_sort(&head, &tail)) {
-		OPENSSL_free(co_list);
+		free(co_list);
 		return NULL;
 	}
 
@@ -1398,9 +1398,9 @@ STACK_OF(SSL_CIPHER)
 	 */
 	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
 	num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
-	ca_list = OPENSSL_malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
+	ca_list = malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
 	if (ca_list == NULL) {
-		OPENSSL_free(co_list);
+		free(co_list);
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 	}
@@ -1425,11 +1425,11 @@ STACK_OF(SSL_CIPHER)
 	if (ok && (strlen(rule_p) > 0))
 		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list);
 
-	OPENSSL_free((void *)ca_list);	/* Not needed anymore */
+	free((void *)ca_list);	/* Not needed anymore */
 
 	if (!ok)
 			{	/* Rule processing failure */
-		OPENSSL_free(co_list);
+		free(co_list);
 		return (NULL);
 	}
 
@@ -1438,7 +1438,7 @@ STACK_OF(SSL_CIPHER)
 	 * if we cannot get one.
 	 */
 	if ((cipherstack = sk_SSL_CIPHER_new_null()) == NULL) {
-		OPENSSL_free(co_list);
+		free(co_list);
 		return (NULL);
 	}
 
@@ -1454,7 +1454,7 @@ STACK_OF(SSL_CIPHER)
 #endif
 		}
 	}
-	OPENSSL_free(co_list);	/* Not needed any longer */
+	free(co_list);	/* Not needed any longer */
 
 	tmp_cipher_list = sk_SSL_CIPHER_dup(cipherstack);
 	if (tmp_cipher_list == NULL) {
@@ -1642,9 +1642,9 @@ char
 
 	if (buf == NULL) {
 		len = 128;
-		buf = OPENSSL_malloc(len);
+		buf = malloc(len);
 		if (buf == NULL)
-			return("OPENSSL_malloc Error");
+			return("malloc Error");
 	} else if (len < 128)
 	return("Buffer too small");
 
@@ -1767,19 +1767,19 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	}
 
 	MemCheck_off();
-	comp = (SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
+	comp = (SSL_COMP *)malloc(sizeof(SSL_COMP));
 	comp->id = id;
 	comp->method = cm;
 	load_builtin_compressions();
 	if (ssl_comp_methods &&
 	    sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
-		OPENSSL_free(comp);
+		free(comp);
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, SSL_R_DUPLICATE_COMPRESSION_ID);
 		return (1);
 	} else if ((ssl_comp_methods == NULL) ||
 	    !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
-		OPENSSL_free(comp);
+		free(comp);
 		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
 		return (1);

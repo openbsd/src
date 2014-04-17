@@ -68,7 +68,7 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni,
 	unsigned char *unitmp;
 	if (asclen == -1) asclen = strlen(asc);
 	ulen = asclen*2  + 2;
-	if (!(unitmp = OPENSSL_malloc(ulen))) return NULL;
+	if (!(unitmp = malloc(ulen))) return NULL;
 	for (i = 0; i < ulen - 2; i+=2) {
 		unitmp[i] = 0;
 		unitmp[i + 1] = asc[i>>1];
@@ -89,7 +89,7 @@ char *OPENSSL_uni2asc(unsigned char *uni, int unilen)
 	/* If no terminating zero allow for one */
 	if (!unilen || uni[unilen - 1]) asclen++;
 	uni++;
-	if (!(asctmp = OPENSSL_malloc(asclen))) return NULL;
+	if (!(asctmp = malloc(asclen))) return NULL;
 	for (i = 0; i < unilen; i+=2) asctmp[i>>1] = uni[i];
 	asctmp[asclen - 1] = 0;
 	return asctmp;

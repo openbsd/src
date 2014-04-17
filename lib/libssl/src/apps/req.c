@@ -1068,7 +1068,7 @@ loop:
 end:
 #ifndef MONOLITH
 	if(to_free)
-		OPENSSL_free(to_free);
+		free(to_free);
 #endif
 	if (ex)
 		{
@@ -1089,12 +1089,12 @@ end:
 		ENGINE_free(gen_eng);
 #endif
 	if (keyalgstr)
-		OPENSSL_free(keyalgstr);
+		free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
 	ASN1_INTEGER_free(serial);
-	if(passargin && passin) OPENSSL_free(passin);
-	if(passargout && passout) OPENSSL_free(passout);
+	if(passargin && passin) free(passin);
+	if(passargout && passout) free(passout);
 	OBJ_cleanup();
 	apps_shutdown();
 	OPENSSL_EXIT(ex);

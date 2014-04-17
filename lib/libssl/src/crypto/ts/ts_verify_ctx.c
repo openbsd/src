@@ -63,7 +63,7 @@
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 	{
 	TS_VERIFY_CTX *ctx = 
-		(TS_VERIFY_CTX *) OPENSSL_malloc(sizeof(TS_VERIFY_CTX));
+		(TS_VERIFY_CTX *) malloc(sizeof(TS_VERIFY_CTX));
 	if (ctx)
 		memset(ctx, 0, sizeof(TS_VERIFY_CTX));
 	else
@@ -82,7 +82,7 @@ void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx)
 	if (!ctx) return;
 
 	TS_VERIFY_CTX_cleanup(ctx);
-	OPENSSL_free(ctx);
+	free(ctx);
 	}
 
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
@@ -95,7 +95,7 @@ void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
 	ASN1_OBJECT_free(ctx->policy);
 
 	X509_ALGOR_free(ctx->md_alg);
-	OPENSSL_free(ctx->imprint);
+	free(ctx->imprint);
 	
 	BIO_free_all(ctx->data);
 
@@ -138,7 +138,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
 	if (!(ret->md_alg = X509_ALGOR_dup(md_alg))) goto err;
 	msg = TS_MSG_IMPRINT_get_msg(imprint);
 	ret->imprint_len = ASN1_STRING_length(msg);
-	if (!(ret->imprint = OPENSSL_malloc(ret->imprint_len))) goto err;
+	if (!(ret->imprint = malloc(ret->imprint_len))) goto err;
 	memcpy(ret->imprint, ASN1_STRING_data(msg), ret->imprint_len);
 
 	/* Setting nonce. */

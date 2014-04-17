@@ -213,7 +213,7 @@ void BN_CTX_init(BN_CTX *ctx)
 
 BN_CTX *BN_CTX_new(void)
 	{
-	BN_CTX *ret = OPENSSL_malloc(sizeof(BN_CTX));
+	BN_CTX *ret = malloc(sizeof(BN_CTX));
 	if(!ret)
 		{
 		BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -249,7 +249,7 @@ void BN_CTX_free(BN_CTX *ctx)
 #endif
 	BN_STACK_finish(&ctx->stack);
 	BN_POOL_finish(&ctx->pool);
-	OPENSSL_free(ctx);
+	free(ctx);
 	}
 
 void BN_CTX_start(BN_CTX *ctx)
@@ -317,7 +317,7 @@ static void BN_STACK_init(BN_STACK *st)
 
 static void BN_STACK_finish(BN_STACK *st)
 	{
-	if(st->size) OPENSSL_free(st->indexes);
+	if(st->size) free(st->indexes);
 	}
 
 #ifndef OPENSSL_NO_DEPRECATED
@@ -334,13 +334,13 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
 		{
 		unsigned int newsize = (st->size ?
 				(st->size * 3 / 2) : BN_CTX_START_FRAMES);
-		unsigned int *newitems = OPENSSL_malloc(newsize *
+		unsigned int *newitems = malloc(newsize *
 						sizeof(unsigned int));
 		if(!newitems) return 0;
 		if(st->depth)
 			memcpy(newitems, st->indexes, st->depth *
 						sizeof(unsigned int));
-		if(st->size) OPENSSL_free(st->indexes);
+		if(st->size) free(st->indexes);
 		st->indexes = newitems;
 		st->size = newsize;
 		}
@@ -375,7 +375,7 @@ static void BN_POOL_finish(BN_POOL *p)
 			bn++;
 			}
 		p->current = p->head->next;
-		OPENSSL_free(p->head);
+		free(p->head);
 		p->head = p->current;
 		}
 	}
@@ -406,7 +406,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p)
 		{
 		BIGNUM *bn;
 		unsigned int loop = 0;
-		BN_POOL_ITEM *item = OPENSSL_malloc(sizeof(BN_POOL_ITEM));
+		BN_POOL_ITEM *item = malloc(sizeof(BN_POOL_ITEM));
 		if(!item) return NULL;
 		/* Initialise the structure */
 		bn = item->vals;

@@ -153,7 +153,7 @@ static int dlfcn_load(DSO *dso)
 err:
 	/* Cleanup! */
 	if(filename != NULL)
-		OPENSSL_free(filename);
+		free(filename);
 	if(ptr != NULL)
 		dlclose(ptr);
 	return(0);
@@ -264,7 +264,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/'))
 		{
 		len = strlen(filespec1) + 1;
-		merged = OPENSSL_malloc(len);
+		merged = malloc(len);
 		if(!merged)
 			{
 			DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
@@ -276,7 +276,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	else if (!filespec1)
 		{
 		len = strlen(filespec2) + 1;
-		merged = OPENSSL_malloc(strlen(filespec2) + 1);
+		merged = malloc(strlen(filespec2) + 1);
 		if(!merged)
 			{
 			DSOerr(DSO_F_DLFCN_MERGER,
@@ -302,7 +302,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 			spec2len--;
 			len--;
 			}
-		merged = OPENSSL_malloc(len + 2);
+		merged = malloc(len + 2);
 		if(!merged)
 			{
 			DSOerr(DSO_F_DLFCN_MERGER,
@@ -334,7 +334,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
 			rsize += 3; /* The length of "lib" */
 		}
-	translated = OPENSSL_malloc(rsize);
+	translated = malloc(rsize);
 	if(translated == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_NAME_CONVERTER,

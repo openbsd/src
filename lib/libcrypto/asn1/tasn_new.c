@@ -160,7 +160,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 			}
 		if (!combine)
 			{
-			*pval = OPENSSL_malloc(it->size);
+			*pval = malloc(it->size);
 			if (!*pval)
 				goto memerr;
 			memset(*pval, 0, it->size);
@@ -188,7 +188,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 			}
 		if (!combine)
 			{
-			*pval = OPENSSL_malloc(it->size);
+			*pval = malloc(it->size);
 			if (!*pval)
 				goto memerr;
 			memset(*pval, 0, it->size);
@@ -354,7 +354,7 @@ int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		return 1;
 
 		case V_ASN1_ANY:
-		typ = OPENSSL_malloc(sizeof(ASN1_TYPE));
+		typ = malloc(sizeof(ASN1_TYPE));
 		if (!typ)
 			return 0;
 		typ->value.ptr = NULL;

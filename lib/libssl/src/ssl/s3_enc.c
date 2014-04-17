@@ -243,7 +243,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 	if (which & SSL3_CC_READ) {
 		if (s->enc_read_ctx != NULL)
 			reuse_dd = 1;
-		else if ((s->enc_read_ctx = OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+		else if ((s->enc_read_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
 			/* make sure it's intialized in case we exit later with an error */
@@ -265,7 +265,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 			}
 			if (s->s3->rrec.comp == NULL)
 				s->s3->rrec.comp = (unsigned char *)
-			OPENSSL_malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+			malloc(SSL3_RT_MAX_PLAIN_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 		}
@@ -275,7 +275,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 	} else {
 		if (s->enc_write_ctx != NULL)
 			reuse_dd = 1;
-		else if ((s->enc_write_ctx = OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+		else if ((s->enc_write_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
 		else
 			/* make sure it's intialized in case we exit later with an error */
@@ -410,7 +410,7 @@ ssl3_setup_key_block(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p = OPENSSL_malloc(num)) == NULL)
+	if ((p = malloc(num)) == NULL)
 		goto err;
 
 	s->s3->tmp.key_block_length = num;
@@ -448,7 +448,7 @@ ssl3_cleanup_key_block(SSL *s)
 	if (s->s3->tmp.key_block != NULL) {
 		OPENSSL_cleanse(s->s3->tmp.key_block,
 		s->s3->tmp.key_block_length);
-		OPENSSL_free(s->s3->tmp.key_block);
+		free(s->s3->tmp.key_block);
 		s->s3->tmp.key_block = NULL;
 	}
 	s->s3->tmp.key_block_length = 0;
@@ -548,7 +548,7 @@ ssl3_free_digest_list(SSL *s)
 		if (s->s3->handshake_dgst[i])
 			EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
 	}
-	OPENSSL_free(s->s3->handshake_dgst);
+	free(s->s3->handshake_dgst);
 	s->s3->handshake_dgst = NULL;
 }
 
@@ -579,7 +579,7 @@ ssl3_digest_cached_records(SSL *s)
 
 	/* Allocate handshake_dgst array */
 	ssl3_free_digest_list(s);
-	s->s3->handshake_dgst = OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
+	s->s3->handshake_dgst = malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
 	memset(s->s3->handshake_dgst, 0, SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
 	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {

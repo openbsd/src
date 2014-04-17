@@ -112,7 +112,7 @@ STORE *STORE_new_method(const STORE_METHOD *method)
 		return NULL;
 		}
 
-	ret=(STORE *)OPENSSL_malloc(sizeof(STORE));
+	ret=(STORE *)malloc(sizeof(STORE));
 	if (ret == NULL)
 		{
 		STOREerr(STORE_F_STORE_NEW_METHOD,ERR_R_MALLOC_FAILURE);
@@ -185,7 +185,7 @@ void STORE_free(STORE *store)
 	if (store->meth->clean)
 		store->meth->clean(store);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_STORE, store, &store->ex_data);
-	OPENSSL_free(store);
+	free(store);
 	}
 
 int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f)(void))
@@ -1227,7 +1227,7 @@ int STORE_delete_arbitrary(STORE *s, OPENSSL_ITEM attributes[],
 
 STORE_OBJECT *STORE_OBJECT_new(void)
 	{
-	STORE_OBJECT *object = OPENSSL_malloc(sizeof(STORE_OBJECT));
+	STORE_OBJECT *object = malloc(sizeof(STORE_OBJECT));
 	if (object) memset(object, 0, sizeof(STORE_OBJECT));
 	return object;
 	}
@@ -1253,7 +1253,7 @@ void STORE_OBJECT_free(STORE_OBJECT *data)
 		BUF_MEM_free(data->data.arbitrary);
 		break;
 		}
-	OPENSSL_free(data);
+	free(data);
 	}
 
 IMPLEMENT_STACK_OF(STORE_OBJECT*)
@@ -1280,7 +1280,7 @@ struct STORE_attr_info_st
 
 STORE_ATTR_INFO *STORE_ATTR_INFO_new(void)
 	{
-	return (STORE_ATTR_INFO *)OPENSSL_malloc(sizeof(STORE_ATTR_INFO));
+	return (STORE_ATTR_INFO *)malloc(sizeof(STORE_ATTR_INFO));
 	}
 static void STORE_ATTR_INFO_attr_free(STORE_ATTR_INFO *attrs,
 	STORE_ATTR_TYPES code)
@@ -1320,7 +1320,7 @@ int STORE_ATTR_INFO_free(STORE_ATTR_INFO *attrs)
 		STORE_ATTR_TYPES i;
 		for(i = 0; i++ < STORE_ATTR_TYPE_NUM;)
 			STORE_ATTR_INFO_attr_free(attrs, i);
-		OPENSSL_free(attrs);
+		free(attrs);
 		}
 	return 1;
 	}
@@ -1474,7 +1474,7 @@ int STORE_ATTR_INFO_modify_cstr(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
 		}
 	if (ATTR_IS_SET(attrs,code))
 		{
-		OPENSSL_free(attrs->values[code].cstring);
+		free(attrs->values[code].cstring);
 		attrs->values[code].cstring = NULL;
 		CLEAR_ATTRBIT(attrs, code);
 		}
@@ -1491,7 +1491,7 @@ int STORE_ATTR_INFO_modify_sha1str(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code
 		}
 	if (ATTR_IS_SET(attrs,code))
 		{
-		OPENSSL_free(attrs->values[code].sha1string);
+		free(attrs->values[code].sha1string);
 		attrs->values[code].sha1string = NULL;
 		CLEAR_ATTRBIT(attrs, code);
 		}
@@ -1508,7 +1508,7 @@ int STORE_ATTR_INFO_modify_dn(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
 		}
 	if (ATTR_IS_SET(attrs,code))
 		{
-		OPENSSL_free(attrs->values[code].dn);
+		free(attrs->values[code].dn);
 		attrs->values[code].dn = NULL;
 		CLEAR_ATTRBIT(attrs, code);
 		}
@@ -1525,7 +1525,7 @@ int STORE_ATTR_INFO_modify_number(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
 		}
 	if (ATTR_IS_SET(attrs,code))
 		{
-		OPENSSL_free(attrs->values[code].number);
+		free(attrs->values[code].number);
 		attrs->values[code].number = NULL;
 		CLEAR_ATTRBIT(attrs, code);
 		}
@@ -1541,7 +1541,7 @@ void *STORE_parse_attrs_start(OPENSSL_ITEM *attributes)
 	if (attributes)
 		{
 		struct attr_list_ctx_st *context =
-			(struct attr_list_ctx_st *)OPENSSL_malloc(sizeof(struct attr_list_ctx_st));
+			(struct attr_list_ctx_st *)malloc(sizeof(struct attr_list_ctx_st));
 		if (context)
 			context->attributes = attributes;
 		else
@@ -1650,7 +1650,7 @@ int STORE_parse_attrs_end(void *handle)
 #if 0
 		OPENSSL_ITEM *attributes = context->attributes;
 #endif
-		OPENSSL_free(context);
+		free(context);
 		return 1;
 		}
 	STOREerr(STORE_F_STORE_PARSE_ATTRS_END, ERR_R_PASSED_NULL_PARAMETER);

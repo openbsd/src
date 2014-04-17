@@ -105,7 +105,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		break;
 
 		case ASN1_OP_D2I_POST:
-		if (ret->name != NULL) OPENSSL_free(ret->name);
+		if (ret->name != NULL) free(ret->name);
 		ret->name=X509_NAME_oneline(ret->cert_info->subject,NULL,0);
 		break;
 
@@ -123,7 +123,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		ASIdentifiers_free(ret->rfc3779_asid);
 #endif
 
-		if (ret->name != NULL) OPENSSL_free(ret->name);
+		if (ret->name != NULL) free(ret->name);
 		break;
 
 	}

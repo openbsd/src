@@ -169,7 +169,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 	if (EVP_PKEY_encrypt(pctx, NULL, &eklen, key, keylen) <= 0)
 		goto err;
 
-	ek = OPENSSL_malloc(eklen);
+	ek = malloc(eklen);
 
 	if (ek == NULL)
 		{
@@ -191,7 +191,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 	if (pctx)
 		EVP_PKEY_CTX_free(pctx);
 	if (ek)
-		OPENSSL_free(ek);
+		free(ek);
 	return ret;
 
 	}
@@ -224,7 +224,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 				ri->enc_key->data, ri->enc_key->length) <= 0)
 		goto err;
 
-	ek = OPENSSL_malloc(eklen);
+	ek = malloc(eklen);
 
 	if (ek == NULL)
 		{
@@ -245,7 +245,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 	if (*pek)
 		{
 		OPENSSL_cleanse(*pek, *peklen);
-		OPENSSL_free(*pek);
+		free(*pek);
 		}
 
 	*pek = ek;
@@ -255,7 +255,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 	if (pctx)
 		EVP_PKEY_CTX_free(pctx);
 	if (!ret && ek)
-		OPENSSL_free(ek);
+		free(ek);
 
 	return ret;
 	}
@@ -573,7 +573,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			goto err;
 		/* Generate random key as MMA defence */
 		tkeylen = EVP_CIPHER_CTX_key_length(evp_ctx);
-		tkey = OPENSSL_malloc(tkeylen);
+		tkey = malloc(tkeylen);
 		if (!tkey)
 			goto err;
 		if (EVP_CIPHER_CTX_rand_key(evp_ctx, tkey) <= 0)
@@ -594,7 +594,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 				{
 				/* Use random key as MMA defence */
 				OPENSSL_cleanse(ek, eklen);
-				OPENSSL_free(ek);
+				free(ek);
 				ek = tkey;
 				eklen = tkeylen;
 				tkey = NULL;
@@ -608,13 +608,13 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (ek)
 			{
 			OPENSSL_cleanse(ek,eklen);
-			OPENSSL_free(ek);
+			free(ek);
                        ek = NULL;
 			}
 		if (tkey)
 			{
 			OPENSSL_cleanse(tkey,tkeylen);
-			OPENSSL_free(tkey);
+			free(tkey);
                        tkey = NULL;
 			}
 
@@ -661,12 +661,12 @@ err:
                if (ek)
                        {
                        OPENSSL_cleanse(ek,eklen);
-                       OPENSSL_free(ek);
+                       free(ek);
                        }
                if (tkey)
                        {
                        OPENSSL_cleanse(tkey,tkeylen);
-                       OPENSSL_free(tkey);
+                       free(tkey);
                        }
 		if (out != NULL) BIO_free_all(out);
 		if (btmp != NULL) BIO_free_all(btmp);
@@ -846,7 +846,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				unsigned char *abuf = NULL;
 				unsigned int abuflen;
 				abuflen = EVP_PKEY_size(si->pkey);
-				abuf = OPENSSL_malloc(abuflen);
+				abuf = malloc(abuflen);
 				if (!abuf)
 					goto err;
 
@@ -927,10 +927,10 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 		goto err;
 	if (EVP_DigestSignUpdate(&mctx,abuf,alen) <= 0)
 		goto err;
-	OPENSSL_free(abuf);
+	free(abuf);
 	if (EVP_DigestSignFinal(&mctx, NULL, &siglen) <= 0)
 		goto err;
-	abuf = OPENSSL_malloc(siglen);
+	abuf = malloc(siglen);
 	if(!abuf)
 		goto err;
 	if (EVP_DigestSignFinal(&mctx, abuf, &siglen) <= 0)
@@ -951,7 +951,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
 	err:
 	if (abuf)
-		OPENSSL_free(abuf);
+		free(abuf);
 	EVP_MD_CTX_cleanup(&mctx);
 	return 0;
 
@@ -1113,7 +1113,7 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		if (!EVP_VerifyUpdate(&mdc_tmp, abuf, alen))
 			goto err;
 
-		OPENSSL_free(abuf);
+		free(abuf);
 		}
 
 	os=si->enc_digest;

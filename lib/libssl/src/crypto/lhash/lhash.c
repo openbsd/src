@@ -116,9 +116,9 @@ _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 	_LHASH *ret;
 	int i;
 
-	if ((ret=OPENSSL_malloc(sizeof(_LHASH))) == NULL)
+	if ((ret=malloc(sizeof(_LHASH))) == NULL)
 		goto err0;
-	if ((ret->b=OPENSSL_malloc(sizeof(LHASH_NODE *)*MIN_NODES)) == NULL)
+	if ((ret->b=malloc(sizeof(LHASH_NODE *)*MIN_NODES)) == NULL)
 		goto err1;
 	for (i=0; i<MIN_NODES; i++)
 		ret->b[i]=NULL;
@@ -149,7 +149,7 @@ _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 	ret->error=0;
 	return(ret);
 err1:
-	OPENSSL_free(ret);
+	free(ret);
 err0:
 	return(NULL);
 	}
@@ -168,12 +168,12 @@ void lh_free(_LHASH *lh)
 		while (n != NULL)
 			{
 			nn=n->next;
-			OPENSSL_free(n);
+			free(n);
 			n=nn;
 			}
 		}
-	OPENSSL_free(lh->b);
-	OPENSSL_free(lh);
+	free(lh->b);
+	free(lh);
 	}
 
 void *lh_insert(_LHASH *lh, void *data)
@@ -190,7 +190,7 @@ void *lh_insert(_LHASH *lh, void *data)
 
 	if (*rn == NULL)
 		{
-		if ((nn=(LHASH_NODE *)OPENSSL_malloc(sizeof(LHASH_NODE))) == NULL)
+		if ((nn=(LHASH_NODE *)malloc(sizeof(LHASH_NODE))) == NULL)
 			{
 			lh->error++;
 			return(NULL);
@@ -233,7 +233,7 @@ void *lh_delete(_LHASH *lh, const void *data)
 		nn= *rn;
 		*rn=nn->next;
 		ret=nn->data;
-		OPENSSL_free(nn);
+		free(nn);
 		lh->num_delete++;
 		}
 
@@ -343,7 +343,7 @@ static void expand(_LHASH *lh)
 	if ((lh->p) >= lh->pmax)
 		{
 		j=(int)lh->num_alloc_nodes*2;
-		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
+		n=(LHASH_NODE **)realloc(lh->b,
 			(int)(sizeof(LHASH_NODE *)*j));
 		if (n == NULL)
 			{
@@ -371,7 +371,7 @@ static void contract(_LHASH *lh)
 	lh->b[lh->p+lh->pmax-1]=NULL; /* 24/07-92 - eay - weird but :-( */
 	if (lh->p == 0)
 		{
-		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
+		n=(LHASH_NODE **)realloc(lh->b,
 			(unsigned int)(sizeof(LHASH_NODE *)*lh->pmax));
 		if (n == NULL)
 			{

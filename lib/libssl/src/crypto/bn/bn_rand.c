@@ -130,7 +130,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	bit=(bits-1)%8;
 	mask=0xff<<(bit+1);
 
-	buf=(unsigned char *)OPENSSL_malloc(bytes);
+	buf=(unsigned char *)malloc(bytes);
 	if (buf == NULL)
 		{
 		BNerr(BN_F_BNRAND,ERR_R_MALLOC_FAILURE);
@@ -199,7 +199,7 @@ err:
 	if (buf != NULL)
 		{
 		OPENSSL_cleanse(buf,bytes);
-		OPENSSL_free(buf);
+		free(buf);
 		}
 	bn_check_top(rnd);
 	return(ret);

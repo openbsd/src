@@ -119,9 +119,9 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
 	if (v != NULL)
 		{
 		(void)sk_CONF_VALUE_delete_ptr(ts,v);
-		OPENSSL_free(v->name);
-		OPENSSL_free(v->value);
-		OPENSSL_free(v);
+		free(v->name);
+		free(v->value);
+		free(v);
 		}
 	return 1;
 	}
@@ -226,7 +226,7 @@ void _CONF_free_data(CONF *conf)
 	if (conf == NULL || conf->data == NULL) return;
 
 	lh_CONF_VALUE_down_load(conf->data)=0; /* evil thing to make
-				  * sure the 'OPENSSL_free()' works as
+				  * sure the 'free()' works as
 				  * expected */
 	lh_CONF_VALUE_doall_arg(conf->data,
 				LHASH_DOALL_ARG_FN(value_free_hash),
@@ -257,13 +257,13 @@ static void value_free_stack_doall(CONF_VALUE *a)
 	for (i=sk_CONF_VALUE_num(sk)-1; i>=0; i--)
 		{
 		vv=sk_CONF_VALUE_value(sk,i);
-		OPENSSL_free(vv->value);
-		OPENSSL_free(vv->name);
-		OPENSSL_free(vv);
+		free(vv->value);
+		free(vv->name);
+		free(vv);
 		}
 	if (sk != NULL) sk_CONF_VALUE_free(sk);
-	OPENSSL_free(a->section);
-	OPENSSL_free(a);
+	free(a->section);
+	free(a);
 	}
 
 /* Up until OpenSSL 0.9.5a, this was new_section */
@@ -275,10 +275,10 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 
 	if ((sk=sk_CONF_VALUE_new_null()) == NULL)
 		goto err;
-	if ((v=OPENSSL_malloc(sizeof(CONF_VALUE))) == NULL)
+	if ((v=malloc(sizeof(CONF_VALUE))) == NULL)
 		goto err;
 	i=strlen(section)+1;
-	if ((v->section=OPENSSL_malloc(i)) == NULL)
+	if ((v->section=malloc(i)) == NULL)
 		goto err;
 
 	memcpy(v->section,section,i);
@@ -292,7 +292,7 @@ err:
 	if (!ok)
 		{
 		if (sk != NULL) sk_CONF_VALUE_free(sk);
-		if (v != NULL) OPENSSL_free(v);
+		if (v != NULL) free(v);
 		v=NULL;
 		}
 	return(v);

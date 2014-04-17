@@ -374,14 +374,14 @@ int main(int Argc, char *ARGV[])
 	ret=1;
 end:
 	if (to_free)
-		OPENSSL_free(to_free);
+		free(to_free);
 	if (config != NULL)
 		{
 		NCONF_free(config);
 		config=NULL;
 		}
 	if (prog != NULL) lh_FUNCTION_free(prog);
-	if (arg.data != NULL) OPENSSL_free(arg.data);
+	if (arg.data != NULL) free(arg.data);
 
 	apps_shutdown();
 

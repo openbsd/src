@@ -813,7 +813,7 @@ end:
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free_all(out);
-	if (passin) OPENSSL_free(passin);
+	if (passin) free(passin);
 	return (ret);
 }
 
