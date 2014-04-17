@@ -1857,49 +1857,6 @@ int main()
 	TEST_CASE(19);
 	TEST_CASE(20);
 
-#ifdef OPENSSL_CPUID_OBJ
-	{
-	size_t start,stop,gcm_t,ctr_t,OPENSSL_rdtsc();
-	union { u64 u; u8 c[1024]; } buf;
-	int i;
-
-	AES_set_encrypt_key(K1,sizeof(K1)*8,&key);
-	CRYPTO_gcm128_init(&ctx,&key,(block128_f)AES_encrypt);
-	CRYPTO_gcm128_setiv(&ctx,IV1,sizeof(IV1));
-
-	CRYPTO_gcm128_encrypt(&ctx,buf.c,buf.c,sizeof(buf));
-	start = OPENSSL_rdtsc();
-	CRYPTO_gcm128_encrypt(&ctx,buf.c,buf.c,sizeof(buf));
-	gcm_t = OPENSSL_rdtsc() - start;
-
-	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
-			&key,ctx.Yi.c,ctx.EKi.c,&ctx.mres,
-			(block128_f)AES_encrypt);
-	start = OPENSSL_rdtsc();
-	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
-			&key,ctx.Yi.c,ctx.EKi.c,&ctx.mres,
-			(block128_f)AES_encrypt);
-	ctr_t = OPENSSL_rdtsc() - start;
-
-	printf("%.2f-%.2f=%.2f\n",
-			gcm_t/(double)sizeof(buf),
-			ctr_t/(double)sizeof(buf),
-			(gcm_t-ctr_t)/(double)sizeof(buf));
-#ifdef GHASH
-	{
-	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len)	= ctx.ghash;
-
-	GHASH((&ctx),buf.c,sizeof(buf));
-	start = OPENSSL_rdtsc();
-	for (i=0;i<100;++i) GHASH((&ctx),buf.c,sizeof(buf));
-	gcm_t = OPENSSL_rdtsc() - start;
-	printf("%.2f\n",gcm_t/(double)sizeof(buf)/(double)i);
-	}
-#endif
-	}
-#endif
-
 	return ret;
 }
 #endif
