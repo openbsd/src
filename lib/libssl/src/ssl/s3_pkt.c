@@ -313,9 +313,6 @@ again:
 		ssl_minor= *(p++);
 		version = (ssl_major << 8)|ssl_minor;
 		n2s(p, rr->length);
-#if 0
-		fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
-#endif
 
 		/* Lets check version */
 		if (!s->first_packet) {
@@ -494,10 +491,6 @@ again:
 	/* just read a 0 length packet */
 	if (rr->length == 0)
 		goto again;
-
-#if 0
-	fprintf(stderr, "Ultimate Record type=%d, Length=%d\n", rr->type, rr->length);
-#endif
 
 	return (1);
 
@@ -1214,14 +1207,7 @@ start:
 	if ((s->s3->handshake_fragment_len >= 4) && !s->in_handshake) {
 		if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-#if 0 /* worked only because C operator preferences are not as expected (and
-			* because this is not really needed for clients except for detecting
-       * protocol violations): */
-			s->state = SSL_ST_BEFORE |
-			    (s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
-#else
 			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
-#endif
 			s->renegotiate = 1;
 			s->new_session = 1;
 		}

@@ -1129,24 +1129,6 @@ ssl3_get_client_hello(SSL *s)
 				break;
 			}
 		}
-/*
- * Disabled because it can be used in a ciphersuite downgrade
- * attack: CVE-2010-4180.
- */
-#if 0
-		if (j == 0 && (s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1)) {
-			/* Special case as client bug workaround: the previously used cipher may
-			 * not be in the current list, the client instead might be trying to
-			 * continue using a cipher that before wasn't chosen due to server
-			 * preferences.  We'll have to reject the connection if the cipher is not
-			 * enabled, though. */
-			c = sk_SSL_CIPHER_value(ciphers, 0);
-			if (sk_SSL_CIPHER_find(SSL_get_ciphers(s), c) >= 0) {
-				s->session->cipher = c;
-				j = 1;
-			}
-		}
-#endif
 		if (j == 0) {
 			/* we need to have the cipher in the cipher
 			 * list if we are asked to reuse it */

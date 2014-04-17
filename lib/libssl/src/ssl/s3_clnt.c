@@ -920,15 +920,9 @@ ssl3_get_server_hello(SSL *s)
 	if (s->session->cipher)
 		s->session->cipher_id = s->session->cipher->id;
 	if (s->hit && (s->session->cipher_id != c->id)) {
-/* Workaround is now obsolete */
-#if 0
-		if (!(s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
-#endif
-		{
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
-			goto f_err;
-		}
+		al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
+		goto f_err;
 	}
 	s->s3->tmp.new_cipher = c;
 	/* Don't digest cached records if TLS v1.2: we may need them for
@@ -1763,14 +1757,6 @@ ssl3_get_certificate_request(SSL *s)
 
 	/* get the CA RDNs */
 	n2s(p, llen);
-#if 0
-	{
-		FILE *out;
-		out = fopen("/tmp/vsign.der", "w");
-		fwrite(p, 1, llen, out);
-		fclose(out);
-	}
-#endif
 
 	if ((unsigned long)(p - d + llen) != n) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);

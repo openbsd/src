@@ -324,12 +324,7 @@ ssl23_get_client_hello(SSL *s)
 			 * so we simply assume TLS 1.0 to avoid protocol version downgrade
 			 * attacks. */
 			if (p[3] == 0 && p[4] < 6) {
-#if 0
-				SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_SMALL);
-				goto err;
-#else
 				v[1] = TLS1_VERSION_MINOR;
-#endif
 			}
 			/* if major version number > 3 set minor to a value
 			 * which will use the highest version 3 we support.

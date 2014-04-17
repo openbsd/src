@@ -118,11 +118,6 @@ SSL_library_init(void)
 #ifndef OPENSSL_NO_ECDSA
 	EVP_add_digest(EVP_ecdsa());
 #endif
-	/* If you want support for phased out ciphers, add the following */
-#if 0
-	EVP_add_digest(EVP_sha());
-	EVP_add_digest(EVP_dss());
-#endif
 #ifndef OPENSSL_NO_COMP
 	/* This will initialise the built-in compression algorithms.
 	   The value returned is a STACK_OF(SSL_COMP), but that can
