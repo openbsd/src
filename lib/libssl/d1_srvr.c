@@ -1290,6 +1290,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			(unsigned char *)encodedPoint,
 			encodedlen);
 			free(encodedPoint);
+			encodedPoint = NULL;
 			p += encodedlen;
 		}
 #endif
@@ -1397,8 +1398,7 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
 #ifndef OPENSSL_NO_ECDH
-	if (encodedPoint != NULL)
-		free(encodedPoint);
+	free(encodedPoint);
 	BN_CTX_free(bn_ctx);
 #endif
 	EVP_MD_CTX_cleanup(&md_ctx);
