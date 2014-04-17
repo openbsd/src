@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.16 2013/12/06 21:03:02 deraadt Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.17 2014/04/17 06:38:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -62,11 +62,8 @@ struct emc_vpd_sp_info {
 struct emc_softc {
 	struct device		sc_dev;
 	struct mpath_path	sc_path;
-	u_int			sc_flags;
-	u_int8_t		sc_sp;
-	u_int8_t		sc_port;
-	u_int8_t		sc_lun_state;
-
+	struct scsi_xshandler   sc_xsh;
+	struct emc_vpd_sp_info	*sc_pg;
 };
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 
@@ -104,13 +101,14 @@ struct emc_device {
 	char *product;
 };
 
-int		emc_inquiry(struct emc_softc *, char *, char *);
-int		emc_sp_info(struct emc_softc *);
+void		emc_status(struct scsi_xfer *);
+void		emc_status_done(struct scsi_xfer *);
+
+int		emc_sp_info(struct emc_softc *, int *);
 
 struct emc_device emc_devices[] = {
 /*	  " vendor "  "     device     " */
 /*	  "01234567"  "0123456789012345" */
-	{ "DGC     ", "LUNZ" },
 	{ "DGC     ", "RAID" },
 	{ "DGC     ", "DISK" },
 	{ "DGC     ", "VRAID" }
@@ -141,10 +139,10 @@ emc_match(struct device *parent, void *match, void *aux)
 void
 emc_attach(struct device *parent, struct device *self, void *aux)
 {
-	char model[256], serial[256];
 	struct emc_softc *sc = (struct emc_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
+	int sp;
 
 	printf("\n");
 
@@ -155,31 +153,28 @@ emc_attach(struct device *parent, struct device *self, void *aux)
 	scsi_xsh_set(&sc->sc_path.p_xsh, link, emc_mpath_start);
 	sc->sc_path.p_link = link;
 
-	if (emc_sp_info(sc)) {
+	/* init status handler */
+	scsi_xsh_set(&sc->sc_xsh, link, emc_status);
+	sc->sc_pg = dma_alloc(sizeof(*sc->sc_pg), PR_WAITOK);
+
+	/* let's go */
+
+	if (emc_sp_info(sc, &sp)) {
 		printf("%s: unable to get sp info\n", DEVNAME(sc));
 		return;
 	}
 
-	if (emc_inquiry(sc, model, serial) != 0) {
-		printf("%s: unable to get inquiry data\n", DEVNAME(sc));
-		return;
-	}
-
-	printf("%s: %s %s SP-%c port %d\n", DEVNAME(sc), model, serial,
-	    sc->sc_sp + 'A', sc->sc_port);
-
-	if (sc->sc_lun_state != EMC_SP_INFO_LUN_STATE_OWNED) {
-		/* XXX add failover support */
-		return;
-	}
-
-	if (mpath_path_attach(&sc->sc_path, sc->sc_sp, &emc_mpath_ops) != 0)
+	if (mpath_path_attach(&sc->sc_path, sp, &emc_mpath_ops) != 0)
 		printf("%s: unable to attach path\n", DEVNAME(sc));
 }
 
 int
 emc_detach(struct device *self, int flags)
 {
+	struct emc_softc *sc = (struct emc_softc *)self;
+
+	dma_free(sc->sc_pg, sizeof(*sc->sc_pg));
+
 	return (0);
 }
 
@@ -217,80 +212,56 @@ emc_mpath_status(struct scsi_link *link)
 {
 	struct emc_softc *sc = link->device_softc;
 
-	mpath_path_status(&sc->sc_path, MPATH_S_UNKNOWN);
+	scsi_xsh_add(&sc->sc_xsh);
 }
 
-int
-emc_inquiry(struct emc_softc *sc, char *model, char *serial)
+void
+emc_status(struct scsi_xfer *xs)
 {
-	u_int8_t *buffer;
-	struct scsi_xfer *xs;
-	size_t length;
-	int error;
-	u_int8_t slen, mlen;
+	struct scsi_link *link = xs->sc_link;
+	struct emc_softc *sc = link->device_softc;
 
-	length = MIN(sc->sc_path.p_link->inqdata.additional_length + 5, 255);
-	if (length < 160) {
-		printf("%s: FC (Legacy)\n", DEVNAME(sc));
-		return (0);
-	}
+	scsi_init_inquiry(xs, SI_EVPD, EMC_VPD_SP_INFO,
+	    sc->sc_pg, sizeof(*sc->sc_pg));
 
-	buffer = dma_alloc(length, PR_WAITOK);
+	xs->done = emc_status_done;
 
-	xs = scsi_xs_get(sc->sc_path.p_link, scsi_autoconf);
-	if (xs == NULL) {
-		error = EBUSY;
-		goto done;
-	}
+	scsi_xs_exec(xs);
+}
 
-	scsi_init_inquiry(xs, 0, 0, buffer, length);
+void
+emc_status_done(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct emc_softc *sc = link->device_softc;
+	struct emc_vpd_sp_info *pg = sc->sc_pg;
+	int status = MPATH_S_UNKNOWN;
 
-	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	if (error != 0)
-		goto done;
-
-	slen = buffer[160];
-	if (slen == 0 || slen + 161 > length) {
-		error = EIO;
-		goto done;
+	if (xs->error == XS_NOERROR) {
+		status = (pg->lun_state == EMC_SP_INFO_LUN_STATE_OWNED) ?
+		    MPATH_S_ACTIVE : MPATH_S_PASSIVE;
 	}
 
-	mlen = buffer[99];
-	if (mlen == 0 || slen + mlen + 161 > length) {
-		error = EIO;
-		goto done;
-	}
-
-	scsi_strvis(serial, buffer + 161, slen);
-	scsi_strvis(model, buffer + 161 + slen, mlen);
-
-	error = 0;
-done:
-	dma_free(buffer, length);
-	return (error);
+	mpath_path_status(&sc->sc_path, status);
 }
 
 int
-emc_sp_info(struct emc_softc *sc)
+emc_sp_info(struct emc_softc *sc, int *sp)
 {
-	struct emc_vpd_sp_info *pg;
+	struct emc_vpd_sp_info *pg = sc->sc_pg;
 	int error;
-
-	pg = dma_alloc(sizeof(*pg), PR_WAITOK);
 
 	error = scsi_inquire_vpd(sc->sc_path.p_link, pg, sizeof(*pg),
 	    EMC_VPD_SP_INFO, scsi_autoconf);
 	if (error != 0)
-		goto done;
+		return (error);
 
-	sc->sc_sp = pg->current_sp;
-	sc->sc_port = pg->port;
-	sc->sc_lun_state = pg->lun_state;
+	*sp = pg->current_sp;
 
-	error = 0;
-done:
-	dma_free(pg, sizeof(*pg));
-	return (error);
+	printf("%s: SP-%c port %d\n", DEVNAME(sc), pg->current_sp + 'A',
+	    pg->port);
+
+	return (0);
 }
