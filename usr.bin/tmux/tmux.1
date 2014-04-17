@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.390 2014/04/17 07:55:43 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.391 2014/04/17 15:48:02 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -2534,10 +2534,6 @@ Examples are:
 #(sysctl vm.loadavg)
 #[fg=yellow,bold]#(apm -l)%%#[default] [#S]
 .Ed
-.Pp
-Where appropriate, special character sequences may be prefixed with a number to
-specify the maximum length, for example
-.Ql #24T .
 .Pp
 By default, UTF-8 in
 .Ar string
