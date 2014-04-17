@@ -250,21 +250,6 @@ end:
 	return (ret);
 }
 
-static int
-ssl23_no_ssl2_ciphers(SSL *s)
-{
-	SSL_CIPHER *cipher;
-	STACK_OF(SSL_CIPHER) *ciphers;
-	int i;
-	ciphers = SSL_get_ciphers(s);
-	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-		cipher = sk_SSL_CIPHER_value(ciphers, i);
-		if (cipher->algorithm_ssl == SSL_SSLV2)
-			return 0;
-	}
-	return 1;
-}
-
 /*
  * Fill a ClientRandom or ServerRandom field of length len. Returns <= 0
  * on failure, 1 on success.
@@ -294,7 +279,7 @@ ssl23_client_hello(SSL *s)
 {
 	unsigned char *buf;
 	unsigned char *p, *d;
-	int i, ch_len;
+	int i;
 	unsigned long l;
 	int version = 0, version_major, version_minor;
 #ifndef OPENSSL_NO_COMP
