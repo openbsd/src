@@ -35,14 +35,8 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 /* memory allocations functions for zlib intialization */
 static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
 {
-	void *p;
-	
-	p=malloc(no*size);
-	if (p)
-		memset(p, 0, no*size);
-	return p;
+	return calloc(no, size);
 }
-
 
 static void zlib_zfree(void* opaque, void* address)
 {
@@ -80,16 +74,6 @@ static COMP_METHOD zlib_stateful_method={
 	NULL,
 	NULL,
 	};
-
-/* 
- * When OpenSSL is built on Windows, we do not want to require that
- * the ZLIB.DLL be available in order for the OpenSSL DLLs to
- * work.  Therefore, all ZLIB routines are loaded at run time
- * and we do not link to a .LIB file when ZLIB_SHARED is set.
- */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-# include <windows.h>
-#endif /* !(OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32) */
 
 #ifdef ZLIB_SHARED
 #include <openssl/dso.h>
@@ -173,7 +157,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
 	return 1;
  err:
-	if (state) free(state);
+	free(state);
 	return 0;
 	}
 
@@ -345,11 +329,7 @@ COMP_METHOD *COMP_zlib(void)
 #ifdef ZLIB_SHARED
 	if (!zlib_loaded)
 		{
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-		zlib_dso = DSO_load(NULL, "ZLIB1", NULL, 0);
-#else
 		zlib_dso = DSO_load(NULL, "z", NULL, 0);
-#endif
 		if (zlib_dso != NULL)
 			{
 			p_compress
