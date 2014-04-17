@@ -111,12 +111,10 @@ SSL_library_init(void)
 	EVP_add_digest(EVP_sha256());
 	EVP_add_digest(EVP_sha384());
 	EVP_add_digest(EVP_sha512());
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_DSA)
 	EVP_add_digest(EVP_dss1()); /* DSA with sha1 */
 	EVP_add_digest_alias(SN_dsaWithSHA1, SN_dsaWithSHA1_2);
 	EVP_add_digest_alias(SN_dsaWithSHA1, "DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1, "dss1");
-#endif
 #ifndef OPENSSL_NO_ECDSA
 	EVP_add_digest(EVP_ecdsa());
 #endif

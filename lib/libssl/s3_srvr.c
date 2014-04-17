@@ -1554,13 +1554,11 @@ ssl3_send_server_done(SSL *s)
 int
 ssl3_send_server_key_exchange(SSL *s)
 {
-#ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	int j, num;
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
-#endif
 #ifndef OPENSSL_NO_DH
 	DH *dh = NULL, *dhp;
 #endif
@@ -1596,7 +1594,6 @@ ssl3_send_server_key_exchange(SSL *s)
 
 		r[0] = r[1] = r[2] = r[3] = NULL;
 		n = 0;
-#ifndef OPENSSL_NO_RSA
 		if (type & SSL_kRSA) {
 			rsa = cert->rsa_tmp;
 			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
@@ -1623,7 +1620,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-#endif
 #ifndef OPENSSL_NO_DH
 		if (type & SSL_kEDH) {
 			dhp = cert->dh_tmp;
@@ -1913,7 +1909,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			 * n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end.
 			 */
-#ifndef OPENSSL_NO_RSA
 			if (pkey->type == EVP_PKEY_RSA
 				&& TLS1_get_version(s) < TLS1_2_VERSION) {
 				q = md_buf;
@@ -1946,7 +1941,6 @@ ssl3_send_server_key_exchange(SSL *s)
 				s2n(u, p);
 				n += u + 2;
 			} else
-#endif
 			if (md) {
 				/* 
 				 * For TLS1.2 and later send signature
@@ -2120,10 +2114,8 @@ ssl3_get_client_key_exchange(SSL *s)
 	long n;
 	unsigned long alg_k;
 	unsigned char *p;
-#ifndef OPENSSL_NO_RSA
 	RSA *rsa = NULL;
 	EVP_PKEY *pkey = NULL;
-#endif
 #ifndef OPENSSL_NO_DH
 	BIGNUM *pub = NULL;
 	DH *dh_srvr;
@@ -2149,7 +2141,6 @@ ssl3_get_client_key_exchange(SSL *s)
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-#ifndef OPENSSL_NO_RSA
 	if (alg_k & SSL_kRSA) {
 		/* FIX THIS UP EAY EAY EAY EAY */
 		if (s->s3->tmp.use_rsa_tmp) {
@@ -2259,7 +2250,6 @@ ssl3_get_client_key_exchange(SSL *s)
 		    p, i);
 		OPENSSL_cleanse(p, i);
 	} else
-#endif
 #ifndef OPENSSL_NO_DH
 	if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
 		n2s(p, i);
@@ -2851,9 +2841,7 @@ ssl3_get_client_key_exchange(SSL *s)
 	return (1);
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP)
 err:
-#endif
 #ifndef OPENSSL_NO_ECDH
 	EVP_PKEY_free(clnt_pub_pkey);
 	EC_POINT_free(clnt_ecpoint);
@@ -3010,7 +2998,6 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
-#ifndef OPENSSL_NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA) {
 		i = RSA_verify(NID_md5_sha1, s->s3->tmp.cert_verify_md,
 		    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, p, i,
@@ -3028,8 +3015,6 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
-#endif
-#ifndef OPENSSL_NO_DSA
 	if (pkey->type == EVP_PKEY_DSA) {
 		j = DSA_verify(pkey->save_type,
 		    &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
@@ -3042,7 +3027,6 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
-#endif
 #ifndef OPENSSL_NO_ECDSA
 	if (pkey->type == EVP_PKEY_EC) {
 		j = ECDSA_verify(pkey->save_type,

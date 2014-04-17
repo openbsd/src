@@ -696,13 +696,6 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 	*mac = 0;
 	*ssl = 0;
 
-#ifdef OPENSSL_NO_RSA
-	*mkey |= SSL_kRSA;
-	*auth |= SSL_aRSA;
-#endif
-#ifdef OPENSSL_NO_DSA
-	*auth |= SSL_aDSS;
-#endif
 	*mkey |= SSL_kDHr|SSL_kDHd; /* no such ciphersuites supported! */
 	*auth |= SSL_aDH;
 #ifdef OPENSSL_NO_DH

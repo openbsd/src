@@ -3098,23 +3098,13 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
 	int ret = 0;
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
-	if (
-#ifndef OPENSSL_NO_RSA
-	cmd == SSL_CTRL_SET_TMP_RSA ||
-	cmd == SSL_CTRL_SET_TMP_RSA_CB ||
-#endif
-#ifndef OPENSSL_NO_DSA
-	cmd == SSL_CTRL_SET_TMP_DH ||
-	cmd == SSL_CTRL_SET_TMP_DH_CB ||
-#endif
-	0) {
+	if (cmd == SSL_CTRL_SET_TMP_RSA || cmd == SSL_CTRL_SET_TMP_RSA_CB ||
+	    cmd == SSL_CTRL_SET_TMP_DH || cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 	}
-#endif
 
 	switch (cmd) {
 	case SSL_CTRL_GET_SESSION_REUSED:
@@ -3135,7 +3125,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_GET_FLAGS:
 		ret = (int)(s->s3->flags);
 		break;
-#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_NEED_TMP_RSA:
 		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
 		   ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
@@ -3165,7 +3154,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (ret);
 		}
 		break;
-#endif
 #ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH:
 		{
@@ -3331,30 +3319,19 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
 	int ret = 0;
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_RSA)
-	if (
-#ifndef OPENSSL_NO_RSA
-	cmd == SSL_CTRL_SET_TMP_RSA_CB ||
-#endif
-#ifndef OPENSSL_NO_DSA
-	cmd == SSL_CTRL_SET_TMP_DH_CB ||
-#endif
-	0) {
+	if (cmd == SSL_CTRL_SET_TMP_RSA_CB || cmd == SSL_CTRL_SET_TMP_DH_CB) {
 		if (!ssl_cert_inst(&s->cert)) {
 			SSLerr(SSL_F_SSL3_CALLBACK_CTRL, ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 	}
-#endif
 
 	switch (cmd) {
-#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
 			s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
 		}
 		break;
-#endif
 #ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
@@ -3389,7 +3366,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	cert = ctx->cert;
 
 	switch (cmd) {
-#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_NEED_TMP_RSA:
 		if ((cert->rsa_tmp == NULL) &&
 		    ((cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
@@ -3429,7 +3405,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return (0);
 		}
 		break;
-#endif
 #ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH:
 		{
@@ -3599,13 +3574,11 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	cert = ctx->cert;
 
 	switch (cmd) {
-#ifndef OPENSSL_NO_RSA
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		{
 			cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))fp;
 		}
 		break;
-#endif
 #ifndef OPENSSL_NO_DH
 	case SSL_CTRL_SET_TMP_DH_CB:
 		{
@@ -3962,29 +3935,17 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 
 #ifndef OPENSSL_NO_DH
 	if (alg_k & (SSL_kDHr|SSL_kEDH)) {
-#  ifndef OPENSSL_NO_RSA
 		p[ret++] = SSL3_CT_RSA_FIXED_DH;
-#  endif
-#  ifndef OPENSSL_NO_DSA
 		p[ret++] = SSL3_CT_DSS_FIXED_DH;
-#  endif
 	}
 	if ((s->version == SSL3_VERSION) &&
 		(alg_k & (SSL_kEDH|SSL_kDHd|SSL_kDHr))) {
-#  ifndef OPENSSL_NO_RSA
 		p[ret++] = SSL3_CT_RSA_EPHEMERAL_DH;
-#  endif
-#  ifndef OPENSSL_NO_DSA
 		p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
-#  endif
 	}
 #endif /* !OPENSSL_NO_DH */
-#ifndef OPENSSL_NO_RSA
 	p[ret++] = SSL3_CT_RSA_SIGN;
-#endif
-#ifndef OPENSSL_NO_DSA
 	p[ret++] = SSL3_CT_DSS_SIGN;
-#endif
 #ifndef OPENSSL_NO_ECDH
 	if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) && (s->version >= TLS1_VERSION)) {
 		p[ret++] = TLS_CT_RSA_FIXED_ECDH;

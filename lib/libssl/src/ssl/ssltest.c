@@ -173,12 +173,8 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -203,10 +199,8 @@
 #define COMP_ZLIB	1
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
-#ifndef OPENSSL_NO_RSA
 static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 static void free_tmp_rsa(void);
-#endif
 static int app_verify_callback(X509_STORE_CTX *ctx, void *arg);
 #define APP_CALLBACK_STRING "Test Callback Argument"
 struct app_verify_arg {
@@ -363,22 +357,18 @@ print_details(SSL *c_ssl, const char *prefix)
 		if (pkey != NULL) {
 			if (0)
 ;
-#ifndef OPENSSL_NO_RSA
 			else if (pkey->type == EVP_PKEY_RSA &&
 			    pkey->pkey.rsa != NULL &&
 			    pkey->pkey.rsa->n != NULL) {
 				BIO_printf(bio_stdout, ", %d bit RSA",
 				BN_num_bits(pkey->pkey.rsa->n));
 			}
-#endif
-#ifndef OPENSSL_NO_DSA
 			else if (pkey->type == EVP_PKEY_DSA &&
 			    pkey->pkey.dsa != NULL &&
 			    pkey->pkey.dsa->p != NULL) {
 				BIO_printf(bio_stdout, ", %d bit DSA",
 				BN_num_bits(pkey->pkey.dsa->p));
 			}
-#endif
 			EVP_PKEY_free(pkey);
 		}
 		X509_free(cert);
@@ -837,9 +827,7 @@ bad:
 	(void)no_ecdhe;
 #endif
 
-#ifndef OPENSSL_NO_RSA
 	SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
-#endif
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	SSL_CTX_set_tlsext_opaque_prf_input_callback(c_ctx, opaque_prf_input_cb);
@@ -997,9 +985,7 @@ end:
 	if (bio_stdout != NULL)
 		BIO_free(bio_stdout);
 
-#ifndef OPENSSL_NO_RSA
 	free_tmp_rsa();
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
 #endif
@@ -2087,7 +2073,6 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	return (ok);
 }
 
-#ifndef OPENSSL_NO_RSA
 static RSA *rsa_tmp = NULL;
 
 static RSA
@@ -2125,7 +2110,6 @@ free_tmp_rsa(void)
 		rsa_tmp = NULL;
 	}
 }
-#endif
 
 #ifndef OPENSSL_NO_DH
 /* These DH parameters have been generated as follows:

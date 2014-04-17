@@ -1000,13 +1000,11 @@ dtls1_send_server_done(SSL *s)
 int
 dtls1_send_server_key_exchange(SSL *s)
 {
-#ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	int j, num;
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
-#endif
 #ifndef OPENSSL_NO_DH
 	DH *dh = NULL, *dhp;
 #endif
@@ -1041,7 +1039,6 @@ dtls1_send_server_key_exchange(SSL *s)
 
 		r[0] = r[1] = r[2] = r[3] = NULL;
 		n = 0;
-#ifndef OPENSSL_NO_RSA
 		if (type & SSL_kRSA) {
 			rsa = cert->rsa_tmp;
 			if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
@@ -1065,7 +1062,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-#endif
 #ifndef OPENSSL_NO_DH
 		if (type & SSL_kEDH) {
 			dhp = cert->dh_tmp;
@@ -1310,7 +1306,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			/* n is the length of the params, they start at
 			 * &(d[DTLS1_HM_HEADER_LENGTH]) and p points to the space
 			 * at the end. */
-#ifndef OPENSSL_NO_RSA
 			if (pkey->type == EVP_PKEY_RSA) {
 				q = md_buf;
 				j = 0;
@@ -1338,8 +1333,6 @@ dtls1_send_server_key_exchange(SSL *s)
 				s2n(u, p);
 				n += u + 2;
 			} else
-#endif
-#if !defined(OPENSSL_NO_DSA)
 			if (pkey->type == EVP_PKEY_DSA) {
 				/* lets do DSS */
 				EVP_SignInit_ex(&md_ctx, EVP_dss1(), NULL);
@@ -1354,7 +1347,6 @@ dtls1_send_server_key_exchange(SSL *s)
 				s2n(i, p);
 				n += i + 2;
 			} else
-#endif
 #if !defined(OPENSSL_NO_ECDSA)
 			if (pkey->type == EVP_PKEY_EC) {
 				/* let's do ECDSA */
