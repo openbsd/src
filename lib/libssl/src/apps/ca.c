@@ -2543,11 +2543,11 @@ make_revocation_str(int rev_type, char *rev_arg)
 
 	BUF_strlcpy(str, (char *)revtm->data, i);
 	if (reason) {
-		BUF_strlcat(str, ", ", i);
+		BUF_strlcat(str, ",", i);
 		BUF_strlcat(str, reason, i);
 	}
 	if (other) {
-		BUF_strlcat(str, ", ", i);
+		BUF_strlcat(str, ",", i);
 		BUF_strlcat(str, other, i);
 	}
 	ASN1_UTCTIME_free(revtm);
