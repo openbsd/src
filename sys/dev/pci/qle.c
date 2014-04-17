@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.21 2014/04/17 13:18:41 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.22 2014/04/17 23:17:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -264,7 +264,7 @@ u_int32_t	qle_read(struct qle_softc *, int);
 void		qle_write(struct qle_softc *, int, u_int32_t);
 void		qle_host_cmd(struct qle_softc *sc, u_int32_t);
 
-int		qle_mbox(struct qle_softc *, int, int);
+int		qle_mbox(struct qle_softc *, int);
 int		qle_ct_pass_through(struct qle_softc *sc,
 		    u_int32_t port_handle, struct qle_dmamem *mem,
 		    size_t req_size, size_t resp_size);
@@ -505,7 +505,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mbox[3] = 0;
 #endif
 	sc->sc_mbox[4] = 0;
-	if (qle_mbox(sc, 0x001f, 0x0001)) {
+	if (qle_mbox(sc, 0x001f)) {
 		printf("ISP couldn't exec firmware: %x\n", sc->sc_mbox[0]);
 		goto deintr;
 	}
@@ -513,8 +513,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	delay(250000);		/* from isp(4) */
 
 	sc->sc_mbox[0] = QLE_MBOX_ABOUT_FIRMWARE;
-	if (qle_mbox(sc, QLE_MBOX_ABOUT_FIRMWARE_IN,
-	    QLE_MBOX_ABOUT_FIRMWARE_OUT)) {
+	if (qle_mbox(sc, 0x0001)) {
 		printf("ISP not talking after firmware exec: %x\n",
 		    sc->sc_mbox[0]);
 		goto deintr;
@@ -598,7 +597,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	qle_mbox_putaddr(sc->sc_mbox, sc->sc_scratch);
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(sc->sc_scratch), 0,
 	    sizeof(*icb), BUS_DMASYNC_PREWRITE);
-	rv = qle_mbox(sc, QLE_MBOX_INIT_FIRMWARE_IN, 0x0001);
+	rv = qle_mbox(sc, 0x00fd);
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(sc->sc_scratch), 0,
 	    sizeof(*icb), BUS_DMASYNC_POSTWRITE);
 
@@ -616,7 +615,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	    QLE_FW_OPTION1_ASYNC_LOGIN_RJT;
 	sc->sc_mbox[2] = 0;
 	sc->sc_mbox[3] = 0;
-	if (qle_mbox(sc, QLE_MBOX_SET_FIRMWARE_OPTIONS_IN, 0x0001)) {
+	if (qle_mbox(sc, 0x000f)) {
 		printf("%s: setting firmware options failed: %x\n",
 		    DEVNAME(sc), sc->sc_mbox[0]);
 		goto free_scratch;
@@ -781,7 +780,7 @@ qle_get_port_db(struct qle_softc *sc, u_int16_t loopid, struct qle_dmamem *mem)
 	qle_mbox_putaddr(sc->sc_mbox, mem);
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(mem), 0,
 	    sizeof(struct qle_get_port_db), BUS_DMASYNC_PREREAD);
-	if (qle_mbox(sc, 0x00cf, 0x0001)) {
+	if (qle_mbox(sc, 0x00cf)) {
 		DPRINTF(QLE_D_PORT, "%s: get port db for %d failed: %x\n",
 		    DEVNAME(sc), loopid, sc->sc_mbox[0]);
 		return (1);
@@ -1093,11 +1092,8 @@ qle_handle_intr(struct qle_softc *sc, u_int16_t isr, u_int16_t info)
 	case QLE_INT_TYPE_MBOX:
 		mtx_enter(&sc->sc_mbox_mtx);
 		if (sc->sc_mbox_pending) {
-			sc->sc_mbox[0] = info;
-			if (info == QLE_MBOX_COMPLETE) {
-				for (i = 1; i < nitems(sc->sc_mbox); i++) {
-					sc->sc_mbox[i] = qle_read_mbox(sc, i);
-				}
+			for (i = 0; i < nitems(sc->sc_mbox); i++) {
+				sc->sc_mbox[i] = qle_read_mbox(sc, i);
 			}
 			sc->sc_mbox_pending = 2;
 			wakeup(sc->sc_mbox);
@@ -1341,7 +1337,7 @@ qle_host_cmd(struct qle_softc *sc, u_int32_t cmd)
 #define MBOX_COMMAND_TIMEOUT	400000
 
 int
-qle_mbox(struct qle_softc *sc, int maskin, int maskout)
+qle_mbox(struct qle_softc *sc, int maskin)
 {
 	int i;
 	int result = 0;
@@ -1354,26 +1350,7 @@ qle_mbox(struct qle_softc *sc, int maskin, int maskout)
 	}
 	qle_host_cmd(sc, QLE_HOST_CMD_SET_HOST_INT);
 
-	if (sc->sc_scsibus == NULL) {
-		for (i = 0; i < MBOX_COMMAND_TIMEOUT && result == 0; i++) {
-			u_int16_t isr, info;
-
-			delay(100);
-
-			if (qle_read_isr(sc, &isr, &info) == 0)
-				continue;
-
-			switch (isr) {
-			case QLE_INT_TYPE_MBOX:
-				result = info;
-				break;
-
-			default:
-				qle_handle_intr(sc, isr, info);
-				break;
-			}
-		}
-	} else {
+	if (sc->sc_scsibus != NULL) {
 		mtx_enter(&sc->sc_mbox_mtx);
 		sc->sc_mbox_pending = 1;
 		while (sc->sc_mbox_pending == 1) {
@@ -1386,25 +1363,34 @@ qle_mbox(struct qle_softc *sc, int maskin, int maskout)
 		return (result == QLE_MBOX_COMPLETE ? 0 : result);
 	}
 
-	switch (result) {
-	case QLE_MBOX_COMPLETE:
-		for (i = 1; i < nitems(sc->sc_mbox); i++) {
-			sc->sc_mbox[i] = (maskout & (1 << i)) ?
-			    qle_read_mbox(sc, i) : 0;
+	for (i = 0; i < MBOX_COMMAND_TIMEOUT && result == 0; i++) {
+		u_int16_t isr, info;
+
+		delay(100);
+
+		if (qle_read_isr(sc, &isr, &info) == 0)
+			continue;
+
+		switch (isr) {
+		case QLE_INT_TYPE_MBOX:
+			result = info;
+			break;
+
+		default:
+			qle_handle_intr(sc, isr, info);
+			break;
 		}
-		rv = 0;
-		break;
+	}
 
-	case 0:
+	if (result == 0) {
 		/* timed out; do something? */
-		printf("mbox timed out\n");
+		DPRINTF(QLE_D_MBOX, "%s: mbox timed out\n", DEVNAME(sc));
 		rv = 1;
-		break;
-
-	default:
-		sc->sc_mbox[0] = result;
-		rv = result;
-		break;
+	} else {
+		for (i = 0; i < nitems(sc->sc_mbox); i++) {
+			sc->sc_mbox[i] = qle_read_mbox(sc, i);
+		}
+		rv = (result == QLE_MBOX_COMPLETE ? 0 : result);
 	}
 
 	qle_clear_isr(sc, QLE_INT_TYPE_MBOX);
@@ -1589,7 +1575,7 @@ qle_softreset(struct qle_softc *sc)
 
 	/* do a basic mailbox operation to check we're alive */
 	sc->sc_mbox[0] = QLE_MBOX_NOP;
-	if (qle_mbox(sc, 0x0001, 0x0001)) {
+	if (qle_mbox(sc, 0x0001)) {
 		printf("ISP not responding after reset\n");
 		return (ENXIO);
 	}
@@ -1601,7 +1587,7 @@ void
 qle_update_topology(struct qle_softc *sc)
 {
 	sc->sc_mbox[0] = QLE_MBOX_GET_ID;
-	if (qle_mbox(sc, 0x0001, QLE_MBOX_GET_LOOP_ID_OUT)) {
+	if (qle_mbox(sc, 0x0001)) {
 		DPRINTF(QLE_D_PORT, "%s: unable to get loop id\n", DEVNAME(sc));
 		sc->sc_topology = QLE_TOPO_N_PORT_NO_TARGET;
 	} else {
@@ -1666,7 +1652,7 @@ qle_update_fabric(struct qle_softc *sc)
 	qle_mbox_putaddr(sc->sc_mbox, sc->sc_scratch);
 	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(sc->sc_scratch), 0,
 	    sizeof(struct qle_get_port_db), BUS_DMASYNC_PREREAD);
-	if (qle_mbox(sc, 0x00cf, 0x0001)) {
+	if (qle_mbox(sc, 0x00cf)) {
 		DPRINTF(QLE_D_PORT, "%s: get port db for SNS failed: %x\n",
 		    DEVNAME(sc), sc->sc_mbox[0]);
 		sc->sc_sns_port_name = 0;
@@ -1902,7 +1888,7 @@ qle_fabric_plogo(struct qle_softc *sc, struct qle_fc_port *port)
 	sc->sc_mbox[1] = port->loopid;
 	sc->sc_mbox[10] = 0;
 
-	if (qle_mbox(sc, 0x0403, 0x03))
+	if (qle_mbox(sc, 0x0403))
 		printf("%s: PLOGO %d failed\n", DEVNAME(sc), port->loopid);
 #endif
 }
@@ -2444,7 +2430,7 @@ qle_load_fwchunk(struct qle_softc *sc, struct qle_dmamem *mem,
 		sc->sc_mbox[5] = words & 0xffff;
 		sc->sc_mbox[8] = dest >> 16;
 		qle_mbox_putaddr(sc->sc_mbox, mem);
-		if (qle_mbox(sc, 0x01ff, 0x0001)) {
+		if (qle_mbox(sc, 0x01ff)) {
 			printf("firmware load failed\n");
 			return (1);
 		}
@@ -2484,7 +2470,7 @@ qle_read_ram_word(struct qle_softc *sc, u_int32_t addr)
 	sc->sc_mbox[0] = QLE_MBOX_READ_RISC_RAM;
 	sc->sc_mbox[1] = addr & 0xffff;
 	sc->sc_mbox[8] = addr >> 16;
-	if (qle_mbox(sc, 0x0103, 0x000e)) {
+	if (qle_mbox(sc, 0x0103)) {
 		return (0);
 	}
 	return ((sc->sc_mbox[3] << 16) | sc->sc_mbox[2]);
@@ -2507,7 +2493,7 @@ qle_verify_firmware(struct qle_softc *sc, u_int32_t addr)
 	sc->sc_mbox[0] = QLE_MBOX_VERIFY_CSUM;
 	sc->sc_mbox[1] = addr >> 16;
 	sc->sc_mbox[2] = addr;
-	if (qle_mbox(sc, 0x0007, 0x0007)) {
+	if (qle_mbox(sc, 0x0007)) {
 		return (1);
 	}
 	return (0);

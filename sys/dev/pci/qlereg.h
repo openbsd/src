@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.6 2014/03/31 07:41:48 dlg Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.7 2014/04/17 23:17:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -144,13 +144,6 @@
 #define QLE_MBOX_SEND_CHANGE_REQ	0x0070
 #define QLE_MBOX_LINK_INIT		0x0072
 #define QLE_MBOX_GET_PORT_NAME_LIST	0x0075
-
-/* mailbox operation register bitfields */
-#define QLE_MBOX_ABOUT_FIRMWARE_IN	0x00000001
-#define QLE_MBOX_ABOUT_FIRMWARE_OUT	0x0000004f
-#define QLE_MBOX_INIT_FIRMWARE_IN	0x000000fd
-#define QLE_MBOX_SET_FIRMWARE_OPTIONS_IN 0x0000000f
-#define QLE_MBOX_GET_LOOP_ID_OUT	0x000000cf
 
 #define QLE_MBOX_COUNT			32
 
