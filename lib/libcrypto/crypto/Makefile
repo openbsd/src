@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2014/04/17 18:11:46 miod Exp $
+# $OpenBSD: Makefile,v 1.20 2014/04/17 18:16:45 miod Exp $
 
 LIB=	crypto
 
@@ -35,6 +35,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 # crypto/
 SRCS+= cryptlib.c malloc-wrapper.c mem_dbg.c cversion.c ex_data.c cpt_err.c
 SRCS+= uid.c o_time.c o_str.c o_init.c
+SRCS+= mem_clr.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
@@ -432,7 +433,6 @@ obj_dat.h: obj_mac.h
 
 .if empty (SSLASM)
 CFLAGS+=-DOPENSSL_NO_ASM
-SRCS+= mem_clr.c
 SRCS+= aes_core.c aes_cbc.c 
 SRCS+= bf_enc.c
 SRCS+= bn_asm.c
