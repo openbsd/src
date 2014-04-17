@@ -82,8 +82,8 @@ static BIO_METHOD null_method = {
 	NULL,
 };
 
-BIO_METHOD
-*BIO_s_null(void)
+BIO_METHOD *
+BIO_s_null(void)
 {
 	return (&null_method);
 }

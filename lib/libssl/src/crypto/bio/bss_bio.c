@@ -116,8 +116,8 @@ static BIO_METHOD methods_biop = {
 	NULL /* no bio_callback_ctrl */
 };
 
-BIO_METHOD
-*BIO_s_bio(void)
+BIO_METHOD *
+BIO_s_bio(void)
 {
 	return &methods_biop;
 }

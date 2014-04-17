@@ -187,14 +187,14 @@ typedef struct bio_dgram_sctp_data_st {
 } bio_dgram_sctp_data;
 #endif
 
-BIO_METHOD
-*BIO_s_datagram(void)
+BIO_METHOD *
+BIO_s_datagram(void)
 {
 	return (&methods_dgramp);
 }
 
-BIO
-*BIO_new_dgram(int fd, int close_flag)
+BIO *
+BIO_new_dgram(int fd, int close_flag)
 {
 	BIO *ret;
 
@@ -764,14 +764,14 @@ dgram_puts(BIO *bp, const char *str)
 }
 
 #ifndef OPENSSL_NO_SCTP
-BIO_METHOD
-*BIO_s_datagram_sctp(void)
+BIO_METHOD *
+BIO_s_datagram_sctp(void)
 {
 	return (&methods_dgramp_sctp);
 }
 
-BIO
-*BIO_new_dgram_sctp(int fd, int close_flag)
+BIO *
+BIO_new_dgram_sctp(int fd, int close_flag)
 {
 	BIO *bio;
 	int ret, optval = 20000;

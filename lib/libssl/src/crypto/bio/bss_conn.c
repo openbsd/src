@@ -288,8 +288,8 @@ end:
 	return (ret);
 }
 
-BIO_CONNECT
-*BIO_CONNECT_new(void)
+BIO_CONNECT *
+BIO_CONNECT_new(void)
 {
 	BIO_CONNECT *ret;
 
@@ -322,8 +322,8 @@ BIO_CONNECT_free(BIO_CONNECT *a)
 	free(a);
 }
 
-BIO_METHOD
-*BIO_s_connect(void)
+BIO_METHOD *
+BIO_s_connect(void)
 {
 	return (&methods_connectp);
 }
@@ -592,8 +592,8 @@ conn_puts(BIO *bp, const char *str)
 	return (ret);
 }
 
-BIO
-*BIO_new_connect(char *str)
+BIO *
+BIO_new_connect(char *str)
 {
 	BIO *ret;
 

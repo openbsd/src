@@ -147,8 +147,8 @@ NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 }
 
 #ifndef OPENSSL_NO_FP_API
-X509
-*d2i_X509_fp(FILE *fp, X509 **x509)
+X509 *
+d2i_X509_fp(FILE *fp, X509 **x509)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509), fp, x509);
 }
@@ -160,8 +160,8 @@ i2d_X509_fp(FILE *fp, X509 *x509)
 }
 #endif
 
-X509
-*d2i_X509_bio(BIO *bp, X509 **x509)
+X509 *
+d2i_X509_bio(BIO *bp, X509 **x509)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509), bp, x509);
 }
@@ -173,8 +173,8 @@ i2d_X509_bio(BIO *bp, X509 *x509)
 }
 
 #ifndef OPENSSL_NO_FP_API
-X509_CRL
-*d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
+X509_CRL *
+d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_CRL), fp, crl);
 }
@@ -186,8 +186,8 @@ i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl)
 }
 #endif
 
-X509_CRL
-*d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
+X509_CRL *
+d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 }
@@ -199,8 +199,8 @@ i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl)
 }
 
 #ifndef OPENSSL_NO_FP_API
-PKCS7
-*d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
+PKCS7 *
+d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
 }
@@ -212,8 +212,8 @@ i2d_PKCS7_fp(FILE *fp, PKCS7 *p7)
 }
 #endif
 
-PKCS7
-*d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
+PKCS7 *
+d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
 }
@@ -225,8 +225,8 @@ i2d_PKCS7_bio(BIO *bp, PKCS7 *p7)
 }
 
 #ifndef OPENSSL_NO_FP_API
-X509_REQ
-*d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
+X509_REQ *
+d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_REQ), fp, req);
 }
@@ -238,8 +238,8 @@ i2d_X509_REQ_fp(FILE *fp, X509_REQ *req)
 }
 #endif
 
-X509_REQ
-*d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
+X509_REQ *
+d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
@@ -253,8 +253,8 @@ i2d_X509_REQ_bio(BIO *bp, X509_REQ *req)
 #ifndef OPENSSL_NO_RSA
 
 #ifndef OPENSSL_NO_FP_API
-RSA
-*d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
+RSA *
+d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(RSAPrivateKey), fp, rsa);
 }
@@ -265,15 +265,15 @@ i2d_RSAPrivateKey_fp(FILE *fp, RSA *rsa)
 	return ASN1_item_i2d_fp(ASN1_ITEM_rptr(RSAPrivateKey), fp, rsa);
 }
 
-RSA
-*d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
+RSA *
+d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
 {
 	return ASN1_item_d2i_fp(ASN1_ITEM_rptr(RSAPublicKey), fp, rsa);
 }
 
 
-RSA
-*d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
+RSA *
+d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
 {
 	return ASN1_d2i_fp((void *(*)(void))RSA_new,
 	    (D2I_OF(void))d2i_RSA_PUBKEY, fp, (void **)rsa);
@@ -292,8 +292,8 @@ i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa)
 }
 #endif
 
-RSA
-*d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
+RSA *
+d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPrivateKey), bp, rsa);
 }
@@ -304,15 +304,15 @@ i2d_RSAPrivateKey_bio(BIO *bp, RSA *rsa)
 	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(RSAPrivateKey), bp, rsa);
 }
 
-RSA
-*d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
+RSA *
+d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPublicKey), bp, rsa);
 }
 
 
-RSA
-*d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
+RSA *
+d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
 {
 	return ASN1_d2i_bio_of(RSA, RSA_new, d2i_RSA_PUBKEY, bp, rsa);
 }
@@ -332,8 +332,8 @@ i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa)
 
 #ifndef OPENSSL_NO_DSA
 #ifndef OPENSSL_NO_FP_API
-DSA
-*d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
+DSA *
+d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 {
 	return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSAPrivateKey, fp, dsa);
 }
@@ -344,8 +344,8 @@ i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 	return ASN1_i2d_fp_of_const(DSA, i2d_DSAPrivateKey, fp, dsa);
 }
 
-DSA
-*d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
+DSA *
+d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
 {
 	return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSA_PUBKEY, fp, dsa);
 }
@@ -357,8 +357,8 @@ i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa)
 }
 #endif
 
-DSA
-*d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
+DSA *
+d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 {
 	return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSAPrivateKey, bp, dsa);
 }
@@ -369,8 +369,8 @@ i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
 	return ASN1_i2d_bio_of_const(DSA, i2d_DSAPrivateKey, bp, dsa);
 }
 
-DSA
-*d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
+DSA *
+d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
 {
 	return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSA_PUBKEY, bp, dsa);
 }
@@ -385,8 +385,8 @@ i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
 
 #ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_FP_API
-EC_KEY
-*d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
+EC_KEY *
+d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 {
 	return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, fp, eckey);
 }
@@ -397,8 +397,8 @@ i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey)
 	return ASN1_i2d_fp_of(EC_KEY, i2d_EC_PUBKEY, fp, eckey);
 }
 
-EC_KEY
-*d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
+EC_KEY *
+d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
 {
 	return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, fp, eckey);
 }
@@ -409,8 +409,8 @@ i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey)
 	return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, eckey);
 }
 #endif
-EC_KEY
-*d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
+EC_KEY *
+d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
 {
 	return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, bp, eckey);
 }
@@ -421,8 +421,8 @@ i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *ecdsa)
 	return ASN1_i2d_bio_of(EC_KEY, i2d_EC_PUBKEY, bp, ecdsa);
 }
 
-EC_KEY
-*d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
+EC_KEY *
+d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
 {
 	return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, bp, eckey);
 }
@@ -488,8 +488,8 @@ PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
 
 
 #ifndef OPENSSL_NO_FP_API
-X509_SIG
-*d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
+X509_SIG *
+d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 {
 	return ASN1_d2i_fp_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, fp, p8);
 }
@@ -501,8 +501,8 @@ i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
 }
 #endif
 
-X509_SIG
-*d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
+X509_SIG *
+d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 {
 	return ASN1_d2i_bio_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, bp, p8);
 }
@@ -514,8 +514,8 @@ i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
 }
 
 #ifndef OPENSSL_NO_FP_API
-PKCS8_PRIV_KEY_INFO
-*d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
+PKCS8_PRIV_KEY_INFO *
+d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
 PKCS8_PRIV_KEY_INFO **p8inf)
 {
 	return ASN1_d2i_fp_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
@@ -548,8 +548,8 @@ i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey)
 	return ASN1_i2d_fp_of(EVP_PKEY, i2d_PrivateKey, fp, pkey);
 }
 
-EVP_PKEY
-*d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
+EVP_PKEY *
+d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 {
 	return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey,
 	    fp, a);
@@ -561,16 +561,16 @@ i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey)
 	return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
 }
 
-EVP_PKEY
-*d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
+EVP_PKEY *
+d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 {
 	return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, fp, a);
 }
 
 #endif
 
-PKCS8_PRIV_KEY_INFO
-*d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
+PKCS8_PRIV_KEY_INFO *
+d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 PKCS8_PRIV_KEY_INFO **p8inf)
 {
 	return ASN1_d2i_bio_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
@@ -603,8 +603,8 @@ i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey)
 	return ASN1_i2d_bio_of(EVP_PKEY, i2d_PrivateKey, bp, pkey);
 }
 
-EVP_PKEY
-*d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
+EVP_PKEY *
+d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 {
 	return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
 }
@@ -615,8 +615,8 @@ i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey)
 	return ASN1_i2d_bio_of(EVP_PKEY, i2d_PUBKEY, bp, pkey);
 }
 
-EVP_PKEY
-*d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
+EVP_PKEY *
+d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
 {
 	return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, bp, a);
 }

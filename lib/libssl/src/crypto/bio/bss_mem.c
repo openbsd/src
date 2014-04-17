@@ -85,14 +85,14 @@ static BIO_METHOD mem_method = {
 /* bio->num is used to hold the value to return on 'empty', if it is
  * 0, should_retry is not set */
 
-BIO_METHOD
-*BIO_s_mem(void)
+BIO_METHOD *
+BIO_s_mem(void)
 {
 	return (&mem_method);
 }
 
-BIO
-*BIO_new_mem_buf(void *buf, int len)
+BIO *
+BIO_new_mem_buf(void *buf, int len)
 {
 	BIO *ret;
 	BUF_MEM *b;

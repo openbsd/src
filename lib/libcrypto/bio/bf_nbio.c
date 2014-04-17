@@ -93,8 +93,8 @@ static BIO_METHOD methods_nbiof = {
 	nbiof_callback_ctrl,
 };
 
-BIO_METHOD
-*BIO_f_nbio_test(void)
+BIO_METHOD *
+BIO_f_nbio_test(void)
 {
 	return (&methods_nbiof);
 }

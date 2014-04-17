@@ -97,8 +97,8 @@ static BIO_METHOD methods_slg = {
 	NULL,
 };
 
-BIO_METHOD
-*BIO_s_log(void)
+BIO_METHOD *
+BIO_s_log(void)
 {
 	return (&methods_slg);
 }

@@ -58,8 +58,8 @@
 
 #include "cryptlib.h"
 
-const char
-*SSLeay_version(int t)
+const char *
+SSLeay_version(int t)
 {
 	if (t == SSLEAY_VERSION)
 		return OPENSSL_VERSION_TEXT;

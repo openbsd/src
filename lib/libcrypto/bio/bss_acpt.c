@@ -110,8 +110,8 @@ static BIO_METHOD methods_acceptp = {
 	NULL,
 };
 
-BIO_METHOD
-*BIO_s_accept(void)
+BIO_METHOD *
+BIO_s_accept(void)
 {
 	return (&methods_acceptp);
 }
@@ -132,8 +132,8 @@ acpt_new(BIO *bi)
 	return (1);
 }
 
-static BIO_ACCEPT
-*BIO_ACCEPT_new(void)
+static BIO_ACCEPT *
+BIO_ACCEPT_new(void)
 {
 	BIO_ACCEPT *ret;
 
@@ -443,8 +443,8 @@ acpt_puts(BIO *bp, const char *str)
 	return (ret);
 }
 
-BIO
-*BIO_new_accept(char *str)
+BIO *
+BIO_new_accept(char *str)
 {
 	BIO *ret;
 

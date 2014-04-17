@@ -84,8 +84,8 @@ X509_LOOKUP_METHOD x509_file_lookup = {
 	NULL,		/* get_by_alias */
 };
 
-X509_LOOKUP_METHOD
-*X509_LOOKUP_file(void)
+X509_LOOKUP_METHOD *
+X509_LOOKUP_file(void)
 {
 	return (&x509_file_lookup);
 }

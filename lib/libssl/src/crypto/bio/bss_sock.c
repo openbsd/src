@@ -86,14 +86,14 @@ static BIO_METHOD methods_sockp = {
 	NULL,
 };
 
-BIO_METHOD
-*BIO_s_socket(void)
+BIO_METHOD *
+BIO_s_socket(void)
 {
 	return (&methods_sockp);
 }
 
-BIO
-*BIO_new_socket(int fd, int close_flag)
+BIO *
+BIO_new_socket(int fd, int close_flag)
 {
 	BIO *ret;
 

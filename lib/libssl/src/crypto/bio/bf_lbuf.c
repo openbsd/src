@@ -89,8 +89,8 @@ static BIO_METHOD methods_linebuffer = {
 	linebuffer_callback_ctrl,
 };
 
-BIO_METHOD
-*BIO_f_linebuffer(void)
+BIO_METHOD *
+BIO_f_linebuffer(void)
 {
 	return (&methods_linebuffer);
 }

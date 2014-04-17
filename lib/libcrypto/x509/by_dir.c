@@ -113,8 +113,8 @@ X509_LOOKUP_METHOD x509_dir_lookup = {
 	NULL,			/* get_by_alias */
 };
 
-X509_LOOKUP_METHOD
-*X509_LOOKUP_hash_dir(void)
+X509_LOOKUP_METHOD *
+X509_LOOKUP_hash_dir(void)
 {
 	return (&x509_dir_lookup);
 }

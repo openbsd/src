@@ -84,8 +84,8 @@ static BIO_METHOD methods_buffer = {
 	buffer_callback_ctrl,
 };
 
-BIO_METHOD
-*BIO_f_buffer(void)
+BIO_METHOD *
+BIO_f_buffer(void)
 {
 	return (&methods_buffer);
 }

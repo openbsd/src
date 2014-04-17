@@ -211,8 +211,8 @@ impl_check(void)
 #define IMPL_CHECK if(!impl) impl_check();
 
 /* API functions to get/set the "ex_data" implementation */
-const CRYPTO_EX_DATA_IMPL
-*CRYPTO_get_ex_data_implementation(void)
+const CRYPTO_EX_DATA_IMPL *
+CRYPTO_get_ex_data_implementation(void)
 {
 	IMPL_CHECK
 	return impl;
@@ -306,8 +306,8 @@ def_cleanup_cb(void *a_void)
 
 /* Return the EX_CLASS_ITEM from the "ex_data" hash table that corresponds to a
  * given class. Handles locking. */
-static EX_CLASS_ITEM
-*def_get_class(int class_index)
+static EX_CLASS_ITEM *
+def_get_class(int class_index)
 {
 	EX_CLASS_ITEM d, *p, *gen;
 	EX_DATA_CHECK(return NULL;)
@@ -622,8 +622,8 @@ CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
 /* For a given CRYPTO_EX_DATA_ variable, get the value corresponding to a
  * particular index in the class used by this variable */
-void
-*CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
+void *
+CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
 {
 	if (ad->sk == NULL)
 		return (0);
