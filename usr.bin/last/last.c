@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.39 2013/08/22 04:43:40 guenther Exp $	*/
+/*	$OpenBSD: last.c,v 1.40 2014/04/17 09:56:09 guenther Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ time_t	 dateconv(char *);
 int	 want(struct utmp *, int);
 void	 wtmp(void);
 void	 checkargs(void);
+void	 print_entry(const struct utmp *);
 void	 usage(void);
 
 #define NAME_WIDTH	9
@@ -203,6 +204,34 @@ checkargs(void)
 		}
 }
 
+void
+print_entry(const struct utmp *bp)
+{
+	printf("%-*.*s %-*.*s %-*.*s ",
+	    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+	    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+	    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host);
+
+	if (seconds)
+		printf("%lld", (long long)bp->ut_time);
+	else {
+		struct tm *tm;
+
+		tm = localtime(&bp->ut_time);
+		if (tm == NULL) {
+			/* bogus entry?  format as epoch time... */
+			printf("%lld", (long long)bp->ut_time);
+		} else {
+			char	tim[40];
+
+			strftime(tim, sizeof tim,
+			    fulltime ? "%a %b %d %H:%M:%S" : "%a %b %d %H:%M",
+			    tm);
+			printf("%s", tim);
+		}
+	}
+}
+
 
 /*
  * read through the wtmp file
@@ -212,7 +241,7 @@ wtmp(void)
 {
 	time_t	delta, total = 0;
 	int	timesize, wfd, snapfound = 0;
-	char	*ct, *crmsg, tim[40];
+	char	*ct, *crmsg;
 	struct utmp	*bp;
 	struct stat	stb;
 	ssize_t	bytes;
@@ -265,21 +294,8 @@ wtmp(void)
 				 * unless flagged for
 				 */
 				if (want(bp, NO)) {
-					if (seconds) {
-						snprintf(tim, sizeof tim, "%ld",
-						    (long)bp->ut_time);
-					} else {
-						ct = ctime(&bp->ut_time);
-						snprintf(tim, sizeof tim,
-						    "%10.10s %*.*s", ct,
-						    timesize, timesize, ct + 11);
-					}
-					printf("%-*.*s %-*.*s %-*.*s %s \n",
-					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					    tim);
-
+					print_entry(bp);
+					printf("\n");
 					if (maxrec != -1 && !--maxrec) {
 						close(wfd);
 						return;
@@ -295,21 +311,8 @@ wtmp(void)
 			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|') &&
 			    !bp->ut_line[1]) {
 				if (want(bp, NO)) {
-					if (seconds) {
-						snprintf(tim, sizeof tim, "%ld",
-						    (long)bp->ut_time);
-					} else {
-						ct = ctime(&bp->ut_time);
-						snprintf(tim, sizeof tim,
-						    "%10.10s %*.*s", ct,
-						    timesize, timesize, ct + 11);
-					}
-					printf("%-*.*s %-*.*s %-*.*s %s \n",
-					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					    tim);
-
+					print_entry(bp);
+					printf("\n");
 					if (maxrec && !--maxrec) {
 						close(wfd);
 						return;
@@ -338,20 +341,8 @@ wtmp(void)
 			    (T->logout > snaptime || !T->logout ||
 			    T->logout < 0)))) {
 				snapfound = 1;
-				if (seconds) {
-					snprintf(tim, sizeof tim, "%ld",
-					    (long)bp->ut_time);
-				} else {
-					ct = ctime(&bp->ut_time);
-					snprintf(tim, sizeof tim,
-					    "%10.10s %*.*s", ct,
-					    timesize, timesize, ct + 11);
-				}
-				printf("%-*.*s %-*.*s %-*.*s %s ",
-				    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-				    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-				    tim);
+				print_entry(bp);
+				printf(" ");
 
 				if (!T->logout)
 					puts("  still logged in");
@@ -361,8 +352,8 @@ wtmp(void)
 						printf("- %s", crmsg);
 					} else {
 						if (seconds)
-							printf("- %ld",
-							    (long)T->logout);
+							printf("- %lld",
+							    (long long)T->logout);
 						else
 							printf("- %*.*s",
 							    timesize, timesize,
@@ -370,7 +361,8 @@ wtmp(void)
 					}
 					delta = T->logout - bp->ut_time;
 					if (seconds)
-						printf("  (%ld)\n", (long)delta);
+						printf("  (%lld)\n",
+						    (long long)delta);
 					else {
 						if (delta < SECSPERDAY)
 							printf("  (%*.*s)\n",
