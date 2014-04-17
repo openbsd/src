@@ -150,8 +150,6 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 				EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		goto error;
 		}
-	RAND_add(p8->pkey->value.octet_string->data,
-		 p8->pkey->value.octet_string->length, 0.0);
 	return p8;
 	error:
 	PKCS8_PRIV_KEY_INFO_free(p8);
