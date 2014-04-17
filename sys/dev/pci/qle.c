@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.22 2014/04/17 23:17:18 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.23 2014/04/17 23:53:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2038,7 +2038,7 @@ qle_do_update(void *xsc, void *x)
 			    DEVNAME(sc));
 			qle_clear_port_lists(sc);
 			qle_ports_gone(sc, QLE_LOCATION_FABRIC);
-			lastport = 0;
+			lastport = sc->sc_port_id;
 			firstport = 0xffffffff;
 			step = 0;
 			if (qle_update_fabric(sc))
