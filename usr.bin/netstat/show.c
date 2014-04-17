@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.40 2013/11/21 17:32:13 mikeb Exp $	*/
+/*	$OpenBSD: show.c,v 1.41 2014/04/17 15:36:53 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -31,12 +31,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/pfkeyv2.h>
@@ -98,6 +96,7 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
+int	 WID_DST(int);
 void	 p_rtentry(struct rt_msghdr *);
 void	 p_pfkentry(struct sadb_msg *);
 void	 pr_family(int);
@@ -213,7 +212,7 @@ p_rttables(int af, u_int tableid)
  */
 #define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
 
-static int
+int
 WID_DST(int af)
 {
 
@@ -296,6 +295,7 @@ p_rtentry(struct rt_msghdr *rtm)
 		return;
 
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
 	if (Fflag && rti_info[RTAX_GATEWAY]->sa_family != sa->sa_family) {
 		return;
 	}
@@ -399,9 +399,6 @@ pr_family(int af)
 		break;
 	case AF_MPLS:
 		afname = "MPLS";
-		break;
-	case AF_APPLETALK:
-		afname = "AppleTalk";
 		break;
 	default:
 		afname = NULL;
@@ -761,7 +758,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	if (mask) {
 		lim = mask->sin6_len - offsetof(struct sockaddr_in6, sin6_addr);
 		lim = lim < (int)sizeof(struct in6_addr) ?
-		    lim : sizeof(struct in6_addr);
+		    lim : (int)sizeof(struct in6_addr);
 		for (p = (u_char *)&mask->sin6_addr, i = 0; i < lim; p++) {
 			if (final && *p) {
 				illegal++;
@@ -815,7 +812,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 			else
 				sin6.sin6_addr.s6_addr[i++] = 0x00;
 		}
-		while (i < sizeof(struct in6_addr))
+		while (i < (int)sizeof(struct in6_addr))
 			sin6.sin6_addr.s6_addr[i++] = 0x00;
 	} else
 		masklen = 128;
