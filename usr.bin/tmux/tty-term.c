@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.33 2014/02/23 00:53:06 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.34 2014/04/17 12:57:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -506,7 +506,8 @@ tty_term_ptr1(struct tty_term *term, enum tty_code_code code, const void *a)
 }
 
 const char *
-tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a, const void *b)
+tty_term_ptr2(struct tty_term *term, enum tty_code_code code, const void *a,
+    const void *b)
 {
 	return (tparm((char *) tty_term_string(term, code), a, b));
 }

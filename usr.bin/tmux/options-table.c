@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.49 2014/04/17 11:38:35 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.50 2014/04/17 12:57:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -528,7 +528,8 @@ const struct options_table_entry window_options_table[] = {
 
 	{ .name = "automatic-rename-format",
 	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "#{?pane_in_mode,[tmux],#{pane_current_command}}#{?pane_dead,[dead],}"
+	  .default_str = "#{?pane_in_mode,[tmux],#{pane_current_command}}"
+	                 "#{?pane_dead,[dead],}"
 	},
 
 	{ .name = "c0-change-trigger",
