@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.10 2013/10/10 12:29:53 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.11 2014/04/17 13:02:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,9 +48,10 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct window_pane	*wp;
 	struct session		*s;
 	struct environ		 env;
-	const char		*cmd;
+	const char		*cmd, *path;
 	char			*cause;
 	u_int			 idx;
+	struct environ_entry	*envent;
 
 	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -77,7 +78,17 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		cmd = args->argv[0];
 	else
 		cmd = NULL;
-	if (window_pane_spawn(wp, cmd, NULL, -1, &env, s->tio, &cause) != 0) {
+
+	path = NULL;
+	if (cmdq->client != NULL && cmdq->client->session == NULL)
+		envent = environ_find(&cmdq->client->environ, "PATH");
+	else
+		envent = environ_find(&s->environ, "PATH");
+	if (envent != NULL)
+		path = envent->value;
+
+	if (window_pane_spawn(wp, cmd, path, NULL, -1, &env, s->tio,
+	    &cause) != 0) {
 		cmdq_error(cmdq, "respawn pane failed: %s", cause);
 		free(cause);
 		environ_free(&env);

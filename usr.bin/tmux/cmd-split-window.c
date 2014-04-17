@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.48 2013/11/22 20:58:36 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.49 2014/04/17 13:02:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,7 +61,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct window		*w;
 	struct window_pane	*wp, *new_wp = NULL;
 	struct environ		 env;
-	const char		*cmd, *shell, *template;
+	const char		*cmd, *path, *shell, *template;
 	char			*cause, *new_cause, *cp;
 	u_int			 hlimit;
 	int			 size, percentage, cwd, fd = -1;
@@ -69,6 +69,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct layout_cell	*lc;
 	struct client		*c;
 	struct format_tree	*ft;
+	struct environ_entry	*envent;
 
 	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -148,8 +149,17 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		goto error;
 	}
 	new_wp = window_add_pane(w, hlimit);
+
+	path = NULL;
+	if (cmdq->client != NULL && cmdq->client->session == NULL)
+		envent = environ_find(&cmdq->client->environ, "PATH");
+	else
+		envent = environ_find(&s->environ, "PATH");
+	if (envent != NULL)
+		path = envent->value;
+
 	if (window_pane_spawn(
-	    new_wp, cmd, shell, cwd, &env, s->tio, &cause) != 0)
+	    new_wp, cmd, path, shell, cwd, &env, s->tio, &cause) != 0)
 		goto error;
 	layout_assign_pane(lc, new_wp);
 
