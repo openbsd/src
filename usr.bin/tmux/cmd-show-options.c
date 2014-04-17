@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.21 2013/10/10 12:00:23 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.22 2014/04/17 07:43:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,15 +100,17 @@ cmd_show_options_one(struct cmd *self, struct cmd_q *cmdq,
     struct options *oo, int quiet)
 {
 	struct args				*args = self->args;
+	const char				*name = args->argv[0];
 	const struct options_table_entry	*table, *oe;
 	struct options_entry			*o;
 	const char				*optval;
 
-	if (*args->argv[0] == '@') {
-		if ((o = options_find1(oo, args->argv[0])) == NULL) {
+retry:
+	if (*name == '@') {
+		if ((o = options_find1(oo, name)) == NULL) {
 			if (quiet)
 				return (CMD_RETURN_NORMAL);
-			cmdq_error(cmdq, "unknown option: %s", args->argv[0]);
+			cmdq_error(cmdq, "unknown option: %s", name);
 			return (CMD_RETURN_ERROR);
 		}
 		if (args_has(self->args, 'v'))
@@ -119,15 +121,19 @@ cmd_show_options_one(struct cmd *self, struct cmd_q *cmdq,
 	}
 
 	table = oe = NULL;
-	if (options_table_find(args->argv[0], &table, &oe) != 0) {
-		cmdq_error(cmdq, "ambiguous option: %s", args->argv[0]);
+	if (options_table_find(name, &table, &oe) != 0) {
+		cmdq_error(cmdq, "ambiguous option: %s", name);
 		return (CMD_RETURN_ERROR);
 	}
 	if (oe == NULL) {
 		if (quiet)
 		    return (CMD_RETURN_NORMAL);
-		cmdq_error(cmdq, "unknown option: %s", args->argv[0]);
+		cmdq_error(cmdq, "unknown option: %s", name);
 		return (CMD_RETURN_ERROR);
+	}
+	if (oe->style != NULL) {
+		name = oe->style;
+		goto retry;
 	}
 	if ((o = options_find1(oo, oe->name)) == NULL)
 		return (CMD_RETURN_NORMAL);
@@ -157,6 +163,8 @@ cmd_show_options_all(struct cmd *self, struct cmd_q *cmdq,
 	}
 
 	for (oe = table; oe->name != NULL; oe++) {
+		if (oe->style != NULL)
+			continue;
 		if ((o = options_find1(oo, oe->name)) == NULL)
 			continue;
 		optval = options_table_print_entry(oe, o,
