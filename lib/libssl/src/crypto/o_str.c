@@ -4,8 +4,11 @@
 
 #include <ctype.h>
 #include <e_os.h>
-#include "o_str.h"
 #include <string.h>
+
+int OPENSSL_strcasecmp(const char *str1, const char *str2);
+int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n);
+int OPENSSL_memcmp(const void *p1, const void *p2, size_t n);
 
 int
 OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
