@@ -96,23 +96,7 @@ static int wsa_init_done = 0;
 #define WSAAPI
 #endif
 
-#if 0
-static unsigned long BIO_ghbn_hits = 0L;
-static unsigned long BIO_ghbn_miss = 0L;
-
-#define GHBN_NUM	4
-static struct ghbn_cache_st {
-	char name[129];
-	struct hostent *ent;
-	unsigned long order;
-} ghbn_cache[GHBN_NUM];
-#endif
-
 static int get_ip(const char *str, unsigned char *ip);
-#if 0
-static void ghbn_free(struct hostent *a);
-static struct hostent *ghbn_dup(struct hostent *a);
-#endif
 
 int
 BIO_get_host_ip(const char *str, unsigned char *ip)
@@ -200,10 +184,6 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 				*port_ptr = 21;
 			else if (strcmp(str, "gopher") == 0)
 				*port_ptr = 70;
-#if 0
-			else if (strcmp(str, "wais") == 0)
-				*port_ptr = 21;
-#endif
 			else {
 				SYSerr(SYS_F_GETSERVBYNAME, errno);
 				ERR_add_error_data(3, "service='", str, "'");
@@ -219,10 +199,6 @@ BIO_sock_error(int sock)
 {
 	int j, i;
 	int size;
-
-#if defined(OPENSSL_SYS_BEOS_R5)
-	return 0;
-#endif
 
 	size = sizeof(int);
 	/* Note: under Windows the third parameter is of type (char *)
@@ -260,13 +236,9 @@ BIO_socket_ioctl(int fd, long type, void *arg)
 {
 	int i;
 
-#ifdef __DJGPP__
-	i = ioctl(fd, type, (char *)arg);
-#else
 #  define ARG arg
 
 	i = ioctl(fd, type, ARG);
-#endif /* __DJGPP__ */
 	if (i < 0)
 		SYSerr(SYS_F_IOCTLSOCKET, errno);
 	return (i);

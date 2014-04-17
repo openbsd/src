@@ -205,24 +205,15 @@ linebuffer_write(BIO *b, const char *in, int inl)
 				}
 			}
 
-#if 0
-			BIO_write(b->next_bio, "<*<", 3);
-#endif
 			i = BIO_write(b->next_bio, ctx->obuf, ctx->obuf_len);
 			if (i <= 0) {
 				ctx->obuf_len = orig_olen;
 				BIO_copy_next_retry(b);
-#if 0
-				BIO_write(b->next_bio, ">*>", 3);
-#endif
 				if (i < 0)
 					return ((num > 0) ? num : i);
 				if (i == 0)
 					return (num);
 			}
-#if 0
-			BIO_write(b->next_bio, ">*>", 3);
-#endif
 			if (i < ctx->obuf_len)
 				memmove(ctx->obuf, ctx->obuf + i,
 				    ctx->obuf_len - i);
@@ -232,23 +223,14 @@ linebuffer_write(BIO *b, const char *in, int inl)
 		/* Now that the save buffer is emptied, let's write the input
 		   buffer if a NL was found and there is anything to write. */
 		if ((foundnl || p - in > ctx->obuf_size) && p - in > 0) {
-#if 0
-			BIO_write(b->next_bio, "<*<", 3);
-#endif
 			i = BIO_write(b->next_bio, in, p - in);
 			if (i <= 0) {
 				BIO_copy_next_retry(b);
-#if 0
-				BIO_write(b->next_bio, ">*>", 3);
-#endif
 				if (i < 0)
 					return ((num > 0) ? num : i);
 				if (i == 0)
 					return (num);
 			}
-#if 0
-			BIO_write(b->next_bio, ">*>", 3);
-#endif
 			num += i;
 			in += i;
 			inl -= i;
@@ -334,9 +316,6 @@ linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 			if (ctx->obuf_len > 0) {
 				r = BIO_write(b->next_bio,
 				    ctx->obuf, ctx->obuf_len);
-#if 0
-				fprintf(stderr, "FLUSH %3d -> %3d\n", ctx->obuf_len, r);
-#endif
 				BIO_copy_next_retry(b);
 				if (r <= 0)
 					return ((long)r);
