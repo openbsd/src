@@ -104,6 +104,7 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
 			   void (*f)(void))
 	{
 	int idx;
+	int ret;
 	char *s = (char *)p;
 	/* Take care of the easy one first (eg. it requires no searches) */
 	if(cmd == ENGINE_CTRL_GET_FIRST_CMD_TYPE)
@@ -158,19 +159,29 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
 	case ENGINE_CTRL_GET_NAME_LEN_FROM_CMD:
 		return strlen(e->cmd_defns[idx].cmd_name);
 	case ENGINE_CTRL_GET_NAME_FROM_CMD:
-		return BIO_snprintf(s,strlen(e->cmd_defns[idx].cmd_name) + 1,
-				    "%s", e->cmd_defns[idx].cmd_name);
+		ret = snprintf(s,strlen(e->cmd_defns[idx].cmd_name) + 1,
+		    "%s", e->cmd_defns[idx].cmd_name);
+		if (ret >= (strlen(e->cmd_defns[idx].cmd_name) + 1))
+			ret = -1;
+		return ret;
 	case ENGINE_CTRL_GET_DESC_LEN_FROM_CMD:
 		if(e->cmd_defns[idx].cmd_desc)
 			return strlen(e->cmd_defns[idx].cmd_desc);
 		return strlen(int_no_description);
 	case ENGINE_CTRL_GET_DESC_FROM_CMD:
-		if(e->cmd_defns[idx].cmd_desc)
-			return BIO_snprintf(s,
-					    strlen(e->cmd_defns[idx].cmd_desc) + 1,
-					    "%s", e->cmd_defns[idx].cmd_desc);
-		return BIO_snprintf(s, strlen(int_no_description) + 1,"%s",
-				    int_no_description);
+		if(e->cmd_defns[idx].cmd_desc) {
+			ret = snprintf(s,
+			    strlen(e->cmd_defns[idx].cmd_desc) + 1,
+			    "%s", e->cmd_defns[idx].cmd_desc);
+			if (ret >= strlen(e->cmd_defns[idx].cmd_desc) + 1)
+				ret = -1;
+			return ret;
+		}
+		ret = snprintf(s, strlen(int_no_description) + 1,"%s",
+		    int_no_description);
+		if (ret >= strlen(int_no_description) + 1)
+			ret = -1;
+		return ret;
 	case ENGINE_CTRL_GET_CMD_FLAGS:
 		return e->cmd_defns[idx].cmd_flags;
 		}
