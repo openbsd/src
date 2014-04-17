@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.40 2014/04/17 09:56:09 guenther Exp $	*/
+/*	$OpenBSD: last.c,v 1.41 2014/04/17 14:49:11 okan Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -414,14 +414,11 @@ want(struct utmp *bp, int check)
 
 	if (check) {
 		/*
-		 * when uucp and ftp log in over a network, the entry in
-		 * the utmp file is the name plus their process id.  See
-		 * etc/ftpd.c and usr.bin/uucp/uucpd.c for more information.
+		 * when ftp logs in over a network, the entry in
+		 * the utmp file is the name plus its process id.
 		 */
 		if (!strncmp(bp->ut_line, "ftp", sizeof("ftp") - 1))
 			bp->ut_line[3] = '\0';
-		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
-			bp->ut_line[4] = '\0';
 	}
 
 	if (snaptime)		/* if snaptime is set, return NO */
