@@ -66,7 +66,7 @@
 #include <stdio.h>
 #ifndef OPENSSL_SYS_MSDOS
 #include <openssl/e_os2.h>
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #else
 #include <io.h>
 extern void exit();

@@ -81,7 +81,7 @@
 #include "winmain.h"
 #include "wintext.h"
 #endif
-#include OPENSSL_UNISTD
+#include <unistd.h>
 
 #undef PROG
 #define PROG s_time_main

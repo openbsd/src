@@ -187,13 +187,12 @@
 #endif
 #include <openssl/bn.h>
 
-#define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
-on Compaq platforms (at least with DEC C).
-Do not try to put it earlier, or IPv6 includes
-get screwed...
-				  */
+#define _XOPEN_SOURCE_EXTENDED	1
+/* Or gethostname won't be declared properly
+   on Compaq platforms (at least with DEC C).
+   Do not try to put it earlier, or IPv6 includes
+   get screwed... */
 
-#include OPENSSL_UNISTD
 
 #  define TEST_SERVER_CERT "../apps/server.pem"
 #  define TEST_CLIENT_CERT "../apps/client.pem"

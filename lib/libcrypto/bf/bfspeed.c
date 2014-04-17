@@ -66,7 +66,7 @@
 #include <stdio.h>
 
 #include <openssl/e_os2.h>
-#include OPENSSL_UNISTD_IO
+#include <unistd.h>
 OPENSSL_DECLARE_EXIT
 
 #ifndef OPENSSL_SYS_NETWARE
