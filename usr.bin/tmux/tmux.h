@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.450 2014/04/16 21:16:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.451 2014/04/17 07:36:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -990,10 +990,8 @@ struct winlink {
 	int              flags;
 #define WINLINK_BELL 0x1
 #define WINLINK_ACTIVITY 0x2
-#define WINLINK_CONTENT 0x4
-#define WINLINK_SILENCE 0x8
-#define WINLINK_ALERTFLAGS \
-    (WINLINK_BELL|WINLINK_ACTIVITY|WINLINK_CONTENT|WINLINK_SILENCE)
+#define WINLINK_SILENCE 0x4
+#define WINLINK_ALERTFLAGS (WINLINK_BELL|WINLINK_ACTIVITY|WINLINK_SILENCE)
 
 	RB_ENTRY(winlink) entry;
 	TAILQ_ENTRY(winlink) sentry;

@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.112 2014/04/02 17:08:23 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.113 2014/04/17 07:36:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -638,8 +638,6 @@ status_print(
 
 	if (wl->flags & WINLINK_BELL)
 		style_apply_update(gc, oo, "window-status-bell-style");
-	else if (wl->flags & WINLINK_CONTENT)
-		style_apply_update(gc, oo, "window-status-content-style");
 	else if (wl->flags & (WINLINK_ACTIVITY|WINLINK_SILENCE))
 		style_apply_update(gc, oo, "window-status-activity-style");
 

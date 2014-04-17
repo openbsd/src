@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.103 2014/03/31 21:41:07 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.104 2014/04/17 07:36:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -699,8 +699,6 @@ window_printable_flags(struct session *s, struct winlink *wl)
 		flags[pos++] = '#';
 	if (wl->flags & WINLINK_BELL)
 		flags[pos++] = '!';
-	if (wl->flags & WINLINK_CONTENT)
-		flags[pos++] = '+';
 	if (wl->flags & WINLINK_SILENCE)
 		flags[pos++] = '~';
 	if (wl == s->curw)
