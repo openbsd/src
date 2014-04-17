@@ -338,9 +338,7 @@ static unsigned char tls12_sigalgs[] = {
 	tlsext_sigalg(TLSEXT_hash_sha384)
 	tlsext_sigalg(TLSEXT_hash_sha256)
 	tlsext_sigalg(TLSEXT_hash_sha224)
-#ifndef OPENSSL_NO_SHA
 	tlsext_sigalg(TLSEXT_hash_sha1)
-#endif
 };
 
 int
@@ -2195,12 +2193,8 @@ typedef struct {
 } tls12_lookup;
 
 static tls12_lookup tls12_md[] = {
-#ifndef OPENSSL_NO_MD5
 	{NID_md5, TLSEXT_hash_md5},
-#endif
-#ifndef OPENSSL_NO_SHA
 	{NID_sha1, TLSEXT_hash_sha1},
-#endif
 	{NID_sha224, TLSEXT_hash_sha224},
 	{NID_sha256, TLSEXT_hash_sha256},
 	{NID_sha384, TLSEXT_hash_sha384},
@@ -2271,10 +2265,8 @@ const EVP_MD
 *tls12_get_hash(unsigned char hash_alg)
 {
 	switch (hash_alg) {
-#ifndef OPENSSL_NO_SHA
 	case TLSEXT_hash_sha1:
 		return EVP_sha1();
-#endif
 	case TLSEXT_hash_sha224:
 		return EVP_sha224();
 
