@@ -20,16 +20,6 @@ static sigjmp_buf ill_jmp;
  * ARM compilers support inline assembler...
  */
 void _armv7_neon_probe(void);
-unsigned int _armv7_tick(void);
-
-unsigned int
-OPENSSL_rdtsc(void)
-{
-	if (OPENSSL_armcap_P & ARMV7_TICK)
-		return _armv7_tick();
-	else
-		return 0;
-}
 
 #if defined(__GNUC__) && __GNUC__>=2
 void OPENSSL_cpuid_setup(void) __attribute__((constructor));
@@ -71,10 +61,6 @@ OPENSSL_cpuid_setup(void)
 	if (sigsetjmp(ill_jmp, 1) == 0) {
 		_armv7_neon_probe();
 		OPENSSL_armcap_P |= ARMV7_NEON;
-	}
-	if (sigsetjmp(ill_jmp, 1) == 0) {
-		_armv7_tick();
-		OPENSSL_armcap_P |= ARMV7_TICK;
 	}
 
 	sigaction (SIGILL, &ill_oact, NULL);

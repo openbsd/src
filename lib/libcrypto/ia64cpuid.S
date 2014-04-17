@@ -8,13 +8,6 @@ OPENSSL_cpuid_setup:
 { .mib;	br.ret.sptk.many	b0		};;
 .endp	OPENSSL_cpuid_setup#
 
-.global	OPENSSL_rdtsc#
-.proc	OPENSSL_rdtsc#
-OPENSSL_rdtsc:
-{ .mib;	mov			r8=ar.itc
-	br.ret.sptk.many	b0		};;
-.endp   OPENSSL_rdtsc#
-
 .global	OPENSSL_atomic_add#
 .proc	OPENSSL_atomic_add#
 .align	32

@@ -42,16 +42,6 @@ OPENSSL_atomic_add:
 	ret
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
-.globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,\@abi-omnipotent
-.align	16
-OPENSSL_rdtsc:
-	rdtsc
-	shl	\$32,%rdx
-	or	%rdx,%rax
-	ret
-.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
-
 .globl	OPENSSL_ia32_cpuid
 .type	OPENSSL_ia32_cpuid,\@abi-omnipotent
 .align	16

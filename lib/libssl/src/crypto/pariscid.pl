@@ -34,18 +34,6 @@ OPENSSL_cpuid_setup
 	nop
 	.PROCEND
 
-	.EXPORT	OPENSSL_rdtsc,ENTRY
-	.ALIGN	8
-OPENSSL_rdtsc
-	.PROC
-	.CALLINFO	NO_CALLS
-	.ENTRY
-	mfctl	%cr16,$rv
-	bv	($rp)
-	.EXIT
-	nop
-	.PROCEND
-
 	.EXPORT	OPENSSL_wipe_cpu,ENTRY
 	.ALIGN	8
 OPENSSL_wipe_cpu

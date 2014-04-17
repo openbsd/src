@@ -11,13 +11,6 @@ _armv7_neon_probe:
 	.word	0xe12fff1e	@ bx	lr
 .size	_armv7_neon_probe,.-_armv7_neon_probe
 
-.global	_armv7_tick
-.type	_armv7_tick,%function
-_armv7_tick:
-	mrc	p15,0,r0,c9,c13,0
-	.word	0xe12fff1e	@ bx	lr
-.size	_armv7_tick,.-_armv7_tick
-
 .global	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,%function
 OPENSSL_atomic_add:

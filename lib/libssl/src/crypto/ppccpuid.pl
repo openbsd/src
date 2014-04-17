@@ -84,15 +84,6 @@ Ladd:	lwarx	r5,0,r3
 	.long	0
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
-
-.globl	.OPENSSL_rdtsc
-.align	4
-.OPENSSL_rdtsc:
-	mftb	r3
-	mftbu	r4
-	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

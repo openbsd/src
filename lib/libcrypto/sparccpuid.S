@@ -215,23 +215,6 @@ OPENSSL_atomic_add:
 	sra	%o0,%g0,%o0	! we return signed int, remember?
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
-.global	_sparcv9_rdtick
-.align	32
-_sparcv9_rdtick:
-	subcc	%g0,1,%o0
-	.word	0x91408000	!rd	%ccr,%o0
-	cmp	%o0,0x99
-	bne	.notick
-	xor	%o0,%o0,%o0
-	.word	0x91410000	!rd	%tick,%o0
-	retl
-	.word	0x93323020	!srlx	%o0,32,%o1
-.notick:
-	retl
-	xor	%o1,%o1,%o1
-.type	_sparcv9_rdtick,#function
-.size	_sparcv9_rdtick,.-_sparcv9_rdtick
-
 .global	_sparcv9_vis1_probe
 .align	8
 _sparcv9_vis1_probe:

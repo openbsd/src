@@ -143,17 +143,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &external_label("OPENSSL_ia32cap_P");
 
-&function_begin_B("OPENSSL_rdtsc","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
-	&xor	("eax","eax");
-	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
-	&bt	(&DWP(0,"ecx"),4);
-	&jnc	(&label("notsc"));
-	&rdtsc	();
-&set_label("notsc");
-	&ret	();
-&function_end_B("OPENSSL_rdtsc");
-
 # This works in Ring 0 only [read DJGPP+MS-DOS+privileged DPMI host],
 # but it's safe to call it on any [supported] 32-bit platform...
 # Just check for [non-]zero return value...

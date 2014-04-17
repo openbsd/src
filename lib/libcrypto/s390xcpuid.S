@@ -16,15 +16,6 @@ OPENSSL_s390x_facilities:
 	br	%r14
 .size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
 
-.globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,@function
-.align	16
-OPENSSL_rdtsc:
-	stck	16(%r15)
-	lg	%r2,16(%r15)
-	br	%r14
-.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
-
 .globl	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,@function
 .align	16

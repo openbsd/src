@@ -77,13 +77,4 @@ OPENSSL_atomic_add:
 	addl	$0,$17,$0
 	ret	($26)
 .end	OPENSSL_atomic_add
-
-.globl	OPENSSL_rdtsc
-.ent	OPENSSL_rdtsc
-OPENSSL_rdtsc:
-	.frame	$30,0,$26
-	.prologue 0
-	rpcc	$0
-	ret	($26)
-.end	OPENSSL_rdtsc
 ___
