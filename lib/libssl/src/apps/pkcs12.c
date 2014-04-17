@@ -692,7 +692,7 @@ int MAIN(int argc, char **argv)
     if(passin) free(passin);
     if(passout) free(passout);
     apps_shutdown();
-    exit(ret);
+    return(ret);
 }
 
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,

@@ -1097,7 +1097,7 @@ end:
 	if(passargout && passout) free(passout);
 	OBJ_cleanup();
 	apps_shutdown();
-	exit(ex);
+	return(ex);
 	}
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,

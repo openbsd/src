@@ -2522,7 +2522,7 @@ end:
 #endif
 
 	apps_shutdown();
-	exit(mret);
+	return(mret);
 	}
 
 static void print_message(const char *s, long num, int length)

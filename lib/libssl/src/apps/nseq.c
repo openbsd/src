@@ -102,7 +102,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-in file  input file\n");
 		BIO_printf (bio_err, "-out file output file\n");
 		BIO_printf (bio_err, "-toseq    output NS Sequence file\n");
-		exit(1);
+		return(1);
 	}
 
 	if (infile) {

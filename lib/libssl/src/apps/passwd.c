@@ -497,6 +497,6 @@ err:
 int MAIN(int argc, char **argv)
 	{
 	fputs("Program not available.\n", stderr)
-	exit(1);
+	return(1);
 	}
 #endif
