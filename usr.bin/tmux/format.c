@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.43 2014/04/17 07:36:45 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.44 2014/04/17 15:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -194,10 +194,10 @@ int
 format_replace(struct format_tree *ft, const char *key, size_t keylen,
     char **buf, size_t *len, size_t *off)
 {
-	char		*copy, *copy0, *endptr, *ptr, *saved;
+	char		*copy, *copy0, *endptr, *ptr, *saved, *trimmed;
 	const char	*value;
 	size_t		 valuelen;
-	u_long		 limit = ULONG_MAX;
+	u_long		 limit = 0;
 
 	/* Make a copy of the key. */
 	copy0 = copy = xmalloc(keylen + 1);
@@ -256,11 +256,14 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 			value = "";
 		saved = NULL;
 	}
-	valuelen = strlen(value);
 
 	/* Truncate the value if needed. */
-	if (valuelen > limit)
-		valuelen = limit;
+	if (limit != 0) {
+		value = trimmed = utf8_trimcstr(value, limit);
+		free(saved);
+		saved = trimmed;
+	}
+	valuelen = strlen(value);
 
 	/* Expand the buffer and copy in the value. */
 	while (*len - *off < valuelen + 1) {
