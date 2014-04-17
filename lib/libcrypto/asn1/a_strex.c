@@ -149,7 +149,7 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes, ch
 		return 2;
 	}
 	if(chflgs & (ASN1_STRFLGS_ESC_CTRL|ASN1_STRFLGS_ESC_MSB)) {
-		(void) snprintf(tmphex, 11, "\\%02X", chtmp);
+		(void) snprintf(tmphex, sizeof tmphex, "\\%02X", chtmp);
 		if(!io_ch(arg, tmphex, 3)) return -1;
 		return 3;
 	}
