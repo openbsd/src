@@ -158,15 +158,9 @@ extern BIO *bio_err;
 
 #endif
 
-#ifndef OPENSSL_SYS_NETWARE
 #include <signal.h>
-#endif
 
-#ifdef SIGPIPE
 #define do_pipe_sig()	signal(SIGPIPE,SIG_IGN)
-#else
-#define do_pipe_sig()
-#endif
 
 #ifdef OPENSSL_NO_COMP
 #define zlib_cleanup()
@@ -204,12 +198,7 @@ extern BIO *bio_err;
 #  endif
 #endif
 
-#ifdef OPENSSL_SYSNAME_WIN32
-#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
-#else
 #  define openssl_fdset(a,b) FD_SET(a, b)
-#endif
-
 
 typedef struct args_st {
 	char **data;
