@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.10 2013/09/19 16:12:01 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.11 2014/04/17 19:06:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -46,4 +46,3 @@ extern History		*hist;
 extern HistEvent	 he;
 extern char	*cmdexpr;
 extern struct termios ttysaved;
-extern bool		interactive;
