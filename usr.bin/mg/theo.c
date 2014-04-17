@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.135 2014/04/15 21:55:38 tedu Exp $	*/
+/*	$OpenBSD: theo.c,v 1.136 2014/04/17 18:13:26 sthen Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -178,6 +178,7 @@ static const char *talk[] = {
 	"Shit should not be shared.",
 	"the randomization in this entire codebase is a grand experiment in stupid",
 	"My mailbox is full of shock.",
+	"my integer overflow spidey senses are tingling.",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
