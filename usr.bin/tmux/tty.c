@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.167 2014/04/17 12:57:28 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.168 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -548,8 +548,8 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 }
 
 void
-tty_emulate_repeat(
-    struct tty *tty, enum tty_code_code code, enum tty_code_code code1, u_int n)
+tty_emulate_repeat(struct tty *tty, enum tty_code_code code,
+    enum tty_code_code code1, u_int n)
 {
 	if (tty_term_has(tty->term, code))
 		tty_putcode1(tty, code, n);

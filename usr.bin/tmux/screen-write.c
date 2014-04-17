@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.68 2014/01/28 23:07:09 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.69 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -65,7 +65,8 @@ screen_write_reset(struct screen_write_ctx *ctx)
 
 /* Write character. */
 void
-screen_write_putc(struct screen_write_ctx *ctx, struct grid_cell *gc, u_char ch)
+screen_write_putc(struct screen_write_ctx *ctx, struct grid_cell *gc,
+    u_char ch)
 {
 	grid_cell_one(gc, ch);
 	screen_write_cell(ctx, gc);

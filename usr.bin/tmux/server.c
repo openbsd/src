@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.111 2013/10/20 17:28:43 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.112 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -216,7 +216,7 @@ server_loop(void)
 	}
 }
 
-/* Check if the server should be shutting down (no more clients or sessions). */
+/* Check if the server should exit (no more clients or sessions). */
 int
 server_should_shutdown(void)
 {

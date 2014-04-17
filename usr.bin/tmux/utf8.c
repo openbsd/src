@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.9 2014/04/02 18:12:18 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.10 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -247,8 +247,7 @@ utf8_append(struct utf8_data *utf8data, u_char ch)
 
 /* Check if two width tree entries overlap. */
 int
-utf8_overlap(
-    struct utf8_width_entry *item1, struct utf8_width_entry *item2)
+utf8_overlap(struct utf8_width_entry *item1, struct utf8_width_entry *item2)
 {
 	if (item1->first >= item2->first && item1->first <= item2->last)
 		return (1);

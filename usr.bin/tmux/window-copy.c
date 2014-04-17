@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.105 2014/04/11 19:35:54 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.106 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2033,7 +2033,8 @@ window_copy_cursor_next_word(struct window_pane *wp, const char *separators)
 }
 
 void
-window_copy_cursor_next_word_end(struct window_pane *wp, const char *separators)
+window_copy_cursor_next_word_end(struct window_pane *wp,
+    const char *separators)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct options			*oo = &wp->window->options;
@@ -2084,7 +2085,8 @@ window_copy_cursor_next_word_end(struct window_pane *wp, const char *separators)
 
 /* Move to the previous place where a word begins. */
 void
-window_copy_cursor_previous_word(struct window_pane *wp, const char *separators)
+window_copy_cursor_previous_word(struct window_pane *wp,
+    const char *separators)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	u_int				 px, py;

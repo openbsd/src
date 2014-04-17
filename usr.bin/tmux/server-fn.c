@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.75 2014/02/14 13:59:01 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.76 2014/04/17 14:45:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -291,7 +291,8 @@ server_kill_window(struct window *w)
 
 int
 server_link_window(struct session *src, struct winlink *srcwl,
-    struct session *dst, int dstidx, int killflag, int selectflag, char **cause)
+    struct session *dst, int dstidx, int killflag, int selectflag,
+    char **cause)
 {
 	struct winlink		*dstwl;
 	struct session_group	*srcsg, *dstsg;
