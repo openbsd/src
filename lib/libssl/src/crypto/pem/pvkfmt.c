@@ -753,8 +753,10 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 			return NULL;
 			}
 		if (!derive_pvk_key(keybuf, p, saltlen,
-			    (unsigned char *)psbuf, inlen))
+			    (unsigned char *)psbuf, inlen)) {
+			free(enctmp);
 			return NULL;
+		}
 		p += saltlen;
 		/* Copy BLOBHEADER across, decrypt rest */
 		memcpy(enctmp, p, 8);

@@ -823,10 +823,14 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
 		}
 	} else tmpval = NULL;
 	mhdr = (MIME_HEADER *) malloc(sizeof(MIME_HEADER));
-	if(!mhdr) return NULL;
+	if (!mhdr)
+		return NULL;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
-	if(!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp))) return NULL;
+	if (!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp))) {
+		free(mhdr);
+		return NULL;
+	}
 	return mhdr;
 }
 		

@@ -187,8 +187,10 @@ X509_STORE *X509_STORE_new(void)
 	ret->verify=0;
 	ret->verify_cb=0;
 
-	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
+	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
+		free(ret);
 		return NULL;
+	}
 
 	ret->get_issuer = 0;
 	ret->check_issued = 0;

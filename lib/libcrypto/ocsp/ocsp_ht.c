@@ -167,16 +167,24 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 	else
 		rctx->iobuflen = OCSP_MAX_LINE_LEN;
 	rctx->iobuf = malloc(rctx->iobuflen);
-	if (!rctx->iobuf)
+	if (!rctx->iobuf) {
+		free(rctx);
 		return 0;
+	}
 	if (!path)
 		path = "/";
 
-        if (BIO_printf(rctx->mem, post_hdr, path) <= 0)
+        if (BIO_printf(rctx->mem, post_hdr, path) <= 0) {
+		free(rctx->iobuf);
+		free(rctx);
 		return 0;
+	}
 
-	if (req && !OCSP_REQ_CTX_set1_req(rctx, req))
+	if (req && !OCSP_REQ_CTX_set1_req(rctx, req)) {
+		free(rctx->iobuf);
+		free(rctx);
 		return 0;
+	}
 
 	return rctx;
 	}
