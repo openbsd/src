@@ -8,17 +8,6 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 
-/* Later versions of DEC C has started to add lnkage information to certain
- * functions, which makes it tricky to use them as values to regular function
- * pointers.  One way is to define a macro that takes care of casting them
- * correctly.
- */
-#ifdef OPENSSL_SYS_VMS_DECC
-# define OPENSSL_strcmp (int (*)(const char *,const char *))strcmp
-#else
-# define OPENSSL_strcmp strcmp
-#endif
-
 /* I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.
  */
@@ -91,12 +80,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 			return(0);
 			}
 		name_funcs->hash_func = lh_strhash;
-		name_funcs->cmp_func = OPENSSL_strcmp;
-		name_funcs->free_func = 0; /* NULL is often declared to
-						* ((void *)0), which according
-						* to Compaq C is not really
-						* compatible with a function
-						* pointer.	-- Richard Levitte*/
+		name_funcs->cmp_func = strcmp;
+		name_funcs->free_func = NULL;
 		MemCheck_off();
 		sk_NAME_FUNCS_push(name_funcs_stack,name_funcs);
 		MemCheck_on();
