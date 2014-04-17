@@ -553,9 +553,6 @@ char *CONF_get1_default_config_file(void)
 		return BUF_strdup(file);
 
 	len = strlen(X509_get_default_cert_area());
-#ifndef OPENSSL_SYS_VMS
-	len++;
-#endif
 	len += strlen(OPENSSL_CONF);
 
 	file = malloc(len + 1);
@@ -563,9 +560,6 @@ char *CONF_get1_default_config_file(void)
 	if (!file)
 		return NULL;
 	BUF_strlcpy(file,X509_get_default_cert_area(),len + 1);
-#ifndef OPENSSL_SYS_VMS
-	BUF_strlcat(file,"/",len + 1);
-#endif
 	BUF_strlcat(file,OPENSSL_CONF,len + 1);
 
 	return file;

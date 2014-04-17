@@ -186,11 +186,7 @@ static int def_load(CONF *conf, const char *name, long *line)
 	int ret;
 	BIO *in=NULL;
 
-#ifdef OPENSSL_SYS_VMS
-	in=BIO_new_file(name, "r");
-#else
 	in=BIO_new_file(name, "rb");
-#endif
 	if (in == NULL)
 		{
 		if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE)

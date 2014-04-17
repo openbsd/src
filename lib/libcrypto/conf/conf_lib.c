@@ -93,11 +93,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
 	LHASH_OF(CONF_VALUE) *ltmp;
 	BIO *in=NULL;
 
-#ifdef OPENSSL_SYS_VMS
-	in=BIO_new_file(file, "r");
-#else
 	in=BIO_new_file(file, "rb");
-#endif
 	if (in == NULL)
 		{
 		CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
