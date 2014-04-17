@@ -346,36 +346,6 @@ static const SHA_LONG64 K512[80] = {
 				: "=r"(ret)		\
 				: "r"(a),"K"(n)); ret;	})
 #  endif
-# elif defined(_MSC_VER)
-#  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */
-#   pragma intrinsic(_rotr64)
-#   define ROTR(a,n)	_rotr64((a),n)
-#  endif
-#  if defined(_M_IX86) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#   if defined(I386_ONLY)
-    static SHA_LONG64 __fastcall __pull64be(const void *x)
-    {	_asm	mov	edx, [ecx + 0]
-	_asm	mov	eax, [ecx + 4]
-	_asm	xchg	dh,dl
-	_asm	xchg	ah,al
-	_asm	rol	edx,16
-	_asm	rol	eax,16
-	_asm	xchg	dh,dl
-	_asm	xchg	ah,al
-    }
-#   else
-    static SHA_LONG64 __fastcall __pull64be(const void *x)
-    {	_asm	mov	edx, [ecx + 0]
-	_asm	mov	eax, [ecx + 4]
-	_asm	bswap	edx
-	_asm	bswap	eax
-    }
-#   endif
-#   define PULL64(x) __pull64be(&(x))
-#   if _MSC_VER<=1200
-#    pragma inline_depth(0)
-#   endif
-#  endif
 # endif
 #endif
 

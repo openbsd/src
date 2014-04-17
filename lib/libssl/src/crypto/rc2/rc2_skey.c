@@ -85,10 +85,6 @@ static const unsigned char key_table[256]={
 	0xfe,0x7f,0xc1,0xad,
 	};
 
-#if defined(_MSC_VER) && defined(_ARM_)
-#pragma optimize("g",off)
-#endif
-
 /* It has come to my attention that there are 2 versions of the RC2
  * key schedule.  One which is normal, and anther which has a hook to
  * use a reduced key length.
@@ -140,7 +136,3 @@ void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
 	for (i=127; i>=0; i-=2)
 		*(ki--)=((k[i]<<8)|k[i-1])&0xffff;
 	}
-
-#if defined(_MSC_VER)
-#pragma optimize("",on)
-#endif

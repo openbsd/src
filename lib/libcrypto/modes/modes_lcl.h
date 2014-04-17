@@ -60,18 +60,6 @@ typedef unsigned char u8;
 			: "=r"(ret) : "r"((u32)(x)));	\
 			ret;				})
 # endif
-#elif defined(_MSC_VER)
-# if _MSC_VER>=1300
-#  pragma intrinsic(_byteswap_uint64,_byteswap_ulong)
-#  define BSWAP8(x)	_byteswap_uint64((u64)(x))
-#  define BSWAP4(x)	_byteswap_ulong((u32)(x))
-# elif defined(_M_IX86)
-   __inline u32 _bswap4(u32 val) {
-	_asm mov eax,val
-	_asm bswap eax
-   }
-#  define BSWAP4(x)	_bswap4(x)
-# endif
 #endif
 #endif
 

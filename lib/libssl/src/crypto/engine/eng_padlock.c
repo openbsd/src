@@ -101,8 +101,7 @@
    compiler choice is limited to GCC and Microsoft C. */
 #undef COMPILE_HW_PADLOCK
 #if !defined(I386_ONLY) && !defined(OPENSSL_NO_INLINE_ASM)
-# if (defined(__GNUC__) && (defined(__i386__) || defined(__i386))) || \
-     (defined(_MSC_VER) && defined(_M_IX86))
+# if (defined(__GNUC__) && (defined(__i386__) || defined(__i386)))
 #  define COMPILE_HW_PADLOCK
 # endif
 #endif
@@ -499,136 +498,6 @@ padlock_memcpy(void *dst,const void *src,size_t n)
 
 	return dst;
 }
-
-#elif defined(_MSC_VER)
-/*
- * Unlike GCC these are real functions. In order to minimize impact
- * on performance we adhere to __fastcall calling convention in
- * order to get two first arguments passed through %ecx and %edx.
- * Which kind of suits very well, as instructions in question use
- * both %ecx and %edx as input:-)
- */
-#define REP_XCRYPT(code)		\
-	_asm _emit 0xf3			\
-	_asm _emit 0x0f _asm _emit 0xa7	\
-	_asm _emit code
-
-/* BIG FAT WARNING: 
- * 	The offsets used with 'lea' instructions
- * 	describe items of the 'padlock_cipher_data'
- * 	structure.
- */
-#define PADLOCK_XCRYPT_ASM(name,code)	\
-static void * __fastcall 		\
-	name (size_t cnt, void *cdata,	\
-	void *outp, const void *inp)	\
-{	_asm	mov	eax,edx		\
-	_asm	lea	edx,[eax+16]	\
-	_asm	lea	ebx,[eax+32]	\
-	_asm	mov	edi,outp	\
-	_asm	mov	esi,inp		\
-	REP_XCRYPT(code)		\
-}
-
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ecb,0xc8)
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cbc,0xd0)
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_cfb,0xe0)
-PADLOCK_XCRYPT_ASM(padlock_xcrypt_ofb,0xe8)
-
-static int __fastcall
-padlock_xstore(void *outp,unsigned int code)
-{	_asm	mov	edi,ecx
-	_asm _emit 0x0f _asm _emit 0xa7 _asm _emit 0xc0
-}
-
-static void __fastcall
-padlock_reload_key(void)
-{	_asm pushfd _asm popfd		}
-
-static void __fastcall
-padlock_verify_context(void *cdata)
-{	_asm	{
-		pushfd
-		bt	DWORD PTR[esp],30
-		jnc	skip
-		cmp	ecx,padlock_saved_context
-		je	skip
-		popfd
-		sub	esp,4
-	skip:	add	esp,4
-		mov	padlock_saved_context,ecx
-		}
-}
-
-static int
-padlock_available(void)
-{	_asm	{
-		pushfd
-		pop	eax
-		mov	ecx,eax
-		xor	eax,1<<21
-		push	eax
-		popfd
-		pushfd
-		pop	eax
-		xor	eax,ecx
-		bt	eax,21
-		jnc	noluck
-		mov	eax,0
-		cpuid
-		xor	eax,eax
-		cmp	ebx,'tneC'
-		jne	noluck
-		cmp	edx,'Hrua'
-		jne	noluck
-		cmp	ecx,'slua'
-		jne	noluck
-		mov	eax,0xC0000000
-		cpuid
-		mov	edx,eax
-		xor	eax,eax
-		cmp	edx,0xC0000001
-		jb	noluck
-		mov	eax,0xC0000001
-		cpuid
-		xor	eax,eax
-		bt	edx,6
-		jnc	skip_a
-		bt	edx,7
-		jnc	skip_a
-		mov	padlock_use_ace,1
-		inc	eax
-	skip_a:	bt	edx,2
-		jnc	skip_r
-		bt	edx,3
-		jnc	skip_r
-		mov	padlock_use_rng,1
-		inc	eax
-	skip_r:
-	noluck:
-		}
-}
-
-static void __fastcall
-padlock_bswapl(void *key)
-{	_asm	{
-		pushfd
-		cld
-		mov	esi,ecx
-		mov	edi,ecx
-		mov	ecx,60
-	up:	lodsd
-		bswap	eax
-		stosd
-		loop	up
-		popfd
-		}
-}
-
-/* MS actually specifies status of Direction Flag and compiler even
- * manages to compile following as 'rep movsd' all by itself...
- */
-#define padlock_memcpy(o,i,n) ((unsigned char *)memcpy((o),(i),(n)&~3U))
 #endif
 
 /* ===== AES encryption/decryption ===== */

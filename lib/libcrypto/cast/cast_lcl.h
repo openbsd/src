@@ -152,11 +152,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
-#define ROTL(a,n)     (_lrotl(a,n))
-#else
 #define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))
-#endif
 
 #define C_M    0x3fc
 #define C_0    22L
