@@ -531,9 +531,6 @@ unsigned long *OPENSSL_ia32cap_loc(void);
 #define OPENSSL_ia32cap (*(OPENSSL_ia32cap_loc()))
 int OPENSSL_isservice(void);
 
-int FIPS_mode(void);
-int FIPS_mode_set(int r);
-
 void OPENSSL_init(void);
 
 #define fips_md_init(alg) fips_md_init_ctx(alg, alg)
