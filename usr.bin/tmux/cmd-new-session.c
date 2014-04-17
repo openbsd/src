@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.57 2014/02/23 00:53:06 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.58 2014/04/17 11:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,7 +20,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.48 2014/04/17 07:55:43 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.49 2014/04/17 11:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,8 +28,8 @@
  * options. These tables are the master copy of the options with their real
  * (user-visible) types, range limits and default values. At start these are
  * copied into the runtime global options trees (which only has number and
- * string types). These tables are then used to loop up the real type when
- * the user sets an option or its value needs to be shown.
+ * string types). These tables are then used to look up the real type when the
+ * user sets an option or its value needs to be shown.
  */
 
 /* Choice option type lists. */

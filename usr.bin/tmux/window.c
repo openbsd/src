@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.105 2014/04/17 09:13:13 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.106 2014/04/17 11:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,14 +17,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <paths.h>
-#include <pwd.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

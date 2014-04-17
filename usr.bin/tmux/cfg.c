@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.30 2013/10/20 17:28:43 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.31 2014/04/17 11:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>
