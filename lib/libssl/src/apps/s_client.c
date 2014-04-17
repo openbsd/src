@@ -143,6 +143,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <unistd.h>
 #include <openssl/e_os2.h>
 #include <netdb.h>
 #include <sys/socket.h>
