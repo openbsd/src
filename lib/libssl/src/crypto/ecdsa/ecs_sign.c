@@ -84,7 +84,6 @@ int ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen, unsigned char
 	EC_KEY *eckey)
 {
 	ECDSA_SIG *s;
-	RAND_seed(dgst, dlen);
 	s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
 	if (s == NULL)
 	{
