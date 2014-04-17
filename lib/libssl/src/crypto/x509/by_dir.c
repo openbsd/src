@@ -336,11 +336,8 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			hent = NULL;
 		}
 		for (;;) {
-			char c = '/';
-
-			(void) snprintf(b->data, b->max,
-			"%s%c%08lx.%s%d", ent->dir, c, h,
-			postfix, k);
+			(void) snprintf(b->data, b->max, "%s/%08lx.%s%d",
+			    ent->dir, h, postfix, k);
 
 #ifndef OPENSSL_NO_POSIX_IO
 			{
@@ -363,8 +360,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			k++;
 		}
 
-		/* we have added it to the cache so now pull
-		 * it out again */
+		/* we have added it to the cache so now pull it out again */
 		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 		j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
 		if (j != -1)
@@ -372,12 +368,11 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			else tmp = NULL;
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
-
 		/* If a CRL, update the last file suffix added for this */
-
 		if (type == X509_LU_CRL) {
 			CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-			/* Look for entry again in case another thread added
+			/*
+			 * Look for entry again in case another thread added
 			 * an entry first.
 			 */
 			if (!hent) {
@@ -408,9 +403,10 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			ok = 1;
 			ret->type = tmp->type;
 			memcpy(&ret->data, &tmp->data, sizeof(ret->data));
-			/* If we were going to up the reference count,
-			 * we would need to do it on a perl 'type'
-			 * basis */
+			/*
+			 * If we were going to up the reference count,
+			 * we would need to do it on a perl 'type' basis
+			 */
 	/*		CRYPTO_add(&tmp->data.x509->references,1,
 				CRYPTO_LOCK_X509);*/
 			goto finish;
