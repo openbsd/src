@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2014/04/17 16:17:41 tedu Exp $
+# $OpenBSD: Makefile,v 1.19 2014/04/17 18:11:46 miod Exp $
 
 LIB=	crypto
 
@@ -426,109 +426,11 @@ obj_mac.h: ${SSL_OBJECTS}/objects.h ${SSL_OBJECTS}/obj_mac.num ${SSL_OBJECTS}/ob
 obj_dat.h: obj_mac.h
 	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
 
-.if (${MACHINE_ARCH} == "i386")
-SRCS+= wp_block.c
-SRCS+= bf_cbc.c	
-CFLAGS+= -DOPENSSL_BN_ASM_PART_WORDS
-CFLAGS+= -DOPENSSL_IA32_SSE2
-CFLAGS+= -DOPENSSL_BN_ASM_MONT
-CFLAGS+= -DOPENSSL_BN_ASM_GF2m
-CFLAGS+= -DSHA1_ASM
-CFLAGS+= -DSHA256_ASM
-CFLAGS+= -DSHA512_ASM
-CFLAGS+= -DMD5_ASM
-CFLAGS+= -DRMD160_ASM
-CFLAGS+= -DAES_ASM
-CFLAGS+= -DVPAES_ASM
-CFLAGS+= -DWHIRLPOOL_ASM
-CFLAGS+= -DGHASH_ASM
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-SSLASM=\
-	aes aes-586 \
-	aes vpaes-x86 \
-	aes aesni-x86 \
-	bf bf-586 \
-	bn bn-586 \
-	bn co-586 \
-	bn x86-mont \
-	bn x86-gf2m \
-	des crypt586 \
-	des des-586 \
-	md5 md5-586 \
-	modes ghash-x86 \
-	rc4 rc4-586 \
-	ripemd rmd-586 \
-	sha sha1-586 \
-	sha sha256-586 \
-	sha sha512-586 \
-	whrlpool wp-mmx
-.for dir f in ${SSLASM}
-SRCS+=	${f}.S
-GENERATED+=${f}.S
-${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
-	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm -I${LCRYPTO_SRC}/${dir}/asm \
-		${LCRYPTO_SRC}/${dir}/asm/${f}.pl \
-		    openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
-.endfor
-SRCS+=	x86cpuid.S
-GENERATED+=x86cpuid.S
-x86cpuid.S: ${LCRYPTO_SRC}/x86cpuid.pl ${LCRYPTO_SRC}/perlasm/x86gas.pl
-	/usr/bin/perl -I${LCRYPTO_SRC}/perlasm ${LCRYPTO_SRC}/x86cpuid.pl \
-		openbsd-elf ${CFLAGS} 386 ${PICFLAG} > ${.TARGET}
-.elif (${MACHINE_ARCH} == "amd64")
-SRCS+= bf_enc.c des_enc.c fcrypt_b.c
-SRCS+= x86_64-gcc.c
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-CFLAGS+= -DOPENSSL_IA32_SSE2
-CFLAGS+= -DOPENSSL_BN_ASM_MONT
-CFLAGS+= -DOPENSSL_BN_ASM_MONT5
-CFLAGS+= -DOPENSSL_BN_ASM_GF2m
-CFLAGS+= -DSHA1_ASM
-CFLAGS+= -DSHA256_ASM
-CFLAGS+= -DSHA512_ASM
-CFLAGS+= -DMD5_ASM
-CFLAGS+= -DAES_ASM
-CFLAGS+= -DVPAES_ASM
-CFLAGS+= -DBSAES_ASM
-CFLAGS+= -DWHIRLPOOL_ASM
-CFLAGS+= -DGHASH_ASM
-SSLASM=\
-	aes aes-x86_64 \
-	aes aesni-x86_64 \
-	aes aesni-sha1-x86_64 \
-	aes bsaes-x86_64 \
-	aes vpaes-x86_64 \
-	bn x86_64-mont \
-	bn x86_64-mont5 \
-	bn x86_64-gf2m \
-	bn modexp512-x86_64 \
-	md5 md5-x86_64 \
-	modes ghash-x86_64 \
-	rc4 rc4-x86_64 \
-	rc4 rc4-md5-x86_64 \
-	sha sha1-x86_64 \
-	whrlpool wp-x86_64
-.for dir f in ${SSLASM}
-SRCS+=	${f}.S
-GENERATED+=${f}.S
-${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl
-	(cd ${LCRYPTO_SRC}/${dir} ; \
-		/usr/bin/perl ./asm/${f}.pl openbsd-elf) > ${.TARGET}
-.endfor
-SRCS+=	x86_64cpuid.S sha256-x86_64.S sha512-x86_64.S
-GENERATED+=x86_64cpuid.S sha256-x86_64.S sha512-x86_64.S
-x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl
-	(cd ${LCRYPTO_SRC}/${dir} ; \
-		/usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}
-sha256-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
-	cd ${LCRYPTO_SRC}/sha/asm ; \
-		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
-sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl
-	cd ${LCRYPTO_SRC}/sha/asm ; \
-		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
-.else
-# XXX lots more asm we can turn on for other platforms. Shouldn't require
-# major cranks.
+.if exists (${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
+.include "${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc"
+.endif
+
+.if empty (SSLASM)
 CFLAGS+=-DOPENSSL_NO_ASM
 SRCS+= mem_clr.c
 SRCS+= aes_core.c aes_cbc.c 
