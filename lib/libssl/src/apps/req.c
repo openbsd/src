@@ -147,9 +147,6 @@ static int check_end(const char *str, const char *end);
 static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 					long *pkeylen, char **palgnam,
 					ENGINE *keygen_engine);
-#ifndef MONOLITH
-static char *default_config_file=NULL;
-#endif
 static CONF *req_conf=NULL;
 static int batch=0;
 
@@ -189,10 +186,6 @@ int MAIN(int argc, char **argv)
 	int multirdn = 0;
 	const EVP_MD *md_alg=NULL,*digest=NULL;
 	unsigned long chtype = MBSTRING_ASC;
-#ifndef MONOLITH
-	char *to_free;
-	long errline;
-#endif
 
 	req_conf = NULL;
 #ifndef OPENSSL_NO_DES
@@ -455,18 +448,6 @@ bad:
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-
-#ifndef MONOLITH /* else this has happened in openssl.c (global `config') */
-	/* Lets load up our environment a little */
-	p=getenv("OPENSSL_CONF");
-	if (p == NULL)
-		p=getenv("SSLEAY_CONF");
-	if (p == NULL)
-		p=to_free=make_config_name();
-	default_config_file=p;
-	config=NCONF_new(NULL);
-	i=NCONF_load(config, p, &errline);
-#endif
 
 	if (template != NULL)
 		{
@@ -1066,10 +1047,6 @@ loop:
 		}
 	ex=0;
 end:
-#ifndef MONOLITH
-	if(to_free)
-		free(to_free);
-#endif
 	if (ex)
 		{
 		ERR_print_errors(bio_err);

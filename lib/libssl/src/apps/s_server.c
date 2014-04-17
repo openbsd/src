@@ -199,9 +199,7 @@ static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
 #endif
 
-#ifdef MONOLITH
 static void s_server_init(void);
-#endif
 
 #ifndef OPENSSL_NO_DH
 static unsigned char dh512_p[]={
@@ -404,7 +402,6 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 
 #endif
 
-#ifdef MONOLITH
 static void s_server_init(void)
 	{
 	accept_socket=-1;
@@ -435,7 +432,6 @@ static void s_server_init(void)
 	engine_id=NULL;
 #endif
 	}
-#endif
 
 static void sv_usage(void)
 	{
@@ -811,9 +807,7 @@ int MAIN(int argc, char *argv[])
 	local_argv=argv;
 
 	apps_startup();
-#ifdef MONOLITH
 	s_server_init();
-#endif
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);

@@ -145,12 +145,8 @@ static void list_cipher(BIO *out);
 static void list_md(BIO *out);
 char *default_config_file=NULL;
 
-/* Make sure there is only one when MONOLITH is defined */
-#ifdef MONOLITH
 CONF *config=NULL;
 BIO *bio_err=NULL;
-#endif
-
 
 static void lock_dbg_cb(int mode, int type, const char *file, int line)
 	{

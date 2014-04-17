@@ -137,26 +137,10 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
                                        * (see e_os.h).  The string is
                                        * destroyed! */
 
-#ifndef MONOLITH
-
-#define MAIN(a,v)	main(a,v)
-
-#ifndef NON_MAIN
-CONF *config = NULL;
-BIO *bio_err = NULL;
-#else
-extern CONF *config;
-extern BIO *bio_err;
-#endif
-
-#else
-
 #define MAIN(a,v)	PROG(a,v)
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;
-
-#endif
 
 #include <signal.h>
 
@@ -168,7 +152,7 @@ extern BIO *bio_err;
 #define zlib_cleanup() COMP_zlib_cleanup()
 #endif
 
-#if defined(MONOLITH) && !defined(OPENSSL_C)
+#if !defined(OPENSSL_C)
 #  define apps_startup() \
 		do_pipe_sig()
 #  define apps_shutdown()
