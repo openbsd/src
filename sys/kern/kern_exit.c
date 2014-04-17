@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.138 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.139 2014/04/17 14:52:50 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -158,12 +158,10 @@ exit1(struct proc *p, int rv, int flags)
 	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
-		while (!TAILQ_EMPTY(&pr->ps_threads))
+		while (pr->ps_refcnt > 1)
 			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
 		if (pr->ps_flags & PS_PROFIL)
 			stopprofclock(pr);
-	} else if (TAILQ_EMPTY(&pr->ps_threads)) {
-		wakeup(&pr->ps_threads);
 	}
 
 	rup = pr->ps_ru;
@@ -356,7 +354,8 @@ exit1(struct proc *p, int rv, int flags)
 	/* just a thread? detach it from its process */
 	if (p->p_flag & P_THREAD) {
 		/* scheduler_wait_hook(pr->ps_mainproc, p); XXX */
-		--pr->ps_refcnt;
+		if (--pr->ps_refcnt == 1)
+			wakeup(&pr->ps_threads);
 		KASSERT(pr->ps_refcnt > 0);
 	}
 
