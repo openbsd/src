@@ -153,10 +153,13 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
-	if (str->data == NULL)
-		ret = malloc(n);
-	else
-		ret = OPENSSL_realloc_clean(str->data, str->max, n);
+	ret = malloc(n);
+	/* we're not shrinking - that case returns above */
+	if ((ret != NULL)  && (str->data != NULL)) {
+		memcpy(ret, str->data, str->max);
+		explicit_bzero(str->data, str->max);
+		free(str->data);
+	}
 	if (ret == NULL) {
 		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
 		len = 0;
