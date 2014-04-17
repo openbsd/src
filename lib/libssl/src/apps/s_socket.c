@@ -84,14 +84,8 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
-#include "netdb.h"
-#endif
 
 static struct hostent *GetHostByName(char *name);
-#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
-static void ssl_sock_cleanup(void);
-#endif
 static int ssl_sock_init(void);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
@@ -99,51 +93,11 @@ static int do_accept(int acc_sock, int *sock, char **host);
 
 #define SOCKET_PROTOCOL	IPPROTO_TCP
 
-#if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
-static int wsa_init_done=0;
-#endif
 
 
-#if   defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
-static void sock_cleanup(void)
-    {
-    if (wsa_init_done)
-        {
-        wsa_init_done=0;
-		WSACleanup();
-		}
-	}
-#endif
 
 static int ssl_sock_init(void)
 	{
-#ifdef WATT32
-	extern int _watt_do_exit;
-	_watt_do_exit = 0;
-	if (sock_init())
-		return (0);
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
-   WORD wVerReq;
-   WSADATA wsaData;
-   int err;
-
-   if (!wsa_init_done)
-      {
-   
-# ifdef SIGINT
-      signal(SIGINT,(void (*)(int))sock_cleanup);
-# endif
-
-      wsa_init_done=1;
-      wVerReq = MAKEWORD( 2, 0 );
-      err = WSAStartup(wVerReq,&wsaData);
-      if (err != 0)
-         {
-         BIO_printf(bio_err,"unable to start WINSOCK2, error code=%d\n",err);
-         return(0);
-         }
-      }
-#endif /* OPENSSL_SYS_WINDOWS */
 	return(1);
 	}
 
@@ -174,14 +128,12 @@ int init_client(int *sock, char *host, char *port, int type, int af)
 		{
 		s=socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s == -1) { continue; }
-#ifndef OPENSSL_SYS_MPE
 	if (type == SOCK_STREAM)
 		{
 		i=0;
 		i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 		if (i < 0) { perror("keepalive"); return(0); }
 		}
-#endif
 		if ((i = connect(s, ai->ai_addr, ai->ai_addrlen)) == 0)
 			{ *sock=s; freeaddrinfo(ai_top); return (1); }
 
@@ -315,11 +267,6 @@ redoit:
 	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == -1)
 		{
-#if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
-		int i;
-		i=WSAGetLastError();
-		BIO_printf(bio_err,"accept error %d\n",i);
-#else
 		if (errno == EINTR)
 			{
 			/*check_timeout(); */
@@ -327,7 +274,6 @@ redoit:
 			}
 		fprintf(stderr,"errno=%d ",errno);
 		perror("accept");
-#endif
 		return(0);
 		}
 
