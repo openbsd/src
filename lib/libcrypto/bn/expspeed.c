@@ -195,8 +195,6 @@ static int sizes[NUM_SIZES]={128,256,512,1024,2048,4096,8192};
 static int mul_c[NUM_SIZES]={8*8*8*8*8*8,8*8*8*8*8,8*8*8*8,8*8*8,8*8,8,1};
 /*static int sizes[NUM_SIZES]={59,179,299,419,539}; */
 
-#define RAND_SEED(string) { const char str[] = string; RAND_seed(string, sizeof str); }
-
 void do_mul_exp(BIGNUM *r,BIGNUM *a,BIGNUM *b,BIGNUM *c,BN_CTX *ctx); 
 
 int main(int argc, char **argv)
@@ -214,10 +212,6 @@ int main(int argc, char **argv)
 	b=BN_new();
 	c=BN_new();
 	r=BN_new();
-
-	while (!RAND_status())
-		/* not enough bits */
-		RAND_SEED("I demand a manual recount!");
 
 	do_mul_exp(r,a,b,c,ctx);
 	return 0;
