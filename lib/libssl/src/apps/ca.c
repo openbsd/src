@@ -2127,12 +2127,13 @@ certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		/* Skip past any leading X. X: X, etc to allow for
 		 * multiple instances
 		 */
-		for (buf = cv->name; *buf; buf++)
-			if ((*buf == ':') || (*buf == ', ') || (*buf == '.')) {
-			buf++;
-			if (*buf)
-				type = buf;
-			break;
+		for (buf = cv->name; *buf; buf++) {
+			if ((*buf == ':') || (*buf == ',') || (*buf == '.')) {
+				buf++;
+				if (*buf)
+					type = buf;
+				break;
+			}
 		}
 
 		buf = cv->value;
@@ -2667,7 +2668,7 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 	ASN1_GENERALIZEDTIME *comp_time = NULL;
 	tmp = BUF_strdup(str);
 
-	p = strchr(tmp, ', ');
+	p = strchr(tmp, ',');
 
 	rtime_str = tmp;
 
@@ -2675,7 +2676,7 @@ unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 		*p = '\0';
 		p++;
 		reason_str = p;
-		p = strchr(p, ', ');
+		p = strchr(p, ',');
 		if (p) {
 			*p = '\0';
 			arg_str = p + 1;
