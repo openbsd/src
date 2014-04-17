@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.22 2013/10/10 12:00:18 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.23 2014/04/17 09:13:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -65,16 +65,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	server_unzoom_window(w);
 
 	TAILQ_REMOVE(&w->panes, wp, entry);
-	if (wp == w->active) {
-		w->active = w->last;
-		w->last = NULL;
-		if (w->active == NULL) {
-			w->active = TAILQ_PREV(wp, window_panes, entry);
-			if (w->active == NULL)
-				w->active = TAILQ_NEXT(wp, entry);
-		}
-	} else if (wp == w->last)
-		w->last = NULL;
+	window_lost_pane(w, wp);
 	layout_close_pane(wp);
 
 	w = wp->window = window_create1(s->sx, s->sy);
