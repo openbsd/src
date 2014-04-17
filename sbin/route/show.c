@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.94 2013/07/19 20:10:23 guenther Exp $	*/
+/*	$OpenBSD: show.c,v 1.95 2014/04/17 15:35:35 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -59,13 +59,6 @@
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
 char	*label_print(struct sockaddr *);
-
-extern int nflag;
-extern int Fflag;
-extern int verbose;
-extern union sockunion so_label;
-
-#define PLEN  (LONG_BIT / 4 + 2) /* XXX this is also defined in netstat.h */
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -151,7 +144,7 @@ p_rttables(int af, u_int tableid, int hastable)
 		if (needed == 0)
 			break;
 		if ((buf = realloc(buf, needed)) == NULL)
-			err(1, "realloc");
+			err(1, NULL);
 		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) == -1) {
 			if (errno == ENOMEM)
 				continue;
@@ -185,18 +178,23 @@ p_rttables(int af, u_int tableid, int hastable)
 	mib[2] = PF_KEY_V2;
 	mib[3] = NET_KEY_SPD_DUMP;
 	mib[4] = mib[5] = 0;
-
-	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
-		if (errno == ENOPROTOOPT)
-			return;
-		err(1, "spd-sysctl-estimate");
-	}
-	if (needed > 0) {
-		if ((buf = malloc(needed)) == 0)
+	while (1) {
+		if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
+			if (errno == ENOPROTOOPT)
+				return;
+			err(1, "spd-sysctl-estimate");
+		}
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1)
+		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1,"sysctl of spd");
+		}
 		lim = buf + needed;
+		break;
 	}
 
 	if (buf) {
