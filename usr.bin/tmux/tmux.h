@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.453 2014/04/17 09:13:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.454 2014/04/17 12:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -818,8 +818,11 @@ struct input_ctx {
 	u_char			param_buf[64];
 	size_t			param_len;
 
-	u_char			input_buf[256];
+#define INPUT_BUF_START 32
+#define INPUT_BUF_LIMIT 1048576
+	u_char*			input_buf;
 	size_t			input_len;
+	size_t			input_space;
 
 	int			param_list[24];	/* -1 not present */
 	u_int			param_list_len;
