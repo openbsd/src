@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2014/04/18 18:25:04 beck Exp $
+# $OpenBSD: Makefile,v 1.9 2014/04/18 20:01:31 beck Exp $
 
 LIB=	roken
 INCS=	roken.h \
@@ -51,6 +51,7 @@ SRCS=	base64.c \
 	parse_time.c \
 	parse_units.c \
 	qsort.c \
+	rand.c \
 	realloc.c \
 	resolve.c \
 	roken.h \
