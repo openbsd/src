@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.25 2014/04/14 12:58:04 blambert Exp $
+#	$OpenBSD: Makefile,v 1.26 2014/04/18 13:55:26 reyk Exp $
 
 PROG=		relayd
-SRCS=		parse.y log.c control.c ssl.c ssl_privsep.c \
-		relayd.c pfe.c pfe_filter.c pfe_route.c hce.c relay.c \
-		relay_http.c relay_udp.c carp.c check_icmp.c check_tcp.c \
-		check_script.c name2id.c snmp.c shuffle.c proc.c config.c \
-		agentx.c
+SRCS=		parse.y
+SRCS+=		agentx.c ca.c carp.c check_icmp.c check_script.c \
+		check_tcp.c config.c control.c hce.c log.c name2id.c \
+		pfe.c pfe_filter.c pfe_route.c proc.c \
+		relay.c relay_http.c relay_udp.c relayd.c \
+		shuffle.c snmp.c ssl.c ssl_privsep.c
 MAN=		relayd.8 relayd.conf.5
 
 LDADD=		-levent -lssl -lcrypto -lutil

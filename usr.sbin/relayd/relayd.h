@@ -1,7 +1,7 @@
-/*	$OpenBSD: relayd.h,v 1.174 2014/04/18 12:02:37 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.175 2014/04/18 13:55:26 reyk Exp $	*/
 
 /*
- * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
@@ -54,7 +54,7 @@
 #define RELAY_MAX_SESSIONS	1024
 #define RELAY_TIMEOUT		600
 #define RELAY_CACHESIZE		-1	/* use default size */
-#define RELAY_NUMPROC		5
+#define RELAY_NUMPROC		3
 #define RELAY_MAXPROC		32
 #define RELAY_MAXHOSTS		32
 #define RELAY_STATINTERVAL	60
@@ -69,6 +69,7 @@
 #define CONFIG_PROTOS		0x08
 #define CONFIG_ROUTES		0x10
 #define CONFIG_RTS		0x20
+#define CONFIG_CA_ENGINE	0x40
 #define CONFIG_ALL		0xff
 
 #define SMALL_READ_BUF_SIZE	1024
@@ -227,6 +228,14 @@ struct ctl_bindany {
 	struct sockaddr_storage	 bnd_ss;
 	in_port_t		 bnd_port;
 	int			 bnd_proto;
+};
+
+struct ctl_keyop {
+	objid_t			 cko_id;
+	int			 cko_proc;
+	int			 cko_flen;
+	int			 cko_tlen;
+	int			 cko_padding;
 };
 
 struct ctl_stats {
@@ -657,8 +666,13 @@ struct relay {
 	struct event		 rl_evt;
 
 	SSL_CTX			*rl_ssl_ctx;
+
 	char			*rl_ssl_cert;
+	X509			*rl_ssl_x509;
+
 	char			*rl_ssl_key;
+	EVP_PKEY		*rl_ssl_pkey;
+
 	char			*rl_ssl_ca;
 	char			*rl_ssl_cacert;
 	char			*rl_ssl_cakey;
@@ -828,7 +842,9 @@ enum imsg_type {
 	IMSG_CFG_PROTONODE,
 	IMSG_CFG_RELAY,
 	IMSG_CFG_RELAY_TABLE,
-	IMSG_CFG_DONE
+	IMSG_CFG_DONE,
+	IMSG_CA_PRIVENC,
+	IMSG_CA_PRIVDEC
 };
 
 enum privsep_procid {
@@ -837,6 +853,7 @@ enum privsep_procid {
 	PROC_HCE,
 	PROC_RELAY,
 	PROC_PFE,
+	PROC_CA,
 	PROC_MAX
 } privsep_process;
 
@@ -1068,13 +1085,18 @@ void	 ssl_transaction(struct ctl_tcp_event *);
 SSL_CTX	*ssl_ctx_create(struct relayd *);
 void	 ssl_error(const char *, const char *);
 char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
-X509	*ssl_update_certificate(X509 *, char *, off_t,
+X509	*ssl_update_certificate(X509 *, EVP_PKEY *,
 	    char *, off_t, char *, off_t);
+int	 ssl_ctx_fake_private_key(SSL_CTX *, void *, char *, off_t,
+	    X509 **, EVP_PKEY **);
 
 /* ssl_privsep.c */
-int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
+
+/* ca.c */
+pid_t	 ca(struct privsep *, struct privsep_proc *);
+int	 ca_engine_init(struct relayd *);
 
 /* relayd.c */
 struct host	*host_find(struct relayd *, objid_t);
@@ -1096,6 +1118,7 @@ struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
+void		 purge_key(char **, off_t);
 void		 purge_tree(struct proto_tree *);
 void		 purge_table(struct tablelist *, struct table *);
 void		 purge_relay(struct relayd *, struct relay *);

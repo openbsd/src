@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.9 2012/10/04 20:53:30 reyk Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.10 2014/04/18 13:55:26 reyk Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -76,7 +76,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 int	 ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
@@ -95,37 +94,6 @@ X509_LOOKUP_METHOD x509_mem_lookup = {
 };
 
 #define X509_L_ADD_MEM	3
-
-int
-ssl_ctx_use_private_key(SSL_CTX *ctx, char *buf, off_t len)
-{
-	int		 ret;
-	BIO		*in;
-	EVP_PKEY	*pkey;
-
-	ret = 0;
-
-	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
-		return 0;
-	}
-
-	pkey = PEM_read_bio_PrivateKey(in, NULL,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
-
-	if (pkey == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_PEM_LIB);
-		goto end;
-	}
-	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-	EVP_PKEY_free(pkey);
-end:
-	if (in != NULL)
-		BIO_free(in);
-	return ret;
-}
-
 
 int
 ssl_ctx_use_certificate_chain(SSL_CTX *ctx, char *buf, off_t len)

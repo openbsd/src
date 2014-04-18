@@ -1,7 +1,7 @@
-/*	$OpenBSD: relay.c,v 1.167 2013/09/09 17:57:44 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.168 2014/04/18 13:55:26 reyk Exp $	*/
 
 /*
- * Copyright (c) 2006 - 2013 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,8 @@ int		 relay_dispatch_parent(int, struct privsep_proc *,
 		    struct imsg *);
 int		 relay_dispatch_pfe(int, struct privsep_proc *,
 		    struct imsg *);
+int		 relay_dispatch_ca(int, struct privsep_proc *,
+		    struct imsg *);
 void		 relay_shutdown(void);
 
 void		 relay_nodedebug(const char *, struct protonode *);
@@ -96,6 +98,7 @@ int				 proc_id;
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	relay_dispatch_parent },
 	{ "pfe",	PROC_PFE,	relay_dispatch_pfe },
+	{ "ca",		PROC_CA,	relay_dispatch_ca }
 };
 
 pid_t
@@ -1782,6 +1785,12 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 int
+relay_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	return (-1);
+}
+
+int
 relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct rsession		*con;
@@ -1904,9 +1913,11 @@ relay_ssl_ctx_create(struct relay *rlay)
 		goto err;
 
 	log_debug("%s: loading private key", __func__);
-	if (!ssl_ctx_use_private_key(ctx, rlay->rl_ssl_key,
-	    rlay->rl_conf.ssl_key_len))
+	if (!ssl_ctx_fake_private_key(ctx,
+	    &rlay->rl_conf.id, rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len,
+	    &rlay->rl_ssl_x509, &rlay->rl_ssl_pkey))
 		goto err;
+
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
 
@@ -1914,6 +1925,9 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!SSL_CTX_set_session_id_context(ctx, rlay->rl_conf.name,
 	    strlen(rlay->rl_conf.name)))
 		goto err;
+
+	/* The text versions of the keys/certs are not needed anymore */
+	purge_key(&rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len);
 
 	return (ctx);
 
@@ -2087,7 +2101,7 @@ relay_ssl_connect(int fd, short event, void *arg)
 		    SSL_get_peer_certificate(con->se_out.ssl)) != NULL) {
 			con->se_in.sslcert =
 			    ssl_update_certificate(servercert,
-			    rlay->rl_ssl_key, rlay->rl_conf.ssl_key_len,
+			    rlay->rl_ssl_pkey,
 			    rlay->rl_ssl_cakey, rlay->rl_conf.ssl_cakey_len,
 			    rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len);
 		} else

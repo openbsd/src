@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.11 2014/02/24 06:55:11 jsg Exp $	*/
+/*	$OpenBSD: config.c,v 1.12 2014/04/18 13:55:26 reyk Exp $	*/
 
 /*
- * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -64,8 +64,9 @@ config_init(struct relayd *env)
 		ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 		ps->ps_what[PROC_PFE] = CONFIG_ALL & ~CONFIG_PROTOS;
 		ps->ps_what[PROC_HCE] = CONFIG_TABLES;
-		ps->ps_what[PROC_RELAY] =
-		    CONFIG_TABLES|CONFIG_RELAYS|CONFIG_PROTOS;
+		ps->ps_what[PROC_CA] = CONFIG_RELAYS;
+		ps->ps_what[PROC_RELAY] = CONFIG_RELAYS|
+		    CONFIG_TABLES|CONFIG_PROTOS|CONFIG_CA_ENGINE;
 	}
 
 	/* Other configuration */
@@ -245,6 +246,7 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 	struct table		*tb;
 	struct host		*h, *ph;
 	struct ctl_flags	 cf;
+	u_int			 what;
 
 	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
 		return (0); /* ignore */
@@ -254,7 +256,9 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 	env->sc_opts = cf.cf_opts;
 	env->sc_flags = cf.cf_flags;
 
-	if (ps->ps_what[privsep_process] & CONFIG_TABLES) {
+	what = ps->ps_what[privsep_process];
+
+	if (what & CONFIG_TABLES) {
 		/* Update the tables */
 		TAILQ_FOREACH(tb, env->sc_tables, entry) {
 			TAILQ_FOREACH(h, &tb->hosts, entry) {
@@ -267,8 +271,12 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 		}
 	}
 
-	if (env->sc_flags & (F_SSL|F_SSLCLIENT))
+	if (env->sc_flags & (F_SSL|F_SSLCLIENT)) {
 		ssl_init(env);
+		if ((what & CONFIG_CA_ENGINE) &&
+		    (ca_engine_init(env)) == -1)
+			fatal("CA engine failed");
+	}
 
 	if (privsep_process != PROC_PARENT)
 		proc_compose_imsg(env->sc_ps, PROC_PARENT, -1,
@@ -802,45 +810,52 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 	struct privsep		*ps = env->sc_ps;
 	struct ctl_relaytable	 crt;
 	struct relay_table	*rlt;
+	struct relay_config	 rl;
 	int			 id;
 	int			 fd, n, m;
 	struct iovec		 iov[6];
 	size_t			 c;
+	u_int			 what;
 
 	/* opens listening sockets etc. */
 	if (relay_privinit(rlay) == -1)
 		return (-1);
 
 	for (id = 0; id < PROC_MAX; id++) {
-		if ((ps->ps_what[id] & CONFIG_RELAYS) == 0 ||
-		    id == privsep_process)
+		what = ps->ps_what[id];
+
+		if ((what & CONFIG_RELAYS) == 0 || id == privsep_process)
 			continue;
 
 		DPRINTF("%s: sending relay %s to %s fd %d", __func__,
 		    rlay->rl_conf.name, ps->ps_title[id], rlay->rl_s);
 
+		memcpy(&rl, &rlay->rl_conf, sizeof(rl));
+
 		c = 0;
-		iov[c].iov_base = &rlay->rl_conf;
-		iov[c++].iov_len = sizeof(rlay->rl_conf);
-		if (rlay->rl_conf.ssl_cert_len) {
+		iov[c].iov_base = &rl;
+		iov[c++].iov_len = sizeof(rl);
+		if (rl.ssl_cert_len) {
 			iov[c].iov_base = rlay->rl_ssl_cert;
-			iov[c++].iov_len = rlay->rl_conf.ssl_cert_len;
+			iov[c++].iov_len = rl.ssl_cert_len;
 		}
-		if (rlay->rl_conf.ssl_key_len) {
+		if ((what & CONFIG_CA_ENGINE) == 0 &&
+		    rl.ssl_key_len) {
 			iov[c].iov_base = rlay->rl_ssl_key;
-			iov[c++].iov_len = rlay->rl_conf.ssl_key_len;
-		}
-		if (rlay->rl_conf.ssl_ca_len) {
+			iov[c++].iov_len = rl.ssl_key_len;
+		} else
+			rl.ssl_key_len = 0;
+		if (rl.ssl_ca_len) {
 			iov[c].iov_base = rlay->rl_ssl_ca;
-			iov[c++].iov_len = rlay->rl_conf.ssl_ca_len;
+			iov[c++].iov_len = rl.ssl_ca_len;
 		}
-		if (rlay->rl_conf.ssl_cacert_len) {
+		if (rl.ssl_cacert_len) {
 			iov[c].iov_base = rlay->rl_ssl_cacert;
-			iov[c++].iov_len = rlay->rl_conf.ssl_cacert_len;
+			iov[c++].iov_len = rl.ssl_cacert_len;
 		}
-		if (rlay->rl_conf.ssl_cakey_len) {
+		if (rl.ssl_cakey_len) {
 			iov[c].iov_base = rlay->rl_ssl_cakey;
-			iov[c++].iov_len = rlay->rl_conf.ssl_cakey_len;
+			iov[c++].iov_len = rl.ssl_cakey_len;
 		}
 
 		if (id == PROC_RELAY) {
@@ -857,6 +872,9 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			proc_composev_imsg(ps, id, -1, IMSG_CFG_RELAY, -1,
 			    iov, c);
 		}
+
+		if ((what & CONFIG_TABLES) == 0)
+			continue;
 
 		/* Now send the tables associated to this relay */
 		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
