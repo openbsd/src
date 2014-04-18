@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.21 2014/04/18 16:09:07 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.22 2014/04/18 16:13:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -445,7 +445,7 @@ printb_flags(const u_int32_t v, const char *bits)
 					if (c == '_')
 						*p++ = ' ';
 					else
-						*p++ = tolower((u_char char)c);
+						*p++ = tolower((u_char)c);
 				}
 			} else
 				for (; *bits > 32; bits++)
