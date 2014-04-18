@@ -2777,8 +2777,9 @@ ssl3_new(SSL *s)
 {
 	SSL3_STATE *s3;
 
-	if ((s3 = malloc(sizeof *s3)) == NULL) goto err;
-		memset(s3, 0, sizeof *s3);
+	if ((s3 = malloc(sizeof *s3)) == NULL)
+		goto err;
+	memset(s3, 0, sizeof *s3);
 	memset(s3->rrec.seq_num, 0, sizeof(s3->rrec.seq_num));
 	memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
 
@@ -3081,9 +3082,9 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT:
-		if (larg > 12288) /* actual internal limit is 2^16 for the complete hello message
-		                   * (including the cert chain and everything) */
-		{
+		if (larg > 12288) {
+			/* actual internal limit is 2^16 for the complete hello message
+		         * (including the cert chain and everything) */
 			SSLerr(SSL_F_SSL3_CTRL, SSL_R_OPAQUE_PRF_INPUT_TOO_LONG);
 			break;
 		}
@@ -3200,9 +3201,8 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	case SSL_CTRL_NEED_TMP_RSA:
 		if ((cert->rsa_tmp == NULL) &&
 		    ((cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
-		    (EVP_PKEY_size(cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) > (512 / 8)))
-		)
-		return (1);
+		    (EVP_PKEY_size(cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) > (512 / 8))))
+			return (1);
 		else
 			return (0);
 		/* break; */
@@ -3975,8 +3975,9 @@ long
 ssl_get_algorithm2(SSL *s)
 {
 	long alg2 = s->s3->tmp.new_cipher->algorithm2;
+
 	if (s->method->version == TLS1_2_VERSION &&
-		alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
-	return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
+		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
 	return alg2;
 }
