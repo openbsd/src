@@ -410,12 +410,6 @@ pkcs12_main(int argc, char **argv)
 		mpass = macpass;
 	}
 
-	if (export_cert || inrand) {
-		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
-		if (inrand != NULL)
-			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-			    app_RAND_load_files(inrand));
-	}
 	ERR_load_crypto_strings();
 
 #ifdef CRYPTO_MDEBUG
@@ -705,8 +699,6 @@ export_end:
 end:
 	if (p12)
 		PKCS12_free(p12);
-	if (export_cert || inrand)
-		app_RAND_write_file(NULL, bio_err);
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_remove_all_info();
 #endif

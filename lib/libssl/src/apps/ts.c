@@ -262,15 +262,6 @@ ts_main(int argc, char **argv)
 			goto usage;
 	}
 
-	/* Seed the random number generator if it is going to be used. */
-	if (mode == CMD_QUERY && !no_nonce) {
-		if (!app_RAND_load_file(NULL, bio_err, 1) && rnd == NULL)
-			BIO_printf(bio_err, "warning, not much extra random "
-			    "data, consider using the -rand option\n");
-		if (rnd != NULL)
-			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-			    app_RAND_load_files(rnd));
-	}
 	/* Get the password if required. */
 	if (mode == CMD_REPLY && passin &&
 	    !app_passwd(bio_err, passin, NULL, &password, NULL)) {
@@ -350,7 +341,6 @@ usage:
 	    "-untrusted cert_file.pem\n");
 cleanup:
 	/* Clean up. */
-	app_RAND_write_file(NULL, bio_err);
 	NCONF_free(conf);
 	free(password);
 	OBJ_cleanup();

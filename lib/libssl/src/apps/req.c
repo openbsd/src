@@ -549,21 +549,9 @@ bad:
 			 * message
 			 */
 			goto end;
-		} else {
-			char *randfile = NCONF_get_string(req_conf, SECTION, "RANDFILE");
-			if (randfile == NULL)
-				ERR_clear_error();
-			app_RAND_load_file(randfile, bio_err, 0);
 		}
 	}
 	if (newreq && (pkey == NULL)) {
-		char *randfile = NCONF_get_string(req_conf, SECTION, "RANDFILE");
-		if (randfile == NULL)
-			ERR_clear_error();
-		app_RAND_load_file(randfile, bio_err, 0);
-		if (inrand)
-			app_RAND_load_files(inrand);
-
 		if (!NCONF_get_number(req_conf, SECTION, BITS, &newkey)) {
 			newkey = DEFAULT_KEY_LENGTH;
 		}
@@ -609,8 +597,6 @@ bad:
 		}
 		EVP_PKEY_CTX_free(genctx);
 		genctx = NULL;
-
-		app_RAND_write_file(randfile, bio_err);
 
 		if (keyout == NULL) {
 			keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);

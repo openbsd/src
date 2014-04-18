@@ -237,14 +237,6 @@ bad:
 		}
 	}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL &&
-	    !RAND_status()) {
-		BIO_printf(bio_err, "warning, not much extra random data, consider using the -rand option\n");
-	}
-	if (inrand != NULL)
-		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-		    app_RAND_load_files(inrand));
-
 	BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
 	    num);
 #ifdef OPENSSL_NO_ENGINE
@@ -257,8 +249,6 @@ bad:
 
 	if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
 		goto err;
-
-	app_RAND_write_file(NULL, bio_err);
 
 	/*
 	 * We need to do the following for when the base number size is <

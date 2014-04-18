@@ -205,7 +205,6 @@ x509_main(int argc, char **argv)
 	const EVP_MD *md_alg, *digest = NULL;
 	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
-	int need_rand = 0;
 	int checkend = 0, checkoffset = 0;
 	unsigned long nmflag = 0, certflag = 0;
 #ifndef OPENSSL_NO_ENGINE
@@ -252,7 +251,6 @@ x509_main(int argc, char **argv)
 			keyformat = str2fmt(*(++argv));
 		} else if (strcmp(*argv, "-req") == 0) {
 			reqfile = 1;
-			need_rand = 1;
 		} else if (strcmp(*argv, "-CAform") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -301,13 +299,11 @@ x509_main(int argc, char **argv)
 				goto bad;
 			keyfile = *(++argv);
 			sign_flag = ++num;
-			need_rand = 1;
 		} else if (strcmp(*argv, "-CA") == 0) {
 			if (--argc < 1)
 				goto bad;
 			CAfile = *(++argv);
 			CA_flag = ++num;
-			need_rand = 1;
 		} else if (strcmp(*argv, "-CAkey") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -463,9 +459,6 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
 	e = setup_engine(bio_err, engine, 0);
 #endif
-
-	if (need_rand)
-		app_RAND_load_file(NULL, bio_err, 0);
 
 	ERR_load_crypto_strings();
 
@@ -844,7 +837,6 @@ bad:
 					if (Upkey == NULL)
 						goto end;
 				}
-				assert(need_rand);
 				if (!sign(x, Upkey, days, clrext, digest,
 					extconf, extsect))
 					goto end;
@@ -858,7 +850,6 @@ bad:
 					if (CApkey == NULL)
 						goto end;
 				}
-				assert(need_rand);
 				if (!x509_certify(ctx, CAfile, digest, x, xca,
 					CApkey, sigopts,
 					CAserial, CA_createserial, days, clrext,
@@ -941,8 +932,6 @@ bad:
 	}
 	ret = 0;
 end:
-	if (need_rand)
-		app_RAND_write_file(NULL, bio_err);
 	OBJ_cleanup();
 	NCONF_free(extconf);
 	BIO_free_all(out);

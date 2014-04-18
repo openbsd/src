@@ -162,11 +162,6 @@ rand_main(int argc, char **argv)
 	setup_engine(bio_err, engine, 0);
 #endif
 
-	app_RAND_load_file(NULL, bio_err, (inrand != NULL));
-	if (inrand != NULL)
-		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-		    app_RAND_load_files(inrand));
-
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)
 		goto err;
@@ -206,7 +201,6 @@ rand_main(int argc, char **argv)
 		BIO_puts(out, "\n");
 	(void) BIO_flush(out);
 
-	app_RAND_write_file(NULL, bio_err);
 	ret = 0;
 
 err:

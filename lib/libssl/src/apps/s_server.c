@@ -1227,14 +1227,6 @@ bad:
 			goto end;
 		}
 	}
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
-	    && !RAND_status()) {
-		BIO_printf(bio_err, "warning, not much extra random data, consider using the -rand option\n");
-	}
-	if (inrand != NULL)
-		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-		    app_RAND_load_files(inrand));
-
 	if (bio_s_out == NULL) {
 		if (s_quiet && !s_debug && !s_msg) {
 			bio_s_out = BIO_new(BIO_s_null());

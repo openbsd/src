@@ -107,7 +107,6 @@ smime_main(int argc, char **argv)
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
-	int need_rand = 0;
 	int indef = 0;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
@@ -212,7 +211,6 @@ smime_main(int argc, char **argv)
 				goto argerr;
 			args++;
 			inrand = *args;
-			need_rand = 1;
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (!strcmp(*args, "-engine")) {
@@ -354,7 +352,6 @@ smime_main(int argc, char **argv)
 		}
 		signerfile = NULL;
 		keyfile = NULL;
-		need_rand = 1;
 	} else if (operation == SMIME_DECRYPT) {
 		if (!recipfile && !keyfile) {
 			BIO_printf(bio_err, "No recipient certificate or key specified\n");
@@ -365,7 +362,6 @@ smime_main(int argc, char **argv)
 			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
 		}
-		need_rand = 1;
 	} else if (!operation)
 		badarg = 1;
 
@@ -440,12 +436,6 @@ argerr:
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
-	}
-	if (need_rand) {
-		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
-		if (inrand != NULL)
-			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-			    app_RAND_load_files(inrand));
 	}
 	ret = 2;
 
@@ -670,8 +660,6 @@ argerr:
 	}
 	ret = 0;
 end:
-	if (need_rand)
-		app_RAND_write_file(NULL, bio_err);
 	if (ret)
 		ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);

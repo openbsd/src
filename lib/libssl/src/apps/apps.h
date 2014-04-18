@@ -126,14 +126,6 @@
 #endif
 #include <openssl/ossl_typ.h>
 
-int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
-int app_RAND_write_file(const char *file, BIO *bio_e);
-/* When `file' is NULL, use defaults.
- * `bio_e' is for error messages. */
-void app_RAND_allow_write_file(void);
-long app_RAND_load_files(char *file); /* `file' is a list of files to read,
-                                       * separated by ':'. The string is destroyed! */
-
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;

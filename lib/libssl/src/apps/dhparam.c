@@ -283,13 +283,6 @@ bad:
 
 		BN_GENCB cb;
 		BN_GENCB_set(&cb, dh_cb, bio_err);
-		if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL) {
-			BIO_printf(bio_err, "warning, not much extra random data, consider using the -rand option\n");
-		}
-		if (inrand != NULL)
-			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-			    app_RAND_load_files(inrand));
-
 #ifndef OPENSSL_NO_DSA
 		if (dsaparam) {
 			DSA *dsa = DSA_new();
@@ -319,8 +312,6 @@ bad:
 				goto end;
 			}
 		}
-
-		app_RAND_write_file(NULL, bio_err);
 	} else {
 
 		in = BIO_new(BIO_s_file());

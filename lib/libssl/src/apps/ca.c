@@ -311,7 +311,6 @@ ca_main(int argc, char **argv)
 #undef BSIZE
 #define BSIZE 256
 	char buf[3][BSIZE];
-	char *randfile = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
@@ -598,11 +597,6 @@ ca_main(int argc, char **argv)
 			goto err;
 		}
 	}
-	randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
-	if (randfile == NULL)
-		ERR_clear_error();
-	app_RAND_load_file(randfile, bio_err, 0);
-
 	f = NCONF_get_string(conf, section, STRING_MASK);
 	if (!f)
 		ERR_clear_error();
@@ -1363,7 +1357,6 @@ err:
 
 	if (ret)
 		ERR_print_errors(bio_err);
-	app_RAND_write_file(randfile, bio_err);
 	if (free_key && key)
 		free(key);
 	BN_free(serial);

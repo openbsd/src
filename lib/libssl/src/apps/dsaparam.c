@@ -117,7 +117,6 @@ dsaparam_main(int argc, char **argv)
 	int informat, outformat, noout = 0, C = 0, ret = 1;
 	char *infile, *outfile, *prog, *inrand = NULL;
 	int numbits = -1, num, genkey = 0;
-	int need_rand = 0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
@@ -180,18 +179,15 @@ dsaparam_main(int argc, char **argv)
 			C = 1;
 		else if (strcmp(*argv, "-genkey") == 0) {
 			genkey = 1;
-			need_rand = 1;
 		} else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				goto bad;
 			inrand = *(++argv);
-			need_rand = 1;
 		} else if (strcmp(*argv, "-noout") == 0)
 			noout = 1;
 		else if (sscanf(*argv, "%d", &num) == 1) {
 			/* generate a key */
 			numbits = num;
-			need_rand = 1;
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
 			badops = 1;
@@ -252,16 +248,9 @@ bad:
 	setup_engine(bio_err, engine, 0);
 #endif
 
-	if (need_rand) {
-		app_RAND_load_file(NULL, bio_err, (inrand != NULL));
-		if (inrand != NULL)
-			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-			    app_RAND_load_files(inrand));
-	}
 	if (numbits > 0) {
 		BN_GENCB cb;
 		BN_GENCB_set(&cb, dsa_cb, bio_err);
-		assert(need_rand);
 		dsa = DSA_new();
 		if (!dsa) {
 			BIO_printf(bio_err, "Error allocating DSA object\n");
@@ -381,7 +370,6 @@ bad:
 	if (genkey) {
 		DSA *dsakey;
 
-		assert(need_rand);
 		if ((dsakey = DSAparams_dup(dsa)) == NULL)
 			goto end;
 		if (!DSA_generate_key(dsakey)) {
@@ -400,8 +388,6 @@ bad:
 		}
 		DSA_free(dsakey);
 	}
-	if (need_rand)
-		app_RAND_write_file(NULL, bio_err);
 	ret = 0;
 
 end:

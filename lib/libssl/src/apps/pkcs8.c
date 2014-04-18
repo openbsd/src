@@ -261,7 +261,6 @@ bad:
 				if (EVP_read_pw_string(pass, sizeof pass, "Enter Encryption Password:", 1))
 					goto end;
 			}
-			app_RAND_load_file(NULL, bio_err, 0);
 			if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
 				    p8pass, strlen(p8pass),
 				    NULL, 0, iter, p8inf))) {
@@ -269,7 +268,6 @@ bad:
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-			app_RAND_write_file(NULL, bio_err);
 			if (outformat == FORMAT_PEM)
 				PEM_write_bio_PKCS8(out, p8);
 			else if (outformat == FORMAT_ASN1)

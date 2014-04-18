@@ -229,8 +229,6 @@ pkeyutl_main(int argc, char **argv)
 		BIO_puts(bio_err, "No signature file specified for verify\n");
 		goto end;
 	}
-/* FIXME: seed PRNG only if needed */
-	app_RAND_load_file(NULL, bio_err, 0);
 
 	if (pkey_op != EVP_PKEY_OP_DERIVE) {
 		if (infile) {

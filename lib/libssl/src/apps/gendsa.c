@@ -228,19 +228,10 @@ bad:
 		}
 	}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL) {
-		BIO_printf(bio_err, "warning, not much extra random data, consider using the -rand option\n");
-	}
-	if (inrand != NULL)
-		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-		    app_RAND_load_files(inrand));
-
 	BIO_printf(bio_err, "Generating DSA key, %d bits\n",
 	    BN_num_bits(dsa->p));
 	if (!DSA_generate_key(dsa))
 		goto end;
-
-	app_RAND_write_file(NULL, bio_err);
 
 	if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
 		goto end;

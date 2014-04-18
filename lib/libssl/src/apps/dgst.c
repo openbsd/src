@@ -292,8 +292,6 @@ dgst_main(int argc, char **argv)
 		else
 			out_bin = 0;
 	}
-	if (randfile)
-		app_RAND_load_file(randfile, bio_err, 0);
 
 	if (outfile) {
 		if (out_bin)

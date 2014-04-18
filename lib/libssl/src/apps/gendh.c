@@ -176,20 +176,11 @@ bad:
 		}
 	}
 
-	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL) {
-		BIO_printf(bio_err, "warning, not much extra random data, consider using the -rand option\n");
-	}
-	if (inrand != NULL)
-		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-		    app_RAND_load_files(inrand));
-
 	BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime, generator %d\n", num, g);
 	BIO_printf(bio_err, "This is going to take a long time\n");
 
 	if (((dh = DH_new()) == NULL) || !DH_generate_parameters_ex(dh, num, g, &cb))
 		goto end;
-
-	app_RAND_write_file(NULL, bio_err);
 
 	if (!PEM_write_bio_DHparams(out, dh))
 		goto end;
