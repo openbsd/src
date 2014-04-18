@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.25 2014/04/18 22:11:57 jmc Exp $
+.\"	$OpenBSD: pr.1,v 1.26 2014/04/18 22:19:00 jmc Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -314,7 +314,18 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except that the
+.Ev TZ
+environment variable is unsupported.
+.Pp
+The flag
+.Op Fl f
+is marked by
+.St -p1003.1-2008
+as being an
+X/Open System Interfaces
+option.
 .Pp
 .St -p1003.1-2008
 is relatively silent concerning the
