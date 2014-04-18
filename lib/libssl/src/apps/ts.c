@@ -330,12 +330,11 @@ ts_main(int argc, char **argv)
 
 usage:
 	BIO_printf(bio_err, "usage:\n"
-	    "ts -query [-rand file%cfile%c...] [-config configfile] "
+	    "ts -query [-rand file:file:...] [-config configfile] "
 	    "[-data file_to_hash] [-digest digest_bytes]"
 	    "[-md2|-md4|-md5|-sha|-sha1|-mdc2|-ripemd160] "
 	    "[-policy object_id] [-no_nonce] [-cert] "
-	    "[-in request.tsq] [-out request.tsq] [-text]\n",
-	    ':', ':');
+	    "[-in request.tsq] [-out request.tsq] [-text]\n");
 	BIO_printf(bio_err, "or\n"
 	    "ts -reply [-config configfile] [-section tsa_section] "
 	    "[-queryfile request.tsq] [-passin password] "

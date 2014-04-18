@@ -515,7 +515,7 @@ sv_usage(void)
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err, " -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
-	BIO_printf(bio_err, " -rand file%cfile%c...\n", ':', ':');
+	BIO_printf(bio_err, " -rand file:file:...\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err, " -servername host - servername for HostName TLS extension\n");
 	BIO_printf(bio_err, " -servername_fatal - on mismatch send fatal alert (default warning alert)\n");

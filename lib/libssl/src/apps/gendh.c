@@ -153,7 +153,7 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e - use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err, " -rand file%cfile%c...\n", ':', ':');
+		BIO_printf(bio_err, " -rand file:file:...\n");
 		BIO_printf(bio_err, "           - load the file (or the files in the directory) into\n");
 		BIO_printf(bio_err, "             the random number generator\n");
 		goto end;

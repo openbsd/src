@@ -153,7 +153,7 @@ rand_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, "-engine e             - use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err, "-rand file%cfile%c... - seed PRNG from files\n", ':', ':');
+		BIO_printf(bio_err, "-rand file:file:... - seed PRNG from files\n");
 		BIO_printf(bio_err, "-base64               - base64 encode output\n");
 		BIO_printf(bio_err, "-hex                  - hex encode output\n");
 		goto err;

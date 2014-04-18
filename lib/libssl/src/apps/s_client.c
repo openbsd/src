@@ -339,7 +339,7 @@ sc_usage(void)
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
-	BIO_printf(bio_err, " -rand file%cfile%c...\n", ':', ':');
+	BIO_printf(bio_err, " -rand file:file:...\n");
 	BIO_printf(bio_err, " -sess_out arg - file to write SSL session to\n");
 	BIO_printf(bio_err, " -sess_in arg  - file to read SSL session from\n");
 #ifndef OPENSSL_NO_TLSEXT
