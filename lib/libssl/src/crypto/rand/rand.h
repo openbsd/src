@@ -95,9 +95,6 @@ int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,size_t num);
 int RAND_status(void);
-int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
-int RAND_egd(const char *path);
-int RAND_egd_bytes(const char *path,int bytes);
 int RAND_poll(void);
 
 /* BEGIN ERROR CODES */

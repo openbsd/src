@@ -117,7 +117,6 @@
 
 
 static int seeded = 0;
-static int egdsocket = 0;
 
 int
 app_RAND_load_file(const char *file, BIO * bio_e, int dont_warn)
@@ -128,14 +127,6 @@ app_RAND_load_file(const char *file, BIO * bio_e, int dont_warn)
 
 	if (file == NULL)
 		file = RAND_file_name(buffer, sizeof buffer);
-	else if (RAND_egd(file) > 0) {
-		/*
-		 * we try if the given filename is an EGD socket. if it is,
-		 * we don't write anything back to the file.
-		 */
-		egdsocket = 1;
-		return 1;
-	}
 	if (file == NULL || !RAND_load_file(file, -1)) {
 		if (RAND_status() == 0) {
 			if (!dont_warn) {
@@ -162,7 +153,6 @@ app_RAND_load_files(char *name)
 	char *p, *n;
 	int last;
 	long tot = 0;
-	int egd;
 
 	for (;;) {
 		last = 0;
@@ -176,11 +166,7 @@ app_RAND_load_files(char *name)
 		if (*n == '\0')
 			break;
 
-		egd = RAND_egd(n);
-		if (egd > 0)
-			tot += egd;
-		else
-			tot += RAND_load_file(n, -1);
+		tot += RAND_load_file(n, -1);
 		if (last)
 			break;
 	}
@@ -194,7 +180,7 @@ app_RAND_write_file(const char *file, BIO * bio_e)
 {
 	char buffer[200];
 
-	if (egdsocket || !seeded)
+	if (!seeded)
 		/*
 		 * If we did not manage to read the seed file, we should not
 		 * write a low-entropy seed file back -- it would suppress a
