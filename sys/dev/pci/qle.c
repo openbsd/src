@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.23 2014/04/17 23:53:49 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.24 2014/04/18 01:11:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -248,7 +248,6 @@ struct cfdriver qle_cd = {
 };
 
 void		qle_scsi_cmd(struct scsi_xfer *);
-struct qle_ccb *qle_scsi_cmd_poll(struct qle_softc *);
 int		qle_scsi_probe(struct scsi_link *);
 
 
@@ -1153,7 +1152,7 @@ qle_scsi_cmd(struct scsi_xfer *xs)
 	struct qle_ccb_list	list;
 	u_int16_t		req;
 	u_int32_t		portid;
-	int			offset, error;
+	int			offset, error, done;
 	bus_dmamap_t		dmap;
 
 	if (xs->cmdlen > 16) {
@@ -1239,29 +1238,11 @@ qle_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	done = 0;
 	SIMPLEQ_INIT(&list);
 	do {
-		ccb = qle_scsi_cmd_poll(sc);
-		SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_link);
-	} while (xs->io != ccb);
-
-	mtx_leave(&sc->sc_queue_mtx);
-
-	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&list, ccb_link);
-		scsi_done(ccb->ccb_xs);
-	}
-}
-
-struct qle_ccb *
-qle_scsi_cmd_poll(struct qle_softc *sc)
-{
-	u_int16_t rspin;
-	struct qle_ccb *ccb = NULL;
-
-	while (ccb == NULL) {
 		u_int16_t isr, info;
-
+		u_int32_t rspin;
 		delay(100);
 
 		if (qle_read_isr(sc, &isr, &info) == 0) {
@@ -1274,20 +1255,28 @@ qle_scsi_cmd_poll(struct qle_softc *sc)
 		}
 
 		rspin = qle_read(sc, QLE_RESP_IN);
-		if (rspin != sc->sc_last_resp_id) {
+		while (rspin != sc->sc_last_resp_id) {
 			ccb = qle_handle_resp(sc, sc->sc_last_resp_id);
 
 			sc->sc_last_resp_id++;
 			if (sc->sc_last_resp_id == sc->sc_maxcmds)
 				sc->sc_last_resp_id = 0;
 
-			qle_write(sc, QLE_RESP_OUT, sc->sc_last_resp_id);
+			if (ccb != NULL)
+				SIMPLEQ_INSERT_TAIL(&list, ccb, ccb_link);
+			if (ccb == xs->io)
+				done = 1;
 		}
-
+		qle_write(sc, QLE_RESP_OUT, sc->sc_last_resp_id);
 		qle_clear_isr(sc, isr);
-	}
+	} while (done == 0);
 
-	return (ccb);
+	mtx_leave(&sc->sc_queue_mtx);
+
+	while ((ccb = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, ccb_link);
+		scsi_done(ccb->ccb_xs);
+	}
 }
 
 u_int32_t
