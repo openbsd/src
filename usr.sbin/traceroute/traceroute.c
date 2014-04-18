@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.101 2014/04/18 16:19:11 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.102 2014/04/18 16:22:18 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -264,6 +264,7 @@ void dump_packet(void);
 void build_probe4(int, u_int8_t, int);
 void send_probe(int, u_int8_t, int, struct sockaddr *);
 int packet_ok(struct msghdr *, int, int, int);
+void icmp_code(int, int *, int *);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(struct sockaddr *, int, const char *);
@@ -295,7 +296,7 @@ u_short ident;
 u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
 u_int8_t  icmp_type = ICMP_ECHO; /* default ICMP code/type */
-u_char  icmp_code = 0;
+#define ICMP_CODE 0;
 int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
@@ -667,7 +668,6 @@ main(int argc, char *argv[])
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
-			int code;
 
 			(void) gettimeofday(&t1, NULL);
 			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to);
@@ -710,65 +710,7 @@ main(int argc, char *argv[])
 				/* time exceeded in transit */
 				if (i == -1)
 					break;
-				code = i - 1;
-				switch (code) {
-				case ICMP_UNREACH_PORT:
-					ip = (struct ip *)packet;
-					if (ip->ip_ttl <= 1)
-						printf(" !");
-					++got_there;
-					break;
-				case ICMP_UNREACH_NET:
-					++unreachable;
-					printf(" !N");
-					break;
-				case ICMP_UNREACH_HOST:
-					++unreachable;
-					printf(" !H");
-					break;
-				case ICMP_UNREACH_PROTOCOL:
-					++got_there;
-					printf(" !P");
-					break;
-				case ICMP_UNREACH_NEEDFRAG:
-					++unreachable;
-					printf(" !F");
-					break;
-				case ICMP_UNREACH_SRCFAIL:
-					++unreachable;
-					printf(" !S");
-					break;
-				case ICMP_UNREACH_FILTER_PROHIB:
-					++unreachable;
-					printf(" !X");
-					break;
-				case ICMP_UNREACH_NET_PROHIB: /*misuse*/
-					++unreachable;
-					printf(" !A");
-					break;
-				case ICMP_UNREACH_HOST_PROHIB:
-					++unreachable;
-					printf(" !C");
-					break;
-				case ICMP_UNREACH_NET_UNKNOWN:
-				case ICMP_UNREACH_HOST_UNKNOWN:
-					++unreachable;
-					printf(" !U");
-					break;
-				case ICMP_UNREACH_ISOLATED:
-					++unreachable;
-					printf(" !I");
-					break;
-				case ICMP_UNREACH_TOSNET:
-				case ICMP_UNREACH_TOSHOST:
-					++unreachable;
-					printf(" !T");
-					break;
-				default:
-					++unreachable;
-					printf(" !<%d>", i - 1);
-					break;
-				}
+				icmp_code(i - 1, &got_there, &unreachable);
 				break;
 			}
 			if (cc == 0) {
@@ -952,7 +894,7 @@ build_probe4(int seq, u_int8_t ttl, int iflag)
 	switch (proto) {
 	case IPPROTO_ICMP:
 		icmpp->icmp_type = icmp_type;
-		icmpp->icmp_code = icmp_code;
+		icmpp->icmp_code = ICMP_CODE;
 		icmpp->icmp_seq = htons(seq);
 		icmpp->icmp_id = htons(ident);
 		op = (struct packetdata *)(icmpp + 1);
@@ -1164,6 +1106,70 @@ print(struct sockaddr *from, int cc, const char *to)
 
 	if (verbose)
 		printf(" %d bytes to %s", cc, to);
+}
+
+void
+icmp_code(int code, int *got_there, int *unreachable)
+{
+	struct ip *ip = (struct ip *)packet;
+
+	switch (code) {
+	case ICMP_UNREACH_PORT:
+		if (ip->ip_ttl <= 1)
+			printf(" !");
+		++(*got_there);
+		break;
+	case ICMP_UNREACH_NET:
+		++(*unreachable);
+		printf(" !N");
+		break;
+	case ICMP_UNREACH_HOST:
+		++(*unreachable);
+		printf(" !H");
+		break;
+	case ICMP_UNREACH_PROTOCOL:
+		++(*got_there);
+		printf(" !P");
+		break;
+	case ICMP_UNREACH_NEEDFRAG:
+		++(*unreachable);
+		printf(" !F");
+		break;
+	case ICMP_UNREACH_SRCFAIL:
+		++(*unreachable);
+		printf(" !S");
+		break;
+	case ICMP_UNREACH_FILTER_PROHIB:
+		++(*unreachable);
+		printf(" !X");
+		break;
+	case ICMP_UNREACH_NET_PROHIB: /*misuse*/
+		++(*unreachable);
+		printf(" !A");
+		break;
+	case ICMP_UNREACH_HOST_PROHIB:
+		++(*unreachable);
+		printf(" !C");
+		break;
+	case ICMP_UNREACH_NET_UNKNOWN:
+	case ICMP_UNREACH_HOST_UNKNOWN:
+		++(*unreachable);
+		printf(" !U");
+		break;
+	case ICMP_UNREACH_ISOLATED:
+		++(*unreachable);
+		printf(" !I");
+		break;
+	case ICMP_UNREACH_TOSNET:
+	case ICMP_UNREACH_TOSHOST:
+		++(*unreachable);
+		printf(" !T");
+		break;
+	default:
+		++(*unreachable);
+		printf(" !<%d>", code);
+		break;
+	}
 }
 
 /*
