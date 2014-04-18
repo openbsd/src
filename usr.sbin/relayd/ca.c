@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.3 2014/04/18 15:53:28 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.4 2014/04/18 16:08:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -54,10 +54,10 @@ int	 rsae_bn_mod_exp(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
 int	 rsae_init(RSA *);
 int	 rsae_finish(RSA *);
-int	 rsae_sign(int, const u_char *, u_int,
-	    u_char *, u_int *, const RSA *);
-int	 rsae_verify(int dtype, const u_char *m, u_int,
-	    const u_char *, u_int, const RSA *);
+int	 rsae_sign(int, const u_char *, u_int, u_char *, u_int *,
+	    const RSA *);
+int	 rsae_verify(int dtype, const u_char *m, u_int, const u_char *,
+	    u_int, const RSA *);
 int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
 
 static struct relayd *env = NULL;
@@ -238,8 +238,8 @@ static RSA_METHOD rsae_method = {
 };
 
 static int
-rsae_send_imsg(int flen, const u_char *from, u_char *to,
-    RSA *rsa,int padding, u_int cmd)
+rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
+    int padding, u_int cmd)
 {
 	struct ctl_keyop cko;
 	int		 ret = 0;
@@ -304,7 +304,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to,
 				toptr = (u_char *)imsg.data + sizeof(cko);
 				memcpy(to, toptr, ret);
 			}
-			done = 1;			
+			done = 1;
 
 			imsg_free(&imsg);
 		}
@@ -315,24 +315,21 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to,
 }
 
 int
-rsae_pub_enc(int flen,const u_char *from,
-    u_char *to, RSA *rsa,int padding)
+rsae_pub_enc(int flen,const u_char *from, u_char *to, RSA *rsa,int padding)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
 	return (rsa_default->rsa_pub_enc(flen, from, to, rsa, padding));
 }
 
 int
-rsae_pub_dec(int flen,const u_char *from, u_char
-    *to, RSA *rsa,int padding)
+rsae_pub_dec(int flen,const u_char *from, u_char *to, RSA *rsa,int padding)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
 	return (rsa_default->rsa_pub_dec(flen, from, to, rsa, padding));
 }
 
 int
-rsae_priv_enc(int flen, const u_char *from, u_char *to,
-    RSA *rsa, int padding)
+rsae_priv_enc(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
 	return (rsae_send_imsg(flen, from, to, rsa, padding,
@@ -340,8 +337,7 @@ rsae_priv_enc(int flen, const u_char *from, u_char *to,
 }
 
 int
-rsae_priv_dec(int flen, const u_char *from, u_char *to,
-    RSA *rsa, int padding)
+rsae_priv_dec(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
 	return (rsae_send_imsg(flen, from, to, rsa, padding,
@@ -356,8 +352,8 @@ rsae_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 }
 
 int
-rsae_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const
-    BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+rsae_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
 	return (rsa_default->bn_mod_exp(r, a, p, m, ctx, m_ctx));
@@ -382,19 +378,21 @@ rsae_finish(RSA *rsa)
 }
 
 int
-rsae_sign(int type, const u_char *m, u_int
-    m_length, u_char *sigret, u_int *siglen, const RSA *rsa)
+rsae_sign(int type, const u_char *m, u_int m_length, u_char *sigret,
+    u_int *siglen, const RSA *rsa)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
-	return (rsa_default->rsa_sign(type, m, m_length, sigret, siglen, rsa));
+	return (rsa_default->rsa_sign(type, m, m_length,
+	    sigret, siglen, rsa));
 }
 
 int
-rsae_verify(int dtype, const u_char *m, u_int m_length,
-    const u_char *sigbuf, u_int siglen, const RSA *rsa)
+rsae_verify(int dtype, const u_char *m, u_int m_length, const u_char *sigbuf,
+    u_int siglen, const RSA *rsa)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
-	return (rsa_default->rsa_verify(dtype, m, m_length, sigbuf, siglen, rsa));
+	return (rsa_default->rsa_verify(dtype, m, m_length,
+	    sigbuf, siglen, rsa));
 }
 
 int
