@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.80 2014/04/18 16:48:19 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.81 2014/04/18 16:56:25 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -478,28 +478,20 @@ main(int argc, char *argv[])
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
 	hints.ai_flags = AI_CANONNAME;
-	error = getaddrinfo(*argv, NULL, &hints, &res);
-	if (error) {
-		fprintf(stderr,
-		    "traceroute6: %s\n", gai_strerror(error));
-		exit(1);
-	}
-	if (res->ai_addrlen != sizeof(to)) {
-		fprintf(stderr,
-		    "traceroute6: size of sockaddr mismatch\n");
-		exit(1);
-	}
+	if (error = getaddrinfo(*argv, NULL, &hints, &res))
+		errx(1, "%s", gai_strerror(error));
+	if (res->ai_addrlen != sizeof(to))
+		errx(1, "size of sockaddr mismatch");
+
 	memcpy(&to, res->ai_addr, res->ai_addrlen);
 	hostname = res->ai_canonname ? strdup(res->ai_canonname) : *argv;
-	if (!hostname) {
-		fprintf(stderr, "traceroute6: not enough core\n");
-		exit(1);
-	}
+	if (!hostname)
+		errx(1, "malloc");
 	if (res->ai_next) {
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
 		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 			strlcpy(hbuf, "?", sizeof(hbuf));
-		fprintf(stderr, "traceroute6: Warning: %s has multiple "
+		warnx("Warning: %s has multiple "
 		    "addresses; using %s\n", hostname, hbuf);
 	}
 
@@ -517,12 +509,9 @@ main(int argc, char *argv[])
 		minlen = sizeof(struct packetdata);
 	if (datalen < minlen)
 		datalen = minlen;
-	else if (datalen >= MAXPACKET) {
-		fprintf(stderr,
-		    "traceroute6: packet size must be %d <= s < %ld.\n",
-		    minlen, (long)MAXPACKET);
-		exit(1);
-	}
+	else if (datalen >= MAXPACKET)
+		errx(1, "packet size must be %d <= s < %ld.\n", minlen,
+		    (long)MAXPACKET);
 
 	if ((outpacket = calloc(1, datalen)) == NULL)
 		err(1, "calloc");
@@ -537,10 +526,8 @@ main(int argc, char *argv[])
 	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	
-	if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
-		fprintf(stderr, "traceroute6: malloc failed\n");
-		exit(1);
-	}
+	if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
+		errx(1, "malloc");
 	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
 	rcvmhdr.msg_controllen = rcvcmsglen;
 
@@ -579,17 +566,10 @@ main(int argc, char *argv[])
 		hints.ai_family = AF_INET6;
 		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 		hints.ai_flags = AI_NUMERICHOST;
-		error = getaddrinfo(source, "0", &hints, &res);
-		if (error) {
-			printf("traceroute6: %s: %s\n", source,
-			    gai_strerror(error));
-			exit(1);
-		}
-		if (res->ai_addrlen > sizeof(from)) {
-			printf("traceroute6: %s: %s\n", source,
-			    gai_strerror(error));
-			exit(1);
-		}
+		if(error = getaddrinfo(source, "0", &hints, &res))
+			errx(1, "%s: %s", source, gai_strerror(error));
+		if (res->ai_addrlen != sizeof(from))
+			errx(1, "size of sockaddr mismatch");
 		memcpy(&from, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 	} else {
