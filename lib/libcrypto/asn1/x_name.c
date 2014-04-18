@@ -146,11 +146,11 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
  memerr:
 	ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
 	if (ret)
-		{
+	{
 		if (ret->entries)
 			sk_X509_NAME_ENTRY_free(ret->entries);
 		free(ret);
-		}
+	}
 	return 0;
 }
 

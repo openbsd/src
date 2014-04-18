@@ -72,7 +72,7 @@
 
 int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
 		unsigned char *md, unsigned int *len)
-	{
+{
 	int i;
 	unsigned char *str = NULL;
 
@@ -83,4 +83,4 @@ int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
 		return 0;
 	free(str);
 	return(1);
-	}
+}

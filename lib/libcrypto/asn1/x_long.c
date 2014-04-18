@@ -174,6 +174,6 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 
 static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
 			int indent, const ASN1_PCTX *pctx)
-	{
+{
 	return BIO_printf(out, "%ld\n", *(long *)pval);
-	}
+}

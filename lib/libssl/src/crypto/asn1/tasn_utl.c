@@ -74,23 +74,23 @@
  */
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
-	{
+{
 	int *sel = offset2ptr(*pval, it->utype);
 	return *sel;
-	}
+}
 
 /* Given an ASN1_ITEM CHOICE type set
  * the selector value, return old value.
  */
 
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it)
-	{	
+{	
 	int *sel, ret;
 	sel = offset2ptr(*pval, it->utype);
 	ret = *sel;
 	*sel = value;
 	return ret;
-	}
+}
 
 /* Do reference counting. The value 'op' decides what to do. 
  * if it is +1 then the count is incremented. If op is 0 count is
@@ -99,7 +99,7 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it)
  */
 
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
-	{
+{
 	const ASN1_AUX *aux;
 	int *lck, ret;
 	if ((it->itype != ASN1_ITYPE_SEQUENCE)
@@ -110,16 +110,16 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 		return 0;
 	lck = offset2ptr(*pval, aux->ref_offset);
 	if (op == 0)
-		{
+	{
 		*lck = 1;
 		return 1;
-		}
+	}
 	ret = CRYPTO_add(lck, op, aux->ref_lock);
 	return ret;
-	}
+}
 
 static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
-	{
+{
 	const ASN1_AUX *aux;
 	if (!pval || !*pval)
 		return NULL;
@@ -127,37 +127,37 @@ static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
 		return NULL;
 	return offset2ptr(*pval, aux->enc_offset);
-	}
+}
 
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
-	{
+{
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
 	if (enc)
-		{
+	{
 		enc->enc = NULL;
 		enc->len = 0;
 		enc->modified = 1;
-		}
 	}
+}
 
 void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
-	{
+{
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
 	if (enc)
-		{
+	{
 		if (enc->enc)
 			free(enc->enc);
 		enc->enc = NULL;
 		enc->len = 0;
 		enc->modified = 1;
-		}
 	}
+}
 
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
 							 const ASN1_ITEM *it)
-	{
+{
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
 	if (!enc)
@@ -173,28 +173,28 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
 	enc->modified = 0;
 
 	return 1;
-	}
+}
 		
 int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
 							const ASN1_ITEM *it)
-	{
+{
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
 	if (!enc || enc->modified)
 		return 0;
 	if (out)
-		{
+	{
 		memcpy(*out, enc->enc, enc->len);
 		*out += enc->len;
-		}
+	}
 	if (len)
 		*len = enc->len;
 	return 1;
-	}
+}
 
 /* Given an ASN1_TEMPLATE get a pointer to a field */
 ASN1_VALUE ** asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
-	{
+{
 	ASN1_VALUE **pvaltmp;
 	if (tt->flags & ASN1_TFLG_COMBINE)
 		return pval;
@@ -204,7 +204,7 @@ ASN1_VALUE ** asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	 * (int *).
 	 */
 	return pvaltmp;
-	}
+}
 
 /* Handle ANY DEFINED BY template, find the selector, look up
  * the relevant ASN1_TEMPLATE in the table and return it.
@@ -212,7 +212,7 @@ ASN1_VALUE ** asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 
 const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
 								int nullerr)
-	{
+{
 	const ASN1_ADB *adb;
 	const ASN1_ADB_TABLE *atbl;
 	long selector;
@@ -229,11 +229,11 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
 
 	/* Check if NULL */
 	if (!sfld)
-		{
+	{
 		if (!adb->null_tt)
 			goto err;
 		return adb->null_tt;
-		}
+	}
 
 	/* Convert type to a long:
 	 * NB: don't check for NID_undef here because it
@@ -269,4 +269,4 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
 		ASN1err(ASN1_F_ASN1_DO_ADB,
 			ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
 	return NULL;
-	}
+}

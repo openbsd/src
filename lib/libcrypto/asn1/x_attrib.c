@@ -97,7 +97,7 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_ATTRIBUTE)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
-	{
+{
 	X509_ATTRIBUTE *ret=NULL;
 	ASN1_TYPE *val=NULL;
 
@@ -115,4 +115,4 @@ err:
 	if (ret != NULL) X509_ATTRIBUTE_free(ret);
 	if (val != NULL) ASN1_TYPE_free(val);
 	return(NULL);
-	}
+}

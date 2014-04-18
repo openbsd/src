@@ -143,20 +143,20 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-        {
+{
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, argl, argp,
 				new_func, dup_func, free_func);
-        }
+}
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
-	{
+{
 	return(CRYPTO_set_ex_data(&r->ex_data,idx,arg));
-	}
+}
 
 void *X509_get_ex_data(X509 *r, int idx)
-	{
+{
 	return(CRYPTO_get_ex_data(&r->ex_data,idx));
-	}
+}
 
 /* X509_AUX ASN1 routines. X509_AUX is the name given to
  * a certificate with extra info tagged on the end. Since these

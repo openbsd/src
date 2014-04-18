@@ -63,15 +63,15 @@
 #include <openssl/x509.h>
 
 X509_INFO *X509_INFO_new(void)
-	{
+{
 	X509_INFO *ret=NULL;
 
 	ret=(X509_INFO *)malloc(sizeof(X509_INFO));
 	if (ret == NULL)
-		{
+	{
 		ASN1err(ASN1_F_X509_INFO_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
-		}
+	}
  
         ret->enc_cipher.cipher=NULL;
         ret->enc_len=0;
@@ -82,10 +82,10 @@ X509_INFO *X509_INFO_new(void)
 	ret->crl=NULL;
 	ret->x_pkey=NULL;
 	return(ret);
-	}
+}
 
 void X509_INFO_free(X509_INFO *x)
-	{
+{
 	int i;
 
 	if (x == NULL) return;
@@ -98,7 +98,7 @@ void X509_INFO_free(X509_INFO *x)
 	if (x->x_pkey != NULL) X509_PKEY_free(x->x_pkey);
 	if (x->enc_data != NULL) free(x->enc_data);
 	free(x);
-	}
+}
 
 IMPLEMENT_STACK_OF(X509_INFO)
 

@@ -65,17 +65,17 @@ ASN1_INTEGER *ASN1_INTEGER_dup(const ASN1_INTEGER *x)
 { return M_ASN1_INTEGER_dup(x);}
 
 int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
-	{ 
+{ 
 	int neg, ret;
 	/* Compare signs */
 	neg = x->type & V_ASN1_NEG;
 	if (neg != (y->type & V_ASN1_NEG))
-		{
+	{
 		if (neg)
 			return -1;
 		else
 			return 1;
-		}
+	}
 
 	ret = ASN1_STRING_cmp(x, y);
 
@@ -83,7 +83,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
 		return -ret;
 	else
 		return ret;
-	}
+}
 	
 
 /* 
@@ -112,7 +112,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
  */
 
 int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
-	{
+{
 	int pad=0,ret,i,neg;
 	unsigned char *p,*n,pb=0;
 
@@ -121,17 +121,17 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 	if (a->length == 0)
 		ret=1;
 	else
-		{
+	{
 		ret=a->length;
 		i=a->data[0];
 		if (!neg && (i > 127)) {
 			pad=1;
 			pb=0;
-		} else if(neg) {
+	} else if(neg) {
 			if(i>128) {
 				pad=1;
 				pb=0xFF;
-			} else if(i == 128) {
+		} else if(i == 128) {
 			/*
 			 * Special case: if any other bytes non zero we pad:
 			 * otherwise we don't.
@@ -140,11 +140,11 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 						pad=1;
 						pb=0xFF;
 						break;
-				}
 			}
 		}
+	}
 		ret+=pad;
-		}
+	}
 	if (pp == NULL) return(ret);
 	p= *pp;
 
@@ -161,33 +161,33 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 			*(p--) = 0;
 			n--;
 			i--;
-		}
+	}
 		/* Complement and increment next octet */
 		*(p--) = ((*(n--)) ^ 0xff) + 1;
 		i--;
 		/* Complement any octets left */
 		for(;i > 0; i--) *(p--) = *(n--) ^ 0xff;
-	}
+}
 
 	*pp+=ret;
 	return(ret);
-	}
+}
 
 /* Convert just ASN1 INTEGER content octets to ASN1_INTEGER structure */
 
 ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	     long len)
-	{
+{
 	ASN1_INTEGER *ret=NULL;
 	const unsigned char *p, *pend;
 	unsigned char *to,*s;
 	int i;
 
 	if ((a == NULL) || ((*a) == NULL))
-		{
+	{
 		if ((ret=M_ASN1_INTEGER_new()) == NULL) return(NULL);
 		ret->type=V_ASN1_INTEGER;
-		}
+	}
 	else
 		ret=(*a);
 
@@ -198,23 +198,23 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	 * signifies a missing NULL parameter. */
 	s=(unsigned char *)malloc((int)len+1);
 	if (s == NULL)
-		{
+	{
 		i=ERR_R_MALLOC_FAILURE;
 		goto err;
-		}
+	}
 	to=s;
 	if(!len) {
 		/* Strictly speaking this is an illegal INTEGER but we
 		 * tolerate it.
 		 */
 		ret->type=V_ASN1_INTEGER;
-	} else if (*p & 0x80) /* a negative number */
-		{
+} else if (*p & 0x80) /* a negative number */
+	{
 		ret->type=V_ASN1_NEG_INTEGER;
 		if ((*p == 0xff) && (len != 1)) {
 			p++;
 			len--;
-		}
+	}
 		i = len;
 		p += i - 1;
 		to += i - 1;
@@ -222,7 +222,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 			*(to--) = 0;
 			i--;
 			p--;
-		}
+	}
 		/* Special case: if all zeros then the number will be of
 		 * the form FF followed by n zero bytes: this corresponds to
 		 * 1 followed by n zero bytes. We've already written n zeros
@@ -234,20 +234,20 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 			*s = 1;
 			s[len] = 0;
 			len++;
-		} else {
+	} else {
 			*(to--) = (*(p--) ^ 0xff) + 1;
 			i--;
 			for(;i > 0; i--) *(to--) = *(p--) ^ 0xff;
-		}
-	} else {
+	}
+} else {
 		ret->type=V_ASN1_INTEGER;
 		if ((*p == 0) && (len != 1))
-			{
+		{
 			p++;
 			len--;
-			}
+		}
 		memcpy(s,p,(int)len);
-	}
+}
 
 	if (ret->data != NULL) free(ret->data);
 	ret->data=s;
@@ -260,7 +260,7 @@ err:
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
 		M_ASN1_INTEGER_free(ret);
 	return(NULL);
-	}
+}
 
 
 /* This is a version of d2i_ASN1_INTEGER that ignores the sign bit of
@@ -270,7 +270,7 @@ err:
 
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	     long length)
-	{
+{
 	ASN1_INTEGER *ret=NULL;
 	const unsigned char *p;
 	unsigned char *s;
@@ -279,45 +279,45 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 	int i;
 
 	if ((a == NULL) || ((*a) == NULL))
-		{
+	{
 		if ((ret=M_ASN1_INTEGER_new()) == NULL) return(NULL);
 		ret->type=V_ASN1_INTEGER;
-		}
+	}
 	else
 		ret=(*a);
 
 	p= *pp;
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
 	if (inf & 0x80)
-		{
+	{
 		i=ASN1_R_BAD_OBJECT_HEADER;
 		goto err;
-		}
+	}
 
 	if (tag != V_ASN1_INTEGER)
-		{
+	{
 		i=ASN1_R_EXPECTING_AN_INTEGER;
 		goto err;
-		}
+	}
 
 	/* We must malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
 	s=(unsigned char *)malloc((int)len+1);
 	if (s == NULL)
-		{
+	{
 		i=ERR_R_MALLOC_FAILURE;
 		goto err;
-		}
+	}
 	ret->type=V_ASN1_INTEGER;
 	if(len) {
 		if ((*p == 0) && (len != 1))
-			{
+		{
 			p++;
 			len--;
-			}
+		}
 		memcpy(s,p,(int)len);
 		p+=len;
-	}
+}
 
 	if (ret->data != NULL) free(ret->data);
 	ret->data=s;
@@ -330,10 +330,10 @@ err:
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
 		M_ASN1_INTEGER_free(ret);
 	return(NULL);
-	}
+}
 
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
-	{
+{
 	int j,k;
 	unsigned int i;
 	unsigned char buf[sizeof(long)+1];
@@ -341,39 +341,39 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 
 	a->type=V_ASN1_INTEGER;
 	if (a->length < (int)(sizeof(long)+1))
-		{
+	{
 		if (a->data != NULL)
 			free(a->data);
 		if ((a->data=(unsigned char *)malloc(sizeof(long)+1)) != NULL)
 			memset((char *)a->data,0,sizeof(long)+1);
-		}
+	}
 	if (a->data == NULL)
-		{
+	{
 		ASN1err(ASN1_F_ASN1_INTEGER_SET,ERR_R_MALLOC_FAILURE);
 		return(0);
-		}
+	}
 	d=v;
 	if (d < 0)
-		{
+	{
 		d= -d;
 		a->type=V_ASN1_NEG_INTEGER;
-		}
+	}
 
 	for (i=0; i<sizeof(long); i++)
-		{
+	{
 		if (d == 0) break;
 		buf[i]=(int)d&0xff;
 		d>>=8;
-		}
+	}
 	j=0;
 	for (k=i-1; k >=0; k--)
 		a->data[j++]=buf[k];
 	a->length=j;
 	return(1);
-	}
+}
 
 long ASN1_INTEGER_get(const ASN1_INTEGER *a)
-	{
+{
 	int neg=0,i;
 	long r=0;
 
@@ -385,24 +385,24 @@ long ASN1_INTEGER_get(const ASN1_INTEGER *a)
 		return -1;
 	
 	if (a->length > (int)sizeof(long))
-		{
+	{
 		/* hmm... a bit ugly, return all ones */
 		return -1;
-		}
+	}
 	if (a->data == NULL)
 		return 0;
 
 	for (i=0; i<a->length; i++)
-		{
+	{
 		r<<=8;
 		r|=(unsigned char)a->data[i];
-		}
+	}
 	if (neg) r= -r;
 	return(r);
-	}
+}
 
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
-	{
+{
 	ASN1_INTEGER *ret;
 	int len,j;
 
@@ -411,40 +411,40 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	else
 		ret=ai;
 	if (ret == NULL)
-		{
+	{
 		ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_NESTED_ASN1_ERROR);
 		goto err;
-		}
+	}
 	if (BN_is_negative(bn))
 		ret->type = V_ASN1_NEG_INTEGER;
 	else ret->type=V_ASN1_INTEGER;
 	j=BN_num_bits(bn);
 	len=((j == 0)?0:((j/8)+1));
 	if (ret->length < len+4)
-		{
+	{
 		unsigned char *new_data=realloc(ret->data, len+4);
 		if (!new_data)
-			{
+		{
 			ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);
 			goto err;
-			}
-		ret->data=new_data;
 		}
+		ret->data=new_data;
+	}
 	ret->length=BN_bn2bin(bn,ret->data);
 	/* Correct zero case */
 	if(!ret->length)
-		{
+	{
 		ret->data[0] = 0;
 		ret->length = 1;
-		}
+	}
 	return(ret);
 err:
 	if (ret != ai) M_ASN1_INTEGER_free(ret);
 	return(NULL);
-	}
+}
 
 BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
-	{
+{
 	BIGNUM *ret;
 
 	if ((ret=BN_bin2bn(ai->data,ai->length,bn)) == NULL)
@@ -452,7 +452,7 @@ BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
 	else if(ai->type == V_ASN1_NEG_INTEGER)
 		BN_set_negative(ret, 1);
 	return(ret);
-	}
+}
 
 IMPLEMENT_STACK_OF(ASN1_INTEGER)
 IMPLEMENT_ASN1_SET_OF(ASN1_INTEGER)

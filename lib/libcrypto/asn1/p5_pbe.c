@@ -76,31 +76,31 @@ IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
 
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 				const unsigned char *salt, int saltlen)
-	{
+{
 	PBEPARAM *pbe=NULL;
 	ASN1_STRING *pbe_str=NULL;
 	unsigned char *sstr;
 
 	pbe = PBEPARAM_new();
 	if (!pbe)
-		{
+	{
 		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
 		goto err;
-		}
+	}
 	if(iter <= 0)
 		iter = PKCS5_DEFAULT_ITER;
 	if (!ASN1_INTEGER_set(pbe->iter, iter))
-		{
+	{
 		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
 		goto err;
-		}
+	}
 	if (!saltlen)
 		saltlen = PKCS5_SALT_LEN;
 	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen))
-		{
+	{
 		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
 		goto err;
-		}
+	}
 	sstr = ASN1_STRING_data(pbe->salt);
 	if (salt)
 		memcpy(sstr, salt, saltlen);
@@ -108,10 +108,10 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 		goto err;
 
 	if(!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str))
-		{
+	{
 		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
 		goto err;
-		}
+	}
 
 	PBEPARAM_free(pbe);
 	pbe = NULL;
@@ -125,24 +125,24 @@ err:
 	if (pbe_str != NULL)
 		ASN1_STRING_free(pbe_str);
 	return 0;
-	}
+}
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
 				const unsigned char *salt, int saltlen)
-	{
+{
 	X509_ALGOR *ret;
 	ret = X509_ALGOR_new();
 	if (!ret)
-		{
+	{
 		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
 		return NULL;
-		}
+	}
 
 	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen)) 
 		return ret;
 
 	X509_ALGOR_free(ret);
 	return NULL;
-	}
+}
