@@ -59,6 +59,8 @@
 #include "bn_lcl.h"
 #include "cryptlib.h"
 
+#include <machine/endian.h>
+
 
 #define BN_NIST_192_TOP	(192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP	(224+BN_BITS2-1)/BN_BITS2
@@ -318,7 +320,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 						:(to[(n)/2] =((m)&1)?(from[(m)/2]>>32):(from[(m)/2]&BN_MASK2l)))
 #define bn_32_set_0(to, n)		(((n)&1)?(to[(n)/2]&=BN_MASK2l):(to[(n)/2]=0));
 #define bn_cp_32(to,n,from,m)		((m)>=0)?bn_cp_32_naked(to,n,from,m):bn_32_set_0(to,n)
-# if defined(L_ENDIAN)
+# if _BYTE_ORDER == _LITTLE_ENDIAN
 #  if defined(__arch64__)
 #   define NIST_INT64 long
 #  else

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2014/04/18 17:32:31 miod Exp $
+# $OpenBSD: Makefile,v 1.26 2014/04/18 19:41:21 miod Exp $
 
 LIB=	crypto
 
@@ -6,16 +6,6 @@ SSL_SRC=	${.CURDIR}/../../libssl/src
 LCRYPTO_SRC=	${SSL_SRC}/crypto
 
 CFLAGS+= -Wall
-
-# arm and sh default to little endian, mips defaults to big endian
-.if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
-    ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "sh" || \
-    ${MACHINE_ARCH} == "vax"
-CFLAGS+= -DL_ENDIAN
-.else
-CFLAGS+= -DB_ENDIAN
-.endif 
 
 .include <bsd.own.mk>		# for 'NOPIC' definition
 .if !defined(NOPIC)
