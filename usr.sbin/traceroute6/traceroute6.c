@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.78 2014/04/18 16:30:00 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.79 2014/04/18 16:33:21 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -592,11 +592,9 @@ main(int argc, char *argv[])
 		    &rtableid, sizeof(rtableid)) == -1)
 			err(1, "setsockopt SO_RTABLE");
 	}
-#ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
-#endif /* SO_SNDBUF */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
