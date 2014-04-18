@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.2 2014/04/18 14:32:22 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.3 2014/04/18 15:53:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -97,20 +97,25 @@ ca_launch(void)
 		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) == 0)
 			continue;
 
-		if ((in = BIO_new_mem_buf(rlay->rl_ssl_key,
-		    rlay->rl_conf.ssl_key_len)) == NULL)
-			fatalx("ca_launch: key");
+		if (rlay->rl_conf.ssl_key_len) {
+			if ((in = BIO_new_mem_buf(rlay->rl_ssl_key,
+			    rlay->rl_conf.ssl_key_len)) == NULL)
+				fatalx("ca_launch: key");
 
-		if ((pkey = PEM_read_bio_PrivateKey(in,
-		    NULL, NULL, NULL)) == NULL)
-			fatalx("ca_launch: PEM");
+			if ((pkey = PEM_read_bio_PrivateKey(in,
+			    NULL, NULL, NULL)) == NULL)
+				fatalx("ca_launch: PEM");
+			BIO_free(in);
 
-		purge_key(&rlay->rl_ssl_key, rlay->rl_conf.ssl_key_len);
-		purge_key(&rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len);
+			rlay->rl_ssl_pkey = pkey;
 
-		rlay->rl_ssl_pkey = pkey;
-
-		BIO_free(in);
+			purge_key(&rlay->rl_ssl_key,
+			    rlay->rl_conf.ssl_key_len);
+		}
+		if (rlay->rl_conf.ssl_cert_len) {
+			purge_key(&rlay->rl_ssl_cert,
+			    rlay->rl_conf.ssl_cert_len);
+		}
 	}
 }
 
