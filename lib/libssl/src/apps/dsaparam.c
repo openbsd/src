@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
+#include <openssl/opensslconf.h>/* for OPENSSL_NO_DSA */
 /* Until the key-gen callbacks are modified to use newer prototypes, we allow
  * deprecated functions for openssl-internal code */
 #ifdef OPENSSL_NO_DEPRECATED
@@ -106,7 +106,7 @@ timebomb_sigalarm(int foo)
 
 #endif
 
-static int dsa_cb(int p, int n, BN_GENCB *cb);
+static int dsa_cb(int p, int n, BN_GENCB * cb);
 
 int MAIN(int, char **);
 
@@ -131,7 +131,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -156,11 +156,11 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
+			infile = *(++argv);
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
@@ -186,7 +186,7 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				goto bad;
-			inrand= *(++argv);
+			inrand = *(++argv);
 			need_rand = 1;
 		} else if (strcmp(*argv, "-noout") == 0)
 			noout = 1;
@@ -225,7 +225,6 @@ bad:
 		BIO_printf(bio_err, " number        number of bits to use for generating private key\n");
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 	in = BIO_new(BIO_s_file());
@@ -234,7 +233,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
@@ -262,7 +260,6 @@ bad:
 			BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
 			    app_RAND_load_files(inrand));
 	}
-
 	if (numbits > 0) {
 		BN_GENCB cb;
 		BN_GENCB_set(&cb, dsa_cb, bio_err);
@@ -314,18 +311,16 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (text) {
 		DSAparams_print(out, dsa);
 	}
-
 	if (C) {
 		unsigned char *data;
 		int l, len, bits_p;
 
 		len = BN_num_bytes(dsa->p);
 		bits_p = BN_num_bits(dsa->p);
-		data = (unsigned char *)malloc(len + 20);
+		data = (unsigned char *) malloc(len + 20);
 		if (data == NULL) {
 			perror("malloc");
 			goto end;
@@ -370,7 +365,6 @@ bad:
 		printf("\t\t{ DSA_free(dsa); return(NULL); }\n");
 		printf("\treturn(dsa);\n\t}\n");
 	}
-
 	if (!noout) {
 		if (outformat == FORMAT_ASN1)
 			i = i2d_DSAparams_bio(out, dsa);
@@ -420,11 +414,11 @@ end:
 	if (dsa != NULL)
 		DSA_free(dsa);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 static int
-dsa_cb(int p, int n, BN_GENCB *cb)
+dsa_cb(int p, int n, BN_GENCB * cb)
 {
 	char c = '*';
 
@@ -437,7 +431,7 @@ dsa_cb(int p, int n, BN_GENCB *cb)
 	if (p == 3)
 		c = '\n';
 	BIO_write(cb->arg, &c, 1);
-	(void)BIO_flush(cb->arg);
+	(void) BIO_flush(cb->arg);
 #ifdef LINT
 	p = n;
 #endif
@@ -447,10 +441,10 @@ dsa_cb(int p, int n, BN_GENCB *cb)
 #endif
 	return 1;
 }
-#else /* !OPENSSL_NO_DSA */
+#else				/* !OPENSSL_NO_DSA */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

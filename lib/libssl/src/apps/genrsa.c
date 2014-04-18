@@ -82,7 +82,7 @@
 #undef PROG
 #define PROG genrsa_main
 
-static int genrsa_cb(int p, int n, BN_GENCB *cb);
+static int genrsa_cb(int p, int n, BN_GENCB * cb);
 
 int MAIN(int, char **);
 
@@ -108,14 +108,15 @@ MAIN(int argc, char **argv)
 	BIGNUM *bn = BN_new();
 	RSA *rsa = NULL;
 
-	if (!bn) goto err;
+	if (!bn)
+		goto err;
 
-		apps_startup();
+	apps_startup();
 	BN_GENCB_set(&cb, genrsa_cb, bio_err);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto err;
@@ -123,7 +124,6 @@ MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "unable to create BIO for output\n");
 		goto err;
 	}
-
 	argv++;
 	argc--;
 	for (;;) {
@@ -132,22 +132,22 @@ MAIN(int argc, char **argv)
 		if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-3") == 0)
 			f4 = 3;
-		else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv,"-f4") == 0)
+		else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv, "-f4") == 0)
 			f4 = RSA_F4;
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		}
 #endif
 		else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				goto bad;
-			inrand= *(++argv);
+			inrand = *(++argv);
 		}
 #ifndef OPENSSL_NO_DES
 		else if (strcmp(*argv, "-des") == 0)
@@ -182,13 +182,13 @@ MAIN(int argc, char **argv)
 		else if (strcmp(*argv, "-passout") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargout= *(++argv);
+			passargout = *(++argv);
 		} else
 			break;
 		argv++;
 		argc--;
 	}
-	if ((argc >= 1) && ((sscanf(*argv, "%d",&num) == 0) || (num < 0))) {
+	if ((argc >= 1) && ((sscanf(*argv, "%d", &num) == 0) || (num < 0))) {
 bad:
 		BIO_printf(bio_err, "usage: genrsa [args] [numbits]\n");
 		BIO_printf(bio_err, " -des            encrypt the generated key with DES in cbc mode\n");
@@ -220,14 +220,12 @@ bad:
 		BIO_printf(bio_err, "                 the random number generator\n");
 		goto err;
 	}
-
 	ERR_load_crypto_strings();
 
 	if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
-
 #ifndef OPENSSL_NO_ENGINE
 	e = setup_engine(bio_err, engine, 0);
 #endif
@@ -264,23 +262,25 @@ bad:
 
 	app_RAND_write_file(NULL, bio_err);
 
-	/* We need to do the following for when the base number size is <
-	 * long, esp windows 3.1 :-(. */
+	/*
+	 * We need to do the following for when the base number size is <
+	 * long, esp windows 3.1 :-(.
+	 */
 	l = 0L;
 	for (i = 0; i < rsa->e->top; i++) {
 #ifndef SIXTY_FOUR_BIT
-		l<<=BN_BITS4;
-		l<<=BN_BITS4;
+		l <<= BN_BITS4;
+		l <<= BN_BITS4;
 #endif
 		l += rsa->e->d[i];
 	}
-	BIO_printf(bio_err, "e is %ld (0x%lX)\n",l,l);
+	BIO_printf(bio_err, "e is %ld (0x%lX)\n", l, l);
 	{
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
 		cb_data.prompt_info = outfile;
 		if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
-			    (pem_password_cb *)password_callback, &cb_data))
+			(pem_password_cb *) password_callback, &cb_data))
 			goto err;
 	}
 
@@ -292,15 +292,16 @@ err:
 		RSA_free(rsa);
 	if (out)
 		BIO_free_all(out);
-	if (passout) free(passout);
-		if (ret != 0)
-			ERR_print_errors(bio_err);
+	if (passout)
+		free(passout);
+	if (ret != 0)
+		ERR_print_errors(bio_err);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 static int
-genrsa_cb(int p, int n, BN_GENCB *cb)
+genrsa_cb(int p, int n, BN_GENCB * cb)
 {
 	char c = '*';
 
@@ -313,16 +314,16 @@ genrsa_cb(int p, int n, BN_GENCB *cb)
 	if (p == 3)
 		c = '\n';
 	BIO_write(cb->arg, &c, 1);
-	(void)BIO_flush(cb->arg);
+	(void) BIO_flush(cb->arg);
 #ifdef LINT
 	p = n;
 #endif
 	return 1;
 }
-#else /* !OPENSSL_NO_RSA */
+#else				/* !OPENSSL_NO_RSA */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

@@ -126,7 +126,6 @@ init_client(int *sock, char *host, char *port, int type, int af)
 		}
 		return (0);
 	}
-
 	for (ai = ai_top; ai != NULL; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s == -1) {
@@ -135,7 +134,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 		if (type == SOCK_STREAM) {
 			i = 0;
 			i = setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
-			    (char *)&i, sizeof(i));
+			    (char *) &i, sizeof(i));
 			if (i < 0) {
 				perror("keepalive");
 				return (0);
@@ -146,7 +145,6 @@ init_client(int *sock, char *host, char *port, int type, int af)
 			freeaddrinfo(ai_top);
 			return (1);
 		}
-
 		close(s);
 	}
 
@@ -158,7 +156,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 
 int
 do_server(int port, int type, int *ret,
-    int (*cb)(char *hostname, int s, unsigned char *context),
+    int (*cb) (char *hostname, int s, unsigned char *context),
     unsigned char *context)
 {
 	int sock;
@@ -171,7 +169,7 @@ do_server(int port, int type, int *ret,
 
 	if (ret != NULL) {
 		*ret = accept_socket;
-		/* return(1);*/
+		/* return(1); */
 	}
 	for (;;) {
 		if (type == SOCK_STREAM) {
@@ -182,7 +180,7 @@ do_server(int port, int type, int *ret,
 			}
 		} else
 			sock = accept_socket;
-		i = (*cb)(name, sock, context);
+		i = (*cb) (name, sock, context);
 		if (name != NULL)
 			free(name);
 		if (type == SOCK_STREAM) {
@@ -207,22 +205,22 @@ init_server_long(int *sock, int port, char *ip, int type)
 	if (!ssl_sock_init())
 		return (0);
 
-	memset((char *)&server, 0,sizeof(server));
+	memset((char *) &server, 0, sizeof(server));
 	server.sin_family = AF_INET;
-	server.sin_port = htons((unsigned short)port);
+	server.sin_port = htons((unsigned short) port);
 	if (ip == NULL)
 		server.sin_addr.s_addr = INADDR_ANY;
 	else
 /* Added for T3E, address-of fails on bit field (beckman@acl.lanl.gov) */
 #ifndef BIT_FIELD_LIMITS
-	memcpy(&server.sin_addr.s_addr, ip, 4);
+		memcpy(&server.sin_addr.s_addr, ip, 4);
 #else
-	memcpy(&server.sin_addr, ip, 4);
+		memcpy(&server.sin_addr, ip, 4);
 #endif
 
 	if (type == SOCK_STREAM)
 		s = socket(AF_INET, SOCK_STREAM, SOCKET_PROTOCOL);
-	else /* type == SOCK_DGRAM */
+	else			/* type == SOCK_DGRAM */
 		s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	if (s == -1)
@@ -234,7 +232,7 @@ init_server_long(int *sock, int port, char *ip, int type)
 		    (void *) &j, sizeof j);
 	}
 #endif
-	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == -1) {
+	if (bind(s, (struct sockaddr *) & server, sizeof(server)) == -1) {
 		perror("bind");
 		goto err;
 	}
@@ -271,24 +269,24 @@ do_accept(int acc_sock, int *sock, char **host)
 
 redoit:
 
-	memset((char *)&from, 0, sizeof(from));
+	memset((char *) &from, 0, sizeof(from));
 	len = sizeof(from);
-	/* Note: under VMS with SOCKETSHR the fourth parameter is currently
-	 * of type (int *) whereas under other systems it is (void *) if
-	 * you don't have a cast it will choke the compiler: if you do
-	 * have a cast then you can either go for (int *) or (void *).
+	/*
+	 * Note: under VMS with SOCKETSHR the fourth parameter is currently
+	 * of type (int *) whereas under other systems it is (void *) if you
+	 * don't have a cast it will choke the compiler: if you do have a
+	 * cast then you can either go for (int *) or (void *).
 	 */
-	ret = accept(acc_sock, (struct sockaddr *)&from, (void *)&len);
+	ret = accept(acc_sock, (struct sockaddr *) & from, (void *) &len);
 	if (ret == -1) {
 		if (errno == EINTR) {
-			/*check_timeout(); */
+			/* check_timeout(); */
 			goto redoit;
 		}
-		fprintf(stderr,"errno=%d ",errno);
+		fprintf(stderr, "errno=%d ", errno);
 		perror("accept");
 		return (0);
 	}
-
 /*
 	ling.l_onoff=1;
 	ling.l_linger=0;
@@ -303,10 +301,10 @@ redoit:
 		goto end;
 #ifndef BIT_FIELD_LIMITS
 	/* I should use WSAAsyncGetHostByName() under windows */
-	h1 = gethostbyaddr((char *)&from.sin_addr.s_addr,
+	h1 = gethostbyaddr((char *) &from.sin_addr.s_addr,
 	    sizeof(from.sin_addr.s_addr), AF_INET);
 #else
-	h1 = gethostbyaddr((char *)&from.sin_addr,
+	h1 = gethostbyaddr((char *) &from.sin_addr,
 	    sizeof(struct in_addr), AF_INET);
 #endif
 	if (h1 == NULL) {
@@ -314,7 +312,7 @@ redoit:
 		*host = NULL;
 		/* return(0); */
 	} else {
-		if ((*host = (char *)malloc(strlen(h1->h_name) + 1)) == NULL) {
+		if ((*host = (char *) malloc(strlen(h1->h_name) + 1)) == NULL) {
 			perror("malloc");
 			return (0);
 		}
@@ -343,7 +341,7 @@ extract_host_port(char *str, char **host_ptr, unsigned char *ip,
 	char *h, *p;
 
 	h = str;
-	p = strrchr(str, '/'); /* IPv6 host/port */
+	p = strrchr(str, '/');	/* IPv6 host/port */
 	if (p == NULL) {
 		p = strrchr(str, ':');
 	}
@@ -370,14 +368,14 @@ extract_port(char *str, short *port_ptr)
 
 	i = atoi(str);
 	if (i != 0)
-		*port_ptr = (unsigned short)i;
+		*port_ptr = (unsigned short) i;
 	else {
 		s = getservbyname(str, "tcp");
 		if (s == NULL) {
 			BIO_printf(bio_err, "getservbyname failure for %s\n", str);
 			return (0);
 		}
-		*port_ptr = ntohs((unsigned short)s->s_port);
+		*port_ptr = ntohs((unsigned short) s->s_port);
 	}
 	return (1);
 }
@@ -393,10 +391,11 @@ static unsigned long ghbn_hits = 0L;
 static unsigned long ghbn_miss = 0L;
 
 static struct hostent *
-GetHostByName(char *name) {
+GetHostByName(char *name)
+{
 	struct hostent *ret;
 	int i, lowi = 0;
-	unsigned long low = (unsigned long) - 1;
+	unsigned long low = (unsigned long) -1;
 
 	for (i = 0; i < GHBN_NUM; i++) {
 		if (low > ghbn_cache[i].order) {
@@ -408,8 +407,7 @@ GetHostByName(char *name) {
 				break;
 		}
 	}
-	if (i == GHBN_NUM) /* no hit*/
-	{
+	if (i == GHBN_NUM) {	/* no hit */
 		ghbn_miss++;
 		ret = gethostbyname(name);
 		if (ret == NULL)
@@ -417,7 +415,7 @@ GetHostByName(char *name) {
 		/* else add to cache */
 		if (strlen(name) < sizeof ghbn_cache[0].name) {
 			strlcpy(ghbn_cache[lowi].name, name, sizeof(ghbn_cache[0].name));
-			memcpy((char *)&(ghbn_cache[lowi].ent), ret, sizeof(struct hostent));
+			memcpy((char *) &(ghbn_cache[lowi].ent), ret, sizeof(struct hostent));
 			ghbn_cache[lowi].order = ghbn_miss + ghbn_hits;
 		}
 		return (ret);

@@ -120,7 +120,7 @@ static int seeded = 0;
 static int egdsocket = 0;
 
 int
-app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
+app_RAND_load_file(const char *file, BIO * bio_e, int dont_warn)
 {
 	int consider_randfile = (file == NULL);
 	char buffer[200];
@@ -129,8 +129,10 @@ app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 	if (file == NULL)
 		file = RAND_file_name(buffer, sizeof buffer);
 	else if (RAND_egd(file) > 0) {
-		/* we try if the given filename is an EGD socket.
-		   if it is, we don't write anything back to the file. */
+		/*
+		 * we try if the given filename is an EGD socket. if it is,
+		 * we don't write anything back to the file.
+		 */
 		egdsocket = 1;
 		return 1;
 	}
@@ -140,8 +142,9 @@ app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn)
 				BIO_printf(bio_e, "unable to load 'random state'\n");
 				BIO_printf(bio_e, "This means that the random number generator has not been seeded\n");
 				BIO_printf(bio_e, "with much random data.\n");
-				if (consider_randfile) /* explanation does not apply when a file is explicitly named */
-				{
+				if (consider_randfile) {	/* explanation does not
+								 * apply when a file is
+								 * explicitly named */
 					BIO_printf(bio_e, "Consider setting the RANDFILE environment variable to point at a file that\n");
 					BIO_printf(bio_e, "'random' data can be kept in (the file will be overwritten).\n");
 				}
@@ -165,8 +168,8 @@ app_RAND_load_files(char *name)
 		last = 0;
 		for (p = name;
 		    ((*p != '\0') && (*p != ':')); p++);
-			if (*p == '\0')
-				last = 1;
+		if (*p == '\0')
+			last = 1;
 		*p = '\0';
 		n = name;
 		name = p + 1;
@@ -187,15 +190,16 @@ app_RAND_load_files(char *name)
 }
 
 int
-app_RAND_write_file(const char *file, BIO *bio_e)
+app_RAND_write_file(const char *file, BIO * bio_e)
 {
 	char buffer[200];
 
 	if (egdsocket || !seeded)
-		/* If we did not manage to read the seed file,
-		 * we should not write a low-entropy seed file back --
-		 * it would suppress a crucial warning the next time
-		 * we want to use it. */
+		/*
+		 * If we did not manage to read the seed file, we should not
+		 * write a low-entropy seed file back -- it would suppress a
+		 * crucial warning the next time we want to use it.
+		 */
 		return 0;
 
 	if (file == NULL)

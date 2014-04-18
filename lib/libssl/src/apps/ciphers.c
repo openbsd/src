@@ -93,7 +93,7 @@ MAIN(int argc, char **argv)
 	SSL *ssl = NULL;
 	char *ciphers = NULL;
 	const SSL_METHOD *meth = NULL;
-	STACK_OF(SSL_CIPHER) *sk;
+	STACK_OF(SSL_CIPHER) * sk;
 	char buf[512];
 	BIO *STDout = NULL;
 
@@ -123,7 +123,7 @@ MAIN(int argc, char **argv)
 			badops = 1;
 			break;
 		} else {
-			ciphers= *argv;
+			ciphers = *argv;
 		}
 		argc--;
 		argv++;
@@ -134,7 +134,6 @@ MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "%s", *pp);
 		goto end;
 	}
-
 	OpenSSL_add_ssl_algorithms();
 
 	ctx = SSL_CTX_new(meth);
@@ -152,7 +151,7 @@ MAIN(int argc, char **argv)
 
 
 	if (!verbose) {
-		for (i = 0; ; i++) {
+		for (i = 0;; i++) {
 			p = SSL_get_cipher_list(ssl, i);
 			if (p == NULL)
 				break;
@@ -161,9 +160,7 @@ MAIN(int argc, char **argv)
 			BIO_printf(STDout, "%s", p);
 		}
 		BIO_printf(STDout, "\n");
-	}
-	else /* verbose */
-	{
+	} else {		/* verbose */
 		sk = SSL_get_ciphers(ssl);
 
 		for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
@@ -173,19 +170,18 @@ MAIN(int argc, char **argv)
 
 			if (Verbose) {
 				unsigned long id = SSL_CIPHER_get_id(c);
-				int id0 = (int)(id >> 24);
-				int id1 = (int)((id >> 16) & 0xffL);
-				int id2 = (int)((id >> 8) & 0xffL);
-				int id3 = (int)(id & 0xffL);
+				int id0 = (int) (id >> 24);
+				int id1 = (int) ((id >> 16) & 0xffL);
+				int id2 = (int) ((id >> 8) & 0xffL);
+				int id3 = (int) (id & 0xffL);
 
 				if ((id & 0xff000000L) == 0x02000000L)
-					BIO_printf(STDout, "     0x%02X,0x%02X,0x%02X - ", id1, id2, id3); /* SSL2 cipher */
+					BIO_printf(STDout, "     0x%02X,0x%02X,0x%02X - ", id1, id2, id3);	/* SSL2 cipher */
 				else if ((id & 0xff000000L) == 0x03000000L)
-					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3); /* SSL3 cipher */
+					BIO_printf(STDout, "          0x%02X,0x%02X - ", id2, id3);	/* SSL3 cipher */
 				else
-					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3); /* whatever */
+					BIO_printf(STDout, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3);	/* whatever */
 			}
-
 			BIO_puts(STDout, SSL_CIPHER_description(c, buf, sizeof buf));
 		}
 	}
@@ -204,5 +200,5 @@ end:
 	if (STDout != NULL)
 		BIO_free_all(STDout);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }

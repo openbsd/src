@@ -57,7 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DH */
+#include <openssl/opensslconf.h>/* for OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,7 +102,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -123,27 +123,24 @@ MAIN(int argc, char **argv)
 			if (--argc < 1)
 				goto bad;
 			informat = str2fmt(*(++argv));
-		}
-		else if (strcmp(*argv, "-outform") == 0) {
+		} else if (strcmp(*argv, "-outform") == 0) {
 			if (--argc < 1)
 				goto bad;
 			outformat = str2fmt(*(++argv));
-		}
-		else if (strcmp(*argv, "-in") == 0) {
+		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
-		}
-		else if (strcmp(*argv, "-out") == 0) {
+			infile = *(++argv);
+		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		}
 #endif
 		else if (strcmp(*argv, "-check") == 0)
@@ -180,7 +177,6 @@ bad:
 #endif
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
@@ -193,7 +189,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
@@ -224,7 +219,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (text) {
 		DHparams_print(out, dh);
 #ifdef undef
@@ -237,7 +231,6 @@ bad:
 			printf("recommended private length=%ld\n", dh->length);
 #endif
 	}
-
 	if (check) {
 		if (!DH_check(dh, &i)) {
 			ERR_print_errors(bio_err);
@@ -254,14 +247,13 @@ bad:
 		if (i == 0)
 			printf("DH parameters appear to be ok.\n");
 	}
-
 	if (C) {
 		unsigned char *data;
 		int len, l, bits;
 
 		len = BN_num_bytes(dh->p);
 		bits = BN_num_bits(dh->p);
-		data = (unsigned char *)malloc(len);
+		data = (unsigned char *) malloc(len);
 		if (data == NULL) {
 			perror("malloc");
 			goto end;
@@ -296,7 +288,6 @@ bad:
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
-
 	if (!noout) {
 		if (outformat == FORMAT_ASN1)
 			i = i2d_DHparams_bio(out, dh);
@@ -322,12 +313,12 @@ end:
 	if (dh != NULL)
 		DH_free(dh);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
-#else /* !OPENSSL_NO_DH */
+#else				/* !OPENSSL_NO_DH */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

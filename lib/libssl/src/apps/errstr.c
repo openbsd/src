@@ -81,7 +81,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	SSL_load_error_strings();
 
@@ -102,9 +102,8 @@ MAIN(int argc, char **argv)
 		argc--;
 		argv++;
 	}
-
 	for (i = 1; i < argc; i++) {
-		if (sscanf(argv[i], "%lx",&l)) {
+		if (sscanf(argv[i], "%lx", &l)) {
 			ERR_error_string_n(l, buf, sizeof buf);
 			printf("%s\n", buf);
 		} else {
@@ -114,5 +113,5 @@ MAIN(int argc, char **argv)
 		}
 	}
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }

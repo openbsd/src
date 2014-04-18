@@ -82,7 +82,7 @@
 
 int MAIN(int, char **);
 
-static int do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf);
+static int do_generate(BIO * bio, char *genstr, char *genconf, BUF_MEM * buf);
 
 int
 MAIN(int argc, char **argv)
@@ -97,7 +97,7 @@ MAIN(int argc, char **argv)
 	unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
 	BUF_MEM *buf = NULL;
-	STACK_OF(OPENSSL_STRING) *osk = NULL;
+	STACK_OF(OPENSSL_STRING) * osk = NULL;
 	ASN1_TYPE *at = NULL;
 
 	informat = FORMAT_PEM;
@@ -106,7 +106,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -126,19 +126,19 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
+			infile = *(++argv);
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			derfile= *(++argv);
+			derfile = *(++argv);
 		} else if (strcmp(*argv, "-i") == 0) {
 			indent = 1;
-		} else
-			if (strcmp(*argv, "-noout") == 0) noout = 1;
-			else if (strcmp(*argv, "-oid") == 0) {
+		} else if (strcmp(*argv, "-noout") == 0)
+			noout = 1;
+		else if (strcmp(*argv, "-oid") == 0) {
 			if (--argc < 1)
 				goto bad;
-			oidfile= *(++argv);
+			oidfile = *(++argv);
 		} else if (strcmp(*argv, "-offset") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -164,11 +164,11 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-genstr") == 0) {
 			if (--argc < 1)
 				goto bad;
-			genstr= *(++argv);
+			genstr = *(++argv);
 		} else if (strcmp(*argv, "-genconf") == 0) {
 			if (--argc < 1)
 				goto bad;
-			genconf= *(++argv);
+			genconf = *(++argv);
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
 			badops = 1;
@@ -199,7 +199,6 @@ bad:
 		BIO_printf(bio_err, " -genconf file file to generate ASN1 structure from\n");
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 	in = BIO_new(BIO_s_file());
@@ -208,7 +207,7 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	BIO_set_fp(out, stdout, BIO_NOCLOSE|BIO_FP_TEXT);
+	BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (oidfile != NULL) {
 		if (BIO_read_filename(in, oidfile) <= 0) {
@@ -218,7 +217,6 @@ bad:
 		}
 		OBJ_create_objects(in);
 	}
-
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
@@ -235,11 +233,10 @@ bad:
 			goto end;
 		}
 	}
-
 	if ((buf = BUF_MEM_new()) == NULL)
 		goto end;
 	if (!BUF_MEM_grow(buf, BUFSIZ * 8))
-		goto end; /* Pre-allocate :-) */
+		goto end;	/* Pre-allocate :-) */
 
 	if (genstr || genconf) {
 		num = do_generate(bio_err, genstr, genconf, buf);
@@ -259,10 +256,9 @@ bad:
 			in = b64;
 			b64 = tmp;
 		}
-
 		num = 0;
 		for (;;) {
-			if (!BUF_MEM_grow(buf, (int)num + BUFSIZ))
+			if (!BUF_MEM_grow(buf, (int) num + BUFSIZ))
 				goto end;
 			i = BIO_read(in, &(buf->data[num]), BUFSIZ);
 			if (i <= 0)
@@ -275,7 +271,7 @@ bad:
 	/* If any structs to parse go through in sequence */
 
 	if (sk_OPENSSL_STRING_num(osk)) {
-		tmpbuf = (unsigned char *)str;
+		tmpbuf = (unsigned char *) str;
 		tmplen = num;
 		for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
 			ASN1_TYPE *atmp;
@@ -310,28 +306,26 @@ bad:
 			tmpbuf = at->value.asn1_string->data;
 			tmplen = at->value.asn1_string->length;
 		}
-		str = (char *)tmpbuf;
+		str = (char *) tmpbuf;
 		num = tmplen;
 	}
-
 	if (offset >= num) {
 		BIO_printf(bio_err, "Error: offset too large\n");
 		goto end;
 	}
-
 	num -= offset;
 
-	if ((length == 0) || ((long)length > num))
-		length = (unsigned int)num;
+	if ((length == 0) || ((long) length > num))
+		length = (unsigned int) num;
 	if (derout) {
-		if (BIO_write(derout, str + offset, length) != (int)length) {
+		if (BIO_write(derout, str + offset, length) != (int) length) {
 			BIO_printf(bio_err, "Error writing output\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (!noout &&
-	    !ASN1_parse_dump(out, (unsigned char *)&(str[offset]), length,
+	    !ASN1_parse_dump(out, (unsigned char *) &(str[offset]), length,
 		indent, dump)) {
 		ERR_print_errors(bio_err);
 		goto end;
@@ -355,11 +349,11 @@ end:
 		sk_OPENSSL_STRING_free(osk);
 	OBJ_cleanup();
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 static int
-do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
+do_generate(BIO * bio, char *genstr, char *genconf, BUF_MEM * buf)
 {
 	CONF *cnf = NULL;
 	int len;
@@ -378,7 +372,6 @@ do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
 			goto err;
 		}
 	}
-
 	atyp = ASN1_generate_nconf(genstr, cnf);
 	NCONF_free(cnf);
 	cnf = NULL;
@@ -394,14 +387,14 @@ do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
 	if (!BUF_MEM_grow(buf, len))
 		goto err;
 
-	p = (unsigned char *)buf->data;
+	p = (unsigned char *) buf->data;
 
 	i2d_ASN1_TYPE(atyp, &p);
 
 	ASN1_TYPE_free(atyp);
 	return len;
 
-	conferr:
+conferr:
 
 	if (errline > 0)
 		BIO_printf(bio, "Error on line %ld of config file '%s'\n",
@@ -409,7 +402,7 @@ do_generate(BIO *bio, char *genstr, char *genconf, BUF_MEM *buf)
 	else
 		BIO_printf(bio, "Error loading config file '%s'\n", genconf);
 
-	err:
+err:
 	NCONF_free(cnf);
 	ASN1_TYPE_free(atyp);
 

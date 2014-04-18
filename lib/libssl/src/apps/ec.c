@@ -86,27 +86,27 @@ int MAIN(int, char **);
 int
 MAIN(int argc, char **argv)
 {
-	int 	ret = 1;
-	EC_KEY 	*eckey = NULL;
+	int ret = 1;
+	EC_KEY *eckey = NULL;
 	const EC_GROUP *group;
-	int 	i, badops = 0;
+	int i, badops = 0;
 	const EVP_CIPHER *enc = NULL;
-	BIO 	*in = NULL, *out = NULL;
-	int 	informat, outformat, text = 0, noout = 0;
-	int  	pubin = 0, pubout = 0, param_out = 0;
-	char 	*infile, *outfile, *prog, *engine;
-	char 	*passargin = NULL, *passargout = NULL;
-	char 	*passin = NULL, *passout = NULL;
+	BIO *in = NULL, *out = NULL;
+	int informat, outformat, text = 0, noout = 0;
+	int pubin = 0, pubout = 0, param_out = 0;
+	char *infile, *outfile, *prog, *engine;
+	char *passargin = NULL, *passargout = NULL;
+	char *passin = NULL, *passout = NULL;
 	point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED;
-	int	new_form = 0;
-	int	asn1_flag = OPENSSL_EC_NAMED_CURVE;
-	int 	new_asn1_flag = 0;
+	int new_form = 0;
+	int asn1_flag = OPENSSL_EC_NAMED_CURVE;
+	int new_asn1_flag = 0;
 
 	apps_startup();
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -132,23 +132,23 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
+			infile = *(++argv);
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-passin") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargin= *(++argv);
+			passargin = *(++argv);
 		} else if (strcmp(*argv, "-passout") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargout= *(++argv);
+			passargout = *(++argv);
 		} else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		} else if (strcmp(*argv, "-noout") == 0)
 			noout = 1;
 		else if (strcmp(*argv, "-text") == 0)
@@ -209,8 +209,8 @@ bad:
 		BIO_printf(bio_err, " -engine e       use engine e, "
 		    "possibly a hardware device.\n");
 		BIO_printf(bio_err, " -des            encrypt PEM output, "
-		"instead of 'des' every other \n"
-		"                 cipher "
+		    "instead of 'des' every other \n"
+		    "                 cipher "
 		    "supported by OpenSSL can be used\n");
 		BIO_printf(bio_err, " -text           print the key\n");
 		BIO_printf(bio_err, " -noout          don't print key out\n");
@@ -234,7 +234,6 @@ bad:
 		    "explicit\n");
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
@@ -245,14 +244,12 @@ bad:
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
 	if ((in == NULL) || (out == NULL)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
@@ -284,7 +281,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
@@ -308,12 +304,10 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-
 	if (noout) {
 		ret = 0;
 		goto end;
 	}
-
 	BIO_printf(bio_err, "writing EC key\n");
 	if (outformat == FORMAT_ASN1) {
 		if (param_out)
@@ -329,7 +323,7 @@ bad:
 			i = PEM_write_bio_EC_PUBKEY(out, eckey);
 		else
 			i = PEM_write_bio_ECPrivateKey(out, eckey, enc,
-		    NULL, 0, NULL, passout);
+			    NULL, 0, NULL, passout);
 	} else {
 		BIO_printf(bio_err, "bad output format specified for "
 		    "outfile\n");
@@ -353,12 +347,12 @@ end:
 	if (passout)
 		free(passout);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
-#else /* !OPENSSL_NO_EC */
+#else				/* !OPENSSL_NO_EC */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

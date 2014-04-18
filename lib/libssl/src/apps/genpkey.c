@@ -65,9 +65,10 @@
 #include <openssl/engine.h>
 #endif
 
-static int init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx, const char *file,
-    ENGINE *e);
-static int genpkey_cb(EVP_PKEY_CTX *ctx);
+static int 
+init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx, const char *file,
+    ENGINE * e);
+static int genpkey_cb(EVP_PKEY_CTX * ctx);
 
 #define PROG genpkey_main
 
@@ -112,7 +113,7 @@ MAIN(int argc, char **argv)
 		} else if (!strcmp(*args, "-pass")) {
 			if (!args[1])
 				goto bad;
-			passarg= *(++args);
+			passarg = *(++args);
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*args, "-engine") == 0) {
@@ -121,7 +122,7 @@ MAIN(int argc, char **argv)
 			e = setup_engine(bio_err, *(++args), 0);
 		}
 #endif
-		else if (!strcmp (*args, "-paramfile")) {
+		else if (!strcmp(*args, "-paramfile")) {
 			if (!args[1])
 				goto bad;
 			args++;
@@ -129,7 +130,7 @@ MAIN(int argc, char **argv)
 				goto bad;
 			if (!init_keygen_file(bio_err, &ctx, *args, e))
 				goto end;
-		} else if (!strcmp (*args, "-out")) {
+		} else if (!strcmp(*args, "-out")) {
 			if (args[1]) {
 				args++;
 				outfile = *args;
@@ -193,20 +194,18 @@ bad:
 		BIO_printf(bio_err, "NB: options order may be important!  See the manual page.\n");
 		goto end;
 	}
-
 	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL)) {
 		BIO_puts(bio_err, "Error getting password\n");
 		goto end;
 	}
-
 	if (outfile) {
-		if (!(out = BIO_new_file (outfile, "wb"))) {
+		if (!(out = BIO_new_file(outfile, "wb"))) {
 			BIO_printf(bio_err,
 			    "Can't open output file %s\n", outfile);
 			goto end;
 		}
 	} else {
-		out = BIO_new_fp (stdout, BIO_NOCLOSE);
+		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
 
 	EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
@@ -242,7 +241,6 @@ bad:
 		BIO_puts(bio_err, "Error writing key\n");
 		ERR_print_errors(bio_err);
 	}
-
 	if (text) {
 		if (do_param)
 			rv = EVP_PKEY_print_params(out, pkey, 0, NULL);
@@ -254,7 +252,6 @@ bad:
 			ERR_print_errors(bio_err);
 		}
 	}
-
 	ret = 0;
 
 end:
@@ -272,8 +269,8 @@ end:
 }
 
 static int
-init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
-    const char *file, ENGINE *e)
+init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
+    const char *file, ENGINE * e)
 {
 	BIO *pbio;
 	EVP_PKEY *pkey = NULL;
@@ -282,13 +279,11 @@ init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
 		BIO_puts(err, "Parameters already set!\n");
 		return 0;
 	}
-
 	pbio = BIO_new_file(file, "r");
 	if (!pbio) {
 		BIO_printf(err, "Can't open parameter file %s\n", file);
 		return 0;
 	}
-
 	pkey = PEM_read_bio_Parameters(pbio, NULL);
 	BIO_free(pbio);
 
@@ -296,7 +291,6 @@ init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
 		BIO_printf(bio_err, "Error reading parameter file %s\n", file);
 		return 0;
 	}
-
 	ctx = EVP_PKEY_CTX_new(pkey, e);
 	if (!ctx)
 		goto err;
@@ -318,8 +312,8 @@ err:
 }
 
 int
-init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
-    const char *algname, ENGINE *e, int do_param)
+init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
+    const char *algname, ENGINE * e, int do_param)
 {
 	EVP_PKEY_CTX *ctx = NULL;
 	const EVP_PKEY_ASN1_METHOD *ameth;
@@ -330,7 +324,6 @@ init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 		BIO_puts(err, "Algorithm already set!\n");
 		return 0;
 	}
-
 	ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
 
 #ifndef OPENSSL_NO_ENGINE
@@ -342,7 +335,6 @@ init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 		BIO_printf(bio_err, "Algorithm %s not found\n", algname);
 		return 0;
 	}
-
 	ERR_clear_error();
 
 	EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
@@ -375,7 +367,7 @@ err:
 }
 
 static int
-genpkey_cb(EVP_PKEY_CTX *ctx)
+genpkey_cb(EVP_PKEY_CTX * ctx)
 {
 	char c = '*';
 	BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
@@ -390,7 +382,7 @@ genpkey_cb(EVP_PKEY_CTX *ctx)
 	if (p == 3)
 		c = '\n';
 	BIO_write(b, &c, 1);
-	(void)BIO_flush(b);
+	(void) BIO_flush(b);
 #ifdef LINT
 	p = n;
 #endif

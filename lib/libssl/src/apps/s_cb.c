@@ -133,7 +133,7 @@ unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
 
 int
-verify_callback(int ok, X509_STORE_CTX *ctx)
+verify_callback(int ok, X509_STORE_CTX * ctx)
 {
 	X509 *err_cert;
 	int err, depth;
@@ -192,7 +192,7 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 }
 
 int
-set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
+set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 {
 	if (cert_file != NULL) {
 		/*
@@ -201,7 +201,7 @@ set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 		*/
 
 		if (SSL_CTX_use_certificate_file(ctx, cert_file,
-		    SSL_FILETYPE_PEM) <= 0) {
+			SSL_FILETYPE_PEM) <= 0) {
 			BIO_printf(bio_err,
 			    "unable to get certificate from '%s'\n", cert_file);
 			ERR_print_errors(bio_err);
@@ -210,13 +210,12 @@ set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 		if (key_file == NULL)
 			key_file = cert_file;
 		if (SSL_CTX_use_PrivateKey_file(ctx, key_file,
-		    SSL_FILETYPE_PEM) <= 0) {
+			SSL_FILETYPE_PEM) <= 0) {
 			BIO_printf(bio_err,
 			    "unable to get private key from '%s'\n", key_file);
 			ERR_print_errors(bio_err);
 			return (0);
 		}
-
 		/*
 		In theory this is no longer needed
 		ssl=SSL_new(ctx);
@@ -232,12 +231,16 @@ set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 		SSL_free(ssl);
 		*/
 
-		/* If we are using DSA, we can copy the parameters from
-		 * the private key */
+		/*
+		 * If we are using DSA, we can copy the parameters from the
+		 * private key
+		 */
 
 
-		/* Now we know that a key and cert have been set against
-		 * the SSL context */
+		/*
+		 * Now we know that a key and cert have been set against the
+		 * SSL context
+		 */
 		if (!SSL_CTX_check_private_key(ctx)) {
 			BIO_printf(bio_err,
 			    "Private key does not match the certificate public key\n");
@@ -248,9 +251,9 @@ set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 }
 
 int
-set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
+set_cert_key_stuff(SSL_CTX * ctx, X509 * cert, EVP_PKEY * key)
 {
-	if (cert ==  NULL)
+	if (cert == NULL)
 		return 1;
 	if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
 		BIO_printf(bio_err, "error setting certificate\n");
@@ -262,9 +265,10 @@ set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 		ERR_print_errors(bio_err);
 		return 0;
 	}
-
-	/* Now we know that a key and cert have been set against
-	 * the SSL context */
+	/*
+	 * Now we know that a key and cert have been set against the SSL
+	 * context
+	 */
 	if (!SSL_CTX_check_private_key(ctx)) {
 		BIO_printf(bio_err,
 		    "Private key does not match the certificate public key\n");
@@ -274,32 +278,32 @@ set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 }
 
 long
-bio_dump_callback(BIO *bio, int cmd, const char *argp,
+bio_dump_callback(BIO * bio, int cmd, const char *argp,
     int argi, long argl, long ret)
 {
 	BIO *out;
 
-	out = (BIO *)BIO_get_callback_arg(bio);
+	out = (BIO *) BIO_get_callback_arg(bio);
 	if (out == NULL)
 		return (ret);
 
-	if (cmd == (BIO_CB_READ|BIO_CB_RETURN)) {
+	if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
 		BIO_printf(out,
 		    "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-		    (void *)bio, argp, (unsigned long)argi, ret, ret);
-		BIO_dump(out, argp, (int)ret);
+		    (void *) bio, argp, (unsigned long) argi, ret, ret);
+		BIO_dump(out, argp, (int) ret);
 		return (ret);
-	} else if (cmd == (BIO_CB_WRITE|BIO_CB_RETURN)) {
+	} else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
 		BIO_printf(out,
 		    "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-		    (void *)bio, argp, (unsigned long)argi, ret, ret);
-		BIO_dump(out, argp, (int)ret);
+		    (void *) bio, argp, (unsigned long) argi, ret, ret);
+		BIO_dump(out, argp, (int) ret);
 	}
 	return (ret);
 }
 
 void
-apps_ssl_info_callback(const SSL *s, int where, int ret)
+apps_ssl_info_callback(const SSL * s, int where, int ret)
 {
 	const char *str;
 	int w;
@@ -333,10 +337,11 @@ apps_ssl_info_callback(const SSL *s, int where, int ret)
 
 
 void
-msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
+msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL * ssl, void *arg)
 {
 	BIO *bio = arg;
-	const char *str_write_p, *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
+	const char *str_write_p, *str_version, *str_content_type = "",
+	*str_details1 = "", *str_details2 = "";
 
 	str_write_p = write_p ? ">>>" : "<<<";
 
@@ -370,12 +375,12 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 		str_details1 = "???";
 
 		if (len > 0) {
-			switch (((const unsigned char*)buf)[0]) {
+			switch (((const unsigned char *) buf)[0]) {
 			case 0:
 				str_details1 = ", ERROR:";
 				str_details2 = " ???";
 				if (len >= 3) {
-					unsigned err = (((const unsigned char*)buf)[1]<<8) + ((const unsigned char*)buf)[2];
+					unsigned err = (((const unsigned char *) buf)[1] << 8) + ((const unsigned char *) buf)[2];
 
 					switch (err) {
 					case 0x0001:
@@ -392,7 +397,6 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 						break;
 					}
 				}
-
 				break;
 			case 1:
 				str_details1 = ", CLIENT-HELLO";
@@ -421,7 +425,6 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 			}
 		}
 	}
-
 	if (version == SSL3_VERSION || version == TLS1_VERSION ||
 	    version == TLS1_1_VERSION || version == TLS1_2_VERSION ||
 	    version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
@@ -437,12 +440,11 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 			break;
 		}
 
-		if (content_type == 21) /* Alert */
-		{
+		if (content_type == 21) {	/* Alert */
 			str_details1 = ", ???";
 
 			if (len == 2) {
-				switch (((const unsigned char*)buf)[0]) {
+				switch (((const unsigned char *) buf)[0]) {
 				case 1:
 					str_details1 = ", warning";
 					break;
@@ -452,7 +454,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 				}
 
 				str_details2 = " ???";
-				switch (((const unsigned char*)buf)[1]) {
+				switch (((const unsigned char *) buf)[1]) {
 				case 0:
 					str_details2 = " close_notify";
 					break;
@@ -543,13 +545,11 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 				}
 			}
 		}
-
-		if (content_type == 22) /* Handshake */
-		{
+		if (content_type == 22) {	/* Handshake */
 			str_details1 = "???";
 
 			if (len > 0) {
-				switch (((const unsigned char*)buf)[0]) {
+				switch (((const unsigned char *) buf)[0]) {
 				case 0:
 					str_details1 = ", HelloRequest";
 					break;
@@ -587,9 +587,8 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 			}
 		}
 	}
-
 	BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p,
-	    str_version, str_content_type, (unsigned long)len,
+	    str_version, str_content_type, (unsigned long) len,
 	    str_details1, str_details2);
 
 	if (len > 0) {
@@ -605,17 +604,17 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 			if (i % 16 == 0 && i > 0)
 				BIO_printf(bio, "\n   ");
 			BIO_printf(bio, " %02x",
-			    ((const unsigned char*)buf)[i]);
+			    ((const unsigned char *) buf)[i]);
 		}
 		if (i < len)
 			BIO_printf(bio, " ...");
 		BIO_printf(bio, "\n");
 	}
-	(void)BIO_flush(bio);
+	(void) BIO_flush(bio);
 }
 
 void
-tlsext_cb(SSL *s, int client_server, int type, unsigned char *data, int len,
+tlsext_cb(SSL * s, int client_server, int type, unsigned char *data, int len,
     void *arg)
 {
 	BIO *bio = arg;
@@ -713,12 +712,12 @@ tlsext_cb(SSL *s, int client_server, int type, unsigned char *data, int len,
 
 	BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
 	    client_server ? "server" : "client", extname, type, len);
-	BIO_dump(bio, (char *)data, len);
-	(void)BIO_flush(bio);
+	BIO_dump(bio, (char *) data, len);
+	(void) BIO_flush(bio);
 }
 
 int
-generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+generate_cookie_callback(SSL * ssl, unsigned char *cookie,
     unsigned int *cookie_len)
 {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
@@ -740,9 +739,8 @@ generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 		}
 		cookie_initialized = 1;
 	}
-
 	/* Read peer information */
-	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+	(void) BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
 
 	/* Create buffer with peer's address and port */
 	length = 0;
@@ -767,7 +765,6 @@ generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 		BIO_printf(bio_err, "out of memory\n");
 		return 0;
 	}
-
 	switch (peer.sa.sa_family) {
 	case AF_INET:
 		memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
@@ -798,7 +795,7 @@ generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 }
 
 int
-verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
+verify_cookie_callback(SSL * ssl, unsigned char *cookie, unsigned int cookie_len)
 {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;
@@ -815,7 +812,7 @@ verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
 		return 0;
 
 	/* Read peer information */
-	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+	(void) BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
 
 	/* Create buffer with peer's address and port */
 	length = 0;
@@ -840,7 +837,6 @@ verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
 		BIO_printf(bio_err, "out of memory\n");
 		return 0;
 	}
-
 	switch (peer.sa.sa_family) {
 	case AF_INET:
 		memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));

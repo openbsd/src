@@ -75,13 +75,13 @@
 #define PROG	dgst_main
 
 int
-do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-    EVP_PKEY *key, unsigned char *sigin, int siglen,
+do_fp(BIO * out, unsigned char *buf, BIO * bp, int sep, int binout,
+    EVP_PKEY * key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *md_name,
-    const char *file, BIO *bmd);
+    const char *file, BIO * bmd);
 
 static void
-list_md_fn(const EVP_MD *m, const char *from, const char *to, void *arg)
+list_md_fn(const EVP_MD * m, const char *from, const char *to, void *arg)
 {
 	const char *mname;
 	/* Skip aliases */
@@ -130,17 +130,17 @@ MAIN(int argc, char **argv)
 	char *hmac_key = NULL;
 	char *mac_name = NULL;
 	int non_fips_allow = 0;
-	STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
+	STACK_OF(OPENSSL_STRING) * sigopts = NULL, *macopts = NULL;
 
 	apps_startup();
 
-	if ((buf = (unsigned char *)malloc(BUFSIZE)) == NULL) {
+	if ((buf = (unsigned char *) malloc(BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -162,34 +162,34 @@ MAIN(int argc, char **argv)
 		else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				break;
-			randfile=*(++argv);
+			randfile = *(++argv);
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				break;
-			outfile=*(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-sign") == 0) {
 			if (--argc < 1)
 				break;
-			keyfile=*(++argv);
+			keyfile = *(++argv);
 		} else if (!strcmp(*argv, "-passin")) {
 			if (--argc < 1)
 				break;
-			passargin=*++argv;
+			passargin = *++argv;
 		} else if (strcmp(*argv, "-verify") == 0) {
 			if (--argc < 1)
 				break;
-			keyfile=*(++argv);
+			keyfile = *(++argv);
 			want_pub = 1;
 			do_verify = 1;
 		} else if (strcmp(*argv, "-prverify") == 0) {
 			if (--argc < 1)
 				break;
-			keyfile=*(++argv);
+			keyfile = *(++argv);
 			do_verify = 1;
 		} else if (strcmp(*argv, "-signature") == 0) {
 			if (--argc < 1)
 				break;
-			sigfile=*(++argv);
+			sigfile = *(++argv);
 		} else if (strcmp(*argv, "-keyform") == 0) {
 			if (--argc < 1)
 				break;
@@ -199,7 +199,7 @@ MAIN(int argc, char **argv)
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				break;
-			engine= *(++argv);
+			engine = *(++argv);
 			e = setup_engine(bio_err, engine, 0);
 		}
 #endif
@@ -216,11 +216,11 @@ MAIN(int argc, char **argv)
 		else if (!strcmp(*argv, "-hmac")) {
 			if (--argc < 1)
 				break;
-			hmac_key=*++argv;
+			hmac_key = *++argv;
 		} else if (!strcmp(*argv, "-mac")) {
 			if (--argc < 1)
 				break;
-			mac_name=*++argv;
+			mac_name = *++argv;
 		} else if (strcmp(*argv, "-sigopt") == 0) {
 			if (--argc < 1)
 				break;
@@ -248,9 +248,7 @@ MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "No signature to verify: use the -signature option\n");
 		goto end;
 	}
-
-	if ((argc > 0) && (argv[0][0] == '-')) /* bad option */
-	{
+	if ((argc > 0) && (argv[0][0] == '-')) {	/* bad option */
 		BIO_printf(bio_err, "unknown option '%s'\n", *argv);
 		BIO_printf(bio_err, "options are\n");
 		BIO_printf(bio_err, "-c              to output the digest with separating colons\n");
@@ -275,32 +273,27 @@ MAIN(int argc, char **argv)
 		EVP_MD_do_all_sorted(list_md_fn, bio_err);
 		goto end;
 	}
-
 	in = BIO_new(BIO_s_file());
 	bmd = BIO_new(BIO_f_md());
 	if (debug) {
 		BIO_set_callback(in, BIO_debug_callback);
 		/* needed for windows 3.1 */
-		BIO_set_callback_arg(in, (char *)bio_err);
+		BIO_set_callback_arg(in, (char *) bio_err);
 	}
-
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
-
 	if ((in == NULL) || (bmd == NULL)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (out_bin == -1) {
 		if (keyfile)
 			out_bin = 1;
 		else
 			out_bin = 0;
 	}
-
 	if (randfile)
 		app_RAND_load_file(randfile, bio_err, 0);
 
@@ -323,7 +316,6 @@ MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "MAC and Signing key cannot both be specified\n");
 		goto end;
 	}
-
 	if (keyfile) {
 		if (want_pub)
 			sigkey = load_pubkey(bio_err, keyfile, keyform, 0, NULL,
@@ -332,12 +324,13 @@ MAIN(int argc, char **argv)
 			sigkey = load_key(bio_err, keyfile, keyform, 0, passin,
 			    e, "key file");
 		if (!sigkey) {
-			/* load_[pub]key() has already printed an appropriate
-			   message */
+			/*
+			 * load_[pub]key() has already printed an appropriate
+			 * message
+			 */
 			goto end;
 		}
 	}
-
 	if (mac_name) {
 		EVP_PKEY_CTX *mac_ctx = NULL;
 		int r = 0;
@@ -368,20 +361,17 @@ mac_end:
 		if (r == 0)
 			goto end;
 	}
-
 	if (non_fips_allow) {
 		EVP_MD_CTX *md_ctx;
 		BIO_get_md_ctx(bmd, &md_ctx);
 		EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	}
-
 	if (hmac_key) {
 		sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, e,
-		    (unsigned char *)hmac_key, -1);
+		    (unsigned char *) hmac_key, -1);
 		if (!sigkey)
 			goto end;
 	}
-
 	if (sigkey) {
 		EVP_MD_CTX *mctx = NULL;
 		EVP_PKEY_CTX *pctx = NULL;
@@ -452,7 +442,6 @@ mac_end:
 		BIO_get_md_ctx(bmd, &tctx);
 		md = EVP_MD_CTX_md(tctx);
 	}
-
 	if (argc == 0) {
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		err = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
@@ -483,7 +472,7 @@ mac_end:
 			}
 			if (r)
 				err = r;
-			(void)BIO_reset(bmd);
+			(void) BIO_reset(bmd);
 		}
 	}
 
@@ -507,20 +496,20 @@ end:
 	if (bmd != NULL)
 		BIO_free(bmd);
 	apps_shutdown();
-	return(err);
+	return (err);
 }
 
 int
-do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-    EVP_PKEY *key, unsigned char *sigin, int siglen,
+do_fp(BIO * out, unsigned char *buf, BIO * bp, int sep, int binout,
+    EVP_PKEY * key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *md_name,
-    const char *file, BIO *bmd)
+    const char *file, BIO * bmd)
 {
 	size_t len;
 	int i;
 
 	for (;;) {
-		i = BIO_read(bp, (char *)buf, BUFSIZE);
+		i = BIO_read(bp, (char *) buf, BUFSIZE);
 		if (i < 0) {
 			BIO_printf(bio_err, "Read Error in %s\n", file);
 			ERR_print_errors(bio_err);
@@ -532,7 +521,7 @@ do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	if (sigin) {
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		i = EVP_DigestVerifyFinal(ctx, sigin, (unsigned int)siglen);
+		i = EVP_DigestVerifyFinal(ctx, sigin, (unsigned int) siglen);
 		if (i > 0)
 			BIO_printf(out, "Verified OK\n");
 		else if (i == 0) {
@@ -555,8 +544,8 @@ do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			return 1;
 		}
 	} else {
-		len = BIO_gets(bp, (char *)buf, BUFSIZE);
-		if ((int)len < 0) {
+		len = BIO_gets(bp, (char *) buf, BUFSIZE);
+		if ((int) len < 0) {
 			ERR_print_errors(bio_err);
 			return 1;
 		}
@@ -565,7 +554,7 @@ do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	if (binout)
 		BIO_write(out, buf, len);
 	else if (sep == 2) {
-		for (i = 0; i < (int)len; i++)
+		for (i = 0; i < (int) len; i++)
 			BIO_printf(out, "%02x", buf[i]);
 		BIO_printf(out, " *%s\n", file);
 	} else {
@@ -575,7 +564,7 @@ do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			BIO_printf(out, "%s(%s)= ", md_name, file);
 		else
 			BIO_printf(out, "(%s)= ", file);
-		for (i = 0; i < (int)len; i++) {
+		for (i = 0; i < (int) len; i++) {
 			if (sep && (i != 0))
 				BIO_printf(out, ":");
 			BIO_printf(out, "%02x", buf[i]);

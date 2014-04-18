@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
+#include <openssl/opensslconf.h>/* for OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,7 +119,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -147,26 +147,25 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
-		}
-		else if (strcmp(*argv, "-out") == 0) {
+			infile = *(++argv);
+		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-passin") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargin= *(++argv);
+			passargin = *(++argv);
 		} else if (strcmp(*argv, "-passout") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargout= *(++argv);
+			passargout = *(++argv);
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		}
 #endif
 		else if (strcmp(*argv, "-pvk-strong") == 0)
@@ -228,7 +227,6 @@ bad:
 		BIO_printf(bio_err, " -modulus        print the DSA public value\n");
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
@@ -239,14 +237,12 @@ bad:
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
 	if ((in == NULL) || (out == NULL)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
@@ -259,7 +255,7 @@ bad:
 	BIO_printf(bio_err, "read DSA key\n");
 
 	{
-		EVP_PKEY	*pkey;
+		EVP_PKEY *pkey;
 
 		if (pubin)
 			pkey = load_pubkey(bio_err, infile, informat, 1,
@@ -278,7 +274,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
@@ -295,13 +290,11 @@ bad:
 			goto end;
 		}
 	}
-
 	if (modulus) {
 		fprintf(stdout, "Public Key=");
 		BN_print(out, dsa->pub_key);
 		fprintf(stdout, "\n");
 	}
-
 	if (noout)
 		goto end;
 	BIO_printf(bio_err, "writing DSA key\n");
@@ -350,12 +343,12 @@ end:
 	if (passout)
 		free(passout);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
-#else /* !OPENSSL_NO_DSA */
+#else				/* !OPENSSL_NO_DSA */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

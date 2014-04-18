@@ -109,7 +109,7 @@
  *
  */
 
-#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DH */
+#include <openssl/opensslconf.h>/* for OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,7 +143,7 @@
  * -C
  */
 
-static int dh_cb(int p, int n, BN_GENCB *cb);
+static int dh_cb(int p, int n, BN_GENCB * cb);
 
 int MAIN(int, char **);
 
@@ -168,7 +168,7 @@ MAIN(int argc, char **argv)
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -193,17 +193,17 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
+			infile = *(++argv);
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		}
 #endif
 		else if (strcmp(*argv, "-check") == 0)
@@ -225,9 +225,8 @@ MAIN(int argc, char **argv)
 		else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				goto bad;
-			inrand= *(++argv);
-		}
-		else if (((sscanf(*argv, "%d", &num) == 0) || (num <= 0)))
+			inrand = *(++argv);
+		} else if (((sscanf(*argv, "%d", &num) == 0) || (num <= 0)))
 			goto bad;
 		argv++;
 		argc--;
@@ -259,7 +258,6 @@ bad:
 		BIO_printf(bio_err, " -noout        no output\n");
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
@@ -300,13 +298,12 @@ bad:
 
 			BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", num);
 			if (!dsa || !DSA_generate_parameters_ex(dsa, num,
-			    NULL, 0, NULL, NULL, &cb)) {
+				NULL, 0, NULL, NULL, &cb)) {
 				if (dsa)
 					DSA_free(dsa);
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-
 			dh = DSA_dup_DH(dsa);
 			DSA_free(dsa);
 			if (dh == NULL) {
@@ -346,14 +343,13 @@ bad:
 			BIO_printf(bio_err, "bad input format specified\n");
 			goto end;
 		}
-
 #ifndef OPENSSL_NO_DSA
 		if (dsaparam) {
 			DSA *dsa;
 
 			if (informat == FORMAT_ASN1)
 				dsa = d2i_DSAparams_bio(in, NULL);
-			else /* informat == FORMAT_PEM */
+			else	/* informat == FORMAT_PEM */
 				dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
 
 			if (dsa == NULL) {
@@ -361,7 +357,6 @@ bad:
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-
 			dh = DSA_dup_DH(dsa);
 			DSA_free(dsa);
 			if (dh == NULL) {
@@ -373,7 +368,7 @@ bad:
 		{
 			if (informat == FORMAT_ASN1)
 				dh = d2i_DHparams_bio(in, NULL);
-			else /* informat == FORMAT_PEM */
+			else	/* informat == FORMAT_PEM */
 				dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
 
 			if (dh == NULL) {
@@ -404,7 +399,6 @@ bad:
 	if (text) {
 		DHparams_print(out, dh);
 	}
-
 	if (check) {
 		if (!DH_check(dh, &i)) {
 			ERR_print_errors(bio_err);
@@ -427,7 +421,7 @@ bad:
 
 		len = BN_num_bytes(dh->p);
 		bits = BN_num_bits(dh->p);
-		data = (unsigned char *)malloc(len);
+		data = (unsigned char *) malloc(len);
 		if (data == NULL) {
 			perror("malloc");
 			goto end;
@@ -468,13 +462,12 @@ bad:
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
-
 	if (!noout) {
 		if (outformat == FORMAT_ASN1)
 			i = i2d_DHparams_bio(out, dh);
 		else if (outformat == FORMAT_PEM)
 			i = PEM_write_bio_DHparams(out, dh);
-		else	{
+		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
 			goto end;
 		}
@@ -494,12 +487,12 @@ end:
 	if (dh != NULL)
 		DH_free(dh);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 /* dh_cb is identical to dsa_cb in apps/dsaparam.c */
 static int
-dh_cb(int p, int n, BN_GENCB *cb)
+dh_cb(int p, int n, BN_GENCB * cb)
 {
 	char c = '*';
 
@@ -512,17 +505,17 @@ dh_cb(int p, int n, BN_GENCB *cb)
 	if (p == 3)
 		c = '\n';
 	BIO_write(cb->arg, &c, 1);
-	(void)BIO_flush(cb->arg);
+	(void) BIO_flush(cb->arg);
 #ifdef LINT
 	p = n;
 #endif
 	return 1;
 }
 
-#else /* !OPENSSL_NO_DH */
+#else				/* !OPENSSL_NO_DH */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

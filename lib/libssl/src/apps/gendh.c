@@ -82,7 +82,7 @@
 #undef PROG
 #define PROG gendh_main
 
-static int dh_cb(int p, int n, BN_GENCB *cb);
+static int dh_cb(int p, int n, BN_GENCB * cb);
 
 int MAIN(int, char **);
 
@@ -105,7 +105,7 @@ MAIN(int argc, char **argv)
 	BN_GENCB_set(&cb, dh_cb, bio_err);
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	if (!load_config(bio_err, NULL))
 		goto end;
@@ -118,35 +118,39 @@ MAIN(int argc, char **argv)
 		if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-2") == 0)
 			g = 2;
-	/*	else if (strcmp(*argv,"-3") == 0)
-			g=3; */
+		/*
+		 * else if (strcmp(*argv,"-3") == 0) g=3;
+		 */
 		else if (strcmp(*argv, "-5") == 0)
 			g = 5;
 #ifndef OPENSSL_NO_ENGINE
 		else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
-			engine= *(++argv);
+			engine = *(++argv);
 		}
 #endif
 		else if (strcmp(*argv, "-rand") == 0) {
 			if (--argc < 1)
 				goto bad;
-			inrand= *(++argv);
+			inrand = *(++argv);
 		} else
 			break;
 		argv++;
 		argc--;
 	}
-	if ((argc >= 1) && ((sscanf(*argv, "%d",&num) == 0) || (num < 0))) {
+	if ((argc >= 1) && ((sscanf(*argv, "%d", &num) == 0) || (num < 0))) {
 bad:
 		BIO_printf(bio_err, "usage: gendh [args] [numbits]\n");
 		BIO_printf(bio_err, " -out file - output the key to 'file\n");
 		BIO_printf(bio_err, " -2        - use 2 as the generator value\n");
-		/*	BIO_printf(bio_err," -3        - use 3 as the generator value\n"); */
+		/*
+		 * BIO_printf(bio_err," -3        - use 3 as the generator
+		 * value\n");
+		 */
 		BIO_printf(bio_err, " -5        - use 5 as the generator value\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e - use engine e, possibly a hardware device.\n");
@@ -156,7 +160,6 @@ bad:
 		BIO_printf(bio_err, "             the random number generator\n");
 		goto end;
 	}
-
 #ifndef OPENSSL_NO_ENGINE
 	setup_engine(bio_err, engine, 0);
 #endif
@@ -166,7 +169,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
@@ -183,7 +185,7 @@ bad:
 		BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
 		    app_RAND_load_files(inrand));
 
-	BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime, generator %d\n",num,g);
+	BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime, generator %d\n", num, g);
 	BIO_printf(bio_err, "This is going to take a long time\n");
 
 	if (((dh = DH_new()) == NULL) || !DH_generate_parameters_ex(dh, num, g, &cb))
@@ -202,11 +204,11 @@ end:
 	if (dh != NULL)
 		DH_free(dh);
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 static int
-dh_cb(int p, int n, BN_GENCB *cb)
+dh_cb(int p, int n, BN_GENCB * cb)
 {
 	char c = '*';
 
@@ -219,16 +221,16 @@ dh_cb(int p, int n, BN_GENCB *cb)
 	if (p == 3)
 		c = '\n';
 	BIO_write(cb->arg, &c, 1);
-	(void)BIO_flush(cb->arg);
+	(void) BIO_flush(cb->arg);
 #ifdef LINT
 	p = n;
 #endif
 	return 1;
 }
-#else /* !OPENSSL_NO_DH */
+#else				/* !OPENSSL_NO_DH */
 
-# if PEDANTIC
+#if PEDANTIC
 static void *dummy = &dummy;
-# endif
+#endif
 
 #endif

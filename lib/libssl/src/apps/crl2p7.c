@@ -71,7 +71,7 @@
 #include <openssl/pem.h>
 #include <openssl/objects.h>
 
-static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
+static int add_certs_from_file(STACK_OF(X509) * stack, char *certfile);
 #undef PROG
 #define PROG	crl2pkcs7_main
 
@@ -93,16 +93,16 @@ MAIN(int argc, char **argv)
 	PKCS7 *p7 = NULL;
 	PKCS7_SIGNED *p7s = NULL;
 	X509_CRL *crl = NULL;
-	STACK_OF(OPENSSL_STRING) *certflst = NULL;
-	STACK_OF(X509_CRL) *crl_stack = NULL;
-	STACK_OF(X509) *cert_stack = NULL;
+	STACK_OF(OPENSSL_STRING) * certflst = NULL;
+	STACK_OF(X509_CRL) * crl_stack = NULL;
+	STACK_OF(X509) * cert_stack = NULL;
 	int ret = 1, nocrl = 0;
 
 	apps_startup();
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE|BIO_FP_TEXT);
+			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
 	infile = NULL;
 	outfile = NULL;
@@ -124,18 +124,19 @@ MAIN(int argc, char **argv)
 		} else if (strcmp(*argv, "-in") == 0) {
 			if (--argc < 1)
 				goto bad;
-			infile= *(++argv);
+			infile = *(++argv);
 		} else if (strcmp(*argv, "-nocrl") == 0) {
 			nocrl = 1;
 		} else if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile= *(++argv);
+			outfile = *(++argv);
 		} else if (strcmp(*argv, "-certfile") == 0) {
 			if (--argc < 1)
 				goto bad;
-			if (!certflst) certflst = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(certflst, *(++argv));
+			if (!certflst)
+				certflst = sk_OPENSSL_STRING_new_null();
+			sk_OPENSSL_STRING_push(certflst, *(++argv));
 		} else {
 			BIO_printf(bio_err, "unknown option %s\n", *argv);
 			badops = 1;
@@ -159,7 +160,6 @@ bad:
 		ret = 1;
 		goto end;
 	}
-
 	ERR_load_crypto_strings();
 
 	in = BIO_new(BIO_s_file());
@@ -168,7 +168,6 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-
 	if (!nocrl) {
 		if (infile == NULL)
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
@@ -193,7 +192,6 @@ bad:
 			goto end;
 		}
 	}
-
 	if ((p7 = PKCS7_new()) == NULL)
 		goto end;
 	if ((p7s = PKCS7_SIGNED_new()) == NULL)
@@ -209,21 +207,21 @@ bad:
 	p7s->crl = crl_stack;
 	if (crl != NULL) {
 		sk_X509_CRL_push(crl_stack, crl);
-		crl=NULL; /* now part of p7 for freeing */
+		crl = NULL;	/* now part of p7 for freeing */
 	}
-
 	if ((cert_stack = sk_X509_new_null()) == NULL)
 		goto end;
 	p7s->cert = cert_stack;
 
-	if (certflst) for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
-		certfile = sk_OPENSSL_STRING_value(certflst, i);
-		if (add_certs_from_file(cert_stack, certfile) < 0) {
-			BIO_printf(bio_err, "error loading certificates\n");
-			ERR_print_errors(bio_err);
-			goto end;
+	if (certflst)
+		for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
+			certfile = sk_OPENSSL_STRING_value(certflst, i);
+			if (add_certs_from_file(cert_stack, certfile) < 0) {
+				BIO_printf(bio_err, "error loading certificates\n");
+				ERR_print_errors(bio_err);
+				goto end;
+			}
 		}
-	}
 
 	sk_OPENSSL_STRING_free(certflst);
 
@@ -262,7 +260,7 @@ end:
 		X509_CRL_free(crl);
 
 	apps_shutdown();
-	return(ret);
+	return (ret);
 }
 
 /*
@@ -276,12 +274,12 @@ end:
  *----------------------------------------------------------------------
  */
 static int
-add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
+add_certs_from_file(STACK_OF(X509) * stack, char *certfile)
 {
 	BIO *in = NULL;
 	int count = 0;
 	int ret = -1;
-	STACK_OF(X509_INFO) *sk = NULL;
+	STACK_OF(X509_INFO) * sk = NULL;
 	X509_INFO *xi;
 
 	in = BIO_new(BIO_s_file());
@@ -289,14 +287,12 @@ add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 		BIO_printf(bio_err, "error opening the file, %s\n", certfile);
 		goto end;
 	}
-
 	/* This loads from a file, a stack of x509/crl/pkey sets */
 	sk = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL);
 	if (sk == NULL) {
 		BIO_printf(bio_err, "error reading the file, %s\n", certfile);
 		goto end;
 	}
-
 	/* scan over it and pull out the CRL's */
 	while (sk_X509_INFO_num(sk)) {
 		xi = sk_X509_INFO_shift(sk);
