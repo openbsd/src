@@ -222,7 +222,7 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 	if (s == NULL)
 		return (NULL);
 
-	ts = OPENSSL_gmtime(&t, &data);
+	ts = gmtime_r(&t, &data);
 	if (ts == NULL)
 		return (NULL);
 

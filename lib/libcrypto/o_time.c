@@ -63,12 +63,6 @@
 #include <string.h>
 #include "o_time.h"
 
-struct tm *
-OPENSSL_gmtime(const time_t *timer, struct tm *result)
-{
-	return gmtime_r(timer, result);
-}
-
 /* Take a tm structure and add an offset to it. This avoids any OS issues
  * with restricted date types and overflows which cause the year 2038
  * problem.
@@ -194,8 +188,8 @@ check_time(long offset)
 	time_t t1, t2;
 	time(&t1);
 	t2 = t1 + offset;
-	OPENSSL_gmtime(&t2, &tm2);
-	OPENSSL_gmtime(&t1, &tm1);
+	gmtime_r(&t2, &tm2);
+	gmtime_r(&t1, &tm1);
 	OPENSSL_gmtime_adj(&tm1, 0, offset);
 	if ((tm1.tm_year == tm2.tm_year) &&
 		(tm1.tm_mon == tm2.tm_mon) &&
