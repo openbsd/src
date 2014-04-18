@@ -757,7 +757,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		os = p7->d.data;
 		break;
 	case NID_pkcs7_signedAndEnveloped:
-		/* XXXXXXXXXXXXXXXX */
+		/* XXX */
 		si_sk=p7->d.signed_and_enveloped->signer_info;
 		os = p7->d.signed_and_enveloped->enc_data->enc_data;
 		if (!os)
@@ -772,7 +772,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			}
 		break;
 	case NID_pkcs7_enveloped:
-		/* XXXXXXXXXXXXXXXX */
+		/* XXX */
 		os = p7->d.enveloped->enc_data->enc_data;
 		if (!os)
 			{
@@ -978,7 +978,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 		PKCS7err(PKCS7_F_PKCS7_DATAVERIFY,PKCS7_R_WRONG_PKCS7_TYPE);
 		goto err;
 		}
-	/* XXXXXXXXXXXXXXXXXXXXXXX */
+	/* XXXX */
 	ias=si->issuer_and_serial;
 
 	x509=X509_find_by_issuer_and_serial(cert,ias->issuer,ias->serial);
