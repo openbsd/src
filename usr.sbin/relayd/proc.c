@@ -1,7 +1,7 @@
-/*	$OpenBSD: proc.c,v 1.8 2014/04/14 07:18:05 blambert Exp $	*/
+/*	$OpenBSD: proc.c,v 1.9 2014/04/18 12:02:37 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -48,6 +48,7 @@ int	 proc_ispeer(struct privsep_proc *, u_int, enum privsep_procid);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
+u_int	 proc_instances(struct privsep *, u_int, u_int);
 
 int
 proc_ispeer(struct privsep_proc *p, u_int nproc, enum privsep_procid type)
@@ -116,18 +117,8 @@ proc_setup(struct privsep *ps)
 
 	for (i = 0; i < PROC_MAX; i++)
 		for (j = 0; j < PROC_MAX; j++) {
-			/*
-			 * find out how many instances of this peer there are.
-			 */
-			if (i >= j || ps->ps_instances[i] == 0 ||
-			    ps->ps_instances[j] == 0)
+			if ((count = proc_instances(ps, i, j)) == 0)
 				continue;
-
-			if (ps->ps_instances[i] > 1 &&
-			    ps->ps_instances[j] > 1)
-				fatalx("N:M peering not supported");
-
-			count = ps->ps_instances[i] * ps->ps_instances[j];
 
 			if ((ps->ps_pipes[i][j] =
 			    calloc(count, sizeof(int))) == NULL ||
@@ -165,12 +156,8 @@ proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 	 */
 	for (i = 0; i < PROC_MAX; i++) {
 		for (j = 0; j < PROC_MAX; j++) {
-			if (i == j ||
-			    ps->ps_instances[i] == 0 ||
-			    ps->ps_instances[j] == 0)
+			if ((count = proc_instances(ps, i, j)) == 0)
 				continue;
-
-			count = ps->ps_instances[i] * ps->ps_instances[j];
 
 			for (n = 0; n < count; n++) {
 				instance = ps->ps_instances[i] > 1 ? n : 0;
@@ -197,7 +184,8 @@ proc_config(struct privsep *ps, struct privsep_proc *p, u_int nproc)
 		if (src == dst)
 			fatal("proc_config: cannot peer with oneself");
 
-		count = ps->ps_instances[src] * ps->ps_instances[dst];
+		if ((count = proc_instances(ps, src, dst)) == 0)
+			continue;
 
 		if ((ps->ps_ievs[dst] = calloc(count,
 		    sizeof(struct imsgev))) == NULL)
@@ -234,10 +222,9 @@ proc_clear(struct privsep *ps, int purge)
 		return;
 
 	for (dst = 0; dst < PROC_MAX; dst++) {
-		if (src == dst || ps->ps_ievs[dst] == NULL)
+		if ((count = proc_instances(ps, src, dst)) == 0 ||
+		    ps->ps_ievs[dst] == NULL)
 			continue;
-
-		count = ps->ps_instances[src] * ps->ps_instances[dst];
 
 		for (n = 0; n < count; n++) {
 			if (ps->ps_pipes[src][dst][n] == -1)
@@ -252,6 +239,26 @@ proc_clear(struct privsep *ps, int purge)
 		if (purge)
 			free(ps->ps_ievs[dst]);
 	}
+}
+
+u_int
+proc_instances(struct privsep *ps, u_int src, u_int dst)
+{
+	u_int	 count;
+
+	if (ps->ps_instances[src] > 1 &&
+	    ps->ps_instances[dst] > 1 &&
+	    ps->ps_instances[src] != ps->ps_instances[dst])
+		fatalx("N:M peering not supported");
+
+	if (src == dst ||
+	    ps->ps_instances[src] == 0 ||
+	    ps->ps_instances[dst] == 0)
+		return (0);
+
+	count = MAX(ps->ps_instances[src], ps->ps_instances[dst]);
+
+	return (count);
 }
 
 void
@@ -596,4 +603,13 @@ proc_ibuf(struct privsep *ps, enum privsep_procid id, int n)
 
 	proc_range(ps, id, &n, &m);
 	return (&ps->ps_ievs[id][n].ibuf);
+}
+
+struct imsgev *
+proc_iev(struct privsep *ps, enum privsep_procid id, int n)
+{
+	int	 m;
+
+	proc_range(ps, id, &n, &m);
+	return (&ps->ps_ievs[id][n]);
 }
