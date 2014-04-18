@@ -72,7 +72,6 @@
 
 
 #define BASE_SECTION	"srp"
-#define CONFIG_FILE "openssl.cnf"
 
 #define ENV_RANDFILE		"RANDFILE"
 
@@ -413,14 +412,10 @@ srp_main(int argc, char **argv)
 		if (configfile == NULL)
 			configfile = getenv("SSLEAY_CONF");
 		if (configfile == NULL) {
-			const char *s = X509_get_default_cert_area();
-			size_t len;
-
-			len = strlen(s) + sizeof(CONFIG_FILE) + 1;
-			tofree = malloc(len);
-			BUF_strlcpy(tofree, s, len);
-			BUF_strlcat(tofree, "/", len);
-			BUF_strlcat(tofree, CONFIG_FILE, len);
+			if ((tofree = make_config_name()) == NULL) {
+				BIO_printf(bio_err, "error making config file name\n");
+				goto err;
+			}
 			configfile = tofree;
 		}
 		VERBOSE BIO_printf(bio_err, "Using configuration from %s\n", configfile);
