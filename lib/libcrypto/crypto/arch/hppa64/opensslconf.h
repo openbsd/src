@@ -1,64 +1,21 @@
-/* opensslconf.h */
-/* WARNING: Generated automatically from opensslconf.h.in by Configure. */
-
-/* OpenSSL was configured with the following options: */
-#ifndef OPENSSL_DOING_MAKEDEPEND
-
-
-#ifndef OPENSSL_NO_CAMELLIA
 # define OPENSSL_NO_CAMELLIA
-#endif
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 # define OPENSSL_NO_EC_NISTP_64_GCC_128
-#endif
-#ifndef OPENSSL_NO_CMS
 # define OPENSSL_NO_CMS
-#endif
-#ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
-#endif
-#ifndef OPENSSL_NO_GOST
 # define OPENSSL_NO_GOST
-#endif
-#ifndef OPENSSL_NO_JPAKE
 # define OPENSSL_NO_JPAKE
-#endif
-#ifndef OPENSSL_NO_KRB5
 # define OPENSSL_NO_KRB5
-#endif
-#ifndef OPENSSL_NO_MD2
 # define OPENSSL_NO_MD2
-#endif
-#ifndef OPENSSL_NO_RC5
 # define OPENSSL_NO_RC5
-#endif
-#ifndef OPENSSL_NO_RFC3779
 # define OPENSSL_NO_RFC3779
-#endif
-#ifndef OPENSSL_NO_SCTP
 # define OPENSSL_NO_SCTP
-#endif
-#ifndef OPENSSL_NO_SEED
 # define OPENSSL_NO_SEED
-#endif
-#ifndef OPENSSL_NO_SRP
 # define OPENSSL_NO_SRP
-#endif
-#ifndef OPENSSL_NO_SSL2
 # define OPENSSL_NO_SSL2
-#endif
-#ifndef OPENSSL_NO_STORE
 # define OPENSSL_NO_STORE
-#endif
 
-#endif /* OPENSSL_DOING_MAKEDEPEND */
-
-#ifndef OPENSSL_THREADS
 # define OPENSSL_THREADS
-#endif
-#ifndef OPENSSL_NO_DYNAMIC_ENGINE
 # define OPENSSL_NO_DYNAMIC_ENGINE
-#endif
 
 /* The OPENSSL_NO_* macros are also defined as NO_* if the application
    asks for it.  This is a transient feature that is provided for those
