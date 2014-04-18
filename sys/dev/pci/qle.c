@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.24 2014/04/18 01:11:23 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.25 2014/04/18 05:08:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -222,6 +222,7 @@ struct qle_softc {
 	u_int32_t		sc_last_resp_id;
 	int			sc_marker_required;
 	int			sc_fabric_pending;
+	u_int8_t		sc_fabric_response[QLE_QUEUE_ENTRY_SIZE];
 
 	struct qle_nvram	sc_nvram;
 	int			sc_nvram_valid;
@@ -296,6 +297,8 @@ void		qle_ports_gone(struct qle_softc *, u_int32_t);
 int		qle_softreset(struct qle_softc *);
 void		qle_update_topology(struct qle_softc *);
 int		qle_update_fabric(struct qle_softc *);
+int		qle_fabric_plogx(struct qle_softc *, struct qle_fc_port *, int,
+		    u_int32_t *);
 int		qle_fabric_plogi(struct qle_softc *, struct qle_fc_port *);
 void		qle_fabric_plogo(struct qle_softc *, struct qle_fc_port *);
 
@@ -1025,6 +1028,8 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 	case QLE_IOCB_CT_PASSTHROUGH:
 		if (sc->sc_fabric_pending) {
 			qle_dump_iocb(sc, entry);
+			memcpy(sc->sc_fabric_response, entry,
+			    QLE_QUEUE_ENTRY_SIZE);
 			sc->sc_fabric_pending = 2;
 			wakeup(sc->sc_scratch);
 		} else {
@@ -1805,24 +1810,15 @@ qle_next_fabric_port(struct qle_softc *sc, u_int32_t *firstport,
 	return (fport);
 }
 
-
 int
-qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
+qle_fabric_plogx(struct qle_softc *sc, struct qle_fc_port *port, int flags,
+    u_int32_t *info)
 {
 	struct qle_iocb_plogx *iocb;
 	u_int16_t req;
 	u_int64_t offset;
 	int rv;
-	int loopid;
 
-	mtx_enter(&sc->sc_port_mtx);
-	loopid = qle_get_loop_id(sc);
-	mtx_leave(&sc->sc_port_mtx);
-	if (loopid == -1) {
-		printf("%s: ran out of loop ids\n", DEVNAME(sc));
-		return (1);
-	}
-	
 	mtx_enter(&sc->sc_queue_mtx);
 
 	req = sc->sc_next_req_id++;
@@ -1839,12 +1835,14 @@ qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
 	iocb->entry_count = 1;
 
 	iocb->req_handle = 7;
-	htolem16(&iocb->req_nport_handle, loopid);
+	htolem16(&iocb->req_nport_handle, port->loopid);
 	htolem16(&iocb->req_port_id_lo, port->portid);
 	iocb->req_port_id_hi = port->portid >> 16;
-	iocb->req_flags = 0;
+	htolem16(&iocb->req_flags, flags);
 
-	/*qle_dump_iocb(sc, iocb);*/
+	DPRINTF(QLE_D_PORT, "%s: plogx loop id %d port %06x, flags %x\n",
+	    DEVNAME(sc), port->loopid, port->portid, flags);
+	qle_dump_iocb(sc, iocb);
 
 	qle_write(sc, QLE_REQ_IN, sc->sc_next_req_id);
 	sc->sc_fabric_pending = 1;
@@ -1865,21 +1863,69 @@ qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
 	}
 	sc->sc_fabric_pending = 0;
 
-	port->loopid = loopid;
+	iocb = (struct qle_iocb_plogx *)&sc->sc_fabric_response;
+	rv = lemtoh16(&iocb->req_status);
+	if (rv == QLE_PLOGX_ERROR) {
+		rv = lemtoh32(&iocb->req_ioparms[0]);
+		*info = lemtoh32(&iocb->req_ioparms[1]);
+	}
+
 	return (rv);
+}
+
+int
+qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
+{
+	u_int32_t info;
+	int err;
+
+	if (port->loopid == 0) {
+		int loopid;
+
+		mtx_enter(&sc->sc_port_mtx);
+		loopid = qle_get_loop_id(sc);
+		mtx_leave(&sc->sc_port_mtx);
+		if (loopid == -1) {
+			printf("%s: ran out of loop ids\n", DEVNAME(sc));
+			return (1);
+		}
+
+		port->loopid = loopid;
+	}
+
+	err = qle_fabric_plogx(sc, port, QLE_PLOGX_LOGIN, &info);
+	if (err == 0) {
+		DPRINTF(QLE_D_PORT, "%s: logged in to port %06x at %d\n",
+		    DEVNAME(sc), port->portid, port->loopid);
+		port->flags &= ~QLE_PORT_FLAG_NEEDS_LOGIN;
+		return (0);
+	} else {
+		DPRINTF(QLE_D_PORT, "%s: error %x(%x) logging in to %06x\n",
+		    DEVNAME(sc), err, info, port->portid);
+		port->loopid = 0;
+		return (1);
+	}
 }
 
 void
 qle_fabric_plogo(struct qle_softc *sc, struct qle_fc_port *port)
 {
-#if 0
-	sc->sc_mbox[0] = QLE_MBOX_FABRIC_PLOGO;
-	sc->sc_mbox[1] = port->loopid;
-	sc->sc_mbox[10] = 0;
+	int err;
+	u_int32_t info;
 
-	if (qle_mbox(sc, 0x0403))
-		printf("%s: PLOGO %d failed\n", DEVNAME(sc), port->loopid);
-#endif
+	/*
+	 * we only log out if we can't see the port any more, so we always
+	 * want to do an explicit logout and free the n-port handle.
+	 */
+	err = qle_fabric_plogx(sc, port, QLE_PLOGX_LOGOUT |
+	    QLE_PLOGX_LOGOUT_EXPLICIT | QLE_PLOGX_LOGOUT_FREE_HANDLE, &info);
+	if (err == 0) {
+		DPRINTF(QLE_D_PORT, "%s: logged out of port %06x\n",
+		    DEVNAME(sc), port->portid);
+	} else {
+		DPRINTF(QLE_D_PORT, "%s: failed to log out of port %06x: "
+		    "%x %x\n", DEVNAME(sc), port->portid, err, info);
+	}
 }
 
 void

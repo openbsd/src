@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.7 2014/04/17 23:17:18 jmatthew Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.8 2014/04/18 05:08:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -595,6 +595,23 @@ struct qle_iocb_ct_passthrough {
 	struct qle_iocb_seg req_resp_seg;
 } __packed __aligned(64);
 
+#define QLE_PLOGX_LOGIN			0x0000
+#define QLE_PLOGX_LOGIN_COND		0x0010
+
+#define QLE_PLOGX_LOGOUT		0x0008
+#define QLE_PLOGX_LOGOUT_IMPLICIT	0x0010
+#define QLE_PLOGX_LOGOUT_ALL		0x0020
+#define QLE_PLOGX_LOGOUT_EXPLICIT	0x0040
+#define QLE_PLOGX_LOGOUT_FREE_HANDLE	0x0080
+
+#define QLE_PLOGX_PORT_UNAVAILABLE	0x28
+#define QLE_PLOGX_PORT_LOGGED_OUT	0x29
+#define QLE_PLOGX_ERROR			0x31
+
+#define QLE_PLOGX_ERROR_PORT_ID_USED	0x1A
+#define QLE_PLOGX_ERROR_HANDLE_USED	0x1B
+#define QLE_PLOGX_ERROR_NO_HANDLE	0x1C
+
 struct qle_iocb_plogx {
 	u_int8_t	entry_type;	/* QLE_IOCB_PLOGX */
 	u_int8_t	entry_count;
@@ -610,5 +627,5 @@ struct qle_iocb_plogx {
 	u_int16_t	req_port_id_lo;
 	u_int8_t	req_port_id_hi;
 	u_int8_t	req_rspsize;
-	u_int16_t	req_ioparms[22];
+	u_int32_t	req_ioparms[11];
 } __packed __aligned(64);
