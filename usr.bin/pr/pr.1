@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.24 2014/04/15 17:27:37 jmc Exp $
+.\"	$OpenBSD: pr.1,v 1.25 2014/04/18 22:11:57 jmc Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 15 2014 $
+.Dd $Mdocdate: April 18 2014 $
 .Dt PR 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd print files
 .Sh SYNOPSIS
 .Nm pr
-.Op Ar +page
+.Op Cm + Ns Ar page
 .Op Fl Ar column
 .Op Fl adFfmrt
 .Op Fl e Ns Oo Ar char Oc Ns Op Ar gap
@@ -91,25 +91,18 @@ By default text columns are separated by at least one
 Input lines that do not fit into a text column are truncated, except
 in the default single columns output mode.
 .Pp
-If standard output is associated with a terminal,
-diagnostic messages are suppressed until the
+Error messages are written to standard error during the printing
+process (if output is redirected) or after all successful
+file printing is complete (when printing to a terminal).
+If
 .Nm pr
-utility has completed processing.
-.Pp
-In the following option descriptions,
-.Em column ,
-.Em lines ,
-.Em offset ,
-.Em page ,
-and
-.Em width
-are positive decimal integers and
-.Em gap
-is a non-negative decimal integer.
+receives an interrupt while printing to a terminal, it
+flushes all accumulated error messages to the screen before
+terminating.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Ar \&+page
+.It Cm + Ns Ar page
 Begin output at page number
 .Ar page
 of the formatted input.
@@ -301,68 +294,17 @@ If no
 operands are specified, or if a
 .Ar file
 operand is
-.Dq - ,
+.Sq - ,
 the standard input is used.
 The standard input is used only if no
 .Ar file
 operands are specified, or if a
 .Ar file
 operand is
-.Dq - .
+.Sq - .
 .El
-.Pp
-The
-.Fl s
-option does not allow the option letter to be separated from its
-argument, and the options
-.Fl e ,
-.Fl i ,
-and
-.Fl n
-require that both arguments, if present, not be separated from the option
-letter.
 .Sh EXIT STATUS
 .Ex -std pr
-.Pp
-Error messages are written to standard error during the printing
-process (if output is redirected) or after all successful
-file printing is complete (when printing to a terminal).
-.Pp
-If
-.Nm pr
-receives an interrupt while printing to a terminal, it
-flushes all accumulated error messages to the screen before
-terminating.
-.Sh NOTES
-The interpretation of
-.Em <form-feed> Ns s
-in the input stream is that they are special
-.Em <newline> Ns s
-which have the side effect of causing a page break.
-While this works
-correctly for all cases, strict interpretation also implies that the
-common convention of placing a
-.Em <form-feed>
-on a line by itself is actually interpreted as a blank line, page break,
-blank line.
-.Sh RESTRICTIONS
-The
-.Nm pr
-utility is intended to paginate input containing basic
-.Xr ascii 7
-text formatting and input streams containing non-printing
-.Em <control-characters> ,
-.Em <escape-sequences>
-or long lines may result in formatting errors.
-.Pp
-The
-.Nm pr
-utility does not currently understand over-printing using
-.Em <back-space>
-or
-.Em <return>
-characters, and except in the case of unmodified single-column output,
-use of these characters will cause formatting errors.
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr more 1 ,
@@ -385,6 +327,36 @@ A
 .Nm
 command appeared in
 .At v1 .
+.Sh CAVEATS
+The interpretation of
+.Em <form-feed> Ns s
+in the input stream is that they are special
+.Em <newline> Ns s
+which have the side effect of causing a page break.
+While this works
+correctly for all cases, strict interpretation also implies that the
+common convention of placing a
+.Em <form-feed>
+on a line by itself is actually interpreted as a blank line, page break,
+blank line.
+.Pp
+The
+.Nm pr
+utility is intended to paginate input containing basic
+.Xr ascii 7
+text formatting and input streams containing non-printing
+.Em <control-characters> ,
+.Em <escape-sequences>
+or long lines may result in formatting errors.
+.Pp
+The
+.Nm pr
+utility does not currently understand over-printing using
+.Em <back-space>
+or
+.Em <return>
+characters, and except in the case of unmodified single-column output,
+use of these characters will cause formatting errors.
 .Sh BUGS
 The lack of a line wrapping option, and the specification that truncation
 does not apply to single-column output frequently results in formatting
