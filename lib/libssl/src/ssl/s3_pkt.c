@@ -1095,8 +1095,7 @@ start:
 	    (s->version > SSL3_VERSION) &&
 	    (s->s3->handshake_fragment_len >= 4) &&
 	    (s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
-	    (s->session != NULL) && (s->session->cipher != NULL) &&
-	    !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
+	    (s->session != NULL) && (s->session->cipher != NULL)) {
 		/*s->s3->handshake_fragment_len = 0;*/
 		rr->length = 0;
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);

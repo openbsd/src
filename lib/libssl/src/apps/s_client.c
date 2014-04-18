@@ -334,7 +334,7 @@ sc_usage(void)
 	BIO_printf(bio_err, " -starttls prot - use the STARTTLS command before starting TLS\n");
 	BIO_printf(bio_err, "                 for those protocols that support it, where\n");
 	BIO_printf(bio_err, "                 'prot' defines which one to assume.  Currently,\n");
-	BIO_printf(bio_err, "                 only \"smtp\", \"pop3\", \"imap\", \"ftp\" and \"xmpp\"\n");
+	BIO_printf(bio_err, "                 only \"smtp\", \"lmtp\", \"pop3\", \"imap\", \"ftp\" and \"xmpp\"\n");
 	BIO_printf(bio_err, "                 are supported.\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
@@ -351,7 +351,6 @@ sc_usage(void)
 	BIO_printf(bio_err, " -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 #endif
 #endif
-	BIO_printf(bio_err, " -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 #ifndef OPENSSL_NO_SRTP
 	BIO_printf(bio_err, " -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
 #endif
@@ -535,6 +534,7 @@ next_proto_cb(SSL * s, unsigned char **out, unsigned char *outlen, const unsigne
 enum {
 	PROTO_OFF = 0,
 	PROTO_SMTP,
+	PROTO_LMTP,
 	PROTO_POP3,
 	PROTO_IMAP,
 	PROTO_FTP,
@@ -832,7 +832,7 @@ s_client_main(int argc, char **argv)
 		else if (strcmp(*argv, "-serverpref") == 0)
 			off |= SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if (strcmp(*argv, "-legacy_renegotiation") == 0)
-			off |= SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;
+			; /* no-op */
 		else if (strcmp(*argv, "-legacy_server_connect") == 0) {
 			off |= SSL_OP_LEGACY_SERVER_CONNECT;
 		} else if (strcmp(*argv, "-no_legacy_server_connect") == 0) {
@@ -853,6 +853,8 @@ s_client_main(int argc, char **argv)
 			++argv;
 			if (strcmp(*argv, "smtp") == 0)
 				starttls_proto = PROTO_SMTP;
+			else if (strcmp(*argv, "lmtp") == 0)
+				starttls_proto = PROTO_LMTP;
 			else if (strcmp(*argv, "pop3") == 0)
 				starttls_proto = PROTO_POP3;
 			else if (strcmp(*argv, "imap") == 0)
@@ -1287,7 +1289,7 @@ re_start:
 	 * push a buffering BIO into the chain that is removed again later on
 	 * to not disturb the rest of the s_client operation.
 	 */
-	if (starttls_proto == PROTO_SMTP) {
+	if (starttls_proto == PROTO_SMTP || starttls_proto == PROTO_LMTP) {
 		int foundit = 0;
 		BIO *fbio = BIO_new(BIO_f_buffer());
 		BIO_push(fbio, sbio);
@@ -1297,7 +1299,8 @@ re_start:
 		}
 		while (mbuf_len > 3 && mbuf[3] == '-');
 		/* STARTTLS command requires EHLO... */
-		BIO_printf(fbio, "EHLO openssl.client.net\r\n");
+		BIO_printf(fbio, "%cHLO openssl.client.net\r\n",
+			   starttls_proto == PROTO_SMTP ? 'E' : 'L');
 		(void) BIO_flush(fbio);
 		/* wait for multi-line response to end EHLO SMTP response */
 		do {

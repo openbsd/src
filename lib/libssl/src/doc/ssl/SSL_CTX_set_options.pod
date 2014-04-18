@@ -216,8 +216,10 @@ not be used by clients or servers.
 
 =item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
 
-Allow legacy insecure renegotiation between OpenSSL and unpatched clients or
-servers. See the B<SECURE RENEGOTIATION> section for more details.
+As of OpenBSD 5.6, this option has no effect.
+In previous versions it allowed legacy insecure renegotiation between
+OpenSSL and unpatched clients or servers.
+See the B<SECURE RENEGOTIATION> section for more details.
 
 =item SSL_OP_LEGACY_SERVER_CONNECT
 
@@ -258,9 +260,6 @@ If the patched OpenSSL server attempts to renegotiate a fatal
 B<handshake_failure> alert is sent. This is because the server code may be
 unaware of the unpatched nature of the client.
 
-If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then
-renegotiation B<always> succeeds.
-
 B<NB:> a bug in OpenSSL clients earlier than 0.9.8m (all of which are
 unpatched) will result in the connection hanging if it receives a
 B<no_renegotiation> alert. OpenSSL versions 0.9.8m and later will regard
@@ -271,8 +270,7 @@ was refused.
 
 =head2 Patched OpenSSL client and unpatched server.
 
-If the option B<SSL_OP_LEGACY_SERVER_CONNECT> or
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then initial connections
+If the option B<SSL_OP_LEGACY_SERVER_CONNECT> is set then initial connections
 and renegotiation between patched OpenSSL clients and unpatched servers
 succeeds. If neither option is set then initial connections to unpatched
 servers will fail.
@@ -294,13 +292,6 @@ OpenSSL client applications that want to ensure they can B<not> connect to
 unpatched servers (and thus avoid any security issues) should always B<clear>
 B<SSL_OP_LEGACY_SERVER_CONNECT> using SSL_CTX_clear_options() or
 SSL_clear_options().
-
-The difference between the B<SSL_OP_LEGACY_SERVER_CONNECT> and
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> options is that
-B<SSL_OP_LEGACY_SERVER_CONNECT> enables initial connections and secure
-renegotiation between OpenSSL clients and unpatched servers B<only>, while
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> allows initial connections
-and renegotiation between OpenSSL and unpatched clients or servers.
 
 =head1 RETURN VALUES
 
@@ -343,5 +334,8 @@ SSL_CTX_clear_options() and SSL_clear_options() were first added in OpenSSL
 B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>, B<SSL_OP_LEGACY_SERVER_CONNECT>
 and the function SSL_get_secure_renegotiation_support() were first added in
 OpenSSL 0.9.8m.
+
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> was changed to have no effect
+in OpenBSD 5.6.
 
 =cut

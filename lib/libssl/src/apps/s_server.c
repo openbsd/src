@@ -525,7 +525,6 @@ sv_usage(void)
 	BIO_printf(bio_err, "                 not specified (default is %s)\n", TEST_CERT2);
 	BIO_printf(bio_err, " -tlsextdebug  - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err, " -no_ticket    - disable use of RFC4507bis session tickets\n");
-	BIO_printf(bio_err, " -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err, " -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 #endif
@@ -904,7 +903,7 @@ s_server_main(int argc, char *argv[])
 		else if (strcmp(*argv, "-serverpref") == 0) {
 			off |= SSL_OP_CIPHER_SERVER_PREFERENCE;
 		} else if (strcmp(*argv, "-legacy_renegotiation") == 0)
-			off |= SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;
+			; /* no-op */
 		else if (strcmp(*argv, "-cipher") == 0) {
 			if (--argc < 1)
 				goto bad;
