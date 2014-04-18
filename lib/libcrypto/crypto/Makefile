@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2014/04/18 13:13:50 tedu Exp $
+# $OpenBSD: Makefile,v 1.24 2014/04/18 13:19:03 tedu Exp $
 
 LIB=	crypto
 
@@ -207,8 +207,7 @@ SRCS+= pk7_mime.c bio_pk7.c
 SRCS+= pqueue.c
 
 # rand/
-SRCS+= rc4_rand.c randfile.c rand_lib.c rand_err.c
-SRCS+= rand_unix.c
+SRCS+= randfile.c rand_lib.c rand_err.c
 
 # rc2/
 SRCS+= rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c rc2ofb64.c

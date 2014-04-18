@@ -74,10 +74,7 @@
 #define BUFSIZE	1024
 #define RAND_DATA 1024
 
-#define RFILE           ".rnd"
-
-/* Note that these functions are intended for seed files only.
- * Entropy devices and EGD sockets are handled in rand_unix.c */
+/* Note that these functions should not be used. */
 
 int RAND_load_file(const char *file, long bytes)
 {
@@ -145,46 +142,8 @@ err:
 	}
 
 const char *RAND_file_name(char *buf, size_t size)
-	{
-	char *s=NULL;
-	struct stat sb;
-
-	if (OPENSSL_issetugid() == 0)
-		s=getenv("RANDFILE");
-	if (s != NULL && *s && strlen(s) + 1 < size)
-		{
-		if (BUF_strlcpy(buf,s,size) >= size)
-			return NULL;
-		}
-	else
-		{
-		if (OPENSSL_issetugid() == 0)
-			s=getenv("HOME");
-		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
-			{
-			BUF_strlcpy(buf,s,size);
-			BUF_strlcat(buf,"/",size);
-			BUF_strlcat(buf,RFILE,size);
-			}
-		else
-		  	buf[0] = '\0'; /* no file name */
-		}
-
-	/* given that all random loads just fail if the file can't be 
-	 * seen on a stat, we stat the file we're returning, if it
-	 * fails, use /dev/arandom instead. this allows the user to 
-	 * use their own source for good random data, but defaults
-	 * to something hopefully decent if that isn't available. 
-	 */
-
-	if (!buf[0])
-		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
-			return(NULL);
-		}	
-	if (stat(buf,&sb) == -1)
-		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
-			return(NULL);
-		}	
-
-	return(buf);
-	}
+{
+	if (BUF_strlcpy(buf,"/dev/urandom",size) >= size)
+		return(NULL);
+	return buf;
+}
