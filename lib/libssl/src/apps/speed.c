@@ -246,11 +246,6 @@ static double ecdsa_results[EC_NUM][2];
 static double ecdh_results[EC_NUM][1];
 #endif
 
-#if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
-static const char rnd_seed[] = "string to make the random number generator think it has entropy";
-static int rnd_fake = 0;
-#endif
-
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #define SIGRETTYPE void
@@ -1958,10 +1953,6 @@ speed_main(int argc, char **argv)
 
 	RAND_pseudo_bytes(buf, 20);
 #ifndef OPENSSL_NO_DSA
-	if (RAND_status() != 1) {
-		RAND_seed(rnd_seed, sizeof rnd_seed);
-		rnd_fake = 1;
-	}
 	for (j = 0; j < DSA_NUM; j++) {
 		unsigned int kk;
 		int ret;
@@ -2035,15 +2026,9 @@ speed_main(int argc, char **argv)
 				dsa_doit[j] = 0;
 		}
 	}
-	if (rnd_fake)
-		RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_ECDSA
-	if (RAND_status() != 1) {
-		RAND_seed(rnd_seed, sizeof rnd_seed);
-		rnd_fake = 1;
-	}
 	for (j = 0; j < EC_NUM; j++) {
 		int ret;
 
@@ -2130,15 +2115,9 @@ speed_main(int argc, char **argv)
 			}
 		}
 	}
-	if (rnd_fake)
-		RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_ECDH
-	if (RAND_status() != 1) {
-		RAND_seed(rnd_seed, sizeof rnd_seed);
-		rnd_fake = 1;
-	}
 	for (j = 0; j < EC_NUM; j++) {
 		if (!ecdh_doit[j])
 			continue;
@@ -2221,8 +2200,6 @@ speed_main(int argc, char **argv)
 				ecdh_doit[j] = 0;
 		}
 	}
-	if (rnd_fake)
-		RAND_cleanup();
 #endif
 #ifndef NO_FORK
 show_res:
