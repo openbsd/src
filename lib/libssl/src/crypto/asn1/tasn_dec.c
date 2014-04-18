@@ -126,6 +126,7 @@ ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 {
 	ASN1_TLC c;
 	ASN1_VALUE *ptmpval = NULL;
+
 	if (!pval)
 		pval = &ptmpval;
 	asn1_tlc_clear_nc(&c);
@@ -139,6 +140,7 @@ ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
     const ASN1_TEMPLATE *tt)
 {
 	ASN1_TLC c;
+
 	asn1_tlc_clear_nc(&c);
 	return asn1_template_ex_d2i(pval, in, len, tt, 0, &c);
 }
@@ -166,6 +168,7 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	int otag;
 	int ret = 0;
 	ASN1_VALUE **pchptr, *ptmpval;
+
 	if (!pval)
 		return 0;
 	if (aux && aux->asn1_cb)
@@ -841,6 +844,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	int ret = 0;
 	const ASN1_PRIMITIVE_FUNCS *pf;
 	ASN1_INTEGER **tint;
+
 	pf = it->funcs;
 
 	if (pf && pf->prim_c2i)
@@ -1153,6 +1157,7 @@ asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf,
 	int ptag, pclass;
 	long plen;
 	const unsigned char *p, *q;
+
 	p = *in;
 	q = p;
 
