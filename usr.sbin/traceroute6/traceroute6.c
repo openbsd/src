@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.81 2014/04/18 16:56:25 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.82 2014/04/18 16:58:02 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -345,6 +345,7 @@ main(int argc, char *argv[])
 	uid_t uid;
 	int rtableid = -1;
 	const char *errstr;
+	socklen_t len;
 
 	/*
 	 * Receive ICMP
@@ -575,7 +576,6 @@ main(int argc, char *argv[])
 	} else {
 		struct sockaddr_in6 Nxt;
 		int dummy;
-		socklen_t len;
 
 		Nxt = to;
 		Nxt.sin6_port = htons(DUMMY_PORT);
@@ -593,14 +593,10 @@ main(int argc, char *argv[])
 	if (bind(sndsock, (struct sockaddr *)&from, from.sin6_len) < 0)
 		err(1, "bind sndsock");
 
-	{
-		socklen_t len;
-
-		len = sizeof(from);
-		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
-			err(1, "getsockname");
-		srcport = ntohs(from.sin6_port);
-	}
+	len = sizeof(from);
+	if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
+		err(1, "getsockname");
+	srcport = ntohs(from.sin6_port);
 
 	/*
 	 * Message to users

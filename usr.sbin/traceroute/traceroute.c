@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.106 2014/04/18 16:46:18 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.107 2014/04/18 16:58:02 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -328,6 +328,7 @@ main(int argc, char *argv[])
 	long l;
 	uid_t uid;
 	u_int rtableid;
+	socklen_t len;
 
 	if ((rcvsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -625,7 +626,6 @@ main(int argc, char *argv[])
 	} else {
 		struct sockaddr_in nxt;
 		int dummy;
-		socklen_t len;
 
 		nxt = to;
 		nxt.sin_port = htons(DUMMY_PORT);
@@ -642,14 +642,11 @@ main(int argc, char *argv[])
 	if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
 		err(1, "bind sndsock");
 
-	{
-		socklen_t len;
+	len = sizeof(from);
+	if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
+		err(1, "getsockname");
+	srcport = ntohs(from.sin_port);
 
-		len = sizeof(from);
-		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
-			err(1, "getsockname");
-		srcport = ntohs(from.sin_port);
-	}
 	fprintf(stderr, "traceroute to %s (%s)", hostname,
 		inet_ntoa(to.sin_addr));
 	if (source)
