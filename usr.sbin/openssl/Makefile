@@ -1,18 +1,12 @@
-#	$OpenBSD: Makefile,v 1.25 2014/04/17 22:44:34 matthew Exp $
+#	$OpenBSD: Makefile,v 1.26 2014/04/18 14:41:54 deraadt Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
 MAN1=	openssl.1
 
-SSLEAYDIST= lib/libssl/src
-
-SSLEAY_SRC= ${.CURDIR}/../../${SSLEAYDIST}/apps
-SSLEAY_SRC_TOP= ${.CURDIR}/../../${SSLEAYDIST}
-
 CFLAGS+= -Wall
 CFLAGS+= -DTERMIOS -DANSI_SOURCE -DOPENSSL_NO_RC5
 CFLAGS+= -DOPENSSL_NO_SSL2
-CFLAGS+= -I${SSLEAY_SRC_TOP}
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c \
 	pkcs7.c crl2p7.c crl.c ca.c \
@@ -23,6 +17,6 @@ SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c \
 	spkac.c smime.c cms.c rand.c engine.c ocsp.c prime.c ts.c \
 	openssl.c s_cb.c dhparam.c
 
-.PATH:	${SSLEAY_SRC}
+.PATH:	${.CURDIR}/../../lib/libssl/src/apps
 
 .include <bsd.prog.mk>
