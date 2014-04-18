@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.126 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.127 2014/04/18 15:14:25 henning Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -319,7 +319,6 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	struct route *ro = 0;
 	struct tcphdr *th;
 	struct ip *ip;
-	struct ipovly *ih;
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
@@ -385,6 +384,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	m->m_len = tlen;
 	m->m_pkthdr.len = tlen;
 	m->m_pkthdr.rcvif = (struct ifnet *) 0;
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 	th->th_seq = htonl(seq);
 	th->th_ack = htonl(ack);
 	th->th_x2 = 0;
@@ -410,9 +410,6 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip6->ip6_nxt  = IPPROTO_TCP;
 		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
-		th->th_sum = 0;
-		th->th_sum = in6_cksum(m, IPPROTO_TCP,
-		   sizeof(struct ip6_hdr), ip6->ip6_plen);
 		HTONS(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
 		    (struct route_in6 *)ro, 0, NULL, NULL,
@@ -420,19 +417,9 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		break;
 #endif /* INET6 */
 	case AF_INET:
-		ih = (struct ipovly *)ip;
-		bzero(ih->ih_x1, sizeof ih->ih_x1);
-		ih->ih_len = htons((u_short)tlen - sizeof(struct ip));
-
-		/*
-		 * There's no point deferring to hardware checksum processing
-		 * here, as we only send a minimal TCP packet whose checksum
-		 * we need to compute in any case.
-		 */
-		th->th_sum = 0;
-		th->th_sum = in_cksum(m, tlen);
 		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
+		ip->ip_tos = 0;
 		ip_output(m, (void *)NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
 			(void *)NULL, tp ? tp->t_inpcb : (void *)NULL);
 	}
