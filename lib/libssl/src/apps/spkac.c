@@ -70,17 +70,15 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG	spkac_main
 
 /* -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
  */
 
-int MAIN(int, char **);
+int spkac_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+spkac_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int i, badops = 0, ret = 1;

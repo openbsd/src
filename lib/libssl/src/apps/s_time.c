@@ -83,8 +83,6 @@
 #endif
 #include <unistd.h>
 
-#undef PROG
-#define PROG s_time_main
 
 #define SSL_CONNECT_NAME	"localhost:4433"
 
@@ -321,10 +319,10 @@ tm_Time_F(int s)
  * MAIN - main processing area for client
  *			real name depends on MONOLITH
  */
-int MAIN(int, char **);
+int s_time_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+s_time_main(int argc, char **argv)
 {
 	double totalTime = 0.0;
 	int nConn = 0;

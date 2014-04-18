@@ -73,7 +73,6 @@
 int set_hex(char *in, unsigned char *out, int size);
 #undef SIZE
 #undef BSIZE
-#undef PROG
 
 #define SIZE	(512)
 #define BSIZE	(8*1024)
@@ -96,10 +95,10 @@ show_ciphers(const OBJ_NAME * name, void *bio_)
 		BIO_printf(bio, " ");
 }
 
-int MAIN(int, char **);
+int enc_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+enc_main(int argc, char **argv)
 {
 	static const char magic[] = "Salted__";
 	char mbuf[sizeof magic - 1];

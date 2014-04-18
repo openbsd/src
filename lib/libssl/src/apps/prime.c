@@ -53,13 +53,11 @@
 #include <openssl/bn.h>
 
 
-#undef PROG
-#define PROG prime_main
 
-int MAIN(int, char **);
+int prime_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+prime_main(int argc, char **argv)
 {
 	int hex = 0;
 	int checks = 20;

@@ -67,8 +67,6 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
-#undef PROG
-#define PROG smime_main
 static int save_certs(char *signerfile, STACK_OF(X509) * signers);
 static int smime_cb(int ok, X509_STORE_CTX * ctx);
 
@@ -82,10 +80,10 @@ static int smime_cb(int ok, X509_STORE_CTX * ctx);
 #define SMIME_PK7OUT	(5 | SMIME_IP | SMIME_OP)
 #define SMIME_RESIGN	(6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 
-int MAIN(int, char **);
+int smime_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+smime_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int operation = 0;

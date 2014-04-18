@@ -132,13 +132,11 @@
 #include <openssl/blowfish.h>
 #endif
 
-#undef PROG
-#define PROG	version_main
 
-int MAIN(int, char **);
+int version_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+version_main(int argc, char **argv)
 {
 	int i, ret = 0;
 	int cflags = 0, version = 0, date = 0, options = 0, platform = 0,

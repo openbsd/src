@@ -23,8 +23,6 @@
 #endif
 
 
-#undef PROG
-#define PROG passwd_main
 
 
 static unsigned const char cov_2char[64] = {
@@ -56,10 +54,10 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
  * -reverse      - switch table columns
  */
 
-int MAIN(int, char **);
+int passwd_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+passwd_main(int argc, char **argv)
 {
 	int ret = 1;
 	char *infile = NULL;
@@ -466,7 +464,7 @@ err:
 #else
 
 int 
-MAIN(int argc, char **argv)
+passwd_main(int argc, char **argv)
 {
 	fputs("Program not available.\n", stderr)
 	return (1);

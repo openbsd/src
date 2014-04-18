@@ -83,8 +83,6 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#undef PROG
-#define PROG speed_main
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -301,10 +299,10 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
 #endif				/* OPENSSL_NO_ECDH */
 
 
-int MAIN(int, char **);
+int speed_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+speed_main(int argc, char **argv)
 {
 	unsigned char *buf = NULL, *buf2 = NULL;
 	int mret = 1;

@@ -68,8 +68,6 @@
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG	pkcs7_main
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
@@ -78,10 +76,10 @@
  * -print_certs
  */
 
-int MAIN(int, char **);
+int pkcs7_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+pkcs7_main(int argc, char **argv)
 {
 	PKCS7 *p7 = NULL;
 	int i, badops = 0;

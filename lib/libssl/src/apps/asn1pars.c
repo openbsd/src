@@ -77,15 +77,13 @@
  * -oid file	- extra oid description file
  */
 
-#undef PROG
-#define PROG	asn1parse_main
 
-int MAIN(int, char **);
+int asn1parse_main(int, char **);
 
 static int do_generate(BIO * bio, char *genstr, char *genconf, BUF_MEM * buf);
 
 int
-MAIN(int argc, char **argv)
+asn1parse_main(int argc, char **argv)
 {
 	int i, badops = 0, offset = 0, ret = 1, j;
 	unsigned int length = 0;

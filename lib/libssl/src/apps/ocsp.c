@@ -97,12 +97,10 @@ add_ocsp_cert(OCSP_REQUEST ** req, X509 * cert, const EVP_MD * cert_id_md, X509 
     STACK_OF(CONF_VALUE) * headers,
     OCSP_REQUEST * req, int req_timeout);
 
-#undef PROG
-#define PROG ocsp_main
 
-	int MAIN(int, char **);
+	int ocsp_main(int, char **);
 
-	int MAIN(int argc, char **argv)
+	int ocsp_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	char **args;

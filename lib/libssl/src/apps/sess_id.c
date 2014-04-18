@@ -66,8 +66,6 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG	sess_id_main
 
 static const char *sess_id_usage[] = {
 	"usage: sess_id args\n",
@@ -85,10 +83,10 @@ static const char *sess_id_usage[] = {
 
 static SSL_SESSION *load_sess_id(char *file, int format);
 
-int MAIN(int, char **);
+int sess_id_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+sess_id_main(int argc, char **argv)
 {
 	SSL_SESSION *x = NULL;
 	X509 *peer = NULL;

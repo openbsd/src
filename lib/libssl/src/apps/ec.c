@@ -67,8 +67,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG	ec_main
 
 /* -inform arg    - input format - default PEM (one of DER, NET or PEM)
  * -outform arg   - output format - default PEM
@@ -81,10 +79,10 @@
  * -param_enc arg - specifies the parameter encoding
  */
 
-int MAIN(int, char **);
+int ec_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+ec_main(int argc, char **argv)
 {
 	int ret = 1;
 	EC_KEY *eckey = NULL;

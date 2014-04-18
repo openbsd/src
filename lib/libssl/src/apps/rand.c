@@ -63,8 +63,6 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#undef PROG
-#define PROG rand_main
 
 /* -out file         - write to file
  * -rand file:file   - PRNG seed files
@@ -73,10 +71,10 @@
  * num               - write 'num' bytes
  */
 
-int MAIN(int, char **);
+int rand_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+rand_main(int argc, char **argv)
 {
 	int i, r, ret = 1;
 	int badopt;

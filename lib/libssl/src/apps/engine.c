@@ -69,8 +69,6 @@
 #include <openssl/engine.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG	engine_main
 
 static const char *engine_usage[] = {
 	"usage: engine opts [engine ...]\n",
@@ -325,10 +323,10 @@ util_do_cmds(ENGINE * e, STACK_OF(OPENSSL_STRING) * cmds,
 	}
 }
 
-int MAIN(int, char **);
+int engine_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+engine_main(int argc, char **argv)
 {
 	int ret = 1, i;
 	const char **pp;

@@ -62,13 +62,11 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
-#undef PROG
-#define PROG nseq_main
 
-int MAIN(int, char **);
+int nseq_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+nseq_main(int argc, char **argv)
 {
 	char **args, *infile = NULL, *outfile = NULL;
 	BIO *in = NULL, *out = NULL;

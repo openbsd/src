@@ -66,8 +66,6 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG	ciphers_main
 
 static const char *ciphers_usage[] = {
 	"usage: ciphers args\n",
@@ -79,10 +77,10 @@ static const char *ciphers_usage[] = {
 	NULL
 };
 
-int MAIN(int, char **);
+int ciphers_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+ciphers_main(int argc, char **argv)
 {
 	int ret = 1, i;
 	int verbose = 0, Verbose = 0;

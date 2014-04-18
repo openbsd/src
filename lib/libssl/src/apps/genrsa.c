@@ -79,15 +79,13 @@
 #include <openssl/rand.h>
 
 #define DEFBITS	1024
-#undef PROG
-#define PROG genrsa_main
 
 static int genrsa_cb(int p, int n, BN_GENCB * cb);
 
-int MAIN(int, char **);
+int genrsa_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+genrsa_main(int argc, char **argv)
 {
 	BN_GENCB cb;
 #ifndef OPENSSL_NO_ENGINE

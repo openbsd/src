@@ -67,8 +67,6 @@
 #include <openssl/ts.h>
 #include <openssl/bn.h>
 
-#undef PROG
-#define PROG	ts_main
 
 /* Length of the nonce of the request in bits (must be a multiple of 8). */
 #define	NONCE_LENGTH		64
@@ -127,10 +125,10 @@ static X509_STORE *create_cert_store(char *ca_path, char *ca_file);
 static int verify_cb(int ok, X509_STORE_CTX * ctx);
 
 /* Main function definition. */
-int MAIN(int, char **);
+int ts_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+ts_main(int argc, char **argv)
 {
 	int ret = 1;
 	char *configfile = NULL;

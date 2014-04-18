@@ -72,8 +72,6 @@
 #include <openssl/objects.h>
 
 static int add_certs_from_file(STACK_OF(X509) * stack, char *certfile);
-#undef PROG
-#define PROG	crl2pkcs7_main
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
@@ -81,10 +79,10 @@ static int add_certs_from_file(STACK_OF(X509) * stack, char *certfile);
  * -out arg	- output file - default stdout
  */
 
-int MAIN(int, char **);
+int crl2pkcs7_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+crl2pkcs7_main(int argc, char **argv)
 {
 	int i, badops = 0;
 	BIO *in = NULL, *out = NULL;

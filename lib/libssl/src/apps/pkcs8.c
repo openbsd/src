@@ -63,12 +63,11 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
-#define PROG pkcs8_main
 
-int MAIN(int, char **);
+int pkcs8_main(int, char **);
 
 int 
-MAIN(int argc, char **argv)
+pkcs8_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	char **args, *infile = NULL, *outfile = NULL;

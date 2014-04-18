@@ -65,13 +65,11 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG	errstr_main
 
-int MAIN(int, char **);
+int errstr_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+errstr_main(int argc, char **argv)
 {
 	int i, ret = 0;
 	char buf[256];

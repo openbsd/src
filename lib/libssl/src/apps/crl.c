@@ -66,8 +66,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-#undef PROG
-#define PROG	crl_main
 
 #undef POSTFIX
 #define	POSTFIX	".rvk"
@@ -99,10 +97,10 @@ static const char *crl_usage[] = {
 static X509_CRL *load_crl(char *file, int format);
 static BIO *bio_out = NULL;
 
-int MAIN(int, char **);
+int crl_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+crl_main(int argc, char **argv)
 {
 	unsigned long nmflag = 0;
 	X509_CRL *x = NULL;

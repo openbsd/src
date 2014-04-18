@@ -80,8 +80,6 @@
 #include <openssl/dsa.h>
 #endif
 
-#undef PROG
-#define PROG x509_main
 
 #undef POSTFIX
 #define	POSTFIX	".srl"
@@ -166,9 +164,9 @@ x509_certify(X509_STORE * ctx, char *CAfile, const EVP_MD * digest,
 	static int purpose_print(BIO * bio, X509 * cert, X509_PURPOSE * pt);
 	static int reqfile = 0;
 
-	int MAIN(int, char **);
+	int x509_main(int, char **);
 
-	int MAIN(int argc, char **argv)
+	int x509_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int ret = 1;

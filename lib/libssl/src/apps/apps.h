@@ -137,7 +137,6 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
                                        * (see e_os.h).  The string is
                                        * destroyed! */
 
-#define MAIN(a,v)	PROG(a,v)
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;

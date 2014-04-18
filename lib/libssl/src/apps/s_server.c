@@ -242,8 +242,6 @@ static int accept_socket = -1;
 #ifndef OPENSSL_NO_TLSEXT
 #define TEST_CERT2	"server2.pem"
 #endif
-#undef PROG
-#define PROG		s_server_main
 
 extern int verify_depth, verify_return_error;
 
@@ -733,7 +731,7 @@ next_proto_cb(SSL * s, const unsigned char **data, unsigned int *len, void *arg)
 
 #endif
 
-int MAIN(int, char **);
+int s_server_main(int, char **);
 
 #ifndef OPENSSL_NO_JPAKE
 static char *jpake_secret = NULL;
@@ -746,7 +744,7 @@ static char *srtp_profiles = NULL;
 #endif
 
 int 
-MAIN(int argc, char *argv[])
+s_server_main(int argc, char *argv[])
 {
 	X509_VERIFY_PARAM *vpm = NULL;
 	int badarg = 0;

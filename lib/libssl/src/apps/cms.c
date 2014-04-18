@@ -66,8 +66,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 
-#undef PROG
-#define PROG cms_main
 static int save_certs(char *signerfile, STACK_OF(X509) * signers);
 static int cms_cb(int ok, X509_STORE_CTX * ctx);
 static void receipt_request_print(BIO * out, CMS_ContentInfo * cms);
@@ -98,10 +96,10 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) * rr_to,
 
 	int verify_err = 0;
 
-	int MAIN(int, char **);
+	int cms_main(int, char **);
 
 	int
-	 MAIN(int argc, char **argv)
+	 cms_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int operation = 0;

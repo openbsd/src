@@ -127,8 +127,6 @@
 #include <openssl/dsa.h>
 #endif
 
-#undef PROG
-#define PROG	dhparam_main
 
 #define DEFBITS	512
 
@@ -145,10 +143,10 @@
 
 static int dh_cb(int p, int n, BN_GENCB * cb);
 
-int MAIN(int, char **);
+int dhparam_main(int, char **);
 
 int
-MAIN(int argc, char **argv)
+dhparam_main(int argc, char **argv)
 {
 	DH *dh = NULL;
 	int i, badops = 0, text = 0;
