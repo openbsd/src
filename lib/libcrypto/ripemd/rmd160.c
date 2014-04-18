@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/ripemd.h>
@@ -64,9 +65,6 @@
 
 void do_fp(FILE *f);
 void pt(unsigned char *md);
-#if !defined(_OSD_POSIX) && !defined(__DJGPP__)
-int read(int, void *, unsigned int);
-#endif
 
 int main(int argc, char **argv)
 	{
