@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.27 2014/04/18 10:48:30 jca Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.28 2014/04/18 18:44:18 jca Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			goto release;
 		}
 
-		/* we don't support IPv4 mapped address */
 		error = in6_selectsrc(&laddr, sin6, optp,
 		    in6p->inp_moptions6, &in6p->inp_route6,
 		    &in6p->inp_laddr6, in6p->inp_rtableid);
