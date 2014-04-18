@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.94 2014/04/16 21:35:48 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.95 2014/04/18 21:54:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -434,15 +434,25 @@ mandocdb(int argc, char *argv[])
 		 */
 		if (0 == set_basedir(path_arg))
 			goto out;
-		for (i = 0; i < argc; i++)
-			filescan(argv[i]);
-		if (0 == dbopen(1))
-			goto out;
-		if (OP_TEST != op)
-			dbprune();
+		if (dbopen(1)) {
+			for (i = 0; i < argc; i++)
+				filescan(argv[i]);
+			if (OP_TEST != op)
+				dbprune();
+		} else {
+			/*
+			 * Database missing or corrupt.
+			 * Recreate from scratch.
+			 */
+			op = OP_DEFAULT;
+			if (0 == treescan())
+				goto out;
+			if (0 == dbopen(0))
+				goto out;
+		}
 		if (OP_DELETE != op)
 			mpages_merge(mc, mp);
-		dbclose(1);
+		dbclose(OP_DEFAULT == op ? 0 : 1);
 	} else {
 		/*
 		 * If we have arguments, use them as our manpaths.
