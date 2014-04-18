@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.153 2014/04/16 13:04:38 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.154 2014/04/18 10:48:29 jca Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -388,13 +388,10 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
 
-	ina = in_selectsrc(sin, inp->inp_moptions, &inp->inp_route,
-	    &inp->inp_laddr, &error, inp->inp_rtableid);
-	if (ina == NULL) {
-		if (error == 0)
-			error = EADDRNOTAVAIL;
+	error = in_selectsrc(&ina, sin, inp->inp_moptions, &inp->inp_route,
+	    &inp->inp_laddr, inp->inp_rtableid);
+	if (error)
 		return (error);
-	}
 
 	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    *ina, inp->inp_lport, inp->inp_rtableid) != 0)
@@ -776,9 +773,10 @@ in_pcbrtentry(struct inpcb *inp)
  * If necessary, this function lookups the routing table and returns
  * an entry to the caller for later use.
  */
-struct in_addr *
-in_selectsrc(struct sockaddr_in *sin, struct ip_moptions *mopts,
-    struct route *ro, struct in_addr *laddr, int *errorp, u_int rtableid)
+int
+in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
+    struct ip_moptions *mopts, struct route *ro, struct in_addr *laddr,
+    u_int rtableid)
 {
 	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
@@ -798,8 +796,10 @@ in_selectsrc(struct sockaddr_in *sin, struct ip_moptions *mopts,
 	 * If the source address is not specified but the socket(if any)
 	 * is already bound, use the bound address.
 	 */
-	if (laddr && laddr->s_addr != INADDR_ANY)
-		return (laddr);
+	if (laddr && laddr->s_addr != INADDR_ANY) {
+		*insrc = laddr;
+		return (0);
+	}
 
 	/*
 	 * If the destination address is multicast and an outgoing
@@ -813,12 +813,11 @@ in_selectsrc(struct sockaddr_in *sin, struct ip_moptions *mopts,
 		if (ifp != NULL) {
 			if (ifp->if_rdomain == rtable_l2(rtableid))
 				IFP_TO_IA(ifp, ia);
+			if (ia == NULL)
+				return (EADDRNOTAVAIL);
 
-			if (ia == NULL) {
-				*errorp = EADDRNOTAVAIL;
-				return (NULL);
-			}
-			return (&ia->ia_addr.sin_addr);
+			*insrc = &ia->ia_addr.sin_addr;
+			return (0);
 		}
 	}
 	/*
@@ -851,15 +850,14 @@ in_selectsrc(struct sockaddr_in *sin, struct ip_moptions *mopts,
 	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp)
 		ia = ifatoia(ro->ro_rt->rt_ifa);
-	if (ia == 0) {
+	if (ia == NULL) {
 		ia = TAILQ_FIRST(&in_ifaddr);
-		if (ia == 0) {
-			*errorp = EADDRNOTAVAIL;
-			return (NULL);
-		}
+		if (ia == NULL)
+			return (EADDRNOTAVAIL);
 	}
 
-	return (&ia->ia_addr.sin_addr);
+	*insrc = &ia->ia_addr.sin_addr;
+	return (0);
 }
 
 void

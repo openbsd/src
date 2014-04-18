@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.77 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.78 2014/04/18 10:48:30 jca Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -456,9 +456,9 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 			int error;
 
 			bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
-			src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL,
-			    &error, m->m_pkthdr.ph_rtableid);
-			if (src0 == NULL) {
+			error = in6_selectsrc(&src0, &dst_sa, NULL, NULL, &ro,
+			    NULL, m->m_pkthdr.ph_rtableid);
+			if (error) {
 				char addr[INET6_ADDRSTRLEN];
 
 				nd6log((LOG_DEBUG,
@@ -968,9 +968,9 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	 * Select a source whose scope is the same as that of the dest.
 	 */
 	bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
-	src0 = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, &error,
+	error = in6_selectsrc(&src0, &dst_sa, NULL, NULL, &ro, NULL,
 	    m->m_pkthdr.ph_rtableid);
-	if (src0 == NULL) {
+	if (error) {
 		char addr[INET6_ADDRSTRLEN];
 
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "

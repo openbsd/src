@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.65 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.66 2014/04/18 10:48:30 jca Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -413,13 +413,12 @@ rip6_output(struct mbuf *m, ...)
 	{
 		struct in6_addr *in6a;
 
-		if ((in6a = in6_selectsrc(dstsock, optp, in6p->inp_moptions6,
-		    &in6p->inp_route6, &in6p->inp_laddr6, &error,
-		    in6p->inp_rtableid)) == 0) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
+		error = in6_selectsrc(&in6a, dstsock, optp,
+		    in6p->inp_moptions6, &in6p->inp_route6, &in6p->inp_laddr6,
+		    in6p->inp_rtableid);
+		if (error)
 			goto bad;
-		}
+
 		ip6->ip6_src = *in6a;
 		if (in6p->inp_route6.ro_rt &&
 		    in6p->inp_route6.ro_rt->rt_flags & RTF_UP)
@@ -722,14 +721,11 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 
 		/* Source address selection. XXX: need pcblookup? */
-		in6a = in6_selectsrc(addr, in6p->inp_outputopts6,
+		error = in6_selectsrc(&in6a, addr, in6p->inp_outputopts6,
 		    in6p->inp_moptions6, &in6p->inp_route6,
-		    &in6p->inp_laddr6, &error, in6p->inp_rtableid);
-		if (in6a == NULL) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
+		    &in6p->inp_laddr6, in6p->inp_rtableid);
+		if (error)
 			break;
-		}
 		in6p->inp_laddr6 = *in6a;
 		in6p->inp_faddr6 = addr->sin6_addr;
 		soisconnected(so);

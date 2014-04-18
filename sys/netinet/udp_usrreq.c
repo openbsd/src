@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.181 2014/04/16 13:04:38 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.182 2014/04/18 10:48:29 jca Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1017,13 +1017,10 @@ udp_output(struct mbuf *m, ...)
 			goto release;
 		}
 
-		laddr = in_selectsrc(sin, inp->inp_moptions, &inp->inp_route,
-		    &inp->inp_laddr, &error, inp->inp_rtableid);
-		if (laddr == NULL) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
+		error = in_selectsrc(&laddr, sin, inp->inp_moptions,
+		    &inp->inp_route, &inp->inp_laddr, inp->inp_rtableid);
+		if (error)
 			goto release;
-		}
 
 		if (inp->inp_lport == 0) {
 			int s = splsoftnet();

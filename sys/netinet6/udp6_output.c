@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.26 2014/04/16 13:04:38 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.27 2014/04/18 10:48:30 jca Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -152,14 +152,12 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		}
 
 		/* we don't support IPv4 mapped address */
-		laddr = in6_selectsrc(sin6, optp,
+		error = in6_selectsrc(&laddr, sin6, optp,
 		    in6p->inp_moptions6, &in6p->inp_route6,
-		    &in6p->inp_laddr6, &error, in6p->inp_rtableid);
-		if (laddr == NULL) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
+		    &in6p->inp_laddr6, in6p->inp_rtableid);
+		if (error)
 			goto release;
-		}
+
 		if (in6p->inp_lport == 0 &&
 		    (error = in6_pcbsetport(laddr, in6p, p)) != 0)
 			goto release;

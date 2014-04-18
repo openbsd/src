@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.142 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.143 2014/04/18 10:48:30 jca Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1962,7 +1962,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
 	struct in6_ifaddr *ia6;
-	struct in6_addr t, *src = 0;
+	struct in6_addr t, *src = NULL;
 	int plen;
 	int type, code;
 	struct ifnet *outif = NULL;
@@ -2060,8 +2060,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		src = &t;
 	}
 
-	if (src == 0) {
-		int e;
+	if (src == NULL) {
+		int error;
 		struct route_in6 ro;
 		char addr[INET6_ADDRSTRLEN];
 
@@ -2071,18 +2071,18 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		 * source address of the erroneous packet.
 		 */
 		bzero(&ro, sizeof(ro));
-		src = in6_selectsrc(&sa6_src, NULL, NULL, &ro, NULL, &e,
+		error = in6_selectsrc(&src, &sa6_src, NULL, NULL, &ro, NULL,
 		    m->m_pkthdr.ph_rtableid);
 		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
 			RTFREE(ro.ro_rt); /* XXX: we could use this */
 		}
-		if (src == NULL) {
+		if (error) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "
 			    "dst=%s, error=%d\n",
 			    inet_ntop(AF_INET6, &sa6_src.sin6_addr,
 				addr, sizeof(addr)),
-			    e));
+			    error));
 			goto bad;
 		}
 	}
