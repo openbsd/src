@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -66,8 +66,8 @@ ASN1_SEQUENCE(X509_ALGOR) = {
 	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
 } ASN1_SEQUENCE_END(X509_ALGOR)
 
-ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
+ASN1_ITEM_TEMPLATE(X509_ALGORS) =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
 ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
@@ -77,7 +77,8 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
 IMPLEMENT_STACK_OF(X509_ALGOR)
 IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
 
-int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+int
+X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 {
 	if (!alg)
 		return 0;
@@ -93,20 +94,20 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 		alg->algorithm = aobj;
 	}
 	if (ptype == 0)
-		return 1;	
+		return 1;
 	if (ptype == V_ASN1_UNDEF) {
 		if (alg->parameter) {
 			ASN1_TYPE_free(alg->parameter);
 			alg->parameter = NULL;
 		}
-	}
-	else
+	} else
 		ASN1_TYPE_set(alg->parameter, ptype, pval);
 	return 1;
 }
 
-void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-						X509_ALGOR *algor)
+void
+X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
+    X509_ALGOR *algor)
 {
 	if (paobj)
 		*paobj = algor->algorithm;
@@ -114,8 +115,7 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 		if (algor->parameter == NULL) {
 			*pptype = V_ASN1_UNDEF;
 			return;
-		}
-		else
+		} else
 			*pptype = algor->parameter->type;
 		if (ppval)
 			*ppval = algor->parameter->value.ptr;
@@ -124,7 +124,8 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 
 /* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
 
-void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+void
+X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 {
 	int param_type;
 
@@ -134,5 +135,4 @@ void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 		param_type = V_ASN1_NULL;
 
 	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
-
 }
