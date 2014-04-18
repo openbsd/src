@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.77 2014/04/18 16:26:47 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.78 2014/04/18 16:30:00 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -352,10 +352,8 @@ main(int argc, char *argv[])
 	/*
 	 * Receive ICMP
 	 */
-	if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-		perror("socket(ICMPv6)");
-		exit(5);
-	}
+	if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+		err(5, "socket(ICMPv6)");
 
 	/* revoke privs */
 	uid = getuid();
@@ -588,10 +586,8 @@ main(int argc, char *argv[])
 	if (useicmp) {
 		sndsock = rcvsock;
 	} else {
-		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			perror("socket(SOCK_DGRAM)");
-			exit(5);
-		}
+		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+			err(5, "socket(SOCK_DGRAM)");
 		if (rtableid >= 0 && setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
 		    &rtableid, sizeof(rtableid)) == -1)
 			err(1, "setsockopt SO_RTABLE");
@@ -646,36 +642,26 @@ main(int argc, char *argv[])
 
 		Nxt = to;
 		Nxt.sin6_port = htons(DUMMY_PORT);
-		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			perror("socket");
-			exit(1);
-		}
-		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0) {
-			perror("connect");
-			exit(1);
-		}
+		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+			err(1, "socket");
+		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0)
+			err(1, "connect");
 		len = sizeof(from);
-		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0) {
-			perror("getsockname");
-			exit(1);
-		}
+		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0)
+			err(1, "getsockname");
 		close(dummy);
 	}
 
 	from.sin6_port = htons(0);
-	if (bind(sndsock, (struct sockaddr *)&from, from.sin6_len) < 0) {
-		perror("bind sndsock");
-		exit(1);
-	}
+	if (bind(sndsock, (struct sockaddr *)&from, from.sin6_len) < 0)
+		err(1, "bind sndsock");
 
 	{
 		socklen_t len;
 
 		len = sizeof(from);
-		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0) {
-			perror("getsockname");
-			exit(1);
-		}
+		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
+			err(1, "getsockname");
 		srcport = ntohs(from.sin6_port);
 	}
 
@@ -793,9 +779,8 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 
 	i = hops;
 	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-	    (char *)&i, sizeof(i)) < 0) {
-		perror("setsockopt IPV6_UNICAST_HOPS");
-	}
+	    (char *)&i, sizeof(i)) < 0)
+		warn("setsockopt IPV6_UNICAST_HOPS");
 
 	if (iflag)
 		((struct sockaddr_in6*)to)->sin6_port = htons(port + seq);
@@ -839,7 +824,7 @@ send_probe(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
 	if (i < 0 || i != datalen)  {
 		if (i < 0)
-			perror("sendto");
+			warn("sendto");
 		printf("%s: wrote %s %d chars, ret=%d\n", __progname, hostname,
 		    datalen, i);
 		(void) fflush(stdout);

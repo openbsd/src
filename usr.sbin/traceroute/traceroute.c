@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.103 2014/04/18 16:24:41 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.104 2014/04/18 16:29:26 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -618,35 +618,25 @@ main(int argc, char *argv[])
 
 		nxt = to;
 		nxt.sin_port = htons(DUMMY_PORT);
-		if ((dummy = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-			perror("socket");
-			exit(1);
-		}
-		if (connect(dummy, (struct sockaddr *)&nxt, sizeof(nxt)) < 0) {
-			perror("connect");
-			exit(1);
-		}
+		if ((dummy = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+			err(1, "socket");
+		if (connect(dummy, (struct sockaddr *)&nxt, sizeof(nxt)) < 0)
+			err(1, "connect");
 		len = sizeof(from);
-		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0) {
-			perror("getsockname");
-			exit(1);
-		}
+		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0)
+			err(1, "getsockname");
 		close(dummy);
 	}
 	from.sin_port = htons(0);
-	if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0) {
-		perror("bind sndsock");
-		exit(1);
-	}
+	if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
+		err(1, "bind sndsock");
 
 	{
 		socklen_t len;
 
 		len = sizeof(from);
-		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0) {
-			perror("getsockname");
-			exit(1);
-		}
+		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
+			err(1, "getsockname");
 		srcport = ntohs(from.sin_port);
 	}
 	fprintf(stderr, "traceroute to %s (%s)", hostname,
@@ -961,7 +951,7 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr *to)
 	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
 	if (i < 0 || i != datalen)  {
 		if (i < 0)
-			perror("sendto");
+			warn("sendto");
 		printf("%s: wrote %s %d chars, ret=%d\n", __progname, hostname,
 		    datalen, i);
 		(void) fflush(stdout);
