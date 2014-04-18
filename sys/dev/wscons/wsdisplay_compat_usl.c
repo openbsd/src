@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.24 2012/03/28 22:26:10 deraadt Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.25 2014/04/18 21:18:50 guenther Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -51,7 +51,7 @@ int	wsdisplaydebug = 0;
 
 struct usl_syncdata {
 	struct wsscreen *s_scr;
-	struct proc *s_proc;
+	struct process *s_process;
 	pid_t s_pid;
 	int s_flags;
 #define SF_DETACHPENDING 1
@@ -65,7 +65,7 @@ struct usl_syncdata {
 };
 
 int usl_sync_init(struct wsscreen *, struct usl_syncdata **,
-		       struct proc *, int, int, int);
+		       struct process *, int, int, int);
 void usl_sync_done(struct usl_syncdata *);
 int usl_sync_check(struct usl_syncdata *);
 struct usl_syncdata *usl_sync_get(struct wsscreen *);
@@ -92,8 +92,8 @@ static const struct wscons_syncops usl_syncops = {
 static int wscompat_usl_synctimeout = WSCOMPAT_USL_SYNCTIMEOUT;
 
 int
-usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp, struct proc *p,
-    int acqsig, int relsig, int frsig)
+usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
+    struct process *pr, int acqsig, int relsig, int frsig)
 {
 	struct usl_syncdata *sd;
 	int res;
@@ -105,8 +105,8 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp, struct proc *p,
 	if (!sd)
 		return (ENOMEM);
 	sd->s_scr = scr;
-	sd->s_proc = p->p_p->ps_mainproc;
-	sd->s_pid = sd->s_proc->p_pid;
+	sd->s_process = pr;
+	sd->s_pid = pr->ps_pid;
 	sd->s_flags = 0;
 	sd->s_acqsig = acqsig;
 	sd->s_relsig = relsig;
@@ -140,7 +140,7 @@ usl_sync_done(struct usl_syncdata *sd)
 int
 usl_sync_check(struct usl_syncdata *sd)
 {
-	if (sd->s_proc == pfind(sd->s_pid))
+	if (sd->s_process == prfind(sd->s_pid))
 		return (1);
 	DPRINTF(("usl_sync_check: process %d died\n", sd->s_pid));
 	usl_sync_done(sd);
@@ -178,7 +178,7 @@ usl_detachproc(void *cookie, int waitok, void (*callback)(void *, int, int),
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
-	psignal(sd->s_proc, sd->s_relsig);
+	prsignal(sd->s_process, sd->s_relsig);
 	timeout_add_sec(&sd->s_detach_ch, wscompat_usl_synctimeout);
 
 	return (EAGAIN);
@@ -237,7 +237,7 @@ usl_attachproc(void *cookie, int waitok, void (*callback)(void *, int, int),
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
-	psignal(sd->s_proc, sd->s_acqsig);
+	prsignal(sd->s_process, sd->s_acqsig);
 	timeout_add_sec(&sd->s_attach_ch, wscompat_usl_synctimeout);
 
 	return (EAGAIN);
@@ -358,7 +358,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    case VT_SETMODE:
 #define newmode ((struct vt_mode *)data)
 		if (newmode->mode == VT_PROCESS) {
-			res = usl_sync_init(scr, &sd, p, newmode->acqsig,
+			res = usl_sync_init(scr, &sd, p->p_p, newmode->acqsig,
 					    newmode->relsig, newmode->frsig);
 			if (res)
 				return (res);
