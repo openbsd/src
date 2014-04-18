@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.122 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.123 2014/04/18 15:20:00 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1102,11 +1102,6 @@ tunstart(struct ifnet *ifp)
 	struct mbuf		*m;
 
 	splassert(IPL_NET);
-
-	if (!(tp->tun_flags & TUN_LAYER2) &&
-	    !ALTQ_IS_ENABLED(&ifp->if_snd) &&
-	    !TBR_IS_ENABLED(&ifp->if_snd))
-		return;
 
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m != NULL) {
