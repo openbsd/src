@@ -494,7 +494,7 @@ typedef const ASN1_ITEM * ASN1_ITEM_EXP(void);
 
 /* These determine what 'dumping' does, we can dump the
  * content octets or the DER encoding: both use the
- * RFC2253 #XXXXX notation.
+ * RFC2253 #NNNNN notation.
  */
 
 #define ASN1_STRFLGS_DUMP_DER		0x200

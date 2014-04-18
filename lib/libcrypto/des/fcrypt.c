@@ -72,7 +72,7 @@ char *DES_fcrypt(const char *buf, const char *salt, char *ret)
 	/* eay 25/08/92
 	 * If you call crypt("pwd","*") as often happens when you
 	 * have * as the pwd field in /etc/passwd, the function
-	 * returns *\0XXXXXXXXX
+	 * returns *\0xxxxxxxxx
 	 * The \0 makes the string look like * so the pwd "*" would
 	 * crypt to "*".  This was found when replacing the crypt in
 	 * our shared libraries.  People found that the disabled
