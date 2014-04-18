@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.28 2014/04/18 18:44:18 jca Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.29 2014/04/18 18:56:25 jca Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 {
 	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
-	int error = 0, priv = 0, af, hlen, flags;
+	int error = 0, priv = 0, hlen, flags;
 	struct ip6_hdr *ip6;
 	struct udphdr *udp6;
 	struct in6_addr *laddr, *faddr;
@@ -130,6 +130,10 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		}
 		if (sin6->sin6_port == 0) {
 			error = EADDRNOTAVAIL;
+			goto release;
+		}
+		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+			error = EINVAL;
 			goto release;
 		}
 
@@ -170,13 +174,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		fport = in6p->inp_fport;
 	}
 
-	if (1) {	/* we don't support IPv4 mapped address */
-		af = AF_INET6;
-		hlen = sizeof(struct ip6_hdr);
-	} else {
-		af = AF_INET;
-		hlen = sizeof(struct ip);
-	}
+	hlen = sizeof(struct ip6_hdr);
 
 	/*
 	 * Calculate data length and get a mbuf
@@ -200,42 +198,35 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		udp6->uh_ulen = 0;
 	udp6->uh_sum = 0;
 
-	switch (af) {
-	case AF_INET6:
-		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_flow	= in6p->inp_flowinfo & IPV6_FLOWINFO_MASK;
-		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
-		ip6->ip6_vfc 	|= IPV6_VERSION;
-#if 0				/* ip6_plen will be filled in ip6_output. */
-		ip6->ip6_plen	= htons((u_short)plen);
+	ip6 = mtod(m, struct ip6_hdr *);
+	ip6->ip6_flow	= in6p->inp_flowinfo & IPV6_FLOWINFO_MASK;
+	ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc 	|= IPV6_VERSION;
+#if 0	/* ip6_plen will be filled in ip6_output. */
+	ip6->ip6_plen	= htons((u_short)plen);
 #endif
-		ip6->ip6_nxt	= IPPROTO_UDP;
-		ifp = NULL;
-		if (in6p->inp_route6.ro_rt &&
-		    in6p->inp_route6.ro_rt->rt_flags & RTF_UP)
-			ifp = in6p->inp_route6.ro_rt->rt_ifp;
-		ip6->ip6_hlim	= in6_selecthlim(in6p, ifp);
-		ip6->ip6_src	= *laddr;
-		ip6->ip6_dst	= *faddr;
+	ip6->ip6_nxt	= IPPROTO_UDP;
+	ifp = NULL;
+	if (in6p->inp_route6.ro_rt &&
+	    in6p->inp_route6.ro_rt->rt_flags & RTF_UP)
+		ifp = in6p->inp_route6.ro_rt->rt_ifp;
+	ip6->ip6_hlim	= in6_selecthlim(in6p, ifp);
+	ip6->ip6_src	= *laddr;
+	ip6->ip6_dst	= *faddr;
 
-		m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
+	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
-		flags = 0;
-		if (in6p->inp_flags & IN6P_MINMTU)
-			flags |= IPV6_MINMTU;
+	flags = 0;
+	if (in6p->inp_flags & IN6P_MINMTU)
+		flags |= IPV6_MINMTU;
 
-		udpstat.udps_opackets++;
+	udpstat.udps_opackets++;
 
-		/* force routing table */
-		m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
+	/* force routing table */
+	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
 
-		error = ip6_output(m, optp, &in6p->inp_route6,
-		    flags, in6p->inp_moptions6, NULL, in6p);
-		break;
-	case AF_INET:
-		error = EAFNOSUPPORT;
-		goto release;
-	}
+	error = ip6_output(m, optp, &in6p->inp_route6,
+	    flags, in6p->inp_moptions6, NULL, in6p);
 	goto releaseopt;
 
 release:
