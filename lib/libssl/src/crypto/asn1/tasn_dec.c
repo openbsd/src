@@ -171,11 +171,13 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	if (!pval)
 		return 0;
+
 	/* always start fresh */
 	if (*pval) {
 		ASN1_item_ex_free(pval, it);
 		*pval = NULL;
 	}
+
 	if (aux && aux->asn1_cb)
 		asn1_cb = aux->asn1_cb;
 	else
