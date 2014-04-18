@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.72 2014/04/18 16:02:08 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.73 2014/04/18 16:07:54 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -734,6 +734,10 @@ main(int argc, char *argv[])
 					printf("  %g ms", deltaT(&t1, &t2));
 					if (ttl_flag)
 						printf(" (%u)", rcvhlim);
+
+					/* time exceeded in transit */
+					if (i == -1)
+						break;
 					switch (i - 1) {
 					case ICMP6_DST_UNREACH_NOROUTE:
 						++unreachable;
@@ -756,6 +760,10 @@ main(int argc, char *argv[])
 						    rcvhlim <= 1)
 							printf(" !");
 						++got_there;
+						break;
+					default:
+						++unreachable;
+						printf(" !<%d>", i - 1);
 						break;
 					}
 					break;
