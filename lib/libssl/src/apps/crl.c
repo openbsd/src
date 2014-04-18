@@ -152,7 +152,7 @@ MAIN(int argc, char **argv)
 				goto bad;
 			if (!args_from_file(++argv, Nargc, Nargv)) {
 				goto end;
-			} */
+			}
 		}
 #endif
 		if (strcmp(*argv, "-inform") == 0) {
