@@ -70,18 +70,9 @@
 
 #include <openssl/e_os2.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #define OPENSSL_CONF	"openssl.cnf"
-#define RFILE		".rnd"
 
 #define OPENSSL_USE_IPV6 1
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif
 
