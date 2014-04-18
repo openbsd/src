@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.109 2014/04/18 17:01:06 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.110 2014/04/18 17:01:47 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -373,7 +373,8 @@ main(int argc, char *argv[])
 				hp = gethostbyname(optarg);
 				if (hp == 0)
 					errx(1, "unknown host %s", optarg);
-				memcpy(&gateway[lsrr], hp->h_addr, hp->h_length);
+				memcpy(&gateway[lsrr], hp->h_addr,
+				    hp->h_length);
 			}
 			if (++lsrr == 1)
 				lsrrlen = 4;
@@ -424,7 +425,8 @@ main(int argc, char *argv[])
 				if (pent)
 					proto = pent->p_proto;
 				else
-					errx(1, "proto must be >=1, or a name.");
+					errx(1, "proto must be >=1, or a "
+					    "name.");
 			} else
 				proto = (int)l;
 			break;
