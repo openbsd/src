@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.53 2014/03/24 11:11:49 mpi Exp $
+.\"	$OpenBSD: traceroute.8,v 1.54 2014/04/18 16:19:11 florian Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 24 2014 $
+.Dd $Mdocdate: April 18 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -160,9 +160,8 @@ a hostname) as the source address in outgoing probe packets.
 On hosts with more than one IP address, this option can be used to
 force the source address to be something other than the IP address
 of the interface the probe packet is sent on.
-If the IP address
-is not one of this machine's interface addresses and the user is
-not the superuser, an error is returned and nothing is sent.
+If the IP address is not one of this machine's interface addresses an error is
+returned and nothing is sent.
 .It Fl t Ar toskeyword
 Set the
 .Em type-of-service

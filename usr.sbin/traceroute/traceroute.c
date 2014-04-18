@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.100 2014/04/18 16:04:39 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.101 2014/04/18 16:19:11 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -234,6 +234,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define DUMMY_PORT 10010
+
 #define MAX_LSRR		((MAX_IPOPTLEN - 4) / 4)
 
 #define MPLS_LABEL(m)		((m & MPLS_LABEL_MASK) >> MPLS_LABEL_OFFSET)
@@ -288,6 +290,7 @@ char *hostname;
 int nprobes = 3;
 u_int8_t max_ttl = IPDEFTTL;
 u_int8_t first_ttl = 1;
+u_int16_t srcport;
 u_short ident;
 u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
@@ -574,7 +577,7 @@ main(int argc, char *argv[])
 	ip->ip_v = IPVERSION;
 	ip->ip_tos = tos;
 
-	ident = (getpid() & 0xffff) | 0x8000;
+	ident = getpid() & 0xffff;
 	tmprnd = arc4random();
 	sec_perturb = (tmprnd & 0x80000000) ? -(tmprnd & 0x7ff) :
 	    (tmprnd & 0x7ff);
@@ -597,8 +600,8 @@ main(int argc, char *argv[])
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
 
+	(void) memset(&from, 0, sizeof(struct sockaddr));
 	if (source) {
-		(void) memset(&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
 		if (inet_aton(source, &from.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
@@ -607,12 +610,44 @@ main(int argc, char *argv[])
 		    (ntohl(from.sin_addr.s_addr) & 0xff000000U) == 0x7f000000U &&
 		    (ntohl(to.sin_addr.s_addr) & 0xff000000U) != 0x7f000000U)
 			errx(1, "source is on 127/8, destination is not");
+	} else {
+		struct sockaddr_in nxt;
+		int dummy;
+		socklen_t len;
 
-		if (getuid() &&
-		    bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
-			err(1, "bind");
+		nxt = to;
+		nxt.sin_port = htons(DUMMY_PORT);
+		if ((dummy = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+			perror("socket");
+			exit(1);
+		}
+		if (connect(dummy, (struct sockaddr *)&nxt, sizeof(nxt)) < 0) {
+			perror("connect");
+			exit(1);
+		}
+		len = sizeof(from);
+		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0) {
+			perror("getsockname");
+			exit(1);
+		}
+		close(dummy);
+	}
+	from.sin_port = htons(0);
+	if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0) {
+		perror("bind sndsock");
+		exit(1);
 	}
 
+	{
+		socklen_t len;
+
+		len = sizeof(from);
+		if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0) {
+			perror("getsockname");
+			exit(1);
+		}
+		srcport = ntohs(from.sin_port);
+	}
 	fprintf(stderr, "traceroute to %s (%s)", hostname,
 		inet_ntoa(to.sin_addr));
 	if (source)
@@ -923,7 +958,7 @@ build_probe4(int seq, u_int8_t ttl, int iflag)
 		op = (struct packetdata *)(icmpp + 1);
 		break;
 	case IPPROTO_UDP:
-		up->uh_sport = htons(ident);
+		up->uh_sport = htons(srcport);
 		if (iflag)
 			up->uh_dport = htons(port+seq);
 		else
@@ -1085,7 +1120,7 @@ packet_ok(struct msghdr *mhdr, int cc,int seq, int iflag)
 		case IPPROTO_UDP:
 			up = (struct udphdr *)((u_char *)hip + hlen);
 			if (hlen + 12 <= cc && hip->ip_p == proto &&
-			    up->uh_sport == htons(ident) &&
+			    up->uh_sport == htons(srcport) &&
 			    ((iflag && up->uh_dport == htons(port + seq)) ||
 			    (!iflag && up->uh_dport == htons(port))))
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
