@@ -2,7 +2,6 @@
  * Written by Theo de Raadt.  Public domain.
  */
 
-#include <ctype.h>
 #include <string.h>
 
 int OPENSSL_strcasecmp(const char *str1, const char *str2);
