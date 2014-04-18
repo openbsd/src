@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,21 +62,25 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
-static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine);
+static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
+    int combine);
 
 /* Free up an ASN1 structure */
 
-void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
+void
+ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
 {
 	asn1_item_combine_free(&val, it, 0);
 }
 
-void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void
+ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	asn1_item_combine_free(pval, it, 0);
 }
 
-static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
+static void
+asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 {
 	const ASN1_TEMPLATE *tt = NULL, *seqtt;
 	const ASN1_EXTERN_FUNCS *ef;
@@ -84,6 +88,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb;
 	int i;
+
 	if (!pval)
 		return;
 	if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
@@ -93,8 +98,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 	else
 		asn1_cb = 0;
 
-	switch(it->itype) {
-
+	switch (it->itype) {
 	case ASN1_ITYPE_PRIMITIVE:
 		if (it->templates)
 			ASN1_template_free(pval, it->templates);
@@ -147,10 +151,10 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
 			if (i == 2)
 				return;
-		}		
+		}
 		asn1_enc_free(pval, it);
 		/* If we free up as normal we will invalidate any
-		 * ANY DEFINED BY field and we wont be able to 
+		 * ANY DEFINED BY field and we wont be able to
 		 * determine the type of the field it defines. So
 		 * free up in reverse order.
 		 */
@@ -173,7 +177,8 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 	}
 }
 
-void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
+void
+ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
 	int i;
 	if (tt->flags & ASN1_TFLG_SK_MASK) {
@@ -182,17 +187,17 @@ void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 			ASN1_VALUE *vtmp;
 			vtmp = sk_ASN1_VALUE_value(sk, i);
 			asn1_item_combine_free(&vtmp, ASN1_ITEM_ptr(tt->item),
-									0);
+			    0);
 		}
 		sk_ASN1_VALUE_free(sk);
 		*pval = NULL;
-	}
-	else
+	} else
 		asn1_item_combine_free(pval, ASN1_ITEM_ptr(tt->item),
-						tt->flags & ASN1_TFLG_COMBINE);
+		    tt->flags & ASN1_TFLG_COMBINE);
 }
 
-void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void
+ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	int utype;
 	if (it) {
@@ -220,7 +225,7 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 			return;
 	}
 
-	switch(utype) {
+	switch (utype) {
 	case V_ASN1_OBJECT:
 		ASN1_OBJECT_free((ASN1_OBJECT *)*pval);
 		break;
