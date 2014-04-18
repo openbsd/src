@@ -590,9 +590,6 @@ int MAIN(int argc, char **argv)
 	ENGINE *ssl_client_engine=NULL;
 #endif
 	ENGINE *e=NULL;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
-	struct timeval tv;
-#endif
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
         tlsextctx tlsextcbp = 
@@ -1554,7 +1551,6 @@ SSL_set_tlsext_status_ids(con, ids);
 
 		if (!ssl_pending)
 			{
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
 			if (tty_on)
 				{
 				if (read_tty)  openssl_fdset(fileno(stdin),&readfds);
@@ -1564,14 +1560,6 @@ SSL_set_tlsext_status_ids(con, ids);
 				openssl_fdset(SSL_get_fd(con),&readfds);
 			if (write_ssl)
 				openssl_fdset(SSL_get_fd(con),&writefds);
-#else
-			if(!tty_on || !write_tty) {
-				if (read_ssl)
-					openssl_fdset(SSL_get_fd(con),&readfds);
-				if (write_ssl)
-					openssl_fdset(SSL_get_fd(con),&writefds);
-			}
-#endif
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
@@ -1581,33 +1569,8 @@ SSL_set_tlsext_status_ids(con, ids);
 			 * will choke the compiler: if you do have a cast then
 			 * you can either go for (int *) or (void *).
 			 */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-                        /* Under Windows/DOS we make the assumption that we can
-			 * always write to the tty: therefore if we need to
-			 * write to the tty we just fall through. Otherwise
-			 * we timeout the select every second and see if there
-			 * are any keypresses. Note: this is a hack, in a proper
-			 * Windows application we wouldn't do this.
-			 */
-			i=0;
-			if(!write_tty) {
-				if(read_tty) {
-					tv.tv_sec = 1;
-					tv.tv_usec = 0;
-					i=select(width,(void *)&readfds,(void *)&writefds,
-						 NULL,&tv);
-#if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
-					if(!i && (!_kbhit() || !read_tty) ) continue;
-#else
-					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
-#endif
-				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					 NULL,timeoutp);
-			}
-#else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,timeoutp);
-#endif
 			if ( i < 0)
 				{
 				BIO_printf(bio_err,"bad select %d\n",
@@ -1690,12 +1653,7 @@ SSL_set_tlsext_status_ids(con, ids);
 				goto shut;
 				}
 			}
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
-		/* Assume Windows/DOS/BeOS can always write */
-		else if (!ssl_pending && write_tty)
-#else
 		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
-#endif
 			{
 			i=raw_write_stdout(&(sbuf[sbuf_off]),sbuf_len);
 
@@ -1771,15 +1729,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				}
 			}
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-#if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
-		else if (_kbhit())
-#else
-		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
-#endif
-#else
 		else if (FD_ISSET(fileno(stdin),&readfds))
-#endif
 			{
 			if (crlf)
 				{

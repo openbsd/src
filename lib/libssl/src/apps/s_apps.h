@@ -108,18 +108,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#if !defined(OPENSSL_SYS_NETWARE)  /* conflicts with winsock2 stuff on netware */
 #include <sys/types.h>
-#endif
 #include <openssl/opensslconf.h>
-
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-#include <conio.h>
-#endif
-
-#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
-#define _kbhit kbhit
-#endif
 
 #define PORT            4433
 #define PORT_STR        "4433"
