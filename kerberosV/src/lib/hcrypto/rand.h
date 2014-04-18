@@ -33,7 +33,7 @@
  */
 
 /*
- * $Id: rand.h,v 1.1 2013/06/17 19:11:42 robert Exp $
+ * $Id: rand.h,v 1.2 2014/04/18 16:40:46 beck Exp $
  */
 
 #ifndef _HEIM_RAND_H
@@ -56,10 +56,7 @@ typedef struct RAND_METHOD RAND_METHOD;
 #define RAND_load_file hc_RAND_load_file
 #define RAND_write_file hc_RAND_write_file
 #define RAND_status hc_RAND_status
-#define RAND_egd hc_RAND_egd
-#define RAND_egd_bytes hc_RAND_egd_bytes
 #define RAND_fortuna_method hc_RAND_fortuna_method
-#define RAND_egd_method hc_RAND_egd_method
 #define RAND_unix_method hc_RAND_unix_method
 #define RAND_w32crypto_method hc_RAND_w32crypto_method
 
@@ -97,13 +94,10 @@ const char *
 int	RAND_load_file(const char *, size_t);
 int	RAND_write_file(const char *);
 int	RAND_status(void);
-int	RAND_egd(const char *);
-int	RAND_egd_bytes(const char *, int);
 
 
 const RAND_METHOD *	RAND_fortuna_method(void);
 const RAND_METHOD *	RAND_unix_method(void);
-const RAND_METHOD *	RAND_egd_method(void);
 const RAND_METHOD *	RAND_w32crypto_method(void);
 
 #endif /* _HEIM_RAND_H */

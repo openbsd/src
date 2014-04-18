@@ -32,7 +32,7 @@
  */
 
 /*
- * $Id: randi.h,v 1.1 2013/06/17 19:11:42 robert Exp $
+ * $Id: randi.h,v 1.2 2014/04/18 16:40:46 beck Exp $
  */
 
 #ifndef _HEIM_RANDI_H
@@ -40,7 +40,6 @@
 
 extern const RAND_METHOD hc_rand_fortuna_method;
 extern const RAND_METHOD hc_rand_unix_method;
-extern const RAND_METHOD hc_rand_egd_method;
 extern const RAND_METHOD hc_rand_timer_method;
 extern const RAND_METHOD hc_rand_w32crypto_method;
 
