@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: weekly,v 1.25 2011/07/07 23:09:46 guenther Exp $
+#	$OpenBSD: weekly,v 1.26 2014/04/18 10:00:48 schwarze Exp $
 #
 # For local additions, create the file /etc/weekly.local.
 # To get section headers, use the function next_part in weekly.local.
@@ -63,7 +63,7 @@ if [ -f /var/db/locate.database ]; then
 fi
 
 next_part "Rebuilding whatis databases:"
-/usr/libexec/makewhatis
+/usr/sbin/makewhatis ${MAKEWHATISARGS:--Q}
 
 next_part "Doing login accounting:"
 [ "X$LOGINACCOUNTING" = X1 ] && {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.18 2011/04/18 23:58:45 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.19 2014/04/18 10:00:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2011 $
+.Dd $Mdocdate: April 18 2014 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -235,6 +235,12 @@ The following variables can be set in
 If set to 1, run
 .Xr ac 8
 to report login accounting.
+.It Ev MAKEWHATISARGS
+If set to a string containing at least one character (even a blank),
+use that string as the arguments to
+.Xr makewhatis 8 .
+If unset or empty, use the default argument
+.Fl Q .
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/tabs/root" -compact

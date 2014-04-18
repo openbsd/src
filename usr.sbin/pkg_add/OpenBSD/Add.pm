@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.150 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Add.pm,v 1.151 2014/04/18 10:00:48 schwarze Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -30,7 +30,6 @@ sub manpages_index
 	my ($state) = @_;
 	return unless defined $state->{addman};
 	my $destdir = $state->{destdir};
-	require OpenBSD::Makewhatis;
 
 	# fudge verbose for API differences
 	my $v = $state->{v};
@@ -41,13 +40,8 @@ sub manpages_index
 			$state->say("Merging manpages in #1: #2",
 			    $destdir.$k, join(' ', @l)) if $state->verbose;
 		} else {
-			eval {
-				OpenBSD::Makewhatis::merge($destdir.$k, \@l,
-				    $state);
-			};
-			if ($@) {
-				$state->errsay("Error in makewhatis: #1", $_);
-			};
+			$state->vsystem(OpenBSD::Paths->makewhatis,
+			    '-d', $destdir.$k, '--', @l);
 		}
 	}
 	$state->{v} = $v;

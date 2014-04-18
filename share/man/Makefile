@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2012/01/16 08:42:38 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.10 2014/04/18 10:00:48 schwarze Exp $
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
 
 SUBDIR=	man1 man3 man4 man5 man6 man7 man8 man9
@@ -8,6 +8,6 @@ afterinstall:
 	    ${DESTDIR}/usr/share/man/COPYRIGHT
 
 makedb:
-	/usr/libexec/makewhatis -v ${DESTDIR}/usr/share/man
+	/usr/sbin/makewhatis -Qv ${DESTDIR}/usr/share/man
 
 .include <bsd.subdir.mk>

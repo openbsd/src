@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.75 2014/03/21 22:17:01 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.76 2014/04/18 10:00:48 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,11 @@ SRCS+=	manpath.c mandocdb.c mansearch_const.c mansearch.c apropos.c
 
 PROG=	mandoc
 
-MAN=	mandoc.1
+LINKS =	${BINDIR}/mandoc ${BINDIR}/apropos \
+	${BINDIR}/mandoc ${BINDIR}/whatis \
+	${BINDIR}/mandoc /usr/sbin/makewhatis \
+	${BINDIR}/mandoc /usr/libexec/makewhatis
+
+MAN =	apropos.1 mandoc.1 whatis.1 makewhatis.8
 
 .include <bsd.prog.mk>

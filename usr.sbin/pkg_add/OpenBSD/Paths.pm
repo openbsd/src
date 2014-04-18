@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.27 2014/01/17 10:54:14 espie Exp $
+# $OpenBSD: Paths.pm,v 1.28 2014/04/18 10:00:48 schwarze Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -44,6 +44,7 @@ sub arch() { '/usr/bin/arch' }
 sub uname() { '/usr/bin/uname' }
 sub userdel() { '/usr/sbin/userdel' }
 sub groupdel() { '/usr/sbin/groupdel' }
+sub makewhatis() { '/usr/sbin/makewhatis' }
 sub mknod() { '/sbin/mknod' }
 sub mount() { '/sbin/mount' }
 sub df() { '/bin/df' }
