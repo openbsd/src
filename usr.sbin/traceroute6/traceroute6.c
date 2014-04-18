@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.73 2014/04/18 16:07:54 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.74 2014/04/18 16:11:36 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DEFHLIM };
 	int ttl_flag = 0, incflag = 1, sump = 0;
-	char hbuf[NI_MAXHOST], src0[NI_MAXHOST], *ep;
+	char hbuf[NI_MAXHOST], *ep;
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
@@ -658,12 +658,6 @@ main(int argc, char *argv[])
 			perror("getsockname");
 			exit(1);
 		}
-		if (getnameinfo((struct sockaddr *)&Src, Src.sin6_len,
-		    src0, sizeof(src0), NULL, 0, NI_NUMERICHOST)) {
-			fprintf(stderr, "getnameinfo failed for source\n");
-			exit(1);
-		}
-		source = src0;
 		close(dummy);
 	}
 
