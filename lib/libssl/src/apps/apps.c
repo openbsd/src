@@ -1324,15 +1324,9 @@ char *
 make_config_name()
 {
 	const char *t = X509_get_default_cert_area();
-	size_t len;
 	char *p;
 
-	len = strlen(t) + strlen(OPENSSL_CONF) + 2;
-	p = malloc(len);
-	BUF_strlcpy(p, t, len);
-	BUF_strlcat(p, "/", len);
-	BUF_strlcat(p, OPENSSL_CONF, len);
-
+	asprintf(&p, "%s/openssl.cnf", t);
 	return p;
 }
 
