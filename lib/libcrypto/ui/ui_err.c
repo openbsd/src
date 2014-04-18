@@ -68,8 +68,7 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_UI,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_UI,0,reason)
 
-static ERR_STRING_DATA UI_str_functs[] =
-{
+static ERR_STRING_DATA UI_str_functs[] = {
 	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "GENERAL_ALLOCATE_BOOLEAN"},
 	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "GENERAL_ALLOCATE_PROMPT"},
 	{ERR_FUNC(UI_F_GENERAL_ALLOCATE_STRING), "GENERAL_ALLOCATE_STRING"},
@@ -85,8 +84,7 @@ static ERR_STRING_DATA UI_str_functs[] =
 	{0, NULL}
 };
 
-static ERR_STRING_DATA UI_str_reasons[] =
-{
+static ERR_STRING_DATA UI_str_reasons[] = {
 	{ERR_REASON(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS), "common ok and cancel characters"},
 	{ERR_REASON(UI_R_INDEX_TOO_LARGE), "index too large"},
 	{ERR_REASON(UI_R_INDEX_TOO_SMALL), "index too small"},
@@ -99,11 +97,10 @@ static ERR_STRING_DATA UI_str_reasons[] =
 
 #endif
 
-void 
+void
 ERR_load_UI_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-
 	if (ERR_func_error_string(UI_str_functs[0].error) == NULL) {
 		ERR_load_strings(0, UI_str_functs);
 		ERR_load_strings(0, UI_str_reasons);

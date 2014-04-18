@@ -114,7 +114,6 @@
  * [including the GNU Public Licence.]
  */
 
-
 #include <openssl/e_os2.h>
 
 #include <signal.h>
@@ -187,18 +186,17 @@ static int read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
-static int read_string_inner(UI * ui, UI_STRING * uis, int echo, int strip_nl);
+static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
 
-static int read_string(UI * ui, UI_STRING * uis);
-static int write_string(UI * ui, UI_STRING * uis);
+static int read_string(UI *ui, UI_STRING *uis);
+static int write_string(UI *ui, UI_STRING *uis);
 
-static int open_console(UI * ui);
-static int echo_console(UI * ui);
-static int noecho_console(UI * ui);
-static int close_console(UI * ui);
+static int open_console(UI *ui);
+static int echo_console(UI *ui);
+static int noecho_console(UI *ui);
+static int close_console(UI *ui);
 
-static UI_METHOD ui_openssl =
-{
+static UI_METHOD ui_openssl = {
 	"OpenSSL default user interface",
 	open_console,
 	write_string,
@@ -217,12 +215,12 @@ UI_OpenSSL(void)
 
 /* The following function makes sure that info and error strings are printed
    before any prompt. */
-static int 
-write_string(UI * ui, UI_STRING * uis)
+static int
+write_string(UI *ui, UI_STRING *uis)
 {
 	switch (UI_get_string_type(uis)) {
-		case UIT_ERROR:
-		case UIT_INFO:
+	case UIT_ERROR:
+	case UIT_INFO:
 		fputs(UI_get0_output_string(uis), tty_out);
 		fflush(tty_out);
 		break;
@@ -232,8 +230,8 @@ write_string(UI * ui, UI_STRING * uis)
 	return 1;
 }
 
-static int 
-read_string(UI * ui, UI_STRING * uis)
+static int
+read_string(UI *ui, UI_STRING *uis)
 {
 	int ok = 0;
 
@@ -257,7 +255,7 @@ read_string(UI * ui, UI_STRING * uis)
 			    UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO, 1)) <= 0)
 			return ok;
 		if (strcmp(UI_get0_result_string(uis),
-			UI_get0_test_string(uis)) != 0) {
+		    UI_get0_test_string(uis)) != 0) {
 			fprintf(tty_out, "Verify failure\n");
 			fflush(tty_out);
 			return 0;
@@ -271,8 +269,8 @@ read_string(UI * ui, UI_STRING * uis)
 
 
 /* Internal functions to read a string without echoing */
-static int 
-read_till_nl(FILE * in)
+static int
+read_till_nl(FILE *in)
 {
 #define SIZE 4
 	char buf[SIZE + 1];
@@ -286,8 +284,8 @@ read_till_nl(FILE * in)
 
 static volatile sig_atomic_t intr_signal;
 
-static int 
-read_string_inner(UI * ui, UI_STRING * uis, int echo, int strip_nl)
+static int
+read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 {
 	static int ps;
 	int ok;
@@ -339,8 +337,8 @@ error:
 
 
 /* Internal functions to open, handle and close a channel to the console.  */
-static int 
-open_console(UI * ui)
+static int
+open_console(UI *ui)
 {
 	CRYPTO_w_lock(CRYPTO_LOCK_UI);
 	is_a_tty = 1;
@@ -361,8 +359,8 @@ open_console(UI * ui)
 			 * solaris can return EINVAL instead.  This should be
 			 * ok
 			 */
-		if (errno == EINVAL)
-			is_a_tty = 0;
+			if (errno == EINVAL)
+				is_a_tty = 0;
 		else
 			return 0;
 	}
@@ -370,8 +368,8 @@ open_console(UI * ui)
 	return 1;
 }
 
-static int 
-noecho_console(UI * ui)
+static int
+noecho_console(UI *ui)
 {
 #ifdef TTY_FLAGS
 	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
@@ -385,8 +383,8 @@ noecho_console(UI * ui)
 	return 1;
 }
 
-static int 
-echo_console(UI * ui)
+static int
+echo_console(UI *ui)
 {
 #if defined(TTY_set)
 	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
@@ -400,8 +398,8 @@ echo_console(UI * ui)
 	return 1;
 }
 
-static int 
-close_console(UI * ui)
+static int
+close_console(UI *ui)
 {
 	if (tty_in != stdin)
 		fclose(tty_in);
@@ -414,7 +412,7 @@ close_console(UI * ui)
 
 
 /* Internal functions to handle signals and act on them */
-static void 
+static void
 pushsig(void)
 {
 	int i;
@@ -450,7 +448,7 @@ pushsig(void)
 #endif
 }
 
-static void 
+static void
 popsig(void)
 {
 	int i;
@@ -467,7 +465,7 @@ popsig(void)
 	}
 }
 
-static void 
+static void
 recsig(int i)
 {
 	intr_signal = i;
