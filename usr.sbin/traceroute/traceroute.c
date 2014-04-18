@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.98 2014/04/18 08:44:25 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.99 2014/04/18 15:58:43 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -259,7 +259,8 @@ u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
 int wait_for_reply(int, struct msghdr *);
 void dump_packet(void);
-void send_probe(int, u_int8_t, int, struct sockaddr_in *);
+void build_probe4(int, u_int8_t, int);
+void send_probe(int, u_int8_t, int, struct sockaddr *);
 int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
@@ -300,6 +301,8 @@ int dump;
 int xflag;			/* show ICMP extension header */
 int tflag;			/* tos flag was set */
 int Aflag;			/* lookup ASN */
+
+extern char *__progname;
 
 int
 main(int argc, char *argv[])
@@ -632,7 +635,7 @@ main(int argc, char *argv[])
 			int code;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, ttl, incflag, &to);
+			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				i = packet_ok(packet, cc, &from, seq, incflag);
@@ -898,7 +901,7 @@ dump_packet(void)
 }
 
 void
-send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
+build_probe4(int seq, u_int8_t ttl, int iflag)
 {
 	struct ip *ip = (struct ip *)outpacket;
 	u_char *p = (u_char *)(ip + 1);
@@ -906,7 +909,6 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 	struct icmp *icmpp = (struct icmp *)(p + lsrrlen);
 	struct packetdata *op;
 	struct timeval tv;
-	int i;
 
 	ip->ip_len = htons(datalen);
 	ip->ip_ttl = ttl;
@@ -962,16 +964,29 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 		if (icmpp->icmp_cksum == 0)
 			icmpp->icmp_cksum = 0xffff;
 	}
+}
+
+void
+send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr *to)
+{
+	int i;
+
+	switch (to->sa_family) {
+		case AF_INET:
+			build_probe4(seq, ttl, iflag);
+			break;
+		default:
+			errx(1, "unsupported AF: %d", to->sa_family);
+	}
 
 	if (dump)
 		dump_packet();
 
-	i = sendto(sndsock, outpacket, datalen, 0, (struct sockaddr *)to,
-	    sizeof(struct sockaddr_in));
+	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
 	if (i < 0 || i != datalen)  {
 		if (i < 0)
 			perror("sendto");
-		printf("traceroute: wrote %s %d chars, ret=%d\n", hostname,
+		printf("%s: wrote %s %d chars, ret=%d\n", __progname, hostname,
 		    datalen, i);
 		(void) fflush(stdout);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.69 2014/03/27 09:32:18 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.70 2014/04/18 15:58:43 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -284,12 +284,13 @@ struct opacket {
 } __packed;
 
 u_char	packet[512];		/* last inbound (icmp) packet */
-struct opacket	*outpacket;	/* last output (udp) packet */
+u_char	*outpacket;		/* last output (udp) packet */
 
 int	main(int, char *[]);
 int	wait_for_reply(int, struct msghdr *);
 void	dump_packet(void);
-void	send_probe(int, u_int8_t, int);
+void	build_probe6(int, u_int8_t, int, struct sockaddr *);
+void	send_probe(int, u_int8_t, int, struct sockaddr *);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
@@ -331,6 +332,8 @@ int nflag;			/* print addresses numerically */
 int dump;
 int useicmp;
 int Aflag;			/* lookup ASN */
+
+extern char *__progname;
 
 int
 main(int argc, char *argv[])
@@ -716,7 +719,8 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, hops, incflag);
+			send_probe(++seq, hops, incflag, (struct sockaddr*)
+			    &Dst);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				if ((i = packet_ok(&rcvmhdr, cc, seq,
@@ -810,7 +814,7 @@ dump_packet(void)
 }
 
 void
-send_probe(int seq, u_int8_t hops, int iflag)
+build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 {
 	struct timeval tv;
 	struct tv32 tv32;
@@ -823,9 +827,9 @@ send_probe(int seq, u_int8_t hops, int iflag)
 	}
 
 	if (iflag)
-		Dst.sin6_port = htons(port + seq);
+		((struct sockaddr_in6*)to)->sin6_port = htons(port + seq);
 	else
-		Dst.sin6_port = htons(port);
+		((struct sockaddr_in6*)to)->sin6_port = htons(port);
 	(void) gettimeofday(&tv, NULL);
 	tv32.tv32_sec = htonl(tv.tv_sec);
 	tv32.tv32_usec = htonl(tv.tv_usec);
@@ -838,25 +842,39 @@ send_probe(int seq, u_int8_t hops, int iflag)
 		icp->icmp6_cksum = 0;
 		icp->icmp6_id = ident;
 		icp->icmp6_seq = htons(seq);
-		bcopy(&tv32, ((u_int8_t *)outpacket + ICMP6ECHOLEN), sizeof tv32);
+		bcopy(&tv32, ((u_int8_t *)outpacket + ICMP6ECHOLEN),
+		    sizeof tv32);
 	} else {
-		struct opacket *op = outpacket;
+		struct opacket *op = (struct opacket *)outpacket;
 
 		op->seq = seq;
 		op->hops = hops;
 		bcopy(&tv32, &op->tv, sizeof tv32);
 	}
+}
+
+void
+send_probe(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
+{
+	int i;
+
+	switch (to->sa_family) {
+		case AF_INET6:
+			build_probe6(seq, hops, iflag, to);
+			break;
+		default:
+			errx(1, "unsupported AF: %d", to->sa_family);
+	}
 
 	if (dump)
 		dump_packet();
 
-	i = sendto(sndsock, (char *)outpacket, datalen, 0,
-	    (struct sockaddr *)&Dst, Dst.sin6_len);
+	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
 	if (i < 0 || i != datalen)  {
 		if (i < 0)
 			perror("sendto");
-		printf("traceroute6: wrote %s %d chars, ret=%d\n",
-		    hostname, datalen, i);
+		printf("%s: wrote %s %d chars, ret=%d\n", __progname, hostname,
+		    datalen, i);
 		(void) fflush(stdout);
 	}
 }
