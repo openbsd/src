@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.75 2014/04/18 16:20:56 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.76 2014/04/18 16:23:00 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -292,6 +292,7 @@ int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
 char	*pr_type(int);
 int	packet_ok(struct msghdr *, int, int, int);
+void	icmp6_code(int, int *, int *);
 void	print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr *);
 void	print_asn(struct sockaddr_storage *);
@@ -731,34 +732,8 @@ main(int argc, char *argv[])
 					/* time exceeded in transit */
 					if (i == -1)
 						break;
-					switch (i - 1) {
-					case ICMP6_DST_UNREACH_NOROUTE:
-						++unreachable;
-						printf(" !N");
-						break;
-					case ICMP6_DST_UNREACH_ADMIN:
-						++unreachable;
-						printf(" !P");
-						break;
-					case ICMP6_DST_UNREACH_NOTNEIGHBOR:
-						++unreachable;
-						printf(" !S");
-						break;
-					case ICMP6_DST_UNREACH_ADDR:
-						++unreachable;
-						printf(" !A");
-						break;
-					case ICMP6_DST_UNREACH_NOPORT:
-						if (rcvhlim >= 0 &&
-						    rcvhlim <= 1)
-							printf(" !");
-						++got_there;
-						break;
-					default:
-						++unreachable;
-						printf(" !<%d>", i - 1);
-						break;
-					}
+					icmp6_code(i - 1, &got_there,
+					    &unreachable);
 					break;
 				}
 			}
@@ -1118,6 +1093,38 @@ print(struct sockaddr *from, int cc, const char *to)
 
 	if (verbose)
 		printf(" %d bytes to %s", cc, to);
+}
+
+void
+icmp6_code(int code, int *got_there, int *unreachable)
+{
+	switch (code) {
+	case ICMP6_DST_UNREACH_NOROUTE:
+		++(*unreachable);
+		printf(" !N");
+		break;
+	case ICMP6_DST_UNREACH_ADMIN:
+		++(*unreachable);
+		printf(" !P");
+		break;
+	case ICMP6_DST_UNREACH_NOTNEIGHBOR:
+		++(*unreachable);
+		printf(" !S");
+		break;
+	case ICMP6_DST_UNREACH_ADDR:
+		++(*unreachable);
+		printf(" !A");
+		break;
+	case ICMP6_DST_UNREACH_NOPORT:
+		if (rcvhlim >= 0 && rcvhlim <= 1)
+			printf(" !");
+		++(*got_there);
+		break;
+	default:
+		++(*unreachable);
+		printf(" !<%d>", code);
+		break;
+	}
 }
 
 /*
