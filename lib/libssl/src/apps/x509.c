@@ -152,21 +152,20 @@ static const char *x509_usage[] = {
 };
 
 static int callb(int ok, X509_STORE_CTX * ctx);
-static int 
-sign(X509 * x, EVP_PKEY * pkey, int days, int clrext, const EVP_MD * digest,
-    CONF * conf, char *section);
-static int 
-x509_certify(X509_STORE * ctx, char *CAfile, const EVP_MD * digest,
+static int sign(X509 * x, EVP_PKEY * pkey, int days, int clrext,
+    const EVP_MD * digest, CONF * conf, char *section);
+static int x509_certify(X509_STORE * ctx, char *CAfile, const EVP_MD * digest,
     X509 * x, X509 * xca, EVP_PKEY * pkey,
     STACK_OF(OPENSSL_STRING) * sigopts,
     char *serial, int create, int days, int clrext,
     CONF * conf, char *section, ASN1_INTEGER * sno);
-	static int purpose_print(BIO * bio, X509 * cert, X509_PURPOSE * pt);
-	static int reqfile = 0;
+static int purpose_print(BIO * bio, X509 * cert, X509_PURPOSE * pt);
+static int reqfile = 0;
 
-	int x509_main(int, char **);
+int x509_main(int, char **);
 
-	int x509_main(int argc, char **argv)
+int
+x509_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int ret = 1;

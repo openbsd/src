@@ -70,7 +70,7 @@ static int save_certs(char *signerfile, STACK_OF(X509) * signers);
 static int cms_cb(int ok, X509_STORE_CTX * ctx);
 static void receipt_request_print(BIO * out, CMS_ContentInfo * cms);
 static CMS_ReceiptRequest *
-make_receipt_request(STACK_OF(OPENSSL_STRING) * rr_to,
+    make_receipt_request(STACK_OF(OPENSSL_STRING) * rr_to,
     int rr_allorfirst,
     STACK_OF(OPENSSL_STRING) * rr_from);
 
@@ -94,12 +94,12 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) * rr_to,
 #define SMIME_SIGN_RECEIPT	(15 | SMIME_IP | SMIME_OP)
 #define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
 
-	int verify_err = 0;
+int verify_err = 0;
 
-	int cms_main(int, char **);
+int cms_main(int, char **);
 
-	int
-	 cms_main(int argc, char **argv)
+int
+cms_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	int operation = 0;
@@ -1122,7 +1122,8 @@ receipt_request_print(BIO * out, CMS_ContentInfo * cms)
 }
 
 static
-STACK_OF(GENERAL_NAMES) * make_names_stack(STACK_OF(OPENSSL_STRING) * ns)
+STACK_OF(GENERAL_NAMES) *
+make_names_stack(STACK_OF(OPENSSL_STRING) * ns)
 {
 	int i;
 	STACK_OF(GENERAL_NAMES) * ret;

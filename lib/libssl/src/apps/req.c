@@ -123,37 +123,35 @@
  *		  require.  This format is wrong
  */
 
-static int 
-make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *dn, int mutlirdn,
+static int make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *dn, int mutlirdn,
     int attribs, unsigned long chtype);
-static int 
-build_subject(X509_REQ * req, char *subj, unsigned long chtype,
+static int build_subject(X509_REQ * req, char *subj, unsigned long chtype,
     int multirdn);
-static int 
-prompt_info(X509_REQ * req,
+static int prompt_info(X509_REQ * req,
     STACK_OF(CONF_VALUE) * dn_sk, char *dn_sect,
     STACK_OF(CONF_VALUE) * attr_sk, char *attr_sect, int attribs,
     unsigned long chtype);
-	static int auto_info(X509_REQ * req, STACK_OF(CONF_VALUE) * sk,
+static int auto_info(X509_REQ * req, STACK_OF(CONF_VALUE) * sk,
     STACK_OF(CONF_VALUE) * attr, int attribs,
     unsigned long chtype);
-	static int add_attribute_object(X509_REQ * req, char *text, const char *def,
-     char *value, int nid, int n_min,
-     int n_max, unsigned long chtype);
-	static int add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
-     int nid, int n_min, int n_max, unsigned long chtype, int mval);
-	static int genpkey_cb(EVP_PKEY_CTX * ctx);
-	static int req_check_len(int len, int n_min, int n_max);
-	static int check_end(const char *str, const char *end);
-	static EVP_PKEY_CTX *set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
-     long *pkeylen, char **palgnam,
-     ENGINE * keygen_engine);
-	static CONF *req_conf = NULL;
-	static int batch = 0;
+static int add_attribute_object(X509_REQ * req, char *text, const char *def,
+    char *value, int nid, int n_min,
+    int n_max, unsigned long chtype);
+static int add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
+    int nid, int n_min, int n_max, unsigned long chtype, int mval);
+static int genpkey_cb(EVP_PKEY_CTX * ctx);
+static int req_check_len(int len, int n_min, int n_max);
+static int check_end(const char *str, const char *end);
+static EVP_PKEY_CTX *set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
+    long *pkeylen, char **palgnam,
+    ENGINE * keygen_engine);
+static CONF *req_conf = NULL;
+static int batch = 0;
 
-	int req_main(int, char **);
+int req_main(int, char **);
 
-	int req_main(int argc, char **argv)
+int
+req_main(int argc, char **argv)
 {
 	ENGINE *e = NULL, *gen_eng = NULL;
 	unsigned long nmflag = 0, reqflag = 0;

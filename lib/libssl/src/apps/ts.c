@@ -80,31 +80,25 @@ static ASN1_OBJECT *txt2obj(const char *oid);
 static CONF *load_config_file(const char *configfile);
 
 /* Query related functions. */
-static int 
-query_command(const char *data, char *digest,
+static int query_command(const char *data, char *digest,
     const EVP_MD * md, const char *policy, int no_nonce,
     int cert, const char *in, const char *out, int text);
-static BIO *
-BIO_open_with_default(const char *file, const char *mode,
+static BIO *BIO_open_with_default(const char *file, const char *mode,
     FILE * default_fp);
-static TS_REQ *
-create_query(BIO * data_bio, char *digest, const EVP_MD * md,
+static TS_REQ *create_query(BIO * data_bio, char *digest, const EVP_MD * md,
     const char *policy, int no_nonce, int cert);
-static int 
-create_digest(BIO * input, char *digest,
+static int create_digest(BIO * input, char *digest,
     const EVP_MD * md, unsigned char **md_value);
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int 
-reply_command(CONF * conf, char *section, char *engine,
+static int reply_command(CONF * conf, char *section, char *engine,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy,
     char *in, int token_in, char *out, int token_out,
     int text);
 static TS_RESP *read_PKCS7(BIO * in_bio);
-static TS_RESP *
-create_response(CONF * conf, const char *section, char *engine,
+static TS_RESP *create_response(CONF * conf, const char *section, char *engine,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy);
 static ASN1_INTEGER *serial_cb(TS_RESP_CTX * ctx, void *data);
@@ -112,12 +106,10 @@ static ASN1_INTEGER *next_serial(const char *serialfile);
 static int save_ts_serial(const char *serialfile, ASN1_INTEGER * serial);
 
 /* Verify related functions. */
-static int 
-verify_command(char *data, char *digest, char *queryfile,
+static int verify_command(char *data, char *digest, char *queryfile,
     char *in, int token_in,
     char *ca_path, char *ca_file, char *untrusted);
-static TS_VERIFY_CTX *
-create_verify_ctx(char *data, char *digest,
+static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     char *queryfile,
     char *ca_path, char *ca_file,
     char *untrusted);

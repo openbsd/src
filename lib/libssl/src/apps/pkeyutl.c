@@ -70,17 +70,14 @@ static void usage(void);
 
 
 
-static EVP_PKEY_CTX *
-init_ctx(int *pkeysize,
+static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     char *keyfile, int keyform, int key_type,
     char *passargin, int pkey_op, ENGINE * e);
 
-static int 
-setup_peer(BIO * err, EVP_PKEY_CTX * ctx, int peerform,
+static int setup_peer(BIO * err, EVP_PKEY_CTX * ctx, int peerform,
     const char *file);
 
-static int 
-do_keyop(EVP_PKEY_CTX * ctx, int pkey_op,
+static int do_keyop(EVP_PKEY_CTX * ctx, int pkey_op,
     unsigned char *out, size_t * poutlen,
     unsigned char *in, size_t inlen);
 

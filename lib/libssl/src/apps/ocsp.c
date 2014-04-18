@@ -77,30 +77,31 @@
 static int
 add_ocsp_cert(OCSP_REQUEST ** req, X509 * cert, const EVP_MD * cert_id_md, X509 * issuer,
     STACK_OF(OCSP_CERTID) * ids);
-	static int add_ocsp_serial(OCSP_REQUEST ** req, char *serial, const EVP_MD * cert_id_md, X509 * issuer,
-     STACK_OF(OCSP_CERTID) * ids);
-	static int print_ocsp_summary(BIO * out, OCSP_BASICRESP * bs, OCSP_REQUEST * req,
+static int add_ocsp_serial(OCSP_REQUEST ** req, char *serial, const EVP_MD * cert_id_md, X509 * issuer,
+    STACK_OF(OCSP_CERTID) * ids);
+static int print_ocsp_summary(BIO * out, OCSP_BASICRESP * bs, OCSP_REQUEST * req,
     STACK_OF(OPENSSL_STRING) * names,
     STACK_OF(OCSP_CERTID) * ids, long nsec,
     long maxage);
 
-	static int make_ocsp_response(OCSP_RESPONSE ** resp, OCSP_REQUEST * req, CA_DB * db,
-     X509 * ca, X509 * rcert, EVP_PKEY * rkey,
+static int make_ocsp_response(OCSP_RESPONSE ** resp, OCSP_REQUEST * req, CA_DB * db,
+    X509 * ca, X509 * rcert, EVP_PKEY * rkey,
     STACK_OF(X509) * rother, unsigned long flags,
     int nmin, int ndays);
 
-	static char **lookup_serial(CA_DB * db, ASN1_INTEGER * ser);
-	static BIO *init_responder(char *port);
-	static int do_responder(OCSP_REQUEST ** preq, BIO ** pcbio, BIO * acbio, char *port);
-	static int send_ocsp_response(BIO * cbio, OCSP_RESPONSE * resp);
-	static OCSP_RESPONSE *query_responder(BIO * err, BIO * cbio, char *path,
+static char **lookup_serial(CA_DB * db, ASN1_INTEGER * ser);
+static BIO *init_responder(char *port);
+static int do_responder(OCSP_REQUEST ** preq, BIO ** pcbio, BIO * acbio, char *port);
+static int send_ocsp_response(BIO * cbio, OCSP_RESPONSE * resp);
+static OCSP_RESPONSE *query_responder(BIO * err, BIO * cbio, char *path,
     STACK_OF(CONF_VALUE) * headers,
     OCSP_REQUEST * req, int req_timeout);
 
 
-	int ocsp_main(int, char **);
+int ocsp_main(int, char **);
 
-	int ocsp_main(int argc, char **argv)
+int
+ocsp_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	char **args;
