@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.79 2014/04/18 16:33:21 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.80 2014/04/18 16:48:19 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -308,9 +308,6 @@ struct in6_pktinfo *rcvpktinfo;
 
 int datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
-/* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
-char rtbuf[2064];
-struct ip6_rthdr *rth;
 
 char *source = 0;
 char *hostname;
@@ -376,7 +373,7 @@ main(int argc, char *argv[])
 
 	seq = 0;
 
-	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:np:q:Ss:w:vV:")) != -1)
+	while ((ch = getopt(argc, argv, "AcDdf:Ilm:np:q:Ss:w:vV:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag++;
@@ -397,35 +394,6 @@ main(int argc, char *argv[])
 			if (errno || !*optarg || *ep || l < 1 || l > max_hops)
 				errx(1, "firsthop must be 1 to %u.", max_hops);
 			first_hop = (u_int8_t)l;
-			break;
-		case 'g':
-			hp = getipnodebyname(optarg, AF_INET6, 0, &h_errno);
-			if (hp == NULL) {
-				fprintf(stderr,
-				    "traceroute6: unknown host %s\n", optarg);
-				exit(1);
-			}
-			if (rth == NULL) {
-				/*
-				 * XXX: We can't detect the number of
-				 * intermediate nodes yet.
-				 */
-				if ((rth = inet6_rth_init((void *)rtbuf,
-				    sizeof(rtbuf), IPV6_RTHDR_TYPE_0,
-				    0)) == NULL) {
-					fprintf(stderr,
-					    "inet6_rth_init failed.\n");
-					exit(1);
-				}
-			}
-			if (inet6_rth_add((void *)rth,
-			    (struct in6_addr *)hp->h_addr)) {
-				fprintf(stderr,
-				    "inet6_rth_add failed for %s\n",
-				    optarg);
-				exit(1);
-			}
-			freehostent(hp);
 			break;
 		case 'I':
 			useicmp++;
@@ -598,15 +566,6 @@ main(int argc, char *argv[])
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
-	if (rth) {/* XXX: there is no library to finalize the header... */
-		rth->ip6r_len = rth->ip6r_segleft * 2;
-		if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_RTHDR,
-		    (void *)rth, (rth->ip6r_len + 1) << 3)) {
-			fprintf(stderr, "setsockopt(IPV6_RTHDR): %s\n",
-			    strerror(errno));
-			exit(1);
-		}
-	}
 
 	/*
 	 * Source selection
@@ -1208,7 +1167,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-"usage: traceroute6 [-AcDdIlnSv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
+"usage: traceroute6 [-AcDdIlnSv] [-f firsthop] [-m hoplimit]\n"
 "       [-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
 "       host [datalen]\n");
 	exit(1);
