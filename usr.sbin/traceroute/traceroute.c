@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.102 2014/04/18 16:22:18 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.103 2014/04/18 16:24:41 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -677,16 +677,15 @@ main(int argc, char *argv[])
 				/* Skip short packet */
 				if (i == 0)
 					continue;
+				ip = (struct ip *)packet;
 				if (from.sin_addr.s_addr != lastaddr) {
 					print((struct sockaddr *)&from,
-					    (cc - (((struct ip*)packet)->ip_hl
-					    <<2)), inet_ntop(AF_INET,
-					    &((struct ip*)packet)->ip_dst,
+					    cc - (ip->ip_hl << 2),
+					    inet_ntop(AF_INET, &ip->ip_dst,
 					    hbuf, sizeof(hbuf)));
 					lastaddr = from.sin_addr.s_addr;
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
-				ip = (struct ip *)packet;
 				if (ttl_flag)
 					printf(" (%u)", ip->ip_ttl);
 				if (i == -2) {
