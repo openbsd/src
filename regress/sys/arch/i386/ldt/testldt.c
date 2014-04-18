@@ -1,4 +1,4 @@
-/*	$OpenBSD: testldt.c,v 1.8 2003/09/02 23:52:17 david Exp $	*/
+/*	$OpenBSD: testldt.c,v 1.9 2014/04/18 14:38:21 guenther Exp $	*/
 /*	$NetBSD: testldt.c,v 1.4 1995/04/20 22:42:38 cgd Exp $	*/
 
 #include <stdio.h>
@@ -18,7 +18,7 @@ struct sigaction segv_act;
 static inline void
 set_fs(unsigned long val)
 {
-	__asm__ __volatile__("mov %0,%%fs"::"r" ((unsigned short) val));
+	__asm__ volatile("mov %0,%%fs"::"r" ((unsigned short) val));
 }
 
 static inline unsigned char
@@ -51,8 +51,8 @@ static void
 gated_call(void)
 {
 	printf("Called from call gate...");
-	__asm__ __volatile__("popl %ebp");
-	__asm__ __volatile__(".byte 0xcb");
+	__asm__ volatile("popl %ebp");
+	__asm__ volatile(".byte 0xcb");
 }
 
 static struct segment_descriptor *
@@ -260,13 +260,13 @@ main(int argc, char *argv[])
 	printf("setldt returned: %d\n", err);
 #endif
 
-	__asm__ __volatile__(".byte 0x9a"); /* This is a call to a call gate. */
-	__asm__ __volatile__(".byte 0x00"); /* Value is ignored in a call gate but can be used. */
-	__asm__ __volatile__(".byte 0x00"); /* by the called procedure. */
-	__asm__ __volatile__(".byte 0x00");
-	__asm__ __volatile__(".byte 0x00");
-	__asm__ __volatile__(".byte 0x2f"); /* Selector 0x002f.	 This is index = 5 (the call gate), */
-	__asm__ __volatile__(".byte 0x00"); /* and a requestor priveledge level of 3. */
+	__asm__ volatile(".byte 0x9a"); /* This is a call to a call gate. */
+	__asm__ volatile(".byte 0x00"); /* Value is ignored in a call gate but can be used. */
+	__asm__ volatile(".byte 0x00"); /* by the called procedure. */
+	__asm__ volatile(".byte 0x00");
+	__asm__ volatile(".byte 0x00");
+	__asm__ volatile(".byte 0x2f"); /* Selector 0x002f.	 This is index = 5 (the call gate), */
+	__asm__ volatile(".byte 0x00"); /* and a requestor priveledge level of 3. */
 
 	printf("Gated call returned\n");
 	exit (0);

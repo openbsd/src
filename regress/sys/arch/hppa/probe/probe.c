@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.1 2004/05/12 22:54:13 mickey Exp $	*/
+/*	$OpenBSD: probe.c,v 1.2 2014/04/18 14:38:21 guenther Exp $	*/
 
 /*
  * Written by Michael Shalayeff, 2004. Public Domain.
@@ -14,13 +14,13 @@ char moo[] = "moo";	/* writable */
 const char blah[] = "blah";	/* not */
 volatile char *label;
 
-#define	prober(r,a)	__asm __volatile(	\
+#define	prober(r,a)	__asm volatile(	\
     "prober	(%2),%1,%0" : "=r" (r) : "r" (3), "r" (a));
-#define	proberi(r,a)	__asm __volatile(	\
+#define	proberi(r,a)	__asm volatile(	\
     "proberi	(%2),%1,%0" : "=r" (r) : "i" (3), "r" (a));
-#define	probew(r,a)	__asm __volatile(	\
+#define	probew(r,a)	__asm volatile(	\
     "probew	(%2),%1,%0" : "=r" (r) : "r" (3), "r" (a));
-#define	probewi(r,a)	__asm __volatile(	\
+#define	probewi(r,a)	__asm volatile(	\
     "probewi	(%2),%1,%0" : "=r" (r) : "i" (3), "r" (a));
 
 void
