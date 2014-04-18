@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.138 2014/04/18 10:00:48 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.139 2014/04/18 19:13:16 okan Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= apply arch asa at aucat audioctl awk banner \
-	basename bc bdes bgplg \
+	basename bc bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
 	column comm compress cpp crontab csplit ctags cu cut \
 	dc deroff diff diff3 dirname du encrypt env expand false file \
