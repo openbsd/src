@@ -725,9 +725,7 @@ generate_cookie_callback(SSL * ssl, unsigned char *cookie,
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
 		struct sockaddr_in6 s6;
-#endif
 	} peer;
 
 	/* Initialize a random secret */
@@ -749,12 +747,10 @@ generate_cookie_callback(SSL * ssl, unsigned char *cookie,
 		length += sizeof(struct in_addr);
 		length += sizeof(peer.s4.sin_port);
 		break;
-#if OPENSSL_USE_IPV6
 	case AF_INET6:
 		length += sizeof(struct in6_addr);
 		length += sizeof(peer.s6.sin6_port);
 		break;
-#endif
 	default:
 		OPENSSL_assert(0);
 		break;
@@ -771,13 +767,11 @@ generate_cookie_callback(SSL * ssl, unsigned char *cookie,
 		memcpy(buffer + sizeof(peer.s4.sin_port),
 		    &peer.s4.sin_addr, sizeof(struct in_addr));
 		break;
-#if OPENSSL_USE_IPV6
 	case AF_INET6:
 		memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
 		memcpy(buffer + sizeof(peer.s6.sin6_port),
 		    &peer.s6.sin6_addr, sizeof(struct in6_addr));
 		break;
-#endif
 	default:
 		OPENSSL_assert(0);
 		break;
@@ -802,9 +796,7 @@ verify_cookie_callback(SSL * ssl, unsigned char *cookie, unsigned int cookie_len
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
 		struct sockaddr_in6 s6;
-#endif
 	} peer;
 
 	/* If secret isn't initialized yet, the cookie can't be valid */
@@ -821,12 +813,10 @@ verify_cookie_callback(SSL * ssl, unsigned char *cookie, unsigned int cookie_len
 		length += sizeof(struct in_addr);
 		length += sizeof(peer.s4.sin_port);
 		break;
-#if OPENSSL_USE_IPV6
 	case AF_INET6:
 		length += sizeof(struct in6_addr);
 		length += sizeof(peer.s6.sin6_port);
 		break;
-#endif
 	default:
 		OPENSSL_assert(0);
 		break;
@@ -843,13 +833,11 @@ verify_cookie_callback(SSL * ssl, unsigned char *cookie, unsigned int cookie_len
 		memcpy(buffer + sizeof(peer.s4.sin_port),
 		    &peer.s4.sin_addr, sizeof(struct in_addr));
 		break;
-#if OPENSSL_USE_IPV6
 	case AF_INET6:
 		memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
 		memcpy(buffer + sizeof(peer.s6.sin6_port),
 		    &peer.s6.sin6_addr, sizeof(struct in6_addr));
 		break;
-#endif
 	default:
 		OPENSSL_assert(0);
 		break;

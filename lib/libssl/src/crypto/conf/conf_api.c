@@ -68,7 +68,6 @@
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
-#include "e_os.h"
 
 static void value_free_hash_doall_arg(CONF_VALUE *a,
 				      LHASH_OF(CONF_VALUE) *conf);

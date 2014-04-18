@@ -83,8 +83,6 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#include "e_os.h"
-
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);

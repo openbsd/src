@@ -64,8 +64,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "e_os.h"
-
 #include <openssl/crypto.h>
 #include <openssl/buffer.h> 
 #include <openssl/bio.h> 

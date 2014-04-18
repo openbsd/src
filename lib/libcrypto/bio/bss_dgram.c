@@ -147,9 +147,7 @@ typedef struct bio_dgram_data_st {
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in;
-#if OPENSSL_USE_IPV6
 		struct sockaddr_in6 sa_in6;
-#endif
 	} peer;
 	unsigned int connected;
 	unsigned int _errno;
@@ -169,9 +167,7 @@ typedef struct bio_dgram_sctp_data_st {
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in;
-#if OPENSSL_USE_IPV6
 		struct sockaddr_in6 sa_in6;
-#endif
 	} peer;
 	unsigned int connected;
 	unsigned int _errno;
@@ -346,9 +342,7 @@ dgram_read(BIO *b, char *out, int outl)
 		union	{
 			struct sockaddr sa;
 			struct sockaddr_in sa_in;
-#if OPENSSL_USE_IPV6
 			struct sockaddr_in6 sa_in6;
-#endif
 		} peer;
 	} sa;
 
@@ -395,10 +389,8 @@ dgram_write(BIO *b, const char *in, int inl)
 
 		if (data->peer.sa.sa_family == AF_INET)
 			peerlen = sizeof(data->peer.sa_in);
-#if OPENSSL_USE_IPV6
 		else if (data->peer.sa.sa_family == AF_INET6)
 			peerlen = sizeof(data->peer.sa_in6);
-#endif
 		ret = sendto(b->num, in, inl, 0, &data->peer.sa, peerlen);
 	}
 
@@ -432,9 +424,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	union	{
 		struct sockaddr	sa;
 		struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
 		struct sockaddr_in6 s6;
-#endif
 	} addr;
 #endif
 
@@ -485,11 +475,9 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		case AF_INET:
 			memcpy(&data->peer, to, sizeof(data->peer.sa_in));
 			break;
-#if OPENSSL_USE_IPV6
 		case AF_INET6:
 			memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
 			break;
-#endif
 		default:
 			memcpy(&data->peer, to, sizeof(data->peer.sa));
 			break;
@@ -512,7 +500,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			    sizeof(sockopt_val))) < 0)
 				perror("setsockopt");
 			break;
-#if OPENSSL_USE_IPV6 && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
+#if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO)
 		case AF_INET6:
 			sockopt_val = IPV6_PMTUDISC_DO;
 			if ((ret = setsockopt(b->num, IPPROTO_IPV6,
@@ -552,7 +540,7 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				ret = data->mtu;
 			}
 			break;
-#if OPENSSL_USE_IPV6 && defined(IPV6_MTU)
+#if defined(IPV6_MTU)
 		case AF_INET6:
 			if ((ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU,
 			    (void *)&sockopt_val, &sockopt_len)) < 0 ||
@@ -580,7 +568,6 @@ default:
 		case AF_INET:
 			ret = 576 - 20 - 8;
 			break;
-#if OPENSSL_USE_IPV6
 		case AF_INET6:
 #ifdef IN6_IS_ADDR_V4MAPPED
 			if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
@@ -589,7 +576,6 @@ default:
 #endif
 				ret = 1280 - 40 - 8;
 			break;
-#endif
 		default:
 			ret = 576 - 20 - 8;
 			break;
@@ -611,11 +597,9 @@ default:
 			case AF_INET:
 				memcpy(&data->peer, to, sizeof(data->peer.sa_in));
 				break;
-#if OPENSSL_USE_IPV6
 			case AF_INET6:
 				memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
 				break;
-#endif
 			default:
 				memcpy(&data->peer, to, sizeof(data->peer.sa));
 				break;
@@ -630,11 +614,9 @@ default:
 		case AF_INET:
 			ret = sizeof(data->peer.sa_in);
 			break;
-#if OPENSSL_USE_IPV6
 		case AF_INET6:
 			ret = sizeof(data->peer.sa_in6);
 			break;
-#endif
 		default:
 			ret = sizeof(data->peer.sa);
 			break;
@@ -649,11 +631,9 @@ default:
 		case AF_INET:
 			memcpy(&data->peer, to, sizeof(data->peer.sa_in));
 			break;
-#if OPENSSL_USE_IPV6
 		case AF_INET6:
 			memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
 			break;
-#endif
 		default:
 			memcpy(&data->peer, to, sizeof(data->peer.sa));
 			break;

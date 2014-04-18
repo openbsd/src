@@ -61,7 +61,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>

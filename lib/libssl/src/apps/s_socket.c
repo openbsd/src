@@ -66,23 +66,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#ifdef FLAT_INC
-#include "e_os2.h"
-#else
-#include "../e_os2.h"
-#endif
+#include <openssl/e_os2.h>
 
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
-
-#ifdef FLAT_INC
-#include "e_os.h"
-#else
-#include "../e_os.h"
-#endif
 
 #ifndef OPENSSL_NO_SOCK
 
