@@ -168,7 +168,7 @@ typedef struct openssl_item_st {
 } OPENSSL_ITEM;
 
 
-/* When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
+/* When changing the CRYPTO_LOCK_* list, be sure to maintain the text lock
  * names in cryptlib.c
  */
 
