@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.105 2014/04/18 16:32:42 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.106 2014/04/18 16:46:18 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -313,8 +313,9 @@ main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
-	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0;
+	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error;
 	int last_tos, tos_returned;
+	struct addrinfo hints, *res;
 	size_t size = sizeof(max_ttl);
 	struct sockaddr_in from, to;
 	struct hostent *hp;
@@ -504,16 +505,30 @@ main(int argc, char *argv[])
 	if (inet_aton(*argv, &to.sin_addr) != 0)
 		hostname = *argv;
 	else {
-		hp = gethostbyname(*argv);
-		if (hp == 0)
-			errx(1, "unknown host %s", *argv);
-		to.sin_family = hp->h_addrtype;
-		memcpy(&to.sin_addr, hp->h_addr, hp->h_length);
-		if ((hostname = strdup(hp->h_name)) == NULL)
-			err(1, "malloc");
-		if (hp->h_addr_list[1] != NULL)
-			warnx("Warning: %s has multiple addresses; using %s",
-			    hostname, inet_ntoa(to.sin_addr));
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_INET;
+		hints.ai_socktype = SOCK_RAW;
+		hints.ai_protocol = IPPROTO_ICMP;
+		hints.ai_flags = AI_CANONNAME;
+		if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
+			errx(1, "%s", gai_strerror(error));
+
+		if (res->ai_addrlen != sizeof(to))
+		    errx(1, "size of sockaddr mismatch");
+
+		memcpy(&to, res->ai_addr, res->ai_addrlen);
+		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
+		    *argv;
+		if (!hostname)
+			errx(1, "malloc");
+
+		if (res->ai_next) {
+			if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+			    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+				strlcpy(hbuf, "?", sizeof(hbuf));
+			warnx("Warning: %s has multiple "
+			    "addresses; using %s\n", hostname, hbuf);
+		}
 	}
 	if (*++argv) {
 		errno = 0;
