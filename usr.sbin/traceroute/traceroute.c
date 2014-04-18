@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.107 2014/04/18 16:58:02 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.108 2014/04/18 17:00:07 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -647,8 +647,10 @@ main(int argc, char *argv[])
 		err(1, "getsockname");
 	srcport = ntohs(from.sin_port);
 
-	fprintf(stderr, "traceroute to %s (%s)", hostname,
-		inet_ntoa(to.sin_addr));
+	if (getnameinfo((struct sockaddr *)&to, to.sin_len, hbuf,
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
+		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
+	fprintf(stderr, "%s to %s (%s)", __progname, hostname, hbuf);
 	if (source)
 		fprintf(stderr, " from %s", source);
 	fprintf(stderr, ", %u hops max, %d byte packets\n", max_ttl, datalen);
