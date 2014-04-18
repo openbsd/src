@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.97 2014/03/29 11:19:41 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.98 2014/04/18 08:44:25 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -652,11 +652,9 @@ main(int argc, char *argv[])
 				if (ttl_flag)
 					printf(" (%u)", ip->ip_ttl);
 				if (i == -2) {
-#ifndef ARCHAIC
 					ip = (struct ip *)packet;
 					if (ip->ip_ttl <= 1)
 						printf(" !");
-#endif
 					++got_there;
 					break;
 				}
@@ -677,11 +675,9 @@ main(int argc, char *argv[])
 				code = i - 1;
 				switch (code) {
 				case ICMP_UNREACH_PORT:
-#ifndef ARCHAIC
 					ip = (struct ip *)packet;
 					if (ip->ip_ttl <= 1)
 						printf(" !");
-#endif /* ARCHAIC */
 					++got_there;
 					break;
 				case ICMP_UNREACH_NET:
@@ -1031,7 +1027,6 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 	u_char code;
 	u_int8_t type;
 	int hlen;
-#ifndef ARCHAIC
 	struct ip *ip;
 
 	ip = (struct ip *) buf;
@@ -1044,9 +1039,6 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 	}
 	cc -= hlen;
 	icp = (struct icmp *)(buf + hlen);
-#else
-	icp = (struct icmp *)buf;
-#endif /* ARCHAIC */
 	type = icp->icmp_type;
 	code = icp->icmp_code;
 	if ((type == ICMP_TIMXCEED && code == ICMP_TIMXCEED_INTRANS) ||
@@ -1089,7 +1081,6 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 		}
 	}
-#ifndef ARCHAIC
 	if (verbose) {
 		int i;
 		in_addr_t *lp = (in_addr_t *)&icp->icmp_ip;
@@ -1101,7 +1092,6 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 		for (i = 4; i < cc ; i += sizeof(in_addr_t))
 			printf("%2d: x%8.8lx\n", i, (unsigned long)*lp++);
 	}
-#endif /* ARCHAIC */
 	return (0);
 }
 
