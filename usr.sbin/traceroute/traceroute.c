@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.99 2014/04/18 15:58:43 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.100 2014/04/18 16:04:39 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -261,7 +261,7 @@ int wait_for_reply(int, struct msghdr *);
 void dump_packet(void);
 void build_probe4(int, u_int8_t, int);
 void send_probe(int, u_int8_t, int, struct sockaddr *);
-int packet_ok(u_char *, int, struct sockaddr_in *, int, int);
+int packet_ok(struct msghdr *, int, int, int);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(struct sockaddr *, int, const char *);
@@ -638,7 +638,7 @@ main(int argc, char *argv[])
 			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				i = packet_ok(packet, cc, &from, seq, incflag);
+				i = packet_ok(&rcvmhdr, cc, seq, incflag);
 				/* Skip short packet */
 				if (i == 0)
 					continue;
@@ -1036,10 +1036,12 @@ pr_type(u_int8_t t)
 }
 
 int
-packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
+packet_ok(struct msghdr *mhdr, int cc,int seq, int iflag)
 {
+	struct sockaddr_in *from = (struct sockaddr_in *)mhdr->msg_name;
 	struct icmp *icp;
 	u_char code;
+	char *buf = (char *)mhdr->msg_iov[0].iov_base;
 	u_int8_t type;
 	int hlen;
 	struct ip *ip;
