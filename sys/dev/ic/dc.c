@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.131 2013/12/28 03:34:59 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.132 2014/04/18 14:56:59 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2563,10 +2563,6 @@ dc_encap(struct dc_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
 	if (sc->dc_flags & DC_TX_USE_TX_INTR && sc->dc_cdata.dc_tx_cnt > 64)
-		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
-		    htole32(DC_TXCTL_FINT);
-	else if ((sc->dc_flags & DC_TX_USE_TX_INTR) &&
-		 TBR_IS_ENABLED(&sc->sc_arpcom.ac_if.if_snd))
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
