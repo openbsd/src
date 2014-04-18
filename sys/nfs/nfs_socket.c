@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.104 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.105 2014/04/18 13:35:31 kettenis Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1681,7 +1681,7 @@ nfsrv_getstream(struct nfssvc_sock *slp, int waitflag)
 	u_int32_t recmark;
 
 	if (slp->ns_flag & SLP_GETSTREAM)
-		panic("nfs getstream");
+		return (0);
 	slp->ns_flag |= SLP_GETSTREAM;
 	for (;;) {
 	    if (slp->ns_reclen == 0) {
