@@ -1,4 +1,0 @@
-#tests an edge case in LOOP_THROUGH behaviour, the one loop despite the 
-#list is empty
-altq on { lo0 tun1000000 } priq bandwidth 10Mb tbrsize 1824 queue q_def
-oldqueue q_def priq(default)

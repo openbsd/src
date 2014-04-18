@@ -1,7 +1,0 @@
-# test two different named queues don't get the same qid on different interfaces
-
-altq on lo0 tbrsize 1824 bandwidth 10Mb cbq queue { bloody germans }
-altq on tun1000000 tbrsize 1824 bandwidth 10Mb cbq queue { bloody toads }
-oldqueue bloody cbq(default) bandwidth 50%
-oldqueue germans bandwidth 50%
-oldqueue toads bandwidth 50%

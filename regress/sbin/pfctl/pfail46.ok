@@ -1,4 +1,0 @@
-stdin:5: queue cannot have itself as child
-stdin:5: errors in queue definition
-altq on lo0 cbq bandwidth 512Kb tbrsize 33224 queue { i_am_braindead }
-oldqueue i_am_braindead cbq( default ) { i_am_braindead }

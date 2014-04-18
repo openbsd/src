@@ -1,8 +1,0 @@
-oldqueue one on tun1000000 priq( default ) 
-  [ qid=1 ifname=tun1000000 ifbandwidth=10Mb ]
-oldqueue one on tun1000001 priq( default ) 
-  [ qid=1 ifname=tun1000001 ifbandwidth=10Mb ]
-oldqueue two on tun1000000 priority 15 
-  [ qid=2 ifname=tun1000000 ifbandwidth=10Mb ]
-oldqueue two on tun1000001 priority 0 
-  [ qid=2 ifname=tun1000001 ifbandwidth=10Mb ]

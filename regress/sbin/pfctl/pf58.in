@@ -1,8 +1,0 @@
-# queue on two interfaces
-
-altq on tun1000000 bandwidth 100Kb cbq queue { std ssh }
-altq on tun1000001 bandwidth 10Mb cbq queue { blah ssh }
-oldqueue std bandwidth 20% cbq(borrow, default)
-oldqueue ssh bandwidth 30% cbq(borrow) { ssh2 }
-oldqueue ssh2 bandwidth 80%
-oldqueue blah bandwidth 60% cbq(default)

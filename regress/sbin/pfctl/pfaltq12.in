@@ -1,9 +1,0 @@
-# linkshare & upperlimit service curves
-
-altq on lo0 tbrsize 1824 bandwidth 10Mb hfsc queue { eins zwei drei }
-queue eins bandwidth 10% hfsc(default linkshare(20% 20 5%))
-queue zwei bandwidth 40% hfsc(linkshare 35% upperlimit 5Mb)
-queue drei bandwidth 50% hfsc(linkshare(45% 20 40%) \
-	upperlimit(65% 10 45%))
-
-

@@ -1,6 +1,0 @@
-altq on tun1000000 cbq bandwidth 100Kb tbrsize 1500 queue { std ssh }
-altq on tun1000001 cbq bandwidth 10Mb tbrsize 6000 queue { blah ssh }
-oldqueue std bandwidth 20% cbq( borrow default ) 
-oldqueue ssh bandwidth 30% cbq( borrow ) { ssh2 }
-oldqueue ssh2 bandwidth 80% 
-oldqueue blah bandwidth 60% cbq( default ) 

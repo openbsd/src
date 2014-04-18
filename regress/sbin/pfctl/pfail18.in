@@ -1,6 +1,0 @@
-# queue without parent
-
-altq on lo0 cbq tbrsize 1824 bandwidth 10Mb queue { frenchs eat frogs }
-oldqueue frenchs bandwidth 30% cbq(default)
-oldqueue eat bandwidth 30%
-oldqueue toads bandwidth 30%

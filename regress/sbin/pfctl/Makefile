@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.218 2011/07/27 10:40:05 mcbride Exp $
+# $OpenBSD: Makefile,v 1.219 2014/04/18 10:48:23 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -13,24 +13,19 @@
 # pfcmd: test pfctl command line parsing
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
-PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
-PFTESTS+=52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73
+PFTESTS+=28 29 30 31 32 34 35 36 38 39 40 41 44 46 47 48 49 50
+PFTESTS+=52 53 54 55 56 57 60 61 65 66 67 68 69 70 71 72 73
 PFTESTS+=74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96
 PFTESTS+=97 98 99 100 101
-PFFAIL=1 2 3 4 5 6 7 8 11 12 13 14 15 16 17 18 19 20 23 25 27
-PFFAIL+=29 30 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53
+PFFAIL=1 2 3 4 5 6 7 8 11 12 13 14 15 16 17 19 20 23 25 27
+PFFAIL+=30 37 38 39 40 41 42 43 47 48 49 50 51 52 53
 PFSIMPLE=1 2
-PFSETUP=1 2 3 4
+PFSETUP=1 4
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 34 36 38 39 40 44 46 47 48 49 54 56 60 61 65 66 67 68 69 70 71
 PFLOAD+=72 73 74 75 76 77 78 79 80 81 82 84 87 88 89 90 91 92 99 100 101
-PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
-# disabled; no altq in anchors
-# PFLOAD+=33 35 37 42 43 45 51 58 59 62 63 64
-# only testing parser, load test would be useless
-# PFLOAD+=6 22 41 50 52 53 55 57 83 85 86
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
-PFOPT=1 2 3 6
+PFOPT=1 2 6
 PFIF2IP=1 2 3
 PFCHKSUM=1 2 3
 PFCMD=1
@@ -278,33 +273,6 @@ pfsetup-update:	${PFSETUP_UPDATES}
 
 NODEFAULT_TARGETS+=pfsetup
 REGRESS_ROOT_TARGETS+=pfsetup
-
-.for n in ${PFALTQ}
-PFALTQ_TARGETS+=pfaltq${n}
-PFALTQ_UPDATES+=pfaltq${n}-update
-
-pfaltq${n}:
-	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
-	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfaltq${n}.in
-	( ${SUDO} pfctl -o none -gsq; \
-	${SUDO} pfctl -o none -gsr ) | \
-	    diff -u ${.CURDIR}/pfaltq${n}.ok /dev/stdin
-	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
-
-pfaltq${n}-update:
-	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
-	${SUDO} pfctl -o none -f - < ${.CURDIR}/pfaltq${n}.in
-	( ${SUDO} pfctl -o none -gsq; \
-	${SUDO} pfctl -o none -gsr ) > ${.CURDIR}/pfaltq${n}.ok
-	${SUDO} pfctl -o none -Fa >/dev/null 2>&1
-
-.endfor
-
-pfaltq:		${PFALTQ_TARGETS}
-pfaltq-update:	${PFALTQ_UPDATES}
-
-NODEFAULT_TARGETS+=pfaltq
-REGRESS_ROOT_TARGETS+=pfaltq
 
 .for n in ${PFCHKSUM}
 PFCHKSUM_TARGETS+=pfchksum${n}

@@ -1,7 +1,0 @@
-# queuespec limited to interface(s)
-
-altq on { tun1000000 tun1000001 } priq bandwidth 10Mb queue { one two }
-oldqueue one priority 1 priq(default)
-oldqueue two on tun1000000 priority 15
-oldqueue two on tun1000001 priority 0
-

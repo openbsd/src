@@ -1,4 +1,0 @@
-#test tbrsize calculation
-
-altq on lo1000010 bandwidth 10Mb cbq queue { openbsd rocks }
-oldqueue openbsd cbq(default)

@@ -1,5 +1,4 @@
-stdin:2: syntax error
-stdin:15: syntax error
-stdin:16: syntax error
-stdin:17: syntax error
+stdin:11: syntax error
+stdin:12: syntax error
+stdin:13: syntax error
 table <444> { 1.2.3.4 }

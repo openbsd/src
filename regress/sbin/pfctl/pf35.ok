@@ -1,18 +1,3 @@
 intf = "lo0"
-developerhosts = "10.0.0.0/24"
-employeehosts = "10.0.1.0/24"
-altq on lo0 cbq( red ecn ) bandwidth 10Mb qlimit 100 tbrsize 5000 queue { std http mail ssh }
-oldqueue std bandwidth 10% qlimit 1 cbq( default ) 
-oldqueue http bandwidth 60% priority 2 cbq( red borrow ) { employees developers }
-oldqueue developers bandwidth 60% 
-oldqueue employees bandwidth 40% 
-oldqueue mail bandwidth 10% priority 0 cbq( red ecn borrow ) 
-oldqueue ssh bandwidth 20% cbq( borrow ) { ssh_interactive ssh_bulk }
-oldqueue ssh_interactive bandwidth 30% priority 7 
-oldqueue ssh_bulk bandwidth 70% priority 0 qlimit 60 
-block return out on lo0 inet all set ( queue std )
-pass out on lo0 inet proto tcp from 10.0.0.0/24 to any port = 80 flags S/SA set ( queue developers )
-pass out on lo0 inet proto tcp from 10.0.1.0/24 to any port = 80 flags S/SA set ( queue employees )
-pass out on lo0 inet proto tcp from any to any port = 22 flags S/SA tos 0x10 set ( queue ssh_interactive )
-pass out on lo0 inet proto tcp from any to any port = 22 flags S/SA tos 0x08 set ( queue ssh_bulk )
-pass out on lo0 inet proto tcp from any to any port = 25 flags S/SA set ( queue mail )
+pass out on lo0 inet proto tcp from any to any port = 22 flags S/SA tos 0x10
+pass out on lo0 inet proto tcp from any to any port = 22 flags S/SA tos 0x08

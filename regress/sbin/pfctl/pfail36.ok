@@ -1,2 +1,0 @@
-stdin:4: upperlimit already specified
-altq on lo0 hfsc bandwidth 10Mb tbrsize 1824 queue { eins }

@@ -1,6 +1,0 @@
-pfctl: the sum of the child bandwidth higher than parent "root_gif3"
-queue zwei already exists on interface gif3
-stdin:4: errors in queue definition
-altq on gif3 cbq bandwidth 100Kb tbrsize 1500 queue { eins zwei }
-oldqueue eins cbq( default ) { zwei }
-oldqueue zwei 

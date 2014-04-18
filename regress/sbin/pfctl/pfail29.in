@@ -1,3 +1,0 @@
-# altq spec without child queues, altq without scheduler spec
-
-altq on lo0 bandwidth 10Mb queue { nonexistent }

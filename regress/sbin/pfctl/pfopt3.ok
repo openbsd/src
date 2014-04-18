@@ -1,5 +1,0 @@
-ext_if = "lo0"
-altq on lo0 priq bandwidth 10Mb tbrsize 1824 queue { pri-low pri-med pri-high }
-oldqueue pri-low priority 0 
-oldqueue pri-med priq( default ) 
-oldqueue pri-high priority 2 
