@@ -92,13 +92,8 @@
 #  if defined(__i386) || defined(__x86_64)
 #   define RightRotate(x,s) ({u32 ret; asm ("rorl %1,%0":"=r"(ret):"I"(s),"0"(x):"cc"); ret; })
 #   define LeftRotate(x,s)  ({u32 ret; asm ("roll %1,%0":"=r"(ret):"I"(s),"0"(x):"cc"); ret; })
-#   if defined(B_ENDIAN) /* stratus.com does it */
-#    define GETU32(p)   (*(u32 *)(p))
-#    define PUTU32(p,v) (*(u32 *)(p)=(v))
-#   else
-#    define GETU32(p)   ({u32 r=*(const u32 *)(p); asm("bswapl %0":"=r"(r):"0"(r)); r; })
-#    define PUTU32(p,v) ({u32 r=(v); asm("bswapl %0":"=r"(r):"0"(r)); *(u32 *)(p)=r; })
-#   endif
+#   define GETU32(p)   ({u32 r=*(const u32 *)(p); asm("bswapl %0":"=r"(r):"0"(r)); r; })
+#   define PUTU32(p,v) ({u32 r=(v); asm("bswapl %0":"=r"(r):"0"(r)); *(u32 *)(p)=r; })
 #  elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
         defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define LeftRotate(x,s)  ({u32 ret; asm ("rlwinm %0,%1,%2,0,31":"=r"(ret):"r"(x),"I"(s)); ret; })
