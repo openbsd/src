@@ -575,6 +575,7 @@ bad:
 		}
 		EC_KEY_free(eckey);
 	}
+	ret = 0;
 end:
 	if (ec_p)
 		BN_free(ec_p);
