@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.76 2014/04/18 16:23:00 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.77 2014/04/18 16:26:47 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -713,29 +713,28 @@ main(int argc, char *argv[])
 			send_probe(++seq, hops, incflag, (struct sockaddr*)&to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				if ((i = packet_ok(&rcvmhdr, cc, seq,
-				    incflag))) {
-					if (!IN6_ARE_ADDR_EQUAL(&from.sin6_addr,
-					    &lastaddr)) {
-						print((struct sockaddr *)
-						    rcvmhdr.msg_name, cc,
-						    rcvpktinfo ?  inet_ntop(
-						    AF_INET6, &rcvpktinfo->
-						    ipi6_addr, hbuf,
-						    sizeof(hbuf)) : "?");
-						lastaddr = from.sin6_addr;
-					}
-					printf("  %g ms", deltaT(&t1, &t2));
-					if (ttl_flag)
-						printf(" (%u)", rcvhlim);
-
-					/* time exceeded in transit */
-					if (i == -1)
-						break;
-					icmp6_code(i - 1, &got_there,
-					    &unreachable);
-					break;
+				i = packet_ok(&rcvmhdr, cc, seq, incflag);
+				/* Skip short packet */
+				if (i == 0)
+					continue;
+				if (!IN6_ARE_ADDR_EQUAL(&from.sin6_addr,
+				    &lastaddr)) {
+					print((struct sockaddr *)
+					    rcvmhdr.msg_name, cc,
+					    rcvpktinfo ?  inet_ntop(AF_INET6,
+					    &rcvpktinfo->ipi6_addr, hbuf,
+					    sizeof(hbuf)) : "?");
+					lastaddr = from.sin6_addr;
 				}
+				printf("  %g ms", deltaT(&t1, &t2));
+				if (ttl_flag)
+					printf(" (%u)", rcvhlim);
+
+				/* time exceeded in transit */
+				if (i == -1)
+					break;
+				icmp6_code(i - 1, &got_there, &unreachable);
+				break;
 			}
 			if (cc == 0) {
 				printf(" *");
