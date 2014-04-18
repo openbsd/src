@@ -212,6 +212,3 @@ DSA *get_dsa2048()
 		return(NULL);
 	return(dsa);
 	}
-
-static const char rnd_seed[] = "string to make the random number generator think it has entropy";
-static int rnd_fake = 0;
