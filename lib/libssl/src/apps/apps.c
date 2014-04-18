@@ -1326,7 +1326,8 @@ make_config_name()
 	const char *t = X509_get_default_cert_area();
 	char *p;
 
-	asprintf(&p, "%s/openssl.cnf", t);
+	if (asprintf(&p, "%s/openssl.cnf", t) == -1)
+		return NULL;
 	return p;
 }
 

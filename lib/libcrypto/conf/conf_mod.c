@@ -551,7 +551,8 @@ CONF_get1_default_config_file(void)
 	file = getenv("OPENSSL_CONF");
 	if (file) 
 		return BUF_strdup(file);
-	asprintf(&file, "%s/openssl.cnf", X509_get_default_cert_area());
+	if (asprintf(&file, "%s/openssl.cnf", X509_get_default_cert_area()) == -1)
+		return (NULL);
 	return file;
 }
 
