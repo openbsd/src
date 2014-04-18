@@ -68,18 +68,17 @@
 #include <openssl/pem.h>
 
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
-	{
+{
 	X509_REQ *ret;
 	X509_REQ_INFO *ri;
 	int i;
 	EVP_PKEY *pktmp;
 
 	ret=X509_REQ_new();
-	if (ret == NULL)
-		{
+	if (ret == NULL) {
 		X509err(X509_F_X509_TO_X509_REQ,ERR_R_MALLOC_FAILURE);
 		goto err;
-		}
+	}
 
 	ri=ret->req_info;
 
@@ -96,32 +95,30 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	EVP_PKEY_free(pktmp);
 	if (!i) goto err;
 
-	if (pkey != NULL)
-		{
+	if (pkey != NULL) {
 		if (!X509_REQ_sign(ret,pkey,md))
 			goto err;
-		}
+	}
 	return(ret);
 err:
 	X509_REQ_free(ret);
 	return(NULL);
-	}
+}
 
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
-	{
+{
 	if ((req == NULL) || (req->req_info == NULL))
 		return(NULL);
 	return(X509_PUBKEY_get(req->req_info->pubkey));
-	}
+}
 
 int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
-	{
+{
 	EVP_PKEY *xk=NULL;
 	int ok=0;
 
 	xk=X509_REQ_get_pubkey(x);
-	switch (EVP_PKEY_cmp(xk, k))
-		{
+	switch (EVP_PKEY_cmp(xk, k)) {
 	case 1:
 		ok=1;
 		break;
@@ -133,26 +130,24 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 		break;
 	case -2:
 #ifndef OPENSSL_NO_EC
-		if (k->type == EVP_PKEY_EC)
-			{
+		if (k->type == EVP_PKEY_EC) {
 			X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
 			break;
-			}
+		}
 #endif
 #ifndef OPENSSL_NO_DH
-		if (k->type == EVP_PKEY_DH)
-			{
+		if (k->type == EVP_PKEY_DH) {
 			/* No idea */
 			X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
 			break;
-			}
+		}
 #endif
 	        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,X509_R_UNKNOWN_KEY_TYPE);
-		}
+	}
 
 	EVP_PKEY_free(xk);
 	return(ok);
-	}
+}
 
 /* It seems several organisations had the same idea of including a list of
  * extensions in a certificate request. There are at least two OIDs that are
@@ -184,7 +179,7 @@ void X509_REQ_set_extension_nids(int *nids)
 }
 
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
-	{
+{
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *ext = NULL;
 	int idx, *pnid;
@@ -192,8 +187,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 
 	if ((req == NULL) || (req->req_info == NULL) || !ext_nids)
 		return(NULL);
-	for (pnid = ext_nids; *pnid != NID_undef; pnid++)
-		{
+	for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
 		idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
 		if (idx == -1)
 			continue;
@@ -202,7 +196,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
 		else if(sk_ASN1_TYPE_num(attr->value.set))
 			ext = sk_ASN1_TYPE_value(attr->value.set, 0);
 		break;
-		}
+	}
 	if(!ext || (ext->type != V_ASN1_SEQUENCE))
 		return NULL;
 	p = ext->value.sequence->data;
@@ -235,11 +229,10 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	at = NULL;
 	attr->single = 0;
 	attr->object = OBJ_nid2obj(nid);
-	if (!req->req_info->attributes)
-		{
+	if (!req->req_info->attributes) {
 		if (!(req->req_info->attributes = sk_X509_ATTRIBUTE_new_null()))
 			goto err;
-		}
+	}
 	if(!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr)) goto err;
 	return 1;
 	err:

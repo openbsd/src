@@ -91,8 +91,7 @@ int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk, ASN1_OBJECT *obj,
 	if (lastpos < 0)
 		lastpos=0;
 	n=sk_X509_ATTRIBUTE_num(sk);
-	for ( ; lastpos < n; lastpos++)
-		{
+	for ( ; lastpos < n; lastpos++) {
 		ex=sk_X509_ATTRIBUTE_value(sk,lastpos);
 		if (OBJ_cmp(ex->object,obj) == 0)
 			return(lastpos);
@@ -124,18 +123,15 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
 	X509_ATTRIBUTE *new_attr=NULL;
 	STACK_OF(X509_ATTRIBUTE) *sk=NULL;
 
-	if (x == NULL)
-		{
+	if (x == NULL) {
 		X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_PASSED_NULL_PARAMETER);
 		goto err2;
-		} 
+	} 
 
-	if (*x == NULL)
-		{
+	if (*x == NULL) {
 		if ((sk=sk_X509_ATTRIBUTE_new_null()) == NULL)
 			goto err;
-		}
-	else
+	} else
 		sk= *x;
 
 	if ((new_attr=X509_ATTRIBUTE_dup(attr)) == NULL)
@@ -215,11 +211,10 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 	X509_ATTRIBUTE *ret;
 
 	obj=OBJ_nid2obj(nid);
-	if (obj == NULL)
-		{
+	if (obj == NULL) {
 		X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_NID,X509_R_UNKNOWN_NID);
 		return(NULL);
-		}
+	}
 	ret=X509_ATTRIBUTE_create_by_OBJ(attr,obj,atrtype,data,len);
 	if (ret == NULL) ASN1_OBJECT_free(obj);
 	return(ret);
@@ -230,14 +225,12 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 {
 	X509_ATTRIBUTE *ret;
 
-	if ((attr == NULL) || (*attr == NULL))
-		{
-		if ((ret=X509_ATTRIBUTE_new()) == NULL)
-			{
+	if ((attr == NULL) || (*attr == NULL)) {
+		if ((ret=X509_ATTRIBUTE_new()) == NULL) {
 			X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ,ERR_R_MALLOC_FAILURE);
 			return(NULL);
-			}
 		}
+	}
 	else
 		ret= *attr;
 
@@ -256,22 +249,21 @@ err:
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
 		const char *atrname, int type, const unsigned char *bytes, int len)
-	{
+{
 	ASN1_OBJECT *obj;
 	X509_ATTRIBUTE *nattr;
 
 	obj=OBJ_txt2obj(atrname, 0);
-	if (obj == NULL)
-		{
+	if (obj == NULL) {
 		X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_TXT,
 						X509_R_INVALID_FIELD_NAME);
 		ERR_add_error_data(2, "name=", atrname);
 		return(NULL);
-		}
+	}
 	nattr = X509_ATTRIBUTE_create_by_OBJ(attr,obj,type,bytes,len);
 	ASN1_OBJECT_free(obj);
 	return nattr;
-	}
+}
 
 int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
 {
@@ -310,12 +302,10 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 	if (attrtype == 0)
 		return 1;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
-	if ((len == -1) && !(attrtype & MBSTRING_FLAG))
-		{
+	if ((len == -1) && !(attrtype & MBSTRING_FLAG)) {
 		if (!ASN1_TYPE_set1(ttmp, attrtype, data))
 			goto err;
-		}
-	else
+	} else
 		ASN1_TYPE_set(ttmp, atype, stmp);
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
 	return 1;

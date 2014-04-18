@@ -63,7 +63,7 @@
 #include <openssl/x509.h>
 
 int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
-	{
+{
 	EVP_PKEY *pk;
 	int ret=0,i;
 
@@ -76,8 +76,7 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 
 	if (pk == NULL) return(0);
 
-	switch (pk->type)
-		{
+	switch (pk->type) {
 	case EVP_PKEY_RSA:
 		ret=EVP_PK_RSA|EVP_PKT_SIGN;
 /*		if (!sign only extension) */
@@ -98,14 +97,12 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 		break;
 	default:
 		break;
-		}
+	}
 
 	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	if (i && OBJ_find_sigid_algs(i, NULL, &i))
-		{
+	if (i && OBJ_find_sigid_algs(i, NULL, &i)) {
 
-		switch (i)
-			{
+		switch (i) {
 		case NID_rsaEncryption:
 		case NID_rsa:
 			ret|=EVP_PKS_RSA;
@@ -119,13 +116,13 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 			break;
 		default:
 			break;
-			}
 		}
+	}
 
 	if (EVP_PKEY_size(pk) <= 1024/8)/* /8 because it's 1024 bits we look
 					   for, not bytes */
 		ret|=EVP_PKT_EXP;
 	if(pkey==NULL) EVP_PKEY_free(pk);
 	return(ret);
-	}
+}
 

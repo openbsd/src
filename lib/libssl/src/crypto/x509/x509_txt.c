@@ -69,11 +69,10 @@
 #include <openssl/objects.h>
 
 const char *X509_verify_cert_error_string(long n)
-	{
+{
 	static char buf[100];
 
-	switch ((int)n)
-		{
+	switch ((int)n) {
 	case X509_V_OK:
 		return("ok");
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
@@ -187,7 +186,7 @@ const char *X509_verify_cert_error_string(long n)
 	default:
 		(void) snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);
-		}
 	}
+}
 
 

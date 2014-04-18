@@ -174,7 +174,8 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
-	} else trtmp = X509_TRUST_get0(idx);
+	} else
+		trtmp = X509_TRUST_get0(idx);
 
 	/* free existing name if dynamic */
 	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) free(trtmp->name);
@@ -208,15 +209,14 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 }
 
 static void trtable_free(X509_TRUST *p)
-	{
+{
 	if(!p) return;
-	if (p->flags & X509_TRUST_DYNAMIC) 
-		{
+	if (p->flags & X509_TRUST_DYNAMIC) {
 		if (p->flags & X509_TRUST_DYNAMIC_NAME)
 			free(p->name);
 		free(p);
-		}
 	}
+}
 
 void X509_TRUST_cleanup(void)
 {

@@ -69,7 +69,7 @@
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_X509,0,reason)
 
 static ERR_STRING_DATA X509_str_functs[]=
-	{
+{
 {ERR_FUNC(X509_F_ADD_CERT_DIR),	"ADD_CERT_DIR"},
 {ERR_FUNC(X509_F_BY_FILE_CTRL),	"BY_FILE_CTRL"},
 {ERR_FUNC(X509_F_CHECK_POLICY),	"CHECK_POLICY"},
@@ -116,10 +116,10 @@ static ERR_STRING_DATA X509_str_functs[]=
 {ERR_FUNC(X509_F_X509_TRUST_SET),	"X509_TRUST_set"},
 {ERR_FUNC(X509_F_X509_VERIFY_CERT),	"X509_verify_cert"},
 {0,NULL}
-	};
+};
 
 static ERR_STRING_DATA X509_str_reasons[]=
-	{
+{
 {ERR_REASON(X509_R_BAD_X509_FILETYPE)    ,"bad x509 filetype"},
 {ERR_REASON(X509_R_BASE64_DECODE_ERROR)  ,"base64 decode error"},
 {ERR_REASON(X509_R_CANT_CHECK_DH_KEY)    ,"cant check dh key"},
@@ -147,18 +147,17 @@ static ERR_STRING_DATA X509_str_reasons[]=
 {ERR_REASON(X509_R_WRONG_LOOKUP_TYPE)    ,"wrong lookup type"},
 {ERR_REASON(X509_R_WRONG_TYPE)           ,"wrong type"},
 {0,NULL}
-	};
+};
 
 #endif
 
 void ERR_load_X509_strings(void)
-	{
+{
 #ifndef OPENSSL_NO_ERR
 
-	if (ERR_func_error_string(X509_str_functs[0].error) == NULL)
-		{
+	if (ERR_func_error_string(X509_str_functs[0].error) == NULL) {
 		ERR_load_strings(0,X509_str_functs);
 		ERR_load_strings(0,X509_str_reasons);
-		}
-#endif
 	}
+#endif
+}
