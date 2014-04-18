@@ -543,27 +543,17 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 
 /* Return default config file name */
 
-char *CONF_get1_default_config_file(void)
-	{
+char *
+CONF_get1_default_config_file(void)
+{
 	char *file;
-	int len;
 
 	file = getenv("OPENSSL_CONF");
 	if (file) 
 		return BUF_strdup(file);
-
-	len = strlen(X509_get_default_cert_area());
-	len += strlen(OPENSSL_CONF);
-
-	file = malloc(len + 1);
-
-	if (!file)
-		return NULL;
-	BUF_strlcpy(file,X509_get_default_cert_area(),len + 1);
-	BUF_strlcat(file,OPENSSL_CONF,len + 1);
-
+	asprintf(&file, "%s/openssl.cnf", X509_get_default_cert_area());
 	return file;
-	}
+}
 
 /* This function takes a list separated by 'sep' and calls the
  * callback function giving the start and length of each member
