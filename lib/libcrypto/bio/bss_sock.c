@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include "cryptlib.h"
 #include <sys/socket.h>
 
