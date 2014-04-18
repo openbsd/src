@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.19 2013/11/20 20:46:47 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.20 2014/04/18 11:35:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -59,12 +59,12 @@ static char  **gargv;
 #define hextobin(c)	((c) >= 'A' && (c) <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
 
 #define PF(f, func) { \
-	if (fieldwidth) \
-		if (precision) \
+	if (havefieldwidth) \
+		if (haveprecision) \
 			(void)printf(f, fieldwidth, precision, func); \
 		else \
 			(void)printf(f, fieldwidth, func); \
-	else if (precision) \
+	else if (haveprecision) \
 		(void)printf(f, precision, func); \
 	else \
 		(void)printf(f, func); \
@@ -74,6 +74,7 @@ int
 main(int argc, char *argv[])
 {
 	char *fmt, *start;
+	int havefieldwidth, haveprecision;
 	int fieldwidth, precision;
 	char convch, nextch;
 	char *format;
@@ -128,18 +129,20 @@ main(int argc, char *argv[])
 					;
 				if (*fmt == '*') {
 					++fmt;
+					havefieldwidth = 1;
 					fieldwidth = getint();
 				} else
-					fieldwidth = 0;
+					havefieldwidth = 0;
 
 				/* skip to field precision */
 				for (; strchr(SKIP2, *fmt); ++fmt)
 					;
-				precision = 0;
+				haveprecision = 0;
 				if (*fmt == '.') {
 					++fmt;
 					if (*fmt == '*') {
 						++fmt;
+						haveprecision = 1;
 						precision = getint();
 					}
 					for (; strchr(SKIP2, *fmt); ++fmt)
