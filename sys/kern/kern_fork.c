@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.162 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.163 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -175,8 +175,9 @@ process_new(struct proc *p, struct process *parent, int flags)
 	    (caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy);
 
 	/* post-copy fixups */
-	pr->ps_ucred = parent->ps_ucred;
+	pr->ps_ucred = p->p_ucred;
 	crhold(pr->ps_ucred);
+	KASSERT(p->p_ucred->cr_ref >= 3); /* fork thr, new thr, new process */
 	pr->ps_limit->p_refcnt++;
 
 	/* bump references to the text vnode (for procfs) */
@@ -318,6 +319,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	    (caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero);
 	memcpy(&p->p_startcopy, &curp->p_startcopy,
 	    (caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy);
+	crhold(p->p_ucred);
 
 	/*
 	 * Initialize the timeouts.

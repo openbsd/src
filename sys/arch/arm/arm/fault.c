@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.15 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: fault.c,v 1.16 2014/04/18 11:51:16 guenther Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -255,8 +255,10 @@ data_abort_handler(trapframe_t *tf)
 	 * the MMU.
 	 */
 
-	if (user)
+	if (user) {
 		p->p_addr->u_pcb.pcb_tf = tf;
+		refreshcreds(p);
+	}
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of

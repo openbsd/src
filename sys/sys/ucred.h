@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucred.h,v 1.8 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: ucred.h,v 1.9 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
@@ -40,6 +40,9 @@
  */
 struct ucred {
 	u_int	cr_ref;			/* reference count */
+
+/* The following fields are all copied by crset() */
+#define	cr_startcopy	cr_uid
 	uid_t	cr_uid;			/* effective user id */
 	uid_t	cr_ruid;		/* Real user id. */
 	uid_t	cr_svuid;		/* Saved effective user id. */
@@ -68,6 +71,7 @@ struct xucred {
 #define SUSER_NOACCT	0x1	/* don't mark accounting flags */
 
 void		crfromxucred(struct ucred *, const struct xucred *);
+void		crset(struct ucred *, const struct ucred *);
 struct ucred	*crcopy(struct ucred *cr);
 struct ucred	*crdup(struct ucred *cr);
 void		crfree(struct ucred *cr);

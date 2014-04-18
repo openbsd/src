@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.38 2014/03/19 05:11:06 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.39 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -261,8 +261,8 @@
 #define	__END_HIDDEN_DECLS	__END_EXTERN_C
 #endif
 
-#define	__BEGIN_DECLS	__BEGIN_PUBLIC_DECLS
-#define	__END_DECLS	__END_PUBLIC_DECLS
+#define	__BEGIN_DECLS	__BEGIN_EXTERN_C
+#define	__END_DECLS	__END_EXTERN_C
 
 /*
  * "The nice thing about standards is that there are so many to choose from."

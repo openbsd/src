@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.66 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.67 2014/04/18 11:51:17 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -59,8 +59,6 @@ int	systraceopen(dev_t, int, int, struct proc *);
 int	systraceclose(dev_t, int, int, struct proc *);
 int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-uid_t	systrace_seteuid(struct proc *,  uid_t);
-gid_t	systrace_setegid(struct proc *,  gid_t);
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *p);
@@ -117,9 +115,7 @@ struct str_process {
 	u_int16_t seqnr;	/* expected reply sequence number */
 
 	uid_t seteuid;
-	uid_t saveuid;
 	gid_t setegid;
-	gid_t savegid;
 
 	int isscript;
 	char scriptname[MAXPATHLEN];
@@ -666,10 +662,9 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	struct str_policy *strpolicy;
 	struct fsystrace *fst = NULL;
 	struct emul *oldemul;
-	struct ucred *uc;
-	uid_t olduid;
-	gid_t oldgid;
 	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
+	uid_t old_ruid = p->p_ucred->cr_ruid;
+	gid_t old_rgid = p->p_ucred->cr_rgid;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -701,8 +696,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		maycontrol = 1;
 		issuser = 1;
 	} else if (!ISSET(pr->ps_flags, PS_SUGID | PS_SUGIDEXEC)) {
-		maycontrol = fst->p_ruid == p->p_ucred->cr_ruid &&
-		    fst->p_rgid == p->p_ucred->cr_rgid;
+		maycontrol = fst->p_ruid == old_ruid &&
+		    fst->p_rgid == old_rgid;
 	}
 
 	if (!maycontrol) {
@@ -787,41 +782,43 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		goto out_unlock;
 
 	oldemul = pr->ps_emul;
-	uc = p->p_ucred;
-	olduid = uc->cr_ruid;
-	oldgid = uc->cr_rgid;
 		
 	/* Elevate privileges as desired */
-	if (issuser) {
-		if (ISSET(strp->flags, STR_PROC_SETEUID))
-			strp->saveuid = systrace_seteuid(p, strp->seteuid);
-		if (ISSET(strp->flags, STR_PROC_SETEGID))
-			strp->savegid = systrace_setegid(p, strp->setegid);
-	} else
-		CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
+	if (issuser && ISSET(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID)) {
+		struct ucred *uc, *newcred;
+
+		uc = p->p_ucred;
+		newcred = NULL;
+		if (ISSET(strp->flags, STR_PROC_SETEUID) &&
+		    uc->cr_uid != strp->seteuid) {
+			newcred = crdup(uc);
+			newcred->cr_uid = strp->seteuid;
+		}
+		if (ISSET(strp->flags, STR_PROC_SETEGID) &&
+		    uc->cr_gid != strp->setegid) {
+			if (newcred == NULL)
+				newcred = crdup(uc);
+			newcred->cr_gid = strp->setegid;
+		}
+		if (newcred != NULL) {
+			p->p_ucred = newcred;
+			crfree(uc);
+			atomic_setbits_int(&pr->ps_flags, PS_SUGID);
+		}
+	}
 
 	rw_exit_write(&fst->lock);
 				
 	error = (*callp->sy_call)(p, v, retval);
+
+	/* reset the credentials on the thread */
+	refreshcreds(p);
 
 	/* Return to old privileges */
 	systrace_lock();
 	if ((strp = p->p_systrace) == NULL) {
 		systrace_unlock();
 		return (error);
-	}
-
-	if (issuser) {
-		if (ISSET(strp->flags, STR_PROC_SETEUID)) {
-			if (uc->cr_uid == strp->seteuid)
-				systrace_seteuid(p, strp->saveuid);
-			CLR(strp->flags, STR_PROC_SETEUID);
-		}
-		if (ISSET(strp->flags, STR_PROC_SETEGID)) {
-			if (uc->cr_gid == strp->setegid)
-				systrace_setegid(p, strp->savegid);
-			CLR(strp->flags, STR_PROC_SETEGID);
-		}
 	}
 
 	systrace_replacefree(strp);
@@ -858,8 +855,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	}
 
 	/* Report if effective uid or gid changed */
-	if (olduid != p->p_ucred->cr_ruid ||
-	    oldgid != p->p_ucred->cr_rgid) {
+	if (old_ruid != pr->ps_ucred->cr_ruid ||
+	    old_rgid != pr->ps_ucred->cr_rgid) {
 		systrace_msg_ugid(fst, strp);
 
 		REACQUIRE_LOCK;
@@ -878,44 +875,6 @@ out_unlock:
 	rw_exit_write(&fst->lock);
 out:
 	return (error);
-}
-
-uid_t
-systrace_seteuid(struct proc *p,  uid_t euid)
-{
-	struct ucred *uc = p->p_ucred;
-	uid_t oeuid = uc->cr_uid;
-
-	if (oeuid == euid)
-		return (oeuid);
-
-	/*
-	 * Copy credentials so other references do not see our changes.
-	 */
-	p->p_ucred = uc = crcopy(uc);
-	uc->cr_uid = euid;
-	atomic_setbits_int(&p->p_p->ps_flags, PS_SUGID);
-
-	return (oeuid);
-}
-
-gid_t
-systrace_setegid(struct proc *p,  gid_t egid)
-{
-	struct ucred *uc = p->p_ucred;
-	gid_t oegid = uc->cr_gid;
-
-	if (oegid == egid)
-		return (oegid);
-
-	/*
-	 * Copy credentials so other references do not see our changes.
-	 */
-	p->p_ucred = uc = crcopy(uc);
-	uc->cr_gid = egid;
-	atomic_setbits_int(&p->p_p->ps_flags, PS_SUGID);
-
-	return (oegid);
 }
 
 /* Called with fst locked */
@@ -1201,15 +1160,18 @@ int
 systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
-	struct proc *proc, *p = curproc;
+	struct proc *p = curproc;
+	struct proc *t;				/* target thread */
+	struct process *tr;			/* target process */
 	struct str_process *newstrp;
 
-	if ((proc = pfind(pid)) == NULL || (proc->p_flag & P_THREAD)) {
+	if ((t = pfind(pid)) == NULL || (t->p_flag & P_THREAD)) {
 		error = ESRCH;
 		goto out;
 	}
+	tr = t->p_p;
 
-	if (ISSET(proc->p_p->ps_flags, PS_INEXEC)) {
+	if (ISSET(tr->ps_flags, PS_INEXEC)) {
 		error = EAGAIN;
 		goto out;
 	}
@@ -1218,7 +1180,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 * You can't attach to a process if:
 	 *	(1) it's the process that's doing the attaching,
 	 */
-	if (proc->p_p == p->p_p) {
+	if (tr == p->p_p) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1226,7 +1188,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(2) it's a system process
 	 */
-	if (ISSET(proc->p_flag, P_SYSTEM)) {
+	if (ISSET(t->p_flag, P_SYSTEM)) {
 		error = EPERM;
 		goto out;
 	}
@@ -1234,7 +1196,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(3) it's being traced already
 	 */
-	if (ISSET(proc->p_flag, P_SYSTRACE)) {
+	if (ISSET(t->p_flag, P_SYSTRACE)) {
 		error = EBUSY;
 		goto out;
 	}
@@ -1250,8 +1212,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
-	if ((proc->p_ucred->cr_ruid != p->p_ucred->cr_ruid ||
-		ISSET(proc->p_p->ps_flags, PS_SUGID | PS_SUGIDEXEC)) &&
+	if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
+		ISSET(tr->ps_flags, PS_SUGID | PS_SUGIDEXEC)) &&
 	    (error = suser(p, 0)) != 0)
 		goto out;
 
@@ -1261,13 +1223,13 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *          compiled with permanently insecure mode turned
 	 *	    on.
 	 */
-	if ((proc->p_p->ps_pid == 1) && (securelevel > -1)) {
+	if ((tr->ps_pid == 1) && (securelevel > -1)) {
 		error = EPERM;
 		goto out;
 	}
 
 	newstrp = systrace_getproc();
-	systrace_insert_process(fst, proc, newstrp);
+	systrace_insert_process(fst, t, newstrp);
 
  out:
 	return (error);
@@ -1713,10 +1675,10 @@ int
 systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 {
 	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
-	struct proc *p = strp->proc;
+	struct ucred *uc = strp->proc->p_p->ps_ucred;
 
-	msg_ugid->uid = p->p_ucred->cr_ruid;
-	msg_ugid->gid = p->p_ucred->cr_rgid;
+	msg_ugid->uid = uc->cr_ruid;
+	msg_ugid->gid = uc->cr_rgid;
 
 	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
 }

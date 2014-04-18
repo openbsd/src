@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.140 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.141 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -595,13 +595,25 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	} else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGID);
 
-	/* reset the saved ugids */
+	/*
+	 * Reset the saved ugids and update the process's copy of the
+	 * creds if the creds have been changed
+	 */
 	if (cred->cr_uid != cred->cr_svuid ||
 	    cred->cr_gid != cred->cr_svgid) {
 		/* make sure we have unshared ucreds */
 		p->p_ucred = cred = crcopy(cred);
 		cred->cr_svuid = cred->cr_uid;
 		cred->cr_svgid = cred->cr_gid;
+	}
+
+	if (pr->ps_ucred != cred) {
+		struct ucred *ocred;
+
+		ocred = pr->ps_ucred;
+		crhold(cred);
+		pr->ps_ucred = cred;
+		crfree(ocred);
 	}
 
 	if (pr->ps_flags & PS_SUGIDEXEC) {

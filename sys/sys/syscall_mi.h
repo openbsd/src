@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.2 2012/08/07 23:22:38 guenther Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.3 2014/04/18 11:51:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,6 +54,9 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 {
 	int lock = !(callp->sy_flags & SY_NOLOCK);
 	int error;
+
+	/* refresh the thread's cache of the process's creds */
+	refreshcreds(p);
 
 #ifdef SYSCALL_DEBUG
 	KERNEL_LOCK();

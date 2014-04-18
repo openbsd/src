@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.71 2014/03/30 21:54:48 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.72 2014/04/18 11:51:16 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -244,8 +244,10 @@ trap(a0, a1, a2, entry, framep)
 	ucode = 0;
 	v = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-	if (user)
+	if (user) {
 		p->p_md.md_tf = framep;
+		refreshcreds(p);
+	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:

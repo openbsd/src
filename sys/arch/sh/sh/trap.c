@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -173,6 +173,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 			goto do_panic;
 		KDASSERT(p->p_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
+		refreshcreds(p);
 	}
 
 	switch (expevt) {
@@ -336,6 +337,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(p->p_md.md_regs == tf);
+		refreshcreds(p);
 	} else {
 		KDASSERT(p == NULL ||		/* idle */
 		    p == &proc0 ||		/* kthread */
@@ -479,6 +481,7 @@ ast(struct proc *p, struct trapframe *tf)
 		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
 
+		refreshcreds(p);
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);
 		}

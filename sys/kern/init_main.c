@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.210 2014/03/31 19:37:15 kettenis Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.211 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -294,6 +294,9 @@ main(void *framep)
 	/* Create credentials. */
 	pr->ps_ucred = crget();
 	pr->ps_ucred->cr_ngroups = 1;	/* group 0 */
+
+	p->p_ucred = pr->ps_ucred;	/* prime the thread's cache */
+	crhold(p->p_ucred);
 
 	/* Initialize signal state for process 0. */
 	signal_init();

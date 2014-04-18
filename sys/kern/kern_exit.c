@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.139 2014/04/17 14:52:50 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.140 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -411,6 +411,7 @@ exit2(struct proc *p)
 void
 proc_free(struct proc *p)
 {
+	crfree(p->p_ucred);
 	pool_put(&proc_pool, p);
 	nthreads--;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.183 2014/03/31 22:20:15 matthew Exp $	*/
+/*	$OpenBSD: proc.h,v 1.184 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -260,7 +260,6 @@ struct proc {
 	/* substructures: */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
 	struct	vmspace *p_vmspace;	/* Address space. */
-#define	p_ucred		p_p->ps_ucred
 #define	p_rlimit	p_p->ps_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
@@ -321,6 +320,7 @@ struct proc {
 # define TCB_GET(p)		((p)->p_tcb)
 #endif
 
+	struct	ucred *p_ucred;		/* cached credentials */
 	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
 
 	u_long	p_prof_addr;	/* tmp storage for profiling addr until AST */
@@ -488,6 +488,17 @@ void	cpu_exit(struct proc *);
 int	fork1(struct proc *, int, void *, pid_t *, void (*)(void *),
 	    void *, register_t *, struct proc **);
 int	groupmember(gid_t, struct ucred *);
+void	dorefreshcreds(struct process *, struct proc *);
+
+static inline void
+refreshcreds(struct proc *p)
+{
+	struct process *pr = p->p_p;
+
+	/* this is an unlocked access to ps_ucred, but the result is benign */
+	if (pr->ps_ucred != p->p_ucred)
+		dorefreshcreds(pr, p);
+}
 
 enum single_thread_mode {
 	SINGLE_SUSPEND,		/* other threads to stop wherever they are */

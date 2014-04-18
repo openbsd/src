@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2014/03/30 21:54:49 guenther Exp $     */
+/*	$OpenBSD: trap.c,v 1.51 2014/04/18 11:51:17 guenther Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -110,6 +110,7 @@ arithflt(frame)
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
 		p->p_addr->u_pcb.framep = frame;
+		refreshcreds(p);
 	}
 
 	type&=~(T_WRITE|T_PTEFETCH);

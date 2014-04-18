@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2014/04/18 11:51:17 guenther Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -286,6 +286,7 @@ trap(type, psr, pc, tf)
 		p = &proc0;
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
+	refreshcreds(p);
 
 	switch (type) {
 

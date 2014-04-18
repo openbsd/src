@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -254,6 +254,7 @@ trap(struct trapframe *frame)
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
+		refreshcreds(p);
 	}
 
 	switch (type) {

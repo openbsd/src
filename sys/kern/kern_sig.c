@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.163 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.164 2014/04/18 11:51:17 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 struct timeout proc_stop_to;
 
-int cansignal(struct process *, struct process *, int);
+int cansignal(struct proc *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
 
@@ -87,9 +87,10 @@ struct pool sigacts_pool;	/* memory pool for sigacts structures */
  * Can thread p, send the signal signum to process qr?
  */
 int
-cansignal(struct process *pr, struct process *qr, int signum)
+cansignal(struct proc *p, struct process *qr, int signum)
 {
-	struct ucred *uc = pr->ps_ucred;
+	struct process *pr = p->p_p;
+	struct ucred *uc = p->p_ucred;
 	struct ucred *quc = qr->ps_ucred;
 
 	if (uc->cr_uid == 0)
@@ -589,7 +590,7 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
 				return (ESRCH);
-			if (!cansignal(cp->p_p, p->p_p, signum))
+			if (!cansignal(cp, p->p_p, signum))
 				return (EPERM);
 		}
 
@@ -628,7 +629,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			p = pr->ps_mainproc;
 			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    pr == cp->p_p || !cansignal(cp->p_p, pr, signum))
+			    pr == cp->p_p || !cansignal(cp, pr, signum))
 				continue;
 			nfound++;
 			if (signum)
@@ -648,7 +649,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist) {
 			p = pr->ps_mainproc;
 			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    !cansignal(cp->p_p, pr, signum))
+			    !cansignal(cp, pr, signum))
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
