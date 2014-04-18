@@ -928,6 +928,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	if (EVP_DigestSignUpdate(&mctx,abuf,alen) <= 0)
 		goto err;
 	free(abuf);
+	abuf = NULL;
 	if (EVP_DigestSignFinal(&mctx, NULL, &siglen) <= 0)
 		goto err;
 	abuf = malloc(siglen);
@@ -950,8 +951,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	return 1;
 
 	err:
-	if (abuf)
-		free(abuf);
+	free(abuf);
 	EVP_MD_CTX_cleanup(&mctx);
 	return 0;
 
