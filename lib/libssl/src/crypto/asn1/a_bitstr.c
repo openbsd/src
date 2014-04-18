@@ -69,7 +69,7 @@ ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 int
 i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 {
-	int ret, j,bits, len;
+	int ret, j, bits, len;
 	unsigned char *p, *d;
 
 	if (a == NULL)
@@ -198,7 +198,7 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	if (a == NULL)
 		return 0;
 
-	a->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear, set on write */
+	a->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07); /* clear, set on write */
 
 	if ((a->length < (w + 1)) || (a->data == NULL)) {
 		if (!value)
