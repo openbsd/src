@@ -258,8 +258,13 @@ main(int Argc, char *ARGV[])
 	p = getenv("OPENSSL_CONF");
 	if (p == NULL)
 		p = getenv("SSLEAY_CONF");
-	if (p == NULL)
+	if (p == NULL) {
 		p = to_free = make_config_name();
+		if (p == NULL) {
+			BIO_printf(bio_err, "error making config file name\n");
+			goto end;
+		}
+	}
 
 	default_config_file = p;
 
