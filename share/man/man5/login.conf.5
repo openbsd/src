@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.52 2014/02/18 22:54:14 tedu Exp $
+.\" $OpenBSD: login.conf.5,v 1.53 2014/04/18 22:04:54 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: February 18 2014 $
+.Dd $Mdocdate: April 18 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -50,12 +50,10 @@ as well as session resource limits and environment setup.
 While designed primarily for the
 .Xr login 1
 program,
-it is also used by other programs, e.g.,
+it is also used by other programs, such as
 .Xr ftpd 8 ,
 to determine what means of authentication are available.
-It is also used by programs, e.g.,
-.Xr rshd 8 ,
-which need to set up a user environment.
+It is also used by programs which need to set up a user environment.
 .Pp
 A special record,
 .Dq default ,
