@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.70 2014/04/18 15:58:43 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.71 2014/04/18 16:00:38 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -269,18 +269,14 @@
 #endif
 
 /*
- * format of a (udp) probe packet.
+ * Format of the data in a (udp) probe packet.
  */
-struct tv32 {
-	u_int32_t tv32_sec;
-	u_int32_t tv32_usec;
-};
-
 struct opacket {
 	u_char seq;		/* sequence number of this packet */
-	u_char hops;		/* hop limit of the packet */
+	u_int8_t hops;		/* hop limit of the packet */
 	u_char pad[2];
-	struct tv32 tv;		/* time packet left */
+	u_int32_t sec;		/* time packet left */
+	u_int32_t usec;
 } __packed;
 
 u_char	packet[512];		/* last inbound (icmp) packet */
@@ -549,7 +545,7 @@ main(int argc, char *argv[])
 		datalen = (int)l;
 	}
 	if (useicmp)
-		minlen = ICMP6ECHOLEN + sizeof(struct tv32);
+		minlen = ICMP6ECHOLEN + sizeof(struct opacket);
 	else
 		minlen = sizeof(struct opacket);
 	if (datalen < minlen)
@@ -817,7 +813,7 @@ void
 build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 {
 	struct timeval tv;
-	struct tv32 tv32;
+	struct opacket *op;
 	int i;
 
 	i = hops;
@@ -831,8 +827,6 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 	else
 		((struct sockaddr_in6*)to)->sin6_port = htons(port);
 	(void) gettimeofday(&tv, NULL);
-	tv32.tv32_sec = htonl(tv.tv_sec);
-	tv32.tv32_usec = htonl(tv.tv_usec);
 
 	if (useicmp) {
 		struct icmp6_hdr *icp = (struct icmp6_hdr *)outpacket;
@@ -842,15 +836,13 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 		icp->icmp6_cksum = 0;
 		icp->icmp6_id = ident;
 		icp->icmp6_seq = htons(seq);
-		bcopy(&tv32, ((u_int8_t *)outpacket + ICMP6ECHOLEN),
-		    sizeof tv32);
-	} else {
-		struct opacket *op = (struct opacket *)outpacket;
-
-		op->seq = seq;
-		op->hops = hops;
-		bcopy(&tv32, &op->tv, sizeof tv32);
-	}
+		op = (struct opacket *)(outpacket + ICMP6ECHOLEN);
+	} else
+		op = (struct opacket *)outpacket;
+	op->seq = seq;
+	op->hops = hops;
+	op->sec = htonl(tv.tv_sec);
+	op->usec = htonl(tv.tv_usec);
 }
 
 void
