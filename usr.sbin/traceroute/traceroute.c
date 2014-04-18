@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.108 2014/04/18 17:00:07 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.109 2014/04/18 17:01:06 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -501,6 +501,12 @@ main(int argc, char *argv[])
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
+	ident = getpid() & 0xffff;
+	tmprnd = arc4random();
+	sec_perturb = (tmprnd & 0x80000000) ? -(tmprnd & 0x7ff) :
+	    (tmprnd & 0x7ff);
+	usec_perturb = arc4random();
+
 	(void) memset(&to, 0, sizeof(struct sockaddr));
 	to.sin_family = AF_INET;
 	if (inet_aton(*argv, &to.sin_addr) != 0)
@@ -593,12 +599,6 @@ main(int argc, char *argv[])
 	ip->ip_p = proto;
 	ip->ip_v = IPVERSION;
 	ip->ip_tos = tos;
-
-	ident = getpid() & 0xffff;
-	tmprnd = arc4random();
-	sec_perturb = (tmprnd & 0x80000000) ? -(tmprnd & 0x7ff) :
-	    (tmprnd & 0x7ff);
-	usec_perturb = arc4random();
 
 	if (options & SO_DEBUG)
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
