@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.83 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: pf.4,v 1.84 2014/04/18 11:18:40 henning Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: April 18 2014 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -88,11 +88,6 @@ commands, available through
 Start the packet filter.
 .It Dv DIOCSTOP
 Stop the packet filter.
-.It Dv DIOCSTARTALTQ
-Start the ALTQ bandwidth control system (see
-.Xr altq 9 ) .
-.It Dv DIOCSTOPALTQ
-Stop the ALTQ bandwidth control system.
 .It Dv DIOCADDRULE Fa "struct pfioc_rule *pr"
 .Bd -literal
 struct pfioc_rule {
@@ -127,16 +122,6 @@ struct pfioc_queue {
 	u_int32_t		ticket;
 	u_int			nr;
 	struct pf_queuespec	queue;
-};
-.Ed
-.It Dv DIOCADDALTQ Fa "struct pfioc_altq *pa"
-Add an ALTQ discipline or queue.
-.Bd -literal
-struct pfioc_altq {
-	u_int32_t	action;
-	u_int32_t	ticket;
-	u_int32_t	nr;
-	struct pf_altq  altq;
 };
 .Ed
 .It Dv DIOCGETRULES Fa "struct pfioc_rule *pr"
@@ -188,42 +173,6 @@ struct pfioc_qstats {
 	struct pf_queuespec	 queue;
 	void			*buf;
 	int		 	 nbytes;
-};
-.Ed
-.Pp
-This call fills in a pointer to the buffer of statistics
-.Va buf ,
-of length
-.Va nbytes ,
-for the queue specified by
-.Va nr .
-.It Dv DIOCGETALTQS Fa "struct pfioc_altq *pa"
-Get a
-.Va ticket
-for subsequent
-.Dv DIOCGETALTQ
-calls and the number
-.Va nr
-of queues in the active list.
-.It Dv DIOCGETALTQ Fa "struct pfioc_altq *pa"
-Get the queueing discipline
-.Va altq
-by its number
-.Va nr
-using the
-.Va ticket
-obtained through a preceding
-.Dv DIOCGETALTQS
-call.
-.It Dv DIOCGETALTQSTATS Fa "struct pfioc_altqstats *pq"
-Get the statistics on an ALTQ queue.
-.Bd -literal
-struct pfioc_altqstats {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	void		*buf;
-	int		 nbytes;
-	u_int8_t	 scheduler;
 };
 .Ed
 .Pp
@@ -426,7 +375,6 @@ indicates the rule number against which
 or
 .Dv PF_CHANGE_REMOVE
 actions are applied.
-.\" It Dv DIOCCHANGEALTQ Fa "struct pfioc_altq *pcr"
 .It Dv DIOCSETTIMEOUT Fa "struct pfioc_tm *pt"
 .Bd -literal
 struct pfioc_tm {
@@ -823,8 +771,6 @@ can be one of the following:
 .Bl -tag -width PF_TRANS_RULESET -offset ind -compact
 .It Dv PF_TRANS_RULESET
 Filter rules.
-.It Dv PF_TRANS_ALTQ
-ALTQ disciplines.
 .It Dv PF_TRANS_TABLE
 Address tables.
 .El
@@ -1143,7 +1089,6 @@ main(int argc, char *argv[])
 .Xr pfsync 4 ,
 .Xr pf.conf 5 ,
 .Xr pfctl 8 ,
-.Xr altq 9
 .Sh HISTORY
 The
 .Nm
