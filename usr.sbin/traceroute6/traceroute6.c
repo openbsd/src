@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.71 2014/04/18 16:00:38 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.72 2014/04/18 16:02:08 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -271,7 +271,7 @@
 /*
  * Format of the data in a (udp) probe packet.
  */
-struct opacket {
+struct packetdata {
 	u_char seq;		/* sequence number of this packet */
 	u_int8_t hops;		/* hop limit of the packet */
 	u_char pad[2];
@@ -545,9 +545,9 @@ main(int argc, char *argv[])
 		datalen = (int)l;
 	}
 	if (useicmp)
-		minlen = ICMP6ECHOLEN + sizeof(struct opacket);
+		minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
 	else
-		minlen = sizeof(struct opacket);
+		minlen = sizeof(struct packetdata);
 	if (datalen < minlen)
 		datalen = minlen;
 	else if (datalen >= MAXPACKET) {
@@ -813,7 +813,7 @@ void
 build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 {
 	struct timeval tv;
-	struct opacket *op;
+	struct packetdata *op;
 	int i;
 
 	i = hops;
@@ -836,9 +836,9 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 		icp->icmp6_cksum = 0;
 		icp->icmp6_id = ident;
 		icp->icmp6_seq = htons(seq);
-		op = (struct opacket *)(outpacket + ICMP6ECHOLEN);
+		op = (struct packetdata *)(outpacket + ICMP6ECHOLEN);
 	} else
-		op = (struct opacket *)outpacket;
+		op = (struct packetdata *)outpacket;
 	op->seq = seq;
 	op->hops = hops;
 	op->sec = htonl(tv.tv_sec);
