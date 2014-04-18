@@ -433,10 +433,11 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
 			derlst = malloc(sk_ASN1_VALUE_num(sk)
 						* sizeof(*derlst));
 			tmpdat = malloc(skcontlen);
-			if (!derlst || !tmpdat)
+			if (!derlst || !tmpdat) {
 				free(derlst);
 				free(tmpdat);
 				return 0;
+			}
 		}
 	}
 	/* If not sorting just output each item */
