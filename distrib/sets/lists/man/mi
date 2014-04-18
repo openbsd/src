@@ -124,7 +124,6 @@
 ./usr/share/man/man1/basename.1
 ./usr/share/man/man1/batch.1
 ./usr/share/man/man1/bc.1
-./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/biff.1
 ./usr/share/man/man1/c2ph.1
 ./usr/share/man/man1/cal.1
@@ -2777,7 +2776,6 @@
 ./usr/share/man/man8/rpcinfo.8
 ./usr/share/man/man8/rquotad.8
 ./usr/share/man/man8/rrestore.8
-./usr/share/man/man8/rshd.8
 ./usr/share/man/man8/rtadvd.8
 ./usr/share/man/man8/rtsol.8
 ./usr/share/man/man8/rtsold.8

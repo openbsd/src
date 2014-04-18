@@ -197,7 +197,6 @@
 ./usr/bin/basename
 ./usr/bin/batch
 ./usr/bin/bc
-./usr/bin/bdes
 ./usr/bin/bgplgsh
 ./usr/bin/biff
 ./usr/bin/c2ph
@@ -2514,7 +2513,6 @@
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd
 ./usr/libexec/rpc.rwalld
-./usr/libexec/rshd
 ./usr/libexec/security
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/makemap
