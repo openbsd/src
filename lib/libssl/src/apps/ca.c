@@ -195,48 +195,48 @@ certify(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
     char *enddate, long days, int batch, char *ext_sect, CONF * conf,
     int verbose, unsigned long certopt, unsigned long nameopt,
     int default_op, int ext_copy, int selfsign);
-	static int certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
-     const EVP_MD * dgst, 
+static int certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
+    const EVP_MD * dgst, 
     STACK_OF(OPENSSL_STRING) * sigopts,
     STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
     char *enddate, long days, int batch, char *ext_sect, CONF * conf,
     int verbose, unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy, ENGINE * e);
-	static int certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
+static int certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
      const EVP_MD * dgst, 
     STACK_OF(OPENSSL_STRING) * sigopts,
     STACK_OF(CONF_VALUE) * policy, CA_DB * db, BIGNUM * serial, char *subj,
     unsigned long chtype, int multirdn, int email_dn, char *startdate,
     char *enddate, long days, char *ext_sect, CONF * conf, int verbose,
     unsigned long certopt, unsigned long nameopt, int default_op, int ext_copy);
-	static void write_new_certificate(BIO * bp, X509 * x, int output_der, int notext);
-	static int do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
+static void write_new_certificate(BIO * bp, X509 * x, int output_der, int notext);
+static int do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
     STACK_OF(OPENSSL_STRING) * sigopts, STACK_OF(CONF_VALUE) * policy, CA_DB * db,
     BIGNUM * serial, char *subj, unsigned long chtype, int multirdn,
     int email_dn, char *startdate, char *enddate, long days, int batch,
     int verbose, X509_REQ * req, char *ext_sect, CONF * conf,
     unsigned long certopt, unsigned long nameopt, int default_op,
     int ext_copy, int selfsign);
-	static int do_revoke(X509 * x509, CA_DB * db, int ext, char *extval);
-	static int get_certificate_status(const char *ser_status, CA_DB * db);
-	static int do_updatedb(CA_DB * db);
-	static int check_time_format(const char *str);
-	char *make_revocation_str(int rev_type, char *rev_arg);
-	int make_revoked(X509_REVOKED * rev, const char *str);
-	int old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str);
-	static CONF *conf = NULL;
-	static CONF *extconf = NULL;
-	static char *section = NULL;
+static int do_revoke(X509 * x509, CA_DB * db, int ext, char *extval);
+static int get_certificate_status(const char *ser_status, CA_DB * db);
+static int do_updatedb(CA_DB * db);
+static int check_time_format(const char *str);
+char *make_revocation_str(int rev_type, char *rev_arg);
+int make_revoked(X509_REVOKED * rev, const char *str);
+int old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str);
+static CONF *conf = NULL;
+static CONF *extconf = NULL;
+static char *section = NULL;
 
-	static int preserve = 0;
-	static int msie_hack = 0;
+static int preserve = 0;
+static int msie_hack = 0;
 
 
-	int ca_main(int, char **);
+int ca_main(int, char **);
 
-	int
-	 ca_main(int argc, char **argv)
+int
+ca_main(int argc, char **argv)
 {
 	ENGINE *e = NULL;
 	char *key = NULL, *passargin = NULL;
