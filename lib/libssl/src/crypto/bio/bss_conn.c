@@ -65,7 +65,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#ifndef OPENSSL_NO_SOCK
 
 #define SOCKET_PROTOCOL IPPROTO_TCP
 
@@ -611,4 +610,3 @@ BIO_new_connect(char *str)
 	}
 }
 
-#endif

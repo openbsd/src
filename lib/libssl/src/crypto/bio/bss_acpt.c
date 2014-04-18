@@ -63,7 +63,6 @@
 #include <openssl/bio.h>
 #include <sys/socket.h>
 
-#ifndef OPENSSL_NO_SOCK
 
 #define SOCKET_PROTOCOL IPPROTO_TCP
 
@@ -460,4 +459,3 @@ BIO_new_accept(char *str)
 	}
 }
 
-#endif

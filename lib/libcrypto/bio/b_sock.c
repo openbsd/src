@@ -68,7 +68,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#ifndef OPENSSL_NO_SOCK
 
 #include <openssl/dso.h>
 
@@ -599,4 +598,3 @@ BIO_socket_nbio(int s, int mode)
 #endif
 	return (ret == 0);
 }
-#endif
