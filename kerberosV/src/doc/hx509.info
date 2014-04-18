@@ -1,4 +1,4 @@
-Detta är hx509.info, skapad av makeinfo version 4.8 från hx509.texi.
+This is hx509.info, produced by makeinfo version 4.8 from hx509.texi.
 
 INFO-DIR-SECTION Security
 START-INFO-DIR-ENTRY
@@ -11,7 +11,7 @@ File: hx509.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 Heimdal
 *******
 
-This manual is for version 1.5.2 of hx509.
+This manual is for version 1.5.3 of hx509.
 
 * Menu:
 
@@ -599,19 +599,19 @@ File: hx509.info,  Node: How to use the PKCS11 module,  Prev: Software PKCS 11 m
 
 
 Tag Table:
-Node: Top203
-Node: Introduction799
-Node: What is X.509 ?2248
-Node: Setting up a CA6206
-Node: Creating a CA certificate7476
-Node: Issuing certificates9917
-Node: Issuing CRLs12460
-Node: Application requirements13087
-Node: CMS signing and encryption18448
-Node: CMS background18799
-Node: Certificate matching18955
-Node: Matching syntax19209
-Node: Software PKCS 11 module19766
-Node: How to use the PKCS11 module20285
+Node: Top202
+Node: Introduction798
+Node: What is X.509 ?2247
+Node: Setting up a CA6205
+Node: Creating a CA certificate7475
+Node: Issuing certificates9916
+Node: Issuing CRLs12459
+Node: Application requirements13086
+Node: CMS signing and encryption18447
+Node: CMS background18798
+Node: Certificate matching18954
+Node: Matching syntax19208
+Node: Software PKCS 11 module19765
+Node: How to use the PKCS11 module20284
 
 End Tag Table

@@ -1454,7 +1454,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 1.5.2"
+#define PACKAGE_STRING "Heimdal 1.5.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
@@ -1463,7 +1463,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.5.2"
+#define PACKAGE_VERSION "1.5.3"
 
 /* Define to enable PKINIT. */
 /* #undef PKINIT */
@@ -1518,7 +1518,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.5.2"
+#define VERSION "1.5.3"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1

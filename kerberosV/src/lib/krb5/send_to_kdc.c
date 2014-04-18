@@ -40,6 +40,61 @@ struct send_to_kdc {
 };
 
 /*
+ * connect to a remote host and in the case of stream sockets, provide
+ * a timeout for the connexion.
+ */
+
+static int
+timed_connect(int s, struct addrinfo *addr, time_t tmout)
+{
+#ifdef HAVE_POLL
+    socklen_t sl;
+    int err;
+    int flags;
+    int ret;
+
+    if (addr->ai_socktype != SOCK_STREAM)
+	return connect(s, addr->ai_addr, addr->ai_addrlen);
+
+    flags = fcntl(s, F_GETFL);
+    if (flags == -1)
+	return -1;
+
+    fcntl(s, F_SETFL, flags | O_NONBLOCK);
+    ret = connect(s, addr->ai_addr, addr->ai_addrlen);
+    if (ret == -1 && errno != EINPROGRESS)
+	return -1;
+
+    for (;;) {
+	struct pollfd fds;
+
+	fds.fd = s;
+	fds.events = POLLIN | POLLOUT;
+	fds.revents = 0;
+
+	ret = poll(&fds, 1, tmout * 1000);
+	if (ret != -1 || errno != EINTR)
+	    break;
+    }
+    fcntl(s, F_SETFL, flags);
+
+    if (ret != 1)
+	return -1;
+
+    sl = sizeof(err);
+    ret = getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &sl);
+    if (ret == -1)
+	return -1;
+    if (err != 0)
+	return -1;
+
+    return 0;
+#else
+    return connect(s, addr->ai_addr, addr->ai_addrlen);
+#endif
+}
+
+/*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
  * waiting `tmout' for a reply and returning the reply in `rep'.
  * iff limit read up to this many bytes
@@ -292,7 +347,7 @@ send_via_proxy (krb5_context context,
 	if (s < 0)
 	    continue;
 	rk_cloexec(s);
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+	if (timed_connect (s, a, context->kdc_timeout) < 0) {
 	    rk_closesocket (s);
 	    continue;
 	}
@@ -419,7 +474,7 @@ krb5_sendto (krb5_context context,
 		 if (rk_IS_BAD_SOCKET(fd))
 		     continue;
 		 rk_cloexec(fd);
-		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {
+		 if (timed_connect (fd, a, context->kdc_timeout) < 0) {
 		     rk_closesocket (fd);
 		     continue;
 		 }

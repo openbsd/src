@@ -838,6 +838,48 @@ handle_tcp(krb5_context context,
     }
 }
 
+krb5_boolean
+realloc_descrs(struct descr **d, unsigned int *ndescr)
+{
+    struct descr *tmp;
+    size_t i;
+
+    tmp = realloc(*d, (*ndescr + 4) * sizeof(**d));
+    if(tmp == NULL)
+        return FALSE;
+
+    *d = tmp;
+    reinit_descrs (*d, *ndescr);
+    memset(*d + *ndescr, 0, 4 * sizeof(**d));
+    for(i = *ndescr; i < *ndescr + 4; i++)
+        init_descr (*d + i);
+
+    *ndescr += 4;
+
+    return TRUE;
+}
+
+int
+next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
+{
+    size_t i;
+    int min_free;
+
+    for(i = 0; i < *ndescr; i++) {
+        int s = (*d + i)->s;
+        if(rk_IS_BAD_SOCKET(s))
+            return i;
+    }
+
+    min_free = *ndescr;
+    if(!realloc_descrs(d, ndescr)) {
+        min_free = -1;
+        krb5_warnx(context, "No memory");
+    }
+
+    return min_free;
+}
+
 void
 loop(krb5_context context,
      krb5_kdc_configuration *config)
@@ -876,22 +918,6 @@ loop(krb5_context context,
 #endif
 #endif
 		FD_SET(d[i].s, &fds);
-	    } else if(min_free < 0 || i < (size_t)min_free)
-		min_free = i;
-	}
-	if(min_free == -1){
-	    struct descr *tmp;
-	    tmp = realloc(d, (ndescr + 4) * sizeof(*d));
-	    if(tmp == NULL)
-		krb5_warnx(context, "No memory");
-	    else {
-		d = tmp;
-		reinit_descrs (d, ndescr);
-		memset(d + ndescr, 0, 4 * sizeof(*d));
-		for(i = ndescr; i < ndescr + 4; i++)
-		    init_descr (&d[i]);
-		min_free = ndescr;
-		ndescr += 4;
 	    }
 	}
 
@@ -907,10 +933,12 @@ loop(krb5_context context,
 	default:
 	    for(i = 0; i < ndescr; i++)
 		if(!rk_IS_BAD_SOCKET(d[i].s) && FD_ISSET(d[i].s, &fds)) {
-		    if(d[i].type == SOCK_DGRAM)
-			handle_udp(context, config, &d[i]);
-		    else if(d[i].type == SOCK_STREAM)
-			handle_tcp(context, config, d, i, min_free);
+            min_free = next_min_free(context, &d, &ndescr);
+
+            if(d[i].type == SOCK_DGRAM)
+                handle_udp(context, config, &d[i]);
+            else if(d[i].type == SOCK_STREAM)
+                handle_tcp(context, config, d, i, min_free);
 		}
 	}
     }

@@ -1,4 +1,4 @@
-Detta är heimdal.info, skapad av makeinfo version 4.8 från
+This is heimdal.info, produced by makeinfo version 4.8 from
 heimdal.texi.
 
 INFO-DIR-SECTION Security
@@ -12,7 +12,7 @@ File: heimdal.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 Heimdal
 *******
 
-This manual for version 1.5.2 of Heimdal.
+This manual for version 1.5.3 of Heimdal.
 
 * Menu:
 
@@ -50,6 +50,7 @@ Setting up a realm
 * Using LDAP to store the database::
 * Providing Kerberos credentials to servers and programs::
 * Setting up PK-INIT::
+* Debugging Kerberos problems::
 
 Applications
 
@@ -3374,52 +3375,52 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 Tag Table:
-Node: Top212
-Node: Introduction1659
-Node: What is Kerberos?4405
-Node: Building and Installing9518
-Node: Setting up a realm9845
-Node: Configuration file10797
-Node: Creating the database13865
-Node: Modifying the database16797
-Node: Checking the setup18390
-Node: keytabs19245
-Node: Remote administration20103
-Node: Password changing22009
-Node: Testing clients and servers26197
-Node: Slave Servers26525
-Node: Incremental propagation28278
-Node: Encryption types and salting31522
-Node: Credential cache server - KCM33699
-Node: Cross realm35683
-Node: Transit policy38229
-Node: Setting up DNS45006
-Node: Using LDAP to store the database47481
-Node: Providing Kerberos credentials to servers and programs53486
-Node: Setting up PK-INIT55584
-Node: Debugging Kerberos problems68063
-Node: Applications68494
-Node: Authentication modules68694
-Node: Digital SIA69288
-Node: IRIX73672
-Node: AFS74962
-Node: Things in search for a better place78716
-Node: Kerberos 4 issues81445
-Node: Principal conversion issues81793
-Ref: Principal conversion issues-Footnote-184024
-Ref: Principal conversion issues-Footnote-284092
-Node: Converting a version 4 database84145
-Node: Windows compatibility88458
-Node: Configuring Windows to use a Heimdal KDC89544
-Node: Inter-Realm keys (trust) between Windows and a Heimdal KDC91614
-Node: Create account mappings95285
-Node: Encryption types96037
-Node: Authorisation data96637
-Node: Quirks of Windows 2000 KDC97784
-Node: Useful links when reading about the Windows99078
-Node: Programming with Kerberos100882
-Node: Migration101132
-Node: Acknowledgments102893
-Node: Copyrights and Licenses105819
+Node: Top211
+Node: Introduction1690
+Node: What is Kerberos?4436
+Node: Building and Installing9549
+Node: Setting up a realm9876
+Node: Configuration file10828
+Node: Creating the database13896
+Node: Modifying the database16828
+Node: Checking the setup18421
+Node: keytabs19276
+Node: Remote administration20134
+Node: Password changing22040
+Node: Testing clients and servers26228
+Node: Slave Servers26556
+Node: Incremental propagation28309
+Node: Encryption types and salting31553
+Node: Credential cache server - KCM33730
+Node: Cross realm35714
+Node: Transit policy38260
+Node: Setting up DNS45037
+Node: Using LDAP to store the database47512
+Node: Providing Kerberos credentials to servers and programs53517
+Node: Setting up PK-INIT55615
+Node: Debugging Kerberos problems68094
+Node: Applications68525
+Node: Authentication modules68725
+Node: Digital SIA69319
+Node: IRIX73703
+Node: AFS74993
+Node: Things in search for a better place78747
+Node: Kerberos 4 issues81476
+Node: Principal conversion issues81824
+Ref: Principal conversion issues-Footnote-184055
+Ref: Principal conversion issues-Footnote-284123
+Node: Converting a version 4 database84176
+Node: Windows compatibility88489
+Node: Configuring Windows to use a Heimdal KDC89575
+Node: Inter-Realm keys (trust) between Windows and a Heimdal KDC91645
+Node: Create account mappings95316
+Node: Encryption types96068
+Node: Authorisation data96668
+Node: Quirks of Windows 2000 KDC97815
+Node: Useful links when reading about the Windows99109
+Node: Programming with Kerberos100913
+Node: Migration101163
+Node: Acknowledgments102924
+Node: Copyrights and Licenses105850
 
 End Tag Table

@@ -1653,6 +1653,7 @@ match_ms_upn_san(krb5_context context,
     if (list.len != 1) {
 	kdc_log(context, config, 0,
 		"More then one PK-INIT MS UPN SAN");
+	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	goto out;
     }
 

@@ -2516,7 +2516,7 @@ krb5_crypto_prfplus(krb5_context context,
     krb5_data_free(&input2);
     if (ret)
 	krb5_data_free(output);
-    return 0;
+    return ret;
 }
 
 /**
@@ -2549,6 +2549,8 @@ krb5_crypto_fx_cf2(krb5_context context,
     size_t i, keysize;
 
     memset(res, 0, sizeof(*res));
+    krb5_data_zero(&os1);
+    krb5_data_zero(&os2);
 
     ret = krb5_enctype_keysize(context, enctype, &keysize);
     if (ret)

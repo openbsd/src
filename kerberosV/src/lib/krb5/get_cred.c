@@ -176,6 +176,9 @@ init_tgs_req (krb5_context context,
 	goto fail;
     t->req_body.addresses = addresses;
     t->req_body.kdc_options = flags.b;
+    t->req_body.kdc_options.forwardable = krbtgt->flags.b.forwardable;
+    t->req_body.kdc_options.renewable = krbtgt->flags.b.renewable;
+    t->req_body.kdc_options.proxiable = krbtgt->flags.b.proxiable;
     ret = copy_Realm(&in_creds->server->realm, &t->req_body.realm);
     if (ret)
 	goto fail;
@@ -193,6 +196,15 @@ init_tgs_req (krb5_context context,
     if (ret)
 	goto fail;
 
+    if (krbtgt->times.starttime) {
+        ALLOC(t->req_body.from, 1);
+        if(t->req_body.from == NULL){
+            ret = krb5_enomem(context);
+            goto fail;
+        }
+        *t->req_body.from = in_creds->times.starttime;
+    }
+
     /* req_body.till should be NULL if there is no endtime specified,
        but old MIT code (like DCE secd) doesn't like that */
     ALLOC(t->req_body.till, 1);
@@ -202,6 +214,15 @@ init_tgs_req (krb5_context context,
 	goto fail;
     }
     *t->req_body.till = in_creds->times.endtime;
+
+    if (t->req_body.kdc_options.renewable && krbtgt->times.renew_till) {
+        ALLOC(t->req_body.rtime, 1);
+        if(t->req_body.rtime == NULL){
+            ret = krb5_enomem(context);
+            goto fail;
+        }
+        *t->req_body.rtime = in_creds->times.renew_till;
+    }
 
     t->req_body.nonce = nonce;
     if(second_ticket){

@@ -1,3 +1,11 @@
+Release Notes - Heimdal - Version Heimdal 1.5.3
+
+ Bug fixes
+ - Fix leaking file descriptors in KDC
+ - Better socket/timeout handling in libkrb5
+ - General bug fixes
+ - Build fixes
+
 Release Notes - Heimdal - Version Heimdal 1.5.2
 
  Security fixes

@@ -46,6 +46,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -354,7 +355,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -502,7 +503,7 @@ char *yytext;
  * SUCH DAMAGE.
  */
 
-/* $Id: sel-lex.c,v 1.1 2013/06/17 19:11:43 robert Exp $ */
+/* $Id: sel-lex.c,v 1.2 2014/04/18 09:47:36 ajacoutot Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -535,7 +536,7 @@ struct hx_expr_input _hx509_expr_input;
 
 #undef ECHO
 
-#line 539 "sel-lex.c"
+#line 540 "sel-lex.c"
 
 #define INITIAL 0
 
@@ -720,7 +721,7 @@ YY_DECL
 #line 69 "sel-lex.l"
 
 
-#line 724 "sel-lex.c"
+#line 725 "sel-lex.c"
 
 	if ( !(yy_init) )
 		{
@@ -867,7 +868,7 @@ YY_RULE_SETUP
 #line 86 "sel-lex.l"
 ECHO;
 	YY_BREAK
-#line 871 "sel-lex.c"
+#line 872 "sel-lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

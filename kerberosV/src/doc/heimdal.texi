@@ -1,6 +1,6 @@
 \input texinfo @c -*- texinfo -*-
 @c %**start of header
-@c $Id: heimdal.texi,v 1.5 2013/06/17 18:57:41 robert Exp $
+@c $Id: heimdal.texi,v 1.6 2014/04/18 09:47:34 ajacoutot Exp $
 @setfilename heimdal.info
 @settitle HEIMDAL
 @iftex
@@ -97,6 +97,7 @@ Setting up a realm
 * Using LDAP to store the database::  
 * Providing Kerberos credentials to servers and programs::  
 * Setting up PK-INIT::
+* Debugging Kerberos problems::
 
 Applications
 
