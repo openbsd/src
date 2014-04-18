@@ -187,23 +187,6 @@
 #endif
 #include <openssl/modes.h>
 
-#ifdef OPENSSL_FIPS
-#ifdef OPENSSL_DOING_MAKEDEPEND
-#undef AES_set_encrypt_key
-#undef AES_set_decrypt_key
-#undef DES_set_key_unchecked
-#endif
-#define BF_set_key	private_BF_set_key
-#define CAST_set_key	private_CAST_set_key
-#define idea_set_encrypt_key	private_idea_set_encrypt_key
-#define SEED_set_key	private_SEED_set_key
-#define RC2_set_key	private_RC2_set_key
-#define RC4_set_key	private_RC4_set_key
-#define DES_set_key_unchecked	private_DES_set_key_unchecked
-#define AES_set_encrypt_key	private_AES_set_encrypt_key
-#define AES_set_decrypt_key	private_AES_set_decrypt_key
-#define Camellia_set_key	private_Camellia_set_key
-#endif
 
 #ifndef HAVE_FORK
 #  define HAVE_FORK 1

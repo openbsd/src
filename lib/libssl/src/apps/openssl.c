@@ -129,9 +129,6 @@
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 /* The LHASH callbacks ("hash" & "cmp") have been replaced by functions with the
  * base prototypes (we cast each variable inside the function to the required
