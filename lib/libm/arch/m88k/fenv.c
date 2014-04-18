@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.5 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.6 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -44,13 +44,13 @@ feclearexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fpsr));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fpsr));
 
 	/* Clear the requested floating-point exceptions */
 	fpsr &= ~excepts;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fstcr %0, %%fcr62" : : "r" (fpsr));
+	__asm__ volatile ("fstcr %0, %%fcr62" : : "r" (fpsr));
 
 	return (0);
 }
@@ -68,7 +68,7 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fpsr));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fpsr));
 
 	/* Store the results in flagp */
 	*flagp = fpsr & excepts;
@@ -130,14 +130,14 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fpsr));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fpsr));
 
 	/* Set the requested status flags */
 	fpsr &= ~excepts;
 	fpsr |= *flagp & excepts;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fstcr %0, %%fcr62" : : "r" (fpsr));
+	__asm__ volatile ("fstcr %0, %%fcr62" : : "r" (fpsr));
 
 	return (0);
 }
@@ -155,7 +155,7 @@ fetestexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fpsr));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fpsr));
 
 	return (fpsr & excepts);
 }
@@ -169,7 +169,7 @@ fegetround(void)
 	unsigned int fpcr;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fpcr));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fpcr));
 
 	return (fpcr & _ROUND_MASK);
 }
@@ -189,14 +189,14 @@ fesetround(int round)
 		return (-1);
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fpcr));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fpcr));
 
 	/* Set the rounding direction */
 	fpcr &= ~_ROUND_MASK;
 	fpcr |= round;
 
 	/* Load the floating-point control register */
-	__asm__ __volatile__ ("fstcr %0, %%fcr63" : : "r" (fpcr));
+	__asm__ volatile ("fstcr %0, %%fcr63" : : "r" (fpcr));
 
 	return (0);
 }
@@ -209,8 +209,8 @@ int
 fegetenv(fenv_t *envp)
 {
 	/* Store the current floating-point control and status registers */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (envp->__control));
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (envp->__status));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (envp->__control));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (envp->__status));
 
 	return (0);
 }
@@ -227,18 +227,18 @@ feholdexcept(fenv_t *envp)
 	unsigned int fpsr, fpcr;
 
 	/* Store the current floating-point control and status registers */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (envp->__control));
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (envp->__status));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (envp->__control));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (envp->__status));
 
 	/* Clear exception flags in FPSR */
 	fpsr = envp->__status;
 	fpsr &= ~FE_ALL_EXCEPT;
-	__asm__ __volatile__ ("fstcr %0, %%fcr62" : : "r" (fpsr));
+	__asm__ volatile ("fstcr %0, %%fcr62" : : "r" (fpsr));
 
 	/* Mask all exceptions */
 	fpcr = envp->__control;
 	fpcr &= ~FE_ALL_EXCEPT;
-	__asm__ __volatile__ ("fstcr %0, %%fcr63" : : "r" (fpcr));
+	__asm__ volatile ("fstcr %0, %%fcr63" : : "r" (fpcr));
 
 	return (0);
 }
@@ -257,8 +257,8 @@ fesetenv(const fenv_t *envp)
 	fenv_t fenv;
 
 	/* Store the current floating-point control and status registers */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fenv.__control));
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fenv.__status));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fenv.__control));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fenv.__status));
 
 	/* Set the requested control flags */
 	fenv.__control &= ~(FE_ALL_EXCEPT | _ROUND_MASK);
@@ -269,8 +269,8 @@ fesetenv(const fenv_t *envp)
 	fenv.__status |= envp->__status & FE_ALL_EXCEPT;
 
 	/* Load the floating-point control and status registers */
-	__asm__ __volatile__ ("fstcr %0, %%fcr63" : : "r" (fenv.__control));
-	__asm__ __volatile__ ("fstcr %0, %%fcr62" : : "r" (fenv.__status));
+	__asm__ volatile ("fstcr %0, %%fcr63" : : "r" (fenv.__control));
+	__asm__ volatile ("fstcr %0, %%fcr62" : : "r" (fenv.__status));
 
 	return (0);
 }
@@ -289,7 +289,7 @@ feupdateenv(const fenv_t *envp)
 	unsigned int fpsr;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r" (fpsr));
+	__asm__ volatile ("fldcr %0, %%fcr62" : "=r" (fpsr));
 
 	/* Install new floating-point environment */
 	fesetenv(envp);
@@ -311,13 +311,13 @@ feenableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fpcr));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fpcr));
 
 	omask = fpcr & FE_ALL_EXCEPT;
 	fpcr |= mask;
 
 	/* Load the floating-point control register */
-	__asm__ __volatile__ ("fstcr %0, %%fcr63" : : "r" (fpcr));
+	__asm__ volatile ("fstcr %0, %%fcr63" : : "r" (fpcr));
 
 	return (omask);
 
@@ -331,13 +331,13 @@ fedisableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fpcr));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fpcr));
 
 	omask = fpcr & FE_ALL_EXCEPT;
 	fpcr &= ~mask;
 
 	/* Load the floating-point control register */
-	__asm__ __volatile__ ("fstcr %0, %%fcr63" : : "r" (fpcr));
+	__asm__ volatile ("fstcr %0, %%fcr63" : : "r" (fpcr));
 
 	return (omask);
 }
@@ -348,7 +348,7 @@ fegetexcept(void)
 	unsigned int fpcr;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r" (fpcr));
+	__asm__ volatile ("fldcr %0, %%fcr63" : "=r" (fpcr));
 
 	return (fpcr & FE_ALL_EXCEPT);
 }

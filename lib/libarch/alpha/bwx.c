@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.6 2012/12/20 21:05:07 naddy Exp $ */
+/* $OpenBSD: bwx.c,v 1.7 2014/04/18 15:09:52 guenther Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -42,8 +42,8 @@
 
 #define PATH_APERTURE "/dev/xf86"
 
-#define mb()	__asm__ __volatile__("mb"  : : : "memory")
-#define wmb()	__asm__ __volatile__("wmb" : : : "memory")
+#define mb()	__asm__ volatile("mb"  : : : "memory")
+#define wmb()	__asm__ volatile("wmb" : : : "memory")
 
 static int		mem_fd = -1;	/* file descriptor to /dev/mem */
 static void	       *bwx_int1_ports = MAP_FAILED; /* mapped int1 io ports */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.7 2013/06/03 16:19:45 miod Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.8 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Atomic lock for mips
@@ -12,7 +12,7 @@ _atomic_lock(volatile _atomic_lock_t *lock)
 {
 	_atomic_lock_t old;
 
-	__asm__ __volatile__ (
+	__asm__ volatile (
 	".set	noreorder\n"
 	"1:	ll	%0,	0(%1)\n"
 	"	sc	%2,	0(%1)\n"

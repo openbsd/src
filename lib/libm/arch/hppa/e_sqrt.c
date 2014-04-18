@@ -8,7 +8,7 @@
 double
 sqrt(double x)
 {
-	__asm__ __volatile__ ("fsqrt,dbl %0, %0" : "+f" (x));
+	__asm__ volatile ("fsqrt,dbl %0, %0" : "+f" (x));
 	return (x);
 }
 

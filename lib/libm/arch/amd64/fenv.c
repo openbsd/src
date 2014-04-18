@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.3 2012/12/05 23:20:02 deraadt Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.4 2014/04/18 15:09:52 guenther Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2010/07/31 21:47:53 joerg Exp $	*/
 
 /*-
@@ -71,18 +71,18 @@ feclearexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current x87 floating-point environment */
-	__asm__ __volatile__ ("fnstenv %0" : "=m" (fenv));
+	__asm__ volatile ("fnstenv %0" : "=m" (fenv));
 
 	/* Clear the requested floating-point exceptions */
 	fenv.__x87.__status &= ~excepts;
 
 	/* Load the x87 floating-point environent */
-	__asm__ __volatile__ ("fldenv %0" : : "m" (fenv));
+	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 	mxcsr &= ~excepts;
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (0);
 }
@@ -101,10 +101,10 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current x87 status register */
-	__asm__ __volatile__ ("fnstsw %0" : "=am" (status));
+	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	/* Store the results in flagp */
 	*flagp = (status | mxcsr) & excepts;
@@ -128,7 +128,7 @@ feraiseexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	fesetexceptflag((fexcept_t *)&excepts, excepts);
-	__asm__ __volatile__ ("fwait");
+	__asm__ volatile ("fwait");
 
 	return (0);
 }
@@ -147,20 +147,20 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current x87 floating-point environment */
-	__asm__ __volatile__ ("fnstenv %0" : "=m" (fenv));
+	__asm__ volatile ("fnstenv %0" : "=m" (fenv));
 
 	/* Set the requested status flags */
 	fenv.__x87.__status &= ~excepts;
 	fenv.__x87.__status |= *flagp & excepts;
 
 	/* Load the x87 floating-point environent */
-	__asm__ __volatile__ ("fldenv %0" : : "m" (fenv));
+	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 	mxcsr &= ~excepts;
 	mxcsr |= *flagp & excepts;
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (0);
 }
@@ -179,10 +179,10 @@ fetestexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current x87 status register */
-	__asm__ __volatile__ ("fnstsw %0" : "=am" (status));
+	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register state */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	return ((status | mxcsr) & excepts);
 }
@@ -201,7 +201,7 @@ fegetround(void)
 	 * out to be about 5 times faster than reading it on the SSE
 	 * unit on an Opteron 244.
 	 */
-	__asm__ __volatile__ ("fnstcw %0" : "=m" (control));
+	__asm__ volatile ("fnstcw %0" : "=m" (control));
 
 	return (control & _X87_ROUND_MASK);
 }
@@ -222,20 +222,20 @@ fesetround(int round)
 		return (-1);
 
 	/* Store the current x87 control word register */
-	__asm__ __volatile__ ("fnstcw %0" : "=m" (control));
+	__asm__ volatile ("fnstcw %0" : "=m" (control));
 
 	/* Set the rounding direction */
 	control &= ~_X87_ROUND_MASK;
 	control |= round;
 
 	/* Load the x87 control word register */
-	__asm__ __volatile__ ("fldcw %0" : : "m" (control));
+	__asm__ volatile ("fldcw %0" : : "m" (control));
 
 	/* Same for the SSE environment */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 	mxcsr &= ~(_X87_ROUND_MASK << _SSE_ROUND_SHIFT);
 	mxcsr |= round << _SSE_ROUND_SHIFT;
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (0);
 }
@@ -248,10 +248,10 @@ int
 fegetenv(fenv_t *envp)
 {
 	/* Store the current x87 floating-point environment */
-	__asm__ __volatile__ ("fnstenv %0" : "=m" (*envp));
+	__asm__ volatile ("fnstenv %0" : "=m" (*envp));
 
 	/* Store the MXCSR register state */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (envp->__mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (envp->__mxcsr));
 
 	/*
 	 * When an FNSTENV instruction is executed, all pending exceptions are
@@ -261,7 +261,7 @@ fegetenv(fenv_t *envp)
 	 * 8.6 X87 FPU EXCEPTION SYNCHRONIZATION -
 	 * Intel(R) 64 and IA-32 Architectures Softare Developer's Manual - Vol1
 	 */
-	__asm__ __volatile__ ("fldcw %0" : : "m" (envp->__x87.__control));
+	__asm__ volatile ("fldcw %0" : : "m" (envp->__x87.__control));
 
 	return (0);
 }
@@ -278,13 +278,13 @@ feholdexcept(fenv_t *envp)
 	unsigned int mxcsr;
 
 	/* Store the current x87 floating-point environment */
-	__asm__ __volatile__ ("fnstenv %0" : "=m" (*envp));
+	__asm__ volatile ("fnstenv %0" : "=m" (*envp));
 
 	/* Clear all exception flags in FPU */
-	__asm__ __volatile__ ("fnclex");
+	__asm__ volatile ("fnclex");
 
 	/* Store the MXCSR register state */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (envp->__mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (envp->__mxcsr));
 
 	/* Clear exception flags in MXCSR */
 	mxcsr = envp->__mxcsr;
@@ -294,7 +294,7 @@ feholdexcept(fenv_t *envp)
 	mxcsr |= FE_ALL_EXCEPT << _SSE_MASK_SHIFT;
 
 	/* Store the MXCSR register */
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (0);
 }
@@ -311,10 +311,10 @@ int
 fesetenv(const fenv_t *envp)
 {
 	/* Load the x87 floating-point environent */
-	__asm__ __volatile__ ("fldenv %0" : : "m" (*envp));
+	__asm__ volatile ("fldenv %0" : : "m" (*envp));
 
 	/* Store the MXCSR register */
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (envp->__mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (envp->__mxcsr));
 
 	return (0);
 }
@@ -334,10 +334,10 @@ feupdateenv(const fenv_t *envp)
 	unsigned int mxcsr;
 
 	/* Store the x87 status register */
-	__asm__ __volatile__ ("fnstsw %0" : "=am" (status));
+	__asm__ volatile ("fnstsw %0" : "=am" (status));
 
 	/* Store the MXCSR register */
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	/* Install new floating-point environment */
 	fesetenv(envp);
@@ -359,15 +359,15 @@ feenableexcept(int mask)
 
 	mask &= FE_ALL_EXCEPT;
 
-	__asm__ __volatile__ ("fnstcw %0" : "=m" (control));
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("fnstcw %0" : "=m" (control));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	omask = ~(control | (mxcsr >> _SSE_MASK_SHIFT)) & FE_ALL_EXCEPT;
 	control &= ~mask;
-	__asm__ __volatile__ ("fldcw %0" : : "m" (control));
+	__asm__ volatile ("fldcw %0" : : "m" (control));
 
 	mxcsr &= ~(mask << _SSE_MASK_SHIFT);
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (omask);
 }
@@ -380,15 +380,15 @@ fedisableexcept(int mask)
 
 	mask &= FE_ALL_EXCEPT;
 
-	__asm__ __volatile__ ("fnstcw %0" : "=m" (control));
-	__asm__ __volatile__ ("stmxcsr %0" : "=m" (mxcsr));
+	__asm__ volatile ("fnstcw %0" : "=m" (control));
+	__asm__ volatile ("stmxcsr %0" : "=m" (mxcsr));
 
 	omask = ~(control | (mxcsr >> _SSE_MASK_SHIFT)) & FE_ALL_EXCEPT;
 	control |= mask;
-	__asm__ __volatile__ ("fldcw %0" : : "m" (control));
+	__asm__ volatile ("fldcw %0" : : "m" (control));
 
 	mxcsr |= mask << _SSE_MASK_SHIFT;
-	__asm__ __volatile__ ("ldmxcsr %0" : : "m" (mxcsr));
+	__asm__ volatile ("ldmxcsr %0" : : "m" (mxcsr));
 
 	return (omask);
 }
@@ -402,7 +402,7 @@ fegetexcept(void)
 	 * We assume that the masks for the x87 and the SSE unit are
 	 * the same.
 	 */
-	__asm__ __volatile__ ("fnstcw %0" : "=m" (control));
+	__asm__ volatile ("fnstcw %0" : "=m" (control));
 
 	return (~control & FE_ALL_EXCEPT);
 }

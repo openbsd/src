@@ -8,7 +8,7 @@
 double
 rint(double x)
 {
-	__asm__ __volatile__("frnd,dbl %0,%0" : "+f" (x));
+	__asm__ volatile("frnd,dbl %0,%0" : "+f" (x));
 
 	return (x);
 }

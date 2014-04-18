@@ -1,4 +1,4 @@
-/* $OpenBSD: io.c,v 1.4 2012/12/20 21:05:07 naddy Exp $ */
+/* $OpenBSD: io.c,v 1.5 2014/04/18 15:09:52 guenther Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -130,21 +130,21 @@ void
 writeb(void *handle, u_int32_t offset, u_int8_t val)
 {
 	ops->writeb(handle, offset, val);
-	__asm__ __volatile__ ("mb");
+	__asm__ volatile ("mb");
 }
 
 void
 writew(void *handle, u_int32_t offset, u_int16_t val)
 {
 	ops->writew(handle, offset, val);
-	__asm__ __volatile__ ("mb");
+	__asm__ volatile ("mb");
 }
 
 void
 writel(void *handle, u_int32_t offset, u_int32_t val)
 {
 	ops->writel(handle, offset, val);
-	__asm__ __volatile__ ("mb");
+	__asm__ volatile ("mb");
 }
 
 void

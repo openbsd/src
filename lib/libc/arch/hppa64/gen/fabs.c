@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.c,v 1.7 2013/11/13 15:21:51 deraadt Exp $	*/
+/*	$OpenBSD: fabs.c,v 1.8 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -11,7 +11,7 @@ double
 fabs(double val)
 {
 
-	__asm__ __volatile__("fabs,dbl %0,%0" : "+f" (val));
+	__asm__ volatile("fabs,dbl %0,%0" : "+f" (val));
 	return (val);
 }
 

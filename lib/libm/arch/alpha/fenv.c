@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.2 2011/04/28 17:34:23 martynas Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.3 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -150,9 +150,9 @@ fegetround(void)
 	unsigned long fpcr;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mf_fpcr %0" : "=f" (fpcr));
+	__asm__ volatile ("trapb");
 
 	return ((fpcr >> _ROUND_SHIFT) & _ROUND_MASK);
 }
@@ -172,18 +172,18 @@ fesetround(int round)
 		return (-1);
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mf_fpcr %0" : "=f" (fpcr));
+	__asm__ volatile ("trapb");
 
 	/* Set the rounding direction */
 	fpcr &= ~((unsigned long)_ROUND_MASK << _ROUND_SHIFT);
 	fpcr |= (unsigned long)round << _ROUND_SHIFT;
 
 	/* Load the floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mt_fpcr %0" : : "f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mt_fpcr %0" : : "f" (fpcr));
+	__asm__ volatile ("trapb");
 
 	return (0);
 }
@@ -204,9 +204,9 @@ fegetenv(fenv_t *envp)
 	envp->__mask = sysarch(ALPHA_FPGETMASK, 0L) & FE_ALL_EXCEPT;
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mf_fpcr %0" : "=f" (fpcr));
+	__asm__ volatile ("trapb");
 	envp->__round = (fpcr >> _ROUND_SHIFT) & _ROUND_MASK;
 
 	return (0);
@@ -260,18 +260,18 @@ fesetenv(const fenv_t *envp)
 	sysarch(ALPHA_FPSETMASK, &a);
 
 	/* Store the current floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mf_fpcr %0" : "=f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mf_fpcr %0" : "=f" (fpcr));
+	__asm__ volatile ("trapb");
 
 	/* Set the requested flags */
 	fpcr &= ~((unsigned long)_ROUND_MASK << _ROUND_SHIFT);
 	fpcr |= ((unsigned long)envp->__round & _ROUND_MASK) << _ROUND_SHIFT;
 
 	/* Load the floating-point control register */
-	__asm__ __volatile__ ("trapb");
-	__asm__ __volatile__ ("mt_fpcr %0" : : "f" (fpcr));
-	__asm__ __volatile__ ("trapb");
+	__asm__ volatile ("trapb");
+	__asm__ volatile ("mt_fpcr %0" : : "f" (fpcr));
+	__asm__ volatile ("trapb");
 
 	return (0);
 }

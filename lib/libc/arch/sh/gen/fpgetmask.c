@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.c,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: fpgetmask.c,v 1.2 2014/04/18 15:09:52 guenther Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -24,6 +24,6 @@ fpgetmask()
 {
 	register_t fpscr;
 
-	__asm__ __volatile__ ("sts fpscr, %0" : "=r" (fpscr));
+	__asm__ volatile ("sts fpscr, %0" : "=r" (fpscr));
 	return ((fpscr >> 7) & 0x1f);
 }

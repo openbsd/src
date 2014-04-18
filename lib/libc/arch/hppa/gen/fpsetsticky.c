@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.5 2011/04/22 14:44:08 martynas Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.6 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -14,9 +14,9 @@ fpsetsticky(mask)
 	u_int64_t fpsr;
 	fp_except old;
 
-	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	__asm__ volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
 	old = (fpsr >> 59) & 0x1f;
 	fpsr = (fpsr & 0x07ffffff00000000LL) | ((u_int64_t)(mask & 0x1f) << 59);
-	__asm__ __volatile__("fldd 0(%0),%%fr0" : : "r" (&fpsr));
+	__asm__ volatile("fldd 0(%0),%%fr0" : : "r" (&fpsr));
 	return (old);
 }

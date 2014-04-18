@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.3 2012/12/05 23:20:02 deraadt Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.4 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -46,14 +46,14 @@ feclearexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Clear the requested floating-point exceptions */
 	u.bits[0] &= ~(excepts << _MASK_SHIFT);
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (0);
 }
@@ -71,7 +71,7 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Store the results in flagp */
@@ -118,7 +118,7 @@ feraiseexcept(int excepts)
 		d = 0x1p-1022;
 		d += 1.0;
 	}
-	__asm__ __volatile__ ("fldd 0(%%sr0,%%sp), %0" : "=f" (d));
+	__asm__ volatile ("fldd 0(%%sr0,%%sp), %0" : "=f" (d));
 
 	return (0);
 }
@@ -136,7 +136,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Set the requested status flags */
@@ -144,7 +144,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	u.bits[0] |= (*flagp & excepts) << _MASK_SHIFT;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (0);
 }
@@ -162,7 +162,7 @@ fetestexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	return ((u.bits[0] >> _MASK_SHIFT) & excepts);
@@ -177,7 +177,7 @@ fegetround(void)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	return (u.bits[0] & _ROUND_MASK);
@@ -198,7 +198,7 @@ fesetround(int round)
 		return (-1);
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Set the rounding direction */
@@ -206,7 +206,7 @@ fesetround(int round)
 	u.bits[0] |= round;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (0);
 }
@@ -221,7 +221,7 @@ fegetenv(fenv_t *envp)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	*envp = u.bits[0];
@@ -241,7 +241,7 @@ feholdexcept(fenv_t *envp)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	*envp = u.bits[0];
@@ -251,7 +251,7 @@ feholdexcept(fenv_t *envp)
 
 	/* Mask all exceptions */
 	u.bits[0] &= ~FE_ALL_EXCEPT;
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (0);
 }
@@ -270,7 +270,7 @@ fesetenv(const fenv_t *envp)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Set the requested flags */
@@ -280,7 +280,7 @@ fesetenv(const fenv_t *envp)
 	    (FE_ALL_EXCEPT << _MASK_SHIFT));
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (0);
 }
@@ -299,7 +299,7 @@ feupdateenv(const fenv_t *envp)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	/* Install new floating-point environment */
@@ -323,14 +323,14 @@ feenableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	omask = u.bits[0] & FE_ALL_EXCEPT;
 	u.bits[0] |= mask;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (omask);
 
@@ -345,14 +345,14 @@ fedisableexcept(int mask)
 	mask &= FE_ALL_EXCEPT;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	omask = u.bits[0] & FE_ALL_EXCEPT;
 	u.bits[0] &= ~mask;
 
 	/* Load the floating-point status register */
-	__asm__ __volatile__ ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
 
 	return (omask);
 }
@@ -363,7 +363,7 @@ fegetexcept(void)
 	volatile union u u;
 
 	/* Store the current floating-point status register */
-	__asm__ __volatile__ ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
+	__asm__ volatile ("fstd %%fr0, 0(%1)" : "=m" (u.fpsr) :
 	    "r" (&u.fpsr));
 
 	return (u.bits[0] & FE_ALL_EXCEPT);

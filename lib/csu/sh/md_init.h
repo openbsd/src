@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.3 2014/04/18 15:09:52 guenther Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ __asm(".section " #section "\n"		\
 	__set_fpscr(0);				\
 	__fpscr_values[0] |= FPSCR_DN;		\
 	__fpscr_values[1] |= FPSCR_DN;		\
-	__asm __volatile__ ("lds %0, fpscr"	\
+	__asm volatile ("lds %0, fpscr"		\
 	    : : "r" (__fpscr_values[1]));
 #endif /* defined(__SH4__) && !defined(__SH4_NOFPU__) */
 

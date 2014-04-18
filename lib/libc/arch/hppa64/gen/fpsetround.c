@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1 2005/04/01 10:54:27 mickey Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2014/04/18 15:09:52 guenther Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -14,10 +14,10 @@ fpsetround(rnd_dir)
 	u_int64_t fpsr;
 	fp_rnd old;
 
-	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	__asm__ volatile("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
 	old = (fpsr >> 41) & 0x03;
 	fpsr = (fpsr & 0xfffff9ff00000000LL) |
 	    ((u_int64_t)(rnd_dir & 0x03) << 41);
-	__asm__ __volatile__("fldd 0(%0),%%fr0" : : "r" (&fpsr));
+	__asm__ volatile("fldd 0(%0),%%fr0" : : "r" (&fpsr));
 	return (old);
 }
