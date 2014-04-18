@@ -72,8 +72,7 @@
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 			void *exarg)
 {
-	if (operation == ASN1_OP_FREE_POST)
-	{
+	if (operation == ASN1_OP_FREE_POST) {
 		X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
 		EVP_PKEY_free(pubkey->pkey);
 	}
@@ -95,26 +94,19 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
 	if ((pk=X509_PUBKEY_new()) == NULL) goto error;
 
-	if (pkey->ameth)
-	{
-		if (pkey->ameth->pub_encode)
-		{
-			if (!pkey->ameth->pub_encode(pk, pkey))
-			{
+	if (pkey->ameth) {
+		if (pkey->ameth->pub_encode) {
+			if (!pkey->ameth->pub_encode(pk, pkey)) {
 				X509err(X509_F_X509_PUBKEY_SET,
 					X509_R_PUBLIC_KEY_ENCODE_ERROR);
 				goto error;
 			}
-		}
-		else
-		{
+		} else {
 			X509err(X509_F_X509_PUBKEY_SET,
 				X509_R_METHOD_NOT_SUPPORTED);
 			goto error;
 		}
-	}
-	else
-	{
+	} else {
 		X509err(X509_F_X509_PUBKEY_SET,X509_R_UNSUPPORTED_ALGORITHM);
 		goto error;
 	}
@@ -136,51 +128,41 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 
 	if (key == NULL) goto error;
 
-	if (key->pkey != NULL)
-	{
+	if (key->pkey != NULL) {
 		CRYPTO_add(&key->pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
 		return key->pkey;
 	}
 
 	if (key->public_key == NULL) goto error;
 
-	if ((ret = EVP_PKEY_new()) == NULL)
-	{
+	if ((ret = EVP_PKEY_new()) == NULL) {
 		X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
 		goto error;
 	}
 
-	if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm)))
-	{
+	if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm))) {
 		X509err(X509_F_X509_PUBKEY_GET,X509_R_UNSUPPORTED_ALGORITHM);
 		goto error;
 	}
 
-	if (ret->ameth->pub_decode)
-	{
-		if (!ret->ameth->pub_decode(ret, key))
-		{
+	if (ret->ameth->pub_decode) {
+		if (!ret->ameth->pub_decode(ret, key)) {
 			X509err(X509_F_X509_PUBKEY_GET,
 						X509_R_PUBLIC_KEY_DECODE_ERROR);
 			goto error;
 		}
-	}
-	else
-	{
+	} else {
 		X509err(X509_F_X509_PUBKEY_GET, X509_R_METHOD_NOT_SUPPORTED);
 		goto error;
 	}
 
 	/* Check to see if another thread set key->pkey first */
 	CRYPTO_w_lock(CRYPTO_LOCK_EVP_PKEY);
-	if (key->pkey)
-	{
+	if (key->pkey) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
 		EVP_PKEY_free(ret);
 		ret = key->pkey;
-	}
-	else
-	{
+	} else {
 		key->pkey = ret;
 		CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
 	}
@@ -208,8 +190,7 @@ EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp,
 	pktmp = X509_PUBKEY_get(xpk);
 	X509_PUBKEY_free(xpk);
 	if(!pktmp) return NULL;
-	if(a)
-	{
+	if(a) {
 		EVP_PKEY_free(*a);
 		*a = pktmp;
 	}
@@ -244,8 +225,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp,
 	EVP_PKEY_free(pkey);
 	if (!key) return NULL;
 	*pp = q;
-	if (a)
-	{
+	if (a) {
 		RSA_free(*a);
 		*a = key;
 	}
@@ -258,8 +238,7 @@ int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
 	int ret;
 	if (!a) return 0;
 	pktmp = EVP_PKEY_new();
-	if (!pktmp)
-	{
+	if (!pktmp) {
 		ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -284,8 +263,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp,
 	EVP_PKEY_free(pkey);
 	if (!key) return NULL;
 	*pp = q;
-	if (a)
-	{
+	if (a) {
 		DSA_free(*a);
 		*a = key;
 	}
@@ -298,8 +276,7 @@ int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
 	int ret;
 	if(!a) return 0;
 	pktmp = EVP_PKEY_new();
-	if(!pktmp)
-	{
+	if(!pktmp) {
 		ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -323,8 +300,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
 	EVP_PKEY_free(pkey);
 	if (!key)  return(NULL);
 	*pp = q;
-	if (a)
-	{
+	if (a) {
 		EC_KEY_free(*a);
 		*a = key;
 	}
@@ -336,8 +312,7 @@ int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
 	EVP_PKEY *pktmp;
 	int ret;
 	if (!a)	return(0);
-	if ((pktmp = EVP_PKEY_new()) == NULL)
-	{
+	if ((pktmp = EVP_PKEY_new()) == NULL) {
 		ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
 		return(0);
 	}
@@ -354,8 +329,7 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
 {
 	if (!X509_ALGOR_set0(pub->algor, aobj, ptype, pval))
 		return 0;
-	if (penc)
-	{
+	if (penc) {
 		if (pub->public_key->data)
 			free(pub->public_key->data);
 		pub->public_key->data = penc;
@@ -374,8 +348,7 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
 {
 	if (ppkalg)
 		*ppkalg = pub->algor->algorithm;
-	if (pk)
-	{
+	if (pk) {
 		*pk = pub->public_key->data;
 		*ppklen = pub->public_key->length;
 	}

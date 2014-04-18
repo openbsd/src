@@ -131,8 +131,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 {
 	EVP_MD_CTX ctx;
 	EVP_MD_CTX_init(&ctx);
-	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey))
-	{
+	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey)) {
 		EVP_MD_CTX_cleanup(&ctx);
 		return 0;
 	}
@@ -154,14 +153,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	type = EVP_MD_CTX_md(ctx);
 	pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
 
-	if (!type || !pkey)
-	{
+	if (!type || !pkey) {
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 	}
 
-	if (pkey->ameth->item_sign)
-	{
+	if (pkey->ameth->item_sign) {
 		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
 						signature);
 		if (rv == 1)
@@ -180,15 +177,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	else
 		rv = 2;
 
-	if (rv == 2)
-	{
-		if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
-		{
+	if (rv == 2) {
+		if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
 			if (!pkey->ameth ||
 				!OBJ_find_sigid_by_algs(&signid,
 							EVP_MD_nid(type),
-							pkey->ameth->pkey_id))
-			{
+							pkey->ameth->pkey_id)) {
 				ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
 					ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
 				return 0;
@@ -212,16 +206,14 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	inl=ASN1_item_i2d(asn,&buf_in, it);
 	outll=outl=EVP_PKEY_size(pkey);
 	buf_out=malloc((unsigned int)outl);
-	if ((buf_in == NULL) || (buf_out == NULL))
-	{
+	if ((buf_in == NULL) || (buf_out == NULL)) {
 		outl=0;
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	if (!EVP_DigestSignUpdate(ctx, buf_in, inl)
-		|| !EVP_DigestSignFinal(ctx, buf_out, &outl))
-	{
+		|| !EVP_DigestSignFinal(ctx, buf_out, &outl)) {
 		outl=0;
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,ERR_R_EVP_LIB);
 		goto err;
@@ -237,9 +229,11 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
 	EVP_MD_CTX_cleanup(ctx);
-	if (buf_in != NULL)
-	{ OPENSSL_cleanse((char *)buf_in,(unsigned int)inl); free(buf_in); }
-	if (buf_out != NULL)
-	{ OPENSSL_cleanse((char *)buf_out,outll); free(buf_out); }
+	if (buf_in != NULL) {
+		OPENSSL_cleanse((char *)buf_in,(unsigned int)inl); free(buf_in);
+	}
+	if (buf_out != NULL) {
+		OPENSSL_cleanse((char *)buf_out,outll); free(buf_out);
+	}
 	return(outl);
 }

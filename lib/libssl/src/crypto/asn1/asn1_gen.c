@@ -156,10 +156,8 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	if (CONF_parse_list(str, ',', 1, asn1_cb, &asn1_tags) != 0)
 		return NULL;
 
-	if ((asn1_tags.utype == V_ASN1_SEQUENCE) || (asn1_tags.utype == V_ASN1_SET))
-	{
-		if (!cnf)
-		{
+	if ((asn1_tags.utype == V_ASN1_SEQUENCE) || (asn1_tags.utype == V_ASN1_SET)) {
+		if (!cnf) {
 			ASN1err(ASN1_F_ASN1_GENERATE_V3, ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG);
 			return NULL;
 		}
@@ -183,8 +181,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	cpy_start = orig_der;
 
 	/* Do we need IMPLICIT tagging? */
-	if (asn1_tags.imp_tag != -1)
-	{
+	if (asn1_tags.imp_tag != -1) {
 		/* If IMPLICIT we will replace the underlying tag */
 		/* Skip existing tag+len */
 		r = ASN1_get_object(&cpy_start, &hdr_len, &hdr_tag, &hdr_class, cpy_len);
@@ -196,8 +193,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 		 * original length and constructed flag should be
 		 * consistent.
 		 */
-		if (r & 0x1)
-		{
+		if (r & 0x1) {
 			/* Indefinite length constructed */
 			hdr_constructed = 2;
 			hdr_len = 0;
@@ -215,8 +211,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	/* Work out length in any EXPLICIT, starting from end */
 
-	for(i = 0, etmp = asn1_tags.exp_list + asn1_tags.exp_count - 1; i < asn1_tags.exp_count; i++, etmp--)
-	{
+	for(i = 0, etmp = asn1_tags.exp_list + asn1_tags.exp_count - 1; i < asn1_tags.exp_count; i++, etmp--) {
 		/* Content length: number of content octets + any padding */
 		len += etmp->exp_pad;
 		etmp->exp_len = len;
@@ -236,8 +231,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	/* Output explicit tags first */
 
-	for (i = 0, etmp = asn1_tags.exp_list; i < asn1_tags.exp_count; i++, etmp++)
-	{
+	for (i = 0, etmp = asn1_tags.exp_list; i < asn1_tags.exp_count; i++, etmp++) {
 		ASN1_put_object(&p, etmp->exp_constructed, etmp->exp_len,
 					etmp->exp_tag, etmp->exp_class);
 		if (etmp->exp_pad)
@@ -246,8 +240,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 
 	/* If IMPLICIT, output tag */
 
-	if (asn1_tags.imp_tag != -1)
-	{
+	if (asn1_tags.imp_tag != -1) {
 		if (asn1_tags.imp_class == V_ASN1_UNIVERSAL 
 		    && (asn1_tags.imp_tag == V_ASN1_SEQUENCE
 		     || asn1_tags.imp_tag == V_ASN1_SET) )
@@ -284,11 +277,9 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 
 	int tmp_tag, tmp_class;
 
-	for(i = 0, p = elem; i < len; p++, i++)
-	{
+	for(i = 0, p = elem; i < len; p++, i++) {
 		/* Look for the ':' in name value pairs */
-		if (*p == ':')
-		{
+		if (*p == ':') {
 			vstart = p + 1;
 			vlen = len - (vstart - elem);
 			len = p - elem;
@@ -298,34 +289,29 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 
 	utype = asn1_str2tag(elem, len);
 
-	if (utype == -1)
-	{
+	if (utype == -1) {
 		ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKNOWN_TAG);
 		ERR_add_error_data(2, "tag=", elem);
 		return -1;
 	}
 
 	/* If this is not a modifier mark end of string and exit */
-	if (!(utype & ASN1_GEN_FLAG))
-	{
+	if (!(utype & ASN1_GEN_FLAG)) {
 		arg->utype = utype;
 		arg->str = vstart;
 		/* If no value and not end of string, error */
-		if (!vstart && elem[len])
-		{
+		if (!vstart && elem[len]) {
 			ASN1err(ASN1_F_ASN1_CB, ASN1_R_MISSING_VALUE);
 			return -1;
 		}
 		return 0;
 	}
 
-	switch(utype)
-	{
+	switch(utype) {
 
-		case ASN1_GEN_FLAG_IMP:
+	case ASN1_GEN_FLAG_IMP:
 		/* Check for illegal multiple IMPLICIT tagging */
-		if (arg->imp_tag != -1)
-		{
+		if (arg->imp_tag != -1) {
 			ASN1err(ASN1_F_ASN1_CB, ASN1_R_ILLEGAL_NESTED_TAGGING);
 			return -1;
 		}
@@ -333,7 +319,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_EXP:
+	case ASN1_GEN_FLAG_EXP:
 
 		if (!parse_tagging(vstart, vlen, &tmp_tag, &tmp_class))
 			return -1;
@@ -341,27 +327,27 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_SEQWRAP:
+	case ASN1_GEN_FLAG_SEQWRAP:
 		if (!append_exp(arg, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, 1, 0, 1))
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_SETWRAP:
+	case ASN1_GEN_FLAG_SETWRAP:
 		if (!append_exp(arg, V_ASN1_SET, V_ASN1_UNIVERSAL, 1, 0, 1))
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_BITWRAP:
+	case ASN1_GEN_FLAG_BITWRAP:
 		if (!append_exp(arg, V_ASN1_BIT_STRING, V_ASN1_UNIVERSAL, 0, 1, 1))
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_OCTWRAP:
+	case ASN1_GEN_FLAG_OCTWRAP:
 		if (!append_exp(arg, V_ASN1_OCTET_STRING, V_ASN1_UNIVERSAL, 0, 0, 1))
 			return -1;
 		break;
 
-		case ASN1_GEN_FLAG_FORMAT:
+	case ASN1_GEN_FLAG_FORMAT:
 		if (!strncmp(vstart, "ASCII", 5))
 			arg->format = ASN1_GEN_FORMAT_ASCII;
 		else if (!strncmp(vstart, "UTF8", 4))
@@ -370,8 +356,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 			arg->format = ASN1_GEN_FORMAT_HEX;
 		else if (!strncmp(vstart, "BITLIST", 7))
 			arg->format = ASN1_GEN_FORMAT_BITLIST;
-		else
-		{
+		else {
 			ASN1err(ASN1_F_ASN1_CB, ASN1_R_UNKOWN_FORMAT);
 			return -1;
 		}
@@ -394,8 +379,7 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 	/* Check we haven't gone past max length: should be impossible */
 	if (eptr && *eptr && (eptr > vstart + vlen))
 		return 0;
-	if (tag_num < 0)
-	{
+	if (tag_num < 0) {
 		ASN1err(ASN1_F_PARSE_TAGGING, ASN1_R_INVALID_NUMBER);
 		return 0;
 	}
@@ -405,24 +389,22 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 		vlen -= eptr - vstart;
 	else 
 		vlen = 0;
-	if (vlen)
-	{
-		switch (*eptr)
-		{
+	if (vlen) {
+		switch (*eptr) {
 
-			case 'U':
+		case 'U':
 			*pclass = V_ASN1_UNIVERSAL;
 			break;
 
-			case 'A':
+		case 'A':
 			*pclass = V_ASN1_APPLICATION;
 			break;
 
-			case 'P':
+		case 'P':
 			*pclass = V_ASN1_PRIVATE;
 			break;
 
-			case 'C':
+		case 'C':
 			*pclass = V_ASN1_CONTEXT_SPECIFIC;
 			break;
 
@@ -456,15 +438,13 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	sk = sk_ASN1_TYPE_new_null();
 	if (!sk)
 		goto bad;
-	if (section)
-	{
+	if (section) {
 		if (!cnf)
 			goto bad;
 		sect = X509V3_get_section(cnf, (char *)section);
 		if (!sect)
 			goto bad;
-		for (i = 0; i < sk_CONF_VALUE_num(sect); i++)
-		{
+		for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
 			ASN1_TYPE *typ = ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
 			if (!typ)
 				goto bad;
@@ -513,14 +493,12 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class, int exp_cons
 {
 	tag_exp_type *exp_tmp;
 	/* Can only have IMPLICIT if permitted */
-	if ((arg->imp_tag != -1) && !imp_ok)
-	{
+	if ((arg->imp_tag != -1) && !imp_ok) {
 		ASN1err(ASN1_F_APPEND_EXP, ASN1_R_ILLEGAL_IMPLICIT_TAG);
 		return 0;
 	}
 
-	if (arg->exp_count == ASN1_FLAG_EXP_MAX)
-	{
+	if (arg->exp_count == ASN1_FLAG_EXP_MAX) {
 		ASN1err(ASN1_F_APPEND_EXP, ASN1_R_DEPTH_EXCEEDED);
 		return 0;
 	}
@@ -530,15 +508,12 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class, int exp_cons
 	/* If IMPLICIT set tag to implicit value then
 	 * reset implicit tag since it has been used.
 	 */
-	if (arg->imp_tag != -1)
-	{
+	if (arg->imp_tag != -1) {
 		exp_tmp->exp_tag = arg->imp_tag;
 		exp_tmp->exp_class = arg->imp_class;
 		arg->imp_tag = -1;
 		arg->imp_class = -1;
-	}
-	else
-	{
+	} else {
 		exp_tmp->exp_tag = exp_tag;
 		exp_tmp->exp_class = exp_class;
 	}
@@ -617,8 +592,7 @@ static int asn1_str2tag(const char *tagstr, int len)
 		len = strlen(tagstr);
 	
 	tntmp = tnst;	
-	for (i = 0; i < sizeof(tnst) / sizeof(struct tag_name_st); i++, tntmp++)
-	{
+	for (i = 0; i < sizeof(tnst) / sizeof(struct tag_name_st); i++, tntmp++) {
 		if ((len == tntmp->len) && !strncmp(tntmp->strnam, tagstr, len))
 			return tntmp->tag;
 	}
@@ -637,8 +611,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 
 	int no_unused = 1;
 
-	if (!(atmp = ASN1_TYPE_new()))
-	{
+	if (!(atmp = ASN1_TYPE_new())) {
 		ASN1err(ASN1_F_ASN1_STR2TYPE, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -646,110 +619,96 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 	if (!str)
 		str = "";
 
-	switch(utype)
-	{
+	switch(utype) {
 
-		case V_ASN1_NULL:
-		if (str && *str)
-		{
+	case V_ASN1_NULL:
+		if (str && *str) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_NULL_VALUE);
 			goto bad_form;
 		}
 		break;
 		
-		case V_ASN1_BOOLEAN:
-		if (format != ASN1_GEN_FORMAT_ASCII)
-		{
+	case V_ASN1_BOOLEAN:
+		if (format != ASN1_GEN_FORMAT_ASCII) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_NOT_ASCII_FORMAT);
 			goto bad_form;
 		}
 		vtmp.name = NULL;
 		vtmp.section = NULL;
 		vtmp.value = (char *)str;
-		if (!X509V3_get_value_bool(&vtmp, &atmp->value.boolean))
-		{
+		if (!X509V3_get_value_bool(&vtmp, &atmp->value.boolean)) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_BOOLEAN);
 			goto bad_str;
 		}
 		break;
 
-		case V_ASN1_INTEGER:
-		case V_ASN1_ENUMERATED:
-		if (format != ASN1_GEN_FORMAT_ASCII)
-		{
+	case V_ASN1_INTEGER:
+	case V_ASN1_ENUMERATED:
+		if (format != ASN1_GEN_FORMAT_ASCII) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_INTEGER_NOT_ASCII_FORMAT);
 			goto bad_form;
 		}
-		if (!(atmp->value.integer = s2i_ASN1_INTEGER(NULL, (char *)str)))
-		{
+		if (!(atmp->value.integer = s2i_ASN1_INTEGER(NULL, (char *)str))) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_INTEGER);
 			goto bad_str;
 		}
 		break;
 
-		case V_ASN1_OBJECT:
-		if (format != ASN1_GEN_FORMAT_ASCII)
-		{
+	case V_ASN1_OBJECT:
+		if (format != ASN1_GEN_FORMAT_ASCII) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_OBJECT_NOT_ASCII_FORMAT);
 			goto bad_form;
 		}
-		if (!(atmp->value.object = OBJ_txt2obj(str, 0)))
-		{
+		if (!(atmp->value.object = OBJ_txt2obj(str, 0))) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_OBJECT);
 			goto bad_str;
 		}
 		break;
 
-		case V_ASN1_UTCTIME:
-		case V_ASN1_GENERALIZEDTIME:
-		if (format != ASN1_GEN_FORMAT_ASCII)
-		{
+	case V_ASN1_UTCTIME:
+	case V_ASN1_GENERALIZEDTIME:
+		if (format != ASN1_GEN_FORMAT_ASCII) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_TIME_NOT_ASCII_FORMAT);
 			goto bad_form;
 		}
-		if (!(atmp->value.asn1_string = ASN1_STRING_new()))
-		{
+		if (!(atmp->value.asn1_string = ASN1_STRING_new())) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ERR_R_MALLOC_FAILURE);
 			goto bad_str;
 		}
-		if (!ASN1_STRING_set(atmp->value.asn1_string, str, -1))
-		{
+		if (!ASN1_STRING_set(atmp->value.asn1_string, str, -1)) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ERR_R_MALLOC_FAILURE);
 			goto bad_str;
 		}
 		atmp->value.asn1_string->type = utype;
-		if (!ASN1_TIME_check(atmp->value.asn1_string))
-		{
+		if (!ASN1_TIME_check(atmp->value.asn1_string)) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_TIME_VALUE);
 			goto bad_str;
 		}
 
 		break;
 
-		case V_ASN1_BMPSTRING:
-		case V_ASN1_PRINTABLESTRING:
-		case V_ASN1_IA5STRING:
-		case V_ASN1_T61STRING:
-		case V_ASN1_UTF8STRING:
-		case V_ASN1_VISIBLESTRING:
-		case V_ASN1_UNIVERSALSTRING:
-		case V_ASN1_GENERALSTRING:
-		case V_ASN1_NUMERICSTRING:
+	case V_ASN1_BMPSTRING:
+	case V_ASN1_PRINTABLESTRING:
+	case V_ASN1_IA5STRING:
+	case V_ASN1_T61STRING:
+	case V_ASN1_UTF8STRING:
+	case V_ASN1_VISIBLESTRING:
+	case V_ASN1_UNIVERSALSTRING:
+	case V_ASN1_GENERALSTRING:
+	case V_ASN1_NUMERICSTRING:
 
 		if (format == ASN1_GEN_FORMAT_ASCII)
 			format = MBSTRING_ASC;
 		else if (format == ASN1_GEN_FORMAT_UTF8)
 			format = MBSTRING_UTF8;
-		else
-		{
+		else {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_FORMAT);
 			goto bad_form;
 		}
 
 
 		if (ASN1_mbstring_copy(&atmp->value.asn1_string, (unsigned char *)str,
-						-1, format, ASN1_tag2bit(utype)) <= 0)
-		{
+						-1, format, ASN1_tag2bit(utype)) <= 0) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ERR_R_MALLOC_FAILURE);
 			goto bad_str;
 		}
@@ -757,21 +716,18 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 
 		break;
 
-		case V_ASN1_BIT_STRING:
+	case V_ASN1_BIT_STRING:
 
-		case V_ASN1_OCTET_STRING:
+	case V_ASN1_OCTET_STRING:
 
-		if (!(atmp->value.asn1_string = ASN1_STRING_new()))
-		{
+		if (!(atmp->value.asn1_string = ASN1_STRING_new())) {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ERR_R_MALLOC_FAILURE);
 			goto bad_form;
 		}
 
-		if (format == ASN1_GEN_FORMAT_HEX)
-		{
+		if (format == ASN1_GEN_FORMAT_HEX) {
 
-			if (!(rdata = string_to_hex((char *)str, &rdlen)))
-			{
+			if (!(rdata = string_to_hex((char *)str, &rdlen))) {
 				ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_HEX);
 				goto bad_str;
 			}
@@ -783,24 +739,19 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 		}
 		else if (format == ASN1_GEN_FORMAT_ASCII)
 			ASN1_STRING_set(atmp->value.asn1_string, str, -1);
-		else if ((format == ASN1_GEN_FORMAT_BITLIST) && (utype == V_ASN1_BIT_STRING))
-		{
-			if (!CONF_parse_list(str, ',', 1, bitstr_cb, atmp->value.bit_string))
-			{
+		else if ((format == ASN1_GEN_FORMAT_BITLIST) && (utype == V_ASN1_BIT_STRING)) {
+			if (!CONF_parse_list(str, ',', 1, bitstr_cb, atmp->value.bit_string)) {
 				ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_LIST_ERROR);
 				goto bad_str;
 			}
 			no_unused = 0;
 			
-		}
-		else 
-		{
+		} else {
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
 			goto bad_form;
 		}
 
-		if ((utype == V_ASN1_BIT_STRING) && no_unused)
-		{
+		if ((utype == V_ASN1_BIT_STRING) && no_unused) {
 			atmp->value.asn1_string->flags
 				&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
         		atmp->value.asn1_string->flags
@@ -810,7 +761,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 
 		break;
 
-		default:
+	default:
 		ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_UNSUPPORTED_TYPE);
 		goto bad_str;
 		break;
@@ -821,9 +772,9 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 	return atmp;
 
 
-	bad_str:
+bad_str:
 	ERR_add_error_data(2, "string=", str);
-	bad_form:
+bad_form:
 
 	ASN1_TYPE_free(atmp);
 	return NULL;
@@ -839,13 +790,11 @@ static int bitstr_cb(const char *elem, int len, void *bitstr)
 	bitnum = strtoul(elem, &eptr, 10);
 	if (eptr && *eptr && (eptr != elem + len))
 		return 0;
-	if (bitnum < 0)
-	{
+	if (bitnum < 0) {
 		ASN1err(ASN1_F_BITSTR_CB, ASN1_R_INVALID_NUMBER);
 		return 0;
 	}
-	if (!ASN1_BIT_STRING_set_bit(bitstr, bitnum, 1))
-	{
+	if (!ASN1_BIT_STRING_set_bit(bitstr, bitnum, 1)) {
 		ASN1err(ASN1_F_BITSTR_CB, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}

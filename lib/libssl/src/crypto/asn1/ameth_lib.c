@@ -150,8 +150,7 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 	EVP_PKEY_ASN1_METHOD tmp;
 	const EVP_PKEY_ASN1_METHOD *t = &tmp, **ret;
 	tmp.pkey_id = type;
-	if (app_methods)
-	{
+	if (app_methods) {
 		int idx;
 		idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
 		if (idx >= 0)
@@ -175,21 +174,18 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
 	const EVP_PKEY_ASN1_METHOD *t;
 
-	for (;;)
-	{
+	for (;;) {
 		t = pkey_asn1_find(type);
 		if (!t || !(t->pkey_flags & ASN1_PKEY_ALIAS))
 			break;
 		type = t->pkey_base_id;
 	}
-	if (pe)
-	{
+	if (pe) {
 #ifndef OPENSSL_NO_ENGINE
 		ENGINE *e;
 		/* type will contain the final unaliased type */
 		e = ENGINE_get_pkey_asn1_meth_engine(type);
-		if (e)
-		{
+		if (e) {
 			*pe = e;
 			return ENGINE_get_pkey_asn1_meth(e, type);
 		}
@@ -206,13 +202,11 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	if (len == -1)
 		len = strlen(str);
-	if (pe)
-	{
+	if (pe) {
 #ifndef OPENSSL_NO_ENGINE
 		ENGINE *e;
 		ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
-		if (ameth)
-		{
+		if (ameth) {
 			/* Convert structural into
 			 * functional reference
 			 */
@@ -225,8 +219,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 #endif
 		*pe = NULL;
 	}
-	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++)
-	{
+	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
 		ameth = EVP_PKEY_asn1_get0(i);
 		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
 			continue;
@@ -239,8 +232,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (app_methods == NULL)
-	{
+	if (app_methods == NULL) {
 		app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
 		if (!app_methods)
 			return 0;
@@ -299,8 +291,7 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 	ameth->pkey_base_id = id;
 	ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;
 
-	if (info)
-	{
+	if (info) {
 		ameth->info = BUF_strdup(info);
 		if (!ameth->info)
 			goto err;
@@ -308,8 +299,7 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 	else
 		ameth->info = NULL;
 
-	if (pem_str)
-	{
+	if (pem_str) {
 		ameth->pem_str = BUF_strdup(pem_str);
 		if (!ameth->pem_str)
 			goto err;
@@ -390,8 +380,7 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
 
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC))
-	{
+	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC)) {
 		if (ameth->pem_str)
 			free(ameth->pem_str);
 		if (ameth->info)

@@ -159,8 +159,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	if ((enckey->enckey->algor->parameter=ASN1_TYPE_new()) == NULL) goto err;
 	enckey->enckey->algor->parameter->type=V_ASN1_NULL;
 
-	if (pp == NULL)
-	{
+	if (pp == NULL) {
 		olen = i2d_NETSCAPE_ENCRYPTED_PKEY(enckey, NULL);
 		NETSCAPE_PKEY_free(pkey);
 		NETSCAPE_ENCRYPTED_PKEY_free(enckey);
@@ -169,8 +168,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 
 
 	/* Since its RC4 encrypted length is actual length */
-	if ((zz=(unsigned char *)malloc(rsalen)) == NULL)
-	{
+	if ((zz=(unsigned char *)malloc(rsalen)) == NULL) {
 		ASN1err(ASN1_F_I2D_RSA_NET,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -179,14 +177,12 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	/* Write out private key encoding */
 	i2d_RSAPrivateKey(a,&zz);
 
-	if ((zz=malloc(pkeylen)) == NULL)
-	{
+	if ((zz=malloc(pkeylen)) == NULL) {
 		ASN1err(ASN1_F_I2D_RSA_NET,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!ASN1_STRING_set(enckey->os, "private-key", -1)) 
-	{
+	if (!ASN1_STRING_set(enckey->os, "private-key", -1)) {
 		ASN1err(ASN1_F_I2D_RSA_NET,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -199,8 +195,7 @@ int i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	if (cb == NULL)
 		cb=EVP_read_pw_string;
 	i=cb((char *)buf,256,"Enter Private Key password:",1);
-	if (i != 0)
-	{
+	if (i != 0) {
 		ASN1err(ASN1_F_I2D_RSA_NET,ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 	}
@@ -259,14 +254,12 @@ RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
 }
 
 	if ((enckey->os->length != 11) || (strncmp("private-key",
-		(char *)enckey->os->data,11) != 0))
-	{
+		(char *)enckey->os->data,11) != 0)) {
 		ASN1err(ASN1_F_D2I_RSA_NET,ASN1_R_PRIVATE_KEY_HEADER_MISSING);
 		NETSCAPE_ENCRYPTED_PKEY_free(enckey);
 		return NULL;
 	}
-	if (OBJ_obj2nid(enckey->enckey->algor->algorithm) != NID_rc4)
-	{
+	if (OBJ_obj2nid(enckey->enckey->algor->algorithm) != NID_rc4) {
 		ASN1err(ASN1_F_D2I_RSA_NET,ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM);
 		goto err;
 }
@@ -296,8 +289,7 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 	EVP_CIPHER_CTX_init(&ctx);
 
 	i=cb((char *)buf,256,"Enter Private Key password:",0);
-	if (i != 0)
-	{
+	if (i != 0) {
 		ASN1err(ASN1_F_D2I_RSA_NET_2,ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 	}
@@ -324,15 +316,13 @@ static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 
 	zz=os->data;
 
-	if ((pkey=d2i_NETSCAPE_PKEY(NULL,&zz,os->length)) == NULL)
-	{
+	if ((pkey=d2i_NETSCAPE_PKEY(NULL,&zz,os->length)) == NULL) {
 		ASN1err(ASN1_F_D2I_RSA_NET_2,ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY);
 		goto err;
 	}
 		
 	zz=pkey->private_key->data;
-	if ((ret=d2i_RSAPrivateKey(a,&zz,pkey->private_key->length)) == NULL)
-	{
+	if ((ret=d2i_RSAPrivateKey(a,&zz,pkey->private_key->length)) == NULL) {
 		ASN1err(ASN1_F_D2I_RSA_NET_2,ASN1_R_UNABLE_TO_DECODE_RSA_KEY);
 		goto err;
 	}

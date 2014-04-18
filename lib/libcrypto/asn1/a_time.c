@@ -95,13 +95,11 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
 	struct tm data;
 
 	ts=OPENSSL_gmtime(&t,&data);
-	if (ts == NULL)
-	{
+	if (ts == NULL) {
 		ASN1err(ASN1_F_ASN1_TIME_ADJ, ASN1_R_ERROR_GETTING_TIME);
 		return NULL;
 	}
-	if (offset_day || offset_sec)
-	{ 
+	if (offset_day || offset_sec) { 
 		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
 			return NULL;
 	}
@@ -128,8 +126,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 
 	if (!ASN1_TIME_check(t)) return NULL;
 
-	if (!out || !*out)
-	{
+	if (!out || !*out) {
 		if (!(ret = ASN1_GENERALIZEDTIME_new ()))
 			return NULL;
 		if (out) *out = ret;
@@ -137,8 +134,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 	else ret = *out;
 
 	/* If already GeneralizedTime just copy across */
-	if (t->type == V_ASN1_GENERALIZEDTIME)
-	{
+	if (t->type == V_ASN1_GENERALIZEDTIME) {
 		if(!ASN1_STRING_set(ret, t->data, t->length))
 			return NULL;
 		return ret;
@@ -169,8 +165,7 @@ int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 	
 	t.type = V_ASN1_UTCTIME;
 
-	if (!ASN1_TIME_check(&t))
-	{
+	if (!ASN1_TIME_check(&t)) {
 		t.type = V_ASN1_GENERALIZEDTIME;
 		if (!ASN1_TIME_check(&t))
 			return 0;

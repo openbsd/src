@@ -77,13 +77,11 @@ ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
 
 	ret=(ASN1_UTCTIME *)d2i_ASN1_bytes((ASN1_STRING **)a,pp,length,
 		V_ASN1_UTCTIME,V_ASN1_UNIVERSAL);
-	if (ret == NULL)
-	{
+	if (ret == NULL) {
 		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 	}
-	if (!ASN1_UTCTIME_check(ret))
-	{
+	if (!ASN1_UTCTIME_check(ret)) {
 		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_INVALID_TIME_FORMAT);
 		goto err;
 	}
@@ -110,11 +108,12 @@ int ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 	o=0;
 
 	if (l < 11) goto err;
-	for (i=0; i<6; i++)
-	{
+	for (i=0; i<6; i++) {
 		if ((i == 5) && ((a[o] == 'Z') ||
-			(a[o] == '+') || (a[o] == '-')))
-		{ i++; break; }
+		    (a[o] == '+') || (a[o] == '-'))) {
+			i++;
+			break;
+		}
 		if ((a[o] < '0') || (a[o] > '9')) goto err;
 		n= a[o]-'0';
 		if (++o > l) goto err;
@@ -127,12 +126,10 @@ int ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 	}
 	if (a[o] == 'Z')
 		o++;
-	else if ((a[o] == '+') || (a[o] == '-'))
-	{
+	else if ((a[o] == '+') || (a[o] == '-')) {
 		o++;
 		if (o+4 > l) goto err;
-		for (i=6; i<8; i++)
-		{
+		for (i=6; i<8; i++) {
 			if ((a[o] < '0') || (a[o] > '9')) goto err;
 			n= a[o]-'0';
 			o++;
@@ -154,18 +151,15 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 	t.type=V_ASN1_UTCTIME;
 	t.length=strlen(str);
 	t.data=(unsigned char *)str;
-	if (ASN1_UTCTIME_check(&t))
-	{
-		if (s != NULL)
-		{
+	if (ASN1_UTCTIME_check(&t)) {
+		if (s != NULL) {
 			if (!ASN1_STRING_set((ASN1_STRING *)s,
 				(unsigned char *)str,t.length))
 				return 0;
 			s->type = V_ASN1_UTCTIME;
 		}
 		return(1);
-	}
-	else
+	} else
 		return(0);
 }
 
@@ -191,8 +185,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 	if (ts == NULL)
 		return(NULL);
 
-	if (offset_day || offset_sec)
-	{ 
+	if (offset_day || offset_sec) { 
 		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
 			return NULL;
 	}
@@ -201,11 +194,9 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 		return NULL;
 
 	p=(char *)s->data;
-	if ((p == NULL) || ((size_t)s->length < len))
-	{
+	if ((p == NULL) || ((size_t)s->length < len)) {
 		p=malloc(len);
-		if (p == NULL)
-		{
+		if (p == NULL) {
 			ASN1err(ASN1_F_ASN1_UTCTIME_ADJ,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 		}
@@ -233,8 +224,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 
 	if (s->data[12] == 'Z')
 		offset=0;
-	else
-	{
+	else {
 		offset = g2(s->data+13)*60+g2(s->data+15);
 		if (s->data[12] == '-')
 			offset = -offset;
@@ -280,8 +270,7 @@ time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s)
 	tm.tm_sec=g2(s->data+10);
 	if(s->data[12] == 'Z')
 		offset=0;
-	else
-	{
+	else {
 		offset=g2(s->data+13)*60+g2(s->data+15);
 		if(s->data[12] == '-')
 			offset= -offset;

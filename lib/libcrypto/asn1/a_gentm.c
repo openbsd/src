@@ -116,8 +116,7 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
          * field so make first two fields 00 to 99
          */
 	if (l < 13) goto err;
-	for (i=0; i<7; i++)
-	{
+	for (i=0; i<7; i++) {
 		if ((i == 6) && ((a[o] == 'Z') ||
 			(a[o] == '+') || (a[o] == '-')))
 		{ i++; break; }
@@ -146,12 +145,10 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 
 	if (a[o] == 'Z')
 		o++;
-	else if ((a[o] == '+') || (a[o] == '-'))
-	{
+	else if ((a[o] == '+') || (a[o] == '-')) {
 		o++;
 		if (o+4 > l) goto err;
-		for (i=7; i<9; i++)
-		{
+		for (i=7; i<9; i++) {
 			if ((a[o] < '0') || (a[o] > '9')) goto err;
 			n= a[o]-'0';
 			o++;
@@ -160,9 +157,7 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 			if ((n < min[i]) || (n > max[i])) goto err;
 			o++;
 		}
-	}
-	else
-	{
+	} else {
 		/* Missing time zone information. */
 		goto err;
 	}
@@ -178,10 +173,8 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
 	t.type=V_ASN1_GENERALIZEDTIME;
 	t.length=strlen(str);
 	t.data=(unsigned char *)str;
-	if (ASN1_GENERALIZEDTIME_check(&t))
-	{
-		if (s != NULL)
-		{
+	if (ASN1_GENERALIZEDTIME_check(&t)) {
+		if (s != NULL) {
 			if (!ASN1_STRING_set((ASN1_STRING *)s,
 				(unsigned char *)str,t.length))
 				return 0;
@@ -216,18 +209,15 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
 	if (ts == NULL)
 		return(NULL);
 
-	if (offset_day || offset_sec)
-	{ 
+	if (offset_day || offset_sec) { 
 		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
 			return NULL;
 	}
 
 	p=(char *)s->data;
-	if ((p == NULL) || ((size_t)s->length < len))
-	{
+	if ((p == NULL) || ((size_t)s->length < len)) {
 		p=malloc(len);
-		if (p == NULL)
-		{
+		if (p == NULL) {
 			ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);

@@ -77,24 +77,20 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 {
 	EVP_PKEY *ret;
 
-	if ((a == NULL) || (*a == NULL))
-	{
-		if ((ret=EVP_PKEY_new()) == NULL)
-		{
+	if ((a == NULL) || (*a == NULL)) {
+		if ((ret=EVP_PKEY_new()) == NULL) {
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_EVP_LIB);
 			return(NULL);
 		}
 	}
 	else	ret= *a;
 
-	if (!EVP_PKEY_set_type(ret, type))
-	{
+	if (!EVP_PKEY_set_type(ret, type)) {
 		ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_EVP_LIB);
 		goto err;
 	}
 
-	switch (EVP_PKEY_id(ret))
-	{
+	switch (EVP_PKEY_id(ret)) {
 #ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
 		if ((ret->pkey.rsa=d2i_RSAPublicKey(NULL,

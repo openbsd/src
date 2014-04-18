@@ -90,13 +90,11 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 					unsigned char *penc, int penclen)
 {
 	unsigned char **ppenc = NULL;
-	if (version >= 0)
-	{
+	if (version >= 0) {
 		if (!ASN1_INTEGER_set(priv->version, version))
 			return 0;
 	}
-	if (penc)
-	{
+	if (penc) {
 		int pmtype;
 		ASN1_OCTET_STRING *oct;
 		oct = ASN1_OCTET_STRING_new();
@@ -111,8 +109,7 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 			pmtype = V_ASN1_OCTET_STRING;
 		ASN1_TYPE_set(priv->pkey, pmtype, oct);
 	}
-	if (!X509_ALGOR_set0(priv->pkeyalg, aobj, ptype, pval))
-	{
+	if (!X509_ALGOR_set0(priv->pkeyalg, aobj, ptype, pval)) {
 		/* If call fails do not swallow 'enc' */
 		if (ppenc)
 			*ppenc = NULL;
@@ -128,20 +125,15 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
 {
 	if (ppkalg)
 		*ppkalg = p8->pkeyalg->algorithm;
-	if(p8->pkey->type == V_ASN1_OCTET_STRING)
-	{
+	if(p8->pkey->type == V_ASN1_OCTET_STRING) {
 		p8->broken = PKCS8_OK;
-		if (pk)
-		{
+		if (pk) {
 			*pk = p8->pkey->value.octet_string->data;
 			*ppklen = p8->pkey->value.octet_string->length;
 		}
-	}
-	else if (p8->pkey->type == V_ASN1_SEQUENCE)
-	{
+	} else if (p8->pkey->type == V_ASN1_SEQUENCE) {
 		p8->broken = PKCS8_NO_OCTET;
-		if (pk)
-		{
+		if (pk) {
 			*pk = p8->pkey->value.sequence->data;
 			*ppklen = p8->pkey->value.sequence->length;
 		}

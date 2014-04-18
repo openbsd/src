@@ -405,8 +405,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 	if(indent < 0) indent = 0;
 	outlen = indent;
 	if(!do_indent(io_ch, arg, indent)) return -1;
-	switch (flags & XN_FLAG_SEP_MASK)
-	{
+	switch (flags & XN_FLAG_SEP_MASK) {
 		case XN_FLAG_SEP_MULTILINE:
 		sep_dn = "\n";
 		sep_dn_len = 1;
@@ -526,8 +525,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags)
 #ifndef OPENSSL_NO_FP_API
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags)
 {
-	if(flags == XN_FLAG_COMPAT)
-		{
+	if(flags == XN_FLAG_COMPAT) {
 		BIO *btmp;
 		int ret;
 		btmp = BIO_new_fp(fp, BIO_NOCLOSE);

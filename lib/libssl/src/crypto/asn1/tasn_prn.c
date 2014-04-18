@@ -86,8 +86,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 {
 	ASN1_PCTX *ret;
 	ret = malloc(sizeof(ASN1_PCTX));
-	if (ret == NULL)
-	{
+	if (ret == NULL) {
 		ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -199,8 +198,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 	ASN1_aux_cb *asn1_cb;
 	ASN1_PRINT_ARG parg;
 	int i;
-	if (aux && aux->asn1_cb)
-	{
+	if (aux && aux->asn1_cb) {
 		parg.out = out;
 		parg.indent = indent;
 		parg.pctx = pctx;
@@ -208,10 +206,8 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 	}
 	else asn1_cb = 0;
 
-	if(*fld == NULL)
-	{
-		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT)
-		{
+	if(*fld == NULL) {
+		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT) {
 			if (!nohdr && !asn1_print_fsname(out, indent,
 							fname, sname, pctx))
 				return 0;
@@ -221,29 +217,26 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		return 1;
 	}
 
-	switch(it->itype)
-	{
-		case ASN1_ITYPE_PRIMITIVE:
-		if(it->templates)
-		{
+	switch(it->itype) {
+	case ASN1_ITYPE_PRIMITIVE:
+		if(it->templates) {
 			if (!asn1_template_print_ctx(out, fld, indent,
 							it->templates, pctx))
 				return 0;
 		}
 		/* fall thru */
-		case ASN1_ITYPE_MSTRING:
+	case ASN1_ITYPE_MSTRING:
 		if (!asn1_primitive_print(out, fld, it,
 				indent, fname, sname,pctx))
 			return 0;
 		break;
 
-		case ASN1_ITYPE_EXTERN:
+	case ASN1_ITYPE_EXTERN:
 		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
 			return 0;
 		/* Use new style print routine if possible */
 		ef = it->funcs;
-		if (ef && ef->asn1_ex_print)
-		{
+		if (ef && ef->asn1_ex_print) {
 			i = ef->asn1_ex_print(out, fld, indent, "", pctx);
 			if (!i)
 				return 0;
@@ -256,7 +249,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 			return 0;
 		break;
 
-		case ASN1_ITYPE_CHOICE:
+	case ASN1_ITYPE_CHOICE:
 #if 0
 		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
 			return 0;
@@ -264,8 +257,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		/* CHOICE type, get selector */
 		i = asn1_get_choice_selector(fld, it);
 		/* This should never happen... */
-		if((i < 0) || (i >= it->tcount))
-		{
+		if((i < 0) || (i >= it->tcount)) {
 			if (BIO_printf(out,
 				"ERROR: selector [%d] invalid\n", i) <= 0)
 				return 0;
@@ -277,26 +269,21 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 			return 0;
 		break;
 
-		case ASN1_ITYPE_SEQUENCE:
-		case ASN1_ITYPE_NDEF_SEQUENCE:
+	case ASN1_ITYPE_SEQUENCE:
+	case ASN1_ITYPE_NDEF_SEQUENCE:
 		if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
 			return 0;
-		if (fname || sname)
-		{
-			if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
-			{
+		if (fname || sname) {
+			if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE) {
 				if (BIO_puts(out, " {\n") <= 0)
 					return 0;
-			}
-			else
-			{
+			} else {
 				if (BIO_puts(out, "\n") <= 0)
 					return 0;
 			}
 		}
 
-		if (asn1_cb)
-		{
+		if (asn1_cb) {
 			i = asn1_cb(ASN1_OP_PRINT_PRE, fld, it, &parg);
 			if (i == 0)
 				return 0;
@@ -305,8 +292,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		}
 
 		/* Print each field entry */
-		for(i = 0, tt = it->templates; i < it->tcount; i++, tt++)
-		{
+		for(i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
 			const ASN1_TEMPLATE *seqtt;
 			seqtt = asn1_do_adb(fld, tt, 1);
 			tmpfld = asn1_get_field_ptr(fld, seqtt);
@@ -314,14 +300,12 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 						indent + 2, seqtt, pctx))
 				return 0;
 		}
-		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
-		{
+		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE) {
 			if (BIO_printf(out, "%*s}\n", indent, "") < 0)
 				return 0;
 		}
 
-		if (asn1_cb)
-		{
+		if (asn1_cb) {
 			i = asn1_cb(ASN1_OP_PRINT_POST, fld, it, &parg);
 			if (i == 0)
 				return 0;
@@ -350,17 +334,14 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		fname = NULL;
 	else
 		fname = tt->field_name;
-	if(flags & ASN1_TFLG_SK_MASK)
-	{
+	if(flags & ASN1_TFLG_SK_MASK) {
 		char *tname;
 		ASN1_VALUE *skitem;
 		STACK_OF(ASN1_VALUE) *stack;
 
 		/* SET OF, SEQUENCE OF */
-		if (fname)
-		{
-			if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SSOF)
-			{
+		if (fname) {
+			if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SSOF) {
 				if(flags & ASN1_TFLG_SET_OF)
 					tname = "SET";
 				else
@@ -374,8 +355,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 				return 0;
 		}
 		stack = (STACK_OF(ASN1_VALUE) *)*fld;
-		for(i = 0; i < sk_ASN1_VALUE_num(stack); i++)
-		{
+		for(i = 0; i < sk_ASN1_VALUE_num(stack); i++) {
 			if ((i > 0) && (BIO_puts(out, "\n") <= 0))
 				return 0;
 
@@ -386,8 +366,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		}
 		if (!i && BIO_printf(out, "%*s<EMPTY>\n", indent + 2, "") <= 0)
 				return 0;
-		if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE)
-		{
+		if(pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE) {
 			if (BIO_printf(out, "%*s}\n", indent, "") <= 0)
 				return 0;
 		}
@@ -409,8 +388,7 @@ static int asn1_print_fsname(BIO *out, int indent,
 		return 1;
 #endif
 
-	while (indent > nspaces)
-	{
+	while (indent > nspaces) {
 		if (BIO_write(out, spaces, nspaces) != nspaces)
 			return 0;
 		indent -= nspaces;
@@ -423,20 +401,15 @@ static int asn1_print_fsname(BIO *out, int indent,
 		fname = NULL;
 	if (!sname && !fname)
 		return 1;
-	if (fname)
-	{
+	if (fname) {
 		if (BIO_puts(out, fname) <= 0)
 			return 0;
 	}
-	if (sname)
-	{
-		if (fname)
-		{
+	if (sname) {
+		if (fname) {
 			if (BIO_printf(out, " (%s)", sname) <= 0)
 				return 0;
-		}
-		else
-		{
+		} else {
 			if (BIO_puts(out, sname) <= 0)
 				return 0;
 		}
@@ -450,13 +423,12 @@ static int asn1_print_boolean_ctx(BIO *out, int boolval,
 							const ASN1_PCTX *pctx)
 {
 	const char *str;
-	switch (boolval)
-	{
-		case -1:
+	switch (boolval) {
+	case -1:
 		str = "BOOL ABSENT";
 		break;
 
-		case 0:
+	case 0:
 		str = "FALSE";
 		break;
 
@@ -501,8 +473,7 @@ static int asn1_print_oid_ctx(BIO *out, const ASN1_OBJECT *oid,
 static int asn1_print_obstring_ctx(BIO *out, ASN1_STRING *str, int indent,
 						const ASN1_PCTX *pctx)
 {
-	if (str->type == V_ASN1_BIT_STRING)
-	{
+	if (str->type == V_ASN1_BIT_STRING) {
 		if (BIO_printf(out, " (%ld unused bits)\n",
 					str->flags & 0x7) <= 0)
 				return 0;
@@ -536,8 +507,7 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		utype = str->type & ~V_ASN1_NEG;
 	else
 		utype = it->utype;
-	if (utype == V_ASN1_ANY)
-	{
+	if (utype == V_ASN1_ANY) {
 		ASN1_TYPE *atype = (ASN1_TYPE *)*fld;
 		utype = atype->type;
 		fld = &atype->value.asn1_value;
@@ -546,33 +516,28 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 			pname = NULL;
 		else 
 			pname = ASN1_tag2str(utype);
-	}
-	else
-	{
+	} else {
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_TYPE)
 			pname = ASN1_tag2str(utype);
 		else 
 			pname = NULL;
 	}
 
-	if (utype == V_ASN1_NULL)
-	{
+	if (utype == V_ASN1_NULL) {
 		if (BIO_puts(out, "NULL\n") <= 0)
 			return 0;
 		return 1;
 	}
 
-	if (pname)
-	{
+	if (pname) {
 		if (BIO_puts(out, pname) <= 0)
 			return 0;
 		if (BIO_puts(out, ":") <= 0)
 			return 0;
 	}
 
-	switch (utype)
-	{
-		case V_ASN1_BOOLEAN:
+	switch (utype) {
+	case V_ASN1_BOOLEAN:
 		{
 			int boolval = *(int *)fld;
 			if (boolval == -1)
@@ -581,32 +546,32 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		}
 		break;
 
-		case V_ASN1_INTEGER:
-		case V_ASN1_ENUMERATED:
+	case V_ASN1_INTEGER:
+	case V_ASN1_ENUMERATED:
 		ret = asn1_print_integer_ctx(out, str, pctx);
 		break;
 
-		case V_ASN1_UTCTIME:
+	case V_ASN1_UTCTIME:
 		ret = ASN1_UTCTIME_print(out, str);
 		break;
 
-		case V_ASN1_GENERALIZEDTIME:
+	case V_ASN1_GENERALIZEDTIME:
 		ret = ASN1_GENERALIZEDTIME_print(out, str);
 		break;
 
-		case V_ASN1_OBJECT:
+	case V_ASN1_OBJECT:
 		ret = asn1_print_oid_ctx(out, (const ASN1_OBJECT *)*fld, pctx);
 		break;
 
-		case V_ASN1_OCTET_STRING:
-		case V_ASN1_BIT_STRING:
+	case V_ASN1_OCTET_STRING:
+	case V_ASN1_BIT_STRING:
 		ret = asn1_print_obstring_ctx(out, str, indent, pctx);
 		needlf = 0;
 		break;
 
-		case V_ASN1_SEQUENCE:
-		case V_ASN1_SET:
-		case V_ASN1_OTHER:
+	case V_ASN1_SEQUENCE:
+	case V_ASN1_SET:
+	case V_ASN1_OTHER:
 		if (BIO_puts(out, "\n") <= 0)
 			return 0;
 		if (ASN1_parse_dump(out, str->data, str->length,
@@ -615,7 +580,7 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		needlf = 0;
 		break;
 
-		default:
+	default:
 		ret = ASN1_STRING_print_ex(out, str, pctx->str_flags);
 
 	}

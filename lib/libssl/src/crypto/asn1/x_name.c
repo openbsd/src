@@ -145,8 +145,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 
  memerr:
 	ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
-	if (ret)
-	{
+	if (ret) {
 		if (ret->entries)
 			sk_X509_NAME_ENTRY_free(ret->entries);
 		free(ret);
@@ -242,14 +241,14 @@ static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out, const ASN1_IT
 }
 
 static void local_sk_X509_NAME_ENTRY_free(STACK_OF(X509_NAME_ENTRY) *ne)
-	{
+{
 	sk_X509_NAME_ENTRY_free(ne);
-	}
+}
 
 static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY) *ne)
-	{
+{
 	sk_X509_NAME_ENTRY_pop_free(ne, X509_NAME_ENTRY_free);
-	}
+}
 
 static int x509_name_encode(X509_NAME *a)
 {
@@ -295,12 +294,12 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
 						int indent,
 						const char *fname, 
 						const ASN1_PCTX *pctx)
-	{
+{
 	if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
 					indent, pctx->nm_flags) <= 0)
 		return 0;
 	return 2;
-	}
+}
 
 /* This function generates the canonical encoding of the Name structure.
  * In it all strings are converted to UTF8, leading, trailing and
@@ -316,39 +315,35 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
  */
 
 static int x509_name_canon(X509_NAME *a)
-	{
+{
 	unsigned char *p;
 	STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname = NULL;
 	STACK_OF(X509_NAME_ENTRY) *entries = NULL;
 	X509_NAME_ENTRY *entry, *tmpentry = NULL;
 	int i, set = -1, ret = 0;
 
-	if (a->canon_enc)
-		{
+	if (a->canon_enc) {
 		free(a->canon_enc);
 		a->canon_enc = NULL;
 		}
 	/* Special case: empty X509_NAME => null encoding */
-	if (sk_X509_NAME_ENTRY_num(a->entries) == 0)
-		{
+	if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
 		a->canon_enclen = 0;
 		return 1;
-		}
+	}
 	intname = sk_STACK_OF_X509_NAME_ENTRY_new_null();
 	if(!intname)
 		goto err;
-	for(i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++)
-		{
+	for(i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
 		entry = sk_X509_NAME_ENTRY_value(a->entries, i);
-		if(entry->set != set)
-			{
+		if(entry->set != set) {
 			entries = sk_X509_NAME_ENTRY_new_null();
 			if(!entries)
 				goto err;
 			if(!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries))
 				goto err;
 			set = entry->set;
-			}
+		}
 		tmpentry = X509_NAME_ENTRY_new();
 		tmpentry->object = OBJ_dup(entry->object);
 		if (!asn1_string_canon(tmpentry->value, entry->value))
@@ -356,7 +351,7 @@ static int x509_name_canon(X509_NAME *a)
 		if(!sk_X509_NAME_ENTRY_push(entries, tmpentry))
 			goto err;
 		tmpentry = NULL;
-		}
+	}
 
 	/* Finally generate encoding */
 
@@ -381,7 +376,7 @@ static int x509_name_canon(X509_NAME *a)
 		sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
 					local_sk_X509_NAME_ENTRY_pop_free);
 	return ret;
-	}
+}
 
 /* Bitmap of all the types of string that will be canonicalized. */
 
@@ -392,17 +387,16 @@ static int x509_name_canon(X509_NAME *a)
 	
 
 static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
-	{
+{
 	unsigned char *to, *from;
 	int len, i;
 
 	/* If type not in bitmask just copy string across */
-	if (!(ASN1_tag2bit(in->type) & ASN1_MASK_CANON))
-		{
+	if (!(ASN1_tag2bit(in->type) & ASN1_MASK_CANON)) {
 		if (!ASN1_STRING_copy(out, in))
 			return 0;
 		return 1;
-		}
+	}
 
 	out->type = V_ASN1_UTF8STRING;
 	out->length = ASN1_STRING_to_UTF8(&out->data, in);
@@ -421,99 +415,87 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
 	 */
 
 	/* Ignore leading spaces */
-	while((len > 0) && !(*from & 0x80) && isspace(*from))
-		{
+	while((len > 0) && !(*from & 0x80) && isspace(*from)) {
 		from++;
 		len--;
-		}
+	}
 
 	to = from + len - 1;
 
 	/* Ignore trailing spaces */
-	while ((len > 0) && !(*to & 0x80) && isspace(*to))
-		{
+	while ((len > 0) && !(*to & 0x80) && isspace(*to)) {
 		to--;
 		len--;
-		}
+	}
 
 	to = out->data;
 
 	i = 0;
-	while(i < len)
-		{
+	while(i < len) {
 		/* If MSB set just copy across */
-		if (*from & 0x80)
-			{
+		if (*from & 0x80) {
 			*to++ = *from++;
 			i++;
 			}
 		/* Collapse multiple spaces */
-		else if (isspace(*from))
-			{
+		else if (isspace(*from)) {
 			/* Copy one space across */
 			*to++ = ' ';
 			/* Ignore subsequent spaces. Note: don't need to
 			 * check len here because we know the last 
 			 * character is a non-space so we can't overflow.
 			 */
-			do
-				{
+			do {
 				from++;
 				i++;
-				}
-			while(!(*from & 0x80) && isspace(*from));
-			}
-		else
-			{
+			} while(!(*from & 0x80) && isspace(*from));
+		} else {
 			*to++ = tolower(*from);
 			from++;
 			i++;
-			}
 		}
+	}
 
 	out->length = to - out->data;
 
 	return 1;
 
-	}
+}
 
 static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) *_intname,
 			  unsigned char **in)
-	{
+{
 	int i, len, ltmp;
 	ASN1_VALUE *v;
 	STACK_OF(ASN1_VALUE) *intname = (STACK_OF(ASN1_VALUE) *)_intname;
 
 	len = 0;
-	for (i = 0; i < sk_ASN1_VALUE_num(intname); i++)
-		{
+	for (i = 0; i < sk_ASN1_VALUE_num(intname); i++) {
 		v = sk_ASN1_VALUE_value(intname, i);
 		ltmp = ASN1_item_ex_i2d(&v, in,
 			ASN1_ITEM_rptr(X509_NAME_ENTRIES), -1, -1);
 		if (ltmp < 0)
 			return ltmp;
 		len += ltmp;
-		}
-	return len;
 	}
+	return len;
+}
 
 int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
-	{
+{
 	X509_NAME *in;
 
 	if (!xn || !name) return(0);
 
-	if (*xn != name)
-		{
+	if (*xn != name) {
 		in=X509_NAME_dup(name);
-		if (in != NULL)
-			{
+		if (in != NULL) {
 			X509_NAME_free(*xn);
 			*xn=in;
-			}
 		}
-	return(*xn != NULL);
 	}
+	return(*xn != NULL);
+}
 	
 IMPLEMENT_STACK_OF(X509_NAME_ENTRY)
 IMPLEMENT_ASN1_SET_OF(X509_NAME_ENTRY)

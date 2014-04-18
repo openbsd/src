@@ -76,8 +76,7 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
         BIO *b;
         int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-	{
+        if ((b=BIO_new(BIO_s_file())) == NULL) {
 		X509err(X509_F_X509_REQ_PRINT_FP,ERR_R_BUF_LIB);
                 return(0);
 	}
@@ -110,17 +109,16 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 
 
 	ri=x->req_info;
-	if(!(cflag & X509_FLAG_NO_HEADER))
-	{
+	if(!(cflag & X509_FLAG_NO_HEADER)) {
 		if (BIO_write(bp,"Certificate Request:\n",21) <= 0) goto err;
 		if (BIO_write(bp,"    Data:\n",10) <= 0) goto err;
 	}
-	if(!(cflag & X509_FLAG_NO_VERSION))
-	{
+	if(!(cflag & X509_FLAG_NO_VERSION)) {
 		neg=(ri->version->type == V_ASN1_NEG_INTEGER)?"-":"";
 		l=0;
-		for (i=0; i<ri->version->length; i++)
-		{ l<<=8; l+=ri->version->data[i]; }
+		for (i=0; i<ri->version->length; i++) {
+			l<<=8; l+=ri->version->data[i];
+		}
 		if(BIO_printf(bp,"%8sVersion: %s%lu (%s0x%lx)\n","",neg,l,neg,
 			      l) <= 0)
 		    goto err;
@@ -131,8 +129,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
                 if (X509_NAME_print_ex(bp,ri->subject,nmindent, nmflags) < 0) goto err;
                 if (BIO_write(bp,"\n",1) <= 0) goto err;
                 }
-	if(!(cflag & X509_FLAG_NO_PUBKEY))
-	{
+	if(!(cflag & X509_FLAG_NO_PUBKEY)) {
 		if (BIO_write(bp,"        Subject Public Key Info:\n",33) <= 0)
 			goto err;
 		if (BIO_printf(bp,"%12sPublic Key Algorithm: ","") <= 0)
@@ -143,34 +140,26 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 			goto err;
 
 		pkey=X509_REQ_get_pubkey(x);
-		if (pkey == NULL)
-		{
+		if (pkey == NULL) {
 			BIO_printf(bp,"%12sUnable to load Public Key\n","");
 			ERR_print_errors(bp);
-		}
-		else
-		{
+		} else {
 			EVP_PKEY_print_public(bp, pkey, 16, NULL);
 			EVP_PKEY_free(pkey);
 		}
 	}
 
-	if(!(cflag & X509_FLAG_NO_ATTRIBUTES))
-	{
+	if(!(cflag & X509_FLAG_NO_ATTRIBUTES)) {
 		/* may not be */
 		if(BIO_printf(bp,"%8sAttributes:\n","") <= 0)
 		    goto err;
 
 		sk=x->req_info->attributes;
-		if (sk_X509_ATTRIBUTE_num(sk) == 0)
-		{
+		if (sk_X509_ATTRIBUTE_num(sk) == 0) {
 			if(BIO_printf(bp,"%12sa0:00\n","") <= 0)
 			    goto err;
-		}
-		else
-		{
-			for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
-			{
+		} else {
+			for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++) {
 				ASN1_TYPE *at;
 				X509_ATTRIBUTE *a;
 				ASN1_BIT_STRING *bs=NULL;
@@ -182,16 +171,12 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 									continue;
 				if(BIO_printf(bp,"%12s","") <= 0)
 				    goto err;
-				if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
-			{
-				if (a->single)
-				{
+				if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0) {
+				if (a->single) {
 					t=a->value.single;
 					type=t->type;
 					bs=t->value.bit_string;
-				}
-				else
-				{
+				} else {
 					ii=0;
 					count=sk_ASN1_TYPE_num(a->value.set);
 get_next:
@@ -205,29 +190,23 @@ get_next:
 				if (BIO_puts(bp,":") <= 0) goto err;
 				if (	(type == V_ASN1_PRINTABLESTRING) ||
 					(type == V_ASN1_T61STRING) ||
-					(type == V_ASN1_IA5STRING))
-				{
+					(type == V_ASN1_IA5STRING)) {
 					if (BIO_write(bp,(char *)bs->data,bs->length)
 						!= bs->length)
 						goto err;
 					BIO_puts(bp,"\n");
-				}
-				else
-				{
+				} else {
 					BIO_puts(bp,"unable to print attribute\n");
 				}
 				if (++ii < count) goto get_next;
 			}
 		}
 	}
-	if(!(cflag & X509_FLAG_NO_EXTENSIONS))
-	{
+	if(!(cflag & X509_FLAG_NO_EXTENSIONS)) {
 		exts = X509_REQ_get_extensions(x);
-		if(exts)
-		{
+		if(exts) {
 			BIO_printf(bp,"%8sRequested Extensions:\n","");
-			for (i=0; i<sk_X509_EXTENSION_num(exts); i++)
-			{
+			for (i=0; i<sk_X509_EXTENSION_num(exts); i++) {
 				ASN1_OBJECT *obj;
 				X509_EXTENSION *ex;
 				int j;
@@ -238,8 +217,7 @@ get_next:
 				j=X509_EXTENSION_get_critical(ex);
 				if (BIO_printf(bp,": %s\n",j?"critical":"") <= 0)
 					goto err;
-				if(!X509V3_EXT_print(bp, ex, cflag, 16))
-				{
+				if(!X509V3_EXT_print(bp, ex, cflag, 16)) {
 					BIO_printf(bp, "%16s", "");
 					M_ASN1_OCTET_STRING_print(bp,ex->value);
 				}
@@ -249,8 +227,7 @@ get_next:
 		}
 	}
 
-	if(!(cflag & X509_FLAG_NO_SIGDUMP))
-	{
+	if(!(cflag & X509_FLAG_NO_SIGDUMP)) {
 		if(!X509_signature_print(bp, x->sig_alg, x->signature)) goto err;
 	}
 

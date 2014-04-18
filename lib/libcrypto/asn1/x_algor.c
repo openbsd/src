@@ -81,25 +81,21 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 {
 	if (!alg)
 		return 0;
-	if (ptype != V_ASN1_UNDEF)
-	{
+	if (ptype != V_ASN1_UNDEF) {
 		if (alg->parameter == NULL)
 			alg->parameter = ASN1_TYPE_new();
 		if (alg->parameter == NULL)
 			return 0;
 	}
-	if (alg)
-	{
+	if (alg) {
 		if (alg->algorithm)
 			ASN1_OBJECT_free(alg->algorithm);
 		alg->algorithm = aobj;
 	}
 	if (ptype == 0)
 		return 1;	
-	if (ptype == V_ASN1_UNDEF)
-	{
-		if (alg->parameter)
-		{
+	if (ptype == V_ASN1_UNDEF) {
+		if (alg->parameter) {
 			ASN1_TYPE_free(alg->parameter);
 			alg->parameter = NULL;
 		}
@@ -114,10 +110,8 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 {
 	if (paobj)
 		*paobj = algor->algorithm;
-	if (pptype)
-	{
-		if (algor->parameter == NULL)
-		{
+	if (pptype) {
+		if (algor->parameter == NULL) {
 			*pptype = V_ASN1_UNDEF;
 			return;
 		}

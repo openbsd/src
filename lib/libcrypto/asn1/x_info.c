@@ -67,8 +67,7 @@ X509_INFO *X509_INFO_new(void)
 	X509_INFO *ret=NULL;
 
 	ret=(X509_INFO *)malloc(sizeof(X509_INFO));
-	if (ret == NULL)
-	{
+	if (ret == NULL) {
 		ASN1err(ASN1_F_X509_INFO_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 	}

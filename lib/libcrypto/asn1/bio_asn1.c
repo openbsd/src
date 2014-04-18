@@ -210,20 +210,18 @@ static int asn1_bio_write(BIO *b, const char *in , int inl)
 	wrlen = 0;
 	ret = -1;
 
-	for(;;)
-	{
-		switch (ctx->state)
-		{
+	for(;;) {
+		switch (ctx->state) {
 
 			/* Setup prefix data, call it */
-			case ASN1_STATE_START:
+		case ASN1_STATE_START:
 			if (!asn1_bio_setup_ex(b, ctx, ctx->prefix,
 				ASN1_STATE_PRE_COPY, ASN1_STATE_HEADER))
 				return 0;
 			break;
 
 			/* Copy any pre data first */
-			case ASN1_STATE_PRE_COPY:
+		case ASN1_STATE_PRE_COPY:
 
 			ret = asn1_bio_flush_ex(b, ctx, ctx->prefix_free,
 							ASN1_STATE_HEADER);
@@ -233,7 +231,7 @@ static int asn1_bio_write(BIO *b, const char *in , int inl)
 
 			break;
 
-			case ASN1_STATE_HEADER:
+		case ASN1_STATE_HEADER:
 			ctx->buflen =
 				ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
 			OPENSSL_assert(ctx->buflen <= ctx->bufsize);
@@ -245,7 +243,7 @@ static int asn1_bio_write(BIO *b, const char *in , int inl)
 
 			break;
 
-			case ASN1_STATE_HEADER_COPY:	
+		case ASN1_STATE_HEADER_COPY:	
 			ret = BIO_write(b->next_bio,
 					ctx->buf + ctx->bufpos, ctx->buflen);
 			if (ret <= 0)
@@ -254,15 +252,14 @@ static int asn1_bio_write(BIO *b, const char *in , int inl)
 			ctx->buflen -= ret;
 			if (ctx->buflen)
 				ctx->bufpos += ret;
-			else
-			{
+			else {
 				ctx->bufpos = 0;
 				ctx->state = ASN1_STATE_DATA_COPY;
 			}
 
 			break;
 
-			case ASN1_STATE_DATA_COPY:
+		case ASN1_STATE_DATA_COPY:
 
 			if (inl > ctx->copylen)
 				wrmax = ctx->copylen;
@@ -306,8 +303,7 @@ static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
 	int ret;
 	if (ctx->ex_len <= 0)
 		return 1;
-	for(;;)
-	{
+	for(;;) {
 		ret = BIO_write(b->next_bio, ctx->ex_buf + ctx->ex_pos,
 								ctx->ex_len);
 		if (ret <= 0)
@@ -315,8 +311,7 @@ static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
 		ctx->ex_len -= ret;
 		if (ctx->ex_len > 0)
 			ctx->ex_pos += ret;
-		else
-		{
+		else {
 			if(cleanup)
 				cleanup(b, &ctx->ex_buf, &ctx->ex_len,
 								&ctx->ex_arg);
@@ -333,8 +328,7 @@ static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
 				asn1_bio_state_t ex_state,
 				asn1_bio_state_t other_state)
 {
-	if (setup && !setup(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg))
-	{
+	if (setup && !setup(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg)) {
 		BIO_clear_retry_flags(b);
 		return 0;
 	}
@@ -378,55 +372,52 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
 	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
 	if (ctx == NULL)
 		return 0;
-	switch(cmd)
-	{
+	switch(cmd) {
 
-		case BIO_C_SET_PREFIX:
+	case BIO_C_SET_PREFIX:
 		ex_func = arg2;
 		ctx->prefix  = ex_func->ex_func;
 		ctx->prefix_free  = ex_func->ex_free_func;
 		break;
 
-		case BIO_C_GET_PREFIX:
+	case BIO_C_GET_PREFIX:
 		ex_func = arg2;
 		ex_func->ex_func = ctx->prefix;
 		ex_func->ex_free_func = ctx->prefix_free;
 		break;
 
-		case BIO_C_SET_SUFFIX:
+	case BIO_C_SET_SUFFIX:
 		ex_func = arg2;
 		ctx->suffix  = ex_func->ex_func;
 		ctx->suffix_free  = ex_func->ex_free_func;
 		break;
 
-		case BIO_C_GET_SUFFIX:
+	case BIO_C_GET_SUFFIX:
 		ex_func = arg2;
 		ex_func->ex_func = ctx->suffix;
 		ex_func->ex_free_func = ctx->suffix_free;
 		break;
 
-		case BIO_C_SET_EX_ARG:
+	case BIO_C_SET_EX_ARG:
 		ctx->ex_arg = arg2;
 		break;
 
-		case BIO_C_GET_EX_ARG:
+	case BIO_C_GET_EX_ARG:
 		*(void **)arg2 = ctx->ex_arg;
 		break;
 
-		case BIO_CTRL_FLUSH:
+	case BIO_CTRL_FLUSH:
 		if (!b->next_bio)
 			return 0;
 
 		/* Call post function if possible */
-		if (ctx->state == ASN1_STATE_HEADER)
-		{
+		if (ctx->state == ASN1_STATE_HEADER) {
 			if (!asn1_bio_setup_ex(b, ctx, ctx->suffix,
 				ASN1_STATE_POST_COPY, ASN1_STATE_DONE))
 				return 0;
 		}
 
-		if (ctx->state == ASN1_STATE_POST_COPY)
-		{
+		if (ctx->state == ASN1_STATE_POST_COPY) {
 			ret = asn1_bio_flush_ex(b, ctx, ctx->suffix_free,
 							ASN1_STATE_DONE);
 			if (ret <= 0)
@@ -435,15 +426,14 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
 
 		if (ctx->state == ASN1_STATE_DONE)
 			return BIO_ctrl(b->next_bio, cmd, arg1, arg2);
-		else
-		{
+		else {
 			BIO_clear_retry_flags(b);
 			return 0;
 		}
 		break;
 
 
-		default:
+	default:
 		if (!b->next_bio)
 			return 0;
 		return BIO_ctrl(b->next_bio, cmd, arg1, arg2);
@@ -468,8 +458,7 @@ static int asn1_bio_get_ex(BIO *b, int cmd,
 	BIO_ASN1_EX_FUNCS extmp;
 	int ret;
 	ret = BIO_ctrl(b, cmd, 0, &extmp);
-	if (ret > 0)
-	{
+	if (ret > 0) {
 		*ex_func = extmp.ex_func;
 		*ex_free_func = extmp.ex_free_func;
 	}

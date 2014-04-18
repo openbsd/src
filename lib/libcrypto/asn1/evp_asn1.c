@@ -78,8 +78,7 @@ int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data,
 	int ret,num;
 	unsigned char *p;
 
-	if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL))
-	{
+	if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL)) {
 		ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
 		return(-1);
 	}
@@ -115,8 +114,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
 
 	if ((osp=ASN1_STRING_new()) == NULL) return(0);
 	/* Grow the 'string' */
-	if (!ASN1_STRING_set(osp,NULL,size))
-	{
+	if (!ASN1_STRING_set(osp,NULL,size)) {
 		ASN1_STRING_free(osp);
 		return(0);
 	}
@@ -145,8 +143,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 	long length;
 	ASN1_const_CTX c;
 
-	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL))
-	{
+	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL)) {
 		goto err;
 	}
 	p=M_ASN1_STRING_data(a->value.sequence);
@@ -177,8 +174,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 
 	if (data != NULL)
 		memcpy(data,M_ASN1_STRING_data(os),n);
-	if (0)
-	{
+	if (0) {
 err:
 		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
 	}

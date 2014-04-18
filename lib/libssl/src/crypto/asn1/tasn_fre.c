@@ -93,30 +93,27 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 	else
 		asn1_cb = 0;
 
-	switch(it->itype)
-	{
+	switch(it->itype) {
 
-		case ASN1_ITYPE_PRIMITIVE:
+	case ASN1_ITYPE_PRIMITIVE:
 		if (it->templates)
 			ASN1_template_free(pval, it->templates);
 		else
 			ASN1_primitive_free(pval, it);
 		break;
 
-		case ASN1_ITYPE_MSTRING:
+	case ASN1_ITYPE_MSTRING:
 		ASN1_primitive_free(pval, it);
 		break;
 
-		case ASN1_ITYPE_CHOICE:
-		if (asn1_cb)
-		{
+	case ASN1_ITYPE_CHOICE:
+		if (asn1_cb) {
 			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
 			if (i == 2)
 				return;
 		}
 		i = asn1_get_choice_selector(pval, it);
-		if ((i >= 0) && (i < it->tcount))
-		{
+		if ((i >= 0) && (i < it->tcount)) {
 			ASN1_VALUE **pchval;
 			tt = it->templates + i;
 			pchval = asn1_get_field_ptr(pval, tt);
@@ -124,31 +121,29 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 		}
 		if (asn1_cb)
 			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
-		if (!combine)
-		{
+		if (!combine) {
 			free(*pval);
 			*pval = NULL;
 		}
 		break;
 
-		case ASN1_ITYPE_COMPAT:
+	case ASN1_ITYPE_COMPAT:
 		cf = it->funcs;
 		if (cf && cf->asn1_free)
 			cf->asn1_free(*pval);
 		break;
 
-		case ASN1_ITYPE_EXTERN:
+	case ASN1_ITYPE_EXTERN:
 		ef = it->funcs;
 		if (ef && ef->asn1_ex_free)
 			ef->asn1_ex_free(pval, it);
 		break;
 
-		case ASN1_ITYPE_NDEF_SEQUENCE:
-		case ASN1_ITYPE_SEQUENCE:
+	case ASN1_ITYPE_NDEF_SEQUENCE:
+	case ASN1_ITYPE_SEQUENCE:
 		if (asn1_do_lock(pval, -1, it) > 0)
 			return;
-		if (asn1_cb)
-		{
+		if (asn1_cb) {
 			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
 			if (i == 2)
 				return;
@@ -160,8 +155,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 		 * free up in reverse order.
 		 */
 		tt = it->templates + it->tcount - 1;
-		for (i = 0; i < it->tcount; tt--, i++)
-		{
+		for (i = 0; i < it->tcount; tt--, i++) {
 			ASN1_VALUE **pseqval;
 			seqtt = asn1_do_adb(pval, tt, 0);
 			if (!seqtt)
@@ -171,8 +165,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 		}
 		if (asn1_cb)
 			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
-		if (!combine)
-		{
+		if (!combine) {
 			free(*pval);
 			*pval = NULL;
 		}
@@ -183,11 +176,9 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
 	int i;
-	if (tt->flags & ASN1_TFLG_SK_MASK)
-	{
+	if (tt->flags & ASN1_TFLG_SK_MASK) {
 		STACK_OF(ASN1_VALUE) *sk = (STACK_OF(ASN1_VALUE) *)*pval;
-		for (i = 0; i < sk_ASN1_VALUE_num(sk); i++)
-		{
+		for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
 			ASN1_VALUE *vtmp;
 			vtmp = sk_ASN1_VALUE_value(sk, i);
 			asn1_item_combine_free(&vtmp, ASN1_ITEM_ptr(tt->item),
@@ -204,60 +195,52 @@ void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	int utype;
-	if (it)
-	{
+	if (it) {
 		const ASN1_PRIMITIVE_FUNCS *pf;
 		pf = it->funcs;
-		if (pf && pf->prim_free)
-		{
+		if (pf && pf->prim_free) {
 			pf->prim_free(pval, it);
 			return;
 		}
 	}
 	/* Special case: if 'it' is NULL free contents of ASN1_TYPE */
-	if (!it)
-	{
+	if (!it) {
 		ASN1_TYPE *typ = (ASN1_TYPE *)*pval;
 		utype = typ->type;
 		pval = &typ->value.asn1_value;
 		if (!*pval)
 			return;
-	}
-	else if (it->itype == ASN1_ITYPE_MSTRING)
-	{
+	} else if (it->itype == ASN1_ITYPE_MSTRING) {
 		utype = -1;
 		if (!*pval)
 			return;
-	}
-	else
-	{
+	} else {
 		utype = it->utype;
 		if ((utype != V_ASN1_BOOLEAN) && !*pval)
 			return;
 	}
 
-	switch(utype)
-	{
-		case V_ASN1_OBJECT:
+	switch(utype) {
+	case V_ASN1_OBJECT:
 		ASN1_OBJECT_free((ASN1_OBJECT *)*pval);
 		break;
 
-		case V_ASN1_BOOLEAN:
+	case V_ASN1_BOOLEAN:
 		if (it)
 			*(ASN1_BOOLEAN *)pval = it->size;
 		else
 			*(ASN1_BOOLEAN *)pval = -1;
 		return;
 
-		case V_ASN1_NULL:
+	case V_ASN1_NULL:
 		break;
 
-		case V_ASN1_ANY:
+	case V_ASN1_ANY:
 		ASN1_primitive_free(pval, NULL);
 		free(*pval);
 		break;
 
-		default:
+	default:
 		ASN1_STRING_free((ASN1_STRING *)*pval);
 		*pval = NULL;
 		break;

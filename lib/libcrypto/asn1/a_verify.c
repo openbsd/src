@@ -81,8 +81,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	int mdnid, pknid;
 
-	if (!pkey)
-	{
+	if (!pkey) {
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
 	}
@@ -90,15 +89,12 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	EVP_MD_CTX_init(&ctx);
 
 	/* Convert signature OID into digest and public key OIDs */
-	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid))
-	{
+	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid)) {
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
 		goto err;
 	}
-	if (mdnid == NID_undef)
-	{
-		if (!pkey->ameth || !pkey->ameth->item_verify)
-		{
+	if (mdnid == NID_undef) {
+		if (!pkey->ameth || !pkey->ameth->item_verify) {
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
 			goto err;
 		}
@@ -111,26 +107,21 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		if (ret != 2)
 			goto err;
 		ret = -1;
-	}
-	else
-	{
+	} else {
 		const EVP_MD *type;
 		type=EVP_get_digestbynid(mdnid);
-		if (type == NULL)
-		{
+		if (type == NULL) {
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
 			goto err;
 		}
 
 		/* Check public key OID matches public key type */
-		if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id)
-		{
+		if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_WRONG_PUBLIC_KEY_TYPE);
 			goto err;
 		}
 
-		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey))
-		{
+		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)) {
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 			ret=0;
 			goto err;
@@ -140,14 +131,12 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	inl = ASN1_item_i2d(asn, &buf_in, it);
 	
-	if (buf_in == NULL)
-	{
+	if (buf_in == NULL) {
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EVP_DigestVerifyUpdate(&ctx,buf_in,inl))
-	{
+	if (!EVP_DigestVerifyUpdate(&ctx,buf_in,inl)) {
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
 		goto err;
@@ -157,8 +146,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	free(buf_in);
 
 	if (EVP_DigestVerifyFinal(&ctx,signature->data,
-			(size_t)signature->length) <= 0)
-	{
+			(size_t)signature->length) <= 0) {
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
 		goto err;

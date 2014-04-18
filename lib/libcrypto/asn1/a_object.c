@@ -100,55 +100,45 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	p=buf;
 	c= *(p++);
 	num--;
-	if ((c >= '0') && (c <= '2'))
-	{
+	if ((c >= '0') && (c <= '2')) {
 		first= c-'0';
-	}
-	else
-	{
+	} else {
 		ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_FIRST_NUM_TOO_LARGE);
 		goto err;
 	}
 
-	if (num <= 0)
-	{
+	if (num <= 0) {
 		ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_MISSING_SECOND_NUMBER);
 		goto err;
 	}
 	c= *(p++);
 	num--;
-	for (;;)
-	{
+	for (;;) {
 		if (num <= 0) break;
-		if ((c != '.') && (c != ' '))
-		{
+		if ((c != '.') && (c != ' ')) {
 			ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_INVALID_SEPARATOR);
 			goto err;
 		}
 		l=0;
 		use_bn = 0;
-		for (;;)
-		{
+		for (;;) {
 			if (num <= 0) break;
 			num--;
 			c= *(p++);
 			if ((c == ' ') || (c == '.'))
 				break;
-			if ((c < '0') || (c > '9'))
-			{
+			if ((c < '0') || (c > '9')) {
 				ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_INVALID_DIGIT);
 				goto err;
 			}
-			if (!use_bn && l >= ((ULONG_MAX - 80) / 10L))
-			{
+			if (!use_bn && l >= ((ULONG_MAX - 80) / 10L)) {
 				use_bn = 1;
 				if (!bl)
 					bl = BN_new();
 				if (!bl || !BN_set_word(bl, l))
 					goto err;
 			}
-			if (use_bn)
-			{
+			if (use_bn) {
 				if (!BN_mul_word(bl, 10L)
 					|| !BN_add_word(bl, c-'0'))
 					goto err;
@@ -156,15 +146,12 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 			else
 				l=l*10L+(long)(c-'0');
 		}
-		if (len == 0)
-		{
-			if ((first < 2) && (l >= 40))
-			{
+		if (len == 0) {
+			if ((first < 2) && (l >= 40)) {
 				ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_SECOND_NUMBER_TOO_LARGE);
 				goto err;
 			}
-			if (use_bn)
-			{
+			if (use_bn) {
 				if (!BN_add_word(bl, first * 40))
 					goto err;
 			}
@@ -172,13 +159,11 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 				l+=(long)first*40;
 		}
 		i=0;
-		if (use_bn)
-		{
+		if (use_bn) {
 			int blsize;
 			blsize = BN_num_bits(bl);
 			blsize = (blsize + 6)/7;
-			if (blsize > tmpsize)
-			{
+			if (blsize > tmpsize) {
 				if (tmp != ftmp)
 					free(tmp);
 				tmpsize = blsize + 32;
@@ -188,22 +173,17 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 			}
 			while(blsize--)
 				tmp[i++] = (unsigned char)BN_div_word(bl, 0x80L);
-		}
-		else
-		{
+		} else {
 					
-			for (;;)
-			{
+			for (;;) {
 				tmp[i++]=(unsigned char)l&0x7f;
 				l>>=7L;
 				if (l == 0L) break;
 			}
 
 		}
-		if (out != NULL)
-		{
-			if (len+i > olen)
-			{
+		if (out != NULL) {
+			if (len+i > olen) {
 				ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_BUFFER_TOO_SMALL);
 				goto err;
 			}
@@ -240,8 +220,7 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	if ((a == NULL) || (a->data == NULL))
 		return(BIO_write(bp,"NULL",4));
 	i=i2t_ASN1_OBJECT(buf,sizeof buf,a);
-	if (i > (int)(sizeof(buf) - 1))
-	{
+	if (i > (int)(sizeof(buf) - 1)) {
 		p = malloc(i + 1);
 		if (!p)
 			return -1;
@@ -265,14 +244,12 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	ASN1_OBJECT *ret = NULL;
 	p= *pp;
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
-	if (inf & 0x80)
-	{
+	if (inf & 0x80) {
 		i=ASN1_R_BAD_OBJECT_HEADER;
 		goto err;
 	}
 
-	if (tag != V_ASN1_OBJECT)
-	{
+	if (tag != V_ASN1_OBJECT) {
 		i=ASN1_R_EXPECTING_AN_OBJECT;
 		goto err;
 	}
@@ -293,10 +270,8 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	/* Sanity check OID encoding: can't have leading 0x80 in
 	 * subidentifiers, see: X.690 8.19.2
 	 */
-	for (i = 0, p = *pp; i < len; i++, p++)
-	{
-		if (*p == 0x80 && (!i || !(p[-1] & 0x80)))
-		{
+	for (i = 0, p = *pp; i < len; i++, p++) {
+		if (*p == 0x80 && (!i || !(p[-1] & 0x80))) {
 			ASN1err(ASN1_F_C2I_ASN1_OBJECT,ASN1_R_INVALID_OBJECT_ENCODING);
 			return NULL;
 		}
@@ -305,8 +280,7 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	/* only the ASN1_OBJECTs from the 'table' will have values
 	 * for ->sn or ->ln */
 	if ((a == NULL) || ((*a) == NULL) ||
-		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-	{
+		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC)) {
 		if ((ret=ASN1_OBJECT_new()) == NULL) return(NULL);
 	}
 	else	ret=(*a);
@@ -316,13 +290,11 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	data = (unsigned char *)ret->data;
 	ret->data = NULL;
 	/* once detached we can change it */
-	if ((data == NULL) || (ret->length < len))
-	{
+	if ((data == NULL) || (ret->length < len)) {
 		ret->length=0;
 		if (data != NULL) free(data);
 		data=(unsigned char *)malloc(len ? (int)len : 1);
-		if (data == NULL)
-		{ i=ERR_R_MALLOC_FAILURE; goto err; }
+		if (data == NULL) { i=ERR_R_MALLOC_FAILURE; goto err; }
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
 	memcpy(data,p,(int)len);
@@ -349,8 +321,7 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 	ASN1_OBJECT *ret;
 
 	ret=(ASN1_OBJECT *)malloc(sizeof(ASN1_OBJECT));
-	if (ret == NULL)
-	{
+	if (ret == NULL) {
 		ASN1err(ASN1_F_ASN1_OBJECT_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 	}
@@ -366,16 +337,14 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 void ASN1_OBJECT_free(ASN1_OBJECT *a)
 {
 	if (a == NULL) return;
-	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
-	{
+	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
 #ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause memory leaks */
 		if (a->sn != NULL) free((void *)a->sn);
 		if (a->ln != NULL) free((void *)a->ln);
 #endif
 		a->sn=a->ln=NULL;
 	}
-	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
-	{
+	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
 		if (a->data != NULL) free((void *)a->data);
 		a->data=NULL;
 		a->length=0;

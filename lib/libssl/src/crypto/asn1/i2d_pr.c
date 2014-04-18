@@ -64,8 +64,7 @@
 
 int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 {
-	if (a->ameth && a->ameth->old_priv_encode)
-	{
+	if (a->ameth && a->ameth->old_priv_encode) {
 		return a->ameth->old_priv_encode(a, pp);
 	}
 	if (a->ameth && a->ameth->priv_encode) {

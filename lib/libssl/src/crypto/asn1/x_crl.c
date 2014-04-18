@@ -101,10 +101,10 @@ static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		/* Just set cmp function here. We don't sort because that
 		 * would affect the output of X509_CRL_print().
 		 */
-		case ASN1_OP_D2I_POST:
+	case ASN1_OP_D2I_POST:
 		(void)sk_X509_REVOKED_set_cmp_func(a->revoked,X509_REVOKED_cmp);
 		break;
-}
+	}
 	return 1;
 }
 
@@ -133,8 +133,7 @@ static int crl_set_issuers(X509_CRL *crl)
 	revoked = X509_CRL_get_REVOKED(crl);
 
 	gens = NULL;
-	for (i = 0; i < sk_X509_REVOKED_num(revoked); i++)
-	{
+	for (i = 0; i < sk_X509_REVOKED_num(revoked); i++) {
 		X509_REVOKED *rev = sk_X509_REVOKED_value(revoked, i);
 		STACK_OF(X509_EXTENSION) *exts;
 		ASN1_ENUMERATED *reason;
@@ -142,17 +141,14 @@ static int crl_set_issuers(X509_CRL *crl)
 		gtmp = X509_REVOKED_get_ext_d2i(rev, 
 						NID_certificate_issuer,
 						&j, NULL);
-		if (!gtmp && (j != -1))
-		{
+		if (!gtmp && (j != -1)) {
 			crl->flags |= EXFLAG_INVALID;
 			return 1;
 		}
 
-		if (gtmp)
-		{
+		if (gtmp) {
 			gens = gtmp;
-			if (!crl->issuers)
-			{
+			if (!crl->issuers) {
 				crl->issuers = sk_GENERAL_NAMES_new_null();
 				if (!crl->issuers)
 					return 0;
@@ -164,29 +160,24 @@ static int crl_set_issuers(X509_CRL *crl)
 
 		reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason,
 								&j, NULL);
-		if (!reason && (j != -1))
-		{
+		if (!reason && (j != -1)) {
 			crl->flags |= EXFLAG_INVALID;
 			return 1;
 		}
 
-		if (reason)
-		{
+		if (reason) {
 			rev->reason = ASN1_ENUMERATED_get(reason);
 			ASN1_ENUMERATED_free(reason);
-		}
-		else
+		} else
 			rev->reason = CRL_REASON_NONE;	
 
 		/* Check for critical CRL entry extensions */
 
 		exts = rev->extensions;
 
-		for (j = 0; j < sk_X509_EXTENSION_num(exts); j++)
-		{
+		for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
 			ext = sk_X509_EXTENSION_value(exts, j);
-			if (ext->critical > 0)
-			{
+			if (ext->critical > 0) {
 				if (OBJ_obj2nid(ext->object) ==
 					NID_certificate_issuer)
 					continue;
@@ -213,9 +204,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 	X509_EXTENSION *ext;
 	int idx;
 
-	switch(operation)
-	{
-		case ASN1_OP_NEW_POST:
+	switch(operation) {
+	case ASN1_OP_NEW_POST:
 		crl->idp = NULL;
 		crl->akid = NULL;
 		crl->flags = 0;
@@ -228,7 +218,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		crl->base_crl_number = NULL;
 		break;
 
-		case ASN1_OP_D2I_POST:
+	case ASN1_OP_D2I_POST:
 #ifndef OPENSSL_NO_SHA
 		X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL);
 #endif
@@ -259,15 +249,13 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 		exts = crl->crl->extensions;
 
-		for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++)
-		{
+		for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++) {
 			int nid;
 			ext = sk_X509_EXTENSION_value(exts, idx);
 			nid = OBJ_obj2nid(ext->object);
 			if (nid == NID_freshest_crl)
 				crl->flags |= EXFLAG_FRESHEST;
-			if (ext->critical > 0)
-			{
+			if (ext->critical > 0) {
 				/* We handle IDP and deltas */
 				if ((nid == NID_issuing_distribution_point)
 					|| (nid == NID_delta_crl))
@@ -281,16 +269,14 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		if (!crl_set_issuers(crl))
 			return 0;
 
-		if (crl->meth->crl_init)
-		{
+		if (crl->meth->crl_init) {
 			if (crl->meth->crl_init(crl) == 0)
 				return 0;
 		}
 		break;
 
-		case ASN1_OP_FREE_POST:
-		if (crl->meth->crl_free)
-		{
+	case ASN1_OP_FREE_POST:
+		if (crl->meth->crl_free) {
 			if (!crl->meth->crl_free(crl))
 				return 0;
 		}
@@ -313,18 +299,15 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 	int idp_only = 0;
 	/* Set various flags according to IDP */
 	crl->idp_flags |= IDP_PRESENT;
-	if (idp->onlyuser > 0)
-	{
+	if (idp->onlyuser > 0) {
 		idp_only++;
 		crl->idp_flags |= IDP_ONLYUSER;
 	}
-	if (idp->onlyCA > 0)
-	{
+	if (idp->onlyCA > 0) {
 		idp_only++;
 		crl->idp_flags |= IDP_ONLYCA;
 	}
-	if (idp->onlyattr > 0)
-	{
+	if (idp->onlyattr > 0) {
 		idp_only++;
 		crl->idp_flags |= IDP_ONLYATTR;
 	}
@@ -335,8 +318,7 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 	if (idp->indirectCRL > 0)
 		crl->idp_flags |= IDP_INDIRECT;
 
-	if (idp->onlysomereasons)
-	{
+	if (idp->onlysomereasons) {
 		crl->idp_flags |= IDP_REASONS;
 		if (idp->onlysomereasons->length > 0)
 			crl->idp_reasons = idp->onlysomereasons->data[0];
@@ -417,8 +399,7 @@ static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
 {
 	int i;
 
-	if (!rev->issuer)
-	{
+	if (!rev->issuer) {
 		if (!nm)
 			return 1;
 		if (!X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
@@ -429,8 +410,7 @@ static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
 	if (!nm)
 		nm = X509_CRL_get_issuer(crl);
 
-	for (i = 0; i < sk_GENERAL_NAME_num(rev->issuer); i++)
-	{
+	for (i = 0; i < sk_GENERAL_NAME_num(rev->issuer); i++) {
 		GENERAL_NAME *gen = sk_GENERAL_NAME_value(rev->issuer, i);
 		if (gen->type != GEN_DIRNAME)
 			continue;
@@ -450,8 +430,7 @@ static int def_crl_lookup(X509_CRL *crl,
 	/* Sort revoked into serial number order if not already sorted.
 	 * Do this under a lock to avoid race condition.
  	 */
-	if (!sk_X509_REVOKED_is_sorted(crl->crl->revoked))
-	{
+	if (!sk_X509_REVOKED_is_sorted(crl->crl->revoked)) {
 		CRYPTO_w_lock(CRYPTO_LOCK_X509_CRL);
 		sk_X509_REVOKED_sort(crl->crl->revoked);
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509_CRL);
@@ -460,13 +439,11 @@ static int def_crl_lookup(X509_CRL *crl,
 	if(idx < 0)
 		return 0;
 	/* Need to look for matching name */
-	for(;idx < sk_X509_REVOKED_num(crl->crl->revoked); idx++)
-	{
+	for(;idx < sk_X509_REVOKED_num(crl->crl->revoked); idx++) {
 		rev = sk_X509_REVOKED_value(crl->crl->revoked, idx);
 		if (ASN1_INTEGER_cmp(rev->serialNumber, serial))
 			return 0;
-		if (crl_revoked_issuer_match(crl, issuer, rev))
-		{
+		if (crl_revoked_issuer_match(crl, issuer, rev)) {
 			if (ret)
 				*ret = rev;
 			if (rev->reason == CRL_REASON_REMOVE_FROM_CRL)

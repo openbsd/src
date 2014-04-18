@@ -116,20 +116,17 @@ int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 				const ASN1_ITEM *it)
 {
 	/* If streaming create stream BIO and copy all content through it */
-	if (flags & SMIME_STREAM)
-	{
+	if (flags & SMIME_STREAM) {
 		BIO *bio, *tbio;
 		bio = BIO_new_NDEF(out, val, it);
-		if (!bio)
-		{
+		if (!bio) {
 			ASN1err(ASN1_F_I2D_ASN1_BIO_STREAM,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		SMIME_crlf_copy(in, bio, flags);
 		(void)BIO_flush(bio);
 		/* Free up successive BIOs until we hit the old output BIO */
-		do
-		{
+		do {
 			tbio = BIO_pop(bio);
 			BIO_free(bio);
 			bio = tbio;
@@ -151,8 +148,7 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 	BIO *b64;
 	int r;
 	b64 = BIO_new(BIO_f_base64());
-	if(!b64)
-	{
+	if(!b64) {
 		ASN1err(ASN1_F_B64_WRITE_ASN1,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -205,20 +201,17 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 	int i, have_unknown = 0, write_comma, ret = 0, md_nid;
 	have_unknown = 0;
 	write_comma = 0;
-	for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++)
-	{
+	for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++) {
 		if (write_comma)
 			BIO_write(out, ",", 1);
 		write_comma = 1;
 		md_nid = OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm);
 		md = EVP_get_digestbynid(md_nid);
-		if (md && md->md_ctrl)
-		{
+		if (md && md->md_ctrl) {
 			int rv;
 			char *micstr;
 			rv = md->md_ctrl(NULL, EVP_MD_CTRL_MICALG, 0, &micstr);
-			if (rv > 0)
-			{
+			if (rv > 0) {
 				BIO_puts(out, micstr);
 				free(micstr);
 				continue;
@@ -226,8 +219,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 			if (rv != -2)
 				goto err;
 		}
-		switch(md_nid)
-		{
+		switch(md_nid) {
 			case NID_sha1:
 			BIO_puts(out, "sha1");
 			break;
@@ -256,8 +248,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 			default:
 			if (have_unknown)
 				write_comma = 0;
-			else
-			{
+			else {
 				BIO_puts(out, "unknown");
 				have_unknown = 1;
 			}
@@ -338,17 +329,14 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 
 	if (ctype_nid == NID_pkcs7_enveloped)
 		msg_type = "enveloped-data";
-	else if (ctype_nid == NID_pkcs7_signed)
-	{
+	else if (ctype_nid == NID_pkcs7_signed) {
 		if (econt_nid == NID_id_smime_ct_receipt)
 			msg_type = "signed-receipt";
 		else if (sk_X509_ALGOR_num(mdalgs) >= 0)
 			msg_type = "signed-data";
 		else
 			msg_type = "certs-only";
-	}
-	else if (ctype_nid == NID_id_smime_ct_compressedData)
-	{
+	} else if (ctype_nid == NID_id_smime_ct_compressedData) {
 		msg_type = "compressed-data";
 		cname = "smime.p7z";
 	}
@@ -382,14 +370,12 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
 	/* If data is not deteched or resigning then the output BIO is
 	 * already set up to finalise when it is written through.
 	 */
-	if (!(flags & SMIME_DETACHED) || (flags & PKCS7_REUSE_DIGEST))
-	{
+	if (!(flags & SMIME_DETACHED) || (flags & PKCS7_REUSE_DIGEST)) {
 		SMIME_crlf_copy(data, out, flags);
 		return 1;
 	}
 
-	if (!aux || !aux->asn1_cb)
-	{
+	if (!aux || !aux->asn1_cb) {
 		ASN1err(ASN1_F_ASN1_OUTPUT_DATA,
 					ASN1_R_STREAMING_NOT_SUPPORTED);
 		return 0;
@@ -413,8 +399,7 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
 
 	/* Now remove any digests prepended to the BIO */
 
-	while (sarg.ndef_bio != out)
-	{
+	while (sarg.ndef_bio != out) {
 		tmpbio = BIO_pop(sarg.ndef_bio);
 		BIO_free(sarg.ndef_bio);
 		sarg.ndef_bio = tmpbio;
@@ -547,17 +532,13 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 	if (!bf)
 		return 0;
 	out = BIO_push(bf, out);
-	if(flags & SMIME_BINARY)
-	{
+	if(flags & SMIME_BINARY) {
 		while((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0)
 						BIO_write(out, linebuf, len);
-	}
-	else
-	{
+	} else {
 		if(flags & SMIME_TEXT)
 			BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
-		while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0)
-		{
+		while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
 			eol = strip_eol(linebuf, &len);
 			if (len)
 				BIO_write(out, linebuf, len);
@@ -944,8 +925,7 @@ static int strip_eol(char *linebuf, int *plen)
 	char *p, c;
 	int is_eol = 0;
 	p = linebuf + len - 1;
-	for (p = linebuf + len - 1; len > 0; len--, p--)
-	{
+	for (p = linebuf + len - 1; len > 0; len--, p--) {
 		c = *p;
 		if (c == '\n')
 			is_eol = 1;

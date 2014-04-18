@@ -109,8 +109,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 	if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
 		return 0;
 	lck = offset2ptr(*pval, aux->ref_offset);
-	if (op == 0)
-	{
+	if (op == 0) {
 		*lck = 1;
 		return 1;
 	}
@@ -133,8 +132,7 @@ void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
-	if (enc)
-	{
+	if (enc) {
 		enc->enc = NULL;
 		enc->len = 0;
 		enc->modified = 1;
@@ -145,8 +143,7 @@ void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	ASN1_ENCODING *enc;
 	enc = asn1_get_enc_ptr(pval, it);
-	if (enc)
-	{
+	if (enc) {
 		if (enc->enc)
 			free(enc->enc);
 		enc->enc = NULL;
@@ -182,8 +179,7 @@ int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
 	enc = asn1_get_enc_ptr(pval, it);
 	if (!enc || enc->modified)
 		return 0;
-	if (out)
-	{
+	if (out) {
 		memcpy(*out, enc->enc, enc->len);
 		*out += enc->len;
 	}
@@ -228,8 +224,7 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
 	sfld = offset2ptr(*pval, adb->offset);
 
 	/* Check if NULL */
-	if (!sfld)
-	{
+	if (!sfld) {
 		if (!adb->null_tt)
 			goto err;
 		return adb->null_tt;

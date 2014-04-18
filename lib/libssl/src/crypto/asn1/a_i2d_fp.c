@@ -69,8 +69,7 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
         BIO *b;
         int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-	{
+        if ((b=BIO_new(BIO_s_file())) == NULL) {
 		ASN1err(ASN1_F_ASN1_I2D_FP,ERR_R_BUF_LIB);
                 return(0);
 	}
@@ -89,8 +88,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
 
 	n=i2d(x,NULL);
 	b=(char *)malloc(n);
-	if (b == NULL)
-	{
+	if (b == NULL) {
 		ASN1err(ASN1_F_ASN1_I2D_BIO,ERR_R_MALLOC_FAILURE);
 		return(0);
 	}
@@ -98,12 +96,10 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
 	p=(unsigned char *)b;
 	i2d(x,&p);
 	
-	for (;;)
-	{
+	for (;;) {
 		i=BIO_write(out,&(b[j]),n);
 		if (i == n) break;
-		if (i <= 0)
-		{
+		if (i <= 0) {
 			ret=0;
 			break;
 		}
@@ -122,8 +118,7 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
         BIO *b;
         int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
-	{
+        if ((b=BIO_new(BIO_s_file())) == NULL) {
 		ASN1err(ASN1_F_ASN1_ITEM_I2D_FP,ERR_R_BUF_LIB);
                 return(0);
 	}
@@ -140,18 +135,15 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
 	int i,j=0,n,ret=1;
 
 	n = ASN1_item_i2d(x, &b, it);
-	if (b == NULL)
-	{
+	if (b == NULL) {
 		ASN1err(ASN1_F_ASN1_ITEM_I2D_BIO,ERR_R_MALLOC_FAILURE);
 		return(0);
 	}
 
-	for (;;)
-	{
+	for (;;) {
 		i=BIO_write(out,&(b[j]),n);
 		if (i == n) break;
-		if (i <= 0)
-		{
+		if (i <= 0) {
 			ret=0;
 			break;
 		}

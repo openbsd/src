@@ -81,17 +81,14 @@ X509_PKEY *d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp, long length)
 
 	ret->cipher.cipher=EVP_get_cipherbyname(
 		OBJ_nid2ln(OBJ_obj2nid(ret->enc_algor->algorithm)));
-	if (ret->cipher.cipher == NULL)
-	{
+	if (ret->cipher.cipher == NULL) {
 		c.error=ASN1_R_UNSUPPORTED_CIPHER;
 		c.line=__LINE__;
 		goto err;
 	}
-	if (ret->enc_algor->parameter->type == V_ASN1_OCTET_STRING) 
-	{
+	if (ret->enc_algor->parameter->type == V_ASN1_OCTET_STRING) {
 		i=ret->enc_algor->parameter->value.octet_string->length;
-		if (i > EVP_MAX_IV_LENGTH)
-		{
+		if (i > EVP_MAX_IV_LENGTH) {
 			c.error=ASN1_R_IV_TOO_LARGE;
 			c.line=__LINE__;
 			goto err;

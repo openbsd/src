@@ -114,13 +114,12 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 	if(!(scheme->parameter = ASN1_TYPE_new())) goto merr;
 
 	/* Create random IV */
-	if (EVP_CIPHER_iv_length(cipher))
-		{
+	if (EVP_CIPHER_iv_length(cipher)) {
 		if (aiv)
 			memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
 		else if (RAND_pseudo_bytes(iv, EVP_CIPHER_iv_length(cipher)) < 0)
   			goto err;
-		}
+	}
 
 	EVP_CIPHER_CTX_init(&ctx);
 
@@ -137,11 +136,10 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 	 * An error is OK here: just means use default PRF.
 	 */
 	if ((prf_nid == -1) && 
-	EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0)
-		{
+	    EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
 		ERR_clear_error();
 		prf_nid = NID_hmacWithSHA1;
-		}
+	}
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
 	/* If its RC2 then we'd better setup the key length */
@@ -178,7 +176,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
 	return ret;
 
-	merr:
+merr:
 	ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,ERR_R_MALLOC_FAILURE);
 
 	err:
@@ -193,13 +191,13 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 				 unsigned char *salt, int saltlen)
-	{
+{
 	return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
-	}
+}
 
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 				int prf_nid, int keylen)
-	{
+{
 	X509_ALGOR *keyfunc = NULL;
 	PBKDF2PARAM *kdf = NULL;
 	ASN1_OCTET_STRING *osalt = NULL;
@@ -232,8 +230,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 	/* If have a key len set it up */
 
-	if(keylen > 0) 
-		{
+	if(keylen > 0) {
 		if(!(kdf->keylength = M_ASN1_INTEGER_new()))
 			goto merr;
 		if(!ASN1_INTEGER_set (kdf->keylength, keylen))
@@ -241,14 +238,13 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 		}
 
 	/* prf can stay NULL if we are using hmacWithSHA1 */
-	if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1)
-		{
+	if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1) {
 		kdf->prf = X509_ALGOR_new();
 		if (!kdf->prf)
 			goto merr;
 		X509_ALGOR_set0(kdf->prf, OBJ_nid2obj(prf_nid),
 					V_ASN1_NULL, NULL);
-		}
+	}
 
 	/* Finally setup the keyfunc structure */
 
@@ -271,10 +267,10 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 	PBKDF2PARAM_free(kdf);
 	return keyfunc;
 
-	merr:
+merr:
 	ASN1err(ASN1_F_PKCS5_PBKDF2_SET,ERR_R_MALLOC_FAILURE);
 	PBKDF2PARAM_free(kdf);
 	X509_ALGOR_free(keyfunc);
 	return NULL;
-	}
+}
 

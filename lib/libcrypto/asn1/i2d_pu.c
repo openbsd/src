@@ -73,8 +73,7 @@
 
 int i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
 {
-	switch (a->type)
-	{
+	switch (a->type) {
 #ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
 		return(i2d_RSAPublicKey(a->pkey.rsa,pp));

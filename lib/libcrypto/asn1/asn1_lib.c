@@ -72,8 +72,7 @@ static int _asn1_check_infinite_end(const unsigned char **p, long len)
 	 * things up */
 	if (len <= 0)
 		return(1);
-	else if ((len >= 2) && ((*p)[0] == 0) && ((*p)[1] == 0))
-	{
+	else if ((len >= 2) && ((*p)[0] == 0) && ((*p)[1] == 0)) {
 		(*p)+=2;
 		return(1);
 	}
@@ -104,13 +103,11 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	ret=(*p&V_ASN1_CONSTRUCTED);
 	xclass=(*p&V_ASN1_PRIVATE);
 	i= *p&V_ASN1_PRIMITIVE_TAG;
-	if (i == V_ASN1_PRIMITIVE_TAG)
-	{		/* high-tag */
+	if (i == V_ASN1_PRIMITIVE_TAG) {		/* high-tag */
 		p++;
 		if (--max == 0) goto err;
 		l=0;
-		while (*p&0x80)
-		{
+		while (*p&0x80) {
 			l<<=7L;
 			l|= *(p++)&0x7f;
 			if (--max == 0) goto err;
@@ -120,9 +117,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 		l|= *(p++)&0x7f;
 		tag=(int)l;
 		if (--max == 0) goto err;
-	}
-	else
-	{ 
+	} else { 
 		tag=i;
 		p++;
 		if (--max == 0) goto err;
@@ -137,8 +132,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 		(int)(omax+ *pp));
 
 #endif
-	if (*plength > (omax - (p - *pp)))
-	{
+	if (*plength > (omax - (p - *pp))) {
 		ASN1err(ASN1_F_ASN1_GET_OBJECT,ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough
 		 * the values are set correctly */
@@ -158,23 +152,18 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max
 	unsigned int i;
 
 	if (max-- < 1) return(0);
-	if (*p == 0x80)
-	{
+	if (*p == 0x80) {
 		*inf=1;
 		ret=0;
 		p++;
-	}
-	else
-	{
+	} else {
 		*inf=0;
 		i= *p&0x7f;
-		if (*(p++) & 0x80)
-		{
+		if (*(p++) & 0x80) {
 			if (i > sizeof(long))
 				return 0;
 			if (max-- == 0) return(0);
-			while (i-- > 0)
-			{
+			while (i-- > 0) {
 				ret<<=8L;
 				ret|= *(p++);
 				if (max-- == 0) return(0);
@@ -202,13 +191,11 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	i|=(xclass&V_ASN1_PRIVATE);
 	if (tag < 31)
 		*(p++)=i|(tag&V_ASN1_PRIMITIVE_TAG);
-	else
-	{
+	else {
 		*(p++)=i|V_ASN1_PRIMITIVE_TAG;
 		for(i = 0, ttag = tag; ttag > 0; i++) ttag >>=7;
 		ttag = i;
-		while(i-- > 0)
-		{
+		while(i-- > 0) {
 			p[i] = tag & 0x7f;
 			if(i != (ttag - 1)) p[i] |= 0x80;
 			tag >>= 7;
@@ -237,15 +224,13 @@ static void asn1_put_length(unsigned char **pp, int length)
 	int i,l;
 	if (length <= 127)
 		*(p++)=(unsigned char)length;
-	else
-	{
+	else {
 		l=length;
 		for (i=0; l > 0; i++)
 			l>>=8;
 		*(p++)=i|0x80;
 		l=i;
-		while (i-- > 0)
-		{
+		while (i-- > 0) {
 			p[i]=length&0xff;
 			length>>=8;
 		}
@@ -260,10 +245,8 @@ int ASN1_object_size(int constructed, int length, int tag)
 
 	ret=length;
 	ret++;
-	if (tag >= 31)
-	{
-		while (tag > 0)
-		{
+	if (tag >= 31) {
+		while (tag > 0) {
 			tag>>=7;
 			ret++;
 		}
@@ -271,10 +254,8 @@ int ASN1_object_size(int constructed, int length, int tag)
 	if (constructed == 2)
 		return ret + 3;
 	ret++;
-	if (length > 127)
-	{
-		while (length > 0)
-		{
+	if (length > 127) {
+		while (length > 0) {
 			length>>=8;
 			ret++;
 		}
@@ -284,17 +265,14 @@ int ASN1_object_size(int constructed, int length, int tag)
 
 static int _asn1_Finish(ASN1_const_CTX *c)
 {
-	if ((c->inf == (1|V_ASN1_CONSTRUCTED)) && (!c->eos))
-	{
-		if (!ASN1_const_check_infinite_end(&c->p,c->slen))
-		{
+	if ((c->inf == (1|V_ASN1_CONSTRUCTED)) && (!c->eos)) {
+		if (!ASN1_const_check_infinite_end(&c->p,c->slen)) {
 			c->error=ERR_R_MISSING_ASN1_EOS;
 			return(0);
 		}
 	}
 	if (	((c->slen != 0) && !(c->inf & 1)) ||
-		((c->slen < 0) && (c->inf & 1)))
-	{
+		((c->slen < 0) && (c->inf & 1))) {
 		c->error=ERR_R_ASN1_LENGTH_MISMATCH;
 		return(0);
 	}
@@ -318,19 +296,16 @@ int asn1_GetSequence(ASN1_const_CTX *c, long *length)
 	q=c->p;
 	c->inf=ASN1_get_object(&(c->p),&(c->slen),&(c->tag),&(c->xclass),
 		*length);
-	if (c->inf & 0x80)
-	{
+	if (c->inf & 0x80) {
 		c->error=ERR_R_BAD_GET_ASN1_OBJECT_CALL;
 		return(0);
 	}
-	if (c->tag != V_ASN1_SEQUENCE)
-	{
+	if (c->tag != V_ASN1_SEQUENCE) {
 		c->error=ERR_R_EXPECTING_AN_ASN1_SEQUENCE;
 		return(0);
 	}
 	(*length)-=(c->p-q);
-	if (c->max && (*length < 0))
-	{
+	if (c->max && (*length < 0)) {
 		c->error=ERR_R_ASN1_LENGTH_MISMATCH;
 		return(0);
 	}
@@ -359,8 +334,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
 	ret=ASN1_STRING_new();
 	if (!ret)
 		return NULL;
-	if (!ASN1_STRING_copy(ret,str))
-	{
+	if (!ASN1_STRING_copy(ret,str)) {
 		ASN1_STRING_free(ret);
 		return NULL;
 	}
@@ -372,31 +346,27 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	unsigned char *c;
 	const char *data=_data;
 
-	if (len < 0)
-	{
+	if (len < 0) {
 		if (data == NULL)
 			return(0);
 		else
 			len=strlen(data);
 	}
-	if ((str->length < len) || (str->data == NULL))
-	{
+	if ((str->length < len) || (str->data == NULL)) {
 		c=str->data;
 		if (c == NULL)
 			str->data=malloc(len+1);
 		else
 			str->data=realloc(c,len+1);
 
-		if (str->data == NULL)
-		{
+		if (str->data == NULL) {
 			ASN1err(ASN1_F_ASN1_STRING_SET,ERR_R_MALLOC_FAILURE);
 			str->data=c;
 			return(0);
 		}
 	}
 	str->length=len;
-	if (data != NULL)
-	{
+	if (data != NULL) {
 		memcpy(str->data,data,len);
 		/* an allowance for strings :-) */
 		str->data[len]='\0';
@@ -423,8 +393,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 	ASN1_STRING *ret;
 
 	ret=(ASN1_STRING *)malloc(sizeof(ASN1_STRING));
-	if (ret == NULL)
-	{
+	if (ret == NULL) {
 		ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 	}
@@ -448,8 +417,7 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 	int i;
 
 	i=(a->length-b->length);
-	if (i == 0)
-	{
+	if (i == 0) {
 		i=memcmp(a->data,b->data,a->length);
 		if (i == 0)
 			return(a->type-b->type);
