@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.570 2014/04/12 05:06:58 dlg Exp $
+#	$OpenBSD: files,v 1.571 2014/04/18 21:55:23 jasper Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -254,8 +254,8 @@ device	oosiop: scsi
 file	dev/ic/oosiop.c			oosiop
 
 # Western Digital WD33C93 SCSI controllers
-define	wd33c93
-file	dev/ic/wd33c93.c		wd33c93
+define	wd33c93ctrl
+file	dev/ic/wd33c93.c		wd33c93ctrl
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii

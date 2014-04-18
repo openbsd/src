@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.4 2013/04/21 14:44:16 sebastia Exp $
+# $OpenBSD: files.hpc,v 1.5 2014/04/18 21:55:24 jasper Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -18,7 +18,7 @@ file	arch/sgi/hpc/if_sq.c			sq
 define	hpcdma
 file	arch/sgi/hpc/hpcdma.c			hpcdma
 
-device	wdsc: wd33c93, scsi, hpcdma
+device	wdsc: wd33c93ctrl, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgi/hpc/wdsc.c			wdsc
 
