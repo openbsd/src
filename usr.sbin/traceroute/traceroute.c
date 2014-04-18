@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.104 2014/04/18 16:29:26 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.105 2014/04/18 16:32:42 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -587,16 +587,12 @@ main(int argc, char *argv[])
 	if (options & SO_DEBUG)
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
-#ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
-#endif /* SO_SNDBUF */
-#ifdef IP_HDRINCL
 	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
 	    sizeof(on)) < 0)
 		err(6, "IP_HDRINCL");
-#endif /* IP_HDRINCL */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
