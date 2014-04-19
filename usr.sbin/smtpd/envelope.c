@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.28 2014/02/04 15:44:05 eric Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.29 2014/04/19 12:30:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -64,7 +64,7 @@ envelope_set_errormsg(struct envelope *e, char *fmt, ...)
 		err(1, "vsnprintf");
 
 	if ((size_t)ret >= sizeof(e->errorline))
-		strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
+		(void)strlcpy(e->errorline + (sizeof(e->errorline) - 4), "...", 4);
 }
 
 void
@@ -681,12 +681,12 @@ ascii_dump_flags(enum envelope_flags flags, char *buf, size_t len)
 			cpylen = strlcat(buf, "authenticated", len);
 		if (flags & EF_BOUNCE) {
 			if (buf[0] != '\0')
-				strlcat(buf, " ", len);
+				(void)strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "bounce", len);
 		}
 		if (flags & EF_INTERNAL) {
 			if (buf[0] != '\0')
-				strlcat(buf, " ", len);
+				(void)strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "internal", len);
 		}
 	}
@@ -709,12 +709,12 @@ ascii_dump_mta_relay_flags(uint16_t flags, char *buf, size_t len)
 	if (flags) {
 		if (flags & F_TLS_VERIFY) {
 			if (buf[0] != '\0')
-				strlcat(buf, " ", len);
+				(void)strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "verify", len);
 		}
 		if (flags & F_STARTTLS) {
 			if (buf[0] != '\0')
-				strlcat(buf, " ", len);
+				(void)strlcat(buf, " ", len);
 			cpylen = strlcat(buf, "tls", len);
 		}
 	}
