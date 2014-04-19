@@ -175,7 +175,7 @@ i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 		*(p--) = ((*(n--)) ^ 0xff) + 1;
 		i--;
 		/* Complement any octets left */
-		for(; i > 0; i--)
+		for (; i > 0; i--)
 			*(p--) = *(n--) ^ 0xff;
 	}
 
@@ -244,7 +244,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 		} else {
 			*(to--) = (*(p--) ^ 0xff) + 1;
 			i--;
-			for(; i > 0; i--)
+			for (; i > 0; i--)
 				*(to--) = *(p--) ^ 0xff;
 		}
 	} else {

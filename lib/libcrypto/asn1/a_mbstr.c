@@ -89,8 +89,7 @@ ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 
 int
 ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
-    int inform, unsigned long mask,
-    long minsize, long maxsize)
+    int inform, unsigned long mask, long minsize, long maxsize)
 {
 	int str_type;
 	int ret;
@@ -109,7 +108,6 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
 	/* First do a string check and work out the number of characters */
 	switch (inform) {
-
 	case MBSTRING_BMP:
 		if (len & 1) {
 			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
@@ -264,6 +262,7 @@ traverse_string(const unsigned char *p, int len, int inform,
 {
 	unsigned long value;
 	int ret;
+
 	while (len) {
 		if (inform == MBSTRING_ASC) {
 			value = *p++;
@@ -280,8 +279,9 @@ traverse_string(const unsigned char *p, int len, int inform,
 			len -= 4;
 		} else {
 			ret = UTF8_getc(p, len, &value);
-			if (ret < 0) return -1;
-				len -= ret;
+			if (ret < 0)
+				return -1;
+			len -= ret;
 			p += ret;
 		}
 		if (rfunc) {
@@ -301,6 +301,7 @@ static int
 in_utf8(unsigned long value, void *arg)
 {
 	int *nchar;
+
 	nchar = arg;
 	(*nchar)++;
 	return 1;
@@ -312,6 +313,7 @@ static int
 out_utf8(unsigned long value, void *arg)
 {
 	int *outlen;
+
 	outlen = arg;
 	*outlen += UTF8_putc(NULL, -1, value);
 	return 1;
@@ -408,8 +410,10 @@ is_printable(unsigned long value)
 {
 	int ch;
 
-	if (value > 0x7f) return 0;
-		ch = (int)value;
+	if (value > 0x7f)
+		return 0;
+	ch = (int)value;
+
 	/* Note: we can't use 'isalnum' because certain accented
 	 * characters may count as alphanumeric in some environments.
 	 */

@@ -78,7 +78,7 @@ i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 		return objsize;
 
 	p = *pp;
-	ASN1_put_object(&p, 0,a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
+	ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
 	memcpy(p, a->data, a->length);
 	p += a->length;
 
