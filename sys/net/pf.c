@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.872 2014/04/18 15:13:01 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.873 2014/04/19 12:59:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2366,14 +2366,6 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	m->m_pkthdr.ph_rtableid = rdom;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m->m_pkthdr.pf.prio = r->set_prio[0];
-
-#ifdef ALTQ
-	if (r != NULL && r->qid) {
-		m->m_pkthdr.pf.qid = r->qid;
-		/* add hints for ecn */
-		m->m_pkthdr.pf.hdr = mtod(m, struct ip *);
-	}
-#endif /* ALTQ */
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -2478,14 +2470,6 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	m0->m_pkthdr.ph_rtableid = rdomain;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m0->m_pkthdr.pf.prio = r->set_prio[0];
-
-#ifdef ALTQ
-	if (r->qid) {
-		m0->m_pkthdr.pf.qid = r->qid;
-		/* add hints for ecn */
-		m0->m_pkthdr.pf.hdr = mtod(m0, struct ip *);
-	}
-#endif /* ALTQ */
 
 	switch (af) {
 #ifdef INET
@@ -6610,13 +6594,6 @@ done:
 		pd.m->m_pkthdr.pf.inp->inp_pf_sk = s->key[PF_SK_STACK];
 		s->key[PF_SK_STACK]->inp = pd.m->m_pkthdr.pf.inp;
 	}
-
-#ifdef ALTQ
-	if (action == PF_PASS && qid) {
-		pd.m->m_pkthdr.pf.qid = qid;
-		pd.m->m_pkthdr.pf.hdr = mtod(pd.m, caddr_t);/* hints for ecn */
-	}
-#endif /* ALTQ */
 
 	/*
 	 * connections redirected to loopback should not match sockets

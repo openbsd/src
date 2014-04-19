@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.397 2014/01/21 01:50:07 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.398 2014/04/19 12:59:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1718,7 +1718,7 @@ struct pfioc_iface {
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
 #define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_rule)
-/* XXX cut 26 - 28 */
+/* XXX cut 27 - 28 */
 #define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
 #define DIOCGETTIMEOUT	_IOWR('D', 30, struct pfioc_tm)
 #define DIOCADDSTATE	_IOWR('D', 37, struct pfioc_state)
@@ -1726,14 +1726,7 @@ struct pfioc_iface {
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
-#define DIOCSTARTALTQ	_IO  ('D', 42)
-#define DIOCSTOPALTQ	_IO  ('D', 43)
-#define DIOCADDALTQ	_IOWR('D', 45, struct pfioc_altq)
-#define DIOCGETALTQS	_IOWR('D', 47, struct pfioc_altq)
-#define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
-#define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
-#define DIOCGETALTQSTATS	_IOWR('D', 50, struct pfioc_altqstats)
-/* XXX cut 51 - 57 */
+/* XXX cut 42 - 57 */
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
 #define	DIOCRCLRTABLES	_IOWR('D', 60, struct pfioc_table)
