@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.23 2010/10/28 21:51:02 jmc Exp $
+.\"	$OpenBSD: lpd.8,v 1.24 2014/04/19 18:44:25 tedu Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -161,9 +161,7 @@ Access control is provided by two means.
 First, all requests must come from one of the machines listed in the file
 .Pa /etc/hosts.equiv
 or
-.Pa /etc/hosts.lpd
-(which follows the same syntax as
-.Xr hosts.equiv 5 ) .
+.Pa /etc/hosts.lpd .
 Second, if the
 .Dq rs
 capability is specified in the
@@ -349,7 +347,6 @@ but not under same administrative control.
 .Xr lprm 1 ,
 .Xr syslog 3 ,
 .Xr hosts 5 ,
-.Xr hosts.equiv 5 ,
 .Xr printcap 5 ,
 .Xr resolv.conf 5 ,
 .Xr lpc 8 ,
