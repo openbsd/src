@@ -587,7 +587,6 @@ typedef struct ssl3_comp_st {
 #endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
 
@@ -790,35 +789,6 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
 int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
-
-int ssl2_enc_init(SSL *s, int client);
-int ssl2_generate_key_material(SSL *s);
-void ssl2_enc(SSL *s, int send_data);
-void ssl2_mac(SSL *s, unsigned char *mac, int send_data);
-const SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
-int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
-int ssl2_part_read(SSL *s, unsigned long f, int i);
-int ssl2_do_write(SSL *s);
-int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data);
-void ssl2_return_error(SSL *s, int reason);
-void ssl2_write_error(SSL *s);
-int ssl2_num_ciphers(void);
-const SSL_CIPHER *ssl2_get_cipher(unsigned int u);
-int	ssl2_new(SSL *s);
-void	ssl2_free(SSL *s);
-int	ssl2_accept(SSL *s);
-int	ssl2_connect(SSL *s);
-int	ssl2_read(SSL *s, void *buf, int len);
-int	ssl2_peek(SSL *s, void *buf, int len);
-int	ssl2_write(SSL *s, const void *buf, int len);
-int	ssl2_shutdown(SSL *s);
-void	ssl2_clear(SSL *s);
-long	ssl2_ctrl(SSL *s, int cmd, long larg, void *parg);
-long	ssl2_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
-long	ssl2_callback_ctrl(SSL *s, int cmd, void (*fp)(void));
-long	ssl2_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp)(void));
-int	ssl2_pending(const SSL *s);
-long	ssl2_default_timeout(void );
 
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
