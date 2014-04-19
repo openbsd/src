@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.13 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.14 2014/04/19 14:19:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -213,8 +213,10 @@ table_create(const char *backend, const char *name, const char *tag,
 		if (stat(path, &sb) == 0) {
 			tb = table_backend_lookup("proc");
 			if (config) {
-				strlcat(path, " ", sizeof(path));
-				strlcat(path, config, sizeof(path));
+				(void)strlcat(path, " ", sizeof(path));
+				if (strlcat(path, config, sizeof(path))
+				    >= sizeof(path))
+					errx(1, "table_create: config file path too long");
 			}
 			config = path;
 		}
@@ -244,7 +246,7 @@ table_create(const char *backend, const char *name, const char *tag,
 		t->t_type = T_DYNAMIC;
 
 	if (name == NULL)
-		snprintf(t->t_name, sizeof(t->t_name), "<dynamic:%u>",
+		(void)snprintf(t->t_name, sizeof(t->t_name), "<dynamic:%u>",
 		    last_table_id++);
 	else {
 		n = strlcpy(t->t_name, name, sizeof(t->t_name));
@@ -483,17 +485,17 @@ table_dump_all(void)
 		sep = "";
  		buf[0] = '\0';
 		if (t->t_type & T_DYNAMIC) {
-			strlcat(buf, "DYNAMIC", sizeof(buf));
+			(void)strlcat(buf, "DYNAMIC", sizeof(buf));
 			sep = ",";
 		}
 		if (t->t_type & T_LIST) {
-			strlcat(buf, sep, sizeof(buf));
-			strlcat(buf, "LIST", sizeof(buf));
+			(void)strlcat(buf, sep, sizeof(buf));
+			(void)strlcat(buf, "LIST", sizeof(buf));
 			sep = ",";
 		}
 		if (t->t_type & T_HASH) {
-			strlcat(buf, sep, sizeof(buf));
-			strlcat(buf, "HASH", sizeof(buf));
+			(void)strlcat(buf, sep, sizeof(buf));
+			(void)strlcat(buf, "HASH", sizeof(buf));
 			sep = ",";
 		}
 		log_debug("TABLE \"%s\" type=%s config=\"%s\"",
