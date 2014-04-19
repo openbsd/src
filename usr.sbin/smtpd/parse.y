@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2014/04/19 17:08:49 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2014/04/19 17:12:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -481,8 +481,14 @@ opt_relay_common: AS STRING	{
 
 opt_relay	: BACKUP STRING			{
 			rule->r_value.relayhost.flags |= F_BACKUP;
-			strlcpy(rule->r_value.relayhost.hostname, $2,
-			    sizeof (rule->r_value.relayhost.hostname));
+			if (strlcpy(rule->r_value.relayhost.hostname, $2,
+				sizeof (rule->r_value.relayhost.hostname))
+			    >= sizeof (rule->r_value.relayhost.hostname)) {
+				log_warnx("hostname too long: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| BACKUP       			{
 			rule->r_value.relayhost.flags |= F_BACKUP;
