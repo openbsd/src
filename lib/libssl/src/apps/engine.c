@@ -119,8 +119,8 @@ append_buf(char **buf, const char *s, int *size, int step)
 		return 0;
 
 	if (**buf != '\0')
-		BUF_strlcat(*buf, ", ", *size);
-	BUF_strlcat(*buf, s, *size);
+		strlcat(*buf, ", ", *size);
+	strlcat(*buf, s, *size);
 
 	return 1;
 }

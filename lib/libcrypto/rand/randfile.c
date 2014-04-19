@@ -142,7 +142,7 @@ err:
 
 const char *RAND_file_name(char *buf, size_t size)
 {
-	if (BUF_strlcpy(buf,"/dev/urandom",size) >= size)
+	if (strlcpy(buf,"/dev/urandom",size) >= size)
 		return(NULL);
 	return buf;
 }

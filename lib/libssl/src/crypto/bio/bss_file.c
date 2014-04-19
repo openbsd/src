@@ -246,14 +246,14 @@ file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown = (int)num&BIO_CLOSE;
 		if (num & BIO_FP_APPEND) {
 			if (num & BIO_FP_READ)
-				BUF_strlcpy(p, "a+", sizeof p);
-			else	BUF_strlcpy(p, "a", sizeof p);
+				strlcpy(p, "a+", sizeof p);
+			else	strlcpy(p, "a", sizeof p);
 		} else if ((num & BIO_FP_READ) && (num & BIO_FP_WRITE))
-			BUF_strlcpy(p, "r+", sizeof p);
+			strlcpy(p, "r+", sizeof p);
 		else if (num & BIO_FP_WRITE)
-			BUF_strlcpy(p, "w", sizeof p);
+			strlcpy(p, "w", sizeof p);
 		else if (num & BIO_FP_READ)
-			BUF_strlcpy(p, "r", sizeof p);
+			strlcpy(p, "r", sizeof p);
 		else {
 			BIOerr(BIO_F_FILE_CTRL, BIO_R_BAD_FOPEN_MODE);
 			ret = 0;

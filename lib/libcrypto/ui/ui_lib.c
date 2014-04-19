@@ -409,13 +409,13 @@ UI_construct_prompt(UI *ui, const char *object_desc, const char *object_name)
 		len += sizeof(prompt3) - 1;
 
 		prompt = (char *)malloc(len + 1);
-		BUF_strlcpy(prompt, prompt1, len + 1);
-		BUF_strlcat(prompt, object_desc, len + 1);
+		strlcpy(prompt, prompt1, len + 1);
+		strlcat(prompt, object_desc, len + 1);
 		if (object_name) {
-			BUF_strlcat(prompt, prompt2, len + 1);
-			BUF_strlcat(prompt, object_name, len + 1);
+			strlcat(prompt, prompt2, len + 1);
+			strlcat(prompt, object_name, len + 1);
 		}
-		BUF_strlcat(prompt, prompt3, len + 1);
+		strlcat(prompt, prompt3, len + 1);
 	}
 	return prompt;
 }
@@ -869,7 +869,7 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 			UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
 			return -1;
 		}
-		BUF_strlcpy(uis->result_buf, result,
+		strlcpy(uis->result_buf, result,
 		    uis->_.string_data.result_maxsize + 1);
 		break;
 	case UIT_BOOLEAN:

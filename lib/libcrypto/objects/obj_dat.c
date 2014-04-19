@@ -486,7 +486,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		if (s)
 			{
 			if (buf)
-				BUF_strlcpy(buf,s,buf_len);
+				strlcpy(buf,s,buf_len);
 			n=strlen(s);
 			return n;
 			}
@@ -576,7 +576,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 					*buf++ = '.';
 					buf_len--;
 					}
-				BUF_strlcpy(buf,bndec,buf_len);
+				strlcpy(buf,bndec,buf_len);
 				if (i > buf_len)
 					{
 					buf += buf_len;
@@ -598,7 +598,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 			i=strlen(tbuf);
 			if (buf && (buf_len > 0))
 				{
-				BUF_strlcpy(buf,tbuf,buf_len);
+				strlcpy(buf,tbuf,buf_len);
 				if (i > buf_len)
 					{
 					buf += buf_len;

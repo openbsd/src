@@ -306,7 +306,7 @@ redoit:
 			perror("malloc");
 			return (0);
 		}
-		BUF_strlcpy(*host, h1->h_name, strlen(h1->h_name) + 1);
+		strlcpy(*host, h1->h_name, strlen(h1->h_name) + 1);
 
 		h2 = GetHostByName(*host);
 		if (h2 == NULL) {

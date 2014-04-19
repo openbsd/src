@@ -1136,7 +1136,7 @@ ca_main(int argc, char **argv)
 			}
 			strlcpy(buf[2], outdir, sizeof(buf[2]));
 
-			BUF_strlcat(buf[2], "/", sizeof(buf[2]));
+			strlcat(buf[2], "/", sizeof(buf[2]));
 
 			n = (char *) &(buf[2][strlen(buf[2])]);
 			if (j > 0) {
@@ -1955,7 +1955,7 @@ do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;
 	}
-	BUF_strlcpy(row[DB_file], "unknown", 8);
+	strlcpy(row[DB_file], "unknown", 8);
 	row[DB_type][0] = 'V';
 	row[DB_type][1] = '\0';
 
@@ -2211,7 +2211,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
-		BUF_strlcpy(row[DB_file], "unknown", 8);
+		strlcpy(row[DB_file], "unknown", 8);
 		row[DB_type][0] = 'V';
 		row[DB_type][1] = '\0';
 
@@ -2497,14 +2497,14 @@ make_revocation_str(int rev_type, char *rev_arg)
 	if (!str)
 		return NULL;
 
-	BUF_strlcpy(str, (char *) revtm->data, i);
+	strlcpy(str, (char *) revtm->data, i);
 	if (reason) {
-		BUF_strlcat(str, ",", i);
-		BUF_strlcat(str, reason, i);
+		strlcat(str, ",", i);
+		strlcat(str, reason, i);
 	}
 	if (other) {
-		BUF_strlcat(str, ",", i);
-		BUF_strlcat(str, other, i);
+		strlcat(str, ",", i);
+		strlcat(str, other, i);
 	}
 	ASN1_UTCTIME_free(revtm);
 	return str;

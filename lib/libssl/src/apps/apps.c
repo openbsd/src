@@ -198,7 +198,7 @@ program_name(char *in, char *out, int size)
 		p++;
 	else
 		p = in;
-	BUF_strlcpy(out, p, size);
+	strlcpy(out, p, size);
 }
 
 int
@@ -1447,7 +1447,7 @@ save_serial(char *serialfile, char *suffix, BIGNUM * serial,
 		goto err;
 	}
 	if (suffix == NULL)
-		BUF_strlcpy(buf[0], serialfile, BSIZE);
+		strlcpy(buf[0], serialfile, BSIZE);
 	else
 		(void) snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
 #ifdef RL_DEBUG
