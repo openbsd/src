@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.63 2014/04/04 16:10:41 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.64 2014/04/19 17:27:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -152,7 +152,7 @@ bounce_add(uint64_t evpid)
 		TAILQ_INIT(&msg->envelopes);
 
 		msg->smtpname = xstrdup(evp.smtpname, "bounce_add");
-		snprintf(buf, sizeof(buf), "%s@%s", evp.sender.user,
+		(void)snprintf(buf, sizeof(buf), "%s@%s", evp.sender.user,
 		    evp.sender.domain);
 		msg->to = xstrdup(buf, "bounce_add");
 		nmessage += 1;
@@ -166,7 +166,7 @@ bounce_add(uint64_t evpid)
 	line = evp.errorline;
 	if (strlen(line) > 4 && (*line == '1' || *line == '6'))
 		line += 4;
-	snprintf(buf, sizeof(buf), "%s@%s: %s\n", evp.dest.user,
+	(void)snprintf(buf, sizeof(buf), "%s@%s: %s\n", evp.dest.user,
 	    evp.dest.domain, line);
 
 	be = xmalloc(sizeof *be, "bounce_add");
@@ -292,22 +292,23 @@ bounce_send(struct bounce_session *s, const char *fmt, ...)
 }
 
 static const char *
-bounce_duration(long long int d) {
+bounce_duration(long long int d)
+{
 	static char buf[32];
 
 	if (d < 60) {
-		snprintf(buf, sizeof buf, "%lld second%s", d, (d == 1)?"":"s");
+		(void)snprintf(buf, sizeof buf, "%lld second%s", d, (d == 1)?"":"s");
 	} else if (d < 3600) {
 		d = d / 60;
-		snprintf(buf, sizeof buf, "%lld minute%s", d, (d == 1)?"":"s");
+		(void)snprintf(buf, sizeof buf, "%lld minute%s", d, (d == 1)?"":"s");
 	}
 	else if (d < 3600 * 24) {
 		d = d / 3600;
-		snprintf(buf, sizeof buf, "%lld hour%s", d, (d == 1)?"":"s");
+		(void)snprintf(buf, sizeof buf, "%lld hour%s", d, (d == 1)?"":"s");
 	}
 	else {
 		d = d / (3600 * 24);
-		snprintf(buf, sizeof buf, "%lld day%s", d, (d == 1)?"":"s");
+		(void)snprintf(buf, sizeof buf, "%lld day%s", d, (d == 1)?"":"s");
 	}
 	return (buf);
 };
@@ -367,7 +368,7 @@ bounce_next_message(struct bounce_session *s)
 	}
 
 	if ((s->msgfp = fdopen(fd, "r")) == NULL) {
-		snprintf(buf, sizeof(buf), "fdopen: %s", strerror(errno));
+		(void)snprintf(buf, sizeof(buf), "fdopen: %s", strerror(errno));
 		log_warn("warn: bounce: fdopen");
 		close(fd);
 		bounce_delivery(msg, IMSG_QUEUE_DELIVERY_TEMPFAIL, buf);
