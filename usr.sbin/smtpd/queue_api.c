@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_api.c,v 1.3 2013/10/27 18:21:07 eric Exp $	*/
+/*	$OpenBSD: queue_api.c,v 1.4 2014/04/19 17:47:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -149,7 +149,7 @@ queue_msg_dispatch(void)
 
 		/* XXX needs more love */
 		r = -1;
-		snprintf(path, sizeof path, "/tmp/message.XXXXXXXXXX");
+		(void)snprintf(path, sizeof path, "/tmp/message.XXXXXXXXXX");
 		fd = mkstemp(path);
 		if (fd == -1) {
 			log_warn("warn: queue-api: mkstemp");
