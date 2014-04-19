@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_socketmap.c,v 1.2 2014/02/04 16:41:08 eric Exp $	*/
+/*	$OpenBSD: table_socketmap.c,v 1.3 2014/04/19 14:21:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -146,7 +146,7 @@ table_socketmap_query(const char *name, const char *key)
 	buf = fgetln(sockstream, &len);
 	if (buf == NULL) {
 		log_warnx("warn: table-socketmap: socketmap has lost its socket");
-		strlcpy(repbuffer, "lost connection to socket", sizeof repbuffer);
+		(void)strlcpy(repbuffer, "lost connection to socket", sizeof repbuffer);
 		ret = SM_PERM;
 		goto err;
 	}
@@ -155,7 +155,7 @@ table_socketmap_query(const char *name, const char *key)
 	else {
 		if ((lbuf = malloc(len + 1)) == NULL) {
 			log_warnx("warn: table-socketmap: memory exhaustion");
-			strlcpy(repbuffer, "memory exhaustion", sizeof repbuffer);
+			(void)strlcpy(repbuffer, "memory exhaustion", sizeof repbuffer);
 			ret = SM_PERM;
 			goto err;
 		}
@@ -169,7 +169,7 @@ table_socketmap_query(const char *name, const char *key)
 	if (strlcpy(repbuffer, buf, sizeof repbuffer) >= sizeof repbuffer) {
 		log_warnx("warn: table-socketmap: socketmap reply too large (>%zu bytes)",
 			sizeof repbuffer);
-		strlcpy(repbuffer, "socketmap reply too large", sizeof repbuffer);
+		(void)strlcpy(repbuffer, "socketmap reply too large", sizeof repbuffer);
 		ret = SM_PERM;
 		goto err;
 	}
@@ -196,7 +196,7 @@ table_socketmap_query(const char *name, const char *key)
 	}
 	else {
 		ret = SM_PERM;
-		strlcpy(repbuffer, "unrecognized socketmap reply", sizeof repbuffer);
+		(void)strlcpy(repbuffer, "unrecognized socketmap reply", sizeof repbuffer);
 	}
 
 err:
