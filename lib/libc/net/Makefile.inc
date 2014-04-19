@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.51 2014/04/07 17:57:56 schwarze Exp $
+#	$OpenBSD: Makefile.inc,v 1.52 2014/04/19 11:18:01 guenther Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -27,8 +27,9 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 
 MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getpeereid.3 getprotoent.3 \
-	getrrsetbyname.3 getservent.3 if_indextoname.3 inet.3 \
-	inet_net.3 inet6_option_space.3 inet6_rthdr_space.3 \
+	getrrsetbyname.3 getservent.3 if_indextoname.3 \
+	inet_addr.3 inet_lnaof.3 inet_net.3 inet_ntop.3 \
+	inet6_option_space.3 inet6_rthdr_space.3 \
 	inet6_opt_init.3 inet6_rth_space.3 link_addr.3 \
 	rcmd.3 rcmdsh.3 resolver.3
 
@@ -61,10 +62,10 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 endservent_r.3
 MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3
-MLINKS+=inet.3 inet_addr.3 inet.3 inet_aton.3 \
-	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
-	inet.3 inet_network.3 inet.3 inet_ntoa.3 \
-	inet.3 inet_ntop.3 inet.3 inet_pton.3
+MLINKS+=inet_addr.3 inet_aton.3 inet_addr.3 inet_network.3 \
+	inet_addr.3 inet_ntoa.3 \
+MLINKS+=inet_lnaof.3 inet_makeaddr.3 inet_lnaof.3 inet_netof.3
+MLINKS+=inet_ntop.3 inet_pton.3
 MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
 MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 \

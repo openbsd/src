@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.26 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: inet_ntop.3,v 1.1 2014/04/19 11:18:01 guenther Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,72 +30,20 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
-.Dt INET 3
+.Dd $Mdocdate: April 19 2014 $
+.Dt INET_NTOP 3
 .Os
 .Sh NAME
-.Nm inet_aton ,
-.Nm inet_addr ,
-.Nm inet_network ,
-.Nm inet_pton ,
 .Nm inet_ntop ,
-.Nm inet_ntoa ,
-.Nm inet_makeaddr ,
-.Nm inet_netof ,
-.Nm inet_lnaof
-.Nd Internet address manipulation routines
+.Nm inet_pton
+.Nd convert Internet addresses between presentation and network formats
 .Sh SYNOPSIS
-.In sys/types.h
-.In sys/socket.h
-.In netinet/in.h
 .In arpa/inet.h
-.Ft int
-.Fn inet_aton "const char *cp" "struct in_addr *addr"
-.Ft in_addr_t
-.Fn inet_addr "const char *cp"
-.Ft in_addr_t
-.Fn inet_network "const char *cp"
-.Ft int
-.Fn inet_pton "int af" "const char *src" "void *dst"
 .Ft const char *
-.Fn inet_ntop "int af" "const void *src" "char *dst" "socklen_t size"
-.Ft char *
-.Fn inet_ntoa "struct in_addr in"
-.Ft struct in_addr
-.Fn inet_makeaddr "in_addr_t net" "in_addr_t lna"
-.Ft in_addr_t
-.Fn inet_netof "struct in_addr in"
-.Ft in_addr_t
-.Fn inet_lnaof "struct in_addr in"
+.Fn inet_ntop "int af" "const void * restrict src" "char * restrict dst" "socklen_t size"
+.Ft int
+.Fn inet_pton "int af" "const char * restrict src" "void * restrict dst"
 .Sh DESCRIPTION
-The routines
-.Fn inet_aton ,
-.Fn inet_addr ,
-and
-.Fn inet_network
-interpret character strings representing
-numbers expressed in the Internet standard
-.Dq dot
-notation.
-.Pp
-The
-.Fn inet_aton
-routine interprets the specified character string as an Internet address,
-placing the address into the structure provided.
-It returns 1 if the string was successfully interpreted,
-or 0 if the string was invalid.
-.Pp
-The
-.Fn inet_addr
-and
-.Fn inet_network
-functions return numbers suitable for use
-as Internet addresses and Internet network
-numbers, respectively.
-Both functions return the constant
-.Dv INADDR_NONE
-if the specified character string is malformed.
-.Pp
 The
 .Fn inet_pton
 function converts a presentation format address (that is, printable form
@@ -114,10 +62,7 @@ and
 .Pp
 The function
 .Fn inet_ntop
-converts an address from network format (usually a
-.Li struct in_addr
-or some other binary form, in network byte order) to presentation format
-(suitable for external display purposes).
+converts an address from network format to presentation format.
 It returns
 .Dv NULL
 if a system
@@ -125,74 +70,15 @@ error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
 .Pp
-The routine
-.Fn inet_ntoa
-takes an Internet address and returns an
-ASCII string representing the address in dot notation.
-.Pp
-The routine
-.Fn inet_makeaddr
-takes an Internet network number and a local
-network address and constructs an Internet address
-from it.
-.Pp
-The routines
-.Fn inet_netof
-and
-.Fn inet_lnaof
-break apart Internet host addresses, returning
-the network number and local network address part,
-respectively.
-.Pp
 All Internet addresses are returned in network
 order (bytes ordered from left to right).
-All network numbers and local address parts are
-returned as machine format integer values.
 .Sh INTERNET ADDRESSES (IP VERSION 4)
-Values specified using dot notation take one of the following forms:
+Values must be specified using the standard dot notation:
 .Bd -literal -offset indent
 a.b.c.d
-a.b.c
-a.b
-a
 .Ed
 .Pp
-When four parts are specified, each is interpreted
-as a byte of data and assigned, from left to right,
-to the four bytes of an Internet address.
-Note that when an Internet address is viewed as a 32-bit
-integer quantity on a system that uses little-endian
-byte order
-(such as the Intel 386, 486 and Pentium processors)
-the bytes referred to above appear as
-.Dq Li d.c.b.a .
-That is, little-endian bytes are ordered from right to left.
-.Pp
-When a three part address is specified, the last
-part is interpreted as a 16-bit quantity and placed
-in the rightmost two bytes of the network address.
-This makes the three part address format convenient
-for specifying Class B network addresses as
-.Dq Li 128.net.host .
-.Pp
-When a two part address is supplied, the last part
-is interpreted as a 24-bit quantity and placed in
-the rightmost three bytes of the network address.
-This makes the two part address format convenient
-for specifying Class A network addresses as
-.Dq Li net.host .
-.Pp
-When only one part is given, the value is stored
-directly in the network address without any byte
-rearrangement.
-.Pp
-All numbers supplied as
-.Dq parts
-in a dot notation
-may be decimal, octal, or hexadecimal, as specified
-in the C language (i.e., a leading 0x or 0X implies
-hexadecimal; a leading 0 implies octal;
-otherwise, the number is interpreted as decimal).
+All four parts must be decimal numbers between 0 and 255, inclusive.
 .Sh INTERNET ADDRESSES (IP VERSION 6)
 In order to support scoped IPv6 addresses,
 .Xr getaddrinfo 3
@@ -271,23 +157,30 @@ or in compressed form:
 .Ed
 .El
 .Sh SEE ALSO
-.Xr byteorder 3 ,
 .Xr gethostbyname 3 ,
-.Xr getnetent 3 ,
+.Xr inet_addr 3 ,
 .Xr inet_net 3 ,
-.Xr hosts 5 ,
-.Xr networks 5
+.Xr hosts 5
 .Sh STANDARDS
 The
 .Nm inet_ntop
 and
 .Nm inet_pton
 functions conform to the IETF IPv6 BSD API and address formatting
-specifications.
+specifications, as well as
+.St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Nm inet_pton
+and
+.Nm inet_ntop
+functions appeared in BIND 4.9.4.
+.Sh CAVEATS
 Note that
 .Nm inet_pton
-does not accept 1-, 2-, or 3-part dotted addresses; all four parts
-must be specified.
+does not accept 1-, 2-, or 3-part dotted addresses;
+all four parts must be specified and must be in decimal
+(and not octal or hexadecimal).
 This is a narrower input set than that accepted by
 .Nm inet_aton .
 .Pp
@@ -309,47 +202,3 @@ This is a narrower input set than that accepted by
 .%R RFC 4291
 .%T IP Version 6 Addressing Architecture
 .Re
-.Sh HISTORY
-The
-.Nm inet_addr ,
-.Nm inet_network ,
-.Nm inet_makeaddr ,
-.Nm inet_lnaof ,
-and
-.Nm inet_netof
-functions appeared in
-.Bx 4.2 .
-The
-.Nm inet_aton
-and
-.Nm inet_ntoa
-functions appeared in
-.Bx 4.3 .
-The
-.Nm inet_pton
-and
-.Nm inet_ntop
-functions appeared in BIND 4.9.4.
-.Sh BUGS
-The value
-.Dv INADDR_NONE
-(0xffffffff) is a valid broadcast address, but
-.Fn inet_addr
-cannot return that value without indicating failure.
-Also,
-.Fn inet_addr
-should have been designed to return a
-.Li struct in_addr .
-The newer
-.Fn inet_aton
-function does not share these problems, and almost all existing code
-should be modified to use
-.Fn inet_aton
-instead.
-.Pp
-The problem of host byte ordering versus network byte ordering is
-confusing.
-.Pp
-The string returned by
-.Fn inet_ntoa
-resides in a static memory area.
