@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -131,8 +131,7 @@ typedef char* (*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
  * first. */
 typedef char* (*DSO_MERGER_FUNC)(DSO *, const char *, const char *);
 
-typedef struct dso_meth_st
-	{
+typedef struct dso_meth_st {
 	const char *name;
 	/* Loads a shared library, NB: new DSO_METHODs must ensure that a
 	 * successful load populates the loaded_filename field, and likewise a
@@ -172,16 +171,15 @@ typedef struct dso_meth_st
 	int (*finish)(DSO *dso);
 
 	/* Return pathname of the module containing location */
-	int (*pathbyaddr)(void *addr,char *path,int sz);
+	int (*pathbyaddr)(void *addr, char *path, int sz);
 	/* Perform global symbol lookup, i.e. among *all* modules */
 	void *(*globallookup)(const char *symname);
-	} DSO_METHOD;
+} DSO_METHOD;
 
 /**********************************************************************/
 /* The low-level handle type used to refer to a loaded shared library */
 
-struct dso_st
-	{
+struct dso_st {
 	DSO_METHOD *meth;
 	/* Standard dlopen uses a (void *). Win32 uses a HANDLE. VMS
 	 * doesn't use anything but will need to cache the filename
@@ -215,7 +213,7 @@ struct dso_st
 	 * corresponds to a loaded library or not, and (b) the filename with
 	 * which it was actually loaded. */
 	char *loaded_filename;
-	};
+};
 
 
 DSO *	DSO_new(void);
@@ -230,7 +228,7 @@ long	DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
  * oldcb is non-NULL then it is set to the function pointer value being
  * replaced. Return value is non-zero for success. */
 int	DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
-				DSO_NAME_CONVERTER_FUNC *oldcb);
+	    DSO_NAME_CONVERTER_FUNC *oldcb);
 /* These functions can be used to get/set the platform-independant filename
  * used for a DSO. NB: set will fail if the DSO is already loaded. */
 const char *DSO_get_filename(DSO *dso);
@@ -299,7 +297,7 @@ DSO_METHOD *DSO_METHOD_dlfcn(void);
  * pathname of cryptolib itself is returned. Negative or zero
  * return value denotes error.
  */
-int DSO_pathbyaddr(void *addr,char *path,int sz);
+int DSO_pathbyaddr(void *addr, char *path, int sz);
 
 /* This function should be used with caution! It looks up symbols in
  * *all* loaded modules and if module gets unloaded by somebody else

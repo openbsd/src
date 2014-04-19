@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,13 +62,14 @@
 
 /* We just pinch the method from an appropriate "default" method. */
 
-DSO_METHOD *DSO_METHOD_openssl(void)
-	{
+DSO_METHOD *
+DSO_METHOD_openssl(void)
+{
 #ifdef DEF_DSO_METHOD
-	return(DEF_DSO_METHOD());
+	return (DEF_DSO_METHOD());
 #elif defined(DSO_DLFCN)
-	return(DSO_METHOD_dlfcn());
+	return (DSO_METHOD_dlfcn());
 #else
-	return(DSO_METHOD_null());
+	return (DSO_METHOD_null());
 #endif
-	}
+}
