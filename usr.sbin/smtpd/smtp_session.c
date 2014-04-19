@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.205 2014/04/19 16:56:34 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.206 2014/04/19 17:03:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1459,7 +1459,13 @@ smtp_parse_mail_args(struct smtp_session *s, char *args)
 				s->evp.dsn_ret = DSN_RETFULL;
 		} else if (strncasecmp(b, "ENVID=", 6) == 0) {
 			b += 6;
-			strlcpy(s->evp.dsn_envid, b, sizeof(s->evp.dsn_envid));
+			if (strlcpy(s->evp.dsn_envid, b, sizeof(s->evp.dsn_envid))
+			    >= sizeof(s->evp.dsn_envid)) {
+			smtp_reply(s, "503 %s %s: option too large, truncated: %s",
+			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
+			    esc_description(ESC_INVALID_COMMAND_ARGUMENTS), b);
+				return (-1);
+			}
 		} else {
 			smtp_reply(s, "503 %s %s: Unsupported option %s",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
