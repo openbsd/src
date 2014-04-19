@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.110 2014/04/18 17:01:47 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.111 2014/04/19 14:06:10 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 	struct ip *ip, *inner_ip;
 	struct icmp *icp;
 	u_int8_t ttl;
-	char *ep, hbuf[NI_MAXHOST];
+	char *ep, hbuf[NI_MAXHOST], *dest;
 	const char *errstr;
 	long l;
 	uid_t uid;
@@ -509,36 +509,43 @@ main(int argc, char *argv[])
 	    (tmprnd & 0x7ff);
 	usec_perturb = arc4random();
 
-	(void) memset(&to, 0, sizeof(struct sockaddr));
-	to.sin_family = AF_INET;
-	if (inet_aton(*argv, &to.sin_addr) != 0)
+	(void) memset(&to, 0, sizeof(to));
+
+	if (inet_aton(*argv, &to.sin_addr) != 0) {
 		hostname = *argv;
-	else {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = PF_INET;
-		hints.ai_socktype = SOCK_RAW;
-		hints.ai_protocol = IPPROTO_ICMP;
-		hints.ai_flags = AI_CANONNAME;
-		if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
-			errx(1, "%s", gai_strerror(error));
+		if ((dest = strdup(inet_ntoa(to.sin_addr))) == NULL)
+			errx(1, "malloc");
+	} else
+		dest = *argv;
 
-		if (res->ai_addrlen != sizeof(to))
-		    errx(1, "size of sockaddr mismatch");
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_protocol = IPPROTO_ICMP;
+	hints.ai_flags = AI_CANONNAME;
+	if ((error = getaddrinfo(dest, NULL, &hints, &res)))
+		errx(1, "%s", gai_strerror(error));
 
-		memcpy(&to, res->ai_addr, res->ai_addrlen);
-		hostname = res->ai_canonname ? strdup(res->ai_canonname) :
-		    *argv;
+	if (res->ai_addrlen != sizeof(to))
+	    errx(1, "size of sockaddr mismatch");
+
+	memcpy(&to, res->ai_addr, res->ai_addrlen);
+
+	if (!hostname) {
+		hostname = res->ai_canonname ? strdup(res->ai_canonname) : dest;
 		if (!hostname)
 			errx(1, "malloc");
-
-		if (res->ai_next) {
-			if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
-			    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
-				strlcpy(hbuf, "?", sizeof(hbuf));
-			warnx("Warning: %s has multiple "
-			    "addresses; using %s\n", hostname, hbuf);
-		}
 	}
+
+	if (res->ai_next) {
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(hbuf, "?", sizeof(hbuf));
+		warnx("Warning: %s has multiple "
+		    "addresses; using %s\n", hostname, hbuf);
+	}
+	freeaddrinfo(res);
+
 	if (*++argv) {
 		errno = 0;
 		ep = NULL;
