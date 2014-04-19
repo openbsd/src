@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.571 2014/04/18 21:55:23 jasper Exp $
+#	$OpenBSD: files,v 1.572 2014/04/19 12:27:06 henning Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -609,12 +609,6 @@ file 	net/if_pppoe.c			pppoe	needs-flag
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
 # kernel sources
-file altq/altq_subr.c			altq
-file altq/altq_red.c			altq
-file altq/altq_cbq.c			altq
-file altq/altq_rmclass.c		altq
-file altq/altq_hfsc.c			altq
-file altq/altq_priq.c			altq
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
