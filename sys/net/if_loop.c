@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.53 2013/10/24 11:31:43 mpi Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.54 2014/04/19 11:01:37 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -148,10 +148,6 @@
 #else
 #define	LOMTU	(32768 +  MHLEN + MLEN)
 #endif
-  
-#ifdef ALTQ
-static void lo_altqstart(struct ifnet *);
-#endif
 
 int	loop_clone_create(struct if_clone *, int);
 int	loop_clone_destroy(struct ifnet *);
@@ -186,9 +182,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hdrlen = sizeof(u_int32_t);
 	ifp->if_addrlen = 0;
 	IFQ_SET_READY(&ifp->if_snd);
-#ifdef ALTQ
-	ifp->if_start = lo_altqstart;
-#endif
 	if (unit == 0) {
 		lo0ifp = ifp;
 		if_attachhead(ifp);
@@ -242,30 +235,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
-#ifdef ALTQ
-	/*
-	 * altq for loop is just for debugging.
-	 * only used when called for loop interface (not for
-	 * a simplex interface).
-	 */
-	if ((ALTQ_IS_ENABLED(&ifp->if_snd) || TBR_IS_ENABLED(&ifp->if_snd))
-	    && ifp->if_start == lo_altqstart) {
-		int32_t *afp;
-	        int error;
-
-		M_PREPEND(m, sizeof(int32_t), M_DONTWAIT);
-		if (m == 0)
-			return (ENOBUFS);
-		afp = mtod(m, int32_t *);
-		*afp = (int32_t)dst->sa_family;
-
-	        s = splnet();
-		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-		(*ifp->if_start)(ifp);
-		splx(s);
-		return (error);
-	}
-#endif /* ALTQ */
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -306,68 +275,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	splx(s);
 	return (0);
 }
-
-#ifdef ALTQ
-static void
-lo_altqstart(struct ifnet *ifp)
-{
-	struct ifqueue *ifq;
-	struct mbuf *m;
-	int32_t af, *afp;
-	int s, isr;
-	
-	while (1) {
-		s = splnet();
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
-		if (m == NULL)
-			return;
-
-		afp = mtod(m, int32_t *);
-		af = *afp;
-		m_adj(m, sizeof(int32_t));
-
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ifq = &ipintrq;
-			isr = NETISR_IP;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			m->m_flags |= M_LOOP;
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
-			break;
-#endif
-#ifdef MPLS
-		case AF_MPLS:
-			ifq = &mplsintrq;
-			isr = NETISR_MPLS;
-			break;
-#endif
-		default:
-			printf("lo_altqstart: can't handle af%d\n", af);
-			m_freem(m);
-			return;
-		}
-
-		s = splnet();
-		if (IF_QFULL(ifq)) {
-			IF_DROP(ifq);
-			m_freem(m);
-			splx(s);
-			return;
-		}
-		IF_ENQUEUE(ifq, m);
-		schednetisr(isr);
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
-		splx(s);
-	}
-}
-#endif /* ALTQ */
 
 /* ARGSUSED */
 void
