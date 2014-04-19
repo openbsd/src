@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strncpy.3,v 1.1 2013/12/19 20:52:37 millert Exp $
+.\"	$OpenBSD: strncpy.3,v 1.2 2014/04/19 11:30:40 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 19 2013 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt STRNCPY 3
 .Os
 .Sh NAME
@@ -48,17 +48,16 @@ function copies not more than
 .Fa len
 characters from the string
 .Fa src
-to
+to the buffer
 .Fa dst .
 If
 .Fa src
 is less than
 .Fa len
 characters long,
-it appends
+it fills the remaining buffer with
 .Ql \e0
-characters for the rest of
-.Fa len .
+characters.
 If the length of
 .Fa src
 is greater than or equal to
@@ -67,6 +66,11 @@ is greater than or equal to
 will
 .Em not
 be NUL-terminated.
+.Pp
+.Fn strncpy
+.Em only
+NUL terminates the destination string when the length of the source
+string is less than the length parameter.
 .Pp
 If the
 .Fa src
@@ -90,31 +94,17 @@ to
 The following sets
 .Va chararray
 to
-.Dq abcdef
-and does
-.Em not
-NUL terminate
-.Va chararray
-because the length of the source string is greater than or equal to the
-length parameter.
-.Fn strncpy
-.Em only
-NUL terminates the destination string when the length of the source
-string is less than the length parameter.
+.Dq abcdef ,
+without a NUL-terminator:
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
 .Ed
 .Pp
-The following copies as many characters from
+The following sequence copies as many characters from
 .Va input
 to
 .Va buf
-as will fit and NUL terminates the result.
-Because
-.Fn strncpy
-does
-.Em not
-guarantee to NUL terminate the string itself, it must be done by hand.
+as will fit, and then NUL terminates the result by hand:
 .Bd -literal -offset indent
 char buf[BUFSIZ];
 
@@ -122,23 +112,18 @@ char buf[BUFSIZ];
 buf[sizeof(buf) - 1] = '\e0';
 .Ed
 .Pp
-Note that
+By now it is clear that
+.Nm strncpy
+is dangerously easy to misuse.
+The
 .Xr strlcpy 3
-is a better choice for this kind of operation.
-The equivalent using
-.Xr strlcpy 3
-is simply:
+function is safer for this kind of operation:
 .Bd -literal -offset indent
-(void)strlcpy(buf, input, sizeof(buf));
+if (strlcpy(buf, input, sizeof(buf)) >= sizeof(buf))
+        goto toolong;
 .Ed
 .Sh SEE ALSO
-.Xr bcopy 3 ,
-.Xr memccpy 3 ,
-.Xr memcpy 3 ,
-.Xr memmove 3 ,
-.Xr strcat 3 ,
 .Xr strlcpy 3 ,
-.Xr strncat 3 ,
 .Xr wcscpy 3 ,
 .Xr wcslcpy 3
 .Sh STANDARDS
