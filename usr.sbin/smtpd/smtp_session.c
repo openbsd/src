@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.202 2014/04/19 16:44:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.203 2014/04/19 16:50:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -315,7 +315,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_string(&m, &line);
 		m_end(&m);
 		s = tree_xpop(&wait_lka_ptr, reqid);
-		strlcpy(s->hostname, line, sizeof s->hostname);
+		(void)strlcpy(s->hostname, line, sizeof s->hostname);
 		if (smtp_lookup_servername(s))
 			smtp_connected(s);
 		return;
