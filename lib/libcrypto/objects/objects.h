@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -387,7 +387,7 @@
 #define SN_pbeWithSHA1AndRC2_CBC	"PBE-SHA1-RC2-64"
 #define LN_pbeWithSHA1AndRC2_CBC	"pbeWithSHA1AndRC2-CBC"
 #define NID_pbeWithSHA1AndRC2_CBC	68
-#define OBJ_pbeWithSHA1AndRC2_CBC	OBJ_pkcs,5L,11L 
+#define OBJ_pbeWithSHA1AndRC2_CBC	OBJ_pkcs,5L,11L
 
 /* proposed by microsoft to RSA as pbeWithSHA1AndRC4: it is now
  * defined explicitly in PKCS#5 v2.0 as id-PBKDF2 which is something
@@ -395,7 +395,7 @@
  */
 #define LN_id_pbkdf2			"PBKDF2"
 #define NID_id_pbkdf2			69
-#define OBJ_id_pbkdf2			OBJ_pkcs,5L,12L 
+#define OBJ_id_pbkdf2			OBJ_pkcs,5L,12L
 
 #define SN_dsaWithSHA1_2		"DSA-SHA1-old"
 #define LN_dsaWithSHA1_2		"dsaWithSHA1-old"
@@ -976,29 +976,28 @@
 extern "C" {
 #endif
 
-typedef struct obj_name_st
-	{
+typedef struct obj_name_st {
 	int type;
 	int alias;
 	const char *name;
 	const char *data;
-	} OBJ_NAME;
+} OBJ_NAME;
 
 #define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
 
 
 int OBJ_NAME_init(void);
 int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
-		       int (*cmp_func)(const char *, const char *),
-		       void (*free_func)(const char *, int, const char *));
-const char *OBJ_NAME_get(const char *name,int type);
-int OBJ_NAME_add(const char *name,int type,const char *data);
-int OBJ_NAME_remove(const char *name,int type);
+    int (*cmp_func)(const char *, const char *),
+    void (*free_func)(const char *, int, const char *));
+const char *OBJ_NAME_get(const char *name, int type);
+int OBJ_NAME_add(const char *name, int type, const char *data);
+int OBJ_NAME_remove(const char *name, int type);
 void OBJ_NAME_cleanup(int type); /* -1 for everything */
-void OBJ_NAME_do_all(int type,void (*fn)(const OBJ_NAME *,void *arg),
-		     void *arg);
-void OBJ_NAME_do_all_sorted(int type,void (*fn)(const OBJ_NAME *,void *arg),
-			    void *arg);
+void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
+    void *arg);
+void OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *arg),
+    void *arg);
 
 ASN1_OBJECT *	OBJ_dup(const ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_nid2obj(int n);
@@ -1010,13 +1009,12 @@ int	OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
 int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
-int		OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
-const void *	OBJ_bsearch_(const void *key,const void *base,int num,int size,
-			     int (*cmp)(const void *, const void *));
-const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
-				int size,
-				int (*cmp)(const void *, const void *),
-				int flags);
+int		OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
+const void *	OBJ_bsearch_(const void *key, const void *base, int num,
+		    int size, int (*cmp)(const void *, const void *));
+const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
+		    int size, int (*cmp)(const void *, const void *),
+		    int flags);
 
 #define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
   static int nm##_cmp_BSEARCH_CMP_FN(const void *, const void *); \
@@ -1099,7 +1097,7 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);
-int		OBJ_create(const char *oid,const char *sn,const char *ln);
+int		OBJ_create(const char *oid, const char *sn, const char *ln);
 void		OBJ_cleanup(void );
 int		OBJ_create_objects(BIO *in);
 
