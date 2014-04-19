@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.37 2014/02/04 14:56:03 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.38 2014/04/19 13:51:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -1020,56 +1020,56 @@ rq_envelope_to_text(struct rq_envelope *e)
 	static char	buf[256];
 	char		t[64];
 
-	snprintf(buf, sizeof buf, "evp:%016" PRIx64 " [", e->evpid);
+	(void)snprintf(buf, sizeof buf, "evp:%016" PRIx64 " [", e->evpid);
 
 	if (e->type == D_BOUNCE)
-		strlcat(buf, "bounce", sizeof buf);
+		(void)strlcat(buf, "bounce", sizeof buf);
 	else if (e->type == D_MDA)
-		strlcat(buf, "mda", sizeof buf);
+		(void)strlcat(buf, "mda", sizeof buf);
 	else if (e->type == D_MTA)
-		strlcat(buf, "mta", sizeof buf);
+		(void)strlcat(buf, "mta", sizeof buf);
 
-	snprintf(t, sizeof t, ",expire=%s",
+	(void)snprintf(t, sizeof t, ",expire=%s",
 	    duration_to_text(e->expire - currtime));
-	strlcat(buf, t, sizeof buf);
+	(void)strlcat(buf, t, sizeof buf);
 
 
 	switch (e->state) {
 	case RQ_EVPSTATE_PENDING:
-		snprintf(t, sizeof t, ",pending=%s",
+		(void)snprintf(t, sizeof t, ",pending=%s",
 		    duration_to_text(e->sched - currtime));
-		strlcat(buf, t, sizeof buf);
+		(void)strlcat(buf, t, sizeof buf);
 		break;
 
 	case RQ_EVPSTATE_SCHEDULED:
-		snprintf(t, sizeof t, ",scheduled=%s",
+		(void)snprintf(t, sizeof t, ",scheduled=%s",
 		    duration_to_text(currtime - e->t_scheduled));
-		strlcat(buf, t, sizeof buf);
+		(void)strlcat(buf, t, sizeof buf);
 		break;
 
 	case RQ_EVPSTATE_INFLIGHT:
-		snprintf(t, sizeof t, ",inflight=%s",
+		(void)snprintf(t, sizeof t, ",inflight=%s",
 		    duration_to_text(currtime - e->t_inflight));
-		strlcat(buf, t, sizeof buf);
+		(void)strlcat(buf, t, sizeof buf);
 		break;
 
 	case RQ_EVPSTATE_HELD:
-		snprintf(t, sizeof t, ",held=%s",
+		(void)snprintf(t, sizeof t, ",held=%s",
 		    duration_to_text(currtime - e->t_inflight));
-		strlcat(buf, t, sizeof buf);
+		(void)strlcat(buf, t, sizeof buf);
 		break;
 	default:
 		errx(1, "%016" PRIx64 " bad state %d", e->evpid, e->state);
 	}
 
 	if (e->flags & RQ_ENVELOPE_REMOVED)
-		strlcat(buf, ",removed", sizeof buf);
+		(void)strlcat(buf, ",removed", sizeof buf);
 	if (e->flags & RQ_ENVELOPE_EXPIRED)
-		strlcat(buf, ",expired", sizeof buf);
+		(void)strlcat(buf, ",expired", sizeof buf);
 	if (e->flags & RQ_ENVELOPE_SUSPEND)
-		strlcat(buf, ",suspended", sizeof buf);
+		(void)strlcat(buf, ",suspended", sizeof buf);
 
-	strlcat(buf, "]", sizeof buf);
+	(void)strlcat(buf, "]", sizeof buf);
 
 	return (buf);
 }
