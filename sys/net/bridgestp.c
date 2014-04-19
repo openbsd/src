@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.46 2013/10/20 08:48:39 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.47 2014/04/19 15:54:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -484,11 +484,10 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
 		goto done;
 
-#ifdef ALTQ
-	if (!ALTQ_IS_ENABLED(&ifp->if_snd))
-#endif
-	if (IF_QFULL(&ifp->if_snd))
+	if (IF_QFULL(&ifp->if_snd)) {
+		IF_DROP(&ifp->if_snd);
 		goto done;
+	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
