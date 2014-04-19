@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_ramstat.c,v 1.8 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: stat_ramstat.c,v 1.9 2014/04/19 14:11:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -80,11 +80,11 @@ ramstat_increment(const char *name, size_t val)
 	struct ramstat_entry	*np, lk;
 
 	log_trace(TRACE_STAT, "ramstat: increment: %s", name);
-	strlcpy(lk.key, name, sizeof (lk.key));
+	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
 		np = xcalloc(1, sizeof *np, "ramstat_increment");
-		strlcpy(np->key, name, sizeof (np->key));
+		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
 	log_trace(TRACE_STAT, "ramstat: %s (%p): %zd -> %zd",
@@ -98,11 +98,11 @@ ramstat_decrement(const char *name, size_t val)
 	struct ramstat_entry	*np, lk;
 
 	log_trace(TRACE_STAT, "ramstat: decrement: %s", name);
-	strlcpy(lk.key, name, sizeof (lk.key));
+	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
 		np = xcalloc(1, sizeof *np, "ramstat_decrement");
-		strlcpy(np->key, name, sizeof (np->key));
+		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
 	log_trace(TRACE_STAT, "ramstat: %s (%p): %zd -> %zd",
@@ -116,11 +116,11 @@ ramstat_set(const char *name, const struct stat_value *val)
 	struct ramstat_entry	*np, lk;
 
 	log_trace(TRACE_STAT, "ramstat: set: %s", name);
-	strlcpy(lk.key, name, sizeof (lk.key));
+	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
 		np = xcalloc(1, sizeof *np, "ramstat_set");
-		strlcpy(np->key, name, sizeof (np->key));
+		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
 	log_trace(TRACE_STAT, "ramstat: %s: n/a -> n/a", name);
