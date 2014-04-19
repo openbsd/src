@@ -2690,8 +2690,6 @@
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_cleanup.3
-./usr/share/man/man3/RAND_egd.3
-./usr/share/man/man3/RAND_egd_bytes.3
 ./usr/share/man/man3/RAND_event.3
 ./usr/share/man/man3/RAND_file_name.3
 ./usr/share/man/man3/RAND_get_rand_method.3
@@ -4310,7 +4308,6 @@
 ./usr/share/man/man3/inchnstr.3
 ./usr/share/man/man3/inchstr.3
 ./usr/share/man/man3/index.3
-./usr/share/man/man3/inet.3
 ./usr/share/man/man3/inet6_opt_append.3
 ./usr/share/man/man3/inet6_opt_find.3
 ./usr/share/man/man3/inet6_opt_finish.3
@@ -6278,7 +6275,6 @@
 ./usr/share/man/man9/add_tty_randomness.9
 ./usr/share/man/man9/addlog.9
 ./usr/share/man/man9/allocbuf.9
-./usr/share/man/man9/altq.9
 ./usr/share/man/man9/aml_evalname.9
 ./usr/share/man/man9/aml_evalnode.9
 ./usr/share/man/man9/aml_find_node.9
