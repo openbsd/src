@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2014/04/19 17:29:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -187,7 +187,7 @@ process_stat(struct mproc *p)
 		return;
 
 	value.type = STAT_COUNTER;
-	snprintf(buf, sizeof buf, "buffer.%s.%s",
+	(void)snprintf(buf, sizeof buf, "buffer.%s.%s",
 	    proc_name(smtpd_process),
 	    proc_name(p->proc));
 	value.u.counter = p->bytes_queued_max;
