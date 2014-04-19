@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.9 2013/02/09 02:46:03 krw Exp $	*/
+/*	$OpenBSD: conv.c,v 1.10 2014/04/19 09:28:20 sobrado Exp $	*/
 /*	$NetBSD: conv.c,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ conv_c(PR *pr, u_char *p)
 		goto strpr;
 	/* case '\a': */
 	case '\007':
-		if (deprecated)		/* od didn't know about \a */
+		if (odmode)		/* od didn't know about \a */
 			break;
 		str = "\\a";
 		goto strpr;
@@ -69,7 +69,7 @@ conv_c(PR *pr, u_char *p)
 		str = "\\t";
 		goto strpr;
 	case '\v':
-		if (deprecated)
+		if (odmode)
 			break;
 		str = "\\v";
 		goto strpr;
@@ -100,14 +100,14 @@ conv_u(PR *pr, u_char *p)
 						/* od used nl, not lf */
 	if (*p <= 0x1f) {
 		*pr->cchar = 's';
-		if (deprecated && *p == 0x0a)
+		if (odmode && *p == 0x0a)
 			(void)printf(pr->fmt, "nl");
 		else
 			(void)printf(pr->fmt, list[*p]);
 	} else if (*p == 0x7f) {
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, "del");
-	} else if (deprecated && *p == 0x20) {	/* od replaced space with sp */
+	} else if (odmode && *p == 0x20) {	/* od replaced space with sp */
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, " sp");
 	} else if (isprint(*p)) {

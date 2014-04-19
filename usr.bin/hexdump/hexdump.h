@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.h,v 1.9 2010/10/12 17:23:21 millert Exp $	*/
+/*	$OpenBSD: hexdump.h,v 1.10 2014/04/19 09:28:20 sobrado Exp $	*/
 /*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ typedef struct _fs {			/* format strings */
 enum _vflag { ALL, DUP, FIRST, WAIT };	/* -v values */
 
 extern int blocksize;			/* data block size */
-extern int deprecated;			/* od compatibility */
+extern int odmode;			/* od compatibility */
 extern FU *endfu;			/* format at end-of-data */
 extern int exitval;			/* final exit value */
 extern FS *fshead;			/* head of format strings list */

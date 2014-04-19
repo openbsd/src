@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.24 2014/04/15 15:35:24 sobrado Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.25 2014/04/19 09:28:20 sobrado Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 
 #define PADDING	"         "
 
-int deprecated;
+int odmode;
 
 static void odoffset(int, char ***);
 static void posixtypes(char *);
@@ -87,7 +87,7 @@ oldsyntax(int argc, char ***argvp)
 	add("\"%07.7_Ao\n\"");
 	add("\"%07.7_ao  \"");
 
-	deprecated = 1;
+	odmode = 1;
 	argv = *argvp;
 	while ((ch = getopt(argc, argv,
 	    "A:aBbcDdeFfHhIij:LlN:Oost:vXx")) != -1)
