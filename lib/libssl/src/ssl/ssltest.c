@@ -2069,8 +2069,8 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
 static RSA *rsa_tmp = NULL;
 
-static RSA
-*tmp_rsa_cb(SSL *s, int is_export, int keylength)
+static RSA *
+tmp_rsa_cb(SSL *s, int is_export, int keylength)
 {
 	BIGNUM *bn = NULL;
 	if (rsa_tmp == NULL) {
@@ -2112,8 +2112,8 @@ free_tmp_rsa(void)
  *    $ openssl dhparam -C -noout -dsaparam 1024
  * (The third function has been renamed to avoid name conflicts.)
  */
-static DH
-*get_dh512()
+static DH *
+get_dh512()
 {
 	static unsigned char dh512_p[] = {
 		0xCB, 0xC8, 0xE1, 0x86, 0xD0, 0x1F, 0x94, 0x17, 0xA6, 0x99, 0xF0, 0xC6,
@@ -2138,8 +2138,8 @@ static DH
 	return (dh);
 }
 
-static DH
-*get_dh1024()
+static DH *
+get_dh1024()
 {
 	static unsigned char dh1024_p[] = {
 		0xF8, 0x81, 0x89, 0x7D, 0x14, 0x24, 0xC5, 0xD1, 0xE6, 0xF7, 0xBF, 0x3A,
@@ -2169,8 +2169,8 @@ static DH
 	return (dh);
 }
 
-static DH
-*get_dh1024dsa()
+static DH *
+get_dh1024dsa()
 {
 	static unsigned char dh1024_p[] = {
 		0xC8, 0x00, 0xF7, 0x08, 0x07, 0x89, 0x4D, 0x90, 0x53, 0xF3, 0xD5, 0x00,

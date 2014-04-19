@@ -104,8 +104,8 @@ kssl_calloc(size_t nmemb, size_t size)
 #define kssl_free(ptr) free((ptr))
 
 
-char
-*kstring(char *string)
+char *
+kstring(char *string)
 {
 	static char	*null = "[NULL]";
 
@@ -207,8 +207,8 @@ kssl_test_confound(unsigned char *p)
 **      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
 **      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
 */
-static size_t 
-*populate_cksumlens(void)
+static size_t *
+populate_cksumlens(void)
 {
 	int 		i, j, n;
 	static size_t 	*cklens = NULL;
@@ -250,8 +250,8 @@ static size_t
 **	This hackery wouldn't be necessary if MIT KRB5 1.0.6 had the
 **	krb5_auth_con_getcksumtype() function advertised in its krb5.h.
 */
-unsigned char
-*kssl_skip_confound(krb5_enctype etype, unsigned char *a)
+unsigned char *
+kssl_skip_confound(krb5_enctype etype, unsigned char *a)
 {
 	int 		i, conlen;
 	size_t		cklen;
@@ -1213,8 +1213,8 @@ kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 **  Return pointer to the (partially) filled in struct tm on success,
 **  return NULL on failure.
 */
-static struct tm
-*k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm) {
+static struct tm *
+k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm) {
 	char 		c, *p;
 
 	if (!k_tm)

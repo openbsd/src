@@ -171,8 +171,8 @@ ssl_cert_set_default_md(CERT *cert)
 #endif
 }
 
-CERT
-*ssl_cert_new(void)
+CERT *
+ssl_cert_new(void)
 {
 	CERT *ret;
 
@@ -189,8 +189,8 @@ CERT
 	return (ret);
 }
 
-CERT
-*ssl_cert_dup(CERT *cert)
+CERT *
+ssl_cert_dup(CERT *cert)
 {
 	CERT *ret;
 	int i;
@@ -398,8 +398,8 @@ ssl_cert_inst(CERT **o)
 }
 
 
-SESS_CERT
-*ssl_sess_cert_new(void)
+SESS_CERT *
+ssl_sess_cert_new(void)
 {
 	SESS_CERT *ret;
 
@@ -531,8 +531,8 @@ set_client_CA_list(STACK_OF(X509_NAME) **ca_list, STACK_OF(X509_NAME) *name_list
 	*ca_list = name_list;
 }
 
-STACK_OF(X509_NAME)
-*SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
+STACK_OF(X509_NAME) *
+SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
 {
 	int i;
 	STACK_OF(X509_NAME) *ret;
@@ -561,14 +561,14 @@ SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
 	set_client_CA_list(&(ctx->client_CA), name_list);
 }
 
-STACK_OF(X509_NAME)
-*SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
+STACK_OF(X509_NAME) *
+SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 {
 	return (ctx->client_CA);
 }
 
-STACK_OF(X509_NAME)
-*SSL_get_client_CA_list(const SSL *s)
+STACK_OF(X509_NAME) *
+SSL_get_client_CA_list(const SSL *s)
 {
 	if (s->type == SSL_ST_CONNECT)
 			{ /* we are in the client */
@@ -632,8 +632,8 @@ xname_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
  * \param file the file containing one or more certs.
  * \return a ::STACK containing the certs.
  */
-STACK_OF(X509_NAME)
-*SSL_load_client_CA_file(const char *file)
+STACK_OF(X509_NAME) *
+SSL_load_client_CA_file(const char *file)
 {
 	BIO *in;
 	X509 *x = NULL;

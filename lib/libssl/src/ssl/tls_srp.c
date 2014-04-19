@@ -426,32 +426,32 @@ SRP_Calc_A_param(SSL *s)
 	return 1;
 }
 
-BIGNUM
-*SSL_get_srp_g(SSL *s)
+BIGNUM *
+SSL_get_srp_g(SSL *s)
 {
 	if (s->srp_ctx.g != NULL)
 		return s->srp_ctx.g;
 	return s->ctx->srp_ctx.g;
 }
 
-BIGNUM
-*SSL_get_srp_N(SSL *s)
+BIGNUM *
+SSL_get_srp_N(SSL *s)
 {
 	if (s->srp_ctx.N != NULL)
 		return s->srp_ctx.N;
 	return s->ctx->srp_ctx.N;
 }
 
-char
-*SSL_get_srp_username(SSL *s)
+char *
+SSL_get_srp_username(SSL *s)
 {
 	if (s->srp_ctx.login != NULL)
 		return s->srp_ctx.login;
 	return s->ctx->srp_ctx.login;
 }
 
-char
-*SSL_get_srp_userinfo(SSL *s)
+char *
+SSL_get_srp_userinfo(SSL *s)
 {
 	if (s->srp_ctx.info != NULL)
 		return s->srp_ctx.info;

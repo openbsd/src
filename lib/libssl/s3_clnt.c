@@ -167,13 +167,12 @@
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
 
-static const SSL_METHOD
-*ssl3_get_client_method(int ver)
+static const SSL_METHOD *
+ssl3_get_client_method(int ver)
 {
 	if (ver == SSL3_VERSION)
 		return (SSLv3_client_method());
-	else
-		return (NULL);
+	return (NULL);
 }
 
 IMPLEMENT_ssl3_meth_func(SSLv3_client_method,

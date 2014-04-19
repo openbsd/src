@@ -1728,9 +1728,8 @@ SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
 unsigned int sid_ctx_len);
 
 SSL_SESSION *SSL_SESSION_new(void);
-const unsigned char
-*SSL_SESSION_get_id(const SSL_SESSION *s,
-unsigned int *len);
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
+	    unsigned int *len);
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
 #ifndef OPENSSL_NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);

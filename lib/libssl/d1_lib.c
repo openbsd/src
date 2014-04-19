@@ -277,8 +277,8 @@ dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
  * to explicitly list their SSL_* codes. Currently RC4 is the only one
  * available, but if new ones emerge, they will have to be added...
  */
-const SSL_CIPHER
-*dtls1_get_cipher(unsigned int u)
+const SSL_CIPHER *
+dtls1_get_cipher(unsigned int u)
 {
 	const SSL_CIPHER *ciph = ssl3_get_cipher(u);
 

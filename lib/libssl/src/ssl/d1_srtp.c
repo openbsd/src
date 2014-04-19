@@ -109,11 +109,11 @@
  *
  */
 /*
-  DTLS code by Eric Rescorla <ekr@rtfm.com>
-
-  Copyright (C) 2006, Network Resonance, Inc.
-  Copyright (C) 2011, RTFM, Inc.
-*/
+ * DTLS code by Eric Rescorla <ekr@rtfm.com>
+ *
+ * Copyright (C) 2006, Network Resonance, Inc.
+ * Copyright (C) 2011, RTFM, Inc.
+ */
 
 #include <stdio.h>
 #include <openssl/objects.h>
@@ -232,8 +232,8 @@ SSL_set_tlsext_use_srtp(SSL *s, const char *profiles)
 }
 
 
-STACK_OF(SRTP_PROTECTION_PROFILE)
-*SSL_get_srtp_profiles(SSL *s)
+STACK_OF(SRTP_PROTECTION_PROFILE) *
+SSL_get_srtp_profiles(SSL *s)
 {
 	if (s != NULL) {
 		if (s->srtp_profiles != NULL) {
@@ -247,8 +247,8 @@ STACK_OF(SRTP_PROTECTION_PROFILE)
 	return NULL;
 }
 
-SRTP_PROTECTION_PROFILE
-*SSL_get_selected_srtp_profile(SSL *s)
+SRTP_PROTECTION_PROFILE *
+SSL_get_selected_srtp_profile(SSL *s)
 {
 	return s->srtp_profile;
 }

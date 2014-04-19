@@ -69,11 +69,11 @@ ssl23_default_timeout(void)
 int
 ssl23_num_ciphers(void)
 {
-	return(ssl3_num_ciphers());
+	return (ssl3_num_ciphers());
 }
 
-const SSL_CIPHER
-*ssl23_get_cipher(unsigned int u)
+const SSL_CIPHER *
+ssl23_get_cipher(unsigned int u)
 {
 	unsigned int uu = ssl3_num_ciphers();
 
@@ -85,8 +85,8 @@ const SSL_CIPHER
 
 /* This function needs to check if the ciphers required are actually
  * available */
-const SSL_CIPHER
-*ssl23_get_cipher_by_char(const unsigned char *p)
+const SSL_CIPHER *
+ssl23_get_cipher_by_char(const unsigned char *p)
 {
 	const SSL_CIPHER *cp;
 

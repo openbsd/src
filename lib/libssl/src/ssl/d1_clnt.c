@@ -131,13 +131,12 @@
 static const SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
 
-static const SSL_METHOD
-*dtls1_get_client_method(int ver)
+static const SSL_METHOD *
+dtls1_get_client_method(int ver)
 {
 	if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
 		return (DTLSv1_client_method());
-	else
-		return (NULL);
+	return (NULL);
 }
 
 IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,

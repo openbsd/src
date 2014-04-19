@@ -2754,8 +2754,8 @@ ssl3_num_ciphers(void)
 	return (SSL3_NUM_CIPHERS);
 }
 
-const SSL_CIPHER
-*ssl3_get_cipher(unsigned int u)
+const SSL_CIPHER *
+ssl3_get_cipher(unsigned int u)
 {
 	if (u < SSL3_NUM_CIPHERS)
 		return (&(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]));
@@ -3470,8 +3470,8 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 
 /* This function needs to check if the ciphers required are actually
  * available */
-const SSL_CIPHER
-*ssl3_get_cipher_by_char(const unsigned char *p)
+const SSL_CIPHER *
+ssl3_get_cipher_by_char(const unsigned char *p)
 {
 	SSL_CIPHER c;
 	const SSL_CIPHER *cp;
@@ -3954,10 +3954,11 @@ ssl3_renegotiate_check(SSL *s)
 	if (s->s3->renegotiate) {
 		if ((s->s3->rbuf.left == 0) && (s->s3->wbuf.left == 0) &&
 		    !SSL_in_init(s)) {
-/*
-if we are the server, and we have sent a 'RENEGOTIATE' message, we
-need to go to SSL_ST_ACCEPT.
-*/
+			/*
+			 * If we are the server, and we have sent
+			 * a 'RENEGOTIATE' message, we need to go
+			 * to SSL_ST_ACCEPT.
+			 */
 			/* SSL_ST_ACCEPT */
 			s->state = SSL_ST_RENEGOTIATE;
 			s->s3->renegotiate = 0;

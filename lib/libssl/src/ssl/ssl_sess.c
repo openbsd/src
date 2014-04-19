@@ -147,16 +147,16 @@ static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
-SSL_SESSION
-*SSL_get_session(const SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
+SSL_SESSION *
+SSL_get_session(const SSL *ssl)
 {
 	return (ssl->session);
 }
 
-SSL_SESSION
-*SSL_get1_session(SSL *ssl)
 /* variant of SSL_get_session: caller really gets something */
+SSL_SESSION *
+SSL_get1_session(SSL *ssl)
 {
 	SSL_SESSION *sess;
 	/* Need to lock this all up rather than just use CRYPTO_add so that
@@ -184,14 +184,14 @@ SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 	return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
 }
 
-void
-*SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
+void *
+SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 {
 	return (CRYPTO_get_ex_data(&s->ex_data, idx));
 }
 
-SSL_SESSION
-*SSL_SESSION_new(void)
+SSL_SESSION *
+SSL_SESSION_new(void)
 {
 	SSL_SESSION *ss;
 
@@ -230,8 +230,8 @@ SSL_SESSION
 	return (ss);
 }
 
-const unsigned char
-*SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
+const unsigned char *
+SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 {
 	if (len)
 		*len = s->session_id_length;
@@ -824,8 +824,8 @@ SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	return (t);
 }
 
-X509
-*SSL_SESSION_get0_peer(SSL_SESSION *s)
+X509 *
+SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
 	return s->peer;
 }

@@ -1295,8 +1295,8 @@ const SSL_CIPHER **ca_list)
 	return (retval);
 }
 
-STACK_OF(SSL_CIPHER)
-*ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+STACK_OF(SSL_CIPHER) *
+ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     STACK_OF(SSL_CIPHER) **cipher_list,
     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
     const char *rule_str)
@@ -1466,8 +1466,8 @@ STACK_OF(SSL_CIPHER)
 	return (cipherstack);
 }
 
-char
-*SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
+char *
+SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
 	int is_export, pkl, kl, l;
 	const char *ver, *exp_str;
@@ -1652,8 +1652,8 @@ char
 		return (buf);
 }
 
-char
-*SSL_CIPHER_get_version(const SSL_CIPHER *c)
+char *
+SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
 	int i;
 
@@ -1669,8 +1669,8 @@ char
 }
 
 /* return the actual cipher being used */
-const char
-*SSL_CIPHER_get_name(const SSL_CIPHER *c)
+const char *
+SSL_CIPHER_get_name(const SSL_CIPHER *c)
 {
 	if (c != NULL)
 		return (c->name);
@@ -1697,8 +1697,8 @@ SSL_CIPHER_get_id(const SSL_CIPHER *c)
 	return c->id;
 }
 
-SSL_COMP
-*ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
+SSL_COMP *
+ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
 	SSL_COMP *ctmp;
 	int i, nn;
@@ -1715,8 +1715,8 @@ SSL_COMP
 }
 
 #ifdef OPENSSL_NO_COMP
-void
-*SSL_COMP_get_compression_methods(void)
+void *
+SSL_COMP_get_compression_methods(void)
 {
 	return NULL;
 }
@@ -1727,14 +1727,14 @@ SSL_COMP_add_compression_method(int id, void *cm)
 	return 1;
 }
 
-const char
-*SSL_COMP_get_name(const void *comp)
+const char *
+SSL_COMP_get_name(const void *comp)
 {
 	return NULL;
 }
 #else
-STACK_OF(SSL_COMP)
-*SSL_COMP_get_compression_methods(void)
+STACK_OF(SSL_COMP) *
+SSL_COMP_get_compression_methods(void)
 {
 	load_builtin_compressions();
 	return (ssl_comp_methods);
@@ -1782,8 +1782,8 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	}
 }
 
-const char
-*SSL_COMP_get_name(const COMP_METHOD *comp)
+const char *
+SSL_COMP_get_name(const COMP_METHOD *comp)
 {
 	if (comp)
 		return comp->name;

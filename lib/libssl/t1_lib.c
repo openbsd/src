@@ -343,8 +343,8 @@ tls12_get_req_sig_algs(SSL *s, unsigned char *p)
 	return (int)slen;
 }
 
-unsigned char
-*ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
+unsigned char *
+ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
@@ -671,8 +671,8 @@ skip_ext:
 	return ret;
 }
 
-unsigned char
-*ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
+unsigned char *
+ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 {
 	int extdatalen = 0;
 	unsigned char *ret = p;
@@ -2249,8 +2249,8 @@ tls12_get_sigid(const EVP_PKEY *pk)
 	sizeof(tls12_sig)/sizeof(tls12_lookup));
 }
 
-const EVP_MD
-*tls12_get_hash(unsigned char hash_alg)
+const EVP_MD *
+tls12_get_hash(unsigned char hash_alg)
 {
 	switch (hash_alg) {
 	case TLSEXT_hash_sha1:

@@ -61,19 +61,18 @@
 #include "ssl_locl.h"
 
 static const SSL_METHOD *ssl23_get_method(int ver);
-static const SSL_METHOD
-*ssl23_get_method(int ver)
+static const SSL_METHOD *
+ssl23_get_method(int ver)
 {
 	if (ver == SSL3_VERSION)
 		return (SSLv3_method());
-	else if (ver == TLS1_VERSION)
+	if (ver == TLS1_VERSION)
 		return (TLSv1_method());
-	else if (ver == TLS1_1_VERSION)
+	if (ver == TLS1_1_VERSION)
 		return (TLSv1_1_method());
-	else if (ver == TLS1_2_VERSION)
+	if (ver == TLS1_2_VERSION)
 		return (TLSv1_2_method());
-	else
-		return (NULL);
+	return (NULL);
 }
 
 IMPLEMENT_ssl23_meth_func(SSLv23_method,

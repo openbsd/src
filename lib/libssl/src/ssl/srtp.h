@@ -109,11 +109,11 @@
  *
  */
 /*
-  DTLS code by Eric Rescorla <ekr@rtfm.com>
-
-  Copyright (C) 2006, Network Resonance, Inc.
-  Copyright (C) 2011, RTFM, Inc.
-*/
+ * DTLS code by Eric Rescorla <ekr@rtfm.com>
+ *
+ * Copyright (C) 2006, Network Resonance, Inc.
+ * Copyright (C) 2011, RTFM, Inc.
+ */
 
 #ifndef HEADER_D1_SRTP_H
 #define HEADER_D1_SRTP_H
