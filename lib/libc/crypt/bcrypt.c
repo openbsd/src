@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.37 2014/04/08 20:14:25 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.38 2014/04/19 15:17:59 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -97,11 +97,12 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	char arounds[3];
 
 	/* Discard "$" identifier */
+	if (*salt != '$')
+		return -1;
 	salt++;
 
-	if (*salt > BCRYPT_VERSION) {
+	if (*salt != BCRYPT_VERSION)
 		return -1;
-	}
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
@@ -110,6 +111,8 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 		 case 'b':	/* cap input length at 72 bytes */
 			 minor = salt[1];
 			 salt++;
+			 if (salt[1] != '$')
+				 return -1;
 			 break;
 		 default:
 			 return -1;
@@ -141,7 +144,8 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 		return -1;
 
 	/* We dont want the base64 salt but the raw data */
-	decode_base64(csalt, BCRYPT_MAXSALT, salt);
+	if (decode_base64(csalt, BCRYPT_MAXSALT, salt))
+		return -1;
 	salt_len = BCRYPT_MAXSALT;
 	if (minor <= 'a')
 		key_len = (u_int8_t)(strlen(key) + (minor >= 'a' ? 1 : 0));
@@ -284,7 +288,7 @@ decode_base64(u_int8_t *buffer, size_t len, const char *b64data)
 
 		c3 = CHAR64(*(p + 2));
 		if (c3 == 255)
-			break;
+			return -1;
 
 		*bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
 		if (bp >= buffer + len)
@@ -292,7 +296,7 @@ decode_base64(u_int8_t *buffer, size_t len, const char *b64data)
 
 		c4 = CHAR64(*(p + 3));
 		if (c4 == 255)
-			break;
+			return -1;
 		*bp++ = ((c3 & 0x03) << 6) | c4;
 
 		p += 4;
