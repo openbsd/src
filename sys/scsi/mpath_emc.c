@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.18 2014/04/19 05:00:06 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.19 2014/04/19 05:05:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -246,12 +246,12 @@ emc_status_done(struct scsi_xfer *xs)
 	struct emc_vpd_sp_info *pg = sc->sc_pg;
 	int status = MPATH_S_UNKNOWN;
 
-	scsi_xs_put(xs);
-
 	if (xs->error == XS_NOERROR) {
 		status = (pg->lun_state == EMC_SP_INFO_LUN_STATE_OWNED) ?
 		    MPATH_S_ACTIVE : MPATH_S_PASSIVE;
 	}
+
+	scsi_xs_put(xs);
 
 	mpath_path_status(&sc->sc_path, status);
 }
