@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.103 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.104 2014/04/19 13:07:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -264,9 +264,9 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			case A_MDA:
 				deliver.mode = A_MDA;
 				deliver.userinfo = *userinfo;
-				strlcpy(deliver.user, userinfo->username,
+				(void)strlcpy(deliver.user, userinfo->username,
 				    sizeof(deliver.user));
-				strlcpy(deliver.to, e->buffer,
+				(void)strlcpy(deliver.to, e->buffer,
 				    sizeof(deliver.to));
 				break;
 
@@ -277,41 +277,74 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				deliver.mode = A_MBOX;
 				deliver.userinfo = *userinfo;
 				deliver.userinfo.uid = 0;
-				strlcpy(deliver.user, "root",
+				(void)strlcpy(deliver.user, "root",
 				    sizeof(deliver.user));
-				strlcpy(deliver.to, userinfo->username,
-				    sizeof(deliver.to));
-				strlcpy(deliver.from, e->sender,
+				(void)strlcpy(deliver.from, e->sender,
 				    sizeof(deliver.from));
+				(void)strlcpy(deliver.to, userinfo->username,
+				    sizeof(deliver.to));
 				break;
 
 			case A_MAILDIR:
 				deliver.mode = A_MAILDIR;
 				deliver.userinfo = *userinfo;
-				strlcpy(deliver.user, userinfo->username,
+				(void)strlcpy(deliver.user, userinfo->username,
 				    sizeof(deliver.user));
-				strlcpy(deliver.to, e->buffer,
-				    sizeof(deliver.to));
+				if (strlcpy(deliver.to, e->buffer,
+					sizeof(deliver.to))
+				    >= sizeof(deliver.to)) {
+					log_warn("warn: mda: "
+					    "deliver buffer too large");
+					mda_queue_tempfail(e->id,
+					    "Maildir path too long",
+					    ESC_OTHER_MAIL_SYSTEM_STATUS);
+					mda_log(e, "TempFail",
+					    "Maildir path too long");
+					mda_done(s);
+					return;
+				}
 				break;
 
 			case A_FILENAME:
 				deliver.mode = A_FILENAME;
 				deliver.userinfo = *userinfo;
-				strlcpy(deliver.user, userinfo->username,
+				(void)strlcpy(deliver.user, userinfo->username,
 				    sizeof deliver.user);
-				strlcpy(deliver.to, e->buffer,
-				    sizeof deliver.to);
+				if (strlcpy(deliver.to, e->buffer,
+					sizeof(deliver.to))
+				    >= sizeof(deliver.to)) {
+					log_warn("warn: mda: "
+					    "deliver buffer too large");
+					mda_queue_tempfail(e->id,
+					    "filename path too long",
+					    ESC_OTHER_MAIL_SYSTEM_STATUS);
+					mda_log(e, "TempFail",
+					    "filename path too long");
+					mda_done(s);
+					return;
+				}
 				break;
 
 			case A_LMTP:
 				deliver.mode = A_LMTP;
 				deliver.userinfo = *userinfo;
-				strlcpy(deliver.user, userinfo->username,
+				(void)strlcpy(deliver.user, userinfo->username,
 				    sizeof(deliver.user));
-				strlcpy(deliver.to, e->buffer,
-				    sizeof(deliver.to));
-				strlcpy(deliver.from, e->sender,
+				(void)strlcpy(deliver.from, e->sender,
 				    sizeof(deliver.from));
+				if (strlcpy(deliver.to, e->buffer,
+					sizeof(deliver.to))
+				    >= sizeof(deliver.to)) {
+					log_warn("warn: mda: "
+					    "deliver buffer too large");
+					mda_queue_tempfail(e->id,
+					    "socket path too long",
+					    ESC_OTHER_MAIL_SYSTEM_STATUS);
+					mda_log(e, "TempFail",
+					    "socket path too long");
+					mda_done(s);
+					return;
+				}
 				break;
 
 			default:
@@ -578,9 +611,9 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 	fclose(fp);
 
 	if (buf[0]) {
-		strlcpy(dst, "\"", dstsz);
-		strnvis(dst + 1, buf, dstsz - 2, VIS_SAFE | VIS_CSTYLE);
-		strlcat(dst, "\"", dstsz);
+		(void)strlcpy(dst, "\"", dstsz);
+		(void)strnvis(dst + 1, buf, dstsz - 2, VIS_SAFE | VIS_CSTYLE);
+		(void)strlcat(dst, "\"", dstsz);
 	}
 
 	return (0);
@@ -783,8 +816,8 @@ mda_user(const struct envelope *evp)
 	u = xcalloc(1, sizeof *u, "mda_user");
 	u->id = generate_uid();
 	TAILQ_INIT(&u->envelopes);
-	strlcpy(u->name, evp->agent.mda.username, sizeof(u->name));
-	strlcpy(u->usertable, evp->agent.mda.usertable,
+	(void)strlcpy(u->name, evp->agent.mda.username, sizeof(u->name));
+	(void)strlcpy(u->usertable, evp->agent.mda.usertable,
 	    sizeof(u->usertable));
 
 	tree_xset(&users, u->id, u);
