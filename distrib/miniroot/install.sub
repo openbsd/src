@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.759 2014/04/16 13:12:22 krw Exp $
+#	$OpenBSD: install.sub,v 1.760 2014/04/19 16:50:52 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1477,8 +1477,7 @@ install_cdrom() {
 }
 
 install_disk() {
-	ask_yn "Is the disk partition already mounted?"
-	if [[ $resp == n ]]; then
+	if ! ask_yn "Is the disk partition already mounted?"; then
 		get_drive "disk" '$(bsort $(get_dkdevs))' \
 			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))' || return
 		mount_mnt2 $resp || return
@@ -1499,8 +1498,7 @@ install_nfs() {
 	NFS_PATH=$resp
 
 	# Determine use of TCP
-	ask_yn "Use TCP transport? (requires TCP-capable NFS server)"
-	[[ $resp == y ]] && _tcp=-T
+	ask_yn "Use TCP transport? (requires TCP-capable NFS server)" && _tcp=-T
 
 	# Mount the server
 	mount_nfs $_tcp -o ro -R 5 $NFS_ADDR:$NFS_PATH /mnt2 || return
@@ -1696,10 +1694,7 @@ mount_fs() {
 	if [[ -n $_fail ]]; then
 		# One or more mounts failed. Continue or abort?
 		echo "\nWARNING! The following filesystems were not properly mounted:$_fail"
-		ask_yn "Continue anyway?" no
-		if [[ $resp == n ]]; then
-			exit
-		fi
+		ask_yn "Continue anyway?" || exit
 	fi
 }
 
@@ -1725,8 +1720,7 @@ getdevname() {
 check_fs() {
 	local _dev _dn _mp _fstype _rest _fail _f _passno
 
-	ask_yn "Force checking of clean non-root filesystems?"
-	[[ $resp == y ]] && _f=f
+	ask_yn "Force checking of clean non-root filesystems?" && _f=f
 
 	while read _dev _mp _fstype _rest _rest _passno _rest; do
 		_dn=$(getdevname "$_dev")

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.246 2014/03/20 20:01:28 krw Exp $
+#	$OpenBSD: install.sh,v 1.247 2014/04/19 16:50:52 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -69,8 +69,7 @@ _fsent=
 # Remove traces of previous install attempt.
 rm -f /tmp/fstab*
 
-ask_yn "Use DUIDs rather than device names in fstab?" yes
-[[ $resp == y ]] && FSTABFLAG=-F
+ask_yn "Use DUIDs rather than device names in fstab?" yes && FSTABFLAG=-F
 
 while :; do
 	DISKS_DONE=$(addel "$DISK" $DISKS_DONE)
@@ -209,8 +208,7 @@ fi
 if _time=$(http_time) && _now=$(date +%s) &&
 	(( _now - _time > 120 || _time - _now > 120 )); then
 	_tz=/mnt/usr/share/zoneinfo/$TZ
-	ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(http_time)")'?" yes
-	if [[ $resp == y ]]; then
+	if ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(http_time)")'?" yes; then
 		# We do not need to specify TZ below since both date
 		# invocations use the same one
 		date $(date -r "$(http_time)" "+%Y%m%d%H%M.%S") >/dev/null
