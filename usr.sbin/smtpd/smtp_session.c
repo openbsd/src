@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.201 2014/04/19 16:26:23 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.202 2014/04/19 16:44:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -265,7 +265,7 @@ smtp_session(struct listener *listener, int sock,
 	s->state = STATE_NEW;
 	s->phase = PHASE_INIT;
 
-	strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));
+	(void)strlcpy(s->smtpname, listener->hostname, sizeof(s->smtpname));
 
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
@@ -273,7 +273,7 @@ smtp_session(struct listener *listener, int sock,
 		/* A bit of a hack */
 		if (!strcmp(hostname, "localhost"))
 			s->flags |= SF_BOUNCE;
-		strlcpy(s->hostname, hostname, sizeof(s->hostname));
+		(void)strlcpy(s->hostname, hostname, sizeof(s->hostname));
 		if (smtp_lookup_servername(s))
 			smtp_connected(s);
 	} else {
@@ -886,7 +886,7 @@ smtp_io(struct io *io, int evt)
 		}
 
 		/* Must be a command */
-		strlcpy(s->cmd, line, sizeof s->cmd);
+		(void)strlcpy(s->cmd, line, sizeof s->cmd);
 		io_set_write(io);
 		smtp_command(s, line);
 		iobuf_normalize(&s->iobuf);
@@ -1021,7 +1021,7 @@ smtp_command(struct smtp_session *s, char *line)
 			    esc_description(ESC_INVALID_COMMAND_ARGUMENTS));
 			break;
 		}
-		strlcpy(s->helo, args, sizeof(s->helo));
+		(void)strlcpy(s->helo, args, sizeof(s->helo));
 		s->flags &= SF_SECURE | SF_AUTHENTICATED | SF_VERIFIED;
 		if (cmd == CMD_EHLO) {
 			s->flags |= SF_EHLO;
@@ -1613,10 +1613,10 @@ smtp_message_reset(struct smtp_session *s, int prepare)
 
 	if (prepare) {
 		s->evp.ss = s->ss;
-		strlcpy(s->evp.tag, s->listener->tag, sizeof(s->evp.tag));
-		strlcpy(s->evp.smtpname, s->smtpname, sizeof(s->evp.smtpname));
-		strlcpy(s->evp.hostname, s->hostname, sizeof s->evp.hostname);
-		strlcpy(s->evp.helo, s->helo, sizeof s->evp.helo);
+		(void)strlcpy(s->evp.tag, s->listener->tag, sizeof(s->evp.tag));
+		(void)strlcpy(s->evp.smtpname, s->smtpname, sizeof(s->evp.smtpname));
+		(void)strlcpy(s->evp.hostname, s->hostname, sizeof s->evp.hostname);
+		(void)strlcpy(s->evp.helo, s->helo, sizeof s->evp.helo);
 
 		if (s->flags & SF_BOUNCE)
 			s->evp.flags |= EF_BOUNCE;
