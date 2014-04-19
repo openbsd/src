@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.6 2013/06/03 15:53:48 eric Exp $ */
+/*	$OpenBSD: aldap.c,v 1.7 2014/04/19 14:37:45 gilles Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -1240,7 +1240,7 @@ parseval(char *p, size_t len)
 		}
 
 		if (cp[j] == '\\') {
-			strlcpy(hex, cp + j + 1, sizeof(hex));
+			(void)strlcpy(hex, cp + j + 1, sizeof(hex));
 			buffer[i] = (char)strtoumax(hex, NULL, 16);
 			j += 3;
 		} else {
