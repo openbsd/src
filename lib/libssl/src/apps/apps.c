@@ -1503,11 +1503,7 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 	    serialfile, buf[1]);
 #endif
-	if (rename(serialfile, buf[1]) < 0 && errno != ENOENT
-#ifdef ENOTDIR
-	    && errno != ENOTDIR
-#endif
-	    ) {
+	if (rename(serialfile, buf[1]) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err,
 		    "unable to rename %s to %s\n",
 		    serialfile, buf[1]);
@@ -1723,11 +1719,7 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 	    dbfile, buf[1]);
 #endif
-	if (rename(dbfile, buf[1]) < 0 && errno != ENOENT
-#ifdef ENOTDIR
-	    && errno != ENOTDIR
-#endif
-	    ) {
+	if (rename(dbfile, buf[1]) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err,
 		    "unable to rename %s to %s\n",
 		    dbfile, buf[1]);
@@ -1750,11 +1742,7 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 	    buf[4], buf[3]);
 #endif
-	if (rename(buf[4], buf[3]) < 0 && errno != ENOENT
-#ifdef ENOTDIR
-	    && errno != ENOTDIR
-#endif
-	    ) {
+	if (rename(buf[4], buf[3]) < 0 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err,
 		    "unable to rename %s to %s\n",
 		    buf[4], buf[3]);
