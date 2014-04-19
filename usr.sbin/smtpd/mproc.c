@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.7 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.8 2014/04/19 17:45:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -424,7 +424,7 @@ m_error(const char *error)
 {
 	char	buf[512];
 
-	snprintf(buf, sizeof buf, "%s: %s: %s",
+	(void)snprintf(buf, sizeof buf, "%s: %s: %s",
 	    proc_name(smtpd_process),
 	    imsg_to_str(current->hdr.type),
 	    error);
