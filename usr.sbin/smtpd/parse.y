@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.141 2014/04/19 17:18:58 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.142 2014/04/19 17:21:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2117,8 +2117,16 @@ create_filter(const char *name, const char *path)
 	}
 
 	f = xcalloc(1, sizeof(*f), "create_filter");
-	strlcpy(f->name, name, sizeof(f->name));
-	strlcpy(f->path, path, sizeof(f->path));
+	if (strlcpy(f->name, name, sizeof(f->name))
+	    >= sizeof (f->name)) {
+		yyerror("filter name \"%s\" too long", name);
+		return (NULL);
+	}
+	if (strlcpy(f->path, path, sizeof(f->path))
+	    >= sizeof (f->path)) {
+		yyerror("filter path \"%s\" too long", path);
+		return (NULL);
+	}
 
 	dict_xset(&conf->sc_filters, name, f);
 
