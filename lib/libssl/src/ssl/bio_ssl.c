@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -94,8 +94,8 @@ static BIO_METHOD methods_sslp = {
 	ssl_callback_ctrl,
 };
 
-BIO_METHOD
-*BIO_f_ssl(void)
+BIO_METHOD *
+BIO_f_ssl(void)
 {
 	return (&methods_sslp);
 }
@@ -412,18 +412,18 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->retry_reason = 0;
 		ret = (int)SSL_do_handshake(ssl);
 
-		switch (SSL_get_error(ssl,(int)ret)) {
+		switch (SSL_get_error(ssl, (int)ret)) {
 		case SSL_ERROR_WANT_READ:
 			BIO_set_flags(b,
-			BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
+			    BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY);
 			break;
 		case SSL_ERROR_WANT_WRITE:
 			BIO_set_flags(b,
-			BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY);
+			    BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY);
 			break;
 		case SSL_ERROR_WANT_CONNECT:
 			BIO_set_flags(b,
-			BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY);
+			    BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY);
 			b->retry_reason = b->next_bio->retry_reason;
 			break;
 		default:
@@ -487,7 +487,7 @@ ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 		{
 		/* FIXME: setting this via a completely different prototype
 		   seems like a crap idea */
-			SSL_set_info_callback(ssl,(void (*)(const SSL *, int, int))fp);
+			SSL_set_info_callback(ssl, (void (*)(const SSL *, int, int))fp);
 		}
 		break;
 	default:
@@ -507,8 +507,8 @@ ssl_puts(BIO *bp, const char *str)
 	return (ret);
 }
 
-BIO
-*BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
+BIO *
+BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 {
 #ifndef OPENSSL_NO_SOCK
 	BIO *ret = NULL, *buf = NULL, *ssl = NULL;
@@ -529,8 +529,8 @@ err:
 	return (NULL);
 }
 
-BIO
-*BIO_new_ssl_connect(SSL_CTX *ctx)
+BIO *
+BIO_new_ssl_connect(SSL_CTX *ctx)
 {
 #ifndef OPENSSL_NO_SOCK
 	BIO *ret = NULL, *con = NULL, *ssl = NULL;
@@ -549,8 +549,8 @@ err:
 	return (NULL);
 }
 
-BIO
-*BIO_new_ssl(SSL_CTX *ctx, int client)
+BIO *
+BIO_new_ssl(SSL_CTX *ctx, int client)
 {
 	BIO *ret;
 	SSL *ssl;
@@ -580,7 +580,7 @@ BIO_ssl_copy_session_id(BIO *t, BIO *f)
 	if ((((BIO_SSL *)t->ptr)->ssl == NULL) ||
 	    (((BIO_SSL *)f->ptr)->ssl == NULL))
 		return (0);
-	SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl,((BIO_SSL *)f->ptr)->ssl);
+	SSL_copy_session_id(((BIO_SSL *)t->ptr)->ssl, ((BIO_SSL *)f->ptr)->ssl);
 	return (1);
 }
 
