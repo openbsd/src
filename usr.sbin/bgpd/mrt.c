@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.76 2013/11/13 20:41:01 benno Exp $ */
+/*	$OpenBSD: mrt.c,v 1.77 2014/04/19 15:43:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -986,10 +986,12 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 {
 	struct mrt	*m, *xm;
 
+	/* both lists here are actually struct mrt_conifg nodes */
 	LIST_FOREACH(m, nconf, entry) {
 		if ((xm = mrt_get(xconf, m)) == NULL) {
 			/* NEW */
-			if ((xm = calloc(1, sizeof(struct mrt_config))) == NULL)
+			if ((xm = (struct mrt *)calloc(1,
+			    sizeof(struct mrt_config))) == NULL)
 				fatal("mrt_mergeconfig");
 			memcpy(xm, m, sizeof(struct mrt_config));
 			xm->state = MRT_STATE_OPEN;
