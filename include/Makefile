@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.187 2014/04/11 22:51:52 miod Exp $
+#	$OpenBSD: Makefile,v 1.188 2014/04/19 15:58:56 henning Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -31,7 +31,7 @@ MFILES=	frame.h
 LFILES=	fcntl.h syslog.h termios.h stdarg.h stdint.h varargs.h
 
 DIRS=	arpa protocols rpc rpcsvc
-LDIRS=	altq crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
+LDIRS=	crypto ddb dev isofs miscfs msdosfs net netinet netinet6 \
 	netmpls net80211 netbt nfs ntfs scsi sys ufs uvm
 
 # Places that need a prerequisite target met before includes
