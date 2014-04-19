@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2014/03/25 10:28:58 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.139 2014/04/19 17:08:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -444,11 +444,11 @@ opt_relay_common: AS STRING	{
 				    "SOURCE parameter", t->t_name);
 				YYERROR;
 			}
-			strlcpy(rule->r_value.relayhost.sourcetable, t->t_name,
+			(void)strlcpy(rule->r_value.relayhost.sourcetable, t->t_name,
 			    sizeof rule->r_value.relayhost.sourcetable);
 		}
 		| HOSTNAME STRING {
-			strlcat(rule->r_value.relayhost.heloname, $2,
+			(void)strlcpy(rule->r_value.relayhost.heloname, $2,
 			    sizeof rule->r_value.relayhost.heloname);
 			free($2);
 		}
@@ -459,7 +459,7 @@ opt_relay_common: AS STRING	{
 				    "HOSTNAMES parameter", t->t_name);
 				YYERROR;
 			}
-			strlcpy(rule->r_value.relayhost.helotable, t->t_name,
+			(void)strlcpy(rule->r_value.relayhost.helotable, t->t_name,
 			    sizeof rule->r_value.relayhost.helotable);
 		}
 		| PKI STRING {
@@ -486,7 +486,7 @@ opt_relay	: BACKUP STRING			{
 		}
 		| BACKUP       			{
 			rule->r_value.relayhost.flags |= F_BACKUP;
-			strlcpy(rule->r_value.relayhost.hostname,
+			(void)strlcpy(rule->r_value.relayhost.hostname,
 			    conf->sc_hostname,
 			    sizeof (rule->r_value.relayhost.hostname));
 		}
@@ -511,7 +511,7 @@ opt_relay_via	: AUTH tables {
 				    t->t_name);
 				YYERROR;
 			}
-			strlcpy(rule->r_value.relayhost.authtable, t->t_name,
+			(void)strlcpy(rule->r_value.relayhost.authtable, t->t_name,
 			    sizeof(rule->r_value.relayhost.authtable));
 		}
 		| VERIFY {
@@ -636,7 +636,7 @@ main		: BOUNCEWARN {
 			pki = dict_get(conf->sc_pki_dict, buf);
 			if (pki == NULL) {
 				pki = xcalloc(1, sizeof *pki, "parse:pki");
-				strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
+				(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
 				dict_set(conf->sc_pki_dict, pki->pki_name, pki);
 			}
 		} pki
@@ -1519,7 +1519,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf = x_conf;
 	memset(conf, 0, sizeof(*conf));
 
-	strlcpy(conf->sc_hostname, hostname, sizeof(conf->sc_hostname));
+	(void)strlcpy(conf->sc_hostname, hostname, sizeof(conf->sc_hostname));
 
 	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
 
