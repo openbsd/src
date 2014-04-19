@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2014/04/16 12:08:46 sthen Exp $
+# $OpenBSD: Makefile,v 1.4 2014/04/19 11:15:37 deraadt Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -127,7 +127,6 @@ MAN=	\
 	RAND_add.3 \
 	RAND_bytes.3 \
 	RAND_cleanup.3 \
-	RAND_egd.3 \
 	RAND_load_file.3 \
 	RAND_set_rand_method.3 \
 	RC4.3 \
@@ -666,7 +665,6 @@ MLINKS+=\
 	RAND_add.3 RAND_seed.3 \
 	RAND_add.3 RAND_status.3 \
 	RAND_bytes.3 RAND_pseudo_bytes.3 \
-	RAND_egd.3 RAND_egd_bytes.3 \
 	RAND_load_file.3 RAND_file_name.3 \
 	RAND_load_file.3 RAND_write_file.3 \
 	RAND_set_rand_method.3 RAND_SSLeay.3 \
