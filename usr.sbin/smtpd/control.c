@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.99 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.100 2014/04/19 11:17:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -468,7 +468,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		if (! stat_backend->iter(&kvp->iter, &key, &val))
 			kvp->iter = NULL;
 		else {
-			strlcpy(kvp->key, key, sizeof kvp->key);
+			(void)strlcpy(kvp->key, key, sizeof kvp->key);
 			kvp->val = val;
 		}
 		m_compose(p, IMSG_CTL_GET_STATS, 0, 0, -1, kvp, sizeof *kvp);
