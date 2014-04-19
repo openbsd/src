@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_lnaof.3,v 1.1 2014/04/19 11:18:01 guenther Exp $
+.\"	$OpenBSD: inet_lnaof.3,v 1.2 2014/04/19 16:46:32 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -54,7 +54,7 @@ It is frequency-encoded;
 the most-significant bit is clear in Class A addresses,
 in which the high-order 8 bits are the network number.
 Class B addresses use the high-order 16 bits as the network field,
-and Class C addresses have a 24-bit network part. 
+and Class C addresses have a 24-bit network part.
 .Pp
 The routine
 .Fn inet_makeaddr
