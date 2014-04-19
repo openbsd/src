@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.64 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: printf.3,v 1.65 2014/04/19 11:21:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -871,7 +871,9 @@ for later interpolation by
 .Pp
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
-snprintf(buffer, sizeof(buffer), "%s", string);
+ret = snprintf(buffer, sizeof(buffer), "%s", string);
+if (ret == -1 || ret >= sizeof(buffer)
+	goto toolong;
 .Ed
 .Pp
 There is no way for
