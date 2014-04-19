@@ -1,6 +1,6 @@
 /* ssl/tls_srp.c */
-/* Written by Christophe Renou (christophe.renou@edelweb.fr) with 
- * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr) 
+/* Written by Christophe Renou (christophe.renou@edelweb.fr) with
+ * the precious help of Peter Sylvester (peter.sylvester@edelweb.fr)
  * for the EdelKey project and contributed to the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,7 +64,8 @@
 #include <openssl/err.h>
 
 int
-SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx) {
+SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
+{
 	if (ctx == NULL)
 		return 0;
 	free(ctx->srp_ctx.login);
@@ -96,7 +97,8 @@ SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx) {
 }
 
 int
-SSL_SRP_CTX_free(struct ssl_st *s) {
+SSL_SRP_CTX_free(struct ssl_st *s)
+{
 	if (s == NULL)
 		return 0;
 	free(s->srp_ctx.login);
@@ -128,7 +130,8 @@ SSL_SRP_CTX_free(struct ssl_st *s) {
 }
 
 int
-SSL_SRP_CTX_init(struct ssl_st *s) {
+SSL_SRP_CTX_init(struct ssl_st *s)
+{
 	SSL_CTX *ctx;
 
 	if ((s == NULL) || ((ctx = s->ctx) == NULL))
@@ -194,7 +197,8 @@ err:
 }
 
 int
-SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx) {
+SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)
+{
 	if (ctx == NULL)
 		return 0;
 
@@ -232,7 +236,7 @@ SSL_srp_server_param_with_username(SSL *s, int *ad)
 	*ad = SSL_AD_UNKNOWN_PSK_IDENTITY;
 	if ((s->srp_ctx.TLS_ext_srp_username_callback !=NULL) &&
 	    ((al = s->srp_ctx.TLS_ext_srp_username_callback(s, ad,
-	        s->srp_ctx.SRP_cb_arg)) != SSL_ERROR_NONE))
+	    s->srp_ctx.SRP_cb_arg)) != SSL_ERROR_NONE))
 		return al;
 
 	*ad = SSL_AD_INTERNAL_ERROR;
@@ -379,8 +383,9 @@ SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
 		goto err;
 
 	tmp_len = BN_num_bytes(K);
-	if ((tmp = malloc(tmp_len)) == NULL) goto err;
-		BN_bn2bin(K, tmp);
+	if ((tmp = malloc(tmp_len)) == NULL)
+		goto err;
+	BN_bn2bin(K, tmp);
 	ret = s->method->ssl3_enc->generate_master_secret(s, master_key,
 	    tmp, tmp_len);
 err:
@@ -477,14 +482,14 @@ int
 SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength)
 {
 	return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH, strength,
-	NULL);
+	    NULL);
 }
 
 int
 SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx, int (*cb)(SSL *, void *))
 {
 	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_SRP_VERIFY_PARAM_CB,
-	(void (*)(void))cb);
+	    (void (*)(void))cb);
 }
 
 int
@@ -498,14 +503,14 @@ SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
     int (*cb)(SSL *, int *, void *))
 {
 	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB,
-	(void (*)(void))cb);
+	    (void (*)(void))cb);
 }
 
 int
 SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx, char *(*cb)(SSL *, void *))
 {
 	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB,
-	(void (*)(void))cb);
+	    (void (*)(void))cb);
 }
 
 #endif
