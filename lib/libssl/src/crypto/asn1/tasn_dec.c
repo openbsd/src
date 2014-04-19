@@ -172,12 +172,6 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	if (!pval)
 		return 0;
 
-	/* always start fresh */
-	if (0 && *pval) {
-		ASN1_item_ex_free(pval, it);
-		*pval = NULL;
-	}
-
 	if (aux && aux->asn1_cb)
 		asn1_cb = aux->asn1_cb;
 	else
@@ -388,10 +382,14 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 			goto err;
 		}
 
-		if (!*pval && !ASN1_item_ex_new(pval, it)) {
-			ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
-			    ERR_R_NESTED_ASN1_ERROR);
-			goto err;
+		if (!*pval) {
+			if (!ASN1_item_ex_new(pval, it)) {
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+				    ERR_R_NESTED_ASN1_ERROR);
+				goto err;
+			}
+		} else {
+			memset(*pval, 0, it->size);
 		}
 
 		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
