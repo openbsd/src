@@ -1,4 +1,4 @@
-/* $OpenBSD: esc.c,v 1.1 2014/02/04 15:44:05 eric Exp $	 */
+/* $OpenBSD: esc.c,v 1.2 2014/04/19 17:32:58 gilles Exp $	 */
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -120,7 +120,7 @@ esc_code(enum enhanced_status_class class, enum enhanced_status_code code)
 {
 	static char buffer[6];
 
-	snprintf(buffer, sizeof buffer, "%d.%d.%d", class, code / 10, code % 10);
+	(void)snprintf(buffer, sizeof buffer, "%d.%d.%d", class, code / 10, code % 10);
 	return buffer;
 
 }
