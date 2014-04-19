@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.283 2014/04/10 13:47:21 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.284 2014/04/19 12:27:59 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -282,13 +282,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-#ifdef ALTQ
-	ifp->if_snd.altq_type = 0;
-	ifp->if_snd.altq_disc = NULL;
-	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
-	ifp->if_snd.altq_tbr  = NULL;
-	ifp->if_snd.altq_ifp  = ifp;
-#endif
 
 	if (domains)
 		if_attachdomain1(ifp);
@@ -535,12 +528,6 @@ if_detach(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
-#endif
-#ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&ifp->if_snd))
-		altq_disable(&ifp->if_snd);
-	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
-		altq_detach(&ifp->if_snd);
 #endif
 	rt_if_remove(ifp);
 #ifdef INET
