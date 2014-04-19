@@ -77,7 +77,6 @@
 #ifndef OPENSSL_NO_SOCK
 
 
-static struct hostent *GetHostByName(char *name);
 static int ssl_sock_init(void);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);
@@ -296,7 +295,7 @@ redoit:
 			return (0);
 		}
 
-		h2 = GetHostByName(*host);
+		h2 = gethostbyname(*host);
 		if (h2 == NULL) {
 			BIO_printf(bio_err, "gethostbyname failure\n");
 			return (0);
@@ -357,52 +356,4 @@ extract_port(char *str, short *port_ptr)
 	}
 	return (1);
 }
-
-#define GHBN_NUM	4
-static struct ghbn_cache_st {
-	char name[128];
-	struct hostent ent;
-	unsigned long order;
-} ghbn_cache[GHBN_NUM];
-
-static unsigned long ghbn_hits = 0L;
-static unsigned long ghbn_miss = 0L;
-
-static struct hostent *
-GetHostByName(char *name)
-{
-	struct hostent *ret;
-	int i, lowi = 0;
-	unsigned long low = (unsigned long) -1;
-
-	for (i = 0; i < GHBN_NUM; i++) {
-		if (low > ghbn_cache[i].order) {
-			low = ghbn_cache[i].order;
-			lowi = i;
-		}
-		if (ghbn_cache[i].order > 0) {
-			if (strncmp(name, ghbn_cache[i].name, 128) == 0)
-				break;
-		}
-	}
-	if (i == GHBN_NUM) {	/* no hit */
-		ghbn_miss++;
-		ret = gethostbyname(name);
-		if (ret == NULL)
-			return (NULL);
-		/* else add to cache */
-		if (strlen(name) < sizeof ghbn_cache[0].name) {
-			strlcpy(ghbn_cache[lowi].name, name, sizeof(ghbn_cache[0].name));
-			memcpy((char *) &(ghbn_cache[lowi].ent), ret, sizeof(struct hostent));
-			ghbn_cache[lowi].order = ghbn_miss + ghbn_hits;
-		}
-		return (ret);
-	} else {
-		ghbn_hits++;
-		ret = &(ghbn_cache[i].ent);
-		ghbn_cache[i].order = ghbn_miss + ghbn_hits;
-		return (ret);
-	}
-}
-
 #endif
