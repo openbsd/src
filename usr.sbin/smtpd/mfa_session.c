@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.21 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.22 2014/04/19 13:18:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -291,7 +291,10 @@ mfa_filter_connect(uint64_t id, const struct sockaddr *local,
 
 	memmove(&q->u.connect.local, local, local->sa_len);
 	memmove(&q->u.connect.remote, remote, remote->sa_len);
-	strlcpy(q->u.connect.hostname, host, sizeof(q->u.connect.hostname));
+	if (strlcpy(q->u.connect.hostname, host,
+		sizeof(q->u.connect.hostname)) >=
+	    sizeof(q->u.connect.hostname))
+		fatalx("hostname too large");
 
 	q->smtp.status = MFA_OK;
 	q->smtp.code = 0;
@@ -325,8 +328,12 @@ mfa_filter_mailaddr(uint64_t id, int hook, const struct mailaddr *maddr)
 	s = tree_xget(&sessions, id);
 	q = mfa_query(s, QT_QUERY, hook);
 
-	strlcpy(q->u.maddr.user, maddr->user, sizeof(q->u.maddr.user));
-	strlcpy(q->u.maddr.domain, maddr->domain, sizeof(q->u.maddr.domain));
+	if (strlcpy(q->u.maddr.user, maddr->user, sizeof(q->u.maddr.user))
+	    >= sizeof(q.u.maddr.user))
+		fatalx("username too large");
+	if (strlcpy(q->u.maddr.domain, maddr->domain, sizeof(q->u.maddr.domain))
+	    >= sizeof(q.u.maddr.domain))
+		fatalx("hostname too large");
 
 	mfa_drain_query(q);
 }
@@ -340,7 +347,9 @@ mfa_filter_line(uint64_t id, int hook, const char *line)
 	s = tree_xget(&sessions, id);
 	q = mfa_query(s, QT_QUERY, hook);
 
-	strlcpy(q->u.line, line, sizeof(q->u.line));
+	if (strlcpy(q->u.line, line, sizeof(q->u.line))
+	    >= sizeof(q->u.line))
+		fatalx("line too large");
 
 	mfa_drain_query(q);
 }
@@ -681,38 +690,45 @@ mfa_query_to_text(struct mfa_query *q)
 {
 	static char buf[1024];
 	char tmp[1024];
+	int ret;
 
 	tmp[0] = '\0';
 
 	switch(q->hook) {
 
 	case HOOK_CONNECT:
-		strlcat(tmp, "=", sizeof tmp);
-		strlcat(tmp, ss_to_text(&q->u.connect.local), sizeof tmp);
-		strlcat(tmp, " <-> ", sizeof tmp);
-		strlcat(tmp, ss_to_text(&q->u.connect.remote), sizeof tmp);
-		strlcat(tmp, "(", sizeof tmp);
-		strlcat(tmp, q->u.connect.hostname, sizeof tmp);
-		strlcat(tmp, ")", sizeof tmp);
+		(void)strlcat(tmp, "=", sizeof tmp);
+		(void)strlcat(tmp, ss_to_text(&q->u.connect.local), sizeof tmp);
+		(void)strlcat(tmp, " <-> ", sizeof tmp);
+		(void)strlcat(tmp, ss_to_text(&q->u.connect.remote), sizeof tmp);
+		(void)strlcat(tmp, "(", sizeof tmp);
+		(void)strlcat(tmp, q->u.connect.hostname, sizeof tmp);
+		if (strlcat(tmp, ")", sizeof tmp) >= sizeof tmp)
+			fatalx("line too large");
 		break;
 
 	case HOOK_MAIL:
 	case HOOK_RCPT:
-		snprintf(tmp, sizeof tmp, "=%s@%s",
+		ret = snprintf(tmp, sizeof tmp, "=%s@%s",
 		    q->u.maddr.user, q->u.maddr.domain);
+		if (ret == -1 || ret >= sizeof tmp)
+			fatalx("line too large");
 		break;
 
 	case HOOK_HELO:
-		snprintf(tmp, sizeof tmp, "=%s", q->u.line);
+		ret = snprintf(tmp, sizeof tmp, "=%s", q->u.line);
+		if (ret == -1 || ret >= sizeof tmp)
+			fatalx("line too large");
 		break;
 
 	default:
 		break;
 	}
 
-	snprintf(buf, sizeof buf, "%016"PRIx64"[%s,%s%s]",
+	ret = snprintf(buf, sizeof buf, "%016"PRIx64"[%s,%s%s]",
 	    q->qid, type_to_str(q->type), hook_to_str(q->hook), tmp);
-
+	if (ret == -1 || ret >= sizeof buf)
+		fatalx("line too large");
 	return (buf);
 }
 
@@ -720,8 +736,11 @@ static const char *
 mfa_filter_to_text(struct mfa_filter *f)
 {
 	static char buf[1024];
+	int ret;
 
-	snprintf(buf, sizeof buf, "filter:%s", mfa_filterproc_to_text(f->proc));
+	ret = snprintf(buf, sizeof buf, "filter:%s", mfa_filterproc_to_text(f->proc));
+	if (ret == -1 || ret >= sizeof buf)
+		fatalx("line too large");
 
 	return (buf);
 }
@@ -730,9 +749,12 @@ static const char *
 mfa_filterproc_to_text(struct mfa_filterproc *proc)
 {
 	static char buf[1024];
+	int ret;
 
-	snprintf(buf, sizeof buf, "%s[hooks=0x%08x,flags=0x%04x]",
+	ret = snprintf(buf, sizeof buf, "%s[hooks=0x%08x,flags=0x%04x]",
 	    proc->mproc.name, proc->hooks, proc->flags);
+	if (ret == -1 || ret >= sizeof buf)
+		fatalx("line too large");
 
 	return (buf);
 }
