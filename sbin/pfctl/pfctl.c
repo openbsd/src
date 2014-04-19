@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.324 2014/04/11 02:56:41 jsg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.325 2014/04/19 14:22:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,7 +40,6 @@
 #include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
-#include <altq/altq.h>
 #include <net/hfsc.h>
 #include <sys/sysctl.h>
 
@@ -65,7 +64,6 @@ int	 pfctl_disable(int, int);
 int	 pfctl_clear_stats(int, const char *, int);
 int	 pfctl_clear_interface_flags(int, int);
 int	 pfctl_clear_rules(int, int, char *);
-int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, const char *, int);
 void	 pfctl_addrprefix(char *, struct pf_addr *);
@@ -90,7 +88,6 @@ int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
 void	 pfctl_debug(int, u_int32_t, int);
-int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int, char *);
 int	 pfctl_ruleset_trans(struct pfctl *, char *, struct pf_anchor *);
 u_int	 pfctl_find_childqs(struct pfctl_qsitem *);
@@ -121,8 +118,6 @@ int		 src_node_killers;
 char		*src_node_kill[2];
 int		 state_killers;
 char		*state_kill[2];
-int		 loadaltq = 1;
-int		 altqsupport;
 
 int		 dev = -1;
 int		 first_title = 1;
@@ -207,8 +202,7 @@ static const struct {
 };
 
 static const char *clearopt_list[] = {
-	"queue", "rules", "Sources",
-	"states", "info", "Tables", "osfp", "all", NULL
+	"rules", "Sources", "states", "info", "Tables", "osfp", "all", NULL
 };
 
 static const char *showopt_list[] = {
@@ -261,10 +255,6 @@ pfctl_enable(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf enabled\n");
 
-	if (altqsupport && ioctl(dev, DIOCSTARTALTQ))
-		if (errno != EEXIST)
-			err(1, "DIOCSTARTALTQ");
-
 	return (0);
 }
 
@@ -279,10 +269,6 @@ pfctl_disable(int dev, int opts)
 	}
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf disabled\n");
-
-	if (altqsupport && ioctl(dev, DIOCSTOPALTQ))
-			if (errno != ENOENT)
-				err(1, "DIOCSTOPALTQ");
 
 	return (0);
 }
@@ -338,23 +324,6 @@ pfctl_clear_rules(int dev, int opts, char *anchorname)
 		err(1, "pfctl_clear_rules");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "rules cleared\n");
-	return (0);
-}
-
-int
-pfctl_clear_altq(int dev, int opts)
-{
-	struct pfr_buffer t;
-	if (!altqsupport)
-		return (-1);
-	memset(&t, 0, sizeof(t));
-	t.pfrb_type = PFRB_TRANS;
-	if (pfctl_add_trans(&t, PF_TRANS_ALTQ, "") ||
-	    pfctl_trans(dev, &t, DIOCXBEGIN, 0) ||
-	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
-		err(1, "pfctl_clear_altq");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "altq cleared\n");
 	return (0);
 }
 
@@ -1125,10 +1094,6 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 {
 	int osize = pf->trans->pfrb_size;
 
-	if (a == pf->astack[0] && (altqsupport && loadaltq)) {
-		if (pfctl_add_trans(pf->trans, PF_TRANS_ALTQ, path))
-			return (2);
-	}
 	if (pfctl_add_trans(pf->trans, PF_TRANS_RULESET, path))
 		return (3);
 	if (pfctl_add_trans(pf->trans, PF_TRANS_TABLE, path))
@@ -1440,27 +1405,6 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 }
 
 int
-pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
-{
-	if (altqsupport) {
-		memcpy(&pf->paltq->altq, a, sizeof(struct pf_altq));
-		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			if (ioctl(pf->dev, DIOCADDALTQ, pf->paltq)) {
-				if (errno == ENXIO)
-					errx(1, "qtype not configured");
-				else if (errno == ENODEV)
-					errx(1, "%s: driver does not support "
-					    "altq", a->ifname);
-				else
-					err(1, "DIOCADDALTQ");
-			}
-		}
-		pfaltq_store(&pf->paltq->altq);
-	}
-	return (0);
-}
-
-int
 pfctl_rules(int dev, char *filename, int opts, int optimize,
     char *anchorname, struct pfr_buffer *trans)
 {
@@ -1468,7 +1412,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 #define ERRX(x) do { warnx(x); goto _error; } while(0)
 
 	struct pfr_buffer	*t, buf;
-	struct pfioc_altq	 pa;
 	struct pfctl		 pf;
 	struct pf_ruleset	*rs;
 	struct pfr_table	 trs;
@@ -1490,7 +1433,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 		osize = t->pfrb_size;
 	}
 
-	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
 	memset(&trs, 0, sizeof(trs));
 	if ((path = calloc(1, MAXPATHLEN)) == NULL)
@@ -1501,8 +1443,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.optimize = optimize;
-	if (anchorname[0])
-		loadaltq = 0;
 
 	/* non-brace anchor, create without resolving the path */
 	if ((pf.anchor = calloc(1, sizeof(*pf.anchor))) == NULL)
@@ -1520,7 +1460,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	pf.astack[0] = pf.anchor;
 	pf.asd = 0;
-	pf.paltq = &pa;
 	pf.trans = t;
 	pfctl_init_options(&pf);
 
@@ -1532,9 +1471,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 		 */
 		if (pfctl_ruleset_trans(&pf, anchorname, pf.anchor))
 			ERRX("pfctl_rules");
-		if (altqsupport && loadaltq)
-			pa.ticket =
-			    pfctl_get_ticket(t, PF_TRANS_ALTQ, anchorname);
 		pf.astack[0]->ruleset.tticket =
 		    pfctl_get_ticket(t, PF_TRANS_TABLE, anchorname);
 	}
@@ -1564,9 +1500,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	free(path);
 	path = NULL;
-
-	if (altqsupport && loadaltq && check_commit_altq(dev, opts) != 0)
-		ERRX("errors in altq config");
 
 	/* process "load anchor" directives */
 	if (!anchorname[0])
@@ -2005,23 +1938,6 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 }
 
 int
-pfctl_test_altqsupport(int dev, int opts)
-{
-	struct pfioc_altq pa;
-
-	if (ioctl(dev, DIOCGETALTQS, &pa)) {
-		if (errno == ENODEV) {
-			if (!(opts & PF_OPT_QUIET))
-				fprintf(stderr, "No ALTQ support in kernel\n"
-				    "ALTQ related functions disabled\n");
-			return (0);
-		} else
-			err(1, "DIOCGETALTQS");
-	}
-	return (1);
-}
-
-int
 pfctl_show_anchors(int dev, int opts, char *anchorname)
 {
 	struct pfioc_ruleset	 pr;
@@ -2335,7 +2251,6 @@ main(int argc, char *argv[])
 		dev = open(pf_device, mode);
 		if (dev == -1)
 			err(1, "%s", pf_device);
-		altqsupport = pfctl_test_altqsupport(dev, opts);
 	} else {
 		dev = open(pf_device, O_RDONLY);
 		if (dev >= 0)
@@ -2343,7 +2258,6 @@ main(int argc, char *argv[])
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
 		clearopt = showopt = debugopt = NULL;
-		altqsupport = 1;
 	}
 
 	if (opts & PF_OPT_DISABLE)
@@ -2368,8 +2282,6 @@ main(int argc, char *argv[])
 		case 'q':
 			pfctl_show_queues(dev, ifaceopt, opts,
 			    opts & PF_OPT_VERBOSE2);
-			pfctl_show_altq(dev, ifaceopt, opts,
-			    opts & PF_OPT_VERBOSE2);
 			break;
 		case 's':
 			pfctl_show_states(dev, ifaceopt, opts);
@@ -2392,7 +2304,6 @@ main(int argc, char *argv[])
 
 			pfctl_show_rules(dev, path, opts, 0, anchorname,
 			    0, 0, -1);
-			pfctl_show_altq(dev, ifaceopt, opts, 0);
 			pfctl_show_states(dev, ifaceopt, opts);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
@@ -2429,9 +2340,6 @@ main(int argc, char *argv[])
 		case 'r':
 			pfctl_clear_rules(dev, opts, anchorname);
 			break;
-		case 'q':
-			pfctl_clear_altq(dev, opts);
-			break;
 		case 's':
 			pfctl_clear_states(dev, ifaceopt, opts);
 			break;
@@ -2450,7 +2358,6 @@ main(int argc, char *argv[])
 				/* NOTREACHED */
 			}
 			if (!*anchorname) {
-				pfctl_clear_altq(dev, opts);
 				pfctl_clear_states(dev, ifaceopt, opts);
 				pfctl_clear_src_nodes(dev, opts);
 				pfctl_clear_stats(dev, ifaceopt, opts);

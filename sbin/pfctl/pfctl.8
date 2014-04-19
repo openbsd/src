@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.163 2013/07/21 17:22:49 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.164 2014/04/19 14:22:32 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 21 2013 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -183,8 +183,6 @@ Flush the filter parameters specified by
 (may be abbreviated):
 .Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
-.It Fl F Cm queue
-Flush the queue rules.
 .It Fl F Cm rules
 Flush the filter rules.
 .It Fl F Cm states
@@ -333,7 +331,7 @@ Show the filter parameters specified by
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxx -compact
 .It Fl s Cm queue
-Show the currently loaded queue rules.
+Show the currently loaded queue definitions.
 When used together with
 .Fl v ,
 per-queue statistics are also shown.

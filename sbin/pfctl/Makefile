@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.20 2013/10/12 12:16:10 henning Exp $
+#	$OpenBSD: Makefile,v 1.21 2014/04/19 14:22:32 henning Exp $
 
 PROG=	pfctl
-SRCS=	pfctl.c parse.y pfctl_parser.c pf_print_state.c pfctl_altq.c
-SRCS+=	pfctl_osfp.c pfctl_radix.c pfctl_table.c pfctl_qstats.c
+SRCS=	pfctl.c parse.y pfctl_parser.c pf_print_state.c
+SRCS+=	pfctl_osfp.c pfctl_radix.c pfctl_table.c
 SRCS+=	pfctl_optimize.c pf_ruleset.c pfctl_queue.c
 CFLAGS+= -Wall -Wmissing-prototypes -Wno-uninitialized
 CFLAGS+= -Wstrict-prototypes -I${.CURDIR}

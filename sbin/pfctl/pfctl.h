@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.51 2013/10/12 12:16:11 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.52 2014/04/19 14:22:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,7 +79,6 @@ int	 pfctl_clear_tables(const char *, int);
 int	 pfctl_show_tables(const char *, int);
 int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 	    const char *, int);
-int	 pfctl_show_altq(int, const char *, int, int);
 void	 warn_namespace_collision(const char *);
 int	 pfctl_show_ifaces(const char *, int);
 FILE	*pfctl_fopen(const char *, const char *);
@@ -99,11 +98,6 @@ struct segment {
 	LIST_ENTRY(segment)	_next;
 	double			x, y, d, m;
 };
-
-int		 check_commit_altq(int, int);
-void		 pfaltq_store(struct pf_altq *);
-struct pf_altq	*pfaltq_lookup(const char *);
-char		*rate2str(double);
 
 void	 print_addr(struct pf_addr_wrap *, sa_family_t, int);
 void	 print_host(struct pf_addr *, u_int16_t p, sa_family_t, u_int16_t, const char *, int);

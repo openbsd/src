@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.1 2013/10/12 12:16:12 henning Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.2 2014/04/19 14:22:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -66,6 +66,7 @@ void			 pfctl_free_queue_node(struct pfctl_queue_node *);
 void			 pfctl_print_queue_nodestat(int,
 			    const struct pfctl_queue_node *);
 void			 update_avg(struct queue_stats *);
+char			*rate2str(double);
 
 int
 pfctl_show_queues(int dev, const char *iface, int opts, int verbose2)
@@ -234,4 +235,31 @@ update_avg(struct queue_stats *s)
 	s->prev_packets = s->data.xmit_cnt.packets;
 	if (s->avgn < AVGN_MAX)
 		s->avgn++;
+}
+
+#define	R2S_BUFS	8
+#define	RATESTR_MAX	16
+
+char *
+rate2str(double rate)
+{
+	char		*buf;
+	static char	 r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
+	static int	 idx = 0;
+	int		 i;
+	static const char unit[] = " KMG";
+
+	buf = r2sbuf[idx++];
+	if (idx == R2S_BUFS)
+		idx = 0;
+
+	for (i = 0; rate >= 1000 && i <= 3; i++)
+		rate /= 1000;
+
+	if ((int)(rate * 100) % 100)
+		snprintf(buf, RATESTR_MAX, "%.2f%cb", rate, unit[i]);
+	else
+		snprintf(buf, RATESTR_MAX, "%d%cb", (int)rate, unit[i]);
+
+	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.101 2013/10/12 12:16:12 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.102 2014/04/19 14:22:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,7 +79,6 @@ struct pfctl {
 	int tdirty;			/* kernel dirty */
 #define PFCTL_ANCHOR_STACK_DEPTH 64
 	struct pf_anchor *astack[PFCTL_ANCHOR_STACK_DEPTH];
-	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
 	struct pfr_buffer *trans;
 	struct pf_anchor *anchor, *alast;
@@ -200,7 +199,6 @@ int     add_opt_table(struct pfctl *, struct pf_opt_tbl **, sa_family_t,
             struct pf_rule_addr *, char *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *, const char *);
-int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t, int);
 void	pfctl_move_pool(struct pf_pool *, struct pf_pool *);
 void	pfctl_clear_pool(struct pf_pool *);
@@ -228,16 +226,6 @@ void	print_tabledef(const char *, int, int, struct node_tinithead *);
 void	print_status(struct pf_status *, int);
 void	print_queuespec(struct pf_queuespec *);
 
-int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
-	    struct node_queue_opt *);
-int	eval_pfqueue(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
-	    struct node_queue_opt *);
-
-void	 print_altq(const struct pf_altq *, unsigned, struct node_queue_bw *,
-	    struct node_queue_opt *);
-void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
-	    int, struct node_queue_opt *);
-
 int	pfctl_define_table(char *, int, int, const char *, struct pfr_buffer *,
 	    u_int32_t);
 
@@ -247,7 +235,6 @@ pf_osfp_t	 pfctl_get_fingerprint(const char *);
 int		 pfctl_load_fingerprints(int, int);
 char		*pfctl_lookup_fingerprint(pf_osfp_t, char *, size_t);
 void		 pfctl_show_fingerprints(int);
-
 
 struct icmptypeent {
 	const char *name;
