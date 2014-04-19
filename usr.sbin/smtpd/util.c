@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.108 2014/02/04 10:38:06 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.109 2014/04/19 14:32:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -353,7 +353,7 @@ mvpurge(char *from, char *to)
 	retry = 0;
 
 again:
-	snprintf(buf, sizeof buf, "%s%s%u", to, sep, arc4random());
+	(void)snprintf(buf, sizeof buf, "%s%s%u", to, sep, arc4random());
 	if (rename(from, buf) == -1) {
 		/* ENOTDIR has actually 2 meanings, and incorrect input
 		 * could lead to an infinite loop. Consider that after
@@ -540,7 +540,7 @@ secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 	for (;;) {
 		if ((cp = dirname(buf)) == NULL)
 			return 0;
-		strlcpy(buf, cp, sizeof(buf));
+		(void)strlcpy(buf, cp, sizeof(buf));
 
 		if (stat(buf, &st) < 0 ||
 		    (st.st_uid != 0 && st.st_uid != uid) ||
