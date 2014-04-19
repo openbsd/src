@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.58 2013/11/06 10:40:36 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.59 2014/04/19 11:53:42 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -375,9 +375,8 @@ msi_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	pcireg_t reg;
 	int off;
 
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
-		panic("%s: no msi capability", __func__);
-	pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg))
+		pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
 }
 
 int
