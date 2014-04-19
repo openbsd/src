@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.38 2014/04/19 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.39 2014/04/19 15:19:20 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -276,10 +276,12 @@ decode_base64(u_int8_t *buffer, size_t len, const char *b64data)
 
 	while (bp < buffer + len) {
 		c1 = CHAR64(*p);
-		c2 = CHAR64(*(p + 1));
-
 		/* Invalid data */
-		if (c1 == 255 || c2 == 255)
+		if (c1 == 255)
+			return -1;
+
+		c2 = CHAR64(*(p + 1));
+		if (c2 == 255)
 			return -1;
 
 		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
