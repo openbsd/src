@@ -517,7 +517,6 @@
 ./usr/share/man/man1/rm.1
 ./usr/share/man/man1/rmdir.1
 ./usr/share/man/man1/rs.1
-./usr/share/man/man1/rsh.1
 ./usr/share/man/man1/rup.1
 ./usr/share/man/man1/ruptime.1
 ./usr/share/man/man1/rusers.1

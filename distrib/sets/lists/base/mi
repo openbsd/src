@@ -401,7 +401,6 @@
 ./usr/bin/rlog
 ./usr/bin/rpcinfo
 ./usr/bin/rs
-./usr/bin/rsh
 ./usr/bin/rup
 ./usr/bin/ruptime
 ./usr/bin/rusers
