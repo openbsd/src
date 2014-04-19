@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.104 2014/04/19 13:07:56 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.105 2014/04/19 17:42:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -421,7 +421,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			if (error) {
 				mda_queue_tempfail(e->id, error,
 				    ESC_OTHER_MAIL_SYSTEM_STATUS);
-				snprintf(buf, sizeof buf, "Error (%s)", error);
+				(void)snprintf(buf, sizeof buf, "Error (%s)", error);
 				mda_log(e, "TempFail", buf);
 			}
 			else {
@@ -736,7 +736,7 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 
 	rcpt[0] = '\0';
 	if (evp->rcpt)
-		snprintf(rcpt, sizeof rcpt, "rcpt=<%s>, ", evp->rcpt);
+		(void)snprintf(rcpt, sizeof rcpt, "rcpt=<%s>, ", evp->rcpt);
 
 	if (evp->method == A_MAILDIR)
 		method = "maildir";
@@ -857,7 +857,7 @@ mda_user_to_text(const struct mda_user *u)
 {
 	static char buf[1024];
 
-	snprintf(buf, sizeof(buf), "%s:%s", u->usertable, u->name);
+	(void)snprintf(buf, sizeof(buf), "%s:%s", u->usertable, u->name);
 
 	return (buf);
 }
@@ -873,12 +873,12 @@ mda_envelope(const struct envelope *evp)
 	e->creation = evp->creation;
 	buf[0] = '\0';
 	if (evp->sender.user[0] && evp->sender.domain[0])
-		snprintf(buf, sizeof buf, "%s@%s",
+		(void)snprintf(buf, sizeof buf, "%s@%s",
 		    evp->sender.user, evp->sender.domain);
 	e->sender = xstrdup(buf, "mda_envelope:sender");
-	snprintf(buf, sizeof buf, "%s@%s", evp->dest.user, evp->dest.domain);
+	(void)snprintf(buf, sizeof buf, "%s@%s", evp->dest.user, evp->dest.domain);
 	e->dest = xstrdup(buf, "mda_envelope:dest");
-	snprintf(buf, sizeof buf, "%s@%s", evp->rcpt.user, evp->rcpt.domain);
+	(void)snprintf(buf, sizeof buf, "%s@%s", evp->rcpt.user, evp->rcpt.domain);
 	if (strcmp(buf, e->dest))
 		e->rcpt = xstrdup(buf, "mda_envelope:rcpt");
 	e->method = evp->agent.mda.method;
