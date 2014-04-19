@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.5 2014/01/27 15:41:06 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.6 2014/04/19 16:02:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -255,12 +255,6 @@ struct hfsc_if {
 
 #define	HFSC_ENABLED(ifq)	((ifq)->ifq_hfsc != NULL)
 #define	HFSC_DEFAULT_QLIMIT	50
-
-/* XXX hack */
-#ifndef ALTQ_IS_ENABLED
-#define ALTQ_IS_ENABLED(ifq)	HFSC_ENABLED(ifq)
-#endif
-/* XXX hack */
 
 struct ifnet; struct ifqueue; struct pf_queuespec;
 
