@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.4 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.5 2014/04/19 13:48:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -125,13 +125,17 @@ queue_fs_message_commit(uint32_t msgid, const char *path)
 
 	/* before-first, move the message content in the incoming directory */
 	fsqueue_message_incoming_path(msgid, msgpath, sizeof(msgpath));
-	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+	if (strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath))
+	    >= sizeof(msgpath))
+		return (0);
 	if (rename(path, msgpath) == -1)
 		return (0);
 
 	fsqueue_message_incoming_path(msgid, incomingdir, sizeof(incomingdir));
 	fsqueue_message_path(msgid, msgdir, sizeof(msgdir));
-	strlcpy(queuedir, msgdir, sizeof(queuedir));
+	if (strlcpy(queuedir, msgdir, sizeof(queuedir))
+	    >= sizeof(queuedir))
+		return (0);
 
 	/* first attempt to rename */
 	if (rename(incomingdir, msgdir) == 0)
@@ -172,7 +176,9 @@ queue_fs_message_fd_r(uint32_t msgid)
 	char path[SMTPD_MAXPATHLEN];
 
 	fsqueue_message_path(msgid, path, sizeof(path));
-	strlcat(path, PATH_MESSAGE, sizeof(path));
+	if (strlcat(path, PATH_MESSAGE, sizeof(path))
+	    >= sizeof(path))
+		return -1;
 
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		log_warn("warn: queue-fs: open");
@@ -217,8 +223,8 @@ again:
 	if (stat(corruptdir, &sb) != -1 || errno != ENOENT) {
 		fsqueue_message_corrupt_path(msgid, corruptdir,
 		    sizeof(corruptdir));
-		snprintf(buf, sizeof(buf), ".%d", retry++);
-		strlcat(corruptdir, buf, sizeof(corruptdir));
+		(void)snprintf(buf, sizeof (buf), ".%d", retry++);
+		(void)strlcat(corruptdir, buf, sizeof(corruptdir));
 		goto again;
 	}
 
@@ -535,7 +541,7 @@ fsqueue_qwalk_new(void)
 	struct qwalk	*q;
 
 	q = xcalloc(1, sizeof(*q), "fsqueue_qwalk_new");
-	strlcpy(path, PATH_QUEUE, sizeof(path));
+	(void)strlcpy(path, PATH_QUEUE, sizeof(path));
 	q->fts = fts_open(path_argv,
 	    FTS_PHYSICAL | FTS_NOCHDIR, NULL);
 
@@ -625,7 +631,7 @@ queue_fs_init(struct passwd *pw, int server)
 
 	ret = 1;
 	for (n = 0; n < nitems(paths); n++) {
-		strlcpy(path, PATH_SPOOL, sizeof(path));
+		(void)strlcpy(path, PATH_SPOOL, sizeof(path));
 		if (strlcat(path, paths[n], sizeof(path)) >= sizeof(path))
 			errx(1, "path too long %s%s", PATH_SPOOL, paths[n]);
 		if (ckdir(path, 0700, pw->pw_uid, 0, server) == 0)
