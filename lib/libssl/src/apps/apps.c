@@ -310,8 +310,8 @@ ui_read(UI * ui, UI_STRING * uis)
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
 		switch (UI_get_string_type(uis)) {
-			case UIT_PROMPT:
-			case UIT_VERIFY:
+		case UIT_PROMPT:
+		case UIT_VERIFY:
 			{
 				const char *password =
 				((PW_CB_DATA *) UI_get0_user_data(ui))->password;
@@ -320,6 +320,7 @@ ui_read(UI * ui, UI_STRING * uis)
 					return 1;
 				}
 			}
+			break;
 		default:
 			break;
 		}
@@ -333,14 +334,15 @@ ui_write(UI * ui, UI_STRING * uis)
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
 		switch (UI_get_string_type(uis)) {
-			case UIT_PROMPT:
-			case UIT_VERIFY:
+		case UIT_PROMPT:
+		case UIT_VERIFY:
 			{
 				const char *password =
-				((PW_CB_DATA *) UI_get0_user_data(ui))->password;
+				    ((PW_CB_DATA *) UI_get0_user_data(ui))->password;
 				if (password && password[0] != '\0')
 					return 1;
 			}
+			break;
 		default:
 			break;
 		}
@@ -1370,16 +1372,16 @@ index_name_cmp(const OPENSSL_CSTRING * a, const OPENSSL_CSTRING * b)
 	return (strcmp(a[DB_name], b[DB_name]));
 }
 
-static 
-IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
-	static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
-	static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
-	static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
+
 #undef BSIZE
 #define BSIZE 256
 
-	BIGNUM *
-	 load_serial(char *serialfile, int create, ASN1_INTEGER ** retai)
+BIGNUM *
+load_serial(char *serialfile, int create, ASN1_INTEGER ** retai)
 {
 	BIO *in = NULL;
 	BIGNUM *ret = NULL;
