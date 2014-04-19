@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.120 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.121 2014/04/19 12:12:02 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -644,7 +644,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 {
 	struct sppp *sp = (struct sppp*) ifp;
 	struct ppp_header *h;
-	struct ifqueue *ifq = NULL;
 	struct timeval tv;
 	int s, len, rv = 0;
 	u_int16_t protocol;
@@ -819,20 +818,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * not yet active.
 	 */
 	len = m->m_pkthdr.len;
-	if (ifq != NULL
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
-#endif
-		) {
-		if (IF_QFULL (ifq)) {
-			IF_DROP (&ifp->if_snd);
-			m_freem (m);
-			if (rv == 0)
-				rv = ENOBUFS;
-		} else
-			IF_ENQUEUE (ifq, m);
-	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
 
 	if (rv != 0) {
 		++ifp->if_oerrors;
