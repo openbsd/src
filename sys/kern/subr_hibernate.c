@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.86 2014/03/21 21:39:36 miod Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.87 2014/04/19 16:19:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1640,7 +1640,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
     struct hibernate_disk_chunk *chunks)
 {
 	paddr_t img_index, img_cur, r1s, r1e, r2s, r2e;
-	paddr_t copy_start, copy_end, piglet_cur;
+	paddr_t copy_start, copy_end;
 	paddr_t piglet_base = hib->piglet_pa;
 	paddr_t piglet_end = piglet_base + HIBERNATE_CHUNK_SIZE;
 	daddr_t blkctr;
@@ -1757,13 +1757,10 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 		if (chunks[ochunks[i]].flags & HIBERNATE_CHUNK_CONFLICT) {
 			copy_start = piglet_base;
 			copy_end = piglet_end;
-			piglet_cur = piglet_base;
 			npchunks = 0;
 			j = i;
 
 			while (copy_start < copy_end && j < nochunks) {
-				piglet_cur +=
-				    chunks[ochunks[j]].compressed_size;
 				pchunks[npchunks] = ochunks[j];
 				npchunks++;
 				copy_start +=
@@ -1773,10 +1770,7 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 				j++;
 			}
 
-			piglet_cur = piglet_base;
 			for (j = 0; j < npchunks; j++) {
-				piglet_cur +=
-				    chunks[pchunks[j]].compressed_size;
 				fchunks[nfchunks] = pchunks[j];
 				chunks[pchunks[j]].flags |=
 				    HIBERNATE_CHUNK_USED;
@@ -1799,7 +1793,6 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 
 	img_index = pig_start;
 	for (i = 0; i < nfchunks; i++) {
-		piglet_cur = piglet_base;
 		img_index += chunks[fchunks[i]].compressed_size;
 	}
 
