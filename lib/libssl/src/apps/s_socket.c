@@ -302,11 +302,10 @@ redoit:
 		*host = NULL;
 		/* return(0); */
 	} else {
-		if ((*host = (char *) malloc(strlen(h1->h_name) + 1)) == NULL) {
-			perror("malloc");
+		if ((*host = strdup(h1->h_name) == NULL) {
+			perror("strdup");
 			return (0);
 		}
-		strlcpy(*host, h1->h_name, strlen(h1->h_name) + 1);
 
 		h2 = GetHostByName(*host);
 		if (h2 == NULL) {
