@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.185 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.186 2014/04/19 13:32:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -243,7 +243,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				TAILQ_INSERT_TAIL(&relay->tasks, task, entry);
 				task->msgid = evpid_to_msgid(evp.id);
 				if (evp.sender.user[0] || evp.sender.domain[0])
-					snprintf(buf, sizeof buf, "%s@%s",
+					(void)snprintf(buf, sizeof buf, "%s@%s",
 					    evp.sender.user, evp.sender.domain);
 				else
 					buf[0] = '\0';
@@ -254,21 +254,21 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			e = xcalloc(1, sizeof *e, "mta_envelope");
 			e->id = evp.id;
 			e->creation = evp.creation;
-			snprintf(buf, sizeof buf, "%s@%s",
+			(void)snprintf(buf, sizeof buf, "%s@%s",
 			    evp.dest.user, evp.dest.domain);
 			e->dest = xstrdup(buf, "mta_envelope:dest");
-			snprintf(buf, sizeof buf, "%s@%s",
+			(void)snprintf(buf, sizeof buf, "%s@%s",
 			    evp.rcpt.user, evp.rcpt.domain);
 			if (strcmp(buf, e->dest))
 				e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
 			e->task = task;
 			if (evp.dsn_orcpt.user[0] && evp.dsn_orcpt.domain[0]) {
-				snprintf(buf, sizeof buf, "%s@%s",
+				(void)snprintf(buf, sizeof buf, "%s@%s",
 			    	    evp.dsn_orcpt.user, evp.dsn_orcpt.domain);
 				e->dsn_orcpt = xstrdup(buf,
 				    "mta_envelope:dsn_orcpt");
 			}
-			strlcpy(e->dsn_envid, evp.dsn_envid,
+			(void)strlcpy(e->dsn_envid, evp.dsn_envid,
 			    sizeof e->dsn_envid);
 			e->dsn_notify = evp.dsn_notify;
 			e->dsn_ret = evp.dsn_ret;
@@ -446,7 +446,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_CTL_MTA_SHOW_HOSTS:
 			t = time(NULL);
 			SPLAY_FOREACH(host, mta_host_tree, &hosts) {
-				snprintf(buf, sizeof(buf),
+				(void)snprintf(buf, sizeof(buf),
 				    "%s %s refcount=%d nconn=%zu lastconn=%s",
 				    sockaddr_to_text(host->sa),
 				    host->ptrname,
@@ -472,7 +472,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		case IMSG_CTL_MTA_SHOW_ROUTES:
 			SPLAY_FOREACH(route, mta_route_tree, &routes) {
 				v = runq_pending(runq_route, NULL, route, &t);
-				snprintf(buf, sizeof(buf),
+				(void)snprintf(buf, sizeof(buf),
 				    "%llu. %s %c%c%c%c nconn=%zu nerror=%d penalty=%d timeout=%s",
 				    (unsigned long long)route->id,
 				    mta_route_to_text(route),
@@ -496,7 +496,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			iter = NULL;
 			while (dict_iter(&hoststat, &iter, &hostname,
 				(void **)&hs)) {
-				snprintf(buf, sizeof(buf),
+				(void)snprintf(buf, sizeof(buf),
 				    "%s|%llu|%s",
 				    hostname, (unsigned long long) hs->tm,
 				    hs->error);
@@ -516,8 +516,9 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_end(&m);
 			source = mta_source((struct sockaddr*)&ss);
 			if (strlen(dom)) {
-				strlcpy(buf, dom, sizeof(buf));
-				mta_block(source, buf);
+				if (!(strlcpy(buf, dom, sizeof(buf))
+					>= sizeof(buf)))
+					mta_block(source, buf);
 			}
 			else
 				mta_block(source, NULL);
@@ -532,8 +533,9 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			m_end(&m);
 			source = mta_source((struct sockaddr*)&ss);
 			if (strlen(dom)) {
-				strlcpy(buf, dom, sizeof(buf));
-				mta_unblock(source, buf);
+				if (!(strlcpy(buf, dom, sizeof(buf))
+					>= sizeof(buf)))
+					mta_unblock(source, buf);
 			}
 			else
 				mta_unblock(source, NULL);
@@ -543,7 +545,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 		case IMSG_CTL_MTA_SHOW_BLOCK:
 			SPLAY_FOREACH(block, mta_block_tree, &blocks) {
-				snprintf(buf, sizeof(buf), "%s -> %s",
+				(void)snprintf(buf, sizeof(buf), "%s -> %s",
 				    mta_source_to_text(block->source),
 				    block->domain ? block->domain : "*");
 				m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK,
@@ -779,7 +781,7 @@ mta_delivery_log(struct mta_envelope *e, const char *source, const char *relay,
 
 	e->delivery = delivery;
 	if (status)
-		strlcpy(e->status, status, sizeof(e->status));
+		(void)strlcpy(e->status, status, sizeof(e->status));
 }
 
 void
@@ -1318,15 +1320,15 @@ mta_drain(struct mta_relay *r)
 	if (r->status & RELAY_WAITMASK) {
 		buf[0] = '\0';
 		if (r->status & RELAY_WAIT_MX)
-			strlcat(buf, " MX", sizeof buf);
+			(void)strlcat(buf, " MX", sizeof buf);
 		if (r->status & RELAY_WAIT_PREFERENCE)
-			strlcat(buf, " preference", sizeof buf);
+			(void)strlcat(buf, " preference", sizeof buf);
 		if (r->status & RELAY_WAIT_SECRET)
-			strlcat(buf, " secret", sizeof buf);
+			(void)strlcat(buf, " secret", sizeof buf);
 		if (r->status & RELAY_WAIT_SOURCE)
-			strlcat(buf, " source", sizeof buf);
+			(void)strlcat(buf, " source", sizeof buf);
 		if (r->status & RELAY_WAIT_CONNECTOR)
-			strlcat(buf, " connector", sizeof buf);
+			(void)strlcat(buf, " connector", sizeof buf);
 		log_debug("debug: mta: %s waiting for%s",
 		    mta_relay_to_text(r), buf);
 		return;
@@ -1742,68 +1744,68 @@ mta_relay_to_text(struct mta_relay *relay)
 	char		 tmp[32];
 	const char	*sep = ",";
 
-	snprintf(buf, sizeof buf, "[relay:%s", relay->domain->name);
+	(void)snprintf(buf, sizeof buf, "[relay:%s", relay->domain->name);
 
 	if (relay->port) {
-		strlcat(buf, sep, sizeof buf);
-		snprintf(tmp, sizeof tmp, "port=%d", (int)relay->port);
-		strlcat(buf, tmp, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)snprintf(tmp, sizeof tmp, "port=%d", (int)relay->port);
+		(void)strlcat(buf, tmp, sizeof buf);
 	}
 
 	if (relay->flags & RELAY_STARTTLS) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "starttls", sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "starttls", sizeof buf);
 	}
 
 	if (relay->flags & RELAY_SMTPS) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "smtps", sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "smtps", sizeof buf);
 	}
 
 	if (relay->flags & RELAY_AUTH) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "auth=", sizeof buf);
-		strlcat(buf, relay->authtable, sizeof buf);
-		strlcat(buf, ":", sizeof buf);
-		strlcat(buf, relay->authlabel, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "auth=", sizeof buf);
+		(void)strlcat(buf, relay->authtable, sizeof buf);
+		(void)strlcat(buf, ":", sizeof buf);
+		(void)strlcat(buf, relay->authlabel, sizeof buf);
 	}
 
 	if (relay->pki_name) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "pki_name=", sizeof buf);
-		strlcat(buf, relay->pki_name, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "pki_name=", sizeof buf);
+		(void)strlcat(buf, relay->pki_name, sizeof buf);
 	}
 
 	if (relay->flags & RELAY_MX) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "mx", sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "mx", sizeof buf);
 	}
 
 	if (relay->backupname) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "backup=", sizeof buf);
-		strlcat(buf, relay->backupname, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "backup=", sizeof buf);
+		(void)strlcat(buf, relay->backupname, sizeof buf);
 	}
 
 	if (relay->sourcetable) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "sourcetable=", sizeof buf);
-		strlcat(buf, relay->sourcetable, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "sourcetable=", sizeof buf);
+		(void)strlcat(buf, relay->sourcetable, sizeof buf);
 	}
 
 	if (relay->helotable) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "helotable=", sizeof buf);
-		strlcat(buf, relay->helotable, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "helotable=", sizeof buf);
+		(void)strlcat(buf, relay->helotable, sizeof buf);
 	}
 
 	if (relay->heloname) {
-		strlcat(buf, sep, sizeof buf);
-		strlcat(buf, "heloname=", sizeof buf);
-		strlcat(buf, relay->heloname, sizeof buf);
+		(void)strlcat(buf, sep, sizeof buf);
+		(void)strlcat(buf, "heloname=", sizeof buf);
+		(void)strlcat(buf, relay->heloname, sizeof buf);
 	}
 
-	strlcat(buf, "]", sizeof buf);
+	(void)strlcat(buf, "]", sizeof buf);
 
 	return (buf);
 }
@@ -1818,12 +1820,12 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 
 	flags[0] = '\0';
 
-#define SHOWSTATUS(f, n) do {						\
-		if (r->status & (f)) {					\
-			if (flags[0])					\
-				strlcat(flags, ",", sizeof(flags));	\
-			strlcat(flags, (n), sizeof(flags));		\
-		} 							\
+#define SHOWSTATUS(f, n) do {							\
+		if (r->status & (f)) {						\
+			if (flags[0])						\
+				(void)strlcat(flags, ",", sizeof(flags));	\
+			(void)strlcat(flags, (n), sizeof(flags));		\
+		}								\
 	} while(0)
 
 	SHOWSTATUS(RELAY_WAIT_MX, "MX");
@@ -1835,11 +1837,11 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 #undef SHOWSTATUS
 
 	if (runq_pending(runq_relay, NULL, r, &to))
-		snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
+		(void)snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
 	else
-		strlcpy(dur, "-", sizeof(dur));
+		(void)strlcpy(dur, "-", sizeof(dur));
 
-	snprintf(buf, sizeof(buf), "%s refcount=%d ntask=%zu nconn=%zu lastconn=%s timeout=%s wait=%s%s",
+	(void)snprintf(buf, sizeof(buf), "%s refcount=%d ntask=%zu nconn=%zu lastconn=%s timeout=%s wait=%s%s",
 	    mta_relay_to_text(r),
 	    r->refcount,
 	    r->ntask,
@@ -1854,18 +1856,18 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 	while (tree_iter(&r->connectors, &iter, NULL, (void **)&c)) {
 
 		if (runq_pending(runq_connector, NULL, c, &to))
-			snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
+			(void)snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
 		else
-			strlcpy(dur, "-", sizeof(dur));
+			(void)strlcpy(dur, "-", sizeof(dur));
 
 		flags[0] = '\0';
 
-#define SHOWFLAG(f, n) do {						\
-		if (c->flags & (f)) {					\
-			if (flags[0])					\
-				strlcat(flags, ",", sizeof(flags));	\
-			strlcat(flags, (n), sizeof(flags));		\
-		} 							\
+#define SHOWFLAG(f, n) do {							\
+		if (c->flags & (f)) {						\
+			if (flags[0])						\
+				(void)strlcat(flags, ",", sizeof(flags));	\
+			(void)strlcat(flags, (n), sizeof(flags));		\
+		}								\
 	} while(0)
 
 		SHOWFLAG(CONNECTOR_NEW,		"NEW");
@@ -1886,7 +1888,7 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 		SHOWFLAG(CONNECTOR_LIMIT_DOMAIN,	"LIMIT_DOMAIN");
 #undef SHOWFLAG
 
-		snprintf(buf, sizeof(buf),
+		(void)snprintf(buf, sizeof(buf),
 		    "  connector %s refcount=%d nconn=%zu lastconn=%s timeout=%s flags=%s",
 		    mta_source_to_text(c->source),
 		    c->refcount,
@@ -2009,10 +2011,10 @@ mta_host_to_text(struct mta_host *h)
 	static char buf[1024];
 
 	if (h->ptrname)
-		snprintf(buf, sizeof buf, "%s (%s)",
+		(void)snprintf(buf, sizeof buf, "%s (%s)",
 		    sa_to_text(h->sa), h->ptrname);
 	else
-		snprintf(buf, sizeof buf, "%s", sa_to_text(h->sa));
+		(void)snprintf(buf, sizeof buf, "%s", sa_to_text(h->sa));
 
 	return (buf);
 }
@@ -2141,7 +2143,7 @@ mta_source_to_text(struct mta_source *s)
 
 	if (s->sa == NULL)
 		return "[]";
-	snprintf(buf, sizeof buf, "%s", sa_to_text(s->sa));
+	(void)snprintf(buf, sizeof buf, "%s", sa_to_text(s->sa));
 	return (buf);
 }
 
@@ -2203,7 +2205,7 @@ mta_connector_to_text(struct mta_connector *c)
 {
 	static char buf[1024];
 
-	snprintf(buf, sizeof buf, "[connector:%s->%s,0x%x]",
+	(void)snprintf(buf, sizeof buf, "[connector:%s->%s,0x%x]",
 	    mta_source_to_text(c->source),
 	    mta_relay_to_text(c->relay),
 	    c->flags);
@@ -2310,7 +2312,7 @@ mta_route_to_text(struct mta_route *r)
 {
 	static char	buf[1024];
 
-	snprintf(buf, sizeof buf, "%s <-> %s",
+	(void)snprintf(buf, sizeof buf, "%s <-> %s",
 	    mta_source_to_text(r->src),
 	    mta_host_to_text(r->dst));
 
@@ -2428,8 +2430,8 @@ mta_hoststat_update(const char *host, const char *error)
 		tree_init(&hs->deferred);
 		runq_schedule(runq_hoststat, tm+HOSTSTAT_EXPIRE_DELAY, NULL, hs);
 	}
-	strlcpy(hs->name, buf, sizeof hs->name);
-	strlcpy(hs->error, error, sizeof hs->error);
+	(void)strlcpy(hs->name, buf, sizeof hs->name);
+	(void)strlcpy(hs->error, error, sizeof hs->error);
 	hs->tm = time(NULL);
 	dict_set(&hoststat, buf, hs);
 
