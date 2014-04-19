@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.6 2014/03/27 10:39:23 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.7 2014/04/19 11:26:10 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -331,73 +331,6 @@ struct ifg_list {
 };
 
 #ifdef _KERNEL
-/* XXX the IFQ_ macros are a giant mess right now. cleanup once altq gone. */
-
-#ifdef ALTQ
-
-/* XXX pattr unused */
-/* if_snd becomes ifqueue when altq is gone and the casts go away */
-#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
-do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		(err) = hfsc_enqueue(((struct ifqueue *)(ifq)), (m));	\
-	else if (ALTQ_IS_ENABLED((ifq))) {				\
-		m->m_pkthdr.pf.prio = IFQ_MAXPRIO;			\
-		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
-	} else {							\
-		if (IF_QFULL((ifq))) {					\
-			m_freem((m));					\
-			(err) = ENOBUFS;				\
-		} else {						\
-			IF_ENQUEUE((ifq), (m));				\
-			(err) = 0;					\
-		}							\
-	}								\
-	if ((err))							\
-		(ifq)->ifq_drops++;					\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_DEQUEUE(ifq, m)						\
-do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 1);	\
-	else if (OLDTBR_IS_ENABLED((ifq)))				\
-		(m) = oldtbr_dequeue((ifq), ALTDQ_REMOVE);		\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
-		ALTQ_DEQUEUE((ifq), (m));				\
-	else								\
-		IF_DEQUEUE((ifq), (m));					\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_POLL(ifq, m)						\
-do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		(m) = hfsc_dequeue(((struct ifqueue *)(ifq)), 0);	\
-	else if (OLDTBR_IS_ENABLED((ifq)))				\
-		(m) = oldtbr_dequeue((ifq), ALTDQ_POLL);		\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
-		ALTQ_POLL((ifq), (m));					\
-	else								\
-		IF_POLL((ifq), (m));					\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_PURGE(ifq)							\
-do {									\
-	if (HFSC_ENABLED((ifq)))					\
-		hfsc_purge(((struct ifqueue *)(ifq)));			\
-	else if (ALTQ_IS_ENABLED((ifq)))				\
-		ALTQ_PURGE(ifq);					\
-	else								\
-		IF_PURGE((ifq));					\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_SET_READY(ifq)						\
-do {									\
-	((ifq)->altq_flags |= ALTQF_READY);				\
-} while (/* CONSTCOND */0)
-
-#else /* !ALTQ */
-
 /* XXX pattr unused */
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
 do {									\
@@ -441,8 +374,6 @@ do {									\
 } while (/* CONSTCOND */0)
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
-
-#endif /* ALTQ */
 
 #define	IFQ_LEN(ifq)			IF_LEN(ifq)
 #define	IFQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
