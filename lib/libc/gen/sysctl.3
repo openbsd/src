@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.229 2014/04/19 12:42:50 logan Exp $
+.\"	$OpenBSD: sysctl.3,v 1.230 2014/04/19 16:20:08 logan Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1476,7 +1476,7 @@ The default is 0.
 .It Li ip.mtudisc
 Returns 1 if Path MTU Discovery is enabled.
 .It Li ip.mtudisctimeout
-Returns the number of seconds in which a route added by the Path MTU
+Number of seconds in which a route added by the Path MTU
 Discovery engine will time out.
 When the route times out, the Path MTU Discovery engine will attempt
 to probe a larger path MTU.
@@ -1682,6 +1682,7 @@ The currently defined protocols and names are:
 .It ip6 Ta maxifprefixes Ta integer Ta yes
 .It ip6 Ta maxifdefrouters Ta integer Ta yes
 .It ip6 Ta mforwarding Ta integer Ta yes
+.It ip6 Ta mtudisctimeout Ta integer Ta yes
 .It ip6 Ta multicast_mtudisc Ta integer Ta yes
 .It ip6 Ta multipath Ta integer Ta yes
 .It ip6 Ta neighborgcthresh Ta integer Ta yes
@@ -1881,6 +1882,12 @@ If set to 0, the ICMPv6 Too Big message will be suppressed.
 This variable enables multipath routing for IPv6 addresses.
 If set to 0, only the first route selected will be used for a given
 destination regardless of how many routes exist in the routing table.
+.Pp
+.It Li ip6.mtudisctimeout
+Number of seconds in which a route added by the Path MTU
+Discovery engine will time out.
+When the route times out, the Path MTU Discovery engine will attempt
+to probe a larger path MTU.
 .Pp
 .It Li ip6.neighborgcthresh
 Maximum number of entries in neighbor cache.
