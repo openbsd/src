@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.72 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.73 2014/04/19 12:08:10 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -819,11 +819,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	m0->m_nextpkt = NULL;
 	sc->sc_npqtail = &m0->m_nextpkt;
     } else {
-	if ((m0->m_flags & M_HIGHPRI)
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&sc->sc_if.if_snd) == 0
-#endif
-	    ) {
+	if (m0->m_flags & M_HIGHPRI) {
 	    ifq = &sc->sc_fastq;
 	    if (IF_QFULL(ifq) && dst->sa_family != AF_UNSPEC) {
 		IF_DROP(ifq);
@@ -886,11 +882,7 @@ ppp_requeue(struct ppp_softc *sc)
 	     */
 	    *mpp = m->m_nextpkt;
 	    m->m_nextpkt = NULL;
-	    if ((m->m_flags & M_HIGHPRI)
-#ifdef ALTQ
-		&& ALTQ_IS_ENABLED(&sc->sc_if.if_snd) == 0
-#endif
-		) {
+	    if (m->m_flags & M_HIGHPRI) {
 		ifq = &sc->sc_fastq;
 		if (IF_QFULL(ifq)) {
 		    IF_DROP(ifq);
