@@ -302,7 +302,7 @@ redoit:
 		*host = NULL;
 		/* return(0); */
 	} else {
-		if ((*host = strdup(h1->h_name) == NULL) {
+		if ((*host = strdup(h1->h_name)) == NULL) {
 			perror("strdup");
 			return (0);
 		}
