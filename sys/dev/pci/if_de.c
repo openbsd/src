@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.112 2013/11/26 09:50:33 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.113 2014/04/19 12:25:03 henning Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -215,7 +215,6 @@ struct mbuf *tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int);
 void tulip_txput_setup(tulip_softc_t * const sc);
 int tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data);
 void tulip_ifstart(struct ifnet *ifp);
-void tulip_ifstart_one(struct ifnet *ifp);
 void tulip_ifwatchdog(struct ifnet *ifp);
 int tulip_busdma_allocmem(tulip_softc_t * const sc, size_t size,
     bus_dmamap_t *map_p, tulip_desc_t **desc_p);
@@ -4255,33 +4254,9 @@ tulip_ifstart(struct ifnet * const ifp)
 		break;
 	    }
 	}
-#ifdef ALTQ
-	if (0) /* don't switch to the one packet mode */
-#else
-	if (IFQ_IS_EMPTY(&sc->tulip_if.if_snd))
-#endif
-	    sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
     TULIP_PERFEND(ifstart);
-}
-
-void
-tulip_ifstart_one(struct ifnet * const ifp)
-{
-    TULIP_PERFSTART(ifstart_one)
-    tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
-
-    if ((sc->tulip_if.if_flags & IFF_RUNNING)
-	    && !IFQ_IS_EMPTY(&sc->tulip_if.if_snd)) {
-	struct mbuf *m, *m0;
-	IFQ_POLL(&sc->tulip_if.if_snd, m);
-	if (m != NULL && (m0 = tulip_txput(sc, m, 0)) != NULL)
-	    if (m0 != m)
-		/* should not happen */
-		printf("tulip_if_start_one: txput failed!\n");
-    }
-    TULIP_PERFEND(ifstart_one);
 }
 
 void
