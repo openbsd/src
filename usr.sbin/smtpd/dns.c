@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.77 2014/04/19 11:41:49 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.78 2014/04/19 12:26:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -458,7 +458,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 	size_t   left, n, count;
 
 	if (_dname[0] == 0) {
-		strlcpy(buf, ".", max);
+		(void)strlcpy(buf, ".", max);
 		return buf;
 	}
 
