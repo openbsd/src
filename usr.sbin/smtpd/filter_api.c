@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter_api.c,v 1.13 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: filter_api.c,v 1.14 2014/04/19 17:35:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -852,14 +852,4 @@ proc_name(enum smtp_proc_type proc)
 	if (proc == PROC_FILTER)
 		return filter_name;
 	return "filter";
-}
-
-const char *
-imsg_to_str(int imsg)
-{
-	static char buf[32];
-
-	snprintf(buf, sizeof(buf), "%d", imsg);
-
-	return (buf);
 }
