@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.10 2014/04/19 18:19:57 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.11 2014/04/19 18:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -338,7 +338,7 @@ initiator_login_build(struct connection *c, struct task_login *tl)
 	}
 	n = htonl(n);
 	/* copy 32bit value over ahslen and datalen */
-	bcopy(&n, &lreq->ahslen, sizeof(n));
+	memcpy(&lreq->ahslen, &n, sizeof(n));
 
 	return p;
 }
@@ -362,7 +362,7 @@ initiator_text_build(struct task *t, struct session *s, struct kvp *kvp)
 	if ((n = text_to_pdu(kvp, p)) == -1)
 		return NULL;
 	n = htonl(n);
-	bcopy(&n, &lreq->ahslen, sizeof(n));
+	memcpy(&lreq->ahslen, &n, sizeof(n));
 
 	return p;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2010/09/25 16:20:06 sobrado Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2014/04/19 18:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,7 @@ pdu_dup(void *data, size_t len)
 	void *p;
 
 	if ((p = malloc(PDU_LEN(len))))
-		bcopy(data, p, len);
+		memcpy(p, data, len);
 	return p;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2014/04/07 19:55:46 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.6 2014/04/19 18:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -279,7 +279,7 @@ control_getpdu(char *buf, size_t len)
 
 	n = sizeof(*cmh);
 	cmh = pdu_alloc(n);
-	bcopy(buf, cmh, n);
+	memcpy(cmh, buf, n);
 	buf += n;
 	len -= n;
 
@@ -298,7 +298,7 @@ fail:
 			goto fail;
 		if (!(data = pdu_alloc(n)))
 			goto fail;
-		bcopy(buf, data, n);
+		memcpy(data, buf, n);
 		if (pdu_addbuf(p, data, n, i + 1)) {
 			free(data);
 			goto fail;
@@ -344,7 +344,7 @@ control_compose(void *ch, u_int16_t type, void *buf, size_t len)
 	if (len > 0) {
 		if ((ptr = pdu_alloc(len)) == NULL)
 			goto fail;
-		bcopy(buf, ptr, len);
+		memcpy(ptr, buf, len);
 		pdu_addbuf(pdu, ptr, len, 1);
 	}
 

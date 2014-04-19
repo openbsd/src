@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.8 2011/05/04 21:00:04 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.9 2014/04/19 18:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -113,14 +113,14 @@ vscsi_dispatch(int fd, short event, void *arg)
 		    "I'm afraid I can't do that.");
 	sreq->lun[1] = t->lun;
 
-	bcopy(&i2t.cmd, sreq->cdb, i2t.cmdlen);
+	memcpy(sreq->cdb, &i2t.cmd, i2t.cmdlen);
 
 #if 0
 	if (i2t.direction == VSCSI_DIR_WRITE) {
 		if (!(buf = pdu_alloc(i2t.datalen)))
 			fatal("vscsi_dispatch");
 		t32 = htonl(i2t.datalen);
-		bcopy(&t32, &sreq->ahslen, sizeof(t32));
+		memcpy(&sreq->ahslen, &t32, sizeof(t32));
 		vscsi_data(VSCSI_DATA_WRITE, i2t.tag, buf, i2t.datalen);
 		pdu_addbuf(p, buf, i2t.datalen, PDU_DATA);
 	}
@@ -155,7 +155,7 @@ vscsi_status(int tag, int status, void *buf, size_t len)
 	if (buf) {
 		if (len > sizeof(t2i.sense))
 			len = sizeof(t2i.sense);
-		bcopy(buf, &t2i.sense, len);
+		memcpy(&t2i.sense, buf, len);
 	}
 
 	if (ioctl(v.fd, VSCSI_T2I, &t2i) == -1)
@@ -291,7 +291,7 @@ vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
 		dout->ttt = ttt;
 		dout->datasn = htonl(dsn++);
 		t32 = htonl(size);
-		bcopy(&t32, &dout->ahslen, sizeof(t32));
+		memcpy(&dout->ahslen, &t32, sizeof(t32));
 
 		dout->buffer_offs = htonl(off);
 		if (!(buf = pdu_alloc(size)))

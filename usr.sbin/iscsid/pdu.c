@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.6 2011/05/04 21:00:04 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.7 2014/04/19 18:31:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -417,12 +417,12 @@ pdu_readbuf_read(struct pdu_readbuf *rb, void *ptr, size_t len)
 		return (0);
 	} else if (rb->rpos < rb->wpos) {
 		l = PDU_MIN(rb->wpos - rb->rpos, len);
-		bcopy(rb->buf + rb->rpos, ptr, l);
+		memcpy(ptr, rb->buf + rb->rpos, l);
 		rb->rpos += l;
 		return l;
 	} else {
 		l = PDU_MIN(rb->size - rb->rpos, len);
-		bcopy(rb->buf + rb->rpos, ptr, l);
+		memcpy(ptr, rb->buf + rb->rpos, l);
 		rb->rpos += l;
 		if (rb->rpos == rb->size)
 			rb->rpos = 0;
