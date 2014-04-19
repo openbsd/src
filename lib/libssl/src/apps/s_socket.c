@@ -201,12 +201,7 @@ init_server_long(int *sock, int port, char *ip, int type)
 	if (ip == NULL)
 		server.sin_addr.s_addr = INADDR_ANY;
 	else
-/* Added for T3E, address-of fails on bit field (beckman@acl.lanl.gov) */
-#ifndef BIT_FIELD_LIMITS
 		memcpy(&server.sin_addr.s_addr, ip, 4);
-#else
-		memcpy(&server.sin_addr, ip, 4);
-#endif
 
 	if (type == SOCK_STREAM)
 		s = socket(AF_INET, SOCK_STREAM, SOCKET_PROTOCOL);
@@ -289,14 +284,8 @@ redoit:
 
 	if (host == NULL)
 		goto end;
-#ifndef BIT_FIELD_LIMITS
-	/* I should use WSAAsyncGetHostByName() under windows */
 	h1 = gethostbyaddr((char *) &from.sin_addr.s_addr,
 	    sizeof(from.sin_addr.s_addr), AF_INET);
-#else
-	h1 = gethostbyaddr((char *) &from.sin_addr,
-	    sizeof(struct in_addr), AF_INET);
-#endif
 	if (h1 == NULL) {
 		BIO_printf(bio_err, "bad gethostbyaddr\n");
 		*host = NULL;
