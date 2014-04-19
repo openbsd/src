@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,10 +62,10 @@
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 
-static int nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-							void *exarg)
+static int
+nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 {
-	if(operation == ASN1_OP_NEW_POST) {
+	if (operation == ASN1_OP_NEW_POST) {
 		NETSCAPE_CERT_SEQUENCE *nsseq;
 		nsseq = (NETSCAPE_CERT_SEQUENCE *)*pval;
 		nsseq->type = OBJ_nid2obj(NID_netscape_cert_sequence);
