@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.220 2014/04/09 19:12:45 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.221 2014/04/19 14:00:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -805,7 +805,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 
 	db = delivery_backend_lookup(deliver->mode);
 	if (db == NULL) {
-		snprintf(ebuf, sizeof ebuf, "could not find delivery backend");
+		(void)snprintf(ebuf, sizeof ebuf, "could not find delivery backend");
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
 		m_add_string(p_pony, ebuf);
@@ -814,7 +814,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	}
 
 	if (deliver->userinfo.uid == 0 && ! db->allow_root) {
-		snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
+		(void)snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
 		    deliver->user);
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
@@ -824,7 +824,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	}
 
 	if (pipe(pipefd) < 0) {
-		snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
+		(void)snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
 		m_add_string(p_pony, ebuf);
@@ -833,12 +833,12 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	}
 
 	/* prepare file which captures stdout and stderr */
-	strlcpy(sfn, "/tmp/smtpd.out.XXXXXXXXXXX", sizeof(sfn));
+	(void)strlcpy(sfn, "/tmp/smtpd.out.XXXXXXXXXXX", sizeof(sfn));
 	omode = umask(7077);
 	allout = mkstemp(sfn);
 	umask(omode);
 	if (allout < 0) {
-		snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
+		(void)snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
 		m_add_string(p_pony, ebuf);
@@ -851,7 +851,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 
 	pid = fork();
 	if (pid < 0) {
-		snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
+		(void)snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
 		m_add_string(p_pony, ebuf);
@@ -1379,7 +1379,7 @@ imsg_to_str(int type)
 	CASE(IMSG_SMTP_EVENT_ROLLBACK);
 	CASE(IMSG_SMTP_EVENT_DISCONNECT);
 	default:
-		snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
+		(void)snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 
 		return buf;
 	}
@@ -1392,8 +1392,8 @@ parent_auth_user(const char *username, const char *password)
 	char	pass[SMTPD_MAXLINESIZE];
 	int	ret;
 
-	strlcpy(user, username, sizeof(user));
-	strlcpy(pass, password, sizeof(pass));
+	(void)strlcpy(user, username, sizeof(user));
+	(void)strlcpy(pass, password, sizeof(pass));
 
 	ret = auth_userokay(user, NULL, "auth-smtp", pass);
 	if (ret)
