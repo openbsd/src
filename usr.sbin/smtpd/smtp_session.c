@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.203 2014/04/19 16:50:28 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.204 2014/04/19 16:52:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -352,7 +352,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_int(&m, &status);
 		if (status == LKA_OK) {
 			m_get_string(&m, &helo);
-			strlcpy(s->smtpname, helo, sizeof(s->smtpname));
+			(void)strlcpy(s->smtpname, helo, sizeof(s->smtpname));
 		}
 		m_end(&m);
 		smtp_connected(s);
