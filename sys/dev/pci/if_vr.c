@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.132 2013/12/28 03:34:54 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.133 2014/04/19 14:47:51 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1350,10 +1350,7 @@ vr_start(struct ifnet *ifp)
 		head_tx = cur_tx;
 		if (vr_encap(sc, &cur_tx, m_head)) {
 			/* Rollback, send what we were able to encap. */
-			if (ALTQ_IS_ENABLED(&ifp->if_snd))
-				m_freem(m_head);
-			else
-				IF_PREPEND(&ifp->if_snd, m_head);
+			IF_PREPEND(&ifp->if_snd, m_head);
 			break;
 		}
 		queued++;
