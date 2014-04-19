@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.167 2013/12/28 03:36:25 deraadt Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.168 2014/04/19 18:29:39 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -180,7 +180,6 @@ void sk_iff_yukon(struct sk_if_softc *);
 
 void sk_tick(void *);
 void sk_yukon_tick(void *);
-void sk_rxcsum(struct ifnet *, struct mbuf *, const u_int16_t, const u_int16_t);
 
 #ifdef SK_DEBUG
 #define DPRINTF(x)	if (skdebug) printf x
@@ -550,9 +549,6 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 			nexti = i + 1;
 		cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[nexti];
 		rd->sk_rx_ring[i].sk_next = htole32(SK_RX_RING_ADDR(sc_if, nexti));
-		rd->sk_rx_ring[i].sk_csum1_start = htole16(ETHER_HDR_LEN);
-		rd->sk_rx_ring[i].sk_csum2_start = htole16(ETHER_HDR_LEN +
-		    sizeof(struct ip));
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -1732,7 +1728,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	int			i, cur, total_len = 0;
 	u_int32_t		rxstat, sk_ctl;
 	bus_dmamap_t		dmamap;
-	u_int16_t		csum1, csum2;
 
 	DPRINTFN(2, ("sk_rxeof\n"));
 
@@ -1764,9 +1759,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
 		total_len = SK_RXBYTES(letoh32(cur_desc->sk_ctl));
-
-		csum1 = letoh16(sc_if->sk_rdata->sk_rx_ring[i].sk_csum1);
-		csum2 = letoh16(sc_if->sk_rdata->sk_rx_ring[i].sk_csum2);
 
 		SK_INC(i, SK_RX_RING_CNT);
 
@@ -1805,8 +1797,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		ifp->if_ipackets++;
 
-		sk_rxcsum(ifp, m, csum1, csum2);
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
@@ -1814,94 +1804,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
-	}
-}
-
-void
-sk_rxcsum(struct ifnet *ifp, struct mbuf *m, const u_int16_t csum1, const u_int16_t csum2)
-{
-	struct ether_header *eh;
-	struct ip *ip;
-	u_int8_t *pp;
-	int hlen, len, plen;
-	u_int16_t iph_csum, ipo_csum, ipd_csum, csum;
-
-	pp = mtod(m, u_int8_t *);
-	plen = m->m_pkthdr.len;
-	if (plen < sizeof(*eh))
-		return;
-	eh = (struct ether_header *)pp;
-	iph_csum = in_cksum_addword(csum1, (~csum2 & 0xffff));
-
-	if (eh->ether_type == htons(ETHERTYPE_VLAN)) {
-		u_int16_t *xp = (u_int16_t *)pp;
-
-		xp = (u_int16_t *)pp;
-		if (xp[1] != htons(ETHERTYPE_IP))
-			return;
-		iph_csum = in_cksum_addword(iph_csum, (~xp[0] & 0xffff));
-		iph_csum = in_cksum_addword(iph_csum, (~xp[1] & 0xffff));
-		xp = (u_int16_t *)(pp + sizeof(struct ip));
-		iph_csum = in_cksum_addword(iph_csum, xp[0]);
-		iph_csum = in_cksum_addword(iph_csum, xp[1]);
-		pp += EVL_ENCAPLEN;
-	} else if (eh->ether_type != htons(ETHERTYPE_IP))
-		return;
-
-	pp += sizeof(*eh);
-	plen -= sizeof(*eh);
-
-	ip = (struct ip *)pp;
-
-	if (ip->ip_v != IPVERSION)
-		return;
-
-	hlen = ip->ip_hl << 2;
-	if (hlen < sizeof(struct ip))
-		return;
-	if (hlen > ntohs(ip->ip_len))
-		return;
-
-	/* Don't deal with truncated or padded packets. */
-	if (plen != ntohs(ip->ip_len))
-		return;
-
-	len = hlen - sizeof(struct ip);
-	if (len > 0) {
-		u_int16_t *p;
-
-		p = (u_int16_t *)(ip + 1);
-		ipo_csum = 0;
-		for (ipo_csum = 0; len > 0; len -= sizeof(*p), p++)
-			ipo_csum = in_cksum_addword(ipo_csum, *p);
-		iph_csum = in_cksum_addword(iph_csum, ipo_csum);
-		ipd_csum = in_cksum_addword(csum2, (~ipo_csum & 0xffff));
-	} else
-		ipd_csum = csum2;
-
-	if (iph_csum != 0xffff)
-		return;
-	m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-
-	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
-		return;                 /* ip frag, we're done for now */
-
-	pp += hlen;
-
-	/* Only know checksum protocol for udp/tcp */
-	if (ip->ip_p == IPPROTO_UDP) {
-		struct udphdr *uh = (struct udphdr *)pp;
-
-		if (uh->uh_sum == 0)    /* udp with no checksum */
-			return;
-	} else if (ip->ip_p != IPPROTO_TCP)
-		return;
-
-	csum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
-	    htonl(ntohs(ip->ip_len) - hlen + ip->ip_p) + ipd_csum);
-	if (csum == 0xffff) {
-		m->m_pkthdr.csum_flags |= (ip->ip_p == IPPROTO_TCP) ?
-		    M_TCP_CSUM_IN_OK : M_UDP_CSUM_IN_OK;
 	}
 }
 
@@ -2817,9 +2719,6 @@ sk_dump_txdesc(struct sk_tx_desc *desc, int idx)
 	DESC_PRINT(letoh32(desc->sk_data_hi));
 	DESC_PRINT(letoh32(desc->sk_xmac_txstat));
 	DESC_PRINT(letoh16(desc->sk_rsvd0));
-	DESC_PRINT(letoh16(desc->sk_csum_startval));
-	DESC_PRINT(letoh16(desc->sk_csum_startpos));
-	DESC_PRINT(letoh16(desc->sk_csum_writepos));
 	DESC_PRINT(letoh16(desc->sk_rsvd1));
 #undef PRINT
 }
