@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.16 2014/02/04 09:59:21 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.17 2014/04/19 12:48:54 gilles Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -451,23 +451,23 @@ io_strflags(int flags)
 
 	switch (flags & IO_RW) {
 	case 0:
-		strlcat(buf, "rw", sizeof buf);
+		(void)strlcat(buf, "rw", sizeof buf);
 		break;
 	case IO_READ:
-		strlcat(buf, "R", sizeof buf);
+		(void)strlcat(buf, "R", sizeof buf);
 		break;
 	case IO_WRITE:
-		strlcat(buf, "W", sizeof buf);
+		(void)strlcat(buf, "W", sizeof buf);
 		break;
 	case IO_RW:
-		strlcat(buf, "RW", sizeof buf);
+		(void)strlcat(buf, "RW", sizeof buf);
 		break;
 	}
 
 	if (flags & IO_PAUSE_IN)
-		strlcat(buf, ",F_PI", sizeof buf);
+		(void)strlcat(buf, ",F_PI", sizeof buf);
 	if (flags & IO_PAUSE_OUT)
-		strlcat(buf, ",F_PO", sizeof buf);
+		(void)strlcat(buf, ",F_PO", sizeof buf);
 
 	return buf;
 }
@@ -483,46 +483,46 @@ io_evstr(short ev)
 	buf[0] = '\0';
 
 	if (ev == 0) {
-		strlcat(buf, "<NONE>", sizeof(buf));
+		(void)strlcat(buf, "<NONE>", sizeof(buf));
 		return buf;
 	}
 
 	if (ev & EV_TIMEOUT) {
-		strlcat(buf, "EV_TIMEOUT", sizeof(buf));
+		(void)strlcat(buf, "EV_TIMEOUT", sizeof(buf));
 		ev &= ~EV_TIMEOUT;
 		n++;
 	}
 
 	if (ev & EV_READ) {
 		if (n)
-			strlcat(buf, "|", sizeof(buf));
-		strlcat(buf, "EV_READ", sizeof(buf));
+			(void)strlcat(buf, "|", sizeof(buf));
+		(void)strlcat(buf, "EV_READ", sizeof(buf));
 		ev &= ~EV_READ;
 		n++;
 	}
 
 	if (ev & EV_WRITE) {
 		if (n)
-			strlcat(buf, "|", sizeof(buf));
-		strlcat(buf, "EV_WRITE", sizeof(buf));
+			(void)strlcat(buf, "|", sizeof(buf));
+		(void)strlcat(buf, "EV_WRITE", sizeof(buf));
 		ev &= ~EV_WRITE;
 		n++;
 	}
 
 	if (ev & EV_SIGNAL) {
 		if (n)
-			strlcat(buf, "|", sizeof(buf));
-		strlcat(buf, "EV_SIGNAL", sizeof(buf));
+			(void)strlcat(buf, "|", sizeof(buf));
+		(void)strlcat(buf, "EV_SIGNAL", sizeof(buf));
 		ev &= ~EV_SIGNAL;
 		n++;
 	}
 
 	if (ev) {
 		if (n)
-			strlcat(buf, "|", sizeof(buf));
-		strlcat(buf, "EV_?=0x", sizeof(buf));
-		snprintf(buf2, sizeof(buf2), "%hx", ev);
-		strlcat(buf, buf2, sizeof(buf));
+			(void)strlcat(buf, "|", sizeof(buf));
+		(void)strlcat(buf, "EV_?=0x", sizeof(buf));
+		(void)snprintf(buf2, sizeof(buf2), "%hx", ev);
+		(void)strlcat(buf, buf2, sizeof(buf));
 	}
 
 	return buf;
