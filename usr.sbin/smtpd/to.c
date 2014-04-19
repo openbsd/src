@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.16 2014/02/28 08:32:48 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.17 2014/04/19 14:27:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -136,8 +136,8 @@ mailaddr_to_text(const struct mailaddr *maddr)
 {
 	static char  buffer[SMTPD_MAXLINESIZE];
 
-	strlcpy(buffer, maddr->user, sizeof buffer);
-	strlcat(buffer, "@", sizeof buffer);
+	(void)strlcpy(buffer, maddr->user, sizeof buffer);
+	(void)strlcat(buffer, "@", sizeof buffer);
 	if (strlcat(buffer, maddr->domain, sizeof buffer) >= sizeof buffer)
 		return NULL;
 
@@ -155,13 +155,13 @@ sa_to_text(const struct sockaddr *sa)
 	p = buf;
 
 	if (sa->sa_family == AF_LOCAL)
-		strlcpy(buf, "local", sizeof buf);
+		(void)strlcpy(buf, "local", sizeof buf);
 	else if (sa->sa_family == AF_INET) {
 		in_addr_t addr;
 
 		addr = ((const struct sockaddr_in *)sa)->sin_addr.s_addr;
 		addr = ntohl(addr);
-		bsnprintf(p, NI_MAXHOST, "%d.%d.%d.%d",
+		(void)bsnprintf(p, NI_MAXHOST, "%d.%d.%d.%d",
 		    (addr >> 24) & 0xff, (addr >> 16) & 0xff,
 		    (addr >> 8) & 0xff, addr & 0xff);
 	}
@@ -170,10 +170,10 @@ sa_to_text(const struct sockaddr *sa)
 		const struct in6_addr	*in6_addr;
 
 		in6 = (const struct sockaddr_in6 *)sa;
-		strlcpy(buf, "IPv6:", sizeof(buf));
+		(void)strlcpy(buf, "IPv6:", sizeof(buf));
 		p = buf + 5;
 		in6_addr = &in6->sin6_addr;
-		bsnprintf(p, NI_MAXHOST, "%s", in6addr_to_text(in6_addr));
+		(void)bsnprintf(p, NI_MAXHOST, "%s", in6addr_to_text(in6_addr));
 	}
 
 	return (buf);
@@ -222,13 +222,13 @@ duration_to_text(time_t t)
 	long long	d;
 
 	if (t == 0) {
-		strlcpy(dst, "0s", sizeof dst);
+		(void)strlcpy(dst, "0s", sizeof dst);
 		return (dst);
 	}
 
 	dst[0] = '\0';
 	if (t < 0) {
-		strlcpy(dst, "-", sizeof dst);
+		(void)strlcpy(dst, "-", sizeof dst);
 		t = -t;
 	}
 
@@ -240,20 +240,20 @@ duration_to_text(time_t t)
 	d = t / 24;
 
 	if (d) {
-		snprintf(buf, sizeof buf, "%lldd", d);
-		strlcat(dst, buf, sizeof dst);
+		(void)snprintf(buf, sizeof buf, "%lldd", d);
+		(void)strlcat(dst, buf, sizeof dst);
 	}
 	if (h) {
-		snprintf(buf, sizeof buf, "%dh", h);
-		strlcat(dst, buf, sizeof dst);
+		(void)snprintf(buf, sizeof buf, "%dh", h);
+		(void)strlcat(dst, buf, sizeof dst);
 	}
 	if (m) {
-		snprintf(buf, sizeof buf, "%dm", m);
-		strlcat(dst, buf, sizeof dst);
+		(void)snprintf(buf, sizeof buf, "%dm", m);
+		(void)strlcat(dst, buf, sizeof dst);
 	}
 	if (s) {
-		snprintf(buf, sizeof buf, "%ds", s);
-		strlcat(dst, buf, sizeof dst);
+		(void)snprintf(buf, sizeof buf, "%ds", s);
+		(void)strlcat(dst, buf, sizeof dst);
 	}
 
 	return (dst);
@@ -419,45 +419,45 @@ relayhost_to_text(const struct relayhost *relay)
 	memset(buf, 0, sizeof buf);
 	switch (relay->flags & mask) {
 	case F_SMTPS|F_STARTTLS|F_AUTH:
-		strlcat(buf, "secure+auth://", sizeof buf);
+		(void)strlcat(buf, "secure+auth://", sizeof buf);
 		break;
 	case F_SMTPS|F_STARTTLS:
-		strlcat(buf, "secure://", sizeof buf);
+		(void)strlcat(buf, "secure://", sizeof buf);
 		break;
 	case F_STARTTLS|F_AUTH:
-		strlcat(buf, "tls+auth://", sizeof buf);
+		(void)strlcat(buf, "tls+auth://", sizeof buf);
 		break;
 	case F_SMTPS|F_AUTH:
-		strlcat(buf, "smtps+auth://", sizeof buf);
+		(void)strlcat(buf, "smtps+auth://", sizeof buf);
 		break;
 	case F_STARTTLS:
-		strlcat(buf, "tls://", sizeof buf);
+		(void)strlcat(buf, "tls://", sizeof buf);
 		break;
 	case F_SMTPS:
-		strlcat(buf, "smtps://", sizeof buf);
+		(void)strlcat(buf, "smtps://", sizeof buf);
 		break;
 	case F_BACKUP:
-		strlcat(buf, "backup://", sizeof buf);
+		(void)strlcat(buf, "backup://", sizeof buf);
 		break;
 	case F_TLS_OPTIONAL:
-		strlcat(buf, "smtp+tls://", sizeof buf);
+		(void)strlcat(buf, "smtp+tls://", sizeof buf);
 		break;
 	case F_LMTP:
-		strlcat(buf, "lmtp://", sizeof buf);
+		(void)strlcat(buf, "lmtp://", sizeof buf);
 		break;
 	default:
-		strlcat(buf, "smtp://", sizeof buf);
+		(void)strlcat(buf, "smtp://", sizeof buf);
 		break;
 	}
 	if (relay->authlabel[0]) {
-		strlcat(buf, relay->authlabel, sizeof buf);
-		strlcat(buf, "@", sizeof buf);
+		(void)strlcat(buf, relay->authlabel, sizeof buf);
+		(void)strlcat(buf, "@", sizeof buf);
 	}
-	strlcat(buf, relay->hostname, sizeof buf);
+	(void)strlcat(buf, relay->hostname, sizeof buf);
 	if (relay->port) {
-		strlcat(buf, ":", sizeof buf);
-		snprintf(port, sizeof port, "%d", relay->port);
-		strlcat(buf, port, sizeof buf);
+		(void)strlcat(buf, ":", sizeof buf);
+		(void)snprintf(port, sizeof port, "%d", relay->port);
+		(void)strlcat(buf, port, sizeof buf);
 	}
 	return buf;
 }
@@ -504,77 +504,77 @@ rule_to_text(struct rule *r)
 	static char buf[4096];
 
 	memset(buf, 0, sizeof buf);
-	strlcpy(buf, r->r_decision == R_ACCEPT  ? "accept" : "reject", sizeof buf);
+	(void)strlcpy(buf, r->r_decision == R_ACCEPT  ? "accept" : "reject", sizeof buf);
 	if (r->r_tag[0]) {
-		strlcat(buf, " tagged ", sizeof buf);
+		(void)strlcat(buf, " tagged ", sizeof buf);
 		if (r->r_nottag)
-			strlcat(buf, "! ", sizeof buf);
-		strlcat(buf, r->r_tag, sizeof buf);
+			(void)strlcat(buf, "! ", sizeof buf);
+		(void)strlcat(buf, r->r_tag, sizeof buf);
 	}
-	strlcat(buf, " from ", sizeof buf);
+	(void)strlcat(buf, " from ", sizeof buf);
 	if (r->r_notsources)
-		strlcat(buf, "! ", sizeof buf);
-	strlcat(buf, r->r_sources->t_name, sizeof buf);
+		(void)strlcat(buf, "! ", sizeof buf);
+	(void)strlcat(buf, r->r_sources->t_name, sizeof buf);
 
-	strlcat(buf, " for ", sizeof buf);
+	(void)strlcat(buf, " for ", sizeof buf);
 	if (r->r_notdestination)
-		strlcat(buf, "! ", sizeof buf);
+		(void)strlcat(buf, "! ", sizeof buf);
 	switch (r->r_desttype) {
 	case DEST_DOM:
 		if (r->r_destination == NULL) {
-			strlcat(buf, " any", sizeof buf);
+			(void)strlcat(buf, " any", sizeof buf);
 			break;
 		}
-		strlcat(buf, " domain ", sizeof buf);
-		strlcat(buf, r->r_destination->t_name, sizeof buf);
+		(void)strlcat(buf, " domain ", sizeof buf);
+		(void)strlcat(buf, r->r_destination->t_name, sizeof buf);
 		if (r->r_mapping) {
-			strlcat(buf, " alias ", sizeof buf);
-			strlcat(buf, r->r_mapping->t_name, sizeof buf);
+			(void)strlcat(buf, " alias ", sizeof buf);
+			(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
 		}
 		break;
 	case DEST_VDOM:
 		if (r->r_destination == NULL) {
-			strlcat(buf, " any virtual ", sizeof buf);
-			strlcat(buf, r->r_mapping->t_name, sizeof buf);
+			(void)strlcat(buf, " any virtual ", sizeof buf);
+			(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
 			break;
 		}
-		strlcat(buf, " domain ", sizeof buf);
-		strlcat(buf, r->r_destination->t_name, sizeof buf);
-		strlcat(buf, " virtual ", sizeof buf);
-		strlcat(buf, r->r_mapping->t_name, sizeof buf);
+		(void)strlcat(buf, " domain ", sizeof buf);
+		(void)strlcat(buf, r->r_destination->t_name, sizeof buf);
+		(void)strlcat(buf, " virtual ", sizeof buf);
+		(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
 		break;
 	}
 
 	switch (r->r_action) {
 	case A_RELAY:
-		strlcat(buf, " relay", sizeof buf);
+		(void)strlcat(buf, " relay", sizeof buf);
 		break;
 	case A_RELAYVIA:
-		strlcat(buf, " relay via ", sizeof buf);
-		strlcat(buf, relayhost_to_text(&r->r_value.relayhost), sizeof buf);
+		(void)strlcat(buf, " relay via ", sizeof buf);
+		(void)strlcat(buf, relayhost_to_text(&r->r_value.relayhost), sizeof buf);
 		break;
 	case A_MAILDIR:
-		strlcat(buf, " deliver to maildir \"", sizeof buf);
-		strlcat(buf, r->r_value.buffer, sizeof buf);
-		strlcat(buf, "\"", sizeof buf);
+		(void)strlcat(buf, " deliver to maildir \"", sizeof buf);
+		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
+		(void)strlcat(buf, "\"", sizeof buf);
 		break;
 	case A_MBOX:
-		strlcat(buf, " deliver to mbox", sizeof buf);
+		(void)strlcat(buf, " deliver to mbox", sizeof buf);
 		break;
 	case A_FILENAME:
-		strlcat(buf, " deliver to filename \"", sizeof buf);
-		strlcat(buf, r->r_value.buffer, sizeof buf);
-		strlcat(buf, "\"", sizeof buf);
+		(void)strlcat(buf, " deliver to filename \"", sizeof buf);
+		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
+		(void)strlcat(buf, "\"", sizeof buf);
 		break;
 	case A_MDA:
-		strlcat(buf, " deliver to mda \"", sizeof buf);
-		strlcat(buf, r->r_value.buffer, sizeof buf);
-		strlcat(buf, "\"", sizeof buf);
+		(void)strlcat(buf, " deliver to mda \"", sizeof buf);
+		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
+		(void)strlcat(buf, "\"", sizeof buf);
 		break;
 	case A_LMTP:
-		strlcat(buf, " deliver to lmtp \"", sizeof buf);
-		strlcat(buf, r->r_value.buffer, sizeof buf);
-		strlcat(buf, "\"", sizeof buf);
+		(void)strlcat(buf, " deliver to lmtp \"", sizeof buf);
+		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
+		(void)strlcat(buf, "\"", sizeof buf);
 		break;
 	case A_NONE:
 		break;
@@ -769,8 +769,8 @@ alias_is_address(struct expandnode *alias, const char *line, size_t len)
 
 	/* scan pre @ for disallowed chars */
 	*domain++ = '\0';
-	strlcpy(alias->u.mailaddr.user, line, sizeof(alias->u.mailaddr.user));
-	strlcpy(alias->u.mailaddr.domain, domain,
+	(void)strlcpy(alias->u.mailaddr.user, line, sizeof(alias->u.mailaddr.user));
+	(void)strlcpy(alias->u.mailaddr.domain, domain,
 	    sizeof(alias->u.mailaddr.domain));
 
 	while (*line) {
