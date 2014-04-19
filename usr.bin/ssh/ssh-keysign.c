@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.40 2014/04/01 02:05:27 djm Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.41 2014/04/19 14:53:48 tedu Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +26,6 @@
 #include <sys/types.h>
 
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/rsa.h>
 
 #include <fcntl.h>
@@ -152,7 +151,6 @@ main(int argc, char **argv)
 	u_char *signature, *data;
 	char *host, *fp;
 	u_int slen, dlen;
-	u_int32_t rnd[256];
 
 	/* Ensure that stdin and stdout are connected */
 	if ((fd = open(_PATH_DEVNULL, O_RDWR)) < 2)
@@ -194,8 +192,6 @@ main(int argc, char **argv)
 		fatal("could not open any host key");
 
 	OpenSSL_add_all_algorithms();
-	arc4random_buf(rnd, sizeof(rnd));
-	RAND_seed(rnd, sizeof(rnd));
 
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {

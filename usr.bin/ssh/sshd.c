@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.424 2014/04/18 23:52:25 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.425 2014/04/19 14:53:48 tedu Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -64,7 +64,6 @@
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -584,7 +583,6 @@ demote_sensitive_data(void)
 static void
 privsep_preauth_child(void)
 {
-	u_int32_t rnd[256];
 	gid_t gidset[1];
 	struct passwd *pw;
 
@@ -596,10 +594,6 @@ privsep_preauth_child(void)
 	if (options.gss_authentication)
 		ssh_gssapi_prepare_supported_oids();
 #endif
-
-	arc4random_buf(rnd, sizeof(rnd));
-	RAND_seed(rnd, sizeof(rnd));
-	explicit_bzero(rnd, sizeof(rnd));
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
@@ -702,7 +696,6 @@ privsep_preauth(Authctxt *authctxt)
 static void
 privsep_postauth(Authctxt *authctxt)
 {
-	u_int32_t rnd[256];
 
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
@@ -732,10 +725,6 @@ privsep_postauth(Authctxt *authctxt)
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
-
-	arc4random_buf(rnd, sizeof(rnd));
-	RAND_seed(rnd, sizeof(rnd));
-	explicit_bzero(rnd, sizeof(rnd));
 
 	/* Drop privileges */
 	do_setusercontext(authctxt->pw);
@@ -1117,7 +1106,6 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	struct sockaddr_storage from;
 	socklen_t fromlen;
 	pid_t pid;
-	u_char rnd[256];
 
 	/* setup fd set for accept */
 	fdset = NULL;
@@ -1309,14 +1297,6 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			}
 
 			close(*newsock);
-
-			/*
-			 * Ensure that our random state differs
-			 * from that of the child
-			 */
-			arc4random_buf(rnd, sizeof(rnd));
-			RAND_seed(rnd, sizeof(rnd));
-			explicit_bzero(rnd, sizeof(rnd));
 		}
 
 		/* child process check (or debug mode) */
