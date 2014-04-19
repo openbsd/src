@@ -594,7 +594,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 			}
 		else
 			{
-			(void) snprintf(tbuf,sizeof tbuf,".%lu",l);
+			snprintf(tbuf,sizeof tbuf,".%lu",l);
 			i=strlen(tbuf);
 			if (buf && (buf_len > 0))
 				{

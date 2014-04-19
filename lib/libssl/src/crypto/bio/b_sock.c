@@ -543,7 +543,7 @@ BIO_accept(int sock, char **addr)
 			goto end;
 		}
 		*addr = p;
-		(void) snprintf(*addr, nl, "%s:%s", h, s);
+		snprintf(*addr, nl, "%s:%s", h, s);
 		goto end;
 	} while (0);
 #endif
@@ -558,7 +558,7 @@ BIO_accept(int sock, char **addr)
 		}
 		*addr = p;
 	}
-	(void) snprintf(*addr, 24, "%d.%d.%d.%d:%d",
+	snprintf(*addr, 24, "%d.%d.%d.%d:%d",
 	    (unsigned char)(l >> 24L) & 0xff, (unsigned char)(l >> 16L) & 0xff,
 	    (unsigned char)(l >> 8L) & 0xff, (unsigned char)(l) & 0xff, port);
 

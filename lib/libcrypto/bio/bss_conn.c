@@ -482,7 +482,7 @@ conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 				char buf[16];
 				unsigned char *p = ptr;
 
-				(void) snprintf(buf, sizeof buf, "%d.%d.%d.%d",
+				snprintf(buf, sizeof buf, "%d.%d.%d.%d",
 				    p[0], p[1], p[2], p[3]);
 				if (data->param_hostname != NULL)
 					free(data->param_hostname);
@@ -491,7 +491,7 @@ conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 			} else if (num == 3) {
 				char buf[DECIMAL_SIZE(int) + 1];
 
-				(void) snprintf(buf, sizeof buf, "%d",
+				snprintf(buf, sizeof buf, "%d",
 				    *(int *)ptr);
 				if (data->param_port != NULL)
 					free(data->param_port);

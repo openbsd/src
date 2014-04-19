@@ -108,14 +108,14 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 	for (i = 0; i < rows; i++) {
 		buf[0] = '\0';	/* start with empty string */
 		strlcpy(buf, str, sizeof buf);
-		(void) snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
+		snprintf(tmp, sizeof tmp, "%04x - ", i*dump_width);
 		strlcat(buf, tmp, sizeof buf);
 		for (j = 0; j < dump_width; j++) {
 			if (((i*dump_width) + j) >= len) {
 				strlcat(buf, "   ", sizeof buf);
 			} else {
 				ch = ((unsigned char)*(s + i*dump_width + j)) & 0xff;
-				(void) snprintf(tmp, sizeof tmp, "%02x%c", ch,
+				snprintf(tmp, sizeof tmp, "%02x%c", ch,
 				    j == 7 ? '-' : ' ');
 				strlcat(buf, tmp, sizeof buf);
 			}
@@ -125,7 +125,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 			if (((i*dump_width) + j) >= len)
 				break;
 			ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-			(void) snprintf(tmp, sizeof tmp, "%c",
+			snprintf(tmp, sizeof tmp, "%c",
 			    ((ch >= ' ') && (ch <= '~')) ? ch : '.');
 			strlcat(buf, tmp, sizeof buf);
 		}
@@ -137,7 +137,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 	}
 #ifdef TRUNCATE
 	if (trc > 0) {
-		(void) snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
+		snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
 		    str, len + trc);
 		ret += cb((void *)buf, strlen(buf), u);
 	}

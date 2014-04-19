@@ -388,7 +388,7 @@ enc_main(int argc, char **argv)
 		for (;;) {
 			char buf[200];
 
-			(void) snprintf(buf, sizeof buf, "enter %s %s password:",
+			snprintf(buf, sizeof buf, "enter %s %s password:",
 			    OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
 			    (enc) ? "encryption" : "decryption");
 			strbuf[0] = '\0';

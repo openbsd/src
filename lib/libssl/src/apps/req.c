@@ -1081,17 +1081,17 @@ start:		for (;;) {
 				ERR_clear_error();
 				def = "";
 			}
-			(void) snprintf(buf, sizeof buf, "%s_value", v->name);
+			snprintf(buf, sizeof buf, "%s_value", v->name);
 			if ((value = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
 				ERR_clear_error();
 				value = NULL;
 			}
-			(void) snprintf(buf, sizeof buf, "%s_min", v->name);
+			snprintf(buf, sizeof buf, "%s_min", v->name);
 			if (!NCONF_get_number(req_conf, dn_sect, buf, &n_min)) {
 				ERR_clear_error();
 				n_min = -1;
 			}
-			(void) snprintf(buf, sizeof buf, "%s_max", v->name);
+			snprintf(buf, sizeof buf, "%s_max", v->name);
 			if (!NCONF_get_number(req_conf, dn_sect, buf, &n_max)) {
 				ERR_clear_error();
 				n_max = -1;
@@ -1131,18 +1131,18 @@ start:		for (;;) {
 					ERR_clear_error();
 					def = "";
 				}
-				(void) snprintf(buf, sizeof buf, "%s_value", type);
+				snprintf(buf, sizeof buf, "%s_value", type);
 				if ((value = NCONF_get_string(req_conf, attr_sect, buf))
 				    == NULL) {
 					ERR_clear_error();
 					value = NULL;
 				}
-				(void) snprintf(buf, sizeof buf, "%s_min", type);
+				snprintf(buf, sizeof buf, "%s_min", type);
 				if (!NCONF_get_number(req_conf, attr_sect, buf, &n_min)) {
 					ERR_clear_error();
 					n_min = -1;
 				}
-				(void) snprintf(buf, sizeof buf, "%s_max", type);
+				snprintf(buf, sizeof buf, "%s_max", type);
 				if (!NCONF_get_number(req_conf, attr_sect, buf, &n_max)) {
 					ERR_clear_error();
 					n_max = -1;

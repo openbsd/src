@@ -398,7 +398,7 @@ s_time_main(int argc, char **argv)
 			goto end;
 
 		if (s_www_path != NULL) {
-			(void) snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+			snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
 			SSL_write(scon, buf, strlen(buf));
 			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
 				bytes_read += i;
@@ -453,7 +453,7 @@ next:
 		goto end;
 	}
 	if (s_www_path != NULL) {
-		(void) snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+		snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
 		SSL_write(scon, buf, strlen(buf));
 		while (SSL_read(scon, buf, sizeof(buf)) > 0);
 	}
@@ -490,7 +490,7 @@ next:
 			goto end;
 
 		if (s_www_path) {
-			(void) snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+			snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", s_www_path);
 			SSL_write(scon, buf, strlen(buf));
 			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
 				bytes_read += i;
