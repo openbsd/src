@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.140 2014/04/19 17:12:02 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.141 2014/04/19 17:18:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2075,7 +2075,9 @@ is_if_in_group(const char *ifname, const char *groupname)
 		err(1, "socket");
 
         memset(&ifgr, 0, sizeof(ifgr));
-        strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
+        if (strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ) >= IFNAMSIZ)
+		errx(1, "interface name too large");
+
         if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
                 if (errno == EINVAL || errno == ENOTTY)
 			goto end;
