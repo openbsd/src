@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.52 2014/04/19 11:18:01 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.53 2014/04/19 13:51:05 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -63,7 +63,7 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3
 MLINKS+=inet_addr.3 inet_aton.3 inet_addr.3 inet_network.3 \
-	inet_addr.3 inet_ntoa.3 \
+	inet_addr.3 inet_ntoa.3
 MLINKS+=inet_lnaof.3 inet_makeaddr.3 inet_lnaof.3 inet_netof.3
 MLINKS+=inet_ntop.3 inet_pton.3
 MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
