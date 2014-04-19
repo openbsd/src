@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.14 2014/04/19 14:19:17 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.15 2014/04/19 18:01:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -632,6 +632,7 @@ static const char *
 table_dump_lookup(enum table_service s, union lookup *lk)
 {
 	static char	buf[SMTPD_MAXLINESIZE];
+	int		ret;
 
 	switch (s) {
 	case K_NONE:
@@ -642,42 +643,56 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		break;
 
 	case K_DOMAIN:
-		snprintf(buf, sizeof(buf), "%s", lk->domain.name);
+		ret = snprintf(buf, sizeof(buf), "%s", lk->domain.name);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_CREDENTIALS:
-		snprintf(buf, sizeof(buf), "%s:%s",
+		ret = snprintf(buf, sizeof(buf), "%s:%s",
 		    lk->creds.username, lk->creds.password);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_NETADDR:
-		snprintf(buf, sizeof(buf), "%s/%d",
+		ret = snprintf(buf, sizeof(buf), "%s/%d",
 		    sockaddr_to_text((struct sockaddr *)&lk->netaddr.ss),
 		    lk->netaddr.bits);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_USERINFO:
-		snprintf(buf, sizeof(buf), "%s:%d:%d:%s",
+		ret = snprintf(buf, sizeof(buf), "%s:%d:%d:%s",
 		    lk->userinfo.username,
 		    lk->userinfo.uid,
 		    lk->userinfo.gid,
 		    lk->userinfo.directory);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_SOURCE:
-		snprintf(buf, sizeof(buf), "%s",
+		ret = snprintf(buf, sizeof(buf), "%s",
 		    ss_to_text(&lk->source.addr));
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_MAILADDR:
-		snprintf(buf, sizeof(buf), "%s@%s",
+		ret = snprintf(buf, sizeof(buf), "%s@%s",
 		    lk->mailaddr.user,
 		    lk->mailaddr.domain);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	case K_ADDRNAME:
-		snprintf(buf, sizeof(buf), "%s",
+		ret = snprintf(buf, sizeof(buf), "%s",
 		    lk->addrname.name);
+		if (ret == -1 || ret >= (int)sizeof (buf))
+			goto err;
 		break;
 
 	default:
@@ -685,6 +700,9 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 	}
 
 	return (buf);
+
+err:
+	return (NULL);
 }
 
 
