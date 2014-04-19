@@ -190,7 +190,8 @@ browser has a cert, it will crash/hang.  Works for 3.x and 4.xbeta
 
 =item SSL_OP_NO_SSLv2
 
-Do not use the SSLv2 protocol.
+As of OpenBSD 5.6, this option has no effect as SSLv2 support has been removed.
+In previous versions it disabled use of the SSLv2 protocol.
 
 =item SSL_OP_NO_SSLv3
 
@@ -198,7 +199,15 @@ Do not use the SSLv3 protocol.
 
 =item SSL_OP_NO_TLSv1
 
-Do not use the TLSv1 protocol.
+Do not use the TLSv1.0 protocol.
+
+=item SSL_OP_NO_TLSv1_1
+
+Do not use the TLSv1.1 protocol.
+
+=item SSL_OP_NO_TLSv1_2
+
+Do not use the TLSv1.2 protocol.
 
 =item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 
@@ -335,7 +344,7 @@ B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>, B<SSL_OP_LEGACY_SERVER_CONNECT>
 and the function SSL_get_secure_renegotiation_support() were first added in
 OpenSSL 0.9.8m.
 
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> was changed to have no effect
-in OpenBSD 5.6.
+B<SSL_OP_NO_SSLv2> and B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>
+were changed to have no effect in OpenBSD 5.6.
 
 =cut
