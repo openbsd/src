@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.454 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.455 2014/04/19 16:55:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1024,7 +1024,7 @@ enum ca_resp_status {
 
 struct ca_cert_req_msg {
 	uint64_t		reqid;
-	char			name[SMTPD_MAXPATHLEN];
+	char			name[SMTPD_MAXHOSTNAMELEN];
 };
 
 struct ca_cert_resp_msg {
