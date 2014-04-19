@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.76 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.77 2014/04/19 11:41:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -223,7 +223,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_MTA_DNS_MX:
 		m_get_string(&m, &domain);
 		m_end(&m);
-		strlcpy(s->name, domain, sizeof(s->name));
+		(void)strlcpy(s->name, domain, sizeof(s->name));
 
 		sa = (struct sockaddr *)&ss;
 		sl = sizeof(ss);
@@ -261,7 +261,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &domain);
 		m_get_string(&m, &mx);
 		m_end(&m);
-		strlcpy(s->name, mx, sizeof(s->name));
+		(void)strlcpy(s->name, mx, sizeof(s->name));
 
 		sa = (struct sockaddr *)&ss;
 		sl = sizeof(ss);
