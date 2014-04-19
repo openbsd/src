@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.8 2014/01/27 15:41:06 pelikan Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.9 2014/04/19 15:58:12 henning Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -166,7 +166,7 @@ hfsc_attach(struct ifnet *ifp)
 
 	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	hif->hif_eligible = hfsc_ellist_alloc();
-	hif->hif_ifq = (struct ifqueue *)&ifp->if_snd; /* XXX cast temp */
+	hif->hif_ifq = &ifp->if_snd;
 	ifp->if_snd.ifq_hfsc = hif;
 
 	hif->hif_class_tbl = malloc(tblsize, M_DEVBUF, M_WAITOK | M_ZERO);
