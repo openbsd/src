@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.17 2014/04/17 06:38:54 dlg Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.18 2014/04/19 05:00:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -204,6 +204,15 @@ emc_mpath_start(struct scsi_xfer *xs)
 int
 emc_mpath_checksense(struct scsi_xfer *xs)
 {
+	struct scsi_sense_data *sense = &xs->sense;
+
+	if ((sense->error_code & SSD_ERRCODE) == SSD_ERRCODE_CURRENT &&
+	    (sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    ASC_ASCQ(sense) == 0x0403) {
+		/* Logical Unit Not Ready, Manual Intervention Required */
+		return (MPATH_SENSE_FAILOVER);
+	}
+
 	return (MPATH_SENSE_DECLINED);
 }
 
