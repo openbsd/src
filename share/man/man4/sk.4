@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.64 2013/08/14 06:32:34 jmc Exp $
+.\"	$OpenBSD: sk.4,v 1.65 2014/04/19 19:44:23 naddy Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/man4.i386/sk.4,v 1.3 1999/08/28 00:20:29 peter Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt SK 4
 .Os
 .Sh NAME
@@ -117,8 +117,6 @@ Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to transmit Jumbo frames.
-.Pp
-Hardware receive IP checksum offload for IPv4 is supported.
 .Pp
 The
 .Nm
