@@ -320,8 +320,6 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #define SERIAL_RAND_BITS	64
 
 int app_isdir(const char *);
-int raw_read_stdin(void *, int);
-int raw_write_stdout(const void *, int);
 
 #define TM_START	0
 #define TM_STOP		1

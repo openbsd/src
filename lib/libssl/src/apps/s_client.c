@@ -1524,7 +1524,7 @@ re_start:
 				goto shut;
 			}
 		} else if (!ssl_pending && FD_ISSET(fileno(stdout), &writefds)) {
-			i = raw_write_stdout(&(sbuf[sbuf_off]), sbuf_len);
+			i = write(fileno(stdout), &(sbuf[sbuf_off]), sbuf_len);
 
 			if (i <= 0) {
 				BIO_printf(bio_c_out, "DONE\n");
@@ -1601,7 +1601,7 @@ re_start:
 			if (crlf) {
 				int j, lf_num;
 
-				i = raw_read_stdin(cbuf, BUFSIZZ / 2);
+				i = read(fileno(stdin), cbuf, BUFSIZZ / 2);
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -1617,7 +1617,7 @@ re_start:
 				}
 				assert(lf_num == 0);
 			} else
-				i = raw_read_stdin(cbuf, BUFSIZZ);
+				i = read(fileno(stdin), cbuf, BUFSIZZ);
 
 			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
 				BIO_printf(bio_err, "DONE\n");

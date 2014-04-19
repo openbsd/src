@@ -1805,7 +1805,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 			if (s_crlf) {
 				int j, lf_num;
 
-				i = raw_read_stdin(buf, bufsize / 2);
+				i = read(fileno(stdin), buf, bufsize / 2);
 				lf_num = 0;
 				/* both loops are skipped when i <= 0 */
 				for (j = 0; j < i; j++)
@@ -1821,7 +1821,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 				}
 				assert(lf_num == 0);
 			} else
-				i = raw_read_stdin(buf, bufsize);
+				i = read(fileno(stdin), buf, bufsize);
 			if (!s_quiet) {
 				if ((i <= 0) || (buf[0] == 'Q')) {
 					BIO_printf(bio_s_out, "DONE\n");
@@ -1954,7 +1954,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 #endif
 				switch (SSL_get_error(con, i)) {
 				case SSL_ERROR_NONE:
-					raw_write_stdout(buf,
+					write(fileno(stdout), buf,
 					    (unsigned int) i);
 					if (SSL_pending(con))
 						goto again;
