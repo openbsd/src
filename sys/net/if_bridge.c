@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.222 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.223 2014/04/19 14:39:26 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1033,9 +1033,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 				continue;
 
-#ifdef ALTQ
-			if (ALTQ_IS_ENABLED(&dst_if->if_snd) == 0)
-#endif
 			if (IF_QFULL(&dst_if->if_snd)) {
 				IF_DROP(&dst_if->if_snd);
 				sc->sc_if.if_oerrors++;
@@ -1524,9 +1521,6 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			continue;
 
-#ifdef ALTQ
-		if (ALTQ_IS_ENABLED(&dst_if->if_snd) == 0)
-#endif
 		if (IF_QFULL(&dst_if->if_snd)) {
 			IF_DROP(&dst_if->if_snd);
 			sc->sc_if.if_oerrors++;
@@ -1673,9 +1667,6 @@ bridge_span(struct bridge_softc *sc, struct ether_header *eh,
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			continue;
 
-#ifdef ALTQ
-		if (ALTQ_IS_ENABLED(&ifp->if_snd) == 0)
-#endif
 			if (IF_QFULL(&ifp->if_snd)) {
 				IF_DROP(&ifp->if_snd);
 				sc->sc_if.if_oerrors++;
