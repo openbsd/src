@@ -25,17 +25,6 @@
 ./usr/bin/xstr
 ./usr/bin/yacc
 ./usr/include/a.out.h
-./usr/include/altq
-./usr/include/altq/altq.h
-./usr/include/altq/altq_cbq.h
-./usr/include/altq/altq_classq.h
-./usr/include/altq/altq_hfsc.h
-./usr/include/altq/altq_priq.h
-./usr/include/altq/altq_red.h
-./usr/include/altq/altq_rmclass.h
-./usr/include/altq/altq_rmclass_debug.h
-./usr/include/altq/altq_var.h
-./usr/include/altq/if_altq.h
 ./usr/include/ar.h
 ./usr/include/arpa
 ./usr/include/arpa/ftp.h
