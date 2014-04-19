@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.117 2014/04/04 16:10:42 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.118 2014/04/19 13:57:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -111,7 +111,7 @@ srv_connect(void)
 
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, SMTPD_SOCKET, sizeof(sun.sun_path));
+	(void)strlcpy(sun.sun_path, SMTPD_SOCKET, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		saved_errno = errno;
 		close(ctl_sock);
@@ -959,17 +959,17 @@ show_queue_envelope(struct envelope *e, int online)
 
 	if (online) {
 		if (e->flags & EF_PENDING)
-			snprintf(runstate, sizeof runstate, "pending|%zi",
+			(void)snprintf(runstate, sizeof runstate, "pending|%zi",
 			    (ssize_t)(e->nexttry - now));
 		else if (e->flags & EF_INFLIGHT)
-			snprintf(runstate, sizeof runstate, "inflight|%zi",
+			(void)snprintf(runstate, sizeof runstate, "inflight|%zi",
 			    (ssize_t)(now - e->lasttry));
 		else
-			snprintf(runstate, sizeof runstate, "invalid|");
+			(void)snprintf(runstate, sizeof runstate, "invalid|");
 		e->flags &= ~(EF_PENDING|EF_INFLIGHT);
 	}
 	else
-		strlcpy(runstate, "offline|", sizeof runstate);
+		(void)strlcpy(runstate, "offline|", sizeof runstate);
 
 	if (e->flags)
 		errx(1, "%016" PRIx64 ": unexpected flags 0x%04x", e->id,
@@ -1018,8 +1018,8 @@ getflag(uint *bitmap, int bit, char *bitstr, char *buf, size_t len)
 {
 	if (*bitmap & bit) {
 		*bitmap &= ~bit;
-		strlcat(buf, bitstr, len);
-		strlcat(buf, ",", len);
+		(void)strlcat(buf, bitstr, len);
+		(void)strlcat(buf, ",", len);
 	}
 }
 
