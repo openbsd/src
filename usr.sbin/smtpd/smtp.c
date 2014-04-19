@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.135 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.136 2014/04/19 13:52:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -248,10 +248,10 @@ smtp_enqueue(uid_t *euid)
 
 	if (listener == NULL) {
 		listener = &local;
-		strlcpy(listener->tag, "local", sizeof(listener->tag));
+		(void)strlcpy(listener->tag, "local", sizeof(listener->tag));
 		listener->ss.ss_family = AF_LOCAL;
 		listener->ss.ss_len = sizeof(struct sockaddr *);
-		strlcpy(listener->hostname, "localhost",
+		(void)strlcpy(listener->hostname, "localhost",
 		    sizeof(listener->hostname));
 	}
 
@@ -269,7 +269,7 @@ smtp_enqueue(uid_t *euid)
 
 	hostname = "localhost";
 	if (euid) {
-		snprintf(buf, sizeof(buf), "%d@localhost", *euid);
+		(void)snprintf(buf, sizeof(buf), "%d@localhost", *euid);
 		hostname = buf;
 	}
 
