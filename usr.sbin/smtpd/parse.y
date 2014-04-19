@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2014/04/19 17:21:19 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.143 2014/04/19 17:23:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2143,7 +2143,11 @@ create_filter_chain(const char *name)
 		return (NULL);
 	}
 	f = xcalloc(1, sizeof(*f), "create_filter_chain");
-	strlcpy(f->name, name, sizeof(f->name));
+	if (strlcpy(f->name, name, sizeof(f->name)) >=
+	    sizeof(f->name)) {
+		yyerror("filter chain name \"%s\" too long", name);
+		return (NULL);
+	}
 	f->chain = 1;
 
 	dict_xset(&conf->sc_filters, name, f);
@@ -2172,7 +2176,7 @@ extend_filter_chain(struct filter *f, const char *name)
 
 	for (i = 0; i < MAX_FILTER_PER_CHAIN; i++) {
 		if (f->filters[i][0] == '\0') {
-			strlcpy(f->filters[i], name, sizeof(f->filters[i]));
+			(void)strlcpy(f->filters[i], name, sizeof(f->filters[i]));
 			return (1);
 		}
 	}
