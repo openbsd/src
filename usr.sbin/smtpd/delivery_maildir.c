@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.12 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.13 2014/04/19 17:31:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -71,7 +71,7 @@ delivery_maildir_open(struct deliver *deliver)
 		error("mkdir tmp failed");
 	if (mkdir("new", 0700) < 0 && errno != EEXIST)
 		error("mkdir new failed");
-	snprintf(tmp, sizeof tmp, "tmp/%lld.%d.%s",
+	(void)snprintf(tmp, sizeof tmp, "tmp/%lld.%d.%s",
 	    (long long int) time(NULL),
 	    getpid(), env->sc_hostname);
 	fd = open(tmp, O_CREAT | O_EXCL | O_WRONLY, 0600);
@@ -91,7 +91,7 @@ delivery_maildir_open(struct deliver *deliver)
 		error2("fsync");
 	if (fclose(fp) == EOF)
 		error2("fclose");
-	snprintf(new, sizeof new, "new/%s", tmp + 4);
+	(void)snprintf(new, sizeof new, "new/%s", tmp + 4);
 	if (rename(tmp, new) < 0)
 		error2("cannot rename tmp->new");
 	_exit(0);
