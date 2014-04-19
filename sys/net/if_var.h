@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.7 2014/04/19 11:26:10 henning Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.8 2014/04/19 15:57:25 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #define _NET_IF_VAR_H_
 
 #include <sys/queue.h>
-#include <altq/if_altq.h>
 #ifdef _KERNEL
 #include <net/hfsc.h>
 #endif
@@ -96,7 +95,6 @@ struct if_clone {
 
 /*
  * Structure defining a queue for a network interface.
- * XXX keep in sync with struct ifaltq.
  */
 struct	ifqueue {
 	struct {
@@ -168,7 +166,7 @@ struct ifnet {				/* and the entries */
 	void	(*if_watchdog)(struct ifnet *);
 	int	(*if_wol)(struct ifnet *, int);
 	struct	ifaddr *if_lladdr;	/* pointer to link-level address */
-	struct	ifaltq if_snd;		/* output queue (includes altq) */
+	struct	ifqueue if_snd;		/* output queue */
 	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 
 	void	*if_afdata[AF_MAX];
