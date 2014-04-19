@@ -1,4 +1,4 @@
-/* $OpenBSD: delivery_lmtp.c,v 1.4 2013/12/26 17:25:32 eric Exp $ */
+/* $OpenBSD: delivery_lmtp.c,v 1.5 2014/04/19 11:29:06 gilles Exp $ */
 
 /*
  * Copyright (c) 2013 Ashish SHUKLA <ashish.is@lostca.se>
@@ -116,7 +116,12 @@ unix_socket(char *path) {
 	 }
 
 	 addr.sun_family = AF_UNIX;
-	 strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
+	 if (strlcpy(addr.sun_path, path, sizeof(addr.sun_path))
+	     >= sizeof(addr.sun_path)) {
+		 warnx("strlcpy: socket path too long");
+		 close(s);
+		 return -1;
+	 }
 
 	 if (connect(s, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
 		 warn("connect");
