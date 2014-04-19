@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.96 2014/04/19 02:29:12 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.97 2014/04/19 02:55:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -422,19 +422,20 @@ mandocdb(int argc, char *argv[])
 	ohash_init(&mlinks, 6, &mlinks_info);
 
 	if (OP_UPDATE == op || OP_DELETE == op || OP_TEST == op) {
-		/* 
-		 * Force processing all files.
-		 */
-		use_all = 1;
 
 		/*
 		 * All of these deal with a specific directory.
-		 * Jump into that directory then collect files specified
-		 * on the command-line.
+		 * Jump into that directory first.
 		 */
 		if (0 == set_basedir(path_arg))
 			goto out;
+
 		if (dbopen(1)) {
+			/*
+			 * The existing database is usable.  Process
+			 * all files specified on the command-line.
+			 */
+			use_all = 1;
 			for (i = 0; i < argc; i++)
 				filescan(argv[i]);
 			if (OP_TEST != op)
@@ -444,6 +445,7 @@ mandocdb(int argc, char *argv[])
 			 * Database missing or corrupt.
 			 * Recreate from scratch.
 			 */
+			exitcode = (int)MANDOCLEVEL_OK;
 			op = OP_DEFAULT;
 			if (0 == treescan())
 				goto out;
