@@ -1773,23 +1773,15 @@ sv_body(char *hostname, int s, unsigned char *context)
 
 		if (!read_from_sslcon) {
 			FD_ZERO(&readfds);
-			openssl_fdset(fileno(stdin), &readfds);
-			openssl_fdset(s, &readfds);
-			/*
-			 * Note: under VMS with SOCKETSHR the second
-			 * parameter is currently of type (int *) whereas
-			 * under other systems it is (void *) if you don't
-			 * have a cast it will choke the compiler: if you do
-			 * have a cast then you can either go for (int *) or
-			 * (void *).
-			 */
+			FD_SET(fileno(stdin), &readfds);
+			FD_SET(s, &readfds);
 			if ((SSL_version(con) == DTLS1_VERSION) &&
 			    DTLSv1_get_timeout(con, &timeout))
 				timeoutp = &timeout;
 			else
 				timeoutp = NULL;
 
-			i = select(width, (void *) &readfds, NULL, NULL, timeoutp);
+			i = select(width, &readfds, NULL, NULL, timeoutp);
 
 			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0) {
 				BIO_printf(bio_err, "TIMEOUT occured\n");

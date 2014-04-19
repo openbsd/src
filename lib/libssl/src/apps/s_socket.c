@@ -245,7 +245,7 @@ do_accept(int acc_sock, int *sock, char **host)
 	int ret;
 	struct hostent *h1, *h2;
 	static struct sockaddr_in from;
-	int len;
+	socklen_t len;
 /*	struct linger ling; */
 
 	if (!ssl_sock_init())
@@ -255,13 +255,7 @@ redoit:
 
 	memset((char *) &from, 0, sizeof(from));
 	len = sizeof(from);
-	/*
-	 * Note: under VMS with SOCKETSHR the fourth parameter is currently
-	 * of type (int *) whereas under other systems it is (void *) if you
-	 * don't have a cast it will choke the compiler: if you do have a
-	 * cast then you can either go for (int *) or (void *).
-	 */
-	ret = accept(acc_sock, (struct sockaddr *) & from, (void *) &len);
+	ret = accept(acc_sock, (struct sockaddr *) & from, &len);
 	if (ret == -1) {
 		if (errno == EINTR) {
 			/* check_timeout(); */

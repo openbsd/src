@@ -1432,29 +1432,23 @@ re_start:
 
 		ssl_pending = read_ssl && SSL_pending(con);
 
+		/* XXX should add tests for fd_set overflow */
+
 		if (!ssl_pending) {
 			if (tty_on) {
 				if (read_tty)
-					openssl_fdset(fileno(stdin), &readfds);
+					FD_SET(fileno(stdin), &readfds);
 				if (write_tty)
-					openssl_fdset(fileno(stdout), &writefds);
+					FD_SET(fileno(stdout), &writefds);
 			}
 			if (read_ssl)
-				openssl_fdset(SSL_get_fd(con), &readfds);
+				FD_SET(SSL_get_fd(con), &readfds);
 			if (write_ssl)
-				openssl_fdset(SSL_get_fd(con), &writefds);
+				FD_SET(SSL_get_fd(con), &writefds);
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-			/*
-			 * Note: under VMS with SOCKETSHR the second
-			 * parameter is currently of type (int *) whereas
-			 * under other systems it is (void *) if you don't
-			 * have a cast it will choke the compiler: if you do
-			 * have a cast then you can either go for (int *) or
-			 * (void *).
-			 */
-			i = select(width, (void *) &readfds, (void *) &writefds,
+			i = select(width, &readfds, &writefds,
 			    NULL, timeoutp);
 			if (i < 0) {
 				BIO_printf(bio_err, "bad select %d\n",

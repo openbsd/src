@@ -598,15 +598,8 @@ doConnection(SSL * scon)
 			i = SSL_get_fd(serverCon);
 			width = i + 1;
 			FD_ZERO(&readfds);
-			openssl_fdset(i, &readfds);
-			/*
-			 * Note: under VMS with SOCKETSHR the 2nd parameter
-			 * is currently of type (int *) whereas under other
-			 * systems it is (void *) if you don't have a cast it
-			 * will choke the compiler: if you do have a cast
-			 * then you can either go for (int *) or (void *).
-			 */
-			select(width, (void *) &readfds, NULL, NULL, NULL);
+			FD_SET(i, &readfds);
+			select(width, &readfds, NULL, NULL, NULL);
 			continue;
 		}
 		break;

@@ -1131,10 +1131,10 @@ query_responder(BIO * err, BIO * cbio, char *path,
 	}
 	if (req_timeout != -1 && rv <= 0) {
 		FD_ZERO(&confds);
-		openssl_fdset(fd, &confds);
+		FD_SET(fd, &confds);
 		tv.tv_usec = 0;
 		tv.tv_sec = req_timeout;
-		rv = select(fd + 1, NULL, (void *) &confds, NULL, &tv);
+		rv = select(fd + 1, NULL, &confds, NULL, &tv);
 		if (rv == 0) {
 			BIO_puts(err, "Timeout on connect\n");
 			return NULL;
@@ -1160,13 +1160,13 @@ query_responder(BIO * err, BIO * cbio, char *path,
 		if (req_timeout == -1)
 			continue;
 		FD_ZERO(&confds);
-		openssl_fdset(fd, &confds);
+		FD_SET(fd, &confds);
 		tv.tv_usec = 0;
 		tv.tv_sec = req_timeout;
 		if (BIO_should_read(cbio))
-			rv = select(fd + 1, (void *) &confds, NULL, NULL, &tv);
+			rv = select(fd + 1, &confds, NULL, NULL, &tv);
 		else if (BIO_should_write(cbio))
-			rv = select(fd + 1, NULL, (void *) &confds, NULL, &tv);
+			rv = select(fd + 1, NULL, &confds, NULL, &tv);
 		else {
 			BIO_puts(err, "Unexpected retry condition\n");
 			goto err;
