@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,29 +62,32 @@
 
 /* ASN1_ITEM versions of the above */
 
-ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
+ASN1_STRING *
+ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 {
 	ASN1_STRING *octmp;
 
 	if (!oct || !*oct) {
 		if (!(octmp = ASN1_STRING_new ())) {
-			ASN1err(ASN1_F_ASN1_ITEM_PACK,ERR_R_MALLOC_FAILURE);
+			ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-		if (oct) *oct = octmp;
-	} else octmp = *oct;
+		if (oct)
+			*oct = octmp;
+	} else
+		octmp = *oct;
 
-	if(octmp->data) {
+	if (octmp->data) {
 		free(octmp->data);
 		octmp->data = NULL;
 	}
-		
+
 	if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
-		ASN1err(ASN1_F_ASN1_ITEM_PACK,ASN1_R_ENCODE_ERROR);
+		ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);
 		return NULL;
 	}
 	if (!octmp->data) {
-		ASN1err(ASN1_F_ASN1_ITEM_PACK,ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	return octmp;
@@ -92,13 +95,14 @@ ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
+void *
+ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
 {
 	const unsigned char *p;
 	void *ret;
 
 	p = oct->data;
-	if(!(ret = ASN1_item_d2i(NULL, &p, oct->length, it)))
-		ASN1err(ASN1_F_ASN1_ITEM_UNPACK,ASN1_R_DECODE_ERROR);
+	if (!(ret = ASN1_item_d2i(NULL, &p, oct->length, it)))
+		ASN1err(ASN1_F_ASN1_ITEM_UNPACK, ASN1_R_DECODE_ERROR);
 	return ret;
 }

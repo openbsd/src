@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -68,20 +68,22 @@
 
 static int do_create(char *value, char *name);
 
-static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
+static int
+oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
 	int i;
 	const char *oid_section;
 	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *oval;
+
 	oid_section = CONF_imodule_get_value(md);
-	if(!(sktmp = NCONF_get_section(cnf, oid_section))) {
+	if (!(sktmp = NCONF_get_section(cnf, oid_section))) {
 		ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ERROR_LOADING_SECTION);
 		return 0;
 	}
-	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
+	for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
 		oval = sk_CONF_VALUE_value(sktmp, i);
-		if(!do_create(oval->value, oval->name)) {
+		if (!do_create(oval->value, oval->name)) {
 			ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ADDING_OBJECT);
 			return 0;
 		}
@@ -89,12 +91,14 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 	return 1;
 }
 
-static void oid_module_finish(CONF_IMODULE *md)
+static void
+oid_module_finish(CONF_IMODULE *md)
 {
 	OBJ_cleanup();
 }
 
-void ASN1_add_oid_module(void)
+void
+ASN1_add_oid_module(void)
 {
 	CONF_module_add("oid_section", oid_module_init, oid_module_finish);
 }
@@ -104,12 +108,13 @@ void ASN1_add_oid_module(void)
  * shortname = some long name, 1.2.3.4
  */
 
-
-static int do_create(char *value, char *name)
+static int
+do_create(char *value, char *name)
 {
 	int nid;
 	ASN1_OBJECT *oid;
 	char *ln, *ostr, *p, *lntmp;
+
 	p = strrchr(value, ',');
 	if (!p) {
 		ln = name;
@@ -119,7 +124,8 @@ static int do_create(char *value, char *name)
 		ostr = p + 1;
 		if (!*ostr)
 			return 0;
-		while(isspace((unsigned char)*ostr)) ostr++;
+		while (isspace((unsigned char)*ostr))
+			ostr++;
 	}
 
 	nid = OBJ_create(ostr, name, ln);
@@ -129,9 +135,10 @@ static int do_create(char *value, char *name)
 
 	if (p) {
 		ln = value;
-		while(isspace((unsigned char)*ln)) ln++;
+		while (isspace((unsigned char)*ln))
+			ln++;
 		p--;
-		while(isspace((unsigned char)*p)) {
+		while (isspace((unsigned char)*p)) {
 			if (p == ln)
 				return 0;
 			p--;
@@ -148,5 +155,3 @@ static int do_create(char *value, char *name)
 
 	return 1;
 }
-		
-		
