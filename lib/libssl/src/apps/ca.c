@@ -221,6 +221,7 @@ static int do_revoke(X509 * x509, CA_DB * db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, CA_DB * db);
 static int do_updatedb(CA_DB * db);
 static int check_time_format(const char *str);
+static char * bin2hex(unsigned char *, size_t);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED * rev, const char *str);
 int old_entry_print(BIO * bp, ASN1_OBJECT * obj, ASN1_STRING * str);
@@ -1123,40 +1124,31 @@ ca_main(int argc, char **argv)
 			BIO_printf(bio_err, "writing new certificates\n");
 		for (i = 0; i < sk_X509_num(cert_sk); i++) {
 			int k;
-			char *n;
+			char *serial;
+			unsigned char *data;
 
 			x = sk_X509_value(cert_sk, i);
 
 			j = x->cert_info->serialNumber->length;
-			p = (const char *) x->cert_info->serialNumber->data;
-
-			if (strlen(outdir) >= (size_t) (j ? BSIZE - j * 2 - 6 : BSIZE - 8)) {
-				BIO_printf(bio_err, "certificate file name too long\n");
-				goto err;
-			}
-			strlcpy(buf[2], outdir, sizeof(buf[2]));
-
-			strlcat(buf[2], "/", sizeof(buf[2]));
-
-			n = (char *) &(buf[2][strlen(buf[2])]);
-			if (j > 0) {
-				for (k = 0; k < j; k++) {
-					if (n >= &(buf[2][sizeof(buf[2])]))
-						break;
-					snprintf(n,
-					    &buf[2][0] + sizeof(buf[2]) - n,
-					    "%02X", (unsigned char) *(p++));
-					n += 2;
+			data = (unsigned char *) x->cert_info->serialNumber->data;
+			if (j > 0)
+				serial = bin2hex(data, j);
+			else
+				serial = strdup("00");
+			if (serial) {
+				k = snprintf(buf[2], sizeof(buf[2]),
+				    "%s/%s.pem", outdir, serial);
+				free(serial);
+				if (k == -1 || k >= sizeof(buf[2])) {
+					BIO_printf(bio_err,
+					    "certificate file name too long\n");
+					goto err;
 				}
 			} else {
-				*(n++) = '0';
-				*(n++) = '0';
+				BIO_printf(bio_err,
+				    "memory allocation failed\n");
+				goto err;
 			}
-			*(n++) = '.';
-			*(n++) = 'p';
-			*(n++) = 'e';
-			*(n++) = 'm';
-			*n = '\0';
 			if (verbose)
 				BIO_printf(bio_err, "writing %s\n", buf[2]);
 
@@ -1955,7 +1947,7 @@ do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;
 	}
-	strlcpy(row[DB_file], "unknown", 8);
+	(void) strlcpy(row[DB_file], "unknown", 8);
 	row[DB_type][0] = 'V';
 	row[DB_type][1] = '\0';
 
@@ -2211,7 +2203,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
-		strlcpy(row[DB_file], "unknown", 8);
+		(void) strlcpy(row[DB_file], "unknown", 8);
 		row[DB_type][0] = 'V';
 		row[DB_type][1] = '\0';
 
@@ -2482,30 +2474,10 @@ make_revocation_str(int rev_type, char *rev_arg)
 	}
 
 	revtm = X509_gmtime_adj(NULL, 0);
-
-	i = revtm->length + 1;
-
-	if (reason)
-		i += strlen(reason)
-		    + 1;
-	if (other)
-		i += strlen(other)
-		    + 1;
-
-	str = malloc(i);
-
-	if (!str)
-		return NULL;
-
-	strlcpy(str, (char *) revtm->data, i);
-	if (reason) {
-		strlcat(str, ",", i);
-		strlcat(str, reason, i);
-	}
-	if (other) {
-		strlcat(str, ",", i);
-		strlcat(str, other, i);
-	}
+	if (asprintf(&str, "%s%s%s%s%s", revtm->data,
+		reason ? "," : "", reason ? reason : "",
+		other ? "," : "", other ? other : "") == -1)
+	    str = NULL;
 	ASN1_UTCTIME_free(revtm);
 	return str;
 }
@@ -2703,5 +2675,24 @@ err:
 	if (!pinvtm)
 		ASN1_GENERALIZEDTIME_free(comp_time);
 
+	return ret;
+}
+
+
+static char *
+bin2hex(unsigned char * data, size_t len)
+{
+	char *ret = NULL;
+	char hex[]= "0123456789ABCDEF";
+	int i;
+
+	if ((ret = malloc(len * 2 + 1))) {
+		for (i = 0; i < len; i++)
+		{
+			ret[i * 2 + 0] = hex[data[i] >> 4  ];
+			ret[i * 2 + 1] = hex[data[i] & 0x0F];
+		}
+		ret[len * 2] = '\0';
+	}
 	return ret;
 }
