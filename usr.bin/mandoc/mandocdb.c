@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.95 2014/04/18 21:54:48 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.96 2014/04/19 02:29:12 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -551,6 +551,7 @@ usage:
 static int
 treescan(void)
 {
+	char		 buf[PATH_MAX];
 	FTS		*f;
 	FTSENT		*ff;
 	struct mlink	*mlink;
@@ -562,11 +563,8 @@ treescan(void)
 	argv[0] = ".";
 	argv[1] = (char *)NULL;
 
-	/*
-	 * Walk through all components under the directory, using the
-	 * logical descent of files.
-	 */
-	f = fts_open((char * const *)argv, FTS_LOGICAL, NULL);
+	f = fts_open((char * const *)argv,
+	    FTS_PHYSICAL | FTS_NOCHDIR, NULL);
 	if (NULL == f) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fts_open");
@@ -578,11 +576,36 @@ treescan(void)
 
 	while (NULL != (ff = fts_read(f))) {
 		path = ff->fts_path + 2;
+		switch (ff->fts_info) {
+
+		/*
+		 * Symbolic links require various sanity checks,
+		 * then get handled just like regular files.
+		 */
+		case (FTS_SL):
+			if (NULL == realpath(path, buf)) {
+				if (warnings)
+					say(path, "&realpath");
+				continue;
+			}
+			if (strstr(buf, basedir) != buf) {
+				if (warnings) say("",
+				    "%s: outside base directory", buf);
+				continue;
+			}
+			/* Use logical inode to avoid mpages dupe. */
+			if (-1 == stat(path, ff->fts_statp)) {
+				if (warnings)
+					say(path, "&stat");
+				continue;
+			}
+			/* FALLTHROUGH */
+
 		/*
 		 * If we're a regular file, add an mlink by using the
 		 * stored directory data and handling the filename.
 		 */
-		if (FTS_F == ff->fts_info) {
+		case (FTS_F):
 			if (0 == strcmp(path, MANDOC_DB))
 				continue;
 			if ( ! use_all && ff->fts_level < 2) {
@@ -638,8 +661,13 @@ treescan(void)
 			mlink->gzip = gzip;
 			mlink_add(mlink, ff->fts_statp);
 			continue;
-		} else if (FTS_D != ff->fts_info &&
-				FTS_DP != ff->fts_info) {
+
+		case (FTS_D):
+			/* FALLTHROUGH */
+		case (FTS_DP):
+			break;
+
+		default:
 			if (warnings)
 				say(path, "Not a regular file");
 			continue;
@@ -728,6 +756,27 @@ filescan(const char *file)
 	if (0 == strncmp(file, "./", 2))
 		file += 2;
 
+	/*
+	 * We have to do lstat(2) before realpath(3) loses
+	 * the information whether this is a symbolic link.
+	 * We need to know that because for symbolic links,
+	 * we want to use the orginal file name, while for
+	 * regular files, we want to use the real path.
+	 */
+	if (-1 == lstat(file, &st)) {
+		exitcode = (int)MANDOCLEVEL_BADARG;
+		say(file, "&lstat");
+		return;
+	} else if (0 == ((S_IFREG | S_IFLNK) & st.st_mode)) {
+		exitcode = (int)MANDOCLEVEL_BADARG;
+		say(file, "Not a regular file");
+		return;
+	}
+
+	/*
+	 * We have to resolve the file name to the real path
+	 * in any case for the base directory check.
+	 */
 	if (NULL == realpath(file, buf)) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "&realpath");
@@ -744,14 +793,24 @@ filescan(const char *file)
 		return;
 	}
 
-	if (-1 == stat(buf, &st)) {
-		exitcode = (int)MANDOCLEVEL_BADARG;
-		say(file, "&stat");
-		return;
-	} else if ( ! (S_IFREG & st.st_mode)) {
-		exitcode = (int)MANDOCLEVEL_BADARG;
-		say(file, "Not a regular file");
-		return;
+	/*
+	 * Now we are sure the file is inside our tree.
+	 * If it is a symbolic link, ignore the real path
+	 * and use the original name.
+	 * This implies passing stuff like "cat1/../man1/foo.1"
+	 * on the command line won't work.  So don't do that.
+	 * Note the stat(2) can still fail if the link target
+	 * doesn't exist.
+	 */
+	if (S_IFLNK & st.st_mode) {
+		if (-1 == stat(buf, &st)) {
+			exitcode = (int)MANDOCLEVEL_BADARG;
+			say(file, "&stat");
+			return;
+		}
+		strlcpy(buf, file, sizeof(buf));
+		start = strstr(buf, basedir) == buf ?
+		    buf + strlen(basedir) + 1 : buf;
 	}
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
