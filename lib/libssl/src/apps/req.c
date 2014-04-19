@@ -1074,24 +1074,40 @@ start:		for (;;) {
 				goto start;
 			ret = snprintf(buf, sizeof buf, "%s_default", v->name);
 			if (ret == -1 || ret >= sizeof(buf)) {
-				BIO_printf(bio_err, "Name '%s' too long\n", v->name);
+				BIO_printf(bio_err, "Name '%s' too long for default\n",
+				    v->name);
 				return 0;
 			}
 			if ((def = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
 				ERR_clear_error();
 				def = "";
 			}
-			snprintf(buf, sizeof buf, "%s_value", v->name);
+			ret = snprintf(buf, sizeof buf, "%s_value", v->name);
+			if (ret == -1 || ret >= sizeof(buf)) {
+				BIO_printf(bio_err, "Name '%s' too long for value\n",
+				    v->name);
+				return 0;
+			}
 			if ((value = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
 				ERR_clear_error();
 				value = NULL;
 			}
-			snprintf(buf, sizeof buf, "%s_min", v->name);
+			ret = snprintf(buf, sizeof buf, "%s_min", v->name);
+			if (ret == -1 || ret >= sizeof(buf)) {
+				BIO_printf(bio_err, "Name '%s' too long for min\n",
+				    v->name);
+				return 0;
+			}
 			if (!NCONF_get_number(req_conf, dn_sect, buf, &n_min)) {
 				ERR_clear_error();
 				n_min = -1;
 			}
-			snprintf(buf, sizeof buf, "%s_max", v->name);
+			ret = snprintf(buf, sizeof buf, "%s_max", v->name);
+			if (ret == -1 || ret >= sizeof(buf)) {
+				BIO_printf(bio_err, "Name '%s' too long for max\n",
+				    v->name);
+				return 0;
+			}
 			if (!NCONF_get_number(req_conf, dn_sect, buf, &n_max)) {
 				ERR_clear_error();
 				n_max = -1;
@@ -1105,12 +1121,15 @@ start:		for (;;) {
 			return 0;
 		}
 		if (attribs) {
-			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0) && (!batch)) {
-				BIO_printf(bio_err, "\nPlease enter the following 'extra' attributes\n");
-				BIO_printf(bio_err, "to be sent with your certificate request\n");
+			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0) &&
+			    (!batch)) {
+				BIO_printf(bio_err,
+				    "\nPlease enter the following 'extra' attributes\n");
+				BIO_printf(bio_err,
+				    "to be sent with your certificate request\n");
 			}
 			i = -1;
-	start2:	for (;;) {
+start2:			for (;;) {
 				int ret;
 				i++;
 				if ((attr_sk == NULL) ||
@@ -1123,7 +1142,8 @@ start:		for (;;) {
 					goto start2;
 				ret = snprintf(buf, sizeof buf, "%s_default", type);
 				if (ret == -1 || ret >= sizeof(buf)) {
-					BIO_printf(bio_err, "Name '%s' too long\n", v->name);
+					BIO_printf(bio_err, "Name '%s' too long for default\n",
+					    v->name);
 					return 0;
 				}
 				if ((def = NCONF_get_string(req_conf, attr_sect, buf))
@@ -1131,18 +1151,33 @@ start:		for (;;) {
 					ERR_clear_error();
 					def = "";
 				}
-				snprintf(buf, sizeof buf, "%s_value", type);
+				ret = snprintf(buf, sizeof buf, "%s_value", type);
+				if (ret == -1 || ret >= sizeof(buf)) {
+					BIO_printf(bio_err, "Name '%s' too long for value\n",
+					    v->name);
+					return 0;
+				}
 				if ((value = NCONF_get_string(req_conf, attr_sect, buf))
 				    == NULL) {
 					ERR_clear_error();
 					value = NULL;
 				}
-				snprintf(buf, sizeof buf, "%s_min", type);
+				ret = snprintf(buf, sizeof buf, "%s_min", type);
+				if (ret == -1 || ret >= sizeof(buf)) {
+					BIO_printf(bio_err, "Name '%s' too long for min\n",
+					    v->name);
+					return 0;
+				}
 				if (!NCONF_get_number(req_conf, attr_sect, buf, &n_min)) {
 					ERR_clear_error();
 					n_min = -1;
 				}
-				snprintf(buf, sizeof buf, "%s_max", type);
+				ret = snprintf(buf, sizeof buf, "%s_max", type);
+				if (ret == -1 || ret >= sizeof(buf)) {
+					BIO_printf(bio_err, "Name '%s' too long for max\n",
+					    v->name);
+					return 0;
+				}
 				if (!NCONF_get_number(req_conf, attr_sect, buf, &n_max)) {
 					ERR_clear_error();
 					n_max = -1;

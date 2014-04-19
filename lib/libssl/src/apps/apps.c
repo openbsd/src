@@ -1436,7 +1436,7 @@ save_serial(char *serialfile, char *suffix, BIGNUM * serial,
 {
 	char buf[1][BSIZE];
 	BIO *out = NULL;
-	int ret = 0;
+	int ret = 0, n;
 	ASN1_INTEGER *ai = NULL;
 	int j;
 
@@ -1449,9 +1449,13 @@ save_serial(char *serialfile, char *suffix, BIGNUM * serial,
 		goto err;
 	}
 	if (suffix == NULL)
-		strlcpy(buf[0], serialfile, BSIZE);
+		n = strlcpy(buf[0], serialfile, BSIZE);
 	else
-		snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
+		n = snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
+	if (n == -1 || n >= sizeof(buf[0])) {
+		BIO_printf(bio_err, "serial too long\n");
+		goto err;
+	}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
 #endif

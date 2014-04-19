@@ -387,10 +387,15 @@ enc_main(int argc, char **argv)
 	if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
 		for (;;) {
 			char buf[200];
+			int ret;
 
-			snprintf(buf, sizeof buf, "enter %s %s password:",
+			ret = snprintf(buf, sizeof buf, "enter %s %s password:",
 			    OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
 			    (enc) ? "encryption" : "decryption");
+			if (ret == -1 || ret >= sizeof buf) {
+				BIO_printf(bio_err, "Password prompt too long\n");
+				goto end;
+			}
 			strbuf[0] = '\0';
 			i = EVP_read_pw_string((char *) strbuf, SIZE, buf, enc);
 			if (i == 0) {
