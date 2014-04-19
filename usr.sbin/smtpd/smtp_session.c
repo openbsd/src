@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.204 2014/04/19 16:52:20 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.205 2014/04/19 16:56:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -658,10 +658,10 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 		if (s->listener->flags & F_SMTPS) {
 			req_ca_cert.reqid = s->id;
 			if (s->listener->pki_name[0])
-				strlcpy(req_ca_cert.name, s->listener->pki_name,
+				(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
 				    sizeof req_ca_cert.name);
 			else
-				strlcpy(req_ca_cert.name, s->smtpname,
+				(void)strlcpy(req_ca_cert.name, s->smtpname,
 				    sizeof req_ca_cert.name);
 			m_compose(p_lka, IMSG_SMTP_SSL_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
@@ -905,10 +905,10 @@ smtp_io(struct io *io, int evt)
 		if (s->state == STATE_TLS) {
 			req_ca_cert.reqid = s->id;
 			if (s->listener->pki_name[0])
-				strlcpy(req_ca_cert.name, s->listener->pki_name,
+				(void)strlcpy(req_ca_cert.name, s->listener->pki_name,
 				    sizeof req_ca_cert.name);
 			else
-				strlcpy(req_ca_cert.name, s->smtpname,
+				(void)strlcpy(req_ca_cert.name, s->smtpname,
 				    sizeof req_ca_cert.name);
 			m_compose(p_lka, IMSG_SMTP_SSL_INIT, 0, 0, -1,
 			    &req_ca_cert, sizeof(req_ca_cert));
