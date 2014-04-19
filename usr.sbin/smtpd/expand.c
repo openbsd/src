@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.25 2013/12/26 17:25:32 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.26 2014/04/19 12:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -49,8 +49,9 @@ expand_to_text(struct expand *expand, char *buf, size_t sz)
 
 	RB_FOREACH(xn, expandtree, &expand->tree) {
 		if (buf[0])
-			strlcat(buf, ", ", sz);
-		strlcat(buf, expandnode_to_text(xn), sz);
+			(void)strlcat(buf, ", ", sz);
+		if (strlcat(buf, expandnode_to_text(xn), sz) >= sz)
+			return 0;
 	}
 
 	return 1;
@@ -297,23 +298,23 @@ expandnode_info(struct expandnode *e)
 	if ((value = expandnode_to_text(e)) == NULL)
 		return NULL;
 
-	strlcpy(buffer, type, sizeof buffer);
-	strlcat(buffer, ":", sizeof buffer);
+	(void)strlcpy(buffer, type, sizeof buffer);
+	(void)strlcat(buffer, ":", sizeof buffer);
 	if (strlcat(buffer, value, sizeof buffer) >= sizeof buffer)
 		return NULL;
 
-	snprintf(tmp, sizeof(tmp), "[parent=%p", e->parent);
+	(void)snprintf(tmp, sizeof(tmp), "[parent=%p", e->parent);
 	if (strlcat(buffer, tmp, sizeof buffer) >= sizeof buffer)
 		return NULL;
 
 	if (e->mapping) {
-		strlcat(buffer, ", mapping=", sizeof buffer);
-		strlcat(buffer, e->mapping->t_name, sizeof buffer);
+		(void)strlcat(buffer, ", mapping=", sizeof buffer);
+		(void)strlcat(buffer, e->mapping->t_name, sizeof buffer);
 	}
 
 	if (e->userbase) {
-		strlcat(buffer, ", userbase=", sizeof buffer);
-		strlcat(buffer, e->userbase->t_name, sizeof buffer);
+		(void)strlcat(buffer, ", userbase=", sizeof buffer);
+		(void)strlcat(buffer, e->userbase->t_name, sizeof buffer);
 	}
 
 	if (strlcat(buffer, "]", sizeof buffer) >= sizeof buffer)
