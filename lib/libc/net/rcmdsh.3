@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmdsh.3,v 1.15 2014/04/18 22:04:54 jmc Exp $
+.\"	$OpenBSD: rcmdsh.3,v 1.16 2014/04/19 18:11:19 tedu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2014 $
+.Dd $Mdocdate: April 19 2014 $
 .Dt RCMDSH 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ The
 .Fn rcmdsh
 function is used by normal users to execute a command on a remote machine
 using an authentication scheme based on reserved port numbers using
-.Xr rsh 1
+.Xr ssh 1
 or the value of
 .Fa rshprog
 (if non-null).
@@ -81,7 +81,7 @@ The
 function returns a valid socket descriptor on success.
 It returns \-1 on error and prints a diagnostic message on the standard error.
 .Sh SEE ALSO
-.Xr rsh 1 ,
+.Xr ssh 1 ,
 .Xr socketpair 2 ,
 .Xr rcmd 3
 .Sh HISTORY
@@ -91,5 +91,5 @@ function first appeared in
 .Ox 2.0 .
 .Sh BUGS
 If
-.Xr rsh 1
+.Xr ssh 1
 encounters an error, a file descriptor is still returned instead of \-1.
