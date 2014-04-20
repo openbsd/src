@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.52 2013/11/24 21:32:32 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.53 2014/04/20 22:35:10 ajacoutot Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -666,7 +666,6 @@ chkhost(struct sockaddr *f)
 {
 	struct addrinfo hints, *res, *r;
 	FILE *hostf;
-	int first = 1;
 	int good = 0;
 	char host[NI_MAXHOST], ip[NI_MAXHOST];
 	char serv[NI_MAXSERV];
@@ -719,9 +718,8 @@ chkhost(struct sockaddr *f)
 		fatal("address for your hostname (%s) not matched", host);
 	setproctitle("serving %s", from);
 	PRIV_START;
-	hostf = fopen(_PATH_HOSTSEQUIV, "r");
+	hostf = fopen(_PATH_HOSTSLPD, "r");
 	PRIV_END;
-again:
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
 			(void)fclose(hostf);
@@ -729,15 +727,7 @@ again:
 		}
 		(void)fclose(hostf);
 	}
-	if (first == 1) {
-		first = 0;
-		PRIV_START;
-		hostf = fopen(_PATH_HOSTSLPD, "r");
-		PRIV_END;
-		goto again;
-	}
 	fatal("Your host does not have line printer access");
-	/*NOTREACHED*/
 }
 
 static __dead void

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.25 2014/04/20 18:11:45 tedu Exp $
+.\"	$OpenBSD: lpd.8,v 1.26 2014/04/20 22:35:10 ajacoutot Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -159,9 +159,7 @@ port from
 .Pp
 Access control is provided by two means.
 First, all requests must come from one of the machines listed in the file
-.Pa /etc/hosts.lpd
-or
-.Pa /etc/hosts.equiv ,
+.Pa /etc/hosts.lpd ,
 one hostname per line.
 A plus "+" may be used as a wildcard to grant access to all hosts.
 Second, if the
@@ -337,11 +335,8 @@ minimum free space to leave
 line printer devices
 .It Pa /var/run/printer
 socket for local requests
-.It Pa /etc/hosts.equiv
-lists machine names allowed printer access
 .It Pa /etc/hosts.lpd
-lists machine names allowed printer access,
-but not under same administrative control.
+lists machine names allowed printer access
 .El
 .Sh SEE ALSO
 .Xr lpq 1 ,
