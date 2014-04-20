@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.25 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: read.c,v 1.26 2014/04/20 22:03:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -827,7 +827,7 @@ mandoc_vmsg(enum mandocerr t, struct mparse *m,
 	va_list		 ap;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	mandoc_msg(t, m, ln, pos, buf);
