@@ -177,7 +177,7 @@ padlock_bind_helper(ENGINE *e)
 #endif
 
 	/* Generate a nice engine name with available features */
-	snprintf(padlock_name, sizeof(padlock_name),
+	(void) snprintf(padlock_name, sizeof(padlock_name),
 		"VIA PadLock (%s, %s)", 
 		 padlock_use_rng ? "RNG" : "no-RNG",
 		 padlock_use_ace ? "ACE" : "no-ACE");
