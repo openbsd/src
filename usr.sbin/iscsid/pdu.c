@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.7 2014/04/19 18:31:33 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.8 2014/04/20 18:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,7 @@ text_to_pdu(struct kvp *k, struct pdu *p)
 	int n, nk;
 
 	if (k == NULL)
-		return (0);
+		return 0;
 
 	nk = 0;
 	while(k[nk].key) {
@@ -182,7 +182,7 @@ text_to_num(const char *numstr, u_int64_t minval, u_int64_t maxval,
 	if (error)
 		ull = 0;
 
-	return (ull);
+	return ull;
 #undef INVALID
 #undef TOOSMALL
 #undef TOOLARGE
@@ -207,7 +207,7 @@ text_to_bool(const char *buf, const char **errstrp)
 		else
 			*errstrp = "invalid";
 	}
-	return (val);
+	return val;
 }
 
 
@@ -263,7 +263,7 @@ pdu_read(struct connection *c)
 	if (c->prbuf.wpos >= c->prbuf.size)
 		c->prbuf.wpos -= c->prbuf.size;
 
-	return (n);
+	return n;
 }
 
 ssize_t
@@ -414,7 +414,7 @@ pdu_readbuf_read(struct pdu_readbuf *rb, void *ptr, size_t len)
 	size_t l;
 
 	if (rb->rpos == rb->wpos) {
-		return (0);
+		return 0;
 	} else if (rb->rpos < rb->wpos) {
 		l = PDU_MIN(rb->wpos - rb->rpos, len);
 		memcpy(ptr, rb->buf + rb->rpos, l);

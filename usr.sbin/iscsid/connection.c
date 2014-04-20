@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.14 2014/04/20 16:49:56 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.15 2014/04/20 18:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -316,11 +316,11 @@ conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)
 		if (kvp && i < *nkvp) {
 			kvp[i].key = strdup("MaxConnections");
 			if (kvp[i].key == NULL)
-				return (-1);
+				return -1;
 			if (asprintf(&kvp[i].value, "%hu",
 			    s->mine.MaxConnections) == -1) {
 				kvp[i].value = NULL;
-				return (-1);
+				return -1;
 			}
 		}
 		i++;
@@ -330,18 +330,18 @@ conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)
 		if (kvp && i < *nkvp) {
 			kvp[i].key = strdup("MaxRecvDataSegmentLength");
 			if (kvp[i].key == NULL)
-				return (-1);
+				return -1;
 			if (asprintf(&kvp[i].value, "%u",
 			    c->mine.MaxRecvDataSegmentLength) == -1) {
 				kvp[i].value = NULL;
-				return (-1);
+				return -1;
 			}
 		}
 		i++;
 	}
 
 	*nkvp = i;
-	return (0);
+	return 0;
 }
 
 void
@@ -419,23 +419,23 @@ c_do_connect(struct connection *c, enum c_event ev)
 		log_warnx("connect(%s), lost socket",
 		    log_sockaddr(&c->config.TargetAddr));
 		session_fsm(c->session, SESS_EV_CONN_FAIL, c);
-		return (CONN_FREE);
+		return CONN_FREE;
 	}
 
 	if (connect(c->fd, (struct sockaddr *)&c->config.TargetAddr,
 	    c->config.TargetAddr.ss_len) == -1) {
 		if (errno == EINPROGRESS) {
 			event_add(&c->wev, NULL);
-			return (CONN_XPT_WAIT);
+			return CONN_XPT_WAIT;
 		} else {
 			log_warn("connect(%s)",
 			    log_sockaddr(&c->config.TargetAddr));
 			session_fsm(c->session, SESS_EV_CONN_FAIL, c);
-			return (CONN_FREE);
+			return CONN_FREE;
 		}
 	}
 	/* move forward */
-	return (c_do_login(c, CONN_EV_CONNECTED));
+	return c_do_login(c, CONN_EV_CONNECTED);
 }
 
 int
@@ -443,7 +443,7 @@ c_do_login(struct connection *c, enum c_event ev)
 {
 	/* start a login session and hope for the best ... */
 	initiator_login(c);
-	return (CONN_IN_LOGIN);
+	return CONN_IN_LOGIN;
 }
 
 int
@@ -451,14 +451,14 @@ c_do_loggedin(struct connection *c, enum c_event ev)
 {
 	session_fsm(c->session, SESS_EV_CONN_LOGGED_IN, c);
 
-	return (CONN_LOGGED_IN);
+	return CONN_LOGGED_IN;
 }
 
 int
 c_do_logout(struct connection *c, enum c_event ev)
 {
 	/* logout is in progress ... */
-	return (CONN_IN_LOGOUT);
+	return CONN_IN_LOGOUT;
 }
 
 int
@@ -470,7 +470,7 @@ c_do_loggedout(struct connection *c, enum c_event ev)
 	close(c->fd);
 
 	/* session is informed by the logout handler */
-	return (CONN_FREE);
+	return CONN_FREE;
 }
 
 int
@@ -484,8 +484,8 @@ c_do_fail(struct connection *c, enum c_event ev)
 	session_fsm(c->session, SESS_EV_CONN_FAIL, c);
 
 	if (ev == CONN_EV_FREE || c->state & CONN_NEVER_LOGGED_IN)
-		return (CONN_FREE);
-	return (CONN_CLEANUP_WAIT);
+		return CONN_FREE;
+	return CONN_CLEANUP_WAIT;
 }
 
 const char *

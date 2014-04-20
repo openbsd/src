@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2014/04/19 18:31:33 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.7 2014/04/20 18:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -64,23 +64,27 @@ control_init(char *path)
 
 	if ((control_state = calloc(1, sizeof(*control_state))) == NULL) {
 		log_warn("control_init: calloc");
-		return (-1);
+		return -1;
 	}
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		log_warn("control_init: socket");
-		return (-1);
+		return -1;
 	}
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path)) {
+		log_warnx("control_init: path %s too long", path);
+		return -1;
+	}
 
 	if (unlink(path) == -1)
 		if (errno != ENOENT) {
 			log_warn("control_init: unlink %s", path);
 			close(fd);
-			return (-1);
+			return -1;
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
@@ -88,7 +92,7 @@ control_init(char *path)
 		log_warn("control_init: bind: %s", path);
 		close(fd);
 		umask(old_umask);
-		return (-1);
+		return -1;
 	}
 	umask(old_umask);
 
@@ -96,21 +100,21 @@ control_init(char *path)
 		log_warn("control_init: chmod");
 		close(fd);
 		(void)unlink(path);
-		return (-1);
+		return -1;
 	}
 
 	if (listen(fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_init: listen");
 		close(fd);
 		(void)unlink(path);
-		return (-1);
+		return -1;
 	}
 
 	socket_setblockmode(fd, 1);
 	control_state->fd = fd;
 	TAILQ_INIT(&controls);
 
-	return (0);
+	return 0;
 }
 
 void
