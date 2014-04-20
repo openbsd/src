@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.167 2014/04/20 14:54:39 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.168 2014/04/20 15:29:52 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -155,6 +155,9 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
+static __inline int    ether_addheader(struct mbuf **, u_int16_t, u_char *,
+			   u_char *);
+
 int
 ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 {
@@ -187,6 +190,21 @@ ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 	}
 
 	return (error);
+}
+
+static __inline int
+ether_addheader(struct mbuf **m, u_int16_t etype, u_char *esrc, u_char *edst)
+{
+	struct ether_header *eh;
+
+	M_PREPEND(*m, ETHER_HDR_LEN, M_DONTWAIT);
+	if (*m == 0)
+		return (-1);
+	eh = mtod(*m, struct ether_header *);
+	eh->ether_type = etype;
+	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
+	return (0);
 }
 
 /*
@@ -348,17 +366,8 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		esrc = carp_get_srclladdr(ifp0, esrc);
 #endif
 
-	/*
-	 * Add local net header.  If no space in first mbuf,
-	 * allocate another.
-	 */
-	M_PREPEND(m, ETHER_HDR_LEN, M_DONTWAIT);
-	if (m == 0)
+	if (ether_addheader(&m, etype, esrc, edst) == -1)
 		senderr(ENOBUFS);
-	eh = mtod(m, struct ether_header *);
-	eh->ether_type = etype;
-	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
-	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 
 #if NBRIDGE > 0
 	/*
