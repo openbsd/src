@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.166 2014/04/20 14:51:50 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.167 2014/04/20 14:54:39 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -343,6 +343,10 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 
 	if (!hdrcmplt)
 		esrc = ac->ac_enaddr;
+#if NCARP > 0
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
+		esrc = carp_get_srclladdr(ifp0, esrc);
+#endif
 
 	/*
 	 * Add local net header.  If no space in first mbuf,
@@ -355,11 +359,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	eh->ether_type = etype;
 	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
 	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
-
-#if NCARP > 0
-	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
-	    carp_rewrite_lladdr(ifp0, eh->ether_shost);
-#endif
 
 #if NBRIDGE > 0
 	/*

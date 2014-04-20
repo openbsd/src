@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.30 2014/01/22 09:35:20 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.31 2014/04/20 14:54:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -178,7 +178,7 @@ int		 carp_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
 int		 carp_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
 int		 carp_lsdrop(struct mbuf *, sa_family_t, u_int32_t *, u_int32_t *);
-void		 carp_rewrite_lladdr(struct ifnet *, u_int8_t *);
+u_char		*carp_get_srclladdr(struct ifnet *, u_char *);
 int		 carp_our_mcastaddr(struct ifnet *, u_int8_t *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_CARP_H_ */
