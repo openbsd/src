@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -71,12 +71,11 @@
 extern "C" {
 #endif
 
-typedef struct
-	{
+typedef struct {
 	char *section;
 	char *name;
 	char *value;
-	} CONF_VALUE;
+} CONF_VALUE;
 
 DECLARE_STACK_OF(CONF_VALUE)
 DECLARE_LHASH_OF(CONF_VALUE);
@@ -85,8 +84,7 @@ struct conf_st;
 struct conf_method_st;
 typedef struct conf_method_st CONF_METHOD;
 
-struct conf_method_st
-	{
+struct conf_method_st {
 	const char *name;
 	CONF *(*create)(CONF_METHOD *meth);
 	int (*init)(CONF *conf);
@@ -97,7 +95,7 @@ struct conf_method_st
 	int (*is_number)(const CONF *conf, char c);
 	int (*to_int)(const CONF *conf, char c);
 	int (*load)(CONF *conf, const char *name, long *eline);
-	};
+};
 
 /* Module definitions */
 
@@ -119,20 +117,20 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_DEFAULT_SECTION	0x20
 
 int CONF_set_default_method(CONF_METHOD *meth);
-void CONF_set_nconf(CONF *conf,LHASH_OF(CONF_VALUE) *hash);
-LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf,const char *file,
-				long *eline);
+void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
+LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
+    long *eline);
 #ifndef OPENSSL_NO_FP_API
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
-				   long *eline);
+    long *eline);
 #endif
-LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,long *eline);
+LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline);
 STACK_OF(CONF_VALUE) *CONF_get_section(LHASH_OF(CONF_VALUE) *conf,
-				       const char *section);
-char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf,const char *group,
-		      const char *name);
-long CONF_get_number(LHASH_OF(CONF_VALUE) *conf,const char *group,
-		     const char *name);
+    const char *section);
+char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
+    const char *name);
+long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
+    const char *name);
 void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
@@ -143,12 +141,11 @@ void OPENSSL_no_config(void);
 /* New conf code.  The semantics are different from the functions above.
    If that wasn't the case, the above functions would have been replaced */
 
-struct conf_st
-	{
+struct conf_st {
 	CONF_METHOD *meth;
 	void *meth_data;
 	LHASH_OF(CONF_VALUE) *data;
-	};
+};
 
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
@@ -159,36 +156,36 @@ CONF_METHOD *NCONF_XML(void);
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
-int NCONF_load(CONF *conf,const char *file,long *eline);
+int NCONF_load(CONF *conf, const char *file, long *eline);
 #ifndef OPENSSL_NO_FP_API
-int NCONF_load_fp(CONF *conf, FILE *fp,long *eline);
+int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 #endif
-int NCONF_load_bio(CONF *conf, BIO *bp,long *eline);
-STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,const char *section);
-char *NCONF_get_string(const CONF *conf,const char *group,const char *name);
-int NCONF_get_number_e(const CONF *conf,const char *group,const char *name,
-		       long *result);
+int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
+STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section);
+char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
+int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
+    long *result);
 int NCONF_dump_fp(const CONF *conf, FILE *out);
 int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 #if 0 /* The following function has no error checking,
 	 and should therefore be avoided */
-long NCONF_get_number(CONF *conf,char *group,char *name);
+long NCONF_get_number(CONF *conf, char *group, char *name);
 #else
 #define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)
 #endif
-  
+
 /* Module functions */
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
-		      unsigned long flags);
+    unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
-			   unsigned long flags);
+    unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
 void CONF_modules_free(void);
 int CONF_module_add(const char *name, conf_init_func *ifunc,
-		    conf_finish_func *ffunc);
+    conf_finish_func *ffunc);
 
 const char *CONF_imodule_get_name(const CONF_IMODULE *md);
 const char *CONF_imodule_get_value(const CONF_IMODULE *md);
@@ -203,7 +200,7 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);
 char *CONF_get1_default_config_file(void);
 
 int CONF_parse_list(const char *list, int sep, int nospc,
-	int (*list_cb)(const char *elem, int len, void *usr), void *arg);
+    int (*list_cb)(const char *elem, int len, void *usr), void *arg);
 
 void OPENSSL_load_builtin_modules(void);
 
