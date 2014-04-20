@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.165 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.166 2014/04/20 14:51:50 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
-
 int
 ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 {
@@ -201,7 +200,8 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 {
 	u_int16_t etype;
 	int s, len, error = 0, hdrcmplt = 0;
-	u_char edst[ETHER_ADDR_LEN], esrc[ETHER_ADDR_LEN];
+	u_char edst[ETHER_ADDR_LEN];
+	u_char *esrc;
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -321,7 +321,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		eh = (struct ether_header *)dst->sa_data;
-		memcpy(esrc, eh->ether_shost, sizeof(esrc));
+		esrc = eh->ether_shost;
 		/* FALLTHROUGH */
 
 	case AF_UNSPEC:
@@ -341,6 +341,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 
+	if (!hdrcmplt)
+		esrc = ac->ac_enaddr;
+
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
@@ -350,11 +353,8 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
 	eh->ether_type = etype;
-	memcpy(eh->ether_dhost, edst, sizeof(edst));
-	if (hdrcmplt)
-		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
-	else
-		memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
+	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
+	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
