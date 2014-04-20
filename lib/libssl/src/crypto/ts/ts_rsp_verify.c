@@ -626,6 +626,7 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
  err:
 	X509_ALGOR_free(*md_alg);
 	free(*imprint);
+	*imprint = NULL;
 	*imprint_len = 0;
 	return 0;
 	}
