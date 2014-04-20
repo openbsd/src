@@ -373,7 +373,6 @@ ASN1_STRING_dup(const ASN1_STRING *str)
 int
 ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 {
-	unsigned char *c;
 	const char *data = _data;
 
 	if (len < 0) {
@@ -383,24 +382,19 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 			len = strlen(data);
 	}
 	if ((str->length < len) || (str->data == NULL)) {
-		c = str->data;
-		if (c == NULL)
-			str->data = malloc(len + 1);
-		else
-			str->data = realloc(c, len + 1);
-
-		if (str->data == NULL) {
+		unsigned char *tmp;
+		tmp = realloc(str->data, len + 1);
+		if (tmp == NULL) {
 			ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
-			str->data = c;
 			return (0);
 		}
+		str->data = tmp;
 	}
 	str->length = len;
 	if (data != NULL) {
-		memcpy(str->data, data, len);
-		/* an allowance for strings :-) */
-		str->data[len]='\0';
+		memmove(str->data, data, len);
 	}
+	str->data[str->length]='\0';
 	return (1);
 }
 
@@ -465,11 +459,10 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 void
 asn1_add_error(const unsigned char *address, int offset)
 {
-	char buf1[DECIMAL_SIZE(address) + 1], buf2[DECIMAL_SIZE(offset) + 1];
-
-	snprintf(buf1, sizeof buf1, "%lu", (unsigned long)address);
-	snprintf(buf2, sizeof buf2, "%d", offset);
-	ERR_add_error_data(4, "address=", buf1, " offset=", buf2);
+	char tmp[128];
+	(void) snprintf(tmp, sizeof(tmp), "address=%p offset=%d",
+	    address, offset);
+	ERR_add_error_data(1, tmp);
 }
 
 int
