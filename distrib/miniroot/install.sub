@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.761 2014/04/19 18:31:24 rpe Exp $
+#	$OpenBSD: install.sub,v 1.762 2014/04/20 10:51:59 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -2067,7 +2067,7 @@ md_consoleinfo
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 : ${DEFAULTSETS:="bsd bsd.rd"}
 for _set in base etc comp man game xbase xetc xshare xfont xserv site; do
-	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
+	[[ $MODE == upgrade && $_set == @(etc|xetc) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
 	isin $_set site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
