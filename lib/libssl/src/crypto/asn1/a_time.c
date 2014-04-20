@@ -126,6 +126,7 @@ ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
 	ASN1_GENERALIZEDTIME *ret;
 	char *str;
 	int newlen;
+	int i;
 
 	if (!ASN1_TIME_check(t))
 		return NULL;
@@ -151,13 +152,12 @@ ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
 	/* ASN1_STRING_set() allocated 'len + 1' bytes. */
 	newlen = t->length + 2 + 1;
 	str = (char *)ret->data;
-	/* Work out the century and prepend */
-	if (t->data[0] >= '5')
-		strlcpy(str, "19", newlen);
-	else
-		strlcpy(str, "20", newlen);
-	strlcat(str, (char *)t->data, newlen);
-
+	i = snprintf(str, newlen, "%s%s", (t->data >= '5') ? "19" : "20",
+	    (char *) t->data);
+	if (i == -1 || i >= newlen) {
+		ASN1_STRING_free(ret);
+		return NULL;
+	}
 	return ret;
 }
 
