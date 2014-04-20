@@ -591,7 +591,7 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 			n += i;
 			free(bndec);
 		} else {
-			snprintf(tbuf, sizeof tbuf, ".%lu", l);
+			(void) snprintf(tbuf, sizeof tbuf, ".%lu", l);
 			i = strlen(tbuf);
 			if (buf && (buf_len > 0)) {
 				strlcpy(buf, tbuf, buf_len);
