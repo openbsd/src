@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.13 2011/05/04 21:00:04 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.14 2014/04/20 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -313,31 +313,31 @@ conn_gen_kvp(struct connection *c, struct kvp *kvp, size_t *nkvp)
 	size_t i = 0;
 
 	if (s->mine.MaxConnections != iscsi_sess_defaults.MaxConnections) {
-		i++;
 		if (kvp && i < *nkvp) {
 			kvp[i].key = strdup("MaxConnections");
 			if (kvp[i].key == NULL)
 				return (-1);
-			if (asprintf(&kvp[i].value, "%u",
-			    (unsigned int)s->mine.MaxConnections) == -1) {
+			if (asprintf(&kvp[i].value, "%hu",
+			    s->mine.MaxConnections) == -1) {
 				kvp[i].value = NULL;
 				return (-1);
 			}
 		}
+		i++;
 	}
 	if (c->mine.MaxRecvDataSegmentLength !=
 	    iscsi_conn_defaults.MaxRecvDataSegmentLength) {
-		i++;
 		if (kvp && i < *nkvp) {
 			kvp[i].key = strdup("MaxRecvDataSegmentLength");
 			if (kvp[i].key == NULL)
 				return (-1);
 			if (asprintf(&kvp[i].value, "%u",
-			    (unsigned int)c->mine.MaxRecvDataSegmentLength) == -1) {
+			    c->mine.MaxRecvDataSegmentLength) == -1) {
 				kvp[i].value = NULL;
 				return (-1);
 			}
 		}
+		i++;
 	}
 
 	*nkvp = i;

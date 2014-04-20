@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.11 2014/04/19 18:31:33 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.12 2014/04/20 16:49:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -276,6 +276,7 @@ initiator_login_kvp(struct connection *c, u_int8_t stage)
 	case ISCSI_LOGIN_STG_OPNEG:
 		if (conn_gen_kvp(c, NULL, &nkvp) == -1)
 			return NULL;
+		nkvp += 1; /* add slot for terminator */
 		if (!(kvp = calloc(nkvp, sizeof(*kvp))))
 			return NULL;
 		if (conn_gen_kvp(c, kvp, &nkvp) == -1) {
