@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.154 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.155 2014/04/20 16:48:22 naddy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -132,6 +132,9 @@ int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 	struct ifnet *, struct in6_addr *, u_long *, int *);
 int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
+static __inline u_int16_t __attribute__((__unused__))
+    in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
+    u_int32_t, u_int32_t);
 void in6_delayed_cksum(struct mbuf *, u_int8_t);
 
 /* Context for non-repeating IDs */
@@ -3200,6 +3203,43 @@ void
 ip6_randomid_init(void)
 {
 	idgen32_init(&ip6_id_ctx);
+}
+
+/*
+ *	Compute significant parts of the IPv6 checksum pseudo-header
+ *	for use in a delayed TCP/UDP checksum calculation.
+ */
+static __inline u_int16_t __attribute__((__unused__))
+in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
+    u_int32_t len, u_int32_t nxt)
+{
+	u_int32_t sum = 0;
+	const u_int16_t *w;
+
+	w = (const u_int16_t *) src;
+	sum += w[0];
+	if (!IN6_IS_SCOPE_EMBED(src))
+		sum += w[1];
+	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
+	sum += w[6]; sum += w[7];
+
+	w = (const u_int16_t *) dst;
+	sum += w[0];
+	if (!IN6_IS_SCOPE_EMBED(dst))
+		sum += w[1];
+	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
+	sum += w[6]; sum += w[7];
+
+	sum += (u_int16_t)(len >> 16) + (u_int16_t)(len /*& 0xffff*/);
+
+	sum += (u_int16_t)(nxt >> 16) + (u_int16_t)(nxt /*& 0xffff*/);
+
+	sum = (u_int16_t)(sum >> 16) + (u_int16_t)(sum /*& 0xffff*/);
+
+	if (sum > 0xffff)
+		sum -= 0xffff;
+
+	return (sum);
 }
 
 /*
