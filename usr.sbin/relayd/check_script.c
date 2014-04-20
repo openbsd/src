@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.14 2011/05/26 14:48:20 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.15 2014/04/20 16:13:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,8 +54,11 @@ check_script(struct relayd *env, struct host *host)
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 
 	scr.host = host->conf.id;
-	strlcpy(scr.name, host->conf.name, sizeof(host->conf.name));
-	strlcpy(scr.path, table->conf.path, sizeof(table->conf.path));
+	if ((strlcpy(scr.name, host->conf.name,sizeof(scr.name)) >=
+	    sizeof(scr.name)) ||
+	    (strlcpy(scr.path, table->conf.path, sizeof(scr.path)) >=
+	    sizeof(scr.path)))
+		fatalx("invalid script path");
 	memcpy(&scr.timeout, &table->conf.timeout, sizeof(scr.timeout));
 
 	proc_compose_imsg(env->sc_ps, PROC_PARENT, 0, IMSG_SCRIPT,
