@@ -40,7 +40,6 @@ If more than one CA certificate with the same name hash value exist, the
 extension must be different (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search
 is performed in the ordering of the extension number, regardless of other
 properties of the certificates.
-Use the B<c_rehash> utility to create the necessary links.
 
 The certificates in B<CApath> are only looked up when required, e.g. when
 building the certificate chain or when actually performing the verification
@@ -92,7 +91,21 @@ Prepare the directory /some/where/certs containing several CA certificates
 for use as B<CApath>:
 
  cd /some/where/certs
- c_rehash .
+ rm -f *.[0-9]* *.r[0-9]*
+ for c in *.pem; do
+    [ "$c" = "*.pem" ] && continue
+    hash=$(openssl x509 -noout -hash -in "$c")
+    if egrep -q -- '-BEGIN( X509 | TRUSTED | )CERTIFICATE-' "$c"; then
+      suf=0
+      while [ -e $hash.$suf ]; do suf=$(( $suf + 1 )); done
+      ln -s "$c" $hash.$suf
+    fi
+    if egrep -q -- '-BEGIN X509 CRL-' "$c"; then
+      suf=0
+      while [ -e $hash.r$suf ]; do suf=$(( $suf + 1 )); done
+      ln -s "$c" $hash.r$suf
+    fi
+  done
 
 =head1 RETURN VALUES
 

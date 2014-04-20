@@ -856,6 +856,6 @@ The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
 of the distinguished name. In OpenSSL 1.0.0 and later it is based on a
 canonical version of the DN using SHA1. This means that any directories using
-the old form must have their links rebuilt using B<c_rehash> or similar. 
+the old form must have their links rebuilt.
 
 =cut
