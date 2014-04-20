@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.297 2014/04/17 13:46:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.298 2014/04/20 21:25:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -348,6 +348,11 @@ routehandler(void)
 				client->state = S_REBOOTING;
 				state_reboot();
 			} else {
+				/* Let monitoring programs see link loss. */
+				write_file(path_option_db,
+				    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC |
+				    O_EXLOCK | O_NOFOLLOW, S_IRUSR | S_IWUSR |
+				    S_IRGRP, 0, 0, "", 0);
 				/* No need to wait for anything but link. */
 				cancel_timeout();
 			}
@@ -1955,10 +1960,11 @@ fork_privchld(int fd, int fd2)
 	close(fd);
 
 	if (strlen(path_option_db)) {
-		rslt = unlink(path_option_db);
+		/* Truncate the file so monitoring process see exit. */
+		rslt = truncate(path_option_db, 0);
 		if (rslt == -1)
-			warning("Could not unlink '%s': %s",
-			    path_option_db, strerror(errno));
+			warning("Unable to truncate '%s': %s", path_option_db,
+			    strerror(errno));
 	}
 
 	/*
