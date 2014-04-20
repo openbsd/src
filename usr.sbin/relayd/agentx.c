@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.4 2014/04/20 10:46:20 reyk Exp $    */
+/*      $OpenBSD: agentx.c,v 1.5 2014/04/20 16:07:10 reyk Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -91,7 +91,9 @@ snmp_agentx_open(const char *path, char *descr, struct snmp_oid *oid)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path))
+		goto fail;
 
 	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		goto fail;
