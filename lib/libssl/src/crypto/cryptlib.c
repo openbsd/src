@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,21 +58,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -87,10 +87,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -110,7 +110,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECDH support in OpenSSL originally developed by 
+ * ECDH support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
@@ -197,7 +197,8 @@ CRYPTO_get_new_lockid(char *name)
 	char *str;
 	int i;
 
-	if ((app_locks == NULL) && ((app_locks = sk_OPENSSL_STRING_new_null()) == NULL)) {
+	if ((app_locks == NULL) &&
+	    ((app_locks = sk_OPENSSL_STRING_new_null()) == NULL)) {
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
@@ -226,28 +227,32 @@ CRYPTO_get_new_dynlockid(void)
 	CRYPTO_dynlock *pointer = NULL;
 
 	if (dynlock_create_callback == NULL) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
+		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
+		    CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
 		return (0);
 	}
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	if ((dyn_locks == NULL)
-		&& ((dyn_locks = sk_CRYPTO_dynlock_new_null()) == NULL)) {
+	if ((dyn_locks == NULL) &&
+	    ((dyn_locks = sk_CRYPTO_dynlock_new_null()) == NULL)) {
 		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
+		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
+		    ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	pointer = (CRYPTO_dynlock *)malloc(sizeof(CRYPTO_dynlock));
 	if (pointer == NULL) {
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
+		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
+		    ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 	pointer->references = 1;
 	pointer->data = dynlock_create_callback(__FILE__, __LINE__);
 	if (pointer->data == NULL) {
 		free(pointer);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
+		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,
+		    ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 
@@ -272,13 +277,14 @@ CRYPTO_get_new_dynlockid(void)
 		free(pointer);
 	} else
 		i += 1; /* to avoid 0 */
-	return - i;
+	return -i;
 }
 
 void
 CRYPTO_destroy_dynlockid(int i)
 {
 	CRYPTO_dynlock *pointer = NULL;
+
 	if (i)
 		i = -i - 1;
 	if (dynlock_destroy_callback == NULL)
@@ -310,6 +316,7 @@ struct CRYPTO_dynlock_value *
 CRYPTO_get_dynlock_value(int i)
 {
 	CRYPTO_dynlock *pointer = NULL;
+
 	if (i)
 		i = -i - 1;
 
@@ -328,20 +335,21 @@ CRYPTO_get_dynlock_value(int i)
 }
 
 struct CRYPTO_dynlock_value *
-(*CRYPTO_get_dynlock_create_callback(void))(
-    const char *file, int line)
+(*CRYPTO_get_dynlock_create_callback(void))(const char *file, int line)
 {
 	return (dynlock_create_callback);
 }
 
-void (*CRYPTO_get_dynlock_lock_callback(void))(int mode,
+void
+(*CRYPTO_get_dynlock_lock_callback(void))(int mode,
     struct CRYPTO_dynlock_value *l, const char *file, int line)
 {
 	return (dynlock_lock_callback);
 }
 
-void (*CRYPTO_get_dynlock_destroy_callback(void))(
-    struct CRYPTO_dynlock_value *l, const char *file, int line)
+void
+(*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l,
+    const char *file, int line)
 {
 	return (dynlock_destroy_callback);
 }
@@ -367,13 +375,15 @@ CRYPTO_set_dynlock_destroy_callback(
 	dynlock_destroy_callback = func;
 }
 
-void (*CRYPTO_get_locking_callback(void))(int mode, int type,
-    const char *file, int line)
+void
+(*CRYPTO_get_locking_callback(void))(int mode, int type, const char *file,
+    int line)
 {
 	return (locking_callback);
 }
 
-int (*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
+int
+(*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
     const char *file, int line)
 {
 	return (add_lock_callback);
@@ -527,23 +537,23 @@ CRYPTO_lock(int mode, int type, const char *file, int line)
 		char *rw_text, *operation_text;
 
 		if (mode & CRYPTO_LOCK)
-			operation_text="lock  ";
+			operation_text = "lock  ";
 		else if (mode & CRYPTO_UNLOCK)
-			operation_text="unlock";
+			operation_text = "unlock";
 		else
-			operation_text="ERROR ";
+			operation_text = "ERROR ";
 
 		if (mode & CRYPTO_READ)
-			rw_text="r";
+			rw_text = "r";
 		else if (mode & CRYPTO_WRITE)
-			rw_text="w";
+			rw_text = "w";
 		else
-			rw_text="ERROR";
+			rw_text = "ERROR";
 
 		CRYPTO_THREADID_current(&id);
 		fprintf(stderr, "lock:%08lx:(%s)%s %-18s %s:%d\n",
-		CRYPTO_THREADID_hash(&id), rw_text, operation_text,
-		CRYPTO_get_lock_name(type), file, line);
+		    CRYPTO_THREADID_hash(&id), rw_text, operation_text,
+		    CRYPTO_get_lock_name(type), file, line);
 	}
 #endif
 	if (type < 0) {
@@ -578,9 +588,9 @@ CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 			CRYPTO_THREADID id;
 			CRYPTO_THREADID_current(&id);
 			fprintf(stderr, "ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_THREADID_hash(&id), before, amount, ret,
-			CRYPTO_get_lock_name(type),
-			file, line);
+			    CRYPTO_THREADID_hash(&id), before, amount, ret,
+			    CRYPTO_get_lock_name(type),
+			    file, line);
 		}
 #endif
 	} else {
@@ -592,10 +602,8 @@ CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 			CRYPTO_THREADID id;
 			CRYPTO_THREADID_current(&id);
 			fprintf(stderr, "ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_THREADID_hash(&id),
-			*pointer, amount, ret,
-			CRYPTO_get_lock_name(type),
-			file, line);
+			    CRYPTO_THREADID_hash(&id), *pointer, amount, ret,
+			    CRYPTO_get_lock_name(type), file, line);
 		}
 #endif
 		*pointer = ret;
@@ -614,7 +622,8 @@ CRYPTO_get_lock_name(int type)
 	else if (type - CRYPTO_NUM_LOCKS > sk_OPENSSL_STRING_num(app_locks))
 		return("ERROR");
 	else
-		return (sk_OPENSSL_STRING_value(app_locks, type - CRYPTO_NUM_LOCKS));
+		return (sk_OPENSSL_STRING_value(app_locks,
+		    type - CRYPTO_NUM_LOCKS));
 }
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -651,26 +660,29 @@ OPENSSL_cpuid_setup(void)
 
 	trigger = 1;
 	if ((env = getenv("OPENSSL_ia32cap"))) {
-		int off = (env[0]=='~') ? 1 : 0;
+		int off = (env[0] == '~') ? 1 : 0;
 		if (!sscanf(env+off, "%lli",(long long *)&vec))
-			vec = strtoul(env+off, NULL, 0);
+			vec = strtoul(env + off, NULL, 0);
 		if (off)
-			vec = OPENSSL_ia32_cpuid()&~vec;
+			vec = OPENSSL_ia32_cpuid() & ~vec;
 	} else
 		vec = OPENSSL_ia32_cpuid();
 
-    /*
-     * |(1<<10) sets a reserved bit to signal that variable
-     * was initialized already... This is to avoid interference
-     * with cpuid snippets in ELF .init segment.
-     */
-	OPENSSL_ia32cap_P[0] = (unsigned int)vec|(1 << 10);
+	/*
+	 * |(1<<10) sets a reserved bit to signal that variable
+	 * was initialized already... This is to avoid interference
+	 * with cpuid snippets in ELF .init segment.
+	 */
+	OPENSSL_ia32cap_P[0] = (unsigned int)vec | (1 << 10);
 	OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
 #endif
 
 #else
-	unsigned long *OPENSSL_ia32cap_loc(void) { return NULL;
+unsigned long *
+OPENSSL_ia32cap_loc(void)
+{
+	return NULL;
 }
 #endif
 int OPENSSL_NONPIC_relocated = 0;
