@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.120 2014/04/18 13:55:26 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.121 2014/04/20 14:48:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -226,6 +226,8 @@ main(int argc, char *argv[])
 
 	ps->ps_instances[PROC_RELAY] = env->sc_prefork_relay;
 	ps->ps_instances[PROC_CA] = env->sc_prefork_relay;
+	ps->ps_ninstances = env->sc_prefork_relay;
+
 	proc_init(ps, procs, nitems(procs));
 
 	setproctitle("parent");
@@ -244,7 +246,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsighup, NULL);
 	signal_add(&ps->ps_evsigpipe, NULL);
 
-	proc_config(ps, procs, nitems(procs));
+	proc_listen(ps, procs, nitems(procs));
 
 	if (load_config(env->sc_conffile, env) == -1) {
 		proc_kill(env->sc_ps);

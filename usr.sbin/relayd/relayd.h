@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.175 2014/04/18 13:55:26 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.176 2014/04/20 14:48:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -860,14 +860,21 @@ enum privsep_procid {
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_PFE
 
+struct privsep_pipes {
+	int				*pp_pipes[PROC_MAX];
+};
+
 struct privsep {
-	int				*ps_pipes[PROC_MAX][PROC_MAX];
+	struct privsep_pipes		*ps_pipes[PROC_MAX];
+	struct privsep_pipes		*ps_pp;
+
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
 	pid_t				 ps_pid[PROC_MAX];
 	u_int8_t			 ps_what[PROC_MAX];
 
 	u_int				 ps_instances[PROC_MAX];
+	u_int				 ps_ninstances;
 	u_int				 ps_instance;
 
 	struct control_sock		 ps_csock;
@@ -1178,8 +1185,7 @@ __dead void fatalx(const char *);
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_kill(struct privsep *);
-void	 proc_clear(struct privsep *, int);
-void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
 void	 proc_dispatch(int, short event, void *);
 pid_t	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
