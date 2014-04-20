@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.15 2014/04/03 04:02:50 dlg Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.16 2014/04/20 00:50:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -245,17 +245,16 @@ hds_status_done(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct hds_softc *sc = link->device_softc;
 	struct hds_vpd *vpd = sc->sc_vpd;
-	int status;
+	int status = MPATH_S_UNKNOWN;
+
+	if (xs->error == XS_NOERROR &&
+	    _2btol(vpd->hdr.page_length) >= sizeof(vpd->state) &&
+	    ISSET(vpd->state, HDS_VPD_VALID)) {
+		status = ISSET(vpd->state, HDS_VPD_PREFERRED) ?
+		    MPATH_S_ACTIVE : MPATH_S_PASSIVE;
+	}
 
 	scsi_xs_put(xs);
-
-	if (_2btol(vpd->hdr.page_length) < sizeof(vpd->state) ||
-	    !ISSET(vpd->state, HDS_VPD_VALID))
-		status = MPATH_S_UNKNOWN;
-	else if (ISSET(vpd->state, HDS_VPD_PREFERRED))
-		status = MPATH_S_ACTIVE;
-	else
-		status = MPATH_S_PASSIVE;
 
 	mpath_path_status(&sc->sc_path, status);
 }
