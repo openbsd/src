@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.368 2014/04/07 08:27:23 brad Exp $
+#	$OpenBSD: GENERIC,v 1.369 2014/04/20 00:08:26 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -383,7 +383,7 @@ ses*	at scsibus?			# SCSI enclosure services
 uk*	at scsibus?			# unknown SCSI
 
 mpath0	at root
-#emc*	at scsibus?
+emc*	at scsibus?
 hds*	at scsibus?
 rdac*	at scsibus?
 sym*	at scsibus?

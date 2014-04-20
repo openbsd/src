@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.162 2014/04/08 02:25:32 brad Exp $
+#	$OpenBSD: GENERIC,v 1.163 2014/04/20 00:08:26 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -359,7 +359,7 @@ ses*	at scsibus?
 uk*	at scsibus?
 
 mpath0	at root
-#emc*	at scsibus?
+emc*	at scsibus?
 hds*	at scsibus?
 rdac*	at scsibus?
 sym*	at scsibus?
