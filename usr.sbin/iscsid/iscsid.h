@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.10 2014/04/07 19:55:46 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.11 2014/04/20 22:18:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -53,6 +53,7 @@ struct ctrlmsghdr {
 #define CTRL_INITIATOR_CONFIG	4
 #define CTRL_SESSION_CONFIG	5
 #define CTRL_LOG_VERBOSE	6
+#define CTRL_VSCSI_STATS	7
 
 
 TAILQ_HEAD(session_head, session);
@@ -271,6 +272,19 @@ struct kvp {
 #define KVP_KEY_ALLOCED		0x01
 #define KVP_VALUE_ALLOCED	0x02
 
+struct vscsi_stats {
+	u_int64_t	bytes_rd;
+	u_int64_t	bytes_wr;
+	u_int64_t	cnt_read;
+	u_int64_t	cnt_write;
+	u_int64_t	cnt_i2t;
+	u_int64_t	cnt_i2t_dir[3];
+	u_int64_t	cnt_t2i;
+	u_int64_t	cnt_t2i_status[3];
+	u_int32_t	cnt_probe;
+	u_int32_t	cnt_detach;
+};
+
 extern const struct session_params iscsi_sess_defaults;
 extern const struct connection_params iscsi_conn_defaults;
 extern struct session_params initiator_sess_defaults;
@@ -356,3 +370,4 @@ void	vscsi_dispatch(int, short, void *);
 void	vscsi_data(unsigned long, int, void *, size_t);
 void	vscsi_status(int, int, void *, size_t);
 void	vscsi_event(unsigned long, u_int, u_int);
+struct vscsi_stats *vscsi_stats(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.9 2014/04/19 18:31:33 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.10 2014/04/20 22:18:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>	/* for nitems */
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -35,8 +36,9 @@
 #include "log.h"
 
 struct vscsi {
-	struct event	ev;
-	int		fd;
+	struct event		ev;
+	int			fd;
+	struct vscsi_stats	stats;
 } v;
 
 struct scsi_task {
@@ -81,6 +83,10 @@ vscsi_dispatch(int fd, short event, void *arg)
 
 	if (ioctl(v.fd, VSCSI_I2T, &i2t) == -1)
 		fatal("vscsi_dispatch");
+
+	v.stats.cnt_i2t++;
+	if (i2t.direction < (int)nitems(v.stats.cnt_i2t_dir))
+		v.stats.cnt_i2t_dir[i2t.direction]++;
 
 	s = initiator_t2s(i2t.target);
 	if (s == NULL)
@@ -131,11 +137,19 @@ vscsi_dispatch(int fd, short event, void *arg)
 	session_task_issue(s, &t->task);
 }
 
+/* read / write data to vscsi */
 void
 vscsi_data(unsigned long req, int tag, void *buf, size_t len)
 {
 	struct vscsi_ioc_data data;
 
+	if (req == VSCSI_DATA_READ) {
+		v.stats.cnt_read++;
+		v.stats.bytes_rd += len;
+	} else if (req == VSCSI_DATA_WRITE) {
+		v.stats.cnt_write++;
+		v.stats.bytes_wr += len;
+	}
 	data.tag = tag;
 	data.data = buf;
 	data.datalen = len;
@@ -148,6 +162,10 @@ void
 vscsi_status(int tag, int status, void *buf, size_t len)
 {
 	struct vscsi_ioc_t2i t2i;
+
+	v.stats.cnt_t2i++;
+	if (status < (int)nitems(v.stats.cnt_t2i_status))
+		v.stats.cnt_t2i_status[status]++;
 
 	bzero(&t2i, sizeof(t2i));
 	t2i.tag = tag;
@@ -166,6 +184,11 @@ void
 vscsi_event(unsigned long req, u_int target, u_int lun)
 {
 	struct vscsi_ioc_devevent devev;
+
+	if (req == VSCSI_REQPROBE)
+		v.stats.cnt_probe++;
+	else if (req == VSCSI_REQDETACH)
+		v.stats.cnt_detach++;
 
 	devev.target = target;
 	devev.lun = lun;
@@ -302,4 +325,10 @@ vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
 		task_pdu_add(&t->task, p);
 	}
 	conn_task_issue(c, &t->task);
+}
+
+struct vscsi_stats *
+vscsi_stats(void)
+{
+	return &v.stats;
 }

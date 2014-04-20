@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.11 2014/04/20 12:22:16 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.12 2014/04/20 22:18:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -264,6 +264,10 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		valp = pdu_getbuf(pdu, NULL, 1);
 		log_verbose(*valp);
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
+		break;
+	case CTRL_VSCSI_STATS:
+		control_compose(ch, CTRL_VSCSI_STATS, vscsi_stats(),
+		    sizeof(struct vscsi_stats));
 		break;
 	default:
 		log_warnx("unknown control message type %d", cmh->type);
