@@ -1,4 +1,4 @@
-/* $OpenBSD: umac.c,v 1.8 2013/11/08 00:39:15 djm Exp $ */
+/* $OpenBSD: umac.c,v 1.9 2014/04/20 02:30:25 djm Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -65,12 +65,14 @@
 
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
 
 #include "xmalloc.h"
 #include "umac.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include "misc.h"
 
 /* ---------------------------------------------------------------------- */
 /* --- Primitive Data Types ---                                           */
@@ -123,37 +125,20 @@ typedef unsigned int	UWORD;  /* Register */
 /* --- Endian Conversion --- Forcing assembly on some platforms           */
 /* ---------------------------------------------------------------------- */
 
-#if 0
-static UINT32 LOAD_UINT32_REVERSED(const void *ptr)
-{
-    UINT32 temp = *(const UINT32 *)ptr;
-    temp = (temp >> 24) | ((temp & 0x00FF0000) >> 8 )
-         | ((temp & 0x0000FF00) << 8 ) | (temp << 24);
-    return (UINT32)temp;
-}
-
-static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
-{
-    UINT32 i = (UINT32)x;
-    *(UINT32 *)ptr = (i >> 24) | ((i & 0x00FF0000) >> 8 )
-                   | ((i & 0x0000FF00) << 8 ) | (i << 24);
-}
-#endif
-
 /* The following definitions use the above reversal-primitives to do the right
  * thing on endian specific load and stores.
  */
 
-#define LOAD_UINT32_REVERSED(p)		(swap32(*(const UINT32 *)(p)))
-#define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = swap32(v))
-
-#if (__LITTLE_ENDIAN__)
-#define LOAD_UINT32_LITTLE(ptr)     (*(const UINT32 *)(ptr))
-#define STORE_UINT32_BIG(ptr,x)     STORE_UINT32_REVERSED(ptr,x)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define LOAD_UINT32_REVERSED(p)		get_u32(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32(p,v)
 #else
-#define LOAD_UINT32_LITTLE(ptr)     LOAD_UINT32_REVERSED(ptr)
-#define STORE_UINT32_BIG(ptr,x)     (*(UINT32 *)(ptr) = (UINT32)(x))
+#define LOAD_UINT32_REVERSED(p)		get_u32_le(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32_le(p,v)
 #endif
+
+#define LOAD_UINT32_LITTLE(p)           (get_u32_le(p))
+#define STORE_UINT32_BIG(p,v)           put_u32(p, v)
 
 
 
