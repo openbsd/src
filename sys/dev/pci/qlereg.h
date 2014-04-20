@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlereg.h,v 1.8 2014/04/18 05:08:15 jmatthew Exp $ */
+/*	$OpenBSD: qlereg.h,v 1.9 2014/04/20 09:49:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -350,6 +350,12 @@ struct qle_get_port_db {
 	u_int64_t	node_name;
 	u_int8_t	reserved3[24];
 } __packed __aligned(4);
+
+struct qle_port_name_list {
+	u_int64_t	port_name;
+	u_int16_t	loopid;
+	u_int16_t	reserved;
+} __packed;
 
 #define QLE_SVC3_TARGET_ROLE		0x0010
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.25 2014/04/18 05:08:15 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.26 2014/04/20 09:49:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -196,15 +196,15 @@ struct qle_softc {
 	int			sc_update_tasks;
 #define	QLE_UPDATE_TASK_CLEAR_ALL	0x00000001
 #define QLE_UPDATE_TASK_SOFTRESET	0x00000002
-#define QLE_UPDATE_TASK_DETACH_TARGET	0x00000004
-#define QLE_UPDATE_TASK_ATTACH_TARGET	0x00000008
-#define QLE_UPDATE_TASK_UPDATE_TOPO	0x00000010
-#define QLE_UPDATE_TASK_SCAN_LOOP	0x00000020
-#define QLE_UPDATE_TASK_SCANNING_LOOP	0x00000040
-#define QLE_UPDATE_TASK_SCAN_FABRIC	0x00000080
-#define QLE_UPDATE_TASK_SCANNING_FABRIC	0x00000100
-#define QLE_UPDATE_TASK_FABRIC_LOGIN	0x00000200
-#define QLE_UPDATE_TASK_FABRIC_RELOGIN	0x00000400
+#define QLE_UPDATE_TASK_UPDATE_TOPO	0x00000004
+#define QLE_UPDATE_TASK_GET_PORT_LIST	0x00000008
+#define QLE_UPDATE_TASK_PORT_LIST	0x00000010
+#define QLE_UPDATE_TASK_SCAN_FABRIC	0x00000020
+#define QLE_UPDATE_TASK_SCANNING_FABRIC	0x00000040
+#define QLE_UPDATE_TASK_FABRIC_LOGIN	0x00000080
+#define QLE_UPDATE_TASK_FABRIC_RELOGIN	0x00000100
+#define QLE_UPDATE_TASK_DETACH_TARGET	0x00000200
+#define QLE_UPDATE_TASK_ATTACH_TARGET	0x00000400
 
 	int			sc_maxcmds;
 	struct qle_dmamem	*sc_requests;
@@ -287,13 +287,13 @@ struct qle_fc_port *qle_next_fabric_port(struct qle_softc *, u_int32_t *,
 		    u_int32_t *);
 int		qle_get_port_db(struct qle_softc *, u_int16_t,
 		    struct qle_dmamem *);
-int		qle_add_loop_port(struct qle_softc *, u_int16_t);
+int		qle_get_port_name_list(struct qle_softc *sc, u_int32_t);
+int		qle_add_loop_port(struct qle_softc *, struct qle_fc_port *);
 int		qle_add_fabric_port(struct qle_softc *, struct qle_fc_port *);
 int		qle_classify_port(struct qle_softc *, u_int32_t, u_int64_t,
 		    u_int64_t, struct qle_fc_port **);
 int		qle_get_loop_id(struct qle_softc *sc);
 void		qle_clear_port_lists(struct qle_softc *);
-void		qle_ports_gone(struct qle_softc *, u_int32_t);
 int		qle_softreset(struct qle_softc *);
 void		qle_update_topology(struct qle_softc *);
 int		qle_update_fabric(struct qle_softc *);
@@ -735,7 +735,7 @@ qle_classify_port(struct qle_softc *sc, u_int32_t location,
 		return (QLE_PORT_DISP_NEW);
 	}
 
-	TAILQ_FOREACH(port, &sc->sc_ports_gone, update) {
+	TAILQ_FOREACH(port, &sc->sc_ports, ports) {
 		if (port->location == location)
 			locmatch = port;
 
@@ -794,31 +794,95 @@ qle_get_port_db(struct qle_softc *sc, u_int16_t loopid, struct qle_dmamem *mem)
 }
 
 int
-qle_add_loop_port(struct qle_softc *sc, u_int16_t loopid)
+qle_get_port_name_list(struct qle_softc *sc, u_int32_t match)
+{
+	struct qle_port_name_list *l;
+	struct qle_fc_port *port;
+	int i;
+
+	sc->sc_mbox[0] = QLE_MBOX_GET_PORT_NAME_LIST;
+	sc->sc_mbox[1] = 0;
+	sc->sc_mbox[8] = QLE_DMA_LEN(sc->sc_scratch);
+	sc->sc_mbox[9] = 0;
+	qle_mbox_putaddr(sc->sc_mbox, sc->sc_scratch);
+	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(sc->sc_scratch), 0,
+	    QLE_DMA_LEN(sc->sc_scratch), BUS_DMASYNC_PREREAD);
+	if (qle_mbox(sc, 0x03cf)) {
+		DPRINTF(QLE_D_PORT, "%s: get port name list failed: %x\n",
+		    DEVNAME(sc), sc->sc_mbox[0]);
+		return (1);
+	}
+	bus_dmamap_sync(sc->sc_dmat, QLE_DMA_MAP(sc->sc_scratch), 0,
+	    sc->sc_mbox[1], BUS_DMASYNC_POSTREAD);
+
+	i = 0;
+	l = QLE_DMA_KVA(sc->sc_scratch);
+	mtx_enter(&sc->sc_port_mtx);
+	while (i * sizeof(*l) < sc->sc_mbox[1]) {
+		u_int16_t loopid;
+		u_int32_t loc;
+
+		loopid = lemtoh16(&l[i].loopid) & 0xfff;
+		/* skip special ports */
+		switch (loopid) {
+		case QLE_F_PORT_HANDLE:
+		case QLE_SNS_HANDLE:
+		case QLE_FABRIC_CTRL_HANDLE:
+		case QLE_IP_BCAST_HANDLE:
+			loc = 0;
+			break;
+		default:
+			if (loopid <= sc->sc_loop_max_id) {
+				loc = QLE_LOCATION_LOOP_ID(loopid);
+			} else {
+				/*
+				 * we don't have the port id here, so just
+				 * indicate it's a fabric port.
+				 */
+				loc = QLE_LOCATION_FABRIC;
+			}
+			break;
+		}
+
+		if (match & loc) {
+			port = malloc(sizeof(*port), M_DEVBUF, M_ZERO |
+			    M_NOWAIT);
+			if (port == NULL) {
+				printf("%s: failed to allocate port struct\n",
+				    DEVNAME(sc));
+				break;
+			}
+			port->location = loc;
+			port->loopid = loopid;
+			port->port_name = letoh64(l[i].port_name);
+			DPRINTF(QLE_D_PORT, "%s: loop id %d, port name %llx\n",
+			    DEVNAME(sc), port->loopid, port->port_name);
+			TAILQ_INSERT_TAIL(&sc->sc_ports_found, port, update);
+		}
+		i++;
+	}
+	mtx_leave(&sc->sc_port_mtx);
+
+	return (0);
+}
+
+int
+qle_add_loop_port(struct qle_softc *sc, struct qle_fc_port *port)
 {
 	struct qle_get_port_db *pdb;
-	struct qle_fc_port *port, *pport;
+	struct qle_fc_port *pport;
 	int disp;
 
-	if (qle_get_port_db(sc, loopid, sc->sc_scratch) != 0) {
+	if (qle_get_port_db(sc, port->loopid, sc->sc_scratch) != 0) {
 		return (1);
 	}
 	pdb = QLE_DMA_KVA(sc->sc_scratch);
-
-	port = malloc(sizeof(*port), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (port == NULL) {
-		printf("%s: failed to allocate a port structure\n",
-		    DEVNAME(sc));
-		return (1);
-	}
 
 	if (lemtoh16(&pdb->prli_svc_word3) & QLE_SVC3_TARGET_ROLE)
 		port->flags |= QLE_PORT_FLAG_IS_TARGET;
 
 	port->port_name = betoh64(pdb->port_name);
 	port->node_name = betoh64(pdb->node_name);
-	port->location = QLE_LOCATION_LOOP_ID(loopid);
-	port->loopid = loopid;
 	port->portid = (pdb->port_id[0] << 16) | (pdb->port_id[1] << 8) |
 	    pdb->port_id[2];
 
@@ -830,7 +894,7 @@ qle_add_loop_port(struct qle_softc *sc, u_int16_t loopid)
 	case QLE_PORT_DISP_MOVED:
 	case QLE_PORT_DISP_NEW:
 		TAILQ_INSERT_TAIL(&sc->sc_ports_new, port, update);
-		sc->sc_targets[loopid] = port;
+		sc->sc_targets[port->loopid] = port;
 		break;
 	case QLE_PORT_DISP_DUP:
 		free(port, M_DEVBUF);
@@ -848,7 +912,8 @@ qle_add_loop_port(struct qle_softc *sc, u_int16_t loopid)
 	case QLE_PORT_DISP_NEW:
 		DPRINTF(QLE_D_PORT, "%s: %s %d; name %llx\n",
 		    DEVNAME(sc), ISSET(port->flags, QLE_PORT_FLAG_IS_TARGET) ?
-		    "target" : "non-target", loopid, betoh64(pdb->port_name));
+		    "target" : "non-target", port->loopid,
+		    betoh64(pdb->port_name));
 		break;
 	default:
 		break;
@@ -870,7 +935,17 @@ qle_add_fabric_port(struct qle_softc *sc, struct qle_fc_port *port)
 	if (lemtoh16(&pdb->prli_svc_word3) & QLE_SVC3_TARGET_ROLE)
 		port->flags |= QLE_PORT_FLAG_IS_TARGET;
 
-	/* compare port and node name with what's in the port db now */
+	/*
+	 * if we only know about this port because qle_get_port_name_list
+	 * returned it, we don't have its port id or node name, so fill
+	 * those in and update its location.
+	 */
+	if (port->location == QLE_LOCATION_FABRIC) {
+		port->node_name = betoh64(pdb->node_name);
+		port->portid = (pdb->port_id[0] << 16) |
+		    (pdb->port_id[1] << 8) | pdb->port_id[2];
+		port->location = QLE_LOCATION_PORT_ID(port->portid);
+	}
 
 	mtx_enter(&sc->sc_port_mtx);
 	TAILQ_INSERT_TAIL(&sc->sc_ports_new, port, update);
@@ -1009,6 +1084,7 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 		case QLE_IOCB_STATUS_PORT_CHANGED:
 			DPRINTF(QLE_D_IO, "%s: dev gone\n", DEVNAME(sc));
 			xs->error = XS_SELTIMEOUT;
+			/* mark port as needing relogin? */
 			break;
 
 		default:
@@ -1490,16 +1566,6 @@ qle_clear_port_lists(struct qle_softc *sc)
 	}
 }
 
-void
-qle_ports_gone(struct qle_softc *sc, u_int32_t location)
-{
-	struct qle_fc_port *port;
-	TAILQ_FOREACH(port, &sc->sc_ports, ports) {
-		if ((port->location & location) != 0)
-			TAILQ_INSERT_TAIL(&sc->sc_ports_gone, port, update);
-	}
-}
-
 int
 qle_softreset(struct qle_softc *sc)
 {
@@ -1894,14 +1960,29 @@ qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
 	}
 
 	err = qle_fabric_plogx(sc, port, QLE_PLOGX_LOGIN, &info);
-	if (err == 0) {
-		DPRINTF(QLE_D_PORT, "%s: logged in to port %06x at %d\n",
+	switch (err) {
+	case 0:
+		DPRINTF(QLE_D_PORT, "%s: logged in to %06x as %d\n",
 		    DEVNAME(sc), port->portid, port->loopid);
 		port->flags &= ~QLE_PORT_FLAG_NEEDS_LOGIN;
 		return (0);
-	} else {
-		DPRINTF(QLE_D_PORT, "%s: error %x(%x) logging in to %06x\n",
-		    DEVNAME(sc), err, info, port->portid);
+
+	case QLE_PLOGX_ERROR_PORT_ID_USED:
+		DPRINTF(QLE_D_PORT, "%s: already logged in to %06x as %d\n",
+		    DEVNAME(sc), port->portid, info);
+		port->loopid = info;
+		return (0);
+
+	case QLE_PLOGX_ERROR_HANDLE_USED:
+		DPRINTF(QLE_D_PORT, "%s: handle %d used for port %06x\n",
+		    DEVNAME(sc), port->loopid, info);
+		/* now do something clever */
+		port->loopid = 0;
+		return (1);
+
+	default:
+		DPRINTF(QLE_D_PORT, "%s: error %x logging in to port %06x\n",
+		    DEVNAME(sc), err);
 		port->loopid = 0;
 		return (1);
 	}
@@ -1932,8 +2013,8 @@ void
 qle_do_update(void *xsc, void *x)
 {
 	struct qle_softc *sc = xsc;
-	int step, firstport, lastport;
-	struct qle_fc_port *port;
+	int firstport, lastport;
+	struct qle_fc_port *port, *fport;
 
 	DPRINTF(QLE_D_PORT, "%s: updating\n", DEVNAME(sc));
 	while (sc->sc_update_tasks != 0) {
@@ -1949,9 +2030,6 @@ qle_do_update(void *xsc, void *x)
 				port = TAILQ_FIRST(&sc->sc_ports);
 				TAILQ_REMOVE(&sc->sc_ports, port, ports);
 				TAILQ_INSERT_TAIL(&detach, port, ports);
-				if (port->flags & QLE_PORT_FLAG_IS_TARGET) {
-					sc->sc_targets[port->loopid] = NULL;
-				}
 			}
 			mtx_leave(&sc->sc_port_mtx);
 
@@ -1981,6 +2059,193 @@ qle_do_update(void *xsc, void *x)
 				    DEVNAME(sc));
 			}
 			qle_update_done(sc, QLE_UPDATE_TASK_SOFTRESET);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_UPDATE_TOPO) {
+			DPRINTF(QLE_D_PORT, "%s: updating topology\n",
+			    DEVNAME(sc));
+			qle_update_topology(sc);
+			qle_update_done(sc, QLE_UPDATE_TASK_UPDATE_TOPO);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_GET_PORT_LIST) {
+			DPRINTF(QLE_D_PORT, "%s: getting port name list\n",
+			    DEVNAME(sc));
+			mtx_enter(&sc->sc_port_mtx);
+			qle_clear_port_lists(sc);
+			mtx_leave(&sc->sc_port_mtx);
+
+			qle_get_port_name_list(sc, QLE_LOCATION_LOOP |
+			    QLE_LOCATION_FABRIC);
+			mtx_enter(&sc->sc_port_mtx);
+			TAILQ_FOREACH(port, &sc->sc_ports, ports) {
+				TAILQ_INSERT_TAIL(&sc->sc_ports_gone, port,
+				    update);
+				if (port->location & QLE_LOCATION_FABRIC) {
+					port->flags |=
+					    QLE_PORT_FLAG_NEEDS_LOGIN;
+				}
+			}
+
+			/* take care of ports that haven't changed first */
+			TAILQ_FOREACH(fport, &sc->sc_ports_found, update) {
+				port = sc->sc_targets[fport->loopid];
+				if (port == NULL || fport->port_name !=
+				    port->port_name) {
+					/* new or changed port, handled later */
+					continue;
+				}
+
+				/*
+				 * the port hasn't been logged out, which
+				 * means we don't need to log in again, and,
+				 * for loop ports, that the port still exists
+				 */
+				port->flags &= ~QLE_PORT_FLAG_NEEDS_LOGIN;
+				if (port->location & QLE_LOCATION_LOOP)
+					TAILQ_REMOVE(&sc->sc_ports_gone,
+					    port, update);
+
+				fport->location = 0;
+			}
+			mtx_leave(&sc->sc_port_mtx);
+			qle_update_start(sc, QLE_UPDATE_TASK_PORT_LIST);
+			qle_update_done(sc, QLE_UPDATE_TASK_GET_PORT_LIST);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_PORT_LIST) {
+			mtx_enter(&sc->sc_port_mtx);
+			fport = TAILQ_FIRST(&sc->sc_ports_found);
+			if (fport != NULL) {
+				TAILQ_REMOVE(&sc->sc_ports_found, fport,
+				    update);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (fport == NULL) {
+				DPRINTF(QLE_D_PORT, "%s: done with ports\n",
+				    DEVNAME(sc));
+				qle_update_done(sc,
+				    QLE_UPDATE_TASK_PORT_LIST);
+				qle_update_start(sc,
+				    QLE_UPDATE_TASK_ATTACH_TARGET |
+				    QLE_UPDATE_TASK_DETACH_TARGET);
+			} else if (fport->location & QLE_LOCATION_LOOP) {
+				DPRINTF(QLE_D_PORT, "%s: loop port %04x\n",
+				    DEVNAME(sc), fport->loopid);
+				if (qle_add_loop_port(sc, fport) != 0)
+					free(fport, M_DEVBUF);
+			} else if (fport->location & QLE_LOCATION_FABRIC) {
+				qle_add_fabric_port(sc, fport);
+			} else {
+				/* already processed */
+				free(fport, M_DEVBUF);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCAN_FABRIC) {
+			DPRINTF(QLE_D_PORT, "%s: starting fabric scan\n",
+			    DEVNAME(sc));
+			lastport = sc->sc_port_id;
+			firstport = 0xffffffff;
+			if (qle_update_fabric(sc))
+				qle_update_start(sc,
+				    QLE_UPDATE_TASK_SCANNING_FABRIC);
+
+			qle_update_done(sc, QLE_UPDATE_TASK_SCAN_FABRIC);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCANNING_FABRIC) {
+			fport = qle_next_fabric_port(sc, &firstport, &lastport);
+			if (fport != NULL) {
+				int disp;
+
+				mtx_enter(&sc->sc_port_mtx);
+				disp = qle_classify_port(sc, fport->location,
+				    fport->port_name, fport->node_name, &port);
+				switch (disp) {
+				case QLE_PORT_DISP_CHANGED:
+				case QLE_PORT_DISP_MOVED:
+					/* we'll log out the old port later */
+				case QLE_PORT_DISP_NEW:
+					DPRINTF(QLE_D_PORT, "%s: new port "
+					    "%06x\n", DEVNAME(sc),
+					    fport->portid);
+					TAILQ_INSERT_TAIL(&sc->sc_ports_found,
+					    fport, update);
+					break;
+				case QLE_PORT_DISP_DUP:
+					free(fport, M_DEVBUF);
+					break;
+				case QLE_PORT_DISP_SAME:
+					DPRINTF(QLE_D_PORT, "%s: existing port "
+					    " %06x\n", DEVNAME(sc),
+					    fport->portid);
+					TAILQ_REMOVE(&sc->sc_ports_gone, port,
+					    update);
+					free(fport, M_DEVBUF);
+					break;
+				}
+				mtx_leave(&sc->sc_port_mtx);
+			}
+			if (lastport == 0xffffffff) {
+				DPRINTF(QLE_D_PORT, "%s: finished\n",
+				    DEVNAME(sc));
+				qle_update_done(sc,
+				    QLE_UPDATE_TASK_SCANNING_FABRIC);
+				qle_update_start(sc,
+				    QLE_UPDATE_TASK_FABRIC_LOGIN);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_FABRIC_LOGIN) {
+			mtx_enter(&sc->sc_port_mtx);
+			port = TAILQ_FIRST(&sc->sc_ports_found);
+			if (port != NULL) {
+				TAILQ_REMOVE(&sc->sc_ports_found, port, update);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (port != NULL) {
+				DPRINTF(QLE_D_PORT, "%s: found port %06x\n",
+				    DEVNAME(sc), port->portid);
+				if (qle_fabric_plogi(sc, port) == 0) {
+					qle_add_fabric_port(sc, port);
+				} else {
+					DPRINTF(QLE_D_PORT, "%s: plogi %06x "
+					    "failed\n", DEVNAME(sc),
+					    port->portid);
+					free(port, M_DEVBUF);
+				}
+			} else {
+				DPRINTF(QLE_D_PORT, "%s: done with logins\n",
+				    DEVNAME(sc));
+				qle_update_done(sc,
+				    QLE_UPDATE_TASK_FABRIC_LOGIN);
+				qle_update_start(sc,
+				    QLE_UPDATE_TASK_ATTACH_TARGET |
+				    QLE_UPDATE_TASK_DETACH_TARGET);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLE_UPDATE_TASK_FABRIC_RELOGIN) {
+			TAILQ_FOREACH(port, &sc->sc_ports, ports) {
+				if (port->flags & QLE_PORT_FLAG_NEEDS_LOGIN) {
+					qle_fabric_plogi(sc, port);
+					break;
+				}
+			}
+
+			if (port == TAILQ_END(&sc->sc_ports))
+				qle_update_done(sc,
+				    QLE_UPDATE_TASK_FABRIC_RELOGIN);
 			continue;
 		}
 
@@ -2034,138 +2299,6 @@ qle_do_update(void *xsc, void *x)
 			continue;
 		}
 
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_UPDATE_TOPO) {
-			DPRINTF(QLE_D_PORT, "%s: updating topology\n",
-			    DEVNAME(sc));
-			qle_update_topology(sc);
-			qle_update_done(sc, QLE_UPDATE_TASK_UPDATE_TOPO);
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCAN_LOOP) {
-			DPRINTF(QLE_D_PORT, "%s: starting loop scan\n",
-			    DEVNAME(sc));
-			qle_clear_port_lists(sc);
-			qle_update_start(sc, QLE_UPDATE_TASK_SCANNING_LOOP);
-			qle_update_done(sc, QLE_UPDATE_TASK_SCAN_LOOP);
-			step = 0;
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCANNING_LOOP) {
-			DPRINTF(QLE_D_PORT, "%s: scanning loop id %d\n",
-			    DEVNAME(sc), step);
-			qle_add_loop_port(sc, step);
-			if (step == sc->sc_loop_max_id) {
-				qle_update_done(sc,
-				    QLE_UPDATE_TASK_SCANNING_LOOP);
-				qle_update_start(sc,
-				    QLE_UPDATE_TASK_ATTACH_TARGET |
-				    QLE_UPDATE_TASK_DETACH_TARGET);
-			} else {
-				step++;
-			}
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCAN_FABRIC) {
-			DPRINTF(QLE_D_PORT, "%s: starting fabric scan\n",
-			    DEVNAME(sc));
-			qle_clear_port_lists(sc);
-			qle_ports_gone(sc, QLE_LOCATION_FABRIC);
-			lastport = sc->sc_port_id;
-			firstport = 0xffffffff;
-			step = 0;
-			if (qle_update_fabric(sc))
-				qle_update_start(sc,
-				    QLE_UPDATE_TASK_SCANNING_FABRIC);
-
-			qle_update_done(sc, QLE_UPDATE_TASK_SCAN_FABRIC);
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_SCANNING_FABRIC) {
-			port = qle_next_fabric_port(sc, &firstport, &lastport);
-			if (port != NULL) {
-				struct qle_fc_port *pport = NULL;
-				int disp;
-
-				mtx_enter(&sc->sc_port_mtx);
-				disp = qle_classify_port(sc, port->location,
-				    port->port_name, port->node_name, &pport);
-				switch (disp) {
-				case QLE_PORT_DISP_CHANGED:
-				case QLE_PORT_DISP_MOVED:
-					/* pport cleaned up later */
-				case QLE_PORT_DISP_NEW:
-					DPRINTF(QLE_D_PORT, "%s: new port "
-					    "%06x\n", DEVNAME(sc), port->portid);
-					TAILQ_INSERT_TAIL(&sc->sc_ports_found,
-					    port, update);
-					break;
-				case QLE_PORT_DISP_DUP:
-					free(port, M_DEVBUF);
-					port = NULL;
-					break;
-				case QLE_PORT_DISP_SAME:
-					DPRINTF(QLE_D_PORT, "%s: existing port "
-					    " %06x\n", DEVNAME(sc),
-					    port->portid);
-					TAILQ_REMOVE(&sc->sc_ports_gone, pport,
-					    update);
-					free(port, M_DEVBUF);
-					port = NULL;
-					break;
-				}
-				mtx_leave(&sc->sc_port_mtx);
-			}
-			if (lastport == 0xffffffff) {
-				DPRINTF(QLE_D_PORT, "%s: finished\n",
-				    DEVNAME(sc));
-				qle_update_done(sc,
-				    QLE_UPDATE_TASK_SCANNING_FABRIC);
-				qle_update_start(sc,
-				    QLE_UPDATE_TASK_FABRIC_LOGIN);
-			}
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_FABRIC_LOGIN) {
-			mtx_enter(&sc->sc_port_mtx);
-			port = TAILQ_FIRST(&sc->sc_ports_found);
-			if (port != NULL) {
-				TAILQ_REMOVE(&sc->sc_ports_found, port, update);
-			}
-			mtx_leave(&sc->sc_port_mtx);
-
-			if (port != NULL) {
-				DPRINTF(QLE_D_PORT, "%s: found port %06x\n",
-				    DEVNAME(sc), port->portid);
-				if (qle_fabric_plogi(sc, port) == 0) {
-					qle_add_fabric_port(sc, port);
-				} else {
-					DPRINTF(QLE_D_PORT, "%s: plogi %06x "
-					    "failed\n", DEVNAME(sc),
-					    port->portid);
-					free(port, M_DEVBUF);
-				}
-			} else {
-				DPRINTF(QLE_D_PORT, "%s: done with logins\n",
-				    DEVNAME(sc));
-				qle_update_done(sc,
-				    QLE_UPDATE_TASK_FABRIC_LOGIN);
-				qle_update_start(sc,
-				    QLE_UPDATE_TASK_ATTACH_TARGET |
-				    QLE_UPDATE_TASK_DETACH_TARGET);
-			}
-			continue;
-		}
-
-		if (sc->sc_update_tasks & QLE_UPDATE_TASK_FABRIC_RELOGIN) {
-			/* loop across all fabric targets and redo login */
-			qle_update_done(sc, QLE_UPDATE_TASK_FABRIC_RELOGIN);
-			continue;
-		}
 	}
 
 	DPRINTF(QLE_D_PORT, "%s: done updating\n", DEVNAME(sc));
@@ -2196,7 +2329,7 @@ qle_async(struct qle_softc *sc, u_int16_t info)
 		sc->sc_loop_up = 1;
 		sc->sc_marker_required = 1;
 		qle_update_start(sc, QLE_UPDATE_TASK_UPDATE_TOPO |
-		    QLE_UPDATE_TASK_SCAN_LOOP |
+		    QLE_UPDATE_TASK_GET_PORT_LIST |
 		    QLE_UPDATE_TASK_SCAN_FABRIC);
 		break;
 
@@ -2215,13 +2348,15 @@ qle_async(struct qle_softc *sc, u_int16_t info)
 	case QLE_ASYNC_PORT_DB_CHANGE:
 		DPRINTF(QLE_D_PORT, "%s: port db changed %x\n", DEVNAME(sc),
 		    qle_read_mbox(sc, 1));
-		qle_update_start(sc, QLE_UPDATE_TASK_SCAN_LOOP);
+		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST |
+		    QLE_UPDATE_TASK_SCAN_FABRIC);
 		break;
 
 	case QLE_ASYNC_CHANGE_NOTIFY:
 		DPRINTF(QLE_D_PORT, "%s: name server change (%02x:%02x)\n",
 		    DEVNAME(sc), qle_read_mbox(sc, 1), qle_read_mbox(sc, 2));
-		qle_update_start(sc, QLE_UPDATE_TASK_SCAN_FABRIC);
+		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST |
+		    QLE_UPDATE_TASK_SCAN_FABRIC);
 		break;
 
 	case QLE_ASYNC_LIP_F8:
