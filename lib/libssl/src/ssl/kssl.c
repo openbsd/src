@@ -85,21 +85,8 @@
 #endif
 
 
-/* memory allocation functions for non-temporary storage
- * (e.g. stuff that gets saved into the kssl context) */
-static void*
-kssl_calloc(size_t nmemb, size_t size)
-{
-	void* p;
-
-	p = malloc(nmemb*size);
-	if (p){
-		memset(p, 0, nmemb*size);
-	}
-	return p;
-}
-
 #define kssl_malloc(size) malloc((size))
+#define kssl_calloc(nmemb, size) calloc(nmemb, size)
 #define kssl_realloc(ptr, size) realloc(ptr, size)
 #define kssl_free(ptr) free((ptr))
 
