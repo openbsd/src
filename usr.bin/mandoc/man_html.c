@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.52 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.53 2014/04/20 20:17:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "html.h"
 #include "man.h"
@@ -296,9 +297,10 @@ a2width(const struct man_node *n, struct roffsu *su)
 static void
 man_root_pre(MAN_ARGS)
 {
+	char		 b[BUFSIZ];
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		 b[BUFSIZ], title[BUFSIZ];
+	char		*title;
 
 	b[0] = 0;
 	if (man->vol)
@@ -306,7 +308,7 @@ man_root_pre(MAN_ARGS)
 
 	assert(man->title);
 	assert(man->msec);
-	snprintf(title, BUFSIZ - 1, "%s(%s)", man->title, man->msec);
+	mandoc_asprintf(&title, "%s(%s)", man->title, man->msec);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");
@@ -337,6 +339,7 @@ man_root_pre(MAN_ARGS)
 	print_otag(h, TAG_TD, 2, tag);
 	print_text(h, title);
 	print_tagq(h, t);
+	free(title);
 }
 
 static void

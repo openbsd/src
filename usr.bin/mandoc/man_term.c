@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.100 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.101 2014/04/20 20:17:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "man.h"
 #include "term.h"
@@ -1045,9 +1046,9 @@ print_man_nodelist(DECL_ARGS)
 static void
 print_man_foot(struct termp *p, const void *arg)
 {
-	char		title[BUFSIZ];
-	size_t		datelen;
-	const struct man_meta *meta;
+	const struct man_meta	*meta;
+	char			*title;
+	size_t			 datelen;
 
 	meta = (const struct man_meta *)arg;
 	assert(meta->title);
@@ -1067,11 +1068,12 @@ print_man_foot(struct termp *p, const void *arg)
 	if ( ! p->mdocstyle) {
 		term_vspace(p);
 		term_vspace(p);
-		snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+		mandoc_asprintf(&title, "%s(%s)",
+		    meta->title, meta->msec);
 	} else if (meta->source) {
-		strlcpy(title, meta->source, BUFSIZ);
+		title = mandoc_strdup(meta->source);
 	} else {
-		title[0] = '\0';
+		title = mandoc_strdup("");
 	}
 	datelen = term_strlen(p, meta->date);
 
@@ -1107,14 +1109,16 @@ print_man_foot(struct termp *p, const void *arg)
 
 	term_word(p, title);
 	term_flushln(p);
+	free(title);
 }
 
 static void
 print_man_head(struct termp *p, const void *arg)
 {
-	char		buf[BUFSIZ], title[BUFSIZ];
-	size_t		buflen, titlen;
-	const struct man_meta *meta;
+	char			 buf[BUFSIZ];
+	const struct man_meta	*meta;
+	char			*title;
+	size_t			 buflen, titlen;
 
 	meta = (const struct man_meta *)arg;
 	assert(meta->title);
@@ -1128,7 +1132,7 @@ print_man_head(struct termp *p, const void *arg)
 
 	/* Top left corner: manual title and section. */
 
-	snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
 	titlen = term_strlen(p, title);
 
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
@@ -1179,4 +1183,5 @@ print_man_head(struct termp *p, const void *arg)
 		term_vspace(p);
 		term_vspace(p);
 	}
+	free(title);
 }

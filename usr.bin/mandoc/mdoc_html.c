@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.71 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.72 2014/04/20 20:17:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "html.h"
 #include "mdoc.h"
@@ -510,9 +511,10 @@ mdoc_root_post(MDOC_ARGS)
 static int
 mdoc_root_pre(MDOC_ARGS)
 {
+	char		 b[BUFSIZ];
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		 b[BUFSIZ], title[BUFSIZ];
+	char		*title;
 
 	strlcpy(b, meta->vol, BUFSIZ);
 
@@ -522,7 +524,7 @@ mdoc_root_pre(MDOC_ARGS)
 		strlcat(b, ")", BUFSIZ);
 	}
 
-	snprintf(title, BUFSIZ - 1, "%s(%s)", meta->title, meta->msec);
+	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Header");
 	PAIR_CLASS_INIT(&tag[1], "head");
@@ -553,6 +555,8 @@ mdoc_root_pre(MDOC_ARGS)
 	print_otag(h, TAG_TD, 2, tag);
 	print_text(h, title);
 	print_tagq(h, t);
+
+	free(title);
 	return(1);
 }
 

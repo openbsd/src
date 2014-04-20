@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.167 2014/04/20 19:39:35 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.168 2014/04/20 20:17:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "mandoc_aux.h"
 #include "out.h"
 #include "term.h"
 #include "mdoc.h"
@@ -437,9 +438,10 @@ print_mdoc_foot(struct termp *p, const void *arg)
 static void
 print_mdoc_head(struct termp *p, const void *arg)
 {
-	char		buf[BUFSIZ], title[BUFSIZ];
-	size_t		buflen, titlen;
-	const struct mdoc_meta *meta;
+	char			 buf[BUFSIZ];
+	const struct mdoc_meta	*meta;
+	char			*title;
+	size_t			 buflen, titlen;
 
 	meta = (const struct mdoc_meta *)arg;
 
@@ -469,7 +471,7 @@ print_mdoc_head(struct termp *p, const void *arg)
 		strlcat(buf, ")", BUFSIZ);
 	}
 
-	snprintf(title, BUFSIZ, "%s(%s)", meta->title, meta->msec);
+	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
 	titlen = term_strlen(p, title);
 
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
@@ -504,6 +506,7 @@ print_mdoc_head(struct termp *p, const void *arg)
 	p->flags &= ~TERMP_NOSPACE;
 	p->offset = 0;
 	p->rmargin = p->maxrmargin;
+	free(title);
 }
 
 static size_t
