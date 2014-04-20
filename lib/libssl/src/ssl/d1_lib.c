@@ -100,8 +100,8 @@ dtls1_new(SSL *s)
 
 	if (!ssl3_new(s))
 		return (0);
-	if ((d1 = malloc(sizeof *d1)) == NULL) return (0);
-		memset(d1, 0, sizeof *d1);
+	if ((d1 = calloc(1, sizeof *d1)) == NULL)
+		return (0);
 
 	/* d1->handshake_epoch=0; */
 
