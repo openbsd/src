@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.5 2014/04/16 14:39:06 zhuk Exp $
+# $OpenBSD: Program.pm,v 1.6 2014/04/20 17:34:26 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -68,11 +68,11 @@ sub link
 		$dst = ($odir eq '.') ? $fname : "$odir/$fname";
 	}
 
-	tie(my @rpath_link, 'LT::UList');
+	my $rpath_link = LT::UList->new;
 	# add libdirs to rpath if they are not in standard lib path
 	for my $l (@$libdirs) {
 		if (LT::OSConfig->is_search_dir($l)) {
-			push @rpath_link, $l;
+			push @$rpath_link, $l;
 		} else {
 			push @$RPdirs, $l;
 		}
@@ -105,7 +105,7 @@ sub link
 		for my $d (@$RPdirs) {
 			push(@linkeropts, '-rpath', $d);
 		}
-		for my $d (@rpath_link) {
+		for my $d (@$rpath_link) {
 			push(@linkeropts, '-rpath-link', $d);
 		}
 	}

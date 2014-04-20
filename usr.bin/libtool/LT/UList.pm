@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.1 2014/04/16 10:31:27 zhuk Exp $
+# $OpenBSD: UList.pm,v 1.2 2014/04/20 17:34:26 zhuk Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -36,6 +36,14 @@ sub _translate_num_key($$;$) {
 		$_[1] += 1;
 	}
 	die "invalid index" if $_[1] - int($_[2] // 0) >= @{$_[0]};
+}
+
+# Construct new UList and returnes reference to the array,
+# not to the tied object itself.
+sub new {
+	my $class = shift;
+	tie(my @a, $class, @_);
+	return \@a;
 }
 
 # Given we have successfully added N directories:

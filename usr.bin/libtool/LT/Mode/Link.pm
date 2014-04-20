@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.27 2014/04/16 14:39:06 zhuk Exp $
+# $OpenBSD: Link.pm,v 1.28 2014/04/20 17:34:26 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -23,18 +23,19 @@ use feature qw(say);
 package LT::OSConfig;
 require LT::UList;
 
-my $search_dir_obj = tie(my @search_dir_list, 'LT::UList');
+my $search_dir_list = LT::UList->new;
+my $search_dir_obj = tied(@$search_dir_list);
 
 sub fillup_search_dirs
 {
-	return if @search_dir_list;
+	return if @$search_dir_list;
 	open(my $fh, '-|', '/sbin/ldconfig -r');
 	if (!defined $fh) {
 		die "Can't run ldconfig\n";
 	}
 	while (<$fh>) {
 		if (m/^\s*search directories:\s*(.*?)\s*$/o) {
-			push @search_dir_list, split(/\:/o, $1);
+			push @$search_dir_list, split(/\:/o, $1);
 			last;
 		}
 	}
@@ -45,7 +46,7 @@ sub search_dirs
 {
 	my $self = shift;
 	$self->fillup_search_dirs;
-	return @search_dir_list;
+	return @$search_dir_list;
 }
 
 sub is_search_dir
@@ -117,11 +118,10 @@ sub run
 
 	my $noshared  = $ltconfig->noshared;
 	my $cmd;
-	my $libdirs = [];			# list of libdirs
-	tie (@$libdirs, 'LT::UList');
+	my $libdirs = LT::UList->new;		# list of libdirs
 	my $libs = LT::Library::Stash->new;	# libraries
-	my $dirs = [];				# paths to find libraries
-	tie (@$dirs, 'LT::UList', '/usr/lib');	# always look here
+	my $dirs = LT::UList->new('/usr/lib');	# paths to search for libraries,
+						# /usr/lib is always there
 
 	$gp->handle_permuted_options(
 	    'all-static',
@@ -197,8 +197,7 @@ sub run
 	tsay {"objs = @objs"};
 	tsay {"sobjs = @sobjs"};
 
-	my $deplibs = [];	# list of dependent libraries (both -L and -l flags)
-	tie (@$deplibs, 'LT::UList');
+	my $deplibs = LT::UList->new;	# list of dependent libraries (both -L and -l flags)
 	my $parser = LT::Parser->new(\@ARGV);
 
 	if ($linkmode == PROGRAM) {
@@ -224,8 +223,7 @@ sub run
 				tsay {"hoping for real objects in ARGV..."};
 			}
 		}
-		tie(my @temp, 'LT::UList', @Ropts, @RPopts, $gp->Rresolved);
-		my $RPdirs = \@temp;
+		my $RPdirs = LT::UList->new(@Ropts, @RPopts, $gp->Rresolved);
 		$program->{RPdirs} = $RPdirs;
 
 		$program->link($ltprog, $ltconfig, $dirs, $libs, $deplibs, $libdirs, $parser, $gp);
@@ -447,10 +445,10 @@ sub build_cache
 {
 	my ($self, $lainfo, $level) = @_;
 	my $o = $lainfo->{cached} = {
-	    deplibs => [], libdirs => [], result => [] };
-	tie @{$o->{deplibs}}, 'LT::UList';
-	tie @{$o->{libdirs}}, 'LT::UList';
-	tie @{$o->{result}},  'LT::UList';
+	    deplibs => LT::UList->new,
+	    libdirs => LT::UList->new,
+	    result => LT::UList->new
+	};
 	$self->internal_resolve_la($o, $lainfo->deplib_list,
 	    $level+1);
 	push(@{$o->{deplibs}}, @{$lainfo->deplib_list});
@@ -744,8 +742,7 @@ sub create_symlinks
 		my $f = $l->{fullpath};
 		next if !defined $f;
 		next if $f =~ m/\.a$/;
-		my $libnames = [];
-		tie (@$libnames, 'LT::UList');
+		my $libnames = LT::UList->new;
 		if (defined $l->{lafile}) {
 			require LT::LaFile;
 			my $lainfo = LT::LaFile->parse($l->{lafile});
@@ -773,8 +770,7 @@ sub common1
 	my ($self, $parser, $gp, $deplibs, $libdirs, $dirs, $libs) = @_;
 
 	$parser->resolve_la($deplibs, $libdirs);
-	my $orderedlibs = [];
-	tie(@$orderedlibs, 'LT::UList');
+	my $orderedlibs = LT::UList->new;
 	my $staticlibs = [];
 	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs,
 	    $libs);
