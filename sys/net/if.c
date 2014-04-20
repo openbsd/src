@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.284 2014/04/19 12:27:59 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.285 2014/04/20 11:25:18 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1502,6 +1502,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #ifdef INET
 			in_ifdetach(ifp);
 #endif
+			/*
+			 * Remove sadl from ifa RB tree because rdomain is part
+			 * of the lookup key and re-add it after the switch.
+			 */
+			ifa_del(ifp, ifp->if_lladdr);
 			splx(s);
 		}
 
@@ -1512,6 +1517,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		/* Add interface to the specified rdomain */
 		ifp->if_rdomain = ifr->ifr_rdomainid;
+
+		/* re-add sadl to the ifa RB tree in new rdomain */
+		ifa_add(ifp, ifp->if_lladdr);
 		break;
 
 	case SIOCAIFGROUP:
