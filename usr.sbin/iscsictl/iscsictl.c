@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.4 2012/05/02 18:02:45 gsoares Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.5 2014/04/20 22:22:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -37,6 +37,7 @@ __dead void	 usage(void);
 void		 run_command(int, struct pdu *);
 struct pdu	*ctl_getpdu(char *, size_t);
 int		 ctl_sendpdu(int, struct pdu *);
+void		 show_vscsi_stats(struct ctrlmsghdr *, struct pdu *);
 
 char		cbuf[CONTROL_READ_SIZE];
 
@@ -122,6 +123,16 @@ main (int argc, char* argv[])
 	case SHOW_SUM:
 		usage();
 		/* NOTREACHED */
+	case SHOW_VSCSI_STATS:
+		if ((pdu = pdu_new()) == NULL)
+			err(1, "pdu_new");
+		if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
+			err(1, "pdu_alloc");
+		bzero(cmh, sizeof(*cmh));
+		cmh->type = CTRL_VSCSI_STATS;
+		pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
+		run_command(csock, pdu);
+		break;
 	case RELOAD:
 		if ((cf = parse_config(confname)) == NULL)
 			errx(1, "errors while loading configuration file.");
@@ -224,8 +235,8 @@ run_command(int csock, struct pdu *pdu)
 
 		pdu = ctl_getpdu(cbuf, n);
 		cmh = pdu_getbuf(pdu, NULL, 0);
-			if (cmh == NULL)
-				break;
+		if (cmh == NULL)
+			break;
 		switch (cmh->type) {
 		case CTRL_SUCCESS:
 			printf("command successful\n");
@@ -237,6 +248,10 @@ run_command(int csock, struct pdu *pdu)
 			break;
 		case CTRL_INPROGRESS:
 			printf("command in progress...\n");
+			break;
+		case CTRL_VSCSI_STATS:
+			show_vscsi_stats(cmh, pdu);
+			done = 1;
 			break;
 		}
 	}
@@ -307,4 +322,35 @@ ctl_sendpdu(int fd, struct pdu *pdu)
 	if (sendmsg(fd, &msg, 0) == -1)
 		return -1;
 	return 0;
+}
+
+void
+show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
+{
+	struct vscsi_stats *vs;
+
+	if (cmh->len[0] != sizeof(struct vscsi_stats))
+		errx(1, "bad size of response");
+	vs = pdu_getbuf(pdu, NULL, 1);
+		if (vs == NULL)
+			return;
+
+	printf("VSCSI ioctl statistics:\n");
+	printf("%u probe calls and %u detach calls\n",
+	    vs->cnt_probe, vs->cnt_detach);
+	printf("%llu I2T calls (%llu read, %llu writes)\n",
+	    vs->cnt_i2t,
+	    vs->cnt_i2t_dir[1], 
+	    vs->cnt_i2t_dir[2]);
+
+	printf("%llu data reads (%llu bytes read)\n",
+	    vs->cnt_read, vs->bytes_rd);
+	printf("%llu data writes (%llu bytes written)\n",
+	    vs->cnt_write, vs->bytes_wr);
+
+	printf("%llu T2I calls (%llu done, %llu sense errors, %llu errors)\n",
+	    vs->cnt_t2i,
+	    vs->cnt_t2i_status[0], 
+	    vs->cnt_t2i_status[1], 
+	    vs->cnt_t2i_status[2]);
 }

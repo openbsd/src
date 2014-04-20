@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.h,v 1.2 2011/04/27 19:20:01 claudio Exp $ */
+/*	$OpenBSD: iscsictl.h,v 1.3 2014/04/20 22:22:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -34,6 +34,7 @@ enum actions {
 	LOG_BRIEF,
 	SHOW,
 	SHOW_SUM,
+	SHOW_VSCSI_STATS,
 	RELOAD,
 	DISCOVERY
 };
