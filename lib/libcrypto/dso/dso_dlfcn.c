@@ -307,30 +307,24 @@ static char *
 dlfcn_name_converter(DSO *dso, const char *filename)
 {
 	char *translated;
-	int len, rsize, transform;
+	int ret;
 
-	len = strlen(filename);
-	rsize = len + 1;
-	transform = (strstr(filename, "/") == NULL);
-	if (transform) {
-		/* We will convert this to "%s.so" or "lib%s.so" etc */
-		rsize += DSO_extlen;	/* The length of ".so" */
+	if (strchr(filename, '/') == NULL) {
+		/* Bare name, so convert to "%s.so" or "lib%s.so" */
 		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-			rsize += 3; /* The length of "lib" */
+			ret = asprintf(&translated, "lib%s" DSO_ext, filename);
+		else
+			ret = asprintf(&translated, "%s" DSO_ext, filename);
+		if (ret == -1)
+			translated = NULL;
+	} else {
+		/* Full path, so just duplicate it */
+		translated = strdup(filename);
 	}
-	translated = malloc(rsize);
-	if (translated == NULL) {
+
+	if (translated == NULL)
 		DSOerr(DSO_F_DLFCN_NAME_CONVERTER,
 		    DSO_R_NAME_TRANSLATION_FAILED);
-		return (NULL);
-	}
-	if (transform) {
-		if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-			snprintf(translated, rsize, "lib%s" DSO_ext, filename);
-		else
-			snprintf(translated, rsize, "%s" DSO_ext, filename);
-	} else
-		snprintf(translated, rsize, "%s", filename);
 	return (translated);
 }
 
