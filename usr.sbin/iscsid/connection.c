@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.15 2014/04/20 18:17:12 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.16 2014/04/20 20:12:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -449,6 +449,7 @@ c_do_login(struct connection *c, enum c_event ev)
 int
 c_do_loggedin(struct connection *c, enum c_event ev)
 {
+	iscsi_merge_conn_params(&c->active, &c->mine, &c->his);
 	session_fsm(c->session, SESS_EV_CONN_LOGGED_IN, c);
 
 	return CONN_LOGGED_IN;

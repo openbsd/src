@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.5 2014/04/20 16:52:11 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.6 2014/04/20 20:12:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -297,10 +297,13 @@ sess_do_conn_loggedin(struct session *s, struct sessev *sev)
 	if (s->state & SESS_LOGGED_IN)
 		return SESS_LOGGED_IN;
 
-	if (s->config.SessionType == SESSION_TYPE_DISCOVERY)
+	if (s->config.SessionType == SESSION_TYPE_DISCOVERY) {
 		initiator_discovery(s);
-	else
-		vscsi_event(VSCSI_REQPROBE, s->target, -1);
+		return SESS_LOGGED_IN;
+	}
+
+	iscsi_merge_sess_params(&s->active, &s->mine, &s->his);
+	vscsi_event(VSCSI_REQPROBE, s->target, -1);
 
 	return SESS_LOGGED_IN;
 }
