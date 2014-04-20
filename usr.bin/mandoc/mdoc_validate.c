@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.129 2014/04/20 19:39:35 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.130 2014/04/20 20:48:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1040,34 +1040,25 @@ post_bf(POST_ARGS)
 static int
 post_lb(POST_ARGS)
 {
-	const char	*p;
-	char		*buf;
-	size_t		 sz;
+	struct mdoc_node	*n;
+	const char		*stdlibname;
+	char			*libname;
 
 	check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 1);
 
-	assert(mdoc->last->child);
-	assert(MDOC_TEXT == mdoc->last->child->type);
+	n = mdoc->last->child;
 
-	p = mdoc_a2lib(mdoc->last->child->string);
+	assert(n);
+	assert(MDOC_TEXT == n->type);
 
-	/* If lookup ok, replace with table value. */
+	if (NULL == (stdlibname = mdoc_a2lib(n->string)))
+		mandoc_asprintf(&libname,
+		    "library \\(lq%s\\(rq", n->string);
+	else
+		libname = mandoc_strdup(stdlibname);
 
-	if (p) {
-		free(mdoc->last->child->string);
-		mdoc->last->child->string = mandoc_strdup(p);
-		return(1);
-	}
-
-	/* If not, use "library ``xxxx''. */
-
-	sz = strlen(mdoc->last->child->string) + 2 +
-	     strlen("\\(lqlibrary\\(rq");
-	buf = mandoc_malloc(sz);
-	snprintf(buf, sz, "library \\(lq%s\\(rq",
-	    mdoc->last->child->string);
-	free(mdoc->last->child->string);
-	mdoc->last->child->string = buf;
+	free(n->string);
+	n->string = libname;
 	return(1);
 }
 
