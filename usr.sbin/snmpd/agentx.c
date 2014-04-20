@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.2 2014/04/14 15:11:24 andre Exp $    */
+/*      $OpenBSD: agentx.c,v 1.3 2014/04/20 09:29:22 reyk Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -678,7 +678,7 @@ snmp_agentx_octetstring(struct agentx_pdu *pdu, char *str, int len)
 	padding = ((len + 3) & ~0x03) - len;
 
 	l = len;
-	if (snmp_agentx_int(pdu, &len) == -1 ||
+	if (snmp_agentx_int(pdu, &l) == -1 ||
 	    snmp_agentx_raw(pdu, str, len) == -1 ||
 	    snmp_agentx_raw(pdu, pad, padding) == -1)
 		return (-1);
@@ -886,14 +886,17 @@ snmp_agentx_ping(struct agentx_handle *h)
 	struct agentx_pdu	*pdu;
 	int			 error = 0;
 
-	if ((pdu = snmp_agentx_ping_pdu()) == NULL ||
-	    (pdu = snmp_agentx_request(h, pdu)) == NULL)
+	if ((pdu = snmp_agentx_ping_pdu()) == NULL)
 		return (-1);
 
-	if (snmp_agentx_response(h, pdu) == -1)
+	if ((pdu = snmp_agentx_request(h, pdu)) == NULL ||
+	    snmp_agentx_response(h, pdu) == -1) {
 		error = -1;
-	snmp_agentx_pdu_free(pdu);
+		goto fail;
+	}
 
+ fail:
+	snmp_agentx_pdu_free(pdu);
 	return (error);
 }
 
