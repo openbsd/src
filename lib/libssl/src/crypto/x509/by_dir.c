@@ -336,7 +336,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			hent = NULL;
 		}
 		for (;;) {
-			snprintf(b->data, b->max, "%s/%08lx.%s%d",
+			(void) snprintf(b->data, b->max, "%s/%08lx.%s%d",
 			    ent->dir, h, postfix, k);
 
 #ifndef OPENSSL_NO_POSIX_IO
