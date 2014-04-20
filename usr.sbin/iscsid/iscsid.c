@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.10 2014/04/07 19:55:46 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.11 2014/04/20 12:22:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -143,14 +143,28 @@ main(int argc, char *argv[])
 
 	event_dispatch();
 
-	/* CLEANUP XXX */
+	/* do some cleanup on the way out */
 	control_cleanup(ctrlsock);
 	initiator_cleanup(initiator);
 	log_info("exiting.");
 	return 0;
 }
 
-/* ARGSUSED */
+void
+shutdown_cb(int fd, short event, void *arg)
+{
+	struct timeval tv;
+
+	if (exit_rounds++ >= ISCSI_EXIT_WAIT || initiator_isdown(initiator))
+		event_loopexit(NULL);
+
+	timerclear(&tv);
+	tv.tv_sec = 1;
+
+	if (evtimer_add(&exit_ev, &tv) == -1)
+		fatal("shutdown_cb");
+}
+
 void
 main_sig_handler(int sig, short event, void *arg)
 {
@@ -204,7 +218,7 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 			break;
 		}
 		ic = pdu_getbuf(pdu, NULL, 1);
-		bcopy(ic, &initiator->config, sizeof(initiator->config));
+		memcpy(&initiator->config, ic, sizeof(initiator->config));
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	case CTRL_SESSION_CONFIG:
@@ -259,21 +273,6 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 
 done:
 	pdu_free(pdu);
-}
-
-void
-shutdown_cb(int fd, short event, void *arg)
-{
-	struct timeval tv;
-
-	if (exit_rounds++ >= ISCSI_EXIT_WAIT || initiator_isdown(initiator))
-		event_loopexit(NULL);
-
-	timerclear(&tv);
-	tv.tv_sec = 1;
-
-	if (evtimer_add(&exit_ev, &tv) == -1)
-		fatal("shutdown_cb");
 }
 
 #define MERGE_MIN(r, a, b, v)				\
