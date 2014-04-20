@@ -242,8 +242,8 @@ X509_TRUST_cleanup(void)
 {
 	unsigned int i;
 
-	for(i = 0; i < X509_TRUST_COUNT; i++)
-	    trtable_free(trstandard + i);
+	for (i = 0; i < X509_TRUST_COUNT; i++)
+		trtable_free(trstandard + i);
 	sk_X509_TRUST_pop_free(trtable, trtable_free);
 	trtable = NULL;
 }

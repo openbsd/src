@@ -68,7 +68,7 @@ X509_NAME_oneline(X509_NAME *a, char *buf, int len)
 {
 	X509_NAME_ENTRY *ne;
 	int i;
-	int n, lold, l,l1, l2, num, j, type;
+	int n, lold, l, l1, l2, num, j, type;
 	const char *s;
 	char *p;
 	unsigned char *q;
