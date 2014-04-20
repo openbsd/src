@@ -436,18 +436,20 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			}
 
 			skip_message = 0;
-			if (!s->server)
-				if (p[0] == SSL3_MT_HELLO_REQUEST)
-					/* The server may always send 'Hello Request' messages --
-					 * we are doing a handshake anyway now, so ignore them
-					 * if their format is correct. Does not count for
-					 * 'Finished' MAC. */
-			if (p[1] == 0 && p[2] == 0 &&p[3] == 0) {
-				s->init_num = 0;
-				skip_message = 1;
+			if (!s->server && p[0] == SSL3_MT_HELLO_REQUEST) {
+				/*
+				 * The server may always send 'Hello Request'
+				 * messages -- we are doing a handshake anyway
+				 * now, so ignore them if their format is
+				 * correct.  Does not count for 'Finished' MAC.
+				 */
+				if (p[1] == 0 && p[2] == 0 &&p[3] == 0) {
+					s->init_num = 0;
+					skip_message = 1;
 
-				if (s->msg_callback)
-					s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, 4, s, s->msg_callback_arg);
+					if (s->msg_callback)
+						s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, 4, s, s->msg_callback_arg);
+				}
 			}
 		}
 		while (skip_message);
