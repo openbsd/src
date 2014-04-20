@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.97 2014/04/19 02:55:44 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.98 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -172,12 +172,12 @@ static	char		 tempfilename[32];
 static	char		*progname;
 static	int		 nodb; /* no database changes */
 static	int		 mparse_options; /* abort the parse early */
-static	int	 	 use_all; /* use all found files */
-static	int	  	 debug; /* print what we're doing */
-static	int	  	 warnings; /* warn about crap */
+static	int		 use_all; /* use all found files */
+static	int		 debug; /* print what we're doing */
+static	int		 warnings; /* warn about crap */
 static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
-static	enum op	  	 op; /* operational mode */
+static	enum op		 op; /* operational mode */
 static	char		 basedir[PATH_MAX]; /* current base directory */
 static	struct ohash	 mpages; /* table of distinct manual pages */
 static	struct ohash	 mlinks; /* table of directory entries */
@@ -312,6 +312,7 @@ static	const struct mdoc_handler mdocs[MDOC_MAX] = {
 	{ NULL, 0 },  /* Ta */
 };
 
+
 int
 mandocdb(int argc, char *argv[])
 {
@@ -340,7 +341,7 @@ mandocdb(int argc, char *argv[])
 		++progname;
 
 	/*
-	 * We accept a few different invocations.  
+	 * We accept a few different invocations.
 	 * The CHECKOP macro makes sure that invocation styles don't
 	 * clobber each other.
 	 */
@@ -355,32 +356,32 @@ mandocdb(int argc, char *argv[])
 
 	while (-1 != (ch = getopt(argc, argv, "aC:Dd:npQT:tu:v")))
 		switch (ch) {
-		case ('a'):
+		case 'a':
 			use_all = 1;
 			break;
-		case ('C'):
+		case 'C':
 			CHECKOP(op, ch);
 			path_arg = optarg;
 			op = OP_CONFFILE;
 			break;
-		case ('D'):
+		case 'D':
 			debug++;
 			break;
-		case ('d'):
+		case 'd':
 			CHECKOP(op, ch);
 			path_arg = optarg;
 			op = OP_UPDATE;
 			break;
-		case ('n'):
+		case 'n':
 			nodb = 1;
 			break;
-		case ('p'):
+		case 'p':
 			warnings = 1;
 			break;
-		case ('Q'):
+		case 'Q':
 			mparse_options |= MPARSE_QUICK;
 			break;
-		case ('T'):
+		case 'T':
 			if (strcmp(optarg, "utf8")) {
 				fprintf(stderr, "-T%s: Unsupported "
 				    "output format\n", optarg);
@@ -388,18 +389,18 @@ mandocdb(int argc, char *argv[])
 			}
 			write_utf8 = 1;
 			break;
-		case ('t'):
+		case 't':
 			CHECKOP(op, ch);
 			dup2(STDOUT_FILENO, STDERR_FILENO);
 			op = OP_TEST;
 			nodb = warnings = 1;
 			break;
-		case ('u'):
+		case 'u':
 			CHECKOP(op, ch);
 			path_arg = optarg;
 			op = OP_DELETE;
 			break;
-		case ('v'):
+		case 'v':
 			/* Compatibility with espie@'s makewhatis. */
 			break;
 		default:
@@ -462,8 +463,8 @@ mandocdb(int argc, char *argv[])
 		 * manpath_parse() wants to do it.
 		 */
 		if (argc > 0) {
-			dirs.paths = mandoc_calloc
-				(argc, sizeof(char *));
+			dirs.paths = mandoc_calloc(argc,
+			    sizeof(char *));
 			dirs.sz = (size_t)argc;
 			for (i = 0; i < argc; i++)
 				dirs.paths[i] = mandoc_strdup(argv[i]);
@@ -530,7 +531,7 @@ usage:
 			"       %s [-DnpQ] [-Tutf8] -d dir [file ...]\n"
 			"       %s [-Dnp] -u dir [file ...]\n"
 			"       %s [-Q] -t file ...\n",
-		       progname, progname, progname, 
+		       progname, progname, progname,
 		       progname, progname);
 
 	return((int)MANDOCLEVEL_BADARG);
@@ -544,7 +545,7 @@ usage:
  * If use_all has been specified, grok all files.
  * If not, sanitise paths to the following:
  *
- *   [./]man*[/<arch>]/<name>.<section> 
+ *   [./]man*[/<arch>]/<name>.<section>
  *   or
  *   [./]cat<section>[/<arch>]/<name>.0
  *
@@ -584,7 +585,7 @@ treescan(void)
 		 * Symbolic links require various sanity checks,
 		 * then get handled just like regular files.
 		 */
-		case (FTS_SL):
+		case FTS_SL:
 			if (NULL == realpath(path, buf)) {
 				if (warnings)
 					say(path, "&realpath");
@@ -607,7 +608,7 @@ treescan(void)
 		 * If we're a regular file, add an mlink by using the
 		 * stored directory data and handling the filename.
 		 */
-		case (FTS_F):
+		case FTS_F:
 			if (0 == strcmp(path, MANDOC_DB))
 				continue;
 			if ( ! use_all && ff->fts_level < 2) {
@@ -664,9 +665,9 @@ treescan(void)
 			mlink_add(mlink, ff->fts_statp);
 			continue;
 
-		case (FTS_D):
+		case FTS_D:
 			/* FALLTHROUGH */
-		case (FTS_DP):
+		case FTS_DP:
 			break;
 
 		default:
@@ -676,10 +677,10 @@ treescan(void)
 		}
 
 		switch (ff->fts_level) {
-		case (0):
+		case 0:
 			/* Ignore the root directory. */
 			break;
-		case (1):
+		case 1:
 			/*
 			 * This might contain manX/ or catX/.
 			 * Try to infer this from the name.
@@ -700,14 +701,14 @@ treescan(void)
 				dsec = NULL;
 			}
 
-			if (NULL != dsec || use_all) 
+			if (NULL != dsec || use_all)
 				break;
 
 			if (warnings)
 				say(path, "Unknown directory part");
 			fts_set(f, ff, FTS_SKIP);
 			break;
-		case (2):
+		case 2:
 			/*
 			 * Possibly our architecture.
 			 * If we're descending, keep tabs on it.
@@ -739,7 +740,7 @@ treescan(void)
  * Try to infer the manual section, architecture, and page name from the
  * path, assuming it looks like
  *
- *   [./]man*[/<arch>]/<name>.<section> 
+ *   [./]man*[/<arch>]/<name>.<section>
  *   or
  *   [./]cat<section>[/<arch>]/<name>.0
  *
@@ -976,7 +977,7 @@ mlinks_undupe(struct mpage *mpage)
 			*++bufp = '\0';
 		strlcat(buf, mlink->dsec, PATH_MAX);
 		if (NULL == ohash_find(&mlinks,
-				ohash_qlookup(&mlinks, buf)))
+		    ohash_qlookup(&mlinks, buf)))
 			goto nextlink;
 		if (warnings)
 			say(mlink->file, "Man source exists: %s", buf);
@@ -1105,14 +1106,14 @@ mpages_merge(struct mchars *mc, struct mparse *mp)
 				goto nextpage;
 			}
 			switch (child_pid = fork()) {
-			case (-1):
+			case -1:
 				exitcode = (int)MANDOCLEVEL_SYSERR;
 				say(mpage->mlinks->file, "&fork gunzip");
 				child_pid = 0;
 				close(fd[1]);
 				close(fd[0]);
 				goto nextpage;
-			case (0):
+			case 0:
 				close(fd[0]);
 				if (-1 == dup2(fd[1], STDOUT_FILENO)) {
 					say(mpage->mlinks->file,
@@ -1327,7 +1328,7 @@ parse_cat(struct mpage *mpage, int fd)
 	while (NULL != (line = fgetln(stream, &len)))
 		if ('\n' != *line && ' ' != *line)
 			break;
-	
+
 	/*
 	 * Read up until the next section into a buffer.
 	 * Strip the leading and trailing newline from each read line,
@@ -1397,7 +1398,7 @@ parse_cat(struct mpage *mpage, int fd)
 		if (0 == len) {
 			memmove(line, line + 1, plen--);
 			continue;
-		} 
+		}
 		memmove(line - 1, line + 1, plen - len);
 		plen -= 2;
 	}
@@ -1461,11 +1462,11 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 		body = n;
 		assert(body->parent);
 		if (NULL != (head = body->parent->head) &&
-				1 == head->nchild &&
-				NULL != (head = (head->child)) &&
-				MAN_TEXT == head->type &&
-				0 == strcmp(head->string, "NAME") &&
-				NULL != body->child) {
+		    1 == head->nchild &&
+		    NULL != (head = (head->child)) &&
+		    MAN_TEXT == head->type &&
+		    0 == strcmp(head->string, "NAME") &&
+		    NULL != body->child) {
 
 			/*
 			 * Suck the entire NAME section into memory.
@@ -1479,7 +1480,7 @@ parse_man(struct mpage *mpage, const struct man_node *n)
 			if (NULL == title)
 				return;
 
-			/* 
+			/*
 			 * Go through a special heuristic dance here.
 			 * Conventionally, one or more manual names are
 			 * comma-specified prior to a whitespace, then a
@@ -1561,15 +1562,15 @@ parse_mdoc(struct mpage *mpage, const struct mdoc_node *n)
 	assert(NULL != n);
 	for (n = n->child; NULL != n; n = n->next) {
 		switch (n->type) {
-		case (MDOC_ELEM):
+		case MDOC_ELEM:
 			/* FALLTHROUGH */
-		case (MDOC_BLOCK):
+		case MDOC_BLOCK:
 			/* FALLTHROUGH */
-		case (MDOC_HEAD):
+		case MDOC_HEAD:
 			/* FALLTHROUGH */
-		case (MDOC_BODY):
+		case MDOC_BODY:
 			/* FALLTHROUGH */
-		case (MDOC_TAIL):
+		case MDOC_TAIL:
 			if (NULL != mdocs[n->tok].fp)
 			       if (0 == (*mdocs[n->tok].fp)(mpage, n))
 				       break;
@@ -1593,8 +1594,8 @@ parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_node *n)
 	size_t		 sz;
 
 	if (SEC_SYNOPSIS != n->sec ||
-			NULL == (n = n->child) || 
-			MDOC_TEXT != n->type)
+	    NULL == (n = n->child) ||
+	    MDOC_TEXT != n->type)
 		return(0);
 
 	/*
@@ -1637,11 +1638,11 @@ parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_node *n)
 	if (NULL == (n = n->child) || MDOC_TEXT != n->type)
 		return(0);
 
-	/* 
+	/*
 	 * Parse: .Fn "struct type *name" "char *arg".
-	 * First strip away pointer symbol. 
+	 * First strip away pointer symbol.
 	 * Then store the function name, then type.
-	 * Finally, store the arguments. 
+	 * Finally, store the arguments.
 	 */
 
 	if (NULL == (cp = strrchr(n->string, ' ')))
@@ -1858,7 +1859,7 @@ render_key(struct mchars *mc, struct str *key)
 	if (strcspn(val, res) == bsz) {
 		key->rendered = key->key;
 		return;
-	} 
+	}
 
 	/* Pre-allocate by the length of the input */
 
@@ -1878,17 +1879,17 @@ render_key(struct mchars *mc, struct str *key)
 		}
 
 		switch (*val) {
-		case (ASCII_HYPH):
+		case ASCII_HYPH:
 			buf[pos++] = '-';
 			val++;
 			continue;
-		case ('\t'):
+		case '\t':
 			/* FALLTHROUGH */
-		case (ASCII_NBRSP):
+		case ASCII_NBRSP:
 			buf[pos++] = ' ';
 			val++;
 			/* FALLTHROUGH */
-		case (ASCII_BREAK):
+		case ASCII_BREAK:
 			continue;
 		default:
 			break;
@@ -1905,8 +1906,8 @@ render_key(struct mchars *mc, struct str *key)
 		 * predefined character or special character.
 		 */
 
-		esc = mandoc_escape
-			((const char **)&val, &seq, &len);
+		esc = mandoc_escape((const char **)&val,
+		    &seq, &len);
 		if (ESCAPE_ERROR == esc)
 			break;
 		if (ESCAPE_SPECIAL != esc)
@@ -2117,11 +2118,11 @@ dbclose(int real)
 	}
 
 	switch (child = fork()) {
-	case (-1):
+	case -1:
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fork cmp");
 		return;
-	case (0):
+	case 0:
 		execlp("cmp", "cmp", "-s",
 		    tempfilename, MANDOC_DB, NULL);
 		say("", "&exec cmp");
@@ -2143,11 +2144,11 @@ dbclose(int real)
 
 	*strrchr(tempfilename, '/') = '\0';
 	switch (child = fork()) {
-	case (-1):
+	case -1:
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&fork rm");
 		return;
-	case (0):
+	case 0:
 		execlp("rm", "rm", "-rf", tempfilename, NULL);
 		say("", "&exec rm");
 		exit((int)MANDOCLEVEL_SYSERR);
@@ -2178,7 +2179,7 @@ dbopen(int real)
 	const char	*sql;
 	int		 rc, ofl;
 
-	if (nodb) 
+	if (nodb)
 		return(1);
 
 	*tempfilename = '\0';
@@ -2198,7 +2199,7 @@ dbopen(int real)
 
 	remove(MANDOC_DB "~");
 	rc = sqlite3_open_v2(MANDOC_DB "~", &db, ofl, NULL);
-	if (SQLITE_OK == rc) 
+	if (SQLITE_OK == rc)
 		goto create_tables;
 	if (MPARSE_QUICK & mparse_options) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
@@ -2389,10 +2390,10 @@ say(const char *file, const char *format, ...)
 	use_errno = 1;
 	if (NULL != format) {
 		switch (*format) {
-		case ('&'):
+		case '&':
 			format++;
 			break;
-		case ('\0'):
+		case '\0':
 			format = NULL;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.87 2014/03/30 19:47:32 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.88 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,33 +36,33 @@ enum	rew {	/* see rew_dohalt() */
 	REWIND_ERROR
 };
 
-static	int	  	blk_full(MACRO_PROT_ARGS);
-static	int	  	blk_exp_close(MACRO_PROT_ARGS);
-static	int	  	blk_part_exp(MACRO_PROT_ARGS);
-static	int	  	blk_part_imp(MACRO_PROT_ARGS);
-static	int	  	ctx_synopsis(MACRO_PROT_ARGS);
-static	int	  	in_line_eoln(MACRO_PROT_ARGS);
-static	int	  	in_line_argn(MACRO_PROT_ARGS);
-static	int	  	in_line(MACRO_PROT_ARGS);
-static	int	  	obsolete(MACRO_PROT_ARGS);
-static	int	  	phrase_ta(MACRO_PROT_ARGS);
+static	int		blk_full(MACRO_PROT_ARGS);
+static	int		blk_exp_close(MACRO_PROT_ARGS);
+static	int		blk_part_exp(MACRO_PROT_ARGS);
+static	int		blk_part_imp(MACRO_PROT_ARGS);
+static	int		ctx_synopsis(MACRO_PROT_ARGS);
+static	int		in_line_eoln(MACRO_PROT_ARGS);
+static	int		in_line_argn(MACRO_PROT_ARGS);
+static	int		in_line(MACRO_PROT_ARGS);
+static	int		obsolete(MACRO_PROT_ARGS);
+static	int		phrase_ta(MACRO_PROT_ARGS);
 
 static	int		dword(struct mdoc *, int, int, const char *,
 				 enum mdelim, int);
-static	int	  	append_delims(struct mdoc *, 
+static	int		append_delims(struct mdoc *,
 				int, int *, char *);
 static	enum mdoct	lookup(enum mdoct, const char *);
 static	enum mdoct	lookup_raw(const char *);
 static	int		make_pending(struct mdoc_node *, enum mdoct,
 				struct mdoc *, int, int);
-static	int	  	phrase(struct mdoc *, int, int, char *);
-static	enum mdoct 	rew_alt(enum mdoct);
-static	enum rew  	rew_dohalt(enum mdoct, enum mdoc_type, 
+static	int		phrase(struct mdoc *, int, int, char *);
+static	enum mdoct	rew_alt(enum mdoct);
+static	enum rew	rew_dohalt(enum mdoct, enum mdoc_type,
 				const struct mdoc_node *);
-static	int	  	rew_elem(struct mdoc *, enum mdoct);
-static	int	  	rew_last(struct mdoc *, 
+static	int		rew_elem(struct mdoc *, enum mdoct);
+static	int		rew_last(struct mdoc *,
 				const struct mdoc_node *);
-static	int	  	rew_sub(enum mdoc_type, struct mdoc *, 
+static	int		rew_sub(enum mdoc_type, struct mdoc *,
 				enum mdoct, int, int);
 
 const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
@@ -226,7 +226,7 @@ mdoc_macroend(struct mdoc *mdoc)
 	/* Scan for open explicit scopes. */
 
 	n = MDOC_VALID & mdoc->last->flags ?
-			mdoc->last->parent : mdoc->last;
+	    mdoc->last->parent : mdoc->last;
 
 	for ( ; n; n = n->parent)
 		if (MDOC_BLOCK == n->type &&
@@ -237,7 +237,6 @@ mdoc_macroend(struct mdoc *mdoc)
 
 	return(rew_last(mdoc, mdoc->first));
 }
-
 
 /*
  * Look up a macro from within a subsequent context.
@@ -250,7 +249,6 @@ lookup(enum mdoct from, const char *p)
 		return(MDOC_MAX);
 	return(lookup_raw(p));
 }
-
 
 /*
  * Lookup a macro following the initial line macro.
@@ -267,7 +265,6 @@ lookup_raw(const char *p)
 	return(MDOC_MAX);
 }
 
-
 static int
 rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 {
@@ -276,7 +273,7 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 	assert(to);
 	mdoc->next = MDOC_NEXT_SIBLING;
 
-	/* LINTED */
+
 	while (mdoc->last != to) {
 		/*
 		 * Save the parent here, because we may delete the
@@ -296,7 +293,6 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 	return(mdoc_valid_post(mdoc));
 }
 
-
 /*
  * For a block closing macro, return the corresponding opening one.
  * Otherwise, return the macro itself.
@@ -305,44 +301,43 @@ static enum mdoct
 rew_alt(enum mdoct tok)
 {
 	switch (tok) {
-	case (MDOC_Ac):
+	case MDOC_Ac:
 		return(MDOC_Ao);
-	case (MDOC_Bc):
+	case MDOC_Bc:
 		return(MDOC_Bo);
-	case (MDOC_Brc):
+	case MDOC_Brc:
 		return(MDOC_Bro);
-	case (MDOC_Dc):
+	case MDOC_Dc:
 		return(MDOC_Do);
-	case (MDOC_Ec):
+	case MDOC_Ec:
 		return(MDOC_Eo);
-	case (MDOC_Ed):
+	case MDOC_Ed:
 		return(MDOC_Bd);
-	case (MDOC_Ef):
+	case MDOC_Ef:
 		return(MDOC_Bf);
-	case (MDOC_Ek):
+	case MDOC_Ek:
 		return(MDOC_Bk);
-	case (MDOC_El):
+	case MDOC_El:
 		return(MDOC_Bl);
-	case (MDOC_Fc):
+	case MDOC_Fc:
 		return(MDOC_Fo);
-	case (MDOC_Oc):
+	case MDOC_Oc:
 		return(MDOC_Oo);
-	case (MDOC_Pc):
+	case MDOC_Pc:
 		return(MDOC_Po);
-	case (MDOC_Qc):
+	case MDOC_Qc:
 		return(MDOC_Qo);
-	case (MDOC_Re):
+	case MDOC_Re:
 		return(MDOC_Rs);
-	case (MDOC_Sc):
+	case MDOC_Sc:
 		return(MDOC_So);
-	case (MDOC_Xc):
+	case MDOC_Xc:
 		return(MDOC_Xo);
 	default:
 		return(tok);
 	}
 	/* NOTREACHED */
 }
-
 
 /*
  * Rewinding to tok, how do we have to handle *p?
@@ -355,7 +350,7 @@ rew_alt(enum mdoct tok)
  * REWIND_ERROR: No tok block is open at all.
  */
 static enum rew
-rew_dohalt(enum mdoct tok, enum mdoc_type type, 
+rew_dohalt(enum mdoct tok, enum mdoc_type type,
 		const struct mdoc_node *p)
 {
 
@@ -371,7 +366,7 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 		    REWIND_ERROR : REWIND_NONE);
 
 	/*
-	 * When starting to rewind, skip plain text 
+	 * When starting to rewind, skip plain text
 	 * and nodes that have already been rewound.
 	 */
 	if (MDOC_TEXT == p->type || MDOC_VALID & p->flags)
@@ -395,14 +390,14 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 
 	/*
 	 * Blocks delimited by our target token get REWIND_MORE.
-	 * Blocks delimiting our target token get REWIND_NONE. 
+	 * Blocks delimiting our target token get REWIND_NONE.
 	 */
 	switch (tok) {
-	case (MDOC_Bl):
+	case MDOC_Bl:
 		if (MDOC_It == p->tok)
 			return(REWIND_MORE);
 		break;
-	case (MDOC_It):
+	case MDOC_It:
 		if (MDOC_BODY == p->type && MDOC_Bl == p->tok)
 			return(REWIND_NONE);
 		break;
@@ -412,19 +407,19 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	 * This is an incomplete and extremely ugly workaround,
 	 * required to let the OpenBSD tree build.
 	 */
-	case (MDOC_Oo):
+	case MDOC_Oo:
 		if (MDOC_Op == p->tok)
 			return(REWIND_MORE);
 		break;
-	case (MDOC_Nm):
+	case MDOC_Nm:
 		return(REWIND_NONE);
-	case (MDOC_Nd):
+	case MDOC_Nd:
 		/* FALLTHROUGH */
-	case (MDOC_Ss):
+	case MDOC_Ss:
 		if (MDOC_BODY == p->type && MDOC_Sh == p->tok)
 			return(REWIND_NONE);
 		/* FALLTHROUGH */
-	case (MDOC_Sh):
+	case MDOC_Sh:
 		if (MDOC_Nd == p->tok || MDOC_Ss == p->tok ||
 		    MDOC_Sh == p->tok)
 			return(REWIND_MORE);
@@ -453,7 +448,6 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 	    REWIND_FORCE : REWIND_LATER);
 }
 
-
 static int
 rew_elem(struct mdoc *mdoc, enum mdoct tok)
 {
@@ -467,7 +461,6 @@ rew_elem(struct mdoc *mdoc, enum mdoct tok)
 
 	return(rew_last(mdoc, n));
 }
-
 
 /*
  * We are trying to close a block identified by tok,
@@ -533,8 +526,8 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 		}
 		broken->pending = breaker;
 		mandoc_vmsg(MANDOCERR_SCOPENEST, mdoc->parse, line, ppos,
-				"%s breaks %s", mdoc_macronames[tok],
-				mdoc_macronames[broken->tok]);
+		    "%s breaks %s", mdoc_macronames[tok],
+		    mdoc_macronames[broken->tok]);
 		return(1);
 	}
 
@@ -545,9 +538,8 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 	return(0);
 }
 
-
 static int
-rew_sub(enum mdoc_type t, struct mdoc *mdoc, 
+rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 		enum mdoct tok, int line, int ppos)
 {
 	struct mdoc_node *n;
@@ -555,30 +547,30 @@ rew_sub(enum mdoc_type t, struct mdoc *mdoc,
 	n = mdoc->last;
 	while (n) {
 		switch (rew_dohalt(tok, t, n)) {
-		case (REWIND_NONE):
+		case REWIND_NONE:
 			return(1);
-		case (REWIND_THIS):
+		case REWIND_THIS:
 			n->lastline = line -
 			    (MDOC_NEWLINE & mdoc->flags &&
 			     ! (MDOC_EXPLICIT & mdoc_macros[tok].flags));
 			break;
-		case (REWIND_FORCE):
-			mandoc_vmsg(MANDOCERR_SCOPEBROKEN, mdoc->parse, 
-					line, ppos, "%s breaks %s", 
-					mdoc_macronames[tok],
-					mdoc_macronames[n->tok]);
+		case REWIND_FORCE:
+			mandoc_vmsg(MANDOCERR_SCOPEBROKEN, mdoc->parse,
+			    line, ppos, "%s breaks %s",
+			    mdoc_macronames[tok],
+			    mdoc_macronames[n->tok]);
 			/* FALLTHROUGH */
-		case (REWIND_MORE):
+		case REWIND_MORE:
 			n->lastline = line -
 			    (MDOC_NEWLINE & mdoc->flags ? 1 : 0);
 			n = n->parent;
 			continue;
-		case (REWIND_LATER):
+		case REWIND_LATER:
 			if (make_pending(n, tok, mdoc, line, ppos) ||
 			    MDOC_BLOCK != t)
 				return(1);
 			/* FALLTHROUGH */
-		case (REWIND_ERROR):
+		case REWIND_ERROR:
 			mdoc_pmsg(mdoc, line, ppos, MANDOCERR_NOSCOPE);
 			return(1);
 		}
@@ -612,7 +604,7 @@ static int
 dword(struct mdoc *mdoc, int line, int col, const char *p,
 		enum mdelim d, int may_append)
 {
-	
+
 	if (DELIM_MAX == d)
 		d = mdoc_isdelim(p);
 
@@ -641,8 +633,8 @@ dword(struct mdoc *mdoc, int line, int col, const char *p,
 	 */
 
 	else if (DELIM_CLOSE == d && mdoc->last->prev &&
-			mdoc->last->prev->tok != MDOC_No &&
-			mdoc->last->parent->tok != MDOC_Fd)
+	    mdoc->last->prev->tok != MDOC_No &&
+	    mdoc->last->parent->tok != MDOC_Fd)
 		mdoc->last->flags |= MDOC_DELIMC;
 
 	return(1);
@@ -687,9 +679,8 @@ append_delims(struct mdoc *mdoc, int line, int *pos, char *buf)
 	return(1);
 }
 
-
 /*
- * Close out block partial/full explicit.  
+ * Close out block partial/full explicit.
  */
 static int
 blk_exp_close(MACRO_PROT_ARGS)
@@ -698,7 +689,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	struct mdoc_node *later;	/* A sub-block starting later. */
 	struct mdoc_node *n;		/* For searching backwards. */
 
-	int	 	 j, lastarg, maxargs, flushed, nl;
+	int		 j, lastarg, maxargs, flushed, nl;
 	enum margserr	 ac;
 	enum mdoct	 atok, ntok;
 	char		*p;
@@ -706,10 +697,10 @@ blk_exp_close(MACRO_PROT_ARGS)
 	nl = MDOC_NEWLINE & mdoc->flags;
 
 	switch (tok) {
-	case (MDOC_Ec):
+	case MDOC_Ec:
 		maxargs = 1;
 		break;
-	case (MDOC_Ek):
+	case MDOC_Ek:
 		mdoc->flags &= ~MDOC_KEEP;
 	default:
 		maxargs = 0;
@@ -746,7 +737,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			if (NULL == later)
 				break;
 
-			/* 
+			/*
 			 * When there is a pending sub block,
 			 * postpone closing out the current block
 			 * until the rew_sub() closing out the sub-block.
@@ -777,7 +768,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
 		/* FIXME: do this in validate */
-		if (buf[*pos]) 
+		if (buf[*pos])
 			mdoc_pmsg(mdoc, line, ppos, MANDOCERR_ARGSLOST);
 
 		if ( ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
@@ -788,7 +779,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	if ( ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
 		return(0);
 
-	if (NULL == later && maxargs > 0) 
+	if (NULL == later && maxargs > 0)
 		if ( ! mdoc_tail_alloc(mdoc, line, ppos, rew_alt(tok)))
 			return(0);
 
@@ -840,7 +831,6 @@ blk_exp_close(MACRO_PROT_ARGS)
 	return(append_delims(mdoc, line, pos, buf));
 }
 
-
 static int
 in_line(MACRO_PROT_ARGS)
 {
@@ -860,17 +850,17 @@ in_line(MACRO_PROT_ARGS)
 	 */
 
 	switch (tok) {
-	case (MDOC_An):
+	case MDOC_An:
 		/* FALLTHROUGH */
-	case (MDOC_Ar):
+	case MDOC_Ar:
 		/* FALLTHROUGH */
-	case (MDOC_Fl):
+	case MDOC_Fl:
 		/* FALLTHROUGH */
-	case (MDOC_Mt):
+	case MDOC_Mt:
 		/* FALLTHROUGH */
-	case (MDOC_Nm):
+	case MDOC_Nm:
 		/* FALLTHROUGH */
-	case (MDOC_Pa):
+	case MDOC_Pa:
 		nc = 1;
 		break;
 	default:
@@ -885,7 +875,7 @@ in_line(MACRO_PROT_ARGS)
 		if (ARGV_WORD == av) {
 			*pos = la;
 			break;
-		} 
+		}
 		if (ARGV_EOLN == av)
 			break;
 		if (ARGV_ARG == av)
@@ -908,7 +898,7 @@ in_line(MACRO_PROT_ARGS)
 
 		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
 
-		/* 
+		/*
 		 * In this case, we've located a submacro and must
 		 * execute it.  Close out scope, if open.  If no
 		 * elements have been generated, either create one (nc)
@@ -919,15 +909,15 @@ in_line(MACRO_PROT_ARGS)
 			if (scope && ! rew_elem(mdoc, tok))
 				return(0);
 			if (nc && 0 == cnt) {
-				if ( ! mdoc_elem_alloc(mdoc, line,
-						ppos, tok, arg))
+				if ( ! mdoc_elem_alloc(mdoc,
+				    line, ppos, tok, arg))
 					return(0);
 				if ( ! rew_last(mdoc, mdoc->last))
 					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
 				mdoc_pmsg(mdoc, line, ppos,
-					MANDOCERR_MACROEMPTY);
+				    MANDOCERR_MACROEMPTY);
 			}
 
 			if ( ! mdoc_macro(mdoc, ntok, line, la, pos, buf))
@@ -935,12 +925,12 @@ in_line(MACRO_PROT_ARGS)
 			if ( ! nl)
 				return(1);
 			return(append_delims(mdoc, line, pos, buf));
-		} 
+		}
 
-		/* 
+		/*
 		 * Non-quote-enclosed punctuation.  Set up our scope, if
 		 * a word; rewind the scope, if a delimiter; then append
-		 * the word. 
+		 * the word.
 		 */
 
 		d = ARGS_QWORD == ac ? DELIM_NONE : mdoc_isdelim(p);
@@ -954,13 +944,13 @@ in_line(MACRO_PROT_ARGS)
 			 * this once per invocation.  There may be more
 			 * of these (all of them?).
 			 */
-			if (0 == cnt && (nc || MDOC_Li == tok) && 
-					DELIM_CLOSE == d && ! scope) {
-				if ( ! mdoc_elem_alloc(mdoc, line,
-						ppos, tok, arg))
+			if (0 == cnt && (nc || MDOC_Li == tok) &&
+			    DELIM_CLOSE == d && ! scope) {
+				if ( ! mdoc_elem_alloc(mdoc,
+				    line, ppos, tok, arg))
 					return(0);
-				if (MDOC_Ar == tok || MDOC_Li == tok || 
-						MDOC_Fl == tok)
+				if (MDOC_Ar == tok || MDOC_Li == tok ||
+				    MDOC_Fl == tok)
 					cnt++;
 				scope = 1;
 			}
@@ -1020,7 +1010,6 @@ in_line(MACRO_PROT_ARGS)
 	return(append_delims(mdoc, line, pos, buf));
 }
 
-
 static int
 blk_full(MACRO_PROT_ARGS)
 {
@@ -1062,7 +1051,7 @@ blk_full(MACRO_PROT_ARGS)
 		if (ARGV_WORD == av) {
 			*pos = la;
 			break;
-		} 
+		}
 
 		if (ARGV_EOLN == av)
 			break;
@@ -1083,8 +1072,8 @@ blk_full(MACRO_PROT_ARGS)
 	 * parsed, even though `It' macros in general are parsed.
 	 */
 	nparsed = MDOC_It == tok &&
-		MDOC_Bl == mdoc->last->parent->tok &&
-		LIST_diag == mdoc->last->parent->norm->Bl.type;
+	    MDOC_Bl == mdoc->last->parent->tok &&
+	    LIST_diag == mdoc->last->parent->norm->Bl.type;
 
 	/*
 	 * The `Nd' macro has all arguments in its body: it's a hybrid
@@ -1137,17 +1126,17 @@ blk_full(MACRO_PROT_ARGS)
 			break;
 		}
 
-		/* 
+		/*
 		 * Emit leading punctuation (i.e., punctuation before
 		 * the MDOC_HEAD) for non-phrase types.
 		 */
 
-		if (NULL == head && 
-				ARGS_PEND != ac &&
-				ARGS_PHRASE != ac &&
-				ARGS_PPHRASE != ac &&
-				ARGS_QWORD != ac &&
-				DELIM_OPEN == mdoc_isdelim(p)) {
+		if (NULL == head &&
+		    ARGS_PEND != ac &&
+		    ARGS_PHRASE != ac &&
+		    ARGS_PPHRASE != ac &&
+		    ARGS_QWORD != ac &&
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! dword(mdoc, line, la, p, DELIM_OPEN, 0))
 				return(0);
 			continue;
@@ -1161,9 +1150,9 @@ blk_full(MACRO_PROT_ARGS)
 			head = mdoc->last;
 		}
 
-		if (ARGS_PHRASE == ac || 
-				ARGS_PEND == ac ||
-				ARGS_PPHRASE == ac) {
+		if (ARGS_PHRASE == ac ||
+		    ARGS_PEND == ac ||
+		    ARGS_PPHRASE == ac) {
 			/*
 			 * If we haven't opened a body yet, rewind the
 			 * head; if we have, rewind that instead.
@@ -1172,7 +1161,7 @@ blk_full(MACRO_PROT_ARGS)
 			mtt = body ? MDOC_BODY : MDOC_HEAD;
 			if ( ! rew_sub(mtt, mdoc, tok, line, ppos))
 				return(0);
-			
+
 			/* Then allocate our body context. */
 
 			if ( ! mdoc_body_alloc(mdoc, line, ppos, tok))
@@ -1197,8 +1186,8 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		ntok = nparsed || ARGS_QWORD == ac ? 
-			MDOC_MAX : lookup(tok, p);
+		ntok = nparsed || ARGS_QWORD == ac ?
+		    MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
 			if ( ! dword(mdoc, line, la, p, DELIM_MAX,
@@ -1217,7 +1206,7 @@ blk_full(MACRO_PROT_ARGS)
 			return(0);
 		head = mdoc->last;
 	}
-	
+
 	if (nl && ! append_delims(mdoc, line, pos, buf))
 		return(0);
 
@@ -1233,9 +1222,9 @@ blk_full(MACRO_PROT_ARGS)
 	 * sub-block.
 	 */
 	for (n = mdoc->last; n && n != head; n = n->parent) {
-		if (MDOC_BLOCK == n->type && 
-				MDOC_EXPLICIT & mdoc_macros[n->tok].flags &&
-				! (MDOC_VALID & n->flags)) {
+		if (MDOC_BLOCK == n->type &&
+		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags &&
+		    ! (MDOC_VALID & n->flags)) {
 			n->pending = head;
 			return(1);
 		}
@@ -1260,7 +1249,6 @@ out:
 	mdoc->flags &= ~MDOC_FREECOL;
 	return(1);
 }
-
 
 static int
 blk_part_imp(MACRO_PROT_ARGS)
@@ -1312,7 +1300,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 			break;
 
 		if (NULL == body && ARGS_QWORD != ac &&
-				DELIM_OPEN == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! dword(mdoc, line, la, p, DELIM_OPEN, 0))
 				return(0);
 			continue;
@@ -1352,7 +1340,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 * until the rew_sub() call closing out the sub-block.
 	 */
 	for (n = mdoc->last; n && n != body && n != blk->parent;
-			n = n->parent) {
+	     n = n->parent) {
 		if (MDOC_BLOCK == n->type &&
 		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags &&
 		    ! (MDOC_VALID & n->flags)) {
@@ -1364,15 +1352,15 @@ blk_part_imp(MACRO_PROT_ARGS)
 		}
 	}
 
-	/* 
+	/*
 	 * If we can't rewind to our body, then our scope has already
 	 * been closed by another macro (like `Oc' closing `Op').  This
 	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
 	 * crufty use of `Op' breakage.
 	 */
 	if (n != body)
-		mandoc_vmsg(MANDOCERR_SCOPENEST, mdoc->parse, line, ppos, 
-				"%s broken", mdoc_macronames[tok]);
+		mandoc_vmsg(MANDOCERR_SCOPENEST, mdoc->parse, line,
+		    ppos, "%s broken", mdoc_macronames[tok]);
 
 	if (n && ! rew_sub(MDOC_BODY, mdoc, tok, line, ppos))
 		return(0);
@@ -1397,7 +1385,6 @@ blk_part_imp(MACRO_PROT_ARGS)
 	return(1);
 }
 
-
 static int
 blk_part_exp(MACRO_PROT_ARGS)
 {
@@ -1417,7 +1404,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 	 */
 
 	if ( ! mdoc_block_alloc(mdoc, line, ppos, tok, NULL))
-		return(0); 
+		return(0);
 
 	for (head = body = NULL; ; ) {
 		la = *pos;
@@ -1433,7 +1420,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 		/* Flush out leading punctuation. */
 
 		if (NULL == head && ARGS_QWORD != ac &&
-				DELIM_OPEN == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			assert(NULL == body);
 			if ( ! dword(mdoc, line, la, p, DELIM_OPEN, 0))
 				return(0);
@@ -1505,8 +1492,6 @@ blk_part_exp(MACRO_PROT_ARGS)
 	return(append_delims(mdoc, line, pos, buf));
 }
 
-
-/* ARGSUSED */
 static int
 in_line_argn(MACRO_PROT_ARGS)
 {
@@ -1528,18 +1513,18 @@ in_line_argn(MACRO_PROT_ARGS)
 	 */
 
 	switch (tok) {
-	case (MDOC_Ap):
+	case MDOC_Ap:
 		/* FALLTHROUGH */
-	case (MDOC_No):
+	case MDOC_No:
 		/* FALLTHROUGH */
-	case (MDOC_Ns):
+	case MDOC_Ns:
 		/* FALLTHROUGH */
-	case (MDOC_Ux):
+	case MDOC_Ux:
 		maxargs = 0;
 		break;
-	case (MDOC_Bx):
+	case MDOC_Bx:
 		/* FALLTHROUGH */
-	case (MDOC_Xr):
+	case MDOC_Xr:
 		maxargs = 2;
 		break;
 	default:
@@ -1554,7 +1539,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGV_WORD == av) {
 			*pos = la;
 			break;
-		} 
+		}
 
 		if (ARGV_EOLN == av)
 			break;
@@ -1576,9 +1561,9 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == ac)
 			break;
 
-		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
-				ARGS_QWORD != ac && 0 == j && 
-				DELIM_OPEN == mdoc_isdelim(p)) {
+		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) &&
+		    ARGS_QWORD != ac && 0 == j &&
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! dword(mdoc, line, la, p, DELIM_OPEN, 0))
 				return(0);
 			continue;
@@ -1605,9 +1590,9 @@ in_line_argn(MACRO_PROT_ARGS)
 		}
 
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) &&
-				ARGS_QWORD != ac &&
-				! flushed &&
-				DELIM_NONE != mdoc_isdelim(p)) {
+		    ARGS_QWORD != ac &&
+		    ! flushed &&
+		    DELIM_NONE != mdoc_isdelim(p)) {
 			if ( ! rew_elem(mdoc, tok))
 				return(0);
 			flushed = 1;
@@ -1630,7 +1615,6 @@ in_line_argn(MACRO_PROT_ARGS)
 		return(1);
 	return(append_delims(mdoc, line, pos, buf));
 }
-
 
 static int
 in_line_eoln(MACRO_PROT_ARGS)
@@ -1657,7 +1641,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 			*pos = la;
 			break;
 		}
-		if (ARGV_EOLN == av) 
+		if (ARGV_EOLN == av)
 			break;
 		if (ARGV_ARG == av)
 			continue;
@@ -1701,8 +1685,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 	return(rew_elem(mdoc, tok));
 }
 
-
-/* ARGSUSED */
 static int
 ctx_synopsis(MACRO_PROT_ARGS)
 {
@@ -1729,8 +1711,6 @@ ctx_synopsis(MACRO_PROT_ARGS)
 	return(blk_part_imp(mdoc, tok, line, ppos, pos, buf));
 }
 
-
-/* ARGSUSED */
 static int
 obsolete(MACRO_PROT_ARGS)
 {
@@ -1738,7 +1718,6 @@ obsolete(MACRO_PROT_ARGS)
 	mdoc_pmsg(mdoc, line, ppos, MANDOCERR_MACROOBS);
 	return(1);
 }
-
 
 /*
  * Phrases occur within `Bl -column' entries, separated by `Ta' or tabs.
@@ -1779,8 +1758,6 @@ phrase(struct mdoc *mdoc, int line, int ppos, char *buf)
 	return(1);
 }
 
-
-/* ARGSUSED */
 static int
 phrase_ta(MACRO_PROT_ARGS)
 {

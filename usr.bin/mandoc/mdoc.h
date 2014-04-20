@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.52 2014/03/31 00:02:45 dlg Exp $ */
+/*	$Id: mdoc.h,v 1.53 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -187,7 +187,7 @@ enum	mdoc_type {
 	MDOC_ROOT
 };
 
-/* 
+/*
  * Section (named/unnamed) of `Sh'.   Note that these appear in the
  * conventional order imposed by mdoc.7.  In the case of SEC_NONE, no
  * section has been invoked (this shouldn't happen).  SEC_CUSTOM refers
@@ -216,7 +216,7 @@ enum	mdoc_sec {
 	SEC_CAVEATS, /* CAVEATS */
 	SEC_BUGS, /* BUGS */
 	SEC_SECURITY, /* SECURITY */
-	SEC_CUSTOM, 
+	SEC_CUSTOM,
 	SEC__MAX
 };
 
@@ -230,11 +230,11 @@ struct	mdoc_meta {
 	char		 *name; /* leading `Nm' name */
 };
 
-/* 
- * An argument to a macro (multiple values = `-column xxx yyy'). 
+/*
+ * An argument to a macro (multiple values = `-column xxx yyy').
  */
 struct	mdoc_argv {
-	enum mdocargt  	  arg; /* type of argument */
+	enum mdocargt	  arg; /* type of argument */
 	int		  line;
 	int		  pos;
 	size_t		  sz; /* elements in "value" */
@@ -246,7 +246,7 @@ struct	mdoc_argv {
  * blocks have multiple instances of the same arguments spread across
  * the HEAD, BODY, TAIL, and BLOCK node types.
  */
-struct 	mdoc_arg {
+struct	mdoc_arg {
 	size_t		  argc;
 	struct mdoc_argv *argv;
 	unsigned int	  refcnt;
@@ -334,15 +334,15 @@ struct	mdoc_rs {
  * provided, etc.
  */
 union	mdoc_data {
-	struct mdoc_an 	  An;
+	struct mdoc_an	  An;
 	struct mdoc_bd	  Bd;
 	struct mdoc_bf	  Bf;
 	struct mdoc_bl	  Bl;
 	struct mdoc_rs	  Rs;
 };
 
-/* 
- * Single node in tree-linked AST. 
+/*
+ * Single node in tree-linked AST.
  */
 struct	mdoc_node {
 	struct mdoc_node *parent; /* parent AST node */

@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.53 2014/01/05 20:26:27 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.54 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -109,12 +109,12 @@ __BEGIN_DECLS
 #define		  mdoc_nmsg(mdoc, n, t) \
 		  mandoc_msg((t), (mdoc)->parse, (n)->line, (n)->pos, NULL)
 int		  mdoc_macro(MACRO_PROT_ARGS);
-int		  mdoc_word_alloc(struct mdoc *, 
+int		  mdoc_word_alloc(struct mdoc *,
 			int, int, const char *);
 void		  mdoc_word_append(struct mdoc *, const char *);
-int		  mdoc_elem_alloc(struct mdoc *, int, int, 
+int		  mdoc_elem_alloc(struct mdoc *, int, int,
 			enum mdoct, struct mdoc_arg *);
-int		  mdoc_block_alloc(struct mdoc *, int, int, 
+int		  mdoc_block_alloc(struct mdoc *, int, int,
 			enum mdoct, struct mdoc_arg *);
 int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
@@ -137,7 +137,7 @@ enum margverr	  mdoc_argv(struct mdoc *, int, enum mdoct,
 void		  mdoc_argv_free(struct mdoc_arg *);
 enum margserr	  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
-enum margserr	  mdoc_zargs(struct mdoc *, int, 
+enum margserr	  mdoc_zargs(struct mdoc *, int,
 			int *, char *, char **);
 int		  mdoc_macroend(struct mdoc *);
 enum mdelim	  mdoc_isdelim(const char *);

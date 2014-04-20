@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.16 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.17 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,13 +26,14 @@
 #include "libmandoc.h"
 #include "libroff.h"
 
-static	int		 getdata(struct tbl_node *, struct tbl_span *, 
+static	int		 getdata(struct tbl_node *, struct tbl_span *,
 				int, const char *, int *);
-static	struct tbl_span	*newspan(struct tbl_node *, int, 
+static	struct tbl_span	*newspan(struct tbl_node *, int,
 				struct tbl_row *);
 
+
 static int
-getdata(struct tbl_node *tbl, struct tbl_span *dp, 
+getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		int ln, const char *p, int *pos)
 {
 	struct tbl_dat	*dat;
@@ -45,7 +46,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	else if (NULL == dp->last)
 		cp = dp->layout->first;
 
-	/* 
+	/*
 	 * Skip over spanners, since
 	 * we want to match data with data layout cells in the header.
 	 */
@@ -59,8 +60,8 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	 */
 
 	if (NULL == cp) {
-		mandoc_msg(MANDOCERR_TBLEXTRADAT, 
-				tbl->parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_TBLEXTRADAT, tbl->parse,
+		    ln, *pos, NULL);
 		/* Skip to the end... */
 		while (p[*pos])
 			(*pos)++;
@@ -78,7 +79,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 			spans++;
 		else
 			break;
-	
+
 	dat->spans = spans;
 
 	if (dp->last) {
@@ -123,21 +124,20 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		dat->pos = TBL_DATA_DATA;
 
 	if (TBL_CELL_HORIZ == dat->layout->pos ||
-			TBL_CELL_DHORIZ == dat->layout->pos ||
-			TBL_CELL_DOWN == dat->layout->pos)
+	    TBL_CELL_DHORIZ == dat->layout->pos ||
+	    TBL_CELL_DOWN == dat->layout->pos)
 		if (TBL_DATA_DATA == dat->pos && '\0' != *dat->string)
-			mandoc_msg(MANDOCERR_TBLIGNDATA, 
-					tbl->parse, ln, sv, NULL);
+			mandoc_msg(MANDOCERR_TBLIGNDATA,
+			    tbl->parse, ln, sv, NULL);
 
 	return(1);
 }
 
-/* ARGSUSED */
 int
 tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 {
 	struct tbl_dat	*dat;
-	size_t	 	 sz;
+	size_t		 sz;
 	int		 pos;
 
 	pos = 0;
@@ -168,9 +168,9 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 	} else
 		dat->string = mandoc_strdup(p);
 
-	if (TBL_CELL_DOWN == dat->layout->pos) 
-		mandoc_msg(MANDOCERR_TBLIGNDATA, 
-				tbl->parse, ln, pos, NULL);
+	if (TBL_CELL_DOWN == dat->layout->pos)
+		mandoc_msg(MANDOCERR_TBLIGNDATA, tbl->parse,
+		    ln, pos, NULL);
 
 	return(0);
 }
@@ -212,7 +212,7 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 		return(0);
 	}
 
-	/* 
+	/*
 	 * Choose a layout row: take the one following the last parsed
 	 * span's.  If that doesn't exist, use the last parsed span's.
 	 * If there's no last parsed span, use the first row.  Lastly,
@@ -226,11 +226,11 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p)
 			for (rp = tbl->last_span->layout->next;
 					rp && rp->first; rp = rp->next) {
 				switch (rp->first->pos) {
-				case (TBL_CELL_HORIZ):
+				case TBL_CELL_HORIZ:
 					dp = newspan(tbl, ln, rp);
 					dp->pos = TBL_SPAN_HORIZ;
 					continue;
-				case (TBL_CELL_DHORIZ):
+				case TBL_CELL_DHORIZ:
 					dp = newspan(tbl, ln, rp);
 					dp->pos = TBL_SPAN_DHORIZ;
 					continue;

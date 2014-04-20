@@ -1,4 +1,4 @@
-/*	$Id: tbl_layout.c,v 1.13 2014/03/28 23:25:54 schwarze Exp $ */
+/*	$Id: tbl_layout.c,v 1.14 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,16 +51,17 @@ static	const struct tbl_phrase keys[KEYS_MAX] = {
 	{ '=',		 TBL_CELL_DHORIZ }
 };
 
-static	int		 mods(struct tbl_node *, struct tbl_cell *, 
+static	int		 mods(struct tbl_node *, struct tbl_cell *,
 				int, const char *, int *);
-static	int		 cell(struct tbl_node *, struct tbl_row *, 
+static	int		 cell(struct tbl_node *, struct tbl_row *,
 				int, const char *, int *);
 static	void		 row(struct tbl_node *, int, const char *, int *);
 static	struct tbl_cell *cell_alloc(struct tbl_node *, struct tbl_row *,
 				enum tbl_cellt, int vert);
 
+
 static int
-mods(struct tbl_node *tbl, struct tbl_cell *cp, 
+mods(struct tbl_node *tbl, struct tbl_cell *cp,
 		int ln, const char *p, int *pos)
 {
 	char		 buf[5];
@@ -69,35 +70,35 @@ mods(struct tbl_node *tbl, struct tbl_cell *cp,
 	/* Not all types accept modifiers. */
 
 	switch (cp->pos) {
-	case (TBL_CELL_DOWN):
+	case TBL_CELL_DOWN:
 		/* FALLTHROUGH */
-	case (TBL_CELL_HORIZ):
+	case TBL_CELL_HORIZ:
 		/* FALLTHROUGH */
-	case (TBL_CELL_DHORIZ):
+	case TBL_CELL_DHORIZ:
 		return(1);
 	default:
 		break;
 	}
 
 mod:
-	/* 
+	/*
 	 * XXX: since, at least for now, modifiers are non-conflicting
 	 * (are separable by value, regardless of position), we let
 	 * modifiers come in any order.  The existing tbl doesn't let
 	 * this happen.
 	 */
 	switch (p[*pos]) {
-	case ('\0'):
+	case '\0':
 		/* FALLTHROUGH */
-	case (' '):
+	case ' ':
 		/* FALLTHROUGH */
-	case ('\t'):
+	case '\t':
 		/* FALLTHROUGH */
-	case (','):
+	case ',':
 		/* FALLTHROUGH */
-	case ('.'):
+	case '.':
 		/* FALLTHROUGH */
-	case ('|'):
+	case '|':
 		return(1);
 	default:
 		break;
@@ -113,8 +114,8 @@ mod:
 			(*pos)++;
 			goto mod;
 		}
-		mandoc_msg(MANDOCERR_TBLLAYOUT, 
-				tbl->parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+		    ln, *pos, NULL);
 		return(0);
 	}
 
@@ -131,8 +132,8 @@ mod:
 		/* No greater than 4 digits. */
 
 		if (4 == i) {
-			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
-					ln, *pos, NULL);
+			mandoc_msg(MANDOCERR_TBLLAYOUT,
+			    tbl->parse, ln, *pos, NULL);
 			return(0);
 		}
 
@@ -141,69 +142,69 @@ mod:
 
 		goto mod;
 		/* NOTREACHED */
-	} 
+	}
 
 	/* TODO: GNU has many more extensions. */
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
-	case ('z'):
+	case 'z':
 		cp->flags |= TBL_CELL_WIGN;
 		goto mod;
-	case ('u'):
+	case 'u':
 		cp->flags |= TBL_CELL_UP;
 		goto mod;
-	case ('e'):
+	case 'e':
 		cp->flags |= TBL_CELL_EQUAL;
 		goto mod;
-	case ('t'):
+	case 't':
 		cp->flags |= TBL_CELL_TALIGN;
 		goto mod;
-	case ('d'):
+	case 'd':
 		cp->flags |= TBL_CELL_BALIGN;
 		goto mod;
-	case ('w'):  /* XXX for now, ignore minimal column width */
+	case 'w':  /* XXX for now, ignore minimal column width */
 		goto mod;
-	case ('f'):
+	case 'f':
 		break;
-	case ('r'):
+	case 'r':
 		/* FALLTHROUGH */
-	case ('b'):
+	case 'b':
 		/* FALLTHROUGH */
-	case ('i'):
+	case 'i':
 		(*pos)--;
 		break;
 	default:
 		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
-				ln, *pos - 1, NULL);
+		    ln, *pos - 1, NULL);
 		return(0);
 	}
 
 	switch (tolower((unsigned char)p[(*pos)++])) {
-	case ('3'):
+	case '3':
 		/* FALLTHROUGH */
-	case ('b'):
+	case 'b':
 		cp->flags |= TBL_CELL_BOLD;
 		goto mod;
-	case ('2'):
+	case '2':
 		/* FALLTHROUGH */
-	case ('i'):
+	case 'i':
 		cp->flags |= TBL_CELL_ITALIC;
 		goto mod;
-	case ('1'):
+	case '1':
 		/* FALLTHROUGH */
-	case ('r'):
+	case 'r':
 		goto mod;
 	default:
 		break;
 	}
 
 	mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
-			ln, *pos - 1, NULL);
+	    ln, *pos - 1, NULL);
 	return(0);
 }
 
 static int
-cell(struct tbl_node *tbl, struct tbl_row *rp, 
+cell(struct tbl_node *tbl, struct tbl_row *rp,
 		int ln, const char *p, int *pos)
 {
 	int		 vert, i;
@@ -230,8 +231,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 			break;
 
 	if (KEYS_MAX == i) {
-		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, 
-				ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+		    ln, *pos, NULL);
 		return(0);
 	}
 
@@ -248,14 +249,15 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	if (TBL_CELL_SPAN == c) {
 		if (NULL == rp->first) {
 			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
-					ln, *pos, NULL);
+			    ln, *pos, NULL);
 			return(0);
 		} else if (rp->last)
 			switch (rp->last->pos) {
-			case (TBL_CELL_HORIZ):
-			case (TBL_CELL_DHORIZ):
-				mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
-						ln, *pos, NULL);
+			case TBL_CELL_HORIZ:
+				/* FALLTHROUGH */
+			case TBL_CELL_DHORIZ:
+				mandoc_msg(MANDOCERR_TBLLAYOUT,
+				    tbl->parse, ln, *pos, NULL);
 				return(0);
 			default:
 				break;
@@ -285,7 +287,6 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	return(mods(tbl, cell_alloc(tbl, rp, c, vert), ln, p, pos));
 }
-
 
 static void
 row(struct tbl_node *tbl, int ln, const char *p, int *pos)
@@ -317,9 +318,9 @@ cell:
 
 	if ('.' == p[*pos]) {
 		tbl->part = TBL_PART_DATA;
-		if (NULL == tbl->first_row) 
-			mandoc_msg(MANDOCERR_TBLNOLAYOUT, tbl->parse, 
-					ln, *pos, NULL);
+		if (NULL == tbl->first_row)
+			mandoc_msg(MANDOCERR_TBLNOLAYOUT,
+			    tbl->parse, ln, *pos, NULL);
 		(*pos)++;
 		return;
 	}

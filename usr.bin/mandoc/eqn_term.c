@@ -1,4 +1,4 @@
-/*	$Id: eqn_term.c,v 1.1 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: eqn_term.c,v 1.2 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +32,7 @@ static	const enum termfont fontmap[EQNFONT__MAX] = {
 };
 
 static void	eqn_box(struct termp *, const struct eqn_box *);
+
 
 void
 term_eqn(struct termp *p, const struct eqn *ep)
@@ -68,7 +65,7 @@ eqn_box(struct termp *p, const struct eqn_box *bp)
 		term_word(p, ")");
 	if (bp->right)
 		term_word(p, bp->right);
-	if (EQNFONT_NONE != bp->font) 
+	if (EQNFONT_NONE != bp->font)
 		term_fontpop(p);
 
 	if (bp->next)

@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.27 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: chars.c,v 1.28 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,8 +48,9 @@ struct	mchars {
 	struct ln	**htab;
 };
 
-static	const struct ln	 *find(const struct mchars *, 
+static	const struct ln	 *find(const struct mchars *,
 				const char *, size_t);
+
 
 void
 mchars_free(struct mchars *arg)
@@ -107,18 +108,18 @@ mchars_spec2cp(const struct mchars *arg, const char *p, size_t sz)
 char
 mchars_num2char(const char *p, size_t sz)
 {
-	int		  i;
+	int	  i;
 
 	if ((i = mandoc_strntoi(p, sz, 10)) < 0)
 		return('\0');
-	return(i > 0 && i < 256 && isprint(i) ? 
-			/* LINTED */ i : '\0');
+
+	return(i > 0 && i < 256 && isprint(i) ? i : '\0');
 }
 
 int
 mchars_num2uc(const char *p, size_t sz)
 {
-	int               i;
+	int	 i;
 
 	if ((i = mandoc_strntoi(p, sz, 16)) < 0)
 		return('\0');
@@ -127,7 +128,7 @@ mchars_num2uc(const char *p, size_t sz)
 }
 
 const char *
-mchars_spec2str(const struct mchars *arg, 
+mchars_spec2str(const struct mchars *arg,
 		const char *p, size_t sz, size_t *rsz)
 {
 	const struct ln	*ln;
@@ -156,8 +157,8 @@ find(const struct mchars *tab, const char *p, size_t sz)
 	hash = (int)p[0] - PRINT_LO;
 
 	for (pp = tab->htab[hash]; pp; pp = pp->next)
-		if (0 == strncmp(pp->code, p, sz) && 
-				'\0' == pp->code[(int)sz])
+		if (0 == strncmp(pp->code, p, sz) &&
+		    '\0' == pp->code[(int)sz])
 			return(pp);
 
 	return(NULL);

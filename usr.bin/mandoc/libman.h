@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.33 2014/01/05 20:26:27 schwarze Exp $ */
+/*	$Id: libman.h,v 1.34 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -78,8 +78,8 @@ enum mant	  man_hash_find(const char *);
 int		  man_macroend(struct man *);
 int		  man_valid_post(struct man *);
 int		  man_valid_pre(struct man *, struct man_node *);
-int		  man_unscope(struct man *, 
-			const struct man_node *, enum mandocerr);
+int		  man_unscope(struct man *, const struct man_node *,
+			enum mandocerr);
 
 __END_DECLS
 

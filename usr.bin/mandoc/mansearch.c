@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.23 2014/04/17 19:19:54 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.24 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -56,7 +56,7 @@ extern const char *const mansearch_keynames[];
 	} while (0)
 
 struct	expr {
-	uint64_t 	 bits;    /* type-mask */
+	uint64_t	 bits;    /* type-mask */
 	const char	*substr;  /* to search for, if applicable */
 	regex_t		 regexp;  /* compiled regexp, if applicable */
 	int		 open;    /* opening parentheses before */
@@ -79,7 +79,7 @@ static	char		*buildoutput(sqlite3 *, sqlite3_stmt *,
 static	void		*hash_alloc(size_t, void *);
 static	void		 hash_free(void *, size_t, void *);
 static	void		*hash_halloc(size_t, void *);
-static	struct expr	*exprcomp(const struct mansearch *, 
+static	struct expr	*exprcomp(const struct mansearch *,
 				int, char *[]);
 static	void		 exprfree(struct expr *);
 static	struct expr	*exprspec(struct expr *, uint64_t,
@@ -92,6 +92,7 @@ static	void		 sql_match(sqlite3_context *context,
 static	void		 sql_regexp(sqlite3_context *context,
 				int argc, sqlite3_value **argv);
 static	char		*sql_statement(const struct expr *);
+
 
 int
 mansearch_setup(int start)
@@ -227,11 +228,10 @@ mansearch(const struct mansearch *search,
 		} else if (-1 == chdir(paths->paths[i])) {
 			perror(paths->paths[i]);
 			continue;
-		} 
+		}
 
-		c =  sqlite3_open_v2
-			(MANDOC_DB, &db, 
-			 SQLITE_OPEN_READONLY, NULL);
+		c = sqlite3_open_v2(MANDOC_DB, &db,
+		    SQLITE_OPEN_READONLY, NULL);
 
 		if (SQLITE_OK != c) {
 			perror(MANDOC_DB);
@@ -280,9 +280,9 @@ mansearch(const struct mansearch *search,
 		 */
 		while (SQLITE_ROW == (c = sqlite3_step(s))) {
 			pageid = sqlite3_column_int64(s, 2);
-			idx = ohash_lookup_memory
-				(&htab, (char *)&pageid,
-				 sizeof(uint64_t), (uint32_t)pageid);
+			idx = ohash_lookup_memory(&htab,
+			    (char *)&pageid, sizeof(uint64_t),
+			    (uint32_t)pageid);
 
 			if (NULL != ohash_find(&htab, idx))
 				continue;
@@ -301,7 +301,7 @@ mansearch(const struct mansearch *search,
 
 		sqlite3_finalize(s);
 
-		c = sqlite3_prepare_v2(db, 
+		c = sqlite3_prepare_v2(db,
 		    "SELECT * FROM mlinks WHERE pageid=?"
 		    " ORDER BY sec, arch, name",
 		    -1, &s, NULL);
@@ -319,8 +319,8 @@ mansearch(const struct mansearch *search,
 				mp = ohash_next(&htab, &idx)) {
 			if (cur + 1 > maxres) {
 				maxres += 1024;
-				*res = mandoc_realloc
-					(*res, maxres * sizeof(struct manpage));
+				*res = mandoc_realloc(*res,
+				    maxres * sizeof(struct manpage));
 			}
 			mpage = *res + cur;
 			mpage->form = mp->form;

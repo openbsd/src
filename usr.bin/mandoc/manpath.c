@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.8 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: manpath.c,v 1.9 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -119,9 +119,8 @@ manpath_add(struct manpaths *dirs, const char *dir)
 		if (0 == strcmp(dirs->paths[i], dir))
 			return;
 
-	dirs->paths = mandoc_realloc
-		(dirs->paths,
-		 (dirs->sz + 1) * sizeof(char *));
+	dirs->paths = mandoc_realloc(dirs->paths,
+	    (dirs->sz + 1) * sizeof(char *));
 
 	dirs->paths[dirs->sz++] = mandoc_strdup(cp);
 }

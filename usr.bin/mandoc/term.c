@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.82 2014/04/08 07:13:01 schwarze Exp $ */
+/*	$Id: term.c,v 1.83 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,6 +35,7 @@ static	void		 bufferc(struct termp *, char);
 static	void		 encode(struct termp *, const char *, size_t);
 static	void		 encode1(struct termp *, int);
 
+
 void
 term_free(struct termp *p)
 {
@@ -47,9 +48,8 @@ term_free(struct termp *p)
 	free(p);
 }
 
-
 void
-term_begin(struct termp *p, term_margin head, 
+term_begin(struct termp *p, term_margin head,
 		term_margin foot, const void *arg)
 {
 
@@ -58,7 +58,6 @@ term_begin(struct termp *p, term_margin head,
 	p->argf = arg;
 	(*p->begin)(p);
 }
-
 
 void
 term_end(struct termp *p)
@@ -167,7 +166,7 @@ term_flushln(struct termp *p)
 
 			/* Regular word. */
 			/* Break at the hyphen point if we overrun. */
-			if (vend > vis && vend < bp && 
+			if (vend > vis && vend < bp &&
 			    (ASCII_HYPH == p->buf[j] ||
 			     ASCII_BREAK == p->buf[j]))
 				jhy = j;
@@ -247,7 +246,7 @@ term_flushln(struct termp *p)
 			(*p->letter)(p, p->buf[i]);
 			if (8 == p->buf[i])
 				p->viscol -= (*p->width)(p, p->buf[i-1]);
-			else 
+			else
 				p->viscol += (*p->width)(p, p->buf[i]);
 		}
 		vis = vend;
@@ -271,7 +270,7 @@ term_flushln(struct termp *p)
 
 	if (TERMP_HANG & p->flags) {
 		p->overstep = (int)(vis - maxvis +
-				p->trailspace * (*p->width)(p, ' '));
+		    p->trailspace * (*p->width)(p, ' '));
 
 		/*
 		 * If we have overstepped the margin, temporarily move
@@ -294,8 +293,7 @@ term_flushln(struct termp *p)
 	}
 }
 
-
-/* 
+/*
  * A newline only breaks an existing line; it won't assert vertical
  * space.  All data in the output buffer is flushed prior to the newline
  * assertion.
@@ -308,7 +306,6 @@ term_newln(struct termp *p)
 	if (p->col || p->viscol)
 		term_flushln(p);
 }
-
 
 /*
  * Asserts a vertical space (a full, empty line-break between lines).
@@ -338,7 +335,6 @@ term_fontlast(struct termp *p)
 	p->fontq[p->fonti] = f;
 }
 
-
 void
 term_fontrepl(struct termp *p, enum termfont f)
 {
@@ -346,7 +342,6 @@ term_fontrepl(struct termp *p, enum termfont f)
 	p->fontl = p->fontq[p->fonti];
 	p->fontq[p->fonti] = f;
 }
-
 
 void
 term_fontpush(struct termp *p, enum termfont f)
@@ -357,7 +352,6 @@ term_fontpush(struct termp *p, enum termfont f)
 	p->fontq[++p->fonti] = f;
 }
 
-
 const void *
 term_fontq(struct termp *p)
 {
@@ -365,14 +359,12 @@ term_fontq(struct termp *p)
 	return(&p->fontq[p->fonti]);
 }
 
-
 enum termfont
 term_fonttop(struct termp *p)
 {
 
 	return(p->fontq[p->fonti]);
 }
-
 
 void
 term_fontpopq(struct termp *p, const void *key)
@@ -382,7 +374,6 @@ term_fontpopq(struct termp *p, const void *key)
 		p->fonti--;
 	assert(p->fonti >= 0);
 }
-
 
 void
 term_fontpop(struct termp *p)
@@ -453,13 +444,13 @@ term_word(struct termp *p, const char *word)
 
 		if (TERMENC_ASCII != p->enc)
 			switch (esc) {
-			case (ESCAPE_UNICODE):
+			case ESCAPE_UNICODE:
 				uc = mchars_num2uc(seq + 1, sz - 1);
 				if ('\0' == uc)
 					break;
 				encode1(p, uc);
 				continue;
-			case (ESCAPE_SPECIAL):
+			case ESCAPE_SPECIAL:
 				uc = mchars_spec2cp(p->symtab, seq, sz);
 				if (uc <= 0)
 					break;
@@ -470,45 +461,45 @@ term_word(struct termp *p, const char *word)
 			}
 
 		switch (esc) {
-		case (ESCAPE_UNICODE):
+		case ESCAPE_UNICODE:
 			encode1(p, '?');
 			break;
-		case (ESCAPE_NUMBERED):
+		case ESCAPE_NUMBERED:
 			c = mchars_num2char(seq, sz);
 			if ('\0' != c)
 				encode(p, &c, 1);
 			break;
-		case (ESCAPE_SPECIAL):
+		case ESCAPE_SPECIAL:
 			cp = mchars_spec2str(p->symtab, seq, sz, &ssz);
-			if (NULL != cp) 
+			if (NULL != cp)
 				encode(p, cp, ssz);
 			else if (1 == ssz)
 				encode(p, seq, sz);
 			break;
-		case (ESCAPE_FONTBOLD):
+		case ESCAPE_FONTBOLD:
 			term_fontrepl(p, TERMFONT_BOLD);
 			break;
-		case (ESCAPE_FONTITALIC):
+		case ESCAPE_FONTITALIC:
 			term_fontrepl(p, TERMFONT_UNDER);
 			break;
-		case (ESCAPE_FONTBI):
+		case ESCAPE_FONTBI:
 			term_fontrepl(p, TERMFONT_BI);
 			break;
-		case (ESCAPE_FONT):
+		case ESCAPE_FONT:
 			/* FALLTHROUGH */
-		case (ESCAPE_FONTROMAN):
+		case ESCAPE_FONTROMAN:
 			term_fontrepl(p, TERMFONT_NONE);
 			break;
-		case (ESCAPE_FONTPREV):
+		case ESCAPE_FONTPREV:
 			term_fontlast(p);
 			break;
-		case (ESCAPE_NOSPACE):
+		case ESCAPE_NOSPACE:
 			if (TERMP_SKIPCHAR & p->flags)
 				p->flags &= ~TERMP_SKIPCHAR;
 			else if ('\0' == *word)
 				p->flags |= TERMP_NOSPACE;
 			break;
-		case (ESCAPE_SKIPCHAR):
+		case ESCAPE_SKIPCHAR:
 			p->flags |= TERMP_SKIPCHAR;
 			break;
 		default:
@@ -591,7 +582,7 @@ encode(struct termp *p, const char *word, size_t sz)
 	 */
 
 	if (TERMFONT_NONE == term_fonttop(p)) {
-		if (p->col + sz >= p->maxcols) 
+		if (p->col + sz >= p->maxcols)
 			adjbuf(p, p->col + sz);
 		for (i = 0; i < sz; i++)
 			p->buf[p->col++] = word[i];
@@ -623,11 +614,11 @@ term_setwidth(struct termp *p, const char *wstr)
 	width = 0;
 	if (NULL != wstr) {
 		switch (*wstr) {
-		case ('+'):
+		case '+':
 			iop = 1;
 			wstr++;
 			break;
-		case ('-'):
+		case '-':
 			iop = -1;
 			wstr++;
 			break;
@@ -684,7 +675,7 @@ term_strlen(const struct termp *p, const char *cp)
 			sz += cond_width(p, *cp++, &skip);
 
 		switch (*cp) {
-		case ('\\'):
+		case '\\':
 			cp++;
 			esc = mandoc_escape(&cp, &seq, &ssz);
 			if (ESCAPE_ERROR == esc)
@@ -692,16 +683,16 @@ term_strlen(const struct termp *p, const char *cp)
 
 			if (TERMENC_ASCII != p->enc)
 				switch (esc) {
-				case (ESCAPE_UNICODE):
-					c = mchars_num2uc
-						(seq + 1, ssz - 1);
+				case ESCAPE_UNICODE:
+					c = mchars_num2uc(seq + 1,
+					    ssz - 1);
 					if ('\0' == c)
 						break;
 					sz += cond_width(p, c, &skip);
 					continue;
-				case (ESCAPE_SPECIAL):
-					c = mchars_spec2cp
-						(p->symtab, seq, ssz);
+				case ESCAPE_SPECIAL:
+					c = mchars_spec2cp(p->symtab,
+					    seq, ssz);
 					if (c <= 0)
 						break;
 					sz += cond_width(p, c, &skip);
@@ -713,17 +704,17 @@ term_strlen(const struct termp *p, const char *cp)
 			rhs = NULL;
 
 			switch (esc) {
-			case (ESCAPE_UNICODE):
+			case ESCAPE_UNICODE:
 				sz += cond_width(p, '?', &skip);
 				break;
-			case (ESCAPE_NUMBERED):
+			case ESCAPE_NUMBERED:
 				c = mchars_num2char(seq, ssz);
 				if ('\0' != c)
 					sz += cond_width(p, c, &skip);
 				break;
-			case (ESCAPE_SPECIAL):
-				rhs = mchars_spec2str
-					(p->symtab, seq, ssz, &rsz);
+			case ESCAPE_SPECIAL:
+				rhs = mchars_spec2str(p->symtab,
+				    seq, ssz, &rsz);
 
 				if (ssz != 1 || rhs)
 					break;
@@ -731,7 +722,7 @@ term_strlen(const struct termp *p, const char *cp)
 				rhs = seq;
 				rsz = ssz;
 				break;
-			case (ESCAPE_SKIPCHAR):
+			case ESCAPE_SKIPCHAR:
 				skip = 1;
 				break;
 			default:
@@ -749,15 +740,15 @@ term_strlen(const struct termp *p, const char *cp)
 			for (i = 0; i < rsz; i++)
 				sz += (*p->width)(p, *rhs++);
 			break;
-		case (ASCII_NBRSP):
+		case ASCII_NBRSP:
 			sz += cond_width(p, ' ', &skip);
 			cp++;
 			break;
-		case (ASCII_HYPH):
+		case ASCII_HYPH:
 			sz += cond_width(p, '-', &skip);
 			cp++;
 			/* FALLTHROUGH */
-		case (ASCII_BREAK):
+		case ASCII_BREAK:
 			break;
 		default:
 			break;
@@ -767,29 +758,28 @@ term_strlen(const struct termp *p, const char *cp)
 	return(sz);
 }
 
-/* ARGSUSED */
 size_t
 term_vspan(const struct termp *p, const struct roffsu *su)
 {
 	double		 r;
 
 	switch (su->unit) {
-	case (SCALE_CM):
+	case SCALE_CM:
 		r = su->scale * 2;
 		break;
-	case (SCALE_IN):
+	case SCALE_IN:
 		r = su->scale * 6;
 		break;
-	case (SCALE_PC):
+	case SCALE_PC:
 		r = su->scale;
 		break;
-	case (SCALE_PT):
+	case SCALE_PT:
 		r = su->scale / 8;
 		break;
-	case (SCALE_MM):
+	case SCALE_MM:
 		r = su->scale / 1000;
 		break;
-	case (SCALE_VS):
+	case SCALE_VS:
 		r = su->scale;
 		break;
 	default:
@@ -799,8 +789,7 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 
 	if (r < 0.0)
 		r = 0.0;
-	return(/* LINTED */(size_t)
-			r);
+	return((size_t)r);
 }
 
 size_t
@@ -811,6 +800,5 @@ term_hspan(const struct termp *p, const struct roffsu *su)
 	v = ((*p->hspan)(p, su));
 	if (v < 0.0)
 		v = 0.0;
-	return((size_t) /* LINTED */
-			v);
+	return((size_t)v);
 }

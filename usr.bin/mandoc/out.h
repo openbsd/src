@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.12 2011/09/18 15:54:48 schwarze Exp $ */
+/*	$Id: out.h,v 1.13 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,8 +63,8 @@ __BEGIN_DECLS
 	     (p)->scale = (v); } \
 	while (/* CONSTCOND */ 0)
 
-int	  	  a2roffsu(const char *, struct roffsu *, enum roffscale);
-void	  	  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
+int		  a2roffsu(const char *, struct roffsu *, enum roffscale);
+void		  tblcalc(struct rofftbl *tbl, const struct tbl_span *);
 
 __END_DECLS
 

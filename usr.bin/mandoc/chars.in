@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.21 2014/03/05 23:14:37 schwarze Exp $ */
+/*	$Id: chars.in,v 1.22 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * The ASCII translation tables.  
+ * The ASCII translation tables.
  *
  * The left-hand side corresponds to the input sequence (\x, \(xx, \*(xx
  * and so on) whose length is listed second element.  The right-hand

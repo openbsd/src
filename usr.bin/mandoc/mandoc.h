@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.63 2014/03/28 23:25:54 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.64 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -363,7 +363,7 @@ struct	eqn_box {
 
 /*
  * An equation consists of a tree of expressions starting at a given
- * line and position. 
+ * line and position.
  */
 struct	eqn {
 	char		 *name; /* identifier (or NULL) */
@@ -409,18 +409,18 @@ __BEGIN_DECLS
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 struct mchars	 *mchars_alloc(void);
 void		  mchars_free(struct mchars *);
-char	 	  mchars_num2char(const char *, size_t);
+char		  mchars_num2char(const char *, size_t);
 int		  mchars_num2uc(const char *, size_t);
-int		  mchars_spec2cp(const struct mchars *, 
+int		  mchars_spec2cp(const struct mchars *,
 			const char *, size_t);
-const char	 *mchars_spec2str(const struct mchars *, 
+const char	 *mchars_spec2str(const struct mchars *,
 			const char *, size_t, size_t *);
 struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg, char *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
 void		  mparse_reset(struct mparse *);
-void		  mparse_result(struct mparse *, 
+void		  mparse_result(struct mparse *,
 			struct mdoc **, struct man **, char **);
 const char	 *mparse_getkeep(const struct mparse *);
 const char	 *mparse_strerror(enum mandocerr);

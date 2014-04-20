@@ -1,4 +1,4 @@
-/*	$Id: arch.c,v 1.7 2014/03/21 22:17:01 schwarze Exp $ */
+/*	$Id: arch.c,v 1.8 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,11 +22,12 @@
 #define LINE(x, y) \
 	if (0 == strcmp(p, x)) return(y);
 
+
 const char *
 mdoc_a2arch(const char *p)
 {
 
-#include "arch.in" 
+#include "arch.in"
 
 	return(NULL);
 }

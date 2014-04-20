@@ -1,4 +1,4 @@
-/*	$Id: apropos.c,v 1.21 2014/04/11 15:45:39 schwarze Exp $ */
+/*	$Id: apropos.c,v 1.22 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include "manpath.h"
 #include "mansearch.h"
+
 
 int
 apropos(int argc, char *argv[])
@@ -60,22 +61,22 @@ apropos(int argc, char *argv[])
 
 	while (-1 != (ch = getopt(argc, argv, "C:M:m:O:S:s:")))
 		switch (ch) {
-		case ('C'):
+		case 'C':
 			conf_file = optarg;
 			break;
-		case ('M'):
+		case 'M':
 			defpaths = optarg;
 			break;
-		case ('m'):
+		case 'm':
 			auxpaths = optarg;
 			break;
-		case ('O'):
+		case 'O':
 			outkey = optarg;
 			break;
-		case ('S'):
+		case 'S':
 			search.arch = optarg;
 			break;
-		case ('s'):
+		case 's':
 			search.sec = optarg;
 			break;
 		default:

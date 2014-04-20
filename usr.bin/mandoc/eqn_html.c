@@ -1,4 +1,4 @@
-/*	$Id: eqn_html.c,v 1.1 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: eqn_html.c,v 1.2 2014/04/20 16:44:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,8 +31,8 @@ static	const enum htmltag fontmap[EQNFONT__MAX] = {
 	TAG_I /* EQNFONT_ITALIC */
 };
 
-
 static void	eqn_box(struct html *, const struct eqn_box *);
+
 
 void
 print_eqn(struct html *p, const struct eqn *ep)
@@ -59,12 +55,12 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 {
 	struct tag	*t;
 
-	t = EQNFONT_NONE == bp->font ? NULL : 
-		print_otag(p, fontmap[(int)bp->font], 0, NULL);
+	t = EQNFONT_NONE == bp->font ? NULL :
+	    print_otag(p, fontmap[(int)bp->font], 0, NULL);
 
 	if (bp->left)
 		print_text(p, bp->left);
-	
+
 	if (bp->text)
 		print_text(p, bp->text);
 
