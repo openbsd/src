@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.61 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.62 2014/04/20 19:39:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -453,7 +453,7 @@ print_offs(const char *v)
 	if (Bl_stack_len)
 		sz += Bl_stack[Bl_stack_len - 1];
 
-	snprintf(buf, sizeof(buf), "%zun", sz);
+	(void)snprintf(buf, sizeof(buf), "%zun", sz);
 	print_word(buf);
 	outflags |= MMAN_nl;
 }
@@ -506,7 +506,7 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 		remain = sz + 2;
 	}
 	if (numeric) {
-		snprintf(buf, sizeof(buf), "%zun", sz + 2);
+		(void)snprintf(buf, sizeof(buf), "%zun", sz + 2);
 		print_word(buf);
 	} else
 		print_word(v);
@@ -516,9 +516,9 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 static void
 print_count(int *count)
 {
-	char		  buf[12];
+	char		  buf[24];
 
-	snprintf(buf, sizeof(buf), "%d.", ++*count);
+	(void)snprintf(buf, sizeof(buf), "%d.", ++*count);
 	print_word(buf);
 }
 
@@ -1312,7 +1312,8 @@ mid_it(void)
 
 	/* Restore the indentation of the enclosing list. */
 	print_line(".RS", MMAN_Bk_susp);
-	snprintf(buf, sizeof(buf), "%zun", Bl_stack[Bl_stack_len - 1]);
+	(void)snprintf(buf, sizeof(buf), "%zun",
+	    Bl_stack[Bl_stack_len - 1]);
 	print_word(buf);
 
 	/* Remeber to close out this .RS block later. */

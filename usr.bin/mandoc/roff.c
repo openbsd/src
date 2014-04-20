@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.80 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: roff.c,v 1.81 2014/04/20 19:39:35 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -484,7 +484,7 @@ roff_alloc(struct mparse *parse, int options)
 static enum rofferr
 roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 {
-	char		 ubuf[12]; /* buffer to print the number */
+	char		 ubuf[24]; /* buffer to print the number */
 	const char	*start;	/* start of the string to process */
 	const char	*stesc;	/* start of an escape sequence ('\\') */
 	const char	*stnam;	/* start of the name, after "[(*" */
@@ -610,11 +610,11 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 			ubuf[1] = '\0';
 			break;
 		case 'n':
-			snprintf(ubuf, sizeof(ubuf), "%d",
+			(void)snprintf(ubuf, sizeof(ubuf), "%d",
 			    roff_getregn(r, stnam, naml));
 			break;
 		case 'w':
-			snprintf(ubuf, sizeof(ubuf), "%d",
+			(void)snprintf(ubuf, sizeof(ubuf), "%d",
 			    24 * (int)naml);
 			break;
 		}
