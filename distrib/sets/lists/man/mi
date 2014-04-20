@@ -2262,7 +2262,6 @@
 ./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zyd.4
 ./usr/share/man/man5
-./usr/share/man/man5/.rhosts.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/amd64
@@ -2306,7 +2305,6 @@
 ./usr/share/man/man5/hostapd.conf.5
 ./usr/share/man/man5/hostname.if.5
 ./usr/share/man/man5/hosts.5
-./usr/share/man/man5/hosts.equiv.5
 ./usr/share/man/man5/hppa
 ./usr/share/man/man5/hppa/boot.conf.5
 ./usr/share/man/man5/hppa64
