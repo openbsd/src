@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.103 2014/04/20 09:30:56 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.104 2014/04/20 09:38:19 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -777,37 +777,6 @@ __END_DECLS
 #endif
 
 #else
-/*
- * in_cksum_phdr:
- *
- *	Compute significant parts of the IPv4 checksum pseudo-header
- *	for use in a delayed TCP/UDP checksum calculation.
- *
- *	Args:
- *
- *		src		Source IP address
- *		dst		Destination IP address
- *		lenproto	htons(proto-hdr-len + proto-number)
- */
-static __inline u_int16_t __attribute__((__unused__))
-in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
-{
-	u_int32_t sum;
-
-	sum = lenproto +
-	      (u_int16_t)(src >> 16) +
-	      (u_int16_t)(src /*& 0xffff*/) +
-	      (u_int16_t)(dst >> 16) +
-	      (u_int16_t)(dst /*& 0xffff*/);
-
-	sum = (u_int16_t)(sum >> 16) + (u_int16_t)(sum /*& 0xffff*/);
-
-	if (sum > 0xffff)
-		sum -= 0xffff;
-
-	return (sum);
-}
-
 extern	   int inetctlerrmap[];
 extern	   struct ifqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
