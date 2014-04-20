@@ -829,9 +829,9 @@ static unsigned long get_error_values(int inc, int top, const char **file, int *
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 	{
-	char lsbuf[64], fsbuf[64], rsbuf[64];
+	char lsbuf[30], fsbuf[30], rsbuf[30];
 	const char *ls,*fs,*rs;
-	unsigned long l,f,r;
+	int l, f, r, ret;
 
 	l=ERR_GET_LIB(e);
 	f=ERR_GET_FUNC(e);
@@ -841,16 +841,23 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 	fs=ERR_func_error_string(e);
 	rs=ERR_reason_error_string(e);
 
-	if (ls == NULL) 
-		snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
-	if (fs == NULL)
-		snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-	if (rs == NULL)
-		snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+	if (ls == NULL) {
+		(void) snprintf(lsbuf, sizeof(lsbuf), "lib(%d)", l);
+		ls = lsbuf;
+	}
+	if (fs == NULL) {
+		(void) snprintf(fsbuf, sizeof(fsbuf), "func(%d)", f);
+		fs = fsbuf;
+	}
+	if (rs == NULL) {
+		(void) snprintf(rsbuf, sizeof(rsbuf), "reason(%d)", r);
+		rs = rsbuf;
+	}
 
-	snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
-		fs?fs:fsbuf, rs?rs:rsbuf);
-	if (strlen(buf) == len-1)
+	ret = snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, fs, rs);
+	if (ret == -1)
+		return;	/* can't happen, and can't do better if it does */
+	if (ret >= len)
 		{
 		/* output may be truncated; make sure we always have 5 
 		 * colon-separated fields, i.e. 4 colons ... */
