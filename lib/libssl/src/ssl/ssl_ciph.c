@@ -1030,12 +1030,11 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 		curr = curr->next;
 	}
 
-	number_uses = malloc((max_strength_bits + 1) * sizeof(int));
+	number_uses = calloc((max_strength_bits + 1), sizeof(int));
 	if (!number_uses) {
 		SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	memset(number_uses, 0, (max_strength_bits + 1) * sizeof(int));
 
 	/*
 	 * Now find the strength_bits values actually used
