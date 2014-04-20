@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.177 2014/04/14 14:39:18 blambert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.178 2014/04/20 18:16:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -478,11 +478,18 @@ rdroptsl	: forwardmode TO tablespec interface	{
 				YYERROR;
 			case FWD_TRANS:
 				yyerror("no transparent forward here");
+				if ($4 != NULL)
+					free($4);
 				YYERROR;
 			}
 			if ($4 != NULL) {
-				strlcpy($3->conf.ifname, $4,
-				    sizeof($3->conf.ifname));
+				if (strlcpy($3->conf.ifname, $4,
+				    sizeof($3->conf.ifname)) >=
+				    sizeof($3->conf.ifname)) {
+					yyerror("interface name truncated");
+					free($4);
+					YYERROR;
+				}
 				free($4);
 			}
 
@@ -594,7 +601,12 @@ tabledef	: TABLE table		{
 			if ((tb = calloc(1, sizeof (*tb))) == NULL)
 				fatal("out of memory");
 
-			(void)strlcpy(tb->conf.name, $2, sizeof(tb->conf.name));
+			if (strlcpy(tb->conf.name, $2,
+			    sizeof(tb->conf.name)) >= sizeof(tb->conf.name)) {
+				yyerror("table name truncated");
+				free($2);
+				YYERROR;
+			}
 			free($2);
 
 			tb->conf.id = 0; /* will be set later */
@@ -638,7 +650,12 @@ tablespec	: table			{
 			struct table	*tb;
 			if ((tb = calloc(1, sizeof (*tb))) == NULL)
 				fatal("out of memory");
-			(void)strlcpy(tb->conf.name, $1, sizeof(tb->conf.name));
+			if (strlcpy(tb->conf.name, $1,
+			    sizeof(tb->conf.name)) >= sizeof(tb->conf.name)) {
+				yyerror("table name truncated");
+				free($1);
+				YYERROR;
+			}
 			free($1);
 			table = tb;
 		} tableopts_l		{
@@ -765,8 +782,13 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 			free($3);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
-			(void)strlcpy(table->conf.digest, $4.digest,
-			    sizeof(table->conf.digest));
+			if (strlcpy(table->conf.digest, $4.digest,
+			    sizeof(table->conf.digest)) >=
+			    sizeof(table->conf.digest)) {
+				yyerror("digest truncated");
+				free($4.digest);
+				YYERROR;
+			}
 			table->conf.digest_type = $4.type;
 			free($4.digest);
 		}
@@ -1411,8 +1433,13 @@ relayoptsl	: LISTEN ON STRING port optssl {
 				YYERROR;
 			}
 			if ($5 != NULL) {
-				strlcpy(rlay->rl_conf.ifname, $5,
-				    sizeof(rlay->rl_conf.ifname));
+				if (strlcpy(rlay->rl_conf.ifname, $5,
+				    sizeof(rlay->rl_conf.ifname)) >=
+				    sizeof(rlay->rl_conf.ifname)) {
+					yyerror("interface name truncated");
+					free($5);
+					YYERROR;
+				}
 				free($5);
 			}
 			if ($2) {
@@ -2764,7 +2791,11 @@ table_inherit(struct table *tb)
 		yyerror("invalid table name");
 		goto fail;
 	}
-	(void)strlcpy(tb->conf.name, pname, sizeof(tb->conf.name));
+	if (strlcpy(tb->conf.name, pname, sizeof(tb->conf.name)) >=
+	    sizeof(tb->conf.name)) {
+		yyerror("invalid table mame");
+		goto fail;
+	}
 	if ((oldtb = table_findbyconf(conf, tb)) != NULL) {
 		purge_table(NULL, tb);
 		return (oldtb);
@@ -2919,7 +2950,8 @@ is_if_in_group(const char *ifname, const char *groupname)
 		err(1, "socket");
 
 	memset(&ifgr, 0, sizeof(ifgr));
-	strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
+	if (strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ) >= IFNAMSIZ)
+		err(1, "IFNAMSIZ");
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
 		if (errno == EINVAL || errno == ENOTTY)
 			goto end;
