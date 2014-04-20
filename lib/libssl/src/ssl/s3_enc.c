@@ -361,8 +361,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 		}
 	}
 
-	s->session->key_arg_length = 0;
-
 	EVP_CipherInit_ex(dd, c, NULL, key, iv,(which & SSL3_CC_WRITE));
 
 	OPENSSL_cleanse(&(exp_key[0]), sizeof(exp_key));

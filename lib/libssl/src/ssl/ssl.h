@@ -399,7 +399,7 @@ struct ssl_cipher_st {
 };
 
 
-/* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
+/* Used to hold functions for SSLv3/TLSv1 functions */
 struct ssl_method_st {
 	int version;
 	int (*ssl_new)(SSL *s);
@@ -442,7 +442,6 @@ struct ssl_method_st {
  *	Session_ID 		OCTET STRING,	-- the Session ID
  *	Master_key 		OCTET STRING,	-- the master key
  *	KRB5_principal		OCTET STRING	-- optional Kerberos principal
- *	Key_Arg [ 0 ] IMPLICIT	OCTET STRING,	-- the optional Key argument
  *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
@@ -463,9 +462,6 @@ struct ssl_session_st {
 	int ssl_version;	/* what ssl version session info is
 				 * being kept in here? */
 
-	/* only really used in SSLv2 */
-	unsigned int key_arg_length;
-	unsigned char key_arg[SSL_MAX_KEY_ARG_LENGTH];
 	int master_key_length;
 	unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
 	/* session_id - valid? */
@@ -502,9 +498,9 @@ struct ssl_session_st {
 	 * is not ok, we must remember the error for session reuse: */
 	long verify_result; /* only for servers */
 
-	int references;
 	long timeout;
-	long time;
+	time_t time;
+	int references;
 
 	unsigned int compress_meth;	/* Need to lookup the method */
 
@@ -845,9 +841,8 @@ struct ssl_ctx_st {
 
 	CRYPTO_EX_DATA ex_data;
 
-	const EVP_MD *rsa_md5;	/* For SSLv2 - name is 'ssl2-md5' */
 	const EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
-	const EVP_MD *sha1;	/* For SSLv3/TLSv1 'ssl3->sha1' */
+	const EVP_MD *sha1;	/* For SSLv3/TLSv1 'ssl3-sha1' */
 
 	STACK_OF(X509) *extra_certs;
 	STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
@@ -1155,7 +1150,6 @@ struct ssl_st {
 	unsigned char *packet;
 	unsigned int packet_length;
 
-	struct ssl2_state_st *s2; /* SSLv2 variables */
 	struct ssl3_state_st *s3; /* SSLv3 variables */
 	struct dtls1_state_st *d1; /* DTLSv1 variables */
 
@@ -1828,9 +1822,9 @@ const SSL_METHOD *SSLv3_method(void);		/* SSLv3 */
 const SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
 const SSL_METHOD *SSLv3_client_method(void);	/* SSLv3 */
 
-const SSL_METHOD *SSLv23_method(void);		/* SSLv3 but can rollback to v2 */
-const SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 but can rollback to v2 */
-const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
+const SSL_METHOD *SSLv23_method(void);		/* SSLv3 or TLSv1.* */
+const SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 or TLSv1.* */
+const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 or TLSv1.* */
 
 const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */

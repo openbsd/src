@@ -161,16 +161,6 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		if (BIO_printf(bp, "%02X", x->master_key[i])
 			<= 0) goto err;
 	}
-	if (BIO_puts(bp, "\n    Key-Arg   : ")
-		<= 0) goto err;
-	if (x->key_arg_length == 0) {
-		if (BIO_puts(bp, "None")
-			<= 0) goto err;
-	} else
-		for (i = 0; i < x->key_arg_length; i++) {
-		if (BIO_printf(bp, "%02X", x->key_arg[i])
-			<= 0) goto err;
-	}
 #ifndef OPENSSL_NO_KRB5
 	if (BIO_puts(bp, "\n    Krb5 Principal: ")
 		<= 0) goto err;
@@ -227,8 +217,8 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 			}
 	}
 #endif
-	if (x->time != 0L) {
-		if (BIO_printf(bp, "\n    Start Time: %ld", x->time)
+	if (x->time != 0) {
+		if (BIO_printf(bp, "\n    Start Time: %lld", (long long)x->time)
 			<= 0) goto err;
 	}
 	if (x->timeout != 0L) {

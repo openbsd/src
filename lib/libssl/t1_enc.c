@@ -519,7 +519,6 @@ tls1_change_cipher_state(SSL *s, int which)
 		}
 	}
 
-	s->session->key_arg_length = 0;
 #ifdef KSSL_DEBUG
 	{
 		int i;

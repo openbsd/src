@@ -1712,11 +1712,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->references = 1;
 	ret->quiet_shutdown = 0;
 
-/*	ret->cipher=NULL;*/
-/*	ret->s2->challenge=NULL;
+/*	ret->cipher=NULL;
 	ret->master_key=NULL;
-	ret->key_arg=NULL;
-	ret->s2->conn_id=NULL;
 */
 
 	ret->info_callback = NULL;
@@ -2340,7 +2337,7 @@ ssl_update_cache(SSL *s, int mode)
 		if ((((mode & SSL_SESS_CACHE_CLIENT)
 			?s->session_ctx->stats.sess_connect_good
 		:s->session_ctx->stats.sess_accept_good) & 0xff) == 0xff) {
-			SSL_CTX_flush_sessions(s->session_ctx,(unsigned long)time(NULL));
+			SSL_CTX_flush_sessions(s->session_ctx, time(NULL));
 		}
 	}
 }
