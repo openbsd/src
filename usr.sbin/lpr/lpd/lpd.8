@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.24 2014/04/19 18:44:25 tedu Exp $
+.\"	$OpenBSD: lpd.8,v 1.25 2014/04/20 18:11:45 tedu Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: April 20 2014 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -159,9 +159,11 @@ port from
 .Pp
 Access control is provided by two means.
 First, all requests must come from one of the machines listed in the file
-.Pa /etc/hosts.equiv
+.Pa /etc/hosts.lpd
 or
-.Pa /etc/hosts.lpd .
+.Pa /etc/hosts.equiv ,
+one hostname per line.
+A plus "+" may be used as a wildcard to grant access to all hosts.
 Second, if the
 .Dq rs
 capability is specified in the
