@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.3 2014/04/20 09:29:22 reyk Exp $    */
+/*      $OpenBSD: agentx.c,v 1.4 2014/04/20 10:46:20 reyk Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -889,14 +889,14 @@ snmp_agentx_ping(struct agentx_handle *h)
 	if ((pdu = snmp_agentx_ping_pdu()) == NULL)
 		return (-1);
 
-	if ((pdu = snmp_agentx_request(h, pdu)) == NULL ||
-	    snmp_agentx_response(h, pdu) == -1) {
-		error = -1;
-		goto fail;
-	}
+	/* Attaches the pdu to the handle; will be released later */
+	if ((pdu = snmp_agentx_request(h, pdu)) == NULL)
+		return (-1);
 
- fail:
+	if (snmp_agentx_response(h, pdu) == -1)
+		error = -1;
 	snmp_agentx_pdu_free(pdu);
+
 	return (error);
 }
 
