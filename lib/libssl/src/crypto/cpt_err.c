@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -68,7 +68,7 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_CRYPTO,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_CRYPTO,0,reason)
 
-static ERR_STRING_DATA CRYPTO_str_functs[]= {
+static ERR_STRING_DATA CRYPTO_str_functs[] = {
 	{ERR_FUNC(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX),	"CRYPTO_get_ex_new_index"},
 	{ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID),	"CRYPTO_get_new_dynlockid"},
 	{ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_LOCKID),	"CRYPTO_get_new_lockid"},
@@ -82,7 +82,7 @@ static ERR_STRING_DATA CRYPTO_str_functs[]= {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA CRYPTO_str_reasons[]= {
+static ERR_STRING_DATA CRYPTO_str_reasons[] = {
 	{ERR_REASON(CRYPTO_R_FIPS_MODE_NOT_SUPPORTED), "fips mode not supported"},
 	{ERR_REASON(CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK), "no dynlock create callback"},
 	{0, NULL}

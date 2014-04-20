@@ -13,7 +13,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -192,19 +192,19 @@ check_time(long offset)
 	gmtime_r(&t1, &tm1);
 	OPENSSL_gmtime_adj(&tm1, 0, offset);
 	if ((tm1.tm_year == tm2.tm_year) &&
-		(tm1.tm_mon == tm2.tm_mon) &&
-	(tm1.tm_mday == tm2.tm_mday) &&
-	(tm1.tm_hour == tm2.tm_hour) &&
-	(tm1.tm_min == tm2.tm_min) &&
-	(tm1.tm_sec == tm2.tm_sec))
-	return 1;
+	    (tm1.tm_mon == tm2.tm_mon) &&
+	    (tm1.tm_mday == tm2.tm_mday) &&
+	    (tm1.tm_hour == tm2.tm_hour) &&
+	    (tm1.tm_min == tm2.tm_min) &&
+	    (tm1.tm_sec == tm2.tm_sec))
+		return 1;
 	fprintf(stderr, "TIME ERROR!!\n");
 	fprintf(stderr, "Time1: %d/%d/%d, %d:%02d:%02d\n",
-	tm2.tm_mday, tm2.tm_mon + 1, tm2.tm_year + 1900,
-	tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
+	    tm2.tm_mday, tm2.tm_mon + 1, tm2.tm_year + 1900,
+	    tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
 	fprintf(stderr, "Time2: %d/%d/%d, %d:%02d:%02d\n",
-	tm1.tm_mday, tm1.tm_mon + 1, tm1.tm_year + 1900,
-	tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
+	    tm1.tm_mday, tm1.tm_mon + 1, tm1.tm_year + 1900,
+	    tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
 	return 0;
 }
 

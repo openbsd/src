@@ -34,21 +34,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -63,10 +63,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -78,7 +78,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -92,7 +92,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -276,9 +276,9 @@ ex_data_check(void)
 {
 	int toret = 1;
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
-	if (!ex_data
-		&& (ex_data = lh_EX_CLASS_ITEM_new()) == NULL)
-	toret = 0;
+	if (!ex_data &&
+	    (ex_data = lh_EX_CLASS_ITEM_new()) == NULL)
+		toret = 0;
 	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
 	return toret;
 }
@@ -344,7 +344,7 @@ def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
 {
 	int toret = -1;
 	CRYPTO_EX_DATA_FUNCS *a = (CRYPTO_EX_DATA_FUNCS *)malloc(
-	sizeof(CRYPTO_EX_DATA_FUNCS));
+	    sizeof(CRYPTO_EX_DATA_FUNCS));
 	if (!a) {
 		CRYPTOerr(CRYPTO_F_DEF_ADD_INDEX, ERR_R_MALLOC_FAILURE);
 		return -1;
@@ -376,6 +376,7 @@ static int
 int_new_class(void)
 {
 	int toret;
+
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
 	toret = ex_class++;
 	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
@@ -395,9 +396,10 @@ int_cleanup(void)
 static int
 int_get_new_index(int class_index, long argl, void *argp,
     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-CRYPTO_EX_free *free_func)
+    CRYPTO_EX_free *free_func)
 {
 	EX_CLASS_ITEM *item = def_get_class(class_index);
+
 	if (!item)
 		return -1;
 	return def_add_index(item, argl, argp, new_func, dup_func, free_func);
@@ -408,13 +410,13 @@ CRYPTO_EX_free *free_func)
  * the global "ex_data" state (ie. class definitions), not thread-safe on 'ad'
  * itself. */
 static int
-int_new_ex_data(int class_index, void *obj,
-    CRYPTO_EX_DATA *ad)
+int_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 {
 	int mx, i;
 	void *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
 	EX_CLASS_ITEM *item = def_get_class(class_index);
+
 	if (!item)
 		/* error is already set */
 		return 0;
@@ -426,7 +428,8 @@ int_new_ex_data(int class_index, void *obj,
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
-			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth, i);
+			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(
+			    item->meth, i);
 	}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
@@ -438,7 +441,7 @@ skip:
 		if (storage[i] && storage[i]->new_func) {
 			ptr = CRYPTO_get_ex_data(ad, i);
 			storage[i]->new_func(obj, ptr, ad, i,
-			storage[i]->argl, storage[i]->argp);
+			    storage[i]->argl, storage[i]->argp);
 		}
 	}
 	if (storage)
@@ -448,13 +451,13 @@ skip:
 
 /* Same thread-safety notes as for "int_new_ex_data" */
 static int
-int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-    CRYPTO_EX_DATA *from)
+int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from)
 {
 	int mx, j, i;
 	char *ptr;
 	CRYPTO_EX_DATA_FUNCS **storage = NULL;
 	EX_CLASS_ITEM *item;
+
 	if (!from->sk)
 		/* 'to' should be "blank" which *is* just like 'from' */
 		return 1;
@@ -470,7 +473,8 @@ int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
-			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth, i);
+			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(
+			    item->meth, i);
 	}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
@@ -507,7 +511,8 @@ int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 		if (!storage)
 			goto skip;
 		for (i = 0; i < mx; i++)
-			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth, i);
+			storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(
+			    item->meth, i);
 	}
 skip:
 	CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
@@ -519,7 +524,7 @@ skip:
 		if (storage[i] && storage[i]->free_func) {
 			ptr = CRYPTO_get_ex_data(ad, i);
 			storage[i]->free_func(obj, ptr, ad, i,
-			storage[i]->argl, storage[i]->argp);
+			    storage[i]->argl, storage[i]->argp);
 		}
 	}
 	if (storage)
@@ -563,7 +568,7 @@ CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 
 	IMPL_CHECK
 	ret = EX_IMPL(get_new_index)(class_index,
-	argl, argp, new_func, dup_func, free_func);
+	    argl, argp, new_func, dup_func, free_func);
 	return ret;
 }
 
@@ -603,7 +608,8 @@ CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
 	if (ad->sk == NULL) {
 		if ((ad->sk = sk_void_new_null()) == NULL) {
-			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_MALLOC_FAILURE);
+			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA,
+			    ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 	}
@@ -611,7 +617,8 @@ CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
 	while (i <= idx) {
 		if (!sk_void_push(ad->sk, NULL)) {
-			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_MALLOC_FAILURE);
+			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA,
+			    ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 		i++;

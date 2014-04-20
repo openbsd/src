@@ -34,7 +34,8 @@ void		_sparcv9_vis2_probe(void);
 void		_sparcv9_fmadd_probe(void);
 
 static sigjmp_buf common_jmp;
-static void common_handler(int sig)
+static void
+common_handler(int sig)
 {
 	siglongjmp(common_jmp, sig);
 }

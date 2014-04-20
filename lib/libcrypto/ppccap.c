@@ -90,7 +90,7 @@ OPENSSL_cpuid_setup(void)
 #if defined(_AIX)
 	if (sizeof(size_t) == 4
 # if defined(_SC_AIX_KERNEL_BITMODE)
-	&& sysconf(_SC_AIX_KERNEL_BITMODE) != 64
+	    && sysconf(_SC_AIX_KERNEL_BITMODE) != 64
 # endif
 	)
 	return;
