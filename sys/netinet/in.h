@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.102 2014/01/23 01:10:42 naddy Exp $	*/
+/*	$OpenBSD: in.h,v 1.103 2014/04/20 09:30:56 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -801,22 +801,6 @@ in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
 	      (u_int16_t)(dst /*& 0xffff*/);
 
 	sum = (u_int16_t)(sum >> 16) + (u_int16_t)(sum /*& 0xffff*/);
-
-	if (sum > 0xffff)
-		sum -= 0xffff;
-
-	return (sum);
-}
-
-/*
- * in_cksum_addword:
- *
- *	Add the two 16-bit network-order values, carry, and return.
- */
-static __inline u_int16_t __attribute__((__unused__))
-in_cksum_addword(u_int16_t a, u_int16_t b)
-{
-	u_int32_t sum = a + b;
 
 	if (sum > 0xffff)
 		sum -= 0xffff;
