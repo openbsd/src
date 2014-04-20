@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.24 2014/03/23 22:08:15 sthen Exp $
+# $OpenBSD: security,v 1.25 2014/04/20 22:15:49 ajacoutot Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -308,19 +308,15 @@ sub check_hostname_if {
 	}
 }
 
-# Files that should not have + signs.
-sub check_hosts_equiv {
-	foreach my $base (qw(hosts.equiv shosts.equiv hosts.lpd)) {
-		my $filename = "/etc/$base";
-		next unless -s $filename;
-		nag !(open my $fh, '<', $filename),
-		    "open: $filename: $!"
-		    and next;
-		nag /^\+/ && !/^\+@/,
-		    "Plus sign in $filename file."
-		    while <$fh>;
-		close $fh;
-	}
+# hosts.lpd should not have + signs.
+sub check_hosts_lpd {
+	my $filename = '/etc/hosts.lpd';
+	-s $filename or return;
+	nag !(open my $fh, '<', $filename), "open: $filename: $!" and return;
+	nag /^\+/ && !/^\+@/,
+	    "Plus sign in $filename file."
+	    while <$fh>;
+	close $fh;
 }
 
 sub find_homes {
@@ -887,7 +883,7 @@ open STDERR, '>&', $olderr;
 $check_title = "Checking configuration files:";
 check_mail_aliases;
 check_hostname_if;
-check_hosts_equiv;
+check_hosts_lpd;
 $check_title = "Checking for special users with .rhosts/.shosts files.";
 my $homes = find_homes;
 check_rhosts_owner @$_ foreach @$homes;

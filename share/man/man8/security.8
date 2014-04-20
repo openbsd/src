@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.22 2014/03/23 22:08:59 sthen Exp $
+.\" $OpenBSD: security.8,v 1.23 2014/04/20 22:15:49 ajacoutot Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: March 23 2014 $
+.Dd $Mdocdate: April 20 2014 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -40,9 +40,7 @@ dotfiles.
 Check for suspicious commands in
 .Pa /etc/mail/aliases .
 .It
-Check for insecurities in various trust files such as
-.Pa /etc/hosts.equiv , /etc/shosts.equiv ,
-and
+Check for insecurities in
 .Pa /etc/hosts.lpd .
 .It
 Check user
