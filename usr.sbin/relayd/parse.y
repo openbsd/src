@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.178 2014/04/20 18:16:11 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.179 2014/04/21 17:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -417,6 +417,7 @@ rdr		: REDIRECT STRING	{
 			    sizeof(srv->conf.name)) >=
 			    sizeof(srv->conf.name)) {
 				yyerror("redirection name truncated");
+				free($2);
 				free(srv);
 				YYERROR;
 			}
@@ -470,11 +471,13 @@ rdroptsl	: forwardmode TO tablespec interface	{
 				if ($4 == NULL)
 					break;
 				yyerror("superfluous interface");
+				free($4);
 				YYERROR;
 			case FWD_ROUTE:
 				if ($4 != NULL)
 					break;
 				yyerror("missing interface to route to");
+				free($4);
 				YYERROR;
 			case FWD_TRANS:
 				yyerror("no transparent forward here");
@@ -866,6 +869,7 @@ proto		: relay_proto PROTO STRING	{
 			if (strlcpy(p->name, $3, sizeof(p->name)) >=
 			    sizeof(p->name)) {
 				yyerror("protocol name truncated");
+				free($3);
 				free(p);
 				YYERROR;
 			}
@@ -1314,6 +1318,7 @@ relay		: RELAY STRING	{
 			    sizeof(r->rl_conf.name)) >=
 			    sizeof(r->rl_conf.name)) {
 				yyerror("relay name truncated");
+				free($2);
 				free(r);
 				YYERROR;
 			}
