@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.25 2014/04/20 22:15:49 ajacoutot Exp $
+# $OpenBSD: security,v 1.26 2014/04/21 15:46:03 sthen Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -383,7 +383,7 @@ sub check_dot_readable {
 	foreach my $f (qw(
 	    .netrc .rhosts .gnupg/secring.gpg .gnupg/random_seed
 	    .pgp/secring.pgp .shosts .ssh/identity .ssh/id_dsa .ssh/id_ecdsa
-	    .ssh/id_rsa 
+	    .ssh/id_rsa .ssh/id_ed25519
 	)) {
 		next unless -e "$home/$f";
 		my ($mode, $fuid) = (stat(_))[2,4];
