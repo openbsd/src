@@ -265,7 +265,7 @@ int X509_ocspid_print (BIO *bp, X509 *x)
 	if (BIO_printf(bp, "        Subject OCSP hash: ") <= 0)
 		goto err;
 	derlen = i2d_X509_NAME(x->cert_info->subject, NULL);
-	if ((der = dertmp = (unsigned char *)malloc (derlen)) == NULL)
+	if ((der = dertmp = malloc(derlen)) == NULL)
 		goto err;
 	i2d_X509_NAME(x->cert_info->subject, &dertmp);
 

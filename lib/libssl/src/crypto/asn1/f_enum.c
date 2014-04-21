@@ -154,12 +154,7 @@ a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
 		}
 		i /= 2;
 		if (num + i > slen) {
-			if (s == NULL)
-				sp = (unsigned char *)malloc(
-				    (unsigned int)num + i * 2);
-			else
-				sp = (unsigned char *)realloc(s,
-				    (unsigned int)num + i * 2);
+			sp = realloc(s, (unsigned int)num + i * 2);
 			if (sp == NULL) {
 				ASN1err(ASN1_F_A2I_ASN1_ENUMERATED,
 				    ERR_R_MALLOC_FAILURE);

@@ -287,11 +287,9 @@ EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
 {
 	EVP_PKEY_ASN1_METHOD *ameth;
 
-	ameth = malloc(sizeof(EVP_PKEY_ASN1_METHOD));
+	ameth = calloc(1, sizeof(EVP_PKEY_ASN1_METHOD));
 	if (!ameth)
 		return NULL;
-
-	memset(ameth, 0, sizeof(EVP_PKEY_ASN1_METHOD));
 
 	ameth->pkey_id = id;
 	ameth->pkey_base_id = id;

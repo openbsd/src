@@ -205,7 +205,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 
 	/* We must malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s = (unsigned char *)malloc((int)len + 1);
+	s = malloc((int)len + 1);
 	if (s == NULL) {
 		i = ERR_R_MALLOC_FAILURE;
 		goto err;
@@ -309,7 +309,7 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 
 	/* We must malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s = (unsigned char *)malloc((int)len + 1);
+	s = malloc((int)len + 1);
 	if (s == NULL) {
 		i = ERR_R_MALLOC_FAILURE;
 		goto err;
@@ -352,8 +352,7 @@ ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	if (a->length < (int)(sizeof(long) + 1)) {
 		if (a->data != NULL)
 			free(a->data);
-		if ((a->data = (unsigned char *)malloc(sizeof(long) + 1)) != NULL)
-			memset((char *)a->data, 0, sizeof(long) + 1);
+		a->data = calloc(1, sizeof(long) + 1);
 	}
 	if (a->data == NULL) {
 		ASN1err(ASN1_F_ASN1_INTEGER_SET, ERR_R_MALLOC_FAILURE);
