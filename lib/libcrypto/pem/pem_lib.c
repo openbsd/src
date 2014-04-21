@@ -501,10 +501,10 @@ PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 	}
 	header += 11;
 	if (*header != '4')
-		return(0);
+		return (0);
 	header++;
 	if (*header != ',')
-		return(0);
+		return (0);
 	header++;
 	if (strncmp(header, "ENCRYPTED", 9) != 0) {
 		PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_ENCRYPTED);

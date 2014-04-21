@@ -91,7 +91,7 @@ PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 		goto err;
 	}
 
-	if (EVP_SignFinal(ctx, m,&m_len, pkey) <= 0)
+	if (EVP_SignFinal(ctx, m, &m_len, pkey) <= 0)
 		goto err;
 
 	i = EVP_EncodeBlock(sigret, m, m_len);

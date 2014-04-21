@@ -173,7 +173,7 @@ PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 	EVP_EncodeFinal(&ctx->encode, out, &j);
 	*outl += j;
 
-	if (!EVP_SignFinal(&ctx->md, s,&i, priv))
+	if (!EVP_SignFinal(&ctx->md, s, &i, priv))
 		goto err;
 	*sigl = EVP_EncodeBlock(sig, s, i);
 

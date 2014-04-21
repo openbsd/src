@@ -133,7 +133,7 @@ PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 		ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
 		if (!ameth || !ameth->old_priv_decode)
 			goto p8err;
-		ret = d2i_PrivateKey(ameth->pkey_id, x,&p, len);
+		ret = d2i_PrivateKey(ameth->pkey_id, x, &p, len);
 	}
 
 p8err:
@@ -159,7 +159,7 @@ PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 	(void) snprintf(pem_str, sizeof(pem_str), "%s PRIVATE KEY",
 	    x->ameth->pem_str);
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
-	    pem_str, bp, x,enc, kstr, klen, cb, u);
+	    pem_str, bp, x, enc, kstr, klen, cb, u);
 }
 
 EVP_PKEY *
@@ -214,7 +214,7 @@ PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
 	(void) snprintf(pem_str, sizeof(pem_str), "%s PARAMETERS",
 	    x->ameth->pem_str);
 	return PEM_ASN1_write_bio((i2d_of_void *)x->ameth->param_encode,
-	    pem_str, bp, x,NULL, NULL, 0,0, NULL);
+	    pem_str, bp, x, NULL, NULL, 0, 0, NULL);
 }
 
 #ifndef OPENSSL_NO_FP_API
@@ -229,7 +229,7 @@ PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 		return (0);
 	}
 	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = PEM_read_bio_PrivateKey(b, x,cb, u);
+	ret = PEM_read_bio_PrivateKey(b, x, cb, u);
 	BIO_free(b);
 	return (ret);
 }
