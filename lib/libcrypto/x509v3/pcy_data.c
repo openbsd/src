@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -64,16 +64,17 @@
 
 /* Policy Node routines */
 
-void policy_data_free(X509_POLICY_DATA *data)
-	{
+void
+policy_data_free(X509_POLICY_DATA *data)
+{
 	ASN1_OBJECT_free(data->valid_policy);
 	/* Don't free qualifiers if shared */
 	if (!(data->flags & POLICY_DATA_FLAG_SHARED_QUALIFIERS))
 		sk_POLICYQUALINFO_pop_free(data->qualifier_set,
-					POLICYQUALINFO_free);
+		    POLICYQUALINFO_free);
 	sk_ASN1_OBJECT_pop_free(data->expected_policy_set, ASN1_OBJECT_free);
 	free(data);
-	}
+}
 
 /* Create a data based on an existing policy. If 'id' is NULL use the
  * oid in the policy, otherwise use 'id'. This behaviour covers the two
@@ -82,32 +83,30 @@ void policy_data_free(X509_POLICY_DATA *data)
  * another source.
  */
 
-X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
-					const ASN1_OBJECT *cid, int crit)
-	{
+X509_POLICY_DATA *
+policy_data_new(POLICYINFO *policy, const ASN1_OBJECT *cid, int crit)
+{
 	X509_POLICY_DATA *ret;
 	ASN1_OBJECT *id;
+
 	if (!policy && !cid)
 		return NULL;
-	if (cid)
-		{
+	if (cid) {
 		id = OBJ_dup(cid);
 		if (!id)
 			return NULL;
-		}
-	else
+	} else
 		id = NULL;
 	ret = malloc(sizeof(X509_POLICY_DATA));
 	if (!ret)
 		return NULL;
 	ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
-	if (!ret->expected_policy_set)
-		{
+	if (!ret->expected_policy_set) {
 		free(ret);
 		if (id)
 			ASN1_OBJECT_free(id);
 		return NULL;
-		}
+	}
 
 	if (crit)
 		ret->flags = POLICY_DATA_FLAG_CRITICAL;
@@ -116,20 +115,16 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
 
 	if (id)
 		ret->valid_policy = id;
-	else
-		{
+	else {
 		ret->valid_policy = policy->policyid;
 		policy->policyid = NULL;
-		}
+	}
 
-	if (policy)
-		{
+	if (policy) {
 		ret->qualifier_set = policy->qualifiers;
 		policy->qualifiers = NULL;
-		}
-	else
+	} else
 		ret->qualifier_set = NULL;
 
 	return ret;
-	}
-
+}

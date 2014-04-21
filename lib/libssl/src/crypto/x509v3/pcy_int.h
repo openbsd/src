@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -69,19 +69,18 @@ DECLARE_STACK_OF(X509_POLICY_DATA)
  * can be kept static and cached with the certificate.
  */
 
-struct X509_POLICY_DATA_st
-	{
+struct X509_POLICY_DATA_st {
 	unsigned int flags;
 	/* Policy OID and qualifiers for this data */
 	ASN1_OBJECT *valid_policy;
 	STACK_OF(POLICYQUALINFO) *qualifier_set;
 	STACK_OF(ASN1_OBJECT) *expected_policy_set;
-	};
+};
 
 /* X509_POLICY_DATA flags values */
 
 /* This flag indicates the structure has been mapped using a policy mapping
- * extension. If policy mapping is not active its references get deleted. 
+ * extension. If policy mapping is not active its references get deleted.
  */
 
 #define POLICY_DATA_FLAG_MAPPED			0x1
@@ -125,24 +124,22 @@ struct X509_POLICY_CACHE_st {
 	 * value or -1 if absent.
          */
 	long map_skip;
-	};
+};
 
 /*#define POLICY_CACHE_FLAG_CRITICAL		POLICY_DATA_FLAG_CRITICAL*/
 
 /* This structure represents the relationship between nodes */
 
-struct X509_POLICY_NODE_st
-	{
+struct X509_POLICY_NODE_st {
 	/* node data this refers to */
 	const X509_POLICY_DATA *data;
 	/* Parent node */
 	X509_POLICY_NODE *parent;
 	/* Number of child nodes */
 	int nchild;
-	};
+};
 
-struct X509_POLICY_LEVEL_st
-	{
+struct X509_POLICY_LEVEL_st {
 	/* Cert for this level */
 	X509 *cert;
 	/* nodes at this level */
@@ -152,10 +149,9 @@ struct X509_POLICY_LEVEL_st
 	/* Extra data */
 	/*STACK_OF(X509_POLICY_DATA) *extra_data;*/
 	unsigned int flags;
-	};
+};
 
-struct X509_POLICY_TREE_st
-	{
+struct X509_POLICY_TREE_st {
 	/* This is the tree 'level' data */
 	X509_POLICY_LEVEL *levels;
 	int nlevel;
@@ -167,7 +163,7 @@ struct X509_POLICY_TREE_st
 	STACK_OF(X509_POLICY_NODE) *auth_policies;
 	STACK_OF(X509_POLICY_NODE) *user_policies;
 	unsigned int flags;
-	};
+};
 
 /* Set if anyPolicy present in user policies */
 #define POLICY_FLAG_ANY_POLICY		0x2
@@ -180,11 +176,11 @@ struct X509_POLICY_TREE_st
 /* Internal functions */
 
 X509_POLICY_DATA *policy_data_new(POLICYINFO *policy, const ASN1_OBJECT *id,
-								int crit);
+    int crit);
 void policy_data_free(X509_POLICY_DATA *data);
 
 X509_POLICY_DATA *policy_cache_find_data(const X509_POLICY_CACHE *cache,
-							const ASN1_OBJECT *id);
+    const ASN1_OBJECT *id);
 int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps);
 
 
@@ -195,18 +191,16 @@ void policy_cache_init(void);
 void policy_cache_free(X509_POLICY_CACHE *cache);
 
 X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
-					const X509_POLICY_NODE *parent,	
-					const ASN1_OBJECT *id);
+    const X509_POLICY_NODE *parent, const ASN1_OBJECT *id);
 
 X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *sk,
-						const ASN1_OBJECT *id);
+    const ASN1_OBJECT *id);
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-			const X509_POLICY_DATA *data,
-			X509_POLICY_NODE *parent,
-			X509_POLICY_TREE *tree);
+    const X509_POLICY_DATA *data, X509_POLICY_NODE *parent,
+    X509_POLICY_TREE *tree);
 void policy_node_free(X509_POLICY_NODE *node);
 int policy_node_match(const X509_POLICY_LEVEL *lvl,
-		      const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);
+    const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);
 
 const X509_POLICY_CACHE *policy_cache_set(X509 *x);
