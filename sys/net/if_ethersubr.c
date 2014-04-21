@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.168 2014/04/20 15:29:52 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.169 2014/04/21 18:38:36 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
-static __inline int    ether_addheader(struct mbuf **, u_int16_t, u_char *,
+static inline int    ether_addheader(struct mbuf **, u_int16_t, u_char *,
 			   u_char *);
 
 int
@@ -192,7 +192,7 @@ ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-static __inline int
+static inline int
 ether_addheader(struct mbuf **m, u_int16_t etype, u_char *esrc, u_char *edst)
 {
 	struct ether_header *eh;
