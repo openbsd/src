@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.26 2014/04/20 09:49:23 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.27 2014/04/21 13:05:20 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2131,8 +2131,7 @@ qle_do_update(void *xsc, void *x)
 				qle_update_done(sc,
 				    QLE_UPDATE_TASK_PORT_LIST);
 				qle_update_start(sc,
-				    QLE_UPDATE_TASK_ATTACH_TARGET |
-				    QLE_UPDATE_TASK_DETACH_TARGET);
+				    QLE_UPDATE_TASK_SCAN_FABRIC);
 			} else if (fport->location & QLE_LOCATION_LOOP) {
 				DPRINTF(QLE_D_PORT, "%s: loop port %04x\n",
 				    DEVNAME(sc), fport->loopid);
@@ -2329,8 +2328,7 @@ qle_async(struct qle_softc *sc, u_int16_t info)
 		sc->sc_loop_up = 1;
 		sc->sc_marker_required = 1;
 		qle_update_start(sc, QLE_UPDATE_TASK_UPDATE_TOPO |
-		    QLE_UPDATE_TASK_GET_PORT_LIST |
-		    QLE_UPDATE_TASK_SCAN_FABRIC);
+		    QLE_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLE_ASYNC_LOOP_DOWN:
@@ -2348,15 +2346,13 @@ qle_async(struct qle_softc *sc, u_int16_t info)
 	case QLE_ASYNC_PORT_DB_CHANGE:
 		DPRINTF(QLE_D_PORT, "%s: port db changed %x\n", DEVNAME(sc),
 		    qle_read_mbox(sc, 1));
-		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST |
-		    QLE_UPDATE_TASK_SCAN_FABRIC);
+		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLE_ASYNC_CHANGE_NOTIFY:
 		DPRINTF(QLE_D_PORT, "%s: name server change (%02x:%02x)\n",
 		    DEVNAME(sc), qle_read_mbox(sc, 1), qle_read_mbox(sc, 2));
-		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST |
-		    QLE_UPDATE_TASK_SCAN_FABRIC);
+		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLE_ASYNC_LIP_F8:
