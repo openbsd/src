@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.56 2013/12/28 01:51:53 martynas Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.57 2014/04/21 13:17:32 deraadt Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -124,6 +124,9 @@ char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
 void	*malloc(size_t);
+#if __BSD_VISIBLE
+void	*mallocarray(size_t, size_t);
+#endif /* __BSD_VISIBLE */
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);

@@ -30,14 +30,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.73 2013/07/18 10:14:49 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.74 2014/04/21 13:17:32 deraadt Exp $
 .\"
-.Dd $Mdocdate: July 18 2013 $
+.Dd $Mdocdate: April 21 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
 .Nm calloc ,
+.Nm mallocarray ,
 .Nm realloc ,
 .Nm free ,
 .Nm cfree
@@ -49,12 +50,14 @@
 .Ft void *
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
+.Fn mallocarray "size_t nmemb" "size_t size"
+.Ft void *
 .Fn realloc "void *ptr" "size_t size"
 .Ft void
 .Fn free "void *ptr"
 .Ft void
 .Fn cfree "void *ptr"
-.Ft char *
+.Ft char * Ns
 .Va malloc_options ;
 .Sh DESCRIPTION
 The
@@ -91,10 +94,18 @@ if ((p = malloc(num * size)) == NULL)
 	err(1, "malloc");
 .Ed
 .Pp
-The multiplication may lead to an integer overflow.
-To avoid this,
+The multiplication may lead to an integer overflow, which can
+be avoided using the extension
+.Fn mallocarray ,
+as follows:
+.Bd -literal -offset indent
+if ((p = mallocarray(num, size)) == NULL)
+	err(1, "malloc");
+.Ed
+.Pp
+Alternatively
 .Fn calloc
-is recommended.
+is a more portable solution which comes with the cost of clearing memory.
 .Pp
 If
 .Fn malloc
@@ -324,7 +335,8 @@ it is buggy.
 The default number of free pages cached is 64.
 .Sh RETURN VALUES
 The
-.Fn malloc
+.Fn malloc ,
+.Fn mallocarray ,
 and
 .Fn calloc
 functions return a pointer to the allocated space if successful; otherwise,
@@ -482,3 +494,6 @@ random.
 A rewrite by Otto Moerbeek introducing a new central data structure and more
 randomization appeared in
 .Ox 4.4 .
+.Fn mallocarray
+appeared in
+.Ox 5.6 .

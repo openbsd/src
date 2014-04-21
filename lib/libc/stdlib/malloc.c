@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.153 2014/04/14 10:29:41 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.154 2014/04/21 13:17:32 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1430,6 +1430,17 @@ calloc(size_t nmemb, size_t size)
 	if (r != NULL)
 		errno = saved_errno;
 	return r;
+}
+
+void *
+mallocarray(size_t nmemb, size_t size)
+{
+	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	    nmemb > 0 && SIZE_MAX / nmemb < size) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return malloc(size * nmemb);
 }
 
 static void *
