@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.12 2014/04/20 22:18:04 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.13 2014/04/21 09:48:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -268,6 +268,16 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 	case CTRL_VSCSI_STATS:
 		control_compose(ch, CTRL_VSCSI_STATS, vscsi_stats(),
 		    sizeof(struct vscsi_stats));
+		break;
+	case CTRL_SHOW_SUM:
+		control_compose(ch, CTRL_INITIATOR_CONFIG, &initiator->config,
+		    sizeof(initiator->config));
+
+		TAILQ_FOREACH(s, &initiator->sessions, entry)
+			control_compose(ch, CTRL_SESSION_CONFIG,
+			    &s->config, sizeof(s->config));
+
+		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
 	default:
 		log_warnx("unknown control message type %d", cmh->type);

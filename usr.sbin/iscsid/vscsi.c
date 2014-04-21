@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.10 2014/04/20 22:18:04 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.11 2014/04/21 09:48:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -71,10 +71,6 @@ vscsi_dispatch(int fd, short event, void *arg)
 	struct session *s;
 	struct scsi_task *t;
 	struct pdu *p;
-#if 0
-	char *buf;
-	u_int32_t t32;
-#endif
 
 	if (!(event & EV_READ)) {
 		log_debug("spurious read call");
@@ -121,16 +117,22 @@ vscsi_dispatch(int fd, short event, void *arg)
 
 	memcpy(sreq->cdb, &i2t.cmd, i2t.cmdlen);
 
-#if 0
-	if (i2t.direction == VSCSI_DIR_WRITE) {
-		if (!(buf = pdu_alloc(i2t.datalen)))
+	/* include immediate data of up to FirstBurstLength bytes if allowed */
+	if (i2t.direction == VSCSI_DIR_WRITE &&
+	    s->active.ImmediateData) {
+		char *buf;
+		u_int32_t t32;
+		size_t size;
+
+		size = i2t.datalen > s->active.FirstBurstLength ?
+		    s->active.FirstBurstLength : i2t.datalen;
+		if (!(buf = pdu_alloc(size)))
 			fatal("vscsi_dispatch");
-		t32 = htonl(i2t.datalen);
+		t32 = htonl(size);
 		memcpy(&sreq->ahslen, &t32, sizeof(t32));
-		vscsi_data(VSCSI_DATA_WRITE, i2t.tag, buf, i2t.datalen);
-		pdu_addbuf(p, buf, i2t.datalen, PDU_DATA);
+		vscsi_data(VSCSI_DATA_WRITE, i2t.tag, buf, size);
+		pdu_addbuf(p, buf, size, PDU_DATA);
 	}
-#endif
 
 	task_init(&t->task, s, 0, t, vscsi_callback, vscsi_fail);
 	task_pdu_add(&t->task, p);

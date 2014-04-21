@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.11 2014/04/20 22:18:04 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.12 2014/04/21 09:48:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,7 @@ struct ctrlmsghdr {
 #define CTRL_SESSION_CONFIG	5
 #define CTRL_LOG_VERBOSE	6
 #define CTRL_VSCSI_STATS	7
+#define CTRL_SHOW_SUM		8
 
 
 TAILQ_HEAD(session_head, session);
