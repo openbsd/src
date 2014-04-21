@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2014/04/19 18:31:33 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2014/04/21 17:41:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -140,4 +141,52 @@ log_sockaddr(void *arg)
 	else
 		snprintf(buf, sizeof(buf), "[%s]:%s", host, port);
 	return buf;
+}
+
+int
+control_compose(void *ch, u_int16_t type, void *buf, size_t len)
+{
+	return control_build(ch, type, 1, CTRLARGV({ buf, len }));
+}
+
+int
+control_build(void *ch, u_int16_t type, int argc, struct ctrldata *argv)
+{
+	struct pdu *pdu;
+	struct ctrlmsghdr *cmh;
+	size_t size = 0;
+	int i;
+
+	if (argc > (int)nitems(cmh->len))
+		return -1;
+
+	for (i = 0; i < argc; i++)
+		size += argv[i].len;
+	if (PDU_LEN(size) > CONTROL_READ_SIZE - PDU_LEN(sizeof(*cmh)))
+		return -1;
+
+	if ((pdu = pdu_new()) == NULL)
+		return -1;
+	if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
+		goto fail;
+	bzero(cmh, sizeof(*cmh));
+	cmh->type = type;
+	pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
+
+	for (i = 0; i < argc; i++)
+		if (argv[i].len > 0) {
+			void *ptr;
+
+			cmh->len[i] = argv[i].len;
+			if ((ptr = pdu_alloc(argv[i].len)) == NULL)
+				goto fail;
+			memcpy(ptr, argv[i].buf, argv[i].len);
+			pdu_addbuf(pdu, ptr, argv[i].len, i + 1);
+		}
+
+	control_queue(ch, pdu);
+	return 0;
+fail:
+	pdu_free(pdu);
+	return -1;
 }

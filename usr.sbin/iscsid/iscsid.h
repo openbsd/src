@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.12 2014/04/21 09:48:31 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.13 2014/04/21 17:41:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -45,6 +45,13 @@ struct ctrlmsghdr {
 	u_int16_t	type;
 	u_int16_t	len[3];
 };
+
+struct ctrldata {
+	void		*buf;
+	size_t		 len;
+};
+
+#define CTRLARGV(x...)	((struct ctrldata []){ x })
 
 /* Control message types */
 #define CTRL_SUCCESS		1
@@ -311,8 +318,9 @@ char	*default_initiator_name(void);
 int	control_init(char *);
 void	control_cleanup(char *);
 void	control_event_init(void);
-int	control_queue(void *, struct pdu *);
+void	control_queue(void *, struct pdu *);
 int	control_compose(void *, u_int16_t, void *, size_t);
+int	control_build(void *, u_int16_t, int, struct ctrldata *);
 
 struct session	*session_find(struct initiator *, char *);
 struct session	*session_new(struct initiator *, u_int8_t);

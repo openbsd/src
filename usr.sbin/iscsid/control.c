@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2014/04/20 18:17:12 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.8 2014/04/21 17:41:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -67,7 +67,7 @@ control_init(char *path)
 		return -1;
 	}
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1) {
 		log_warn("control_init: socket");
 		return -1;
 	}
@@ -242,8 +242,6 @@ control_dispatch(int fd, short event, void *bula)
 	}
 	if (event & EV_WRITE) {
 		if ((pdu = TAILQ_FIRST(&c->channel)) != NULL) {
-			TAILQ_REMOVE(&c->channel, pdu, entry);
-
 			for (niov = 0; niov < PDU_MAXIOV; niov++) {
 				iov[niov].iov_base = pdu->iov[niov].iov_base;
 				iov[niov].iov_len = pdu->iov[niov].iov_len;
@@ -251,13 +249,16 @@ control_dispatch(int fd, short event, void *bula)
 			bzero(&msg, sizeof(msg));
 			msg.msg_iov = iov;
 			msg.msg_iovlen = niov;
-			if (sendmsg(fd, &msg, 0) == -1 &&
-			    !(errno == EAGAIN || errno == ENOBUFS)) {
+			if (sendmsg(fd, &msg, 0) == -1) {
+				if (errno == EAGAIN || errno == ENOBUFS)
+					goto requeue;
 				control_close(c);
 				return;
 			}
+			TAILQ_REMOVE(&c->channel, pdu, entry);
 		}
 	}
+requeue:
 	if (!TAILQ_EMPTY(&c->channel))
 		flags |= EV_WRITE;
 
@@ -314,7 +315,7 @@ fail:
 	return p;
 }
 
-int
+void
 control_queue(void *ch, struct pdu *pdu)
 {
 	struct control *c = ch;
@@ -324,36 +325,4 @@ control_queue(void *ch, struct pdu *pdu)
 	event_del(&c->ev);
 	event_set(&c->ev, c->fd, EV_READ|EV_WRITE, control_dispatch, c);
 	event_add(&c->ev, NULL);
-
-	return 0;
-}
-
-int
-control_compose(void *ch, u_int16_t type, void *buf, size_t len)
-{
-	struct pdu *pdu;
-	struct ctrlmsghdr *cmh;
-	void *ptr;
-
-	if (PDU_LEN(len) > CONTROL_READ_SIZE - PDU_LEN(sizeof(*cmh)))
-		return -1;
-	if ((pdu = pdu_new()) == NULL)
-		return -1;
-	if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-		goto fail;
-	bzero(cmh, sizeof(*cmh));
-	cmh->type = type;
-	cmh->len[0] = len;
-	pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-	if (len > 0) {
-		if ((ptr = pdu_alloc(len)) == NULL)
-			goto fail;
-		memcpy(ptr, buf, len);
-		pdu_addbuf(pdu, ptr, len, 1);
-	}
-
-	return control_queue(ch, pdu);
-fail:
-	pdu_free(pdu);
-	return -1;
 }
