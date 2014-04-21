@@ -109,15 +109,17 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>
 #include <unistd.h>
+
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -2489,27 +2491,13 @@ app_tminterval(int stop, int usertime)
 }
 #endif
 
-/* app_isdir section */
-#include <sys/stat.h>
-#ifndef S_ISDIR
-#if defined(_S_IFMT) && defined(_S_IFDIR)
-#define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
-#else
-#define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
-#endif
-#endif
 
 int
 app_isdir(const char *name)
 {
-#if defined(S_ISDIR)
 	struct stat st;
 
 	if (stat(name, &st) == 0)
 		return S_ISDIR(st.st_mode);
-	else
-		return -1;
-#else
-	 return -1;
-#endif
+	return -1;
 }
