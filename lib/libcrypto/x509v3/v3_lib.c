@@ -133,7 +133,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
 		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,X509V3_R_EXTENSION_NOT_FOUND);
 		return 0;
 	}
-	if(!(tmpext = (X509V3_EXT_METHOD *)malloc(sizeof(X509V3_EXT_METHOD)))) {
+	if(!(tmpext = malloc(sizeof(X509V3_EXT_METHOD)))) {
 		X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}

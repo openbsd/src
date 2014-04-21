@@ -85,7 +85,7 @@ int X509V3_add_value(const char *name, const char *value,
 	char *tname = NULL, *tvalue = NULL;
 	if(name && !(tname = BUF_strdup(name))) goto err;
 	if(value && !(tvalue = BUF_strdup(value))) goto err;
-	if(!(vtmp = (CONF_VALUE *)malloc(sizeof(CONF_VALUE)))) goto err;
+	if(!(vtmp = malloc(sizeof(CONF_VALUE)))) goto err;
 	if(!*extlist && !(*extlist = sk_CONF_VALUE_new_null())) goto err;
 	vtmp->section = NULL;
 	vtmp->name = tname;
