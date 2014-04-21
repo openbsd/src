@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2013/11/25 12:56:09 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2014/04/21 17:33:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -226,6 +226,7 @@ targetoptsl	: state			{ session->disabled = $1; }
 			freeaddrinfo($2);
 		}
 		| INITIATORADDR addrinfo {
+			((struct sockaddr_in *)$2->ai_addr)->sin_port = 0;
 			bcopy($2->ai_addr, &session->connection.LocalAddr,
 			    $2->ai_addr->sa_len);
 			freeaddrinfo($2);
