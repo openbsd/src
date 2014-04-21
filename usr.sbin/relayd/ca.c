@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.5 2014/04/21 16:08:47 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.6 2014/04/21 17:22:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -251,7 +251,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	int		 n, done = 0, cnt = 0;
 	u_char		*toptr;
 
-	if ((id = RSA_get_app_data(rsa)) == NULL)
+	if ((id = RSA_get_ex_data(rsa, 0)) == NULL)
 		return (0);
 
 	iev = proc_iev(env->sc_ps, PROC_CA, proc_id);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.20 2014/04/18 13:55:26 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.21 2014/04/21 17:22:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -456,7 +456,7 @@ ssl_ctx_fake_private_key(SSL_CTX *ctx, void *data, char *buf, off_t len,
 		goto fail;
 	}
 
-	RSA_set_app_data(rsa, data);
+	RSA_set_ex_data(rsa, 0, data);
 
 	/*
 	 * Use the public key as the "private" key - the secret key
