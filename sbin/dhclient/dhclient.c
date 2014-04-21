@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.298 2014/04/20 21:25:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.299 2014/04/21 15:26:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -681,16 +681,12 @@ state_selecting(void)
 
 	while (!TAILQ_EMPTY(&client->offered_leases)) {
 		lp = TAILQ_FIRST(&client->offered_leases);
-		TAILQ_REMOVE(&client->leases, lp, next);
+		TAILQ_REMOVE(&client->offered_leases, lp, next);
 		make_decline(lp);
 		send_decline();
 		free_client_lease(lp);
 	}
 
-	/*
-	 * If we just tossed all the leases we were offered, go back
-	 *  to square one.
-	 */
 	if (!picked) {
 		state_panic();
 		return;
