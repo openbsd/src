@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.16 2013/10/01 20:22:13 sf Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.17 2014/04/21 15:35:02 krw Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ const u_short leapyear[] = {
  * Variables used to remember parts of the last time conversion.  Maybe we
  * can avoid a full conversion.
  */
-uint32_t lasttime;
+time_t lasttime;
 uint32_t lastday;
 u_short lastddate;
 u_short lastdtime;
@@ -96,7 +96,7 @@ u_short lastdtime;
 void
 unix2dostime(struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
 {
-	uint32_t t;
+	time_t t;
 	uint32_t days;
 	uint32_t inc;
 	uint32_t year;
@@ -110,6 +110,15 @@ unix2dostime(struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp
 	t = tsp->tv_sec - (tz.tz_minuteswest * 60)
 	     /* +- daylight saving time correction */ ;
 	t &= ~1;
+	/*
+	 * Before 1/1/1980 there is only a timeless void. After 12/31/2107
+	 * there is only Cthulhu.
+	 */
+#define DOSEPOCH 315532800LL
+#define DOSENDTIME 4354775999LL
+	if (t < DOSEPOCH || t > DOSENDTIME)
+		t = DOSEPOCH;
+
 	if (lasttime != t) {
 		lasttime = t;
 		lastdtime = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
