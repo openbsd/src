@@ -1,7 +1,7 @@
 /* crypto/pqueue/pq_test.c */
-/* 
+/*
  * DTLS implementation written by Nagendra Modadugu
- * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
+ * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
  */
 /* ====================================================================
  * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -61,7 +61,7 @@
 
 int
 main(void)
-	{
+{
 	pitem *item;
 	pqueue pq;
 
@@ -87,9 +87,9 @@ main(void)
 
 	pqueue_print(pq);
 
-	for(item = pqueue_pop(pq); item != NULL; item = pqueue_pop(pq))
+	for (item = pqueue_pop(pq); item != NULL; item = pqueue_pop(pq))
 		pitem_free(item);
 
 	pqueue_free(pq);
 	return 0;
-	}
+}
