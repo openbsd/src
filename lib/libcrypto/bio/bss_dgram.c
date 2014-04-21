@@ -1118,7 +1118,8 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
 		data->saved_message.bio = b;
 		data->saved_message.length = inl;
-		data->saved_message.data = calloc(1, inl);
+		data->saved_message.data = malloc(inl);
+		memcpy(data->saved_message.data, in, inl);
 		return inl;
 	}
 
