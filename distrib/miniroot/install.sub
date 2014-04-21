@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.764 2014/04/21 12:41:36 rpe Exp $
+#	$OpenBSD: install.sub,v 1.765 2014/04/21 15:56:19 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -742,7 +742,7 @@ configure_ifs() {
 			: ${_first:=$_ifs}
 		fi
 		
-		NIFS=0; for _hn in /tmp/hostname.*; do ((NIFS++)); done
+		NIFS=$(ls -1 /tmp/hostname.* 2>/dev/null | grep -c ^)
 		_p=done
 	done
 }
