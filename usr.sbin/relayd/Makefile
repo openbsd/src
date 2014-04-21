@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2014/04/18 13:55:26 reyk Exp $
+#	$OpenBSD: Makefile,v 1.27 2014/04/21 14:57:17 reyk Exp $
 
 PROG=		relayd
 SRCS=		parse.y
@@ -14,7 +14,7 @@ DPADD=		${LIBEVENT} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
 CFLAGS+=	-Wall -I${.CURDIR} -I${.CURDIR}/../snmpd
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
-CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+=	-Wshadow -Wpointer-arith
 CFLAGS+=	-Wsign-compare
 CLEANFILES+=	y.tab.h
 
