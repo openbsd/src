@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.64 2014/01/09 06:29:06 tedu Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.65 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1225,8 +1225,7 @@ static int
 socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 {
 	if (s != NULL) {
-		if (sbappendaddr(&s->so_rcv, sintosa(src), mm,
-		    (struct mbuf *)NULL) != 0) {
+		if (sbappendaddr(&s->so_rcv, sintosa(src), mm, NULL) != 0) {
 			sorwakeup(s);
 			return (0);
 		}
@@ -1733,9 +1732,7 @@ send_packet(struct vif *vifp, struct mbuf *m)
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* If tunnel options */
-		ip_output(m, (struct mbuf *)NULL, &vifp->v_route,
-		    IP_FORWARDING, (struct ip_moptions *)NULL,
-		    (struct inpcb *)NULL);
+		ip_output(m, NULL, &vifp->v_route, IP_FORWARDING, NULL, NULL);
 	} else {
 		/*
 		 * if physical interface option, extract the options
@@ -1747,9 +1744,8 @@ send_packet(struct vif *vifp, struct mbuf *m)
 		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
 		imo.imo_multicast_loop = 1;
 
-		error = ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
-		    (struct inpcb *)NULL);
+		error = ip_output(m, NULL, NULL,
+		    IP_FORWARDING | IP_MULTICASTOPTS, &imo, NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
@@ -2762,8 +2758,7 @@ pim_input(struct mbuf *m, ...)
 			    reg_vif_num);
 		}
 		/* NB: vifp was collected above; can it change on us? */
-		looutput(vifp, m, (struct sockaddr *)&dst,
-		    (struct rtentry *)NULL);
+		looutput(vifp, m, (struct sockaddr *)&dst, NULL);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;

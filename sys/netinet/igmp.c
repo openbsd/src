@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.37 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.38 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -634,8 +634,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 	imo.imo_multicast_loop = 0;
 #endif /* MROUTING */
 
-	ip_output(m, (struct mbuf *)0, (struct route *)0, IP_MULTICASTOPTS,
-	    &imo, (void *)NULL);
+	ip_output(m, NULL, NULL, IP_MULTICASTOPTS, &imo, NULL);
 
 	++igmpstat.igps_snd_reports;
 }

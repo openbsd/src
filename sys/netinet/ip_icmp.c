@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.119 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.120 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -844,7 +844,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 		printf("icmp_send dst %s src %s\n", dst, src);
 	}
 #endif
-	(void)ip_output(m, opts, (void *)NULL, 0, (void *)NULL, (void *)NULL);
+	ip_output(m, opts, NULL, 0, NULL, NULL);
 }
 
 n_time

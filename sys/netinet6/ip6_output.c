@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.155 2014/04/20 16:48:22 naddy Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.156 2014/04/21 11:10:54 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1221,7 +1221,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
 		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
 			RTFREE(ro_pmtu->ro_rt);
-			ro_pmtu->ro_rt = (struct rtentry *)NULL;
+			ro_pmtu->ro_rt = NULL;
 		}
 		if (ro_pmtu->ro_rt == 0) {
 			bzero(ro_pmtu, sizeof(*ro_pmtu));

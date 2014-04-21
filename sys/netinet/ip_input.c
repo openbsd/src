@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.229 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.230 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1472,9 +1472,9 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, int srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)NULL, &ipforward_rt,
+	error = ip_output(m, NULL, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-	    (void *)NULL, (void *)NULL);
+	    NULL, NULL);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {

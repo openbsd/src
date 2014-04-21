@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.127 2014/04/18 15:14:25 henning Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.128 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -420,8 +420,8 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		ip->ip_tos = 0;
-		ip_output(m, (void *)NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
-			(void *)NULL, tp ? tp->t_inpcb : (void *)NULL);
+		ip_output(m, NULL, ro, ip_mtudisc ? IP_MTUDISC : 0,
+		    NULL, tp ? tp->t_inpcb : NULL);
 	}
 }
 

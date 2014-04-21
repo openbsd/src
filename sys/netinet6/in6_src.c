@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.42 2014/04/18 10:48:30 jca Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.43 2014/04/21 11:10:54 henning Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -421,9 +421,9 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		     sin6tosa(&ro->ro_dst)->sa_family != AF_INET6 ||
 		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
+			ro->ro_rt = NULL;
 		}
-		if (ro->ro_rt == (struct rtentry *)NULL) {
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */

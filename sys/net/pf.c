@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.873 2014/04/19 12:59:53 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.874 2014/04/21 11:10:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2426,8 +2426,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 #ifdef INET
 	case AF_INET:
 		if (eh == NULL) {
-			ip_output(m, (void *)NULL, (void *)NULL, 0,
-			    (void *)NULL, (void *)NULL);
+			ip_output(m, NULL, NULL, 0, NULL, NULL);
 		} else {
 			struct route		 ro;
 			struct rtentry		 rt;
@@ -2444,8 +2443,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 			memcpy(e->ether_shost, eh->ether_dhost, ETHER_ADDR_LEN);
 			memcpy(e->ether_dhost, eh->ether_shost, ETHER_ADDR_LEN);
 			e->ether_type = eh->ether_type;
-			ip_output(m, (void *)NULL, &ro, IP_ROUTETOETHER,
-			    (void *)NULL, (void *)NULL);
+			ip_output(m, NULL, &ro, IP_ROUTETOETHER, NULL, NULL);
 		}
 		break;
 #endif /* INET */

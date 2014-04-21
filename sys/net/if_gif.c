@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.64 2013/10/19 14:46:30 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.65 2014/04/21 11:10:54 henning Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -261,8 +261,7 @@ gif_start(struct ifnet *ifp)
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ip_output(m, (void *)NULL, (void *)NULL, 0,
-			    (void *)NULL, (void *)NULL);
+			ip_output(m, NULL, NULL, 0, NULL, NULL);
 			break;
 #endif
 #ifdef INET6
@@ -273,8 +272,7 @@ gif_start(struct ifnet *ifp)
 			 * of inner packet, to achieve path MTU discovery for
 			 * encapsulated packets.
 			 */
-			ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL,
-			     NULL);
+			ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL, NULL);
 			break;
 #endif
 		default:

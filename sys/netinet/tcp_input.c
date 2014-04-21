@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.273 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.274 2014/04/21 11:10:54 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4414,8 +4414,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0), 
-		    (struct ip_moptions *)NULL, inp);
+		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL, inp);
 		break;
 #endif
 #ifdef INET6
@@ -4424,7 +4423,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0, NULL, NULL);
+		    NULL, NULL, NULL);
 		break;
 #endif
 	default:
