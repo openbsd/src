@@ -22,7 +22,6 @@
 ./etc/group
 ./etc/hostapd.conf
 ./etc/hosts
-./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/hotplug
 ./etc/ifstated.conf
