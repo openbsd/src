@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.13 2014/04/21 09:48:31 claudio Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.14 2014/04/21 18:00:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -273,9 +274,27 @@ iscsid_ctrl_dispatch(void *ch, struct pdu *pdu)
 		control_compose(ch, CTRL_INITIATOR_CONFIG, &initiator->config,
 		    sizeof(initiator->config));
 
-		TAILQ_FOREACH(s, &initiator->sessions, entry)
-			control_compose(ch, CTRL_SESSION_CONFIG,
-			    &s->config, sizeof(s->config));
+		TAILQ_FOREACH(s, &initiator->sessions, entry) {
+			struct ctrldata cdv[3];
+			bzero(cdv, sizeof(cdv));
+
+			cdv[0].buf = &s->config;
+			cdv[0].len = sizeof(s->config);
+
+			if (s->config.TargetName) {
+				cdv[1].buf = s->config.TargetName;
+				cdv[1].len =
+				    strlen(s->config.TargetName) + 1;
+			}
+			if (s->config.InitiatorName) {
+				cdv[2].buf = s->config.InitiatorName;
+				cdv[2].len =
+				    strlen(s->config.InitiatorName) + 1;
+			}
+
+			control_build(ch, CTRL_SESSION_CONFIG,
+			    nitems(cdv), cdv);
+		}
 
 		control_compose(ch, CTRL_SUCCESS, NULL, 0);
 		break;
