@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.77 2014/01/17 15:39:53 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.78 2014/04/21 11:42:31 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -133,6 +133,46 @@ my $unsupported = {
 	LONGNAME => 'Long file',
 };
 	
+sub read_records
+{
+	my ($self, $size) = @_;
+	my $toread = $self->{swallow};
+	my $result = '';
+	while ($toread > 0) {
+		my $buffer;
+		my $maxread = $buffsize;
+		$maxread = $toread if $maxread > $toread;
+		my $actual = read($self->{fh}, $buffer, $maxread);
+		if (!defined $actual) {
+			$self->fatal("Error reading from archive: #1", $!);
+		}
+		if ($actual == 0) {
+			$self->fatal("Premature end of archive");
+		}
+		$self->{swallow} -= $actual;
+		$toread -= $actual;
+		$result .= $buffer;
+	}
+	return substr($result, 0, $size);
+}
+
+sub parse_records
+{
+	my ($self, $result, $h) = @_;
+	open(my $fh, '<', \$h);
+	while (<$fh>) {
+		chomp;
+		if (m/^(\d+)\s+(\w+?)\=(.*)$/) {
+			my ($k, $v) = ($2, $3);
+			if ($k eq 'path') {
+				$result->{name} = $v;
+			} elsif ($k eq 'linkpath') {
+				$result->{linkname} = $v;
+			}
+		}
+	}
+}
+
 sub next
 {
 	my $self = shift;
@@ -196,6 +236,17 @@ sub next
 	    major => $major,
 	    minor => $minor,
 	};
+	# adjust swallow
+	$self->{swallow} = $size;
+	if ($size % 512) {
+		$self->{swallow} += 512 - $size % 512;
+	}
+	if ($type eq XHDR) {
+		my $h = $self->read_records($size);
+		$result = $self->next;
+		$self->parse_records($result, $h);
+		return $result;
+	}
 	if (defined $types->{$type}) {
 		$self->new_object($result, $types->{$type});
 	} else {
@@ -207,11 +258,6 @@ sub next
 		    $types->{$type}, $result->{name});
 	}
 
-	# adjust swallow
-	$self->{swallow} = $size;
-	if ($size % 512) {
-		$self->{swallow} += 512 - $size % 512;
-	}
 	$self->{cachename} = $name;
 	return $result;
 }
@@ -233,10 +279,56 @@ sub split_name
 	return ($prefix, $name);
 }
 
+sub extended_record
+{
+	my ($k, $v) = @_;
+	my $string = " $k=$v\n";
+	my $len = length($string);
+	if ($len < 995) {
+		return sprintf("%3d", $len+3).$string;
+	} elsif ($len < 9995) {
+		return sprintf("%04d", $len+4).$string;
+	} else {
+		return sprintf("%05d", $len+5).$string;
+	}
+}
+
+sub pack_header
+{
+	my ($archive, $type, $size, $entry, $prefix, $name, $linkname, 
+		$uname, $gname, $major, $minor) = @_;
+
+	my $header;
+	my $cksum = ' 'x8;
+	for (1 .. 2) {
+		$header = pack(USTAR_HEADER,
+		    $name,
+		    sprintf("%07o", $entry->{mode}),
+		    sprintf("%07o", $entry->{uid}),
+		    sprintf("%07o", $entry->{gid}),
+		    sprintf("%011o", $size),
+		    sprintf("%011o", $entry->{mtime}),
+		    $cksum,
+		    $type,
+		    $linkname,
+		    'ustar', '00',
+		    $uname,
+		    $gname,
+		    sprintf("%07o", $major),
+		    sprintf("%07o", $minor),
+		    $prefix, "\0");
+		$cksum = sprintf("%07o", unpack("%C*", $header));
+	}
+	return $header;
+}
+
+my $random_name = "A_random_name000";
+
 sub mkheader
 {
 	my ($archive, $entry, $type) = @_;
 	my ($prefix, $name) = split_name($entry->name);
+	my ($extendedname, $extendedlink);
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
 	my ($major, $minor);
@@ -268,13 +360,16 @@ sub mkheader
 		$linkname = '';
 	}
 	if (length $prefix > MAXPREFIX) {
-		$archive->fatal("Prefix too long #1", $prefix);
+		$prefix = substr($prefix, 0, MAXPREFIX);
+		$extendedname = 1;
 	}
 	if (length $name > MAXFILENAME) {
-		$archive->fatal("Name too long #1", $name);
+		$name = substr($name, 0, MAXPREFIX);
+		$extendedname = 1;
 	}
 	if (length $linkname > MAXLINKNAME) {
-		$archive->fatal("Linkname too long #1", $linkname);
+		$linkname = substr($linkname, 0, MAXLINKNAME);
+		$extendedlink = 1;
 	}
 	if (length $uname > MAXUSERNAME) {
 		$archive->fatal("Username too long #1", $uname);
@@ -282,26 +377,23 @@ sub mkheader
 	if (length $gname > MAXGROUPNAME) {
 		$archive->fatal("Groupname too long #1", $gname);
 	}
-	my $header;
-	my $cksum = ' 'x8;
-	for (1 .. 2) {
-		$header = pack(USTAR_HEADER,
-		    $name,
-		    sprintf("%07o", $entry->{mode}),
-		    sprintf("%07o", $entry->{uid}),
-		    sprintf("%07o", $entry->{gid}),
-		    sprintf("%011o", $size),
-		    sprintf("%011o", $entry->{mtime}),
-		    $cksum,
-		    $type,
-		    $linkname,
-		    'ustar', '00',
-		    $uname,
-		    $gname,
-		    sprintf("%07o", $major),
-		    sprintf("%07o", $minor),
-		    $prefix, "\0");
-		$cksum = sprintf("%07o", unpack("%C*", $header));
+	my $header = $archive->pack_header($type, $size, $entry, 
+	    $prefix, $name, $linkname, $uname, $gname, $major, $minor);
+	my $x;
+	if ($extendedname) {
+		$x .= extended_record("path", $entry->name);
+	}
+	if ($extendedlink) {
+		$x .= extended_record("linkpath",$entry->{linkname});
+	}
+	if ($x) {
+		my $extended = $archive->pack_header(XHDR, length($x), $entry,
+		    '', $random_name, '', $uname, $gname, $major, $minor);
+		$random_name++;
+		if ((length $x) % 512) {
+			$x .= "\0" x (512 - ((length $x) % 512));
+		}
+		return $extended.$x.$header;
 	}
 	return $header;
 }
