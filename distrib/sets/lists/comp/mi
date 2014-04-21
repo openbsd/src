@@ -4944,6 +4944,7 @@
 ./usr/share/man/man3/lroundl.3
 ./usr/share/man/man3/lsearch.3
 ./usr/share/man/man3/malloc.3
+./usr/share/man/man3/mallocarray.3
 ./usr/share/man/man3/mblen.3
 ./usr/share/man/man3/mbrlen.3
 ./usr/share/man/man3/mbrtowc.3

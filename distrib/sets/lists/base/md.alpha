@@ -68,7 +68,7 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd5.5/4.2.1/collect2
 ./usr/lib/gcc-lib/alpha-unknown-openbsd5.5/4.2.1/specs
 ./usr/lib/libasn1.so.20.0
-./usr/lib/libc.so.74.0
+./usr/lib/libc.so.74.1
 ./usr/lib/libcom_err.so.20.0
 ./usr/lib/libcrypto.so.26.0
 ./usr/lib/libcurses.so.14.0
