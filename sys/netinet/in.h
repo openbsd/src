@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.105 2014/04/21 09:57:27 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.106 2014/04/21 10:05:27 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -43,12 +43,12 @@
 #ifndef _KERNEL
 #include <sys/types.h>
 #include <machine/endian.h>
-#endif
+#endif /* _KERNEL */
 
 #ifndef	_SA_FAMILY_T_DEFINED_
 #define	_SA_FAMILY_T_DEFINED_
 typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
-#endif
+#endif /* _SA_FAMILY_T_DEFINED_ */
 
 /*
  * Protocols
@@ -91,7 +91,6 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 
 /* Only used internally, so it can be outside the range of valid IP protocols */
 #define	IPPROTO_DIVERT		258		/* Divert sockets */
-
 
 /*
  * From FreeBSD:
@@ -152,7 +151,7 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 struct in_addr {
 	in_addr_t s_addr;
 };
-#endif
+#endif /* _IN_ADDR_DECLARED */
 
 /* last return value of *_input(), meaning "all job for this pkt is done".  */
 #define	IPPROTO_DONE		257
@@ -170,7 +169,7 @@ struct in_addr {
 #define	__IPADDR(x)	((u_int32_t) htonl((u_int32_t)(x)))
 #else
 #define	__IPADDR(x)	((u_int32_t)(x))
-#endif
+#endif /* _KERNEL */
 
 #define	IN_CLASSA(i)		(((u_int32_t)(i) & __IPADDR(0x80000000)) == \
 				 __IPADDR(0x00000000))
@@ -226,7 +225,7 @@ struct in_addr {
 #define	INADDR_BROADCAST	__IPADDR(0xffffffff)	/* must be masked */
 #ifndef _KERNEL
 #define	INADDR_NONE		__IPADDR(0xffffffff)	/* -1 return */
-#endif
+#endif /* _KERNEL */
 
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
@@ -261,7 +260,7 @@ struct ip_opts {
 	int8_t		Ip_opts[40];	/* cannot have same name as class */
 #else
 	int8_t		ip_opts[40];	/* actually variable in size */
-#endif
+#endif /* defined(__cplusplus) */
 };
 
 /*
@@ -361,7 +360,7 @@ struct ip_mreq {
  */
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN		16
-#endif
+#endif /* INET_ADDRSTRLEN */
 
 
 #if __BSD_VISIBLE
