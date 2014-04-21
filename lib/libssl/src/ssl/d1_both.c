@@ -179,12 +179,12 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 	unsigned char *buf = NULL;
 	unsigned char *bitmask = NULL;
 
-	frag = (hm_fragment *)malloc(sizeof(hm_fragment));
+	frag = malloc(sizeof(hm_fragment));
 	if (frag == NULL)
 		return NULL;
 
 	if (frag_len) {
-		buf = (unsigned char *)malloc(frag_len);
+		buf = malloc(frag_len);
 		if (buf == NULL) {
 			free(frag);
 			return NULL;
@@ -196,7 +196,7 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 
 	/* Initialize reassembly bitmask if necessary */
 	if (reassembly) {
-		bitmask = (unsigned char *)malloc(RSMBLY_BITMASK_SIZE(frag_len));
+		bitmask = malloc(RSMBLY_BITMASK_SIZE(frag_len));
 		if (bitmask == NULL) {
 			if (buf != NULL)
 				free(buf);

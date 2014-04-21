@@ -456,7 +456,7 @@ load_builtin_compressions(void)
 			MemCheck_off();
 			ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 			if (ssl_comp_methods != NULL) {
-				comp = (SSL_COMP *)malloc(sizeof(SSL_COMP));
+				comp = malloc(sizeof(SSL_COMP));
 				if (comp != NULL) {
 					comp->method = COMP_zlib();
 					if (comp->method &&
@@ -1759,7 +1759,7 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	}
 
 	MemCheck_off();
-	comp = (SSL_COMP *)malloc(sizeof(SSL_COMP));
+	comp = malloc(sizeof(SSL_COMP));
 	comp->id = id;
 	comp->method = cm;
 	load_builtin_compressions();

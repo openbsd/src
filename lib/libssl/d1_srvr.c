@@ -1182,8 +1182,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			POINT_CONVERSION_UNCOMPRESSED,
 			NULL, 0, NULL);
 
-			encodedPoint = (unsigned char *)
-			malloc(encodedlen*sizeof(unsigned char));
+			encodedPoint = malloc(encodedlen);
 
 			bn_ctx = BN_CTX_new();
 			if ((encodedPoint == NULL) || (bn_ctx == NULL)) {

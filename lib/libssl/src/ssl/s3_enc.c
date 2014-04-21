@@ -245,9 +245,10 @@ ssl3_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_read_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
-		else
+		else {
 			/* make sure it's intialized in case we exit later with an error */
-		EVP_CIPHER_CTX_init(s->enc_read_ctx);
+			EVP_CIPHER_CTX_init(s->enc_read_ctx);
+		}
 		dd = s->enc_read_ctx;
 
 		ssl_replace_hash(&s->read_hash, m);
@@ -264,8 +265,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 				goto err2;
 			}
 			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp = (unsigned char *)
-			malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+				s->s3->rrec.comp = malloc(SSL3_RT_MAX_PLAIN_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 		}
@@ -277,9 +277,10 @@ ssl3_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_write_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
-		else
+		else {
 			/* make sure it's intialized in case we exit later with an error */
-		EVP_CIPHER_CTX_init(s->enc_write_ctx);
+			EVP_CIPHER_CTX_init(s->enc_write_ctx);
+		}
 		dd = s->enc_write_ctx;
 		ssl_replace_hash(&s->write_hash, m);
 #ifndef OPENSSL_NO_COMP
@@ -577,8 +578,7 @@ ssl3_digest_cached_records(SSL *s)
 
 	/* Allocate handshake_dgst array */
 	ssl3_free_digest_list(s);
-	s->s3->handshake_dgst = malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
-	memset(s->s3->handshake_dgst, 0, SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
+	s->s3->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
 	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {
 		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);

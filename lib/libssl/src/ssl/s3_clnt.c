@@ -2390,9 +2390,7 @@ ssl3_send_client_key_exchange(SSL *s)
 				       POINT_CONVERSION_UNCOMPRESSED,
 				       NULL, 0, NULL);
 
-				encodedPoint =
-				    (unsigned char *)malloc(
-				        encoded_pt_len * sizeof(unsigned char));
+				encodedPoint = malloc(encoded_pt_len);
 
 				bn_ctx = BN_CTX_new();
 				if ((encodedPoint == NULL) ||

@@ -2777,9 +2777,8 @@ ssl3_new(SSL *s)
 {
 	SSL3_STATE *s3;
 
-	if ((s3 = malloc(sizeof *s3)) == NULL)
+	if ((s3 = calloc(1, sizeof *s3)) == NULL)
 		goto err;
-	memset(s3, 0, sizeof *s3);
 	memset(s3->rrec.seq_num, 0, sizeof(s3->rrec.seq_num));
 	memset(s3->wrec.seq_num, 0, sizeof(s3->wrec.seq_num));
 

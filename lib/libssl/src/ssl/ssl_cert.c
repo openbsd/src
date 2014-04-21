@@ -176,13 +176,11 @@ ssl_cert_new(void)
 {
 	CERT *ret;
 
-	ret = (CERT *)malloc(sizeof(CERT));
+	ret = calloc(1, sizeof(CERT));
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
-	memset(ret, 0, sizeof(CERT));
-
 	ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references = 1;
 	ssl_cert_set_default_md(ret);
@@ -195,13 +193,11 @@ ssl_cert_dup(CERT *cert)
 	CERT *ret;
 	int i;
 
-	ret = (CERT *)malloc(sizeof(CERT));
+	ret = calloc(1, sizeof(CERT));
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
-
-	memset(ret, 0, sizeof(CERT));
 
 	ret->key = &ret->pkeys[cert->key - &cert->pkeys[0]];
 	/* or ret->key = ret->pkeys + (cert->key - cert->pkeys),
@@ -403,13 +399,11 @@ ssl_sess_cert_new(void)
 {
 	SESS_CERT *ret;
 
-	ret = malloc(sizeof *ret);
+	ret = calloc(1, sizeof *ret);
 	if (ret == NULL) {
 		SSLerr(SSL_F_SSL_SESS_CERT_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-
-	memset(ret, 0 , sizeof *ret);
 	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references = 1;
 

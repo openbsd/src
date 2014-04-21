@@ -506,8 +506,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			if (!s->session->tlsext_tick)
 				return NULL;
 			memcpy(s->session->tlsext_tick,
-			s->tlsext_session_ticket->data,
-			ticklen);
+			    s->tlsext_session_ticket->data, ticklen);
 			s->session->tlsext_ticklen = ticklen;
 		} else
 			ticklen = 0;
@@ -1029,7 +1028,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 							*al = TLS1_AD_UNRECOGNIZED_NAME;
 							return 0;
 						}
-						if ((s->session->tlsext_hostname = malloc(len + 1)) == NULL) {
+						if ((s->session->tlsext_hostname =
+						    malloc(len + 1)) == NULL) {
 							*al = TLS1_AD_INTERNAL_ERROR;
 							return 0;
 						}
@@ -1101,7 +1101,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 					s->session->tlsext_ecpointformatlist = NULL;
 				}
 				s->session->tlsext_ecpointformatlist_length = 0;
-				if ((s->session->tlsext_ecpointformatlist = malloc(ecpointformatlist_length)) == NULL) {
+				if ((s->session->tlsext_ecpointformatlist =
+				    malloc(ecpointformatlist_length)) == NULL) {
 					*al = TLS1_AD_INTERNAL_ERROR;
 					return 0;
 				}
@@ -1132,7 +1133,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 					return 0;
 				}
 				s->session->tlsext_ellipticcurvelist_length = 0;
-				if ((s->session->tlsext_ellipticcurvelist = malloc(ellipticcurvelist_length)) == NULL) {
+				if ((s->session->tlsext_ellipticcurvelist =
+				    malloc(ellipticcurvelist_length)) == NULL) {
 					*al = TLS1_AD_INTERNAL_ERROR;
 					return 0;
 				}
@@ -1423,7 +1425,8 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n,
 			s->session->tlsext_ecpointformatlist_length = 0;
 			if (s->session->tlsext_ecpointformatlist != NULL)
 				free(s->session->tlsext_ecpointformatlist);
-			if ((s->session->tlsext_ecpointformatlist = malloc(ecpointformatlist_length)) == NULL) {
+			if ((s->session->tlsext_ecpointformatlist =
+			    malloc(ecpointformatlist_length)) == NULL) {
 				*al = TLS1_AD_INTERNAL_ERROR;
 				return 0;
 			}

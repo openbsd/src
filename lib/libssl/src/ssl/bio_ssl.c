@@ -105,12 +105,11 @@ ssl_new(BIO *bi)
 {
 	BIO_SSL *bs;
 
-	bs = (BIO_SSL *)malloc(sizeof(BIO_SSL));
+	bs = calloc(1, sizeof(BIO_SSL));
 	if (bs == NULL) {
 		BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	memset(bs, 0, sizeof(BIO_SSL));
 	bi->init = 0;
 	bi->ptr = (char *)bs;
 	bi->flags = 0;
