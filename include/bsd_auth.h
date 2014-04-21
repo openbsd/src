@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_auth.h,v 1.9 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: bsd_auth.h,v 1.10 2014/04/21 11:27:34 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -61,7 +61,7 @@ int	 auth_setitem(auth_session_t *, auth_item_t, char *);
 
 auth_session_t *auth_open(void);
 auth_session_t *auth_verify(auth_session_t *, char *, char *, ...)
-		    __attribute__((sentinel));
+		    __attribute__((__sentinel__));
 
 auth_session_t *auth_userchallenge(char *, char *, char *, char **);
 auth_session_t *auth_usercheck(char *, char *, char *, char *);
@@ -81,7 +81,7 @@ void	 auth_clrenv(auth_session_t *);
 
 void	 auth_setstate(auth_session_t *, int);
 int	 auth_call(auth_session_t *, char *, ...) 
-	    __attribute__((sentinel));
+	    __attribute__((__sentinel__));
 
 int	 auth_setdata(auth_session_t *, void *, size_t);
 int	 auth_setoption(auth_session_t *, char *, char *);
