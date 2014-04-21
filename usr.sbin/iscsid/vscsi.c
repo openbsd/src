@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.11 2014/04/21 09:48:31 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.12 2014/04/21 12:24:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -49,9 +49,10 @@ struct scsi_task {
 	size_t		datalen;
 };
 
-void vscsi_callback(struct connection *, void *, struct pdu *);
-void vscsi_fail(void *arg);
-void vscsi_dataout(struct connection *, struct scsi_task *, u_int32_t, size_t);
+void	vscsi_callback(struct connection *, void *, struct pdu *);
+void	vscsi_fail(void *arg);
+void	vscsi_dataout(struct connection *, struct scsi_task *, u_int32_t,
+	    size_t, size_t);
 
 void
 vscsi_open(char *dev)
@@ -118,14 +119,20 @@ vscsi_dispatch(int fd, short event, void *arg)
 	memcpy(sreq->cdb, &i2t.cmd, i2t.cmdlen);
 
 	/* include immediate data of up to FirstBurstLength bytes if allowed */
-	if (i2t.direction == VSCSI_DIR_WRITE &&
-	    s->active.ImmediateData) {
+	if (i2t.direction == VSCSI_DIR_WRITE && s->active.ImmediateData) {
+		struct connection *c;
 		char *buf;
 		u_int32_t t32;
 		size_t size;
 
 		size = i2t.datalen > s->active.FirstBurstLength ?
 		    s->active.FirstBurstLength : i2t.datalen;
+
+		/* XXX assumes all connections have same settings */
+		c = TAILQ_FIRST(&s->connections);
+		if (c && size > c->active.MaxRecvDataSegmentLength)
+			size = c->active.MaxRecvDataSegmentLength;
+
 		if (!(buf = pdu_alloc(size)))
 			fatal("vscsi_dispatch");
 		t32 = htonl(size);
@@ -207,7 +214,7 @@ vscsi_callback(struct connection *c, void *arg, struct pdu *p)
 	struct iscsi_pdu_rt2 *r2t;
 	int status = VSCSI_STAT_DONE;
 	u_char *buf = NULL;
-	size_t size = 0, n;
+	size_t size, off, n;
 	int tag;
 
 	sresp = pdu_getbuf(p, NULL, PDU_HEADER);
@@ -223,6 +230,7 @@ vscsi_callback(struct connection *c, void *arg, struct pdu *p)
 			conn_fail(c);
 			break;
 		}
+		size = 0;
 		/* XXX handle the various serial numbers */
 		if (sresp->response) {
 			status = VSCSI_STAT_ERR;
@@ -263,11 +271,10 @@ send_status:
 	case ISCSI_OP_R2T:
 		conn_task_cleanup(c, &t->task);
 		r2t = (struct iscsi_pdu_rt2 *)sresp;
-		if (ntohl(r2t->buffer_offs))
-			fatalx("vscsi: r2t bummer failure");
+		off = ntohl(r2t->buffer_offs);
 		size = ntohl(r2t->desired_datalen);
 
-		vscsi_dataout(c, t, r2t->ttt, size);
+		vscsi_dataout(c, t, r2t->ttt, size, off);
 		break;
 	default:
 		log_debug("scsi task: tag %d, target %d lun %d", t->tag,
@@ -291,7 +298,7 @@ vscsi_fail(void *arg)
 
 void
 vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
-    size_t len)
+    size_t len, size_t buffer_off)
 {
 	struct pdu *p;
 	struct iscsi_pdu_data_out *dout;
@@ -318,7 +325,7 @@ vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
 		t32 = htonl(size);
 		memcpy(&dout->ahslen, &t32, sizeof(t32));
 
-		dout->buffer_offs = htonl(off);
+		dout->buffer_offs = htonl(buffer_off + off);
 		if (!(buf = pdu_alloc(size)))
 			fatal("vscsi_r2t");
 
