@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.106 2014/04/21 10:05:27 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.107 2014/04/21 10:07:58 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -640,9 +640,6 @@ struct ip_mreq {
 #define	IPCTL_FORWARDING	1	/* act as router */
 #define	IPCTL_SENDREDIRECTS	2	/* may send redirects when forwarding */
 #define	IPCTL_DEFTTL		3	/* default TTL */
-#ifdef notyet
-#define	IPCTL_DEFMTU		4	/* default MTU */
-#endif
 #define	IPCTL_SOURCEROUTE	5	/* may perform source routes */
 #define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
 #define IPCTL_IPPORT_FIRSTAUTO	7
@@ -651,9 +648,6 @@ struct ip_mreq {
 #define IPCTL_IPPORT_HILASTAUTO	10
 #define	IPCTL_IPPORT_MAXQUEUE	11
 #define	IPCTL_ENCDEBUG		12
-#ifdef notdef	/*obsolete*/
-#define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
-#endif
 #define IPCTL_IPSEC_EXPIRE_ACQUIRE 14   /* How long to wait for key mgmt. */
 #define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
 #define IPCTL_IPSEC_REQUIRE_PFS 16
