@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.205 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.206 2014/04/21 12:22:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1685,7 +1685,7 @@ pfsync_sendout(void)
 
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
-	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL) == 0)
+	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL, 0) == 0)
 		pfsyncstats.pfsyncs_opackets++;
 	else
 		pfsyncstats.pfsyncs_oerrors++;
@@ -1798,8 +1798,8 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
 #ifdef INET
 			case AF_INET:
-				ip_output(pd->pd_m, NULL, NULL, 0,
-				    NULL, NULL);
+				ip_output(pd->pd_m, NULL, NULL, 0, NULL, NULL,
+				    0);
 				break;
 #endif /* INET */
 #ifdef INET6

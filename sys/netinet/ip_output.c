@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.262 2014/04/20 09:38:19 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.263 2014/04/21 12:22:26 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ void in_delayed_cksum(struct mbuf *);
  */
 int
 ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
-    struct ip_moptions *imo, struct inpcb *inp, ...)
+    struct ip_moptions *imo, struct inpcb *inp, u_int32_t ipsecflowinfo)
 {
 	struct ip *ip;
 	struct ifnet *ifp;
@@ -106,7 +106,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct tdb_ident *tdbi;
 
 	struct tdb *tdb;
-	u_int32_t ipsecflowinfo = 0;
 #if NPF > 0
 	struct ifnet *encif;
 #endif
@@ -115,12 +114,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 #ifdef IPSEC
 	if (inp && (inp->inp_flags & INP_IPV6) != 0)
 		panic("ip_output: IPv6 pcb is passed");
-	if (flags & IP_IPSECFLOW) {
-		va_list ap;
-		va_start(ap, inp);
-		ipsecflowinfo = va_arg(ap, u_int32_t);
-		va_end(ap);
-	}
 #endif /* IPSEC */
 
 #ifdef	DIAGNOSTIC

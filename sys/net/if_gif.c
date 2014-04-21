@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.65 2014/04/21 11:10:54 henning Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.66 2014/04/21 12:22:25 henning Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ gif_start(struct ifnet *ifp)
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ip_output(m, NULL, NULL, 0, NULL, NULL);
+			ip_output(m, NULL, NULL, 0, NULL, NULL, 0);
 			break;
 #endif
 #ifdef INET6

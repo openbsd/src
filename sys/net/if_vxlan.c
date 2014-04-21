@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.12 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.13 2014/04/21 12:22:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -636,7 +636,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef INET
 	if ((error =
-	    ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))) {
+	    ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL, 0))) {
 		ifp->if_oerrors++;
 	}
 #endif

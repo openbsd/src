@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.71 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.72 2014/04/21 12:22:26 henning Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ rip_output(struct mbuf *m, ...)
 	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route, flags,
-	    inp->inp_moptions, inp);
+	    inp->inp_moptions, inp, 0);
 	if (error == EACCES)	/* translate pf(4) error for userland */
 		error = EHOSTUNREACH;
 	return (error);

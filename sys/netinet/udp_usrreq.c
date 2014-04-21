@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.182 2014/04/18 10:48:29 jca Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.183 2014/04/21 12:22:26 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1111,8 +1111,8 @@ udp_output(struct mbuf *m, ...)
 	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
-	    (inp->inp_socket->so_options & SO_BROADCAST) | IP_IPSECFLOW,
-	    inp->inp_moptions, inp, ipsecflowinfo);
+	    (inp->inp_socket->so_options & SO_BROADCAST), inp->inp_moptions,
+	    inp, ipsecflowinfo);
 	if (error == EACCES)	/* translate pf(4) error for userland */
 		error = EHOSTUNREACH;
 

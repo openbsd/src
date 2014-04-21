@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.49 2014/04/18 22:23:50 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.50 2014/04/21 12:22:25 henning Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1558,7 +1558,7 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	gre->flags = htons(gre->flags);
 
 	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
-	if (ip_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
+	if (ip_output(m0, NULL, NULL, 0, NULL, NULL, 0) != 0) {
 		PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
 		goto drop;
 	}
@@ -1996,7 +1996,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_ttl = MAXTTL;
 		ip->ip_tos = 0;
 
-		if (ip_output(m0, NULL, NULL, IP_IPSECFLOW, NULL, NULL,
+		if (ip_output(m0, NULL, NULL, 0, NULL, NULL,
 		    session->proto.l2tp.ipsecflowinfo) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
 			goto drop;

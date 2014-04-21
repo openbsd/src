@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.55 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.56 2014/04/21 12:22:26 henning Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -137,13 +137,12 @@ struct ipq {
 	struct	  in_addr ipq_src, ipq_dst;
 };
 
-/* flags passed to ip_output as last parameter */
+/* flags passed to ip_output */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0800		/* pmtu discovery, set DF */
 #define IP_ROUTETOETHER		0x1000		/* ether addresses given */
-#define IP_IPSECFLOW		0x2000		/* IPsec flow info */
 
 extern struct ipstat ipstat;
 extern LIST_HEAD(ipqhead, ipq)	ipq;	/* ip reass. queue */
@@ -185,7 +184,7 @@ void	 ip_init(void);
 int	 ip_mforward(struct mbuf *, struct ifnet *);
 int	 ip_optcopy(struct ip *, struct ip *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, struct inpcb *, ...);
+	    struct ip_moptions *, struct inpcb *, u_int32_t);
 int	 ip_pcbopts(struct mbuf **, struct mbuf *);
 struct mbuf *
 	 ip_reass(struct ipqent *, struct ipq *);

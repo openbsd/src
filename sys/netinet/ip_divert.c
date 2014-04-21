@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.20 2014/04/14 09:06:42 mpi Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.21 2014/04/21 12:22:26 henning Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -181,7 +181,7 @@ divert_output(struct mbuf *m, ...)
 		splx(s);
 	} else {
 		error = ip_output(m, NULL, &inp->inp_route,
-		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
+		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, 0);
 		if (error == EACCES)	/* translate pf(4) error for userland */
 			error = EHOSTUNREACH;
 	}
