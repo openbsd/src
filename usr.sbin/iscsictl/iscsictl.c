@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.6 2014/04/21 17:44:47 claudio Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.7 2014/04/21 18:01:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -135,7 +135,6 @@ main (int argc, char* argv[])
 		}
 		SIMPLEQ_FOREACH(s, &cf->sessions, entry) {
 			struct ctrldata cdv[3];
-
 			bzero(cdv, sizeof(cdv));
 
 			cdv[0].buf = &s->session;
@@ -312,6 +311,7 @@ show_config(struct ctrlmsghdr *cmh, struct pdu *pdu)
 {
 	struct initiator_config	*ic;
 	struct session_config	*sc;
+	char *name;
 
 	switch (cmh->type) {
 	case CTRL_INITIATOR_CONFIG:
@@ -336,12 +336,14 @@ show_config(struct ctrlmsghdr *cmh, struct pdu *pdu)
 		printf("    SessionType: %s\tMaxConnections: %hd\n",
 		    sc->SessionType == SESSION_TYPE_DISCOVERY ? "discovery" :
 		    "normal", sc->MaxConnections);
-//		printf("    InitiatorName: %s\n", sc->InitiatorName);
-		printf("    InitiatorAddr: %s\n",
-		    log_sockaddr(&sc->connection.LocalAddr));
-//		printf("    TargetName: %s\n", sc->TargetName);
+		if ((name = pdu_getbuf(pdu, NULL, 2)))
+			printf("    TargetName: %s\n", name);
 		printf("    TargetAddr: %s\n",
 		    log_sockaddr(&sc->connection.TargetAddr));
+		if ((name = pdu_getbuf(pdu, NULL, 3)))
+			printf("    InitiatorName: %s\n", name);
+		printf("    InitiatorAddr: %s\n",
+		    log_sockaddr(&sc->connection.LocalAddr));
 		break;
 	}
 }
