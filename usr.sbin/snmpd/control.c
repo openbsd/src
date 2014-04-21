@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.22 2014/04/14 12:55:10 blambert Exp $	*/
+/*	$OpenBSD: control.c,v 1.23 2014/04/21 19:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -329,11 +329,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			for (i = 0; i < PROC_MAX; i++) {
 				if (privsep_process == PROC_CONTROL)
 					continue;
-				proc_forward_imsg(&env->sc_ps, &imsg, i);
+				proc_forward_imsg(&env->sc_ps, &imsg, i, -1);
 			}
 			break;
 		case IMSG_CTL_RELOAD:
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT);
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

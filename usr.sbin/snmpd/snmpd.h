@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.50 2014/04/14 12:55:10 blambert Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.51 2014/04/21 19:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -82,6 +82,7 @@ struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
 	struct event		 ev;
+	struct privsep_proc	*proc;
 	void			*data;
 	short			 events;
 	const char		*name;
@@ -118,12 +119,23 @@ enum privsep_procid privsep_process;
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_SNMPE
 
+struct privsep_pipes {
+	int			*pp_pipes[PROC_MAX];
+};
+
 struct privsep {
-	int			 ps_pipes[PROC_MAX][PROC_MAX];
-	struct imsgev		 ps_ievs[PROC_MAX];
+	struct privsep_pipes	*ps_pipes[PROC_MAX];
+	struct privsep_pipes	*ps_pp;
+
+	struct imsgev		*ps_ievs[PROC_MAX];
 	const char		*ps_title[PROC_MAX];
 	pid_t			 ps_pid[PROC_MAX];
 	struct passwd		*ps_pw;
+
+	u_int			 ps_instances[PROC_MAX];
+	u_int			 ps_ninstances;
+	u_int			 ps_instance;
+	int			 ps_noaction;
 
 	struct control_sock	 ps_csock;
 	struct control_socks	 ps_rcsocks;
@@ -145,11 +157,11 @@ struct privsep_proc {
 				    struct imsg *);
 	pid_t			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
-	void			(*p_shutdown)(struct privsep *,
-				    struct privsep_proc *);
+	void			(*p_shutdown)(void);
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	void 			*p_env;
+	u_int			 p_instance;
 };
 
 enum blockmodes {
@@ -552,7 +564,7 @@ struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
 
 /* snmpe.c */
 pid_t		 snmpe(struct privsep *, struct privsep_proc *);
-void		 snmpe_shutdown(struct privsep *, struct privsep_proc *);
+void		 snmpe_shutdown(void);
 
 /* trap.c */
 void		 trap_init(void);
@@ -648,22 +660,26 @@ void		 usm_make_report(struct snmp_message *);
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_kill(struct privsep *);
-void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
 void	 proc_dispatch(int, short event, void *);
 pid_t	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
-	    void (*)(struct privsep *, void *), void *);
+	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
 int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
 int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, const struct iovec *, int);
-int	 proc_compose_imsg(struct privsep *, enum privsep_procid,
+void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
+int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, void *, u_int16_t);
-int	 proc_composev_imsg(struct privsep *, enum privsep_procid,
+int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
-	    enum privsep_procid);
-void	 proc_flush_imsg(struct privsep *, enum privsep_procid);
+	    enum privsep_procid, int);
+struct imsgbuf *
+	 proc_ibuf(struct privsep *, enum privsep_procid, int);
+struct imsgev *
+	 proc_iev(struct privsep *, enum privsep_procid, int);
 
 #endif /* _SNMPD_H */

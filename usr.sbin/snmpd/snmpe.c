@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.37 2013/10/17 08:42:44 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.38 2014/04/21 19:47:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,7 @@
 #include "snmpd.h"
 #include "mib.h"
 
-void	 snmpe_init(struct privsep *, void *);
+void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
 int	 snmpe_parse(struct sockaddr_storage *,
 	    struct ber_element *, struct snmp_message *);
 unsigned long
@@ -85,7 +85,7 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 
 /* ARGSUSED */
 void
-snmpe_init(struct privsep *p, void *arg)
+snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	kr_init();
 	trap_init();
@@ -99,7 +99,7 @@ snmpe_init(struct privsep *p, void *arg)
 }
 
 void
-snmpe_shutdown(struct privsep *ps, struct privsep_proc *p)
+snmpe_shutdown(void)
 {
 	kr_shutdown();
 }
