@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.766 2014/04/21 19:05:40 rpe Exp $
+#	$OpenBSD: install.sub,v 1.767 2014/04/21 23:15:09 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1448,6 +1448,7 @@ install_mounted_fs() {
 		# Accept a valid absolute path.
 		[[ -d /$resp ]] && { _dir=/$resp; break; }
 		echo "The directory '$resp' does not exist."
+		$auto && exit 1
 	done
 
 	install_files "file://$_dir" "$(ls $_dir/)"
