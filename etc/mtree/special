@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.100 2013/12/04 01:18:33 sthen Exp $
+#	$OpenBSD: special,v 1.101 2014/04/21 08:42:01 ajacoutot Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -33,7 +33,6 @@ ftpusers	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
 hostapd.conf	type=file mode=0600 uname=root gname=wheel
 hosts		type=file mode=0644 uname=root gname=wheel
-hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
 iked		type=dir mode=0755 uname=root gname=wheel
 ..	#iked
 iked.conf	type=file mode=0600 uname=root gname=wheel

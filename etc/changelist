@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.84 2014/03/24 17:42:04 tedu Exp $
+#	$OpenBSD: changelist,v 1.85 2014/04/21 08:42:01 ajacoutot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -39,7 +39,6 @@
 /etc/hostapd.conf
 +/etc/hostname.*
 /etc/hosts
-/etc/hosts.equiv
 /etc/hosts.lpd
 /etc/ifstated.conf
 +/etc/iked.conf
@@ -127,7 +126,6 @@
 /etc/sensorsd.conf
 /etc/services
 /etc/shells
-/etc/shosts.equiv
 /etc/slip.hosts
 /etc/slip.login
 /etc/snmpd.conf
