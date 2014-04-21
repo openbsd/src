@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2014/04/20 22:22:18 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2014/04/21 17:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -40,6 +40,7 @@ enum token_type {
 	ENDTOKEN,
 	KEYWORD,
 	ADDRESS,
+	NAME,
 	FLAG
 };
 
@@ -54,12 +55,13 @@ static const struct token t_main[];
 static const struct token t_show[];
 static const struct token t_log[];
 static const struct token t_discovery[];
+static const struct token t_session[];
 static const struct token t_vscsi[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"discover",	DISCOVERY,	t_discovery},
-	{KEYWORD,	"show",		SHOW,		t_show},
+	{KEYWORD,	"show",		SHOW_SUM,	t_show},
 	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -67,6 +69,7 @@ static const struct token t_main[] = {
 static const struct token t_show[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"summary",	SHOW_SUM,	NULL},
+	{KEYWORD,	"session",	SHOW_SESS,	t_session},
 	{KEYWORD,	"vscsi",	NONE,		t_vscsi},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -79,6 +82,11 @@ static const struct token t_log[] = {
 
 static const struct token t_discovery[] = {
 	{ADDRESS,	"",		NONE,			NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_session[] = {
+	{NAME,		"",		NONE,			NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
 };
 
@@ -162,6 +170,15 @@ match_token(const char *word, const struct token *table)
 					res.action = t->value;
 			}
 			break;
+		case NAME:
+			if (word != NULL && strlen(word) > 0) {
+				if (strlcpy(res.name, word, sizeof(res.name)) >=
+				    sizeof(res.name))
+					errx(1, "name too long");
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -196,6 +213,9 @@ show_valid_args(const struct token *table)
 			break;
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
+			break;
+		case NAME:
+			fprintf(stderr, "  <name>\n");
 			break;
 		case ENDTOKEN:
 			break;

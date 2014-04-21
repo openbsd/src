@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.5 2014/04/20 22:22:18 claudio Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.6 2014/04/21 17:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -34,12 +35,19 @@
 #include "iscsictl.h"
 
 __dead void	 usage(void);
-void		 run_command(int, struct pdu *);
+void		 run(void);
+void		 run_command(struct pdu *);
 struct pdu	*ctl_getpdu(char *, size_t);
 int		 ctl_sendpdu(int, struct pdu *);
+void		 show_config(struct ctrlmsghdr *, struct pdu *);
 void		 show_vscsi_stats(struct ctrlmsghdr *, struct pdu *);
 
 char		cbuf[CONTROL_READ_SIZE];
+
+struct control {
+	struct pduq	channel;
+	int		fd;
+} control;
 
 __dead void
 usage(void)
@@ -55,18 +63,13 @@ int
 main (int argc, char* argv[])
 {
 	struct sockaddr_un sun;
+	struct session_config sc;
 	struct parse_result *res;
 	char *confname = ISCSID_CONFIG;
 	char *sockname = ISCSID_CONTROL;
-	struct pdu *pdu;
-	struct ctrlmsghdr *cmh;
-	struct session_config *sc;
-	struct initiator_config *ic;
 	struct session_ctlcfg *s;
 	struct iscsi_config *cf;
-	char *tname, *iname;
-	int ch, csock;
-	int *vp, val = 0;
+	int ch, val = 0;
 
 	/* check flags */
 	while ((ch = getopt(argc, argv, "f:s:")) != -1) {
@@ -90,14 +93,15 @@ main (int argc, char* argv[])
 		exit(1);
 
 	/* connect to iscsid control socket */
-	if ((csock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+	TAILQ_INIT(&control.channel);
+	if ((control.fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)
 		err(1, "socket");
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
 
-	if (connect(csock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+	if (connect(control.fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);
 
 	switch (res->action) {
@@ -106,127 +110,102 @@ main (int argc, char* argv[])
 		val = 1;
 		/* FALLTHROUGH */
 	case LOG_BRIEF:
-		if ((pdu = pdu_new()) == NULL)
-			err(1, "pdu_new");
-		if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-			err(1, "pdu_alloc");
-		bzero(cmh, sizeof(*cmh));
-		cmh->type = CTRL_LOG_VERBOSE;
-		cmh->len[0] = sizeof(int);
-		if ((vp = pdu_dup(&val, sizeof(int))) == NULL)
-			err(1, "pdu_dup");
-		pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-		pdu_addbuf(pdu, vp, sizeof(int), 1);
-		run_command(csock, pdu);
+		if (control_compose(NULL, CTRL_LOG_VERBOSE,
+		    &val, sizeof(int)) == -1)
+			err(1, "control_compose");
 		break;
-	case SHOW:
 	case SHOW_SUM:
+		if (control_compose(NULL, CTRL_SHOW_SUM, NULL, 0) == -1)
+			err(1, "control_compose");
+		break;
+	case SHOW_SESS:
 		usage();
 		/* NOTREACHED */
 	case SHOW_VSCSI_STATS:
-		if ((pdu = pdu_new()) == NULL)
-			err(1, "pdu_new");
-		if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-			err(1, "pdu_alloc");
-		bzero(cmh, sizeof(*cmh));
-		cmh->type = CTRL_VSCSI_STATS;
-		pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-		run_command(csock, pdu);
+		if (control_compose(NULL, CTRL_VSCSI_STATS, NULL, 0) == -1)
+			err(1, "control_compose");
 		break;
 	case RELOAD:
 		if ((cf = parse_config(confname)) == NULL)
 			errx(1, "errors while loading configuration file.");
 		if (cf->initiator.isid_base != 0) {
-			if ((pdu = pdu_new()) == NULL)
-				err(1, "pdu_new");
-			if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-				err(1, "pdu_alloc");
-			bzero(cmh, sizeof(*cmh));
-			cmh->type = CTRL_INITIATOR_CONFIG;
-			cmh->len[0] = sizeof(*ic);
-			if ((ic = pdu_dup(&cf->initiator,
-			    sizeof(cf->initiator))) == NULL)
-				err(1, "pdu_dup");
-			pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-			pdu_addbuf(pdu, ic, sizeof(*ic), 1);
-			run_command(csock, pdu);
+			if (control_compose(NULL, CTRL_INITIATOR_CONFIG,
+			    &cf->initiator, sizeof(cf->initiator)) == -1)
+				err(1, "control_compose");
 		}
 		SIMPLEQ_FOREACH(s, &cf->sessions, entry) {
-			if ((pdu = pdu_new()) == NULL)
-				err(1, "pdu_new");
-			if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-				err(1, "pdu_alloc");
-			bzero(cmh, sizeof(*cmh));
-			cmh->type = CTRL_SESSION_CONFIG;
-			cmh->len[0] = sizeof(*sc);
-			if ((sc = pdu_dup(&s->session, sizeof(s->session))) ==
-			    NULL)
-				err(1, "pdu_dup");
-			if (s->session.TargetName) {
-				if ((tname = pdu_dup(s->session.TargetName,
-				    strlen(s->session.TargetName) + 1)) ==
-				    NULL)
-					err(1, "pdu_dup");
-				cmh->len[1] = strlen(s->session.TargetName) + 1;
-			} else
-				tname = NULL;
-			if (s->session.InitiatorName) {
-				if ((iname = pdu_dup(s->session.InitiatorName,
-				    strlen(s->session.InitiatorName) + 1)) ==
-				    NULL)
-					err(1, "pdu_dup");
-				cmh->len[2] = strlen(s->session.InitiatorName)
-				    + 1;
-			} else
-				iname = NULL;
-			pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-			pdu_addbuf(pdu, sc, sizeof(*sc), 1);
-			if (tname)
-				pdu_addbuf(pdu, tname, strlen(tname) + 1, 2);
-			if (iname)
-				pdu_addbuf(pdu, iname, strlen(iname) + 1, 3);
+			struct ctrldata cdv[3];
 
-			run_command(csock, pdu);
+			bzero(cdv, sizeof(cdv));
+
+			cdv[0].buf = &s->session;
+			cdv[0].len = sizeof(s->session);
+
+			if (s->session.TargetName) {
+				cdv[1].buf = s->session.TargetName;
+				cdv[1].len =
+				    strlen(s->session.TargetName) + 1;
+			}
+			if (s->session.InitiatorName) {
+				cdv[2].buf = s->session.InitiatorName;
+				cdv[2].len =
+				    strlen(s->session.InitiatorName) + 1;
+			}
+
+			if (control_build(NULL, CTRL_SESSION_CONFIG,
+			    nitems(cdv), cdv) == -1)
+				err(1, "control_build");
 		}
 		break;
 	case DISCOVERY:
 		printf("discover %s\n", log_sockaddr(&res->addr));
-		if ((pdu = pdu_new()) == NULL)
-			err(1, "pdu_new");
-		if ((cmh = pdu_alloc(sizeof(*cmh))) == NULL)
-			err(1, "pdu_alloc");
-		if ((sc = pdu_alloc(sizeof(*sc))) == NULL)
-			err(1, "pdu_alloc");
-		bzero(cmh, sizeof(*cmh));
-		bzero(sc, sizeof(*sc));
-		snprintf(sc->SessionName, sizeof(sc->SessionName),
-		    "discovery.%d", (int)getpid());
-		bcopy(&res->addr, &sc->connection.TargetAddr, res->addr.ss_len);
-		sc->SessionType = SESSION_TYPE_DISCOVERY;
-		cmh->type = CTRL_SESSION_CONFIG;
-		cmh->len[0] = sizeof(*sc);
-		pdu_addbuf(pdu, cmh, sizeof(*cmh), 0);
-		pdu_addbuf(pdu, sc, sizeof(*sc), 1);
 
-		run_command(csock, pdu);
+		bzero(&sc, sizeof(sc));
+		snprintf(sc.SessionName, sizeof(sc.SessionName),
+		    "discovery.%d", (int)getpid());
+		bcopy(&res->addr, &sc.connection.TargetAddr, res->addr.ss_len);
+		sc.SessionType = SESSION_TYPE_DISCOVERY;
+
+		if (control_compose(NULL, CTRL_SESSION_CONFIG,
+		    &sc, sizeof(sc)) == -1)
+			err(1, "control_compose");
 	}
 
-	close(csock);
+	run();
+
+	close(control.fd);
 
 	return (0);
 }
 
 void
-run_command(int csock, struct pdu *pdu)
+control_queue(void *ch, struct pdu *pdu)
+{
+	TAILQ_INSERT_TAIL(&control.channel, pdu, entry);
+}
+
+void
+run(void)
+{
+	struct pdu *pdu;
+
+	while ((pdu = TAILQ_FIRST(&control.channel)) != NULL) {
+		TAILQ_REMOVE(&control.channel, pdu, entry);
+		run_command(pdu);
+	}
+}
+
+void
+run_command(struct pdu *pdu)
 {
 	struct ctrlmsghdr *cmh;
 	int done = 0;
 	ssize_t n;
 
-	if (ctl_sendpdu(csock, pdu) == -1)
+	if (ctl_sendpdu(control.fd, pdu) == -1)
 		err(1, "send");
 	while (!done) {
-		if ((n = recv(csock, cbuf, sizeof(cbuf), 0)) == -1 &&
+		if ((n = recv(control.fd, cbuf, sizeof(cbuf), 0)) == -1 &&
 		    !(errno == EAGAIN || errno == EINTR))
 			err(1, "recv");
 
@@ -248,6 +227,10 @@ run_command(int csock, struct pdu *pdu)
 			break;
 		case CTRL_INPROGRESS:
 			printf("command in progress...\n");
+			break;
+		case CTRL_INITIATOR_CONFIG:
+		case CTRL_SESSION_CONFIG:
+			show_config(cmh, pdu);
 			break;
 		case CTRL_VSCSI_STATS:
 			show_vscsi_stats(cmh, pdu);
@@ -325,6 +308,45 @@ ctl_sendpdu(int fd, struct pdu *pdu)
 }
 
 void
+show_config(struct ctrlmsghdr *cmh, struct pdu *pdu)
+{
+	struct initiator_config	*ic;
+	struct session_config	*sc;
+
+	switch (cmh->type) {
+	case CTRL_INITIATOR_CONFIG:
+		if (cmh->len[0] != sizeof(*ic))
+			errx(1, "bad size of response");
+		ic = pdu_getbuf(pdu, NULL, 1);
+		if (ic == NULL)
+			return;
+
+		printf("Initiator: ISID base %x qalifier %hx\n",
+		    ic->isid_base, ic->isid_qual);
+		break;
+	case CTRL_SESSION_CONFIG:
+		if (cmh->len[0] != sizeof(*sc))
+			errx(1, "bad size of response");
+		sc = pdu_getbuf(pdu, NULL, 1);
+		if (sc == NULL)
+			return;
+
+		printf("\nSession '%s':%s\n", sc->SessionName,
+		    sc->disabled ? " disabled" : "");
+		printf("    SessionType: %s\tMaxConnections: %hd\n",
+		    sc->SessionType == SESSION_TYPE_DISCOVERY ? "discovery" :
+		    "normal", sc->MaxConnections);
+//		printf("    InitiatorName: %s\n", sc->InitiatorName);
+		printf("    InitiatorAddr: %s\n",
+		    log_sockaddr(&sc->connection.LocalAddr));
+//		printf("    TargetName: %s\n", sc->TargetName);
+		printf("    TargetAddr: %s\n",
+		    log_sockaddr(&sc->connection.TargetAddr));
+		break;
+	}
+}
+
+void
 show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
 {
 	struct vscsi_stats *vs;
@@ -332,8 +354,8 @@ show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
 	if (cmh->len[0] != sizeof(struct vscsi_stats))
 		errx(1, "bad size of response");
 	vs = pdu_getbuf(pdu, NULL, 1);
-		if (vs == NULL)
-			return;
+	if (vs == NULL)
+		return;
 
 	printf("VSCSI ioctl statistics:\n");
 	printf("%u probe calls and %u detach calls\n",

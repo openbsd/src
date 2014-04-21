@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.h,v 1.3 2014/04/20 22:22:18 claudio Exp $ */
+/*	$OpenBSD: iscsictl.h,v 1.4 2014/04/21 17:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -32,8 +32,8 @@ enum actions {
 	NONE,
 	LOG_VERBOSE,
 	LOG_BRIEF,
-	SHOW,
 	SHOW_SUM,
+	SHOW_SESS,
 	SHOW_VSCSI_STATS,
 	RELOAD,
 	DISCOVERY
@@ -41,6 +41,7 @@ enum actions {
 
 struct parse_result {
 	struct sockaddr_storage	addr;
+	char			name[32];
 	int			flags;
 	enum actions		action;
 	u_int8_t		prefixlen;
