@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.169 2014/04/21 18:38:36 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.170 2014/04/21 18:52:25 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype;
-	int s, len, error = 0, hdrcmplt = 0;
+	int s, len, error = 0;
 	u_char edst[ETHER_ADDR_LEN];
 	u_char *esrc;
 	struct mbuf *m = m0;
@@ -284,6 +284,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+	esrc = ac->ac_enaddr;
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -337,7 +338,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		break;
 #endif /* MPLS */
 	case pseudo_AF_HDRCMPLT:
-		hdrcmplt = 1;
 		eh = (struct ether_header *)dst->sa_data;
 		esrc = eh->ether_shost;
 		/* FALLTHROUGH */
@@ -359,8 +359,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 
-	if (!hdrcmplt)
-		esrc = ac->ac_enaddr;
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
 		esrc = carp_get_srclladdr(ifp0, esrc);
