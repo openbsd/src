@@ -106,10 +106,10 @@ linebuffer_new(BIO *bi)
 {
 	BIO_LINEBUFFER_CTX *ctx;
 
-	ctx = (BIO_LINEBUFFER_CTX *)malloc(sizeof(BIO_LINEBUFFER_CTX));
+	ctx = malloc(sizeof(BIO_LINEBUFFER_CTX));
 	if (ctx == NULL)
 		return (0);
-	ctx->obuf = (char *)malloc(DEFAULT_LINEBUFFER_SIZE);
+	ctx->obuf = malloc(DEFAULT_LINEBUFFER_SIZE);
 	if (ctx->obuf == NULL) {
 		free(ctx);
 		return (0);
@@ -281,7 +281,7 @@ linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 		obs = (int)num;
 		p = ctx->obuf;
 		if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
-			p = (char *)malloc((int)num);
+			p = malloc((int)num);
 			if (p == NULL)
 				goto malloc_error;
 		}

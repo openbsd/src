@@ -95,15 +95,15 @@ buffer_new(BIO *bi)
 {
 	BIO_F_BUFFER_CTX *ctx;
 
-	ctx = (BIO_F_BUFFER_CTX *)malloc(sizeof(BIO_F_BUFFER_CTX));
+	ctx = malloc(sizeof(BIO_F_BUFFER_CTX));
 	if (ctx == NULL)
 		return (0);
-	ctx->ibuf = (char *)malloc(DEFAULT_BUFFER_SIZE);
+	ctx->ibuf = malloc(DEFAULT_BUFFER_SIZE);
 	if (ctx->ibuf == NULL) {
 		free(ctx);
 		return (0);
 	}
-	ctx->obuf = (char *)malloc(DEFAULT_BUFFER_SIZE);
+	ctx->obuf = malloc(DEFAULT_BUFFER_SIZE);
 	if (ctx->obuf == NULL) {
 		free(ctx->ibuf);
 		free(ctx);
@@ -370,12 +370,12 @@ buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 		p1 = ctx->ibuf;
 		p2 = ctx->obuf;
 		if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size)) {
-			p1 = (char *)malloc((int)num);
+			p1 = malloc((int)num);
 			if (p1 == NULL)
 				goto malloc_error;
 		}
 		if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size)) {
-			p2 = (char *)malloc((int)num);
+			p2 = malloc((int)num);
 			if (p2 == NULL) {
 				if (p1 != ctx->ibuf)
 					free(p1);

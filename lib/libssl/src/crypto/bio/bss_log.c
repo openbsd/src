@@ -157,7 +157,7 @@ slg_write(BIO *b, const char *in, int inl)
 		{ 0, "", LOG_ERR } /* The default */
 	};
 
-	if ((buf = (char *)malloc(inl + 1)) == NULL) {
+	if ((buf = malloc(inl + 1)) == NULL) {
 		return (0);
 	}
 	strlcpy(buf, in, inl + 1);

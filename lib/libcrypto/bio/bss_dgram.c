@@ -211,10 +211,9 @@ dgram_new(BIO *bi)
 
 	bi->init = 0;
 	bi->num = 0;
-	data = malloc(sizeof(bio_dgram_data));
+	data = calloc(1, sizeof(bio_dgram_data));
 	if (data == NULL)
 		return 0;
-	memset(data, 0x00, sizeof(bio_dgram_data));
 	bi->ptr = data;
 
 	bi->flags = 0;
@@ -773,8 +772,7 @@ BIO_new_dgram_sctp(int fd, int close_flag)
 	 * SCTP-AUTH has to be activated for the listening socket
 	 * already, otherwise the connected socket won't use it. */
 	sockopt_len = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-	authchunks = malloc(sockopt_len);
-	memset(authchunks, 0, sizeof(sockopt_len));
+	authchunks = calloc(1, sockopt_len);
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
 	OPENSSL_assert(ret >= 0);
 
@@ -834,10 +832,9 @@ dgram_sctp_new(BIO *bi)
 
 	bi->init = 0;
 	bi->num = 0;
-	data = malloc(sizeof(bio_dgram_sctp_data));
+	data = calloc(1, sizeof(bio_dgram_sctp_data));
 	if (data == NULL)
 		return 0;
-	memset(data, 0x00, sizeof(bio_dgram_sctp_data));
 #ifdef SCTP_PR_SCTP_NONE
 	data->prinfo.pr_policy = SCTP_PR_SCTP_NONE;
 #endif
@@ -1055,8 +1052,7 @@ dgram_sctp_read(BIO *b, char *out, int outl)
 			struct sctp_authchunks *authchunks;
 
 			optlen = (socklen_t)(sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-			authchunks = malloc(optlen);
-			memset(authchunks, 0, sizeof(optlen));
+			authchunks = calloc(1, optlen);
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
 			OPENSSL_assert(ii >= 0);
 
@@ -1122,8 +1118,7 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
 		data->saved_message.bio = b;
 		data->saved_message.length = inl;
-		data->saved_message.data = malloc(inl);
-		memcpy(data->saved_message.data, in, inl);
+		data->saved_message.data = calloc(1, inl);
 		return inl;
 	}
 
@@ -1250,8 +1245,7 @@ dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 		/* Add new key */
 		sockopt_len = sizeof(struct sctp_authkey) + 64 * sizeof(uint8_t);
-		authkey = malloc(sockopt_len);
-		memset(authkey, 0x00, sockopt_len);
+		authkey = calloc(1, sockopt_len);
 		authkey->sca_keynumber = authkeyid.scact_keynumber + 1;
 #ifndef __FreeBSD__
 		/* This field is missing in FreeBSD 8.2 and earlier,

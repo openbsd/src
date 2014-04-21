@@ -68,7 +68,7 @@ BIO_new(BIO_METHOD *method)
 {
 	BIO *ret = NULL;
 
-	ret = (BIO *)malloc(sizeof(BIO));
+	ret = malloc(sizeof(BIO));
 	if (ret == NULL) {
 		BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
