@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.283 2014/04/03 16:15:38 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.284 2014/04/21 08:19:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -138,6 +138,7 @@ void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
 void	mpcopy(char **, char **);
+void	mpfree(char **);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
@@ -500,9 +501,9 @@ editor(int f)
 		}
 	}
 done:
-	free(omountpoints);
-	free(origmountpoints);
-	free(tmpmountpoints);
+	mpfree(omountpoints);
+	mpfree(origmountpoints);
+	mpfree(tmpmountpoints);
 	if (disk_geop)
 		free(disk_geop);
 	return(error);
@@ -1803,17 +1804,12 @@ mpcopy(char **to, char **from)
 	char *top;
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
+		free(to[i]);
+		to[i] = NULL;
 		if (from[i] != NULL) {
-			int len = strlen(from[i]) + 1;
-
-			top = realloc(to[i], len);
-			if (top == NULL)
+			to[i] = strdup(from[i]);
+			if (to[i] == NULL)
 				errx(4, "out of memory");
-			to[i] = top;
-			(void)strlcpy(to[i], from[i], len);
-		} else if (to[i] != NULL) {
-			free(to[i]);
-			to[i] = NULL;
 		}
 	}
 }
@@ -1894,6 +1890,20 @@ mpsave(struct disklabel *lp)
 		}
 		fclose(fp);
 	}
+}
+
+void
+mpfree(char **mp)
+{
+	int part;
+	
+	if (mp == NULL)
+		return;
+	
+	for (part == 0; part < MAXPARTITIONS; part++)
+		free(mp[part]);
+	
+	free(mp);
 }
 
 int
