@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2013/03/23 16:12:20 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2014/04/21 11:58:48 guenther Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define	PG_NX		0x8000000000000000UL	/* non-executable */
 #define	PG_FRAME	0x000ffffffffff000UL
 
-#define	PG_LGFRAME	0x000fffffffc00000UL	/* large (2M) page frame mask */
+#define	PG_LGFRAME	0x000fffffffe00000UL	/* large (2M) page frame mask */
 
 /* Cacheability bits when we are using PAT */
 #define	PG_WB		(0)		/* The default */
