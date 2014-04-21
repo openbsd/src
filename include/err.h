@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.h,v 1.10 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: err.h,v 1.11 2014/04/21 16:13:24 guenther Exp $	*/
 /*	$NetBSD: err.h,v 1.11 1994/10/26 00:55:52 cgd Exp $	*/
 
 /*-
@@ -35,15 +35,8 @@
 #ifndef _ERR_H_
 #define	_ERR_H_
 
-/*
- * Don't use va_list in the err/warn prototypes.   Va_list is typedef'd in two
- * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
- * of them here we may collide with the utility's includes.  It's unreasonable
- * for utilities to have to include one of them to include err.h, so we get
- * __va_list from <machine/_types.h> and use it.
- */
 #include <sys/cdefs.h>
-#include <machine/_types.h>
+#include <machine/_types.h>		/* for __va_list */
 
 __BEGIN_DECLS
 
@@ -65,8 +58,7 @@ void		vwarnx(const char *, __va_list)
 			__attribute__((__format__ (printf, 1, 0)));
 
 /*
- * The _* versions are for use in library functions so user-defined
- * versions of err*,warn* do not get used.
+ * The _* versions are for use inside libc only and will go away
  */
 __dead void	_err(int, const char *, ...)
 			__attribute__((__format__ (printf, 2, 3)));
