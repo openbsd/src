@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.17 2014/04/21 12:26:50 claudio Exp $ */
+/*	$OpenBSD: connection.c,v 1.18 2014/04/21 18:59:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -285,6 +285,7 @@ conn_parse_kvp(struct connection *c, struct kvp *kvp)
 
 
 	for (k = kvp; k->key; k++) {
+		/* XXX handle NotUnderstood|Irrelevant|Reject */
 		SET_NUM(k, s, MaxBurstLength, 512, 16777215);
 		SET_NUM(k, s, FirstBurstLength, 512, 16777215);
 		SET_NUM(k, s, DefaultTime2Wait, 0, 3600);
@@ -425,7 +426,15 @@ c_do_connect(struct connection *c, enum c_event ev)
 		session_fsm(c->session, SESS_EV_CONN_FAIL, c);
 		return CONN_FREE;
 	}
-
+	if (c->config.LocalAddr.ss_len != 0) {
+		if (bind(c->fd, (struct sockaddr *)&c->config.LocalAddr,
+		    c->config.LocalAddr.ss_len) == -1) {
+			log_warn("bind(%s)",
+			    log_sockaddr(&c->config.LocalAddr));
+			session_fsm(c->session, SESS_EV_CONN_FAIL, c);
+			return CONN_FREE;
+		}
+	}
 	if (connect(c->fd, (struct sockaddr *)&c->config.TargetAddr,
 	    c->config.TargetAddr.ss_len) == -1) {
 		if (errno == EINPROGRESS) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.12 2014/04/21 12:24:58 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.13 2014/04/21 18:59:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -309,6 +309,8 @@ vscsi_dataout(struct connection *c, struct scsi_task *t, u_int32_t ttt,
 	for (off = 0; off < len; off += size) {
 		size = len - off > c->active.MaxRecvDataSegmentLength ?
 		    c->active.MaxRecvDataSegmentLength : len - off;
+
+		/* XXX also respect the MaxBurstLength */
 
 		if (!(p = pdu_new()))
 			fatal("vscsi_r2t");
