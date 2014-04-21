@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_ext2fs.8,v 1.7 2013/07/16 09:45:28 schwarze Exp $
+.\"	$OpenBSD: newfs_ext2fs.8,v 1.8 2014/04/21 09:22:15 guenther Exp $
 .\"	$NetBSD: newfs_ext2fs.8,v 1.7 2009/12/01 08:47:25 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: April 21 2014 $
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ because the current ext2fs
 implementation doesn't support fragmentation.
 .It Fl I
 Do not require that the file system type listed in the disk label is
-.Ql Linux Ext2 .
+.Ql ext2fs .
 .It Fl i Ar bytes-per-inode
 This specifies the density of inodes in the file system.
 If fewer inodes are desired, a larger number should be used;
@@ -272,7 +272,7 @@ For the
 command to succeed,
 the disk label should first be updated such that the fstype field for the
 partition is set to
-.Ql Linux Ext2 ,
+.Ql ext2fs ,
 unless
 .Fl F
 or
