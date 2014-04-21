@@ -84,13 +84,6 @@
 #define ENOMEM KRB5KRB_ERR_GENERIC
 #endif
 
-
-#define kssl_malloc(size) malloc((size))
-#define kssl_calloc(nmemb, size) calloc(nmemb, size)
-#define kssl_realloc(ptr, size) realloc(ptr, size)
-#define kssl_free(ptr) free((ptr))
-
-
 char *
 kstring(char *string)
 {
@@ -558,8 +551,7 @@ kssl_TKT2tkt(
 		return KRB5KRB_ERR_GENERIC;
 	}
 
-	if ((new5ticket =
-	    (krb5_ticket *)calloc(1, sizeof(krb5_ticket))) == NULL) {
+	if ((new5ticket = calloc(1, sizeof(krb5_ticket))) == NULL) {
 		(void) snprintf(kssl_err->text, KSSL_ERR_MAX,
 		    "Unable to allocate new krb5_ticket.\n");
 		kssl_err->reason = SSL_R_KRB5_S_RD_REQ;
@@ -849,7 +841,7 @@ err:
 KSSL_CTX *
 kssl_ctx_new(void)
 {
-	return ((KSSL_CTX *) kssl_calloc(1, sizeof(KSSL_CTX)));
+	return (calloc(1, sizeof(KSSL_CTX)));
 }
 
 
@@ -865,17 +857,17 @@ kssl_ctx_free(KSSL_CTX *kssl_ctx)
 	if (kssl_ctx->key)
 		OPENSSL_cleanse(kssl_ctx->key, kssl_ctx->length);
 	if (kssl_ctx->key)
-		kssl_free(kssl_ctx->key);
+		free(kssl_ctx->key);
 	if (kssl_ctx->client_princ)
-		kssl_free(kssl_ctx->client_princ);
+		free(kssl_ctx->client_princ);
 	if (kssl_ctx->service_host)
-		kssl_free(kssl_ctx->service_host);
+		free(kssl_ctx->service_host);
 	if (kssl_ctx->service_name)
-		kssl_free(kssl_ctx->service_name);
+		free(kssl_ctx->service_name);
 	if (kssl_ctx->keytab_file)
-		kssl_free(kssl_ctx->keytab_file);
+		free(kssl_ctx->keytab_file);
 
-	kssl_free(kssl_ctx);
+	free(kssl_ctx);
 	return (KSSL_CTX *) NULL;
 }
 
@@ -907,7 +899,7 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which, krb5_data *realm,
 		break;
 	}
 	if (*princ)
-		kssl_free(*princ);
+		free(*princ);
 
 	/* Add up all the entity->lengths */
 	length = 0;
@@ -919,7 +911,7 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which, krb5_data *realm,
 	/* Space for the ('@'+realm+NULL | NULL) */
 	length += ((realm) ? realm->length + 2 : 1);
 
-	if ((*princ = kssl_calloc(1, length)) == NULL)
+	if ((*princ = calloc(1, length)) == NULL)
 		return KSSL_CTX_ERR;
 	else {
 		for (i = 0; i < nentities; i++) {
@@ -969,14 +961,14 @@ kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
 		break;
 	}
 	if (*string)
-		kssl_free(*string);
+		free(*string);
 
 	if (!text) {
 		*string = '\0';
 		return KSSL_CTX_OK;
 	}
 
-	if ((*string = kssl_calloc(1, strlen(text) + 1)) == NULL)
+	if ((*string = calloc(1, strlen(text) + 1)) == NULL)
 		return KSSL_CTX_ERR;
 	else
 		memcpy(*string, text, strlen(text) + 1);
@@ -1000,7 +992,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 
 	if (kssl_ctx->key) {
 		OPENSSL_cleanse(kssl_ctx->key, kssl_ctx->length);
-		kssl_free(kssl_ctx->key);
+		free(kssl_ctx->key);
 	}
 
 	if (session) {
@@ -1022,8 +1014,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 		return KSSL_CTX_OK;
 	}
 
-	if ((kssl_ctx->key =
-	    (krb5_octet FAR *)kssl_calloc(1, kssl_ctx->length)) == NULL) {
+	if ((kssl_ctx->key = calloc(1, kssl_ctx->length)) == NULL) {
 		kssl_ctx->length = 0;
 		return KSSL_CTX_ERR;
 	} else
@@ -1501,9 +1492,8 @@ kssl_build_principal_2(
 	krb5_principal		new_p = NULL;
 	char			*new_r = NULL;
 
-	if ((p_data = (krb5_data *)calloc(2, sizeof(krb5_data))) == NULL ||
-	    (new_p = (krb5_principal)calloc(1, sizeof(krb5_principal_data))) ==
-	    NULL)
+	if ((p_data = calloc(2, sizeof(krb5_data))) == NULL ||
+	    (new_p = calloc(1, sizeof(krb5_principal_data))) == NULL)
 		goto err;
 	new_p->length = 2;
 	new_p->data = p_data;
