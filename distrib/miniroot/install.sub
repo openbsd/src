@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.765 2014/04/21 15:56:19 rpe Exp $
+#	$OpenBSD: install.sub,v 1.766 2014/04/21 19:05:40 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -780,40 +780,29 @@ dhclient() {
 	/sbin/dhclient "$@"
 }
 
-# Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
-# no IP address assigned to $1.
-#
-# $1 == interface
-# $2 == hostname
+# Issue a DHCP request to configure interface $1 and add the host-name option to
+# /etc/dhclient.conf using $2.
 dhcp_request() {
 	local _ifs=$1 _hn=$2
 
 	echo "lookup file bind" >/etc/resolv.conf.tail
-
-	cat >/etc/dhclient.conf <<__EOT
-initial-interval 1;
-send host-name "$_hn";
-request subnet-mask, broadcast-address, routers, domain-name,
-	domain-name-servers, host-name;
-__EOT
+	echo "send host-name \"$_hn\";" >/etc/dhclient.conf
 
 	ifconfig $_ifs group dhcp >/dev/null 2>&1
-	dhclient $_ifs
 
-	set -- $(v4_info $_ifs)
+	dhclient -c /dev/stdin $_ifs << __EOT
+initial-interval 1;
+backoff-cutoff 2;
+reboot 5;
+timeout 10;
+send host-name "$_hn";
+__EOT
 
-	if [[ $1 == UP && -n $2 ]]; then
-		# Move configuration files to where they will be copied to the
-		# installed system. Overwrites configuration information from
-		# last successful dhcp attempt.
-		mv /etc/dhclient.conf /tmp/dhclient.conf
-		mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
-		return 0
-	fi
-
-	ifconfig $_ifs delete down -group dhcp 2>/dev/null
-	rm /etc/dhclient.conf /etc/resolv.conf.tail
-	return 1
+	# Move configuration files to where they will be copied to the
+	# installed system. Overwrites configuration information from
+	# last successful dhcp attempt.
+	mv /etc/dhclient.conf /tmp/dhclient.conf
+	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
 }
 
 # Convert a hex value to dotted decimal format
@@ -926,12 +915,13 @@ v4_config() {
 	none)	;;
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not possible - no /sbin/dhclient."
-		elif dhcp_request $_ifs "$_name"; then
+		else
+			dhcp_request $_ifs "$_name"
 			echo "dhcp" >>$_hn
 		fi
 		;;
 	*)	_addr=$resp
-		ask_until "Netmask?" "${_mask:=255.255.255.0}"
+		ask_until "Netmask for $_ifs?" "${_mask:=255.255.255.0}"
 		ifconfig $_ifs -group dhcp >/dev/null 2>&1
 		if ifconfig $_ifs inet $_addr netmask $resp up; then
 			addhostent "$_addr" "$_name"
