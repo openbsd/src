@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.94 2013/08/13 05:52:25 guenther Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.95 2014/04/21 12:49:34 beck Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2050,7 +2050,15 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		toff = fxdr_unsigned(u_quad_t, *tl++);
 	}
-
+	off = toff;
+	cnt = fxdr_unsigned(int, *tl);
+	siz = ((cnt + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
+	if (siz > xfer)
+		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
+	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
@@ -2058,8 +2066,8 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-
-	error = getret = VOP_GETATTR(vp, &at, cred, procp);
+	if (info.nmi_v3)
+		error = getret = VOP_GETATTR(vp, &at, cred, procp);
 	if (!error)
 		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
 	if (error) {
@@ -2069,16 +2077,6 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-
-	off = toff;
-	cnt = fxdr_unsigned(int, *tl);
-	siz = ((cnt + at.va_blocksize - 1) & ~(at.va_blocksize - 1));
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (siz > xfer)
-		siz = xfer;
-	if (cnt > xfer)
-		cnt = xfer;
-	fullsiz = siz;
 	VOP_UNLOCK(vp, 0, procp);
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
@@ -2251,7 +2249,16 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	tl += 2;
 	verf = fxdr_hyper(tl);
 	tl += 2;
-
+	siz = fxdr_unsigned(int, *tl++);
+	cnt = fxdr_unsigned(int, *tl);
+	off = toff;
+	siz = ((siz + DIRBLKSIZ - 1) & ~(DIRBLKSIZ - 1));
+	xfer = NFS_SRVMAXDATA(nfsd);
+	if (siz > xfer)
+		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
+	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
@@ -2259,7 +2266,6 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-
 	error = getret = VOP_GETATTR(vp, &at, cred, procp);
 	if (!error)
 		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
@@ -2270,18 +2276,8 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-
-	siz = fxdr_unsigned(int, *tl++);
-	cnt = fxdr_unsigned(int, *tl);
-	off = toff;
-	siz = ((siz + at.va_blocksize - 1) & ~(at.va_blocksize - 1));
-	xfer = NFS_SRVMAXDATA(nfsd);
-	if (siz > xfer)
-		siz = xfer;
-	if (cnt > xfer)
-		cnt = xfer;
-	fullsiz = siz;
 	VOP_UNLOCK(vp, 0, procp);
+
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
