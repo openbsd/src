@@ -1328,7 +1328,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 #ifdef KSSL_DEBUG
 	printf("ssl_create_cipher_list() for %d ciphers\n", num_of_ciphers);
 #endif    /* KSSL_DEBUG */
-	co_list = (CIPHER_ORDER *)malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
+	co_list = mallocarray(num_of_ciphers, sizeof(CIPHER_ORDER));
 	if (co_list == NULL) {
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
@@ -1390,7 +1390,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
 	num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
-	ca_list = malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
+	ca_list = mallocarray(num_of_alias_max, sizeof(SSL_CIPHER *));
 	if (ca_list == NULL) {
 		free(co_list);
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
