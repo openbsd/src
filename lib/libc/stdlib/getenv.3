@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.19 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: getenv.3,v 1.20 2014/04/21 08:46:59 guenther Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 21 2014 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -102,11 +102,13 @@ function deletes all instances of the variable name pointed to by
 .Fa name
 from the list.
 .Sh RETURN VALUES
-These functions
-return zero if successful; otherwise the global variable
-.Va errno
-is set to indicate the error and \-1 is returned.
+.Rv -std putenv setenv unsetenv
 .Pp
+The
+.Fn getenv
+function returns a pointer to the requested value, or
+.Dv NULL
+if it could not be found.
 If
 .Fn getenv
 is successful, the string returned should be considered read-only.
