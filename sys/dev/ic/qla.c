@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.37 2014/04/14 04:14:11 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.38 2014/04/21 04:17:07 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1413,17 +1413,40 @@ qla_get_port_name_list(struct qla_softc *sc, u_int32_t match)
 
 	i = 0;
 	l = QLA_DMA_KVA(sc->sc_scratch);
+	mtx_enter(&sc->sc_port_mtx);
 	while (i * sizeof(*l) < sc->sc_mbox[1]) {
 		u_int16_t loopid;
 		u_int32_t loc;
 
 		loopid = letoh16(l[i].loop_id);
+		/* skip special ports */
+		switch (loopid) {
+		case QLA_F_PORT_HANDLE:
+		case QLA_SNS_HANDLE:
+		case QLA_FABRIC_CTRL_HANDLE:
+			loc = 0;
+			break;
+		default:
+			if (loopid <= sc->sc_loop_max_id) {
+				loc = QLA_LOCATION_LOOP_ID(loopid);
+			} else {
+				/*
+				 * we don't have the port id here, so just
+				 * indicate it's a fabric port.
+				 */
+				loc = QLA_LOCATION_FABRIC;
+			}
+		}
 
-		loc = (loopid < QLA_MIN_HANDLE) ? QLA_LOCATION_LOOP :
-		    QLA_LOCATION_FABRIC;
 		if (match & loc) {
 			port = malloc(sizeof(*port), M_DEVBUF, M_ZERO |
 			    M_NOWAIT);
+			if (port == NULL) {
+				printf("%s: failed to allocate port struct\n",
+				    DEVNAME(sc));
+				break;
+			}
+			port->location = loc;
 			port->loopid = loopid;
 			port->port_name = letoh64(l[i].port_name);
 			DPRINTF(QLA_D_PORT, "%s: loop id %d, port name %llx\n",
@@ -1432,6 +1455,7 @@ qla_get_port_name_list(struct qla_softc *sc, u_int32_t match)
 		}
 		i++;
 	}
+	mtx_leave(&sc->sc_port_mtx);
 
 	return (0);
 }
