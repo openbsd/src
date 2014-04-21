@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2012/09/13 05:50:15 claudio Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/04/21 20:20:37 claudio Exp $
 
 .PATH:		${.CURDIR}/../iscsid
 
@@ -14,5 +14,7 @@ CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../iscsid
 YFLAGS=
+LDADD= -lutil
+DPADD+= ${LIBUTIL}
 
 .include <bsd.prog.mk>

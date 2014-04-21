@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsictl.c,v 1.7 2014/04/21 18:01:08 claudio Exp $ */
+/*	$OpenBSD: iscsictl.c,v 1.8 2014/04/21 20:20:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "iscsid.h"
 #include "iscsictl.h"
@@ -352,6 +353,7 @@ void
 show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
 {
 	struct vscsi_stats *vs;
+	char buf[FMT_SCALED_STRSIZE];
 
 	if (cmh->len[0] != sizeof(struct vscsi_stats))
 		errx(1, "bad size of response");
@@ -367,10 +369,12 @@ show_vscsi_stats(struct ctrlmsghdr *cmh, struct pdu *pdu)
 	    vs->cnt_i2t_dir[1], 
 	    vs->cnt_i2t_dir[2]);
 
-	printf("%llu data reads (%llu bytes read)\n",
-	    vs->cnt_read, vs->bytes_rd);
-	printf("%llu data writes (%llu bytes written)\n",
-	    vs->cnt_write, vs->bytes_wr);
+	if (fmt_scaled(vs->bytes_rd, buf) != 0)
+		(void)strlcpy(buf, "NaN", sizeof(buf));
+	printf("%llu data reads (%s bytes read)\n", vs->cnt_read, buf);
+	if (fmt_scaled(vs->bytes_wr, buf) != 0)
+		(void)strlcpy(buf, "NaN", sizeof(buf));
+	printf("%llu data writes (%s bytes written)\n", vs->cnt_write, buf);
 
 	printf("%llu T2I calls (%llu done, %llu sense errors, %llu errors)\n",
 	    vs->cnt_t2i,
