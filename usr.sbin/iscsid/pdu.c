@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.8 2014/04/20 18:17:12 claudio Exp $ */
+/*	$OpenBSD: pdu.c,v 1.9 2014/04/21 12:26:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -246,15 +246,8 @@ pdu_read(struct connection *c)
 		}
 	}
 
-	if ((n = readv(c->fd, iov, niov)) == -1) {
-		if (errno == EAGAIN || errno == ENOBUFS ||
-		    errno == EINTR)     /* try later */
-			return 0;
-		else {
-			log_warn("pdu_read");
-			return -1;
-		}
-	}
+	if ((n = readv(c->fd, iov, niov)) == -1)
+		return -1;
 	if (n == 0)
 		/* XXX what should we do on close with remaining data? */
 		return 0;
