@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.104 2014/04/20 09:38:19 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.105 2014/04/21 09:57:27 henning Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -767,16 +767,16 @@ struct ip_mreq {
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifndef _KERNEL
-
 #if __BSD_VISIBLE
 __BEGIN_DECLS
 int	   bindresvport(int, struct sockaddr_in *);
 struct sockaddr;
 int	   bindresvport_sa(int, struct sockaddr *);
 __END_DECLS
-#endif
+#endif /* __BSD_VISIBLE */
+#endif /* !_KERNEL */
 
-#else
+#ifdef _KERNEL
 extern	   int inetctlerrmap[];
 extern	   struct ifqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
