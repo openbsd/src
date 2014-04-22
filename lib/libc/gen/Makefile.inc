@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.63 2014/04/22 00:33:02 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.64 2014/04/22 10:08:54 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -78,7 +78,8 @@ MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
 	directory.3 telldir.3 directory.3 readdir_r.3 directory.3 fdopendir.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
-	err.3 warnx.3 err.3 vwarnx.3
+	err.3 warnx.3 err.3 vwarnx.3 \
+	err.3 errc.3 err.3 verrc.3 err.3 warnc.3 err.3 vwarnc.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3 exec.3 execvpe.3
 MLINKS+=fabs.3 fabsf.3 fabs.3 fabsl.3
