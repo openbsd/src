@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.35 2013/11/22 15:47:35 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.36 2014/04/22 08:26:31 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -460,14 +460,14 @@ do_sort(const char *s, const struct Name *dummy UNUSED, void *arg UNUSED)
 	const char *start, *end;
 
 	n = 1024;	/* start at 1024 words */
-	t = (struct Name *)emalloc(sizeof(struct Name) * n);
+	t = ecalloc(n, sizeof(struct Name));
 	start = s;
 	end = start;
 
 	for (i = 0;; i++) {
 		if (i == n) {
 			n *= 2;
-			t = (struct Name *)erealloc(t, sizeof(struct Name) * n);
+			t = emult_realloc(t, n, sizeof(struct Name));
 		}
 		start = iterate_words(&end);
 		if (start == NULL)
