@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.161 2014/04/11 00:06:30 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.162 2014/04/22 12:35:00 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -650,8 +650,17 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 		 */
 		ifa = ifa_ifwithdstaddr(gateway, rtableid);
 	}
-	if (ifa == NULL)
-		ifa = ifa_ifwithnet(gateway, rtableid);
+	if (ifa == NULL) {
+		if (gateway->sa_family == AF_LINK) {
+			struct sockaddr_dl *sdl = (struct sockaddr_dl *)gateway;
+			struct ifnet *ifp = if_get(sdl->sdl_index);
+
+			if (ifp != NULL)
+				ifa = ifp->if_lladdr;
+		} else {
+			ifa = ifa_ifwithnet(gateway, rtableid);
+		}
+	}
 	if (ifa == NULL) {
 		struct rtentry	*rt = rtalloc1(gateway, 0, rtable_l2(rtableid));
 		if (rt == NULL)

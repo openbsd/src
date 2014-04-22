@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.285 2014/04/20 11:25:18 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.286 2014/04/22 12:35:00 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -891,27 +891,21 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
  * is most specific found.
  */
 struct ifaddr *
-ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
+ifa_ifwithnet(struct sockaddr *sa, u_int rtableid)
 {
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
-	struct ifaddr *ifa_maybe = 0;
-	u_int af = addr->sa_family;
-	char *addr_data = addr->sa_data, *cplim;
+	struct ifaddr *ifa, *ifa_maybe = NULL;
+	char *cplim, *addr_data = sa->sa_data;
+	u_int rdomain;
 
-	rdomain = rtable_l2(rdomain);
-	if (af == AF_LINK) {
-		struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-		if (sdl->sdl_index && (ifp = if_get(sdl->sdl_index)) != NULL)
-			return (ifp->if_lladdr);
-	}
+	rdomain = rtable_l2(rtableid);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			char *cp, *cp2, *cp3;
 
-			if (ifa->ifa_addr->sa_family != af ||
+			if (ifa->ifa_addr->sa_family != sa->sa_family ||
 			    ifa->ifa_netmask == 0)
 				next: continue;
 			cp = addr_data;
