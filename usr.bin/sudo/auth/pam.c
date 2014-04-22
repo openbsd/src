@@ -260,9 +260,8 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     char *pass;
     int n, flags, std_prompt;
 
-    if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
+    if ((*response = calloc(num_msg, sizeof(struct pam_response))) == NULL)
 	return(PAM_SYSTEM_ERR);
-    zero_bytes(*response, num_msg * sizeof(struct pam_response));
 
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
 	flags = tgetpass_flags;
