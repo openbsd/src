@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.171 2014/04/22 11:43:07 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.172 2014/04/22 12:07:20 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 			struct ether_vlan_header	*evh;
 
 			M_PREPEND(*m, sizeof(*evh), M_DONTWAIT);
-			if (*m == 0)
+			if (*m == NULL)
 				return (-1);
 			evh = mtod(*m, struct ether_vlan_header *);
 			memcpy(evh->evl_dhost, edst, sizeof(evh->evl_dhost));
@@ -228,7 +228,7 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
 	}
 #endif /* NVLAN > 0 */
 	M_PREPEND(*m, ETHER_HDR_LEN, M_DONTWAIT);
-	if (*m == 0)
+	if (*m == NULL)
 		return (-1);
 	eh = mtod(*m, struct ether_header *);
 	eh->ether_type = etype;
@@ -252,7 +252,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	u_char *esrc;
 	struct mbuf *m = m0;
 	struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp0;
 	short mflags;
@@ -297,7 +297,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 
 		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == 0)
+			if (rt->rt_gwroute == NULL)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt);
@@ -721,7 +721,7 @@ decapsulate:
 					m_adj(m, etype - m->m_pkthdr.len);
 				m_adj(m, 6);
 				M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-				if (m == 0)
+				if (m == NULL)
 					goto done;
 				*mtod(m, struct ether_header *) = *eh;
 				goto decapsulate;
