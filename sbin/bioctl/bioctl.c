@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.119 2014/01/18 09:11:12 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.120 2014/04/22 20:42:01 tedu Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -836,10 +836,9 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	} else
 #endif /* AOE */
 	{
-		dt = (dev_t *)malloc(BIOC_CRMAXLEN);
+		dt = calloc(1, BIOC_CRMAXLEN);
 		if (!dt)
 			err(1, "not enough memory for dev_t list");
-		memset(dt, 0, BIOC_CRMAXLEN);
 
 		no_dev = bio_parse_devlist(dev_list, dt);
 	}

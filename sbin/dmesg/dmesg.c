@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.22 2010/07/02 22:02:06 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.23 2014/04/22 20:43:12 tedu Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -95,11 +95,10 @@ main(int argc, char *argv[])
 			err(1, "sysctl: KERN_MSGBUFSIZE");
 
 		msgbufsize += sizeof(struct msgbuf) - 1;
-		bufdata = malloc(msgbufsize);
+		bufdata = calloc(1, msgbufsize);
 		if (bufdata == NULL)
 			errx(1, "couldn't allocate space for buffer data");
 
-		memset(bufdata, 0, msgbufsize);
 		mib[1] = KERN_MSGBUF;
 		len = msgbufsize;
 		if (sysctl(mib, 2, bufdata, &len, NULL, 0))
