@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.113 2014/04/19 12:25:03 henning Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.114 2014/04/22 14:41:03 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4223,7 +4223,7 @@ tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 
 /*
  * the original dequeueing policy is dequeue-and-prepend if something
- * goes wrong.  when altq is used, it is changed to peek-and-dequeue.
+ * goes wrong.
  * the modification becomes a bit complicated since tulip_txput() might
  * copy and modify the mbuf passed.
  */

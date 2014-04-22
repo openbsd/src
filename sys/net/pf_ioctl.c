@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.271 2014/04/19 12:59:53 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.272 2014/04/22 14:41:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -157,8 +157,6 @@ pfattach(int num)
 	    "pfstitem", NULL);
 	pool_init(&pf_rule_item_pl, sizeof(struct pf_rule_item), 0, 0, 0,
 	    "pfruleitem", NULL);
-	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltq",
-	    &pool_allocator_nointr);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0, 0, 0, 
 	    "pfqueue", NULL);
 	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
@@ -185,10 +183,6 @@ pfattach(int num)
 	TAILQ_INIT(&pf_queues[1]);
 	pf_queues_active = &pf_queues[0];
 	pf_queues_inactive = &pf_queues[1];
-	TAILQ_INIT(&pf_altqs[0]);
-	TAILQ_INIT(&pf_altqs[1]);
-	pf_altqs_active = &pf_altqs[0];
-	pf_altqs_inactive = &pf_altqs[1];
 	TAILQ_INIT(&state_list);
 
 	/* default rule should never be garbage collected */
@@ -2406,7 +2400,6 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->max_src_conn_rate.limit = from->max_src_conn_rate.limit;
 	to->max_src_conn_rate.seconds = from->max_src_conn_rate.seconds;
 
-	/* set queue IDs. little ugly due to both altq and new system... */
 	if (to->qname[0] != 0) {
 		if ((to->qid = pf_qname2qid(to->qname, 0)) == 0)
 			return (EBUSY);

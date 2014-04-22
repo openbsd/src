@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.398 2014/04/19 12:59:53 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.399 2014/04/22 14:41:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1483,34 +1483,6 @@ struct hfsc_opts {
 	int		flags;
 };
 
-struct pf_altq {
-	char			 ifname[IFNAMSIZ];
-
-	void			*altq_disc;	/* discipline-specific state */
-	TAILQ_ENTRY(pf_altq)	 entries;
-
-	/* scheduler spec */
-	u_int8_t		 scheduler;	/* scheduler type */
-	u_int16_t		 tbrsize;	/* tokenbucket regulator size */
-	u_int32_t		 ifbandwidth;	/* interface bandwidth */
-
-	/* queue spec */
-	char			 qname[PF_QNAME_SIZE];	/* queue name */
-	char			 parent[PF_QNAME_SIZE];	/* parent name */
-	u_int32_t		 parent_qid;	/* parent queue id */
-	u_int32_t		 bandwidth;	/* queue bandwidth */
-	u_int8_t		 priority;	/* priority */
-	u_int16_t		 qlimit;	/* queue size limit */
-	u_int16_t		 flags;		/* misc flags */
-	union {
-		struct cbq_opts		 cbq_opts;
-		struct priq_opts	 priq_opts;
-		struct hfsc_opts	 hfsc_opts;
-	} pq_u;
-
-	u_int32_t		 qid;		/* return value */
-};
-
 struct pf_tagname {
 	TAILQ_ENTRY(pf_tagname)	entries;
 	char			name[PF_TAG_NAME_SIZE];
@@ -1612,21 +1584,6 @@ struct pfioc_tm {
 struct pfioc_limit {
 	int		 index;
 	unsigned	 limit;
-};
-
-struct pfioc_altq {
-	u_int32_t	 action;
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	struct pf_altq	 altq;
-};
-
-struct pfioc_altqstats {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	void		*buf;
-	int		 nbytes;
-	u_int8_t	 scheduler;
 };
 
 struct pfioc_ruleset {
@@ -1779,15 +1736,7 @@ TAILQ_HEAD(pf_queuehead, pf_queuespec);
 extern struct pf_queuehead		  pf_queues[2];
 extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 
-TAILQ_HEAD(pf_altqqueue, pf_altq);
-extern struct pf_altqqueue		  pf_altqs[2];
-
-extern u_int32_t		 ticket_altqs_active;
-extern u_int32_t		 ticket_altqs_inactive;
-extern int			 altqs_inactive_open;
 extern u_int32_t		 ticket_pabuf;
-extern struct pf_altqqueue	*pf_altqs_active;
-extern struct pf_altqqueue	*pf_altqs_inactive;
 extern int			 pf_free_queues(struct pf_queuehead *,
 				    struct ifnet *);
 extern int			 pf_remove_queues(struct ifnet *);
@@ -1798,7 +1747,7 @@ extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_altq_pl, pf_rule_item_pl, pf_queue_pl;
+				    pf_rule_item_pl, pf_queue_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern struct pool		 hfsc_class_pl, hfsc_classq_pl,
 				    hfsc_internal_sc_pl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.875 2014/04/21 12:22:25 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.876 2014/04/22 14:41:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,14 +104,7 @@ struct pf_queuehead	 pf_queues[2];
 struct pf_queuehead	*pf_queues_active;
 struct pf_queuehead	*pf_queues_inactive;
 
-struct pf_altqqueue	 pf_altqs[2];
-struct pf_altqqueue	*pf_altqs_active;
-struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
-
-u_int32_t		 ticket_altqs_active;
-u_int32_t		 ticket_altqs_inactive;
-int			 altqs_inactive_open;
 
 MD5_CTX			 pf_tcp_secret_ctx;
 u_char			 pf_tcp_secret[16];
@@ -143,7 +136,7 @@ union pf_headers {
 
 struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
-struct pool		 pf_altq_pl, pf_rule_item_pl, pf_sn_item_pl;
+struct pool		 pf_rule_item_pl, pf_sn_item_pl;
 struct pool		 hfsc_class_pl, hfsc_classq_pl, hfsc_internal_sc_pl;
 
 void			 pf_init_threshold(struct pf_threshold *, u_int32_t,
