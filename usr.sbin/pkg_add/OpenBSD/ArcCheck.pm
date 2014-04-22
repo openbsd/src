@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.24 2014/01/25 13:23:15 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.25 2014/04/22 18:22:20 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -32,12 +32,7 @@ package OpenBSD::Ustar::Object;
 sub check_name
 {
 	my ($self, $item) = @_;
-	return 1 if $self->name eq $item->name;
-	if ($self->name =~ m/^LongName\d+$/o) {
-		$self->set_name($item->name);
-		return 1;
-	}
-	return 0;
+	return $self->name eq $item->name;
 }
 
 # match archive header link name against actual link names
@@ -48,15 +43,7 @@ sub check_linkname
 	if ($self->isHardLink && defined $self->{cwd}) {
 		$c = $self->{cwd}.'/'.$c;
 	}
-	return 1 if $c eq $linkname;
-	if ($self->{linkname} =~ m/^Long(?:Link|Name)\d+$/o) {
-		$self->{linkname} = $linkname;
-		if ($self->isHardLink && defined $self->{cwd}) {
-			$self->{linkname} =~ s|^$self->{cwd}/||;
-		}
-		return 1;
-	}
-	return 0;
+	return $c eq $linkname;
 }
 
 use POSIX;
@@ -135,16 +122,6 @@ sub prepare_long
 	}
 
 	$entry->set_name($item->name);
-	my ($prefix, $name) = split_name($entry->name);
-	if (length($name) > MAXFILENAME || length($prefix) > MAXPREFIX) {
-		$self->{name_index} = 0 if !defined $self->{name_index};
-		$entry->set_name('LongName'.$self->{name_index}++);
-	}
-	if ((defined $entry->{linkname}) &&
-	    length($entry->{linkname}) > MAXLINKNAME) {
-		$self->{linkname_index} = 0 if !defined $self->{linkname_index};
-		$entry->{linkname} = 'LongLink'.$self->{linkname_index}++;
-	}
 	return $entry;
 }
 
