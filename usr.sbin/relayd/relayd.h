@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.176 2014/04/20 14:48:29 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.177 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -627,6 +627,13 @@ struct relay_table {
 };
 TAILQ_HEAD(relaytables, relay_table);
 
+struct ca_pkey {
+	objid_t			 pkey_id;
+	EVP_PKEY		*pkey;
+	TAILQ_ENTRY(ca_pkey)	 pkey_entry;
+};
+TAILQ_HEAD(ca_pkeylist, ca_pkey);
+
 struct relay_config {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -643,9 +650,11 @@ struct relay_config {
 	enum forwardmode	 fwdmode;
 	off_t			 ssl_cert_len;
 	off_t			 ssl_key_len;
+	objid_t			 ssl_keyid;
 	off_t			 ssl_ca_len;
 	off_t			 ssl_cacert_len;
 	off_t			 ssl_cakey_len;
+	objid_t			 ssl_cakeyid;
 };
 
 struct relay {
@@ -674,8 +683,12 @@ struct relay {
 	EVP_PKEY		*rl_ssl_pkey;
 
 	char			*rl_ssl_ca;
+
 	char			*rl_ssl_cacert;
+	X509			*rl_ssl_cacertx509;
+
 	char			*rl_ssl_cakey;
+	EVP_PKEY		*rl_ssl_capkey;
 
 	struct ctl_stats	 rl_stats[RELAY_MAXPROC + 1];
 
@@ -929,6 +942,7 @@ struct relayd {
 	struct relaylist	*sc_relays;
 	struct routerlist	*sc_rts;
 	struct netroutelist	*sc_routes;
+	struct ca_pkeylist	*sc_pkeys;
 	u_int16_t		 sc_prefork_relay;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
@@ -1092,8 +1106,9 @@ void	 ssl_transaction(struct ctl_tcp_event *);
 SSL_CTX	*ssl_ctx_create(struct relayd *);
 void	 ssl_error(const char *, const char *);
 char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
-X509	*ssl_update_certificate(X509 *, EVP_PKEY *,
-	    char *, off_t, char *, off_t);
+X509	*ssl_update_certificate(X509 *, EVP_PKEY *, EVP_PKEY *, X509 *);
+int	 ssl_ctx_load_pkey(SSL_CTX *, void *, char *, off_t,
+	    X509 **, EVP_PKEY **);
 int	 ssl_ctx_fake_private_key(SSL_CTX *, void *, char *, off_t,
 	    X509 **, EVP_PKEY **);
 
@@ -1123,6 +1138,8 @@ struct protocol	*proto_find(struct relayd *, objid_t);
 struct rsession	*session_find(struct relayd *, objid_t);
 struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
+EVP_PKEY	*pkey_find(struct relayd *, objid_t);
+struct ca_pkey	*pkey_add(struct relayd *, EVP_PKEY *, objid_t);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_key(char **, off_t);

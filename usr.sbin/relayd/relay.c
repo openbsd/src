@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.168 2014/04/18 13:55:26 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.169 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1914,12 +1914,22 @@ relay_ssl_ctx_create(struct relay *rlay)
 
 	log_debug("%s: loading private key", __func__);
 	if (!ssl_ctx_fake_private_key(ctx,
-	    &rlay->rl_conf.id, rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len,
+	    &rlay->rl_conf.ssl_keyid,
+	    rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len,
 	    &rlay->rl_ssl_x509, &rlay->rl_ssl_pkey))
 		goto err;
 
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
+
+	if (rlay->rl_conf.ssl_cacert_len) {
+		log_debug("%s: loading CA private key", __func__);
+		if (!ssl_ctx_load_pkey(ctx,
+		    &rlay->rl_conf.ssl_cakeyid, rlay->rl_ssl_cacert,
+		    rlay->rl_conf.ssl_cacert_len,
+		    &rlay->rl_ssl_cacertx509, &rlay->rl_ssl_capkey))
+			goto err;
+	}
 
 	/* Set session context to the local relay name */
 	if (!SSL_CTX_set_session_id_context(ctx, rlay->rl_conf.name,
@@ -1928,6 +1938,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 
 	/* The text versions of the keys/certs are not needed anymore */
 	purge_key(&rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len);
+	purge_key(&rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len);
 
 	return (ctx);
 
@@ -2101,9 +2112,8 @@ relay_ssl_connect(int fd, short event, void *arg)
 		    SSL_get_peer_certificate(con->se_out.ssl)) != NULL) {
 			con->se_in.sslcert =
 			    ssl_update_certificate(servercert,
-			    rlay->rl_ssl_pkey,
-			    rlay->rl_ssl_cakey, rlay->rl_conf.ssl_cakey_len,
-			    rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len);
+			    rlay->rl_ssl_pkey, rlay->rl_ssl_capkey,
+			    rlay->rl_ssl_cacertx509);
 		} else
 			con->se_in.sslcert = NULL;
 		if (servercert != NULL)

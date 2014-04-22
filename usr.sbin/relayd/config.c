@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.12 2014/04/18 13:55:26 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -96,6 +96,10 @@ config_init(struct relayd *env)
 		    calloc(1, sizeof(*env->sc_relays))) == NULL)
 			return (-1);
 		TAILQ_INIT(env->sc_relays);
+		if ((env->sc_pkeys =
+		    calloc(1, sizeof(*env->sc_pkeys))) == NULL)
+			return (-1);
+		TAILQ_INIT(env->sc_pkeys);
 	}
 	if (what & CONFIG_PROTOS) {
 		if ((env->sc_protos =
@@ -147,6 +151,7 @@ config_purge(struct relayd *env, u_int reset)
 	struct relay		*rlay;
 	struct netroute		*nr;
 	struct router		*rt;
+	struct ca_pkey		*pkey;
 	u_int			 what;
 
 	what = ps->ps_what[privsep_process] & reset;
@@ -166,6 +171,12 @@ config_purge(struct relayd *env, u_int reset)
 			free(rdr);
 		}
 		env->sc_rdrcount = 0;
+	}
+	if (what & CONFIG_RELAYS && env->sc_pkeys != NULL) {
+		while ((pkey = TAILQ_FIRST(env->sc_pkeys)) != NULL) {
+			TAILQ_REMOVE(env->sc_pkeys, pkey, pkey_entry);
+			free(pkey);
+		}
 	}
 	if (what & CONFIG_RELAYS && env->sc_relays != NULL) {
 		while ((rlay = TAILQ_FIRST(env->sc_relays)) != NULL)
@@ -853,10 +864,12 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			iov[c].iov_base = rlay->rl_ssl_cacert;
 			iov[c++].iov_len = rl.ssl_cacert_len;
 		}
-		if (rl.ssl_cakey_len) {
+		if ((what & CONFIG_CA_ENGINE) == 0 &&
+		    rl.ssl_cakey_len) {
 			iov[c].iov_base = rlay->rl_ssl_cakey;
 			iov[c++].iov_len = rl.ssl_cakey_len;
-		}
+		} else
+			rl.ssl_cakey_len = 0;
 
 		if (id == PROC_RELAY) {
 			/* XXX imsg code will close the fd after 1st call */

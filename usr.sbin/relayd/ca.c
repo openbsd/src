@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.6 2014/04/21 17:22:06 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.7 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -109,12 +109,39 @@ ca_launch(void)
 
 			rlay->rl_ssl_pkey = pkey;
 
+			if (pkey_add(env, pkey,
+			    rlay->rl_conf.ssl_keyid) == NULL)
+				fatalx("ssl pkey");
+
 			purge_key(&rlay->rl_ssl_key,
 			    rlay->rl_conf.ssl_key_len);
 		}
 		if (rlay->rl_conf.ssl_cert_len) {
 			purge_key(&rlay->rl_ssl_cert,
 			    rlay->rl_conf.ssl_cert_len);
+		}
+		if (rlay->rl_conf.ssl_cakey_len) {
+			if ((in = BIO_new_mem_buf(rlay->rl_ssl_cakey,
+			    rlay->rl_conf.ssl_cakey_len)) == NULL)
+				fatalx("ca_launch: key");
+
+			if ((pkey = PEM_read_bio_PrivateKey(in,
+			    NULL, NULL, NULL)) == NULL)
+				fatalx("ca_launch: PEM");
+			BIO_free(in);
+
+			rlay->rl_ssl_capkey = pkey;
+
+			if (pkey_add(env, pkey,
+			    rlay->rl_conf.ssl_cakeyid) == NULL)
+				fatalx("ca pkey");
+
+			purge_key(&rlay->rl_ssl_cakey,
+			    rlay->rl_conf.ssl_cakey_len);
+		}
+		if (rlay->rl_conf.ssl_cacert_len) {
+			purge_key(&rlay->rl_ssl_cacert,
+			    rlay->rl_conf.ssl_cacert_len);
 		}
 	}
 }
@@ -142,17 +169,6 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (0);
 }
 
-static EVP_PKEY *
-ca_get_key(objid_t id)
-{
-	struct relay	*rlay;
-
-	if ((rlay = relay_find(env, id)) == NULL)
-		return (NULL);
-
-	return (rlay->rl_ssl_pkey);
-}
-
 int
 ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
@@ -174,10 +190,12 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (IMSG_DATA_SIZE(imsg) != (sizeof(cko) + cko.cko_flen))
 			fatalx("ca_dispatch_relay: "
 			    "invalid key operation");
-		if ((pkey = ca_get_key(cko.cko_id)) == NULL ||
+		if ((pkey = pkey_find(env, cko.cko_id)) == NULL ||
 		    (rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
 			fatalx("ca_dispatch_relay: "
 			    "invalid relay key or id");
+
+		DPRINTF("%s:%d: key id %d", __func__, __LINE__, cko.cko_id);
 
 		from = (u_char *)imsg->data + sizeof(cko);
 		if ((to = calloc(1, cko.cko_tlen)) == NULL)
@@ -243,7 +261,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 {
 	struct ctl_keyop cko;
 	int		 ret = 0;
-	u_int32_t	*id;
+	objid_t		*id;
 	struct iovec	 iov[2];
 	struct imsgbuf	*ibuf;
 	struct imsgev	*iev;

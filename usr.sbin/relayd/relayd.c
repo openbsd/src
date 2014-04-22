@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.121 2014/04/20 14:48:29 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.122 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -639,6 +639,14 @@ purge_relay(struct relayd *env, struct relay *rlay)
 		EVP_PKEY_free(rlay->rl_ssl_pkey);
 		rlay->rl_ssl_pkey = NULL;
 	}
+	if (rlay->rl_ssl_cacertx509 != NULL) {
+		X509_free(rlay->rl_ssl_cacertx509);
+		rlay->rl_ssl_cacertx509 = NULL;
+	}
+	if (rlay->rl_ssl_capkey != NULL) {
+		EVP_PKEY_free(rlay->rl_ssl_capkey);
+		rlay->rl_ssl_capkey = NULL;
+	}
 
 	if (rlay->rl_ssl_ctx != NULL)
 		SSL_CTX_free(rlay->rl_ssl_ctx);
@@ -831,6 +839,36 @@ relay_findbyaddr(struct relayd *env, struct relay_config *rc)
 		    rlay->rl_conf.port == rc->port)
 			return (rlay);
 	return (NULL);
+}
+
+EVP_PKEY *
+pkey_find(struct relayd *env, objid_t id)
+{
+	struct ca_pkey	*pkey;
+
+	TAILQ_FOREACH(pkey, env->sc_pkeys, pkey_entry)
+		if (pkey->pkey_id == id)
+			return (pkey->pkey);
+	return (NULL);
+}
+
+struct ca_pkey *
+pkey_add(struct relayd *env, EVP_PKEY *pkey, objid_t id)
+{
+	struct ca_pkey	*ca_pkey;
+	
+	if (env->sc_pkeys == NULL)
+		fatalx("pkeys");
+
+	if ((ca_pkey = calloc(1, sizeof(*ca_pkey))) == NULL)
+		return (NULL);
+
+	ca_pkey->pkey = pkey;
+	ca_pkey->pkey_id = id;
+
+	TAILQ_INSERT_TAIL(env->sc_pkeys, ca_pkey, pkey_entry);
+
+	return (ca_pkey);
 }
 
 void

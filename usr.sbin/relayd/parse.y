@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.179 2014/04/21 17:33:31 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.180 2014/04/22 08:04:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -99,6 +99,7 @@ objid_t			 last_relay_id = 0;
 objid_t			 last_proto_id = 0;
 objid_t			 last_rt_id = 0;
 objid_t			 last_nr_id = 0;
+objid_t			 last_key_id = 0;
 
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
@@ -124,6 +125,7 @@ int		 host(const char *, struct addresslist *,
 void		 host_free(struct addresslist *);
 
 struct table	*table_inherit(struct table *);
+int		 relay_id(struct relay *);
 struct relay	*relay_inherit(struct relay *, struct relay *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
@@ -1323,7 +1325,11 @@ relay		: RELAY STRING	{
 				YYERROR;
 			}
 			free($2);
-			r->rl_conf.id = ++last_relay_id;
+			if (relay_id(r) == -1) {
+				yyerror("too many relays defined");
+				free(r);
+				YYERROR;
+			}
 			r->rl_conf.timeout.tv_sec = RELAY_TIMEOUT;
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
@@ -2848,6 +2854,19 @@ table_inherit(struct table *tb)
 	return (NULL);
 }
 
+int
+relay_id(struct relay *rl)
+{
+	rl->rl_conf.id = ++last_relay_id;
+	rl->rl_conf.ssl_keyid = ++last_key_id;
+	rl->rl_conf.ssl_cakeyid = ++last_key_id;
+
+	if (last_relay_id == INT_MAX || last_key_id == INT_MAX)
+		return (-1);
+
+	return (0);
+}
+
 struct relay *
 relay_inherit(struct relay *ra, struct relay *rb)
 {
@@ -2869,8 +2888,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	}
 	TAILQ_INIT(&rb->rl_tables);
 
-	rb->rl_conf.id = ++last_relay_id;
-	if (last_relay_id == INT_MAX) {
+	if (relay_id(rb) == -1) {
 		yyerror("too many relays defined");
 		goto err;
 	}
