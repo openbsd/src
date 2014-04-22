@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.53 2013/12/04 22:58:24 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.54 2014/04/22 11:05:22 henning Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -221,8 +221,6 @@ bsd.own.mk):
 
 SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
-
-KERBEROS5	Compile in support for Kerberos 5 authentication.
 
 SYS_INCLUDE	Copy or symlink kernel include files into /usr/include.
 		Possible values are "symlinks" or "copies" (which is
