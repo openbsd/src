@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.71 2014/04/10 16:08:02 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.72 2014/04/22 12:00:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@ struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
 	struct event		 ev;
+	struct privsep_proc	*proc;
 	void			*data;
 	short			 events;
 	const char		*name;
@@ -487,14 +488,25 @@ struct iked_user {
 };
 RB_HEAD(iked_users, iked_user);
 
+struct privsep_pipes {
+	int				*pp_pipes[PROC_MAX];
+};
+
 struct privsep {
-	int				 ps_pipes[PROC_MAX][PROC_MAX];
-	struct imsgev			 ps_ievs[PROC_MAX];
+	struct privsep_pipes		*ps_pipes[PROC_MAX];
+	struct privsep_pipes		*ps_pp;
+
+	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
 	pid_t				 ps_pid[PROC_MAX];
 	struct passwd			*ps_pw;
+	int				 ps_noaction;
 
 	struct control_sock		 ps_csock;
+
+	u_int				 ps_instances[PROC_MAX];
+	u_int				 ps_ninstances;
+	u_int				 ps_instance;
 
 	/* Event and signal handlers */
 	struct event			 ps_evsigint;
@@ -516,6 +528,8 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct iked		*p_env;
+	void			(*p_shutdown)(void);
+	u_int			 p_instance;
 };
 
 struct iked_ocsp_entry {
@@ -825,22 +839,26 @@ void	 timer_del(struct iked *, struct iked_timer *);
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
 void	 proc_kill(struct privsep *);
-void	 proc_config(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
 void	 proc_dispatch(int, short event, void *);
 pid_t	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, u_int,
-	    void (*)(struct privsep *, void *), void *);
+	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
 int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
 int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, const struct iovec *, int);
-int	 proc_compose_imsg(struct iked *, enum privsep_procid,
+int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, void *, u_int16_t);
-int	 proc_composev_imsg(struct iked *, enum privsep_procid,
+int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
 	    u_int16_t, int, const struct iovec *, int);
-int	 proc_forward_imsg(struct iked *, struct imsg *,
-	    enum privsep_procid);
+int	 proc_forward_imsg(struct privsep *, struct imsg *,
+	    enum privsep_procid, int);
+struct imsgbuf *
+	 proc_ibuf(struct privsep *, enum privsep_procid, int);
+struct imsgev *
+	 proc_iev(struct privsep *, enum privsep_procid, int);
 
 /* util.c */
 void	 socket_set_blockmode(int, enum blockmodes);

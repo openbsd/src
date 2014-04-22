@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.30 2014/04/10 16:08:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.31 2014/04/22 12:00:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -97,8 +97,8 @@ ikev2_msg_cb(int fd, short event, void *arg)
 		iov[1].iov_base = buf;
 		iov[1].iov_len = len;
 
-		proc_composev_imsg(env, PROC_IKEV1, IMSG_IKE_MESSAGE, -1,
-		    iov, 2);
+		proc_composev_imsg(&env->sc_ps, PROC_IKEV1, -1,
+		    IMSG_IKE_MESSAGE, -1, iov, 2);
 		goto done;
 	}
 	TAILQ_INIT(&msg.msg_proposals);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.26 2014/02/17 15:07:23 markus Exp $	*/
+/*	$OpenBSD: ca.c,v 1.27 2014/04/22 12:00:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,7 +47,7 @@
 #include "iked.h"
 #include "ikev2.h"
 
-void	 ca_reset(struct privsep *, void *);
+void	 ca_reset(struct privsep *, struct privsep_proc *, void *);
 int	 ca_reload(struct iked *);
 
 int	 ca_getreq(struct iked *, struct imsg *);
@@ -119,7 +119,7 @@ caproc(struct privsep *ps, struct privsep_proc *p)
 }
 
 void
-ca_reset(struct privsep *ps, void *arg)
+ca_reset(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct iked	*env = ps->ps_env;
 	struct ca_store	*store = arg;
@@ -160,7 +160,7 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&mode, imsg->data, sizeof(mode));
 		if (mode == RESET_ALL || mode == RESET_CA) {
 			log_debug("%s: config reload", __func__);
-			ca_reset(&env->sc_ps, store);
+			ca_reset(&env->sc_ps, p, store);
 		}
 		break;
 	case IMSG_OCSP_FD:
@@ -241,7 +241,8 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (proc_composev_imsg(env, procid, IMSG_CERT, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(&env->sc_ps, procid, -1,
+	    IMSG_CERT, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -282,7 +283,7 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 	iov[iovcnt].iov_len = len;
 	iovcnt++;
 
-	if (proc_composev_imsg(env, procid,
+	if (proc_composev_imsg(&env->sc_ps, procid, -1,
 	    IMSG_CERTREQ, -1, iov, iovcnt) == -1)
 		goto done;
 
@@ -319,7 +320,8 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: auth length %zu", __func__, ibuf_size(authmsg));
 	}
 
-	if (proc_composev_imsg(env, id, IMSG_AUTH, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(&env->sc_ps, id, -1,
+	    IMSG_AUTH, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -379,7 +381,8 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	iov[1].iov_base = &type;
 	iov[1].iov_len = sizeof(type);
 
-	if (proc_composev_imsg(env, PROC_IKEV2, cmd, -1, iov, iovcnt) == -1)
+	if (proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
+	    cmd, -1, iov, iovcnt) == -1)
 		return (-1);
 	return (0);
 }
@@ -623,8 +626,8 @@ ca_reload(struct iked *env)
 		    ibuf_length(env->sc_certreq) == SHA_DIGEST_LENGTH ?
 		    "" : "s");
 
-		(void)proc_composev_imsg(env, PROC_IKEV2, IMSG_CERTREQ, -1,
-		    iov, iovcnt);
+		(void)proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
+		    IMSG_CERTREQ, -1, iov, iovcnt);
 	}
 
 	/*
@@ -672,8 +675,8 @@ ca_reload(struct iked *env)
 
 	iov[0].iov_base = &env->sc_certreqtype;
 	iov[0].iov_len = sizeof(env->sc_certreqtype);
-	(void)proc_composev_imsg(env, PROC_IKEV2, IMSG_CERTREQ, -1,
-	    iov, iovcnt);
+	(void)proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
+	    IMSG_CERTREQ, -1, iov, iovcnt);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.14 2014/02/17 11:00:14 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.15 2014/04/22 12:00:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -158,8 +158,8 @@ ikev1_msg_cb(int fd, short event, void *arg)
 		iov[1].iov_base = buf;
 		iov[1].iov_len = len;
 
-		proc_composev_imsg(env, PROC_IKEV2, IMSG_IKE_MESSAGE, -1,
-		    iov, 2);
+		proc_composev_imsg(&env->sc_ps, PROC_IKEV2, -1,
+		    IMSG_IKE_MESSAGE, -1, iov, 2);
 		goto done;
 	}
 
