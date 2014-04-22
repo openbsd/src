@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.10 2014/04/21 09:22:15 guenther Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.11 2014/04/22 00:23:35 guenther Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ main(int argc, char *argv[])
 			bufsize = sfs.f_iosize;
 
 		if ((buf = calloc(1, bufsize)) == NULL)
-			err(1, "can't malloc buffer of %d",
+			err(1, "can't allocate buffer of %d",
 			bufsize);
 		bufrem = fssize * sectorsize;
 		if (verbosity > 0)
