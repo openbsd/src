@@ -69,18 +69,11 @@
 #include <sys/socket.h>
 
 #include "apps.h"
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
 #include "s_apps.h"
 #include <openssl/err.h>
-#ifdef WIN32_STUFF
-#include "winmain.h"
-#include "wintext.h"
-#endif
 #include <unistd.h>
 
 
@@ -385,15 +378,6 @@ s_time_main(int argc, char **argv)
 	for (;;) {
 		if (finishtime < (long) time(NULL))
 			break;
-#ifdef WIN32_STUFF
-
-		if (flushWinMsgs(0) == -1)
-			goto end;
-
-		if (waitingToDie || exitNow)	/* we're dead */
-			goto end;
-#endif
-
 		if ((scon = doConnection(NULL)) == NULL)
 			goto end;
 
@@ -487,15 +471,6 @@ next:
 	for (;;) {
 		if (finishtime < (long) time(NULL))
 			break;
-
-#ifdef WIN32_STUFF
-		if (flushWinMsgs(0) == -1)
-			goto end;
-
-		if (waitingToDie || exitNow)	/* we're dead */
-			goto end;
-#endif
-
 		if ((doConnection(scon)) == NULL)
 			goto end;
 

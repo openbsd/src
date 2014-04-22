@@ -502,14 +502,6 @@ app_get_pass(BIO * err, char *arg, int keepbio)
 				    arg + 5);
 				return NULL;
 			}
-			/*
-			 * Under _WIN32, which covers even Win64 and CE, file
-			 * descriptors referenced by BIO_s_fd are not inherited
-			 * by child process and therefore below is not an option.
-			 * It could have been an option if bss_fd.c was operating
-			 * on real Windows descriptors, such as those obtained
-			 * with CreateFile.
-			 */
 		} else if (!strncmp(arg, "fd:", 3)) {
 			BIO *btmp;
 			i = atoi(arg + 3);

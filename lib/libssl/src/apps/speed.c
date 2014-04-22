@@ -90,9 +90,6 @@
 #include <string.h>
 #include <math.h>
 #include "apps.h"
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -101,18 +98,6 @@
 #include <unistd.h>
 
 #include <signal.h>
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#if defined(__CYGWIN__) && !defined(_WIN32)
- /*
-  * <windows.h> should define _WIN32, which normally is mutually exclusive
-  * with __CYGWIN__, but if it didn't...
-  */
-#define _WIN32
- /* this is done because Cygwin alarm() fails sometimes. */
-#endif
-#endif
 
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_DES

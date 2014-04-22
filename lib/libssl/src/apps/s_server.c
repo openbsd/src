@@ -155,9 +155,6 @@
 #include <sys/socket.h>
 
 #include <openssl/e_os2.h>
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 
 #include <sys/types.h>
 

@@ -148,9 +148,6 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifdef OPENSSL_NO_STDIO
-#define APPS_WIN16
-#endif
 
 #include "apps.h"
 #include <openssl/x509.h>
