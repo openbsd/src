@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.73 2014/03/24 00:19:48 guenther Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.74 2014/04/22 20:25:16 tedu Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1057,10 +1057,9 @@ get_exp(void)
 {
 	struct exportlist *ep;
 
-	ep = (struct exportlist *)malloc(sizeof (struct exportlist));
+	ep = calloc(1, sizeof (struct exportlist));
 	if (ep == NULL)
 		out_of_mem();
-	memset(ep, 0, sizeof(struct exportlist));
 	return (ep);
 }
 
@@ -1072,10 +1071,9 @@ get_grp(void)
 {
 	struct grouplist *gp;
 
-	gp = (struct grouplist *)malloc(sizeof (struct grouplist));
+	gp = calloc(1, sizeof (struct grouplist));
 	if (gp == NULL)
 		out_of_mem();
-	memset(gp, 0, sizeof(struct grouplist));
 	return (gp);
 }
 
