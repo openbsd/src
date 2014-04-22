@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2014/04/15 20:55:42 miod Exp $
+#	$OpenBSD: Makefile,v 1.19 2014/04/22 10:21:56 reyk Exp $
 
 .include <bsd.own.mk>
 
@@ -7,18 +7,10 @@ SRCS=	login.c login_passwd.c pwd_gensalt.c
 MAN=	${PROG}.8
 CFLAGS+=-DPASSWD -Wall -I${.CURDIR}/../login_passwd
 
-.if (${KERBEROS5:L} == "yes")
-SRCS+=	login_krb5.c
-DPADD+=  ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBUTIL}
-LDADD+=	-lkrb5 -lasn1 -lcrypto -lutil
-LDADD+=	-lwind -lroken -lcom_err -lheimbase
-CFLAGS+=-DKRB5
-.PATH:	${.CURDIR}/../login_passwd ${.CURDIR}/../login_krb5 ${.CURDIR}/../../usr.bin/passwd
-.else
 DPADD+=  ${LIBUTIL}
 LDADD+=  -lutil
+
 .PATH:	${.CURDIR}/../login_passwd ${.CURDIR}/../../usr.bin/passwd
-.endif
 
 BINOWN=	root
 BINGRP= auth
