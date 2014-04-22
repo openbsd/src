@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.170 2014/04/21 18:52:25 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.171 2014/04/22 11:43:07 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -155,8 +155,8 @@ u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
-static inline int    ether_addheader(struct mbuf **, u_int16_t, u_char *,
-			   u_char *);
+static inline int	ether_addheader(struct mbuf **, struct ifnet *,
+			   u_int16_t, u_char *, u_char *);
 
 int
 ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
@@ -193,10 +193,40 @@ ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
 }
 
 static inline int
-ether_addheader(struct mbuf **m, u_int16_t etype, u_char *esrc, u_char *edst)
+ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
+    u_char *esrc, u_char *edst)
 {
 	struct ether_header *eh;
 
+#if NVLAN > 0
+	if ((*m)->m_flags & M_VLANTAG) {
+		struct ifvlan	*ifv = ifp->if_softc;
+		struct ifnet	*p = ifv->ifv_p;
+
+		/* should we use the tx tagging hw offload at all? */
+		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
+			(*m)->m_pkthdr.ether_vtag = ifv->ifv_tag +
+			    ((*m)->m_pkthdr.pf.prio << EVL_PRIO_BITS);
+			/* don't return, need to add regular ethernet header */
+		} else {
+			struct ether_vlan_header	*evh;
+
+			M_PREPEND(*m, sizeof(*evh), M_DONTWAIT);
+			if (*m == 0)
+				return (-1);
+			evh = mtod(*m, struct ether_vlan_header *);
+			memcpy(evh->evl_dhost, edst, sizeof(evh->evl_dhost));
+			memcpy(evh->evl_shost, esrc, sizeof(evh->evl_shost));
+			evh->evl_proto = etype;
+			evh->evl_encap_proto = htons(ifv->ifv_type);
+			evh->evl_tag = htons(ifv->ifv_tag +
+			    ((*m)->m_pkthdr.pf.prio << EVL_PRIO_BITS));
+			(*m)->m_flags &= ~M_VLANTAG;
+			return (0);
+		}
+	}
+#endif /* NVLAN > 0 */
 	M_PREPEND(*m, ETHER_HDR_LEN, M_DONTWAIT);
 	if (*m == 0)
 		return (-1);
@@ -364,7 +394,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		esrc = carp_get_srclladdr(ifp0, esrc);
 #endif
 
-	if (ether_addheader(&m, etype, esrc, edst) == -1)
+	if (ether_addheader(&m, ifp, etype, esrc, edst) == -1)
 		senderr(ENOBUFS);
 
 #if NBRIDGE > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.102 2014/03/10 12:21:35 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.103 2014/04/22 11:43:07 henning Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -80,6 +80,8 @@ u_long vlan_tagmask, svlan_tagmask;
 #define TAG_HASH(tag)		(tag & vlan_tagmask)
 LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
+int	vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *);
 void	vlan_start(struct ifnet *ifp);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_unconfig(struct ifnet *ifp, struct ifnet *newp);
@@ -152,6 +154,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	/* Now undo some of the damage... */
 	ifp->if_type = IFT_L2VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
+	ifp->if_output = vlan_output;
 
 	return (0);
 }
@@ -175,6 +178,18 @@ vlan_ifdetach(void *ptr)
 	struct ifvlan *ifv = (struct ifvlan *)ptr;
 
 	vlan_clone_destroy(&ifv->ifv_if);
+}
+
+int
+vlan_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	/*
+	 * we have to use a custom output function because ether_output
+	 * can't figure out ifp is a vlan in a reasonable way
+	 */
+	m->m_flags |= M_VLANTAG;
+	return (ether_output(ifp, m, dst, rt));
 }
 
 void
@@ -206,36 +221,6 @@ vlan_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-
-		/*
-		 * If the IFCAP_VLAN_HWTAGGING capability is set on the parent,
-		 * it can do VLAN tag insertion itself and doesn't require us
-	 	 * to create a special header for it. In this case, we just pass
-		 * the packet along.
-		 */
-		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
-		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
-			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
-			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS);
-			m->m_flags |= M_VLANTAG;
-		} else {
-			struct ether_vlan_header evh;
-
-			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
-			evh.evl_proto = evh.evl_encap_proto;
-			evh.evl_encap_proto = htons(ifv->ifv_type);
-			evh.evl_tag = htons(ifv->ifv_tag +
-			    (m->m_pkthdr.pf.prio << EVL_PRIO_BITS));
-
-			m_adj(m, ETHER_HDR_LEN);
-			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
-			if (m == NULL) {
-				ifp->if_oerrors++;
-				continue;
-			}
-
-			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
-		}
 
 		/*
 		 * Send it, precisely as ether_output() would have.
