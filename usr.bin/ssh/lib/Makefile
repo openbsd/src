@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2014/01/29 06:18:35 djm Exp $
+#	$OpenBSD: Makefile,v 1.75 2014/04/22 11:47:55 henning Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -40,11 +40,11 @@ install:
 
 .include <bsd.own.mk>
 
-.if (${KERBEROS5:L} == "yes")
-CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV
+# .if (${KERBEROS5:L} == "yes")
+# CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV
 
-SRCS+= gss-genr.c
-CFLAGS+= -DGSSAPI
-.endif # KERBEROS5
+# SRCS+= gss-genr.c
+# CFLAGS+= -DGSSAPI
+# .endif # KERBEROS5
 
 .include <bsd.lib.mk>
