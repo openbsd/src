@@ -181,9 +181,7 @@ typedef struct pw_cb_data {
 	const char *prompt_info;
 } PW_CB_DATA;
 
-int
-password_callback(char *buf, int bufsiz, int verify,
-PW_CB_DATA *cb_data);
+int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
@@ -195,7 +193,8 @@ void program_name(char *in, char *out, int size);
 int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[]);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
-void print_name(BIO *out, const char *title, X509_NAME *nm, unsigned long lflags);
+void print_name(BIO *out, const char *title, X509_NAME *nm,
+    unsigned long lflags);
 #endif
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
@@ -252,13 +251,15 @@ typedef struct ca_db_st {
 } CA_DB;
 
 BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai);
-int save_serial(char *serialfile, char *suffix, BIGNUM *serial, ASN1_INTEGER **retai);
+int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
+    ASN1_INTEGER **retai);
 int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix);
 int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
 CA_DB *load_index(char *dbfile, DB_ATTR *dbattr);
 int index_index(CA_DB *db);
 int save_index(const char *dbfile, const char *suffix, CA_DB *db);
-int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix);
+int rotate_index(const char *dbfile, const char *new_suffix,
+    const char *old_suffix);
 void free_index(CA_DB *db);
 #define index_name_cmp_noconst(a, b) \
 	index_name_cmp((const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, a), \
