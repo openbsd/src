@@ -162,8 +162,6 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 			if (sp == NULL) {
 				ASN1err(ASN1_F_A2I_ASN1_INTEGER,
 				    ERR_R_MALLOC_FAILURE);
-				if (s != NULL)
-					free(s);
 				goto err;
 			}
 			s = sp;
@@ -195,12 +193,11 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	}
 	bs->length = num;
 	bs->data = s;
-	ret = 1;
+	return (1);
 
-err:
-	if (0) {
 err_sl:
-		ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
-	}
+	ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
+err:
+	free(s);
 	return (ret);
 }
