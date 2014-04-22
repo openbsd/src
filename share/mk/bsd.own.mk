@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.149 2014/04/22 09:48:51 reyk Exp $
+#	$OpenBSD: bsd.own.mk,v 1.150 2014/04/22 14:42:53 reyk Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -12,8 +12,6 @@
 WARNINGS?=	no
 # Set `SKEY' to `yes' to build with support for S/key authentication.
 SKEY?=		yes
-# Set `KERBEROS5' to `yes' to build with support for Kerberos5 authentication.
-KERBEROS5?=	no
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
