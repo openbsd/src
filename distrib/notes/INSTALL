@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.47 2014/02/27 19:44:37 tedu Exp $
+dnl	$OpenBSD: INSTALL,v 1.48 2014/04/22 10:50:15 henning Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -36,7 +36,7 @@ as many security options as possible to allow the user to enjoy secure
 computing without feeling burdened by it.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
-(such as OpenSSH, IPsec, and Kerberos) to the world is not restricted.
+(such as OpenSSH and IPsec) to the world is not restricted.
 
 (NOTE: OpenBSD can not be re-exported from the US once it has entered
 the US.  Because of this, take care NOT to get the distribution from
