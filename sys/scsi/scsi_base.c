@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.210 2014/01/27 23:44:40 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.211 2014/04/22 07:29:11 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -176,17 +176,7 @@ scsi_plug_probe(void *xsc, void *xp)
 
 	pool_put(&scsi_plug_pool, p);
 
-	if (target == -1 && lun == -1)
-		scsi_probe_bus(sc);
-
-	/* specific lun and wildcard target is bad */
-	if (target == -1)
-		return;
-
-	if (lun == -1)
-		scsi_probe_target(sc, target);
-
-	scsi_probe_lun(sc, target, lun);
+	scsi_probe(sc, target, lun);
 }
 
 void
@@ -199,17 +189,7 @@ scsi_plug_detach(void *xsc, void *xp)
 
 	pool_put(&scsi_plug_pool, p);
 
-	if (target == -1 && lun == -1)
-		scsi_detach_bus(sc, how);
-
-	/* specific lun and wildcard target is bad */
-	if (target == -1)
-		return;
-
-	if (lun == -1)
-		scsi_detach_target(sc, target, how);
-
-	scsi_detach_lun(sc, target, lun, how);
+	scsi_detach(sc, target, lun, how);
 }
 
 int

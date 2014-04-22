@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.186 2014/01/31 02:53:41 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.187 2014/04/22 07:29:11 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -305,32 +305,11 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 	switch (cmd) {
 	case SBIOCPROBE:
 		sdev = (struct sbioc_device *)addr;
-
-		if (sdev->sd_target == -1 && sdev->sd_lun == -1)
-			return (scsi_probe_bus(sc));
-
-		/* specific lun and wildcard target is bad */
-		if (sdev->sd_target == -1)
-			return (EINVAL);
-
-		if (sdev->sd_lun == -1)
-			return (scsi_probe_target(sc, sdev->sd_target));
-
-		return (scsi_probe_lun(sc, sdev->sd_target, sdev->sd_lun));
+		return (scsi_probe(sc, sdev->sd_target, sdev->sd_lun));
 
 	case SBIOCDETACH:
 		sdev = (struct sbioc_device *)addr;
-
-		if (sdev->sd_target == -1 && sdev->sd_lun == -1)
-			return (scsi_detach_bus(sc, 0));
-
-		if (sdev->sd_target == -1)
-			return (EINVAL);
-
-		if (sdev->sd_lun == -1)
-			return (scsi_detach_target(sc, sdev->sd_target, 0));
-
-		return (scsi_detach_lun(sc, sdev->sd_target, sdev->sd_lun, 0));
+		return (scsi_detach(sc, sdev->sd_target, sdev->sd_lun, 0));
 
 	default:
 		return (ENOTTY);
@@ -413,6 +392,22 @@ dumbscan:
 }
 
 int
+scsi_probe(struct scsibus_softc *sc, int target, int lun)
+{
+	if (target == -1 && lun == -1)
+		return (scsi_probe_bus(sc));
+
+	/* specific lun and wildcard target is bad */
+	if (target == -1)
+		return (EINVAL);
+
+	if (lun == -1)
+		return (scsi_probe_target(sc, target));
+
+	return (scsi_probe_lun(sc, target, lun));
+}
+
+int
 scsi_probe_lun(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsi_link *alink = sc->adapter_link;
@@ -438,6 +433,22 @@ scsi_detach_bus(struct scsibus_softc *sc, int flags)
 	}
 
 	return (rv);
+}
+
+int
+scsi_detach(struct scsibus_softc *sc, int target, int lun, int flags)
+{
+	if (target == -1 && lun == -1)
+		return (scsi_detach_bus(sc, flags));
+
+	/* specific lun and wildcard target is bad */
+	if (target == -1)
+		return (EINVAL);
+
+	if (lun == -1)
+		return (scsi_detach_target(sc, target, flags));
+
+	return (scsi_detach_lun(sc, target, lun, flags));
 }
 
 int

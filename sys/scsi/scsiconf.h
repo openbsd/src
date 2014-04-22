@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.160 2014/01/31 02:53:41 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.161 2014/04/22 07:29:11 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -507,10 +507,12 @@ void	scsi_show_mem(u_char *, int);
 void	scsi_strvis(u_char *, u_char *, int);
 int	scsi_delay(struct scsi_xfer *, int);
 
+int	scsi_probe(struct scsibus_softc *, int, int);
 int	scsi_probe_bus(struct scsibus_softc *);
 int	scsi_probe_target(struct scsibus_softc *, int);
 int	scsi_probe_lun(struct scsibus_softc *, int, int);
 
+int	scsi_detach(struct scsibus_softc *, int, int, int);
 int	scsi_detach_bus(struct scsibus_softc *, int);
 int	scsi_detach_target(struct scsibus_softc *, int, int);
 int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
