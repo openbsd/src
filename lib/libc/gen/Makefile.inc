@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.62 2013/06/17 19:11:54 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.63 2014/04/22 00:33:02 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -7,7 +7,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         basename.c clock.c clock_getcpuclockid.c \
         closedir.c confstr.c ctermid.c ctype_.c \
         daemon.c devname.c dirfd.c dirname.c disklabel.c elf_hash.c err.c \
-        errx.c errlist.c errno.c exec.c \
+        errc.c errx.c errlist.c errno.c exec.c \
         fdatasync.c fnmatch.c fpclassify.c frexp.c \
         fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c \
         getdomainname.c getgrent.c getgrouplist.c gethostname.c \
@@ -25,7 +25,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         tolower_.c ttyname.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
         utime.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c \
-        warnx.c vwarn.c vwarnx.c verr.c verrx.c
+        warnc.c warnx.c vwarn.c vwarnc.c vwarnx.c verr.c verrc.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
