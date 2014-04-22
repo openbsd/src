@@ -1,4 +1,4 @@
-/*	$Id: arch.in,v 1.9 2013/09/04 19:39:18 patrick Exp $ */
+/*	$Id: arch.in,v 1.10 2014/04/22 22:58:02 aoyama Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -66,7 +66,7 @@ LINE("iyonix",		"Iyonix")
 LINE("landisk",		"LANDISK")
 LINE("loongson",	"Loongson")
 LINE("luna68k",		"Luna68k")
-LINE("luna88k",		"Luna88k")
+LINE("luna88k",		"LUNA-88K")
 LINE("m68k",		"m68k")
 LINE("mac68k",		"Mac68k")
 LINE("macppc",		"MacPPC")

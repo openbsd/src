@@ -1,3 +1,3 @@
-dnl	$OpenBSD: whatis,v 1.3 2005/03/18 13:29:46 miod Exp $
+dnl	$OpenBSD: whatis,v 1.4 2014/04/22 22:58:02 aoyama Exp $
 
-OpenBSD/MACHINE runs on the OMRON Luna-88K family of workstations.
+OpenBSD/MACHINE runs on the OMRON LUNA-88K family of workstations.

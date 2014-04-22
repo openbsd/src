@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2014/04/12 11:26:42 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 2014/04/22 22:58:02 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -511,7 +511,7 @@ haltsys:
 	if (mainbus != NULL)
 		config_suspend(mainbus, DVACT_POWERDOWN);
 
-	/* Luna88k supports automatic powerdown */
+	/* LUNA-88K supports automatic powerdown */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		printf("attempting to power down...\n");
 		powerdown();
@@ -810,7 +810,7 @@ secondary_main()
 #endif	/* MULTIPROCESSOR */
 
 /*
- *	Device interrupt handler for LUNA88K
+ *	Device interrupt handler for LUNA-88K
  */
 
 void 
@@ -1052,7 +1052,7 @@ luna88k_bootstrap()
 	avail_end = last_addr;
 
 #ifdef DEBUG
-	printf("LUNA88K boot: memory from 0x%x to 0x%x\n",
+	printf("LUNA-88K boot: memory from 0x%x to 0x%x\n",
 	    avail_start, avail_end);
 #endif
 

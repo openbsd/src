@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2013/11/02 23:10:29 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2014/04/22 22:58:02 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -158,7 +158,7 @@ void
 device_register(struct device *dev, void *aux)
 {
         /*
-         * scsi: sd,cd  XXX: Can LUNA88K boot from CD-ROM?
+         * scsi: sd,cd  XXX: Can LUNA-88K boot from CD-ROM?
          */
         if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
             strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
