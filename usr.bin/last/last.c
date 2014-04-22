@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.41 2014/04/17 14:49:11 okan Exp $	*/
+/*	$OpenBSD: last.c,v 1.42 2014/04/22 12:36:36 okan Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -414,11 +414,19 @@ want(struct utmp *bp, int check)
 
 	if (check) {
 		/*
-		 * when ftp logs in over a network, the entry in
-		 * the utmp file is the name plus its process id.
+		 * some entries, such as ftp and uucp, will 
+		 * include process name plus id; exclude entries
+		 * that start with 'console' and 'tty' from
+		 * having the process id stripped.
 		 */
-		if (!strncmp(bp->ut_line, "ftp", sizeof("ftp") - 1))
-			bp->ut_line[3] = '\0';
+		if ((strncmp(bp->ut_line, "console", strlen("console")) != 0) &&
+		    (strncmp(bp->ut_line, "tty", strlen("tty")) != 0)) {
+			char *s;
+			for (s = bp->ut_line;
+			     *s != '\0' && !isdigit((unsigned char)*s); s++)
+				;
+			*s = '\0';
+		}
 	}
 
 	if (snaptime)		/* if snaptime is set, return NO */
