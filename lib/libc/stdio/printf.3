@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.66 2014/04/19 16:48:41 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.67 2014/04/22 15:22:04 sobrado Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -872,7 +872,7 @@ for later interpolation by
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 ret = snprintf(buffer, sizeof(buffer), "%s", string);
-if (ret == -1 || ret >= sizeof(buffer)
+if (ret == -1 || ret >= sizeof(buffer))
 	goto toolong;
 .Ed
 .Pp
