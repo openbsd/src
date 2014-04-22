@@ -231,19 +231,33 @@ main(int argc, char **argv)
 	};
 
 	AES_KEY wctx, xctx;
-	int ret;
+	int ret, nfailures = 0;
 	ret = AES_wrap_unwrap_test(kek, 128, NULL, e1, key, 16);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
 	ret = AES_wrap_unwrap_test(kek, 192, NULL, e2, key, 16);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
 	ret = AES_wrap_unwrap_test(kek, 256, NULL, e3, key, 16);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
 	ret = AES_wrap_unwrap_test(kek, 192, NULL, e4, key, 24);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
 	ret = AES_wrap_unwrap_test(kek, 256, NULL, e5, key, 24);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
 	ret = AES_wrap_unwrap_test(kek, 256, NULL, e6, key, 32);
+	if (ret == 0)
+		nfailures++;
 	fprintf(stderr, "Key test result %d\n", ret);
+
+	return nfailures;
 }
 
 #endif
