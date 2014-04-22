@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.246 2014/03/24 09:24:09 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.247 2014/04/22 10:24:29 reyk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -157,11 +157,6 @@ ufqdn		uname=root mode=0755
 # ./etc/isakmpd
 ..
 
-# ./etc/kerberosV
-kerberosV
-# ./etc/kerberosV
-..
-
 # ./etc/ldap
 ldap
 
@@ -310,27 +305,6 @@ std             gname=bin uname=root mode=0755
 ..
 
 # ./usr/include/g++
-..
-
-# ./usr/include/kerberosV
-kerberosV		gname=bin uname=root mode=0755
-
-# ./usr/include/kerberosV/gssapi
-gssapi			gname=bin uname=root mode=0755
-# ./usr/include/kerberosV/gssapi
-..
-
-# ./usr/include/kerberosV/kadm5
-kadm5			gname=bin uname=root mode=0755
-# ./usr/include/kerberosV/kadm5
-..
-
-# ./usr/include/kerberosV/krb5
-krb5			gname=bin uname=root mode=0755
-# ./usr/include/kerberosV/krb5
-..
-
-# ./usr/include/kerberosV
 ..
 
 # ./usr/include/libmilter
@@ -1159,11 +1133,6 @@ phantasia        uname=root gname=games mode=0775
 ..
 
 # ./var/games
-..
-
-# ./var/kerberosV
-kerberosV	uname=root gname=wheel mode=0700
-# ./var/kerberosV
 ..
 
 # ./var/log
