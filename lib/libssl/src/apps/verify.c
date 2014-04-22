@@ -68,9 +68,8 @@
 
 
 static int cb(int ok, X509_STORE_CTX * ctx);
-static int check(X509_STORE * ctx, char *file,
-    STACK_OF(X509) * uchain, STACK_OF(X509) * tchain,
-    STACK_OF(X509_CRL) * crls, ENGINE * e);
+static int check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
+    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls, ENGINE * e);
 static int v_verbose = 0, vflags = 0;
 
 int verify_main(int, char **);
@@ -120,7 +119,7 @@ verify_main(int argc, char **argv)
 					goto end;
 				CAfile = *(++argv);
 			} else if (args_verify(&argv, &argc, &badarg, bio_err,
-				&vpm)) {
+			    &vpm)) {
 				if (badarg)
 					goto end;
 				continue;
@@ -217,7 +216,8 @@ verify_main(int argc, char **argv)
 			ret = -1;
 	} else {
 		for (i = 0; i < argc; i++)
-			if (1 != check(cert_ctx, argv[i], untrusted, trusted, crls, e))
+			if (1 != check(cert_ctx, argv[i], untrusted, trusted,
+			    crls, e))
 				ret = -1;
 	}
 
@@ -250,10 +250,9 @@ end:
 	return (ret < 0 ? 2 : ret);
 }
 
-static int 
-check(X509_STORE * ctx, char *file,
-    STACK_OF(X509) * uchain, STACK_OF(X509) * tchain,
-    STACK_OF(X509_CRL) * crls, ENGINE * e)
+static int
+check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
+    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls, ENGINE * e)
 {
 	X509 *x = NULL;
 	int i = 0, ret = 0;
@@ -282,6 +281,7 @@ check(X509_STORE * ctx, char *file,
 	X509_STORE_CTX_free(csc);
 
 	ret = 0;
+
 end:
 	if (i > 0) {
 		fprintf(stdout, "OK\n");
@@ -294,7 +294,7 @@ end:
 	return (ret);
 }
 
-static int 
+static int
 cb(int ok, X509_STORE_CTX * ctx)
 {
 	int cert_error = X509_STORE_CTX_get_error(ctx);

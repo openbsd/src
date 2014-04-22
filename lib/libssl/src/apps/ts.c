@@ -119,7 +119,7 @@ static int verify_cb(int ok, X509_STORE_CTX * ctx);
 /* Main function definition. */
 int ts_main(int, char **);
 
-int 
+int
 ts_main(int argc, char **argv)
 {
 	int ret = 1;
@@ -306,10 +306,9 @@ ts_main(int argc, char **argv)
 		    in, token_in, out, token_out, text);
 		break;
 	case CMD_VERIFY:
-		ret = !(((queryfile && !data && !digest)
-			|| (!queryfile && data && !digest)
-			|| (!queryfile && !data && digest))
-		    && in != NULL);
+		ret = !(((queryfile && !data && !digest) ||
+		    (!queryfile && data && !digest) ||
+		    (!queryfile && !data && digest)) && in != NULL);
 		if (ret)
 			goto usage;
 
@@ -379,7 +378,7 @@ load_config_file(const char *configfile)
 
 	if (configfile &&
 	    (!(conf = NCONF_new(NULL)) ||
-		NCONF_load(conf, configfile, &errorline) <= 0)) {
+	    NCONF_load(conf, configfile, &errorline) <= 0)) {
 		if (errorline <= 0)
 			BIO_printf(bio_err, "error loading the config file "
 			    "'%s'\n", configfile);
@@ -390,7 +389,8 @@ load_config_file(const char *configfile)
 	if (conf != NULL) {
 		const char *p;
 
-		BIO_printf(bio_err, "Using configuration from %s\n", configfile);
+		BIO_printf(bio_err, "Using configuration from %s\n",
+		    configfile);
 		p = NCONF_get_string(conf, NULL, ENV_OID_FILE);
 		if (p != NULL) {
 			BIO *oid_bio = BIO_new_file(p, "r");
@@ -412,10 +412,10 @@ load_config_file(const char *configfile)
  * Query-related method definitions.
  */
 
-static int 
+static int
 query_command(const char *data, char *digest, const EVP_MD * md,
-    const char *policy, int no_nonce,
-    int cert, const char *in, const char *out, int text)
+    const char *policy, int no_nonce, int cert, const char *in,
+    const char *out, int text)
 {
 	int ret = 0;
 	TS_REQ *query = NULL;
@@ -430,8 +430,8 @@ query_command(const char *data, char *digest, const EVP_MD * md,
 		query = d2i_TS_REQ_bio(in_bio, NULL);
 	} else {
 		/* Open the file if no explicit digest bytes were specified. */
-		if (!digest
-		    && !(data_bio = BIO_open_with_default(data, "rb", stdin)))
+		if (!digest &&
+		    !(data_bio = BIO_open_with_default(data, "rb", stdin)))
 			goto end;
 		/* Creating the query object. */
 		query = create_query(data_bio, digest, md,
@@ -469,12 +469,10 @@ end:
 }
 
 static BIO *
-BIO_open_with_default(const char *file, const char *mode,
-    FILE * default_fp)
+BIO_open_with_default(const char *file, const char *mode, FILE * default_fp)
 {
-	return file == NULL ?
-	BIO_new_fp(default_fp, BIO_NOCLOSE)
-	: BIO_new_file(file, mode);
+	return file == NULL ? BIO_new_fp(default_fp, BIO_NOCLOSE) :
+	    BIO_new_file(file, mode);
 }
 
 static TS_REQ *
@@ -543,6 +541,7 @@ create_query(BIO * data_bio, char *digest, const EVP_MD * md,
 		goto err;
 
 	ret = 1;
+
 err:
 	if (!ret) {
 		TS_REQ_free(ts_req);
@@ -557,7 +556,7 @@ err:
 	return ts_req;
 }
 
-static int 
+static int
 create_digest(BIO * input, char *digest, const EVP_MD * md,
     unsigned char **md_value)
 {
@@ -614,7 +613,8 @@ create_nonce(int bits)
 		goto err;
 
 	/* Find the first non-zero byte and creating ASN1_INTEGER object. */
-	for (i = 0; i < len && !buf[i]; ++i);
+	for (i = 0; i < len && !buf[i]; ++i)
+		;
 	if (!(nonce = ASN1_INTEGER_new()))
 		goto err;
 	free(nonce->data);
@@ -625,6 +625,7 @@ create_nonce(int bits)
 	memcpy(nonce->data, buf + i, nonce->length);
 
 	return nonce;
+
 err:
 	BIO_printf(bio_err, "could not create nonce\n");
 	ASN1_INTEGER_free(nonce);
@@ -634,12 +635,10 @@ err:
  * Reply-related method definitions.
  */
 
-static int 
-reply_command(CONF * conf, char *section, char *engine,
-    char *queryfile, char *passin, char *inkey,
-    char *signer, char *chain, const char *policy,
-    char *in, int token_in,
-    char *out, int token_out, int text)
+static int
+reply_command(CONF * conf, char *section, char *engine, char *queryfile,
+    char *passin, char *inkey, char *signer, char *chain, const char *policy,
+    char *in, int token_in, char *out, int token_out, int text)
 {
 	int ret = 0;
 	TS_RESP *response = NULL;
@@ -913,7 +912,7 @@ err:
 	return serial;
 }
 
-static int 
+static int
 save_ts_serial(const char *serialfile, ASN1_INTEGER * serial)
 {
 	int ret = 0;
@@ -938,10 +937,9 @@ err:
  * Verify-related method definitions.
  */
 
-static int 
-verify_command(char *data, char *digest, char *queryfile,
-    char *in, int token_in,
-    char *ca_path, char *ca_file, char *untrusted)
+static int
+verify_command(char *data, char *digest, char *queryfile, char *in,
+    int token_in, char *ca_path, char *ca_file, char *untrusted)
 {
 	BIO *in_bio = NULL;
 	PKCS7 *token = NULL;
@@ -961,7 +959,7 @@ verify_command(char *data, char *digest, char *queryfile,
 	}
 
 	if (!(verify_ctx = create_verify_ctx(data, digest, queryfile,
-		    ca_path, ca_file, untrusted)))
+	    ca_path, ca_file, untrusted)))
 		goto end;
 
 	/* Checking the token or response against the request. */
@@ -988,10 +986,8 @@ end:
 }
 
 static TS_VERIFY_CTX *
-create_verify_ctx(char *data, char *digest,
-    char *queryfile,
-    char *ca_path, char *ca_file,
-    char *untrusted)
+create_verify_ctx(char *data, char *digest, char *queryfile, char *ca_path,
+    char *ca_file, char *untrusted)
 {
 	TS_VERIFY_CTX *ctx = NULL;
 	BIO *input = NULL;
@@ -1099,7 +1095,7 @@ err:
 	return NULL;
 }
 
-static int 
+static int
 verify_cb(int ok, X509_STORE_CTX * ctx)
 {
 	/*

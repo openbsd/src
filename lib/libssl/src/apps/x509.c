@@ -151,15 +151,14 @@ static const char *x509_usage[] = {
 	NULL
 };
 
-static int callb(int ok, X509_STORE_CTX * ctx);
-static int sign(X509 * x, EVP_PKEY * pkey, int days, int clrext,
-    const EVP_MD * digest, CONF * conf, char *section);
-static int x509_certify(X509_STORE * ctx, char *CAfile, const EVP_MD * digest,
-    X509 * x, X509 * xca, EVP_PKEY * pkey,
-    STACK_OF(OPENSSL_STRING) * sigopts,
-    char *serial, int create, int days, int clrext,
-    CONF * conf, char *section, ASN1_INTEGER * sno);
-static int purpose_print(BIO * bio, X509 * cert, X509_PURPOSE * pt);
+static int callb(int ok, X509_STORE_CTX *ctx);
+static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+    const EVP_MD *digest, CONF *conf, char *section);
+static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
+    X509 *x, X509 *xca, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
+    char *serial, int create, int days, int clrext, CONF *conf, char *section,
+    ASN1_INTEGER *sno);
+static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile = 0;
 
 int x509_main(int, char **);
@@ -172,26 +171,26 @@ x509_main(int argc, char **argv)
 	X509_REQ *req = NULL;
 	X509 *x = NULL, *xca = NULL;
 	ASN1_OBJECT *objtmp;
-	STACK_OF(OPENSSL_STRING) * sigopts = NULL;
+	STACK_OF(OPENSSL_STRING) *sigopts = NULL;
 	EVP_PKEY *Upkey = NULL, *CApkey = NULL;
 	ASN1_INTEGER *sno = NULL;
 	int i, num, badops = 0;
 	BIO *out = NULL;
 	BIO *STDout = NULL;
-	STACK_OF(ASN1_OBJECT) * trust = NULL, *reject = NULL;
+	STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
 	int informat, outformat, keyformat, CAformat, CAkeyformat;
 	char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
 	char *CAkeyfile = NULL, *CAserial = NULL;
 	char *alias = NULL;
 	int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0,
-	 enddate = 0;
+	    enddate = 0;
 	int next_serial = 0;
 	int subject_hash = 0, issuer_hash = 0, ocspid = 0;
 #ifndef OPENSSL_NO_MD5
 	int subject_hash_old = 0, issuer_hash_old = 0;
 #endif
 	int noout = 0, sign_flag = 0, CA_flag = 0, CA_createserial = 0,
-	 email = 0;
+	    email = 0;
 	int ocsp_uri = 0;
 	int trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0, clrext = 0;
 	int C = 0;
@@ -382,8 +381,8 @@ x509_main(int argc, char **argv)
 			x509req = ++num;
 		else if (strcmp(*argv, "-text") == 0)
 			text = ++num;
-		else if (strcmp(*argv, "-hash") == 0
-		    || strcmp(*argv, "-subject_hash") == 0)
+		else if (strcmp(*argv, "-hash") == 0 ||
+		    strcmp(*argv, "-subject_hash") == 0)
 			subject_hash = ++num;
 #ifndef OPENSSL_NO_MD5
 		else if (strcmp(*argv, "-subject_hash_old") == 0)
@@ -473,7 +472,8 @@ bad:
 	if ((CAkeyfile == NULL) && (CA_flag) && (CAformat == FORMAT_PEM)) {
 		CAkeyfile = CAfile;
 	} else if ((CA_flag) && (CAkeyfile == NULL)) {
-		BIO_printf(bio_err, "need to specify a CAkey if using the CA command\n");
+		BIO_printf(bio_err,
+		    "need to specify a CAkey if using the CA command\n");
 		goto end;
 	}
 	if (extfile) {
@@ -487,12 +487,13 @@ bad:
 				    extfile);
 			else
 				BIO_printf(bio_err,
-				    "error on line %ld of config file '%s'\n"
-				    ,errorline, extfile);
+				    "error on line %ld of config file '%s'\n",
+				    errorline, extfile);
 			goto end;
 		}
 		if (!extsect) {
-			extsect = NCONF_get_string(extconf, "default", "extensions");
+			extsect = NCONF_get_string(extconf, "default",
+			    "extensions");
 			if (!extsect) {
 				ERR_clear_error();
 				extsect = "default";
@@ -668,7 +669,7 @@ bad:
 				BIO_puts(out, "\n");
 			} else if ((email == i) || (ocsp_uri == i)) {
 				int j;
-				STACK_OF(OPENSSL_STRING) * emlst;
+				STACK_OF(OPENSSL_STRING) *emlst;
 				if (email == i)
 					emlst = X509_get1_email(x);
 				else
@@ -724,11 +725,11 @@ bad:
 				else
 #endif
 #ifndef OPENSSL_NO_DSA
-				if (pkey->type == EVP_PKEY_DSA)
-					BN_print(STDout, pkey->pkey.dsa->pub_key);
+						if (pkey->type == EVP_PKEY_DSA)
+							BN_print(STDout, pkey->pkey.dsa->pub_key);
 				else
 #endif
-					BIO_printf(STDout, "Wrong Algorithm type");
+						BIO_printf(STDout, "Wrong Algorithm type");
 				BIO_printf(STDout, "\n");
 				EVP_PKEY_free(pkey);
 			} else if (pubkey == i) {
@@ -823,8 +824,7 @@ bad:
 				    OBJ_nid2sn(EVP_MD_type(fdig)));
 				for (j = 0; j < (int) n; j++) {
 					BIO_printf(STDout, "%02X%c", md[j],
-					    (j + 1 == (int) n)
-					    ? '\n' : ':');
+					    (j + 1 == (int)n) ? '\n' : ':');
 				}
 			}
 			/* should be in the library */
@@ -838,7 +838,7 @@ bad:
 						goto end;
 				}
 				if (!sign(x, Upkey, days, clrext, digest,
-					extconf, extsect))
+				    extconf, extsect))
 					goto end;
 			} else if (CA_flag == i) {
 				BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -851,9 +851,9 @@ bad:
 						goto end;
 				}
 				if (!x509_certify(ctx, CAfile, digest, x, xca,
-					CApkey, sigopts,
-					CAserial, CA_createserial, days, clrext,
-					extconf, extsect, sno))
+				    CApkey, sigopts,
+				    CAserial, CA_createserial, days, clrext,
+				    extconf, extsect, sno))
 					goto end;
 			} else if (x509req == i) {
 				EVP_PKEY *pk;
@@ -931,6 +931,7 @@ bad:
 		goto end;
 	}
 	ret = 0;
+
 end:
 	OBJ_cleanup();
 	NCONF_free(extconf);
@@ -962,9 +963,8 @@ x509_load_serial(char *CAfile, char *serialfile, int create)
 	BIGNUM *serial = NULL;
 	size_t len;
 
-	len = ((serialfile == NULL)
-	    ? (strlen(CAfile) + strlen(POSTFIX) + 1)
-	    : (strlen(serialfile))) + 1;
+	len = ((serialfile == NULL) ? (strlen(CAfile) + strlen(POSTFIX) + 1) :
+	    (strlen(serialfile))) + 1;
 	buf = malloc(len);
 	if (buf == NULL) {
 		BIO_printf(bio_err, "out of mem\n");
@@ -999,13 +999,11 @@ end:
 	return bs;
 }
 
-static int 
-x509_certify(X509_STORE * ctx, char *CAfile, const EVP_MD * digest,
-    X509 * x, X509 * xca, EVP_PKEY * pkey,
-    STACK_OF(OPENSSL_STRING) * sigopts,
-    char *serialfile, int create,
-    int days, int clrext, CONF * conf, char *section,
-    ASN1_INTEGER * sno)
+static int
+x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
+    X509 *xca, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
+    char *serialfile, int create, int days, int clrext, CONF *conf,
+    char *section, ASN1_INTEGER *sno)
 {
 	int ret = 0;
 	ASN1_INTEGER *bs = NULL;
@@ -1076,8 +1074,8 @@ end:
 	return ret;
 }
 
-static int 
-callb(int ok, X509_STORE_CTX * ctx)
+static int
+callb(int ok, X509_STORE_CTX *ctx)
 {
 	int err;
 	X509 *err_cert;
@@ -1110,9 +1108,9 @@ callb(int ok, X509_STORE_CTX * ctx)
 }
 
 /* self sign */
-static int 
-sign(X509 * x, EVP_PKEY * pkey, int days, int clrext, const EVP_MD * digest,
-    CONF * conf, char *section)
+static int
+sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
+    CONF *conf, char *section)
 {
 
 	EVP_PKEY *pktmp;
@@ -1131,7 +1129,8 @@ sign(X509 * x, EVP_PKEY * pkey, int days, int clrext, const EVP_MD * digest,
 	/* memcpy(x->cert_info->validity->notBefore,"700101120000Z",13); */
 	/* 28 days to be certified */
 
-	if (X509_gmtime_adj(X509_get_notAfter(x), (long) 60 * 60 * 24 * days) == NULL)
+	if (X509_gmtime_adj(X509_get_notAfter(x),
+	    (long) 60 * 60 * 24 * days) == NULL)
 		goto err;
 
 	if (!X509_set_pubkey(x, pkey))
@@ -1151,16 +1150,18 @@ sign(X509 * x, EVP_PKEY * pkey, int days, int clrext, const EVP_MD * digest,
 	if (!X509_sign(x, pkey, digest))
 		goto err;
 	return 1;
+
 err:
 	ERR_print_errors(bio_err);
 	return 0;
 }
 
-static int 
-purpose_print(BIO * bio, X509 * cert, X509_PURPOSE * pt)
+static int
+purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 {
 	int id, i, idret;
 	char *pname;
+
 	id = X509_PURPOSE_get_id(pt);
 	pname = X509_PURPOSE_get0_name(pt);
 	for (i = 0; i < 2; i++) {
