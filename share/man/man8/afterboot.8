@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.142 2014/01/22 01:29:33 juanfra Exp $
+.\"	$OpenBSD: afterboot.8,v 1.143 2014/04/22 11:15:05 henning Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 22 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -381,16 +381,11 @@ The manual page for
 tells you to make sure to put people in
 the
 .Sq wheel
-group if they need root access (non-Kerberos).
+group if they need root access.
 For example:
 .Pp
 .Dl wheel:*:0:root,myself
 .Pp
-Follow instructions for
-.Xr login_krb5 8
-if using
-Kerberos
-for authentication.
 .Ss System command scripts
 The
 .Pa /etc/rc.*\&

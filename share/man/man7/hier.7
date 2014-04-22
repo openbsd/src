@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.119 2014/04/18 11:41:10 henning Exp $
+.\"	$OpenBSD: hier.7,v 1.120 2014/04/22 11:15:05 henning Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 18 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -110,9 +110,6 @@ Configuration files for
 .It isakmpd/
 Configuration files for
 .Xr isakmpd 8 .
-.It kerberosV/
-Configuration files for the Kerberos version V subsystem (see
-.Xr kerberos 8 ) .
 .It ldap/
 Certificates and schema definition files for
 .Xr ldapd 8 .
@@ -235,9 +232,6 @@ Device-specific C include files.
 Include files for the GNU C++ compiler.
 .It isofs/
 C include files for the ISO standard file systems (currently only cd9660).
-.It kerberosV/
-C include files for the KerberosV authentication subsystem (see
-.Xr kerberos 8 ) .
 .It libmilter/
 C include files for the
 .Xr sendmail 8
@@ -510,8 +504,6 @@ Source for files under GPL or other restrictive licenses.
 .It include/
 Source for files in
 .Pa /usr/include .
-.It kerberosV/
-Source for Kerberos version V.
 .It lib/
 Source for files in
 .Pa /usr/lib .
@@ -593,9 +585,6 @@ Generic
 directory.
 .It games/
 Miscellaneous game status and log files.
-.It kerberosV
-Kerberos database, key and ACL files (see
-.Xr kerberos 8 ) .
 .It log/
 Miscellaneous system log files.
 .Pp
