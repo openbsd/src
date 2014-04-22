@@ -1,7 +1,0 @@
-@c $Id: programming.texi,v 1.2 2013/06/17 18:57:41 robert Exp $
-
-@node Programming with Kerberos, Migration, Windows compatibility, Top
-@chapter Programming with Kerberos
-
-See the Kerberos 5 API introduction and documentation on the Heimdal
-webpage.
