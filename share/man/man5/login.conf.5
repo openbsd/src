@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.53 2014/04/18 22:04:54 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.54 2014/04/22 12:48:17 sobrado Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: April 18 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -452,7 +452,7 @@ uses
 Authentication, which is made up of a variety of
 authentication styles.
 The authentication styles currently provided are:
-.Bl -tag -width krb5-or-pwdxx
+.Bl -tag -width lchpassxx
 .\"
 .It Li activ
 Authenticate using an ActivCard token.
@@ -468,20 +468,6 @@ See
 Authenticate using a CRYPTOCard token.
 See
 .Xr login_crypto 8 .
-.\"
-.It Li krb5
-Request a password and use it to request a ticket from the kerberos 5 server.
-See
-.Xr login_krb5 8 .
-.\"
-.It Li krb5-or-pwd
-Request a password and first try the
-.Li krb5
-authentication style and if that fails use the same password with the
-.Li passwd
-authentication style.
-See
-.Xr login_krb5-or-pwd 8 .
 .\"
 .It Li lchpass
 Change user's local password.
@@ -548,7 +534,7 @@ program, the syntax
 would be used.
 .Pp
 Authentication requires several pieces of information:
-.Bl -tag -width kerberosxx
+.Bl -tag -width usernamexx
 .\"
 .It Ar class
 The login class being used.
@@ -579,9 +565,7 @@ The authentication type,
 used to determine the available authentication styles.
 .It Ar username
 The name of the user to authenticate.
-The name may contain an instance, e.g.\&
-.Dq user/root ,
-as used by Kerberos authentication.
+The name may contain an instance.
 If the authentication style being used does not support such instances,
 the request will fail.
 .El
@@ -702,9 +686,6 @@ program provides the following through the
 .Fl v
 option:
 .Bl -tag -width remote_addrxxx
-.It Li invokinguser
-Set to the name of the user being authenticated; used for Kerberos
-authentication.
 .It Li wheel
 Set to either
 .Dq yes
@@ -756,7 +737,7 @@ Authorization is rejected, but no error messages should be generated.
 .It Li remove Va file
 If the login session fails for any reason, remove
 .Va file
-before termination (a kerberos ticket file, for example).
+before termination.
 .\"
 .It Li setenv Va name Va value
 If the login session succeeds, the environment variable
