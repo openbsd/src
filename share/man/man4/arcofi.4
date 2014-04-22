@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arcofi.4,v 1.5 2014/03/19 12:57:51 jmc Exp $
+.\"	$OpenBSD: arcofi.4,v 1.6 2014/04/22 21:01:10 miod Exp $
 .\"
 .\"
 .\" Copyright (c) 2011 Miodrag Vallat.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt ARCOFI 4
 .Os
 .Sh NAME
@@ -38,7 +38,8 @@ This device is found onboard HP 9000 workstations models 425e, 705 and 710.
 .Pp
 The
 .Nm
-is limited to a phone-quality mono, 8000 KHz sound.
+is limited to a mono, 8000 KHz sound, either with 8-bit phone-quality mu-law or
+a-law samples, or 16-bit signed linear samples in big-endian byte order.
 .Ss AUDIOCTL SETTINGS
 The following encodings are supported:
 .Pp
