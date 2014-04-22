@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.49 2014/01/03 22:29:00 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.50 2014/04/22 20:40:37 tedu Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -860,8 +860,9 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	    typ->ty_getty == 0)
 		return (0);
 
-	sp = (session_t *) malloc(sizeof (session_t));
-	memset(sp, 0, sizeof *sp);
+	sp = calloc(1, sizeof (session_t));
+	if (sp == NULL)
+		err(1, "calloc");
 
 	sp->se_flags = SE_PRESENT;
 	sp->se_index = session_index;
