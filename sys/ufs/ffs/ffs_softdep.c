@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.125 2014/02/04 01:04:03 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.126 2014/04/22 20:14:39 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5151,9 +5151,9 @@ flush_pagedep_deps(struct vnode *pvp, struct mount *mp,
 		if ((inodedep->id_state & DEPCOMPLETE) == 0) {
 			bp = inodedep->id_buf;
 			gotit = getdirtybuf(bp, MNT_WAIT);
-			FREE_LOCK(&lk);
 			if (gotit == -1)
 				goto retry;
+			FREE_LOCK(&lk);
 			if (gotit && (error = bwrite(bp)) != 0)
 				break;
 			ACQUIRE_LOCK(&lk);
