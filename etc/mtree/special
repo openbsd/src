@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.102 2014/04/22 10:24:29 reyk Exp $
+#	$OpenBSD: special,v 1.103 2014/04/22 10:48:36 reyk Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -175,10 +175,6 @@ db		type=dir mode=0755 uname=root gname=wheel
 host.random	type=file mode=0600 uname=root gname=wheel optional
 kvm_bsd.db	type=file mode=0644 uname=root gname=wheel
 ..	#var/db
-kerberosV	type=dir mode=0700 uname=root gname=wheel optional
-heimdal.db	type=file mode=0600 uname=root gname=wheel optional
-m-key		type=file mode=0600 uname=root gname=wheel optional
-..	#var/kerberosV
 log		type=dir mode=0755 uname=root gname=wheel
 authlog		type=file mode=0640 uname=root gname=wheel
 secure		type=file mode=0600 uname=root gname=wheel
