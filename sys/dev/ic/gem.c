@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.102 2014/03/14 11:04:24 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.103 2014/04/22 15:52:05 naddy Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -120,7 +120,6 @@ int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
 int		gem_pint(struct gem_softc *);
-void		gem_rxcksum(struct mbuf *, u_int64_t);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -811,9 +810,6 @@ gem_init(struct ifnet *ifp)
 
 	/* Encode Receive Descriptor ring size: four possible values */
 	v = gem_ringsize(GEM_NRXDESC /*XXX*/);
-	/* RX TCP/UDP checksum offset */
-	v |= ((ETHER_HDR_LEN + sizeof(struct ip)) <<
-	    GEM_RX_CONFIG_CXM_START_SHFT);
 	/* Enable DMA */
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 
 		v|(GEM_THRSH_1024<<GEM_RX_CONFIG_FIFO_THRS_SHIFT)|
@@ -948,95 +944,6 @@ gem_init_regs(struct gem_softc *sc)
 }
 
 /*
- * RX TCP/UDP checksum
- */
-void
-gem_rxcksum(struct mbuf *m, u_int64_t rxstat)
-{
-	struct ether_header *eh;
-	struct ip *ip;
-	struct udphdr *uh;
-	int32_t hlen, len, pktlen;
-	u_int16_t cksum, *opts;
-	u_int32_t temp32;
-	union pseudoh {
-		struct hdr {
-			u_int16_t len;
-			u_int8_t ttl;
-			u_int8_t proto;
-			u_int32_t src;
-			u_int32_t dst;
-		} h;
-		u_int16_t w[6];
-	} ph;
-
-	pktlen = m->m_pkthdr.len;
-	if (pktlen < sizeof(struct ether_header))
-		return;
-	eh = mtod(m, struct ether_header *);
-	if (eh->ether_type != htons(ETHERTYPE_IP))
-		return;
-	ip = (struct ip *)(eh + 1);
-	if (ip->ip_v != IPVERSION)
-		return;
-
-	hlen = ip->ip_hl << 2;
-	pktlen -= sizeof(struct ether_header);
-	if (hlen < sizeof(struct ip))
-		return;
-	if (ntohs(ip->ip_len) < hlen)
-		return;
-	if (ntohs(ip->ip_len) != pktlen) 
-		return;
-	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
-		return;	/* can't handle fragmented packet */
-
-	switch (ip->ip_p) {
-	case IPPROTO_TCP:
-		if (pktlen < (hlen + sizeof(struct tcphdr)))
-			return;
-		break;
-	case IPPROTO_UDP:
-		if (pktlen < (hlen + sizeof(struct udphdr)))
-			return;
-		uh = (struct udphdr *)((caddr_t)ip + hlen);
-		if (uh->uh_sum == 0)
-			return; /* no checksum */
-		break;
-	default:
-		return;
-	}
-
-	cksum = htons(~(rxstat & GEM_RD_CHECKSUM));
-	/* cksum fixup for IP options */
-	len = hlen - sizeof(struct ip);
-	if (len > 0) {
-		opts = (u_int16_t *)(ip + 1);
-		for (; len > 0; len -= sizeof(u_int16_t), opts++) {
-			temp32 = cksum - *opts;
-			temp32 = (temp32 >> 16) + (temp32 & 65535);
-			cksum = temp32 & 65535;
-		}
-	}
-
-	ph.h.len = htons(ntohs(ip->ip_len) - hlen);
-	ph.h.ttl = 0;
-	ph.h.proto = ip->ip_p;
-	ph.h.src = ip->ip_src.s_addr;
-	ph.h.dst = ip->ip_dst.s_addr;
-	temp32 = cksum;
-	opts = &ph.w[0];
-	temp32 += opts[0] + opts[1] + opts[2] + opts[3] + opts[4] + opts[5];
-	temp32 = (temp32 >> 16) + (temp32 & 65535);
-	temp32 += (temp32 >> 16);
-	cksum = ~temp32;
-	if (cksum == 0) {
-		m->m_pkthdr.csum_flags |=
-			M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-	}
-}
-
-/*
  * Receive interrupt.
  */
 int
@@ -1100,8 +1007,6 @@ gem_rint(struct gem_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-
-		gem_rxcksum(m, rxstat);	
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

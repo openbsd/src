@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.64 2013/09/05 20:55:58 bluhm Exp $	*/
+/*	$OpenBSD: hme.c,v 1.65 2014/04/22 15:52:05 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -102,9 +102,6 @@ int	hme_rint(struct hme_softc *);
 int	hme_tint(struct hme_softc *);
 int	hme_mint(struct hme_softc *, u_int32_t);
 int	hme_eint(struct hme_softc *, u_int32_t);
-
-/* TCP/UDP checksum offload support */
-void	hme_rxcksum(struct mbuf *, u_int32_t);
 
 void	hme_reset_rx(struct hme_softc *);
 void	hme_reset_tx(struct hme_softc *);
@@ -494,7 +491,7 @@ void
 hmeinit(sc)
 	struct hme_softc *sc;
 {
-	u_int32_t c, n;
+	u_int32_t c;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct hme_tcvr *tcvr = sc->sc_tcvr;
 	struct hme_cr *cr = sc->sc_cr;
@@ -553,10 +550,6 @@ hmeinit(sc)
 	txr->cfg |= TXR_CFG_DMAENABLE;
 
 	c = RXR_CFG_DMAENABLE | (HME_RX_OFFSET << 3);
-	/* RX TCP/UDP cksum offset */
-	n = (ETHER_HDR_LEN + sizeof(struct ip)) / 2;
-	n = (n << RXR_CFG_CSUM_SHIFT) & RXR_CFG_CSUMSTART;
-	c |= n;
 #if HME_RX_RING_SIZE == 32
 	c |= RXR_CFG_RINGSIZE32;
 #elif HME_RX_RING_SIZE == 64
@@ -709,101 +702,6 @@ hme_tint(sc)
 	return (1);
 }
 
-/*
- * XXX layering violation
- *
- * If we can have additional csum data member in 'struct pkthdr' for
- * these incomplete checksum offload capable hardware, things would be
- * much simpler. That member variable will carry partial checksum
- * data and it may be evaluated in TCP/UDP input handler after
- * computing pseudo header checksumming.
- */
-void
-hme_rxcksum(struct mbuf *m, u_int32_t flags)
-{
-	struct ether_header *eh;
-	struct ip *ip;
-	struct udphdr *uh;
-	int32_t hlen, len, pktlen;
-	u_int16_t cksum, *opts;
-	u_int32_t temp32;
-	union pseudoh {
-		struct hdr {
-			u_int16_t len;
-			u_int8_t ttl;
-			u_int8_t proto;
-			u_int32_t src;
-			u_int32_t dst;
-		} h;
-		u_int16_t w[6];
-	} ph;
-
-	pktlen = m->m_pkthdr.len;
-	if (pktlen < sizeof(struct ether_header))
-		return;
-	eh = mtod(m, struct ether_header *);
-	if (eh->ether_type != htons(ETHERTYPE_IP))
-		return;
-	ip = (struct ip *)(eh + 1);
-	if (ip->ip_v != IPVERSION)
-		return;
-
-	hlen = ip->ip_hl << 2;
-	pktlen -= sizeof(struct ether_header);
-	if (hlen < sizeof(struct ip))
-		return;
-	if (ntohs(ip->ip_len) < hlen)
-		return;
-	if (ntohs(ip->ip_len) != pktlen) 
-		return;
-	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
-		return;	/* can't handle fragmented packet */
-
-	switch (ip->ip_p) {
-	case IPPROTO_TCP:
-		if (pktlen < (hlen + sizeof(struct tcphdr)))
-			return;
-		break;
-	case IPPROTO_UDP:
-		if (pktlen < (hlen + sizeof(struct udphdr)))
-			return;
-		uh = (struct udphdr *)((caddr_t)ip + hlen);
-		if (uh->uh_sum == 0)
-			return; /* no checksum */
-		break;
-	default:
-		return;
-	}
-
-	cksum = htons(~(flags & HME_RXD_CSUM));
-	/* cksum fixup for IP options */
-	len = hlen - sizeof(struct ip);
-	if (len > 0) {
-		opts = (u_int16_t *)(ip + 1);
-		for (; len > 0; len -= sizeof(u_int16_t), opts++) {
-			temp32 = cksum - *opts;
-			temp32 = (temp32 >> 16) + (temp32 & 65535);
-			cksum = temp32 & 65535;
-		}
-	}
-	/* cksum fixup for pseudo-header, replace with in_cksum_phdr()? */
-	ph.h.len = htons(ntohs(ip->ip_len) - hlen);
-	ph.h.ttl = 0;
-	ph.h.proto = ip->ip_p;
-	ph.h.src = ip->ip_src.s_addr;
-	ph.h.dst = ip->ip_dst.s_addr;
-	temp32 = cksum;
-	opts = &ph.w[0];
-	temp32 += opts[0] + opts[1] + opts[2] + opts[3] + opts[4] + opts[5];
-	temp32 = (temp32 >> 16) + (temp32 & 65535);
-	temp32 += (temp32 >> 16);
-	cksum = ~temp32;
-	if (cksum == 0) {
-		m->m_pkthdr.csum_flags |=
-			M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
-	}
-}
-
 int
 hme_rint(sc)
 	struct hme_softc *sc;
@@ -944,7 +842,6 @@ hme_read(sc, idx, len, flags)
 	}
 
 	ifp->if_ipackets++;
-	hme_rxcksum(m, flags);
 
 #if NBPFILTER > 0
 	/*
