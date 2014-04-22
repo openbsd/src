@@ -30,15 +30,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.74 2014/04/21 13:17:32 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.75 2014/04/22 14:26:26 tedu Exp $
 .\"
-.Dd $Mdocdate: April 21 2014 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
 .Nm calloc ,
-.Nm mallocarray ,
+.Nm reallocarray ,
 .Nm realloc ,
 .Nm free ,
 .Nm cfree
@@ -50,7 +50,7 @@
 .Ft void *
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
-.Fn mallocarray "size_t nmemb" "size_t size"
+.Fn reallocarray "void *ptr" "size_t nmemb" "size_t size"
 .Ft void *
 .Fn realloc "void *ptr" "size_t size"
 .Ft void
@@ -96,10 +96,10 @@ if ((p = malloc(num * size)) == NULL)
 .Pp
 The multiplication may lead to an integer overflow, which can
 be avoided using the extension
-.Fn mallocarray ,
+.Fn reallocarray ,
 as follows:
 .Bd -literal -offset indent
-if ((p = mallocarray(num, size)) == NULL)
+if ((p = reallocarray(NULL, num, size)) == NULL)
 	err(1, "malloc");
 .Ed
 .Pp
@@ -125,6 +125,8 @@ objects, each of whose size is
 .Fa size .
 The space is initialized to zero.
 The use of
+.Fn reallocarray
+or
 .Fn calloc
 is strongly encouraged when allocating multiple sized objects
 in order to avoid possible integer overflows.
@@ -309,11 +311,6 @@ malloc_options = "X";
 .Pp
 Note that this will cause code that is supposed to handle
 out-of-memory conditions gracefully to abort instead.
-.It Cm Z
-.Dq Zero .
-Fill some junk into the area allocated (see
-.Cm J ) ,
-except for the exact length the user asked for, which is zeroed.
 .It Cm <
 .Dq Half the cache size .
 Decrease the size of the free page cache by a factor of two.
@@ -494,6 +491,6 @@ random.
 A rewrite by Otto Moerbeek introducing a new central data structure and more
 randomization appeared in
 .Ox 4.4 .
-.Fn mallocarray
+.Fn reallocarray
 appeared in
 .Ox 5.6 .
