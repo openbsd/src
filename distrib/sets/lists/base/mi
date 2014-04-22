@@ -65,8 +65,6 @@
 ./etc/isakmpd/pubkeys/ipv4
 ./etc/isakmpd/pubkeys/ipv6
 ./etc/isakmpd/pubkeys/ufqdn
-./etc/kerberosV
-./etc/kerberosV/krb5.conf.example
 ./etc/ldap
 ./etc/ldap/certs
 ./etc/magic
@@ -184,7 +182,6 @@
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
-./usr/bin/asn1_compile
 ./usr/bin/at
 ./usr/bin/atq
 ./usr/bin/atrm
@@ -217,7 +214,6 @@
 ./usr/bin/colrm
 ./usr/bin/column
 ./usr/bin/comm
-./usr/bin/compile_et
 ./usr/bin/compress
 ./usr/bin/config_data
 ./usr/bin/corelist
@@ -291,15 +287,8 @@
 ./usr/bin/ipcs
 ./usr/bin/join
 ./usr/bin/jot
-./usr/bin/kcc
-./usr/bin/kdestroy
 ./usr/bin/kdump
 ./usr/bin/keynote
-./usr/bin/kf
-./usr/bin/kgetcred
-./usr/bin/kinit
-./usr/bin/klist
-./usr/bin/krb5-config
 ./usr/bin/ktrace
 ./usr/bin/lam
 ./usr/bin/last
@@ -422,7 +411,6 @@
 ./usr/bin/skeyinfo
 ./usr/bin/skeyinit
 ./usr/bin/skeyprune
-./usr/bin/slc
 ./usr/bin/slogin
 ./usr/bin/sndiod
 ./usr/bin/sort
@@ -436,7 +424,6 @@
 ./usr/bin/ssh-keygen
 ./usr/bin/ssh-keyscan
 ./usr/bin/stat
-./usr/bin/string2key
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sudo
@@ -479,7 +466,6 @@
 ./usr/bin/uudecode
 ./usr/bin/uuencode
 ./usr/bin/vacation
-./usr/bin/verify_krb5_conf
 ./usr/bin/vi
 ./usr/bin/view
 ./usr/bin/vis
@@ -2456,8 +2442,6 @@
 ./usr/libexec/auth/login_activ
 ./usr/libexec/auth/login_chpass
 ./usr/libexec/auth/login_crypto
-./usr/libexec/auth/login_krb5
-./usr/libexec/auth/login_krb5-or-pwd
 ./usr/libexec/auth/login_lchpass
 ./usr/libexec/auth/login_passwd
 ./usr/libexec/auth/login_radius
@@ -2488,14 +2472,6 @@
 ./usr/libexec/fingerd
 ./usr/libexec/ftpd
 ./usr/libexec/getty
-./usr/libexec/hprop
-./usr/libexec/hpropd
-./usr/libexec/ipropd-master
-./usr/libexec/ipropd-slave
-./usr/libexec/kadmind
-./usr/libexec/kdc
-./usr/libexec/kfd
-./usr/libexec/kpasswdd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
 ./usr/libexec/locate.concatdb
@@ -2609,13 +2585,8 @@
 ./usr/sbin/inetd
 ./usr/sbin/installboot
 ./usr/sbin/iostat
-./usr/sbin/iprop-log
 ./usr/sbin/iscsictl
 ./usr/sbin/iscsid
-./usr/sbin/kadmin
-./usr/sbin/kimpersonate
-./usr/sbin/kstash
-./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/ldapctl
 ./usr/sbin/ldapd
@@ -5046,7 +5017,6 @@
 ./var/games/hackdir/save
 ./var/games/phantasia
 ./var/games/save
-./var/kerberosV
 ./var/log
 ./var/log/rdist
 ./var/mail
