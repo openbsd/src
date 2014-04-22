@@ -205,6 +205,7 @@ d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 			if ((ret->length < len) || (ret->data == NULL)) {
 				if (ret->data != NULL)
 					free(ret->data);
+				ret->data = NULL;
 				s = malloc(len + 1);
 				if (s == NULL) {
 					i = ERR_R_MALLOC_FAILURE;
