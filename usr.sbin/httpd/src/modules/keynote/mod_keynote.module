@@ -1,4 +1,0 @@
-Name: keynote_module
-ConfigStart
-    LIBS="$LIBS -lkeynote -lm"
-ConfigEnd
