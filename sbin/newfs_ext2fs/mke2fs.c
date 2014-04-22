@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.6 2013/12/27 19:17:28 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.7 2014/04/22 00:22:41 guenther Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -465,10 +465,9 @@ mke2fs(const char *fsys, int fi, int fo)
 	/*
 	 * Initialize group descriptors
 	 */
-	gd = malloc(sblock.e2fs_ngdb * bsize);
+	gd = calloc(sblock.e2fs_ngdb, bsize);
 	if (gd == NULL)
 		errx(EXIT_FAILURE, "Can't allocate descriptors buffer");
-	memset(gd, 0, sblock.e2fs_ngdb * bsize);
 
 	fbcount = 0;
 	ficount = 0;
