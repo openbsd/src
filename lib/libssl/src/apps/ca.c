@@ -2125,7 +2125,7 @@ certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 	ri = req->req_info;
 	n = ri->subject;
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		if (sk_CONF_VALUE_num(sk) <= i)
 			break;
 

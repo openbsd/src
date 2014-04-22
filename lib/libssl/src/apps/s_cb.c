@@ -201,7 +201,7 @@ set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 		*/
 
 		if (SSL_CTX_use_certificate_file(ctx, cert_file,
-			SSL_FILETYPE_PEM) <= 0) {
+		    SSL_FILETYPE_PEM) <= 0) {
 			BIO_printf(bio_err,
 			    "unable to get certificate from '%s'\n", cert_file);
 			ERR_print_errors(bio_err);
@@ -210,7 +210,7 @@ set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 		if (key_file == NULL)
 			key_file = cert_file;
 		if (SSL_CTX_use_PrivateKey_file(ctx, key_file,
-			SSL_FILETYPE_PEM) <= 0) {
+		    SSL_FILETYPE_PEM) <= 0) {
 			BIO_printf(bio_err,
 			    "unable to get private key from '%s'\n", key_file);
 			ERR_print_errors(bio_err);
@@ -341,7 +341,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 {
 	BIO *bio = arg;
 	const char *str_write_p, *str_version, *str_content_type = "",
-	*str_details1 = "", *str_details2 = "";
+	    *str_details1 = "", *str_details2 = "";
 
 	str_write_p = write_p ? ">>>" : "<<<";
 

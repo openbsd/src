@@ -181,7 +181,8 @@ bad:
 		else if (informat == FORMAT_PEM)
 			crl = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
 		else {
-			BIO_printf(bio_err, "bad input format specified for input crl\n");
+			BIO_printf(bio_err,
+			    "bad input format specified for input crl\n");
 			goto end;
 		}
 		if (crl == NULL) {
@@ -215,7 +216,8 @@ bad:
 		for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
 			certfile = sk_OPENSSL_STRING_value(certflst, i);
 			if (add_certs_from_file(cert_stack, certfile) < 0) {
-				BIO_printf(bio_err, "error loading certificates\n");
+				BIO_printf(bio_err,
+				    "error loading certificates\n");
 				ERR_print_errors(bio_err);
 				goto end;
 			}
@@ -237,7 +239,8 @@ bad:
 	else if (outformat == FORMAT_PEM)
 		i = PEM_write_bio_PKCS7(out, p7);
 	else {
-		BIO_printf(bio_err, "bad output format specified for outfile\n");
+		BIO_printf(bio_err,
+		    "bad output format specified for outfile\n");
 		goto end;
 	}
 	if (!i) {

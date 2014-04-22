@@ -110,7 +110,7 @@ crl_main(int argc, char **argv)
 	int informat, outformat;
 	char *infile = NULL, *outfile = NULL;
 	int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0,
-	 text = 0;
+	    text = 0;
 #ifndef OPENSSL_NO_MD5
 	int hash_old = 0;
 #endif
@@ -235,13 +235,15 @@ bad:
 		if (lookup == NULL)
 			goto end;
 		if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM))
-			X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+			X509_LOOKUP_load_file(lookup, NULL,
+			    X509_FILETYPE_DEFAULT);
 
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
 		if (lookup == NULL)
 			goto end;
 		if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM))
-			X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+			X509_LOOKUP_add_dir(lookup, NULL,
+			    X509_FILETYPE_DEFAULT);
 		ERR_clear_error();
 
 		if (!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
@@ -275,12 +277,13 @@ bad:
 	if (num) {
 		for (i = 1; i <= num; i++) {
 			if (issuer == i) {
-				print_name(bio_out, "issuer=", X509_CRL_get_issuer(x), nmflag);
+				print_name(bio_out, "issuer=",
+				    X509_CRL_get_issuer(x), nmflag);
 			}
 			if (crlnumber == i) {
 				ASN1_INTEGER *crlnum;
-				crlnum = X509_CRL_get_ext_d2i(x, NID_crl_number,
-				    NULL, NULL);
+				crlnum = X509_CRL_get_ext_d2i(x,
+				    NID_crl_number, NULL, NULL);
 				BIO_printf(bio_out, "crlNumber=");
 				if (crlnum) {
 					i2a_ASN1_INTEGER(bio_out, crlnum);
@@ -296,8 +299,7 @@ bad:
 #ifndef OPENSSL_NO_MD5
 			if (hash_old == i) {
 				BIO_printf(bio_out, "%08lx\n",
-				    X509_NAME_hash_old(
-					X509_CRL_get_issuer(x)));
+				    X509_NAME_hash_old(X509_CRL_get_issuer(x)));
 			}
 #endif
 			if (lastupdate == i) {
@@ -328,7 +330,7 @@ bad:
 				    OBJ_nid2sn(EVP_MD_type(digest)));
 				for (j = 0; j < (int) n; j++) {
 					BIO_printf(bio_out, "%02X%c", md[j],
-					    (j + 1 == (int) n) ? '\n' : ':');
+					    (j + 1 == (int)n) ? '\n' : ':');
 				}
 			}
 		}
@@ -359,7 +361,8 @@ bad:
 	else if (outformat == FORMAT_PEM)
 		i = PEM_write_bio_X509_CRL(out, x);
 	else {
-		BIO_printf(bio_err, "bad output format specified for outfile\n");
+		BIO_printf(bio_err,
+		    "bad output format specified for outfile\n");
 		goto end;
 	}
 	if (!i) {
@@ -405,7 +408,8 @@ load_crl(char *infile, int format)
 	else if (format == FORMAT_PEM)
 		x = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
 	else {
-		BIO_printf(bio_err, "bad input format specified for input crl\n");
+		BIO_printf(bio_err,
+		    "bad input format specified for input crl\n");
 		goto end;
 	}
 	if (x == NULL) {
@@ -413,6 +417,7 @@ load_crl(char *infile, int format)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
 end:
 	BIO_free(in);
 	return (x);
