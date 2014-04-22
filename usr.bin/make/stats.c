@@ -1,4 +1,4 @@
-/* $OpenBSD: stats.c,v 1.10 2010/07/19 19:46:44 espie Exp $ */
+/* $OpenBSD: stats.c,v 1.11 2014/04/22 12:21:17 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -58,120 +58,119 @@ static bool mmapped = false;
 static float
 average_runs(unsigned long val)
 {
-    return (float)val / STAT_INVOCATIONS;
+	return (float)val / STAT_INVOCATIONS;
 }
 
 static void
 print_stats(void)
 {
-    struct rusage ru;
+	struct rusage ru;
 
-    if (getrusage(RUSAGE_SELF, &ru) != -1) {
-	STAT_USER_SECONDS += ru.ru_utime.tv_sec;
-	STAT_USER_MS += ru.ru_utime.tv_usec;
-	if (STAT_USER_MS > 1000000) {
-	    STAT_USER_MS -= 1000000;
-	    STAT_USER_SECONDS++;
+	if (getrusage(RUSAGE_SELF, &ru) != -1) {
+		STAT_USER_SECONDS += ru.ru_utime.tv_sec;
+		STAT_USER_MS += ru.ru_utime.tv_usec;
+		if (STAT_USER_MS > 1000000) {
+			STAT_USER_MS -= 1000000;
+			STAT_USER_SECONDS++;
+		}
+		STAT_SYS_SECONDS += ru.ru_stime.tv_sec;
+		STAT_SYS_MS += ru.ru_stime.tv_usec;
+		if (STAT_SYS_MS > 1000000) {
+			STAT_SYS_MS -= 1000000;
+			STAT_SYS_SECONDS++;
+		}
 	}
-	STAT_SYS_SECONDS += ru.ru_stime.tv_sec;
-	STAT_SYS_MS += ru.ru_stime.tv_usec;
-	if (STAT_SYS_MS > 1000000) {
-	    STAT_SYS_MS -= 1000000;
-	    STAT_SYS_SECONDS++;
-	}
-    }
-    fprintf(stderr, "Make runs: %lu\n", STAT_INVOCATIONS);
-    fprintf(stderr, "Time user: %lu.%06lu, sys %lu.%06lu\n",
-	STAT_USER_SECONDS, STAT_USER_MS,
-	STAT_SYS_SECONDS, STAT_SYS_MS);
+	fprintf(stderr, "Make runs: %lu\n", STAT_INVOCATIONS);
+	fprintf(stderr, "Time user: %lu.%06lu, sys %lu.%06lu\n",
+	    STAT_USER_SECONDS, STAT_USER_MS,
+	    STAT_SYS_SECONDS, STAT_SYS_MS);
 #ifdef STATS_VAR_LOOKUP
 	/* to get the average total of MAXSIZE, we need this value */
-    STAT_VAR_POWER +=
-	STAT_VAR_HASH_MAXSIZE * STAT_VAR_HASH_CREATION;
-    fprintf(stderr, "Var finds: %f, lookups: %f, average: %f, max: %lu\n",
-	average_runs(STAT_VAR_FIND),
-	average_runs(STAT_VAR_SEARCHES),
-	(float)STAT_VAR_COUNT/STAT_VAR_SEARCHES,
-	STAT_VAR_MAXCOUNT);
-    fprintf(stderr, "Average hash: %f, creation: %f, from env %f\n",
-	average_runs(STAT_VAR_HASH_CREATION),
-	average_runs(STAT_VAR_CREATION),
-	average_runs(STAT_VAR_FROM_ENV));
-    fprintf(stderr, "Local hash max: %lu, global hash max: %lu, average local: %f\n",
-	STAT_VAR_HASH_MAXSIZE,
-	STAT_VAR_GHASH_MAXSIZE,
-	(float)STAT_VAR_POWER/STAT_VAR_HASH_CREATION);
+	STAT_VAR_POWER +=
+	    STAT_VAR_HASH_MAXSIZE * STAT_VAR_HASH_CREATION;
+	fprintf(stderr, "Var finds: %f, lookups: %f, average: %f, max: %lu\n",
+	    average_runs(STAT_VAR_FIND),
+	    average_runs(STAT_VAR_SEARCHES),
+	    (float)STAT_VAR_COUNT/STAT_VAR_SEARCHES,
+	    STAT_VAR_MAXCOUNT);
+	fprintf(stderr, "Average hash: %f, creation: %f, from env %f\n",
+	    average_runs(STAT_VAR_HASH_CREATION),
+	    average_runs(STAT_VAR_CREATION),
+	    average_runs(STAT_VAR_FROM_ENV));
+	fprintf(stderr, "Local hash max: %lu, global hash max: %lu, average local: %f\n",
+	    STAT_VAR_HASH_MAXSIZE,
+	    STAT_VAR_GHASH_MAXSIZE,
+	    (float)STAT_VAR_POWER/STAT_VAR_HASH_CREATION);
 #endif
 #ifdef STATS_GN_CREATION
-    fprintf(stderr, "Average GN: %f\n", average_runs(STAT_GN_COUNT));
+	fprintf(stderr, "Average GN: %f\n", average_runs(STAT_GN_COUNT));
 #endif
 #ifdef STATS_SUFF
-    fprintf(stderr, "Average Suffix lookup: %f, transforms: %f\n",
-    	average_runs(STAT_SUFF_LOOKUP_NAME),
-	average_runs(STAT_TRANSFORM_LOOKUP_NAME));
+	fprintf(stderr, "Average Suffix lookup: %f, transforms: %f\n",
+	    average_runs(STAT_SUFF_LOOKUP_NAME),
+	    average_runs(STAT_TRANSFORM_LOOKUP_NAME));
 #endif
 #ifdef STATS_BUF
-    fprintf(stderr, "Buf tot: %f, def: %f, exp %f, weird %f, bad %f\n",
-	average_runs(STAT_TOTAL_BUFS),
-	average_runs(STAT_DEFAULT_BUFS),
-	average_runs(STAT_BUFS_EXPANSION),
-	average_runs(STAT_WEIRD_BUFS),
-	average_runs(STAT_WEIRD_INEFFICIENT));
+	fprintf(stderr, "Buf tot: %f, def: %f, exp %f, weird %f, bad %f\n",
+	    average_runs(STAT_TOTAL_BUFS),
+	    average_runs(STAT_DEFAULT_BUFS),
+	    average_runs(STAT_BUFS_EXPANSION),
+	    average_runs(STAT_WEIRD_BUFS),
+	    average_runs(STAT_WEIRD_INEFFICIENT));
 #endif
 #ifdef STATS_HASH
-    fprintf(stderr, "Hashes new: %f, exp: %f, lookup %f, l: %f, +: %f, ent : %f\n",
-	average_runs(STAT_HASH_CREATION),
-	average_runs(STAT_HASH_EXPAND),
-	average_runs(STAT_HASH_LOOKUP),
-	(float)STAT_HASH_LENGTH/STAT_HASH_LOOKUP,
-	(float)STAT_HASH_POSITIVE/STAT_HASH_LOOKUP,
-	(float)STAT_HASH_ENTRIES/STAT_HASH_SIZE);
+	fprintf(stderr, "Hashes new: %f, exp: %f, lookup %f, l: %f, +: %f, ent : %f\n",
+	    average_runs(STAT_HASH_CREATION),
+	    average_runs(STAT_HASH_EXPAND),
+	    average_runs(STAT_HASH_LOOKUP),
+	    (float)STAT_HASH_LENGTH/STAT_HASH_LOOKUP,
+	    (float)STAT_HASH_POSITIVE/STAT_HASH_LOOKUP,
+	    (float)STAT_HASH_ENTRIES/STAT_HASH_SIZE);
 #endif
 #ifdef STATS_GROW
-    fprintf(stderr, "Grow: %f\n", average_runs(STAT_GROWARRAY));
+	fprintf(stderr, "Grow: %f\n", average_runs(STAT_GROWARRAY));
 #endif
-    if (mmapped)
-	munmap(statarray, STAT_NUMBER * sizeof(unsigned long));
+	if (mmapped)
+		munmap(statarray, STAT_NUMBER * sizeof(unsigned long));
 }
 
 void
 Init_Stats(void)
 {
-    char *name;
-    int fd;
+	char *name;
+	int fd;
 
 	/* try to get ahold of a stats collecting file */
-    name = getenv("MAKESTATS");
-    if (name) {
-	while ((fd = open(name, O_RDWR)) == -1) {
-		/* if collecting file does not already exist, fill it with
-		 * zeros (so all stats starting values should be 0) */
-	    unsigned long n;
-	    int i;
-	    FILE *f;
+	name = getenv("MAKESTATS");
+	if (name) {
+		while ((fd = open(name, O_RDWR)) == -1) {
+			/* if collecting file does not already exist, fill it with
+			 * zeros (so all stats starting values should be 0) */
+			unsigned long n;
+			int i;
+			FILE *f;
 
-	    f = fopen(name, "w");
+			f = fopen(name, "w");
 
-	    n = 0;
-	    for (i = 0; i < STAT_NUMBER; i++)
-		fwrite(&n, sizeof(unsigned long), 1, f);
-	    fclose(f);
-	}
+			n = 0;
+			for (i = 0; i < STAT_NUMBER; i++)
+				fwrite(&n, sizeof(unsigned long), 1, f);
+			fclose(f);
+		}
 
-    /* either we've got the file -> share it across makes */
-	if (fd) {
-	    statarray = mmap(0, STAT_NUMBER * sizeof(unsigned long),
-		PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	    if (statarray == MAP_FAILED)
-		exit(1);
-	    mmapped = true;
-	}
-    } else
-    /* or we don't -> simple stats gathering */
-	statarray = ecalloc(STAT_NUMBER, sizeof(unsigned long));
-    STAT_INVOCATIONS++;
-    atexit(print_stats);
+		/* either we've got the file -> share it across makes */
+		if (fd) {
+			statarray = mmap(0, STAT_NUMBER * sizeof(unsigned long),
+			    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+			if (statarray == MAP_FAILED)
+				exit(1);
+			mmapped = true;
+		}
+	} else
+		/* or we don't -> simple stats gathering */
+		statarray = ecalloc(STAT_NUMBER, sizeof(unsigned long));
+	STAT_INVOCATIONS++;
+	atexit(print_stats);
 }
 
 #endif
-
