@@ -109,7 +109,6 @@
  *
  */
 
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -146,7 +145,7 @@ char *default_config_file = NULL;
 CONF *config = NULL;
 BIO *bio_err = NULL;
 
-static void 
+static void
 lock_dbg_cb(int mode, int type, const char *file, int line)
 {
 	static int modes[CRYPTO_NUM_LOCKS];	/* = {0, 0, ... } */
@@ -198,7 +197,7 @@ err:
 
 #define ARGV Argv
 
-int 
+int
 main(int Argc, char *ARGV[])
 {
 	ARGS arg;
@@ -271,8 +270,8 @@ main(int Argc, char *ARGV[])
 	config = NCONF_new(NULL);
 	i = NCONF_load(config, p, &errline);
 	if (i == 0) {
-		if (ERR_GET_REASON(ERR_peek_last_error())
-		    == CONF_R_NO_SUCH_FILE) {
+		if (ERR_GET_REASON(ERR_peek_last_error()) ==
+		    CONF_R_NO_SUCH_FILE) {
 			BIO_printf(bio_err,
 			    "WARNING: can't open config file: %s\n", p);
 			ERR_clear_error();
@@ -350,6 +349,7 @@ main(int Argc, char *ARGV[])
 	}
 	BIO_printf(bio_err, "bad exit\n");
 	ret = 1;
+
 end:
 	if (to_free)
 		free(to_free);
@@ -380,7 +380,7 @@ end:
 #define LIST_PUBLIC_KEY_ALGORITHMS "list-public-key-algorithms"
 
 
-static int 
+static int
 do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 {
 	FUNCTION f, *fp;
@@ -416,16 +416,16 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 		BIO_free_all(bio_stdout);
 		goto end;
 	} else if ((strcmp(argv[0], "quit") == 0) ||
-		    (strcmp(argv[0], "q") == 0) ||
-		    (strcmp(argv[0], "exit") == 0) ||
+	    (strcmp(argv[0], "q") == 0) ||
+	    (strcmp(argv[0], "exit") == 0) ||
 	    (strcmp(argv[0], "bye") == 0)) {
 		ret = -1;
 		goto end;
 	} else if ((strcmp(argv[0], LIST_STANDARD_COMMANDS) == 0) ||
-		    (strcmp(argv[0], LIST_MESSAGE_DIGEST_COMMANDS) == 0) ||
-		    (strcmp(argv[0], LIST_MESSAGE_DIGEST_ALGORITHMS) == 0) ||
-		    (strcmp(argv[0], LIST_CIPHER_COMMANDS) == 0) ||
-		    (strcmp(argv[0], LIST_CIPHER_ALGORITHMS) == 0) ||
+	    (strcmp(argv[0], LIST_MESSAGE_DIGEST_COMMANDS) == 0) ||
+	    (strcmp(argv[0], LIST_MESSAGE_DIGEST_ALGORITHMS) == 0) ||
+	    (strcmp(argv[0], LIST_CIPHER_COMMANDS) == 0) ||
+	    (strcmp(argv[0], LIST_CIPHER_ALGORITHMS) == 0) ||
 	    (strcmp(argv[0], LIST_PUBLIC_KEY_ALGORITHMS) == 0)) {
 		int list_type;
 		BIO *bio_stdout;
@@ -463,7 +463,8 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 		ret = 0;
 		goto end;
 	} else {
-		BIO_printf(bio_err, "openssl:Error: '%s' is an invalid command.\n",
+		BIO_printf(bio_err,
+		    "openssl:Error: '%s' is an invalid command.\n",
 		    argv[0]);
 		BIO_printf(bio_err, "\nStandard commands");
 		i = 0;
@@ -505,7 +506,7 @@ end:
 	return (ret);
 }
 
-static int 
+static int
 SortFnByName(const void *_f1, const void *_f2)
 {
 	const FUNCTION *f1 = _f1;
@@ -516,10 +517,11 @@ SortFnByName(const void *_f1, const void *_f2)
 	return strcmp(f1->name, f2->name);
 }
 
-static void 
+static void
 list_pkey(BIO * out)
 {
 	int i;
+
 	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
 		const EVP_PKEY_ASN1_METHOD *ameth;
 		int pkey_id, pkey_base_id, pkey_flags;
@@ -546,9 +548,9 @@ list_pkey(BIO * out)
 	}
 }
 
-static void 
-list_cipher_fn(const EVP_CIPHER * c,
-    const char *from, const char *to, void *arg)
+static void
+list_cipher_fn(const EVP_CIPHER * c, const char *from, const char *to,
+    void *arg)
 {
 	if (c)
 		BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
@@ -561,15 +563,14 @@ list_cipher_fn(const EVP_CIPHER * c,
 	}
 }
 
-static void 
+static void
 list_cipher(BIO * out)
 {
 	EVP_CIPHER_do_all_sorted(list_cipher_fn, out);
 }
 
-static void 
-list_md_fn(const EVP_MD * m,
-    const char *from, const char *to, void *arg)
+static void
+list_md_fn(const EVP_MD * m, const char *from, const char *to, void *arg)
 {
 	if (m)
 		BIO_printf(arg, "%s\n", EVP_MD_name(m));
@@ -582,33 +583,38 @@ list_md_fn(const EVP_MD * m,
 	}
 }
 
-static void 
+static void
 list_md(BIO * out)
 {
 	EVP_MD_do_all_sorted(list_md_fn, out);
 }
 
-static int 
+static int
 function_cmp(const FUNCTION * a, const FUNCTION * b)
 {
 	return strncmp(a->name, b->name, 8);
 }
-static 
-IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
-	static unsigned long function_hash(const FUNCTION * a)
+
+static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
+
+static unsigned long
+function_hash(const FUNCTION * a)
 {
 	return lh_strhash(a->name);
 }
-static 
-IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
-	static LHASH_OF(FUNCTION) * prog_init(void)
+
+static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
+
+static LHASH_OF(FUNCTION) *
+prog_init(void)
 {
 	LHASH_OF(FUNCTION) * ret;
 	FUNCTION *f;
 	size_t i;
 
 	/* Purely so it looks nice when the user hits ? */
-	for (i = 0, f = functions; f->name != NULL; ++f, ++i);
+	for (i = 0, f = functions; f->name != NULL; ++f, ++i)
+		;
 	qsort(functions, i, sizeof *functions, SortFnByName);
 
 	if ((ret = lh_FUNCTION_new()) == NULL)
