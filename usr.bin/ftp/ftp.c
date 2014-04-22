@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.84 2013/12/20 13:44:51 jca Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.85 2014/04/22 20:48:41 tedu Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -1408,13 +1408,11 @@ reinit:
 			if (data_addr.su_family != AF_INET) {
 				fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (code / 10 == 22 && code != 227) {
 				fputs("wrong server: return code must be 227\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			error = sscanf(pasv, "%u,%u,%u,%u,%u,%u",
@@ -1423,10 +1421,8 @@ reinit:
 			if (error != 6) {
 				fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
-			error = 0;
 			memset(&data_addr, 0, sizeof(data_addr));
 			data_addr.su_family = AF_INET;
 			data_addr.su_len = sizeof(struct sockaddr_in);
@@ -1437,7 +1433,6 @@ reinit:
 			if (code / 10 == 22 && code != 228) {
 				fputs("wrong server: return code must be 228\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			switch (data_addr.su_family) {
@@ -1450,7 +1445,6 @@ reinit:
 				if (error != 9) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 				if (af != 4 || hal != 4 || pal != 2) {
@@ -1460,7 +1454,6 @@ reinit:
 					goto bad;
 				}
 
-				error = 0;
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET;
 				data_addr.su_len = sizeof(struct sockaddr_in);
@@ -1481,17 +1474,14 @@ reinit:
 				if (error != 21) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 				if (af != 6 || hal != 16 || pal != 2) {
 					fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 
-				error = 0;
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
@@ -1506,7 +1496,8 @@ reinit:
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
 			default:
-				error = 1;
+				fputs("Bad family!\n", ttyout);
+				goto bad;
 			}
 		} else if (strcmp(pasvcmd, "EPSV") == 0) {
 			char delim[4];
@@ -1515,20 +1506,17 @@ reinit:
 			if (code / 10 == 22 && code != 229) {
 				fputs("wrong server: return code must be 229\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (sscanf(pasv, "%c%c%c%d%c", &delim[0],
 					&delim[1], &delim[2], &port[1],
 					&delim[3]) != 5) {
 				fputs("parse error!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (delim[0] != delim[1] || delim[0] != delim[2]
 			 || delim[0] != delim[3]) {
 				fputs("parse error!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			data_addr = hisctladdr;
