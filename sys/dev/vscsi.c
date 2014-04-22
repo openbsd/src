@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.28 2014/01/22 01:21:33 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.29 2014/04/22 08:48:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <sys/pool.h>
+#include <sys/task.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/selinfo.h>
@@ -106,7 +107,9 @@ struct scsi_adapter vscsi_switch = {
 int		vscsi_i2t(struct vscsi_softc *, struct vscsi_ioc_i2t *);
 int		vscsi_data(struct vscsi_softc *, struct vscsi_ioc_data *, int);
 int		vscsi_t2i(struct vscsi_softc *, struct vscsi_ioc_t2i *);
-
+int		vscsi_devevent(struct vscsi_softc *, u_long,
+		    struct vscsi_ioc_devevent *);
+void		vscsi_devevent_task(void *, void *);
 void		vscsi_done(struct vscsi_softc *, struct vscsi_ccb *);
 
 void *		vscsi_ccb_get(void *);
@@ -292,7 +295,6 @@ int
 vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	struct vscsi_softc		*sc = DEV2SC(dev);
-	struct vscsi_ioc_devevent	*de = (struct vscsi_ioc_devevent *)addr;
 	int				read = 0;
 	int				err = 0;
 
@@ -317,12 +319,9 @@ vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case VSCSI_REQPROBE:
-		err = scsi_req_probe(sc->sc_scsibus, de->target, de->lun);
-		break;
-
 	case VSCSI_REQDETACH:
-		err = scsi_req_detach(sc->sc_scsibus, de->target, de->lun,
-		    DETACH_FORCE);
+		err = vscsi_devevent(sc, cmd,
+		    (struct vscsi_ioc_devevent *)addr);
 		break;
 
 	default:
@@ -471,6 +470,67 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 	vscsi_done(sc, ccb);
 
 	return (rv);
+}
+
+struct vscsi_devevent_task {
+	struct task t;
+	struct vscsi_ioc_devevent de;
+	u_long cmd;
+};
+
+int
+vscsi_devevent(struct vscsi_softc *sc, u_long cmd,
+    struct vscsi_ioc_devevent *de)
+{
+	struct vscsi_devevent_task *dt;
+
+	dt = malloc(sizeof(*dt), M_TEMP, M_WAITOK | M_CANFAIL);
+	if (dt == NULL)
+		return (ENOMEM);
+
+	task_set(&dt->t, vscsi_devevent_task, sc, dt);
+	dt->de = *de;
+	dt->cmd = cmd;
+
+	device_ref(&sc->sc_dev);
+	task_add(systq, &dt->t);
+
+	return (0);
+}
+
+void
+vscsi_devevent_task(void *xsc, void *xdt)
+{
+	struct vscsi_softc *sc = xsc;
+	struct vscsi_devevent_task *dt = xdt;
+	int state;
+
+	mtx_enter(&sc->sc_state_mtx);
+	state = sc->sc_state;
+	mtx_leave(&sc->sc_state_mtx);
+
+	if (state != VSCSI_S_RUNNING)
+		goto gone;
+
+	switch (dt->cmd) {
+	case VSCSI_REQPROBE:
+		scsi_probe(sc->sc_scsibus, dt->de.target, dt->de.lun);
+		break;
+	case VSCSI_REQDETACH:
+		scsi_detach(sc->sc_scsibus, dt->de.target, dt->de.lun,
+		    DETACH_FORCE);
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		panic("unexpected vscsi_devevent cmd");
+		/* NOTREACHED */
+	}
+#endif
+
+gone:
+	device_unref(&sc->sc_dev);
+
+	free(dt, M_TEMP);
 }
 
 int
