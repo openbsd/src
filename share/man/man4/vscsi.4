@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vscsi.4,v 1.10 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: vscsi.4,v 1.11 2014/04/22 10:25:12 dlg Exp $
 .\"
 .\" Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: April 22 2014 $
 .Dt VSCSI 4
 .Os
 .Sh NAME
@@ -82,7 +82,8 @@ struct vscsi_ioc_t2i {
 	int			status;
 #define VSCSI_STAT_DONE		0
 #define VSCSI_STAT_SENSE	1
-#define VSCSI_STAT_ERR		2
+#define VSCSI_STAT_RESET	2
+#define VSCSI_STAT_ERR		3
 	struct scsi_sense_data	sense;
 };
 .Ed
