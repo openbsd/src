@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.75 2014/04/22 14:26:26 tedu Exp $
+.\"	$OpenBSD: malloc.3,v 1.76 2014/04/22 15:02:16 jmc Exp $
 .\"
 .Dd $Mdocdate: April 22 2014 $
 .Dt MALLOC 3
@@ -321,7 +321,7 @@ Increase the size of the free page cache by a factor of two.
 .Pp
 So to set a systemwide reduction of the cache to a quarter of the
 default size and use guard pages:
-.Dl # ln -s 'G\*(Lt\*(Lt' /etc/malloc.conf
+.Dl # ln -s 'G<<' /etc/malloc.conf
 .Pp
 The flags are mostly for testing and debugging.
 If a program changes behavior if any of these options (except
@@ -333,7 +333,7 @@ The default number of free pages cached is 64.
 .Sh RETURN VALUES
 The
 .Fn malloc ,
-.Fn mallocarray ,
+.Fn reallocarray ,
 and
 .Fn calloc
 functions return a pointer to the allocated space if successful; otherwise,
