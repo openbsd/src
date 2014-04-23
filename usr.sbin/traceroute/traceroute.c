@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.116 2014/04/23 08:55:42 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.117 2014/04/23 08:58:26 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -263,7 +263,8 @@ void build_probe4(int, u_int8_t, int);
 void send_probe(int, u_int8_t, int, struct sockaddr *);
 int packet_ok(int, struct msghdr *, int, int, int);
 int packet_ok4(struct msghdr *, int, int, int);
-void icmp_code(int, int *, int *);
+void icmp_code(int, int, int *, int *);
+void icmp4_code(int, int *, int *);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
 void print(struct sockaddr *, int, const char *);
@@ -701,7 +702,8 @@ main(int argc, char *argv[])
 				/* time exceeded in transit */
 				if (i == -1)
 					break;
-				icmp_code(i - 1, &got_there, &unreachable);
+				icmp_code(to->sa_family, i - 1, &got_there,
+				    &unreachable);
 				break;
 			}
 			if (cc == 0) {
@@ -1112,8 +1114,20 @@ print(struct sockaddr *from, int cc, const char *to)
 		printf(" %d bytes to %s", cc, to);
 }
 
+void icmp_code(int af, int code, int *got_there, int *unreachable)
+{
+	switch (af) {
+	case AF_INET:
+		return icmp4_code(code, got_there, unreachable);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", af);
+		break;
+	}
+}
+
 void
-icmp_code(int code, int *got_there, int *unreachable)
+icmp4_code(int code, int *got_there, int *unreachable)
 {
 	struct ip *ip = (struct ip *)packet;
 
