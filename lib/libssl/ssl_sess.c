@@ -756,10 +756,10 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 
 #ifndef OPENSSL_NO_KRB5
 		if (s->kssl_ctx && !s->kssl_ctx->client_princ &&
-			session->krb5_client_princ_len > 0) {
+		    session->krb5_client_princ_len > 0) {
 			s->kssl_ctx->client_princ = malloc(session->krb5_client_princ_len + 1);
 			memcpy(s->kssl_ctx->client_princ, session->krb5_client_princ,
-			session->krb5_client_princ_len);
+			    session->krb5_client_princ_len);
 			s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '\0';
 		}
 #endif /* OPENSSL_NO_KRB5 */
