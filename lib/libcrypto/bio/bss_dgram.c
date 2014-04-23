@@ -331,13 +331,7 @@ dgram_read(BIO *b, char *out, int outl)
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
 	struct	{
-		/*
-		 * See commentary in b_sock.c. <appro>
-		 */
-		union	{
-			size_t s;
-			int i;
-		} len;
+		socklen_t len;
 		union	{
 			struct sockaddr sa;
 			struct sockaddr_in sa_in;
@@ -345,18 +339,13 @@ dgram_read(BIO *b, char *out, int outl)
 		} peer;
 	} sa;
 
-	sa.len.s = 0;
-	sa.len.i = sizeof(sa.peer);
+	sa.len = sizeof(sa.peer);
 
 	if (out != NULL) {
 		errno = 0;
 		memset(&sa.peer, 0x00, sizeof(sa.peer));
 		dgram_adjust_rcv_timeout(b);
-		ret = recvfrom(b->num, out, outl, 0, &sa.peer.sa,(void *)&sa.len);
-		if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
-			OPENSSL_assert(sa.len.s <= sizeof(sa.peer));
-			sa.len.i = (int)sa.len.s;
-		}
+		ret = recvfrom(b->num, out, outl, 0, &sa.peer.sa, &sa.len);
 
 		if (! data->connected  && ret >= 0)
 			BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &sa.peer);

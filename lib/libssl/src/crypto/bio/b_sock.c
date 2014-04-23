@@ -452,31 +452,7 @@ BIO_accept(int sock, char **addr)
 	char *p, *tmp;
 
 	struct {
-		/*
-		 * As for following union. Trouble is that there are platforms
-		 * that have socklen_t and there are platforms that don't, on
-		 * some platforms socklen_t is int and on some size_t. So what
-		 * one can do? One can cook #ifdef spaghetti, which is nothing
-		 * but masochistic. Or one can do union between int and size_t.
-		 * One naturally does it primarily for 64-bit platforms where
-		 * sizeof(int) != sizeof(size_t). But would it work? Note that
-		 * if size_t member is initialized to 0, then later int member
-		 * assignment naturally does the job on little-endian platforms
-		 * regardless accept's expectations! What about big-endians?
-		 * If accept expects int*, then it works, and if size_t*, then
-		 * length value would appear as unreasonably large. But this
-		 * won't prevent it from filling in the address structure. The
-		 * trouble of course would be if accept returns more data than
-		 * actual buffer can accomodate and overwrite stack... That's
-		 * where early OPENSSL_assert comes into picture. Besides, the
-		 * only 64-bit big-endian platform found so far that expects
-		 * size_t* is HP-UX, where stack grows towards higher address.
-		 * <appro>
-		 */
-		union {
-			size_t s;
-			int i;
-		} len;
+		socklen_t len;
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sa_in;
@@ -484,15 +460,9 @@ BIO_accept(int sock, char **addr)
 		} from;
 	} sa;
 
-	sa.len.s = 0;
-	sa.len.i = sizeof(sa.from);
+	sa.len = sizeof(sa.from);
 	memset(&sa.from, 0, sizeof(sa.from));
-	ret = accept(sock, &sa.from.sa, (void *)&sa.len);
-	if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
-		OPENSSL_assert(sa.len.s <= sizeof(sa.from));
-		sa.len.i = (int)sa.len.s;
-		/* use sa.len.i from this point */
-	}
+	ret = accept(sock, &sa.from.sa, &sa.len);
 	if (ret == -1) {
 		if (BIO_sock_should_retry(ret))
 			return -2;
@@ -511,7 +481,7 @@ BIO_accept(int sock, char **addr)
 		static union {
 			void *p;
 			int (*f)(const struct sockaddr *,
-			size_t/*socklen_t*/, char *, size_t,
+			socklen_t, char *, size_t,
 			    char *, size_t, int);
 		} p_getnameinfo = {NULL};
 		/* 2nd argument to getnameinfo is specified to
@@ -527,7 +497,7 @@ BIO_accept(int sock, char **addr)
 		if (p_getnameinfo.p == (void *) - 1)
 			break;
 
-		if ((*p_getnameinfo.f)(&sa.from.sa, sa.len.i, h, sizeof(h),
+		if ((*p_getnameinfo.f)(&sa.from.sa, sa.len, h, sizeof(h),
 		    s, sizeof(s), NI_NUMERICHOST|NI_NUMERICSERV))
 			break;
 		nl = strlen(h) + strlen(s) + 2;
