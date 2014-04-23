@@ -898,8 +898,8 @@ kssl_ctx_setprinc(KSSL_CTX *kssl_ctx, int which, krb5_data *realm,
 		return KSSL_CTX_ERR;
 		break;
 	}
-	if (*princ)
-		free(*princ);
+	free(*princ);
+	*princ = NULL;
 
 	/* Add up all the entity->lengths */
 	length = 0;
@@ -960,18 +960,11 @@ kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
 		return KSSL_CTX_ERR;
 		break;
 	}
-	if (*string)
-		free(*string);
+	free(*string);
+	*string = NULL;
 
-	if (!text) {
-		*string = '\0';
-		return KSSL_CTX_OK;
-	}
-
-	if ((*string = calloc(1, strlen(text) + 1)) == NULL)
+	if ((*string = strdup(text ? text : "")) == NULL)
 		return KSSL_CTX_ERR;
-	else
-		memcpy(*string, text, strlen(text) + 1);
 
 	return KSSL_CTX_OK;
 }
@@ -993,6 +986,7 @@ kssl_ctx_setkey(KSSL_CTX *kssl_ctx, krb5_keyblock *session)
 	if (kssl_ctx->key) {
 		OPENSSL_cleanse(kssl_ctx->key, kssl_ctx->length);
 		free(kssl_ctx->key);
+		kssl_ctx->key = NULL;
 	}
 
 	if (session) {
