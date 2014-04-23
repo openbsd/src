@@ -449,7 +449,7 @@ BIO_accept(int sock, char **addr)
 	int ret = -1;
 	unsigned long l;
 	unsigned short port;
-	char *p;
+	char *p, *tmp;
 
 	struct {
 		/*
@@ -534,11 +534,19 @@ BIO_accept(int sock, char **addr)
 		p = *addr;
 		if (p) {
 			*p = '\0';
-			p = realloc(p, nl);
+			if (!(tmp = realloc(p, nl))) {
+				ret = -1;
+				free(p);
+				*addr = NULL;
+				BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+				goto end;
+			}
+			p = tmp;
 		} else {
 			p = malloc(nl);
 		}
 		if (p == NULL) {
+			ret = -1;
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
 		}
@@ -553,6 +561,7 @@ BIO_accept(int sock, char **addr)
 	port = ntohs(sa.from.sa_in.sin_port);
 	if (*addr == NULL) {
 		if ((p = malloc(24)) == NULL) {
+			ret = -1;
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
 		}
