@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.151 2014/04/23 02:58:06 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.152 2014/04/23 03:20:55 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -244,6 +244,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168DP,      "RTL8168DP/8111DP" },
 	{ RL_HWREV_8168E,       "RTL8168E/8111E" },
 	{ RL_HWREV_8168E_VL,	"RTL8168E/8111E-VL" },
+	{ RL_HWREV_8168EP,	"RTL8168EP/8111EP" },
 	{ RL_HWREV_8169,	"RTL8169" },
 	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
 	{ RL_HWREV_8169_8110SBL, "RTL8169SBL" },
@@ -711,6 +712,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
 		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
 		break;
+	case RL_HWREV_8168EP:
 	case RL_HWREV_8168G:
 	case RL_HWREV_8168G_SPIN4:
 	case RL_HWREV_8168GU:
