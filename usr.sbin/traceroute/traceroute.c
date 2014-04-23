@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.115 2014/04/23 08:50:27 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.116 2014/04/23 08:55:42 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -261,7 +261,8 @@ int wait_for_reply(int, struct msghdr *);
 void dump_packet(void);
 void build_probe4(int, u_int8_t, int);
 void send_probe(int, u_int8_t, int, struct sockaddr *);
-int packet_ok(struct msghdr *, int, int, int);
+int packet_ok(int, struct msghdr *, int, int, int);
+int packet_ok4(struct msghdr *, int, int, int);
 void icmp_code(int, int *, int *);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
@@ -663,7 +664,8 @@ main(int argc, char *argv[])
 			send_probe(++seq, ttl, incflag, to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				i = packet_ok(&rcvmhdr, cc, seq, incflag);
+				i = packet_ok(to->sa_family, &rcvmhdr, cc, seq,
+				    incflag);
 				/* Skip short packet */
 				if (i == 0)
 					continue;
@@ -1002,7 +1004,20 @@ pr_type(u_int8_t t)
 }
 
 int
-packet_ok(struct msghdr *mhdr, int cc,int seq, int iflag)
+packet_ok(int af, struct msghdr *mhdr, int cc, int seq, int iflag)
+{
+	switch (af) {
+	case AF_INET:
+		return packet_ok4(mhdr, cc, seq, iflag);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", af);
+		break;
+	}
+}
+
+int
+packet_ok4(struct msghdr *mhdr, int cc,int seq, int iflag)
 {
 	struct sockaddr_in *from = (struct sockaddr_in *)mhdr->msg_name;
 	struct icmp *icp;
