@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.83 2014/04/23 08:44:50 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.85 2014/04/23 08:53:49 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -337,7 +337,8 @@ main(int argc, char *argv[])
 	int ch, i, on = 1, seq, probe, rcvcmsglen, error, minlen;
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
-	struct sockaddr_in6 from, to;
+	struct sockaddr_in6 from6, to6;
+	struct sockaddr *from, *to;
 	size_t size;
 	u_int8_t hops;
 	long l;
@@ -480,10 +481,14 @@ main(int argc, char *argv[])
 	hints.ai_flags = AI_CANONNAME;
 	if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
-	if (res->ai_addrlen != sizeof(to))
+	if (res->ai_addrlen != sizeof(to6))
 		errx(1, "size of sockaddr mismatch");
 
-	memcpy(&to, res->ai_addr, res->ai_addrlen);
+	to = (struct sockaddr *)&to6;
+	from = (struct sockaddr *)&from6;
+
+	memcpy(to, res->ai_addr, res->ai_addrlen);
+
 	hostname = res->ai_canonname ? strdup(res->ai_canonname) : *argv;
 	if (!hostname)
 		errx(1, "malloc");
@@ -519,8 +524,8 @@ main(int argc, char *argv[])
 	/* initialize msghdr for receiving packets */
 	rcviov[0].iov_base = (caddr_t)packet;
 	rcviov[0].iov_len = sizeof(packet);
-	rcvmhdr.msg_name = (caddr_t)&from;
-	rcvmhdr.msg_namelen = sizeof(from);
+	rcvmhdr.msg_name = (caddr_t)&from6;
+	rcvmhdr.msg_namelen = sizeof(from6);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
 	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
@@ -557,7 +562,7 @@ main(int argc, char *argv[])
 	/*
 	 * Source selection
 	 */
-	bzero(&from, sizeof(from));
+	bzero(&from6, sizeof(from6));
 	if (source) {
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_INET6;
@@ -565,40 +570,40 @@ main(int argc, char *argv[])
 		hints.ai_flags = AI_NUMERICHOST;
 		if ((error = getaddrinfo(source, "0", &hints, &res)))
 			errx(1, "%s: %s", source, gai_strerror(error));
-		if (res->ai_addrlen != sizeof(from))
+		if (res->ai_addrlen != sizeof(from6))
 			errx(1, "size of sockaddr mismatch");
-		memcpy(&from, res->ai_addr, res->ai_addrlen);
+		memcpy(&from6, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 	} else {
 		struct sockaddr_in6 Nxt;
 		int dummy;
 
-		Nxt = to;
+		Nxt = to6;
 		Nxt.sin6_port = htons(DUMMY_PORT);
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(1, "socket");
 		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0)
 			err(1, "connect");
-		len = sizeof(from);
-		if (getsockname(dummy, (struct sockaddr *)&from, &len) < 0)
+		len = sizeof(from6);
+		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
 			err(1, "getsockname");
 		close(dummy);
 	}
 
-	from.sin6_port = htons(0);
-	if (bind(sndsock, (struct sockaddr *)&from, from.sin6_len) < 0)
+	from6.sin6_port = htons(0);
+	if (bind(sndsock, (struct sockaddr *)&from6, from6.sin6_len) < 0)
 		err(1, "bind sndsock");
 
-	len = sizeof(from);
-	if (getsockname(sndsock, (struct sockaddr *)&from, &len) < 0)
+	len = sizeof(from6);
+	if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
 		err(1, "getsockname");
-	srcport = ntohs(from.sin6_port);
+	srcport = ntohs(from6.sin6_port);
 
 	/*
 	 * Message to users
 	 */
-	if (getnameinfo((struct sockaddr *)&to, to.sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
+	if (getnameinfo(to, to->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "traceroute6");
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
@@ -625,21 +630,19 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, hops, incflag, (struct sockaddr*)&to);
+			send_probe(++seq, hops, incflag, to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				i = packet_ok(&rcvmhdr, cc, seq, incflag);
 				/* Skip short packet */
 				if (i == 0)
 					continue;
-				if (!IN6_ARE_ADDR_EQUAL(&from.sin6_addr,
+				if (!IN6_ARE_ADDR_EQUAL(&from6.sin6_addr,
 				    &lastaddr)) {
-					print((struct sockaddr *)
-					    rcvmhdr.msg_name, cc,
-					    rcvpktinfo ?  inet_ntop(AF_INET6,
-					    &rcvpktinfo->ipi6_addr, hbuf,
-					    sizeof(hbuf)) : "?");
-					lastaddr = from.sin6_addr;
+					print(from, cc, rcvpktinfo ? inet_ntop(
+					    AF_INET6, &rcvpktinfo->ipi6_addr,
+					    hbuf, sizeof(hbuf)) : "?");
+					lastaddr = from6.sin6_addr;
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
 				if (ttl_flag)

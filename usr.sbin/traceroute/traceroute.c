@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.114 2014/04/23 08:47:16 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.115 2014/04/23 08:50:27 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -315,6 +315,7 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	size_t size = sizeof(max_ttl);
 	struct sockaddr_in from4, to4;
+	struct sockaddr *from, *to;
 	struct hostent *hp;
 	u_int32_t tmprnd;
 	struct ip *ip, *inner_ip;
@@ -525,7 +526,10 @@ main(int argc, char *argv[])
 	if (res->ai_addrlen != sizeof(to4))
 	    errx(1, "size of sockaddr mismatch");
 
-	memcpy(&to4, res->ai_addr, res->ai_addrlen);
+	to = (struct sockaddr *)&to4;
+	from = (struct sockaddr *)&from4;
+
+	memcpy(to, res->ai_addr, res->ai_addrlen);
 
 	if (!hostname) {
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) : dest;
@@ -634,7 +638,7 @@ main(int argc, char *argv[])
 			err(1, "bind");
 	}
 
-	if (getnameinfo((struct sockaddr *)&to4, to4.sin_len, hbuf,
+	if (getnameinfo(to, to->sa_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "%s to %s (%s)", __progname, hostname, hbuf);
@@ -656,7 +660,7 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to4);
+			send_probe(++seq, ttl, incflag, to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				i = packet_ok(&rcvmhdr, cc, seq, incflag);
@@ -665,7 +669,7 @@ main(int argc, char *argv[])
 					continue;
 				ip = (struct ip *)packet;
 				if (from4.sin_addr.s_addr != lastaddr) {
-					print((struct sockaddr *)&from4,
+					print(from,
 					    cc - (ip->ip_hl << 2),
 					    inet_ntop(AF_INET, &ip->ip_dst,
 					    hbuf, sizeof(hbuf)));
