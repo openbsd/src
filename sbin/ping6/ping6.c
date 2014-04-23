@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.88 2014/01/10 21:57:44 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.89 2014/04/23 18:16:36 jca Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -250,11 +250,8 @@ main(int argc, char *argv[])
 {
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
-	int timeout;
 	struct addrinfo hints;
-	struct pollfd fdmaskp[1];
-	int cc, i;
-	int ch, hold, packlen, preload, optval, ret_ga;
+	int ch, hold, i, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	const char *errstr;
@@ -887,12 +884,15 @@ main(int argc, char *argv[])
 #endif
 
 	for (;;) {
-		struct msghdr m;
+		struct msghdr	m;
 		union {
 			struct cmsghdr hdr;
 			u_char buf[CMSG_SPACE(1024)];
-		} cmsgbuf;
-		struct iovec iov[2];
+		}		cmsgbuf;
+		struct iovec	iov[2];
+		struct pollfd	pfd;
+		ssize_t		cc;
+		int		ret, timeout;
 
 		/* signal handling */
 		if (seenalrm) {
@@ -918,16 +918,18 @@ main(int argc, char *argv[])
 			timeout = 10;
 		} else
 			timeout = INFTIM;
-		fdmaskp[0].fd = s;
-		fdmaskp[0].events = POLLIN;
-		cc = poll(fdmaskp, 1, timeout);
-		if (cc < 0) {
+
+		pfd.fd = s;
+		pfd.events = POLLIN;
+
+		ret = poll(&pfd, 1, timeout);
+		if (ret < 0) {
 			if (errno != EINTR) {
 				warn("poll");
 				sleep(1);
 			}
 			continue;
-		} else if (cc == 0)
+		} else if (ret == 0)
 			continue;
 
 		m.msg_name = &from;

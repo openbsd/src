@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.101 2014/04/23 12:27:31 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.102 2014/04/23 18:16:36 jca Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -178,10 +178,8 @@ main(int argc, char *argv[])
 {
 	struct hostent *hp;
 	struct sockaddr_in *to;
-	struct pollfd fdmaskp[1];
 	struct in_addr saddr;
-	int i, ch, hold = 1, packlen, preload, maxsize, df = 0, tos = 0;
-	int timeout;
+	int ch, hold = 1, i, packlen, preload, maxsize, df = 0, tos = 0;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 #ifdef IP_OPTIONS
@@ -508,27 +506,32 @@ main(int argc, char *argv[])
 		catcher(0);		/* start things going */
 
 	for (;;) {
-		struct sockaddr_in from;
-		sigset_t omask, nmask;
-		socklen_t fromlen;
-		int cc;
+		struct sockaddr_in	from;
+		sigset_t		omask, nmask;
+		socklen_t		fromlen;
+		struct pollfd		pfd;
+		ssize_t			cc;
+		int			ret, timeout;
 
 		if (options & F_FLOOD) {
 			pinger();
 			timeout = 10;
 		} else
 			timeout = INFTIM;
-		fdmaskp[0].fd = s;
-		fdmaskp[0].events = POLLIN;
-		cc = poll(fdmaskp, 1, timeout);
-		if (cc < 0) {
+
+		pfd.fd = s;
+		pfd.events = POLLIN;
+
+		ret = poll(&pfd, 1, timeout);
+		if (ret < 0) {
 			if (errno != EINTR) {
 				warn("poll");
 				sleep(1);
 			}
 			continue;
-		} else if (cc == 0)
+		} else if (ret == 0)
 			continue;
+
 		fromlen = sizeof(from);
 		if ((cc = recvfrom(s, packet, packlen, 0,
 		    (struct sockaddr *)&from, &fromlen)) < 0) {
