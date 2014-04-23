@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.24 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.25 2014/04/23 16:33:37 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -302,14 +302,15 @@ mansearch(const struct mansearch *search,
 		sqlite3_finalize(s);
 
 		c = sqlite3_prepare_v2(db,
-		    "SELECT * FROM mlinks WHERE pageid=?"
-		    " ORDER BY sec, arch, name",
+		    "SELECT sec, arch, name, pageid FROM mlinks "
+		    "WHERE pageid=? ORDER BY sec, arch, name",
 		    -1, &s, NULL);
 		if (SQLITE_OK != c)
 			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
 
 		c = sqlite3_prepare_v2(db,
-		    "SELECT * FROM keys WHERE pageid=? AND bits & ?",
+		    "SELECT bits, key, pageid FROM keys "
+		    "WHERE pageid=? AND bits & ?",
 		    -1, &s2, NULL);
 		if (SQLITE_OK != c)
 			fprintf(stderr, "%s\n", sqlite3_errmsg(db));
@@ -534,7 +535,8 @@ sql_statement(const struct expr *e)
 	size_t		 sz;
 	int		 needop;
 
-	sql = mandoc_strdup("SELECT * FROM mpages WHERE ");
+	sql = mandoc_strdup(
+	    "SELECT desc, form, pageid FROM mpages WHERE ");
 	sz = strlen(sql);
 
 	for (needop = 0; NULL != e; e = e->next) {
