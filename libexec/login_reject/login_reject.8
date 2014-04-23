@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_reject.8,v 1.6 2007/05/31 19:19:40 jmc Exp $
+.\" $OpenBSD: login_reject.8,v 1.7 2014/04/23 18:24:23 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"	BSDI	$From: login_reject.8,v 1.2 1996/08/01 21:02:26 prb Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 23 2014 $
 .Dt LOGIN_REJECT 8
 .Os
 .Sh NAME
@@ -61,11 +61,11 @@ For example, a class entry (see
 .Xr login.conf 5 )
 may contain:
 .Bd -literal -offset indent
-:auth=krb-or-pwd,kerberos,passwd:
+:auth=passwd:
 :auth-ftp=reject:
 .Ed
 .Pp
-which would allow authentication for this class in most situations
+which would allow password authentication for this class
 but would reject attempts to authenticate from
 .Xr ftpd 8 .
 .Sh SEE ALSO
