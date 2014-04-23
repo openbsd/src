@@ -1552,7 +1552,7 @@ ssl3_send_server_key_exchange(SSL *s)
 
 #endif
 #ifndef OPENSSL_NO_PSK
-	size_t pskhintlen;
+	size_t pskhintlen = 0;
 #endif
 	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;

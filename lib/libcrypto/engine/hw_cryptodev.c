@@ -654,7 +654,7 @@ xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *ivs = DOALIGN(ivs_store);
 	void *iiv, *iv = NULL, *ivp = NULL;
 	const void *usein = in;
-	void *useout = out, *spare;
+	void *useout = out, *spare = NULL;
 	int cws[4 + 3], *cw = DOALIGN(cws);
 
 	if (!inl)
