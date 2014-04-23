@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.19 2014/04/23 13:58:55 schwarze Exp $
+.\"	$OpenBSD: err.3,v 1.20 2014/04/23 16:26:33 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,7 +193,7 @@ if ((fd = open(block_device, O_RDONLY, 0)) == -1)
 The functions
 .Fn err ,
 .Fn errx ,
-.Fn verr,
+.Fn verr ,
 .Fn verrx ,
 .Fn warn ,
 .Fn warnx ,
@@ -204,13 +204,13 @@ first appeared in
 .Bx 4.4 .
 The functions
 .Fn errc ,
-.Fn verrc,
+.Fn verrc ,
 .Fn warnc ,
 and
 .Fn vwarnc
-functions first appeared in
+first appeared in
 .Fx 3.0
-and have been ported to
+and were ported to
 .Ox 5.6 .
 .Sh CAVEATS
 It is important never to pass a string with user-supplied data as a
