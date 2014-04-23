@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.84 2014/04/23 08:51:32 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.86 2014/04/23 08:56:31 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -291,7 +291,8 @@ struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
 char	*pr_type(int);
-int	packet_ok(struct msghdr *, int, int, int);
+int	packet_ok(int, struct msghdr *, int, int, int);
+int	packet_ok6(struct msghdr *, int, int, int);
 void	icmp6_code(int, int *, int *);
 void	print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr *);
@@ -338,6 +339,7 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
 	struct sockaddr_in6 from6, to6;
+	struct sockaddr *from, *to;
 	size_t size;
 	u_int8_t hops;
 	long l;
@@ -483,7 +485,11 @@ main(int argc, char *argv[])
 	if (res->ai_addrlen != sizeof(to6))
 		errx(1, "size of sockaddr mismatch");
 
-	memcpy(&to6, res->ai_addr, res->ai_addrlen);
+	to = (struct sockaddr *)&to6;
+	from = (struct sockaddr *)&from6;
+
+	memcpy(to, res->ai_addr, res->ai_addrlen);
+
 	hostname = res->ai_canonname ? strdup(res->ai_canonname) : *argv;
 	if (!hostname)
 		errx(1, "malloc");
@@ -597,8 +603,8 @@ main(int argc, char *argv[])
 	/*
 	 * Message to users
 	 */
-	if (getnameinfo((struct sockaddr *)&to6, to6.sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
+	if (getnameinfo(to, to->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "traceroute6");
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
@@ -625,20 +631,19 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, hops, incflag, (struct sockaddr*)&to6);
+			send_probe(++seq, hops, incflag, to);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
-				i = packet_ok(&rcvmhdr, cc, seq, incflag);
+				i = packet_ok(to->sa_family, &rcvmhdr, cc, seq,
+				    incflag);
 				/* Skip short packet */
 				if (i == 0)
 					continue;
 				if (!IN6_ARE_ADDR_EQUAL(&from6.sin6_addr,
 				    &lastaddr)) {
-					print((struct sockaddr *)
-					    rcvmhdr.msg_name, cc,
-					    rcvpktinfo ?  inet_ntop(AF_INET6,
-					    &rcvpktinfo->ipi6_addr, hbuf,
-					    sizeof(hbuf)) : "?");
+					print(from, cc, rcvpktinfo ? inet_ntop(
+					    AF_INET6, &rcvpktinfo->ipi6_addr,
+					    hbuf, sizeof(hbuf)) : "?");
 					lastaddr = from6.sin6_addr;
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
@@ -846,7 +851,20 @@ pr_type(int t0)
 }
 
 int
-packet_ok(struct msghdr *mhdr, int cc, int seq, int iflag)
+packet_ok(int af, struct msghdr *mhdr, int cc, int seq, int iflag)
+{
+	switch (af) {
+	case AF_INET6:
+		return packet_ok6(mhdr, cc, seq, iflag);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", af);
+		break;
+	}
+}
+
+int
+packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 {
 	struct icmp6_hdr *icp;
 	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
