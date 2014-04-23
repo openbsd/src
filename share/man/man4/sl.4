@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sl.4,v 1.17 2013/06/02 20:23:34 tedu Exp $
+.\"	$OpenBSD: sl.4,v 1.18 2014/04/23 13:16:28 jca Exp $
 .\"	$NetBSD: sl.4,v 1.1 1996/08/10 21:26:14 explorer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: April 23 2014 $
 .Dt SL 4
 .Os
 .Sh NAME
@@ -59,11 +59,11 @@ The following link-level options are configurable via
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It link0
-Use Van Jacobsen TCP header compression.
+Use Van Jacobson TCP header compression.
 .It link1
 Suppress ICMP traffic.
 .It link2
-Auto-enable Van Jacobsen TCP header compression
+Auto-enable Van Jacobson TCP header compression
 (enabled by default).
 .El
 .Sh DIAGNOSTICS
