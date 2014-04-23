@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.87 2014/04/23 08:59:35 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.88 2014/04/23 09:09:28 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 	u_int8_t hops;
 	long l;
 	uid_t uid;
-	int rtableid = -1;
+	u_int rtableid;
 	const char *errstr;
 	socklen_t len;
 
@@ -354,6 +354,8 @@ main(int argc, char *argv[])
 	 */
 	if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		err(5, "socket(ICMPv6)");
+	if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		err(5, "socket(SOCK_DGRAM)");
 
 	/* revoke privs */
 	uid = getuid();
@@ -448,12 +450,15 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'V':
-			rtableid = (int)strtonum(optarg, 0,
+			rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
 			if (setsockopt(rcvsock, SOL_SOCKET, SO_RTABLE,
+			    &rtableid, sizeof(rtableid)) == -1)
+				err(1, "setsockopt SO_RTABLE");
+			if (setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
 			    &rtableid, sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
 			break;
@@ -546,13 +551,8 @@ main(int argc, char *argv[])
 	 * Send UDP or ICMP
 	 */
 	if (useicmp) {
+		close(sndsock);
 		sndsock = rcvsock;
-	} else {
-		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			err(5, "socket(SOCK_DGRAM)");
-		if (rtableid >= 0 && setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
-		    &rtableid, sizeof(rtableid)) == -1)
-			err(1, "setsockopt SO_RTABLE");
 	}
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 	    sizeof(datalen)) < 0)
