@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.15 2014/04/20 16:23:33 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.16 2014/04/23 15:45:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -248,7 +248,7 @@ snmp_element(const char *oidstr, enum snmp_type type, void *buf, int64_t val,
 	struct snmp_oid		 oid;
 
 	DPRINTF("%s: oid %s type %d buf %p val %lld", __func__,
-	    oid, type, buf, val);
+	    oidstr, type, buf, val);
 
 	if (snmp_string2oid(oidstr, &oid) == -1)
 		return (-1);
