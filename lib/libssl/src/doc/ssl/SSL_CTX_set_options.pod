@@ -170,14 +170,6 @@ preferences. When set, the SSLv3/TLSv1 server will choose following its
 own preferences. Because of the different protocol, for SSLv2 the server
 will send its list of preferences to the client and the client chooses.
 
-=item SSL_OP_PKCS1_CHECK_1
-
-...
-
-=item SSL_OP_PKCS1_CHECK_2
-
-...
-
 =item SSL_OP_NETSCAPE_CA_DN_BUG
 
 If we accept a netscape connection, demand a client cert, have a

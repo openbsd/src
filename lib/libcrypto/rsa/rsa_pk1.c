@@ -190,9 +190,6 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,RSA_R_BLOCK_TYPE_IS_NOT_02);
 		return(-1);
 		}
-#ifdef PKCS1_CHECK
-	return(num-11);
-#endif
 
 	/* scan over padding data */
 	j=flen-1; /* one for type. */
