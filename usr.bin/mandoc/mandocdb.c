@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.99 2014/04/23 16:33:37 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.100 2014/04/23 19:08:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -655,7 +655,13 @@ treescan(void)
 				fsec[-1] = '\0';
 
 			mlink = mandoc_calloc(1, sizeof(struct mlink));
-			strlcpy(mlink->file, path, sizeof(mlink->file));
+			if (strlcpy(mlink->file, path,
+			    sizeof(mlink->file)) >=
+			    sizeof(mlink->file)) {
+				say(path, "Filename too long");
+				free(mlink);
+				continue;
+			}
 			mlink->dform = dform;
 			mlink->dsec = dsec;
 			mlink->arch = arch;
@@ -811,13 +817,20 @@ filescan(const char *file)
 			say(file, "&stat");
 			return;
 		}
-		strlcpy(buf, file, sizeof(buf));
+		if (strlcpy(buf, file, sizeof(buf)) >= sizeof(buf)) {
+			say(file, "Filename too long");
+			return;
+		}
 		start = strstr(buf, basedir) == buf ?
 		    buf + strlen(basedir) + 1 : buf;
 	}
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
-	strlcpy(mlink->file, start, sizeof(mlink->file));
+	if (strlcpy(mlink->file, start, sizeof(mlink->file)) >=
+	    sizeof(mlink->file)) {
+		say(start, "Filename too long");
+		return;
+	}
 
 	/*
 	 * First try to guess our directory structure.
@@ -965,17 +978,13 @@ mlinks_undupe(struct mpage *mpage)
 			mpage->form = FORM_NONE;
 			goto nextlink;
 		}
-		if (strlcpy(buf, mlink->file, PATH_MAX) >= PATH_MAX) {
-			if (warnings)
-				say(mlink->file, "Filename too long");
-			goto nextlink;
-		}
+		(void)strlcpy(buf, mlink->file, sizeof(buf));
 		bufp = strstr(buf, "cat");
 		assert(NULL != bufp);
 		memcpy(bufp, "man", 3);
 		if (NULL != (bufp = strrchr(buf, '.')))
 			*++bufp = '\0';
-		strlcat(buf, mlink->dsec, PATH_MAX);
+		(void)strlcat(buf, mlink->dsec, sizeof(buf));
 		if (NULL == ohash_find(&mlinks,
 		    ohash_qlookup(&mlinks, buf)))
 			goto nextlink;
@@ -2208,24 +2217,15 @@ dbopen(int real)
 		return(0);
 	}
 
-	if (strlcpy(tempfilename, "/tmp/mandocdb.XXXXXX",
-	    sizeof(tempfilename)) >= sizeof(tempfilename)) {
-		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "/tmp/mandocdb.XXXXXX: Filename too long");
-		return(0);
-	}
+	(void)strlcpy(tempfilename, "/tmp/mandocdb.XXXXXX",
+	    sizeof(tempfilename));
 	if (NULL == mkdtemp(tempfilename)) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
 		say("", "&%s", tempfilename);
 		return(0);
 	}
-	if (strlcat(tempfilename, "/" MANDOC_DB,
-	    sizeof(tempfilename)) >= sizeof(tempfilename)) {
-		exitcode = (int)MANDOCLEVEL_SYSERR;
-		say("", "%s/" MANDOC_DB ": Filename too long",
-		    tempfilename);
-		return(0);
-	}
+	(void)strlcat(tempfilename, "/" MANDOC_DB,
+	    sizeof(tempfilename));
 	rc = sqlite3_open_v2(tempfilename, &db, ofl, NULL);
 	if (SQLITE_OK != rc) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
