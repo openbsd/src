@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.120 2014/04/23 09:14:07 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.121 2014/04/23 09:14:49 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -686,7 +686,6 @@ main(int argc, char *argv[])
 				if (ttl_flag)
 					printf(" (%u)", ip->ip_ttl);
 				if (i == -2) {
-					ip = (struct ip *)packet;
 					if (ip->ip_ttl <= 1)
 						printf(" !");
 					++got_there;
