@@ -195,10 +195,8 @@ err:
 	}
 }
 
-#define ARGV Argv
-
 int
-main(int Argc, char *ARGV[])
+main(int argc, char **argv)
 {
 	ARGS arg;
 #define PROG_NAME_SIZE	39
@@ -208,8 +206,7 @@ main(int Argc, char *ARGV[])
 	char buf[1024];
 	char *to_free = NULL;
 	int n, i, ret = 0;
-	int argc;
-	char **argv, *p;
+	char *p;
 	LHASH_OF(FUNCTION) * prog = NULL;
 	long errline;
 
@@ -286,23 +283,23 @@ main(int Argc, char *ARGV[])
 	prog = prog_init();
 
 	/* first check the program name */
-	program_name(Argv[0], pname, sizeof pname);
+	program_name(argv[0], pname, sizeof pname);
 
 	f.name = pname;
 	fp = lh_FUNCTION_retrieve(prog, &f);
 	if (fp != NULL) {
-		Argv[0] = pname;
-		ret = fp->func(Argc, Argv);
+		argv[0] = pname;
+		ret = fp->func(argc, argv);
 		goto end;
 	}
 	/*
 	 * ok, now check that there are not arguments, if there are, run with
 	 * them, shifting the ssleay off the front
 	 */
-	if (Argc != 1) {
-		Argc--;
-		Argv++;
-		ret = do_cmd(prog, Argc, Argv);
+	if (argc != 1) {
+		argc--;
+		argv++;
+		ret = do_cmd(prog, argc, argv);
 		if (ret < 0)
 			ret = 0;
 		goto end;
