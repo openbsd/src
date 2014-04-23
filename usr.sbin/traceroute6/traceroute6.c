@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.97 2014/04/23 09:22:34 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.98 2014/04/23 09:23:30 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -319,13 +319,13 @@ u_int8_t max_hops = IPV6_DEFHLIM;
 u_int8_t first_hop = 1;
 u_int16_t srcport;
 u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
+u_char proto = IPPROTO_UDP;
 u_int16_t ident;
 int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int dump;
-int useicmp;
 int Aflag;			/* lookup ASN */
 
 extern char *__progname;
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 			first_hop = (u_int8_t)l;
 			break;
 		case 'I':
-			useicmp++;
+			proto = IPPROTO_ICMP;
 			ident = htons(getpid() & 0xffff); /* same as ping6 */
 			break;
 		case 'l':
@@ -527,7 +527,7 @@ main(int argc, char *argv[])
 
 	switch (to->sa_family) {
 	case AF_INET6:
-		if (useicmp)
+		if (proto == IPPROTO_ICMP)
 			minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
 		else
 			minlen = sizeof(struct packetdata);
@@ -558,7 +558,7 @@ main(int argc, char *argv[])
 		/*
 		 * Send UDP or ICMP
 		 */
-		if (useicmp) {
+		if (proto == IPPROTO_ICMP) {
 			close(sndsock);
 			sndsock = rcvsock;
 		}
@@ -751,7 +751,7 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 		((struct sockaddr_in6*)to)->sin6_port = htons(port);
 	(void) gettimeofday(&tv, NULL);
 
-	if (useicmp) {
+	if (proto == IPPROTO_ICMP) {
 		struct icmp6_hdr *icp = (struct icmp6_hdr *)outpacket;
 
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
@@ -903,6 +903,7 @@ packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 	struct cmsghdr *cm;
 	int *hlimp;
 	char hbuf[NI_MAXHOST];
+	int useicmp = (proto == IPPROTO_ICMP);
 
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (verbose) {
@@ -1001,6 +1002,7 @@ get_udphdr(struct ip6_hdr *ip6, u_char *lim)
 {
 	u_char *cp = (u_char *)ip6, nh;
 	int hlen;
+	int useicmp = (proto == IPPROTO_ICMP);
 
 	if (cp + sizeof(*ip6) >= lim)
 		return(NULL);
