@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.155 2014/04/22 14:26:26 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.156 2014/04/23 05:43:25 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -217,16 +217,14 @@ static inline size_t
 hash(void *p)
 {
 	size_t sum;
-	union {
-		uintptr_t p;
-		unsigned short a[sizeof(void *) / sizeof(short)];
-	} u;
-	u.p = (uintptr_t)p >> MALLOC_PAGESHIFT;
-	sum = u.a[0];
-	sum = (sum << 7) - sum + u.a[1];
+	uintptr_t u;
+
+	u = (uintptr_t)p >> MALLOC_PAGESHIFT;
+	sum = u;
+	sum = (sum << 7) - sum + (u >> 16);
 #ifdef __LP64__
-	sum = (sum << 7) - sum + u.a[2];
-	sum = (sum << 7) - sum + u.a[3];
+	sum = (sum << 7) - sum + (u >> 32);
+	sum = (sum << 7) - sum + (u >> 48);
 #endif
 	return sum;
 }
