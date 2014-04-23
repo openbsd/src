@@ -245,7 +245,6 @@ static char *
 dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 {
 	char *merged;
-	size_t len;
 
 	if (!filespec1 && !filespec2) {
 		DSOerr(DSO_F_DLFCN_MERGER,
@@ -275,7 +274,7 @@ dlfcn_merger(DSO *dso, const char *filespec1, const char *filespec2)
 		   the concatenation of filespec2 followed by a slash followed
 		   by filespec1. */
 	{
-		int spec2len, len;
+		size_t spec2len, len;
 
 		spec2len = strlen(filespec2);
 		len = spec2len + (filespec1 ? strlen(filespec1) : 0);
