@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.152 2014/04/23 03:20:55 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.153 2014/04/23 03:37:29 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -214,7 +214,7 @@ static const struct re_revision {
 	const char		*re_name;
 } re_revisions[] = {
 	{ RL_HWREV_8100,	"RTL8100" },
-	{ RL_HWREV_8100E_SPIN1,	"RTL8100E 1" },
+	{ RL_HWREV_8100E,	"RTL8100E" },
 	{ RL_HWREV_8100E_SPIN2, "RTL8100E 2" },
 	{ RL_HWREV_8101,	"RTL8101" },
 	{ RL_HWREV_8101E,	"RTL8101E" },
@@ -223,20 +223,20 @@ static const struct re_revision {
 	{ RL_HWREV_8401E,	"RTL8401E" },
 	{ RL_HWREV_8402,	"RTL8402" },
 	{ RL_HWREV_8411,	"RTL8411" },
+	{ RL_HWREV_8411B,	"RTL8411B" },
 	{ RL_HWREV_8102EL,	"RTL8102EL" },
 	{ RL_HWREV_8102EL_SPIN1, "RTL8102EL 1" },
 	{ RL_HWREV_8103E,       "RTL8103E" },
 	{ RL_HWREV_8110S,	"RTL8110S" },
 	{ RL_HWREV_8139CPLUS,	"RTL8139C+" },
-	{ RL_HWREV_8168_SPIN1,	"RTL8168 1" },
-	{ RL_HWREV_8168_SPIN2,	"RTL8168 2" },
-	{ RL_HWREV_8168_SPIN3,	"RTL8168 3" },
+	{ RL_HWREV_8168B_SPIN1,	"RTL8168 1" },
+	{ RL_HWREV_8168B_SPIN2,	"RTL8168 2" },
+	{ RL_HWREV_8168B_SPIN3,	"RTL8168 3" },
 	{ RL_HWREV_8168C,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168C_SPIN2,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168CP,	"RTL8168CP/8111CP" },
 	{ RL_HWREV_8168F,	"RTL8168F/8111F" },
 	{ RL_HWREV_8168G,	"RTL8168G/8111G" },
-	{ RL_HWREV_8168G_SPIN4,	"RTL8168G/8111G" },
 	{ RL_HWREV_8168GU,	"RTL8168GU/8111GU" },
 	{ RL_HWREV_8105E,	"RTL8105E" },
 	{ RL_HWREV_8105E_SPIN1,	"RTL8105E" },
@@ -643,7 +643,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8139CPLUS:
 		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_AUTOPAD;
 		break;
-	case RL_HWREV_8100E_SPIN1:
+	case RL_HWREV_8100E:
 	case RL_HWREV_8100E_SPIN2:
 	case RL_HWREV_8101E:
 		sc->rl_flags |= RL_FLAG_NOJUMBO | RL_FLAG_INVMAR |
@@ -669,9 +669,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD |
 		    RL_FLAG_NOJUMBO;
 		break;
-	case RL_HWREV_8168_SPIN1:
-	case RL_HWREV_8168_SPIN2:
-	case RL_HWREV_8168_SPIN3:
+	case RL_HWREV_8168B_SPIN1:
+	case RL_HWREV_8168B_SPIN2:
+	case RL_HWREV_8168B_SPIN3:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_MACSTAT | RL_FLAG_HWIM;
 		break;
@@ -714,7 +714,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	case RL_HWREV_8168EP:
 	case RL_HWREV_8168G:
-	case RL_HWREV_8168G_SPIN4:
+	case RL_HWREV_8411B:
 	case RL_HWREV_8168GU:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
