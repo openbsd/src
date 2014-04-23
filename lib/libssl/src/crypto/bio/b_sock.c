@@ -535,6 +535,7 @@ BIO_accept(int sock, char **addr)
 		if (p) {
 			*p = '\0';
 			if (!(tmp = realloc(p, nl))) {
+				close(ret);
 				ret = -1;
 				free(p);
 				*addr = NULL;
@@ -546,6 +547,7 @@ BIO_accept(int sock, char **addr)
 			p = malloc(nl);
 		}
 		if (p == NULL) {
+			close(ret);
 			ret = -1;
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
@@ -561,6 +563,7 @@ BIO_accept(int sock, char **addr)
 	port = ntohs(sa.from.sa_in.sin_port);
 	if (*addr == NULL) {
 		if ((p = malloc(24)) == NULL) {
+			close(ret);
 			ret = -1;
 			BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
 			goto end;
