@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.101 2014/04/20 20:17:36 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.102 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1115,20 +1115,17 @@ print_man_foot(struct termp *p, const void *arg)
 static void
 print_man_head(struct termp *p, const void *arg)
 {
-	char			 buf[BUFSIZ];
 	const struct man_meta	*meta;
+	const char		*volume;
 	char			*title;
-	size_t			 buflen, titlen;
+	size_t			 vollen, titlen;
 
 	meta = (const struct man_meta *)arg;
 	assert(meta->title);
 	assert(meta->msec);
 
-	if (meta->vol)
-		strlcpy(buf, meta->vol, BUFSIZ);
-	else
-		buf[0] = '\0';
-	buflen = term_strlen(p, buf);
+	volume = NULL == meta->vol ? "" : meta->vol;
+	vollen = term_strlen(p, volume);
 
 	/* Top left corner: manual title and section. */
 
@@ -1138,10 +1135,9 @@ print_man_head(struct termp *p, const void *arg)
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
 	p->trailspace = 1;
 	p->offset = 0;
-	p->rmargin = 2 * (titlen+1) + buflen < p->maxrmargin ?
-	    (p->maxrmargin -
-	     term_strlen(p, buf) + term_len(p, 1)) / 2 :
-	    p->maxrmargin - buflen;
+	p->rmargin = 2 * (titlen+1) + vollen < p->maxrmargin ?
+	    (p->maxrmargin - vollen + term_len(p, 1)) / 2 :
+	    p->maxrmargin - vollen;
 
 	term_word(p, title);
 	term_flushln(p);
@@ -1150,10 +1146,10 @@ print_man_head(struct termp *p, const void *arg)
 
 	p->flags |= TERMP_NOSPACE;
 	p->offset = p->rmargin;
-	p->rmargin = p->offset + buflen + titlen < p->maxrmargin ?
+	p->rmargin = p->offset + vollen + titlen < p->maxrmargin ?
 	    p->maxrmargin - titlen : p->maxrmargin;
 
-	term_word(p, buf);
+	term_word(p, volume);
 	term_flushln(p);
 
 	/* Top right corner: title and section, again. */

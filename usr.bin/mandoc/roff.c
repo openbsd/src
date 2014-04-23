@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.81 2014/04/20 19:39:35 schwarze Exp $ */
+/*	$Id: roff.c,v 1.82 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -486,14 +486,13 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 {
 	char		 ubuf[24]; /* buffer to print the number */
 	const char	*start;	/* start of the string to process */
-	const char	*stesc;	/* start of an escape sequence ('\\') */
+	char		*stesc;	/* start of an escape sequence ('\\') */
 	const char	*stnam;	/* start of the name, after "[(*" */
 	const char	*cp;	/* end of the name, e.g. before ']' */
 	const char	*res;	/* the string to be substituted */
 	char		*nbuf;	/* new buffer to copy bufp to */
 	size_t		 maxl;  /* expected length of the escape name */
 	size_t		 naml;	/* actual length of the escape name */
-	size_t		 ressz;	/* size of the replacement string */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
 	int		 irc;	/* return code from roff_evalnum() */
@@ -516,7 +515,7 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 				break;
 
 		if (0 == (stesc - cp) % 2) {
-			stesc = cp;
+			stesc = (char *)cp;
 			continue;
 		}
 
@@ -624,21 +623,17 @@ roff_res(struct roff *r, char **bufp, size_t *szp, int ln, int pos)
 			    ln, (int)(stesc - *bufp), NULL);
 			res = "";
 		}
-		ressz = strlen(res);
 
 		/* Replace the escape sequence by the string. */
 
-		*szp += ressz + 1;
-		nbuf = mandoc_malloc(*szp);
-
-		strlcpy(nbuf, *bufp, (size_t)(stesc - *bufp + 1));
-		strlcat(nbuf, res, *szp);
-		strlcat(nbuf, cp, *szp);
+		*stesc = '\0';
+		*szp = mandoc_asprintf(&nbuf, "%s%s%s",
+		    *bufp, res, cp) + 1;
 
 		/* Prepare for the next replacement. */
 
 		start = nbuf + pos;
-		stesc = nbuf + (stesc - *bufp) + ressz;
+		stesc = nbuf + (stesc - *bufp) + strlen(res);
 		free(*bufp);
 		*bufp = nbuf;
 	}
@@ -1986,14 +1981,9 @@ roff_userdef(ROFF_ARGS)
 			cp += 2;
 			continue;
 		}
-
-		*szp = strlen(n1) - 3 + strlen(arg[i]) + 1;
-		n2 = mandoc_malloc(*szp);
-
-		strlcpy(n2, n1, (size_t)(cp - n1 + 1));
-		strlcat(n2, arg[i], *szp);
-		strlcat(n2, cp + 3, *szp);
-
+		*cp = '\0';
+		*szp = mandoc_asprintf(&n2, "%s%s%s",
+		    n1, arg[i], cp + 3) + 1;
 		cp = n2 + (cp - n1);
 		free(n1);
 		n1 = n2;

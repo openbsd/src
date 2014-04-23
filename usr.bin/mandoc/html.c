@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.35 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: html.c,v 1.36 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -652,6 +652,12 @@ bufcat_style(struct html *h, const char *key, const char *val)
 void
 bufcat(struct html *h, const char *p)
 {
+
+	/*
+	 * XXX This is broken and not easy to fix.
+	 * When using the -Oincludes option, buffmt_includes()
+	 * may pass in strings overrunning BUFSIZ, causing a crash.
+	 */
 
 	h->buflen = strlcat(h->buf, p, BUFSIZ);
 	assert(h->buflen < BUFSIZ);

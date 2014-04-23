@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.72 2014/04/20 20:17:36 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.73 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -511,18 +511,15 @@ mdoc_root_post(MDOC_ARGS)
 static int
 mdoc_root_pre(MDOC_ARGS)
 {
-	char		 b[BUFSIZ];
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		*title;
+	char		*volume, *title;
 
-	strlcpy(b, meta->vol, BUFSIZ);
-
-	if (meta->arch) {
-		strlcat(b, " (", BUFSIZ);
-		strlcat(b, meta->arch, BUFSIZ);
-		strlcat(b, ")", BUFSIZ);
-	}
+	if (NULL == meta->arch)
+		volume = mandoc_strdup(meta->vol);
+	else
+		mandoc_asprintf(&volume, "%s (%s)",
+		    meta->vol, meta->arch);
 
 	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
 
@@ -547,7 +544,7 @@ mdoc_root_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "head-vol");
 	PAIR_INIT(&tag[1], ATTR_ALIGN, "center");
 	print_otag(h, TAG_TD, 2, tag);
-	print_text(h, b);
+	print_text(h, volume);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "head-rtitle");
@@ -557,6 +554,7 @@ mdoc_root_pre(MDOC_ARGS)
 	print_tagq(h, t);
 
 	free(title);
+	free(volume);
 	return(1);
 }
 
@@ -989,8 +987,8 @@ mdoc_bl_pre(MDOC_ARGS)
 	PAIR_STYLE_INIT(&tag[0], h);
 
 	assert(lists[n->norm->Bl.type]);
-	strlcpy(buf, "list ", BUFSIZ);
-	strlcat(buf, lists[n->norm->Bl.type], BUFSIZ);
+	(void)strlcpy(buf, "list ", BUFSIZ);
+	(void)strlcat(buf, lists[n->norm->Bl.type], BUFSIZ);
 	PAIR_INIT(&tag[1], ATTR_CLASS, buf);
 
 	/* Set the block's left-hand margin. */
@@ -1359,6 +1357,15 @@ mdoc_fd_pre(MDOC_ARGS)
 
 	if (NULL != (n = n->next)) {
 		assert(MDOC_TEXT == n->type);
+
+		/*
+		 * XXX This is broken and not easy to fix.
+		 * When using -Oincludes, truncation may occur.
+		 * Dynamic allocation wouldn't help because
+		 * passing long strings to buffmt_includes()
+		 * does not work either.
+		 */
+
 		strlcpy(buf, '<' == *n->string || '"' == *n->string ?
 		    n->string + 1 : n->string, BUFSIZ);
 
@@ -1471,10 +1478,8 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	t = print_otag(h, TAG_B, 1, tag);
 
-	if (sp) {
-		strlcpy(nbuf, sp, BUFSIZ);
-		print_text(h, nbuf);
-	}
+	if (sp)
+		print_text(h, sp);
 
 	print_tagq(h, t);
 

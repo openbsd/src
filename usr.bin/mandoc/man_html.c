@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.53 2014/04/20 20:17:36 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.54 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -297,14 +297,9 @@ a2width(const struct man_node *n, struct roffsu *su)
 static void
 man_root_pre(MAN_ARGS)
 {
-	char		 b[BUFSIZ];
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
 	char		*title;
-
-	b[0] = 0;
-	if (man->vol)
-		(void)strlcat(b, man->vol, BUFSIZ);
 
 	assert(man->title);
 	assert(man->msec);
@@ -331,7 +326,8 @@ man_root_pre(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "head-vol");
 	PAIR_INIT(&tag[1], ATTR_ALIGN, "center");
 	print_otag(h, TAG_TD, 2, tag);
-	print_text(h, b);
+	if (NULL != man->vol)
+		print_text(h, man->vol);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "head-rtitle");

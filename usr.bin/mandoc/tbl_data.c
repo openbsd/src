@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.17 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.18 2014/04/23 16:07:06 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -163,8 +163,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p)
 	if (dat->string) {
 		sz = strlen(p) + strlen(dat->string) + 2;
 		dat->string = mandoc_realloc(dat->string, sz);
-		strlcat(dat->string, " ", sz);
-		strlcat(dat->string, p, sz);
+		(void)strlcat(dat->string, " ", sz);
+		(void)strlcat(dat->string, p, sz);
 	} else
 		dat->string = mandoc_strdup(p);
 
