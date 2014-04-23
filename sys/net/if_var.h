@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.8 2014/04/19 15:57:25 henning Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.9 2014/04/23 09:30:57 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -425,8 +425,6 @@ void	ifnewlladdr(struct ifnet *);
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *, u_int);
 struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *, u_int);
 struct	ifaddr *ifa_ifwithnet(struct sockaddr *, u_int);
-struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *,
-					struct sockaddr *, u_int);
 struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *);

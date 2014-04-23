@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.162 2014/04/22 12:35:00 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.163 2014/04/23 09:30:57 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -150,6 +150,9 @@ int	rtable_init(struct radix_node_head ***, u_int);
 int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *, u_int);
+
+struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *, struct sockaddr *,
+		    u_int);
 
 #define	LABELID_MAX	50000
 
