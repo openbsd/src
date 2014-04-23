@@ -247,7 +247,6 @@ ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 	default:
 		ASN1_STRING_free((ASN1_STRING *)*pval);
-		*pval = NULL;
 		break;
 	}
 	*pval = NULL;
