@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.91 2014/04/23 09:13:00 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.92 2014/04/23 09:16:11 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ main(int argc, char *argv[])
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = IPPROTO_ICMPV6;
+	hints.ai_protocol = 0;
 	hints.ai_flags = AI_CANONNAME;
 	if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));

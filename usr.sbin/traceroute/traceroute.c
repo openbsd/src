@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.121 2014/04/23 09:14:49 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.122 2014/04/23 09:16:11 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -522,7 +522,7 @@ main(int argc, char *argv[])
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET;
 	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = IPPROTO_ICMP;
+	hints.ai_protocol = 0;
 	hints.ai_flags = AI_CANONNAME;
 	if ((error = getaddrinfo(dest, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
