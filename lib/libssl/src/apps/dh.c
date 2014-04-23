@@ -313,10 +313,4 @@ end:
 	apps_shutdown();
 	return (ret);
 }
-#else				/* !OPENSSL_NO_DH */
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif

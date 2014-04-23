@@ -141,16 +141,15 @@
  * Engage compiler specific rotate intrinsic function if available.
  */
 #undef ROTATE
-#ifndef PEDANTIC
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
    * rotates by *constant* number of bits! But that's exactly
    * what we need here...
    * 					<appro@fy.chalmers.se>
    */
-#  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
-#   define ROTATE(a,n)	({ register unsigned int ret;	\
+# if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#  define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"roll %1,%0"		\
 				: "=r"(ret)		\
@@ -158,25 +157,24 @@
 				: "cc");		\
 			   ret;				\
 			})
-#  elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
+# elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
 	defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
-#   define ROTATE(a,n)	({ register unsigned int ret;	\
+#  define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"rlwinm %0,%1,%2,0,31"	\
 				: "=r"(ret)		\
 				: "r"(a), "I"(n));	\
 			   ret;				\
 			})
-#  elif defined(__s390x__)
-#   define ROTATE(a,n) ({ register unsigned int ret;	\
+# elif defined(__s390x__)
+#  define ROTATE(a,n) ({ register unsigned int ret;	\
 				asm ("rll %0,%1,%2"	\
 				: "=r"(ret)		\
 				: "r"(a), "I"(n));	\
 			  ret;				\
 			})
-#  endif
 # endif
-#endif /* PEDANTIC */
+#endif
 
 #ifndef ROTATE
 #define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
@@ -184,9 +182,8 @@
 
 #if defined(DATA_ORDER_IS_BIG_ENDIAN)
 
-#ifndef PEDANTIC
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#  if ((defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)) || \
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+# if ((defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)) || \
       (defined(__x86_64) || defined(__x86_64__))
     /*
      * This gives ~30-40% performance improvement in SHA-256 compiled
@@ -194,13 +191,12 @@
      * this trick on x86* platforms only, because these CPUs can fetch
      * unaligned data without raising an exception.
      */
-#   define HOST_c2l(c,l)	({ unsigned int r=*((const unsigned int *)(c));	\
+#  define HOST_c2l(c,l)	({ unsigned int r=*((const unsigned int *)(c));	\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   (c)+=4; (l)=r;			})
-#   define HOST_l2c(l,c)	({ unsigned int r=(l);			\
+#  define HOST_l2c(l,c)	({ unsigned int r=(l);			\
 				   asm ("bswapl %0":"=r"(r):"0"(r));	\
 				   *((unsigned int *)(c))=r; (c)+=4; r;	})
-#  endif
 # endif
 #endif
 #if defined(__s390__) || defined(__s390x__)
@@ -225,16 +221,14 @@
 
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 
-#ifndef PEDANTIC
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#  if defined(__s390x__)
-#   define HOST_c2l(c,l)	({ asm ("lrv	%0,%1"			\
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+# if defined(__s390x__)
+#  define HOST_c2l(c,l)	({ asm ("lrv	%0,%1"			\
 				   :"=d"(l) :"m"(*(const unsigned int *)(c)));\
 				   (c)+=4; (l);				})
-#   define HOST_l2c(l,c)	({ asm ("strv	%1,%0"			\
+#  define HOST_l2c(l,c)	({ asm ("strv	%1,%0"			\
 				   :"=m"(*(unsigned int *)(c)) :"d"(l));\
 				   (c)+=4; (l);				})
-#  endif
 # endif
 #endif
 #if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)

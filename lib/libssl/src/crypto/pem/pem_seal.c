@@ -186,10 +186,4 @@ err:
 		free(s);
 	return (ret);
 }
-#else /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

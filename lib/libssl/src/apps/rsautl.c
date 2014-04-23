@@ -345,10 +345,4 @@ usage()
 
 }
 
-#else				/* !OPENSSL_NO_RSA */
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif

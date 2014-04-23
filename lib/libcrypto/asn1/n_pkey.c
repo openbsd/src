@@ -335,10 +335,4 @@ err:
 
 #endif /* OPENSSL_NO_RC4 */
 
-#else /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

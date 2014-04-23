@@ -502,10 +502,4 @@ end:
 	apps_shutdown();
 	return (ret);
 }
-#else
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif

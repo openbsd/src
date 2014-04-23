@@ -311,21 +311,20 @@ static const SHA_LONG64 K512[80] = {
         U64(0x4cc5d4becb3e42b6),U64(0x597f299cfc657e2a),
         U64(0x5fcb6fab3ad6faec),U64(0x6c44198c4a475817) };
 
-#ifndef PEDANTIC
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#  if defined(__x86_64) || defined(__x86_64__)
-#   define ROTR(a,n)	({ SHA_LONG64 ret;		\
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+# if defined(__x86_64) || defined(__x86_64__)
+#  define ROTR(a,n)	({ SHA_LONG64 ret;		\
 				asm ("rorq %1,%0"	\
 				: "=r"(ret)		\
 				: "J"(n),"0"(a)		\
 				: "cc"); ret;		})
-#    define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
+#   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
 				asm ("bswapq	%0"		\
 				: "=r"(ret)			\
 				: "0"(ret)); ret;		})
-#  elif (defined(__i386) || defined(__i386__))
-#   if defined(I386_ONLY)
-#    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+# elif (defined(__i386) || defined(__i386__))
+#  if defined(I386_ONLY)
+#   define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
 			 unsigned int hi=p[0],lo=p[1];		\
 				asm("xchgb %%ah,%%al;xchgb %%dh,%%dl;"\
 				    "roll $16,%%eax; roll $16,%%edx; "\
@@ -333,20 +332,19 @@ static const SHA_LONG64 K512[80] = {
 				: "=a"(lo),"=d"(hi)		\
 				: "0"(lo),"1"(hi) : "cc");	\
 				((SHA_LONG64)hi)<<32|lo;	})
-#   else
-#    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+#  else
+#   define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
 			 unsigned int hi=p[0],lo=p[1];		\
 				asm ("bswapl %0; bswapl %1;"	\
 				: "=r"(lo),"=r"(hi)		\
 				: "0"(lo),"1"(hi));		\
 				((SHA_LONG64)hi)<<32|lo;	})
-#   endif
-#  elif (defined(_ARCH_PPC) && defined(__64BIT__)) || defined(_ARCH_PPC64)
-#   define ROTR(a,n)	({ SHA_LONG64 ret;		\
+#  endif
+# elif (defined(_ARCH_PPC) && defined(__64BIT__)) || defined(_ARCH_PPC64)
+#  define ROTR(a,n)	({ SHA_LONG64 ret;		\
 				asm ("rotrdi %0,%1,%2"	\
 				: "=r"(ret)		\
 				: "r"(a),"K"(n)); ret;	})
-#  endif
 # endif
 #endif
 
@@ -559,11 +557,5 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 #endif
 
 #endif /* SHA512_ASM */
-
-#else /* !OPENSSL_NO_SHA512 */
-
-#if defined(PEDANTIC) || defined(__DECC) || defined(OPENSSL_SYS_MACOSX)
-static void *dummy=&dummy;
-#endif
 
 #endif /* !OPENSSL_NO_SHA512 */

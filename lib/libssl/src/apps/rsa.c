@@ -402,10 +402,4 @@ end:
 	apps_shutdown();
 	return (ret);
 }
-#else				/* !OPENSSL_NO_RSA */
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif

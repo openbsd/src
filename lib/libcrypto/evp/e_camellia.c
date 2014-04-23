@@ -122,10 +122,4 @@ static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
-#else
-
-# ifdef PEDANTIC
-static void *dummy=&dummy;
-# endif
-
 #endif

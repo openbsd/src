@@ -90,7 +90,7 @@ typedef struct
 	defined(_M_AMD64)	|| defined(_M_X64)	|| \
 	defined(__INTEL__)	)
 
-#if defined(__GNUC__) && __GNUC__>=2 && !defined(PEDANTIC)
+#if defined(__GNUC__) && __GNUC__>=2
 # define BSWAP(x) ({ unsigned int r=(x); asm ("bswapl %0":"=r"(r):"0"(r)); r; })
 #endif
 

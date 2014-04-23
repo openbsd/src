@@ -119,10 +119,4 @@ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		i = EVP_DecryptInit_ex(ctx,NULL,NULL,NULL,NULL);
 	return(i);
 	}
-#else /* !OPENSSL_NO_RSA */
-
-# ifdef PEDANTIC
-static void *dummy=&dummy;
-# endif
-
 #endif

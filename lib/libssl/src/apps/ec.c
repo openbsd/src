@@ -347,10 +347,4 @@ end:
 	apps_shutdown();
 	return (ret);
 }
-#else				/* !OPENSSL_NO_EC */
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif

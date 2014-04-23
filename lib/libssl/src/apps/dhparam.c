@@ -501,10 +501,4 @@ dh_cb(int p, int n, BN_GENCB * cb)
 	return 1;
 }
 
-#else				/* !OPENSSL_NO_DH */
-
-#if PEDANTIC
-static void *dummy = &dummy;
-#endif
-
 #endif
