@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.86 2014/04/23 08:56:31 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.87 2014/04/23 08:59:35 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -293,6 +293,7 @@ double	deltaT(struct timeval *, struct timeval *);
 char	*pr_type(int);
 int	packet_ok(int, struct msghdr *, int, int, int);
 int	packet_ok6(struct msghdr *, int, int, int);
+void	icmp_code(int, int, int *, int *);
 void	icmp6_code(int, int *, int *);
 void	print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr *);
@@ -653,7 +654,8 @@ main(int argc, char *argv[])
 				/* time exceeded in transit */
 				if (i == -1)
 					break;
-				icmp6_code(i - 1, &got_there, &unreachable);
+				icmp_code(to->sa_family, i - 1, &got_there,
+				    &unreachable);
 				break;
 			}
 			if (cc == 0) {
@@ -1024,6 +1026,18 @@ print(struct sockaddr *from, int cc, const char *to)
 
 	if (verbose)
 		printf(" %d bytes to %s", cc, to);
+}
+
+void icmp_code(int af, int code, int *got_there, int *unreachable)
+{
+	switch (af) {
+	case AF_INET6:
+		return icmp6_code(code, got_there, unreachable);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", af);
+		break;
+	}
 }
 
 void
