@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.149 2014/03/13 13:11:30 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.150 2014/04/23 02:39:28 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -240,6 +240,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168G_SPIN1,	"RTL8168G/8111G" },
 	{ RL_HWREV_8168G_SPIN2,	"RTL8168G/8111G" },
 	{ RL_HWREV_8168G_SPIN4,	"RTL8168G/8111G" },
+	{ RL_HWREV_8168GU,	"RTL8168GU/8111GU" },
 	{ RL_HWREV_8105E,	"RTL8105E" },
 	{ RL_HWREV_8105E_SPIN1,	"RTL8105E" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
@@ -717,6 +718,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	case RL_HWREV_8168G:
 	case RL_HWREV_8168G_SPIN1:
 	case RL_HWREV_8168G_SPIN4:
+	case RL_HWREV_8168GU:
 		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
 		    RL_FLAG_PAR | RL_FLAG_DESCV2 | RL_FLAG_MACSTAT |
 		    RL_FLAG_CMDSTOP | RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO |
