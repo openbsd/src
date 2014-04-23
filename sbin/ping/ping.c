@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.100 2014/03/24 11:11:49 mpi Exp $	*/
+/*	$OpenBSD: ping.c,v 1.101 2014/04/23 12:27:31 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <poll.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -175,11 +176,12 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct timeval timeout;
 	struct hostent *hp;
 	struct sockaddr_in *to;
+	struct pollfd fdmaskp[1];
 	struct in_addr saddr;
 	int i, ch, hold = 1, packlen, preload, maxsize, df = 0, tos = 0;
+	int timeout;
 	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 #ifdef IP_OPTIONS
@@ -187,8 +189,6 @@ main(int argc, char *argv[])
 #endif
 	socklen_t maxsizelen;
 	const char *errstr;
-	fd_set *fdmaskp;
-	size_t fdmasks;
 	uid_t uid;
 	u_int rtableid;
 
@@ -507,10 +507,6 @@ main(int argc, char *argv[])
 	if ((options & F_FLOOD) == 0)
 		catcher(0);		/* start things going */
 
-	fdmasks = howmany(s+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdmaskp = (fd_set *)malloc(fdmasks)) == NULL)
-		err(1, "malloc");
-
 	for (;;) {
 		struct sockaddr_in from;
 		sigset_t omask, nmask;
@@ -519,14 +515,20 @@ main(int argc, char *argv[])
 
 		if (options & F_FLOOD) {
 			pinger();
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 10000;
-			memset(fdmaskp, 0, fdmasks);
-			FD_SET(s, fdmaskp);
-			if (select(s + 1, (fd_set *)fdmaskp, (fd_set *)NULL,
-			    (fd_set *)NULL, &timeout) < 1)
-				continue;
-		}
+			timeout = 10;
+		} else
+			timeout = INFTIM;
+		fdmaskp[0].fd = s;
+		fdmaskp[0].events = POLLIN;
+		cc = poll(fdmaskp, 1, timeout);
+		if (cc < 0) {
+			if (errno != EINTR) {
+				warn("poll");
+				sleep(1);
+			}
+			continue;
+		} else if (cc == 0)
+			continue;
 		fromlen = sizeof(from);
 		if ((cc = recvfrom(s, packet, packlen, 0,
 		    (struct sockaddr *)&from, &fromlen)) < 0) {
@@ -543,7 +545,6 @@ main(int argc, char *argv[])
 		if (npackets && nreceived >= npackets)
 			break;
 	}
-	free(fdmaskp);
 	finish(0);
 	/* NOTREACHED */
 	exit(0);	/* Make the compiler happy */
