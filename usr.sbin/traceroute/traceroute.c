@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.118 2014/04/23 09:10:53 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.119 2014/04/23 09:13:00 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -613,18 +613,9 @@ main(int argc, char *argv[])
 	ip->ip_v = IPVERSION;
 	ip->ip_tos = tos;
 
-	if (options & SO_DEBUG)
-		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0)
-		err(6, "SO_SNDBUF");
 	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
 	    sizeof(on)) < 0)
 		err(6, "IP_HDRINCL");
-	if (options & SO_DEBUG)
-		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
 
 	if (source) {
 		(void) memset(&from4, 0, sizeof(from4));
@@ -641,6 +632,17 @@ main(int argc, char *argv[])
 		    bind(sndsock, (struct sockaddr *)&from4, sizeof(from4)) < 0)
 			err(1, "bind");
 	}
+
+	if (options & SO_DEBUG) {
+		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
+		    (char *)&on, sizeof(on));
+		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
+		    (char *)&on, sizeof(on));
+	}
+
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
+	    sizeof(datalen)) < 0)
+		err(6, "SO_SNDBUF");
 
 	if (getnameinfo(to, to->sa_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))

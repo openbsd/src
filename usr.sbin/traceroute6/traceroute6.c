@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.90 2014/04/23 09:11:35 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.91 2014/04/23 09:13:00 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -544,10 +544,6 @@ main(int argc, char *argv[])
 	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
 	rcvmhdr.msg_controllen = rcvcmsglen;
 
-	if (options & SO_DEBUG)
-		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
-
 	/*
 	 * Send UDP or ICMP
 	 */
@@ -555,12 +551,6 @@ main(int argc, char *argv[])
 		close(sndsock);
 		sndsock = rcvsock;
 	}
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0)
-		err(6, "SO_SNDBUF");
-	if (options & SO_DEBUG)
-		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
 
 	/*
 	 * Source selection
@@ -601,6 +591,17 @@ main(int argc, char *argv[])
 	if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
 		err(1, "getsockname");
 	srcport = ntohs(from6.sin6_port);
+
+	if (options & SO_DEBUG) {
+		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
+		    (char *)&on, sizeof(on));
+		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
+		    (char *)&on, sizeof(on));
+	}
+
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
+	    sizeof(datalen)) < 0)
+		err(6, "SO_SNDBUF");
 
 	/*
 	 * Message to users
