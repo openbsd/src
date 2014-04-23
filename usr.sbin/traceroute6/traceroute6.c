@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.93 2014/04/23 09:17:10 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.94 2014/04/23 09:18:27 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -489,11 +489,19 @@ main(int argc, char *argv[])
 	hints.ai_flags = AI_CANONNAME;
 	if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
-	if (res->ai_addrlen != sizeof(to6))
-		errx(1, "size of sockaddr mismatch");
 
-	to = (struct sockaddr *)&to6;
-	from = (struct sockaddr *)&from6;
+	switch(res->ai_family) {
+	case AF_INET6:
+		if (res->ai_addrlen != sizeof(to6))
+			errx(1, "size of sockaddr mismatch");
+
+		to = (struct sockaddr *)&to6;
+		from = (struct sockaddr *)&from6;
+		break;
+	default:
+		errx(1, "unsupported AF: %d", res->ai_family);
+		break;
+	}
 
 	memcpy(to, res->ai_addr, res->ai_addrlen);
 
@@ -516,81 +524,92 @@ main(int argc, char *argv[])
 			errx(1, "datalen out of range");
 		datalen = (int)l;
 	}
-	if (useicmp)
-		minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
-	else
-		minlen = sizeof(struct packetdata);
-	if (datalen < minlen)
-		datalen = minlen;
-	else if (datalen >= MAXPACKET)
-		errx(1, "packet size must be %d <= s < %ld.\n", minlen,
-		    (long)MAXPACKET);
 
-	if ((outpacket = calloc(1, datalen)) == NULL)
-		err(1, "calloc");
+	switch(to->sa_family) {
+	case AF_INET6:
+		if (useicmp)
+			minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
+		else
+			minlen = sizeof(struct packetdata);
+		if (datalen < minlen)
+			datalen = minlen;
+		else if (datalen >= MAXPACKET)
+			errx(1, "packet size must be %d <= s < %ld.\n", minlen,
+			    (long)MAXPACKET);
 
-	/* initialize msghdr for receiving packets */
-	rcviov[0].iov_base = (caddr_t)packet;
-	rcviov[0].iov_len = sizeof(packet);
-	rcvmhdr.msg_name = (caddr_t)&from6;
-	rcvmhdr.msg_namelen = sizeof(from6);
-	rcvmhdr.msg_iov = rcviov;
-	rcvmhdr.msg_iovlen = 1;
-	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-	    CMSG_SPACE(sizeof(int));
+		if ((outpacket = calloc(1, datalen)) == NULL)
+			err(1, "calloc");
+
+		/* initialize msghdr for receiving packets */
+		rcviov[0].iov_base = (caddr_t)packet;
+		rcviov[0].iov_len = sizeof(packet);
+		rcvmhdr.msg_name = (caddr_t)&from6;
+		rcvmhdr.msg_namelen = sizeof(from6);
+		rcvmhdr.msg_iov = rcviov;
+		rcvmhdr.msg_iovlen = 1;
+		rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		    CMSG_SPACE(sizeof(int));
 	
-	if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
-		errx(1, "malloc");
-	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmhdr.msg_controllen = rcvcmsglen;
+		if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
+			errx(1, "malloc");
+		rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
+		rcvmhdr.msg_controllen = rcvcmsglen;
 
-	/*
-	 * Send UDP or ICMP
-	 */
-	if (useicmp) {
-		close(sndsock);
-		sndsock = rcvsock;
-	}
+		/*
+		 * Send UDP or ICMP
+		 */
+		if (useicmp) {
+			close(sndsock);
+			sndsock = rcvsock;
+		}
 
-	/*
-	 * Source selection
-	 */
-	bzero(&from6, sizeof(from6));
-	if (source) {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_INET6;
-		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-		hints.ai_flags = AI_NUMERICHOST;
-		if ((error = getaddrinfo(source, "0", &hints, &res)))
-			errx(1, "%s: %s", source, gai_strerror(error));
-		if (res->ai_addrlen != sizeof(from6))
-			errx(1, "size of sockaddr mismatch");
-		memcpy(&from6, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-	} else {
-		struct sockaddr_in6 nxt;
-		int dummy;
+		/*
+		 * Source selection
+		 */
+		bzero(&from6, sizeof(from6));
+		if (source) {
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_INET6;
+			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+			hints.ai_flags = AI_NUMERICHOST;
+			if ((error = getaddrinfo(source, "0", &hints, &res)))
+				errx(1, "%s: %s", source, gai_strerror(error));
+			if (res->ai_addrlen != sizeof(from6))
+				errx(1, "size of sockaddr mismatch");
+			memcpy(&from6, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
+		} else {
+			struct sockaddr_in6 nxt;
+			int dummy;
 
-		nxt = to6;
-		nxt.sin6_port = htons(DUMMY_PORT);
-		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			err(1, "socket");
-		if (connect(dummy, (struct sockaddr *)&nxt, nxt.sin6_len) < 0)
-			err(1, "connect");
+			nxt = to6;
+			nxt.sin6_port = htons(DUMMY_PORT);
+			if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+				err(1, "socket");
+			if (connect(dummy, (struct sockaddr *)&nxt,
+			    nxt.sin6_len) < 0)
+				err(1, "connect");
+			len = sizeof(from6);
+			if (getsockname(dummy, (struct sockaddr *)&from6,
+			    &len) < 0)
+				err(1, "getsockname");
+			close(dummy);
+		}
+
+		from6.sin6_port = htons(0);
+		if (bind(sndsock, (struct sockaddr *)&from6, from6.sin6_len) <
+		    0)
+			err(1, "bind sndsock");
+
 		len = sizeof(from6);
-		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
+		if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
 			err(1, "getsockname");
-		close(dummy);
+		srcport = ntohs(from6.sin6_port);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", to->sa_family);
+		break;
 	}
-
-	from6.sin6_port = htons(0);
-	if (bind(sndsock, (struct sockaddr *)&from6, from6.sin6_len) < 0)
-		err(1, "bind sndsock");
-
-	len = sizeof(from6);
-	if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
-		err(1, "getsockname");
-	srcport = ntohs(from6.sin6_port);
 
 	if (options & SO_DEBUG) {
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
@@ -642,13 +661,19 @@ main(int argc, char *argv[])
 				/* Skip short packet */
 				if (i == 0)
 					continue;
-				if (!IN6_ARE_ADDR_EQUAL(&from6.sin6_addr,
-				    &lastaddr)) {
-					print(from, cc, rcvpktinfo ? inet_ntop(
-					    AF_INET6, &rcvpktinfo->ipi6_addr,
-					    hbuf, sizeof(hbuf)) : "?");
-					lastaddr = from6.sin6_addr;
-				}
+				if (to->sa_family == AF_INET6) {
+					if (!IN6_ARE_ADDR_EQUAL(
+					    &from6.sin6_addr, &lastaddr)) {
+						print(from, cc, rcvpktinfo ?
+						    inet_ntop( AF_INET6,
+						    &rcvpktinfo->ipi6_addr,
+						    hbuf, sizeof(hbuf)) : "?");
+						lastaddr = from6.sin6_addr;
+					}
+				} else
+					errx(1, "unsupported AF: %d",
+					    to->sa_family);
+
 				printf("  %g ms", deltaT(&t1, &t2));
 				if (ttl_flag)
 					printf(" (%u)", rcvhlim);

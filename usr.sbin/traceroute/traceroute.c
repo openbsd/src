@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.123 2014/04/23 09:20:59 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.124 2014/04/23 09:21:41 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -527,11 +527,18 @@ main(int argc, char *argv[])
 	if ((error = getaddrinfo(dest, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
 
-	if (res->ai_addrlen != sizeof(to4))
-	    errx(1, "size of sockaddr mismatch");
+	switch(res->ai_family) {
+	case AF_INET:
+		if (res->ai_addrlen != sizeof(to4))
+		    errx(1, "size of sockaddr mismatch");
 
-	to = (struct sockaddr *)&to4;
-	from = (struct sockaddr *)&from4;
+		to = (struct sockaddr *)&to4;
+		from = (struct sockaddr *)&from4;
+		break;
+	default:
+		errx(1, "unsupported AF: %d", res->ai_family);
+		break;
+	}
 
 	memcpy(to, res->ai_addr, res->ai_addrlen);
 
@@ -559,78 +566,86 @@ main(int argc, char *argv[])
 		datalen = (int)l;
 	}
 
-	switch (proto) {
-	case IPPROTO_UDP:
-		headerlen = (sizeof(struct ip) + lsrrlen +
-		    sizeof(struct udphdr) + sizeof(struct packetdata));
-		break;
-	case IPPROTO_ICMP:
-		headerlen = (sizeof(struct ip) + lsrrlen +
-		    sizeof(struct icmp) + sizeof(struct packetdata));
+	switch(to->sa_family) {
+	case AF_INET:
+		switch (proto) {
+		case IPPROTO_UDP:
+			headerlen = (sizeof(struct ip) + lsrrlen +
+			    sizeof(struct udphdr) + sizeof(struct packetdata));
+			break;
+		case IPPROTO_ICMP:
+			headerlen = (sizeof(struct ip) + lsrrlen +
+			    sizeof(struct icmp) + sizeof(struct packetdata));
+			break;
+		default:
+			headerlen = (sizeof(struct ip) + lsrrlen +
+			    sizeof(struct packetdata));
+		}
+
+		if (datalen < 0 || datalen > IP_MAXPACKET - headerlen)
+			errx(1, "packet size must be 0 to %d.",
+			    IP_MAXPACKET - headerlen);
+
+		datalen += headerlen;
+
+		if ((outpacket = calloc(1, datalen)) == NULL)
+			err(1, "calloc");
+
+		rcviov[0].iov_base = (caddr_t)packet;
+		rcviov[0].iov_len = sizeof(packet);
+		rcvmhdr.msg_name = (caddr_t)&from4;
+		rcvmhdr.msg_namelen = sizeof(from4);
+		rcvmhdr.msg_iov = rcviov;
+		rcvmhdr.msg_iovlen = 1;
+		rcvmhdr.msg_control = NULL;
+		rcvmhdr.msg_controllen = 0;
+
+		ip = (struct ip *)outpacket;
+		if (lsrr != 0) {
+			u_char *p = (u_char *)(ip + 1);
+
+			*p++ = IPOPT_NOP;
+			*p++ = IPOPT_LSRR;
+			*p++ = lsrrlen - 1;
+			*p++ = IPOPT_MINOFF;
+			gateway[lsrr] = to4.sin_addr;
+			for (i = 1; i <= lsrr; i++) {
+				memcpy(p, &gateway[i], sizeof(struct in_addr));
+				p += sizeof(struct in_addr);
+			}
+			ip->ip_dst = gateway[0];
+		} else
+			ip->ip_dst = to4.sin_addr;
+		ip->ip_off = htons(0);
+		ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
+		ip->ip_p = proto;
+		ip->ip_v = IPVERSION;
+		ip->ip_tos = tos;
+
+		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
+		    sizeof(on)) < 0)
+			err(6, "IP_HDRINCL");
+
+		if (source) {
+			(void) memset(&from4, 0, sizeof(from4));
+			from4.sin_family = AF_INET;
+			if (inet_aton(source, &from4.sin_addr) == 0)
+				errx(1, "unknown host %s", source);
+			ip->ip_src = from4.sin_addr;
+			if (getuid() != 0 &&
+			    (ntohl(from4.sin_addr.s_addr) & 0xff000000U) ==
+			    0x7f000000U && (ntohl(to4.sin_addr.s_addr) &
+			    0xff000000U) != 0x7f000000U)
+				errx(1, "source is on 127/8, destination is"
+				    " not");
+			if (getuid() && bind(sndsock, (struct sockaddr *)&from4,
+			    sizeof(from4)) < 0)
+				err(1, "bind");
+		}
 		break;
 	default:
-		headerlen = (sizeof(struct ip) + lsrrlen +
-		    sizeof(struct packetdata));
-	}
-
-	if (datalen < 0 || datalen > IP_MAXPACKET - headerlen)
-		errx(1, "packet size must be 0 to %d.",
-		    IP_MAXPACKET - headerlen);
-
-	datalen += headerlen;
-
-	if ((outpacket = calloc(1, datalen)) == NULL)
-		err(1, "calloc");
-
-	rcviov[0].iov_base = (caddr_t)packet;
-	rcviov[0].iov_len = sizeof(packet);
-	rcvmhdr.msg_name = (caddr_t)&from4;
-	rcvmhdr.msg_namelen = sizeof(from4);
-	rcvmhdr.msg_iov = rcviov;
-	rcvmhdr.msg_iovlen = 1;
-	rcvmhdr.msg_control = NULL;
-	rcvmhdr.msg_controllen = 0;
-
-	ip = (struct ip *)outpacket;
-	if (lsrr != 0) {
-		u_char *p = (u_char *)(ip + 1);
-
-		*p++ = IPOPT_NOP;
-		*p++ = IPOPT_LSRR;
-		*p++ = lsrrlen - 1;
-		*p++ = IPOPT_MINOFF;
-		gateway[lsrr] = to4.sin_addr;
-		for (i = 1; i <= lsrr; i++) {
-			memcpy(p, &gateway[i], sizeof(struct in_addr));
-			p += sizeof(struct in_addr);
-		}
-		ip->ip_dst = gateway[0];
-	} else
-		ip->ip_dst = to4.sin_addr;
-	ip->ip_off = htons(0);
-	ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
-	ip->ip_p = proto;
-	ip->ip_v = IPVERSION;
-	ip->ip_tos = tos;
-
-	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
-	    sizeof(on)) < 0)
-		err(6, "IP_HDRINCL");
-
-	if (source) {
-		(void) memset(&from4, 0, sizeof(from4));
-		from4.sin_family = AF_INET;
-		if (inet_aton(source, &from4.sin_addr) == 0)
-			errx(1, "unknown host %s", source);
-		ip->ip_src = from4.sin_addr;
-		if (getuid() != 0 &&
-		    (ntohl(from4.sin_addr.s_addr) & 0xff000000U) ==
-		    0x7f000000U && (ntohl(to4.sin_addr.s_addr) & 0xff000000U)
-		    != 0x7f000000U)
-			errx(1, "source is on 127/8, destination is not");
-		if (getuid() &&
-		    bind(sndsock, (struct sockaddr *)&from4, sizeof(from4)) < 0)
-			err(1, "bind");
+		errx(1, "unsupported AF: %d", to->sa_family);
+		break;
 	}
 
 	if (options & SO_DEBUG) {
@@ -674,26 +689,32 @@ main(int argc, char *argv[])
 				/* Skip short packet */
 				if (i == 0)
 					continue;
-				ip = (struct ip *)packet;
-				if (from4.sin_addr.s_addr != lastaddr) {
-					print(from,
-					    cc - (ip->ip_hl << 2),
-					    inet_ntop(AF_INET, &ip->ip_dst,
-					    hbuf, sizeof(hbuf)));
-					lastaddr = from4.sin_addr.s_addr;
+				if (to->sa_family == AF_INET) {
+					ip = (struct ip *)packet;
+					if (from4.sin_addr.s_addr != lastaddr) {
+						print(from,
+						    cc - (ip->ip_hl << 2),
+						    inet_ntop(AF_INET,
+						    &ip->ip_dst, hbuf,
+						    sizeof(hbuf)));
+						lastaddr =
+						    from4.sin_addr.s_addr;
+					}
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
 				if (ttl_flag)
 					printf(" (%u)", ip->ip_ttl);
-				if (i == -2) {
-					if (ip->ip_ttl <= 1)
-						printf(" !");
-					++got_there;
-					break;
-				}
+				if (to->sa_family == AF_INET) {
+					if (i == -2) {
+						if (ip->ip_ttl <= 1)
+							printf(" !");
+						++got_there;
+						break;
+					}
 
-				if (tflag)
-					check_tos(ip);
+					if (tflag)
+						check_tos(ip);
+				}
 
 				/* time exceeded in transit */
 				if (i == -1)
