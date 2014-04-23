@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.117 2014/04/23 08:58:26 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.118 2014/04/23 09:10:53 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error;
 	int last_tos = 0, tos_returned;
 	struct addrinfo hints, *res;
-	size_t size = sizeof(max_ttl);
+	size_t size;
 	struct sockaddr_in from4, to4;
 	struct sockaddr *from, *to;
 	struct hostent *hp;
@@ -339,8 +339,10 @@ main(int argc, char *argv[])
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
 
-	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
-	    NULL, 0);
+	size = sizeof(i);
+	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0) == -1)
+		err(1, "sysctl");
+	max_ttl = i;
 
 	while ((ch = getopt(argc, argv, "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x"))
 			!= -1)

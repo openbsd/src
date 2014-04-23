@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.88 2014/04/23 09:09:28 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.89 2014/04/23 09:10:53 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -363,7 +363,8 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	size = sizeof(i);
-	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0);
+	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0) == -1)
+		err(1, "sysctl");
 	max_hops = i;
 
 	/* specify to tell receiving interface */
