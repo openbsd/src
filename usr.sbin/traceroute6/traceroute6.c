@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.95 2014/04/23 09:19:23 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.96 2014/04/23 09:20:15 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ main(int argc, char *argv[])
 		/*
 		 * Source selection
 		 */
-		bzero(&from6, sizeof(from6));
+		memset(&from6, 0, sizeof(from6));
 		if (source) {
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET6;
@@ -647,7 +647,7 @@ main(int argc, char *argv[])
 		int got_there = 0, unreachable = 0, timeout = 0, loss;
 
 		printf("%2u ", hops);
-		bzero(&lastaddr6, sizeof(lastaddr6));
+		memset(&lastaddr6, 0, sizeof(lastaddr6));
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
