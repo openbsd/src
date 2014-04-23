@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.92 2014/04/23 09:16:11 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.93 2014/04/23 09:17:10 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -754,6 +754,7 @@ send_probe(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 			break;
 		default:
 			errx(1, "unsupported AF: %d", to->sa_family);
+			break;
 	}
 
 	if (dump)
