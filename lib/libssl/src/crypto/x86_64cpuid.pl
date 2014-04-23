@@ -4,8 +4,6 @@ $flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
-$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
-
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}perlasm/x86_64-xlate.pl" and -f $xlate) or
@@ -14,8 +12,7 @@ die "can't locate x86_64-xlate.pl";
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 
-($arg1,$arg2,$arg3,$arg4)=$win64?("%rcx","%rdx","%r8", "%r9") :	# Win64 order
-				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
+($arg1,$arg2,$arg3,$arg4)=("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 print<<___;
 .extern		OPENSSL_cpuid_setup
@@ -164,7 +161,7 @@ OPENSSL_ia32_cpuid:
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 ___
 
-print<<___ if (!$win64);
+print<<___ 
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,\@abi-omnipotent
 .align	16
@@ -189,27 +186,6 @@ OPENSSL_wipe_cpu:
 	xorq	%rdx,%rdx
 	xorq	%rsi,%rsi
 	xorq	%rdi,%rdi
-	xorq	%r8,%r8
-	xorq	%r9,%r9
-	xorq	%r10,%r10
-	xorq	%r11,%r11
-	leaq	8(%rsp),%rax
-	ret
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
-___
-print<<___ if ($win64);
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@abi-omnipotent
-.align	16
-OPENSSL_wipe_cpu:
-	pxor	%xmm0,%xmm0
-	pxor	%xmm1,%xmm1
-	pxor	%xmm2,%xmm2
-	pxor	%xmm3,%xmm3
-	pxor	%xmm4,%xmm4
-	pxor	%xmm5,%xmm5
-	xorq	%rcx,%rcx
-	xorq	%rdx,%rdx
 	xorq	%r8,%r8
 	xorq	%r9,%r9
 	xorq	%r10,%r10
