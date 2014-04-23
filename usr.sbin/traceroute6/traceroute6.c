@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.85 2014/04/23 08:53:49 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.84 2014/04/23 08:51:32 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -338,7 +338,6 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
 	struct sockaddr_in6 from6, to6;
-	struct sockaddr *from, *to;
 	size_t size;
 	u_int8_t hops;
 	long l;
@@ -484,11 +483,7 @@ main(int argc, char *argv[])
 	if (res->ai_addrlen != sizeof(to6))
 		errx(1, "size of sockaddr mismatch");
 
-	to = (struct sockaddr *)&to6;
-	from = (struct sockaddr *)&from6;
-
-	memcpy(to, res->ai_addr, res->ai_addrlen);
-
+	memcpy(&to6, res->ai_addr, res->ai_addrlen);
 	hostname = res->ai_canonname ? strdup(res->ai_canonname) : *argv;
 	if (!hostname)
 		errx(1, "malloc");
@@ -602,8 +597,8 @@ main(int argc, char *argv[])
 	/*
 	 * Message to users
 	 */
-	if (getnameinfo(to, to->sa_len, hbuf, sizeof(hbuf), NULL, 0,
-	    NI_NUMERICHOST))
+	if (getnameinfo((struct sockaddr *)&to6, to6.sin6_len, hbuf,
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "traceroute6");
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
@@ -630,7 +625,7 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, hops, incflag, to);
+			send_probe(++seq, hops, incflag, (struct sockaddr*)&to6);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				i = packet_ok(&rcvmhdr, cc, seq, incflag);
@@ -639,9 +634,11 @@ main(int argc, char *argv[])
 					continue;
 				if (!IN6_ARE_ADDR_EQUAL(&from6.sin6_addr,
 				    &lastaddr)) {
-					print(from, cc, rcvpktinfo ? inet_ntop(
-					    AF_INET6, &rcvpktinfo->ipi6_addr,
-					    hbuf, sizeof(hbuf)) : "?");
+					print((struct sockaddr *)
+					    rcvmhdr.msg_name, cc,
+					    rcvpktinfo ?  inet_ntop(AF_INET6,
+					    &rcvpktinfo->ipi6_addr, hbuf,
+					    sizeof(hbuf)) : "?");
 					lastaddr = from6.sin6_addr;
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
