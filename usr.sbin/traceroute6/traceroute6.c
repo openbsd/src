@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.98 2014/04/23 09:23:30 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.99 2014/04/23 09:24:36 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -273,7 +273,7 @@
  */
 struct packetdata {
 	u_char seq;		/* sequence number of this packet */
-	u_int8_t hops;		/* hop limit of the packet */
+	u_int8_t ttl;		/* hop limit of the packet */
 	u_char pad[2];
 	u_int32_t sec;		/* time packet left */
 	u_int32_t usec;
@@ -763,7 +763,7 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 	} else
 		op = (struct packetdata *)outpacket;
 	op->seq = seq;
-	op->hops = hops;
+	op->ttl = hops;
 	op->sec = htonl(tv.tv_sec);
 	op->usec = htonl(tv.tv_usec);
 }
