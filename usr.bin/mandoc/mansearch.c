@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.25 2014/04/23 16:33:37 schwarze Exp $ */
+/*	$Id: mansearch.c,v 1.26 2014/04/23 21:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -320,8 +320,8 @@ mansearch(const struct mansearch *search,
 				mp = ohash_next(&htab, &idx)) {
 			if (cur + 1 > maxres) {
 				maxres += 1024;
-				*res = mandoc_realloc(*res,
-				    maxres * sizeof(struct manpage));
+				*res = mandoc_reallocarray(*res,
+				    maxres, sizeof(struct manpage));
 			}
 			mpage = *res + cur;
 			mpage->form = mp->form;
@@ -785,7 +785,7 @@ static void *
 hash_halloc(size_t sz, void *arg)
 {
 
-	return(mandoc_calloc(sz, 1));
+	return(mandoc_calloc(1, sz));
 }
 
 static void *

@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.8 2014/04/20 19:39:35 schwarze Exp $ */
+/*	$Id: eqn.c,v 1.9 2014/04/23 21:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -860,8 +860,8 @@ eqn_do_define(struct eqn_node *ep)
 
 		if (i == (int)ep->defsz) {
 			ep->defsz++;
-			ep->defs = mandoc_realloc(ep->defs,
-			    ep->defsz * sizeof(struct eqn_def));
+			ep->defs = mandoc_reallocarray(ep->defs,
+			    ep->defsz, sizeof(struct eqn_def));
 			ep->defs[i].key = ep->defs[i].val = NULL;
 		}
 

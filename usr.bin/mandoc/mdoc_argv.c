@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.49 2014/04/20 16:44:44 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.50 2014/04/23 21:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -355,8 +355,8 @@ mdoc_argv(struct mdoc *mdoc, int line, enum mdoct tok,
 		arg = *v = mandoc_calloc(1, sizeof(struct mdoc_arg));
 
 	arg->argc++;
-	arg->argv = mandoc_realloc(arg->argv,
-	    arg->argc * sizeof(struct mdoc_argv));
+	arg->argv = mandoc_reallocarray(arg->argv,
+	    arg->argc, sizeof(struct mdoc_argv));
 
 	memcpy(&arg->argv[(int)arg->argc - 1], &tmp,
 	    sizeof(struct mdoc_argv));
@@ -663,8 +663,8 @@ argv_multi(struct mdoc *mdoc, int line,
 			break;
 
 		if (0 == v->sz % MULTI_STEP)
-			v->value = mandoc_realloc(v->value,
-			    (v->sz + MULTI_STEP) * sizeof(char *));
+			v->value = mandoc_reallocarray(v->value,
+			    v->sz + MULTI_STEP, sizeof(char *));
 
 		v->value[(int)v->sz] = mandoc_strdup(p);
 	}

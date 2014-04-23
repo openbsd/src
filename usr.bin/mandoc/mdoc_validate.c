@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.131 2014/04/23 16:07:06 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.132 2014/04/23 21:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1456,8 +1456,8 @@ post_bl_block_tag(POST_ARGS)
 	assert(n->args);
 	i = (int)(n->args->argc)++;
 
-	n->args->argv = mandoc_realloc(n->args->argv,
-	    n->args->argc * sizeof(struct mdoc_argv));
+	n->args->argv = mandoc_reallocarray(n->args->argv,
+	    n->args->argc, sizeof(struct mdoc_argv));
 
 	n->args->argv[i].arg = MDOC_Width;
 	n->args->argv[i].line = n->line;
@@ -1517,8 +1517,8 @@ post_bl_head(POST_ARGS)
 	 */
 
 	np->args->argv[j].sz = (size_t)mdoc->last->nchild;
-	np->args->argv[j].value = mandoc_malloc(
-	    (size_t)mdoc->last->nchild * sizeof(char *));
+	np->args->argv[j].value = mandoc_reallocarray(NULL,
+	    (size_t)mdoc->last->nchild, sizeof(char *));
 
 	mdoc->last->norm->Bl.ncols = np->args->argv[j].sz;
 	mdoc->last->norm->Bl.cols = (void *)np->args->argv[j].value;

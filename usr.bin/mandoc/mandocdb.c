@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.100 2014/04/23 19:08:52 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.101 2014/04/23 21:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -463,8 +463,8 @@ mandocdb(int argc, char *argv[])
 		 * manpath_parse() wants to do it.
 		 */
 		if (argc > 0) {
-			dirs.paths = mandoc_calloc(argc,
-			    sizeof(char *));
+			dirs.paths = mandoc_reallocarray(NULL,
+			    argc, sizeof(char *));
 			dirs.sz = (size_t)argc;
 			for (i = 0; i < argc; i++)
 				dirs.paths[i] = mandoc_strdup(argv[i]);
@@ -1776,7 +1776,7 @@ putkeys(const struct mpage *mpage,
 		s->mask |= v;
 		return;
 	} else if (NULL == s) {
-		s = mandoc_calloc(sizeof(struct str) + sz + 1, 1);
+		s = mandoc_calloc(1, sizeof(struct str) + sz + 1);
 		memcpy(s->key, cp, sz);
 		ohash_insert(htab, slot, s);
 	}
@@ -2304,7 +2304,7 @@ static void *
 hash_halloc(size_t sz, void *arg)
 {
 
-	return(mandoc_calloc(sz, 1));
+	return(mandoc_calloc(1, sz));
 }
 
 static void *
