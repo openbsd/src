@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.89 2014/04/23 09:10:53 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.90 2014/04/23 09:11:35 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -578,14 +578,14 @@ main(int argc, char *argv[])
 		memcpy(&from6, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 	} else {
-		struct sockaddr_in6 Nxt;
+		struct sockaddr_in6 nxt;
 		int dummy;
 
-		Nxt = to6;
-		Nxt.sin6_port = htons(DUMMY_PORT);
+		nxt = to6;
+		nxt.sin6_port = htons(DUMMY_PORT);
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(1, "socket");
-		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0)
+		if (connect(dummy, (struct sockaddr *)&nxt, nxt.sin6_len) < 0)
 			err(1, "connect");
 		len = sizeof(from6);
 		if (getsockname(dummy, (struct sockaddr *)&from6, &len) < 0)
