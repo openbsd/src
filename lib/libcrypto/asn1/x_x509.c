@@ -125,6 +125,7 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 #endif
 		if (ret->name != NULL)
 			free(ret->name);
+		ret->name = NULL;
 		break;
 	}
 
