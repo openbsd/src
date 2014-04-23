@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.94 2014/04/23 09:18:27 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.95 2014/04/23 09:19:23 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -643,11 +643,11 @@ main(int argc, char *argv[])
 	 * Main loop
 	 */
 	for (hops = first_hop; hops <= max_hops; ++hops) {
-		struct in6_addr lastaddr;
+		struct in6_addr lastaddr6;
 		int got_there = 0, unreachable = 0, timeout = 0, loss;
 
 		printf("%2u ", hops);
-		bzero(&lastaddr, sizeof(lastaddr));
+		bzero(&lastaddr6, sizeof(lastaddr6));
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
@@ -663,12 +663,12 @@ main(int argc, char *argv[])
 					continue;
 				if (to->sa_family == AF_INET6) {
 					if (!IN6_ARE_ADDR_EQUAL(
-					    &from6.sin6_addr, &lastaddr)) {
+					    &from6.sin6_addr, &lastaddr6)) {
 						print(from, cc, rcvpktinfo ?
 						    inet_ntop( AF_INET6,
 						    &rcvpktinfo->ipi6_addr,
 						    hbuf, sizeof(hbuf)) : "?");
-						lastaddr = from6.sin6_addr;
+						lastaddr6 = from6.sin6_addr;
 					}
 				} else
 					errx(1, "unsupported AF: %d",
