@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.113 2014/04/23 08:44:50 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.114 2014/04/23 08:47:16 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -314,7 +314,7 @@ main(int argc, char *argv[])
 	int last_tos = 0, tos_returned;
 	struct addrinfo hints, *res;
 	size_t size = sizeof(max_ttl);
-	struct sockaddr_in from, to;
+	struct sockaddr_in from4, to4;
 	struct hostent *hp;
 	u_int32_t tmprnd;
 	struct ip *ip, *inner_ip;
@@ -505,11 +505,11 @@ main(int argc, char *argv[])
 	    (tmprnd & 0x7ff);
 	usec_perturb = arc4random();
 
-	(void) memset(&to, 0, sizeof(to));
+	(void) memset(&to4, 0, sizeof(to4));
 
-	if (inet_aton(*argv, &to.sin_addr) != 0) {
+	if (inet_aton(*argv, &to4.sin_addr) != 0) {
 		hostname = *argv;
-		if ((dest = strdup(inet_ntoa(to.sin_addr))) == NULL)
+		if ((dest = strdup(inet_ntoa(to4.sin_addr))) == NULL)
 			errx(1, "malloc");
 	} else
 		dest = *argv;
@@ -522,10 +522,10 @@ main(int argc, char *argv[])
 	if ((error = getaddrinfo(dest, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
 
-	if (res->ai_addrlen != sizeof(to))
+	if (res->ai_addrlen != sizeof(to4))
 	    errx(1, "size of sockaddr mismatch");
 
-	memcpy(&to, res->ai_addr, res->ai_addrlen);
+	memcpy(&to4, res->ai_addr, res->ai_addrlen);
 
 	if (!hostname) {
 		hostname = res->ai_canonname ? strdup(res->ai_canonname) : dest;
@@ -576,8 +576,8 @@ main(int argc, char *argv[])
 
 	rcviov[0].iov_base = (caddr_t)packet;
 	rcviov[0].iov_len = sizeof(packet);
-	rcvmhdr.msg_name = (caddr_t)&from;
-	rcvmhdr.msg_namelen = sizeof(from);
+	rcvmhdr.msg_name = (caddr_t)&from4;
+	rcvmhdr.msg_namelen = sizeof(from4);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
 	rcvmhdr.msg_control = NULL;
@@ -591,14 +591,14 @@ main(int argc, char *argv[])
 		*p++ = IPOPT_LSRR;
 		*p++ = lsrrlen - 1;
 		*p++ = IPOPT_MINOFF;
-		gateway[lsrr] = to.sin_addr;
+		gateway[lsrr] = to4.sin_addr;
 		for (i = 1; i <= lsrr; i++) {
 			memcpy(p, &gateway[i], sizeof(struct in_addr));
 			p += sizeof(struct in_addr);
 		}
 		ip->ip_dst = gateway[0];
 	} else
-		ip->ip_dst = to.sin_addr;
+		ip->ip_dst = to4.sin_addr;
 	ip->ip_off = htons(0);
 	ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
 	ip->ip_p = proto;
@@ -619,21 +619,22 @@ main(int argc, char *argv[])
 		    (char *)&on, sizeof(on));
 
 	if (source) {
-		(void) memset(&from, 0, sizeof(struct sockaddr));
-		from.sin_family = AF_INET;
-		if (inet_aton(source, &from.sin_addr) == 0)
+		(void) memset(&from4, 0, sizeof(from4));
+		from4.sin_family = AF_INET;
+		if (inet_aton(source, &from4.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
-		ip->ip_src = from.sin_addr;
+		ip->ip_src = from4.sin_addr;
 		if (getuid() != 0 &&
-		    (ntohl(from.sin_addr.s_addr) & 0xff000000U) == 0x7f000000U &&
-		    (ntohl(to.sin_addr.s_addr) & 0xff000000U) != 0x7f000000U)
+		    (ntohl(from4.sin_addr.s_addr) & 0xff000000U) ==
+		    0x7f000000U && (ntohl(to4.sin_addr.s_addr) & 0xff000000U)
+		    != 0x7f000000U)
 			errx(1, "source is on 127/8, destination is not");
 		if (getuid() &&
-		    bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
+		    bind(sndsock, (struct sockaddr *)&from4, sizeof(from4)) < 0)
 			err(1, "bind");
 	}
 
-	if (getnameinfo((struct sockaddr *)&to, to.sin_len, hbuf,
+	if (getnameinfo((struct sockaddr *)&to4, to4.sin_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "%s to %s (%s)", __progname, hostname, hbuf);
@@ -655,7 +656,7 @@ main(int argc, char *argv[])
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to);
+			send_probe(++seq, ttl, incflag, (struct sockaddr*)&to4);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
 				(void) gettimeofday(&t2, NULL);
 				i = packet_ok(&rcvmhdr, cc, seq, incflag);
@@ -663,12 +664,12 @@ main(int argc, char *argv[])
 				if (i == 0)
 					continue;
 				ip = (struct ip *)packet;
-				if (from.sin_addr.s_addr != lastaddr) {
-					print((struct sockaddr *)&from,
+				if (from4.sin_addr.s_addr != lastaddr) {
+					print((struct sockaddr *)&from4,
 					    cc - (ip->ip_hl << 2),
 					    inet_ntop(AF_INET, &ip->ip_dst,
 					    hbuf, sizeof(hbuf)));
-					lastaddr = from.sin_addr.s_addr;
+					lastaddr = from4.sin_addr.s_addr;
 				}
 				printf("  %g ms", deltaT(&t1, &t2));
 				if (ttl_flag)
