@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.21 2014/04/14 09:06:42 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.22 2014/04/23 14:43:14 florian Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -63,7 +63,9 @@ int divb6hashsize = DIVERTHASHSIZE;
 
 static struct sockaddr_in6 ip6addr = { sizeof(ip6addr), AF_INET6 };
 
-void divert6_detach(struct inpcb *);
+void	divert6_detach(struct inpcb *);
+int	divert6_output(struct inpcb *, struct mbuf *, struct mbuf *,
+	    struct mbuf *);
 
 void
 divert6_init()
@@ -80,25 +82,17 @@ divert6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 int
-divert6_output(struct mbuf *m, ...)
+divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
 {
-	struct inpcb *inp;
 	struct ifqueue *inq;
-	struct mbuf *nam, *control;
 	struct sockaddr_in6 *sin6;
 	struct socket *so;
 	struct ifaddr *ifa;
 	int s, error = 0, p_hdrlen = 0, nxt = 0, off;
-	va_list ap;
 	struct ip6_hdr *ip6;
 	u_int16_t csum = 0;
 	size_t p_off = 0;
-
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	nam = va_arg(ap, struct mbuf *);
-	control = va_arg(ap, struct mbuf *);
-	va_end(ap);
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
@@ -321,7 +315,7 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_SEND:
-		return (divert6_output(m, inp, addr, control));
+		return (divert6_output(inp, m, addr, control));
 
 	case PRU_ABORT:
 		soisdisconnected(so);

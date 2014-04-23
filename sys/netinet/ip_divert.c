@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.21 2014/04/21 12:22:26 henning Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.22 2014/04/23 14:43:14 florian Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -62,8 +62,9 @@ int divbhashsize = DIVERTHASHSIZE;
 
 static struct sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 
-void divert_detach(struct inpcb *);
-
+void	divert_detach(struct inpcb *);
+int	divert_output(struct inpcb *, struct mbuf *, struct mbuf *,
+	    struct mbuf *);
 void
 divert_init()
 {
@@ -77,26 +78,18 @@ divert_input(struct mbuf *m, ...)
 }
 
 int
-divert_output(struct mbuf *m, ...)
+divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
 {
-	struct inpcb *inp;
 	struct ifqueue *inq;
-	struct mbuf *nam, *control;
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct ifaddr *ifa;
 	int s, error = 0, p_hdrlen = 0;
-	va_list ap;
 	struct ip *ip;
 	u_int16_t off, csum = 0;
 	u_int8_t nxt;
 	size_t p_off = 0;
-
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	nam = va_arg(ap, struct mbuf *);
-	control = va_arg(ap, struct mbuf *);
-	va_end(ap);
 
 	m->m_pkthdr.rcvif = NULL;
 	m->m_nextpkt = NULL;
@@ -325,7 +318,7 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_SEND:
-		return (divert_output(m, inp, addr, control));
+		return (divert_output(inp, m, addr, control));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
