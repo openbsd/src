@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.183 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.184 2014/04/23 12:25:35 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -135,10 +135,11 @@ int *udpctl_vars[UDPCTL_MAXID] = UDPCTL_VARS;
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
-void udp_detach(struct inpcb *);
-void udp_notify(struct inpcb *, int);
+int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
+void	udp_detach(struct inpcb *);
+void	udp_notify(struct inpcb *, int);
 
-#ifndef UDBHASHSIZE
+#ifndef	UDBHASHSIZE
 #define	UDBHASHSIZE	128
 #endif
 int	udbhashsize = UDBHASHSIZE;
@@ -964,27 +965,19 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 }
 
 int
-udp_output(struct mbuf *m, ...)
+udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
+    struct mbuf *control)
 {
-	struct inpcb *inp;
-	struct mbuf *addr, *control;
 	struct sockaddr_in *sin = NULL;
 	struct udpiphdr *ui;
 	u_int32_t ipsecflowinfo = 0;
 	int len = m->m_pkthdr.len;
 	struct in_addr *laddr;
 	int error = 0;
-	va_list ap;
-
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	addr = va_arg(ap, struct mbuf *);
-	control = va_arg(ap, struct mbuf *);
-	va_end(ap);
 
 #ifdef DIAGNOSTIC
 	if ((inp->inp_flags & INP_IPV6) != 0)
-		panic("IPv6 inpcb to udp_output");
+		panic("IPv6 inpcb to %s", __func__);
 #endif
 
 	/*
@@ -1294,9 +1287,9 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		if (inp->inp_flags & INP_IPV6)
 			return (udp6_output(inp, m, addr, control));
 		else
-			return (udp_output(m, inp, addr, control));
+			return (udp_output(inp, m, addr, control));
 #else
-		return (udp_output(m, inp, addr, control));
+		return (udp_output(inp, m, addr, control));
 #endif
 
 	case PRU_ABORT:
