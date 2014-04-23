@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.82 2014/04/18 16:58:02 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.83 2014/04/23 08:44:50 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -338,7 +338,6 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res;
 	static u_char *rcvcmsgbuf;
 	struct sockaddr_in6 from, to;
-	struct hostent *hp;
 	size_t size;
 	u_int8_t hops;
 	long l;
@@ -479,7 +478,7 @@ main(int argc, char *argv[])
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
 	hints.ai_flags = AI_CANONNAME;
-	if (error = getaddrinfo(*argv, NULL, &hints, &res))
+	if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
 	if (res->ai_addrlen != sizeof(to))
 		errx(1, "size of sockaddr mismatch");
@@ -560,14 +559,11 @@ main(int argc, char *argv[])
 	 */
 	bzero(&from, sizeof(from));
 	if (source) {
-		struct addrinfo hints, *res;
-		int error;
-
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_INET6;
 		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 		hints.ai_flags = AI_NUMERICHOST;
-		if(error = getaddrinfo(source, "0", &hints, &res))
+		if ((error = getaddrinfo(source, "0", &hints, &res)))
 			errx(1, "%s: %s", source, gai_strerror(error));
 		if (res->ai_addrlen != sizeof(from))
 			errx(1, "size of sockaddr mismatch");
@@ -1082,7 +1078,7 @@ print_asn(struct sockaddr_storage *ss)
 	struct rrsetinfo *answers = NULL;
 	int counter;
 	const u_char *uaddr;
-	char qbuf[MAXDNAME], *qp;
+	char qbuf[MAXDNAME];
 
 	switch (ss->ss_family) {
 	case AF_INET:

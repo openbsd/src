@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.112 2014/04/21 14:26:10 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.113 2014/04/23 08:44:50 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error;
-	int last_tos, tos_returned;
+	int last_tos = 0, tos_returned;
 	struct addrinfo hints, *res;
 	size_t size = sizeof(max_ttl);
 	struct sockaddr_in from, to;
@@ -325,7 +325,6 @@ main(int argc, char *argv[])
 	long l;
 	uid_t uid;
 	u_int rtableid;
-	socklen_t len;
 
 	if ((rcvsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -649,7 +648,6 @@ main(int argc, char *argv[])
 	for (ttl = first_ttl; ttl && ttl <= max_ttl; ++ttl) {
 		int got_there = 0, unreachable = 0, timeout = 0, loss;
 		in_addr_t lastaddr = 0;
-		quad_t dt;
 
 		printf("%2u ", ttl);
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
@@ -1229,7 +1227,7 @@ print_asn(struct sockaddr_storage *ss)
 	struct rrsetinfo *answers = NULL;
 	int counter;
 	const u_char *uaddr;
-	char qbuf[MAXDNAME], *qp;
+	char qbuf[MAXDNAME];
 
 	switch (ss->ss_family) {
 	case AF_INET:
