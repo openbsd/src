@@ -120,6 +120,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
+#include <machine/endian.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
@@ -463,9 +464,8 @@ static long ok_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	}
 
 static void longswap(void *_ptr, size_t len)
-{	const union { long one; char little; } is_endian = {1};
-
-	if (is_endian.little) {
+{
+	if (_BYTE_ORDER == _LITTLE_ENDIAN) {
 		size_t i;
 		unsigned char *p=_ptr,c;
 

@@ -202,6 +202,7 @@ fips_md_init_ctx(SHA1, SHA)
 #endif
 
 #if !defined(SHA_1) || !defined(SHA1_ASM)
+#include <machine/endian.h>
 static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
@@ -221,9 +222,9 @@ static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 
 	for (;;)
 			{
-	const union { long one; char little; } is_endian = {1};
 
-	if (!is_endian.little && sizeof(SHA_LONG)==4 && ((size_t)p%4)==0)
+	if (_BYTE_ORDER != _LITTLE_ENDIAN &&
+	    sizeof(SHA_LONG)==4 && ((size_t)p%4)==0)
 		{
 		const SHA_LONG *W=(const SHA_LONG *)data;
 

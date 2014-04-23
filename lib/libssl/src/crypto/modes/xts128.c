@@ -62,7 +62,6 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	const unsigned char *inp, unsigned char *out,
 	size_t len, int enc)
 {
-	const union { long one; char little; } is_endian = {1};
 	union { u64 u[2]; u32 d[4]; u8 c[16]; } tweak, scratch;
 	unsigned int i;
 
@@ -98,7 +97,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 
 		if (len==0)	return 0;
 
-		if (is_endian.little) {
+		if (_BYTE_ORDER == _LITTLE_ENDIAN) {
 			unsigned int carry,res;
 			
 			res = 0x87&(((int)tweak.d[3])>>31);
@@ -134,7 +133,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	else {
 		union { u64 u[2]; u8 c[16]; } tweak1;
 
-		if (is_endian.little) {
+		if (_BYTE_ORDER == _LITTLE_ENDIAN) {
 			unsigned int carry,res;
 
 			res = 0x87&(((int)tweak.d[3])>>31);

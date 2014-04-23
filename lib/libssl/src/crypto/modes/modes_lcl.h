@@ -6,6 +6,7 @@
  */
 
 #include <openssl/modes.h>
+#include <machine/endian.h>
 
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)

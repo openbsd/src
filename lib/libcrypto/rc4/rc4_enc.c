@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <machine/endian.h>
 #include <openssl/rc4.h>
 #include "rc4_locl.h"
 
@@ -124,7 +125,6 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 	       ((size_t)outdata & (sizeof(RC4_CHUNK)-1)) ) == 0 )
 		{
 		RC4_CHUNK ichunk,otp;
-		const union { long one; char little; } is_endian = {1};
 
 		/*
 		 * I reckon we can afford to implement both endian
@@ -132,14 +132,10 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		 * because the machine code appears to be very compact
 		 * and redundant 1-2KB is perfectly tolerable (i.e.
 		 * in case the compiler fails to eliminate it:-). By
-		 * suggestion from Terrel Larson <terr@terralogic.net>
-		 * who also stands for the is_endian union:-)
+		 * suggestion from Terrel Larson <terr@terralogic.net>.
 		 *
 		 * Special notes.
 		 *
-		 * - is_endian is declared automatic as doing otherwise
-		 *   (declaring static) prevents gcc from eliminating
-		 *   the redundant code;
 		 * - compilers (those I've tried) don't seem to have
 		 *   problems eliminating either the operators guarded
 		 *   by "if (sizeof(RC4_CHUNK)==8)" or the condition
@@ -154,7 +150,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		 *
 		 *			<appro@fy.chalmers.se>
 		 */
-		if (!is_endian.little)
+		if (_BYTE_ORDER != _LITTLE_ENDIAN)
 			{	/* BIG-ENDIAN CASE */
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
 			for (;len&(0-sizeof(RC4_CHUNK));len-=sizeof(RC4_CHUNK))

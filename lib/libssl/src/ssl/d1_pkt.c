@@ -115,6 +115,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <machine/endian.h>
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
@@ -129,13 +130,9 @@ satsub64be(const unsigned char *v1, const unsigned char *v2)
 
 	if (sizeof(long) == 8)
 		do {
-			const union {
-				long one;
-				char little;
-			} is_endian = {1};
 			long l;
 
-			if (is_endian.little)
+			if (_BYTE_ORDER == _LITTLE_ENDIAN)
 				break;
 			/* not reached on little-endians */
 			/* following test is redundant, because input is
