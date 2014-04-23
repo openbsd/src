@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.26 2010/04/26 16:51:59 stsp Exp $	*/
+/*	$OpenBSD: complete.c,v 1.27 2014/04/23 11:47:04 jca Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -90,7 +90,6 @@ complete_ambiguous(char *word, int list, StringList *words)
 	}
 
 	if (!list) {
-		matchlen = 0;
 		lastmatch = words->sl_str[0];
 		matchlen = strlen(lastmatch);
 		for (i = 1 ; i < words->sl_cur ; i++) {
