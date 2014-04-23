@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.96 2014/04/23 09:20:15 florian Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.97 2014/04/23 09:22:34 florian Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ main(int argc, char *argv[])
 	if ((error = getaddrinfo(*argv, NULL, &hints, &res)))
 		errx(1, "%s", gai_strerror(error));
 
-	switch(res->ai_family) {
+	switch (res->ai_family) {
 	case AF_INET6:
 		if (res->ai_addrlen != sizeof(to6))
 			errx(1, "size of sockaddr mismatch");
@@ -525,7 +525,7 @@ main(int argc, char *argv[])
 		datalen = (int)l;
 	}
 
-	switch(to->sa_family) {
+	switch (to->sa_family) {
 	case AF_INET6:
 		if (useicmp)
 			minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
@@ -774,12 +774,12 @@ send_probe(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 	int i;
 
 	switch (to->sa_family) {
-		case AF_INET6:
-			build_probe6(seq, hops, iflag, to);
-			break;
-		default:
-			errx(1, "unsupported AF: %d", to->sa_family);
-			break;
+	case AF_INET6:
+		build_probe6(seq, hops, iflag, to);
+		break;
+	default:
+		errx(1, "unsupported AF: %d", to->sa_family);
+		break;
 	}
 
 	if (dump)
