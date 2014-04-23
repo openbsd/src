@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.92 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.93 2014/04/23 10:50:18 jca Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -152,12 +152,6 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		hlen = ETHER_HDR_LEN;
 		break;
 
-	case DLT_FDDI:
-		sockp->sa_family = AF_UNSPEC;
-		/* XXX 4(FORMAC)+6(dst)+6(src)+3(LLC)+5(SNAP) */
-		hlen = 24;
-		break;
-
 	case DLT_IEEE802_11:
 	case DLT_IEEE802_11_RADIO:
 		sockp->sa_family = AF_UNSPEC;
@@ -168,16 +162,6 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	case DLT_NULL:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = 0;
-		break;
-
-	case DLT_ATM_RFC1483:
-		/*
-		 * An ATM driver requires 4-byte ATM pseudo header.
-		 * Though it isn't standard, vpi:vci needs to be
-		 * specified anyway.
-		 */
-		sockp->sa_family = AF_UNSPEC;
-		hlen = 12; 	/* XXX 4(ATM_PH) + 3(LLC) + 5(SNAP) */
 		break;
 
 	default:
