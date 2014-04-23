@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.119 2014/04/23 09:13:00 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.120 2014/04/23 09:14:07 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -267,6 +267,7 @@ void icmp_code(int, int, int *, int *);
 void icmp4_code(int, int *, int *);
 void dump_packet(void);
 void print_exthdr(u_char *, int);
+void check_tos(struct ip*);
 void print(struct sockaddr *, int, const char *);
 const char *inetname(struct sockaddr*);
 void print_asn(struct sockaddr_storage *);
@@ -304,6 +305,7 @@ int dump;
 int xflag;			/* show ICMP extension header */
 int tflag;			/* tos flag was set */
 int Aflag;			/* lookup ASN */
+int last_tos;
 
 extern char *__progname;
 
@@ -313,15 +315,13 @@ main(int argc, char *argv[])
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error;
-	int last_tos = 0, tos_returned;
 	struct addrinfo hints, *res;
 	size_t size;
 	struct sockaddr_in from4, to4;
 	struct sockaddr *from, *to;
 	struct hostent *hp;
 	u_int32_t tmprnd;
-	struct ip *ip, *inner_ip;
-	struct icmp *icp;
+	struct ip *ip;
 	u_int8_t ttl;
 	char *ep, hbuf[NI_MAXHOST], *dest;
 	const char *errstr;
@@ -693,15 +693,8 @@ main(int argc, char *argv[])
 					break;
 				}
 
-				icp = (struct icmp *) (((u_char *)ip)+(ip->ip_hl<<2));
-				inner_ip = (struct ip *) (((u_char *)icp)+8);
-
-				tos_returned = inner_ip->ip_tos;
-
-				if (tflag && (tos_returned != last_tos))
-					printf (" (TOS=%d!)", tos_returned);
-
-				last_tos = tos_returned;
+				if (tflag)
+					check_tos(ip);
 
 				/* time exceeded in transit */
 				if (i == -1)
@@ -841,6 +834,21 @@ print_exthdr(u_char *buf, int cc)
 			break;
 		}
 	}
+}
+
+void
+check_tos(struct ip *ip)
+{
+	struct icmp *icp;
+	struct ip *inner_ip;
+
+	icp = (struct icmp *) (((u_char *)ip)+(ip->ip_hl<<2));
+	inner_ip = (struct ip *) (((u_char *)icp)+8);
+
+	if (inner_ip->ip_tos != last_tos)
+		printf (" (TOS=%d!)", inner_ip->ip_tos);
+
+	last_tos = inner_ip->ip_tos;
 }
 
 int
