@@ -4456,7 +4456,6 @@
 ./usr/share/man/man3/lroundl.3
 ./usr/share/man/man3/lsearch.3
 ./usr/share/man/man3/malloc.3
-./usr/share/man/man3/mallocarray.3
 ./usr/share/man/man3/mblen.3
 ./usr/share/man/man3/mbrlen.3
 ./usr/share/man/man3/mbrtowc.3
@@ -4959,6 +4958,7 @@
 ./usr/share/man/man3/readpassphrase.3
 ./usr/share/man/man3/readskey.3
 ./usr/share/man/man3/realloc.3
+./usr/share/man/man3/reallocarray.3
 ./usr/share/man/man3/realpath.3
 ./usr/share/man/man3/recno.3
 ./usr/share/man/man3/redrawwin.3

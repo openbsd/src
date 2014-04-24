@@ -391,10 +391,8 @@
 ./usr/bin/rpcinfo
 ./usr/bin/rs
 ./usr/bin/rup
-./usr/bin/ruptime
 ./usr/bin/rusers
 ./usr/bin/rwall
-./usr/bin/rwho
 ./usr/bin/s2p
 ./usr/bin/scp
 ./usr/bin/script
@@ -2674,7 +2672,6 @@
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
 ./usr/sbin/rtsold
-./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail

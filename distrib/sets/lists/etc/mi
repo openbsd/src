@@ -117,12 +117,7 @@
 ./etc/rc.d/ifstated
 ./etc/rc.d/iked
 ./etc/rc.d/inetd
-./etc/rc.d/ipropd_master
-./etc/rc.d/ipropd_slave
 ./etc/rc.d/isakmpd
-./etc/rc.d/kadmind
-./etc/rc.d/kdc
-./etc/rc.d/kpasswdd
 ./etc/rc.d/ldapd
 ./etc/rc.d/ldattach
 ./etc/rc.d/ldomd
@@ -150,7 +145,6 @@
 ./etc/rc.d/route6d
 ./etc/rc.d/rtadvd
 ./etc/rc.d/rtsold
-./etc/rc.d/rwhod
 ./etc/rc.d/sasyncd
 ./etc/rc.d/sendmail
 ./etc/rc.d/sensorsd

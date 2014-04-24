@@ -510,10 +510,8 @@
 ./usr/share/man/man1/rmdir.1
 ./usr/share/man/man1/rs.1
 ./usr/share/man/man1/rup.1
-./usr/share/man/man1/ruptime.1
 ./usr/share/man/man1/rusers.1
 ./usr/share/man/man1/rwall.1
-./usr/share/man/man1/rwho.1
 ./usr/share/man/man1/s2p.1
 ./usr/share/man/man1/scp.1
 ./usr/share/man/man1/script.1
@@ -2750,7 +2748,6 @@
 ./usr/share/man/man8/rtsol.8
 ./usr/share/man/man8/rtsold.8
 ./usr/share/man/man8/rwalld.8
-./usr/share/man/man8/rwhod.8
 ./usr/share/man/man8/sa.8
 ./usr/share/man/man8/sasyncd.8
 ./usr/share/man/man8/savecore.8
