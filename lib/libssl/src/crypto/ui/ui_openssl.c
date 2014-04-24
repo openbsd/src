@@ -141,27 +141,13 @@
  * TERMIO, TERMIOS, VMS, MSDOS and SGTTY
  */
 
-#ifdef _LIBC
-#undef  TERMIOS
-#define TERMIO
-#undef  SGTTY
-#endif
 
-#ifdef TERMIOS
 #include <termios.h>
 #define TTY_STRUCT		struct termios
 #define TTY_FLAGS		c_lflag
 #define TTY_get(tty,data)	tcgetattr(tty,data)
 #define TTY_set(tty,data)	tcsetattr(tty,TCSANOW,data)
-#endif
 
-#ifdef TERMIO
-#include <termio.h>
-#define TTY_STRUCT		struct termio
-#define TTY_FLAGS		c_lflag
-#define TTY_get(tty,data)	ioctl(tty,TCGETA,data)
-#define TTY_set(tty,data)	ioctl(tty,TCSETA,data)
-#endif
 
 #include <sys/ioctl.h>
 
@@ -171,11 +157,7 @@
 
 
 /* Define globals.  They are protected by a lock */
-#ifdef SIGACTION
 static struct sigaction savsig[NX509_SIG];
-#else
-static void (*savsig[NX509_SIG]) (int);
-#endif
 
 static TTY_STRUCT tty_orig, tty_new;
 static FILE *tty_in, *tty_out;
@@ -416,36 +398,22 @@ static void
 pushsig(void)
 {
 	int i;
-#ifdef SIGACTION
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = recsig;
-#endif
 
 	for (i = 1; i < NX509_SIG; i++) {
-#ifdef SIGUSR1
 		if (i == SIGUSR1)
 			continue;
-#endif
-#ifdef SIGUSR2
 		if (i == SIGUSR2)
 			continue;
-#endif
-#ifdef SIGKILL
 		if (i == SIGKILL)	/* We can't make any action on that. */
 			continue;
-#endif
-#ifdef SIGACTION
 		sigaction(i, &sa, &savsig[i]);
-#else
-		savsig[i] = signal(i, recsig);
-#endif
 	}
 
-#ifdef SIGWINCH
 	signal(SIGWINCH, SIG_DFL);
-#endif
 }
 
 static void
@@ -457,11 +425,7 @@ popsig(void)
 			continue;
 		if (i == SIGUSR2)
 			continue;
-#ifdef SIGACTION
 		sigaction(i, &savsig[i], NULL);
-#else
-		signal(i, savsig[i]);
-#endif
 	}
 }
 
