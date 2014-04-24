@@ -2962,9 +2962,9 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 	case SSL_CTRL_NEED_TMP_RSA:
 		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
-		   ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
-		   (EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey)
-		   > (512 / 8))))
+		    ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
+		    (EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey)
+		    > (512 / 8))))
 			ret = 1;
 		break;
 	case SSL_CTRL_SET_TMP_RSA:
@@ -3113,10 +3113,12 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		}
 		if (s->tlsext_opaque_prf_input != NULL)
 			free(s->tlsext_opaque_prf_input);
-		if ((size_t)larg == 0)
-			s->tlsext_opaque_prf_input = malloc(1); /* dummy byte just to get non-NULL */
-		else
-			s->tlsext_opaque_prf_input = BUF_memdup(parg, (size_t)larg);
+		if ((size_t)larg == 0) {
+			/* dummy byte just to get non-NULL */
+			s->tlsext_opaque_prf_input = malloc(1);
+		} else
+			s->tlsext_opaque_prf_input =
+			    BUF_memdup(parg, (size_t)larg);
 		if (s->tlsext_opaque_prf_input != NULL) {
 			s->tlsext_opaque_prf_input_len = (size_t)larg;
 			ret = 1;

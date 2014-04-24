@@ -7,21 +7,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -36,10 +36,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -51,7 +51,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -65,7 +65,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -112,7 +112,7 @@
  */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * ECC cipher suite support in OpenSSL originally developed by 
+ * ECC cipher suite support in OpenSSL originally developed by
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 /* ====================================================================
@@ -203,7 +203,7 @@ SSL_clear(SSL *s)
 	if (s->renegotiate) {
 		SSLerr(SSL_F_SSL_CLEAR,
 		    ERR_R_INTERNAL_ERROR);
-		return 0;
+		return (0);
 	}
 
 	s->type = 0;
@@ -393,12 +393,12 @@ SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
 	if (sid_ctx_len > sizeof ctx->sid_ctx) {
 		SSLerr(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT,
 		    SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
-		return 0;
+		return (0);
 	}
 	ctx->sid_ctx_length = sid_ctx_len;
 	memcpy(ctx->sid_ctx, sid_ctx, sid_ctx_len);
 
-	return 1;
+	return (1);
 }
 
 int
@@ -407,13 +407,13 @@ SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
 {
 	if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
 		SSLerr(SSL_F_SSL_SET_SESSION_ID_CONTEXT,
-		   SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
-		return 0;
+		    SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+		return (0);
 	}
 	ssl->sid_ctx_length = sid_ctx_len;
 	memcpy(ssl->sid_ctx, sid_ctx, sid_ctx_len);
 
-	return 1;
+	return (1);
 }
 
 int
@@ -422,7 +422,7 @@ SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	ctx->generate_session_id = cb;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
-	return 1;
+	return (1);
 }
 
 int
@@ -431,7 +431,7 @@ SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 	ssl->generate_session_id = cb;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-	return 1;
+	return (1);
 }
 
 int
@@ -448,7 +448,7 @@ SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 	SSL_SESSION r, *p;
 
 	if (id_len > sizeof r.session_id)
-		return 0;
+		return (0);
 
 	r.ssl_version = ssl->version;
 	r.session_id_length = id_len;
@@ -463,37 +463,37 @@ SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 int
 SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 {
-	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
+	return (X509_VERIFY_PARAM_set_purpose(s->param, purpose));
 }
 
 int
 SSL_set_purpose(SSL *s, int purpose)
 {
-	return X509_VERIFY_PARAM_set_purpose(s->param, purpose);
+	return (X509_VERIFY_PARAM_set_purpose(s->param, purpose));
 }
 
 int
 SSL_CTX_set_trust(SSL_CTX *s, int trust)
 {
-	return X509_VERIFY_PARAM_set_trust(s->param, trust);
+	return (X509_VERIFY_PARAM_set_trust(s->param, trust));
 }
 
 int
 SSL_set_trust(SSL *s, int trust)
 {
-	return X509_VERIFY_PARAM_set_trust(s->param, trust);
+	return (X509_VERIFY_PARAM_set_trust(s->param, trust));
 }
 
 int
 SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
 {
-	return X509_VERIFY_PARAM_set1(ctx->param, vpm);
+	return (X509_VERIFY_PARAM_set1(ctx->param, vpm));
 }
 
 int
 SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 {
-	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
+	return (X509_VERIFY_PARAM_set1(ssl->param, vpm));
 }
 
 void
@@ -743,7 +743,7 @@ SSL_get_finished(const SSL *s, void *buf, size_t count)
 			count = ret;
 		memcpy(buf, s->s3->tmp.finish_md, count);
 	}
-	return ret;
+	return (ret);
 }
 
 /* return length of latest Finished message we expected, copy to 'buf' */
@@ -758,7 +758,7 @@ SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 			count = ret;
 		memcpy(buf, s->s3->tmp.peer_finish_md, count);
 	}
-	return ret;
+	return (ret);
 }
 
 
@@ -771,10 +771,11 @@ SSL_get_verify_mode(const SSL *s)
 int
 SSL_get_verify_depth(const SSL *s)
 {
-	return X509_VERIFY_PARAM_get_depth(s->param);
+	return (X509_VERIFY_PARAM_get_depth(s->param));
 }
 
-int (*SSL_get_verify_callback(const SSL *s))(int, X509_STORE_CTX *)
+int
+(*SSL_get_verify_callback(const SSL *s))(int, X509_STORE_CTX *)
 {
 	return (s->verify_callback);
 }
@@ -788,7 +789,7 @@ SSL_CTX_get_verify_mode(const SSL_CTX *ctx)
 int
 SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 {
-	return X509_VERIFY_PARAM_get_depth(ctx->param);
+	return (X509_VERIFY_PARAM_get_depth(ctx->param));
 }
 
 int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int, X509_STORE_CTX *)
@@ -938,7 +939,7 @@ SSL_check_private_key(const SSL *ssl)
 	if (ssl->cert == NULL) {
 		SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,
 		    SSL_R_NO_CERTIFICATE_ASSIGNED);
-		return 0;
+		return (0);
 	}
 	if (ssl->cert->key->x509 == NULL) {
 		SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,
@@ -984,7 +985,7 @@ SSL_read(SSL *s, void *buf, int num)
 	if (s->handshake_func == 0) {
 		SSLerr(SSL_F_SSL_READ,
 		    SSL_R_UNINITIALIZED);
-		return -1;
+		return (-1);
 	}
 
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
@@ -1000,7 +1001,7 @@ SSL_peek(SSL *s, void *buf, int num)
 	if (s->handshake_func == 0) {
 		SSLerr(SSL_F_SSL_PEEK,
 		    SSL_R_UNINITIALIZED);
-		return -1;
+		return (-1);
 	}
 
 	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
@@ -1015,7 +1016,7 @@ SSL_write(SSL *s, const void *buf, int num)
 	if (s->handshake_func == 0) {
 		SSLerr(SSL_F_SSL_WRITE,
 		    SSL_R_UNINITIALIZED);
-		return -1;
+		return (-1);
 	}
 
 	if (s->shutdown & SSL_SENT_SHUTDOWN) {
@@ -1040,7 +1041,7 @@ SSL_shutdown(SSL *s)
 	if (s->handshake_func == 0) {
 		SSLerr(SSL_F_SSL_SHUTDOWN,
 		    SSL_R_UNINITIALIZED);
-		return -1;
+		return (-1);
 	}
 
 	if ((s != NULL) && !SSL_in_init(s))
@@ -1096,7 +1097,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
 		s->msg_callback_arg = parg;
-		return 1;
+		return (1);
 
 	case SSL_CTRL_OPTIONS:
 		return (s->options|=larg);
@@ -1115,24 +1116,24 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_MTU:
 #ifndef OPENSSL_NO_DTLS1
 		if (larg < (long)dtls1_min_mtu())
-			return 0;
+			return (0);
 #endif
 
 		if (SSL_version(s) == DTLS1_VERSION ||
 		    SSL_version(s) == DTLS1_BAD_VER) {
 			s->d1->mtu = larg;
-			return larg;
+			return (larg);
 		}
-		return 0;
+		return (0);
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
-			return 0;
+			return (0);
 		s->max_send_fragment = larg;
-		return 1;
+		return (1);
 	case SSL_CTRL_GET_RI_SUPPORT:
 		if (s->s3)
-			return s->s3->send_connection_binding;
-		else return 0;
+			return (s->s3->send_connection_binding);
+		else return (0);
 	default:
 		return (s->method->ssl_ctrl(s, cmd, larg, parg));
 	}
@@ -1146,7 +1147,7 @@ SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		s->msg_callback = (void (*)(int write_p, int version,
 		    int content_type, const void *buf, size_t len,
 		    SSL *ssl, void *arg))(fp);
-		return 1;
+		return (1);
 
 	default:
 		return (s->method->ssl_callback_ctrl(s, cmd, fp));
@@ -1156,7 +1157,7 @@ SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 LHASH_OF(SSL_SESSION) *
 SSL_CTX_sessions(SSL_CTX *ctx)
 {
-	return ctx->sessions;
+	return (ctx->sessions);
 }
 
 long
@@ -1174,7 +1175,7 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_MSG_CALLBACK_ARG:
 		ctx->msg_callback_arg = parg;
-		return 1;
+		return (1);
 
 	case SSL_CTRL_GET_MAX_CERT_LIST:
 		return (ctx->max_cert_list);
@@ -1230,9 +1231,9 @@ SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return (ctx->mode&=~larg);
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
-			return 0;
+			return (0);
 		ctx->max_send_fragment = larg;
-		return 1;
+		return (1);
 	default:
 		return (ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg));
 	}
@@ -1246,7 +1247,7 @@ SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		ctx->msg_callback = (void (*)(int write_p, int version,
 		    int content_type, const void *buf, size_t len, SSL *ssl,
 		    void *arg))(fp);
-		return 1;
+		return (1);
 
 	default:
 		return (ctx->method->ssl_ctx_callback_ctrl(ctx, cmd, fp));
@@ -1339,7 +1340,7 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 
 	sk = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
 	    &ctx->cipher_list_by_id, str);
-	/* 
+	/*
 	 * ssl_create_cipher_list may return an empty stack if it
 	 * was unable to find a cipher matching the given rule string
 	 * (for example if the rule string specifies a cipher which
@@ -1349,13 +1350,13 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	 * updated.
 	 */
 	if (sk == NULL)
-		return 0;
+		return (0);
 	else if (sk_SSL_CIPHER_num(sk) == 0) {
 		SSLerr(SSL_F_SSL_CTX_SET_CIPHER_LIST,
 		    SSL_R_NO_CIPHER_MATCH);
-		return 0;
+		return (0);
 	}
-	return 1;
+	return (1);
 }
 
 /* Specify the ciphers to be used by the SSL. */
@@ -1368,13 +1369,13 @@ SSL_set_cipher_list(SSL *s, const char *str)
 	&s->cipher_list_by_id, str);
 	/* see comment in SSL_CTX_set_cipher_list */
 	if (sk == NULL)
-		return 0;
+		return (0);
 	else if (sk_SSL_CIPHER_num(sk) == 0) {
 		SSLerr(SSL_F_SSL_SET_CIPHER_LIST,
 		    SSL_R_NO_CIPHER_MATCH);
-		return 0;
+		return (0);
 	}
-	return 1;
+	return (1);
 }
 
 /* works well for SSLv2, not so good for SSLv3 */
@@ -1540,11 +1541,11 @@ const char *
 SSL_get_servername(const SSL *s, const int type)
 {
 	if (type != TLSEXT_NAMETYPE_host_name)
-		return NULL;
+		return (NULL);
 
-	return s->session && !s->tlsext_hostname ?
+	return (s->session && !s->tlsext_hostname ?
 	    s->session->tlsext_hostname :
-	    s->tlsext_hostname;
+	    s->tlsext_hostname);
 }
 
 int
@@ -1553,8 +1554,8 @@ SSL_get_servername_type(const SSL *s)
 	if (s->session &&
 	    (!s->tlsext_hostname ?
 	    s->session->tlsext_hostname : s->tlsext_hostname))
-		return TLSEXT_NAMETYPE_host_name;
-	return -1;
+		return (TLSEXT_NAMETYPE_host_name);
+	return (-1);
 }
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1626,7 +1627,7 @@ SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
  found:
 	*out = (unsigned char *) result + 1;
 	*outlen = result[0];
-	return status;
+	return (status);
 }
 
 /*
@@ -1697,10 +1698,10 @@ SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     int use_context)
 {
 	if (s->version < TLS1_VERSION)
-		return -1;
+		return (-1);
 
-	return s->method->ssl3_enc->export_keying_material(s, out, olen,
-	    label, llen, p, plen, use_context);
+	return (s->method->ssl3_enc->export_keying_material(s, out, olen,
+	    label, llen, p, plen, use_context));
 }
 
 static unsigned long
@@ -2087,7 +2088,8 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 
 #ifdef CIPHER_DEBUG
-	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
+	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d "
+	    "rs=%d ds=%d dhr=%d dhd=%d\n",
 	    rsa_tmp, rsa_tmp_export, dh_tmp, have_ecdh_tmp,
 	    rsa_enc, rsa_enc_export, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
 #endif
@@ -2247,11 +2249,11 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 		/* ECDH key length in export ciphers must be <= 163 bits */
 		pkey = X509_get_pubkey(x);
 		if (pkey == NULL)
-			return 0;
+			return (0);
 		keysize = EVP_PKEY_bits(pkey);
 		EVP_PKEY_free(pkey);
 		if (keysize > 163)
-			return 0;
+			return (0);
 	}
 
 	/* This call populates the ex_flags field correctly */
@@ -2265,7 +2267,7 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT)) {
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
 			    SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
-			return 0;
+			return (0);
 		}
 		if ((alg_k & SSL_kECDHe) && TLS1_get_version(s) <
 		    TLS1_2_VERSION) {
@@ -2273,7 +2275,7 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 			if (pk_nid != NID_X9_62_id_ecPublicKey) {
 				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
 				    SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
-				return 0;
+				return (0);
 			}
 		}
 		if ((alg_k & SSL_kECDHr) && TLS1_get_version(s) <
@@ -2282,7 +2284,7 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 			if (pk_nid != NID_rsaEncryption && pk_nid != NID_rsa) {
 				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
 				    SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
-				return 0;
+				return (0);
 			}
 		}
 	}
@@ -2291,11 +2293,11 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE)) {
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
 			    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
-			return 0;
+			return (0);
 		}
 	}
 
-	return 1;
+	return (1);
 	/* all checks are ok */
 }
 
@@ -2355,7 +2357,7 @@ ssl_get_server_send_pkey(const SSL *s)
 		return (NULL);
 	}
 
-	return c->pkeys + i;
+	return (c->pkeys + i);
 }
 
 X509 *
@@ -2365,8 +2367,8 @@ ssl_get_server_send_cert(const SSL *s)
 
 	cpk = ssl_get_server_send_pkey(s);
 	if (!cpk)
-		return NULL;
-	return cpk->x509;
+		return (NULL);
+	return (cpk->x509);
 }
 
 EVP_PKEY *
@@ -2397,7 +2399,7 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd)
 	}
 	if (pmd)
 		*pmd = c->pkeys[idx].digest;
-	return c->pkeys[idx].privatekey;
+	return (c->pkeys[idx].privatekey);
 }
 
 void
@@ -2506,7 +2508,7 @@ SSL_get_error(const SSL *s, int i)
 			else if (reason == BIO_RR_ACCEPT)
 				return (SSL_ERROR_WANT_ACCEPT);
 			else
-				return(SSL_ERROR_SYSCALL); /* unknown */
+				return (SSL_ERROR_SYSCALL); /* unknown */
 		}
 	}
 
@@ -2514,13 +2516,13 @@ SSL_get_error(const SSL *s, int i)
 		bio = SSL_get_wbio(s);
 		if (BIO_should_write(bio))
 			return (SSL_ERROR_WANT_WRITE);
-		else if (BIO_should_read(bio))
-			return (SSL_ERROR_WANT_READ);
+		else if (BIO_should_read(bio)) {
 			/*
 			 * See above (SSL_want_read(s) with
 			 * BIO_should_write(bio))
 			 */
-		else if (BIO_should_io_special(bio)) {
+			return (SSL_ERROR_WANT_READ);
+		} else if (BIO_should_io_special(bio)) {
 			reason = BIO_get_retry_reason(bio);
 			if (reason == BIO_RR_CONNECT)
 				return (SSL_ERROR_WANT_CONNECT);
@@ -2561,7 +2563,7 @@ SSL_do_handshake(SSL *s)
 	return (ret);
 }
 
-/* 
+/*
  * For the next 2 functions, SSL_clear() sets shutdown and so
  * one of these calls will reset it
  */
@@ -2627,15 +2629,15 @@ const char *
 SSL_get_version(const SSL *s)
 {
 	if (s->version == TLS1_2_VERSION)
-		return("TLSv1.2");
+		return ("TLSv1.2");
 	else if (s->version == TLS1_1_VERSION)
-		return("TLSv1.1");
+		return ("TLSv1.1");
 	else if (s->version == TLS1_VERSION)
-		return("TLSv1");
+		return ("TLSv1");
 	else if (s->version == SSL3_VERSION)
-		return("SSLv3");
+		return ("SSLv3");
 	else
-		return("unknown");
+		return ("unknown");
 }
 
 SSL *
@@ -2722,14 +2724,14 @@ SSL_dup(SSL *s)
 	ret->quiet_shutdown = s->quiet_shutdown;
 	ret->shutdown = s->shutdown;
 	/* SSL_dup does not really work at any state, though */
-	ret->state=s->state; 
+	ret->state=s->state;
 	ret->rstate = s->rstate;
 
 	/*
 	 * Would have to copy ret->init_buf, ret->init_msg, ret->init_num,
 	 * ret->init_off
 	 */
-	ret->init_num = 0; 
+	ret->init_num = 0;
 
 	ret->hit = s->hit;
 
@@ -2741,10 +2743,11 @@ SSL_dup(SSL *s)
 		    sk_SSL_CIPHER_dup(s->cipher_list)) == NULL)
 			goto err;
 	}
-	if (s->cipher_list_by_id != NULL)
+	if (s->cipher_list_by_id != NULL) {
 		if ((ret->cipher_list_by_id =
 		    sk_SSL_CIPHER_dup(s->cipher_list_by_id)) == NULL)
 			goto err;
+	}
 
 	/* Dup the client_CA list */
 	if (s->client_CA != NULL) {
@@ -2825,13 +2828,13 @@ SSL_get_current_cipher(const SSL *s)
 const void *
 SSL_get_current_compression(SSL *s)
 {
-	return NULL;
+	return (NULL);
 }
 
 const void *
 SSL_get_current_expansion(SSL *s)
 {
-	return NULL;
+	return (NULL);
 }
 #else
 
@@ -2950,7 +2953,7 @@ SSL_CTX *
 SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
 	if (ssl->ctx == ctx)
-		return ssl->ctx;
+		return (ssl->ctx);
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
@@ -2993,7 +2996,7 @@ SSL_set_info_callback(SSL *ssl,
  */
 void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/)
 {
-	return ssl->info_callback;
+	return (ssl->info_callback);
 }
 
 int
@@ -3024,8 +3027,8 @@ int
 SSL_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
-	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, argl, argp,
-	    new_func, dup_func, free_func);
+	return (CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, argl, argp,
+	    new_func, dup_func, free_func));
 }
 
 int
@@ -3044,8 +3047,8 @@ int
 SSL_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
-	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_CTX, argl, argp,
-	    new_func, dup_func, free_func);
+	return (CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_CTX, argl, argp,
+	    new_func, dup_func, free_func));
 }
 
 int
@@ -3171,50 +3174,50 @@ SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
 	    PSK_MAX_IDENTITY_LEN) {
 		SSLerr(SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT,
 		    SSL_R_DATA_LENGTH_TOO_LONG);
-		return 0;
+		return (0);
 	}
 	if (ctx->psk_identity_hint != NULL)
 		free(ctx->psk_identity_hint);
 	if (identity_hint != NULL) {
 		ctx->psk_identity_hint = BUF_strdup(identity_hint);
 		if (ctx->psk_identity_hint == NULL)
-			return 0;
+			return (0);
 	} else
 		ctx->psk_identity_hint = NULL;
-	return 1;
+	return (1);
 }
 
 int
 SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
 {
 	if (s == NULL)
-		return 0;
+		return (0);
 
 	if (s->session == NULL)
-		return 1; /* session not created yet, ignored */
+		return (1); /* session not created yet, ignored */
 
 	if (identity_hint != NULL && strlen(identity_hint) >
 	    PSK_MAX_IDENTITY_LEN) {
 		SSLerr(SSL_F_SSL_USE_PSK_IDENTITY_HINT,
 		    SSL_R_DATA_LENGTH_TOO_LONG);
-		return 0;
+		return (0);
 	}
 	if (s->session->psk_identity_hint != NULL)
 		free(s->session->psk_identity_hint);
 	if (identity_hint != NULL) {
 		s->session->psk_identity_hint = BUF_strdup(identity_hint);
 		if (s->session->psk_identity_hint == NULL)
-			return 0;
+			return (0);
 	} else
 		s->session->psk_identity_hint = NULL;
-	return 1;
+	return (1);
 }
 
 const char *
 SSL_get_psk_identity_hint(const SSL *s)
 {
 	if (s == NULL || s->session == NULL)
-		return NULL;
+		return (NULL);
 	return (s->session->psk_identity_hint);
 }
 
@@ -3222,7 +3225,7 @@ const char *
 SSL_get_psk_identity(const SSL *s)
 {
 	if (s == NULL || s->session == NULL)
-		return NULL;
+		return (NULL);
 	return (s->session->psk_identity);
 }
 
@@ -3289,7 +3292,7 @@ ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
 	*hash = EVP_MD_CTX_create();
 	if (md)
 		EVP_DigestInit_ex(*hash, md, NULL);
-	return *hash;
+	return (*hash);
 }
 
 void
@@ -3309,7 +3312,7 @@ SSL_set_debug(SSL *s, int debug)
 int
 SSL_cache_hit(SSL *s)
 {
-	return s->hit;
+	return (s->hit);
 }
 
 IMPLEMENT_STACK_OF(SSL_CIPHER)

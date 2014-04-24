@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -111,7 +111,7 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
@@ -412,12 +412,12 @@ ssl3_connect(SSL *s)
 			 * For TLS, cert_req is set to 2, so a cert chain
 			 * of nothing is sent, but no verify packet is sent
 			 */
-			/* 
-			 * XXX: For now, we do not support client 
+			/*
+			 * XXX: For now, we do not support client
 			 * authentication in ECDH cipher suites with
 			 * ECDH (rather than ECDSA) certificates.
-			 * We need to skip the certificate verify 
-			 * message when client's ECDH public key is sent 
+			 * We need to skip the certificate verify
+			 * message when client's ECDH public key is sent
 			 * inside the client certificate.
 			 */
 			if (s->s3->tmp.cert_req == 1) {
@@ -679,7 +679,7 @@ ssl3_client_hello(SSL *s)
 		/* Do the message type and length last */
 		d = p = &(buf[4]);
 
-		/* 
+		/*
 		 * Version indicates the negotiated version: for example from
 		 * an SSLv2/v3 compatible client hello). The client_version
 		 * field is the maximum version we permit and it is also
@@ -832,7 +832,7 @@ ssl3_get_server_hello(SSL *s)
 		if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
 			if (s->d1->send_cookie == 0) {
 				s->s3->tmp.reuse_message = 1;
-				return 1;
+				return (1);
 			}
 			else /* already sent a cookie */
 			{
@@ -1473,7 +1473,7 @@ ssl3_get_key_exchange(SSL *s)
 			p += i;
 			n -= param_len;
 
-			/* 
+			/*
 			 * This should be because we are using an
 			 * export cipher
 			 */
@@ -2038,9 +2038,9 @@ ssl3_get_new_session_ticket(SSL *s)
 	 * There are two ways to detect a resumed ticket sesion.
 	 * One is to set an appropriate session ID and then the server
 	 * must return a match in ServerHello. This allows the normal
-	 * client session ID matching to work and we know much 
+	 * client session ID matching to work and we know much
 	 * earlier that the ticket has been accepted.
-	 * 
+	 *
 	 * The other way is to set zero length session ID when the
 	 * ticket is presented and rely on the handshake to determine
 	 * session resumption.
@@ -2049,7 +2049,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	 * assumptions elsewhere in OpenSSL. The session ID is set
 	 * to the SHA256 (or SHA1 is SHA256 is disabled) hash of the
 	 * ticket.
-	 */ 
+	 */
 	EVP_Digest(p, ticklen, s->session->session_id,
 	    &s->session->session_id_length, EVP_sha256(), NULL);
 	ret = 1;
@@ -2067,12 +2067,9 @@ ssl3_get_cert_status(SSL *s)
 	unsigned long		 resplen, n;
 	const unsigned char	*p;
 
-	n = s->method->ssl_get_message(s,
-	SSL3_ST_CR_CERT_STATUS_A,
-	SSL3_ST_CR_CERT_STATUS_B,
-	SSL3_MT_CERTIFICATE_STATUS,
-	16384,
-	&ok);
+	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
+	    SSL3_ST_CR_CERT_STATUS_B, SSL3_MT_CERTIFICATE_STATUS,
+	    16384, &ok);
 
 	if (!ok)
 		return ((int)n);
@@ -2123,7 +2120,7 @@ ssl3_get_cert_status(SSL *s)
 			goto f_err;
 		}
 	}
-	return 1;
+	return (1);
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return (-1);
@@ -2147,7 +2144,7 @@ ssl3_get_server_done(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		SSLerr(SSL_F_SSL3_GET_SERVER_DONE,
 		    SSL_R_LENGTH_MISMATCH);
-		return -1;
+		return (-1);
 	}
 	ret = 1;
 	return (ret);
@@ -2229,8 +2226,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			s->session->master_key_length =
 			    s->method->ssl3_enc->generate_master_secret(
-			        s, s->session->master_key, tmp_buf,
-			        sizeof tmp_buf);
+			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
 		}
 #ifndef OPENSSL_NO_KRB5
@@ -2246,7 +2242,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			unsigned char	tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 			unsigned char	epms[SSL_MAX_MASTER_KEY_LENGTH
 					    + EVP_MAX_IV_LENGTH];
-			int 		padl, outl = sizeof(epms);
+			int		padl, outl = sizeof(epms);
 
 			EVP_CIPHER_CTX_init(&ciph_ctx);
 
@@ -2283,14 +2279,14 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 			}
 
-			/*  
+			/*
 			 * 20010406 VRS - Earlier versions used KRB5 AP_REQ
 			 * in place of RFC 2712 KerberosWrapper, as in:
 			 *
 			 * Send ticket (copy to *p, set n = length)
 			 * n = krb5_ap_req.length;
 			 * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-			 * if (krb5_ap_req.data)  
+			 * if (krb5_ap_req.data)
 			 *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
 			 *
 			 * Now using real RFC 2712 KerberosWrapper
@@ -2435,7 +2431,7 @@ ssl3_send_client_key_exchange(SSL *s)
 		}
 #endif
 
-#ifndef OPENSSL_NO_ECDH 
+#ifndef OPENSSL_NO_ECDH
 		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
@@ -2449,11 +2445,11 @@ ssl3_send_client_key_exchange(SSL *s)
 			 */
 			if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) &&
 			    (s->cert != NULL)) {
-				/* 
+				/*
 				 * XXX: For now, we do not support client
 				 * authentication using ECDH certificates.
 				 * To add such support, one needs to add
-				 * code that checks for appropriate 
+				 * code that checks for appropriate
 				 * conditions and sets ecdh_clnt_cert to 1.
 				 * For example, the cert have an ECC
 				 * key on the same curve as the server's
@@ -2561,7 +2557,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			/* generate master key from the result */
 			s->session->master_key_length = s->method->ssl3_enc \
-			    -> generate_master_secret(s, 
+			    -> generate_master_secret(s,
 			    s->session->master_key, p, n);
 
 			memset(p, 0, n); /* clean up */
@@ -2895,7 +2891,7 @@ ssl3_send_client_verify(SSL *s)
 		} else {
 			ERR_clear_error();
 		}
-		/* 
+		/*
 		 * For TLS v1.2 send signature algorithm and signature
 		 * using agreed digest and cached handshake records.
 		 */
@@ -3024,9 +3020,10 @@ ssl3_send_client_certificate(SSL *s)
 
 	/* We need to get a client cert */
 	if (s->state == SSL3_ST_CW_CERT_B) {
-		/* If we get an error, we need to
+		/*
+		 * If we get an error, we need to
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
-		 * We then get retied later 
+		 * We then get retied later
 		 */
 		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0) {
@@ -3120,7 +3117,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 			    SSL_R_BAD_ECC_CERT);
 			goto f_err;
 		} else {
-			return 1;
+			return (1);
 		}
 	}
 #endif
@@ -3221,7 +3218,7 @@ ssl3_send_next_proto(SSL *s)
 		s->init_off = 0;
 	}
 
-	return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
+	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
 }
 #endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
 
@@ -3240,7 +3237,7 @@ ssl3_check_finished(SSL *s)
 
 	/* If we have no ticket it cannot be a resumed session. */
 	if (!s->session->tlsext_tick)
-		return 1;
+		return (1);
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_CERT_A,
@@ -3250,9 +3247,9 @@ ssl3_check_finished(SSL *s)
 	s->s3->tmp.reuse_message = 1;
 	if ((s->s3->tmp.message_type == SSL3_MT_FINISHED) ||
 	    (s->s3->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
-		return 2;
+		return (2);
 
-	return 1;
+	return (1);
 }
 #endif
 
@@ -3267,10 +3264,10 @@ ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 		SSL_get_client_CA_list(s),
 		px509, ppkey, NULL, NULL, NULL);
 		if (i != 0)
-			return i;
+			return (i);
 	}
 #endif
 	if (s->ctx->client_cert_cb)
 		i = s->ctx->client_cert_cb(s, px509, ppkey);
-	return i;
+	return (i};
 }

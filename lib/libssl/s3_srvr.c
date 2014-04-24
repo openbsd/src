@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -63,7 +63,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -111,7 +111,7 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
@@ -190,15 +190,17 @@ ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 	if ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) &&
 		(s->srp_ctx.TLS_ext_srp_username_callback != NULL)) {
 		if (s->srp_ctx.login == NULL) {
-			/* RFC 5054 says SHOULD reject, 
-			   we do so if There is no srp login name */
+			/*
+			 * RFC 5054 says SHOULD reject,
+			 * we do so if There is no srp login name
+			 */
 			ret = SSL3_AL_FATAL;
 			*al = SSL_AD_UNKNOWN_PSK_IDENTITY;
 		} else {
 			ret = SSL_srp_server_param_with_username(s, al);
 		}
 	}
-	return ret;
+	return (ret);
 }
 #endif
 
@@ -228,7 +230,8 @@ ssl3_accept(SSL *s)
 		SSL_clear(s);
 
 	if (s->cert == NULL) {
-		SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
+		SSLerr(SSL_F_SSL3_ACCEPT,
+		    SSL_R_NO_CERTIFICATE_SET);
 		return (-1);
 	}
 
@@ -250,8 +253,9 @@ ssl3_accept(SSL *s)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if ((s->version >> 8) != 3) {
-				SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
-				return -1;
+				SSLerr(SSL_F_SSL3_ACCEPT,
+				    ERR_R_INTERNAL_ERROR);
+				return (-1);
 			}
 			s->type = SSL_ST_ACCEPT;
 
@@ -342,7 +346,7 @@ ssl3_accept(SSL *s)
 			{
 				int al;
 				if ((ret =
-				    ssl_check_srp_ext_ClientHello(s, &al)) 
+				    ssl_check_srp_ext_ClientHello(s, &al))
 				    < 0) {
 					/*
 					 * Callback indicates further work to
@@ -531,7 +535,7 @@ ssl3_accept(SSL *s)
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
 				if (s->s3->handshake_buffer)
 					if (!ssl3_digest_cached_records(s))
-						return -1;
+						return (-1);
 			} else {
 				s->s3->tmp.cert_request = 1;
 				ret = ssl3_send_certificate_request(s);
@@ -635,11 +639,11 @@ ssl3_accept(SSL *s)
 				if (!s->s3->handshake_buffer) {
 					SSLerr(SSL_F_SSL3_ACCEPT,
 					    ERR_R_INTERNAL_ERROR);
-					return -1;
+					return (-1);
 				}
 				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
 				if (!ssl3_digest_cached_records(s))
-					return -1;
+					return (-1);
 			} else {
 				int offset = 0;
 				int dgst_num;
@@ -647,7 +651,7 @@ ssl3_accept(SSL *s)
 				s->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num = 0;
 
-				/* 
+				/*
 				 * We need to get hashes here so if there is
 				 * a client cert, it can be verified
 				 * FIXME - digest processing for
@@ -656,7 +660,7 @@ ssl3_accept(SSL *s)
 				 */
 				if (s->s3->handshake_buffer)
 					if (!ssl3_digest_cached_records(s))
-						return -1;
+						return (-1);
 				for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST;
 				    dgst_num++)
 					if (s->s3->handshake_dgst[dgst_num]) {
@@ -827,7 +831,8 @@ ssl3_accept(SSL *s)
 			/* break; */
 
 		default:
-			SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_UNKNOWN_STATE);
+			SSLerr(SSL_F_SSL3_ACCEPT,
+			    SSL_R_UNKNOWN_STATE);
 			ret = -1;
 			goto end;
 			/* break; */
@@ -903,7 +908,7 @@ ssl3_check_client_hello(SSL *s)
 		if (s->s3->flags & SSL3_FLAGS_SGC_RESTART_DONE) {
 			SSLerr(SSL_F_SSL3_CHECK_CLIENT_HELLO,
 			    SSL_R_MULTIPLE_SGC_RESTARTS);
-			return -1;
+			return (-1);
 		}
 		/*
 		 * Throw away what we have done so far in the current handshake,
@@ -923,9 +928,9 @@ ssl3_check_client_hello(SSL *s)
 		}
 #endif
 		s->s3->flags |= SSL3_FLAGS_SGC_RESTART_DONE;
-		return 2;
+		return (2);
 	}
-	return 1;
+	return (1);
 }
 
 int
@@ -974,7 +979,8 @@ ssl3_get_client_hello(SSL *s)
 
 	if ((s->version == DTLS1_VERSION && s->client_version > s->version) ||
 	    (s->version != DTLS1_VERSION && s->client_version < s->version)) {
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+		    SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
 			!s->enc_write_ctx && !s->write_hash) {
 			/*
@@ -999,7 +1005,7 @@ ssl3_get_client_hello(SSL *s)
 		cookie_length = *(p + SSL3_RANDOM_SIZE + session_length + 1);
 
 		if (cookie_length == 0)
-			return 1;
+			return (1);
 	}
 
 	/* load the client random */
@@ -1048,7 +1054,7 @@ ssl3_get_client_hello(SSL *s)
 		/* cookie stuff */
 		cookie_len = *(p++);
 
-		/* 
+		/*
 		 * The ClientHello may contain a cookie even if the
 		 * HelloVerify message has not been sent--make sure that it
 		 * does not cause an overflow.
@@ -1094,13 +1100,15 @@ ssl3_get_client_hello(SSL *s)
 	if ((i == 0) && (j != 0)) {
 		/* we need a cipher if we are not resuming a session */
 		al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+		    SSL_R_NO_CIPHERS_SPECIFIED);
 		goto f_err;
 	}
 	if ((p + i) >= (d + n)) {
 		/* not enough data */
 		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+		    SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 	}
 	if ((i > 0) &&
@@ -1143,7 +1151,8 @@ ssl3_get_client_hello(SSL *s)
 	if ((p + i) > (d + n)) {
 		/* not enough data */
 		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+		    SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 	}
 	q = p;
@@ -1172,7 +1181,8 @@ ssl3_get_client_hello(SSL *s)
 		}
 	}
 	if (ssl_check_clienthello_tlsext_early(s) <= 0) {
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+		    SSL_R_CLIENTHELLO_TLSEXT);
 		goto err;
 	}
 
@@ -1377,7 +1387,7 @@ ssl3_get_client_hello(SSL *s)
 	}
 
 	/*
-	 * We now have the following setup. 
+	 * We now have the following setup.
 	 * client_random
 	 * cipher_list 		- our prefered list of ciphers
 	 * ciphers 		- the clients prefered list of ciphers
@@ -1422,7 +1432,7 @@ ssl3_send_server_hello(SSL *s)
 #ifdef OPENSSL_NO_TLSEXT
 		p = s->s3->server_random;
 		if (ssl_fill_hello_random(s, 1, p, SSL3_RANDOM_SIZE) <= 0)
-			return -1;
+			return (-1);
 #endif
 		/* Do the message type and length last */
 		d = p= &(buf[4]);
@@ -1460,7 +1470,7 @@ ssl3_send_server_hello(SSL *s)
 		if (sl > (int)sizeof(s->session->session_id)) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    ERR_R_INTERNAL_ERROR);
-			return -1;
+			return (-1);
 		}
 		*(p++) = sl;
 		memcpy(p, s->session->session_id, sl);
@@ -1483,13 +1493,13 @@ ssl3_send_server_hello(SSL *s)
 		if (ssl_prepare_serverhello_tlsext(s) <= 0) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    SSL_R_SERVERHELLO_TLSEXT);
-			return -1;
+			return (-1);
 		}
 		if ((p = ssl_add_serverhello_tlsext(s, p,
 		    buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
 			    ERR_R_INTERNAL_ERROR);
-			return -1;
+			return (-1);
 		}
 #endif
 		/* do the header */
@@ -1714,9 +1724,9 @@ ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 			}
 
-			/* 
+			/*
 			 * XXX: For now, we only support ephemeral ECDH
-			 * keys over named (not generic) curves. For 
+			 * keys over named (not generic) curves. For
 			 * supported named curves, curve_id is non-zero.
 			 */
 			if ((curve_id = tls1_ec_nid2curve_id(
@@ -1726,7 +1736,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 			}
 
-			/* 
+			/*
 			 * Encode the public key.
 			 * First check the size of encoding and
 			 * allocate memory accordingly.
@@ -1760,12 +1770,12 @@ ssl3_send_server_key_exchange(SSL *s)
 			BN_CTX_free(bn_ctx);
 			bn_ctx = NULL;
 
-			/* 
-			 * XXX: For now, we only support named (not 
+			/*
+			 * XXX: For now, we only support named (not
 			 * generic) curves in ECDH ephemeral key exchanges.
 			 * In this situation, we need four additional bytes
 			 * to encode the entire ServerECDHParams
-			 * structure. 
+			 * structure.
 			 */
 			n = 4 + encodedlen;
 
@@ -1790,7 +1800,8 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (type & SSL_kSRP) {
 			if ((s->srp_ctx.N == NULL) || (s->srp_ctx.g == NULL) ||
 			    (s->srp_ctx.s == NULL) || (s->srp_ctx.B == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, SSL_R_MISSING_SRP_PARAM);
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+				    SSL_R_MISSING_SRP_PARAM);
 				goto err;
 			}
 			r[0] = s->srp_ctx.N;
@@ -1801,7 +1812,8 @@ ssl3_send_server_key_exchange(SSL *s)
 #endif
 		{
 			al = SSL_AD_HANDSHAKE_FAILURE;
-			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
+			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+			    SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
 			goto f_err;
 		}
 		for (i = 0; i < 4 && r[i] != NULL; i++) {
@@ -1922,7 +1934,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				n += u + 2;
 			} else
 			if (md) {
-				/* 
+				/*
 				 * For TLS1.2 and later send signature
 				 * algorithm
 				 */
@@ -2384,7 +2396,8 @@ ssl3_get_client_key_exchange(SSL *s)
 		}
 
 		if ((krb5rc = kssl_validate_times(authtime, &ttimes)) != 0) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, krb5rc);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+			    krb5rc);
 			goto err;
 		}
 
@@ -2436,7 +2449,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			 * instead of the protocol version.
 			 *
 			 * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such
-			 * clients. 
+			 * clients.
 			 * (Perhaps we should have a separate BUG value for
 			 * the Kerberos cipher)
 			 */
@@ -2463,7 +2476,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		}
 
 
-		/* 
+		/*
 		 * Was doing kssl_ctx_free() here, but it caused problems for
 		 * apache.
 		 * kssl_ctx = kssl_ctx_free(kssl_ctx);
@@ -2528,13 +2541,13 @@ ssl3_get_client_key_exchange(SSL *s)
 			if (((clnt_pub_pkey = X509_get_pubkey(
 			    s->session->peer)) == NULL) ||
 			    (clnt_pub_pkey->type != EVP_PKEY_EC)) {
-				/* 
+				/*
 				 * XXX: For now, we do not support client
 				 * authentication using ECDH certificates
 				 * so this branch (n == 0L) of the code is
 				 * never executed. When that support is
-				 * added, we ought to ensure the key 
-				 * received in the certificate is 
+				 * added, we ought to ensure the key
+				 * received in the certificate is
 				 * authorized for key agreement.
 				 * ECDH_compute_key implicitly checks that
 				 * the two ECDH shares are for the same
@@ -2582,7 +2595,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			/*
 			 * p is pointing to somewhere in the buffer
 			 * currently, so set it to the start.
-			 */ 
+			 */
 			p = (unsigned char *)s->init_buf->data;
 		}
 
@@ -2808,7 +2821,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		EVP_PKEY_free(client_pub_pkey);
 		EVP_PKEY_CTX_free(pkey_ctx);
 		if (ret)
-			return ret;
+			return (ret);
 		else
 			goto err;
 	} else {
@@ -2897,7 +2910,7 @@ ssl3_get_cert_verify(SSL *s)
 	p = (unsigned char *)s->init_msg;
 	/*
 	 * Check for broken implementations of GOST ciphersuites.
-	 * 
+	 *
 	 * If key is GOST and n is exactly 64, it is a bare
 	 * signature without length field.
 	 */
@@ -2946,7 +2959,8 @@ ssl3_get_cert_verify(SSL *s)
 	}
 	j = EVP_PKEY_size(pkey);
 	if ((i > j) || (n > j) || (n <= 0)) {
-		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_WRONG_SIGNATURE_SIZE);
+		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+		    SSL_R_WRONG_SIGNATURE_SIZE);
 		al = SSL_AD_DECODE_ERROR;
 		goto f_err;
 	}
@@ -2967,14 +2981,16 @@ ssl3_get_cert_verify(SSL *s)
 #endif
 		if (!EVP_VerifyInit_ex(&mctx, md, NULL) ||
 		    !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
-			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_EVP_LIB);
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+			    ERR_R_EVP_LIB);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
 
 		if (EVP_VerifyFinal(&mctx, p , i, pkey) <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
-			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+			    SSL_R_BAD_SIGNATURE);
 			goto f_err;
 		}
 	} else
@@ -3043,7 +3059,8 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else {
-		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+		    ERR_R_INTERNAL_ERROR);
 		al = SSL_AD_UNSUPPORTED_CERTIFICATE;
 		goto f_err;
 	}
@@ -3277,10 +3294,10 @@ ssl3_send_newsession_ticket(SSL *s)
  		 * too long
  		 */
 		if (slen_full > 0xFF00)
-			return -1;
+			return (-1);
 		senc = malloc(slen_full);
 		if (!senc)
-			return -1;
+			return (-1);
 		p = senc;
 		i2d_SSL_SESSION(s->session, &p);
 
@@ -3292,7 +3309,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
 		if (sess == NULL) {
 			free(senc);
-			return -1;
+			return (-1);
 		}
 
 		/* ID is irrelevant for the ticket */
@@ -3302,13 +3319,13 @@ ssl3_send_newsession_ticket(SSL *s)
 		if (slen > slen_full) {
 			/* shouldn't ever happen */
 			free(senc);
-			return -1;
+			return (-1);
 		}
 		p = senc;
 		i2d_SSL_SESSION(sess, &p);
 		SSL_SESSION_free(sess);
 
-		/* 
+		/*
 		 * Grow buffer if need be: the length calculation is as
  		 * follows 1 (size of message name) + 3 (message length
  		 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
@@ -3319,7 +3336,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		if (!BUF_MEM_grow(s->init_buf,
 		    26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
 		    EVP_MAX_MD_SIZE + slen))
-			return -1;
+			return (-1);
 
 		p = (unsigned char *)s->init_buf->data;
 		/* do the header */
@@ -3337,7 +3354,7 @@ ssl3_send_newsession_ticket(SSL *s)
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 			    &hctx, 1) < 0) {
 				free(senc);
-				return -1;
+				return (-1);
 			}
 		} else {
 			RAND_pseudo_bytes(iv, 16);
@@ -3409,7 +3426,7 @@ ssl3_send_cert_status(SSL *s)
  		 * + (ocsp response)
  		 */
 		if (!BUF_MEM_grow(s->init_buf, 8 + s->tlsext_ocsp_resplen))
-			return -1;
+			return (-1);
 
 		p = (unsigned char *)s->init_buf->data;
 
@@ -3453,7 +3470,7 @@ ssl3_get_next_proto(SSL *s)
 	if (!s->s3->next_proto_neg_seen) {
 		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO,
 		    SSL_R_GOT_NEXT_PROTO_WITHOUT_EXTENSION);
-		return -1;
+		return (-1);
 	}
 
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_NEXT_PROTO_A,
@@ -3470,11 +3487,11 @@ ssl3_get_next_proto(SSL *s)
 	if (!s->s3->change_cipher_spec) {
 		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO,
 		    SSL_R_GOT_NEXT_PROTO_BEFORE_A_CCS);
-		return -1;
+		return (-1);
 	}
 
 	if (n < 2)
-		return 0;
+		return (0);
 	/* The body must be > 1 bytes long */
 
 	p = (unsigned char *)s->init_msg;
@@ -3488,20 +3505,21 @@ ssl3_get_next_proto(SSL *s)
 	 */
 	proto_len = p[0];
 	if (proto_len + 2 > s->init_num)
-		return 0;
+		return (0);
 	padding_len = p[proto_len + 1];
 	if (proto_len + padding_len + 2 != s->init_num)
-		return 0;
+		return (0);
 
 	s->next_proto_negotiated = malloc(proto_len);
 	if (!s->next_proto_negotiated) {
-		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, ERR_R_MALLOC_FAILURE);
-		return 0;
+		SSLerr(SSL_F_SSL3_GET_NEXT_PROTO,
+		    ERR_R_MALLOC_FAILURE);
+		return (0);
 	}
 	memcpy(s->next_proto_negotiated, p + 1, proto_len);
 	s->next_proto_negotiated_len = proto_len;
 
-	return 1;
+	return (1);
 }
 # endif
 #endif
