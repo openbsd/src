@@ -1436,243 +1436,240 @@ ssl3_get_key_exchange(SSL *s)
 			    SSL_PKEY_DSA_SIGN].x509);
 	} else
 #endif /* !OPENSSL_NO_SRP */
-		if (alg_k & SSL_kRSA) {
-			if ((rsa = RSA_new()) == NULL) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-			n2s(p, i);
-			param_len = i + 2;
-			if (param_len > n) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_RSA_MODULUS_LENGTH);
-				goto f_err;
-			}
-			if (!(rsa->n = BN_bin2bn(p, i, rsa->n))) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_BN_LIB);
-				goto err;
-			}
-			p += i;
-
-			n2s(p, i);
-			param_len += i + 2;
-			if (param_len > n) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_RSA_E_LENGTH);
-				goto f_err;
-			}
-			if (!(rsa->e = BN_bin2bn(p, i, rsa->e))) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_BN_LIB);
-				goto err;
-			}
-			p += i;
-			n -= param_len;
-
-			/*
-			 * This should be because we are using an
-			 * export cipher
-			 */
-			if (alg_a & SSL_aRSA)
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_RSA_ENC].x509);
-			else {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			s->session->sess_cert->peer_rsa_tmp = rsa;
-			rsa = NULL;
-		}
-#ifndef OPENSSL_NO_DH
-		else if (alg_k & SSL_kEDH) {
-			if ((dh = DH_new()) == NULL) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-			n2s(p, i);
-			param_len = i + 2;
-			if (param_len > n) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_DH_P_LENGTH);
-				goto f_err;
-			}
-			if (!(dh->p = BN_bin2bn(p, i, NULL))) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_BN_LIB);
-				goto err;
-			}
-			p += i;
-
-			n2s(p, i);
-			param_len += i + 2;
-			if (param_len > n) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_DH_G_LENGTH);
-				goto f_err;
-			}
-			if (!(dh->g = BN_bin2bn(p, i, NULL))) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_BN_LIB);
-				goto err;
-			}
-			p += i;
-
-			n2s(p, i);
-			param_len += i + 2;
-			if (param_len > n) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_DH_PUB_KEY_LENGTH);
-				goto f_err;
-			}
-			if (!(dh->pub_key = BN_bin2bn(p, i, NULL))) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_BN_LIB);
-				goto err;
-			}
-			p += i;
-			n -= param_len;
-
-			if (alg_a & SSL_aRSA)
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_RSA_ENC].x509);
-			else if (alg_a & SSL_aDSS)
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_DSA_SIGN].x509);
-			/* else anonymous DH, so no certificate or pkey. */
-
-			s->session->sess_cert->peer_dh_tmp = dh;
-			dh = NULL;
-		} else if ((alg_k & SSL_kDHr) || (alg_k & SSL_kDHd)) {
-			al = SSL_AD_ILLEGAL_PARAMETER;
+	if (alg_k & SSL_kRSA) {
+		if ((rsa = RSA_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
+			    ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		n2s(p, i);
+		param_len = i + 2;
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_RSA_MODULUS_LENGTH);
 			goto f_err;
 		}
+		if (!(rsa->n = BN_bin2bn(p, i, rsa->n))) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_BN_LIB);
+			goto err;
+		}
+		p += i;
+
+		n2s(p, i);
+		param_len += i + 2;
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_RSA_E_LENGTH);
+			goto f_err;
+		}
+		if (!(rsa->e = BN_bin2bn(p, i, rsa->e))) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_BN_LIB);
+			goto err;
+		}
+		p += i;
+		n -= param_len;
+
+		/*
+		 * This should be because we are using an
+		 * export cipher
+		 */
+		if (alg_a & SSL_aRSA)
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_RSA_ENC].x509);
+		else {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+		s->session->sess_cert->peer_rsa_tmp = rsa;
+		rsa = NULL;
+	}
+#ifndef OPENSSL_NO_DH
+	else if (alg_k & SSL_kEDH) {
+		if ((dh = DH_new()) == NULL) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_DH_LIB);
+			goto err;
+		}
+		n2s(p, i);
+		param_len = i + 2;
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_DH_P_LENGTH);
+			goto f_err;
+		}
+		if (!(dh->p = BN_bin2bn(p, i, NULL))) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_BN_LIB);
+			goto err;
+		}
+		p += i;
+
+		n2s(p, i);
+		param_len += i + 2;
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_DH_G_LENGTH);
+			goto f_err;
+		}
+		if (!(dh->g = BN_bin2bn(p, i, NULL))) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_BN_LIB);
+			goto err;
+		}
+		p += i;
+
+		n2s(p, i);
+		param_len += i + 2;
+		if (param_len > n) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_DH_PUB_KEY_LENGTH);
+			goto f_err;
+		}
+		if (!(dh->pub_key = BN_bin2bn(p, i, NULL))) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_BN_LIB);
+			goto err;
+		}
+		p += i;
+		n -= param_len;
+
+		if (alg_a & SSL_aRSA)
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_RSA_ENC].x509);
+		else if (alg_a & SSL_aDSS)
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_DSA_SIGN].x509);
+		/* else anonymous DH, so no certificate or pkey. */
+
+		s->session->sess_cert->peer_dh_tmp = dh;
+		dh = NULL;
+	} else if ((alg_k & SSL_kDHr) || (alg_k & SSL_kDHd)) {
+		al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+		    SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
+		goto f_err;
+	}
 #endif /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_ECDH
-		else if (alg_k & SSL_kEECDH) {
-			EC_GROUP *ngroup;
-			const EC_GROUP *group;
+	else if (alg_k & SSL_kEECDH) {
+		EC_GROUP *ngroup;
+		const EC_GROUP *group;
 
-			if ((ecdh = EC_KEY_new()) == NULL) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			/*
-			 * Extract elliptic curve parameters and the
-			 * server's ephemeral ECDH public key.
-			 * Keep accumulating lengths of various components in
-			 * param_len and make sure it never exceeds n.
-			 */
-
-			/*
-			 * XXX: For now we only support named (not generic)
-			 * curves and the ECParameters in this case is just
-			 * three bytes.
-			 */
-			param_len = 3;
-			if ((param_len > n) || (*p != NAMED_CURVE_TYPE) ||
-			    ((curve_nid = tls1_ec_curve_id2nid(*(p + 2)))
-			    == 0)) {
-				al = SSL_AD_INTERNAL_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-				goto f_err;
-			}
-
-			ngroup = EC_GROUP_new_by_curve_name(curve_nid);
-			if (ngroup == NULL) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_EC_LIB);
-				goto err;
-			}
-			if (EC_KEY_set_group(ecdh, ngroup) == 0) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_EC_LIB);
-				goto err;
-			}
-			EC_GROUP_free(ngroup);
-
-			group = EC_KEY_get0_group(ecdh);
-
-			if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-				(EC_GROUP_get_degree(group) > 163)) {
-				al = SSL_AD_EXPORT_RESTRICTION;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
-				goto f_err;
-			}
-
-			p += 3;
-
-			/* Next, get the encoded ECPoint */
-			if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
-			    ((bn_ctx = BN_CTX_new()) == NULL)) {
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			encoded_pt_len = *p;
-			/* length of encoded point */
-			p += 1;
-			param_len += (1 + encoded_pt_len);
-			if ((param_len > n) ||
-			    (EC_POINT_oct2point(group, srvr_ecpoint,
-			    p, encoded_pt_len, bn_ctx) == 0)) {
-				al = SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-				    SSL_R_BAD_ECPOINT);
-				goto f_err;
-			}
-
-			n -= param_len;
-			p += encoded_pt_len;
-
-			/*
-			 * The ECC/TLS specification does not mention the use
-			 * of DSA to sign ECParameters in the server key
-			 * exchange message. We do support RSA and ECDSA.
-			 */
-			if (alg_a & SSL_aRSA)
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_RSA_ENC].x509);
-#ifndef OPENSSL_NO_ECDSA
-			else if (alg_a & SSL_aECDSA)
-				pkey = X509_get_pubkey(
-				    s->session->sess_cert->peer_pkeys[
-				    SSL_PKEY_ECC].x509);
-#endif
-			/* Else anonymous ECDH, so no certificate or pkey. */
-			EC_KEY_set_public_key(ecdh, srvr_ecpoint);
-			s->session->sess_cert->peer_ecdh_tmp = ecdh;
-			ecdh = NULL;
-			BN_CTX_free(bn_ctx);
-			bn_ctx = NULL;
-			EC_POINT_free(srvr_ecpoint);
-			srvr_ecpoint = NULL;
-		} else if (alg_k) {
-			al = SSL_AD_UNEXPECTED_MESSAGE;
+		if ((ecdh = EC_KEY_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_UNEXPECTED_MESSAGE);
+			    ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+
+		/*
+		 * Extract elliptic curve parameters and the
+		 * server's ephemeral ECDH public key.
+		 * Keep accumulating lengths of various components in
+		 * param_len and make sure it never exceeds n.
+		 */
+
+		/*
+		 * XXX: For now we only support named (not generic) curves
+		 * and the ECParameters in this case is just three bytes.
+		 */
+		param_len = 3;
+		if ((param_len > n) || (*p != NAMED_CURVE_TYPE) ||
+		    ((curve_nid = tls1_ec_curve_id2nid(*(p + 2))) == 0)) {
+			al = SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
 			goto f_err;
 		}
+
+		ngroup = EC_GROUP_new_by_curve_name(curve_nid);
+		if (ngroup == NULL) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_EC_LIB);
+			goto err;
+		}
+		if (EC_KEY_set_group(ecdh, ngroup) == 0) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_EC_LIB);
+			goto err;
+		}
+		EC_GROUP_free(ngroup);
+
+		group = EC_KEY_get0_group(ecdh);
+
+		if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
+		    (EC_GROUP_get_degree(group) > 163)) {
+			al = SSL_AD_EXPORT_RESTRICTION;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
+			goto f_err;
+		}
+
+		p += 3;
+
+		/* Next, get the encoded ECPoint */
+		if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
+		    ((bn_ctx = BN_CTX_new()) == NULL)) {
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+
+		encoded_pt_len = *p;
+		/* length of encoded point */
+		p += 1;
+		param_len += (1 + encoded_pt_len);
+		if ((param_len > n) || (EC_POINT_oct2point(group, srvr_ecpoint,
+		    p, encoded_pt_len, bn_ctx) == 0)) {
+			al = SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+			    SSL_R_BAD_ECPOINT);
+			goto f_err;
+		}
+
+		n -= param_len;
+		p += encoded_pt_len;
+
+		/*
+		 * The ECC/TLS specification does not mention the use
+		 * of DSA to sign ECParameters in the server key
+		 * exchange message. We do support RSA and ECDSA.
+		 */
+		if (alg_a & SSL_aRSA)
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_RSA_ENC].x509);
+#ifndef OPENSSL_NO_ECDSA
+		else if (alg_a & SSL_aECDSA)
+			pkey = X509_get_pubkey(
+			    s->session->sess_cert->peer_pkeys[
+			    SSL_PKEY_ECC].x509);
+#endif
+		/* Else anonymous ECDH, so no certificate or pkey. */
+		EC_KEY_set_public_key(ecdh, srvr_ecpoint);
+		s->session->sess_cert->peer_ecdh_tmp = ecdh;
+		ecdh = NULL;
+		BN_CTX_free(bn_ctx);
+		bn_ctx = NULL;
+		EC_POINT_free(srvr_ecpoint);
+		srvr_ecpoint = NULL;
+	} else if (alg_k) {
+		al = SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+		    SSL_R_UNEXPECTED_MESSAGE);
+			goto f_err;
+	}
 #endif /* !OPENSSL_NO_ECDH */
 
 	/* p points to the next byte, there are 'n' bytes left */
