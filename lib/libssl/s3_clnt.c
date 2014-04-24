@@ -2793,7 +2793,6 @@ ssl3_send_client_certificate(SSL *s)
 		/* If we get an error, we need to
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
 		 * We then get retied later */
-		i = 0;
 		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0) {
 			s->rwstate = SSL_X509_LOOKUP;
