@@ -1,3 +1,4 @@
+.\"	$OpenBSD: unifdef.1,v 1.20 2014/04/24 21:22:05 sthen Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 2002 - 2013 Tony Finch <dot@dotat.at>.  All rights reserved.
@@ -29,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2014 $
+.Dd $Mdocdate: April 24 2014 $
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
@@ -192,17 +193,38 @@ Specify that a macro is undefined.
 If the same macro appears in more than one argument,
 the last occurrence dominates.
 .Pp
-.It Fl iD Ns Ar sym Ns Op = Ns Ar val
+.Sm off
+.It Xo
+.Fl iD Ar sym
+.Op = Ar val
+.Xc
+.Sm on
 .It Fl iU Ns Ar sym
-C strings, comments,
-and line continuations
-are ignored within
-.Ic #ifdef
+Ignore
+.Ic #ifdef Ns s .
+If your C code uses
+.Ic #ifdef Ns s
+to delimit non-C lines,
+such as comments
+or code which is under construction,
+then you must tell
+.Nm
+which symbols are used for that purpose so that it will not try to parse
+comments and line continuations
+inside those
+.Ic #ifdef Ns s .
+One specifies ignored symbols with
+.Sm off
+.Fl iD Ar sym Op = Ar val
+.Sm on
 and
-.Ic #ifndef
-blocks
-controlled by macros
-specified with these options.
+.Fl iU Ns Ar sym ,
+similar to
+.Sm off
+.Fl D Ar sym Op = Ar val
+.Sm on
+and
+.Fl U Ns Ar sym .
 .Pp
 .It Fl f Ar defile
 The file
