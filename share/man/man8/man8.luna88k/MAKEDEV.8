@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.39 2013/06/21 21:35:45 syl Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.40 2014/04/24 15:09:35 aoyama Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.20 2013/06/03 17:34:15 tedu Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.66 2013/06/21 21:30:38 syl Exp 
+.\"	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.22 2014/04/24 14:52:09 aoyama Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2013 $
+.Dd $Mdocdate: April 24 2014 $
 .Dt MAKEDEV 8 luna88k
 .Os
 .Sh NAME
@@ -166,6 +166,9 @@ front panel LCD display, see
 .It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 .
+.It Ar pcex*
+PC-9801 extension board slot, see
+.Xr pcexmem 4 .
 .It Ar pf*
 Packet Filter, see
 .Xr pf 4 .
