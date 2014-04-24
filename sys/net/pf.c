@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.876 2014/04/22 14:41:03 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.877 2014/04/24 11:55:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2359,6 +2359,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	m->m_pkthdr.ph_rtableid = rdom;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m->m_pkthdr.pf.prio = r->set_prio[0];
+	if (r && r->qid)
+		m->m_pkthdr.pf.qid = r->qid;
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -2461,6 +2463,8 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	m0->m_pkthdr.ph_rtableid = rdomain;
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m0->m_pkthdr.pf.prio = r->set_prio[0];
+	if (r && r->qid)
+		m->m_pkthdr.pf.qid = r->qid;
 
 	switch (af) {
 #ifdef INET
@@ -6577,6 +6581,8 @@ done:
 		}
 	}
 
+	if (action == PF_PASS && qid)
+		pd.m->m_pkthdr.pf.qid = qid;
 	if (pd.dir == PF_IN && s && s->key[PF_SK_STACK])
 		pd.m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 	if (pd.dir == PF_OUT &&
