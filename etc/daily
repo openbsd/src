@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.79 2014/04/24 15:05:10 tedu Exp $
+#	$OpenBSD: daily,v 1.80 2014/04/24 19:04:54 tedu Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -156,12 +156,6 @@ mailq | grep -v -e "^/var/spool/mqueue is empty$" \
 next_part "network:"
 if [ "X$VERBOSESTATUS" != X0 ]; then
 	netstat -ivn
-
-	t=/var/rwho/*
-	if [ "$t" != '/var/rwho/*' ]; then
-		echo ""
-		ruptime
-	fi
 fi
 
 next_part "Running calendar in the background:"
