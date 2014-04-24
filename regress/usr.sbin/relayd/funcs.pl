@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.8 2013/02/07 22:56:27 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.9 2014/04/24 09:05:10 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,6 +16,7 @@
 
 use strict;
 use warnings;
+no warnings 'experimental::smartmatch';
 use feature 'switch';
 use Errno;
 use Digest::MD5;
