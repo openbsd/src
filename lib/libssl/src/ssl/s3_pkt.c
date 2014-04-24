@@ -564,6 +564,8 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 		}
 	}
 
+	if (len < tot)
+		len = tot;
 	n = (len - tot);
 	for (;;) {
 		if (n > s->max_send_fragment)
