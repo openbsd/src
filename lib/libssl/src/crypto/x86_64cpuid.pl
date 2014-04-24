@@ -161,7 +161,7 @@ OPENSSL_ia32_cpuid:
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 ___
 
-print<<___ 
+print<<___;
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,\@abi-omnipotent
 .align	16
