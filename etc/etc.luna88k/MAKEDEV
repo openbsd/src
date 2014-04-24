@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.21 2014/01/05 01:16:52 deraadt Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.22 2014/04/24 14:52:09 aoyama Exp 
 #	OpenBSD: MAKEDEV.common,v 1.73 2013/11/21 11:04:44 kettenis Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -58,6 +58,7 @@
 #	fuse	Userland Filesystem
 #	lcd	front panel LCD display
 #	lkm	Loadable kernel modules interface
+#	pcex*	PC-9801 extension board slot
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
 #	*random	In-kernel random data source
@@ -238,6 +239,11 @@ pf*)
 	M pf c 39 0 600
 	;;
 
+pcex)
+		M pcexmem c 25 0 660
+	M pcexio c 25 1 660 
+	;;
+
 lkm)
 	M lkm c 24 0 640 _lkm
 	;;
@@ -373,10 +379,10 @@ ramdisk)
 	;;
 
 all)
-	R lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1
-	R rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
-	R bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx ptm
-	R local wscons uk0 random lkm pf systrace std st0 st1 fd
+	R pcex lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
+	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx
+	R ptm local wscons uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*)
