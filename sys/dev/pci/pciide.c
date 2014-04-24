@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.343 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.344 2014/04/24 04:11:17 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -553,6 +553,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piixsata_chip_map
 	},
+	{ PCI_PRODUCT_INTEL_C600_SATA, /* Intel C600 SATA */
+	  0,
+	  piixsata_chip_map
+	},
 	{ PCI_PRODUCT_INTEL_6SERIES_SATA_1, /* Intel 6 Series SATA */
 	  0,
 	  piixsata_chip_map
@@ -581,7 +585,75 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piixsata_chip_map
 	},
+	{ PCI_PRODUCT_INTEL_7SERIES_SATA_4, /* Intel 7 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_SATA_1, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_SATA_2, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_SATA_3, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_SATA_4, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_LP_SATA_1, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_LP_SATA_2, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_LP_SATA_3, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_8SERIES_LP_SATA_4, /* Intel 8 Series SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_ATOMC2000_SATA_1, /* Intel Atom C2000 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_ATOMC2000_SATA_2, /* Intel Atom C2000 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_ATOMC2000_SATA_3, /* Intel Atom C2000 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_ATOMC2000_SATA_4, /* Intel Atom C2000 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_BAYTRAIL_SATA_1, /* Intel Baytrail SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_BAYTRAIL_SATA_2, /* Intel Baytrail SATA */
+	  0,
+	  piixsata_chip_map
+	},
 	{ PCI_PRODUCT_INTEL_EP80579_SATA, /* Intel EP80579 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_DH8900_SATA_1, /* Intel DH8900 SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_DH8900_SATA_2, /* Intel DH8900 SATA */
 	  0,
 	  piixsata_chip_map
 	},
