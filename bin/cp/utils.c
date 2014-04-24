@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.33 2012/07/11 16:19:24 matthew Exp $	*/
+/*	$OpenBSD: utils.c,v 1.34 2014/04/24 01:34:35 tedu Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -63,10 +63,9 @@ copy_file(FTSENT *entp, int dne)
 			err(1, "malloc");
 	}
 	if (!zeroes) {
-		zeroes = malloc(MAXBSIZE);
+		zeroes = calloc(1, MAXBSIZE);
 		if (!zeroes)
-			err(1, "malloc");
-		memset(zeroes, 0, MAXBSIZE);
+			err(1, "calloc");
 	}
 
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
