@@ -167,18 +167,14 @@ extern "C" {
  * using "long long's", are 32bit, and are not using my assembler code. */
 /* #define BN_DIV2W */
 
-/* assuming long is 64bit - this is the DEC Alpha
- * unsigned long long is only 64 bits :-(, don't define
- * BN_LLONG for the DEC Alpha */
-#ifdef SIXTY_FOUR_BIT_LONG
-#define BN_ULLONG	unsigned long long
+#ifdef _LP64
+#undef	BN_LLONG
 #define BN_ULONG	unsigned long
 #define BN_LONG		long
 #define BN_BITS		128
 #define BN_BYTES	8
 #define BN_BITS2	64
 #define BN_BITS4	32
-#define BN_MASK		(0xffffffffffffffffffffffffffffffffLL)
 #define BN_MASK2	(0xffffffffffffffffL)
 #define BN_MASK2l	(0xffffffffL)
 #define BN_MASK2h	(0xffffffff00000000L)
@@ -190,51 +186,16 @@ extern "C" {
 #define BN_DEC_NUM	19
 #define BN_HEX_FMT1	"%lX"
 #define BN_HEX_FMT2	"%016lX"
-#endif
-
-/* This is where the long long data type is 64 bits, but long is 32.
- * For machines where there are 64bit registers, this is the mode to use.
- * IRIX, on R4000 and above should use this mode, along with the relevant
- * assembler code :-).  Do NOT define BN_LLONG.
- */
-#ifdef SIXTY_FOUR_BIT
-#undef BN_LLONG
-#undef BN_ULLONG
-#define BN_ULONG	unsigned long long
-#define BN_LONG		long long
-#define BN_BITS		128
-#define BN_BYTES	8
-#define BN_BITS2	64
-#define BN_BITS4	32
-#define BN_MASK2	(0xffffffffffffffffLL)
-#define BN_MASK2l	(0xffffffffL)
-#define BN_MASK2h	(0xffffffff00000000LL)
-#define BN_MASK2h1	(0xffffffff80000000LL)
-#define BN_TBIT		(0x8000000000000000LL)
-#define BN_DEC_CONV	(10000000000000000000ULL)
-#define BN_DEC_FMT1	"%llu"
-#define BN_DEC_FMT2	"%019llu"
-#define BN_DEC_NUM	19
-#define BN_HEX_FMT1	"%llX"
-#define BN_HEX_FMT2	"%016llX"
-#endif
-
-#ifdef THIRTY_TWO_BIT
-#ifdef BN_LLONG
-# if defined(_WIN32) && !defined(__GNUC__)
-#  define BN_ULLONG	unsigned __int64
-#  define BN_MASK	(0xffffffffffffffffI64)
-# else
-#  define BN_ULLONG	unsigned long long
-#  define BN_MASK	(0xffffffffffffffffLL)
-# endif
-#endif
+#else
+#define BN_ULLONG	unsigned long long
+#define	BN_LLONG
 #define BN_ULONG	unsigned int
 #define BN_LONG		int
 #define BN_BITS		64
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
+#define BN_MASK		(0xffffffffffffffffLL)
 #define BN_MASK2	(0xffffffffL)
 #define BN_MASK2l	(0xffff)
 #define BN_MASK2h1	(0xffff8000L)
@@ -247,8 +208,6 @@ extern "C" {
 #define BN_HEX_FMT1	"%X"
 #define BN_HEX_FMT2	"%08X"
 #endif
-
-#define BN_DEFAULT_BITS	1280
 
 #define BN_FLG_MALLOCED		0x01
 #define BN_FLG_STATIC_DATA	0x02

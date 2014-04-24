@@ -87,16 +87,6 @@ if ($flavour =~ /64/) {
 	$POP		="ldw";
 	$POPMB		="ldwm";
 	$BN_SZ		=$SIZE_T;
-	if (open CONF,"<${dir}../../opensslconf.h") {
-	    while(<CONF>) {
-		if (m/#\s*define\s+SIXTY_FOUR_BIT/) {
-		    $BN_SZ=8;
-		    $LEVEL="2.0";
-		    last;
-		}
-	    }
-	    close CONF;
-	}
 }
 
 $FRAME=8*$SIZE_T+$FRAME_MARKER;	# 8 saved regs + frame marker

@@ -61,72 +61,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-
-/* The old slow way */
-#if 0
-int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
-	   BN_CTX *ctx)
-	{
-	int i,nm,nd;
-	int ret = 0;
-	BIGNUM *D;
-
-	bn_check_top(m);
-	bn_check_top(d);
-	if (BN_is_zero(d))
-		{
-		BNerr(BN_F_BN_DIV,BN_R_DIV_BY_ZERO);
-		return(0);
-		}
-
-	if (BN_ucmp(m,d) < 0)
-		{
-		if (rem != NULL)
-			{ if (BN_copy(rem,m) == NULL) return(0); }
-		if (dv != NULL) BN_zero(dv);
-		return(1);
-		}
-
-	BN_CTX_start(ctx);
-	D = BN_CTX_get(ctx);
-	if (dv == NULL) dv = BN_CTX_get(ctx);
-	if (rem == NULL) rem = BN_CTX_get(ctx);
-	if (D == NULL || dv == NULL || rem == NULL)
-		goto end;
-
-	nd=BN_num_bits(d);
-	nm=BN_num_bits(m);
-	if (BN_copy(D,d) == NULL) goto end;
-	if (BN_copy(rem,m) == NULL) goto end;
-
-	/* The next 2 are needed so we can do a dv->d[0]|=1 later
-	 * since BN_lshift1 will only work once there is a value :-) */
-	BN_zero(dv);
-	if(bn_wexpand(dv,1) == NULL) goto end;
-	dv->top=1;
-
-	if (!BN_lshift(D,D,nm-nd)) goto end;
-	for (i=nm-nd; i>=0; i--)
-		{
-		if (!BN_lshift1(dv,dv)) goto end;
-		if (BN_ucmp(rem,D) >= 0)
-			{
-			dv->d[0]|=1;
-			if (!BN_usub(rem,rem,D)) goto end;
-			}
-/* CAN IMPROVE (and have now :=) */
-		if (!BN_rshift1(D,D)) goto end;
-		}
-	rem->neg=BN_is_zero(rem)?0:m->neg;
-	dv->neg=m->neg^d->neg;
-	ret = 1;
- end:
-	BN_CTX_end(ctx);
-	return(ret);
-	}
-
-#else
-
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
     && !defined(BN_DIV3W)
 # if defined(__GNUC__) && __GNUC__>=2
@@ -151,7 +85,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	    q;					\
 	})
 #  define REMAINDER_IS_ALREADY_CALCULATED
-#  elif defined(__x86_64) && defined(SIXTY_FOUR_BIT_LONG)
+#  elif defined(__x86_64)
    /*
     * Same story here, but it's 128-bit by 64-bit division. Wow!
     *					<appro@fy.chalmers.se>
@@ -333,7 +267,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #ifdef BN_LLONG
 			BN_ULLONG t2;
 
-#if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
+#if defined(BN_DIV2W) && !defined(bn_div_words)
 			q=(BN_ULONG)(((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0);
 #else
 			q=bn_div_words(n0,n1,d0);
@@ -435,4 +369,3 @@ err:
 	BN_CTX_end(ctx);
 	return(0);
 	}
-#endif

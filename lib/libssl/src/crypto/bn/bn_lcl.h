@@ -144,26 +144,14 @@ extern "C" {
  * (with draws in between).  Very small exponents are often selected
  * with low Hamming weight, so we use  w = 1  for b <= 23.
  */
-#if 1
 #define BN_window_bits_for_exponent_size(b) \
 		((b) > 671 ? 6 : \
 		 (b) > 239 ? 5 : \
 		 (b) >  79 ? 4 : \
 		 (b) >  23 ? 3 : 1)
-#else
-/* Old SSLeay/OpenSSL table.
- * Maximum window size was 5, so this table differs for b==1024;
- * but it coincides for other interesting values (b==160, b==512).
- */
-#define BN_window_bits_for_exponent_size(b) \
-		((b) > 255 ? 5 : \
-		 (b) > 127 ? 4 : \
-		 (b) >  17 ? 3 : 1)
-#endif	 
 
 
-
-/* BN_mod_exp_mont_conttime is based on the assumption that the
+/* BN_mod_exp_mont_consttime is based on the assumption that the
  * L1 data cache line width of the target processor is at least
  * the following value.
  */
@@ -234,7 +222,7 @@ extern "C" {
  *
  *					<appro@fy.chalmers.se>
  */
-# if defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
+# if defined(__alpha)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
 	register BN_ULONG ret;		\
@@ -243,7 +231,7 @@ extern "C" {
 	     : "r"(a), "r"(b));		\
 	ret;			})
 #  endif	/* compiler */
-# elif defined(_ARCH_PPC) && defined(__64BIT__) && defined(SIXTY_FOUR_BIT_LONG)
+# elif defined(_ARCH_PPC) && defined(_LP64)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
 	register BN_ULONG ret;		\
@@ -252,8 +240,7 @@ extern "C" {
 	     : "r"(a), "r"(b));		\
 	ret;			})
 #  endif	/* compiler */
-# elif (defined(__x86_64) || defined(__x86_64__)) && \
-       (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
+# elif defined(__x86_64) || defined(__x86_64__)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
 	register BN_ULONG ret,discard;	\
@@ -268,7 +255,7 @@ extern "C" {
 		: "a"(a),"g"(b)		\
 		: "cc");
 #  endif
-# elif defined(__mips) && (defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
+# elif defined(__mips) && defined(_LP64)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   if __GNUC__>=4 && __GNUC_MINOR__>=4 /* "h" constraint is no more since 4.4 */
 #     define BN_UMULT_HIGH(a,b)		 (((__uint128_t)(a)*(b))>>64)
@@ -396,10 +383,6 @@ extern "C" {
 #define LBITS(a)	((a)&BN_MASK2l)
 #define HBITS(a)	(((a)>>BN_BITS4)&BN_MASK2l)
 #define	L2HBITS(a)	(((a)<<BN_BITS4)&BN_MASK2)
-
-#define LLBITS(a)	((a)&BN_MASKl)
-#define LHBITS(a)	(((a)>>BN_BITS2)&BN_MASKl)
-#define	LL2HBITS(a)	((BN_ULLONG)((a)&BN_MASKl)<<BN_BITS2)
 
 #define mul64(l,h,bl,bh) \
 	{ \

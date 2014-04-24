@@ -256,7 +256,7 @@ bad:
 	 */
 	l = 0L;
 	for (i = 0; i < rsa->e->top; i++) {
-#ifndef SIXTY_FOUR_BIT
+#ifndef _LP64
 		l <<= BN_BITS4;
 		l <<= BN_BITS4;
 #endif
