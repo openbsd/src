@@ -3269,5 +3269,5 @@ ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 #endif
 	if (s->ctx->client_cert_cb)
 		i = s->ctx->client_cert_cb(s, px509, ppkey);
-	return (i};
+	return (i);
 }
