@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.24 2014/03/07 18:57:23 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.25 2014/04/24 09:40:28 mpi Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -45,20 +45,17 @@ usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
 usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
 usbd_status	usbd_get_hub_descriptor(struct usbd_device *,
 		    usb_hub_descriptor_t *, uint8_t);
-usbd_status	usbd_get_protocol(struct usbd_interface *dev, u_int8_t *report);
-usbd_status	usbd_set_protocol(struct usbd_interface *dev, int report);
-usbd_status	usbd_get_report_descriptor(struct usbd_device *dev, int ifcno,
-		    int size, void *d);
-struct usb_hid_descriptor *usbd_get_hid_descriptor(struct usbd_interface *ifc);
-usbd_status	usbd_set_report(struct usbd_interface *iface, int type, int id,
-		    void *data,int len);
-usbd_status	usbd_set_report_async(struct usbd_interface *iface, int type,
-		    int id, void *data, int len);
-usbd_status	usbd_get_report(struct usbd_interface *iface, int type, int id,
-		    void *data, int len);
-usbd_status	usbd_set_idle(struct usbd_interface *iface, int duration,int id);
-usbd_status	usbd_read_report_desc(struct usbd_interface *ifc, void **descp,
-		    int *sizep, int mem);
+struct usb_hid_descriptor *usbd_get_hid_descriptor(struct usbd_device *,
+		   usb_interface_descriptor_t *);
+usbd_status	usbd_get_report(struct usbd_device *, int, int, int, void *,
+		    int);
+usbd_status	usbd_set_report(struct usbd_device *, int, int, int, void *,
+		    int);
+usbd_status	usbd_set_report_async(struct usbd_device *, int, int, int,
+		    void *, int);
+usbd_status	usbd_set_idle(struct usbd_device *, int, int, int);
+usbd_status	usbd_get_report_descriptor(struct usbd_device *, int, void *,
+		    int);
 usbd_status	usbd_get_config(struct usbd_device *dev, u_int8_t *conf);
 usbd_status	usbd_get_string_desc(struct usbd_device *dev, int sindex,
 		    int langid,usb_string_descriptor_t *sdesc, int *sizep);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.58 2014/04/15 09:14:27 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.59 2014/04/24 09:40:28 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -132,14 +132,10 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
+	sc->sc_ifaceno = uaa->ifaceno;
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	usbd_set_idle(sc->sc_iface, 0, 0);
-#if 0
-	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0 &&
-	    id->bInterfaceSubClass != UISUBCLASS_BOOT)
-		usbd_set_protocol(sc->sc_iface, 1);
-#endif
+	usbd_set_idle(sc->sc_udev, sc->sc_ifaceno, 0, 0);
 
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -186,9 +182,23 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 #endif /* !SMALL_KERNEL */
 
 	if (desc == NULL) {
-		if (usbd_read_report_desc(sc->sc_iface, &desc, &size,
-		    M_USBDEV)) {
+		struct usb_hid_descriptor *hid;
+
+		hid = usbd_get_hid_descriptor(sc->sc_udev, id);
+		if (hid == NULL) {
 			printf("%s: no report descriptor\n", DEVNAME(sc));
+			return;
+		}
+		size = UGETW(hid->descrs[0].wDescriptorLength);
+		desc = malloc(size, M_USBDEV, M_NOWAIT);
+		if (desc == NULL) {
+			printf("%s: no memory\n", DEVNAME(sc));
+			return;
+		}
+		if (usbd_get_report_descriptor(sc->sc_udev, sc->sc_ifaceno,
+		    desc, size)) {
+			printf("%s: XXX\n", DEVNAME(sc));
+			free(desc, M_USBDEV);
 			return;
 		}
 	}
@@ -269,8 +279,9 @@ uhidev_use_rdesc(struct uhidev_softc *sc, int vendor, int product,
 			break;
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
-			usbd_set_report(sc->sc_iface, UHID_FEATURE_REPORT, 2,
-			    &reportbuf, sizeof(reportbuf));
+			usbd_set_report(sc->sc_udev, sc->sc_ifaceno,
+			    UHID_FEATURE_REPORT, 2, &reportbuf,
+			    sizeof(reportbuf));
 			size = sizeof(uhid_graphire3_4x5_report_descr);
 			descptr = uhid_graphire3_4x5_report_descr;
 			break;
@@ -604,18 +615,19 @@ uhidev_close(struct uhidev *scd)
 usbd_status
 uhidev_set_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
+	struct uhidev_softc *sc = scd->sc_parent;
 	char *buf;
 	usbd_status retstat;
 
 	if (id == 0)
-		return usbd_set_report(scd->sc_parent->sc_iface, type,
+		return usbd_set_report(sc->sc_udev, sc->sc_ifaceno, type,
 				       id, data, len);
 
 	buf = malloc(len + 1, M_TEMP, M_WAITOK);
 	buf[0] = id;
 	memcpy(buf+1, data, len);
 
-	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
+	retstat = usbd_set_report(sc->sc_udev, sc->sc_ifaceno, type,
 				  id, buf, len + 1);
 
 	free(buf, M_TEMP);
@@ -627,11 +639,12 @@ usbd_status
 uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
     int len)
 {
+	struct uhidev_softc *sc = scd->sc_parent;
 	char *buf;
 	usbd_status retstat;
 
 	if (id == 0)
-		return usbd_set_report_async(scd->sc_parent->sc_iface, type,
+		return usbd_set_report_async(sc->sc_udev, sc->sc_ifaceno, type,
 					     id, data, len);
 
 	buf = malloc(len + 1, M_TEMP, M_NOWAIT);
@@ -640,7 +653,7 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
 	buf[0] = id;
 	memcpy(buf+1, data, len);
 
-	retstat = usbd_set_report_async(scd->sc_parent->sc_iface, type,
+	retstat = usbd_set_report_async(sc->sc_udev, sc->sc_ifaceno, type,
 					id, buf, len + 1);
 
 	/*
@@ -656,7 +669,10 @@ uhidev_set_report_async(struct uhidev *scd, int type, int id, void *data,
 usbd_status
 uhidev_get_report(struct uhidev *scd, int type, int id, void *data, int len)
 {
-	return usbd_get_report(scd->sc_parent->sc_iface, type, id, data, len);
+	struct uhidev_softc *sc = scd->sc_parent;
+
+	return usbd_get_report(sc->sc_udev, sc->sc_ifaceno, type,
+			       id, data, len);
 }
 
 usbd_status

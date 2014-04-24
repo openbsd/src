@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.64 2014/04/15 09:14:27 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.65 2014/04/24 09:40:28 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -252,7 +252,10 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	    uha->uaa->product == USB_PRODUCT_TOPRE_HHKB) {
 		/* ignore country code on purpose */
 	} else {
-		hid = usbd_get_hid_descriptor(uha->uaa->iface);
+		usb_interface_descriptor_t *id;
+
+		id = usbd_get_interface_descriptor(uha->uaa->iface);
+		hid = usbd_get_hid_descriptor(uha->uaa->device, id);
 
 		if (hid->bCountryCode <= HCC_MAX)
 			layout = ukbd_countrylayout[hid->bCountryCode];

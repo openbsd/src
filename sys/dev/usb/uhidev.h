@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.19 2014/04/15 09:14:27 mpi Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.20 2014/04/24 09:40:28 mpi Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ struct uhidev_softc {
 	struct device sc_dev;		/* base device */
 	struct usbd_device *sc_udev;
 	struct usbd_interface *sc_iface;/* interface */
+	int sc_ifaceno;			/* interface number */
 	struct usbd_pipe *sc_ipipe;	/* input interrupt pipe */
 	struct usbd_xfer *sc_ixfer;	/* read request */
 	int sc_iep_addr;
