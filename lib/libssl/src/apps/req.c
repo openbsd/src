@@ -188,7 +188,7 @@ req_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
 	cipher = EVP_des_ede3_cbc();
 #endif
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -922,7 +922,7 @@ end:
 	if (passargout && passout)
 		free(passout);
 	OBJ_cleanup();
-	apps_shutdown();
+	
 	return (ex);
 }
 

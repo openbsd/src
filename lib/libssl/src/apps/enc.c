@@ -131,7 +131,7 @@ enc_main(int argc, char **argv)
 	const EVP_MD *dgst = NULL;
 	int non_fips_allow = 0;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -635,7 +635,7 @@ end:
 #endif
 	if (pass)
 		free(pass);
-	apps_shutdown();
+	
 	return (ret);
 }
 

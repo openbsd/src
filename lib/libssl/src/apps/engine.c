@@ -336,7 +336,7 @@ engine_main(int argc, char **argv)
 	BIO *bio_out = NULL;
 	const char *indent = "     ";
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 	SSL_load_error_strings();
 
 	if (bio_err == NULL)
@@ -499,7 +499,7 @@ end:
 	sk_OPENSSL_STRING_pop_free(post_cmds, identity);
 	if (bio_out != NULL)
 		BIO_free_all(bio_out);
-	apps_shutdown();
+	
 	return (ret);
 }
 #endif

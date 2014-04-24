@@ -96,7 +96,7 @@ crl2pkcs7_main(int argc, char **argv)
 	STACK_OF(X509) * cert_stack = NULL;
 	int ret = 1, nocrl = 0;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -260,7 +260,7 @@ end:
 	if (crl != NULL)
 		X509_CRL_free(crl);
 
-	apps_shutdown();
+	
 	return (ret);
 }
 

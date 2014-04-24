@@ -325,7 +325,7 @@ s_time_main(int argc, char **argv)
 	char buf[1024 * 8];
 	int ver;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 	s_time_init();
 
 	if (bio_err == NULL)
@@ -525,7 +525,7 @@ end:
 		SSL_CTX_free(tm_ctx);
 		tm_ctx = NULL;
 	}
-	apps_shutdown();
+	
 	return (ret);
 }
 

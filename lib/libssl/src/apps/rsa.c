@@ -116,7 +116,7 @@ rsa_main(int argc, char **argv)
 
 	int pvk_encr = 2;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -399,7 +399,7 @@ end:
 		free(passin);
 	if (passout)
 		free(passout);
-	apps_shutdown();
+	
 	return (ret);
 }
 #endif

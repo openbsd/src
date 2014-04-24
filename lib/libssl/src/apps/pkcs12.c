@@ -130,7 +130,7 @@ pkcs12_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 
@@ -710,7 +710,7 @@ end:
 		free(passin);
 	if (passout)
 		free(passout);
-	apps_shutdown();
+	
 	return (ret);
 }
 

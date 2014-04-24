@@ -156,7 +156,7 @@ ts_main(int argc, char **argv)
 	int free_bio_err = 0;
 
 	ERR_load_crypto_strings();
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL && (bio_err = BIO_new(BIO_s_file())) != NULL) {
 		free_bio_err = 1;

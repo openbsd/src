@@ -322,7 +322,7 @@ ca_main(int argc, char **argv)
 	EF_ALIGNMENT = 0;
 #endif
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	conf = NULL;
 	key = NULL;
@@ -1399,7 +1399,7 @@ err:
 	NCONF_free(conf);
 	NCONF_free(extconf);
 	OBJ_cleanup();
-	apps_shutdown();
+	
 	return (ret);
 }
 

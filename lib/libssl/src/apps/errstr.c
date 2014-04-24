@@ -75,7 +75,7 @@ errstr_main(int argc, char **argv)
 	char buf[256];
 	unsigned long l;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -110,6 +110,6 @@ errstr_main(int argc, char **argv)
 			ret++;
 		}
 	}
-	apps_shutdown();
+	
 	return (ret);
 }

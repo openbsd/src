@@ -608,7 +608,7 @@ s_client_main(int argc, char **argv)
 
 	meth = SSLv23_client_method();
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 	c_Pause = 0;
 	c_quiet = 0;
 	c_ign_eof = 0;
@@ -1672,7 +1672,7 @@ end:
 		BIO_free(bio_c_out);
 		bio_c_out = NULL;
 	}
-	apps_shutdown();
+	
 	return (ret);
 }
 

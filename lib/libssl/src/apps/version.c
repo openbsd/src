@@ -142,7 +142,7 @@ version_main(int argc, char **argv)
 	int cflags = 0, version = 0, date = 0, options = 0, platform = 0,
 	    dir = 0;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -210,6 +210,6 @@ version_main(int argc, char **argv)
 	if (dir)
 		printf("%s\n", SSLeay_version(SSLEAY_DIR));
 end:
-	apps_shutdown();
+	
 	return (ret);
 }

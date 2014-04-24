@@ -97,7 +97,7 @@ sess_id_main(int argc, char **argv)
 	int cert = 0, noout = 0, text = 0;
 	const char **pp;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -245,7 +245,7 @@ end:
 		BIO_free_all(out);
 	if (x != NULL)
 		SSL_SESSION_free(x);
-	apps_shutdown();
+	
 	return (ret);
 }
 

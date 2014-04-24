@@ -100,7 +100,7 @@ ec_main(int argc, char **argv)
 	int asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	int new_asn1_flag = 0;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -344,7 +344,7 @@ end:
 		free(passin);
 	if (passout)
 		free(passout);
-	apps_shutdown();
+	
 	return (ret);
 }
 #endif

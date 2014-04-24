@@ -124,7 +124,7 @@ dsaparam_main(int argc, char **argv)
 	int timebomb = 0;
 #endif
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -397,7 +397,7 @@ end:
 		BIO_free_all(out);
 	if (dsa != NULL)
 		DSA_free(dsa);
-	apps_shutdown();
+	
 	return (ret);
 }
 

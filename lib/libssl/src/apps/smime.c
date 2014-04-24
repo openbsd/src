@@ -120,7 +120,7 @@ smime_main(int argc, char **argv)
 	args = argv + 1;
 	ret = 1;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL) {
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)

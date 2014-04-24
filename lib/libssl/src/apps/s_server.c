@@ -789,7 +789,7 @@ s_server_main(int argc, char *argv[])
 	local_argc = argc;
 	local_argv = argv;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 	s_server_init();
 
 	if (bio_err == NULL)
@@ -1612,7 +1612,7 @@ end:
 		BIO_free(bio_s_out);
 		bio_s_out = NULL;
 	}
-	apps_shutdown();
+	
 	return (ret);
 }
 

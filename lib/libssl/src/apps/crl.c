@@ -124,7 +124,7 @@ crl_main(int argc, char **argv)
 	int do_ver = 0;
 	const EVP_MD *md_alg, *digest = EVP_sha1();
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -380,7 +380,7 @@ end:
 		X509_STORE_CTX_cleanup(&ctx);
 		X509_STORE_free(store);
 	}
-	apps_shutdown();
+	
 	return (ret);
 }
 

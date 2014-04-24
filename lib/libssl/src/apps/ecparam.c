@@ -134,7 +134,7 @@ ecparam_main(int argc, char **argv)
 	*ec_order = NULL, *ec_cofactor = NULL;
 	unsigned char *buffer = NULL;
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -597,7 +597,7 @@ end:
 		BIO_free_all(out);
 	if (group != NULL)
 		EC_GROUP_free(group);
-	apps_shutdown();
+	
 	return (ret);
 }
 

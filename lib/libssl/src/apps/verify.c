@@ -97,7 +97,7 @@ verify_main(int argc, char **argv)
 
 	ERR_load_crypto_strings();
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -246,7 +246,7 @@ end:
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
 	sk_X509_CRL_pop_free(crls, X509_CRL_free);
-	apps_shutdown();
+	
 	return (ret < 0 ? 2 : ret);
 }
 

@@ -88,7 +88,7 @@ gendsa_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 
-	apps_startup();
+	signal(SIGPIPE, SIG_IGN);
 
 	if (bio_err == NULL)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -247,7 +247,7 @@ end:
 		DSA_free(dsa);
 	if (passout)
 		free(passout);
-	apps_shutdown();
+	
 	return (ret);
 }
 #endif
