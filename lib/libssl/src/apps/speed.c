@@ -173,16 +173,6 @@
 #include <openssl/modes.h>
 
 
-#ifndef HAVE_FORK
-#define HAVE_FORK 1
-#endif
-
-#if HAVE_FORK
-#undef NO_FORK
-#else
-#define NO_FORK
-#endif
-
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
 int run = 0;
@@ -196,9 +186,7 @@ static void
 pkey_print_message(const char *str, const char *str2,
     long num, int bits, int sec);
 static void print_result(int alg, int run_no, int count, double time_used);
-#ifndef NO_FORK
 static int do_multi(int multi);
-#endif
 
 #define ALGOR_NUM	30
 #define SIZE_NUM	5
@@ -231,24 +219,14 @@ static double ecdsa_results[EC_NUM][2];
 static double ecdh_results[EC_NUM][1];
 #endif
 
-#ifdef SIGALRM
-#if defined(__STDC__) || defined(sgi) || defined(_AIX)
-#define SIGRETTYPE void
-#else
-#define SIGRETTYPE int
-#endif
+static void sig_done(int sig);
 
-static SIGRETTYPE sig_done(int sig);
-static SIGRETTYPE 
+static void
 sig_done(int sig)
 {
 	signal(SIGALRM, sig_done);
 	run = 0;
-#ifdef LINT
-	sig = sig;
-#endif
 }
-#endif
 
 #define START	0
 #define STOP	1
@@ -549,9 +527,7 @@ speed_main(int argc, char **argv)
 	const EVP_CIPHER *evp_cipher = NULL;
 	const EVP_MD *evp_md = NULL;
 	int decrypt = 0;
-#ifndef NO_FORK
 	int multi = 0;
-#endif
 
 #ifndef TIMES
 	usertime = -1;
@@ -662,7 +638,6 @@ speed_main(int argc, char **argv)
 			j--;
 		}
 #endif
-#ifndef NO_FORK
 		else if ((argc > 0) && (strcmp(*argv, "-multi") == 0)) {
 			argc--;
 			argv++;
@@ -678,7 +653,6 @@ speed_main(int argc, char **argv)
 			j--;	/* Otherwise, -mr gets confused with an
 				 * algorithm. */
 		}
-#endif
 		else if (argc > 0 && !strcmp(*argv, "-mr")) {
 			mr = 1;
 			j--;	/* Otherwise, -mr gets confused with an
@@ -1104,9 +1078,7 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "-evp e          use EVP e.\n");
 			BIO_printf(bio_err, "-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err, "-mr             produce machine readable output.\n");
-#ifndef NO_FORK
 			BIO_printf(bio_err, "-multi n        run n benchmarks in parallel.\n");
-#endif
 			goto end;
 		}
 		argc--;
@@ -1114,10 +1086,8 @@ speed_main(int argc, char **argv)
 		j++;
 	}
 
-#ifndef NO_FORK
 	if (multi && do_multi(multi))
 		goto show_res;
-#endif
 
 	if (j == 0) {
 		for (i = 0; i < ALGOR_NUM; i++) {
@@ -1211,222 +1181,9 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 	memset(rsa_c, 0, sizeof(rsa_c));
 #endif
-#ifndef SIGALRM
-#ifndef OPENSSL_NO_DES
-	BIO_printf(bio_err, "First we calculate the approximate speed ...\n");
-	count = 10;
-	do {
-		long it;
-		count *= 2;
-		Time_F(START);
-		for (it = count; it; it--)
-			DES_ecb_encrypt((DES_cblock *) buf,
-			    (DES_cblock *) buf,
-			    &sch, DES_ENCRYPT);
-		d = Time_F(STOP);
-	} while (d < 3);
-	save_count = count;
-	c[D_MD2][0] = count / 10;
-	c[D_MDC2][0] = count / 10;
-	c[D_MD4][0] = count;
-	c[D_MD5][0] = count;
-	c[D_HMAC][0] = count;
-	c[D_SHA1][0] = count;
-	c[D_RMD160][0] = count;
-	c[D_RC4][0] = count * 5;
-	c[D_CBC_DES][0] = count;
-	c[D_EDE3_DES][0] = count / 3;
-	c[D_CBC_IDEA][0] = count;
-	c[D_CBC_SEED][0] = count;
-	c[D_CBC_RC2][0] = count;
-	c[D_CBC_RC5][0] = count;
-	c[D_CBC_BF][0] = count;
-	c[D_CBC_CAST][0] = count;
-	c[D_CBC_128_AES][0] = count;
-	c[D_CBC_192_AES][0] = count;
-	c[D_CBC_256_AES][0] = count;
-	c[D_CBC_128_CML][0] = count;
-	c[D_CBC_192_CML][0] = count;
-	c[D_CBC_256_CML][0] = count;
-	c[D_SHA256][0] = count;
-	c[D_SHA512][0] = count;
-	c[D_WHIRLPOOL][0] = count;
-	c[D_IGE_128_AES][0] = count;
-	c[D_IGE_192_AES][0] = count;
-	c[D_IGE_256_AES][0] = count;
-	c[D_GHASH][0] = count;
-
-	for (i = 1; i < SIZE_NUM; i++) {
-		c[D_MD2][i] = c[D_MD2][0] * 4 * lengths[0] / lengths[i];
-		c[D_MDC2][i] = c[D_MDC2][0] * 4 * lengths[0] / lengths[i];
-		c[D_MD4][i] = c[D_MD4][0] * 4 * lengths[0] / lengths[i];
-		c[D_MD5][i] = c[D_MD5][0] * 4 * lengths[0] / lengths[i];
-		c[D_HMAC][i] = c[D_HMAC][0] * 4 * lengths[0] / lengths[i];
-		c[D_SHA1][i] = c[D_SHA1][0] * 4 * lengths[0] / lengths[i];
-		c[D_RMD160][i] = c[D_RMD160][0] * 4 * lengths[0] / lengths[i];
-		c[D_SHA256][i] = c[D_SHA256][0] * 4 * lengths[0] / lengths[i];
-		c[D_SHA512][i] = c[D_SHA512][0] * 4 * lengths[0] / lengths[i];
-		c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * lengths[0] / lengths[i];
-	}
-	for (i = 1; i < SIZE_NUM; i++) {
-		long l0, l1;
-
-		l0 = (long) lengths[i - 1];
-		l1 = (long) lengths[i];
-		c[D_RC4][i] = c[D_RC4][i - 1] * l0 / l1;
-		c[D_CBC_DES][i] = c[D_CBC_DES][i - 1] * l0 / l1;
-		c[D_EDE3_DES][i] = c[D_EDE3_DES][i - 1] * l0 / l1;
-		c[D_CBC_IDEA][i] = c[D_CBC_IDEA][i - 1] * l0 / l1;
-		c[D_CBC_SEED][i] = c[D_CBC_SEED][i - 1] * l0 / l1;
-		c[D_CBC_RC2][i] = c[D_CBC_RC2][i - 1] * l0 / l1;
-		c[D_CBC_RC5][i] = c[D_CBC_RC5][i - 1] * l0 / l1;
-		c[D_CBC_BF][i] = c[D_CBC_BF][i - 1] * l0 / l1;
-		c[D_CBC_CAST][i] = c[D_CBC_CAST][i - 1] * l0 / l1;
-		c[D_CBC_128_AES][i] = c[D_CBC_128_AES][i - 1] * l0 / l1;
-		c[D_CBC_192_AES][i] = c[D_CBC_192_AES][i - 1] * l0 / l1;
-		c[D_CBC_256_AES][i] = c[D_CBC_256_AES][i - 1] * l0 / l1;
-		c[D_CBC_128_CML][i] = c[D_CBC_128_CML][i - 1] * l0 / l1;
-		c[D_CBC_192_CML][i] = c[D_CBC_192_CML][i - 1] * l0 / l1;
-		c[D_CBC_256_CML][i] = c[D_CBC_256_CML][i - 1] * l0 / l1;
-		c[D_IGE_128_AES][i] = c[D_IGE_128_AES][i - 1] * l0 / l1;
-		c[D_IGE_192_AES][i] = c[D_IGE_192_AES][i - 1] * l0 / l1;
-		c[D_IGE_256_AES][i] = c[D_IGE_256_AES][i - 1] * l0 / l1;
-	}
-#ifndef OPENSSL_NO_RSA
-	rsa_c[R_RSA_512][0] = count / 2000;
-	rsa_c[R_RSA_512][1] = count / 400;
-	for (i = 1; i < RSA_NUM; i++) {
-		rsa_c[i][0] = rsa_c[i - 1][0] / 8;
-		rsa_c[i][1] = rsa_c[i - 1][1] / 4;
-		if ((rsa_doit[i] <= 1) && (rsa_c[i][0] == 0))
-			rsa_doit[i] = 0;
-		else {
-			if (rsa_c[i][0] == 0) {
-				rsa_c[i][0] = 1;
-				rsa_c[i][1] = 20;
-			}
-		}
-	}
-#endif
-
-#ifndef OPENSSL_NO_DSA
-	dsa_c[R_DSA_512][0] = count / 1000;
-	dsa_c[R_DSA_512][1] = count / 1000 / 2;
-	for (i = 1; i < DSA_NUM; i++) {
-		dsa_c[i][0] = dsa_c[i - 1][0] / 4;
-		dsa_c[i][1] = dsa_c[i - 1][1] / 4;
-		if ((dsa_doit[i] <= 1) && (dsa_c[i][0] == 0))
-			dsa_doit[i] = 0;
-		else {
-			if (dsa_c[i] == 0) {
-				dsa_c[i][0] = 1;
-				dsa_c[i][1] = 1;
-			}
-		}
-	}
-#endif
-
-#ifndef OPENSSL_NO_ECDSA
-	ecdsa_c[R_EC_P160][0] = count / 1000;
-	ecdsa_c[R_EC_P160][1] = count / 1000 / 2;
-	for (i = R_EC_P192; i <= R_EC_P521; i++) {
-		ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-		ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-		if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
-			ecdsa_doit[i] = 0;
-		else {
-			if (ecdsa_c[i] == 0) {
-				ecdsa_c[i][0] = 1;
-				ecdsa_c[i][1] = 1;
-			}
-		}
-	}
-	ecdsa_c[R_EC_K163][0] = count / 1000;
-	ecdsa_c[R_EC_K163][1] = count / 1000 / 2;
-	for (i = R_EC_K233; i <= R_EC_K571; i++) {
-		ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-		ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-		if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
-			ecdsa_doit[i] = 0;
-		else {
-			if (ecdsa_c[i] == 0) {
-				ecdsa_c[i][0] = 1;
-				ecdsa_c[i][1] = 1;
-			}
-		}
-	}
-	ecdsa_c[R_EC_B163][0] = count / 1000;
-	ecdsa_c[R_EC_B163][1] = count / 1000 / 2;
-	for (i = R_EC_B233; i <= R_EC_B571; i++) {
-		ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-		ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-		if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
-			ecdsa_doit[i] = 0;
-		else {
-			if (ecdsa_c[i] == 0) {
-				ecdsa_c[i][0] = 1;
-				ecdsa_c[i][1] = 1;
-			}
-		}
-	}
-#endif
-
-#ifndef OPENSSL_NO_ECDH
-	ecdh_c[R_EC_P160][0] = count / 1000;
-	ecdh_c[R_EC_P160][1] = count / 1000;
-	for (i = R_EC_P192; i <= R_EC_P521; i++) {
-		ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-		ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
-		if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
-			ecdh_doit[i] = 0;
-		else {
-			if (ecdh_c[i] == 0) {
-				ecdh_c[i][0] = 1;
-				ecdh_c[i][1] = 1;
-			}
-		}
-	}
-	ecdh_c[R_EC_K163][0] = count / 1000;
-	ecdh_c[R_EC_K163][1] = count / 1000;
-	for (i = R_EC_K233; i <= R_EC_K571; i++) {
-		ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-		ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
-		if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
-			ecdh_doit[i] = 0;
-		else {
-			if (ecdh_c[i] == 0) {
-				ecdh_c[i][0] = 1;
-				ecdh_c[i][1] = 1;
-			}
-		}
-	}
-	ecdh_c[R_EC_B163][0] = count / 1000;
-	ecdh_c[R_EC_B163][1] = count / 1000;
-	for (i = R_EC_B233; i <= R_EC_B571; i++) {
-		ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-		ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
-		if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
-			ecdh_doit[i] = 0;
-		else {
-			if (ecdh_c[i] == 0) {
-				ecdh_c[i][0] = 1;
-				ecdh_c[i][1] = 1;
-			}
-		}
-	}
-#endif
-
-#define COND(d)	(count < (d))
-#define COUNT(d) (d)
-#else
-/* not worth fixing */
-#error "You cannot disable DES on systems without SIGALRM."
-#endif				/* OPENSSL_NO_DES */
-#else
 #define COND(c)	(run && count<0x7fffffff)
 #define COUNT(d) (count)
 	signal(SIGALRM, sig_done);
-#endif				/* SIGALRM */
 
 #ifndef OPENSSL_NO_MD2
 	if (doit[D_MD2]) {
@@ -2186,9 +1943,7 @@ speed_main(int argc, char **argv)
 		}
 	}
 #endif
-#ifndef NO_FORK
 show_res:
-#endif
 	if (!mr) {
 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_VERSION));
 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_BUILT_ON));
@@ -2363,38 +2118,20 @@ end:
 static void 
 print_message(const char *s, long num, int length)
 {
-#ifdef SIGALRM
 	BIO_printf(bio_err, mr ? "+DT:%s:%d:%d\n"
 	    : "Doing %s for %ds on %d size blocks: ", s, SECONDS, length);
 	(void) BIO_flush(bio_err);
 	alarm(SECONDS);
-#else
-	BIO_printf(bio_err, mr ? "+DN:%s:%ld:%d\n"
-	    : "Doing %s %ld times on %d size blocks: ", s, num, length);
-	(void) BIO_flush(bio_err);
-#endif
-#ifdef LINT
-	num = num;
-#endif
 }
 
 static void 
 pkey_print_message(const char *str, const char *str2, long num,
     int bits, int tm)
 {
-#ifdef SIGALRM
 	BIO_printf(bio_err, mr ? "+DTP:%d:%s:%s:%d\n"
 	    : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
 	(void) BIO_flush(bio_err);
 	alarm(tm);
-#else
-	BIO_printf(bio_err, mr ? "+DNP:%ld:%d:%s:%s\n"
-	    : "Doing %ld %d bit %s %s's: ", num, bits, str, str2);
-	(void) BIO_flush(bio_err);
-#endif
-#ifdef LINT
-	num = num;
-#endif
 }
 
 static void 
@@ -2405,7 +2142,6 @@ print_result(int alg, int run_no, int count, double time_used)
 	results[alg][run_no] = ((double) count) / time_used * lengths[run_no];
 }
 
-#ifndef NO_FORK
 static char *
 sstrsep(char **string, const char *delim)
 {
@@ -2607,5 +2343,4 @@ do_multi(int multi)
 	free(fds);
 	return 1;
 }
-#endif
 #endif
