@@ -236,18 +236,7 @@ main(int argc, char **argv)
 	{
 		CRYPTO_set_locking_callback(lock_dbg_cb);
 	}
-	if (getenv("OPENSSL_FIPS")) {
-#ifdef OPENSSL_FIPS
-		if (!FIPS_mode_set(1)) {
-			ERR_load_crypto_strings();
-			ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
-			exit(1);
-		}
-#else
-		fprintf(stderr, "FIPS mode not supported.\n");
-		exit(1);
-#endif
-	}
+
 	apps_startup();
 
 	/* Lets load up our environment a little */
