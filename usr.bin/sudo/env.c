@@ -832,7 +832,7 @@ validate_env_vars(env_vars)
 		okvar = matches_env_keep(var->value);
 	} else {
 	    okvar = matches_env_delete(var->value) == FALSE;
-	    if (okvar == FALSE)
+	    if (okvar == TRUE)
 		okvar = matches_env_check(var->value) != FALSE;
 	}
 	if (okvar == FALSE) {
