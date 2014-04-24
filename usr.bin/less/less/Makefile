@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2011/09/16 18:12:09 shadchin Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/04/24 20:56:02 millert Exp $
 
 PROG=	less
 SRCS=	main.c screen.c brac.c ch.c charset.c cmdbuf.c command.c cvt.c \
@@ -12,8 +12,8 @@ DPADD=	${LIBCURSES}
 
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
-MAN=	less.1
-MLINKS=	less.1 more.1 less.1 page.1
+MAN=	less.1 more.1
+MLINKS=	less.1 page.1
 
 HELPFILE=${SHAREDIR}/misc/more.help
 
