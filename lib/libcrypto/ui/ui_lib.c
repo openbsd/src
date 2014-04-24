@@ -135,14 +135,14 @@ allocate_string_stack(UI *ui)
 }
 
 static UI_STRING *
-general_allocate_prompt(UI *ui, const char *prompt,
-    int prompt_freeable, enum UI_string_types type, int input_flags,
-    char *result_buf)
+general_allocate_prompt(UI *ui, const char *prompt, int prompt_freeable,
+    enum UI_string_types type, int input_flags, char *result_buf)
 {
 	UI_STRING *ret = NULL;
 
 	if (prompt == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, ERR_R_PASSED_NULL_PARAMETER);
+		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT,
+		    ERR_R_PASSED_NULL_PARAMETER);
 	} else if ((type == UIT_PROMPT || type == UIT_VERIFY ||
 	    type == UIT_BOOLEAN) && result_buf == NULL) {
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
@@ -157,9 +157,9 @@ general_allocate_prompt(UI *ui, const char *prompt,
 }
 
 static int
-general_allocate_string(UI *ui, const char *prompt,
-    int prompt_freeable, enum UI_string_types type, int input_flags,
-    char *result_buf, int minsize, int maxsize, const char *test_buf)
+general_allocate_string(UI *ui, const char *prompt, int prompt_freeable,
+    enum UI_string_types type, int input_flags, char *result_buf, int minsize,
+    int maxsize, const char *test_buf)
 {
 	int ret = -1;
 	UI_STRING *s = general_allocate_prompt(ui, prompt, prompt_freeable,
@@ -181,20 +181,20 @@ general_allocate_string(UI *ui, const char *prompt,
 }
 
 static int
-general_allocate_boolean(UI *ui,
-    const char *prompt, const char *action_desc,
-    const char *ok_chars, const char *cancel_chars,
-    int prompt_freeable, enum UI_string_types type, int input_flags,
-    char *result_buf)
+general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
+    const char *ok_chars, const char *cancel_chars, int prompt_freeable,
+    enum UI_string_types type, int input_flags, char *result_buf)
 {
 	int ret = -1;
 	UI_STRING *s;
 	const char *p;
 
 	if (ok_chars == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN, ERR_R_PASSED_NULL_PARAMETER);
+		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
+		    ERR_R_PASSED_NULL_PARAMETER);
 	} else if (cancel_chars == NULL) {
-		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN, ERR_R_PASSED_NULL_PARAMETER);
+		UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
+		    ERR_R_PASSED_NULL_PARAMETER);
 	} else {
 		for (p = ok_chars; *p; p++) {
 			if (strchr(cancel_chars, *p)) {
@@ -228,17 +228,17 @@ general_allocate_boolean(UI *ui,
 /* Returns the index to the place in the stack or -1 for error.  Uses a
    direct reference to the prompt.  */
 int
-UI_add_input_string(UI *ui, const char *prompt, int flags,
-    char *result_buf, int minsize, int maxsize)
+UI_add_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
+    int minsize, int maxsize)
 {
-	return general_allocate_string(ui, prompt, 0,
-	    UIT_PROMPT, flags, result_buf, minsize, maxsize, NULL);
+	return general_allocate_string(ui, prompt, 0, UIT_PROMPT, flags,
+	    result_buf, minsize, maxsize, NULL);
 }
 
 /* Same as UI_add_input_string(), excepts it takes a copy of the prompt */
 int
-UI_dup_input_string(UI *ui, const char *prompt, int flags,
-    char *result_buf, int minsize, int maxsize)
+UI_dup_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
+    int minsize, int maxsize)
 {
 	char *prompt_copy = NULL;
 
@@ -249,16 +249,16 @@ UI_dup_input_string(UI *ui, const char *prompt, int flags,
 			return 0;
 		}
 	}
-	return general_allocate_string(ui, prompt_copy, 1,
-	    UIT_PROMPT, flags, result_buf, minsize, maxsize, NULL);
+	return general_allocate_string(ui, prompt_copy, 1, UIT_PROMPT, flags,
+	    result_buf, minsize, maxsize, NULL);
 }
 
 int
-UI_add_verify_string(UI *ui, const char *prompt, int flags,
-    char *result_buf, int minsize, int maxsize, const char *test_buf)
+UI_add_verify_string(UI *ui, const char *prompt, int flags, char *result_buf,
+    int minsize, int maxsize, const char *test_buf)
 {
-	return general_allocate_string(ui, prompt, 0,
-	    UIT_VERIFY, flags, result_buf, minsize, maxsize, test_buf);
+	return general_allocate_string(ui, prompt, 0, UIT_VERIFY, flags,
+	    result_buf, minsize, maxsize, test_buf);
 }
 
 int
@@ -274,23 +274,21 @@ UI_dup_verify_string(UI *ui, const char *prompt, int flags,
 			return -1;
 		}
 	}
-	return general_allocate_string(ui, prompt_copy, 1,
-	    UIT_VERIFY, flags, result_buf, minsize, maxsize, test_buf);
+	return general_allocate_string(ui, prompt_copy, 1, UIT_VERIFY, flags,
+	    result_buf, minsize, maxsize, test_buf);
 }
 
 int
 UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-    const char *ok_chars, const char *cancel_chars,
-    int flags, char *result_buf)
+    const char *ok_chars, const char *cancel_chars, int flags, char *result_buf)
 {
-	return general_allocate_boolean(ui, prompt, action_desc,
-	    ok_chars, cancel_chars, 0, UIT_BOOLEAN, flags, result_buf);
+	return general_allocate_boolean(ui, prompt, action_desc, ok_chars,
+	    cancel_chars, 0, UIT_BOOLEAN, flags, result_buf);
 }
 
 int
 UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-    const char *ok_chars, const char *cancel_chars,
-    int flags, char *result_buf)
+    const char *ok_chars, const char *cancel_chars, int flags, char *result_buf)
 {
 	char *prompt_copy = NULL;
 	char *action_desc_copy = NULL;
@@ -424,6 +422,7 @@ void *
 UI_add_user_data(UI *ui, void *user_data)
 {
 	void *old_data = ui->user_data;
+
 	ui->user_data = user_data;
 	return old_data;
 }
@@ -514,6 +513,7 @@ UI_process(UI *ui)
 			}
 		}
 	}
+
 err:
 	if (ui->meth->ui_close_session && !ui->meth->ui_close_session(ui))
 		return -1;
@@ -598,7 +598,7 @@ UI_set_method(UI *ui, const UI_METHOD *meth)
 UI_METHOD *
 UI_create_method(char *name)
 {
-	UI_METHOD *ui_method = (UI_METHOD *) malloc(sizeof(UI_METHOD));
+	UI_METHOD *ui_method = (UI_METHOD *)malloc(sizeof(UI_METHOD));
 
 	if (ui_method) {
 		memset(ui_method, 0, sizeof(*ui_method));

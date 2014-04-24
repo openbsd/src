@@ -251,8 +251,8 @@ read_string(UI *ui, UI_STRING *uis)
 		fprintf(tty_out, "Verifying - %s",
 		    UI_get0_output_string(uis));
 		fflush(tty_out);
-		if ((ok = read_string_inner(ui, uis,
-			    UI_get_input_flags(uis) & UI_INPUT_FLAG_ECHO, 1)) <= 0)
+		if ((ok = read_string_inner(ui, uis, UI_get_input_flags(uis) &
+		    UI_INPUT_FLAG_ECHO, 1)) <= 0)
 			return ok;
 		if (strcmp(UI_get0_result_string(uis),
 		    UI_get0_test_string(uis)) != 0) {
