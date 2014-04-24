@@ -343,6 +343,7 @@ void ERR_print_errors_fp(FILE *fp);
 #ifndef OPENSSL_NO_BIO
 void ERR_print_errors(BIO *bp);
 #endif
+void ERR_asprintf_error_data(char * format, ...);
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA str[]);

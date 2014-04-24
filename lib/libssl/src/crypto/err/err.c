@@ -1069,6 +1069,20 @@ ERR_set_error_data(char *data, int flags)
 }
 
 void
+ERR_asprintf_error_data(char * format, ...) {
+	char *errbuf = NULL;
+	va_list ap;
+	int r;
+
+	va_start(ap, format);
+	r = vasprintf(&errbuf, format, ap);
+	va_end(ap);
+	if (r == -1)
+		ERR_set_error_data("malloc failed", ERR_TXT_STRING);
+	else
+		ERR_set_error_data(errbuf, ERR_TXT_MALLOCED|ERR_TXT_STRING);
+}
+void
 ERR_add_error_data(int num, ...)
 {
 	va_list args;
@@ -1080,34 +1094,20 @@ ERR_add_error_data(int num, ...)
 void
 ERR_add_error_vdata(int num, va_list args)
 {
-	int i, n, s;
-	char *str, *p, *a;
-
-	s = 80;
-	str = malloc(s + 1);
-	if (str == NULL)
-		return;
-	str[0] = '\0';
-
-	n = 0;
+	char format[129];
+	char *errbuf;
+	format[0] = '\0';
+	int i;
 	for (i = 0; i < num; i++) {
-		a = va_arg(args, char*);
-		/* ignore NULLs, thanks to Bob Beck <beck@obtuse.com> */
-		if (a != NULL) {
-			n += strlen(a);
-			if (n > s) {
-				s = n + 20;
-				p = realloc(str, s + 1);
-				if (p == NULL) {
-					free(str);
-					return;
-				} else
-					str = p;
-			}
-			strlcat(str, a, (size_t)s + 1);
+		if (strlcat(format, "%s", sizeof(format)) >= sizeof(format)) {
+			ERR_set_error_data("too many errors", ERR_TXT_STRING);
+			return;
 		}
 	}
-	ERR_set_error_data(str, ERR_TXT_MALLOCED|ERR_TXT_STRING);
+	if (vasprintf(&errbuf, format, args) == -1)
+		ERR_set_error_data("malloc failed", ERR_TXT_STRING);
+	else
+		ERR_set_error_data(errbuf, ERR_TXT_MALLOCED|ERR_TXT_STRING);
 }
 
 int
