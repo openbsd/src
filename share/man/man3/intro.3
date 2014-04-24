@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.64 2014/04/22 11:15:05 henning Exp $
+.\"	$OpenBSD: intro.3,v 1.65 2014/04/24 13:48:38 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 22 2014 $
+.Dd $Mdocdate: April 24 2014 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -55,10 +55,6 @@ option of the compiler.
 The various libraries (followed by the loader flag):
 .Pp
 .Bl -tag -width "libkvm" -compact
-.It libasn1 Pq Fl lasn1
-The abstract syntax notation (ASN) library provides routines for the
-specification of abstract data types.
-.Pp
 .It libc Pq Fl lc
 Standard C library functions.
 When using the C compiler
@@ -80,9 +76,6 @@ storage allocation,
 time functions,
 signal handling,
 and more.
-.Pp
-.It libcom_err Pq Fl lcom_err
-The common error description library.
 .Pp
 .It libcrypto Pq Fl lcrypto
 The OpenSSL crypto library.
