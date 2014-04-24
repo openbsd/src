@@ -1538,9 +1538,6 @@ genpkey_cb(EVP_PKEY_CTX * ctx)
 		c = '\n';
 	BIO_write(b, &c, 1);
 	(void) BIO_flush(b);
-#ifdef LINT
-	p = n;
-#endif
 	return 1;
 }
 

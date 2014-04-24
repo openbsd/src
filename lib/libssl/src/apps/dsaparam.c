@@ -416,9 +416,6 @@ dsa_cb(int p, int n, BN_GENCB * cb)
 		c = '\n';
 	BIO_write(cb->arg, &c, 1);
 	(void) BIO_flush(cb->arg);
-#ifdef LINT
-	p = n;
-#endif
 #ifdef GENCB_TEST
 	if (stop_keygen_flag)
 		return 0;
