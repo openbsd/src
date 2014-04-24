@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.425 2014/04/23 09:56:56 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.426 2014/04/24 15:05:10 tedu Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -499,7 +499,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fi
 fi
 
-start_daemon hostapd rwhod lpd sendmail smtpd slowcgi nginx ftpd
+start_daemon hostapd lpd sendmail smtpd slowcgi nginx ftpd
 start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'

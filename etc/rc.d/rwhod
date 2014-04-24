@@ -1,9 +1,0 @@
-#!/bin/sh
-#
-# $OpenBSD: rwhod,v 1.1 2011/07/06 18:55:36 robert Exp $
-
-daemon="/usr/sbin/rwhod"
-
-. /etc/rc.d/rc.subr
-
-rc_cmd $1
