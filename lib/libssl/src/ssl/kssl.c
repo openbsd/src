@@ -963,7 +963,7 @@ kssl_ctx_setstring(KSSL_CTX *kssl_ctx, int which, char *text)
 	free(*string);
 	*string = NULL;
 
-	if ((*string = strdup(text ? text : "")) == NULL)
+	if (text && (*string = strdup(text)) == NULL)
 		return KSSL_CTX_ERR;
 
 	return KSSL_CTX_OK;
