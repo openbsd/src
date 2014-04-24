@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.43 2014/04/19 18:11:19 tedu Exp $
+.\"	$OpenBSD: rdist.1,v 1.44 2014/04/24 14:00:35 jmc Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"	$From: rdist.man,v 6.34 1996/01/29 22:37:19 mcooper Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: April 24 2014 $
 .Dt RDIST 1
 .Os
 .Sh NAME
@@ -394,12 +394,8 @@ A warning message is printed for files which are newer than the master copy.
 .It Fl P Ar rsh-path
 Set the path to the remote shell command.
 .Ar rsh-path
-may be a colon separated list of possible pathnames.
-In this case, the first component of the path to exist is used.
-For example,
-.Pa /usr/bin/ssh:/usr/bin/rsh
-or
-.Pa /usr/bin/ssh .
+may be a colon separated list of possible pathnames,
+in which case the first component of the path to exist is used.
 .It Fl p Ar rdistd-path
 Set the path where the rdistd server is searched for on the target host.
 .It Fl Server
