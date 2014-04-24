@@ -388,33 +388,20 @@ UI_dup_error_string(UI *ui, const char *text)
 char *
 UI_construct_prompt(UI *ui, const char *object_desc, const char *object_name)
 {
-	char *prompt = NULL;
+	char *format = "Enter %s for %s:";
+	char *prompt;
 
 	if (ui->meth->ui_construct_prompt)
-		prompt = ui->meth->ui_construct_prompt(ui,
-		    object_desc, object_name);
-	else {
-		char prompt1[] = "Enter ";
-		char prompt2[] = " for ";
-		char prompt3[] = ":";
-		int len = 0;
+		return ui->meth->ui_construct_prompt(ui, object_desc,
+		    object_name);
 
-		if (object_desc == NULL)
-			return NULL;
-		len = sizeof(prompt1) - 1 + strlen(object_desc);
-		if (object_name)
-			len += sizeof(prompt2) - 1 + strlen(object_name);
-		len += sizeof(prompt3) - 1;
+	if (object_desc == NULL)
+		return NULL;
+	if (object_name == NULL)
+		format = "Enter %s:";
+	if (asprintf(&prompt, format, object_desc, object_name) == -1)
+		return NULL;
 
-		prompt = (char *)malloc(len + 1);
-		strlcpy(prompt, prompt1, len + 1);
-		strlcat(prompt, object_desc, len + 1);
-		if (object_name) {
-			strlcat(prompt, prompt2, len + 1);
-			strlcat(prompt, object_name, len + 1);
-		}
-		strlcat(prompt, prompt3, len + 1);
-	}
 	return prompt;
 }
 
