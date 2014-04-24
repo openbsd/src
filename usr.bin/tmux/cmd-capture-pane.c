@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.25 2013/10/10 12:00:18 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.26 2014/04/24 09:14:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -194,7 +194,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	} else {
 		limit = options_get_number(&global_options, "buffer-limit");
 		if (!args_has(args, 'b')) {
-			paste_add(&global_buffers, buf, len, limit);
+			paste_add(buf, len, limit);
 			return (CMD_RETURN_NORMAL);
 		}
 
@@ -206,7 +206,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		}
 
-		if (paste_replace(&global_buffers, buffer, buf, len) != 0) {
+		if (paste_replace(buffer, buf, len) != 0) {
 			cmdq_error(cmdq, "no buffer %d", buffer);
 			free(buf);
 			return (CMD_RETURN_ERROR);

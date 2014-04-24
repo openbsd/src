@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.35 2014/04/03 08:15:17 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.36 2014/04/24 09:14:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -240,7 +240,7 @@ input_mouse(struct window_pane *wp, struct session *s, struct mouse_event *m)
 
 	if (m->button == 1 && (m->event & MOUSE_EVENT_CLICK) &&
 	    options_get_number(&wp->window->options, "mode-mouse") == 1) {
-		pb = paste_get_top(&global_buffers);
+		pb = paste_get_top();
 		if (pb != NULL) {
 			paste_send_pane(pb, wp, "\r",
 			    wp->screen->mode & MODE_BRACKETPASTE);

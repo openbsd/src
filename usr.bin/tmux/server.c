@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.112 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.113 2014/04/24 09:14:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -50,8 +50,6 @@ int		 server_fd;
 int		 server_shutdown;
 struct event	 server_ev_accept;
 struct event	 server_ev_second;
-
-struct paste_stack global_buffers;
 
 int		 server_create_socket(void);
 void		 server_loop(void);
@@ -147,7 +145,6 @@ server_start(int lockfd, char *lockfile)
 	RB_INIT(&sessions);
 	RB_INIT(&dead_sessions);
 	TAILQ_INIT(&session_groups);
-	ARRAY_INIT(&global_buffers);
 	mode_key_init_trees();
 	key_bindings_init();
 	utf8_build();

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.23 2013/10/10 12:00:21 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.24 2014/04/24 09:14:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,9 +69,9 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (buffer == -1)
-		pb = paste_get_top(&global_buffers);
+		pb = paste_get_top();
 	else {
-		pb = paste_get_index(&global_buffers, buffer);
+		pb = paste_get_index(buffer);
 		if (pb == NULL) {
 			cmdq_error(cmdq, "no buffer %d", buffer);
 			return (CMD_RETURN_ERROR);
@@ -93,9 +93,9 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	/* Delete the buffer if -d. */
 	if (args_has(args, 'd')) {
 		if (buffer == -1)
-			paste_free_top(&global_buffers);
+			paste_free_top();
 		else
-			paste_free_index(&global_buffers, buffer);
+			paste_free_index(buffer);
 	}
 
 	return (CMD_RETURN_NORMAL);

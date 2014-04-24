@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.23 2014/04/16 23:05:38 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.24 2014/04/24 09:14:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -66,7 +66,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	FILE			*f;
 
 	if (!args_has(args, 'b')) {
-		if ((pb = paste_get_top(&global_buffers)) == NULL) {
+		if ((pb = paste_get_top()) == NULL) {
 			cmdq_error(cmdq, "no buffers");
 			return (CMD_RETURN_ERROR);
 		}
@@ -78,7 +78,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		}
 
-		pb = paste_get_index(&global_buffers, buffer);
+		pb = paste_get_index(buffer);
 		if (pb == NULL) {
 			cmdq_error(cmdq, "no buffer %d", buffer);
 			return (CMD_RETURN_ERROR);
