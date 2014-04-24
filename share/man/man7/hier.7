@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.120 2014/04/22 11:15:05 henning Exp $
+.\"	$OpenBSD: hier.7,v 1.121 2014/04/24 13:41:39 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 22 2014 $
+.Dd $Mdocdate: April 24 2014 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -181,7 +181,7 @@ Periodically cleaned by
 .It /usr/
 Contains the majority of user utilities and applications.
 .Pp
-.Bl -tag -width "libdata/" -compact
+.Bl -tag -width "xenocara/" -compact
 .It X11R6/
 Files required for the X11 window system.
 .Pp
@@ -218,7 +218,7 @@ Useful and semi-frivolous programs.
 .It include/
 Standard C include files.
 .Pp
-.Bl -tag -width "kerberosV/" -compact
+.Bl -tag -width "libmilter/" -compact
 .It arpa/
 C include files for Internet service protocols.
 .It crypto/
@@ -349,7 +349,7 @@ System daemons and utilities (executed by users).
 .It share/
 Architecture independent data files.
 .Pp
-.Bl -tag -width "calendar/" -compact
+.Bl -tag -width "vi/catalog/" -compact
 .It calendar/
 Variety of pre-fab calendar files (see
 .Xr calendar 1 ) .
@@ -487,7 +487,7 @@ Time zone configuration information (see
 .Bx
 and/or local source files.
 .Pp
-.Bl -tag -width "kerberosV/" -compact
+.Bl -tag -width "usr.sbin/" -compact
 .It bin/
 Source for files in
 .Pa /bin .
@@ -539,7 +539,7 @@ tree.
 .It /var/
 Multi-purpose log, temporary, transient, and spool files.
 .Pp
-.Bl -tag -width "kerberosV" -compact
+.Bl -tag -width "account" -compact
 .It account/
 System accounting files.
 .Pp
