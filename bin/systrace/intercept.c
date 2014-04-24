@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.60 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.61 2014/04/24 01:57:06 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -197,7 +197,7 @@ intercept_register_sccb(char *emulation, char *name,
 	}
 
 	if ((tmp = calloc(1, sizeof(struct intercept_syscall))) == NULL) {
-		warn("%s:%d: malloc", __func__, __LINE__);
+		warn("%s:%d: calloc", __func__, __LINE__);
 		return (-1);
 	}
 
@@ -426,10 +426,9 @@ intercept_getpid(pid_t pid)
 	if (tmp)
 		return (tmp);
 
-	if ((tmp = malloc(sizeof(struct intercept_pid))) == NULL)
-		err(1, "%s: malloc", __func__);
+	if ((tmp = calloc(1, sizeof(struct intercept_pid))) == NULL)
+		err(1, "%s: calloc", __func__);
 
-	memset(tmp, 0, sizeof(struct intercept_pid));
 	tmp->pid = pid;
 
 	SPLAY_INSERT(pidtree, &pids, tmp);
