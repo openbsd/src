@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -619,6 +618,7 @@ shellcmd(cmd)
 
 #endif /* HAVE_POPEN */
 
+
 #if !SMALL
 /*
  * Expand a filename, doing any system-specific metacharacter substitutions.
@@ -813,6 +813,27 @@ lglob(filename)
 #endif /* !SMALL */
 
 /*
+ * Return number of %s escapes in a string.
+ * Return a large number if there are any other % escapes besides %s.
+ */
+	static int
+num_pct_s(lessopen)
+	char *lessopen;
+{
+	int num;
+
+	for (num = 0;; num++)
+	{
+		lessopen = strchr(lessopen, '%');
+		if (lessopen == NULL)
+			break;
+		if (*++lessopen != 's')
+			return (999);
+	}
+	return (num);
+}
+
+/*
  * See if we should open a "replacement file" 
  * instead of the file we're about to open.
  */
@@ -826,10 +847,9 @@ open_altfile(filename, pf, pfd)
 	return (NULL);
 #else
 	char *lessopen;
-	char *cmd, *cp;
+	char *cmd;
+	size_t len;
 	FILE *fd;
-	size_t i, len;
-	int found;
 #if HAVE_FILENO
 	int returnfd = 0;
 #endif
@@ -839,7 +859,7 @@ open_altfile(filename, pf, pfd)
 	ch_ungetchar(-1);
 	if ((lessopen = lgetenv("LESSOPEN")) == NULL)
 		return (NULL);
-	if (*lessopen == '|')
+	while (*lessopen == '|')
 	{
 		/*
 		 * If LESSOPEN starts with a |, it indicates 
@@ -850,7 +870,7 @@ open_altfile(filename, pf, pfd)
 		return (NULL);
 #else
 		lessopen++;
-		returnfd = 1;
+		returnfd++;
 #endif
 	}
 	if (*lessopen == '-') {
@@ -862,19 +882,15 @@ open_altfile(filename, pf, pfd)
 		if (strcmp(filename, "-") == 0)
 			return (NULL);
 	}
-
-	/* strlen(filename) is guaranteed to be > 0 */
-	len = strlen(lessopen) + strlen(filename);
-	cmd = (char *) ecalloc(len, sizeof(char));
-	for (cp = cmd, i = 0, found = 0; i < strlen(lessopen); i++) {
-		if (!found && lessopen[i] == '%' && lessopen[i + 1] == 's') {
-			found = 1;
-			strlcat(cmd, filename, len);
-			cp += strlen(filename);
-			i++;
-		} else
-			*cp++ = lessopen[i];
+	if (num_pct_s(lessopen) > 1)
+	{
+		error("Invalid LESSOPEN variable", NULL_PARG);
+		return (NULL);
 	}
+
+	len = strlen(lessopen) + strlen(filename) + 2;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF1(cmd, len, lessopen, filename);
 	fd = shellcmd(cmd);
 	free(cmd);
 	if (fd == NULL)
@@ -899,9 +915,18 @@ open_altfile(filename, pf, pfd)
 		if (read(f, &c, 1) != 1)
 		{
 			/*
-			 * Pipe is empty.  This means there is no alt file.
+			 * Pipe is empty.
+			 * If more than 1 pipe char was specified,
+			 * the exit status tells whether the file itself 
+			 * is empty, or if there is no alt file.
+			 * If only one pipe char, just assume no alt file.
 			 */
-			pclose(fd);
+			int status = pclose(fd);
+			if (returnfd > 1 && status == 0) {
+				*pfd = NULL;
+				*pf = -1;
+				return (save(FAKE_EMPTYFILE));
+			}
 			return (NULL);
 		}
 		ch_ungetchar(c);
@@ -933,9 +958,8 @@ close_altfile(altfilename, filename, pipefd)
 #if HAVE_POPEN
 	char *lessclose;
 	FILE *fd;
-	char *cmd, *cp;
-	size_t i, len;
-	int found;
+	char *cmd;
+	size_t len;
 	
 	if (secure)
 		return;
@@ -952,22 +976,14 @@ close_altfile(altfilename, filename, pipefd)
 	}
 	if ((lessclose = lgetenv("LESSCLOSE")) == NULL)
 	     	return;
-	/* strlen(filename) is guaranteed to be > 0 */
-	len = strlen(lessclose) + strlen(filename) + strlen(altfilename);
-	cmd = (char *) ecalloc(len, sizeof(char));
-	for (cp = cmd, i = 0, found = 0; i < strlen(lessclose); i++) {
-		if (found < 2 && lessclose[i] == '%' && lessclose[i + 1] == 's') {
-			if (++found == 1) {
-				strlcat(cmd, filename, len);
-				cp += strlen(filename);
-			} else {
-				strlcat(cmd, altfilename, len);
-				cp += strlen(altfilename);
-			}
-			i++;
-		} else
-			*cp++ = lessclose[i];
+	if (num_pct_s(lessclose) > 2) 
+	{
+		error("Invalid LESSCLOSE variable");
+		return;
 	}
+	len = strlen(lessclose) + strlen(filename) + strlen(altfilename) + 2;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF2(cmd, len, lessclose, filename, altfilename);
 	fd = shellcmd(cmd);
 	free(cmd);
 	if (fd != NULL)

@@ -189,6 +189,7 @@
 /*
  * Sizes of various buffers.
  */
+#if SMALL /* old sizes for small memory machines */
 #define	CMDBUF_SIZE	512	/* Buffer for multichar commands */
 #define	UNGOT_SIZE	100	/* Max chars to unget() */
 #define	LINEBUF_SIZE	1024	/* Max size of line in input file */
@@ -198,6 +199,17 @@
 #define	TERMSBUF_SIZE	1024	/* Buffer to hold termcap strings */
 #define	TAGLINE_SIZE	512	/* Max size of line in tags file */
 #define	TABSTOP_MAX	32	/* Max number of custom tab stops */
+#else /* more reasonable sizes for modern machines */
+#define	CMDBUF_SIZE	2048	/* Buffer for multichar commands */
+#define	UNGOT_SIZE	200	/* Max chars to unget() */
+#define	LINEBUF_SIZE	1024	/* Initial max size of line in input file */
+#define	OUTBUF_SIZE	1024	/* Output buffer */
+#define	PROMPT_SIZE	2048	/* Max size of prompt string */
+#define	TERMBUF_SIZE	2048	/* Termcap buffer for tgetent */
+#define	TERMSBUF_SIZE	1024	/* Buffer to hold termcap strings */
+#define	TAGLINE_SIZE	1024	/* Max size of line in tags file */
+#define	TABSTOP_MAX	128	/* Max number of custom tab stops */
+#endif
 
 /* Settings automatically determined by configure.  */
 
@@ -234,15 +246,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the `gen' library (-lgen). */
-/* #undef HAVE_LIBGEN */
-
-/* Define to 1 if you have the `intl' library (-lintl). */
-/* #undef HAVE_LIBINTL */
-
-/* Define to 1 if you have the `PW' library (-lPW). */
-/* #undef HAVE_LIBPW */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1

@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -743,6 +742,26 @@ v442  3/2/11    Fix search bug.
                 Add ctrl-G line edit command.
 v443  4/9/11    Fix Windows build.
 v444  6/8/11    Fix ungetc bug; remove vestiges of obsolete -l option.
+-----------------------------------------------------------------
+v445  10/19/11  Fix hilite bug in backwards scroll with -J.
+                Fix hilite bug with backspaces.
+                Fix bugs handling SGR sequences in Win32 (thanks to Eric Lee).
+                Add support for GNU regex (thanks to Reuben Thomas).
+v446  5/15/12   Up/down arrows in cmd editing search for matching cmd.
+v447  5/21/12   Add ESC-F command, two-pipe LESSOPEN syntax.
+v448  6/15/12   Print name of regex library in version message.
+v449  6/23/12   Allow config option --with-regex=none.
+v450  7/4/12    Fix EOF bug with ESC-F.
+v451  7/20/12   Fix typo.
+-----------------------------------------------------------------
+v452  10/19/12  Fix --with-regex=none, fix "stty 0", fix Win32.
+                Don't quit if errors in cmd line options.
+v453  10/27/12  Increase buffer sizes.
+v454  11/5/12   Fix typo.
+v455  11/5/12   Fix typo.
+v456  11/8/12   Fix option string incompatibility.
+v457  12/8/12   Use new option string syntax only after --use-backslash.
+v458  4/4/13    Fix display bug in using up/down in cmd buffer.
 */
 
-char version[] = "444";
+char version[] = "458";
