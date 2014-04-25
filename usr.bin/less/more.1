@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.14 2014/04/24 19:19:28 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.15 2014/04/25 06:31:48 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)more.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 24 2014 $
+.Dd $Mdocdate: April 25 2014 $
 .Dt MORE 1
 .Os
 .Sh NAME
@@ -55,6 +55,17 @@ is specified, or if
 is a single dash
 .Pq Ql - ,
 the standard input is used.
+.Pp
+This version of the
+.Nm
+utility is actually
+.Xr less 1
+in disguise.
+As such, it will also accept options documented in
+.Xr less 1 .
+This manual page describes only features
+relevant to a POSIX compliant
+.Nm .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -117,14 +128,6 @@ backspaces which appear between two identical characters are displayed
 as emboldened text;
 and CR-LF sequences are compressed to a single linefeed character.
 .El
-.Pp
-This version of the
-.Nm
-utility is actually
-.Xr less 1
-in disguise.
-As such, it will also accept options documented in
-.Xr less 1 .
 .Sh COMMANDS
 Interactive commands for
 .Nm
