@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.426 2014/04/24 15:05:10 tedu Exp $
+#	$OpenBSD: rc,v 1.427 2014/04/25 17:59:53 bluhm Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -101,16 +101,14 @@ wsconsctl_conf()
 
 random_seed()
 {
-	{
-		# push the old seed into the kernel
-		dd if=/var/db/host.random of=/dev/random bs=65536 count=1
-		chmod 600 /var/db/host.random
-		# ... and create a future seed
-		dd if=/dev/random of=/var/db/host.random bs=65536 count=1
-		# and create a seed file for the boot-loader
-		dd if=/dev/random of=/etc/random.seed bs=512 count=1
-		chmod 600 /etc/random.seed
-	} > /dev/null 2>&1
+	# push the old seed into the kernel
+	dd if=/var/db/host.random of=/dev/random bs=65536 count=1 status=none
+	chmod 600 /var/db/host.random
+	# ... and create a future seed
+	dd if=/dev/random of=/var/db/host.random bs=65536 count=1 status=none
+	# and create a seed file for the boot-loader
+	dd if=/dev/random of=/etc/random.seed bs=512 count=1 status=none
+	chmod 600 /etc/random.seed
 }
 
 fill_baddynamic()
