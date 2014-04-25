@@ -199,7 +199,7 @@ err:
 static void
 openssl_startup(void)
 {
-	do_pipe_sig();
+	signal(SIGPIPE, SIG_IGN);
 
 	CRYPTO_malloc_init();
 	ERR_load_crypto_strings();

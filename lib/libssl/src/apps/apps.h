@@ -132,8 +132,6 @@ extern BIO *bio_err;
 
 #include <signal.h>
 
-#define do_pipe_sig()	signal(SIGPIPE,SIG_IGN)
-
 #ifdef OPENSSL_NO_COMP
 #define zlib_cleanup()
 #else
