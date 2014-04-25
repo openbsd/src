@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.95 2014/04/10 13:47:21 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.96 2014/04/25 09:44:38 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -98,22 +98,6 @@ int in_addprefix(struct in_ifaddr *);
 int in_scrubprefix(struct in_ifaddr *);
 int in_addhost(struct in_ifaddr *);
 int in_scrubhost(struct in_ifaddr *);
-
-/* Return 1 if an internet address is for a directly connected host */
-int
-in_localaddr(struct in_addr in, u_int rdomain)
-{
-	struct in_ifaddr *ia;
-
-	rdomain = rtable_l2(rdomain);
-	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != rdomain)
-			continue;
-		if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
-			return (1);
-	}
-	return (0);
-}
 
 /*
  * Determine whether an IP address is in a reserved set of addresses
