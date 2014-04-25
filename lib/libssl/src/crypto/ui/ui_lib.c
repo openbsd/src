@@ -388,7 +388,7 @@ UI_dup_error_string(UI *ui, const char *text)
 char *
 UI_construct_prompt(UI *ui, const char *object_desc, const char *object_name)
 {
-	char *format = "Enter %s for %s:";
+	const char *format = "Enter %s for %s:";
 	char *prompt;
 
 	if (ui->meth->ui_construct_prompt)
