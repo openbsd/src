@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.31 2014/04/25 06:57:11 blambert Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.32 2014/04/25 14:54:45 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -78,6 +78,14 @@ listen on $ext_addr
 .Sh GLOBAL CONFIGURATION
 The following options can be set globally:
 .Bl -tag -width Ds
+.It Ic filter-routes Pq Ic yes | no
+If set to
+.Ic yes ,
+ask the kernel to filter route update messages on the routing socket.
+Routing table information will not be available, but CPU use will be
+reduced during bulk updates.
+The default is
+.Ic no .
 .It Ic listen on Ar address
 Specify the local address
 .Xr snmpd 8
@@ -90,14 +98,6 @@ The default value is
 Specify the name of the read-write community, or disallow writes completely.
 The default value is
 .Ar private .
-.It Ic filter-routes Pq Ic yes | no
-If set to
-.Ic yes ,
-ask the kernel to filter route update messages on the routing socket.
-Routing table information will not be available, but CPU use will be
-reduced during bulk updates.
-The default is
-.Ic no .
 .It Ic seclevel Pq Ic none | auth | enc
 Specify the lowest security level that
 .Xr snmpd 8
@@ -181,20 +181,6 @@ description in the SNMP MIB for details.
 Specify the name of the trap community.
 The default value is
 .Ar public .
-.It Xo
-.Ic trap receiver Ar string
-.Op Ic oid Ar oid-string
-.Op Ic community Ar string
-.Xc
-Specify the address or FQDN of a remote trap receiver for outgoing traps
-sent by
-.Xr snmpd 8 .
-This option may be specified multiple times.
-The daemon will send outgoing traps using the revised SNMPv2 format and the
-configured trap community.
-The default community is specified by the global
-.Ic trap community
-option.
 .It Ic trap handle Ar oid Qq Ar command
 Execute
 .Ic command
@@ -212,6 +198,20 @@ the resolved hostname of the host sending the trap,
 the IP address of the host sending the trap,
 and any variable bindings contained in the trap
 (the OID followed by the value, separated by a single space).
+.It Xo
+.Ic trap receiver Ar string
+.Op Ic oid Ar oid-string
+.Op Ic community Ar string
+.Xc
+Specify the address or FQDN of a remote trap receiver for outgoing traps
+sent by
+.Xr snmpd 8 .
+This option may be specified multiple times.
+The daemon will send outgoing traps using the revised SNMPv2 format and the
+configured trap community.
+The default community is specified by the global
+.Ic trap community
+option.
 .El
 .Sh USER CONFIGURATION
 Users for the SNMP User-based Security Model (USM, RFC 3414) must be
