@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.49 2013/10/30 18:00:56 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.50 2014/04/25 10:33:36 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -735,7 +735,7 @@ pms_change_state(struct pms_softc *sc, int newstate, int dev)
 			pckbc_flush(sc->sc_kbctag, PCKBC_AUX_SLOT);
 
 		pms_reset(sc);
-		if (sc->protocol->type == PMS_STANDARD ||
+		if (sc->protocol->enable != NULL &&
 		    sc->protocol->enable(sc) == 0)
 			pms_protocol_lookup(sc);
 
