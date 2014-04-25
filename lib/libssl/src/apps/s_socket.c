@@ -68,9 +68,7 @@
 
 #include <openssl/e_os2.h>
 
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
 

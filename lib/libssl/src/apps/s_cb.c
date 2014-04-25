@@ -115,9 +115,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
