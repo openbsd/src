@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.767 2014/04/21 23:15:09 rpe Exp $
+#	$OpenBSD: install.sub,v 1.768 2014/04/25 19:34:24 halex Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -2149,12 +2149,12 @@ elif [[ -z $respfile ]]; then
 	fi
 	rm -f /ai.done
 	echo "Performing non-interactive $action..."
-	/$action -af /$action.conf 2>&1 </dev/null | sed 'w/ai.log'
+	/$action -af /$action.conf 2>&1 </dev/null | sed 's/^.*//;w/ai.log'
 	if [[ -f /ai.done ]]; then
 		# Generate unique filename and let rc.firsttime feed it to
 		# whatever mail system we have at hand by then.
 		while _lf=/mnt/var/tmp/ai.log.$RANDOM && test -e $_lf; do done
-		sed 's/^.*//' /ai.log >>$_lf
+		cp /ai.log $_lf
 		chmod 600 $_lf
 		_lf=${_lf#/mnt}
 		cat <<__EOT >>/mnt/etc/rc.firsttime
