@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.91 2014/04/10 13:47:21 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.92 2014/04/25 10:41:09 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -299,7 +299,6 @@ struct rt_addrinfo {
 	struct	sockaddr *rti_info[RTAX_MAX];
 	int	rti_flags;
 	struct	ifaddr *rti_ifa;
-	struct	ifnet *rti_ifp;
 	struct	rt_msghdr *rti_rtm;
 	u_char	rti_mpls;
 };
