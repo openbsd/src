@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.12 2013/08/29 20:22:10 naddy Exp $	*/
+/*	$OpenBSD: back.h,v 1.13 2014/04/25 20:23:37 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -167,7 +167,6 @@ int	rsetbrd(void);
 void	save(int);
 int	text(const char *const *);
 void	wrboard(void);
-void	wrbsub(void);
 void	wrhit(int);
 void	wrscore(void);
 int	yorn(char);
