@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.92 2014/04/10 01:28:32 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.93 2014/04/25 09:43:04 jsg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2297,10 +2297,11 @@ mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 int
 mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
-	int slot = dev->slot;	/* initial hint */
+	int		slot;	/* initial hint */
 
-	if (dev == NULL || slot < 0)
+	if (dev == NULL || dev->slot < 0)
 		return (1);
+	slot = dev->slot;
 
 	while (slot < sc->sc_max_devices && sc->sc_devs[slot] != NULL)
 		slot++;
