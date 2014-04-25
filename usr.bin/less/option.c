@@ -706,5 +706,5 @@ get_quit_at_eof()
 	if (!less_is_more)
 		return quit_at_eof;
 	/* When less_is_more is set, the -e flag semantics are different. */
-	return quit_at_eof ? OPT_ON : OPT_ONPLUS;
+	return quit_at_eof ? OPT_ONPLUS : OPT_ON;
 }

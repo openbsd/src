@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.15 2014/04/25 06:31:48 jmc Exp $
+.\"	$OpenBSD: more.1,v 1.16 2014/04/25 18:07:41 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,12 @@
 .Op Fl t Ar tag
 .Op Ar
 .Sh DESCRIPTION
+The
 .Nm
-is a filter for paging through text one screenful at a time.
-It uses
-.Xr terminfo 3
-so it can run on a variety of terminals.
+pager displays text one screenful at a time.
+After showing each screenful, it prompts the user for a command.
+Most commands scroll the text or move to a different place
+in the file, while some switch to another file.
 If no
 .Ar file
 is specified, or if
@@ -56,9 +57,23 @@ is a single dash
 .Pq Ql - ,
 the standard input is used.
 .Pp
-This version of the
+When showing the last line of a file,
 .Nm
-utility is actually
+displays a prompt indicating end of file and the name of the next file
+to examine, if any.
+It then waits for input from the user.
+Scrolling forward switches to the next file,
+or exits if there is none.
+.Pp
+The
+.Nm
+utility uses
+.Xr terminfo 3
+so it can run on a variety of terminals.
+.Pp
+This version of
+.Nm
+is actually
 .Xr less 1
 in disguise.
 As such, it will also accept options documented in
@@ -73,12 +88,8 @@ The options are as follows:
 When changing the display, paint from the top line down.
 The default is to scroll from the bottom of the screen.
 .It Fl e
-Exit on reaching end-of-file twice
-without an intervening operation.
-The default is to exit as soon as end-of-file is reached.
-If the file is shorter than a single screen
-.Nm
-exits at end-of-file regardless.
+Exit immediately after showing the last line of the last file,
+without prompting the user for a command first.
 .It Fl i
 Ignore case.
 Upper case and lower case are considered identical.
@@ -305,9 +316,6 @@ utility is compliant with the
 .St -p1003.1-2008
 specification,
 though its presence is optional.
-Behavior for the
-.Fl e
-flag differs between this implementation and the specification.
 .Pp
 Functionality allowing the user to skip (as opposed to scroll)
 forward is not currently implemented.
