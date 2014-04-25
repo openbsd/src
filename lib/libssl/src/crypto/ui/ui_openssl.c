@@ -122,32 +122,10 @@
 #include <errno.h>
 
 #include <unistd.h>
-/* If unistd.h defines _POSIX_VERSION, we conclude that we
- * are on a POSIX system and have sigaction and termios. */
-#if defined(_POSIX_VERSION)
-
-#define SIGACTION
-#if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)
-#define TERMIOS
-#endif
-
-#endif
+#include <termios.h>
 
 #include "ui_locl.h"
 #include "cryptlib.h"
-
-
-/* There are 5 types of terminal interface supported,
- * TERMIO, TERMIOS, VMS, MSDOS and SGTTY
- */
-
-
-#include <termios.h>
-#define TTY_STRUCT		struct termios
-#define TTY_FLAGS		c_lflag
-#define TTY_get(tty,data)	tcgetattr(tty,data)
-#define TTY_set(tty,data)	tcsetattr(tty,TCSANOW,data)
-
 
 #include <sys/ioctl.h>
 
@@ -159,7 +137,7 @@
 /* Define globals.  They are protected by a lock */
 static struct sigaction savsig[NX509_SIG];
 
-static TTY_STRUCT tty_orig, tty_new;
+static struct termios tty_orig, tty_new;
 static FILE *tty_in, *tty_out;
 static int is_a_tty;
 
@@ -331,8 +309,7 @@ open_console(UI *ui)
 	if ((tty_out = fopen(DEV_TTY, "w")) == NULL)
 		tty_out = stderr;
 
-#if defined(TTY_get)
-	if (TTY_get(fileno(tty_in), &tty_orig) == -1) {
+	if (tcgetattr(fileno(tty_in), &tty_orig) == -1) {
 		if (errno == ENOTTY)
 			is_a_tty = 0;
 		else
@@ -346,37 +323,27 @@ open_console(UI *ui)
 		else
 			return 0;
 	}
-#endif
+
 	return 1;
 }
 
 static int
 noecho_console(UI *ui)
 {
-#ifdef TTY_FLAGS
 	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
-	tty_new.TTY_FLAGS &= ~ECHO;
-#endif
-
-#if defined(TTY_set)
-	if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
+	tty_new.c_lflag &= ~ECHO;
+	if (is_a_tty && (tcsetattr(fileno(tty_in), TCSANOW, &tty_new) == -1))
 		return 0;
-#endif
 	return 1;
 }
 
 static int
 echo_console(UI *ui)
 {
-#if defined(TTY_set)
 	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
-	tty_new.TTY_FLAGS |= ECHO;
-#endif
-
-#if defined(TTY_set)
-	if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
+	tty_new.c_lflag |= ECHO;
+	if (is_a_tty && (tcsetattr(fileno(tty_in), TCSANOW, &tty_new) == -1))
 		return 0;
-#endif
 	return 1;
 }
 
