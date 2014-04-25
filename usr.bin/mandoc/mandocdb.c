@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.101 2014/04/23 21:06:33 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.102 2014/04/25 12:12:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -1988,6 +1988,8 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	mlink = mpage->mlinks;
 
 	if (nodb) {
+		if (0 == debug)
+			return;
 		while (NULL != mlink) {
 			fputs(mlink->name, stdout);
 			if (NULL == mlink->next ||
