@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.4 2014/04/25 09:49:33 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -110,7 +110,7 @@ sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	dt.dt_mon = reg >> 8 & 0x0f;
 	dt.dt_year = (reg >> 16 & 0x3f) + 2010; /* 0xff on A20 */
 
-	if (dt.dt_sec > 59 || dt.dt_sec > 59 ||
+	if (dt.dt_sec > 59 || dt.dt_min > 59 ||
 	    dt.dt_hour > 23 || dt.dt_wday > 6 ||
 	    dt.dt_day > 31 || dt.dt_day == 0 ||
 	    dt.dt_mon > 12 || dt.dt_mon == 0)
@@ -129,7 +129,7 @@ sxirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	if (dt.dt_sec > 59 || dt.dt_sec > 59 ||
+	if (dt.dt_sec > 59 || dt.dt_min > 59 ||
 	    dt.dt_hour > 23 || dt.dt_wday > 6 ||
 	    dt.dt_day > 31 || dt.dt_day == 0 ||
 	    dt.dt_mon > 12 || dt.dt_mon == 0)
