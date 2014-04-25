@@ -132,12 +132,6 @@ extern BIO *bio_err;
 
 #include <signal.h>
 
-#ifdef OPENSSL_NO_COMP
-#define zlib_cleanup()
-#else
-#define zlib_cleanup() COMP_zlib_cleanup()
-#endif
-
 typedef struct args_st {
 	char **data;
 	int count;

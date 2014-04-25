@@ -228,7 +228,10 @@ openssl_shutdown(void)
 	ERR_remove_thread_state(NULL);
 	RAND_cleanup();
 	ERR_free_strings();
-	zlib_cleanup();
+
+#ifndef OPENSSL_NO_COMP
+	COMP_zlib_cleanup();
+#endif
 }
 
 int
