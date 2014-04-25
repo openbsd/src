@@ -112,8 +112,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#define OPENSSL_C		/* tells apps.h to use complete
-				 * apps_startup() */
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -130,13 +128,16 @@
 #include "s_apps.h"
 #include <openssl/err.h>
 
+static void openssl_startup(void);
+static void openssl_shutdown(void);
+
 /* The LHASH callbacks ("hash" & "cmp") have been replaced by functions with the
  * base prototypes (we cast each variable inside the function to the required
  * type of "FUNCTION*"). This removes the necessity for macro-generated wrapper
  * functions. */
 
-static LHASH_OF(FUNCTION) * prog_init(void);
-static int do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[]);
+static LHASH_OF(FUNCTION) *prog_init(void);
+static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(BIO * out);
 static void list_cipher(BIO * out);
 static void list_md(BIO * out);
@@ -195,6 +196,41 @@ err:
 	}
 }
 
+static void
+openssl_startup(void)
+{
+	do_pipe_sig();
+
+	CRYPTO_malloc_init();
+	ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE_load_builtin_engines();
+#endif
+
+	setup_ui_method();
+}
+
+static void
+openssl_shutdown(void)
+{
+	CONF_modules_unload(1);
+	destroy_ui_method();
+	OBJ_cleanup();
+	EVP_cleanup();
+
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE_cleanup();
+#endif
+
+	CRYPTO_cleanup_all_ex_data();
+	ERR_remove_thread_state(NULL);
+	RAND_cleanup();
+	ERR_free_strings();
+	zlib_cleanup();
+}
+
 int
 main(int argc, char **argv)
 {
@@ -237,7 +273,7 @@ main(int argc, char **argv)
 		CRYPTO_set_locking_callback(lock_dbg_cb);
 	}
 
-	apps_startup();
+	openssl_startup();
 
 	/* Lets load up our environment a little */
 	p = getenv("OPENSSL_CONF");
@@ -348,7 +384,7 @@ end:
 	if (arg.data != NULL)
 		free(arg.data);
 
-	apps_shutdown();
+	openssl_shutdown();
 
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) {
