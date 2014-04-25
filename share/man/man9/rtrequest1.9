@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtrequest1.9,v 1.1 2014/04/02 13:10:48 mpi Exp $
+.\"     $OpenBSD: rtrequest1.9,v 1.2 2014/04/25 11:49:47 mpi Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2014 $
+.Dd $Mdocdate: April 25 2014 $
 .Dt RTREQUEST1 9
 .Os
 .Sh NAME
@@ -32,7 +32,6 @@ struct rt_addrinfo {
 	struct	sockaddr *rti_info[RTAX_MAX];
 	int	rti_flags;
 	struct	ifaddr *rti_ifa;
-	struct	ifnet *rti_ifp;
 	struct	rt_msghdr *rti_rtm;
 	u_char	rti_mpls;
 };
