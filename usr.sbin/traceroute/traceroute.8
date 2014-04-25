@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.55 2014/04/21 14:26:10 florian Exp $
+.\"	$OpenBSD: traceroute.8,v 1.56 2014/04/25 12:10:14 florian Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 21 2014 $
+.Dd $Mdocdate: April 25 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -56,6 +56,17 @@
 .Ar host
 .Op Ar packetsize
 .Ek
+.Nm traceroute6
+.Op Fl AcDdIlnSv
+.Op Fl f Ar firsthop
+.Op Fl m Ar hoplimit
+.Op Fl p Ar port
+.Op Fl q Ar probes
+.Op Fl s Ar src
+.Op Fl V Ar rtable
+.Op Fl w Ar waittime
+.Ar host
+.Op Ar datalen
 .Sh DESCRIPTION
 The Internet is a large and complex aggregation of
 network hardware, connected together by gateways.
@@ -89,7 +100,7 @@ Dump the packet data to standard error before transmitting it.
 .It Fl d
 Turn on socket-level debugging.
 .It Fl f Ar first_ttl
-Set the first time-to-live used in outgoing probe packets.
+Set the first time-to-live or hoplimit used in outgoing probe packets.
 The effect is that the first first_ttl \- 1 hosts will be skipped
 in the output of
 .Nm traceroute .
@@ -100,19 +111,19 @@ Add
 to the list of addresses in the IP Loose Source Record Route (LSRR)
 option.
 If no gateways are specified, the LSRR option is omitted.
+This option is not available for IPv6.
 .It Fl I
-Equivalent to
-.Fl P
-1.
-Used for compatibility with other OSes.
+Use ICMP or ICMP6 ECHO instead of UDP datagrams.
 .It Fl l
-Display the ttl value of the returned packet.
+Display the ttl or hoplimit value of the returned packet.
 This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
 packets.
 The default is the value of the system's
 .Cm net.inet.ip.ttl
+or
+.Cm net.inet6.ip6.hlim
 MIB variable, which defaults to 64.
 .It Fl n
 Print hop addresses numerically rather than symbolically and numerically
@@ -127,6 +138,7 @@ This will not work reliably for most protocols.
 If set to 1 (ICMP), then
 ICMP Echo Request messages will be used (same as
 .Xr ping 8 ) .
+This option is not available for IPv6.
 .It Fl p Ar port
 Set the base
 .Tn UDP
@@ -196,6 +208,7 @@ Useful values are probably
 .Ar lowdelay
 and
 .Ar throughput .
+This option is not available for IPv6.
 .It Fl V Ar rtable
 Set the routing table to be used.
 .It Fl v
@@ -211,6 +224,7 @@ are listed.
 Set the time (in seconds) to wait for a response to a probe (default 5).
 .It Fl x
 Print the ICMP extended headers if available.
+This option is not available for IPv6.
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
@@ -430,6 +444,9 @@ The
 .Nm
 command first appeared in
 .Bx 4.4 .
+The
+.Nm traceroute6
+command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .Sh AUTHORS
 Implemented by Van Jacobson from a suggestion by Steve Deering.
 Debugged
