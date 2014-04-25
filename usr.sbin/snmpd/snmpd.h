@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.51 2014/04/21 19:47:27 reyk Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.52 2014/04/25 06:57:11 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,8 @@ enum imsg_type {
 	IMSG_CTL_END,
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_VERBOSE,
-	IMSG_CTL_RELOAD
+	IMSG_CTL_RELOAD,
+	IMSG_ALERT
 };
 
 struct imsgev {
@@ -111,6 +112,7 @@ TAILQ_HEAD(control_socks, control_sock);
 enum privsep_procid {
 	PROC_PARENT,	/* Parent process and application interface */
 	PROC_SNMPE,	/* SNMP engine */
+	PROC_ALERT,	/* SNMP trap receiver */
 	PROC_MAX
 };
 
@@ -515,9 +517,23 @@ struct snmpd {
 
 	int			 sc_min_seclevel;
 	int			 sc_readonly;
+	int			 sc_traphandler;
 
 	struct privsep		 sc_ps;
 };
+
+struct trapcmd {
+	struct ber_oid		*cmd_oid;
+		/* sideways return for intermediate lookups */
+	struct trapcmd		*cmd_maybe;
+
+	int			 cmd_argc;
+	char			**cmd_argv;
+
+	RB_ENTRY(trapcmd)	 cmd_entry;
+};
+RB_HEAD(trapcmd_tree, trapcmd);
+extern	struct trapcmd_tree trapcmd_tree;
 
 /* control.c */
 int		 control_init(struct privsep *, struct control_sock *);
@@ -681,5 +697,14 @@ struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
+
+/* traphandler.c */
+pid_t	 traphandler(struct privsep *, struct privsep_proc *);
+void	 traphandler_shutdown(void);
+int	 snmpd_dispatch_traphandler(int, struct privsep_proc *, struct imsg *);
+void	 trapcmd_free(struct trapcmd *);
+int	 trapcmd_add(struct trapcmd *);
+struct trapcmd *
+	 trapcmd_lookup(struct ber_oid *);
 
 #endif /* _SNMPD_H */

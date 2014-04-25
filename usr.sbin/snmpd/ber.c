@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.26 2014/04/14 12:55:10 blambert Exp $ */
+/*	$OpenBSD: ber.c,v 1.27 2014/04/25 06:57:11 blambert Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -614,7 +614,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	va_list			 ap;
 	int			*d, level = -1;
 	unsigned long		*t;
-	long long		*i;
+	long long		*i, l;
 	void			**ptr;
 	size_t			*len, ret = 0, n = strlen(fmt);
 	char			**s;
@@ -640,6 +640,13 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ret++;
 			break;
+		case 'd':
+			d = va_arg(ap, int *);
+			if (ber_get_integer(ber, &l) == -1)
+				goto fail;
+			*d = l;
+			ret++;
+			break;
 		case 'e':
 			e = va_arg(ap, struct ber_element **);
 			*e = ber;
@@ -651,7 +658,6 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ret++;
 			break;
-		case 'd':
 		case 'i':
 			i = va_arg(ap, long long *);
 			if (ber_get_integer(ber, i) == -1)

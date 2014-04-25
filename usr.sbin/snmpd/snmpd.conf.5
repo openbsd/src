@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.30 2014/04/14 15:34:48 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.31 2014/04/25 06:57:11 blambert Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 14 2014 $
+.Dd $Mdocdate: April 25 2014 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -195,6 +195,23 @@ configured trap community.
 The default community is specified by the global
 .Ic trap community
 option.
+.It Ic trap handle Ar oid Qq Ar command
+Execute
+.Ic command
+upon receipt of an SNMP trap that begins with a prefix of
+.Ic oid .
+Alternately, the string
+.Qq Ic default
+may be used, in which case the prefix used is
+.Ic 1.3 .
+The invoked
+.Ar command
+will receive the following information about the trap on standard input,
+one per line, in this order:
+the resolved hostname of the host sending the trap,
+the IP address of the host sending the trap,
+and any variable bindings contained in the trap
+(the OID followed by the value, separated by a single space).
 .El
 .Sh USER CONFIGURATION
 Users for the SNMP User-based Security Model (USM, RFC 3414) must be
