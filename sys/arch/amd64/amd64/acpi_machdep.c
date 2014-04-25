@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.59 2014/03/27 10:24:40 dlg Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.60 2014/04/25 14:37:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -326,13 +326,6 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		return (ECANCELED);
 	}
 	/* Resume path */
-
-#ifdef HIBERNATE
-	if (state == ACPI_STATE_S4) {
-		hibernate_free();
-		uvm_pmr_dirty_everything();
-	}
-#endif
 
 	/* Reset the vectors */
 	sc->sc_facs->wakeup_vector = 0;

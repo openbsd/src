@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.256 2014/04/13 14:43:01 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.257 2014/04/25 14:37:06 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2202,6 +2202,14 @@ fail_quiesce:
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
+
+#ifdef HIBERNATE
+	if (state == ACPI_STATE_S4) {
+		hibernate_free();
+		uvm_pmr_dirty_everything();
+	}
+#endif /* HIBERNATE */
+
 fail_tts:
 	return (error);
 }
