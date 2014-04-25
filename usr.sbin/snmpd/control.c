@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2014/04/21 19:47:27 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.24 2014/04/25 11:12:14 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -471,8 +471,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
 
 		uptime = smi_getticks();
 		if ((pdu = snmp_agentx_response_pdu(uptime, error, idx)) == NULL) {
-			log_debug("bad response generation: %s",
-			    snmp_agentx_type2name(pdu->hdr->type));
+			log_debug("failed to generate response");
 			if (varcpy)
 				free(varcpy);
 			control_event_add(c, fd, EV_WRITE, NULL);	/* XXX -- EV_WRITE? */
