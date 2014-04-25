@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2014/04/23 08:44:50 florian Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/04/25 12:10:45 florian Exp $
 
 PROG=	traceroute6
 
@@ -13,6 +13,6 @@ CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 
-MAN=	traceroute6.8
+NOMAN=	yes
 
 .include <bsd.prog.mk>
