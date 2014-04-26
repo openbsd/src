@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.206 2014/03/13 18:52:38 brynet Exp $ */
+/* $OpenBSD: dsdt.c,v 1.207 2014/04/26 21:45:50 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -736,72 +736,58 @@ static long global_lock_count = 0;
 void
 acpi_glk_enter(void)
 {
-	acpi_acquire_glk(&acpi_softc->sc_facs->global_lock);
+	int st = 0;
+
+	/* If lock is already ours, just continue. */
+	if (global_lock_count++)
+		return;
+
+	/* Spin to acquire the lock. */
+	while (!st) {
+		st = acpi_acquire_glk(&acpi_softc->sc_facs->global_lock);
+		/* XXX - yield/delay? */
+	}
 }
 
 void
 acpi_glk_leave(void)
 {
-	int x;
+	int st, x;
 
-	if (acpi_release_glk(&acpi_softc->sc_facs->global_lock)) {
-		/*
-		 * If pending, notify the BIOS that the lock was released
-		 * by the OSPM. No locking is needed because nobody outside
-		 * the ACPI thread is touching this register.
-		 */
-		x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
-		x |= ACPI_PM1_GBL_RLS;
-		acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
-	}
+	/* If we are the last one, turn out the lights. */
+	if (--global_lock_count)
+		return;
+
+	st = acpi_release_glk(&acpi_softc->sc_facs->global_lock);
+	if (!st)
+		return;
+
+	/*
+	 * If pending, notify the BIOS that the lock was released by
+	 * OSPM.  No locking is needed because nobody outside the ACPI
+	 * thread is supposed to touch this register.
+	 */
+	x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
+	x |= ACPI_PM1_GBL_RLS;
+	acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
 }
 
 void
 aml_lockfield(struct aml_scope *scope, struct aml_value *field)
 {
-	int st = 0;
-
 	if (AML_FIELD_LOCK(field->v_field.flags) != AML_FIELD_LOCK_ON)
 		return;
 
-	/* If lock is already ours, just continue */
-	if (global_lock_count++)
-		return;
-
-	/* Spin to acquire lock */
-	while (!st) {
-		st = acpi_acquire_glk(&acpi_softc->sc_facs->global_lock);
-		/* XXX - yield/delay? */
-	}
-
-	return;
+	acpi_glk_enter();
 }
 
 void
 aml_unlockfield(struct aml_scope *scope, struct aml_value *field)
 {
-	int st, x, s;
-
 	if (AML_FIELD_LOCK(field->v_field.flags) != AML_FIELD_LOCK_ON)
 		return;
 
-	/* If we are the last ones, turn out the lights */
-	if (--global_lock_count)
-		return;
-
-	/* Release lock */
-	st = acpi_release_glk(&acpi_softc->sc_facs->global_lock);
-	if (!st)
-		return;
-
-	/* Signal others if someone waiting */
-	s = spltty();
-	x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
-	x |= ACPI_PM1_GBL_RLS;
-	acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
-	splx(s);
-
-	return;
+	acpi_glk_leave();
 }
 
 /*
