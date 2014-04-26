@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2014/04/25 12:10:45 florian Exp $
+#	$OpenBSD: Makefile,v 1.8 2014/04/26 11:02:45 florian Exp $
 
 PROG=	traceroute
 
@@ -9,6 +9,8 @@ CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 
 MAN=	traceroute.8
 MLINKS=	traceroute.8 traceroute6.8
+
+LINKS=	${BINDIR}/traceroute ${BINDIR}/traceroute6
 BINOWN=	root
 BINMODE=4555
 
