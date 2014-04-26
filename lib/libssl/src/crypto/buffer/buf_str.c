@@ -1,4 +1,4 @@
-/* $OpenBSD: buf_str.c,v 1.7 2014/04/17 14:28:44 beck Exp $ */
+/* $OpenBSD: buf_str.c,v 1.8 2014/04/26 13:07:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -31,6 +31,7 @@ char *
 BUF_strdup(const char *str)
 {
 	char *ret = NULL;
+
 	if (str != NULL) {
 		if (!(ret = strdup(str)))
 			BUFerr(BUF_F_BUF_STRDUP, ERR_R_MALLOC_FAILURE);
@@ -42,6 +43,7 @@ char *
 BUF_strndup(const char *str, size_t siz)
 {
 	char *ret = NULL;
+
 	if (str != NULL) {
 		if (!(ret = strndup(str, siz)))
 			BUFerr(BUF_F_BUF_STRNDUP, ERR_R_MALLOC_FAILURE);
@@ -53,6 +55,7 @@ void *
 BUF_memdup(const void *data, size_t siz)
 {
 	void *ret = NULL;
+
 	if (data != NULL) {
 		if (!(ret = malloc(siz)))
 			BUFerr(BUF_F_BUF_MEMDUP, ERR_R_MALLOC_FAILURE);
