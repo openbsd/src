@@ -80,16 +80,6 @@
 #define IP_MTU      14 /* linux is lame */
 #endif
 
-#if defined(__FreeBSD__) && defined(IN6_IS_ADDR_V4MAPPED)
-/* Standard definition causes type-punning problems. */
-#undef IN6_IS_ADDR_V4MAPPED
-#define s6_addr32 __u6_addr.__u6_addr32
-#define IN6_IS_ADDR_V4MAPPED(a)               \
-        (((a)->s6_addr32[0] == 0) &&          \
-         ((a)->s6_addr32[1] == 0) &&          \
-         ((a)->s6_addr32[2] == htonl(0x0000ffff)))
-#endif
-
 static int dgram_write(BIO *h, const char *buf, int num);
 static int dgram_read(BIO *h, char *buf, int size);
 static int dgram_puts(BIO *h, const char *str);
@@ -1152,9 +1142,6 @@ dgram_sctp_write(BIO *b, const char *in, int inl)
 	memset(sndrcvinfo, 0, sizeof(struct sctp_sndrcvinfo));
 	sndrcvinfo->sinfo_stream = sinfo->snd_sid;
 	sndrcvinfo->sinfo_flags = sinfo->snd_flags;
-#ifdef __FreeBSD__
-	sndrcvinfo->sinfo_flags |= pinfo->pr_policy;
-#endif
 	sndrcvinfo->sinfo_ppid = sinfo->snd_ppid;
 	sndrcvinfo->sinfo_context = sinfo->snd_context;
 	sndrcvinfo->sinfo_timetolive = pinfo->pr_value;
@@ -1237,12 +1224,7 @@ dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 		sockopt_len = sizeof(struct sctp_authkey) + 64 * sizeof(uint8_t);
 		authkey = calloc(1, sockopt_len);
 		authkey->sca_keynumber = authkeyid.scact_keynumber + 1;
-#ifndef __FreeBSD__
-		/* This field is missing in FreeBSD 8.2 and earlier,
-		 * and FreeBSD 8.3 and higher work without it.
-		 */
 		authkey->sca_keylength = 64;
-#endif
 		memcpy(&authkey->sca_key[0], ptr, 64 * sizeof(uint8_t));
 
 		ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_KEY, authkey, sockopt_len);
