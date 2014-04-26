@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.15 2007/10/21 17:30:18 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.16 2014/04/26 06:17:26 jsg Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -893,7 +893,6 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 			snprintf(lbuf, sizeof (lbuf), "%d", crfS);
 			strlcat (disasm_buf, lbuf, bufsize);
 		}
-		break;
 		break;
 	case Opf_mb:
 		{
