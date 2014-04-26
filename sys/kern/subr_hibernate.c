@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.88 2014/04/20 14:02:57 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.89 2014/04/26 05:43:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1566,8 +1566,9 @@ hibernate_read_image(union hibernate_info *hib)
 	vaddr_t chunktable = (vaddr_t)NULL;
 	paddr_t piglet_chunktable = hib->piglet_pa +
 	    HIBERNATE_CHUNK_SIZE;
-	int i;
+	int i, status;
 
+	status = 0;
 	pmap_activate(curproc);
 
 	/* Calculate total chunk table size in disk blocks */
@@ -1581,15 +1582,17 @@ hibernate_read_image(union hibernate_info *hib)
 	if (!chunktable)
 		return (1);
 
-	/* Read the chunktable from disk into the piglet chunktable */
-	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE;
-	    i += PAGE_SIZE, blkctr += PAGE_SIZE/DEV_BSIZE) {
+	/* Map chunktable pages */
+	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE; i += PAGE_SIZE)
 		pmap_kenter_pa(chunktable + i, piglet_chunktable + i,
 		    VM_PROT_ALL);
-		pmap_update(pmap_kernel());
-		hibernate_block_io(hib, blkctr, PAGE_SIZE,
+	pmap_update(pmap_kernel());
+
+	/* Read the chunktable from disk into the piglet chunktable */
+	for (i = 0; i < HIBERNATE_CHUNK_TABLE_SIZE;
+	    i += MAXPHYS, blkctr += MAXPHYS/DEV_BSIZE)
+		hibernate_block_io(hib, blkctr, MAXPHYS,
 		    chunktable + i, 0);
-	}
 
 	blkctr = hib->image_offset;
 	compressed_size = 0;
@@ -1607,8 +1610,10 @@ hibernate_read_image(union hibernate_info *hib)
 
 	/* Allocate the pig area */
 	pig_sz = compressed_size + HIBERNATE_CHUNK_SIZE;
-	if (uvm_pmr_alloc_pig(&pig_start, pig_sz) == ENOMEM)
-		return (1);
+	if (uvm_pmr_alloc_pig(&pig_start, pig_sz) == ENOMEM) {
+		status = 1;
+		goto unmap;
+	}
 
 	pig_end = pig_start + pig_sz;
 
@@ -1619,13 +1624,15 @@ hibernate_read_image(union hibernate_info *hib)
 	hibernate_read_chunks(hib, image_start, image_end, disk_size,
 	    chunks);
 
-	pmap_kremove(chunktable, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
 	/* Prepare the resume time pmap/page table */
 	hibernate_populate_resume_pt(hib, image_start, image_end);
 
-	return (0);
+unmap:
+	/* Unmap chunktable pages */
+	pmap_kremove(chunktable, HIBERNATE_CHUNK_TABLE_SIZE);
+	pmap_update(pmap_kernel());
+
+	return (status);
 }
 
 /*
