@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.24 2014/04/18 11:36:06 henning Exp $	 */
+/* $OpenBSD: pftop.c,v 1.25 2014/04/26 11:27:23 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1588,14 +1588,10 @@ read_queues(void)
 	int inserts;
 	num_disp = num_queues = 0;
 
-	while ((node = TAILQ_FIRST(&qnodes)) != NULL) {
-		TAILQ_REMOVE(&qnodes, node, entries);
-		free(node);
-	}
 	if (pfctl_update_qstats() < 0)
 		return (-1);
 	num_disp = num_queues;
-	
+
 	return(0);
 }
 
