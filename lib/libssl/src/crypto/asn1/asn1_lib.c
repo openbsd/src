@@ -459,10 +459,7 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 void
 asn1_add_error(const unsigned char *address, int offset)
 {
-	char tmp[128];
-	(void) snprintf(tmp, sizeof(tmp), "address=%p offset=%d",
-	    address, offset);
-	ERR_add_error_data(1, tmp);
+	ERR_asprintf_error_data("address=%p offset=%d", address, offset);
 }
 
 int

@@ -94,7 +94,7 @@ X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, char *name, char *value)
 	if (!ret) {
 		X509V3err(X509V3_F_X509V3_EXT_NCONF,
 		    X509V3_R_ERROR_IN_EXTENSION);
-		ERR_add_error_data(4, "name=", name, ", value=", value);
+		ERR_asprintf_error_data("name=%s, value=%s", name, value);
 	}
 	return ret;
 }
@@ -142,8 +142,8 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 		if (sk_CONF_VALUE_num(nval) <= 0) {
 			X509V3err(X509V3_F_DO_EXT_NCONF,
 			    X509V3_R_INVALID_EXTENSION_STRING);
-			ERR_add_error_data(4, "name=", OBJ_nid2sn(ext_nid),
-			    ",section=", value);
+			ERR_asprintf_error_data("name=%s,section=%s",
+			    OBJ_nid2sn(ext_nid), value);
 			return NULL;
 		}
 		ext_struc = method->v2i(method, ctx, nval);
@@ -165,7 +165,7 @@ do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid, int crit, char *value)
 	} else {
 		X509V3err(X509V3_F_DO_EXT_NCONF,
 		    X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
-		ERR_add_error_data(2, "name=", OBJ_nid2sn(ext_nid));
+		ERR_asprintf_error_data("name=%s", OBJ_nid2sn(ext_nid));
 		return NULL;
 	}
 
@@ -283,7 +283,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 	if (!(obj = OBJ_txt2obj(ext, 0))) {
 		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
 		    X509V3_R_EXTENSION_NAME_ERROR);
-		ERR_add_error_data(2, "name=", ext);
+		ERR_asprintf_error_data("name=%s", ext);
 		goto err;
 	}
 
@@ -295,7 +295,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 	if (ext_der == NULL) {
 		X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
 		    X509V3_R_EXTENSION_VALUE_ERROR);
-		ERR_add_error_data(2, "value=", value);
+		ERR_asprintf_error_data("value=%s", value);
 		goto err;
 	}
 

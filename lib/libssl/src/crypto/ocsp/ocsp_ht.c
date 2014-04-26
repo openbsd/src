@@ -259,9 +259,9 @@ static int parse_http_line1(char *line)
 		{
 		OCSPerr(OCSP_F_PARSE_HTTP_LINE1, OCSP_R_SERVER_RESPONSE_ERROR);
 		if(!*q)
-			ERR_add_error_data(2, "Code=", p);
+			ERR_asprintf_error_data("Code=%s", p);
 		else
-			ERR_add_error_data(4, "Code=", p, ",Reason=", q);
+			ERR_asprintf_error_data("Code=%s,Reason=%s", p, q);
 		return 0;
 		}
 

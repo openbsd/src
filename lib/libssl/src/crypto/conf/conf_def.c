@@ -218,7 +218,6 @@ def_load_bio(CONF *conf, BIO *in, long *line)
 	char *s, *p, *end;
 	int again;
 	long eline = 0;
-	char btmp[DECIMAL_SIZE(eline) + 1];
 	CONF_VALUE *v = NULL, *tv;
 	CONF_VALUE *sv = NULL;
 	char *section = NULL, *buf;
@@ -428,8 +427,7 @@ err:
 		free(section);
 	if (line != NULL)
 		*line = eline;
-	snprintf(btmp, sizeof btmp, "%ld", eline);
-	ERR_add_error_data(2, "line ", btmp);
+	ERR_asprintf_error_data("line %ld", eline);
 	if ((h != conf->data) && (conf->data != NULL)) {
 		CONF_free(conf->data);
 		conf->data = NULL;

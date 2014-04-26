@@ -289,7 +289,7 @@ PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
 		if (!PEM_read_bio(bp, &nm, &header, &data, &len)) {
 			if (ERR_GET_REASON(ERR_peek_error()) ==
 			    PEM_R_NO_START_LINE)
-				ERR_add_error_data(2, "Expecting: ", name);
+				ERR_asprintf_error_data("Expecting: %s", name);
 			return 0;
 		}
 		if (check_pem(nm, name))

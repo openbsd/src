@@ -155,7 +155,6 @@ static int ber_free(BIO *a)
 
 int bio_ber_get_header(BIO *bio, BIO_BER_CTX *ctx)
 	{
-	char buf[64];
 	int i,j,n;
 	int ret;
 	unsigned char *p;
@@ -215,8 +214,7 @@ int bio_ber_get_header(BIO *bio, BIO_BER_CTX *ctx)
 	if ((ctx->tag  >= 0) && (ctx->tag != tag))
 		{
 		BIOerr(BIO_F_BIO_BER_GET_HEADER,BIO_R_TAG_MISMATCH);
-		sprintf(buf,"tag=%d, got %d",ctx->tag,tag);
-		ERR_add_error_data(1,buf);
+		ERR_asprintf_error_data("tag=%d, got %d", ctx->tag, tag);
 		return(-1);
 		}
 	if (ret & 0x01)

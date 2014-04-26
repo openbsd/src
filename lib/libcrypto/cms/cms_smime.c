@@ -302,7 +302,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 		j = X509_STORE_CTX_get_error(&ctx);
 		CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CERT,
 						CMS_R_CERTIFICATE_VERIFY_ERROR);
-		ERR_add_error_data(2, "Verify error:",
+		ERR_asprintf_error_data("Verify error:%s",
 					 X509_verify_cert_error_string(j));
 		goto err;
 		}

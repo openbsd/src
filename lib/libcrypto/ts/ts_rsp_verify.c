@@ -244,7 +244,7 @@ TS_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted, X509 *signer,
 	if (i <= 0) {
 		int j = X509_STORE_CTX_get_error(&cert_ctx);
 		TSerr(TS_F_TS_VERIFY_CERT, TS_R_CERTIFICATE_VERIFY_ERROR);
-		ERR_add_error_data(2, "Verify error:",
+		ERR_asprintf_error_data("Verify error:%s",
 		    X509_verify_cert_error_string(j));
 		ret = 0;
 	} else {
@@ -530,11 +530,11 @@ TS_check_status_info(TS_RESP *response)
 
 	/* Making up the error string. */
 	TSerr(TS_F_TS_CHECK_STATUS_INFO, TS_R_NO_TIME_STAMP_TOKEN);
-	ERR_add_error_data(6,
-	    "status code: ", status_text,
-	    ", status text: ", embedded_status_text ?
-	    embedded_status_text : "unspecified",
-	    ", failure codes: ", failure_text);
+	ERR_asprintf_error_data
+	    ("status code: %s, status text: %s, failure codes: %s",
+	    status_text,
+	    embedded_status_text ? embedded_status_text : "unspecified",
+	    failure_text);
 	free(embedded_status_text);
 
 	return 0;

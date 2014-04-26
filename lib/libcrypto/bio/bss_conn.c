@@ -156,7 +156,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 
 			if (c->param_port == NULL) {
 				BIOerr(BIO_F_CONN_STATE, BIO_R_NO_PORT_SPECIFIED);
-				ERR_add_error_data(2, "host=", c->param_hostname);
+				ERR_asprintf_error_data("host=%s",
+				    c->param_hostname);
 				goto exit_loop;
 			}
 			c->state = BIO_CONN_S_GET_IP;
@@ -193,8 +194,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			ret = socket(AF_INET, SOCK_STREAM, SOCKET_PROTOCOL);
 			if (ret == -1) {
 				SYSerr(SYS_F_SOCKET, errno);
-				ERR_add_error_data(4, "host=",
-				    c->param_hostname, ":", c->param_port);
+				ERR_asprintf_error_data("host=%s:%s",
+				    c->param_hostname, c->param_port);
 				BIOerr(BIO_F_CONN_STATE,
 				    BIO_R_UNABLE_TO_CREATE_SOCKET);
 				goto exit_loop;
@@ -208,9 +209,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 				if (!BIO_socket_nbio(b->num, 1)) {
 					BIOerr(BIO_F_CONN_STATE,
 					    BIO_R_ERROR_SETTING_NBIO);
-					ERR_add_error_data(4, "host=",
-					    c->param_hostname, ":",
-					    c->param_port);
+					ERR_asprintf_error_data("host=%s:%s",
+					    c->param_hostname, c->param_port);
 					goto exit_loop;
 				}
 			}
@@ -221,8 +221,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			i = setsockopt(b->num, SOL_SOCKET, SO_KEEPALIVE,(char *)&i, sizeof(i));
 			if (i < 0) {
 				SYSerr(SYS_F_SOCKET, errno);
-				ERR_add_error_data(4, "host=",
-				    c->param_hostname, ":", c->param_port);
+				ERR_asprintf_error_data("host=%s:%s",
+				    c->param_hostname, c->param_port);
 				BIOerr(BIO_F_CONN_STATE, BIO_R_KEEPALIVE);
 				goto exit_loop;
 			}
@@ -242,9 +242,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 					b->retry_reason = BIO_RR_CONNECT;
 				} else {
 					SYSerr(SYS_F_CONNECT, errno);
-					ERR_add_error_data(4, "host=",
-					    c->param_hostname, ":",
-					    c->param_port);
+					ERR_asprintf_error_data("host=%s:%s",
+					    c->param_hostname, c->param_port);
 					BIOerr(BIO_F_CONN_STATE,
 					    BIO_R_CONNECT_ERROR);
 				}
@@ -258,8 +257,8 @@ conn_state(BIO *b, BIO_CONNECT *c)
 			if (i) {
 				BIO_clear_retry_flags(b);
 				SYSerr(SYS_F_CONNECT, i);
-				ERR_add_error_data(4, "host=",
-				    c->param_hostname, ":", c->param_port);
+				ERR_asprintf_error_data("host=%s:%s",
+				    c->param_hostname, c->param_port);
 				BIOerr(BIO_F_CONN_STATE,
 				    BIO_R_NBIO_CONNECT_ERROR);
 				ret = 0;

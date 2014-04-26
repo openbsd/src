@@ -329,7 +329,7 @@ NCONF_get_string(const CONF *conf, const char *group, const char *name)
 		return NULL;
 	}
 	CONFerr(CONF_F_NCONF_GET_STRING, CONF_R_NO_VALUE);
-	ERR_add_error_data(4, "group=", group, " name=", name);
+	ERR_asprintf_error_data("group=%s name=%s", group, name);
 	return NULL;
 }
 

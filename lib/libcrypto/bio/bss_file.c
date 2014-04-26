@@ -122,7 +122,7 @@ BIO_new_file(const char *filename, const char *mode)
 
 	if (file == NULL) {
 		SYSerr(SYS_F_FOPEN, errno);
-		ERR_add_error_data(5, "fopen('", filename, "', '", mode, "')");
+		ERR_asprintf_error_data("fopen('%s', '%s')", filename, mode);
 		if (errno == ENOENT)
 			BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
 		else
@@ -262,7 +262,7 @@ file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		fp = fopen(ptr, p);
 		if (fp == NULL) {
 			SYSerr(SYS_F_FOPEN, errno);
-			ERR_add_error_data(5, "fopen('", ptr, "', '", p, "')");
+			ERR_asprintf_error_data("fopen('%s', '%s')", ptr, p);
 			BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
 			ret = 0;
 			break;

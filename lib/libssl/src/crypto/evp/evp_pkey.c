@@ -83,7 +83,7 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		{
 		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
-		ERR_add_error_data(2, "TYPE=", obj_tmp);
+		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
 		goto error;
 		}
 

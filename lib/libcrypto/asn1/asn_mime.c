@@ -493,7 +493,7 @@ SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 		    strcmp(hdr->value, "application/pkcs7-signature")) {
 			ASN1err(ASN1_F_SMIME_READ_ASN1,
 			    ASN1_R_SIG_INVALID_MIME_TYPE);
-			ERR_add_error_data(2, "type: ", hdr->value);
+			ERR_asprintf_error_data("type: %s", hdr->value);
 			sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 			sk_BIO_pop_free(parts, BIO_vfree);
 			return NULL;
@@ -520,7 +520,7 @@ SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 	if (strcmp (hdr->value, "application/x-pkcs7-mime") &&
 	    strcmp (hdr->value, "application/pkcs7-mime")) {
 		ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_INVALID_MIME_TYPE);
-		ERR_add_error_data(2, "type: ", hdr->value);
+		ERR_asprintf_error_data("type: %s", hdr->value);
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 		return NULL;
 	}
@@ -591,7 +591,7 @@ SMIME_text(BIO *in, BIO *out)
 	}
 	if (strcmp (hdr->value, "text/plain")) {
 		ASN1err(ASN1_F_SMIME_TEXT, ASN1_R_INVALID_MIME_TYPE);
-		ERR_add_error_data(2, "type: ", hdr->value);
+		ERR_asprintf_error_data("type: %s", hdr->value);
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 		return 0;
 	}

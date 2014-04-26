@@ -167,7 +167,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_UNKNOWN_PBE_ALGORITHM);
 		if (!pbe_obj) strlcpy (obj_tmp, "NULL", sizeof obj_tmp);
 		else i2t_ASN1_OBJECT(obj_tmp, sizeof obj_tmp, pbe_obj);
-		ERR_add_error_data(2, "TYPE=", obj_tmp);
+		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
 		return 0;
 		}
 

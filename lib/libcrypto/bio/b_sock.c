@@ -129,7 +129,7 @@ err:
 	if (locked)
 		CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
 	if (err) {
-		ERR_add_error_data(2, "host=", str);
+		ERR_asprintf_error_data("host=%s", str);
 		return 0;
 	} else
 		return 1;
@@ -171,7 +171,7 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 				*port_ptr = 70;
 			else {
 				SYSerr(SYS_F_GETSERVBYNAME, errno);
-				ERR_add_error_data(3, "service='", str, "'");
+				ERR_asprintf_error_data("service='%s'", str);
 				return (0);
 			}
 		}
@@ -378,7 +378,7 @@ again:
 	s = socket(server.sa.sa_family, SOCK_STREAM, SOCKET_PROTOCOL);
 	if (s == -1) {
 		SYSerr(SYS_F_SOCKET, errno);
-		ERR_add_error_data(3, "port='", host, "'");
+		ERR_asprintf_error_data("port='%s'", host);
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 	}
@@ -422,13 +422,13 @@ again:
 		}
 #endif
 		SYSerr(SYS_F_BIND, err_num);
-		ERR_add_error_data(3, "port='", host, "'");
+		ERR_asprintf_error_data("port='%s'", host);
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
 	}
 	if (listen(s, MAX_LISTEN) == -1) {
 		SYSerr(SYS_F_BIND, errno);
-		ERR_add_error_data(3, "port='", host, "'");
+		ERR_asprintf_error_data("port='%s'", host);
 		BIOerr(BIO_F_BIO_GET_ACCEPT_SOCKET, BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
 	}

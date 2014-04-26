@@ -239,7 +239,7 @@ err:
 	if (!ret) {
 		TSerr(TS_F_TS_CONF_SET_DEFAULT_ENGINE,
 		    TS_R_COULD_NOT_SET_ENGINE);
-		ERR_add_error_data(2, "engine:", name);
+		ERR_asprintf_error_data("engine:%s", name);
 	}
 	if (e)
 		ENGINE_free(e);

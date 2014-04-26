@@ -184,12 +184,10 @@ v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 		if (!acc->method) {
 			X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
 			    X509V3_R_BAD_OBJECT);
-			ERR_add_error_data(2, "value=", objtmp);
-			free(objtmp);
+			ERR_asprintf_error_data("value=%s", objtmp);
 			goto err;
 		}
 		free(objtmp);
-
 	}
 	return ainfo;
 

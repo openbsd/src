@@ -827,31 +827,26 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_VERIFY:
-		{
-			char number1[DECIMAL_SIZE(uis->_.string_data.result_minsize) + 1];
-			char number2[DECIMAL_SIZE(uis->_.string_data.result_maxsize) + 1];
-
-			(void) snprintf(number1, sizeof(number1), "%d",
-			    uis->_.string_data.result_minsize);
-			(void) snprintf(number2, sizeof(number2), "%d",
-			    uis->_.string_data.result_maxsize);
-
-			if (l < uis->_.string_data.result_minsize) {
-				ui->flags |= UI_FLAG_REDOABLE;
-				UIerr(UI_F_UI_SET_RESULT, UI_R_RESULT_TOO_SMALL);
-				ERR_add_error_data(5, "You must type in ",
-				    number1, " to ", number2, " characters");
-				return -1;
-			}
-			if (l > uis->_.string_data.result_maxsize) {
-				ui->flags |= UI_FLAG_REDOABLE;
-				UIerr(UI_F_UI_SET_RESULT, UI_R_RESULT_TOO_LARGE);
-				ERR_add_error_data(5, "You must type in ",
-				    number1, " to ", number2, " characters");
-				return -1;
-			}
+		if (l < uis->_.string_data.result_minsize) {
+			ui->flags |= UI_FLAG_REDOABLE;
+			UIerr(UI_F_UI_SET_RESULT,
+			    UI_R_RESULT_TOO_SMALL);
+			ERR_asprintf_error_data
+			    ("You must type in %d to %d characters",
+				uis->_.string_data.result_minsize,
+				uis->_.string_data.result_maxsize);
+			return -1;
 		}
-
+		if (l > uis->_.string_data.result_maxsize) {
+			ui->flags |= UI_FLAG_REDOABLE;
+			UIerr(UI_F_UI_SET_RESULT,
+			    UI_R_RESULT_TOO_LARGE);
+			ERR_asprintf_error_data
+			    ("You must type in %d to %d characters",
+				uis->_.string_data.result_minsize,
+				uis->_.string_data.result_maxsize);
+			return -1;
+		}
 		if (!uis->result_buf) {
 			UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
 			return -1;

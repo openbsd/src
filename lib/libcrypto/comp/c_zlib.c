@@ -551,7 +551,7 @@ bio_zlib_read(BIO *b, char *out, int outl)
 			if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
 				COMPerr(COMP_F_BIO_ZLIB_READ,
 				    COMP_R_ZLIB_INFLATE_ERROR);
-				ERR_add_error_data(2, "zlib error:",
+				ERR_asprintf_error_data("zlib error:%s",
 				    zError(ret));
 				return 0;
 			}
@@ -638,7 +638,7 @@ bio_zlib_write(BIO *b, const char *in, int inl)
 		if (ret != Z_OK) {
 			COMPerr(COMP_F_BIO_ZLIB_WRITE,
 			    COMP_R_ZLIB_DEFLATE_ERROR);
-			ERR_add_error_data(2, "zlib error:", zError(ret));
+			ERR_asprintf_error_data("zlib error:%s", zError(ret));
 			return 0;
 		}
 		ctx->ocount = ctx->obufsize - zout->avail_out;
@@ -688,7 +688,7 @@ bio_zlib_flush(BIO *b)
 		else if (ret != Z_OK) {
 			COMPerr(COMP_F_BIO_ZLIB_FLUSH,
 			    COMP_R_ZLIB_DEFLATE_ERROR);
-			ERR_add_error_data(2, "zlib error:", zError(ret));
+			ERR_asprintf_error_data("zlib error:%s", zError(ret));
 			return 0;
 		}
 		ctx->ocount = ctx->obufsize - zout->avail_out;

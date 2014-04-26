@@ -340,7 +340,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 		X509_STORE_CTX_cleanup(&cert_ctx);
 		if (i <= 0) {
 			PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_CERTIFICATE_VERIFY_ERROR);
-			ERR_add_error_data(2, "Verify error:",
+			ERR_asprintf_error_data("Verify error:%s",
 					 X509_verify_cert_error_string(j));
 			sk_X509_free(signers);
 			return 0;

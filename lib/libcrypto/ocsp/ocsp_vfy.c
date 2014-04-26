@@ -122,9 +122,9 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		X509_STORE_CTX_cleanup(&ctx);
                 if (ret <= 0)
 			{
-			i = X509_STORE_CTX_get_error(&ctx);	
+			i = X509_STORE_CTX_get_error(&ctx);
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,OCSP_R_CERTIFICATE_VERIFY_ERROR);
-			ERR_add_error_data(2, "Verify error:",
+			ERR_asprintf_error_data("Verify error:%s",
 					X509_verify_cert_error_string(i));
                         goto end;
                 	}
@@ -421,7 +421,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *st
 			{
 			ret = X509_STORE_CTX_get_error(&ctx);	
 			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,OCSP_R_CERTIFICATE_VERIFY_ERROR);
-			ERR_add_error_data(2, "Verify error:",
+			ERR_asprintf_error_data("Verify error:%s",
 					X509_verify_cert_error_string(ret));
                         return 0;
                 	}

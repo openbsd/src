@@ -211,7 +211,7 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 	if (!md) {
 		if (!(flags & CONF_MFLAGS_SILENT)) {
 			CONFerr(CONF_F_MODULE_RUN, CONF_R_UNKNOWN_MODULE_NAME);
-			ERR_add_error_data(2, "module=", name);
+			ERR_asprintf_error_data("module=%s", name);
 		}
 		return -1;
 	}
@@ -220,12 +220,11 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 
 	if (ret <= 0) {
 		if (!(flags & CONF_MFLAGS_SILENT)) {
-			char rcode[DECIMAL_SIZE(ret) + 1];
 			CONFerr(CONF_F_MODULE_RUN,
 			    CONF_R_MODULE_INITIALIZATION_ERROR);
-			snprintf(rcode, sizeof rcode, "%-8d", ret);
-			ERR_add_error_data(6, "module=", name, ", value=",
-			    value, ", retcode=", rcode);
+			ERR_asprintf_error_data
+			    ("module=%s, value=%s, retcode=%-8d",
+			    name, value, ret);
 		}
 	}
 
@@ -272,7 +271,7 @@ err:
 	if (dso)
 		DSO_free(dso);
 	CONFerr(CONF_F_MODULE_LOAD_DSO, errcode);
-	ERR_add_error_data(4, "module=", name, ", path=", path);
+	ERR_asprintf_error_data("module=%s, path=%s", name, path);
 	return NULL;
 }
 

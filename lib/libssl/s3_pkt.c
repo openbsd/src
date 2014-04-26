@@ -1169,13 +1169,11 @@ start:
 #endif
 		} else if (alert_level == 2) {
 			/* fatal */
-			char tmp[16];
-
 			s->rwstate = SSL_NOTHING;
 			s->s3->fatal_alert = alert_descr;
 			SSLerr(SSL_F_SSL3_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
-			(void) snprintf(tmp, sizeof tmp, "%d", alert_descr);
-			ERR_add_error_data(2, "SSL alert number ", tmp);
+			ERR_asprintf_error_data("SSL alert number %d",
+			    alert_descr);
 			s->shutdown|=SSL_RECEIVED_SHUTDOWN;
 			SSL_CTX_remove_session(s->ctx, s->session);
 			return (0);

@@ -282,7 +282,7 @@ X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr, const char *atrname,
 	if (obj == NULL) {
 		X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_TXT,
 		    X509_R_INVALID_FIELD_NAME);
-		ERR_add_error_data(2, "name=", atrname);
+		ERR_asprintf_error_data("name=%s", atrname);
 		return (NULL);
 	}
 	nattr = X509_ATTRIBUTE_create_by_OBJ(attr, obj, type, bytes, len);

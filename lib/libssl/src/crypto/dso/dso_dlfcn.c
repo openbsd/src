@@ -140,7 +140,8 @@ dlfcn_load(DSO *dso)
 	ptr = dlopen(filename, flags);
 	if (ptr == NULL) {
 		DSOerr(DSO_F_DLFCN_LOAD, DSO_R_LOAD_FAILED);
-		ERR_add_error_data(4, "filename(", filename, "): ", dlerror());
+		ERR_asprintf_error_data("filename(%s): %s", filename,
+		    dlerror());
 		goto err;
 	}
 	if (!sk_void_push(dso->meth_data, (char *)ptr)) {
@@ -204,7 +205,7 @@ dlfcn_bind_var(DSO *dso, const char *symname)
 	sym = dlsym(ptr, symname);
 	if (sym == NULL) {
 		DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_SYM_FAILURE);
-		ERR_add_error_data(4, "symname(", symname, "): ", dlerror());
+		ERR_asprintf_error_data("symname(%s): %s", symname, dlerror());
 		return (NULL);
 	}
 	return (sym);
@@ -235,7 +236,7 @@ dlfcn_bind_func(DSO *dso, const char *symname)
 	u.dlret = dlsym(ptr, symname);
 	if (u.dlret == NULL) {
 		DSOerr(DSO_F_DLFCN_BIND_FUNC, DSO_R_SYM_FAILURE);
-		ERR_add_error_data(4, "symname(", symname, "): ", dlerror());
+		ERR_asprintf_error_data("symname(%s): %s", symname, dlerror());
 		return (NULL);
 	}
 	return u.sym;
@@ -348,7 +349,7 @@ dlfcn_pathbyaddr(void *addr, char *path, int sz)
 		return len;
 	}
 
-	ERR_add_error_data(4, "dlfcn_pathbyaddr(): ", dlerror());
+	ERR_asprintf_error_data("dlfcn_pathbyaddr(): %s", dlerror());
 	return -1;
 }
 
