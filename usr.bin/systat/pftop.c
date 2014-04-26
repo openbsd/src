@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.25 2014/04/26 11:27:23 sthen Exp $	 */
+/* $OpenBSD: pftop.c,v 1.26 2014/04/26 11:28:49 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -372,7 +372,7 @@ sort_rate_callback(const void *s1, const void *s2)
 		return sortdir;
 	if (e2 == NULL)
 		return -sortdir;
-	
+
 	if (e2->rate > e1 -> rate)
 		return sortdir;
 	if (e2->rate < e1 -> rate)
@@ -390,7 +390,7 @@ sort_peak_callback(const void *s1, const void *s2)
 		return -sortdir;
 	if (e1 == NULL || e2 == NULL)
 		return 0;
-	
+
 	if (e2->peak > e1 -> peak)
 		return sortdir;
 	if (e2->peak < e1 -> peak)
@@ -427,7 +427,7 @@ compare_addr(int af, const struct pf_addr *a, const struct pf_addr *b)
 			return -1;
 		break;
 	}
-	
+
 	return 0;
 }
 
@@ -446,7 +446,7 @@ sort_addr_callback(const struct pfsync_state *s1,
 	if (s1->key[side].af < s2->key[side].af)
 		return -sortdir;
 
-       	ii = io = 0;
+	ii = io = 0;
 
 	if (dir == PF_OUT)	/* looking for source addr */
 		io = 1;
@@ -513,7 +513,7 @@ sort_port_callback(const struct pfsync_state *s1,
 	if (s1->key[side].af < s2->key[side].af)
 		return -sortdir;
 
-       	ii = io = 0;
+	ii = io = 0;
 
 	if (dir == PF_OUT)	/* looking for source addr */
 		io = 1;
@@ -729,15 +729,15 @@ unmask(struct pf_addr * m, u_int8_t af)
 void
 tb_print_addr(struct pf_addr * addr, struct pf_addr * mask, int af)
 {
-        	switch (af) {
-        	case AF_INET: {
+		switch (af) {
+		case AF_INET: {
 			tbprintf("%s", inetname(addr->v4));
 			break;
-        	}
-        	case AF_INET6: {
+		}
+		case AF_INET6: {
 			tbprintf("%s", inet6name(&addr->v6));
 			break;
-        	}
+		}
 	}
 
 	if (mask != NULL) {
@@ -795,14 +795,14 @@ print_fld_state(field_def *fld, unsigned int proto,
 		unsigned int s1, unsigned int s2)
 {
 	int len;
-	
+
 	if (fld == NULL)
 		return;
 
 	len = fld->width;
 	if (len < 1)
 		return;
-	
+
 	tb_start();
 
 	if (proto == IPPROTO_TCP) {
@@ -1252,7 +1252,7 @@ tb_print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 			tb_print_port(src->port_op, src->port[0],
 				      src->port[1],
 				      proto == IPPROTO_TCP ? "tcp" : "udp");
-		
+
 		tbprintf("to ");
 		if (PT_NOROUTE(dst))
 			tbprintf("no-route ");
@@ -1469,7 +1469,7 @@ void
 print_rules(void)
 {
 	u_int32_t n, count = 0;
-	
+
 	for (n = dispstart; n < num_rules; n++) {
 		print_rule(rules + n);
 		count ++;
