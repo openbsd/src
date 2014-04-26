@@ -56,7 +56,6 @@ extern int oldbot;
 extern int forw_prompt;
 extern int be_helpful;
 extern int less_is_more;
-extern int quit_at_eof;
 
 #if SHELL_ESCAPE
 static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
@@ -1259,8 +1258,6 @@ commands()
 			 * Forward forever, ignoring EOF.
 			 */
 			newaction = forw_loop(0);
-			if (less_is_more)
-				quit_at_eof = OPT_ON;
 			break;
 
 		case A_F_UNTIL_HILITE:
