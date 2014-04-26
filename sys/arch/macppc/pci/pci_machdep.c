@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.2 2013/10/13 16:36:46 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.3 2014/04/26 14:26:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -326,11 +326,13 @@ ofw_intr_map(int node, uint32_t *addr, uint32_t *intr)
 		parent = *mp1;
 
 		if (bcmp(mp, addr, mlen) == 0) {
+			char ic[20];
+
 			/*
 			 * If we have a match and the parent is not an
 			 * interrupt controller continue recursively.
 			 */
-			if (OF_getprop(parent, "interrupt-controller", NULL, 0))
+			if (OF_getprop(parent, "interrupt-controller", ic, 20))
 				return ofw_intr_map(parent, &mp1[1], intr);
 
 			*intr = mp1[1];
