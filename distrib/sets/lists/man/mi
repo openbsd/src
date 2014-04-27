@@ -311,7 +311,6 @@
 ./usr/share/man/man1/otp-md5.1
 ./usr/share/man/man1/otp-rmd160.1
 ./usr/share/man/man1/otp-sha1.1
-./usr/share/man/man1/page.1
 ./usr/share/man/man1/pagesize.1
 ./usr/share/man/man1/passwd.1
 ./usr/share/man/man1/paste.1

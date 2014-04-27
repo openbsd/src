@@ -345,7 +345,6 @@
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160
 ./usr/bin/otp-sha1
-./usr/bin/page
 ./usr/bin/pagesize
 ./usr/bin/passwd
 ./usr/bin/paste
