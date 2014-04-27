@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.29 2014/03/25 20:27:37 mpi Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.30 2014/04/27 14:48:10 mpi Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -73,8 +73,6 @@ struct uhci_xfer {
 	int isdone;
 #endif
 };
-
-#define UXFER(xfer) ((struct uhci_xfer *)(xfer))
 
 /*
  * Extra information that we need for a TD.

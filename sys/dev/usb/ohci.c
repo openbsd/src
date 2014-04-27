@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.124 2014/03/25 20:27:37 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.125 2014/04/27 14:48:10 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1450,8 +1450,8 @@ ohci_device_ctrl_done(struct usbd_xfer *xfer)
 void
 ohci_device_intr_done(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
 	struct ohci_softc *sc = (struct ohci_softc *)xfer->device->bus;
+	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
 	struct ohci_soft_ed *sed = opipe->sed;
 	struct ohci_soft_td *data, *tail;
 
@@ -1594,10 +1594,9 @@ ohci_poll(struct usbd_bus *bus)
 usbd_status
 ohci_device_request(struct usbd_xfer *xfer)
 {
+	struct ohci_softc *sc = (struct ohci_softc *)xfer->device->bus;
 	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
 	usb_device_request_t *req = &xfer->request;
-	struct usbd_device *dev = xfer->device;
-	struct ohci_softc *sc = (struct ohci_softc *)dev->bus;
 	struct ohci_soft_td *setup, *stat, *next, *tail;
 	struct ohci_soft_ed *sed;
 	int isread;
@@ -1611,8 +1610,8 @@ ohci_device_request(struct usbd_xfer *xfer)
 	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%u, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
-		    UGETW(req->wIndex), len, dev->address,
-		    opipe->pipe.endpoint->edesc->bEndpointAddress));
+		    UGETW(req->wIndex), len, xfer->device->address,
+		    xfer->pipe->endpoint->edesc->bEndpointAddress));
 
 	setup = opipe->tail.td;
 	stat = ohci_alloc_std(sc);
@@ -1935,14 +1934,12 @@ ohci_dump_ed(struct ohci_soft_ed *sed)
 usbd_status
 ohci_open(struct usbd_pipe *pipe)
 {
-	struct usbd_device *dev = pipe->device;
-	struct ohci_softc *sc = (struct ohci_softc *)dev->bus;
+	struct ohci_softc *sc = (struct ohci_softc *)pipe->device->bus;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	u_int8_t addr = dev->address;
 	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
-	struct ohci_soft_ed *sed;
-	struct ohci_soft_td *std;
+	struct ohci_soft_ed *sed = NULL;
+	struct ohci_soft_td *std = NULL;
 	struct ohci_soft_itd *sitd;
 	ohci_physaddr_t tdphys;
 	u_int32_t fmt;
@@ -1951,13 +1948,10 @@ ohci_open(struct usbd_pipe *pipe)
 	int ival;
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d\n",
-		     pipe, addr, ed->bEndpointAddress));
+		     pipe, pipe->device->address, ed->bEndpointAddress));
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
-
-	std = NULL;
-	sed = NULL;
 
 	/* Root Hub */
 	if (pipe->device->depth == 0) {
@@ -1996,9 +1990,10 @@ ohci_open(struct usbd_pipe *pipe)
 			fmt = OHCI_ED_FORMAT_GEN | OHCI_ED_DIR_TD;
 		}
 		sed->ed.ed_flags = htole32(
-			OHCI_ED_SET_FA(addr) |
+			OHCI_ED_SET_FA(pipe->device->address) |
 			OHCI_ED_SET_EN(UE_GET_ADDR(ed->bEndpointAddress)) |
-			(dev->speed == USB_SPEED_LOW ? OHCI_ED_SPEED : 0) |
+			(pipe->device->speed == USB_SPEED_LOW ?
+			     OHCI_ED_SPEED : 0) |
 			fmt | OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
 		sed->ed.ed_headp = htole32(tdphys |
 		    (pipe->endpoint->savedtoggle ? OHCI_TOGGLECARRY : 0));
@@ -2071,7 +2066,7 @@ ohci_close_pipe(struct usbd_pipe *pipe, struct ohci_soft_ed *head)
 		       (int)letoh32(sed->ed.ed_tailp),
 		       pipe, std);
 #ifdef USB_DEBUG
-		usbd_dump_pipe(&opipe->pipe);
+		usbd_dump_pipe(pipe);
 #endif
 #ifdef OHCI_DEBUG
 		ohci_dump_ed(sed);
@@ -2628,8 +2623,7 @@ ohci_root_intr_transfer(struct usbd_xfer *xfer)
 usbd_status
 ohci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->pipe;
-	struct ohci_softc *sc = (struct ohci_softc *)pipe->device->bus;
+	struct ohci_softc *sc = (struct ohci_softc *)xfer->device->bus;
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);

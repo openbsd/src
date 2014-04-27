@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.29 2014/03/25 20:27:37 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.30 2014/04/27 14:48:10 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -90,8 +90,6 @@ struct ehci_xfer {
 };
 #define EHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
 #define EHCI_XFER_ABORTWAIT	0x0002	/* abort completion is being awaited. */
-
-#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 /* Information about an entry in the interrupt list. */
 struct ehci_soft_islot {
