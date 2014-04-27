@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.176 2014/04/27 15:55:16 logan Exp $
+.\"	$OpenBSD: sysctl.8,v 1.177 2014/04/27 16:56:51 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -296,21 +296,21 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.ip6.log_interval Ta integer Ta yes
 .It net.inet6.ip6.hdrnestlimit Ta integer Ta yes
 .It net.inet6.ip6.dad_count Ta integer Ta yes
-.It net.inet6.ip6.dad_pending Ta integer Ta yes
 .It net.inet6.ip6.auto_flowlabel Ta integer Ta yes
 .It net.inet6.ip6.defmcasthlim Ta integer Ta yes
 .It net.inet6.ip6.use_deprecated Ta integer Ta yes
 .It net.inet6.ip6.rr_prune Ta integer Ta yes
 .It net.inet6.ip6.v6only Ta integer Ta no
-.It net.inet6.ip6.maxdynroutes Ta integer Ta yes
 .It net.inet6.ip6.maxfrags Ta integer Ta yes
-.It net.inet6.ip6.maxifprefixes Ta integer Ta yes
-.It net.inet6.ip6.maxifdefrouters Ta integer Ta yes
 .It net.inet6.ip6.mforwarding Ta integer Ta yes
-.It net.inet6.ip6.mtudisctimeout Ta integer Ta yes
 .It net.inet6.ip6.multipath Ta integer Ta yes
 .It net.inet6.ip6.multicast_mtudisc Ta integer Ta yes
 .It net.inet6.ip6.neighborgcthresh Ta integer Ta yes
+.It net.inet6.ip6.maxifprefixes Ta integer Ta yes
+.It net.inet6.ip6.maxifdefrouters Ta integer Ta yes
+.It net.inet6.ip6.maxdynroutes Ta integer Ta yes
+.It net.inet6.ip6.dad_pending Ta integer Ta yes
+.It net.inet6.ip6.mtudisctimeout Ta integer Ta yes
 .It net.inet6.icmp6.rediraccept Ta integer Ta yes
 .It net.inet6.icmp6.redirtimeout Ta integer Ta yes
 .It net.inet6.icmp6.nd6_prune Ta integer Ta yes
