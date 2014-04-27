@@ -164,11 +164,6 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#ifdef OPENSSL_BUILD_SHLIBSSL
-# undef OPENSSL_EXTERN
-# define OPENSSL_EXTERN OPENSSL_EXPORT
-#endif
-
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
 			 l|=(((unsigned long)(*((c)++)))<<16), \

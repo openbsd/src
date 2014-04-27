@@ -72,11 +72,6 @@
 #include <openssl/bn.h>
 #endif
 
-#ifdef OPENSSL_BUILD_SHLIBCRYPTO
-# undef OPENSSL_EXTERN
-# define OPENSSL_EXTERN OPENSSL_EXPORT
-#endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif

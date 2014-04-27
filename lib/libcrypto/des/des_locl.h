@@ -61,23 +61,13 @@
 
 #include <openssl/e_os2.h>
 
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <unistd.h>
 #include <math.h>
 #include <openssl/des.h>
-
-
-#if defined(__STDC__)
-#include <string.h>
-#endif
-
-#ifdef OPENSSL_BUILD_SHLIBCRYPTO
-# undef OPENSSL_EXTERN
-# define OPENSSL_EXTERN OPENSSL_EXPORT
-#endif
 
 #define ITERATIONS 16
 #define HALF_ITERATIONS 8
