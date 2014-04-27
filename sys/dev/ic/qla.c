@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.38 2014/04/21 04:17:07 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.39 2014/04/27 08:40:13 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -87,7 +87,10 @@ int		qla_read_isr_1G(struct qla_softc *, u_int16_t *, u_int16_t *);
 int		qla_read_isr_2G(struct qla_softc *, u_int16_t *, u_int16_t *);
 void		qla_clear_isr(struct qla_softc *, u_int16_t);
 
-void		qla_update(struct qla_softc *, int);
+void		qla_update_start(struct qla_softc *, int);
+void		qla_update_done(struct qla_softc *, int);
+void		qla_do_update(void *, void*);
+
 void		qla_put_marker(struct qla_softc *, void *);
 void		qla_put_cmd(struct qla_softc *, void *, struct scsi_xfer *,
 		    struct qla_ccb *);
@@ -97,10 +100,13 @@ void		qla_put_data_seg(struct qla_iocb_seg *, bus_dmamap_t, int);
 int		qla_get_port_name_list(struct qla_softc *, u_int32_t);
 struct qla_fc_port *qla_next_fabric_port(struct qla_softc *, u_int32_t *,
 		    u_int32_t *);
-int		qla_add_port(struct qla_softc *, u_int16_t, u_int32_t,
-		    u_int32_t);
+int		qla_get_port_db(struct qla_softc *c, u_int16_t,
+		    struct qla_dmamem *);
+int		qla_add_loop_port(struct qla_softc *, struct qla_fc_port *);
+int		qla_add_fabric_port(struct qla_softc *, struct qla_fc_port *);
+int		qla_add_domain_ctrl_port(struct qla_softc *, int, u_int32_t);
 int		qla_classify_port(struct qla_softc *, u_int32_t, u_int64_t,
-		    u_int64_t);
+		    u_int64_t, struct qla_fc_port **);
 int		qla_get_loop_id(struct qla_softc *sc);
 void		qla_clear_port_lists(struct qla_softc *);
 int		qla_softreset(struct qla_softc *);
@@ -177,7 +183,7 @@ struct scsi_adapter qla_switch = {
 
 int
 qla_classify_port(struct qla_softc *sc, u_int32_t location,
-    u_int64_t port_name, u_int64_t node_name)
+    u_int64_t port_name, u_int64_t node_name, struct qla_fc_port **prev)
 {
 	struct qla_fc_port *port, *locmatch, *wwnmatch;
 	locmatch = NULL;
@@ -187,15 +193,19 @@ qla_classify_port(struct qla_softc *sc, u_int32_t location,
 	TAILQ_FOREACH(port, &sc->sc_ports_new, update) {
 		if ((port->port_name == port_name &&
 		    port->node_name == node_name) ||
-		    port->location == location)
+		    port->location == location) {
+			*prev = port;
 			return (QLA_PORT_DISP_DUP);
+		}
 	}
 
 	/* if we're attaching, everything is new */
-	if (sc->sc_scan_taskq == NULL)
+	if (sc->sc_scsibus == NULL) {
+		*prev = NULL;
 		return (QLA_PORT_DISP_NEW);
+	}
 
-	TAILQ_FOREACH(port, &sc->sc_ports_gone, update) {
+	TAILQ_FOREACH(port, &sc->sc_ports, ports) {
 		if (port->location == location)
 			locmatch = port;
 
@@ -205,12 +215,16 @@ qla_classify_port(struct qla_softc *sc, u_int32_t location,
 	}
 
 	if (locmatch == NULL && wwnmatch == NULL) {
+		*prev = NULL;
 		return (QLA_PORT_DISP_NEW);
 	} else if (locmatch == wwnmatch) {
+		*prev = locmatch;
 		return (QLA_PORT_DISP_SAME);
 	} else if (wwnmatch != NULL) {
+		*prev = wwnmatch;
 		return (QLA_PORT_DISP_MOVED);
 	} else {
+		*prev = locmatch;
 		return (QLA_PORT_DISP_CHANGED);
 	}
 }
@@ -237,37 +251,123 @@ qla_get_loop_id(struct qla_softc *sc)
 }
 
 int
-qla_add_port(struct qla_softc *sc, u_int16_t loopid, u_int32_t portid,
-    u_int32_t location)
+qla_get_port_db(struct qla_softc *sc, u_int16_t loopid, struct qla_dmamem *mem)
 {
-	struct qla_get_port_db *pdb;
-	struct qla_fc_port *port;
-
 	sc->sc_mbox[0] = QLA_MBOX_GET_PORT_DB;
 	if (sc->sc_2k_logins) {
 		sc->sc_mbox[1] = loopid;
 	} else {
 		sc->sc_mbox[1] = loopid << 8;
 	}
-	pdb = QLA_DMA_KVA(sc->sc_scratch);
-	memset(pdb, 0, sizeof(*pdb));
 
-	qla_mbox_putaddr(sc->sc_mbox, sc->sc_scratch);
-	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_scratch), 0,
+	memset(QLA_DMA_KVA(mem), 0, sizeof(struct qla_get_port_db));
+	qla_mbox_putaddr(sc->sc_mbox, mem);
+	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(mem), 0,
 	    sizeof(struct qla_get_port_db), BUS_DMASYNC_PREREAD);
 	if (qla_mbox(sc, 0x00cf)) {
-		if (portid != 0)
-			DPRINTF(QLA_D_PORT, "%s: get port db %d failed: %x\n",
-			    DEVNAME(sc), loopid, sc->sc_mbox[0]);
+		DPRINTF(QLA_D_PORT, "%s: get port db %d failed: %x\n",
+		    DEVNAME(sc), loopid, sc->sc_mbox[0]);
 		return (1);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(sc->sc_scratch), 0,
-	    sizeof(*pdb), BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(mem), 0,
+	    sizeof(struct qla_get_port_db), BUS_DMASYNC_POSTREAD);
+	return (0);
+}
 
-	/* could also check that the port/node names match what we thought we
-	 * logged in to?
+int
+qla_add_loop_port(struct qla_softc *sc, struct qla_fc_port *port)
+{
+	struct qla_get_port_db *pdb;
+	struct qla_fc_port *pport = NULL;
+	int disp;
+
+	if (qla_get_port_db(sc, port->loopid, sc->sc_scratch)) {
+		return (1);
+	}
+	pdb = QLA_DMA_KVA(sc->sc_scratch);
+
+	if (letoh16(pdb->prli_svc_word3) & QLA_SVC3_TARGET_ROLE)
+		port->flags |= QLA_PORT_FLAG_IS_TARGET;
+
+	port->port_name = betoh64(pdb->port_name);
+	port->node_name = betoh64(pdb->node_name);
+	port->portid = (letoh16(pdb->port_id[0]) << 16) |
+	    letoh16(pdb->port_id[1]);
+
+	mtx_enter(&sc->sc_port_mtx);
+	disp = qla_classify_port(sc, port->location, port->port_name,
+	    port->node_name, &pport);
+	switch (disp) {
+	case QLA_PORT_DISP_CHANGED:
+	case QLA_PORT_DISP_MOVED:
+	case QLA_PORT_DISP_NEW:
+		TAILQ_INSERT_TAIL(&sc->sc_ports_new, port, update);
+		sc->sc_targets[port->loopid] = port;
+		break;
+	case QLA_PORT_DISP_DUP:
+		free(port, M_DEVBUF);
+		break;
+	case QLA_PORT_DISP_SAME:
+		TAILQ_REMOVE(&sc->sc_ports_gone, pport, update);
+		free(port, M_DEVBUF);
+		break;
+	}
+	mtx_leave(&sc->sc_port_mtx);
+
+	switch (disp) {
+	case QLA_PORT_DISP_CHANGED:
+	case QLA_PORT_DISP_MOVED:
+	case QLA_PORT_DISP_NEW:
+		DPRINTF(QLA_D_PORT, "%s: %s %d; name %llx, port %06x\n",
+		    DEVNAME(sc), ISSET(port->flags, QLA_PORT_FLAG_IS_TARGET) ?
+		    "target" : "non-target", port->loopid, port->port_name,
+		    port->portid);
+		break;
+	}
+	return (0);
+}
+
+int
+qla_add_fabric_port(struct qla_softc *sc, struct qla_fc_port *port)
+{
+	struct qla_get_port_db *pdb;
+	
+	if (qla_get_port_db(sc, port->loopid, sc->sc_scratch)) {
+		return (1);
+	}
+	pdb = QLA_DMA_KVA(sc->sc_scratch);
+
+	if (letoh16(pdb->prli_svc_word3) & QLA_SVC3_TARGET_ROLE)
+		port->flags |= QLA_PORT_FLAG_IS_TARGET;
+
+	/*
+	 * if we only know about this port because qla_get_port_name_list
+	 * returned it, we don't have its port id or node name, so fill
+	 * those in and update its location.
 	 */
+	if (port->location == QLA_LOCATION_FABRIC) {
+		port->node_name = betoh64(pdb->node_name);
+		port->portid = (letoh16(pdb->port_id[0]) << 16) |
+		    letoh16(pdb->port_id[1]);
+		port->location = QLA_LOCATION_PORT_ID(port->portid);
+	}
+
+	mtx_enter(&sc->sc_port_mtx);
+	TAILQ_INSERT_TAIL(&sc->sc_ports_new, port, update);
+	sc->sc_targets[port->loopid] = port;
+	mtx_leave(&sc->sc_port_mtx);
+
+	DPRINTF(QLA_D_PORT, "%s: %s %d; name %llx\n",
+	    DEVNAME(sc), ISSET(port->flags, QLA_PORT_FLAG_IS_TARGET) ?
+	    "target" : "non-target", port->loopid, port->port_name);
+	return (0);
+}
+
+int
+qla_add_domain_ctrl_port(struct qla_softc *sc, int loopid, u_int32_t portid)
+{
+	struct qla_fc_port *port;
 
 	port = malloc(sizeof(*port), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (port == NULL) {
@@ -275,26 +375,19 @@ qla_add_port(struct qla_softc *sc, u_int16_t loopid, u_int32_t portid,
 		    DEVNAME(sc));
 		return (1);
 	}
-
-	if (letoh16(pdb->prli_svc_word3) & QLA_SVC3_TARGET_ROLE)
-		port->flags |= QLA_PORT_FLAG_IS_TARGET;
-
-	port->port_name = betoh64(pdb->port_name);
-	port->node_name = betoh64(pdb->node_name);
-	port->location = location;
+	port->location = QLA_LOCATION_PORT_ID(portid);
+	port->port_name = 0;
+	port->node_name = 0;
 	port->loopid = loopid;
 	port->portid = portid;
 
 	mtx_enter(&sc->sc_port_mtx);
-	TAILQ_INSERT_TAIL(&sc->sc_ports_new, port, update);
-	sc->sc_targets[loopid] = port;
+	TAILQ_INSERT_TAIL(&sc->sc_ports, port, ports);
+	sc->sc_targets[port->loopid] = port;
 	mtx_leave(&sc->sc_port_mtx);
 
-	DPRINTF(QLA_D_PORT, "%s: %s %d; port id %06x, name %llx\n",
-	    DEVNAME(sc), ISSET(port->flags, QLA_PORT_FLAG_IS_TARGET) ?
-	    "target" : "non-target", loopid,
-	    (letoh16(pdb->port_id[0]) << 16) | letoh16(pdb->port_id[1]),
-	    betoh64(pdb->port_name));
+	DPRINTF(QLA_D_PORT, "%s: added domain controller port %06x at %d\n",
+	    DEVNAME(sc), portid, loopid);
 	return (0);
 }
 
@@ -517,6 +610,9 @@ qla_attach(struct qla_softc *sc)
 		goto free_scratch;
 	}
 
+	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO);
+	task_set(&sc->sc_update_task, qla_do_update, sc, NULL);
+
 	/* wait a bit for link to come up so we can scan and attach devices */
 	for (i = 0; i < QLA_WAIT_FOR_LOOP * 10000; i++) {
 		u_int16_t isr, info;
@@ -533,41 +629,7 @@ qla_attach(struct qla_softc *sc)
 	}
 
 	if (sc->sc_loop_up) {
-		struct qla_fc_port *port;
-
-		qla_update_topology(sc);
-		qla_get_port_name_list(sc, QLA_LOCATION_LOOP);
-		while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
-			port = TAILQ_FIRST(&sc->sc_ports_found);
-			TAILQ_REMOVE(&sc->sc_ports_found, port, update);
-			qla_add_port(sc, port->loopid, port->portid,
-			    QLA_LOCATION_LOOP_ID(port->loopid));
-			free(port, M_DEVBUF);
-		}
-
-		if (qla_update_fabric(sc) == 0) {
-			u_int32_t firstport = 0xffffffff;
-			u_int32_t lastport;
-
-			lastport = sc->sc_port_id;
-			do {
-				port = qla_next_fabric_port(sc, &firstport,
-				    &lastport);
-				if (port != NULL)
-					TAILQ_INSERT_TAIL(&sc->sc_ports_found,
-					    port, update);
-			} while (lastport != 0xffffffff);
-
-			while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
-				port = TAILQ_FIRST(&sc->sc_ports_found);
-				if (qla_fabric_plogi(sc, port) == 0) {
-					qla_add_port(sc, port->loopid,
-					    port->portid, port->location);
-				}
-				TAILQ_REMOVE(&sc->sc_ports_found, port, update);
-				free(port, M_DEVBUF);
-			}
-		}
+		qla_do_update(sc, NULL);
 	} else {
 		DPRINTF(QLA_D_PORT, "%s: loop still down, giving up\n",
 		    DEVNAME(sc));
@@ -1335,7 +1397,7 @@ qla_update_fabric(struct qla_softc *sc)
 	struct qla_sns_rft_id *rft;
 
 	if (sc->sc_fabric == 0)
-		return (1);
+		return (0);
 
 	switch (sc->sc_topology) {
 	case QLA_TOPO_F_PORT:
@@ -1343,7 +1405,7 @@ qla_update_fabric(struct qla_softc *sc)
 		break;
 
 	default:
-		return (1);
+		return (0);
 	}
 
 	/* get the name server's port db entry */
@@ -1386,7 +1448,7 @@ qla_update_fabric(struct qla_softc *sc)
 		/* we might be able to continue after this fails */
 	}
 
-	return (0);
+	return (1);
 }
 
 int
@@ -1523,21 +1585,23 @@ qla_next_fabric_port(struct qla_softc *sc, u_int32_t *firstport,
 	return (fport);
 }
 
-
 int
 qla_fabric_plogi(struct qla_softc *sc, struct qla_fc_port *port)
 {
-	int loopid;
-	int mboxin;
+	int loopid, mboxin, err;
+	u_int32_t id;
 
-	mtx_enter(&sc->sc_port_mtx);
-	loopid = qla_get_loop_id(sc);
-	mtx_leave(&sc->sc_port_mtx);
-
-	if (loopid == -1) {
-		DPRINTF(QLA_D_PORT, "%s: ran out of loop ids\n",
-		    DEVNAME(sc));
-		return (1);
+	loopid = port->loopid;
+retry:
+	if (loopid == 0) {
+		mtx_enter(&sc->sc_port_mtx);
+		loopid = qla_get_loop_id(sc);
+		mtx_leave(&sc->sc_port_mtx);
+		if (loopid == -1) {
+			DPRINTF(QLA_D_PORT, "%s: ran out of loop ids\n",
+			    DEVNAME(sc));
+			return (1);
+		}
 	}
 
 	mboxin = 0x000f;
@@ -1552,14 +1616,49 @@ qla_fabric_plogi(struct qla_softc *sc, struct qla_fc_port *port)
 		sc->sc_mbox[1] = loopid << 8;
 	}
 
-	if (qla_mbox(sc, mboxin)) {
-		DPRINTF(QLA_D_PORT, "%s: port %06x login %d failed: %x %x %x\n",
-		    DEVNAME(sc), port->portid, loopid, sc->sc_mbox[0],
-		    sc->sc_mbox[1], sc->sc_mbox[2]);
+	err = qla_mbox(sc, mboxin);
+	switch (err) {
+	case 0:
+		DPRINTF(QLA_D_PORT, "%s: logged in to %06x as %d\n",
+		    DEVNAME(sc), port->portid, loopid);
+		port->flags &= ~QLA_PORT_FLAG_NEEDS_LOGIN;
+		port->loopid = loopid;
+		return (0);
+
+	case QLA_MBOX_PORT_USED:
+		DPRINTF(QLA_D_PORT, "%s: already logged in to %06x as %d\n",
+		    DEVNAME(sc), port->portid, sc->sc_mbox[1]);
+		port->flags &= ~QLA_PORT_FLAG_NEEDS_LOGIN;
+		port->loopid = sc->sc_mbox[1];
+		return (0);
+
+	case QLA_MBOX_LOOP_USED:
+		/*
+		 * domain controller ids (fffcDD, where DD is the domain id)
+		 * get special treatment here because we can't find out about
+		 * them any other way.  otherwise, we restart the update
+		 * process to add the port at this loopid normally.
+		 */
+		id = (sc->sc_mbox[1] << 16) | sc->sc_mbox[2];
+		if ((id & QLA_DOMAIN_CTRL_MASK) == QLA_DOMAIN_CTRL) {
+			if (qla_add_domain_ctrl_port(sc, loopid, id)) {
+				return (1);
+			}
+			loopid = 0;
+			goto retry;
+		}
+		DPRINTF(QLA_D_PORT, "%s: loop id %d used for port %06x\n",
+		    DEVNAME(sc), loopid, id);
+		qla_update_start(sc, QLA_UPDATE_TASK_GET_PORT_LIST);
+		port->loopid = 0;
+		return (1);
+
+	default:
+		DPRINTF(QLA_D_PORT, "%s: error %x logging in to port %06x\n",
+		    DEVNAME(sc), err, port->portid);
+		port->loopid = 0;
 		return (1);
 	}
-	port->loopid = loopid;
-	return (0);
 }
 
 void
@@ -1581,9 +1680,321 @@ qla_fabric_plogo(struct qla_softc *sc, struct qla_fc_port *port)
 }
 
 void
-qla_update(struct qla_softc *sc, int task)
+qla_update_done(struct qla_softc *sc, int task)
 {
-	/* do things */
+	atomic_clearbits_int(&sc->sc_update_tasks, task);
+}
+
+void
+qla_update_start(struct qla_softc *sc, int task)
+{
+	atomic_setbits_int(&sc->sc_update_tasks, task);
+	task_add(sc->sc_update_taskq, &sc->sc_update_task);
+}
+
+void
+qla_clear_port_lists(struct qla_softc *sc)
+{
+	struct qla_fc_port *p;
+	while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
+		p = TAILQ_FIRST(&sc->sc_ports_found);
+		TAILQ_REMOVE(&sc->sc_ports_found, p, update);
+		free(p, M_DEVBUF);
+	}
+
+	while (!TAILQ_EMPTY(&sc->sc_ports_new)) {
+		p = TAILQ_FIRST(&sc->sc_ports_new);
+		TAILQ_REMOVE(&sc->sc_ports_new, p, update);
+		free(p, M_DEVBUF);
+	}
+
+	while (!TAILQ_EMPTY(&sc->sc_ports_gone)) {
+		p = TAILQ_FIRST(&sc->sc_ports_gone);
+		TAILQ_REMOVE(&sc->sc_ports_gone, p, update);
+	}
+}
+
+void
+qla_do_update(void *xsc, void *x)
+{
+	struct qla_softc *sc = xsc;
+	int firstport, lastport;
+	struct qla_fc_port *port, *fport;
+
+	DPRINTF(QLA_D_PORT, "%s: updating\n", DEVNAME(sc));
+	while (sc->sc_update_tasks != 0) {
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_CLEAR_ALL) {
+			TAILQ_HEAD(, qla_fc_port) detach;
+			DPRINTF(QLA_D_PORT, "%s: detaching everything\n",
+			    DEVNAME(sc));
+
+			mtx_enter(&sc->sc_port_mtx);
+			qla_clear_port_lists(sc);
+			TAILQ_INIT(&detach);
+			while (!TAILQ_EMPTY(&sc->sc_ports)) {
+				port = TAILQ_FIRST(&sc->sc_ports);
+				TAILQ_REMOVE(&sc->sc_ports, port, ports);
+				TAILQ_INSERT_TAIL(&detach, port, ports);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			while (!TAILQ_EMPTY(&detach)) {
+				port = TAILQ_FIRST(&detach);
+				TAILQ_REMOVE(&detach, port, ports);
+				if (port->flags & QLA_PORT_FLAG_IS_TARGET) {
+					scsi_detach_target(sc->sc_scsibus,
+					    port->loopid, -1);
+				}
+				sc->sc_targets[port->loopid] = NULL;
+				if (port->location & QLA_LOCATION_FABRIC)
+					qla_fabric_plogo(sc, port);
+
+				free(port, M_DEVBUF);
+			}
+
+			qla_update_done(sc, QLA_UPDATE_TASK_CLEAR_ALL);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_SOFTRESET) {
+			/* what no */
+			qla_update_done(sc, QLA_UPDATE_TASK_SOFTRESET);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_UPDATE_TOPO) {
+			DPRINTF(QLA_D_PORT, "%s: updating topology\n",
+			    DEVNAME(sc));
+			qla_update_topology(sc);
+			qla_update_done(sc, QLA_UPDATE_TASK_UPDATE_TOPO);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_GET_PORT_LIST) {
+			DPRINTF(QLA_D_PORT, "%s: getting port name list\n",
+			    DEVNAME(sc));
+			mtx_enter(&sc->sc_port_mtx);
+			qla_clear_port_lists(sc);
+			mtx_leave(&sc->sc_port_mtx);
+
+			qla_get_port_name_list(sc, QLA_LOCATION_LOOP |
+			    QLA_LOCATION_FABRIC);
+			mtx_enter(&sc->sc_port_mtx);
+			TAILQ_FOREACH(port, &sc->sc_ports, ports) {
+				TAILQ_INSERT_TAIL(&sc->sc_ports_gone, port,
+				    update);
+				if (port->location & QLA_LOCATION_FABRIC) {
+					port->flags |=
+					    QLA_PORT_FLAG_NEEDS_LOGIN;
+				}
+			}
+
+			/* take care of ports that haven't changed first */
+			TAILQ_FOREACH(fport, &sc->sc_ports_found, update) {
+				port = sc->sc_targets[fport->loopid];
+				if (port == NULL || fport->port_name !=
+				    port->port_name) {
+					/* new or changed port, handled later */
+					continue;
+				}
+
+				/*
+				 * the port hasn't been logged out, which
+				 * means we don't need to log in again, and,
+				 * for loop ports, that the port still exists.
+				 */
+				port->flags &= ~QLA_PORT_FLAG_NEEDS_LOGIN;
+				if (port->location & QLA_LOCATION_LOOP)
+					TAILQ_REMOVE(&sc->sc_ports_gone,
+					    port, update);
+
+				fport->location = 0;
+			}
+			mtx_leave(&sc->sc_port_mtx);
+			qla_update_start(sc, QLA_UPDATE_TASK_PORT_LIST);
+			qla_update_done(sc, QLA_UPDATE_TASK_GET_PORT_LIST);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_PORT_LIST) {
+			mtx_enter(&sc->sc_port_mtx);
+			fport = TAILQ_FIRST(&sc->sc_ports_found);
+			if (fport != NULL) {
+				TAILQ_REMOVE(&sc->sc_ports_found, fport,
+				    update);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (fport == NULL) {
+				DPRINTF(QLA_D_PORT, "%s: done with ports\n",
+				    DEVNAME(sc));
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_PORT_LIST);
+				qla_update_start(sc,
+				    QLA_UPDATE_TASK_SCAN_FABRIC);
+			} else if (fport->location & QLA_LOCATION_LOOP) {
+				DPRINTF(QLA_D_PORT, "%s: loop port %d\n",
+				    DEVNAME(sc), fport->loopid);
+				if (qla_add_loop_port(sc, fport) != 0)
+					free(fport, M_DEVBUF);
+			} else if (fport->location & QLA_LOCATION_FABRIC) {
+				qla_add_fabric_port(sc, fport);
+			} else {
+				/* already processed */
+				free(fport, M_DEVBUF);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_SCAN_FABRIC) {
+			DPRINTF(QLA_D_PORT, "%s: starting fabric scan\n",
+			    DEVNAME(sc));
+			lastport = sc->sc_port_id;
+			firstport = 0xffffffff;
+			if (qla_update_fabric(sc))
+				qla_update_start(sc,
+				    QLA_UPDATE_TASK_SCANNING_FABRIC);
+			qla_update_done(sc, QLA_UPDATE_TASK_SCAN_FABRIC);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_SCANNING_FABRIC) {
+			fport = qla_next_fabric_port(sc, &firstport, &lastport);
+			if (fport != NULL) {
+				int disp;
+
+				mtx_enter(&sc->sc_port_mtx);
+				disp = qla_classify_port(sc, fport->location,
+				    fport->port_name, fport->node_name, &port);
+				switch (disp) {
+				case QLA_PORT_DISP_CHANGED:
+				case QLA_PORT_DISP_MOVED:
+					/* we'll log out the old port later */
+				case QLA_PORT_DISP_NEW:
+					DPRINTF(QLA_D_PORT, "%s: new port "
+					    "%06x\n", DEVNAME(sc),
+					    fport->portid);
+					TAILQ_INSERT_TAIL(&sc->sc_ports_found,
+					    fport, update);
+					break;
+				case QLA_PORT_DISP_DUP:
+					free(fport, M_DEVBUF);
+					break;
+				case QLA_PORT_DISP_SAME:
+					DPRINTF(QLA_D_PORT, "%s: existing port"
+					    " %06x\n", DEVNAME(sc),
+					    fport->portid);
+					TAILQ_REMOVE(&sc->sc_ports_gone, port,
+					    update);
+					free(fport, M_DEVBUF);
+					break;
+				}
+				mtx_leave(&sc->sc_port_mtx);
+			}
+			if (lastport == 0xffffffff) {
+				DPRINTF(QLA_D_PORT, "%s: finished\n",
+				    DEVNAME(sc));
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_SCANNING_FABRIC);
+				qla_update_start(sc,
+				    QLA_UPDATE_TASK_FABRIC_LOGIN);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_FABRIC_LOGIN) {
+			mtx_enter(&sc->sc_port_mtx);
+			port = TAILQ_FIRST(&sc->sc_ports_found);
+			if (port != NULL) {
+				TAILQ_REMOVE(&sc->sc_ports_found, port, update);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (port != NULL) {
+				DPRINTF(QLA_D_PORT, "%s: found port %06x\n",
+				    DEVNAME(sc), port->portid);
+				if (qla_fabric_plogi(sc, port) == 0) {
+					qla_add_fabric_port(sc, port);
+				} else {
+					free(port, M_DEVBUF);
+				}
+			} else {
+				DPRINTF(QLA_D_PORT, "%s: done with logins\n",
+				    DEVNAME(sc));
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_FABRIC_LOGIN);
+				qla_update_start(sc,
+				    QLA_UPDATE_TASK_ATTACH_TARGET |
+				    QLA_UPDATE_TASK_DETACH_TARGET);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_FABRIC_RELOGIN) {
+			TAILQ_FOREACH(port, &sc->sc_ports, ports) {
+				if (port->flags & QLA_PORT_FLAG_NEEDS_LOGIN) {
+					qla_fabric_plogi(sc, port);
+					break;
+				}
+			}
+
+			if (port == TAILQ_END(&sc->sc_ports))
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_FABRIC_RELOGIN);
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_DETACH_TARGET) {
+			mtx_enter(&sc->sc_port_mtx);
+			port = TAILQ_FIRST(&sc->sc_ports_gone);
+			if (port != NULL) {
+				sc->sc_targets[port->loopid] = NULL;
+				TAILQ_REMOVE(&sc->sc_ports_gone, port, update);
+				TAILQ_REMOVE(&sc->sc_ports, port, ports);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (port != NULL) {
+				DPRINTF(QLA_D_PORT, "%s: detaching target %d\n",
+				    DEVNAME(sc), port->loopid);
+				if (sc->sc_scsibus != NULL)
+					scsi_detach_target(sc->sc_scsibus,
+					    port->loopid, -1);
+
+				if (port->location & QLA_LOCATION_FABRIC)
+					qla_fabric_plogo(sc, port);
+
+				free(port, M_DEVBUF);
+			} else {
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_DETACH_TARGET);
+			}
+			continue;
+		}
+
+		if (sc->sc_update_tasks & QLA_UPDATE_TASK_ATTACH_TARGET) {
+			mtx_enter(&sc->sc_port_mtx);
+			port = TAILQ_FIRST(&sc->sc_ports_new);
+			if (port != NULL) {
+				TAILQ_REMOVE(&sc->sc_ports_new, port, update);
+				TAILQ_INSERT_TAIL(&sc->sc_ports, port, ports);
+			}
+			mtx_leave(&sc->sc_port_mtx);
+
+			if (port != NULL) {
+				if (sc->sc_scsibus != NULL)
+					scsi_probe_target(sc->sc_scsibus,
+					    port->loopid);
+			} else {
+				qla_update_done(sc,
+				    QLA_UPDATE_TASK_ATTACH_TARGET);
+			}
+			continue;
+		}
+
+	}
+
+	DPRINTF(QLA_D_PORT, "%s: done updating\n", DEVNAME(sc));
 }
 
 int
@@ -1593,15 +2004,15 @@ qla_async(struct qla_softc *sc, u_int16_t info)
 
 	switch (info) {
 	case QLA_ASYNC_SYSTEM_ERROR:
-		qla_update(sc, QLA_UPDATE_SOFTRESET);
+		qla_update_start(sc, QLA_UPDATE_TASK_SOFTRESET);
 		break;
 
 	case QLA_ASYNC_REQ_XFER_ERROR:
-		qla_update(sc, QLA_UPDATE_SOFTRESET);
+		qla_update_start(sc, QLA_UPDATE_TASK_SOFTRESET);
 		break;
 
 	case QLA_ASYNC_RSP_XFER_ERROR:
-		qla_update(sc, QLA_UPDATE_SOFTRESET);
+		qla_update_start(sc, QLA_UPDATE_TASK_SOFTRESET);
 		break;
 
 	case QLA_ASYNC_LIP_OCCURRED:
@@ -1612,31 +2023,32 @@ qla_async(struct qla_softc *sc, u_int16_t info)
 		DPRINTF(QLA_D_PORT, "%s: loop up\n", DEVNAME(sc));
 		sc->sc_loop_up = 1;
 		sc->sc_marker_required = 1;
-		qla_update(sc, QLA_UPDATE_FULL_SCAN);
+		qla_update_start(sc, QLA_UPDATE_TASK_UPDATE_TOPO |
+		    QLA_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLA_ASYNC_LOOP_DOWN:
 		DPRINTF(QLA_D_PORT, "%s: loop down\n", DEVNAME(sc));
 		sc->sc_loop_up = 0;
-		qla_update(sc, QLA_UPDATE_DISCARD);
+		qla_update_start(sc, QLA_UPDATE_TASK_CLEAR_ALL);
 		break;
 
 	case QLA_ASYNC_LIP_RESET:
 		DPRINTF(QLA_D_PORT, "%s: lip reset\n", DEVNAME(sc));
 		sc->sc_marker_required = 1;
-		qla_update(sc, QLA_UPDATE_FABRIC_RELOGIN);
+		qla_update_start(sc, QLA_UPDATE_TASK_FABRIC_RELOGIN);
 		break;
 
 	case QLA_ASYNC_PORT_DB_CHANGE:
 		DPRINTF(QLA_D_PORT, "%s: port db changed %x\n", DEVNAME(sc),
 		    qla_read_mbox(sc, 1));
-		qla_update(sc, QLA_UPDATE_LOOP_SCAN);
+		qla_update_start(sc, QLA_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLA_ASYNC_CHANGE_NOTIFY:
 		DPRINTF(QLA_D_PORT, "%s: name server change (%02x:%02x)\n",
 		    DEVNAME(sc), qla_read_mbox(sc, 1), qla_read_mbox(sc, 2));
-		qla_update(sc, QLA_UPDATE_FABRIC_SCAN);
+		qla_update_start(sc, QLA_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLA_ASYNC_LIP_F8:

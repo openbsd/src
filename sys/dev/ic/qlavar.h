@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.8 2014/04/14 04:14:11 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.9 2014/04/27 08:40:13 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/task.h>
 
 #define QLA_DEFAULT_PORT_NAME		0x400000007F000003ULL /* from isp(4) */
 
@@ -63,12 +64,8 @@ enum qla_port_disp {
 	QLA_PORT_DISP_DUP
 };
 
-#define QLA_UPDATE_DISCARD		0
-#define QLA_UPDATE_SOFTRESET		1
-#define QLA_UPDATE_FULL_SCAN		2
-#define QLA_UPDATE_LOOP_SCAN		3
-#define QLA_UPDATE_FABRIC_SCAN		4
-#define QLA_UPDATE_FABRIC_RELOGIN	5
+#define QLA_DOMAIN_CTRL_MASK		0xffff00
+#define QLA_DOMAIN_CTRL			0xfffc00
 
 #define QLA_LOCATION_LOOP		(1 << 24)
 #define QLA_LOCATION_FABRIC		(2 << 24)
@@ -160,7 +157,22 @@ struct qla_softc {
 	TAILQ_HEAD(, qla_fc_port) sc_ports_gone;
 	TAILQ_HEAD(, qla_fc_port) sc_ports_found;
 	struct qla_fc_port	*sc_targets[QLA_2KL_BUSWIDTH];
-	struct taskq		*sc_scan_taskq;
+
+	struct taskq		*sc_update_taskq;
+	struct task		sc_update_task;
+	int			sc_update;
+	int			sc_update_tasks;
+#define QLA_UPDATE_TASK_CLEAR_ALL	0x00000001
+#define QLA_UPDATE_TASK_SOFTRESET	0x00000002
+#define QLA_UPDATE_TASK_UPDATE_TOPO	0x00000004
+#define QLA_UPDATE_TASK_GET_PORT_LIST	0x00000008
+#define QLA_UPDATE_TASK_PORT_LIST	0x00000010
+#define QLA_UPDATE_TASK_SCAN_FABRIC	0x00000020
+#define QLA_UPDATE_TASK_SCANNING_FABRIC	0x00000040
+#define QLA_UPDATE_TASK_FABRIC_LOGIN	0x00000080
+#define QLA_UPDATE_TASK_FABRIC_RELOGIN	0x00000100
+#define QLA_UPDATE_TASK_DETACH_TARGET	0x00000200
+#define QLA_UPDATE_TASK_ATTACH_TARGET	0x00000400
 
 	int			sc_maxcmds;
 	struct qla_dmamem	*sc_requests;
