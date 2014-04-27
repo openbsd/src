@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.2 2014/04/27 13:41:50 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -190,9 +190,13 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 
 	if (!nowrite) {
 		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0)
-			err(1, "seek bootstrap");
+			err(1, "seek boot sector");
 		secbuf = calloc(1, dl->d_secsize);
+		if (read(devfd, secbuf, dl->d_secsize) != dl->d_secsize)
+			err(1, "read boot sector");
 		bcopy(blkstore, secbuf, blksize);
+		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0)
+			err(1, "seek bootstrap");
 		if (write(devfd, secbuf, dl->d_secsize) != dl->d_secsize)
 			err(1, "write bootstrap");
 		free(secbuf);
