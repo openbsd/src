@@ -100,7 +100,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 	 * (**)	i.e. according to 'apps/openssl speed rc4' benchmark,
 	 *	crypto/rc4/rc4speed.c exhibits almost 70% speed-up...
 	 *
-	 * Cavets.
+	 * Caveats.
 	 *
 	 * - RC4_CHUNK="unsigned long long" should be a #1 choice for
 	 *   UltraSPARC. Unfortunately gcc generates very slow code

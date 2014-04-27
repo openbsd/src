@@ -266,7 +266,7 @@ int CMAC_resume(CMAC_CTX *ctx)
 	/* The buffer "tbl" containes the last fully encrypted block
 	 * which is the last IV (or all zeroes if no last encrypted block).
 	 * The last block has not been modified since CMAC_final().
-	 * So reinitliasing using the last decrypted block will allow
+	 * So reinitialising using the last decrypted block will allow
 	 * CMAC to continue after calling CMAC_Final(). 
 	 */
 	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
