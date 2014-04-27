@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2014/04/23 05:13:57 beck Exp $
+# $OpenBSD: Makefile,v 1.28 2014/04/27 16:19:04 jsing Exp $
 
 LIB=	crypto
 
@@ -239,7 +239,7 @@ SRCS+= ts_asn1.c
 SRCS+=txt_db.c
 
 # ui/
-SRCS+= ui_err.c ui_lib.c ui_openssl.c ui_util.c ui_compat.c
+SRCS+= ui_err.c ui_lib.c ui_openssl.c ui_util.c
 
 # whrlpool/
 SRCS+= wp_dgst.c
