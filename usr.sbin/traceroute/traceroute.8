@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.57 2014/04/25 15:09:56 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.58 2014/04/27 15:30:16 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: April 27 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -72,8 +72,7 @@ network hardware, connected together by gateways.
 Tracking the route one's packets follow (or finding the miscreant
 gateway that's discarding your packets) can be difficult.
 .Nm
-utilizes the IP protocol `time to live' field and attempts to elicit an
-.Tn ICMP
+utilizes the IP protocol `time to live' field and attempts to elicit an ICMP
 .Dv TIME_EXCEEDED
 response from each gateway along the path to some
 host.
@@ -114,7 +113,7 @@ This option is not available for IPv6.
 .It Fl I
 Use ICMP or ICMP6 ECHO instead of UDP datagrams.
 .It Fl l
-Display the ttl or hoplimit value of the returned packet.
+Display the TTL or hoplimit value of the returned packet.
 This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
@@ -129,8 +128,7 @@ Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
 path).
 .It Fl P Ar proto
-Change the protocol being used from
-.Tn UDP
+Change the protocol being used from UDP
 to a numeric protocol or a name as specified in
 .Pa /etc/protocols .
 This will not work reliably for most protocols.
@@ -139,19 +137,15 @@ ICMP Echo Request messages will be used (same as
 .Xr ping 8 ) .
 This option is not available for IPv6.
 .It Fl p Ar port
-Set the base
-.Tn UDP
+Set the base UDP
 .Ar port
 number used in probes (default is 33434).
 .Nm
-hopes that nothing is listening on
-.Tn UDP
-ports
+hopes that nothing is listening on UDP ports
 .Em base
 to
 .Em base+nhops*nqueries-1
-at the destination host (so an
-.Tn ICMP
+at the destination host (so an ICMP
 .Dv PORT_UNREACHABLE
 message will
 be returned to terminate the route tracing).
@@ -159,7 +153,7 @@ If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
 .It Fl q Ar nqueries
-Set the number of probes per ``ttl'' to
+Set the number of probes per TTL to
 .Ar nqueries
 (default is three probes).
 .It Fl S
@@ -212,9 +206,7 @@ This option is not available for IPv6.
 Set the routing table to be used.
 .It Fl v
 Verbose output.
-Received
-.Tn ICMP
-packets other than
+Received ICMP packets other than
 .Dv TIME_EXCEEDED
 and
 .Dv UNREACHABLE Ns s
@@ -227,23 +219,18 @@ This option is not available for IPv6.
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
-internet host by launching
-.Tn UDP
-probe
-packets with a small ttl (time to live) then listening for an
-.Tn ICMP
-"time exceeded" reply from a gateway.
-We start out probes with a ttl of one and increase by one until we get an
-.Tn ICMP
-"port unreachable"
+internet host by launching UDP probe packets with a small TTL (time to live)
+then listening for an ICMP "time exceeded" reply from a gateway.
+We start out probes with a TTL of one and increase by one until we get an
+ICMP "port unreachable"
 (which means we got to "host") or hit a max (which
 defaults to 64 hops and can be changed with the
 .Fl m
 flag).
 Three probes (changed with
 .Fl q
-flag) are sent at each ttl setting and a
-line is printed showing the ttl, address of the gateway and
+flag) are sent at each TTL setting and a
+line is printed showing the TTL, address of the gateway and
 round trip time of each probe.
 If the probe answers come from
 different gateways, the address of each responding system will
@@ -255,8 +242,7 @@ flag), a "*" is printed for that
 probe.
 .Pp
 We don't want the destination
-host to process the
-.Tn UDP
+host to process the UDP
 probe packets so the destination port is set to an
 unlikely value (if some clod on the destination is using that
 value, it can be changed with the
@@ -283,15 +269,11 @@ traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
 Note that lines 2 & 3 are the same.
 This is due to a buggy
 kernel on the 2nd hop system \- lbl-csam.arpa \- that forwards
-packets with a zero ttl (a bug in the distributed version
-of 4.3
-.Tn BSD ) .
+packets with a zero TTL (a bug in the distributed version of
+.Bx 4.3 ) .
 Note that you have to guess what path
-the packets are taking cross-country since the
-.Tn NSFNET
-(129.140)
-doesn't supply address-to-name translations for its
-.Tn NSS Ns es .
+the packets are taking cross-country since the NSFNET (129.140)
+doesn't supply address-to-name translations for its NSSes.
 .Pp
 A more interesting example is:
 .Bd -literal -offset indent
@@ -318,23 +300,19 @@ traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
 .Ed
 .Pp
 Note that the gateways 12, 14, 15, 16 & 17 hops away
-either don't send
-.Tn ICMP
-"time exceeded" messages or send them
-with a ttl too small to reach us.
-14 \- 17 are running the
-.Tn MIT
+either don't send ICMP "time exceeded" messages or send them
+with a TTL too small to reach us.
+14 \- 17 are running the MIT
 C Gateway code that doesn't send "time exceeded"s.
 God only knows what's going on with 12.
 .Pp
 The silent gateway 12 in the above may be the result of a bug in
 the 4.[23]
-.Tn BSD
+.Bx
 network code (and its derivatives):  4.x (x <= 3)
-sends an unreachable message using whatever ttl remains in the
+sends an unreachable message using whatever TTL remains in the
 original datagram.
-Since, for gateways, the remaining ttl is zero, the
-.Tn ICMP
+Since, for gateways, the remaining TTL is zero, the ICMP
 "time exceeded" is guaranteed to not make it back to us.
 The behavior of this bug is slightly more interesting
 when it appears on the destination system:
@@ -357,20 +335,16 @@ when it appears on the destination system:
 Notice that there are 12 "gateways" (13 is the final
 destination) and exactly the last half of them are "missing".
 What's really happening is that rip (a Sun-3 running Sun OS3.5)
-is using the ttl from our arriving datagram as the ttl in its
-.Tn ICMP
-reply.
+is using the TTL from our arriving datagram as the TTL in its
+ICMP reply.
 So, the reply will time out on the return path
-(with no notice sent to anyone since
-.Tn ICMP's
-aren't sent for
-.Tn ICMP's )
-until we probe with a ttl that's at least twice the path
+(with no notice sent to anyone since ICMPs aren't sent for ICMPs)
+until we probe with a TTL that's at least twice the path
 length.
-i.e., rip is really only 7 hops away.
-A reply that returns with a ttl of 1 is a clue this problem exists.
+That is, rip is really only 7 hops away.
+A reply that returns with a TTL of 1 is a clue this problem exists.
 .Nm
-prints a "!" after the time if the ttl is <= 1.
+prints a "!" after the time if the TTL is <= 1.
 Since vendors ship a lot of obsolete
 .Pf ( Tn DEC Ns \'s
 Ultrix, Sun 3.x) or
