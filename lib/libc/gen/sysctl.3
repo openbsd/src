@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.231 2014/04/27 15:55:16 logan Exp $
+.\"	$OpenBSD: sysctl.3,v 1.232 2014/04/27 16:58:08 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1809,8 +1809,8 @@ These packets are generated when IPv6 interfaces are first brought up.
 This variable displays the number of pending IPv6 DAD
 .Pq duplicated address detection
 before completion.
-It is used to make sure that DAD is completed before 
-.Xr netstart 8 
+It is used to make sure that DAD is completed before
+.Xr netstart 8
 is executed.
 .Pp
 .It Li ip6.defmcasthlim
