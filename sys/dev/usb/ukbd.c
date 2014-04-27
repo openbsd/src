@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.65 2014/04/24 09:40:28 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.66 2014/04/27 13:32:04 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -212,6 +212,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_hid_descriptor *hid;
 	u_int32_t qflags;
 	int dlen, repid;
+	int console = 1;
 	void *desc;
 	kbd_t layout = (kbd_t)-1;
 
@@ -226,8 +227,16 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_osize = hid_report_size(desc, dlen, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
 
+	 /*
+	  * Since the HID-Proxy is always detected before any
+	  * real keyboard, do not let it grab the console.
+	  */
+	if (uha->uaa->vendor == USB_VENDOR_APPLE &&
+	    uha->uaa->product == USB_PRODUCT_APPLE_BLUETOOTH_HCI)
+		console = 0;
+
 	qflags = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
-	if (hidkbd_attach(self, kbd, 1, qflags, repid, desc, dlen) != 0)
+	if (hidkbd_attach(self, kbd, console, qflags, repid, desc, dlen) != 0)
 		return;
 
 	if (uha->uaa->vendor == USB_VENDOR_APPLE) {
