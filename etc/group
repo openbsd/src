@@ -43,6 +43,7 @@ _dhcp:*:77:
 _mopd:*:78:
 _tftpd:*:79:
 _rbootd:*:80:
+_ppp:*:82:
 _ntp:*:83:
 _ftp:*:84:
 _ospfd:*:85:
