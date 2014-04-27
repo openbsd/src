@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.27 2014/04/21 13:05:20 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.28 2014/04/27 05:23:35 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -99,6 +99,9 @@ enum qle_port_disp {
 	QLE_PORT_DISP_MOVED,
 	QLE_PORT_DISP_DUP
 };
+
+#define QLE_DOMAIN_CTRL_MASK		0xffff00
+#define QLE_DOMAIN_CTRL			0xfffc00
 
 #define QLE_LOCATION_LOOP		(1 << 24)
 #define QLE_LOCATION_FABRIC		(2 << 24)
@@ -290,6 +293,8 @@ int		qle_get_port_db(struct qle_softc *, u_int16_t,
 int		qle_get_port_name_list(struct qle_softc *sc, u_int32_t);
 int		qle_add_loop_port(struct qle_softc *, struct qle_fc_port *);
 int		qle_add_fabric_port(struct qle_softc *, struct qle_fc_port *);
+int		qle_add_domain_ctrl_port(struct qle_softc *, u_int16_t,
+		    u_int32_t);
 int		qle_classify_port(struct qle_softc *, u_int32_t, u_int64_t,
 		    u_int64_t, struct qle_fc_port **);
 int		qle_get_loop_id(struct qle_softc *sc);
@@ -955,6 +960,34 @@ qle_add_fabric_port(struct qle_softc *sc, struct qle_fc_port *port)
 	DPRINTF(QLE_D_PORT, "%s: %s %d; name %llx\n",
 	    DEVNAME(sc), ISSET(port->flags, QLE_PORT_FLAG_IS_TARGET) ?
 	    "target" : "non-target", port->loopid, port->port_name);
+	return (0);
+}
+
+int
+qle_add_domain_ctrl_port(struct qle_softc *sc, u_int16_t loopid,
+    u_int32_t portid)
+{
+	struct qle_fc_port *port;
+
+	port = malloc(sizeof(*port), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (port == NULL) {
+		printf("%s: failed to allocate a port structure\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+	port->location = QLE_LOCATION_PORT_ID(portid);
+	port->port_name = 0;
+	port->node_name = 0;
+	port->loopid = loopid;
+	port->portid = portid;
+
+	mtx_enter(&sc->sc_port_mtx);
+	TAILQ_INSERT_TAIL(&sc->sc_ports, port, ports);
+	sc->sc_targets[port->loopid] = port;
+	mtx_leave(&sc->sc_port_mtx);
+
+	DPRINTF(QLE_D_PORT, "%s: added domain controller port %06x at %d\n",
+	    DEVNAME(sc), portid, loopid);
 	return (0);
 }
 
@@ -1945,6 +1978,7 @@ qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
 	u_int32_t info;
 	int err;
 
+retry:
 	if (port->loopid == 0) {
 		int loopid;
 
@@ -1971,18 +2005,32 @@ qle_fabric_plogi(struct qle_softc *sc, struct qle_fc_port *port)
 		DPRINTF(QLE_D_PORT, "%s: already logged in to %06x as %d\n",
 		    DEVNAME(sc), port->portid, info);
 		port->loopid = info;
+		port->flags &= ~QLE_PORT_FLAG_NEEDS_LOGIN;
 		return (0);
 
 	case QLE_PLOGX_ERROR_HANDLE_USED:
+		/*
+		 * domain controller ids (fffcDD, where DD is the domain id)
+		 * get special treatment here because we can't find out about
+		 * them any other way.  otherwise, we restart the update
+		 * process to add the port at this handle normally.
+		 */
+		if ((info & QLE_DOMAIN_CTRL_MASK) == QLE_DOMAIN_CTRL) {
+			if (qle_add_domain_ctrl_port(sc, port->loopid, info)) {
+				return (1);
+			}
+			port->loopid = 0;
+			goto retry;
+		}
 		DPRINTF(QLE_D_PORT, "%s: handle %d used for port %06x\n",
-		    DEVNAME(sc), port->loopid, info);
-		/* now do something clever */
+		    DEVNAME(sc), loopid, info);
+		qle_update_start(sc, QLE_UPDATE_TASK_GET_PORT_LIST);
 		port->loopid = 0;
 		return (1);
 
 	default:
 		DPRINTF(QLE_D_PORT, "%s: error %x logging in to port %06x\n",
-		    DEVNAME(sc), err);
+		    DEVNAME(sc), err, port->portid);
 		port->loopid = 0;
 		return (1);
 	}
