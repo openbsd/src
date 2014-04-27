@@ -67,7 +67,7 @@ int
 i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a)
 {
 	int i, n = 0;
-	static const char *h = "0123456789ABCDEF";
+	static const char h[] = "0123456789ABCDEF";
 	char buf[2];
 
 	if (a == NULL)
