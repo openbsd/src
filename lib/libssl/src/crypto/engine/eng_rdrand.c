@@ -84,15 +84,11 @@ static int get_random_bytes (unsigned char *buf, int num)
 static int random_status (void)
 {	return 1;	}
 
-static RAND_METHOD rdrand_meth =
-	{
-	NULL,	/* seed */
-	get_random_bytes,
-	NULL,	/* cleanup */
-	NULL,	/* add */
-	get_random_bytes,
-	random_status,
-	};
+static RAND_METHOD rdrand_meth = {
+	.bytes = get_random_bytes,
+	.pseudorand = get_random_bytes,
+	.status = random_status
+};
 
 static int rdrand_init(ENGINE *e)
 {	return 1;	}

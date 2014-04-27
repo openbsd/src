@@ -74,16 +74,14 @@ static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 
 static BIO_METHOD methods_sockp = {
-	BIO_TYPE_SOCKET,
-	"socket",
-	sock_write,
-	sock_read,
-	sock_puts,
-	NULL, /* sock_gets, */
-	sock_ctrl,
-	sock_new,
-	sock_free,
-	NULL,
+	.type = BIO_TYPE_SOCKET,
+	.name = "socket",
+	.bwrite = sock_write,
+	.bread = sock_read,
+	.bputs = sock_puts,
+	.ctrl = sock_ctrl,
+	.create = sock_new,
+	.destroy = sock_free
 };
 
 BIO_METHOD *

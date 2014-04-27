@@ -82,15 +82,12 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	}
 
 static DH_METHOD dh_ossl = {
-"OpenSSL DH Method",
-generate_key,
-compute_key,
-dh_bn_mod_exp,
-dh_init,
-dh_finish,
-0,
-NULL,
-NULL
+	.name = "OpenSSL DH Method",
+	.generate_key = generate_key,
+	.compute_key = compute_key,
+	.bn_mod_exp = dh_bn_mod_exp,
+	.init = dh_init,
+	.finish = dh_finish,
 };
 
 const DH_METHOD *DH_OpenSSL(void)

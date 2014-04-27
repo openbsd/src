@@ -87,18 +87,16 @@ typedef struct enc_struct
 	char buf[ENC_BLOCK_SIZE+BUF_OFFSET+2];
 	} BIO_ENC_CTX;
 
-static BIO_METHOD methods_enc=
-	{
-	BIO_TYPE_CIPHER,"cipher",
-	enc_write,
-	enc_read,
-	NULL, /* enc_puts, */
-	NULL, /* enc_gets, */
-	enc_ctrl,
-	enc_new,
-	enc_free,
-	enc_callback_ctrl,
-	};
+static BIO_METHOD methods_enc= {
+	.type = BIO_TYPE_CIPHER,
+	.name = "cipher",
+	.bwrite = enc_write,
+	.bread = enc_read,
+	.ctrl = enc_ctrl,
+	.create = enc_new,
+	.destroy = enc_free,
+	.callback_ctrl = enc_callback_ctrl
+};
 
 BIO_METHOD *BIO_f_cipher(void)
 	{

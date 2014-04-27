@@ -640,65 +640,61 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 /* NB these are sorted in pkey_id order, lowest first */
 
-const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = 
+const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = {
 	{
+		.pkey_id = EVP_PKEY_DSA2,
+		.pkey_base_id = EVP_PKEY_DSA,
+		.pkey_flags = ASN1_PKEY_ALIAS
+	},
 
-		{
-		EVP_PKEY_DSA2,
-		EVP_PKEY_DSA,
-		ASN1_PKEY_ALIAS
-		},
+	{
+		.pkey_id = EVP_PKEY_DSA1,
+		.pkey_base_id = EVP_PKEY_DSA,
+		.pkey_flags = ASN1_PKEY_ALIAS
+	},
 
-		{
-		EVP_PKEY_DSA1,
-		EVP_PKEY_DSA,
-		ASN1_PKEY_ALIAS
-		},
+	{
+		.pkey_id = EVP_PKEY_DSA4,
+		.pkey_base_id = EVP_PKEY_DSA,
+		.pkey_flags = ASN1_PKEY_ALIAS
+	},
 
-		{
-		EVP_PKEY_DSA4,
-		EVP_PKEY_DSA,
-		ASN1_PKEY_ALIAS
-		},
+	{
+		.pkey_id = EVP_PKEY_DSA3,
+		.pkey_base_id = EVP_PKEY_DSA,
+		.pkey_flags = ASN1_PKEY_ALIAS
+	},
 
-		{
-		EVP_PKEY_DSA3,
-		EVP_PKEY_DSA,
-		ASN1_PKEY_ALIAS
-		},
+	{
+		.pkey_id = EVP_PKEY_DSA,
+		.pkey_base_id = EVP_PKEY_DSA,
 
-		{
-		EVP_PKEY_DSA,
-		EVP_PKEY_DSA,
-		0,
+		.pem_str = "DSA",
+		.info = "OpenSSL DSA method",
 
-		"DSA",
-		"OpenSSL DSA method",
+		.pub_decode = dsa_pub_decode,
+		.pub_encode = dsa_pub_encode,
+		.pub_cmp = dsa_pub_cmp,
+		.pub_print = dsa_pub_print,
 
-		dsa_pub_decode,
-		dsa_pub_encode,
-		dsa_pub_cmp,
-		dsa_pub_print,
+		.priv_decode = dsa_priv_decode,
+		.priv_encode = dsa_priv_encode,
+		.priv_print = dsa_priv_print,
 
-		dsa_priv_decode,
-		dsa_priv_encode,
-		dsa_priv_print,
+		.pkey_size = int_dsa_size,
+		.pkey_bits = dsa_bits,
 
-		int_dsa_size,
-		dsa_bits,
+		.param_decode = dsa_param_decode,
+		.param_encode = dsa_param_encode,
+		.param_missing = dsa_missing_parameters,
+		.param_copy = dsa_copy_parameters,
+		.param_cmp = dsa_cmp_parameters,
+		.param_print = dsa_param_print,
+		.sig_print = dsa_sig_print,
 
-		dsa_param_decode,
-		dsa_param_encode,
-		dsa_missing_parameters,
-		dsa_copy_parameters,
-		dsa_cmp_parameters,
-		dsa_param_print,
-		dsa_sig_print,
-
-		int_dsa_free,
-		dsa_pkey_ctrl,
-		old_dsa_priv_decode,
-		old_dsa_priv_encode
-		}
-	};
-
+		.pkey_free = int_dsa_free,
+		.pkey_ctrl = dsa_pkey_ctrl,
+		.old_priv_decode = old_dsa_priv_decode,
+		.old_priv_encode = old_dsa_priv_encode
+	}
+};

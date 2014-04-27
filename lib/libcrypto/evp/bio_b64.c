@@ -91,18 +91,17 @@ typedef struct b64_struct
 	char tmp[B64_BLOCK_SIZE];
 	} BIO_B64_CTX;
 
-static BIO_METHOD methods_b64=
-	{
-	BIO_TYPE_BASE64,"base64 encoding",
-	b64_write,
-	b64_read,
-	b64_puts,
-	NULL, /* b64_gets, */
-	b64_ctrl,
-	b64_new,
-	b64_free,
-	b64_callback_ctrl,
-	};
+static BIO_METHOD methods_b64= {
+	.type = BIO_TYPE_BASE64,
+	.name = "base64 encoding",
+	.bwrite = b64_write,
+	.bread = b64_read,
+	.bputs = b64_puts,
+	.ctrl = b64_ctrl,
+	.create = b64_new,
+	.destroy = b64_free,
+	.callback_ctrl = b64_callback_ctrl
+};
 
 BIO_METHOD *BIO_f_base64(void)
 	{

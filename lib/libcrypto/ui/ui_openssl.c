@@ -157,13 +157,11 @@ static int noecho_console(UI *ui);
 static int close_console(UI *ui);
 
 static UI_METHOD ui_openssl = {
-	"OpenSSL default user interface",
-	open_console,
-	write_string,
-	NULL,			/* No flusher is needed for command lines */
-	read_string,
-	close_console,
-	NULL
+	.name = "OpenSSL default user interface",
+	.ui_open_session = open_console,
+	.ui_write_string = write_string,
+	.ui_read_string = read_string,
+	.ui_close_session = close_console,
 };
 
 /* The method with all the built-in thingies */

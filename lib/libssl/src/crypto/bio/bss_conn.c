@@ -103,16 +103,15 @@ BIO_CONNECT *BIO_CONNECT_new(void);
 void BIO_CONNECT_free(BIO_CONNECT *a);
 
 static BIO_METHOD methods_connectp = {
-	BIO_TYPE_CONNECT,
-	"socket connect",
-	conn_write,
-	conn_read,
-	conn_puts,
-	NULL, /* connect_gets, */
-	conn_ctrl,
-	conn_new,
-	conn_free,
-	conn_callback_ctrl,
+	.type = BIO_TYPE_CONNECT,
+	.name = "socket connect",
+	.bwrite = conn_write,
+	.bread = conn_read,
+	.bputs = conn_puts,
+	.ctrl = conn_ctrl,
+	.create = conn_new,
+	.destroy = conn_free,
+	.callback_ctrl = conn_callback_ctrl
 };
 
 static int

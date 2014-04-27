@@ -217,38 +217,20 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	return 1;
 	}
 
-const EVP_PKEY_METHOD dh_pkey_meth = 
-	{
-	EVP_PKEY_DH,
-	EVP_PKEY_FLAG_AUTOARGLEN,
-	pkey_dh_init,
-	pkey_dh_copy,
-	pkey_dh_cleanup,
+const EVP_PKEY_METHOD dh_pkey_meth = {
+	.pkey_id = EVP_PKEY_DH,
+	.flags = EVP_PKEY_FLAG_AUTOARGLEN,
 
-	0,
-	pkey_dh_paramgen,
+	.init = pkey_dh_init,
+	.copy = pkey_dh_copy,
+	.cleanup = pkey_dh_cleanup,
 
-	0,
-	pkey_dh_keygen,
+	.paramgen = pkey_dh_paramgen,
 
-	0,
-	0,
+	.keygen = pkey_dh_keygen,
 
-	0,
-	0,
+	.derive = pkey_dh_derive,
 
-	0,0,
-
-	0,0,0,0,
-
-	0,0,
-
-	0,0,
-
-	0,
-	pkey_dh_derive,
-
-	pkey_dh_ctrl,
-	pkey_dh_ctrl_str
-
-	};
+	.ctrl = pkey_dh_ctrl,
+	.ctrl_str = pkey_dh_ctrl_str
+};

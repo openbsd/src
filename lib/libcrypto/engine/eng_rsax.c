@@ -116,22 +116,12 @@ static const ENGINE_CMD_DEFN e_rsax_cmd_defns[] = {
 
 #ifndef OPENSSL_NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
-static RSA_METHOD e_rsax_rsa =
-	{
-	"Intel RSA-X method",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	e_rsax_rsa_mod_exp,
-	NULL,
-	NULL,
-	e_rsax_rsa_finish,
-	RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE,
-	NULL,
-	NULL,
-	NULL
-	};
+static RSA_METHOD e_rsax_rsa = {
+	.name = "Intel RSA-X method",
+	.rsa_mod_exp = e_rsax_rsa_mod_exp,
+	.finish = e_rsax_rsa_finish,
+	.flags = RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE,
+};
 #endif
 
 /* Constants used when creating the ENGINE */

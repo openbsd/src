@@ -1086,12 +1086,9 @@ padlock_rand_status(void)
 
 /* Prepare structure for registration */
 static RAND_METHOD padlock_rand = {
-	NULL,			/* seed */
-	padlock_rand_bytes,	/* bytes */
-	NULL,			/* cleanup */
-	NULL,			/* add */
-	padlock_rand_bytes,	/* pseudorand */
-	padlock_rand_status,	/* rand status */
+	.bytes = padlock_rand_bytes,
+	.pseudorand = padlock_rand_bytes,
+	.status = padlock_rand_status
 };
 
 #else  /* !COMPILE_HW_PADLOCK */

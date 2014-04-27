@@ -94,16 +94,14 @@ static int bio_make_pair(BIO *bio1, BIO *bio2);
 static void bio_destroy_pair(BIO *bio);
 
 static BIO_METHOD methods_biop = {
-	BIO_TYPE_BIO,
-	"BIO pair",
-	bio_write,
-	bio_read,
-	bio_puts,
-	NULL /* no bio_gets */,
-	bio_ctrl,
-	bio_new,
-	bio_free,
-	NULL /* no bio_callback_ctrl */
+	.type = BIO_TYPE_BIO,
+	.name = "BIO pair",
+	.bwrite = bio_write,
+	.bread = bio_read,
+	.bputs = bio_puts,
+	.ctrl = bio_ctrl,
+	.create = bio_new,
+	.destroy = bio_free
 };
 
 BIO_METHOD *

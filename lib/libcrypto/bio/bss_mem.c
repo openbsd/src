@@ -70,16 +70,15 @@ static int mem_new(BIO *h);
 static int mem_free(BIO *data);
 
 static BIO_METHOD mem_method = {
-	BIO_TYPE_MEM,
-	"memory buffer",
-	mem_write,
-	mem_read,
-	mem_puts,
-	mem_gets,
-	mem_ctrl,
-	mem_new,
-	mem_free,
-	NULL,
+	.type = BIO_TYPE_MEM,
+	.name = "memory buffer",
+	.bwrite = mem_write,
+	.bread = mem_read,
+	.bputs = mem_puts,
+	.bgets = mem_gets,
+	.ctrl = mem_ctrl,
+	.create = mem_new,
+	.destroy = mem_free
 };
 
 /* bio->num is used to hold the value to return on 'empty', if it is

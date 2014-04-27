@@ -138,30 +138,20 @@ static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 
 #endif
 
-const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = 
-	{
-	EVP_PKEY_HMAC,
-	EVP_PKEY_HMAC,
-	0,
+const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
+	.pkey_id = EVP_PKEY_HMAC,
+	.pkey_base_id = EVP_PKEY_HMAC,
 
-	"HMAC",
-	"OpenSSL HMAC method",
+	.pem_str = "HMAC",
+	.info = "OpenSSL HMAC method",
 
-	0,0,0,0,
+	.pkey_size = hmac_size,
 
-	0,0,0,
-
-	hmac_size,
-	0,
-	0,0,0,0,0,0,0,
-
-	hmac_key_free,
-	hmac_pkey_ctrl,
+	.pkey_free = hmac_key_free,
+	.pkey_ctrl = hmac_pkey_ctrl,
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-	old_hmac_decode,
-	old_hmac_encode
-#else
-	0,0
+	.old_priv_decode = old_hmac_decode,
+	.old_priv_encode = old_hmac_encode
 #endif
 	};
 

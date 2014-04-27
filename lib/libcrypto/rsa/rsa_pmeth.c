@@ -609,41 +609,26 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return ret;
 	}
 
-const EVP_PKEY_METHOD rsa_pkey_meth = 
-	{
-	EVP_PKEY_RSA,
-	EVP_PKEY_FLAG_AUTOARGLEN,
-	pkey_rsa_init,
-	pkey_rsa_copy,
-	pkey_rsa_cleanup,
+const EVP_PKEY_METHOD rsa_pkey_meth = {
+	.pkey_id = EVP_PKEY_RSA,
+	.flags = EVP_PKEY_FLAG_AUTOARGLEN,
 
-	0,0,
+	.init = pkey_rsa_init,
+	.copy = pkey_rsa_copy,
+	.cleanup = pkey_rsa_cleanup,
 
-	0,
-	pkey_rsa_keygen,
+	.keygen = pkey_rsa_keygen,
 
-	0,
-	pkey_rsa_sign,
+	.sign = pkey_rsa_sign,
 
-	0,
-	pkey_rsa_verify,
+	.verify = pkey_rsa_verify,
 
-	0,
-	pkey_rsa_verifyrecover,
+	.verify_recover = pkey_rsa_verifyrecover,
 
+	.encrypt = pkey_rsa_encrypt,
 
-	0,0,0,0,
+	.decrypt = pkey_rsa_decrypt,
 
-	0,
-	pkey_rsa_encrypt,
-
-	0,
-	pkey_rsa_decrypt,
-
-	0,0,
-
-	pkey_rsa_ctrl,
-	pkey_rsa_ctrl_str
-
-
-	};
+	.ctrl = pkey_rsa_ctrl,
+	.ctrl_str = pkey_rsa_ctrl_str
+};

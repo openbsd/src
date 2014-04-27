@@ -74,16 +74,16 @@ static int nullf_free(BIO *data);
 static long nullf_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
 static BIO_METHOD methods_nullf = {
-	BIO_TYPE_NULL_FILTER,
-	"NULL filter",
-	nullf_write,
-	nullf_read,
-	nullf_puts,
-	nullf_gets,
-	nullf_ctrl,
-	nullf_new,
-	nullf_free,
-	nullf_callback_ctrl,
+	.type = BIO_TYPE_NULL_FILTER,
+	.name = "NULL filter",
+	.bwrite = nullf_write,
+	.bread = nullf_read,
+	.bputs = nullf_puts,
+	.bgets = nullf_gets,
+	.ctrl = nullf_ctrl,
+	.create = nullf_new,
+	.destroy = nullf_free,
+	.callback_ctrl = nullf_callback_ctrl
 };
 
 BIO_METHOD *

@@ -157,18 +157,16 @@ typedef struct ok_struct
 	unsigned char buf[IOBS];
 	} BIO_OK_CTX;
 
-static BIO_METHOD methods_ok=
-	{
-	BIO_TYPE_CIPHER,"reliable",
-	ok_write,
-	ok_read,
-	NULL, /* ok_puts, */
-	NULL, /* ok_gets, */
-	ok_ctrl,
-	ok_new,
-	ok_free,
-	ok_callback_ctrl,
-	};
+static BIO_METHOD methods_ok = {
+	.type = BIO_TYPE_CIPHER,
+	.name = "reliable",
+	.bwrite = ok_write,
+	.bread = ok_read,
+	.ctrl = ok_ctrl,
+	.create = ok_new,
+	.destroy = ok_free,
+	.callback_ctrl = ok_callback_ctrl
+};
 
 BIO_METHOD *BIO_f_reliable(void)
 	{

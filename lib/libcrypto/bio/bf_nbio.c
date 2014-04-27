@@ -81,16 +81,16 @@ typedef struct nbio_test_st {
 } NBIO_TEST;
 
 static BIO_METHOD methods_nbiof = {
-	BIO_TYPE_NBIO_TEST,
-	"non-blocking IO test filter",
-	nbiof_write,
-	nbiof_read,
-	nbiof_puts,
-	nbiof_gets,
-	nbiof_ctrl,
-	nbiof_new,
-	nbiof_free,
-	nbiof_callback_ctrl,
+	.type = BIO_TYPE_NBIO_TEST,
+	.name = "non-blocking IO test filter",
+	.bwrite = nbiof_write,
+	.bread = nbiof_read,
+	.bputs = nbiof_puts,
+	.bgets = nbiof_gets,
+	.ctrl = nbiof_ctrl,
+	.create = nbiof_new,
+	.destroy = nbiof_free,
+	.callback_ctrl = nbiof_callback_ctrl
 };
 
 BIO_METHOD *

@@ -72,16 +72,16 @@ static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 #define DEFAULT_BUFFER_SIZE	4096
 
 static BIO_METHOD methods_buffer = {
-	BIO_TYPE_BUFFER,
-	"buffer",
-	buffer_write,
-	buffer_read,
-	buffer_puts,
-	buffer_gets,
-	buffer_ctrl,
-	buffer_new,
-	buffer_free,
-	buffer_callback_ctrl,
+	.type = BIO_TYPE_BUFFER,
+	.name = "buffer",
+	.bwrite = buffer_write,
+	.bread = buffer_read,
+	.bputs = buffer_puts,
+	.bgets = buffer_gets,
+	.ctrl = buffer_ctrl,
+	.create = buffer_new,
+	.destroy = buffer_free,
+	.callback_ctrl = buffer_callback_ctrl
 };
 
 BIO_METHOD *

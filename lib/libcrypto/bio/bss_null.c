@@ -70,16 +70,15 @@ static int null_new(BIO *h);
 static int null_free(BIO *data);
 
 static BIO_METHOD null_method = {
-	BIO_TYPE_NULL,
-	"NULL",
-	null_write,
-	null_read,
-	null_puts,
-	null_gets,
-	null_ctrl,
-	null_new,
-	null_free,
-	NULL,
+	.type = BIO_TYPE_NULL,
+	.name = "NULL",
+	.bwrite = null_write,
+	.bread = null_read,
+	.bputs = null_puts,
+	.bgets = null_gets,
+	.ctrl = null_ctrl,
+	.create = null_new,
+	.destroy = null_free
 };
 
 BIO_METHOD *

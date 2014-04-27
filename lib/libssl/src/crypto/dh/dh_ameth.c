@@ -466,36 +466,32 @@ int DHparams_print(BIO *bp, const DH *x)
 	return do_dh_print(bp, x, 4, NULL, 0);
 	}
 
-const EVP_PKEY_ASN1_METHOD dh_asn1_meth = 
-	{
-	EVP_PKEY_DH,
-	EVP_PKEY_DH,
-	0,
+const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
+	.pkey_id = EVP_PKEY_DH,
+	.pkey_base_id = EVP_PKEY_DH,
 
-	"DH",
-	"OpenSSL PKCS#3 DH method",
+	.pem_str = "DH",
+	.info = "OpenSSL PKCS#3 DH method",
 
-	dh_pub_decode,
-	dh_pub_encode,
-	dh_pub_cmp,
-	dh_public_print,
+	.pub_decode = dh_pub_decode,
+	.pub_encode = dh_pub_encode,
+	.pub_cmp = dh_pub_cmp,
+	.pub_print = dh_public_print,
 
-	dh_priv_decode,
-	dh_priv_encode,
-	dh_private_print,
+	.priv_decode = dh_priv_decode,
+	.priv_encode = dh_priv_encode,
+	.priv_print = dh_private_print,
 
-	int_dh_size,
-	dh_bits,
+	.pkey_size = int_dh_size,
+	.pkey_bits = dh_bits,
 
-	dh_param_decode,
-	dh_param_encode,
-	dh_missing_parameters,
-	dh_copy_parameters,
-	dh_cmp_parameters,
-	dh_param_print,
-	0,
+	.param_decode = dh_param_decode,
+	.param_encode = dh_param_encode,
+	.param_missing = dh_missing_parameters,
+	.param_copy = dh_copy_parameters,
+	.param_cmp = dh_cmp_parameters,
+	.param_print = dh_param_print,
 
-	int_dh_free,
-	0
-	};
+	.pkey_free = int_dh_free,
+};
 

@@ -106,18 +106,16 @@ typedef struct bio_ber_struct
 	unsigned char buf[BER_BUF_SIZE];
 	} BIO_BER_CTX;
 
-static BIO_METHOD methods_ber=
-	{
-	BIO_TYPE_CIPHER,"cipher",
-	ber_write,
-	ber_read,
-	NULL, /* ber_puts, */
-	NULL, /* ber_gets, */
-	ber_ctrl,
-	ber_new,
-	ber_free,
-	ber_callback_ctrl,
-	};
+static BIO_METHOD methods_ber = {
+	.type = BIO_TYPE_CIPHER,
+	.name = "cipher",
+	.bwrite = ber_write,
+	.bread = ber_read,
+	.ctrl = ber_ctrl,
+	.create = ber_new,
+	.destroy = ber_free,
+	.callback_ctrl = ber_callback_ctrl
+};
 
 BIO_METHOD *BIO_f_ber(void)
 	{

@@ -98,16 +98,14 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 #define ACPT_S_OK			3
 
 static BIO_METHOD methods_acceptp = {
-	BIO_TYPE_ACCEPT,
-	"socket accept",
-	acpt_write,
-	acpt_read,
-	acpt_puts,
-	NULL, /* connect_gets, */
-	acpt_ctrl,
-	acpt_new,
-	acpt_free,
-	NULL,
+	.type = BIO_TYPE_ACCEPT,
+	.name = "socket accept",
+	.bwrite = acpt_write,
+	.bread = acpt_read,
+	.bputs = acpt_puts,
+	.ctrl = acpt_ctrl,
+	.create = acpt_new,
+	.destroy = acpt_free
 };
 
 BIO_METHOD *

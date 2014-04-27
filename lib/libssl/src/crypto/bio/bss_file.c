@@ -100,16 +100,15 @@ static int file_new(BIO *h);
 static int file_free(BIO *data);
 
 static BIO_METHOD methods_filep = {
-	BIO_TYPE_FILE,
-	"FILE pointer",
-	file_write,
-	file_read,
-	file_puts,
-	file_gets,
-	file_ctrl,
-	file_new,
-	file_free,
-	NULL,
+	.type = BIO_TYPE_FILE,
+	.name = "FILE pointer",
+	.bwrite = file_write,
+	.bread = file_read,
+	.bputs = file_puts,
+	.bgets = file_gets,
+	.ctrl = file_ctrl,
+	.create = file_new,
+	.destroy = file_free
 };
 
 BIO *

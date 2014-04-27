@@ -8,14 +8,8 @@
 COMP_METHOD *COMP_zlib(void );
 
 static COMP_METHOD zlib_method_nozlib = {
-	NID_undef,
-	"(undef)",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.type = NID_undef,
+	.name = "(undef)"
 };
 
 #ifndef ZLIB
@@ -55,26 +49,20 @@ static int zz_uncompress(Bytef *dest, uLongf *destLen, const Bytef *source,
     uLong sourceLen);
 
 static COMP_METHOD zlib_stateless_method = {
-	NID_zlib_compression,
-	LN_zlib_compression,
-	NULL,
-	NULL,
-	zlib_compress_block,
-	zlib_expand_block,
-	NULL,
-	NULL,
+	.type = NID_zlib_compression,
+	.name = LN_zlib_compression,
+	.compress = zlib_compress_block,
+	.expand = zlib_expand_block
 };
 #endif
 
 static COMP_METHOD zlib_stateful_method = {
-	NID_zlib_compression,
-	LN_zlib_compression,
-	zlib_stateful_init,
-	zlib_stateful_finish,
-	zlib_stateful_compress_block,
-	zlib_stateful_expand_block,
-	NULL,
-	NULL,
+	.type = NID_zlib_compression,
+	.name = LN_zlib_compression,
+	.init = zlib_stateful_init,
+	.finish = zlib_stateful_finish,
+	.compress = zlib_stateful_compress_block,
+	.expand = zlib_stateful_expand_block
 };
 
 #ifdef ZLIB_SHARED
@@ -433,16 +421,14 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
 
 static BIO_METHOD bio_meth_zlib = {
-	BIO_TYPE_COMP,
-	"zlib",
-	bio_zlib_write,
-	bio_zlib_read,
-	NULL,
-	NULL,
-	bio_zlib_ctrl,
-	bio_zlib_new,
-	bio_zlib_free,
-	bio_zlib_callback_ctrl
+	.type = BIO_TYPE_COMP,
+	.name = "zlib",
+	.bwrite = bio_zlib_write,
+	.bread = bio_zlib_read,
+	.ctrl = bio_zlib_ctrl,
+	.create = bio_zlib_new,
+	.destroy = bio_zlib_free,
+	.callback_ctrl = bio_zlib_callback_ctrl
 };
 
 BIO_METHOD *

@@ -77,16 +77,16 @@ static long linebuffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 /* #define DEBUG */
 
 static BIO_METHOD methods_linebuffer = {
-	BIO_TYPE_LINEBUFFER,
-	"linebuffer",
-	linebuffer_write,
-	linebuffer_read,
-	linebuffer_puts,
-	linebuffer_gets,
-	linebuffer_ctrl,
-	linebuffer_new,
-	linebuffer_free,
-	linebuffer_callback_ctrl,
+	.type = BIO_TYPE_LINEBUFFER,
+	.name = "linebuffer",
+	.bwrite = linebuffer_write,
+	.bread = linebuffer_read,
+	.bputs = linebuffer_puts,
+	.bgets = linebuffer_gets,
+	.ctrl = linebuffer_ctrl,
+	.create = linebuffer_new,
+	.destroy = linebuffer_free,
+	.callback_ctrl = linebuffer_callback_ctrl
 };
 
 BIO_METHOD *

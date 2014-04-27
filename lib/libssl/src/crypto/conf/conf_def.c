@@ -91,16 +91,16 @@ static int def_to_int(const CONF *conf, char c);
 const char CONF_def_version[]="CONF_def" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD default_method = {
-	"OpenSSL default",
-	def_create,
-	def_init_default,
-	def_destroy,
-	def_destroy_data,
-	def_load_bio,
-	def_dump,
-	def_is_number,
-	def_to_int,
-	def_load
+	.name = "OpenSSL default",
+	.create = def_create,
+	.init = def_init_default,
+	.destroy = def_destroy,
+	.destroy_data = def_destroy_data,
+	.load_bio = def_load_bio,
+	.dump = def_dump,
+	.is_number = def_is_number,
+	.to_int = def_to_int,
+	.load = def_load
 };
 
 static CONF_METHOD WIN32_method = {

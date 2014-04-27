@@ -69,16 +69,10 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 		const ECDSA_SIG *sig, EC_KEY *eckey);
 
 static ECDSA_METHOD openssl_ecdsa_meth = {
-	"OpenSSL ECDSA method",
-	ecdsa_do_sign,
-	ecdsa_sign_setup,
-	ecdsa_do_verify,
-#if 0
-	NULL, /* init     */
-	NULL, /* finish   */
-#endif
-	0,    /* flags    */
-	NULL  /* app_data */
+	.name = "OpenSSL ECDSA method",
+	.ecdsa_do_sign = ecdsa_do_sign,
+	.ecdsa_sign_setup = ecdsa_sign_setup,
+	.ecdsa_do_verify = ecdsa_do_verify
 };
 
 const ECDSA_METHOD *ECDSA_OpenSSL(void)

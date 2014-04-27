@@ -133,25 +133,22 @@ static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
 	OPENSSL_ITEM parameters[]);
 static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void));
 
-static STORE_METHOD store_memory =
-	{
-	"OpenSSL memory store interface",
-	mem_init,
-	mem_clean,
-	mem_generate,
-	mem_get,
-	mem_store,
-	mem_modify,
-	NULL, /* revoke */
-	mem_delete,
-	mem_list_start,
-	mem_list_next,
-	mem_list_end,
-	mem_list_endp,
-	NULL, /* update */
-	mem_lock,
-	mem_unlock,
-	mem_ctrl
+static STORE_METHOD store_memory = {
+	.name = "OpenSSL memory store interface",
+	.init = mem_init,
+	.clean = mem_clean,
+	.generate_object = mem_generate,
+	.get_object = mem_get,
+	.store_object = mem_store,
+	.modify_object = mem_modify,
+	.delete_object = mem_delete,
+	.list_object_start = mem_list_start,
+	.list_object_next = mem_list_next,
+	.list_object_end = mem_list_end,
+	.list_object_endp = mem_list_endp,
+	.lock_store = mem_lock,
+	.unlock_store = mem_unlock,
+	.ctrl = mem_ctrl
 	};
 
 const STORE_METHOD *STORE_Memory(void)

@@ -93,23 +93,15 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz);
 static void *dlfcn_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dlfcn = {
-	"OpenSSL 'dlfcn' shared library method",
-	dlfcn_load,
-	dlfcn_unload,
-	dlfcn_bind_var,
-	dlfcn_bind_func,
-/* For now, "unbind" doesn't exist */
-#if 0
-	NULL, /* unbind_var */
-	NULL, /* unbind_func */
-#endif
-	NULL, /* ctrl */
-	dlfcn_name_converter,
-	dlfcn_merger,
-	NULL, /* init */
-	NULL, /* finish */
-	dlfcn_pathbyaddr,
-	dlfcn_globallookup
+	.name = "OpenSSL 'dlfcn' shared library method",
+	.dso_load = dlfcn_load,
+	.dso_unload = dlfcn_unload,
+	.dso_bind_var = dlfcn_bind_var,
+	.dso_bind_func = dlfcn_bind_func,
+	.dso_name_converter = dlfcn_name_converter,
+	.dso_merger = dlfcn_merger,
+	.pathbyaddr = dlfcn_pathbyaddr,
+	.globallookup = dlfcn_globallookup
 };
 
 DSO_METHOD *

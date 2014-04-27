@@ -304,38 +304,23 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return EC_KEY_generate_key(pkey->pkey.ec);
 	}
 
-const EVP_PKEY_METHOD ec_pkey_meth = 
-	{
-	EVP_PKEY_EC,
-	0,
-	pkey_ec_init,
-	pkey_ec_copy,
-	pkey_ec_cleanup,
+const EVP_PKEY_METHOD ec_pkey_meth = {
+	.pkey_id = EVP_PKEY_EC,
 
-	0,
-	pkey_ec_paramgen,
+	.init = pkey_ec_init,
+	.copy = pkey_ec_copy,
+	.cleanup = pkey_ec_cleanup,
 
-	0,
-	pkey_ec_keygen,
+	.paramgen = pkey_ec_paramgen,
 
-	0,
-	pkey_ec_sign,
+	.keygen = pkey_ec_keygen,
 
-	0,
-	pkey_ec_verify,
+	.sign = pkey_ec_sign,
 
-	0,0,
+	.verify = pkey_ec_verify,
 
-	0,0,0,0,
+	.derive = pkey_ec_derive,
 
-	0,0,
-
-	0,0,
-
-	0,
-	pkey_ec_derive,
-
-	pkey_ec_ctrl,
-	pkey_ec_ctrl_str
-
-	};
+	.ctrl = pkey_ec_ctrl,
+	.ctrl_str = pkey_ec_ctrl_str
+};

@@ -74,18 +74,17 @@ static int md_new(BIO *h);
 static int md_free(BIO *data);
 static long md_callback_ctrl(BIO *h,int cmd,bio_info_cb *fp);
 
-static BIO_METHOD methods_md=
-	{
-	BIO_TYPE_MD,"message digest",
-	md_write,
-	md_read,
-	NULL, /* md_puts, */
-	md_gets,
-	md_ctrl,
-	md_new,
-	md_free,
-	md_callback_ctrl,
-	};
+static BIO_METHOD methods_md = {
+	.type = BIO_TYPE_MD,
+	.name = "message digest",
+	.bwrite = md_write,
+	.bread = md_read,
+	.bgets = md_gets,
+	.ctrl = md_ctrl,
+	.create = md_new,
+	.destroy = md_free,
+	.callback_ctrl = md_callback_ctrl
+};
 
 BIO_METHOD *BIO_f_md(void)
 	{

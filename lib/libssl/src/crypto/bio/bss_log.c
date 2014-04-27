@@ -86,15 +86,13 @@ static void xsyslog(BIO* bp, int priority, const char* string);
 static void xcloselog(BIO* bp);
 
 static BIO_METHOD methods_slg = {
-	BIO_TYPE_MEM, "syslog",
-	slg_write,
-	NULL,
-	slg_puts,
-	NULL,
-	slg_ctrl,
-	slg_new,
-	slg_free,
-	NULL,
+	.type = BIO_TYPE_MEM,
+	.name = "syslog",
+	.bwrite = slg_write,
+	.bputs = slg_puts,
+	.ctrl = slg_ctrl,
+	.create = slg_new,
+	.destroy = slg_free
 };
 
 BIO_METHOD *

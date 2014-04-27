@@ -79,15 +79,15 @@ static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
 
 static BIO_METHOD methods_fdp = {
-	BIO_TYPE_FD, "file descriptor",
-	fd_write,
-	fd_read,
-	fd_puts,
-	fd_gets,
-	fd_ctrl,
-	fd_new,
-	fd_free,
-	NULL,
+	.type = BIO_TYPE_FD,
+	.name = "file descriptor",
+	.bwrite = fd_write,
+	.bread = fd_read,
+	.bputs = fd_puts,
+	.bgets = fd_gets,
+	.ctrl = fd_ctrl,
+	.create = fd_new,
+	.destroy = fd_free
 };
 
 BIO_METHOD *

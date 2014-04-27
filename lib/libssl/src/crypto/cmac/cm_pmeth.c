@@ -188,37 +188,19 @@ static int pkey_cmac_ctrl_str(EVP_PKEY_CTX *ctx,
 	return -2;
 	}
 
-const EVP_PKEY_METHOD cmac_pkey_meth = 
-	{
-	EVP_PKEY_CMAC,
-	EVP_PKEY_FLAG_SIGCTX_CUSTOM,
-	pkey_cmac_init,
-	pkey_cmac_copy,
-	pkey_cmac_cleanup,
+const EVP_PKEY_METHOD cmac_pkey_meth = {
+	.pkey_id = EVP_PKEY_CMAC,
+	.flags = EVP_PKEY_FLAG_SIGCTX_CUSTOM,
 
-	0, 0,
+	.init = pkey_cmac_init,
+	.copy = pkey_cmac_copy,
+	.cleanup = pkey_cmac_cleanup,
 
-	0,
-	pkey_cmac_keygen,
+	.keygen = pkey_cmac_keygen,
 
-	0, 0,
+	.signctx_init = cmac_signctx_init,
+	.signctx = cmac_signctx,
 
-	0, 0,
-
-	0,0,
-
-	cmac_signctx_init,
-	cmac_signctx,
-
-	0,0,
-
-	0,0,
-
-	0,0,
-
-	0,0,
-
-	pkey_cmac_ctrl,
-	pkey_cmac_ctrl_str
-
-	};
+	.ctrl = pkey_cmac_ctrl,
+	.ctrl_str = pkey_cmac_ctrl_str
+};

@@ -124,16 +124,16 @@ static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
     asn1_bio_state_t other_state);
 
 static BIO_METHOD methods_asn1 = {
-	BIO_TYPE_ASN1,
-	"asn1",
-	asn1_bio_write,
-	asn1_bio_read,
-	asn1_bio_puts,
-	asn1_bio_gets,
-	asn1_bio_ctrl,
-	asn1_bio_new,
-	asn1_bio_free,
-	asn1_bio_callback_ctrl,
+	.type = BIO_TYPE_ASN1,
+	.name = "asn1",
+	.bwrite = asn1_bio_write,
+	.bread = asn1_bio_read,
+	.bputs = asn1_bio_puts,
+	.bgets = asn1_bio_gets,
+	.ctrl = asn1_bio_ctrl,
+	.create = asn1_bio_new,
+	.destroy = asn1_bio_free,
+	.callback_ctrl = asn1_bio_callback_ctrl
 };
 
 BIO_METHOD *

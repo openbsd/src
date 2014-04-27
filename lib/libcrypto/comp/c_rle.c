@@ -10,14 +10,10 @@ static int rle_expand_block(COMP_CTX *ctx, unsigned char *out,
     unsigned int olen, unsigned char *in, unsigned int ilen);
 
 static COMP_METHOD rle_method = {
-	NID_rle_compression,
-	LN_rle_compression,
-	NULL,
-	NULL,
-	rle_compress_block,
-	rle_expand_block,
-	NULL,
-	NULL,
+	.type = NID_rle_compression,
+	.name = LN_rle_compression,
+	.compress = rle_compress_block,
+	.expand = rle_expand_block
 };
 
 COMP_METHOD *

@@ -82,22 +82,15 @@ static int RSA_null_mod_exp(const BIGNUM *r0, const BIGNUM *i, RSA *rsa);
 #endif
 static int RSA_null_init(RSA *rsa);
 static int RSA_null_finish(RSA *rsa);
-static RSA_METHOD rsa_null_meth={
-	"Null RSA",
-	RSA_null_public_encrypt,
-	RSA_null_public_decrypt,
-	RSA_null_private_encrypt,
-	RSA_null_private_decrypt,
-	NULL,
-	NULL,
-	RSA_null_init,
-	RSA_null_finish,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-	};
+static RSA_METHOD rsa_null_meth = {
+	.name = "Null RSA",
+	.rsa_pub_enc = RSA_null_public_encrypt,
+	.rsa_pub_dec = RSA_null_public_decrypt,
+	.rsa_priv_enc = RSA_null_private_encrypt,
+	.rsa_priv_dec = RSA_null_private_decrypt,
+	.init = RSA_null_init,
+	.finish = RSA_null_finish,
+};
 
 const RSA_METHOD *RSA_null_method(void)
 	{

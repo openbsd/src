@@ -74,18 +74,12 @@ static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
 
 static DSA_METHOD openssl_dsa_meth = {
-"OpenSSL DSA method",
-dsa_do_sign,
-dsa_sign_setup,
-dsa_do_verify,
-NULL, /* dsa_mod_exp, */
-NULL, /* dsa_bn_mod_exp, */
-dsa_init,
-dsa_finish,
-0,
-NULL,
-NULL,
-NULL
+	.name = "OpenSSL DSA method",
+	.dsa_do_sign = dsa_do_sign,
+	.dsa_sign_setup = dsa_sign_setup,
+	.dsa_do_verify = dsa_do_verify,
+	.init = dsa_init,
+	.finish = dsa_finish
 };
 
 /* These macro wrappers replace attempts to use the dsa_mod_exp() and

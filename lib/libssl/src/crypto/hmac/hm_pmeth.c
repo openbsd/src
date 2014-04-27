@@ -235,37 +235,18 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
 	return -2;
 	}
 
-const EVP_PKEY_METHOD hmac_pkey_meth = 
-	{
-	EVP_PKEY_HMAC,
-	0,
-	pkey_hmac_init,
-	pkey_hmac_copy,
-	pkey_hmac_cleanup,
+const EVP_PKEY_METHOD hmac_pkey_meth = {
+	.pkey_id = EVP_PKEY_HMAC,
 
-	0, 0,
+	.init = pkey_hmac_init,
+	.copy = pkey_hmac_copy,
+	.cleanup = pkey_hmac_cleanup,
 
-	0,
-	pkey_hmac_keygen,
+	.keygen = pkey_hmac_keygen,
 
-	0, 0,
+	.signctx_init = hmac_signctx_init,
+	.signctx = hmac_signctx,
 
-	0, 0,
-
-	0,0,
-
-	hmac_signctx_init,
-	hmac_signctx,
-
-	0,0,
-
-	0,0,
-
-	0,0,
-
-	0,0,
-
-	pkey_hmac_ctrl,
-	pkey_hmac_ctrl_str
-
-	};
+	.ctrl = pkey_hmac_ctrl,
+	.ctrl_str = pkey_hmac_ctrl_str
+};

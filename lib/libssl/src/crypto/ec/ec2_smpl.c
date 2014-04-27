@@ -73,52 +73,51 @@
 
 #ifndef OPENSSL_NO_EC2M
 
-const EC_METHOD *EC_GF2m_simple_method(void)
-	{
+const EC_METHOD *
+EC_GF2m_simple_method(void)
+{
 	static const EC_METHOD ret = {
-		EC_FLAGS_DEFAULT_OCT,
-		NID_X9_62_characteristic_two_field,
-		ec_GF2m_simple_group_init,
-		ec_GF2m_simple_group_finish,
-		ec_GF2m_simple_group_clear_finish,
-		ec_GF2m_simple_group_copy,
-		ec_GF2m_simple_group_set_curve,
-		ec_GF2m_simple_group_get_curve,
-		ec_GF2m_simple_group_get_degree,
-		ec_GF2m_simple_group_check_discriminant,
-		ec_GF2m_simple_point_init,
-		ec_GF2m_simple_point_finish,
-		ec_GF2m_simple_point_clear_finish,
-		ec_GF2m_simple_point_copy,
-		ec_GF2m_simple_point_set_to_infinity,
-		0 /* set_Jprojective_coordinates_GFp */,
-		0 /* get_Jprojective_coordinates_GFp */,
-		ec_GF2m_simple_point_set_affine_coordinates,
-		ec_GF2m_simple_point_get_affine_coordinates,
-		0,0,0,
-		ec_GF2m_simple_add,
-		ec_GF2m_simple_dbl,
-		ec_GF2m_simple_invert,
-		ec_GF2m_simple_is_at_infinity,
-		ec_GF2m_simple_is_on_curve,
-		ec_GF2m_simple_cmp,
-		ec_GF2m_simple_make_affine,
-		ec_GF2m_simple_points_make_affine,
+		.flags = EC_FLAGS_DEFAULT_OCT,
+		.field_type = NID_X9_62_characteristic_two_field,
+		.group_init = ec_GF2m_simple_group_init,
+		.group_finish = ec_GF2m_simple_group_finish,
+		.group_clear_finish = ec_GF2m_simple_group_clear_finish,
+		.group_copy = ec_GF2m_simple_group_copy,
+		.group_set_curve = ec_GF2m_simple_group_set_curve,
+		.group_get_curve = ec_GF2m_simple_group_get_curve,
+		.group_get_degree = ec_GF2m_simple_group_get_degree,
+		.group_check_discriminant =
+		    ec_GF2m_simple_group_check_discriminant,
+		.point_init = ec_GF2m_simple_point_init,
+		.point_finish = ec_GF2m_simple_point_finish,
+		.point_clear_finish = ec_GF2m_simple_point_clear_finish,
+		.point_copy = ec_GF2m_simple_point_copy,
+		.point_set_to_infinity = ec_GF2m_simple_point_set_to_infinity,
+		.point_set_affine_coordinates =
+		    ec_GF2m_simple_point_set_affine_coordinates,
+		.point_get_affine_coordinates =
+		    ec_GF2m_simple_point_get_affine_coordinates,
+		.add = ec_GF2m_simple_add,
+		.dbl = ec_GF2m_simple_dbl,
+		.invert = ec_GF2m_simple_invert,
+		.is_at_infinity = ec_GF2m_simple_is_at_infinity,
+		.is_on_curve = ec_GF2m_simple_is_on_curve,
+		.point_cmp = ec_GF2m_simple_cmp,
+		.make_affine = ec_GF2m_simple_make_affine,
+		.points_make_affine = ec_GF2m_simple_points_make_affine,
 
 		/* the following three method functions are defined in ec2_mult.c */
-		ec_GF2m_simple_mul,
-		ec_GF2m_precompute_mult,
-		ec_GF2m_have_precompute_mult,
+		.mul = ec_GF2m_simple_mul,
+		.precompute_mult = ec_GF2m_precompute_mult,
+		.have_precompute_mult = ec_GF2m_have_precompute_mult,
 
-		ec_GF2m_simple_field_mul,
-		ec_GF2m_simple_field_sqr,
-		ec_GF2m_simple_field_div,
-		0 /* field_encode */,
-		0 /* field_decode */,
-		0 /* field_set_to_one */ };
+		.field_mul = ec_GF2m_simple_field_mul,
+		.field_sqr = ec_GF2m_simple_field_sqr,
+		.field_div = ec_GF2m_simple_field_div,
+	};
 
 	return &ret;
-	}
+}
 
 
 /* Initialize a GF(2^m)-based EC_GROUP structure.
