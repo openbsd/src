@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.21 2014/04/16 10:31:27 zhuk Exp $
+# $OpenBSD: LaFile.pm,v 1.22 2014/04/27 18:08:35 zhuk Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -126,22 +126,17 @@ sub write_shared_libs_log
 # XXX pick the right one if multiple are found!
 sub find
 {
-	my ($self, $l, $dirs) = @_;
+	my ($self, $l, $sd) = @_;
 
-	# search in cwd as well
-	unshift @$dirs, '.';
-	tsay {"searching .la for $l"};
-	tsay {"search path= ", join(':', @$dirs)};
-	foreach my $d (@$dirs) {
-		foreach my $la_candidate ("$d/lib$l.la", "$d/$l.la") {
-			if (-f $la_candidate) {
-				tsay {"found $la_candidate"};
-				return $la_candidate;
-			}
+	tsay {"searching .la for $l in $sd"};
+	foreach my $la_candidate ("$sd/lib$l.la", "$sd/$l.la") {
+		if (-f $la_candidate) {
+			tsay {"found $la_candidate"};
+			return $la_candidate;
 		}
 	}
 	tsay {".la for $l not found!"};
-	return 0;
+	return undef;
 }
 
 sub install

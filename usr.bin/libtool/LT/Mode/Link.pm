@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.28 2014/04/20 17:34:26 zhuk Exp $
+# $OpenBSD: Link.pm,v 1.29 2014/04/27 18:08:35 zhuk Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -510,6 +510,37 @@ sub resolve_la
 	$self->{args} = $o->{result};
 }
 
+# Find first library or .la file for given library name.
+# Returns pair of (type, file path), or empty list on error.
+sub find_first_lib
+{
+	my ($self, $lib, $dirs, $gp) = @_;
+
+	my $name = $lib->{key};
+	require LT::LaFile;
+
+	push(@$dirs, $gp->libsearchdirs) if $gp;
+	for my $sd(".", @$dirs) {
+		my $file = LT::LaFile->find($name, $sd);
+		tsay {"    LT::LaFile->find($name, $sd) returned \"$file\""} if defined $file;
+		return ('LT::LaFile', $file) if defined $file;
+
+		$file = $lib->findbest($sd, $name);
+		if (defined $file) {
+			tsay {"found $name in $sd"};
+			return ('LT::Library', $file);
+		} else {
+			# XXX find static library instead?
+			$file = "$sd/lib$name.a";
+			if (-f $file) {
+				tsay {"found static $name in $sd"};
+				return ('LT::Library', $file);
+			}
+		}
+	}
+	return ();
+}
+
 # parse link flags and arguments
 # eliminate all -L and -l flags in the argument string and add the
 # corresponding directories and library names to the dirs/libs hashes.
@@ -562,25 +593,31 @@ sub internal_parse_linkargs1
 			my $key = $1;
 			if (!exists $libs->{$key}) {
 				$libs->create($key);
-				require LT::LaFile;
-				my $lafile = LT::LaFile->find($key, $dirs);
-				if ($lafile) {
-					$libs->{$key}->{lafile} = $lafile;
-					my $absla = abs_path($lafile);
+				my ($type, $file) = $self->find_first_lib($libs->{$key}, $dirs, $gp);
+				if (!defined $type) {
+					say "warning: could not find a $key library";
+					next;
+				} elsif ($type eq 'LT::LaFile') {
+					my $absla = abs_path($file);
+					$libs->{$key}->{lafile} = $absla;
 					tsay {"    adding $absla to deplibs"}
 					    if $level == 0;
 					push(@$deplibs, $absla);
-					push(@$result, $lafile);
+					push(@$result, $file);
 					next;
-				} else {
-					$libs->{$key}->resolve_library($dirs, 1, 0, 'notyet', $gp);
+				} elsif ($type eq 'LT::Library') {
+					$libs->{$key}->{fullpath} = $file;
 					my @deps = $libs->{$key}->inspect;
 					foreach my $d (@deps) {
 						my $k = basename($d);
+						# XXX will fail for (_pic)?\.a$
 						$k =~ s/^(\S+)\.so.*$/$1/;
 						$k =~ s/^lib//;
 						push(@largs, "-l$k");
 					}
+				} else {
+					die "internal error: unsupported" .
+					    " library type \"$type\"";
 				}
 			}
 			tsay {"    adding $arg to deplibs"} if $level == 0;
