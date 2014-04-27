@@ -80,7 +80,7 @@ int ENGINE_register_STORE(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_STORE()
+void ENGINE_register_all_STORE(void)
 	{
 	ENGINE *e;
 

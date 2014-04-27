@@ -95,7 +95,7 @@ int ENGINE_register_ECDH(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_ECDH()
+void ENGINE_register_all_ECDH(void)
 	{
 	ENGINE *e;
 

@@ -86,7 +86,7 @@ int ENGINE_register_pkey_meths(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_pkey_meths()
+void ENGINE_register_all_pkey_meths(void)
 	{
 	ENGINE *e;
 

@@ -80,7 +80,7 @@ int ENGINE_register_ECDSA(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_ECDSA()
+void ENGINE_register_all_ECDSA(void)
 	{
 	ENGINE *e;
 

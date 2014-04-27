@@ -104,7 +104,7 @@ OPENSSL_config(const char *config_name)
 }
 
 void
-OPENSSL_no_config()
+OPENSSL_no_config(void)
 {
 	openssl_configured = 1;
 }

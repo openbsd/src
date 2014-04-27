@@ -92,7 +92,7 @@ pitem_free(pitem *item)
 }
 
 pqueue_s *
-pqueue_new()
+pqueue_new(void)
 {
 	pqueue_s *pq = (pqueue_s *)malloc(sizeof(pqueue_s));
 

@@ -117,13 +117,13 @@ static CONF_METHOD WIN32_method = {
 };
 
 CONF_METHOD *
-NCONF_default()
+NCONF_default(void)
 {
 	return &default_method;
 }
 
 CONF_METHOD *
-NCONF_WIN32()
+NCONF_WIN32(void)
 {
 	return &WIN32_method;
 }

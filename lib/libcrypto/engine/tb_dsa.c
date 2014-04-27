@@ -80,7 +80,7 @@ int ENGINE_register_DSA(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_DSA()
+void ENGINE_register_all_DSA(void)
 	{
 	ENGINE *e;
 
