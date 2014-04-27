@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.175 2014/04/19 16:20:08 logan Exp $
+.\"	$OpenBSD: sysctl.8,v 1.176 2014/04/27 15:55:16 logan Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: April 27 2014 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -296,6 +296,7 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.ip6.log_interval Ta integer Ta yes
 .It net.inet6.ip6.hdrnestlimit Ta integer Ta yes
 .It net.inet6.ip6.dad_count Ta integer Ta yes
+.It net.inet6.ip6.dad_pending Ta integer Ta yes
 .It net.inet6.ip6.auto_flowlabel Ta integer Ta yes
 .It net.inet6.ip6.defmcasthlim Ta integer Ta yes
 .It net.inet6.ip6.use_deprecated Ta integer Ta yes

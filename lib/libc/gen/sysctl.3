@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.230 2014/04/19 16:20:08 logan Exp $
+.\"	$OpenBSD: sysctl.3,v 1.231 2014/04/27 15:55:16 logan Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: April 27 2014 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1671,6 +1671,7 @@ The currently defined protocols and names are:
 .It ip6 Ta accept_rtadv Ta integer Ta yes
 .It ip6 Ta auto_flowlabel Ta integer Ta yes
 .It ip6 Ta dad_count Ta integer Ta yes
+.It ip6 Ta dad_pending Ta integer Ta yes
 .It ip6 Ta defmcasthlim Ta integer Ta yes
 .It ip6 Ta forwarding Ta integer Ta yes
 .It ip6 Ta hdrnestlimit Ta integer Ta yes
@@ -1803,6 +1804,14 @@ This variable configures the number of IPv6 DAD
 .Pq duplicated address detection
 probe packets.
 These packets are generated when IPv6 interfaces are first brought up.
+.Pp
+.It Li ip6.dad_pending
+This variable displays the number of pending IPv6 DAD
+.Pq duplicated address detection
+before completion.
+It is used to make sure that DAD is completed before 
+.Xr netstart 8 
+is executed.
 .Pp
 .It Li ip6.defmcasthlim
 The default hop limit value for an IPv6 multicast packet sourced by the node.
