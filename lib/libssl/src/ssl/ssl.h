@@ -546,14 +546,16 @@ struct ssl_session_st {
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
- * the workaround is not needed.  Unfortunately some broken SSL/TLS
- * implementations cannot handle it at all, which is why we include
- * it in SSL_OP_ALL. */
+ * the workaround is not needed.
+ * Unfortunately some broken SSL/TLS implementations cannot handle it
+ * at all, which is why it was previously included in SSL_OP_ALL.
+ * Now it's not.
+ */
 #define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800L /* added in 0.9.6e */
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless.
  *             This used to be 0x000FFFFFL before 0.9.7. */
-#define SSL_OP_ALL					0x80000BFFL
+#define SSL_OP_ALL					0x800004FFL
 
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU                 0x00001000L
