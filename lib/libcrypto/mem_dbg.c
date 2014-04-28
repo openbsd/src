@@ -111,10 +111,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include "cryptlib.h"
 #include <openssl/crypto.h>
-#include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
 
@@ -198,8 +195,6 @@ CRYPTO_mem_leaks_fp(FILE *fp)
 }
 #endif
 
-
-typedef CRYPTO_MEM_LEAK_CB *PCRYPTO_MEM_LEAK_CB;
 
 void
 CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
