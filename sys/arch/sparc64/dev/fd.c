@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.43 2013/11/21 00:13:33 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.44 2014/04/28 21:01:51 brad Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1375,7 +1375,7 @@ loop:
 			goto doio;
 		}
 
-		if (fd->sc_cylin == cylin);
+		if (fd->sc_cylin == cylin)
 			goto doio;
 
 		fd->sc_cylin = -1;
