@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.22 2014/04/23 14:43:14 florian Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.23 2014/04/28 15:43:04 reyk Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -223,7 +223,7 @@ divert6_packet(struct mbuf *m, int dir)
 		break;
 	}
 
-	bzero(&addr, sizeof(addr));
+	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;
 	addr.sin6_len = sizeof(addr);
 
