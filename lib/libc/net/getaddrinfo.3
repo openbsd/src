@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.54 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.55 2014/04/28 21:38:59 sperreault Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: April 28 2014 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -120,6 +120,14 @@ is formed by
 .Tn OR Ns 'ing
 the following values:
 .Bl -tag -width "AI_CANONNAMEXX"
+.It Dv AI_ADDRCONFIG
+If the
+.Dv AI_ADDRCONFIG
+bit is set, IPv4 addresses will be returned only if an IPv4 address is
+configured on an interface, and IPv6 addresses will be returned only if an IPv6
+address is configured on an interface.
+Addresses on a loopback interface and link-local IPv6 addresses are not
+considered valid as configured addresses.
 .It Dv AI_CANONNAME
 If the
 .Dv AI_CANONNAME
@@ -219,7 +227,10 @@ behaves as if the caller provided a
 with
 .Fa ai_family
 set to
-.Dv PF_UNSPEC
+.Dv PF_UNSPEC ,
+.Fa ai_flags
+set to
+.Dv AI_ADDRCONFIG ,
 and all other elements set to zero or
 .Dv NULL .
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.31 2012/09/15 00:47:08 guenther Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.32 2014/04/28 21:38:59 sperreault Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -167,9 +167,11 @@ extern int h_errno;
 #define AI_EXT		8	/* enable non-portable extensions */
 #define AI_NUMERICSERV	16	/* don't ever try servname lookup */
 #define AI_FQDN		32	/* return the FQDN that was resolved */
+#define AI_ADDRCONFIG	64	/* return configured address families only */
 /* valid flags for addrinfo */
 #define AI_MASK \
-    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | AI_FQDN)
+    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | AI_FQDN | \
+     AI_ADDRCONFIG)
 
 #define NI_NUMERICHOST	1	/* return the host address, not the name */
 #define NI_NUMERICSERV	2	/* return the service address, not the name */

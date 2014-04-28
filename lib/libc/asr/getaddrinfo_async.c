@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.26 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.27 2014/04/28 21:38:59 sperreault Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <net/if.h>
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
@@ -32,6 +33,7 @@
 #include <asr.h>
 #include <err.h>
 #include <errno.h>
+#include <ifaddrs.h>
 #include <resolv.h> /* for res_hnok */
 #include <stdlib.h>
 #include <string.h>
@@ -104,6 +106,7 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	else {
 		memset(&as->as.ai.hints, 0, sizeof as->as.ai.hints);
 		as->as.ai.hints.ai_family = PF_UNSPEC;
+		as->as.ai.hints.ai_flags = AI_ADDRCONFIG;
 	}
 
 	asr_ctx_unref(ac);
@@ -127,8 +130,9 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
-	int		 i, family, r;
+	int		 i, family, r, v4, v6;
 	FILE		*f;
+	struct ifaddrs	*ifa, *ifa0;
 	union {
 		struct sockaddr		sa;
 		struct sockaddr_in	sain;
@@ -193,6 +197,39 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 			ar->ar_gai_errno = EAI_SERVICE;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
+		}
+
+		/* Restrict result set to configured address families */
+		if (ai->ai_flags & AI_ADDRCONFIG) {
+			if (getifaddrs(&ifa0) != 0) {
+				ar->ar_gai_errno = EAI_FAIL;
+				async_set_state(as, ASR_STATE_HALT);
+				break;
+			}
+			v4 = 0;
+			v6 = 0;
+			for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
+				if (ifa->ifa_flags & IFF_LOOPBACK)
+					continue;
+				if (ifa->ifa_addr->sa_family == PF_INET)
+					v4 = 1;
+				else if (ifa->ifa_addr->sa_family == PF_INET6 &&
+				    !IN6_IS_ADDR_LINKLOCAL(&((struct
+				    sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
+					v6 = 1;
+			}
+			freeifaddrs(ifa0);
+			if (ai->ai_family == PF_UNSPEC && !v4 && !v6 ||
+			    ai->ai_family == PF_INET && !v4 ||
+			    ai->ai_family == PF_INET6 && !v6) {
+				ar->ar_gai_errno = EAI_NONAME;
+				async_set_state(as, ASR_STATE_HALT);
+				break;
+			}
+			if (ai->ai_family == PF_UNSPEC && v4 && !v6)
+				ai->ai_family = PF_INET;
+			if (ai->ai_family == PF_UNSPEC && !v4 && v6)
+				ai->ai_family = PF_INET6;
 		}
 
 		/* Make sure there is at least a valid combination */
