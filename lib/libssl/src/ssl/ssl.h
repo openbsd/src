@@ -342,13 +342,6 @@ extern "C" {
 #define SSL_SENT_SHUTDOWN	1
 #define SSL_RECEIVED_SHUTDOWN	2
 
-#ifdef __cplusplus
-}
-#endif
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
 #define SSL_FILETYPE_PEM	X509_FILETYPE_PEM
