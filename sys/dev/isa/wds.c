@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.40 2013/11/15 16:46:27 brad Exp $	*/
+/*	$OpenBSD: wds.c,v 1.41 2014/04/28 10:06:37 jsg Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -721,8 +721,8 @@ wds_find(struct isa_attach_args *ia, struct wds_softc *sc)
 	 * Sending a command causes the CMDRDY bit to clear.
 	 */
 	c = bus_space_read_1(iot, ioh, WDS_STAT);
-	for (i = 0; i < 4; i++)
-		if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0) {
+	for (i = 0; i < 4; i++) {
+		if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0)
 			goto ready;
 		delay(10);
 	}
