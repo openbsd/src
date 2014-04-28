@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2012/04/12 17:00:11 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.82 2014/04/28 12:34:11 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -181,8 +181,8 @@ main(int argc, char *argv[])
 	initspaces();
 	STACKMAX = INITSTACKMAX;
 
-	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX, NULL);
-	sstack = (char *)xalloc(STACKMAX, NULL);
+	mstack = xallocarray(STACKMAX, sizeof(stae), NULL);
+	sstack = xalloc(STACKMAX, NULL);
 
 	maxout = 0;
 	outfile = NULL;
@@ -626,7 +626,7 @@ static void
 enlarge_stack(void)
 {
 	STACKMAX += STACKMAX/2;
-	mstack = xrealloc(mstack, sizeof(stae) * STACKMAX,
+	mstack = xreallocarray(mstack, STACKMAX, sizeof(stae),
 	    "Evaluation stack overflow (%lu)",
 	    (unsigned long)STACKMAX);
 	sstack = xrealloc(sstack, STACKMAX,

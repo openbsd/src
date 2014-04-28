@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.71 2013/11/14 15:56:50 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.72 2014/04/28 12:34:11 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -790,7 +790,7 @@ dom4wrap(const char *text)
 			maxwraps = 16;
 		else
 			maxwraps *= 2;
-		m4wraps = xrealloc(m4wraps, maxwraps * sizeof(*m4wraps),
+		m4wraps = xreallocarray(m4wraps, maxwraps, sizeof(*m4wraps),
 		   "too many m4wraps");
 	}
 	m4wraps[wrapindex++] = xstrdup(text);

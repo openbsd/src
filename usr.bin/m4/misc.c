@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.42 2010/09/07 19:58:09 marco Exp $	*/
+/*	$OpenBSD: misc.c,v 1.43 2014/04/28 12:34:11 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -163,7 +164,7 @@ initspaces()
 	strspace = xalloc(strsize+1, NULL);
 	ep = strspace;
 	endest = strspace+strsize;
-	buf = (unsigned char *)xalloc(bufsize, NULL);
+	buf = xalloc(bufsize, NULL);
 	bufbase = buf;
 	bp = buf;
 	endpbb = buf + bufsize;
@@ -283,7 +284,7 @@ resizedivs(int n)
 {
 	int i;
 
-	outfile = (FILE **)xrealloc(outfile, sizeof(FILE *) * n,
+	outfile = xreallocarray(outfile, n, sizeof(FILE *),
 	    "too many diverts %d", n);
 	for (i = maxout; i < n; i++)
 		outfile[i] = NULL;
@@ -310,9 +311,62 @@ xalloc(size_t n, const char *fmt, ...)
 }
 
 void *
+xallocarray(size_t s1, size_t s2, const char *fmt, ...)
+{
+	void *p;
+
+	if (s1 && SIZE_MAX / s1 < s2) {
+		errno = ENOMEM;
+		p = NULL;
+	} else {
+		p = malloc(s1 * s2);
+	}
+
+	if (p == NULL) {
+		if (fmt == NULL)
+			err(1, "malloc");
+		else {
+			va_list va;
+
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+		}
+	}
+	return p;
+}
+
+void *
 xrealloc(void *old, size_t n, const char *fmt, ...)
 {
 	char *p = realloc(old, n);
+
+	if (p == NULL) {
+		free(old);
+		if (fmt == NULL)
+			err(1, "realloc");
+		else {
+			va_list va;
+
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+		}
+	}
+	return p;
+}
+
+void *
+xreallocarray(void *old, size_t s1, size_t s2, const char *fmt, ...)
+{
+	void *p;
+
+	if (s1 && SIZE_MAX / s1 < s2) {
+		errno = ENOMEM;
+		p = NULL;
+	} else {
+		p = realloc(old, s1 * s2);
+	}
 
 	if (p == NULL) {
 		free(old);

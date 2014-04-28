@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.43 2013/11/20 16:44:27 deraadt Exp $ */
+/* $OpenBSD: gnum4.c,v 1.44 2014/04/28 12:34:11 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -469,7 +469,7 @@ dopatsubst(const char *argv[], int argc)
 		if (error != 0)
 			exit_regerror(error, &re);
 
-		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
+		pmatch = xallocarray(re.re_nsub+1, sizeof(regmatch_t), NULL);
 		do_subst(argv[2], &re,
 		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
@@ -501,7 +501,7 @@ doregexp(const char *argv[], int argc)
 	if (error != 0)
 		exit_regerror(error, &re);
 
-	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
+	pmatch = xallocarray(re.re_nsub+1, sizeof(regmatch_t), NULL);
 	if (argc == 4 || argv[4] == NULL)
 		do_regexpindex(argv[2], &re, pmatch);
 	else
