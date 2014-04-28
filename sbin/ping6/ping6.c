@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.89 2014/04/23 18:16:36 jca Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.90 2014/04/28 15:25:34 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -892,7 +892,7 @@ main(int argc, char *argv[])
 		struct iovec	iov[2];
 		struct pollfd	pfd;
 		ssize_t		cc;
-		int		ret, timeout;
+		int		timeout;
 
 		/* signal handling */
 		if (seenalrm) {
@@ -922,14 +922,7 @@ main(int argc, char *argv[])
 		pfd.fd = s;
 		pfd.events = POLLIN;
 
-		ret = poll(&pfd, 1, timeout);
-		if (ret < 0) {
-			if (errno != EINTR) {
-				warn("poll");
-				sleep(1);
-			}
-			continue;
-		} else if (ret == 0)
+		if (poll(&pfd, 1, timeout) <= 0)
 			continue;
 
 		m.msg_name = &from;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.102 2014/04/23 18:16:36 jca Exp $	*/
+/*	$OpenBSD: ping.c,v 1.103 2014/04/28 15:25:34 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ main(int argc, char *argv[])
 		socklen_t		fromlen;
 		struct pollfd		pfd;
 		ssize_t			cc;
-		int			ret, timeout;
+		int			timeout;
 
 		if (options & F_FLOOD) {
 			pinger();
@@ -522,14 +522,7 @@ main(int argc, char *argv[])
 		pfd.fd = s;
 		pfd.events = POLLIN;
 
-		ret = poll(&pfd, 1, timeout);
-		if (ret < 0) {
-			if (errno != EINTR) {
-				warn("poll");
-				sleep(1);
-			}
-			continue;
-		} else if (ret == 0)
+		if (poll(&pfd, 1, timeout) <= 0)
 			continue;
 
 		fromlen = sizeof(from);
