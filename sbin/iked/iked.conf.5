@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.27 2014/02/17 15:07:23 markus Exp $
+.\" $OpenBSD: iked.conf.5,v 1.28 2014/04/28 11:16:18 reyk Exp $
 .\"
 .\" Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2014 $
+.Dd $Mdocdate: April 28 2014 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -246,6 +246,10 @@ is specified, negotiation will be started at once.
 If omitted,
 .Ar passive
 mode will be used.
+.It Ic ipcomp
+Enable optional support for
+.Xr ipcomp 4 ,
+the IP Payload Compression protocol.
 .It Op Ar encap
 .Ar encap
 specifies the encapsulation protocol to be used.
@@ -480,6 +484,34 @@ or hex value (starting with 0x) for authentication.
 Use RSA public key authentication.
 This is the default mode if no option is specified.
 .El
+.It Ic config Ar option Ar address
+Send one or more optional configuration payloads (CP) to the peer.
+The configuration
+.Ar option
+can be one of the following with the expected address format:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Ic address Ar address
+Assign a static address on the internal network.
+.It Ic address Ar address/prefix
+Assign a dynamic address on the internal network.
+The address will be assigned from an address pool with the size specified by
+.Ar prefix .
+.It Ic netmask Ar netmask
+The IPv4 netmask of the internal network.
+.It Ic name-server Ar address
+The DNS server address within the internal network.
+.It Ic netbios-server address
+The NetBIOS name server (WINS) within the internal network.
+This option is provided for compatibility with legacy clients.
+.It Ic dhcp-server Ar address
+The address of an internal DHCP server for further configuration.
+.It Ic protected-subnet Ar address/prefix
+The address of the protected subnet within the internal network.
+.It Ic access-server Ar address
+The address of an internal remote access server.
+.El
+.Pp
 .It Ic tag Ar string
 Add a
 .Xr pf 4
