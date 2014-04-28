@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.14 2013/10/01 15:19:12 reyk Exp $	*/
+/*	$OpenBSD: smi.c,v 1.15 2014/04/28 12:48:36 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -518,6 +518,7 @@ smi_print_element(struct ber_element *root)
 				free(p);
 				goto fail;
 			}
+			free(p);
 		}
 		break;
 	case BER_TYPE_NULL:	/* no payload */
