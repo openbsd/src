@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.126 2014/04/23 09:27:13 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.127 2014/04/28 09:45:30 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -745,7 +745,7 @@ main(int argc, char *argv[])
 		rcvmhdr.msg_iovlen = 1;
 		rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 		    CMSG_SPACE(sizeof(int));
-	
+
 		if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
 			errx(1, "malloc");
 		rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
@@ -927,7 +927,7 @@ print_exthdr(u_char *buf, int cc)
 	u_int32_t label;
 	u_int16_t off, olen;
 	u_int8_t type;
-			
+
 	ip = (struct ip *)buf;
 	hlen = ip->ip_hl << 2;
 	if (cc < hlen + ICMP_MINLEN)
@@ -963,7 +963,7 @@ print_exthdr(u_char *buf, int cc)
 	buf += off;
 	memcpy(&exthdr, buf, sizeof(exthdr));
 
-	/* verify version */		
+	/* verify version */
 	if ((exthdr.ieh_version & ICMP_EXT_HDR_VMASK) != ICMP_EXT_HDR_VERSION)
 		return;
 
@@ -975,10 +975,10 @@ print_exthdr(u_char *buf, int cc)
 	cc -= sizeof(exthdr);
 
 	while (cc > sizeof(objhdr)) {
-		memcpy(&objhdr, buf, sizeof(objhdr)); 
+		memcpy(&objhdr, buf, sizeof(objhdr));
 		olen = ntohs(objhdr.ieo_length);
 
-		/* Sanity check the length field */	
+		/* Sanity check the length field */
 		if (olen < sizeof(objhdr) || olen > cc)
 			return;
 
@@ -999,7 +999,7 @@ print_exthdr(u_char *buf, int cc)
 					label = htonl(label);
 					buf += sizeof(u_int32_t);
 					olen -= sizeof(u_int32_t);
-					
+
 					if (first == 0) {
 						printf(" [MPLS Label ");
 						first++;
@@ -1012,7 +1012,7 @@ print_exthdr(u_char *buf, int cc)
 				}
 				if (olen > 0) {
 					printf("|]");
-					return;	
+					return;
 				}
 				if (first != 0)
 					printf("]");
@@ -1508,7 +1508,8 @@ get_udphdr(struct ip6_hdr *ip6, u_char *lim)
 	return(NULL);
 }
 
-void icmp_code(int af, int code, int *got_there, int *unreachable)
+void
+icmp_code(int af, int code, int *got_there, int *unreachable)
 {
 	switch (af) {
 	case AF_INET:
@@ -1703,7 +1704,7 @@ print_asn(struct sockaddr_storage *ss)
 		break;
 	case AF_INET6:
 		uaddr = (const u_char *)&((struct sockaddr_in6 *) ss)->sin6_addr;
-		if (snprintf(qbuf, sizeof qbuf, 
+		if (snprintf(qbuf, sizeof qbuf,
 		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 		    "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 		    "origin6.asn.cymru.com",
@@ -1781,16 +1782,16 @@ map_tos(char *s, int *val)
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
 		{ "reliability",	IPTOS_RELIABILITY },
 		{ "throughput",		IPTOS_THROUGHPUT },
-		{ NULL, 		-1 },
+		{ NULL,			-1 },
 	};
-	
+
 	for (t = toskeywords; t->keyword != NULL; t++) {
 		if (strcmp(s, t->keyword) == 0) {
 			*val = t->val;
 			return (1);
 		}
 	}
-	
+
 	return (0);
 }
 
@@ -1798,10 +1799,10 @@ void
 usage(void)
 {
 	if (v6flag) {
-	fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f firsthop] "
-	    "[-m hoplimit]\n"
-	    "\t[-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
-	    "\thost [datalen]\n");
+		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f firsthop] "
+		    "[-m hoplimit]\n"
+		    "\t[-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
+		    "\thost [datalen]\n");
 	} else {
 		fprintf(stderr,
 		    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] "
