@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.100 2014/04/10 16:08:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.101 2014/04/28 11:21:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -284,7 +284,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    __func__);
 			break;
 		}
-		
+
 		sa_stateflags(sa, IKED_REQ_CERT);
 
 		if (ikev2_ike_auth(env, sa, NULL) != 0)

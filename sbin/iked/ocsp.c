@@ -155,7 +155,7 @@ ocsp_connect_cb(int fd, short event, void *arg)
 {
 	struct ocsp_connect	*oc = arg;
 	int			 error, send_fd = -1;
-	socklen_t	 	 len;
+	socklen_t		 len;
 
 	len = sizeof(error);
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
@@ -207,8 +207,8 @@ int
 ocsp_validate_cert(struct iked *env, struct iked_static_id *id,
     void *data, size_t len, struct iked_sahdr sh, u_int8_t type)
 {
-	struct iked_ocsp_entry 	*ioe;
-	struct iked_ocsp 	*ocsp;
+	struct iked_ocsp_entry	*ioe;
+	struct iked_ocsp	*ocsp;
 	BIO			*rawcert = NULL, *bissuer = NULL;
 	X509			*cert = NULL, *issuer = NULL;
 

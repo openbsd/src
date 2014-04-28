@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.39 2014/04/10 16:08:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.40 2014/04/28 11:21:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -484,7 +484,7 @@ ikev2_validate_xform(struct iked_message *msg, size_t offset, size_t total,
 	}
 	if (total < xfrm_length) {
 		log_debug("%s: malformed payload: too long for payload size "
-		   "(%zu < %zu)", __func__, total, xfrm_length);
+		    "(%zu < %zu)", __func__, total, xfrm_length);
 		return (-1);
 	}
 
@@ -1371,7 +1371,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		goto done;
 
-    	if (msg->msg_parent->msg_response) {
+	if (msg->msg_parent->msg_response) {
 		ret = 0;
 		goto done;
 	}
