@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.29 2014/04/28 11:17:15 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.30 2014/04/28 16:23:19 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -484,7 +484,7 @@ or hex value (starting with 0x) for authentication.
 Use RSA public key authentication.
 This is the default mode if no option is specified.
 .El
-.It Ic config Ar option Ar address
+.It Ic config Ar option address
 Send one or more optional configuration payloads (CP) to the peer.
 The configuration
 .Ar option
@@ -501,7 +501,7 @@ The address will be assigned from an address pool with the size specified by
 The IPv4 netmask of the internal network.
 .It Ic name-server Ar address
 The DNS server address within the internal network.
-.It Ic netbios-server address
+.It Ic netbios-server Ar address
 The NetBIOS name server (WINS) within the internal network.
 This option is provided for compatibility with legacy clients.
 .It Ic dhcp-server Ar address
@@ -511,7 +511,6 @@ The address of the protected subnet within the internal network.
 .It Ic access-server Ar address
 The address of an internal remote access server.
 .El
-.Pp
 .It Ic tag Ar string
 Add a
 .Xr pf 4
