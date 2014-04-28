@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.21 2014/04/25 06:57:11 blambert Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.22 2014/04/28 08:25:05 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,7 @@ struct snmpd	*snmpd_env;
 
 static struct privsep_proc procs[] = {
 	{ "snmpe", PROC_SNMPE, snmpd_dispatch_snmpe, snmpe, snmpe_shutdown },
-	{ "traphandler", PROC_ALERT, snmpd_dispatch_traphandler, traphandler,
+	{ "traphandler", PROC_TRAP, snmpd_dispatch_traphandler, traphandler,
 	    traphandler_shutdown }
 };
 

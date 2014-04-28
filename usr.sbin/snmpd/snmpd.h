@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.52 2014/04/25 06:57:11 blambert Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.53 2014/04/28 08:25:05 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -112,7 +112,7 @@ TAILQ_HEAD(control_socks, control_sock);
 enum privsep_procid {
 	PROC_PARENT,	/* Parent process and application interface */
 	PROC_SNMPE,	/* SNMP engine */
-	PROC_ALERT,	/* SNMP trap receiver */
+	PROC_TRAP,	/* SNMP trap receiver */
 	PROC_MAX
 };
 
