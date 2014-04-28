@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.40 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.41 2014/04/28 18:49:28 miod Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 
 #define	SYMTABMAG	"/ "
 #define	STRTABMAG	"//"
+#define	SYM64MAG	"/SYM64/         "
 
 union hdr {
 	Elf32_Ehdr elf32;
@@ -535,6 +536,13 @@ show_archive(int count, const char *fname, FILE *fp)
 			if (issize || !armap || !symtablen || !symtaboff)
 				goto skip;
 		}
+#ifdef __mips64
+		else if (memcmp(ar_head.ar_name, SYM64MAG,
+		    sizeof(ar_head.ar_name)) == 0) {
+			/* IRIX6-compatible archive map */
+			goto skip;
+		}
+#endif
 
 		if (!issize && armap && symtablen && symtaboff) {
 			if (show_symtab(symtaboff, symtablen, fname, fp)) {
