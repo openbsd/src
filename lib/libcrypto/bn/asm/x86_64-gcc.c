@@ -55,11 +55,7 @@
  *    machine.
  */
 
-#ifdef _WIN64
-#define BN_ULONG unsigned long long
-#else
 #define BN_ULONG unsigned long
-#endif
 
 #undef mul
 #undef mul_add

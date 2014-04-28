@@ -217,11 +217,7 @@ static int e_rsax_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 
 #ifndef OPENSSL_NO_RSA
 
-#ifdef _WIN32
-typedef unsigned __int64 UINT64;
-#else
 typedef unsigned long long UINT64;
-#endif
 typedef unsigned short UINT16;
 
 /* Table t is interleaved in the following manner:

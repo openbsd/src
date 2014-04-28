@@ -309,11 +309,7 @@ static void aesni_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 }
 /* ===== Engine "management" functions ===== */
 
-#if defined(_WIN32)
-typedef unsigned __int64 IA32CAP;
-#else
 typedef unsigned long long IA32CAP;
-#endif
 
 /* Prepare the ENGINE structure for registration */
 static int

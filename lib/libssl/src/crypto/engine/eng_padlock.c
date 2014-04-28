@@ -129,12 +129,7 @@ void ENGINE_load_padlock (void)
 /* We do these includes here to avoid header problems on platforms that
    do not have the VIA padlock anyway... */
 #include <stdlib.h>
-#ifdef _WIN32
-# include <malloc.h>
-# ifndef alloca
-#  define alloca _alloca
-# endif
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
 # ifndef alloca
 #  define alloca(s) __builtin_alloca(s)
 # endif

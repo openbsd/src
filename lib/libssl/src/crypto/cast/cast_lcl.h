@@ -56,11 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#ifdef OPENSSL_SYS_WIN32
-#include <stdlib.h>
-#endif
-
-
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
 			 l|=((unsigned long)(*((c)++)))<< 8L, \
