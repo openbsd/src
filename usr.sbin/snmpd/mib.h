@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.33 2013/10/01 19:24:46 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.34 2014/04/28 12:03:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -326,6 +326,7 @@
 #define MIB_ipAdEntReasmMaxSize		MIB_ipAddrEntry, 5
 #define MIB_ipNetToMediaTable		MIB_ipMIB, 22
 #define MIB_ipNetToMediaEntry		MIB_ipNetToMediaTable, 1
+#define OIDIDX_ipNetToMedia		9
 #define MIB_ipNetToMediaIfIndex		MIB_ipNetToMediaEntry, 1
 #define MIB_ipNetToMediaPhysAddress	MIB_ipNetToMediaEntry, 2
 #define MIB_ipNetToMediaNetAddress	MIB_ipNetToMediaEntry, 3
@@ -1284,7 +1285,6 @@
 	{ MIBDECL(ipNetToMediaIfIndex) },		\
 	{ MIBDECL(ipNetToMediaPhysAddress) },		\
 	{ MIBDECL(ipNetToMediaNetAddress) },		\
-	{ MIBDECL(ipNetToMediaType) },			\
 	{ MIBDECL(ipNetToMediaType) },			\
 							\
 	{ MIBDECL(ipfMIB) },				\

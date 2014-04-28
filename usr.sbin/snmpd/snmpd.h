@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.53 2014/04/28 08:25:05 blambert Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.54 2014/04/28 12:03:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <net/if_dl.h>
 #include <net/pfvar.h>
 #include <net/route.h>
 
@@ -191,6 +192,7 @@ union kaddr {
 	struct sockaddr		sa;
 	struct sockaddr_in	sin;
 	struct sockaddr_in6	sin6;
+	struct sockaddr_dl	sdl;
 	char			pad[32];
 };
 
@@ -222,6 +224,15 @@ struct kif_addr {
 
 	TAILQ_ENTRY(kif_addr)	 entry;
 	RB_ENTRY(kif_addr)	 node;
+};
+
+struct kif_arp {
+	u_short			 flags;
+	u_short			 if_index;
+	union kaddr		 addr;
+	union kaddr		 target;
+
+	TAILQ_ENTRY(kif_arp)	 entry;
 };
 
 struct kif {
@@ -577,6 +588,9 @@ struct kif_addr *kr_getnextaddr(struct sockaddr *);
 
 struct kroute	*kroute_first(void);
 struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
+
+struct kif_arp	*karp_first(u_short);
+struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 
 /* snmpe.c */
 pid_t		 snmpe(struct privsep *, struct privsep_proc *);

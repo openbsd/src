@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.67 2014/04/08 14:04:11 mpi Exp $	*/
+/*	$OpenBSD: mib.c,v 1.68 2014/04/28 12:03:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -2925,6 +2925,9 @@ int mib_iproutingdiscards(struct oid *, struct ber_oid *,
 int mib_ipaddr(struct oid *, struct ber_oid *, struct ber_element **);
 struct ber_oid *
     mib_ipaddrtable(struct oid *, struct ber_oid *, struct ber_oid *);
+int mib_physaddr(struct oid *, struct ber_oid *, struct ber_element **);
+struct ber_oid *
+    mib_physaddrtable(struct oid *, struct ber_oid *, struct ber_oid *);
 
 static struct oid ip_mib[] = {
 	{ MIB(ipMIB),			OID_MIB },
@@ -2960,11 +2963,15 @@ static struct oid ip_mib[] = {
 	    mib_ipaddrtable },
 	{ MIB(ipAdEntReasmMaxSize),	OID_TRD, mib_ipaddr, NULL,
 	    mib_ipaddrtable },
+	{ MIB(ipNetToMediaIfIndex),	OID_TRD, mib_physaddr, NULL,
+	    mib_physaddrtable },
+	{ MIB(ipNetToMediaPhysAddress),	OID_TRD, mib_physaddr, NULL,
+	    mib_physaddrtable },
+	{ MIB(ipNetToMediaNetAddress),	OID_TRD, mib_physaddr, NULL,
+	    mib_physaddrtable },
+	{ MIB(ipNetToMediaType),	OID_TRD, mib_physaddr, NULL,
+	    mib_physaddrtable },
 #ifdef notyet
-	{ MIB(ipNetToMediaIfIndex) },
-	{ MIB(ipNetToMediaPhysAddress) },
-	{ MIB(ipNetToMediaNetAddress) },
-	{ MIB(ipNetToMediaType) },
 	{ MIB(ipRoutingDiscards) },
 #endif
 	{ MIBEND }
@@ -3250,6 +3257,149 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		return (-1);
 	}
 
+	return (0);
+}
+
+struct ber_oid *
+mib_physaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
+{
+	struct sockaddr_in	 addr;
+	struct oid		 a, b;
+	struct kif		*kif;
+	struct kif_arp		*ka;
+	u_int32_t		 id, idx = 0;
+
+	bcopy(&oid->o_id, no, sizeof(*no));
+	id = oid->o_oidlen - 1;
+
+	if (o->bo_n >= oid->o_oidlen) {
+		/*
+		 * Compare the requested and the matched OID to see
+		 * if we have to iterate to the next element.
+		 */
+		bzero(&a, sizeof(a));
+		bcopy(o, &a.o_id, sizeof(struct ber_oid));
+		bzero(&b, sizeof(b));
+		bcopy(&oid->o_id, &b.o_id, sizeof(struct ber_oid));
+		b.o_oidlen--;
+		b.o_flags |= OID_TABLE;
+		if (smi_oid_cmp(&a, &b) == 0) {
+			o->bo_id[id] = oid->o_oid[id];
+			bcopy(o, no, sizeof(*no));
+		}
+	}
+
+	if (o->bo_n > OIDIDX_ipNetToMedia + 1)
+		idx = o->bo_id[OIDIDX_ipNetToMedia + 1];
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
+	if (o->bo_n > OIDIDX_ipNetToMedia + 2)
+		mps_decodeinaddr(no, &addr.sin_addr, OIDIDX_ipNetToMedia + 2);
+
+	if ((kif = kr_getif(idx)) == NULL) {
+		/* No configured interfaces */
+		if (idx == 0)
+			return (NULL);
+		/*
+		 * It may happen that an interface with a specific index
+		 * does not exist or has been removed.  Jump to the next
+		 * available interface.
+		 */
+		kif = kr_getif(0);
+ nextif:
+		for (; kif != NULL; kif = kr_getnextif(kif->if_index))
+			if (kif->if_index > idx &&
+			    (ka = karp_first(kif->if_index)) != NULL)
+				break;
+		if (kif == NULL) {
+			/* No more interfaces with addresses on them */
+			o->bo_id[OIDIDX_ipNetToMedia + 1] = 0;
+			mps_encodeinaddr(no, NULL, OIDIDX_ipNetToMedia + 2);
+			smi_oidlen(o);
+			return (NULL);
+		}
+	} else {
+		if (idx == 0 || addr.sin_addr.s_addr == 0)
+			ka = karp_first(kif->if_index);
+		else
+			ka = karp_getaddr((struct sockaddr *)&addr, idx, 1);
+		if (ka == NULL) {
+			/* Try next interface */
+			goto nextif;
+		}
+	}
+	idx = kif->if_index;
+
+	no->bo_id[OIDIDX_ipNetToMedia + 1] = idx;
+	/* Encode real IPv4 address */
+	memcpy(&addr, &ka->addr.sin, ka->addr.sin.sin_len);
+	mps_encodeinaddr(no, &addr.sin_addr, OIDIDX_ipNetToMedia + 2);
+
+	smi_oidlen(o);
+	return (no);
+}
+
+int
+mib_physaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct sockaddr_in	 addr;
+	struct kif_arp		*ka;
+	u_int32_t		 val, idx = 0;
+
+	idx = o->bo_id[OIDIDX_ipNetToMedia + 1];
+	if (idx == 0) {
+		/* Strip invalid interface index and fail */
+		o->bo_n = OIDIDX_ipNetToMedia + 1;
+		return (1);
+	}
+
+	/* Get the IP address */
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
+
+	if (mps_decodeinaddr(o, &addr.sin_addr,
+	    OIDIDX_ipNetToMedia + 2) == -1) {
+		/* Strip invalid address and fail */
+		o->bo_n = OIDIDX_ipNetToMedia + 2;
+		return (1);
+	}
+	if ((ka = karp_getaddr((struct sockaddr *)&addr, idx, 0)) == NULL)
+		return (1);
+
+	/* write OID */
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_ipNetToMedia]) {
+	case 1: /* ipNetToMediaIfIndex */
+		ber = ber_add_integer(ber, ka->if_index);
+		break;
+	case 2: /* ipNetToMediaPhysAddress */
+		if (bcmp(LLADDR(&ka->target.sdl), ether_zeroaddr,
+		    sizeof(ether_zeroaddr)) == 0)
+			ber = ber_add_nstring(ber, ether_zeroaddr,
+			    sizeof(ether_zeroaddr));
+		else
+			ber = ber_add_nstring(ber, LLADDR(&ka->target.sdl),
+			    ka->target.sdl.sdl_alen);
+		break;
+	case 3:	/* ipNetToMediaNetAddress */
+		val = addr.sin_addr.s_addr;
+		ber = ber_add_nstring(ber, (char *)&val, sizeof(u_int32_t));
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
+		break;
+	case 4: /* ipNetToMediaType */
+		if (ka->flags & F_STATIC)
+			ber = ber_add_integer(ber, 4); /* static */
+		else
+			ber = ber_add_integer(ber, 3); /* dynamic */
+		break;
+	default:
+		return (-1);
+	}
 	return (0);
 }
 

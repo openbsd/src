@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.24 2013/10/30 17:24:35 deraadt Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.25 2014/04/28 12:03:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -71,6 +71,7 @@ struct kroute6_node {
 struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
 	TAILQ_HEAD(, kif_addr)	 addrs;
+	TAILQ_HEAD(, kif_arp)	 arps;
 	struct kif		 k;
 };
 
@@ -92,6 +93,10 @@ struct kroute6_node	*kroute6_matchgw(struct kroute6_node *,
 int			 kroute6_insert(struct kroute6_node *);
 int			 kroute6_remove(struct kroute6_node *);
 void			 kroute6_clear(void);
+
+struct kif_arp		*karp_find(struct sockaddr *, u_short);
+int			 karp_insert(struct kif_node *, struct kif_arp *);
+int			 karp_remove(struct kif_node *, struct kif_arp *);
 
 struct kif_node		*kif_find(u_short);
 struct kif_node		*kif_insert(u_short);
@@ -120,6 +125,7 @@ void		if_announce(void *);
 
 int		fetchtable(void);
 int		fetchifs(u_short);
+int		fetcharp(void);
 void		dispatch_rtmsg(int, short, void *);
 int		rtmsg_process(char *, int);
 int		dispatch_rtmsg_addr(struct rt_msghdr *,
@@ -184,6 +190,8 @@ kr_init(void)
 		fatalx("kr_init fetchifs");
 	if (fetchtable() == -1)
 		fatalx("kr_init fetchtable");
+	if (fetcharp() == -1)
+		fatalx("kr_init fetcharp");
 
 	event_set(&kr_state.ks_ev, kr_state.ks_fd, EV_READ | EV_PERSIST,
 	    dispatch_rtmsg, NULL);
@@ -521,6 +529,119 @@ kroute6_clear(void)
 		kroute6_remove(kr);
 }
 
+static inline int
+karp_compare(struct kif_arp *a, struct kif_arp *b)
+{
+	/* Interface indices are assumed equal */
+	if (ntohl(a->addr.sin.sin_addr.s_addr) >
+	    ntohl(b->addr.sin.sin_addr.s_addr))
+		return (1);
+	if (ntohl(a->addr.sin.sin_addr.s_addr) <
+	    ntohl(b->addr.sin.sin_addr.s_addr))
+		return (-1);
+	return (0);
+}
+
+static inline struct kif_arp *
+karp_search(struct kif_node *kn, struct kif_arp *ka)
+{
+	struct kif_arp		*pivot;
+
+	TAILQ_FOREACH(pivot, &kn->arps, entry) {
+		switch (karp_compare(ka, pivot)) {
+		case 0: /* found */
+			return (pivot);
+		case -1: /* ka < pivot, end the search */
+			return (NULL);
+		}
+	}
+	/* looped through the whole list and didn't find */
+	return (NULL);
+}
+
+struct kif_arp *
+karp_find(struct sockaddr *sa, u_short ifindex)
+{
+	struct kif_node		*kn;
+	struct kif_arp		*ka = NULL, s;
+
+	memcpy(&s.addr.sa, sa, sa->sa_len);
+
+	if (ifindex == 0) {
+		/*
+		 * We iterate manually to handle zero ifindex special
+		 * case differently from kif_find, in particular we
+		 * want to look for the address on all available
+		 * interfaces.
+		 */
+		RB_FOREACH(kn, kif_tree, &kit) {
+			if ((ka = karp_search(kn, &s)) != NULL)
+				break;
+		}
+	} else {
+		if ((kn = kif_find(ifindex)) == NULL)
+			return (NULL);
+		ka = karp_search(kn, &s);
+	}
+	return (ka);
+}
+
+int
+karp_insert(struct kif_node *kn, struct kif_arp *ka)
+{
+	struct kif_arp		*pivot;
+
+	if (ka->if_index == 0)
+		return (-1);
+	if (!kn && (kn = kif_find(ka->if_index)) == NULL)
+		return (-1);
+	/* Put entry on the list in the ascending lexical order */
+	TAILQ_FOREACH(pivot, &kn->arps, entry) {
+		switch (karp_compare(ka, pivot)) {
+		case 0: /* collision */
+			return (-1);
+		case -1: /* ka < pivot */
+			TAILQ_INSERT_BEFORE(pivot, ka, entry);
+			return (0);
+		}
+	}
+	/* ka is larger than any other element on the list */
+	TAILQ_INSERT_TAIL(&kn->arps, ka, entry);
+	return (0);
+}
+
+int
+karp_remove(struct kif_node *kn, struct kif_arp *ka)
+{
+	if (ka->if_index == 0)
+		return (-1);
+	if (!kn && (kn = kif_find(ka->if_index)) == NULL)
+		return (-1);
+	TAILQ_REMOVE(&kn->arps, ka, entry);
+	free(ka);
+	return (0);
+}
+
+struct kif_arp *
+karp_first(u_short ifindex)
+{
+	struct kif_node		*kn;
+
+	if ((kn = kif_find(ifindex)) == NULL)
+		return (NULL);
+	return (TAILQ_FIRST(&kn->arps));
+}
+
+struct kif_arp *
+karp_getaddr(struct sockaddr *sa, u_short ifindex, int next)
+{
+	struct kif_arp		*ka;
+
+	if ((ka = karp_find(sa, ifindex)) == NULL)
+		return (NULL);
+	return (next ? TAILQ_NEXT(ka, entry) : ka);
+}
+
 struct kif_node *
 kif_find(u_short if_index)
 {
@@ -572,6 +693,7 @@ kif_insert(u_short if_index)
 
 	kif->k.if_index = if_index;
 	TAILQ_INIT(&kif->addrs);
+	TAILQ_INIT(&kif->arps);
 
 	if (RB_INSERT(kif_tree, &kit, kif) != NULL)
 		fatalx("kif_insert: RB_INSERT");
@@ -586,6 +708,7 @@ int
 kif_remove(struct kif_node *kif)
 {
 	struct kif_addr	*ka;
+	struct kif_arp	*kr;
 
 	if (RB_REMOVE(kif_tree, &kit, kif) == NULL) {
 		log_warnx("RB_REMOVE(kif_tree, &kit, kif)");
@@ -595,6 +718,9 @@ kif_remove(struct kif_node *kif)
 	while ((ka = TAILQ_FIRST(&kif->addrs)) != NULL) {
 		TAILQ_REMOVE(&kif->addrs, ka, entry);
 		ka_remove(ka);
+	}
+	while ((kr = TAILQ_FIRST(&kif->arps)) != NULL) {
+		karp_remove(kif, kr);
 	}
 	free(kif);
 
@@ -897,6 +1023,8 @@ if_announce(void *msg)
 		kif = kif_insert(ifan->ifan_index);
 		strlcpy(kif->k.if_name, ifan->ifan_name,
 		    sizeof(kif->k.if_name));
+		/* Update the ARP table */
+		fetcharp();
 		break;
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
@@ -976,6 +1104,45 @@ fetchifs(u_short if_index)
 	return (rv);
 }
 
+int
+fetcharp(void)
+{
+	size_t			 len;
+	int			 mib[7];
+	char			*buf;
+	int			 rv;
+
+	mib[0] = CTL_NET;
+	mib[1] = AF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_FLAGS;
+	mib[5] = RTF_LLINFO;
+	mib[6] = 0;
+
+	if (sysctl(mib, 7, NULL, &len, NULL, 0) == -1) {
+		log_warn("sysctl");
+		return (-1);
+	}
+	/* Empty table? */
+	if (len == 0)
+		return (0);
+	if ((buf = malloc(len)) == NULL) {
+		log_warn("fetcharp");
+		return (-1);
+	}
+	if (sysctl(mib, 7, buf, &len, NULL, 0) == -1) {
+		log_warn("sysctl");
+		free(buf);
+		return (-1);
+	}
+
+	rv = rtmsg_process(buf, len);
+	free(buf);
+
+	return (rv);
+}
+
 /* ARGSUSED */
 void
 dispatch_rtmsg(int fd, short event, void *arg)
@@ -1020,9 +1187,8 @@ rtmsg_process(char *buf, int len)
 		case RTM_GET:
 		case RTM_CHANGE:
 		case RTM_DELETE:
+		case RTM_RESOLVE:
 			if (rtm->rtm_errno)		 /* failed attempts */
-				continue;
-			if (rtm->rtm_flags & RTF_LLINFO) /* arp cache */
 				continue;
 
 			if (dispatch_rtmsg_addr(rtm, rti_info) == -1)
@@ -1069,8 +1235,10 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	struct sockaddr		*sa, *psa;
 	struct sockaddr_in	*sa_in, *psa_in = NULL;
 	struct sockaddr_in6	*sa_in6, *psa_in6 = NULL;
+	struct sockaddr_dl	*sa_dl;
 	struct kroute_node	*kr;
 	struct kroute6_node	*kr6;
+	struct kif_arp		*ka;
 	int			 flags, mpath = 0;
 	u_int16_t		 ifindex;
 	u_int8_t		 prefixlen;
@@ -1131,12 +1299,25 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 		case AF_LINK:
 			flags |= F_CONNECTED;
 			ifindex = rtm->rtm_index;
-			sa = NULL;
 			mpath = 0;	/* link local stuff can't be mpath */
 			break;
 		}
 
 	if (rtm->rtm_type == RTM_DELETE) {
+		if (sa != NULL && sa->sa_family == AF_LINK &&
+		    (rtm->rtm_flags & RTF_HOST) &&
+		    psa->sa_family == AF_INET) {
+			if ((ka = karp_find(psa, ifindex)) == NULL)
+				return (0);
+			if (karp_remove(NULL, ka) == -1)
+				return (-1);
+			return (0);
+		} else if (sa == NULL && (rtm->rtm_flags & RTF_HOST) &&
+		    psa->sa_family == AF_INET) {
+			if ((ka = karp_find(psa, ifindex)) != NULL)
+				karp_remove(NULL, ka);
+			/* Continue to the route section below  */
+		}
 		switch (psa->sa_family) {
 		case AF_INET:
 			sa_in = (struct sockaddr_in *)sa;
@@ -1179,6 +1360,42 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 
 	if (sa == NULL && !(flags & F_CONNECTED))
 		return (0);
+
+	/* Add or update an ARP entry */
+	if ((rtm->rtm_flags & RTF_LLINFO) && (rtm->rtm_flags & RTF_HOST) &&
+	    sa != NULL && sa->sa_family == AF_LINK &&
+	    psa->sa_family == AF_INET) {
+		sa_dl = (struct sockaddr_dl *)sa;
+		/* ignore incomplete entries */
+		if (!sa_dl->sdl_alen)
+			return (0);
+		/* ignore entries that do not specify an interface */
+		if (ifindex == 0)
+			return (0);
+		if ((ka = karp_find(psa, ifindex)) != NULL) {
+			memcpy(&ka->target.sdl, sa_dl, sa_dl->sdl_len);
+			if (rtm->rtm_flags & RTF_PERMANENT_ARP)
+				flags |= F_STATIC;
+			ka->flags = flags;
+		} else {
+			if ((ka = calloc(1, sizeof(struct kif_arp))) == NULL) {
+				log_warn("dispatch_rtmsg");
+				return (-1);
+			}
+			memcpy(&ka->addr.sa, psa, psa->sa_len);
+			memcpy(&ka->target.sdl, sa_dl, sa_dl->sdl_len);
+			if (rtm->rtm_flags & RTF_PERMANENT_ARP)
+				flags |= F_STATIC;
+			ka->flags = flags;
+			ka->if_index = ifindex;
+			if (karp_insert(NULL, ka)) {
+				free(ka);
+				log_warnx("dispatch_rtmsg: failed to insert");
+				return (-1);
+			}
+		}
+		return (0);
+	}
 
 	switch (psa->sa_family) {
 	case AF_INET:
