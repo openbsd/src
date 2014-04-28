@@ -1124,7 +1124,7 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	    TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0)
 		goto err1;
 
-	rv = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	rv = tls1_PRF(ssl_get_algorithm2(s),
 	    val, vallen, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
 	    s->session->master_key, s->session->master_key_length,
 	    out, buff, olen);
