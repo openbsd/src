@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.7 2014/02/05 20:13:58 syl Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.8 2014/04/28 13:08:34 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -29,14 +29,18 @@ alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t parent)
 	struct fuse_vnode *vn;
 
 	if ((vn = malloc(sizeof(*vn))) == NULL) {
-		DPERROR("alloc_vn:");
+		DPERROR(__func__);
 		return (NULL);
 	}
 
 	vn->ino = ino;
 	vn->parent = parent;
-	strncpy(vn->path, path, NAME_MAX);
-	vn->path[NAME_MAX - 1] =  '\0';
+	if (strlcpy(vn->path, path, sizeof(vn->path)) >= sizeof(vn->path)) {
+		DPRINTF("%s: strlcpy name too long\n", __func__);
+		free(vn);
+		return (NULL);
+	}
+
 	if (ino == (ino_t)-1) {
 		f->max_ino++;
 		vn->ino = f->max_ino;
