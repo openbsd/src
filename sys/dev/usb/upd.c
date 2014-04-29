@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.7 2014/04/15 09:14:27 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.8 2014/04/29 07:23:40 andre Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -93,39 +93,6 @@ struct upd_softc {
 	struct upd_sensor	*sc_sensors;
 };
 
-static const struct usb_devno upd_devs[] = {
-	{ USB_VENDOR_APC, USB_PRODUCT_APC_UPS },
-	{ USB_VENDOR_APC, USB_PRODUCT_APC_UPS5G },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C100 },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C1100 },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C120 },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C1250EITWRK },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C1500EITWRK },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C550AVR },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C800 },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6C900 },
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F6H375 },
-	{ USB_VENDOR_CYBERPOWER, USB_PRODUCT_CYBERPOWER_1500 },
-	{ USB_VENDOR_CYBERPOWER, USB_PRODUCT_CYBERPOWER_OR2200 },
-	{ USB_VENDOR_CYBERPOWER, USB_PRODUCT_CYBERPOWER_UPS },
-	{ USB_VENDOR_DELL2, USB_PRODUCT_DELL2_UPS },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_R1500G2 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_RT2200 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_T1000 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_T1500 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_T750 },
-	{ USB_VENDOR_HP, USB_PRODUCT_HP_T750G2 },
-	{ USB_VENDOR_IDOWELL, USB_PRODUCT_IDOWELL_IDOWELL },
-	{ USB_VENDOR_LIEBERT, USB_PRODUCT_LIEBERT_UPS },
-	{ USB_VENDOR_LIEBERT2, USB_PRODUCT_LIEBERT2_PSA },
-	{ USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS1 },
-	{ USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2 },
-	{ USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX35F },
-	{ USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BX50F },
-	{ USB_VENDOR_OMRON, USB_PRODUCT_OMRON_BY35S }
-};
-#define upd_lookup(v, p) usb_lookup(upd_devs, v, p)
-
 int  upd_match(struct device *, void *, void *);
 void upd_attach(struct device *, struct device *, void *);
 int  upd_detach(struct device *, int);
@@ -160,14 +127,11 @@ upd_match(struct device *parent, void *match, void *aux)
 	if (uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
 		return (ret);
 
-	if (upd_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
-		return (ret);
-
 	DPRINTF(("upd: vendor=0x%04x, product=0x%04x\n", uha->uaa->vendor,
 	    uha->uaa->product));
 
 	/*
-	 * look for at least one sensor of our table, otherwise do not attach
+	 * look for at least one sensor of our table
 	 */
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	for (hdata = hid_start_parse(desc, size, hid_feature);
