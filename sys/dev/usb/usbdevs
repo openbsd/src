@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.630 2014/04/20 20:34:57 stsp Exp $
+$OpenBSD: usbdevs,v 1.631 2014/04/29 13:46:55 mcbride Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2925,7 +2925,9 @@ product MICROSOFT WLNOTEBOOK3	0x00d2	Wireless Optical Mouse 3000 (Model 1049)
 product MICROSOFT WLNOTEBOOK2	0x00e1	Wireless Optical Mouse 3000 (Model 1056)
 product MICROSOFT XBOX360_CONTROLLER 0x028e XBOX 360 Controller
 product MICROSOFT XBOX360	0x0292	XBOX 360 WLAN
+product MICROSOFT WLMOBILEMOUSE3500 0x0745  Wireless Mobile Mouse 3500
 product MICROSOFT LIFECAM	0x074a	Microsoft LifeCam
+product MICROSOFT WLARCMOUSE	0x074f	Wireless Arc Mouse (Model 1350)
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	SCSI-DB25
