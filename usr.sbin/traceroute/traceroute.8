@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.58 2014/04/27 15:30:16 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.59 2014/04/29 17:35:29 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 27 2014 $
+.Dd $Mdocdate: April 29 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -69,13 +69,19 @@
 .Sh DESCRIPTION
 The Internet is a large and complex aggregation of
 network hardware, connected together by gateways.
-Tracking the route one's packets follow (or finding the miscreant
-gateway that's discarding your packets) can be difficult.
+Tracking the route packets follow (or finding the miscreant
+gateway that's discarding packets) can be difficult.
 .Nm
-utilizes the IP protocol `time to live' field and attempts to elicit an ICMP
+utilizes the IPv4 protocol time to live (TTL) field
+and attempts to elicit an ICMP
 .Dv TIME_EXCEEDED
 response from each gateway along the path to some
 host.
+.Nm traceroute6
+does the same for the IPv6 protocol,
+instead using hop limits and ICMPv6
+.Dv TIME_EXCEEDED
+responses.
 .Pp
 The only mandatory parameter is the destination host name or IP number.
 The default probe datagram length is 38 bytes, but this may be increased
@@ -98,7 +104,7 @@ Dump the packet data to standard error before transmitting it.
 .It Fl d
 Turn on socket-level debugging.
 .It Fl f Ar first_ttl
-Set the first time-to-live or hoplimit used in outgoing probe packets.
+Set the first TTL or hop limit used in outgoing probe packets.
 The effect is that the first first_ttl \- 1 hosts will be skipped
 in the output of
 .Nm traceroute .
@@ -113,11 +119,10 @@ This option is not available for IPv6.
 .It Fl I
 Use ICMP or ICMP6 ECHO instead of UDP datagrams.
 .It Fl l
-Display the TTL or hoplimit value of the returned packet.
+Display the TTL or hop limit value of the returned packet.
 This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
-Set the max time-to-live (max number of hops) used in outgoing probe
-packets.
+Set the maximum TTL or hop limit.
 The default is the value of the system's
 .Cm net.inet.ip.ttl
 or
@@ -219,7 +224,7 @@ This option is not available for IPv6.
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
-internet host by launching UDP probe packets with a small TTL (time to live)
+internet host by launching UDP probe packets with a small TTL
 then listening for an ICMP "time exceeded" reply from a gateway.
 We start out probes with a TTL of one and increase by one until we get an
 ICMP "port unreachable"
