@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.5 2014/02/04 13:44:41 eric Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.6 2014/04/29 10:08:55 reyk Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -42,7 +42,7 @@ struct pki {
 /* ssl.c */
 void		ssl_init(void);
 int		ssl_setup(SSL_CTX **, struct pki *);
-SSL_CTX	       *ssl_ctx_create(void);
+SSL_CTX	       *ssl_ctx_create(char *, off_t, char *, off_t);
 int	        ssl_cmp(struct pki *, struct pki *);
 DH	       *get_dh1024(void);
 DH	       *get_dh_from_memory(char *, size_t);

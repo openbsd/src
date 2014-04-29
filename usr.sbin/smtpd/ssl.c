@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.61 2014/04/19 14:09:19 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.62 2014/04/29 10:08:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -66,18 +66,10 @@ ssl_setup(SSL_CTX **ctxp, struct pki *pki)
 {
 	DH	*dh;
 	SSL_CTX	*ctx;
-	
-	ctx = ssl_ctx_create();
 
-	if (!ssl_ctx_use_certificate_chain(ctx,
-		pki->pki_cert, pki->pki_cert_len))
-		goto err;
-	if (!ssl_ctx_use_private_key(ctx,
-		pki->pki_key, pki->pki_key_len))
-		goto err;
+	ctx = ssl_ctx_create(pki->pki_cert, pki->pki_cert_len,
+	    pki->pki_key, pki->pki_key_len);
 
-	if (!SSL_CTX_check_private_key(ctx))
-		goto err;
 	if (!SSL_CTX_set_session_id_context(ctx,
 		(const unsigned char *)pki->pki_name,
 		strlen(pki->pki_name) + 1))
@@ -251,7 +243,7 @@ fail:
 }
 
 SSL_CTX *
-ssl_ctx_create()
+ssl_ctx_create(char *cert, off_t cert_len, char *key, off_t key_len)
 {
 	SSL_CTX	*ctx;
 
@@ -271,6 +263,19 @@ ssl_ctx_create()
 	if (!SSL_CTX_set_cipher_list(ctx, SSL_CIPHERS)) {
 		ssl_error("ssl_ctx_create");
 		fatal("ssl_ctx_create: could not set cipher list");
+	}
+
+	if (cert != NULL && key != NULL) {
+		if (!ssl_ctx_use_certificate_chain(ctx, cert, cert_len)) {
+			ssl_error("ssl_ctx_create");
+			fatal("ssl_ctx_create: invalid certificate chain");
+		} else if (!ssl_ctx_use_private_key(ctx, key, key_len)) {
+			ssl_error("ssl_ctx_create");
+			fatal("ssl_ctx_create: could not use private key");
+		} else if (!SSL_CTX_check_private_key(ctx)) {
+			ssl_error("ssl_ctx_create");
+			fatal("ssl_ctx_create: invalid private key");
+		}
 	}
 
 	return (ctx);
