@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.125 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.126 2014/04/29 09:55:28 kettenis Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1696,9 +1696,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 				key = SWD_KEY(sdp, startslot + i);
 				SWAP_KEY_GET(sdp, key);	/* add reference */
 
-				swap_encrypt(key, src, dst, block,
-				    1 << PAGE_SHIFT);
-				block += btodb(1 << PAGE_SHIFT);
+				swap_encrypt(key, src, dst, block, PAGE_SIZE);
+				block += btodb(PAGE_SIZE);
 			} else {
 #else
 			{
@@ -1707,8 +1706,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			}
 			/* this just tells async callbacks to free */
 			atomic_setbits_int(&tpps[i]->pg_flags, PQ_ENCRYPT);
-			src += 1 << PAGE_SHIFT;
-			dst += 1 << PAGE_SHIFT;
+			src += PAGE_SIZE;
+			dst += PAGE_SIZE;
 		}
 
 		uvm_pagermapout(kva, npages);
@@ -1838,17 +1837,16 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 					result = VM_PAGER_ERROR;
 					break;
 				}
-				swap_decrypt(key, data, dst, block,
-					     1 << PAGE_SHIFT);
+				swap_decrypt(key, data, dst, block, PAGE_SIZE);
 			} else if (bounce) {
 #else
 			if (bounce) {
 #endif
-				memcpy(dst, data, 1 << PAGE_SHIFT);
+				memcpy(dst, data, PAGE_SIZE);
 			}
-			data += 1 << PAGE_SHIFT;
-			dst += 1 << PAGE_SHIFT;
-			block += btodb(1 << PAGE_SHIFT);
+			data += PAGE_SIZE;
+			dst += PAGE_SIZE;
+			block += btodb(PAGE_SIZE);
 		}
 		if (bounce)
 			uvm_pagermapout(bouncekva, npages);
