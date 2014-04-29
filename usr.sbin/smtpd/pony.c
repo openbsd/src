@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.2 2014/04/09 18:55:19 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.3 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -212,6 +212,8 @@ pony(void)
 	config_peer(PROC_LKA);
 	config_peer(PROC_CONTROL);
 	config_done();
+
+	ca_engine_init();
 
 	if (event_dispatch() < 0)
 		fatal("event_dispatch");

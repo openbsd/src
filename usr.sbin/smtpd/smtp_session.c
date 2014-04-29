@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.209 2014/04/29 12:18:27 reyk Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.210 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -295,6 +295,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	struct smtp_session		*s;
 	struct smtp_rcpt		*rcpt;
 	void				*ssl;
+	char				*pkiname;
 	char				 user[SMTPD_MAXLOGNAME];
 	struct msg			 m;
 	const char			*line, *helo;
@@ -584,24 +585,18 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal(NULL);
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "smtp:ca_cert");
-
-		resp_ca_cert->key = xstrdup((char *)imsg->data +
-		    sizeof *resp_ca_cert + resp_ca_cert->cert_len,
-		    "smtp:ca_key");
-
 		if (s->listener->pki_name[0])
-			ssl_ctx = dict_get(env->sc_ssl_dict, s->listener->pki_name);
+			pkiname = s->listener->pki_name;
 		else
-			ssl_ctx = dict_get(env->sc_ssl_dict, s->smtpname);
+			pkiname = s->smtpname;
+		ssl_ctx = dict_get(env->sc_ssl_dict, pkiname);
 
 		ssl = ssl_smtp_init(ssl_ctx, smtp_sni_callback, s);
 		io_set_read(&s->io);
 		io_start_tls(&s->io, ssl);
 
 		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		explicit_bzero(resp_ca_cert->key, resp_ca_cert->key_len);
 		free(resp_ca_cert->cert);
-		free(resp_ca_cert->key);
 		free(resp_ca_cert);
 		return;
 

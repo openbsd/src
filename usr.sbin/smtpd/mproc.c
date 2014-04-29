@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.8 2014/04/19 17:45:05 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.9 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -38,7 +38,6 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void mproc_event_add(struct mproc *);
 static void mproc_dispatch(int, short, void *);
 
 static ssize_t msgbuf_write2(struct msgbuf *);
@@ -117,7 +116,7 @@ mproc_disable(struct mproc *p)
 	mproc_event_add(p);
 }
 
-static void
+void
 mproc_event_add(struct mproc *p)
 {
 	short	events;
@@ -417,6 +416,25 @@ m_close(struct mproc *p)
 	mproc_event_add(p);
 }
 
+void
+m_flush(struct mproc *p)
+{
+	if (imsg_compose(&p->imsgbuf, p->m_type, p->m_peerid, p->m_pid, p->m_fd,
+	    p->m_buf, p->m_pos) == -1)
+		fatal("imsg_compose");
+
+	log_trace(TRACE_MPROC, "mproc: %s -> %s : %zu %s (flush)",
+	    proc_name(smtpd_process),
+	    proc_name(p->proc),
+	    p->m_pos,
+	    imsg_to_str(p->m_type));
+
+	p->msg_out += 1;
+	p->m_pos = 0;
+
+	imsg_flush(&p->imsgbuf);
+}
+
 static struct imsg * current;
 
 static void
@@ -505,6 +523,7 @@ m_add_typed_sized(struct mproc *p, uint8_t type, const void *data, size_t len)
 enum {
 	M_INT,
 	M_UINT32,
+	M_SIZET,
 	M_TIME,
 	M_STRING,
 	M_DATA,
@@ -526,6 +545,12 @@ void
 m_add_u32(struct mproc *m, uint32_t u32)
 {
 	m_add_typed(m, M_UINT32, &u32, sizeof u32);
+};
+
+void
+m_add_size(struct mproc *m, size_t sz)
+{
+	m_add_typed(m, M_SIZET, &sz, sizeof sz);
 };
 
 void
@@ -602,6 +627,12 @@ void
 m_get_u32(struct msg *m, uint32_t *u32)
 {
 	m_get_typed(m, M_UINT32, u32, sizeof(*u32));
+}
+
+void
+m_get_size(struct msg *m, size_t *sz)
+{
+	m_get_typed(m, M_SIZET, sz, sizeof(*sz));
 }
 
 void

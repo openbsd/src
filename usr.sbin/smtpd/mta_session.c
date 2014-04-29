@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.62 2014/04/29 17:32:42 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.63 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -253,6 +253,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*name;
 	void			*ssl;
 	int			 dnserror, status;
+	char			*pkiname;
 
 	switch (imsg->hdr.type) {
 
@@ -328,7 +329,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 				return;
 			}
 			else {
-				ssl = ssl_mta_init(NULL, 0, NULL, 0);
+				ssl = ssl_mta_init(NULL, NULL, 0);
 				if (ssl == NULL)
 					fatal("mta: ssl_mta_init");
 				io_start_tls(&s->io, ssl);
@@ -339,19 +340,18 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "mta:ca_cert");
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
 		    sizeof *resp_ca_cert, "mta:ca_cert");
-		resp_ca_cert->key = xstrdup((char *)imsg->data +
-		    sizeof *resp_ca_cert + resp_ca_cert->cert_len,
-		    "mta:ca_key");
-		ssl = ssl_mta_init(resp_ca_cert->cert, resp_ca_cert->cert_len,
-		    resp_ca_cert->key, resp_ca_cert->key_len);
+		if (s->relay->pki_name)
+			pkiname = s->relay->pki_name;
+		else
+			pkiname = s->helo;
+		ssl = ssl_mta_init(pkiname,
+		    resp_ca_cert->cert, resp_ca_cert->cert_len);
 		if (ssl == NULL)
 			fatal("mta: ssl_mta_init");
 		io_start_tls(&s->io, ssl);
 
 		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		explicit_bzero(resp_ca_cert->key, resp_ca_cert->key_len);
 		free(resp_ca_cert->cert);
-		free(resp_ca_cert->key);
 		free(resp_ca_cert);
 		return;
 

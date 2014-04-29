@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.167 2014/04/15 08:32:45 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.168 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,6 +91,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
+	if (imsg->hdr.type == IMSG_CA_PRIVENC ||
+	    imsg->hdr.type == IMSG_CA_PRIVDEC) {
+		ca_imsg(p, imsg);
+		return;
+	}
+
 	if (p->proc == PROC_PONY) {
 		switch (imsg->hdr.type) {
 		case IMSG_SMTP_EXPAND_RCPT:
@@ -134,13 +140,10 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			resp_ca_cert.status = CA_OK;
 			resp_ca_cert.cert_len = pki->pki_cert_len;
-			resp_ca_cert.key_len = pki->pki_key_len;
 			iov[0].iov_base = &resp_ca_cert;
 			iov[0].iov_len = sizeof(resp_ca_cert);
 			iov[1].iov_base = pki->pki_cert;
 			iov[1].iov_len = pki->pki_cert_len;
-			iov[2].iov_base = pki->pki_key;
-			iov[2].iov_len = pki->pki_key_len;
 			m_composev(p, IMSG_SMTP_SSL_INIT, 0, 0, -1, iov, nitems(iov));
 			return;
 
@@ -256,13 +259,10 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			}
 			resp_ca_cert.status = CA_OK;
 			resp_ca_cert.cert_len = pki->pki_cert_len;
-			resp_ca_cert.key_len = pki->pki_key_len;
 			iov[0].iov_base = &resp_ca_cert;
 			iov[0].iov_len = sizeof(resp_ca_cert);
 			iov[1].iov_base = pki->pki_cert;
 			iov[1].iov_len = pki->pki_cert_len;
-			iov[2].iov_base = pki->pki_key;
-			iov[2].iov_len = pki->pki_key_len;
 			m_composev(p, IMSG_MTA_SSL_INIT, 0, 0, -1, iov, nitems(iov));
 			return;
 
@@ -389,6 +389,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			if (verbose & TRACE_TABLES)
 				table_dump_all();
 			table_open_all();
+			ca_init();
 
 			/* Start fulfilling requests */
 			mproc_enable(p_pony);

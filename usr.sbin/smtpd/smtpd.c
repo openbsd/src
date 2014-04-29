@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.222 2014/04/29 10:18:06 reyk Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.223 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -47,6 +47,7 @@
 #include <util.h>
 
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -1378,6 +1379,9 @@ imsg_to_str(int type)
 	CASE(IMSG_SMTP_EVENT_COMMIT);
 	CASE(IMSG_SMTP_EVENT_ROLLBACK);
 	CASE(IMSG_SMTP_EVENT_DISCONNECT);
+
+	CASE(IMSG_CA_PRIVENC);
+	CASE(IMSG_CA_PRIVDEC);
 	default:
 		(void)snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 

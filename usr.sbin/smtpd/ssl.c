@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.62 2014/04/29 10:08:55 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.63 2014/04/29 19:13:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,8 +67,7 @@ ssl_setup(SSL_CTX **ctxp, struct pki *pki)
 	DH	*dh;
 	SSL_CTX	*ctx;
 
-	ctx = ssl_ctx_create(pki->pki_cert, pki->pki_cert_len,
-	    pki->pki_key, pki->pki_key_len);
+	ctx = ssl_ctx_create(pki->pki_name, pki->pki_cert, pki->pki_cert_len);
 
 	if (!SSL_CTX_set_session_id_context(ctx,
 		(const unsigned char *)pki->pki_name,
@@ -243,7 +242,7 @@ fail:
 }
 
 SSL_CTX *
-ssl_ctx_create(char *cert, off_t cert_len, char *key, off_t key_len)
+ssl_ctx_create(void *pkiname, char *cert, off_t cert_len)
 {
 	SSL_CTX	*ctx;
 
@@ -265,13 +264,14 @@ ssl_ctx_create(char *cert, off_t cert_len, char *key, off_t key_len)
 		fatal("ssl_ctx_create: could not set cipher list");
 	}
 
-	if (cert != NULL && key != NULL) {
+	if (cert != NULL) {
 		if (!ssl_ctx_use_certificate_chain(ctx, cert, cert_len)) {
 			ssl_error("ssl_ctx_create");
 			fatal("ssl_ctx_create: invalid certificate chain");
-		} else if (!ssl_ctx_use_private_key(ctx, key, key_len)) {
+		} else if (!ssl_ctx_fake_private_key(ctx,
+		    pkiname, cert, cert_len)) {
 			ssl_error("ssl_ctx_create");
-			fatal("ssl_ctx_create: could not use private key");
+			fatal("ssl_ctx_create: could not fake private key");
 		} else if (!SSL_CTX_check_private_key(ctx)) {
 			ssl_error("ssl_ctx_create");
 			fatal("ssl_ctx_create: invalid private key");
@@ -452,4 +452,89 @@ ssl_set_ecdh_curve(SSL_CTX *ctx, const char *curve)
 	SSL_CTX_set_tmp_ecdh(ctx, ecdh);
 	SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
 	EC_KEY_free(ecdh);
+}
+
+int
+ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
+    X509 **x509ptr, EVP_PKEY **pkeyptr)
+{
+	int		 ret = 0;
+	BIO		*in;
+	X509		*x509 = NULL;
+	EVP_PKEY	*pkey = NULL;
+	RSA		*rsa = NULL;
+
+	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_BUF_LIB);
+		return (0);
+	}
+
+	if ((x509 = PEM_read_bio_X509(in, NULL,
+	    ssl_getpass_cb, NULL)) == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PEM_LIB);
+		goto fail;
+	}
+
+	if ((pkey = X509_get_pubkey(x509)) == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_X509_LIB);
+		goto fail;
+	}
+
+	if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
+		goto fail;
+	}
+
+	if (data)
+		RSA_set_ex_data(rsa, 0, data);
+
+	*x509ptr = x509;
+	*pkeyptr = pkey;
+	ret = 1;
+
+	goto done;
+
+ fail:
+	ssl_error("ssl_ctx_load_pkey");
+
+	if (pkey != NULL)
+		EVP_PKEY_free(pkey);
+	if (x509 != NULL)
+		X509_free(x509);
+
+ done:
+	if (in != NULL)
+		BIO_free(in);
+
+	return ret;
+}
+
+int
+ssl_ctx_fake_private_key(SSL_CTX *ctx, void *data, char *buf, off_t len)
+{
+	int		 ret = 0;
+	EVP_PKEY	*pkey = NULL;
+	X509		*x509 = NULL;
+
+	if (!ssl_ctx_load_pkey(ctx, data, buf, len, &x509, &pkey))
+		return (0);
+
+	/*
+	 * Use the public key as the "private" key - the secret key
+	 * parameters are hidden in an extra process that will be
+	 * contacted by the RSA engine.  The SSL/TLS library needs at
+	 * least the public key parameters in the current process.
+	 */
+	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
+	if (!ret) {
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_SSL_LIB);
+		ssl_error("ssl_ctx_fake_private_key");
+	}
+
+	if (pkey != NULL)
+		EVP_PKEY_free(pkey);
+	if (x509 != NULL)
+		X509_free(x509);
+
+	return (ret);
 }

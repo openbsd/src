@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.6 2014/02/04 13:44:41 eric Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.7 2014/04/29 19:13:14 reyk Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -95,37 +95,6 @@ X509_LOOKUP_METHOD x509_mem_lookup = {
 };
 
 #define X509_L_ADD_MEM	3
-
-int
-ssl_ctx_use_private_key(SSL_CTX *ctx, char *buf, off_t len)
-{
-	int		 ret;
-	BIO		*in;
-	EVP_PKEY	*pkey;
-
-	ret = 0;
-
-	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
-		return 0;
-	}
-
-	pkey = PEM_read_bio_PrivateKey(in, NULL,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
-
-	if (pkey == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_PEM_LIB);
-		goto end;
-	}
-	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-	EVP_PKEY_free(pkey);
-end:
-	if (in != NULL)
-		BIO_free(in);
-	return ret;
-}
-
 
 int
 ssl_ctx_use_certificate_chain(SSL_CTX *ctx, char *buf, off_t len)

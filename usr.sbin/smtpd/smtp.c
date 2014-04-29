@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.136 2014/04/19 13:52:49 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.137 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -209,7 +209,7 @@ smtp_setup_events(void)
 		dict_xset(env->sc_ssl_dict, k, ssl_ctx);
 	}
 
-	purge_config(PURGE_PKI);
+	purge_config(PURGE_PKI_KEYS);
 
 	log_debug("debug: smtp: will accept at most %d clients",
 	    (getdtablesize() - getdtablecount())/2 - SMTP_FD_RESERVE);

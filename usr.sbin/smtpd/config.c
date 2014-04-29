@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2014/04/29 10:18:06 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.30 2014/04/29 19:13:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,6 +46,8 @@ purge_config(uint8_t what)
 	struct table	*t;
 	struct rule	*r;
 	struct pki	*p;
+	const char	*k;
+	void		*iter_dict;
 
 	if (what & PURGE_LISTENERS) {
 		while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
@@ -72,13 +74,33 @@ purge_config(uint8_t what)
 	if (what & PURGE_PKI) {
 		while (dict_poproot(env->sc_pki_dict, (void **)&p)) {
 			explicit_bzero(p->pki_cert, p->pki_cert_len);
-			explicit_bzero(p->pki_key, p->pki_key_len);
 			free(p->pki_cert);
-			free(p->pki_key);
+			if (p->pki_key) {
+				explicit_bzero(p->pki_key, p->pki_key_len);
+				free(p->pki_key);
+			}
+			if (p->pki_pkey)
+				EVP_PKEY_free(p->pki_pkey);
 			free(p);
 		}
 		free(env->sc_pki_dict);
 		env->sc_pki_dict = NULL;
+	} else if (what & PURGE_PKI_KEYS) {
+		iter_dict = NULL;
+		while (dict_iter(env->sc_pki_dict, &iter_dict, &k,
+		    (void **)&p)) {
+			explicit_bzero(p->pki_cert, p->pki_cert_len);
+			free(p->pki_cert);
+			p->pki_cert = NULL;
+			if (p->pki_key) {
+				explicit_bzero(p->pki_key, p->pki_key_len);
+				free(p->pki_key);
+				p->pki_key = NULL;
+			}
+			if (p->pki_pkey)
+				EVP_PKEY_free(p->pki_pkey);
+			p->pki_pkey = NULL;
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_smtpd.c,v 1.6 2014/04/29 12:18:27 reyk Exp $	*/
+/*	$OpenBSD: ssl_smtpd.c,v 1.7 2014/04/29 19:13:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,12 +44,12 @@
 
 
 void *
-ssl_mta_init(char *cert, off_t cert_len, char *key, off_t key_len)
+ssl_mta_init(void *pkiname, char *cert, off_t cert_len)
 {
 	SSL_CTX	*ctx = NULL;
 	SSL	*ssl = NULL;
 
-	ctx = ssl_ctx_create(cert, cert_len, key, key_len);
+	ctx = ssl_ctx_create(pkiname, cert, cert_len);
 
 	if ((ssl = SSL_new(ctx)) == NULL)
 		goto err;
