@@ -561,6 +561,11 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 	unsigned int tot, n, nw;
 	int i;
 
+	if (len < 0) {
+		SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
+		return -1;
+	}
+
 	s->rwstate = SSL_NOTHING;
 	tot = s->s3->wnum;
 	s->s3->wnum = 0;
@@ -901,6 +906,11 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_read_buffer(s))
 			return (-1);
+
+	if (len < 0) {
+		SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
+		return -1;
+	}
 
 	if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
 	    (type != SSL3_RT_HANDSHAKE) && type) ||
