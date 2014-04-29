@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.13 2014/02/14 09:00:03 markus Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.14 2014/04/29 11:51:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,7 @@
 #define IKEV2_STATE_EAP			3	/* EAP requested */
 #define IKEV2_STATE_AUTH_REQUEST	4	/* auth received */
 #define IKEV2_STATE_AUTH_SUCCESS	5	/* authenticated */
-#define IKEV2_STATE_VALID		6	/* validated peer certs */
+#define IKEV2_STATE_VALID		6	/* authenticated AND validated certs */
 #define IKEV2_STATE_EAP_VALID		7	/* EAP validated */
 #define IKEV2_STATE_ESTABLISHED		8	/* active IKE SA */
 #define IKEV2_STATE_CLOSED		9	/* delete this SA */

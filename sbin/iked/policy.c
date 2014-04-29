@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.31 2014/02/21 20:52:38 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.32 2014/04/29 11:51:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -222,11 +222,17 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 {
 	const char		*a;
 	const char		*b;
+	int 			ostate = sa->sa_state;
 
-	a = print_map(sa->sa_state, ikev2_state_map);
+	a = print_map(ostate, ikev2_state_map);
 	b = print_map(state, ikev2_state_map);
 
-	if (state > sa->sa_state) {
+	sa->sa_state = state;
+	if (ostate != IKEV2_STATE_INIT &&
+	    !sa_stateok(sa, state)) {
+		log_debug("%s: cannot switch: %s -> %s", __func__, a, b);
+		sa->sa_state = ostate;
+	} else if (ostate != sa->sa_state) {
 		switch (state) {
 		case IKEV2_STATE_ESTABLISHED:
 		case IKEV2_STATE_CLOSED:
@@ -244,7 +250,6 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 		}
 	}
 
-	sa->sa_state = state;
 }
 
 void
@@ -280,6 +285,7 @@ sa_stateok(struct iked_sa *sa, int state)
 
 	if (state == IKEV2_STATE_SA_INIT ||
 	    state == IKEV2_STATE_VALID ||
+	    state == IKEV2_STATE_EAP_VALID ||
 	    state == IKEV2_STATE_EAP) {
 		log_debug("%s: %s flags 0x%02x, require 0x%02x %s", __func__,
 		    print_map(state, ikev2_state_map),
@@ -315,17 +321,18 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	else
 		pol = sa->sa_policy;
 
-	sa->sa_statevalid = IKED_REQ_AUTH|IKED_REQ_SA;
+	sa->sa_statevalid = IKED_REQ_AUTH|IKED_REQ_AUTHVALID|IKED_REQ_SA;
 	if (pol != NULL && pol->pol_auth.auth_eap) {
-		sa->sa_statevalid |= IKED_REQ_CERT;
+		sa->sa_statevalid |= IKED_REQ_CERT|IKED_REQ_EAPVALID;
 	} else if (pol != NULL && pol->pol_auth.auth_method !=
 	    IKEV2_AUTH_SHARED_KEY_MIC) {
-		sa->sa_statevalid |= IKED_REQ_VALID|IKED_REQ_CERT;
+		sa->sa_statevalid |= IKED_REQ_CERTVALID|IKED_REQ_CERT;
 	}
 
 	if (initiator) {
 		localid = &sa->sa_iid;
-		diff = IKED_REQ_VALID|IKED_REQ_SA;
+		diff = IKED_REQ_CERTVALID|IKED_REQ_AUTHVALID|IKED_REQ_SA|
+		    IKED_REQ_EAPVALID;
 		sa->sa_stateinit = sa->sa_statevalid & ~diff;
 		sa->sa_statevalid = sa->sa_statevalid & diff;
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.72 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.73 2014/04/29 11:51:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -324,15 +324,17 @@ struct iked_id {
 };
 
 #define IKED_REQ_CERT		0x01	/* get local certificate (if required) */
-#define IKED_REQ_VALID		0x02	/* validate the peer cert */
+#define IKED_REQ_CERTVALID	0x02	/* validated the peer cert */
 #define IKED_REQ_AUTH		0x04	/* AUTH payload */
-#define IKED_REQ_SA		0x08	/* SA available */
-#define IKED_REQ_CHILDSA	0x10	/* Child SA initiated */
-#define IKED_REQ_INF		0x20	/* Informational exchange initiated */
-#define IKED_REQ_DELETE		0x40	/* Rekeying continuation */
+#define IKED_REQ_AUTHVALID	0x08	/* AUTH payload has been verified */
+#define IKED_REQ_SA		0x10	/* SA available */
+#define IKED_REQ_EAPVALID	0x20	/* EAP payload has been verified */
+#define IKED_REQ_CHILDSA	0x40	/* Child SA initiated */
+#define IKED_REQ_INF		0x80	/* Informational exchange initiated */
+#define IKED_REQ_DELETE		0x100	/* Rekeying continuation */
 
 #define IKED_REQ_BITS	\
-    "\10\01CERT\02VALID\03AUTH\04SA"
+    "\20\01CERT\02CERTVALID\03AUTH\04AUTHVALID\05SA\06EAP"
 
 TAILQ_HEAD(iked_msgqueue, iked_message);
 
