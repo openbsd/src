@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.148 2014/04/29 12:45:29 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.149 2014/04/29 14:11:23 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3448,11 +3448,8 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 void
 ehci_device_intr_abort(struct usbd_xfer *xfer)
 {
-	DPRINTFN(1, ("ehci_device_intr_abort: xfer=%p\n", xfer));
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTFN(1, ("ehci_device_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
 	/*
 	 * XXX - abort_xfer uses ehci_sync_hc, which syncs via the advance
 	 *       async doorbell. That's dependant on the async list, wheras

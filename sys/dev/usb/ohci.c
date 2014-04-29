@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.125 2014/04/27 14:48:10 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.126 2014/04/29 14:11:23 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2973,14 +2973,11 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a device control request. */
 void
 ohci_device_intr_abort(struct usbd_xfer *xfer)
 {
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("ohci_device_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
 	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.111 2014/04/27 14:48:10 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.112 2014/04/29 14:11:23 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2011,15 +2011,11 @@ uhci_device_ctrl_close(struct usbd_pipe *pipe)
 {
 }
 
-/* Abort a device interrupt request. */
 void
 uhci_device_intr_abort(struct usbd_xfer *xfer)
 {
-	DPRINTFN(1,("uhci_device_intr_abort: xfer=%p\n", xfer));
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTFN(1,("uhci_device_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	KASSERT(xfer->pipe->intrxfer == xfer);
+
 	uhci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
