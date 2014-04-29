@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.45 2014/03/31 15:25:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.46 2014/04/29 18:01:49 markus Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,11 @@ CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
 #DEBUG=-g
 
 WARNINGS=yes
+
+OPENSSL?=	yes
+.if (${OPENSSL:L} == "yes")
+CFLAGS+=	-DWITH_OPENSSL -DWITH_SSH1
+.endif
 
 CFLAGS+=	-DENABLE_PKCS11
 .ifndef NOPIC

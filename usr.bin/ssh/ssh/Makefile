@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.62 2013/07/20 01:55:13 djm Exp $
+#	$OpenBSD: Makefile,v 1.63 2014/04/29 18:01:49 markus Exp $
 
 .PATH:		${.CURDIR}/..
+.include "${.CURDIR}/../Makefile.inc"
 
 PROG=	ssh
 BINOWN=	root
@@ -13,10 +14,14 @@ LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
 
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect1.c sshconnect2.c mux.c \
+	sshconnect.c sshconnect2.c mux.c \
 	roaming_common.c roaming_client.c
 
 .include <bsd.own.mk>
+
+.if (${OPENSSL:L} == "yes")
+SRCS+=	sshconnect1.c
+.endif
 
 KERBEROS5=no
 
@@ -32,5 +37,10 @@ LDADD+=  -lgssapi -lkrb5 -lasn1
 LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 .endif # KERBEROS5
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+.if (${OPENSSL:L} == "yes")
+LDADD+=	-lcrypto -lutil
+DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+.endif
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}

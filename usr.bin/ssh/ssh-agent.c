@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.184 2014/03/15 17:28:26 deraadt Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.185 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,9 @@
 #include <sys/un.h>
 #include <sys/param.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -207,9 +209,11 @@ process_request_identities(SocketEntry *e, int version)
 	buffer_put_int(&msg, tab->nentries);
 	TAILQ_FOREACH(id, &tab->idlist, next) {
 		if (id->key->type == KEY_RSA1) {
+#ifdef WITH_SSH1
 			buffer_put_int(&msg, BN_num_bits(id->key->rsa->n));
 			buffer_put_bignum(&msg, id->key->rsa->e);
 			buffer_put_bignum(&msg, id->key->rsa->n);
+#endif
 		} else {
 			u_char *blob;
 			u_int blen;
@@ -224,6 +228,7 @@ process_request_identities(SocketEntry *e, int version)
 	buffer_free(&msg);
 }
 
+#ifdef WITH_SSH1
 /* ssh1 only */
 static void
 process_authentication_challenge1(SocketEntry *e)
@@ -294,6 +299,7 @@ send:
 	BN_clear_free(challenge);
 	buffer_free(&msg);
 }
+#endif
 
 /* ssh2 only */
 static void
@@ -719,6 +725,7 @@ process_message(SocketEntry *e)
 	case SSH_AGENTC_UNLOCK:
 		process_lock_agent(e, type == SSH_AGENTC_LOCK);
 		break;
+#ifdef WITH_SSH1
 	/* ssh1 */
 	case SSH_AGENTC_RSA_CHALLENGE:
 		process_authentication_challenge1(e);
@@ -736,6 +743,7 @@ process_message(SocketEntry *e)
 	case SSH_AGENTC_REMOVE_ALL_RSA_IDENTITIES:
 		process_remove_all_identities(e, 1);
 		break;
+#endif
 	/* ssh2 */
 	case SSH2_AGENTC_SIGN_REQUEST:
 		process_sign_request2(e);
@@ -1016,7 +1024,9 @@ main(int ac, char **av)
 	setegid(getgid());
 	setgid(getgid());
 
+#ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
+#endif
 
 	while ((ch = getopt(ac, av, "cdksa:t:")) != -1) {
 		switch (ch) {

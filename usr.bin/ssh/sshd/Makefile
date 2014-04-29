@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.82 2014/03/26 19:58:37 tedu Exp $
+#	$OpenBSD: Makefile,v 1.83 2014/04/29 18:01:49 markus Exp $
 
 .PATH:		${.CURDIR}/..
+.include "${.CURDIR}/../Makefile.inc"
 
 PROG=	sshd
 BINOWN=	root
@@ -8,16 +9,21 @@ BINMODE=555
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
 
-SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
+SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
-	auth.c auth1.c auth2.c auth-options.c session.c \
+	auth.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
-	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \
+	sftp-server.c sftp-common.c \
 	roaming_common.c roaming_serv.c sandbox-systrace.c \
 	kexc25519s.c
+
+.if (${OPENSSL:L} == "yes")
+SRCS+=	auth-rsa.c auth-rh-rsa.c auth1.c \
+	kexdhs.c kexgexs.c kexecdhs.c
+.endif
 
 .include <bsd.own.mk> # for KERBEROS and AFS
 
@@ -36,5 +42,10 @@ LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
 DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+.if (${OPENSSL:L} == "yes")
+LDADD+=	-lcrypto -lutil
+DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+.endif
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}

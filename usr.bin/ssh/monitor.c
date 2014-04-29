@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.131 2014/02/02 03:44:31 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.132 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -32,7 +32,9 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/dh.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -149,7 +151,10 @@ int mm_answer_gss_checkmic(int, Buffer *);
 static int monitor_read_log(struct monitor *);
 
 static Authctxt *authctxt;
+
+#ifdef WITH_SSH1
 static BIGNUM *ssh1_challenge = NULL;	/* used for ssh1 rsa auth */
+#endif
 
 /* local state for key verify */
 static u_char *key_blob = NULL;
@@ -179,7 +184,9 @@ struct mon_table {
 #define MON_PERMIT	0x1000	/* Request is permitted */
 
 struct mon_table mon_dispatch_proto20[] = {
+#ifdef WITH_OPENSSL
     {MONITOR_REQ_MODULI, MON_ONCE, mm_answer_moduli},
+#endif
     {MONITOR_REQ_SIGN, MON_ONCE, mm_answer_sign},
     {MONITOR_REQ_PWNAM, MON_ONCE, mm_answer_pwnamallow},
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
@@ -199,7 +206,9 @@ struct mon_table mon_dispatch_proto20[] = {
 };
 
 struct mon_table mon_dispatch_postauth20[] = {
+#ifdef WITH_OPENSSL
     {MONITOR_REQ_MODULI, 0, mm_answer_moduli},
+#endif
     {MONITOR_REQ_SIGN, 0, mm_answer_sign},
     {MONITOR_REQ_PTY, 0, mm_answer_pty},
     {MONITOR_REQ_PTYCLEANUP, 0, mm_answer_pty_cleanup},
@@ -208,6 +217,7 @@ struct mon_table mon_dispatch_postauth20[] = {
 };
 
 struct mon_table mon_dispatch_proto15[] = {
+#ifdef WITH_SSH1
     {MONITOR_REQ_PWNAM, MON_ONCE, mm_answer_pwnamallow},
     {MONITOR_REQ_SESSKEY, MON_ONCE, mm_answer_sesskey},
     {MONITOR_REQ_SESSID, MON_ONCE, mm_answer_sessid},
@@ -218,13 +228,16 @@ struct mon_table mon_dispatch_proto15[] = {
     {MONITOR_REQ_RSARESPONSE, MON_ONCE|MON_AUTHDECIDE, mm_answer_rsa_response},
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH, mm_answer_bsdauthrespond},
+#endif
     {0, 0, NULL}
 };
 
 struct mon_table mon_dispatch_postauth15[] = {
+#ifdef WITH_SSH1
     {MONITOR_REQ_PTY, MON_ONCE, mm_answer_pty},
     {MONITOR_REQ_PTYCLEANUP, MON_ONCE, mm_answer_pty_cleanup},
     {MONITOR_REQ_TERM, 0, mm_answer_term},
+#endif
     {0, 0, NULL}
 };
 
@@ -538,6 +551,7 @@ monitor_reset_key_state(void)
 	hostbased_chost = NULL;
 }
 
+#ifdef WITH_OPENSSL
 int
 mm_answer_moduli(int sock, Buffer *m)
 {
@@ -572,6 +586,7 @@ mm_answer_moduli(int sock, Buffer *m)
 	mm_request_send(sock, MONITOR_ANS_MODULI, m);
 	return (0);
 }
+#endif
 
 extern AuthenticationConnection *auth_conn;
 
@@ -882,6 +897,7 @@ mm_answer_keyallowed(int sock, Buffer *m)
 			    cuser, chost);
 			auth_method = "hostbased";
 			break;
+#ifdef WITH_SSH1
 		case MM_RSAHOSTKEY:
 			key->type = KEY_RSA1; /* XXX */
 			allowed = options.rhosts_rsa_authentication &&
@@ -891,6 +907,7 @@ mm_answer_keyallowed(int sock, Buffer *m)
 				auth_clear_options();
 			auth_method = "rsa";
 			break;
+#endif
 		default:
 			fatal("%s: unknown key type %d", __func__, type);
 			break;
@@ -1227,6 +1244,7 @@ mm_answer_pty_cleanup(int sock, Buffer *m)
 	return (0);
 }
 
+#ifdef WITH_SSH1
 int
 mm_answer_sesskey(int sock, Buffer *m)
 {
@@ -1404,6 +1422,7 @@ mm_answer_rsa_response(int sock, Buffer *m)
 
 	return (success);
 }
+#endif
 
 int
 mm_answer_term(int sock, Buffer *req)
@@ -1497,11 +1516,13 @@ mm_get_kex(Buffer *m)
 	    timingsafe_bcmp(kex->session_id, session_id2, session_id2_len) != 0)
 		fatal("mm_get_get: internal error: bad session id");
 	kex->we_need = buffer_get_int(m);
+#ifdef WITH_OPENSSL
 	kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 	kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
+#endif
 	kex->kex[KEX_C25519_SHA256] = kexc25519_server;
 	kex->server = 1;
 	kex->hostkey_type = buffer_get_int(m);

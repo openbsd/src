@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.c,v 1.79 2014/02/02 03:44:31 djm Exp $ */
+/* $OpenBSD: monitor_wrap.c,v 1.80 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -36,13 +36,16 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#include <openssl/evp.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
+#ifdef WITH_OPENSSL
 #include "dh.h"
+#endif
 #include "buffer.h"
 #include "key.h"
 #include "cipher.h"
@@ -165,6 +168,7 @@ mm_request_receive_expect(int sock, enum monitor_reqtype type, Buffer *m)
 		    rtype, type);
 }
 
+#ifdef WITH_OPENSSL
 DH *
 mm_choose_dh(int min, int nbits, int max)
 {
@@ -198,6 +202,7 @@ mm_choose_dh(int min, int nbits, int max)
 
 	return (dh_new_group(g, p));
 }
+#endif
 
 int
 mm_key_sign(Key *key, u_char **sigp, u_int *lenp, u_char *data, u_int datalen)
@@ -767,6 +772,7 @@ mm_terminate(void)
 	buffer_free(&m);
 }
 
+#ifdef WITH_SSH1
 int
 mm_ssh1_session_key(BIGNUM *num)
 {
@@ -786,6 +792,7 @@ mm_ssh1_session_key(BIGNUM *num)
 
 	return (rsafail);
 }
+#endif
 
 static void
 mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
@@ -873,6 +880,7 @@ mm_ssh1_session_id(u_char session_id[16])
 	buffer_free(&m);
 }
 
+#ifdef WITH_SSH1
 int
 mm_auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 {
@@ -968,6 +976,7 @@ mm_auth_rsa_verify_response(Key *key, BIGNUM *p, u_char response[16])
 
 	return (success);
 }
+#endif
 
 #ifdef GSSAPI
 OM_uint32

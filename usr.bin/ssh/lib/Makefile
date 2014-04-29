@@ -1,21 +1,28 @@
-#	$OpenBSD: Makefile,v 1.75 2014/04/22 11:47:55 henning Exp $
+#	$OpenBSD: Makefile,v 1.76 2014/04/29 18:01:49 markus Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
 
 LIB=	ssh
-SRCS=	authfd.c authfile.c bufaux.c bufec.c bufbn.c buffer.c canohost.c \
-	channels.c cipher.c cipher-3des1.c cipher-bf1.c \
+SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c \
+	channels.c cipher.c \
 	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c nchan.c packet.c readpass.c \
-	rsa.c ttymodes.c xmalloc.c atomicio.c \
+	ttymodes.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
+	msg.c progressmeter.c dns.c \
+	monitor_fdpass.c addrmatch.c \
+	smult_curve25519_ref.c kexc25519.c kexc25519c.c \
+	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c hmac.c
+
+.if (${OPENSSL:L} == "yes")
+SRCS+=	bufec.c bufbn.c cipher-3des1.c cipher-bf1.c rsa.c \
 	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
-	kexdhc.c kexgexc.c kexecdhc.c msg.c progressmeter.c dns.c \
-	monitor_fdpass.c umac.c addrmatch.c ssh-pkcs11.c \
-	krl.c smult_curve25519_ref.c kexc25519.c kexc25519c.c \
-	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c \
-	digest-openssl.c hmac.c
+	kexdhc.c kexgexc.c kexecdhc.c umac.c ssh-pkcs11.c \
+	krl.c digest-openssl.c
+.else
+SRCS+=	digest-libc.c rijndael.c cipher-aesctr.c
+.endif
 
 # ed25519, from supercop
 SRCS+=	sc25519.c ge25519.c fe25519.c ed25519.c verify.c hash.c blocks.c

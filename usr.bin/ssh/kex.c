@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.98 2014/02/02 03:44:31 djm Exp $ */
+/* $OpenBSD: kex.c,v 1.99 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh2.h"
@@ -59,6 +61,7 @@ struct kexalg {
 	int hash_alg;
 };
 static const struct kexalg kexalgs[] = {
+#ifdef WITH_OPENSSL
 	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, SSH_DIGEST_SHA1 },
 	{ KEX_DH14, KEX_DH_GRP14_SHA1, 0, SSH_DIGEST_SHA1 },
 	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, SSH_DIGEST_SHA1 },
@@ -69,6 +72,7 @@ static const struct kexalg kexalgs[] = {
 	    SSH_DIGEST_SHA384 },
 	{ KEX_ECDH_SHA2_NISTP521, KEX_ECDH_SHA2, NID_secp521r1,
 	    SSH_DIGEST_SHA512 },
+#endif
 	{ KEX_CURVE25519_SHA256, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
 	{ NULL, -1, -1, -1},
 };
@@ -595,6 +599,7 @@ kex_derive_keys(Kex *kex, u_char *hash, u_int hashlen,
 	}
 }
 
+#ifdef WITH_OPENSSL
 void
 kex_derive_keys_bn(Kex *kex, u_char *hash, u_int hashlen, const BIGNUM *secret)
 {
@@ -606,6 +611,7 @@ kex_derive_keys_bn(Kex *kex, u_char *hash, u_int hashlen, const BIGNUM *secret)
 	    buffer_ptr(&shared_secret), buffer_len(&shared_secret));
 	buffer_free(&shared_secret);
 }
+#endif
 
 Newkeys *
 kex_get_newkeys(int mode)
@@ -617,6 +623,7 @@ kex_get_newkeys(int mode)
 	return ret;
 }
 
+#ifdef WITH_SSH1
 void
 derive_ssh1_session_id(BIGNUM *host_modulus, BIGNUM *server_modulus,
     u_int8_t cookie[8], u_int8_t id[16])
@@ -649,6 +656,7 @@ derive_ssh1_session_id(BIGNUM *host_modulus, BIGNUM *server_modulus,
 	explicit_bzero(nbuf, sizeof(nbuf));
 	explicit_bzero(obuf, sizeof(obuf));
 }
+#endif
 
 #if defined(DEBUG_KEX) || defined(DEBUG_KEXDH) || defined(DEBUG_KEXECDH)
 void

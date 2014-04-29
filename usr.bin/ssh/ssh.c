@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.401 2014/02/26 20:18:37 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.402 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -64,8 +64,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -603,7 +605,13 @@ main(int ac, char **av)
 			break;
 		case 'V':
 			fprintf(stderr, "%s, %s\n",
-			    SSH_VERSION, SSLeay_version(SSLEAY_VERSION));
+			    SSH_VERSION,
+#ifdef WITH_OPENSSL
+			    SSLeay_version(SSLEAY_VERSION)
+#else
+			    "without OpenSSL"
+#endif
+			);
 			if (opt == 'V')
 				exit(0);
 			break;
@@ -800,8 +808,10 @@ main(int ac, char **av)
 
 	host_arg = xstrdup(host);
 
+#ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
+#endif
 
 	/* Initialize the command to execute on remote host. */
 	buffer_init(&command);
@@ -848,7 +858,13 @@ main(int ac, char **av)
 	    SYSLOG_FACILITY_USER, !use_syslog);
 
 	if (debug_flag)
-		logit("%s, %s", SSH_VERSION, SSLeay_version(SSLEAY_VERSION));
+		logit("%s, %s", SSH_VERSION,
+#ifdef WITH_OPENSSL
+		    SSLeay_version(SSLEAY_VERSION)
+#else
+		    "without OpenSSL"
+#endif
+		);
 
 	/* Parse the configuration files */
 	process_config_files(pw);
