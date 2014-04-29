@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.126 2014/04/29 14:11:23 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.127 2014/04/29 21:51:18 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -37,8 +37,9 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/selinfo.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -47,7 +48,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
@@ -66,10 +66,7 @@ int ohcidebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-/*
- * The OHCI controller is little endian, so on big endian machines
- * the data stored in memory needs to be swapped.
- */
+struct pool *ohcixfer;
 
 struct ohci_pipe;
 
@@ -728,7 +725,16 @@ ohci_init(struct ohci_softc *sc)
 	for (i = 0; i < OHCI_HASH_SIZE; i++)
 		LIST_INIT(&sc->sc_hash_itds[i]);
 
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
+	if (ohcixfer == NULL) {
+		ohcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		if (ohcixfer == NULL) {
+			printf("%s: unable to allocate pool descriptor\n",
+			    sc->sc_bus.bdev.dv_xname);
+			return (ENOMEM);
+		}
+		pool_init(ohcixfer, sizeof(struct ohci_xfer), 0, 0, 0,
+		    "ohcixfer", NULL);
+	}
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
@@ -940,44 +946,30 @@ ohci_init(struct ohci_softc *sc)
 struct usbd_xfer *
 ohci_allocx(struct usbd_bus *bus)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
-	struct usbd_xfer *xfer;
+	struct ohci_xfer *ox;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+	ox = pool_get(ohcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("ohci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = malloc(sizeof(struct ohci_xfer), M_USB, M_NOWAIT);
+	if (ox != NULL) {
+		ox->xfer.busy_free = XFER_BUSY;
 	}
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ohci_xfer));
-#ifdef DIAGNOSTIC
-		xfer->busy_free = XFER_BUSY;
 #endif
-	}
-	return (xfer);
+	return ((struct usbd_xfer *)ox);
 }
 
 void
 ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	struct ohci_xfer *ox = (struct ohci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
-		printf("ohci_freex: xfer=%p not busy, 0x%08x\n", xfer,
-		       xfer->busy_free);
+		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
+		    xfer->busy_free);
 		return;
 	}
-	xfer->busy_free = XFER_FREE;
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_put(ohcixfer, ox);
 }
 
 #ifdef OHCI_DEBUG

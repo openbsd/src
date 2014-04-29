@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.112 2014/04/29 14:11:23 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.113 2014/04/29 21:51:18 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -37,8 +37,9 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/selinfo.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -47,7 +48,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
@@ -71,10 +71,7 @@ int uhcinoloop = 0;
 #define DPRINTFN(n,x)
 #endif
 
-/*
- * The UHCI controller is little endian, so on big endian machines
- * the data stored in memory needs to be swapped.
- */
+struct pool *uhcixfer;
 
 struct uhci_pipe {
 	struct usbd_pipe pipe;
@@ -376,6 +373,17 @@ uhci_init(struct uhci_softc *sc)
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
+	if (uhcixfer == NULL) {
+		uhcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		if (uhcixfer == NULL) {
+			printf("%s: unable to allocate pool descriptor\n",
+			    sc->sc_bus.bdev.dv_xname);
+			return (ENOMEM);
+		}
+		pool_init(uhcixfer, sizeof(struct uhci_xfer), 0, 0, 0,
+		    "uhcixfer", NULL);
+	}
+
 	/* Restore saved SOF. */
 	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
@@ -473,8 +481,6 @@ uhci_init(struct uhci_softc *sc)
 	}
 
 	LIST_INIT(&sc->sc_intrhead);
-
-	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 	timeout_set(&sc->sc_poll_handle, NULL, NULL);
 
@@ -576,7 +582,6 @@ uhci_activate(struct device *self, int act)
 int
 uhci_detach(struct uhci_softc *sc, int flags)
 {
-	struct usbd_xfer *xfer;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -590,15 +595,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		sc->sc_intr_xfer = NULL;
 	}
 
-	/* Free all xfers associated with this HC. */
-	for (;;) {
-		xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-		if (xfer == NULL)
-			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
-		free(xfer, M_USB);
-	}
-
 	/* XXX free other data structures XXX */
 
 	return (rv);
@@ -607,49 +603,35 @@ uhci_detach(struct uhci_softc *sc, int flags)
 struct usbd_xfer *
 uhci_allocx(struct usbd_bus *bus)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)bus;
-	struct usbd_xfer *xfer;
+	struct uhci_xfer *ux;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+	ux = pool_get(uhcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
-			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
-			       xfer->busy_free);
-		}
-#endif
-	} else {
-		xfer = malloc(sizeof(struct uhci_xfer), M_USB, M_NOWAIT);
+	if (ux != NULL) {
+		ux->isdone = 1;
+		ux->xfer.busy_free = XFER_BUSY;
 	}
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct uhci_xfer));
-#ifdef DIAGNOSTIC
-		((struct uhci_xfer *)xfer)->isdone = 1;
-		xfer->busy_free = XFER_BUSY;
 #endif
-	}
-	return (xfer);
+	return ((struct usbd_xfer *)ux);
 }
 
 void
 uhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)bus;
+	struct uhci_xfer *ux = (struct uhci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
-		printf("uhci_freex: xfer=%p not busy, 0x%08x\n", xfer,
-		       xfer->busy_free);
+		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
+		    xfer->busy_free);
 		return;
 	}
-	xfer->busy_free = XFER_FREE;
-	if (!((struct uhci_xfer *)xfer)->isdone) {
-		printf("uhci_freex: !isdone\n");
+	if (!ux->isdone) {
+		printf("%s: !isdone\n", __func__);
 		return;
 	}
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_put(uhcixfer, ux);
 }
 
 #ifdef UHCI_DEBUG

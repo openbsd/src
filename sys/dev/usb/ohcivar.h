@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.35 2014/03/25 20:27:37 mpi Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.36 2014/04/29 21:51:18 mpi Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -104,8 +104,6 @@ struct ohci_softc {
 	struct ohci_soft_ed *sc_freeeds;
 	struct ohci_soft_td *sc_freetds;
 	struct ohci_soft_itd *sc_freeitds;
-
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
 	struct usbd_xfer *sc_intrxfer;
 
