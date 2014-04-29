@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.5 2014/04/15 09:14:27 mpi Exp $   */
+/*	$OpenBSD: ugold.c,v 1.6 2014/04/29 12:53:33 mpi Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
@@ -182,6 +182,9 @@ ugold_detach(struct device *self, int flags)
 
 	for (i = 0; i < sc->sc_num_sensors; i++)
 		sensor_detach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+
+	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
+		uhidev_close(&sc->sc_hdev);
 
 	return (0);
 }
