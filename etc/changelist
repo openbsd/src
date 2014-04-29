@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.86 2014/04/22 10:24:29 reyk Exp $
+#	$OpenBSD: changelist,v 1.87 2014/04/29 21:30:20 dcoppa Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -153,7 +153,6 @@
 /etc/ypldap.conf
 /root/.Xdefaults
 /root/.cshrc
-/root/.klogin
 /root/.login
 /root/.profile
 /root/.rhosts

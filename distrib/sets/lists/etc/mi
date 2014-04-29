@@ -205,7 +205,6 @@
 ./root/.Xdefaults
 ./root/.cshrc
 ./root/.cvsrc
-./root/.klogin
 ./root/.login
 ./root/.profile
 ./var/crash/minfree

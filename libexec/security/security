@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.26 2014/04/21 15:46:03 sthen Exp $
+# $OpenBSD: security,v 1.27 2014/04/29 21:30:20 dcoppa Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -103,7 +103,7 @@ sub check_passwd {
 			    "\t by root; cannot check for existence " .
 			    "of alternate access files."
 			or check_access_file "$home/.$_", $name
-			    foreach qw(ssh rhosts shosts klogin);
+			    foreach qw(ssh rhosts shosts);
 		}
 		nag $uid == 0 && $name ne 'root',
 		    "Login $name has a user ID of 0.";
@@ -407,7 +407,7 @@ sub check_dot_writeable {
 	return if $name =~ /^[+-]/;  # skip YP lines
 	foreach my $f (qw(
 	    .bashrc .bash_profile .bash_login .bash_logout .cshrc
-	    .emacs .exrc .forward .fvwmrc .inputrc .klogin .kshrc .login
+	    .emacs .exrc .forward .fvwmrc .inputrc .kshrc .login
 	    .logout .nexrc .profile .screenrc .ssh .ssh/config
 	    .ssh/authorized_keys .ssh/authorized_keys2 .ssh/environment
 	    .ssh/known_hosts .ssh/rc .tcshrc .twmrc .xsession .xinitrc
