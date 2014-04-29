@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_smtpd.c,v 1.5 2014/04/29 10:08:55 reyk Exp $	*/
+/*	$OpenBSD: ssl_smtpd.c,v 1.6 2014/04/29 12:18:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -81,7 +81,7 @@ dummy_verify(int ok, X509_STORE_CTX *store)
 }
 
 void *
-ssl_smtp_init(void *ssl_ctx, char *cert, off_t cert_len, char *key, off_t key_len, void *sni, void *arg)
+ssl_smtp_init(void *ssl_ctx, void *sni, void *arg)
 {
 	SSL	*ssl = NULL;
 	int	(*cb)(SSL *,int *,void *) = sni;

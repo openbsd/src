@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.455 2014/04/19 16:55:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.456 2014/04/29 12:18:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1321,7 +1321,7 @@ const char *imsg_to_str(int);
 
 /* ssl_smtpd.c */
 void   *ssl_mta_init(char *, off_t, char *, off_t);
-void   *ssl_smtp_init(void *, char *, off_t, char *, off_t, void *, void *);
+void   *ssl_smtp_init(void *, void *, void *);
 
 
 /* stat_backend.c */
