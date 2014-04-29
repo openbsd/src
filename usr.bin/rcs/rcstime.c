@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.3 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.4 2014/04/29 07:44:19 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -63,7 +63,7 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 		memcpy(tb, &rdp->rd_date, sizeof(*tb));
 
 		tzone = atoi(h);
-		if ((tzone >= 24) && (tzone <= -24))
+		if ((tzone >= 24) || (tzone <= -24))
 			errx(1, "%s: not a known time zone", tz);
 
 		if (pos) {
