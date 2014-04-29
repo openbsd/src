@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.30 2014/04/27 14:48:10 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.31 2014/04/29 12:45:29 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -146,8 +146,6 @@ struct ehci_softc {
 
 	u_int32_t sc_eintrs;
 	struct ehci_soft_qh *sc_async_head;
-
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
 	struct rwlock sc_doorbell_lock;
 

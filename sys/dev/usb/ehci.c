@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.147 2014/04/27 14:48:10 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.148 2014/04/29 12:45:29 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -46,9 +46,9 @@
 #include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/selinfo.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
+#include <sys/pool.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -77,6 +77,8 @@ int ehcidebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+struct pool *ehcixfer;
 
 struct ehci_pipe {
 	struct usbd_pipe pipe;
@@ -344,6 +346,17 @@ ehci_init(struct ehci_softc *sc)
 	err = ehci_reset(sc);
 	if (err)
 		return (err);
+
+	if (ehcixfer == NULL) {
+		ehcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		if (ehcixfer == NULL) {
+			printf("%s: unable to allocate pool descriptor\n",
+			    sc->sc_bus.bdev.dv_xname);
+			return (ENOMEM);
+		}
+		pool_init(ehcixfer, sizeof(struct ehci_xfer), 0, 0, 0,
+		    "ehcixfer", NULL);
+	}
 
 	/* frame list size at default, read back what we got and use that */
 	switch (EHCI_CMD_FLS(EOREAD4(sc, EHCI_USBCMD))) {
@@ -1180,49 +1193,35 @@ ehci_reset(struct ehci_softc *sc)
 struct usbd_xfer *
 ehci_allocx(struct usbd_bus *bus)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)bus;
-	struct usbd_xfer *xfer;
+	struct ehci_xfer *ex;
 
-	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+	ex = pool_get(ehcixfer, PR_NOWAIT | PR_ZERO);
 #ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE)
-			printf("ehci_allocx: xfer=%p not free, 0x%08x\n",
-			    xfer, xfer->busy_free);
-#endif
-	} else
-		xfer = malloc(sizeof(struct ehci_xfer), M_USB, M_NOWAIT);
-
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct ehci_xfer));
-		((struct ehci_xfer *)xfer)->ehci_xfer_flags = 0;
-#ifdef DIAGNOSTIC
-		((struct ehci_xfer *)xfer)->isdone = 1;
-		xfer->busy_free = XFER_BUSY;
-#endif
+	if (ex != NULL) {
+		ex->isdone = 1;
+		ex->xfer.busy_free = XFER_BUSY;
 	}
-	return (xfer);
+#endif
+	return ((struct usbd_xfer *)ex);
 }
 
 void
 ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)bus;
+	struct ehci_xfer *ex = (struct ehci_xfer*)xfer;
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
-		printf("ehci_freex: xfer=%p not busy, 0x%08x\n", xfer,
+		printf("%s: xfer=%p not busy, 0x%08x\n", __func__, xfer,
 		    xfer->busy_free);
 		return;
 	}
-	xfer->busy_free = XFER_FREE;
-	if (!((struct ehci_xfer *)xfer)->isdone) {
-		printf("ehci_freex: !isdone\n");
+	if (!ex->isdone) {
+		printf("%s: !isdone\n", __func__);
 		return;
 	}
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	pool_put(ehcixfer, ex);
 }
 
 void

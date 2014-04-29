@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.3 2014/03/25 20:27:37 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.4 2014/04/29 12:45:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -103,8 +103,6 @@ struct xhci_softc {
 
 	struct xhci_trb		*sc_cmd_trb;
 	struct xhci_trb		 sc_result_trb;
-
-	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
 	char			 sc_vendor[16];	/* Vendor string for root hub */
 	int			 sc_id_vendor;	/* Vendor ID for root hub */
