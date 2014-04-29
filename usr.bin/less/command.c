@@ -54,7 +54,6 @@ extern int screen_trashed;	/* The screen has been overwritten */
 extern int shift_count;
 extern int oldbot;
 extern int forw_prompt;
-extern int be_helpful;
 extern int less_is_more;
 
 #if SHELL_ESCAPE
@@ -70,7 +69,6 @@ static int optflag;
 static int optgetname;
 static POSITION bottompos;
 static int save_hshift;
-static char *help_prompt;
 #if PIPEC
 static char pipec;
 #endif
@@ -750,7 +748,7 @@ prompt()
 		clear_bot();
 	clear_cmd();
 	forw_prompt = 0;
-	p = help_prompt ? help_prompt : pr_string();
+	p = pr_string();
 	if (is_filtering())
 		putstr("& ");
 	if (p == NULL || *p == '\0')
@@ -759,11 +757,8 @@ prompt()
 	{
 		at_enter(AT_STANDOUT);
 		putstr(p);
-		if (be_helpful && !help_prompt && strlen(p) + 40 < sc_width)
-			putstr(" [Press space to continue, 'q' to quit.]");
 		at_exit();
 	}
-	help_prompt = NULL;
 	clear_eol();
 }
 
@@ -1812,10 +1807,7 @@ commands()
 			break;
 
 		default:
-			if (be_helpful)
-				help_prompt = "[Press 'h' for instructions.]";
-			else
-				bell();
+			bell();
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.32 2014/04/25 13:38:21 shadchin Exp $
+.\"	$OpenBSD: less.1,v 1.33 2014/04/29 12:11:25 millert Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: April 29 2014 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -589,7 +589,7 @@ Causes full screen repaints to be painted from the bottom of the screen.
 By default, full screen repaints are done from the top line down
 to avoid the position of the display being moved
 when using interactive commands.
-.It Fl d | -dumb No (less only)
+.It Fl d | -dumb
 The -d option suppresses the error message
 normally displayed if the terminal is dumb;
 that is, lacks some important capability,
@@ -599,13 +599,6 @@ The -d option does not otherwise change the behavior of
 on a dumb terminal.
 This option is on by default when invoked as
 .Nm more .
-.It Fl d No (more only)
-The -d option causes the default prompt to include the
-basic directions ``[Press space to continue, 'q' to quit.]''.
-The -d option also causes the message ``[Press 'h' for instructions.]'' to be
-displayed when an invalid command is entered (normally, the bell is rung).
-This option is useful in environments where users may not be experienced
-with pagers.
 .\" .It Fl Dxcolor or --color=xcolor"
 .\" [MS-DOS only]
 .\" Sets the color of the text displayed.

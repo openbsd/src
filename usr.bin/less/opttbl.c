@@ -28,7 +28,6 @@ public int know_dumb;		/* Don't complain about dumb terminals */
 public int quit_at_eof;		/* Quit after hitting end of file twice */
 public int quit_if_one_screen;	/* Quit if EOF on first screen */
 public int squeeze;		/* Squeeze multiple blank lines into one */
-public int be_helpful;		/* more(1) style -d */
 public int tabstop;		/* Tab settings */
 public int back_scroll;		/* Repaint screen on backwards movement */
 public int forw_scroll;		/* Repaint screen on forward movement */
@@ -535,21 +534,6 @@ init_option()
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
-		/*
-		 * Replace less's -d option if invoked as more
-		 */
-		if (less_is_more && o->oletter == 'd')
-		{
-			o->onames = NULL;
-			o->otype = BOOL;
-			o->odefault = OPT_OFF;
-			o->ovar = &be_helpful;
-			o->ofunc = NULL;
-			o->odesc[0] = "Be less helpful in prompts";
-			o->odesc[1] = "Be helpful in prompts";
-			o->odesc[2] = NULL;
-		}
-
 		/*
 		 * Set each variable to its default.
 		 */
