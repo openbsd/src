@@ -231,7 +231,7 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 			fp->f_blkno[level] = ind_block_num;
 		}
 
-		ind_p = (d_addrt *)fp->f_blk[level];
+		ind_p = (daddr_t *)fp->f_blk[level];
 
 		if (level > 0) {
 			idx = file_block / fp->f_nindir[level - 1];
