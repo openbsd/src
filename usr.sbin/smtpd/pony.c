@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.3 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: pony.c,v 1.4 2014/04/30 08:23:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -43,11 +43,10 @@ void mda_imsg(struct mproc *, struct imsg *);
 void mta_imsg(struct mproc *, struct imsg *);
 void smtp_imsg(struct mproc *, struct imsg *);
 
-static void pony_imsg(struct mproc *, struct imsg *);
 static void pony_shutdown(void);
 static void pony_sig_handler(int, short, void *);
 
-static void
+void
 pony_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct msg	m;

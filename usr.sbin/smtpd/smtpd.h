@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.457 2014/04/29 19:13:14 reyk Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.458 2014/04/30 08:23:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1303,6 +1303,7 @@ time_t scheduler_compute_schedule(struct scheduler_info *);
 
 /* pony.c */
 pid_t pony(void);
+void pony_imsg(struct mproc *, struct imsg *);
 
 
 /* smtp.c */
@@ -1325,6 +1326,7 @@ void post_fork(int);
 const char *proc_name(enum smtp_proc_type);
 const char *proc_title(enum smtp_proc_type);
 const char *imsg_to_str(int);
+void log_imsg(int, int, struct imsg *);
 
 
 /* ssl_smtpd.c */

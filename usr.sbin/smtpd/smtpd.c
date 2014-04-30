@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.224 2014/04/29 21:04:17 reyk Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.225 2014/04/30 08:23:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -73,7 +73,6 @@ static void	offline_done(void);
 static int	offline_enqueue(char *);
 
 static void	purge_task(void);
-static void	log_imsg(int, int, struct imsg *);
 static int	parent_auth_user(const char *, const char *);
 static void	load_pki_tree(void);
 static void	load_pki_keys(void);
@@ -1192,7 +1191,7 @@ imsg_dispatch(struct mproc *p, struct imsg *imsg)
 	}
 }
 
-static void
+void
 log_imsg(int to, int from, struct imsg *imsg)
 {
 

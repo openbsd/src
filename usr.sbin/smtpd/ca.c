@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.4 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.5 2014/04/30 08:23:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -52,6 +52,8 @@ static int	 rsae_sign(int, const u_char *, u_int, u_char *, u_int *,
 static int	 rsae_verify(int dtype, const u_char *m, u_int, const u_char *,
 		    u_int, const RSA *);
 static int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
+
+static uint64_t	 rsae_reqid = 0;
 
 void
 ca_init(void)
@@ -164,8 +166,10 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 	size_t			 flen, tlen, padding;
 	struct pki		*pki;
 	int			 ret = 0;
+	uint64_t		 id;
 
 	m_msg(&m, imsg);
+	m_get_id(&m, &id);
 	m_get_string(&m, &pkiname);
 	m_get_data(&m, &from, &flen);
 	m_get_size(&m, &tlen);
@@ -192,6 +196,7 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 	}
 
 	m_create(p, imsg->hdr.type, 0, 0, -1);
+	m_add_id(p, id);
 	m_add_int(p, ret);
 	if (ret > 0)
 		m_add_data(p, to, (size_t)ret);
@@ -236,6 +241,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	char		*pkiname;
 	size_t		 tlen;
 	struct msg	 m;
+	uint64_t	 id;
 
 	if ((pkiname = RSA_get_ex_data(rsa, 0)) == NULL)
 		return (0);
@@ -245,6 +251,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * operation in OpenSSL's engine layer.
 	 */
 	m_create(p_lka, cmd, 0, 0, -1);
+	rsae_reqid++;
+	m_add_id(p_lka, rsae_reqid);
 	m_add_string(p_lka, pkiname);
 	m_add_data(p_lka, (const void *)from, (size_t)flen);
 	m_add_size(p_lka, (size_t)RSA_size(rsa));
@@ -264,10 +272,24 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				fatalx("imsg_get error");
 			if (n == 0)
 				break;
-			if (imsg.hdr.type != cmd)
-				fatalx("invalid response");
+
+			log_imsg(PROC_PONY, PROC_LKA, &imsg);
+
+			switch (imsg.hdr.type) {
+			case IMSG_CA_PRIVENC:
+			case IMSG_CA_PRIVDEC:
+				break;
+			default:
+				/* Another imsg is queued up in the buffer */
+				pony_imsg(p_lka, &imsg);
+				imsg_free(&imsg);
+				continue;
+			}
 
 			m_msg(&m, &imsg);
+			m_get_id(&m, &id);
+			if (id != rsae_reqid)
+				fatalx("invalid response id");
 			m_get_int(&m, &ret);
 			if (ret > 0)
 				m_get_data(&m, &toptr, &tlen);
