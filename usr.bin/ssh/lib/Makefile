@@ -1,10 +1,23 @@
-#	$OpenBSD: Makefile,v 1.76 2014/04/29 18:01:49 markus Exp $
+#	$OpenBSD: Makefile,v 1.77 2014/04/30 05:29:56 djm Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
 
 LIB=	ssh
-SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c \
+
+# These are files intended for a standalone libopenssh in the future.
+LIB_SRCS= \
+	ssherr.c \
+	sshbuf.c \
+	sshbuf-getput-basic.c \
+	sshbuf-misc.c
+
+.if (${OPENSSL:L} == "yes")
+LIB_SRCS+=	sshbuf-getput-crypto.c
+.endif
+
+SRCS=	${LIB_SRCS} \
+	authfd.c authfile.c bufaux.c buffer.c canohost.c \
 	channels.c cipher.c \
 	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c nchan.c packet.c readpass.c \
