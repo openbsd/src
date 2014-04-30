@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2014/04/18 11:51:16 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2014/04/30 06:24:23 sf Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -205,12 +205,12 @@ trap(struct trapframe *frame)
 		else
 			printf("unknown trap %ld", (u_long)frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
-		       " %lx cpl %x rsp %lx\n",
-		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
+		printf("trap type %d code %llx rip %llx cs %llx rflags %llx cr2 "
+		       " %llx cpl %x rsp %llx\n",
+		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 
-		panic("trap type %d, code=%lx, pc=%lx",
+		panic("trap type %d, code=%llx, pc=%llx",
 		    type, frame->tf_err, frame->tf_rip);
 		/*NOTREACHED*/
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.60 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.61 2014/04/30 06:24:23 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -535,7 +535,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
 		    sc->sc_dev.dv_xname, kstack, USPACE);
-		printf("%s: idle pcb at %p, idle sp at 0x%lx\n",
+		printf("%s: idle pcb at %p, idle sp at 0x%llx\n",
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_rsp);
 	}
 #endif
