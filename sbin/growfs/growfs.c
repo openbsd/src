@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.33 2013/11/10 00:48:04 krw Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.34 2014/04/30 14:28:48 krw Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1899,7 +1899,7 @@ int
 main(int argc, char **argv)
 {
 	DBG_FUNC("main")
-	char	*device;
+	char	*device, *lastsector;
 	int	ch;
 	long long	size = 0;
 	unsigned int	Nflag = 0;
@@ -2072,12 +2072,16 @@ main(int argc, char **argv)
 		    (intmax_t)sblock.fs_size);
 
 	/*
-	 * Try to access our new last block in the filesystem. Even if we
-	 * later on realize we have to abort our operation, on that block
+	 * Try to access our new last sector in the filesystem. Even if we
+	 * later on realize we have to abort our operation, on that sector
 	 * there should be no data, so we can't destroy something yet.
 	 */
-	wtfs(DL_SECTOBLK(lp, DL_GETPSIZE(pp)) - 1, (size_t)DEV_BSIZE,
-	    (void *)&sblock, fso, Nflag);
+	lastsector = calloc(1, lp->d_secsize);
+	if (!lastsector)
+		err(1, "No memory for last sector test write");
+	wtfs(DL_SECTOBLK(lp, DL_GETPSIZE(pp) - 1), lp->d_secsize,
+	    lastsector, fso, Nflag);
+	free(lastsector);
 
 	/*
 	 * Now calculate new superblock values and check for reasonable
