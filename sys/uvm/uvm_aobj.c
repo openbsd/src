@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.62 2014/04/30 16:07:31 kettenis Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.63 2014/04/30 19:25:14 kettenis Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -442,6 +442,7 @@ uao_shrink_hash(struct uvm_object *uobj, int pages)
 	 * to adjust the page count.
 	 */
 	if (UAO_SWHASH_BUCKETS(aobj->u_pages) == UAO_SWHASH_BUCKETS(pages)) {
+		uao_shrink_flush(uobj, pages, aobj->u_pages);
 		aobj->u_pages = pages;
 		return 0;
 	}
