@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.61 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.62 2014/04/30 16:07:31 kettenis Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -431,6 +431,7 @@ uao_shrink_hash(struct uvm_object *uobj, int pages)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct uao_swhash *new_swhash;
+	struct uao_swhash_elt *elt;
 	unsigned long new_hashmask;
 	int i;
 
@@ -456,8 +457,13 @@ uao_shrink_hash(struct uvm_object *uobj, int pages)
 	 * Even though the hash table size is changing, the hash of the buckets
 	 * we are interested in copying should not change.
 	 */
-	for (i = 0; i < UAO_SWHASH_BUCKETS(aobj->u_pages); i++)
-		LIST_FIRST(&new_swhash[i]) = LIST_FIRST(&aobj->u_swhash[i]);
+	for (i = 0; i < UAO_SWHASH_BUCKETS(aobj->u_pages); i++) {
+		while (LIST_EMPTY(&aobj->u_swhash[i]) == 0) {
+			elt = LIST_FIRST(&aobj->u_swhash[i]);
+			LIST_REMOVE(elt, list);
+			LIST_INSERT_HEAD(&new_swhash[i], elt, list);
+		}
+	}
 
 	free(aobj->u_swhash, M_UVMAOBJ);
 
@@ -609,7 +615,6 @@ uao_grow_hash(struct uvm_object *uobj, int pages)
 		return ENOMEM;
 
 	for (i = 0; i < UAO_SWHASH_BUCKETS(aobj->u_pages); i++) {
-		/* XXX pedro: shouldn't copying the list pointers be enough? */
 		while (LIST_EMPTY(&aobj->u_swhash[i]) == 0) {
 			elt = LIST_FIRST(&aobj->u_swhash[i]);
 			LIST_REMOVE(elt, list);
