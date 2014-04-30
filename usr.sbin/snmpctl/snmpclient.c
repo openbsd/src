@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.9 2014/04/16 08:52:28 blambert Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.10 2014/04/30 07:01:34 blambert Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -40,6 +40,7 @@
 #include <poll.h>
 #include <err.h>
 #include <pwd.h>
+#include <vis.h>
 
 #include "snmpd.h"
 #include "mib.h"
@@ -68,11 +69,28 @@ struct snmpc {
 #define SNMPC_OID_ALL		"1.0"
 #define SNMPC_MAXREPETITIONS	10
 
+#define	SNMPC_DATEANDTIME_LEN		11
+#define	SNMPC_DATEANDTIME_SHORT_LEN	8
+
 void	 snmpc_run(struct snmpc *, enum actions, const char *);
 void	 snmpc_request(struct snmpc *, u_long);
 int	 snmpc_response(struct snmpc *);
 int	 snmpc_sendreq(struct snmpc *, u_long);
 int	 snmpc_recvresp(int, int, u_int32_t, struct ber_element **);
+
+struct display_hint *
+	 snmpc_display_hint_lookup(struct ber_oid *);
+void	 snmpc_display_hint(struct ber_oid *, char **);
+char	*snmpc_physaddress(char *);
+char	*snmpc_dateandtime(char *);
+
+struct display_hint {
+	struct ber_oid		 oid;
+	char			*(*print)(char *);
+} display_hints[] = {
+	{ { { MIB_ifPhysAddress } },	snmpc_physaddress },
+	{ { { MIB_hrSystemDate } },	snmpc_dateandtime }
+};
 
 void
 snmpclient(struct parse_result *res)
@@ -81,8 +99,12 @@ snmpclient(struct parse_result *res)
 	struct addrinfo		 hints, *ai, *ai0;
 	int			 s;
 	int			 error;
+	u_int			 i;
 	struct passwd		*pw;
 	struct parse_val	*oid;
+
+	for (i = 0; i < sizeof(display_hints) / sizeof(display_hints[0]); i++)
+		smi_oidlen(&display_hints[i].oid);
 
 	bzero(&sc, sizeof(sc));
 
@@ -254,6 +276,7 @@ snmpc_response(struct snmpc *sc)
 		if ((value = smi_print_element(e)) != NULL) {
 			smi_oid2string(&sc->sc_oid, buf, sizeof(buf),
 			    sc->sc_root_len);
+			snmpc_display_hint(&sc->sc_oid, &value);
 			p = buf;
 			if (*p != '\0')
 				printf("%s=%s\n", p, value);
@@ -274,6 +297,99 @@ snmpc_response(struct snmpc *sc)
 		ber_free_elements(resp);
 	errno = EINVAL;
 	return (-1);
+}
+
+void
+snmpc_display_hint(struct ber_oid *oid, char **val)
+{
+	struct display_hint	*h;
+	char			*newval;
+
+	if (*val == NULL || strlen(*val) == 0)
+		return;
+
+	if ((h = snmpc_display_hint_lookup(oid)) == NULL)
+		return;
+	/* best-effort translation */
+	if ((newval = h->print(*val)) == NULL)
+		return;
+
+	free(*val);
+	*val = newval;
+}
+
+char *
+snmpc_physaddress(char *v)
+{
+	char			 buf[ETHER_ADDR_LEN + 2];
+	char			*str;
+	ssize_t			 n;
+
+	n = strnunvis(buf, v, ETHER_ADDR_LEN + 2);
+	if (n == -1 || n != ETHER_ADDR_LEN + 2)
+		return (NULL);
+	if (asprintf(&str, "\"%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\"",
+	    buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]) == -1)
+		return (NULL);
+	return (str);
+}
+
+char *
+snmpc_dateandtime(char *v)
+{
+	char			 buf[SNMPC_DATEANDTIME_LEN + 2];
+	u_int16_t		 year;
+	char			*str;
+	ssize_t			 n;
+
+	if ((n = strnunvis(buf, v, SNMPC_DATEANDTIME_LEN + 2)) == -1)
+		return (NULL);
+
+	bcopy(&buf[1], &year, sizeof(year));
+	year = ntohs(year);
+
+	switch (n) {
+	case SNMPC_DATEANDTIME_SHORT_LEN + 2:
+		if (asprintf(&str,
+		    "\"%hu-%.02hhu-%.02hhu %.02hhu:%.02hhu:%.02hhu\"",
+		    year, buf[3], buf[4], buf[5], buf[6], buf[7]) == -1)
+			return (NULL);
+		break;
+	case SNMPC_DATEANDTIME_LEN + 2:
+		if (asprintf(&str,
+		    "\"%hu-%.02hhu-%.02hhu %.02hhu:%.02hhu:%.02hhu"
+		    "%c%.02hhu%.02hhu\"",
+		    year, buf[3], buf[4], buf[5], buf[6],
+		    buf[7], buf[9], buf[10], buf[11]) == -1)
+			return (NULL);
+		break;
+	default:
+		return (NULL);
+	}
+
+	return (str);
+}
+
+struct display_hint *
+snmpc_display_hint_lookup(struct ber_oid *oid)
+{
+	u_int			 i, j, found;
+
+	for (i = 0; i < sizeof(display_hints) / sizeof(display_hints[0]); i++) {
+		if (oid->bo_n < display_hints[i].oid.bo_n)
+			continue;
+		found = 1;
+		for (j = 0; j < display_hints[i].oid.bo_n; j++) {
+			if (oid->bo_id[j] != display_hints[i].oid.bo_id[j]) {
+				found = 0;
+				break;
+			}
+		}
+
+		if (found)
+			return (&display_hints[i]);
+	}
+	return (NULL);
 }
 
 int
