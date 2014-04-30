@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2014/04/30 05:29:56 djm Exp $
+#	$OpenBSD: Makefile,v 1.78 2014/04/30 19:07:48 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -26,12 +26,12 @@ SRCS=	${LIB_SRCS} \
 	msg.c progressmeter.c dns.c \
 	monitor_fdpass.c addrmatch.c \
 	smult_curve25519_ref.c kexc25519.c kexc25519c.c \
-	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c hmac.c
+	chacha.c poly1305.c cipher-chachapoly.c ssh-ed25519.c hmac.c umac.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS+=	bufec.c bufbn.c cipher-3des1.c cipher-bf1.c rsa.c \
 	ssh-dss.c ssh-rsa.c ssh-ecdsa.c dh.c kexdh.c kexgex.c kexecdh.c \
-	kexdhc.c kexgexc.c kexecdhc.c umac.c ssh-pkcs11.c \
+	kexdhc.c kexgexc.c kexecdhc.c ssh-pkcs11.c \
 	krl.c digest-openssl.c
 .else
 SRCS+=	digest-libc.c rijndael.c cipher-aesctr.c
