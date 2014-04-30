@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.105 2014/04/19 17:42:18 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.106 2014/04/30 09:17:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -290,6 +290,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				deliver.userinfo = *userinfo;
 				(void)strlcpy(deliver.user, userinfo->username,
 				    sizeof(deliver.user));
+				(void)strlcpy(deliver.dest, e->dest,
+				    sizeof(deliver.dest));
 				if (strlcpy(deliver.to, e->buffer,
 					sizeof(deliver.to))
 				    >= sizeof(deliver.to)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.13 2014/04/19 17:31:35 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.14 2014/04/30 09:17:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -42,28 +42,70 @@ extern char	**environ;
 
 /* maildir backend */
 static void delivery_maildir_open(struct deliver *);
+static int maildir_tag(const struct mailaddr *, char *, size_t);
 
 struct delivery_backend delivery_backend_maildir = {
 	1, delivery_maildir_open
 };
 
+static int
+mailaddr_tag(const struct mailaddr *maddr, char *dest, size_t len)
+{
+	char		*tag;
+	char		*sanitized;
+
+	if ((tag = strchr(maddr->user, TAG_CHAR))) {
+		tag++;
+		while (*tag == '.')
+			tag++;
+	}
+	if (tag == NULL)
+		return 1;
+
+	if (strlcpy(dest, tag, len) >= len)
+		return 0;
+	for (sanitized = dest; *sanitized; sanitized++)
+		if (strchr(MAILADDR_ESCAPE, *sanitized))
+			*sanitized = ':';
+	return 1;
+}
 
 static void
 delivery_maildir_open(struct deliver *deliver)
 {
-	char	 tmp[SMTPD_MAXPATHLEN], new[SMTPD_MAXPATHLEN];
+	char	 tmp[SMTPD_MAXPATHLEN], new[SMTPD_MAXPATHLEN], tag[SMTPD_MAXPATHLEN];
 	int	 ch, fd;
 	FILE	*fp;
 	char	*msg;
 	int	 n;
+	const char	*chd;
+	struct mailaddr	maddr;
+	struct stat	sb;
 
 #define error(m)	{ msg = m; goto err; }
 #define error2(m)	{ msg = m; goto err2; }
 
 	setproctitle("maildir delivery");
+
+	memset(&maddr, 0, sizeof maddr);
+	if (! text_to_mailaddr(&maddr, deliver->dest))
+		error("cannot parse destination address");
+
+	memset(tag, 0, sizeof tag);
+	if (! mailaddr_tag(&maddr, tag, sizeof tag))
+		error("cannot extract tag from destination address");
+
 	if (mkdirs(deliver->to, 0700) < 0 && errno != EEXIST)
 		error("cannot mkdir maildir");
-	if (chdir(deliver->to) < 0)
+	chd = deliver->to;
+
+	if (tag[0]) {
+		(void)snprintf(tmp, sizeof tmp, "%s/.%s", deliver->to, tag);
+		if (stat(tmp, &sb) != -1)
+			chd = tmp;
+	}
+
+	if (chdir(chd) < 0)
 		error("cannot cd to maildir");
 	if (mkdir("cur", 0700) < 0 && errno != EEXIST)
 		error("mkdir cur failed");
