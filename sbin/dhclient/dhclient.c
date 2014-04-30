@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.299 2014/04/21 15:26:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.300 2014/04/30 15:11:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1659,7 +1659,15 @@ rewrite_client_leases(void)
 	fflush(leaseFile);
 	rewind(leaseFile);
 
-	TAILQ_FOREACH(lp, &client->leases, next) {
+	/*
+	 * The leases file is kept in chronological order, with the
+	 * most recently bound lease last. When the file was read
+	 * leases that were not expired were added to the head of the
+	 * TAILQ client->leases as they were read. Therefore write out
+	 * the leases in client->leases in reverse order to recreate
+	 * the chonological order required.
+	 */
+	TAILQ_FOREACH_REVERSE(lp, &client->leases, _leases, next) {
 		/* Skip any leases that duplicate the active lease address. */
 		if (client->active && lp->address.s_addr ==
 		    client->active->address.s_addr)
