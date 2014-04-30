@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2014/04/30 04:20:31 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -952,8 +952,8 @@ syscall(code, tf, pc)
 	int error, new;
 	struct args {
 		register_t i[8];
-	} args;
-	register_t rval[2];
+	} args __aligned(8);
+	register_t rval[2] __aligned(8);
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
 #endif
