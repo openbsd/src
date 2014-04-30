@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.20 2014/04/24 21:22:05 sthen Exp $
+.\"	$OpenBSD: unifdef.1,v 1.21 2014/04/30 06:06:09 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 2002 - 2013 Tony Finch <dot@dotat.at>.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2014 $
+.Dd $Mdocdate: April 30 2014 $
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
@@ -38,16 +38,14 @@
 .Nd remove preprocessor conditionals from code
 .Sh SYNOPSIS
 .Nm
-.Op Fl bBcdehKkmnsStV
-.Op Fl I Ns Ar path
+.Op Fl BbcdehKkmnSstV
 .Op Fl [i]D Ns Ar sym Ns Op = Ns Ar val
 .Op Fl [i]U Ns Ar sym
-.Ar ...
 .Op Fl f Ar defile
-.Op Fl x Bro Ar 012 Brc
 .Op Fl M Ar backext
 .Op Fl o Ar outfile
-.Op Ar infile ...
+.Op Fl x Cm 0 | 1 | 2
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -179,80 +177,15 @@ a comment,
 or affected by a backslash-continued line.
 It spots unusually-formatted preprocessor directives
 and knows when the layout is too odd for it to handle.
-.Sh OPTIONS
+.Pp
+The options are as follows:
+.Pp
 .Bl -tag -width indent -compact
-.It Fl D Ns Ar sym Ns = Ns Ar val
-Specify that a macro is defined to a given value.
-.Pp
-.It Fl D Ns Ar sym
-Specify that a macro is defined to the value 1.
-.Pp
-.It Fl U Ns Ar sym
-Specify that a macro is undefined.
-.Pp
-If the same macro appears in more than one argument,
-the last occurrence dominates.
-.Pp
-.Sm off
-.It Xo
-.Fl iD Ar sym
-.Op = Ar val
-.Xc
-.Sm on
-.It Fl iU Ns Ar sym
-Ignore
-.Ic #ifdef Ns s .
-If your C code uses
-.Ic #ifdef Ns s
-to delimit non-C lines,
-such as comments
-or code which is under construction,
-then you must tell
-.Nm
-which symbols are used for that purpose so that it will not try to parse
-comments and line continuations
-inside those
-.Ic #ifdef Ns s .
-One specifies ignored symbols with
-.Sm off
-.Fl iD Ar sym Op = Ar val
-.Sm on
-and
-.Fl iU Ns Ar sym ,
-similar to
-.Sm off
-.Fl D Ar sym Op = Ar val
-.Sm on
-and
-.Fl U Ns Ar sym .
-.Pp
-.It Fl f Ar defile
-The file
-.Ar defile
-contains
-.Ic #define
-and
-.Ic #undef
-preprocessor directives,
-which have the same effect as the corresponding
-.Fl D
-and
-.Fl U
-command-line arguments.
-You can have multiple
-.Fl f
-arguments and mix them with
-.Fl D
-and
-.Fl U
-arguments;
-later options override earlier ones.
-.Pp
-Each directive must be on a single line.
-Object-like macro definitions (without arguments)
-are set to the given value.
-Function-like macro definitions (with arguments)
-are treated as if they are set to 1.
+.It Fl B
+Compress blank lines around a deleted section.
+Mutually exclusive with the
+.Fl b
+option.
 .Pp
 .It Fl b
 Replace removed lines with blank lines
@@ -261,16 +194,27 @@ Mutually exclusive with the
 .Fl B
 option.
 .Pp
-.It Fl B
-Compress blank lines around a deleted section.
-Mutually exclusive with the
-.Fl b
-option.
-.Pp
 .It Fl c
-Complement,
-i.e., lines that would have been removed or blanked
+Complement.
+That is, lines that would have been removed or blanked
 are retained and vice versa.
+.Pp
+.Sm off
+.It Xo
+.Fl D Ar sym
+.Op = Ar val
+.Xc
+.Sm on
+.It Fl U Ns Ar sym
+Specify that a macro is defined
+.Pq Fl D
+to a given value,
+to 1 if no value is given,
+or undefined
+.Pq Fl U .
+.Pp
+If the same macro appears in more than one argument,
+the last occurrence dominates.
 .Pp
 .It Fl d
 Turn on printing of debugging messages.
@@ -285,6 +229,58 @@ comment hanging off its right hand end.
 The
 .Fl e
 flag makes it ignore the line instead.
+.Pp
+.It Fl f Ar defile
+The file
+.Ar defile
+contains
+.Ic #define
+and
+.Ic #undef
+preprocessor directives,
+which have the same effect as the corresponding
+.Fl D
+and
+.Fl U
+command line arguments.
+Multiple
+.Fl f
+arguments can be given and mixed with
+.Fl D
+and
+.Fl U
+arguments;
+later options override earlier ones.
+.Pp
+Each directive must be on a single line.
+Object-like macro definitions (without arguments)
+are set to the given value.
+Function-like macro definitions (with arguments)
+are treated as if they are set to 1.
+.Pp
+.Sm off
+.It Xo
+.Fl iD Ar sym
+.Op = Ar val
+.Xc
+.Sm on
+.It Fl iU Ns Ar sym
+Ignore
+.Ic #ifdef Ns s .
+If C code uses
+.Ic #ifdef Ns s
+to delimit non-C lines,
+such as comments
+or code which is under construction,
+this tells
+.Nm
+which symbols are used for that purpose so that it will not try to parse
+comments and line continuations
+inside those
+.Ic #ifdef Ns s .
+.Pp
+If the same macro appears in more than one argument,
+the last occurrence dominates.
 .Pp
 .It Fl h
 Print help.
@@ -311,14 +307,14 @@ because they typically start
 and are used as a kind of comment to sketch out future or past development.
 It would be rude to strip them out, just as it would be for normal comments.
 .Pp
-.It Fl m
-Modify one or more input files in place.
-.Pp
 .It Fl M Ar backext
 Modify input files in place, and keep backups of the original files by
 appending the
 .Ar backext
 to the input filenames.
+.Pp
+.It Fl m
+Modify one or more input files in place.
 .Pp
 .It Fl n
 Add
@@ -332,19 +328,19 @@ Write output to the file
 .Ar outfile
 instead of the standard output when processing a single file.
 .Pp
-.It Fl s
-Instead of processing an input file as usual,
-this option causes
-.Nm
-to produce a list of macros that are used in
-preprocessor directive controlling expressions.
-.Pp
 .It Fl S
 Like the
 .Fl s
 option, but the nesting depth of each macro is also printed.
 This is useful for working out the number of possible combinations
 of interdependent defined/undefined macros.
+.Pp
+.It Fl s
+Instead of processing an input file as usual,
+this option causes
+.Nm
+to produce a list of macros that are used in
+preprocessor directive controlling expressions.
 .Pp
 .It Fl t
 Disables parsing for C strings, comments,
@@ -360,7 +356,7 @@ flags.
 .It Fl V
 Print version details.
 .Pp
-.It Fl x Bro Ar 012 Brc
+.It Fl x Cm 0 | 1 | 2
 Set exit status mode to zero, one, or two.
 See the
 .Sx EXIT STATUS
@@ -374,13 +370,14 @@ utility takes its input from
 if there are no
 .Ar file
 arguments.
-You must use the
+The
 .Fl m
 or
 .Fl M
-options if there are multiple input files.
-You can specify inut from stdin or output to stdout with
-.Ql - .
+options must be used if there are multiple input files.
+A dash
+.Pq -
+specifies input from stdin or output to stdout.
 .Pp
 The
 .Nm

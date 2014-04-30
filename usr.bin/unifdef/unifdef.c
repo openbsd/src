@@ -47,7 +47,7 @@
 
 static const char copyright[] =
     #include "version.h"
-    "@(#) $Author: sthen $\n"
+    "@(#) $Author: jmc $\n"
     "@(#) $URL: http://dotat.at/prog/unifdef $\n"
 ;
 
@@ -453,8 +453,8 @@ static void
 synopsis(FILE *fp)
 {
 	fprintf(fp,
-	    "usage:	unifdef [-bBcdehKkmnsStV] [-x{012}] [-Mext] [-opath] \\\n"
-	    "		[-[i]Dsym[=val]] [-[i]Usym] [-fpath] ... [file] ...\n");
+	    "usage:	unifdef [-BbcdehKkmnSstV] [-[i]Dsym[=val]] [-[i]Usym] [-f defile]\n"
+	    "		[-M backext] [-o outfile] [-x 0 | 1 | 2] file ...\n");
 }
 
 static void
