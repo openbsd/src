@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.63 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.64 2014/04/30 12:49:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -626,6 +626,8 @@ mta_enter_state(struct mta_session *s, int newstate)
 		break;
 
 	case MTA_STARTTLS:
+		if (s->flags & MTA_DOWNGRADE_PLAIN)
+			mta_enter_state(s, MTA_AUTH);
 		if (s->flags & MTA_TLS) /* already started */
 			mta_enter_state(s, MTA_AUTH);
 		else if ((s->ext & MTA_EXT_STARTTLS) == 0) {
@@ -737,7 +739,17 @@ mta_enter_state(struct mta_session *s, int newstate)
 			break;
 		}
 
-		s->task = mta_route_next_task(s->relay, s->route);
+		/*
+		 * When downgrading from opportunistic TLS, clear flag and
+		 * possibly reuse the same task (forbidden in other cases).
+		 */
+		if (s->flags & MTA_DOWNGRADE_PLAIN)
+			s->flags &= ~MTA_DOWNGRADE_PLAIN;
+		else if (s->task)
+			fatalx("task should be NULL at this point");
+
+		if (s->task == NULL)
+			s->task = mta_route_next_task(s->relay, s->route);
 		if (s->task == NULL) {
 			log_debug("debug: mta: %p: no task for relay %s",
 			    s, mta_relay_to_text(s->relay));
@@ -1275,16 +1287,25 @@ mta_io(struct io *io, int evt)
 
 	case IO_ERROR:
 		log_debug("debug: mta: %p: IO error: %s", s, io->error);
-		mta_error(s, "IO Error: %s", io->error);
-		if (!s->ready)
+		if (!s->ready) {
+			mta_error(s, "IO Error: %s", io->error);
 			mta_connect(s);
+			break;
+		}
 		else if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_ANYSSL))) {
 			/* error in non-strict SSL negotiation, downgrade to plain */
+			if (s->flags & MTA_TLS) {
+				log_info("smtp-out: Error on session %016"PRIx64
+				    ": opportunistic TLS failed, "
+				    "downgrading to plain", s->id);
+				s->flags &= ~MTA_TLS;
 				s->flags |= MTA_DOWNGRADE_PLAIN;
 				mta_connect(s);
+				break;
+			}
 		}
-		else
-			mta_free(s);
+		mta_error(s, "IO Error: %s", io->error);
+		mta_free(s);
 		break;
 
 	case IO_DISCONNECTED:
