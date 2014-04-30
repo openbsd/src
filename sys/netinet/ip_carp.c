@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.228 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.229 2014/04/30 10:04:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -198,7 +198,6 @@ void	carp_hmac_generate(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *, u_int8_t);
 int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *);
-void	carp_setroute(struct carp_softc *, int);
 void	carp_proto_input_c(struct mbuf *, struct carp_header *, int,
 	    sa_family_t);
 void	carpattach(int);
@@ -394,124 +393,6 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 			return (0);
 	}
 	return (1);
-}
-
-void
-carp_setroute(struct carp_softc *sc, int cmd)
-{
-	struct ifaddr *ifa;
-	int s;
-
-	/* XXX this mess needs fixing */
-
-	s = splsoftnet();
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET: {
-			int error;
-			struct sockaddr sa;
-			struct rtentry *rt;
-			struct radix_node_head *rnh;
-			struct radix_node *rn;
-			struct rt_addrinfo info;
-			int hr_otherif, nr_ourif;
-			struct sockaddr_rtlabel	sa_rl;
-			const char *label;
-
-			/* Remove the existing host route, if any */
-			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = ifa->ifa_addr;
-			info.rti_flags = RTF_HOST;
-			error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED,
-			    NULL, sc->sc_if.if_rdomain);
-			rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
-			    error, sc->sc_if.if_rdomain);
-
-			/* Check for our address on another interface */
-			/* XXX cries for proper API */
-			rnh = rtable_get(sc->sc_if.if_rdomain,
-			    ifa->ifa_addr->sa_family);
-			rn = rnh->rnh_matchaddr(ifa->ifa_addr, rnh);
-			rt = (struct rtentry *)rn;
-			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
-			    rt->rt_flags & (RTF_CLONING|RTF_CLONED));
-
-			/* Check for a network route on our interface */
-			bcopy(ifa->ifa_addr, &sa, sizeof(sa));
-			satosin(&sa)->sin_addr.s_addr = satosin(ifa->ifa_netmask
-			    )->sin_addr.s_addr & satosin(&sa)->sin_addr.s_addr;
-			rt = rt_lookup(&sa,
-			    ifa->ifa_netmask, sc->sc_if.if_rdomain);
-			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
-
-			/* Restore the route label */
-			memset(&sa_rl, 0, sizeof(sa_rl));
-			if (rt && rt->rt_labelid) {
-				sa_rl.sr_len = sizeof(sa_rl);
-				sa_rl.sr_family = AF_UNSPEC;
-				label = rtlabel_id2name(rt->rt_labelid);
-				if (label != NULL)
-					strlcpy(sa_rl.sr_label, label,
-					    sizeof(sa_rl.sr_label));
-			}
-
-			switch (cmd) {
-			case RTM_ADD:
-				if (hr_otherif) {
-					ifa->ifa_rtrequest = NULL;
-					memset(&info, 0, sizeof(info));
-					info.rti_info[RTAX_DST] = ifa->ifa_addr;
-					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-					info.rti_flags = RTF_UP | RTF_HOST;
-					error = rtrequest1(RTM_ADD, &info,
-					    RTP_CONNECTED, NULL,
-					    sc->sc_if.if_rdomain);
-					rt_missmsg(RTM_ADD, &info,
-					    info.rti_flags, &sc->sc_if,
-					    error, sc->sc_if.if_rdomain);
-				}
-				if (!hr_otherif || nr_ourif || !rt) {
-					if (nr_ourif && !(rt->rt_flags &
-					    RTF_CLONING)) {
-						memset(&info, 0, sizeof(info));
-						info.rti_info[RTAX_DST] = &sa;
-						info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
-						error = rtrequest1(RTM_DELETE,
-						    &info, RTP_CONNECTED, NULL,
-						    sc->sc_if.if_rdomain);
-						rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
-						    error, sc->sc_if.if_rdomain);
-					}
-
-					ifa->ifa_rtrequest = arp_rtrequest;
-
-					memset(&info, 0, sizeof(info));
-					info.rti_info[RTAX_DST] = &sa;
-					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-					info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
-					info.rti_info[RTAX_LABEL] =
-					    (struct sockaddr *)&sa_rl;
-					error = rtrequest1(RTM_ADD, &info,
-					    RTP_CONNECTED, NULL, 
-					    sc->sc_if.if_rdomain);
-					if (error == 0)
-						ifa->ifa_flags |= IFA_ROUTE;
-					rt_missmsg(RTM_ADD, &info, info.rti_flags,
-					    &sc->sc_if, error, sc->sc_if.if_rdomain);
-				}
-				break;
-			case RTM_DELETE:
-				break;
-			default:
-				break;
-			}
-			break;
-		}
-		default:
-			break;
-		}
-	}
-	splx(s);
 }
 
 /*
@@ -749,8 +630,6 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
 			timeout_del(&vhe->ad_tmo);
 			carp_set_state(vhe, BACKUP);
 			carp_setrun(vhe, 0);
-			if (vhe->vhe_leader)
-				carp_setroute(sc, RTM_DELETE);
 		}
 		break;
 	case BACKUP:
@@ -1655,8 +1534,6 @@ carp_master_down(void *v)
 #endif /* INET6 */
 		}
 		carp_setrun(vhe, 0);
-		if (vhe->vhe_leader)
-			carp_setroute(sc, RTM_ADD);
 		carpstats.carps_preempt++;
 		break;
 	}
@@ -1698,16 +1575,12 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 		sc->sc_if.if_flags |= IFF_RUNNING;
 	} else {
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
-		if (vhe->vhe_leader)
-			carp_setroute(sc, RTM_DELETE);
 		return;
 	}
 
 	switch (vhe->state) {
 	case INIT:
 		carp_set_state(vhe, BACKUP);
-		if (vhe->vhe_leader)
-			carp_setroute(sc, RTM_DELETE);
 		carp_setrun(vhe, 0);
 		break;
 	case BACKUP:
@@ -2277,7 +2150,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 				timeout_del(&vhe->ad_tmo);
 				carp_set_state_all(sc, BACKUP);
 				carp_setrun_all(sc, 0);
-				carp_setroute(sc, RTM_DELETE);
 				break;
 			case MASTER:
 				LIST_FOREACH(vhe, &sc->carp_vhosts,
