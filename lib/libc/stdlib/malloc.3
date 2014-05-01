@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.77 2014/04/30 23:28:05 sthen Exp $
+.\"	$OpenBSD: malloc.3,v 1.78 2014/05/01 18:41:59 jmc Exp $
 .\"
-.Dd $Mdocdate: April 30 2014 $
+.Dd $Mdocdate: May 1 2014 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -275,7 +275,7 @@ Freed chunks are filled with 0xdf.
 .Dq Don't Junk .
 By default, small chunks are always junked, and the first part of pages
 is junked after free.
-This flag disables the default so that no junking is performed.
+This option ensures that no junking is performed.
 .It Cm P
 .Dq Move allocations within a page.
 Allocations larger than half a page but smaller than a page
