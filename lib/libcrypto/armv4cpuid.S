@@ -77,24 +77,6 @@ OPENSSL_wipe_cpu:
 	.word	0xe12fff1e	@ bx	lr
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
-.global	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,%function
-OPENSSL_instrument_bus:
-	eor	r0,r0,r0
-	tst	lr,#1
-	moveq	pc,lr
-	.word	0xe12fff1e	@ bx	lr
-.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
-
-.global	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,%function
-OPENSSL_instrument_bus2:
-	eor	r0,r0,r0
-	tst	lr,#1
-	moveq	pc,lr
-	.word	0xe12fff1e	@ bx	lr
-.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
-
 .align	5
 .LOPENSSL_armcap:
 .word	OPENSSL_armcap_P-.LOPENSSL_armcap
