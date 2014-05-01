@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.126 2014/04/03 21:36:59 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.127 2014/05/01 04:25:02 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ unsigned int pool_serial;
 int	 pool_catchup(struct pool *);
 void	 pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
 void	 pool_update_curpage(struct pool *);
+void	 pool_swizzle_curpage(struct pool *);
 void	*pool_do_get(struct pool *, int);
 void	 pool_do_put(struct pool *, void *);
 void	 pr_rmpage(struct pool *, struct pool_item_header *,
@@ -568,6 +569,7 @@ startover:
 		return (NULL);
 	}
 
+	pool_swizzle_curpage(pp);
 	/*
 	 * The convention we use is that if `curpage' is not NULL, then
 	 * it points at a non-empty bucket. In particular, `curpage'
@@ -813,17 +815,13 @@ pool_do_put(struct pool *pp, void *v)
 			pool_update_curpage(pp);
 		}
 	}
-
 	/*
 	 * If the page was previously completely full, move it to the
-	 * partially-full list and make it the current page.  The next
-	 * allocation will get the item from this page, instead of
-	 * further fragmenting the pool.
+	 * partially-full list.
 	 */
 	else if (ph->ph_nmissing == (pp->pr_itemsperpage - 1)) {
 		LIST_REMOVE(ph, ph_pagelist);
 		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
-		pp->pr_curpage = ph;
 	}
 }
 
@@ -979,6 +977,27 @@ pool_update_curpage(struct pool *pp)
 	if (pp->pr_curpage == NULL) {
 		pp->pr_curpage = LIST_FIRST(&pp->pr_emptypages);
 	}
+}
+
+void
+pool_swizzle_curpage(struct pool *pp)
+{
+	struct pool_item_header *ph, *next;
+
+	if ((ph = pp->pr_curpage) == NULL)
+		return;
+	if (arc4random_uniform(16) != 0)
+		return;
+	next = LIST_FIRST(&pp->pr_partpages);
+	if (next == ph)
+		next = LIST_NEXT(next, ph_pagelist);
+	if (next == NULL) {
+		next = LIST_FIRST(&pp->pr_emptypages);
+		if (next == ph)
+			next = LIST_NEXT(next, ph_pagelist);
+	}
+	if (next != NULL)
+		pp->pr_curpage = next;
 }
 
 void
