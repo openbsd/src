@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.2 2014/02/28 00:55:02 afresh1 Exp $
+dnl	$OpenBSD: hardware,v 1.3 2014/05/01 11:48:47 jasper Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
     BeagleBoard, BeagleBoard xM
@@ -20,3 +20,21 @@ The following machines are targeted by OpenBSD/MACHINE:
 	  USB controller (ehci)
 	  watchdog controller (omdog)
 	  GPIO controller (omgpio)
+
+    Cubieboard, Cubieboard 2, pcDuino
+    	Supported on-board devices:
+	 standard serial port (com)
+	 watchdog controller (sxidog)
+	 ethernet controller (sxie)
+	 USB controller (ehci)
+	 AHCI controller (ahci)
+	 GPIO controller (sxipio)
+
+    SABRE Lite, Nitrogen6X
+        Supported on-board devices:
+	 standard serial port (com)
+	 USB controller (ehci)
+	 watchdog controller (imxdog)
+	 ethernet controller (imxenet)
+	 GPIO controller (imxgpio)
+	 OTP controller (imxocotp)
