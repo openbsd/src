@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.34 2014/05/01 18:50:36 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.35 2014/05/01 18:53:22 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -141,7 +141,7 @@ while it is being viewed.
 (The behavior is similar to the "tail -f" command.)
 .It Ic ESC-F
 Like F, but as soon as a line is found which matches
-the last search pattern, the terminal bell is rung 
+the last search pattern, the terminal bell is rung
 and forward scrolling stops.
 .It Ic g | < | ESC-<
 Go to line N in the file, default 1 (beginning of file).
@@ -513,7 +513,7 @@ If the --use-backslash option appears earlier in the options, then
 a dollar sign or backslash may be included literally in an option string
 by preceding it with a backslash.
 If the --use-backslash option is not in effect, then backslashes are
-not treated specially, and there is no way to include a dollar sign 
+not treated specially, and there is no way to include a dollar sign
 in the option string.
 .Bl -tag -width XXXX
 .It Fl \&? | -help
@@ -1832,7 +1832,7 @@ LINES and COLUMNS environment variables.)
 .It Ev MORE
 Options which are passed to
 .Nm
-automatically when running in 
+automatically when running in
 .Nm more
 compatible mode.
 .\" .It Ev PATH
@@ -1849,17 +1849,6 @@ The name of the editor (used for the v command).
 .El
 .Sh SEE ALSO
 .Xr lesskey 1
-.Sh STANDARDS
-The
-.Nm more
-utility is compliant with the
-.St -p1003.1-2008
-specification,
-though its presence is optional.
-.Pp
-The flags
-.Op Fl aBbCdEFfGghIJjkLMmNOoPQqRrSTUVWwXxyz~#
-are extensions to that specification.
 .Sh AUTHORS
 .An Mark Nudelman
 .Pp
