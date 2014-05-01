@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.127 2014/04/28 09:45:30 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.128 2014/05/01 18:46:01 jmc Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -1799,17 +1799,17 @@ void
 usage(void)
 {
 	if (v6flag) {
-		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f firsthop] "
-		    "[-m hoplimit]\n"
-		    "\t[-p port] [-q probes] [-s src] [-V rtableid] [-w waittime]\n"
-		    "\thost [datalen]\n");
+		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f first_hop] "
+		    "[-m max_hop] [-p port]\n"
+		    "\t[-q nqueries] [-s src_addr] [-V rtable] [-w waittime] "
+		    "host\n\t[datalen]\n");
 	} else {
 		fprintf(stderr,
 		    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] "
 		    "[-m max_ttl]\n"
-		    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr] "
-		    "[-t toskeyword]\n"
-		    "\t[-V rtable] [-w waittime] host [packetsize]\n",
+		    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr]\n"
+		    "\t[-t toskeyword] "
+		    "[-V rtable] [-w waittime] host [datalen]\n",
 		    __progname);
 	}
 	exit(1);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.59 2014/04/29 17:35:29 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.60 2014/05/01 18:46:01 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 29 2014 $
+.Dd $Mdocdate: May 1 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nm traceroute6
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
-.Nm traceroute
+.Nm traceroute\ \&
 .Op Fl AcDdIlnSvx
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
@@ -54,14 +54,14 @@
 .Op Fl V Ar rtable
 .Op Fl w Ar waittime
 .Ar host
-.Op Ar packetsize
+.Op Ar datalen
 .Nm traceroute6
 .Op Fl AcDdIlnSv
-.Op Fl f Ar firsthop
-.Op Fl m Ar hoplimit
+.Op Fl f Ar first_hop
+.Op Fl m Ar max_hop
 .Op Fl p Ar port
-.Op Fl q Ar probes
-.Op Fl s Ar src
+.Op Fl q Ar nqueries
+.Op Fl s Ar src_addr
 .Op Fl V Ar rtable
 .Op Fl w Ar waittime
 .Ar host
