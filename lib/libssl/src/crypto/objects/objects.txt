@@ -1307,3 +1307,5 @@ brainpool 1 11 : brainpoolP384r1
 brainpool 1 12 : brainpoolP384t1
 brainpool 1 13 : brainpoolP512r1
 brainpool 1 14 : brainpoolP512t1
+
+1 2 250 1 223 101 256 1 : FRP256v1
