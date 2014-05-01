@@ -533,12 +533,6 @@ int OPENSSL_isservice(void);
 
 void OPENSSL_init(void);
 
-#define fips_md_init(alg) fips_md_init_ctx(alg, alg)
-
-#define fips_md_init_ctx(alg, cx) \
-	int alg##_Init(cx##_CTX *c)
-#define fips_cipher_abort(alg) while(0)
-
 /* CRYPTO_memcmp returns zero iff the |len| bytes at |a| and |b| are equal. It
  * takes an amount of time dependent on |len|, but independent of the contents
  * of |a| and |b|. Unlike memcmp, it cannot be used to put elements into a

@@ -60,7 +60,7 @@ const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
 
-fips_md_init_ctx(SHA384, SHA512)
+int SHA384_Init(SHA512_CTX *c)
 	{
 	c->h[0]=U64(0xcbbb9d5dc1059ed8);
 	c->h[1]=U64(0x629a292a367cd507);
@@ -76,7 +76,7 @@ fips_md_init_ctx(SHA384, SHA512)
         return 1;
 	}
 
-fips_md_init(SHA512)
+int SHA512_Init(SHA512_CTX *c)
 	{
 	c->h[0]=U64(0x6a09e667f3bcc908);
 	c->h[1]=U64(0xbb67ae8584caa73b);

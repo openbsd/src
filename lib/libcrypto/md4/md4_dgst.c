@@ -71,7 +71,7 @@ const char MD4_version[]="MD4" OPENSSL_VERSION_PTEXT;
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-fips_md_init(MD4)
+int MD4_Init(MD4_CTX *c)
 	{
 	memset (c,0,sizeof(*c));
 	c->A=INIT_DATA_A;
