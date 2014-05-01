@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.33 2014/04/29 12:11:25 millert Exp $
+.\"	$OpenBSD: less.1,v 1.34 2014/05/01 18:50:36 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,44 +23,28 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2014 $
+.Dd $Mdocdate: May 1 2014 $
 .Dt LESS 1
 .Os
 .Sh NAME
-.Nm less , more
+.Nm less
 .Nd view files
 .Sh SYNOPSIS
-.Nm less \*(Ba more
-.Fl \&?
-.Nm less \*(Ba more
-.Fl -help
-.Nm less \*(Ba more
-.Fl V
-.Nm less \*(Ba more
-.Fl -version
-.Nm less \*(Ba more
-.Bk -words
-.Op Fl Oo Cm + Oc Ns Cm AaBCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX~
-.Op Fl b Ar space
-.Op Fl h Ar lines
-.Op Fl j Ar line
+.Nm less
+.Op Fl #?~AaBCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX
+.Op Fl b Ar n
+.Op Fl h Ar n
+.Op Fl j Ar n
 .Op Fl k Ar keyfile
 .Op Fl O | o Ar logfile
 .Op Fl P Ar prompt
 .Op Fl p Ar pattern
 .Op Fl T Ar tagsfile
 .Op Fl t Ar tag
-.Op Fl x Ar tab,...
-.Op Fl y Ar lines
-.Op Fl Oo Cm z Oc Ar lines
-.Op Fl # Ar shift
-.Xo Oo Cm \&+ Ns Oo Ns Cm \&+ Ns
-.Oc Ar cmd
-.Oc
-.Xc
-.Op Fl -
-.Op Ar filename ...
-.Ek
+.Op Fl x Ar n Ns , Ns Ar ...
+.Op Fl y Ar n
+.Op Fl Cm z Ar n
+.Op Ar
 .\" (See the
 .\" .Sx OPTIONS
 .\" section for alternate option syntax with long option names.)
@@ -569,7 +553,7 @@ Warning: use of -B can result in erroneous display, since only the
 most recently viewed part of the piped data is kept in memory;
 any earlier data is lost.
 .It Xo
-.Fl b Ns Ar n |
+.Fl b Ar n |
 .Fl -buffers Ns = Ns Ar n
 .Xc
 Specifies the amount of buffer space
@@ -643,7 +627,7 @@ This can cause
 .Nm
 to run somewhat faster than the default.
 .It Xo
-.Fl h Ns Ar n |
+.Fl h Ar n |
 .Fl -max-back-scroll Ns = Ns Ar n
 .Xc
 Specifies a maximum number of lines to scroll backward.
@@ -664,7 +648,7 @@ Displays a status column at the left edge of the screen.
 The status column shows the lines that matched the current search.
 The status column is also used if the -w or -W option is in effect.
 .It Xo
-.Fl j Ns Ar n |
+.Fl j Ar n |
 .Fl -jump-target Ns = Ns Ar n
 .Xc
 Specifies a line on the screen where the "target" line is to be positioned.
@@ -700,8 +684,8 @@ to stop whatever it is doing and return to its command prompt.
 Note that use of this option makes it impossible to return to the
 command prompt from the "F" command.
 .It Xo
-.Fl k Ns Ar filename |
-.Fl -lesskey-file Ns = Ns Ar filename
+.Fl k Ar keyfile |
+.Fl -lesskey-file Ns = Ns Ar keyfile
 .Xc
 Causes
 .Nm
@@ -759,8 +743,8 @@ number to the editor (see also the discussion of LESSEDIT in
 .Sx PROMPTS
 below).
 .It Xo
-.Fl O Ns Ar filename |
-.Fl -LOG-FILE Ns = Ns Ar filename
+.Fl O Ar logfile |
+.Fl -LOG-FILE Ns = Ns Ar logfile
 .Xc
 The -O option is like -o, but it will overwrite an existing
 file without asking for confirmation.
@@ -773,8 +757,8 @@ Without a file name, they will simply report the name of the log file.
 The "s" command is equivalent to specifying -o from within
 .Nm less .
 .It Xo
-.Fl o Ns Ar filename |
-.Fl -log-file Ns = Ns Ar filename
+.Fl o Ar logfile |
+.Fl -log-file Ns = Ns Ar logfile
 .Xc
 Causes
 .Nm
@@ -784,7 +768,7 @@ If the file already exists,
 .Nm
 will ask for confirmation before overwriting it.
 .It Xo
-.Fl P Ns Ar prompt |
+.Fl P Ar prompt |
 .Fl -prompt Ns = Ns Ar prompt
 .Xc
 Provides a way to tailor the three prompt styles to your own preference.
@@ -808,7 +792,7 @@ See the section on
 .Sx PROMPTS
 for more details.
 .It Xo
-.Fl p Ns Ar pattern |
+.Fl p Ar pattern |
 .Fl -pattern Ns = Ns Ar pattern
 .Xc
 The -p option on the command line is equivalent to specifying +/pattern;
@@ -868,12 +852,12 @@ on the next line.
 .It Fl s | -squeeze-blank-lines
 Causes consecutive blank lines to be squeezed into a single blank line.
 .It Xo
-.Fl T Ns Ar tagsfile |
+.Fl T Ar tagsfile |
 .Fl -tag-file Ns = Ns Ar tagsfile
 .Xc
 Specifies a tags file to be used instead of "tags".
 .It Xo
-.Fl t Ns Ar tag |
+.Fl t Ar tag |
 .Fl -tag Ns = Ns Ar tag
 .Xc
 The -t option, followed immediately by a TAG,
@@ -937,8 +921,8 @@ to the terminal.
 This is sometimes desirable if the deinitialization string does
 something unnecessary, like clearing the screen.
 .It Xo
-.Fl x Ns Ar n,... |
-.Fl -tabs Ns = Ns Ar n,...
+.Fl x Ar n Ns , Ns Ar ... |
+.Fl -tabs Ns = Ns Ar n Ns , Ns Ar ...
 .Xc
 Sets tab stops.
 If only one n is specified, tab stops are set at multiples of n.
@@ -947,7 +931,7 @@ those positions, and then continue with the same spacing as the last two.
 For example, -x9,17 will set tabs at positions 9, 17, 25, 33, etc.
 The default for n is 8.
 .It Xo
-.Fl y Ns Ar n |
+.Fl y Ar n |
 .Fl -max-forw-scroll Ns = Ns Ar n
 .Xc
 Specifies a maximum number of lines to scroll forward.
@@ -957,7 +941,7 @@ The -c or -C option may be used to repaint from the top of
 the screen if desired.
 By default, any forward movement causes scrolling.
 .It Xo
-.Fl Oo Cm z Oc Ns Ar n |
+.Fl z Ar n |
 .Fl -window Ns = Ns Ar n
 .Xc
 Changes the default scrolling window size to n lines.
