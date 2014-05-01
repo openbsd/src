@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.5 2014/04/30 08:23:42 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.6 2014/05/01 15:50:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -23,7 +23,10 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <imsg.h>
+#include <pwd.h>
+#include <err.h>
 
 #include <openssl/pem.h>
 #include <openssl/evp.h>
@@ -54,6 +57,85 @@ static int	 rsae_verify(int dtype, const u_char *m, u_int, const u_char *,
 static int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
 
 static uint64_t	 rsae_reqid = 0;
+
+static void
+ca_shutdown(void)
+{
+	log_info("info: ca agent exiting");
+	_exit(0);
+}
+
+static void
+ca_sig_handler(int sig, short event, void *p)
+{
+	switch (sig) {
+	case SIGINT:
+	case SIGTERM:
+		ca_shutdown();
+		break;
+	default:
+		fatalx("ca_sig_handler: unexpected signal");
+	}
+}
+
+pid_t
+ca(void)
+{
+	pid_t		 pid;
+	struct passwd	*pw;
+	struct event	 ev_sigint;
+	struct event	 ev_sigterm;
+
+	switch (pid = fork()) {
+	case -1:
+		fatal("ca: cannot fork");
+	case 0:
+		post_fork(PROC_CA);
+		break;
+	default:
+		return (pid);
+	}
+
+	purge_config(PURGE_LISTENERS|PURGE_TABLES|PURGE_RULES);
+
+	if ((pw = getpwnam(SMTPD_USER)) == NULL)
+		fatalx("unknown user " SMTPD_USER);
+
+	if (chroot(PATH_CHROOT) == -1)
+		fatal("ca: chroot");
+	if (chdir("/") == -1)
+		fatal("ca: chdir(\"/\")");
+
+	config_process(PROC_CA);
+
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		fatal("ca: cannot drop privileges");
+
+	imsg_callback = ca_imsg;
+	event_init();
+
+	signal_set(&ev_sigint, SIGINT, ca_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, ca_sig_handler, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+
+	config_peer(PROC_PARENT);
+	config_peer(PROC_PONY);
+	config_done();
+
+	/* Ignore them until we get our config */
+	mproc_disable(p_pony);
+
+	if (event_dispatch() < 0)
+		fatal("event_dispatch");
+	ca_shutdown();
+
+	return (0);
+}
 
 void
 ca_init(void)
@@ -167,43 +249,81 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 	struct pki		*pki;
 	int			 ret = 0;
 	uint64_t		 id;
+	int			 v;
 
-	m_msg(&m, imsg);
-	m_get_id(&m, &id);
-	m_get_string(&m, &pkiname);
-	m_get_data(&m, &from, &flen);
-	m_get_size(&m, &tlen);
-	m_get_size(&m, &padding);
-	m_end(&m);
+	log_imsg(smtpd_process, p->proc, imsg);
 
-	pki = dict_get(env->sc_pki_dict, pkiname);
-	if (pki == NULL || pki->pki_pkey == NULL ||
-	    (rsa = EVP_PKEY_get1_RSA(pki->pki_pkey)) == NULL)
-		fatalx("ca_imsg: invalid pki");
+	if (p->proc == PROC_PARENT) {
+		switch (imsg->hdr.type) {
+		case IMSG_CONF_START:
+			return;
+		case IMSG_CONF_END:
+			ca_init();
 
-	if ((to = calloc(1, tlen)) == NULL)
-		fatalx("ca_imsg: calloc");
-
-	switch (imsg->hdr.type) {
-	case IMSG_CA_PRIVENC:
-		ret = RSA_private_encrypt(flen, from, to, rsa,
-		    padding);
-		break;
-	case IMSG_CA_PRIVDEC:
-		ret = RSA_private_decrypt(flen, from, to, rsa,
-		    padding);
-		break;
+			/* Start fulfilling requests */
+			mproc_enable(p_pony);
+			return;
+		case IMSG_CTL_VERBOSE:
+			m_msg(&m, imsg);
+			m_get_int(&m, &v);
+			m_end(&m);
+			log_verbose(v);
+			return;
+		case IMSG_CTL_PROFILE:
+			m_msg(&m, imsg);
+			m_get_int(&m, &v);
+			m_end(&m);
+			profiling = v;
+			return;
+		}
 	}
 
-	m_create(p, imsg->hdr.type, 0, 0, -1);
-	m_add_id(p, id);
-	m_add_int(p, ret);
-	if (ret > 0)
-		m_add_data(p, to, (size_t)ret);
-	m_close(p);
+	if (p->proc == PROC_PONY) {
+		switch (imsg->hdr.type) {
+		case IMSG_CA_PRIVENC:
+		case IMSG_CA_PRIVDEC:
+			m_msg(&m, imsg);
+			m_get_id(&m, &id);
+			m_get_string(&m, &pkiname);
+			m_get_data(&m, &from, &flen);
+			m_get_size(&m, &tlen);
+			m_get_size(&m, &padding);
+			m_end(&m);
 
-	free(to);
-	RSA_free(rsa);
+			pki = dict_get(env->sc_pki_dict, pkiname);
+			if (pki == NULL || pki->pki_pkey == NULL ||
+			    (rsa = EVP_PKEY_get1_RSA(pki->pki_pkey)) == NULL)
+				fatalx("ca_imsg: invalid pki");
+
+			if ((to = calloc(1, tlen)) == NULL)
+				fatalx("ca_imsg: calloc");
+
+			switch (imsg->hdr.type) {
+			case IMSG_CA_PRIVENC:
+				ret = RSA_private_encrypt(flen, from, to, rsa,
+				    padding);
+				break;
+			case IMSG_CA_PRIVDEC:
+				ret = RSA_private_decrypt(flen, from, to, rsa,
+				    padding);
+				break;
+			}
+
+			m_create(p, imsg->hdr.type, 0, 0, -1);
+			m_add_id(p, id);
+			m_add_int(p, ret);
+			if (ret > 0)
+				m_add_data(p, to, (size_t)ret);
+			m_close(p);
+
+			free(to);
+			RSA_free(rsa);
+
+			return;
+		}
+	}
+
+	errx(1, "ca_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
 }
 
 /*
@@ -250,16 +370,16 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * Send a synchronous imsg because we cannot defer the RSA
 	 * operation in OpenSSL's engine layer.
 	 */
-	m_create(p_lka, cmd, 0, 0, -1);
+	m_create(p_ca, cmd, 0, 0, -1);
 	rsae_reqid++;
-	m_add_id(p_lka, rsae_reqid);
-	m_add_string(p_lka, pkiname);
-	m_add_data(p_lka, (const void *)from, (size_t)flen);
-	m_add_size(p_lka, (size_t)RSA_size(rsa));
-	m_add_size(p_lka, (size_t)padding);
-	m_flush(p_lka);
+	m_add_id(p_ca, rsae_reqid);
+	m_add_string(p_ca, pkiname);
+	m_add_data(p_ca, (const void *)from, (size_t)flen);
+	m_add_size(p_ca, (size_t)RSA_size(rsa));
+	m_add_size(p_ca, (size_t)padding);
+	m_flush(p_ca);
 
-	ibuf = &p_lka->imsgbuf;
+	ibuf = &p_ca->imsgbuf;
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -273,7 +393,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 			if (n == 0)
 				break;
 
-			log_imsg(PROC_PONY, PROC_LKA, &imsg);
+			log_imsg(PROC_PONY, PROC_CA, &imsg);
 
 			switch (imsg.hdr.type) {
 			case IMSG_CA_PRIVENC:
@@ -281,7 +401,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				break;
 			default:
 				/* Another imsg is queued up in the buffer */
-				pony_imsg(p_lka, &imsg);
+				pony_imsg(p_ca, &imsg);
 				imsg_free(&imsg);
 				continue;
 			}
@@ -302,7 +422,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 			imsg_free(&imsg);
 		}
 	}
-	mproc_event_add(p_lka);
+	mproc_event_add(p_ca);
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2014/05/01 15:50:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -165,6 +165,8 @@ config_peer(enum smtp_proc_type proc)
 		p_scheduler = p;
 	else if (proc == PROC_PONY)
 		p_pony = p;
+	else if (proc == PROC_CA)
+		p_ca = p;
 	else
 		fatalx("bad peer");
 }
@@ -229,6 +231,7 @@ process_stat_event(int fd, short ev, void *arg)
 	process_stat(p_queue);
 	process_stat(p_scheduler);
 	process_stat(p_pony);
+	process_stat(p_ca);
 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;

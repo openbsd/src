@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.168 2014/04/29 19:13:13 reyk Exp $	*/
+/*	$OpenBSD: lka.c,v 1.169 2014/05/01 15:50:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -88,12 +88,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	    imsg->hdr.type == IMSG_MTA_DNS_MX ||
 	    imsg->hdr.type == IMSG_MTA_DNS_MX_PREFERENCE) {
 		dns_imsg(p, imsg);
-		return;
-	}
-
-	if (imsg->hdr.type == IMSG_CA_PRIVENC ||
-	    imsg->hdr.type == IMSG_CA_PRIVDEC) {
-		ca_imsg(p, imsg);
 		return;
 	}
 
@@ -389,7 +383,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			if (verbose & TRACE_TABLES)
 				table_dump_all();
 			table_open_all();
-			ca_init();
 
 			/* Start fulfilling requests */
 			mproc_enable(p_pony);

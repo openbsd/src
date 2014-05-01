@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.4 2014/04/30 08:23:42 reyk Exp $	*/
+/*	$OpenBSD: pony.c,v 1.5 2014/05/01 15:50:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -210,6 +210,7 @@ pony(void)
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_LKA);
 	config_peer(PROC_CONTROL);
+	config_peer(PROC_CA);
 	config_done();
 
 	ca_engine_init();
