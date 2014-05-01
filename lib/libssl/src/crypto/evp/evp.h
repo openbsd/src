@@ -838,6 +838,10 @@ const EVP_CIPHER *EVP_seed_cfb128(void);
 const EVP_CIPHER *EVP_seed_ofb(void);
 #endif
 
+#ifndef OPENSSL_NO_CHACHA
+const EVP_CIPHER *EVP_chacha20(void);
+#endif
+
 void OPENSSL_add_all_algorithms_noconf(void);
 void OPENSSL_add_all_algorithms_conf(void);
 

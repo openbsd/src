@@ -1309,3 +1309,7 @@ brainpool 1 13 : brainpoolP512r1
 brainpool 1 14 : brainpoolP512t1
 
 1 2 250 1 223 101 256 1 : FRP256v1
+
+# ChaCha Stream Cipher
+!Cname chacha20
+			: ChaCha		: chacha

@@ -429,6 +429,13 @@ int main(int argc,char **argv)
 		continue;
 		}
 #endif
+#ifdef OPENSSL_NO_CHACHA
+	    if (strstr(cipher, "ChaCha") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
 	    fprintf(stderr,"Can't find %s\n",cipher);
 	    exit(3);
 	    }

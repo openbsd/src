@@ -14,7 +14,27 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "chacha.h"
 #include "chacha-merged.c"
+
+void
+ChaCha_set_key(ChaCha_ctx *ctx, const unsigned char *key, uint32_t keybits)
+{
+	chacha_keysetup((chacha_ctx *)ctx, key, keybits);
+}
+
+void
+ChaCha_set_iv(ChaCha_ctx *ctx, const unsigned char *iv,
+    const unsigned char *counter)
+{
+	chacha_ivsetup((chacha_ctx *)ctx, iv, counter);
+}
+
+void
+ChaCha(ChaCha_ctx *ctx, unsigned char *out, const unsigned char *in, size_t len)
+{
+	chacha_encrypt_bytes((chacha_ctx *)ctx, in, out, (uint32_t)len);
+}
 
 void
 CRYPTO_chacha_20(unsigned char *out, const unsigned char *in, size_t len,
