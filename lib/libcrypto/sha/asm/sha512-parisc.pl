@@ -159,8 +159,12 @@ ___
 
 $code=<<___;
 	.LEVEL	$LEVEL
+#if 0
 	.SPACE	\$TEXT\$
 	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
+#else
+	.text
+#endif
 
 	.ALIGN	64
 L\$table
@@ -682,6 +686,8 @@ $code.=<<___;
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
+
+	.data
 	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 

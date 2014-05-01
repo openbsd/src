@@ -20,8 +20,12 @@ $rv="%r28";
 
 $code=<<___;
 	.LEVEL	$LEVEL
+#if 0
 	.SPACE	\$TEXT\$
 	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
+#else
+	.text
+#endif
 
 	.EXPORT	OPENSSL_cpuid_setup,ENTRY
 	.ALIGN	8
