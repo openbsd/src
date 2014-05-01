@@ -1898,6 +1898,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/comp.ph

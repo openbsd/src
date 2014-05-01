@@ -1325,6 +1325,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/comp.ph

@@ -1213,6 +1213,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/comp.ph

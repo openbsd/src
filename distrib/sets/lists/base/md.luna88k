@@ -1809,6 +1809,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/comp.ph

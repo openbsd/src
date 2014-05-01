@@ -1900,6 +1900,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/comp.ph

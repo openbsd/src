@@ -1927,6 +1927,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/buffer.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/camellia.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/cast.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/chacha.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/cmac.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/cms.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/openssl/comp.ph
