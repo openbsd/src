@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.72 2014/03/06 02:28:25 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.73 2014/05/01 10:35:47 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -38,18 +38,7 @@ OpenBSDcd
 			This file is included in the cd{:--:}OSrev.iso image, and is
 			provided as a convenience, but will rarely be needed.
 
-Additionally, you may be interested in
-
-.../OSREV/tools/
-	miscellaneous MACHINE installation utilities like rawrite.exe,
-	ntrw.exe, gzip.exe, and pfdisk.exe; see installation section,
-	below.
-
-
 OpenBSDfloppydesc(three,Each,s)
-
-In addition, the "tools/" directory contains some utilities that might be
-useful for the installation.
 
 DistributionDescription(ten)
 
