@@ -41,12 +41,7 @@ $j="s4";
 $m1="s5";
 
 $code=<<___;
-#ifdef __linux__
-#include <asm/regdef.h>
-#else
-#include <asm.h>
-#include <regdef.h>
-#endif
+#include <machine/asm.h>
 
 .text
 

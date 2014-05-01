@@ -245,12 +245,7 @@ ___
 }}
 
 $code=<<___;
-#ifdef __linux__
-#include <asm/regdef.h>
-#else
-#include <asm.h>
-#include <regdef.h>
-#endif
+#include <machine/asm.h>
 
 .text
 
