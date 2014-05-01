@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.116 2014/03/07 07:19:42 gerhard Exp $	 */
+/* $OpenBSD: x509.c,v 1.117 2014/05/01 07:35:57 jsg Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -295,7 +295,7 @@ x509_generate_kn(int id, X509 *cert)
 	}
 
 	tm = X509_get_notAfter(cert);
-	if (tm == NULL &&
+	if (tm == NULL ||
 	    (tm->type != V_ASN1_UTCTIME &&
 		tm->type != V_ASN1_GENERALIZEDTIME)) {
 		tt = time(0);
