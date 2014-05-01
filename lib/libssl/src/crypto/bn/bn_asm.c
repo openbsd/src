@@ -558,7 +558,7 @@ void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
-#else
+#elif !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
 	BN_ULONG bl,bh;
 #endif
 	BN_ULONG t1,t2;
@@ -667,7 +667,7 @@ void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t;
-#else
+#elif !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
 	BN_ULONG bl,bh;
 #endif
 	BN_ULONG t1,t2;
@@ -712,7 +712,7 @@ void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
-#else
+#elif !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
 	BN_ULONG bl,bh;
 #endif
 	BN_ULONG t1,t2;
@@ -793,7 +793,7 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	{
 #ifdef BN_LLONG
 	BN_ULLONG t,tt;
-#else
+#elif !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
 	BN_ULONG bl,bh;
 #endif
 	BN_ULONG t1,t2;
