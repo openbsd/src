@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2014/04/27 16:19:04 jsing Exp $
+# $OpenBSD: Makefile,v 1.29 2014/05/01 13:15:22 jsing Exp $
 
 LIB=	crypto
 
@@ -75,6 +75,9 @@ SRCS+= buffer.c buf_err.c buf_str.c
 
 # cast/
 SRCS+= c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c
+
+# chacha/
+SRCS+= chacha.c
 
 # cmac/
 SRCS+= cmac.c cm_ameth.c cm_pmeth.c
@@ -271,6 +274,7 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/buffer \
 	${LCRYPTO_SRC}/camellia \
 	${LCRYPTO_SRC}/cast \
+	${LCRYPTO_SRC}/chacha \
 	${LCRYPTO_SRC}/cmac \
 	${LCRYPTO_SRC}/cms \
 	${LCRYPTO_SRC}/comp \
@@ -329,6 +333,7 @@ HDRS=\
 	crypto/buffer/buffer.h \
 	crypto/camellia/camellia.h \
 	crypto/cast/cast.h \
+	crypto/chacha/chacha.h \
 	crypto/cmac/cmac.h \
 	crypto/cms/cms.h \
 	crypto/comp/comp.h \
