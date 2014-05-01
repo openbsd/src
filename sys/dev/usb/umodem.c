@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.55 2014/01/30 20:37:03 mpi Exp $ */
+/*	$OpenBSD: umodem.c,v 1.56 2014/05/01 03:45:08 sasano Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 	if (usbd_is_dying(sc->sc_udev))
 		return (EIO);
 
-	DPRINTF(("umodemioctl: cmd=0x%08lx\n", cmd));
+	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
 
 	switch (cmd) {
 	case USB_GET_CM_OVER_DATA:
@@ -590,7 +590,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 		break;
 
 	default:
-		DPRINTF(("umodemioctl: unknown\n"));
+		DPRINTF(("umodem_ioctl: unknown\n"));
 		error = ENOTTY;
 		break;
 	}
@@ -601,7 +601,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 void
 umodem_dtr(struct umodem_softc *sc, int onoff)
 {
-	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
+	DPRINTF(("umodem_dtr: onoff=%d\n", onoff));
 
 	if (sc->sc_dtr == onoff)
 		return;
@@ -613,7 +613,7 @@ umodem_dtr(struct umodem_softc *sc, int onoff)
 void
 umodem_rts(struct umodem_softc *sc, int onoff)
 {
-	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
+	DPRINTF(("umodem_rts: onoff=%d\n", onoff));
 
 	if (sc->sc_rts == onoff)
 		return;
