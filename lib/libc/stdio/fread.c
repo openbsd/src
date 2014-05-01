@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.11 2009/11/21 09:53:44 guenther Exp $ */
+/*	$OpenBSD: fread.c,v 1.12 2014/05/01 16:40:36 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <errno.h>
 #include "local.h"
+
+#define MUL_NO_OVERFLOW	(1UL << (sizeof(size_t) * 4))
 
 size_t
 fread(void *buf, size_t size, size_t count, FILE *fp)
@@ -42,6 +46,16 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	char *p;
 	int r;
 	size_t total;
+
+	/*
+	 * Extension:  Catch integer overflow
+	 */
+	if ((size >= MUL_NO_OVERFLOW || count >= MUL_NO_OVERFLOW) &&
+	    size > 0 && SIZE_MAX / size < count) {
+		errno = EOVERFLOW;
+		fp->_flags |= __SERR;
+		return (0);
+	}
 
 	/*
 	 * ANSI and SUSv2 require a return value of 0 if size or count are 0.
