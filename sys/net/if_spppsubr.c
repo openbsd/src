@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.121 2014/04/19 12:12:02 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.122 2014/05/02 10:40:26 jca Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -5236,13 +5236,6 @@ sppp_null(struct sppp *unused)
 {
 	/* do just nothing */
 }
-/*
- * This file is large.  Tell emacs to highlight it nevertheless.
- *
- * Local Variables:
- * hilit-auto-highlight-maxout: 120000
- * End:
- */
 
 void
 sppp_set_phase(struct sppp *sp)
