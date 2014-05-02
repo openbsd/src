@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.61 2013/01/18 04:07:06 pirofti Exp $ */
+/* $OpenBSD: dsdt.h,v 1.62 2014/05/02 14:10:15 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -168,6 +168,9 @@ union acpi_resource {
 		uint8_t  typecode;
 		uint16_t length;
 		uint8_t  flags;
+#define LR_EXTIRQ_SHR		(1L << 3)
+#define LR_EXTIRQ_POLARITY	(1L << 2)
+#define LR_EXTIRQ_MODE		(1L << 1)
 		uint8_t  irq_count;
 		uint32_t irq[1];
 	} __packed lr_extirq;

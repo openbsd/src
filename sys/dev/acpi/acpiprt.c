@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.44 2013/12/22 18:55:25 kettenis Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.45 2014/05/02 14:10:15 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,13 @@
 #include <machine/mpbiosvar.h>
 
 #include "ioapic.h"
+
+struct acpiprt_irq {
+	int _int;
+	int _shr;
+	int _ll;
+	int _he;
+};
 
 struct acpiprt_map {
 	int bus, dev;
@@ -134,16 +141,29 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 int
 acpiprt_getirq(union acpi_resource *crs, void *arg)
 {
-	int *irq = (int *)arg;
-	int typ;
+	struct acpiprt_irq *irq = arg;
+	int typ, len;
+
+	irq->_shr = 0;
+	irq->_ll = 0;
+	irq->_he = 1;
 
 	typ = AML_CRSTYPE(crs);
+	len = AML_CRSLEN(crs);
 	switch (typ) {
 	case SR_IRQ:
-		*irq = ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
+		irq->_int= ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
+		if (len > 2) {
+			irq->_shr = (crs->sr_irq.irq_flags & SR_IRQ_SHR);
+			irq->_ll = (crs->sr_irq.irq_flags & SR_IRQ_POLARITY);
+			irq->_he = (crs->sr_irq.irq_flags & SR_IRQ_MODE);
+		}
 		break;
 	case LR_EXTIRQ:
-		*irq = letoh32(crs->lr_extirq.irq[0]);
+		irq->_int = letoh32(crs->lr_extirq.irq[0]);
+		irq->_shr = (crs->lr_extirq.flags & LR_EXTIRQ_SHR);
+		irq->_ll = (crs->lr_extirq.flags & LR_EXTIRQ_POLARITY);
+		irq->_he = (crs->lr_extirq.flags & LR_EXTIRQ_MODE);
 		break;
 	default:
 		printf("unknown interrupt: %x\n", typ);
@@ -174,35 +194,48 @@ acpiprt_pri[16] = {
 int
 acpiprt_chooseirq(union acpi_resource *crs, void *arg)
 {
-	int *irq = (int *)arg;
-	int typ, i, pri = -1;
+	struct acpiprt_irq *irq = arg;
+	int typ, len, i, pri = -1;
+
+	irq->_shr = 0;
+	irq->_ll = 0;
+	irq->_he = 1;
 
 	typ = AML_CRSTYPE(crs);
+	len = AML_CRSLEN(crs);
 	switch (typ) {
 	case SR_IRQ:
 		for (i = 0; i < sizeof(crs->sr_irq.irq_mask) * 8; i++) {
 			if (crs->sr_irq.irq_mask & (1 << i) &&
 			    acpiprt_pri[i] > pri) {
-				*irq = i;
-				pri = acpiprt_pri[*irq];
+				irq->_int = i;
+				pri = acpiprt_pri[irq->_int];
 			}
+		}
+		if (len > 2) {
+			irq->_shr = (crs->sr_irq.irq_flags & SR_IRQ_SHR);
+			irq->_ll = (crs->sr_irq.irq_flags & SR_IRQ_POLARITY);
+			irq->_he = (crs->sr_irq.irq_flags & SR_IRQ_MODE);
 		}
 		break;
 	case LR_EXTIRQ:
 		/* First try non-8259 interrupts. */
 		for (i = 0; i < crs->lr_extirq.irq_count; i++) {
 			if (crs->lr_extirq.irq[i] > 15) {
-				*irq = crs->lr_extirq.irq[i];
+				irq->_int = crs->lr_extirq.irq[i];
 				return (0);
 			}
 		}
 
 		for (i = 0; i < crs->lr_extirq.irq_count; i++) {
 			if (acpiprt_pri[crs->lr_extirq.irq[i]] > pri) {
-				*irq = crs->lr_extirq.irq[i];
-				pri = acpiprt_pri[*irq];
+				irq->_int = crs->lr_extirq.irq[i];
+				pri = acpiprt_pri[irq->_int];
 			}
 		}
+		irq->_shr = (crs->lr_extirq.flags & LR_EXTIRQ_SHR);
+		irq->_ll = (crs->lr_extirq.flags & LR_EXTIRQ_POLARITY);
+		irq->_he = (crs->lr_extirq.flags & LR_EXTIRQ_MODE);
 		break;
 	default:
 		printf("unknown interrupt: %x\n", typ);
@@ -215,8 +248,9 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 {
 	struct aml_node	*node;
 	struct aml_value res, *pp;
+	struct acpiprt_irq irq;
 	u_int64_t addr;
-	int pin, irq;
+	int pin;
 	int64_t sta;
 #if NIOAPIC > 0
 	struct mp_intr_map *map;
@@ -283,7 +317,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		aml_freevalue(&res);
 
 		/* Pick a new IRQ if necessary. */
-		if ((irq == 0 || irq == 2 || irq == 13) &&
+		if ((irq._int == 0 || irq._int == 2 || irq._int == 13) &&
 		    !aml_evalname(sc->sc_acpi, node, "_PRS", 0, NULL, &res)){
 			aml_parse_resource(&res, acpiprt_chooseirq, &irq);
 			aml_freevalue(&res);
@@ -294,24 +328,28 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		p->bus = sc->sc_bus;
 		p->dev = ACPI_PCI_DEV(addr << 16);
 		p->pin = pin;
-		p->irq = irq;
+		p->irq = irq._int;
 		p->sc = sc;
 		p->node = node;
 		SIMPLEQ_INSERT_TAIL(&acpiprt_map_list, p, list);
 	} else {
-		irq = aml_val2int(v->v_package[3]);
+		irq._int = aml_val2int(v->v_package[3]);
+		irq._shr = 1;
+		irq._ll = 1;
+		irq._he = 0;
 	}
 
 #ifdef ACPI_DEBUG
 	printf("%s: %s addr 0x%llx pin %d irq %d\n",
-	    DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq);
+	    DEVNAME(sc), aml_nodename(pp->node), addr, pin, irq._int);
 #endif
 
 #if NIOAPIC > 0
 	if (nioapics > 0) {
-		apic = ioapic_find_bybase(irq);
+		apic = ioapic_find_bybase(irq._int);
 		if (apic == NULL) {
-			printf("%s: no apic found for irq %d\n", DEVNAME(sc), irq);
+			printf("%s: no apic found for irq %d\n",
+			    DEVNAME(sc), irq._int);
 			return;
 		}
 
@@ -320,10 +358,30 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			return;
 
 		map->ioapic = apic;
-		map->ioapic_pin = irq - apic->sc_apic_vecbase;
+		map->ioapic_pin = irq._int - apic->sc_apic_vecbase;
 		map->bus_pin = ((addr >> 14) & 0x7c) | (pin & 0x3);
-		map->redir = IOAPIC_REDLO_ACTLO | IOAPIC_REDLO_LEVEL;
-		map->redir |= (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
+		if (irq._ll)
+			map->flags |= (MPS_INTPO_ACTLO << MPS_INTPO_SHIFT);
+		else
+			map->flags |= (MPS_INTPO_ACTHI << MPS_INTPO_SHIFT);
+		if (irq._he)
+			map->flags |= (MPS_INTTR_EDGE << MPS_INTTR_SHIFT);
+		else
+			map->flags |= (MPS_INTTR_LEVEL << MPS_INTTR_SHIFT);
+
+		map->redir = (IOAPIC_REDLO_DEL_LOPRI << IOAPIC_REDLO_DEL_SHIFT);
+		switch ((map->flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK) {
+		case MPS_INTPO_DEF:
+		case MPS_INTPO_ACTLO:
+			map->redir |= IOAPIC_REDLO_ACTLO;
+			break;
+		}
+		switch ((map->flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK) {
+		case MPS_INTTR_DEF:
+		case MPS_INTTR_LEVEL:
+			map->redir |= IOAPIC_REDLO_LEVEL;
+			break;
+		}
 
 		map->ioapic_ih = APIC_INT_VIA_APIC |
 		    ((apic->sc_apicid << APIC_INT_APIC_SHIFT) |
@@ -353,7 +411,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		if (PCI_INTERRUPT_PIN(reg) == pin + 1) {
 			reg &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
-			reg |= irq << PCI_INTERRUPT_LINE_SHIFT;
+			reg |= irq._int << PCI_INTERRUPT_LINE_SHIFT;
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, reg);
 		}
 	}
@@ -372,10 +430,11 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 {
 	struct acpiprt_softc *sc;
 	struct acpiprt_map *p;
+	struct acpiprt_irq irq;
 	struct aml_node *node = NULL;
 	struct aml_value res, res2;
 	union acpi_resource *crs;
-	int irq, newirq;
+	int newirq;
 	int64_t sta;
 
 	SIMPLEQ_FOREACH(p, &acpiprt_map_list, list) {
@@ -408,7 +467,7 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 	aml_parse_resource(&res, acpiprt_getirq, &irq);
 
 	/* Only re-route interrupts when necessary. */
-	if ((sta & STA_ENABLED) && irq == newirq) {
+	if ((sta & STA_ENABLED) && irq._int == newirq) {
 		aml_freevalue(&res);
 		return;
 	}
