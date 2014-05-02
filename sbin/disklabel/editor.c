@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.285 2014/05/02 12:43:10 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.286 2014/05/02 23:17:29 chl Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1801,7 +1801,6 @@ void
 mpcopy(char **to, char **from)
 {
 	int i;
-	char *top;
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		free(to[i]);
