@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.9 2014/04/24 09:05:10 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.10 2014/05/02 14:10:03 andre Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,7 +16,7 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
+#no warnings 'experimental::smartmatch';
 use feature 'switch';
 use Errno;
 use Digest::MD5;
@@ -90,16 +90,23 @@ sub http_client {
 	my $vers = $self->{lengths} ? "1.1" : "1.0";
 	my $method = $self->{method} || "GET";
 	my %header = %{$self->{header} || {}};
+	my $cookie = $self->{cookie} || "";
 
 	foreach my $len (@lengths) {
 		# encode the requested length or chunks into the url
 		my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
+		# overwrite path with custom path
+		if (defined($self->{path})) {
+			$path = $self->{path};
+		}
 		my @request = ("$method /$path HTTP/$vers");
 		push @request, "Host: foo.bar" unless defined $header{Host};
 		push @request, "Content-Length: $len"
 		    if $vers eq "1.1" && $method eq "PUT" &&
 		    !defined $header{'Content-Length'};
 		push @request, "$_: $header{$_}" foreach sort keys %header;
+		push @request, "Cookie: $cookie"
+		    if $cookie ne "";
 		push @request, "";
 		print STDERR map { ">>> $_\n" } @request;
 		print map { "$_\r\n" } @request;
@@ -119,7 +126,8 @@ sub http_client {
 			chomp;
 			print STDERR "<<< $_\n";
 			m{^HTTP/$vers 200 OK$}
-			    or die ref($self), " http response not ok";
+			    or die ref($self), " http response not ok"
+			    unless $self->{httpnok};
 			while (<STDIN>) {
 				chomp;
 				print STDERR "<<< $_\n";
@@ -221,6 +229,8 @@ sub read_char {
 
 sub http_server {
 	my $self = shift;
+	my %header = %{$self->{header} || {}};
+	my $cookie = $self->{cookie} || "";
 
 	my($method, $url, $vers);
 	do {
@@ -246,6 +256,10 @@ sub http_server {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
 				}
+				if ($cookie eq "" &&
+				    /^Cookie: (.*)/) {
+				    $cookie = $1;
+				}
 			}
 		}
 		# XXX reading to EOF does not work with relayd
@@ -254,6 +268,7 @@ sub http_server {
 		    if $method eq "PUT";
 
 		my @response = ("HTTP/$vers 200 OK");
+		$len = defined($len) ? $len : scalar(split /|/,$url);
 		if (ref($len) eq 'ARRAY') {
 			push @response, "Transfer-Encoding: chunked"
 			    if $vers eq "1.1";
@@ -261,7 +276,11 @@ sub http_server {
 			push @response, "Content-Length: $len"
 			    if $vers eq "1.1" && $method eq "GET";
 		}
+		push @response, "$_: $header{$_} " foreach sort keys %header;
+		push @response, "Set-Cookie: $cookie"
+		    if $cookie ne "";
 		push @response, "";
+
 		print STDERR map { ">>> $_\n" } @response;
 		print map { "$_\r\n" } @response;
 
