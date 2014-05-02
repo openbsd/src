@@ -230,7 +230,6 @@ get_dh512(void)
 
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
-#undef BUFSIZZ
 #define BUFSIZZ	16*1024
 static int bufsize = BUFSIZZ;
 static int accept_socket = -1;

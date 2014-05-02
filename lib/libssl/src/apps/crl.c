@@ -67,7 +67,6 @@
 #include <openssl/pem.h>
 
 
-#undef POSTFIX
 #define	POSTFIX	".rvk"
 
 static const char *crl_usage[] = {

@@ -73,7 +73,6 @@
 
 #ifndef OPENSSL_NO_SPEED
 
-#undef SECONDS
 #define SECONDS		3
 #define RSA_SECONDS	10
 #define DSA_SECONDS	10
@@ -175,7 +174,6 @@
 #include "./testrsa.h"
 #endif
 
-#undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
 int run = 0;
 

@@ -307,7 +307,6 @@ ca_main(int argc, char **argv)
 	STACK_OF(CONF_VALUE) * attribs = NULL;
 	STACK_OF(X509) * cert_sk = NULL;
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL;
-#undef BSIZE
 #define BSIZE 256
 	char buf[3][BSIZE];
 #ifndef OPENSSL_NO_ENGINE

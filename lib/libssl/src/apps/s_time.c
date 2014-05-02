@@ -81,7 +81,6 @@
 
  /*#define TEST_CERT "client.pem" *//* no default cert. */
 
-#undef BUFSIZZ
 #define BUFSIZZ 1024*10
 
 #define MYBUFSIZ 1024*8
@@ -91,7 +90,6 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#undef SECONDS
 #define SECONDS	30
 extern int verify_depth;
 extern int verify_error;

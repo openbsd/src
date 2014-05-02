@@ -68,7 +68,6 @@
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
 
-#undef BUFSIZE
 #define BUFSIZE	1024*8
 
 

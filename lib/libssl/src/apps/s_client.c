@@ -171,7 +171,6 @@
 
  /*#define TEST_CERT "client.pem" *//* no default cert. */
 
-#undef BUFSIZZ
 #define BUFSIZZ 1024*8
 
 extern int verify_depth;

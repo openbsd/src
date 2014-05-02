@@ -71,8 +71,6 @@
 #include <ctype.h>
 
 int set_hex(char *in, unsigned char *out, int size);
-#undef SIZE
-#undef BSIZE
 
 #define SIZE	(512)
 #define BSIZE	(8*1024)

@@ -78,7 +78,6 @@
 #endif
 
 
-#undef POSTFIX
 #define	POSTFIX	".srl"
 #define DEF_DAYS	30
 
