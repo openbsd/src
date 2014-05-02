@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2014/05/02 18:21:39 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2014/05/02 20:08:10 miod Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -29,8 +29,8 @@ CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-parisc sha1-parisc
 CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha512-parisc sha256-parisc
-#CFLAGS+= -DSHA512_ASM
-#SSLASM+= sha sha512-parisc sha512-parisc
+CFLAGS+= -DSHA512_ASM
+SSLASM+= sha sha512-parisc sha512-parisc
 # whrlpool
 SRCS+= wp_block.c
 
