@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.207 2014/04/26 21:45:50 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.208 2014/05/02 14:04:50 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -727,11 +727,7 @@ aml_delchildren(struct aml_node *node)
 void aml_unlockfield(struct aml_scope *, struct aml_value *);
 void aml_lockfield(struct aml_scope *, struct aml_value *);
 
-long acpi_acquire_global_lock(void*);
-long acpi_release_global_lock(void*);
 static long global_lock_count = 0;
-#define acpi_acquire_global_lock(x) 1
-#define acpi_release_global_lock(x) 0
 
 void
 acpi_glk_enter(void)
@@ -2542,14 +2538,12 @@ int
 acpi_mutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
     int timeout)
 {
-	int err;
-
 	if (mtx->v_mtx.owner == NULL || scope == mtx->v_mtx.owner) {
 		/* We are now the owner */
 		mtx->v_mtx.owner = scope;
 		if (mtx == aml_global_lock) {
 			dnprintf(10,"LOCKING GLOBAL\n");
-			err = acpi_acquire_global_lock(&acpi_softc->sc_facs->global_lock);
+			acpi_glk_enter();
 		}
 		dnprintf(5,"%s acquires mutex %s\n", scope->node->name,
 		    mtx->node->name);
@@ -2564,11 +2558,9 @@ acpi_mutex_acquire(struct aml_scope *scope, struct aml_value *mtx,
 void
 acpi_mutex_release(struct aml_scope *scope, struct aml_value *mtx)
 {
-	int err;
-
 	if (mtx == aml_global_lock) {
 		dnprintf(10,"UNLOCKING GLOBAL\n");
-		err=acpi_release_global_lock(&acpi_softc->sc_facs->global_lock);
+		acpi_glk_leave();
 	}
 	dnprintf(5, "%s releases mutex %s\n", scope->node->name,
 	    mtx->node->name);
