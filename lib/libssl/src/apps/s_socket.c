@@ -72,7 +72,6 @@
 #include "s_apps.h"
 #include <openssl/ssl.h>
 
-#ifndef OPENSSL_NO_SOCK
 
 
 static int ssl_sock_init(void);
@@ -348,4 +347,3 @@ extract_port(char *str, short *port_ptr)
 	}
 	return (1);
 }
-#endif

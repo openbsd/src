@@ -660,7 +660,6 @@ SSL_get_wfd(const SSL *s)
 	return (ret);
 }
 
-#ifndef OPENSSL_NO_SOCK
 int
 SSL_set_fd(SSL *s, int fd)
 {
@@ -728,7 +727,6 @@ SSL_set_rfd(SSL *s, int fd)
  err:
 	return (ret);
 }
-#endif
 
 
 /* return length of latest Finished message we sent, copy to 'buf' */

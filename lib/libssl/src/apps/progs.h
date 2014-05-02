@@ -66,9 +66,7 @@ FUNCTION functions[] = {
 	/* General functions. */
 	{ FUNC_TYPE_GENERAL, "asn1parse", asn1parse_main },
 	{ FUNC_TYPE_GENERAL, "ca", ca_main },
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_SSL3)
 	{ FUNC_TYPE_GENERAL, "ciphers", ciphers_main },
-#endif
 #ifndef OPENSSL_NO_CMS
 	{ FUNC_TYPE_GENERAL, "cms", cms_main },
 #endif
@@ -97,15 +95,9 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_GENERAL, "prime", prime_main },
 	{ FUNC_TYPE_GENERAL, "rand", rand_main },
 	{ FUNC_TYPE_GENERAL, "req", req_main },
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_SSL3)
 	{ FUNC_TYPE_GENERAL, "s_client", s_client_main },
-#endif
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_SSL3)
 	{ FUNC_TYPE_GENERAL, "s_server", s_server_main },
-#endif
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_SSL3)
 	{ FUNC_TYPE_GENERAL, "s_time", s_time_main },
-#endif
 	{ FUNC_TYPE_GENERAL, "sess_id", sess_id_main },
 	{ FUNC_TYPE_GENERAL, "smime", smime_main },
 #ifndef OPENSSL_NO_SPEED
