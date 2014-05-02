@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.10 2013/11/29 16:27:40 guenther Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.11 2014/05/02 21:58:51 kurt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 
+#include <inttypes.h>
 #include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
@@ -63,7 +64,11 @@ int
 pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 {
 	if (thread->stack) {
-		sinfo->ss_sp = thread->stack->sp;
+#ifdef MACHINE_STACK_GROWS_UP
+		sinfo->ss_sp = thread->stack->base;
+#else
+		sinfo->ss_sp = thread->stack->base + thread->stack->len;
+#endif
 		sinfo->ss_size = thread->stack->len;
 		if (thread->stack->guardsize != 1)
 			sinfo->ss_size -= thread->stack->guardsize;
@@ -93,10 +98,12 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 		 * Provides a rough estimation of stack bounds.   Caller
 		 * likely wants to know for the purpose of inspecting call
 		 * frames, but VM_PSSTRINGS points to process arguments...
-		 * 
-		 * XXXX This interface ignores MACHINE_STACK_GROWS_UP.
 		 */
+#ifdef MACHINE_STACK_GROWS_UP
 		sinfo->ss_sp = _ps.val;
+#else
+		sinfo->ss_sp = (void *)ROUND_TO_PAGE((uintptr_t)_ps.val);
+#endif
 		sinfo->ss_size = (size_t)rl.rlim_cur;
 		sinfo->ss_flags = 0;
 		return (0);
