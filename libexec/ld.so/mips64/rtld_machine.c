@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.17 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.18 2014/05/02 04:55:48 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -47,7 +47,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	struct load_list *load_list;
 	Elf64_Addr loff;
 	Elf64_Addr ooff;
-	Elf64_Addr got_start, got_end;
 	Elf64_Rel  *relocs;
 	const Elf64_Sym *sym, *this;
 	Elf64_Addr prev_value = 0;
@@ -72,21 +71,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			    load_list->prot|PROT_WRITE);
 		load_list = load_list->next;
 	}
-
-	/* XXX We need the got limits to know if reloc is in got. */
-	/* XXX Relocs against the got should not include the STUB address! */
-	this = NULL;
-	got_start = 0;
-	got_end = 0;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		got_start = ooff + this->st_value;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		got_end = ooff + this->st_value;
 
 	DL_DEB(("relocating %d\n", numrel));
 	for (i = 0; i < numrel; i++, relocs++) {
