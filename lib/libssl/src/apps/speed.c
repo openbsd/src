@@ -83,31 +83,51 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-
+#include <math.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <string.h>
-#include <math.h>
-#include "apps.h"
+#include <unistd.h>
+
+#include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <unistd.h>
+#include <openssl/modes.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
 
-#include <signal.h>
-
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_DES
-#include <openssl/des.h>
-#endif
 #ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
 #endif
+#ifndef OPENSSL_NO_BF
+#include <openssl/blowfish.h>
+#endif
+#ifndef OPENSSL_NO_CAST
+#include <openssl/cast.h>
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
 #include <openssl/camellia.h>
+#endif
+#ifndef OPENSSL_NO_DES
+#include <openssl/des.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_ECDH
+#include <openssl/ecdh.h>
+#endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
+#ifndef OPENSSL_NO_HMAC
+#include <openssl/hmac.h>
+#endif
+#ifndef OPENSSL_NO_IDEA
+#include <openssl/idea.h>
 #endif
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
@@ -121,18 +141,8 @@
 #ifndef OPENSSL_NO_MD5
 #include <openssl/md5.h>
 #endif
-#ifndef OPENSSL_NO_HMAC
-#include <openssl/hmac.h>
-#endif
-#include <openssl/evp.h>
-#ifndef OPENSSL_NO_SHA
-#include <openssl/sha.h>
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-#include <openssl/ripemd.h>
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-#include <openssl/whrlpool.h>
+#ifndef OPENSSL_NO_RC2
+#include <openssl/rc2.h>
 #endif
 #ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
@@ -140,38 +150,30 @@
 #ifndef OPENSSL_NO_RC5
 #include <openssl/rc5.h>
 #endif
-#ifndef OPENSSL_NO_RC2
-#include <openssl/rc2.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
-#ifndef OPENSSL_NO_IDEA
-#include <openssl/idea.h>
+#ifndef OPENSSL_NO_RIPEMD
+#include <openssl/ripemd.h>
 #endif
 #ifndef OPENSSL_NO_SEED
 #include <openssl/seed.h>
 #endif
-#ifndef OPENSSL_NO_BF
-#include <openssl/blowfish.h>
+#ifndef OPENSSL_NO_SHA
+#include <openssl/sha.h>
 #endif
-#ifndef OPENSSL_NO_CAST
-#include <openssl/cast.h>
+#ifndef OPENSSL_NO_WHIRLPOOL
+#include <openssl/whrlpool.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#include "./testrsa.h"
-#endif
-#include <openssl/x509.h>
+
+#include "apps.h"
+
 #ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
 #include "./testdsa.h"
 #endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
+#ifndef OPENSSL_NO_RSA
+#include "./testrsa.h"
 #endif
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
-#endif
-#include <openssl/modes.h>
-
 
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
