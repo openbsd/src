@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.271 2014/01/22 00:21:16 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.272 2014/05/02 14:12:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,7 +228,7 @@ grammar		: /* empty */
 
 asnumber	: NUMBER			{
 			/*
-			 * Accroding to iana 65535 and 4294967295 are reserved
+			 * According to iana 65535 and 4294967295 are reserved
 			 * but enforcing this is not duty of the parser.
 			 */
 			if ($1 < 0 || $1 > UINT_MAX) {
