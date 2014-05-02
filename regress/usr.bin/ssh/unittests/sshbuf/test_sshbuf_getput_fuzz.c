@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_sshbuf_getput_fuzz.c,v 1.1 2014/04/30 05:32:00 djm Exp $ */
+/* 	$OpenBSD: test_sshbuf_getput_fuzz.c,v 1.2 2014/05/02 02:54:00 djm Exp $ */
 /*
  * Regress test for sshbuf.h buffer API
  *
@@ -59,6 +59,14 @@ attempt_parse_blob(u_char *blob, size_t len)
 	sshbuf_free(p1);
 }
 
+
+static void
+onerror(void *fuzz)
+{
+	fprintf(stderr, "Failed during fuzz:\n");
+	fuzz_dump((struct fuzz *)fuzz);
+}
+
 void
 sshbuf_getput_fuzz_tests(void)
 {
@@ -96,57 +104,17 @@ sshbuf_getput_fuzz_tests(void)
 		0xc8, 0xf9, 0xa3, 0x5e, 0x42, 0xbd, 0xd0, 0x47,
 		0x55, 0x0f, 0x69, 0xd8, 0x0e, 0xc2, 0x3c, 0xd4,
 	};
-	u_char *blobm;
-	u_int i, j;
+	struct fuzz *fuzz;
 
-	TEST_START("flip every byte");
-	blobm = malloc(sizeof(blob));
-	for (i = 0; i < sizeof(blob); i++) {
-		memcpy(blobm, blob, sizeof(blob));
-		blobm[i / 8] ^= 0xff;
-		attempt_parse_blob(blobm, sizeof(blob));
-	}
-	free(blobm);
+	TEST_START("fuzz blob parsing");
+	fuzz = fuzz_begin(FUZZ_1_BIT_FLIP | FUZZ_2_BIT_FLIP |
+	    FUZZ_1_BYTE_FLIP | FUZZ_2_BYTE_FLIP |
+	    FUZZ_TRUNCATE_START | FUZZ_TRUNCATE_END, blob, sizeof(blob));
+	TEST_ONERROR(onerror, fuzz);
+	for(; !fuzz_done(fuzz); fuzz_next(fuzz))
+		attempt_parse_blob(blob, sizeof(blob));
+	fuzz_cleanup(fuzz);
 	TEST_DONE();
-
-	TEST_START("flip two bytes");
-	blobm = malloc(sizeof(blob));
-	for (i = 0; i < sizeof(blob); i++) {
-		for (j = 0; i < sizeof(blob); i++) {
-			if (i == j)
-				continue;
-			memcpy(blobm, blob, sizeof(blob));
-			blobm[i / 8] ^= 0xff;
-			blobm[j / 8] ^= 0xff;
-			attempt_parse_blob(blobm, sizeof(blob));
-		}
-	}
-	free(blobm);
-	TEST_DONE();
-	TEST_START("flip one bit");
-	blobm = malloc(sizeof(blob));
-	for (i = 0; i < sizeof(blob) * 8; i++) {
-		memcpy(blobm, blob, sizeof(blob));
-		blobm[i / 8] ^= 1 << (i % 8);
-		attempt_parse_blob(blobm, sizeof(blob));
-	}
-	free(blobm);
-	TEST_DONE();
-
-	TEST_START("flip two bits");
-	blobm = malloc(sizeof(blob));
-	for (i = 0; i < sizeof(blob) * 8; i++) {
-		for (j = 0; i < sizeof(blob) * 8; i++) {
-			if (i == j)
-				continue;
-			memcpy(blobm, blob, sizeof(blob));
-			blobm[i / 8] ^= 1 << (i % 8);
-			blobm[j / 8] ^= 1 << (j % 8);
-			attempt_parse_blob(blobm, sizeof(blob));
-		}
-	}
-	free(blobm);
-	TEST_DONE();
+	TEST_ONERROR(NULL, NULL);
 }
-
 
