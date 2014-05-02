@@ -268,7 +268,7 @@ struct fuzz;
 #define FUZZ_MAX		FUZZ_BASE64
 
 /* Start fuzzing a blob of data with selected strategies (bitmask) */
-struct fuzz *fuzz_begin(u_int strategies, void *p, size_t l);
+struct fuzz *fuzz_begin(u_int strategies, const void *p, size_t l);
 
 /* Free a fuzz context */
 void fuzz_cleanup(struct fuzz *fuzz);

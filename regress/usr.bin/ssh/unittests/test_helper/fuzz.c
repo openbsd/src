@@ -168,7 +168,7 @@ fuzz_dump(struct fuzz *fuzz)
 }
 
 struct fuzz *
-fuzz_begin(u_int strategies, void *p, size_t l)
+fuzz_begin(u_int strategies, const void *p, size_t l)
 {
 	struct fuzz *ret = calloc(sizeof(*ret), 1);
 
