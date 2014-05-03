@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.34 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.35 2014/05/03 05:11:30 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -9043,6 +9043,9 @@ static struct intel_quirk intel_quirks[] = {
 
 	/* Acer Aspire 4736Z */
 	{ 0x2a42, 0x1025, 0x0260, quirk_invert_brightness },
+
+	/* Acer Aspire 5336 */
+	{ 0x2a42, 0x1025, 0x048a, quirk_invert_brightness },
 
 	/* Dell XPS13 HD Sandy Bridge */
 	{ 0x0116, 0x1028, 0x052e, quirk_no_pcm_pwm_enable },
