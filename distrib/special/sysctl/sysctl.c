@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.7 2010/11/23 12:37:25 halex Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.8 2014/05/03 00:27:19 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -71,7 +71,6 @@ pint(struct var *v)
 int
 pstring(struct var *v)
 {
-	struct iovec iov[2];
 	char *p;
 	size_t len;
 
