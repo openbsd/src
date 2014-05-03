@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.246 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.247 2014/05/03 23:30:04 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1584,12 +1584,12 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (0);
 	}
 
-	if (P_ZOMBIE(vp) || (vp->p_flag & P_SYSTEM))
+	if (vp->p_flag & P_SYSTEM)
 		return (EINVAL);
 
 	/* Exiting - don't bother, it will be gone soon anyway */
 	if (vp->p_p->ps_flags & PS_EXITING)
-		return (ESRCH);
+		return (EINVAL);
 
 	/* Execing - danger. */
 	if ((vp->p_p->ps_flags & PS_INEXEC))
@@ -1774,17 +1774,17 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (0);
 	}
 
-	if (P_ZOMBIE(findp) || (findp->p_flag & P_SYSTEM))
+	if (findp->p_flag & P_SYSTEM)
+		return (EINVAL);
+
+	/* Exiting - don't bother, it will be gone soon anyway */
+	if (findp->p_p->ps_flags & PS_EXITING)
 		return (EINVAL);
 
 	/* Only owner or root can get cwd */
 	if (findp->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
 	    (error = suser(cp, 0)) != 0)
 		return (error);
-
-	/* Exiting - don't bother, it will be gone soon anyway */
-	if (findp->p_p->ps_flags & PS_EXITING)
-		return (ESRCH);
 
 	len = *oldlenp;
 	if (len > MAXPATHLEN * 4)
