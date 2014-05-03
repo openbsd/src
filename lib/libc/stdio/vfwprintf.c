@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.9 2014/03/19 05:17:01 guenther Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.10 2014/05/03 12:36:45 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -784,6 +784,7 @@ fp_common:
 			}
 			break;
 #endif /* FLOATING_POINT */
+#ifndef NO_PRINTF_PERCENT_N
 		case 'n':
 			if (flags & LLONGINT)
 				*GETARG(long long *) = ret;
@@ -802,6 +803,7 @@ fp_common:
 			else
 				*GETARG(int *) = ret;
 			continue;	/* no output */
+#endif /* NO_PRINTF_PERCENT_N */
 		case 'O':
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
@@ -1296,6 +1298,7 @@ reswitch:	switch (ch) {
 				ADDTYPE(T_DOUBLE);
 			break;
 #endif /* FLOATING_POINT */
+#ifndef NO_PRINTF_PERCENT_N
 		case 'n':
 			if (flags & LLONGINT)
 				ADDTYPE(TP_LLONG);
@@ -1312,6 +1315,7 @@ reswitch:	switch (ch) {
 			else
 				ADDTYPE(TP_INT);
 			continue;	/* no output */
+#endif /* NO_PRINTF_PERCENT_N */
 		case 'O':
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
