@@ -23,6 +23,7 @@ $code=<<___;
 .machine	"any"
 .text
 
+#if 0
 .globl	.OPENSSL_ppc64_probe
 .align	4
 .OPENSSL_ppc64_probe:
@@ -31,14 +32,7 @@ $code=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-
-.globl	.OPENSSL_altivec_probe
-.align	4
-.OPENSSL_altivec_probe:
-	.long	0x10000484	# vor	v0,v0,v0
-	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
+#endif
 
 .globl	.OPENSSL_wipe_cpu
 .align	4
