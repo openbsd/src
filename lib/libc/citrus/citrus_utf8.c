@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.6 2012/12/05 23:19:59 deraadt Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.7 2014/05/03 14:10:20 stsp Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -161,8 +161,7 @@ _citrus_utf8_ctype_mbrtowc(wchar_t * __restrict pwc,
 		errno = EILSEQ;
 		return ((size_t)-1);
 	}
-	if ((wch >= 0xd800 && wch <= 0xdfff) ||
-	    wch == 0xfffe || wch == 0xffff) {
+	if (wch >= 0xd800 && wch <= 0xdfff) {
 		/*
 		 * Malformed input; invalid code points.
 		 */
