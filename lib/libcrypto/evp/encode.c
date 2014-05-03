@@ -259,6 +259,12 @@ EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			goto end;
 		}
 
+		/* There should not be base64 data after padding. */
+		if (eof && tmp != '=' && tmp != '\r' && tmp != '\n') {
+			rv = -1;
+			goto end;
+		}
+
 		/* have we seen a '=' which is 'definitely' the last
 		 * input line.  seof will point to the character that
 		 * holds it. and eof will hold how many characters to
@@ -267,6 +273,12 @@ EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			if (seof == -1)
 				seof = n;
 			eof++;
+		}
+
+		/* There should be no more than two padding markers. */
+		if (eof > 2) {
+			rv = -1;
+			goto end;
 		}
 
 		if (v == B64_CR) {
