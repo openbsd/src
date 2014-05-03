@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2014/05/01 20:42:59 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2014/05/03 17:23:55 miod Exp $
 
 # alpha-specific libcrypto build rules
 
@@ -9,6 +9,7 @@ SRCS+= bf_enc.c
 # bn
 SRCS+= bn_asm.c
 SSLASM+= bn alpha-mont
+CFLAGS+= -DOPENSSL_BN_ASM_MONT
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # modes
