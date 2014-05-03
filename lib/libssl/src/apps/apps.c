@@ -615,11 +615,7 @@ load_cert(BIO * err, const char *file, int format, const char *pass, ENGINE * e,
 		goto end;
 	}
 	if (file == NULL) {
-#ifdef _IONBF
-#ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
-#endif				/* ndef OPENSSL_NO_SETVBUF_IONBF */
-#endif
 		BIO_set_fp(cert, stdin, BIO_NOCLOSE);
 	} else {
 		if (BIO_read_filename(cert, file) <= 0) {
@@ -709,11 +705,7 @@ load_key(BIO * err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 	if (file == NULL && maybe_stdin) {
-#ifdef _IONBF
-#ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
-#endif				/* ndef OPENSSL_NO_SETVBUF_IONBF */
-#endif
 		BIO_set_fp(key, stdin, BIO_NOCLOSE);
 	} else if (BIO_read_filename(key, file) <= 0) {
 		BIO_printf(err, "Error opening %s %s\n",
@@ -789,11 +781,7 @@ load_pubkey(BIO * err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 	if (file == NULL && maybe_stdin) {
-#ifdef _IONBF
-#ifndef OPENSSL_NO_SETVBUF_IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
-#endif				/* ndef OPENSSL_NO_SETVBUF_IONBF */
-#endif
 		BIO_set_fp(key, stdin, BIO_NOCLOSE);
 	} else if (BIO_read_filename(key, file) <= 0) {
 		BIO_printf(err, "Error opening %s %s\n", key_descrip, file);

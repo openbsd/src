@@ -363,10 +363,8 @@ enc_main(int argc, char **argv)
 		BIO_set_callback_arg(out, (char *) bio_err);
 	}
 	if (inf == NULL) {
-#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdin, (char *) NULL, _IONBF, 0);
-#endif				/* ndef OPENSSL_NO_SETVBUF_IONBF */
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	} else {
 		if (BIO_read_filename(in, inf) <= 0) {
@@ -412,10 +410,8 @@ enc_main(int argc, char **argv)
 	}
 	if (outf == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
-#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdout, (char *) NULL, _IONBF, 0);
-#endif				/* ndef OPENSSL_NO_SETVBUF_IONBF */
 	} else {
 		if (BIO_write_filename(out, outf) <= 0) {
 			perror(outf);
