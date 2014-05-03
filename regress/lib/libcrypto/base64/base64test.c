@@ -67,17 +67,6 @@ struct base64_test base64_tests[] = {
 		48,
 		34,
 	},
-
-#ifdef crash
-	{
-		"",
-		-1,
-		"YWJjZA======================================================"
-		"============",
-		74,
-		0,
-	},
-#endif
 };
 
 #define N_TESTS (sizeof(base64_tests) / sizeof(*base64_tests))
@@ -86,14 +75,14 @@ struct base64_test base64_nl_tests[] = {
 
 	/* Corrupt/invalid encodings. */
 	{ "", -1, "", 0, 0, },
-	{ "", -1, "!!!!", 4, 0, }, /* 20 */
-	{ "", -1, "====", 4, 1, },		/* XXX - output ix 0x0. */
-	{ "", -1, "x===", 4, 1, },
-	{ "", -1, "=AAA", 4, 3, },
-	{ "", -1, "A=AA", 4, 3, },
-	{ "", -1, "AA=A", 4, 2, },
+	{ "", -1, "!!!!", 4, 0, },
+	{ "", -1, "====", 4, 0, },
+	{ "", -1, "x===", 4, 0, },
+	{ "", -1, "=AAA", 4, 0, },
+	{ "", -1, "A=AA", 4, 0, },
+	{ "", -1, "AA=A", 4, 0, },
 	{ "", -1, "AA==A", 5, 0, },
-	{ "", -1, "AAA=AAAA", 8, 6, },
+	{ "", -1, "AAA=AAAA", 8, 0, },
 	{ "", -1, "AAAAA", 5, 0, },
 	{ "", -1, "AAAAAA", 6, 0, },
 	{ "", -1, "A=", 2, 0, },
@@ -119,6 +108,14 @@ struct base64_test base64_nl_tests[] = {
 	{ "sure", 4, "c3VyZQ=\n=", 9, 4, },
 	{ "sure", 4, "c3VyZQ=\r\n\r\n=", 12, 4, },
 
+	{
+		"",
+		-1,
+		"YWJjZA======================================================"
+		"============",
+		74,
+		0,
+	},
 };
 
 #define N_NL_TESTS (sizeof(base64_nl_tests) / sizeof(*base64_nl_tests))
@@ -133,7 +130,7 @@ struct base64_test base64_no_nl_tests[] = {
 
 	/* Corrupt/invalid encodings. */
 	{ "", -1, "", 0, 0, },
-	{ "", -1, "!!!!", 4, 0, }, /* 20 */
+	{ "", -1, "!!!!", 4, 0, },
 	{ "", -1, "====", 4, 1, },
 	{ "", -1, "x===", 4, 1, },
 	{ "", -1, "=AAA", 4, 3, },
@@ -165,6 +162,18 @@ struct base64_test base64_no_nl_tests[] = {
 	{ "sure", -1, "c3VyZQ=\n=", 9, 0, },
 	{ "sure", -1, "c3VyZQ=\r\n\r\n=", 12, 0, },
 
+	/*
+	 * This is invalid, yet results in 'abcd' followed by a stream of
+	 * zero value bytes.
+	 */
+	{
+		"",
+		-1,
+		"YWJjZA======================================================"
+		"============",
+		74,
+		52,
+	},
 };
 
 #define N_NO_NL_TESTS (sizeof(base64_no_nl_tests) / sizeof(*base64_no_nl_tests))
