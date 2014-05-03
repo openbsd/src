@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.32 2013/08/06 19:04:50 miod Exp $	*/
+/*	$OpenBSD: math.h,v 1.33 2014/05/03 16:13:03 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -118,19 +118,19 @@ extern char __nan[];
  * XOPEN/SVID
  */
 #if __BSD_VISIBLE || __XPG_VISIBLE
-#define	M_E		2.7182818284590452354	/* e */
-#define	M_LOG2E		1.4426950408889634074	/* log 2e */
-#define	M_LOG10E	0.43429448190325182765	/* log 10e */
-#define	M_LN2		0.69314718055994530942	/* log e2 */
-#define	M_LN10		2.30258509299404568402	/* log e10 */
-#define	M_PI		3.14159265358979323846	/* pi */
-#define	M_PI_2		1.57079632679489661923	/* pi/2 */
-#define	M_PI_4		0.78539816339744830962	/* pi/4 */
-#define	M_1_PI		0.31830988618379067154	/* 1/pi */
-#define	M_2_PI		0.63661977236758134308	/* 2/pi */
-#define	M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
-#define	M_SQRT2		1.41421356237309504880	/* sqrt(2) */
-#define	M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
+#define	M_E		((double)2.7182818284590452354)  /* e */
+#define	M_LOG2E		((double)1.4426950408889634074)  /* log 2e */
+#define	M_LOG10E	((double)0.43429448190325182765) /* log 10e */
+#define	M_LN2		((double)0.69314718055994530942) /* log e2 */
+#define	M_LN10		((double)2.30258509299404568402) /* log e10 */
+#define	M_PI		((double)3.14159265358979323846) /* pi */
+#define	M_PI_2		((double)1.57079632679489661923) /* pi/2 */
+#define	M_PI_4		((double)0.78539816339744830962) /* pi/4 */
+#define	M_1_PI		((double)0.31830988618379067154) /* 1/pi */
+#define	M_2_PI		((double)0.63661977236758134308) /* 2/pi */
+#define	M_2_SQRTPI	((double)1.12837916709551257390) /* 2/sqrt(pi) */
+#define	M_SQRT2		((double)1.41421356237309504880) /* sqrt(2) */
+#define	M_SQRT1_2	((double)0.70710678118654752440) /* 1/sqrt(2) */
 
 #ifdef __vax__
 #define	MAXFLOAT	((float)1.70141173319264430e+38)
@@ -140,6 +140,22 @@ extern char __nan[];
 
 extern int signgam;
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
+
+#if __POSIX_VISIBLE >= 201403
+#define	M_El		2.718281828459045235360287471352662498L /* e */
+#define	M_LOG2El	1.442695040888963407359924681001892137L /* log 2e */
+#define	M_LOG10El	0.434294481903251827651128918916605082L /* log 10e */
+#define	M_LN2l		0.693147180559945309417232121458176568L /* log e2 */
+#define	M_LN10l		2.302585092994045684017991454684364208L /* log e10 */
+#define	M_PIl		3.141592653589793238462643383279502884L /* pi */
+#define	M_PI_2l		1.570796326794896619231321691639751442L /* pi/2 */
+#define	M_PI_4l		0.785398163397448309615660845819875721L /* pi/4 */
+#define	M_1_PIl		0.318309886183790671537767526745028724L /* 1/pi */
+#define	M_2_PIl		0.636619772367581343075535053490057448L /* 2/pi */
+#define	M_2_SQRTPIl	1.128379167095512573896158903121545172L /* 2/sqrt(pi) */
+#define	M_SQRT2l	1.414213562373095048801688724209698079L /* sqrt(2) */
+#define	M_SQRT1_2l	0.707106781186547524400844362104849039L /* 1/sqrt(2) */
+#endif /* __POSIX_VISIBLE >= 201403 */
 
 #if __BSD_VISIBLE
 #define	HUGE		MAXFLOAT
