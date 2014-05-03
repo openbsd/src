@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.26 2014/04/26 11:28:49 sthen Exp $	 */
+/* $OpenBSD: pftop.c,v 1.27 2014/05/03 11:11:15 chl Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1583,9 +1583,6 @@ select_queues(void)
 int
 read_queues(void)
 {
-	static int first_read = 1;
-	struct pfctl_queue_node *node;
-	int inserts;
 	num_disp = num_queues = 0;
 
 	if (pfctl_update_qstats() < 0)
