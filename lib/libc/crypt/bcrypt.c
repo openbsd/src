@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.39 2014/04/19 15:19:20 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.40 2014/05/03 16:33:35 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -94,45 +94,44 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
-	char arounds[3];
 
-	/* Discard "$" identifier */
-	if (*salt != '$')
+	/* Check and discard "$" identifier */
+	if (salt[0] != '$')
 		return -1;
-	salt++;
+	salt += 1;
 
-	if (*salt != BCRYPT_VERSION)
+	if (salt[0] != BCRYPT_VERSION)
 		return -1;
 
 	/* Check for minor versions */
-	if (salt[1] != '$') {
-		 switch (salt[1]) {
-		 case 'a':	/* 'ab' should not yield the same as 'abab' */
-		 case 'b':	/* cap input length at 72 bytes */
-			 minor = salt[1];
-			 salt++;
-			 if (salt[1] != '$')
-				 return -1;
-			 break;
-		 default:
-			 return -1;
-		 }
-	} else
-		 minor = 0;
-
-	/* Discard version + "$" identifier */
-	salt += 2;
-
+	switch ((minor = salt[1])) {
+	case 'a':
+		key_len = (u_int8_t)(strlen(key) + 1);
+		break;
+	case 'b':
+		/* strlen() returns a size_t, but the function calls
+		 * below result in implicit casts to a narrower integer
+		 * type, so cap key_len at the actual maximum supported
+		 * length here to avoid integer wraparound */
+		key_len = strlen(key);
+		if (key_len > 72)
+			key_len = 72;
+		key_len++; /* include the NUL */
+		break;
+	default:
+		 return -1;
+	}
 	if (salt[2] != '$')
-		/* Out of sync with passwd entry */
 		return -1;
+	/* Discard version + "$" identifier */
+	salt += 3;
 
-	memcpy(arounds, salt, sizeof(arounds));
-	if (arounds[sizeof(arounds) - 1] != '$')
+	/* Check and parse num rounds */
+	if (!isdigit((unsigned char)salt[0]) ||
+	    !isdigit((unsigned char)salt[1]) || salt[2] != '$')
 		return -1;
-	arounds[sizeof(arounds) - 1] = 0;
-	logr = strtonum(arounds, BCRYPT_MINLOGROUNDS, 31, NULL);
-	if (logr == 0)
+	logr = atoi(salt);
+	if (logr < BCRYPT_MINLOGROUNDS || logr > 31)
 		return -1;
 	/* Computer power doesn't increase linearly, 2^x should be fine */
 	rounds = 1U << logr;
@@ -147,18 +146,6 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	if (decode_base64(csalt, BCRYPT_MAXSALT, salt))
 		return -1;
 	salt_len = BCRYPT_MAXSALT;
-	if (minor <= 'a')
-		key_len = (u_int8_t)(strlen(key) + (minor >= 'a' ? 1 : 0));
-	else {
-		/* strlen() returns a size_t, but the function calls
-		 * below result in implicit casts to a narrower integer
-		 * type, so cap key_len at the actual maximum supported
-		 * length here to avoid integer wraparound */
-		key_len = strlen(key);
-		if (key_len > 72)
-			key_len = 72;
-		key_len++; /* include the NUL */
-	}
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
@@ -192,8 +179,7 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	i = 0;
 	encrypted[i++] = '$';
 	encrypted[i++] = BCRYPT_VERSION;
-	if (minor)
-		encrypted[i++] = minor;
+	encrypted[i++] = minor;
 	encrypted[i++] = '$';
 
 	snprintf(encrypted + i, 4, "%2.2u$", logr);
