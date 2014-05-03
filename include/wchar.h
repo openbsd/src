@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.24 2013/03/28 16:37:14 eric Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.25 2014/05/03 16:19:53 martynas Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -112,7 +112,8 @@ size_t	mbrtowc(wchar_t * __restrict, const char * __restrict, size_t,
 	    mbstate_t * __restrict);
 int	mbsinit(const mbstate_t *);
 size_t	mbsrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
-	    mbstate_t * __restrict);
+	    mbstate_t * __restrict)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 size_t	wcrtomb(char * __restrict, wchar_t, mbstate_t * __restrict);
 wchar_t	*wcscat(wchar_t * __restrict, const wchar_t * __restrict);
 wchar_t	*wcschr(const wchar_t *, wchar_t);
@@ -122,14 +123,17 @@ wchar_t	*wcscpy(wchar_t * __restrict, const wchar_t * __restrict);
 size_t	wcscspn(const wchar_t *, const wchar_t *);
 size_t	wcslen(const wchar_t *);
 wchar_t	*wcsncat(wchar_t * __restrict, const wchar_t * __restrict,
-	    size_t);
+	    size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 int	wcsncmp(const wchar_t *, const wchar_t *, size_t);
 wchar_t	*wcsncpy(wchar_t * __restrict , const wchar_t * __restrict,
-	    size_t);
+	    size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 wchar_t	*wcspbrk(const wchar_t *, const wchar_t *);
 wchar_t	*wcsrchr(const wchar_t *, wchar_t);
 size_t	wcsrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
-	    mbstate_t * __restrict);
+	    mbstate_t * __restrict)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 size_t	wcsspn(const wchar_t *, const wchar_t *);
 wchar_t	*wcsstr(const wchar_t *, const wchar_t *);
 wchar_t *wcstok(wchar_t * __restrict, const wchar_t * __restrict,
@@ -139,12 +143,19 @@ wchar_t	*wcswcs(const wchar_t *, const wchar_t *);
 wchar_t	*wmemchr(const wchar_t *, wchar_t, size_t);
 int	wmemcmp(const wchar_t *, const wchar_t *, size_t);
 wchar_t	*wmemcpy(wchar_t * __restrict, const wchar_t * __restrict,
-	    size_t);
-wchar_t	*wmemmove(wchar_t *, const wchar_t *, size_t);
-wchar_t	*wmemset(wchar_t *, wchar_t, size_t);
+	    size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)))
+		__attribute__ ((__bounded__(__wcstring__,2,3)));
+wchar_t	*wmemmove(wchar_t *, const wchar_t *, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)))
+		__attribute__ ((__bounded__(__wcstring__,2,3)));
+wchar_t	*wmemset(wchar_t *, wchar_t, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 
-size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
-size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
+size_t	wcslcat(wchar_t *, const wchar_t *, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
+size_t	wcslcpy(wchar_t *, const wchar_t *, size_t)
+		__attribute__ ((__bounded__(__wcstring__,1,3)));
 int	wcswidth(const wchar_t *, size_t);
 int	wctob(wint_t);
 int	wcwidth(wchar_t);
@@ -162,9 +173,11 @@ int wcscasecmp(const wchar_t *, const wchar_t *);
 int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);
 
 size_t mbsnrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
-    size_t, mbstate_t * __restrict);
+    size_t, mbstate_t * __restrict)
+		__attribute__ ((__bounded__(__wcstring__,1,4)));
 size_t wcsnrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
-    size_t, mbstate_t * __restrict);
+    size_t, mbstate_t * __restrict)
+		__attribute__ ((__bounded__(__wcstring__,1,4)));
 #endif
 
 #if __ISO_C_VISIBLE >= 1999
@@ -186,7 +199,8 @@ unsigned long long int wcstoull(const wchar_t * __restrict,
 
 wint_t ungetwc(wint_t, FILE *);
 wint_t fgetwc(FILE *);
-wchar_t *fgetws(wchar_t * __restrict, int, FILE * __restrict);
+wchar_t *fgetws(wchar_t * __restrict, int, FILE * __restrict)
+		__attribute__ ((__bounded__(__wcstring__,1,2)));
 wint_t getwc(FILE *);
 wint_t getwchar(void);
 wint_t fputwc(wchar_t, FILE *);
