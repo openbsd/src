@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.21 2014/04/30 06:06:09 jmc Exp $
+.\"	$OpenBSD: unifdef.1,v 1.22 2014/05/03 14:13:52 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 2002 - 2013 Tony Finch <dot@dotat.at>.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 30 2014 $
+.Dd $Mdocdate: May 3 2014 $
 .Dt UNIFDEF 1
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ and
 .Fl U
 command line options or in
 .Fl f
-definitions files.
+definition files.
 A directive is processed
 if the macro specifications are sufficient to provide
 a definite value for its control expression.
@@ -156,7 +156,7 @@ or with
 .Ic #define
 in a
 .Fl f
-definitions file,
+definition file,
 its arguments are ignored.
 If a macro is explicitly undefined on the command line with the
 .Fl U
@@ -165,7 +165,7 @@ or with
 .Ic #undef
 in a
 .Fl f
-definitions file,
+definition file,
 it may not have any arguments since this leads to a syntax error.
 .Pp
 The
@@ -382,7 +382,7 @@ specifies input from stdin or output to stdout.
 The
 .Nm
 utility works nicely with the
-.Fl D Ns Ar sym
+.Fl D
 option of
 .Xr diff 1 .
 .Sh EXIT STATUS
