@@ -224,7 +224,7 @@ int
 EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-	int seof = -1, eof = 0, rv = -1, ret = 0, i,v, tmp, n,ln, exp_nl;
+	int seof = -1, eof = 0, rv = -1, ret = 0, i,v, tmp, n, ln, exp_nl;
 	unsigned char *d;
 
 	n = ctx->num;
@@ -259,7 +259,7 @@ EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 			goto end;
 		}
 
-		/* have we seen a '=' which is 'definitly' the last
+		/* have we seen a '=' which is 'definitely' the last
 		 * input line.  seof will point to the character that
 		 * holds it. and eof will hold how many characters to
 		 * chop off. */
