@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.127 2014/04/29 21:51:18 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.128 2014/05/04 14:42:36 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -83,9 +83,9 @@ void		ohci_free_sitd(struct ohci_softc *, struct ohci_soft_itd *);
 void		ohci_free_std_chain(struct ohci_softc *, struct ohci_soft_td *,
 		    struct ohci_soft_td *);
 #endif
-usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
-			    struct ohci_softc *, u_int, int, struct usbd_xfer *,
-			    struct ohci_soft_td *, struct ohci_soft_td **);
+usbd_status	ohci_alloc_std_chain(struct ohci_softc *, u_int,
+		    struct usbd_xfer *, struct ohci_soft_td *,
+		    struct ohci_soft_td **);
 
 usbd_status	ohci_open(struct usbd_pipe *);
 void		ohci_poll(struct usbd_bus *);
@@ -488,14 +488,15 @@ ohci_free_std(struct ohci_softc *sc, struct ohci_soft_td *std)
 }
 
 usbd_status
-ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
-    u_int alen, int rd, struct usbd_xfer *xfer,
+ohci_alloc_std_chain(struct ohci_softc *sc, u_int alen, struct usbd_xfer *xfer,
     struct ohci_soft_td *sp, struct ohci_soft_td **ep)
 {
 	struct ohci_soft_td *next, *cur, *end;
 	ohci_physaddr_t dataphys, dataphysend;
 	u_int32_t tdflags;
 	u_int len, curlen;
+	int mps;
+	int rd = usbd_xfer_isread(xfer);
 	struct usb_dma *dma = &xfer->dmabuf;
 	u_int16_t flags = xfer->flags;
 
@@ -511,6 +512,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 	    (rd ? OHCI_TD_IN : OHCI_TD_OUT) |
 	    (flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0) |
 	    OHCI_TD_NOCC | OHCI_TD_TOGGLE_CARRY | OHCI_TD_NOINTR);
+	mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 
 	while (len > 0) {
 		next = ohci_alloc_std(sc);
@@ -527,7 +529,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 			curlen = 2 * OHCI_PAGE_SIZE -
 				 (dataphys & (OHCI_PAGE_SIZE-1));
 			/* the length must be a multiple of the max size */
-			curlen -= curlen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize);
+			curlen -= curlen % mps;
 #ifdef DIAGNOSTIC
 			if (curlen == 0)
 				panic("ohci_alloc_std: curlen == 0");
@@ -555,7 +557,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, struct ohci_softc *sc,
 		cur = next;
 	}
 	if (!rd && ((flags & USBD_FORCE_SHORT_XFER) || alen == 0) &&
-	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
+	    alen % mps == 0) {
 		/* Force a 0 length transfer at the end. */
 
 		next = ohci_alloc_std(sc);
@@ -1591,12 +1593,10 @@ ohci_device_request(struct usbd_xfer *xfer)
 	usb_device_request_t *req = &xfer->request;
 	struct ohci_soft_td *setup, *stat, *next, *tail;
 	struct ohci_soft_ed *sed;
-	int isread;
 	u_int len;
 	usbd_status err;
 	int s;
 
-	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
 	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
@@ -1627,8 +1627,7 @@ ohci_device_request(struct usbd_xfer *xfer)
 	if (len != 0) {
 		struct ohci_soft_td *std = stat;
 
-		err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
-			  std, &stat);
+		err = ohci_alloc_std_chain(sc, len, xfer, std, &stat);
 		stat = stat->nexttd; /* point at free TD */
 		if (err)
 			goto bad3;
@@ -1651,7 +1650,7 @@ ohci_device_request(struct usbd_xfer *xfer)
 	xfer->hcpriv = setup;
 
 	stat->td.td_flags = htole32(
-		(isread ? OHCI_TD_OUT : OHCI_TD_IN) |
+		(usbd_xfer_isread(xfer) ? OHCI_TD_OUT : OHCI_TD_IN) |
 		OHCI_TD_NOCC | OHCI_TD_TOGGLE_1 | OHCI_TD_SET_DI(1));
 	stat->td.td_cbp = 0;
 	stat->nexttd = tail;
@@ -2752,7 +2751,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	struct ohci_soft_td *data, *tail, *tdp;
 	struct ohci_soft_ed *sed;
 	u_int len;
-	int s, isread, endpt;
+	int s, endpt;
 	usbd_status err;
 
 	if (sc->sc_bus.dying)
@@ -2768,14 +2767,12 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 
 	len = xfer->length;
 	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
-	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sed = opipe->sed;
 
-	DPRINTFN(4,("ohci_device_bulk_start: xfer=%p len=%u isread=%d "
-		    "flags=%d endpt=%d\n", xfer, len, isread, xfer->flags,
-		    endpt));
+	DPRINTFN(4,("ohci_device_bulk_start: xfer=%p len=%u "
+		    "flags=%d endpt=%d\n", xfer, len, xfer->flags, endpt));
 
-	opipe->u.bulk.isread = isread;
+	opipe->u.bulk.isread = usbd_xfer_isread(xfer);
 	opipe->u.bulk.length = len;
 
 	/* Update device address */
@@ -2785,8 +2782,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 
 	/* Allocate a chain of new TDs (including a new tail). */
 	data = opipe->tail.td;
-	err = ohci_alloc_std_chain(opipe, sc, len, isread, xfer,
-		  data, &tail);
+	err = ohci_alloc_std_chain(sc, len, xfer, data, &tail);
 	/* We want interrupt at the end of the transfer. */
 	tail->td.td_flags &= htole32(~OHCI_TD_INTR_MASK);
 	tail->td.td_flags |= htole32(OHCI_TD_SET_DI(1));
@@ -2890,7 +2886,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
 	struct ohci_soft_ed *sed = opipe->sed;
 	struct ohci_soft_td *data, *tail;
-	int s, len, isread, endpt;
+	int s, len, endpt;
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
@@ -2906,7 +2902,6 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 
 	len = xfer->length;
 	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
-	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	data = opipe->tail.td;
 	tail = ohci_alloc_std(sc);
@@ -2915,7 +2910,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = htole32(
-		isread ? OHCI_TD_IN : OHCI_TD_OUT |
+		usbd_xfer_isread(xfer) ? OHCI_TD_IN : OHCI_TD_OUT |
 		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
