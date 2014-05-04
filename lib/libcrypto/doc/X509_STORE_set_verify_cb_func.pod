@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-X509_STORE_set_verify_cb_func, X509_STORE_set_verify_cb - set verification callback
+X509_STORE_set_verify_cb_func, X509_STORE_set_verify_cb - set verification
+callback
 
 =head1 SYNOPSIS
 

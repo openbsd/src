@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_encrypt - create a CMS envelopedData structure
+CMS_encrypt - create a CMS envelopedData structure
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_DigestVerifyInit, EVP_DigestVerifyUpdate, EVP_DigestVerifyFinal - EVP signature verification functions
+EVP_DigestVerifyInit, EVP_DigestVerifyUpdate, EVP_DigestVerifyFinal - EVP
+signature verification functions
 
 =head1 SYNOPSIS
 

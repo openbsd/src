@@ -28,25 +28,27 @@ with '.'.
 
 =head1 NOTES
 
-ASN1_STRING_print() is a legacy function which should be avoided in new applications.
+ASN1_STRING_print() is a legacy function which should be avoided in new
+applications.
 
-Although there are a large number of options frequently B<ASN1_STRFLGS_RFC2253> is
-suitable, or on UTF8 terminals B<ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB>.
+Although there are a large number of options frequently B<ASN1_STRFLGS_RFC2253>
+is suitable, or on UTF8 terminals B<ASN1_STRFLGS_RFC2253 &
+~ASN1_STRFLGS_ESC_MSB>.
 
 The complete set of supported options for B<flags> is listed below.
 
-Various characters can be escaped. If B<ASN1_STRFLGS_ESC_2253> is set the characters
-determined by RFC2253 are escaped. If B<ASN1_STRFLGS_ESC_CTRL> is set control
-characters are escaped. If B<ASN1_STRFLGS_ESC_MSB> is set characters with the
-MSB set are escaped: this option should B<not> be used if the terminal correctly
-interprets UTF8 sequences.
+Various characters can be escaped. If B<ASN1_STRFLGS_ESC_2253> is set the
+characters determined by RFC2253 are escaped. If B<ASN1_STRFLGS_ESC_CTRL> is
+set control characters are escaped. If B<ASN1_STRFLGS_ESC_MSB> is set
+characters with the MSB set are escaped: this option should B<not> be used if
+the terminal correctly interprets UTF8 sequences.
 
 Escaping takes several forms.
 
-If the character being escaped is a 16 bit character then the form "\UXXXX" is used
-using exactly four characters for the hex representation. If it is 32 bits then
-"\WXXXXXXXX" is used using eight characters of its hex representation. These forms
-will only be used if UTF8 conversion is not set (see below).
+If the character being escaped is a 16 bit character then the form "\UXXXX" is
+used using exactly four characters for the hex representation. If it is 32 bits
+then "\WXXXXXXXX" is used using eight characters of its hex representation.
+These forms will only be used if UTF8 conversion is not set (see below).
 
 Printable characters are normally escaped using the backslash '\' character. If
 B<ASN1_STRFLGS_ESC_QUOTE> is set then the whole string is instead surrounded by
@@ -58,9 +60,10 @@ If B<ASN1_STRFLGS_UTF8_CONVERT> is set then characters are converted to UTF8
 format first. If the terminal supports the display of UTF8 sequences then this
 option will correctly display multi byte characters.
 
-If B<ASN1_STRFLGS_IGNORE_TYPE> is set then the string type is not interpreted at
-all: everything is assumed to be one byte per character. This is primarily for
-debugging purposes and can result in confusing output in multi character strings.
+If B<ASN1_STRFLGS_IGNORE_TYPE> is set then the string type is not interpreted
+at all: everything is assumed to be one byte per character. This is primarily
+for debugging purposes and can result in confusing output in multi character
+strings.
 
 If B<ASN1_STRFLGS_SHOW_TYPE> is set then the string type itself is printed out
 before its value (for example "BMPSTRING"), this actually uses ASN1_tag2str().

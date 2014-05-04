@@ -239,11 +239,13 @@ RC5 can be set.
 EVP_EncryptInit_ex(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
 return 1 for success and 0 for failure.
 
-EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
-EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
+EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for
+failure.  EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for
+success.
 
-EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
-EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
+EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for
+failure.  EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for
+success.
 
 EVP_CIPHER_CTX_cleanup() returns 1 for success and 0 for failure.
 
@@ -285,11 +287,13 @@ Null cipher: does nothing.
 
 DES in CBC, ECB, CFB and OFB modes respectively.
 
-=item EVP_des_ede_cbc(void), EVP_des_ede(), EVP_des_ede_ofb(void),  EVP_des_ede_cfb(void)
+=item EVP_des_ede_cbc(void), EVP_des_ede(), EVP_des_ede_ofb(void),
+EVP_des_ede_cfb(void)
 
 Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
 
-=item EVP_des_ede3_cbc(void), EVP_des_ede3(), EVP_des_ede3_ofb(void),  EVP_des_ede3_cfb(void)
+=item EVP_des_ede3_cbc(void), EVP_des_ede3(), EVP_des_ede3_ofb(void),
+EVP_des_ede3_cfb(void)
 
 Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
 
@@ -299,44 +303,49 @@ DESX algorithm in CBC mode.
 
 =item EVP_rc4(void)
 
-RC4 stream cipher. This is a variable key length cipher with default key length 128 bits.
+RC4 stream cipher. This is a variable key length cipher with default key length
+128 bits.
 
 =item EVP_rc4_40(void)
 
-RC4 stream cipher with 40 bit key length. This is obsolete and new code should use EVP_rc4()
-and the EVP_CIPHER_CTX_set_key_length() function.
+RC4 stream cipher with 40 bit key length. This is obsolete and new code should
+use EVP_rc4() and the EVP_CIPHER_CTX_set_key_length() function.
 
-=item EVP_idea_cbc() EVP_idea_ecb(void), EVP_idea_cfb(void), EVP_idea_ofb(void), EVP_idea_cbc(void)
+=item EVP_idea_cbc() EVP_idea_ecb(void), EVP_idea_cfb(void),
+EVP_idea_ofb(void), EVP_idea_cbc(void)
 
 IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 
 =item EVP_rc2_cbc(void), EVP_rc2_ecb(void), EVP_rc2_cfb(void), EVP_rc2_ofb(void)
 
-RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher with an additional parameter called "effective key bits" or "effective key length".
-By default both are set to 128 bits.
+RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a
+variable key length cipher with an additional parameter called "effective key
+bits" or "effective key length".  By default both are set to 128 bits.
 
 =item EVP_rc2_40_cbc(void), EVP_rc2_64_cbc(void)
 
-RC2 algorithm in CBC mode with a default key length and effective key length of 40 and 64 bits.
-These are obsolete and new code should use EVP_rc2_cbc(), EVP_CIPHER_CTX_set_key_length() and
-EVP_CIPHER_CTX_ctrl() to set the key length and effective key length.
+RC2 algorithm in CBC mode with a default key length and effective key length of
+40 and 64 bits.  These are obsolete and new code should use EVP_rc2_cbc(),
+EVP_CIPHER_CTX_set_key_length() and EVP_CIPHER_CTX_ctrl() to set the key length
+and effective key length.
 
 =item EVP_bf_cbc(void), EVP_bf_ecb(void), EVP_bf_cfb(void), EVP_bf_ofb(void);
 
-Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
+Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This
+is a variable key length cipher.
 
-=item EVP_cast5_cbc(void), EVP_cast5_ecb(void), EVP_cast5_cfb(void), EVP_cast5_ofb(void)
+=item EVP_cast5_cbc(void), EVP_cast5_ecb(void), EVP_cast5_cfb(void),
+EVP_cast5_ofb(void)
 
-CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
+CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is
+a variable key length cipher.
 
-=item EVP_rc5_32_12_16_cbc(void), EVP_rc5_32_12_16_ecb(void), EVP_rc5_32_12_16_cfb(void), EVP_rc5_32_12_16_ofb(void)
+=item EVP_rc5_32_12_16_cbc(void), EVP_rc5_32_12_16_ecb(void),
+EVP_rc5_32_12_16_cfb(void), EVP_rc5_32_12_16_ofb(void)
 
-RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key length
-cipher with an additional "number of rounds" parameter. By default the key length is set to 128
-bits and 12 rounds.
+RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a
+variable key length cipher with an additional "number of rounds" parameter. By
+default the key length is set to 128 bits and 12 rounds.
 
 =back
 

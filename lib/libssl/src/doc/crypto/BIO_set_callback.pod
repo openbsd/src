@@ -81,9 +81,8 @@ after.
 
 =item B<BIO_gets(b, out, outl)>
 
-callback(b, BIO_CB_GETS, out, outl, 0L, 1L) is called before
-the operation and callback(b, BIO_CB_GETS|BIO_CB_RETURN, out, outl, 0L, retvalue)
-after.
+callback(b, BIO_CB_GETS, out, outl, 0L, 1L) is called before the operation and
+callback(b, BIO_CB_GETS|BIO_CB_RETURN, out, outl, 0L, retvalue) after.
 
 =item B<BIO_puts(b, in)>
 

@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-X509_STORE_CTX_get_ex_new_index, X509_STORE_CTX_set_ex_data, X509_STORE_CTX_get_ex_data - add application specific data to X509_STORE_CTX structures
+X509_STORE_CTX_get_ex_new_index, X509_STORE_CTX_set_ex_data,
+X509_STORE_CTX_get_ex_data - add application specific data to X509_STORE_CTX
+structures
 
 =head1 SYNOPSIS
 

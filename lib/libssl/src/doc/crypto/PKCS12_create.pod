@@ -38,13 +38,13 @@ The default MAC iteration count is 1 in order to retain compatibility with
 old software which did not interpret MAC iteration counts. If such compatibility
 is not required then B<mac_iter> should be set to PKCS12_DEFAULT_ITER.
 
-B<keytype> adds a flag to the store private key. This is a non standard extension
-that is only currently interpreted by MSIE. If set to zero the flag is omitted,
-if set to B<KEY_SIG> the key can be used for signing only, if set to B<KEY_EX>
-it can be used for signing and encryption. This option was useful for old
-export grade software which could use signing only keys of arbitrary size but
-had restrictions on the permissible sizes of keys which could be used for
-encryption.
+B<keytype> adds a flag to the store private key. This is a non standard
+extension that is only currently interpreted by MSIE. If set to zero the flag
+is omitted, if set to B<KEY_SIG> the key can be used for signing only, if set
+to B<KEY_EX> it can be used for signing and encryption. This option was useful
+for old export grade software which could use signing only keys of arbitrary
+size but had restrictions on the permissible sizes of keys which could be used
+for encryption.
 
 =head1 NEW FUNCTIONALITY IN OPENSSL 0.9.8
 

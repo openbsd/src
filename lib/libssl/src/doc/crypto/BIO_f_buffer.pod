@@ -29,11 +29,11 @@ Calling BIO_reset() on a buffering BIO clears any buffered data.
 
 BIO_get_buffer_num_lines() returns the number of lines currently buffered.
 
-BIO_set_read_buffer_size(), BIO_set_write_buffer_size() and BIO_set_buffer_size()
-set the read, write or both read and write buffer sizes to B<size>. The initial
-buffer size is DEFAULT_BUFFER_SIZE, currently 4096. Any attempt to reduce the
-buffer size below DEFAULT_BUFFER_SIZE is ignored. Any buffered data is cleared
-when the buffer is resized.
+BIO_set_read_buffer_size(), BIO_set_write_buffer_size() and
+BIO_set_buffer_size() set the read, write or both read and write buffer sizes
+to B<size>. The initial buffer size is DEFAULT_BUFFER_SIZE, currently 4096. Any
+attempt to reduce the buffer size below DEFAULT_BUFFER_SIZE is ignored. Any
+buffered data is cleared when the buffer is resized.
 
 BIO_set_buffer_read_data() clears the read buffer and fills it with B<num>
 bytes of B<buf>. If B<num> is larger than the current buffer size the buffer
@@ -58,8 +58,9 @@ BIO_f_buffer() returns the buffering BIO method.
 
 BIO_get_buffer_num_lines() returns the number of lines buffered (may be 0).
 
-BIO_set_read_buffer_size(), BIO_set_write_buffer_size() and BIO_set_buffer_size()
-return 1 if the buffer was successfully resized or 0 for failure.
+BIO_set_read_buffer_size(), BIO_set_write_buffer_size() and
+BIO_set_buffer_size() return 1 if the buffer was successfully resized or 0 for
+failure.
 
 BIO_set_buffer_read_data() returns 1 if the data was set correctly or 0 if
 there was an error.

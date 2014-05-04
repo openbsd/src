@@ -47,7 +47,8 @@ B<BIO_TYPE_SOURCE_SINK>) then the next matching BIO of the given general type is
 searched for. BIO_find_type() returns the next matching BIO or NULL if none is
 found.
 
-Note: not all the B<BIO_TYPE_*> types above have corresponding BIO implementations.
+Note: not all the B<BIO_TYPE_*> types above have corresponding BIO
+implementations.
 
 BIO_next() returns the next BIO in a chain. It can be used to traverse all BIOs
 in a chain or used in conjunction with BIO_find_type() to find all BIOs of a
