@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.300 2014/04/30 15:11:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.301 2014/05/04 21:07:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,7 @@ void add_static_routes(int, struct option_data *);
 void add_classless_static_routes(int, struct option_data *);
 
 int compare_lease(struct client_lease *, struct client_lease *);
+void set_lease_times(struct client_lease *);
 
 void state_reboot(void);
 void state_init(void);
@@ -784,62 +785,15 @@ bind_lease(void)
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
 	struct client_lease *lease;
-	time_t cur_time;
 
 	lease = apply_defaults(client->new);
 	options = lease->options;
 
-	/* Figure out the lease time. */
-	if (options[DHO_DHCP_LEASE_TIME].data)
-		client->new->expiry =
-		    getULong(options[DHO_DHCP_LEASE_TIME].data);
-	else
-		client->new->expiry = DEFAULT_LEASE_TIME;
-
-	/*
-	 * A number that looks negative here is really just very large,
-	 * because the lease expiry offset is unsigned.
-	 */
-	if (client->new->expiry < 0)
-		client->new->expiry = TIME_MAX;
-	/* XXX should be fixed by resetting the client state */
-	if (client->new->expiry < 60)
-		client->new->expiry = 60;
-
-	/*
-	 * Take the server-provided renewal time if there is one;
-	 * otherwise figure it out according to the spec.
-	 */
-	if (options[DHO_DHCP_RENEWAL_TIME].len)
-		client->new->renewal =
-		    getULong(options[DHO_DHCP_RENEWAL_TIME].data);
-	else
-		client->new->renewal = client->new->expiry / 2;
-
-	/* Same deal with the rebind time. */
-	if (options[DHO_DHCP_REBINDING_TIME].len)
-		client->new->rebind =
-		    getULong(options[DHO_DHCP_REBINDING_TIME].data);
-	else
-		client->new->rebind = client->new->renewal +
-		    client->new->renewal / 2 + client->new->renewal / 4;
-
-	time(&cur_time);
-
-	client->new->expiry += cur_time;
-	/* Lease lengths can never be negative. */
-	if (client->new->expiry < cur_time)
-		client->new->expiry = TIME_MAX;
-	client->new->renewal += cur_time;
-	if (client->new->renewal < cur_time)
-		client->new->renewal = TIME_MAX;
-	client->new->rebind += cur_time;
-	if (client->new->rebind < cur_time)
-		client->new->rebind = TIME_MAX;
-
-	lease->expiry = client->new->expiry;
-	lease->renewal = client->new->renewal;
-	lease->rebind = client->new->rebind;
+	set_lease_times(lease);
+	
+	client->new->expiry = lease->expiry;
+	client->new->renewal = lease->renewal;
+	client->new->rebind = lease->rebind;
 
 	/*
 	 * A duplicate lease once we are responsible & S_RENEWING means we don't
@@ -2544,4 +2498,54 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 	}
 
 	return (0);
+}
+
+void
+set_lease_times(struct client_lease *lease)
+{
+	time_t cur_time;
+
+	/*
+	 * Take the server-provided times if available.  Otherwise
+	 * figure them out according to the spec.
+	 */
+	if (lease->options[DHO_DHCP_LEASE_TIME].data)
+		lease->expiry =
+		    getULong(lease->options[DHO_DHCP_LEASE_TIME].data);
+	else
+		lease->expiry = DEFAULT_LEASE_TIME;
+	if (lease->options[DHO_DHCP_RENEWAL_TIME].len)
+		lease->renewal =
+		    getULong(lease->options[DHO_DHCP_RENEWAL_TIME].data);
+	else
+		lease->renewal = lease->expiry / 2;
+	if (lease->options[DHO_DHCP_REBINDING_TIME].len)
+		lease->rebind =
+		    getULong(lease->options[DHO_DHCP_REBINDING_TIME].data);
+	else
+		lease->rebind = lease->renewal + lease->renewal / 2 +
+		    lease->renewal / 4;
+
+	/*
+	 * A number that looks negative here is really just very large,
+	 * because the lease expiry offset is unsigned.
+	 */
+	if (lease->expiry < 0)
+		lease->expiry = TIME_MAX;
+	/* XXX should be fixed by resetting the client state */
+	if (lease->expiry < 60)
+		lease->expiry = 60;
+
+	time(&cur_time);
+
+	/* Lease lengths can never be negative. */
+	lease->expiry += cur_time;
+	if (lease->expiry < cur_time)
+		lease->expiry = TIME_MAX;
+	lease->renewal += cur_time;
+	if (lease->renewal < cur_time)
+		lease->renewal = TIME_MAX;
+	lease->rebind += cur_time;
+	if (lease->rebind < cur_time)
+		lease->rebind = TIME_MAX;
 }
