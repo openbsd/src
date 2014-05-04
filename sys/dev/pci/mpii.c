@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.93 2014/04/25 09:43:04 jsg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.94 2014/05/04 17:34:17 sf Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1704,7 +1704,7 @@ mpii_event_sas(void *xsc, void *x)
 	struct mpii_evt_phy_entry	*pe;
 	struct mpii_device		*dev;
 	int				i;
-	u_int64_t			handle;
+	u_int16_t			handle;
 
 	mtx_enter(&sc->sc_evt_sas_mtx);
 	rcb = SIMPLEQ_FIRST(&sc->sc_evt_sas_queue);
