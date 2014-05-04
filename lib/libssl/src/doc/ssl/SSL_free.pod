@@ -37,6 +37,8 @@ from the session cache as required by RFC2246.
 
 SSL_free() does not provide diagnostic information.
 
+=head1 SEE ALSO
+
 L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
 L<ssl(3)|ssl(3)>
