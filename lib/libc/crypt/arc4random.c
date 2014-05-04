@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.26 2013/10/21 20:33:23 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.27 2014/05/04 20:40:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -212,25 +212,3 @@ arc4random_uniform(u_int32_t upper_bound)
 
 	return r % upper_bound;
 }
-
-#if 0
-/*-------- Test code for i386 --------*/
-#include <stdio.h>
-#include <machine/pctr.h>
-int
-main(int argc, char **argv)
-{
-	const int iter = 1000000;
-	int     i;
-	pctrval v;
-
-	v = rdtsc();
-	for (i = 0; i < iter; i++)
-		arc4random();
-	v = rdtsc() - v;
-	v /= iter;
-
-	printf("%qd cycles\n", v);
-	exit(0);
-}
-#endif
