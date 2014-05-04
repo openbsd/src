@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.164 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.165 2014/05/04 03:53:37 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/buf.h>
 #include <sys/acct.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/wait.h>
 #include <sys/ktrace.h>
@@ -1446,21 +1447,20 @@ coredump(struct proc *p)
 	struct nameidata nd;
 	struct vattr vattr;
 	struct coredump_iostate	io;
-	int error, len;
-	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
-	char *dir = "";
+	int error, len, incrash = 0;
+	char name[MAXPATHLEN];
+	const char *dir = "/var/crash";
 
 	pr->ps_flags |= PS_COREDUMP;
 
 	/*
-	 * Don't dump if not root and the process has used set user or
-	 * group privileges, unless the nosuidcoredump sysctl is set to 2,
-	 * in which case dumps are put into /var/crash/.
+	 * If the process has inconsistant uids, nosuidcoredump
+	 * determines coredump placement policy.
 	 */
 	if (((pr->ps_flags & PS_SUGID) && (error = suser(p, 0))) ||
 	   ((pr->ps_flags & PS_SUGID) && nosuidcoredump)) {
-		if (nosuidcoredump == 2)
-			dir = "/var/crash/";
+		if (nosuidcoredump == 3 || nosuidcoredump == 2)
+			incrash = 1;
 		else
 			return (EPERM);
 	}
@@ -1470,16 +1470,42 @@ coredump(struct proc *p)
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFBIG);
 
-	len = snprintf(name, sizeof(name), "%s%s.core", dir, p->p_comm);
+	if (nosuidcoredump == 3) {
+		/*
+		 * If the program directory does not exist, dumps of
+		 * that core will silently fail.
+		 */
+		len = snprintf(name, sizeof(name), "%s/%s/%u.core",
+		    dir, p->p_comm, p->p_pid);
+	} else if (nosuidcoredump == 2)
+		len = snprintf(name, sizeof(name), "%s/%s.core",
+		    dir, p->p_comm);
+	else
+		len = snprintf(name, sizeof(name), "%s.core", p->p_comm);
 	if (len >= sizeof(name))
 		return (EACCES);
 
 	/*
-	 * ... but actually write it as UID
+	 * Control the UID used to write out.  The normal case uses
+	 * the real UID.  If the sugid case is going to write into the
+	 * controlled directory, we do so as root.
 	 */
-	cred = crdup(cred);
-	cred->cr_uid = cred->cr_ruid;
-	cred->cr_gid = cred->cr_rgid;
+	if (incrash == 0) {
+		cred = crdup(cred);
+		cred->cr_uid = cred->cr_ruid;
+		cred->cr_gid = cred->cr_rgid;
+	} else {
+		if (p->p_fd->fd_rdir) {
+			vrele(p->p_fd->fd_rdir);
+			p->p_fd->fd_rdir = NULL;
+		}
+		p->p_ucred = crdup(p->p_ucred);
+		crfree(cred);
+		cred = p->p_ucred;
+		crhold(cred);
+		cred->cr_uid = 0;
+		cred->cr_gid = 0;
+	}
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 

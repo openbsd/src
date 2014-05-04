@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.177 2014/04/27 16:56:51 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.178 2014/05/04 03:53:37 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: April 27 2014 $
+.Dd $Mdocdate: May 4 2014 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -521,6 +521,18 @@ the maximum number of shared memory segments:
 # sysctl kern.shminfo.shmmax=33554432
 # sysctl kern.shminfo.shmseg=32
 .Ed
+.Pp
+To place core dumps from
+.Xr issetugid 2
+programs (in this example
+.Xr bgpd 8 )
+into a safe place for debugging purposes
+.Bd -literal -offset indent
+# mkdir /var/crash/bgpd
+# chmod 700 /var/crash/bgpd
+# sysctl kern.nosuidcoredump=3
+.Ed
+.Pp
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr options 4 ,
