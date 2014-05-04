@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.32 2013/11/26 20:33:18 deraadt Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.33 2014/05/04 20:09:15 sf Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -386,7 +386,7 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_int pci_id, u_int rev )
                 buf = 0;
 
 	if ( bootverbose ) {
-		printf("%s: buffer size %d, addr 0x%x\n",
+		printf("%s: buffer size %d, addr 0x%lx\n",
 			bktr_name(bktr), BROOKTREE_ALLOC,
 			bktr->dm_prog->dm_segs->ds_addr);
 	}

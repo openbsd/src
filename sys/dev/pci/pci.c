@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.101 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.102 2014/05/04 20:09:15 sf Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -846,7 +846,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			}
 			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: mem address conflict 0x%x/0x%x\n",
+				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
 				    bus, dev, func, base, size);
 				pci_conf_write(pc, tag, reg, 0);
 				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
@@ -856,7 +856,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		case PCI_MAPREG_TYPE_IO:
 			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: io address conflict 0x%x/0x%x\n",
+				printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
 				    bus, dev, func, base, size);
 				pci_conf_write(pc, tag, reg, 0);
 			}
@@ -883,7 +883,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		size = 0;
 	if (pa->pa_ioex && base > 0 && size > 0) {
 		if (extent_alloc_region(pa->pa_ioex, base, size, EX_NOWAIT)) {
-			printf("%d:%d:%d: bridge io address conflict 0x%x/0x%x\n",
+			printf("%d:%d:%d: bridge io address conflict 0x%lx/0x%lx\n",
 			    bus, dev, func, base, size);
 			blr &= 0xffff0000;
 			blr |= 0x000000f0;
@@ -901,7 +901,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		size = 0;
 	if (pa->pa_memex && base > 0 && size > 0) {
 		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT)) {
-			printf("%d:%d:%d: bridge mem address conflict 0x%x/0x%x\n",
+			printf("%d:%d:%d: bridge mem address conflict 0x%lx/0x%lx\n",
 			    bus, dev, func, base, size);
 			pci_conf_write(pc, tag, PPB_REG_MEM, 0x0000fff0);
 		}
@@ -917,13 +917,13 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		size = 0;
 	if (pa->pa_pmemex && base > 0 && size > 0) {
 		if (extent_alloc_region(pa->pa_pmemex, base, size, EX_NOWAIT)) {
-			printf("%d:%d:%d: bridge mem address conflict 0x%x/0x%x\n",
+			printf("%d:%d:%d: bridge mem address conflict 0x%lx/0x%lx\n",
 			    bus, dev, func, base, size);
 			pci_conf_write(pc, tag, PPB_REG_PREFMEM, 0x0000fff0);
 		}
 	} else if (pa->pa_memex && base > 0 && size > 0) {
 		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT)) {
-			printf("%d:%d:%d: bridge mem address conflict 0x%x/0x%x\n",
+			printf("%d:%d:%d: bridge mem address conflict 0x%lx/0x%lx\n",
 			    bus, dev, func, base, size);
 			pci_conf_write(pc, tag, PPB_REG_PREFMEM, 0x0000fff0);
 		}

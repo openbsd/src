@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.76 2013/12/06 21:03:04 deraadt Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.77 2014/05/04 20:09:15 sf Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -193,7 +193,7 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
 
-	printf(" port 0x%x/%d", psc->sc_pcioh.addr, psc->sc_pcioh.size);
+	printf(" port 0x%lx/%ld", psc->sc_pcioh.addr, psc->sc_pcioh.size);
 
 	/* establish interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, cmalo_intr, sc,

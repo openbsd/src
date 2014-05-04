@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.24 2013/10/02 21:06:17 sf Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.25 2014/05/04 20:09:15 sf Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ pci_addr_fixup(struct pcibios_softc *sc, pci_chipset_tag_t pc, int maxbus)
 	sc->mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
 	sc->port_alloc_start = PCIADDR_ISAPORT_RESERVE;
 	PCIBIOS_PRINTV((" Physical memory end: 0x%08lx\n PCI memory mapped I/O "
-	    "space start: 0x%08x\n", avail_end, sc->mem_alloc_start));
+	    "space start: 0x%08lx\n", avail_end, sc->mem_alloc_start));
 
 	/* 
 	 * 4. do fixup 
@@ -298,10 +298,10 @@ pciaddr_do_resource_allocate(struct pcibios_softc *sc, pci_chipset_tag_t pc,
 
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		PCIBIOS_PRINTV(("fixup failed. (new address=%#x)\n", *addr));
+		PCIBIOS_PRINTV(("fixup failed. (new address=%#lx)\n", *addr));
 		return (1);
 	}
-	PCIBIOS_PRINTV(("new address 0x%08x\n", *addr));
+	PCIBIOS_PRINTV(("new address 0x%08lx\n", *addr));
 
 	return (0);
 }
@@ -354,7 +354,7 @@ pciaddr_do_resource_reserve_disabled(struct pcibios_softc *sc,
 	    (val & PCI_COMMAND_IO_ENABLE) == PCI_COMMAND_IO_ENABLE)
 		return (0);
 
-	PCIBIOS_PRINTV(("disabled %s space at addr 0x%lx size 0x%x\n",
+	PCIBIOS_PRINTV(("disabled %s space at addr 0x%lx size 0x%lx\n",
 	    type == PCI_MAPREG_TYPE_MEM ? "mem" : "io", *addr, size));
 
 	error = extent_alloc_region(ex, *addr, size, EX_NOWAIT | EX_MALLOCOK);

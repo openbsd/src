@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.151 2014/02/20 11:13:44 kettenis Exp $ */
+/* $OpenBSD: mfi.c,v 1.152 2014/05/04 20:09:15 sf Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -733,7 +733,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	}
 	/* XXX hack, fix this */
 	if (MFIMEM_DVA(sc->sc_frames) & 0x3f) {
-		printf("%s: improper frame alignment (%#x) FIXME\n",
+		printf("%s: improper frame alignment (%#lx) FIXME\n",
 		    DEVNAME(sc), MFIMEM_DVA(sc->sc_frames));
 		goto noframe;
 	}

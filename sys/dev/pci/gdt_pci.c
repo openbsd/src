@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.22 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.23 2014/05/04 20:09:15 sf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -445,7 +445,7 @@ gdt_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC, GDT_MPR_MAGIC);
 		if (bus_space_read_4(dpmemt, dpmemh, GDT_MPR_IC) !=
 		    GDT_MPR_MAGIC) {
-			printf("cannot access DPMEM at 0x%x (shadowed?)\n",
+			printf("cannot access DPMEM at 0x%lx (shadowed?)\n",
 			    dpmembase);
 			goto bail_out;
 		}

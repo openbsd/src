@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.156 2013/12/22 11:05:58 sf Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.157 2014/05/04 20:09:15 sf Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -2470,12 +2470,12 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp)
 
 #ifdef DIAGNOSTIC
 	if (rp->rpr_msgin.dma_paddr & 3 || rp->rpr_msgin.dma_size & 3) {
-		panic("%s: rsapriv: invalid msgin %08x(0x%x)",
+		panic("%s: rsapriv: invalid msgin %08x(0x%lx)",
 		    sc->sc_dv.dv_xname, rp->rpr_msgin.dma_paddr,
 		    rp->rpr_msgin.dma_size);
 	}
 	if (rp->rpr_msgout.dma_paddr & 3 || rp->rpr_msgout.dma_size & 3) {
-		panic("%s: rsapriv: invalid msgout %08x(0x%x)",
+		panic("%s: rsapriv: invalid msgout %08x(0x%lx)",
 		    sc->sc_dv.dv_xname, rp->rpr_msgout.dma_paddr,
 		    rp->rpr_msgout.dma_size);
 	}
