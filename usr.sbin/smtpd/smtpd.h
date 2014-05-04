@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.460 2014/05/01 15:50:20 reyk Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.461 2014/05/04 16:38:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1078,7 +1078,7 @@ pid_t	 ca(void);
 int	 ca_X509_verify(void *, void *, const char *, const char *, const char **);
 void	 ca_imsg(struct mproc *, struct imsg *);
 void	 ca_init(void);
-int	 ca_engine_init(void);
+void	 ca_engine_init(void);
 
 /* compress_backend.c */
 struct compress_backend *compress_backend_lookup(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.177 2014/04/22 08:04:23 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.178 2014/05/04 16:38:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1118,7 +1118,7 @@ int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 
 /* ca.c */
 pid_t	 ca(struct privsep *, struct privsep_proc *);
-int	 ca_engine_init(struct relayd *);
+void	 ca_engine_init(struct relayd *);
 
 /* relayd.c */
 struct host	*host_find(struct relayd *, objid_t);
