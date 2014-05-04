@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.69 2013/07/03 15:10:57 bluhm Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.70 2014/05/04 18:18:36 sf Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1578,9 +1578,9 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh)) {
-		printf("%s: bus_space_map(%x %x %x 0 %p) failed\n",
+		printf("%s: bus_space_map(%lx %x %x 0 %p) failed\n",
 		    DEVNAME(sc),
-		    sc->sc_iot, ia->iaa_if_iobase,
+		    (unsigned long)sc->sc_iot, ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
 		return (-1);
 	}
