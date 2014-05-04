@@ -1,4 +1,4 @@
-.\"	$OpenBSD: core.5,v 1.17 2014/05/04 03:53:38 deraadt Exp $
+.\"	$OpenBSD: core.5,v 1.18 2014/05/04 07:01:10 jmc Exp $
 .\"	$NetBSD: core.5,v 1.4 1994/11/30 19:31:11 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -164,13 +164,13 @@ A
 file format appeared in
 .At v3 .
 .Sh CAVEATS
-Programs which are started with (either) the set-user-ID or
+Programs which are started with either the set-user-ID or
 set-group-ID bits set,
-or which change their uid or gid after starting, will normally not
+or which change their UID or GID after starting, will normally not
 dump core.
 This is to prevent sensitive information from inadvertently ending
 up on disk.
-This behaviour can be changed (for debugging purposes) by changing
+This behaviour can be changed (for debugging purposes) by changing the
 .Li kern.nosuidcoredump
 .Xr sysctl 3
 variable to the right settings.
