@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.768 2014/04/25 19:34:24 halex Exp $
+#	$OpenBSD: install.sub,v 1.769 2014/05/04 10:47:25 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -944,7 +944,8 @@ v6_config() {
 	ask_until "$_prompt" "${_addr:-none}"
 
 	case $resp in
-	none)	return
+	none)	echo "-inet6" >>$_hn
+		return
 		;;
 	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol."; return; }
 		ifconfig $_ifs up
