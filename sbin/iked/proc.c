@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.14 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.15 2014/05/04 10:35:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -372,31 +372,19 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	else
 		root = pw->pw_dir;
 
-#ifndef DEBUG
 	if (chroot(root) == -1)
 		fatal("proc_run: chroot");
 	if (chdir("/") == -1)
 		fatal("proc_run: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG MODE
-	if (p->p_chroot != NULL) {
-		if (chroot(root) == -1)
-			fatal("proc_run: chroot");
-		if (chdir("/") == -1)
-			fatal("proc_run: chdir(\"/\")");
-	}
-#endif
 
 	privsep_process = p->p_id;
 
 	setproctitle("%s", p->p_title);
 
-#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("proc_run: cannot drop privileges");
-#endif
 
 	/* Fork child handlers */
 	for (n = 1; n < ps->ps_instances[p->p_id]; n++) {
