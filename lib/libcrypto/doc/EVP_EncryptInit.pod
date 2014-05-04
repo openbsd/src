@@ -128,7 +128,7 @@ calls to EVP_EncryptUpdate() should be made.
 
 If padding is disabled then EVP_EncryptFinal_ex() will not encrypt any more
 data and it will return an error if any data remains in a partial block:
-that is if the total data length is not a multiple of the block size. 
+that is if the total data length is not a multiple of the block size.
 
 EVP_DecryptInit_ex(), EVP_DecryptUpdate() and EVP_DecryptFinal_ex() are the
 corresponding decryption operations. EVP_DecryptFinal() will return an
@@ -157,7 +157,7 @@ initialized and they always use the default cipher implementation.
 
 EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() behave in a
 similar way to EVP_EncryptFinal_ex(), EVP_DecryptFinal_ex() and
-EVP_CipherFinal_ex() except B<ctx> is automatically cleaned up 
+EVP_CipherFinal_ex() except B<ctx> is automatically cleaned up
 after the call.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
@@ -268,7 +268,7 @@ OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.
 
 EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
-EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return 1 for 
+EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return 1 for
 success or zero for failure.
 
 =head1 CIPHER LISTING
@@ -283,7 +283,7 @@ Null cipher: does nothing.
 
 =item EVP_des_cbc(void), EVP_des_ecb(void), EVP_des_cfb(void), EVP_des_ofb(void)
 
-DES in CBC, ECB, CFB and OFB modes respectively. 
+DES in CBC, ECB, CFB and OFB modes respectively.
 
 =item EVP_des_ede_cbc(void), EVP_des_ede(), EVP_des_ede_ofb(void),  EVP_des_ede_cfb(void)
 
@@ -346,7 +346,7 @@ Where possible the B<EVP> interface to symmetric ciphers should be used in
 preference to the low level interfaces. This is because the code then becomes
 transparent to the cipher used and much more flexible.
 
-PKCS padding works by adding B<n> padding bytes of value B<n> to make the total 
+PKCS padding works by adding B<n> padding bytes of value B<n> to make the total
 length of the encrypted data a multiple of the block size. Padding is always
 added so if the data is already a multiple of the block size B<n> will equal
 the block size. For example if the block size is 8 and 11 bytes are to be
@@ -376,7 +376,7 @@ a limitation of the current RC5 code rather than the EVP interface.
 
 EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
 default key lengths. If custom ciphers exceed these values the results are
-unpredictable. This is because it has become standard practice to define a 
+unpredictable. This is because it has become standard practice to define a
 generic key as a fixed unsigned char array containing EVP_MAX_KEY_LENGTH bytes.
 
 The ASN1 code is incomplete (and sometimes inaccurate) it has only been tested
@@ -449,7 +449,7 @@ Encrypt a string using blowfish:
 
 The ciphertext from the above example can be decrypted using the B<openssl>
 utility with the command line:
- 
+
  S<openssl bf -in cipher.bin -K 000102030405060708090A0B0C0D0E0F -iv 0102030405060708 -d>
 
 General encryption, decryption function example using FILE I/O and RC2 with an
@@ -472,7 +472,7 @@ General encryption, decryption function example using FILE I/O and RC2 with an
 	/* We finished modifying parameters so now we can set key and IV */
 	EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, do_encrypt);
 
-	for(;;) 
+	for(;;)
 		{
 		inlen = fread(inbuf, 1, 1024, in);
 		if(inlen <= 0) break;

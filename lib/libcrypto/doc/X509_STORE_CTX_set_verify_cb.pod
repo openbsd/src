@@ -94,7 +94,7 @@ expired just one specific case:
 Full featured logging callback. In this case the B<bio_err> is assumed to be
 a global logging B<BIO>, an alternative would to store a BIO in B<ctx> using
 B<ex_data>.
-	
+
  int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	X509 *err_cert;
