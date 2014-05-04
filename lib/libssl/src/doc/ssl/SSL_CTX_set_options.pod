@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_options, SSL_set_options, SSL_CTX_clear_options, SSL_clear_options, SSL_CTX_get_options, SSL_get_options, SSL_get_secure_renegotiation_support - manipulate SSL options
+SSL_CTX_set_options, SSL_set_options, SSL_CTX_clear_options, SSL_clear_options,
+SSL_CTX_get_options, SSL_get_options, SSL_get_secure_renegotiation_support -
+manipulate SSL options
 
 =head1 SYNOPSIS
 
@@ -320,9 +322,9 @@ B<SSL_OP_CIPHER_SERVER_PREFERENCE> and
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> have been added in
 OpenSSL 0.9.7.
 
-B<SSL_OP_TLS_ROLLBACK_BUG> has been added in OpenSSL 0.9.6 and was automatically
-enabled with B<SSL_OP_ALL>. As of 0.9.7, it is no longer included in B<SSL_OP_ALL>
-and must be explicitly set.
+B<SSL_OP_TLS_ROLLBACK_BUG> has been added in OpenSSL 0.9.6 and was
+automatically enabled with B<SSL_OP_ALL>. As of 0.9.7, it is no longer included
+in B<SSL_OP_ALL> and must be explicitly set.
 
 B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS> has been added in OpenSSL 0.9.6e.
 Versions up to OpenSSL 0.9.6c do not include the countermeasure that

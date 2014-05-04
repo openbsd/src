@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
+SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled
+functions
 
 =head1 SYNOPSIS
 

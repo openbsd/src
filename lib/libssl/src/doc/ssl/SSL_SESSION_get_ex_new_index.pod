@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_SESSION_get_ex_new_index, SSL_SESSION_set_ex_data, SSL_SESSION_get_ex_data - internal application specific data functions
+SSL_SESSION_get_ex_new_index, SSL_SESSION_set_ex_data, SSL_SESSION_get_ex_data
+- internal application specific data functions
 
 =head1 SYNOPSIS
 

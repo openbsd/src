@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_rstate_string, SSL_rstate_string_long - get textual description of state of an SSL object during read operation
+SSL_rstate_string, SSL_rstate_string_long - get textual description of state of
+an SSL object during read operation
 
 =head1 SYNOPSIS
 

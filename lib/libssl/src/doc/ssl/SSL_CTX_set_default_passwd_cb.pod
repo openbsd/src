@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata - set passwd callback for encrypted PEM file handling
+SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata - set
+passwd callback for encrypted PEM file handling
 
 =head1 SYNOPSIS
 

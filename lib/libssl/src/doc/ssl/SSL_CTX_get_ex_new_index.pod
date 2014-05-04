@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_get_ex_new_index, SSL_CTX_set_ex_data, SSL_CTX_get_ex_data - internal application specific data functions
+SSL_CTX_get_ex_new_index, SSL_CTX_set_ex_data, SSL_CTX_get_ex_data - internal
+application specific data functions
 
 =head1 SYNOPSIS
 

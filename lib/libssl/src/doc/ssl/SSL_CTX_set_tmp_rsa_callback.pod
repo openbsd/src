@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_tmp_rsa_callback, SSL_CTX_set_tmp_rsa, SSL_CTX_need_tmp_rsa, SSL_set_tmp_rsa_callback, SSL_set_tmp_rsa, SSL_need_tmp_rsa - handle RSA keys for ephemeral key exchange
+SSL_CTX_set_tmp_rsa_callback, SSL_CTX_set_tmp_rsa, SSL_CTX_need_tmp_rsa,
+SSL_set_tmp_rsa_callback, SSL_set_tmp_rsa, SSL_need_tmp_rsa - handle RSA keys
+for ephemeral key exchange
 
 =head1 SYNOPSIS
 

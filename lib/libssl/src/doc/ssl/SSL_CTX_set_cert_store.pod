@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate verification storage
+SSL_CTX_set_cert_store, SSL_CTX_get_cert_store - manipulate X509 certificate
+verification storage
 
 =head1 SYNOPSIS
 

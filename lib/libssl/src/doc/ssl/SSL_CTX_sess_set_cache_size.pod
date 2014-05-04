@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_sess_set_cache_size, SSL_CTX_sess_get_cache_size - manipulate session cache size
+SSL_CTX_sess_set_cache_size, SSL_CTX_sess_get_cache_size - manipulate session
+cache size
 
 =head1 SYNOPSIS
 

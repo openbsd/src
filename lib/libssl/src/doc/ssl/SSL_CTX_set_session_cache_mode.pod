@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable session caching
+SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable
+session caching
 
 =head1 SYNOPSIS
 
