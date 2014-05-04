@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.183 2014/04/22 14:41:03 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.184 2014/05/04 19:27:08 sf Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1349,27 +1349,27 @@ m_print(void *v,
 	struct mbuf *m = v;
 
 	(*pr)("mbuf %p\n", m);
-	(*pr)("m_type: %hi\tm_flags: %hb\n", m->m_type, m->m_flags, M_BITS);
+	(*pr)("m_type: %i\tm_flags: %b\n", m->m_type, m->m_flags, M_BITS);
 	(*pr)("m_next: %p\tm_nextpkt: %p\n", m->m_next, m->m_nextpkt);
 	(*pr)("m_data: %p\tm_len: %u\n", m->m_data, m->m_len);
 	(*pr)("m_dat: %p\tm_pktdat: %p\n", m->m_dat, m->m_pktdat);
 	if (m->m_flags & M_PKTHDR) {
 		(*pr)("m_ptkhdr.rcvif: %p\tm_pkthdr.len: %i\n",
 		    m->m_pkthdr.rcvif, m->m_pkthdr.len);
-		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %hb\n",
+		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %b\n",
 		    SLIST_FIRST(&m->m_pkthdr.tags),
 		    m->m_pkthdr.tagsset, MTAG_BITS);
-		(*pr)("m_pkthdr.csum_flags: %hb\n",
+		(*pr)("m_pkthdr.csum_flags: %b\n",
 		    m->m_pkthdr.csum_flags, MCS_BITS);
-		(*pr)("m_pkthdr.ether_vtag: %hu\tm_ptkhdr.ph_rtableid: %u\n",
+		(*pr)("m_pkthdr.ether_vtag: %u\tm_ptkhdr.ph_rtableid: %u\n",
 		    m->m_pkthdr.ether_vtag, m->m_pkthdr.ph_rtableid);
 		(*pr)("m_pkthdr.pf.statekey: %p\tm_pkthdr.pf.inp %p\n",
 		    m->m_pkthdr.pf.statekey, m->m_pkthdr.pf.inp);
-		(*pr)("m_pkthdr.pf.qid: %u\tm_pkthdr.pf.tag: %hu\n",
+		(*pr)("m_pkthdr.pf.qid: %u\tm_pkthdr.pf.tag: %u\n",
 		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
-		(*pr)("m_pkthdr.pf.flags: %hhb\n",
+		(*pr)("m_pkthdr.pf.flags: %b\n",
 		    m->m_pkthdr.pf.flags, MPF_BITS);
-		(*pr)("m_pkthdr.pf.routed: %hhu\tm_pkthdr.pf.prio: %hhu\n",
+		(*pr)("m_pkthdr.pf.routed: %u\tm_pkthdr.pf.prio: %u\n",
 		    m->m_pkthdr.pf.routed, m->m_pkthdr.pf.prio);
 	}
 	if (m->m_flags & M_EXT) {
