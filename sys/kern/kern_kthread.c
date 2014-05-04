@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.34 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.35 2014/05/04 05:03:26 guenther Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -67,14 +67,9 @@ kthread_create(void (*func)(void *), void *arg,
 	 * parent to wait for.
 	 */
 	error = fork1(&proc0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
-	    FORK_SIGHAND, NULL, 0, func, arg, NULL, &p);
+	    FORK_SYSTEM|FORK_SIGHAND, NULL, 0, func, arg, NULL, &p);
 	if (error)
 		return (error);
-
-	/*
-	 * Mark it as a system process.
-	 */
-	atomic_setbits_int(&p->p_flag, P_SYSTEM);
 
 	/* Name it as specified. */
 	strlcpy(p->p_comm, name, sizeof p->p_comm);

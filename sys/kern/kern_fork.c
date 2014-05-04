@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.164 2014/05/03 22:44:36 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.165 2014/05/04 05:03:26 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -208,6 +208,8 @@ process_new(struct proc *p, struct process *parent, int flags)
 		atomic_setbits_int(&pr->ps_flags, PS_TRACED);
 	if (flags & FORK_NOZOMBIE)
 		atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
+	if (flags & FORK_SYSTEM)
+		atomic_setbits_int(&pr->ps_flags, PS_SYSTEM);
 
 	/* it's sufficiently inited to be globally visible */
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
@@ -236,7 +238,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 
 	/* sanity check some flag combinations */
 	if (flags & FORK_THREAD) {
-		if ((flags & FORK_SIGHAND) == 0)
+		if ((flags & FORK_SIGHAND) == 0 || (flags & FORK_SYSTEM) != 0)
 			return (EINVAL);
 	}
 	if (flags & FORK_SIGHAND && (flags & FORK_SHAREVM) == 0)
@@ -331,6 +333,8 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 		process_new(p, curpr, flags);
 		pr = p->p_p;
 	}
+	if (pr->ps_flags & PS_SYSTEM)
+		atomic_setbits_int(&p->p_flag, P_SYSTEM);
 
 	/*
 	 * Duplicate sub-structures as needed.

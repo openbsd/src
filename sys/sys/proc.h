@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.184 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.185 2014/05/04 05:03:26 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -242,12 +242,13 @@ struct process {
 #define	PS_SINGLEUNWIND	0x00002000	/* Other threads must unwind. */
 #define	PS_NOZOMBIE	0x00004000	/* No signal or zombie at exit. */
 #define	PS_STOPPED	0x00008000	/* Just stopped, need sig to parent. */
+#define	PS_SYSTEM	0x00010000	/* No sigs, stats or swapping. */
 
 #define	PS_BITS \
     ("\20\01CONTROLT\02EXEC\03INEXEC\04EXITING\05SUGID" \
      "\06SUGIDEXEC\07PPWAIT\010ISPWAIT\011PROFIL\012TRACED" \
      "\013WAITED\014COREDUMP\015SINGLEEXIT\016SINGLEUNWIND" \
-     "\017NOZOMBIE\020STOPPED")
+     "\017NOZOMBIE\020STOPPED\021SYSTEM")
 
 
 struct proc {
@@ -415,6 +416,7 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_IDLE	0x00000004
 #define FORK_PPWAIT	0x00000008
 #define FORK_SHAREFILES	0x00000010
+#define FORK_SYSTEM	0x00000020
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
 #define FORK_TFORK	0x00000100

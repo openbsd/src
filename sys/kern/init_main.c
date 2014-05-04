@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.211 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.212 2014/05/04 05:03:26 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ main(void *framep)
 	process0.ps_refcnt = 1;
 	p->p_p = pr = &process0;
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
+	atomic_setbits_int(&pr->ps_flags, PS_SYSTEM);
 
 	/* Set the default routing table/domain. */
 	process0.ps_rtableid = 0;

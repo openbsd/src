@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.165 2014/05/04 03:53:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.166 2014/05/04 05:03:26 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -618,7 +618,6 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 int
 killpg1(struct proc *cp, int signum, int pgid, int all)
 {
-	struct proc *p;
 	struct process *pr;
 	struct pgrp *pgrp;
 	int nfound = 0;
@@ -628,13 +627,12 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		 * broadcast
 		 */
 		LIST_FOREACH(pr, &allprocess, ps_list) {
-			p = pr->ps_mainproc;
-			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
+			if (pr->ps_pid <= 1 || pr->ps_flags & PS_SYSTEM ||
 			    pr == cp->p_p || !cansignal(cp, pr, signum))
 				continue;
 			nfound++;
 			if (signum)
-				psignal(p, signum);
+				prsignal(pr, signum);
 		}
 	else {
 		if (pgid == 0)
@@ -648,13 +646,12 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 				return (ESRCH);
 		}
 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist) {
-			p = pr->ps_mainproc;
-			if (pr->ps_pid <= 1 || p->p_flag & P_SYSTEM ||
+			if (pr->ps_pid <= 1 || pr->ps_flags & PS_SYSTEM ||
 			    !cansignal(cp, pr, signum))
 				continue;
 			nfound++;
-			if (signum && P_ZOMBIE(p) == 0)
-				psignal(p, signum);
+			if (signum)
+				prsignal(pr, signum);
 		}
 	}
 	return (nfound ? 0 : ESRCH);
