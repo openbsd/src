@@ -251,10 +251,10 @@ cipher suites using MD5.
 
 cipher suites using SHA1.
 
-=item B<aGOST> 
+=item B<aGOST>
 
 cipher suites using GOST R 34.10 (either 2001 or 94) for authenticaction
-(needs an engine supporting GOST algorithms). 
+(needs an engine supporting GOST algorithms).
 
 =item B<aGOST01>
 

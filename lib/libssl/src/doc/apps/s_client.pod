@@ -217,7 +217,7 @@ print out a hex dump of any TLS extensions received from the server.
 
 =item B<-no_ticket>
 
-disable RFC4507bis session ticket support. 
+disable RFC4507bis session ticket support.
 
 =item B<-sess_out filename>
 
