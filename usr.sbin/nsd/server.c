@@ -1305,7 +1305,7 @@ server_main(struct nsd *nsd)
 					task_process_sync(nsd->task[nsd->mytask]);
 					/* inform xfrd reload attempt ended */
 					if(!write_socket(nsd->xfrd_listener->fd,
-						&cmd, sizeof(cmd)) == -1) {
+						&cmd, sizeof(cmd))) {
 						log_msg(LOG_ERR, "problems "
 						  "sending SOAEND to xfrd: %s",
 						  strerror(errno));
