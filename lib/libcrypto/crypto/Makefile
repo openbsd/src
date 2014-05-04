@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2014/05/01 17:08:57 miod Exp $
+# $OpenBSD: Makefile,v 1.31 2014/05/04 17:12:19 miod Exp $
 
 LIB=	crypto
 
@@ -427,9 +427,7 @@ obj_dat.h: obj_mac.h
 
 .if exists (${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc)
 .include "${.CURDIR}/arch/${MACHINE_CPU}/Makefile.inc"
-.endif
-
-.if !defined(SSLASM)
+.else
 CFLAGS+=-DOPENSSL_NO_ASM
 SRCS+= aes_core.c aes_cbc.c 
 SRCS+= bf_enc.c
