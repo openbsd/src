@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.32 2014/04/29 11:51:13 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.33 2014/05/05 16:14:37 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -946,7 +946,6 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 	    ibuf_size(msg->msg_data), 0, (struct sockaddr *)&msg->msg_peer,
 	    msg->msg_peerlen)) == -1) {
 		log_warn("%s: sendto", __func__);
-		sa_free(env, sa);
 		return (-1);
 	}
 
