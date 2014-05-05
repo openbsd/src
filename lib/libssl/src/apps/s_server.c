@@ -146,6 +146,8 @@
 #undef OPENSSL_NO_DEPRECATED
 #endif
 
+#include <sys/ioctl.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -249,9 +251,7 @@ static const char *s_cert_file = TEST_CERT, *s_key_file = NULL;
 static const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
 #endif
 static char *s_dcert_file = NULL, *s_dkey_file = NULL;
-#ifdef FIONBIO
 static int s_nbio = 0;
-#endif
 static int s_nbio_test = 0;
 int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
@@ -406,9 +406,7 @@ s_server_init(void)
 	s_key_file2 = NULL;
 	ctx2 = NULL;
 #endif
-#ifdef FIONBIO
 	s_nbio = 0;
-#endif
 	s_nbio_test = 0;
 	ctx = NULL;
 	www = 0;
@@ -456,9 +454,7 @@ sv_usage(void)
 	    "                 Use \"openssl ecparam -list_curves\" for all names\n" \
 	    "                 (default is nistp256).\n");
 #endif
-#ifdef FIONBIO
 	BIO_printf(bio_err, " -nbio         - Run with non-blocking IO\n");
-#endif
 	BIO_printf(bio_err, " -nbio_test    - test with the non-blocking test bio\n");
 	BIO_printf(bio_err, " -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err, " -debug        - Print more output\n");
@@ -798,9 +794,7 @@ s_server_main(int argc, char *argv[])
 		goto end;
 
 	verify_depth = 0;
-#ifdef FIONBIO
 	s_nbio = 0;
-#endif
 	s_nbio_test = 0;
 
 	argc--;
@@ -909,15 +903,11 @@ s_server_main(int argc, char *argv[])
 				goto bad;
 			CAfile = *(++argv);
 		}
-#ifdef FIONBIO
 		else if (strcmp(*argv, "-nbio") == 0) {
 			s_nbio = 1;
 		}
-#endif
 		else if (strcmp(*argv, "-nbio_test") == 0) {
-#ifdef FIONBIO
 			s_nbio = 1;
-#endif
 			s_nbio_test = 1;
 		} else if (strcmp(*argv, "-debug") == 0) {
 			s_debug = 1;
@@ -1661,7 +1651,6 @@ sv_body(char *hostname, int s, unsigned char *context)
 		BIO_printf(bio_err, "out of memory\n");
 		goto err;
 	}
-#ifdef FIONBIO
 	if (s_nbio) {
 		unsigned long sl = 1;
 
@@ -1670,7 +1659,6 @@ sv_body(char *hostname, int s, unsigned char *context)
 		if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
 			ERR_print_errors(bio_err);
 	}
-#endif
 
 	if (con == NULL) {
 		con = SSL_new(ctx);
@@ -2178,7 +2166,6 @@ www_body(char *hostname, int s, unsigned char *context)
 	if ((io == NULL) || (ssl_bio == NULL))
 		goto err;
 
-#ifdef FIONBIO
 	if (s_nbio) {
 		unsigned long sl = 1;
 
@@ -2187,7 +2174,6 @@ www_body(char *hostname, int s, unsigned char *context)
 		if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
 			ERR_print_errors(bio_err);
 	}
-#endif
 
 	/* lets make the output buffer a reasonable size */
 	if (!BIO_set_write_buffer_size(io, bufsize))

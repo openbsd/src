@@ -118,9 +118,7 @@ static char *s_www_path = NULL;
 static long bytes_read = 0;
 static int st_bugs = 0;
 static int perform = 0;
-#ifdef FIONBIO
 static int t_nbio = 0;
-#endif
 
 static void 
 s_time_init(void)
@@ -140,9 +138,7 @@ s_time_init(void)
 	st_bugs = 0;
 	perform = 0;
 
-#ifdef FIONBIO
 	t_nbio = 0;
-#endif
 }
 
 /***********************************************************************
@@ -164,7 +160,6 @@ s_time_usage(void)
 	printf("usage: s_time <args>\n\n");
 
 	printf("-connect host:port - host:port to connect to (default is %s)\n", SSL_CONNECT_NAME);
-#ifdef FIONBIO
 	printf("-nbio         - Run with non-blocking IO\n");
 	printf("-ssl2         - Just use SSLv2\n");
 	printf("-ssl3         - Just use SSLv3\n");
@@ -172,7 +167,6 @@ s_time_usage(void)
 	printf("-new          - Just time new connections\n");
 	printf("-reuse        - Just time connection reuse\n");
 	printf("-www page     - Retrieve 'page' from the site\n");
-#endif
 	printf(umsg, SECONDS);
 }
 
@@ -251,11 +245,9 @@ parseArgs(int argc, char **argv)
 				goto bad;
 			tm_cipher = *(++argv);
 		}
-#ifdef FIONBIO
 		else if (strcmp(*argv, "-nbio") == 0) {
 			t_nbio = 1;
 		}
-#endif
 		else if (strcmp(*argv, "-www") == 0) {
 			if (--argc < 1)
 				goto bad;
