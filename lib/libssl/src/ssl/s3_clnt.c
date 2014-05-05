@@ -369,17 +369,6 @@ ssl3_connect(SSL *s)
 			ret = ssl3_get_server_done(s);
 			if (ret <= 0)
 				goto end;
-#ifndef OPENSSL_NO_SRP
-			if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
-				if ((ret = SRP_Calc_A_param(s)) <= 0) {
-					SSLerr(SSL_F_SSL3_CONNECT,
-					    SSL_R_SRP_A_CALC);
-					ssl3_send_alert(s, SSL3_AL_FATAL,
-					    SSL_AD_INTERNAL_ERROR);
-					goto end;
-				}
-			}
-#endif
 			if (s->s3->tmp.cert_req)
 				s->state = SSL3_ST_CW_CERT_A;
 			else
@@ -1137,10 +1126,6 @@ ssl3_get_server_certificate(SSL *s)
 
 	i = ssl_verify_cert_chain(s, sk);
 	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)
-#ifndef OPENSSL_NO_KRB5
-	    && !((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
-	    (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
-#endif /* OPENSSL_NO_KRB5 */
 	    ) {
 		al = ssl_verify_alarm_type(s->verify_result);
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1361,81 +1346,6 @@ ssl3_get_key_exchange(SSL *s)
 		n -= param_len;
 	} else
 #endif /* !OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_SRP
-	if (alg_k & SSL_kSRP) {
-		n2s(p, i);
-		param_len = i + 2;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_SRP_N_LENGTH);
-			goto f_err;
-		}
-		if (!(s->srp_ctx.N = BN_bin2bn(p, i, NULL))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-
-		n2s(p, i);
-		param_len += i + 2;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_SRP_G_LENGTH);
-			goto f_err;
-		}
-		if (!(s->srp_ctx.g = BN_bin2bn(p, i, NULL))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-
-		i = (unsigned int)(p[0]);
-		p++;
-		param_len += i + 1;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_SRP_S_LENGTH);
-			goto f_err;
-		}
-		if (!(s->srp_ctx.s = BN_bin2bn(p, i, NULL))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-
-		n2s(p, i);
-		param_len += i + 2;
-		if (param_len > n) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    SSL_R_BAD_SRP_B_LENGTH);
-			goto f_err;
-		}
-		if (!(s->srp_ctx.B = BN_bin2bn(p, i, NULL))) {
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
-			    ERR_R_BN_LIB);
-			goto err;
-		}
-		p += i;
-		n -= param_len;
-
-		/* We must check if there is a certificate */
-		if (alg_a & SSL_aRSA)
-			pkey = X509_get_pubkey(
-			    s->session->sess_cert->peer_pkeys[
-			    SSL_PKEY_RSA_ENC].x509);
-		else if (alg_a & SSL_aDSS)
-			pkey = X509_get_pubkey(
-			    s->session->sess_cert->peer_pkeys[
-			    SSL_PKEY_DSA_SIGN].x509);
-	} else
-#endif /* !OPENSSL_NO_SRP */
 	if (alg_k & SSL_kRSA) {
 		if ((rsa = RSA_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
@@ -2156,9 +2066,6 @@ ssl3_send_client_key_exchange(SSL *s)
 	unsigned long	 alg_k;
 	unsigned char	*q;
 	EVP_PKEY	*pkey = NULL;
-#ifndef OPENSSL_NO_KRB5
-	KSSL_ERR	 kssl_err;
-#endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY		*clnt_ecdh = NULL;
 	const EC_POINT	*srvr_ecpoint = NULL;
@@ -2226,140 +2133,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
 		}
-#ifndef OPENSSL_NO_KRB5
-		else if (alg_k & SSL_kKRB5) {
-			krb5_error_code	krb5rc;
-			KSSL_CTX	*kssl_ctx = s->kssl_ctx;
-			/*  krb5_data	krb5_ap_req;  */
-			krb5_data	*enc_ticket;
-			krb5_data	authenticator, *authp = NULL;
-			EVP_CIPHER_CTX	ciph_ctx;
-			const EVP_CIPHER *enc = NULL;
-			unsigned char	iv[EVP_MAX_IV_LENGTH];
-			unsigned char	tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
-			unsigned char	epms[SSL_MAX_MASTER_KEY_LENGTH
-					    + EVP_MAX_IV_LENGTH];
-			int		padl, outl = sizeof(epms);
-
-			EVP_CIPHER_CTX_init(&ciph_ctx);
-
-#ifdef KSSL_DEBUG
-			printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-			    alg_k, SSL_kKRB5);
-#endif	/* KSSL_DEBUG */
-
-			authp = NULL;
-#ifdef KRB5SENDAUTH
-			if (KRB5SENDAUTH)
-				authp = &authenticator;
-#endif	/* KRB5SENDAUTH */
-
-			krb5rc = kssl_cget_tkt(kssl_ctx, &enc_ticket,
-			    authp, &kssl_err);
-			enc = kssl_map_enc(kssl_ctx->enctype);
-			if (enc == NULL)
-				goto err;
-#ifdef KSSL_DEBUG
-			{
-				printf("kssl_cget_tkt rtn %d\n", krb5rc);
-				if (krb5rc && kssl_err.text)
-					printf("kssl_cget_tkt kssl_err=%s\n",
-					    kssl_err.text);
-			}
-#endif	/* KSSL_DEBUG */
-
-			if (krb5rc) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    kssl_err.reason);
-				goto err;
-			}
-
-			/*
-			 * 20010406 VRS - Earlier versions used KRB5 AP_REQ
-			 * in place of RFC 2712 KerberosWrapper, as in:
-			 *
-			 * Send ticket (copy to *p, set n = length)
-			 * n = krb5_ap_req.length;
-			 * memcpy(p, krb5_ap_req.data, krb5_ap_req.length);
-			 * if (krb5_ap_req.data)
-			 *   kssl_krb5_free_data_contents(NULL,&krb5_ap_req);
-			 *
-			 * Now using real RFC 2712 KerberosWrapper
-			 * (Thanks to Simon Wilkinson <sxw@sxw.org.uk>)
-			 * Note: 2712 "opaque" types are here replaced
-			 * with a 2-byte length followed by the value.
-			 * Example:
-			 * KerberosWrapper= xx xx asn1ticket 0 0 xx xx encpms
-			 * Where "xx xx" = length bytes.  Shown here with
-			 * optional authenticator omitted.
-			 */
-
-			/*  KerberosWrapper.Ticket */
-			s2n(enc_ticket->length, p);
-			memcpy(p, enc_ticket->data, enc_ticket->length);
-			p += enc_ticket->length;
-			n = enc_ticket->length + 2;
-
-			/*  KerberosWrapper.Authenticator */
-			if (authp && authp->length) {
-				s2n(authp->length, p);
-				memcpy(p, authp->data, authp->length);
-				p += authp->length;
-				n += authp->length + 2;
-
-				free(authp->data);
-				authp->data = NULL;
-				authp->length = 0;
-			} else {
-				s2n(0,p);/*  null authenticator length	*/
-				n += 2;
-			}
-
-			tmp_buf[0] = s->client_version >> 8;
-			tmp_buf[1] = s->client_version & 0xff;
-			if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
-				goto err;
-
-			/*
-			 * 20010420 VRS.  Tried it this way; failed.
-			 * EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
-			 * EVP_CIPHER_CTX_set_key_length(&ciph_ctx,
-			 *     kssl_ctx->length);
-			 * EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
-			 */
-
-			memset(iv, 0, sizeof iv);
-			/* per RFC 1510 */
-			EVP_EncryptInit_ex(&ciph_ctx, enc, NULL,
-			    kssl_ctx->key, iv);
-			EVP_EncryptUpdate(&ciph_ctx, epms, &outl, tmp_buf,
-			    sizeof tmp_buf);
-			EVP_EncryptFinal_ex(&ciph_ctx, &(epms[outl]), &padl);
-			outl += padl;
-			if (outl > (int)sizeof epms) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
-
-			/* KerberosWrapper.EncryptedPreMasterSecret */
-			s2n(outl, p);
-			memcpy(p, epms, outl);
-			p += outl;
-			n += outl + 2;
-
-			s->session->master_key_length =
-			s->method->ssl3_enc->generate_master_secret(s,
-			s->session->master_key,
-			tmp_buf, sizeof tmp_buf);
-
-			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
-			OPENSSL_cleanse(epms, outl);
-		}
-#endif
 #ifndef OPENSSL_NO_DH
 		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
 			DH *dh_srvr, *dh_clnt;
@@ -2716,37 +2489,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			    EVP_PKEY_free(pub_key);
 
 		}
-#ifndef OPENSSL_NO_SRP
-		else if (alg_k & SSL_kSRP) {
-			if (s->srp_ctx.A != NULL) {
-				/* send off the data */
-				n = BN_num_bytes(s->srp_ctx.A);
-				s2n(n, p);
-				BN_bn2bin(s->srp_ctx.A, p);
-				n += 2;
-			} else {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			if (s->session->srp_username != NULL)
-				free(s->session->srp_username);
-			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
-			if (s->session->srp_username == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			if ((s->session->master_key_length =
-			    SRP_generate_client_master_secret(s,
-			    s->session->master_key)) < 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-		}
-#endif
 #ifndef OPENSSL_NO_PSK
 		else if (alg_k & SSL_kPSK) {
 			char identity[PSK_MAX_IDENTITY_LEN];

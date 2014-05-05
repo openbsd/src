@@ -223,9 +223,6 @@ SSL_SESSION_new(void)
 	ss->psk_identity_hint = NULL;
 	ss->psk_identity = NULL;
 #endif
-#ifndef OPENSSL_NO_SRP
-	ss->srp_username = NULL;
-#endif
 	return (ss);
 }
 
@@ -726,10 +723,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->psk_identity != NULL)
 		free(ss->psk_identity);
 #endif
-#ifndef OPENSSL_NO_SRP
-	if (ss->srp_username != NULL)
-		free(ss->srp_username);
-#endif
 	OPENSSL_cleanse(ss, sizeof(*ss));
 	free(ss);
 }
@@ -754,15 +747,6 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 				return (0);
 		}
 
-#ifndef OPENSSL_NO_KRB5
-		if (s->kssl_ctx && !s->kssl_ctx->client_princ &&
-		    session->krb5_client_princ_len > 0) {
-			s->kssl_ctx->client_princ = malloc(session->krb5_client_princ_len + 1);
-			memcpy(s->kssl_ctx->client_princ, session->krb5_client_princ,
-			    session->krb5_client_princ_len);
-			s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '\0';
-		}
-#endif /* OPENSSL_NO_KRB5 */
 
 		/* CRYPTO_w_lock(CRYPTO_LOCK_SSL);*/
 		CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);

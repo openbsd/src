@@ -97,9 +97,6 @@ typedef struct ssl_session_asn1_st {
 	ASN1_OCTET_STRING master_key;
 	ASN1_OCTET_STRING session_id;
 	ASN1_OCTET_STRING session_id_context;
-#ifndef OPENSSL_NO_KRB5
-	ASN1_OCTET_STRING krb5_princ;
-#endif /* OPENSSL_NO_KRB5 */
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
 	ASN1_INTEGER verify_result;
@@ -112,9 +109,6 @@ typedef struct ssl_session_asn1_st {
 	ASN1_OCTET_STRING psk_identity_hint;
 	ASN1_OCTET_STRING psk_identity;
 #endif /* OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_SRP
-	ASN1_OCTET_STRING srp_username;
-#endif /* OPENSSL_NO_SRP */
 } SSL_SESSION_ASN1;
 
 int
@@ -131,9 +125,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_COMP
 	unsigned char cbuf;
 	int v11 = 0;
-#endif
-#ifndef OPENSSL_NO_SRP
-	int v12 = 0;
 #endif
 	long l;
 	SSL_SESSION_ASN1 a;
@@ -189,13 +180,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	a.session_id_context.type = V_ASN1_OCTET_STRING;
 	a.session_id_context.data = in->sid_ctx;
 
-#ifndef OPENSSL_NO_KRB5
-	if (in->krb5_client_princ_len) {
-		a.krb5_princ.length = in->krb5_client_princ_len;
-		a.krb5_princ.type = V_ASN1_OCTET_STRING;
-		a.krb5_princ.data = in->krb5_client_princ;
-	}
-#endif /* OPENSSL_NO_KRB5 */
 
 	if (in->time != 0L) {
 		a.time.length = LSIZE2;
@@ -248,23 +232,12 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.psk_identity.data = (unsigned char *)(in->psk_identity);
 	}
 #endif /* OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_SRP
-	if (in->srp_username) {
-		a.srp_username.length = strlen(in->srp_username);
-		a.srp_username.type = V_ASN1_OCTET_STRING;
-		a.srp_username.data = (unsigned char *)(in->srp_username);
-	}
-#endif /* OPENSSL_NO_SRP */
 
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.cipher),		i2d_ASN1_OCTET_STRING);
 	M_ASN1_I2D_len(&(a.session_id),		i2d_ASN1_OCTET_STRING);
 	M_ASN1_I2D_len(&(a.master_key),		i2d_ASN1_OCTET_STRING);
-#ifndef OPENSSL_NO_KRB5
-	if (in->krb5_client_princ_len)
-		M_ASN1_I2D_len(&(a.krb5_princ),	i2d_ASN1_OCTET_STRING);
-#endif /* OPENSSL_NO_KRB5 */
 	if (in->time != 0L)
 		M_ASN1_I2D_len_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
 	if (in->timeout != 0L)
@@ -293,10 +266,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->psk_identity)
 		M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING, 8, v8);
 #endif /* OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_SRP
-	if (in->srp_username)
-		M_ASN1_I2D_len_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING, 12, v12);
-#endif /* OPENSSL_NO_SRP */
 
 	M_ASN1_I2D_seq_total();
 
@@ -305,10 +274,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	M_ASN1_I2D_put(&(a.cipher),		i2d_ASN1_OCTET_STRING);
 	M_ASN1_I2D_put(&(a.session_id),		i2d_ASN1_OCTET_STRING);
 	M_ASN1_I2D_put(&(a.master_key),		i2d_ASN1_OCTET_STRING);
-#ifndef OPENSSL_NO_KRB5
-	if (in->krb5_client_princ_len)
-		M_ASN1_I2D_put(&(a.krb5_princ),	i2d_ASN1_OCTET_STRING);
-#endif /* OPENSSL_NO_KRB5 */
 	if (in->time != 0L)
 		M_ASN1_I2D_put_EXP_opt(&(a.time), i2d_ASN1_INTEGER, 1, v1);
 	if (in->timeout != 0L)
@@ -339,10 +304,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->compress_meth)
 		M_ASN1_I2D_put_EXP_opt(&(a.comp_id), i2d_ASN1_OCTET_STRING, 11, v11);
 #endif
-#ifndef OPENSSL_NO_SRP
-	if (in->srp_username)
-		M_ASN1_I2D_put_EXP_opt(&(a.srp_username), i2d_ASN1_OCTET_STRING, 12, v12);
-#endif /* OPENSSL_NO_SRP */
 	M_ASN1_I2D_finish();
 }
 
@@ -420,21 +381,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 
 	os.length = 0;
 
-#ifndef OPENSSL_NO_KRB5
-	os.length = 0;
-	M_ASN1_D2I_get_opt(osp, d2i_ASN1_OCTET_STRING, V_ASN1_OCTET_STRING);
-	if (os.data) {
-		if (os.length > SSL_MAX_KRB5_PRINCIPAL_LENGTH)
-			ret->krb5_client_princ_len = 0;
-		else
-			ret->krb5_client_princ_len = os.length;
-		memcpy(ret->krb5_client_princ, os.data, ret->krb5_client_princ_len);
-		free(os.data);
-		os.data = NULL;
-		os.length = 0;
-	} else
-		ret->krb5_client_princ_len = 0;
-#endif /* OPENSSL_NO_KRB5 */
 
 	ai.length = 0;
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 1);	/* XXX 2038 */
@@ -561,18 +507,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	}
 #endif
 
-#ifndef OPENSSL_NO_SRP
-	os.length = 0;
-	os.data = NULL;
-	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 12);
-	if (os.data) {
-		ret->srp_username = BUF_strndup((char *)os.data, os.length);
-		free(os.data);
-		os.data = NULL;
-		os.length = 0;
-	} else
-		ret->srp_username = NULL;
-#endif /* OPENSSL_NO_SRP */
 
 	M_ASN1_D2I_Finish(a, SSL_SESSION_free, SSL_F_D2I_SSL_SESSION);
 }

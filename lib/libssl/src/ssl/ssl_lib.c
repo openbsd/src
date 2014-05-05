@@ -284,9 +284,6 @@ SSL_new(SSL_CTX *ctx)
 	if (s == NULL)
 		goto err;
 
-#ifndef	OPENSSL_NO_KRB5
-	s->kssl_ctx = kssl_ctx_new();
-#endif	/* OPENSSL_NO_KRB5 */
 
 	s->options = ctx->options;
 	s->mode = ctx->mode;
@@ -580,10 +577,6 @@ SSL_free(SSL *s)
 	if (s->ctx)
 		SSL_CTX_free(s->ctx);
 
-#ifndef	OPENSSL_NO_KRB5
-	if (s->kssl_ctx != NULL)
-		kssl_ctx_free(s->kssl_ctx);
-#endif	/* OPENSSL_NO_KRB5 */
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (s->next_proto_negotiated)
@@ -1415,9 +1408,6 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 	int		 i, j = 0;
 	SSL_CIPHER	*c;
 	unsigned char	*q;
-#ifndef OPENSSL_NO_KRB5
-	int		 nokrb5 = !kssl_tgt_is_available(s->kssl_ctx);
-#endif /* OPENSSL_NO_KRB5 */
 
 	if (sk == NULL)
 		return (0);
@@ -1429,11 +1419,6 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
 		if ((c->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
-#ifndef OPENSSL_NO_KRB5
-		if (((c->algorithm_mkey & SSL_kKRB5) ||
-		    (c->algorithm_auth & SSL_aKRB5)) && nokrb5)
-			continue;
-#endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
 		/* with PSK there must be client callback set */
 		if (((c->algorithm_mkey & SSL_kPSK) ||
@@ -1877,9 +1862,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->psk_client_callback = NULL;
 	ret->psk_server_callback = NULL;
 #endif
-#ifndef OPENSSL_NO_SRP
-	SSL_CTX_SRP_CTX_init(ret);
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	ret->client_cert_engine = NULL;
 #ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
@@ -1982,9 +1964,6 @@ SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_PSK
 	if (a->psk_identity_hint)
 		free(a->psk_identity_hint);
-#endif
-#ifndef OPENSSL_NO_SRP
-	SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
@@ -2147,12 +2126,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	mask_a|=SSL_aNULL;
 	emask_a|=SSL_aNULL;
 
-#ifndef OPENSSL_NO_KRB5
-	mask_k|=SSL_kKRB5;
-	mask_a|=SSL_aKRB5;
-	emask_k|=SSL_kKRB5;
-	emask_a|=SSL_aKRB5;
-#endif
 
 	/*
 	 * An ECC certificate may be usable for ECDH and/or

@@ -415,35 +415,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		ret += el;
 	}
 
-#ifndef OPENSSL_NO_SRP
-	/* Add SRP username if there is one */
-	if (s->srp_ctx.login != NULL) {
-		/* Add TLS extension SRP username to the Client Hello message */
-
-		int login_len = strlen(s->srp_ctx.login);
-
-		if (login_len > 255 || login_len == 0) {
-			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-			return NULL;
-		}
-
-		/* check for enough space.
-		   4 for the srp type type and entension length
-		   1 for the srp user identity
-		   + srp user identity length 
-		*/
-		if ((limit - ret - 5 - login_len) < 0)
-			return NULL;
-
-
-		/* fill in the extension */
-		s2n(TLSEXT_TYPE_srp, ret);
-		s2n(login_len + 1, ret);
-		(*ret++) = (unsigned char) login_len;
-		memcpy(ret, s->srp_ctx.login, login_len);
-		ret += login_len;
-	}
-#endif
 
 #ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist != NULL &&
@@ -1063,27 +1034,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			}
 
 		}
-#ifndef OPENSSL_NO_SRP
-		else if (type == TLSEXT_TYPE_srp) {
-			if (size <= 0 || ((len = data[0])) != (size - 1)) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-			if (s->srp_ctx.login != NULL) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-			if ((s->srp_ctx.login = malloc(len + 1)) == NULL)
-				return -1;
-			memcpy(s->srp_ctx.login, &data[1], len);
-			s->srp_ctx.login[len] = '\0';
-
-			if (strlen(s->srp_ctx.login) != len) {
-				*al = SSL_AD_DECODE_ERROR;
-				return 0;
-			}
-		}
-#endif
 
 #ifndef OPENSSL_NO_EC
 		else if (type == TLSEXT_TYPE_ec_point_formats &&

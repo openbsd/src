@@ -702,10 +702,8 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kEDH;
 	*auth |= SSL_aDH;
 #endif
-#ifdef OPENSSL_NO_KRB5
 	*mkey |= SSL_kKRB5;
 	*auth |= SSL_aKRB5;
-#endif
 #ifdef OPENSSL_NO_ECDSA
 	*auth |= SSL_aECDSA;
 #endif
@@ -717,9 +715,7 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;
 #endif
-#ifdef OPENSSL_NO_SRP
 	*mkey |= SSL_kSRP;
-#endif
 	/* Check for presence of GOST 34.10 algorithms, and if they
 	 * do not present, disable  appropriate auth and key exchange */
 	if (!get_optional_pkey_id("gost94")) {

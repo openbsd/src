@@ -429,9 +429,6 @@ dtls1_accept(SSL *s)
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
 			if ((s->options & SSL_OP_EPHEMERAL_RSA)
-#ifndef OPENSSL_NO_KRB5
-			&& !(alg_k & SSL_kKRB5)
-#endif /* OPENSSL_NO_KRB5 */
 			)
 				/* option SSL_OP_EPHEMERAL_RSA sends temporary RSA key
 				 * even when forbidden by protocol specs
