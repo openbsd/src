@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.32 2013/10/18 15:19:39 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.33 2014/05/05 18:30:44 pelikan Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -52,8 +52,6 @@ struct protocol *protocols;
 struct dhcpd_timeout *timeouts;
 static struct dhcpd_timeout *free_timeouts;
 static int interfaces_invalidated;
-void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
 int get_rdomain(char *);
@@ -277,8 +275,7 @@ discover_interfaces(int *rdomain)
 /*
  * Wait for packets to come in using poll().  When a packet comes in,
  * call receive_packet to receive the packet and possibly strip hardware
- * addressing information from it, and then call through the
- * bootp_packet_handler hook to try to do something with it.
+ * addressing information from it, and then process it in do_packet.
  */
 void
 dispatch(void)
@@ -417,13 +414,10 @@ got_one(struct protocol *l)
 	if (result == 0)
 		return;
 
-	if (bootp_packet_handler) {
-		ifrom.len = 4;
-		memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
+	ifrom.len = 4;
+	memcpy(ifrom.iabuf, &from.sin_addr, ifrom.len);
 
-		(*bootp_packet_handler)(ip, &u.packet, result,
-		    from.sin_port, ifrom, &hfrom);
-	}
+	do_packet(ip, &u.packet, result, from.sin_port, ifrom, &hfrom);
 }
 
 int

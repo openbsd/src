@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.48 2014/05/05 18:27:57 pelikan Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.49 2014/05/05 18:30:44 pelikan Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -625,8 +625,6 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 /* dispatch.c */
 extern struct interface_info *interfaces;
 extern struct protocol *protocols;
-extern void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 extern struct dhcpd_timeout *timeouts;
 void discover_interfaces(int *);
 void dispatch(void);
