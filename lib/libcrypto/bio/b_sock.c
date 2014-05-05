@@ -57,21 +57,20 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
-#include "cryptlib.h"
+
 #include <openssl/bio.h>
-#include <sys/ioctl.h>
-
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
-
 #include <openssl/dso.h>
+
+#include "cryptlib.h"
 
 #define SOCKET_PROTOCOL IPPROTO_TCP
 

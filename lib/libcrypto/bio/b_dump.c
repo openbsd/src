@@ -61,8 +61,10 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+
 #include <openssl/bio.h>
+
+#include "cryptlib.h"
 
 #define TRUNCATE
 #define DUMP_WIDTH	16
