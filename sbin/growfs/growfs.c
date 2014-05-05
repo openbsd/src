@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.34 2014/04/30 14:28:48 krw Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.35 2014/05/05 15:04:05 krw Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -2068,7 +2068,7 @@ main(int argc, char **argv)
 	}
 
 	if (!quiet)
-		printf("new file systemsize is: %jd frags\n",
+		printf("new filesystem size is: %jd frags\n",
 		    (intmax_t)sblock.fs_size);
 
 	/*
