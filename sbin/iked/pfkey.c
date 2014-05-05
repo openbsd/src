@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.30 2014/04/25 09:41:21 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.31 2014/05/05 08:23:57 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@ struct pfkey_message {
 	SIMPLEQ_ENTRY(pfkey_message)
 			 pm_entry;
 	u_int8_t	*pm_data;
-	ssize_t		 pm_lenght;
+	ssize_t		 pm_length;
 };
 SIMPLEQ_HEAD(, pfkey_message) pfkey_postponed =
     SIMPLEQ_HEAD_INITIALIZER(pfkey_postponed);
@@ -1127,7 +1127,7 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 			return (-1);
 		}
 		pm->pm_data = data;
-		pm->pm_lenght = len;
+		pm->pm_length = len;
 		SIMPLEQ_INSERT_TAIL(&pfkey_postponed, pm, pm_entry);
 		evtimer_add(&pfkey_timer_ev, &pfkey_timer_tv);
 	}
@@ -1485,7 +1485,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 	}
 
 	pm.pm_data = data;
-	pm.pm_lenght = len;
+	pm.pm_length = len;
 	pfkey_process(env, &pm);
 
 	free(data);
@@ -1526,7 +1526,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	ssize_t			 rlen;
 	const char		*errmsg = NULL;
 	u_int8_t		*data = pm->pm_data;
-	ssize_t			 len = pm->pm_lenght;
+	ssize_t			 len = pm->pm_length;
 	size_t			 slen;
 
 	if (!env || !data || !len)
