@@ -2454,7 +2454,6 @@ next_protos_parse(unsigned short *outlen, const char *in)
  */
 
 /* app_tminterval section */
-#if defined(_SC_CLK_TCK)	/* by means of unistd.h */
 #include <sys/times.h>
 
 double
@@ -2478,32 +2477,6 @@ app_tminterval(int stop, int usertime)
 	return (ret);
 }
 
-#else
-#include <sys/time.h>
-#include <sys/resource.h>
-
-double
-app_tminterval(int stop, int usertime)
-{
-	double ret = 0;
-	struct rusage rus;
-	struct timeval now;
-	static struct timeval tmstart;
-
-	if (usertime)
-		getrusage(RUSAGE_SELF, &rus), now = rus.ru_utime;
-	else
-		gettimeofday(&now, NULL);
-
-	if (stop == TM_START)
-		tmstart = now;
-	else
-		ret = ((now.tv_sec + now.tv_usec * 1e-6) -
-		    (tmstart.tv_sec + tmstart.tv_usec * 1e-6));
-
-	return ret;
-}
-#endif
 
 int
 app_isdir(const char *name)
