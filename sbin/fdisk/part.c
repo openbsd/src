@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.65 2014/03/31 22:03:29 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.66 2014/05/05 17:18:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -179,6 +179,7 @@ PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
     off_t reloff, struct prt *partn)
 {
 	off_t off;
+	u_int32_t t;
 
 	partn->flag = prt->dp_flag;
 	partn->shead = prt->dp_shd;
@@ -196,8 +197,15 @@ PRT_parse(struct disk *disk, struct dos_partition *prt, off_t offset,
 	else
 		off = offset;
 
+#if 0 /* XXX */
 	partn->bs = letoh32(prt->dp_start) + off;
 	partn->ns = letoh32(prt->dp_size);
+#else
+	memcpy(&t, &prt->dp_start, sizeof(u_int32_t));
+	partn->bs = letoh32(t) + off;
+	memcpy(&t, &prt->dp_size, sizeof(u_int32_t));
+	partn->ns = letoh32(t);
+#endif
 
 	PRT_fix_CHS(disk, partn);
 }
@@ -223,6 +231,7 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 {
 	off_t off;
 	u_int32_t ecsave, scsave;
+	u_int32_t t;
 
 	/* Save (and restore below) cylinder info we may fiddle with. */
 	scsave = partn->scyl;
@@ -255,8 +264,15 @@ PRT_make(struct prt *partn, off_t offset, off_t reloff,
 	prt->dp_flag = partn->flag & 0xFF;
 	prt->dp_typ = partn->id & 0xFF;
 
+#if 0 /* XXX */
 	prt->dp_start = htole32(partn->bs - off);
 	prt->dp_size = htole32(partn->ns);
+#else
+	t = htole32(partn->bs - off);
+	memcpy(&prt->dp_start, &t, sizeof(u_int32_t));
+	t = htole32(partn->ns);
+	memcpy(&prt->dp_size, &t, sizeof(u_int32_t));
+#endif
 
 	partn->scyl = scsave;
 	partn->ecyl = ecsave;

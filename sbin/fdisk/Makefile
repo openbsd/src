@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.40 2014/04/13 15:29:21 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.41 2014/05/05 17:18:08 miod Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -54,6 +54,11 @@ MAN=	fdisk.8
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "socppc"
 CFLAGS += -DHAS_MBR
+.endif
+
+# XXX gross
+.if ${MACHINE_ARCH} == "sh"
+CFLAGS += -fno-builtin-memcpy
 .endif
 
 .include <bsd.prog.mk>
