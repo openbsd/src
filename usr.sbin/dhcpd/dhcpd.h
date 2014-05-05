@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.47 2013/04/17 19:26:10 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.48 2014/05/05 18:27:57 pelikan Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -687,9 +687,9 @@ u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
 
 /* icmp.c */
-void icmp_startup(int, void (*)(struct iaddr, u_int8_t *, int));
-int icmp_echorequest(struct iaddr *);
-void icmp_echoreply(struct protocol *);
+void	icmp_startup(void);
+int	icmp_echorequest(struct iaddr *);
+void	icmp_echoreply(struct protocol *);
 
 /* pfutils.c */
 __dead void pftable_handler(void);

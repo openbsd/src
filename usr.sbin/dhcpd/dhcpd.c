@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.41 2010/12/15 14:34:17 claudio Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.42 2014/05/05 18:27:57 pelikan Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 		if (setrtable(rdomain) == -1)
 			error("setrtable (%m)");
 
-	icmp_startup(1, lease_pinged);
+	icmp_startup();
 
 	if (syncsend || syncrecv) {
 		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
