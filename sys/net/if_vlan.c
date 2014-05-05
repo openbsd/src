@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.103 2014/04/22 11:43:07 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.104 2014/05/05 10:00:45 henning Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -151,8 +151,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	/* Now undo some of the damage... */
-	ifp->if_type = IFT_L2VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
 	ifp->if_output = vlan_output;
 
@@ -374,12 +372,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	}
 
 	/*
-	 * Inherit the if_type from the parent.  This allows us to
-	 * participate in bridges of that type.
-	 */
-	ifv->ifv_if.if_type = p->if_type;
-
-	/*
 	 * Inherit baudrate from the parent.  An SNMP agent would use this
 	 * information.
 	 */
@@ -392,9 +384,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	 *
 	 * If the card cannot handle hardware tagging, it cannot
 	 * possibly compute the correct checksums for tagged packets.
-	 *
-	 * This brings up another possibility, do cards exist which
-	 * have all of these capabilities but cannot utilize them together?
 	 */
 	if (p->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		ifv->ifv_if.if_capabilities = p->if_capabilities &
