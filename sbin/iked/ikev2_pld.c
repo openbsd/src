@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.40 2014/04/28 11:21:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.41 2014/05/05 15:21:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -616,6 +616,12 @@ ikev2_pld_attr(struct iked *env, struct ikev2_transform *xfrm,
 	} else {
 		/* Type-Length-Value attribute */
 		attr_length = betoh16(attr.attr_length);
+		if (attr_length < sizeof(attr)) {
+			log_debug("%s: payload malformed: shorter than "
+			    "minimal header (%zu < %zu)", __func__,
+			    attr_length, sizeof(attr));
+			return (-1);
+		}
 		if (total < attr_length) {
 			log_debug("%s: payload malformed: attribute larger "
 			    "than actual payload (%zu < %zu)", __func__,
