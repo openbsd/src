@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.32 2013/03/11 17:40:10 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.33 2014/05/05 15:08:37 tedu Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -103,13 +103,10 @@ main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
 	struct sockaddr_in inetaddr, inetpeer;
-	fd_set *ready, *sockbits;
-	size_t fd_size;
-	int ch, connect_type_cnt, i, maxsock = 0, msgsock;
+	int ch, connect_type_cnt, i;
 	int nfsdcnt = DEFNFSDCNT, on, reregister = 0, sock;
 	int udpflag = 0, tcpflag = 0, tcpsock;
 	const char *errstr = NULL;
-	socklen_t len;
 
 	/* Start by writing to both console and log. */
 	openlog("nfsd", LOG_PID | LOG_PERROR, LOG_DAEMON);
@@ -264,7 +261,6 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			return (1);
 		}
-		maxsock = tcpsock;
 		connect_type_cnt++;
 	}
 
@@ -274,33 +270,28 @@ main(int argc, char *argv[])
 	setproctitle("master");
 
 	/*
-	 * Allocate space for the fd_set pointers and fill in sockbits
-	 */
-	fd_size = howmany(maxsock + 1, NFDBITS) * sizeof(fd_mask);
-	sockbits = malloc(fd_size);
-	ready = malloc(fd_size);
-	if (sockbits == NULL || ready == NULL) {
-		syslog(LOG_ERR, "cannot allocate memory");
-		return (1);
-	}
-	memset(sockbits, 0, fd_size);
-	if (tcpflag)
-		FD_SET(tcpsock, sockbits);
-
-	/*
 	 * Loop forever accepting connections and passing the sockets
 	 * into the kernel for the mounts.
 	 */
 	for (;;) {
-		memcpy(ready, sockbits, fd_size);
+		struct pollfd		pfd;
+		struct sockaddr_in	inetpeer;
+		int ret, msgsock;
+		socklen_t len;
+
+		pfd.fd = tcpsock;
+		pfd.events = POLLIN;
+
 		if (connect_type_cnt > 1) {
-			if (select(maxsock + 1,
-			    ready, NULL, NULL, NULL) < 1) {
-				syslog(LOG_ERR, "select failed: %m");
+			ret = poll(&pfd, 1, INFTIM);
+			if (ret < 1) {
+				syslog(LOG_ERR, "poll failed: %m");
 				return (1);
 			}
+				
 		}
-		if (tcpflag && FD_ISSET(tcpsock, ready)) {
+		
+		if (tcpflag) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
