@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.31 2014/05/05 08:23:57 blambert Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.32 2014/05/05 16:13:12 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1117,8 +1117,10 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 
 		/* ignore messages for other processes */
 		if (hdr.sadb_msg_pid != 0 &&
-		    hdr.sadb_msg_pid != (u_int32_t)getpid())
+		    hdr.sadb_msg_pid != (u_int32_t)getpid()) {
+			free(data);
 			continue;
+		}
 
 		/* not the reply, enqueue */
 		if ((pm = malloc(sizeof(*pm))) == NULL) {
