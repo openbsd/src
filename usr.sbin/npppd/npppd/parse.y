@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2014/03/22 04:32:39 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2014/05/05 04:58:23 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1041,7 +1041,6 @@ lookup(char *s)
 		{ "max-failovers",                MAX_FAILOVERS},
 		{ "max-session",                  MAX_SESSION},
 		{ "max-tries",                    MAX_TRIES},
-		{ "mppe",                         MPPE},
 		{ "mppe",                         MPPE},
 		{ "mppe-key-length",              MPPE_KEY_LENGTH},
 		{ "mppe-key-state",               MPPE_KEY_STATE},
