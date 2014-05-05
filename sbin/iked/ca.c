@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.27 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.28 2014/05/05 18:54:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -791,8 +791,7 @@ ca_x509_serialize(X509 *x509)
 int
 ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 {
-	RSA		*rsa;
-	BIO		*out = NULL;
+	RSA		*rsa = NULL;
 	u_int8_t	*d;
 	int		 len = 0;
 	int		 ret = -1;
@@ -805,14 +804,16 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 
 		if ((rsa = EVP_PKEY_get1_RSA(key)) == NULL)
 			goto done;
-		if ((out = BIO_new(BIO_s_mem())) == NULL)
+		if ((len = i2d_RSAPublicKey(rsa, NULL)) <= 0)
 			goto done;
-		if (!i2d_RSAPublicKey_bio(out, rsa))
+		if ((id->id_buf = ibuf_new(NULL, len)) == NULL)
 			goto done;
 
-		len = BIO_get_mem_data(out, &d);
-		if ((id->id_buf = ibuf_new(d, len)) == NULL)
+		d = ibuf_data(id->id_buf);
+		if (i2d_RSAPublicKey(rsa, &d) != len) {
+			ibuf_release(id->id_buf);
 			goto done;
+		}
 
 		id->id_type = IKEV2_CERT_RSA_KEY;
 		break;
@@ -826,17 +827,18 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 
 	ret = 0;
  done:
-	if (out != NULL)
-		BIO_free(out);
+	if (rsa != NULL)
+		RSA_free(rsa);
 	return (ret);
 }
 
 int
 ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 {
-	RSA		*rsa;
+	RSA		*rsa = NULL;
 	u_int8_t	*d;
 	int		 len = 0;
+	int		 ret = -1;
 
 	switch (key->type) {
 	case EVP_PKEY_RSA:
@@ -845,16 +847,16 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		ibuf_release(id->id_buf);
 
 		if ((rsa = EVP_PKEY_get1_RSA(key)) == NULL)
-			return (-1);
+			goto done;
 		if ((len = i2d_RSAPrivateKey(rsa, NULL)) <= 0)
-			return (-1);
+			goto done;
 		if ((id->id_buf = ibuf_new(NULL, len)) == NULL)
-			return (-1);
+			goto done;
 
 		d = ibuf_data(id->id_buf);
 		if (i2d_RSAPrivateKey(rsa, &d) != len) {
 			ibuf_release(id->id_buf);
-			return (-1);
+			goto done;
 		}
 
 		id->id_type = IKEV2_CERT_RSA_KEY;
@@ -867,7 +869,11 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 	log_debug("%s: type %s length %d", __func__,
 	    print_map(id->id_type, ikev2_cert_map), len);
 
-	return (0);
+	ret = 0;
+ done:
+	if (rsa != NULL)
+		RSA_free(rsa);
+	return (ret);
 }
 
 char *
