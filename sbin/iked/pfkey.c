@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.32 2014/05/05 16:13:12 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.33 2014/05/05 18:50:36 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -43,6 +43,7 @@
 #define IOV_CNT 20
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
+#define PFKEY_REPLY_TIMEOUT 1000
 
 static u_int32_t sadb_msg_seq = 0;
 static u_int sadb_decoupled = 0;
@@ -1085,10 +1086,42 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 {
 	struct pfkey_message	*pm;
 	struct sadb_msg		 hdr;
+	struct timeval		 tv;
 	ssize_t			 len;
 	u_int8_t		*data;
+	fd_set			*fds;
+	int			 n;
 
 	for (;;) {
+		/*
+		 * We should actually expect the reply to get lost
+		 * as PF_KEY is an unreliable service per the specs.
+		 * Currently we do this by setting a short timeout,
+		 * and if it is not readable in that time, we fail
+		 * the read.
+		 */
+		n = howmany(sd + 1, NFDBITS);
+		if ((fds = calloc(n, sizeof(fd_mask))) == NULL) {
+			log_warn("%s: calloc(%lu, %lu) failed", __func__,
+			    (unsigned long) n,
+			    (unsigned long) sizeof(fd_mask));
+			return (-1);
+		}
+		FD_SET(sd, fds);
+		tv.tv_sec = 0;
+		tv.tv_usec = PFKEY_REPLY_TIMEOUT;
+		n = select(sd + 1, fds, 0, 0, &tv);
+		free(fds);
+		if (n == -1) {
+			log_warn("%s: select(%d, fds, 0, 0, &tv) failed",
+			    __func__, sd + 1);
+			return (-1);
+		}
+		if (n == 0) {
+			log_warnx("%s: no reply from PF_KEY", __func__);
+			return (-1);
+		}
+
 		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
 			log_warn("%s: short recv", __func__);
 			return (-1);
