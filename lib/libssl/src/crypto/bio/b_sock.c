@@ -56,6 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/ioctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -575,8 +577,7 @@ BIO_socket_nbio(int s, int mode)
 	int l;
 
 	l = mode;
-#ifdef FIONBIO
 	ret = BIO_socket_ioctl(s, FIONBIO, &l);
-#endif
+
 	return (ret == 0);
 }
