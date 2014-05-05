@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.73 2014/04/19 12:08:10 henning Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.74 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -619,6 +619,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
     case SIOCSIFADDR:
 	if (ifa->ifa_addr->sa_family != AF_INET)
 	    error = EAFNOSUPPORT;
+	ifa->ifa_rtrequest = p2p_rtrequest;
 	break;
 
     case SIOCSIFDSTADDR:

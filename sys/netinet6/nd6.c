@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.114 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.115 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1157,8 +1157,14 @@ nd6_rtrequest(int req, struct rtentry *rt)
 				memcpy(LLADDR(SDL(gate)), macp, ifp->if_addrlen);
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
+
+			/*
+			 * XXX Since lo0 is in the default rdomain we
+			 * should not (ab)use it for any route related
+			 * to an interface of a different rdomain.
+			 */
 			if (nd6_useloopback) {
-				rt->rt_ifp = lo0ifp;	/*XXX*/
+				rt->rt_ifp = lo0ifp;
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.

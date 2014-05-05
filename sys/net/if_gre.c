@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.67 2014/04/21 12:22:25 henning Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.68 2014/05/05 11:44:33 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -441,7 +441,8 @@ int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 
-	struct ifreq *ifr = (struct ifreq *) data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct ifkalivereq *ikar = (struct ifkalivereq *)data;
 	struct gre_softc *sc = ifp->if_softc;
@@ -455,6 +456,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 	case SIOCSIFDSTADDR:
 		break;

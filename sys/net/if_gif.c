@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.66 2014/04/21 12:22:25 henning Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.67 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -354,7 +354,8 @@ int
 gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
-	struct ifreq     *ifr = (struct ifreq*)data;
+	struct ifreq     *ifr = (struct ifreq *)data;
+	struct ifaddr	 *ifa = (struct ifaddr *)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
 	struct sockaddr *sa;
@@ -363,6 +364,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		break;
 
 	case SIOCSIFDSTADDR:

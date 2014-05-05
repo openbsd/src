@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.122 2014/05/02 10:40:26 jca Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.123 2014/05/05 11:44:33 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -996,7 +996,8 @@ sppp_pick(struct ifnet *ifp)
 int
 sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ifreq *ifr = (struct ifreq*) data;
+	struct ifreq *ifr = data;
+	struct ifaddr *ifa = data;
 	struct sppp *sp = (struct sppp*) ifp;
 	int s, rv, going_up, going_down, newmode;
 
@@ -1009,6 +1010,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFADDR:
 		if_up(ifp);
+		ifa->ifa_rtrequest = p2p_rtrequest;
 		/* FALLTHROUGH */
 
 	case SIOCSIFFLAGS:

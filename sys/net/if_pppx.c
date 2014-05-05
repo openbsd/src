@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.29 2014/04/08 04:26:53 miod Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.30 2014/05/05 11:44:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1094,10 +1094,14 @@ pppx_if_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct pppx_if *pxi = (struct pppx_if *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)addr;
+	struct ifaddr *ifa = (struct ifaddr *)addr;
 	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		ifa->ifa_rtrequest = p2p_rtrequest;
+		break;
+
 	case SIOCSIFFLAGS:
 		break;
 

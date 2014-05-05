@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.135 2014/04/10 13:47:21 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.136 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1369,7 +1369,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 		ifacount++;
 	}
 
-	if ((ifacount <= 1 || ifp->if_type == IFT_CARP) && ifp->if_ioctl &&
+	if ((ifacount <= 1 || ifp->if_type == IFT_CARP ||
+	    (ifp->if_flags & IFF_POINTOPOINT)) && ifp->if_ioctl &&
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia6))) {
 		splx(s);
 		return (error);
@@ -1398,7 +1399,9 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	/* Add ownaddr as loopback rtentry, if necessary (ex. on p2p link). */
 	if (newhost) {
 		/* set the rtrequest function to create llinfo */
-		ia6->ia_ifa.ifa_rtrequest = nd6_rtrequest;
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
+			ia6->ia_ifa.ifa_rtrequest = nd6_rtrequest;
+
 		rt_ifa_addloop(&(ia6->ia_ifa));
 	}
 

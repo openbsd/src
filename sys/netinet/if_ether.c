@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.125 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.126 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -254,6 +254,12 @@ arp_rtrequest(int req, struct rtentry *rt)
 			SDL(gate)->sdl_alen = ETHER_ADDR_LEN;
 			memcpy(LLADDR(SDL(gate)),
 			    ((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
+
+			/*
+			 * XXX Since lo0 is in the default rdomain we
+			 * should not (ab)use it for any route related
+			 * to an interface of a different rdomain.
+			 */
 			if (useloopback)
 				rt->rt_ifp = lo0ifp;
 			/*

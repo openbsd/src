@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.286 2014/04/22 12:35:00 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.287 2014/05/05 11:44:33 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -988,6 +988,71 @@ link_rtrequest(int cmd, struct rtentry *rt)
 			ifa->ifa_rtrequest(cmd, rt);
 	}
 }
+
+/*
+ * Default action when installing a local route on a point-to-point
+ * interface.
+ */
+void
+p2p_rtrequest(int req, struct rtentry *rt)
+{
+	struct ifnet *ifp = rt->rt_ifp;
+	struct ifaddr *ifa, *lo0ifa;
+
+	switch (req) {
+	case RTM_ADD:
+		/*
+		 * XXX Here we abuse RTF_LLINFO to add a route to
+		 * loopback.  We do that to always have a route
+		 * pointing to our address.
+		 */
+		if ((rt->rt_flags & RTF_LLINFO) == 0)
+			break;
+
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			if (memcmp(rt_key(rt), ifa->ifa_addr,
+			    rt_key(rt)->sa_len) == 0)
+				break;
+		}
+
+		if (ifa == NULL)
+			break;
+
+		/*
+		 * XXX Since lo0 is in the default rdomain we should not
+		 * (ab)use it for any route related to an interface of a
+		 * different rdomain.
+		 */
+		TAILQ_FOREACH(lo0ifa, &lo0ifp->if_addrlist, ifa_list)
+			if (lo0ifa->ifa_addr->sa_family ==
+			    ifa->ifa_addr->sa_family)
+				break;
+
+		if (lo0ifa == NULL)
+			break;
+
+		rt_setgate(rt, rt_key(rt), lo0ifa->ifa_addr, ifp->if_rdomain);
+		rt->rt_ifp = lo0ifp;
+		rt->rt_flags &= ~RTF_LLINFO;
+
+		/*
+		 * make sure to set rt->rt_ifa to the interface
+		 * address we are using, otherwise we will have trouble
+		 * with source address selection.
+		 */
+		if (ifa != rt->rt_ifa) {
+			ifafree(rt->rt_ifa);
+			ifa->ifa_refcnt++;
+			rt->rt_ifa = ifa;
+		}
+		break;
+	case RTM_DELETE:
+	case RTM_RESOLVE:
+	default:
+		break;
+	}
+}
+
 
 /*
  * Bring down all interfaces
