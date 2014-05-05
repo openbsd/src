@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.37 2014/01/21 03:07:50 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.38 2014/05/05 18:02:49 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -141,7 +141,7 @@ parse_string(FILE *cfile)
  * bit-count :== 0..32
  */
 int
-parse_cidr(FILE *cfile, unsigned char *cidr)  
+parse_cidr(FILE *cfile, unsigned char *cidr)
 {
 	struct in_addr addr;
 	int token;
@@ -254,7 +254,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 		skip_to_semi(cfile);
 		return;
 	}
-	
+
 	*timep = betoh32(value);
 
 	parse_semi(cfile);
@@ -269,7 +269,7 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 	long long numval, low, high;
 
 	token = next_token(&val, cfile);
-	
+
 	switch (fmt) {
 	case 'l':	/* Signed 32-bit integer. */
 		low = INT32_MIN;
@@ -311,7 +311,7 @@ parse_hex(FILE *cfile, unsigned char *buf)
 	char *val, *ep;
 	int token;
 	unsigned long ulval;
-	
+
 	token = next_token(&val, cfile);
 
 	errno = 0;
@@ -322,7 +322,7 @@ parse_hex(FILE *cfile, unsigned char *buf)
 		return (0);
 
 	buf[0] = ulval;
-	
+
 	return (1);
 }
 

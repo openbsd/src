@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.64 2014/02/13 00:24:13 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.65 2014/05/05 18:02:49 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -217,7 +217,7 @@ priv_add_route(struct imsg_add_route *imsg)
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
-	
+
 	if (imsg->addrs & RTA_DST) {
 		memset(&dest, 0, sizeof(dest));
 
@@ -230,7 +230,7 @@ priv_add_route(struct imsg_add_route *imsg)
 		iov[iovcnt].iov_base = &dest;
 		iov[iovcnt++].iov_len = sizeof(dest);
 	}
-	
+
 	if (imsg->addrs & RTA_GATEWAY) {
 		memset(&gateway, 0, sizeof(gateway));
 
@@ -533,7 +533,7 @@ resolv_conf_priority(int domain)
 
 	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
 	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
-	
+
 	/* Set destination & netmask addresses of all zeros. */
 
 	m_rtmsg.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;

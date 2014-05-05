@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.302 2014/05/05 14:44:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.303 2014/05/05 18:02:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -790,7 +790,7 @@ bind_lease(void)
 	options = lease->options;
 
 	set_lease_times(lease);
-	
+
 	client->new->expiry = lease->expiry;
 	client->new->renewal = lease->renewal;
 	client->new->rebind = lease->rebind;
@@ -2109,7 +2109,7 @@ apply_defaults(struct client_lease *lease)
 		}
 		if (j < config->ignored_option_count)
 			continue;
-		
+
 		switch (config->default_actions[i]) {
 		case ACTION_SUPERSEDE:
 			if (newlease->options[i].len != 0)
@@ -2272,7 +2272,7 @@ apply_ignore_list(char *ignore_list)
 	    p = strsep(&ignore_list, ", ")) {
 		if (*p == '\0')
 			continue;
-		
+
 		for (i = 1; i < DHO_END; i++)
 			if (!strcasecmp(dhcp_options[i].name, p))
 				break;

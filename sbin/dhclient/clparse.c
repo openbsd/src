@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.84 2014/05/05 14:44:18 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.85 2014/05/05 18:02:49 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -165,7 +165,7 @@ parse_client_statement(FILE *cfile)
 	int code, count, token;
 
 	token = next_token(NULL, cfile);
-	
+
 	switch (token) {
 	case TOK_SEND:
 		parse_option_decl(cfile, &config->send_options[0]);

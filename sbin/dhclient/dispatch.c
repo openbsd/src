@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.89 2014/02/18 01:46:58 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.90 2014/05/05 18:02:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -86,7 +86,7 @@ discover_interface(void)
 
 			if (foo->sdl_alen != ETHER_ADDR_LEN)
 				continue;
-				
+
 			ifi->index = foo->sdl_index;
 			memcpy(ifi->hw_address.ether_addr_octet, LLADDR(foo),
 			    ETHER_ADDR_LEN);
@@ -446,7 +446,7 @@ subnet_exists(struct client_lease *l)
 			    ifa->ifa_name);
 			return (1);
 		}
-		
+
 		/* Would my packets go out *his* interface? */
 		if (hisnet.s_addr == (myaddr.s_addr & hismask.s_addr)) {
 			note("interface %s already has the offered subnet!",
