@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.83 2014/01/25 05:21:23 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.84 2014/05/05 14:44:18 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -454,12 +454,11 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		return;
 	}
 
-	lease = malloc(sizeof(struct client_lease));
+	lease = calloc(1, sizeof(struct client_lease));
 	if (!lease)
 		error("no memory for lease.");
-	memset(lease, 0, sizeof(*lease));
-	lease->is_static = is_static;
 
+	lease->is_static = is_static;
 	do {
 		token = peek_token(NULL, cfile);
 		if (token == EOF) {

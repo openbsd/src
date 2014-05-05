@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.301 2014/05/04 21:07:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.302 2014/05/05 14:44:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -991,13 +991,11 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 	char *pretty;
 	int i;
 
-	lease = malloc(sizeof(struct client_lease));
+	lease = calloc(1, sizeof(struct client_lease));
 	if (!lease) {
 		warning("dhcpoffer: no memory to record lease.");
 		return (NULL);
 	}
-
-	memset(lease, 0, sizeof(*lease));
 
 	/* Copy the lease options. */
 	for (i = 0; i < 256; i++) {
