@@ -256,25 +256,7 @@ main(int argc, char **argv)
 		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
-	if (getenv("OPENSSL_DEBUG_MEMORY") != NULL) {	/* if not defined, use
-							 * compiled-in library
-							 * defaults */
-		if (!(0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))) {
-			CRYPTO_malloc_debug_init();
-			CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-		} else {
-			/* OPENSSL_DEBUG_MEMORY=off */
-			CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-		}
-	}
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-#if 0
-	if (getenv("OPENSSL_DEBUG_LOCKING") != NULL)
-#endif
-	{
-		CRYPTO_set_locking_callback(lock_dbg_cb);
-	}
+	CRYPTO_set_locking_callback(lock_dbg_cb);
 
 	openssl_startup();
 
@@ -376,8 +358,8 @@ main(int argc, char **argv)
 	ret = 1;
 
 end:
-	if (to_free)
-		free(to_free);
+	free(to_free);
+
 	if (config != NULL) {
 		NCONF_free(config);
 		config = NULL;
@@ -389,7 +371,6 @@ end:
 
 	openssl_shutdown();
 
-	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) {
 		BIO_free(bio_err);
 		bio_err = NULL;
