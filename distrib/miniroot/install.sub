@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.770 2014/05/04 13:08:39 krw Exp $
+#	$OpenBSD: install.sub,v 1.771 2014/05/05 00:09:16 bluhm Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1894,19 +1894,19 @@ upgrade_to64time_t() {
 
 # Feed the random pool some entropy before we read from it
 feed_random() {
-	{
-	    (dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
+	(dmesg; cat $CGI_INFO /*.conf; sysctl; route -n show; df;
 	    ifconfig -A; hostname) >/dev/random 2>&1
-	    dd if=/mnt/var/db/host.random of=/dev/random bs=65536 count=1
-	} >/dev/null 2>&1
+	if [[ -e /mnt/var/db/host.random ]]; then
+		dd if=/mnt/var/db/host.random of=/dev/random bs=65536 count=1 \
+		    status=none
+	fi
 }
 
 store_random() {
-	{
-	    dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1
-	    dd if=/dev/random of=/mnt/etc/random.seed bs=512 count=1
-	    chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
-	} >/dev/null 2>&1
+	dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1 \
+	    status=none
+	dd if=/dev/random of=/mnt/etc/random.seed bs=512 count=1 status=none
+	chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
 }
 
 finish_up() {
