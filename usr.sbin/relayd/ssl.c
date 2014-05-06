@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.22 2014/04/22 08:04:23 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.23 2014/05/06 11:03:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -346,6 +346,8 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	memcpy(buf, data, size);
 
 	BIO_free_all(bio);
+	EVP_PKEY_free(key);
+
 	*len = (off_t)size;
 	return (buf);
 
@@ -355,6 +357,8 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
+	if (key != NULL)
+		EVP_PKEY_free(key);
 	return (NULL);
 }
 
@@ -432,6 +436,7 @@ ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
 	}
 
 	RSA_set_ex_data(rsa, 0, data);
+	RSA_free(rsa); /* dereference, will be cleaned up with pkey */
 
 	*x509ptr = x509;
 	*pkeyptr = pkey;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.63 2014/04/29 19:13:14 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.64 2014/05/06 11:03:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -228,6 +228,8 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	memcpy(buf, data, size);
 
 	BIO_free_all(bio);
+	EVP_PKEY_free(key);
+
 	*len = (off_t)size + 1;
 	return (buf);
 
@@ -236,6 +238,8 @@ fail:
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
+	if (key != NULL)
+		EVP_PKEY_free(key);
 	if (fp)
 		fclose(fp);
 	return (NULL);
@@ -458,7 +462,7 @@ int
 ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
     X509 **x509ptr, EVP_PKEY **pkeyptr)
 {
-	int		 ret = 0;
+	int		 ret = 1;
 	BIO		*in;
 	X509		*x509 = NULL;
 	EVP_PKEY	*pkey = NULL;
@@ -480,19 +484,19 @@ ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
 		goto fail;
 	}
 
+	*x509ptr = x509;
+	*pkeyptr = pkey;
+
+	if (data == NULL)
+		goto done;
+
 	if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
 		goto fail;
 	}
 
-	if (data)
-		RSA_set_ex_data(rsa, 0, data);
-
-	*x509ptr = x509;
-	*pkeyptr = pkey;
-	ret = 1;
-
-	goto done;
+	RSA_set_ex_data(rsa, 0, data);
+	RSA_free(rsa); /* dereference, will be cleaned up with pkey */
 
  fail:
 	ssl_error("ssl_ctx_load_pkey");
@@ -501,6 +505,7 @@ ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
 		EVP_PKEY_free(pkey);
 	if (x509 != NULL)
 		X509_free(x509);
+	ret = 0;
 
  done:
 	if (in != NULL)
