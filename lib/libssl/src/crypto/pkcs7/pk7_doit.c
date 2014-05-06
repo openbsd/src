@@ -639,10 +639,10 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		 * EOF and encode the last few bytes */
 		BIO_set_mem_eof_return(bio,0);
 
-		if (data_body->length > 0)
+		if (data_body != NULL && data_body->length > 0)
 			BIO_write(bio,(char *)data_body->data,data_body->length);
 #else
-		if (data_body->length > 0)
+		if (data_body != NULL && data_body->length > 0)
 		      bio = BIO_new_mem_buf(data_body->data,data_body->length);
 		else {
 			bio=BIO_new(BIO_s_mem());
@@ -788,6 +788,10 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	case NID_pkcs7_signed:
 		si_sk=p7->d.sign->signer_info;
 		os=PKCS7_get_octet_string(p7->d.sign->contents);
+		if (os == NULL) {
+			PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_DECODE_ERROR);
+	        	goto err;
+		}
 		/* If detached data then the content is excluded */
 		if(PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
 			M_ASN1_OCTET_STRING_free(os);
@@ -797,6 +801,10 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 	case NID_pkcs7_digest:
 		os=PKCS7_get_octet_string(p7->d.digest->contents);
+		if (os == NULL) {
+			PKCS7err(PKCS7_F_PKCS7_DATAFINAL, PKCS7_R_DECODE_ERROR);
+	        	goto err;
+		}
 		/* If detached data then the content is excluded */
 		if(PKCS7_type_is_data(p7->d.digest->contents) && p7->detached)
 			{
