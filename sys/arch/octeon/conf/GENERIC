@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2014/01/15 10:36:10 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.13 2014/05/06 17:11:16 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,6 +48,7 @@ cnmac*		at cn30xxgmx?
 rgephy*		at mii?
 ukphy*		at mii?
 atphy*		at mii?
+brswphy*	at mii?
 
 # IDE Controller
 pciide*		at pci? flags 0x0000
