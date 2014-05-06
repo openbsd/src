@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.8 2013/10/24 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.9 2014/05/06 11:11:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,7 @@ ibuf_cat(struct ibuf *dst, struct ibuf *src)
 void
 ibuf_zero(struct ibuf *buf)
 {
-	memset(buf->buf, 0, buf->wpos);
+	explicit_bzero(buf->buf, buf->wpos);
 }
 
 struct ibuf *
@@ -103,8 +103,10 @@ ibuf_release(struct ibuf *buf)
 {
 	if (buf == NULL)
 		return;
-	if (buf->buf != NULL)
+	if (buf->buf != NULL) {
+		ibuf_zero(buf);
 		free(buf->buf);
+	}
 	free(buf);
 }
 
