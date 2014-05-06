@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.29 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.30 2014/05/06 11:50:14 mpi Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -169,13 +169,10 @@ procfs_start(struct mount *mp, int flags, struct proc *p)
 int
 procfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
-	struct vmtotal	vmtotals;
-
-	uvm_total(&vmtotals);
 	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
-	sbp->f_blocks = vmtotals.t_vm;
-	sbp->f_bfree = vmtotals.t_vm - vmtotals.t_avm;
+	sbp->f_blocks = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
+	sbp->f_bfree = uvmexp.npages - uvmexp.free - uvmexp.active;
 	sbp->f_bavail = 0;
 	sbp->f_files = maxprocess;		/* approx */
 	sbp->f_ffree = maxprocess - nprocesses;	/* approx */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.31 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.32 2014/05/06 11:50:14 mpi Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <uvm/uvm_extern.h>
+#include <sys/vmmeter.h>
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 
@@ -79,10 +79,9 @@ static fixpt_t cexp[3] = {
 	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
 };
 
-/*
- * prototypes
- */
+
 static void uvm_loadav(struct loadavg *);
+void uvm_total(struct vmtotal *);
 
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)

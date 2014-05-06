@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.113 2014/05/03 22:44:36 guenther Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.114 2014/05/06 11:50:14 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -484,7 +484,6 @@ struct loadavg;
 struct proc;
 struct pmap;
 struct vmspace;
-struct vmtotal;
 struct mount;
 struct vnode;
 struct core;
@@ -678,7 +677,6 @@ void			uvmspace_share(struct proc *, struct proc *);
 void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *, 
 				void *, size_t, struct proc *);
-void			uvm_total(struct vmtotal *);
 
 /* uvm_mmap.c */
 int			uvm_mmap(vm_map_t, vaddr_t *, vsize_t,
