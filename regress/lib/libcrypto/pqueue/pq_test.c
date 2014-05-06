@@ -59,6 +59,7 @@
 
 #include "pqueue.h"
 
+/* remember to change expected.txt if you change these values */
 unsigned char prio1[8] = "supercal";
 unsigned char prio2[8] = "ifragili";
 unsigned char prio3[8] = "sticexpi";
