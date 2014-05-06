@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.104 2014/05/06 07:24:37 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.105 2014/05/06 08:17:58 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2611,7 +2611,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		del->del_spisize = sizeof(spi32);
 		del->del_nspi = htobe16(1);
 
-		spi32 = htobe32(csa->csa_peerspi);
+		spi32 = htobe32(csa->csa_spi.spi);
 		if (ibuf_add(buf, &spi32, sizeof(spi32)))
 			goto done;
 
