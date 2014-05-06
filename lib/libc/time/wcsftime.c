@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsftime.c,v 1.2 2013/01/20 20:29:02 millert Exp $ */
+/*	$OpenBSD: wcsftime.c,v 1.3 2014/05/06 15:49:45 tedu Exp $ */
 #include "private.h"
 
 /*
@@ -110,10 +110,6 @@ static wchar_t *	_yconv(int, int, int, int, wchar_t *, const wchar_t *);
 
 extern char *	tzname[];
 
-#ifndef YEAR_2000_NAME
-#define YEAR_2000_NAME	"CHECK_STRFTIME_FORMATS_FOR_TWO_DIGIT_YEARS"
-#endif /* !defined YEAR_2000_NAME */
-
 #define IN_NONE	0
 #define IN_SOME	1
 #define IN_THIS	2
@@ -129,22 +125,6 @@ wcsftime(wchar_t *__restrict s, size_t maxsize,
 	tzset();
 	warn = IN_NONE;
 	p = _fmt(((format == NULL) ? L"%c" : format), t, s, s + maxsize, &warn);
-#ifndef NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU
-	if (warn != IN_NONE && getenv(YEAR_2000_NAME) != NULL) {
-		(void) fprintf(stderr, "\n");
-		if (format == NULL)
-			(void) fprintf(stderr, "NULL strftime format ");
-		else	(void) fwprintf(stderr, "strftime format \"%ls\" ",
-				format);
-		(void) fprintf(stderr, "yields only two digits of years in ");
-		if (warn == IN_SOME)
-			(void) fprintf(stderr, "some locales");
-		else if (warn == IN_THIS)
-			(void) fprintf(stderr, "the current locale");
-		else	(void) fprintf(stderr, "all locales");
-		(void) fprintf(stderr, "\n");
-	}
-#endif /* !defined NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU */
 	if (p == s + maxsize) {
 		if (maxsize > 0)
 			s[maxsize - 1] = '\0';
