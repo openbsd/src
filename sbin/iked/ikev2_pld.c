@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.42 2014/05/06 07:24:37 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.43 2014/05/06 07:45:17 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1152,6 +1152,12 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		print_hex(md, 0, sizeof(md));
 		break;
 	case IKEV2_N_INVALID_KE_PAYLOAD:
+		if (sa_stateok(msg->msg_sa, IKEV2_STATE_VALID) &&
+		    !msg->msg_e) {
+			log_debug("%s: INVALID_KE_PAYLOAD not encrypted",
+			    __func__);
+			return (-1);
+		}
 		if (len != sizeof(group)) {
 			log_debug("%s: malformed payload: group size mismatch"
 			    " (%zu != %zu)", __func__, len, sizeof(group));
@@ -1181,6 +1187,11 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
 		break;
 	case IKEV2_N_NO_ADDITIONAL_SAS:
+		if (!msg->msg_e) {
+			log_debug("%s: NO_ADDITIONAL_SAS not encrypted",
+			    __func__);
+			return (-1);
+		}
 		/* This makes sense for Child SAs only atm */
 		if (msg->msg_sa->sa_stateflags & IKED_REQ_CHILDSA) {
 			ikev2_disable_rekeying(env, msg->msg_sa);
@@ -1188,6 +1199,10 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		break;
 	case IKEV2_N_REKEY_SA:
+		if (!msg->msg_e) {
+			log_debug("%s: N_REKEY_SA not encrypted", __func__);
+			return (-1);
+		}
 		if (len != n.n_spisize) {
 			log_debug("%s: malformed notification", __func__);
 			return (-1);
@@ -1220,6 +1235,11 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    print_spi(rekey->spi, n.n_spisize));
 		break;
 	case IKEV2_N_IPCOMP_SUPPORTED:
+		if (!msg->msg_e) {
+			log_debug("%s: N_IPCOMP_SUPPORTED not encrypted",
+			    __func__);
+			return (-1);
+		}
 		if (len < sizeof(cpi) + sizeof(transform)) {
 			log_debug("%s: ignoring malformed ipcomp notification",
 			    __func__);
