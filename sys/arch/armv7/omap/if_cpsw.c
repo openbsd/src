@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.21 2013/11/26 20:33:11 deraadt Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.22 2014/05/06 14:44:08 jasper Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -200,19 +200,6 @@ cpsw_rxdesc_adjust(u_int x, int y)
 	return (((x) + y) & (CPSW_NRXDESCS - 1));
 }
 
-static inline uint32_t
-cpsw_read_4(struct cpsw_softc * const sc, bus_size_t const offset)
-{
-	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, offset);
-}
-
-static inline void
-cpsw_write_4(struct cpsw_softc * const sc, bus_size_t const offset,
-    uint32_t const value)
-{
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, offset, value);
-}
-
 static inline void
 cpsw_set_txdesc_next(struct cpsw_softc * const sc, const u_int i, uint32_t n)
 {
@@ -381,7 +368,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
-	idver = cpsw_read_4(sc, CPSW_SS_IDVER);
+	idver = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_IDVER);
 	printf(": version %d.%d (%d), address %s\n",
 	    CPSW_SS_IDVER_MAJ(idver), CPSW_SS_IDVER_MIN(idver),
 	    CPSW_SS_IDVER_RTL(idver), ether_sprintf(ac->ac_enaddr));
@@ -569,7 +556,7 @@ cpsw_start(struct ifnet *ifp)
 		if (sc->sc_txeoq) {
 			/* kick the dma engine */
 			sc->sc_txeoq = false;
-			cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(0),
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(0),
 			    cpsw_txdesc_paddr(sc, txstart));
 		}
 	}
@@ -640,7 +627,7 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 	u_int tries;
 
 	for(tries = 0; tries < 1000; tries++) {
-		if ((cpsw_read_4(sc, reg) & (1U << 31)) == 0)
+		if ((bus_space_read_4(sc->sc_bst, sc->sc_bsh, reg) & (1U << 31)) == 0)
 			return 0;
 		delay(1);
 	}
@@ -656,13 +643,13 @@ cpsw_mii_readreg(struct device *dev, int phy, int reg)
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		return 0;
 
-	cpsw_write_4(sc, MDIOUSERACCESS0, (1U << 31) |
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOUSERACCESS0, (1U << 31) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16));
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		return 0;
 
-	v = cpsw_read_4(sc, MDIOUSERACCESS0);
+	v = bus_space_read_4(sc->sc_bst, sc->sc_bsh, MDIOUSERACCESS0);
 	if (v & (1 << 29))
 		return v & 0xffff;
 	else
@@ -680,13 +667,13 @@ cpsw_mii_writereg(struct device *dev, int phy, int reg, int val)
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		goto out;
 
-	cpsw_write_4(sc, MDIOUSERACCESS0, (1U << 31) | (1 << 30) |
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOUSERACCESS0, (1U << 31) | (1 << 30) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16) | val);
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
 		goto out;
 
-	v = cpsw_read_4(sc, MDIOUSERACCESS0);
+	v = bus_space_read_4(sc->sc_bst, sc->sc_bsh, MDIOUSERACCESS0);
 	if ((v & (1 << 29)) == 0)
 out:
 		printf("%s error\n", __func__);
@@ -769,59 +756,59 @@ cpsw_init(struct ifnet *ifp)
 	sc->sc_txhead = 0;
 
 	/* Reset wrapper */
-	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_SOFT_RESET) & 1);
 
 	/* Reset SS */
-	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_SOFT_RESET) & 1);
 
 	/* Clear table (30) and enable ALE(31) and set passthrough (4) */
-	cpsw_write_4(sc, CPSW_ALE_CONTROL, (3 << 30) | 0x10);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_ALE_CONTROL, (3 << 30) | 0x10);
 
 	/* Reset and init Sliver port 1 and 2 */
 	for (i = 0; i < 2; i++) {
 		/* Reset */
-		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_SOFT_RESET(i), 1);
+		while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_SOFT_RESET(i)) & 1);
 		/* Set Slave Mapping */
-		cpsw_write_4(sc, CPSW_SL_RX_PRI_MAP(i), 0x76543210);
-		cpsw_write_4(sc, CPSW_PORT_P_TX_PRI_MAP(i+1), 0x33221100);
-		cpsw_write_4(sc, CPSW_SL_RX_MAXLEN(i), 0x5f2);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_RX_PRI_MAP(i), 0x76543210);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P_TX_PRI_MAP(i+1), 0x33221100);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_RX_MAXLEN(i), 0x5f2);
 		/* Set MAC Address */
-		cpsw_write_4(sc, CPSW_PORT_P_SA_HI(i+1),
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P_SA_HI(i+1),
 		    ac->ac_enaddr[0] | (ac->ac_enaddr[1] << 8) |
 		    (ac->ac_enaddr[2] << 16) | (ac->ac_enaddr[3] << 24));
-		cpsw_write_4(sc, CPSW_PORT_P_SA_LO(i+1),
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P_SA_LO(i+1),
 		    ac->ac_enaddr[4] | (ac->ac_enaddr[5] << 8));
 
 		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
 		   IFCTL_A(15), IFCTL_B(16) FIXME */
-		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i),
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_MACCONTROL(i),
 		    1 | (1<<5) | (1<<15) | (1<<16));
 
 		/* Set ALE port to forwarding(3) */
-		cpsw_write_4(sc, CPSW_ALE_PORTCTL(i+1), 3);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_ALE_PORTCTL(i+1), 3);
 	}
 
 	/* Set Host Port Mapping */
-	cpsw_write_4(sc, CPSW_PORT_P0_CPDMA_TX_PRI_MAP, 0x76543210);
-	cpsw_write_4(sc, CPSW_PORT_P0_CPDMA_RX_CH_MAP, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P0_CPDMA_TX_PRI_MAP, 0x76543210);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_PORT_P0_CPDMA_RX_CH_MAP, 0);
 
 	/* Set ALE port to forwarding(3) */
-	cpsw_write_4(sc, CPSW_ALE_PORTCTL(0), 3);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_ALE_PORTCTL(0), 3);
 
-	cpsw_write_4(sc, CPSW_SS_PTYPE, 0);
-	cpsw_write_4(sc, CPSW_SS_STAT_PORT_EN, 7);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_PTYPE, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_STAT_PORT_EN, 7);
 
-	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_SOFT_RESET) & 1);
 
 	for (i = 0; i < 8; i++) {
-		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(i), 0);
-		cpsw_write_4(sc, CPSW_CPDMA_RX_HDP(i), 0);
-		cpsw_write_4(sc, CPSW_CPDMA_TX_CP(i), 0);
-		cpsw_write_4(sc, CPSW_CPDMA_RX_CP(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_HDP(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_CP(i), 0);
 	}
 
 	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_txdescs, 0, 0,
@@ -830,7 +817,7 @@ cpsw_init(struct ifnet *ifp)
 	sc->sc_txhead = 0;
 	sc->sc_txnext = 0;
 
-	cpsw_write_4(sc, CPSW_CPDMA_RX_FREEBUFFER(0), 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_FREEBUFFER(0), 0);
 
 	bus_space_set_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, 0, 0,
 	    CPSW_CPPI_RAM_RXDESCS_SIZE/4);
@@ -843,42 +830,42 @@ cpsw_init(struct ifnet *ifp)
 	sc->sc_rxhead = 0;
 
 	/* align layer 3 header to 32-bit */
-	cpsw_write_4(sc, CPSW_CPDMA_RX_BUFFER_OFFSET, ETHER_ALIGN);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_BUFFER_OFFSET, ETHER_ALIGN);
 
 	/* Clear all interrupt Masks */
-	cpsw_write_4(sc, CPSW_CPDMA_RX_INTMASK_CLEAR, 0xFFFFFFFF);
-	cpsw_write_4(sc, CPSW_CPDMA_TX_INTMASK_CLEAR, 0xFFFFFFFF);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_INTMASK_CLEAR, 0xFFFFFFFF);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_INTMASK_CLEAR, 0xFFFFFFFF);
 
 	/* Enable TX & RX DMA */
-	cpsw_write_4(sc, CPSW_CPDMA_TX_CONTROL, 1);
-	cpsw_write_4(sc, CPSW_CPDMA_RX_CONTROL, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CONTROL, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_CONTROL, 1);
 
 	/* Enable TX and RX interrupt receive for core 0 */
-	cpsw_write_4(sc, CPSW_WR_C_TX_EN(0), 1);
-	cpsw_write_4(sc, CPSW_WR_C_RX_EN(0), 1);
-	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x1F);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_TX_EN(0), 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_RX_EN(0), 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_MISC_EN(0), 0x1F);
 
 	/* Enable host Error Interrupt */
-	cpsw_write_4(sc, CPSW_CPDMA_DMA_INTMASK_SET, 2);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_DMA_INTMASK_SET, 2);
 
 	/* Enable interrupts for TX and RX Channel 0 */
-	cpsw_write_4(sc, CPSW_CPDMA_TX_INTMASK_SET, 1);
-	cpsw_write_4(sc, CPSW_CPDMA_RX_INTMASK_SET, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_INTMASK_SET, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_INTMASK_SET, 1);
 
 	/* Ack stalled irqs */
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RXTH);
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RXTH);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
 	/* Initialze MDIO - ENABLE, PREAMBLE=0, FAULTENB, CLKDIV=0xFF */
 	/* TODO Calculate MDCLK=CLK/(CLKDIV+1) */
-	cpsw_write_4(sc, MDIOCONTROL, (1<<30) | (1<<18) | 0xFF);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MDIOCONTROL, (1<<30) | (1<<18) | 0xFF);
 
 	mii_mediachg(mii);
 
 	/* Write channel 0 RX HDP */
-	cpsw_write_4(sc, CPSW_CPDMA_RX_HDP(0), cpsw_rxdesc_paddr(sc, 0));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_HDP(0), cpsw_rxdesc_paddr(sc, 0));
 	sc->sc_rxrun = true;
 	sc->sc_rxeoq = false;
 
@@ -911,14 +898,14 @@ cpsw_stop(struct ifnet *ifp)
 
 	mii_down(&sc->sc_mii);
 
-	cpsw_write_4(sc, CPSW_CPDMA_TX_INTMASK_CLEAR, 1);
-	cpsw_write_4(sc, CPSW_CPDMA_RX_INTMASK_CLEAR, 1);
-	cpsw_write_4(sc, CPSW_WR_C_TX_EN(0), 0x0);
-	cpsw_write_4(sc, CPSW_WR_C_RX_EN(0), 0x0);
-	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x1F);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_INTMASK_CLEAR, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_INTMASK_CLEAR, 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_TX_EN(0), 0x0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_RX_EN(0), 0x0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_MISC_EN(0), 0x1F);
 
-	cpsw_write_4(sc, CPSW_CPDMA_TX_TEARDOWN, 0);
-	cpsw_write_4(sc, CPSW_CPDMA_RX_TEARDOWN, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_TEARDOWN, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_TEARDOWN, 0);
 	i = 0;
 	while ((sc->sc_txrun || sc->sc_rxrun) && i < 10000) {
 		delay(10);
@@ -931,21 +918,21 @@ cpsw_stop(struct ifnet *ifp)
 	/* printf("%s toredown complete in %u\n", __func__, i); */
 
 	/* Reset wrapper */
-	cpsw_write_4(sc, CPSW_WR_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_WR_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_SOFT_RESET) & 1);
 
 	/* Reset SS */
-	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_SS_SOFT_RESET) & 1);
 
 	for (i = 0; i < 2; i++) {
-		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
-		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_SOFT_RESET(i), 1);
+		while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_SL_SOFT_RESET(i)) & 1);
 	}
 
 	/* Reset CPDMA */
-	cpsw_write_4(sc, CPSW_CPDMA_SOFT_RESET, 1);
-	while(cpsw_read_4(sc, CPSW_CPDMA_SOFT_RESET) & 1);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_SOFT_RESET, 1);
+	while(bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_SOFT_RESET) & 1);
 
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < CPSW_NTXDESCS; i++) {
@@ -978,7 +965,7 @@ cpsw_rxthintr(void *arg)
 	struct cpsw_softc * const sc = arg;
 
 	/* this won't deassert the interrupt though */
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RXTH);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RXTH);
 
 	return 1;
 }
@@ -1056,7 +1043,7 @@ next:
 		} else {
 			sc->sc_rxeoq = false;
 		}
-		cpsw_write_4(sc, CPSW_CPDMA_RX_CP(0),
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_CP(0),
 		    cpsw_rxdesc_paddr(sc, i));
 	}
 
@@ -1065,7 +1052,7 @@ next:
 		/* Debugger(); */
 	}
 
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
 
 	return 1;
 }
@@ -1096,17 +1083,17 @@ cpsw_txintr(void *arg)
 
 	KASSERT(sc->sc_txrun);
 
-	tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
+	tx0_cp = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(0));
 
 	if (tx0_cp == 0xfffffffc) {
-		cpsw_write_4(sc, CPSW_CPDMA_TX_CP(0), 0xfffffffc);
-		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(0), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(0), 0xfffffffc);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(0), 0);
 		sc->sc_txrun = false;
 		return 0;
 	}
 
 	for (;;) {
-		tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
+		tx0_cp = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(0));
 		cpi = (tx0_cp - sc->sc_txdescs_pa) /
 		    sizeof(struct cpsw_cpdma_bd);
 		KASSERT(sc->sc_txhead < CPSW_NTXDESCS);
@@ -1151,7 +1138,7 @@ next:
 			sc->sc_txeoq = true;
 
 		if (sc->sc_txhead == cpi) {
-			cpsw_write_4(sc, CPSW_CPDMA_TX_CP(0),
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(0),
 			    cpsw_txdesc_paddr(sc, cpi));
 			sc->sc_txhead = TXDESC_NEXT(sc->sc_txhead);
 			break;
@@ -1161,12 +1148,12 @@ next:
 			break;
 	}
 
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
 
 	if ((sc->sc_txnext != sc->sc_txhead) && sc->sc_txeoq) {
-		if (cpsw_read_4(sc, CPSW_CPDMA_TX_HDP(0)) == 0) {
+		if (bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(0)) == 0) {
 			sc->sc_txeoq = false;
-			cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(0),
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(0),
 			    cpsw_txdesc_paddr(sc, sc->sc_txhead));
 		}
 	}
@@ -1188,35 +1175,35 @@ cpsw_miscintr(void *arg)
 	uint32_t dmastat;
 	uint32_t stat;
 
-	miscstat = cpsw_read_4(sc, CPSW_WR_C_MISC_STAT(0));
+	miscstat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_WR_C_MISC_STAT(0));
 	printf("%s %x FIRE\n", __func__, miscstat);
 
 	if (miscstat & CPSW_MISC_HOST_PEND) {
 		/* Host Error */
-		dmastat = cpsw_read_4(sc, CPSW_CPDMA_DMA_INTSTAT_MASKED);
+		dmastat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_DMA_INTSTAT_MASKED);
 		printf("CPSW_CPDMA_DMA_INTSTAT_MASKED %x\n", dmastat);
 
 		printf("rxhead %02x\n", sc->sc_rxhead);
 
-		stat = cpsw_read_4(sc, CPSW_CPDMA_DMASTATUS);
+		stat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_DMASTATUS);
 		printf("CPSW_CPDMA_DMASTATUS %x\n", stat);
-		stat = cpsw_read_4(sc, CPSW_CPDMA_TX_HDP(0));
+		stat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_HDP(0));
 		printf("CPSW_CPDMA_TX0_HDP %x\n", stat);
-		stat = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
+		stat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_TX_CP(0));
 		printf("CPSW_CPDMA_TX0_CP %x\n", stat);
-		stat = cpsw_read_4(sc, CPSW_CPDMA_RX_HDP(0));
+		stat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_HDP(0));
 		printf("CPSW_CPDMA_RX0_HDP %x\n", stat);
-		stat = cpsw_read_4(sc, CPSW_CPDMA_RX_CP(0));
+		stat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_RX_CP(0));
 		printf("CPSW_CPDMA_RX0_CP %x\n", stat);
 
 		/* Debugger(); */
 
-		cpsw_write_4(sc, CPSW_CPDMA_DMA_INTMASK_CLEAR, dmastat);
-		dmastat = cpsw_read_4(sc, CPSW_CPDMA_DMA_INTSTAT_MASKED);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_DMA_INTMASK_CLEAR, dmastat);
+		dmastat = bus_space_read_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_DMA_INTSTAT_MASKED);
 		printf("CPSW_CPDMA_DMA_INTSTAT_MASKED %x\n", dmastat);
 	}
 
-	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
 	return 1;
 }
