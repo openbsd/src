@@ -418,9 +418,6 @@ s_client_main(int argc, char **argv)
 {
 	unsigned int off = 0, clr = 0;
 	SSL *con = NULL;
-#ifndef OPENSSL_NO_KRB5
-	KSSL_CTX *kctx;
-#endif
 	int s, k, width, state = 0, af = AF_UNSPEC;
 	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
 	int cbuf_len, cbuf_off;
@@ -963,12 +960,6 @@ bad:
 		}
 	}
 #endif
-#ifndef OPENSSL_NO_KRB5
-	if (con && (kctx = kssl_ctx_new()) != NULL) {
-		SSL_set0_kssl_ctx(con, kctx);
-		kssl_ctx_setstring(kctx, KSSL_SERVER, host);
-	}
-#endif				/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 #if 0
 #ifdef TLSEXT_TYPE_opaque_prf_input
