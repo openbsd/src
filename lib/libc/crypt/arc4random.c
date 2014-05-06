@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.29 2014/05/06 15:37:57 tedu Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.30 2014/05/06 16:06:33 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -63,10 +63,10 @@ _rs_init(u_char *buf, size_t n)
 	if (n < KEYSZ + IVSZ)
 		return;
 
-	if ((rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
+	if (rs == NULL && (rs = mmap(NULL, sizeof(*rs), PROT_READ|PROT_WRITE,
 	    MAP_ANON, -1, 0)) == MAP_FAILED)
 		abort();
-	if ((rs_buf = mmap(NULL, RSBUFSZ, PROT_READ|PROT_WRITE,
+	if (rs_buf == NULL && (rs_buf = mmap(NULL, RSBUFSZ, PROT_READ|PROT_WRITE,
 	    MAP_ANON, -1, 0)) == MAP_FAILED)
 		abort();
 
