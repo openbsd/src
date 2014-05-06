@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.76 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.77 2014/05/06 14:10:53 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -344,6 +344,16 @@ struct iked_sahdr {
 	u_int				 sh_initiator;	/* Is initiator? */
 } __packed;
 
+struct iked_kex {
+	struct ibuf			*kex_inonce;	/* Ni */
+	struct ibuf			*kex_rnonce;	/* Nr */
+
+	struct group			*kex_dhgroup;	/* DH group */
+	struct ibuf			*kex_dhiexchange;
+	struct ibuf			*kex_dhrexchange;
+	struct ibuf			*kex_dhpeer;	/* pointer to i or r */
+};
+
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	u_int32_t			 sa_msgid;	/* Last request rcvd */
@@ -375,13 +385,14 @@ struct iked_sa {
 
 	char				*sa_tag;
 
-	struct ibuf			*sa_inonce;	/* Ni */
-	struct ibuf			*sa_rnonce;	/* Nr */
-
-	struct group			*sa_dhgroup;	/* DH group */
-	struct ibuf			*sa_dhiexchange;
-	struct ibuf			*sa_dhrexchange;
-	struct ibuf			*sa_dhpeer;	/* pointer to i or r */
+	struct iked_kex			 sa_kex;
+/* XXX compat defines until everything is converted */
+#define sa_inonce		sa_kex.kex_inonce
+#define sa_rnonce		sa_kex.kex_rnonce
+#define sa_dhgroup		sa_kex.kex_dhgroup
+#define sa_dhiexchange		sa_kex.kex_dhiexchange
+#define sa_dhrexchange		sa_kex.kex_dhrexchange
+#define sa_dhpeer		sa_kex.kex_dhpeer
 
 	struct iked_hash		*sa_prf;	/* PRF alg */
 	struct iked_hash		*sa_integr;	/* integrity alg */
@@ -604,6 +615,7 @@ void	 control_cleanup(struct control_sock *);
 /* config.c */
 struct iked_policy *
 	 config_new_policy(struct iked *);
+void	 config_free_kex(struct iked_kex *);
 void	 config_free_sa(struct iked *, struct iked_sa *);
 struct iked_sa *
 	 config_new_sa(struct iked *, int);
@@ -731,7 +743,7 @@ pid_t	 ikev1(struct privsep *, struct privsep_proc *);
 pid_t	 ikev2(struct privsep *, struct privsep_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
 void	 ikev2_init_ike_sa(struct iked *, void *);
-int	 ikev2_sa_negotiate(struct iked_sa *, struct iked_proposals *,
+int	 ikev2_sa_negotiate(struct iked_proposals *, struct iked_proposals *,
 	    struct iked_proposals *);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);

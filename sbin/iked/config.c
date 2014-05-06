@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2014/05/06 14:10:53 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,23 @@ config_getspi(void)
 		return (config_getspi());
 
 	return (spi);
+}
+
+void
+config_free_kex(struct iked_kex *kex)
+{
+	if (kex == NULL)
+		return;
+
+	ibuf_release(kex->kex_inonce);
+	ibuf_release(kex->kex_rnonce);
+
+	if (kex->kex_dhgroup != NULL)
+		group_free(kex->kex_dhgroup);
+	ibuf_release(kex->kex_dhiexchange);
+	ibuf_release(kex->kex_dhrexchange);
+
+	free(kex);
 }
 
 void

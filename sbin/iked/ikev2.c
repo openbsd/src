@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.107 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.108 2014/05/06 14:10:53 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -86,13 +86,15 @@ int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 int	 ikev2_sa_responder(struct iked *, struct iked_sa *, struct iked_sa *,
 	    struct iked_message *);
 int	 ikev2_sa_initiator_dh(struct iked_sa *, struct iked_message *, u_int);
-int	 ikev2_sa_responder_dh(struct iked_sa *, struct iked_message *, u_int);
+int	 ikev2_sa_responder_dh(struct iked_kex *, struct iked_proposals *,
+	    struct iked_message *, u_int);
 void	 ikev2_sa_cleanup_dh(struct iked_sa *);
 int	 ikev2_sa_keys(struct iked *, struct iked_sa *, struct ibuf *);
 int	 ikev2_sa_tag(struct iked_sa *, struct iked_id *);
 int	 ikev2_set_sa_proposal(struct iked_sa *, struct iked_policy *, u_int);
 
-int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *, int, int);
+int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *,
+	    struct iked_kex *, struct iked_proposals *, int, int);
 int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
 	    struct iked_transform **);
 int	 ikev2_valid_proposal(struct iked_proposal *,
@@ -625,8 +627,8 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 	}
 
 	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
-		if (ikev2_sa_negotiate(sa, &sa->sa_policy->pol_proposals,
-		    &msg->msg_proposals) != 0) {
+		if (ikev2_sa_negotiate(&sa->sa_proposals,
+		    &sa->sa_policy->pol_proposals, &msg->msg_proposals) != 0) {
 			log_debug("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 			return (-1);
@@ -1078,7 +1080,8 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 	if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (0);	/* ignored */
 
-	ret = ikev2_childsa_negotiate(env, sa, sa->sa_hdr.sh_initiator, 0);
+	ret = ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
+	    sa->sa_hdr.sh_initiator, 0);
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
@@ -2100,7 +2103,8 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	if (ikev2_cp_setaddr(env, sa) < 0)
 		return (-1);
 
-	if (ikev2_childsa_negotiate(env, sa, sa->sa_hdr.sh_initiator, 0) == -1)
+	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
+	    sa->sa_hdr.sh_initiator, 0) < 0)
 		return (-1);
 
 	/* New encrypted message buffer */
@@ -2659,7 +2663,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 
-	if (ikev2_sa_negotiate(sa, &sa->sa_proposals,
+	if (ikev2_sa_negotiate(&sa->sa_proposals, &sa->sa_proposals,
 	    &msg->msg_proposals) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		return (-1);
@@ -2735,7 +2739,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	ibuf_release(sa->sa_rnonce);
 	sa->sa_rnonce = ibuf_dup(msg->msg_nonce);
 
-	if (ikev2_childsa_negotiate(env, sa, 1, pfs)) {
+	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals, 1,
+	    pfs)) {
 		log_debug("%s: failed to get CHILD SAs", __func__);
 		return (-1);
 	}
@@ -2933,12 +2938,13 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 {
 	struct iked_childsa		*csa;
 	struct iked_proposal		*prop;
+	struct iked_proposals		 proposals;
+	struct iked_kex		 	*kex, *kextmp = NULL;
 	struct iked_sa			*nsa = NULL, *sa = msg->msg_sa;
 	struct iked_spi			*spi, *rekey = &msg->msg_rekey;
 	struct ikev2_keyexchange	*ke;
 	struct ikev2_payload		*pld = NULL;
 	struct ibuf			*e = NULL, *nonce = NULL;
-	struct group			*group;
 	u_int8_t			 firstpayload;
 	ssize_t				 len = 0;
 	int				 initiator, protoid, rekeying = 1;
@@ -2949,6 +2955,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	if (!ikev2_msg_frompeer(msg) || msg->msg_prop == NULL)
 		return (0);
+
+	TAILQ_INIT(&proposals);
 
 	if ((protoid = rekey->spi_protoid) == 0) {
 		/*
@@ -2995,31 +3003,42 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		sa_state(env, nsa, IKEV2_STATE_AUTH_SUCCESS);
 
 		nonce = nsa->sa_rnonce;
+		kex = &nsa->sa_kex;
 	} else {
 		/* Child SA creating/rekeying */
+
+		if ((kex = kextmp = calloc(1, sizeof(*kextmp))) == NULL) {
+			log_debug("%s: calloc kex", __func__);
+			goto fail;
+		}
+
+		if (ikev2_sa_negotiate(&proposals,
+		    &sa->sa_policy->pol_proposals, &msg->msg_proposals) != 0) {
+			log_debug("%s: no proposal chosen", __func__);
+			goto fail;
+		}
 
 		/* check KE payload for PFS */
 		if (ibuf_length(msg->msg_parent->msg_ke)) {
 			log_debug("%s: using PFS", __func__);
-			ikev2_sa_cleanup_dh(sa);
-			if (ikev2_sa_responder_dh(sa, msg->msg_parent,
-			    protoid) < 0) {
+			if (ikev2_sa_responder_dh(kex, &proposals,
+			    msg->msg_parent, protoid) < 0) {
 				log_debug("%s: failed to setup DH", __func__);
-				return (ret);
+				goto fail;
 			}
 			pfs = 1;
 			/* XXX check group against policy ? */
 		}
 
 		/* Update peer SPI */
-		TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
+		TAILQ_FOREACH(prop, &proposals, prop_entry) {
 			if (prop->prop_protoid == protoid)
 				break;
 		}
 		if (prop == NULL) {
 			log_debug("%s: failed to find %s proposals", __func__,
 			    print_map(protoid, ikev2_saproto_map));
-			return (-1);
+			goto fail;
 		} else
 			prop->prop_peerspi = msg->msg_prop->prop_peerspi;
 
@@ -3030,13 +3049,13 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 				log_debug("%s: CHILD SA %s wasn't found",
 				    __func__, print_spi(rekey->spi,
 					rekey->spi_size));
-				return (-1);
+				goto fail;
 			}
 			if (!csa->csa_loaded || !csa->csa_peersa ||
 			    !csa->csa_peersa->csa_loaded) {
 				log_debug("%s: SA is not loaded or no peer SA",
 				    __func__);
-				return (-1);
+				goto fail;
 			}
 			csa->csa_rekey = 1;
 			csa->csa_peersa->csa_rekey = 1;
@@ -3045,22 +3064,22 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		/* Update initiator's nonce */
 		if (!ibuf_length(msg->msg_nonce)) {
 			log_debug("%s: initiator didn't send nonce", __func__);
-			return (-1);
+			goto fail;
 		}
-		ibuf_release(sa->sa_inonce);
-		sa->sa_inonce = ibuf_dup(msg->msg_nonce);
+		ibuf_release(kex->kex_inonce);
+		kex->kex_inonce = ibuf_dup(msg->msg_nonce);
 
 		/* Generate new responder's nonce */
 		if ((nonce = ibuf_random(IKED_NONCE_SIZE)) == NULL)
-			return (-1);
+			goto fail;
 
 		/* Update responder's nonce */
-		ibuf_release(sa->sa_rnonce);
-		sa->sa_rnonce = nonce;
+		ibuf_release(kex->kex_rnonce);
+		kex->kex_rnonce = nonce;
 
-		if (ikev2_childsa_negotiate(env, sa, 0, pfs)) {
+		if (ikev2_childsa_negotiate(env, sa, kex, &proposals, 0, pfs)) {
 			log_debug("%s: failed to get CHILD SAs", __func__);
-			return (-1);
+			goto fail;
 		}
 	}
 
@@ -3084,7 +3103,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		goto done;
 
 	if ((len = ikev2_add_proposals(env, nsa ? nsa : sa, e,
-		nsa ? &nsa->sa_proposals : &sa->sa_proposals,
+		nsa ? &nsa->sa_proposals : &proposals,
 		protoid, 0, nsa ? 1 : 0)) == -1)
 		goto done;
 
@@ -3108,16 +3127,14 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto done;
 		if ((ke = ibuf_advance(e, sizeof(*ke))) == NULL)
 			goto done;
-		if ((group = nsa ?
-		    nsa->sa_dhgroup : sa->sa_dhgroup) == NULL) {
+		if (kex->kex_dhgroup == NULL) {
 			log_debug("%s: invalid dh", __func__);
 			goto done;
 		}
-		ke->kex_dhgroup = htobe16(group->id);
-		if (ikev2_add_buf(e, nsa ?
-		    nsa->sa_dhrexchange : sa->sa_dhrexchange) == -1)
+		ke->kex_dhgroup = htobe16(kex->kex_dhgroup->id);
+		if (ikev2_add_buf(e, kex->kex_dhrexchange) == -1)
 			goto done;
-		len = sizeof(*ke) + dh_getlen(group);
+		len = sizeof(*ke) + dh_getlen(kex->kex_dhgroup);
 	}
 
 	if (protoid != IKEV2_SAPROTO_IKE)
@@ -3140,7 +3157,14 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (ret && protoid != IKEV2_SAPROTO_IKE)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_release(e);
+	config_free_proposals(&proposals, 0);
+	config_free_kex(kextmp);
 	return (ret);
+
+ fail:
+	config_free_proposals(&proposals, 0);
+	config_free_kex(kextmp);
+	return (-1);
 }
 
 void
@@ -3392,7 +3416,7 @@ ikev2_match_proposals(struct iked_proposal *local, struct iked_proposal *peer,
 }
 
 int
-ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
+ikev2_sa_negotiate(struct iked_proposals *result, struct iked_proposals *local,
     struct iked_proposals *peer)
 {
 	struct iked_proposal	*ppeer = NULL, *plocal, *prop, vpeer, vlocal;
@@ -3436,12 +3460,11 @@ ikev2_sa_negotiate(struct iked_sa *sa, struct iked_proposals *local,
 
 	if (chosen_score == 0)
 		return (-1);
-	else if (sa == NULL)
+	else if (result == NULL)
 		return (0);
 
-	(void)config_free_proposals(&sa->sa_proposals, vpeer.prop_protoid);
-	prop = config_add_proposal(&sa->sa_proposals, vpeer.prop_id,
-	    vpeer.prop_protoid);
+	(void)config_free_proposals(result, vpeer.prop_protoid);
+	prop = config_add_proposal(result, vpeer.prop_id, vpeer.prop_protoid);
 
 	if (vpeer.prop_localspi.spi_size) {
 		prop->prop_localspi.spi_size = vpeer.prop_localspi.spi_size;
@@ -3562,8 +3585,8 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(sa, &msg->msg_policy->pol_proposals,
-	    &msg->msg_proposals) != 0) {
+	if (ikev2_sa_negotiate(&sa->sa_proposals,
+	    &msg->msg_policy->pol_proposals, &msg->msg_proposals) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 		return (-1);
@@ -3620,17 +3643,18 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 }
 
 int
-ikev2_sa_responder_dh(struct iked_sa *sa, struct iked_message *msg, u_int proto)
+ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
+    struct iked_message *msg, u_int proto)
 {
 	struct iked_transform	*xform;
 
-	if (sa->sa_dhgroup == NULL) {
-		if ((xform = config_findtransform(&sa->sa_proposals,
+	if (kex->kex_dhgroup == NULL) {
+		if ((xform = config_findtransform(proposals,
 		    IKEV2_XFORMTYPE_DH, proto)) == NULL) {
 			log_debug("%s: did not find dh transform", __func__);
 			return (-1);
 		}
-		if ((sa->sa_dhgroup =
+		if ((kex->kex_dhgroup =
 		    group_get(xform->xform_id)) == NULL) {
 			log_debug("%s: invalid dh %d", __func__,
 			    xform->xform_id);
@@ -3638,32 +3662,32 @@ ikev2_sa_responder_dh(struct iked_sa *sa, struct iked_message *msg, u_int proto)
 		}
 	}
 
-	if (!ibuf_length(sa->sa_dhrexchange)) {
-		if ((sa->sa_dhrexchange = ibuf_new(NULL,
-		    dh_getlen(sa->sa_dhgroup))) == NULL) {
+	if (!ibuf_length(kex->kex_dhrexchange)) {
+		if ((kex->kex_dhrexchange = ibuf_new(NULL,
+		    dh_getlen(kex->kex_dhgroup))) == NULL) {
 			log_debug("%s: failed to alloc dh exchange", __func__);
 			return (-1);
 		}
-		if (dh_create_exchange(sa->sa_dhgroup,
-		    sa->sa_dhrexchange->buf) == -1) {
+		if (dh_create_exchange(kex->kex_dhgroup,
+		    kex->kex_dhrexchange->buf) == -1) {
 			log_debug("%s: failed to get dh exchange", __func__);
 			return (-1);
 		}
 	}
 
-	if (!ibuf_length(sa->sa_dhiexchange)) {
-		if ((sa->sa_dhiexchange = ibuf_dup(msg->msg_ke)) == NULL ||
-		    ((ssize_t)ibuf_length(sa->sa_dhiexchange) !=
-		    dh_getlen(sa->sa_dhgroup))) {
+	if (!ibuf_length(kex->kex_dhiexchange)) {
+		if ((kex->kex_dhiexchange = ibuf_dup(msg->msg_ke)) == NULL ||
+		    ((ssize_t)ibuf_length(kex->kex_dhiexchange) !=
+		    dh_getlen(kex->kex_dhgroup))) {
 			/* XXX send notification to peer */
 			log_debug("%s: invalid dh, size %d", __func__,
-			    dh_getlen(sa->sa_dhgroup) * 8);
+			    dh_getlen(kex->kex_dhgroup) * 8);
 			return (-1);
 		}
 	}
 
 	/* Set a pointer to the peer exchange */
-	sa->sa_dhpeer = sa->sa_dhiexchange;
+	kex->kex_dhpeer = kex->kex_dhiexchange;
 	return (0);
 }
 int
@@ -3694,8 +3718,8 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(sa, &msg->msg_policy->pol_proposals,
-	    &msg->msg_proposals) != 0) {
+	if (ikev2_sa_negotiate(&sa->sa_proposals,
+	    &msg->msg_policy->pol_proposals, &msg->msg_proposals) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 		return (-1);
@@ -3742,7 +3766,7 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 		}
 	}
 
-	if (ikev2_sa_responder_dh(sa, msg, 0) < 0)
+	if (ikev2_sa_responder_dh(&sa->sa_kex, &sa->sa_proposals, msg, 0) < 0)
 		return (-1);
 
 	return (ikev2_sa_keys(env, sa, osa ? osa->sa_key_d : NULL));
@@ -4119,7 +4143,8 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 }
 
 int
-ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
+ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
+    struct iked_kex *kex, struct iked_proposals *proposals, int initiator,
     int pfs)
 {
 	struct iked_proposal	*prop;
@@ -4149,7 +4174,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 		return (-1);
 
 	/* We need to determine the key material length first */
-	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
 		if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
 			continue;
 		log_debug("%s: proposal %d", __func__, prop->prop_id);
@@ -4185,8 +4210,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 	}
 	if (pfs) {
 		log_debug("%s: using PFS", __func__);
-		if (sa->sa_dhpeer == NULL || ibuf_length(sa->sa_dhpeer) == 0 ||
-		    (group = sa->sa_dhgroup) == NULL) {
+		if (kex->kex_dhpeer == NULL || ibuf_length(kex->kex_dhpeer) == 0 ||
+		    (group = kex->kex_dhgroup) == NULL) {
 			log_debug("%s: no dh group for pfs", __func__);
 			goto done;
 		}
@@ -4195,11 +4220,11 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 			goto done;
 		}
 		if (dh_create_shared(group, dhsecret->buf,
-		    sa->sa_dhpeer->buf) == -1) {
+		    kex->kex_dhpeer->buf) == -1) {
 			log_debug("%s: failed to get dh secret"
 			    " group %d len %d secret %zu exchange %zu", __func__,
 			    group->id, dh_getlen(group), ibuf_length(dhsecret),
-			    ibuf_length(sa->sa_dhpeer));
+			    ibuf_length(kex->kex_dhpeer));
 			goto done;
 		}
 		if (ibuf_cat(seed, dhsecret) != 0) {
@@ -4207,8 +4232,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 			goto done;
 		}
 	}
-	if (ibuf_cat(seed, sa->sa_inonce) != 0 ||
-	    ibuf_cat(seed, sa->sa_rnonce) != 0 ||
+	if (ibuf_cat(seed, kex->kex_inonce) != 0 ||
+	    ibuf_cat(seed, kex->kex_rnonce) != 0 ||
 	    (keymat = ikev2_prfplus(sa->sa_prf,
 	    sa->sa_key_d, seed, ilen)) == NULL) {
 		log_debug("%s: failed to get IKE SA key material", __func__);
@@ -4216,7 +4241,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 	}
 
 	/* Create the new flows */
-	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
 		if (ikev2_valid_proposal(prop, NULL, NULL, NULL) != 0)
 			continue;
 
@@ -4272,7 +4297,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa, int initiator,
 	}
 
 	/* create the CHILD SAs using the key material */
-	TAILQ_FOREACH(prop, &sa->sa_proposals, prop_entry) {
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
 		if (ikev2_valid_proposal(prop, &encrxf, &integrxf, &esn) != 0)
 			continue;
 
