@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.43 2014/05/06 07:45:17 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.44 2014/05/06 09:21:50 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1166,7 +1166,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		/* XXX chould also happen for PFS */
 		if (!msg->msg_sa->sa_hdr.sh_initiator) {
 			log_debug("%s: not an initiator", __func__);
-			sa_free(env, msg->msg_sa);
+			sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
 			msg->msg_sa = NULL;
 			return (-1);
 		}
@@ -1180,7 +1180,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		log_debug("%s: responder selected DH group %d", __func__,
 		    group);
-		sa_free(env, msg->msg_sa);
+		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
 		msg->msg_sa = NULL;
 		/* XXX chould also happen for PFS so we have to check state XXX*/
 		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
