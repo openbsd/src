@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.32 2014/04/29 11:51:13 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.33 2014/05/06 09:48:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -310,12 +310,29 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	if ((ispi == 0 && rspi == 0) ||
 	    (sa = sa_lookup(env, ispi, rspi, initiator)) == NULL) {
 		/* Create new SA */
+		if (!initiator && ispi == 0) {
+			log_debug("%s: cannot create responder IKE SA w/o ispi",
+			    __func__);
+			return (NULL);
+		}
 		sa = config_new_sa(env, initiator);
+		if (sa == NULL) {
+			log_debug("%s: failed to allocate IKE SA", __func__);
+			return (NULL);
+		}
+		if (!initiator)
+			sa->sa_hdr.sh_ispi = ispi;
+		old = RB_INSERT(iked_sas, &env->sc_sas, sa);
+		if (old && old != sa) {
+			log_warnx("%s: duplicate IKE SA", __func__);
+			config_free_sa(env, sa);
+			return (NULL);
+		}
 	}
-	if (sa == NULL) {
-		log_debug("%s: failed to get sa", __func__);
-		return (NULL);
-	}
+	/* Update rspi in the initator case */
+	if (initiator && sa->sa_hdr.sh_rspi == 0 && rspi)
+		sa->sa_hdr.sh_rspi = rspi;
+
 	if (sa->sa_policy == NULL)
 		sa->sa_policy = pol;
 	else
@@ -345,19 +362,6 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 		return (NULL);
 	}
 
-	if (sa->sa_hdr.sh_ispi == 0)
-		sa->sa_hdr.sh_ispi = ispi;
-	if (sa->sa_hdr.sh_rspi == 0)
-		sa->sa_hdr.sh_rspi = rspi;
-
-	/* Re-insert node into the tree */
-	old = RB_INSERT(iked_sas, &env->sc_sas, sa);
-	if (old && old != sa) {
-		log_debug("%s: duplicate ikesa", __func__);
-		sa_free(env, sa);
-		return (NULL);
-	}
-
 	return (sa);
 }
 
@@ -368,6 +372,7 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	    print_spi(sa->sa_hdr.sh_ispi, 8),
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
+	RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);
 }
 

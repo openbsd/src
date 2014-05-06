@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.105 2014/05/06 08:17:58 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.106 2014/05/06 09:48:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -661,7 +661,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi), 1,
 		    NULL)) == NULL || sa != msg->msg_sa) {
 			log_debug("%s: invalid new SA", __func__);
-			sa_free(env, sa);
+			if (sa)
+				sa_free(env, sa);
 		}
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:

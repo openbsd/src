@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.28 2014/05/06 07:24:37 markus Exp $	*/
+/*	$OpenBSD: config.c,v 1.29 2014/05/06 09:48:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -78,8 +78,6 @@ config_getspi(void)
 void
 config_free_sa(struct iked *env, struct iked_sa *sa)
 {
-	(void)RB_REMOVE(iked_sas, &env->sc_sas, sa);
-
 	timer_del(env, &sa->sa_timer);
 
 	config_free_proposals(&sa->sa_proposals, 0);
@@ -471,6 +469,7 @@ config_getreset(struct iked *env, struct imsg *imsg)
 		for (sa = RB_MIN(iked_sas, &env->sc_sas);
 		    sa != NULL; sa = nextsa) {
 			nextsa = RB_NEXT(iked_sas, &env->sc_sas, sa);
+			RB_REMOVE(iked_sas, &env->sc_sas, sa);
 			config_free_sa(env, sa);
 		}
 	}
