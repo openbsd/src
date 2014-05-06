@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.15 2014/05/04 10:35:24 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.16 2014/05/06 06:40:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,7 +38,6 @@
 #include <pwd.h>
 #include <event.h>
 
-#include <openssl/rand.h>
 #include <openssl/ssl.h>
 
 #include "iked.h"
