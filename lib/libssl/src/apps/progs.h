@@ -104,9 +104,6 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_GENERAL, "speed", speed_main },
 #endif
 	{ FUNC_TYPE_GENERAL, "spkac", spkac_main },
-#ifndef OPENSSL_NO_SRP
-	{ FUNC_TYPE_GENERAL, "srp", srp_main },
-#endif
 	{ FUNC_TYPE_GENERAL, "ts", ts_main },
 	{ FUNC_TYPE_GENERAL, "verify", verify_main },
 	{ FUNC_TYPE_GENERAL, "version", version_main },
