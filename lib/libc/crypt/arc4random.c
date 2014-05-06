@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.28 2014/05/06 02:31:45 tedu Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.29 2014/05/06 15:37:57 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -92,7 +92,7 @@ _rs_stir(void)
 		_rs_init(rnd, sizeof(rnd));
 	} else
 		_rs_rekey(rnd, sizeof(rnd));
-	memset(rnd, 0, sizeof(rnd));
+	explicit_bzero(rnd, sizeof(rnd));
 
 	/* invalidate rs_buf */
 	rs_have = 0;
