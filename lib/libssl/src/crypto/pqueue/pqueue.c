@@ -126,7 +126,8 @@ pqueue_insert(pqueue_s *pq, pitem *item)
 	    curr = next, next = next->next) {
 		/* we can compare 64-bit value in big-endian encoding
 		 * with memcmp:-) */
-		int cmp = memcmp(next->priority, item->priority, 8);
+		int cmp = memcmp(next->priority, item->priority,
+				 sizeof(item->priority));
 		if (cmp > 0)		/* next > item */
 		{
 			item->next = next;
@@ -173,26 +174,15 @@ pqueue_find(pqueue_s *pq, unsigned char *prio64be)
 	if (pq->items == NULL)
 		return NULL;
 
-	for (next = pq->items; next->next != NULL; next = next->next) {
+	for (next = pq->items; next != NULL; next = next->next) {
 		if (memcmp(next->priority, prio64be, 8) == 0) {
 			found = next;
 			break;
 		}
 	}
 
-	/* check the one last node */
-	if (memcmp(next->priority, prio64be, 8) ==0)
-		found = next;
-
-	if (! found)
+	if (!found)
 		return NULL;
-
-#if 0 /* find works in peek mode */
-	if (prev == NULL)
-		pq->items = next->next;
-	else
-		prev->next = next->next;
-#endif
 
 	return found;
 }
