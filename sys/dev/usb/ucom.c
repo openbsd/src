@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.63 2014/02/03 20:59:05 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.64 2014/05/06 09:44:31 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -228,13 +228,17 @@ ucom_detach(struct device *self, int flags)
 		sc->sc_bulkout_pipe = NULL;
 	}
 	if (sc->sc_ixfer != NULL) {
-		if (sc->sc_uhidev == NULL)
+		if (sc->sc_bulkin_no != -1) {
+			usbd_free_buffer(sc->sc_ixfer);
+			sc->sc_ibuf = NULL;
 			usbd_free_xfer(sc->sc_ixfer);
+		}
 		sc->sc_ixfer = NULL;
 	}
 	if (sc->sc_oxfer != NULL) {
 		usbd_free_buffer(sc->sc_oxfer);
-		if (sc->sc_uhidev == NULL)
+		sc->sc_obuf = NULL;
+		if (sc->sc_bulkin_no != -1)
 			usbd_free_xfer(sc->sc_oxfer);
 		sc->sc_oxfer = NULL;
 	}
@@ -418,7 +422,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 	tp = sc->sc_tty;
 	splx(s);
 
-	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
+	DPRINTF(("ucomopen: unit=%d, tp=%p\n", UCOMUNIT(dev), tp));
 
 	tp->t_dev = dev;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -520,7 +524,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 
 fail_4:
-	if (sc->sc_uhidev == NULL)
+	if (sc->sc_bulkin_no != -1)
 		usbd_free_xfer(sc->sc_oxfer);
 	sc->sc_oxfer = NULL;
 fail_3:
@@ -554,6 +558,8 @@ ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
 
+	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
+
 	sc->sc_refcnt++;
 	error = ucom_do_close(sc, flag, mode, p);
 	if (--sc->sc_refcnt < 0)
@@ -571,7 +577,6 @@ ucom_do_close(struct ucom_softc *sc, int flag, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	ucom_lock(sc);
 
 	(*LINESW(tp, l_close))(tp, flag, p);
@@ -1192,13 +1197,17 @@ ucom_cleanup(struct ucom_softc *sc)
 		sc->sc_bulkout_pipe = NULL;
 	}
 	if (sc->sc_ixfer != NULL) {
-		if (sc->sc_uhidev == NULL)
+		if (sc->sc_bulkin_no != -1) {
+			usbd_free_buffer(sc->sc_ixfer);
+			sc->sc_ibuf = NULL;
 			usbd_free_xfer(sc->sc_ixfer);
+		}
 		sc->sc_ixfer = NULL;
 	}
 	if (sc->sc_oxfer != NULL) {
 		usbd_free_buffer(sc->sc_oxfer);
-		if (sc->sc_uhidev == NULL)
+		sc->sc_obuf = NULL;
+		if (sc->sc_bulkin_no != -1)
 			usbd_free_xfer(sc->sc_oxfer);
 		sc->sc_oxfer = NULL;
 	}
