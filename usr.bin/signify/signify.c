@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.74 2014/05/06 23:19:46 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.75 2014/05/06 23:24:19 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -133,7 +133,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 	    memcmp(b64, COMMENTHDR, COMMENTHDRLEN) != 0)
 		errx(1, "invalid comment in %s; must start with '%s'",
 		    filename, COMMENTHDR);
-	*commentend = 0;
+	*commentend = '\0';
 	if (comment) {
 		if (strlcpy(comment, b64 + COMMENTHDRLEN,
 		    COMMENTMAXLEN) >= COMMENTMAXLEN)
@@ -142,7 +142,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 	b64end = strchr(commentend + 1, '\n');
 	if (!b64end)
 		errx(1, "missing new line after b64 in %s", filename);
-	*b64end = 0;
+	*b64end = '\0';
 	rv = b64_pton(commentend + 1, buf, buflen);
 	if (rv != buflen)
 		errx(1, "invalid b64 encoding in %s", filename);
@@ -158,10 +158,10 @@ readb64file(const char *filename, void *buf, size_t buflen, char *comment)
 	int rv, fd;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
-	memset(b64, 0, sizeof(b64));
 	rv = read(fd, b64, sizeof(b64) - 1);
 	if (rv == -1)
 		err(1, "read from %s", filename);
+	b64[rv] = '\0';
 	parseb64file(filename, b64, buf, buflen, comment);
 	explicit_bzero(b64, sizeof(b64));
 	close(fd);
@@ -203,7 +203,7 @@ readmsg(const char *filename, unsigned long long *msglenp)
 		msglen += x;
 	}
 
-	msg[msglen] = 0;
+	msg[msglen] = '\0';
 	close(fd);
 
 	*msglenp = msglen;
