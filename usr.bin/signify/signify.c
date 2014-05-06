@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.75 2014/05/06 23:24:19 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.76 2014/05/06 23:27:50 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -454,11 +454,12 @@ static void
 readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
     const char *sigcomment)
 {
+	const char *safepath = "/etc/signify/";
 
 	if (!pubkeyfile) {
 		if ((pubkeyfile = strstr(sigcomment, VERIFYWITH))) {
 			pubkeyfile += strlen(VERIFYWITH);
-			if (strncmp(pubkeyfile, "/etc/signify/", 13) != 0 ||
+			if (strncmp(pubkeyfile, safepath, strlen(safepath)) != 0 ||
 			    strstr(pubkeyfile, "/../") != NULL)
 				errx(1, "untrusted path %s", pubkeyfile);
 		} else
