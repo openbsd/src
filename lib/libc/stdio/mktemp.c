@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.32 2013/03/12 16:47:11 guenther Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.33 2014/05/06 22:55:27 millert Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -35,12 +35,16 @@
 #define NUM_CHARS	(sizeof(TEMPCHARS) - 1)
 #define MIN_X		6
 
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
 static int
 mktemp_internal(char *path, int slen, int mode)
 {
 	char *start, *cp, *ep;
 	const char *tempchars = TEMPCHARS;
-	unsigned int r, tries;
+	unsigned int tries;
 	struct stat sb;
 	size_t len;
 	int fd;
@@ -61,10 +65,19 @@ mktemp_internal(char *path, int slen, int mode)
 
 	tries = INT_MAX;
 	do {
-		for (cp = start; cp != ep; cp++) {
-			r = arc4random_uniform(NUM_CHARS);
-			*cp = tempchars[r];
-		}
+		cp = start;
+		do {
+			unsigned short rbuf[16];
+			unsigned int i;
+
+			/*
+			 * Avoid lots of arc4random() calls by using
+			 * a buffer sized for up to 16 Xs at a time.
+			 */
+			arc4random_buf(rbuf, sizeof(rbuf));
+			for (i = 0; i < nitems(rbuf) && cp != ep; i++)
+				*cp++ = tempchars[rbuf[i] % NUM_CHARS];
+		} while (cp != ep);
 
 		switch (mode) {
 		case MKTEMP_NAME:
