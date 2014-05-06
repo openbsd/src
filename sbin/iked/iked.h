@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.73 2014/04/29 11:51:13 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.74 2014/05/06 07:08:10 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -331,7 +331,6 @@ struct iked_id {
 #define IKED_REQ_EAPVALID	0x20	/* EAP payload has been verified */
 #define IKED_REQ_CHILDSA	0x40	/* Child SA initiated */
 #define IKED_REQ_INF		0x80	/* Informational exchange initiated */
-#define IKED_REQ_DELETE		0x100	/* Rekeying continuation */
 
 #define IKED_REQ_BITS	\
     "\20\01CERT\02CERTVALID\03AUTH\04AUTHVALID\05SA\06EAP"

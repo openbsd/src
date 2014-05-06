@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.102 2014/04/29 11:51:13 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.103 2014/05/06 07:08:10 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -373,7 +373,6 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	struct iked_message	*m;
 	struct iked_sa		*sa;
 	u_int			 initiator, flag = 0;
-	int			 response;
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
@@ -382,7 +381,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		return;
 
 	initiator = (hdr->ike_flags & IKEV2_FLAG_INITIATOR) ? 0 : 1;
-	response = (hdr->ike_flags & IKEV2_FLAG_RESPONSE) ? 1 : 0;
+	msg->msg_response = (hdr->ike_flags & IKEV2_FLAG_RESPONSE) ? 1 : 0;
 	msg->msg_sa = sa_lookup(env,
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
@@ -390,8 +389,9 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (policy_lookup(env, msg) != 0)
 		return;
 
-	log_info("%s: %s from %s %s to %s policy '%s' id %u, %ld bytes",
+	log_info("%s: %s %s from %s %s to %s policy '%s' id %u, %ld bytes",
 	    __func__, print_map(hdr->ike_exchange, ikev2_exchange_map),
+	    msg->msg_response ? "response" : "request",
 	    initiator ? "responder" : "initiator",
 	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
 	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
@@ -409,7 +409,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
 		flag = IKED_REQ_INF;
 
-	if (response) {
+	if (msg->msg_response) {
 		if (msg->msg_msgid > sa->sa_reqid)
 			return;
 		if (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
@@ -716,6 +716,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		(void)ikev2_init_create_child_sa(env, msg);
 		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
+		sa->sa_stateflags &= ~IKED_REQ_INF;
 		break;
 	default:
 		log_debug("%s: exchange %s not implemented", __func__,
@@ -2518,7 +2519,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		    IKEV2_EXCHANGE_INFORMATIONAL, 0))
 			goto done;
 
-		sa->sa_stateflags |= IKED_REQ_INF | IKED_REQ_DELETE;
+		sa->sa_stateflags |= IKED_REQ_INF;
 	}
 
 	ret = ikev2_childsa_enable(env, sa);
