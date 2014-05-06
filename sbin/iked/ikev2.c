@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.106 2014/05/06 09:48:40 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.107 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,13 +73,16 @@ int	 ikev2_resp_ike_eap(struct iked *, struct iked_sa *, struct ibuf *);
 
 int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 	    struct iked_spi *, u_int8_t);
+int	 ikev2_ikesa_enable(struct iked *, struct iked_sa *, struct iked_sa *);
+void	 ikev2_ikesa_delete(struct iked *, struct iked_sa *, int);
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
+void	 ikev2_ike_sa_rekey(struct iked *, void *);
 void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
-	    struct iked_message *);
+	    struct iked_sa *, struct iked_message *);
 int	 ikev2_sa_responder(struct iked *, struct iked_sa *, struct iked_sa *,
 	    struct iked_message *);
 int	 ikev2_sa_initiator_dh(struct iked_sa *, struct iked_message *, u_int);
@@ -787,7 +790,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	/* XXX free old sa_dhgroup ? */
 	sa->sa_dhgroup = pol->pol_peerdh;
 
-	if (ikev2_sa_initiator(env, sa, NULL) == -1)
+	if (ikev2_sa_initiator(env, sa, NULL, NULL) == -1)
 		goto done;
 
 	if (pol->pol_local.addr.ss_family == AF_UNSPEC) {
@@ -932,7 +935,7 @@ ikev2_init_auth(struct iked *env, struct iked_message *msg)
 	if (sa == NULL)
 		return (-1);
 
-	if (ikev2_sa_initiator(env, sa, msg) == -1) {
+	if (ikev2_sa_initiator(env, sa, NULL, msg) == -1) {
 		log_debug("%s: failed to get IKE keys", __func__);
 		return (-1);
 	}
@@ -1082,6 +1085,9 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
+		if (sa->sa_policy->pol_rekey)
+			timer_add(env, &sa->sa_rekey, sa->sa_policy->pol_rekey);
 	}
 
 	if (ret)
@@ -2212,6 +2218,9 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
+		if (sa->sa_policy->pol_rekey)
+			timer_add(env, &sa->sa_rekey, sa->sa_policy->pol_rekey);
 	}
 
  done:
@@ -2389,6 +2398,13 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 	else
 		log_debug("%s: creating new CHILD SAs", __func__);
 
+	/* XXX cannot initiate multiple concurrent CREATE_CHILD_SA exchanges */
+	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
+		log_debug("%s: another CREATE_CHILD_SA exchange already active",
+		    __func__);
+		return (-1);
+	}
+
 	sa->sa_rekeyspi = 0;	/* clear rekey spi */
 	initiator = sa->sa_hdr.sh_initiator ? 1 : 0;
 
@@ -2524,12 +2540,110 @@ done:
 	return (ret);
 }
 
+void
+ikev2_ike_sa_rekey(struct iked *env, void *arg)
+{
+	struct iked_sa			*sa = arg;
+	struct iked_sa			*nsa = NULL;
+	struct ikev2_payload		*pld = NULL;
+	struct ikev2_keyexchange	*ke;
+	struct group			*group;
+	struct ibuf			*e = NULL, *nonce = NULL;
+	ssize_t				 len = 0;
+	int				 ret = -1;
+
+	log_debug("%s: called for IKE SA %p", __func__, sa);
+
+	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
+		/*
+		 * We cannot initiate multiple concurrent CREATE_CHILD_SA
+		 * exchanges, so retry in one minute.
+		 */
+		timer_add(env, &sa->sa_rekey, 60);
+		return;
+	}
+
+	if ((nsa = sa_new(env, 0, 0, 1, sa->sa_policy)) == NULL) {
+		log_debug("%s: failed to get new SA", __func__);
+		goto done;
+	}
+
+	if (ikev2_sa_initiator(env, nsa, sa, NULL)) {
+		log_debug("%s: failed to setup DH", __func__);
+		goto done;
+	}
+	sa_state(env, nsa, IKEV2_STATE_AUTH_SUCCESS);
+	nonce = nsa->sa_inonce;
+
+	if ((e = ibuf_static()) == NULL)
+		goto done;
+
+	/* SA payload */
+	if ((pld = ikev2_add_payload(e)) == NULL)
+		goto done;
+
+	/* just reuse the old IKE SA proposals */
+	if ((len = ikev2_add_proposals(env, nsa, e, &sa->sa_proposals,
+	    IKEV2_SAPROTO_IKE, 1, 1)) == -1)
+		goto done;
+
+	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONCE) == -1)
+		goto done;
+
+	/* NONCE payload */
+	if ((pld = ikev2_add_payload(e)) == NULL)
+		goto done;
+	if (ikev2_add_buf(e, nonce) == -1)
+		goto done;
+	len = ibuf_size(nonce);
+
+	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_KE) == -1)
+		goto done;
+
+	/* KE payload */
+	if ((pld = ikev2_add_payload(e)) == NULL)
+		goto done;
+	if ((ke = ibuf_advance(e, sizeof(*ke))) == NULL)
+		goto done;
+	if ((group = nsa->sa_dhgroup) == NULL) {
+		log_debug("%s: invalid dh", __func__);
+		goto done;
+	}
+	ke->kex_dhgroup = htobe16(group->id);
+	if (ikev2_add_buf(e, nsa->sa_dhiexchange) == -1)
+		goto done;
+	len = sizeof(*ke) + dh_getlen(group);
+
+	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
+		goto done;
+
+	ret = ikev2_msg_send_encrypt(env, sa, &e,
+	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 0);
+	if (ret == 0) {
+		sa->sa_stateflags |= IKED_REQ_CHILDSA;
+		sa->sa_next = nsa;
+		nsa = NULL;
+	}
+done:
+	if (nsa)
+		sa_free(env, nsa);
+	ibuf_release(e);
+
+	if (ret == 0)
+		log_debug("%s: create child SA sent", __func__);
+	else
+		log_debug("%s: could not send create child SA", __func__);
+	/* XXX should we try again in case of ret != 0 ? */
+}
+
 int
 ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 {
 	struct iked_childsa		*csa = NULL;
 	struct iked_proposal		*prop;
 	struct iked_sa			*sa = msg->msg_sa;
+	struct iked_sa			*nsa;
+	struct iked_spi			*spi;
 	struct ikev2_delete		*del;
 	struct ibuf			*buf = NULL;
 	u_int32_t			 spi32;
@@ -2561,6 +2675,33 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 
+	/* IKE SA rekeying */
+	if (prop->prop_protoid == IKEV2_SAPROTO_IKE) {
+		if (sa->sa_next == NULL) {
+			log_debug("%s: missing IKE SA for rekeying", __func__);
+			return (-1);
+		}
+		/* Update the responder SPI */
+		spi = &msg->msg_prop->prop_peerspi;
+		if ((nsa = sa_new(env, sa->sa_next->sa_hdr.sh_ispi,
+		    spi->spi, 1, NULL)) == NULL || nsa != sa->sa_next) {
+			log_debug("%s: invalid rekey SA", __func__);
+			if (nsa)
+				sa_free(env, nsa);
+			sa_free(env, sa->sa_next);
+			sa->sa_next = NULL;
+			return (-1);
+		}
+		if (ikev2_sa_initiator(env, nsa, sa, msg) == -1) {
+			log_debug("%s: failed to get IKE keys", __func__);
+			return (-1);
+		}
+		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+		sa->sa_next = NULL;
+		return (ikev2_ikesa_enable(env, sa, nsa));
+	}
+
+	/* Child SA rekeying */
 	if (sa->sa_rekeyspi &&
 	    (csa = childsa_lookup(sa, sa->sa_rekeyspi, prop->prop_protoid))
 	    != NULL) {
@@ -2635,11 +2776,163 @@ done:
 }
 
 int
-ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
+ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 {
 	struct iked_childsa		*csa, *nextcsa;
 	struct iked_flow		*flow, *nextflow;
 	struct iked_proposal		*prop, *nextprop;
+	int				 initiator;
+
+	log_debug("%s: IKE SA %p ispi %s rspi %s replaced"
+	    " by SA %p ispi %s rspi %s ",
+	    __func__, sa,
+	    print_spi(sa->sa_hdr.sh_ispi, 8),
+	    print_spi(sa->sa_hdr.sh_rspi, 8),
+	    nsa,
+	    print_spi(nsa->sa_hdr.sh_ispi, 8),
+	    print_spi(nsa->sa_hdr.sh_rspi, 8));
+
+	/*
+	 * Transfer policy and address:
+	 * - Remember if we initiated the original IKE-SA because of our policy.
+	 * - Note that sa_address() will insert the new SA when we set sa_peer.
+	 */
+	initiator = !memcmp(&sa->sa_polpeer, &sa->sa_policy->pol_peer,
+	    sizeof(sa->sa_polpeer));
+	nsa->sa_policy = sa->sa_policy;
+	RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
+	sa->sa_policy = NULL;
+	if (sa_address(nsa, &nsa->sa_peer, &sa->sa_peer.addr,
+	    initiator) == -1 ||
+	    sa_address(nsa, &nsa->sa_local, &sa->sa_local.addr,
+	    initiator) == -1) {
+		/* reinsert old SA :/ */
+		sa->sa_policy = nsa->sa_policy;
+		if (RB_FIND(iked_sapeers, &nsa->sa_policy->pol_sapeers, nsa))
+			RB_REMOVE(iked_sapeers, &nsa->sa_policy->pol_sapeers, nsa);
+		RB_INSERT(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
+		nsa->sa_policy = NULL;
+		return (-1);
+	}
+
+	/* Transfer socket and NAT information */
+	nsa->sa_fd = sa->sa_fd;
+	nsa->sa_natt = sa->sa_natt;
+	nsa->sa_udpencap = sa->sa_udpencap;
+
+	/* Transfer all Child SAs and flows from the old IKE SA */
+	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
+	     flow = nextflow) {
+		nextflow = TAILQ_NEXT(flow, flow_entry);
+		TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
+		TAILQ_INSERT_TAIL(&nsa->sa_flows, flow,
+		    flow_entry);
+		flow->flow_ikesa = nsa;
+		flow->flow_local = &nsa->sa_local;
+		flow->flow_peer = &nsa->sa_peer;
+	}
+	for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
+	     csa = nextcsa) {
+		nextcsa = TAILQ_NEXT(csa, csa_entry);
+		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
+		TAILQ_INSERT_TAIL(&nsa->sa_childsas, csa,
+		    csa_entry);
+		csa->csa_ikesa = nsa;
+		if (csa->csa_dir == IPSP_DIRECTION_IN) {
+			csa->csa_local = &nsa->sa_peer;
+			csa->csa_peer = &nsa->sa_local;
+		} else {
+			csa->csa_local = &nsa->sa_local;
+			csa->csa_peer = &nsa->sa_peer;
+		}
+	}
+	/* Transfer all non-IKE proposals */
+	for (prop = TAILQ_FIRST(&sa->sa_proposals); prop != NULL;
+	     prop = nextprop) {
+		nextprop = TAILQ_NEXT(prop, prop_entry);
+		if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
+			continue;
+		TAILQ_REMOVE(&sa->sa_proposals, prop, prop_entry);
+		TAILQ_INSERT_TAIL(&nsa->sa_proposals, prop,
+		    prop_entry);
+	}
+
+	/* Preserve ID information */
+	if (sa->sa_hdr.sh_initiator == nsa->sa_hdr.sh_initiator) {
+		nsa->sa_iid = sa->sa_iid;
+		nsa->sa_rid = sa->sa_rid;
+	} else {
+		/* initiator and responder role swapped */
+		nsa->sa_iid = sa->sa_rid;
+		nsa->sa_rid = sa->sa_iid;
+	}
+	/* duplicate the actual buffer */
+	nsa->sa_iid.id_buf = ibuf_dup(nsa->sa_iid.id_buf);
+	nsa->sa_rid.id_buf = ibuf_dup(nsa->sa_rid.id_buf);
+
+	/* Transfer sa_addrpool address */
+	if (sa->sa_addrpool) {
+		RB_REMOVE(iked_addrpool, &env->sc_addrpool, sa);
+		nsa->sa_addrpool = sa->sa_addrpool;
+		sa->sa_addrpool = NULL;
+		RB_INSERT(iked_addrpool, &env->sc_addrpool, nsa);
+	}
+
+	log_debug("%s: activating new IKE SA", __func__);
+	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
+	timer_set(env, &nsa->sa_timer, ikev2_ike_sa_alive, nsa);
+	timer_add(env, &nsa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	timer_set(env, &nsa->sa_rekey, ikev2_ike_sa_rekey, nsa);
+	if (nsa->sa_policy->pol_rekey)
+		timer_add(env, &nsa->sa_rekey, nsa->sa_policy->pol_rekey);
+	nsa->sa_stateflags = nsa->sa_statevalid; /* XXX */
+
+	/* unregister DPD keep alive timer & rekey first */
+	if (sa->sa_state == IKEV2_STATE_ESTABLISHED) {
+		timer_del(env, &sa->sa_rekey);
+		timer_del(env, &sa->sa_timer);
+	}
+
+	ikev2_ikesa_delete(env, sa, nsa->sa_hdr.sh_initiator);
+	return (0);
+}
+
+void
+ikev2_ikesa_delete(struct iked *env, struct iked_sa *sa, int initiator)
+{
+	struct ibuf                     *buf = NULL;
+	struct ikev2_delete             *del;
+
+	if (initiator) {
+		/* Send PAYLOAD_DELETE */
+		if ((buf = ibuf_static()) == NULL)
+			goto done;
+		if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
+			goto done;
+		del->del_protoid = IKEV2_SAPROTO_IKE;
+		del->del_spisize = 0;
+		del->del_nspi = 0;
+		if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
+		    IKEV2_EXCHANGE_INFORMATIONAL, 0) == -1)
+			goto done;
+		log_debug("%s: sent delete, closing SA", __func__);
+done:
+		ibuf_release(buf);
+		sa_state(env, sa, IKEV2_STATE_CLOSED);
+	} else {
+		sa_state(env, sa, IKEV2_STATE_CLOSING);
+	}
+
+	/* Remove IKE-SA after timeout, e.g. if we don't get a delete */
+	timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
+	timer_add(env, &sa->sa_timer, IKED_IKE_SA_DELETE_TIMEOUT);
+}
+
+int
+ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
+{
+	struct iked_childsa		*csa;
+	struct iked_proposal		*prop;
 	struct iked_sa			*nsa = NULL, *sa = msg->msg_sa;
 	struct iked_spi			*spi, *rekey = &msg->msg_rekey;
 	struct ikev2_keyexchange	*ke;
@@ -2838,60 +3131,9 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, firstpayload, 1)) == -1)
 		goto done;
 
-	if (protoid == IKEV2_SAPROTO_IKE) {
-		/* Transfer all Child SAs and flows from the old IKE SA */
-		for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
-		     flow = nextflow) {
-			nextflow = TAILQ_NEXT(flow, flow_entry);
-			TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
-			TAILQ_INSERT_TAIL(&nsa->sa_flows, flow,
-			    flow_entry);
-			flow->flow_ikesa = nsa;
-		}
-		for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
-		     csa = nextcsa) {
-			nextcsa = TAILQ_NEXT(csa, csa_entry);
-			TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
-			TAILQ_INSERT_TAIL(&nsa->sa_childsas, csa,
-			    csa_entry);
-			csa->csa_ikesa = nsa;
-		}
-		/* Transfer all non-IKE proposals */
-		for (prop = TAILQ_FIRST(&sa->sa_proposals); prop != NULL;
-		     prop = nextprop) {
-			nextprop = TAILQ_NEXT(prop, prop_entry);
-			if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
-				continue;
-			TAILQ_REMOVE(&sa->sa_proposals, prop, prop_entry);
-			TAILQ_INSERT_TAIL(&nsa->sa_proposals, prop,
-			    prop_entry);
-		}
-		/* Preserve ID information */
-		nsa->sa_iid = sa->sa_iid;
-		nsa->sa_iid.id_buf = ibuf_dup(sa->sa_iid.id_buf);
-		nsa->sa_rid = sa->sa_rid;
-		nsa->sa_rid.id_buf = ibuf_dup(sa->sa_rid.id_buf);
-
-		log_debug("%s: activating new IKE SA", __func__);
-		sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
-		timer_set(env, &nsa->sa_timer, ikev2_ike_sa_alive, nsa);
-		timer_add(env, &nsa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
-		nsa->sa_stateflags = sa->sa_statevalid; /* XXX */
-
-		/* unregister DPD keep alive timer first */
-		if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
-			timer_del(env, &sa->sa_timer);
-		timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
-		timer_add(env, &sa->sa_timer, IKED_IKE_SA_REKEY_TIMEOUT);
-
-		if (sa->sa_addrpool) {
-			/* transfer sa_addrpool address */
-			RB_REMOVE(iked_addrpool, &env->sc_addrpool, sa);
-			nsa->sa_addrpool = sa->sa_addrpool;
-			sa->sa_addrpool = NULL;
-			RB_INSERT(iked_addrpool, &env->sc_addrpool, nsa);
-		}
-	} else
+	if (protoid == IKEV2_SAPROTO_IKE)
+		ret = ikev2_ikesa_enable(env, sa, nsa);
+	else
 		ret = ikev2_childsa_enable(env, sa);
 
  done:
@@ -3290,7 +3532,7 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg, u_int proto)
 
 int
 ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
-    struct iked_message *msg)
+    struct iked_sa *osa, struct iked_message *msg)
 {
 	struct iked_transform	*xform;
 
@@ -3374,7 +3616,7 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 		return (-1);
 	}
 
-	return (ikev2_sa_keys(env, sa, NULL));
+	return (ikev2_sa_keys(env, sa, osa ? osa->sa_key_d : NULL));
 }
 
 int
@@ -4457,7 +4699,8 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 	return (0);
 }
 
-void
+/* return 0 if processed, -1 if busy */
+int
 ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 {
 	struct iked_flow	*flow;
@@ -4465,7 +4708,7 @@ ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 	struct iked_policy	 pol, *p = NULL;
 
 	if (env->sc_passive)
-		return;
+		return (0);
 
 	/* First try to find an active flow with IKE SA */
 	flow = RB_FIND(iked_flows, &env->sc_activeflows, acquire);
@@ -4482,7 +4725,7 @@ ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 
 		if ((p = policy_test(env, &pol)) == NULL) {
 			log_warnx("%s: flow wasn't found", __func__);
-			return;
+			return (0);
 		}
 
 		log_debug("%s: found matching policy '%s'", __func__,
@@ -4496,14 +4739,16 @@ ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 
 		if ((sa = flow->flow_ikesa) == NULL) {
 			log_warnx("%s: flow without SA", __func__);
-			return;
+			return (0);
 		}
-
+		if (sa->sa_stateflags & IKED_REQ_CHILDSA)
+			return (-1);	/* busy, retry later */
 		if (ikev2_send_create_child_sa(env, sa, NULL,
 		    flow->flow_saproto) != 0)
 			log_warnx("%s: failed to initiate a "
 			    "CREATE_CHILD_SA exchange", __func__);
 	}
+	return (0);
 }
 
 void
@@ -4519,7 +4764,8 @@ ikev2_disable_rekeying(struct iked *env, struct iked_sa *sa)
 	(void)ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 }
 
-void
+/* return 0 if processed, -1 if busy */
+int
 ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 {
 	struct iked_childsa		*csa, key;
@@ -4528,28 +4774,32 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 	key.csa_spi = *rekey;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);
 	if (!csa)
-		return;
+		return (0);
 
 	if (csa->csa_rekey)	/* See if it's already taken care of */
-		return;
+		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
 		log_warnx("%s: SA %s doesn't have a parent SA", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
-		return;
+		return (0);
 	}
 	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED)) {
 		log_warnx("%s: SA %s is not established", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
-		return;
+		return (0);
 	}
+	if (sa->sa_stateflags & IKED_REQ_CHILDSA)
+		return (-1);	/* busy, retry later */
 	if (csa->csa_allocated)	/* Peer SPI died first, get the local one */
 		rekey->spi = csa->csa_peerspi;
 	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid))
 		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
 		    __func__);
+	return (0);
 }
 
-void
+/* return 0 if processed, -1 if busy */
+int
 ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 {
 	struct ibuf			*buf = NULL;
@@ -4561,12 +4811,18 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	key.csa_spi = *drop;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);
 	if (!csa || csa->csa_rekey)
-		return;
+		return (0);
+
+	sa = csa->csa_ikesa;
+	if (sa && (sa->sa_stateflags & IKED_REQ_CHILDSA))
+		return (-1);	/* busy, retry later */
+
 	RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
 	csa->csa_loaded = 0;
-	if ((sa = csa->csa_ikesa) == NULL) {
+	csa->csa_rekey = 1;	/* prevent re-loading */
+	if (sa == NULL) {
 		log_debug("%s: failed to find a parent SA", __func__);
-		return;
+		return (0);
 	}
 
 	if (csa->csa_allocated)
@@ -4582,7 +4838,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	/* Send PAYLOAD_DELETE */
 
 	if ((buf = ibuf_static()) == NULL)
-		return;
+		return (0);
 	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
 		goto done;
 	del->del_protoid = drop->spi_protoid;
@@ -4604,7 +4860,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 
 done:
 	ibuf_release(buf);
-	return;
+	return (0);
 }
 
 int

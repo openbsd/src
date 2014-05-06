@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.30 2014/04/28 16:23:19 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.31 2014/05/06 10:24:22 markus Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2014 $
+.Dd $Mdocdate: May 6 2014 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -435,6 +435,14 @@ is similar to
 .Ic srcid ,
 but instead specifies the ID to be used
 by the remote peer.
+.It Ic ikelifetime Ar time
+The optional
+.Ic ikelifetime
+parameter defines the IKE SA expiration timeout by the
+.Ar time
+SA was in created.
+A zero value disables active IKE SA rekeying.
+This is the default.
 .It Ic lifetime Ar time Op Ic bytes Ar bytes
 The optional
 .Ic lifetime

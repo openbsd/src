@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.33 2014/05/06 09:48:40 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.34 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -242,7 +242,8 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 			    NULL, 0),
 			    print_host((struct sockaddr *)&sa->sa_local.addr,
 			    NULL, 0),
-			    sa->sa_policy->pol_name);
+			    sa->sa_policy ? sa->sa_policy->pol_name :
+			    "<unknown>");
 			break;
 		default:
 			log_debug("%s: %s -> %s", __func__, a, b);
@@ -372,6 +373,11 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	    print_spi(sa->sa_hdr.sh_ispi, 8),
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
+	/* IKE rekeying running? */
+	if (sa->sa_next) {
+		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_next);
+		config_free_sa(env, sa->sa_next);
+	}
 	RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);
 }
@@ -401,8 +407,8 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 {
 	struct iked_policy	*pol = sa->sa_policy;
 
-	if (pol == NULL) {
-		log_debug("%s: invalid policy", __func__);
+	if (sa->sa_state != IKEV2_STATE_CLOSING && pol == NULL) {
+		log_debug("%s: missing policy", __func__);
 		return (-1);
 	}
 
@@ -415,7 +421,7 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 		return (-1);
 	}
 
-	if (addr == &sa->sa_peer) {
+	if (addr == &sa->sa_peer && pol) {
 		/* XXX Re-insert node into the tree */
 		RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
 		memcpy(&sa->sa_polpeer, initiator ? &pol->pol_peer :
@@ -471,7 +477,7 @@ sa_lookup(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	struct iked_sa	*sa, key;
 
 	key.sa_hdr.sh_ispi = ispi;
-	key.sa_hdr.sh_rspi = rspi;
+	/* key.sa_hdr.sh_rspi = rspi; */
 	key.sa_hdr.sh_initiator = initiator;
 
 	if ((sa = RB_FIND(iked_sas, &env->sc_sas, &key)) != NULL) {

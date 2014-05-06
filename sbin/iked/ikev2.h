@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.14 2014/04/29 11:51:13 markus Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.15 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -37,7 +37,8 @@
 #define IKEV2_STATE_VALID		6	/* authenticated AND validated certs */
 #define IKEV2_STATE_EAP_VALID		7	/* EAP validated */
 #define IKEV2_STATE_ESTABLISHED		8	/* active IKE SA */
-#define IKEV2_STATE_CLOSED		9	/* delete this SA */
+#define IKEV2_STATE_CLOSING		9	/* expect delete for this SA */
+#define IKEV2_STATE_CLOSED		10	/* delete this SA */
 
 extern struct iked_constmap ikev2_state_map[];
 

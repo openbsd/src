@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.75 2014/05/06 07:24:37 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.76 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -274,7 +274,8 @@ struct iked_policy {
 	struct iked_cfg			 pol_cfg[IKED_CFG_MAX];
 	u_int				 pol_ncfg;
 
-	struct iked_lifetime		 pol_lifetime;
+	u_int32_t			 pol_rekey;	/* ike SA lifetime */
+	struct iked_lifetime		 pol_lifetime;	/* child SA lifetime */
 
 	struct iked_sapeers		 pol_sapeers;
 
@@ -411,6 +412,7 @@ struct iked_sa {
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPSec flows */
 
+	struct iked_sa			*sa_next;	/* IKE SA rekeying */
 	u_int64_t			 sa_rekeyspi;	/* peerspi for rekey*/
 
 	u_int8_t			 sa_ipcomp;	/* IPcomp transform */
@@ -418,8 +420,10 @@ struct iked_sa {
 	u_int16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
-#define IKED_IKE_SA_REKEY_TIMEOUT	 300		/* 5 minutes */
+#define IKED_IKE_SA_DELETE_TIMEOUT	 300		/* 5 minutes */
 #define IKED_IKE_SA_ALIVE_TIMEOUT	 60		/* 1 minute */
+
+	struct iked_timer		 sa_rekey;	/* rekey timeout */
 
 	struct iked_msgqueue		 sa_requests;	/* request queue */
 #define IKED_RETRANSMIT_TIMEOUT		 2		/* 2 seconds */
@@ -751,10 +755,10 @@ struct ikev2_payload *
 	 ikev2_add_payload(struct ibuf *);
 int	 ikev2_next_payload(struct ikev2_payload *, size_t,
 	    u_int8_t);
-void	 ikev2_acquire_sa(struct iked *, struct iked_flow *);
+int	 ikev2_acquire_sa(struct iked *, struct iked_flow *);
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
-void	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
-void	 ikev2_drop_sa(struct iked *, struct iked_spi *);
+int	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
+int	 ikev2_drop_sa(struct iked *, struct iked_spi *);
 int	 ikev2_print_id(struct iked_id *, char *, size_t);
 
 /* ikev2_msg.c */

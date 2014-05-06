@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.33 2014/05/05 16:14:37 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.34 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -190,8 +190,22 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 	struct iked_sa			 sa;
 #endif
 
-	if (msg->msg_sa != NULL && msg->msg_policy != NULL)
+	if (msg->msg_sa != NULL && msg->msg_policy != NULL) {
+		/*
+		 * Only permit informational requests from initiator
+		 * on closing SAs (for DELETE).
+		 */
+		if (msg->msg_sa->sa_state == IKEV2_STATE_CLOSING) {
+			if (((oldhdr->ike_flags &
+			    (IKEV2_FLAG_INITIATOR|IKEV2_FLAG_RESPONSE)) ==
+			    IKEV2_FLAG_INITIATOR) &&
+			    (oldhdr->ike_exchange ==
+			    IKEV2_EXCHANGE_INFORMATIONAL))
+				return (0);
+			return (-1);
+		}
 		return (0);
+	}
 
 #if 0
 	/*

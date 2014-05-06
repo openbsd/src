@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.44 2014/05/06 09:21:50 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.45 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1340,9 +1340,13 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			msg->msg_parent->msg_responded = 1;
 			ibuf_release(resp);
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
-			return (ret);
+		} else {
+			/*
+			 * We're sending a delete message. Upper layer
+			 * must deal with deletion of the IKE SA.
+			 */
+			ret = 0;
 		}
-		log_debug("%s: invalid SPI size", __func__);
 		return (ret);
 	}
 

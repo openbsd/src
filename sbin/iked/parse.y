@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2014/02/17 15:07:23 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.38 2014/05/06 10:24:22 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -321,7 +321,8 @@ void			 copy_transforms(u_int, const struct ipsec_xf *,
 int			 create_ike(char *, int, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, struct ipsec_mode *,
 			     struct ipsec_mode *, u_int8_t,
-			     u_int8_t, char *, char *, struct iked_lifetime *,
+			     u_int8_t, char *, char *,
+			     u_int32_t, struct iked_lifetime *,
 			     struct iked_auth *, struct ipsec_filters *,
 			     struct ipsec_addr_wrap *);
 int			 create_user(const char *, const char *);
@@ -370,7 +371,7 @@ typedef struct {
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
-%token	IPCOMP OCSP
+%token	IPCOMP OCSP IKELIFETIME
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -392,7 +393,7 @@ typedef struct {
 %type	<v.ikekey>		keyspec
 %type	<v.mode>		ike_sa child_sa
 %type	<v.lifetime>		lifetime
-%type	<v.number>		byte_spec time_spec
+%type	<v.number>		byte_spec time_spec ikelifetime
 %type	<v.string>		name
 %type	<v.cfg>			cfg ikecfg ikecfgvals
 %%
@@ -446,9 +447,9 @@ user		: USER STRING STRING		{
 		;
 
 ikev2rule	: IKEV2 name ikeflags satype af proto hosts_list peers
-		    ike_sa child_sa ids lifetime ikeauth ikecfg filters {
+		    ike_sa child_sa ids ikelifetime lifetime ikeauth ikecfg filters {
 			if (create_ike($2, $5, $6, $7, &$8, $9, $10, $4, $3,
-			    $11.srcid, $11.dstid, &$12, &$13, $15, $14) == -1)
+			    $11.srcid, $11.dstid, $12, &$13, &$14, $16, $15) == -1)
 				YYERROR;
 		}
 		;
@@ -895,6 +896,13 @@ lifetime	: /* empty */				{
 		}
 		;
 
+ikelifetime	: /* empty */				{
+			$$ = 0;
+		}
+		| IKELIFETIME time_spec			{
+			$$ = $2;
+		}
+
 keyspec		: STRING			{
 			u_int8_t	*hex;
 
@@ -1084,6 +1092,7 @@ lookup(char *s)
 		{ "from",		FROM },
 		{ "group",		GROUP },
 		{ "ike",		IKEV1 },
+		{ "ikelifetime",	IKELIFETIME },
 		{ "ikesa",		IKESA },
 		{ "ikev2",		IKEV2 },
 		{ "include",		INCLUDE },
@@ -2312,6 +2321,9 @@ print_policy(struct iked_policy *pol)
 	if (pol->pol_peerid.id_length != 0)
 		print_verbose(" dstid %s", pol->pol_peerid.id_data);
 
+	if (pol->pol_rekey)
+		print_verbose(" ikelifetime %u", pol->pol_rekey);
+
 	print_verbose(" lifetime %llu bytes %llu",
 	    pol->pol_lifetime.lt_seconds, pol->pol_lifetime.lt_bytes);
 
@@ -2382,7 +2394,8 @@ int
 create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
     struct ipsec_hosts *peers, struct ipsec_mode *ike_sa,
     struct ipsec_mode *ipsec_sa, u_int8_t saproto,
-    u_int8_t flags, char *srcid, char *dstid, struct iked_lifetime *lt,
+    u_int8_t flags, char *srcid, char *dstid,
+    u_int32_t ikelifetime, struct iked_lifetime *lt,
     struct iked_auth *authtype, struct ipsec_filters *filter,
     struct ipsec_addr_wrap *ikecfg)
 {
@@ -2507,6 +2520,9 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
 		if (pol.pol_af == AF_UNSPEC)
 			pol.pol_af = ipb->af;
 	}
+
+	if (ikelifetime)
+		pol.pol_rekey = ikelifetime;
 
 	if (lt)
 		pol.pol_lifetime = *lt;
