@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.41 2014/05/05 15:21:20 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.42 2014/05/06 07:24:37 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1157,6 +1157,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " (%zu != %zu)", __func__, len, sizeof(group));
 			return (-1);
 		}
+		/* XXX chould also happen for PFS */
 		if (!msg->msg_sa->sa_hdr.sh_initiator) {
 			log_debug("%s: not an initiator", __func__);
 			sa_free(env, msg->msg_sa);
@@ -1175,6 +1176,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    group);
 		sa_free(env, msg->msg_sa);
 		msg->msg_sa = NULL;
+		/* XXX chould also happen for PFS so we have to check state XXX*/
 		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
 		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
 		break;

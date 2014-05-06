@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2014/05/06 07:24:37 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -339,7 +339,8 @@ config_add_transform(struct iked_proposal *prop, u_int type,
 }
 
 struct iked_transform *
-config_findtransform(struct iked_proposals *props, u_int8_t type)
+config_findtransform(struct iked_proposals *props, u_int8_t type,
+    u_int proto)
 {
 	struct iked_proposal	*prop;
 	struct iked_transform	*xform;
@@ -347,6 +348,9 @@ config_findtransform(struct iked_proposals *props, u_int8_t type)
 
 	/* Search of the first transform with the desired type */
 	TAILQ_FOREACH(prop, props, prop_entry) {
+		/* Find any proposal or only selected SA proto */
+		if (proto != 0 && prop->prop_protoid != proto)
+			continue;
 		for (i = 0; i < prop->prop_nxforms; i++) {
 			xform = prop->prop_xforms + i;
 			if (xform->xform_type == type)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.74 2014/05/06 07:08:10 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.75 2014/05/06 07:24:37 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -411,6 +411,8 @@ struct iked_sa {
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPSec flows */
 
+	u_int64_t			 sa_rekeyspi;	/* peerspi for rekey*/
+
 	u_int8_t			 sa_ipcomp;	/* IPcomp transform */
 	u_int16_t			 sa_cpi_out;	/* IPcomp outgoing */
 	u_int16_t			 sa_cpi_in;	/* IPcomp incoming*/
@@ -606,7 +608,7 @@ struct iked_user *
 u_int64_t
 	 config_getspi(void);
 struct iked_transform *
-	 config_findtransform(struct iked_proposals *, u_int8_t);
+	 config_findtransform(struct iked_proposals *, u_int8_t, u_int);
 void	 config_free_policy(struct iked *, struct iked_policy *);
 struct iked_proposal *
 	 config_add_proposal(struct iked_proposals *, u_int, u_int);
