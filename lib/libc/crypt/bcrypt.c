@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.42 2014/05/06 15:38:49 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.43 2014/05/06 15:59:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -187,10 +187,10 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	encode_base64(encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64(encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
-	explicit_bzero(&state, 0, sizeof(state));
-	explicit_bzero(ciphertext, 0, sizeof(ciphertext));
-	explicit_bzero(csalt, 0, sizeof(csalt));
-	explicit_bzero(cdata, 0, sizeof(cdata));
+	explicit_bzero(&state, sizeof(state));
+	explicit_bzero(ciphertext, sizeof(ciphertext));
+	explicit_bzero(csalt, sizeof(csalt));
+	explicit_bzero(cdata, sizeof(cdata));
 	return 0;
 }
 
