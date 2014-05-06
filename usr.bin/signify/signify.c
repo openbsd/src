@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.73 2014/05/06 23:17:13 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.74 2014/05/06 23:19:46 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -572,7 +572,7 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 		uselist = 1;
 		count = nchecksums;
 	}
-	if (!(failures = calloc(count, sizeof(int))))
+	if (!(failures = calloc(count, sizeof(*failures))))
 		err(1, "calloc");
 	for (i = 0; i < count; i++) {
 		if (uselist) {
