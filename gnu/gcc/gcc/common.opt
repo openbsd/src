@@ -874,6 +874,10 @@ fstack-protector-strong
 Common Report RejectNegative Var(flag_stack_protect, 3)
 Use a smart stack protection method for certain functions
 
+fstack-shuffle
+Common Report Var(flag_stack_shuffle)
+Shuffle local stack variables.
+
 fstrength-reduce
 Common
 Does nothing.  Preserved for backward compatibility.
