@@ -959,13 +959,14 @@ add_stack_protection_conflicts (void)
 /* Create a decl for the guard at the top of the stack frame.  */
 
 static void
-create_stack_guard (void)
+create_stack_guard (bool protect)
 {
   tree guard = build_decl (VAR_DECL, NULL, ptr_type_node);
   TREE_THIS_VOLATILE (guard) = 1;
   TREE_USED (guard) = 1;
   expand_one_stack_var (guard);
-  cfun->stack_protect_guard = guard;
+  if (protect)
+    cfun->stack_protect_guard = guard;
 }
 
 /* Helper routine to check if a record or union contains an array field. */
@@ -1103,18 +1104,16 @@ expand_used_vars (void)
   switch (flag_stack_protect)
     {
     case SPCT_FLAG_ALL:
-      create_stack_guard ();
+      create_stack_guard (true);
       break;
 
     case SPCT_FLAG_STRONG:
-      if (gen_stack_protect_signal
-	  || current_function_calls_alloca || has_protected_decls)
-	create_stack_guard ();
+      create_stack_guard (gen_stack_protect_signal
+	  || current_function_calls_alloca || has_protected_decls);
       break;
 
     case SPCT_FLAG_DEFAULT:
-      if (current_function_calls_alloca || has_protected_decls)
-	create_stack_guard();
+      create_stack_guard(current_function_calls_alloca || has_protected_decls);
       break;
 
     default:
