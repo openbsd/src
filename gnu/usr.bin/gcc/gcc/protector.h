@@ -33,7 +33,7 @@ extern void prepare_stack_protection  PARAMS ((int inlinable));
 #ifdef TREE_CODE
 /* search a character array from the specified type tree */
 
-extern int search_string_def PARAMS ((tree names, int addressable));
+extern int search_string_def PARAMS ((tree names));
 #endif
 
 /* examine whether the input contains frame pointer addressing */

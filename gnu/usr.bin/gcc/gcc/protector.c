@@ -293,8 +293,7 @@ search_string_from_argsandvars (caller)
       {
 	if (PARM_PASSED_IN_MEMORY (parms) && DECL_NAME (parms))
 	  {
-	    string_p = search_string_def (
-		TREE_TYPE (parms), TREE_ADDRESSABLE (parms));
+	    string_p = search_string_def (TREE_TYPE (parms));
 	    if (string_p) return TRUE;
 	  }
       }
@@ -326,8 +325,7 @@ search_string_from_local_vars (block)
 	      && DECL_RTL_SET_P (types)
 	      && GET_CODE (DECL_RTL (types)) == MEM
 
-	      && search_string_def (
-		 TREE_TYPE (types), TREE_ADDRESSABLE (types)))
+	      && search_string_def (TREE_TYPE (types)))
 	    {
 	      rtx home = DECL_RTL (types);
 
@@ -376,9 +374,8 @@ search_string_from_local_vars (block)
  * search a character array from the specified type tree
  */
 int
-search_string_def (type, addressable)
+search_string_def (type)
      tree type;
-     int addressable;
 {
   tree tem;
     
@@ -386,8 +383,7 @@ search_string_def (type, addressable)
     return FALSE;
 
   if (flag_strong_protection
-      && (TREE_CODE (type) == ARRAY_TYPE
-          || addressable))
+      && TREE_CODE (type) == ARRAY_TYPE)
     return TRUE;
 
   switch (TREE_CODE (type))
@@ -428,7 +424,7 @@ search_string_def (type, addressable)
       /* to protect every functions, sweep any arrays to the frame top */
       is_array = TRUE;
 
-      return search_string_def(TREE_TYPE (type), FALSE);
+      return search_string_def(TREE_TYPE (type));
 	
     case UNION_TYPE:
     case QUAL_UNION_TYPE:
@@ -448,7 +444,7 @@ search_string_def (type, addressable)
 		  || (TREE_CODE (tem) == VAR_DECL && TREE_STATIC (tem)))
 	        continue;
 
-	      if (search_string_def(TREE_TYPE (tem), FALSE))
+	      if (search_string_def(TREE_TYPE (tem)))
 		{
 		  TREE_VISITED (type) = 0;
 		  return TRUE;
@@ -986,8 +982,7 @@ arrange_var_order (block)
 	      && GET_CODE (DECL_RTL (types)) == MEM
 	      && GET_MODE (DECL_RTL (types)) == BLKmode
 
-	      && (is_array=0, search_string_def (
-		  TREE_TYPE (types), TREE_ADDRESSABLE (types))
+	      && (is_array=0, search_string_def (TREE_TYPE (types))
 		  || (! current_function_defines_vulnerable_string
 		      && is_array)))
 	    {
@@ -1066,8 +1061,7 @@ copy_args_for_protection ()
 	      }
 	    */
 
-	    string_p = search_string_def (
-		TREE_TYPE (parms), TREE_ADDRESSABLE (parms));
+	    string_p = search_string_def (TREE_TYPE (parms));
 
 	    /* check if it is a candidate to move */
 	    if (string_p || search_pointer_def (TREE_TYPE (parms)))
