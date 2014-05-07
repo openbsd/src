@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.16 2011/08/19 20:53:36 millert Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.17 2014/05/07 21:20:06 schwarze Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -100,7 +100,7 @@ copyfile(int from, int to, struct stat *sb)
 	if (fstat(from, sb) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
-		for (off = 0; off < nr; nr -= nw, off += nw)
+		for (off = 0; nr > 0; nr -= nw, off += nw)
 			if ((nw = write(to, buf + off, nr)) < 0)
 				pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 	if (nr < 0)
