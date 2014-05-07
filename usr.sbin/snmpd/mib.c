@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.68 2014/04/28 12:03:32 mikeb Exp $	*/
+/*	$OpenBSD: mib.c,v 1.69 2014/05/07 01:23:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -2818,9 +2818,8 @@ mib_carpifget(u_int idx)
 		return (NULL);
 	}
 
-	cif = malloc(sizeof(struct carpif));
+	cif = calloc(1, sizeof(struct carpif));
 	if (cif != NULL) {
-		memset(cif, 0, sizeof(struct carpif));
 		memcpy(&cif->carpr, &carpr, sizeof(struct carpreq));
 		memcpy(&cif->kif, kif, sizeof(struct kif));
 	}
