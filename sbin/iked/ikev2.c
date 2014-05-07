@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.108 2014/05/06 14:10:53 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.109 2014/05/07 10:52:47 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -54,8 +54,9 @@ struct iked_sa *
 	    u_int8_t *, u_int8_t **, size_t *);
 
 void	 ikev2_recv(struct iked *, struct iked_message *);
-int	 ikev2_ike_auth(struct iked *, struct iked_sa *,
+int	 ikev2_ike_auth_recv(struct iked *, struct iked_sa *,
 	    struct iked_message *);
+int	 ikev2_ike_auth(struct iked *, struct iked_sa *);
 
 void	 ikev2_init_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
@@ -253,7 +254,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warnx("%s: peer certificate is invalid", __func__);
 		}
 
-		if (ikev2_ike_auth(env, sa, NULL) != 0)
+		if (ikev2_ike_auth(env, sa) != 0)
 			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	case IMSG_CERT:
@@ -296,7 +297,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		sa_stateflags(sa, IKED_REQ_CERT);
 
-		if (ikev2_ike_auth(env, sa, NULL) != 0)
+		if (ikev2_ike_auth(env, sa) != 0)
 			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	case IMSG_AUTH:
@@ -331,7 +332,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* Switch in case we already have certvalid or authvalid */
 		sa_state(env, sa, IKEV2_STATE_VALID);
 
-		if (ikev2_ike_auth(env, sa, NULL) != 0)
+		if (ikev2_ike_auth(env, sa) != 0)
 			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	default:
@@ -490,7 +491,7 @@ done:
 }
 
 int
-ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
+ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg)
 {
 	struct iked_id		*id, *certid;
@@ -498,9 +499,6 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 	struct iked_auth	 ikeauth;
 	struct iked_policy	*policy = sa->sa_policy;
 	int			 ret = -1;
-
-	if (msg == NULL)
-		goto done;
 
 	if (sa->sa_hdr.sh_initiator) {
 		id = &sa->sa_rid;
@@ -635,7 +633,12 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 		} else
 			sa_stateflags(sa, IKED_REQ_SA);
 	}
- done:
+	return ikev2_ike_auth(env, sa);
+}
+
+int
+ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
+{
 	if (sa->sa_hdr.sh_initiator) {
 		if (sa_stateok(sa, IKEV2_STATE_AUTH_SUCCESS))
 			return (ikev2_init_done(env, sa));
@@ -720,7 +723,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		(void)ikev2_init_auth(env, msg);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
-		(void)ikev2_ike_auth(env, sa, msg);
+		(void)ikev2_ike_auth_recv(env, sa, msg);
 		break;
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
 		(void)ikev2_init_create_child_sa(env, msg);
@@ -1916,7 +1919,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		    sa->sa_policy->pol_auth.auth_eap)
 			sa_state(env, sa, IKEV2_STATE_EAP);
 
-		if (ikev2_ike_auth(env, sa, msg) != 0) {
+		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
