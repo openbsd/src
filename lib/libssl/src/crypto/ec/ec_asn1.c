@@ -1233,8 +1233,10 @@ i2o_ECPublicKey(EC_KEY * a, unsigned char **out)
 	if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
 		*out, buf_len, NULL)) {
 		ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_EC_LIB);
-		free(*out);
-		*out = NULL;
+		if (new_buffer) {
+			free(*out);
+			*out = NULL;
+		}
 		return 0;
 	}
 	if (!new_buffer)
