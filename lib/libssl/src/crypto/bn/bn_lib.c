@@ -226,11 +226,22 @@ void BN_clear_free(BIGNUM *a)
 		free(a);
 	}
 
-void
-BN_free(BIGNUM *a)
-{
-	BN_clear_free(a);
-}
+void BN_free(BIGNUM *a)
+	{
+	if (a == NULL) return;
+	bn_check_top(a);
+	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+		free(a->d);
+	if (a->flags & BN_FLG_MALLOCED)
+		free(a);
+	else
+		{
+#ifndef OPENSSL_NO_DEPRECATED
+		a->flags|=BN_FLG_FREE;
+#endif
+		a->d = NULL;
+		}
+	}
 
 void BN_init(BIGNUM *a)
 	{
@@ -389,10 +400,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
 		{
 		BN_ULONG *a = bn_expand_internal(b, words);
 		if(!a) return NULL;
-		if(b->d) {
-			OPENSSL_cleanse(b->d, b->dmax * sizeof(b->d[0]));
-			free(b->d);
-		}
+		if(b->d) free(b->d);
 		b->d=a;
 		b->dmax=words;
 		}
