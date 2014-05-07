@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.26 2014/04/15 09:14:27 mpi Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.27 2014/05/07 08:17:21 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -582,6 +582,10 @@ ucycom_detach(struct device *self, int flags)
 		config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
+
+	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
+		uhidev_close(&sc->sc_hdev);
+
 	return (0);
 }
 

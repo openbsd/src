@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.14 2014/04/15 09:14:27 mpi Exp $   */
+/*	$OpenBSD: utrh.c,v 1.15 2014/05/07 08:17:21 mpi Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -174,6 +174,9 @@ utrh_detach(struct device *self, int flags)
 		if (sc->sc_sensortask != NULL)
 			sensor_task_unregister(sc->sc_sensortask);
 	}
+
+	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
+		uhidev_close(&sc->sc_hdev);
 
 	if (sc->sc_ibuf != NULL) {
 		free(sc->sc_ibuf, M_USBDEV);
