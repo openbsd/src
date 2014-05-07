@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zmore.1,v 1.10 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: zmore.1,v 1.11 2014/05/07 21:42:50 zhuk Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: May 7 2014 $
 .Dt ZMORE 1
 .Os
 .Sh NAME
@@ -47,11 +47,11 @@ and
 formats are supported).
 Any
 .Ar flags
-that are specified are passed to the user's preferred
-.Ev PAGER
-(which is
-.Pa /usr/bin/more
-by default).
+that are specified are passed to
+.Xr more 1
+or
+.Xr less 1 ,
+respectively.
 .Pp
 .Nm zless
 is equivalent to
@@ -90,18 +90,6 @@ In this mode
 will assume
 .Xr gzip 1
 style compression since there is no suffix on which to make a decision.
-.Sh ENVIRONMENT
-.Bl -tag -width "PAGER"
-.It Ev PAGER
-Program used to display files.
-If unset,
-.Pa /usr/bin/more
-is used
-.Pq Nm zmore
-or
-.Pa /usr/bin/less
-.Pq Nm zless .
-.El
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr gzip 1 ,

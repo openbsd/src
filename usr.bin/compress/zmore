@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: zmore,v 1.6 2008/08/20 09:22:02 mpf Exp $
+# $OpenBSD: zmore,v 1.7 2014/05/07 21:42:50 zhuk Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -40,9 +40,9 @@ while test $# -ne 0; do
 done
 
 if [ `basename $0` == "zless" ] ; then
-	pager=${PAGER-less}
+	pager=less
 else
-	pager=${PAGER-more}
+	pager=more
 fi
 
 # No files means read from stdin
