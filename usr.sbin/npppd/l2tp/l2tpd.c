@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.14 2014/03/22 04:32:39 yasuoka Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.15 2014/05/07 01:16:15 tedu Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.14 2014/03/22 04:32:39 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.15 2014/05/07 01:16:15 tedu Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -162,12 +162,11 @@ l2tpd_add_listener(l2tpd *_this, int idx, struct l2tp_conf *conf,
 		    __func__, slist_length(&_this->listener), idx);
 		goto fail;
 	}
-	if ((plistener = malloc(sizeof(l2tpd_listener))) == NULL) {
-		l2tpd_log(_this, LOG_ERR, "malloc() failed in %s: %m",
+	if ((plistener = calloc(1, sizeof(l2tpd_listener))) == NULL) {
+		l2tpd_log(_this, LOG_ERR, "calloc() failed in %s: %m",
 		    __func__);
 		goto fail;
 	}
-	memset(plistener, 0, sizeof(l2tpd_listener));
 	L2TPD_ASSERT(sizeof(plistener->bind) >= addr->sa_len);
 	memcpy(&plistener->bind, addr, addr->sa_len);
 
