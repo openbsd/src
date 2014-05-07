@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.44 2014/04/14 22:25:40 beck Exp $	*/
+/*	$OpenBSD: inode.h,v 1.45 2014/05/07 02:57:41 guenther Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -316,8 +316,14 @@ struct indir {
 #define	EXT2FS_ITIMES(ip) do {						\
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
 		(ip)->i_flag |= IN_MODIFIED;				\
-		if ((ip)->i_flag & IN_CHANGE)				\
+		if ((ip)->i_flag & IN_ACCESS)				\
+			(ip)->i_e2fs_atime = time_second;		\
+		if ((ip)->i_flag & IN_UPDATE)				\
+			(ip)->i_e2fs_mtime = time_second;		\
+		if ((ip)->i_flag & IN_CHANGE) {				\
 			(ip)->i_e2fs_ctime = time_second;		\
+			(ip)->i_modrev++;				\
+		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
 } while (0)
