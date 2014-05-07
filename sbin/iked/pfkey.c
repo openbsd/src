@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.34 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.35 2014/05/07 13:09:43 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1519,6 +1519,10 @@ pfkey_dispatch(int sd, short event, void *arg)
 		return;
 	}
 
+	/* Try postponed requests first, so we do in-order processing */
+	if (!SIMPLEQ_EMPTY(&pfkey_postponed))
+		pfkey_timer_cb(0, 0, env);
+
 	pm.pm_data = data;
 	pm.pm_length = len;
 
@@ -1553,6 +1557,7 @@ pfkey_timer_cb(int unused, short event, void *arg)
 			free(pm);
 		}
 	}
+	/* move from retry to postponed */
 	while ((pm = SIMPLEQ_FIRST(&pfkey_retry)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&pfkey_retry, pm_entry);
 		SIMPLEQ_INSERT_TAIL(&pfkey_postponed, pm, pm_entry);
@@ -1783,7 +1788,7 @@ out:
 			spi.spi_protoid = IKEV2_SAPROTO_ESP;
 			break;
 		default:
-			log_warnx("%s: usupported SA type %d spi %s",
+			log_warnx("%s: unsupported SA type %d spi %s",
 			    __func__, hdr->sadb_msg_satype,
 			    print_spi(spi.spi, spi.spi_size));
 			return (0);
