@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.126 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.127 2014/05/07 08:14:59 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq;
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
-int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done;
 int	la_hold_total;
 
@@ -233,23 +232,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 				break;
 		}
 		if (ifa) {
-			/*
-			 * This test used to be
-			 *	if (lo0ifp->if_flags & IFF_UP)
-			 * It allowed local traffic to be forced through
-			 * the hardware by configuring the loopback down.
-			 * However, it causes problems during network
-			 * configuration for boards that can't receive
-			 * packets they send.  It is now necessary to clear
-			 * "useloopback" and remove the route to force
-			 * traffic out to the hardware.
-			 *
-			 * In 4.4BSD, the above "if" statement checked
-			 * rt->rt_ifa against rt_key(rt).  It was changed
-			 * to the current form so that we can provide a
-			 * better support for multiple IPv4 addresses on a
-			 * interface.
-			 */
 			rt->rt_expire = 0;
 			SDL(gate)->sdl_alen = ETHER_ADDR_LEN;
 			memcpy(LLADDR(SDL(gate)),
@@ -260,8 +242,8 @@ arp_rtrequest(int req, struct rtentry *rt)
 			 * should not (ab)use it for any route related
 			 * to an interface of a different rdomain.
 			 */
-			if (useloopback)
-				rt->rt_ifp = lo0ifp;
+			rt->rt_ifp = lo0ifp;
+
 			/*
 			 * make sure to set rt->rt_ifa to the interface
 			 * address we are using, otherwise we will have trouble
