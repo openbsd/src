@@ -29,6 +29,7 @@
 #include <openssl/objects.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
+#include <openssl/bn.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
 #include <sys/param.h>
@@ -53,6 +54,10 @@ ENGINE_load_cryptodev(void)
 
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
 #include <sys/ioctl.h>
 
 #include <errno.h>
