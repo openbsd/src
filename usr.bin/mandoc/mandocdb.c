@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.104 2014/05/07 15:10:33 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.105 2014/05/07 16:18:57 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -2028,12 +2028,21 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	if (debug)
 		say(mlink->file, "Adding to database");
 
+	i = strlen(mpage->desc) + 1;
+	key = mandoc_calloc(1, sizeof(struct str) + i);
+	memcpy(key->key, mpage->desc, i);
+	render_key(mc, key);
+
 	i = 1;
-	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, mpage->desc);
+	SQL_BIND_TEXT(stmts[STMT_INSERT_PAGE], i, key->rendered);
 	SQL_BIND_INT(stmts[STMT_INSERT_PAGE], i, FORM_SRC == mpage->form);
 	SQL_STEP(stmts[STMT_INSERT_PAGE]);
 	mpage->pageid = sqlite3_last_insert_rowid(db);
 	sqlite3_reset(stmts[STMT_INSERT_PAGE]);
+
+	if (key->rendered != key->key)
+		free(key->rendered);
+	free(key);
 
 	while (NULL != mlink) {
 		dbadd_mlink(mlink);
