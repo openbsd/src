@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.31 2014/03/20 09:18:01 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.32 2014/05/07 08:26:38 mpi Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
 	struct socket *so;
+	struct ifaddr *ifa;
 	char addr[INET_ADDRSTRLEN];
 	int error;
 
@@ -192,18 +193,23 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 
 	soclose(so);
 
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			break;
+	}
+	if (ifa == NULL)
+		panic("nfs_boot: address not configured on %s", ifp->if_xname);
+
 	/*
 	 * Get client name and gateway address.
 	 * RPC: bootparam/whoami
-	 * Use the old broadcast address for the WHOAMI
-	 * call because we do not yet know our netmask.
 	 * The server address returned by the WHOAMI call
 	 * is used for all subsequent bootparam RPCs.
 	 */
 	bzero((caddr_t)&bp_sin, sizeof(bp_sin));
 	bp_sin.sin_len = sizeof(bp_sin);
 	bp_sin.sin_family = AF_INET;
-	bp_sin.sin_addr.s_addr = INADDR_BROADCAST;
+	bp_sin.sin_addr.s_addr = ifatoia(ifa)->ia_broadaddr.sin_addr.s_addr;
 	hostnamelen = MAXHOSTNAMELEN;
 
 	/* this returns gateway IP address */

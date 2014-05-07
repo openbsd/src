@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.154 2014/04/18 10:48:29 jca Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.155 2014/05/07 08:26:38 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -230,8 +230,6 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		return in6_pcbbind(inp, nam, p);
 #endif /* INET6 */
 
-	if (TAILQ_EMPTY(&in_ifaddr))
-		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || inp->inp_laddr.s_addr != INADDR_ANY)
 		return (EINVAL);
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
@@ -781,17 +779,6 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
 
-	if (!TAILQ_EMPTY(&in_ifaddr)) {
-		if (sin->sin_addr.s_addr == INADDR_ANY)
-			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
-		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
-		  (TAILQ_FIRST(&in_ifaddr)->ia_ifp->if_flags & IFF_BROADCAST) &&
-		  TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr.s_addr)
-			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddr)->ia_broadaddr.sin_addr;
-	}
-
 	/*
 	 * If the source address is not specified but the socket(if any)
 	 * is already bound, use the bound address.
@@ -850,11 +837,9 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp)
 		ia = ifatoia(ro->ro_rt->rt_ifa);
-	if (ia == NULL) {
-		ia = TAILQ_FIRST(&in_ifaddr);
-		if (ia == NULL)
-			return (EADDRNOTAVAIL);
-	}
+
+	if (ia == NULL)
+		return (EADDRNOTAVAIL);
 
 	*insrc = &ia->ia_addr.sin_addr;
 	return (0);

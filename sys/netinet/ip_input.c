@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.231 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.232 2014/05/07 08:26:38 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -238,12 +238,6 @@ ipv4_input(struct mbuf *m)
 
 	ifp = m->m_pkthdr.rcvif;
 
-	/*
-	 * If no IP addresses have been set yet but the interfaces
-	 * are receiving, can't do anything with incoming packets yet.
-	 */
-	if (TAILQ_EMPTY(&in_ifaddr))
-		goto bad;
 	ipstat.ips_total++;
 	if (m->m_len < sizeof (struct ip) &&
 	    (m = m_pullup(m, sizeof (struct ip))) == NULL) {
