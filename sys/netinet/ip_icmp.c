@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.121 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.122 2014/05/07 08:09:33 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -305,6 +305,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 void
 icmp_input(struct mbuf *m, ...)
 {
+	struct ifnet *ifp;
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in sin;
@@ -317,6 +318,8 @@ icmp_input(struct mbuf *m, ...)
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
+
+	ifp = m->m_pkthdr.rcvif;
 
 	/*
 	 * Locate icmp structure in mbuf, and check
@@ -480,7 +483,7 @@ icmp_input(struct mbuf *m, ...)
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_addr = icp->icmp_ip.ip_dst;
 #if NCARP > 0
-		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &sin.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
@@ -545,10 +548,9 @@ icmp_input(struct mbuf *m, ...)
 			sin.sin_addr = ip->ip_src;
 		else
 			sin.sin_addr = ip->ip_dst;
-		if (m->m_pkthdr.rcvif == NULL)
+		if (ifp == NULL)
 			break;
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&sin),
-		    m->m_pkthdr.rcvif));
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&sin), ifp));
 		if (ia == 0)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
@@ -565,7 +567,7 @@ icmp_input(struct mbuf *m, ...)
 		}
 reflect:
 #if NCARP > 0
-		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
@@ -631,7 +633,7 @@ reflect:
 #endif
 
 #if NCARP > 0
-		if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
+		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &sdst.sin_addr.s_addr,
 		    &ip->ip_dst.s_addr))
 			goto freeit;
