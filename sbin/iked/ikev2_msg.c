@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.34 2014/05/06 10:24:22 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.35 2014/05/07 13:04:01 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -286,10 +286,12 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 
 	exchange = hdr->ike_exchange;
 	flags = hdr->ike_flags;
-	log_info("%s: %s from %s to %s, %ld bytes%s", __func__,
+	log_info("%s: %s %s from %s to %s msgid %u, %ld bytes%s", __func__,
 	    print_map(exchange, ikev2_exchange_map),
+	    (flags & IKEV2_FLAG_RESPONSE) ? "response" : "request",
 	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
 	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+	    betoh32(hdr->ike_msgid),
 	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
 
 	if (isnatt) {
@@ -995,7 +997,8 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 		timer_add(env, &msg->msg_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
 	} else {
-		log_debug("%s: retransmit limit reached", __func__);
+		log_debug("%s: retransmit limit reached for msgid %u",
+		    __func__, msg->msg_msgid);
 		sa_free(env, sa);
 	}
 }
