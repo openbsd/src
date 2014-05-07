@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.16 2013/09/13 03:25:27 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.17 2014/05/07 01:20:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.16 2013/09/13 03:25:27 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.17 2014/05/07 01:20:53 tedu Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -106,13 +106,8 @@ static u_int l2tp_ctrl_id_seq = 0;
 l2tp_ctrl *
 l2tp_ctrl_create(void)
 {
-	l2tp_ctrl *_this;
 
-	if ((_this = malloc(sizeof(l2tp_ctrl))) == NULL)
-		return NULL;
-
-	memset(_this, 0, sizeof(l2tp_ctrl));
-	return (l2tp_ctrl *)_this;
+	return calloc(1, sizeof(l2tp_ctrl));
 }
 
 /**
