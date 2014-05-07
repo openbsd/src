@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.11 2013/10/30 20:48:04 pirofti Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.12 2014/05/07 14:44:54 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1047,7 +1047,7 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 		clk_rx_setting = 24;
 		break;
 	}
-	
+
 	/* board specific overrides */
 	switch (octeon_boot_info->board_type) {
 	case BOARD_TYPE_UBIQUITI_E100:

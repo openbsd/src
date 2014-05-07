@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.1 2014/01/15 10:29:45 pirofti Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.2 2014/05/07 14:44:54 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -184,7 +184,7 @@ again:
 	} while (twsi.field.v);
 	DPRINTF(("%#llX ", twsi.reg));
 
-	/* 
+	/*
 	 * The data field is in the upper 32 bits and we're only
 	 * interested in the first byte.
 	 */

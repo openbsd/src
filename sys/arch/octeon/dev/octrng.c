@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.4 2013/11/05 16:37:06 pirofti Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.5 2014/05/07 14:44:54 pirofti Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
  *
@@ -73,7 +73,7 @@ octrng_match(struct device *parent, void *match, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
 	struct cfdata *cf = match;
-	
+
 	/* XXX: check for board type */
 
 	if (aa->aa_name == NULL ||
@@ -99,7 +99,7 @@ octrng_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers");
 	}
 
- 	control_reg = octeon_xkphys_read_8(OCTRNG_CONTROL_ADDR);
+	control_reg = octeon_xkphys_read_8(OCTRNG_CONTROL_ADDR);
 	control_reg |= (OCTRNG_ENABLE_OUTPUT | OCTRNG_ENABLE_ENTROPY);
 	octeon_xkphys_write_8(OCTRNG_CONTROL_ADDR, control_reg);
 
@@ -118,8 +118,8 @@ octrng_rnd(void *arg)
 
 	value = bus_space_read_8(sc->sc_iot, sc->sc_ioh, OCTRNG_ENTROPY_REG);
 
- 	DPRINTF(("%#llX ", value));	/* WARNING: very verbose */
+	DPRINTF(("%#llX ", value));	/* WARNING: very verbose */
 
- 	add_true_randomness(value);
+	add_true_randomness(value);
 	timeout_add_msec(&sc->sc_to, 10);
 }
