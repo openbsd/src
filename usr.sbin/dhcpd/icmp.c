@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.11 2014/05/05 18:27:57 pelikan Exp $ */
+/*	$OpenBSD: icmp.c,v 1.12 2014/05/07 13:20:47 pelikan Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -49,7 +49,7 @@ static int icmp_protocol_fd;
 /* Initialize the ICMP protocol. */
 
 void
-icmp_startup(void)
+icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 {
 	struct protoent *proto;
 	int protocol = 1, state;
@@ -73,7 +73,7 @@ icmp_startup(void)
 	    &state, sizeof(state)) == -1)
 		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
-	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, NULL);
+	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
 }
 
 int
@@ -114,6 +114,7 @@ icmp_echorequest(struct iaddr *addr)
 void
 icmp_echoreply(struct protocol *protocol)
 {
+	void (*handler)(struct iaddr, u_int8_t *, int);
 	struct sockaddr_in from;
 	u_int8_t icbuf[1500];
 	struct icmp *icfrom;
@@ -140,7 +141,12 @@ icmp_echoreply(struct protocol *protocol)
 	if (icfrom->icmp_type != ICMP_ECHOREPLY)
 		return;
 
-	memcpy(ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
-	ia.len = sizeof from.sin_addr;
-	lease_pinged(ia, icbuf, len);
+	/* If we were given a second-stage handler, call it. */
+	if (protocol->local) {
+		handler = ((void (*)(struct iaddr, u_int8_t *, int))
+		    protocol->local);
+		memcpy(ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
+		ia.len = sizeof from.sin_addr;
+		(*handler)(ia, icbuf, len);
+	}
 }
