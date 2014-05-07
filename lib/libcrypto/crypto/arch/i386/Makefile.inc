@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2014/05/06 19:55:06 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2014/05/07 00:04:14 deraadt Exp $
 
 # i386-specific libcrypto build rules
 
@@ -21,6 +21,7 @@ SSLASM+= bn x86-mont
 CFLAGS+= -DOPENSSL_BN_ASM_GF2m
 SSLASM+= bn x86-gf2m
 # des
+SRCS+= fcrypt_b.c
 SSLASM+= des des-586
 # md5
 CFLAGS+= -DMD5_ASM
