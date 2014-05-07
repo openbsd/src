@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.59 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.60 2014/05/07 01:31:25 tedu Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -332,7 +332,7 @@ main(int argc, char *argv[])
 	 * sort proc list, we convert from an array of structs to an array
 	 * of pointers to make the sort cheaper.
 	 */
-	if ((kinfo = calloc(sizeof(*kinfo), nentries)) == NULL)
+	if ((kinfo = reallocarray(NULL, nentries, sizeof(*kinfo))) == NULL)
 		err(1, "failed to allocate memory for proc pointers");
 	for (i = 0; i < nentries; i++)
 		kinfo[i] = &kp[i];
