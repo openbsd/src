@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.103 2014/04/27 23:03:52 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.104 2014/05/07 15:10:33 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -504,7 +504,7 @@ mandocdb(int argc, char *argv[])
 				goto out;
 
 			mpages_merge(mc, mp);
-			if (warnings &&
+			if (warnings && !nodb &&
 			    ! (MPARSE_QUICK & mparse_options))
 				names_check();
 			dbclose(0);
@@ -1988,6 +1988,18 @@ dbadd(struct mpage *mpage, struct mchars *mc)
 	mlink = mpage->mlinks;
 
 	if (nodb) {
+		for (key = ohash_first(&names, &slot); NULL != key;
+		     key = ohash_next(&names, &slot)) {
+			if (key->rendered != key->key)
+				free(key->rendered);
+			free(key);
+		}
+		for (key = ohash_first(&strings, &slot); NULL != key;
+		     key = ohash_next(&strings, &slot)) {
+			if (key->rendered != key->key)
+				free(key->rendered);
+			free(key);
+		}
 		if (0 == debug)
 			return;
 		while (NULL != mlink) {
