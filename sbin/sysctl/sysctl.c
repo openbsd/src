@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.200 2014/04/08 14:04:11 mpi Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.201 2014/05/07 01:41:18 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1132,7 +1132,7 @@ vfsinit(void)
 	mib[1] = VFS_GENERIC;
 	mib[2] = VFS_MAXTYPENUM;
 	buflen = 4;
-	if (sysctl(mib, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
+	if (sysctl(mib, 3, &maxtypenum, &buflen, NULL, 0) < 0)
 		return;
 	/*
          * We need to do 0..maxtypenum so add one, and then we offset them
@@ -1154,7 +1154,7 @@ vfsinit(void)
 	buflen = sizeof vfc;
 	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {
 		mib[3] = cnt - 1;
-		if (sysctl(mib, 4, &vfc, &buflen, (void *)0, (size_t)0) < 0) {
+		if (sysctl(mib, 4, &vfc, &buflen, NULL, 0) < 0) {
 			if (errno == EOPNOTSUPP)
 				continue;
 			warn("vfsinit");
@@ -1213,7 +1213,7 @@ sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[2] = VFS_CONF;
 	mib[3] = indx;
 	size = sizeof vfc;
-	if (sysctl(mib, 4, &vfc, &size, (void *)0, (size_t)0) < 0) {
+	if (sysctl(mib, 4, &vfc, &size, NULL, 0) < 0) {
 		if (errno != EOPNOTSUPP)
 			warn("vfs print");
 		return -1;
