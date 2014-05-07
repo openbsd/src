@@ -301,9 +301,6 @@ sc_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err, " -psk_identity arg - PSK identity\n");
 	BIO_printf(bio_err, " -psk arg      - PSK in hex (without 0x)\n");
-#ifndef OPENSSL_NO_JPAKE
-	BIO_printf(bio_err, " -jpake arg    - JPAKE secret to use\n");
-#endif
 #endif
 	BIO_printf(bio_err, " -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err, " -tls1_2       - just use TLSv1.2\n");
@@ -467,9 +464,6 @@ s_client_main(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0;
 	long socket_mtu = 0;
-#ifndef OPENSSL_NO_JPAKE
-	char *jpake_secret = NULL;
-#endif
 
 	meth = SSLv23_client_method();
 
@@ -727,13 +721,6 @@ s_client_main(int argc, char **argv)
 			/* meth=TLSv1_client_method(); */
 		}
 #endif
-#ifndef OPENSSL_NO_JPAKE
-		else if (strcmp(*argv, "-jpake") == 0) {
-			if (--argc < 1)
-				goto bad;
-			jpake_secret = *++argv;
-		}
-#endif
 #ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv, "-use_srtp") == 0) {
 			if (--argc < 1)
@@ -764,21 +751,6 @@ bad:
 		sc_usage();
 		goto end;
 	}
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-	if (jpake_secret) {
-		if (psk_key) {
-			BIO_printf(bio_err,
-			    "Can't use JPAKE and PSK together\n");
-			goto end;
-		}
-		psk_identity = "JPAKE";
-		if (cipher) {
-			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-			goto end;
-		}
-		cipher = "PSK";
-	}
-#endif
 
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
@@ -862,14 +834,9 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
-#ifdef OPENSSL_NO_JPAKE
-	if (psk_key != NULL)
-#else
-	if (psk_key != NULL || jpake_secret)
-#endif
-	{
+	if (psk_key != NULL) {
 		if (c_debug)
-			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
+			BIO_printf(bio_c_out, "PSK key given, setting client callback\n");
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 	}
 #endif
@@ -1054,10 +1021,6 @@ re_start:
 		}
 #endif
 	}
-#endif
-#ifndef OPENSSL_NO_JPAKE
-	if (jpake_secret)
-		jpake_client_auth(bio_c_out, sbio, jpake_secret);
 #endif
 
 	SSL_set_bio(con, sbio, sbio);

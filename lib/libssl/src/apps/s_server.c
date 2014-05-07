@@ -426,11 +426,7 @@ sv_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err, " -psk_hint arg - PSK identity hint to use\n");
 	BIO_printf(bio_err, " -psk arg      - PSK in hex (without 0x)\n");
-#ifndef OPENSSL_NO_JPAKE
-	BIO_printf(bio_err, " -jpake arg    - JPAKE secret to use\n");
 #endif
-#endif
-	BIO_printf(bio_err, " -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err, " -ssl3         - Just talk SSLv3\n");
 	BIO_printf(bio_err, " -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err, " -tls1_1       - Just talk TLSv1.1\n");
@@ -676,9 +672,6 @@ next_proto_cb(SSL * s, const unsigned char **data, unsigned int *len, void *arg)
 
 int s_server_main(int, char **);
 
-#ifndef OPENSSL_NO_JPAKE
-static char *jpake_secret = NULL;
-#endif
 #ifndef OPENSSL_NO_SRTP
 static char *srtp_profiles = NULL;
 #endif
@@ -1009,13 +1002,6 @@ s_server_main(int argc, char *argv[])
 		}
 #endif
 #endif
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-		else if (strcmp(*argv, "-jpake") == 0) {
-			if (--argc < 1)
-				goto bad;
-			jpake_secret = *(++argv);
-		}
-#endif
 #ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv, "-use_srtp") == 0) {
 			if (--argc < 1)
@@ -1046,21 +1032,6 @@ bad:
 		sv_usage();
 		goto end;
 	}
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-	if (jpake_secret) {
-		if (psk_key) {
-			BIO_printf(bio_err,
-			    "Can't use JPAKE and PSK together\n");
-			goto end;
-		}
-		psk_identity = "JPAKE";
-		if (cipher) {
-			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-			goto end;
-		}
-		cipher = "PSK";
-	}
-#endif
 
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
@@ -1414,14 +1385,9 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
-#ifdef OPENSSL_NO_JPAKE
-	if (psk_key != NULL)
-#else
-	if (psk_key != NULL || jpake_secret)
-#endif
-	{
+	if (psk_key != NULL) {
 		if (s_debug)
-			BIO_printf(bio_s_out, "PSK key given or JPAKE in use, setting server callback\n");
+			BIO_printf(bio_s_out, "PSK key given, setting server callback\n");
 		SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
 	}
 	if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
@@ -1628,10 +1594,6 @@ sv_body(char *hostname, int s, unsigned char *context)
 		test = BIO_new(BIO_f_nbio_test());
 		sbio = BIO_push(test, sbio);
 	}
-#ifndef OPENSSL_NO_JPAKE
-	if (jpake_secret)
-		jpake_server_auth(bio_s_out, sbio, jpake_secret);
-#endif
 
 	SSL_set_bio(con, sbio, sbio);
 	SSL_set_accept_state(con);

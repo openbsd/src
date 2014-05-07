@@ -246,10 +246,6 @@ int do_X509_CRL_sign(BIO *err, X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
 #ifndef OPENSSL_NO_PSK
 extern char *psk_key;
 #endif
-#ifndef OPENSSL_NO_JPAKE
-void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
-void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
-#endif
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
