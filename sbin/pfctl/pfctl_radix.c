@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.30 2013/11/22 04:12:48 deraadt Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.31 2014/05/07 14:59:11 tedu Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -469,25 +469,15 @@ pfr_buf_grow(struct pfr_buffer *b, int minsize)
 	if (!b->pfrb_msize) {
 		if (minsize < 64)
 			minsize = 64;
-		b->pfrb_caddr = calloc(bs, minsize);
-		if (b->pfrb_caddr == NULL)
-			return (-1);
-		b->pfrb_msize = minsize;
-	} else {
-		if (minsize == 0)
-			minsize = b->pfrb_msize * 2;
-		if (minsize < 0 || minsize >= SIZE_T_MAX / bs) {
-			/* msize overflow */
-			errno = ENOMEM;
-			return (-1);
-		}
-		p = realloc(b->pfrb_caddr, minsize * bs);
-		if (p == NULL)
-			return (-1);
-		bzero(p + b->pfrb_msize * bs, (minsize - b->pfrb_msize) * bs);
-		b->pfrb_caddr = p;
-		b->pfrb_msize = minsize;
 	}
+	if (minsize == 0)
+		minsize = b->pfrb_msize * 2;
+	p = reallocarray(b->pfrb_caddr, minsize, bs);
+	if (p == NULL)
+		return (-1);
+	bzero(p + b->pfrb_msize * bs, (minsize - b->pfrb_msize) * bs);
+	b->pfrb_caddr = p;
+	b->pfrb_msize = minsize;
 	return (0);
 }
 
