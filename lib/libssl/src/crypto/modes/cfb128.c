@@ -83,7 +83,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 			--len;
 			n = (n+1) % 16;
 		}
-#if defined(STRICT_ALIGNMENT)
+#ifdef __STRICT_ALIGNMENT
 		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
 			break;
 #endif
@@ -128,7 +128,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 			--len;
 			n = (n+1) % 16;
  		}
-#if defined(STRICT_ALIGNMENT)
+#ifdef __STRICT_ALIGNMENT
 		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
 			break;
 #endif

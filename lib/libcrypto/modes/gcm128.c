@@ -60,7 +60,7 @@
 #endif
 #include <assert.h>
 
-#if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
+#if defined(BSWAP4) && defined(__STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
 #undef	GETU32
 #define	GETU32(p)	BSWAP4(*(const u32 *)(p))
@@ -935,7 +935,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 				return 0;
 			}
 		}
-#if defined(STRICT_ALIGNMENT)
+#ifdef __STRICT_ALIGNMENT
 		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
 			break;
 #endif
@@ -1113,7 +1113,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 				return 0;
 			}
 		}
-#if defined(STRICT_ALIGNMENT)
+#ifdef __STRICT_ALIGNMENT
 		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
 			break;
 #endif
