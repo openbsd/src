@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.19 2013/03/12 06:00:05 guenther Exp $	*/
+/*	$OpenBSD: ln.c,v 1.20 2014/05/07 12:37:04 schwarze Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <string.h>
 #include <unistd.h>
 
-int	dirflag;			/* Undocumented directory flag. */
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	Pflag;				/* Hard link to symlink. */
@@ -58,11 +57,8 @@ main(int argc, char *argv[])
 	int ch, exitval;
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "FfhLnPs")) != -1)
+	while ((ch = getopt(argc, argv, "fhLnPs")) != -1)
 		switch (ch) {
-		case 'F':
-			dirflag = 1;	/* XXX: deliberately undocumented. */
-			break;
 		case 'f':
 			fflag = 1;
 			break;
@@ -126,8 +122,8 @@ linkit(char *target, char *source, int isdir)
 			warn("%s", target);
 			return (1);
 		}
-		/* Only symbolic links to directories, unless -F option used. */
-		if (!dirflag && S_ISDIR(sb.st_mode)) {
+		/* Only symbolic links to directories. */
+		if (S_ISDIR(sb.st_mode)) {
 			errno = EISDIR;
 			warn("%s", target);
 			return (1);
