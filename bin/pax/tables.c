@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.30 2014/01/08 06:43:34 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.31 2014/05/07 14:56:57 tedu Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -1131,7 +1131,7 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 		name = rp;
 	}
 	if (dircnt == dirsize) {
-		dblk = realloc(dirp, 2 * dirsize * sizeof(DIRDATA));
+		dblk = reallocarray(dirp, dirsize, 2 * sizeof(DIRDATA));
 		if (dblk == NULL) {
 			paxwarn(1, "Unable to store mode and times for created"
 			    " directory: %s", name);
