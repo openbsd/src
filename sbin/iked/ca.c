@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.29 2014/05/05 18:56:42 markus Exp $	*/
+/*	$OpenBSD: ca.c,v 1.30 2014/05/07 12:57:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@ int	 ca_getauth(struct iked *, struct imsg *);
 X509	*ca_by_subjectpubkey(X509_STORE *, u_int8_t *, size_t);
 X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
 int	 ca_subjectpubkey_digest(X509 *, u_int8_t *, u_int *);
+int	 ca_x509_subject_cmp(X509 *, struct iked_static_id *);
 int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 	    void *, size_t);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
@@ -731,9 +732,16 @@ ca_by_issuer(X509_STORE *ctx, X509_NAME *subject, struct iked_static_id *id)
 		if ((issuer = X509_get_issuer_name(cert)) == NULL)
 			continue;
 		else if (X509_NAME_cmp(subject, issuer) == 0) {
-			if (ca_x509_subjectaltname_cmp(cert, id) != 0)
-				continue;
-			return (cert);
+			switch (id->id_type) {
+			case IKEV2_ID_ASN1_DN:
+				if (ca_x509_subject_cmp(cert, id) == 0)
+					return (cert);
+				break;
+			default:
+				if (ca_x509_subjectaltname_cmp(cert, id) == 0)
+					return (cert);
+				break;
+			}
 		}
 	}
 
@@ -906,6 +914,101 @@ ca_x509_name(void *ptr)
 	return (strdup(buf));
 }
 
+/*
+ * Copy 'src' to 'dst' until 'marker' is found while unescaping '\'
+ * characters. The return value tells the caller where to continue
+ * parsing (might be the end of the string) or NULL on error.
+ */
+static char *
+ca_x509_name_unescape(char *src, char *dst, char marker)
+{
+	while (*src) {
+		if (*src == marker) {
+			src++;
+			break;
+		}
+		if (*src == '\\') {
+			src++;
+			if (!*src) {
+				log_warnx("%s: '\\' at end of string",
+				    __func__);
+				*dst = '\0';
+				return (NULL);
+			}
+		}
+		*dst++ = *src++;
+	}
+	*dst = '\0';
+	return (src);
+}
+/*
+ * Parse an X509 subject name where 'subject' is in the format
+ *    /type0=value0/type1=value1/type2=...
+ * where characters may be escaped by '\'.
+ * See lib/libssl/src/apps/apps.c:parse_name()
+ */
+void *
+ca_x509_name_parse(char *subject)
+{
+	char		*cp, *value = NULL, *type = NULL;
+	size_t		 maxlen;
+	X509_NAME	*name = NULL;
+
+	if (*subject != '/') {
+		log_warnx("%s: leading '/' missing in '%s'", __func__, subject);
+		goto err;
+	}
+
+	/* length of subject is upper bound for unescaped type/value */
+	maxlen = strlen(subject) + 1;
+
+	if ((type = calloc(1, maxlen)) == NULL ||
+	    (value = calloc(1, maxlen)) == NULL ||
+	    (name = X509_NAME_new()) == NULL)
+		goto err;
+
+	cp = subject + 1;
+	while (*cp) {
+		/* unescape type, terminated by '=' */
+		cp = ca_x509_name_unescape(cp, type, '=');
+		if (cp == NULL) {
+			log_warnx("%s: could not parse type", __func__);
+			goto err;
+		}
+		if (!*cp) {
+			log_warnx("%s: missing value", __func__);
+			goto err;
+		}
+		/* unescape value, terminated by '/' */
+		cp = ca_x509_name_unescape(cp, value, '/');
+		if (cp == NULL) {
+			log_warnx("%s: could not parse value", __func__);
+			goto err;
+		}
+		if (!*type || !*value) {
+			log_warnx("%s: empty type or value", __func__);
+			goto err;
+		}
+		log_debug("%s: setting '%s' to '%s'", __func__, type, value);
+		if (!X509_NAME_add_entry_by_txt(name, type, MBSTRING_ASC,
+		    value, -1, -1, 0)) {
+			log_warnx("%s: setting '%s' to '%s' failed", __func__,
+			    type, value);
+			ca_sslerror(__func__);
+			goto err;
+		}
+	}
+	free(type);
+	free(value);
+	return (name);
+
+err:
+	X509_NAME_free(name);
+	free(type);
+	free(value);
+	return (NULL);
+}
+
 int
 ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
     void *data, size_t len)
@@ -1016,9 +1119,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	BIO		*rawcert = NULL;
 	X509		*cert = NULL;
 	int		 ret = -1, result, error;
-	size_t		 idlen, idoff;
-	const u_int8_t	*idptr;
-	X509_NAME	*idname = NULL, *subject;
+	X509_NAME	*subject;
 	const char	*errstr = "failed";
 
 	if (len == 0) {
@@ -1047,17 +1148,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 
 		switch (id->id_type) {
 		case IKEV2_ID_ASN1_DN:
-			idoff = id->id_offset;
-			if (id->id_length <= idoff) {
-				errstr = "invalid ASN1_DN id length";
-				goto done;
-			}
-			idlen = id->id_length - idoff;
-			idptr = id->id_data + idoff;
-
-			if ((idname = d2i_X509_NAME(NULL,
-			    &idptr, idlen)) == NULL ||
-			    X509_NAME_cmp(subject, idname) != 0) {
+			if (ca_x509_subject_cmp(cert, id) < 0) {
 				errstr = "ASN1_DN identifier mismatch";
 				goto done;
 			}
@@ -1100,14 +1191,37 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	if (cert != NULL)
 		log_debug("%s: %s %.100s", __func__, cert->name, errstr);
 
-	if (idname != NULL)
-		X509_NAME_free(idname);
 	if (rawcert != NULL) {
 		BIO_free(rawcert);
 		if (cert != NULL)
 			X509_free(cert);
 	}
 
+	return (ret);
+}
+
+/* check if subject from cert matches the id */
+int
+ca_x509_subject_cmp(X509 *cert, struct iked_static_id *id)
+{
+	X509_NAME	*subject, *idname = NULL;
+	const u_int8_t	*idptr;
+	size_t		 idlen;
+	int		 ret = -1;
+
+	if (id->id_type != IKEV2_ID_ASN1_DN)
+		return (-1);
+	if ((subject = X509_get_subject_name(cert)) == NULL)
+		return (-1);
+	if (id->id_length <= id->id_offset)
+		return (-1);
+	idlen = id->id_length - id->id_offset;
+	idptr = id->id_data + id->id_offset;
+	if ((idname = d2i_X509_NAME(NULL, &idptr, idlen)) == NULL)
+		return (-1);
+	if (X509_NAME_cmp(subject, idname) == 0)
+		ret = 0;
+	X509_NAME_free(idname);
 	return (ret);
 }
 

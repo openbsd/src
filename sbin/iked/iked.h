@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.77 2014/05/06 14:10:53 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.78 2014/05/07 12:57:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -848,6 +848,7 @@ void	 ca_sslinit(void);
 void	 ca_sslerror(const char *);
 char	*ca_asn1_name(u_int8_t *, size_t);
 char	*ca_x509_name(void *);
+void	*ca_x509_name_parse(char *);
 
 /* timer.c */
 void	 timer_set(struct iked *, struct iked_timer *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.109 2014/05/07 10:52:47 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.110 2014/05/07 12:57:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,7 @@
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/x509.h>
 
 #include "iked.h"
 #include "ikev2.h"
@@ -1109,6 +1110,9 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 	char			 idstr[IKED_ID_SIZE];
 	struct in_addr		 in4;
 	struct in6_addr		 in6;
+	X509_NAME		*name = NULL;
+	u_int8_t		*p;
+	size_t			 len;
 
 	/* Fixup the local Id if not specified */
 	if (srcid && polid->id_type == 0) {
@@ -1150,6 +1154,19 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 			ibuf_release(id->id_buf);
 			return (-1);
 		}
+		break;
+	case IKEV2_ID_ASN1_DN:
+		/* policy has ID in string-format, convert to ASN1 */
+		if ((name = ca_x509_name_parse(polid->id_data)) == NULL ||
+		    (len = i2d_X509_NAME(name, NULL)) < 0 ||
+		    (p = ibuf_reserve(id->id_buf, len)) == NULL ||
+		    (i2d_X509_NAME(name, &p)) < 0) {
+			if (name)
+				X509_NAME_free(name);
+			ibuf_release(id->id_buf);
+			return (-1);
+		}
+		X509_NAME_free(name);
 		break;
 	default:
 		if (ibuf_add(id->id_buf,
