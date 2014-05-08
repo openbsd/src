@@ -118,17 +118,6 @@ static int
 des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
-#ifdef KSSL_DEBUG
-	{
-		int i;
-		char *cp;
-		printf("des_ede_cbc_cipher(ctx=%lx, buflen=%d)\n", ctx, ctx->buf_len);
-		printf("\t iv= ");
-		for (i = 0; i < 8; i++)
-			printf("%02X",ctx->iv[i]);
-		printf("\n");
-	}
-#endif    /* KSSL_DEBUG */
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ede3_cbc_encrypt(in, out, (long)EVP_MAXCHUNK,
 		    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
@@ -257,16 +246,6 @@ des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	DES_cblock *deskey = (DES_cblock *)key;
 
-#ifdef KSSL_DEBUG
-	{
-		int i;
-		printf("des_ede3_init_key(ctx=%lx)\n", ctx);
-		printf("\tKEY= ");
-		for(i=0;i<24;i++) printf("%02X",key[i]); printf("\n");
-			printf("\t IV= ");
-		for(i=0;i<8;i++) printf("%02X",iv[i]); printf("\n");
-	}
-#endif	/* KSSL_DEBUG */
 
 #ifdef EVP_CHECK_DES_KEY
 	if (DES_set_key_checked(&deskey[0], &data(ctx)->ks1) ||
