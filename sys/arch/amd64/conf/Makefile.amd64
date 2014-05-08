@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.58 2013/10/16 17:34:02 florian Exp $
+#	$OpenBSD: Makefile.amd64,v 1.59 2014/05/08 17:59:28 sf Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -24,7 +24,7 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format \
+		-Wno-main -Wno-uninitialized \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mcmodel=kernel -mno-red-zone -mno-sse2 -mno-sse -mno-3dnow \
