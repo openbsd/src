@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.123 2014/05/08 13:08:48 blambert Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.124 2014/05/08 15:28:57 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -195,9 +195,7 @@ main(int argc, char *argv[])
 	relayd_env = env;
 	env->sc_ps = ps;
 	ps->ps_env = env;
-log_warnx("batman");
 	TAILQ_INIT(&ps->ps_rcsocks);
-log_warnx("robin");
 	env->sc_conffile = conffile;
 	env->sc_opts = opts;
 
