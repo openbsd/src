@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2014/05/08 21:43:04 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -296,7 +296,7 @@ do_panic:
 	else
 		printf("EXPEVT 0x%03x", expevt);
 	printf(" in %s mode\n", expevt & EXP_USER ? "user" : "kernel");
-	printf("va %p spc %p ssr %p pr %p \n",
+	printf("va 0x%x spc 0x%x ssr 0x%x pr 0x%x \n",
 	    va, tf->tf_spc, tf->tf_ssr, tf->tf_pr);
 
 	panic("general_exception");

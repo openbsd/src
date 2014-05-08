@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.36 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.37 2014/05/08 21:43:04 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ sh_startup()
 	    sh_vector_interrupt_end - sh_vector_interrupt);
 #endif /* DEBUG */
 
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem) / 1024 / 1024);
 
 	/*
