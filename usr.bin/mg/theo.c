@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.138 2014/04/18 14:25:52 schwarze Exp $	*/
+/*	$OpenBSD: theo.c,v 1.139 2014/05/08 15:48:41 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -181,6 +181,7 @@ static const char *talk[] = {
 	"my integer overflow spidey senses are tingling.",
 	"I'm just trying to improve the code...",
 	"It's a pleasure to work on code you can't make worse.",
+	"It's largely bad style to do (int)sizeof",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
