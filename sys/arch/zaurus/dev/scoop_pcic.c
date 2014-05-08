@@ -1,4 +1,4 @@
-/*	$OpenBSD: scoop_pcic.c,v 1.4 2014/04/03 10:17:34 mpi Exp $	*/
+/*	$OpenBSD: scoop_pcic.c,v 1.5 2014/05/08 21:17:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -105,7 +105,7 @@ scoop_pcic_socket_setup(struct pxapcic_socket *so)
 	error = bus_space_map(iot, trunc_page(pa), round_page(size),
 	    0, &scooph);
 	if (error)
-		panic("%s: can't map memory %x for scoop",
+		panic("%s: can't map memory %lx for scoop",
 		    sc->sc_dev.dv_xname, pa);
 	scooph += pa - trunc_page(pa);
 	

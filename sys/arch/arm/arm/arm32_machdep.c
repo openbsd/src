@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.42 2014/04/03 10:17:34 mpi Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.43 2014/05/08 21:17:00 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ cpu_startup()
 	 */
 	printf(version);
 
-	printf("real mem  = %u (%uMB)\n", ptoa(physmem),
+	printf("real mem  = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
 
 	/*
@@ -300,7 +300,7 @@ cpu_startup()
 	 */
 	bufinit(); 
 
-	printf("avail mem = %lu (%uMB)\n", ptoa(uvmexp.free),
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
 
 	curpcb = &proc0.p_addr->u_pcb;

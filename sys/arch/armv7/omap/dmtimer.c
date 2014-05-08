@@ -194,7 +194,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 		    dmtimer_setstatclockrate, NULL);
 	}
 	else
-		panic("attaching too many dmtimers at 0x%x",
+		panic("attaching too many dmtimers at 0x%lx",
 		    aa->aa_dev->mem[0].addr);
 
 	/* set IDLEMODE to smart-idle */

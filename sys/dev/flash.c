@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.29 2013/11/11 03:03:34 dlg Exp $	*/
+/*	$OpenBSD: flash.c,v 1.30 2014/05/08 21:17:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -621,7 +621,7 @@ flash_chip_verify_block(struct flash_softc *sc, long blkno, caddr_t data,
 	while (pageno < blkend) {
 		error = flash_chip_verify_page(sc, pageno, data, oob);
 		if (error != 0) {
-			printf("block %d page %d verify failed\n",
+			printf("block %ld page %ld verify failed\n",
 			    blkno, pageno);
 			return error;
 		}

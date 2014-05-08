@@ -1,4 +1,4 @@
-/*	$OpenBSD: disassem.c,v 1.2 2011/11/10 17:46:18 miod Exp $	*/
+/*	$OpenBSD: disassem.c,v 1.3 2014/05/08 21:17:00 miod Exp $	*/
 /*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
@@ -674,7 +674,7 @@ disassemble_readword(db_expr_t address)
 static void
 disassemble_printaddr(db_expr_t address)
 {
-	db_printf("0x%08x", address);
+	db_printf("0x%08lx", address);
 }
 
 static const disasm_interface_t disassemble_di = {

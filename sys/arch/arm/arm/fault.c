@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.16 2014/04/18 11:51:16 guenther Exp $	*/
+/*	$OpenBSD: fault.c,v 1.17 2014/05/08 21:17:00 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -471,29 +471,29 @@ dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 		if ((fsr & FAULT_IMPRECISE) != 0)
 			printf(" (imprecise)");
 #endif
-		printf(", spsr=%08x\n", tf->tf_spsr);
+		printf(", spsr=%08lx\n", tf->tf_spsr);
 	} else {
-		printf("Fatal %s mode prefetch abort at 0x%08x\n",
+		printf("Fatal %s mode prefetch abort at 0x%08lx\n",
 		    mode, tf->tf_pc);
-		printf("trapframe: %p\nIFSR=%08x, IFAR=%08x, spsr=%08x\n",
+		printf("trapframe: %p\nIFSR=%08x, IFAR=%08x, spsr=%08lx\n",
 		    tf, fsr, far, tf->tf_spsr);
 	}
 
-	printf("r0 =%08x, r1 =%08x, r2 =%08x, r3 =%08x\n",
+	printf("r0 =%08lx, r1 =%08lx, r2 =%08lx, r3 =%08lx\n",
 	    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
-	printf("r4 =%08x, r5 =%08x, r6 =%08x, r7 =%08x\n",
+	printf("r4 =%08lx, r5 =%08lx, r6 =%08lx, r7 =%08lx\n",
 	    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);
-	printf("r8 =%08x, r9 =%08x, r10=%08x, r11=%08x\n",
+	printf("r8 =%08lx, r9 =%08lx, r10=%08lx, r11=%08lx\n",
 	    tf->tf_r8, tf->tf_r9, tf->tf_r10, tf->tf_r11);
-	printf("r12=%08x, ", tf->tf_r12);
+	printf("r12=%08lx, ", tf->tf_r12);
 
 	if (TRAP_USERMODE(tf))
-		printf("usp=%08x, ulr=%08x",
+		printf("usp=%08lx, ulr=%08lx",
 		    tf->tf_usr_sp, tf->tf_usr_lr);
 	else
-		printf("ssp=%08x, slr=%08x",
+		printf("ssp=%08lx, slr=%08lx",
 		    tf->tf_svc_sp, tf->tf_svc_lr);
-	printf(", pc =%08x\n\n", tf->tf_pc);
+	printf(", pc =%08lx\n\n", tf->tf_pc);
 
 #if defined(DDB) || defined(KGDB)
 	kdb_trap(T_FAULT, tf);

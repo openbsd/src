@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.24 2014/03/29 18:09:28 guenther Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.25 2014/05/08 21:17:00 miod Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ pxa2x0_intr_string(void *cookie)
 	if (ih == NULL)
 		snprintf(irqstr, sizeof irqstr, "couldn't establish interrupt");
 	else
-		snprintf(irqstr, sizeof irqstr, "irq %ld", ih->ih_irq);
+		snprintf(irqstr, sizeof irqstr, "irq %d", ih->ih_irq);
 
 	return irqstr;
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.zaurus,v 1.50 2014/02/12 05:31:58 miod Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.51 2014/05/08 21:17:01 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -24,7 +24,7 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format \
+		-Wno-main -Wno-uninitialized \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-ffreestanding -msoft-float # -march=armv4 -mtune=strongarm

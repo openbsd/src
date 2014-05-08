@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.13 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.14 2014/05/08 21:17:00 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2049,7 +2049,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	pa = l2pte_pa(pte);
 
 	if ((ftype & VM_PROT_EXECUTE) && (pte & L2_V7_S_XN)) {
-printf("%s: va %08x ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
+printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
 printf("fault on exec\n");
 Debugger();
 		/* XXX FIX THIS */
@@ -2130,7 +2130,7 @@ Debugger();
 		PTE_SYNC(ptep);
 		rv = 1;
 	} else {
-printf("%s: va %08x ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
+printf("%s: va %08lx ftype %x %c pte %08x\n", __func__, va, ftype, user ? 'u' : 's', pte);
 		goto out;
 	}
 

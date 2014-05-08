@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.10 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.11 2014/05/08 21:17:01 miod Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ iq80321_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqname[32];
 
-	snprintf(irqname, sizeof irqname, "irq %d", ih);
+	snprintf(irqname, sizeof irqname, "irq %ld", ih);
 	return (irqname);
 }
 

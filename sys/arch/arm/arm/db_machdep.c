@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.4 2013/05/10 22:06:10 patrick Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.5 2014/05/08 21:17:00 miod Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $	*/
 
 /* 
@@ -53,14 +53,14 @@ db_show_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	frame = (struct trapframe *)addr;
 
 	db_printf("frame address = %08x  ", (u_int)frame);
-	db_printf("spsr=%08x\n", frame->tf_spsr);
-	db_printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n",
+	db_printf("spsr=%08lx\n", frame->tf_spsr);
+	db_printf("r0 =%08lx r1 =%08lx r2 =%08lx r3 =%08lx\n",
 	    frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
-	db_printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n",
+	db_printf("r4 =%08lx r5 =%08lx r6 =%08lx r7 =%08lx\n",
 	    frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
-	db_printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n",
+	db_printf("r8 =%08lx r9 =%08lx r10=%08lx r11=%08lx\n",
 	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
-	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
+	db_printf("r12=%08lx r13=%08lx r14=%08lx r15=%08lx\n",
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
-	db_printf("slr=%08x\n", frame->tf_svc_lr);
+	db_printf("slr=%08lx\n", frame->tf_svc_lr);
 }
