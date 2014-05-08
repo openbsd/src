@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.10 2014/04/30 07:01:34 blambert Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.11 2014/05/08 14:48:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -88,8 +88,9 @@ struct display_hint {
 	struct ber_oid		 oid;
 	char			*(*print)(char *);
 } display_hints[] = {
-	{ { { MIB_ifPhysAddress } },	snmpc_physaddress },
-	{ { { MIB_hrSystemDate } },	snmpc_dateandtime }
+	{ { { MIB_ifPhysAddress } },		snmpc_physaddress },
+	{ { { MIB_ipNetToMediaPhysAddress } },	snmpc_physaddress },
+	{ { { MIB_hrSystemDate } },		snmpc_dateandtime }
 };
 
 void
