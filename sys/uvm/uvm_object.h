@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.19 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.20 2014/05/08 20:08:50 kettenis Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -97,8 +97,8 @@ RB_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 	 ((struct vnode *)uobj)->v_flag & VTEXT)
 
 void	uvm_objinit(struct uvm_object *, struct uvm_pagerops *, int);
-int	uvm_objwire(struct uvm_object *, off_t, off_t, struct pglist *);
-void	uvm_objunwire(struct uvm_object *, off_t, off_t);
+int	uvm_objwire(struct uvm_object *, voff_t, voff_t, struct pglist *);
+void	uvm_objunwire(struct uvm_object *, voff_t, voff_t);
 
 #endif /* _KERNEL */
 

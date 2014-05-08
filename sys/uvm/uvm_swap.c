@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.126 2014/04/29 09:55:28 kettenis Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.127 2014/05/08 20:08:50 kettenis Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1780,7 +1780,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	bp->b_vp = NULL;
 	buf_replacevnode(bp, swapdev_vp);
 	splx(s);
-	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
+	bp->b_bufsize = bp->b_bcount = (long)npages << PAGE_SHIFT;
 
 	/*
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].

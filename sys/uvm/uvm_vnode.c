@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.81 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.82 2014/05/08 20:08:50 kettenis Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1159,7 +1159,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 	/* fill out uio/iov */
 	iov.iov_base = (caddr_t) kva;
-	wanted = npages << PAGE_SHIFT;
+	wanted = (size_t)npages << PAGE_SHIFT;
 	if (file_offset + wanted > uvn->u_size)
 		wanted = uvn->u_size - file_offset;	/* XXX: needed? */
 	iov.iov_len = wanted;
@@ -1211,7 +1211,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			result = EIO;		/* XXX: error? */
 		} else if (got < PAGE_SIZE * npages && rw == UIO_READ) {
 			memset((void *) (kva + got), 0,
-			       (npages << PAGE_SHIFT) - got);
+			       ((size_t)npages << PAGE_SHIFT) - got);
 		}
 	}
 

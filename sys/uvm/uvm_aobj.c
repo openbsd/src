@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.63 2014/04/30 19:25:14 kettenis Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.64 2014/05/08 20:08:50 kettenis Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -422,7 +422,8 @@ uao_shrink_flush(struct uvm_object *uobj, int startpg, int endpg)
 {
 	KASSERT(startpg < endpg);
 	KASSERT(uobj->uo_refs == 1);
-	uao_flush(uobj, startpg << PAGE_SHIFT, endpg << PAGE_SHIFT, PGO_FREE);
+	uao_flush(uobj, (voff_t)startpg << PAGE_SHIFT,
+	    (voff_t)endpg << PAGE_SHIFT, PGO_FREE);
 	uao_dropswap_range(uobj, startpg, endpg);
 }
 
@@ -909,14 +910,14 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
-		stop = aobj->u_pages << PAGE_SHIFT;
+		stop = (voff_t)aobj->u_pages << PAGE_SHIFT;
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
-		if (stop > (aobj->u_pages << PAGE_SHIFT)) {
+		if (stop > ((voff_t)aobj->u_pages << PAGE_SHIFT)) {
 			printf("uao_flush: strange, got an out of range "
 			    "flush (fixed)\n");
-			stop = aobj->u_pages << PAGE_SHIFT;
+			stop = (voff_t)aobj->u_pages << PAGE_SHIFT;
 		}
 	}
 
@@ -1414,7 +1415,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 
 	pg = NULL;
 	npages = 1;
-	rv = uao_get(&aobj->u_obj, pageidx << PAGE_SHIFT,
+	rv = uao_get(&aobj->u_obj, (voff_t)pageidx << PAGE_SHIFT,
 		     &pg, &npages, 0, VM_PROT_READ|VM_PROT_WRITE, 0, 0);
 
 	switch (rv) {
@@ -1511,7 +1512,7 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 					int slot = elt->slots[j];
 
 					KASSERT(uvm_pagelookup(&aobj->u_obj,
-					    (UAO_SWHASH_ELT_PAGEIDX_BASE(elt)
+					    (voff_t)(UAO_SWHASH_ELT_PAGEIDX_BASE(elt)
 					    + j) << PAGE_SHIFT) == NULL);
 
 					if (slot > 0) {
