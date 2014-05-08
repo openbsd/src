@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.36 2014/05/01 18:59:15 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.37 2014/05/08 06:24:14 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2014 $
+.Dd $Mdocdate: May 8 2014 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -52,30 +52,30 @@
 .Nm
 is a program similar to the traditional
 .Xr more 1 ,
-but which allows backward movement in the file as well as forward movement.
-Also,
+but with many more features.
+It displays text one screenful at a time.
+After showing each screenful, it prompts the user for a command.
+When showing the last line of a file,
 .Nm
-does not have to read the entire input file before starting,
-so with large input files it starts up faster than text editors like
-.Xr vi 1 .
-.Nm
-uses termcap (or terminfo on some systems),
-so it can run on a variety of terminals.
-There is even limited support for hardcopy terminals.
-(On a hardcopy terminal, lines which should be printed at the top
-of the screen are prefixed with a caret.)
+displays a prompt indicating end of file and the name of the next file
+to examine, if any.
+It then waits for input from the user.
 .Pp
 This version of
 .Nm
 also acts as
 .Xr more 1
 if it is called as
-.Nm more .
-In this mode, the differences are in the prompt and that
-.Nm more
-exits by default when it gets to the end of the file.
+.Nm more ,
+or if the
+.Ev LESS_IS_MORE
+environment variable is set.
+The main differences between the two are summarized in the
+.Sx COMPATIBILITY WITH MORE
+section, below.
+.Pp
 Commands are based on both traditional
-.Nm more
+.Xr more 1
 and
 .Xr vi 1 .
 Commands may be preceded by a decimal number,
@@ -1700,23 +1700,32 @@ or if the program is invoked via a file link named "more",
 behaves (mostly) in conformance with the POSIX "more" command specification.
 In this mode, less behaves differently in these ways:
 .Pp
-The -e option works differently.
-If the -e option is not set,
-.Nm
-behaves as if the -E option were set.
-If the -e option is set,
-.Nm
-behaves as if the -e and -F options were set.
+The
+.Fl e
+option works differently:
+it causes
+.Xr more 1
+to exit the first time it reaches EOF,
+not the second.
 .Pp
-The -m option works differently.
-If the -m option is not set, the medium prompt is used.
-If the -m option is set, the short prompt is used.
+The
+.Fl m
+option works differently:
+if it is not specified, the medium prompt is used;
+if it is specified, the short prompt is used.
 .Pp
-The -n option acts like the -z option.
-The normal behavior of the -n option is unavailable in this mode.
+The
+.Fl n
+option acts like the
+.Fl z
+option.
+The normal behavior of the
+.Fl n
+option is unavailable in this mode.
 .Pp
-The parameter to the -p option is taken to be a
-.Nm
+The parameter to the
+.Fl p
+option is taken to be a
 command rather than a search pattern.
 .Pp
 The
@@ -1850,7 +1859,8 @@ is being run.
 The name of the editor (used for the v command).
 .El
 .Sh SEE ALSO
-.Xr lesskey 1
+.Xr lesskey 1 ,
+.Xr more 1
 .Sh AUTHORS
 .An Mark Nudelman
 .Pp
