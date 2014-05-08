@@ -62,17 +62,20 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static int init(EVP_MD_CTX *ctx)
+static int
+init(EVP_MD_CTX *ctx)
 {
 	return 1;
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return 1;
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+final(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return 1;
 }

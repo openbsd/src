@@ -69,17 +69,20 @@
 #endif
 
 
-static int init(EVP_MD_CTX *ctx)
+static int
+init(EVP_MD_CTX *ctx)
 {
 	return SHA1_Init(ctx->md_data);
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return SHA1_Update(ctx->md_data, data, count);
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int
+final(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return SHA1_Final(md, ctx->md_data);
 }
@@ -107,11 +110,14 @@ EVP_sha1(void)
 #endif
 
 #ifndef OPENSSL_NO_SHA256
-static int init224(EVP_MD_CTX *ctx)
+static int
+init224(EVP_MD_CTX *ctx)
 {
 	return SHA224_Init(ctx->md_data);
 }
-static int init256(EVP_MD_CTX *ctx)
+
+static int
+init256(EVP_MD_CTX *ctx)
 {
 	return SHA256_Init(ctx->md_data);
 }
@@ -120,11 +126,14 @@ static int init256(EVP_MD_CTX *ctx)
  * SHA256 functions even in SHA224 context. This is what happens
  * there anyway, so we can spare few CPU cycles:-)
  */
-static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update256(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return SHA256_Update(ctx->md_data, data, count);
 }
-static int final256(EVP_MD_CTX *ctx, unsigned char *md)
+
+static int
+final256(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return SHA256_Final(md, ctx->md_data);
 }
@@ -144,7 +153,8 @@ static const EVP_MD sha224_md = {
 	sizeof(EVP_MD *) + sizeof(SHA256_CTX),
 };
 
-const EVP_MD *EVP_sha224(void)
+const EVP_MD *
+EVP_sha224(void)
 {
 	return (&sha224_md);
 }
@@ -164,27 +174,34 @@ static const EVP_MD sha256_md = {
 	sizeof(EVP_MD *) + sizeof(SHA256_CTX),
 };
 
-const EVP_MD *EVP_sha256(void)
+const EVP_MD *
+EVP_sha256(void)
 {
 	return (&sha256_md);
 }
 #endif	/* ifndef OPENSSL_NO_SHA256 */
 
 #ifndef OPENSSL_NO_SHA512
-static int init384(EVP_MD_CTX *ctx)
+static int
+init384(EVP_MD_CTX *ctx)
 {
 	return SHA384_Init(ctx->md_data);
 }
-static int init512(EVP_MD_CTX *ctx)
+
+static int
+init512(EVP_MD_CTX *ctx)
 {
 	return SHA512_Init(ctx->md_data);
 }
 /* See comment in SHA224/256 section */
-static int update512(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int
+update512(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return SHA512_Update(ctx->md_data, data, count);
 }
-static int final512(EVP_MD_CTX *ctx, unsigned char *md)
+
+static int
+final512(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return SHA512_Final(md, ctx->md_data);
 }
@@ -204,7 +221,8 @@ static const EVP_MD sha384_md = {
 	sizeof(EVP_MD *) + sizeof(SHA512_CTX),
 };
 
-const EVP_MD *EVP_sha384(void)
+const EVP_MD *
+EVP_sha384(void)
 {
 	return (&sha384_md);
 }
@@ -224,7 +242,8 @@ static const EVP_MD sha512_md = {
 	sizeof(EVP_MD *) + sizeof(SHA512_CTX),
 };
 
-const EVP_MD *EVP_sha512(void)
+const EVP_MD *
+EVP_sha512(void)
 {
 	return (&sha512_md);
 }
