@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.9 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: score.c,v 1.10 2014/05/08 23:12:40 schwarze Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -295,7 +295,7 @@ pegscore(CARD crd, CARD tbl[], int n, int sum)
 	if (!n)
 		return (scr);
 	j = 1;
-	while ((crd.rank == tbl[n - j].rank) && (n - j >= 0))
+	while ((j <= n) && (crd.rank == tbl[n - j].rank))
 		++j;
 	if (j > 1)
 		return (scr + ichoose2[j]);
