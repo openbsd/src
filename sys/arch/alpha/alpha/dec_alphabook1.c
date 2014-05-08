@@ -143,11 +143,13 @@ dec_alphabook1_cons_init(void)
 		break;
 
 	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+		printf("ctb->ctb_term_type = 0x%lx\n",
+		    (unsigned long)ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n",
+		    (unsigned long)ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld",
-		    ctb->ctb_term_type);
+		panic("consinit: unknown console type %lu",
+		    (unsigned long)ctb->ctb_term_type);
 	}
 }
 

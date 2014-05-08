@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.13 2010/11/23 04:07:55 shadchin Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.14 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -173,11 +173,13 @@ dec_6600_cons_init()
 
 	default:
 		printf("ctb_term_type = 0x%lx ctb_turboslot = 0x%lx"
-		    " hose = %ld\n", ctb->ctb_term_type, ctbslot,
-		    CTB_TURBOSLOT_HOSE(ctbslot));
+		    " hose = %ld\n",
+		    (unsigned long)ctb->ctb_term_type,
+		    (unsigned long)ctbslot,
+		    (unsigned long)CTB_TURBOSLOT_HOSE(ctbslot));
 
-		panic("consinit: unknown console type %ld",
-		    ctb->ctb_term_type);
+		panic("consinit: unknown console type %lu",
+		    (unsigned long)ctb->ctb_term_type);
 	}
 }
 
@@ -380,16 +382,19 @@ dec_6600_environmental_mcheck(unsigned long mces, struct trapframe *framep,
 		printf("      Processor Environmental Machine Check, "
 		    "Code 0x%x\n", hdr->mcheck_code);
 
-		printf("Flags\t%016x\n", env->flags);
-		printf("DIR\t%016x\n", env->c_dir);
-		printf("SMIR\t%016x\n", env->smir);
-		printf("CPUIR\t%016x\n", env->cpuir);
-		printf("PSIR\t%016x\n", env->psir);
-		printf("LM78_ISR\t%016x\n", env->lm78_isr);
-		printf("Doors\t%016x\n", env->doors);
-		printf("Temp Warning\t%016x\n", env->temp_warning);
-		printf("Fan Control\t%016x\n", env->fan_control);
-		printf("Fatal Power Down\t%016x\n", env->fatal_power_down);
+		printf("Flags\t%016lx\n", (unsigned long)env->flags);
+		printf("DIR\t%016lx\n", (unsigned long)env->c_dir);
+		printf("SMIR\t%016lx\n", (unsigned long)env->smir);
+		printf("CPUIR\t%016lx\n", (unsigned long)env->cpuir);
+		printf("PSIR\t%016lx\n", (unsigned long)env->psir);
+		printf("LM78_ISR\t%016lx\n", (unsigned long)env->lm78_isr);
+		printf("Doors\t%016lx\n", (unsigned long)env->doors);
+		printf("Temp Warning\t%016lx\n",
+		    (unsigned long)env->temp_warning);
+		printf("Fan Control\t%016lx\n",
+		    (unsigned long)env->fan_control);
+		printf("Fatal Power Down\t%016lx\n",
+		    (unsigned long)env->fatal_power_down);
 	}
 
 	/*
@@ -427,7 +432,7 @@ dec_6600_print_syndrome(int sno, unsigned long syndrome)
 	unsigned int bitno;
 
 	syndrome &= 0xff;
-	printf("Syndrome bits %d\t%02x ", sno, syndrome);
+	printf("Syndrome bits %d\t%02lx ", sno, syndrome);
 	for (bitno = 0; bitno < nitems(ev6_syndrome); bitno++)
 		if (syndrome == ev6_syndrome[bitno])
 			break;
@@ -468,8 +473,8 @@ dec_6600_mcheck(unsigned long mces, struct trapframe *framep,
 		mc_cpu_ev6 *cpu = (mc_cpu_ev6 *)(logout + hdr->la_cpu_offset);
 		size_t cpu_size = hdr->la_system_offset - hdr->la_cpu_offset;
 
-		printf("Dcache status\t0x%05x\n",
-		    cpu->dc_stat & EV6_DC_STAT_MASK);
+		printf("Dcache status\t0x%05lx\n",
+		    (unsigned long)cpu->dc_stat & EV6_DC_STAT_MASK);
 		dec_6600_print_syndrome(0, cpu->c_syndrome_0);
 		dec_6600_print_syndrome(1, cpu->c_syndrome_1);
 		/* C_STAT */
@@ -519,20 +524,22 @@ dec_6600_mcheck(unsigned long mces, struct trapframe *framep,
 			}
 			/* FALLTHROUGH */
 		default:
-			printf("%02x\n", cpu->c_stat);
+			printf("%02lx\n", (unsigned long)cpu->c_stat);
 			break;
 		}
 		/* C_ADDR */
 		printf("Error address\t");
 		if ((cpu->c_stat & EV6_C_STAT_MASK) ==
 		    EV6_C_STAT_SNGL_DSTREAM_DC_ECC_ERR)
-			printf("0xXXXXXXXXXXX%05x\n", cpu->c_addr & 0xfffc0);
+			printf("0xXXXXXXXXXXX%05lx\n",
+			    (unsigned long)cpu->c_addr & 0xfffc0);
 		else
-			printf("0x%016x\n", cpu->c_addr & 0xffffffffffffffc0);
+			printf("0x%016lx\n",
+			    (unsigned long)cpu->c_addr & 0xffffffffffffffc0);
 
 		if (cpu_size > offsetof(mc_cpu_ev6, exc_addr)) {
-			printf("Exception address\t0x%016x%s\n",
-			    cpu->exc_addr & 0xfffffffffffffffc,
+			printf("Exception address\t0x%016lx%s\n",
+			    (unsigned long)cpu->exc_addr & 0xfffffffffffffffc,
 			    cpu->exc_addr & 1 ? " in PAL mode" : "");
 			/* other fields are not really informative */
 		}

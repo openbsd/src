@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_dma.c,v 1.9 2014/01/06 20:11:40 miod Exp $ */
+/* $OpenBSD: tsp_dma.c,v 1.10 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: tsp_dma.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -207,8 +207,8 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 	 */
 	if ((sgwbase <= dwbase && dwbase < sgwbase + sgwlen) ||
 	    (dwbase <= sgwbase && sgwbase < dwbase + dwlen))
-		panic("tsp_dma_init: overlap sg %p len %p d %p len %p",
-		    sgwbase, sgwlen, dwbase, dwlen);
+		panic("%s: overlap sg 0x%lx len 0x%lx d 0x%lx len 0x%lx",
+		    __func__, sgwbase, sgwlen, dwbase, dwlen);
 
 	tbase = pcp->pc_sgmap.aps_ptpa;
 	if (tbase & ~0x7fffffc00UL)

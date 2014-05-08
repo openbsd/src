@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.5 2012/12/05 23:20:10 deraadt Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.6 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -182,7 +182,7 @@ dec_kn300_intr_string(ccv, ih)
 	if (irq >= NIRQ)
 		panic("dec_kn300_intr_string: bogus kn300 IRQ 0x%x", irq);
 
-	snprintf(irqstr, sizeof irqstr, "kn300 irq %ld", irq);
+	snprintf(irqstr, sizeof irqstr, "kn300 irq %d", irq);
 
 	return (irqstr);
 }

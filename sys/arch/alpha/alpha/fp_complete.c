@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.9 2014/02/06 05:14:12 miod Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.10 2014/05/08 20:46:49 miod Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -155,8 +155,8 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 	++total;
 	if (bits)
 		printf("FP instruction %x\n", (unsigned int)bits);
-	printf("FP event %d/%lx/%lx\n", what_cannot_happen, reported,
-	    alpha_shadow.uop);
+	printf("FP event %d/%lx/%lx\n", what_cannot_happen,
+	    (unsigned long)reported, (unsigned long)alpha_shadow.uop);
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.35 2014/03/29 18:09:28 guenther Exp $ */
+/* $OpenBSD: cpu.c,v 1.36 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -412,7 +412,7 @@ cpu_announce_extensions(struct cpu_info *ci)
 	}
 
 	if (amask) {
-		printf("%s: architecture extensions: %b\n",
+		printf("%s: architecture extensions: %lb\n",
 		    ci->ci_dev->dv_xname, amask, ALPHA_AMASK_BITS);
 	}
 }

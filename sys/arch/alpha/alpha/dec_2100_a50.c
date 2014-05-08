@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_2100_a50.c,v 1.21 2010/11/23 04:07:55 shadchin Exp $ */
+/* $OpenBSD: dec_2100_a50.c,v 1.22 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: dec_2100_a50.c,v 1.43 2000/05/22 20:13:31 thorpej Exp $ */
 
 /*
@@ -165,11 +165,13 @@ dec_2100_a50_cons_init()
 		break;
 
 	default:
-		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+		printf("ctb->ctb_term_type = 0x%lx\n",
+		    (unsigned long)ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n",
+		    (unsigned long)ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld",
-		    ctb->ctb_term_type);
+		panic("consinit: unknown console type %lu",
+		    (unsigned long)ctb->ctb_term_type);
 	}
 }
 
@@ -300,7 +302,8 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	/* Print PAL fields */
 	for (i = 0; i < 32; i += 2) {
 		printf("\tPAL temp[%d-%d]\t\t= 0x%16lx 0x%16lx\n", i, i+1,
-		    ptr->paltemp[i], ptr->paltemp[i+1]);
+		    (unsigned long)ptr->paltemp[i],
+		    (unsigned long)ptr->paltemp[i+1]);
 	}
 	printf(fmt1, "Excepting Instruction Addr", ptr->exc_addr);
 	printf(fmt1, "Summary of arithmetic traps", ptr->exc_sum);
@@ -374,30 +377,30 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	  switch(hdr->mcheck_code) {
 	  case AVANTI_RETRY_TIMEOUT:
 	    printf("\tRetry timeout error accessing 0x%08lx.\n",
-		   ptr->epic_pear & 0xffffffff);
+		   (unsigned long)ptr->epic_pear & 0xffffffff);
 	    break;
 
 	  case AVANTI_DMA_DATA_PARITY:
 	    printf("\tDMA data parity error accessing 0x%08lx.\n",
-		   ptr->epic_pear & 0xffffffff);
+		   (unsigned long)ptr->epic_pear & 0xffffffff);
 	    break;
 
 	  case AVANTI_IO_PARITY:
 	    printf("\tI/O parity error at 0x%08lx during PCI cycle 0x%0lx.\n",
-		   ptr->epic_pear & 0xffffffff, 
-		   (ptr->epic_dcsr >> 18) & 0xf);
+		   (unsigned long)ptr->epic_pear & 0xffffffff, 
+		   (unsigned long)(ptr->epic_dcsr >> 18) & 0xf);
 	    break;
 
 	  case AVANTI_TARGET_ABORT:
 	    printf("\tPCI target abort at 0x%08lx during PCI cycle 0x%0lx.\n",
-		   ptr->epic_pear & 0xffffffff, 
-		   (ptr->epic_dcsr >> 18) & 0xf);
+		   (unsigned long)ptr->epic_pear & 0xffffffff, 
+		   (unsigned long)(ptr->epic_dcsr >> 18) & 0xf);
 	    break;
 
 	  case AVANTI_NO_DEVICE:
 	    printf("\tNo device responded at 0x%08lx during PCI cycle 0x%0lx\n.",
-		   ptr->epic_pear & 0xffffffff, 
-		   (ptr->epic_dcsr >> 18) & 0xf);
+		   (unsigned long)ptr->epic_pear & 0xffffffff, 
+		   (unsigned long)(ptr->epic_dcsr >> 18) & 0xf);
 	    break;
 
 	  case AVANTI_CORRRECTABLE_MEMORY:
@@ -409,7 +412,7 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	  case AVANTI_UNCORRECTABLE_PCI_MEMORY:
 	    printf("\tUncorrectable memory error at %016lx reported "
 		   "during DMA read.\n",
-		   (ptr->epic_sear & 0xfffffff0) << 2);
+		   (unsigned long)(ptr->epic_sear & 0xfffffff0) << 2);
 	    break;
 
 	  case AVANTI_INVALID_PT_LOOKUP:
@@ -418,13 +421,13 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	      printf("\tAddress lost.\n");
 	    else
 	      printf("\tBus address to 0x%08lx, PCI cycle 0x%0lx\n",
-		     ptr->epic_pear & 0xffffffff, 
-		     (ptr->epic_dcsr >> 18) & 0xf);
+		     (unsigned long)ptr->epic_pear & 0xffffffff, 
+		     (unsigned long)(ptr->epic_dcsr >> 18) & 0xf);
 	    break;
 
 	  case AVANTI_MEMORY:
 	    printf("\tMemory error at %016lx, ",
-		   (ptr->epic_sear & 0xfffffff0) << 2);
+		   (unsigned long)(ptr->epic_sear & 0xfffffff0) << 2);
 	    sysaddr = (ptr->epic_sear & 0xffffffff) >> 21;
 	    if (sysaddr >= ((ptr->coma_base0 >> 5) & 0x7ff) &&
 		sysaddr < (((ptr->coma_base0 >> 5) & 0x7ff) +
@@ -447,9 +450,11 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	    if (ptr->coma_edsr & 0x20)
 	      printf("victim write\n");
 	    else if (ptr->coma_edsr & 0x10)
-	      printf("DMA. ioCmd<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("DMA. ioCmd<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    else
-	      printf("CPU. cpuCReq<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("CPU. cpuCReq<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    break;
 
 	  case AVANTI_BCACHE_TAG_CTRL_PARITY:
@@ -457,9 +462,11 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	    if (ptr->coma_edsr & 0x20)
 	      printf("victim write\n");
 	    else if (ptr->coma_edsr & 0x10)
-	      printf("DMA. ioCmd<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("DMA. ioCmd<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    else
-	      printf("CPU. cpuCReq<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("CPU. cpuCReq<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    break;
 	    
 	  case AVANTI_NONEXISTENT_MEMORY:
@@ -467,28 +474,31 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	    if (ptr->coma_edsr & 0x20)
 	      printf("victim write\n");
 	    else if (ptr->coma_edsr & 0x10)
-	      printf("DMA. ioCmd<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("DMA. ioCmd<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    else
-	      printf("CPU. cpuCReq<2:0> = %0lx\n", (ptr->coma_edsr >> 6) & 7);
+	      printf("CPU. cpuCReq<2:0> = %0lx\n",
+	        (unsigned long)(ptr->coma_edsr >> 6) & 7);
 	    break;
 
 	  case AVANTI_IO_BUS:
 	    printf("\tI/O bus error at %08lx during PCI cycle %0lx\n",
-		   ptr->epic_pear & 0xffffffff, (ptr->epic_dcsr >> 18) & 0xf);
+		   (unsigned long)ptr->epic_pear & 0xffffffff,
+		   (unsigned long)(ptr->epic_dcsr >> 18) & 0xf);
 	    break;
 
 	  case AVANTI_BCACHE_TAG_PARITY:
 	    printf("\tBcache tag address parity error.\n"
 		   "\tcReg_h cycle %0lx, address<7:0> 0x%02lx\n",
-		   (ptr->biu_stat >> 4) & 7,
-		   ptr->biu_addr & 0xff);
+		   (unsigned long)(ptr->biu_stat >> 4) & 7,
+		   (unsigned long)ptr->biu_addr & 0xff);
 	    break;
 
 	  case AVANTI_BCACHE_TAG_CTRL_PARITY2:
 	    printf("\tBcache tag control parity error.\n"
 		   "\tcReg_h cycle %0lx, address<7:0> 0x%02lx\n",
-		   (ptr->biu_stat >> 4) & 7,
-		   ptr->biu_addr & 0xff);
+		   (unsigned long)(ptr->biu_stat >> 4) & 7,
+		   (unsigned long)ptr->biu_addr & 0xff);
 	    break;
 
 	  }
@@ -530,15 +540,15 @@ dec_2100_a50_mcheck(mces, type, logout, framep)
 	  case AVANTI_DCACHE_FILL_PARITY:
 	    printf("\tPrimary Dcache data fill parity error.\n"
 		   "\tDcache Quadword %lx, address %08lx\n",
-		   (ptr->biu_stat >> 12) & 0x3,
-		   (ptr->fill_addr >> 8) & 0x7f);
+		   (unsigned long)(ptr->biu_stat >> 12) & 0x3,
+		   (unsigned long)(ptr->fill_addr >> 8) & 0x7f);
 	    break;
 
 	  case AVANTI_ICACHE_FILL_PARITY:
 	    printf("\tPrimary Icache data fill parity error.\n"
 		   "\tDcache Quadword %lx, address %08lx\n",
-		   (ptr->biu_stat >> 12) & 0x3,
-		   (ptr->fill_addr >> 8) & 0x7f);
+		   (unsigned long)(ptr->biu_stat >> 12) & 0x3,
+		   (unsigned long)(ptr->fill_addr >> 8) & 0x7f);
 	    break;
 	  }
 	}

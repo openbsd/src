@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.152 2014/03/26 05:23:42 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.153 2014/05/08 20:46:49 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -462,7 +462,7 @@ nobootinfo:
 	if (mddtp->mddt_cluster_cnt < 2) {
 		mddtweird = 1;
 		printf("WARNING: weird number of mem clusters: %lu\n",
-		    mddtp->mddt_cluster_cnt);
+		    (unsigned long)mddtp->mddt_cluster_cnt);
 	}
 
 #if 0
@@ -495,7 +495,7 @@ nobootinfo:
 		if (memc->mddt_usage & MDDT_mbz) {
 			mddtweird = 1;
 			printf("WARNING: mem cluster %d has weird "
-			    "usage 0x%lx\n", i, memc->mddt_usage);
+			    "usage 0x%lx\n", i, (long)memc->mddt_usage);
 			unknownmem += memc->mddt_pg_cnt;
 			continue;
 		}
@@ -784,8 +784,8 @@ nobootinfo:
 	hz = hwrpb->rpb_intr_freq >> 12;
 	if (!(60 <= hz && hz <= 10240)) {
 #ifdef DIAGNOSTIC
-		printf("WARNING: unbelievable rpb_intr_freq: %ld (%d hz)\n",
-			hwrpb->rpb_intr_freq, hz);
+		printf("WARNING: unbelievable rpb_intr_freq: %lu (%d hz)\n",
+			(unsigned long)hwrpb->rpb_intr_freq, hz);
 #endif
 		hz = 1024;
 	}
@@ -933,7 +933,7 @@ alpha_unknown_sysname()
 	static char s[128];		/* safe size */
 
 	snprintf(s, sizeof s, "%s family, unknown model variation 0x%lx",
-	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
+	    platform.family, (unsigned long)hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
 }
 
@@ -950,7 +950,7 @@ identifycpu()
 	for(s = cpu_model; *s; ++s)
 		if(strncasecmp(s, "MHz", 3) == 0)
 			goto skipMHz;
-	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
+	printf(", %luMHz", (unsigned long)hwrpb->rpb_cc_freq / 1000000);
 skipMHz:
 	/* fill in hw_serial if a serial number is known */
 	slen = strlen(hwrpb->rpb_ssn) + 1;
@@ -961,8 +961,9 @@ skipMHz:
 	}
 
 	printf("\n");
-	printf("%ld byte page size, %d processor%s.\n",
-	    hwrpb->rpb_page_size, ncpusfound, ncpusfound == 1 ? "" : "s");
+	printf("%lu byte page size, %d processor%s.\n",
+	    (unsigned long)hwrpb->rpb_page_size, ncpusfound,
+	    ncpusfound == 1 ? "" : "s");
 #if 0
 	/* this is not particularly useful! */
 	printf("variation: 0x%lx, revision 0x%lx\n",

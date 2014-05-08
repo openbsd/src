@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.26 2009/09/30 20:18:06 miod Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.27 2014/05/08 20:46:49 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ dec_kn20aa_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > KN20AA_MAX_IRQ)
-		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%x", ih);
+		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx", ih);
 
         snprintf(irqstr, sizeof irqstr, "kn20aa irq %ld", ih);
         return (irqstr);
@@ -200,7 +200,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
 	void *cookie;
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x",
+                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(kn20aa_pci_intr, ih, IST_LEVEL,
