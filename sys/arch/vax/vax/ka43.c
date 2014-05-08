@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.15 2011/09/15 00:48:24 miod Exp $ */
+/*	$OpenBSD: ka43.c,v 1.16 2014/05/08 19:06:07 miod Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -175,7 +175,7 @@ ka43_memerr()
 	 * and try to go on...
 	 */
 	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
+	printf("primary cache status: %lb\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
 	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
 }
 
@@ -209,7 +209,7 @@ ka43_cache_reset(int silent)
 	ka43_cache_enable();
 
 	if (silent == 0) {
-		printf("primary cache status: %b\n", mfpr(PR_PCSTS),
+		printf("primary cache status: %lb\n", mfpr(PR_PCSTS),
 		    KA43_PCSTS_BITS);
 		printf("secondary cache status: %b\n", *ka43_creg,
 		    KA43_SESR_BITS);

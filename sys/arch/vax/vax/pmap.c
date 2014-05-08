@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2014/02/09 20:58:49 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.64 2014/05/08 19:06:07 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -1297,7 +1297,7 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pr = (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		break;
 	default:
-		panic("unsupported segtype: %d", SEGTYPE(start));
+		panic("unsupported segtype: %d", (int)SEGTYPE(start));
 	}
 
 	pts = &pt[start >> VAX_PGSHIFT];

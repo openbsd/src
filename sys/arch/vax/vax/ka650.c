@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.21 2011/09/19 21:53:02 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.22 2014/05/08 19:06:07 miod Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -106,8 +106,8 @@ uvaxIII_conf()
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
 	ka650setcache(CACHEON);
 	if (ptoa(physmem) > ka650merr_ptr->merr_qbmbr) {
-		printf("physmem(0x%x) > qbmbr(0x%x)\n",
-		    ptoa(physmem), (int)ka650merr_ptr->merr_qbmbr);
+		printf("physmem(0x%lx) > qbmbr(0x%lx)\n",
+		    ptoa(physmem), ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
 	if (mfpr(PR_TODR) == 0)
@@ -172,10 +172,10 @@ uvaxIII_mchk(cmcf)
 	printf("\n\tvap %x istate1 %x istate2 %x pc %x psl %x\n",
 	    mcf->cvax_mrvaddr, mcf->cvax_istate1, mcf->cvax_istate2,
 	    mcf->cvax_pc, mcf->cvax_psl);
-	printf("dmaser=0x%b qbear=0x%x dmaear=0x%x\n",
+	printf("dmaser=0x%lb qbear=0x%lx dmaear=0x%lx\n",
 	    ka650merr_ptr->merr_dser, DMASER_BITS, 
-	    (int)ka650merr_ptr->merr_qbear,
-	    (int)ka650merr_ptr->merr_dear);
+	    ka650merr_ptr->merr_qbear,
+	    ka650merr_ptr->merr_dear);
 	ka650merr_ptr->merr_dser = DSER_CLEAR;
 
 	i = mfpr(PR_CAER);

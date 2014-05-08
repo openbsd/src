@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.11 2011/09/15 00:48:24 miod Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.12 2014/05/08 19:06:07 miod Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -165,8 +165,9 @@ ka670_memerr()
 	 * and try to go on...
 	 */
 	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA670_PCSTS_BITS);
-	printf("secondary cache status: %b\n", mfpr(PR_BCSTS), KA670_BCSTS_BITS);
+	printf("primary cache status: %lb\n", mfpr(PR_PCSTS), KA670_PCSTS_BITS);
+	printf("secondary cache status: %lb\n", mfpr(PR_BCSTS),
+	    KA670_BCSTS_BITS);
 }
 
 int
