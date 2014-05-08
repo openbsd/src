@@ -48,16 +48,6 @@ typedef unsigned long long	u64;
 
 #define ROUNDS	10
 
-#define STRICT_ALIGNMENT
-#if defined(__i386) || defined(__i386__) || \
-    defined(__x86_64) || defined(__x86_64__) || \
-    defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64)
-/* Well, formally there're couple of other architectures, which permit
- * unaligned loads, specifically those not crossing cache lines, IA-64
- * and PowerPC... */
-#  undef STRICT_ALIGNMENT
-#endif
-
 #undef SMALL_REGISTER_BANK
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
 #  define SMALL_REGISTER_BANK
@@ -99,14 +89,14 @@ typedef unsigned long long	u64;
 #      define ROTATE(i,n)	((i)>>(n) ^ (i)<<(64-n))
 #    endif
 #  endif
-#  if defined(ROTATE) && !defined(STRICT_ALIGNMENT)
-#    define STRICT_ALIGNMENT	/* ensure smallest table size */
+#  if defined(ROTATE) && !defined(__STRICT_ALIGNMENT)
+#    define __STRICT_ALIGNMENT	/* ensure smallest table size */
 #  endif
 #endif
 
 /*
- * Table size depends on STRICT_ALIGNMENT and whether or not endian-
- * specific ROTATE macro is defined. If STRICT_ALIGNMENT is not
+ * Table size depends on __STRICT_ALIGNMENT and whether or not endian-
+ * specific ROTATE macro is defined. If __STRICT_ALIGNMENT is not
  * defined, which is normally the case on x86[_64] CPUs, the table is
  * 4KB large unconditionally. Otherwise if ROTATE is defined, the
  * table is 2KB large, and otherwise - 16KB. 2KB table requires a
@@ -127,7 +117,7 @@ typedef unsigned long long	u64;
  * ones to depend on smart compiler to fold byte loads if beneficial.
  * Hand-coded assembler would be another alternative:-)
  */
-#ifdef STRICT_ALIGNMENT
+#ifdef __STRICT_ALIGNMENT
 #  if defined(ROTATE)
 #    define N	1
 #    define LL(c0,c1,c2,c3,c4,c5,c6,c7)	c0,c1,c2,c3,c4,c5,c6,c7
@@ -487,7 +477,7 @@ void whirlpool_block(WHIRLPOOL_CTX *ctx,const void *inp,size_t n)
 #else
 	u64	L0,L1,L2,L3,L4,L5,L6,L7;
 
-#ifdef STRICT_ALIGNMENT
+#ifdef __STRICT_ALIGNMENT
 	if ((size_t)p & 7)
 		{
 		memcpy (S.c,p,64);
@@ -614,7 +604,7 @@ void whirlpool_block(WHIRLPOOL_CTX *ctx,const void *inp,size_t n)
 #endif
 		}
 
-#ifdef STRICT_ALIGNMENT
+#ifdef __STRICT_ALIGNMENT
 	if ((size_t)p & 7)
 		{
 		int i;
