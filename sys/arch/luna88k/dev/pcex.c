@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.c,v 1.1 2014/04/16 12:01:33 aoyama Exp $	*/
+/*	$OpenBSD: pcex.c,v 1.2 2014/05/08 13:31:00 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -17,7 +17,7 @@
  */
 
 /*
- * PC-9801 extension board slot direct access driver for LUNA-88K{,2}
+ * PC-9801 extension board slot direct access driver for LUNA-88K2.
  */
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ pcex_wait_int(struct pcex_softc *sc, u_int level)
  * Note about interrupt on PC-9801 extension board slot
  *
  * PC-9801 extension board slot bus (so-called 'C-bus' in Japan) use 8 own
- * interrupt levels, INT0-INT6, and NMI.  On LUNA-88K{,2}, they all trigger
+ * interrupt levels, INT0-INT6, and NMI.  On LUNA-88K2, they all trigger
  * level 4 interrupt, so we need to check the dedicated interrupt status
  * register to know which C-bus interrupt is occurred.
  *
@@ -258,7 +258,7 @@ pcex_intr(void *arg)
 	int n;
 
 	/*
-	 * LUNA-88K{,2}'s interrupt level 4 is shared with other devices,
+	 * LUNA-88K2's interrupt level 4 is shared with other devices,
 	 * such as le(4), for example.  So we check:
 	 * - the value of our C-bus interrupt status register, and
 	 * - if the INT level is what we are looking for.
