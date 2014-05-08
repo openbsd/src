@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.771 2014/05/05 00:09:16 bluhm Exp $
+#	$OpenBSD: install.sub,v 1.772 2014/05/08 16:46:47 krw Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1365,10 +1365,10 @@ install_http() {
 	[[ $resp == none ]] || export http_proxy=$resp
 
 	if [[ -s $HTTP_LIST ]]; then
-		_prompt="Server? (hostname, list#, 'done' or '?')"
+		_prompt="HTTP Server? (hostname, list#, 'done' or '?')"
 	else
 		echo "(Unable to get list from ftp.openbsd.org, but that is OK)"
-		_prompt="Server? (hostname or 'done')"
+		_prompt="HTTP Server? (hostname or 'done')"
 	fi
 
 	# Get server IP address or hostname
