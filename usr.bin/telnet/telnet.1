@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.47 2014/02/26 20:56:11 claudio Exp $
+.\"	$OpenBSD: telnet.1,v 1.48 2014/05/08 13:08:43 jmc Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: February 26 2014 $
+.Dd $Mdocdate: May 8 2014 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -580,7 +580,7 @@ will attempt to contact a TELNET server at the default port.
 The host specification may be either a host name (see
 .Xr hosts 5 )
 or an Internet address specified in the ``dot notation'' (see
-.Xr inet 3 ) .
+.Xr inet_net 3 ) .
 The
 .Fl l
 option may be used to specify the user name

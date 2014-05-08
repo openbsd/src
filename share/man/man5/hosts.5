@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.19 2011/10/16 15:07:28 lum Exp $
+.\"	$OpenBSD: hosts.5,v 1.20 2014/05/08 13:08:43 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 16 2011 $
+.Dd $Mdocdate: May 8 2014 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ Internet addresses are specified using either
 dot notation (IPv4)
 or colon separated notation (IPv6).
 Further information on network addressing is contained in
-.Xr inet 3 .
+.Xr inet_net 3 .
 Host names may contain any printable character other than a field delimiter,
 newline, or comment character.
 .Sh FILES
@@ -88,7 +88,7 @@ newline, or comment character.
 .Xr getaddrinfo 3 ,
 .Xr gethostbyname 3 ,
 .Xr getnameinfo 3 ,
-.Xr inet 3 ,
+.Xr inet_net 3 ,
 .Xr resolv.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr named 8
