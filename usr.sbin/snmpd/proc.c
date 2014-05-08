@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.8 2014/05/06 06:40:03 jsg Exp $	*/
+/*	$OpenBSD: proc.c,v 1.9 2014/05/08 13:04:28 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -336,10 +336,11 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
     struct privsep_proc *procs, u_int nproc,
     void (*init)(struct privsep *, struct privsep_proc *, void *), void *arg)
 {
-	pid_t		 pid;
-	struct passwd	*pw;
-	const char	*root;
-	u_int		 n;
+	pid_t			 pid;
+	struct passwd		*pw;
+	const char		*root;
+	struct control_sock	*rcs;
+	u_int			 n;
 
 	if (ps->ps_noaction)
 		return (0);
@@ -363,6 +364,9 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		if (control_init(ps, &ps->ps_csock) == -1)
 			fatalx(p->p_title);
+		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
+			if (control_init(ps, rcs) == -1)
+				fatalx(p->p_title);
 	}
 
 	/* Change root directory */
@@ -418,6 +422,9 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 		TAILQ_INIT(&ctl_conns);
 		if (control_listen(&ps->ps_csock) == -1)
 			fatalx(p->p_title);
+		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
+			if (control_listen(rcs) == -1)
+				fatalx(p->p_title);
 	}
 
 	if (init != NULL)
