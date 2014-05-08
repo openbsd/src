@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.180 2014/04/22 08:04:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.181 2014/05/08 16:11:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -1080,6 +1080,12 @@ flag		: STRING			{
 		;
 
 protonode	: nodetype APPEND STRING TO STRING nodeopts		{
+			if (node.type != NODE_TYPE_HEADER) {
+				yyerror("action only supported for headers");
+				free($5);
+				free($3);
+				YYERROR;
+			}
 			node.action = NODE_ACTION_APPEND;
 			node.key = strdup($5);
 			node.value = strdup($3);
@@ -1091,6 +1097,12 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 			free($3);
 		}
 		| nodetype CHANGE STRING TO STRING nodeopts		{
+			if (node.type != NODE_TYPE_HEADER) {
+				yyerror("action only supported for headers");
+				free($5);
+				free($3);
+				YYERROR;
+			}
 			node.action = NODE_ACTION_CHANGE;
 			node.key = strdup($3);
 			node.value = strdup($5);
@@ -1102,6 +1114,11 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 			free($3);
 		}
 		| nodetype REMOVE STRING nodeopts			{
+			if (node.type != NODE_TYPE_HEADER) {
+				yyerror("action only supported for headers");
+				free($3);
+				YYERROR;
+			}
 			node.action = NODE_ACTION_REMOVE;
 			node.key = strdup($3);
 			node.value = NULL;
@@ -1110,6 +1127,10 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 			free($3);
 		}
 		| nodetype REMOVE					{
+			if (node.type != NODE_TYPE_HEADER) {
+				yyerror("action only supported for headers");
+				YYERROR;
+			}
 			node.action = NODE_ACTION_REMOVE;
 			node.key = NULL;
 			node.value = NULL;
@@ -1229,6 +1250,10 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 			free($5);
 		}
 		| nodetype MARK STRING WITH mark nodeopts		{
+			if (node.mark) {
+				yyerror("either mark or marked");
+				YYERROR;
+			}
 			node.action = NODE_ACTION_MARK;
 			node.key = strdup($3);
 			node.value = strdup("*");
