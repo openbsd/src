@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.55 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.56 2014/05/08 18:09:22 sf Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.55 2011/07/17 22:46:48 matthew Exp $
+ * $Id: ahc_pci.c,v 1.56 2014/05/08 18:09:22 sf Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -793,8 +793,8 @@ ahc_pci_attach(parent, self, aux)
 		ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
 		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) == 0);
 #if 0
-	printf("%s: mem mapping: memt 0x%x, memh 0x%x, iot 0x%x, ioh 0x%lx\n",
-	       ahc_name(ahc), memt, (u_int32_t)memh, (u_int32_t)iot, ioh);
+	printf("%s: mem mapping: memt 0x%lx, memh 0x%lx, iot 0x%lx, ioh 0x%lx\n",
+	       ahc_name(ahc), (u_long)memt, memh, (u_long)iot, ioh);
 #endif
 
 	if (ioh_valid) {
