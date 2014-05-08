@@ -41,7 +41,7 @@ static const EVP_CIPHER chacha20_cipher = {
 const EVP_CIPHER *
 EVP_chacha20(void)
 {
-	return(&chacha20_cipher);
+	return (&chacha20_cipher);
 }
 
 static int
