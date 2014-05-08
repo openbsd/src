@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.114 2014/05/04 14:42:36 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.115 2014/05/08 14:00:52 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1785,6 +1785,9 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
+#ifdef DIAGNOSTIC
+		ux->isdone = 1;
+#endif
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;

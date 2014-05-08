@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.151 2014/05/04 14:42:36 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.152 2014/05/08 14:00:52 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2734,6 +2734,9 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
 		usb_rem_task(xfer->device, &xfer->abort_task);
+#ifdef DIAGNOSTIC
+		ex->isdone = 1;
+#endif
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
