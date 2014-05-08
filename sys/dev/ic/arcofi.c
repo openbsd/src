@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.7 2014/05/08 21:32:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -1294,5 +1294,5 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 
 error:
 	arcofi_write(sc, ARCOFI_ID, 0);
-	printf("%s: %02x command failed, error %d\n", __func__, cmd, rc);
+	printf("%s: command failed, error %d\n", __func__, rc);
 }

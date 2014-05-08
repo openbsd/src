@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.130 2014/04/18 11:51:16 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.131 2014/05/08 21:32:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -465,7 +465,7 @@ trap(int type, struct trapframe *frame)
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLTRP, sv);
 			KERNEL_UNLOCK();
 		} else
-			panic("trap: %s @ 0x%x:0x%x for 0x%x:0x%x irr 0x%08x",
+			panic("trap: %s @ 0x%lx:0x%lx for 0x%x:0x%lx irr 0x%08x",
 			    tts, frame->tf_iisq_head, frame->tf_iioq_head,
 			    space, va, opcode);
 		break;
@@ -914,7 +914,7 @@ syscall(struct trapframe *frame)
 #ifdef DIAGNOSTIC
 	if (curcpu()->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
-		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    "syscall(0x%x, 0x%lx, 0x%lx, 0x%lx...) EXIT, PID %d\n",
 		    curcpu()->ci_cpl, code, args[0], args[1], args[2],
 		    p->p_pid);
 		curcpu()->ci_cpl = oldcpl;

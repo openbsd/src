@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.83 2014/04/08 09:34:23 mpi Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.84 2014/05/08 21:32:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1141,7 +1141,7 @@ mbattach(parent, self, aux)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
 		panic("mbattach: PDC_HPA failed");
 
-	printf(" [flex %lx]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+	printf(" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* map all the way till the end of the memory */
 	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa,

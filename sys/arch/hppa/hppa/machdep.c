@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.219 2014/04/08 09:34:23 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.220 2014/05/08 21:32:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -624,9 +624,9 @@ cpu_startup(void)
 	printf(version);
 
 	printf("%s\n", cpu_model);
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem) / 1024 / 1024);
-	printf("rsvd mem = %u (%uKB)\n", ptoa(resvmem), ptoa(resvmem) / 1024);
+	printf("rsvd mem = %lu (%luKB)\n", ptoa(resvmem), ptoa(resvmem) / 1024);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
