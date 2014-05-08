@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.78 2014/05/07 12:57:13 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.79 2014/05/08 13:11:16 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -80,7 +80,10 @@ struct control_sock {
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
+
+	TAILQ_ENTRY(control_sock) cs_entry;
 };
+TAILQ_HEAD(control_socks, control_sock);
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
@@ -521,6 +524,7 @@ struct privsep {
 	int				 ps_noaction;
 
 	struct control_sock		 ps_csock;
+	struct control_socks		 ps_rcsocks;
 
 	u_int				 ps_instances[PROC_MAX];
 	u_int				 ps_ninstances;

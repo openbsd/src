@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.20 2014/04/22 12:00:03 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.21 2014/05/08 13:11:16 blambert Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -118,6 +118,7 @@ main(int argc, char *argv[])
 
 	ps = &env->sc_ps;
 	ps->ps_env = env;
+	TAILQ_INIT(&ps->ps_rcsocks);
 
 	if ((opts & (IKED_OPT_NONATT|IKED_OPT_NATT)) ==
 	    (IKED_OPT_NONATT|IKED_OPT_NATT))
