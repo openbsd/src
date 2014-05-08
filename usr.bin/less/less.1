@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.37 2014/05/08 06:24:14 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.38 2014/05/08 06:50:50 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -61,6 +61,14 @@ displays a prompt indicating end of file and the name of the next file
 to examine, if any.
 It then waits for input from the user.
 .Pp
+Commands are based on both traditional
+.Xr more 1
+and
+.Xr vi 1 .
+Commands may be preceded by a decimal number,
+called N in the descriptions below.
+The number is used by some commands, as indicated.
+.Pp
 This version of
 .Nm
 also acts as
@@ -74,77 +82,11 @@ The main differences between the two are summarized in the
 .Sx COMPATIBILITY WITH MORE
 section, below.
 .Pp
-Commands are based on both traditional
-.Xr more 1
-and
-.Xr vi 1 .
-Commands may be preceded by a decimal number,
-called N in the descriptions below.
-The number is used by some commands, as indicated.
-.Pp
-Command line options are described below.
-Most options may be changed while
-.Nm
-is running, via the "\-" command.
-.Pp
-Most options may be given in one of two forms:
-either a dash followed by a single letter, or two dashes followed by a
-long option name.
 A long option name may be abbreviated as long as the abbreviation is
 unambiguous.
-For example, --quit-at-eof may be abbreviated --quit, but not
---qui, since both --quit-at-eof and --quiet begin with --qui.
-Some long option names are in uppercase, such as --QUIT-AT-EOF, as
-distinct from --quit-at-eof.
 Such option names need only have their first letter capitalized;
 the remainder of the name may be in either case.
 For example, --Quit-at-eof is equivalent to --QUIT-AT-EOF.
-.Pp
-Options are also taken from the environment variable
-.Ev LESS
-if the command is
-.Nm less ,
-or from the environment variable
-.Ev MORE
-if the command is
-.Nm more .
-For example, to avoid typing "less -options ..." each time
-.Nm
-is invoked, you might tell
-.Xr csh 1 :
-.Pp
-.Dl setenv LESS "-options"
-.Pp
-or if you use
-.Xr sh 1 :
-.Pp
-.Dl LESS="-options"; export LESS
-.Pp
-.\" On MS-DOS, you don't need the quotes, but you should replace any
-.\" percent signs in the options string by double percent signs.
-.\" .Pp
-The environment variable is parsed before the command line,
-so command line options override the
-.Ev LESS
-environment variable.
-If an option appears in the
-.Ev LESS
-variable, it can be reset to its default value on the command line by
-beginning the command line option with "\-+".
-.Pp
-Some options like -k require a string to follow the option letter.
-The string for that option is considered to end when a dollar sign ($) is found.
-For example, to separate a prompt value from any other options
-with dollar sign between them:
-.Pp
-.Dl LESS="-Ps--More--$-C -e"
-.Pp
-If the --use-backslash option appears earlier in the options, then
-a dollar sign or backslash may be included literally in an option string
-by preceding it with a backslash.
-If the --use-backslash option is not in effect, then backslashes are
-not treated specially, and there is no way to include a dollar sign
-in the option string.
 .Pp
 The options are as follows:
 .Bl -tag -width XXXX
@@ -1742,7 +1684,7 @@ If environment variables are defined in more than one place,
 variables defined in a local lesskey file take precedence over
 variables defined in the system environment, which take precedence
 over variables defined in the system-wide lesskey file.
-.Bl -tag -width Ds
+.Bl -tag -width LESSANSIENDCHARS
 .It Ev COLUMNS
 Sets the number of columns on the screen.
 Takes precedence over the number of columns specified by the TERM variable.
@@ -1754,13 +1696,6 @@ The name of the editor (used for the v command).
 .It Ev HOME
 Name of the user's home directory
 (used to find a lesskey file).
-.\" .It Ev "HOMEDRIVE, HOMEPATH"
-.\" Concatenation of the HOMEDRIVE and HOMEPATH environment variables is
-.\" the name of the user's home directory if the HOME variable is not set
-.\" (only in the Windows version).
-.\" .It Ev INIT
-.\" Name of the user's init directory
-.\" (used to find a lesskey file on OS/2 systems).
 .It Ev LANG
 Language for determining the character set.
 .It Ev LC_CTYPE
@@ -1769,6 +1704,23 @@ Language for determining the character set.
 Options which are passed to
 .Nm
 automatically.
+Command line options override the
+.Ev LESS
+environment variable.
+.Pp
+Some options like -k require a string to follow the option letter.
+The string for that option is considered to end when a dollar sign ($) is found.
+For example, to separate a prompt value from any other options
+with dollar sign between them:
+.Pp
+.Dl LESS="-Ps--More--$-C -e"
+.Pp
+If the --use-backslash option appears earlier in the options, then
+a dollar sign or backslash may be included literally in an option string
+by preceding it with a backslash.
+If the --use-backslash option is not in effect, then backslashes are
+not treated specially, and there is no way to include a dollar sign
+in the option string.
 .It Ev LESSANSIENDCHARS
 Characters which may end an ANSI color escape sequence
 (default "m").
@@ -1784,10 +1736,6 @@ Defines a character set.
 Selects a predefined character set.
 .It Ev LESSCLOSE
 Command line to invoke the (optional) input-postprocessor.
-.\" .It Ev LESSECHO
-.\" Name of the lessecho program (default "lessecho").
-.\" The lessecho program is needed to expand metacharacters, such as * and ?,
-.\" in filenames on Unix systems.
 .It Ev LESSEDIT
 Editor prototype string (used for the v command).
 See discussion under
@@ -1802,9 +1750,6 @@ shell commands between invocations of
 .Nm less .
 If set to "-" or "/dev/null", a history file is not used.
 The default is "-".
-.\" The default is "$HOME/.lesshst" on Unix systems, "$HOME/_lesshst" on
-.\" DOS and Windows systems, or "$HOME/lesshst.ini" or "$INIT/lesshst.ini"
-.\" on OS/2 systems.
 .It Ev LESSHISTSIZE
 The maximum number of commands to save in the history file.
 The default is 100.
@@ -1846,9 +1791,6 @@ Options which are passed to
 automatically when running in
 .Nm more
 compatible mode.
-.\" .It Ev PATH
-.\" User's search path (used to find a lesskey file
-.\" on MS-DOS and OS/2 systems).
 .It Ev SHELL
 The shell used to execute the ! command, as well as to expand filenames.
 .It Ev TERM
@@ -1862,7 +1804,7 @@ The name of the editor (used for the v command).
 .Xr lesskey 1 ,
 .Xr more 1
 .Sh AUTHORS
-.An Mark Nudelman
+.An Mark Nudelman .
 .Pp
 Send bug reports or comments to
 .Aq Mt bug\-less@gnu.org .
