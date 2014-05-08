@@ -12,12 +12,12 @@ our %args = (
 	protocol => [ "http",
 	    'return error',
 	    'label test_reject_label',
-	    'path filter file args-http-filter-url-file.in log',
+	    'url filter file args-http-filter-url-file.in log',
 	    'no label',
 	],
 	loggrep => {
 		qr/rejecting request/ => 1,
-		qr/\[test_reject_label\, \/0\:/ => 1
+		qr/\[test_reject_label\, foo\.bar\/0\:/ => 1
 	},
     },
     server => {
