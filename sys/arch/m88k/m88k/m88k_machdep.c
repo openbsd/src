@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.59 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.60 2014/05/08 22:17:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -242,60 +242,60 @@ void
 regdump(struct trapframe *f)
 {
 #define R(i) f->tf_r[i]
-	printf("R00-05: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	printf("R00-05: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	       R(0),R(1),R(2),R(3),R(4),R(5));
-	printf("R06-11: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	printf("R06-11: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	       R(6),R(7),R(8),R(9),R(10),R(11));
-	printf("R12-17: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	printf("R12-17: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	       R(12),R(13),R(14),R(15),R(16),R(17));
-	printf("R18-23: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	printf("R18-23: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	       R(18),R(19),R(20),R(21),R(22),R(23));
-	printf("R24-29: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	printf("R24-29: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	       R(24),R(25),R(26),R(27),R(28),R(29));
-	printf("R30-31: 0x%08x  0x%08x\n",R(30),R(31));
+	printf("R30-31: 0x%08lx  0x%08lx\n",R(30),R(31));
 #ifdef M88110
 	if (CPU_IS88110) {
-		printf("exip %x enip %x\n", f->tf_exip, f->tf_enip);
+		printf("exip %lx enip %lx\n", f->tf_exip, f->tf_enip);
 	}
 #endif
 #ifdef M88100
 	if (CPU_IS88100) {
-		printf("sxip %x snip %x sfip %x\n",
+		printf("sxip %lx snip %lx sfip %lx\n",
 		    f->tf_sxip, f->tf_snip, f->tf_sfip);
 	}
 	if (CPU_IS88100 && f->tf_vector == 0x3) {
 		/* print dmt stuff for data access fault */
-		printf("dmt0 %x dmd0 %x dma0 %x\n",
+		printf("dmt0 %lx dmd0 %lx dma0 %lx\n",
 		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
-		printf("dmt1 %x dmd1 %x dma1 %x\n",
+		printf("dmt1 %lx dmd1 %lx dma1 %lx\n",
 		    f->tf_dmt1, f->tf_dmd1, f->tf_dma1);
-		printf("dmt2 %x dmd2 %x dma2 %x\n",
+		printf("dmt2 %lx dmd2 %lx dma2 %lx\n",
 		    f->tf_dmt2, f->tf_dmd2, f->tf_dma2);
-		printf("fault type %d\n", (f->tf_dpfsr >> 16) & 0x7);
+		printf("fault type %ld\n", (f->tf_dpfsr >> 16) & 0x7);
 		dae_print((u_int *)f);
 	}
 	if (CPU_IS88100 && longformat != 0) {
-		printf("fpsr %x fpcr %x epsr %x ssbr %x\n",
+		printf("fpsr %lx fpcr %lx epsr %lx ssbr %lx\n",
 		    f->tf_fpsr, f->tf_fpcr, f->tf_epsr, f->tf_ssbr);
-		printf("fpecr %x fphs1 %x fpls1 %x fphs2 %x fpls2 %x\n",
+		printf("fpecr %lx fphs1 %lx fpls1 %lx fphs2 %lx fpls2 %lx\n",
 		    f->tf_fpecr, f->tf_fphs1, f->tf_fpls1,
 		    f->tf_fphs2, f->tf_fpls2);
-		printf("fppt %x fprh %x fprl %x fpit %x\n",
+		printf("fppt %lx fprh %lx fprl %lx fpit %lx\n",
 		    f->tf_fppt, f->tf_fprh, f->tf_fprl, f->tf_fpit);
-		printf("vector %d mask %x flags %x scratch1 %x cpu %p\n",
+		printf("vector %ld mask %lx flags %lx scratch1 %lx cpu %p\n",
 		    f->tf_vector, f->tf_mask, f->tf_flags,
 		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif
 #ifdef M88110
 	if (CPU_IS88110 && longformat != 0) {
-		printf("fpsr %x fpcr %x fpecr %x epsr %x\n",
+		printf("fpsr %lx fpcr %lx fpecr %lx epsr %lx\n",
 		    f->tf_fpsr, f->tf_fpcr, f->tf_fpecr, f->tf_epsr);
-		printf("dsap %x duap %x dsr %x dlar %x dpar %x\n",
+		printf("dsap %lx duap %lx dsr %lx dlar %lx dpar %lx\n",
 		    f->tf_dsap, f->tf_duap, f->tf_dsr, f->tf_dlar, f->tf_dpar);
-		printf("isap %x iuap %x isr %x ilar %x ipar %x\n",
+		printf("isap %lx iuap %lx isr %lx ilar %lx ipar %lx\n",
 		    f->tf_isap, f->tf_iuap, f->tf_isr, f->tf_ilar, f->tf_ipar);
-		printf("vector %d mask %x flags %x scratch1 %x cpu %p\n",
+		printf("vector %ld mask %lx flags %lx scratch1 %lx cpu %p\n",
 		    f->tf_vector, f->tf_mask, f->tf_flags,
 		    f->tf_scratch1, f->tf_cpu);
 	}

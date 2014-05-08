@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2011/10/09 17:01:34 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.8 2014/05/08 22:17:33 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -174,6 +174,6 @@ mainbus_print(void *args, const char *bus)
 	struct confargs *ca = args;
 
 	if (ca->ca_paddr != (paddr_t)-1)
-		printf(" addr 0x%08x", ca->ca_paddr);
+		printf(" addr 0x%08lx", ca->ca_paddr);
 	return (UNCONF);
 }

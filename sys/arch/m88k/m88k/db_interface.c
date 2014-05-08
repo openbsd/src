@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2011/10/25 18:38:06 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2014/05/08 22:17:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -221,19 +221,19 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 
 #define R(i) s->tf_r[i]
 #define IPMASK(x) ((x) &  ~(3))
-	db_printf("R00-05: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	db_printf("R00-05: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	    R(0), R(1), R(2), R(3), R(4), R(5));
-	db_printf("R06-11: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	db_printf("R06-11: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	    R(6), R(7), R(8), R(9), R(10), R(11));
-	db_printf("R12-17: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	db_printf("R12-17: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	    R(12), R(13), R(14), R(15), R(16), R(17));
-	db_printf("R18-23: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	db_printf("R18-23: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	    R(18), R(19), R(20), R(21), R(22), R(23));
-	db_printf("R24-29: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
+	db_printf("R24-29: 0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 	    R(24), R(25), R(26), R(27), R(28), R(29));
-	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
+	db_printf("R30-31: 0x%08lx  0x%08lx\n", R(30), R(31));
 
-	db_printf("%cxip: 0x%08x ",
+	db_printf("%cxip: 0x%08lx ",
 	    CPU_IS88110 ? 'e' : 's', s->tf_sxip & XIP_ADDR);
 	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sxip),
 	    &name, &offset);
@@ -242,7 +242,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("\n");
 
 	if (s->tf_snip != s->tf_sxip + 4) {
-		db_printf("%cnip: 0x%08x ",
+		db_printf("%cnip: 0x%08lx ",
 		    CPU_IS88110 ? 'e' : 's', s->tf_snip);
 		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_snip),
 		    &name, &offset);
@@ -254,7 +254,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 #ifdef M88100
 	if (CPU_IS88100) {
 		if (s->tf_sfip != s->tf_snip + 4) {
-			db_printf("sfip: 0x%08x ", s->tf_sfip);
+			db_printf("sfip: 0x%08lx ", s->tf_sfip);
 			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sfip),
 			    &name, &offset);
 			if (name != NULL && (u_int)offset <= db_maxoff)
@@ -265,18 +265,18 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 #endif
 #ifdef M88110
 	if (CPU_IS88110) {
-		db_printf("fpsr: 0x%08x fpcr: 0x%08x fpecr: 0x%08x\n",
+		db_printf("fpsr: 0x%08lx fpcr: 0x%08lx fpecr: 0x%08lx\n",
 			  s->tf_fpsr, s->tf_fpcr, s->tf_fpecr);
-		db_printf("dsap 0x%08x duap 0x%08x dsr 0x%08x dlar 0x%08x dpar 0x%08x\n",
+		db_printf("dsap 0x%08lx duap 0x%08lx dsr 0x%08lx dlar 0x%08lx dpar 0x%08lx\n",
 			  s->tf_dsap, s->tf_duap, s->tf_dsr, s->tf_dlar, s->tf_dpar);
-		db_printf("isap 0x%08x iuap 0x%08x isr 0x%08x ilar 0x%08x ipar 0x%08x\n",
+		db_printf("isap 0x%08lx iuap 0x%08lx isr 0x%08lx ilar 0x%08lx ipar 0x%08lx\n",
 			  s->tf_isap, s->tf_iuap, s->tf_isr, s->tf_ilar, s->tf_ipar);
 	}
 #endif
 
-	db_printf("epsr: 0x%08x                current process: %p\n",
+	db_printf("epsr: 0x%08lx                current process: %p\n",
 		  s->tf_epsr, curproc);
-	db_printf("vector: 0x%02x                    interrupt mask: 0x%08x\n",
+	db_printf("vector: 0x%02lx                    interrupt mask: 0x%08lx\n",
 		  s->tf_vector, s->tf_mask);
 
 	/*
@@ -294,7 +294,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 #ifdef M88100
 	if (CPU_IS88100) {
 		if (s->tf_vector == /*data*/3 || s->tf_dmt0 & DMT_VALID) {
-			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
+			db_printf("dmt,d,a0: 0x%08lx  0x%08lx  0x%08lx ",
 			    s->tf_dmt0, s->tf_dmd0, s->tf_dma0);
 			db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma0,
 			    &name, &offset);
@@ -307,7 +307,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 			db_printf("\n");
 
 			if ((s->tf_dmt1 & DMT_VALID) && (!suppress1)) {
-				db_printf("dmt,d,a1: 0x%08x  0x%08x  0x%08x ",
+				db_printf("dmt,d,a1: 0x%08lx  0x%08lx  0x%08lx ",
 				    s->tf_dmt1, s->tf_dmd1, s->tf_dma1);
 				db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma1,
 				    &name, &offset);
@@ -320,7 +320,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 				db_printf("\n");
 
 				if ((s->tf_dmt2 & DMT_VALID) && (!suppress2)) {
-					db_printf("dmt,d,a2: 0x%08x  0x%08x  0x%08x ",
+					db_printf("dmt,d,a2: 0x%08lx  0x%08lx  0x%08lx ",
 						  s->tf_dmt2, s->tf_dmd2, s->tf_dma2);
 					db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma2,
 					    &name, &offset);
@@ -335,20 +335,20 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 				}
 			}
 
-			db_printf("fault code %d\n",
+			db_printf("fault code %ld\n",
 			    CMMU_PFSR_FAULT(s->tf_dpfsr));
 		}
 	}
 #endif	/* M88100 */
 
 	if (s->tf_fpecr & 255) { /* floating point error occurred */
-		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
+		db_printf("fpecr: 0x%08lx fpsr: 0x%08lx fpcr: 0x%08lx\n",
 		    s->tf_fpecr, s->tf_fpsr, s->tf_fpcr);
 #ifdef M88100
 		if (CPU_IS88100) {
-			db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
+			db_printf("fcr1-4: 0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 			    s->tf_fphs1, s->tf_fpls1, s->tf_fphs2, s->tf_fpls2);
-			db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
+			db_printf("fcr5-8: 0x%08lx  0x%08lx  0x%08lx  0x%08lx\n",
 			    s->tf_fppt, s->tf_fprh, s->tf_fprl, s->tf_fpit);
 		}
 #endif
@@ -563,7 +563,7 @@ m88k_db_where(addr, have_addr, count, modif)
 
 	db_find_xtrn_sym_and_offset(l, &name, &offset);
 	if (name && (u_int)offset <= db_maxoff)
-		db_printf("stopped at 0x%lx  (%s+0x%x)\n", l, name, offset);
+		db_printf("stopped at 0x%lx  (%s+0x%lx)\n", l, name, offset);
 	else
 		db_printf("stopped at 0x%lx\n", l);
 }
@@ -592,11 +592,11 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	/* walk back up stack until 8k boundry, looking for 0 */
 	while (addr & ((8 * 1024) - 1)) {
 		if (frame_is_sane((db_regs_t *)addr, 1) != 0)
-			db_printf("frame found at 0x%x\n", addr);
+			db_printf("frame found at 0x%lx\n", addr);
 		addr += 4;
 	}
 
-	db_printf("(Walked back until 0x%x)\n",addr);
+	db_printf("(Walked back until 0x%lx)\n",addr);
 }
 
 #ifdef MULTIPROCESSOR
@@ -616,7 +616,7 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			ddb_mp_nextcpu = cpu;
 			db_cmd_loop_done = 1;
 		} else {
-			db_printf("cpu%d is not active\n", cpu);
+			db_printf("cpu%ld is not active\n", cpu);
 		}
 		return;
 	}
@@ -641,10 +641,10 @@ m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			    ci->ci_ddb_state);
 			break;
 		}
-		db_printf("%ccpu%1d   %02x  %-14s %08x %08x %3d %08x\n",
+		db_printf("%ccpu%d   %02x  %-14s %08lx %08lx %3u %08x\n",
 		    (cpu == cpu_number()) ? '*' : ' ', CPU_INFO_UNIT(ci),
-		    ci->ci_flags, state, ci->ci_curproc, ci->ci_curpcb,
-		    ci->ci_intrdepth, ci->ci_ipi);
+		    ci->ci_flags, state, (register_t)ci->ci_curproc,
+		    (register_t)ci->ci_curpcb, ci->ci_intrdepth, ci->ci_ipi);
 	}
 }
 

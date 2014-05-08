@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.8 2013/07/02 04:39:04 guenther Exp $ */
+/*	$OpenBSD: nvram.c,v 1.9 2014/05/08 22:17:33 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -116,7 +116,7 @@ nvramattach(parent, self, args)
 
 	sc->sc_ioh = ioh;
 
-	printf(": MK48T0%d\n", sc->sc_len / 1024);
+	printf(": MK48T0%ld\n", sc->sc_len / 1024);
 }
 
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
@@ -296,7 +296,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
 			goto done;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		       ts.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 	printf(" -- CHECK AND RESET THE DATE!\n");

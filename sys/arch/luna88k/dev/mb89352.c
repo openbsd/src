@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.17 2011/05/30 20:01:29 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.18 2014/05/08 22:17:33 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -958,7 +958,7 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
+				printf("%s: %ld extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				acb->data_length = 0;

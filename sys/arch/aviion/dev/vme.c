@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.12 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.13 2014/05/08 22:17:33 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -205,7 +205,7 @@ out3:
 out2:
 	extent_destroy(sc->sc_ext_a16);
 out1:
-	printf(": can't allocate memory\n", self->dv_xname);
+	printf(": can't allocate memory\n");
 }
 
 int
@@ -580,7 +580,7 @@ vme_unmap(struct vme_softc *sc, struct extent *ext, u_int awidth,
 	}
 	if (r->vr_width == 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: non-sensical A%d mapping at va %p pa %p\n",
+		printf("%s: nonsensical A%d mapping at va 0x%08lx pa 0x%08lx\n",
 		    __func__, AWIDTH(awidth), vaddr, paddr);
 #endif
 		return;

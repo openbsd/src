@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2014/03/13 03:52:55 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2014/05/08 22:17:33 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -237,7 +237,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
 
 	/*
@@ -801,7 +801,7 @@ cpu_hatch_secondary_processors()
 				ncpusfound = 1;
 				return;
 			default:
-				printf("CPU%d failed to start, error %d\n",
+				printf("CPU%ld failed to start, error %d\n",
 				    cpu, rc);
 				/* FALLTHROUGH */
 			case JPSTART_NO_JP:
