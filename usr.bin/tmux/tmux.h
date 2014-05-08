@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.458 2014/05/08 06:03:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.459 2014/05/08 07:54:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1129,6 +1129,9 @@ LIST_HEAD(tty_terms, tty_term);
 /* Mouse wheel states. */
 #define MOUSE_WHEEL_UP 0
 #define MOUSE_WHEEL_DOWN 1
+
+/* Mouse wheel multipler. */
+#define MOUSE_WHEEL_SCALE 3
 
 /* Mouse event bits. */
 #define MOUSE_EVENT_DOWN 0x1
