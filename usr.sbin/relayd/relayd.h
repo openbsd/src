@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.178 2014/05/04 16:38:19 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.179 2014/05/08 13:08:48 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -761,7 +761,10 @@ struct control_sock {
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
+
+	TAILQ_ENTRY(control_sock) cs_entry;
 };
+TAILQ_HEAD(control_socks, control_sock);
 
 struct {
 	struct event	 ev;
@@ -891,6 +894,7 @@ struct privsep {
 	u_int				 ps_instance;
 
 	struct control_sock		 ps_csock;
+	struct control_socks		 ps_rcsocks;
 
 	/* Event and signal handlers */
 	struct event			 ps_evsigint;
