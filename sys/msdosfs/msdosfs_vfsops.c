@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.63 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.64 2014/05/09 03:54:28 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -312,7 +312,6 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	 */
 	if ((error = bread(devvp, 0, 4096, &bp)) != 0)
 		goto error_exit;
-	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;

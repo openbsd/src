@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.64 2013/12/14 02:57:25 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.65 2014/05/09 03:54:28 tedu Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -274,9 +274,6 @@ cd9660_read(void *v)
 
 		error = uiomove(bp->b_data + on, (int)n, uio);
 
-                if (n + on == imp->logical_block_size ||
-		    uio->uio_offset == (off_t)ip->i_size)
-			bp->b_flags |= B_AGE;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);

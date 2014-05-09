@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.66 2014/05/08 20:08:50 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.67 2014/05/09 03:54:28 tedu Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -774,8 +774,5 @@ uvm_aio_aiodone(struct buf *bp)
 #ifdef UVM_SWAP_ENCRYPT
 freed:
 #endif
-	if (write && (bp->b_flags & B_AGE) != 0 && bp->b_vp != NULL) {
-		vwakeup(bp->b_vp);
-	}
 	pool_put(&bufpool, bp);
 }
