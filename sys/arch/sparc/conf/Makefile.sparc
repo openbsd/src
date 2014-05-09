@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.79 2014/01/01 07:54:15 miod Exp $
+#	$OpenBSD: Makefile.sparc,v 1.80 2014/05/09 20:15:06 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -24,7 +24,7 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format \
+		-Wno-main -Wno-uninitialized \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mno-fpu

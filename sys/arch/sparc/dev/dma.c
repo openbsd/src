@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.28 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.29 2014/05/09 20:15:06 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -465,7 +465,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %zd@%p,%d\n", sc->sc_dev.dv_xname,
 		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -476,7 +476,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	NCR_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	NCR_DMA(("dma_setup: dmasize = %zd\n", sc->sc_dmasize));
 
 	/*
 	 * XXX what length?
@@ -553,11 +553,11 @@ espdmaintr(sc)
 
 	csr = DMACSR(sc);
 
-	NCR_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: intr: addr %p, csr %lb\n", sc->sc_dev.dv_xname,
 		 DMADDR(sc), csr, DDMACSR_BITS));
 
 	if (csr & (D_ERR_PEND|D_SLAVE_ERR)) {
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+		printf("%s: error: csr=%lb\n", sc->sc_dev.dv_xname,
 			csr, DDMACSR_BITS);
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
@@ -674,7 +674,7 @@ ledmaintr(sc)
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+		printf("%s: error: csr=%lb\n", sc->sc_dev.dv_xname,
 			csr, DDMACSR_BITS);
 		DMA_RESET(sc);
 	}

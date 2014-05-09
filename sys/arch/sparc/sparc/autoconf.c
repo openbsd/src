@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.93 2010/11/18 21:13:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.94 2014/05/09 20:15:06 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -179,7 +179,7 @@ bootstrap()
 		u_long pgsiz;
 
 		pgsiz = 0;
-		snprintf(tmpstr, sizeof tmpstr, "pagesize %x l!",
+		snprintf(tmpstr, sizeof tmpstr, "pagesize %lx l!",
 		    (u_long)&pgsiz);
 		rominterpret(tmpstr);
 		if (pgsiz == 1 << SUN4_PGSHIFT) {
@@ -981,12 +981,12 @@ romprop(rp, cp, node)
 	    strcmp(getpropstring(node, "device_type"), "hierarchical") == 0)
 		len = 0;
 	if (len % sizeof(struct rom_reg)) {
-		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
+		printf("%s \"reg\" %s = %d (need multiple of %zu)\n",
 			cp, pl, len, sizeof(struct rom_reg));
 		return (0);
 	}
 	if (len > RA_MAXREG * sizeof(struct rom_reg))
-		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
+		printf("warning: %s \"reg\" %s %d > %zu, excess ignored\n",
 		    cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
 	rp->ra_node = node;
 	rp->ra_name = cp;
