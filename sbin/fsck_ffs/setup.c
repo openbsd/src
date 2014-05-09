@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.52 2014/05/09 13:19:34 krw Exp $	*/
+/*	$OpenBSD: setup.c,v 1.53 2014/05/09 13:56:33 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ again:
 	for (fs->fs_fsbtodb = 0, i = NSPF(fs); i > 1; i >>= 1)
 		fs->fs_fsbtodb++;
 	/*
-	 * Mimick what mkfs is doing to get an acceptable cgsize,
+	 * Mimic what mkfs is doing to get an acceptable cgsize,
 	 * not all fields used by CGSIZE() are filled in, but it's a best
 	 * effort anyway.
 	 */
