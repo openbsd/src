@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.9 2013/07/16 16:05:49 schwarze Exp $
+.\"     $OpenBSD: vio.4,v 1.10 2014/05/09 14:44:56 sf Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt VIO 4
 .Os
 .Sh NAME
@@ -54,3 +54,8 @@ It is based on the
 .Nm vioif
 driver by
 .An Minoura Makoto .
+.Sh BUGS
+Due to a qemu bug, VLANs don't work with qemu versions before 2.0 unless the
+interface is in promiscuous mode.
+.Nm
+should probably implement a workaround for this.
