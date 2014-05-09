@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.38 2014/05/08 06:50:50 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.39 2014/05/09 17:30:34 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 8 2014 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -155,8 +155,6 @@ such as the ability to clear the screen or scroll backward.
 The -d option does not otherwise change the behavior of
 .Nm
 on a dumb terminal.
-This option is on by default when invoked as
-.Nm more .
 .\" .It Fl Dxcolor or --color=xcolor"
 .\" [MS-DOS only]
 .\" Sets the color of the text displayed.
@@ -285,20 +283,17 @@ This option can be set from within
 .Nm less ,
 but it will apply only to files opened subsequently, not to the
 file which is currently open.
-When invoked as
-.Nm more ,
-the
-.Ev LESSOPEN
-environment variable is ignored by default.
 .It Fl M | -LONG-PROMPT
 Causes
 .Nm
 to prompt even more verbosely than
-.Nm more .
+.Xr more 1 .
 .It Fl m | -long-prompt
 Causes
 .Nm
-to prompt verbosely (like more), with the percent into the file.
+to prompt verbosely, like
+.Xr more 1 ,
+with the percent into the file.
 By default,
 .Nm
 prompts with a colon.
@@ -522,7 +517,7 @@ Changes the default scrolling window size to n lines.
 The default is one screenful.
 The z and w commands can also be used to change the window size.
 The "z" may be omitted for compatibility with some versions of
-.Nm more .
+.Xr more 1 .
 If the number
 .Ar n
 is negative, it indicates
@@ -1672,9 +1667,14 @@ command rather than a search pattern.
 .Pp
 The
 .Ev LESS
-environment variable is ignored, and the
+environment variables are ignored, and the
 .Ev MORE
 environment variable is used in its place.
+.Pp
+The error message normally displayed when the terminal is dumb is suppressed
+(as if
+.Fl d
+had been specified).
 .Sh ENVIRONMENT
 Environment variables may be specified either in the system environment
 as usual, or in a
@@ -1789,7 +1789,7 @@ LINES and COLUMNS environment variables.)
 Options which are passed to
 .Nm
 automatically when running in
-.Nm more
+.Xr more 1
 compatible mode.
 .It Ev SHELL
 The shell used to execute the ! command, as well as to expand filenames.
