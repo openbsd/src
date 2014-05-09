@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.70 2014/04/23 18:24:23 ajacoutot Exp $
+# $OpenBSD: Makefile.cross,v 1.71 2014/05/09 20:14:18 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -252,19 +252,23 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	ln -sf ${TARGET_CANON}-cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/cpp
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    CROSSDIR=${CROSSDIR} \
 	    MACHINE=${TARGET} \
 	    PATH=${CROSSPATH} ${MAKE} depend  )
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    CROSSDIR=${CROSSDIR} \
 	    MACHINE=${TARGET} \
 	    ${MAKE} all )
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
-	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} \
+	    PIE_DEFAULT=${PIE_DEFAULT} \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    MACHINE=${TARGET} \
 	    PATH=${CROSSPATH} ${MAKE} install)
