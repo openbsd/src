@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.7 2014/05/02 14:10:03 andre Exp $
+#	$OpenBSD: Relayd.pm,v 1.8 2014/05/09 11:49:26 andre Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -96,9 +96,10 @@ sub new {
 sub up {
 	my $self = Proc::up(shift, @_);
 	my $timeout = shift || 10;
+	my $dummyrun = $self->{dummyrun} || 0;
 	my $lsock = $self->loggrep(qr/relay_launch: /, $timeout)
 	    or croak ref($self), " no relay_launch in $self->{logfile} ".
-		"after $timeout seconds";
+		"after $timeout seconds" unless $dummyrun;
 	return $self;
 }
 

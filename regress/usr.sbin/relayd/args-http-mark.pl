@@ -9,12 +9,13 @@ our %args = (
     relayd => {
 	protocol => [ "http",
 	    'request path mark "*" from "/foobar" with 55',
-	    'request path change "path" to "foobarchangedpath" marked 55',
+	    'request header append "bar" to "foo" marked 55',
 	],
 	loggrep => { ", 55,.*done" => 1 },
     },
     server => {
 	func => \&http_server,
+	loggrep => { "foo: bar" => 1 },
     },
 );
 
