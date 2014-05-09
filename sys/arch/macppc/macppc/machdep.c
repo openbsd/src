@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.149 2014/04/01 20:27:14 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.150 2014/05/09 18:16:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -986,7 +986,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 		{
-			printf("bus_space_map: pa 0x%lx, size 0x%x\n",
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
@@ -1018,7 +1018,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		if (extent_free(devio_ex, bpa | (bsh & PAGE_MASK), size, EX_NOWAIT |
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 		{
-			printf("bus_space_map: pa 0x%lx, size 0x%x\n",
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.5 2009/09/06 20:09:34 kettenis Exp $	*/
+/*	$OpenBSD: obio.c,v 1.6 2014/05/09 18:16:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -93,7 +93,7 @@ obio_print(void *aux, const char *name)
 	if (name)
 		printf("\"%s\" at %s", oa->oa_name, name);
 	if (oa->oa_offset)
-		printf(" offset 0x%05x", oa->oa_offset);
+		printf(" offset 0x%05lx", oa->oa_offset);
 	if (oa->oa_ivec != -1)
 		printf(" ivec %d", oa->oa_ivec);
 

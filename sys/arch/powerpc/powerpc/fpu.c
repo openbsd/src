@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.12 2009/12/10 16:46:09 deraadt Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.13 2014/05/09 18:16:15 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -52,8 +52,8 @@ enable_fpu(struct proc *p)
 	}
 
 	if (pcb->pcb_fpcpu != NULL || ci->ci_fpuproc != NULL) {
-		printf("attempting to restore fpu state when in use pcb %x"
-		    " fpproc %x\n", pcb->pcb_fpcpu, ci->ci_fpuproc);
+		printf("attempting to restore fpu state when in use pcb %p"
+		    " fpproc %p\n", pcb->pcb_fpcpu, ci->ci_fpuproc);
 	}
 	msr = ppc_mfmsr();
 	ppc_mtmsr((msr  & ~PSL_EE) | PSL_FP);
