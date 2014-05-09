@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.39 2014/05/09 17:30:34 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.40 2014/05/09 21:51:50 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -45,9 +45,6 @@
 .Op Fl y Ar n
 .Op Fl Cm z Ar n
 .Op Ar
-.\" (See the
-.\" .Sx OPTIONS
-.\" section for alternate option syntax with long option names.)
 .Sh DESCRIPTION
 .Nm
 is a program similar to the traditional
@@ -155,16 +152,6 @@ such as the ability to clear the screen or scroll backward.
 The -d option does not otherwise change the behavior of
 .Nm
 on a dumb terminal.
-.\" .It Fl Dxcolor or --color=xcolor"
-.\" [MS-DOS only]
-.\" Sets the color of the text displayed.
-.\" x is a single character which selects the type of text whose color is
-.\" being set: n=normal, s=standout, d=bold, u=underlined, k=blink.
-.\" color is a pair of numbers separated by a period.
-.\" The first number selects the foreground color and the second selects
-.\" the background color of the text.
-.\" A single number N is the same as N.M,
-.\" where M is the normal background color.
 .It Fl E | -QUIT-AT-EOF
 Causes
 .Nm
@@ -960,7 +947,6 @@ A pound sign (#) is replaced by the name of the previously examined file.
 The shell is taken from the environment variable
 .Ev SHELL ,
 or defaults to "sh".
-.\" On MS-DOS and OS/2 systems, the shell is the normal command processor.
 .It Ic | <m> Ar shell-command
 <m> represents any mark letter.
 Pipes a section of the input file to the given shell command.
@@ -979,8 +965,6 @@ or the pattern for a search command),
 certain keys can be used to manipulate the command line.
 Most commands have an alternate form in [ brackets ] which can be used if
 a key does not exist on a particular keyboard.
-.\" (Note that the forms beginning with ESC do not work
-.\" in some MS-DOS and Windows systems because ESC is the line erase character.)
 Any of these special keys may be entered literally by preceding
 it with the "literal" character, either ^V or ^A.
 A backslash itself may also be entered literally by entering two backslashes.
@@ -1024,7 +1008,6 @@ If it matches more than one filename, the first match
 is entered into the command line.
 Repeated TABs will cycle through the other matching filenames.
 If the completed filename is a directory, a "/" is appended to the filename.
-.\" (On MS-DOS systems, a "\e" is appended.)
 The environment variable
 .Ev LESSSEPARATOR
 can be used to specify a different character to append to a directory name.
@@ -1034,7 +1017,6 @@ Like TAB, but cycles in the reverse direction through the matching filenames.
 Complete the partial filename to the left of the cursor.
 If it matches more than one filename, all matches are entered into
 the command line (if they fit).
-.\" .It ^U (Unix and OS/2) or ESC (MS-DOS)
 .It ^U
 Delete the entire command line,
 or cancel the command if the command line is empty.
@@ -1063,18 +1045,6 @@ uses that as the name of the lesskey file.
 Otherwise,
 .Nm
 looks for a lesskey file called "$HOME/.less".
-.\" On MS-DOS and Windows systems,
-.\" .I less
-.\" looks for a lesskey file called "$HOME/_less", and if it is not found there,
-.\" then looks for a lesskey file called "_less" in any directory specified
-.\" in the PATH environment variable.
-.\" On OS/2 systems,
-.\" .I less
-.\" looks for a lesskey file called "$HOME/less.ini", and if it is not found,
-.\" then looks for a lesskey file called "less.ini" in any directory specified
-.\" in the INIT environment variable, and if it not found there,
-.\" then looks for a lesskey file called "less.ini" in any directory specified
-.\" in the PATH environment variable.
 See the
 .Xr lesskey 1
 manual page for more details.
@@ -1095,13 +1065,6 @@ On
 .Ox ,
 the system-wide lesskey file is
 .Pa /etc/sysless .
-.\" On Unix systems, the system-wide lesskey file is /usr/local/etc/sysless.
-.\" (However, if
-.\" .Nm less
-.\" was built with a different sysconf directory than /usr/local/etc,
-.\" that directory is where the sysless file is found.)
-.\" On MS-DOS and Windows systems, the system-wide lesskey file is c:\e_sysless.
-.\" On OS/2 systems, the system-wide lesskey file is c:\esysless.ini.
 .Sh INPUT PREPROCESSOR
 You may define an "input preprocessor" for
 .Nm less .
