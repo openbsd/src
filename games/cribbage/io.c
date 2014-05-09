@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.18 2014/05/09 23:39:10 schwarze Exp $	*/
+/*	$OpenBSD: io.c,v 1.19 2014/05/09 23:56:26 schwarze Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -213,23 +213,21 @@ incard(CARD *crd)
 {
 	int i;
 	int rnk, sut;
-	char *line, *p, *p1;
+	char *p, *p1;
 	bool retval;
 
 	retval = FALSE;
 	rnk = sut = EMPTY;
-	if (!(line = get_line()))
+	p1 = get_line();
+	if (*p1 == '\0')
 		goto gotit;
-	p = p1 = line;
+	p = p1;
 	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
 	*p1++ = '\0';
-	if (*p == '\0')
-		goto gotit;
 
 	/* IMPORTANT: no real card has 2 char first name */
-	if (strlen(p) == 2) {	/* check for short form */
-		rnk = EMPTY;
+	if (p + 3 == p1) {	/* check for short form */
 		for (i = 0; i < RANKS; i++) {
 			if (*p == *rankchar[i]) {
 				rnk = i;
@@ -239,7 +237,6 @@ incard(CARD *crd)
 		if (rnk == EMPTY)
 			goto gotit;	/* it's nothing... */
 		++p;		/* advance to next char */
-		sut = EMPTY;
 		for (i = 0; i < SUITS; i++) {
 			if (*p == *suitchar[i]) {
 				sut = i;
@@ -250,30 +247,26 @@ incard(CARD *crd)
 			retval = TRUE;
 		goto gotit;
 	}
-	rnk = EMPTY;
 	for (i = 0; i < RANKS; i++) {
 		if (!strcmp(p, rankname[i]) || !strcmp(p, rankchar[i])) {
 			rnk = i;
 			break;
 		}
 	}
-	if (rnk == EMPTY)
+	if (rnk == EMPTY || *p1 == '\0')
 		goto gotit;
 	p = p1;
 	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
 	*p1++ = '\0';
-	if (*p == '\0')
-		goto gotit;
 	if (!strcmp("OF", p)) {
+		if (*p1 == '\0')
+			goto gotit;
 		p = p1;
 		while (*p1 != ' ' && *p1 != '\0')
 			++p1;
-		*p1++ = '\0';
-		if (*p == '\0')
-			goto gotit;
+		*p1 = '\0';
 	}
-	sut = EMPTY;
 	for (i = 0; i < SUITS; i++) {
 		if (!strcmp(p, suitname[i]) || !strcmp(p, suitchar[i])) {
 			sut = i;
@@ -317,7 +310,8 @@ number(int lo, int hi, char *prompt)
 
 	for (sum = 0;;) {
 		msg("%s", prompt);
-		if (!(p = get_line()) || *p == '\0') {
+		p = get_line();
+		if (*p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
 			continue;
