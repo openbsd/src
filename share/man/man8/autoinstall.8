@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.7 2014/02/24 23:43:26 krw Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.8 2014/05/09 21:16:54 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2014 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -138,10 +138,10 @@ Change the default console to com0 = yes
 Which speed should com0 use = 19200
 Setup a user = puffy
 Password for user = *************
-Public ssh key for user = ssh-rsa AAAAB3...RVtZJL puffy@ai
+Public ssh key for user = ssh-ed25519 AAAAC3NzaC1...g3Aqre puffy@ai
 What timezone are you in = Europe/Stockholm
 Location of sets = http
-Server = ftp.eu.openbsd.org
+HTTP Server = ftp.eu.openbsd.org
 .Ed
 .Pp
 The same file could be used for upgrades by creating a symbolic link called

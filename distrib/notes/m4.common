@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.108 2014/03/19 01:59:48 tedu Exp $
+dnl	$OpenBSD: m4.common,v 1.109 2014/05/09 21:15:17 rpe Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -804,10 +804,10 @@ user that is created during the installation.
            Password for root = ${:--:}2a${:--:}14${:--:}Z4xRMg8vDpgYH...GVot3ySoj8yby
            Setup a user = puffy
            Password for user = *************
-           Public ssh key for user = ssh-rsa AAAAB3...RVtZJL puffy@ai
+           Public ssh key for user = ssh-ed25519 AAAAC3NzaC1...g3Aqre puffy@ai
            What timezone are you in = Europe/Stockholm
            Location of sets = http
-           Server = ftp.eu.openbsd.org
+           HTTP Server = ftp.eu.openbsd.org
 
 The "System hostname" key above matches the following full question
 asked during an interactive installation:
