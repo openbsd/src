@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.111 2014/05/09 06:29:46 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.112 2014/05/09 06:37:24 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4171,7 +4171,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	struct iked_transform	*xform, *encrxf = NULL, *integrxf = NULL;
 	struct iked_childsa	*csa, *csb;
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
-	struct iked_id		*peerid, *localid;
 	struct ibuf		*keymat = NULL, *seed = NULL, *dhsecret = NULL;
 	struct group		*group;
 	u_int32_t		 spi = 0;
@@ -4182,15 +4181,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (-1);
 
-	if (sa->sa_hdr.sh_initiator) {
-		peerid = &sa->sa_rid;
-		localid = &sa->sa_iid;
-	} else {
-		peerid = &sa->sa_iid;
-		localid = &sa->sa_rid;
-	}
-
-	if (ikev2_sa_tag(sa, peerid) == -1)
+	if (ikev2_sa_tag(sa, IKESA_DSTID(sa)) == -1)
 		return (-1);
 
 	/* We need to determine the key material length first */
@@ -4289,8 +4280,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			memcpy(flowa, flow, sizeof(*flow));
 			flowa->flow_dir = IPSP_DIRECTION_OUT;
 			flowa->flow_saproto = prop->prop_protoid;
-			flowa->flow_srcid = localid;
-			flowa->flow_dstid = peerid;
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
@@ -4330,8 +4319,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 		csa->csa_saproto = prop->prop_protoid;
 		csa->csa_ikesa = sa;
-		csa->csa_srcid = localid;
-		csa->csa_dstid = peerid;
 		csa->csa_spi.spi_protoid = prop->prop_protoid;
 		csa->csa_esn = esn;
 
@@ -4481,13 +4468,6 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	/* install IPCOMP SAs */
 	csa->csa_ikesa = sa;
 	csa->csa_saproto = IKEV2_SAPROTO_IPCOMP;
-	if (sa->sa_hdr.sh_initiator) {
-		csa->csa_dstid = &sa->sa_rid;
-		csa->csa_srcid = &sa->sa_iid;
-	} else {
-		csa->csa_dstid = &sa->sa_iid;
-		csa->csa_srcid = &sa->sa_rid;
-	}
 	csa->csa_spi.spi_size = 2;
 	csa->csa_spi.spi = sa->sa_cpi_out;
 	csa->csa_peerspi = sa->sa_cpi_in;
@@ -4557,13 +4537,6 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	/* setup ESP flows for gateways */
 	flowa->flow_dir = IPSP_DIRECTION_OUT;
 	flowa->flow_saproto = IKEV2_SAPROTO_ESP;
-	if (sa->sa_hdr.sh_initiator) {
-		flowa->flow_dstid = &sa->sa_rid;
-		flowa->flow_srcid = &sa->sa_iid;
-	} else {
-		flowa->flow_dstid = &sa->sa_iid;
-		flowa->flow_srcid = &sa->sa_rid;
-	}
 	flowa->flow_local = &sa->sa_local;
 	flowa->flow_peer = &sa->sa_peer;
 	memcpy(&flowa->flow_src, &sa->sa_local, sizeof(sa->sa_local));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.80 2014/05/09 06:29:46 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.81 2014/05/09 06:37:24 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -146,9 +146,6 @@ struct iked_flow {
 	u_int8_t			 flow_ipproto;
 	u_int8_t			 flow_type;
 
-	struct iked_id			*flow_srcid;
-	struct iked_id			*flow_dstid;
-
 	struct iked_addr		*flow_local;	/* outer source */
 	struct iked_addr		*flow_peer;	/* outer dest */
 	struct iked_sa			*flow_ikesa;	/* parent SA */
@@ -178,9 +175,6 @@ struct iked_childsa {
 
 	struct ibuf			*csa_integrkey;	/* auth key */
 	u_int16_t		 	 csa_integrid;	/* auth xform id */
-
-	struct iked_id			*csa_srcid;
-	struct iked_id			*csa_dstid;
 
 	struct iked_addr		*csa_local;	/* outer source */
 	struct iked_addr		*csa_peer;	/* outer dest */
@@ -417,6 +411,8 @@ struct iked_sa {
 	struct iked_id			 sa_rid;	/* responder id */
 	struct iked_id			 sa_icert;	/* initiator cert */
 	struct iked_id			 sa_rcert;	/* responder cert */
+#define IKESA_SRCID(x) ((x)->sa_hdr.sh_initiator ? &(x)->sa_iid : &(x)->sa_rid)
+#define IKESA_DSTID(x) ((x)->sa_hdr.sh_initiator ? &(x)->sa_rid : &(x)->sa_iid)
 
 	char				*sa_eapid;	/* EAP identity */
 	struct iked_id			 sa_eap;	/* EAP challenge */

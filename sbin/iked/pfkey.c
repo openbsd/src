@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.36 2014/05/09 06:29:46 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.37 2014/05/09 06:37:24 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -312,11 +312,11 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 		    (sizeof(sa_peer) + ROUNDUP(speer.ss_len)) / 8;
 
 		/* local id */
-		sa_srcid = pfkey_id2ident(flow->flow_srcid,
+		sa_srcid = pfkey_id2ident(IKESA_SRCID(flow->flow_ikesa),
 		    SADB_EXT_IDENTITY_SRC);
 
 		/* peer id */
-		sa_dstid = pfkey_id2ident(flow->flow_dstid,
+		sa_dstid = pfkey_id2ident(IKESA_DSTID(flow->flow_ikesa),
 		    SADB_EXT_IDENTITY_DST);
 	}
 
@@ -578,11 +578,18 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	if (satype == SADB_X_SATYPE_IPCOMP)
 		sadb.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
 
-	/* local id */
-	sa_srcid = pfkey_id2ident(sa->csa_srcid, SADB_EXT_IDENTITY_SRC);
-
-	/* peer id */
-	sa_dstid = pfkey_id2ident(sa->csa_dstid, SADB_EXT_IDENTITY_DST);
+	/* Note that we need to swap the IDs for incoming SAs (SADB_UPDATE) */
+	if (action != SADB_UPDATE) {
+		sa_srcid = pfkey_id2ident(
+		    IKESA_SRCID(sa->csa_ikesa), SADB_EXT_IDENTITY_SRC);
+		sa_dstid = pfkey_id2ident(
+		    IKESA_DSTID(sa->csa_ikesa), SADB_EXT_IDENTITY_DST);
+	} else {
+		sa_srcid = pfkey_id2ident(
+		    IKESA_DSTID(sa->csa_ikesa), SADB_EXT_IDENTITY_SRC);
+		sa_dstid = pfkey_id2ident(
+		    IKESA_SRCID(sa->csa_ikesa), SADB_EXT_IDENTITY_DST);
+	}
 
 	tag = sa->csa_ikesa->sa_tag;
 	if (tag != NULL && *tag != '\0') {
