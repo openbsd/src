@@ -1611,7 +1611,7 @@ EC_GFp_nistp521_method(void)
 		.points_make_affine = ec_GFp_simple_points_make_affine,
 		.mul = ec_GFp_nistp521_points_mul,
 		.precompute_mult = ec_GFp_nistp521_precompute_mult,
-		.have_precompulte_mult = ec_GFp_nistp521_have_precompute_mult,
+		.have_precompute_mult = ec_GFp_nistp521_have_precompute_mult,
 		.field_mul = ec_GFp_nist_field_mul,
 		.field_sqr = ec_GFp_nist_field_sqr
 	};
