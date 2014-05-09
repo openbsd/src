@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.28 2013/11/02 00:08:17 krw Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.29 2014/05/09 13:19:34 krw Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ struct inoinfo {
 
 extern long numdirs, listmax, inplast;
 
-long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */

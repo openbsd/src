@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.51 2013/11/22 04:38:02 guenther Exp $	*/
+/*	$OpenBSD: setup.c,v 1.52 2014/05/09 13:19:34 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -131,9 +131,9 @@ setup(char *dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
 	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
-		dev_bsize = secsize = lp->d_secsize;
+		secsize = lp->d_secsize;
 	else
-		dev_bsize = secsize = DEV_BSIZE;
+		secsize = DEV_BSIZE;
 	/*
 	 * Read in the superblock, looking for alternates if necessary
 	 */
@@ -445,7 +445,7 @@ readsb(int listerr)
 		}
 	} else {
 		for (i = 0; sbtry[i] != -1; i++) {
-			super = sbtry[i] / dev_bsize;
+			super = sbtry[i] / DEV_BSIZE;
 
 			if (bread(fsreadfd, (char *)&sblock, super,
 			    (long)SBSIZE) != 0)
@@ -515,15 +515,6 @@ readsb(int listerr)
 		return (0);
 	}
 
-
-	/*
-	 * Compute block size that the filesystem is based on,
-	 * according to fsbtodb, and adjust superblock block number
-	 * so we can tell if this is an alternate later.
-	 */
-	super *= dev_bsize;
-	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
-	sblk.b_bno = super / dev_bsize;
 	if (bflag)
 		goto out;
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
@@ -643,7 +634,6 @@ again:
 		fs->fs_spc >>= 1;
 		goto again;
 	}
-	dev_bsize = lp->d_secsize;
 	return (1);
 }
 
