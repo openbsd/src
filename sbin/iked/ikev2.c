@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.110 2014/05/07 12:57:13 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.111 2014/05/09 06:29:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4372,8 +4372,10 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			childsa_free(csa);
 			goto done;
 		}
-		csa->csa_encrxf = encrxf;
-		csa->csa_integrxf = integrxf;
+		if (encrxf)
+			csa->csa_encrid = encrxf->xform_id;
+		if (integrxf)
+			csa->csa_integrid = integrxf->xform_id;
 
 		if ((csb = calloc(1, sizeof(*csb))) == NULL) {
 			log_debug("%s: failed to get CHILD SA", __func__);

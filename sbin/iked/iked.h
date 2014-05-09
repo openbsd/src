@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.79 2014/05/08 13:11:16 blambert Exp $	*/
+/*	$OpenBSD: iked.h,v 1.80 2014/05/09 06:29:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -174,10 +174,10 @@ struct iked_childsa {
 	struct iked_spi			 csa_spi;
 
 	struct ibuf			*csa_encrkey;	/* encryption key */
-	struct iked_transform		*csa_encrxf;	/* encryption xform */
+	u_int16_t			 csa_encrid;	/* encryption xform id */
 
 	struct ibuf			*csa_integrkey;	/* auth key */
-	struct iked_transform		*csa_integrxf;	/* auth xform */
+	u_int16_t		 	 csa_integrid;	/* auth xform id */
 
 	struct iked_id			*csa_srcid;
 	struct iked_id			*csa_dstid;

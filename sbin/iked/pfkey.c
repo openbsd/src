@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.35 2014/05/07 13:09:43 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.36 2014/05/09 06:29:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -540,20 +540,20 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		    ntohs(udpencap.sadb_x_udpencap_port));
 	}
 
-	if (sa->csa_integrxf)
+	if (sa->csa_integrid)
 		if (pfkey_map(pfkey_integr,
-		    sa->csa_integrxf->xform_id, &sadb.sadb_sa_auth) == -1) {
+		    sa->csa_integrid, &sadb.sadb_sa_auth) == -1) {
 			log_warnx("%s: unsupported integrity algorithm %s",
-			    __func__, print_map(sa->csa_integrxf->xform_id,
+			    __func__, print_map(sa->csa_integrid,
 			    ikev2_xformauth_map));
 			return (-1);
 		}
 
-	if (sa->csa_encrxf)
+	if (sa->csa_encrid)
 		if (pfkey_map(pfkey_encr,
-		    sa->csa_encrxf->xform_id, &sadb.sadb_sa_encrypt) == -1) {
+		    sa->csa_encrid, &sadb.sadb_sa_encrypt) == -1) {
 			log_warnx("%s: unsupported encryption algorithm %s",
-			    __func__, print_map(sa->csa_encrxf->xform_id,
+			    __func__, print_map(sa->csa_encrid,
 			    ikev2_xformencr_map));
 			return (-1);
 		}
