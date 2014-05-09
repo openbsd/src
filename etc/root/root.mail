@@ -22,7 +22,7 @@ the popular emacs editor.)
 Again, PLEASE READ THE MANUAL PAGES.  Our developers have spent countless
 hours improving them so that they are clear and precise.
 
-If you have installed the X11 packages during the install process, you can
+If you have installed the X11 file sets during the install process, you can
 find further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
