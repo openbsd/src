@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.4,v 1.15 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: inet.4,v 1.16 2014/05/09 06:37:38 jmc Exp $
 .\"	$NetBSD: inet.4,v 1.3 1994/11/30 16:22:18 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt INET 4
 .Os
 .Sh NAME
@@ -156,6 +156,8 @@ Get interface network mask.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
+.Xr inet_net 3 ,
+.Xr inet_ntop 3 ,
 .Xr icmp 4 ,
 .Xr ip 4 ,
 .Xr netintro 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: networks.5,v 1.17 2014/05/08 13:08:43 jmc Exp $
+.\"	$OpenBSD: networks.5,v 1.18 2014/05/09 06:37:38 jmc Exp $
 .\"	$NetBSD: networks.5,v 1.9 1999/03/17 20:19:47 garbled Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)networks.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 8 2014 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt NETWORKS 5
 .Os
 .Sh NAME
@@ -70,9 +70,8 @@ the line are not interpreted by routines which search the file.
 Network number may be specified in the conventional
 .Ql \&.
 (dot) notation using the
-.Xr inet_network 3
-routine from the IP address manipulation library,
-.Xr inet_net 3 .
+.Xr inet_addr 3
+routine from the IP address manipulation library.
 Network names may contain
 .Qq a
 through
