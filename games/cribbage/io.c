@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.16 2014/05/09 02:47:25 schwarze Exp $	*/
+/*	$OpenBSD: io.c,v 1.17 2014/05/09 03:13:24 schwarze Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -526,31 +526,31 @@ get_line(void)
 	for (pos = 0; (c = readchar()) != '\n'; clrtoeol(), refresh()) {
 		if (c == -1)
 			continue;
-		else
-			if (c == erasechar()) {	/* process erase character */
-				if (pos > 0) {
-					int i;
-
-					pos--;
-					for (i = strlen(unctrl(linebuf[pos])); i; i--)
-						addch('\b');
-				}
-				continue;
-			} else if (c == killchar()) {	/* process kill character */
-				pos = 0;
-				move(oy, ox);
-				continue;
-			} else if (pos == 0 && c == ' ')
-				continue;
-		if (pos >= LINESIZE - 1 || !(isprint(c) || c == ' '))
-			putchar(CTRL('G'));
-		else {
-			if (islower(c))
-				c = toupper(c);
-			linebuf[pos++] = c;
-			addstr(unctrl(c));
-			Mpos++;
+		if (c == erasechar()) {
+			if (pos > 0) {
+				int i;
+				pos--;
+				for (i = strlen(unctrl(linebuf[pos])); i; i--)
+					addch('\b');
+			}
+			continue;
 		}
+		if (c == killchar()) {
+			pos = 0;
+			move(oy, ox);
+			continue;
+		}
+		if (pos == 0 && c == ' ')
+			continue;
+		if (pos >= LINESIZE - 1 || !(isprint(c) || c == ' ')) {
+			putchar(CTRL('G'));
+			continue;
+		}
+		if (islower(c))
+			c = toupper(c);
+		linebuf[pos++] = c;
+		addstr(unctrl(c));
+		Mpos++;
 	}
 	while (pos < sizeof(linebuf))
 		linebuf[pos++] = '\0';
