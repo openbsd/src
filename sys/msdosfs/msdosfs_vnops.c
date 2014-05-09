@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.92 2014/04/08 18:48:41 beck Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.93 2014/05/09 03:48:58 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -743,8 +743,10 @@ msdosfs_write(void *v)
 		 * without delay.  Otherwise do a delayed write because we
 		 * may want to write somemore into the block later.
 		 */
+#if 0
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
+#endif
 		if (ioflag & IO_SYNC)
 			(void) bwrite(bp);
 		else if (n + croffset == pmp->pm_bpcluster)
