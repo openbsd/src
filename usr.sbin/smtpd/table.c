@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.15 2014/04/19 18:01:01 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.16 2014/05/09 21:30:11 tedu Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -107,7 +107,7 @@ table_find(const char *name, const char *tag)
 	if (tag == NULL)
 		return dict_get(env->sc_tables_dict, name);
 
-	if (snprintf(buf, sizeof(buf), "%s#%s", name, tag) >= (int)sizeof(buf)) {
+	if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >= sizeof(buf)) {
 		log_warnx("warn: table name too long: %s#%s", name, tag);
 		return (NULL);
 	}
@@ -194,8 +194,8 @@ table_create(const char *backend, const char *name, const char *tag,
 	struct stat		 sb;
 
 	if (name && tag) {
-		if (snprintf(buf, sizeof(buf), "%s#%s", name, tag)
-		    >= (int)sizeof(buf))
+		if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >=
+		    sizeof(buf))
 			errx(1, "table_create: name too long \"%s#%s\"",
 			    name, tag);
 		name = buf;
@@ -205,8 +205,8 @@ table_create(const char *backend, const char *name, const char *tag,
 		errx(1, "table_create: table \"%s\" already defined", name);
 
 	if ((tb = table_backend_lookup(backend)) == NULL) {
-		if (snprintf(path, sizeof(path), PATH_TABLES "/table-%s",
-		    backend) >= (int)sizeof(path)) {
+		if ((size_t)snprintf(path, sizeof(path), PATH_TABLES "/table-%s",
+		    backend) >= sizeof(path)) {
 			errx(1, "table_create: path too long \""
 			    PATH_TABLES "/table-%s\"", backend);
 		}
@@ -644,14 +644,14 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 
 	case K_DOMAIN:
 		ret = snprintf(buf, sizeof(buf), "%s", lk->domain.name);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
 	case K_CREDENTIALS:
 		ret = snprintf(buf, sizeof(buf), "%s:%s",
 		    lk->creds.username, lk->creds.password);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
@@ -659,7 +659,7 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		ret = snprintf(buf, sizeof(buf), "%s/%d",
 		    sockaddr_to_text((struct sockaddr *)&lk->netaddr.ss),
 		    lk->netaddr.bits);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
@@ -669,14 +669,14 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		    lk->userinfo.uid,
 		    lk->userinfo.gid,
 		    lk->userinfo.directory);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
 	case K_SOURCE:
 		ret = snprintf(buf, sizeof(buf), "%s",
 		    ss_to_text(&lk->source.addr));
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
@@ -684,14 +684,14 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		ret = snprintf(buf, sizeof(buf), "%s@%s",
 		    lk->mailaddr.user,
 		    lk->mailaddr.domain);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 
 	case K_ADDRNAME:
 		ret = snprintf(buf, sizeof(buf), "%s",
 		    lk->addrname.name);
-		if (ret == -1 || ret >= (int)sizeof (buf))
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;
 

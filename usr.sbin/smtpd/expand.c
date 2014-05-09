@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.26 2014/04/19 12:43:19 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.27 2014/05/09 21:30:11 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -193,12 +193,14 @@ static int
 expand_line_split(char **line, char **ret)
 {
 	static char	buffer[SMTPD_MAXLINESIZE];
-	int		esc, i, dq, sq;
+	int		esc, dq, sq;
+	size_t		i;
 	char	       *s;
 
 	memset(buffer, 0, sizeof buffer);
-	esc = dq = sq = i = 0;
-	for (s = *line; (*s) && (i < (int)sizeof(buffer)); ++s) {
+	esc = dq = sq = 0;
+	i = 0;
+	for (s = *line; (*s) && (i < sizeof(buffer)); ++s) {
 		if (esc) {
 			buffer[i++] = *s;
 			esc = 0;
