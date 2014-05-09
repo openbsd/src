@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.115 2014/05/08 14:00:52 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.116 2014/05/09 11:01:06 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -3294,24 +3294,19 @@ uhci_root_ctrl_close(struct usbd_pipe *pipe)
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }
 
-/* Abort a root interrupt request. */
 void
 uhci_root_intr_abort(struct usbd_xfer *xfer)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
+	int s;
 
 	timeout_del(&sc->sc_poll_handle);
 	sc->sc_intr_xfer = NULL;
 
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("uhci_root_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = 0;
-	}
 	xfer->status = USBD_CANCELLED;
-#ifdef DIAGNOSTIC
-	((struct uhci_xfer *)xfer)->isdone = 1;
-#endif
+	s = splusb();
 	usb_transfer_complete(xfer);
+	splx(s);
 }
 
 usbd_status

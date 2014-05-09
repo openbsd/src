@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.10 2014/04/29 12:45:29 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.11 2014/05/09 11:01:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -2092,10 +2092,12 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 void
 xhci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
 	int s;
 
-	xfer->status = USBD_CANCELLED;
+	sc->sc_intrxfer = NULL;
 
+	xfer->status = USBD_CANCELLED;
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
@@ -2104,12 +2106,6 @@ xhci_root_intr_abort(struct usbd_xfer *xfer)
 void
 xhci_root_intr_done(struct usbd_xfer *xfer)
 {
-	struct xhci_softc *sc = (struct xhci_softc *)xfer->device->bus;
-
-	KASSERT(sc->sc_intrxfer == xfer);
-
-	if (!xfer->pipe->repeat)
-		sc->sc_intrxfer = NULL;
 }
 
 usbd_status

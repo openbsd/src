@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.128 2014/05/04 14:42:36 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.129 2014/05/09 11:01:06 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2624,34 +2624,24 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a root interrupt request. */
 void
 ohci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct ohci_softc *sc = (struct ohci_softc *)xfer->device->bus;
 	int s;
 
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("ohci_root_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	sc->sc_intrxfer = NULL;
+
 	xfer->status = USBD_CANCELLED;
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
 }
 
-/* Close the root pipe. */
 void
 ohci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)pipe->device->bus;
-
-	DPRINTF(("ohci_root_intr_close\n"));
-
-	sc->sc_intrxfer = NULL;
 }
-
-/************************/
 
 usbd_status
 ohci_device_ctrl_transfer(struct usbd_xfer *xfer)

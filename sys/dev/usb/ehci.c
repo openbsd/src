@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.152 2014/05/08 14:00:52 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.153 2014/05/09 11:01:06 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2305,8 +2305,7 @@ ehci_root_intr_transfer(struct usbd_xfer *xfer)
 usbd_status
 ehci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->pipe;
-	struct ehci_softc *sc = (struct ehci_softc *)pipe->device->bus;
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
@@ -2316,39 +2315,29 @@ ehci_root_intr_start(struct usbd_xfer *xfer)
 	return (USBD_IN_PROGRESS);
 }
 
-/* Abort a root interrupt request. */
 void
 ehci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct ehci_softc *sc = (struct ehci_softc *)xfer->device->bus;
 	int s;
 
-	if (xfer->pipe->intrxfer == xfer) {
-		DPRINTF(("ehci_root_intr_abort: remove\n"));
-		xfer->pipe->intrxfer = NULL;
-	}
+	sc->sc_intrxfer = NULL;
+
 	xfer->status = USBD_CANCELLED;
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
 }
 
-/* Close the root pipe. */
 void
 ehci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)pipe->device->bus;
-
-	DPRINTF(("ehci_root_intr_close\n"));
-
-	sc->sc_intrxfer = NULL;
 }
 
 void
 ehci_root_ctrl_done(struct usbd_xfer *xfer)
 {
 }
-
-/************************/
 
 struct ehci_soft_qh *
 ehci_alloc_sqh(struct ehci_softc *sc)
