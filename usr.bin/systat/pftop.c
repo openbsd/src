@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.27 2014/05/03 11:11:15 chl Exp $	 */
+/* $OpenBSD: pftop.c,v 1.28 2014/05/09 21:03:43 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1633,6 +1633,8 @@ print_queue_node(struct pfctl_queue_node *node)
 	for (i = 0; i < node->depth; i++)
 		tbprintf(" ");
 	tbprintf("%s", node->qs.qname);
+	if (i == 0 && node->qs.ifname[0])
+		tbprintf(" on %s ", node->qs.ifname);
 	print_fld_tb(FLD_QUEUE);
 
 	// XXX: missing min, max, burst
