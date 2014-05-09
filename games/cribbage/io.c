@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.15 2014/05/09 00:03:41 schwarze Exp $	*/
+/*	$OpenBSD: io.c,v 1.16 2014/05/09 02:47:25 schwarze Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -552,7 +552,8 @@ get_line(void)
 			Mpos++;
 		}
 	}
-	linebuf[pos] = '\0';
+	while (pos < sizeof(linebuf))
+		linebuf[pos++] = '\0';
 	stdscr = oscr;
 	return (linebuf);
 }
