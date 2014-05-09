@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_ntop.3,v 1.1 2014/04/19 11:18:01 guenther Exp $
+.\"	$OpenBSD: inet_ntop.3,v 1.2 2014/05/09 06:38:27 guenther Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: May 9 2014 $
 .Dt INET_NTOP 3
 .Os
 .Sh NAME
@@ -78,7 +78,15 @@ Values must be specified using the standard dot notation:
 a.b.c.d
 .Ed
 .Pp
-All four parts must be decimal numbers between 0 and 255, inclusive.
+All four parts must be decimal numbers between 0 and 255, inclusive,
+and are assigned, from left to right,
+to the four bytes of an Internet address.
+Note that when an Internet address is viewed as a 32-bit integer
+quantity on a system that uses little-endian byte order
+(such as the Intel 386, 486 and Pentium processors)
+the bytes referred to above appear as
+.Dq Li d.c.b.a .
+That is, little-endian bytes are ordered from right to left.
 .Sh INTERNET ADDRESSES (IP VERSION 6)
 In order to support scoped IPv6 addresses,
 .Xr getaddrinfo 3
