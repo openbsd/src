@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.17 2014/05/09 03:13:24 schwarze Exp $	*/
+/*	$OpenBSD: io.c,v 1.18 2014/05/09 23:39:10 schwarze Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -526,6 +526,8 @@ get_line(void)
 	for (pos = 0; (c = readchar()) != '\n'; clrtoeol(), refresh()) {
 		if (c == -1)
 			continue;
+		if (c == ' ' && (pos == 0 || linebuf[pos - 1] == ' '))
+			continue;
 		if (c == erasechar()) {
 			if (pos > 0) {
 				int i;
@@ -540,10 +542,8 @@ get_line(void)
 			move(oy, ox);
 			continue;
 		}
-		if (pos == 0 && c == ' ')
-			continue;
-		if (pos >= LINESIZE - 1 || !(isprint(c) || c == ' ')) {
-			putchar(CTRL('G'));
+		if (pos >= LINESIZE - 1 || !(isalnum(c) || c == ' ')) {
+			beep();
 			continue;
 		}
 		if (islower(c))
