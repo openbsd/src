@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.64 2014/05/06 11:03:03 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.65 2014/05/10 21:34:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -497,6 +497,7 @@ ssl_ctx_load_pkey(SSL_CTX *ctx, void *data, char *buf, off_t len,
 
 	RSA_set_ex_data(rsa, 0, data);
 	RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+	goto done;
 
  fail:
 	ssl_error("ssl_ctx_load_pkey");
