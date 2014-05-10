@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2014/04/26 11:53:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/05/10 16:45:23 schwarze Exp $
 
 PROG=	less
 SRCS=	main.c screen.c brac.c ch.c charset.c cmdbuf.c command.c cvt.c \
@@ -14,14 +14,18 @@ LINKS=	${BINDIR}/less ${BINDIR}/more
 
 MAN=	less.1 more.1
 
-HELPFILE=${SHAREDIR}/misc/more.help
+HELPDIR=${SHAREDIR}/misc
 
-CFLAGS+=-DBINDIR=\"${BINDIR}\" -DSYSDIR=\"/etc\" -DHELPFILE=\"${HELPFILE}\"
+CFLAGS+=-DBINDIR=\"${BINDIR}\" -DSYSDIR=\"/etc\" -DHELPDIR=\"${HELPDIR}\"
 
 CDIAGFLAGS+=-Wall -W
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \
-	    -m ${SHAREMODE} ${.CURDIR}/../less.hlp ${DESTDIR}${HELPFILE}
+	    -m ${SHAREMODE} ${.CURDIR}/../less.hlp \
+	    ${DESTDIR}${HELPDIR}/less.help
+	${INSTALL} ${INSTALL_COPY} -o ${SHAREOWN} -g ${SHAREGRP} \
+	    -m ${SHAREMODE} ${.CURDIR}/../more.hlp \
+	    ${DESTDIR}${HELPDIR}/more.help
 
 .include <bsd.prog.mk>

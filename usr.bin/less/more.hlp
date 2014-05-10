@@ -1,0 +1,75 @@
+
+                     SSUUMMMMAARRYY OOFF CCOOMMMMAANNDDSS
+
+      Commands marked with * may be preceded by a number, _N.
+      Notes in parentheses indicate the behavior if _N is given.
+      A key preceded by a caret indicates the Ctrl key; thus ^K is ctrl-K.
+
+  h                    Display this help.
+  q  :q  ZZ            Exit.
+ ---------------------------------------------------------------------------
+
+                           MMOOVVIINNGG
+
+  j  CR             *  Forward  one line   (or _N lines).
+  k                 *  Backward one line   (or _N lines).
+  f  ^F  SPACE      *  Forward  one window (or _N lines).
+  b  ^B             *  Backward one window (or _N lines).
+  d  ^D             *  Forward  one half-window (and set half-window to _N).
+  u  ^U             *  Backward one half-window (and set half-window to _N).
+  r  ^L                Repaint screen.
+  R                    Repaint screen, discarding buffered input.
+  :t                   Go to supplied tag.
+        ---------------------------------------------------
+        Default "window" is the screen height.
+        Default "half-window" is half of the screen height.
+ ---------------------------------------------------------------------------
+
+                          SSEEAARRCCHHIINNGG
+
+  /_p_a_t_t_e_r_n          *  Search forward for (_N-th) matching line.
+  ?_p_a_t_t_e_r_n          *  Search backward for (_N-th) matching line.
+  n                 *  Repeat previous search (for _N-th occurrence).
+  N                    Repeat previous search in reverse direction.
+        ---------------------------------------------------
+        A search pattern may be preceded by one or more of:
+        !        Search for NON-matching lines.
+ ---------------------------------------------------------------------------
+
+                           JJUUMMPPIINNGG
+
+  g                 *  Go to first line in file (or line _N).
+  G                 *  Go to last line in file (or line _N).
+        ---------------------------------------------------
+
+  m_<_l_e_t_t_e_r_>            Mark the current position with <letter>.
+  '_<_l_e_t_t_e_r_>            Go to a previously marked position.
+  ''                   Go to the previous position.
+        ---------------------------------------------------
+        A mark is any lower-case letter.
+ ---------------------------------------------------------------------------
+
+                        CCHHAANNGGIINNGG FFIILLEESS
+
+  :e [_f_i_l_e]            Examine a new file.
+  :n                *  Examine the (_N-th) next file from the command line.
+  :p                *  Examine the (_N-th) previous file from the command line.
+  =  ^G                Print current file name.
+ ---------------------------------------------------------------------------
+
+                    MMIISSCCEELLLLAANNEEOOUUSS CCOOMMMMAANNDDSS
+
+  v                    Edit the current file with $VISUAL or vi(1).
+ ---------------------------------------------------------------------------
+
+                           OOPPTTIIOONNSS
+
+  -c                   Repaint by clearing rather than scrolling.
+  -e                   Quit at end of file.
+  -i                   Ignore case in searches.
+  -n _n_u_m_b_e_r            Page number of lines per screenful.
+  -p _c_o_m_m_a_n_d           Execute the specified commands.
+  -s                   Squeeze multiple blank lines.
+  -t _t_a_g               Examine the file containing tag..
+  -u                   Change handling of backspaces.
+

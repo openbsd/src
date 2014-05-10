@@ -283,7 +283,7 @@ edit_ifile(ifile)
 
 	chflags = 0;
 #if !SMALL
-	if (strcmp(open_filename, HELPFILE) == 0)
+	if (strcmp(open_filename, helpfile()) == 0)
 		chflags |= CH_HELPFILE;
 #endif /* !SMALL */
 	if (alt_pipe != NULL)
