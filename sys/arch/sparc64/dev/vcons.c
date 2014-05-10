@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.13 2013/07/16 19:46:56 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.14 2014/05/10 11:49:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -88,7 +88,7 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 
 	if (vbus_intr_map(va->va_node, va->va_intr[0], &sysino))
 		printf(": can't map interrupt\n");
-	printf(": ivec 0x%lx", sysino);
+	printf(": ivec 0x%llx", sysino);
 
 	sc->sc_ih = bus_intr_establish(va->va_bustag, sysino, IPL_TTY,
 	    BUS_INTR_ESTABLISH_MPSAFE, vcons_intr, sc, sc->sc_dv.dv_xname);

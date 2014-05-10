@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.7 2014/04/03 09:15:06 mpi Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.8 2014/05/10 11:49:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -139,7 +139,7 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map interrupt\n");
 		return;
 	}
-	printf(": ivec 0x%lx, 0x%lx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -313,7 +313,7 @@ vldcpopen(dev_t dev, int flag, int mode, struct proc *p)
 	err = hv_ldc_rx_qconf(lc->lc_id,
 	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
-		printf("%d: hv_ldc_rx_qconf %d\n", __func__, err);
+		printf("%s: hv_ldc_rx_qconf %d\n", __func__, err);
 
 	/* Clear a pending channel reset.  */
 	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);

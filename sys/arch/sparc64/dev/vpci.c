@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.13 2014/01/24 05:42:23 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.14 2014/05/10 11:49:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -532,13 +532,13 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 
 		err = hv_pci_msi_setmsiq(pbm->vp_devhandle, msinum, 0, 0);
 		if (err != H_EOK) {
-			printf("pci_msi_setmsiq: err %ld\n", err);
+			printf("pci_msi_setmsiq: err %d\n", err);
 			return (NULL);
 		}
 
 		err = hv_pci_msi_setvalid(pbm->vp_devhandle, msinum, PCI_MSI_VALID);
 		if (err != H_EOK) {
-			printf("pci_msi_setvalid: err %ld\n", err);
+			printf("pci_msi_setvalid: err %d\n", err);
 			return (NULL);
 		}
 

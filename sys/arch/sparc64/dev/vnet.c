@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.30 2014/04/03 09:15:06 mpi Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.31 2014/05/10 11:49:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -258,7 +258,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map interrupt\n");
 		return;
 	}
-	printf(": ivec 0x%lx, 0x%lx", sc->sc_tx_sysino, sc->sc_rx_sysino);
+	printf(": ivec 0x%llx, 0x%llx", sc->sc_tx_sysino, sc->sc_rx_sysino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,

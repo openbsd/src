@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.37 2014/04/03 09:15:06 mpi Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.38 2014/05/10 11:49:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -243,7 +243,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map interrupt\n");
 		return;
 	}
-	printf(": ivec 0x%lx, 0x%lx", sysino[0], sysino[1]);
+	printf(": ivec 0x%llx, 0x%llx", sysino[0], sysino[1]);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
