@@ -185,11 +185,11 @@ ngx_module_t  ngx_core_module = {
 
 
 ngx_uint_t          ngx_max_module;
+u_char		   *ngx_prefix;
 
 static ngx_uint_t   ngx_show_help;
 static ngx_uint_t   ngx_show_version;
 static ngx_uint_t   ngx_show_configure;
-static u_char      *ngx_prefix;
 static u_char      *ngx_conf_file;
 static u_char      *ngx_conf_params;
 static char        *ngx_signal;

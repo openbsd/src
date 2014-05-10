@@ -471,6 +471,7 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 ngx_int_t
 ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
 {
+    u_char	     *prefix;
     ngx_err_t         err;
     ngx_uint_t        i;
     ngx_path_t      **path;
@@ -479,9 +480,13 @@ ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
     for (i = 0; i < cycle->paths.nelts; i++) {
 
         if (ngx_chrooted) {
-          if (chdir(NGX_PREFIX) == -1) {
+	  if (ngx_prefix)
+	    prefix = ngx_prefix;
+	  else
+	    prefix = NGX_PREFIX;
+          if (chdir(prefix) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
-                          "chdir(\"%s\") failed", NGX_PREFIX);
+                          "chdir(\"%s\") failed", prefix);
             return NGX_ERROR;
           }
           ngx_strip_chroot(&path[i]->name);

@@ -1842,10 +1842,22 @@ ngx_memcpy(void *dst, const void *src, size_t n)
 void
 ngx_strip_chroot(ngx_str_t *path)
 {
-    if (!ngx_strncmp(path->data, NGX_PREFIX, strlen(NGX_PREFIX))) {
+    int plen;
+    u_char *prefix;
+
+    if (ngx_prefix)
+	prefix = ngx_prefix;
+    else
+	prefix = NGX_PREFIX;
+
+    if (prefix[strlen(prefix) - 1] == '/')
+	plen = strlen(prefix) - 1;
+    else
+	plen = strlen(prefix);
+
+    if (!ngx_strncmp(path->data, prefix, strlen(prefix))) {
         char *x, *buf = malloc(path->len);
-       x = ngx_cpystrn(buf, path->data + strlen(NGX_PREFIX) - 1,
-                       path->len);
+       x = ngx_cpystrn(buf, path->data + plen, path->len);
        path->len = (x - buf);
        path->data = buf;
     }
