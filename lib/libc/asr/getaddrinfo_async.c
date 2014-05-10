@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.27 2014/04/28 21:38:59 sperreault Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.28 2014/05/10 21:21:09 chl Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -219,9 +219,9 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 					v6 = 1;
 			}
 			freeifaddrs(ifa0);
-			if (ai->ai_family == PF_UNSPEC && !v4 && !v6 ||
-			    ai->ai_family == PF_INET && !v4 ||
-			    ai->ai_family == PF_INET6 && !v6) {
+			if ((ai->ai_family == PF_UNSPEC && !v4 && !v6) ||
+			    (ai->ai_family == PF_INET && !v4) ||
+			    (ai->ai_family == PF_INET6 && !v6)) {
 				ar->ar_gai_errno = EAI_NONAME;
 				async_set_state(as, ASR_STATE_HALT);
 				break;
