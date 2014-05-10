@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.232 2014/05/07 08:26:38 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.233 2014/05/10 12:30:27 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ found:
          */
         if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH) ||
 	    (ip->ip_p == IPPROTO_IPCOMP))
-          goto skipipsec;
+        	goto skipipsec;
 
 	/*
 	 * If the protected packet was tunneled, then we need to
@@ -590,7 +590,7 @@ found:
 	 * to deal with that).
 	 */
 	if ((ip->ip_p == IPPROTO_IPIP) || (ip->ip_p == IPPROTO_IPV6))
-	  goto skipipsec;
+		goto skipipsec;
 
 	/*
 	 * If the protected packet is TCP or UDP, we'll do the
@@ -598,7 +598,7 @@ found:
 	 * check for bypass sockets.
 	 */
 	if ((ip->ip_p == IPPROTO_TCP) || (ip->ip_p == IPPROTO_UDP))
-	  goto skipipsec;
+		goto skipipsec;
 
 	/*
 	 * IPsec policy check for local-delivery packets. Look at the
