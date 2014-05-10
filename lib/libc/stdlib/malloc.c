@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.161 2014/05/08 21:43:49 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.162 2014/05/10 18:14:55 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1782,7 +1782,7 @@ malloc_dump(int fd)
 	struct region_info *r;
 	int saved_errno = errno;
 
-	for (i = 0; i <= MALLOC_DELAYED_CHUNKS; i++) {
+	for (i = 0; i < MALLOC_DELAYED_CHUNK_MASK + 1; i++) {
 		p = g_pool->delayed_chunks[i];
 		if (p == NULL)
 			continue;
