@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.40 2012/10/08 09:01:21 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.41 2014/05/10 18:59:29 guenther Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1179,11 +1179,14 @@ est_init(struct cpu_info *ci, int vendor)
 	if (est_fqlist->n < 2)
 		return;
 
-	printf("%s: Enhanced SpeedStep %d MHz", cpu_device, cpuspeed);
-
 	low = est_fqlist->table[est_fqlist->n - 1].mhz;
 	high = est_fqlist->table[0].mhz;
+	if (low == high)
+		return;
+
 	perflevel = (cpuspeed - low) * 100 / (high - low);
+
+	printf("%s: Enhanced SpeedStep %d MHz", cpu_device, cpuspeed);
 
 	/*
 	 * OK, tell the user the available frequencies.
