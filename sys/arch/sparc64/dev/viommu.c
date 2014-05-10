@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.14 2014/01/22 10:52:35 kettenis Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.15 2014/05/10 12:20:38 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -328,13 +328,13 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			paddr_t pa;
 
 			if (pmap_extract(pmap, a, &pa) == FALSE)
-				panic("iomap pmap error addr 0x%llx\n", a);
+				panic("iomap pmap error addr 0x%lx\n", a);
 
 			err = iommu_iomap_insert_page(ims, pa);
 			if (err) {
 				printf("iomap insert error: %d for "
-				    "va 0x%llx pa 0x%lx "
-				    "(buf %p len %lld/%llx)\n",
+				    "va 0x%lx pa 0x%lx "
+				    "(buf %p len %ld/%lx)\n",
 				    err, a, pa, buf, buflen, buflen);
 				iommu_iomap_clear_pages(ims);
 				return (EFBIG);
@@ -398,7 +398,7 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 			/* Yuck... Redoing the same pmap_extract... */
 			if (pmap_extract(pmap, a, &pa) == FALSE)
-				panic("iomap pmap error addr 0x%llx\n", a);
+				panic("iomap pmap error addr 0x%lx\n", a);
 
 			pgstart = pa | (MAX(a, addr) & PAGE_MASK);
 			pgend = pa | (MIN(a + PAGE_SIZE - 1,
@@ -414,7 +414,7 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 				break;
 			else if (err) {
 				printf("iomap load seg page: %d for "
-				    "va 0x%llx pa %lx (%llx - %llx) "
+				    "va 0x%lx pa %lx (%lx - %lx) "
 				    "for %d/0x%x\n",
 				    err, a, pa, pgstart, pgend, pglen, pglen);
 				break;
@@ -515,7 +515,7 @@ viommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 				err = iommu_iomap_insert_page(ims, a);
 				if (err) {
 					printf("iomap insert error: %d for "
-					    "pa 0x%llx\n", err, a);
+					    "pa 0x%lx\n", err, a);
 					iommu_iomap_clear_pages(ims);
 					return (EFBIG);
 				}
@@ -610,7 +610,7 @@ viommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 #ifdef DIAGNOSTIC
 	if (sgstart == 0 || sgstart > sgend) {
 		printf("append range invalid mapping for %lx "
-		    "(0x%llx - 0x%llx)\n", pa, sgstart, sgend);
+		    "(0x%lx - 0x%lx)\n", pa, sgstart, sgend);
 		map->dm_nsegs = 0;
 		return (EINVAL);
 	}
@@ -619,7 +619,7 @@ viommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 #ifdef DEBUG
 	if (trunc_page(sgstart) != trunc_page(sgend)) {
 		printf("append range crossing page boundary! "
-		    "pa %lx length %lld/0x%llx sgstart %llx sgend %llx\n",
+		    "pa %lx length %ld/0x%lx sgstart %lx sgend %lx\n",
 		    pa, length, length, sgstart, sgend);
 	}
 #endif
@@ -752,7 +752,7 @@ viommu_dvmamap_load_seg(bus_dma_tag_t t, struct iommu_state *is,
 				return (err);
 			if (err) {
 				printf("iomap load seg page: %d for "
-				    "pa 0x%llx (%llx - %llx for %d/%x\n",
+				    "pa 0x%lx (%lx - %lx for %d/%x\n",
 				    err, a, pgstart, pgend, pglen, pglen);
 				return (err);
 			}
@@ -838,7 +838,7 @@ viommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 	map->_dm_dvmasize = 0;
 	mtx_leave(&is->is_mtx);
 	if (error != 0)
-		printf("warning: %qd of DVMA space lost\n", sgsize);
+		printf("warning: %ld of DVMA space lost\n", sgsize);
 }
 
 void
