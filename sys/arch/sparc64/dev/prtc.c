@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtc.c,v 1.2 2008/07/10 08:58:00 kettenis Exp $	*/
+/*	$OpenBSD: prtc.c,v 1.3 2014/05/10 12:36:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -93,7 +93,7 @@ prtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 		return (0);
 	}
 
-	snprintf(buf, sizeof(buf), "h# %08x unix-gettod", &tod);
+	snprintf(buf, sizeof(buf), "h# %08lx unix-gettod", (long)&tod);
 	OF_interpret(buf, 0);
 
 	tv->tv_sec = tod;
