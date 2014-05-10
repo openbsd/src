@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.772 2014/05/08 16:46:47 krw Exp $
+#	$OpenBSD: install.sub,v 1.773 2014/05/10 17:25:21 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -990,7 +990,7 @@ v4_defroute() {
 }
 
 v6_defroute() {
-	local _if=$1 _resp _routers
+	local _if=$1 _prompt _resp _routers
 
 	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
@@ -998,11 +998,17 @@ v6_defroute() {
 		sed -n '/bytes from/{s/^.*from //;s/,.*$//;p;}' |
 		sed -n 'G;s/\n/&&/;/^\(.*\n\).*\n\1/d;h;P'))
 
-	local PS3="IPv6 default router? (${_routers:+list #, }IPv6 address or 'none'): "
-	select _resp in $_routers; do
-		[[ ${_resp:=$REPLY} == *:* ]] && break
-		[[ $_resp == none ]] && return
-	done
+	_prompt="IPv6 default router?"
+
+	if $auto; then
+		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
+	else
+		local PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
+		select _resp in $_routers; do
+			[[ ${_resp:=$REPLY} == *:* ]] && break
+			[[ $_resp == none ]] && return
+		done
+	fi
 
 	route -n add -inet6 -host default "$_resp" &&
 		echo "$_resp" >>/tmp/mygate
