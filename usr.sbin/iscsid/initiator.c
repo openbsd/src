@@ -1,4 +1,4 @@
-/*	$OpenBSD: initiator.c,v 1.12 2014/04/20 16:49:56 claudio Exp $ */
+/*	$OpenBSD: initiator.c,v 1.13 2014/05/10 11:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -503,16 +503,17 @@ initiator_logout_cb(struct connection *c, void *arg, struct pdu *p)
 	loresp = pdu_getbuf(p, NULL, PDU_HEADER);
 	log_debug("initiator_logout_cb: "
 	    "response %d, Time2Wait %d, Time2Retain %d",
-	    loresp->response, loresp->time2wait, loresp->time2retain);
+	    loresp->response, ntohs(loresp->time2wait),
+	    ntohs(loresp->time2retain));
 
 	switch (loresp->response) {
 	case ISCSI_LOGOUT_RESP_SUCCESS:
 		if (tl->reason == ISCSI_LOGOUT_CLOSE_SESS) {
 			conn_fsm(c, CONN_EV_LOGGED_OUT);
-			session_fsm(c->session, SESS_EV_CLOSED, NULL);
+			session_fsm(c->session, SESS_EV_CLOSED, NULL, 0);
 		} else {
 			conn_fsm(tl->c, CONN_EV_LOGGED_OUT);
-			session_fsm(c->session, SESS_EV_CONN_CLOSED, tl->c);
+			session_fsm(c->session, SESS_EV_CONN_CLOSED, tl->c, 0);
 		}
 		break;
 	case ISCSI_LOGOUT_RESP_UNKN_CID:

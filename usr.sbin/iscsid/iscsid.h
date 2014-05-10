@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.13 2014/04/21 17:41:52 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.14 2014/05/10 11:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 
 #define ISCSID_BASE_NAME	"iqn.1995-11.org.openbsd.iscsid"
 #define ISCSID_DEF_CONNS	8
+#define ISCSID_HOLD_TIME_MAX	128
 
 #define PDU_READ_SIZE		(256 * 1024)
 #define CONTROL_READ_SIZE	8192
@@ -79,19 +80,18 @@ TAILQ_HEAD(taskq, task);
 #define SESS_FREE		0x0002
 #define SESS_LOGGED_IN		0x0004
 #define SESS_FAILED		0x0008
-#define SESS_DOWN		0x0010
 #define SESS_ANYSTATE		0xffff
 #define SESS_RUNNING		(SESS_FREE | SESS_LOGGED_IN | SESS_FAILED)
 
-#define CONN_FREE		0x0001
-#define CONN_XPT_WAIT		0x0002
-#define CONN_XPT_UP		0x0004
-#define CONN_IN_LOGIN		0x0008
-#define CONN_LOGGED_IN		0x0010
-#define CONN_IN_LOGOUT		0x0020
-#define CONN_LOGOUT_REQ		0x0040
-#define CONN_CLEANUP_WAIT	0x0080
-#define CONN_IN_CLEANUP		0x0100
+#define CONN_FREE		0x0001	/* S1 = R3 */
+#define CONN_XPT_WAIT		0x0002	/* S2 */
+#define CONN_XPT_UP		0x0004	/* S3 */
+#define CONN_IN_LOGIN		0x0008	/* S4 */
+#define CONN_LOGGED_IN		0x0010	/* S5 */
+#define CONN_IN_LOGOUT		0x0020	/* S6 */
+#define CONN_LOGOUT_REQ		0x0040	/* S7 */
+#define CONN_CLEANUP_WAIT	0x0080	/* S8 = R1 */
+#define CONN_IN_CLEANUP		0x0100	/* R2 */
 #define CONN_ANYSTATE		0xffff
 #define CONN_RUNNING		(CONN_LOGGED_IN | CONN_LOGOUT_REQ)
 #define CONN_FAILED		(CONN_CLEANUP_WAIT | CONN_IN_CLEANUP)
@@ -104,18 +104,24 @@ enum c_event {
 	CONN_EV_CONNECT,
 	CONN_EV_CONNECTED,
 	CONN_EV_LOGGED_IN,
+	CONN_EV_REQ_LOGOUT,
 	CONN_EV_LOGOUT,
 	CONN_EV_LOGGED_OUT,
-	CONN_EV_CLOSED
+	CONN_EV_CLOSED,
+	CONN_EV_CLEANING_UP
 };
 
 enum s_event {
 	SESS_EV_START,
+	SESS_EV_STOP,
 	SESS_EV_CONN_LOGGED_IN,
 	SESS_EV_CONN_FAIL,
 	SESS_EV_CONN_CLOSED,
+	SESS_EV_REINSTATEMENT,
+	SESS_EV_TIMEOUT,
 	SESS_EV_CLOSED,
-	SESS_EV_FAIL
+	SESS_EV_FAIL,
+	SESS_EV_FREE
 };
 
 #define SESS_ACT_UP		0
@@ -216,7 +222,7 @@ struct initiator {
 };
 
 struct sessev {
-	SIMPLEQ_ENTRY(sessev)	 entry;
+	struct session		*sess;
 	struct connection	*conn;
 	enum s_event		 event;
 };
@@ -230,14 +236,13 @@ struct session {
 	struct session_params	 his;
 	struct session_params	 active;
 	struct initiator	*initiator;
-	struct event		 fsm_ev;
-	SIMPLEQ_HEAD(, sessev)	 fsmq;
 	u_int32_t		 cmdseqnum;
 	u_int32_t		 itt;
 	u_int32_t		 isid_base;	/* only 24 bits */
 	u_int16_t		 isid_qual;	/* inherited from initiator */
 	u_int16_t		 tsih;		/* target session id handle */
 	u_int			 target;
+	int			 holdTimer;	/* internal hold timer */
 	int			 state;
 	int			 action;
 };
@@ -331,7 +336,8 @@ void	session_task_issue(struct session *, struct task *);
 void	session_logout_issue(struct session *, struct task *);
 void	session_schedule(struct session *);
 void	session_task_login(struct connection *);
-void	session_fsm(struct session *, enum s_event, struct connection *);
+void	session_fsm(struct session *, enum s_event, struct connection *,
+	    unsigned int);
 
 void	conn_new(struct session *, struct connection_config *);
 void	conn_free(struct connection *);

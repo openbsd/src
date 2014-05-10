@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.6 2014/04/20 20:12:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.7 2014/05/10 11:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,9 @@ int	sess_do_start(struct session *, struct sessev *);
 int	sess_do_conn_loggedin(struct session *, struct sessev *);
 int	sess_do_conn_fail(struct session *, struct sessev *);
 int	sess_do_conn_closed(struct session *, struct sessev *);
-int	sess_do_down(struct session *, struct sessev *);
+int	sess_do_stop(struct session *, struct sessev *);
+int	sess_do_free(struct session *, struct sessev *);
+int	sess_do_reinstatement(struct session *, struct sessev *);
 
 const char *sess_state(int);
 const char *sess_event(enum s_event);
@@ -81,8 +83,6 @@ session_new(struct initiator *i, u_int8_t st)
 	TAILQ_INSERT_HEAD(&i->sessions, s, entry);
 	TAILQ_INIT(&s->connections);
 	TAILQ_INIT(&s->tasks);
-	SIMPLEQ_INIT(&s->fsmq);
-	evtimer_set(&s->fsm_ev, session_fsm_callback, s);
 
 	return s;
 }
@@ -108,7 +108,8 @@ session_shutdown(struct session *s)
 	log_debug("session[%s] going down", s->config.SessionName);
 
 	s->action = SESS_ACT_DOWN;
-	if (s->state & (SESS_INIT | SESS_FREE | SESS_DOWN)) {
+	if (s->state & (SESS_INIT | SESS_FREE)) {
+		/* no active session, so do a quick cleanup */
 		struct connection *c;
 		while ((c = TAILQ_FIRST(&s->connections)) != NULL)
 			conn_free(c);
@@ -205,19 +206,25 @@ session_schedule(struct session *s)
  * The session FSM runs from a callback so that the connection FSM can finish.
  */
 void
-session_fsm(struct session *s, enum s_event ev, struct connection *c)
+session_fsm(struct session *s, enum s_event ev, struct connection *c,
+    unsigned int timeout)
 {
 	struct timeval tv;
 	struct sessev *sev;
 
+	log_debug("session_fsm[%s]: %s ev %s timeout %d",
+	    s->config.SessionName, sess_state(s->state),
+	    sess_event(ev), timeout);
+
 	if ((sev = malloc(sizeof(*sev))) == NULL)
 		fatal("session_fsm");
 	sev->conn = c;
+	sev->sess = s;
 	sev->event = ev;
-	SIMPLEQ_INSERT_TAIL(&s->fsmq, sev, entry);
 
 	timerclear(&tv);
-	if (evtimer_add(&s->fsm_ev, &tv) == -1)
+	tv.tv_sec = timeout;
+	if (event_once(-1, EV_TIMEOUT, session_fsm_callback, sev, &tv) == -1)
 		fatal("session_fsm");
 }
 
@@ -227,11 +234,17 @@ struct {
 	int		(*action)(struct session *, struct sessev *);
 } s_fsm[] = {
 	{ SESS_INIT, SESS_EV_START, sess_do_start },
-	{ SESS_FREE, SESS_EV_CONN_LOGGED_IN, sess_do_conn_loggedin },
+	{ SESS_FREE, SESS_EV_START, sess_do_start },
+	{ SESS_FREE, SESS_EV_CONN_LOGGED_IN, sess_do_conn_loggedin },	/* N1 */
+	{ SESS_FREE, SESS_EV_CLOSED, sess_do_stop },
 	{ SESS_LOGGED_IN, SESS_EV_CONN_LOGGED_IN, sess_do_conn_loggedin },
-	{ SESS_RUNNING, SESS_EV_CONN_FAIL, sess_do_conn_fail },
-	{ SESS_RUNNING, SESS_EV_CONN_CLOSED, sess_do_conn_closed },
-	{ SESS_RUNNING, SESS_EV_CLOSED, sess_do_down },
+	{ SESS_RUNNING, SESS_EV_CONN_CLOSED, sess_do_conn_closed },	/* N3 */
+	{ SESS_RUNNING, SESS_EV_CONN_FAIL, sess_do_conn_fail },		/* N5 */
+	{ SESS_RUNNING, SESS_EV_CLOSED, sess_do_free },		/* XXX */
+	{ SESS_FAILED, SESS_EV_START, sess_do_start },
+	{ SESS_FAILED, SESS_EV_TIMEOUT, sess_do_free },			/* N6 */
+	{ SESS_FAILED, SESS_EV_FREE, sess_do_free },			/* N6 */
+	{ SESS_FAILED, SESS_EV_CONN_LOGGED_IN, sess_do_reinstatement },	/* N4 */
 	{ 0, 0, NULL }
 };
 
@@ -239,37 +252,35 @@ struct {
 void
 session_fsm_callback(int fd, short event, void *arg)
 {
-	struct session *s = arg;
-	struct sessev *sev;
+	struct sessev *sev = arg;
+	struct session *s = sev->sess;
 	int	i, ns;
 
-	while ((sev = SIMPLEQ_FIRST(&s->fsmq))) {
-		SIMPLEQ_REMOVE_HEAD(&s->fsmq, entry);
-		for (i = 0; s_fsm[i].action != NULL; i++) {
-			if (s->state & s_fsm[i].state &&
-			    sev->event == s_fsm[i].event) {
-				log_debug("sess_fsm[%s]: %s ev %s",
-				    s->config.SessionName, sess_state(s->state),
-				    sess_event(sev->event));
-				ns = s_fsm[i].action(s, sev);
-				if (ns == -1)
-					/* XXX better please */
-					fatalx("sess_fsm: action failed");
-				log_debug("sess_fsm[%s]: new state %s",
-				    s->config.SessionName,
-				    sess_state(ns));
-				s->state = ns;
-				break;
-			}
+	for (i = 0; s_fsm[i].action != NULL; i++) {
+		if (s->state & s_fsm[i].state &&
+		    sev->event == s_fsm[i].event) {
+			log_debug("sess_fsm[%s]: %s ev %s",
+			    s->config.SessionName, sess_state(s->state),
+			    sess_event(sev->event));
+			ns = s_fsm[i].action(s, sev);
+			if (ns == -1)
+				/* XXX better please */
+				fatalx("sess_fsm: action failed");
+			log_debug("sess_fsm[%s]: new state %s",
+			    s->config.SessionName,
+			    sess_state(ns));
+			s->state = ns;
+			break;
 		}
-		if (s_fsm[i].action == NULL) {
-			log_warnx("sess_fsm[%s]: unhandled state transition "
-			    "[%s, %s]", s->config.SessionName,
-			    sess_state(s->state), sess_event(sev->event));
-			fatalx("bjork bjork bjork");
-		}
-		free(sev);
 	}
+	if (s_fsm[i].action == NULL) {
+		log_warnx("sess_fsm[%s]: unhandled state transition "
+		    "[%s, %s]", s->config.SessionName,
+		    sess_state(s->state), sess_event(sev->event));
+		fatalx("bjork bjork bjork");
+	}
+	free(sev);
+log_debug("sess_fsm: done");
 }
 
 int
@@ -283,12 +294,17 @@ sess_do_start(struct session *s, struct sessev *sev)
 	s->his = iscsi_sess_defaults;
 	s->active = iscsi_sess_defaults;
 
-	if (s->config.MaxConnections)
+	if (s->config.SessionType != SESSION_TYPE_DISCOVERY &&
+	    s->config.MaxConnections)
 		s->mine.MaxConnections = s->config.MaxConnections;
 
 	conn_new(s, &s->config.connection);
 
-	return SESS_FREE;
+	/* XXX kill SESS_FREE it seems to be bad */
+	if (s->state == SESS_INIT)
+		return SESS_FREE;
+	else
+		return s->state;
 }
 
 int
@@ -304,6 +320,7 @@ sess_do_conn_loggedin(struct session *s, struct sessev *sev)
 
 	iscsi_merge_sess_params(&s->active, &s->mine, &s->his);
 	vscsi_event(VSCSI_REQPROBE, s->target, -1);
+	s->holdTimer = 0;
 
 	return SESS_LOGGED_IN;
 }
@@ -324,7 +341,7 @@ sess_do_conn_fail(struct session *s, struct sessev *sev)
 	 * Connections in state FREE can be removed.
 	 * Connections in any error state will cause the session to enter
 	 * the FAILED state. If no sessions are left and the session was
-	 * not already FREE then explicit recovery needs to be done.
+	 * not already FREE then implicit recovery needs to be done.
 	 */
 
 	switch (c->state) {
@@ -341,10 +358,15 @@ sess_do_conn_fail(struct session *s, struct sessev *sev)
 	TAILQ_FOREACH(c, &s->connections, entry) {
 		if (c->state & CONN_FAILED) {
 			state = SESS_FAILED;
-			break;
-		} else if (c->state & CONN_RUNNING)
+			conn_fsm(c, CONN_EV_CLEANING_UP);
+		} else if (c->state & CONN_RUNNING && state != SESS_FAILED)
 			state = SESS_LOGGED_IN;
 	}
+
+	session_fsm(s, SESS_EV_START, NULL, s->holdTimer);
+	/* exponential back-off on constant failure */
+	if (s->holdTimer < ISCSID_HOLD_TIME_MAX)
+		s->holdTimer = s->holdTimer ? s->holdTimer * 2 : 1;
 
 	return state;
 }
@@ -373,16 +395,50 @@ sess_do_conn_closed(struct session *s, struct sessev *sev)
 }
 
 int
-sess_do_down(struct session *s, struct sessev *sev)
+sess_do_stop(struct session *s, struct sessev *sev)
+{
+	struct connection *c;
+
+	/* XXX do graceful closing of session and go to INIT state at the end */
+
+	while ((c = TAILQ_FIRST(&s->connections)) != NULL)
+		conn_free(c);
+
+	/* XXX anything else to reset to initial state? */
+	return SESS_INIT;
+}
+
+int
+sess_do_free(struct session *s, struct sessev *sev)
 {
 	struct connection *c;
 
 	while ((c = TAILQ_FIRST(&s->connections)) != NULL)
 		conn_free(c);
 
-	/* XXX anything else to reset to initial state? */
+	return SESS_FREE;
+}
 
-	return SESS_DOWN;
+const char *conn_state(int);
+
+
+int
+sess_do_reinstatement(struct session *s, struct sessev *sev)
+{
+	struct connection *c, *nc;
+
+	TAILQ_FOREACH_SAFE(c, &s->connections, entry, nc) {
+		log_debug("sess reinstatement[%s]: %s",
+		    s->config.SessionName, conn_state(c->state));
+
+		if (c->state & CONN_FAILED) {
+			conn_fsm(c, CONN_EV_FREE);
+			TAILQ_REMOVE(&s->connections, c, entry);
+			conn_free(c);
+		}
+	}
+
+	return SESS_LOGGED_IN;
 }
 
 const char *
@@ -399,8 +455,6 @@ sess_state(int s)
 		return "LOGGED_IN";
 	case SESS_FAILED:
 		return "FAILED";
-	case SESS_DOWN:
-		return "DOWN";
 	default:
 		snprintf(buf, sizeof(buf), "UKNWN %x", s);
 		return buf;
@@ -416,14 +470,22 @@ sess_event(enum s_event e)
 	switch (e) {
 	case SESS_EV_START:
 		return "start";
+	case SESS_EV_STOP:
+		return "stop";
 	case SESS_EV_CONN_LOGGED_IN:
 		return "connection logged in";
 	case SESS_EV_CONN_FAIL:
 		return "connection fail";
 	case SESS_EV_CONN_CLOSED:
 		return "connection closed";
+	case SESS_EV_REINSTATEMENT:
+		return "connection reinstated";
 	case SESS_EV_CLOSED:
 		return "session closed";
+	case SESS_EV_TIMEOUT:
+		return "timeout";
+	case SESS_EV_FREE:
+		return "free";
 	case SESS_EV_FAIL:
 		return "fail";
 	}
