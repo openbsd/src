@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2014/05/10 16:56:23 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -88,10 +88,9 @@
 #include <sys/signal.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <uvm/uvm_extern.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sh/cache.h>
 #include <sh/cpu.h>
