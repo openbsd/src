@@ -897,6 +897,8 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 #endif
 
     if (geteuid() == 0) {
+	char *prefix;
+
         if (!ngx_chrooted) {
             goto nochroot;
         }
@@ -908,23 +910,28 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
             exit(2);
 	}
 
-	if (stat(pw->pw_dir, &stb) == -1) {
+	if (ngx_prefix)
+	    prefix = (char *)ngx_prefix;
+	else
+	    prefix = pw->pw_dir;
+
+	if (stat(prefix, &stb) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
-                          "stat(%s) failed", pw->pw_dir);
+                          "stat(%s) failed", prefix);
             /* fatal */
             exit(2);
 	}
 
 	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
-                          "bad privsep dir permissions on %s", pw->pw_dir);
+                          "bad privsep dir permissions on %s", prefix);
             /* fatal */
             exit(2);
 	}
 
-	if (chroot(pw->pw_dir) == -1) {
+	if (chroot(prefix) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
-                          "chroot(%s) failed", pw->pw_dir);
+                          "chroot(%s) failed", prefix);
             /* fatal */
             exit(2);
 	}
