@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.81 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.82 2014/05/10 05:33:00 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -452,13 +452,7 @@ dopanic:
 
 	case T_AST:
 		p->p_md.md_astpending = 0;
-		if (p->p_flag & P_OWEUPC) {
-			KERNEL_LOCK();
-			ADDUPROF(p);
-			KERNEL_UNLOCK();
-		}
-		if (curcpu()->ci_want_resched)
-			preempt(NULL);
+		mi_ast(p, curcpu()->ci_want_resched);
 		break;
 
 	case T_RWRET:

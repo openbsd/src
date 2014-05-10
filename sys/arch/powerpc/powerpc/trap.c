@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.97 2014/05/09 18:16:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.98 2014/05/10 05:33:00 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -619,15 +619,8 @@ for (i = 0; i < errnum; i++) {
 		break;
 
 	case EXC_AST|EXC_USER:
-		uvmexp.softs++;
 		p->p_md.md_astpending = 0;	/* we are about to do it */
-		if (p->p_flag & P_OWEUPC) {
-			KERNEL_LOCK();
-			ADDUPROF(p);
-			KERNEL_UNLOCK();
-		}
-		if (ci->ci_want_resched)
-			preempt(NULL);
+		mi_ast(p, ci->ci_want_resched);
 		break;
 	}
 

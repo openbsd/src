@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.3 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.4 2014/05/10 05:33:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -141,4 +141,27 @@ mi_child_return(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 #endif
+}
+
+/* 
+ * Do the specific processing necessary for an AST
+ */
+static void
+mi_ast(struct proc *p, int resched)
+{
+	uvmexp.softs++;
+
+	if (p->p_flag & P_OWEUPC) {
+		KERNEL_LOCK();
+		ADDUPROF(p);
+		KERNEL_UNLOCK();
+	}
+	if (resched)
+		preempt(NULL);
+
+	/*
+	 * XXX could move call to userret() here, but
+	 * hppa calls ast() in syscall return and sh calls
+	 * it after userret()
+	 */
 }

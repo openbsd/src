@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.10 2011/11/16 20:50:18 deraadt Exp $	*/
+/*	$OpenBSD: ast.c,v 1.11 2014/05/10 05:33:00 guenther Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/vmmeter.h>
+#include <sys/syscall_mi.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -81,7 +82,6 @@ ast(struct trapframe *tf)
 	/* Interrupts were restored by exception_exit. */
 
 	uvmexp.traps++;
-	uvmexp.softs++;
 
 #ifdef DEBUG
 	if (p == NULL)
@@ -90,14 +90,7 @@ ast(struct trapframe *tf)
 		panic("ast: no pcb!");
 #endif	
 
-	if (p->p_flag & P_OWEUPC) {
-		ADDUPROF(p);
-	}
-
-	/* Allow a forced task switch. */
-	if (want_resched)
-		preempt(NULL);
-
+	mi_ast(p, want_resched);
 	userret(p);
 }
 

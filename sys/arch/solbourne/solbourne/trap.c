@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2014/05/10 05:33:00 guenther Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -308,11 +308,7 @@ trap(type, psr, pc, tf)
 
 	case T_AST:
 		want_ast = 0;
-		if (p->p_flag & P_OWEUPC) {
-			ADDUPROF(p);
-		}
-		if (want_resched)
-			preempt(NULL);
+		mi_ast(p, want_resched);
 		break;
 
 	case T_ILLINST:

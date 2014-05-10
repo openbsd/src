@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2014/05/08 21:43:04 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2014/05/10 05:33:00 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -479,18 +479,8 @@ ast(struct proc *p, struct trapframe *tf)
 
 	while (p->p_md.md_astpending) {
 		p->p_md.md_astpending = 0;
-		uvmexp.softs++;
-
 		refreshcreds(p);
-		if (p->p_flag & P_OWEUPC) {
-			ADDUPROF(p);
-		}
-
-		if (want_resched) {
-			/* We are being preempted. */
-			preempt(NULL);
-		}
-
+		mi_ast(p, want_resched);
 		userret(p);
 	}
 }

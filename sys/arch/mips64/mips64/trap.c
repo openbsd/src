@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.93 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.94 2014/05/10 05:33:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,17 +148,9 @@ ast()
 	struct cpu_info *ci = curcpu();
 	struct proc *p = ci->ci_curproc;
 
-	atomic_add_int(&uvmexp.softs, 1);
-
 	p->p_md.md_astpending = 0;
-	if (p->p_flag & P_OWEUPC) {
-		KERNEL_LOCK();
-		ADDUPROF(p);
-		KERNEL_UNLOCK();
-	}
-	if (ci->ci_want_resched)
-		preempt(NULL);
 
+	mi_ast(p, ci->ci_want_resched);
 	userret(p);
 }
 
