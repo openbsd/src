@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2014/05/10 22:25:16 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.46 2014/05/10 22:37:12 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -402,9 +402,9 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 	DUMP_BOOT_DESC(desc_ver, %d);
 	DUMP_BOOT_DESC(desc_size, %d);
-	DUMP_BOOT_DESC(stack_top, %llu);
-	DUMP_BOOT_DESC(heap_start, %llu);
-	DUMP_BOOT_DESC(heap_end, %llu);
+	DUMP_BOOT_DESC(stack_top, %llx);
+	DUMP_BOOT_DESC(heap_start, %llx);
+	DUMP_BOOT_DESC(heap_end, %llx);
 	DUMP_BOOT_DESC(argc, %d);
 	DUMP_BOOT_DESC(flags, %x);
 	DUMP_BOOT_DESC(core_mask, %x);
@@ -589,7 +589,7 @@ process_bootargs(void)
 	/*
 	 * The kernel is booted via a bootoctlinux command. Thus we need to skip
 	 * argv[0] when we start to decode the boot arguments (${bootargs}).
-	 * Note that U-Boot doesn't pass us anything by default, we need
+	 * Note that U-Boot doesn't pass us anything by default, we need to
 	 * explicitly pass the rootdevice.
 	 */
 	for (i = 1; i < octeon_boot_desc->argc; i++ ) {
