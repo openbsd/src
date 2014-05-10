@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l518d_sdmmc.c,v 1.1 2009/10/03 19:51:53 kettenis Exp $	*/
+/*	$OpenBSD: w83l518d_sdmmc.c,v 1.2 2014/05/10 18:41:55 kettenis Exp $	*/
 /*	$NetBSD: w83l518d_sdmmc.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
 
 /*
@@ -579,14 +579,9 @@ wb_sdmmc_intr(struct wb_softc *wb)
 
 	wb->wb_sdmmc_intsts |= val;
 
-	if (wb_sdmmc_debug) {
-		char buf[64];
-		snprintf(buf, sizeof(buf),
-		    "\20\1TC\2BUSYEND\3PROGEND\4TIMEOUT"
-		    "\5CRC\6FIFO\7CARD\010PENDING",
-		    val);
-		REPORT(wb, "WB_SD_INTSTS = %s\n", buf);
-	}
+	REPORT(wb, "WB_SD_INTSTS = %b\n", val,
+	    "\20\1TC\2BUSYEND\3PROGEND\4TIMEOUT"
+	    "\5CRC\6FIFO\7CARD\010PENDING");
 
 	if (val & WB_INT_CARD)
 		timeout_add(&wb->wb_sdmmc_to, hz / 4);
