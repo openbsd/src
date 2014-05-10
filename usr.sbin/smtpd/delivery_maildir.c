@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.14 2014/04/30 09:17:29 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.15 2014/05/10 21:50:40 chl Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -42,7 +42,7 @@ extern char	**environ;
 
 /* maildir backend */
 static void delivery_maildir_open(struct deliver *);
-static int maildir_tag(const struct mailaddr *, char *, size_t);
+static int mailaddr_tag(const struct mailaddr *, char *, size_t);
 
 struct delivery_backend delivery_backend_maildir = {
 	1, delivery_maildir_open
