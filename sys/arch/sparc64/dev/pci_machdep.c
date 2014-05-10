@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.43 2013/05/17 18:26:37 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.44 2014/05/10 12:15:19 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ pci_intr_string(pc, ih)
 	if (ih & PCI_INTR_MSI)
 		snprintf(str, sizeof str, "msi");
 	else
-		snprintf(str, sizeof str, "ivec 0x%x", INTVEC(ih));
+		snprintf(str, sizeof str, "ivec 0x%llx", INTVEC(ih));
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);

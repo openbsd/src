@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.52 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: clock.c,v 1.53 2014/05/10 12:15:19 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -502,7 +502,7 @@ timerattach(parent, self, aux)
 	strlcpy(level14.ih_name, "prof", sizeof(level14.ih_name));
 	intr_establish(14, &level14);
 
-	printf(" ivec 0x%x, 0x%x\n", INTVEC(level10.ih_number),
+	printf(" ivec 0x%llx, 0x%llx\n", INTVEC(level10.ih_number),
 	    INTVEC(level14.ih_number));
 }
 
