@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.13 2014/04/21 18:59:05 claudio Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.14 2014/05/10 11:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -288,12 +288,9 @@ void
 vscsi_fail(void *arg)
 {
 	struct scsi_task *t = arg;
-	int tag;
 
-	conn_task_cleanup(NULL, &t->task);
-	tag = t->tag;
-	free(t);
-	vscsi_status(tag, VSCSI_STAT_RESET, NULL, 0);
+	log_debug("vscsi_fail: task failed, reseting it");
+	vscsi_status(t->tag, VSCSI_STAT_RESET, NULL, 0);
 }
 
 void

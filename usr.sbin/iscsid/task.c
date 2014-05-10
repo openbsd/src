@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.c,v 1.9 2011/04/28 18:32:01 claudio Exp $ */
+/*	$OpenBSD: task.c,v 1.10 2014/05/10 11:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -65,10 +65,8 @@ taskq_cleanup(struct taskq *tq)
 		TAILQ_REMOVE(tq, t, entry);
 		if (t->failback)
 			t->failback(t->callarg);
-		else {
-			conn_task_cleanup(NULL, t);
-			free(t);
-		}
+		conn_task_cleanup(NULL, t);
+		free(t);
 	}
 }
 
