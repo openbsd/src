@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.118 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.119 2014/05/10 12:29:58 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -594,11 +594,11 @@ bootpath_print(bp)
 	printf("bootpath: ");
 	while (bp->name[0]) {
 		if (bp->val[0] == -1)
-			printf("/%s%x", bp->name, bp->val[1]);
+			printf("/%s%lx", bp->name, bp->val[1]);
 		else
 			printf("/%s@%lx,%lx", bp->name, bp->val[0], bp->val[1]);
 		if (bp->val[2] != 0)
-			printf(":%c", bp->val[2] + 'a');
+			printf(":%c", (int)bp->val[2] + 'a');
 		bp++;
 	}
 	printf("\n");

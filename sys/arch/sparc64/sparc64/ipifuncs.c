@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.14 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.15 2014/05/10 12:29:58 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -142,7 +142,8 @@ sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		delay(10);
 	}
 	if (err != H_EOK)
-		panic("Unable to send mondo %lx to cpu %d: %d", func, itid, err);
+		panic("Unable to send mondo %llx to cpu %d: %d",
+		    (u_int64_t)func, itid, err);
 }
 
 /*
@@ -203,7 +204,8 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		delay(10);
 	}
 	if (err != H_EOK)
-		panic("Unable to broadcast mondo %lx: %d", func, err);
+		panic("Unable to broadcast mondo %llx: %d",
+		    (u_int64_t)func, err);
 }
 
 void

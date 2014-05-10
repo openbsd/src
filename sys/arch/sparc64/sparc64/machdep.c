@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.153 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.154 2014/05/10 12:29:58 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -825,7 +825,7 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
-				printf("%d ", i / (1024*1024));
+				printf("%lld ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 			pmap_update(pmap_kernel());
