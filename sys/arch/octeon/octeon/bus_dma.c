@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.9 2014/03/21 21:49:45 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.10 2014/05/10 22:25:16 jasper Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -564,7 +564,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * Get the physical address for this segment.
 		 */
 		if (pmap_extract(pmap, vaddr, &curaddr) == FALSE)
-			panic("_dmapmap_load_buffer: pmap_extract(%x, %x) failed!",
+			panic("_dmapmap_load_buffer: pmap_extract(%p, %lx) failed!",
 			    pmap, vaddr);
 
 		/*

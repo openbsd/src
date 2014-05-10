@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2013/01/16 19:04:43 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2014/05/10 22:25:16 jasper Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -241,7 +241,7 @@ vmapbuf(bp, len)
 
 	while (sz > 0) {
 		if (pmap_extract(pmap, uva, &pa) == FALSE)
-			panic("vmapbuf: pmap_extract(%x, %x) failed!",
+			panic("vmapbuf: pmap_extract(%p, %lx) failed!",
 			    pmap, uva);
 
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),

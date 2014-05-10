@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.94 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.95 2014/05/10 22:25:16 jasper Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -621,7 +621,8 @@ fault_common_no_miss:
 				printf("trap: %s (%d): breakpoint at %p "
 				    "(insn %08x)\n",
 				    p->p_comm, p->p_pid,
-				    p->p_md.md_ss_addr, p->p_md.md_ss_instr);
+				    (void *)p->p_md.md_ss_addr,
+				    p->p_md.md_ss_instr);
 #endif
 
 				/* Restore original instruction and clear BP */
@@ -756,7 +757,7 @@ fault_common_no_miss:
 		return;
 
 	case T_FPE:
-		printf("FPU Trap: PC %x CR %x SR %x\n",
+		printf("FPU Trap: PC %lx CR %lx SR %lx\n",
 			trapframe->pc, trapframe->cause, trapframe->sr);
 		goto err;
 
@@ -788,7 +789,8 @@ fault_common_no_miss:
 #endif
 		printf("\nTrap cause = %d Frame %p\n", type, trapframe);
 		printf("Trap PC %p RA %p fault %p\n",
-		    trapframe->pc, trapframe->ra, trapframe->badvaddr);
+		    (void *)trapframe->pc, (void *)trapframe->ra,
+		    (void *)trapframe->badvaddr);
 #ifdef DDB
 		stacktrace(!USERMODE(trapframe->sr) ? trapframe : p->p_md.md_regs);
 		kdb_trap(type, trapframe);
@@ -1069,7 +1071,8 @@ process_sstep(struct proc *p, int sstep)
 				printf("WARNING: %s (%d): can't restore "
 				    "instruction at %p: %08x\n",
 				    p->p_comm, p->p_pid,
-				    p->p_md.md_ss_addr, p->p_md.md_ss_instr);
+				    (void *)p->p_md.md_ss_addr,
+				    p->p_md.md_ss_instr);
 #endif
 			p->p_md.md_ss_addr = 0;
 		} else
@@ -1093,7 +1096,7 @@ process_sstep(struct proc *p, int sstep)
 	if (p->p_md.md_ss_addr != 0) {
 		printf("WARNING: %s (%d): breakpoint request "
 		    "at %p, already set at %p\n",
-		    p->p_comm, p->p_pid, va, p->p_md.md_ss_addr);
+		    p->p_comm, p->p_pid, (void *)va, (void *)p->p_md.md_ss_addr);
 		return EFAULT;
 	}
 #endif
@@ -1112,8 +1115,8 @@ process_sstep(struct proc *p, int sstep)
 
 #ifdef DEBUG
 	printf("%s (%d): breakpoint set at %p: %08x (pc %p %08x)\n",
-		p->p_comm, p->p_pid,
-		p->p_md.md_ss_addr, p->p_md.md_ss_instr, locr0->pc, curinstr);
+		p->p_comm, p->p_pid, (void *)p->p_md.md_ss_addr,
+		p->p_md.md_ss_instr, (void *)locr0->pc, curinstr);
 #endif
 	return 0;
 }
@@ -1470,7 +1473,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_map_protect on %p failed: %d\n",
-		    __func__, p->p_md.md_fppgva, rc);
+		    __func__, (void *)p->p_md.md_fppgva, rc);
 #endif
 		return rc;
 	}
@@ -1479,7 +1482,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_fault_wire on %p failed: %d\n",
-		    __func__, p->p_md.md_fppgva, rc);
+		    __func__, (void *)p->p_md.md_fppgva, rc);
 #endif
 		goto err2;
 	}
@@ -1488,7 +1491,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: copyout %p failed %d\n",
-		    __func__, p->p_md.md_fppgva, rc);
+		    __func__, (void *)p->p_md.md_fppgva, rc);
 #endif
 		goto err;
 	}
@@ -1497,7 +1500,7 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: copyout %p failed %d\n",
-		    __func__, p->p_md.md_fppgva + 4, rc);
+		    __func__, (void *)(p->p_md.md_fppgva + 4), rc);
 #endif
 		goto err;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.13 2014/03/10 09:41:27 jasper Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.14 2014/05/10 22:25:16 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -928,7 +928,7 @@ if_cnmac_kvtophys(vaddr_t kva)
 	else if (kva >= CKSEG1_BASE && kva < CKSEG1_BASE + CKSEG_SIZE)
 		return CKSEG1_TO_PHYS(kva);
 
-	printf("kva %p is not be able to convert physical address\n", kva);
+	printf("kva %lx is not be able to convert physical address\n", kva);
 	panic("if_cnmac_kvtophys");
 }
 

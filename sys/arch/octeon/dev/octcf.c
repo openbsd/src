@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.13 2013/11/01 01:06:03 dlg Exp $ */
+/*	$OpenBSD: octcf.c,v 1.14 2014/05/10 22:25:16 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -198,8 +198,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 		if ((cfg & BOOT_CFG_BASE_MASK) ==
 			(OCTEON_CF_BASE >> BOOT_CFG_BASE_SHIFT)) {
 			if ((cfg & BOOT_CFG_WIDTH_MASK) == 0)
-				printf(": Doesn't support 8bit card\n",
-					wd->sc_dev.dv_xname);
+				printf(": Doesn't support 8bit card\n");
 			break;
 		}
 	}
@@ -208,7 +207,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	i = 0;
 	while ( (status = (OCTCF_REG_READ(wd, wdr_status)>>8)) & WDCS_BSY) {
 		if ((i++) == NR_TRIES )     {
-			printf(": card not present\n", wd->sc_dev.dv_xname);
+			printf(": card not present\n");
 			return;
                	}
 		DELAY(OCTCFDELAY);
@@ -216,7 +215,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 
 	/* read our drive info */
 	if (octcf_get_params(wd, &wd->sc_params) != 0) {
-		printf(": IDENTIFY failed\n", wd->sc_dev.dv_xname);
+		printf(": IDENTIFY failed\n");
 		return;
 	}
 

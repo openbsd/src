@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.5 2013/10/24 20:45:03 pirofti Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.6 2014/05/10 22:25:16 jasper Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -183,7 +183,7 @@ iobusprint(void *aux, const char *iobus)
 		printf("%s at %s", aa->aa_name, iobus);
 
 	if (aa->aa_unit->addr != 0)
-		printf(" base 0x%llx", aa->aa_unit->addr);
+		printf(" base 0x%lx", aa->aa_unit->addr);
 	if (aa->aa_unit->irq >= 0)
 		printf(" irq %d", aa->aa_unit->irq);
 

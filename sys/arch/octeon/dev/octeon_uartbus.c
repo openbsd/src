@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_uartbus.c,v 1.3 2013/06/02 20:29:36 jasper Exp $ */
+/*	$OpenBSD: octeon_uartbus.c,v 1.4 2014/05/10 22:25:16 jasper Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -151,7 +151,7 @@ uartbusprint(void *aux, const char *uartbus)
 		printf("%s at %s", uba->uba_name, uartbus);
 
 	if (uba->uba_baseaddr != 0)
-		printf(" base 0x%llx", uba->uba_baseaddr);
+		printf(" base 0x%lx", uba->uba_baseaddr);
 	if (uba->uba_intr >= 0)
 		printf(" irq %d", uba->uba_intr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2014/04/04 20:52:05 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2014/05/10 22:25:16 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -648,7 +648,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
-		("pmap_remove(%p, %p, %p)\n", pmap, sva, eva));
+		("pmap_remove(%p, %p, %p)\n", pmap, (void *)sva, (void *)eva));
 
 	stat_count(remove_stats.calls);
 
@@ -660,7 +660,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #ifdef DIAGNOSTIC
 		if (sva < VM_MIN_KERNEL_ADDRESS ||
 		    eva >= VM_MAX_KERNEL_ADDRESS || eva < sva)
-			panic("pmap_remove(%p, %p): not in range", sva, eva);
+			panic("pmap_remove(%p, %p): not in range",
+			    (void *)sva, (void *)eva);
 #endif
 		pte = kvtopte(sva);
 		for(; sva < eva; sva += PAGE_SIZE, pte++) {
@@ -738,10 +739,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	int s;
 
 	if (prot == VM_PROT_NONE) {
-		DPRINTF(PDB_REMOVE, ("pmap_page_protect(%p, %p)\n", pg, prot));
+		DPRINTF(PDB_REMOVE, ("pmap_page_protect(%p, 0x%x)\n", pg, prot));
 	} else {
 		DPRINTF(PDB_FOLLOW|PDB_PROTECT,
-			("pmap_page_protect(%p, %p)\n", pg, prot));
+			("pmap_page_protect(%p, 0x%x)\n", pg, prot));
 	}
 
 	switch (prot) {
@@ -791,7 +792,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	struct cpu_info *ci = curcpu();
 
 	DPRINTF(PDB_FOLLOW|PDB_PROTECT,
-		("pmap_protect(%p, %p, %p, %p)\n", pmap, sva, eva, prot));
+		("pmap_protect(%p, %p, %p, 0x%x)\n",
+		    pmap, (void *)sva, (void *)eva, prot));
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -812,7 +814,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #ifdef DIAGNOSTIC
 		if (sva < VM_MIN_KERNEL_ADDRESS ||
 		    eva >= VM_MAX_KERNEL_ADDRESS || eva < sva)
-			panic("pmap_protect(%p, %p): not in range", sva, eva);
+			panic("pmap_protect(%p, %p): not in range",
+			    (void *)sva, (void *)eva);
 #endif
 		pte = kvtopte(sva);
 		for (; sva < eva; sva += PAGE_SIZE, pte++) {
@@ -886,18 +889,19 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-		("pmap_enter(%p, %p, %p, %p, %p)\n", pmap, va, pa, prot, flags));
+		("pmap_enter(%p, %p, %p, 0x%x, 0x%x)\n",
+		    pmap, (void *)va, (void *)pa, prot, flags));
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel()) {
 		stat_count(enter_stats.kernel);
 		if (va < VM_MIN_KERNEL_ADDRESS ||
 		    va >= VM_MAX_KERNEL_ADDRESS)
-			panic("pmap_enter: kva %p", va);
+			panic("pmap_enter: kva %p", (void *)va);
 	} else {
 		stat_count(enter_stats.user);
 		if (va >= VM_MAXUSER_ADDRESS)
-			panic("pmap_enter: uva %p", va);
+			panic("pmap_enter: uva %p", (void *)va);
 	}
 #endif
 
@@ -1077,12 +1081,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pt_entry_t *pte, npte;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-		("pmap_kenter_pa(%p, %p, 0x%x)\n", va, pa, prot));
+		("pmap_kenter_pa(%p, %p, 0x%x)\n", (void *)va, (void *)pa, prot));
 
 #ifdef DIAGNOSTIC
 	if (va < VM_MIN_KERNEL_ADDRESS ||
 	    va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_kenter_pa: kva %p", va);
+		panic("pmap_kenter_pa: kva %p", (void *)va);
 #endif
 
 	npte = vad_to_pfn(pa) | PG_G | PG_WIRED;
@@ -1114,13 +1118,14 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	vaddr_t eva;
 	struct cpu_info *ci = curcpu();
 
-	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove(%p, %p)\n", va, len));
+	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
+		("pmap_kremove(%p, 0x%lx)\n", (void *)va, len));
 
 	eva = va + len;
 #ifdef DIAGNOSTIC
 	if (va < VM_MIN_KERNEL_ADDRESS ||
 	    eva >= VM_MAX_KERNEL_ADDRESS || eva < va)
-		panic("pmap_kremove: va %p len %p", va, len);
+		panic("pmap_kremove: va %p len %lx", (void *)va, len);
 #endif
 	pte = kvtopte(va);
 	for (; va < eva; va += PAGE_SIZE, pte++) {
@@ -1185,7 +1190,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #ifdef DIAGNOSTIC
 			if (va < VM_MIN_KERNEL_ADDRESS ||
 			    va >= VM_MAX_KERNEL_ADDRESS)
-				panic("pmap_extract(%p, %p)", pmap, va);
+				panic("pmap_extract(%p, %p)", pmap, (void *)va);
 #endif
 			pte = kvtopte(va);
 			if (*pte & PG_V)
@@ -1207,7 +1212,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (rv != FALSE)
 		*pap = pa;
 
-	DPRINTF(PDB_FOLLOW, ("pmap_extract(%p, %p)=%p(%d)", pmap, va, pa, rv));
+	DPRINTF(PDB_FOLLOW, ("pmap_extract(%p, %p)=%p(%d)",
+		pmap, (void *)va, (void *)pa, rv));
 
 	return (rv);
 }
@@ -1241,8 +1247,8 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vaddr_t src_addr;
 {
 
-	DPRINTF(PDB_FOLLOW, ("pmap_copy(%p, %p, %p, %p, %p)\n",
-	       dst_pmap, src_pmap, dst_addr, len, src_addr));
+	DPRINTF(PDB_FOLLOW,("pmap_copy(%p, %p, %p, 0x%lx, %p)\n",
+	       dst_pmap, src_pmap, (void *)dst_addr, len, (void *)src_addr));
 }
 
 /*
@@ -1257,7 +1263,7 @@ pmap_zero_page(struct vm_page *pg)
 	struct cpu_info *ci = curcpu();
 	int df = 0;
 
-	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", phys));
+	DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%p)\n", (void *)phys));
 
 	va = (vaddr_t)PHYS_TO_XKPHYS(phys, CCA_CACHED);
 	pv = pg_to_pvh(pg);
@@ -1299,7 +1305,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	s = (vaddr_t)PHYS_TO_XKPHYS(src, CCA_CACHED);
 	d = (vaddr_t)PHYS_TO_XKPHYS(dst, CCA_CACHED);
 
-	DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%p, %p)\n", src, dst));
+	DPRINTF(PDB_FOLLOW,
+		("pmap_copy_page(%p, %p)\n", (void *)src, (void *)dst));
 
 	pv = pg_to_pvh(srcpg);
 	if (srcpg->pg_flags & PGF_UNCACHED)
@@ -1346,7 +1353,8 @@ pmap_clear_modify(struct vm_page *pg)
 	paddr_t pa;
 	struct cpu_info *ci = curcpu();
 
-	DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", VM_PAGE_TO_PHYS(pg)));
+	DPRINTF(PDB_FOLLOW,
+		("pmap_clear_modify(%p)\n", (void *)VM_PAGE_TO_PHYS(pg)));
 
 	pa = VM_PAGE_TO_PHYS(pg);
 	pv = pg_to_pvh(pg);
@@ -1361,7 +1369,8 @@ pmap_clear_modify(struct vm_page *pg)
 #ifdef DIAGNOSTIC
 			if (pv->pv_va < VM_MIN_KERNEL_ADDRESS ||
 			    pv->pv_va >= VM_MAX_KERNEL_ADDRESS)
-				panic("pmap_clear_modify(%p)", pv->pv_va);
+				panic("pmap_clear_modify(%p)",
+				    (void *)pv->pv_va);
 #endif
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
@@ -1410,7 +1419,8 @@ pmap_clear_reference(struct vm_page *pg)
 {
 	boolean_t rv;
 
-	DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", VM_PAGE_TO_PHYS(pg)));
+	DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n",
+	    (void *)VM_PAGE_TO_PHYS(pg)));
 
 	rv = (pg->pg_flags & PGF_ATTR_REF) != 0;
 	atomic_clearbits_int(&pg->pg_flags, PGF_ATTR_REF);
@@ -1478,7 +1488,7 @@ pmap_page_cache(vm_page_t pg, u_int mode)
 #ifdef DIAGNOSTIC
 			if (pv->pv_va < VM_MIN_KERNEL_ADDRESS ||
 			    pv->pv_va >= VM_MAX_KERNEL_ADDRESS)
-				panic("pmap_page_cache(%p)", pv->pv_va);
+				panic("pmap_page_cache(%p)", (void *)pv->pv_va);
 #endif
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
@@ -1573,7 +1583,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 
 		DPRINTF(PDB_PVENTRY,
 			("pmap_enter: first pv: pmap %p va %p pa %p\n",
-				pmap, va, VM_PAGE_TO_PHYS(pg)));
+				pmap, (void *)va, (void *)VM_PAGE_TO_PHYS(pg)));
 
 		stat_count(enter_stats.firstpv);
 
@@ -1612,7 +1622,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 
 		DPRINTF(PDB_PVENTRY,
 			("pmap_enter: new pv: pmap %p va %p pg %p\n",
-			    pmap, va, VM_PAGE_TO_PHYS(pg)));
+			    pmap, (void *)va, (void *)VM_PAGE_TO_PHYS(pg)));
 
 		npv = pmap_pv_alloc();
 		if (npv == NULL) {
@@ -1632,10 +1642,10 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 			 * cache and set page to not be mapped cached.
 			 */
 			if (((pv->pv_va ^ va) & cache_valias_mask) != 0) {
-#ifdef PMAP_DEBUG
+#ifdef PMAPDEBUG
 				printf("%s: uncaching page pa %p, va %p/%p\n",
-				    __func__, VM_PAGE_TO_PHYS(pg),
-				    pv->pv_va, va);
+				    __func__, (void *)VM_PAGE_TO_PHYS(pg),
+				    (void *)pv->pv_va, (void *)va);
 #endif
 				pmap_page_cache(pg, 0);
 				Mips_SyncDCachePage(curcpu(), pv->pv_va,
@@ -1668,7 +1678,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_PVENTRY,
-		("pmap_remove_pv(%p, %p, %p)\n", pmap, va, pa));
+		("pmap_remove_pv(%p, %p, %p)\n", pmap, (void *)va, (void *)pa));
 
 	/*
 	 * Remove page from the PV table
@@ -1707,7 +1717,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		} else {
 #ifdef DIAGNOSTIC
 			panic("pmap_remove_pv(%p, %p, %p) not found",
-			    pmap, va, pa);
+			    pmap, (void *)va, (void *)pa);
 #endif
 		}
 	}
@@ -1727,9 +1737,9 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 
 		if (pv == NULL) {
-#ifdef PMAP_DEBUG
+#ifdef PMAPDEBUG
 			printf("%s: caching page pa %p, va %p again\n",
-			    __func__, VM_PAGE_TO_PHYS(pg), va);
+			    __func__, (void *)VM_PAGE_TO_PHYS(pg), (void *)va);
 #endif
 			pmap_page_cache(pg, PGF_CACHED);
 		}

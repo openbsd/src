@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2014/04/03 08:07:16 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.45 2014/05/10 22:25:16 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -233,7 +233,7 @@ octeon_memory_init(struct boot_info *boot_info)
 		    (long)phys_avail[i], (long)phys_avail[i + 1]);
 	}
 	for (i = 0; mem_layout[i].mem_last_page; i++) {
-		printf("mem_layout[%d] page 0x%016lX -> 0x%016lX\n", i,
+		printf("mem_layout[%d] page 0x%016llX -> 0x%016llX\n", i,
 		    mem_layout[i].mem_first_page, mem_layout[i].mem_last_page);
 	}
 }
@@ -402,9 +402,9 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 	DUMP_BOOT_DESC(desc_ver, %d);
 	DUMP_BOOT_DESC(desc_size, %d);
-	DUMP_BOOT_DESC(stack_top, %d);
-	DUMP_BOOT_DESC(heap_start, %d);
-	DUMP_BOOT_DESC(heap_end, %d);
+	DUMP_BOOT_DESC(stack_top, %llu);
+	DUMP_BOOT_DESC(heap_start, %llu);
+	DUMP_BOOT_DESC(heap_end, %llu);
 	DUMP_BOOT_DESC(argc, %d);
 	DUMP_BOOT_DESC(flags, %x);
 	DUMP_BOOT_DESC(core_mask, %x);
@@ -412,14 +412,14 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	DUMP_BOOT_DESC(phy_mem_desc_addr, %x);
 	DUMP_BOOT_DESC(debugger_flag_addr, %x);
 	DUMP_BOOT_DESC(eclock, %d);
-	DUMP_BOOT_DESC(boot_info_addr, %x);
+	DUMP_BOOT_DESC(boot_info_addr, %llx);
 
 	DUMP_BOOT_INFO(ver_major, %d);
 	DUMP_BOOT_INFO(ver_minor, %d);
-	DUMP_BOOT_INFO(stack_top, %x);
-	DUMP_BOOT_INFO(heap_start, %x);
-	DUMP_BOOT_INFO(heap_end, %x);
-	DUMP_BOOT_INFO(boot_desc_addr, %x);
+	DUMP_BOOT_INFO(stack_top, %llx);
+	DUMP_BOOT_INFO(heap_start, %llx);
+	DUMP_BOOT_INFO(heap_end, %llx);
+	DUMP_BOOT_INFO(boot_desc_addr, %llx);
 	DUMP_BOOT_INFO(exception_base_addr, %x);
 	DUMP_BOOT_INFO(stack_size, %d);
 	DUMP_BOOT_INFO(flags, %x);
@@ -433,9 +433,9 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	DUMP_BOOT_INFO(board_rev_major, %d);
 	DUMP_BOOT_INFO(board_rev_minor, %d);
 	DUMP_BOOT_INFO(mac_addr_count, %d);
-	DUMP_BOOT_INFO(cf_common_addr, %x);
-	DUMP_BOOT_INFO(cf_attr_addr, %x);
-	DUMP_BOOT_INFO(led_display_addr, %x);
+	DUMP_BOOT_INFO(cf_common_addr, %llx);
+	DUMP_BOOT_INFO(cf_attr_addr, %llx);
+	DUMP_BOOT_INFO(led_display_addr, %llx);
 	DUMP_BOOT_INFO(dfaclock, %d);
 	DUMP_BOOT_INFO(config_flags, %x);
 #endif
@@ -524,7 +524,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %u (%uMB)\n", ptoa((psize_t)physmem),
+	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 
 	/*
@@ -538,7 +538,7 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %u (%uMB)\n", ptoa(uvmexp.free),
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
 
 	/*
@@ -601,7 +601,7 @@ process_bootargs(void)
 
 #ifdef DEBUG
 		printf("boot_desc->argv[%d] = %s\n",
-		       i, PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]));
+		       i, (const char *)PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]));
 #endif
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.38 2014/04/09 21:10:35 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.39 2014/05/10 22:25:16 jasper Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -499,13 +499,13 @@ db_dump_tlb_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 				asid = 0;	/* KV1 addresses ignore ASID */
 			va |= ptoa((tlbno ^ asid) % 128);
 #endif
-			db_printf("%3d v=%016llx", tlbno, va);
+			db_printf("%3d v=%016lx", tlbno, va);
 			db_printf("/%02x ", asid);
 
 			db_print_tlb(tlbno, tlb.tlb_lo0);
 #ifndef CPU_R8000
 			db_print_tlb(tlbno, tlb.tlb_lo1);
-			db_printf(" sz=%x", tlb.tlb_mask);
+			db_printf(" sz=%llx", tlb.tlb_mask);
 #endif
 		} else if (pid < 0) {
 			db_printf("%3d v=invalid    ", tlbno);
