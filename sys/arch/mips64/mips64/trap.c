@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2014/05/10 22:25:16 jasper Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2014/05/11 00:05:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,9 +49,9 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
+#include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #ifdef PTRACE

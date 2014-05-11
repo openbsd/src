@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.16 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.17 2014/05/11 00:05:38 guenther Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -77,11 +77,11 @@
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
-#include <sys/syscall.h>
-#include <sys/syscall_mi.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 
 #include <uvm/uvm_extern.h>
 
