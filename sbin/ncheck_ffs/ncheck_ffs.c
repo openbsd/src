@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.38 2013/11/01 17:36:18 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.39 2014/05/11 21:14:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -412,6 +412,7 @@ searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
 	void *di;
 	mode_t mode;
 	char *npath;
+	ino_t subino;
 	long loc;
 
 	if ((dblk = malloc(sblock->fs_bsize)) == NULL)
@@ -436,7 +437,8 @@ searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
 		}
 		di = getino(dp->d_ino);
 		mode = DIP(di, di_mode) & IFMT;
-		if (bsearch(&dp->d_ino, ilist, ninodes, sizeof(*ilist), matchino)) {
+		subino = dp->d_ino;
+		if (bsearch(&subino, ilist, ninodes, sizeof(*ilist), matchino)) {
 			if (format) {
 				format_entry(path, dp);
 			} else {
