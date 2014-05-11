@@ -70,6 +70,6 @@
   -n _n_u_m_b_e_r            Page number of lines per screenful.
   -p _c_o_m_m_a_n_d           Execute the specified commands.
   -s                   Squeeze multiple blank lines.
-  -t _t_a_g               Examine the file containing tag..
+  -t _t_a_g               Examine the file containing tag.
   -u                   Change handling of backspaces.
 
