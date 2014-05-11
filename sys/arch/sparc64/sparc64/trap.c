@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.83 2014/05/10 12:29:58 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.84 2014/05/11 00:12:44 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -452,6 +452,7 @@ dopanic:
 
 	case T_AST:
 		p->p_md.md_astpending = 0;
+		uvmexp.softs++;
 		mi_ast(p, curcpu()->ci_want_resched);
 		break;
 

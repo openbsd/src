@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2014/05/10 05:33:00 guenther Exp $     */
+/*	$OpenBSD: trap.c,v 1.53 2014/05/11 00:12:44 guenther Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -253,6 +253,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	case T_ASTFLT|T_USER:
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = 0;
+		uvmexp.softs++;
 		mi_ast(p, want_resched);
 		break;
 

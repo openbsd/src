@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.92 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.93 2014/05/11 00:12:44 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -207,6 +207,7 @@ ast(struct trapframe *frame)
 
 	p->p_md.md_astpending = 0;
 
+	uvmexp.softs++;
 	mi_ast(p, ci->ci_want_resched);
 	userret(p);
 }

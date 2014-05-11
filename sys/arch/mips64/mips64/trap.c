@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.96 2014/05/11 00:05:38 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.97 2014/05/11 00:12:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,6 +150,7 @@ ast()
 
 	p->p_md.md_astpending = 0;
 
+	atomic_add_int(&uvmexp.softs, 1);
 	mi_ast(p, ci->ci_want_resched);
 	userret(p);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.73 2014/05/10 05:33:00 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.74 2014/05/11 00:12:43 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -720,6 +720,7 @@ ast(framep)
 		panic("ast and not user");
 #endif
 
+	atomic_add_int(&uvmexp.softs, 1);
 	mi_ast(p, ci->ci_want_resched);
 
 	/* Do any deferred user pmap operations. */

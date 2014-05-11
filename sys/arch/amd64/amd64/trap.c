@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2014/05/11 00:12:43 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -281,6 +281,7 @@ copyfault:
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
+		uvmexp.softs++;
 		mi_ast(p, curcpu()->ci_want_resched);
 		goto out;
 

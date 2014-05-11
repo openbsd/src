@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2014/05/11 00:12:44 guenther Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -308,6 +308,7 @@ trap(type, psr, pc, tf)
 
 	case T_AST:
 		want_ast = 0;
+		uvmexp.softs++;
 		mi_ast(p, want_resched);
 		break;
 

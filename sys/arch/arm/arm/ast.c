@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.11 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: ast.c,v 1.12 2014/05/11 00:12:44 guenther Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ ast(struct trapframe *tf)
 		panic("ast: no pcb!");
 #endif	
 
+	uvmexp.softs++;
 	mi_ast(p, want_resched);
 	userret(p);
 }

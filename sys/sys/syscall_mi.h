@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.4 2014/05/10 05:33:00 guenther Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.5 2014/05/11 00:12:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -146,11 +146,9 @@ mi_child_return(struct proc *p)
 /* 
  * Do the specific processing necessary for an AST
  */
-static void
+static inline void
 mi_ast(struct proc *p, int resched)
 {
-	uvmexp.softs++;
-
 	if (p->p_flag & P_OWEUPC) {
 		KERNEL_LOCK();
 		ADDUPROF(p);
