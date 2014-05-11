@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.39 2014/05/11 21:14:03 guenther Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.40 2014/05/11 21:25:07 halex Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -157,13 +157,9 @@ cacheino(ino_t ino, void *dp)
 {
 	struct icache_s *newicache;
 
-	newicache = realloc(icache, (nicache + 1) * sizeof(struct icache_s));
-	if (newicache == NULL) {
-		if (icache)
-			free(icache);
-		icache = NULL;
+	newicache = reallocarray(icache, nicache + 1, sizeof(struct icache_s));
+	if (newicache == NULL)
 		errx(1, "malloc");
-	}
 	icache = newicache;
 	icache[nicache].ino = ino;
 	if (sblock->fs_magic == FS_UFS1_MAGIC)
@@ -321,13 +317,9 @@ addinode(ino_t ino)
 {
 	ino_t *newilist;
 
-	newilist = realloc(ilist, sizeof(ino_t) * (ninodes + 1));
-	if (newilist == NULL) {
-		if (ilist)
-			free(ilist);
-		ilist = NULL;
+	newilist = reallocarray(ilist, ninodes + 1, sizeof(ino_t));
+	if (newilist == NULL)
 		errx(4, "not enough memory to allocate tables");
-	}
 	ilist = newilist;
 	ilist[ninodes] = ino;
 	ninodes++;
