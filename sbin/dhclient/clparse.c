@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.85 2014/05/05 18:02:49 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.86 2014/05/11 12:40:37 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -486,55 +486,21 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	}
 
 	/*
-	 * The new lease may supersede a lease that's not the active
-	 * lease but is still on the lease list, so scan the lease list
-	 * looking for a lease with the same address, and if we find it,
-	 * toss it.
+	 * The new lease will supersede a lease of the same type and for
+	 * the same address.
 	 */
 	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
-		if (lp->address.s_addr == lease->address.s_addr) {
+		if (lp->address.s_addr == lease->address.s_addr &&
+		    lp->is_static == lease->is_static) {
 			TAILQ_REMOVE(&client->leases, lp, next);
 			free_client_lease(lp);
 		}
 	}
 
-	/*
-	 * If this is a preloaded lease, just put it on the list of
-	 * recorded leases - don't make it the active lease.
-	 */
-	if (is_static) {
-		TAILQ_INSERT_HEAD(&client->leases, lease, next);
-		return;
-	}
-
-	/*
-	 * The last lease in the lease file on a particular interface is
-	 * the active lease for that interface.    Of course, we don't
-	 * know what the last lease in the file is until we've parsed
-	 * the whole file, so at this point, we assume that the lease we
-	 * just parsed is the active lease for its interface.   If
-	 * there's already an active lease for the interface, and this
-	 * lease is for the same ip address, then we just toss the old
-	 * active lease and replace it with this one.   If this lease is
-	 * for a different address, then if the old active lease has
-	 * expired, we dump it; if not, we put it on the list of leases
-	 * for this interface which are still valid but no longer
-	 * active.
-	 */
-	if (client->active) {
-		if (client->active->expiry < time(NULL))
-			free_client_lease(client->active);
-		else if (client->active->address.s_addr ==
-		    lease->address.s_addr)
-			free_client_lease(client->active);
-		else {
-			TAILQ_INSERT_HEAD(&client->leases, client->active,
-			    next);
-		}
-	}
-	client->active = lease;
-
-	/* Phew. */
+	if (is_static)
+		TAILQ_INSERT_TAIL(&client->leases, lease, next);
+	else
+		TAILQ_INSERT_HEAD(&client->leases, lease,  next);
 }
 
 /*

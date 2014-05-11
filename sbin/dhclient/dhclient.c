@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.303 2014/05/05 18:02:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.304 2014/05/11 12:40:37 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -626,9 +626,30 @@ usage(void)
 void
 state_reboot(void)
 {
+	struct client_lease *lp, *pl;
+	time_t cur_time;
+
 	cancel_timeout();
 	deleting.s_addr = INADDR_ANY;
 	adding.s_addr = INADDR_ANY;
+
+	time(&cur_time);
+	if (client->active && client->active->expiry <= cur_time) {
+		free_client_lease(client->active);
+		client->active = NULL;
+	}
+
+	/* Run through the list of leases and see if one can be used. */
+	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+		if (client->active || lp->is_static)
+			break;
+		else if (lp->expiry <= cur_time)
+			free_client_lease(lp);
+		else {
+			client->active = lp;
+			break;
+		}
+	}
 
 	/* If we don't remember an active lease, go straight to INIT. */
 	if (!client->active || client->active->is_bootp) {
@@ -784,7 +805,16 @@ bind_lease(void)
 {
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
-	struct client_lease *lease;
+	struct client_lease *lease, *pl;
+
+	/*
+	 * If it's been here before (e.g. static lease), clear out any
+	 * old resolv_conf.
+	 */
+	if (client->new->resolv_conf) {
+		free(client->new->resolv_conf);
+		client->new->resolv_conf = NULL;
+	}
 
 	lease = apply_defaults(client->new);
 	options = lease->options;
@@ -866,20 +896,28 @@ bind_lease(void)
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
 		    client->new->resolv_conf, strlen(client->new->resolv_conf));
 
-	/* Replace the old active lease with the new one. */
 newlease:
-	if (client->active)
-		free_client_lease(client->active);
+	/* Replace the old active lease with the new one. */
 	client->active = client->new;
 	client->new = NULL;
+	rewrite_option_db(client->active, lease);
+	free_client_lease(lease);
+
+	/* Remove previous dynamic lease(es) for this address. */
+	TAILQ_FOREACH_SAFE(lease, &client->leases, next, pl) {
+		if (lease->is_static)
+			break;
+		if (client->active != lease && lease->address.s_addr ==
+		    client->active->address.s_addr)
+			free_client_lease(lease);
+	}
+	if (!client->active->is_static)
+		TAILQ_INSERT_HEAD(&client->leases, client->active,  next);
 
 	client->state = S_BOUND;
 
 	/* Write out new leases file. */
 	rewrite_client_leases();
-	rewrite_option_db(client->active, lease);
-
-	free_client_lease(lease);
 
 	/* Set timeout to start the renewal process. */
 	set_timeout(client->active->renewal, state_bound);
@@ -1185,73 +1223,30 @@ send_discover(void)
 void
 state_panic(void)
 {
-	struct client_lease *loop = client->active;
+	struct client_lease *lp, *pl;
 	time_t cur_time;
 
 	time(&cur_time);
 	note("No acceptable DHCPOFFERS received.");
 
-	/*
-	 * We may not have an active lease, but we may have some predefined
-	 * leases that we can try.
-	 */
-	if (!client->active && !TAILQ_EMPTY(&client->leases))
-		goto activate_next;
-
 	/* Run through the list of leases and see if one can be used. */
-	while (client->active) {
-		if (client->active->expiry > cur_time) {
+	time(&cur_time);
+	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+		if (lp->is_static) {
+			set_lease_times(lp);
+			note("Trying static lease %s", inet_ntoa(lp->address));
+		} else if (lp->expiry <= cur_time) {
+			free_client_lease(lp);
+			continue;
+		} else
 			note("Trying recorded lease %s",
-			    inet_ntoa(client->active->address));
+			    inet_ntoa(lp->address));
 
-			/*
-			 * If the old lease is still good and doesn't
-			 * yet need renewal, go into BOUND state and
-			 * timeout at the renewal time.
-			 */
-			if (cur_time < client->active->renewal) {
-				client->state = S_BOUND;
-				note("bound: renewal in %lld seconds.",
-				    (long long)(client->active->renewal
-				    - cur_time));
-				set_timeout(client->active->renewal,
-				    state_bound);
-			} else {
-				client->state = S_BOUND;
-				note("bound: immediate renewal.");
-				state_bound();
-			}
-			go_daemon();
-			return;
-		}
+		client->new = lp;
+		client->state = S_REQUESTING;
+		bind_lease();
 
-		/* If there are no other leases, give up. */
-		if (TAILQ_EMPTY(&client->leases)) {
-			TAILQ_INSERT_HEAD(&client->leases, client->active,
-			    next);
-			client->active = NULL;
-			break;
-		}
-
-activate_next:
-		/*
-		 * Otherwise, put the active lease at the end of the lease
-		 * list, and try another lease.
-		 */
-		if (client->active)
-			TAILQ_INSERT_TAIL(&client->leases, client->active,
-			    next);
-		client->active = TAILQ_FIRST(&client->leases);
-		TAILQ_REMOVE(&client->leases, client->active, next);
-
-		/*
-		 * If we already tried this lease, we've exhausted the set of
-		 * leases, so we might as well give up for now.
-		 */
-		if (client->active == loop)
-			break;
-		else if (!loop)
-			loop = client->active;
+		return;
 	}
 
 	/*
@@ -1584,7 +1579,17 @@ make_decline(struct client_lease *lease)
 void
 free_client_lease(struct client_lease *lease)
 {
+	struct client_lease *lp, *pl;
 	int i;
+
+	/* Static leases are forever. */
+	if (lease->is_static)
+		return;
+
+	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+		if (lease == lp)
+			TAILQ_REMOVE(&client->leases, lp, next);
+	}
 
 	if (lease->server_name)
 		free(lease->server_name);
@@ -1604,6 +1609,7 @@ rewrite_client_leases(void)
 {
 	struct client_lease *lp;
 	char *leasestr;
+	time_t cur_time;
 
 	if (!leaseFile)	/* XXX */
 		error("lease file not open");
@@ -1619,23 +1625,14 @@ rewrite_client_leases(void)
 	 * the leases in client->leases in reverse order to recreate
 	 * the chonological order required.
 	 */
+	time(&cur_time);
 	TAILQ_FOREACH_REVERSE(lp, &client->leases, _leases, next) {
-		/* Skip any leases that duplicate the active lease address. */
-		if (client->active && lp->address.s_addr ==
-		    client->active->address.s_addr)
-			continue;
 		/* Don't write out static leases from dhclient.conf. */
 		if (lp->is_static)
 			continue;
+		if (lp->expiry <= cur_time)
+			continue;
 		leasestr = lease_as_string("lease", lp);
-		if (leasestr)
-			fprintf(leaseFile, "%s", leasestr);
-		else
-			warning("cannot make lease into string");
-	}
-
-	if (client->active) {
-		leasestr = lease_as_string("lease", client->active);
 		if (leasestr)
 			fprintf(leaseFile, "%s", leasestr);
 		else
