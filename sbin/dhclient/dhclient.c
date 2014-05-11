@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.304 2014/05/11 12:40:37 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.305 2014/05/11 14:00:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1357,8 +1357,8 @@ send_request(void)
 			client->bootrequest_packet.secs = htons(65535);
 	}
 
-	note("DHCPREQUEST on %s to %s port %hu", ifi->name,
-	    inet_ntoa(destination.sin_addr), ntohs(destination.sin_port));
+	note("DHCPREQUEST on %s to %s", ifi->name,
+	    inet_ntoa(destination.sin_addr));
 
 	send_packet(from, destination.sin_addr);
 
