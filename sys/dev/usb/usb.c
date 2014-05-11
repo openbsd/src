@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.95 2014/03/31 16:18:06 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.96 2014/05/11 16:33:21 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -900,10 +900,19 @@ usb_activate(struct device *self, int act)
 		if (sc->sc_bus->root_hub != NULL)
 			usb_detach_roothub(sc);
 		break;
-	case DVACT_WAKEUP:
+	case DVACT_RESUME:
 		sc->sc_bus->dying = 0;
+
+		/*
+		 * Make sure the root hub is present before interrupts
+		 * get enabled.   As long as the bus is in polling mode
+		 * it is safe to call usbd_new_device() now since root
+		 * hub transfers do not need to sleep.
+		 */
+		sc->sc_bus->use_polling++;
 		if (!usb_attach_roothub(sc))
 			usb_needs_explore(sc->sc_bus->root_hub, 0);
+		sc->sc_bus->use_polling--;
 		break;
 	case DVACT_DEACTIVATE:
 		rv = config_activate_children(self, act);
