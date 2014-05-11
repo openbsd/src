@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.33 2014/05/05 15:08:37 tedu Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.34 2014/05/11 00:03:14 chl Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ int
 main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
-	struct sockaddr_in inetaddr, inetpeer;
+	struct sockaddr_in inetaddr;
 	int ch, connect_type_cnt, i;
 	int nfsdcnt = DEFNFSDCNT, on, reregister = 0, sock;
 	int udpflag = 0, tcpflag = 0, tcpsock;
