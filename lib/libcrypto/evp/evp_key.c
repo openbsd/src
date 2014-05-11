@@ -105,7 +105,7 @@ EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
 		prompt = prompt_string;
 	ui = UI_new();
-	UI_add_input_string(ui, prompt, 0,buf, min,
+	UI_add_input_string(ui, prompt, 0, buf, min,
 	    (len >= BUFSIZ) ? BUFSIZ - 1 : len);
 	if (verify)
 		UI_add_verify_string(ui, prompt, 0, buff, min,

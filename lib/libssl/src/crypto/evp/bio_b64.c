@@ -147,7 +147,7 @@ b64_free(BIO *a)
 static int
 b64_read(BIO *b, char *out, int outl)
 {
-	int ret = 0, i, ii, j,k, x,n, num, ret_code = 0;
+	int ret = 0, i, ii, j, k, x, n, num, ret_code = 0;
 	BIO_B64_CTX *ctx;
 	unsigned char *p, *q;
 

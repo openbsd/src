@@ -419,7 +419,7 @@ BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
 
 	b->init = 1;
 	ctx = (BIO_ENC_CTX *)b->ptr;
-	EVP_CipherInit_ex(&(ctx->cipher), c,NULL, k, i, e);
+	EVP_CipherInit_ex(&(ctx->cipher), c, NULL, k, i, e);
 
 	if (b->callback != NULL)
 		b->callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 1L);

@@ -68,7 +68,7 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_EVP,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_EVP,0,reason)
 
-static ERR_STRING_DATA EVP_str_functs[]= {
+static ERR_STRING_DATA EVP_str_functs[] = {
 	{ERR_FUNC(EVP_F_AESNI_INIT_KEY),	"AESNI_INIT_KEY"},
 	{ERR_FUNC(EVP_F_AESNI_XTS_CIPHER),	"AESNI_XTS_CIPHER"},
 	{ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
@@ -149,7 +149,7 @@ static ERR_STRING_DATA EVP_str_functs[]= {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA EVP_str_reasons[]= {
+static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_AES_IV_SETUP_FAILED)   , "aes iv setup failed"},
 	{ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED)  , "aes key setup failed"},
 	{ERR_REASON(EVP_R_ASN1_LIB)              , "asn1 lib"},
