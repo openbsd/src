@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.13 2014/05/10 22:25:16 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.14 2014/05/11 09:23:49 jasper Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -248,7 +248,7 @@ octeon_pcibus_attach(struct device *parent, struct device *self, void *aux)
 bus_addr_t
 octeon_pcibus_pa_to_device(paddr_t pa)
 {
-	printf("%s:%d: pa=%p\n", __func__, __LINE__, (void *)pa);
+	OCTEON_PCIDEBUG(("%s:%d: pa=%p\n", __func__, __LINE__, (void *)pa));
 
 	return pa & 0x1ffffffffffffUL;
 }
@@ -256,7 +256,7 @@ octeon_pcibus_pa_to_device(paddr_t pa)
 paddr_t
 octeon_pcibus_device_to_pa(bus_addr_t addr)
 {
-	printf("%s:%d: addr=%lx\n", __func__, __LINE__, addr);
+	OCTEON_PCIDEBUG(("%s:%d: addr=%lx\n", __func__, __LINE__, addr));
 
 	return PHYS_TO_XKPHYS(addr, CCA_NC);
 }
