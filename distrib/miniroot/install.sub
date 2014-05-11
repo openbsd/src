@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.773 2014/05/10 17:25:21 rpe Exp $
+#	$OpenBSD: install.sub,v 1.774 2014/05/11 08:23:46 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -656,6 +656,9 @@ configure_ifs() {
 	# Always need lo0 configured.
 	ifconfig lo0 inet 127.0.0.1/8
 
+	# In case of restart, delete previous default gateway config.
+	rm -f /tmp/mygate
+
 	while :; do
 		# Create new vlan if possible.
 		ifconfig vlan$_vl create >/dev/null 2>&1
@@ -983,7 +986,7 @@ v4_defroute() {
 		ask_until "$_prompt" "$_dr"
 		[[ $resp == @(none|dhcp) ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" && { echo "$resp" >/tmp/mygate; break; }
+		route -n add -inet -host default "$resp" && { echo "$resp" >>/tmp/mygate; break; }
 		# Put the old default route back. The new one did not work.
 		route -n add -inet -host default $_dr >/dev/null 2>&1
 	done
