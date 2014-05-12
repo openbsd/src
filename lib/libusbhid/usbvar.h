@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbvar.h,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: usbvar.h,v 1.3 2014/05/12 17:03:28 mpi Exp $	*/
 /*	$NetBSD: usbvar.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -28,7 +28,6 @@
  */
 
 struct report_desc {
-	unsigned int size;
-	unsigned char data[1];
+	uint32_t size;
+	uint8_t data[1];
 };
-

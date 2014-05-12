@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.6 2012/07/16 19:57:17 jasper Exp $	*/
+/*	$OpenBSD: data.c,v 1.7 2014/05/12 17:03:28 mpi Exp $	*/
 /*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
@@ -30,36 +30,68 @@
 #include <stdlib.h>
 #include "usbhid.h"
 
-int
+int32_t
 hid_get_data(const void *p, const hid_item_t *h)
 {
-	const unsigned char *buf = p;
-	unsigned int hpos = h->pos, hsize = h->report_size;
-	int data, i, end, offs;
+	const uint8_t *buf;
+	uint32_t hpos;
+	uint32_t hsize;
+	uint32_t data;
+	int i, end, offs;
 
+	buf = p;
+
+	/* Skip report ID byte. */
+	if (h->report_ID > 0)
+		buf++;
+
+	hpos = h->pos;			/* bit position of data */
+	hsize = h->report_size;		/* bit length of data */
+
+	/* Range check and limit */
 	if (hsize == 0)
 		return (0);
+	if (hsize > 32)
+		hsize = 32;
+
 	offs = hpos / 8;
 	end = (hpos + hsize) / 8 - offs;
 	data = 0;
 	for (i = 0; i <= end; i++)
 		data |= buf[offs + i] << (i*8);
+
+	/* Correctly shift down data */
 	data >>= hpos % 8;
-	data &= (1 << hsize) - 1;
-	if (h->logical_minimum < 0) {
-		/* Need to sign extend */
-		hsize = sizeof data * 8 - hsize;
-		data = (data << hsize) >> hsize;
-	}
+	hsize = 32 - hsize;
+
+	/* Mask and sign extend in one */
+	if ((h->logical_minimum < 0) || (h->logical_maximum < 0))
+		data = (int32_t)((int32_t)data << hsize) >> hsize;
+	else
+		data = (uint32_t)((uint32_t)data << hsize) >> hsize;
+
 	return (data);
 }
 
 void
-hid_set_data(void *p, const hid_item_t *h, int data)
+hid_set_data(void *p, const hid_item_t *h, int32_t data)
 {
-	unsigned char *buf = p;
-	unsigned int hpos = h->pos, hsize = h->report_size;
-	int i, end, offs, mask;
+	uint8_t *buf;
+	uint32_t hpos;
+	uint32_t hsize;
+	uint32_t mask;
+	int i;
+	int end;
+	int offs;
+
+	buf = p;
+
+	/* Set report ID byte. */
+	if (h->report_ID > 0)
+		*buf++ = h->report_ID & 0xff;
+
+	hpos = h->pos;			/* bit position of data */
+	hsize = h->report_size;		/* bit length of data */
 
 	if (hsize != 32) {
 		mask = (1 << hsize) - 1;

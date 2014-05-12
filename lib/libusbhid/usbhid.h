@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.5 2012/07/16 19:57:17 jasper Exp $	*/
+/*	$OpenBSD: usbhid.h,v 1.6 2014/05/12 17:03:28 mpi Exp $	*/
 /*	$NetBSD: usbhid.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -32,45 +32,41 @@ typedef struct report_desc *report_desc_t;
 typedef struct hid_data *hid_data_t;
 
 typedef enum hid_kind {
-	hid_input = 0,
-	hid_output = 1,
-	hid_feature = 2,
-	hid_collection,
-	hid_endcollection
+	hid_input, hid_output, hid_feature, hid_collection, hid_endcollection
 } hid_kind_t;
 
 typedef struct hid_item {
 	/* Global */
-	int _usage_page;
-	int logical_minimum;
-	int logical_maximum;
-	int physical_minimum;
-	int physical_maximum;
-	int unit_exponent;
-	int unit;
-	int report_size;
-	int report_ID;
+	uint32_t _usage_page;
+	int32_t logical_minimum;
+	int32_t logical_maximum;
+	int32_t physical_minimum;
+	int32_t physical_maximum;
+	int32_t unit_exponent;
+	int32_t unit;
+	int32_t report_size;
+	int32_t report_ID;
 #define NO_REPORT_ID 0
-	int report_count;
+	int32_t report_count;
 	/* Local */
-	unsigned int usage;
-	int usage_minimum;
-	int usage_maximum;
-	int designator_index;
-	int designator_minimum;
-	int designator_maximum;
-	int string_index;
-	int string_minimum;
-	int string_maximum;
-	int set_delimiter;
+	uint32_t usage;
+	int32_t usage_minimum;
+	int32_t usage_maximum;
+	int32_t designator_index;
+	int32_t designator_minimum;
+	int32_t designator_maximum;
+	int32_t string_index;
+	int32_t string_minimum;
+	int32_t string_maximum;
+	int32_t set_delimiter;
 	/* Misc */
-	int collection;
-	int collevel;
+	int32_t collection;
+	int	collevel;
 	enum hid_kind kind;
-	unsigned int flags;
-	/* Absolute data position (bits) */
-	unsigned int pos;
-	/* */
+	uint32_t flags;
+	/* Location */
+	uint32_t pos;
+	/* unused */
 	struct hid_item *next;
 } hid_item_t;
 
@@ -99,5 +95,5 @@ int		hid_parse_usage_in_page(const char *name);
 int		hid_parse_usage_page(const char *name);
 
 /* Extracting/insertion of data, data.c: */
-int		hid_get_data(const void *p, const hid_item_t *h);
-void		hid_set_data(void *p, const hid_item_t *h, int data);
+int32_t		hid_get_data(const void *p, const hid_item_t *h);
+void		hid_set_data(void *p, const hid_item_t *h, int32_t data);
