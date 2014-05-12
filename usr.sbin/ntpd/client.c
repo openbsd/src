@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.92 2013/10/21 08:48:22 phessler Exp $ */
+/*	$OpenBSD: client.c,v 1.93 2014/05/12 20:50:46 miod Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -289,9 +289,9 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		}
 		interval = error_interval();
 		set_next(p, interval);
-		log_info("reply from %s: not synced (%s), next query %ds",
+		log_info("reply from %s: not synced (%s), next query %llds",
 		    log_sockaddr((struct sockaddr *)&p->addr->ss), s,
-			interval);
+			(long long)interval);
 		return (0);
 	}
 
@@ -331,9 +331,9 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		interval = error_interval();
 		set_next(p, interval);
 		log_info("reply from %s: negative delay %fs, "
-		    "next query %ds",
+		    "next query %llds",
 		    log_sockaddr((struct sockaddr *)&p->addr->ss),
-		    p->reply[p->shift].delay, interval);
+		    p->reply[p->shift].delay, (long long)interval);
 		return (0);
 	}
 	p->reply[p->shift].error = (T2 - T1) - (T3 - T4);
@@ -384,10 +384,10 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	}
 
 	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %ds %s",
+	    "next query %llds %s",
 	    log_sockaddr((struct sockaddr *)&p->addr->ss),
-	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval,
-	    print_rtable(p->rtable));
+	    p->reply[p->shift].offset, p->reply[p->shift].delay,
+	    (long long)interval, print_rtable(p->rtable));
 
 	client_update(p);
 	if (settime)
