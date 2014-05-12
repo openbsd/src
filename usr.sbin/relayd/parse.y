@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.181 2014/05/08 16:11:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.182 2014/05/12 14:28:22 andre Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -1252,6 +1252,7 @@ protonode	: nodetype APPEND STRING TO STRING nodeopts		{
 		| nodetype MARK STRING WITH mark nodeopts		{
 			if (node.mark) {
 				yyerror("either mark or marked");
+				free($3);
 				YYERROR;
 			}
 			node.action = NODE_ACTION_MARK;
