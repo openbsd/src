@@ -70,8 +70,8 @@
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd5.5/3.3.5/cc1
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd5.5/3.3.5/collect2
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd5.5/3.3.5/specs
-./usr/lib/libc.so.74.2
-./usr/lib/libcrypto.so.26.1
+./usr/lib/libc.so.75.0
+./usr/lib/libcrypto.so.27.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.0
 ./usr/lib/libevent.so.4.1
@@ -101,12 +101,12 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.27.0
-./usr/lib/libssl.so.24.0
+./usr/lib/libssl.so.24.1
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libusbhid.so.6.0
-./usr/lib/libutil.so.12.0
+./usr/lib/libusbhid.so.7.0
+./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
 ./usr/libdata/perl5/hppa64-openbsd
 ./usr/libdata/perl5/hppa64-openbsd/5.18.2
