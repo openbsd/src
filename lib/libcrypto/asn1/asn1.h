@@ -760,6 +760,10 @@ typedef struct BIT_STRING_BITNAME_st {
 		(ASN1_UTF8STRING *)d2i_ASN1_type_bytes\
 		((ASN1_STRING **)a,pp,l,B_ASN1_UTF8STRING)
 
+  /* for the is_set parameter to i2d_ASN1_SET */
+#define IS_SEQUENCE	0
+#define IS_SET		1
+
 DECLARE_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
 
 int ASN1_TYPE_get(ASN1_TYPE *a);
@@ -1035,7 +1039,14 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
 int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a,long *num,
 	unsigned char *data, int max_len);
 
+STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
+				 d2i_of_void *d2i, void (*free_func)(OPENSSL_BLOCK));
+unsigned char *ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
+			     unsigned char **buf, int *len );
+void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);
 void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
+ASN1_STRING *ASN1_pack_string(void *obj, i2d_of_void *i2d,
+			      ASN1_OCTET_STRING **oct);
 
 ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_OCTET_STRING **oct);
 
