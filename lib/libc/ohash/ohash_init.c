@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_init.c,v 1.2 2004/06/22 20:00:16 espie Exp $ */
+/* $OpenBSD: ohash_init.c,v 1.3 2014/05/12 19:07:37 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -31,11 +31,11 @@ ohash_init(struct ohash *h, unsigned int size, struct ohash_info *info)
 #endif
 	/* Copy info so that caller may free it.  */
 	h->info.key_offset = info->key_offset;
-	h->info.halloc = info->halloc;
-	h->info.hfree = info->hfree;
+	h->info.calloc = info->calloc;
+	h->info.free = info->free;
 	h->info.alloc = info->alloc;
 	h->info.data = info->data;
-	h->t = (h->info.halloc)(sizeof(struct _ohash_record) * h->size,
-	    h->info.data);
+	h->t = (h->info.calloc)(h->size, sizeof(struct _ohash_record),
+		    h->info.data);
 	h->total = h->deleted = 0;
 }

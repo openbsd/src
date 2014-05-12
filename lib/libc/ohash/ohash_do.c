@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_do.c,v 1.4 2004/06/22 20:00:16 espie Exp $ */
+/* $OpenBSD: ohash_do.c,v 1.5 2014/05/12 19:07:37 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <limits.h>
 #include "ohash_int.h"
 
 static void ohash_resize(struct ohash *);
@@ -25,13 +26,17 @@ static void
 ohash_resize(struct ohash *h)
 {
 	struct _ohash_record *n;
-	unsigned int 	ns, j;
+	size_t ns;
+	unsigned int 	j;
 	unsigned int	i, incr;
 
-	if (4 * h->deleted < h->total)
-		ns = h->size << 1;
-	else if (3 * h->deleted > 2 * h->total)
-		ns = h->size >> 1;
+	if (4 * h->deleted < h->total) {
+		if (h->size >= (UINT_MAX >> 1U))
+			ns = UINT_MAX;
+		else
+			ns = h->size << 1U;
+	} else if (3 * h->deleted > 2 * h->total)
+		ns = h->size >> 1U;
 	else
 		ns = h->size;
 	if (ns < MINSIZE)
@@ -40,7 +45,8 @@ ohash_resize(struct ohash *h)
 	STAT_HASH_EXPAND++;
 	STAT_HASH_SIZE += ns - h->size;
 #endif
-	n = (h->info.halloc)(sizeof(struct _ohash_record) * ns, h->info.data);
+
+	n = (h->info.calloc)(ns, sizeof(struct _ohash_record), h->info.data);
 	if (!n)
 		return;
 
@@ -57,8 +63,7 @@ ohash_resize(struct ohash *h)
 			n[i].p = h->t[j].p;
 		}
 	}
-	(h->info.hfree)(h->t, sizeof(struct _ohash_record) * h->size, 
-		h->info.data);
+	(h->info.free)(h->t, h->info.data);
 	h->t = n;
 	h->size = ns;
 	h->total -= h->deleted;
