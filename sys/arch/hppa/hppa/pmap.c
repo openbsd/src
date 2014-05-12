@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.161 2014/04/08 09:34:23 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.162 2014/05/12 14:35:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -182,10 +182,10 @@ pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp)
 {
 #ifdef PMAPDEBUG
 	if (ptp & PGOFSET)
-		panic("pmap_pde_set, unaligned ptp 0x%x", ptp);
+		panic("pmap_pde_set, unaligned ptp 0x%lx", ptp);
 #endif
 	DPRINTF(PDB_FOLLOW|PDB_VP,
-	    ("pmap_pde_set(%p, 0x%x, 0x%x)\n", pm, va, ptp));
+	    ("pmap_pde_set(%p, 0x%lx, 0x%lx)\n", pm, va, ptp));
 
 	pm->pm_pdir[va >> 22] = ptp;
 }
@@ -197,14 +197,14 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 	paddr_t pa;
 
 	DPRINTF(PDB_FOLLOW|PDB_VP,
-	    ("pmap_pde_alloc(%p, 0x%x, %p)\n", pm, va, pdep));
+	    ("pmap_pde_alloc(%p, 0x%lx, %p)\n", pm, va, pdep));
 
 	if ((pg = pmap_pagealloc(&pm->pm_obj, va)) == NULL)
 		return (NULL);
 
 	pa = VM_PAGE_TO_PHYS(pg);
 
-	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %x\n", pa));
+	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pde_alloc: pde %lx\n", pa));
 
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 	pg->wire_count = 1;		/* no mappings yet */
@@ -226,7 +226,7 @@ pmap_pde_ptp(struct pmap *pm, volatile pt_entry_t *pde)
 	if (pm->pm_ptphint && VM_PAGE_TO_PHYS(pm->pm_ptphint) == pa)
 		return (pm->pm_ptphint);
 
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pde_ptp: lookup 0x%x\n", pa));
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pde_ptp: lookup 0x%lx\n", pa));
 
 	return (PHYS_TO_VM_PAGE(pa));
 }
@@ -237,7 +237,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 	paddr_t pa;
 
 	DPRINTF(PDB_FOLLOW|PDB_PV,
-	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, va, ptp));
+	    ("pmap_pde_release(%p, 0x%lx, %p)\n", pmap, va, ptp));
 
 	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
@@ -268,7 +268,7 @@ pmap_pte_get(volatile pt_entry_t *pde, vaddr_t va)
 static __inline void
 pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 {
-	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%x, 0x%x)\n",
+	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%lx, 0x%x)\n",
 	    pde, va, pte));
 
 #ifdef PMAPDEBUG
@@ -378,7 +378,7 @@ pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 		    (pte & PTE_PROT(TLB_WRITE))) {
 #ifdef PMAPDEBUG
 			printf("pmap_check_alias: "
-			    "aliased writable mapping 0x%x:0x%x\n",
+			    "aliased writable mapping 0x%x:0x%lx\n",
 			    pve->pv_pmap->pm_space, pve->pv_va);
 #endif
 			ret++;
@@ -423,7 +423,7 @@ static __inline void
 pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, struct pmap *pm,
     vaddr_t va, struct vm_page *pdep)
 {
-	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_enter(%p, %p, %p, 0x%x, %p)\n",
+	DPRINTF(PDB_FOLLOW|PDB_PV, ("pmap_pv_enter(%p, %p, %p, 0x%lx, %p)\n",
 	    pg, pve, pm, va, pdep));
 	pve->pv_pmap = pm;
 	pve->pv_va = va;
@@ -459,7 +459,7 @@ pmap_bootstrap(vaddr_t vstart)
 	struct pmap *kpm;
 	int npdes, nkpdes;
 
-	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%x)\n", vstart));
+	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%lx)\n", vstart));
 
 	uvm_setpagesize();
 
@@ -495,7 +495,7 @@ pmap_bootstrap(vaddr_t vstart)
 	size = round_page((hppa_sid_max + 1) * 4);
 	bzero((void *)addr, size);
 	fdcache(HPPA_SID_KERNEL, addr, size);
-	DPRINTF(PDB_INIT, ("vtop: 0x%x @ 0x%x\n", size, addr));
+	DPRINTF(PDB_INIT, ("vtop: 0x%lx @ 0x%lx\n", size, addr));
 	addr += size;
 	pmap_sdir_set(HPPA_SID_KERNEL, kpm->pm_pdir);
 
@@ -556,7 +556,7 @@ pmap_bootstrap(vaddr_t vstart)
 	if (&__rodata_end < &__data_start) {
 		physical_steal = (vaddr_t)&__rodata_end;
 		physical_end = (vaddr_t)&__data_start;
-		DPRINTF(PDB_INIT, ("physpool: 0x%x @ 0x%x\n",
+		DPRINTF(PDB_INIT, ("physpool: 0x%lx @ 0x%lx\n",
 		    physical_end - physical_steal, physical_steal));
 	}
 
@@ -578,14 +578,15 @@ pmap_bootstrap(vaddr_t vstart)
 		/* now map the pde for the physmem */
 		bzero((void *)addr, PAGE_SIZE);
 		fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
-		DPRINTF(PDB_INIT|PDB_VP, ("pde premap 0x%x 0x%x\n", va, addr));
+		DPRINTF(PDB_INIT|PDB_VP,
+		    ("pde premap 0x%lx 0x%lx\n", va, addr));
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++; /* count PTP as resident */
 	}
 
 	resvphysmem = atop(addr);
 	eaddr = physmem - atop(round_page(MSGBUFSIZE));
-	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", resvphysmem, eaddr));
+	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%lx\n", resvphysmem, eaddr));
 	uvm_page_physload(0, eaddr, resvphysmem, eaddr, 0);
 
 	/* TODO optimize/inline the kenter */
@@ -603,7 +604,7 @@ pmap_bootstrap(vaddr_t vstart)
 		pmap_kenter_pa(va, va, prot);
 	}
 
-	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext, va));
+	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%lx\n", &etext, va));
 }
 
 void
@@ -722,7 +723,7 @@ pmap_destroy(struct pmap *pmap)
 				npv = pv->pv_next;
 				if (pv->pv_pmap == pmap) {
 #ifdef PMAPDEBUG
-					printf(" 0x%x", pv->pv_va);
+					printf(" 0x%lx", pv->pv_va);
 #endif
 					pmap_remove(pmap, pv->pv_va,
 					    pv->pv_va + PAGE_SIZE);
@@ -776,7 +777,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_enter(%p, 0x%x, 0x%x, 0x%x, 0x%x)\n",
+	    ("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
 	    pmap, va, pa, prot, flags));
 
 	simple_lock(&pmap->pm_lock);
@@ -797,7 +798,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if ((pte = pmap_pte_get(pde, va))) {
 
 		DPRINTF(PDB_ENTER,
-		    ("pmap_enter: remapping 0x%x -> 0x%x\n", pte, pa));
+		    ("pmap_enter: remapping 0x%x -> 0x%lx\n", pte, pa));
 
 		pmap_pte_flush(pmap, va, pte);
 		if (wired && !(pte & PTE_PROT(TLB_WIRED)))
@@ -820,7 +821,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	} else {
 		DPRINTF(PDB_ENTER,
-		    ("pmap_enter: new mapping 0x%x -> 0x%x\n", va, pa));
+		    ("pmap_enter: new mapping 0x%lx -> 0x%lx\n", va, pa));
 		pte = PTE_PROT(TLB_REFTRAP);
 		pmap->pm_stats.resident_count++;
 		if (wired)
@@ -875,7 +876,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	int batch;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-	    ("pmap_remove(%p, 0x%x, 0x%x)\n", pmap, sva, eva));
+	    ("pmap_remove(%p, 0x%lx, 0x%lx)\n", pmap, sva, eva));
 
 	simple_lock(&pmap->pm_lock);
 
@@ -939,7 +940,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	u_int tlbprot, pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP,
-	    ("pmap_write_protect(%p, %x, %x, %x)\n", pmap, sva, eva, prot));
+	    ("pmap_write_protect(%p, %lx, %lx, %x)\n", pmap, sva, eva, prot));
 
 	sva = trunc_page(sva);
 	tlbprot = PTE_PROT(pmap_prot(pmap, prot));
@@ -957,7 +958,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if ((pte = pmap_pte_get(pde, sva))) {
 
 			DPRINTF(PDB_PMAP,
-			    ("pmap_write_protect: va=0x%x pte=0x%x\n",
+			    ("pmap_write_protect: va=0x%lx pte=0x%x\n",
 			    sva,  pte));
 			/*
 			 * Determine if mapping is changing.
@@ -1028,7 +1029,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t	va)
 	volatile pt_entry_t *pde;
 	pt_entry_t pte = 0;
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire(%p, 0x%x)\n", pmap, va));
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire(%p, 0x%lx)\n", pmap, va));
 
 	simple_lock(&pmap->pm_lock);
 	if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
@@ -1072,7 +1073,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 			opte = pte = pmap_pte_get(pde, va);
 #ifdef PMAPDEBUG
 			if (!pte) {
-				printf("pmap_changebit: zero pte for 0x%x\n",
+				printf("pmap_changebit: zero pte for 0x%lx\n",
 				    va);
 				continue;
 			}
@@ -1120,7 +1121,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t pte;
 
-	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %x)\n", pmap, va));
+	DPRINTF(PDB_FOLLOW|PDB_EXTRACT, ("pmap_extract(%p, %lx)\n", pmap, va));
 
 	simple_lock(&pmap->pm_lock);
 	pte = pmap_vp_find(pmap, va);
@@ -1174,7 +1175,7 @@ pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%x)\n", pa));
+	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%lx)\n", pa));
 
 	pmap_flush_page(pg, 1);
 	bzero((void *)pa, PAGE_SIZE);
@@ -1187,7 +1188,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
 	paddr_t spa = VM_PAGE_TO_PHYS(srcpg);
 	paddr_t dpa = VM_PAGE_TO_PHYS(dstpg);
-	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", spa, dpa));
+	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%lx, %lx)\n", spa, dpa));
 
 	pmap_flush_page(srcpg, 0);
 	pmap_flush_page(dstpg, 1);
@@ -1205,7 +1206,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pt_entry_t pte, opte;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
-	    ("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot));
+	    ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
 
 	simple_lock(&pmap->pm_lock);
 
@@ -1251,10 +1252,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	struct vm_page *pg;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-	    ("pmap_kremove(%x, %x)\n", va, size));
+	    ("pmap_kremove(%lx, %lx)\n", va, size));
 #ifdef PMAPDEBUG
 	if (va < ptoa(physmem)) {
-		printf("pmap_kremove(%x, %x): unmapping physmem\n", va, size);
+		printf("pmap_kremove(%lx, %lx): unmapping physmem\n", va, size);
 		return;
 	}
 #endif
