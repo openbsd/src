@@ -57,12 +57,28 @@
  *
  */
 
-#include "pqueue.h"
+#include <openssl/pqueue.h>
 
 /* remember to change expected.txt if you change these values */
 unsigned char prio1[8] = "supercal";
 unsigned char prio2[8] = "ifragili";
 unsigned char prio3[8] = "sticexpi";
+
+static void
+pqueue_print(pqueue pq)
+{
+	pitem *iter, *item;
+
+	iter = pqueue_iterator(pq);
+	for (item = pqueue_next(&iter); item != NULL;
+	    item = pqueue_next(&iter)) {
+		printf("item\t%02x%02x%02x%02x%02x%02x%02x%02x\n",
+		    item->priority[0], item->priority[1],
+		    item->priority[2], item->priority[3],
+		    item->priority[4], item->priority[5],
+		    item->priority[6], item->priority[7]);
+	}
+}
 
 int
 main(void)
@@ -82,13 +98,13 @@ main(void)
 	pqueue_insert(pq, item);
 
 	item = pqueue_find(pq, prio1);
-	fprintf(stderr, "found %ld\n", item->priority);
+	fprintf(stderr, "found %p\n", item->priority);
 
 	item = pqueue_find(pq, prio2);
-	fprintf(stderr, "found %ld\n", item->priority);
+	fprintf(stderr, "found %p\n", item->priority);
 
 	item = pqueue_find(pq, prio3);
-	fprintf(stderr, "found %ld\n", item ? item->priority: 0);
+	fprintf(stderr, "found %p\n", item ? item->priority: 0);
 
 	pqueue_print(pq);
 
