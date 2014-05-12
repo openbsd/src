@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.64 2014/04/30 12:49:54 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.65 2014/05/12 14:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,6 +91,7 @@ enum mta_state {
 #define MTA_LMTP		0x0800
 #define MTA_WAIT		0x1000
 #define MTA_HANGON		0x2000
+#define MTA_RECONN		0x4000
 
 #define MTA_EXT_STARTTLS	0x01
 #define MTA_EXT_PIPELINING	0x02
@@ -633,7 +634,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		else if ((s->ext & MTA_EXT_STARTTLS) == 0) {
 			if (s->flags & MTA_FORCE_TLS || s->flags & MTA_WANT_SECURE) {
 				mta_error(s, "TLS required but not supported by remote host");
-				mta_connect(s);
+				s->flags |= MTA_RECONN;
 			}
 			else
 				/* server doesn't support starttls, do not use it */
@@ -1248,6 +1249,11 @@ mta_io(struct io *io, int evt)
 		mta_response(s, line);
 		if (s->flags & MTA_FREE) {
 			mta_free(s);
+			return;
+		}
+		if (s->flags & MTA_RECONN) {
+			s->flags &= ~MTA_RECONN;
+			mta_connect(s);
 			return;
 		}
 
