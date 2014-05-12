@@ -11,7 +11,7 @@ our %args = (
 	    'request path mark "*" with 99 marked 55',
 	],
 	loggrep => { "either mark or marked" => 1 },
-	dummyrun => 1,
+	dryrun => "relayd.conf",
     },
     server => {
 	noserver => 1,

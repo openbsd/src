@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.6 2014/05/09 11:49:26 andre Exp $
+#	$OpenBSD: Proc.pm,v 1.7 2014/05/12 21:30:42 andre Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -138,7 +138,7 @@ sub loggrep {
 
 	do {
 		my($kid, $status, $code) = $self->wait(WNOHANG);
-		if ($kid > 0 && $status != 0 && not $self->{dummyrun}) {
+		if ($kid > 0 && $status != 0 && !$self->{dryrun}) {
 			# child terminated with failure
 			die ref($self), " child status: $status $code";
 		}

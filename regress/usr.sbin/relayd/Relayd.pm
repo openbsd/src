@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.8 2014/05/09 11:49:26 andre Exp $
+#	$OpenBSD: Relayd.pm,v 1.9 2014/05/12 21:30:42 andre Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -27,7 +27,7 @@ sub new {
 	my %args = @_;
 	$args{logfile} ||= "relayd.log";
 	$args{up} ||= "Started";
-	$args{down} ||= "parent terminating";
+	$args{down} ||= $args{dryrun} ? "no actions" : "parent terminating";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "relayd.conf";
 	$args{forward}
@@ -96,10 +96,10 @@ sub new {
 sub up {
 	my $self = Proc::up(shift, @_);
 	my $timeout = shift || 10;
-	my $dummyrun = $self->{dummyrun} || 0;
-	my $lsock = $self->loggrep(qr/relay_launch: /, $timeout)
-	    or croak ref($self), " no relay_launch in $self->{logfile} ".
-		"after $timeout seconds" unless $dummyrun;
+	my $regex = $self->{dryrun} || "relay_launch: ";
+	my $lsock = $self->loggrep(qr/$regex/, $timeout)
+	    or croak ref($self), " no $regex in $self->{logfile} ".
+		"after $timeout seconds";
 	return $self;
 }
 
