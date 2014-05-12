@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.39 2014/04/21 12:22:26 henning Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.40 2014/05/12 09:15:00 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ int *igmpctl_vars[IGMPCTL_MAXID] = IGMPCTL_VARS;
 
 int		igmp_timers_are_running;
 static struct router_info *rti_head;
+static struct mbuf *router_alert;
 struct igmpstat igmpstat;
 
 void igmp_checktimer(struct ifnet *);
@@ -113,12 +114,34 @@ struct router_info * rti_find(struct ifnet *);
 void
 igmp_init(void)
 {
+	struct ipoption *ra;
 
-	/*
-	 * To avoid byte-swapping the same value over and over again.
-	 */
 	igmp_timers_are_running = 0;
 	rti_head = 0;
+
+	router_alert = m_get(M_DONTWAIT, MT_DATA);
+	if (router_alert == NULL) {
+		printf("%s: no mbuf\n", __func__);
+		return;
+	}
+
+	/*
+	 * Construct a Router Alert option (RAO) to use in report
+	 * messages as required by RFC2236.  This option has the
+	 * following format:
+	 *
+	 *	| 10010100 | 00000100 |  2 octet value  |
+	 *
+	 * where a value of "0" indicates that routers shall examine
+	 * the packet.
+	 */
+	ra = mtod(router_alert, struct ipoption *);
+	ra->ipopt_dst.s_addr = INADDR_ANY;
+	ra->ipopt_list[0] = IPOPT_RA;
+	ra->ipopt_list[1] = 0x04;
+	ra->ipopt_list[2] = 0x00;
+	ra->ipopt_list[3] = 0x00;
+	router_alert->m_len = sizeof(ra->ipopt_dst) + ra->ipopt_list[1];
 }
 
 /* Return -1 for error. */
@@ -634,7 +657,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 	imo.imo_multicast_loop = 0;
 #endif /* MROUTING */
 
-	ip_output(m, NULL, NULL, IP_MULTICASTOPTS, &imo, NULL, 0);
+	ip_output(m, router_alert, NULL, IP_MULTICASTOPTS, &imo, NULL, 0);
 
 	++igmpstat.igps_snd_reports;
 }
