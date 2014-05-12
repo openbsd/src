@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.31 2013/06/11 16:42:05 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.32 2014/05/12 21:10:35 krw Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ union {
 } cg_un;
 #define	cgblk	cg_un.cgblk
 
-long dev_bsize;
 long maxino;
 
 union dinode {
@@ -274,9 +273,9 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 		if ((fi = opendev(fsname, O_RDONLY, 0, NULL)) < 0)
 			err(1, "%s", fsname);
 		sync();
-		dev_bsize = 1;
 		for (i = 0; sblock_try[i] != -1; i++) {
-			bread(sblock_try[i], (char *)&sblock, (long)SBLOCKSIZE);
+			bread(sblock_try[i] / DEV_BSIZE, (char *)&sblock,
+			    (long)SBLOCKSIZE);
 			if ((sblock.fs_magic == FS_UFS1_MAGIC ||
 			     (sblock.fs_magic == FS_UFS2_MAGIC &&
 			      sblock.fs_sblockloc == sblock_try[i])) &&
@@ -288,7 +287,6 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 			warn("Cannot find file system superblock");
 			return (1);
 		}
-		dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 		maxino = sblock.fs_ncg * sblock.fs_ipg;
 		for (cg = 0; cg < sblock.fs_ncg; cg++) {
 			ino = cg * sblock.fs_ipg;
@@ -737,8 +735,7 @@ freeinodebuf(void)
 void
 bread(daddr_t bno, char *buf, long cnt)
 {
-
-	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
+	if (lseek(fi, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(fi, buf, cnt) != cnt)
 		err(1, "bread failed on block %lld", (long long)bno);
 }
