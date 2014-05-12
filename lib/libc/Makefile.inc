@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2013/03/28 16:43:08 eric Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2014/05/12 19:25:16 espie Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -41,7 +41,6 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/asr/Makefile.inc"
 .include "${LIBCSRCDIR}/net/Makefile.inc"
 .include "${LIBCSRCDIR}/nls/Makefile.inc"
-.include "${LIBCSRCDIR}/ohash/Makefile.inc"
 .if (${MACHINE_CPU} != "alpha")
 .include "${LIBCSRCDIR}/quad/Makefile.inc"
 .endif
