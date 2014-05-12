@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.72 2014/04/01 20:16:50 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.73 2014/05/12 19:29:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1498,7 +1498,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		paddr = dev->agp->base + obj->gtt_offset + offset;
+		paddr = dev_priv->mm.gtt_base_addr + obj->gtt_offset + offset;
 
 		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
@@ -4157,11 +4157,12 @@ intel_enable_ppgtt(struct drm_device *dev)
 
 int i915_gem_init(struct drm_device *dev)
 {
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long gtt_size, mappable_size;
 	int ret;
 
-	gtt_size = dev->agp->info.ai_aperture_size;
-	mappable_size = dev->agp->info.ai_aperture_size;
+	gtt_size = dev_priv->mm.gtt->gtt_total_entries << PAGE_SHIFT;
+	mappable_size = dev_priv->mm.gtt->gtt_mappable_entries << PAGE_SHIFT;
 
 	DRM_LOCK();
 #ifdef notyet

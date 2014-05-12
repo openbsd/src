@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.51 2014/03/25 17:44:39 mpi Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.52 2014/05/12 19:29:16 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -43,6 +43,23 @@
 #include <dev/rasops/rasops.h>
 
 #include "acpi.h"
+
+struct intel_gtt {
+	/* Size of memory reserved for graphics by the BIOS */
+	unsigned int stolen_size;
+	/* Total number of gtt entries. */
+	unsigned int gtt_total_entries;
+	/* Part of the gtt that is mappable by the cpu, for those chips where
+	 * this is not the full gtt. */
+	unsigned int gtt_mappable_entries;
+	/* Share the scratch page dma with ppgtts. */
+	bus_addr_t scratch_page_dma;
+	struct drm_dmamem *scratch_page;
+	/* for ppgtt PDE access */
+	bus_space_handle_t gtt;
+	/* needed for ioremap in drm/i915 */
+	bus_addr_t gma_bus_addr;
+};
 
 /* General customization:
  */
@@ -672,6 +689,8 @@ struct inteldrm_softc {
 		unsigned long gtt_start;
 		unsigned long gtt_mappable_end;
 		unsigned long gtt_end;
+
+		bus_addr_t gtt_base_addr;
 
 		/**
 		 * List of objects currently involved in rendering from the
@@ -1338,6 +1357,8 @@ void i915_gem_init_global_gtt(struct drm_device *dev,
 			      unsigned long start,
 			      unsigned long mappable_end,
 			      unsigned long end);
+int i915_gem_gtt_init(struct drm_device *dev);
+void i915_gem_gtt_fini(struct drm_device *dev);
 
 /* modesetting */
 extern void intel_modeset_init_hw(struct drm_device *dev);
