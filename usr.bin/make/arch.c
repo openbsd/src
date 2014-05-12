@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.82 2013/11/22 15:47:35 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.83 2014/05/12 19:11:19 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -141,11 +141,11 @@ struct arch_member {
 
 static struct ohash_info members_info = {
 	offsetof(struct arch_member, name), NULL,
-	hash_alloc, hash_free, element_alloc
+	hash_calloc, hash_free, element_alloc
 };
 
 static struct ohash_info arch_info = {
-	offsetof(Arch, name), NULL, hash_alloc, hash_free, element_alloc
+	offsetof(Arch, name), NULL, hash_calloc, hash_free, element_alloc
 };
 
 

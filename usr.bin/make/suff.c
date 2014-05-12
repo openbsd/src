@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.87 2014/01/06 12:08:18 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.88 2014/05/12 19:11:19 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct Suff_ {
 
 static struct ohash_info suff_info = {
 	offsetof(struct Suff_, name), NULL,
-	hash_alloc, hash_free, element_alloc
+	hash_calloc, hash_free, element_alloc
 };
 
 /*

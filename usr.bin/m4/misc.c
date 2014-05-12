@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.43 2014/04/28 12:34:11 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.44 2014/05/12 19:11:19 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -311,20 +311,13 @@ xalloc(size_t n, const char *fmt, ...)
 }
 
 void *
-xallocarray(size_t s1, size_t s2, const char *fmt, ...)
+xcalloc(size_t n, size_t s, const char *fmt, ...)
 {
-	void *p;
-
-	if (s1 && SIZE_MAX / s1 < s2) {
-		errno = ENOMEM;
-		p = NULL;
-	} else {
-		p = malloc(s1 * s2);
-	}
+	void *p = calloc(n, s);
 
 	if (p == NULL) {
 		if (fmt == NULL)
-			err(1, "malloc");
+			err(1, "calloc");
 		else {
 			va_list va;
 
@@ -359,19 +352,12 @@ xrealloc(void *old, size_t n, const char *fmt, ...)
 void *
 xreallocarray(void *old, size_t s1, size_t s2, const char *fmt, ...)
 {
-	void *p;
-
-	if (s1 && SIZE_MAX / s1 < s2) {
-		errno = ENOMEM;
-		p = NULL;
-	} else {
-		p = realloc(old, s1 * s2);
-	}
+	void *p = reallocarray(old, s1, s2);
 
 	if (p == NULL) {
 		free(old);
 		if (fmt == NULL)
-			err(1, "realloc");
+			err(1, "reallocarray");
 		else {
 			va_list va;
 

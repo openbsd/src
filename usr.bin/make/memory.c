@@ -1,4 +1,4 @@
-/* $OpenBSD: memory.c,v 1.9 2013/04/23 14:32:53 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.10 2014/05/12 19:11:19 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,29 +104,22 @@ ecalloc(size_t s1, size_t s2)
 }
 
 void *
-emult_realloc(void *ptr, size_t s1, size_t s2)
+ereallocarray(void *ptr, size_t s1, size_t s2)
 {
-	size_t size;
-
-	if (s1 && SIZE_MAX / s1 < s2) {
-		errno = ENOMEM;
-		enocmem(s1, s2);
-	}
-	size = s1 * s2;
-	if ((ptr = realloc(ptr, size)) == NULL)
+	if ((ptr = reallocarray(ptr, s1, s2)) == NULL)
 		enocmem(s1, s2);
 	return ptr;
 }
 
 /* Support routines for hash tables.  */
 void *
-hash_alloc(size_t s, void *u UNUSED)
+hash_calloc(size_t n, size_t s, void *u UNUSED)
 {
-	return ecalloc(s, 1);
+	return ecalloc(n, s);
 }
 
 void
-hash_free(void *p, size_t s UNUSED, void *u UNUSED)
+hash_free(void *p, void *u UNUSED)
 {
 	free(p);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.82 2014/04/28 12:34:11 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.83 2014/05/12 19:11:19 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 	initspaces();
 	STACKMAX = INITSTACKMAX;
 
-	mstack = xallocarray(STACKMAX, sizeof(stae), NULL);
+	mstack = xreallocarray(NULL, STACKMAX, sizeof(stae), NULL);
 	sstack = xalloc(STACKMAX, NULL);
 
 	maxout = 0;
@@ -416,7 +416,8 @@ macro(void)
 				}
 			}
 		} else if (t == EOF) {
-			if (sp > -1 && ilevel <= 0) {
+			if (!mimic_gnu /* you can puke right there */
+			    && sp > -1 && ilevel <= 0) {
 				warnx( "unexpected end of input, unclosed parenthesis:");
 				dump_stack(paren, PARLEV);
 				exit(1);

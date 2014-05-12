@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.22 2013/11/27 00:13:24 deraadt Exp $ */
+/* $OpenBSD: tsort.c,v 1.23 2014/05/12 19:11:20 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -146,14 +146,14 @@ static void enqueue(struct array *, struct node *);
 
 
 #define erealloc(n, s)	emem(realloc(n, s))
-static void *hash_alloc(size_t, void *);
-static void hash_free(void *, size_t, void *);
+static void *hash_calloc(size_t, size_t, void *);
+static void hash_free(void *, void *);
 static void* entry_alloc(size_t, void *);
 static void *emalloc(size_t);
 static void *emem(void *);
 #define DEBUG_TRAVERSE 0
 static struct ohash_info node_info = {
-	offsetof(struct node, k), NULL, hash_alloc, hash_free, entry_alloc };
+	offsetof(struct node, k), NULL, hash_calloc, hash_free, entry_alloc };
 
 
 int main(int, char *[]);
@@ -173,13 +173,13 @@ emem(void *p)
 }
 
 static void *
-hash_alloc(size_t s, void *u UNUSED)
+hash_calloc(size_t n, size_t s, void *u UNUSED)
 {
-	return emem(calloc(s, 1));
+	return emem(calloc(n, s));
 }
 
 static void
-hash_free(void *p, size_t s UNUSED, void *u UNUSED)
+hash_free(void *p, void *u UNUSED)
 {
 	free(p);
 }

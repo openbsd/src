@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.74 2013/05/30 08:58:38 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.75 2014/05/12 19:11:19 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@
 
 static struct ohash targets;	/* hash table of targets */
 struct ohash_info gnode_info = {
-	offsetof(GNode, name), NULL, hash_alloc, hash_free, element_alloc
+	offsetof(GNode, name), NULL, hash_calloc, hash_free, element_alloc
 };
 
 #define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.53 2014/04/28 12:34:11 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.54 2014/05/12 19:11:19 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ extern void	pbunsigned(unsigned long);
 extern void	pbstr(const char *);
 extern void	pushback(int);
 extern void	*xalloc(size_t, const char *, ...);
-extern void	*xallocarray(size_t, size_t, const char *, ...);
+extern void	*xcalloc(size_t, size_t, const char *, ...);
 extern void	*xrealloc(void *, size_t, const char *, ...);
 extern void	*xreallocarray(void *, size_t, size_t, const char *, ...);
 extern char	*xstrdup(const char *);

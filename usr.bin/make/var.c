@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.97 2014/01/29 23:53:20 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.98 2014/05/12 19:11:19 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ typedef struct Var_ {
 static struct ohash_info var_info = {
 	offsetof(Var, name),
 	NULL,
-	hash_alloc, hash_free, element_alloc
+	hash_calloc, hash_free, element_alloc
 };
 
 static int classify_var(const char *, const char **, uint32_t *);

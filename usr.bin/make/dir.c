@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.63 2013/05/22 12:14:08 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.64 2014/05/12 19:11:19 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ struct PathEntry {
 
 /* PathEntry kept on knownDirectories */
 static struct ohash_info dir_info = {
-	offsetof(struct PathEntry, name), NULL, hash_alloc, hash_free,
+	offsetof(struct PathEntry, name), NULL, hash_calloc, hash_free,
 	element_alloc
 };
 
@@ -186,7 +186,7 @@ static struct ohash   knownDirectories;	/* cache all open directories */
 
 /* file names kept in a path entry */
 static struct ohash_info file_info = {
-	0, NULL, hash_alloc, hash_free, element_alloc
+	0, NULL, hash_calloc, hash_free, element_alloc
 };
 
 
@@ -204,7 +204,7 @@ static struct ohash mtimes;
 
 
 static struct ohash_info stamp_info = {
-	offsetof(struct file_stamp, name), NULL, hash_alloc, hash_free,
+	offsetof(struct file_stamp, name), NULL, hash_calloc, hash_free,
 	element_alloc
 };
 

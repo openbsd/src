@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-/* $OpenBSD: memory.h,v 1.7 2010/07/19 19:46:44 espie Exp $ */
+/* $OpenBSD: memory.h,v 1.8 2014/05/12 19:11:19 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@ extern void *emalloc(size_t);
 extern char *estrdup(const char *);
 extern void *erealloc(void *, size_t);
 extern void *ecalloc(size_t, size_t);
-extern void *emult_realloc(void *, size_t, size_t);
+extern void *ereallocarray(void *, size_t, size_t);
 extern int eunlink(const char *);
 extern void esetenv(const char *, const char *);
 
@@ -50,8 +50,8 @@ extern void esetenv(const char *, const char *);
  * definition for cross-builds on deficient systems */
 #define efree	free
 
-extern void *hash_alloc(size_t, void *);
-extern void hash_free(void *, size_t, void *);
+extern void *hash_calloc(size_t, size_t, void *);
+extern void hash_free(void *, void *);
 extern void *element_alloc(size_t, void *);
 
 struct ohash;

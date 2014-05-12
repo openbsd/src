@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.29 2014/04/22 08:26:31 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.30 2014/05/12 19:11:19 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -150,7 +150,7 @@ brk_string(const char *str, int *store_argc, char **buffer)
 			*t++ = '\0';
 			if (argc == argmax) {
 				argmax *= 2;	/* ramp up fast */
-				argv = emult_realloc(argv,
+				argv = ereallocarray(argv,
 				    (argmax + 1), sizeof(char *));
 			}
 			argv[argc++] = start;

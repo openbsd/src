@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.4 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.5 2014/05/12 19:11:19 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -53,7 +53,7 @@ struct equiv_list {
 };
 
 static struct ohash_info equiv_info = {
-	offsetof(struct equiv_list, name), NULL, hash_alloc, hash_free,
+	offsetof(struct equiv_list, name), NULL, hash_calloc, hash_free,
 	element_alloc
 };
 
