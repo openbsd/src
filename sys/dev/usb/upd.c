@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.8 2014/04/29 07:23:40 andre Exp $ */
+/*	$OpenBSD: upd.c,v 1.9 2014/05/12 09:50:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -98,7 +98,7 @@ void upd_attach(struct device *, struct device *, void *);
 int  upd_detach(struct device *, int);
 
 void upd_refresh(void *);
-void upd_update_sensors(struct upd_softc *, uint8_t *, int);
+void upd_update_sensors(struct upd_softc *, uint8_t *, unsigned int, int);
 void upd_intr(struct uhidev *, void *, uint);
 struct upd_usage_entry *upd_lookup_usage_entry(const struct hid_item *);
 struct upd_sensor *upd_lookup_sensor(struct upd_softc *, int, int);
@@ -283,7 +283,7 @@ upd_refresh(void *arg)
 			continue;
 		}
 
-		upd_update_sensors(sc, buf, repid);
+		upd_update_sensors(sc, buf, report->size, repid);
 	}
 }
 
@@ -318,10 +318,10 @@ upd_lookup_sensor(struct upd_softc *sc, int page, int usage)
 }
 
 void
-upd_update_sensors(struct upd_softc *sc, uint8_t *buf, int repid)
+upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
+    int repid)
 {
 	struct upd_sensor	*sensor;
-	struct hid_location	*loc;
 	ulong			hdata, batpres;
 	ulong 			adjust;
 	int			i;
@@ -358,9 +358,8 @@ upd_update_sensors(struct upd_softc *sc, uint8_t *buf, int repid)
 			break;
 		}
 
-		loc = &sensor->hitem.loc;
-		/* first byte which is the report id */
-		hdata = hid_get_data(buf + 1, loc);
+		/* XXX first byte which is the report id */
+		hdata = hid_get_data(buf + 1, len, &sensor->hitem.loc);
 
 		sensor->ksensor.value = hdata * adjust;
 		sensor->ksensor.status = SENSOR_S_OK;

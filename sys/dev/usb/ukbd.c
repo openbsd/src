@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.66 2014/04/27 13:32:04 mpi Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.67 2014/05/12 09:50:44 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -506,7 +506,7 @@ ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 		{ 82, 75 }	/* up -> page up */
 	};
 
-	if (!hid_get_data(ibuf, &sc->sc_apple_fn))
+	if (!hid_get_data(ibuf, ilen, &sc->sc_apple_fn))
 		return;
 
 	spos = ibuf + kbd->sc_keycodeloc.pos / 8;

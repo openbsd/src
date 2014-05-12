@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.6 2014/05/05 13:48:11 mpi Exp $ */
+/*	$OpenBSD: hidms.c,v 1.7 2014/05/12 09:50:44 mpi Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -367,10 +367,10 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 	if (ms->sc_flags & HIDMS_ABSY)
 		flags |= WSMOUSE_INPUT_ABSOLUTE_Y;
 
-	dx =  hid_get_data(data, &ms->sc_loc_x);
-	dy = -hid_get_data(data, &ms->sc_loc_y);
-	dz =  hid_get_data(data, &ms->sc_loc_z);
-	dw =  hid_get_data(data, &ms->sc_loc_w);
+	dx =  hid_get_data(data, len, &ms->sc_loc_x);
+	dy = -hid_get_data(data, len, &ms->sc_loc_y);
+	dz =  hid_get_data(data, len, &ms->sc_loc_z);
+	dw =  hid_get_data(data, len, &ms->sc_loc_w);
 
 	if (ms->sc_flags & HIDMS_ABSY)
 		dy = -dy;
@@ -396,7 +396,7 @@ hidms_input(struct hidms *ms, uint8_t *data, u_int len)
 	}
 
 	for (i = 0; i < ms->sc_num_buttons; i++)
-		if (hid_get_data(data, &ms->sc_loc_btn[i]))
+		if (hid_get_data(data, len, &ms->sc_loc_btn[i]))
 			buttons |= (1 << HIDMS_BUT(i));
 
 	if (dx != 0 || dy != 0 || dz != 0 || dw != 0 ||

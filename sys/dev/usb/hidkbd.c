@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.11 2014/03/23 11:54:59 mpi Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.12 2014/05/12 09:50:44 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -270,8 +270,9 @@ hidkbd_input(struct hidkbd *kbd, uint8_t *data, u_int len)
 #endif
 
 	/* extract variable keys */
-	for (i = 0; i < kbd->sc_nvar; i++) 
-		ud->var[i] = (u_int8_t)hid_get_data(data, &kbd->sc_var[i].loc);
+	for (i = 0; i < kbd->sc_nvar; i++)
+		ud->var[i] = (u_int8_t)hid_get_data(data, len,
+		    &kbd->sc_var[i].loc);
 
 	/* extract keycodes */
 	memcpy(ud->keycode, data + kbd->sc_keycodeloc.pos / 8,
@@ -589,8 +590,7 @@ hidkbd_parse_desc(struct hidkbd *kbd, int id, void *desc, int dlen)
 		    h.report_ID != id)
 			continue;
 
-		DPRINTF(("hidkbd: imod=%d usage=0x%x flags=0x%x pos=%d size=%d "
-			 "cnt=%d", imod,
+		DPRINTF(("hidkbd: usage=0x%x flags=0x%x pos=%d size=%d cnt=%d",
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
 			/* variable reports should be one bit each */
