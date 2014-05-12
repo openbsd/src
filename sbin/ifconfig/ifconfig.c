@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.282 2014/03/05 20:46:50 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.283 2014/05/12 08:47:37 beck Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1576,8 +1576,40 @@ setifnwkey(const char *val, int d)
 				return;
 			}
 		} else {
+			/*
+			 * length of each key must be either a 5
+			 * character ASCII string or 10 hex digits for
+			 * 40 bit encryption, or 13 character ASCII
+			 * string or 26 hex digits for 128 bit
+			 * encryption.
+			 */
+			int j;
+			char *tmp = NULL;
+			size_t vlen = strlen(val);
+			switch(vlen) {
+			case 10:
+			case 26:
+				/* 0x must be missing for these lengths */
+				j = asprintf(&tmp, "0x%s", val);
+				if (j == -1) {
+					warnx("malloc failed");
+					return;
+				}
+				val = tmp;
+				break;
+			case 12:
+			case 28:
+			case 5:
+			case 13:
+				/* 0xkey or string case - all is ok */
+				break;
+			default:
+				warnx("Invalid WEP key length");
+				return;
+			}
 			len = sizeof(keybuf[0]);
 			val = get_string(val, NULL, keybuf[0], &len);
+			free(tmp);
 			if (val == NULL)
 				return;
 			nwkey.i_key[0].i_keylen = len;
