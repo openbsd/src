@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.34 2014/03/19 02:34:45 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.35 2014/05/12 19:13:14 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 19 2014 $
+.Dd $Mdocdate: May 12 2014 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -41,8 +41,7 @@
 .Nm des_setkey ,
 .Nm des_cipher ,
 .Nm bcrypt_gensalt ,
-.Nm bcrypt ,
-.Nm md5crypt
+.Nm bcrypt
 .Nd password hashing
 .Sh SYNOPSIS
 .In stdlib.h
@@ -63,8 +62,6 @@
 .Fn bcrypt_gensalt "u_int8_t log_rounds"
 .Ft char *
 .Fn bcrypt "const char *key" "const char *salt"
-.Ft char *
-.Fn md5crypt "const char *key" "const char *salt"
 .Sh DESCRIPTION
 The
 .Fn crypt
@@ -88,9 +85,7 @@ If it begins
 with a string character
 .Pq Ql $
 and a number then a different algorithm is used depending on the number.
-At the moment a
-.Ql $1
-chooses MD5 hashing and a
+At the moment
 .Ql $2
 chooses Blowfish hashing; see below for more information.
 .Ss Extended crypt
@@ -113,24 +108,6 @@ This allows 24 bits for both
 .Fa count
 and
 .Fa salt .
-.Ss "MD5" crypt
-For
-.Tn MD5
-crypt the version number,
-.Fa salt
-and the hashed password are separated by the
-.Ql $
-character.
-The maximum length of a password is limited by
-the length counter of the MD5 context, which is about
-2**64.
-A valid MD5 password entry looks like this:
-.Pp
-.Dq $1$caeiHQwX$hsKqOjrFRRN6K32OWkCBf1 .
-.Pp
-The whole MD5 password string is passed as
-.Fa setting
-for interpretation.
 .Ss "Blowfish" crypt
 The
 .Tn Blowfish

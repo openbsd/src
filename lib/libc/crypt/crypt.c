@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.20 2005/08/08 08:05:33 espie Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.21 2014/05/12 19:13:14 tedu Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -576,15 +576,14 @@ crypt(const char *key, const char *setting)
 	u_int32_t	count, salt, l, r0, r1, keybuf[2];
 	u_char		*p, *q;
 	static u_char	output[21];
-	extern char	*md5crypt(const char *, const char *);
 	extern char	*bcrypt(const char *, const char *);
 
 	if (setting[0] == '$') {
 		switch (setting[1]) {
-		case '1':
-			return (md5crypt(key, setting));
-		default:
+		case '2':
 			return bcrypt(key, setting);
+		default:
+			return (NULL);
 		}
 	}
 
