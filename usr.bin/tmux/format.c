@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.45 2014/05/13 07:34:35 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.46 2014/05/13 08:08:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -368,7 +368,7 @@ format_get_command(struct window_pane *wp)
 	cmd = get_proc_name(wp->fd, wp->tty);
 	if (cmd == NULL || *cmd == '\0') {
 		free(cmd);
-		cmd = xstrdup(wp->cmd);
+		cmd = cmd_stringify_argv(wp->argc, wp->argv);
 		if (cmd == NULL || *cmd == '\0') {
 			free(cmd);
 			cmd = xstrdup(wp->shell);
@@ -559,8 +559,10 @@ format_window_pane(struct format_tree *ft, struct window_pane *wp)
 	if (wp->tty != NULL)
 		format_add(ft, "pane_tty", "%s", wp->tty);
 	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
-	if (wp->cmd != NULL)
-		format_add(ft, "pane_start_command", "%s", wp->cmd);
+	if ((cmd = cmd_stringify_argv(wp->argc, wp->argv)) != NULL) {
+		format_add(ft, "pane_start_command", "%s", cmd);
+		free(cmd);
+	}
 	if ((cmd = format_get_command(wp)) != NULL) {
 		format_add(ft, "pane_current_command", "%s", cmd);
 		free(cmd);
