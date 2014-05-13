@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.68 2014/05/09 05:14:17 deraadt Exp $
+.\"	$OpenBSD: printf.3,v 1.69 2014/05/13 20:51:00 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 9 2014 $
+.Dd $Mdocdate: May 13 2014 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -188,16 +188,6 @@ A hash
 character
 specifying that the value should be converted to an ``alternate form''.
 For
-.Cm c ,
-.Cm d ,
-.Cm i ,
-.Cm n ,
-.Cm p ,
-.Cm s ,
-and
-.Cm u
-conversions, this option has no effect.
-For
 .Cm o
 conversions, the precision of the number is increased to force the first
 character of the output string to a zero (except if a zero value is printed
@@ -232,6 +222,7 @@ and
 .Cm G
 conversions, trailing zeros are not removed from the result as they
 would otherwise be.
+For all other formats, behaviour is undefined.
 .It
 A zero
 .Sq Cm \&0
