@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.25 2010/10/21 13:20:51 jmc Exp $
+.\"	$OpenBSD: printf.1,v 1.26 2014/05/13 20:37:48 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: October 21 2010 $
+.Dd $Mdocdate: May 13 2014 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -122,12 +122,6 @@ in the following order:
 Specifies that the value should be printed in an
 .Dq alternate form .
 For the
-.Cm c ,
-.Cm d ,
-and
-.Cm s
-formats, this option has no effect.
-For the
 .Cm o
 format the precision of the number is increased to force the first
 character of the output string to a zero.
@@ -157,6 +151,7 @@ and
 .Cm G
 formats, trailing zeros are not removed from the result as they
 would otherwise be.
+For all other formats, behaviour is undefined.
 .It Cm \&\-
 Specifies the
 .Em left adjustment
@@ -368,6 +363,8 @@ The
 utility is compliant with the
 .St -p1003.1-2008
 specification.
+.Pp
+The escape sequences \ee and \e' are extensions to that specification.
 .Sh HISTORY
 The
 .Nm
