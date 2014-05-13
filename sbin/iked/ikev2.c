@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.112 2014/05/09 06:37:24 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.113 2014/05/13 14:24:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -429,6 +429,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		if (flag) {
 			if ((sa->sa_stateflags & flag) == 0)
 				return;
+			/*
+			 * We have initiated this exchange, even if
+			 * we are not the initiator of the IKE SA.
+			 */
 			initiator = 1;
 		}
 		/*
@@ -469,8 +473,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		ikev2_msg_prevail(env, &sa->sa_responses, msg);
 	}
 
-	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer, initiator) == -1 ||
-	    sa_address(sa, &sa->sa_local, &msg->msg_local, initiator) == -1)
+	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer,
+	    sa->sa_hdr.sh_initiator) == -1 ||
+	    sa_address(sa, &sa->sa_local, &msg->msg_local,
+	    sa->sa_hdr.sh_initiator) == -1)
 		return;
 
 	sa->sa_fd = msg->msg_fd;
