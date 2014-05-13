@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.1 2014/05/12 19:09:00 espie Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.2 2014/05/13 14:01:41 jmc Exp $
 .\" Copyright (c) 1999 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2014 $
+.Dd $Mdocdate: May 13 2014 $
 .Dt OHASH_INIT 3
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ the
 .Va calloc
 and
 .Va free
-fields are pointers to 
+fields are pointers to
 .Xr calloc 3
 and
 .Xr free 3 Ns -like
@@ -99,7 +99,7 @@ field is only used by the utility function
 .Xr ohash_create_entry 3 .
 .Pp
 Each of these functions are called similarly to their standard counterpart,
-but with an extra 
+but with an extra
 .Ft void *
 parameter corresponding to the content of the field
 .Fa data ,
