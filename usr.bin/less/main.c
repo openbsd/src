@@ -421,8 +421,10 @@ quit(status)
 	exit(status);
 }
 
+#if !SMALL
 	public char *
 helpfile(void)
 {
 	return (less_is_more ? HELPDIR "/more.help" : HELPDIR "/less.help");
 }
+#endif /* !SMALL */
