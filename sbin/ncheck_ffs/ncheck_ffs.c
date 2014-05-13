@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.40 2014/05/11 21:25:07 halex Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.41 2014/05/13 05:50:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -84,7 +84,7 @@ char	sblock_buf[MAXBSIZE];
 int	sblock_try[] = SBLOCKSEARCH; /* possible superblock locations */
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
-ino_t	*ilist;		/* list of inodes to check */
+ufsino_t *ilist;	/* list of inodes to check */
 int	ninodes;	/* number of inodes in list */
 int	sflag;		/* only suid and special files */
 int	aflag;		/* print the . and .. entries too */
@@ -93,26 +93,27 @@ int	iflag;		/* specific inode */
 char	*format;	/* output format */
 
 struct icache_s {
-	ino_t		ino;
+	ufsino_t	ino;
 	union {
 		struct ufs1_dinode dp1;
 		struct ufs2_dinode dp2;
 	} di;
 } *icache;
 int	nicache;
+int	maxicache;
 
-void addinode(ino_t inum);
-void *getino(ino_t inum);
-void findinodes(ino_t);
+void addinode(ufsino_t inum);
+void *getino(ufsino_t inum);
+void findinodes(ufsino_t);
 void bread(daddr_t, char *, int);
 __dead void usage(void);
-void scanonedir(ino_t, const char *);
-void dirindir(ino_t, daddr_t, int, off_t, const char *);
-void searchdir(ino_t, daddr_t, long, off_t, const char *);
+void scanonedir(ufsino_t, const char *);
+void dirindir(ufsino_t, daddr_t, int, off_t *, const char *);
+void searchdir(ufsino_t, daddr_t, long, off_t, const char *);
 int matchino(const void *, const void *);
 int matchcache(const void *, const void *);
-void cacheino(ino_t, void *);
-void *cached(ino_t);
+void cacheino(ufsino_t, void *);
+void *cached(ufsino_t);
 int main(int, char *[]);
 char *rawname(char *);
 void format_entry(const char *, struct direct *);
@@ -123,8 +124,8 @@ void format_entry(const char *, struct direct *);
 int
 matchino(const void *key, const void *val)
 {
-	ino_t k = *(ino_t *)key;
-	ino_t v = *(ino_t *)val;
+	ufsino_t k = *(ufsino_t *)key;
+	ufsino_t v = *(ufsino_t *)val;
 
 	if (k < v)
 		return -1;
@@ -139,7 +140,7 @@ matchino(const void *key, const void *val)
 int
 matchcache(const void *key, const void *val)
 {
-	ino_t		ino = *(ino_t *)key;
+	ufsino_t	ino = *(ufsino_t *)key;
 	struct icache_s	*ic = (struct icache_s *)val;
 
 	if (ino < ic->ino)
@@ -153,14 +154,19 @@ matchcache(const void *key, const void *val)
  * Add an inode to the cached entries
  */
 void
-cacheino(ino_t ino, void *dp)
+cacheino(ufsino_t ino, void *dp)
 {
-	struct icache_s *newicache;
+	if (nicache == maxicache) {
+		struct icache_s *newicache;
 
-	newicache = reallocarray(icache, nicache + 1, sizeof(struct icache_s));
-	if (newicache == NULL)
-		errx(1, "malloc");
-	icache = newicache;
+		/* grow exponentially */
+		maxicache += 10 + maxicache/2;
+		newicache = reallocarray(icache, maxicache, sizeof(*icache));
+		if (newicache == NULL)
+			errx(1, "malloc");
+		icache = newicache;
+
+	}
 	icache[nicache].ino = ino;
 	if (sblock->fs_magic == FS_UFS1_MAGIC)
 		icache[nicache++].di.dp1 = *(struct ufs1_dinode *)dp;
@@ -172,13 +178,12 @@ cacheino(ino_t ino, void *dp)
  * Get a cached inode
  */
 void *
-cached(ino_t ino)
+cached(ufsino_t ino)
 {
 	struct icache_s *ic;
 	void *dp = NULL;
 
-	ic = (struct icache_s *)bsearch(&ino, icache, nicache,
-	    sizeof(struct icache_s), matchcache);
+	ic = bsearch(&ino, icache, nicache, sizeof(*icache), matchcache);
 	if (ic != NULL) {
 		if (sblock->fs_magic == FS_UFS1_MAGIC)
 			dp = &ic->di.dp1;
@@ -194,9 +199,9 @@ cached(ino_t ino)
  * inodes pointing to directories
  */
 void
-findinodes(ino_t maxino)
+findinodes(ufsino_t maxino)
 {
-	ino_t ino;
+	ufsino_t ino;
 	void *dp;
 	mode_t mode;
 
@@ -221,7 +226,7 @@ findinodes(ino_t maxino)
  * per cylinder group
  */
 void *
-getino(ino_t inum)
+getino(ufsino_t inum)
 {
 	static char *itab = NULL;
 	static daddr_t iblk = -1;
@@ -239,7 +244,7 @@ getino(ino_t inum)
 	if ((inum / sblock->fs_ipg) != iblk || itab == NULL) {
 		iblk = inum / sblock->fs_ipg;
 		if (itab == NULL &&
-		    (itab = calloc(sblock->fs_ipg, dsize)) == NULL)
+		    (itab = reallocarray(NULL, sblock->fs_ipg, dsize)) == NULL)
 			errx(1, "no memory for inodes");
 		bread(fsbtodb(sblock, cgimin(sblock, iblk)), itab,
 		      sblock->fs_ipg * dsize);
@@ -313,11 +318,11 @@ loop:
  * Add an inode to the in-memory list of inodes to dump
  */
 void
-addinode(ino_t ino)
+addinode(ufsino_t ino)
 {
-	ino_t *newilist;
+	ufsino_t *newilist;
 
-	newilist = reallocarray(ilist, ninodes + 1, sizeof(ino_t));
+	newilist = reallocarray(ilist, ninodes + 1, sizeof(*ilist));
 	if (newilist == NULL)
 		errx(4, "not enough memory to allocate tables");
 	ilist = newilist;
@@ -329,7 +334,7 @@ addinode(ino_t ino)
  * Scan the directory pointer at by ino
  */
 void
-scanonedir(ino_t ino, const char *path)
+scanonedir(ufsino_t ino, const char *path)
 {
 	void *dp;
 	off_t filesize;
@@ -348,46 +353,48 @@ scanonedir(ino_t ino, const char *path)
 	}
 	for (i = 0; filesize > 0 && i < NIADDR; i++) {
 		if (DIP(dp, di_ib[i]))
-			dirindir(ino, DIP(dp, di_ib[i]), i, filesize, path);
+			dirindir(ino, DIP(dp, di_ib[i]), i, &filesize, path);
 	}
 }
 
 /*
  * Read indirect blocks, and pass the data blocks to be searched
- * as directories. Quit as soon as any entry is found that will
- * require the directory to be dumped.
+ * as directories.
  */
 void
-dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t filesize,
+dirindir(ufsino_t ino, daddr_t blkno, int ind_level, off_t *filesizep,
     const char *path)
 {
 	int i;
-	static void *idblk; 
+	void *idblk; 
 
-	if (idblk == NULL && (idblk = malloc(sblock->fs_bsize)) == NULL)
+	if ((idblk = malloc(sblock->fs_bsize)) == NULL)
 		errx(1, "dirindir: cannot allocate indirect memory.\n");
 	bread(fsbtodb(sblock, blkno), idblk, (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
+		for (i = 0; *filesizep > 0 && i < NINDIR(sblock); i++) {
 			if (sblock->fs_magic == FS_UFS1_MAGIC)
 				blkno = ((int32_t *)idblk)[i];
 			else
 				blkno = ((int64_t *)idblk)[i];
 			if (blkno != 0)
 				searchdir(ino, blkno, sblock->fs_bsize,
-				    filesize, path);
+				    *filesizep, path);
+			*filesizep -= sblock->fs_bsize;
 		}
-		return;
+	} else {
+		ind_level--;
+		for (i = 0; *filesizep > 0 && i < NINDIR(sblock); i++) {
+			if (sblock->fs_magic == FS_UFS1_MAGIC)
+				blkno = ((int32_t *)idblk)[i];
+			else
+				blkno = ((int64_t *)idblk)[i];
+			if (blkno != 0)
+				dirindir(ino, blkno, ind_level, filesizep,
+				    path);
+		}
 	}
-	ind_level--;
-	for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
-		if (sblock->fs_magic == FS_UFS1_MAGIC)
-			blkno = ((int32_t *)idblk)[i];
-		else
-			blkno = ((int64_t *)idblk)[i];
-		if (blkno != 0)
-			dirindir(ino, blkno, ind_level, filesize, path);
-	}
+	free(idblk);
 }
 
 /*
@@ -396,7 +403,7 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t filesize,
  * contains any subdirectories.
  */
 void
-searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
+searchdir(ufsino_t ino, daddr_t blkno, long size, off_t filesize,
     const char *path)
 {
 	char *dblk;
@@ -404,11 +411,11 @@ searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
 	void *di;
 	mode_t mode;
 	char *npath;
-	ino_t subino;
+	ufsino_t subino;
 	long loc;
 
 	if ((dblk = malloc(sblock->fs_bsize)) == NULL)
-		errx(1, "searchdir: cannot allocate indirect memory.");
+		errx(1, "searchdir: cannot allocate directory memory.");
 	bread(fsbtodb(sblock, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
@@ -455,6 +462,7 @@ searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
 			free(npath);
 		}
 	}
+	free(dblk);
 }
 
 char *
@@ -507,20 +515,22 @@ main(int argc, char *argv[])
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "%s is not a number",
 				    optarg);
-			if (errno == ERANGE && ullval == ULLONG_MAX)
-				errx(1, "%s is out or range",
+			if ((errno == ERANGE && ullval == ULLONG_MAX) ||
+			    (ufsino_t)ullval != ullval)
+				errx(1, "%s is out of range",
 				    optarg);
-			addinode((ino_t)ullval);
+			addinode((ufsino_t)ullval);
 
 			while (optind < argc) {
 				errno = 0;
 				ullval = strtoull(argv[optind], &ep, 10);
 				if (argv[optind][0] == '\0' || *ep != '\0')
 					break;
-				if (errno == ERANGE && ullval == ULLONG_MAX)
-					errx(1, "%s is out or range",
+				if ((errno == ERANGE && ullval == ULLONG_MAX)
+				    || (ufsino_t)ullval != ullval)
+					errx(1, "%s is out of range",
 					    argv[optind]);
-				addinode((ino_t)ullval);
+				addinode((ufsino_t)ullval);
 				optind++;
 			}
 			break;
