@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.h,v 1.9 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.h,v 1.10 2014/05/13 22:06:06 krw Exp $	*/
 /*	$NetBSD: fsdb.h,v 1.4 1996/09/28 19:30:36 christos Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@ extern void bwrite(int fd, char *buf, daddr_t blk, long size);
 extern void rwerror(char *mesg, daddr_t blk);
 extern int reply(char *question);
 
-extern long dev_bsize;
 extern long secsize;
 extern int fsmodified;
 extern int fsfd;
