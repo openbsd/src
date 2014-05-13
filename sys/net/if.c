@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.287 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.288 2014/05/13 14:33:25 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1251,7 +1251,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
 	char ifrtlabelbuf[RTLABEL_LEN];
-	int s, error = 0;
+	int s, error = 0, needsadd;
 	size_t bytesdone;
 	short oif_flags;
 	const char *label;
@@ -1536,6 +1536,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		/* remove all routing entries when switching domains */
 		/* XXX hell this is ugly */
+		needsadd = 0;
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			s = splnet();
 			if (ifp->if_flags & IFF_UP)
@@ -1566,6 +1567,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			 * of the lookup key and re-add it after the switch.
 			 */
 			ifa_del(ifp, ifp->if_lladdr);
+			needsadd = 1;
 			splx(s);
 		}
 
@@ -1578,7 +1580,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifp->if_rdomain = ifr->ifr_rdomainid;
 
 		/* re-add sadl to the ifa RB tree in new rdomain */
-		ifa_add(ifp, ifp->if_lladdr);
+		if (needsadd)
+			ifa_add(ifp, ifp->if_lladdr);
 		break;
 
 	case SIOCAIFGROUP:
