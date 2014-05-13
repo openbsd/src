@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.28 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.29 2014/05/13 11:57:35 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -431,6 +431,10 @@ hostent_file_match(FILE *f, int reqtype, int family, const char *data,
 			errno = 0; /* ignore errors reading the file */
 			return (NULL);
 		}
+
+		/* there must be an address and at least one name */
+		if (n < 2)
+			continue;
 
 		if (reqtype == ASR_GETHOSTBYNAME) {
 			for (i = 1; i < n; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.14 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.15 2014/05/13 11:57:35 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -286,6 +286,10 @@ netent_file_match(FILE *f, int reqtype, const char *data)
 			errno = 0; /* ignore errors reading the file */
 			return (NULL);
 		}
+
+		/* there must be an address and at least one name */
+		if (n < 2)
+			continue;
 
 		if (reqtype == ASR_GETNETBYADDR) {
 			net = inet_network(tokens[1]);
