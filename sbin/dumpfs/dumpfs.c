@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.29 2013/04/02 03:05:37 guenther Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.30 2014/05/13 12:51:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -65,8 +65,6 @@ union {
 	char pad[MAXBSIZE];
 } cgun;
 #define acg	cgun.cg
-
-long	dev_bsize;
 
 int	dumpfs(int, const char *);
 int	dumpcg(const char *, int, int);
@@ -146,7 +144,6 @@ open_disk(const char *name)
 		return (-1);
 	}
 
-	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	return (fd);
 }
 
@@ -288,7 +285,7 @@ dumpfs(int fd, const char *name)
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
 		off = (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j *
-		    afs.fs_frag))) * dev_bsize;
+		    afs.fs_frag))) * DEV_BSIZE;
 		if (pread(fd, (char *)afs.fs_csp + i, size, off) != size)
 			goto err;
 	}
@@ -325,7 +322,7 @@ dumpcg(const char *name, int fd, int c)
 	int i, j;
 
 	printf("\ncg %d:\n", c);
-	cur = (off_t)fsbtodb(&afs, cgtod(&afs, c)) * dev_bsize;
+	cur = (off_t)fsbtodb(&afs, cgtod(&afs, c)) * DEV_BSIZE;
 	if (pread(fd, &acg, afs.fs_bsize, cur) != afs.fs_bsize) {
 		warn("%s: error reading cg", name);
 		return(1);
