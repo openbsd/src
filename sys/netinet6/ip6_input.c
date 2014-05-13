@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.124 2014/04/14 09:06:42 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.125 2014/05/13 09:30:27 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -190,6 +190,7 @@ extern struct	route_in6 ip6_forward_rt;
 void
 ip6_input(struct mbuf *m)
 {
+	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
 	int off, nest;
 	u_int32_t plen;
@@ -202,9 +203,8 @@ ip6_input(struct mbuf *m)
 	int srcrt = 0, isanycast = 0;
 	u_int rtableid = 0;
 
-	/*
-	 * mbuf statistics by kazu
-	 */
+	ifp = m->m_pkthdr.rcvif;
+
 	if (m->m_flags & M_EXT) {
 		if (m->m_next)
 			ip6stat.ip6s_mext2m++;
@@ -214,23 +214,21 @@ ip6_input(struct mbuf *m)
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
 				ip6stat.ip6s_m2m[lo0ifp->if_index]++;	/*XXX*/
-			} else if (m->m_pkthdr.rcvif->if_index < nitems(ip6stat.ip6s_m2m))
-				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
+			} else if (ifp->if_index < nitems(ip6stat.ip6s_m2m))
+				ip6stat.ip6s_m2m[ifp->if_index]++;
 			else
 				ip6stat.ip6s_m2m[0]++;
 		} else
 			ip6stat.ip6s_m1++;
 	}
 
-	in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_receive);
+	in6_ifstat_inc(ifp, ifs6_in_receive);
 	ip6stat.ip6s_total++;
 
 	if (m->m_len < sizeof(struct ip6_hdr)) {
-		struct ifnet *inifp;
-		inifp = m->m_pkthdr.rcvif;
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6stat.ip6s_toosmall++;
-			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
+			in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 			return;
 		}
 	}
@@ -239,13 +237,12 @@ ip6_input(struct mbuf *m)
 
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		ip6stat.ip6s_badvers++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+		in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 		goto bad;
 	}
 
 #if NCARP > 0
-	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    ip6->ip6_nxt != IPPROTO_ICMPV6 &&
+	if (ifp->if_type == IFT_CARP && ip6->ip6_nxt != IPPROTO_ICMPV6 &&
 	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32))
 		goto bad;
@@ -261,14 +258,14 @@ ip6_input(struct mbuf *m)
 		 * XXX: "badscope" is not very suitable for a multicast source.
 		 */
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		goto bad;
 	}
 	if ((IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) &&
-	    (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+	    (ifp->if_flags & IFF_LOOPBACK) == 0) {
 		    ip6stat.ip6s_badscope++;
-		    in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		    in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		    goto bad;
 	}
 	if (IN6_IS_ADDR_MC_INTFACELOCAL(&ip6->ip6_dst) &&
@@ -280,7 +277,7 @@ ip6_input(struct mbuf *m)
 		 * as the outgoing/incoming interface.
 		 */
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		goto bad;
 	}
 
@@ -299,7 +296,7 @@ ip6_input(struct mbuf *m)
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		goto bad;
 	}
 #if 0
@@ -313,7 +310,7 @@ ip6_input(struct mbuf *m)
 	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		goto bad;
 	}
 #endif
@@ -323,7 +320,7 @@ ip6_input(struct mbuf *m)
          * Packet filter
          */
 	odst = ip6->ip6_dst;
-	if (pf_test(AF_INET6, PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
+	if (pf_test(AF_INET6, PF_IN, ifp, &m, NULL) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;
@@ -339,8 +336,8 @@ ip6_input(struct mbuf *m)
 	if (!(m->m_pkthdr.pf.flags & PF_TAG_PROCESSED) &&
 	    ip6_check_rh0hdr(m, &off)) {
 		ip6stat.ip6s_badoptions++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+		in6_ifstat_inc(ifp, ifs6_in_discard);
+		in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, off);
 		/* m is already freed */
 		return;
@@ -349,23 +346,23 @@ ip6_input(struct mbuf *m)
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		ours = 1;
-		deliverifp = m->m_pkthdr.rcvif;
+		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
 	/* drop packets if interface ID portion is already filled */
 	if ((IN6_IS_SCOPE_EMBED(&ip6->ip6_src) && ip6->ip6_src.s6_addr16[1]) ||
 	    (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) && ip6->ip6_dst.s6_addr16[1])) {
-		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			ip6stat.ip6s_badscope++;
 			goto bad;
 		}
 	}
 
 	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src))
-		ip6->ip6_src.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+		ip6->ip6_src.s6_addr16[1] = htons(ifp->if_index);
 	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
-		ip6->ip6_dst.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+		ip6->ip6_dst.s6_addr16[1] = htons(ifp->if_index);
 
 	/*
 	 * We use rt->rt_ifp to determine if the address is ours or not.
@@ -376,9 +373,9 @@ ip6_input(struct mbuf *m)
 	 * by actually looking at interface addresses
 	 * (using in6ifa_ifpwithaddr).
 	 */
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) != 0 &&
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0 &&
 	    IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-		if (!in6ifa_ifpwithaddr(m->m_pkthdr.rcvif, &ip6->ip6_dst)) {
+		if (!in6ifa_ifpwithaddr(ifp, &ip6->ip6_dst)) {
 			icmp6_error(m, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_ADDR, 0);
 			/* m is already freed */
@@ -386,13 +383,13 @@ ip6_input(struct mbuf *m)
 		}
 
 		ours = 1;
-		deliverifp = m->m_pkthdr.rcvif;
+		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		ours = 1;
-		deliverifp = m->m_pkthdr.rcvif;
+		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
@@ -402,12 +399,12 @@ ip6_input(struct mbuf *m)
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 	  	struct	in6_multi *in6m = 0;
 
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mcast);
+		in6_ifstat_inc(ifp, ifs6_in_mcast);
 		/*
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, m->m_pkthdr.rcvif, in6m);
+		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 		if (in6m)
 			ours = 1;
 #ifdef MROUTING
@@ -419,10 +416,10 @@ ip6_input(struct mbuf *m)
 			ip6stat.ip6s_notmember++;
 			if (!IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst))
 				ip6stat.ip6s_cantforward++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
+			in6_ifstat_inc(ifp, ifs6_in_discard);
 			goto bad;
 		}
-		deliverifp = m->m_pkthdr.rcvif;
+		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
@@ -498,8 +495,7 @@ ip6_input(struct mbuf *m)
 	}
 
 #if NCARP > 0
-	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
-	    ip6->ip6_nxt == IPPROTO_ICMPV6 &&
+	if (ifp->if_type == IFT_CARP && ip6->ip6_nxt == IPPROTO_ICMPV6 &&
 	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32))
 		goto bad;
@@ -510,7 +506,7 @@ ip6_input(struct mbuf *m)
 	 */
 	if (!ip6_forwarding) {
 		ip6stat.ip6s_cantforward++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
+		in6_ifstat_inc(ifp, ifs6_in_discard);
 		goto bad;
 	}
 
@@ -527,7 +523,7 @@ ip6_input(struct mbuf *m)
 
 		if (ip6_hopopts_input(&plen, &rtalert, &m, &off)) {
 #if 0	/*touches NULL pointer*/
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
+			in6_ifstat_inc(ifp, ifs6_in_discard);
 #endif
 			return;	/* m have already been freed */
 		}
@@ -547,8 +543,8 @@ ip6_input(struct mbuf *m)
 			 * (non-zero) payload length to the variable plen. 
 			 */
 			ip6stat.ip6s_badoptions++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+			in6_ifstat_inc(ifp, ifs6_in_discard);
+			in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
@@ -579,7 +575,7 @@ ip6_input(struct mbuf *m)
 	 */
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
 		ip6stat.ip6s_tooshort++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
+		in6_ifstat_inc(ifp, ifs6_in_truncated);
 		goto bad;
 	}
 	if (m->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
@@ -604,7 +600,7 @@ ip6_input(struct mbuf *m)
 		 */
 #ifdef MROUTING
 		if (ip6_mforwarding && ip6_mrouter &&
-		    ip6_mforward(ip6, m->m_pkthdr.rcvif, m)) {
+		    ip6_mforward(ip6, ifp, m)) {
 			ip6stat.ip6s_cantforward++;
 			m_freem(m);
 			return;
@@ -636,7 +632,7 @@ ip6_input(struct mbuf *m)
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		in6_ifstat_inc(ifp, ifs6_in_addrerr);
 		goto bad;
 	}
 
@@ -659,7 +655,7 @@ ip6_input(struct mbuf *m)
 		 */
 		if (m->m_pkthdr.len < off) {
 			ip6stat.ip6s_tooshort++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
+			in6_ifstat_inc(ifp, ifs6_in_truncated);
 			goto bad;
 		}
 
