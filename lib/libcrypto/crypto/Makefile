@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2014/05/12 19:14:14 miod Exp $
+# $OpenBSD: Makefile,v 1.33 2014/05/14 14:46:35 jsing Exp $
 
 LIB=	crypto
 
@@ -198,6 +198,9 @@ SRCS+= p12_utl.c p12_npas.c pk12err.c p12_p8d.c p12_p8e.c
 SRCS+= pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c
 SRCS+= pk7_mime.c bio_pk7.c
 
+# poly1305/
+SRCS+= poly1305.c
+
 # rand/
 SRCS+= randfile.c rand_lib.c rand_err.c
 
@@ -301,6 +304,7 @@ SRCS+= v3_asid.c v3_addr.c
 	${LCRYPTO_SRC}/perlasm \
 	${LCRYPTO_SRC}/pkcs12 \
 	${LCRYPTO_SRC}/pkcs7 \
+	${LCRYPTO_SRC}/poly1305 \
 	${LCRYPTO_SRC}/rand \
 	${LCRYPTO_SRC}/rc2 \
 	${LCRYPTO_SRC}/rc4 \
@@ -363,6 +367,7 @@ HDRS=\
 	crypto/pem/pem2.h \
 	crypto/pkcs12/pkcs12.h \
 	crypto/pkcs7/pkcs7.h \
+	crypto/poly1305/poly1305.h \
 	crypto/rand/rand.h \
 	crypto/rc2/rc2.h \
 	crypto/rc4/rc4.h \

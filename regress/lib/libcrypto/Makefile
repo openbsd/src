@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2014/05/06 20:27:17 miod Exp $
+#	$OpenBSD: Makefile,v 1.9 2014/05/14 14:46:35 jsing Exp $
 
 SUBDIR= \
 	aeswrap \
@@ -23,6 +23,7 @@ SUBDIR= \
 	md4 \
 	md5 \
 	mdc2 \
+	poly1305 \
 	pqueue \
 	rand \
 	rc2 \
