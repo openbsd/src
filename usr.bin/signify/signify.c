@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.80 2014/05/14 15:52:24 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.81 2014/05/14 15:55:11 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -533,14 +533,14 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 #ifndef VERIFYONLY
 struct checksum {
 	char file[1024];
-	char hash[1024];
-	char algo[256];
+	char hash[224];
+	char algo[32];
 };
 
 static void
 recodehash(char *hash)
 {
-	uint8_t data[512];
+	uint8_t data[112];
 	int i, rv;
 
 	if (strlen(hash) == SHA256_DIGEST_STRING_LENGTH ||
@@ -573,7 +573,7 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 		c = &checksums[nchecksums++];
 		if ((endline = strchr(line, '\n')))
 			*endline++ = '\0';
-		rv = sscanf(line, "%255s %1023s = %1023s",
+		rv = sscanf(line, "%31s %1023s = %223s",
 		    c->algo, buf, c->hash);
 		if (rv != 3 || buf[0] != '(' || buf[strlen(buf) - 1] != ')')
 			errx(1, "unable to parse checksum line %s", line);
