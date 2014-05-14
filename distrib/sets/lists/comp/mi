@@ -4467,7 +4467,6 @@
 ./usr/share/man/man3/mbtowc.3
 ./usr/share/man/man3/mcprint.3
 ./usr/share/man/man3/md5.3
-./usr/share/man/man3/md5crypt.3
 ./usr/share/man/man3/memccpy.3
 ./usr/share/man/man3/memchr.3
 ./usr/share/man/man3/memcmp.3
