@@ -1936,6 +1936,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/pkcs7.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/poly1305.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl/rc2.ph

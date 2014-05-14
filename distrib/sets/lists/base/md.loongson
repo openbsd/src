@@ -1952,6 +1952,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/pkcs7.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/poly1305.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/openssl/rc2.ph

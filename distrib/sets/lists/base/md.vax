@@ -1251,6 +1251,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/pem2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/pkcs7.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl/poly1305.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/rc2.ph
