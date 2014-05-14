@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.79 2014/05/14 15:33:41 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.80 2014/05/14 15:52:24 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -538,6 +538,21 @@ struct checksum {
 };
 
 static void
+recodehash(char *hash)
+{
+	uint8_t data[512];
+	int i, rv;
+
+	if (strlen(hash) == SHA256_DIGEST_STRING_LENGTH ||
+	    strlen(hash) == SHA512_DIGEST_STRING_LENGTH)
+		return;
+	if ((rv = b64_pton(hash, data, sizeof(data))) == -1)
+		errx(1, "invalid base64 encoding");
+	for (i = 0; i < rv; i++)
+		snprintf(hash + i * 2, 1024 - i * 2, "%2.2x", data[i]);
+}
+
+static void
 verifychecksums(char *msg, int argc, char **argv, int quiet)
 {
 	char buf[1024];
@@ -562,6 +577,7 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 		    c->algo, buf, c->hash);
 		if (rv != 3 || buf[0] != '(' || buf[strlen(buf) - 1] != ')')
 			errx(1, "unable to parse checksum line %s", line);
+		recodehash(c->hash);
 		buf[strlen(buf) - 1] = 0;
 		strlcpy(c->file, buf + 1, sizeof(c->file));
 		line = endline;
