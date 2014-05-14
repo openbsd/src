@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.81 2014/05/14 15:55:11 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.82 2014/05/14 15:56:41 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -140,10 +140,10 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 	}
 	b64end = strchr(commentend + 1, '\n');
 	if (!b64end)
-		errx(1, "missing new line after b64 in %s", filename);
+		errx(1, "missing new line after base64 in %s", filename);
 	*b64end = '\0';
 	if (b64_pton(commentend + 1, buf, buflen) != buflen)
-		errx(1, "invalid b64 encoding in %s", filename);
+		errx(1, "invalid base64 encoding in %s", filename);
 	if (memcmp(buf, PKALG, 2) != 0)
 		errx(1, "unsupported file %s", filename);
 	return b64end - b64 + 1;
@@ -237,7 +237,7 @@ writeb64file(const char *filename, const char *comment, const void *buf,
 		errx(1, "comment too long");
 	writeall(fd, header, strlen(header), filename);
 	if ((rv = b64_ntop(buf, buflen, b64, sizeof(b64)-1)) == -1)
-		errx(1, "b64 encode failed");
+		errx(1, "base64 encode failed");
 	b64[rv++] = '\n';
 	writeall(fd, b64, rv, filename);
 	explicit_bzero(b64, sizeof(b64));
