@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: abort.3,v 1.10 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: abort.3,v 1.11 2014/05/14 21:54:20 tedu Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: May 14 2014 $
 .Dt ABORT 3
 .Os
 .Sh NAME
@@ -48,7 +48,8 @@ function causes abnormal program termination to occur, unless the signal
 .Dv SIGABRT
 is being caught and the signal handler does not return.
 .Pp
-Any open streams are flushed and closed.
+Some implementations may flush output streams before terminating.
+This implementation does not.
 .Sh RETURN VALUES
 The
 .Fn abort
@@ -66,3 +67,11 @@ The
 .Fn abort
 function first appeared in
 .At v5 .
+.Pp
+Historically, previous standards required
+.Fn abort
+to flush and close output streams, but this conflicted with the requirement
+that
+.Fn abort
+be async signal safe.
+As a result, the flushing requirement was dropped.

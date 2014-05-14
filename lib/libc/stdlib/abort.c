@@ -1,4 +1,4 @@
-/*	$OpenBSD: abort.c,v 1.16 2012/11/10 03:46:11 guenther Exp $ */
+/*	$OpenBSD: abort.c,v 1.17 2014/05/14 21:54:20 tedu Exp $ */
 /*
  * Copyright (c) 1985 Regents of the University of California.
  * All rights reserved.
@@ -39,8 +39,6 @@ int	_thread_sys_sigprocmask(int, const sigset_t *, sigset_t *);
 void
 abort(void)
 {
-	struct atexit *p = __atexit;
-	static int cleanup_called = 0;
 	sigset_t mask;
 
 
@@ -51,21 +49,6 @@ abort(void)
 	 */
 	sigdelset(&mask, SIGABRT);
 	(void)_thread_sys_sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-
-	/*
-	 * POSIX requires we flush stdio buffers on abort
-	 */
-	if (cleanup_called == 0) {
-		/* the cleanup routine lives in fns[0] on the last page */
-		while (p != NULL && p->next != NULL)
-			p = p->next;
-		/* the check for fn_dso == NULL is mostly paranoia */
-		if (p != NULL && p->fns[0].fn_dso == NULL &&
-		    p->fns[0].fn_ptr.std_func != NULL) {
-			cleanup_called = 1;
-			(*p->fns[0].fn_ptr.std_func)();
-		}
-	}
 
 	(void)raise(SIGABRT);
 
