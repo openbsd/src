@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.394 2014/05/13 08:08:32 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.395 2014/05/14 06:45:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 13 2014 $
+.Dd $Mdocdate: May 14 2014 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1861,7 +1861,7 @@ Commands related to key bindings are as follows:
 .Bl -tag -width Ds
 .It Xo Ic bind-key
 .Op Fl cnr
-.Op Fl t Ar key-table
+.Op Fl t Ar mode-table
 .Ar key Ar command Op Ar arguments
 .Xc
 .D1 (alias: Ic bind )
@@ -1890,7 +1890,7 @@ If
 is present,
 .Ar key
 is bound in
-.Ar key-table :
+.Ar mode-table :
 the binding for command mode with
 .Fl c
 or for normal mode without.
@@ -1948,7 +1948,7 @@ Send the prefix key, or with
 the secondary prefix key, to a window as if it was pressed.
 .It Xo Ic unbind-key
 .Op Fl acn
-.Op Fl t Ar key-table
+.Op Fl t Ar mode-table
 .Ar key
 .Xc
 .D1 (alias: Ic unbind )
@@ -1970,7 +1970,7 @@ If
 is present,
 .Ar key
 in
-.Ar key-table
+.Ar mode-table
 is unbound: the binding for command mode with
 .Fl c
 or for normal mode without.
