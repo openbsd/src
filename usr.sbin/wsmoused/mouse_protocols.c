@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.13 2009/06/05 03:37:10 miod Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.14 2014/05/14 18:18:01 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -193,24 +193,6 @@ SetMouseSpeed(int old, int new, unsigned int cflag)
 		debug("Warning: %s unable to get status of mouse fd (%s)\n",
 		    mouse.portname, strerror(errno));
 		return;
-	}
-	/* this will query the initial baudrate only once */
-	if (mouse.old_baudrate < 0) {
-		switch (cfgetispeed(&tty)) {
-		case B9600:
-			mouse.old_baudrate = 9600;
-			break;
-		case B4800:
-			mouse.old_baudrate = 4800;
-			break;
-		case B2400:
-			mouse.old_baudrate = 2400;
-			break;
-		case B1200:
-		default:
-			mouse.old_baudrate = 1200;
-			break;
-		}
 	}
 	tty.c_iflag = IGNBRK | IGNPAR;
 	tty.c_oflag = 0;
