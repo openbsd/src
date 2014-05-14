@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.78 2014/05/06 23:50:53 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.79 2014/05/14 15:33:41 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -543,15 +543,18 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 	char buf[1024];
 	char *line, *endline;
 	struct checksum *checksums = NULL, *c = NULL;
-	int nchecksums = 0;
+	int nchecksums = 0, checksumspace = 0;
 	int i, j, rv, uselist, count, hasfailed;
 	int *failures;
 
 	line = msg;
 	while (line && *line) {
-		if (!(checksums = reallocarray(checksums,
-		    nchecksums + 1, sizeof(*checksums))))
-			err(1, "realloc");
+		if (nchecksums == checksumspace) {
+			checksumspace = 2 * (nchecksums + 1);
+			if (!(checksums = reallocarray(checksums,
+			    checksumspace, sizeof(*checksums))))
+				err(1, "realloc");
+		}
 		c = &checksums[nchecksums++];
 		if ((endline = strchr(line, '\n')))
 			*endline++ = '\0';
