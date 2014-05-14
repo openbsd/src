@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.113 2014/04/24 09:14:43 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.114 2014/05/14 06:21:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -208,7 +208,6 @@ server_loop(void)
 		server_window_loop();
 		server_client_loop();
 
-		key_bindings_clean();
 		server_clean_dead();
 	}
 }

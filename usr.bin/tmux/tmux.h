@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.463 2014/05/13 08:08:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.464 2014/05/14 06:21:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1889,7 +1889,6 @@ RB_PROTOTYPE(key_bindings, key_binding, entry, key_bindings_cmp);
 struct key_binding *key_bindings_lookup(int);
 void	 key_bindings_add(int, int, struct cmd_list *);
 void	 key_bindings_remove(int);
-void	 key_bindings_clean(void);
 void	 key_bindings_init(void);
 void	 key_bindings_dispatch(struct key_binding *, struct client *);
 
