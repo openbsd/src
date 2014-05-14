@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.82 2014/05/14 15:56:41 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.83 2014/05/14 16:02:34 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -531,16 +531,17 @@ verify(const char *pubkeyfile, const char *msgfile, const char *sigfile,
 }
 
 #ifndef VERIFYONLY
+#define HASHBUFSIZE 224
 struct checksum {
 	char file[1024];
-	char hash[224];
+	char hash[HASHBUFSIZE];
 	char algo[32];
 };
 
 static void
 recodehash(char *hash)
 {
-	uint8_t data[112];
+	uint8_t data[HASHBUFSIZE / 2];
 	int i, rv;
 
 	if (strlen(hash) == SHA256_DIGEST_STRING_LENGTH ||
@@ -549,7 +550,7 @@ recodehash(char *hash)
 	if ((rv = b64_pton(hash, data, sizeof(data))) == -1)
 		errx(1, "invalid base64 encoding");
 	for (i = 0; i < rv; i++)
-		snprintf(hash + i * 2, 1024 - i * 2, "%2.2x", data[i]);
+		snprintf(hash + i * 2, HASHBUFSIZE - i * 2, "%2.2x", data[i]);
 }
 
 static void
