@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.117 2013/11/04 05:45:04 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.118 2014/05/14 18:11:24 shadchin Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1319,7 +1319,7 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 	switch (cmd) {
 #ifdef HAVE_WSMOUSED_SUPPORT
 	case WSDISPLAYIO_WSMOUSED:
-		error = wsmoused(sc, cmd, data, flag, p);
+		error = wsmoused(sc, data, flag, p);
 		return (error);
 #endif
 	case WSDISPLAYIO_ADDSCREEN:
@@ -2381,36 +2381,33 @@ wsdisplay_burner(void *v)
  * Main function, called from wsdisplay_cfg_ioctl.
  */
 int
-wsmoused(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-    int flag, struct proc *p)
+wsmoused(struct wsdisplay_softc *sc, caddr_t data, int flag, struct proc *p)
 {
 	struct wscons_event mouse_event = *(struct wscons_event *)data;
 
-	if (cmd == WSDISPLAYIO_WSMOUSED) {
-		if (IS_MOTION_EVENT(mouse_event.type)) {
-			if (sc->sc_focus != NULL)
-				motion_event(sc->sc_focus, mouse_event.type,
-				    mouse_event.value);
-			return 0;
+	if (IS_MOTION_EVENT(mouse_event.type)) {
+		if (sc->sc_focus != NULL)
+			motion_event(sc->sc_focus, mouse_event.type,
+			    mouse_event.value);
+		return 0;
+	}
+	if (IS_BUTTON_EVENT(mouse_event.type)) {
+		if (sc->sc_focus != NULL) {
+			/* XXX tv_sec contains the number of clicks */
+			if (mouse_event.type ==
+			    WSCONS_EVENT_MOUSE_DOWN) {
+				button_event(sc->sc_focus,
+				    mouse_event.value,
+				    mouse_event.time.tv_sec);
+			} else
+				button_event(sc->sc_focus,
+				    mouse_event.value, 0);
 		}
-		if (IS_BUTTON_EVENT(mouse_event.type)) {
-			if (sc->sc_focus != NULL) {
-				/* XXX tv_sec contains the number of clicks */
-				if (mouse_event.type ==
-				    WSCONS_EVENT_MOUSE_DOWN) {
-					button_event(sc->sc_focus,
-					    mouse_event.value,
-					    mouse_event.time.tv_sec);
-				} else
-					button_event(sc->sc_focus,
-					    mouse_event.value, 0);
-			}
-			return (0);
-		}
-		if (IS_CTRL_EVENT(mouse_event.type)) {
-			return ctrl_event(sc, mouse_event.type,
-			    mouse_event.value, p);
-		}
+		return (0);
+	}
+	if (IS_CTRL_EVENT(mouse_event.type)) {
+		return ctrl_event(sc, mouse_event.type,
+		    mouse_event.value, p);
 	}
 	return -1;
 }

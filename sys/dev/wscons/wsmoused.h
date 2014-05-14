@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.8 2009/05/31 17:02:20 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.9 2014/05/14 18:11:24 shadchin Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -35,7 +35,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	wsmoused(struct wsdisplay_softc *, u_long, caddr_t, int, struct proc *);
+int	wsmoused(struct wsdisplay_softc *, caddr_t, int, struct proc *);
 
 void	motion_event(struct wsscreen *, u_int, int);
 void	button_event(struct wsscreen *, int, int);
