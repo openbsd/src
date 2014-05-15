@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.102 2013/11/24 12:36:13 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.103 2014/05/15 19:40:42 chl Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ chdir_verify_path(const char *path, struct dirs *d)
 static void
 setup_CURDIR_OBJDIR(struct dirs *d, const char *machine)
 {
-	char *path, *prefix;
+	char *path;
 
 	d->current = figure_out_CURDIR();
 	/*
