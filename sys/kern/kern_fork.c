@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.166 2014/05/06 11:50:14 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.167 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -196,12 +196,21 @@ process_new(struct proc *p, struct process *parent, int flags)
 	p->p_p = pr;
 
 	/*
-	 * Create signal actions for the child process.
+	 * Duplicate sub-structures as needed.
+	 * Increase reference counts on shared objects.
 	 */
+	if (flags & FORK_SHAREFILES)
+		pr->ps_fd = fdshare(parent);
+	else
+		pr->ps_fd = fdcopy(parent);
 	if (flags & FORK_SIGHAND)
 		pr->ps_sigacts = sigactsshare(parent);
 	else
 		pr->ps_sigacts = sigactsinit(parent);
+	if (flags & FORK_SHAREVM)
+		pr->ps_vmspace = uvmspace_share(parent);
+	else
+		pr->ps_vmspace = uvmspace_fork(parent);
 
 	if (parent->ps_flags & PS_PROFIL)
 		startprofclock(pr);
@@ -334,17 +343,10 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 		process_new(p, curpr, flags);
 		pr = p->p_p;
 	}
+	p->p_fd		= pr->ps_fd;
+	p->p_vmspace	= pr->ps_vmspace;
 	if (pr->ps_flags & PS_SYSTEM)
 		atomic_setbits_int(&p->p_flag, P_SYSTEM);
-
-	/*
-	 * Duplicate sub-structures as needed.
-	 * Increase reference counts on shared objects.
-	 */
-	if (flags & FORK_SHAREFILES)
-		p->p_fd = fdshare(curp);
-	else
-		p->p_fd = fdcopy(curp);
 
 	if (flags & FORK_PPWAIT) {
 		atomic_setbits_int(&pr->ps_flags, PS_PPWAIT);
@@ -380,13 +382,16 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	p->p_addr = (struct user *)uaddr;
 
 	/*
-	 * Finish creating the child process.  It will return through a
-	 * different path later.
+	 * Finish creating the child thread.  cpu_fork() will copy
+	 * and update the pcb and make the child ready to run.  If
+	 * this is a normal user fork, the child will exit directly
+	 * to user mode via child_return() on its first time slice
+	 * and will not return here.  If this is a kernel thread,
+	 * the specified entry point will be executed.
 	 */
-	uvm_fork(curp, p, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
-	    0, func ? func : child_return, arg ? arg : p);
+	cpu_fork(curp, p, stack, 0, func ? func : child_return, arg ? arg : p);
 
-	vm = p->p_vmspace;
+	vm = pr->ps_vmspace;
 
 	if (flags & FORK_FORK) {
 		forkstat.cntfork++;

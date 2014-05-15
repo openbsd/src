@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.114 2014/05/06 11:50:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.115 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -513,9 +513,8 @@ int			uvm_fault(vm_map_t, vaddr_t,
 void			uvm_chgkprot(caddr_t, size_t, int);
 #endif
 vaddr_t			uvm_uarea_alloc(void);
-void			uvm_fork(struct proc *, struct proc *, boolean_t,
-			    void *, size_t, void (*)(void *), void *);
-void			uvm_exit(struct proc *);
+void			uvm_uarea_free(struct proc *);
+void			uvm_exit(struct process *);
 void			uvm_init_limits(struct proc *);
 boolean_t		uvm_kernacc(caddr_t, size_t, int);
 
@@ -668,9 +667,9 @@ struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t,
 void			uvmspace_init(struct vmspace *, struct pmap *,
 				vaddr_t, vaddr_t, boolean_t, boolean_t);
 void			uvmspace_exec(struct proc *, vaddr_t, vaddr_t);
-struct vmspace		*uvmspace_fork(struct vmspace *);
+struct vmspace		*uvmspace_fork(struct process *);
 void			uvmspace_free(struct vmspace *);
-void			uvmspace_share(struct proc *, struct proc *);
+struct vmspace		*uvmspace_share(struct process *);
 
 
 /* uvm_meter.c */

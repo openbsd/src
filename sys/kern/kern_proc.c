@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.57 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.58 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -403,9 +403,8 @@ proc_printit(struct proc *p, const char *modif,
 	    TAILQ_NEXT(p, p_runq), p->p_list.le_next, p->p_list.le_prev);
 	(*pr)("    process=%p user=%p, vmspace=%p\n",
 	    p->p_p, p->p_addr, p->p_vmspace);
-	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%u.%u, swtime=%u\n",
-	    p->p_estcpu, p->p_cpticks, p->p_pctcpu / 100, p->p_pctcpu % 100,
-	    p->p_swtime);
+	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%u.%u\n",
+	    p->p_estcpu, p->p_cpticks, p->p_pctcpu / 100, p->p_pctcpu % 100);
 	(*pr)("    user=%u, sys=%u, intr=%u\n",
 	    p->p_uticks, p->p_sticks, p->p_iticks);
 }

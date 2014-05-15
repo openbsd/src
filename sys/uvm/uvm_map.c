@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.167 2014/04/13 23:14:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.168 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3015,15 +3015,16 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
  * uvmspace_share: share a vmspace between two processes
  *
  * - XXX: no locking on vmspace
- * - used for vfork and threads
+ * - used for vfork
  */
 
-void
-uvmspace_share(p1, p2)
-	struct proc *p1, *p2;
+struct vmspace *
+uvmspace_share(struct process *pr)
 {
-	p2->p_vmspace = p1->p_vmspace;
-	p1->p_vmspace->vm_refcnt++;
+	struct vmspace *vm = pr->ps_vmspace;
+
+	vm->vm_refcnt++;
+	return vm;
 }
 
 /*
@@ -3035,7 +3036,8 @@ uvmspace_share(p1, p2)
 void
 uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 {
-	struct vmspace *nvm, *ovm = p->p_vmspace;
+	struct process *pr = p->p_p;
+	struct vmspace *nvm, *ovm = pr->ps_vmspace;
 	struct vm_map *map = &ovm->vm_map;
 	struct uvm_map_deadq dead_entries;
 
@@ -3049,8 +3051,9 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 	/* see if more than one process is using this vmspace...  */
 	if (ovm->vm_refcnt == 1) {
 		/*
-		 * if p is the only process using its vmspace then we can safely
-		 * recycle that vmspace for the program that is being exec'd.
+		 * If pr is the only process using its vmspace then
+		 * we can safely recycle that vmspace for the program
+		 * that is being exec'd.
 		 */
 
 #ifdef SYSVSHM
@@ -3104,16 +3107,16 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		pmap_remove_holes(map);
 	} else {
 		/*
-		 * p's vmspace is being shared, so we can't reuse it for p since
-		 * it is still being used for others.   allocate a new vmspace
-		 * for p
+		 * pr's vmspace is being shared, so we can't reuse
+		 * it for pr since it is still being used for others.
+		 * allocate a new vmspace for pr
 		 */
 		nvm = uvmspace_alloc(start, end,
 		    (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE, TRUE);
 
 		/* install new vmspace and drop our ref to the old one. */
 		pmap_deactivate(p);
-		p->p_vmspace = nvm;
+		p->p_vmspace = pr->ps_vmspace = nvm;
 		pmap_activate(p);
 
 		uvmspace_free(ovm);
@@ -3409,8 +3412,9 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
  * => parent's map must not be locked.
  */
 struct vmspace *
-uvmspace_fork(struct vmspace *vm1)
+uvmspace_fork(struct process *pr)
 {
+	struct vmspace *vm1 = pr->ps_vmspace;
 	struct vmspace *vm2;
 	struct vm_map *old_map = &vm1->vm_map;
 	struct vm_map *new_map;

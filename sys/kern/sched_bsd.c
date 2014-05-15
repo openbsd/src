@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.33 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.34 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -222,7 +222,6 @@ schedcpu(void *arg)
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
 		 * (remember them?) overflow takes 45 days.
 		 */
-		p->p_swtime++;
 		if (p->p_stat == SSLEEP || p->p_stat == SSTOP)
 			p->p_slptime++;
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;

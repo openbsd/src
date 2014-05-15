@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.144 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.145 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -357,8 +357,8 @@ struct kinfo_proc {
 	u_int32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
 	u_int32_t p_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
 	int32_t	p_cpticks;		/* INT: Ticks of cpu time. */
-	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process during p_swtime */
-	u_int32_t p_swtime;		/* U_INT: Time swapped in or out. */
+	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process */
+	u_int32_t p_swtime;		/* unused, always zero */
 	u_int32_t p_slptime;		/* U_INT: Time since last blocked. */
 	int32_t	p_schedflags;		/* INT: PSCHED_* flags */
 
@@ -469,9 +469,9 @@ do {									\
 									\
 	if (show_addresses) {						\
 		(kp)->p_paddr = PTRTOINT64(paddr);			\
-		(kp)->p_fd = PTRTOINT64((p)->p_fd);			\
+		(kp)->p_fd = PTRTOINT64((pr)->ps_fd);			\
 		(kp)->p_limit = PTRTOINT64((pr)->ps_limit);		\
-		(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);		\
+		(kp)->p_vmspace = PTRTOINT64((pr)->ps_vmspace);		\
 		(kp)->p_sigacts = PTRTOINT64((pr)->ps_sigacts);		\
 		(kp)->p_sess = PTRTOINT64((pg)->pg_session);		\
 		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
@@ -551,7 +551,6 @@ do {									\
 		}							\
 		(kp)->p_addr = PTRTOINT64((p)->p_addr);			\
 		(kp)->p_stat = (p)->p_stat;				\
-		(kp)->p_swtime = (p)->p_swtime;				\
 		(kp)->p_slptime = (p)->p_slptime;			\
 		(kp)->p_holdcnt = 1;					\
 		(kp)->p_priority = (p)->p_priority;			\

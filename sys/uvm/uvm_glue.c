@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.64 2014/05/03 22:49:43 guenther Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.65 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -316,53 +316,26 @@ uvm_uarea_alloc(void)
 }
 
 /*
- * uvm_fork: fork a virtual address space
+ * uvm_uarea_free: free a dead thread's stack
  *
- * - the address space is copied as per parent map's inherit values
- * - if specified, the child gets a new user stack described by
- *	stack and stacksize
- * - NOTE: the kernel stack may be at a different location in the child
- *	process, and thus addresses of automatic variables may be invalid
- *	after cpu_fork returns in the child process.  We do nothing here
- *	after cpu_fork returns.
- * - XXXCDC: we need a way for this to return a failure value rather
- *   than just hang
+ * - the thread passed to us is a dead thread; we
+ *   are running on a different context now (the reaper).
  */
 void
-uvm_fork(struct proc *p1, struct proc *p2, boolean_t shared, void *stack,
-    size_t stacksize, void (*func)(void *), void * arg)
+uvm_uarea_free(struct proc *p)
 {
-	if (shared == TRUE) {
-		p2->p_vmspace = NULL;
-		uvmspace_share(p1, p2);			/* share vmspace */
-	} else
-		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
-
-	/*
-	 * cpu_fork() copy and update the pcb, and make the child ready
-	 * to run.  If this is a normal user fork, the child will exit
-	 * directly to user mode via child_return() on its first time
-	 * slice and will not return here.  If this is a kernel thread,
-	 * the specified entry point will be executed.
-	 */
-	cpu_fork(p1, p2, stack, stacksize, func, arg);
+	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_addr = NULL;
 }
 
 /*
  * uvm_exit: exit a virtual address space
- *
- * - the process passed to us is a dead (pre-zombie) process; we
- *   are running on a different context now (the reaper).
- * - we must run in a separate thread because freeing the vmspace
- *   of the dead process may block.
  */
 void
-uvm_exit(struct proc *p)
+uvm_exit(struct process *pr)
 {
-	uvmspace_free(p->p_vmspace);
-	p->p_vmspace = NULL;
-	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
-	p->p_addr = NULL;
+	uvmspace_free(pr->ps_vmspace);
+	pr->ps_vmspace = NULL;
 }
 
 /*
@@ -395,11 +368,6 @@ int	swapdebug = 0;
 #define SDB_SWAPOUT	4
 #endif
 
-/*
- * swappable: is process "p" swappable?
- */
-
-#define	swappable(p) (((p)->p_flag & (P_SYSTEM | P_WEXIT)) == 0)
 
 /*
  * swapout_threads: find threads that can be swapped
@@ -413,9 +381,10 @@ int	swapdebug = 0;
 void
 uvm_swapout_threads(void)
 {
-	struct proc *p;
-	struct proc *outp, *outp2;
-	int outpri, outpri2;
+	struct process *pr;
+	struct proc *p, *slpp;
+	struct process *outpr;
+	int outpri;
 	int didswap = 0;
 	extern int maxslp; 
 	/* XXXCDC: should move off to uvmexp. or uvm., also in uvm_meter */
@@ -426,33 +395,45 @@ uvm_swapout_threads(void)
 #endif
 
 	/*
-	 * outp/outpri  : stop/sleep process with largest sleeptime < maxslp
-	 * outp2/outpri2: the longest resident process (its swap time)
+	 * outpr/outpri  : stop/sleep process whose most active thread has
+	 *	the largest sleeptime < maxslp
 	 */
-	outp = outp2 = NULL;
-	outpri = outpri2 = 0;
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (!swappable(p))
+	outpr = NULL;
+	outpri = 0;
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		if (pr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			continue;
-		switch (p->p_stat) {
-		case SRUN:
-			if (p->p_swtime > outpri2) {
-				outp2 = p;
-				outpri2 = p->p_swtime;
+
+		/*
+		 * slpp: the sleeping or stopped thread in pr with
+		 * the smallest p_slptime
+		 */
+		slpp = NULL;
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+			switch (p->p_stat) {
+			case SRUN:
+			case SONPROC:
+				goto next_process;
+
+			case SSLEEP:
+			case SSTOP:
+				if (slpp == NULL ||
+				    slpp->p_slptime < p->p_slptime)
+					slpp = p;
+				continue;
 			}
-			continue;
-			
-		case SSLEEP:
-		case SSTOP:
-			if (p->p_slptime >= maxslp) {
-				pmap_collect(p->p_vmspace->vm_map.pmap);
-				didswap++;
-			} else if (p->p_slptime > outpri) {
-				outp = p;
-				outpri = p->p_slptime;
-			}
-			continue;
 		}
+
+		if (slpp != NULL) {
+			if (slpp->p_slptime >= maxslp) {
+				pmap_collect(pr->ps_vmspace->vm_map.pmap);
+				didswap++;
+			} else if (slpp->p_slptime > outpri) {
+				outpr = pr;
+				outpri = slpp->p_slptime;
+			}
+		}
+next_process:	;
 	}
 
 	/*
@@ -461,15 +442,14 @@ uvm_swapout_threads(void)
 	 * if we are real low on memory since we don't gain much by doing
 	 * it.
 	 */
-	if (didswap == 0 && uvmexp.free <= atop(round_page(USPACE))) {
-		if ((p = outp) == NULL)
-			p = outp2;
+	if (didswap == 0 && uvmexp.free <= atop(round_page(USPACE)) &&
+	    outpr != NULL) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %p\n", p);
+			printf("swapout_threads: no duds, try procpr %p\n",
+			    outpr);
 #endif
-		if (p)
-			pmap_collect(p->p_vmspace->vm_map.pmap);
+		pmap_collect(outpr->ps_vmspace->vm_map.pmap);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.141 2014/04/18 11:51:17 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.142 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@
 /*
  * Map the shared signal code.
  */
-int exec_sigcode_map(struct proc *, struct emul *);
+int exec_sigcode_map(struct process *, struct emul *);
 
 /*
  * If non-zero, stackgap_random specifies the upper limit of the random gap size
@@ -256,7 +256,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 	char *stack;
 	struct ps_strings arginfo;
-	struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm = pr->ps_vmspace;
 	char **tmpfap;
 	extern struct emul emul_native;
 #if NSYSTRACE > 0
@@ -415,17 +415,16 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/*
 	 * we're committed: any further errors will kill the process, so
 	 * kill the other threads now.
-	 * XXX wait until threads are reaped to make uvmspace_exec() cheaper?
 	 */
 	single_thread_set(p, SINGLE_EXIT, 0);
 
 	/*
 	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
-	 * p_vmspace!
+	 * pr_vmspace!
 	 */
 	uvmspace_exec(p, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
-	vm = p->p_vmspace;
+	vm = pr->ps_vmspace;
 	/* Now map address space */
 	vm->vm_taddr = (char *)pack.ep_taddr;
 	vm->vm_tsize = atop(round_page(pack.ep_tsize));
@@ -653,7 +652,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_emul))
+	if (exec_sigcode_map(pr, pack.ep_emul))
 		goto free_pack_abort;
 
 #ifdef __HAVE_EXEC_MD_MAP
@@ -817,7 +816,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 }
 
 int
-exec_sigcode_map(struct proc *p, struct emul *e)
+exec_sigcode_map(struct process *pr, struct emul *e)
 {
 	vsize_t sz;
 
@@ -851,9 +850,9 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
 
-	p->p_p->ps_sigcode = 0; /* no hint */
+	pr->ps_sigcode = 0; /* no hint */
 	uao_reference(e->e_sigobject);
-	if (uvm_map(&p->p_vmspace->vm_map, &p->p_p->ps_sigcode, round_page(sz),
+	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_sigcode, round_page(sz),
 	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) {
 		uao_detach(e->e_sigobject);

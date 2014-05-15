@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.107 2014/04/12 14:18:11 espie Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.108 2014/05/15 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -867,21 +867,12 @@ restart:
  * Build a new filedesc structure.
  */
 struct filedesc *
-fdinit(struct proc *p)
+fdinit(void)
 {
 	struct filedesc0 *newfdp;
 	extern int cmask;
 
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK|PR_ZERO);
-	if (p != NULL) {
-		struct filedesc *fdp = p->p_fd;
-
-		newfdp->fd_fd.fd_cdir = fdp->fd_cdir;
-		vref(newfdp->fd_fd.fd_cdir);
-		newfdp->fd_fd.fd_rdir = fdp->fd_rdir;
-		if (newfdp->fd_fd.fd_rdir)
-			vref(newfdp->fd_fd.fd_rdir);
-	}
 	rw_init(&newfdp->fd_fd.fd_lock, "fdlock");
 
 	/* Create the file descriptor table. */
@@ -904,19 +895,19 @@ fdinit(struct proc *p)
  * Share a filedesc structure.
  */
 struct filedesc *
-fdshare(struct proc *p)
+fdshare(struct process *pr)
 {
-	p->p_fd->fd_refcnt++;
-	return (p->p_fd);
+	pr->ps_fd->fd_refcnt++;
+	return (pr->ps_fd);
 }
 
 /*
  * Copy a filedesc structure.
  */
 struct filedesc *
-fdcopy(struct proc *p)
+fdcopy(struct process *pr)
 {
-	struct filedesc *newfdp, *fdp = p->p_fd;
+	struct filedesc *newfdp, *fdp = pr->ps_fd;
 	struct file **fpp;
 	int i;
 

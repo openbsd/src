@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2014/05/08 19:06:07 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.65 2014/05/15 03:52:25 guenther Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -605,71 +605,61 @@ rmspace(struct pmap *pm)
  * Avoid to remove ourselves. Logic is designed after uvm_swapout_threads().
  */
 
-static inline boolean_t
-pmap_vax_swappable(struct proc *p, struct pmap *pm)
-{
-	if (p->p_flag & (P_SYSTEM | P_WEXIT))	/* !swappable(p) */
-		return FALSE;
-	if (p->p_vmspace->vm_map.pmap == pm)
-		return FALSE;
-	switch (p->p_stat) {
-	case SRUN:
-	case SSLEEP:
-	case SSTOP:
-		return TRUE;
-	default:
-		return FALSE;
-	}
-}
-
 int
 pmap_rmproc(struct pmap *pm)
 {
+	struct process *pr, *outpr;
 	struct pmap *ppm;
-	struct proc *p;
-	struct proc *outp, *outp2;
-	int outpri, outpri2;
+	struct proc *p, *slpp;
+	int outpri;
 	int didswap = 0;
 	extern int maxslp;
 
-	outp = outp2 = NULL;
-	outpri = outpri2 = 0;
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (!pmap_vax_swappable(p, pm))
+	outpr = NULL;
+	outpri = 0;
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		if (pr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			continue;
 		ppm = p->p_vmspace->vm_map.pmap;
-		if (ppm->pm_p0lr == 0 && ppm->pm_p1lr == NPTEPERREG)
-			continue; /* Already swapped */
-		switch (p->p_stat) {
-		case SRUN:
-#if 0 /* won't pass pmap_vax_swappable() */
-		case SONPROC:
-#endif
-			if (p->p_swtime > outpri2) {
-				outp2 = p;
-				outpri2 = p->p_swtime;
-			}
+		if (ppm == pm)		/* Don't swap ourself */
 			continue;
-		case SSLEEP:
-		case SSTOP:
-			if (p->p_slptime >= maxslp) {
+		if (ppm->pm_p0lr == 0 && ppm->pm_p1lr == NPTEPERREG)
+			continue;	/* Already swapped */
+
+		/*
+		 * slpp: the sleeping or stopped thread in pr with
+		 * the smallest p_slptime
+		 */
+		slpp = NULL;
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+			switch (p->p_stat) {
+			case SRUN:
+			case SONPROC:
+				goto next_process;
+
+			case SSLEEP:
+			case SSTOP:
+				if (slpp == NULL ||
+				    slpp->p_slptime < p->p_slptime)
+				slpp = p;
+				continue;
+			}
+		}
+		if (slpp != NULL) {
+			if (slpp->p_slptime >= maxslp) {
 				rmspace(ppm);
 				didswap++;
-			} else if (p->p_slptime > outpri) {
-				outp = p;
+			} else if (slpp->p_slptime > outpri) {
+				outpr = pr;
 				outpri = p->p_slptime;
 			}
-			continue;
 		}
+next_process:	;
 	}
 
-	if (didswap == 0) {
-		if ((p = outp) == NULL)
-			p = outp2;
-		if (p) {
-			rmspace(p->p_vmspace->vm_map.pmap);
-			didswap++;
-		}
+	if (didswap == 0 && outpr != NULL) {
+		rmspace(outpr->ps_vmspace->vm_map.pmap);
+		didswap++;
 	}
 	return didswap;
 }
