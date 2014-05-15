@@ -204,6 +204,4 @@ ec_GFp_nistp_recode_scalar_bits(unsigned char *sign, unsigned char *digit, unsig
 	*sign = s & 1;
 	*digit = d;
 }
-#else
-static void *dummy = &dummy;
 #endif

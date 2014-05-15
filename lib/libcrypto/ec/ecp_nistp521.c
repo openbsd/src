@@ -2117,6 +2117,4 @@ ec_GFp_nistp521_have_precompute_mult(const EC_GROUP * group)
 		return 0;
 }
 
-#else
-static void *dummy = &dummy;
 #endif

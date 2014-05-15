@@ -56,9 +56,7 @@
  *
  */
 
-#ifdef OPENSSL_NO_DEPRECATED
-static void *dummy = &dummy;
-#else
+#ifndef OPENSSL_NO_DEPRECATED
 
 #include <openssl/evp.h>
 

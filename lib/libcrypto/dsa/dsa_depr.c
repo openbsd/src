@@ -69,8 +69,6 @@
 #define HASH    EVP_sha1()
 #endif 
 
-static void *dummy=&dummy;
-
 #ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
