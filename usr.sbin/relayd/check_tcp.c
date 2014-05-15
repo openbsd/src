@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.42 2011/06/17 14:36:51 jsg Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.43 2014/05/15 07:56:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -211,7 +211,7 @@ tcp_send_req(int s, short event, void *arg)
 		if (bs == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				goto retry;
-			log_warnx("%s: cannot send request", __func__);
+			log_warn("%s: cannot send request", __func__);
 			tcp_close(cte, HOST_DOWN);
 			hce_notify_done(cte->host, HCE_TCP_WRITE_FAIL);
 			return;
