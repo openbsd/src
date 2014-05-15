@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.90 2014/05/15 19:38:06 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.91 2014/05/15 19:42:56 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -567,7 +567,15 @@ utility is compliant with the
 specification,
 except that the flag
 .Op Fl G
-is unsupported.
+is unsupported,
+the flags
+.Op Fl ptU
+support only single arguments, not lists,
+and the environment variables
+.Ev COLUMNS
+and
+.Ev TZ
+are unsupported.
 .Pp
 The flags
 .Op Fl defglnu
