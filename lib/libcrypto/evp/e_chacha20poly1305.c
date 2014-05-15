@@ -238,15 +238,15 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 }
 
 static const EVP_AEAD aead_chacha20_poly1305 = {
-	32,  /* key len */
-	CHACHA20_NONCE_LEN,   /* nonce len */
-	POLY1305_TAG_LEN,  /* overhead */
-	POLY1305_TAG_LEN,  /* max tag length */
+	.key_len = 32,
+	.nonce_len = CHACHA20_NONCE_LEN,
+	.overhead = POLY1305_TAG_LEN,
+	.max_tag_len = POLY1305_TAG_LEN,
 
-	aead_chacha20_poly1305_init,
-	aead_chacha20_poly1305_cleanup,
-	aead_chacha20_poly1305_seal,
-	aead_chacha20_poly1305_open,
+	.init = aead_chacha20_poly1305_init,
+	.cleanup = aead_chacha20_poly1305_cleanup,
+	.seal = aead_chacha20_poly1305_seal,
+	.open = aead_chacha20_poly1305_open,
 };
 
 const EVP_AEAD *
