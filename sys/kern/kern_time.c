@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.87 2014/01/30 21:01:59 kettenis Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.88 2014/05/15 04:36:33 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ realitexpire(void *arg)
 	struct process *pr = arg;
 	struct itimerval *tp = &pr->ps_timer[ITIMER_REAL];
 
-	psignal(pr->ps_mainproc, SIGALRM);
+	prsignal(pr, SIGALRM);
 	if (!timerisset(&tp->it_interval)) {
 		timerclear(&tp->it_value);
 		return;
