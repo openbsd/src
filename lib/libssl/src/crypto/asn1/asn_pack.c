@@ -137,22 +137,26 @@ ASN1_pack_string(void *obj, i2d_of_void *i2d, ASN1_STRING **oct)
 			ASN1err(ASN1_F_ASN1_PACK_STRING,ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-		if (oct)
-			*oct = octmp;
 	} else
 		octmp = *oct;
 		
 	if (!(octmp->length = i2d(obj, NULL))) {
 		ASN1err(ASN1_F_ASN1_PACK_STRING,ASN1_R_ENCODE_ERROR);
-		return NULL;
+		goto err;
 	}
 	if (!(p = malloc (octmp->length))) {
 		ASN1err(ASN1_F_ASN1_PACK_STRING,ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 	octmp->data = p;
 	i2d (obj, &p);
+	if (oct)
+		*oct = octmp;
 	return octmp;
+err:
+	if (!oct || octmp != *oct)
+		ASN1_STRING_free(octmp);
+	return NULL;
 }
 
 #endif
@@ -169,8 +173,6 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 			ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
 			return NULL;
 		}
-		if (oct)
-			*oct = octmp;
 	} else
 		octmp = *oct;
 
@@ -181,13 +183,19 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 
 	if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
 		ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);
-		return NULL;
+		goto err;
 	}
 	if (!octmp->data) {
 		ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
+	if (oct)
+		*oct = octmp;
 	return octmp;
+err:
+	if (!oct || octmp != *oct)
+		ASN1_STRING_free(octmp);
+	return NULL;
 }
 
 /* Extract an ASN1 object from an ASN1_STRING */

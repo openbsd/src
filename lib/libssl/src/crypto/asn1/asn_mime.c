@@ -825,11 +825,12 @@ static MIME_HEADER *
 mime_hdr_new(char *name, char *value)
 {
 	MIME_HEADER *mhdr;
-	char *tmpname, *tmpval, *p;
+	char *tmpname = NULL, *tmpval = NULL, *p;
 	int c;
+
 	if (name) {
 		if (!(tmpname = BUF_strdup(name)))
-			return NULL;
+			goto err;
 		for (p = tmpname; *p; p++) {
 			c = (unsigned char)*p;
 			if (isupper(c)) {
@@ -837,11 +838,10 @@ mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else
-		tmpname = NULL;
+	}
 	if (value) {
 		if (!(tmpval = BUF_strdup(value)))
-			return NULL;
+			goto err;
 		for (p = tmpval; *p; p++) {
 			c = (unsigned char)*p;
 			if (isupper(c)) {
@@ -849,32 +849,34 @@ mime_hdr_new(char *name, char *value)
 				*p = c;
 			}
 		}
-	} else tmpval = NULL;
-		mhdr = malloc(sizeof(MIME_HEADER));
-	if (!mhdr) {
-		OPENSSL_free(tmpname);
-		return NULL;
 	}
+	mhdr = malloc(sizeof(MIME_HEADER));
+	if (!mhdr)
+		goto err;
 	mhdr->name = tmpname;
 	mhdr->value = tmpval;
 	if (!(mhdr->params = sk_MIME_PARAM_new(mime_param_cmp))) {
 		free(mhdr);
-		return NULL;
+		goto err;
 	}
 	return mhdr;
+err:
+	free(tmpname);
+	free(tmpval);
+	return NULL;
 }
 
 static int
 mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 {
-	char *tmpname, *tmpval, *p;
+	char *tmpname = NULL, *tmpval = NULL, *p;
 	int c;
 	MIME_PARAM *mparam;
 
 	if (name) {
 		tmpname = BUF_strdup(name);
 		if (!tmpname)
-			return 0;
+			goto err;
 		for (p = tmpname; *p; p++) {
 			c = (unsigned char)*p;
 			if (isupper(c)) {
@@ -882,22 +884,24 @@ mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 				*p = c;
 			}
 		}
-	} else
-		tmpname = NULL;
+	}
 	if (value) {
 		tmpval = BUF_strdup(value);
 		if (!tmpval)
-			return 0;
-	} else
-		tmpval = NULL;
+			goto err;
+	}
 	/* Parameter values are case sensitive so leave as is */
 	mparam = malloc(sizeof(MIME_PARAM));
 	if (!mparam)
-		return 0;
+		goto err;
 	mparam->param_name = tmpname;
 	mparam->param_value = tmpval;
 	sk_MIME_PARAM_push(mhdr->params, mparam);
 	return 1;
+err:
+	free(tmpname);
+	free(tmpval);
+	return 0;
 }
 
 static int
