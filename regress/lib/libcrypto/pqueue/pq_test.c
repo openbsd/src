@@ -57,7 +57,7 @@
  *
  */
 
-#include <openssl/pqueue.h>
+#include "pqueue.h"
 
 /* remember to change expected.txt if you change these values */
 unsigned char prio1[8] = "supercal";

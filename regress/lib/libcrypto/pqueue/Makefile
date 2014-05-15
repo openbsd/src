@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 2014/05/12 19:14:14 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2014/05/15 19:23:14 miod Exp $
 
 PROG=	pq_test
+SRC=	${.CURDIR}/../../../../lib/libssl/src/ssl
+CFLAGS+=	-I${SRC}
 
 LDADD=	-lssl -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
