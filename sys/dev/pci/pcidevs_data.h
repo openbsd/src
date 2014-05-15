@@ -19569,7 +19569,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_RENESAS, PCI_PRODUCT_RENESAS_uPD720202_XHCI,
-	    "uPD720202 XHCI",
+	    "uPD720202 xHCI",
 	},
 	{
 	    PCI_VENDOR_RHINO, PCI_PRODUCT_RHINO_R1T1,
