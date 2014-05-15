@@ -208,19 +208,14 @@ ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s, time_t t)
 	return ASN1_GENERALIZEDTIME_adj(s, t, 0, 0);
 }
 
-ASN1_GENERALIZEDTIME *
-ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
-    long offset_sec)
+static ASN1_GENERALIZEDTIME *
+ASN1_GENERALIZEDTIME_adj_internal(ASN1_GENERALIZEDTIME *s, time_t t,
+    int offset_day, long offset_sec)
 {
 	char *p;
 	struct tm *ts;
 	struct tm data;
 	size_t len = 20;
-
-	if (s == NULL)
-		s = M_ASN1_GENERALIZEDTIME_new();
-	if (s == NULL)
-		return (NULL);
 
 	ts = gmtime_r(&t, &data);
 	if (ts == NULL)
@@ -249,4 +244,25 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 	s->length = strlen(p);
 	s->type = V_ASN1_GENERALIZEDTIME;
 	return (s);
+}
+
+ASN1_GENERALIZEDTIME *
+ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
+    long offset_sec)
+{
+	ASN1_GENERALIZEDTIME *tmp = NULL, *ret;
+
+	if (s == NULL) {
+		tmp = M_ASN1_GENERALIZEDTIME_new();
+		if (tmp == NULL)
+			return NULL;
+		s = tmp;
+	}
+
+	ret = ASN1_GENERALIZEDTIME_adj_internal(s, t, offset_day, offset_sec);
+	if (ret == NULL && tmp != NULL)
+		M_ASN1_GENERALIZEDTIME_free(tmp);
+
+	return ret;
+
 }
