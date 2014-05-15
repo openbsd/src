@@ -224,7 +224,7 @@ int
 EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-	int seof = -1, eof = 0, rv = -1, ret = 0, i,v, tmp, n, ln, exp_nl;
+	int seof = -1, eof = 0, rv = -1, ret = 0, i, v, tmp, n, ln, exp_nl;
 	unsigned char *d;
 
 	n = ctx->num;
@@ -360,7 +360,7 @@ end:
 int
 EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
-	int i, ret = 0, a,b, c, d;
+	int i, ret = 0, a, b, c, d;
 	unsigned long l;
 
 	/* trim white space from the start of the line. */

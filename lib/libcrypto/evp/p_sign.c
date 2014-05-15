@@ -132,6 +132,6 @@ err:
 		EVPerr(EVP_F_EVP_SIGNFINAL, EVP_R_NO_SIGN_FUNCTION_CONFIGURED);
 		return (0);
 	}
-	return(ctx->digest->sign(ctx->digest->type, m,m_len, sigret, siglen,
+	return(ctx->digest->sign(ctx->digest->type, m, m_len, sigret, siglen,
 	    pkey->pkey.ptr));
 }

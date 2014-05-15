@@ -251,7 +251,7 @@ des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if (DES_set_key_checked(&deskey[0], &data(ctx)->ks1) ||
 	    DES_set_key_checked(&deskey[1], &data(ctx)->ks2) ||
 	    DES_set_key_checked(&deskey[2], &data(ctx)->ks3))
-			return 0;
+		return 0;
 #else
 	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
 	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
