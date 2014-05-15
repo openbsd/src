@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.56 2014/03/30 21:54:48 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.57 2014/05/15 04:43:25 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -993,12 +993,14 @@ knote_fdclose(struct proc *p, int fd)
  * XXX this could be more efficient, doing a single pass down the klist
  */
 void
-knote_processexit(struct process *pr)
+knote_processexit(struct proc *p)
 {
+	struct process *pr = p->p_p;
+
 	KNOTE(&pr->ps_klist, NOTE_EXIT);
 
 	/* remove other knotes hanging off the process */
-	knote_remove(pr->ps_mainproc, &pr->ps_klist);
+	knote_remove(p, &pr->ps_klist);
 }
 
 void
