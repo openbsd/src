@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.117 2014/02/16 21:59:34 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.118 2014/05/15 19:36:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 16 2014 $
+.Dd $Mdocdate: May 15 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ and may be omitted.
 .Ic from
 .Op Ic \&!
 .Ic source
-.Ic table
+.Aq Ar table
 .Xc
 The rule matches if the connection is made from a client whose address
 is declared in the table
@@ -121,7 +121,7 @@ In addition, finer filtering may be achieved on the sender if desired:
 .It Xo
 .Ic sender
 .Op Ic \&!
-.Ic senders
+.Aq Ar senders
 .Xc
 If specified, the rule will only be matched if the sender email address
 is found in the table
@@ -253,7 +253,7 @@ Further filtering may be achieved on specific recipients if desired:
 .It Xo
 .Ic recipient
 .Op Ic \&!
-.Ar recipients
+.Aq Ar recipients
 .Xc
 If specified, the rule will only be matched if the recipient email address
 is found in the table
@@ -304,17 +304,18 @@ which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
 .Pq see Sx FORMAT SPECIFIERS .
 .It Xo
+.Bk -words
 .Ic relay
 .Op Ic backup Op Ar mx
 .Op Ic as Ar address
-.Op Ic source Ar source
-.Bk -words
+.Op Ic source Aq Ar source
 .Op Ic hostname Ar name
-.Op Ic hostnames Ar names
-.Ek
+.Op Ic hostnames Aq Ar names
 .Op Ic pki Ar pkiname
 .Op Ic tls | verify
+.Ek
 .Xc
+.Pp
 Mail is relayed.
 The routing decision is based on the DNS system.
 .Pp
@@ -407,12 +408,13 @@ as they will prevent proper relaying on the Internet.
 .Ar host
 .Op Ic auth Aq Ar auth
 .Op Ic as Ar address
-.Op Ic source Ar source
+.Op Ic source Aq Ar source
 .Op Ic hostname Ar name
-.Op Ic hostnames Ar names
+.Op Ic hostnames Aq Ar names
 .Op Ic pki Ar pkiname
 .Op Ic verify
 .Xc
+.Pp
 Mail is relayed through the specified
 .Ar host
 expressed as a URL.
@@ -477,7 +479,7 @@ If the
 parameter is specified,
 .Xr smtpd 8
 will explicitly bind to an address found in the table referenced by
-.Ar table
+.Aq Ar source
 when connecting to the relay.
 If the table contains more than one address, they are picked in turn each
 time a new connection is opened.
@@ -592,13 +594,14 @@ Changing the default value might degrade performances.
 .Op Ic port Ar port
 .Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
-.Op Ic auth | auth-optional | auth Ar authtable | Ic auth-optional Ar authtable
+.Op Ic auth | auth-optional Aq Ar authtable
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
-.Op Ic hostnames Ar names
+.Op Ic hostnames Aq Ar names
 .Op Ic mask-source
 .Ek
 .Xc
+.Pp
 Specify an
 .Ar interface
 and
@@ -662,7 +665,7 @@ Both
 .Ic auth
 and
 .Ic auth-optional
-accept a table as parameter.
+accept an optional table as a parameter.
 When provided, credentials are looked up in this table.
 Credentials format is described in
 .Xr table 5 .
