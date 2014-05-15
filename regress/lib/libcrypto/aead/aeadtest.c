@@ -57,20 +57,20 @@
 /* This program tests an AEAD against a series of test vectors from a file. The
  * test vector file consists of key-value lines where the key and value are
  * separated by a colon and optional whitespace. The keys are listed in
- * |NAMES|, below. The values are hex-encoded data.
+ * NAMES, below. The values are hex-encoded data.
  *
- * After a number of key-value lines, a blank line or EOF indicates the end of
- * the test case.
+ * After a number of key-value lines, a blank line indicates the end of the
+ * test case.
  *
  * For example, here's a valid test case:
  *
  *   AEAD: chacha20-poly1305
- *   KEY: 5a19f3173586b4c42f8412f4d5a786531b3231753e9e00998aec12fda8df10e4
- *   NONCE: 978105dfce667bf4
- *   IN: 6a4583908d
- *   AD: b654574932
- *   CT: 5294265a60
- *   TAG: 1d45758621762e061368e68868e2f929
+ *   KEY: bcb2639bf989c6251b29bf38d39a9bdce7c55f4b2ac12a39c8a37b5d0a5cc2b5
+ *   NONCE: 1e8b4c510f5ca083
+ *   IN: 8c8419bc27
+ *   AD: 34ab88c265
+ *   CT: 1a7c2f33f5
+ *   TAG: 2875c659d0f2808de3a40027feff91a4
  */
 
 #define BUF_MAX 1024
