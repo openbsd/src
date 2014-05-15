@@ -73,7 +73,7 @@
  *   TAG: 1d45758621762e061368e68868e2f929
  */
 
-#define BUF_MAX 512
+#define BUF_MAX 1024
 
 /* These are the different types of line that are found in the input file. */
 enum {
@@ -112,7 +112,8 @@ hex_digit(char h)
 }
 
 int
-aead_from_name(const EVP_AEAD **aead, const char *name){
+aead_from_name(const EVP_AEAD **aead, const char *name)
+{
 	*aead = NULL;
 
 	if (strcmp(name, "aes-128-gcm") == 0) {
@@ -126,6 +127,12 @@ aead_from_name(const EVP_AEAD **aead, const char *name){
 		*aead = EVP_aead_aes_256_gcm();
 #else
 		fprintf(stderr, "No AES support.\n");
+#endif
+	} else if (strcmp(name, "chacha20-poly1305") == 0) {
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+		*aead = EVP_aead_chacha20_poly1305();
+#else
+		fprintf(stderr, "No chacha20-poly1305 support.\n");
 #endif
 	} else {
 		fprintf(stderr, "Unknown AEAD: %s\n", name);
