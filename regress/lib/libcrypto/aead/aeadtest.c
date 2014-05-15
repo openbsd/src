@@ -99,7 +99,8 @@ static const char NAMES[NUM_TYPES][6] = {
 };
 
 static unsigned char
-hex_digit(char h) {
+hex_digit(char h)
+{
 	if (h >= '0' && h <= '9')
 		return h - '0';
 	else if (h >= 'a' && h <= 'f')
@@ -144,7 +145,7 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 	EVP_AEAD_CTX ctx;
 	ssize_t n;
 	size_t un;
-	unsigned char out[BUF_MAX+EVP_AEAD_MAX_TAG_LENGTH], out2[BUF_MAX];
+	unsigned char out[BUF_MAX + EVP_AEAD_MAX_TAG_LENGTH], out2[BUF_MAX];
 
 	if (!EVP_AEAD_CTX_init(&ctx, aead, bufs[KEY], lengths[KEY],
 	    lengths[TAG], NULL)) {
@@ -164,8 +165,8 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 
 	if (un != lengths[CT] + lengths[TAG]) {
 		fprintf(stderr, "Bad output length on line %u: %u vs %u\n",
-			line_no, (unsigned) un,
-			(unsigned)(lengths[CT] + lengths[TAG]));
+		    line_no, (unsigned) un,
+		    (unsigned)(lengths[CT] + lengths[TAG]));
 		return 0;
 	}
 
@@ -188,7 +189,7 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 
 	if ((size_t)n != lengths[IN]) {
 		fprintf(stderr, "Bad decrypt on line %u: %u\n", line_no,
-			(unsigned) n);
+		    (unsigned) n);
 		return 0;
 	}
 
@@ -263,7 +264,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "Aborting...\n");
 				return 4;
 			}
-			
+
 			if (!run_test_case(aead, bufs, lengths, line_no))
 				return 4;
 

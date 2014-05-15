@@ -658,7 +658,8 @@ aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 
 /* increment counter (64-bit int) by 1 */
 static void
-ctr64_inc(unsigned char *counter) {
+ctr64_inc(unsigned char *counter)
+{
 	int n = 8;
 	unsigned char  c;
 
@@ -991,11 +992,11 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
 		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1,12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
     EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 192, 1,12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, gcm, GCM,
     EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1,12, gcm, GCM,
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, gcm, GCM,
     EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 
 static int
@@ -1104,8 +1105,8 @@ aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #define XTS_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV \
 			 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1,16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1,16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 16, xts, XTS, EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
 
 static int
 aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
@@ -1254,11 +1255,11 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define aes_ccm_cleanup NULL
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1,12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM,
     EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 192, 1,12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, ccm, CCM,
     EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes, 256, 1,12, ccm, CCM,
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, ccm, CCM,
     EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 
 #define EVP_AEAD_AES_GCM_TAG_LEN 16
@@ -1390,7 +1391,7 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 
 	if (gcm_ctx->ctr) {
 		if (CRYPTO_gcm128_decrypt_ctr32(&gcm, in + bulk, out + bulk,
-		    in_len-bulk-gcm_ctx->tag_len, gcm_ctx->ctr))
+		    in_len - bulk - gcm_ctx->tag_len, gcm_ctx->ctr))
 			return -1;
 	} else {
 		if (CRYPTO_gcm128_decrypt(&gcm, in + bulk, out + bulk,

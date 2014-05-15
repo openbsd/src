@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 typedef struct {
-        unsigned int input[16];
+	unsigned int input[16];
 } ChaCha_ctx;
 
 void ChaCha_set_key(ChaCha_ctx *ctx, const unsigned char *key,
