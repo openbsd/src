@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.116 2014/05/07 08:14:59 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.117 2014/05/15 09:05:13 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1059,20 +1059,14 @@ nd6_rtrequest(int req, struct rtentry *rt)
 #endif
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
-		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) == 0) {
-			/*
-			 * Address resolution isn't necessary for a point to
-			 * point link, so we can skip this test for a p2p link.
-			 */
-			if (gate->sa_family != AF_LINK ||
-			    gate->sa_len < sizeof(null_sdl)) {
-				log(LOG_DEBUG, "%s: bad gateway value: %s\n",
-				    __func__, ifp->if_xname);
-				break;
-			}
-			SDL(gate)->sdl_type = ifp->if_type;
-			SDL(gate)->sdl_index = ifp->if_index;
+		if (gate->sa_family != AF_LINK ||
+		    gate->sa_len < sizeof(null_sdl)) {
+			log(LOG_DEBUG, "%s: bad gateway value: %s\n",
+			    __func__, ifp->if_xname);
+			break;
 		}
+		SDL(gate)->sdl_type = ifp->if_type;
+		SDL(gate)->sdl_index = ifp->if_index;
 		if (ln != NULL)
 			break;	/* This happens on a route change */
 		/*
