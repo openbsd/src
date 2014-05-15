@@ -164,6 +164,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "pqueue.h"
+
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
 			 l|=(((unsigned long)(*((c)++)))<<16), \

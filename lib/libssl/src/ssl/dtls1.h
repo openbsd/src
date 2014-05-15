@@ -61,7 +61,6 @@
 #define HEADER_DTLS1_H
 
 #include <openssl/buffer.h>
-#include <openssl/pqueue.h>
 #include <sys/time.h>
 
 #ifdef  __cplusplus
@@ -145,6 +144,9 @@ struct dtls1_timeout_st {
 	/* Number of alerts received so far */
 	unsigned int num_alerts;
 };
+
+struct _pqueue;
+typedef struct _pqueue *pqueue;
 
 typedef struct record_pqueue_st {
 	unsigned short epoch;
