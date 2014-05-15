@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1725 2014/04/25 12:22:15 mpi Exp $
+$OpenBSD: pcidevs,v 1.1726 2014/05/15 09:47:26 mpi Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5667,7 +5667,7 @@ product RENDITION V2x00		0x2000	Verite V2x00
 product RENESAS SH7757_PPB	0x0012	SH7757 PCIE-PCI
 product RENESAS SH7757_SW	0x0013	SH7757 PCIE Switch
 product RENESAS UPD720201_XHCI	0x0014	uPD720201 xHCI
-product RENESAS uPD720202_XHCI	0x0015	uPD720202 XHCI
+product RENESAS uPD720202_XHCI	0x0015	uPD720202 xHCI
 
 /* Rhino Equipment products */
 product RHINO R1T1		0x0105	T1/E1/J1 
