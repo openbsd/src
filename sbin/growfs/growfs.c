@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.35 2014/05/05 15:04:05 krw Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.36 2014/05/15 19:18:23 chl Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -663,7 +663,7 @@ cond_bl_upd(daddr_t *block, struct gfs_bpp *field, int fsi, int fso,
 		/*
 		 * Copy the block back immediately.
 		 *
-		 * XXX	If src is is from an indirect block we have
+		 * XXX	If src is from an indirect block we have
 		 *	to implement copy on write here in case of
 		 *	active snapshots.
 		 */
@@ -1240,8 +1240,6 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	    sizeof(struct gfs_bpp));
 	if (bp == NULL)
 		errx(1, "calloc failed");
-	memset((char *)bp, 0, ((dupper-odupper) / sblock.fs_frag + 2) *
-	    sizeof(struct gfs_bpp));
 
 	/*
 	 * Lock all new frags needed for the cylinder group summary. This  is
@@ -1519,11 +1517,12 @@ rdfs(daddr_t bno, size_t size, void *bf, int fsi)
 	DBG_FUNC("rdfs")
 	ssize_t	n;
 
+	DBG_ENTER;
 
 	if (bno < 0) {
 		err(32, "rdfs: attempting to read negative block number");
 	}
-	if (lseek(fsi, (off_t)bno * DEV_BSIZE, 0) < 0) {
+	if (lseek(fsi, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0) {
 		err(33, "rdfs: seek error: %jd", (intmax_t)bno);
 	}
 	n = read(fsi, bf, size);
