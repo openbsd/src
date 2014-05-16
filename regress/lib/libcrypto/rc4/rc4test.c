@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/evp.h>
 #include <openssl/rc4.h>
 #include <openssl/sha.h>
 
