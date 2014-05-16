@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.631 2014/04/29 13:46:55 mcbride Exp $
+$OpenBSD: usbdevs,v 1.632 2014/05/16 13:53:35 dcoppa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3992,7 +3992,9 @@ product SYNTECH CIPHERLAB100	0x1000	CipherLab Barcode Scanner
 /* TCT Mobile products */
 product TCTMOBILE UMSM		0x0000	Modem mode
 product TCTMOBILE UMSM_2	0x0017	Modem mode
+product TCTMOBILE UMSM_3	0x011e	Modem mode
 product TCTMOBILE UMASS		0xf000	Storage mode
+product TCTMOBILE UMASS_2	0xf017	Storage mode
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
