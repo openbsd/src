@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.143 2014/04/25 10:41:09 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.144 2014/05/16 08:21:54 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1317,8 +1317,7 @@ sysctl_iflist(int af, struct walkarg *w)
 		}
 		info.rti_info[RTAX_IFP] = NULL;
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family == AF_LINK)
-				continue;
+			KASSERT(ifa->ifa_addr->sa_family != AF_LINK);
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;

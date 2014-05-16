@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.288 2014/05/13 14:33:25 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.289 2014/05/16 08:21:54 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	if (socksize < sizeof(*sdl))
 		socksize = sizeof(*sdl);
 	socksize = ROUNDUP(socksize);
-	ifasize = sizeof(*ifa) + 2 * socksize;
+	ifasize = sizeof(*ifa) + socksize;
 	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
@@ -337,12 +337,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	ifa->ifa_rtrequest = link_rtrequest;
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
-	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
-	ifa->ifa_netmask = (struct sockaddr *)sdl;
-	sdl->sdl_len = masklen;
-	while (namelen != 0)
-		sdl->sdl_data[--namelen] = 0xff;
-	ifa_add(ifp, ifa);
+	ifa->ifa_netmask = NULL;
 }
 
 /*
@@ -362,7 +357,6 @@ if_free_sadl(struct ifnet *ifp)
 
 	s = splnet();
 	rt_ifa_del(ifa, 0, ifa->ifa_addr);
-	ifa_del(ifp, ifa);
 	ifafree(ifp->if_lladdr);
 	ifp->if_lladdr = NULL;
 	ifp->if_sadl = NULL;
@@ -1251,7 +1245,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
 	char ifrtlabelbuf[RTLABEL_LEN];
-	int s, error = 0, needsadd;
+	int s, error = 0;
 	size_t bytesdone;
 	short oif_flags;
 	const char *label;
@@ -1536,7 +1530,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		/* remove all routing entries when switching domains */
 		/* XXX hell this is ugly */
-		needsadd = 0;
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			s = splnet();
 			if (ifp->if_flags & IFF_UP)
@@ -1562,12 +1555,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #ifdef INET
 			in_ifdetach(ifp);
 #endif
-			/*
-			 * Remove sadl from ifa RB tree because rdomain is part
-			 * of the lookup key and re-add it after the switch.
-			 */
-			ifa_del(ifp, ifp->if_lladdr);
-			needsadd = 1;
 			splx(s);
 		}
 
@@ -1578,10 +1565,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		/* Add interface to the specified rdomain */
 		ifp->if_rdomain = ifr->ifr_rdomainid;
-
-		/* re-add sadl to the ifa RB tree in new rdomain */
-		if (needsadd)
-			ifa_add(ifp, ifp->if_lladdr);
 		break;
 
 	case SIOCAIFGROUP:
@@ -2226,10 +2209,7 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 void
 ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 {
-	if (ifa->ifa_addr->sa_family == AF_LINK)
-		TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
-	else
-		TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
 	ifa_item_insert(ifa->ifa_addr, ifa, ifp);
 	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
 		ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
