@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.87 2014/05/16 17:46:07 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.88 2014/05/16 18:35:01 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -604,14 +604,13 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 	struct ohash_info info = { 0, NULL, ecalloc, efree, NULL };
 	struct ohash myh;
 	struct checksum c;
-	char *line, *endline;
-	const char *e;
+	char *e, *line, *endline;
 	int hasfailed = 0;
 	int i, rv;
 	unsigned int slot;
 
+	ohash_init(&myh, 6, &info);
 	if (argc) {
-		ohash_init(&myh, 6, &info);
 		for (i = 0; i < argc; i++) {
 			slot = ohash_qlookup(&myh, argv[i]);
 			e = ohash_find(&myh, slot);
@@ -639,23 +638,24 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 			}
 		} else {
 			if (verifychecksum(&c, quiet) == 0) {
-				fprintf(stderr, "%s: FAIL\n", c.file);
-				hasfailed = 1;
+				slot = ohash_qlookup(&myh, c.file);
+				e = ohash_find(&myh, slot);
+				if (e == NULL) {
+					if (!(e = strdup(c.file)))
+						err(1, "strdup");
+					ohash_insert(&myh, slot, e);
+				}
 			}
 		}
 	}
 
-	if (argc) {
-		for (i = 0; i < argc; i++) {
-			slot = ohash_qlookup(&myh, argv[i]);
-			e = ohash_find(&myh, slot);
-			if (e != NULL) {
-				fprintf(stderr, "%s: FAIL\n", argv[i]);
-				hasfailed = 1;
-			}
-	    	}
-		ohash_delete(&myh);
+	for (e = ohash_first(&myh, &slot); e != NULL; e = ohash_next(&myh, &slot)) {
+		fprintf(stderr, "%s: FAIL\n", e);
+		hasfailed = 1;
+		if (argc == 0)
+			free(e);
 	}
+	ohash_delete(&myh);
 	if (hasfailed)
 		exit(1);
 }
