@@ -19,15 +19,16 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BUF_SIZE 128
 
 struct base64_test {
 	const unsigned char in[BUF_SIZE];
-	const size_t in_len;
+	const ssize_t in_len;
 	const unsigned char out[BUF_SIZE];
-	const size_t out_len;
-	const size_t valid_len;
+	const ssize_t out_len;
+	const ssize_t valid_len;
 };
 
 /*
@@ -178,12 +179,12 @@ struct base64_test base64_no_nl_tests[] = {
 
 #define N_NO_NL_TESTS (sizeof(base64_no_nl_tests) / sizeof(*base64_no_nl_tests))
 
-int
+static int
 base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 {
 	BIO *bio_b64, *bio_mem;
 	unsigned char *buf, *out;
-	int i, len, b64len;
+	ssize_t i, len, b64len;
 	int failure = 0;
 
 	buf = malloc(BUF_SIZE);
@@ -205,7 +206,7 @@ base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 
 	len = BIO_write(bio_mem, bt->in, bt->in_len);
 	if (len != bt->in_len) {
-		fprintf(stderr, "FAIL: test %i - only wrote %i out of %i "
+		fprintf(stderr, "FAIL: test %i - only wrote %zi out of %zi "
 		    "characters\n", test_no, len, bt->in_len);
 		failure = 1;
 		goto done;
@@ -232,8 +233,8 @@ base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 		goto done;
 
 	if (len != b64len) {
-		fprintf(stderr, "FAIL: test %i - encoding resulted in %i "
-		    "characters instead of %i\n", test_no, len, b64len);
+		fprintf(stderr, "FAIL: test %i - encoding resulted in %zi "
+		    "characters instead of %zi\n", test_no, len, b64len);
 		failure = 1;
 		goto done;
 	}
@@ -258,13 +259,13 @@ done:
 	return failure;
 }
 
-int
+static int
 base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 {
 	BIO *bio_b64, *bio_mem;
 	char *buf, *input;
+	ssize_t i, inlen, len;
 	int failure = 0;
-	int i, inlen, len;
 
 	buf = malloc(BUF_SIZE);
 	if (buf == NULL)
@@ -295,8 +296,8 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 	 */
 	len = BIO_read(bio_mem, buf, BUF_SIZE);
 	if (len != bt->valid_len && (bt->in_len != 0 || len != -1)) {
-		fprintf(stderr, "FAIL: test %i - decoding resulted in %i "
-		    "characters instead of %i\n", test_no, len, bt->valid_len);
+		fprintf(stderr, "FAIL: test %i - decoding resulted in %zi "
+		    "characters instead of %zi\n", test_no, len, bt->valid_len);
 		fprintf(stderr, "  input: ");
 		for (i = 0; i < inlen; i++)
 			fprintf(stderr, "%c", input[i]);
@@ -340,7 +341,7 @@ main(int argc, char **argv)
 {
 	struct base64_test *bt;
 	int failed = 0;
-	int i;
+	size_t i;
 
 	fprintf(stderr, "Starting combined tests...\n");
 
