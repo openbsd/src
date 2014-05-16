@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.37 2014/05/16 21:34:48 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.38 2014/05/16 22:11:00 jmc Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -36,6 +36,7 @@
 .Os
 .Sh NAME
 .Nm crypt ,
+.Nm crypt_checkpass ,
 .Nm setkey ,
 .Nm encrypt ,
 .Nm des_setkey ,
@@ -100,7 +101,7 @@ Otherwise, the password is hashed and compared to the provided hash.
 If the hash is NULL, authentication will always fail, but a default
 amount of work is performed to simulate the hashing operation.
 A successful match will return 0.
-A failure will return -1 and set errno.
+A failure will return \-1 and set errno.
 .Ss Extended crypt
 The
 .Ar key
