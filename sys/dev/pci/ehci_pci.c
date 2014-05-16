@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.26 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.27 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -219,9 +219,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	splx(s);
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
-
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 	return;
 
 disestablish_ret:
@@ -236,10 +234,6 @@ ehci_pci_activate(struct device *self, int act)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
-
-	/* ehci_pci_attach previously failed in some way */
-	if (sc->sc.sc_child == NULL)
-		return (0);
 
 	switch (act) {
 	case DVACT_RESUME:
@@ -265,7 +259,7 @@ ehci_pci_detach(struct device *self, int flags)
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
 
-	rv = ehci_detach(&sc->sc, flags);
+	rv = ehci_detach(self, flags);
 	if (rv)
 		return (rv);
 	if (sc->sc_ih != NULL) {

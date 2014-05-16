@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.116 2014/05/09 11:01:06 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.117 2014/05/16 18:17:03 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -570,8 +570,7 @@ uhci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
+		rv = config_activate_children(self, act);
 		sc->sc_bus.dying = 1;
 		break;
 	}
@@ -579,13 +578,12 @@ uhci_activate(struct device *self, int act)
 }
 
 int
-uhci_detach(struct uhci_softc *sc, int flags)
+uhci_detach(struct device *self, int flags)
 {
-	int rv = 0;
+	struct uhci_softc *sc = (struct uhci_softc *)self;
+	int rv;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
-
+	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return (rv);
 

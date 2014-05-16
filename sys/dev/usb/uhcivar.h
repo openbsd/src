@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.31 2014/04/29 21:51:18 mpi Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.32 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -157,12 +157,10 @@ struct uhci_softc {
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
-
-	struct device *sc_child;		/* /dev/usb# device */
 };
 
 usbd_status	uhci_init(struct uhci_softc *);
 usbd_status	uhci_run(struct uhci_softc *, int run);
 int		uhci_intr(void *);
-int		uhci_detach(struct uhci_softc *, int);
+int		uhci_detach(struct device *, int);
 int		uhci_activate(struct device *, int);

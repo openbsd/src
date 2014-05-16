@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.31 2014/04/29 12:45:29 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.32 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -150,8 +150,6 @@ struct ehci_softc {
 	struct rwlock sc_doorbell_lock;
 
 	struct timeout sc_tmo_intrlist;
-
-	struct device *sc_child;		/* /dev/usb# device */
 };
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
@@ -169,7 +167,7 @@ struct ehci_softc {
 
 usbd_status	ehci_init(struct ehci_softc *);
 int		ehci_intr(void *);
-int		ehci_detach(struct ehci_softc *, int);
+int		ehci_detach(struct device *, int);
 int		ehci_activate(struct device *, int);
 usbd_status	ehci_reset(struct ehci_softc *);
 

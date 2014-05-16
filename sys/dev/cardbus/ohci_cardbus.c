@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.18 2013/04/15 09:23:00 mglocker Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.19 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -168,8 +168,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 int
@@ -179,7 +178,7 @@ ohci_cardbus_detach(struct device *self, int flags)
 	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 
-	rv = ohci_detach(&sc->sc, flags);
+	rv = ohci_detach(self, flags);
 	if (rv)
 		return (rv);
 

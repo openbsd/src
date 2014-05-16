@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.129 2014/05/09 11:01:06 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.130 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -366,8 +366,7 @@ ohci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
+		rv = config_activate_children(self, act);
 		sc->sc_bus.dying = 1;
 		break;
 	case DVACT_POWERDOWN:
@@ -382,13 +381,12 @@ ohci_activate(struct device *self, int act)
 }
 
 int
-ohci_detach(struct ohci_softc *sc, int flags)
+ohci_detach(struct device *self, int flags)
 {
-	int rv = 0;
+	struct ohci_softc *sc = (struct ohci_softc *)self;
+	int rv;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
-
+	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return (rv);
 

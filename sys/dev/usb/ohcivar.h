@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.36 2014/04/29 21:51:18 mpi Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.37 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -121,8 +121,6 @@ struct ohci_softc {
 	struct timeval sc_overrun_ntc;
 
 	struct timeout sc_tmo_rhsc;
-
-	struct device *sc_child;
 };
 
 struct ohci_xfer {
@@ -133,5 +131,5 @@ usbd_status	ohci_checkrev(struct ohci_softc *);
 usbd_status	ohci_handover(struct ohci_softc *);
 usbd_status	ohci_init(struct ohci_softc *);
 int		ohci_intr(void *);
-int		ohci_detach(struct ohci_softc *, int);
+int		ohci_detach(struct device *, int);
 int		ohci_activate(struct device *, int);

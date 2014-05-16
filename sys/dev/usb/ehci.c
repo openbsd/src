@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.153 2014/05/09 11:01:06 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.154 2014/05/16 18:17:03 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1006,13 +1006,12 @@ ehci_poll(struct usbd_bus *bus)
 }
 
 int
-ehci_detach(struct ehci_softc *sc, int flags)
+ehci_detach(struct device *self, int flags)
 {
-	int rv = 0;
+	struct ehci_softc *sc = (struct ehci_softc *)self;
+	int rv;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
-
+	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return (rv);
 
@@ -1138,8 +1137,7 @@ ehci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
+		rv = config_activate_children(self, act);
 		sc->sc_bus.dying = 1;
 		break;
 	case DVACT_POWERDOWN:

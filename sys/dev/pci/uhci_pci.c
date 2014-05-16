@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.32 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.33 2014/05/16 18:17:03 mpi Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -212,9 +212,7 @@ uhci_pci_attach_deferred(struct device *self)
 	splx(s);
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
-
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 	return;
 
 unmap_ret:
@@ -229,7 +227,7 @@ uhci_pci_detach(struct device *self, int flags)
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	int rv;
 
-	rv = uhci_detach(&sc->sc, flags);
+	rv = uhci_detach(self, flags);
 	if (rv)
 		return (rv);
 	if (sc->sc_ih != NULL) {
