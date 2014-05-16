@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.85 2014/05/16 16:18:33 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.86 2014/05/16 17:42:24 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -759,8 +759,8 @@ main(int argc, char **argv)
 
 #ifndef VERIFYONLY
 	if (verb == CHECK) {
-		if (!pubkeyfile || !sigfile)
-			usage("must specify pubkey and sigfile");
+		if (!sigfile)
+			usage("must specify sigfile");
 		check(pubkeyfile, sigfile, quiet, argc, argv);
 		return 0;
 	}
