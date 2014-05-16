@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.13 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.14 2014/05/16 13:44:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -74,17 +74,16 @@ ffs_df(int rfd, char *file, struct statfs *sfsp)
 		sfsp->f_blocks = sblock.fs_ffs1_dsize;
 		sfsp->f_bfree = sblock.fs_ffs1_cstotal.cs_nbfree *
 		    sblock.fs_frag + sblock.fs_ffs1_cstotal.cs_nffree;
-		sfsp->f_bavail = ((int64_t)sblock.fs_ffs1_dsize * (100 -
-		    sblock.fs_minfree) / 100) - (sblock.fs_ffs1_dsize -
-		    sfsp->f_bfree);
+		sfsp->f_bavail = sfsp->f_bfree -
+		    ((int64_t)sblock.fs_ffs1_dsize * sblock.fs_minfree / 100);
 		sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
 		sfsp->f_ffree = sblock.fs_ffs1_cstotal.cs_nifree;
 	} else {
 		sfsp->f_blocks = sblock.fs_dsize;
 		sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree *
 		    sblock.fs_frag + sblock.fs_cstotal.cs_nffree;
-		sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) /
-		    100) - (sblock.fs_dsize - sfsp->f_bfree);
+		sfsp->f_bavail = sfsp->f_bfree -
+		    ((int64_t)sblock.fs_dsize * sblock.fs_minfree / 100);
 		sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
 		sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
 	}
