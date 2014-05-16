@@ -1906,7 +1906,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/pkcs7.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/poly1305.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/rc4.ph

@@ -1850,7 +1850,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pkcs7.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/poly1305.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/rc4.ph

@@ -1972,7 +1972,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/pkcs7.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/poly1305.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl/rc4.ph

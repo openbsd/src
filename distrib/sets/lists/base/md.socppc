@@ -1880,7 +1880,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/pkcs12.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/pkcs7.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/poly1305.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/pqueue.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/rand.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/rc2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/rc4.ph

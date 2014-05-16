@@ -1195,7 +1195,6 @@
 ./usr/include/openssl/pkcs12.h
 ./usr/include/openssl/pkcs7.h
 ./usr/include/openssl/poly1305.h
-./usr/include/openssl/pqueue.h
 ./usr/include/openssl/rand.h
 ./usr/include/openssl/rc2.h
 ./usr/include/openssl/rc4.h
