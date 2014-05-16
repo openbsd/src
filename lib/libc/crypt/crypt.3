@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.36 2014/05/16 14:12:19 sthen Exp $
+.\" $OpenBSD: crypt.3,v 1.37 2014/05/16 21:34:48 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -52,6 +52,8 @@
 .Ft char *
 .Fn crypt "const char *key" "const char *setting"
 .Ft int
+.Fn crypt_checkpass "const char *password" "const char *hash"
+.Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
 .Fn des_setkey "const char *key"
@@ -88,6 +90,17 @@ and a number then a different algorithm is used depending on the number.
 At the moment
 .Ql $2
 chooses Blowfish hashing; see below for more information.
+.Pp
+The
+.Fn crypt_checkpass
+function is provided to simplify checking a user's password.
+If both the hash and the password are the empty string, authentication
+is a success.
+Otherwise, the password is hashed and compared to the provided hash.
+If the hash is NULL, authentication will always fail, but a default
+amount of work is performed to simulate the hashing operation.
+A successful match will return 0.
+A failure will return -1 and set errno.
 .Ss Extended crypt
 The
 .Ar key
