@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.74 2014/04/22 20:25:16 tedu Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.75 2014/05/16 17:30:28 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -875,6 +875,8 @@ get_exportlist(void)
 				if (has_host) {
 				    grp->gr_next = get_grp();
 				    grp = grp->gr_next;
+				} else {
+				    memset(grp, 0, sizeof(*grp));
 				}
 				if (netgrp) {
 				    if (hst == NULL) {
