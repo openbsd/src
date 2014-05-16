@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.117 2014/05/16 18:17:03 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.118 2014/05/16 19:00:18 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -125,8 +125,8 @@ usbd_status	uhci_alloc_std_chain(struct uhci_softc *, u_int,
 		    struct uhci_soft_td **);
 void		uhci_poll_hub(void *);
 void		uhci_waitintr(struct uhci_softc *, struct usbd_xfer *);
-void		uhci_check_intr(struct uhci_softc *, struct uhci_xfer *);
-void		uhci_idone(struct uhci_xfer *);
+void		uhci_check_intr(struct uhci_softc *, struct usbd_xfer *);
+void		uhci_idone(struct usbd_xfer *);
 
 void		uhci_abort_xfer(struct usbd_xfer *, usbd_status status);
 
@@ -1117,7 +1117,7 @@ void
 uhci_softintr(void *v)
 {
 	struct uhci_softc *sc = v;
-	struct uhci_xfer *ex, *nextex;
+	struct uhci_xfer *ux, *nextex;
 
 	DPRINTFN(10,("%s: uhci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
@@ -1138,9 +1138,9 @@ uhci_softintr(void *v)
 	 * We scan all interrupt descriptors to see if any have
 	 * completed.
 	 */
-	for (ex = LIST_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
-		nextex = LIST_NEXT(ex, inext);
-		uhci_check_intr(sc, ex);
+	for (ux = LIST_FIRST(&sc->sc_intrhead); ux; ux = nextex) {
+		nextex = LIST_NEXT(ux, inext);
+		uhci_check_intr(sc, &ux->xfer);
 	}
 
 	if (sc->sc_softwake) {
@@ -1151,32 +1151,31 @@ uhci_softintr(void *v)
 	sc->sc_bus.intr_context--;
 }
 
-/* Check for an interrupt. */
 void
-uhci_check_intr(struct uhci_softc *sc, struct uhci_xfer *ex)
+uhci_check_intr(struct uhci_softc *sc, struct usbd_xfer *xfer)
 {
+	struct uhci_xfer *ux = (struct uhci_xfer *)xfer;
 	struct uhci_soft_td *std, *lstd;
 	u_int32_t status;
 
-	DPRINTFN(15, ("uhci_check_intr: ex=%p\n", ex));
+	DPRINTFN(15, ("%s: ux=%p\n", __func__, ux));
 #ifdef DIAGNOSTIC
-	if (ex == NULL) {
-		printf("uhci_check_intr: no ex? %p\n", ex);
+	if (ux == NULL) {
+		printf("%s: no ux? %p\n", __func__, ux);
 		return;
 	}
 #endif
-	if (ex->xfer.status == USBD_CANCELLED ||
-	    ex->xfer.status == USBD_TIMEOUT) {
-		DPRINTF(("uhci_check_intr: aborted xfer=%p\n", ex->xfer));
+	if (xfer->status == USBD_CANCELLED || xfer->status == USBD_TIMEOUT) {
+		DPRINTF(("%s: aborted xfer=%p\n", __func__, xfer));
 		return;
 	}
 
-	if (ex->stdstart == NULL)
+	if (ux->stdstart == NULL)
 		return;
-	lstd = ex->stdend;
+	lstd = ux->stdend;
 #ifdef DIAGNOSTIC
 	if (lstd == NULL) {
-		printf("uhci_check_intr: std==0\n");
+		printf("%s: std==0\n", __func__);
 		return;
 	}
 #endif
@@ -1186,8 +1185,8 @@ uhci_check_intr(struct uhci_softc *sc, struct uhci_xfer *ex)
 	 * short packet (SPD and not ACTIVE).
 	 */
 	if (letoh32(lstd->td.td_status) & UHCI_TD_ACTIVE) {
-		DPRINTFN(12, ("uhci_check_intr: active ex=%p\n", ex));
-		for (std = ex->stdstart; std != lstd; std = std->link.std) {
+		DPRINTFN(12, ("%s: active ux=%p\n", __func__, ux));
+		for (std = ux->stdstart; std != lstd; std = std->link.std) {
 			status = letoh32(std->td.td_status);
 			/* If there's an active TD the xfer isn't done. */
 			if (status & UHCI_TD_ACTIVE)
@@ -1201,22 +1200,22 @@ uhci_check_intr(struct uhci_softc *sc, struct uhci_xfer *ex)
 			      UHCI_TD_GET_MAXLEN(letoh32(std->td.td_token)))
 				goto done;
 		}
-		DPRINTFN(12, ("uhci_check_intr: ex=%p std=%p still active\n",
-			      ex, ex->stdstart));
+		DPRINTFN(12, ("%s: ux=%p std=%p still active\n", __func__,
+			      ux, ux->stdstart));
 		return;
 	}
  done:
-	DPRINTFN(12, ("uhci_check_intr: ex=%p done\n", ex));
-	timeout_del(&ex->xfer.timeout_handle);
-	usb_rem_task(ex->xfer.pipe->device, &ex->xfer.abort_task);
-	uhci_idone(ex);
+	DPRINTFN(12, ("uhci_check_intr: ux=%p done\n", ux));
+	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
+	uhci_idone(xfer);
 }
 
 /* Called at splusb() */
 void
-uhci_idone(struct uhci_xfer *ux)
+uhci_idone(struct usbd_xfer *xfer)
 {
-	struct usbd_xfer *xfer = &ux->xfer;
+	struct uhci_xfer *ux = (struct uhci_xfer *)xfer;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	struct uhci_soft_td *std;
 	u_int32_t status = 0, nstatus;

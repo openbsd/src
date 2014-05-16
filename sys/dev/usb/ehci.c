@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.154 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.155 2014/05/16 19:00:18 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -118,10 +118,10 @@ void		ehci_poll(struct usbd_bus *);
 void		ehci_softintr(void *);
 int		ehci_intr1(struct ehci_softc *);
 void		ehci_waitintr(struct ehci_softc *, struct usbd_xfer *);
-void		ehci_check_intr(struct ehci_softc *, struct ehci_xfer *);
-void		ehci_check_qh_intr(struct ehci_softc *, struct ehci_xfer *);
-void		ehci_check_itd_intr(struct ehci_softc *, struct ehci_xfer *);
-void		ehci_idone(struct ehci_xfer *);
+void		ehci_check_intr(struct ehci_softc *, struct usbd_xfer *);
+void		ehci_check_qh_intr(struct ehci_softc *, struct usbd_xfer *);
+void		ehci_check_itd_intr(struct ehci_softc *, struct usbd_xfer *);
+void		ehci_idone(struct usbd_xfer *);
 void		ehci_timeout(void *);
 void		ehci_timeout_task(void *);
 void		ehci_intrlist_timeout(void *);
@@ -645,7 +645,7 @@ ehci_softintr(void *v)
 	 */
 	for (ex = TAILQ_FIRST(&sc->sc_intrhead); ex; ex = nextex) {
 		nextex = TAILQ_NEXT(ex, inext);
-		ehci_check_intr(sc, ex);
+		ehci_check_intr(sc, &ex->xfer);
 	}
 
 	/* Schedule a callout to catch any dropped transactions. */
@@ -664,26 +664,27 @@ ehci_softintr(void *v)
 
 /* Check for an interrupt. */
 void
-ehci_check_intr(struct ehci_softc *sc, struct ehci_xfer *ex)
+ehci_check_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 {
 	int attr;
 
-	DPRINTFN(/*15*/2, ("ehci_check_intr: ex=%p\n", ex));
+	DPRINTFN(2, ("%s: xfer=%p\n", __func__, xfer));
 
-	attr = ex->xfer.pipe->endpoint->edesc->bmAttributes;
+	attr = xfer->pipe->endpoint->edesc->bmAttributes;
 	if (UE_GET_XFERTYPE(attr) == UE_ISOCHRONOUS)
-		ehci_check_itd_intr(sc, ex);
+		ehci_check_itd_intr(sc, xfer);
 	else
-		ehci_check_qh_intr(sc, ex);
+		ehci_check_qh_intr(sc, xfer);
 
 	return;
 }
 
 void
-ehci_check_qh_intr(struct ehci_softc *sc, struct ehci_xfer *ex)
+ehci_check_qh_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
 {
+	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 	struct ehci_soft_qtd *sqtd, *lsqtd;
-	__uint32_t status;
+	uint32_t status;
 
 	if (ex->sqtdstart == NULL) {
 		printf("ehci_check_qh_intr: not valid sqtd\n");
@@ -736,17 +737,19 @@ ehci_check_qh_intr(struct ehci_softc *sc, struct ehci_xfer *ex)
 	}
  done:
 	DPRINTFN(12, ("ehci_check_intr: ex=%p done\n", ex));
-	timeout_del(&ex->xfer.timeout_handle);
-	usb_rem_task(ex->xfer.pipe->device, &ex->xfer.abort_task);
-	ehci_idone(ex);
+	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
+	ehci_idone(xfer);
 }
 
 void
-ehci_check_itd_intr(struct ehci_softc *sc, struct ehci_xfer *ex) {
+ehci_check_itd_intr(struct ehci_softc *sc, struct usbd_xfer *xfer)
+{
+	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 	struct ehci_soft_itd *itd;
 	int i;
 
-	if (&ex->xfer != SIMPLEQ_FIRST(&ex->xfer.pipe->queue))
+	if (xfer != SIMPLEQ_FIRST(&xfer->pipe->queue))
 		return;
 
 	if (ex->itdstart == NULL) {
@@ -784,15 +787,15 @@ ehci_check_itd_intr(struct ehci_softc *sc, struct ehci_xfer *ex) {
 	return;
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
-	timeout_del(&ex->xfer.timeout_handle);
-	usb_rem_task(ex->xfer.pipe->device, &ex->xfer.abort_task);
-	ehci_idone(ex);
+	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->pipe->device, &xfer->abort_task);
+	ehci_idone(xfer);
 }
 
 void
-ehci_idone(struct ehci_xfer *ex)
+ehci_idone(struct usbd_xfer *xfer)
 {
-	struct usbd_xfer *xfer = &ex->xfer;
+	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 #ifdef EHCI_DEBUG
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 #endif
