@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.86 2014/05/16 17:42:24 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.87 2014/05/16 17:46:07 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -546,7 +546,9 @@ struct checksum {
 static void * 
 ecalloc(size_t s1, size_t s2, void *data)
 {
-	void *p = calloc(s1, s2);
+	void *p;
+
+	p = calloc(s1, s2);
 	if (!p)
 		err(1, "calloc");
 	return p;
@@ -576,6 +578,7 @@ static int
 verifychecksum(struct checksum *c, int quiet)
 {
 	char buf[HASHBUFSIZE];
+
 	if (strcmp(c->algo, "SHA256") == 0) {
 		recodehash(c->hash, SHA256_DIGEST_STRING_LENGTH-1);
 		if (!SHA256File(c->file, buf))
@@ -598,17 +601,14 @@ verifychecksum(struct checksum *c, int quiet)
 static void
 verifychecksums(char *msg, int argc, char **argv, int quiet)
 {
-
-	struct ohash_info info = {  0, NULL, ecalloc, efree, NULL };
+	struct ohash_info info = { 0, NULL, ecalloc, efree, NULL };
 	struct ohash myh;
-	unsigned int i;
 	struct checksum c;
 	char *line, *endline;
-	int hasfailed = 0;
-	int rv;
 	const char *e;
+	int hasfailed = 0;
+	int i, rv;
 	unsigned int slot;
-
 
 	if (argc) {
 		ohash_init(&myh, 6, &info);
@@ -628,17 +628,17 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 		    c.algo, c.file, c.hash);
 		if (rv != 3 || c.file[0] == 0 || c.file[strlen(c.file)-1] != ')')
 			errx(1, "unable to parse checksum line %s", line);
-		c.file[strlen(c.file) - 1] = 0;
+		c.file[strlen(c.file) - 1] = '\0';
 		line = endline;
 		if (argc) {
 			slot = ohash_qlookup(&myh, c.file);
 			e = ohash_find(&myh, slot);
 			if (e != NULL) {
-				if (verifychecksum(&c, quiet))
+				if (verifychecksum(&c, quiet) != 0)
 					ohash_remove(&myh, slot);
 			}
 		} else {
-			if (!verifychecksum(&c, quiet)) {
+			if (verifychecksum(&c, quiet) == 0) {
 				fprintf(stderr, "%s: FAIL\n", c.file);
 				hasfailed = 1;
 			}
