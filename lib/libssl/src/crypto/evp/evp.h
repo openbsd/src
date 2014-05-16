@@ -830,15 +830,14 @@ void OPENSSL_add_all_algorithms_noconf(void);
 void OPENSSL_add_all_algorithms_conf(void);
 
 #ifdef OPENSSL_LOAD_CONF
-#define OpenSSL_add_all_algorithms() \
-		OPENSSL_add_all_algorithms_conf()
+#define OpenSSL_add_all_algorithms() OPENSSL_add_all_algorithms_conf()
 #else
-#define OpenSSL_add_all_algorithms() \
-		OPENSSL_add_all_algorithms_noconf()
+#define OpenSSL_add_all_algorithms() OPENSSL_add_all_algorithms_noconf()
 #endif
 
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);
+
 #define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
 #define SSLeay_add_all_ciphers() OpenSSL_add_all_ciphers()
 #define SSLeay_add_all_digests() OpenSSL_add_all_digests()
