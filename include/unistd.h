@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.85 2014/04/21 11:28:26 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.86 2014/05/16 21:28:15 tedu Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -410,6 +410,9 @@ int	 fdatasync(int);
 #endif
 
 #if __XPG_VISIBLE || __BSD_VISIBLE
+#if __BSD_VISIBLE
+int	crypt_checkpass(const char *, const char *);
+#endif
 char	*crypt(const char *, const char *);
 int	 encrypt(char *, int);
 int	 fchdir(int);
