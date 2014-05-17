@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.632 2014/04/19 14:22:32 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.633 2014/05/17 08:12:53 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3211,13 +3211,18 @@ icmp6type	: STRING			{
 
 tos	: STRING			{
 			int val;
+			char *end;
+
 			if (map_tos($1, &val))
 				$$ = val;
-			else if ($1[0] == '0' && $1[1] == 'x')
-				$$ = strtoul($1, NULL, 16);
-			else
+			else if ($1[0] == '0' && $1[1] == 'x') {
+				errno = 0;
+				$$ = strtoul($1, &end, 16);
+				if (errno || *end != '\0')
+					$$ = 256;
+			} else
 				$$ = 256;		/* flag bad argument */
-			if ($$ > 255) {
+			if ($$ < 0 || $$ > 255) {
 				yyerror("illegal tos value %s", $1);
 				free($1);
 				YYERROR;
@@ -3226,8 +3231,8 @@ tos	: STRING			{
 		}
 		| NUMBER			{
 			$$ = $1;
-			if ($$ > 255) {
-				yyerror("illegal tos value %lu", $1);
+			if ($$ < 0 || $$ > 255) {
+				yyerror("illegal tos value %lld", $1);
 				YYERROR;
 			}
 		}
