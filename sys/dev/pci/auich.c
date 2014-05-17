@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.99 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: auich.c,v 1.100 2014/05/17 12:40:25 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1297,7 +1297,7 @@ auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 	/* can only use 1 segment */
 	if (size > AUICH_DMASEG_MAX) {
 		DPRINTF(AUICH_DEBUG_DMA,
-		    ("%s: requested buffer size too large: %d", \
+		    ("%s: requested buffer size too large: %zd", \
 		    sc->sc_dev.dv_xname, size));
 		return NULL;
 	}
@@ -1427,7 +1427,7 @@ auich_intr(void *v)
 
 #ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
-			printf("%s: in fifo overrun civ=%u ctrl=0x%x sts=%b\n",
+			printf("%s: in fifo overrun # %u civ=%u ctrl=0x%x sts=%b\n",
 			    sc->sc_dev.dv_xname, sc->pcmi_fifoe++,
 			    bus_space_read_1(sc->iot, sc->aud_ioh,
 				AUICH_PCMI + AUICH_CIV),
@@ -1457,7 +1457,7 @@ auich_intr(void *v)
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 #ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
-			printf("%s: in fifo overrun # %u civ=%u ctrl=0x%x sts=%b\n",
+			printf("%s: in fifo overrun civ=%u ctrl=0x%x sts=%b\n",
 			    sc->sc_dev.dv_xname,
 			    bus_space_read_1(sc->iot, sc->aud_ioh,
 				AUICH_MICI + AUICH_CIV),
@@ -1580,7 +1580,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 	    AUICH_PCMO + sc->sc_sts_reg);
 	DPRINTF(AUICH_DEBUG_DMA,
-	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p) sts=%b\n",
+	    ("auich_trigger_output(%p, %p, %d, %p, %p, %p) sts=%b\n",
 		start, end, blksize, intr, arg, param, sts, AUICH_ISTS_BITS));
 #endif
 
@@ -1627,7 +1627,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 
 #ifdef AUICH_DEBUG
 	DPRINTF(AUICH_DEBUG_DMA,
-	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p) sts=%b\n",
+	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p) sts=%b\n",
 		start, end, blksize, intr, arg, param,
 		bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + sc->sc_sts_reg),
