@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.39 2014/04/27 08:40:13 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.40 2014/05/17 11:51:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -104,10 +104,10 @@ int		qla_get_port_db(struct qla_softc *c, u_int16_t,
 		    struct qla_dmamem *);
 int		qla_add_loop_port(struct qla_softc *, struct qla_fc_port *);
 int		qla_add_fabric_port(struct qla_softc *, struct qla_fc_port *);
-int		qla_add_domain_ctrl_port(struct qla_softc *, int, u_int32_t);
+int		qla_add_logged_in_port(struct qla_softc *, int, u_int32_t);
 int		qla_classify_port(struct qla_softc *, u_int32_t, u_int64_t,
 		    u_int64_t, struct qla_fc_port **);
-int		qla_get_loop_id(struct qla_softc *sc);
+int		qla_get_loop_id(struct qla_softc *sc, int);
 void		qla_clear_port_lists(struct qla_softc *);
 int		qla_softreset(struct qla_softc *);
 void		qla_update_topology(struct qla_softc *);
@@ -230,7 +230,7 @@ qla_classify_port(struct qla_softc *sc, u_int32_t location,
 }
 
 int
-qla_get_loop_id(struct qla_softc *sc)
+qla_get_loop_id(struct qla_softc *sc, int start)
 {
 	int i, last;
 
@@ -242,6 +242,9 @@ qla_get_loop_id(struct qla_softc *sc)
 		i = QLA_MIN_HANDLE;
 		last = QLA_MAX_HANDLE;
 	}
+	if (i < start)
+		i = start;
+
 	for (; i <= last; i++) {
 		if (sc->sc_targets[i] == NULL)
 			return (i);
@@ -348,6 +351,7 @@ qla_add_fabric_port(struct qla_softc *sc, struct qla_fc_port *port)
 	 */
 	if (port->location == QLA_LOCATION_FABRIC) {
 		port->node_name = betoh64(pdb->node_name);
+		port->port_name = betoh64(pdb->port_name);
 		port->portid = (letoh16(pdb->port_id[0]) << 16) |
 		    letoh16(pdb->port_id[1]);
 		port->location = QLA_LOCATION_PORT_ID(port->portid);
@@ -365,28 +369,65 @@ qla_add_fabric_port(struct qla_softc *sc, struct qla_fc_port *port)
 }
 
 int
-qla_add_domain_ctrl_port(struct qla_softc *sc, int loopid, u_int32_t portid)
+qla_add_logged_in_port(struct qla_softc *sc, int loopid, u_int32_t portid)
 {
 	struct qla_fc_port *port;
+	struct qla_get_port_db *pdb;
+	u_int64_t node_name, port_name;
+	u_int32_t location;
+	int flags, ret;
+	
+	ret = qla_get_port_db(sc, loopid, sc->sc_scratch);
+	mtx_enter(&sc->sc_port_mtx);
+	if (ret != 0) {
+		/* put in a fake port to prevent use of this loop id */
+		printf("%s: loop id %d used, but can't see what's using it\n",
+		    DEVNAME(sc), loopid);
+		location = QLA_LOCATION_PORT_ID(portid);
+		node_name = 0;
+		port_name = 0;
+		flags = 0;
+	} else {
+		pdb = QLA_DMA_KVA(sc->sc_scratch);
+		location = QLA_LOCATION_PORT_ID(portid);
+		node_name = betoh64(pdb->node_name);
+		port_name = betoh64(pdb->port_name);
+		flags = 0;
+		if (letoh16(pdb->prli_svc_word3) & QLA_SVC3_TARGET_ROLE)
+			flags |= QLA_PORT_FLAG_IS_TARGET;
+
+		/* see if we've already found this port */
+		TAILQ_FOREACH(port, &sc->sc_ports_found, update) {
+			if ((port->node_name == node_name) &&
+			    (port->port_name == port_name) &&
+			    (port->portid == portid)) {
+				mtx_leave(&sc->sc_port_mtx);
+				DPRINTF(QLA_D_PORT, "%s: already found port "
+				    "%06x\n", DEVNAME(sc), portid);
+				return (0);
+			}
+		}
+	}
 
 	port = malloc(sizeof(*port), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (port == NULL) {
+		mtx_leave(&sc->sc_port_mtx);
 		printf("%s: failed to allocate a port structure\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	port->location = QLA_LOCATION_PORT_ID(portid);
-	port->port_name = 0;
-	port->node_name = 0;
+	port->location = location;
+	port->port_name = port_name;
+	port->node_name = node_name;
 	port->loopid = loopid;
 	port->portid = portid;
+	port->flags = flags;
 
-	mtx_enter(&sc->sc_port_mtx);
 	TAILQ_INSERT_TAIL(&sc->sc_ports, port, ports);
 	sc->sc_targets[port->loopid] = port;
 	mtx_leave(&sc->sc_port_mtx);
 
-	DPRINTF(QLA_D_PORT, "%s: added domain controller port %06x at %d\n",
+	DPRINTF(QLA_D_PORT, "%s: added logged in port %06x at %d\n",
 	    DEVNAME(sc), portid, loopid);
 	return (0);
 }
@@ -1591,11 +1632,11 @@ qla_fabric_plogi(struct qla_softc *sc, struct qla_fc_port *port)
 	int loopid, mboxin, err;
 	u_int32_t id;
 
-	loopid = port->loopid;
+	loopid = 0;
 retry:
-	if (loopid == 0) {
+	if (port->loopid == 0) {
 		mtx_enter(&sc->sc_port_mtx);
-		loopid = qla_get_loop_id(sc);
+		loopid = qla_get_loop_id(sc, loopid);
 		mtx_leave(&sc->sc_port_mtx);
 		if (loopid == -1) {
 			DPRINTF(QLA_D_PORT, "%s: ran out of loop ids\n",
@@ -1633,25 +1674,13 @@ retry:
 		return (0);
 
 	case QLA_MBOX_LOOP_USED:
-		/*
-		 * domain controller ids (fffcDD, where DD is the domain id)
-		 * get special treatment here because we can't find out about
-		 * them any other way.  otherwise, we restart the update
-		 * process to add the port at this loopid normally.
-		 */
 		id = (sc->sc_mbox[1] << 16) | sc->sc_mbox[2];
-		if ((id & QLA_DOMAIN_CTRL_MASK) == QLA_DOMAIN_CTRL) {
-			if (qla_add_domain_ctrl_port(sc, loopid, id)) {
-				return (1);
-			}
-			loopid = 0;
-			goto retry;
+		if (qla_add_logged_in_port(sc, loopid, id)) {
+			return (1);
 		}
-		DPRINTF(QLA_D_PORT, "%s: loop id %d used for port %06x\n",
-		    DEVNAME(sc), loopid, id);
-		qla_update_start(sc, QLA_UPDATE_TASK_GET_PORT_LIST);
 		port->loopid = 0;
-		return (1);
+		loopid++;
+		goto retry;
 
 	default:
 		DPRINTF(QLA_D_PORT, "%s: error %x logging in to port %06x\n",

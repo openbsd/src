@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.9 2014/04/27 08:40:13 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.10 2014/05/17 11:51:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -63,9 +63,6 @@ enum qla_port_disp {
 	QLA_PORT_DISP_MOVED,
 	QLA_PORT_DISP_DUP
 };
-
-#define QLA_DOMAIN_CTRL_MASK		0xffff00
-#define QLA_DOMAIN_CTRL			0xfffc00
 
 #define QLA_LOCATION_LOOP		(1 << 24)
 #define QLA_LOCATION_FABRIC		(2 << 24)
