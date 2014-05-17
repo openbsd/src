@@ -163,19 +163,8 @@ sk_insert(_STACK *st, void *data, int loc)
 	if ((loc >= (int)st->num) || (loc < 0))
 		st->data[st->num] = data;
 	else {
-		int i;
-		char **f, **t;
-
-		f = st->data;
-		t = &(st->data[1]);
-		for (i = st->num; i >= loc; i--)
-			t[i] = f[i];
-
-#ifdef undef /* no memmove on sunos :-( */
-		memmove(&(st->data[loc + 1]),
-		    &(st->data[loc]),
+		memmove(&(st->data[loc + 1]), &(st->data[loc]),
 		    sizeof(char *)*(st->num - loc));
-#endif
 		st->data[loc] = data;
 	}
 	st->num++;
@@ -198,21 +187,14 @@ void *
 sk_delete(_STACK *st, int loc)
 {
 	char *ret;
-	int i, j;
 
 	if (!st || (loc < 0) || (loc >= st->num))
 		return NULL;
 
 	ret = st->data[loc];
 	if (loc != st->num - 1) {
-		j = st->num - 1;
-		for (i = loc; i < j; i++)
-			st->data[i] = st->data[i + 1];
-		/* In theory memcpy is not safe for this
-		 * memcpy( &(st->data[loc]),
-		 *	&(st->data[loc+1]),
-		 *	sizeof(char *)*(st->num-loc-1));
-		 */
+		memmove(&(st->data[loc]), &(st->data[loc + 1]),
+		    sizeof(char *)*(st->num - 1 - loc));
 	}
 	st->num--;
 	return (ret);
