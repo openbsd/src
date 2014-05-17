@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.24 2013/04/20 20:11:41 deraadt Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.25 2014/05/17 21:37:51 chl Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ CLIENT *FindClient(RMPCONN *);
 int
 main(int argc, char *argv[])
 {
-	int c, fd, maxfds;
+	int c, fd;
 	sigset_t hmask, omask;
 	struct passwd *pw;
 	struct pollfd pfd[1];
@@ -208,7 +208,6 @@ main(int argc, char *argv[])
 	pfd[0].fd = fd;
 	pfd[0].events = POLLIN;
 	for (;;) {
-		struct timeval timeout;
 		int nsel;
 
 		/*
