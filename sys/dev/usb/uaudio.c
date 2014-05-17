@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.101 2013/11/06 16:13:42 pirofti Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.102 2014/05/17 12:43:18 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -3361,7 +3361,7 @@ uaudio_match_alt(void *addr, struct audio_params *p, int mode)
 	int i, j, dir, rate;
 	int alts_eh, alts_ch, ualt;
 
-	DPRINTF(("%s: mode=%s rate=%d ch=%d pre=%d bps=%d enc=%d\n",
+	DPRINTF(("%s: mode=%s rate=%ld ch=%d pre=%d bps=%d enc=%d\n",
 	    __func__, mode == AUMODE_RECORD ? "rec" : "play", p->sample_rate,
 	    p->channels, p->precision, p->bps, p->encoding));
 
@@ -3422,7 +3422,7 @@ uaudio_match_alt(void *addr, struct audio_params *p, int mode)
 			rate = uaudio_match_alt_rate(sc, i, p->sample_rate);
 			if (rate - 50 <= p->sample_rate &&
 			    rate + 50 >= p->sample_rate) {
-				DPRINTFN(6,("%s: alt %d matched rate %d with %d\n",
+				DPRINTFN(6,("%s: alt %d matched rate %ld with %d\n",
 				    __func__, i, p->sample_rate, rate));
 				p->sample_rate = rate;
 				break;
