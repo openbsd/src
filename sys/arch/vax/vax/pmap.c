@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2014/05/17 21:32:19 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.68 2014/05/17 23:21:36 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -654,7 +654,7 @@ pmap_rmproc(struct pmap *pm)
 				didswap++;
 			} else if (slpp->p_slptime > outpri) {
 				outpr = pr;
-				outpri = p->p_slptime;
+				outpri = slpp->p_slptime;
 			}
 		}
 next_process:	;
