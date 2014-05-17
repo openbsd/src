@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.16 2014/03/13 01:18:22 tedu Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.17 2014/05/17 15:19:17 chl Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ void
 set_goto_map(void)
 {
 	shifts *sp;
-	int i, j, k, symbol;
+	int i, k, symbol;
 	int state1, state2;
 	short *temp_map;
 
