@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.248 2014/05/04 05:03:26 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.249 2014/05/17 17:26:24 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -334,7 +334,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newp == NULL)
 			return (error);
 		if ((securelevel > 0 || level < -1) &&
-		    level < securelevel && p->p_pid != 1)
+		    level < securelevel && p->p_p->ps_pid != 1)
 			return (EPERM);
 		securelevel = level;
 		return (0);
@@ -1255,11 +1255,11 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			if ((pr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
-			if (arg > 0 && pp->p_pid != (pid_t)arg) {
+			if (arg > 0 && pr->ps_pid != (pid_t)arg) {
 				/* not the pid we are looking for */
 				continue;
 			}
-			fdp = pp->p_fd;
+			fdp = pr->ps_fd;
 			if (pr->ps_textvp)
 				FILLIT(NULL, NULL, KERN_FILE_TEXT, pr->ps_textvp, pp);
 			if (fdp->fd_cdir)
@@ -1287,11 +1287,11 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			if ((pr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
-			if (arg >= 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
+			if (arg >= 0 && pr->ps_ucred->cr_uid != (uid_t)arg) {
 				/* not the uid we are looking for */
 				continue;
 			}
-			fdp = pp->p_fd;
+			fdp = pr->ps_fd;
 			if (fdp->fd_cdir)
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
 			if (fdp->fd_rdir)
@@ -1384,7 +1384,7 @@ again:
 
 		case KERN_PROC_PID:
 			/* could do this with just a lookup */
-			if (p->p_pid != (pid_t)arg)
+			if (pr->ps_pid != (pid_t)arg)
 				continue;
 			break;
 
@@ -1502,7 +1502,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
 	struct timespec ut, st;
 
 	FILL_KPROC(ki, strlcpy, p, pr, pr->ps_ucred, pr->ps_pgrp,
-	    p, pr, s, p->p_vmspace, pr->ps_limit, pr->ps_sigacts, isthread,
+	    p, pr, s, pr->ps_vmspace, pr->ps_limit, pr->ps_sigacts, isthread,
 	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
@@ -1525,7 +1525,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
 	/* fixups that can only be done in the kernel */
 	if (!P_ZOMBIE(p)) {
 		if (p->p_stat != SIDL)
-			ki->p_vm_rssize = vm_resident_count(p->p_vmspace);
+			ki->p_vm_rssize = vm_resident_count(pr->ps_vmspace);
 
 		calctsru(&p->p_tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
@@ -1544,7 +1544,7 @@ int
 sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     struct proc *cp)
 {
-	struct proc *vp;
+	struct process *vpr;
 	pid_t pid;
 	struct ps_strings pss;
 	struct iovec iov;
@@ -1573,7 +1573,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 
-	if ((vp = pfind(pid)) == NULL)
+	if ((vpr = prfind(pid)) == NULL)
 		return (ESRCH);
 
 	if (oldp == NULL) {
@@ -1585,22 +1585,22 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	/* Either system process or exiting/zombie */
-	if (vp->p_p->ps_flags & (PS_SYSTEM | PS_EXITING))
+	if (vpr->ps_flags & (PS_SYSTEM | PS_EXITING))
 		return (EINVAL);
 
 	/* Execing - danger. */
-	if ((vp->p_p->ps_flags & PS_INEXEC))
+	if ((vpr->ps_flags & PS_INEXEC))
 		return (EBUSY);
 	
 	/* Only owner or root can get env */
 	if ((op == KERN_PROC_NENV || op == KERN_PROC_ENV) &&
-	    (vp->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	    (vpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
 	    (error = suser(cp, 0)) != 0))
 		return (error);
 
-	vm = vp->p_vmspace;
+	vm = vpr->ps_vmspace;
 	vm->vm_refcnt++;
-	vp = NULL;
+	vpr = NULL;
 
 	buf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
@@ -1750,7 +1750,7 @@ int
 sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     struct proc *cp)
 {
-	struct proc *findp;
+	struct process *findpr;
 	struct vnode *vp;
 	pid_t pid;
 	int error;
@@ -1763,7 +1763,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EINVAL);
 
 	pid = name[0];
-	if ((findp = pfind(pid)) == NULL)
+	if ((findpr = prfind(pid)) == NULL)
 		return (ESRCH);
 
 	if (oldp == NULL) {
@@ -1772,11 +1772,11 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	/* Either system process or exiting/zombie */
-	if (findp->p_p->ps_flags & (PS_SYSTEM | PS_EXITING))
+	if (findpr->ps_flags & (PS_SYSTEM | PS_EXITING))
 		return (EINVAL);
 
 	/* Only owner or root can get cwd */
-	if (findp->p_p->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	if (findpr->ps_ucred->cr_uid != cp->p_ucred->cr_uid &&
 	    (error = suser(cp, 0)) != 0)
 		return (error);
 
@@ -1788,7 +1788,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	*oldlenp = 0;
 
 	/* snag a reference to the vnode before we can sleep */
-	vp = findp->p_fd->fd_cdir;
+	vp = findpr->ps_fd->fd_cdir;
 	vref(vp);
 
 	path = malloc(len, M_TEMP, M_WAITOK);
