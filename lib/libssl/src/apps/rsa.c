@@ -215,9 +215,6 @@ bad:
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err, " -idea           encrypt PEM output with cbc idea\n");
 #endif
-#ifndef OPENSSL_NO_SEED
-		BIO_printf(bio_err, " -seed           encrypt PEM output with cbc seed\n");
-#endif
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err, " -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err, "                 encrypt PEM output with cbc aes\n");

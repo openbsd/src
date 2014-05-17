@@ -217,9 +217,6 @@ bad:
 		BIO_printf(bio_err, " -camellia128, -camellia192, -camellia256\n");
 		BIO_printf(bio_err, "                 encrypt PEM output with cbc camellia\n");
 #endif
-#ifndef OPENSSL_NO_SEED
-		BIO_printf(bio_err, " -seed           encrypt PEM output with cbc seed\n");
-#endif
 		BIO_printf(bio_err, " -text           print the key in text\n");
 		BIO_printf(bio_err, " -noout          don't print key out\n");
 		BIO_printf(bio_err, " -modulus        print the DSA public value\n");

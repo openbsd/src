@@ -155,9 +155,6 @@
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
-#ifndef OPENSSL_NO_SEED
-#include <openssl/seed.h>
-#endif
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
@@ -312,9 +309,6 @@ speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_IDEA
 	IDEA_KEY_SCHEDULE idea_ks;
-#endif
-#ifndef OPENSSL_NO_SEED
-	SEED_KEY_SCHEDULE seed_ks;
 #endif
 #ifndef OPENSSL_NO_BF
 	BF_KEY bf_ks;
@@ -802,13 +796,6 @@ speed_main(int argc, char **argv)
 			doit[D_CBC_IDEA] = 1;
 		else
 #endif
-#ifndef OPENSSL_NO_SEED
-		if (strcmp(*argv, "seed-cbc") == 0)
-			doit[D_CBC_SEED] = 1;
-		else if (strcmp(*argv, "seed") == 0)
-			doit[D_CBC_SEED] = 1;
-		else
-#endif
 #ifndef OPENSSL_NO_BF
 		if (strcmp(*argv, "bf-cbc") == 0)
 			doit[D_CBC_BF] = 1;
@@ -984,9 +971,6 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err, "idea-cbc ");
 #endif
-#ifndef OPENSSL_NO_SEED
-			BIO_printf(bio_err, "seed-cbc ");
-#endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err, "rc2-cbc  ");
 #endif
@@ -1038,9 +1022,6 @@ speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err, "idea     ");
-#endif
-#ifndef OPENSSL_NO_SEED
-			BIO_printf(bio_err, "seed     ");
 #endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err, "rc2      ");
@@ -1159,9 +1140,6 @@ speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16, &idea_ks);
-#endif
-#ifndef OPENSSL_NO_SEED
-	SEED_set_key(key16, &seed_ks);
 #endif
 #ifndef OPENSSL_NO_RC4
 	RC4_set_key(&rc4_ks, 16, key16);
@@ -1496,19 +1474,6 @@ speed_main(int argc, char **argv)
 				    iv, IDEA_ENCRYPT);
 			d = Time_F(STOP);
 			print_result(D_CBC_IDEA, j, count, d);
-		}
-	}
-#endif
-#ifndef OPENSSL_NO_SEED
-	if (doit[D_CBC_SEED]) {
-		for (j = 0; j < SIZE_NUM; j++) {
-			print_message(names[D_CBC_SEED], c[D_CBC_SEED][j], lengths[j]);
-			Time_F(START);
-			for (count = 0, run = 1; COND(c[D_CBC_SEED][j]); count++)
-				SEED_cbc_encrypt(buf, buf,
-				    (unsigned long) lengths[j], &seed_ks, iv, 1);
-			d = Time_F(STOP);
-			print_result(D_CBC_SEED, j, count, d);
 		}
 	}
 #endif

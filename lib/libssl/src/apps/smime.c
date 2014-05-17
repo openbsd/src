@@ -148,10 +148,6 @@ smime_main(int argc, char **argv)
 		else if (!strcmp(*args, "-des"))
 			cipher = EVP_des_cbc();
 #endif
-#ifndef OPENSSL_NO_SEED
-		else if (!strcmp(*args, "-seed"))
-			cipher = EVP_seed_cbc();
-#endif
 #ifndef OPENSSL_NO_RC2
 		else if (!strcmp(*args, "-rc2-40"))
 			cipher = EVP_rc2_40_cbc();
@@ -377,9 +373,6 @@ argerr:
 #ifndef OPENSSL_NO_DES
 		BIO_printf(bio_err, "-des3          encrypt with triple DES\n");
 		BIO_printf(bio_err, "-des           encrypt with DES\n");
-#endif
-#ifndef OPENSSL_NO_SEED
-		BIO_printf(bio_err, "-seed          encrypt with SEED\n");
 #endif
 #ifndef OPENSSL_NO_RC2
 		BIO_printf(bio_err, "-rc2-40        encrypt with RC2-40 (default)\n");

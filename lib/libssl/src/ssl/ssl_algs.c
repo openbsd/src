@@ -97,10 +97,6 @@ SSL_library_init(void)
 	EVP_add_cipher(EVP_camellia_256_cbc());
 #endif
 
-#ifndef OPENSSL_NO_SEED
-	EVP_add_cipher(EVP_seed_cbc());
-#endif
-
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest_alias(SN_md5, "ssl2-md5");
 	EVP_add_digest_alias(SN_md5, "ssl3-md5");
