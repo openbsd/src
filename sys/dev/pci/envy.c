@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.56 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.57 2014/05/17 12:23:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1779,7 +1779,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 		goto err_destroy;
 	}
 	dma_addr = buf->map->dm_segs[0].ds_addr;
-	DPRINTF("%s: allocated %zd bytes dir=%d, ka=%p, da=%p\n", DEVNAME(sc),
+	DPRINTF("%s: allocated %zd bytes dir=%d, ka=%p, da=%lx\n", DEVNAME(sc),
 	    buf->size, dir, buf->addr, dma_addr);
 	if (!sc->isht && (dma_addr & ~ENVY_MAXADDR)) {
 		printf("%s: DMA address beyond 0x10000000\n", DEVNAME(sc));
