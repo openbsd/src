@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2013/03/21 21:55:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2014/05/17 12:08:37 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -88,8 +88,11 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-	printf("boot device: %s\n",
-	    bootdv ? bootdv->dv_xname : "<unknown>");
+	if (bootdv == NULL)
+		printf("boot device: unknown (rpb %d/%d)\n",
+		    rpb.devtyp, rpb.unit);
+	else
+		printf("boot device: %s\n", bootdv->dv_xname);
 
 	setroot(bootdv, booted_partition, RB_USERREQ);
 	dumpconf();
