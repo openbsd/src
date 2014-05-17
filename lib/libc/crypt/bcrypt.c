@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.43 2014/05/06 15:59:24 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.44 2014/05/17 15:18:06 chl Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -31,12 +31,13 @@
  *
  */
 
+#include <sys/types.h>
+#include <blf.h>
+#include <ctype.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <string.h>
-#include <pwd.h>
-#include <blf.h>
 
 /* This implementation is adaptable to current computing power.
  * You can have up to 2^31 rounds which should be enough for some
