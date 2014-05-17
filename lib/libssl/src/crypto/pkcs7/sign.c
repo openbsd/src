@@ -76,9 +76,6 @@ char *argv[];
 	int i;
 	int nodetach=0;
 
-#ifndef OPENSSL_NO_MD2
-	EVP_add_digest(EVP_md2());
-#endif
 #ifndef OPENSSL_NO_MD5
 	EVP_add_digest(EVP_md5());
 #endif
