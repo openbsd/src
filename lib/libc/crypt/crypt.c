@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.21 2014/05/12 19:13:14 tedu Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.22 2014/05/17 13:27:55 tedu Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -160,8 +160,6 @@ const u_int32_t _des_bits32[32] =
 
 const u_char	_des_bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
-static u_int32_t saltbits;
-static int32_t	old_salt;
 static const u_int32_t *bits28, *bits24;
 static u_char	init_perm[64], final_perm[64];
 static u_int32_t en_keysl[16], en_keysr[16];
@@ -205,8 +203,6 @@ _des_init(void)
 	u_int32_t	*p, *il, *ir, *fl, *fr;
 
 	old_rawkey0 = old_rawkey1 = 0;
-	saltbits = 0;
-	old_salt = 0;
 	bits24 = (bits28 = _des_bits32 + 4) + 4;
 
 	/*
@@ -328,15 +324,11 @@ _des_init(void)
 	_des_initialised = 1;
 }
 
-void
+u_int32_t
 _des_setup_salt(int32_t salt)
 {
-	u_int32_t	obit, saltbit;
+	u_int32_t	obit, saltbit, saltbits;
 	int	i;
-
-	if (salt == old_salt)
-		return;
-	old_salt = salt;
 
 	saltbits = 0;
 	saltbit = 1;
@@ -347,6 +339,7 @@ _des_setup_salt(int32_t salt)
 		saltbit <<= 1;
 		obit >>= 1;
 	}
+	return saltbits;
 }
 
 int
@@ -431,7 +424,7 @@ des_setkey(const char *key)
 
 int
 _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
-    int count)
+    int count, u_int32_t saltbits)
 {
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
@@ -549,19 +542,19 @@ _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
 int
 des_cipher(const char *in, char *out, int32_t salt, int count)
 {
-	u_int32_t l_out, r_out, rawl, rawr;
+	u_int32_t l_out, r_out, rawl, rawr, saltbits;
 	u_int32_t x[2];
 	int	retval;
 
 	if (!_des_initialised)
 		_des_init();
 
-	_des_setup_salt(salt);
+	saltbits = _des_setup_salt(salt);
 
 	memcpy(x, in, sizeof x);
 	rawl = ntohl(x[0]);
 	rawr = ntohl(x[1]);
-	retval = _des_do_des(rawl, rawr, &l_out, &r_out, count);
+	retval = _des_do_des(rawl, rawr, &l_out, &r_out, count, saltbits);
 
 	x[0] = htonl(l_out);
 	x[1] = htonl(r_out);
@@ -569,23 +562,12 @@ des_cipher(const char *in, char *out, int32_t salt, int count)
 	return(retval);
 }
 
-char *
-crypt(const char *key, const char *setting)
+static int
+crypt_hashpass(const char *key, const char *setting, char *output)
 {
 	int		i;
-	u_int32_t	count, salt, l, r0, r1, keybuf[2];
+	u_int32_t	count, salt, l, r0, r1, saltbits, keybuf[2];
 	u_char		*p, *q;
-	static u_char	output[21];
-	extern char	*bcrypt(const char *, const char *);
-
-	if (setting[0] == '$') {
-		switch (setting[1]) {
-		case '2':
-			return bcrypt(key, setting);
-		default:
-			return (NULL);
-		}
-	}
 
 	if (!_des_initialised)
 		_des_init();
@@ -600,7 +582,7 @@ crypt(const char *key, const char *setting)
 			key++;
 	}
 	if (des_setkey((char *) keybuf))
-		return(NULL);
+		return(-1);
 
 	if (*setting == _PASSWORD_EFMT1) {
 		/*
@@ -619,7 +601,7 @@ crypt(const char *key, const char *setting)
 			 * Encrypt the key with itself.
 			 */
 			if (des_cipher((char *)keybuf, (char *)keybuf, 0, 1))
-				return(NULL);
+				return(-1);
 			/*
 			 * And XOR with the next 8 characters of the key.
 			 */
@@ -629,7 +611,7 @@ crypt(const char *key, const char *setting)
 				*q++ ^= *key++ << 1;
 
 			if (des_setkey((char *) keybuf))
-				return(NULL);
+				return(-1);
 		}
 		strlcpy((char *)output, setting, 10);
 
@@ -663,13 +645,13 @@ crypt(const char *key, const char *setting)
 
 		p = output + 2;
 	}
-	_des_setup_salt(salt);
+	saltbits = _des_setup_salt(salt);
 
 	/*
 	 * Do it.
 	 */
-	if (_des_do_des(0, 0, &r0, &r1, count))
-		return(NULL);
+	if (_des_do_des(0, 0, &r0, &r1, count, saltbits))
+		return(-1);
 	/*
 	 * Now encode the result...
 	 */
@@ -691,5 +673,26 @@ crypt(const char *key, const char *setting)
 	*p++ = ascii64[l & 0x3f];
 	*p = 0;
 
-	return((char *)output);
+	return(0);
+}
+
+char *
+crypt(const char *key, const char *setting)
+{
+	static u_char	goutput[21];
+	extern char	*bcrypt(const char *, const char *);
+
+	if (setting[0] == '$') {
+		switch (setting[1]) {
+		case '2':
+			return bcrypt(key, setting);
+		default:
+			return (NULL);
+		}
+	}
+
+	memset(goutput, 0, sizeof(goutput));
+	if (crypt_hashpass(key, setting, goutput) != 0)
+		return (NULL);
+	return goutput;
 }

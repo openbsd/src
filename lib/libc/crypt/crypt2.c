@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt2.c,v 1.4 2013/04/17 17:40:35 tedu Exp $	*/
+/*	$OpenBSD: crypt2.c,v 1.5 2014/05/17 13:27:55 tedu Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -60,8 +60,8 @@ extern const u_char _des_bits8[8];
 extern const u_int32_t _des_bits32[32];
 extern int	_des_initialised;
 void _des_init(void);
-void _des_setup_salt(int32_t salt);
-int _des_do_des(u_int32_t , u_int32_t , u_int32_t *, u_int32_t *, int);
+u_int32_t _des_setup_salt(int32_t salt);
+int _des_do_des(u_int32_t , u_int32_t , u_int32_t *, u_int32_t *, int, u_int32_t);
 
 int
 setkey(const char *key)
@@ -84,14 +84,14 @@ setkey(const char *key)
 int
 encrypt(char *block, int flag)
 {
-	u_int32_t io[2];
+	u_int32_t saltbits, io[2];
 	u_char	*p;
 	int	i, j, retval;
 
 	if (!_des_initialised)
 		_des_init();
 
-	_des_setup_salt(0);
+	saltbits = _des_setup_salt(0);
 	p = (u_char *)block;
 	for (i = 0; i < 2; i++) {
 		io[i] = 0L;
@@ -99,7 +99,7 @@ encrypt(char *block, int flag)
 			if (*p++ & 1)
 				io[i] |= _des_bits32[j];
 	}
-	retval = _des_do_des(io[0], io[1], io, io + 1, flag ? -1 : 1);
+	retval = _des_do_des(io[0], io[1], io, io + 1, flag ? -1 : 1, saltbits);
 	for (i = 0; i < 2; i++)
 		for (j = 0; j < 32; j++)
 			block[(i << 5) | j] = (io[i] & _des_bits32[j]) ? 1 : 0;
