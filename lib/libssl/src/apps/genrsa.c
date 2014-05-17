@@ -78,7 +78,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
-#define DEFBITS	1024
+#define DEFBITS	2048
 
 static int genrsa_cb(int p, int n, BN_GENCB * cb);
 

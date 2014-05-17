@@ -97,7 +97,7 @@ below.
 
 =item B<rsa_keygen_bits:numbits>
 
-The number of bits in the generated key. If not specified 1024 is used.
+The number of bits in the generated key. If not specified 2048 is used.
 
 =item B<rsa_keygen_pubexp:value>
 
