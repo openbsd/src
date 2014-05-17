@@ -160,6 +160,8 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 	OCSP_REQ_CTX *rctx;
 
 	rctx = malloc(sizeof(OCSP_REQ_CTX));
+	if (rctx == NULL)
+		return 0;
 	rctx->state = OHS_ERROR;
 	rctx->mem = BIO_new(BIO_s_mem());
 	rctx->io = io;
