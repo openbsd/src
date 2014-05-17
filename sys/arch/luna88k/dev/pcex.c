@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.c,v 1.2 2014/05/08 13:31:00 aoyama Exp $	*/
+/*	$OpenBSD: pcex.c,v 1.3 2014/05/17 10:06:43 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -264,7 +264,7 @@ pcex_intr(void *arg)
 	 * - if the INT level is what we are looking for.
 	 */
 	int_status = *cisr & sc->int_bits;
-	if (int_status == sc->int_bits) return -1;	/* Not for me */
+	if (int_status == sc->int_bits) return 0;	/* Not for me */
 
 #ifdef PCEX_DEBUG
 	printf("%s: called, *cisr=0x%02x, int_bits = 0x%02x\n",
