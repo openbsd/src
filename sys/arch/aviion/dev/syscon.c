@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.9 2014/05/08 22:17:33 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.10 2014/05/17 12:20:55 miod Exp $ */
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -209,7 +209,7 @@ int
 sysconsysfail(void *eframe)
 {
 	*(volatile u_int32_t *)AV_CLRINT = ISTATE_SYSFAIL;
-	printf("WARNING: SYSFAIL* ASSERTED\n");
+	printf("SYSFAIL* ASSERTED\n");
 	return (1);
 }
 
@@ -217,6 +217,6 @@ int
 sysconacfail(void *eframe)
 {
 	*(volatile u_int32_t *)AV_CLRINT = ISTATE_ACFAIL;
-	printf("WARNING: ACFAIL* ASSERTED\n");
+	printf("ACFAIL* ASSERTED\n");
 	return (1);
 }
