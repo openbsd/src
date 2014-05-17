@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.45 2013/12/06 21:03:04 deraadt Exp $	*/
+/*	$OpenBSD: yds.c,v 1.46 2014/05/17 12:19:36 ratchov Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -711,7 +711,7 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 #ifdef AUDIO_DEBUG
 	if (ydsdebug)
 		printf("%s: chip has %b\n", sc->sc_dev.dv_xname,
-			YDS_CAP_BITS, sc->sc_flags);
+		    sc->sc_flags, YDS_CAP_BITS);
 #endif
 
 	/* Disable legacy mode */
