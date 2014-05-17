@@ -98,8 +98,7 @@ sk_dup(_STACK *sk)
 
 	if ((ret = sk_new(sk->comp)) == NULL)
 		goto err;
-	s = (char **)realloc((char *)ret->data,
-	    (unsigned int)sizeof(char *) * sk->num_alloc);
+	s = reallocarray(ret->data, sk->num_alloc, sizeof(char *));
 	if (s == NULL)
 		goto err;
 	ret->data = s;
@@ -131,7 +130,7 @@ sk_new(int (*c)(const void *, const void *))
 
 	if ((ret = malloc(sizeof(_STACK))) == NULL)
 		goto err;
-	if ((ret->data = malloc(sizeof(char *) * MIN_NODES)) == NULL)
+	if ((ret->data = reallocarray(NULL, MIN_NODES, sizeof(char *))) == NULL)
 		goto err;
 	for (i = 0; i < MIN_NODES; i++)
 		ret->data[i] = NULL;
@@ -155,8 +154,7 @@ sk_insert(_STACK *st, void *data, int loc)
 	if (st == NULL)
 		return 0;
 	if (st->num_alloc <= st->num + 1) {
-		s = realloc((char *)st->data,
-		    (unsigned int)sizeof(char *) * st->num_alloc * 2);
+		s = reallocarray(st->data, st->num_alloc, 2 * sizeof(char *));
 		if (s == NULL)
 			return (0);
 		st->data = s;
@@ -296,7 +294,7 @@ sk_zero(_STACK *st)
 		return;
 	if (st->num <= 0)
 		return;
-	memset((char *)st->data, 0, sizeof(st->data)*st->num);
+	memset(st->data, 0, sizeof(st->data)*st->num);
 	st->num = 0;
 }
 
