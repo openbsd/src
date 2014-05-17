@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.16 2014/01/21 23:54:50 deraadt Exp $	*/
+/*	$OpenBSD: chap.c,v 1.17 2014/05/17 20:31:07 chl Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -760,8 +760,6 @@ ChapGenChallenge(cstate)
     chap_state *cstate;
 {
     int chal_len;
-    u_char *ptr = cstate->challenge;
-    unsigned int i;
 
     /* pick a random challenge length >= MIN_CHALLENGE_LENGTH and
        <= MAX_CHALLENGE_LENGTH */
