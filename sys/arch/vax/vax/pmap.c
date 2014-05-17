@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2014/05/17 21:21:17 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.67 2014/05/17 21:32:19 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -621,6 +621,8 @@ pmap_rmproc(struct pmap *pm)
 		if (pr->ps_flags & (PS_SYSTEM | PS_EXITING))
 			continue;
 		p = TAILQ_FIRST(&pr->ps_threads);
+		if (p == NULL)
+			continue;
 		ppm = p->p_vmspace->vm_map.pmap;
 		if (ppm == pm)		/* Don't swap ourself */
 			continue;
