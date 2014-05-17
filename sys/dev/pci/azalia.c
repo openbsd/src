@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.211 2014/03/08 22:49:00 tedu Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.212 2014/05/17 12:45:53 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -4047,7 +4047,7 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 			break;
 		}
 		if (j == codec->formats[i].frequency_type) {
-			DPRINTF(("%s: can't find %s rate %u\n",
+			DPRINTF(("%s: can't find %s rate %lu\n",
 			    __func__, cmode, par->sample_rate));
 			return EINVAL;
 		}
@@ -4289,7 +4289,7 @@ azalia_trigger_input(void *v, void *start, void *end, int blk,
 	int err;
 	uint16_t fmt;
 
-	DPRINTFN(1, ("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %ubit %uHz}\n",
+	DPRINTFN(1, ("%s: this=%p start=%p end=%p blk=%d {enc=%u %uch %ubit %luHz}\n",
 	    __func__, v, start, end, blk, param->encoding, param->channels,
 	    param->precision, param->sample_rate));
 
@@ -4332,7 +4332,7 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 		return EINVAL;
 	}
 
-	DPRINTFN(1, ("%s: prec=%d, chan=%d, rate=%d\n", __func__,
+	DPRINTFN(1, ("%s: prec=%d, chan=%d, rate=%ld\n", __func__,
 	    param->precision, param->channels, param->sample_rate));
 
 	/* Only mono is emulated, and it is emulated from stereo. */
