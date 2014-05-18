@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.30 2014/05/12 19:11:19 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.31 2014/05/18 08:08:50 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ brk_string(const char *str, int *store_argc, char **buffer)
 	size_t len;
 	int argmax = 50;
 	size_t curlen = 0;
-	char **argv = emalloc((argmax + 1) * sizeof(char *));
+	char **argv = ereallocarray(NULL, argmax + 1, sizeof(char *));
 
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)

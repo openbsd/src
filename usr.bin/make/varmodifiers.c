@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.37 2014/05/12 19:11:19 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.38 2014/05/18 08:08:50 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1414,7 +1414,7 @@ do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 		p2.nsub = 1;
 	if (p2.nsub > 10)
 		p2.nsub = 10;
-	p2.matches = emalloc(p2.nsub * sizeof(regmatch_t));
+	p2.matches = ereallocarray(NULL, p2.nsub, sizeof(regmatch_t));
 	result = VarModify((char *)s, VarRESubstitute, &p2);
 	regfree(&p2.re);
 	free(p2.matches);

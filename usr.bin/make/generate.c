@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.15 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.16 2014/05/18 08:08:50 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -152,11 +152,9 @@ main(int argc, char *argv[])
 	t = table[tn-1];
 	slots = atoi(argv[2]);
 	if (slots) {
-		occupied = calloc(sizeof(char *), slots);
+		occupied = calloc(slots, sizeof(char *));
 		if (!occupied)
 			exit(1);
-		for (i = 0; i < slots; i++)
-			occupied[i] = NULL;
 	} else
 		occupied = NULL;
 

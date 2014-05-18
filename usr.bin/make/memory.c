@@ -1,4 +1,4 @@
-/* $OpenBSD: memory.c,v 1.10 2014/05/12 19:11:19 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.11 2014/05/18 08:08:50 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -94,16 +94,6 @@ erealloc(void *ptr, size_t size)
 }
 
 void *
-ecalloc(size_t s1, size_t s2)
-{
-	void *p;
-
-	if ((p = calloc(s1, s2)) == NULL)
-		enocmem(s1, s2);
-	return p;
-}
-
-void *
 ereallocarray(void *ptr, size_t s1, size_t s2)
 {
 	if ((ptr = reallocarray(ptr, s1, s2)) == NULL)
@@ -115,7 +105,11 @@ ereallocarray(void *ptr, size_t s1, size_t s2)
 void *
 hash_calloc(size_t n, size_t s, void *u UNUSED)
 {
-	return ecalloc(n, s);
+	void *p;
+
+	if ((p = calloc(n, s)) == NULL)
+		enocmem(n, s);
+	return p;
 }
 
 void

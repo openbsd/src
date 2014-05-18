@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-/* $OpenBSD: memory.h,v 1.8 2014/05/12 19:11:19 espie Exp $ */
+/* $OpenBSD: memory.h,v 1.9 2014/05/18 08:08:50 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -41,7 +41,6 @@
 extern void *emalloc(size_t);
 extern char *estrdup(const char *);
 extern void *erealloc(void *, size_t);
-extern void *ecalloc(size_t, size_t);
 extern void *ereallocarray(void *, size_t, size_t);
 extern int eunlink(const char *);
 extern void esetenv(const char *, const char *);
