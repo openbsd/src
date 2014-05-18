@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -61,17 +61,17 @@
 #include <string.h>
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
-	    STACK_OF(X509) *certs, X509_STORE *st, unsigned long flags);
+    STACK_OF(X509) *certs, X509_STORE *st, unsigned long flags);
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id);
 static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
-	    unsigned long flags);
+    unsigned long flags);
 static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret);
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
-	    STACK_OF(OCSP_SINGLERESP) *sresp);
+    STACK_OF(OCSP_SINGLERESP) *sresp);
 static int ocsp_check_delegated(X509 *x, int flags);
 static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
-	    X509_NAME *nm, STACK_OF(X509) *certs, X509_STORE *st,
-	    unsigned long flags);
+    X509_NAME *nm, STACK_OF(X509) *certs, X509_STORE *st,
+    unsigned long flags);
 
 /* Verify a basic response message */
 int
@@ -108,14 +108,14 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 	if (!(flags & OCSP_NOVERIFY)) {
 		int init_res;
 
-		if(flags & OCSP_NOCHAIN)
+		if (flags & OCSP_NOCHAIN)
 			init_res = X509_STORE_CTX_init(&ctx, st, signer, NULL);
 		else
 			init_res = X509_STORE_CTX_init(&ctx, st, signer,
 			    bs->certs);
 		if (!init_res) {
 			ret = -1;
-			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,ERR_R_X509_LIB);
+			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
 			goto end;
 		}
 
@@ -131,7 +131,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 			    X509_verify_cert_error_string(i));
 			goto end;
 		}
-		if(flags & OCSP_NOCHECKS) {
+		if (flags & OCSP_NOCHECKS) {
 			ret = 1;
 			goto end;
 		}
@@ -152,7 +152,7 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 
 		x = sk_X509_value(chain, sk_X509_num(chain) - 1);
 		if (X509_check_trust(x, NID_OCSP_sign, 0) !=
-		    X509_TRUST_TRUSTED) {
+			X509_TRUST_TRUSTED) {
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
 			    OCSP_R_ROOT_CA_NOT_TRUSTED);
 			goto end;
@@ -411,7 +411,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 			init_res = X509_STORE_CTX_init(&ctx, store, signer,
 			    req->optionalSignature->certs);
 		if (!init_res) {
-			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,ERR_R_X509_LIB);
+			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, ERR_R_X509_LIB);
 			return 0;
 		}
 
@@ -420,7 +420,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 		ret = X509_verify_cert(&ctx);
 		X509_STORE_CTX_cleanup(&ctx);
 		if (ret <= 0) {
-			ret = X509_STORE_CTX_get_error(&ctx);	
+			ret = X509_STORE_CTX_get_error(&ctx);
 			OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
 			    OCSP_R_CERTIFICATE_VERIFY_ERROR);
 			ERR_asprintf_error_data("Verify error:%s",

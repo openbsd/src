@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -131,6 +131,7 @@ OCSP_response_create(int status, OCSP_BASICRESP *bs)
 	    &rsp->responseBytes->response))
 		goto err;
 	return rsp;
+
 err:
 	if (rsp)
 		OCSP_RESPONSE_free(rsp);
@@ -164,7 +165,7 @@ OCSP_basic_add1_status(OCSP_BASICRESP *rsp, OCSP_CERTID *cid, int status,
 		goto err;
 
 	cs = single->certStatus;
-	switch(cs->type = status) {
+	switch (cs->type = status) {
 	case V_OCSP_CERTSTATUS_REVOKED:
 		if (!revtime) {
 			OCSPerr(OCSP_F_OCSP_BASIC_ADD1_STATUS,
@@ -174,14 +175,14 @@ OCSP_basic_add1_status(OCSP_BASICRESP *rsp, OCSP_CERTID *cid, int status,
 		if (!(cs->value.revoked = ri = OCSP_REVOKEDINFO_new()))
 			goto err;
 		if (!ASN1_TIME_to_generalizedtime(revtime, &ri->revocationTime))
-			goto err;	
+			goto err;
 		if (reason != OCSP_REVOKED_STATUS_NOSTATUS) {
-			if (!(ri->revocationReason = ASN1_ENUMERATED_new())) 
+			if (!(ri->revocationReason = ASN1_ENUMERATED_new()))
 				goto err;
 			if (!(ASN1_ENUMERATED_set(ri->revocationReason,
 			    reason)))
-				goto err;	
-			}
+				goto err;
+		}
 		break;
 
 	case V_OCSP_CERTSTATUS_GOOD:
@@ -198,6 +199,7 @@ OCSP_basic_add1_status(OCSP_BASICRESP *rsp, OCSP_CERTID *cid, int status,
 	if (!(sk_OCSP_SINGLERESP_push(rsp->tbsResponseData->responses, single)))
 		goto err;
 	return single;
+
 err:
 	OCSP_SINGLERESP_free(single);
 	return NULL;
@@ -268,6 +270,7 @@ OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
 		goto err;
 
 	return 1;
+
 err:
 	return 0;
 }

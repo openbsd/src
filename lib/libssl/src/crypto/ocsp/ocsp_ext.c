@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -129,8 +129,8 @@ OCSP_REQUEST_add1_ext_i2d(OCSP_REQUEST *x, int nid, void *value, int crit,
 int
 OCSP_REQUEST_add_ext(OCSP_REQUEST *x, X509_EXTENSION *ex, int loc)
 {
-	return X509v3_add_ext(&(x->tbsRequest->requestExtensions), ex, loc) !=
-	    NULL;
+	return X509v3_add_ext(&(x->tbsRequest->requestExtensions), ex,
+	    loc) != NULL;
 }
 
 /* Single extensions */
@@ -172,7 +172,8 @@ OCSP_ONEREQ_delete_ext(OCSP_ONEREQ *x, int loc)
 	return X509v3_delete_ext(x->singleRequestExtensions, loc);
 }
 
-void *OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx)
+void *
+OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->singleRequestExtensions, nid, crit, idx);
 }
@@ -203,7 +204,7 @@ int
 OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
 {
 	return X509v3_get_ext_by_NID(x->tbsResponseData->responseExtensions,
-	    nid ,lastpos);
+	    nid, lastpos);
 }
 
 int
@@ -216,8 +217,8 @@ OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, ASN1_OBJECT *obj, int lastpos)
 int
 OCSP_BASICRESP_get_ext_by_critical(OCSP_BASICRESP *x, int crit, int lastpos)
 {
-	return X509v3_get_ext_by_critical(x->tbsResponseData->responseExtensions,
-	    crit, lastpos);
+	return X509v3_get_ext_by_critical(
+	    x->tbsResponseData->responseExtensions, crit, lastpos);
 }
 
 X509_EXTENSION *
@@ -329,14 +330,15 @@ ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d, void *data,
 		if (i2d(data, &p) <= 0)
 			goto err;
 	} else if (sk) {
-		if ((i = i2d_ASN1_SET_OF_ASN1_OBJECT(sk,NULL,
+		if ((i = i2d_ASN1_SET_OF_ASN1_OBJECT(sk, NULL,
 		    (I2D_OF(ASN1_OBJECT))i2d, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL,
 		    IS_SEQUENCE)) <= 0)
 			goto err;
 		if (!(b = p = malloc((unsigned int)i)))
 			goto err;
-		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk,&p,(I2D_OF(ASN1_OBJECT))i2d,
-		    V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL, IS_SEQUENCE) <= 0)
+		if (i2d_ASN1_SET_OF_ASN1_OBJECT(sk, &p,
+		    (I2D_OF(ASN1_OBJECT))i2d, V_ASN1_SEQUENCE,
+		    V_ASN1_UNIVERSAL, IS_SEQUENCE) <= 0)
 			goto err;
 	} else {
 		OCSPerr(OCSP_F_ASN1_STRING_ENCODE, OCSP_R_BAD_DATA);
@@ -348,6 +350,7 @@ ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d, void *data,
 		goto err;
 	free(b);
 	return s;
+
 err:
 	free(b);
 	return NULL;
@@ -358,7 +361,7 @@ err:
 
 /* Add a nonce to an extension stack. A nonce can be specificed or if NULL
  * a random nonce will be generated.
- * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the 
+ * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the
  * nonce, previous versions used the raw nonce.
  */
 
@@ -390,6 +393,7 @@ ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts, unsigned char *val, int len)
 	    X509V3_ADD_REPLACE))
 		goto err;
 	ret = 1;
+
 err:
 	free(os.data);
 	return ret;
@@ -436,7 +440,8 @@ OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	X509_EXTENSION *req_ext, *resp_ext;
 
 	req_idx = OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1);
-	resp_idx = OCSP_BASICRESP_get_ext_by_NID(bs, NID_id_pkix_OCSP_Nonce, -1);
+	resp_idx = OCSP_BASICRESP_get_ext_by_NID(bs,
+	    NID_id_pkix_OCSP_Nonce, -1);
 	/* Check both absent */
 	if (req_idx < 0 && resp_idx < 0)
 		return 2;
@@ -454,7 +459,7 @@ OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs)
 	return 1;
 }
 
-/* Copy the nonce value (if any) from an OCSP request to 
+/* Copy the nonce value (if any) from an OCSP request to
  * a response.
  */
 int
@@ -477,7 +482,7 @@ OCSP_crlID_new(char *url, long *n, char *tim)
 {
 	X509_EXTENSION *x = NULL;
 	OCSP_CRLID *cid = NULL;
-	
+
 	if (!(cid = OCSP_CRLID_new()))
 		goto err;
 	if (url) {
@@ -495,10 +500,11 @@ OCSP_crlID_new(char *url, long *n, char *tim)
 	if (tim) {
 		if (!(cid->crlTime = ASN1_GENERALIZEDTIME_new()))
 			goto err;
-		if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim))) 
+		if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim)))
 			goto err;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_CrlID, 0, cid);
+
 err:
 	if (cid)
 		OCSP_CRLID_free(cid);
@@ -518,11 +524,12 @@ OCSP_accept_responses_new(char **oids)
 		goto err;
 	while (oids && *oids) {
 		if ((nid = OBJ_txt2nid(*oids)) != NID_undef &&
-		    (o = OBJ_nid2obj(nid))) 
+		    (o = OBJ_nid2obj(nid)))
 			sk_ASN1_OBJECT_push(sk, o);
 		oids++;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_acceptableResponses, 0, sk);
+
 err:
 	if (sk)
 		sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
@@ -541,6 +548,7 @@ OCSP_archive_cutoff_new(char* tim)
 	if (!(ASN1_GENERALIZEDTIME_set_string(gt, tim)))
 		goto err;
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_archiveCutoff, 0, gt);
+
 err:
 	if (gt)
 		ASN1_GENERALIZEDTIME_free(gt);
@@ -558,7 +566,7 @@ OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 	ASN1_IA5STRING *ia5 = NULL;
 	OCSP_SERVICELOC *sloc = NULL;
 	ACCESS_DESCRIPTION *ad = NULL;
-	
+
 	if (!(sloc = OCSP_SERVICELOC_new()))
 		goto err;
 	if (!(sloc->issuer = X509_NAME_dup(issuer)))
@@ -584,6 +592,7 @@ OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 		urls++;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_serviceLocator, 0, sloc);
+
 err:
 	if (sloc)
 		OCSP_SERVICELOC_free(sloc);

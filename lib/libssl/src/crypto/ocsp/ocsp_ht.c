@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -233,7 +233,7 @@ parse_http_line1(char *line)
 		return 0;
 	}
 
-	/* Set end of response code and start of message */ 
+	/* Set end of response code and start of message */
 	*q++ = 0;
 
 	/* Attempt to parse numeric code */
@@ -290,7 +290,7 @@ next_io:
 	case OHS_ASN1_WRITE:
 		n = BIO_get_mem_data(rctx->mem, &p);
 		i = BIO_write(rctx->io,
-			p + (n - rctx->asn1_len), rctx->asn1_len);
+		    p + (n - rctx->asn1_len), rctx->asn1_len);
 		if (i <= 0) {
 			if (BIO_should_retry(rctx->io))
 				return -1;
@@ -422,7 +422,7 @@ next_line:
 		rctx->state = OHS_ASN1_CONTENT;
 
 		/* FALLTHROUGH */
-		
+
 	case OHS_ASN1_CONTENT:
 		n = BIO_get_mem_data(rctx->mem, &p);
 		if (n < (int)rctx->asn1_len)

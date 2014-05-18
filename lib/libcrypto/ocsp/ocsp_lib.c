@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -115,11 +115,11 @@ OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
 		OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
 		goto err;
 	}
-	if (!(alg->algorithm=OBJ_nid2obj(nid)))
+	if (!(alg->algorithm = OBJ_nid2obj(nid)))
 		goto err;
-	if ((alg->parameter=ASN1_TYPE_new()) == NULL)
+	if ((alg->parameter = ASN1_TYPE_new()) == NULL)
 		goto err;
-	alg->parameter->type=V_ASN1_NULL;
+	alg->parameter->type = V_ASN1_NULL;
 
 	if (!X509_NAME_digest(issuerName, dgst, md, &i))
 		goto digerr;
@@ -139,6 +139,7 @@ OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
 			goto err;
 	}
 	return cid;
+
 digerr:
 	OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_DIGEST_ERR);
 err:
@@ -216,7 +217,7 @@ OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
 
 	/* Check for trailing part of path */
 	p = strchr(p, '/');
-	if (!p) 
+	if (!p)
 		*ppath = BUF_strdup("/");
 	else {
 		*ppath = BUF_strdup(p);

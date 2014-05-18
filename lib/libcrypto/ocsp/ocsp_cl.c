@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -75,7 +75,7 @@
  * relevant information from the response.
  */
 
-/* Add an OCSP_CERTID to an OCSP request. Return new OCSP_ONEREQ 
+/* Add an OCSP_CERTID to an OCSP request. Return new OCSP_ONEREQ
  * pointer: useful if we want to add extensions.
  */
 OCSP_ONEREQ *
@@ -91,6 +91,7 @@ OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 	if (req && !sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
 		goto err;
 	return one;
+
 err:
 	OCSP_ONEREQ_free(one);
 	return NULL;
@@ -115,7 +116,7 @@ OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
 	req->tbsRequest->requestorName = gen;
 	return 1;
 }
-	
+
 /* Add a certificate to an OCSP request */
 int
 OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
@@ -132,7 +133,7 @@ OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 	if (!sig->certs && !(sig->certs = sk_X509_new_null()))
 		return 0;
 
-	if(!sk_X509_push(sig->certs, cert))
+	if (!sk_X509_push(sig->certs, cert))
 		return 0;
 	CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
 	return 1;
@@ -167,7 +168,7 @@ OCSP_request_sign(OCSP_REQUEST *req, X509 *signer, EVP_PKEY *key,
 	}
 
 	if (!(flags & OCSP_NOCERTS)) {
-		if(!OCSP_request_add1_cert(req, signer))
+		if (!OCSP_request_add1_cert(req, signer))
 			goto err;
 		for (i = 0; i < sk_X509_num(certs); i++) {
 			x = sk_X509_value(certs, i);
@@ -177,6 +178,7 @@ OCSP_request_sign(OCSP_REQUEST *req, X509 *signer, EVP_PKEY *key,
 	}
 
 	return 1;
+
 err:
 	OCSP_SIGNATURE_free(req->optionalSignature);
 	req->optionalSignature = NULL;
@@ -257,7 +259,7 @@ OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)
 }
 
 /* Extract status information from an OCSP_SINGLERESP structure.
- * Note: the revtime and reason values are only set if the 
+ * Note: the revtime and reason values are only set if the
  * certificate status is revoked. Returns numerical value of
  * status.
  */
@@ -280,7 +282,8 @@ OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 			*revtime = rev->revocationTime;
 		if (reason) {
 			if (rev->revocationReason)
-				*reason = ASN1_ENUMERATED_get(rev->revocationReason);
+				*reason = ASN1_ENUMERATED_get(
+				    rev->revocationReason);
 			else
 				*reason = -1;
 		}

@@ -15,7 +15,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -335,7 +335,7 @@ typedef struct ocsp_service_locator_st {
 	X509_NAME* issuer;
 	STACK_OF(ACCESS_DESCRIPTION) *locator;
 } OCSP_SERVICELOC;
- 
+
 #define PEM_STRING_OCSP_REQUEST	"OCSP REQUEST"
 #define PEM_STRING_OCSP_RESPONSE "OCSP RESPONSE"
 
@@ -454,7 +454,7 @@ int	OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
 int	OCSP_request_is_signed(OCSP_REQUEST *req);
 OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp, OCSP_CERTID *cid,
-	    int status, int reason, ASN1_TIME *revtime, ASN1_TIME *thisupd, 
+	    int status, int reason, ASN1_TIME *revtime, ASN1_TIME *thisupd,
 	    ASN1_TIME *nextupd);
 int	OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
 int	OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
