@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.26 2012/01/07 20:13:16 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.27 2014/05/18 20:16:29 mlarkin Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -216,8 +216,7 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = 1;
 
-	if (aml_evalname(acpi_sc, NULL, "\\_PIC", 1, &arg, NULL) != 0)
-		return;
+	aml_evalname(acpi_sc, NULL, "\\_PIC", 1, &arg, NULL);
 
 	mp_busses = acpimadt_busses;
 	mp_nbusses = nitems(acpimadt_busses);
