@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.306 2014/05/12 18:50:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.307 2014/05/18 15:17:50 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -802,7 +802,8 @@ bind_lease(void)
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
 	struct client_lease *lease, *pl;
-
+	int seen; 
+	
 	/*
 	 * If it's been here before (e.g. static lease), clear out any
 	 * old resolv_conf.
@@ -900,14 +901,17 @@ newlease:
 	free_client_lease(lease);
 
 	/* Remove previous dynamic lease(es) for this address. */
+	seen = 0;
 	TAILQ_FOREACH_SAFE(lease, &client->leases, next, pl) {
 		if (lease->is_static)
 			break;
-		if (client->active != lease && lease->address.s_addr ==
+		if (client->active == lease)
+			seen = 1;
+		else if (lease->address.s_addr ==
 		    client->active->address.s_addr)
 			free_client_lease(lease);
 	}
-	if (!client->active->is_static)
+	if (!client->active->is_static && !seen)
 		TAILQ_INSERT_HEAD(&client->leases, client->active,  next);
 
 	client->state = S_BOUND;
