@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.16 2011/10/02 22:20:50 edd Exp $	*/
+/*	$OpenBSD: pack.c,v 1.17 2014/05/18 09:29:54 espie Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -144,12 +144,12 @@ pack(void)
 	}
 
 	/* Allocate and pack loc[]. */
-	locators.vec = emalloc(locspace * sizeof(*locators.vec));
+	locators.vec = ereallocarray(NULL, locspace, sizeof(*locators.vec));
 	locators.used = 0;
 	packlocs();
 
 	/* Allocate and pack pv[]. */
-	parents.vec = emalloc(pvecspace * sizeof(*parents.vec));
+	parents.vec = ereallocarray(NULL, pvecspace, sizeof(*parents.vec));
 	parents.used = 0;
 	packpvec();
 }
@@ -167,7 +167,7 @@ packdevi(void)
 	struct deva *d;
 	int j, m, n;
 
-	packed = emalloc((ndevi + 1) * sizeof *packed);
+	packed = ereallocarray(NULL, ndevi + 1, sizeof *packed);
 	n = 0;
 	for (d = alldevas; d != NULL; d = d->d_next) {
 		/*
@@ -247,7 +247,7 @@ addparents(struct devi *src, struct devi *dst)
 		return;
 	if (src->i_atdev != NULL) {
 		n = nparents(NULL, src->i_atdev, src->i_atunit);
-		p = emalloc(n * sizeof *p);
+		p = ereallocarray(NULL, n, sizeof *p);
 		if (n == 0)
 			return;
 		(void)nparents(p, src->i_atdev, src->i_atunit);
@@ -257,7 +257,7 @@ addparents(struct devi *src, struct devi *dst)
 			n += nparents(NULL, nv->nv_ptr, src->i_atunit);
 		if (n == 0)
 			return;
-		p = emalloc(n * sizeof *p);
+		p = ereallocarray(NULL, n, sizeof *p);
 		n = 0;
 		for (nv = src->i_atattr->a_refs; nv != NULL; nv = nv->nv_next)
 			n += nparents(p + n, nv->nv_ptr, src->i_atunit);
@@ -283,7 +283,7 @@ addparents(struct devi *src, struct devi *dst)
 		free(p);
 		return;
 	}
-	dst->i_parents = q = erealloc(dst->i_parents, (new + 1) * sizeof(*q));
+	dst->i_parents = q = ereallocarray(dst->i_parents, new + 1, sizeof(*q));
 	dst->i_pvlen = new;
 	q[new] = NULL;
 	q += old;
@@ -343,7 +343,7 @@ packpvec(void)
 	int l, v, o;
 	short *vec;
 
-	vec = emalloc(longest_pvec * sizeof(*vec));
+	vec = ereallocarray(NULL, longest_pvec, sizeof(*vec));
 	qsort(packed, npacked, sizeof *packed, pvlencmp);
 	for (p = packed; (i = *p) != NULL; p++) {
 		l = i->i_pvlen;

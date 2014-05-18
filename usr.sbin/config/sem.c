@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.33 2013/11/23 17:38:15 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.34 2014/05/18 09:29:54 espie Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -1099,7 +1099,8 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 	if (attr->a_loclen == 0)	/* e.g., "at root" */
 		lp = nullvec;
 	else
-		lp = emalloc((attr->a_loclen + 1) * sizeof(const char *));
+		lp = ereallocarray(NULL, attr->a_loclen + 1, 
+		    sizeof(const char *));
 	for (n = got; n != NULL; n = n->nv_next)
 		n->nv_int = -1;
 	nmissing = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.15 2011/10/02 22:20:49 edd Exp $	*/
+/*	$OpenBSD: hash.c,v 1.16 2014/05/18 09:29:54 espie Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ ht_init(struct hashtab *ht, size_t sz)
 	struct hashent **h;
 	u_int n;
 
-	h = emalloc(sz * sizeof *h);
+	h = ereallocarray(NULL, sz, sizeof *h);
 	ht->ht_tab = h;
 	ht->ht_size = sz;
 	ht->ht_mask = sz - 1;
@@ -148,9 +148,7 @@ ht_expand(struct hashtab *ht)
 	u_int n, i;
 
 	n = ht->ht_size * 2;
-	h = emalloc(n * sizeof *h);
-	for (i = 0; i < n; i++)
-		h[i] = NULL;
+	h = ecalloc(n, sizeof *h);
 	oldh = ht->ht_tab;
 	n--;
 	for (i = ht->ht_size; i != 0; i--) {

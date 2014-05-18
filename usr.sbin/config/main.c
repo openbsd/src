@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2013/11/23 17:38:15 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2014/05/18 09:29:54 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -735,7 +735,7 @@ optiondelta(void)
 
 	for (nnewopts = 0, nv = options; nv != NULL; nv = nv->nv_next)
 		nnewopts++;
-	newopts = (struct opt *)emalloc(nnewopts * sizeof(struct opt));
+	newopts = ereallocarray(NULL, nnewopts, sizeof(struct opt));
 	if (newopts == NULL)
 		ret = 0;
 	for (i = 0, nv = options; nv != NULL; nv = nv->nv_next, i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.26 2013/10/29 15:37:56 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.27 2014/05/18 09:29:54 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -369,7 +369,8 @@ void	initsem(void);
 
 /* util.c */
 void	*emalloc(size_t);
-void	*erealloc(void *, size_t);
+void	*ereallocarray(void *, size_t, size_t);
+void	*ecalloc(size_t, size_t);
 char	*sourcepath(const char *);
 void	error(const char *, ...);			/* immediate errs */
 void	xerror(const char *, int, const char *, ...);	/* delayed errs */
