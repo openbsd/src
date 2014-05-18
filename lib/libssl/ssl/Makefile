@@ -1,11 +1,15 @@
-# $OpenBSD: Makefile,v 1.43 2014/05/15 19:39:46 miod Exp $
+# $OpenBSD: Makefile,v 1.44 2014/05/18 11:20:08 miod Exp $
 
 LIB=	ssl
 
 SSL_SRC=	${.CURDIR}/../../libssl/src
 LSSL_SRC=	${SSL_SRC}/ssl
 
-CFLAGS+= -Wall -Werror
+.include <bsd.own.mk>
+CFLAGS+= -Wall
+.if ${COMPILER_VERSION:L} != "gcc3"
+CFLAGS+= -Werror
+.endif
 CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -I${SSL_SRC}
