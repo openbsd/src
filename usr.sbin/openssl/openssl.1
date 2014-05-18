@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.93 2014/03/13 10:12:11 florian Exp $
+.\" $OpenBSD: openssl.1,v 1.94 2014/05/18 08:23:27 sthen Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: March 13 2014 $
+.Dd $Mdocdate: May 18 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3535,7 +3535,7 @@ implementations are detailed below.
 .It rsa_keygen_bits : Ns Ar numbits
 (RSA)
 The number of bits in the generated key.
-If not specified 1024 is used.
+If not specified 2048 is used.
 .It rsa_keygen_pubexp : Ns Ar value
 (RSA)
 The RSA public exponent value.
@@ -3665,7 +3665,7 @@ Multiple files can be specified separated by a
 .It Ar numbits
 The size of the private key to generate in bits.
 This must be the last option specified.
-The default is 512.
+The default is 2048.
 .El
 .Sh GENRSA NOTES
 RSA private key generation essentially involves the generation of two prime
@@ -3688,7 +3688,7 @@ primes.
 Therefore the number of bits should not be less that 64.
 For typical private keys this will not matter because for security reasons
 they will be much larger
-.Pq typically 1024 bits .
+.Pq typically 2048 bits .
 .\"
 .\" NSEQ
 .\"
