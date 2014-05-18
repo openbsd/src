@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2013/11/25 12:51:10 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2014/05/18 16:36:41 espie Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -113,8 +113,8 @@ changeroptsl	: changeropts nl
 changeropts	: DRIVE STRING	{
 			void *newp;
 
-			if ((newp = realloc(curchanger->drives,
-			    (curchanger->drivecnt + 1) *
+			if ((newp = reallocarray(curchanger->drives,
+			    curchanger->drivecnt + 1,
 			    sizeof(curchanger->drives))) == NULL)
 				err(1, NULL);
 			curchanger->drives = newp;

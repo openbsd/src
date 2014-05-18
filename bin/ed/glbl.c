@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.13 2012/12/04 02:40:48 deraadt Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.14 2014/05/18 16:36:42 espie Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -149,8 +149,8 @@ set_active_node(line_t *lp)
 		int ti = active_size;
 		line_t **ts;
 		SPL1();
-		if ((ts = (line_t **) realloc(active_list,
-		    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
+		if ((ts = reallocarray(active_list,
+		    (ti += MINBUFSZ), sizeof(line_t **))) == NULL) {
 			perror(NULL);
 			seterrmsg("out of memory");
 			SPL0();
