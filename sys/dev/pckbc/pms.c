@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.50 2014/04/25 10:33:36 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.51 2014/05/18 15:27:28 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2189,7 +2189,7 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 		 * the tail packet.
 		 */
 		if ((sc->packet[0] & 0x0c) != 0x04 &&
-		    (sc->packet[3] & 0xfc) != 0x02) {
+		    (sc->packet[3] & 0xcf) != 0x02) {
 			/* not the head packet -- ignore */
 			return;
 		}
