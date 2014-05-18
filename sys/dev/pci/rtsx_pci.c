@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.5 2014/04/18 09:34:05 claudio Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.6 2014/05/18 10:52:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -59,7 +59,8 @@ rtsx_pci_match(struct device *parent, void *match, void *aux)
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5227 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTL8402)
 		return 1;
 
 	return 0;
