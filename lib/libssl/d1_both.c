@@ -618,7 +618,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		frag->msg_header.frag_len = frag->msg_header.msg_len;
 		frag->msg_header.frag_off = 0;
 	} else
-		frag = (hm_fragment*) item->data;
+		frag = (hm_fragment*)item->data;
 
 	/* If message is already reassembled, this must be a
 	 * retransmit and can be dropped.
@@ -671,10 +671,8 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
-	if (frag != NULL)
+	if (item == NULL && frag != NULL)
 		dtls1_hm_fragment_free(frag);
-	if (item != NULL)
-		free(item);
 	*ok = 0;
 	return i;
 }
@@ -755,10 +753,8 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
-	if (frag != NULL)
+	if (item == NULL && frag != NULL)
 		dtls1_hm_fragment_free(frag);
-	if (item != NULL)
-		free(item);
 	*ok = 0;
 	return i;
 }
