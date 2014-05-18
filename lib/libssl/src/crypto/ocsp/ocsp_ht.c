@@ -161,7 +161,7 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 
 	rctx = malloc(sizeof(OCSP_REQ_CTX));
 	if (rctx == NULL)
-		return 0;
+		return NULL;
 	rctx->state = OHS_ERROR;
 	rctx->mem = BIO_new(BIO_s_mem());
 	rctx->io = io;
@@ -174,7 +174,7 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 	if (!rctx->iobuf) {
 		BIO_free(rctx->mem);
 		free(rctx);
-		return 0;
+		return NULL;
 	}
 	if (!path)
 		path = "/";
@@ -183,14 +183,14 @@ OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
 		free(rctx->iobuf);
 		BIO_free(rctx->mem);
 		free(rctx);
-		return 0;
+		return NULL;
 	}
 
 	if (req && !OCSP_REQ_CTX_set1_req(rctx, req)) {
 		free(rctx->iobuf);
 		BIO_free(rctx->mem);
 		free(rctx);
-		return 0;
+		return NULL;
 	}
 
 	return rctx;
@@ -453,6 +453,8 @@ OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req)
 	int rv;
 
 	ctx = OCSP_sendreq_new(b, path, req, -1);
+	if (ctx == NULL)
+		return NULL;
 
 	do {
 		rv = OCSP_sendreq_nbio(&resp, ctx);
