@@ -521,7 +521,7 @@ OCSP_accept_responses_new(char **oids)
 	X509_EXTENSION *x = NULL;
 
 	if (!(sk = sk_ASN1_OBJECT_new_null()))
-		goto err;
+		return NULL;
 	while (oids && *oids) {
 		if ((nid = OBJ_txt2nid(*oids)) != NID_undef &&
 		    (o = OBJ_nid2obj(nid)))
@@ -529,10 +529,7 @@ OCSP_accept_responses_new(char **oids)
 		oids++;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_acceptableResponses, 0, sk);
-
-err:
-	if (sk)
-		sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
+	sk_ASN1_OBJECT_pop_free(sk, ASN1_OBJECT_free);
 	return x;
 }
 
@@ -544,7 +541,7 @@ OCSP_archive_cutoff_new(char* tim)
 	ASN1_GENERALIZEDTIME *gt = NULL;
 
 	if (!(gt = ASN1_GENERALIZEDTIME_new()))
-		goto err;
+		return NULL;
 	if (!(ASN1_GENERALIZEDTIME_set_string(gt, tim)))
 		goto err;
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_archiveCutoff, 0, gt);
@@ -587,13 +584,19 @@ OCSP_url_svcloc_new(X509_NAME* issuer, char **urls)
 			goto err;
 		ad->location->type = GEN_URI;
 		ad->location->d.ia5 = ia5;
+		ia5 = NULL;
 		if (!sk_ACCESS_DESCRIPTION_push(sloc->locator, ad))
 			goto err;
+		ad = NULL;
 		urls++;
 	}
 	x = X509V3_EXT_i2d(NID_id_pkix_OCSP_serviceLocator, 0, sloc);
 
 err:
+	if (ia5)
+		ASN1_IA5STRING_free(ia5);
+	if (ad)
+		ACCESS_DESCRIPTION_free(ad);
 	if (sloc)
 		OCSP_SERVICELOC_free(sloc);
 	return x;
