@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2014/05/18 08:10:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 
 	(void)time(&now);	/* initialize the time-of-day */
 
-	p = paths = (char **) emalloc(sizeof(char *) * argc);
+	p = paths = ereallocarray(NULL, argc, sizeof(char *));
 
 	sigaction(SIGINFO, &sa, NULL);
 
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		usage();
 	*p = NULL;
 
-	if (!(paths2 = realloc(paths, sizeof(char *) * (p - paths + 1))))
+	if (!(paths2 = reallocarray(paths, p - paths + 1, sizeof(char *))))
 		err(1, NULL);
 	paths = paths2;
 

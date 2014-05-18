@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2014/05/18 08:10:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -115,11 +115,21 @@ queryuser(char **argv)
  *	malloc with error checking.
  */
 void *
-emalloc(u_int len)
+emalloc(size_t len)
 {
 	void *p;
 
 	if ((p = malloc(len)))
+		return (p);
+	err(1, NULL);
+}
+
+void *
+ereallocarray(void *oldp, size_t sz1, size_t sz2)
+{
+	void *p;
+
+	if ((p = reallocarray(oldp, sz1, sz2)) != NULL)
 		return (p);
 	err(1, NULL);
 }

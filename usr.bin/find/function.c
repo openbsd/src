@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.40 2013/04/20 04:52:24 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.41 2014/05/18 08:10:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -537,8 +537,8 @@ c_exec(char *unused, char ***argvp, int isok)
 
 		cnt = ap - *argvp - 1;			/* units are words */
 		new->ep_maxargs = 5000;
-		new->e_argv = (char **)emalloc((u_int)(cnt + new->ep_maxargs)
-						* sizeof(char **));
+		new->e_argv = ereallocarray(NULL,
+		    (size_t)(cnt + new->ep_maxargs), sizeof(char **));
 
 		/* We start stuffing arguments after the user's last one. */
 		new->ep_bxp = &new->e_argv[cnt];
@@ -566,9 +566,9 @@ c_exec(char *unused, char ***argvp, int isok)
 		new->ep_rval = 0;
 	} else { /* !F_PLUSSET */
 		cnt = ap - *argvp + 1;
-		new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
-		new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
-		new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+		new->e_argv = ereallocarray(NULL, cnt, sizeof(char *));
+		new->e_orig = ereallocarray(NULL, cnt, sizeof(char *));
+		new->e_len = ereallocarray(NULL, cnt, sizeof(int));
 
 		for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
 			new->e_orig[cnt] = *argv;
@@ -685,9 +685,9 @@ c_execdir(char *ignored, char ***argvp, int unused)
 	}
 
 	cnt = ap - *argvp + 1;
-	new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
-	new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+	new->e_argv = ereallocarray(NULL, cnt, sizeof(char *));
+	new->e_orig = ereallocarray(NULL, cnt, sizeof(char *));
+	new->e_len = ereallocarray(NULL, cnt, sizeof(int));
 
 	for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
 		new->e_orig[cnt] = *argv;
