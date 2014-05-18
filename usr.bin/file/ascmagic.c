@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascmagic.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: ascmagic.c,v 1.12 2014/05/18 17:50:11 espie Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -101,9 +101,9 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	while (nbytes > 1 && buf[nbytes - 1] == '\0')
 		nbytes--;
 
-	if ((nbuf = calloc(1, (nbytes + 1) * sizeof(nbuf[0]))) == NULL)
+	if ((nbuf = calloc((nbytes + 1), sizeof(nbuf[0]))) == NULL)
 		goto done;
-	if ((ubuf = calloc(1, (nbytes + 1) * sizeof(ubuf[0]))) == NULL)
+	if ((ubuf = calloc((nbytes + 1), sizeof(ubuf[0]))) == NULL)
 		goto done;
 
 	/*

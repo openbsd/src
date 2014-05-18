@@ -1,4 +1,4 @@
-/* $OpenBSD: funcs.c,v 1.7 2009/10/27 23:59:37 deraadt Exp $ */
+/* $OpenBSD: funcs.c,v 1.8 2014/05/18 17:50:11 espie Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -121,6 +121,11 @@ file_oomem(struct magic_set *ms, size_t len)
 	file_error(ms, errno, "cannot allocate %zu bytes", len);
 }
 
+protected void
+file_oomem2(struct magic_set *ms, size_t len, size_t l2)
+{
+	file_error(ms, errno, "cannot allocate %zu * %zu bytes", len, l2);
+}
 protected void
 file_badseek(struct magic_set *ms)
 {

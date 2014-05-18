@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.30 2014/01/16 21:45:33 tobias Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.31 2014/05/18 17:50:11 espie Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -629,7 +629,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 
         maxmagic = MAXMAGIS;
 	if ((marray = calloc(maxmagic, sizeof(*marray))) == NULL) {
-		file_oomem(ms, maxmagic * sizeof(*marray));
+		file_oomem2(ms, maxmagic, sizeof(*marray));
 		return -1;
 	}
 	marraycount = 0;
@@ -714,8 +714,8 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 	for (i = 0; i < marraycount; i++)
 		mentrycount += marray[i].cont_count;
 
-	if ((*magicp = malloc(sizeof(**magicp) * mentrycount)) == NULL) {
-		file_oomem(ms, sizeof(**magicp) * mentrycount);
+	if ((*magicp = reallocarray(NULL, mentrycount, sizeof(**magicp))) == NULL) {
+		file_oomem2(ms, mentrycount, sizeof(**magicp));
 		errs++;
 		goto out;
 	}
@@ -1003,8 +1003,9 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 		if (me->cont_count == me->max_count) {
 			struct magic *nm;
 			size_t cnt = me->max_count + ALLOC_CHUNK;
-			if ((nm = realloc(me->mp, sizeof(*nm) * cnt)) == NULL) {
-				file_oomem(ms, sizeof(*nm) * cnt);
+			if ((nm = reallocarray(me->mp, cnt, sizeof(*nm))) 
+			    == NULL) {
+				file_oomem2(ms, cnt, sizeof(*nm));
 				return -1;
 			}
 			me->mp = m = nm;
@@ -1018,9 +1019,9 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 			struct magic_entry *mp;
 
 			maxmagic += ALLOC_INCR;
-			if ((mp = realloc(*mentryp, sizeof(*mp) * maxmagic)) ==
-			    NULL) {
-				file_oomem(ms, sizeof(*mp) * maxmagic);
+			if ((mp = reallocarray(*mentryp, maxmagic, 
+			    sizeof(*mp))) == NULL) {
+				file_oomem2(ms, maxmagic, sizeof(*mp));
 				return -1;
 			}
 			(void)memset(&mp[*nmentryp], 0, sizeof(*mp) *
@@ -1029,8 +1030,8 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 		}
 		me = &(*mentryp)[*nmentryp];
 		if (me->mp == NULL) {
-			if ((m = malloc(sizeof(*m) * ALLOC_CHUNK)) == NULL) {
-				file_oomem(ms, sizeof(*m) * ALLOC_CHUNK);
+			if ((m = reallocarray(NULL, ALLOC_CHUNK, sizeof(*m))) == NULL) {
+				file_oomem2(ms, ALLOC_CHUNK, sizeof(*m));
 				return -1;
 			}
 			me->mp = m;

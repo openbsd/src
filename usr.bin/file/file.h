@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.23 2013/04/17 15:01:26 deraadt Exp $ */
+/*	$OpenBSD: file.h,v 1.24 2014/05/18 17:50:11 espie Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.23 2013/04/17 15:01:26 deraadt Exp $
+ * @(#)$Id: file.h,v 1.24 2014/05/18 17:50:11 espie Exp $
  */
 
 #ifndef __file_h__
@@ -340,6 +340,7 @@ protected void file_delmagic(struct magic *, int type, size_t entries);
 protected void file_badread(struct magic_set *);
 protected void file_badseek(struct magic_set *);
 protected void file_oomem(struct magic_set *, size_t);
+protected void file_oomem2(struct magic_set *, size_t, size_t);
 protected void file_error(struct magic_set *, int, const char *, ...);
 protected void file_magerror(struct magic_set *, const char *, ...);
 protected void file_magwarn(struct magic_set *, const char *, ...);
