@@ -111,7 +111,7 @@ send_fp_chars(void *arg, const void *buf, int len)
 {
 	if (!arg)
 		return 1;
-	if (fwrite(buf, 1, len, arg) != (unsigned int)len)
+	if (fwrite(buf, 1, (size_t)len, arg) != (size_t)len)
 		return 0;
 	return 1;
 }
@@ -227,7 +227,7 @@ do_buf(unsigned char *buf, int buflen, int type, unsigned char flags,
 			break;
 
 		case 0:
-			i = UTF8_getc(p, buflen, &c);
+			i = UTF8_getc(p, q - p, &c);
 			if (i < 0)
 				return -1;	/* Invalid UTF8String */
 			p += i;
