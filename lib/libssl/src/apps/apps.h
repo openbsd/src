@@ -112,25 +112,27 @@
 #ifndef HEADER_APPS_H
 #define HEADER_APPS_H
 
-#include <openssl/e_os2.h>
+#include <signal.h>
+
 #include <openssl/bio.h>
-#include <openssl/x509.h>
-#include <openssl/lhash.h>
 #include <openssl/conf.h>
+#include <openssl/e_os2.h>
+#include <openssl/lhash.h>
+#include <openssl/ossl_typ.h>
 #include <openssl/txt_db.h>
+#include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
 #ifndef OPENSSL_NO_OCSP
 #include <openssl/ocsp.h>
 #endif
-#include <openssl/ossl_typ.h>
 
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;
-
-#include <signal.h>
 
 typedef struct args_st {
 	char **data;

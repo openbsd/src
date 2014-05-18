@@ -15,15 +15,14 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
+
 #ifndef NO_MD5CRYPT_1
 #include <openssl/md5.h>
 #endif
-
-
-
 
 static unsigned const char cov_2char[64] = {
 	/* from crypto/des/fcrypt.c */

@@ -146,7 +146,9 @@
 #undef OPENSSL_NO_DEPRECATED
 #endif
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -154,30 +156,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 
-#include <openssl/e_os2.h>
-
-#include <sys/types.h>
-
-#include <openssl/lhash.h>
-#include <openssl/bn.h>
 #include "apps.h"
+
+#include <openssl/bn.h>
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/rand.h>
+#include <openssl/lhash.h>
 #include <openssl/ocsp.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
 #include "s_apps.h"
 #include "timeouts.h"
-
 
 #ifndef OPENSSL_NO_RSA
 static RSA *tmp_rsa_cb(SSL * s, int is_export, int keylength);

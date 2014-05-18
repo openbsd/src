@@ -56,19 +56,21 @@
  * [including the GNU Public Licence.]
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
+
 #include <openssl/bio.h>
+#include <openssl/comp.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
 #include <openssl/pem.h>
-#include <openssl/comp.h>
-#include <ctype.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
 
 int set_hex(char *in, unsigned char *out, int size);
 

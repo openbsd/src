@@ -59,10 +59,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-
 
 static const char *ciphers_usage[] = {
 	"usage: ciphers args\n",

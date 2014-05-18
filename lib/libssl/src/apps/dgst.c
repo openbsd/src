@@ -57,19 +57,20 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "apps.h"
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 #include <openssl/hmac.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #define BUFSIZE	1024*8
-
 
 int
 do_fp(BIO * out, unsigned char *buf, BIO * bp, int sep, int binout,

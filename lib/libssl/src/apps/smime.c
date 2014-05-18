@@ -60,10 +60,12 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "apps.h"
+
 #include <openssl/crypto.h>
-#include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 

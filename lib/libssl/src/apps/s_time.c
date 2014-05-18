@@ -63,19 +63,21 @@
    Written and donated by Larry Streepy <streepy@healthcare.com>
   -----------------------------------------*/
 
+#include <sys/socket.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-
-#include "apps.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/pem.h>
-#include "s_apps.h"
-#include <openssl/err.h>
 #include <unistd.h>
 
+#include "apps.h"
+
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+#include "s_apps.h"
 
 #define SSL_CONNECT_NAME	"localhost:4433"
 

@@ -57,16 +57,19 @@
  */
 
 #include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_EC
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-
 
 /* -inform arg    - input format - default PEM (one of DER, NET or PEM)
  * -outform arg   - output format - default PEM

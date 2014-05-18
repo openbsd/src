@@ -61,14 +61,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "apps.h"		/* needs to be included before the openssl
-				 * headers! */
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
+
+/* Needs to be included before the openssl headers! */
+#include "apps.h"
+
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 
 /* Maximum leeway in validity period: default 5 minutes */

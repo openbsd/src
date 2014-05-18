@@ -58,29 +58,31 @@
 
 /* The PPKI stuff has been donated by Jeff Barber <jeffb@issl.atl.hp.com> */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <sys/types.h>
-#include <openssl/conf.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/txt_db.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-#include <openssl/ocsp.h>
-#include <openssl/pem.h>
 
 #ifndef W_OK
 #include <sys/file.h>
 #endif
 
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "apps.h"
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/pem.h>
+#include <openssl/txt_db.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #ifndef W_OK
 #define F_OK 0
@@ -88,7 +90,6 @@
 #define W_OK 2
 #define R_OK 4
 #endif
-
 
 #define BASE_SECTION	"ca"
 

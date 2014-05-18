@@ -137,32 +137,32 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 
 #include <netinet/in.h>
+
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 #include <unistd.h>
-#include <openssl/e_os2.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include "apps.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
+
+#include <openssl/bn.h>
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
+#include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/ocsp.h>
-#include <openssl/bn.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #include "s_apps.h"
 #include "timeouts.h"
-
-
 
 /*#define SSL_HOST_NAME	"www.netscape.com" */
 /*#define SSL_HOST_NAME	"193.118.187.102" */

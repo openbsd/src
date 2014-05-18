@@ -60,16 +60,19 @@
  * and donated 'to the cause' along with lots and lots of other fixes to
  * the library. */
 
+#include <sys/types.h>
+
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
+
 #include "apps.h"
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pem.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
 
 static int add_certs_from_file(STACK_OF(X509) * stack, char *certfile);
 

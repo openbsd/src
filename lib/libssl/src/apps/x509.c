@@ -60,23 +60,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
-#include <openssl/bio.h>
+
 #include <openssl/asn1.h>
-#include <openssl/err.h>
+#include <openssl/bio.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
 
 #define	POSTFIX	".srl"
 #define DEF_DAYS	30

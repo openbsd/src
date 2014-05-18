@@ -89,12 +89,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "apps.h"
+
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/objects.h>
 #include <openssl/modes.h>
+#include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 
@@ -158,8 +160,6 @@
 #ifndef OPENSSL_NO_WHIRLPOOL
 #include <openssl/whrlpool.h>
 #endif
-
-#include "apps.h"
 
 #ifndef OPENSSL_NO_DSA
 #include "./testdsa.h"

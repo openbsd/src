@@ -57,10 +57,13 @@
  */
 
 #include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_RSA
 
-#include "apps.h"
 #include <string.h>
+
+#include "apps.h"
+
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -75,8 +78,6 @@
 #define KEY_CERT	3
 
 static void usage(void);
-
-
 
 int rsautl_main(int argc, char **);
 

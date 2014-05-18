@@ -53,16 +53,15 @@
  *
  */
 
-#include "apps.h"
-
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "apps.h"
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-
 
 /* -out file         - write to file
  * -rand file:file   - PRNG seed files

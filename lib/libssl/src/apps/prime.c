@@ -50,9 +50,8 @@
 #include <string.h>
 
 #include "apps.h"
+
 #include <openssl/bn.h>
-
-
 
 int prime_main(int, char **);
 

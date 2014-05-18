@@ -59,12 +59,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include <openssl/bio.h>
-#include <openssl/lhash.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 
+#include "apps.h"
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/lhash.h>
+#include <openssl/ssl.h>
 
 int errstr_main(int, char **);
 

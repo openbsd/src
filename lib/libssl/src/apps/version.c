@@ -112,23 +112,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
-#include <openssl/evp.h>
-#include <openssl/crypto.h>
+
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_RC4
-#include <openssl/rc4.h>
-#endif
-#ifndef OPENSSL_NO_DES
-#include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_IDEA
-#include <openssl/idea.h>
-#endif
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+
 #ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
 #endif
 
+#ifndef OPENSSL_NO_DES
+#include <openssl/des.h>
+#endif
+
+#ifndef OPENSSL_NO_IDEA
+#include <openssl/idea.h>
+#endif
+
+#ifndef OPENSSL_NO_RC4
+#include <openssl/rc4.h>
+#endif
 
 int version_main(int, char **);
 

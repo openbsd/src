@@ -113,21 +113,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "apps.h"
+
 #include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
-#include <openssl/lhash.h>
 #include <openssl/conf.h>
-#include <openssl/x509.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/lhash.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
 #include "progs.h"
 #include "s_apps.h"
-#include <openssl/err.h>
 
 static void openssl_startup(void);
 static void openssl_shutdown(void);

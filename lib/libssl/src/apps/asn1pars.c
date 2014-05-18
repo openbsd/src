@@ -63,11 +63,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "apps.h"
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -in arg	- input file - default stdin
@@ -76,7 +78,6 @@
  * -length	- how many bytes to use
  * -oid file	- extra oid description file
  */
-
 
 int asn1parse_main(int, char **);
 

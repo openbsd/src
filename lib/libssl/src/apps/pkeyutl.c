@@ -55,20 +55,19 @@
  *
  */
 
+#include <string.h>
 
 #include "apps.h"
-#include <string.h>
+
 #include <openssl/err.h>
-#include <openssl/pem.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 
 #define KEY_PRIVKEY	1
 #define KEY_PUBKEY	2
 #define KEY_CERT	3
 
 static void usage(void);
-
-
 
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     char *keyfile, int keyform, int key_type,

@@ -109,18 +109,22 @@
  *
  */
 
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #include "apps.h"
+
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/x509.h>
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #include "s_apps.h"
 
 #define	COOKIE_SECRET_LENGTH	16

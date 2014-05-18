@@ -64,24 +64,28 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
+
 #include "apps.h"
+
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
-#include <openssl/evp.h>
+#include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
 
 #define SECTION		"req"

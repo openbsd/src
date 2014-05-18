@@ -56,23 +56,24 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <netdb.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
-#include <openssl/e_os2.h>
 
 #include "apps.h"
-#include "s_apps.h"
+
+#include <openssl/e_os2.h>
 #include <openssl/ssl.h>
 
-
+#include "s_apps.h"
 
 static int ssl_sock_init(void);
 static int init_server(int *sock, int port, int type);
@@ -80,7 +81,6 @@ static int init_server_long(int *sock, int port, char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
 
 #define SOCKET_PROTOCOL	IPPROTO_TCP
-
 
 static int
 ssl_sock_init(void)
