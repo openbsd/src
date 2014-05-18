@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.118 2014/05/16 19:00:18 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.119 2014/05/18 17:10:27 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -481,7 +481,7 @@ uhci_init(struct uhci_softc *sc)
 
 	LIST_INIT(&sc->sc_intrhead);
 
-	timeout_set(&sc->sc_poll_handle, NULL, NULL);
+	timeout_set(&sc->sc_root_intr, uhci_poll_hub, sc);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &uhci_bus_methods;
@@ -511,8 +511,6 @@ uhci_activate(struct device *self, int act)
 			uhci_dumpregs(sc);
 #endif
 		rv = config_activate_children(self, act);
-		if (sc->sc_intr_xfer != NULL)
-			timeout_del(&sc->sc_poll_handle);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
 
@@ -557,12 +555,6 @@ uhci_activate(struct device *self, int act)
 		uhci_run(sc, 1); /* and start traffic again */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_bus.use_polling--;
-		if (sc->sc_intr_xfer != NULL) {
-			timeout_del(&sc->sc_poll_handle);
-			timeout_set(&sc->sc_poll_handle, uhci_poll_hub,
-			    sc->sc_intr_xfer);
-			timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
-		}
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
@@ -587,10 +579,7 @@ uhci_detach(struct device *self, int flags)
 	if (rv != 0)
 		return (rv);
 
-	if (sc->sc_intr_xfer != NULL) {
-		timeout_del(&sc->sc_poll_handle);
-		sc->sc_intr_xfer = NULL;
-	}
+	KASSERT(sc->sc_intrxfer == NULL);
 
 	/* XXX free other data structures XXX */
 
@@ -820,19 +809,17 @@ void exdump(void) { uhci_dump_xfers(thesc); }
 void
 uhci_poll_hub(void *addr)
 {
-	struct usbd_xfer *xfer = addr;
-	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
+	struct uhci_softc *sc = addr;
+	struct usbd_xfer *xfer;
 	int s;
 	u_char *p;
-
-	DPRINTFN(20, ("uhci_poll_hub\n"));
 
 	if (sc->sc_bus.dying)
 		return;
 
-	timeout_del(&sc->sc_poll_handle);
-	timeout_set(&sc->sc_poll_handle, uhci_poll_hub, xfer);
-	timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
+	xfer = sc->sc_intrxfer;
+	if (xfer == NULL)
+		return;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	p[0] = 0;
@@ -840,22 +827,20 @@ uhci_poll_hub(void *addr)
 		p[0] |= 1<<1;
 	if (UREAD2(sc, UHCI_PORTSC2) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<2;
-	if (p[0] == 0)
+	if (p[0] == 0) {
 		/* No change, try again in a while */
+		timeout_add_msec(&sc->sc_root_intr, 255);
 		return;
+	}
 
-	xfer->actlen = 1;
+	xfer->actlen = xfer->length;
 	xfer->status = USBD_NORMAL_COMPLETION;
+
 	s = splusb();
 	xfer->device->bus->intr_context++;
 	usb_transfer_complete(xfer);
 	xfer->device->bus->intr_context--;
 	splx(s);
-}
-
-void
-uhci_root_intr_done(struct usbd_xfer *xfer)
-{
 }
 
 void
@@ -3297,8 +3282,8 @@ uhci_root_intr_abort(struct usbd_xfer *xfer)
 	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 	int s;
 
-	timeout_del(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
+	timeout_del(&sc->sc_root_intr);
+	sc->sc_intrxfer = NULL;
 
 	xfer->status = USBD_CANCELLED;
 	s = splusb();
@@ -3328,27 +3313,25 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
 
-	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%u flags=%d\n",
-		     xfer, xfer->length, xfer->flags));
-
 	if (sc->sc_bus.dying)
 		return (USBD_IOERROR);
 
-	sc->sc_ival = xfer->pipe->endpoint->edesc->bInterval;
-	timeout_del(&sc->sc_poll_handle);
-	timeout_set(&sc->sc_poll_handle, uhci_poll_hub, xfer);
-	timeout_add_msec(&sc->sc_poll_handle, sc->sc_ival);
-	sc->sc_intr_xfer = xfer;
+	sc->sc_intrxfer = xfer;
+	timeout_add_msec(&sc->sc_root_intr, 255);
+
 	return (USBD_IN_PROGRESS);
 }
 
-/* Close the root interrupt pipe. */
 void
 uhci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)pipe->device->bus;
+}
 
-	timeout_del(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
-	DPRINTF(("uhci_root_intr_close\n"));
+void
+uhci_root_intr_done(struct usbd_xfer *xfer)
+{
+	struct uhci_softc *sc = (struct uhci_softc *)xfer->device->bus;
+
+	if (xfer->pipe->repeat)
+		timeout_add_msec(&sc->sc_root_intr, 255);
 }
