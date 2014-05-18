@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.163 2014/05/12 19:02:20 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.164 2014/05/18 17:49:47 tedu Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -966,6 +966,30 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 	return ((char *)bp->page + k);
 }
 
+static uint32_t
+find_chunknum(struct dir_info *d, struct region_info *r, void *ptr)
+{
+	struct chunk_info *info;
+	uint32_t chunknum;
+
+	info = (struct chunk_info *)r->size;
+	if (info->canary != d->canary1)
+		wrterror("chunk info corrupted", NULL);
+
+	/* Find the chunk number on the page */
+	chunknum = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
+
+	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1)) {
+		wrterror("modified chunk-pointer", ptr);
+		return -1;
+	}
+	if (info->bits[chunknum / MALLOC_BITS] &
+	    (1U << (chunknum % MALLOC_BITS))) {
+		wrterror("chunk is already free", ptr);
+		return -1;
+	}
+	return chunknum;
+}
 
 /*
  * Free a chunk, and possibly the page it's on, if the page becomes empty.
@@ -975,25 +999,14 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 {
 	struct chunk_head *mp;
 	struct chunk_info *info;
-	int i, listnum;
+	uint32_t chunknum;
+	int listnum;
 
 	info = (struct chunk_info *)r->size;
-	if (info->canary != d->canary1)
-		wrterror("chunk info corrupted", NULL);
-
-	/* Find the chunk number on the page */
-	i = ((uintptr_t)ptr & MALLOC_PAGEMASK) >> info->shift;
-
-	if ((uintptr_t)ptr & ((1U << (info->shift)) - 1)) {
-		wrterror("modified chunk-pointer", ptr);
+	if ((chunknum = find_chunknum(d, r, ptr)) == -1)
 		return;
-	}
-	if (info->bits[i / MALLOC_BITS] & (1U << (i % MALLOC_BITS))) {
-		wrterror("chunk is already free", ptr);
-		return;
-	}
 
-	info->bits[i / MALLOC_BITS] |= 1U << (i % MALLOC_BITS);
+	info->bits[chunknum / MALLOC_BITS] |= 1U << (chunknum % MALLOC_BITS);
 	info->free++;
 
 	if (info->free == 1) {
@@ -1204,9 +1217,15 @@ ofree(void *p)
 		if (mopts.malloc_junk && sz > 0)
 			memset(p, SOME_FREEJUNK, sz);
 		if (!mopts.malloc_freenow) {
+			if (find_chunknum(g_pool, r, p) == -1)
+				return;
 			i = getrbyte() & MALLOC_DELAYED_CHUNK_MASK;
 			tmp = p;
 			p = g_pool->delayed_chunks[i];
+			if (tmp == p) {
+				wrterror("double free", p);
+				return;
+			}
 			g_pool->delayed_chunks[i] = tmp;
 		}
 		if (p != NULL) {
