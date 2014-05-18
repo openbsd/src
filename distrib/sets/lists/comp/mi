@@ -3419,6 +3419,7 @@
 ./usr/share/man/man3/creall.3
 ./usr/share/man/man3/creat.3
 ./usr/share/man/man3/crypt.3
+./usr/share/man/man3/crypt_checkpass.3
 ./usr/share/man/man3/crypto.3
 ./usr/share/man/man3/csin.3
 ./usr/share/man/man3/csinf.3
