@@ -158,14 +158,14 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 		}
 		i /= 2;
 		if (num + i > slen) {
-			sp = OPENSSL_realloc_clean(s, slen, num + i * 2);
+			sp = OPENSSL_realloc_clean(s, slen, num + i);
 			if (sp == NULL) {
 				ASN1err(ASN1_F_A2I_ASN1_INTEGER,
 				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 			s = sp;
-			slen = num + i * 2;
+			slen = num + i;
 		}
 		for (j = 0; j < i; j++, k += 2) {
 			for (n = 0; n < 2; n++) {
