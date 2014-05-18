@@ -112,7 +112,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
