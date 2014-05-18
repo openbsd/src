@@ -60,10 +60,6 @@
 
 #include <sys/types.h>
 
-#ifndef W_OK
-#include <sys/file.h>
-#endif
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,18 +80,11 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef W_OK
-#define F_OK 0
-#define X_OK 1
-#define W_OK 2
-#define R_OK 4
-#endif
-
-#define BASE_SECTION	"ca"
+#define BASE_SECTION		"ca"
 
 #define ENV_DEFAULT_CA		"default_ca"
 
-#define STRING_MASK	"string_mask"
+#define STRING_MASK		"string_mask"
 #define UTF8_IN			"utf8"
 
 #define ENV_DIR			"dir"
