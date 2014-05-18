@@ -109,6 +109,7 @@
  *
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -252,9 +253,9 @@ main(int argc, char **argv)
 	arg.data = NULL;
 	arg.count = 0;
 
+	bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 	if (bio_err == NULL)
-		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+		errx(1, "failed to initialise bio_err");
 
 	CRYPTO_set_locking_callback(lock_dbg_cb);
 

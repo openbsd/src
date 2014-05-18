@@ -137,7 +137,6 @@ ocsp_main(int argc, char **argv)
 	int ignore_err = 0;
 	STACK_OF(OPENSSL_STRING) * reqnames = NULL;
 	STACK_OF(OCSP_CERTID) * ids = NULL;
-
 	X509 *rca_cert = NULL;
 	char *ridx_filename = NULL;
 	char *rca_filename = NULL;
@@ -145,13 +144,12 @@ ocsp_main(int argc, char **argv)
 	int nmin = 0, ndays = -1;
 	const EVP_MD *cert_id_md = NULL;
 
-	if (bio_err == NULL)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
+
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
+
 	args = argv + 1;
 	reqnames = sk_OPENSSL_STRING_new_null();
 	ids = sk_OCSP_CERTID_new_null();

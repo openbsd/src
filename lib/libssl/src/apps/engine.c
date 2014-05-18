@@ -339,11 +339,9 @@ engine_main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	SSL_load_error_strings();
 
-	if (bio_err == NULL)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
+
 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
 	argc--;

@@ -78,9 +78,6 @@ pkeyparam_main(int argc, char **argv)
 #endif
 	int ret = 1;
 
-	if (bio_err == NULL)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

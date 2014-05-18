@@ -98,9 +98,6 @@ spkac_main(int argc, char **argv)
 
 	signal(SIGPIPE, SIG_IGN);
 
-	if (!bio_err)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

@@ -190,10 +190,6 @@ req_main(int argc, char **argv)
 #endif
 	signal(SIGPIPE, SIG_IGN);
 
-	if (bio_err == NULL)
-		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
 	infile = NULL;
 	outfile = NULL;
 	informat = FORMAT_PEM;

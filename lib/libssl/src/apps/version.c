@@ -141,10 +141,6 @@ version_main(int argc, char **argv)
 
 	signal(SIGPIPE, SIG_IGN);
 
-	if (bio_err == NULL)
-		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
 	if (argc == 1)
 		version = 1;
 	for (i = 1; i < argc; i++) {

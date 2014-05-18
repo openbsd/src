@@ -318,9 +318,6 @@ s_time_main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	s_time_init();
 
-	if (bio_err == NULL)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	s_time_meth = SSLv23_client_method();
 
 	/* parse the command line arguments */

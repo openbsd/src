@@ -725,9 +725,6 @@ s_server_main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 	s_server_init();
 
-	if (bio_err == NULL)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

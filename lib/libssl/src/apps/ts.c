@@ -153,15 +153,11 @@ ts_main(int argc, char **argv)
 	int token_in = 0;
 	/* Output is ContentInfo instead of TimeStampResp. */
 	int token_out = 0;
-	int free_bio_err = 0;
 
 	ERR_load_crypto_strings();
+
 	signal(SIGPIPE, SIG_IGN);
 
-	if (bio_err == NULL && (bio_err = BIO_new(BIO_s_file())) != NULL) {
-		free_bio_err = 1;
-		BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-	}
 	if (!load_config(bio_err, NULL))
 		goto cleanup;
 
@@ -338,15 +334,13 @@ usage:
 	    "-in response.tsr [-token_in] "
 	    "-CApath ca_path -CAfile ca_file.pem "
 	    "-untrusted cert_file.pem\n");
+
 cleanup:
 	/* Clean up. */
 	NCONF_free(conf);
 	free(password);
 	OBJ_cleanup();
-	if (free_bio_err) {
-		BIO_free_all(bio_err);
-		bio_err = NULL;
-	}
+
 	return (ret);
 }
 

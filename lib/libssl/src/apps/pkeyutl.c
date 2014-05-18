@@ -106,11 +106,9 @@ pkeyutl_main(int argc, char **argv)
 	argc--;
 	argv++;
 
-	if (!bio_err)
-		bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
+
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 

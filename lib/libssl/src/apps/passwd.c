@@ -75,12 +75,9 @@ passwd_main(int argc, char **argv)
 
 	signal(SIGPIPE, SIG_IGN);
 
-	if (bio_err == NULL)
-		if ((bio_err = BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
 	if (!load_config(bio_err, NULL))
 		goto err;
+
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)
 		goto err;
