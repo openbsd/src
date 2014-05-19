@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.118 2014/04/09 10:10:57 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.119 2014/05/19 20:03:16 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ int		ssl_match_hostname(char *, char *);
 int		ssl_check_subject_altname(X509 *, char *);
 int		ssl_check_common_name(X509 *, char *);
 int		ssl_check_hostname(X509 *, char *);
+SSL_CTX		*ssl_get_ssl_ctx(void);
 #endif /* !SMALL */
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
@@ -328,6 +329,52 @@ ssl_check_hostname(X509 *cert, char *host)
 		return rv;
 
 	return ssl_check_common_name(cert, host);
+}
+
+SSL_CTX *
+ssl_get_ssl_ctx(void)
+{
+	static SSL_CTX	*ssl_ctx;
+	static int	 libssl_loaded;
+
+ 	if (ssl_ctx != NULL)
+		return ssl_ctx;
+
+	if (!libssl_loaded) {
+		SSL_library_init();
+		SSL_load_error_strings();
+		libssl_loaded = 1;
+	}
+
+	ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+	if (ssl_ctx == NULL)
+		goto err;
+
+	if (ssl_verify) {
+		if (ssl_ca_file == NULL && ssl_ca_path == NULL)
+			ssl_ca_file = _PATH_SSL_CAFILE;
+
+		if (SSL_CTX_load_verify_locations(ssl_ctx,
+		    ssl_ca_file, ssl_ca_path) != 1)
+			goto err;
+
+		SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+		if (ssl_verify_depth != -1)
+			SSL_CTX_set_verify_depth(ssl_ctx,
+			    ssl_verify_depth);
+	}
+
+	if (ssl_ciphers != NULL &&
+	    SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers) == -1)
+		goto err;
+
+	return ssl_ctx;
+err:
+	if (ssl_ctx != NULL) {
+		SSL_CTX_free(ssl_ctx);
+		ssl_ctx = NULL;
+	}
+	return NULL;
 }
 #endif
 
@@ -769,28 +816,8 @@ again:
 			proxyurl = NULL;
 			path = sslpath;
 		}
-		SSL_library_init();
-		SSL_load_error_strings();
-		ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+		ssl_ctx = ssl_get_ssl_ctx();
 		if (ssl_ctx == NULL) {
-			ERR_print_errors_fp(ttyout);
-			goto cleanup_url_get;
-		}
-		if (ssl_verify) {
-			if (ssl_ca_file == NULL && ssl_ca_path == NULL)
-				ssl_ca_file = _PATH_SSL_CAFILE;
-			if (SSL_CTX_load_verify_locations(ssl_ctx,
-			    ssl_ca_file, ssl_ca_path) != 1) {
-				ERR_print_errors_fp(ttyout);
-				goto cleanup_url_get;
-			}
-			SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
-			if (ssl_verify_depth != -1)
-				SSL_CTX_set_verify_depth(ssl_ctx,
-				    ssl_verify_depth);
-		}
-		if (ssl_ciphers != NULL &&
-		    SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers) == -1) {
 			ERR_print_errors_fp(ttyout);
 			goto cleanup_url_get;
 		}
