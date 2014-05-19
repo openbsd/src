@@ -148,13 +148,13 @@ typedef struct {
 static UI_METHOD *ui_method = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
-    const NAME_EX_TBL * in_tbl);
+    const NAME_EX_TBL *in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
-    const NAME_EX_TBL * in_tbl);
+    const NAME_EX_TBL *in_tbl);
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 /* Looks like this stuff is worth moving into separate function */
-static EVP_PKEY *load_netscape_key(BIO * err, BIO * key, const char *file,
+static EVP_PKEY *load_netscape_key(BIO *err, BIO *key, const char *file,
     const char *key_descrip, int format);
 #endif
 
@@ -202,7 +202,7 @@ program_name(char *in, char *out, int size)
 }
 
 int
-chopup_args(ARGS * arg, char *buf, int *argc, char **argv[])
+chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 {
 	int num, i;
 	char *p;
@@ -271,7 +271,7 @@ chopup_args(ARGS * arg, char *buf, int *argc, char **argv[])
 }
 
 int
-dump_cert_text(BIO * out, X509 * x)
+dump_cert_text(BIO *out, X509 *x)
 {
 	char *p;
 
@@ -290,13 +290,13 @@ dump_cert_text(BIO * out, X509 * x)
 }
 
 static int
-ui_open(UI * ui)
+ui_open(UI *ui)
 {
 	return UI_method_get_opener(UI_OpenSSL()) (ui);
 }
 
 static int
-ui_read(UI * ui, UI_STRING * uis)
+ui_read(UI *ui, UI_STRING *uis)
 {
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
@@ -320,7 +320,7 @@ ui_read(UI * ui, UI_STRING * uis)
 }
 
 static int
-ui_write(UI * ui, UI_STRING * uis)
+ui_write(UI *ui, UI_STRING *uis)
 {
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
@@ -342,7 +342,7 @@ ui_write(UI * ui, UI_STRING * uis)
 }
 
 static int
-ui_close(UI * ui)
+ui_close(UI *ui)
 {
 	return UI_method_get_closer(UI_OpenSSL()) (ui);
 }
@@ -368,7 +368,7 @@ destroy_ui_method(void)
 }
 
 int
-password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA * cb_tmp)
+password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 {
 	UI *ui = NULL;
 	int res = 0;
@@ -438,10 +438,10 @@ password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA * cb_tmp)
 	return res;
 }
 
-static char *app_get_pass(BIO * err, char *arg, int keepbio);
+static char *app_get_pass(BIO *err, char *arg, int keepbio);
 
 int
-app_passwd(BIO * err, char *arg1, char *arg2, char **pass1, char **pass2)
+app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2)
 {
 	int same;
 
@@ -465,7 +465,7 @@ app_passwd(BIO * err, char *arg1, char *arg2, char **pass1, char **pass2)
 }
 
 static char *
-app_get_pass(BIO * err, char *arg, int keepbio)
+app_get_pass(BIO *err, char *arg, int keepbio)
 {
 	char *tmp, tpass[APP_PASS_LEN];
 	static BIO *pwdbio = NULL;
@@ -535,10 +535,10 @@ app_get_pass(BIO * err, char *arg, int keepbio)
 }
 
 int
-add_oid_section(BIO * err, CONF * conf)
+add_oid_section(BIO *err, CONF *conf)
 {
 	char *p;
-	STACK_OF(CONF_VALUE) * sktmp;
+	STACK_OF(CONF_VALUE) *sktmp;
 	CONF_VALUE *cnf;
 	int i;
 
@@ -562,8 +562,8 @@ add_oid_section(BIO * err, CONF * conf)
 }
 
 static int
-load_pkcs12(BIO * err, BIO * in, const char *desc, pem_password_cb * pem_cb,
-    void *cb_data, EVP_PKEY ** pkey, X509 ** cert, STACK_OF(X509) ** ca)
+load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
+    void *cb_data, EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
 {
 	const char *pass;
 	char tpass[PEM_BUFSIZE];
@@ -605,7 +605,7 @@ die:
 }
 
 X509 *
-load_cert(BIO * err, const char *file, int format, const char *pass, ENGINE * e,
+load_cert(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
     const char *cert_descrip)
 {
 	X509 *x = NULL;
@@ -670,8 +670,8 @@ end:
 }
 
 EVP_PKEY *
-load_key(BIO * err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE * e, const char *key_descrip)
+load_key(BIO *err, const char *file, int format, int maybe_stdin,
+    const char *pass, ENGINE *e, const char *key_descrip)
 {
 	BIO *key = NULL;
 	EVP_PKEY *pkey = NULL;
@@ -752,8 +752,8 @@ end:
 }
 
 EVP_PKEY *
-load_pubkey(BIO * err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE * e, const char *key_descrip)
+load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
+    const char *pass, ENGINE *e, const char *key_descrip)
 {
 	BIO *key = NULL;
 	EVP_PKEY *pkey = NULL;
@@ -843,7 +843,7 @@ end:
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
 static EVP_PKEY *
-load_netscape_key(BIO * err, BIO * key, const char *file,
+load_netscape_key(BIO *err, BIO *key, const char *file,
     const char *key_descrip, int format)
 {
 	EVP_PKEY *pkey;
@@ -887,13 +887,13 @@ error:
 #endif				/* ndef OPENSSL_NO_RC4 */
 
 static int
-load_certs_crls(BIO * err, const char *file, int format, const char *pass,
-    ENGINE * e, const char *desc, STACK_OF(X509) ** pcerts,
-    STACK_OF(X509_CRL) ** pcrls)
+load_certs_crls(BIO *err, const char *file, int format, const char *pass,
+    ENGINE *e, const char *desc, STACK_OF(X509) **pcerts,
+    STACK_OF(X509_CRL) **pcrls)
 {
 	int i;
 	BIO *bio;
-	STACK_OF(X509_INFO) * xis = NULL;
+	STACK_OF(X509_INFO) *xis = NULL;
 	X509_INFO *xi;
 	PW_CB_DATA cb_data;
 	int rv = 0;
@@ -972,10 +972,10 @@ end:
 }
 
 STACK_OF(X509) *
-load_certs(BIO * err, const char *file, int format, const char *pass,
-    ENGINE * e, const char *desc)
+load_certs(BIO *err, const char *file, int format, const char *pass,
+    ENGINE *e, const char *desc)
 {
-	STACK_OF(X509) * certs;
+	STACK_OF(X509) *certs;
 
 	if (!load_certs_crls(err, file, format, pass, e, desc, &certs, NULL))
 		return NULL;
@@ -983,10 +983,10 @@ load_certs(BIO * err, const char *file, int format, const char *pass,
 }
 
 STACK_OF(X509_CRL) *
-load_crls(BIO * err, const char *file, int format, const char *pass, ENGINE * e,
+load_crls(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
     const char *desc)
 {
-	STACK_OF(X509_CRL) * crls;
+	STACK_OF(X509_CRL) *crls;
 
 	if (!load_certs_crls(err, file, format, pass, e, desc, NULL, &crls))
 		return NULL;
@@ -1084,9 +1084,9 @@ set_ext_copy(int *copy_type, const char *arg)
 }
 
 int
-copy_extensions(X509 * x, X509_REQ * req, int copy_type)
+copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 {
-	STACK_OF(X509_EXTENSION) * exts = NULL;
+	STACK_OF(X509_EXTENSION) *exts = NULL;
 	X509_EXTENSION *ext, *tmpext;
 	ASN1_OBJECT *obj;
 	int i, idx, ret = 0;
@@ -1126,9 +1126,9 @@ end:
 
 static int
 set_multi_opts(unsigned long *flags, const char *arg,
-    const NAME_EX_TBL * in_tbl)
+    const NAME_EX_TBL *in_tbl)
 {
-	STACK_OF(CONF_VALUE) * vals;
+	STACK_OF(CONF_VALUE) *vals;
 	CONF_VALUE *val;
 	int i, ret = 1;
 
@@ -1146,7 +1146,7 @@ set_multi_opts(unsigned long *flags, const char *arg,
 
 static int
 set_table_opts(unsigned long *flags, const char *arg,
-    const NAME_EX_TBL * in_tbl)
+    const NAME_EX_TBL *in_tbl)
 {
 	char c;
 	const NAME_EX_TBL *ptbl;
@@ -1175,7 +1175,7 @@ set_table_opts(unsigned long *flags, const char *arg,
 }
 
 void
-print_name(BIO * out, const char *title, X509_NAME * nm, unsigned long lflags)
+print_name(BIO *out, const char *title, X509_NAME *nm, unsigned long lflags)
 {
 	char *buf;
 	char mline = 0;
@@ -1201,7 +1201,7 @@ print_name(BIO * out, const char *title, X509_NAME * nm, unsigned long lflags)
 }
 
 X509_STORE *
-setup_verify(BIO * bp, char *CAfile, char *CApath)
+setup_verify(BIO *bp, char *CAfile, char *CApath)
 {
 	X509_STORE *store;
 	X509_LOOKUP *lookup;
@@ -1241,7 +1241,7 @@ end:
 #ifndef OPENSSL_NO_ENGINE
 /* Try to load an engine in a shareable library */
 static ENGINE *
-try_load_engine(BIO * err, const char *engine, int debug)
+try_load_engine(BIO *err, const char *engine, int debug)
 {
 	ENGINE *e = ENGINE_by_id("dynamic");
 
@@ -1256,7 +1256,7 @@ try_load_engine(BIO * err, const char *engine, int debug)
 }
 
 ENGINE *
-setup_engine(BIO * err, const char *engine, int debug)
+setup_engine(BIO *err, const char *engine, int debug)
 {
 	ENGINE *e = NULL;
 
@@ -1293,7 +1293,7 @@ setup_engine(BIO * err, const char *engine, int debug)
 #endif
 
 int
-load_config(BIO * err, CONF * cnf)
+load_config(BIO *err, CONF *cnf)
 {
 	static int load_config_called = 0;
 
@@ -1327,7 +1327,7 @@ make_config_name()
 }
 
 static unsigned long
-index_serial_hash(const OPENSSL_CSTRING * a)
+index_serial_hash(const OPENSSL_CSTRING *a)
 {
 	const char *n;
 
@@ -1338,7 +1338,7 @@ index_serial_hash(const OPENSSL_CSTRING * a)
 }
 
 static int
-index_serial_cmp(const OPENSSL_CSTRING * a, const OPENSSL_CSTRING * b)
+index_serial_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 {
 	const char *aa, *bb;
 
@@ -1356,13 +1356,13 @@ index_name_qual(char **a)
 }
 
 static unsigned long
-index_name_hash(const OPENSSL_CSTRING * a)
+index_name_hash(const OPENSSL_CSTRING *a)
 {
 	return (lh_strhash(a[DB_name]));
 }
 
 int
-index_name_cmp(const OPENSSL_CSTRING * a, const OPENSSL_CSTRING * b)
+index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 {
 	return (strcmp(a[DB_name], b[DB_name]));
 }
@@ -1375,7 +1375,7 @@ static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 #define BSIZE 256
 
 BIGNUM *
-load_serial(char *serialfile, int create, ASN1_INTEGER ** retai)
+load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 {
 	BIO *in = NULL;
 	BIGNUM *ret = NULL;
@@ -1427,8 +1427,8 @@ err:
 }
 
 int
-save_serial(char *serialfile, char *suffix, BIGNUM * serial,
-    ASN1_INTEGER ** retai)
+save_serial(char *serialfile, char *suffix, BIGNUM *serial,
+    ASN1_INTEGER **retai)
 {
 	char buf[1][BSIZE];
 	BIO *out = NULL;
@@ -1535,7 +1535,7 @@ err:
 }
 
 int
-rand_serial(BIGNUM * b, ASN1_INTEGER * ai)
+rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 {
 	BIGNUM *btmp;
 	int ret = 0;
@@ -1563,7 +1563,7 @@ error:
 }
 
 CA_DB *
-load_index(char *dbfile, DB_ATTR * db_attr)
+load_index(char *dbfile, DB_ATTR *db_attr)
 {
 	CA_DB *retdb = NULL;
 	TXT_DB *tmpdb = NULL;
@@ -1631,7 +1631,7 @@ err:
 }
 
 int
-index_index(CA_DB * db)
+index_index(CA_DB *db)
 {
 	if (!TXT_DB_create_index(db->db, DB_serial, NULL,
 	    LHASH_HASH_FN(index_serial), LHASH_COMP_FN(index_serial))) {
@@ -1651,7 +1651,7 @@ index_index(CA_DB * db)
 }
 
 int
-save_index(const char *dbfile, const char *suffix, CA_DB * db)
+save_index(const char *dbfile, const char *suffix, CA_DB *db)
 {
 	char buf[3][BSIZE];
 	BIO *out = BIO_new(BIO_s_file());
@@ -1786,7 +1786,7 @@ err:
 }
 
 void
-free_index(CA_DB * db)
+free_index(CA_DB *db)
 {
 	if (db) {
 		if (db->db)
@@ -1946,8 +1946,8 @@ error:
 }
 
 int
-args_verify(char ***pargs, int *pargc, int *badarg, BIO * err,
-    X509_VERIFY_PARAM ** pm)
+args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
+    X509_VERIFY_PARAM **pm)
 {
 	ASN1_OBJECT *otmp = NULL;
 	unsigned long flags = 0;
@@ -2081,7 +2081,7 @@ end:
  */
 
 int
-bio_to_mem(unsigned char **out, int maxlen, BIO * in)
+bio_to_mem(unsigned char **out, int maxlen, BIO *in)
 {
 	BIO *mem;
 	int len, ret;
@@ -2114,7 +2114,7 @@ bio_to_mem(unsigned char **out, int maxlen, BIO * in)
 }
 
 int
-pkey_ctrl_string(EVP_PKEY_CTX * ctx, char *value)
+pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
 {
 	int rv;
 	char *stmp, *vtmp = NULL;
@@ -2134,7 +2134,7 @@ pkey_ctrl_string(EVP_PKEY_CTX * ctx, char *value)
 }
 
 static void
-nodes_print(BIO * out, const char *name, STACK_OF(X509_POLICY_NODE) * nodes)
+nodes_print(BIO *out, const char *name, STACK_OF(X509_POLICY_NODE) *nodes)
 {
 	X509_POLICY_NODE *node;
 	int i;
@@ -2151,7 +2151,7 @@ nodes_print(BIO * out, const char *name, STACK_OF(X509_POLICY_NODE) * nodes)
 }
 
 void
-policies_print(BIO * out, X509_STORE_CTX * ctx)
+policies_print(BIO *out, X509_STORE_CTX *ctx)
 {
 	X509_POLICY_TREE *tree;
 	int explicit_policy;
