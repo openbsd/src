@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.5 2013/04/16 14:55:22 deraadt Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.6 2014/05/19 13:11:31 mpi Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -179,5 +179,5 @@ ohci_voyager_attach_deferred(struct device *self)
 	splx(s);
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus, usbctlprint);
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 }

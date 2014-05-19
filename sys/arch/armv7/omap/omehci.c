@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/*	$OpenBSD: omehci.c,v 1.3 2014/05/19 13:11:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -180,8 +180,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 		goto intr;
 	}
 
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-	    usbctlprint);
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 
 	goto out;
 
@@ -426,7 +425,7 @@ omehci_detach(struct device *self, int flags)
 	struct omehci_softc		*sc = (struct omehci_softc *)self;
 	int				rv;
 
-	rv = ehci_detach(&sc->sc, flags);
+	rv = ehci_detach(self, flags);
 	if (rv)
 		return (rv);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.3 2013/11/26 20:33:11 deraadt Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.4 2014/05/19 13:11:31 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -205,8 +205,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 		goto intr;
 	}
 
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-	    usbctlprint);
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 
 	goto out;
 
@@ -232,7 +231,7 @@ imxehci_detach(struct device *self, int flags)
 	struct imxehci_softc		*sc = (struct imxehci_softc *)self;
 	int				rv;
 
-	rv = ehci_detach(&sc->sc, flags);
+	rv = ehci_detach(self, flags);
 	if (rv)
 		return (rv);
 
