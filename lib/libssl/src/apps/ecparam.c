@@ -587,8 +587,7 @@ end:
 		BN_free(ec_order);
 	if (ec_cofactor)
 		BN_free(ec_cofactor);
-	if (buffer)
-		free(buffer);
+	free(buffer);
 	if (in != NULL)
 		BIO_free(in);
 	if (out != NULL)

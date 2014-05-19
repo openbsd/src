@@ -391,10 +391,8 @@ end:
 		BIO_free_all(out);
 	if (rsa != NULL)
 		RSA_free(rsa);
-	if (passin)
-		free(passin);
-	if (passout)
-		free(passout);
+	free(passin);
+	free(passout);
 	
 	return (ret);
 }

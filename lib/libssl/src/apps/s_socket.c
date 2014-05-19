@@ -167,8 +167,7 @@ do_server(int port, int type, int *ret,
 		} else
 			sock = accept_socket;
 		i = (*cb) (name, sock, context);
-		if (name != NULL)
-			free(name);
+		free(name);
 		if (type == SOCK_STREAM) {
 			shutdown(sock, SHUT_RDWR);
 			close(sock);

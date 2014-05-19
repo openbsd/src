@@ -548,6 +548,7 @@ err:
 	free(data);
 	ASN1_OBJECT_free(policy_obj);
 	ASN1_INTEGER_free(nonce_asn1);
+
 	return ts_req;
 }
 

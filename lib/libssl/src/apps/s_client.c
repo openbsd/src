@@ -1411,8 +1411,7 @@ end:
 		SSL_free(con);
 	}
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-	if (next_proto.data)
-		free(next_proto.data);
+	free(next_proto.data);
 #endif
 	if (ctx != NULL)
 		SSL_CTX_free(ctx);
@@ -1420,8 +1419,7 @@ end:
 		X509_free(cert);
 	if (key)
 		EVP_PKEY_free(key);
-	if (pass)
-		free(pass);
+	free(pass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 	if (cbuf != NULL) {

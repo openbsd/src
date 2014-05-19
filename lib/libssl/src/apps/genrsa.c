@@ -274,8 +274,7 @@ err:
 		RSA_free(rsa);
 	if (out)
 		BIO_free_all(out);
-	if (passout)
-		free(passout);
+	free(passout);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	

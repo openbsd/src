@@ -670,8 +670,8 @@ end:
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free_all(out);
-	if (passin)
-		free(passin);
+	free(passin);
+
 	return (ret);
 }
 

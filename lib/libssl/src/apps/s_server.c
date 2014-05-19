@@ -1457,10 +1457,8 @@ end:
 		EVP_PKEY_free(s_key);
 	if (s_dkey)
 		EVP_PKEY_free(s_dkey);
-	if (pass)
-		free(pass);
-	if (dpass)
-		free(dpass);
+	free(pass);
+	free(dpass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 #ifndef OPENSSL_NO_TLSEXT

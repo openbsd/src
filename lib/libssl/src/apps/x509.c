@@ -939,8 +939,7 @@ end:
 	ASN1_INTEGER_free(sno);
 	sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
 	sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-	if (passin)
-		free(passin);
+	free(passin);
 	
 	return (ret);
 }
@@ -983,9 +982,9 @@ x509_load_serial(char *CAfile, char *serialfile, int create)
 		goto end;
 
 end:
-	if (buf)
-		free(buf);
+	free(buf);
 	BN_free(serial);
+
 	return bs;
 }
 

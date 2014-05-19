@@ -231,10 +231,8 @@ end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
 	BIO_free(in);
-	if (passin)
-		free(passin);
-	if (passout)
-		free(passout);
+	free(passin);
+	free(passout);
 
 	return ret;
 }

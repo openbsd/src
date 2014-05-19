@@ -262,8 +262,7 @@ end:
 	if (out)
 		BIO_free_all(out);
 	BIO_free(in);
-	if (pass)
-		free(pass);
+	free(pass);
 
 	return ret;
 }

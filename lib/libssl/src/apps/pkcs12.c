@@ -697,10 +697,8 @@ end:
 	BIO_free_all(out);
 	if (canames)
 		sk_OPENSSL_STRING_free(canames);
-	if (passin)
-		free(passin);
-	if (passout)
-		free(passout);
+	free(passin);
+	free(passout);
 	
 	return (ret);
 }

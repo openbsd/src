@@ -371,8 +371,7 @@ end:
 	}
 	if (prog != NULL)
 		lh_FUNCTION_free(prog);
-	if (arg.data != NULL)
-		free(arg.data);
+	free(arg.data);
 
 	openssl_shutdown();
 

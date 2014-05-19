@@ -973,12 +973,9 @@ end:
 		sk_OPENSSL_STRING_free(sksigners);
 	if (skkeys)
 		sk_OPENSSL_STRING_free(skkeys);
-	if (secret_key)
-		free(secret_key);
-	if (secret_keyid)
-		free(secret_keyid);
-	if (pwri_tmp)
-		free(pwri_tmp);
+	free(secret_key);
+	free(secret_keyid);
+	free(pwri_tmp);
 	if (econtent_type)
 		ASN1_OBJECT_free(econtent_type);
 	if (rr)
@@ -998,8 +995,7 @@ end:
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free_all(out);
-	if (passin)
-		free(passin);
+	free(passin);
 	return (ret);
 }
 

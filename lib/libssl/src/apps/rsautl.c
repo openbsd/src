@@ -305,16 +305,15 @@ rsautl_main(int argc, char **argv)
 		BIO_dump(out, (char *) rsa_out, rsa_outlen);
 	else
 		BIO_write(out, rsa_out, rsa_outlen);
+
 end:
 	RSA_free(rsa);
 	BIO_free(in);
 	BIO_free_all(out);
-	if (rsa_in)
-		free(rsa_in);
-	if (rsa_out)
-		free(rsa_out);
-	if (passin)
-		free(passin);
+	free(rsa_in);
+	free(rsa_out);
+	free(passin);
+
 	return ret;
 }
 

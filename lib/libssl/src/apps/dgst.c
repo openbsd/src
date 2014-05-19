@@ -476,16 +476,14 @@ end:
 	}
 	if (in != NULL)
 		BIO_free(in);
-	if (passin)
-		free(passin);
+	free(passin);
 	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
 	if (sigopts)
 		sk_OPENSSL_STRING_free(sigopts);
 	if (macopts)
 		sk_OPENSSL_STRING_free(macopts);
-	if (sigbuf)
-		free(sigbuf);
+	free(sigbuf);
 	if (bmd != NULL)
 		BIO_free(bmd);
 	

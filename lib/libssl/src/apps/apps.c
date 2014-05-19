@@ -1932,18 +1932,16 @@ parse_name(char *subject, long chtype, int multirdn)
 	free(ne_types);
 	free(buf);
 	free(mval);
+
 	return n;
 
 error:
 	X509_NAME_free(n);
-	if (ne_values)
-		free(ne_values);
-	if (ne_types)
-		free(ne_types);
-	if (mval)
-		free(mval);
-	if (buf)
-		free(buf);
+	free(ne_values);
+	free(ne_types);
+	free(mval);
+	free(buf);
+
 	return NULL;
 }
 
@@ -2131,6 +2129,7 @@ pkey_ctrl_string(EVP_PKEY_CTX * ctx, char *value)
 	}
 	rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
 	free(stmp);
+
 	return rv;
 }
 

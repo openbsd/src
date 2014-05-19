@@ -530,10 +530,9 @@ bad:
 			    errorline, configfile);
 		goto err;
 	}
-	if (tofree) {
-		free(tofree);
-		tofree = NULL;
-	}
+	free(tofree);
+	tofree = NULL;
+
 	if (!load_config(bio_err, conf))
 		goto err;
 
@@ -1347,8 +1346,8 @@ bad:
 	ret = 0;
 
 err:
-	if (tofree)
-		free(tofree);
+	free(tofree);
+
 	BIO_free_all(Cout);
 	BIO_free_all(Sout);
 	BIO_free_all(out);
@@ -1996,8 +1995,7 @@ again2:
 	ok = 1;
 err:
 	for (i = 0; i < DB_NUMBER; i++)
-		if (row[i] != NULL)
-			free(row[i]);
+		free(row[i]);
 
 	if (CAname != NULL)
 		X509_NAME_free(CAname);
@@ -2287,10 +2285,9 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 	ok = 1;
 
 err:
-	for (i = 0; i < DB_NUMBER; i++) {
-		if (row[i] != NULL)
-			free(row[i]);
-	}
+	for (i = 0; i < DB_NUMBER; i++)
+		free(row[i]);
+
 	return (ok);
 }
 
@@ -2360,10 +2357,9 @@ get_certificate_status(const char *serial, CA_DB * db)
 	}
 
 err:
-	for (i = 0; i < DB_NUMBER; i++) {
-		if (row[i] != NULL)
-			free(row[i]);
-	}
+	for (i = 0; i < DB_NUMBER; i++)
+		free(row[i]);
+
 	return (ok);
 }
 
@@ -2575,8 +2571,8 @@ make_revoked(X509_REVOKED * rev, const char *str)
 		ret = 1;
 
 err:
-	if (tmp)
-		free(tmp);
+	free(tmp);
+
 	ASN1_OBJECT_free(hold);
 	ASN1_GENERALIZEDTIME_free(comp_time);
 	ASN1_ENUMERATED_free(rtmp);
@@ -2719,8 +2715,8 @@ unpack_revinfo(ASN1_TIME ** prevtm, int *preason, ASN1_OBJECT ** phold,
 	ret = 1;
 
 err:
-	if (tmp)
-		free(tmp);
+	free(tmp);
+
 	if (!phold)
 		ASN1_OBJECT_free(hold);
 	if (!pinvtm)

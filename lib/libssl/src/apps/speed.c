@@ -2013,10 +2013,8 @@ show_res:
 
 end:
 	ERR_print_errors(bio_err);
-	if (buf != NULL)
-		free(buf);
-	if (buf2 != NULL)
-		free(buf2);
+	free(buf);
+	free(buf2);
 #ifndef OPENSSL_NO_RSA
 	for (i = 0; i < RSA_NUM; i++)
 		if (rsa_key[i] != NULL)

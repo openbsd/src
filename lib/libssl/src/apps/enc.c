@@ -609,10 +609,8 @@ enc_main(int argc, char **argv)
 	}
 end:
 	ERR_print_errors(bio_err);
-	if (strbuf != NULL)
-		free(strbuf);
-	if (buff != NULL)
-		free(buff);
+	free(strbuf);
+	free(buff);
 	if (in != NULL)
 		BIO_free(in);
 	if (out != NULL)
@@ -625,8 +623,7 @@ end:
 	if (bzl != NULL)
 		BIO_free(bzl);
 #endif
-	if (pass)
-		free(pass);
+	free(pass);
 	
 	return (ret);
 }

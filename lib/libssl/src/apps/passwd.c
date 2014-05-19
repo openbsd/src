@@ -245,10 +245,8 @@ passwd_main(int argc, char **argv)
 
 err:
 	ERR_print_errors(bio_err);
-	if (salt_malloc)
-		free(salt_malloc);
-	if (passwd_malloc)
-		free(passwd_malloc);
+	free(salt_malloc);
+	free(passwd_malloc);
 	if (in)
 		BIO_free(in);
 	if (out)

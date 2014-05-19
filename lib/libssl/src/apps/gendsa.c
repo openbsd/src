@@ -238,8 +238,7 @@ end:
 		BIO_free_all(out);
 	if (dsa != NULL)
 		DSA_free(dsa);
-	if (passout)
-		free(passout);
+	free(passout);
 	
 	return (ret);
 }

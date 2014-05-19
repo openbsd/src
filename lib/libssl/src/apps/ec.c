@@ -339,10 +339,8 @@ end:
 		BIO_free_all(out);
 	if (eckey)
 		EC_KEY_free(eckey);
-	if (passin)
-		free(passin);
-	if (passout)
-		free(passout);
+	free(passin);
+	free(passout);
 	
 	return (ret);
 }

@@ -259,10 +259,9 @@ util_verbose(ENGINE * e, int verbose, BIO * bio_out, const char *indent)
 		}
 		free(name);
 		name = NULL;
-		if (desc) {
-			free(desc);
-			desc = NULL;
-		}
+		free(desc);
+		desc = NULL;
+
 		/* Move to the next command */
 		num = ENGINE_ctrl(e, ENGINE_CTRL_GET_NEXT_CMD_TYPE,
 		    num, NULL, NULL);
@@ -273,10 +272,8 @@ util_verbose(ENGINE * e, int verbose, BIO * bio_out, const char *indent)
 err:
 	if (cmds)
 		sk_OPENSSL_STRING_pop_free(cmds, identity);
-	if (name)
-		free(name);
-	if (desc)
-		free(desc);
+	free(name);
+	free(desc);
 	return ret;
 }
 

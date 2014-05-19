@@ -912,8 +912,7 @@ end:
 	if (gen_eng)
 		ENGINE_free(gen_eng);
 #endif
-	if (keyalgstr)
-		free(keyalgstr);
+	free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
 	ASN1_INTEGER_free(serial);

@@ -322,12 +322,10 @@ end:
 		EVP_PKEY_CTX_free(ctx);
 	BIO_free(in);
 	BIO_free_all(out);
-	if (buf_in)
-		free(buf_in);
-	if (buf_out)
-		free(buf_out);
-	if (sig)
-		free(sig);
+	free(buf_in);
+	free(buf_out);
+	free(sig);
+
 	return ret;
 }
 
