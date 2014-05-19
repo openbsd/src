@@ -83,7 +83,7 @@ main(void)
 		ASSERT(value == UNCHANGED);
 	}
 
-	/* 
+	/*
 	 * Verify handling of all two-byte sequences
 	 */
 	for (i = 0xC2; i < 0xE0; i++) {
@@ -113,8 +113,7 @@ main(void)
 		}
 	}
 
-#if 0
-	/* 
+	/*
 	 * Verify handling of all three-byte sequences
 	 */
 	for (i = 0xE0; i < 0xF0; i++) {
@@ -163,7 +162,7 @@ main(void)
 		}
 	}
 
-	/* 
+	/*
 	 * Verify handling of all four-byte sequences
 	 */
 	for (i = 0xF0; i < 0xF5; i++) {
@@ -219,7 +218,6 @@ main(void)
 			}
 		}
 	}
-#endif
 
 
 	/*
@@ -263,10 +261,13 @@ main(void)
 
 	/* three-byte sequences */
 	for (i = 0x800; i < 0x10000; i++) {
-		/* XXX skip surrogate pair code points */
-		if (i >= 0xD800 && i < 0xE000)
+		if (i >= 0xD800 && i < 0xE000) {
+			/* surrogates aren't valid */
+			ret = UTF8_putc(NULL, 0, i);
+			ASSERT(ret == -2);
 			continue;
-			
+		}
+
 		ret = UTF8_putc(NULL, 0, i);
 		ASSERT(ret == 3);
 
@@ -301,7 +302,15 @@ main(void)
 		ASSERT(value == i);
 	}
 
-	/* XXX What should UTF8_putc() do with values > 0x10FFFF */
+	/* spot check some larger values to confirm error return */
+	for (i = 0x110000; i < 0x110100; i++) {
+		ret = UTF8_putc(NULL, 0, i);
+		ASSERT(ret == -2);
+	}
+	for (value = (unsigned long)-1; value > (unsigned long)-256; value--) {
+		ret = UTF8_putc(NULL, 0, value);
+		ASSERT(ret == -2);
+	}
 
 	return 0;
 }
