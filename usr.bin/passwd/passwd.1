@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.38 2014/04/24 19:07:54 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.39 2014/05/19 15:05:13 tedu Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: April 24 2014 $
+.Dd $Mdocdate: May 19 2014 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-changes the user's local, Kerberos, or YP password.
+changes the user's local or YP password.
 First, the user is prompted for their current password.
 If the current password is correctly typed, a new password is requested.
 The new password must be entered twice to avoid typing errors.
@@ -62,17 +62,6 @@ variable in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl K
-Forces the change to affect the Kerberos 5 database, even
-if the user has a password in the local database.
-Once the password has been verified,
-.Nm
-communicates the new password information to the Kerberos authenticating host.
-.Pp
-The
-.Ar user
-argument specifies a principal and optional realm, for example
-.Dq user@DOMAIN.COM .
 .It Fl l
 Causes the password to be updated only in the local password file.
 When changing only the local password,
@@ -86,13 +75,8 @@ The
 daemon should be running on the YP master server.
 .El
 .Pp
-This is the behavior if no flags are specified:
-if Kerberos is active then
-.Nm
-will talk to the Kerberos server (even if the user has an entry
-in the local database).
-If the password is not in the local password database, then
-an attempt is made to use the YP database.
+If no flags are specified and the password is not in the local password
+database, then an attempt is made to use the YP database.
 .Pp
 The superuser is not required to provide a user's current password
 if only the local password is modified.

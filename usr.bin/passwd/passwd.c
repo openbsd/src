@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.25 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.26 2014/05/19 15:05:13 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,10 +36,6 @@
 #include <err.h>
 #include <rpcsvc/ypclnt.h>
 
-#if defined(KRB5)
-#include <sys/stat.h>
-#endif
-
 /*
  * Note on configuration:
  *      Generally one would not use both Kerberos and YP
@@ -69,18 +65,6 @@ main(int argc, char **argv)
 #ifdef	YP
 	int status = 0;
 #endif
-#if defined(KRB5)
-	char *ccfile;
-	struct stat sb;
-
-	if (!(ccfile = getenv("KRB5CCNAME")))
-		if (asprintf(&ccfile, "/tmp/krb5cc_%u", (unsigned)getuid()) ==
-		    -1)
-			errx(1, "out of memory");
-
-	if ((stat(ccfile, &sb) == 0) && (sb.st_uid == getuid()))
-		use_kerberos = 1;
-#endif
 #ifdef	YP
 	use_yp = _yp_check(NULL);
 	if (use_yp) {
@@ -92,22 +76,12 @@ main(int argc, char **argv)
 #endif
 
 	/* Process args and options */
-	while ((ch = getopt(argc, argv, "lyK")) != -1)
+	while ((ch = getopt(argc, argv, "ly")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
 			use_kerberos = 0;
 			use_yp = 0;
 			break;
-		case 'K':
-#if defined(KRB5)
-			/* Skip programname and '-K' option */
-			argc -= 2;
-			argv += 2;
-			exit(krb5_passwd(argc, argv));
-#else
-			errx(1, "KerberosV support not enabled");
-			break;
-#endif
 		case 'y':		/* change YP password */
 #ifdef	YP
 			if (!use_yp) {
@@ -145,10 +119,6 @@ main(int argc, char **argv)
 		usage(1);
 	}
 
-#if defined(KRB5)
-	if (use_kerberos)
-		exit(krb5_passwd(argc, argv));
-#endif
 #ifdef	YP
 	if (force_yp || ((status = local_passwd(username, 0)) && use_yp))
 		exit(yp_passwd(username));
@@ -161,6 +131,6 @@ main(int argc, char **argv)
 void
 usage(int retval)
 {
-	fprintf(stderr, "usage: passwd [-K | -l | -y] [user]\n");
+	fprintf(stderr, "usage: passwd [-l | -y] [user]\n");
 	exit(retval);
 }
