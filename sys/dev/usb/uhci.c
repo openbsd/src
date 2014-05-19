@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.119 2014/05/18 17:10:27 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.120 2014/05/19 06:54:34 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -572,7 +572,9 @@ uhci_activate(struct device *self, int act)
 int
 uhci_detach(struct device *self, int flags)
 {
+#ifdef DIAGNOSTIC
 	struct uhci_softc *sc = (struct uhci_softc *)self;
+#endif
 	int rv;
 
 	rv = config_detach_children(self, flags);
