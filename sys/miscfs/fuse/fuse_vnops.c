@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.16 2014/03/18 08:51:53 mpi Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.17 2014/05/19 13:55:29 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -202,7 +202,7 @@ fusefs_open(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	if (!fmp->sess_init)
-		return (0);
+		return (ENXIO);
 
 	isdir = 0;
 	if (ip->vtype == VDIR)
@@ -293,7 +293,10 @@ fusefs_access(void *v)
 	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_ACCESS))
+	if (!fmp->sess_init)
+		return (ENXIO);
+
+	if (fmp->undef_op & UNDEF_ACCESS)
 		goto system_check;
 
 	if (ap->a_vp->v_type == VLNK)
@@ -358,7 +361,7 @@ fusefs_getattr(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	if (!fmp->sess_init)
-		goto fake;
+		return (ENXIO);
 
 	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_GETATTR, p);
 
@@ -372,10 +375,6 @@ fusefs_getattr(void *v)
 	memcpy(vap, &fbuf->fb_vattr, sizeof(*vap));
 	fb_delete(fbuf);
 	return (error);
-fake:
-	bzero(vap, sizeof(*vap));
-	vap->va_type = vp->v_type;
-	return (0);
 }
 
 int
@@ -401,8 +400,11 @@ fusefs_setattr(void *v)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
 		return (EINVAL);
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_SETATTR))
+	if (!fmp->sess_init)
 		return (ENXIO);
+
+	if (fmp->undef_op & UNDEF_SETATTR)
+		return (ENOSYS);
 
 	fbuf = fb_setup(sizeof(*io), ip->ufs_ino.i_number, FBT_SETATTR, p);
 	io = fbtod(fbuf, struct fb_io *);
@@ -521,6 +523,20 @@ fusefs_link(void *v)
 	struct fusebuf *fbuf;
 	int error = 0;
 
+	ip = VTOI(vp);
+	dip = VTOI(dvp);
+	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+
+	if (!fmp->sess_init) {
+		VOP_ABORTOP(dvp, cnp);
+		error = ENXIO;
+		goto out2;
+	}
+	if (fmp->undef_op & UNDEF_LINK) {
+		VOP_ABORTOP(dvp, cnp);
+		error = ENOSYS;
+		goto out2;
+	}
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
 		error = EISDIR;
@@ -535,13 +551,6 @@ fusefs_link(void *v)
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
-
-	ip = VTOI(vp);
-	dip = VTOI(dvp);
-	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_LINK))
-		goto out1;
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, dip->ufs_ino.i_number,
 	    FBT_LINK, p);
@@ -591,7 +600,12 @@ fusefs_symlink(void *v)
 	dp = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)dp->ufs_ino.i_ump;
 
-	if (!fmp->sess_init  || (fmp->undef_op & UNDEF_SYMLINK)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto bad;
+	}
+
+	if (fmp->undef_op & UNDEF_SYMLINK) {
 		error = ENOSYS;
 		goto bad;
 	}
@@ -652,7 +666,7 @@ fusefs_readdir(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 	if (!fmp->sess_init)
-		return (0);
+		return (ENXIO);
 
 	if (uio->uio_resid < sizeof(struct dirent))
 		return (EINVAL);
@@ -743,10 +757,11 @@ fusefs_readlink(void *v)
 	uio = ap->a_uio;
 	p = uio->uio_procp;
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_READLINK)) {
-		error = ENOSYS;
-		goto out;
-	}
+	if (!fmp->sess_init)
+		return (ENXIO);
+
+	if (fmp->undef_op & UNDEF_READLINK)
+		return (ENOSYS);
 
 	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READLINK, p);
 
@@ -757,12 +772,12 @@ fusefs_readlink(void *v)
 			fmp->undef_op |= UNDEF_READLINK;
 
 		fb_delete(fbuf);
-		goto out;
+		return (error);
 	}
 
 	error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
 	fb_delete(fbuf);
-out:
+
 	return (error);
 }
 
@@ -849,7 +864,12 @@ fusefs_create(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_CREATE)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
+
+	if (fmp->undef_op & UNDEF_CREATE) {
 		error = ENOSYS;
 		goto out;
 	}
@@ -909,7 +929,12 @@ fusefs_mknod(void *v)
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_MKNOD)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
+
+	if (fmp->undef_op & UNDEF_MKNOD) {
 		error = ENOSYS;
 		goto out;
 	}
@@ -1167,7 +1192,13 @@ abortit:
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);	/* XXX right place? */
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_RENAME)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		VOP_UNLOCK(fvp, 0, p);
+		goto abortit;
+	}
+
+	if (fmp->undef_op & UNDEF_RENAME) {
 		error = ENOSYS;
 		VOP_UNLOCK(fvp, 0, p);
 		goto abortit;
@@ -1228,7 +1259,12 @@ fusefs_mkdir(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_MKDIR)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
+
+	if (fmp->undef_op & UNDEF_MKDIR) {
 		error = ENOSYS;
 		goto out;
 	}
@@ -1285,6 +1321,16 @@ fusefs_rmdir(void *v)
 	dp = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
+
+	if (fmp->undef_op & UNDEF_RMDIR) {
+		error = ENOSYS;
+		goto out;
+	}
+
 	/*
 	 * No rmdir "." please.
 	 */
@@ -1292,11 +1338,6 @@ fusefs_rmdir(void *v)
 		vrele(dvp);
 		vput(vp);
 		return (EINVAL);
-	}
-
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_RMDIR)) {
-		error = ENOSYS;
-		goto out;
 	}
 
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1350,7 +1391,12 @@ fusefs_remove(void *v)
 	dp = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_REMOVE)) {
+	if (!fmp->sess_init) {
+		error = ENXIO;
+		goto out;
+	}
+
+	if (fmp->undef_op & UNDEF_REMOVE) {
 		error = ENOSYS;
 		goto out;
 	}
