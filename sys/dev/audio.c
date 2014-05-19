@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.120 2013/12/17 14:55:16 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.121 2014/05/19 07:00:15 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1413,7 +1413,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 	if (cb->mmapped)
 		return EINVAL;
 
-	DPRINTFN(1,("audio_read: cc=%d mode=%d\n",
+	DPRINTFN(1,("audio_read: cc=%ld mode=%d\n",
 	    uio->uio_resid, sc->sc_mode));
 
 	/*
@@ -1657,7 +1657,7 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 	u_char *inp;
 	int error, n, cc, resid, avail;
 
-	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
+	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%zd used=%d(hi=%d)\n", sc, unit,
 		 uio->uio_resid, sc->sc_pr.used, sc->sc_pr.usedhigh));
 
 	if (cb->mmapped)
@@ -1744,7 +1744,7 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 		} else
 			mtx_leave(&audio_lock);
 		cc /= sc->sc_pparams.factor;
-		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%d\n",
+		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%zd\n",
 		    cc, inp, uio->uio_resid));
 		error = uiomove(inp, cc, uio);
 		if (error)
@@ -1777,8 +1777,8 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	while (sc->sc_quiesce == AUDIO_QUIESCE_SILENT)
 		tsleep(&sc->sc_quiesce, 0, "aud_qio", 0);
 
-	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
-	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("audio_ioctl(%ld,'%c',%ld)\n",
+		IOCPARM_LEN(cmd), (int)IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
@@ -1956,8 +1956,8 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = ENOTTY;
 		break;
 	}
-	DPRINTF(("audio_ioctl(%d,'%c',%d) result %d\n",
-	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("audio_ioctl(%ld,'%c',%ld) result %d\n",
+		IOCPARM_LEN(cmd), (int)IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 
@@ -2020,7 +2020,7 @@ audio_mmap(dev_t dev, off_t off, int prot)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb;
 
-	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", off, prot));
 
 	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;
@@ -3312,8 +3312,8 @@ mixer_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct audio_hw_if *hw = sc->hw_if;
 	int error = EINVAL;
 
-	DPRINTF(("mixer_ioctl(%d,'%c',%d)\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("mixer_ioctl(%ld,'%c',%ld)\n",
+		IOCPARM_LEN(cmd), (int)IOCGROUP(cmd), cmd & 0xff));
 
 	/* Block when fully quiesced.  No need to block earlier. */
 	while (sc->sc_quiesce == AUDIO_QUIESCE_SILENT)
@@ -3364,8 +3364,8 @@ mixer_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = ENOTTY;
 		break;
 	}
-	DPRINTF(("mixer_ioctl(%d,'%c',%d) result %d\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("mixer_ioctl(%ld,'%c',%ld) result %d\n",
+		IOCPARM_LEN(cmd), (int)IOCGROUP(cmd), cmd & 0xff, error));
 	return (error);
 }
 
