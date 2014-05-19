@@ -361,20 +361,22 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 	if (s->tlsext_hostname != NULL) {
 		/* Add TLS extension servername to the Client Hello message */
-		unsigned long size_str;
-		long lenmax;
+		size_t size_str, lenmax;
 
 
 		/* check for enough space.
-		   4 for the servername type and entension length
+		   4 for the servername type and extension length
 		   2 for servernamelist length
 		   1 for the hostname type
 		   2 for hostname length
 		   + hostname length 
 		*/
 
-		if ((lenmax = limit - ret - 9) < 0 ||
-		    (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax)
+		if ((size_t)(limit - ret) < 9)
+			return NULL;
+
+		lenmax = limit - ret - 9;
+		if ((size_str = strlen(s->tlsext_hostname)) > lenmax)
 			return NULL;
 
 		/* extension type and length */
@@ -401,7 +403,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			return NULL;
 		}
 
-		if ((limit - p - 4 - el) < 0)
+		if ((size_t)(limit - ret) < 4 + el)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_renegotiate, ret);
@@ -420,12 +422,13 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (s->tlsext_ecpointformatlist != NULL &&
 	    s->version != DTLS1_VERSION) {
 		/* Add TLS extension ECPointFormats to the ClientHello message */
-		long lenmax;
+		size_t lenmax;
 
-		if ((lenmax = limit - ret - 5) < 0)
+		if ((size_t)(limit - ret) < 5)
 			return NULL;
 
-		if (s->tlsext_ecpointformatlist_length > (unsigned long)lenmax)
+		lenmax = limit - ret - 5;
+		if (s->tlsext_ecpointformatlist_length > lenmax)
 			return NULL;
 		if (s->tlsext_ecpointformatlist_length > 255) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -441,13 +444,15 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (s->tlsext_ellipticcurvelist != NULL &&
 	    s->version != DTLS1_VERSION) {
 		/* Add TLS extension EllipticCurves to the ClientHello message */
-		long lenmax;
+		size_t lenmax;
 
-		if ((lenmax = limit - ret - 6)
-			< 0) return NULL;
+		if ((size_t)(limit - ret) < 6)
+			return NULL;
 
-		if (s->tlsext_ellipticcurvelist_length > (unsigned long)lenmax) return NULL;
-			if (s->tlsext_ellipticcurvelist_length > 65532) {
+		lenmax = limit - ret - 6;
+		if (s->tlsext_ellipticcurvelist_length > lenmax)
+			return NULL;
+		if (s->tlsext_ellipticcurvelist_length > 65532) {
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
@@ -487,7 +492,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		/* Check for enough room 2 for extension type, 2 for len
  		 * rest for ticket
   		 */
-		if ((long)(limit - ret - 4 - ticklen) < 0)
+		if ((size_t)(limit - ret) < 4 + ticklen)
 			return NULL;
 		s2n(TLSEXT_TYPE_session_ticket, ret);
 
@@ -512,10 +517,10 @@ skip_ext:
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	if (s->s3->client_opaque_prf_input != NULL &&
-		s->version != DTLS1_VERSION) {
+	    s->version != DTLS1_VERSION) {
 		size_t col = s->s3->client_opaque_prf_input_len;
 
-		if ((long)(limit - ret - 6 - col < 0))
+		if ((size_t)(limit - ret) < 6 + col)
 			return NULL;
 		if (col > 0xFFFD) /* can't happen */
 			return NULL;
@@ -551,7 +556,7 @@ skip_ext:
 		} else
 			extlen = 0;
 
-		if ((long)(limit - ret - 7 - extlen - idlen) < 0)
+		if ((size_t)(limit - ret) < 7 + extlen + idlen)
 			return NULL;
 		s2n(TLSEXT_TYPE_status_request, ret);
 		if (extlen + idlen > 0xFFF0)
@@ -578,7 +583,7 @@ skip_ext:
 	if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len) {
 		/* The client advertises an emtpy extension to indicate its
 		 * support for Next Protocol Negotiation */
-		if (limit - ret - 4 < 0)
+		if ((size_t)(limit - ret) < 4)
 			return NULL;
 		s2n(TLSEXT_TYPE_next_proto_neg, ret);
 		s2n(0, ret);
@@ -591,7 +596,7 @@ skip_ext:
 
 		ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
 
-		if ((limit - p - 4 - el) < 0)
+		if ((size_t)(limit - ret) < 4 + el)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_use_srtp, ret);
@@ -659,7 +664,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		return NULL; /* this really never occurs, but ... */
 
 	if (!s->hit && s->servername_done == 1 && s->session->tlsext_hostname != NULL) {
-		if ((long)(limit - ret - 4) < 0)
+		if ((size_t)(limit - ret) < 4)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_server_name, ret);
@@ -674,8 +679,8 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			return NULL;
 		}
 
-		if ((limit - p - 4 - el)
-			< 0) return NULL;
+		if ((size_t)(limit - ret) < 4 + el)
+			return NULL;
 
 		s2n(TLSEXT_TYPE_renegotiate, ret);
 		s2n(el, ret);
@@ -692,13 +697,13 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (s->tlsext_ecpointformatlist != NULL &&
 		s->version != DTLS1_VERSION) {
 		/* Add TLS extension ECPointFormats to the ServerHello message */
-		long lenmax;
+		size_t lenmax;
 
+		if ((size_t)(limit - ret) < 5)
+			return NULL;
 
-		if ((lenmax = limit - ret - 5)
-			< 0) return NULL;
-
-		if (s->tlsext_ecpointformatlist_length > (unsigned long)lenmax)
+		lenmax = limit - ret - 5;
+		if (s->tlsext_ecpointformatlist_length > lenmax)
 			return NULL;
 		if (s->tlsext_ecpointformatlist_length > 255) {
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -716,7 +721,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 #endif /* OPENSSL_NO_EC */
 
 	if (s->tlsext_ticket_expected && !(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
-		if ((long)(limit - ret - 4) < 0)
+		if ((size_t)(limit - ret) < 4)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_session_ticket, ret);
@@ -724,7 +729,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 	if (s->tlsext_status_expected) {
-		if ((long)(limit - ret - 4) < 0)
+		if ((size_t)(limit - ret) < 4)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_status_request, ret);
@@ -735,7 +740,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (s->s3->server_opaque_prf_input != NULL && s->version != DTLS1_VERSION) {
 		size_t sol = s->s3->server_opaque_prf_input_len;
 
-		if ((long)(limit - ret - 6 - sol) < 0)
+		if ((size_t)(limit - ret) < 6 + sol)
 			return NULL;
 		if (sol > 0xFFFD) /* can't happen */
 			return NULL;
@@ -755,7 +760,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 		ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
 
-		if ((limit - p - 4 - el) < 0)
+		if ((size_t)(limit - ret) < 4 + el)
 			return NULL;
 
 		s2n(TLSEXT_TYPE_use_srtp, ret);
@@ -780,7 +785,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			0x2a, 0x85, 0x03, 0x02, 0x02, 0x16, 0x30, 0x08,
 			0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17
 		};
-		if (limit - ret < 36)
+		if ((size_t)(limit - ret) < 36)
 			return NULL;
 		memcpy(ret, cryptopro_ext, 36);
 		ret += 36;
@@ -796,7 +801,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 		r = s->ctx->next_protos_advertised_cb(s, &npa, &npalen, s->ctx->next_protos_advertised_cb_arg);
 		if (r == SSL_TLSEXT_ERR_OK) {
-			if ((long)(limit - ret - 4 - npalen) < 0)
+			if ((size_t)(limit - ret) < 4 + npalen)
 				return NULL;
 			s2n(TLSEXT_TYPE_next_proto_neg, ret);
 			s2n(npalen, ret);
