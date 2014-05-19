@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.127 2014/05/01 04:25:02 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.128 2014/05/19 14:30:03 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -643,7 +643,7 @@ startover:
 		    pp->pr_wchan, ph->ph_page, pi, 0, pi->pi_magic);
 	if (pool_debug && ph->ph_magic) {
 		size_t pidx;
-		int pval;
+		uint32_t pval;
 		if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
 		    &pidx, &pval)) {
 			int *ip = (int *)(pi + 1);
@@ -1314,7 +1314,7 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 		}
 		if (pool_debug && ph->ph_magic) {
 			size_t pidx;
-			int pval;
+			uint32_t pval;
 			if (poison_check(pi + 1, pp->pr_size - sizeof(*pi),
 			    &pidx, &pval)) {
 				int *ip = (int *)(pi + 1);

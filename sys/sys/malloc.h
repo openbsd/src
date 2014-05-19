@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.107 2013/06/03 15:56:01 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.108 2014/05/19 14:30:03 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -400,8 +400,8 @@ size_t malloc_roundup(size_t);
 void	malloc_printit(int (*)(const char *, ...));
 
 void	poison_mem(void *, size_t);
-int	poison_check(void *, size_t, size_t *, int *);
-int32_t poison_value(void *);
+int	poison_check(void *, size_t, size_t *, uint32_t *);
+uint32_t poison_value(void *);
 
 #ifdef MALLOC_DEBUG
 int	debug_malloc(unsigned long, int, int, void **);

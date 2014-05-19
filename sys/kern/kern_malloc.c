@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.106 2014/04/03 21:36:59 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.107 2014/05/19 14:30:03 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ malloc(unsigned long size, int type, int flags)
 	/* and check that the data hasn't been modified. */
 	if (freshalloc == 0) {
 		size_t pidx;
-		int pval;
+		uint32_t pval;
 		if (poison_check(va, allocsize, &pidx, &pval)) {
 			panic("%s %zd of object %p size 0x%lx %s %s"
 			    " (0x%x != 0x%x)\n",
