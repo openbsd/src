@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.120 2014/05/19 20:05:09 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.121 2014/05/19 20:09:22 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -856,6 +856,7 @@ again:
 			}
 
 			if (ssl_check_hostname(cert, host) != 0) {
+				X509_free(cert);
 				fprintf(ttyout, "%s: host `%s' not present in"
 				    " server certificate\n",
 				    getprogname(), host);
