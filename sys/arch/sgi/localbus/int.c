@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.9 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: int.c,v 1.10 2014/05/19 21:18:42 miod Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ int2_attach(struct device *parent, struct device *self, void *aux)
 	if (int2_base == 0)
 		int2_base = int2_get_base();
 
-	printf(" addr 0x%x\n", XKPHYS_TO_PHYS(int2_base));
+	printf(" addr 0x%lx\n", XKPHYS_TO_PHYS(int2_base));
 
 	/* Clean out interrupt masks */
 	int2_write(INT2_LOCAL0_MASK, 0);

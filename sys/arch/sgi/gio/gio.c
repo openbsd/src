@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.17 2014/03/27 21:24:22 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.18 2014/05/19 21:18:42 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ gio_print(void *aux, const char *pnp)
 
 	if (ga->ga_slot != -1)
 		printf(" slot %d", ga->ga_slot);
-	printf(" addr 0x%lx", ga->ga_addr);
+	printf(" addr 0x%llx", ga->ga_addr);
 
 	return UNCONF;
 }
@@ -523,7 +523,7 @@ gio_print_fb(void *aux, const char *pnp)
 		printf("%s at %s", fbname, pnp);
 	}
 
-	printf(" addr 0x%lx", ga->ga_addr);
+	printf(" addr 0x%llx", ga->ga_addr);
 
 	return UNCONF;
 }

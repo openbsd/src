@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.11 2013/10/21 12:14:51 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.12 2014/05/19 21:18:42 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 					zs_chan_offset[channel],
 					sizeof(struct zschan),
 					&ch->cs_regs) != 0) {
-			printf(": cannot map regs\n", self->dv_xname);
+			printf(": cannot map regs\n");
 			return;
 		}
 		ch->cs_bustag = zsc->zsc_bustag;

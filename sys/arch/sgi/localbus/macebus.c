@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.61 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.62 2014/05/19 21:18:42 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -223,7 +223,7 @@ macebusprint(void *aux, const char *macebus)
 		printf("%s at %s", maa->maa_name, macebus);
 
 	if (maa->maa_baseaddr != 0)
-		printf(" base 0x%08x", maa->maa_baseaddr);
+		printf(" base 0x%08lx", maa->maa_baseaddr);
 	if (maa->maa_intr >= 0)
 		printf(" irq %d", maa->maa_intr);
 
@@ -594,7 +594,8 @@ do { \
 	    (1 << (bit))) != 0) { \
 		if ((mace_isr & mace_imr) != 0) \
 			printf("spurious crime interrupt %d" \
-			    " mace isr %p imr %p\n", bit, mace_isr, mace_imr); \
+			    " mace isr %p imr %p\n", \
+			    bit, (void *)mace_isr, (void *)mace_imr); \
 	} else \
 		printf("spurious crime interrupt %d\n", bit); \
 } while (0)

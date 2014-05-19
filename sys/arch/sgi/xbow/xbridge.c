@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.88 2014/04/03 08:07:16 mpi Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.89 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1058,7 +1058,7 @@ xbridge_intr_string(void *cookie, pci_intr_handle_t ih)
 
 	if (xb->xb_intrstr[intrbit][0] == '\0')
 		snprintf(xb->xb_intrstr[intrbit],
-		    sizeof xb->xb_intrstr[intrbit], "irq %d", ih);
+		    sizeof xb->xb_intrstr[intrbit], "irq %ld", ih);
 	return xb->xb_intrstr[intrbit];
 }
 
@@ -1957,7 +1957,7 @@ xbridge_err_handle(struct xbpci_softc *xb, uint64_t isr)
 		    xbridge_read_reg(xb, BRIDGE_WIDGET_RESP_UPPER) << 32;
 
 	/* XXX give more detailed information */
-	printf("%s: error interrupt, isr %p wid %p pci %p resp %p\n",
+	printf("%s: error interrupt, isr %llx wid %llx pci %llx resp %llx\n",
 	    DEVNAME(xb), isr, wid_err, pci_err, resp_err);
 
 	xbridge_err_clear(xb, isr);

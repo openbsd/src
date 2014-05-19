@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.9 2013/08/17 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.10 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1290,7 +1290,7 @@ dropit:
 		if (rxd->rxd_err & (IEC_RXERR_BADPACKET | IEC_RXERR_LONGEVENT |
 		     IEC_RXERR_INVPREAMB | IEC_RXERR_CODE | IEC_RXERR_FRAME |
 		     IEC_RXERR_CRC)) {
-			printf("%s: iec_rxintr: stat = 0x%08x err = %08x\n",
+			printf("%s: iec_rxintr: stat = 0x%08llx err = %08x\n",
 			    sc->sc_dev.dv_xname, rxstat, rxd->rxd_err);
 			goto dropit;
 		}

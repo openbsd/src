@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.38 2012/05/30 16:43:31 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.39 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -141,7 +141,7 @@ ioc_print(void *aux, const char *iocname)
 
 	/* no base for onewire, and don't display it for rtc */
 	if ((int)iaa->iaa_base > 0 && (int)iaa->iaa_base < IOC3_BYTEBUS_0)
-		printf(" base 0x%x", iaa->iaa_base);
+		printf(" base 0x%lx", iaa->iaa_base);
 
 	return (UNCONF);
 }

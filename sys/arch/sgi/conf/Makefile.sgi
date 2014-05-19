@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.62 2013/10/15 19:23:29 guenther Exp $
+#	$OpenBSD: Makefile.sgi,v 1.63 2014/05/19 21:18:42 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,7 +31,7 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-main -Wno-uninitialized -Wno-format \
+		-Wno-main -Wno-uninitialized \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float -G 0

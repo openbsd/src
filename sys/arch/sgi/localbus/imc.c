@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.15 2014/03/27 21:24:22 miod Exp $	*/
+/*	$OpenBSD: imc.c,v 1.16 2014/05/19 21:18:42 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -749,7 +749,8 @@ imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 				copyin((void *)pc, &insn, sizeof insn);
 
 			printf(" cpu_stat %08x addr %08x pc %p insn %08x",
-			    cpustat, imc_read(IMC_CPU_ERRADDR), pc, insn);
+			    cpustat, imc_read(IMC_CPU_ERRADDR), (void *)pc,
+			    insn);
 		}
 		if (giostat != 0)
 			printf(" gio_stat %08x addr %08x",

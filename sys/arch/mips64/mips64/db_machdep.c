@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.39 2014/05/10 22:25:16 jasper Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.40 2014/05/19 21:18:42 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -256,7 +256,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	int i;
 
 	for (i = 0; i < ncpus; i++) {
-		db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
+		db_printf("%c%4ld: ", (i == cpu_number()) ? '*' : ' ',
 		    get_cpu_info(i)->ci_cpuid);
 		switch(get_cpu_info(i)->ci_ddb) {
 		case CI_DDB_RUNNING:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.16 2013/06/21 09:34:06 ratchov Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.17 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1056,11 +1056,11 @@ mavb_dma_output(struct mavb_softc *sc)
 	src = sc->play.sw_cur;
 
 	if (write_ptr % MAVB_CHAN_CHUNK_SIZE) {
-		printf("%s: write_ptr=%d\n", sc->sc_dev.dv_xname, write_ptr);
+		printf("%s: write_ptr=%lld\n", sc->sc_dev.dv_xname, write_ptr);
 		return;
 	}
 	if ((src - sc->play.sw_start) % MAVB_CHAN_CHUNK_SIZE) {
-		printf("%s: src=%d\n", sc->sc_dev.dv_xname,
+		printf("%s: src=%ld\n", sc->sc_dev.dv_xname,
 		    src - sc->play.sw_start);
 		return;
 	}
@@ -1100,11 +1100,11 @@ mavb_dma_input(struct mavb_softc *sc)
 	dst = sc->rec.sw_cur;
 
 	if (read_ptr % MAVB_CHAN_CHUNK_SIZE) {
-		printf("%s: read_ptr=%d\n", sc->sc_dev.dv_xname, read_ptr);
+		printf("%s: read_ptr=%lld\n", sc->sc_dev.dv_xname, read_ptr);
 		return;
 	}
 	if ((dst - sc->rec.sw_start) % MAVB_CHAN_CHUNK_SIZE) {
-		printf("%s: dst=%d\n", sc->sc_dev.dv_xname,
+		printf("%s: dst=%ld\n", sc->sc_dev.dv_xname,
 		    dst - sc->rec.sw_start);
 		return;
 	}

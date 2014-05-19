@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.5 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -107,7 +107,7 @@ tcc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 	error = tcc_read(TCC_ERROR);
 	addr = tcc_read(TCC_BERR_ADDR);
 
-	printf("tcc bus error: intr %lx error %lx (%d) addr %08lx\n",
+	printf("tcc bus error: intr %llx error %llx (%llu) addr %08llx\n",
 	    intr, error, (error & TCC_ERROR_TYPE_MASK) >> TCC_ERROR_TYPE_SHIFT,
 	    addr);
 
@@ -217,7 +217,7 @@ tcc_virtual(struct cpu_info *ci, vaddr_t va, vsize_t sz, uint64_t op)
 		/* get the proper physical address */
 		if (pmap_extract(pmap_kernel(), va, &pa) == 0) {
 #ifdef DIAGNOSTIC
-			panic("%s: invalid va %p", __func__, va);
+			panic("%s: invalid va %p", __func__, (void *)va);
 #else
 			/* should not happen */
 #endif

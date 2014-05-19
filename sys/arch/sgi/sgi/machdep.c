@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.137 2014/04/03 08:07:16 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.138 2014/05/19 21:18:42 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -982,7 +982,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 	printf("dump not yet implemented\n");
 #if 0 /* XXX HAVE TO FIX XXX */
 	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, dumplo,)) {

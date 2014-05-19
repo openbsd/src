@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.8 2011/10/10 19:49:16 miod Exp $	*/
+/*	$OpenBSD: iof.c,v 1.9 2014/05/19 21:18:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -98,7 +98,7 @@ iof_print(void *aux, const char *iofname)
 	if (iofname != NULL)
 		printf("%s at %s", iaa->iaa_name, iofname);
 
-	printf(" base 0x%x", iaa->iaa_base);
+	printf(" base 0x%lx", iaa->iaa_base);
 
 	return UNCONF;
 }

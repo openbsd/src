@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.33 2014/04/03 08:07:16 mpi Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.34 2014/05/19 21:18:42 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -601,14 +601,14 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * Get the physical address for this segment.
 		 */
 		if (pmap_extract(pmap, vaddr, &curaddr) == FALSE)
-			panic("_dmapmap_load_buffer: pmap_extract(%x, %x) failed!",
-			    pmap, vaddr);
+			panic("_dmapmap_load_buffer: pmap_extract(%p, %p) failed!",
+			    pmap, (void *)vaddr);
 
 #ifdef DIAGNOSTIC
 		if (curaddr > dma_constraint.ucr_high ||
 		    curaddr < dma_constraint.ucr_low)
-			panic("Non DMA-reachable buffer at curaddr %p (raw)",
-			    curaddr);
+			panic("Non DMA-reachable buffer at addr %p (raw)",
+			    (void *)curaddr);
 #endif
 
 		/*

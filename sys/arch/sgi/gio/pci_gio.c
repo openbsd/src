@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_gio.c,v 1.1 2012/05/18 20:31:40 miod Exp $	*/
+/*	$OpenBSD: pci_gio.c,v 1.2 2014/05/19 21:18:42 miod Exp $	*/
 /*	$NetBSD: pci_gio.c,v 1.9 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ giopci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 void
 giopci_intr_disestablish(void *v, void *ih)
 {
-	panic("%s");
+	panic("%s", __func__);
 }
 
 int
@@ -462,7 +462,7 @@ int
 giopci_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
     bus_addr_t *ioend, bus_addr_t *memstart, bus_addr_t *memend)
 {
-	panic("%s");
+	panic("%s", __func__);
 }
 
 #if NCARDBUS > 0
