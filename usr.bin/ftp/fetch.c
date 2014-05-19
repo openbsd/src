@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.119 2014/05/19 20:03:16 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.120 2014/05/19 20:05:09 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -334,8 +334,8 @@ ssl_check_hostname(X509 *cert, char *host)
 SSL_CTX *
 ssl_get_ssl_ctx(void)
 {
-	static SSL_CTX	*ssl_ctx;
-	static int	 libssl_loaded;
+	static SSL_CTX	*ssl_ctx = NULL;
+	static int	 libssl_loaded = 0;
 
  	if (ssl_ctx != NULL)
 		return ssl_ctx;
