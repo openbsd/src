@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.21 2014/03/24 07:24:32 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.22 2014/05/19 13:43:30 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -153,7 +153,7 @@ fuse_mount(const char *dir, unused struct fuse_args *args)
 	if (fc == NULL)
 		return (NULL);
 
-	fc->dir = strdup(dir);
+	fc->dir = realpath(dir, NULL);
 	if (fc->dir == NULL)
 		goto bad;
 
@@ -163,7 +163,7 @@ fuse_mount(const char *dir, unused struct fuse_args *args)
 	}
 
 	fargs.fd = fc->fd;
-	if (mount(MOUNT_FUSEFS, dir, 0, &fargs)) {
+	if (mount(MOUNT_FUSEFS, fc->dir, 0, &fargs)) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
