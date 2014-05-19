@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.17 2014/01/19 11:48:54 tobias Exp $	*/
+/*	$OpenBSD: history.c,v 1.18 2014/05/19 08:58:34 nicm Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ private int history_getunique(TYPE(History) *, TYPE(HistEvent) *);
 private int history_set_fun(TYPE(History) *, TYPE(History) *);
 private int history_load(TYPE(History) *, const char *);
 private int history_save(TYPE(History) *, const char *);
+private int history_save_fp(TYPE(History) *, FILE *);
 private int history_prev_event(TYPE(History) *, TYPE(HistEvent) *, int);
 private int history_next_event(TYPE(History) *, TYPE(HistEvent) *, int);
 private int history_next_string(TYPE(History) *, TYPE(HistEvent) *, const Char *);
@@ -784,13 +785,12 @@ done:
 }
 
 
-/* history_save():
+/* history_save_fp():
  *	TYPE(History) save function
  */
 private int
-history_save(TYPE(History) *h, const char *fname)
+history_save_fp(TYPE(History) *h, FILE *fp)
 {
-	FILE *fp;
 	TYPE(HistEvent) ev;
 	int i = -1, retval;
 	size_t len, max_size;
@@ -798,9 +798,6 @@ history_save(TYPE(History) *h, const char *fname)
 #ifdef WIDECHAR
 	static ct_buffer_t conv;
 #endif
-
-	if ((fp = fopen(fname, "w")) == NULL)
-		return (-1);
 
 	if (fchmod(fileno(fp), S_IRUSR|S_IWUSR) == -1)
 		goto done;
@@ -830,8 +827,26 @@ history_save(TYPE(History) *h, const char *fname)
 oomem:
 	h_free((ptr_t)ptr);
 done:
-	(void) fclose(fp);
 	return (i);
+}
+
+
+/* history_save():
+ *    History save function
+ */
+private int
+history_save(TYPE(History) *h, const char *fname)
+{
+	FILE *fp;
+	int i;
+
+	if ((fp = fopen(fname, "w")) == NULL)
+		return -1;
+
+	i = history_save_fp(h, fp);
+
+	(void) fclose(fp);
+	return i;
 }
 
 
@@ -1013,6 +1028,12 @@ FUNW(history)(TYPE(History) *h, TYPE(HistEvent) *ev, int fun, ...)
 		retval = history_save(h, va_arg(va, const char *));
 		if (retval == -1)
 			he_seterrev(ev, _HE_HIST_WRITE);
+		break;
+
+	case H_SAVE_FP:
+		retval = history_save_fp(h, va_arg(va, FILE *));
+		if (retval == -1)
+		    he_seterrev(ev, _HE_HIST_WRITE);
 		break;
 
 	case H_PREV_EVENT:

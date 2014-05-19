@@ -1,4 +1,4 @@
-/*	$OpenBSD: histedit.h,v 1.11 2011/07/07 05:40:42 okan Exp $	*/
+/*	$OpenBSD: histedit.h,v 1.12 2014/05/19 08:58:34 nicm Exp $	*/
 /*	$NetBSD: histedit.h,v 1.46 2010/04/15 00:50:03 christos Exp $	*/
 
 /*-
@@ -225,6 +225,7 @@ int		history(History *, HistEvent *, int, ...);
 #define	H_NEXT_EVDATA	23	/* , const int, histdata_t *);	*/
 #define	H_DELDATA	24	/* , int, histdata_t *);*/
 #define	H_REPLACE	25	/* , const char *, histdata_t);	*/
+#define	H_SAVE_FP	26	/* , FILE *);		*/
 
 
 

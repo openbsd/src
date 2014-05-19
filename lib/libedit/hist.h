@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: hist.h,v 1.9 2014/05/19 08:58:34 nicm Exp $	*/
 /*	$NetBSD: hist.h,v 1.12 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ typedef struct el_history_t {
 #define	HIST_SET(el, num)	HIST_FUN(el, H_SET, num)
 #define	HIST_LOAD(el, fname)	HIST_FUN(el, H_LOAD fname)
 #define	HIST_SAVE(el, fname)	HIST_FUN(el, H_SAVE fname)
+#define	HIST_SAVE_FP(el, fp)	HIST_FUN(el, H_SAVE_FP fp)
 
 protected int		hist_init(EditLine *);
 protected void		hist_end(EditLine *);
