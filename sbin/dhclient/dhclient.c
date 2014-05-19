@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.308 2014/05/19 10:37:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.309 2014/05/19 10:42:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -802,8 +802,8 @@ bind_lease(void)
 	struct in_addr gateway, mask;
 	struct option_data *options, *opt;
 	struct client_lease *lease, *pl;
-	int seen; 
-	
+	int seen;
+
 	/*
 	 * If it's been here before (e.g. static lease), clear out any
 	 * old resolv_conf.
