@@ -62,6 +62,7 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
+#include "asn1_locl.h"
 
 #include "charmap.h"
 
@@ -215,11 +216,15 @@ do_buf(unsigned char *buf, int buflen, int type, unsigned char flags,
 			c |= ((unsigned long)*p++) << 16;
 			c |= ((unsigned long)*p++) << 8;
 			c |= *p++;
+			if (c > UNICODE_MAX || UNICODE_IS_SURROGATE(c))
+				return -1;
 			break;
 
 		case 2:
 			c = ((unsigned long)*p++) << 8;
 			c |= *p++;
+			if (UNICODE_IS_SURROGATE(c))
+				return -1;
 			break;
 
 		case 1:
@@ -240,7 +245,10 @@ do_buf(unsigned char *buf, int buflen, int type, unsigned char flags,
 		if (type & BUF_TYPE_CONVUTF8) {
 			unsigned char utfbuf[6];
 			int utflen;
+
 			utflen = UTF8_putc(utfbuf, sizeof utfbuf, c);
+			if (utflen < 0)
+				return -1;
 			for (i = 0; i < utflen; i++) {
 				/* We don't need to worry about setting orflags correctly
 				 * because if utflen==1 its value will be correct anyway

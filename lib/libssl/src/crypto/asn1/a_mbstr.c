@@ -60,6 +60,7 @@
 #include <ctype.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
+#include "asn1_locl.h"
 
 static int traverse_string(const unsigned char *p, int len, int inform,
     int (*rfunc)(unsigned long value, void *in), void *arg);
@@ -232,7 +233,11 @@ ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
 	case MBSTRING_UTF8:
 		outlen = 0;
-		traverse_string(in, len, inform, out_utf8, &outlen);
+		if (traverse_string(in, len, inform, out_utf8, &outlen) < 0) {
+			ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY,
+			    ASN1_R_ILLEGAL_CHARACTERS);
+			return -1;
+		}
 		cpyfunc = cpy_utf8;
 		break;
 	}
@@ -267,12 +272,17 @@ traverse_string(const unsigned char *p, int len, int inform,
 		} else if (inform == MBSTRING_BMP) {
 			value = *p++ << 8;
 			value |= *p++;
+			/* BMP is explictly defined to not support surrogates */
+			if (UNICODE_IS_SURROGATE(value))
+				return -1;
 			len -= 2;
 		} else if (inform == MBSTRING_UNIV) {
 			value = ((unsigned long)*p++) << 24;
 			value |= ((unsigned long)*p++) << 16;
 			value |= *p++ << 8;
 			value |= *p++;
+			if (value > UNICODE_MAX || UNICODE_IS_SURROGATE(value))
+				return -1;
 			len -= 4;
 		} else {
 			ret = UTF8_getc(p, len, &value);
@@ -310,9 +320,13 @@ static int
 out_utf8(unsigned long value, void *arg)
 {
 	int *outlen;
+	int ret;
 
 	outlen = arg;
-	*outlen += UTF8_putc(NULL, -1, value);
+	ret = UTF8_putc(NULL, -1, value);
+	if (ret < 0)
+		return ret;
+	*outlen += ret;
 	return 1;
 }
 

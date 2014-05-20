@@ -143,3 +143,14 @@ struct x509_crl_method_st
 				ASN1_INTEGER *ser, X509_NAME *issuer);
 	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk);
 	};
+
+/*
+ * Unicode codepoint constants
+ */
+#define	UNICODE_MAX		0x10FFFF
+#define	UNICODE_SURROGATE_MIN	0x00D800
+#define	UNICODE_SURROGATE_MAX	0x00DFFF
+
+#define	UNICODE_IS_SURROGATE(x) \
+	((x) >= UNICODE_SURROGATE_MIN && (x) <= UNICODE_SURROGATE_MAX)
+
