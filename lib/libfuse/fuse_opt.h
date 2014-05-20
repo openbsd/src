@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.h,v 1.3 2014/01/21 22:26:11 jca Exp $ */
+/* $OpenBSD: fuse_opt.h,v 1.4 2014/05/20 13:22:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -45,6 +45,8 @@ int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *,
     fuse_opt_proc_t);
 
 #define FUSE_ARGS_INIT(ac, av)	{ ac, av, 0 }
+
+#define FUSE_OPT_IS_OPT_KEY(t)	(t->off == (unsigned long)-1)
 
 #define FUSE_OPT_KEY(t, k)	{ t, -1, k }
 #define FUSE_OPT_END		{ NULL, 0, 0 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.9 2014/04/15 08:48:11 syl Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.10 2014/05/20 13:22:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -221,15 +221,32 @@ static int
 parse_opt(const struct fuse_opt *o, const char *val, void *data,
     fuse_opt_proc_t f, struct fuse_args *arg)
 {
-	int ret;
-	int found = 0;
+	int found, ret, keyval;
+	size_t idx;
+
+	ret = 0;
+	found = 0;
+	keyval = 0;
+
+	/* check if it is a key=value entry */
+	idx = strcspn(val, "=");
+	if (idx != strlen(val)) {
+		idx++;
+		keyval = 1;
+	}
 
 	for(; o->templ; o++) {
-		if (strcmp(val, o->templ) == 0) {
+		if ((keyval && strncmp(val, o->templ, idx) == 0) ||
+		    (!keyval && strcmp(val, o->templ) == 0)) {
 			if (o->val == FUSE_OPT_KEY_DISCARD)
 				return (1);
 
-			ret = f(data, val, o->val, arg);
+			if (FUSE_OPT_IS_OPT_KEY(o)) {
+				if (keyval)
+					ret = f(data, &val[idx], o->val, arg);
+				else
+					ret = f(data, val, o->val, arg);
+			}
 
 			if (ret == -1)
 				return (ret);
@@ -245,7 +262,7 @@ parse_opt(const struct fuse_opt *o, const char *val, void *data,
 		return (-1);
 	}
 
-	return (0);
+	return (ret);
 }
 
 /*
@@ -285,9 +302,12 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 			if (arg[2])
 				arg += 2;	/* -ofoo,bar */
 			else
-				i++;		/* -o foo,bar*/
-			if (ret != 0)
-				return (ret);
+				arg = args->argv[++i];
+
+			ret = parse_opt(opt, arg, data, f, &outargs);
+
+			if (ret == -1)
+				goto err;
 		} else {
 			ret = parse_opt(opt, arg, data, f, &outargs);
 

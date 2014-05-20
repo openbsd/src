@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.22 2014/05/19 13:43:30 tedu Exp $ */
+/* $OpenBSD: fuse.c,v 1.23 2014/05/20 13:22:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -33,24 +33,30 @@
 
 static struct fuse_session *sigse;
 static struct fuse_context *ictx = NULL;
+static int max_read = FUSEBUFMAXSIZE;
 
 enum {
 	KEY_HELP,
 	KEY_HELP_WITHOUT_HEADER,
 	KEY_VERSION,
-	KEY_DEBUG
+	KEY_MAXREAD,
+	KEY_STUB
 };
 
 static struct fuse_opt fuse_core_opts[] = {
-	FUSE_OPT_KEY("-h",		KEY_HELP),
-	FUSE_OPT_KEY("--help",		KEY_HELP),
-	FUSE_OPT_KEY("-ho",		KEY_HELP_WITHOUT_HEADER),
-	FUSE_OPT_KEY("-V",		KEY_VERSION),
-	FUSE_OPT_KEY("--version",	KEY_VERSION),
-	FUSE_OPT_KEY("debug",		KEY_DEBUG),
-	FUSE_OPT_KEY("-d",		KEY_DEBUG),
-	FUSE_OPT_KEY("-f",		KEY_DEBUG),
-	FUSE_OPT_KEY("-s",		KEY_DEBUG),
+	FUSE_OPT_KEY("-h",			KEY_HELP),
+	FUSE_OPT_KEY("--help",			KEY_HELP),
+	FUSE_OPT_KEY("-ho",			KEY_HELP_WITHOUT_HEADER),
+	FUSE_OPT_KEY("-V",			KEY_VERSION),
+	FUSE_OPT_KEY("--version",		KEY_VERSION),
+	FUSE_OPT_KEY("max_read=",		KEY_MAXREAD),
+	FUSE_OPT_KEY("debug",			KEY_STUB),
+	FUSE_OPT_KEY("-d",			KEY_STUB),
+	FUSE_OPT_KEY("-f",			KEY_STUB),
+	FUSE_OPT_KEY("-s",			KEY_STUB),
+	FUSE_OPT_KEY("use_ino",			KEY_STUB),
+	FUSE_OPT_KEY("default_permissions",	KEY_STUB),
+	FUSE_OPT_KEY("fsname=",			KEY_STUB),
 	FUSE_OPT_END
 };
 
@@ -342,10 +348,11 @@ ifuse_process_opt(void *data, const char *arg, int key,
 {
 	struct fuse_core_opt *opt = data;
 	struct stat st;
+	const char *err;
 	int res;
 
 	switch (key) {
-		case KEY_DEBUG:
+		case KEY_STUB:
 			return (0);
 		case KEY_HELP:
 		case KEY_HELP_WITHOUT_HEADER:
@@ -354,6 +361,14 @@ ifuse_process_opt(void *data, const char *arg, int key,
 		case KEY_VERSION:
 			dump_version();
 			return (1);
+		case KEY_MAXREAD:
+			res = strtonum(arg, 0, FUSEBUFMAXSIZE, &err);
+			if (err) {
+				fprintf(stderr, "fuse: max_read %s\n", err);
+				return (-1);
+			}
+			max_read = res;
+			break;
 		case FUSE_OPT_KEY_NONOPT:
 			if (opt->mp == NULL) {
 				opt->mp = realpath(arg, opt->mp);
