@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.179 2014/05/08 13:08:48 blambert Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.180 2014/05/20 17:33:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1111,10 +1111,10 @@ SSL_CTX	*ssl_ctx_create(struct relayd *);
 void	 ssl_error(const char *, const char *);
 char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
 X509	*ssl_update_certificate(X509 *, EVP_PKEY *, EVP_PKEY *, X509 *);
-int	 ssl_ctx_load_pkey(SSL_CTX *, void *, char *, off_t,
+int	 ssl_load_pkey(const void *, size_t, char *, off_t,
 	    X509 **, EVP_PKEY **);
-int	 ssl_ctx_fake_private_key(SSL_CTX *, void *, char *, off_t,
-	    X509 **, EVP_PKEY **);
+int	 ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
+	    char *, off_t, X509 **, EVP_PKEY **);
 
 /* ssl_privsep.c */
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);

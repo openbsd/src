@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.169 2014/04/22 08:04:23 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.170 2014/05/20 17:33:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1914,7 +1914,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 
 	log_debug("%s: loading private key", __func__);
 	if (!ssl_ctx_fake_private_key(ctx,
-	    &rlay->rl_conf.ssl_keyid,
+	    &rlay->rl_conf.ssl_keyid, sizeof(rlay->rl_conf.ssl_keyid),
 	    rlay->rl_ssl_cert, rlay->rl_conf.ssl_cert_len,
 	    &rlay->rl_ssl_x509, &rlay->rl_ssl_pkey))
 		goto err;
@@ -1924,9 +1924,9 @@ relay_ssl_ctx_create(struct relay *rlay)
 
 	if (rlay->rl_conf.ssl_cacert_len) {
 		log_debug("%s: loading CA private key", __func__);
-		if (!ssl_ctx_load_pkey(ctx,
-		    &rlay->rl_conf.ssl_cakeyid, rlay->rl_ssl_cacert,
-		    rlay->rl_conf.ssl_cacert_len,
+		if (!ssl_load_pkey(&rlay->rl_conf.ssl_cakeyid,
+		    sizeof(rlay->rl_conf.ssl_cakeyid),
+		    rlay->rl_ssl_cacert, rlay->rl_conf.ssl_cacert_len,
 		    &rlay->rl_ssl_cacertx509, &rlay->rl_ssl_capkey))
 			goto err;
 	}

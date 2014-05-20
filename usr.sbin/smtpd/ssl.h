@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.8 2014/05/20 14:21:46 reyk Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.9 2014/05/20 17:33:36 reyk Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -61,11 +61,10 @@ int		ssl_load_certificate(struct pki *, const char *);
 int		ssl_load_keyfile(struct pki *, const char *, const char *);
 int		ssl_load_cafile(struct pki *, const char *);
 int		ssl_load_dhparams(struct pki *, const char *);
-
-int		ssl_ctx_load_pkey(SSL_CTX *, char *, off_t,
+int		ssl_load_pkey(const void *, size_t, char *, off_t,
 		    X509 **, EVP_PKEY **);
 int		ssl_ctx_fake_private_key(SSL_CTX *, const void *, size_t,
-		    char *, off_t);
+		    char *, off_t, X509 **, EVP_PKEY **);
 
 /* ssl_privsep.c */
 int		ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
