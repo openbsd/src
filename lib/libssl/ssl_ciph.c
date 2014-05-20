@@ -792,9 +792,6 @@ CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 			co_list[co_list_num].prev = NULL;
 			co_list[co_list_num].active = 0;
 			co_list_num++;
-#ifdef KSSL_DEBUG
-			printf("\t%d: %s %lx %lx %lx\n", i, c->name, c->id, c->algorithm_mkey, c->algorithm_auth);
-#endif	/* KSSL_DEBUG */
 			/*
 			if (!sk_push(ca_list,(char *)c)) goto err;
 			*/
@@ -1321,9 +1318,6 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * it is used for allocation.
 	 */
 	num_of_ciphers = ssl_method->num_ciphers();
-#ifdef KSSL_DEBUG
-	printf("ssl_create_cipher_list() for %d ciphers\n", num_of_ciphers);
-#endif    /* KSSL_DEBUG */
 	co_list = reallocarray(NULL, num_of_ciphers, sizeof(CIPHER_ORDER));
 	if (co_list == NULL) {
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
@@ -1468,11 +1462,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	const char *ver, *exp_str;
 	const char *kx, *au, *enc, *mac;
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
-#ifdef KSSL_DEBUG
-	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx/%lx/%lx/%lx/%lx\n";
-#else
 	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
-#endif /* KSSL_DEBUG */
 
 	alg_mkey = cipher->algorithm_mkey;
 	alg_auth = cipher->algorithm_auth;
@@ -1636,11 +1626,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	} else if (len < 128)
 	return("Buffer too small");
 
-#ifdef KSSL_DEBUG
-	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl);
-#else
 	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str);
-#endif /* KSSL_DEBUG */
 	if (l >= len || l == -1)
 		return("Buffer too small");
 	else

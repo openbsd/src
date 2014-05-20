@@ -3081,9 +3081,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		emask_k = cert->export_mask_k;
 		emask_a = cert->export_mask_a;
 
-#ifdef KSSL_DEBUG
-/*		printf("ssl3_choose_cipher %d alg= %lx\n", i,c->algorithms);*/
-#endif    /* KSSL_DEBUG */
 
 		alg_k = c->algorithm_mkey;
 		alg_a = c->algorithm_auth;

@@ -1159,13 +1159,6 @@ ssl3_get_server_certificate(SSL *s)
 	    (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
 	    ? 0 : 1;
 
-#ifdef KSSL_DEBUG
-	printf("pkey, x = %p, %p\n", pkey, x);
-	printf("ssl_cert_type(x, pkey) = %d\n", ssl_cert_type(x, pkey));
-	printf("cipher, alg, nc = %s, %lx, %lx, %d\n",
-	    s->s3->tmp.new_cipher->name, s->s3->tmp.new_cipher->algorithm_mkey,
-	    s->s3->tmp.new_cipher->algorithm_auth, need_cert);
-#endif    /* KSSL_DEBUG */
 
 	if (need_cert && ((pkey == NULL) ||
 	    EVP_PKEY_missing_parameters(pkey))) {
