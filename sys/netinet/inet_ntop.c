@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.1 2013/11/11 09:15:34 mpi Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.2 2014/05/20 09:16:43 mpi Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -74,11 +74,11 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 static const char *
 inet_ntop4(const u_char *src, char *dst, size_t size)
 {
-	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
 	int l;
 
-	l = snprintf(tmp, size, fmt, src[0], src[1], src[2], src[3]);
+	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
+	    src[0], src[1], src[2], src[3]);
 	if (l <= 0 || l >= size) {
 		return (NULL);
 	}
