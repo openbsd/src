@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.32 2014/05/12 21:10:35 krw Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.33 2014/05/20 21:11:16 krw Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -735,7 +735,6 @@ freeinodebuf(void)
 void
 bread(daddr_t bno, char *buf, long cnt)
 {
-	if (lseek(fi, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(fi, buf, cnt) != cnt)
-		err(1, "bread failed on block %lld", (long long)bno);
+	if (pread(fi, buf, cnt, bno * DEV_BSIZE) != cnt)
+		err(1, "read failed on block %lld", (long long)bno);
 }

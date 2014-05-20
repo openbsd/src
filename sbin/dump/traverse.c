@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.28 2013/11/12 04:59:02 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.29 2014/05/20 21:11:16 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -803,9 +803,8 @@ bread(daddr_t blkno, char *buf, int size)
 	int cnt, i;
 
 loop:
-	if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
-		msg("bread: lseek fails\n");
-	if ((cnt = read(diskfd, buf, size)) == size)
+	if ((cnt = pread(diskfd, buf, size, (off_t)blkno << dev_bshift)) ==
+		size)
 		return;
 	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
@@ -843,9 +842,8 @@ loop:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
-			msg("bread: lseek2 fails!\n");
-		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
+		if ((cnt = pread(diskfd, buf, dev_bsize,
+			    (off_t)blkno << dev_bshift)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
 			msg("read error from %s: %s: [sector %lld]: count=%ld\n",

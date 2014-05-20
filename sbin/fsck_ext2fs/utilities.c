@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.19 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.20 2014/05/20 21:11:16 krw Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -286,19 +286,14 @@ bread(int fd, char *buf, daddr32_t blk, long size)
 
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, SEEK_SET) < 0)
-		rwerror("SEEK", blk);
-	else if (read(fd, buf, (int)size) == size)
+	if (pread(fd, buf, size, offset) == size)
 		return (0);
 	rwerror("READ", blk);
-	if (lseek(fd, offset, SEEK_SET) < 0)
-		rwerror("SEEK", blk);
 	errs = 0;
 	memset(buf, 0, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
-		if (read(fd, cp, (int)secsize) != secsize) {
-			(void)lseek(fd, offset + i + secsize, SEEK_SET);
+		if (pread(fd, cp, secsize, offset + i) != secsize) {
 			if (secsize != dev_bsize && dev_bsize != 1)
 				printf(" %ld (%ld),",
 				    (blk * dev_bsize + i) / secsize,
@@ -323,19 +318,14 @@ bwrite(int fd, char *buf, daddr32_t blk, long size)
 		return;
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, SEEK_SET) < 0)
-		rwerror("SEEK", blk);
-	else if (write(fd, buf, (int)size) == size) {
+	if (pwrite(fd, buf, size, offset) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
-	if (lseek(fd, offset, SEEK_SET) < 0)
-		rwerror("SEEK", blk);
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
-		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
-			(void)lseek(fd, offset + i + dev_bsize, SEEK_SET);
+		if (pwrite(fd, cp, dev_bsize, offset + i) != dev_bsize) {
 			printf(" %ld,", blk + i / dev_bsize);
 		}
 	printf("\n");

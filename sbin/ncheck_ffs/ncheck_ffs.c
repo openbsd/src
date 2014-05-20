@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.41 2014/05/13 05:50:24 guenther Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.42 2014/05/20 21:11:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -267,9 +267,8 @@ bread(daddr_t blkno, char *buf, int size)
 	int cnt, i;
 
 loop:
-	if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
-		warnx("bread: lseek fails");
-	if ((cnt = read(diskfd, buf, size)) == size)
+	if ((cnt = pread(diskfd, buf, size, (off_t)blkno << dev_bshift)) ==
+	    size)
 		return;
 	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
@@ -299,9 +298,8 @@ loop:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
-			warnx("bread: lseek2 fails!");
-		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
+		if ((cnt = pread(diskfd, buf, (int)dev_bsize,
+			    (off_t)blkno << dev_bshift)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
 			warnx("read error from %s: %s: [sector %lld]: "

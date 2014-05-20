@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.50 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.51 2014/05/20 21:11:16 krw Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -445,8 +445,7 @@ bread(int rfd, off_t off, void *buf, int cnt)
 {
 	int nr;
 
-	(void)lseek(rfd, off, SEEK_SET);
-	if ((nr = read(rfd, buf, cnt)) != cnt) {
+	if ((nr = pread(rfd, buf, cnt, off)) != cnt) {
 		/* Probably a dismounted disk if errno == EIO. */
 		if (errno != EIO)
 			(void)fprintf(stderr, "\ndf: %qd: %s\n",
