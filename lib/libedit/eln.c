@@ -1,4 +1,4 @@
-/*	$OpenBSD: eln.c,v 1.3 2011/11/27 21:46:44 pascal Exp $	*/
+/*	$OpenBSD: eln.c,v 1.4 2014/05/20 11:59:03 nicm Exp $	*/
 /*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
@@ -144,15 +144,15 @@ el_set(EditLine *el, int op, ...)
 	case EL_SETTC:
 	case EL_ECHOTC:
 	case EL_SETTY: {
-		const char *argv[20];
+		const char *argv[21];
 		int i;
 		const wchar_t **wargv;
-		for (i = 1; i < (int)__arraycount(argv); ++i)
+		for (i = 1; i < (int)__arraycount(argv) - 1; ++i)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 			    break;
-		argv[0] = NULL;
+		argv[0] = argv[i] = NULL;
 		wargv = (const wchar_t **)
-		    ct_decode_argv(i, argv, &el->el_lgcyconv);
+		    ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
 		if (!wargv) {
 		    ret = -1;
 		    goto out;
