@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pxeboot.8,v 1.13 2014/03/13 10:12:11 florian Exp $
+.\"	$OpenBSD: pxeboot.8,v 1.14 2014/05/20 22:49:43 halex Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 13 2014 $
+.Dd $Mdocdate: May 20 2014 $
 .Dt PXEBOOT 8 amd64
 .Os
 .Sh NAME
@@ -93,10 +93,6 @@ the
 and
 .Xr tftpd 8
 services should be enabled and configured.
-.Xr ftpd 8
-or
-.Xr nginx 8
-should be enabled, depending on how the install sets will be made available.
 .Pp
 .Nm
 and the kernel should be copied into the TFTP server's root directory
@@ -171,7 +167,6 @@ The same thing:
 .Xr boot_amd64 8 ,
 .Xr dhcpd 8 ,
 .Xr diskless 8 ,
-.Xr nginx 8 ,
 .Xr tftpd 8
 .Sh STANDARDS
 .Rs
