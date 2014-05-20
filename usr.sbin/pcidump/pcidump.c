@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.35 2013/11/12 19:48:53 deraadt Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.36 2014/05/20 01:25:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 			error = probe(bus, dev, func);
 
 		if (error != 0)
-			errx(1, "\"%s\": %s", argv[0], strerror(error));
+			errc(1, error, "\"%s\"", argv[0]);
 	} else {
 		printf("Domain %s:\n", pcidev);
 		scanpcidomain();

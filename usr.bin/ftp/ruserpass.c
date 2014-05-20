@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.28 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.29 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 		return (0);
 	i = snprintf(buf, sizeof(buf), "%s/.netrc", hdir);
 	if (i < 0 || i >= sizeof(buf)) {
-		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
+		warnc(ENAMETOOLONG, "%s/.netrc", hdir);
 		return (0);
 	}
 	cfile = fopen(buf, "r");

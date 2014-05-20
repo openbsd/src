@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.52 2014/02/13 21:17:13 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.53 2014/05/20 01:25:24 guenther Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -309,8 +309,7 @@ main(int argc, char *argv[])
 			kproc = kvm_getprocs(kd, KERN_PROC_PID, pid,
 			    sizeof(struct kinfo_proc), &rc);
 			if (kproc == NULL || rc == 0) {
-				errno = ESRCH;
-				warn("%d", pid);
+				warnc(ESRCH, "%d", pid);
 				pid = -1;
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.18 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.19 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -260,8 +260,7 @@ decode2(void)
 		flags = O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW;
 		if (lstat(outfile, &st) == 0) {
 			if (iflag) {
-				errno = EEXIST;
-				warn("%s: %s", infile, outfile);
+				warnc(EEXIST, "%s: %s", infile, outfile);
 				return (0);
 			}
 			switch (st.st_mode & S_IFMT) {
@@ -273,8 +272,7 @@ decode2(void)
 				warn("%s: unlink %s", infile, outfile);
 				return (1);
 			case S_IFDIR:
-				errno = EISDIR;
-				warn("%s: %s", infile, outfile);
+				warnc(EISDIR, "%s: %s", infile, outfile);
 				return (1);
 			default:
 				if (oflag) {
@@ -282,8 +280,7 @@ decode2(void)
 					flags &= ~(O_EXCL|O_NOFOLLOW);
 					break;
 				}
-				errno = EEXIST;
-				warn("%s: %s", infile, outfile);
+				warnc(EEXIST, "%s: %s", infile, outfile);
 				return (1);
 			}
 		} else if (errno != ENOENT) {

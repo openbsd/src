@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2013/11/26 13:21:16 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -74,7 +74,7 @@ grep_tree(char **argv)
 		case FTS_ERR:
 			file_err = 1;
 			if(!sflag)
-				warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+				warnc(p->fts_errno, "%s", p->fts_path);
 			break;
 		case FTS_DP:
 			break;

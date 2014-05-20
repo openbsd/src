@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.45 2013/11/24 21:32:32 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.46 2014/05/20 01:25:24 guenther Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ mktemps(void)
 	struct stat stb;
 
 	if (snprintf(buf, sizeof(buf), "%s/.seq", SD) >= sizeof(buf))
-		errx(1, "%s/.seq: %s", SD, strerror(ENAMETOOLONG));
+		errc(1, ENAMETOOLONG, "%s/.seq", SD);
 	PRIV_START;
 	if ((fd = safe_open(buf, O_RDWR|O_CREAT|O_NOFOLLOW, 0661)) < 0)
 		err(1, "cannot open %s", buf);

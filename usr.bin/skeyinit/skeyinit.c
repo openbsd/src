@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.54 2014/04/23 18:24:23 ajacoutot Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.55 2014/05/20 01:25:23 guenther Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -220,10 +220,9 @@ main(int argc, char **argv)
 			if (rmkey) {
 				if (snprintf(filename, sizeof(filename),
 				    "%s/%s", _PATH_SKEYDIR, pp->pw_name)
-				    >= sizeof(filename)) {
-					errno = ENAMETOOLONG;
-					err(1, "Cannot remove S/Key entry");
-				}
+				    >= sizeof(filename))
+					errc(1, ENAMETOOLONG,
+					    "Cannot remove S/Key entry");
 				if (unlink(filename) != 0)
 					err(1, "Cannot remove S/Key entry");
 				printf("S/Key entry for %s removed.\n",
@@ -275,10 +274,9 @@ main(int argc, char **argv)
 			(void)printf("[Adding %s with %s]\n", pp->pw_name,
 			    ht ? ht : skey_get_algorithm());
 			if (snprintf(filename, sizeof(filename), "%s/%s",
-			    _PATH_SKEYDIR, pp->pw_name) >= sizeof(filename)) {
-				errno = ENAMETOOLONG;
-				err(1, "Cannot create S/Key entry");
-			}
+			    _PATH_SKEYDIR, pp->pw_name) >= sizeof(filename))
+				errc(1, ENAMETOOLONG,
+				    "Cannot create S/Key entry");
 			if ((l = open(filename,
 			    O_RDWR | O_NONBLOCK | O_CREAT | O_TRUNC |O_NOFOLLOW,
 			    S_IRUSR | S_IWUSR)) == -1 ||
@@ -532,8 +530,7 @@ convert_db(void)
 		/* Now write the new-style record. */
 		if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
 		    logname) >= sizeof(filename)) {
-			errno = ENAMETOOLONG;
-			warn("%s", logname);
+			warnc(ENAMETOOLONG, "%s", logname);
 			continue;
 		}
 		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);

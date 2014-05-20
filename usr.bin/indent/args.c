@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.17 2013/11/26 13:21:17 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.18 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -168,7 +168,7 @@ set_profile(void)
     home = getenv("HOME");
     if (home != NULL && *home != '\0') {
 	if (snprintf(fname, sizeof fname, "%s/%s", home, prof) >= sizeof fname) {
-	    warnx("%s/%s: %s", home, prof, strerror(ENAMETOOLONG));
+	    warnc(ENAMETOOLONG, "%s/%s", home, prof);
 	    return;
 	}
 	if ((f = fopen(option_source = fname, "r")) != NULL) {

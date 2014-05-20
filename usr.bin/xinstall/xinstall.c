@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.56 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.57 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 		if (stat(*argv, &from_sb))
 			err(EX_OSERR, "%s", *argv);
 		if (!S_ISREG(to_sb.st_mode))
-			errx(EX_OSERR, "%s: %s", to_name, strerror(EFTYPE));
+			errc(EX_OSERR, EFTYPE, "%s", to_name);
 		if (to_sb.st_dev == from_sb.st_dev &&
 		    to_sb.st_ino == from_sb.st_ino)
 			errx(EX_USAGE, "%s and %s are the same file", *argv, to_name);
@@ -211,7 +211,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		if (stat(from_name, &from_sb))
 			err(EX_OSERR, "%s", from_name);
 		if (!S_ISREG(from_sb.st_mode))
-			errx(EX_OSERR, "%s: %s", from_name, strerror(EFTYPE));
+			errc(EX_OSERR, EFTYPE, "%s", from_name);
 		/* Build the target path. */
 		if (flags & DIRECTORY) {
 			(void)snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
@@ -228,7 +228,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		/* Only compare against regular files. */
 		if (docompare && !S_ISREG(to_sb.st_mode)) {
 			docompare = 0;
-			warnx("%s: %s", to_name, strerror(EFTYPE));
+			warnc(EFTYPE, "%s", to_name);
 		}
 	} else if (docompare) {
 		/* File does not exist so silently ignore compare flag. */
@@ -298,7 +298,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		if (fstat(temp_fd, &temp_sb)) {
 			serrno = errno;
 			(void)unlink(tempfile);
-			errx(EX_OSERR, "%s: %s", tempfile, strerror(serrno));
+			errc(EX_OSERR, serrno, "%s", tempfile);
 		}
 
 		if (compare(temp_fd, tempfile, (size_t)temp_sb.st_size, to_fd,
@@ -425,7 +425,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
 		    from_fd, (off_t)0)) == MAP_FAILED) {
 			serrno = errno;
 			(void)unlink(to_name);
-			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
+			errc(EX_OSERR, serrno, "%s", from_name);
 		}
 		madvise(p, size, MADV_SEQUENTIAL);
 		siz = (size_t)size;
@@ -467,7 +467,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
 		if (nr != 0) {
 			serrno = errno;
 			(void)unlink(to_name);
-			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
+			errc(EX_OSERR, serrno, "%s", from_name);
 		}
 	}
 }
@@ -542,7 +542,7 @@ strip(char *to_name)
 	case -1:
 		serrno = errno;
 		(void)unlink(to_name);
-		errx(EX_TEMPFAIL, "forks: %s", strerror(serrno));
+		errc(EX_TEMPFAIL, serrno, "forks");
 	case 0:
 		execl(path_strip, "strip", "--", to_name, (char *)NULL);
 		warn("%s", path_strip);
@@ -572,14 +572,13 @@ install_dir(char *path)
 				int mkdir_errno = errno;
 				if (stat(path, &sb)) {
 					/* Not there; use mkdir()s errno */
-					errno = mkdir_errno;
-					err(EX_OSERR, "%s", path);
+					errc(EX_OSERR, mkdir_errno, "%s",
+					    path);
 					/* NOTREACHED */
 				}
 				if (!S_ISDIR(sb.st_mode)) {
 					/* Is there, but isn't a directory */
-					errno = ENOTDIR;
-					err(EX_OSERR, "%s", path);
+					errc(EX_OSERR, ENOTDIR, "%s", path);
 					/* NOTREACHED */
 				}
 			}

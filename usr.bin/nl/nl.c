@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.2 2013/11/15 22:20:04 millert Exp $ */
+/*	$OpenBSD: nl.c,v 1.3 2014/05/20 01:25:23 guenther Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -130,18 +130,14 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			clen = mbrlen(optarg, MB_CUR_MAX, NULL);
-			if (clen == (size_t)-1 || clen == (size_t)-2) {
-				errno = EILSEQ;
-				err(EXIT_FAILURE, NULL);
-			}
+			if (clen == (size_t)-1 || clen == (size_t)-2)
+				errc(EXIT_FAILURE, EILSEQ, NULL);
 			if (clen != 0) {
 				memcpy(delim1, optarg, delim1len = clen);
 				clen = mbrlen(optarg + delim1len,
 				    MB_CUR_MAX, NULL);
-				if (clen == (size_t)-1 || clen == (size_t)-2) {
-					errno = EILSEQ;
-					err(EXIT_FAILURE, NULL);
-				}
+				if (clen == (size_t)-1 || clen == (size_t)-2)
+					errc(EXIT_FAILURE, EILSEQ, NULL);
 				if (clen != 0) {
 					memcpy(delim2, optarg + delim1len,
 					    delim2len = clen);

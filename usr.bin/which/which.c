@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.18 2013/04/10 02:57:20 guenther Exp $	*/
+/*	$OpenBSD: which.c,v 1.19 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -125,7 +125,7 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 			p[--plen] = '\0';	/* strip trailing '/' */
 
 		if (plen + 1 + proglen >= sizeof(filename)) {
-			warnx("%s/%s: %s", p, prog, strerror(ENAMETOOLONG));
+			warnc(ENAMETOOLONG, "%s/%s", p, prog);
 			free(path);
 			return (0);
 		}

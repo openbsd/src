@@ -1,4 +1,4 @@
-/*	$OpenBSD: earlysig.c,v 1.1 2013/06/21 06:47:20 guenther Exp $	*/
+/*	$OpenBSD: earlysig.c,v 1.2 2014/05/20 01:25:24 guenther Exp $	*/
 
 /*
  * Public domain.  2005, Otto Moerbeek; 2013, Philip Guenther
@@ -43,7 +43,7 @@ main()
 
 	/* make sure the thread library is fully active */
 	if ((r = pthread_create(&tid, NULL, tmain, NULL)))
-		errx(1, "pthread_create: %s", strerror(r));
+		errc(1, r, "pthread_create");
 	pthread_join(tid, NULL);
 
 	/* make sure kill() and all the symbols in fork() are bound */

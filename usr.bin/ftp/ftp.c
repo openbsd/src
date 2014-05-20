@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.85 2014/04/22 20:48:41 tedu Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.86 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ hookup(char *host, char *port)
 
 		error = getaddrinfo(srcaddr, NULL, &ahints, &ares);
 		if (error) {
-			warnx("%s: %s", gai_strerror(error), srcaddr);
+			warnx("%s: %s", srcaddr, gai_strerror(error));
 			code = -1;
 			return (0);
 		}
@@ -781,10 +781,10 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			(void)fflush(ttyout);
 		}
 		if (c < 0)
-			warnx("local: %s: %s", local, strerror(serrno));
+			warnc(serrno, "local: %s", local);
 		if (d < 0) {
 			if (serrno != EPIPE)
-				warnx("netout: %s", strerror(serrno));
+				warnc(serrno, "netout");
 			bytes = -1;
 		}
 		break;
@@ -822,10 +822,10 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			(void)fflush(ttyout);
 		}
 		if (ferror(fin))
-			warnx("local: %s: %s", local, strerror(serrno));
+			warnc(serrno, "local: %s", local);
 		if (ferror(dout)) {
 			if (errno != EPIPE)
-				warnx("netout: %s", strerror(serrno));
+				warnc(serrno, "netout");
 			bytes = -1;
 		}
 		break;
@@ -1118,12 +1118,12 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 		}
 		if (c < 0) {
 			if (serrno != EPIPE)
-				warnx("netin: %s", strerror(serrno));
+				warnc(serrno, "netin");
 			bytes = -1;
 		}
 		if (d < c) {
 			if (d < 0)
-				warnx("local: %s: %s", local, strerror(serrno));
+				warnc(serrno, "local: %s", local);
 			else
 				warnx("%s: short write", local);
 		}
@@ -1203,11 +1203,11 @@ break2:
 		}
 		if (ferror(din)) {
 			if (serrno != EPIPE)
-				warnx("netin: %s", strerror(serrno));
+				warnc(serrno, "netin");
 			bytes = -1;
 		}
 		if (ferror(fout))
-			warnx("local: %s: %s", local, strerror(serrno));
+			warnc(serrno, "local: %s", local);
 		break;
 	}
 	progressmeter(1, NULL);
@@ -1305,7 +1305,7 @@ initconn(void)
 
 		error = getaddrinfo(srcaddr, NULL, &ahints, &ares);
 		if (error) {
-			warnx("%s: %s", gai_strerror(error), srcaddr);
+			warnx("%s: %s", srcaddr, gai_strerror(error));
 			code = -1;
 			return (0);
 		}

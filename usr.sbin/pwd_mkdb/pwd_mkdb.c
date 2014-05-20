@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.43 2010/01/08 13:29:08 oga Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.44 2014/05/20 01:25:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -75,6 +75,7 @@ static int hasyp;				/* are we running YP? */
 
 void	cleanup(void);
 void	error(char *);
+void	errorc(int, char *);
 void	errorx(char *);
 void	cp(char *, char *, mode_t);
 void	mv(char *, char *);
@@ -360,8 +361,7 @@ scan(FILE *fp, struct passwd *pw, int *flags)
 	*flags = 0;
 	if (!pw_scan(line, pw, flags)) {
 		warnx("at line #%d", lcnt);
-fmt:		errno = EFTYPE;	/* XXX */
-		error(pname);
+fmt:		errorc(EFTYPE, pname);
 	}
 
 	return (1);
@@ -383,16 +383,14 @@ cp(char *from, char *to, mode_t mode)
 			int sverrno = errno;
 
 			(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-			errno = sverrno;
-			error(buf);
+			errorc(sverrno, buf);
 		}
 	}
 	if (rcount < 0) {
 		int sverrno = errno;
 
 		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-		errno = sverrno;
-		error(buf);
+		errorc(sverrno, buf);
 	}
 	close(to_fd);
 	close(from_fd);
@@ -407,8 +405,7 @@ mv(char *from, char *to)
 		int sverrno = errno;
 
 		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-		errno = sverrno;
-		error(buf);
+		errorc(sverrno, buf);
 	}
 }
 
@@ -417,6 +414,15 @@ error(char *name)
 {
 
 	warn("%s", name);
+	cleanup();
+	exit(1);
+}
+
+void
+errorc(int code, char *name)
+{
+
+	warnc(code, "%s", name);
 	cleanup();
 	exit(1);
 }

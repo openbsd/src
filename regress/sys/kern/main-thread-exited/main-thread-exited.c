@@ -1,4 +1,4 @@
-/* $OpenBSD: main-thread-exited.c,v 1.1 2012/03/05 02:40:21 guenther Exp $ */
+/* $OpenBSD: main-thread-exited.c,v 1.2 2014/05/20 01:25:24 guenther Exp $ */
 /* PUBLIC DOMAIN Mar 2012 <guenther@openbsd.org> */
 
 
@@ -44,7 +44,7 @@ main(int argc, char **argv)
 
 	/* in child */
 	if ((r = pthread_create(&t, NULL, tmain, NULL)))
-		errx(1, "pthread_create: %s", strerror(r));
+		errc(1, r, "pthread_create");
 	pthread_exit(NULL);
 	abort();
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pthread_rwlock.c,v 1.2 2012/02/26 11:47:51 miod Exp $ */
+/* $OpenBSD: pthread_rwlock.c,v 1.3 2014/05/20 01:25:24 guenther Exp $ */
 /* PUBLIC DOMAIN Feb 2012 <guenther@openbsd.org> */
 
 #include <sys/types.h>
@@ -132,11 +132,11 @@ main(void)
 	for (i = 0; i < NUM_READERS; i++) {
 		ids[i] = i;
 		if ((r = pthread_create(&tr[i], NULL, reader, &ids[i])))
-			errx(1, "create %d: %s", i, strerror(r));
+			errc(1, r, "create %d", i);
 	}
 
 	if ((r = pthread_create(&tw, NULL, writer, NULL)))
-		errx(1, "create writer: %s", strerror(r));
+		errc(1, r, "create writer");
 
 	pthread_mutex_lock(&m);
 	while (state != WRITE)

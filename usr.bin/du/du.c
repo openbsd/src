@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.24 2013/11/13 21:20:01 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.25 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 		case FTS_DNR:			/* Warn, continue. */
 		case FTS_ERR:
 		case FTS_NS:
-			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			warnc(p->fts_errno, "%s", p->fts_path);
 			rval = 1;
 			break;
 		default:

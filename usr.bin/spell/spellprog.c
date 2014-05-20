@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.7 2013/11/28 18:24:55 deraadt Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.8 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -285,7 +285,7 @@ main(int argc, char **argv)
 		if (wlists[i].fd == -1 || fstat(wlists[i].fd, &sb) != 0)
 			err(1, "%s", argv[i]);
 		if (sb.st_size > SIZE_T_MAX)
-			errx(1, "%s: %s", argv[i], strerror(EFBIG));
+			errc(1, EFBIG, "%s", argv[i]);
 		wlists[i].front = mmap(NULL, (size_t)sb.st_size, PROT_READ,
 		    MAP_PRIVATE, wlists[i].fd, (off_t)0);
 		if (wlists[i].front == MAP_FAILED)

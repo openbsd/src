@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.36 2014/01/17 18:42:30 okan Exp $	*/
+/*	$OpenBSD: lex.c,v 1.37 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -81,8 +81,7 @@ setfile(char *name)
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFDIR:
 		(void)Fclose(ibuf);
-		errno = EISDIR;
-		warn("%s", name);
+		warnc(EISDIR, "%s", name);
 		return(-1);
 
 	case S_IFREG:
@@ -90,8 +89,7 @@ setfile(char *name)
 
 	default:
 		(void)Fclose(ibuf);
-		errno = EINVAL;
-		warn("%s", name);
+		warnc(EINVAL, "%s", name);
 		return(-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.61 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.62 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			if (uid) {
-				warnx("-h option: %s", strerror(EPERM));
+				warnc(EPERM, "-h option");
 				quickexit(1);
 			}
 			free(fqdn);
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 			break;
 		case 'L':
 			if (uid) {
-				warnx("-L option: %s", strerror(EPERM));
+				warnc(EPERM, "-L option");
 				quickexit(1);
 			}
 			if (lipaddr) {
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			if (uid) {
-				warnx("-R option: %s", strerror(EPERM));
+				warnc(EPERM, "-R option");
 				quickexit(1);
 			}
 			if (ripaddr) {
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 			break;
 		case 'u':
 			if (uid) {
-				warnx("-u option: %s", strerror(EPERM));
+				warnc(EPERM, "-u option");
 				quickexit(1);
 			}
 			rusername = optarg;

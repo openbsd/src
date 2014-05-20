@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.121 2014/05/19 20:09:22 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.122 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -723,7 +723,7 @@ noslash:
 #endif /* !SMALL */
 	}
 	if (error) {
-		warnx("%s: %s", gai_strerror(error), host);
+		warnx("%s: %s", host, gai_strerror(error));
 		goto cleanup_url_get;
 	}
 
@@ -732,7 +732,7 @@ noslash:
 		hints.ai_flags |= AI_NUMERICHOST;
 		error = getaddrinfo(srcaddr, NULL, &hints, &ares);
 		if (error) {
-			warnx("%s: %s", gai_strerror(error), srcaddr);
+			warnx("%s: %s", srcaddr, gai_strerror(error));
 			goto cleanup_url_get;
 		}
 	}

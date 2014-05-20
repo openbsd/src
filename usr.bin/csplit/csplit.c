@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.4 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.5 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ newfile(void)
 
 	if ((size_t)snprintf(currfile, sizeof(currfile), "%s%0*ld", prefix,
 	    (int)sufflen, nfiles) >= sizeof(currfile))
-		errx(1, "%s: %s", currfile, strerror(ENAMETOOLONG));
+		errc(1, ENAMETOOLONG, "%s", currfile);
 	if ((fp = fopen(currfile, "w+")) == NULL)
 		err(1, "%s", currfile);
 	nfiles++;

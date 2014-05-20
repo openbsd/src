@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.44 2013/11/12 13:11:10 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.45 2014/05/20 01:25:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -320,7 +320,7 @@ create_knlist(char *name, int fd, DB *db)
 	error = __elf_knlist(fd, db, ksyms);
 
 	if (fmterr != NULL)
-		warnx("%s: %s: %s", kfile, fmterr, strerror(EFTYPE));
+		warnc(EFTYPE, "%s: %s", kfile, fmterr);
 
 	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.14 2013/11/26 13:19:07 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.15 2014/05/20 01:25:23 guenther Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 		err(2, "%s", file);
 	if (sb.st_size > SIZE_T_MAX)
-		errx(2, "%s: %s", file, strerror(EFBIG));
+		errc(2, EFBIG, "%s", file);
 	if ((front = mmap(NULL,
 	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED)
 		err(2, "%s", file);

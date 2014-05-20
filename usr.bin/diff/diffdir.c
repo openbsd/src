@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.41 2012/11/29 02:15:44 guenther Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.42 2014/05/20 01:25:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -56,7 +56,7 @@ diffdir(char *p1, char *p2, int flags)
 
 	dirlen1 = strlcpy(path1, *p1 ? p1 : ".", sizeof(path1));
 	if (dirlen1 >= sizeof(path1) - 1) {
-		warnx("%s: %s", p1, strerror(ENAMETOOLONG));
+		warnc(ENAMETOOLONG, "%s", p1);
 		status = 2;
 		return;
 	}
@@ -66,7 +66,7 @@ diffdir(char *p1, char *p2, int flags)
 	}
 	dirlen2 = strlcpy(path2, *p2 ? p2 : ".", sizeof(path2));
 	if (dirlen2 >= sizeof(path2) - 1) {
-		warnx("%s: %s", p2, strerror(ENAMETOOLONG));
+		warnc(ENAMETOOLONG, "%s", p2);
 		status = 2;
 		return;
 	}

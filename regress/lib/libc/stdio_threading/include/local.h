@@ -36,10 +36,10 @@ thread(void *arg)
 	int	r;
 
 	if ((r = pthread_rwlock_rdlock(&start)))
-		errx(1, "could not obtain lock in thread: %s", strerror(r));
+		errc(1, r, "could not obtain lock in thread");
 	real_func(arg);
 	if ((r = pthread_rwlock_unlock(&start)))
-		errx(1, "could not release lock in thread: %s", strerror(r));
+		errc(1, r, "could not release lock in thread");
 	return NULL;
 }
 
@@ -52,20 +52,20 @@ run_threads(void (*func)(void *), void *arg)
 	self = pthread_self();
 	real_func = func;
 	if ((r = pthread_rwlock_init(&start, NULL)))
-		errx(1, "could not initialize lock: %s", strerror(r));
+		errc(1, r, "could not initialize lock");
 
 	if ((r = pthread_rwlock_wrlock(&start)))		/* block */
-		errx(1, "could not lock lock: %s", strerror(r));
+		errc(1, r, "could not lock lock");
 
 	for (i = 0; i < THREAD_COUNT; i++)
 		if ((r = pthread_create(&pthread[i], NULL, thread, arg))) {
-			warnx("could not create thread: %s", strerror(r));
+			warnc(r, "could not create thread");
 			pthread[i] = self;
 		}
 
 
 	if ((r = pthread_rwlock_unlock(&start)))		/* unleash */
-		errx(1, "could not release lock: %s", strerror(r));
+		errc(1, r, "could not release lock");
 
 	sleep(1);
 
@@ -76,6 +76,6 @@ run_threads(void (*func)(void *), void *arg)
 	for (i = 0; i < THREAD_COUNT; i++)
 		if (! pthread_equal(pthread[i], self) &&
 		    (r = pthread_join(pthread[i], NULL)))
-			warnx("could not join thread: %s", strerror(r));
+			warnc(r, "could not join thread");
 }
 
