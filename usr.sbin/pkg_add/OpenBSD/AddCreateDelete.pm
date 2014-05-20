@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.23 2014/05/20 05:46:13 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.24 2014/05/20 05:55:43 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -74,7 +74,6 @@ sub handle_options
 sub vsystem
 {
 	my $self = shift;
-	my $verbose = $self;
 	if ($self->verbose < 2) {
 		$self->system(@_);
 	} else {

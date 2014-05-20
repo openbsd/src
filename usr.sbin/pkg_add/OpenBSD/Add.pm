@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.152 2014/05/20 05:46:13 espie Exp $
+# $OpenBSD: Add.pm,v 1.153 2014/05/20 05:55:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -32,8 +32,6 @@ sub manpages_index
 	my $destdir = $state->{destdir};
 
 	# fudge verbose for API differences
-	my $v = $state->{v};
-	$state->{v} = $state->verbose >= 2;
 	while (my ($k, $v) = each %{$state->{addman}}) {
 		my @l = map { "$destdir$k/$_" } @$v;
 		if ($state->{not}) {
@@ -43,7 +41,6 @@ sub manpages_index
 			$state->run_makewhatis(['-d', $destdir.$k], \@l);
 		}
 	}
-	$state->{v} = $v;
 	delete $state->{addman};
 }
 
