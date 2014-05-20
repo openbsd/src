@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.23 2014/05/20 13:22:06 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.24 2014/05/20 13:32:22 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -169,6 +169,7 @@ fuse_mount(const char *dir, unused struct fuse_args *args)
 	}
 
 	fargs.fd = fc->fd;
+	fargs.max_read = max_read;
 	if (mount(MOUNT_FUSEFS, fc->dir, 0, &fargs)) {
 		switch (errno) {
 		case EMFILE:

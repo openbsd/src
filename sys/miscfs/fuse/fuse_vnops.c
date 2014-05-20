@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.17 2014/05/19 13:55:29 syl Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.18 2014/05/20 13:32:22 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -681,7 +681,7 @@ fusefs_readdir(void *v)
 		}
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
 		fbuf->fb_io_off = uio->uio_offset;
-		fbuf->fb_io_len = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
+		fbuf->fb_io_len = MIN(uio->uio_resid, fmp->max_read);
 
 		error = fb_queue(fmp->dev, fbuf);
 
@@ -1014,7 +1014,7 @@ fusefs_read(void *v)
 	while (uio->uio_resid > 0) {
 		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_READ, p);
 
-		size = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
+		size = MIN(uio->uio_resid, fmp->max_read);
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_RDONLY);
 		fbuf->fb_io_off = uio->uio_offset;
 		fbuf->fb_io_len = size;
@@ -1071,7 +1071,7 @@ fusefs_write(void *v)
 	}
 
 	while (uio->uio_resid > 0) {
-		len = MIN(uio->uio_resid, FUSEBUFMAXSIZE);
+		len = MIN(uio->uio_resid, fmp->max_read);
 		fbuf = fb_setup(len, ip->ufs_ino.i_number, FBT_WRITE, p);
 
 		fbuf->fb_io_fd = fusefs_fd_get(ip, FUFH_WRONLY);

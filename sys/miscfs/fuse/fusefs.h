@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.6 2014/01/16 09:31:44 syl Exp $ */
+/* $OpenBSD: fusefs.h,v 1.7 2014/05/20 13:32:22 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -50,7 +50,7 @@ struct fuse_msg;
 struct fusefs_mnt {
 	struct mount *mp;
 	uint32_t undef_op;
-	uint32_t max_write;
+	int max_read;
 	int sess_init;
 	dev_t dev;
 };

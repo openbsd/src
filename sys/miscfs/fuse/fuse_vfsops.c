@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.8 2013/12/10 13:43:05 pelikan Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.9 2014/05/20 13:32:22 syl Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -98,8 +98,12 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	fmp->mp = mp;
 	fmp->sess_init = 0;
 	fmp->dev = vp->v_rdev;
-	mp->mnt_data = fmp;
+	if (args.max_read > 0)
+		fmp->max_read = MIN(args.max_read, FUSEBUFMAXSIZE);
+	else
+		fmp->max_read = FUSEBUFMAXSIZE;
 
+	mp->mnt_data = fmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
