@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.22 2014/01/17 10:55:01 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.23 2014/05/20 05:46:13 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -71,25 +71,34 @@ sub handle_options
 	$state->{not} = $state->opt('n');
 }
 
-# those are required for makewhatis integration
-sub picky
+sub vsystem
 {
-	return shift->{picky};
-}
-
-sub testmode
-{
-	return shift->{testmode};
-}
-
-sub check_dir
-{
-	my ($self, $dir) = @_;
-	unless (-d $dir) {
-		$self->fatal("#1: #2 is not a directory", $0, $dir);
+	my $self = shift;
+	my $verbose = $self;
+	if ($self->verbose < 2) {
+		$self->system(@_);
+	} else {
+		$self->verbose_system(@_);
 	}
 }
 
+sub system
+{
+	my $self = shift;
+	$self->progress->clear;
+	$self->SUPER::system(@_);
+}
+
+sub run_makewhatis
+{
+	my ($state, $opts, $l) = @_;
+	while (@$l > 1000) {
+		my @b = splice(@$l, 0, 1000);
+		$state->vsystem(OpenBSD::Paths->makewhatis, @$opts, '--', @b);
+	}
+	$state->vsystem(OpenBSD::Paths->makewhatis, @$opts, '--', @$l);
+
+}
 sub ntogo
 {
 	my ($self, $offset) = @_;

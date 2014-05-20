@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.105 2014/04/18 10:00:48 schwarze Exp $
+# $OpenBSD: PkgCreate.pm,v 1.106 2014/05/20 05:46:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1283,8 +1283,7 @@ sub finish_manpages
 	my ($self, $state, $plist) = @_;
 	$plist->grab_manpages($state);
 	if (defined $state->{manpages}) {
-		$state->system(OpenBSD::Paths->makewhatis, '-t', '--',
-		    @{$state->{manpages}});
+		$state->run_makewhatis(['-t'], $state->{manpages});
 	}
 
 	if (defined $state->{mandir}) {
