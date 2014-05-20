@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$OpenBSD: tty.h,v 1.9 2014/05/20 22:28:07 yasuoka Exp $	*/
 /*	$NetBSD: tty.h,v 1.12 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -443,6 +443,7 @@
 #define	QU_IO	2	/* used only for quoted chars	*/
 #define	NN_IO	3	/* The number of entries	*/
 
+/* Don't re-order */
 #define	MD_INP	0
 #define	MD_OUT	1
 #define	MD_CTL	2
