@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.11 2014/05/09 11:01:06 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.12 2014/05/20 14:46:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -227,9 +227,9 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_runt_off = XREAD4(sc, XHCI_RTSOFF);
 
 #ifdef XHCI_DEBUG
-        printf("%s: CAPLENGTH=0x%x\n", DEVNAME(sc), sc->sc_oper_off);
-	printf("%s: DOORBELL=0x%x\n", DEVNAME(sc), sc->sc_door_off);
-	printf("%s: RUNTIME=0x%x\n", DEVNAME(sc), sc->sc_runt_off);
+	printf("%s: CAPLENGTH=%#lx\n", DEVNAME(sc), sc->sc_oper_off);
+	printf("%s: DOORBELL=%#lx\n", DEVNAME(sc), sc->sc_door_off);
+	printf("%s: RUNTIME=%#lx\n", DEVNAME(sc), sc->sc_runt_off);
 #endif
 
 	error = xhci_reset(sc);
@@ -353,7 +353,7 @@ xhci_config(struct xhci_softc *sc)
 	XOWRITE4(sc, XHCI_DCBAAP_LO, (uint32_t)paddr);
 	XOWRITE4(sc, XHCI_DCBAAP_HI, (uint32_t)(paddr >> 32));
 
-	DPRINTF(("%s: DCBAAP=%08lx%08lx\n", DEVNAME(sc),
+	DPRINTF(("%s: DCBAAP=%#x%#x\n", DEVNAME(sc),
 	    XOREAD4(sc, XHCI_DCBAAP_HI), XOREAD4(sc, XHCI_DCBAAP_LO)));
 
 	/* Set the command ring address. */
@@ -361,7 +361,7 @@ xhci_config(struct xhci_softc *sc)
 	XOWRITE4(sc, XHCI_CRCR_LO, ((uint32_t)paddr) | XHCI_CRCR_LO_RCS);
 	XOWRITE4(sc, XHCI_CRCR_HI, (uint32_t)(paddr >> 32));
 
-	DPRINTF(("%s: CRCR=%08lx%08lx (%016llx)\n", DEVNAME(sc),
+	DPRINTF(("%s: CRCR=%#x%#x (%016llx)\n", DEVNAME(sc),
 	    XOREAD4(sc, XHCI_CRCR_HI), XOREAD4(sc, XHCI_CRCR_LO), paddr));
 
 	/* Set the ERST count number to 1, since we use only one event ring. */
@@ -372,7 +372,7 @@ xhci_config(struct xhci_softc *sc)
 	XRWRITE4(sc, XHCI_ERSTBA_LO(0), (uint32_t)paddr);
 	XRWRITE4(sc, XHCI_ERSTBA_HI(0), (uint32_t)(paddr >> 32));
 
-	DPRINTF(("%s: ERSTBA=%08lx%08lx\n", DEVNAME(sc),
+	DPRINTF(("%s: ERSTBA=%#x%#x\n", DEVNAME(sc),
 	    XRREAD4(sc, XHCI_ERSTBA_HI(0)), XRREAD4(sc, XHCI_ERSTBA_LO(0))));
 
 	/* Set the ring dequeue address. */
@@ -380,7 +380,7 @@ xhci_config(struct xhci_softc *sc)
 	XRWRITE4(sc, XHCI_ERDP_LO(0), (uint32_t)paddr);
 	XRWRITE4(sc, XHCI_ERDP_HI(0), (uint32_t)(paddr >> 32));
 
-	DPRINTF(("%s: ERDP=%08lx%08lx\n", DEVNAME(sc),
+	DPRINTF(("%s: ERDP=%#x%#x\n", DEVNAME(sc),
 	    XRREAD4(sc, XHCI_ERDP_HI(0)), XRREAD4(sc, XHCI_ERDP_LO(0))));
 
 	/* Enable interrupts. */
@@ -393,8 +393,8 @@ xhci_config(struct xhci_softc *sc)
 	/* Allow event interrupt and start the controller. */
 	XOWRITE4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS);
 
-	DPRINTF(("%s: USBCMD=%08lx\n", DEVNAME(sc), XOREAD4(sc, XHCI_USBCMD)));
-	DPRINTF(("%s: IMAN=%08lx\n", DEVNAME(sc), XRREAD4(sc, XHCI_IMAN(0))));
+	DPRINTF(("%s: USBCMD=%#x\n", DEVNAME(sc), XOREAD4(sc, XHCI_USBCMD)));
+	DPRINTF(("%s: IMAN=%#x\n", DEVNAME(sc), XRREAD4(sc, XHCI_IMAN(0))));
 }
 
 int
@@ -651,7 +651,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	trb_idx = (paddr - DMAADDR(&xp->ring.dma, 0)) / sizeof(struct xhci_trb);
 	if (trb_idx < 0 || trb_idx >= xp->ring.ntrb) {
-		printf("%s: wrong trb index (%d) max is %d\n", DEVNAME(sc),
+		printf("%s: wrong trb index (%d) max is %zu\n", DEVNAME(sc),
 		    trb_idx, xp->ring.ntrb - 1);
 		return;
 	}
