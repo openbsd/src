@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.68 2014/01/21 10:18:26 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.69 2014/05/20 10:29:01 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -141,14 +141,12 @@ in6_get_rand_ifid(struct ifnet *ifp, struct in6_addr *in6)
 
 /*
  * Get interface identifier for the specified interface.
- * XXX assumes single sockaddr_dl (AF_LINK address) per an interface
  *
  * in6 - upper 64bits are preserved
  */
 int
 get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
-	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 	char *addr;
 	size_t addrlen;
@@ -156,21 +154,10 @@ get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if (sdl == NULL)
-			continue;
-		if (sdl->sdl_alen == 0)
-			continue;
+	sdl = (struct sockaddr_dl *)ifp->if_sadl;
+	if (sdl == NULL || sdl->sdl_alen == 0)
+		return -1;
 
-		goto found;
-	}
-
-	return -1;
-
-found:
 	addr = LLADDR(sdl);
 	addrlen = sdl->sdl_alen;
 
