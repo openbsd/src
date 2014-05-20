@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.877 2014/04/24 11:55:12 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.878 2014/05/20 11:03:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2464,7 +2464,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	if (r && (r->scrub_flags & PFSTATE_SETPRIO))
 		m0->m_pkthdr.pf.prio = r->set_prio[0];
 	if (r && r->qid)
-		m->m_pkthdr.pf.qid = r->qid;
+		m0->m_pkthdr.pf.qid = r->qid;
 
 	switch (af) {
 #ifdef INET
