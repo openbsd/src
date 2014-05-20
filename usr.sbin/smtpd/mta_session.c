@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.65 2014/05/12 14:37:32 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.66 2014/05/20 18:47:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -840,7 +840,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			break;
 		}
 
-		log_trace(TRACE_MTA, "mta: %p: >>> [...%zi bytes...]", s, q);
+		log_trace(TRACE_MTA, "mta: %p: >>> [...%zd bytes...]", s, q);
 		break;
 
 	case MTA_EOM:

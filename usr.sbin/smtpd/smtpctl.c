@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.119 2014/04/22 13:57:58 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.120 2014/05/20 18:47:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -959,10 +959,10 @@ show_queue_envelope(struct envelope *e, int online)
 
 	if (online) {
 		if (e->flags & EF_PENDING)
-			(void)snprintf(runstate, sizeof runstate, "pending|%zi",
+			(void)snprintf(runstate, sizeof runstate, "pending|%zd",
 			    (ssize_t)(e->nexttry - now));
 		else if (e->flags & EF_INFLIGHT)
-			(void)snprintf(runstate, sizeof runstate, "inflight|%zi",
+			(void)snprintf(runstate, sizeof runstate, "inflight|%zd",
 			    (ssize_t)(now - e->lasttry));
 		else
 			(void)snprintf(runstate, sizeof runstate, "invalid|");

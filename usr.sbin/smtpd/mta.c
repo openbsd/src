@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.186 2014/04/19 13:32:07 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.187 2014/05/20 18:47:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -227,7 +227,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				m_add_evpid(p_queue, evp.id);
 				m_add_id(p_queue, relay->id);
 				m_close(p_queue);
-				mta_relay_unref(relay);
+				mta_relay_unref(relay); /* from here */
 				return;
 			}
 
@@ -743,7 +743,7 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 			m_close(p_queue);
 		}
 		else {
-			log_warnx("warn: bad delivery type %i for %016" PRIx64,
+			log_warnx("warn: bad delivery type %d for %016" PRIx64,
 			    e->delivery, e->id);
 			fatalx("aborting");
 		}
@@ -774,7 +774,7 @@ mta_delivery_log(struct mta_envelope *e, const char *source, const char *relay,
 	else if (delivery == IMSG_MTA_DELIVERY_LOOP)
 		mta_log(e, "PermFail", source, relay, "Loop detected");
 	else {
-		log_warnx("warn: bad delivery type %i for %016" PRIx64,
+		log_warnx("warn: bad delivery type %d for %016" PRIx64,
 		    delivery, e->id);
 		fatalx("aborting");
 	}
@@ -1074,7 +1074,7 @@ mta_connect(struct mta_connector *c)
 	}
 
 	if (c->flags & CONNECTOR_WAIT) {
-		log_debug("debug: mta: canceling connector timeout");
+		log_debug("debug: mta: cancelling connector timeout");
 		runq_cancel(runq_connector, NULL, c);
 	}
 
@@ -2190,7 +2190,7 @@ mta_connector_free(struct mta_connector *c)
 	    mta_connector_to_text(c));
 
 	if (c->flags & CONNECTOR_WAIT) {
-		log_debug("debug: mta: canceling timeout for %s",
+		log_debug("debug: mta: cancelling timeout for %s",
 		    mta_connector_to_text(c));
 		runq_cancel(runq_connector, NULL, c);
 	}
@@ -2234,7 +2234,7 @@ mta_route(struct mta_source *src, struct mta_host *dst)
 		stat_increment("mta.route", 1);
 	}
 	else if (r->flags & ROUTE_RUNQ) {
-		log_debug("debug: mta: mta_route_ref(): canceling runq for route %s",
+		log_debug("debug: mta: mta_route_ref(): cancelling runq for route %s",
 		    mta_route_to_text(r));
 		r->flags &= ~(ROUTE_RUNQ | ROUTE_KEEPALIVE);
 		runq_cancel(runq_route, NULL, r);
@@ -2297,7 +2297,7 @@ mta_route_unref(struct mta_route *r)
 		return;
 	}
 
-	log_debug("debug: mta: ma_route_unref(): really discarding route %s",
+	log_debug("debug: mta: mta_route_unref(): really discarding route %s",
 	    mta_route_to_text(r));
 
 	SPLAY_REMOVE(mta_route_tree, &routes, r);

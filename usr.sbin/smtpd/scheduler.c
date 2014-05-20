@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.44 2014/04/08 15:25:43 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.45 2014/05/20 18:47:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -229,7 +229,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_int(&m, &r);
 		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: releasing %d on holdq (%i, %016" PRIx64 ")",
+		    "scheduler: releasing %d on holdq (%d, %016" PRIx64 ")",
 		    r, type, holdq);
 		backend->release(type, holdq, r);
 		scheduler_reset_events();
