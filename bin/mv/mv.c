@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.35 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.36 2014/05/21 06:23:02 guenther Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -300,13 +300,13 @@ err:		if (unlink(to))
 	(void)close(from_fd);
 
 	if (badchown) {
-		errno = serrno;
 		if ((sbp->st_mode & (S_ISUID|S_ISGID)))  {
-			warn("%s: set owner/group; not setting setuid/setgid",
+			warnc(serrno,
+			    "%s: set owner/group; not setting setuid/setgid",
 			    to);
 			sbp->st_mode &= ~(S_ISUID|S_ISGID);
 		} else if (!fflg)
-			warn("%s: set owner/group", to);
+			warnc(serrno, "%s: set owner/group", to);
 	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);

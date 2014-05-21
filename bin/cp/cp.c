@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.35 2012/08/28 06:02:58 otto Exp $	*/
+/*	$OpenBSD: cp.c,v 1.36 2014/05/21 06:23:02 guenther Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -409,10 +409,8 @@ copy(char *argv[], enum op type, int fts_options)
 				if (mkdir(to.p_path,
 				    curr->fts_statp->st_mode | S_IRWXU) < 0)
 					err(1, "%s", to.p_path);
-			} else if (!S_ISDIR(to_stat.st_mode)) {
-				errno = ENOTDIR;
-				err(1, "%s", to.p_path);
-			}
+			} else if (!S_ISDIR(to_stat.st_mode))
+				errc(1, ENOTDIR, "%s", to.p_path);
 			break;
 		case S_IFBLK:
 		case S_IFCHR:
@@ -432,7 +430,7 @@ copy(char *argv[], enum op type, int fts_options)
 					rval = 1;
 			break;
 		case S_IFSOCK:
-			warnx("%s: %s", curr->fts_path, strerror(EOPNOTSUPP));
+			warnc(EOPNOTSUPP, "%s", curr->fts_path);
 			break;
 		default:
 			if (copy_file(curr, fts_dne(curr)))

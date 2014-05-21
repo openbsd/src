@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.28 2013/04/23 18:41:08 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.29 2014/05/21 06:23:02 guenther Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ rm_tree(char **argv)
 			}
 			continue;
 		case FTS_ERR:
-			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
+			errc(1, p->fts_errno, "%s", p->fts_path);
 		case FTS_NS:
 			/*
 			 * FTS_NS: assume that if can't stat the file, it

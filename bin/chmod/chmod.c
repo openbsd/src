@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.29 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.30 2014/05/21 06:23:01 guenther Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ done:
 			else
 				continue;
 		case FTS_DNR:			/* Warn, chmod, continue. */
-			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			warnc(p->fts_errno, "%s", p->fts_path);
 			rval = 1;
 			break;
 		case FTS_DP:			/* Already changed at FTS_D. */
@@ -222,7 +222,7 @@ done:
 				break;
 		case FTS_ERR:			/* Warn, continue. */
 		case FTS_NS:
-			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
+			warnc(p->fts_errno, "%s", p->fts_path);
 			rval = 1;
 			continue;
 		case FTS_SL:			/* Ignore. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.11 2014/04/22 00:23:35 guenther Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.12 2014/05/21 06:23:01 guenther Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ getpartition(int fsi, const char *special, char *argv[], struct disklabel **dl)
 	struct partition *pp;
 
 	if (fstat(fsi, &st) < 0)
-		errx(EXIT_FAILURE, "%s: %s", special, strerror(errno));
+		err(EXIT_FAILURE, "%s", special);
 	if (S_ISBLK(st.st_mode))
 		errx(EXIT_FAILURE, "%s: block device", special);
 	if (!S_ISCHR(st.st_mode))

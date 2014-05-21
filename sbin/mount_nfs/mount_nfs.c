@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.50 2012/05/29 20:04:59 jasper Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.51 2014/05/21 06:23:01 guenther Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -505,8 +505,7 @@ tryagain:
 	if (nfhret.stat) {
 		if (opflags & ISBGRND)
 			exit(1);
-		errno = nfhret.stat;
-		warnx("can't access %s: %s", spec, strerror(nfhret.stat));
+		warnc(nfhret.stat, "can't access %s", spec);
 		return (0);
 	}
 	saddr.sin_port = htons(tport);
