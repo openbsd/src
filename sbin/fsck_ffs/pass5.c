@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.43 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.44 2014/05/21 18:53:05 krw Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ pass5(void)
 	info_fn = NULL;
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	
+
 	sumsize = sizeof(cstotal) - sizeof(cstotal.cs_spare);
 	if (memcmp(&cstotal, &fs->fs_cstotal, sumsize) != 0
 	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
