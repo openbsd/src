@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.8 2014/02/21 16:25:57 deraadt Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.9 2014/05/21 02:14:07 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -448,13 +448,13 @@ aibs_getvalue(struct aibs_softc *sc, int64_t i, int64_t *v)
 	}
 
 	if (aml_evalnode(sc->sc_acpi, n, 1, &req, &res)) {
-		dprintf("%s: %s: %i: evaluation failed\n",
+		dprintf("%s: %s: %lld: evaluation failed\n",
 		    DEVNAME(sc), n->name, i);
 		aml_freevalue(&res);
 		return (-1);
 	}
 	if (res.type != type) {
-		dprintf("%s: %s: %i: not an integer: type %i\n",
+		dprintf("%s: %s: %lld: not an integer: type %i\n",
 		    DEVNAME(sc), n->name, i, res.type);
 		aml_freevalue(&res);
 		return (-1);
@@ -462,14 +462,14 @@ aibs_getvalue(struct aibs_softc *sc, int64_t i, int64_t *v)
 
 	if (sc->sc_mode) {
 		if (res.length < sizeof(ret)) {
-			dprintf("%s: %s: %i: result buffer too small\n",
+			dprintf("%s: %s: %lld: result buffer too small\n",
 			    DEVNAME(sc), n->name, i);
 			aml_freevalue(&res);
 			return (-1);
 		}
 		bcopy(res.v_buffer, &ret, sizeof(ret));
 		if (ret.flags == 0) {
-			dprintf("%s: %s: %i: bad flags in result\n",
+			dprintf("%s: %s: %lld: bad flags in result\n",
 			    DEVNAME(sc), n->name, i);
 			aml_freevalue(&res);
 			return (-1);
@@ -493,13 +493,13 @@ aibs_getpack(struct aibs_softc *sc, struct aml_node *n, int64_t i,
 	req.v_integer = i;
 
 	if (aml_evalnode(sc->sc_acpi, n, 1, &req, res)) {
-		dprintf("%s: %s: %i: evaluation failed\n",
+		dprintf("%s: %s: %lld: evaluation failed\n",
 		    DEVNAME(sc), n->name, i);
 		aml_freevalue(res);
 		return (-1);
 	}
 	if (res->type != AML_OBJTYPE_PACKAGE) {
-		dprintf("%s: %s: %i: not a package: type %i\n",
+		dprintf("%s: %s: %lld: not a package: type %i\n",
 		    DEVNAME(sc), n->name, i, res->type);
 		aml_freevalue(res);
 		return (-1);

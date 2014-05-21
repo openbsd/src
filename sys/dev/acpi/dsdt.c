@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.208 2014/05/02 14:04:50 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.209 2014/05/21 02:14:07 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -424,7 +424,7 @@ _acpi_os_malloc(size_t size, const char *fn, int line)
 	struct acpi_memblock *sptr;
 
 	sptr = malloc(size+sizeof(*sptr), M_ACPI, M_WAITOK | M_ZERO);
-	dnprintf(99, "alloc: %x %s:%d\n", sptr, fn, line);
+	dnprintf(99, "alloc: %p %s:%d\n", sptr, fn, line);
 	acpi_nalloc += size;
 	sptr->size = size;
 #ifdef ACPI_MEMDEBUG
@@ -451,7 +451,7 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 		LIST_REMOVE(sptr, link);
 #endif
 
-		dnprintf(99, "free: %x %s:%d\n", sptr, fn, line);
+		dnprintf(99, "free: %p %s:%d\n", sptr, fn, line);
 		free(sptr, M_ACPI);
 	}
 }
@@ -552,7 +552,7 @@ aml_register_notify(struct aml_node *node, const char *pnpid,
 	struct aml_notify_data	*pdata;
 	extern int acpi_poll_enabled;
 
-	dnprintf(10, "aml_register_notify: %s %s %x\n",
+	dnprintf(10, "aml_register_notify: %s %s %p\n",
 	    node->name, pnpid ? pnpid : "", proc);
 
 	pdata = acpi_os_malloc(sizeof(struct aml_notify_data));
@@ -3124,7 +3124,7 @@ aml_eval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 	case AML_OBJTYPE_BUFFERFIELD:
 	case AML_OBJTYPE_FIELDUNIT:
 		my_ret = aml_allocvalue(0,0,NULL);
-		dnprintf(20,"quick: Convert Bufferfield to %c 0x%x\n",
+		dnprintf(20,"quick: Convert Bufferfield to %c %p\n",
 		    ret_type, my_ret);
 		aml_rwfield(tmp, 0, tmp->v_field.bitlen, my_ret, ACPI_IOREAD);
 		break;
@@ -3971,7 +3971,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_NOTIFY:
 		/* Notify: Si */
 		rv = aml_gettgt(opargs[0], opcode);
-		dnprintf(50,"Notifying: %s %x\n",
+		dnprintf(50,"Notifying: %s %llx\n",
 		    aml_nodename(rv->node),
 		    opargs[1]->v_integer);
 		aml_notify(rv->node, opargs[1]->v_integer);
@@ -4132,7 +4132,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 		memset(res, 0, sizeof(*res));
 	if (node == NULL || node->value == NULL)
 		return (ACPI_E_BADVALUE);
-	dnprintf(12,"EVALNODE: %s %d\n", aml_nodename(node), acpi_nalloc);
+	dnprintf(12,"EVALNODE: %s %lx\n", aml_nodename(node), acpi_nalloc);
 
 	aml_error = 0;
 	xres = aml_eval(NULL, node->value, 't', argc, argv);
@@ -4205,7 +4205,7 @@ __aml_searchname(struct aml_node *root, const void *vname, int create)
 	char  nseg[AML_NAMESEG_LEN + 1];
 	int   i;
 
-	dnprintf(25,"Searchname: %s:%s = ", aml_nodename(root), vname);
+	dnprintf(25,"Searchname: %s:%s = ", aml_nodename(root), name);
 	while (*name == AMLOP_ROOTCHAR) {
 		root = &aml_root;
 		name++;

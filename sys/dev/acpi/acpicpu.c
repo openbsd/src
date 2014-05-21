@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.57 2010/07/21 19:35:15 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.58 2014/05/21 02:14:07 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -344,7 +344,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 #ifdef ACPI_DEBUG
 	printf(": %s: ", sc->sc_devnode->name);
 	printf("\n: hdr:%x pblk:%x,%x duty:%x,%x pstate:%x "
-	       "(%d throttling states)\n", sc->sc_acpi->sc_fadt->hdr_revision,
+	       "(%ld throttling states)\n", sc->sc_acpi->sc_fadt->hdr_revision,
 		sc->sc_pblk_addr, sc->sc_pblk_len, sc->sc_duty_off,
 		sc->sc_duty_wid, sc->sc_acpi->sc_fadt->pstate_cnt,
 		CPU_MAXSTATE(sc));
@@ -519,7 +519,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 		goto ffh;
 	}
 
-	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
+	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016llx\n",
 	    sc->sc_pct.pct_ctrl.grd_descriptor,
 	    sc->sc_pct.pct_ctrl.grd_length,
 	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
@@ -528,7 +528,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sc->sc_pct.pct_ctrl.grd_gas.access_size,
 	    sc->sc_pct.pct_ctrl.grd_gas.address);
 
-	dnprintf(10, "_PCT(status): %02x %04x %02x %02x %02x %02x %016x\n",
+	dnprintf(10, "_PCT(status): %02x %04x %02x %02x %02x %02x %016llx\n",
 	    sc->sc_pct.pct_status.grd_descriptor,
 	    sc->sc_pct.pct_status.grd_length,
 	    sc->sc_pct.pct_status.grd_gas.address_space_id,

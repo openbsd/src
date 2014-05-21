@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.257 2014/04/25 14:37:06 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.258 2014/05/21 02:14:07 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -431,13 +431,13 @@ int
 acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
     const char *driver)
 {
-
 	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
 		return (0);
 	if (_acpi_matchhids(aa->aaa_dev, hids)) {
-		dnprintf(5, "driver %s matches %s\n", driver, hids);
+		dnprintf(5, "driver %s matches at least one hid\n", driver);
 		return (1);
 	}
+
 	return (0);
 }
 #endif /* SMALL_KERNEL */
@@ -1336,7 +1336,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			break;
 		}
 		if (size && addr) {
-			dnprintf(50, "mapping: %.4x %.4x %s\n",
+			dnprintf(50, "mapping: %.4lx %.4lx %s\n",
 			    addr, size, name);
 
 			/* Size and address exist; map register space */
