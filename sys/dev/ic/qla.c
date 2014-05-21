@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.40 2014/05/17 11:51:21 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.41 2014/05/21 23:01:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -374,7 +374,6 @@ qla_add_logged_in_port(struct qla_softc *sc, int loopid, u_int32_t portid)
 	struct qla_fc_port *port;
 	struct qla_get_port_db *pdb;
 	u_int64_t node_name, port_name;
-	u_int32_t location;
 	int flags, ret;
 	
 	ret = qla_get_port_db(sc, loopid, sc->sc_scratch);
@@ -383,13 +382,11 @@ qla_add_logged_in_port(struct qla_softc *sc, int loopid, u_int32_t portid)
 		/* put in a fake port to prevent use of this loop id */
 		printf("%s: loop id %d used, but can't see what's using it\n",
 		    DEVNAME(sc), loopid);
-		location = QLA_LOCATION_PORT_ID(portid);
 		node_name = 0;
 		port_name = 0;
 		flags = 0;
 	} else {
 		pdb = QLA_DMA_KVA(sc->sc_scratch);
-		location = QLA_LOCATION_PORT_ID(portid);
 		node_name = betoh64(pdb->node_name);
 		port_name = betoh64(pdb->port_name);
 		flags = 0;
@@ -416,7 +413,7 @@ qla_add_logged_in_port(struct qla_softc *sc, int loopid, u_int32_t portid)
 		    DEVNAME(sc));
 		return (1);
 	}
-	port->location = location;
+	port->location = QLA_LOCATION_PORT_ID(portid);
 	port->port_name = port_name;
 	port->node_name = node_name;
 	port->loopid = loopid;
