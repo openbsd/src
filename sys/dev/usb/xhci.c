@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.12 2014/05/20 14:46:19 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.13 2014/05/21 12:31:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -673,12 +673,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		xfer->actlen = xfer->length - remain;
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
-#if 0
 	case XHCI_CODE_STALL:
-		xfer->status = USBD_STALLED;
-		xp->halted = 1;
-		break;
-#endif
 	case XHCI_CODE_BABBLE:
 		/*
 		 * Since the stack might try to start a new transfer as
