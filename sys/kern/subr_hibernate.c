@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.89 2014/04/26 05:43:00 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.90 2014/05/21 02:26:49 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -777,7 +777,7 @@ hibernate_inflate_page(void)
 	hibernate_state->hib_stream.avail_out = PAGE_SIZE;
 
 	/* Process next block of data */
-	i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
+	i = inflate(&hibernate_state->hib_stream, Z_SYNC_FLUSH);
 	if (i != Z_OK && i != Z_STREAM_END) {
 		/*
 		 * XXX - this will likely reboot/hang most machines
@@ -868,7 +868,7 @@ hibernate_deflate(union hibernate_info *hib, paddr_t src,
 	hibernate_state->hib_stream.avail_out = *remaining;
 
 	/* Process next block of data */
-	if (deflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH) != Z_OK)
+	if (deflate(&hibernate_state->hib_stream, Z_SYNC_FLUSH) != Z_OK)
 		panic("hibernate zlib deflate error");
 
 	/* Update pointers and return number of bytes consumed */
