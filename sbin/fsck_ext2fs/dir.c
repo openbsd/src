@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2013/04/24 13:46:27 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2014/05/21 17:52:26 krw Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
 		fprintf(stderr, "out of memory\n");
 		exit(8);
-	}	
+	}
 	memcpy(firstblk, bp->b_un.b_buf, sblock.e2fs_bsize);
 	bp = getdirblk(newblk, sblock.e2fs_bsize);
 	if (bp->b_errs) {

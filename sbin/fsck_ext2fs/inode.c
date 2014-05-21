@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.19 2013/04/24 13:46:27 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.20 2014/05/21 17:52:26 krw Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ u_int64_t
 inosize(struct ext2fs_dinode *dp)
 {
 	u_int64_t size = fs2h32(dp->e2di_size);
-	
+
 	if ((fs2h16(dp->e2di_mode) & IFMT) == IFREG)
 		size |= (u_int64_t)fs2h32(dp->e2di_dacl) << 32;
 	if (size >= 0x80000000U)
