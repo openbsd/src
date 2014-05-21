@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.22 2013/11/01 17:36:18 krw Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.23 2014/05/21 16:32:08 krw Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ chkuse(daddr_t blkno, int cnt)
 	}
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg), bn))
-		fprintf(stderr, "Warning: sector %lld is in use\n", 
+		fprintf(stderr, "Warning: sector %lld is in use\n",
 		    (long long)blkno);
 	return (0);
 }
