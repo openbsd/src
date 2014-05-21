@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.17 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: dump.h,v 1.18 2014/05/21 17:38:30 krw Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ int	mapdirs(ino_t maxino, off_t *tapesize);
 /* file dumping routines */
 void	ufs1_blksout(int32_t *blkp, int frags, ino_t ino);
 void	ufs2_blksout(daddr_t *blkp, int frags, ino_t ino);
-void	bread(daddr_t blkno, char *buf, int size);	
+void	bread(daddr_t blkno, char *buf, int size);
 void	dumpino(union dinode *dp, ino_t ino);
 void	dumpmap(char *map, int type, ino_t ino);
 void	writeheader(ino_t ino);

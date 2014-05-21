@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.29 2014/05/20 21:11:16 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.30 2014/05/21 17:38:30 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -499,7 +499,7 @@ dumpino(union dinode *dp, ino_t ino)
 		dumpmap(dumpinomap, TS_BITS, ino);
 	}
 	CLRINO(ino, dumpinomap);
-	if (sblock->fs_magic == FS_UFS1_MAGIC) {  
+	if (sblock->fs_magic == FS_UFS1_MAGIC) {
 		spcl.c_mode = dp->dp1.di_mode;
 		spcl.c_size = dp->dp1.di_size;
 		spcl.c_old_atime = (time_t)dp->dp1.di_atime;
@@ -545,7 +545,8 @@ dumpino(union dinode *dp, ino_t ino)
 		if (DIP(dp, di_size) > 0 &&
 #ifdef FS_44INODEFMT
 		    (DIP(dp, di_size) < sblock->fs_maxsymlinklen ||
-		     (sblock->fs_maxsymlinklen == 0 && DIP(dp, di_blocks) == 0))) {
+		     (sblock->fs_maxsymlinklen == 0 &&
+			 DIP(dp, di_blocks) == 0))) {
 #else
 		    DIP(dp, di_blocks) == 0) {
 #endif
@@ -806,7 +807,8 @@ loop:
 	if ((cnt = pread(diskfd, buf, size, (off_t)blkno << dev_bshift)) ==
 		size)
 		return;
-	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
+	if (blkno + (size / dev_bsize) >
+	    fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
 		 * Trying to read the final fragment.
 		 *
@@ -824,8 +826,8 @@ loop:
 		msg("read error from %s: %s: [block %lld]: count=%d\n",
 			disk, strerror(errno), blkno, size);
 	else
-		msg("short read error from %s: [block %lld]: count=%d, got=%d\n",
-			disk, blkno, size, cnt);
+		msg("short read error from %s: [block %lld]: count=%d, "
+		    "got=%d\n", disk, blkno, size, cnt);
 	if (++breaderrors > BREADEMAX) {
 		msg("More than %d block read errors from %s\n",
 			BREADEMAX, disk);
@@ -846,11 +848,12 @@ loop:
 			    (off_t)blkno << dev_bshift)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %lld]: count=%ld\n",
-				disk, strerror(errno), blkno, dev_bsize);
+			msg("read error from %s: %s: [sector %lld]: "
+			    "count=%ld\n", disk, strerror(errno), blkno,
+			    dev_bsize);
 			continue;
 		}
-		msg("short read error from %s: [sector %lld]: count=%ld, got=%d\n",
-			disk, blkno, dev_bsize, cnt);
+		msg("short read error from %s: [sector %lld]: count=%ld, "
+		    "got=%d\n", disk, blkno, dev_bsize, cnt);
 	}
 }
