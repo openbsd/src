@@ -1,4 +1,4 @@
-#	$OpenBSD: integrity.sh,v 1.13 2014/04/21 22:15:37 djm Exp $
+#	$OpenBSD: integrity.sh,v 1.14 2014/05/21 07:04:21 djm Exp $
 #	Placed in the Public Domain.
 
 tid="integrity"
@@ -48,14 +48,14 @@ for m in $macs; do
 			fail "ssh -m $m succeeds with bit-flip at $off"
 		fi
 		ecnt=$((ecnt+1))
-		output=$(tail -2 $TEST_SSH_LOGFILE | egrep -v "^debug" | \
+		out=$(tail -2 $TEST_SSH_LOGFILE | egrep -v "^debug" | \
 		     tr -s '\r\n' '.')
-		case "$output" in
+		case "$out" in
 		Bad?packet*)	elen=$((elen+1)); skip=2;;
 		Corrupted?MAC* | Decryption?integrity?check?failed*)
 				emac=$((emac+1)); skip=0;;
 		padding*)	epad=$((epad+1)); skip=0;;
-		*)		fail "unexpected error mac $m at $off";;
+		*)		fail "unexpected error mac $m at $off: $out";;
 		esac
 	done
 	verbose "test $tid: $ecnt errors: mac $emac padding $epad length $elen"
