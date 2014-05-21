@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.632 2014/05/16 13:53:35 dcoppa Exp $
+$OpenBSD: usbdevs,v 1.633 2014/05/21 13:04:23 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -605,6 +605,7 @@ vendor PARA		0x20b8	PARA Industrial
 vendor TRENDNET		0x20f4	TRENDnet
 vendor RTSYSTEMS	0x2100	RT Systems
 vendor DLINK3		0x2101	D-Link
+vendor VIALABS		0x2109	VIA Labs
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TPLINK		0x2357	TP-Link
 vendor TRIPPLITE	0x2478	Tripp-Lite
