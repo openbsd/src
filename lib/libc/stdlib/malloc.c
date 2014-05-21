@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.164 2014/05/18 17:49:47 tedu Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.165 2014/05/21 15:47:51 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1643,7 +1643,7 @@ dump_leaks(int fd)
 
 	snprintf(buf, sizeof(buf), "Leak report\n");
 	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "           f     sum      #    avg\n");
+	snprintf(buf, sizeof(buf), "                 f     sum      #    avg\n");
 	write(fd, buf, strlen(buf));
 	/* XXX only one page of summary */
 	if (malloc_leaks == NULL)
@@ -1651,7 +1651,7 @@ dump_leaks(int fd)
 	if (malloc_leaks != MAP_FAILED)
 		memset(malloc_leaks, 0, MALLOC_PAGESIZE);
 	RB_FOREACH(p, leaktree, &leakhead) {
-		snprintf(buf, sizeof(buf), "%12p %7zu %6u %6zu\n", p->d.f,
+		snprintf(buf, sizeof(buf), "%18p %7zu %6u %6zu\n", p->d.f,
 		    p->d.total_size, p->d.count, p->d.total_size / p->d.count);
 		write(fd, buf, strlen(buf));
 		if (malloc_leaks == MAP_FAILED ||
@@ -1670,7 +1670,7 @@ dump_chunk(int fd, struct chunk_info *p, void *f, int fromfreelist)
 	char buf[64];
 
 	while (p != NULL) {
-		snprintf(buf, sizeof(buf), "chunk %12p %12p %4d %d/%d\n",
+		snprintf(buf, sizeof(buf), "chunk %18p %18p %4d %d/%d\n",
 		    p->page, ((p->bits[0] & 1) ? NULL : f),
 		    p->size, p->free, p->total);
 		write(fd, buf, strlen(buf));
@@ -1696,25 +1696,26 @@ static void
 dump_free_chunk_info(int fd, struct dir_info *d)
 {
 	char buf[64];
-	int i, count;
+	int i, j, count;
+	struct chunk_info *p;
 
 	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
 	write(fd, buf, strlen(buf));
 	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
-		struct chunk_info *p;
-
 		count = 0;
 		LIST_FOREACH(p, &d->chunk_info_list[i], entries)
 			count++;
-		p = LIST_FIRST(&d->chunk_dir[i]);
-		if (p == NULL && count == 0)
-			continue;
-		snprintf(buf, sizeof(buf), "%2d) %3d ", i, count);
-		write(fd, buf, strlen(buf));
-		if (p != NULL)
-			dump_chunk(fd, p, NULL, 1);
-		else
-			write(fd, "\n", 1);
+		for (j = 0; j < MALLOC_CHUNK_LISTS; j++) {
+			p = LIST_FIRST(&d->chunk_dir[i][j]);
+			if (p == NULL && count == 0)
+				continue;
+			snprintf(buf, sizeof(buf), "%2d) %3d ", i, count);
+			write(fd, buf, strlen(buf));
+			if (p != NULL)
+				dump_chunk(fd, p, NULL, 1);
+			else
+				write(fd, "\n", 1);
+		}
 	}
 
 }
@@ -1742,7 +1743,7 @@ dump_free_page_info(int fd, struct dir_info *d)
 static void
 malloc_dump1(int fd, struct dir_info *d)
 {
-	char buf[64];
+	char buf[100];
 	size_t i, realsize;
 
 	snprintf(buf, sizeof(buf), "Malloc dir of %s at %p\n", __progname, d);
@@ -1767,7 +1768,7 @@ malloc_dump1(int fd, struct dir_info *d)
 	dump_free_chunk_info(fd, d);
 	dump_free_page_info(fd, d);
 	snprintf(buf, sizeof(buf),
-	    "slot)  hash d  type         page            f size [free/n]\n");
+	    "slot)  hash d  type               page                  f size [free/n]\n");
 	write(fd, buf, strlen(buf));
 	for (i = 0; i < d->regions_total; i++) {
 		if (d->r[i].p != NULL) {
