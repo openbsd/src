@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.44 2014/01/11 05:36:26 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.45 2014/05/21 04:17:56 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -331,14 +331,20 @@ ar_close(void)
 	 * for a quick extract/list, pax frequently exits before the child
 	 * process is done
 	 */
-	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0)
+	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0) {
 		kill(zpid, SIGINT);
+		zpid = -1;
+	}
 
 	(void)close(arfd);
 
 	/* Do not exit before child to ensure data integrity */
-	if (zpid > 0)
+	if (zpid > 0) {
 		waitpid(zpid, &status, 0);
+		if (!WIFEXITED(status) || WEXITSTATUS(status))
+			exit_val = 1;
+	}
+
 
 	if (vflag && (artyp == ISTAPE)) {
 		(void)fputs("done.\n", listf);
@@ -567,7 +573,7 @@ ar_read(char *buf, int cnt)
 	if (res < 0)
 		syswarn(1, errno, "Failed read on archive volume %d", arvol);
 	else
-		paxwarn(0, "End of archive volume %d reached", arvol);
+		paxwarn(1, "End of archive volume %d reached", arvol);
 	return(res);
 }
 
