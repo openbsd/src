@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.39 2014/03/31 19:50:52 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.40 2014/05/21 15:55:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -111,7 +111,7 @@ void
 MBR_parse(struct disk *disk, struct dos_mbr *dos_mbr, off_t offset,
     off_t reloff, struct mbr *mbr)
 {
-	struct dos_partition dos_partition;
+	struct dos_partition dos_parts[NDOSPART];
 	int i;
 
 	memcpy(mbr->code, dos_mbr->dmbr_boot, sizeof(mbr->code));
@@ -119,12 +119,10 @@ MBR_parse(struct disk *disk, struct dos_mbr *dos_mbr, off_t offset,
 	mbr->reloffset = reloff;
 	mbr->signature = letoh16(dos_mbr->dmbr_sign);
 
-	for (i = 0; i < NDOSPART; i++) {
-		memcpy(&dos_partition, &dos_mbr->dmbr_parts[i],
-		    sizeof(dos_partition));
-		PRT_parse(disk, &dos_partition, offset, reloff,
-		    &mbr->part[i]);
-	}
+	memcpy(dos_parts, dos_mbr->dmbr_parts, sizeof(dos_parts));
+
+	for (i = 0; i < NDOSPART; i++)
+		PRT_parse(disk, &dos_parts[i], offset, reloff, &mbr->part[i]);
 }
 
 void
@@ -246,6 +244,7 @@ MBR_pcopy(struct disk *disk, struct mbr *mbr)
 {
 	int i, fd, error;
 	struct dos_mbr dos_mbr;
+	struct dos_partition dos_parts[NDOSPART];
 
 	fd = DISK_open(disk->name, O_RDONLY);
 	error = MBR_read(fd, 0, &dos_mbr);
@@ -254,6 +253,8 @@ MBR_pcopy(struct disk *disk, struct mbr *mbr)
 	if (error == -1)
 		return;
 
+	memcpy(dos_parts, dos_mbr.dmbr_parts, sizeof(dos_parts));
+
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(disk, &dos_mbr.dmbr_parts[i], 0, 0, &mbr->part[i]);
+		PRT_parse(disk, &dos_parts[i], 0, 0, &mbr->part[i]);
 }
