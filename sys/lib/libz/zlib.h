@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.9 2005/07/20 15:56:46 millert Exp $	*/
+/*	$OpenBSD: zlib.h,v 1.10 2014/05/21 02:20:18 mlarkin Exp $	*/
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.3, July 18th, 2005
 
@@ -271,7 +271,7 @@ ZEXTERN int ZEXPORT deflate OF((z_streamp strm, int flush));
   output buffer because there might be more output pending.
 
     Normally the parameter flush is set to Z_NO_FLUSH, which allows deflate to
-  decide how much data to accumualte before producing output, in order to
+  decide how much data to accumulate before producing output, in order to
   maximize compression.
 
     If the parameter flush is set to Z_SYNC_FLUSH, all pending output is
