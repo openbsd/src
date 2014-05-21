@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.34 2013/11/24 21:32:32 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.35 2014/05/21 18:38:42 pascal Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -482,13 +482,17 @@ void
 ldump(char *nfile, char *file, int copies)
 {
 	struct stat lbuf;
+	int ret;
 
 	putchar('\t');
 	if (copies > 1)
 		printf("%-2d copies of %-19s", copies, nfile);
 	else
 		printf("%-32s", nfile);
-	if (*file && !stat(file, &lbuf))
+	PRIV_START;
+	ret = stat(file, &lbuf);
+	PRIV_END;
+	if (*file && !ret)
 		printf(" %lld bytes", (long long)lbuf.st_size);
 	else
 		printf(" ??? bytes");
