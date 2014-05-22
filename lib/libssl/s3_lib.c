@@ -151,7 +151,6 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
-#include "kssl_lcl.h"
 #ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
 #include "../crypto/ec/ec_lcl.h"
