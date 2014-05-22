@@ -471,20 +471,24 @@ void CRYPTO_get_mem_debug_functions(
     void (**r)(void *, void *, int, const char *, int, int),
     void (**f)(void *, int), void (**so)(long), long (**go)(void));
 
-void *CRYPTO_malloc_locked(int num, const char *file, int line);
-void CRYPTO_free_locked(void *ptr);
-void *CRYPTO_malloc(int num, const char *file, int line);
-char *CRYPTO_strdup(const char *str, const char *file, int line);
-void CRYPTO_free(void *ptr);
-void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
+void *CRYPTO_malloc_locked(int num, const char *file, int line)
+    __attribute__((deprecated));
+void CRYPTO_free_locked(void *ptr) __attribute__((deprecated));
+void *CRYPTO_malloc(int num, const char *file, int line)
+    __attribute__((deprecated));
+char *CRYPTO_strdup(const char *str, const char *file, int line)
+    __attribute__((deprecated));
+void CRYPTO_free(void *ptr) __attribute__((deprecated));
+void *CRYPTO_realloc(void *addr, int num, const char *file, int line)
+    __attribute__((deprecated));
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num,
     const char *file, int line);
 void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);
 
 void OPENSSL_cleanse(void *ptr, size_t len);
 
-void CRYPTO_set_mem_debug_options(long bits);
-long CRYPTO_get_mem_debug_options(void);
+void CRYPTO_set_mem_debug_options(long bits) __attribute__((deprecated));
+long CRYPTO_get_mem_debug_options(void) __attribute__((deprecated));
 
 #define CRYPTO_push_info(info) \
         CRYPTO_push_info_(info, __FILE__, __LINE__);
