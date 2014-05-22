@@ -23,6 +23,7 @@
 #include <err.h>
 
 #include <openssl/asn1.h>
+#include "asn1_locl.h"		/* peek into the internals */
 
 #define	UNCHANGED	0xfedcba98
 
@@ -39,7 +40,8 @@ main(void)
 	unsigned char testbuf[] = "012345";
 	const unsigned char zerobuf[sizeof testbuf] = { 0 };
 	unsigned long value;
-	int i, j, k, l, ret;
+	unsigned int i, j, k, l;
+	int ret;
 
 	/*
 	 * First, verify UTF8_getc()
