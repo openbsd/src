@@ -61,18 +61,18 @@
 /* ASN1 print context structure */
 
 struct asn1_pctx_st
-	{
+{
 	unsigned long flags;
 	unsigned long nm_flags;
 	unsigned long cert_flags;
 	unsigned long oid_flags;
 	unsigned long str_flags;
-	} /* ASN1_PCTX */;
+} /* ASN1_PCTX */;
 
 /* ASN1 public key method structure */
 
 struct evp_pkey_asn1_method_st
-	{
+{
 	int pkey_id;
 	int pkey_base_id;
 	unsigned long pkey_flags;
@@ -123,7 +123,7 @@ struct evp_pkey_asn1_method_st
 				X509_ALGOR *alg1, X509_ALGOR *alg2, 
 				ASN1_BIT_STRING *sig);
 
-	} /* EVP_PKEY_ASN1_METHOD */;
+} /* EVP_PKEY_ASN1_METHOD */;
 
 /* Method to handle CRL access.
  * In general a CRL could be very large (several Mb) and can consume large
@@ -135,14 +135,14 @@ struct evp_pkey_asn1_method_st
 #define X509_CRL_METHOD_DYNAMIC		1
 
 struct x509_crl_method_st
-	{
+{
 	int flags;
 	int (*crl_init)(X509_CRL *crl);
 	int (*crl_free)(X509_CRL *crl);
 	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret,
 				ASN1_INTEGER *ser, X509_NAME *issuer);
 	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk);
-	};
+};
 
 /*
  * Unicode codepoint constants
@@ -154,3 +154,5 @@ struct x509_crl_method_st
 #define	UNICODE_IS_SURROGATE(x) \
 	((x) >= UNICODE_SURROGATE_MIN && (x) <= UNICODE_SURROGATE_MAX)
 
+int	UTF8_getc(const unsigned char *str, int len, unsigned long *val);
+int	UTF8_putc(unsigned char *str, int len, unsigned long value);
