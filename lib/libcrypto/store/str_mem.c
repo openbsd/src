@@ -333,7 +333,7 @@ static int mem_list_end(STORE *s, void *handle)
 		}
 	if (context && context->search_attributes)
 		sk_STORE_ATTR_INFO_free(context->search_attributes);
-	if (context) free(context);
+	free(context);
 	return 1;
 	}
 static int mem_list_endp(STORE *s, void *handle)

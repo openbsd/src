@@ -441,8 +441,7 @@ init_ctx(int *pkeysize,
 	}
 end:
 
-	if (passin)
-		free(passin);
+	free(passin);
 
 	return ctx;
 

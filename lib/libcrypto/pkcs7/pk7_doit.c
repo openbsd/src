@@ -190,8 +190,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 		EVP_PKEY_free(pkey);
 	if (pctx)
 		EVP_PKEY_CTX_free(pctx);
-	if (ek)
-		free(ek);
+	free(ek);
 	return ret;
 
 	}

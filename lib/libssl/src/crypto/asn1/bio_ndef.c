@@ -146,8 +146,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 err:
 	if (asn_bio)
 		BIO_free(asn_bio);
-	if (ndef_aux)
-		free(ndef_aux);
+	free(ndef_aux);
 	return NULL;
 }
 

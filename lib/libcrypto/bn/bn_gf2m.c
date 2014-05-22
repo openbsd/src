@@ -558,8 +558,7 @@ BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 	bn_check_top(r);
 
 err:
-	if (arr)
-		free(arr);
+	free(arr);
 	return ret;
 }
 
@@ -621,8 +620,7 @@ BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	bn_check_top(r);
 
 err:
-	if (arr)
-		free(arr);
+	free(arr);
 	return ret;
 }
 
@@ -1050,8 +1048,7 @@ BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 	bn_check_top(r);
 
 err:
-	if (arr)
-		free(arr);
+	free(arr);
 	return ret;
 }
 
@@ -1113,8 +1110,7 @@ BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	bn_check_top(r);
 
 err:
-	if (arr)
-		free(arr);
+	free(arr);
 	return ret;
 }
 
@@ -1249,8 +1245,7 @@ BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	bn_check_top(r);
 
 err:
-	if (arr)
-		free(arr);
+	free(arr);
 	return ret;
 }
 

@@ -507,10 +507,8 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 
 	ok = 1;
 
-err:	if (buffer_1)
-		free(buffer_1);
-	if (buffer_2)
-		free(buffer_2);
+err:	free(buffer_1);
+	free(buffer_2);
 	if (tmp_1)
 		BN_free(tmp_1);
 	if (tmp_2)
@@ -610,8 +608,7 @@ err:	if (!ok) {
 	}
 	if (tmp)
 		BN_free(tmp);
-	if (buffer)
-		free(buffer);
+	free(buffer);
 	return (ret);
 }
 
@@ -1134,8 +1131,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 	}
 	ok = 1;
 err:
-	if (buffer)
-		free(buffer);
+	free(buffer);
 	if (priv_key)
 		EC_PRIVATEKEY_free(priv_key);
 	return (ok ? ret : 0);

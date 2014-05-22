@@ -141,8 +141,7 @@ sk_new(int (*c)(const void *, const void *))
 	return (ret);
 
 err:
-	if (ret)
-		free(ret);
+	free(ret);
 	return (NULL);
 }
 

@@ -422,7 +422,7 @@ unsigned char *string_to_hex(const char *str, long *len)
 	return hexbuf;
 
 	err:
-	if(hexbuf) free(hexbuf);
+	free(hexbuf);
 	X509V3err(X509V3_F_STRING_TO_HEX,ERR_R_MALLOC_FAILURE);
 	return NULL;
 
@@ -623,8 +623,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 	return ret;
 
 	err:
-	if (iptmp)
-		free(iptmp);
+	free(iptmp);
 	if (ret)
 		ASN1_OCTET_STRING_free(ret);
 	return NULL;

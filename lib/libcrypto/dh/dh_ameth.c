@@ -167,8 +167,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 		return 1;
 
 	err:
-	if (penc)
-		free(penc);
+	free(penc);
 	if (pval)
 		ASN1_STRING_free(pval);
 

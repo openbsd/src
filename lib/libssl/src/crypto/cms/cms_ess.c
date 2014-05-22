@@ -156,8 +156,7 @@ int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr)
 	if (!r)
 		CMSerr(CMS_F_CMS_ADD1_RECEIPTREQUEST, ERR_R_MALLOC_FAILURE);
 
-	if (rrder)
-		free(rrder);
+	free(rrder);
 
 	return r;
 	

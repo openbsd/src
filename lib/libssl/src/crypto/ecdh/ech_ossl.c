@@ -204,6 +204,6 @@ err:
 	if (tmp) EC_POINT_free(tmp);
 	if (ctx) BN_CTX_end(ctx);
 	if (ctx) BN_CTX_free(ctx);
-	if (buf) free(buf);
+	free(buf);
 	return(ret);
 	}

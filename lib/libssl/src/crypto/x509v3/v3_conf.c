@@ -313,8 +313,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 err:
 	ASN1_OBJECT_free(obj);
 	M_ASN1_OCTET_STRING_free(oct);
-	if (ext_der)
-		free(ext_der);
+	free(ext_der);
 	return extension;
 }
 

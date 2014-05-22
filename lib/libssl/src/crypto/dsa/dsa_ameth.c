@@ -175,8 +175,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 		return 1;
 
 	err:
-	if (penc)
-		free(penc);
+	free(penc);
 	if (pval)
 		ASN1_STRING_free(pval);
 
@@ -580,8 +579,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 			goto err;
 		rv = 1;
 		err:
-		if (m)
-			free(m);
+		free(m);
 		DSA_SIG_free(dsa_sig);
 		return rv;
 		}

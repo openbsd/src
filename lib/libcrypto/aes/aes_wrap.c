@@ -164,10 +164,8 @@ AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
 	ret = 1;
 
 err:
-	if (otmp)
-		free(otmp);
-	if (ptmp)
-		free(ptmp);
+	free(otmp);
+	free(ptmp);
 
 	return ret;
 }

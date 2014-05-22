@@ -110,8 +110,7 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DH_PKEY_CTX *dctx = ctx->data;
-	if (dctx)
-		free(dctx);
+	free(dctx);
 	}
 
 static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)

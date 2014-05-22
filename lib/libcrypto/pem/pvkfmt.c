@@ -293,8 +293,7 @@ do_b2i_bio(BIO *in, int ispub)
 		ret = b2i_rsa(&p, length, bitlen, ispub);
 
 err:
-	if (buf)
-		free(buf);
+	free(buf);
 	return ret;
 }
 

@@ -128,8 +128,7 @@ err:
 		ASN1_OBJECT_free(pval);
 	else
 		ASN1_STRING_free(pval);
-	if (penc)
-		free(penc);
+	free(penc);
 	return 0;
 }
 

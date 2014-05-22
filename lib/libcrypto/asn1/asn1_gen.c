@@ -258,10 +258,8 @@ ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	ret = d2i_ASN1_TYPE(NULL, &cp, len);
 
 err:
-	if (orig_der)
-		free(orig_der);
-	if (new_der)
-		free(new_der);
+	free(orig_der);
+	free(new_der);
 
 	return ret;
 }

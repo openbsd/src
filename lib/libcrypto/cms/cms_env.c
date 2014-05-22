@@ -354,8 +354,7 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
 	err:
 	if (pctx)
 		EVP_PKEY_CTX_free(pctx);
-	if (ek)
-		free(ek);
+	free(ek);
 	return ret;
 
 	}

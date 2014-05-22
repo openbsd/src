@@ -444,8 +444,7 @@ skip:
 			    storage[i]->argl, storage[i]->argp);
 		}
 	}
-	if (storage)
-		free(storage);
+	free(storage);
 	return 1;
 }
 
@@ -489,8 +488,7 @@ skip:
 			    storage[i]->argl, storage[i]->argp);
 		CRYPTO_set_ex_data(to, i, ptr);
 	}
-	if (storage)
-		free(storage);
+	free(storage);
 	return 1;
 }
 
@@ -527,8 +525,7 @@ skip:
 			    storage[i]->argl, storage[i]->argp);
 		}
 	}
-	if (storage)
-		free(storage);
+	free(storage);
 	if (ad->sk) {
 		sk_void_free(ad->sk);
 		ad->sk = NULL;
