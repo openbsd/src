@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.169 2014/05/01 15:50:20 reyk Exp $	*/
+/*	$OpenBSD: lka.c,v 1.170 2014/05/22 20:31:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -62,7 +62,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct table		*table;
 	int			 ret;
 	struct pki		*pki;
-	struct iovec		iov[3];
+	struct iovec		iov[2];
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_smtp = NULL;
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_mta = NULL;
 	struct ca_vrfy_req_msg		*req_ca_vrfy_chain;
