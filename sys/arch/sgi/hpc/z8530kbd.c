@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.5 2014/01/26 17:48:07 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.6 2014/05/22 19:37:07 miod Exp $	*/
 /*	$NetBSD: zs_kbd.c,v 1.8 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
@@ -54,7 +54,8 @@
 #define ZSKBD_TXQ_LEN		16		/* power of 2 */
 #define ZSKBD_RXQ_LEN		64		/* power of 2 */
 
-#define ZSKBD_DIP_SYNC		0x6e
+#define ZSKBD_DIP_SYNC		0x6e		/* 110 */
+#define ZSKBD_INTL_KEY		0x6f		/* 111 */
 #define ZSKBD_KEY_UP		0x80
 #define ZSKBD_KEY_ALL_UP	0xf0
 
@@ -87,9 +88,8 @@ struct zskbd_devconfig {
 	u_int		rxq_head;
 	u_int		rxq_tail;
 
-	/* state */
-#define RX_DIP		0x1
-	u_int		state;
+	/* number of non-keystroke bytes expected */
+	int		expected;
 
 	/* keyboard configuration */
 #define ZSKBD_CTRL_A		0x0
@@ -133,8 +133,10 @@ void	zskbd_rxint(struct zs_chanstate *);
 void	zskbd_stint(struct zs_chanstate *, int);
 void	zskbd_txint(struct zs_chanstate *);
 void	zskbd_softint(struct zs_chanstate *);
-void	zskbd_send(struct zs_chanstate *, uint8_t *, u_int);
+int	zskbd_send(struct zs_chanstate *, uint8_t *, u_int);
+int	zskbd_poll(struct zs_chanstate *, uint8_t *);
 void	zskbd_ctrl(struct zs_chanstate *, uint8_t, uint8_t, uint8_t, uint8_t);
+void	zskbd_process(struct zs_chanstate *, uint8_t);
 
 void	zskbd_wskbd_input(struct zs_chanstate *, uint8_t);
 int	zskbd_wskbd_enable(void *, int);
@@ -201,7 +203,10 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	struct zsc_attach_args	       *args = aux;
 	struct zs_chanstate	       *cs;
 	struct wskbddev_attach_args	wskaa;
-	int				s, channel;
+	int				s, channel, rc;
+	uint8_t				key;
+
+	printf(": ");
 
 	/* Establish ourself with the MD z8530 driver */
 	channel = args->channel;
@@ -211,10 +216,6 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dc = malloc(sizeof(struct zskbd_devconfig), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	if (zskbd_is_console)
-		sc->sc_dc->enabled = 1;
-
-	printf("\n");
 
 	s = splzs();
 	zs_write_reg(cs, 9, (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET);
@@ -225,13 +226,56 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	zs_set_speed(cs, ZSKBD_BAUD);
 	zs_loadchannelregs(cs);
 
-	/* request DIP switch settings just in case */
-	zskbd_ctrl(cs, ZSKBD_CTRL_A_RCB, 0, 0, 0);
+	/*
+	 * Empty the keyboard input buffer (if the keyboard is the console
+	 * input device and the user invoked UKC, the `enter key up' event
+	 * will still be pending in the buffer).
+	 */
+	while ((zs_read_csr(cs) & ZSRR0_RX_READY) != 0)
+		(void)zs_read_data(cs);
 
-	/* disable key click by default */
+	/*
+	 * Ask the keyboard for its DIP switch settings. This will also let
+	 * us know whether the keyboard is connected.
+	 */
+	sc->sc_dc->expected = 2;
+	zskbd_ctrl(cs, ZSKBD_CTRL_A_RCB, 0, 0, 0);
+	while (sc->sc_dc->expected != 0) {
+		rc = zskbd_poll(cs, &key);
+		if (rc != 0) {
+			if (rc == ENXIO && sc->sc_dc->expected == 2) {
+				printf("no keyboard");
+				/*
+				 * Attach wskbd nevertheless, in case the
+				 * keyboard is plugged late.
+				 */
+				sc->sc_dc->expected = 0;
+				goto dip;
+			} else {
+				printf("i/o error\n");
+				return;
+			}
+		}
+
+		zskbd_process(cs, key);
+	}
+
+	printf("dip switches %02x", sc->sc_dc->dip);
+dip:
+
+	/*
+	 * Disable key click by default. Note that if the keyboard is not
+	 * currently connected, the bit will nevertheless stick and will
+	 * disable the click as soon as a keyboard led needs to be lit.
+	 */
 	zskbd_ctrl(cs, ZSKBD_CTRL_A_NOCLICK, 0, 0, 0);
 
 	splx(s);
+
+	printf("\n");
+
+	if (zskbd_is_console)
+		sc->sc_dc->enabled = 1;
 
 	/* attach wskbd */
 	wskaa.console =		zskbd_is_console;
@@ -298,50 +342,117 @@ zskbd_softint(struct zs_chanstate *cs)
 		splx(s);
 	}
 
-	/* don't bother if nobody is listening */
-	if (!dc->enabled) {
-		dc->rxq_head = dc->rxq_tail;
-		return;
-	}
-
 	/* handle incoming keystrokes/config */
 	while (dc->rxq_head != dc->rxq_tail) {
-		uint8_t key = dc->rxq[dc->rxq_head];
-
-		if (dc->state & RX_DIP) {
-			dc->dip = key;
-			dc->state &= ~RX_DIP;
-		} else if (key == ZSKBD_DIP_SYNC) {
-			dc->state |= RX_DIP;
-		} else {
-			/* toss wskbd a bone */
-			zskbd_wskbd_input(cs, key);
-		}
-
+		zskbd_process(cs, dc->rxq[dc->rxq_head]);
 		dc->rxq_head = (dc->rxq_head + 1) & ~ZSKBD_RXQ_LEN;
 	}
 }
 
-/* expects to be in splzs() */
 void
+zskbd_process(struct zs_chanstate *cs, uint8_t key)
+{
+	struct zskbd_softc *sc = cs->cs_private;
+	struct zskbd_devconfig *dc = sc->sc_dc;
+
+	switch (dc->expected) {
+	case 2:
+		if (key != ZSKBD_DIP_SYNC) {
+			/* only during attach, thus no device name prefix */
+			printf("unexpected configuration byte header"
+			    " (%02x), ", key);
+			/* transition state anyway */
+		}
+		dc->expected--;
+		break;
+	case 1:
+		dc->dip = key;
+		dc->expected--;
+		break;
+	case 0:
+		/*
+		 * The `international' key (only found in non-us layouts) is
+		 * supposed to be keycode 111, but is apparently 110 (same as
+		 * the status byte prefix) on some (all?) models.
+		 */
+		if (key == ZSKBD_DIP_SYNC)
+			key = ZSKBD_INTL_KEY;
+
+		/* toss wskbd a bone */
+		if (dc->enabled)
+			zskbd_wskbd_input(cs, key);
+		break;
+	}
+}
+
+/* expects to be in splzs() */
+int
 zskbd_send(struct zs_chanstate *cs, uint8_t *c, u_int len)
 {
 	struct zskbd_softc     *sc = cs->cs_private;
 	struct zskbd_devconfig *dc = sc->sc_dc;
-	u_int i = 0;
+	u_int i;
 	int rr0;
 
-	for (; i < len; i++) {
+	while (len != 0) {
 		rr0 = zs_read_csr(cs);
-		if ((rr0 & ZSRR0_TX_READY) == 0)
-			break;
-		zs_write_data(cs, c[i]);
+		if ((rr0 & ZSRR0_TX_READY) == 0) {
+			/*
+			 * poll until whole transmission complete during
+			 * autoconf
+			 */
+			if (cold) {
+				for (i = 1000; i != 0; i--) {
+					if ((rr0 & ZSRR0_TX_READY) != 0)
+						break;
+					delay(100);
+				}
+				if (i == 0)
+					return EIO;
+			} else
+				break;
+		}
+		zs_write_data(cs, *c++);
+		len--;
 	}
-	for (; i < len; i++) {
-		dc->txq[dc->txq_tail] = c[i];
+
+	/*
+	 * Enqueue any remaining bytes.
+	 */
+	while (len != 0) {
+		dc->txq[dc->txq_tail] = *c++;
 		dc->txq_tail = (dc->txq_tail + 1) & ~ZSKBD_TXQ_LEN;
+		len--;
 		cs->cs_softreq = 1;
 	}
+
+	return 0;
+}
+
+/* expects to be in splzs() */
+int
+zskbd_poll(struct zs_chanstate *cs, uint8_t *key)
+{
+	u_int i;
+	int rr0, rr1, c;
+
+	for (i = 1000; i != 0; i--) {
+		rr0 = zs_read_csr(cs);
+		if ((rr0 & ZSRR0_RX_READY) != 0)
+			break;
+		delay(100);
+	}
+	if (i == 0)
+		return ENXIO;
+
+	rr1 = zs_read_reg(cs, 1);
+	c = zs_read_data(cs);
+
+	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE))
+		return EIO;
+
+	*key = (uint8_t)c;
+	return 0;
 }
 
 /* expects to be in splzs() */
