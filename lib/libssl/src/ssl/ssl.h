@@ -143,8 +143,6 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
-#include <openssl/e_os2.h>
-
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif

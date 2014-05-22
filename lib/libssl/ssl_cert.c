@@ -121,7 +121,6 @@
 #include <dirent.h>
 
 #include <openssl/opensslconf.h>
-#include <openssl/e_os2.h>
 #include <openssl/objects.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
