@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.68 2014/03/19 04:17:33 guenther Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.69 2014/05/22 02:02:39 guenther Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ ffs_update(struct inode *ip, int waitfor)
 	vp = ITOV(ip);
 	ufs_itimes(vp);
 
-	if ((ip->i_flag & IN_MODIFIED) == 0 && waitfor != MNT_WAIT)
+	if ((ip->i_flag & IN_MODIFIED) == 0 && waitfor == 0)
 		return (0);
 
 	ip->i_flag &= ~(IN_MODIFIED | IN_LAZYMOD);
@@ -165,7 +165,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		memset(SHORTLINK(oip), 0, (size_t) DIP(oip, size));
 		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (UFS_UPDATE(oip, MNT_WAIT));
+		return (UFS_UPDATE(oip, 1));
 	}
 
 	if ((error = getinoquota(oip)) != 0)
@@ -224,7 +224,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (UFS_UPDATE(oip, MNT_WAIT));
+		return (UFS_UPDATE(oip, 1));
 	}
 	uvm_vnp_setsize(ovp, length);
 
@@ -304,7 +304,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	}
 
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = UFS_UPDATE(oip, MNT_WAIT)) != 0)
+	if ((error = UFS_UPDATE(oip, 1)) != 0)
 		allerror = error;
 
 	/*
