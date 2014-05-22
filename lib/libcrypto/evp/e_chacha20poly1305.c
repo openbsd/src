@@ -85,7 +85,7 @@ aead_chacha20_poly1305_init(EVP_AEAD_CTX *ctx, const unsigned char *key,
 	if (key_len != sizeof(c20_ctx->key))
 		return 0;  /* internal error - EVP_AEAD_CTX_init should catch this. */
 
-	c20_ctx = OPENSSL_malloc(sizeof(struct aead_chacha20_poly1305_ctx));
+	c20_ctx = malloc(sizeof(struct aead_chacha20_poly1305_ctx));
 	if (c20_ctx == NULL)
 		return 0;
 
@@ -101,7 +101,7 @@ aead_chacha20_poly1305_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
 	OPENSSL_cleanse(c20_ctx->key, sizeof(c20_ctx->key));
-	OPENSSL_free(c20_ctx);
+	free(c20_ctx);
 }
 
 static void

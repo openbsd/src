@@ -1294,7 +1294,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 		return 0;
 	}
 
-	gcm_ctx = OPENSSL_malloc(sizeof(struct aead_aes_gcm_ctx));
+	gcm_ctx = malloc(sizeof(struct aead_aes_gcm_ctx));
 	if (gcm_ctx == NULL)
 		return 0;
 
@@ -1321,7 +1321,7 @@ aead_aes_gcm_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_aes_gcm_ctx *gcm_ctx = ctx->aead_state;
 
-	OPENSSL_free(gcm_ctx);
+	free(gcm_ctx);
 }
 
 static ssize_t
