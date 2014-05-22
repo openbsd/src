@@ -57,7 +57,9 @@
  *
  */
 
+#include <stdlib.h>
 #include <string.h>
+
 #include "pqueue.h"
 
 typedef struct _pqueue {

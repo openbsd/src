@@ -121,6 +121,8 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 
+#include "pqueue.h"
+
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int
 satsub64be(const unsigned char *v1, const unsigned char *v2)

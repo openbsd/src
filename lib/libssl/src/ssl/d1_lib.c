@@ -64,6 +64,8 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
+
+#include "pqueue.h"
 #include "ssl_locl.h"
 
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;

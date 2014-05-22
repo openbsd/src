@@ -60,10 +60,6 @@
 #ifndef HEADER_PQUEUE_H
 #define HEADER_PQUEUE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 typedef struct _pqueue *pqueue;
 
 typedef struct _pitem {

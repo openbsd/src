@@ -123,6 +123,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+#include "pqueue.h"
+
 #define RSMBLY_BITMASK_SIZE(msg_len) (((msg_len) + 7) / 8)
 
 #define RSMBLY_BITMASK_MARK(bitmask, start, end) { \
