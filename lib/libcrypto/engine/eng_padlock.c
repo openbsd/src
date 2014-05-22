@@ -1088,9 +1088,9 @@ static RAND_METHOD padlock_rand = {
 
 #else  /* !COMPILE_HW_PADLOCK */
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
-OPENSSL_EXPORT
+extern
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
-OPENSSL_EXPORT
+extern
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 IMPLEMENT_DYNAMIC_CHECK_FN()
 #endif
