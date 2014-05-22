@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.42 2014/05/20 21:11:16 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.43 2014/05/22 02:15:54 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -364,7 +364,7 @@ dirindir(ufsino_t ino, daddr_t blkno, int ind_level, off_t *filesizep,
     const char *path)
 {
 	int i;
-	void *idblk; 
+	void *idblk;
 
 	if ((idblk = malloc(sblock->fs_bsize)) == NULL)
 		errx(1, "dirindir: cannot allocate indirect memory.\n");
