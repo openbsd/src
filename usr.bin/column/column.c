@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.18 2014/05/17 20:05:07 espie Exp $	*/
+/*	$OpenBSD: column.c,v 1.19 2014/05/22 19:50:34 millert Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -206,12 +206,12 @@ maketbl(void)
 	TBL *t;
 	int coloff, cnt;
 	char *p, **lp;
-	int *lens, maxcols;
+	int *lens, maxcols = DEFCOLS;
 	TBL *tbl;
 	char **cols;
 
 	t = tbl = ecalloc(entries, sizeof(TBL));
-	cols = ecalloc((maxcols = DEFCOLS), sizeof(char *));
+	cols = ereallocarray(NULL, maxcols, sizeof(char *));
 	lens = ecalloc(maxcols, sizeof(int));
 	for (cnt = 0, lp = list; cnt < entries; ++cnt, ++lp, ++t) {
 		for (coloff = 0, p = *lp; (cols[coloff] = strtok(p, separator));
@@ -243,6 +243,7 @@ maketbl(void)
 			(void)printf("%s\n", t->list[coloff]);
 		}
 	}
+	free(tbl);
 	free(lens);
 	free(cols);
 }
@@ -253,12 +254,12 @@ maketbl(void)
 void
 input(FILE *fp)
 {
-	static size_t maxentry;
+	static size_t maxentry = DEFNUM;
 	int len;
 	char *p, buf[MAXLINELEN];
 
 	if (!list)
-		list = ecalloc((maxentry = DEFNUM), sizeof(char *));
+		list = ecalloc(maxentry, sizeof(char *));
 	while (fgets(buf, MAXLINELEN, fp)) {
 		for (p = buf; isspace((unsigned char)*p); ++p);
 		if (!*p)
@@ -275,6 +276,7 @@ input(FILE *fp)
 		if (entries == maxentry) {
 			maxentry += DEFNUM;
 			list = ereallocarray(list, maxentry, sizeof(char *));
+			memset(list + entries, 0, DEFNUM * sizeof(char *));
 		}
 		if (!(list[entries++] = strdup(buf)))
 			err(1, NULL);
