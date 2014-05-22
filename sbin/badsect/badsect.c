@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.23 2014/05/21 16:32:08 krw Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.24 2014/05/22 14:38:48 krw Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ static union {
 static struct	fs *fs;
 static int	fsi;
 static int	errs;
-static long	dev_bsize = 1;
 
 int
 main(int argc, char *argv[])
@@ -124,7 +123,6 @@ main(int argc, char *argv[])
 
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
-	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
 		number = strtonum(*argv, 0, QUAD_MAX, NULL);
 		if (chkuse(number, 1))
@@ -185,14 +183,7 @@ chkuse(daddr_t blkno, int cnt)
 static void
 rdfs(daddr_t bno, int size, char *bf)
 {
-	int n;
-
-	if (lseek(fsi, (off_t)bno * dev_bsize, SEEK_SET) < 0) {
-		fprintf(stderr, "seek error: %lld\n", (long long)bno);
-		err(1, "rdfs");
-	}
-	n = read(fsi, bf, size);
-	if (n != size) {
+	if (pread(fsi, bf, size, bno * DEV_BSIZE) != size) {
 		fprintf(stderr, "read error: %lld\n", (long long)bno);
 		err(1, "rdfs");
 	}
