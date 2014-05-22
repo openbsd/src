@@ -58,9 +58,7 @@
 
 #include "cryptlib.h"
 
-#if defined(OPENSSL_SYS_UNIX)
 #include <sys/time.h>
-#endif
 
 #include <openssl/objects.h>
 #include <openssl/ts.h>
@@ -110,8 +108,6 @@ err:
 	return NULL;
 }
 
-#if defined(OPENSSL_SYS_UNIX)
-
 /* Use the gettimeofday function call. */
 static int
 def_time_cb(struct TS_resp_ctx *ctx, void *data, long *sec, long *usec)
@@ -131,30 +127,6 @@ def_time_cb(struct TS_resp_ctx *ctx, void *data, long *sec, long *usec)
 
 	return 1;
 }
-
-#else
-
-/* Use the time function call that provides only seconds precision. */
-static int
-def_time_cb(struct TS_resp_ctx *ctx, void *data, long *sec, long *usec)
-{
-	time_t t;
-
-	if (time(&t) == (time_t) - 1) {
-		TSerr(TS_F_DEF_TIME_CB, TS_R_TIME_SYSCALL_ERROR);
-		TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
-		    "Time is not available.");
-		TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
-		return 0;
-	}
-	/* Return time to caller, only second precision. */
-	*sec = (long) t;
-	*usec = 0;
-
-	return 1;
-}
-
-#endif
 
 static int
 def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext, void *data)
