@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.20 2014/05/20 21:11:16 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.21 2014/05/22 14:04:41 krw Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ flush(int fd, struct bufarea *bp)
 		return;
 	if (bp->b_errs != 0)
 		pfatal("WRITING %sZERO'ED BLOCK %d TO DISK\n",
-		    (bp->b_errs == bp->b_size / dev_bsize) ? "" : "PARTIALLY ",
+		    (bp->b_errs == bp->b_size / DEV_BSIZE) ? "" : "PARTIALLY ",
 		    bp->b_bno);
 	bp->b_dirty = 0;
 	bp->b_errs = 0;
@@ -237,9 +237,9 @@ ckfini(int markclean)
 		return;
 	}
 	flush(fswritefd, &sblk);
-	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
+	if (havesb && sblk.b_bno != SBOFF / DEV_BSIZE &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCKS")) {
-		sblk.b_bno = SBOFF / dev_bsize;
+		sblk.b_bno = SBOFF / DEV_BSIZE;
 		sbdirty();
 		flush(fswritefd, &sblk);
 		copyback_sb(&asblk);
@@ -285,7 +285,7 @@ bread(int fd, char *buf, daddr32_t blk, long size)
 	off_t offset;
 
 	offset = blk;
-	offset *= dev_bsize;
+	offset *= DEV_BSIZE;
 	if (pread(fd, buf, size, offset) == size)
 		return (0);
 	rwerror("READ", blk);
@@ -294,12 +294,12 @@ bread(int fd, char *buf, daddr32_t blk, long size)
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
 		if (pread(fd, cp, secsize, offset + i) != secsize) {
-			if (secsize != dev_bsize && dev_bsize != 1)
+			if (secsize != DEV_BSIZE)
 				printf(" %ld (%ld),",
-				    (blk * dev_bsize + i) / secsize,
-				    blk + i / dev_bsize);
+				    (blk * DEV_BSIZE + i) / secsize,
+				    blk + i / DEV_BSIZE);
 			else
-				printf(" %ld,", blk + i / dev_bsize);
+				printf(" %ld,", blk + i / DEV_BSIZE);
 			errs++;
 		}
 	}
@@ -317,16 +317,16 @@ bwrite(int fd, char *buf, daddr32_t blk, long size)
 	if (fd < 0)
 		return;
 	offset = blk;
-	offset *= dev_bsize;
+	offset *= DEV_BSIZE;
 	if (pwrite(fd, buf, size, offset) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
-	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
-		if (pwrite(fd, cp, dev_bsize, offset + i) != dev_bsize) {
-			printf(" %ld,", blk + i / dev_bsize);
+	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize)
+		if (pwrite(fd, cp, secsize, offset + i) != secsize) {
+			printf(" %ld,", blk + i / DEV_BSIZE);
 		}
 	printf("\n");
 	return;

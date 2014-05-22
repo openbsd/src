@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.19 2013/11/22 04:38:02 guenther Exp $	*/
+/*	$OpenBSD: setup.c,v 1.20 2014/05/22 14:04:41 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -107,9 +107,9 @@ setup(char *dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
 	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
-		dev_bsize = secsize = lp->d_secsize;
+		secsize = lp->d_secsize;
 	else
-		dev_bsize = secsize = DEV_BSIZE;
+		secsize = DEV_BSIZE;
 	/*
 	 * Read in the superblock, looking for alternates if necessary
 	 */
@@ -253,7 +253,7 @@ badsblabel:
 static int
 readsb(int listerr)
 {
-	daddr32_t super = bflag ? bflag : SBOFF / dev_bsize;
+	daddr32_t super = bflag ? bflag : SBOFF / DEV_BSIZE;
 
 	if (bread(fsreadfd, (char *)sblk.b_un.b_fs, super, (long)SBSIZE) != 0)
 		return (0);
@@ -294,9 +294,7 @@ readsb(int listerr)
 	 * according to fsbtodb, and adjust superblock block number
 	 * so we can tell if this is an alternate later.
 	 */
-	super *= dev_bsize;
-	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
-	sblk.b_bno = super / dev_bsize;
+	sblk.b_bno = super / DEV_BSIZE;
 
 	if (sblock.e2fs_ncg == 1) {
 		/* no alternate superblock; assume it's okey */
