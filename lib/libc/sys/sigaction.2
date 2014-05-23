@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.54 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: sigaction.2,v 1.55 2014/05/23 15:37:23 millert Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: May 23 2014 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -671,6 +671,10 @@ except when used with floating-point arguments or directives,
 but are probably unsafe on other systems:
 .Pp
 .Bl -tag -offset indent -compact -width foofoofoofoo
+.It Fn dprintf
+Safe.
+.It Fn vdprintf
+Safe.
 .It Fn snprintf
 Safe.
 .It Fn vsnprintf
