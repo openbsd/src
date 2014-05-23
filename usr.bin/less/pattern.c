@@ -306,6 +306,11 @@ match_pattern(pattern, tpattern, line, line_len, sp, ep, notbol, search_type)
 	{
 		regmatch_t rm;
 		int flags = (notbol) ? REG_NOTBOL : 0;
+#ifdef REG_STARTEND
+		flags |= REG_STARTEND;
+		rm.rm_so = 0;
+		rm.rm_eo = line_len;
+#endif
 		matched = !regexec(spattern, line, 1, &rm, flags);
 		if (matched)
 		{
