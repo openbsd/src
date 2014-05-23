@@ -111,6 +111,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/times.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -2215,13 +2216,6 @@ next_protos_parse(unsigned short *outlen, const char *in)
 #endif				/* !OPENSSL_NO_TLSEXT &&
 				 * !OPENSSL_NO_NEXTPROTONEG */
 
-/*
- * Platform-specific sections
- */
-
-/* app_tminterval section */
-#include <sys/times.h>
-
 double
 app_tminterval(int stop, int usertime)
 {
@@ -2242,7 +2236,6 @@ app_tminterval(int stop, int usertime)
 
 	return (ret);
 }
-
 
 int
 app_isdir(const char *name)
