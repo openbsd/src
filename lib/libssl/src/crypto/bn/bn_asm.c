@@ -888,7 +888,6 @@ bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 
 #ifdef OPENSSL_NO_ASM
 #ifdef OPENSSL_BN_ASM_MONT
-#include <alloca.h>
 /*
  * This is essentially reference implementation, which may or may not
  * result in performance improvement. E.g. on IA-32 this routine was
@@ -909,14 +908,15 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG
 #ifdef mul64
 	BN_ULONG mh;
 #endif
-	volatile BN_ULONG *vp;
 	int i = 0, j;
 
 #if 0	/* template for platform-specific implementation */
 	if (ap == bp)
 		return bn_sqr_mont(rp, ap, np, n0p, num);
 #endif
-	vp = tp = alloca((num + 2)*sizeof(BN_ULONG));
+	tp = reallocarray(NULL, num + 2, sizeof(BN_ULONG));
+	if (tp == NULL)
+		return 0;
 
 	n0 = *n0p;
 
@@ -979,15 +979,13 @@ enter:
 	if (tp[num] != 0 || tp[num - 1] >= np[num - 1]) {
 		c0 = bn_sub_words(rp, tp, np, num);
 		if (tp[num] != 0 || c0 == 0) {
-			for (i = 0; i < num + 2; i++)
-				vp[i] = 0;
-			return 1;
+			goto out;
 		}
 	}
-	for (i = 0; i < num; i++)
-		rp[i] = tp[i],	vp[i] = 0;
-	vp[num] = 0;
-	vp[num + 1] = 0;
+	memcpy(rp, tp, num * sizeof(BN_ULONG));
+out:
+	explicit_bzero(tp, (num + 2) * sizeof(BN_ULONG));
+	free(tp);
 	return 1;
 }
 #else
@@ -1045,19 +1043,16 @@ bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 
 #ifdef OPENSSL_NO_ASM
 #ifdef OPENSSL_BN_ASM_MONT
-#include <alloca.h>
 int
 bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, const BN_ULONG *n0p, int num)
 {
 	BN_ULONG c0, c1, *tp, n0 = *n0p;
-	volatile BN_ULONG *vp;
 	int i = 0, j;
 
-	vp = tp = alloca((num + 2) * sizeof(BN_ULONG));
-
-	for(i = 0; i <= num; i++)
-		tp[i] = 0;
+	tp = calloc(NULL, num + 2, sizeof(BN_ULONG));
+	if (tp == NULL)
+		return 0;
 
 	for (i = 0; i < num; i++) {
 		c0 = bn_mul_add_words(tp, ap, num, bp[i]);
@@ -1076,15 +1071,13 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 	if (tp[num] != 0 || tp[num - 1] >= np[num - 1]) {
 		c0 = bn_sub_words(rp, tp, np, num);
 		if (tp[num] != 0 || c0 == 0) {
-			for (i = 0; i < num + 2; i++)
-				vp[i] = 0;
-			return 1;
+			goto out;
 		}
 	}
-	for (i = 0; i < num; i++)
-		rp[i] = tp[i], vp[i] = 0;
-	vp[num] = 0;
-	vp[num + 1] = 0;
+	memcpy(rp, tp, num * sizeof(BN_ULONG));
+out:
+	explicit_bzero(tp, (num + 2) * sizeof(BN_ULONG));
+	free(tp);
 	return 1;
 }
 #else

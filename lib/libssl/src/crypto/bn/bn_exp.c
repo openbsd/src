@@ -114,11 +114,6 @@
 #include "bn_lcl.h"
 
 #include <stdlib.h>
-#if defined(__GNUC__)
-# ifndef alloca
-#  define alloca(s) __builtin_alloca((s))
-# endif
-#endif
 
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32
@@ -632,23 +627,12 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	numPowers = 1 << window;
 	powerbufLen = sizeof(m->d[0]) * (top * numPowers +
 	    ((2*top) > numPowers ? (2*top) : numPowers));
-#ifdef alloca
-	if (powerbufLen < 3072)
-		powerbufFree = alloca(powerbufLen +
-		    MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
-	else
-#endif
 	if ((powerbufFree = (unsigned char*)malloc(powerbufLen +
 	    MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
 		goto err;
 
 	powerbuf = MOD_EXP_CTIME_ALIGN(powerbufFree);
 	memset(powerbuf, 0, powerbufLen);
-
-#ifdef alloca
-	if (powerbufLen < 3072)
-		powerbufFree = NULL;
-#endif
 
 	/* lay down tmp and am right after powers table */
 	tmp.d = (BN_ULONG *)(powerbuf + sizeof(m->d[0]) * top * numPowers);
