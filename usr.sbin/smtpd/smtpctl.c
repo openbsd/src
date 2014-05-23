@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.120 2014/05/20 18:47:01 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.121 2014/05/23 13:28:32 espie Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -317,9 +317,10 @@ srv_iter_evpids(uint32_t msgid, uint64_t *evpid, int *offset)
 		while (srv_iter_envelopes(msgid, &evp)) {
 			if (n == alloc) {
 				alloc += 256;
-				evpids = realloc(evpids, alloc * sizeof(*evpids));
+				evpids = reallocarray(evpids, alloc,
+				    sizeof(*evpids));
 				if (evpids == NULL)
-					err(1, "realloc");
+					err(1, "reallocarray");
 			}
 			evpids[n++] = evp.id;
 		}
