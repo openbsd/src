@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.20 2014/05/07 12:37:04 schwarze Exp $	*/
+/*	$OpenBSD: ln.c,v 1.21 2014/05/23 04:38:57 guenther Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -124,8 +124,7 @@ linkit(char *target, char *source, int isdir)
 		}
 		/* Only symbolic links to directories. */
 		if (S_ISDIR(sb.st_mode)) {
-			errno = EISDIR;
-			warn("%s", target);
+			warnc(EISDIR, "%s", target);
 			return (1);
 		}
 	}
@@ -140,8 +139,7 @@ linkit(char *target, char *source, int isdir)
 		}
 		n = snprintf(path, sizeof(path), "%s/%s", source, p);
 		if (n < 0 || n >= sizeof(path)) {
-			errno = ENAMETOOLONG;
-			warn("%s/%s", source, p);
+			warnc(ENAMETOOLONG, "%s/%s", source, p);
 			return (1);
 		}
 		source = path;
