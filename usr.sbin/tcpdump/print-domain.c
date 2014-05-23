@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.18 2010/11/04 17:37:05 canacar Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.19 2014/05/23 20:36:04 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -663,9 +663,10 @@ ns_print(register const u_char *bp, u_int length, int is_mdns)
 		    DNS_RD(np) ? "+" : "",
 		    DNS_CD(np) ? "%" : "");
 
-		/* any weirdness? */
+		/* any weirdness? AA is expected in NOTIFY. */
 		b2 = EXTRACT_16BITS(((u_short *)np)+1);
-		if (b2 & 0x6cf)
+		if ((b2 & 0x6cf) !=
+		    (DNS_OPCODE(np) == NS_NOTIFY_OP ? htons(0x400) : 0))
 			printf(" [b2&3=0x%x]", b2);
 
 		if (DNS_OPCODE(np) == IQUERY) {

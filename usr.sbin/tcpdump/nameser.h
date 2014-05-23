@@ -1,4 +1,4 @@
-/* @(#) $Id: nameser.h,v 1.6 2010/11/04 17:37:05 canacar Exp $ (LBL) */
+/* @(#) $Id: nameser.h,v 1.7 2014/05/23 20:36:04 sthen Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,8 @@
 #if 0
 #define xxx		0x3		/* 0x3 reserved */
 #endif
+#define NS_NOTIFY_OP	0x4		/* notify secondary of SOA change */
+
 	/* non standard - supports ALLOW_UPDATES stuff from Mike Schwartz */
 #define UPDATEA		0x9		/* add resource record */
 #define UPDATED		0xa		/* delete a specific resource record */
