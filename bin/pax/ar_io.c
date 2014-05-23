@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.46 2014/05/23 19:47:49 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.47 2014/05/23 21:58:26 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -571,7 +571,7 @@ ar_read(char *buf, int cnt)
 	if (res < 0)
 		syswarn(1, errno, "Failed read on archive volume %d", arvol);
 	else
-		paxwarn(1, "End of archive volume %d reached", arvol);
+		paxwarn(0, "End of archive volume %d reached", arvol);
 	return(res);
 }
 
