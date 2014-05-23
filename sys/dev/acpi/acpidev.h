@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.33 2012/07/13 10:37:40 pirofti Exp $ */
+/* $OpenBSD: acpidev.h,v 1.34 2014/05/23 19:17:39 landry Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -278,7 +278,7 @@ struct acpibat_softc {
 	struct acpibat_bst	sc_bst;
 	volatile int		sc_bat_present;
 
-	struct ksensor		sc_sens[8];
+	struct ksensor		sc_sens[9];
 	struct ksensordev	sc_sensdev;
 };
 

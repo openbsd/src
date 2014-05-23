@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.59 2011/10/16 11:59:21 kettenis Exp $ */
+/* $OpenBSD: acpibat.c,v 1.60 2014/05/23 19:17:39 landry Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -163,6 +163,12 @@ acpibat_monitor(struct acpibat_softc *sc)
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[7]);
 	sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
 
+	strlcpy(sc->sc_sens[8].desc, "design capacity",
+	    sizeof(sc->sc_sens[8].desc));
+	sc->sc_sens[8].type = type;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[8]);
+	sc->sc_sens[8].value = sc->sc_bif.bif_capacity * 1000;
+
 	sensordev_install(&sc->sc_sensdev);
 }
 
@@ -176,7 +182,7 @@ acpibat_refresh(void *arg)
 	    sc->sc_devnode->name);
 
 	if (!sc->sc_bat_present) {
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < 9; i++) {
 			sc->sc_sens[i].value = 0;
 			sc->sc_sens[i].status = SENSOR_S_UNSPEC;
 			sc->sc_sens[i].flags = SENSOR_FINVALID;
@@ -273,6 +279,16 @@ acpibat_refresh(void *arg)
 		sc->sc_sens[7].value = sc->sc_bst.bst_voltage * 1000;
 		sc->sc_sens[7].status = SENSOR_S_UNSPEC;
 		sc->sc_sens[7].flags = 0;
+	}
+
+	if (sc->sc_bif.bif_capacity == BIF_UNKNOWN) {
+		sc->sc_sens[8].value = 0;
+		sc->sc_sens[8].status = SENSOR_S_UNKNOWN;
+		sc->sc_sens[8].flags = SENSOR_FUNKNOWN;
+	} else {
+		sc->sc_sens[8].value = sc->sc_bif.bif_capacity * 1000;
+		sc->sc_sens[8].status = SENSOR_S_UNSPEC;
+		sc->sc_sens[8].flags = 0;
 	}
 	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
