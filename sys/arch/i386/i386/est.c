@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.41 2014/05/10 18:59:29 guenther Exp $ */
+/*	$OpenBSD: est.c,v 1.42 2014/05/23 03:30:41 guenther Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1177,12 +1177,12 @@ est_init(struct cpu_info *ci, int vendor)
 		return;
 
 	if (est_fqlist->n < 2)
-		return;
+		goto nospeedstep;
 
 	low = est_fqlist->table[est_fqlist->n - 1].mhz;
 	high = est_fqlist->table[0].mhz;
 	if (low == high)
-		return;
+		goto nospeedstep;
 
 	perflevel = (cpuspeed - low) * 100 / (high - low);
 
@@ -1198,6 +1198,16 @@ est_init(struct cpu_info *ci, int vendor)
 
 	cpu_setperf = est_setperf;
 	setperf_prio = 3;
+
+	return;
+
+nospeedstep:
+	/*
+	 * While est_fqlist can point into the static est_cpus[],
+	 * it can't fail in that case and therefore can't reach here.
+	 */
+	free(est_fqlist->table, M_DEVBUF);
+	free(est_fqlist, M_DEVBUF);
 }
 
 void
