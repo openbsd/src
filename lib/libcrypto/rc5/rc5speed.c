@@ -59,77 +59,30 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX)
-#define TIMES
-#endif
-
-#include <stdio.h>
-
-#include <openssl/e_os2.h>
-#include <unistd.h>
-
-#ifndef OPENSSL_SYS_NETWARE
-#include <signal.h>
-#endif
-
-#ifndef _IRIX
-#include <time.h>
-#endif
-#ifdef TIMES
 #include <sys/types.h>
 #include <sys/times.h>
-#endif
 
-/* Depending on the VMS version, the tms structure is perhaps defined.
-   The __TMS macro will show if it was.  If it wasn't defined, we should
-   undefine TIMES, since that tells the rest of the program how things
-   should be handled.				-- Richard Levitte */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
-#undef TIMES
-#endif
-
-#ifndef TIMES
-#include <sys/timeb.h>
-#endif
-
-#if defined(sun) || defined(__ultrix)
-#define _POSIX_SOURCE
-#include <limits.h>
-#include <sys/param.h>
-#endif
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <openssl/rc5.h>
 
-/* The following if from times(3) man page.  It may need to be changed */
-#ifndef HZ
-#ifndef CLK_TCK
-#define HZ	100.0
-#else /* CLK_TCK */
 #define HZ ((double)CLK_TCK)
-#endif
-#endif
 
 #define BUFSIZE	((long)1024)
 long run=0;
 
 double Time_F(int s);
-#ifdef SIGALRM
-#if defined(__STDC__) || defined(sgi) || defined(_AIX)
-#define SIGRETTYPE void
-#else
-#define SIGRETTYPE int
-#endif
 
-SIGRETTYPE sig_done(int sig);
-SIGRETTYPE sig_done(int sig)
+void sig_done(int sig);
+void sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);
 	run=0;
-#ifdef LINT
-	sig=sig;
-#endif
 	}
-#endif
 
 #define START	0
 #define STOP	1
@@ -137,7 +90,6 @@ SIGRETTYPE sig_done(int sig)
 double Time_F(int s)
 	{
 	double ret;
-#ifdef TIMES
 	static struct tms tstart,tend;
 
 	if (s == START)
@@ -151,23 +103,6 @@ double Time_F(int s)
 		ret=((double)(tend.tms_utime-tstart.tms_utime))/HZ;
 		return((ret == 0.0)?1e-6:ret);
 		}
-#else /* !times() */
-	static struct timeb tstart,tend;
-	long i;
-
-	if (s == START)
-		{
-		ftime(&tstart);
-		return(0);
-		}
-	else
-		{
-		ftime(&tend);
-		i=(long)tend.millitm-(long)tstart.millitm;
-		ret=((double)(tend.time-tstart.time))+((double)i)/1e3;
-		return((ret == 0.0)?1e-6:ret);
-		}
-#endif
 	}
 
 int main(int argc, char **argv)
@@ -229,12 +164,9 @@ int main(int argc, char **argv)
 	printf("%ld RC5_32_set_key's in %.2f seconds\n",count,d);
 	a=((double)COUNT(ca))/d;
 
-#ifdef SIGALRM
 	printf("Doing RC5_32_encrypt's for 10 seconds\n");
 	alarm(10);
-#else
-	printf("Doing RC5_32_encrypt %ld times\n",cb);
-#endif
+
 	Time_F(START);
 	for (count=0,run=1; COND(cb); count+=4)
 		{
@@ -249,14 +181,10 @@ int main(int argc, char **argv)
 	printf("%ld RC5_32_encrypt's in %.2f second\n",count,d);
 	b=((double)COUNT(cb)*8)/d;
 
-#ifdef SIGALRM
 	printf("Doing RC5_32_cbc_encrypt on %ld byte blocks for 10 seconds\n",
 		BUFSIZE);
 	alarm(10);
-#else
-	printf("Doing RC5_32_cbc_encrypt %ld times on %ld byte blocks\n",cc,
-		BUFSIZE);
-#endif
+
 	Time_F(START);
 	for (count=0,run=1; COND(cc); count++)
 		RC5_32_cbc_encrypt(buf,buf,BUFSIZE,&sch,
@@ -270,7 +198,4 @@ int main(int argc, char **argv)
 	printf("RC5_32/12/16 raw ecb bytes per sec = %12.2f (%9.3fuS)\n",b,8.0e6/b);
 	printf("RC5_32/12/16 cbc     bytes per sec = %12.2f (%9.3fuS)\n",c,8.0e6/c);
 	exit(0);
-#if defined(LINT) || defined(OPENSSL_SYS_MSDOS)
-	return(0);
-#endif
 	}
