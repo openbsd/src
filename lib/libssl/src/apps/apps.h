@@ -112,8 +112,6 @@
 #ifndef HEADER_APPS_H
 #define HEADER_APPS_H
 
-#include <signal.h>
-
 #include <openssl/bio.h>
 #include <openssl/conf.h>
 #include <openssl/e_os2.h>
