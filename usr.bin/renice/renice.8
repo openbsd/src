@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.22 2010/09/29 07:44:56 jmc Exp $
+.\"	$OpenBSD: renice.8,v 1.23 2014/05/23 06:40:57 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: May 23 2014 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -128,14 +128,11 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except the way in which processes are specified differs.
 .Pp
 The historical behavior of passing the increment as the first
 argument is supported for backwards compatibility.
-.Pp
-The arguments to flags
-.Op Fl gpu
-are extensions to that specification.
 .Sh HISTORY
 The
 .Nm
