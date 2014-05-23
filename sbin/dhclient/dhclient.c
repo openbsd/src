@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.309 2014/05/19 10:42:08 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.310 2014/05/23 15:26:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
 	saved_argv = argv;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
 	while ((ch = getopt(argc, argv, "c:di:l:L:qu")) != -1)
