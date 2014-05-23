@@ -94,8 +94,6 @@ ciphers_main(int argc, char **argv)
 
 	meth = SSLv3_server_method();
 
-	signal(SIGPIPE, SIG_IGN);
-
 	STDout = BIO_new_fp(stdout, BIO_NOCLOSE);
 	if (!load_config(bio_err, NULL))
 		goto end;

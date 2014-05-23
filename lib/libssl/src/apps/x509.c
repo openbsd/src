@@ -211,8 +211,6 @@ x509_main(int argc, char **argv)
 
 	reqfile = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

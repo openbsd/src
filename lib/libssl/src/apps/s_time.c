@@ -317,7 +317,6 @@ s_time_main(int argc, char **argv)
 	char buf[1024 * 8];
 	int ver;
 
-	signal(SIGPIPE, SIG_IGN);
 	s_time_init();
 
 	s_time_meth = SSLv23_client_method();

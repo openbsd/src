@@ -98,8 +98,6 @@ verify_main(int argc, char **argv)
 
 	ERR_load_crypto_strings();
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

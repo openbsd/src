@@ -165,8 +165,6 @@ dhparam_main(int argc, char **argv)
 #endif
 	int num = 0, g = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

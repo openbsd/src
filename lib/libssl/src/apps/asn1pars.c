@@ -101,8 +101,6 @@ asn1parse_main(int argc, char **argv)
 
 	informat = FORMAT_PEM;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

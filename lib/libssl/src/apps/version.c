@@ -144,8 +144,6 @@ version_main(int argc, char **argv)
 	int cflags = 0, version = 0, date = 0, options = 0, platform = 0,
 	    dir = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (argc == 1)
 		version = 1;
 	for (i = 1; i < argc; i++) {

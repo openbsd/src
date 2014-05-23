@@ -66,8 +66,6 @@ prime_main(int argc, char **argv)
 	BIGNUM *bn = NULL;
 	BIO *bio_out;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	--argc;
 	++argv;
 	while (argc >= 1 && **argv == '-') {

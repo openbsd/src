@@ -99,8 +99,6 @@ dh_main(int argc, char **argv)
 	char *engine;
 #endif
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

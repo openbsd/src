@@ -126,8 +126,6 @@ dsaparam_main(int argc, char **argv)
 	int timebomb = 0;
 #endif
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

@@ -119,8 +119,6 @@ rsa_main(int argc, char **argv)
 
 	int pvk_encr = 2;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

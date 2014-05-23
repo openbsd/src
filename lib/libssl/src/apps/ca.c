@@ -299,8 +299,6 @@ ca_main(int argc, char **argv)
 	char *tofree = NULL;
 	DB_ATTR db_attr;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	conf = NULL;
 	key = NULL;
 	section = NULL;

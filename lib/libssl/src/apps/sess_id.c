@@ -98,8 +98,6 @@ sess_id_main(int argc, char **argv)
 	int cert = 0, noout = 0, text = 0;
 	const char **pp;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	informat = FORMAT_PEM;
 	outformat = FORMAT_PEM;
 

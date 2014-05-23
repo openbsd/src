@@ -98,8 +98,6 @@ spkac_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

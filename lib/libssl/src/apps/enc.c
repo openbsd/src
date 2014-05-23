@@ -130,8 +130,6 @@ enc_main(int argc, char **argv)
 #endif
 	const EVP_MD *dgst = NULL;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

@@ -72,8 +72,6 @@ passwd_main(int argc, char **argv)
 	int usecrypt = 0, use1 = 0, useapr1 = 0;
 	size_t pw_maxlen = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto err;
 

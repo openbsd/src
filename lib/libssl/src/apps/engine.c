@@ -333,7 +333,6 @@ engine_main(int argc, char **argv)
 	BIO *bio_out = NULL;
 	const char *indent = "     ";
 
-	signal(SIGPIPE, SIG_IGN);
 	SSL_load_error_strings();
 
 	if (!load_config(bio_err, NULL))

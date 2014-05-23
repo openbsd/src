@@ -114,7 +114,6 @@ genrsa_main(int argc, char **argv)
 	if (!bn)
 		goto err;
 
-	signal(SIGPIPE, SIG_IGN);
 	BN_GENCB_set(&cb, genrsa_cb, bio_err);
 
 	if (!load_config(bio_err, NULL))

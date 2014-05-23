@@ -136,8 +136,6 @@ ecparam_main(int argc, char **argv)
 	*ec_order = NULL, *ec_cofactor = NULL;
 	unsigned char *buffer = NULL;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

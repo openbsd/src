@@ -145,8 +145,6 @@ cms_main(int argc, char **argv)
 	args = argv + 1;
 	ret = 1;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

@@ -192,7 +192,6 @@ req_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
 	cipher = EVP_des_ede3_cbc();
 #endif
-	signal(SIGPIPE, SIG_IGN);
 
 	infile = NULL;
 	outfile = NULL;

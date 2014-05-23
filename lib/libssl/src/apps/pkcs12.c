@@ -131,8 +131,6 @@ pkcs12_main(int argc, char **argv)
 	char *engine = NULL;
 #endif
 
-	signal(SIGPIPE, SIG_IGN);
-
 	cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 
 	enc = EVP_des_ede3_cbc();

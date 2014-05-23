@@ -723,7 +723,6 @@ s_server_main(int argc, char *argv[])
 	local_argc = argc;
 	local_argv = argv;
 
-	signal(SIGPIPE, SIG_IGN);
 	s_server_init();
 
 	if (!load_config(bio_err, NULL))

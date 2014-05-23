@@ -99,8 +99,6 @@ crl2pkcs7_main(int argc, char **argv)
 	STACK_OF(X509) * cert_stack = NULL;
 	int ret = 1, nocrl = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	infile = NULL;
 	outfile = NULL;
 	informat = FORMAT_PEM;

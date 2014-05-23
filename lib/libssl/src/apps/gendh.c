@@ -103,8 +103,6 @@ gendh_main(int argc, char **argv)
 #endif
 	BIO *out = NULL;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	BN_GENCB_set(&cb, dh_cb, bio_err);
 
 	if (!load_config(bio_err, NULL))

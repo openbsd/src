@@ -76,8 +76,6 @@ errstr_main(int argc, char **argv)
 	char buf[256];
 	unsigned long l;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	SSL_load_error_strings();
 
 	if ((argc > 1) && (strcmp(argv[1], "-stats") == 0)) {

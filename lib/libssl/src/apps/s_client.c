@@ -467,7 +467,6 @@ s_client_main(int argc, char **argv)
 
 	meth = SSLv23_client_method();
 
-	signal(SIGPIPE, SIG_IGN);
 	c_Pause = 0;
 	c_quiet = 0;
 	c_ign_eof = 0;

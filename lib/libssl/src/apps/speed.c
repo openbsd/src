@@ -521,7 +521,6 @@ speed_main(int argc, char **argv)
 	usertime = -1;
 #endif
 
-	signal(SIGPIPE, SIG_IGN);
 	memset(results, 0, sizeof(results));
 #ifndef OPENSSL_NO_DSA
 	memset(dsa_key, 0, sizeof(dsa_key));

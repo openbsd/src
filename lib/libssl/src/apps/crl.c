@@ -124,8 +124,6 @@ crl_main(int argc, char **argv)
 	int do_ver = 0;
 	const EVP_MD *md_alg, *digest = EVP_sha1();
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 

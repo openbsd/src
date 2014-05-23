@@ -103,8 +103,6 @@ ec_main(int argc, char **argv)
 	int asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	int new_asn1_flag = 0;
 
-	signal(SIGPIPE, SIG_IGN);
-
 	if (!load_config(bio_err, NULL))
 		goto end;
 
