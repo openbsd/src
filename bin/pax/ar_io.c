@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.45 2014/05/21 04:17:56 guenther Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.46 2014/05/23 19:47:49 guenther Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -289,11 +289,12 @@ ar_open(const char *name)
 }
 
 /*
- * ar_close()
+ * ar_close(int int_sig)
  *	closes archive device, increments volume number, and prints i/o summary
+ *	If in_sig is set we're in a signal handler and can't flush stdio.
  */
 void
-ar_close(void)
+ar_close(int in_sig)
 {
 	int status;
 
@@ -301,6 +302,8 @@ ar_close(void)
 		did_io = io_ok = flcnt = 0;
 		return;
 	}
+	if (!in_sig)
+		fflush(listf);
 
 	/*
 	 * Close archive file. This may take a LONG while on tapes (we may be
@@ -309,12 +312,9 @@ ar_close(void)
 	 * broken).
 	 */
 	if (vflag && (artyp == ISTAPE)) {
-		if (vfpart)
-			(void)putc('\n', listf);
-		(void)fprintf(listf,
-			"%s: Waiting for tape drive close to complete...",
-			argv0);
-		(void)fflush(listf);
+		(void)dprintf(listfd,
+		    "%s%s: Waiting for tape drive close to complete...",
+		    vfpart ? "\n" : "", argv0);
 	}
 
 	/*
@@ -347,9 +347,8 @@ ar_close(void)
 
 
 	if (vflag && (artyp == ISTAPE)) {
-		(void)fputs("done.\n", listf);
+		(void)write(listfd, "done.\n", sizeof("done.\n")-1);
 		vfpart = 0;
-		(void)fflush(listf);
 	}
 	arfd = -1;
 
@@ -375,7 +374,7 @@ ar_close(void)
 	 * Print out a summary of I/O for this archive volume.
 	 */
 	if (vfpart) {
-		(void)putc('\n', listf);
+		(void)write(listfd, "\n", 1);
 		vfpart = 0;
 	}
 
@@ -385,22 +384,21 @@ ar_close(void)
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL) {
-		(void)fprintf(listf, "%s: unknown format, %llu bytes skipped.\n",
-		    argv0, rdcnt);
-		(void)fflush(listf);
+		(void)dprintf(listfd,
+		    "%s: unknown format, %llu bytes skipped.\n", argv0, rdcnt);
 		flcnt = 0;
 		return;
 	}
 
 	if (strcmp(NM_TAR, argv0) != 0)
-		(void)fprintf(listf,
-		    "%s: %s vol %d, %lu files, %llu bytes read, %llu bytes written.\n",
+		(void)dprintf(listfd, "%s: %s vol %d, %lu files,"
+		    " %llu bytes read, %llu bytes written.\n",
 		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 #ifndef NOCPIO
 	else if (strcmp(NM_CPIO, argv0) == 0)
-		(void)fprintf(listf, "%llu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
+		(void)dprintf(listfd, "%llu blocks\n",
+		    (rdcnt ? rdcnt : wrcnt) / 5120);
 #endif /* !NOCPIO */
-	(void)fflush(listf);
 	flcnt = 0;
 }
 
@@ -1110,7 +1108,7 @@ ar_next(void)
 	 */
 	if (sigprocmask(SIG_BLOCK, &s_mask, &o_mask) < 0)
 		syswarn(0, errno, "Unable to set signal mask");
-	ar_close();
+	ar_close(0);
 	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.31 2014/05/07 14:56:57 tedu Exp $	*/
+/*	$OpenBSD: tables.c,v 1.32 2014/05/23 19:47:49 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -954,6 +954,7 @@ void
 add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 {
 	ATDIR *pt;
+	sigset_t allsigs, savedsigs;
 	u_int indx;
 
 	if (atab == NULL)
@@ -984,7 +985,9 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 	/*
 	 * add it to the front of the hash chain
 	 */
-	if ((pt = (ATDIR *)malloc(sizeof(ATDIR))) != NULL) {
+	sigfillset(&allsigs);
+	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
+	if ((pt = malloc(sizeof *pt)) != NULL) {
 		if ((pt->name = strdup(fname)) != NULL) {
 			pt->dev = dev;
 			pt->ino = ino;
@@ -992,11 +995,13 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 			pt->atime = atime;
 			pt->fow = atab[indx];
 			atab[indx] = pt;
+			sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 			return;
 		}
 		(void)free((char *)pt);
 	}
 
+	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	paxwarn(1, "Directory access time reset table ran out of memory");
 	return;
 }
@@ -1017,6 +1022,7 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 {
 	ATDIR *pt;
 	ATDIR **ppt;
+	sigset_t allsigs, savedsigs;
 	u_int indx;
 
 	if (atab == NULL)
@@ -1048,7 +1054,10 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 	/*
 	 * found it. return the times and remove the entry from the table.
 	 */
+	sigfillset(&allsigs);
+	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 	*ppt = pt->fow;
+	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	*mtime = pt->mtime;
 	*atime = pt->atime;
 	(void)free((char *)pt->name);
@@ -1118,6 +1127,7 @@ void
 add_dir(char *name, struct stat *psb, int frc_mode)
 {
 	DIRDATA *dblk;
+	sigset_t allsigs, savedsigs;
 	char realname[MAXPATHLEN], *rp;
 
 	if (dirp == NULL)
@@ -1137,8 +1147,10 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 			    " directory: %s", name);
 			return;
 		}
+		sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 		dirp = dblk;
 		dirsize *= 2;
+		sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	}
 	dblk = &dirp[dircnt];
 	if ((dblk->name = strdup(name)) == NULL) {
@@ -1150,17 +1162,20 @@ add_dir(char *name, struct stat *psb, int frc_mode)
 	dblk->mtime = psb->st_mtime;
 	dblk->atime = psb->st_atime;
 	dblk->frc_mode = frc_mode;
+	sigprocmask(SIG_BLOCK, &allsigs, &savedsigs);
 	++dircnt;
+	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 }
 
 /*
- * proc_dir()
+ * proc_dir(int in_sig)
  *	process all file modes and times stored for directories CREATED
- *	by pax
+ *	by pax.  If in_sig is set, we're in a signal handler and can't
+ *	free stuff.
  */
 
 void
-proc_dir(void)
+proc_dir(int in_sig)
 {
 	DIRDATA *dblk;
 	size_t cnt;
@@ -1181,10 +1196,12 @@ proc_dir(void)
 			set_pmode(dblk->name, dblk->mode);
 		if (patime || pmtime)
 			set_ftime(dblk->name, dblk->mtime, dblk->atime, 0);
-		free(dblk->name);
+		if (!in_sig)
+			free(dblk->name);
 	}
 
-	free(dirp);
+	if (!in_sig)
+		free(dirp);
 	dirp = NULL;
 	dircnt = 0;
 }

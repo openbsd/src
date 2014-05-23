@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.35 2014/01/09 03:12:25 guenther Exp $	*/
+/*	$OpenBSD: pax.c,v 1.36 2014/05/23 19:47:49 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@ char	*dirptr;		/* destination dir in a copy */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf = stderr;	/* file pointer to print file list to */
+int	listfd = STDERR_FILENO;	/* fd matching listf, for sighandler output */
 char	*tempfile;		/* tempfile to use for mkstemp(3) */
 char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
 
@@ -297,24 +298,22 @@ sig_cleanup(int which_sig)
 
 	/*
 	 * restore modes and times for any dirs we may have created
-	 * or any dirs we may have read. Set vflag and vfpart so the user
-	 * will clearly see the message on a line by itself.
+	 * or any dirs we may have read.
 	 */
-	vflag = vfpart = 1;
 
 	/* paxwarn() uses stdio; fake it as well as we can */
 	if (which_sig == SIGXCPU)
-		strlcpy(errbuf, "CPU time limit reached, cleaning up.\n",
+		strlcpy(errbuf, "\nCPU time limit reached, cleaning up.\n",
 		    sizeof errbuf);
 	else
-		strlcpy(errbuf, "Signal caught, cleaning up.\n",
+		strlcpy(errbuf, "\nSignal caught, cleaning up.\n",
 		    sizeof errbuf);
 	(void) write(STDERR_FILENO, errbuf, strlen(errbuf));
 
-	ar_close();			/* XXX signal race */
-	proc_dir();			/* XXX signal race */
+	ar_close(1);
+	proc_dir(1);
 	if (tflag)
-		atdir_end();		/* XXX signal race */
+		atdir_end();
 	_exit(1);
 }
 
@@ -378,6 +377,10 @@ gen_init(void)
 		paxwarn(1, "Unable to set up signal mask");
 		return(-1);
 	}
+
+	/* snag the fd to be used from the signal handler */
+	listfd = fileno(listf);
+
 	memset(&n_hand, 0, sizeof n_hand);
 	n_hand.sa_mask = s_mask;
 	n_hand.sa_flags = 0;

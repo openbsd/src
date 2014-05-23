@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.38 2014/02/05 20:35:42 halex Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.39 2014/05/23 19:47:49 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ list(void)
 	 */
 	(void)(*frmt->end_rd)();
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
-	ar_close();
+	ar_close(0);
 	pat_chk();
 }
 
@@ -359,8 +359,8 @@ popd:
 	 */
 	(void)(*frmt->end_rd)();
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
-	ar_close();
-	proc_dir();
+	ar_close(0);
+	proc_dir(0);
 	pat_chk();
 }
 
@@ -554,9 +554,9 @@ trailer:
 		wr_fin();
 	}
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
-	ar_close();
+	ar_close(0);
 	if (tflag)
-		proc_dir();
+		proc_dir(0);
 	ftree_chk();
 }
 
@@ -968,8 +968,8 @@ copy(void)
 	 * multiple entry into the cleanup code.
 	 */
 	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
-	ar_close();
-	proc_dir();
+	ar_close(0);
+	proc_dir(0);
 	ftree_chk();
 }
 

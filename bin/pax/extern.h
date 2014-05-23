@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.40 2014/01/19 10:22:57 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.41 2014/05/23 19:47:49 guenther Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ extern const char *arcname;
 extern const char *gzip_program;
 extern int force_one_volume;
 int ar_open(const char *);
-void ar_close(void);
+void ar_close(int _in_sig);
 void ar_drain(void);
 int ar_set_wr(void);
 int ar_app_ok(void);
@@ -236,6 +236,7 @@ extern int docrc;
 extern char *dirptr;
 extern char *argv0;
 extern FILE *listf;
+extern int listfd;
 extern char *tempfile;
 extern char *tempbase;
 extern int havechd;
@@ -272,7 +273,7 @@ void add_atdir(char *, dev_t, ino_t, time_t, time_t);
 int get_atdir(dev_t, ino_t, time_t *, time_t *);
 int dir_start(void);
 void add_dir(char *, struct stat *, int);
-void proc_dir(void);
+void proc_dir(int _in_sig);
 u_int st_hash(char *, int, int);
 
 /*
