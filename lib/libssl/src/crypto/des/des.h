@@ -107,11 +107,8 @@ typedef struct DES_ks
 #define DES_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-extern int _shadow_DES_check_key;	/* defaults to false */
-#define DES_check_key _shadow_DES_check_key
-
-extern int _shadow_DES_rw_mode;		/* defaults to DES_PCBC_MODE */
-#define DES_rw_mode _shadow_DES_rw_mode
+extern int DES_check_key;	/* defaults to false */
+extern int DES_rw_mode;		/* defaults to DES_PCBC_MODE */
 
 const char *DES_options(void);
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,

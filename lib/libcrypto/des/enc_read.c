@@ -63,7 +63,7 @@
 
 /* This has some uglies in it but it works - even over sockets. */
 /*extern int errno;*/
-int _shadow_DES_rw_mode = DES_PCBC_MODE;
+int DES_rw_mode = DES_PCBC_MODE;
 
 
 /*
