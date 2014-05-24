@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: testenc.sh,v 1.6 2002/01/15 18:51:39 art Exp $
+#	$OpenBSD: testenc.sh,v 1.1 2014/05/24 13:32:46 jsing Exp $
 
 
 testsrc=$2/openssl.cnf

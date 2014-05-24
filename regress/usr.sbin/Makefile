@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2013/09/04 22:37:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2014/05/24 13:32:46 jsing Exp $
 
 SUBDIR += mtree
+SUBDIR += openssl
 SUBDIR += relayd
 
 .if defined(REGRESS_FULL)

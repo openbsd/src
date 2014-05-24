@@ -1,4 +1,4 @@
-#	$OpenBSD: openssl.cnf,v 1.2 2001/01/29 02:05:46 niklas Exp $
+#	$OpenBSD: openssl.cnf,v 1.1 2014/05/24 13:32:46 jsing Exp $
 
 #
 # SSLeay example configuration file.

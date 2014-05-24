@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2014/04/17 08:06:59 jsg Exp $
+#	$OpenBSD: Makefile,v 1.1 2014/05/24 13:32:46 jsing Exp $
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 

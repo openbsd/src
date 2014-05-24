@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: testrsa.sh,v 1.6 2002/01/02 15:13:18 art Exp $
+#	$OpenBSD: testrsa.sh,v 1.1 2014/05/24 13:32:46 jsing Exp $
 
 
 #Test RSA certificate generation of openssl

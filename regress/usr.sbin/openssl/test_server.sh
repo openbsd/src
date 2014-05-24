@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: test_server.sh,v 1.3 2001/01/29 02:05:48 niklas Exp $
+#	$OpenBSD: test_server.sh,v 1.1 2014/05/24 13:32:46 jsing Exp $
 
 
 echo This starts a tls1 mode server using the DSA certificate in ./server.pem
