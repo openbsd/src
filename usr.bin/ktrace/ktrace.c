@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.29 2014/04/07 21:42:56 jmc Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.30 2014/05/24 17:04:16 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -161,8 +161,11 @@ main(int argc, char *argv[])
 		} else
 			ops |= pid ? KTROP_CLEAR : KTROP_CLEARFILE;
 
-		if (ktrace(tracefile, ops, trpoints, pid) < 0)
+		if (ktrace(tracefile, ops, trpoints, pid) < 0) {
+			if (errno == ESRCH)
+				err(1, "%d", pid);
 			err(1, "%s", tracefile);
+		}
 		exit(0);
 	}
 
@@ -196,8 +199,11 @@ main(int argc, char *argv[])
 		execvp(argv[0], &argv[0]);
 		err(1, "exec of '%s' failed", argv[0]);
 	}
-	else if (ktrace(tracefile, ops, trpoints, pid) < 0)
+	else if (ktrace(tracefile, ops, trpoints, pid) < 0) {
+		if (errno == ESRCH)
+			err(1, "%d", pid);
 		err(1, "%s", tracefile);
+	}
 	exit(0);
 }
 
