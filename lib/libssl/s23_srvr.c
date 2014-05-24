@@ -118,6 +118,45 @@
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
+
+const SSL_METHOD SSLv23_server_method_data = {
+	.version = TLS1_2_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl23_accept,
+	.ssl_connect = ssl_undefined_function,
+	.ssl_read = ssl23_read,
+	.ssl_peek = ssl23_peek,
+	.ssl_write = ssl23_write,
+	.ssl_shutdown = ssl_undefined_function,
+	.ssl_renegotiate = ssl_undefined_function,
+	.ssl_renegotiate_check = ssl_ok,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl23_get_cipher_by_char,
+	.put_cipher_by_char = ssl23_put_cipher_by_char,
+	.ssl_pending = ssl_undefined_const_function,
+	.num_ciphers = ssl23_num_ciphers,
+	.get_cipher = ssl23_get_cipher,
+	.get_ssl_method = ssl23_get_server_method,
+	.get_timeout = ssl23_default_timeout,
+	.ssl3_enc = &ssl3_undef_enc_method,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
+
+const SSL_METHOD *
+SSLv23_server_method(void)
+{
+	return &SSLv23_server_method_data;
+}
+
 static const SSL_METHOD *
 ssl23_get_server_method(int ver)
 {
@@ -131,9 +170,6 @@ ssl23_get_server_method(int ver)
 		return (TLSv1_2_server_method());
 	return (NULL);
 }
-
-IMPLEMENT_ssl23_meth_func(SSLv23_server_method,
-    ssl23_accept, ssl_undefined_function, ssl23_get_server_method)
 
 int
 ssl23_accept(SSL *s)
