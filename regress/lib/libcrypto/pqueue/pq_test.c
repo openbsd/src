@@ -56,7 +56,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "pqueue.h"
 
 /* remember to change expected.txt if you change these values */
