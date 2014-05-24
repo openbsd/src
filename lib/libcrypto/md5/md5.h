@@ -59,8 +59,9 @@
 #ifndef HEADER_MD5_H
 #define HEADER_MD5_H
 
-#include <openssl/e_os2.h>
 #include <stddef.h>
+
+#include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {

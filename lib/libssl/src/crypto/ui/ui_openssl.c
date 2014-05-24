@@ -114,7 +114,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/e_os2.h>
+#include <openssl/opensslconf.h>
 
 #include <signal.h>
 #include <stdio.h>

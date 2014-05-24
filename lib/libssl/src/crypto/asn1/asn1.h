@@ -60,7 +60,9 @@
 #define HEADER_ASN1_H
 
 #include <time.h>
-#include <openssl/e_os2.h>
+
+#include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif

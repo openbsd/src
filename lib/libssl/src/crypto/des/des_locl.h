@@ -59,14 +59,15 @@
 #ifndef HEADER_DES_LOCL_H
 #define HEADER_DES_LOCL_H
 
-#include <openssl/e_os2.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <unistd.h>
 #include <math.h>
+
+#include <openssl/opensslconf.h>
+
 #include <openssl/des.h>
 
 #define ITERATIONS 16

@@ -65,7 +65,7 @@
 #ifndef HEADER_DSA_H
 #define HEADER_DSA_H
 
-#include <openssl/e_os2.h>
+#include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_NO_DSA
 #error DSA is disabled.
