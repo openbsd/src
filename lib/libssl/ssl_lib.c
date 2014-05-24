@@ -163,22 +163,25 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
 	 * Evil casts, but these functions are only called if there's a
 	 * library bug.
 	 */
-	(int (*)(SSL *, int))ssl_undefined_function,
-	(int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
-	ssl_undefined_function,
-	(int (*)(SSL *, unsigned char *, unsigned char *, int))ssl_undefined_function,
-	(int (*)(SSL*, int))ssl_undefined_function,
-	(int (*)(SSL *,  const char*, int, unsigned char *))ssl_undefined_function,
-	0,	/* finish_mac_length */
-	(int (*)(SSL *, int, unsigned char *))ssl_undefined_function,
-	NULL,	/* client_finished_label */
-	0,	/* client_finished_label_len */
-	NULL,	/* server_finished_label */
-	0,	/* server_finished_label_len */
-	(int (*)(int))ssl_undefined_function,
-	(int (*)(SSL *, unsigned char *, size_t, const char *,
-	size_t, const unsigned char *, size_t,
-	int use_context)) ssl_undefined_function,
+	.enc = (int (*)(SSL *, int))ssl_undefined_function,
+	.mac = (int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
+	.setup_key_block = ssl_undefined_function,
+	.generate_master_secret = (int (*)(SSL *, unsigned char *,
+	    unsigned char *, int))ssl_undefined_function,
+	.change_cipher_state = (int (*)(SSL*, int))ssl_undefined_function,
+	.final_finish_mac = (int (*)(SSL *,  const char*, int,
+	    unsigned char *))ssl_undefined_function,
+	.finish_mac_length = 0,
+	.cert_verify_mac = (int (*)(SSL *, int,
+	    unsigned char *))ssl_undefined_function,
+	.client_finished_label = NULL,
+	.client_finished_label_len = 0,
+	.server_finished_label = NULL,
+	.server_finished_label_len = 0,
+	.alert_value = (int (*)(int))ssl_undefined_function,
+	.export_keying_material = (int (*)(SSL *, unsigned char *, size_t,
+	    const char *, size_t, const unsigned char *, size_t,
+	    int use_context))ssl_undefined_function,
 };
 
 int
