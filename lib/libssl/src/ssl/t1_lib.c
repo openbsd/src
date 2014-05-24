@@ -791,7 +791,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	if (((s->s3->tmp.new_cipher->id & 0xFFFF) == 0x80 ||
 	    (s->s3->tmp.new_cipher->id & 0xFFFF) == 0x81) &&
 	    (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG)) {
-		const unsigned char cryptopro_ext[36] = {
+		static const unsigned char cryptopro_ext[36] = {
 			0xfd, 0xe8, /*65000*/
 			0x00, 0x20, /*32 bytes length*/
 			0x30, 0x1e, 0x30, 0x08, 0x06, 0x06, 0x2a, 0x85,
@@ -799,10 +799,10 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 			0x2a, 0x85, 0x03, 0x02, 0x02, 0x16, 0x30, 0x08,
 			0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17
 		};
-		if ((size_t)(limit - ret) < 36)
+		if ((size_t)(limit - ret) < sizeof(cryptopro_ext))
 			return NULL;
-		memcpy(ret, cryptopro_ext, 36);
-		ret += 36;
+		memcpy(ret, cryptopro_ext, sizeof(cryptopro_ext));
+		ret += sizeof(cryptopro_ext);
 	}
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
