@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.45 2014/05/21 18:53:05 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.46 2014/05/24 14:54:49 krw Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -349,12 +349,11 @@ bread(int fd, char *buf, daddr_t blk, long size)
 		if (pread(fd, cp, secsize, offset + i) != secsize) {
 			if (secsize != DEV_BSIZE)
 				printf(" %lld (%lld),",
-				    (long long)((blk * DEV_BSIZE + i) /
-				    secsize),
-				    (long long)(blk + i / DEV_BSIZE));
+				    (long long)(offset + i) / secsize,
+				    (long long)blk + i / DEV_BSIZE);
 			else
-				printf(" %lld,",
-				    (long long)(blk + i / DEV_BSIZE));
+				printf(" %lld,", (long long)blk +
+				    i / DEV_BSIZE);
 			errs++;
 		}
 	}
@@ -383,12 +382,11 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 		if (pwrite(fd, cp, secsize, offset + i) != secsize) {
 			if (secsize != DEV_BSIZE)
 				printf(" %lld (%lld),",
-				    (long long)((blk * DEV_BSIZE + i) /
-				    secsize),
-				    (long long)(blk + i / DEV_BSIZE));
+				    (long long)(offset + i) / secsize,
+				    (long long)blk + i / DEV_BSIZE);
 			else
-				printf(" %lld,",
-				    (long long)(blk + i / DEV_BSIZE));
+				printf(" %lld,", (long long)blk +
+				    i / DEV_BSIZE);
 		}
 	printf("\n");
 	return;

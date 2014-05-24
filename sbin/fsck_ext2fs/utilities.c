@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.21 2014/05/22 14:04:41 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.22 2014/05/24 14:54:49 krw Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -295,11 +295,12 @@ bread(int fd, char *buf, daddr32_t blk, long size)
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
 		if (pread(fd, cp, secsize, offset + i) != secsize) {
 			if (secsize != DEV_BSIZE)
-				printf(" %ld (%ld),",
-				    (blk * DEV_BSIZE + i) / secsize,
-				    blk + i / DEV_BSIZE);
+				printf(" %lld (%lld),",
+				    (long long)(offset + i) / secsize,
+				    (long long)blk + i / DEV_BSIZE);
 			else
-				printf(" %ld,", blk + i / DEV_BSIZE);
+				printf(" %lld,", (long long)blk +
+				    i / DEV_BSIZE);
 			errs++;
 		}
 	}
@@ -326,7 +327,13 @@ bwrite(int fd, char *buf, daddr32_t blk, long size)
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize)
 		if (pwrite(fd, cp, secsize, offset + i) != secsize) {
-			printf(" %ld,", blk + i / DEV_BSIZE);
+			if (secsize != DEV_BSIZE)
+				printf(" %lld (%lld),",
+				    (long long)(offset + i) / secsize,
+				    (long long)blk + i / DEV_BSIZE);
+			else
+				printf(" %lld,", (long long)blk +
+				    i / DEV_BSIZE);
 		}
 	printf("\n");
 	return;
