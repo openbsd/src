@@ -2963,11 +2963,7 @@ SSL_set_info_callback(SSL *ssl,
 	ssl->info_callback = cb;
 }
 
-/*
- * One compiler (Diab DCC) doesn't like argument names in returned
- * function pointer.
- */
-void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/)
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type, int val)
 {
 	return (ssl->info_callback);
 }
