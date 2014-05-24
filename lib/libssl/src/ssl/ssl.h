@@ -143,6 +143,8 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
+#include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif
@@ -160,7 +162,6 @@
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
 
-#include <openssl/kssl.h>
 #include <openssl/safestack.h>
 
 #ifdef  __cplusplus
