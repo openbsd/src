@@ -261,20 +261,21 @@ end:
 int
 ssl23_get_client_hello(SSL *s)
 {
-	char buf_space[11]; /* Request this many bytes in initial read.
-	* We can detect SSL 3.0/TLS 1.0 Client Hellos
-	* ('type == 3') correctly only when the following
-	* is in a single record, which is not guaranteed by
-	* the protocol specification:
-	* Byte  Content
-	*  0     type            \
-	                     *  1/2   version          > record header
-	*  3/4   length          /
-	*  5     msg_type        \
-	                     *  6-8   length           > Client Hello message
-	*  9/10  client_version  /
-	                     */
-	char *buf = &(buf_space[0]);
+	char buf[11];
+	/*
+	 * sizeof(buf) == 11, because we'll need to request this many bytes in
+	 * the initial read.
+	 * We can detect SSL 3.0/TLS 1.0 Client Hellos ('type == 3') correctly
+	 * only when the following is in a single record, which is not
+	 * guaranteed by the protocol specification:
+	 * Byte  Content
+	 *  0     type            \
+	 *  1/2   version          > record header
+	 *  3/4   length          /
+	 *  5     msg_type        \
+	 *  6-8   length           > Client Hello message
+	 *  9/10  client_version  /
+	 */
 	unsigned char *p, *d, *d_len, *dd;
 	unsigned int i;
 	unsigned int csl, sil, cl;
@@ -287,11 +288,11 @@ ssl23_get_client_hello(SSL *s)
 		v[0] = v[1] = 0;
 
 		if (!ssl3_setup_buffers(s))
-			goto err;
+			return -1;
 
-		n = ssl23_read_bytes(s, sizeof buf_space);
-		if (n != sizeof buf_space)
-			return(n); /* n == -1 || n == 0 */
+		n = ssl23_read_bytes(s, sizeof buf);
+		if (n != sizeof buf)
+			return(n);
 
 		p = s->packet;
 
@@ -404,10 +405,10 @@ ssl23_get_client_hello(SSL *s)
 		    (strncmp("HEAD ",(char *)p, 5) == 0) ||
 		    (strncmp("PUT ", (char *)p, 4) == 0)) {
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTP_REQUEST);
-			goto err;
+			return -1;
 		} else if (strncmp("CONNECT", (char *)p, 7) == 0) {
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_HTTPS_PROXY_REQUEST);
-			goto err;
+			return -1;
 		}
 	}
 
@@ -423,7 +424,7 @@ ssl23_get_client_hello(SSL *s)
 		n = ((p[0] & 0x7f) << 8) | p[1];
 		if (n > (1024 * 4)) {
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_RECORD_TOO_LARGE);
-			goto err;
+			return -1;
 		}
 
 		j = ssl23_read_bytes(s, n + 2);
@@ -449,7 +450,7 @@ ssl23_get_client_hello(SSL *s)
 			 */
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
 			    SSL_R_RECORD_LENGTH_MISMATCH);
-			goto err;
+			return -1;
 		}
 
 		/* record header: msg_type ... */
@@ -511,14 +512,14 @@ ssl23_get_client_hello(SSL *s)
 
 	if (type == 1) {
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
-		goto err;
+		return -1;
 	}
 
 	if ((type == 2) || (type == 3)) {
 		/* we have SSLv3/TLSv1 (type 2: SSL2 style, type 3: SSL3/TLS style) */
 
 		if (!ssl_init_wbio_buffer(s, 1))
-			goto err;
+			return -1;
 
 		/* we are in this state */
 		s->state = SSL3_ST_SR_CLNT_HELLO_A;
@@ -530,7 +531,7 @@ ssl23_get_client_hello(SSL *s)
 			s->packet_length = n;
 			if (s->s3->rbuf.buf == NULL)
 				if (!ssl3_setup_read_buffer(s))
-					goto err;
+					return -1;
 
 			s->packet = &(s->s3->rbuf.buf[0]);
 			memcpy(s->packet, buf, n);
@@ -558,15 +559,9 @@ ssl23_get_client_hello(SSL *s)
 	if ((type < 1) || (type > 3)) {
 		/* bad, very bad */
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
-		goto err;
+		return -1;
 	}
 	s->init_num = 0;
 
-	if (buf != buf_space)
-		free(buf);
 	return (SSL_accept(s));
-err:
-	if (buf != buf_space)
-		free(buf);
-	return (-1);
 }
