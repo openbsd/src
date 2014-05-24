@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -75,7 +75,8 @@
 
 /* Note that these functions should not be used. */
 
-int RAND_load_file(const char *file, long bytes)
+int
+RAND_load_file(const char *file, long bytes)
 {
 	/* the "whole" file */
 	if (bytes == -1)
@@ -84,65 +85,68 @@ int RAND_load_file(const char *file, long bytes)
 		return bytes;
 }
 
-int RAND_write_file(const char *file)
-	{
+int
+RAND_write_file(const char *file)
+{
 	unsigned char buf[BUFSIZE];
-	int i,ret=0,rand_err=0;
+	int i, ret = 0, rand_err = 0;
 	FILE *out = NULL;
 	int n;
 	struct stat sb;
-	
-	i=stat(file,&sb);
-	if (i != -1) { 
-	  if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
-	    /* this file is a device. we don't write back to it. 
-	     * we "succeed" on the assumption this is some sort 
-	     * of random device. Otherwise attempting to write to 
-	     * and chmod the device causes problems.
-	     */
-	    return(1); 
-	  }
+
+	i = stat(file, &sb);
+	if (i != -1) {
+		if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
+			/* this file is a device. we don't write back to it.
+			 * we "succeed" on the assumption this is some sort
+			 * of random device. Otherwise attempting to write to
+			 * and chmod the device causes problems.
+			 */
+			return (1);
+		}
 	}
 
 	{
-	/* chmod(..., 0600) is too late to protect the file,
-	 * permissions should be restrictive from the start */
-	int fd = open(file, O_WRONLY|O_CREAT, 0600);
-	if (fd != -1)
-		out = fdopen(fd, "wb");
+		/* chmod(..., 0600) is too late to protect the file,
+		 * permissions should be restrictive from the start */
+		int fd = open(file, O_WRONLY|O_CREAT, 0600);
+		if (fd != -1)
+			out = fdopen(fd, "wb");
 	}
 
 	if (out == NULL)
-		out = fopen(file,"wb");
-	if (out == NULL) goto err;
+		out = fopen(file, "wb");
+	if (out == NULL)
+		goto err;
 
-	chmod(file,0600);
-	n=RAND_DATA;
-	for (;;)
-		{
-		i=(n > BUFSIZE)?BUFSIZE:n;
-		n-=BUFSIZE;
-		if (RAND_bytes(buf,i) <= 0)
-			rand_err=1;
-		i=fwrite(buf,1,i,out);
-		if (i <= 0)
-			{
-			ret=0;
+	chmod(file, 0600);
+	n = RAND_DATA;
+	for (;;) {
+		i = (n > BUFSIZE) ? BUFSIZE : n;
+		n -= BUFSIZE;
+		if (RAND_bytes(buf, i) <= 0)
+			rand_err = 1;
+		i = fwrite(buf, 1, i, out);
+		if (i <= 0) {
+			ret = 0;
 			break;
-			}
-		ret+=i;
-		if (n <= 0) break;
-                }
-
-	fclose(out);
-	OPENSSL_cleanse(buf,BUFSIZE);
-err:
-	return (rand_err ? -1 : ret);
+		}
+		ret += i;
+		if (n <= 0)
+			break;
 	}
 
-const char *RAND_file_name(char *buf, size_t size)
+	fclose(out);
+	OPENSSL_cleanse(buf, BUFSIZE);
+
+err:
+	return (rand_err ? -1 : ret);
+}
+
+const char *
+RAND_file_name(char *buf, size_t size)
 {
-	if (strlcpy(buf,"/dev/urandom",size) >= size)
-		return(NULL);
+	if (strlcpy(buf, "/dev/urandom", size) >= size)
+		return (NULL);
 	return buf;
 }

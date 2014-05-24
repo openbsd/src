@@ -74,7 +74,7 @@ RAND_status(void)
 int
 RAND_poll(void)
 {
-       return 1;
+	return 1;
 }
 
 /*
