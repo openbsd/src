@@ -63,7 +63,7 @@
 #include "asn1_locl.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, 
-				unsigned char *pass, ossl_ssize_t passlen)
+				unsigned char *pass, ssize_t passlen)
 	{
 	CMS_PasswordRecipientInfo *pwri;
 	if (ri->type != CMS_RECIPINFO_PASS)
@@ -83,7 +83,7 @@ int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 					int iter, int wrap_nid, int pbe_nid,
 					unsigned char *pass,
-					ossl_ssize_t passlen,
+					ssize_t passlen,
 					const EVP_CIPHER *kekciph)
 	{
 	CMS_RecipientInfo *ri = NULL;
