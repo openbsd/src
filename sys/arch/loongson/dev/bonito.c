@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.25 2014/03/27 22:16:03 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.26 2014/05/24 21:11:01 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -173,7 +173,8 @@ struct mips_bus_space bonito_pci_io_space_tag = {
 	._space_map = bonito_io_map,
 	._space_unmap = generic_space_unmap,
 	._space_subregion = generic_space_region,
-	._space_vaddr = generic_space_vaddr
+	._space_vaddr = generic_space_vaddr,
+	._space_mmap = generic_space_mmap
 };
 
 struct mips_bus_space bonito_pci_mem_space_tag = {
@@ -195,13 +196,17 @@ struct mips_bus_space bonito_pci_mem_space_tag = {
 	._space_map = bonito_mem_map,
 	._space_unmap = generic_space_unmap,
 	._space_subregion = generic_space_region,
-	._space_vaddr = generic_space_vaddr
+	._space_vaddr = generic_space_vaddr,
+	._space_mmap = generic_space_mmap
 };
 
 int
 bonito_match(struct device *parent, void *vcf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
+
+	if (loongson_ver >= 0x3a)
+		return (0);
 
 	if (strcmp(maa->maa_name, bonito_cd.cd_name) == 0)
 		return (1);

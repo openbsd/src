@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.1.1.1 2009/12/11 17:05:08 miod Exp $ */
+/*	$OpenBSD: bus_space.c,v 1.2 2014/05/24 21:11:01 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -184,4 +184,11 @@ void *
 generic_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 {
 	return (void *)h;
+}
+
+paddr_t
+generic_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags)
+{
+	return (paddr_t)-1;
 }

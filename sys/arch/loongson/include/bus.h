@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2014/05/24 21:11:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -82,6 +82,8 @@ struct mips_bus_space {
 	int		(*_space_subregion)(bus_space_tag_t, bus_space_handle_t,
 			  bus_size_t, bus_size_t, bus_space_handle_t *);
 	void *		(*_space_vaddr)(bus_space_tag_t, bus_space_handle_t);
+	paddr_t		(*_space_mmap)(bus_space_tag_t, bus_addr_t, off_t,
+			    int, int);
 };
 
 #define	bus_space_read_1(t, h, o) (*(t)->_space_read_1)((t), (h), (o))
@@ -118,6 +120,8 @@ struct mips_bus_space {
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
+#define	bus_space_mmap(t, a, o, p, f) \
+	(*(t)->_space_mmap)((t), (a), (o), (p), (f))
 
 /*----------------------------------------------------------------------------*/
 #define bus_space_read_multi(n,m)					      \
@@ -313,6 +317,7 @@ void	generic_space_read_raw_8(bus_space_tag_t, bus_space_handle_t,
 	    bus_addr_t, uint8_t *, bus_size_t);
 void	generic_space_write_raw_8(bus_space_tag_t, bus_space_handle_t,
 	    bus_addr_t, const uint8_t *, bus_size_t);
+paddr_t	generic_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 /*----------------------------------------------------------------------------*/
 /*
