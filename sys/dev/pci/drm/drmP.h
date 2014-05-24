@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.176 2014/04/07 06:43:11 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.177 2014/05/24 21:09:15 miod Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -309,6 +309,10 @@ div_u64(uint64_t x, uint32_t y)
 #define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
 #define DRM_MEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%rsp)" : : : "memory");
+#elif defined(__mips64__)
+#define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
+#define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
+#define DRM_MEMORYBARRIER()		mips_sync()
 #elif defined(__powerpc__)
 #define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
 #define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
