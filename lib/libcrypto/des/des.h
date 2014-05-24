@@ -61,8 +61,6 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/e_os2.h>	/* OPENSSL_DECLARE_GLOBAL, OPENSSL_GLOBAL_REF */
-
 #ifdef OPENSSL_NO_DES
 #error DES is disabled.
 #endif
@@ -109,10 +107,11 @@ typedef struct DES_ks
 #define DES_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
 	DES_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
 
-OPENSSL_DECLARE_GLOBAL(int,DES_check_key);	/* defaults to false */
-#define DES_check_key OPENSSL_GLOBAL_REF(DES_check_key)
-OPENSSL_DECLARE_GLOBAL(int,DES_rw_mode);	/* defaults to DES_PCBC_MODE */
-#define DES_rw_mode OPENSSL_GLOBAL_REF(DES_rw_mode)
+extern int _shadow_DES_check_key;	/* defaults to false */
+#define DES_check_key _shadow_DES_check_key
+
+extern int _shadow_DES_rw_mode;		/* defaults to DES_PCBC_MODE */
+#define DES_rw_mode _shadow_DES_rw_mode
 
 const char *DES_options(void);
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
