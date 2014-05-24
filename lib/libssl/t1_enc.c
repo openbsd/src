@@ -510,7 +510,7 @@ tls1_change_cipher_state(SSL *s, int which)
 #endif
 
 	OPENSSL_cleanse(tmp1, sizeof(tmp1));
-	OPENSSL_cleanse(tmp2, sizeof(tmp1));
+	OPENSSL_cleanse(tmp2, sizeof(tmp2));
 	OPENSSL_cleanse(iv1, sizeof(iv1));
 	OPENSSL_cleanse(iv2, sizeof(iv2));
 	return (1);
