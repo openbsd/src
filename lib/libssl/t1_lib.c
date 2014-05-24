@@ -202,18 +202,24 @@ static int nid_list[] = {
 	NID_secp256k1,		/* secp256k1 (22) */
 	NID_X9_62_prime256v1,	/* secp256r1 (23) */
 	NID_secp384r1,		/* secp384r1 (24) */
-	NID_secp521r1		/* secp521r1 (25) */
+	NID_secp521r1,		/* secp521r1 (25) */
+	NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
+	NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
+	NID_brainpoolP512r1	/* brainpoolP512r1 (28) */
 };
 
 static int pref_list[] = {
 	NID_sect571r1,		/* sect571r1 (14) */
 	NID_sect571k1,		/* sect571k1 (13) */
 	NID_secp521r1,		/* secp521r1 (25) */
+	NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
 	NID_sect409k1,		/* sect409k1 (11) */
 	NID_sect409r1,		/* sect409r1 (12) */
+	NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
 	NID_secp384r1,		/* secp384r1 (24) */
 	NID_sect283k1,		/* sect283k1 (9) */
 	NID_sect283r1,		/* sect283r1 (10) */
+	NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
 	NID_secp256k1,		/* secp256k1 (22) */
 	NID_X9_62_prime256v1,	/* secp256r1 (23) */
 	NID_sect239k1,		/* sect239k1 (8) */
@@ -298,6 +304,12 @@ tls1_ec_nid2curve_id(int nid)
 		return 24;
 	case NID_secp521r1: /* secp521r1 (25) */
 		return 25;
+	case NID_brainpoolP256r1: /* brainpoolP256r1 (26) */
+		return 26;
+	case NID_brainpoolP384r1: /* brainpoolP384r1 (27) */
+		return 27;
+	case NID_brainpoolP512r1: /* brainpoolP512r1 (28) */
+		return 28;
 	default:
 		return 0;
 	}
