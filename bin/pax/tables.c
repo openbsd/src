@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.32 2014/05/23 19:47:49 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.33 2014/05/24 04:00:06 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
