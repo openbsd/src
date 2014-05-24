@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.9 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.10 2014/05/24 10:10:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -28,7 +28,7 @@
 /* NB: "11" is the maximum number of padding bytes needed for Tx */
 #define RUN_MAX_TXSZ			\
 	(sizeof (struct rt2870_txd) +	\
-	 sizeof (struct rt2860_rxwi) +	\
+	 sizeof (struct rt2860_txwi) +	\
 	 MCLBYTES + 11)
 
 #define RUN_TX_TIMEOUT	5000	/* ms */
@@ -36,7 +36,7 @@
 #define RUN_RX_RING_COUNT	1
 #define RUN_TX_RING_COUNT	8
 
-#define RT2870_WCID_MAX		253
+#define RT2870_WCID_MAX		64
 #define RUN_AID2WCID(aid)	((aid) & 0xff)
 
 struct run_rx_radiotap_header {
@@ -144,7 +144,7 @@ struct run_softc {
 
 	uint16_t			mac_ver;
 	uint16_t			mac_rev;
-	uint8_t				rf_rev;
+	uint16_t			rf_rev;
 	uint8_t				freq;
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;
@@ -164,6 +164,7 @@ struct run_softc {
 	uint8_t				txmixgain_5ghz;
 	int8_t				txpow1[54];
 	int8_t				txpow2[54];
+	int8_t				txpow3[54];
 	int8_t				rssi_2ghz[3];
 	int8_t				rssi_5ghz[3];
 	uint8_t				lna[4];
