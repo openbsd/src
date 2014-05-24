@@ -1,4 +1,4 @@
-$OpenBSD: POSIX,v 1.7 2014/04/20 09:29:36 deraadt Exp $
+$OpenBSD: POSIX,v 1.8 2014/05/24 01:35:55 daniel Exp $
 $NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
 
 This version of ed(1) is not strictly POSIX compliant, as described in
@@ -40,10 +40,6 @@ EXTENSIONS
    first unescaped character of a <file> argument is a bang (!), then the
    rest of the line is interpreted as a shell command, and no escape
    processing is performed by ed.
-
-4) For SunOS ed(1) compatibility, ed runs in restricted mode if invoked
-   as red.  This limits editing of files in the local directory only and
-   prohibits shell commands.
 
 DEVIATIONS
 ----------

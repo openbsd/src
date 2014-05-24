@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2014/04/14 23:19:51 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2014/05/24 01:35:55 daniel Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -73,7 +73,6 @@ int isbinary;			/* if set, buffer contains ASCII NULs */
 int isglobal;			/* if set, doing a global command */
 int modified;			/* if set, buffer modified since last write */
 int mutex = 0;			/* if set, signals set "sigflags" */
-int red = 0;			/* if set, restrict shell/directory access */
 int scripted = 0;		/* if set, suppress diagnostics */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int interactive = 0;		/* if set, we are in interactive mode */
@@ -107,7 +106,6 @@ main(volatile int argc, char ** volatile argv)
 
 	home = getenv("HOME");
 
-	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
 	while ((c = getopt(argc, argv, "p:sx")) != -1)
 		switch (c) {
@@ -169,7 +167,7 @@ top:
 	} else {
 		init_buffers();
 		sigactive = 1;			/* enable signal handlers */
-		if (argc && **argv && is_legal_filename(*argv)) {
+		if (argc && **argv) {
 			if (read_file(*argv, 0) < 0 && !interactive)
 				quit(2);
 			else if (**argv != '!')
@@ -980,7 +978,7 @@ get_filename(void)
 	for (n = 0; *ibufp != '\n';)
 		file[n++] = *ibufp++;
 	file[n] = '\0';
-	return is_legal_filename(file) ? file : NULL;
+	return file;
 }
 
 
@@ -996,10 +994,7 @@ get_shell_command(void)
 	int i = 0;
 	int j = 0;
 
-	if (red) {
-		seterrmsg("shell access restricted");
-		return ERR;
-	} else if ((s = ibufp = get_extended_line(&j, 1)) == NULL)
+	if ((s = ibufp = get_extended_line(&j, 1)) == NULL)
 		return ERR;
 	REALLOC(buf, n, j + 1, ERR);
 	buf[i++] = '!';			/* prefix command w/ bang */
@@ -1429,16 +1424,4 @@ handle_winch(int signo)
 			cols = ws.ws_col - 8;
 	}
 	errno = save_errno;
-}
-
-
-/* is_legal_filename: return a legal filename */
-int
-is_legal_filename(char *s)
-{
-	if (red && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
-		seterrmsg("shell access restricted");
-		return 0;
-	}
-	return 1;
 }
