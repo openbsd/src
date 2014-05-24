@@ -86,10 +86,6 @@ int main(int argc, char *argv[])
 	int i,alen,blen,aout,bout,ret=1;
 	BIO *out;
 
-	CRYPTO_malloc_debug_init();
-	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
 	out=BIO_new(BIO_s_file());
 	if (out == NULL) exit(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
@@ -141,7 +137,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"\n");
 
 	alen=DH_size(a);
-	abuf=(unsigned char *)OPENSSL_malloc(alen);
+	abuf=malloc(alen);
 	aout=DH_compute_key(abuf,b->pub_key,a);
 
 	BIO_puts(out,"key1 =");
@@ -153,7 +149,7 @@ int main(int argc, char *argv[])
 	BIO_puts(out,"\n");
 
 	blen=DH_size(b);
-	bbuf=(unsigned char *)OPENSSL_malloc(blen);
+	bbuf=malloc(blen);
 	bout=DH_compute_key(bbuf,a->pub_key,b);
 
 	BIO_puts(out,"key2 =");
@@ -173,8 +169,8 @@ int main(int argc, char *argv[])
 err:
 	ERR_print_errors_fp(stderr);
 
-	if (abuf != NULL) OPENSSL_free(abuf);
-	if (bbuf != NULL) OPENSSL_free(bbuf);
+	free(abuf);
+	free(bbuf);
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);

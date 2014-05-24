@@ -306,9 +306,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s <test file>\n",argv[0]);
 		exit(1);
 	}
-	CRYPTO_malloc_debug_init();
-	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	szTestFile = argv[1];
 

@@ -184,7 +184,7 @@ int test_builtin(BIO *out)
 	/* get a list of all internal curves */
 	crv_len = EC_get_builtin_curves(NULL, 0);
 
-	curves = OPENSSL_malloc(sizeof(EC_builtin_curve) * crv_len);
+	curves = reallocarray(NULL, sizeof(EC_builtin_curve), crv_len);
 
 	if (curves == NULL)
 		{
@@ -257,7 +257,7 @@ int test_builtin(BIO *out)
 		(void)BIO_flush(out);
 		/* create signature */
 		sig_len = ECDSA_size(eckey);
-		if ((signature = OPENSSL_malloc(sig_len)) == NULL)
+		if ((signature = malloc(sig_len)) == NULL)
 			goto builtin_err;
                 if (!ECDSA_sign(0, digest, 20, signature, &sig_len, eckey))
 			{
@@ -322,10 +322,8 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		buf_len = 2 * bn_len;
-		if ((raw_buf = OPENSSL_malloc(buf_len)) == NULL)
+		if ((raw_buf = calloc(1, buf_len)) == NULL)
 			goto builtin_err;
-		/* Pad the bignums with leading zeroes. */
-		memset(raw_buf, 0, buf_len);
 		BN_bn2bin(ecdsa_sig->r, raw_buf + bn_len - r_len);
 		BN_bn2bin(ecdsa_sig->s, raw_buf + buf_len - s_len);
 
@@ -365,7 +363,7 @@ int test_builtin(BIO *out)
 		/* cleanup */
 		/* clean bogus errors */
 		ERR_clear_error();
-		OPENSSL_free(signature);
+		free(signature);
 		signature = NULL;
 		EC_KEY_free(eckey);
 		eckey = NULL;
@@ -373,7 +371,7 @@ int test_builtin(BIO *out)
 		wrong_eckey = NULL;
 		ECDSA_SIG_free(ecdsa_sig);
 		ecdsa_sig = NULL;
-		OPENSSL_free(raw_buf);
+		free(raw_buf);
 		raw_buf = NULL;
 		}
 
@@ -385,12 +383,9 @@ builtin_err:
 		EC_KEY_free(wrong_eckey);
 	if (ecdsa_sig)
 		ECDSA_SIG_free(ecdsa_sig);
-	if (signature)
-		OPENSSL_free(signature);
-	if (raw_buf)
-		OPENSSL_free(raw_buf);
-	if (curves)
-		OPENSSL_free(curves);
+	free(signature);
+	free(raw_buf);
+	free(curves);
 
 	return ret;
 	}
@@ -401,20 +396,6 @@ int main(void)
 	BIO	*out;
 
 	out = BIO_new_fp(stdout, BIO_NOCLOSE);
-	
-	/* enable memory leak checking unless explicitly disabled */
-	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && 
-		(0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off"))))
-		{
-		CRYPTO_malloc_debug_init();
-		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-		}
-	else
-		{
-		/* OPENSSL_DEBUG_MEMORY=off */
-		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-		}
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	ERR_load_crypto_strings();
 
