@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -63,10 +63,12 @@ DECLARE_ASN1_ITEM(CMS_DigestedData)
 
 /* CMS DigestedData Utilities */
 
-CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
-	{
+CMS_ContentInfo *
+cms_DigestedData_create(const EVP_MD *md)
+{
 	CMS_ContentInfo *cms;
 	CMS_DigestedData *dd;
+
 	cms = CMS_ContentInfo_new();
 	if (!cms)
 		return NULL;
@@ -86,28 +88,30 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 
 	return cms;
 
-	err:
-
+err:
 	if (cms)
 		CMS_ContentInfo_free(cms);
-
 	return NULL;
-	}
+}
 
-BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
-	{
+BIO *
+cms_DigestedData_init_bio(CMS_ContentInfo *cms)
+{
 	CMS_DigestedData *dd;
+
 	dd = cms->d.digestedData;
 	return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
-	}
+}
 
-int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
-	{
+int
+cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
+{
 	EVP_MD_CTX mctx;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	unsigned int mdlen;
 	int r = 0;
 	CMS_DigestedData *dd;
+
 	EVP_MD_CTX_init(&mctx);
 
 	dd = cms->d.digestedData;
@@ -118,31 +122,26 @@ int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
 	if (EVP_DigestFinal_ex(&mctx, md, &mdlen) <= 0)
 		goto err;
 
-	if (verify)
-		{
-		if (mdlen != (unsigned int)dd->digest->length)
-			{
+	if (verify) {
+		if (mdlen != (unsigned int)dd->digest->length) {
 			CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
-				CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
+			    CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
 			goto err;
-			}
+		}
 
 		if (memcmp(md, dd->digest->data, mdlen))
 			CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
-				CMS_R_VERIFICATION_FAILURE);
+			    CMS_R_VERIFICATION_FAILURE);
 		else
 			r = 1;
-		}
-	else
-		{
+	} else {
 		if (!ASN1_STRING_set(dd->digest, md, mdlen))
 			goto err;
 		r = 1;
-		}
+	}
 
-	err:
+err:
 	EVP_MD_CTX_cleanup(&mctx);
 
 	return r;
-
-	}
+}

@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,7 +57,6 @@
 #include "cms.h"
 #include "cms_lcl.h"
 
-
 ASN1_SEQUENCE(CMS_IssuerAndSerialNumber) = {
 	ASN1_SIMPLE(CMS_IssuerAndSerialNumber, issuer, X509_NAME),
 	ASN1_SIMPLE(CMS_IssuerAndSerialNumber, serialNumber, ASN1_INTEGER)
@@ -87,19 +86,18 @@ ASN1_NDEF_SEQUENCE(CMS_EncapsulatedContentInfo) = {
 } ASN1_NDEF_SEQUENCE_END(CMS_EncapsulatedContentInfo)
 
 /* Minor tweak to operation: free up signer key, cert */
-static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-							void *exarg)
-	{
-	if(operation == ASN1_OP_FREE_POST)
-		{
+static int
+cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
+	if (operation == ASN1_OP_FREE_POST) {
 		CMS_SignerInfo *si = (CMS_SignerInfo *)*pval;
 		if (si->pkey)
 			EVP_PKEY_free(si->pkey);
 		if (si->signer)
 			X509_free(si->signer);
-		}
-	return 1;
 	}
+	return 1;
+}
 
 ASN1_SEQUENCE_cb(CMS_SignerInfo, cms_si_cb) = {
 	ASN1_SIMPLE(CMS_SignerInfo, version, LONG),
@@ -160,8 +158,8 @@ ASN1_SEQUENCE(CMS_RecipientKeyIdentifier) = {
 } ASN1_SEQUENCE_END(CMS_RecipientKeyIdentifier)
 
 ASN1_CHOICE(CMS_KeyAgreeRecipientIdentifier) = {
-  ASN1_SIMPLE(CMS_KeyAgreeRecipientIdentifier, d.issuerAndSerialNumber, CMS_IssuerAndSerialNumber),
-  ASN1_IMP(CMS_KeyAgreeRecipientIdentifier, d.rKeyId, CMS_RecipientKeyIdentifier, 0)
+	ASN1_SIMPLE(CMS_KeyAgreeRecipientIdentifier, d.issuerAndSerialNumber, CMS_IssuerAndSerialNumber),
+	ASN1_IMP(CMS_KeyAgreeRecipientIdentifier, d.rKeyId, CMS_RecipientKeyIdentifier, 0)
 } ASN1_CHOICE_END(CMS_KeyAgreeRecipientIdentifier)
 
 ASN1_SEQUENCE(CMS_RecipientEncryptedKey) = {
@@ -170,14 +168,14 @@ ASN1_SEQUENCE(CMS_RecipientEncryptedKey) = {
 } ASN1_SEQUENCE_END(CMS_RecipientEncryptedKey)
 
 ASN1_SEQUENCE(CMS_OriginatorPublicKey) = {
-  ASN1_SIMPLE(CMS_OriginatorPublicKey, algorithm, X509_ALGOR),
-  ASN1_SIMPLE(CMS_OriginatorPublicKey, publicKey, ASN1_BIT_STRING)
+	ASN1_SIMPLE(CMS_OriginatorPublicKey, algorithm, X509_ALGOR),
+	ASN1_SIMPLE(CMS_OriginatorPublicKey, publicKey, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END(CMS_OriginatorPublicKey)
 
 ASN1_CHOICE(CMS_OriginatorIdentifierOrKey) = {
-  ASN1_SIMPLE(CMS_OriginatorIdentifierOrKey, d.issuerAndSerialNumber, CMS_IssuerAndSerialNumber),
-  ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.subjectKeyIdentifier, ASN1_OCTET_STRING, 0),
-  ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.originatorKey, CMS_OriginatorPublicKey, 1)
+	ASN1_SIMPLE(CMS_OriginatorIdentifierOrKey, d.issuerAndSerialNumber, CMS_IssuerAndSerialNumber),
+	ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.subjectKeyIdentifier, ASN1_OCTET_STRING, 0),
+	ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.originatorKey, CMS_OriginatorPublicKey, 1)
 } ASN1_CHOICE_END(CMS_OriginatorIdentifierOrKey)
 
 ASN1_SEQUENCE(CMS_KeyAgreeRecipientInfo) = {
@@ -209,46 +207,38 @@ ASN1_SEQUENCE(CMS_PasswordRecipientInfo) = {
 } ASN1_SEQUENCE_END(CMS_PasswordRecipientInfo)
 
 ASN1_SEQUENCE(CMS_OtherRecipientInfo) = {
-  ASN1_SIMPLE(CMS_OtherRecipientInfo, oriType, ASN1_OBJECT),
-  ASN1_OPT(CMS_OtherRecipientInfo, oriValue, ASN1_ANY)
+	ASN1_SIMPLE(CMS_OtherRecipientInfo, oriType, ASN1_OBJECT),
+	ASN1_OPT(CMS_OtherRecipientInfo, oriValue, ASN1_ANY)
 } ASN1_SEQUENCE_END(CMS_OtherRecipientInfo)
 
 /* Free up RecipientInfo additional data */
-static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-							void *exarg)
-	{
-	if(operation == ASN1_OP_FREE_PRE)
-		{
+static int
+cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
+	if (operation == ASN1_OP_FREE_PRE) {
 		CMS_RecipientInfo *ri = (CMS_RecipientInfo *)*pval;
-		if (ri->type == CMS_RECIPINFO_TRANS)
-			{
+		if (ri->type == CMS_RECIPINFO_TRANS) {
 			CMS_KeyTransRecipientInfo *ktri = ri->d.ktri;
 			if (ktri->pkey)
 				EVP_PKEY_free(ktri->pkey);
 			if (ktri->recip)
 				X509_free(ktri->recip);
-			}
-		else if (ri->type == CMS_RECIPINFO_KEK)
-			{
+		} else if (ri->type == CMS_RECIPINFO_KEK) {
 			CMS_KEKRecipientInfo *kekri = ri->d.kekri;
-			if (kekri->key)
-				{
+			if (kekri->key) {
 				OPENSSL_cleanse(kekri->key, kekri->keylen);
 				free(kekri->key);
-				}
 			}
-		else if (ri->type == CMS_RECIPINFO_PASS)
-			{
+		} else if (ri->type == CMS_RECIPINFO_PASS) {
 			CMS_PasswordRecipientInfo *pwri = ri->d.pwri;
-			if (pwri->pass)
-				{
+			if (pwri->pass) {
 				OPENSSL_cleanse(pwri->pass, pwri->passlen);
 				free(pwri->pass);
-				}
 			}
 		}
-	return 1;
 	}
+	return 1;
+}
 
 ASN1_CHOICE_cb(CMS_RecipientInfo, cms_ri_cb) = {
 	ASN1_SIMPLE(CMS_RecipientInfo, d.ktri, CMS_KeyTransRecipientInfo),
@@ -295,7 +285,7 @@ ASN1_NDEF_SEQUENCE(CMS_CompressedData) = {
 	ASN1_SIMPLE(CMS_CompressedData, version, LONG),
 	ASN1_SIMPLE(CMS_CompressedData, compressionAlgorithm, X509_ALGOR),
 	ASN1_SIMPLE(CMS_CompressedData, encapContentInfo, CMS_EncapsulatedContentInfo),
-} ASN1_NDEF_SEQUENCE_END(CMS_CompressedData)
+    } ASN1_NDEF_SEQUENCE_END(CMS_CompressedData)
 
 /* This is the ANY DEFINED BY table for the top level ContentInfo structure */
 
@@ -312,36 +302,34 @@ ASN1_ADB(CMS_ContentInfo) = {
 } ASN1_ADB_END(CMS_ContentInfo, 0, contentType, 0, &cms_default_tt, NULL);
 
 /* CMS streaming support */
-static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-							void *exarg)
-	{
+static int
+cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
 	ASN1_STREAM_ARG *sarg = exarg;
 	CMS_ContentInfo *cms = NULL;
+
 	if (pval)
 		cms = (CMS_ContentInfo *)*pval;
 	else
 		return 1;
-	switch(operation)
-		{
 
-		case ASN1_OP_STREAM_PRE:
+	switch (operation) {
+	case ASN1_OP_STREAM_PRE:
 		if (CMS_stream(&sarg->boundary, cms) <= 0)
 			return 0;
-		case ASN1_OP_DETACHED_PRE:
+	case ASN1_OP_DETACHED_PRE:
 		sarg->ndef_bio = CMS_dataInit(cms, sarg->out);
 		if (!sarg->ndef_bio)
 			return 0;
 		break;
-
-		case ASN1_OP_STREAM_POST:
-		case ASN1_OP_DETACHED_POST:
+	case ASN1_OP_STREAM_POST:
+	case ASN1_OP_DETACHED_POST:
 		if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
 			return 0;
 		break;
-
-		}
-	return 1;
 	}
+	return 1;
+}
 
 ASN1_NDEF_SEQUENCE_cb(CMS_ContentInfo, cms_cb) = {
 	ASN1_SIMPLE(CMS_ContentInfo, contentType, ASN1_OBJECT),
@@ -354,36 +342,33 @@ ASN1_NDEF_SEQUENCE_cb(CMS_ContentInfo, cms_cb) = {
  * encoding.
  */
 
-ASN1_ITEM_TEMPLATE(CMS_Attributes_Sign) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_ORDER, 0, CMS_ATTRIBUTES, X509_ATTRIBUTE)
+ASN1_ITEM_TEMPLATE(CMS_Attributes_Sign) =
+ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_ORDER, 0, CMS_ATTRIBUTES, X509_ATTRIBUTE)
 ASN1_ITEM_TEMPLATE_END(CMS_Attributes_Sign)
 
-/* When verifying attributes we need to use the received order. So 
+/* When verifying attributes we need to use the received order. So
  * we use SEQUENCE OF and tag it to SET OF
  */
 
-ASN1_ITEM_TEMPLATE(CMS_Attributes_Verify) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_UNIVERSAL,
-				V_ASN1_SET, CMS_ATTRIBUTES, X509_ATTRIBUTE)
+ASN1_ITEM_TEMPLATE(CMS_Attributes_Verify) =
+ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_UNIVERSAL,
+    V_ASN1_SET, CMS_ATTRIBUTES, X509_ATTRIBUTE)
 ASN1_ITEM_TEMPLATE_END(CMS_Attributes_Verify)
 
-
-
 ASN1_CHOICE(CMS_ReceiptsFrom) = {
-  ASN1_IMP(CMS_ReceiptsFrom, d.allOrFirstTier, LONG, 0),
-  ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAMES, 1)
+	ASN1_IMP(CMS_ReceiptsFrom, d.allOrFirstTier, LONG, 0),
+	ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAMES, 1)
 } ASN1_CHOICE_END(CMS_ReceiptsFrom)
 
 ASN1_SEQUENCE(CMS_ReceiptRequest) = {
-  ASN1_SIMPLE(CMS_ReceiptRequest, signedContentIdentifier, ASN1_OCTET_STRING),
-  ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom),
-  ASN1_SEQUENCE_OF(CMS_ReceiptRequest, receiptsTo, GENERAL_NAMES)
+	ASN1_SIMPLE(CMS_ReceiptRequest, signedContentIdentifier, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom),
+	ASN1_SEQUENCE_OF(CMS_ReceiptRequest, receiptsTo, GENERAL_NAMES)
 } ASN1_SEQUENCE_END(CMS_ReceiptRequest)
 
 ASN1_SEQUENCE(CMS_Receipt) = {
-  ASN1_SIMPLE(CMS_Receipt, version, LONG),
-  ASN1_SIMPLE(CMS_Receipt, contentType, ASN1_OBJECT),
-  ASN1_SIMPLE(CMS_Receipt, signedContentIdentifier, ASN1_OCTET_STRING),
-  ASN1_SIMPLE(CMS_Receipt, originatorSignatureValue, ASN1_OCTET_STRING)
+	ASN1_SIMPLE(CMS_Receipt, version, LONG),
+	ASN1_SIMPLE(CMS_Receipt, contentType, ASN1_OBJECT),
+	ASN1_SIMPLE(CMS_Receipt, signedContentIdentifier, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(CMS_Receipt, originatorSignatureValue, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(CMS_Receipt)
-

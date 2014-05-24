@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -93,10 +93,9 @@ typedef struct CMS_PasswordRecipientInfo_st CMS_PasswordRecipientInfo;
 typedef struct CMS_OtherRecipientInfo_st CMS_OtherRecipientInfo;
 typedef struct CMS_ReceiptsFrom_st CMS_ReceiptsFrom;
 
-struct CMS_ContentInfo_st
-	{
+struct CMS_ContentInfo_st {
 	ASN1_OBJECT *contentType;
-	union	{
+	union {
 		ASN1_OCTET_STRING *data;
 		CMS_SignedData *signedData;
 		CMS_EnvelopedData *envelopedData;
@@ -107,29 +106,26 @@ struct CMS_ContentInfo_st
 		ASN1_TYPE *other;
 		/* Other types ... */
 		void *otherData;
-		} d;
-	};
+	} d;
+};
 
-struct CMS_SignedData_st
-	{
+struct CMS_SignedData_st {
 	long version;
 	STACK_OF(X509_ALGOR) *digestAlgorithms;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
 	STACK_OF(CMS_CertificateChoices) *certificates;
 	STACK_OF(CMS_RevocationInfoChoice) *crls;
 	STACK_OF(CMS_SignerInfo) *signerInfos;
-	};
- 
-struct CMS_EncapsulatedContentInfo_st
-	{
+};
+
+struct CMS_EncapsulatedContentInfo_st {
 	ASN1_OBJECT *eContentType;
 	ASN1_OCTET_STRING *eContent;
 	/* Set to 1 if incomplete structure only part set up */
 	int partial;
-	};
+};
 
-struct CMS_SignerInfo_st
-	{
+struct CMS_SignerInfo_st {
 	long version;
 	CMS_SignerIdentifier *sid;
 	X509_ALGOR *digestAlgorithm;
@@ -140,34 +136,30 @@ struct CMS_SignerInfo_st
 	/* Signing certificate and key */
 	X509 *signer;
 	EVP_PKEY *pkey;
-	};
+};
 
-struct CMS_SignerIdentifier_st
-	{
+struct CMS_SignerIdentifier_st {
 	int type;
-	union	{
+	union {
 		CMS_IssuerAndSerialNumber *issuerAndSerialNumber;
 		ASN1_OCTET_STRING *subjectKeyIdentifier;
-		} d;
-	};
+	} d;
+};
 
-struct CMS_EnvelopedData_st
-	{
+struct CMS_EnvelopedData_st {
 	long version;
 	CMS_OriginatorInfo *originatorInfo;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
 	CMS_EncryptedContentInfo *encryptedContentInfo;
 	STACK_OF(X509_ATTRIBUTE) *unprotectedAttrs;
-	};
+};
 
-struct CMS_OriginatorInfo_st
-	{
+struct CMS_OriginatorInfo_st {
 	STACK_OF(CMS_CertificateChoices) *certificates;
 	STACK_OF(CMS_RevocationInfoChoice) *crls;
-	};
+};
 
-struct CMS_EncryptedContentInfo_st
-	{
+struct CMS_EncryptedContentInfo_st {
 	ASN1_OBJECT *contentType;
 	X509_ALGOR *contentEncryptionAlgorithm;
 	ASN1_OCTET_STRING *encryptedContent;
@@ -177,24 +169,22 @@ struct CMS_EncryptedContentInfo_st
 	size_t keylen;
 	/* Set to 1 if we are debugging decrypt and don't fake keys for MMA */
 	int debug;
-	};
+};
 
-struct CMS_RecipientInfo_st
-	{
- 	int type;
- 	union	{
-  	 	CMS_KeyTransRecipientInfo *ktri;
-   		CMS_KeyAgreeRecipientInfo *kari;
-   		CMS_KEKRecipientInfo *kekri;
+struct CMS_RecipientInfo_st {
+	int type;
+	union {
+		CMS_KeyTransRecipientInfo *ktri;
+		CMS_KeyAgreeRecipientInfo *kari;
+		CMS_KEKRecipientInfo *kekri;
 		CMS_PasswordRecipientInfo *pwri;
 		CMS_OtherRecipientInfo *ori;
-		} d;
-	};
+	} d;
+};
 
 typedef CMS_SignerIdentifier CMS_RecipientIdentifier;
 
-struct CMS_KeyTransRecipientInfo_st
-	{
+struct CMS_KeyTransRecipientInfo_st {
 	long version;
 	CMS_RecipientIdentifier *rid;
 	X509_ALGOR *keyEncryptionAlgorithm;
@@ -202,107 +192,94 @@ struct CMS_KeyTransRecipientInfo_st
 	/* Recipient Key and cert */
 	X509 *recip;
 	EVP_PKEY *pkey;
-	};
+};
 
-struct CMS_KeyAgreeRecipientInfo_st
-	{
+struct CMS_KeyAgreeRecipientInfo_st {
 	long version;
 	CMS_OriginatorIdentifierOrKey *originator;
 	ASN1_OCTET_STRING *ukm;
- 	X509_ALGOR *keyEncryptionAlgorithm;
+	X509_ALGOR *keyEncryptionAlgorithm;
 	STACK_OF(CMS_RecipientEncryptedKey) *recipientEncryptedKeys;
-	};
+};
 
-struct CMS_OriginatorIdentifierOrKey_st
-	{
+struct CMS_OriginatorIdentifierOrKey_st {
 	int type;
-	union	{
+	union {
 		CMS_IssuerAndSerialNumber *issuerAndSerialNumber;
 		ASN1_OCTET_STRING *subjectKeyIdentifier;
 		CMS_OriginatorPublicKey *originatorKey;
-		} d;
-	};
+	} d;
+};
 
-struct CMS_OriginatorPublicKey_st
-	{
+struct CMS_OriginatorPublicKey_st {
 	X509_ALGOR *algorithm;
 	ASN1_BIT_STRING *publicKey;
-	};
+};
 
-struct CMS_RecipientEncryptedKey_st
-	{
- 	CMS_KeyAgreeRecipientIdentifier *rid;
- 	ASN1_OCTET_STRING *encryptedKey;
-	};
+struct CMS_RecipientEncryptedKey_st {
+	CMS_KeyAgreeRecipientIdentifier *rid;
+	ASN1_OCTET_STRING *encryptedKey;
+};
 
-struct CMS_KeyAgreeRecipientIdentifier_st
-	{
+struct CMS_KeyAgreeRecipientIdentifier_st {
 	int type;
-	union	{
+	union {
 		CMS_IssuerAndSerialNumber *issuerAndSerialNumber;
 		CMS_RecipientKeyIdentifier *rKeyId;
-		} d;
-	};
+	} d;
+};
 
-struct CMS_RecipientKeyIdentifier_st
-	{
- 	ASN1_OCTET_STRING *subjectKeyIdentifier;
- 	ASN1_GENERALIZEDTIME *date;
- 	CMS_OtherKeyAttribute *other;
-	};
+struct CMS_RecipientKeyIdentifier_st {
+	ASN1_OCTET_STRING *subjectKeyIdentifier;
+	ASN1_GENERALIZEDTIME *date;
+	CMS_OtherKeyAttribute *other;
+};
 
-struct CMS_KEKRecipientInfo_st
-	{
- 	long version;
- 	CMS_KEKIdentifier *kekid;
- 	X509_ALGOR *keyEncryptionAlgorithm;
- 	ASN1_OCTET_STRING *encryptedKey;
+struct CMS_KEKRecipientInfo_st {
+	long version;
+	CMS_KEKIdentifier *kekid;
+	X509_ALGOR *keyEncryptionAlgorithm;
+	ASN1_OCTET_STRING *encryptedKey;
 	/* Extra info: symmetric key to use */
 	unsigned char *key;
 	size_t keylen;
-	};
+};
 
-struct CMS_KEKIdentifier_st
-	{
- 	ASN1_OCTET_STRING *keyIdentifier;
- 	ASN1_GENERALIZEDTIME *date;
- 	CMS_OtherKeyAttribute *other;
-	};
+struct CMS_KEKIdentifier_st {
+	ASN1_OCTET_STRING *keyIdentifier;
+	ASN1_GENERALIZEDTIME *date;
+	CMS_OtherKeyAttribute *other;
+};
 
-struct CMS_PasswordRecipientInfo_st
-	{
- 	long version;
- 	X509_ALGOR *keyDerivationAlgorithm;
- 	X509_ALGOR *keyEncryptionAlgorithm;
- 	ASN1_OCTET_STRING *encryptedKey;
+struct CMS_PasswordRecipientInfo_st {
+	long version;
+	X509_ALGOR *keyDerivationAlgorithm;
+	X509_ALGOR *keyEncryptionAlgorithm;
+	ASN1_OCTET_STRING *encryptedKey;
 	/* Extra info: password to use */
 	unsigned char *pass;
 	size_t passlen;
-	};
+};
 
-struct CMS_OtherRecipientInfo_st
-	{
- 	ASN1_OBJECT *oriType;
- 	ASN1_TYPE *oriValue;
-	};
+struct CMS_OtherRecipientInfo_st {
+	ASN1_OBJECT *oriType;
+	ASN1_TYPE *oriValue;
+};
 
-struct CMS_DigestedData_st
-	{
+struct CMS_DigestedData_st {
 	long version;
 	X509_ALGOR *digestAlgorithm;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
 	ASN1_OCTET_STRING *digest;
-	};
+};
 
-struct CMS_EncryptedData_st
-	{
+struct CMS_EncryptedData_st {
 	long version;
 	CMS_EncryptedContentInfo *encryptedContentInfo;
 	STACK_OF(X509_ATTRIBUTE) *unprotectedAttrs;
-	};
+};
 
-struct CMS_AuthenticatedData_st
-	{
+struct CMS_AuthenticatedData_st {
 	long version;
 	CMS_OriginatorInfo *originatorInfo;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
@@ -312,45 +289,41 @@ struct CMS_AuthenticatedData_st
 	STACK_OF(X509_ATTRIBUTE) *authAttrs;
 	ASN1_OCTET_STRING *mac;
 	STACK_OF(X509_ATTRIBUTE) *unauthAttrs;
-	};
+};
 
-struct CMS_CompressedData_st
-	{
+struct CMS_CompressedData_st {
 	long version;
 	X509_ALGOR *compressionAlgorithm;
 	STACK_OF(CMS_RecipientInfo) *recipientInfos;
 	CMS_EncapsulatedContentInfo *encapContentInfo;
-	};
+};
 
-struct CMS_RevocationInfoChoice_st
-	{
+struct CMS_RevocationInfoChoice_st {
 	int type;
-	union	{
+	union {
 		X509_CRL *crl;
 		CMS_OtherRevocationInfoFormat *other;
-		} d;
-	};
+	} d;
+};
 
 #define CMS_REVCHOICE_CRL		0
 #define CMS_REVCHOICE_OTHER		1
 
-struct CMS_OtherRevocationInfoFormat_st
-	{
+struct CMS_OtherRevocationInfoFormat_st {
 	ASN1_OBJECT *otherRevInfoFormat;
- 	ASN1_TYPE *otherRevInfo;
-	};
+	ASN1_TYPE *otherRevInfo;
+};
 
-struct CMS_CertificateChoices
-	{
+struct CMS_CertificateChoices {
 	int type;
-		union {
+	union {
 		X509 *certificate;
 		ASN1_STRING *extendedCertificate;	/* Obsolete */
 		ASN1_STRING *v1AttrCert;	/* Left encoded for now */
 		ASN1_STRING *v2AttrCert;	/* Left encoded for now */
 		CMS_OtherCertificateFormat *other;
-		} d;
-	};
+	} d;
+};
 
 #define CMS_CERTCHOICE_CERT		0
 #define CMS_CERTCHOICE_EXCERT		1
@@ -358,58 +331,52 @@ struct CMS_CertificateChoices
 #define CMS_CERTCHOICE_V2ACERT		3
 #define CMS_CERTCHOICE_OTHER		4
 
-struct CMS_OtherCertificateFormat_st
-	{
+struct CMS_OtherCertificateFormat_st {
 	ASN1_OBJECT *otherCertFormat;
- 	ASN1_TYPE *otherCert;
-	};
+	ASN1_TYPE *otherCert;
+};
 
 /* This is also defined in pkcs7.h but we duplicate it
  * to allow the CMS code to be independent of PKCS#7
  */
 
-struct CMS_IssuerAndSerialNumber_st
-	{
+struct CMS_IssuerAndSerialNumber_st {
 	X509_NAME *issuer;
 	ASN1_INTEGER *serialNumber;
-	};
+};
 
-struct CMS_OtherKeyAttribute_st
-	{
+struct CMS_OtherKeyAttribute_st {
 	ASN1_OBJECT *keyAttrId;
- 	ASN1_TYPE *keyAttr;
-	};
+	ASN1_TYPE *keyAttr;
+};
 
 /* ESS structures */
 
 #ifdef HEADER_X509V3_H
 
-struct CMS_ReceiptRequest_st
-	{
+struct CMS_ReceiptRequest_st {
 	ASN1_OCTET_STRING *signedContentIdentifier;
 	CMS_ReceiptsFrom *receiptsFrom;
 	STACK_OF(GENERAL_NAMES) *receiptsTo;
-	};
+};
 
 
-struct CMS_ReceiptsFrom_st
-	{
+struct CMS_ReceiptsFrom_st {
 	int type;
 	union
-		{
+	{
 		long allOrFirstTier;
 		STACK_OF(GENERAL_NAMES) *receiptList;
-		} d;
-	};
+	} d;
+};
 #endif
 
-struct CMS_Receipt_st
-	{
+struct CMS_Receipt_st {
 	long version;
 	ASN1_OBJECT *contentType;
 	ASN1_OCTET_STRING *signedContentIdentifier;
 	ASN1_OCTET_STRING *originatorSignatureValue;
-	};
+};
 
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_ITEM(CMS_SignerInfo)
@@ -438,8 +405,7 @@ BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms);
 int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);
 int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type);
 int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
-					ASN1_OCTET_STRING **keyid,
-					X509_NAME **issuer, ASN1_INTEGER **sno);
+    ASN1_OCTET_STRING **keyid, X509_NAME **issuer, ASN1_INTEGER **sno);
 int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 
 CMS_ContentInfo *cms_CompressedData_create(int comp_nid);
@@ -448,13 +414,12 @@ BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms);
 void cms_DigestAlgorithm_set(X509_ALGOR *alg, const EVP_MD *md);
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
-					X509_ALGOR *mdalg);
+    X509_ALGOR *mdalg);
 
 BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec);
 BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms);
-int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
-				const EVP_CIPHER *cipher,
-				const unsigned char *key, size_t keylen);
+int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
+    const EVP_CIPHER *cipher, const unsigned char *key, size_t keylen);
 
 int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
 int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
@@ -465,8 +430,8 @@ CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms);
 
 /* PWRI routines */
 int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
-							int en_de);
-	
+    int en_de);
+
 #ifdef  __cplusplus
 }
 #endif
