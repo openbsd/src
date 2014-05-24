@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.36 2014/05/23 19:47:49 guenther Exp $	*/
+/*	$OpenBSD: pax.c,v 1.37 2014/05/24 03:49:49 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -318,6 +318,25 @@ sig_cleanup(int which_sig)
 }
 
 /*
+ * setup_sig()
+ *	set a signal to be caught, but only if it isn't being ignored already
+ */
+
+static int
+setup_sig(int sig, const struct sigaction *n_hand)
+{
+	struct sigaction o_hand;
+
+	if (sigaction(sig, NULL, &o_hand) < 0)
+		return (-1);
+
+	if (o_hand.sa_handler == SIG_IGN)
+		return (0);
+
+	return (sigaction(sig, n_hand, NULL));
+}
+
+/*
  * gen_init()
  *	general setup routines. Not all are required, but they really help
  *	when dealing with a medium to large sized archives.
@@ -328,7 +347,6 @@ gen_init(void)
 {
 	struct rlimit reslimit;
 	struct sigaction n_hand;
-	struct sigaction o_hand;
 
 	/*
 	 * Really needed to handle large archives. We can run out of memory for
@@ -386,34 +404,16 @@ gen_init(void)
 	n_hand.sa_flags = 0;
 	n_hand.sa_handler = sig_cleanup;
 
-	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) ||
-	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGHUP, &o_hand, &o_hand) < 0))
-		goto out;
-
-	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) ||
-	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGTERM, &o_hand, &o_hand) < 0))
-		goto out;
-
-	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) ||
-	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGINT, &o_hand, &o_hand) < 0))
-		goto out;
-
-	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) ||
-	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
-		goto out;
-
-	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) ||
-	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
+	if (setup_sig(SIGHUP,  &n_hand) ||
+	    setup_sig(SIGTERM, &n_hand) ||
+	    setup_sig(SIGINT,  &n_hand) ||
+	    setup_sig(SIGQUIT, &n_hand) ||
+	    setup_sig(SIGXCPU, &n_hand))
 		goto out;
 
 	n_hand.sa_handler = SIG_IGN;
-	if ((sigaction(SIGPIPE, &n_hand, &o_hand) < 0) ||
-	    (sigaction(SIGXFSZ, &n_hand, &o_hand) < 0))
+	if ((sigaction(SIGPIPE, &n_hand, NULL) < 0) ||
+	    (sigaction(SIGXFSZ, &n_hand, NULL) < 0))
 		goto out;
 	return(0);
 
