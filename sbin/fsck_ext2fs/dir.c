@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.17 2014/05/21 17:52:26 krw Exp $	*/
+/*	$OpenBSD: dir.c,v 1.18 2014/05/24 02:27:31 krw Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ mkentry(struct inodesc *idesc)
 	struct ext2fs_direct newent;
 	int newlen, oldlen;
 
+	newent.e2d_type = EXT2_FT_UNKNOWN;
 	newent.e2d_namlen = strlen(idesc->id_name);
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
