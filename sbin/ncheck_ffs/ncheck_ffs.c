@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.43 2014/05/22 02:15:54 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.44 2014/05/24 21:49:09 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -82,8 +82,6 @@ int	diskfd;		/* disk file descriptor */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
 int	sblock_try[] = SBLOCKSEARCH; /* possible superblock locations */
-long	dev_bsize;	/* block size of underlying disk device */
-int	dev_bshift;	/* log2(dev_bsize) */
 ufsino_t *ilist;	/* list of inodes to check */
 int	ninodes;	/* number of inodes in list */
 int	sflag;		/* only suid and special files */
@@ -264,24 +262,27 @@ int	breaderrors = 0;
 void
 bread(daddr_t blkno, char *buf, int size)
 {
-	int cnt, i;
+	off_t offset;
+ 	int cnt, i;
+
+	offset = blkno * DEV_BSIZE;
 
 loop:
-	if ((cnt = pread(diskfd, buf, size, (off_t)blkno << dev_bshift)) ==
-	    size)
+	if ((cnt = pread(diskfd, buf, size, offset)) == size)
 		return;
-	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_ffs1_size)) {
+	if (blkno + (size / DEV_BSIZE) >
+	    fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
 		 * Trying to read the final fragment.
 		 *
 		 * NB - dump only works in TP_BSIZE blocks, hence
-		 * rounds `dev_bsize' fragments up to TP_BSIZE pieces.
+		 * rounds `DEV_BSIZE' fragments up to TP_BSIZE pieces.
 		 * It should be smarter about not actually trying to
 		 * read more than it can get, but for the time being
 		 * we punt and scale back the read only when it gets
 		 * us into trouble. (mkm 9/25/83)
 		 */
-		size -= dev_bsize;
+		size -= DEV_BSIZE;
 		goto loop;
 	}
 	if (cnt == -1)
@@ -297,18 +298,19 @@ loop:
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
 	memset(buf, 0, size);
-	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if ((cnt = pread(diskfd, buf, (int)dev_bsize,
-			    (off_t)blkno << dev_bshift)) == dev_bsize)
+	for (i = 0; i < size; i += DEV_BSIZE, buf += DEV_BSIZE) {
+		if ((cnt = pread(diskfd, buf, DEV_BSIZE, offset + i)) ==
+		    DEV_BSIZE)
 			continue;
 		if (cnt == -1) {
 			warnx("read error from %s: %s: [sector %lld]: "
-			    "count=%ld", disk, strerror(errno),
-			    (long long)blkno, dev_bsize);
+			    "count=%d", disk, strerror(errno),
+			    (long long)(offset + i) / DEV_BSIZE, DEV_BSIZE);
 			continue;
 		}
-		warnx("short read error from %s: [sector %lld]: count=%ld, "
-		    "got=%d", disk, (long long)blkno, dev_bsize, cnt);
+		warnx("short read error from %s: [sector %lld]: count=%d, "
+		    "got=%d", disk, (long long)(offset + i) / DEV_BSIZE,
+		    DEV_BSIZE, cnt);
 	}
 }
 
@@ -579,10 +581,6 @@ main(int argc, char *argv[])
 	if (sblock_try[i] == -1)
 		errx(1, "cannot find filesystem superblock");
 
-	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
-	dev_bshift = ffs(dev_bsize) - 1;
-	if (dev_bsize != (1 << dev_bshift))
-		errx(2, "blocksize (%ld) not a power of 2", dev_bsize);
 	findinodes(sblock->fs_ipg * sblock->fs_ncg);
 	if (!format)
 		printf("%s:\n", disk);

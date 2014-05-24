@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.30 2014/05/21 17:38:30 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.31 2014/05/24 21:49:09 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -801,25 +801,27 @@ int	breaderrors = 0;
 void
 bread(daddr_t blkno, char *buf, int size)
 {
+	off_t offset;
 	int cnt, i;
 
+	offset = blkno * DEV_BSIZE;
+
 loop:
-	if ((cnt = pread(diskfd, buf, size, (off_t)blkno << dev_bshift)) ==
-		size)
+	if ((cnt = pread(diskfd, buf, size, offset)) == size)
 		return;
-	if (blkno + (size / dev_bsize) >
+	if (blkno + (size / DEV_BSIZE) >
 	    fsbtodb(sblock, sblock->fs_ffs1_size)) {
 		/*
 		 * Trying to read the final fragment.
 		 *
 		 * NB - dump only works in TP_BSIZE blocks, hence
-		 * rounds `dev_bsize' fragments up to TP_BSIZE pieces.
+		 * rounds `DEV_BSIZE' fragments up to TP_BSIZE pieces.
 		 * It should be smarter about not actually trying to
 		 * read more than it can get, but for the time being
 		 * we punt and scale back the read only when it gets
 		 * us into trouble. (mkm 9/25/83)
 		 */
-		size -= dev_bsize;
+		size -= DEV_BSIZE;
 		goto loop;
 	}
 	if (cnt == -1)
@@ -843,17 +845,18 @@ loop:
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
 	memset(buf, 0, size);
-	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if ((cnt = pread(diskfd, buf, dev_bsize,
-			    (off_t)blkno << dev_bshift)) == dev_bsize)
+	for (i = 0; i < size; i += DEV_BSIZE, buf += DEV_BSIZE) {
+		if ((cnt = pread(diskfd, buf, DEV_BSIZE, offset + i)) ==
+		    DEV_BSIZE)
 			continue;
 		if (cnt == -1) {
 			msg("read error from %s: %s: [sector %lld]: "
-			    "count=%ld\n", disk, strerror(errno), blkno,
-			    dev_bsize);
+			    "count=%d\n", disk, strerror(errno),
+			    (long long)(offset + i) / DEV_BSIZE, DEV_BSIZE);
 			continue;
 		}
-		msg("short read error from %s: [sector %lld]: count=%ld, "
-		    "got=%d\n", disk, blkno, dev_bsize, cnt);
+		msg("short read error from %s: [sector %lld]: count=%d, "
+		    "got=%d\n", disk, (long long)(offset + i) / DEV_BSIZE,
+		    DEV_BSIZE, cnt);
 	}
 }

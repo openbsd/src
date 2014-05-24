@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2013/04/16 18:17:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2014/05/24 21:49:09 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@ int	tapeno = 0;	/* current tape number */
 int	density = 0;	/* density in bytes/0.1" */
 int	ntrec = NTREC;	/* # tape blocks in each tape record */
 int	cartridge = 0;	/* Assume non-cartridge tape */
-long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
 int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
@@ -396,10 +395,6 @@ main(int argc, char *argv[])
 	}
 	if (sblock_try[i] == -1)
 		quit("Cannot find filesystem superblock\n");
-	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
-	dev_bshift = ffs(dev_bsize) - 1;
-	if (dev_bsize != (1 << dev_bshift))
-		quit("dev_bsize (%d) is not a power of 2\n", dev_bsize);
 	tp_bshift = ffs(TP_BSIZE) - 1;
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2\n", TP_BSIZE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.18 2014/05/21 17:38:30 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.19 2014/05/24 21:49:09 krw Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -79,8 +79,6 @@ time_t	tstart_writing;	/* when started writing the first tape block */
 long	xferrate;	/* averaged transfer rate of all volumes */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
-long	dev_bsize;	/* block size of underlying disk device */
-int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 
 /* operator interface functions */
