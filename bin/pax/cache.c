@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.20 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: cache.c,v 1.21 2014/05/24 18:51:00 guenther Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ uidtb_start(void)
 		return(0);
 	if (fail)
 		return(-1);
-	if ((uidtb = (UIDC **)calloc(UID_SZ, sizeof(UIDC *))) == NULL) {
+	if ((uidtb = calloc(UID_SZ, sizeof(UIDC *))) == NULL) {
 		++fail;
 		paxwarn(1, "Unable to allocate memory for user id cache table");
 		return(-1);
@@ -101,7 +101,7 @@ gidtb_start(void)
 		return(0);
 	if (fail)
 		return(-1);
-	if ((gidtb = (GIDC **)calloc(GID_SZ, sizeof(GIDC *))) == NULL) {
+	if ((gidtb = calloc(GID_SZ, sizeof(GIDC *))) == NULL) {
 		++fail;
 		paxwarn(1, "Unable to allocate memory for group id cache table");
 		return(-1);
@@ -125,7 +125,7 @@ usrtb_start(void)
 		return(0);
 	if (fail)
 		return(-1);
-	if ((usrtb = (UIDC **)calloc(UNM_SZ, sizeof(UIDC *))) == NULL) {
+	if ((usrtb = calloc(UNM_SZ, sizeof(UIDC *))) == NULL) {
 		++fail;
 		paxwarn(1, "Unable to allocate memory for user name cache table");
 		return(-1);
@@ -149,7 +149,7 @@ grptb_start(void)
 		return(0);
 	if (fail)
 		return(-1);
-	if ((grptb = (GIDC **)calloc(GNM_SZ, sizeof(GIDC *))) == NULL) {
+	if ((grptb = calloc(GNM_SZ, sizeof(GIDC *))) == NULL) {
 		++fail;
 		paxwarn(1,"Unable to allocate memory for group name cache table");
 		return(-1);
@@ -330,7 +330,7 @@ uid_name(char *name, uid_t *uid)
 
 	if (ptr == NULL)
 		ptr = usrtb[st_hash(name, namelen, UNM_SZ)] =
-		  (UIDC *)malloc(sizeof(UIDC));
+		  malloc(sizeof(UIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
@@ -392,7 +392,7 @@ gid_name(char *name, gid_t *gid)
 	}
 	if (ptr == NULL)
 		ptr = grptb[st_hash(name, namelen, GID_SZ)] =
-		  (GIDC *)malloc(sizeof(GIDC));
+		  malloc(sizeof(GIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,

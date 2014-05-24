@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.23 2014/01/08 06:43:34 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.24 2014/05/24 18:51:00 guenther Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ usr_add(char *str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((usrtb == NULL) &&
-	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
+	    ((usrtb = calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
 		paxwarn(1, "Unable to allocate memory for user selection table");
 		return(-1);
 	}
@@ -147,7 +147,7 @@ usr_add(char *str)
 	/*
 	 * uid is not yet in the table, add it to the front of the chain
 	 */
-	if ((pt = (USRT *)malloc(sizeof(USRT))) != NULL) {
+	if ((pt = malloc(sizeof(USRT))) != NULL) {
 		pt->uid = uid;
 		pt->fow = usrtb[indx];
 		usrtb[indx] = pt;
@@ -206,7 +206,7 @@ grp_add(char *str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((grptb == NULL) &&
-	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
+	    ((grptb = calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
 		paxwarn(1, "Unable to allocate memory fo group selection table");
 		return(-1);
 	}
@@ -244,7 +244,7 @@ grp_add(char *str)
 	/*
 	 * gid not in the table, add it to the front of the chain
 	 */
-	if ((pt = (GRPT *)malloc(sizeof(GRPT))) != NULL) {
+	if ((pt = malloc(sizeof(GRPT))) != NULL) {
 		pt->gid = gid;
 		pt->fow = grptb[indx];
 		grptb[indx] = pt;
@@ -358,7 +358,7 @@ trng_add(char *str)
 	/*
 	 * allocate space for the time range and store the limits
 	 */
-	if ((pt = (TIME_RNG *)malloc(sizeof(TIME_RNG))) == NULL) {
+	if ((pt = malloc(sizeof(TIME_RNG))) == NULL) {
 		paxwarn(1, "Unable to allocate memory for time range");
 		return(-1);
 	}
@@ -384,7 +384,7 @@ trng_add(char *str)
 			default:
 				paxwarn(1, "Bad option %c with time range %s",
 				    *flgpt, str);
-				(void)free((char *)pt);
+				free(pt);
 				goto out;
 			}
 			++flgpt;
@@ -401,7 +401,7 @@ trng_add(char *str)
 		 */
 		if (str_sec(str, &(pt->low_time)) < 0) {
 			paxwarn(1, "Illegal lower time range %s", str);
-			(void)free((char *)pt);
+			free(pt);
 			goto out;
 		}
 		pt->flgs |= HASLOW;
@@ -413,7 +413,7 @@ trng_add(char *str)
 		 */
 		if (str_sec(up_pt, &(pt->high_time)) < 0) {
 			paxwarn(1, "Illegal upper time range %s", up_pt);
-			(void)free((char *)pt);
+			free(pt);
 			goto out;
 		}
 		pt->flgs |= HASHIGH;
@@ -425,7 +425,7 @@ trng_add(char *str)
 			if (pt->low_time > pt->high_time) {
 				paxwarn(1, "Upper %s and lower %s time overlap",
 					up_pt, str);
-				(void)free((char *)pt);
+				free(pt);
 				return(-1);
 			}
 		}

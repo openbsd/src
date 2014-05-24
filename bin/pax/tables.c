@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.33 2014/05/24 04:00:06 guenther Exp $	*/
+/*	$OpenBSD: tables.c,v 1.34 2014/05/24 18:51:00 guenther Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ lnk_start(void)
 {
 	if (ltab != NULL)
 		return(0);
-	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
+	if ((ltab = calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for hard link table");
 		return(-1);
 	}
@@ -178,8 +178,8 @@ chk_lnk(ARCHD *arcn)
 			 */
 			if (--pt->nlink <= 1) {
 				*ppt = pt->fow;
-				(void)free((char *)pt->name);
-				(void)free((char *)pt);
+				free(pt->name);
+				free(pt);
 			}
 			return(1);
 		}
@@ -189,7 +189,7 @@ chk_lnk(ARCHD *arcn)
 	 * we never saw this file before. It has links so we add it to the
 	 * front of this hash chain
 	 */
-	if ((pt = (HRDLNK *)malloc(sizeof(HRDLNK))) != NULL) {
+	if ((pt = malloc(sizeof(HRDLNK))) != NULL) {
 		if ((pt->name = strdup(arcn->name)) != NULL) {
 			pt->dev = arcn->sb.st_dev;
 			pt->ino = arcn->sb.st_ino;
@@ -198,7 +198,7 @@ chk_lnk(ARCHD *arcn)
 			ltab[indx] = pt;
 			return(0);
 		}
-		(void)free((char *)pt);
+		free(pt);
 	}
 
 	paxwarn(1, "Hard link table out of memory");
@@ -254,8 +254,8 @@ purg_lnk(ARCHD *arcn)
 	 * remove and free it
 	 */
 	*ppt = pt->fow;
-	(void)free((char *)pt->name);
-	(void)free((char *)pt);
+	free(pt->name);
+	free(pt);
 }
 
 /*
@@ -288,8 +288,8 @@ lnk_end(void)
 		while (pt != NULL) {
 			ppt = pt;
 			pt = ppt->fow;
-			(void)free((char *)ppt->name);
-			(void)free((char *)ppt);
+			free(ppt->name);
+			free(ppt);
 		}
 	}
 	return;
@@ -332,7 +332,7 @@ ftime_start(void)
 
 	if (ftab != NULL)
 		return(0);
-	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
+	if ((ftab = calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for file time table");
 		return(-1);
 	}
@@ -440,7 +440,7 @@ chk_ftime(ARCHD *arcn)
 	/*
 	 * not in table, add it
 	 */
-	if ((pt = (FTM *)malloc(sizeof(FTM))) != NULL) {
+	if ((pt = malloc(sizeof(FTM))) != NULL) {
 		/*
 		 * add the name at the end of the scratch file, saving the
 		 * offset. add the file to the head of the hash chain
@@ -460,7 +460,7 @@ chk_ftime(ARCHD *arcn)
 		paxwarn(1, "File time table ran out of memory");
 
 	if (pt != NULL)
-		(void)free((char *)pt);
+		free(pt);
 	return(-1);
 }
 
@@ -488,7 +488,7 @@ name_start(void)
 {
 	if (ntab != NULL)
 		return(0);
-	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
+	if ((ntab = calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for interactive rename table");
 		return(-1);
 	}
@@ -538,7 +538,7 @@ add_name(char *oname, int onamelen, char *nname)
 			if (strcmp(nname, pt->nname) == 0)
 				return(0);
 
-			(void)free((char *)pt->nname);
+			free(pt->nname);
 			if ((pt->nname = strdup(nname)) == NULL) {
 				paxwarn(1, "Cannot update rename table");
 				return(-1);
@@ -550,16 +550,16 @@ add_name(char *oname, int onamelen, char *nname)
 	/*
 	 * this is a new mapping, add it to the table
 	 */
-	if ((pt = (NAMT *)malloc(sizeof(NAMT))) != NULL) {
+	if ((pt = malloc(sizeof(NAMT))) != NULL) {
 		if ((pt->oname = strdup(oname)) != NULL) {
 			if ((pt->nname = strdup(nname)) != NULL) {
 				pt->fow = ntab[indx];
 				ntab[indx] = pt;
 				return(0);
 			}
-			(void)free((char *)pt->oname);
+			free(pt->oname);
 		}
-		(void)free((char *)pt);
+		free(pt);
 	}
 	paxwarn(1, "Interactive rename table out of memory");
 	return(-1);
@@ -662,7 +662,7 @@ dev_start(void)
 {
 	if (dtab != NULL)
 		return(0);
-	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
+	if ((dtab = calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
 		paxwarn(1, "Cannot allocate memory for device mapping table");
 		return(-1);
 	}
@@ -735,7 +735,7 @@ chk_dev(dev_t dev, int add)
 	 * chain. Note we do not assign remaps values here, so the pt->list
 	 * list must be NULL.
 	 */
-	if ((pt = (DEVT *)malloc(sizeof(DEVT))) == NULL) {
+	if ((pt = malloc(sizeof(DEVT))) == NULL) {
 		paxwarn(1, "Device map table out of memory");
 		return(NULL);
 	}
@@ -827,7 +827,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 		 * same device number.
 		 */
 		if (!trc_dev && (trunc_bits != 0)) {
-			if ((dpt = (DLIST *)malloc(sizeof(DLIST))) == NULL)
+			if ((dpt = malloc(sizeof(DLIST))) == NULL)
 				goto bad;
 			dpt->trunc_bits = 0;
 			dpt->dev = arcn->sb.st_dev;
@@ -854,7 +854,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
 		break;
 	}
 
-	if ((lastdev <= 0) || ((dpt = (DLIST *)malloc(sizeof(DLIST))) == NULL))
+	if ((lastdev <= 0) || ((dpt = malloc(sizeof(DLIST))) == NULL))
 		goto bad;
 
 	/*
@@ -905,7 +905,7 @@ atdir_start(void)
 {
 	if (atab != NULL)
 		return(0);
-	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
+	if ((atab = calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
 		paxwarn(1,"Cannot allocate space for directory access time table");
 		return(-1);
 	}
@@ -999,7 +999,7 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 			sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 			return;
 		}
-		(void)free((char *)pt);
+		free(pt);
 	}
 
 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
@@ -1061,8 +1061,8 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 	sigprocmask(SIG_SETMASK, &savedsigs, NULL);
 	*mtime = pt->mtime;
 	*atime = pt->atime;
-	(void)free((char *)pt->name);
-	(void)free((char *)pt);
+	free(pt->name);
+	free(pt);
 	return(0);
 }
 
@@ -1104,7 +1104,7 @@ dir_start(void)
 		return(0);
 
 	dirsize = DIRP_SIZE;
-	if ((dirp = calloc(dirsize, sizeof(DIRDATA))) == NULL) {
+	if ((dirp = reallocarray(NULL, dirsize, sizeof(DIRDATA))) == NULL) {
 		paxwarn(1, "Unable to allocate memory for directory times");
 		return(-1);
 	}

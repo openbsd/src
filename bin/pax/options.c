@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.85 2014/05/07 14:56:57 tedu Exp $	*/
+/*	$OpenBSD: options.c,v 1.86 2014/05/24 18:51:00 guenther Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1422,7 +1422,7 @@ opt_add(const char *str)
 			free(dstr);
 			return(-1);
 		}
-		if ((opt = (OPLIST *)malloc(sizeof(OPLIST))) == NULL) {
+		if ((opt = malloc(sizeof(OPLIST))) == NULL) {
 			paxwarn(0, "Unable to allocate space for option list");
 			free(dstr);
 			return(-1);

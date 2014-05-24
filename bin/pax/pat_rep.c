@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.33 2014/01/08 04:42:24 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.34 2014/05/24 18:51:00 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ rep_add(char *str)
 	 * allocate space for the node that handles this replacement pattern
 	 * and split out the regular expression and try to compile it
 	 */
-	if ((rep = (REPLACE *)malloc(sizeof(REPLACE))) == NULL) {
+	if ((rep = malloc(sizeof(REPLACE))) == NULL) {
 		paxwarn(1, "Unable to allocate memory for replacement string");
 		return(-1);
 	}
@@ -130,7 +130,7 @@ rep_add(char *str)
 	if ((res = regcomp(&(rep->rcmp), str+1, 0)) != 0) {
 		regerror(res, &(rep->rcmp), rebuf, sizeof(rebuf));
 		paxwarn(1, "%s while compiling regular expression %s", rebuf, str);
-		(void)free((char *)rep);
+		free(rep);
 		return(-1);
 	}
 
@@ -150,7 +150,7 @@ rep_add(char *str)
 	}
 	if (*pt2 == '\0') {
 		regfree(&(rep->rcmp));
-		(void)free((char *)rep);
+		free(rep);
 		paxwarn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -175,7 +175,7 @@ rep_add(char *str)
 			break;
 		default:
 			regfree(&(rep->rcmp));
-			(void)free((char *)rep);
+			free(rep);
 			*pt1 = *str;
 			paxwarn(1, "Invalid replacement string option %s", str);
 			return(-1);
@@ -225,7 +225,7 @@ pat_add(char *str, char *chdirname)
 	 * part of argv so do not bother to copy it, just point at it. Add the
 	 * node to the end of the pattern list
 	 */
-	if ((pt = (PATTERN *)malloc(sizeof(PATTERN))) == NULL) {
+	if ((pt = malloc(sizeof(PATTERN))) == NULL) {
 		paxwarn(1, "Unable to allocate memory for pattern string");
 		return(-1);
 	}
@@ -391,7 +391,7 @@ pat_sel(ARCHD *arcn)
 		return(-1);
 	}
 	*ppt = pt->fow;
-	(void)free((char *)pt);
+	free(pt);
 	arcn->pat = NULL;
 	return(0);
 }
