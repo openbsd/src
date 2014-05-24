@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.9 2013/06/11 16:42:04 deraadt Exp $	*/
+/*	$OpenBSD: debug.c,v 1.10 2014/05/24 17:56:17 krw Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -588,7 +588,8 @@ dbg_dump_clmap(struct fs *sb, const char *comment, struct cg *cgr)
 
 	cp = (unsigned char *)cg_clustersfree(cgr);
 	if (sb->fs_nspf)
-		e = howmany(sb->fs_cpg * sb->fs_spc / (sb->fs_nspf << sb->fs_fragshift), CHAR_BIT);
+		e = howmany(sb->fs_cpg * sb->fs_spc /
+		    (sb->fs_nspf << sb->fs_fragshift), CHAR_BIT);
 	else
 		e = 0;
 	for (j = 0; j < e; j += 32) {
