@@ -59,8 +59,8 @@
  *
  */
 
-#include <openssl/e_os2.h>
 #include <string.h>
+
 #include "o_time.h"
 
 /* Take a tm structure and add an offset to it. This avoids any OS issues
