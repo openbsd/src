@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.36 2012/09/05 06:21:18 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.37 2014/05/25 19:07:36 jmc Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: September 5 2012 $
+.Dd $Mdocdate: May 25 2014 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -150,22 +150,11 @@ specification.
 The flags
 .Op Fl dP
 are extensions to that specification.
-.Pp
-.St -p1003.1-2008
-requires
+.Sh HISTORY
+An
 .Nm
-to act like
-.Xr rmdir 1
-when the
-.Ar file
-specified is a directory.
-This implementation requires the
-.Fl d
-option if such behavior is desired.
-This follows the historical
-behavior of
-.Nm
-with respect to directories.
+command appeared in
+.At v1 .
 .Pp
 The
 .Nm
@@ -183,11 +172,6 @@ The interactive mode used to be a
 .Nm dsw
 command, a carryover from the ancient past with an
 amusing etymology.
-.Sh HISTORY
-An
-.Nm
-command appeared in
-.At v1 .
 .Sh BUGS
 The
 .Fl P
@@ -195,5 +179,5 @@ option assumes that both the underlying file system and storage medium write
 in place.
 This is true for the FFS and MS-DOS file systems and magnetic hard disks,
 but not true for most flash storage.
-In addition, only regular files are overwritten, other types of files
+In addition, only regular files are overwritten; other types of files
 are not.
