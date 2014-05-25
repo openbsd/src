@@ -19,9 +19,3 @@ OPENSSL_strcasecmp(const char *str1, const char *str2)
 {
 	return strcasecmp(str1, str2);
 }
-
-int
-OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
-{
-	return memcmp(v1, v2, n);
-}
