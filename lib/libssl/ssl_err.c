@@ -344,6 +344,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_CERT_LENGTH_MISMATCH)  , "cert length mismatch"},
 	{ERR_REASON(SSL_R_CHALLENGE_IS_DIFFERENT), "challenge is different"},
 	{ERR_REASON(SSL_R_CIPHER_CODE_WRONG_LENGTH), "cipher code wrong length"},
+	{ERR_REASON(SSL_R_CIPHER_COMPRESSION_UNAVAILABLE), "cipher compression unavailable"},
 	{ERR_REASON(SSL_R_CIPHER_OR_HASH_UNAVAILABLE), "cipher or hash unavailable"},
 	{ERR_REASON(SSL_R_CIPHER_TABLE_SRC_ERROR), "cipher table src error"},
 	{ERR_REASON(SSL_R_CLIENTHELLO_TLSEXT)    , "clienthello tlsext"},

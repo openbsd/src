@@ -190,7 +190,9 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	if (x->compress_meth != 0) {
 		SSL_COMP *comp = NULL;
 
-		ssl_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp);
+		if (!ssl_cipher_get_comp(x, &comp))
+			goto err;
+
 		if (comp == NULL) {
 			if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <= 0)
 				goto err;

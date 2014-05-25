@@ -481,32 +481,44 @@ load_builtin_compressions(void)
 }
 #endif
 
+/* ssl_cipher_get_comp sets comp to the correct SSL_COMP for the given
+ * session and returns 1. On error it returns 0. */
+int
+ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp)
+{
+	SSL_COMP ctmp;
+	int i;
+
+#ifndef OPENSSL_NO_COMP
+	load_builtin_compressions();
+#endif
+
+	*comp = NULL;
+	if (s->compress_meth == 0)
+		return 1;
+	if (ssl_comp_methods == NULL)
+		return 0;
+
+	ctmp.id = s->compress_meth;
+	i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
+	if (i >= 0) {
+		*comp = sk_SSL_COMP_value(ssl_comp_methods, i);
+		return 1;
+	}
+
+	return 0;
+}
+
 int
 ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
-    const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size, SSL_COMP **comp)
+    const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size)
 {
-	int i;
 	const SSL_CIPHER *c;
+	int i;
 
 	c = s->cipher;
 	if (c == NULL)
 		return (0);
-	if (comp != NULL) {
-		SSL_COMP ctmp;
-#ifndef OPENSSL_NO_COMP
-		load_builtin_compressions();
-#endif
-
-		*comp = NULL;
-		ctmp.id = s->compress_meth;
-		if (ssl_comp_methods != NULL) {
-			i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
-			if (i >= 0)
-				*comp = sk_SSL_COMP_value(ssl_comp_methods, i);
-			else
-				*comp = NULL;
-		}
-	}
 
 	if ((enc == NULL) || (md == NULL))
 		return (0);
@@ -731,8 +743,6 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 #ifdef SSL_FORBID_ENULL
 	*enc |= SSL_eNULL;
 #endif
-
-
 
 	*enc |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES : 0;
@@ -1684,8 +1694,8 @@ ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	SSL_COMP *ctmp;
 	int i, nn;
 
-	if ((n == 0)
-		|| (sk == NULL)) return (NULL);
+	if ((n == 0) || (sk == NULL))
+		return (NULL);
 	nn = sk_SSL_COMP_num(sk);
 	for (i = 0; i < nn; i++) {
 		ctmp = sk_SSL_COMP_value(sk, i);

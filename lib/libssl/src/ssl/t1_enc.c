@@ -532,12 +532,19 @@ tls1_setup_key_block(SSL *s)
 	int mac_type = NID_undef, mac_secret_size = 0;
 	int ret = 0;
 
-
 	if (s->s3->tmp.key_block_length != 0)
 		return (1);
 
-	if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size, &comp)) {
-		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+	if (!ssl_cipher_get_comp(s->session, &comp)) {
+		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
+		    SSL_R_CIPHER_COMPRESSION_UNAVAILABLE);
+		return (0);
+	}
+
+	if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type,
+	    &mac_secret_size)) {
+		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
+		    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return (0);
 	}
 

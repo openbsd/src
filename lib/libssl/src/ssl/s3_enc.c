@@ -387,18 +387,21 @@ ssl3_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return (1);
 
-	if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, &comp)) {
-		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+	if (!ssl_cipher_get_comp(s->session, &comp)) {
+		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
+		    SSL_R_CIPHER_COMPRESSION_UNAVAILABLE);
+		return (0);
+	}
+
+	if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL)) {
+		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
+		    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return (0);
 	}
 
 	s->s3->tmp.new_sym_enc = c;
 	s->s3->tmp.new_hash = hash;
-#ifdef OPENSSL_NO_COMP
-	s->s3->tmp.new_compression = NULL;
-#else
 	s->s3->tmp.new_compression = comp;
-#endif
 
 	num = EVP_MD_size(hash);
 	if (num < 0)
