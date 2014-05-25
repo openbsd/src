@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.21 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.22 2014/05/25 21:27:07 brad Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -135,14 +135,14 @@ static int reloc_target_flags[] = {
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 #define RELOC_ERROR(t)			(reloc_target_flags[t] & _RF_E)
 
-static long reloc_target_bitmask[] = {
-#define _BM(x)  (x == 64? ~0 : ~(-(1UL << (x))))
+static Elf_Addr reloc_target_bitmask[] = {
+#define _BM(x)  (~(Elf_Addr)0 >> ((8*sizeof(reloc_target_bitmask[0])) - (x)))
 	0,			/*  0 NONE */
 	_BM(64),		/*  1 _64*/
 	_BM(32),		/*  2 PC32 */
 	_BM(32),		/*  3 GOT32 */
 	_BM(32),		/*  4 PLT32 */
-	_BM(0),			/*  5 COPY */
+	0,			/*  5 COPY */
 	_BM(64),		/*  6 GLOB_DAT*/
 	_BM(64),		/*  7 JUMP_SLOT*/
 	_BM(64),		/*  8 RELATIVE*/
