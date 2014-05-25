@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.19 2013/09/30 12:02:36 millert Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.20 2014/05/25 17:47:04 tedu Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -97,9 +97,8 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 		if (strcmp(dom, ysd->dom_domain) == 0)
 			break;
 	if (ysd == NULL) {
-		if ((ysd = malloc(sizeof *ysd)) == NULL)
+		if ((ysd = calloc(1, sizeof *ysd)) == NULL)
 			return YPERR_RESRC;
-		(void)memset(ysd, 0, sizeof *ysd);
 		ysd->dom_socket = -1;
 		ysd->dom_vers = 0;
 		new = 1;

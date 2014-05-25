@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.39 2013/11/24 23:51:29 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.40 2014/05/25 17:47:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -167,8 +167,7 @@ auth_open(void)
 {
 	auth_session_t *as;
 
-	if ((as = malloc(sizeof(auth_session_t))) != NULL) {
-		memset(as, 0, sizeof(*as));
+	if ((as = calloc(1, sizeof(auth_session_t))) != NULL) {
 		as->service = defservice;
 		as->fd = -1;
 	}

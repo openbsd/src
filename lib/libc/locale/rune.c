@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: rune.c,v 1.4 2014/05/25 17:47:04 tedu Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -230,9 +230,8 @@ _Read_RuneMagi(FILE *fp)
 	    ntohl(frl.frl_maplower_ext.frr_nranges) * sizeof(_RuneEntry) +
 	    ntohl(frl.frl_mapupper_ext.frr_nranges) * sizeof(_RuneEntry);
 
-	if ((hostdata = malloc(hostdatalen)) == NULL)
+	if ((hostdata = calloc(hostdatalen, 1)) == NULL)
 		return NULL;
-	memset(hostdata, 0, hostdatalen);
 	lastp = hostdata + hostdatalen;
 
 	rl = (_RuneLocale *)hostdata;

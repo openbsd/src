@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.45 2013/09/30 12:02:33 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.46 2014/05/25 17:47:04 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -906,10 +906,9 @@ fts_alloc(FTS *sp, char *name, size_t namelen)
 	len = sizeof(FTSENT) + namelen;
 	if (!ISSET(FTS_NOSTAT))
 		len += sizeof(struct stat) + ALIGNBYTES;
-	if ((p = malloc(len)) == NULL)
+	if ((p = calloc(1, len)) == NULL)
 		return (NULL);
 
-	memset(p, 0, len);
 	p->fts_path = sp->fts_path;
 	p->fts_namelen = namelen;
 	p->fts_instr = FTS_NOINSTR;
