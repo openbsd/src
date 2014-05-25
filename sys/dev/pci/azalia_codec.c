@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.159 2014/01/06 06:54:15 brad Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.160 2014/05/25 16:00:53 ratchov Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1677,7 +1677,7 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 		const widget_t *w;
 
 		if (!azalia_widget_enabled(this, nid)) {
-			DPRINTF(("%s: invalid muteset nid\n"));
+			DPRINTF(("%s: invalid muteset nid\n", XNAME(this)));
 			return EINVAL;
 		}
 		w = &this->w[nid];
@@ -1700,7 +1700,7 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 		const widget_t *w;
 
 		if (!azalia_widget_enabled(this, nid)) {
-			DPRINTF(("%s: invalid mixerset nid\n"));
+			DPRINTF(("%s: invalid mixerset nid\n", XNAME(this)));
 			return EINVAL;
 		}
 		w = &this->w[nid];
@@ -1717,7 +1717,7 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 		if (nid == this->speaker) {
 			mc->un.mask = this->spkr_muters;
 		} else {
-			DPRINTF(("%s: invalid senseset nid\n"));
+			DPRINTF(("%s: invalid senseset nid\n", XNAME(this)));
 			return EINVAL;
 		}
 	}
@@ -1736,7 +1736,8 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 			mc->un.mask = this->playvols.cur;
 
 		} else {
-			DPRINTF(("%s: invalid outmaster mixer type\n"));
+			DPRINTF(("%s: invalid outmaster mixer type\n",
+				XNAME(this)));
 			return EINVAL;
 		}
 	}
@@ -1755,7 +1756,8 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 			mc->un.mask = this->recvols.cur;
 
 		} else {
-			DPRINTF(("%s: invalid inmaster mixer type\n"));
+			DPRINTF(("%s: invalid inmaster mixer type\n",
+				XNAME(this)));
 			return EINVAL;
 		}
 	}
@@ -2074,7 +2076,7 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 		const widget_t *w;
 
 		if (!azalia_widget_enabled(this, nid)) {
-			DPRINTF(("%s: invalid muteset nid\n"));
+			DPRINTF(("%s: invalid muteset nid\n", XNAME(this)));
 			return EINVAL;
 		}
 		w = &this->w[nid];
@@ -2132,7 +2134,7 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 			this->spkr_muters = mc->un.mask;
 			azalia_unsol_event(this, AZ_TAG_SPKR);
 		} else {
-			DPRINTF(("%s: invalid senseset nid\n"));
+			DPRINTF(("%s: invalid senseset nid\n", XNAME(this)));
 			return EINVAL;
 		}
 	}
@@ -2210,7 +2212,8 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 			    (mc->un.mask & this->playvols.mask);
 
 		} else {
-			DPRINTF(("%s: invalid output master mixer type\n"));
+			DPRINTF(("%s: invalid output master mixer type\n",
+				XNAME(this)));
 			return EINVAL;
 		}
 	}
@@ -2284,7 +2287,8 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 			this->recvols.cur = (mc->un.mask & this->recvols.mask);
 
 		} else {
-			DPRINTF(("%s: invalid input master mixer type\n"));
+			DPRINTF(("%s: invalid input master mixer type\n",
+				XNAME(this)));
 			return EINVAL;
 		}
 	}
