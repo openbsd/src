@@ -453,7 +453,6 @@ load_builtin_compressions(void)
 		if (ssl_comp_methods == NULL) {
 			SSL_COMP *comp = NULL;
 
-			MemCheck_off();
 			ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 			if (ssl_comp_methods != NULL) {
 				comp = malloc(sizeof(SSL_COMP));
@@ -470,7 +469,6 @@ load_builtin_compressions(void)
 				}
 				sk_SSL_COMP_sort(ssl_comp_methods);
 			}
-			MemCheck_on();
 		}
 	}
 

@@ -44,9 +44,7 @@ OBJ_NAME_init(void)
 {
 	if (names_lh != NULL)
 		return (1);
-	MemCheck_off();
 	names_lh = lh_OBJ_NAME_new();
-	MemCheck_on();
 	return (names_lh != NULL);
 }
 
@@ -59,21 +57,15 @@ OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 	int i;
 	NAME_FUNCS *name_funcs;
 
-	if (name_funcs_stack == NULL) {
-		MemCheck_off();
+	if (name_funcs_stack == NULL)
 		name_funcs_stack = sk_NAME_FUNCS_new_null();
-		MemCheck_on();
-	}
-	if (name_funcs_stack == NULL) {
-		/* ERROR */
+	if (name_funcs_stack == NULL)
 		return (0);
-	}
+
 	ret = names_type_num;
 	names_type_num++;
 	for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
-		MemCheck_off();
 		name_funcs = malloc(sizeof(NAME_FUNCS));
-		MemCheck_on();
 		if (!name_funcs) {
 			OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
 			return (0);
@@ -81,9 +73,7 @@ OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 		name_funcs->hash_func = lh_strhash;
 		name_funcs->cmp_func = strcmp;
 		name_funcs->free_func = NULL;
-		MemCheck_off();
 		sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
-		MemCheck_on();
 	}
 	name_funcs = sk_NAME_FUNCS_value(name_funcs_stack, ret);
 	if (hash_func != NULL)
