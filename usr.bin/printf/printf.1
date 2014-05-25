@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.26 2014/05/13 20:37:48 jmc Exp $
+.\"	$OpenBSD: printf.1,v 1.27 2014/05/25 07:36:36 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: May 13 2014 $
+.Dd $Mdocdate: May 25 2014 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm printf
 .Ar format
-.Op Ar arguments ...
+.Op Ar argument ...
 .Sh DESCRIPTION
 .Nm printf
 formats and prints its arguments, after the first, under control
@@ -55,9 +55,8 @@ are converted and copied to the standard output, and format specifications,
 each of which causes printing of the next successive
 .Ar argument .
 .Pp
-The
-.Ar arguments
-after the first are treated as strings if the corresponding format is
+The arguments after the first are treated as strings
+if the corresponding format is
 .Cm b ,
 .Cm c
 or
@@ -72,8 +71,7 @@ If the leading character is a single or double quote, the value is the
 code of the next character.
 .El
 .Pp
-The format string is reused as often as necessary to satisfy the
-.Ar arguments .
+The format string is reused as often as necessary to satisfy the arguments.
 Any extra format specifications are evaluated with zero or the null
 string.
 .Pp

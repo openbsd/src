@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.21 2014/05/20 01:25:23 guenther Exp $	*/
+/*	$OpenBSD: printf.c,v 1.22 2014/05/25 07:36:36 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -497,5 +497,5 @@ check_conversion(const char *s, const char *ep)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
+	(void)fprintf(stderr, "usage: printf format [argument ...]\n");
 }
