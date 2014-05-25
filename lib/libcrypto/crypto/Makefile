@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.36 2014/05/16 14:24:36 jsing Exp $
+# $OpenBSD: Makefile,v 1.37 2014/05/25 17:29:51 tedu Exp $
 
 LIB=	crypto
 
@@ -16,6 +16,7 @@ CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H
 PICFLAG=-fPIC
 .endif
 
+CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -DTERMIOS
 # Hardware engines
 CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?

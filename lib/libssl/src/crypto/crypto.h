@@ -316,7 +316,6 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * via CRYPTO_ex_data_new_class). */
 #define CRYPTO_EX_INDEX_USER		100
 
-
 /* This is the default callbacks, but we can have others as well:
  * this is needed in Win32 where the application malloc and the
  * library malloc may not be the same.
@@ -471,12 +470,14 @@ void CRYPTO_get_mem_debug_functions(
     void (**r)(void *, void *, int, const char *, int, int),
     void (**f)(void *, int), void (**so)(long), long (**go)(void));
 
+#ifndef LIBRESSL_INTERNAL
 void *CRYPTO_malloc_locked(int num, const char *file, int line);
 void CRYPTO_free_locked(void *ptr);
 void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
+#endif
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num,
     const char *file, int line);
 void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);

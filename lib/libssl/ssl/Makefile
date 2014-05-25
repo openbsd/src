@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.44 2014/05/18 11:20:08 miod Exp $
+# $OpenBSD: Makefile,v 1.45 2014/05/25 17:29:51 tedu Exp $
 
 LIB=	ssl
 
@@ -10,6 +10,7 @@ CFLAGS+= -Wall
 .if ${COMPILER_VERSION:L} != "gcc3"
 CFLAGS+= -Werror
 .endif
+CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -DTERMIOS -DANSI_SOURCE
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5
 CFLAGS+= -I${SSL_SRC}
