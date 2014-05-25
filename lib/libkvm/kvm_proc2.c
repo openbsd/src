@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.21 2014/03/30 21:54:49 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.22 2014/05/25 20:28:28 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		vmp = NULL;
 
 		if (proc.p_stat != SIDL && !P_ZOMBIE(&proc) &&
-		    !KREAD(kd, (u_long)proc.p_vmspace, &vm))
+		    !KREAD(kd, (u_long)process.ps_vmspace, &vm))
 			vmp = &vm;
 
 #define do_copy_str(_d, _s, _l)	kvm_read(kd, (u_long)(_s), (_d), (_l)-1)
