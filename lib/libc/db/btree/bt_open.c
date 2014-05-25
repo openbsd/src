@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.16 2013/09/30 12:02:31 millert Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.17 2014/05/25 17:43:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -150,9 +150,8 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 		goto einval;
 
 	/* Allocate and initialize DB and BTREE structures. */
-	if ((t = (BTREE *)malloc(sizeof(BTREE))) == NULL)
+	if ((t = calloc(1, sizeof(BTREE))) == NULL)
 		goto err;
-	memset(t, 0, sizeof(BTREE));
 	t->bt_fd = -1;			/* Don't close unopened fd on error. */
 	t->bt_lorder = b.lorder;
 	t->bt_order = NOT;
@@ -160,9 +159,8 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 	t->bt_pfx = b.prefix;
 	t->bt_rfd = -1;
 
-	if ((t->bt_dbp = dbp = (DB *)malloc(sizeof(DB))) == NULL)
+	if ((t->bt_dbp = dbp = calloc(1, sizeof(DB))) == NULL)
 		goto err;
-	memset(t->bt_dbp, 0, sizeof(DB));
 	if (t->bt_lorder != machine_lorder)
 		F_SET(t, B_NEEDSWAP);
 
