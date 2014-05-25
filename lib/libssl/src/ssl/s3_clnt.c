@@ -1638,10 +1638,6 @@ ssl3_get_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-#ifdef SSL_DEBUG
-			fprintf(stderr, "USING TLSv1.2 HASH %s\n",
-			    EVP_MD_name(md));
-#endif
 			p += 2;
 			n -= 2;
 		} else
@@ -2674,10 +2670,6 @@ ssl3_send_client_verify(SSL *s)
 				goto err;
 			}
 			p += 2;
-#ifdef SSL_DEBUG
-			fprintf(stderr, "Using TLS 1.2 with client alg %s\n",
-			EVP_MD_name(md));
-#endif
 			if (!EVP_SignInit_ex(&mctx, md, NULL) ||
 			    !EVP_SignUpdate(&mctx, hdata, hdatalen) ||
 			    !EVP_SignFinal(&mctx, p + 2, &u, pkey)) {

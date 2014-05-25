@@ -458,10 +458,6 @@ tls1_change_cipher_state(SSL *s, int which)
 		EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key);
 		EVP_PKEY_free(mac_key);
 	}
-#ifdef TLS_DEBUG
-	printf("which = %04X\nmac key=", which);
-	{ int z; for (z = 0; z<i; z++) printf("%02X%c", ms[z],((z+1)%16)?' ':'\n'); }
-#endif
 	if (is_export) {
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
@@ -501,13 +497,6 @@ tls1_change_cipher_state(SSL *s, int which)
 		EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
 		    *mac_secret_size, mac_secret);
 
-#ifdef TLS_DEBUG
-	printf("which = %04X\nkey=", which);
-	{ int z; for (z = 0; z<EVP_CIPHER_key_length(c); z++) printf("%02X%c", key[z],((z+1)%16)?' ':'\n'); }
-	printf("\niv=");
-	{ int z; for (z = 0; z<k; z++) printf("%02X%c", iv[z],((z+1)%16)?' ':'\n'); }
-	printf("\n");
-#endif
 
 	OPENSSL_cleanse(tmp1, sizeof(tmp1));
 	OPENSSL_cleanse(tmp2, sizeof(tmp2));
@@ -570,20 +559,8 @@ tls1_setup_key_block(SSL *s)
 		goto err;
 	}
 
-#ifdef TLS_DEBUG
-	printf("client random\n");
-	{ int z; for (z = 0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c", s->s3->client_random[z],((z+1)%16)?' ':'\n'); }
-	printf("server random\n");
-	{ int z; for (z = 0; z<SSL3_RANDOM_SIZE; z++) printf("%02X%c", s->s3->server_random[z],((z+1)%16)?' ':'\n'); }
-	printf("pre-master\n");
-	{ int z; for (z = 0; z<s->session->master_key_length; z++) printf("%02X%c", s->session->master_key[z],((z+1)%16)?' ':'\n'); }
-#endif
 	if (!tls1_generate_key_block(s, p1, p2, num))
 		goto err;
-#ifdef TLS_DEBUG
-	printf("\nkey block\n");
-	{ int z; for (z = 0; z<num; z++) printf("%02X%c", p1[z],((z+1)%16)?' ':'\n'); }
-#endif
 
 	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
 	    s->method->version <= TLS1_VERSION) {
@@ -919,16 +896,6 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
-#ifdef TLS_DEBUG
-	printf("sec=");
-	{unsigned int z; for (z = 0; z<md_size; z++) printf("%02X ", mac_sec[z]); printf("\n"); }
-	printf("seq=");
-	{int z; for (z = 0; z<8; z++) printf("%02X ", seq[z]); printf("\n"); }
-	printf("buf=");
-	{int z; for (z = 0; z<5; z++) printf("%02X ", buf[z]); printf("\n"); }
-	printf("rec=");
-	{unsigned int z; for (z = 0; z<rec->length; z++) printf("%02X ", buf[z]); printf("\n"); }
-#endif
 
 	if (ssl->version != DTLS1_VERSION && ssl->version != DTLS1_BAD_VER) {
 		for (i = 7; i >= 0; i--) {
@@ -938,9 +905,6 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		}
 	}
 
-#ifdef TLS_DEBUG
-	{unsigned int z; for (z = 0; z<md_size; z++) printf("%02X ", md[z]); printf("\n"); }
-#endif
 	return (md_size);
 }
 
@@ -973,16 +937,6 @@ tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	    so, sol,
 	    p, len,
 	    s->session->master_key, buff, sizeof buff);
-#ifdef SSL_DEBUG
-	fprintf(stderr, "Premaster Secret:\n");
-	BIO_dump_fp(stderr, (char *)p, len);
-	fprintf(stderr, "Client Random:\n");
-	BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
-	fprintf(stderr, "Server Random:\n");
-	BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
-	fprintf(stderr, "Master Secret:\n");
-	BIO_dump_fp(stderr, (char *)s->session->master_key, SSL3_MASTER_SECRET_SIZE);
-#endif
 
 	return (SSL3_MASTER_SECRET_SIZE);
 }

@@ -1088,15 +1088,8 @@ ssl3_get_client_hello(SSL *s)
 		j = 0;
 		id = s->session->cipher->id;
 
-#ifdef CIPHER_DEBUG
-		printf("client sent %d ciphers\n", sk_num(ciphers));
-#endif
 		for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 			c = sk_SSL_CIPHER_value(ciphers, i);
-#ifdef CIPHER_DEBUG
-			printf("client [%2d of %2d]:%s\n",
-			i, sk_num(ciphers), SSL_CIPHER_get_name(c));
-#endif
 			if (c->id == id) {
 				j = 1;
 				break;
@@ -1890,10 +1883,6 @@ ssl3_send_server_key_exchange(SSL *s)
 					}
 					p += 2;
 				}
-#ifdef SSL_DEBUG
-				fprintf(stderr, "Using hash %s\n",
-				    EVP_MD_name(md));
-#endif
 				EVP_SignInit_ex(&md_ctx, md, NULL);
 				EVP_SignUpdate(&md_ctx,
 				    &(s->s3->client_random[0]),
@@ -2662,10 +2651,6 @@ ssl3_get_cert_verify(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-#ifdef SSL_DEBUG
-			fprintf(stderr, "USING TLSv1.2 HASH %s\n",
-			    EVP_MD_name(md));
-#endif
 			p += 2;
 			n -= 2;
 		}
@@ -2696,10 +2681,6 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
-#ifdef SSL_DEBUG
-		fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
-		    EVP_MD_name(md));
-#endif
 		if (!EVP_VerifyInit_ex(&mctx, md, NULL) ||
 		    !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
 			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,

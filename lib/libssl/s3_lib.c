@@ -3048,20 +3048,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	sk_SSL_CIPHER_set_cmp_func(clnt, ssl_cipher_ptr_id_cmp);
 #endif
 
-#ifdef CIPHER_DEBUG
-	printf("Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr),
-	    (void *)srvr);
-	for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
-		c = sk_SSL_CIPHER_value(srvr, i);
-		printf("%p:%s\n",(void *)c, c->name);
-	}
-	printf("Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt),
-	    (void *)clnt);
-	for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
-		c = sk_SSL_CIPHER_value(clnt, i);
-		printf("%p:%s\n",(void *)c, c->name);
-	}
-#endif
 
 	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
 		prio = srvr;
@@ -3097,18 +3083,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 
 		if (SSL_C_IS_EXPORT(c)) {
 			ok = (alg_k & emask_k) && (alg_a & emask_a);
-#ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX:%08lX:%08lX]%p:%s (export)\n",
-			    ok, alg_k, alg_a, emask_k, emask_a, (void *)c,
-			    c->name);
-#endif
 		} else {
 			ok = (alg_k & mask_k) && (alg_a & mask_a);
-#ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
-			    ok, alg_k, alg_a, mask_k, mask_a,(void *)c,
-			    c->name);
-#endif
 		}
 
 #ifndef OPENSSL_NO_TLSEXT
