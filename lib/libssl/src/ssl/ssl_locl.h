@@ -515,18 +515,9 @@ typedef struct sess_cert_st {
 } SESS_CERT;
 
 
-/*#define MAC_DEBUG	*/
-
-/*#define ERR_DEBUG	*/
-/*#define ABORT_DEBUG	*/
-/*#define PKT_DEBUG 1   */
-/*#define DES_DEBUG	*/
-/*#define DES_OFB_DEBUG	*/
 /*#define SSL_DEBUG	*/
 /*#define RSA_DEBUG	*/ 
-/*#define IDEA_DEBUG	*/ 
 
-#define FP_ICC  (int (*)(const void *,const void *))
 #define ssl_put_cipher_by_char(ssl,ciph,ptr) \
 		((ssl)->method->put_cipher_by_char((ciph),(ptr)))
 #define ssl_get_cipher_by_char(ssl,ptr) \
@@ -895,9 +886,5 @@ void ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
     unsigned mac_secret_length, char is_sslv3);
-
-void tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
-    EVP_MD_CTX *mac_ctx, const unsigned char *data, size_t data_len,
-    size_t orig_len);
 
 #endif

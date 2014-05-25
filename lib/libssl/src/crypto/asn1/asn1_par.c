@@ -138,9 +138,7 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 	while ((p < tot) && (op < p)) {
 		op = p;
 		j = ASN1_get_object(&p, &len, &tag, &xclass, length);
-#ifdef LINT
-		j = j;
-#endif
+
 		if (j & 0x80) {
 			if (BIO_write(bp, "Error in encoding\n", 18) <= 0)
 				goto end;
