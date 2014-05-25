@@ -122,6 +122,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 			    (char *) &i, sizeof(i));
 			if (i < 0) {
 				perror("keepalive");
+				close(s);
 				return (0);
 			}
 		}
@@ -281,16 +282,19 @@ redoit:
 	} else {
 		if ((*host = strdup(h1->h_name)) == NULL) {
 			perror("strdup");
+			close(ret);
 			return (0);
 		}
 
 		h2 = gethostbyname(*host);
 		if (h2 == NULL) {
 			BIO_printf(bio_err, "gethostbyname failure\n");
+			close(ret);
 			return (0);
 		}
 		if (h2->h_addrtype != AF_INET) {
 			BIO_printf(bio_err, "gethostbyname addr is not AF_INET\n");
+			close(ret);
 			return (0);
 		}
 	}
