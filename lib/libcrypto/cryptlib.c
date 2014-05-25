@@ -705,12 +705,6 @@ OPENSSL_showfatal(const char *fmta, ...)
 	va_end (ap);
 }
 
-int
-OPENSSL_isservice(void)
-{
-	return 0;
-}
-
 void
 OpenSSLDie(const char *file, int line, const char *assertion)
 {
