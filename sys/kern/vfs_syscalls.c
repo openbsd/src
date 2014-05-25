@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.205 2014/04/12 14:18:11 espie Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.206 2014/05/25 18:46:44 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1627,31 +1627,38 @@ int
 dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 {
 	struct vnode *vp;
-	int error;
+	struct ucred *newcred, *oldcred;
 	struct nameidata nd;
+	int error;
 
 	if (amode & ~(R_OK | W_OK | X_OK))
 		return (EINVAL);
 	if (flag & ~AT_EACCESS)
 		return (EINVAL);
 
+	newcred = NULL;
+	oldcred = p->p_ucred;
+
+	/*
+	 * If access as real ids was requested and they really differ,
+	 * give the thread new creds with them reset
+	 */
+	if ((flag & AT_EACCESS) == 0 &&
+	    (oldcred->cr_uid != oldcred->cr_ruid ||
+	    (oldcred->cr_gid != oldcred->cr_rgid))) {
+		p->p_ucred = newcred = crdup(oldcred);
+		newcred->cr_uid = newcred->cr_ruid;
+		newcred->cr_gid = newcred->cr_rgid;
+	}
+
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto out;
 	vp = nd.ni_vp;
 
 	/* Flags == 0 means only check for existence. */
 	if (amode) {
-		struct ucred *cred = p->p_ucred;
 		int vflags = 0;
-
-		crhold(cred);
-
-		if (!(flag & AT_EACCESS)) {
-			cred = crcopy(cred);
-			cred->cr_uid = cred->cr_ruid;
-			cred->cr_gid = cred->cr_rgid;
-		}
 
 		if (amode & R_OK)
 			vflags |= VREAD;
@@ -1660,13 +1667,16 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 		if (amode & X_OK)
 			vflags |= VEXEC;
 
-		error = VOP_ACCESS(vp, vflags, cred, p);
+		error = VOP_ACCESS(vp, vflags, p->p_ucred, p);
 		if (!error && (vflags & VWRITE))
 			error = vn_writechk(vp);
-
-		crfree(cred);
 	}
 	vput(vp);
+out:
+	if (newcred != NULL) {
+		p->p_ucred = oldcred;
+		crfree(newcred);
+	}
 	return (error);
 }
 
