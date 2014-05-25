@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.133 2014/03/26 05:23:42 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.134 2014/05/25 13:57:48 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -141,7 +141,7 @@ int iospace_inited = 0;
 
 /* sysctl settable */
 #if NLED > 0
-int	vax_led_blink = 0;
+int	vax_led_blink = 1;
 #endif
 
 struct cpu_info cpu_info_store;
