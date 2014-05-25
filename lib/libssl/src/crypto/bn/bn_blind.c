@@ -139,11 +139,10 @@ BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 
 	bn_check_top(mod);
 
-	if ((ret = (BN_BLINDING *)malloc(sizeof(BN_BLINDING))) == NULL) {
+	if ((ret = calloc(1, sizeof(BN_BLINDING))) == NULL) {
 		BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
-	memset(ret, 0, sizeof(BN_BLINDING));
 	if (A != NULL) {
 		if ((ret->A = BN_dup(A))  == NULL)
 			goto err;

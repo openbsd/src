@@ -9,11 +9,10 @@ COMP_CTX_new(COMP_METHOD *meth)
 {
 	COMP_CTX *ret;
 
-	if ((ret = (COMP_CTX *)malloc(sizeof(COMP_CTX))) == NULL) {
+	if ((ret = calloc(1, sizeof(COMP_CTX))) == NULL) {
 		/* ZZZZZZZZZZZZZZZZ */
 		return (NULL);
 	}
-	memset(ret, 0, sizeof(COMP_CTX));
 	ret->meth = meth;
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
 		free(ret);

@@ -62,13 +62,11 @@
 
 STORE_METHOD *STORE_create_method(char *name)
 	{
-	STORE_METHOD *store_method = (STORE_METHOD *)malloc(sizeof(STORE_METHOD));
+	STORE_METHOD *store_method = calloc(1, sizeof(STORE_METHOD));
 
 	if (store_method)
-		{
-		memset(store_method, 0, sizeof(*store_method));
 		store_method->name = BUF_strdup(name);
-		}
+
 	return store_method;
 	}
 

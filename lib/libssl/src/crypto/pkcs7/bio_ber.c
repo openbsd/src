@@ -126,10 +126,8 @@ static int ber_new(BIO *bi)
 	{
 	BIO_BER_CTX *ctx;
 
-	ctx=(BIO_BER_CTX *)malloc(sizeof(BIO_BER_CTX));
+	ctx=calloc(1, sizeof(BIO_BER_CTX));
 	if (ctx == NULL) return(0);
-
-	memset((char *)ctx,0,sizeof(BIO_BER_CTX));
 
 	bi->init=0;
 	bi->ptr=(char *)ctx;
