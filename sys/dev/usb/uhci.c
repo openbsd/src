@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.120 2014/05/19 06:54:34 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.121 2014/05/25 09:59:12 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -564,6 +564,9 @@ uhci_activate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		rv = config_activate_children(self, act);
 		sc->sc_bus.dying = 1;
+		break;
+	default:
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);
