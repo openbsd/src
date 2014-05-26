@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -76,26 +76,23 @@
    attribute type code).
 */
 
-typedef struct mem_object_data_st
-	{
+typedef struct mem_object_data_st {
 	STORE_OBJECT *object;
 	STORE_ATTR_INFO *attr_info;
 	int references;
-	} MEM_OBJECT_DATA;
+} MEM_OBJECT_DATA;
 
 DECLARE_STACK_OF(MEM_OBJECT_DATA)
-struct mem_data_st
-	{
+struct mem_data_st {
 	STACK_OF(MEM_OBJECT_DATA) *data; /* sorted with
 					  * STORE_ATTR_INFO_compare(). */
 	unsigned int compute_components : 1; /* Currently unused, but can
 						be used to add attributes
 						from parts of the data. */
-	};
+};
 
 DECLARE_STACK_OF(STORE_ATTR_INFO)
-struct mem_ctx_st
-	{
+struct mem_ctx_st {
 	int type;		/* The type we're searching for */
 	STACK_OF(STORE_ATTR_INFO) *search_attributes; /* Sets of
 				     attributes to search for.  Each
@@ -105,32 +102,31 @@ struct mem_ctx_st
 				   haven't found any */
 	int index;		/* -1 as long as we're searching for
                                     the first */
-	};
+};
 
 static int mem_init(STORE *s);
 static void mem_clean(STORE *s);
 static STORE_OBJECT *mem_generate(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static STORE_OBJECT *mem_get(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
-static int mem_store(STORE *s, STORE_OBJECT_TYPES type,
-	STORE_OBJECT *data, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+static int mem_store(STORE *s, STORE_OBJECT_TYPES type, STORE_OBJECT *data,
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static int mem_modify(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[],
-	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
-	OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[],
+    OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
+    OPENSSL_ITEM parameters[]);
 static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[]);
 static STORE_OBJECT *mem_list_next(STORE *s, void *handle);
 static int mem_list_end(STORE *s, void *handle);
 static int mem_list_endp(STORE *s, void *handle);
 static int mem_lock(STORE *s, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM parameters[]);
 static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[]);
+    OPENSSL_ITEM parameters[]);
 static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void));
 
 static STORE_METHOD store_memory = {
@@ -149,64 +145,73 @@ static STORE_METHOD store_memory = {
 	.lock_store = mem_lock,
 	.unlock_store = mem_unlock,
 	.ctrl = mem_ctrl
-	};
+};
 
-const STORE_METHOD *STORE_Memory(void)
-	{
+const STORE_METHOD *
+STORE_Memory(void)
+{
 	return &store_memory;
-	}
+}
 
-static int mem_init(STORE *s)
-	{
+static int
+mem_init(STORE *s)
+{
 	return 1;
-	}
+}
 
-static void mem_clean(STORE *s)
-	{
+static void
+mem_clean(STORE *s)
+{
 	return;
-	}
+}
 
-static STORE_OBJECT *mem_generate(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
-	{
+static STORE_OBJECT *
+mem_generate(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
+    OPENSSL_ITEM parameters[])
+{
 	STOREerr(STORE_F_MEM_GENERATE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
-	}
-static STORE_OBJECT *mem_get(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
-	{
+}
+
+static STORE_OBJECT *
+mem_get(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
+    OPENSSL_ITEM parameters[])
+{
 	void *context = mem_list_start(s, type, attributes, parameters);
-	
-	if (context)
-		{
+
+	if (context) {
 		STORE_OBJECT *object = mem_list_next(s, context);
 
 		if (mem_list_end(s, context))
 			return object;
-		}
-	return NULL;
 	}
-static int mem_store(STORE *s, STORE_OBJECT_TYPES type,
-	STORE_OBJECT *data, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[])
-	{
+	return NULL;
+}
+
+static int
+mem_store(STORE *s, STORE_OBJECT_TYPES type, STORE_OBJECT *data,
+    OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
+{
 	STOREerr(STORE_F_MEM_STORE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
-	}
-static int mem_modify(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM search_attributes[], OPENSSL_ITEM add_attributes[],
-	OPENSSL_ITEM modify_attributes[], OPENSSL_ITEM delete_attributes[],
-	OPENSSL_ITEM parameters[])
-	{
+}
+
+static int
+mem_modify(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM search_attributes[],
+    OPENSSL_ITEM add_attributes[], OPENSSL_ITEM modify_attributes[],
+    OPENSSL_ITEM delete_attributes[], OPENSSL_ITEM parameters[])
+{
 	STOREerr(STORE_F_MEM_MODIFY, STORE_R_NOT_IMPLEMENTED);
 	return 0;
-	}
-static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
-	{
+}
+
+static int
+mem_delete(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
+    OPENSSL_ITEM parameters[])
+{
 	STOREerr(STORE_F_MEM_DELETE, STORE_R_NOT_IMPLEMENTED);
 	return 0;
-	}
+}
 
 /* The list functions may be the hardest to understand.  Basically,
    mem_list_start compiles a stack of attribute info elements, and
@@ -215,105 +220,99 @@ static int mem_delete(STORE *s, STORE_OBJECT_TYPES type,
    walk all the way to the end of the store (since any combination
    of attribute bits above the starting point may match the searched
    for bit pattern...). */
-static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
-	OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
-	{
+static void *
+mem_list_start(STORE *s, STORE_OBJECT_TYPES type, OPENSSL_ITEM attributes[],
+    OPENSSL_ITEM parameters[])
+{
 	struct mem_ctx_st *context =
-		(struct mem_ctx_st *)malloc(sizeof(struct mem_ctx_st));
+	    (struct mem_ctx_st *)malloc(sizeof(struct mem_ctx_st));
 	void *attribute_context = NULL;
 	STORE_ATTR_INFO *attrs = NULL;
 
-	if (!context)
-		{
+	if (!context) {
 		STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
 		return 0;
-		}
+	}
 	memset(context, 0, sizeof(struct mem_ctx_st));
 
 	attribute_context = STORE_parse_attrs_start(attributes);
-	if (!attribute_context)
-		{
+	if (!attribute_context) {
 		STOREerr(STORE_F_MEM_LIST_START, ERR_R_STORE_LIB);
 		goto err;
-		}
+	}
 
-	while((attrs = STORE_parse_attrs_next(attribute_context)))
-		{
-		if (context->search_attributes == NULL)
-			{
+	while ((attrs = STORE_parse_attrs_next(attribute_context))) {
+		if (context->search_attributes == NULL) {
 			context->search_attributes =
-				sk_STORE_ATTR_INFO_new(STORE_ATTR_INFO_compare);
-			if (!context->search_attributes)
-				{
+			    sk_STORE_ATTR_INFO_new(STORE_ATTR_INFO_compare);
+			if (!context->search_attributes) {
 				STOREerr(STORE_F_MEM_LIST_START,
-					ERR_R_MALLOC_FAILURE);
+				    ERR_R_MALLOC_FAILURE);
 				goto err;
-				}
 			}
-		sk_STORE_ATTR_INFO_push(context->search_attributes,attrs);
 		}
+		sk_STORE_ATTR_INFO_push(context->search_attributes, attrs);
+	}
 	if (!STORE_parse_attrs_endp(attribute_context))
 		goto err;
 	STORE_parse_attrs_end(attribute_context);
 	context->search_index = -1;
 	context->index = -1;
 	return context;
- err:
-	if (attribute_context) STORE_parse_attrs_end(attribute_context);
+
+err:
+	if (attribute_context)
+		STORE_parse_attrs_end(attribute_context);
 	mem_list_end(s, context);
 	return NULL;
-	}
-static STORE_OBJECT *mem_list_next(STORE *s, void *handle)
-	{
+}
+
+static STORE_OBJECT *
+mem_list_next(STORE *s, void *handle)
+{
 	int i;
 	struct mem_ctx_st *context = (struct mem_ctx_st *)handle;
 	struct mem_object_data_st key = { 0, 0, 1 };
 	struct mem_data_st *store =
-		(struct mem_data_st *)STORE_get_ex_data(s, 1);
+	    (struct mem_data_st *)STORE_get_ex_data(s, 1);
 	int srch;
 	int cres = 0;
 
-	if (!context)
-		{
+	if (!context) {
 		STOREerr(STORE_F_MEM_LIST_NEXT, ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
-		}
-	if (!store)
-		{
+	}
+	if (!store) {
 		STOREerr(STORE_F_MEM_LIST_NEXT, STORE_R_NO_STORE);
 		return NULL;
-		}
+	}
 
-	if (context->search_index == -1)
-		{
+	if (context->search_index == -1) {
 		for (i = 0;
-		     i < sk_STORE_ATTR_INFO_num(context->search_attributes);
-		     i++)
-			{
+			i < sk_STORE_ATTR_INFO_num(context->search_attributes);
+		i++) {
 			key.attr_info
-			  = sk_STORE_ATTR_INFO_value(context->search_attributes,
-						     i);
+			= sk_STORE_ATTR_INFO_value(context->search_attributes,
+			i);
 			srch = sk_MEM_OBJECT_DATA_find_ex(store->data, &key);
 
-			if (srch >= 0)
-				{
+			if (srch >= 0) {
 				context->search_index = srch;
 				break;
-				}
 			}
 		}
+	}
 	if (context->search_index < 0)
 		return NULL;
-	
-	key.attr_info =
-		sk_STORE_ATTR_INFO_value(context->search_attributes,
-					 context->search_index);
+
+	key.attr_info = sk_STORE_ATTR_INFO_value(context->search_attributes,
+	    context->search_index);
 	for(srch = context->search_index;
-	    srch < sk_MEM_OBJECT_DATA_num(store->data)
-		    && STORE_ATTR_INFO_in_range(key.attr_info,
-			    sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info)
-		    && !(cres = STORE_ATTR_INFO_in_ex(key.attr_info,
-				 sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info));
+	    srch < sk_MEM_OBJECT_DATA_num(store->data) &&
+	    STORE_ATTR_INFO_in_range(key.attr_info,
+		sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info) &&
+	    !(cres = STORE_ATTR_INFO_in_ex(key.attr_info,
+		sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info));
 	    srch++)
 		;
 
@@ -321,42 +320,48 @@ static STORE_OBJECT *mem_list_next(STORE *s, void *handle)
 	if (cres)
 		return (sk_MEM_OBJECT_DATA_value(store->data, srch))->object;
 	return NULL;
-	}
-static int mem_list_end(STORE *s, void *handle)
-	{
+}
+
+static int
+mem_list_end(STORE *s, void *handle)
+{
 	struct mem_ctx_st *context = (struct mem_ctx_st *)handle;
 
-	if (!context)
-		{
+	if (!context) {
 		STOREerr(STORE_F_MEM_LIST_END, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
-		}
+	}
 	if (context && context->search_attributes)
 		sk_STORE_ATTR_INFO_free(context->search_attributes);
 	free(context);
 	return 1;
-	}
-static int mem_list_endp(STORE *s, void *handle)
-	{
+}
+
+static int
+mem_list_endp(STORE *s, void *handle)
+{
 	struct mem_ctx_st *context = (struct mem_ctx_st *)handle;
 
-	if (!context
-	    || context->search_index
-	       == sk_STORE_ATTR_INFO_num(context->search_attributes))
+	if (!context || context->search_index ==
+	    sk_STORE_ATTR_INFO_num(context->search_attributes))
 		return 1;
 	return 0;
-	}
-static int mem_lock(STORE *s, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[])
-	{
+}
+
+static int
+mem_lock(STORE *s, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
+{
 	return 1;
-	}
-static int mem_unlock(STORE *s, OPENSSL_ITEM attributes[],
-	OPENSSL_ITEM parameters[])
-	{
+}
+
+static int
+mem_unlock(STORE *s, OPENSSL_ITEM attributes[], OPENSSL_ITEM parameters[])
+{
 	return 1;
-	}
-static int mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void))
-	{
+}
+
+static int
+mem_ctrl(STORE *s, int cmd, long l, void *p, void (*f)(void))
+{
 	return 1;
-	}
+}
