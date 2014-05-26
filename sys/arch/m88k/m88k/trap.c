@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.93 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.94 2014/05/26 17:31:17 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1265,12 +1265,10 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		tf->tf_sfip = tf->tf_snip + 4;
 		break;
 	case ERESTART:
-		tf->tf_epsr &= ~PSR_C;
 		tf->tf_sfip = tf->tf_snip & ~FIP_E;
 		tf->tf_snip = tf->tf_sxip & ~NIP_E;
 		break;
 	case EJUSTRETURN:
-		tf->tf_epsr &= ~PSR_C;
 		break;
 	default:
 	bad:
@@ -1388,10 +1386,8 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		 * exip is already at the trap instruction, so
 		 * there is nothing to do.
 		 */
-		tf->tf_epsr &= ~PSR_C;
 		break;
 	case EJUSTRETURN:
-		tf->tf_epsr &= ~PSR_C;
 		/* skip one instruction */
 		m88110_skip_insn(tf);
 		break;
