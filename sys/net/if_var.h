@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.10 2014/05/05 11:44:33 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.11 2014/05/26 08:33:48 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ struct ifaddr {
 					/* check or clean routes (+ or -)'d */
 	void	(*ifa_rtrequest)(int, struct rtentry *);
 	u_int	ifa_flags;		/* interface flags, see below */
-	u_int	ifa_refcnt;		/* count of references */
+	u_int	ifa_refcnt;		/* number of `rt_ifa` references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
 
