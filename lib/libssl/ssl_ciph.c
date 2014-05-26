@@ -1737,6 +1737,10 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 
 	MemCheck_off();
 	comp = malloc(sizeof(SSL_COMP));
+	if (comp == NULL) {
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
+		return (1);
+	}
 	comp->id = id;
 	comp->method = cm;
 	load_builtin_compressions();
