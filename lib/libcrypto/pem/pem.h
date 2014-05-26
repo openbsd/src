@@ -392,13 +392,7 @@ int PEM_write_bio_##name(BIO *bp, type *x, const EVP_CIPHER *enc, \
 	DECLARE_PEM_read(name, type) \
 	DECLARE_PEM_write_cb(name, type)
 
-#if 1
-/* "userdata": new with OpenSSL 0.9.4 */
 typedef int pem_password_cb(char *buf, int size, int rwflag, void *userdata);
-#else
-/* OpenSSL 0.9.3, 0.9.3a */
-typedef int pem_password_cb(char *buf, int size, int rwflag);
-#endif
 
 int	PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int	PEM_do_header (EVP_CIPHER_INFO *cipher, unsigned char *data, long *len,
