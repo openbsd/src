@@ -153,7 +153,6 @@
 #include "apps.h"
 
 #include <openssl/bn.h>
-#include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>

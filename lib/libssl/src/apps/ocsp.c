@@ -67,7 +67,6 @@
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>

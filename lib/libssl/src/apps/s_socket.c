@@ -69,7 +69,6 @@
 
 #include "apps.h"
 
-#include <openssl/e_os2.h>
 #include <openssl/ssl.h>
 
 #include "s_apps.h"

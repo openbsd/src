@@ -112,9 +112,10 @@
 #ifndef HEADER_APPS_H
 #define HEADER_APPS_H
 
+#include <openssl/opensslconf.h>
+
 #include <openssl/bio.h>
 #include <openssl/conf.h>
-#include <openssl/e_os2.h>
 #include <openssl/lhash.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/txt_db.h>
