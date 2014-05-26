@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.34 2011/10/21 18:16:13 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.35 2014/05/26 19:03:28 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -823,8 +823,8 @@ mp_cfg_special_intr(const struct mpbios_int *entry, u_int32_t *redir)
 void
 mp_cfg_pci_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
-	int mpspo = entry->int_flags & 0x03; /* XXX magic */
-	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
+	int mpspo = (entry->int_flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
+	int mpstrig = (entry->int_flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
@@ -861,8 +861,8 @@ mp_cfg_pci_intr(const struct mpbios_int *entry, u_int32_t *redir)
 void
 mp_cfg_eisa_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
-	int mpspo = entry->int_flags & 0x03; /* XXX magic */
-	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
+	int mpspo = (entry->int_flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
+	int mpstrig = (entry->int_flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
@@ -911,8 +911,8 @@ mp_cfg_eisa_intr(const struct mpbios_int *entry, u_int32_t *redir)
 void
 mp_cfg_isa_intr(const struct mpbios_int *entry, u_int32_t *redir)
 {
-	int mpspo = entry->int_flags & 0x03; /* XXX magic */
-	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
+	int mpspo = (entry->int_flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
+	int mpstrig = (entry->int_flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
