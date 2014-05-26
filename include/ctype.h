@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.23 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.24 2014/05/26 01:49:36 guenther Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -88,102 +88,102 @@ int	_toupper(int);
 
 #if !defined(_ANSI_LIBRARY)
 
-__only_inline int isalnum(int c)
+__only_inline int isalnum(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L|_N)));
 }
 
-__only_inline int isalpha(int c)
+__only_inline int isalpha(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L)));
 }
 
-__only_inline int iscntrl(int c)
+__only_inline int iscntrl(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _C));
 }
 
-__only_inline int isdigit(int c)
+__only_inline int isdigit(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _N));
 }
 
-__only_inline int isgraph(int c)
+__only_inline int isgraph(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N)));
 }
 
-__only_inline int islower(int c)
+__only_inline int islower(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _L));
 }
 
-__only_inline int isprint(int c)
+__only_inline int isprint(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N|_B)));
 }
 
-__only_inline int ispunct(int c)
+__only_inline int ispunct(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _P));
 }
 
-__only_inline int isspace(int c)
+__only_inline int isspace(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _S));
 }
 
-__only_inline int isupper(int c)
+__only_inline int isupper(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _U));
 }
 
-__only_inline int isxdigit(int c)
+__only_inline int isxdigit(int _c)
 {
-	return (c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_N|_X)));
 }
 
-__only_inline int tolower(int c)
+__only_inline int tolower(int _c)
 {
-	if ((unsigned int)c > 255)
-		return (c);
-	return ((_tolower_tab_ + 1)[c]);
+	if ((unsigned int)_c > 255)
+		return (_c);
+	return ((_tolower_tab_ + 1)[_c]);
 }
 
-__only_inline int toupper(int c)
+__only_inline int toupper(int _c)
 {
-	if ((unsigned int)c > 255)
-		return (c);
-	return ((_toupper_tab_ + 1)[c]);
+	if ((unsigned int)_c > 255)
+		return (_c);
+	return ((_toupper_tab_ + 1)[_c]);
 }
 
 #if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __POSIX_VISIBLE > 200112 \
     || __XPG_VISIBLE > 600
-__only_inline int isblank(int c)
+__only_inline int isblank(int _c)
 {
-	return (c == ' ' || c == '\t');
+	return (_c == ' ' || _c == '\t');
 }
 #endif
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
-__only_inline int isascii(int c)
+__only_inline int isascii(int _c)
 {
-	return ((unsigned int)c <= 0177);
+	return ((unsigned int)_c <= 0177);
 }
 
-__only_inline int toascii(int c)
+__only_inline int toascii(int _c)
 {
-	return (c & 0177);
+	return (_c & 0177);
 }
 
-__only_inline int _tolower(int c)
+__only_inline int _tolower(int _c)
 {
-	return (c - 'A' + 'a');
+	return (_c - 'A' + 'a');
 }
 
-__only_inline int _toupper(int c)
+__only_inline int _toupper(int _c)
 {
-	return (c - 'a' + 'A');
+	return (_c - 'a' + 'A');
 }
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
