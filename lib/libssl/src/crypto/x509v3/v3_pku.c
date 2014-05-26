@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -62,16 +62,17 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
+static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
+    PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
 /*
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 */
 const X509V3_EXT_METHOD v3_pkey_usage_period = {
-NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
-0,0,0,0,
-0,0,0,0,
-(X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
-NULL
+	NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	(X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
+	NULL
 };
 
 ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
@@ -81,16 +82,18 @@ ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
-	     PKEY_USAGE_PERIOD *usage, BIO *out, int indent)
+static int
+i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage,
+    BIO *out, int indent)
 {
 	BIO_printf(out, "%*s", indent, "");
-	if(usage->notBefore) {
+	if (usage->notBefore) {
 		BIO_write(out, "Not Before: ", 12);
 		ASN1_GENERALIZEDTIME_print(out, usage->notBefore);
-		if(usage->notAfter) BIO_write(out, ", ", 2);
+		if (usage->notAfter)
+			BIO_write(out, ", ", 2);
 	}
-	if(usage->notAfter) {
+	if (usage->notAfter) {
 		BIO_write(out, "Not After: ", 11);
 		ASN1_GENERALIZEDTIME_print(out, usage->notAfter);
 	}
