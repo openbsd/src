@@ -111,7 +111,7 @@ hex_digit(char h)
 		return 16;
 }
 
-int
+static int
 aead_from_name(const EVP_AEAD **aead, const char *name)
 {
 	*aead = NULL;
@@ -150,9 +150,8 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
     const unsigned int lengths[NUM_TYPES], unsigned int line_no)
 {
 	EVP_AEAD_CTX ctx;
-	ssize_t n;
-	size_t un;
 	unsigned char out[BUF_MAX + EVP_AEAD_MAX_TAG_LENGTH], out2[BUF_MAX];
+	size_t out_len, out_len2;
 
 	if (!EVP_AEAD_CTX_init(&ctx, aead, bufs[KEY], lengths[KEY],
 	    lengths[TAG], NULL)) {
@@ -160,20 +159,15 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 		return 0;
 	}
 
-	n = EVP_AEAD_CTX_seal(&ctx, out, sizeof(out), bufs[NONCE],
-	    lengths[NONCE], bufs[IN], lengths[IN], bufs[AD], lengths[AD]);
-
-	if (n < 0) {
+	if (!EVP_AEAD_CTX_seal(&ctx, out, &out_len, sizeof(out), bufs[NONCE],
+	    lengths[NONCE], bufs[IN], lengths[IN], bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Failed to run AEAD on line %u\n", line_no);
 		return 0;
 	}
 
-	un = (size_t)n;
-
-	if (un != lengths[CT] + lengths[TAG]) {
-		fprintf(stderr, "Bad output length on line %u: %u vs %u\n",
-		    line_no, (unsigned) un,
-		    (unsigned)(lengths[CT] + lengths[TAG]));
+	if (out_len != lengths[CT] + lengths[TAG]) {
+		fprintf(stderr, "Bad output length on line %u: %zu vs %u\n",
+		    line_no, out_len, (unsigned)(lengths[CT] + lengths[TAG]));
 		return 0;
 	}
 
@@ -187,23 +181,21 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 		return 0;
 	}
 
-	n = EVP_AEAD_CTX_open(&ctx, out2, lengths[IN], bufs[NONCE],
-	    lengths[NONCE], out, un, bufs[AD], lengths[AD]);
-	if (n < 0) {
+	if (!EVP_AEAD_CTX_open(&ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
+	    lengths[NONCE], out, out_len, bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Failed to decrypt on line %u\n", line_no);
 		return 0;
 	}
 
-	if ((size_t)n != lengths[IN]) {
-		fprintf(stderr, "Bad decrypt on line %u: %u\n", line_no,
-		    (unsigned) n);
+	if (out_len2 != lengths[IN]) {
+		fprintf(stderr, "Bad decrypt on line %u: %zu\n",
+		    line_no, out_len2);
 		return 0;
 	}
 
 	out[0] ^= 0x80;
-	n = EVP_AEAD_CTX_open(&ctx, out2, lengths[IN], bufs[NONCE],
-	    lengths[NONCE], out, un, bufs[AD], lengths[AD]);
-	if (n >= 0) {
+	if (EVP_AEAD_CTX_open(&ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
+	    lengths[NONCE], out, out_len, bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Decrypted bad data on line %u\n", line_no);
 		return 0;
 	}
