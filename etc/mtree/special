@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.104 2014/04/29 21:30:20 dcoppa Exp $
+#	$OpenBSD: special,v 1.105 2014/05/26 19:37:27 halex Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -151,8 +151,6 @@ sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/share
-src		type=dir mode=0775 uname=root gname=wsrc ignore optional
-..	#usr/src
 ..	#usr
 
 var		type=dir mode=0755 uname=root gname=wheel
