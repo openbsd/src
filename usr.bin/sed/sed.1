@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.39 2014/05/26 15:04:12 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.40 2014/05/26 15:33:17 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -234,30 +234,38 @@ Other backslashes in text are deleted and the following character
 taken literally.
 .Pp
 The
-.Sq r
+.Ic r
 and
-.Sq w
-functions take an optional file parameter, which should be separated
-from the function letter by whitespace.
-Each file given as an argument to
-.Nm
-is created (or its contents truncated) before any input processing begins.
+.Ic w
+functions,
+as well as the
+.Cm w
+flag to the
+.Ic s
+function,
+take an optional
+.Ar file
+parameter,
+which should be separated from the function or flag by whitespace.
+Files are created
+(or their contents truncated)
+before any input processing begins.
 .Pp
 The
-.Sq b ,
-.Sq r ,
-.Sq s ,
-.Sq t ,
-.Sq w ,
-.Sq y ,
-.Ql \&! ,
+.Ic b ,
+.Ic r ,
+.Ic s ,
+.Ic t ,
+.Ic w ,
+.Ic y ,
 and
-.Ql \&:
+.Ic \&:
 functions all accept additional arguments.
-The following synopses indicate which arguments have to be separated from
+The synopses below indicate which arguments have to be separated from
 the function letters by whitespace characters.
 .Pp
-Two of the functions take a function-list.
+Two or more functions form a
+.Em function list .
 This is a list of
 .Nm
 functions separated by newlines, as follows:
@@ -277,7 +285,7 @@ The terminating
 .Ql }
 must be preceded by a newline or optional whitespace.
 .Pp
-Functions and function-lists may be preceded by an exclamation mark,
+Functions and function lists may be preceded by an exclamation mark,
 in which case they are applied only to lines that are
 .Em not
 selected by the addresses.
