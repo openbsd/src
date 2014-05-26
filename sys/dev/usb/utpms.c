@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.4 2014/05/09 18:16:15 miod Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.5 2014/05/26 07:46:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -265,22 +265,23 @@ int
 utpms_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
-	usb_device_descriptor_t *udd;
+	usb_interface_descriptor_t *id;
 	int i;
-	uint16_t vendor, product;
+
+	id = usbd_get_interface_descriptor(uha->uaa->iface);
+	if (id == NULL ||
+	    id->bInterfaceSubClass != UISUBCLASS_BOOT ||
+	    id->bInterfaceProtocol != UIPROTO_BOOT_MOUSE)
+		return (UMATCH_NONE);
 
 	/*
 	 * We just check if the vendor and product IDs have the magic numbers
 	 * we expect.
 	 */
-	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
-		vendor = UGETW(udd->idVendor);
-		product = UGETW(udd->idProduct);
-		for (i = 0; i < nitems(utpms_devices); i++) {
-			if (vendor == utpms_devices[i].vendor &&
-			    product == utpms_devices[i].product)
-				return (UMATCH_IFACECLASS);
-		}
+	for (i = 0; i < nitems(utpms_devices); i++) {
+		if (uha->uaa->vendor == utpms_devices[i].vendor &&
+		    uha->uaa->product == utpms_devices[i].product)
+			return (UMATCH_IFACECLASS);
 	}
 
 	return (UMATCH_NONE);
