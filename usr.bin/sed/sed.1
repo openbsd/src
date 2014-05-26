@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.40 2014/05/26 15:33:17 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.41 2014/05/26 17:08:58 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,16 +71,16 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 The files listed as parameters for the
-.Ql w
-functions are created (or truncated) before any processing begins,
+.Ic w
+function or flag are created (or truncated) before any processing begins,
 by default.
 The
 .Fl a
 option causes
 .Nm
 to delay opening each file until a command containing the related
-.Ql w
-function is applied to a line of input.
+.Ic w
+function or flag is applied to a line of input.
 .It Fl E
 Interpret regular expressions using POSIX extended regular expression syntax.
 The default behaviour is to use POSIX basic regular expression syntax.
@@ -264,9 +264,9 @@ functions all accept additional arguments.
 The synopses below indicate which arguments have to be separated from
 the function letters by whitespace characters.
 .Pp
-Two or more functions form a
-.Em function list .
-This is a list of
+Functions can be combined to form a
+.Em function list ,
+a list of
 .Nm
 functions separated by newlines, as follows:
 .Bd -literal -offset indent
