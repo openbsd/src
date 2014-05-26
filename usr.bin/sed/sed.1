@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.36 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.37 2014/05/26 14:42:32 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: May 26 2014 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ cyclically copies a line of input, not including its terminating newline
 character, into a
 .Em pattern space ,
 (unless there is something left after a
-.Sq D
+.Ic D
 function),
 applies all of the commands with addresses that select that pattern space,
 copies the pattern space to the standard output, appending a newline, and
@@ -227,7 +227,7 @@ addresses for each command is indicated by [0addr], [1addr], or [2addr],
 representing zero, one, or two addresses.
 .Pp
 The argument
-.Em text
+.Ar text
 consists of one or more lines.
 To embed a newline in the text, precede it with a backslash.
 Other backslashes in text are deleted and the following character
@@ -276,68 +276,63 @@ The function can be preceded by whitespace as well.
 The terminating
 .Ql }
 must be preceded by a newline or optional whitespace.
-.Pp
-.Bl -tag -width "XXXXXXXX" -compact
-.It [2addr] Em function-list
+.Bl -tag -width Ds
+.It [2addr] Ar function-list
 Execute
-.Em function-list
+.Ar function-list
 only when the pattern space is selected.
-.Pp
-.It [1addr] Ns Em a Ns \e
-.It Em text
+.It Xo [1 addr] Ic a Ns \e
+.br
+.Ar text
+.Xc
 .Pp
 Write
-.Em text
+.Ar text
 to standard output immediately before each attempt to read a line of input,
 whether by executing the
-.Sq N
+.Ic N
 function or by beginning a new cycle.
-.Pp
-.It [2addr] Ns Em b Ns [label]
+.It [2addr] Ns Ic b Bq Ar label
 Branch to the
-.Sq \&:
-function with the specified label.
+.Ic \&:
+function with the specified
+.Ar label .
 If the label is not specified, branch to the end of the script.
-.Pp
-.It [2addr] Ns Em c Ns \e
-.It Em text
+.It Xo [2addr] Ic c Ns \e
+.br
+.Ar text
+.Xc
 .Pp
 Delete the pattern space.
 With 0 or 1 address or at the end of a 2-address range,
-.Em text
+.Ar text
 is written to the standard output.
-.Pp
-.It [2addr] Ns Em d
+.It [2addr] Ns Ic d
 Delete the pattern space and start the next cycle.
-.Pp
-.It [2addr] Ns Em D
+.It [2addr] Ns Ic D
 Delete the initial segment of the pattern space through the first
 newline character and start the next cycle.
-.Pp
-.It [2addr] Ns Em g
+.It [2addr] Ns Ic g
 Replace the contents of the pattern space with the contents of the
 hold space.
-.Pp
-.It [2addr] Ns Em G
+.It [2addr] Ns Ic G
 Append a newline character followed by the contents of the hold space
 to the pattern space.
-.Pp
-.It [2addr] Ns Em h
+.It [2addr] Ns Ic h
 Replace the contents of the hold space with the contents of the
 pattern space.
-.Pp
-.It [2addr] Ns Em H
+.It [2addr] Ns Ic H
 Append a newline character followed by the contents of the pattern space
 to the hold space.
-.Pp
-.It [1addr] Ns Em i Ns \e
-.It Em text
+.It Xo [1addr] Ic i Ns \e
+.br
+.Ar text
+.Xc
 .Pp
 Write
-.Em text
+.Ar text
 to the standard output.
-.Pp
-.It [2addr] Ns Em l
+.It [2addr] Ns Ic l
 (The letter ell.)
 Write the pattern space to the standard output in a visually unambiguous
 form.
@@ -367,49 +362,47 @@ Long lines are folded, with the point of folding indicated by displaying
 a backslash followed by a newline.
 The end of each line is marked with a
 .Ql $ .
-.Pp
-.It [2addr] Ns Em n
+.It [2addr] Ns Ic n
 Write the pattern space to the standard output if the default output has
 not been suppressed, and replace the pattern space with the next line of
 input.
-.Pp
-.It [2addr] Ns Em N
+.It [2addr] Ns Ic N
 Append the next line of input to the pattern space, using an embedded
 newline character to separate the appended material from the original
 contents.
 Note that the current line number changes.
-.Pp
-.It [2addr] Ns Em p
+.It [2addr] Ns Ic p
 Write the pattern space to standard output.
-.Pp
-.It [2addr] Ns Em P
+.It [2addr] Ns Ic P
 Write the pattern space, up to the first newline character to the
 standard output.
-.Pp
-.It [1addr] Ns Em q
+.It [1addr] Ns Ic q
 Branch to the end of the script and quit without starting a new cycle.
-.Pp
-.It [1addr] Ns Em r file
+.It [1addr] Ns Ic r Ar file
 Copy the contents of
-.Em file
+.Ar file
 to the standard output immediately before the next attempt to read a
 line of input.
 If
-.Em file
+.Ar file
 cannot be read for any reason, it is silently ignored and no error
 condition is set.
-.Pp
-.It [2addr] Ns Em s Ns /re/replacement/flags
-Substitute the replacement string for the first instance of the regular
-expression in the pattern space.
+.It [2addr] Ns Ic s Ns / Ns Ar RE Ns / Ns Ar replacement Ns / Ns Ar flags
+Substitute the
+.Ar replacement
+string for the first instance of the regular expression
+.Ar RE
+in the pattern space.
 Any character other than backslash or newline can be used instead of
-a slash to delimit the RE and the replacement.
-Within the RE and the replacement, the RE delimiter itself can be used as
+a slash to delimit the regular expression and the replacement.
+Within the regular expression and the replacement,
+the regular expression delimiter itself can be used as
 a literal character if it is preceded by a backslash.
 .Pp
 An ampersand
 .Pq Ql &
-appearing in the replacement is replaced by the string matching the RE.
+appearing in the replacement is replaced by the string matching the
+regular expression.
 The special meaning of
 .Ql &
 in this context can be suppressed by preceding it by a backslash.
@@ -426,82 +419,73 @@ To specify a newline character in the replacement string, precede it with
 a backslash.
 .Pp
 The value of
-.Em flags
+.Ar flags
 in the substitute function is zero or more of the following:
 .Bl -tag -width "XXXXXX" -offset indent
-.It 0 ... 9
+.It Cm 0 No ... Cm 9
 Make the substitution only for the N'th occurrence of the regular
 expression in the pattern space.
-.It g
+.It Cm g
 Make the substitution for all non-overlapping matches of the
 regular expression, not just the first one.
-.It p
+.It Cm p
 Write the pattern space to standard output if a replacement was made.
 If the replacement string is identical to that which it replaces, it
 is still considered to have been a replacement.
-.It w Em file
+.It Cm w Ar file
 Append the pattern space to
-.Em file
+.Ar file
 if a replacement was made.
 If the replacement string is identical to that which it replaces, it
 is still considered to have been a replacement.
 .El
-.Pp
-.It [2addr] Ns Em t Ns [label]
+.It [2addr] Ns Ic t Bq Ar label
 Branch to the
-.Ql \&:
-function bearing the label if any substitutions have been made since the
+.Ic \&:
+function bearing the
+.Ar label
+if any substitutions have been made since the
 most recent reading of an input line or execution of a
-.Sq t
+.Ic t
 function.
 If no label is specified, branch to the end of the script.
-.Pp
-.It [2addr] Ns Em w file
+.It [2addr] Ns Ic w Ar file
 Append the pattern space to the
-.Em file .
-.Pp
-.It [2addr] Ns Em x
+.Ar file .
+.It [2addr] Ns Ic x
 Swap the contents of the pattern and hold spaces.
-.Pp
-.It [2addr] Ns Em y Ns /string1/string2/
+.It [2addr] Ns Ic y Ns / Ns Ar string1 Ns / Ns Ar string2 Ns /
 Replace all occurrences of characters in
-.Em string1
+.Ar string1
 in the pattern space with the corresponding characters from
-.Em string2 .
+.Ar string2 .
 Any character other than a backslash or newline can be used instead of
 a slash to delimit the strings.
 Within
-.Em string1
+.Ar string1
 and
-.Em string2 ,
+.Ar string2 ,
 a backslash followed by any character other than a newline is that literal
 character, and a backslash followed by an
 .Sq n
 is replaced by a newline character.
-.Pp
-.Sm off
-.It Xo [2addr] Em !function No ,\ \&[2addr]
-.Em !function-list
-.Xc
-.Sm on
+.It [2addr] Ns Ic \&! Ns Ar function , [2addr] Ns Ic \&! Ns Ar function-list
 Apply the function or function-list only to the lines that are
 .Em not
 selected by the address(es).
-.Pp
-.It [0addr] Ns Em \&: Ns label
-This function does nothing; it bears a label to which the
-.Sq b
+.It [0addr] Ns Ic \&: Ns Ar label
+This function does nothing; it bears a
+.Ar label
+to which the
+.Ic b
 and
-.Sq t
+.Ic t
 commands may branch.
-.Pp
-.It [1addr] Ns Em =
+.It [1addr] Ns Ic =
 Write the line number to the standard output followed by a newline character.
-.Pp
 .It [0addr]
 Empty lines are ignored.
-.Pp
-.It [0addr] Ns Em #
+.It [0addr] Ns Ic #
 The
 .Ql #
 and the remainder of the line are ignored (treated as a comment), with
@@ -545,8 +529,8 @@ command appeared in
 .Sh CAVEATS
 The use of semicolons to separate multiple commands
 is not permitted for the following commands:
-.Cm a , b , c ,
-.Cm i , r , t ,
-.Cm w , \&: ,
+.Ic a , b , c ,
+.Ic i , r , t ,
+.Ic w , \&: ,
 and
-.Cm # .
+.Ic # .
