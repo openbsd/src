@@ -2133,8 +2133,11 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		return -1;
 	}
 	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
-	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0)
+	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
+		free(sdec);
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		return 2;
+	}
 	slen += mlen;
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	p = sdec;
