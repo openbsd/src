@@ -187,6 +187,7 @@
 ./usr/include/luna88k/mutex.h
 ./usr/include/luna88k/param.h
 ./usr/include/luna88k/pcb.h
+./usr/include/luna88k/pcex.h
 ./usr/include/luna88k/pmap.h
 ./usr/include/luna88k/pmap_table.h
 ./usr/include/luna88k/proc.h

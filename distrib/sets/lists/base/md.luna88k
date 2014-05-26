@@ -1559,6 +1559,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/mutex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pcb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pcex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pmap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pmap_table.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/proc.ph
