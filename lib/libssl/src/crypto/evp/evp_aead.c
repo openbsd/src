@@ -126,67 +126,59 @@ check_alias(const unsigned char *in, size_t in_len, const unsigned char *out)
 	return 0;
 }
 
-ssize_t
-EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
+int
+EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
     size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
     const unsigned char *in, size_t in_len, const unsigned char *ad,
     size_t ad_len)
 {
 	size_t possible_out_len = in_len + ctx->aead->overhead;
-	ssize_t r;
 
-	if (possible_out_len < in_len /* overflow */ ||
-	    possible_out_len > SSIZE_MAX /* return value cannot be
-					    represented */) {
-		EVPerr(EVP_F_EVP_AEAD_CTX_SEAL, EVP_R_TOO_LARGE);
+	/* Overflow. */
+	if (possible_out_len < in_len) {
+		EVPerr(EVP_F_AEAD_CTX_SEAL, EVP_R_TOO_LARGE);
 		goto error;
 	}
 
 	if (!check_alias(in, in_len, out)) {
-		EVPerr(EVP_F_EVP_AEAD_CTX_SEAL, EVP_R_OUTPUT_ALIASES_INPUT);
+		EVPerr(EVP_F_AEAD_CTX_SEAL, EVP_R_OUTPUT_ALIASES_INPUT);
 		goto error;
 	}
 
-	r = ctx->aead->seal(ctx, out, max_out_len, nonce, nonce_len,
-	    in, in_len, ad, ad_len);
-	if (r >= 0)
-		return r;
+	if (ctx->aead->seal(ctx, out, out_len, max_out_len, nonce, nonce_len,
+	    in, in_len, ad, ad_len)) {
+		return 1;
+	}
 
 error:
 	/* In the event of an error, clear the output buffer so that a caller
 	 * that doesn't check the return value doesn't send raw data. */
 	memset(out, 0, max_out_len);
-	return -1;
+	*out_len = 0;
+	return 0;
 }
 
-ssize_t
-EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
+int
+EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
     size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
     const unsigned char *in, size_t in_len, const unsigned char *ad,
     size_t ad_len)
 {
-	ssize_t r;
-
-	if (in_len > SSIZE_MAX) {
-		EVPerr(EVP_F_EVP_AEAD_CTX_OPEN, EVP_R_TOO_LARGE);
-		goto error;  /* may not be able to represent return value. */
-	}
-
 	if (!check_alias(in, in_len, out)) {
-		EVPerr(EVP_F_EVP_AEAD_CTX_OPEN, EVP_R_OUTPUT_ALIASES_INPUT);
+		EVPerr(EVP_F_AEAD_CTX_OPEN, EVP_R_OUTPUT_ALIASES_INPUT);
 		goto error;
 	}
 
-	r = ctx->aead->open(ctx, out, max_out_len, nonce, nonce_len,
-	    in, in_len, ad, ad_len);
-
-	if (r >= 0)
-		return r;
+	if (ctx->aead->open(ctx, out, out_len, max_out_len, nonce, nonce_len,
+	    in, in_len, ad, ad_len)) {
+		return 1;
+	}
 
 error:
 	/* In the event of an error, clear the output buffer so that a caller
 	 * that doesn't check the return value doesn't try and process bad
 	 * data. */
 	memset(out, 0, max_out_len);
-	return -1;
+	*out_len = 0;
+	return 0;
 }

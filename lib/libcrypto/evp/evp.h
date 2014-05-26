@@ -1258,49 +1258,51 @@ int EVP_AEAD_CTX_init(EVP_AEAD_CTX *ctx, const EVP_AEAD *aead,
 void EVP_AEAD_CTX_cleanup(EVP_AEAD_CTX *ctx);
 
 /* EVP_AEAD_CTX_seal encrypts and authenticates the input and authenticates
- * any additional data (AD). The result is written as output, with the number
- * of bytes written being returned, or -1 on error.
+ * any additional data (AD), the result being written as output. One is
+ * returned on success, otherwise zero.
  *
  * This function may be called (with the same EVP_AEAD_CTX) concurrently with
  * itself or EVP_AEAD_CTX_open.
  *
  * At most max_out_len bytes are written as output and, in order to ensure
  * success, this value should be the length of the input plus the result of
- * EVP_AEAD_overhead.
+ * EVP_AEAD_overhead. On successful return, out_len is set to the actual
+ * number of bytes written.
  *
  * The length of the nonce is must be equal to the result of
  * EVP_AEAD_nonce_length for this AEAD.
  *
  * EVP_AEAD_CTX_seal never results in a partial output. If max_out_len is
- * insufficient, -1 will be returned.
+ * insufficient, zero will be returned and out_len will be set to zero.
  *
  * If the input and output are aliased then out must be <= in. */
-ssize_t EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
-    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *in, size_t in_len, const unsigned char *ad,
-    size_t ad_len);
+int EVP_AEAD_CTX_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
+    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+    size_t nonce_len, const unsigned char *in, size_t in_len,
+    const unsigned char *ad, size_t ad_len);
 
 /* EVP_AEAD_CTX_open authenticates the input and additional data, decrypting
- * the input and writing it as output. The number of bytes decrypted and
- * written as output is returned, or -1 on error.
+ * the input and writing it as output. One is returned on success, otherwise
+ * zero.
  *
  * This function may be called (with the same EVP_AEAD_CTX) concurrently with
  * itself or EVP_AEAD_CTX_seal.
  *
  * At most the number of input bytes are written as output. In order to ensure
- * success, max_out_len should be at least the same as the input length.
+ * success, max_out_len should be at least the same as the input length. On
+ * successful return out_len is set to the actual number of bytes written.
  *
  * The length of nonce must be equal to the result of EVP_AEAD_nonce_length
  * for this AEAD.
  *
  * EVP_AEAD_CTX_open never results in a partial output. If max_out_len is
- * insufficient, -1 will be returned.
+ * insufficient, zero will be returned and out_len will be set to zero.
  *
  * If the input and output are aliased then out must be <= in. */
-ssize_t EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
-    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *in, size_t in_len, const unsigned char *ad,
-    size_t ad_len);
+int EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
+    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+    size_t nonce_len, const unsigned char *in, size_t in_len,
+    const unsigned char *ad, size_t ad_len);
 
 void EVP_add_alg_module(void);
 

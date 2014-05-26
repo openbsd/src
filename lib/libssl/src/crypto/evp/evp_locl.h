@@ -354,13 +354,13 @@ struct evp_aead_st {
 	    size_t key_len, size_t tag_len);
 	void (*cleanup)(struct evp_aead_ctx_st*);
 
-	ssize_t (*seal)(const struct evp_aead_ctx_st *ctx, unsigned char *out,
-	    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-	    const unsigned char *in, size_t in_len, const unsigned char *ad,
-	    size_t ad_len);
+	int (*seal)(const struct evp_aead_ctx_st *ctx, unsigned char *out,
+	    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+	    size_t nonce_len, const unsigned char *in, size_t in_len,
+	    const unsigned char *ad, size_t ad_len);
 
-	ssize_t (*open)(const struct evp_aead_ctx_st *ctx, unsigned char *out,
-	    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-	    const unsigned char *in, size_t in_len, const unsigned char *ad,
-	    size_t ad_len);
+	int (*open)(const struct evp_aead_ctx_st *ctx, unsigned char *out,
+	    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+	    size_t nonce_len, const unsigned char *in, size_t in_len,
+	    const unsigned char *ad, size_t ad_len);
 };

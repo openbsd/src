@@ -82,8 +82,9 @@ aead_chacha20_poly1305_init(EVP_AEAD_CTX *ctx, const unsigned char *key,
 		return 0;
 	}
 
+	/* Internal error - EVP_AEAD_CTX_init should catch this. */
 	if (key_len != sizeof(c20_ctx->key))
-		return 0;  /* internal error - EVP_AEAD_CTX_init should catch this. */
+		return 0;
 
 	c20_ctx = malloc(sizeof(struct aead_chacha20_poly1305_ctx));
 	if (c20_ctx == NULL)
@@ -100,6 +101,7 @@ static void
 aead_chacha20_poly1305_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
+
 	OPENSSL_cleanse(c20_ctx->key, sizeof(c20_ctx->key));
 	free(c20_ctx);
 }
@@ -121,11 +123,11 @@ poly1305_update_with_length(poly1305_state *poly1305,
 	CRYPTO_poly1305_update(poly1305, length_bytes, sizeof(length_bytes));
 }
 
-static ssize_t
+static int
 aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
-    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *in, size_t in_len, const unsigned char *ad,
-    size_t ad_len)
+    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+    size_t nonce_len, const unsigned char *in, size_t in_len,
+    const unsigned char *ad, size_t ad_len)
 {
 	const struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
 	unsigned char poly1305_key[32];
@@ -139,20 +141,20 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	 * 32-bits and this produces a warning because it's always false.
 	 * Casting to uint64_t inside the conditional is not sufficient to stop
 	 * the warning. */
-	if (in_len_64 >= (1ull << 32)*64 - 64) {
+	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL, EVP_R_TOO_LARGE);
-		return -1;
+		return 0;
 	}
 
 	if (max_out_len < in_len + c20_ctx->tag_len) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL,
 		    EVP_R_BUFFER_TOO_SMALL);
-		return -1;
+		return 0;
 	}
 
 	if (nonce_len != CHACHA20_NONCE_LEN) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_SEAL, EVP_R_IV_TOO_LARGE);
-		return -1;
+		return 0;
 	}
 
 	memset(poly1305_key, 0, sizeof(poly1305_key));
@@ -168,29 +170,31 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		unsigned char tag[POLY1305_TAG_LEN];
 		CRYPTO_poly1305_finish(&poly1305, tag);
 		memcpy(out + in_len, tag, c20_ctx->tag_len);
-		return in_len + c20_ctx->tag_len;
+		*out_len = in_len + c20_ctx->tag_len;
+		return 1;
 	}
 
 	CRYPTO_poly1305_finish(&poly1305, out + in_len);
-	return in_len + POLY1305_TAG_LEN;
+	*out_len = in_len + POLY1305_TAG_LEN;
+	return 1;
 }
 
-static ssize_t
+static int
 aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
-    size_t max_out_len, const unsigned char *nonce, size_t nonce_len,
-    const unsigned char *in, size_t in_len, const unsigned char *ad,
-    size_t ad_len)
+    size_t *out_len, size_t max_out_len, const unsigned char *nonce,
+    size_t nonce_len, const unsigned char *in, size_t in_len,
+    const unsigned char *ad, size_t ad_len)
 {
 	const struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
 	unsigned char mac[POLY1305_TAG_LEN];
 	unsigned char poly1305_key[32];
-	size_t out_len;
 	poly1305_state poly1305;
 	const uint64_t in_len_64 = in_len;
+	size_t plaintext_len;
 
 	if (in_len < c20_ctx->tag_len) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
-		return -1;
+		return 0;
 	}
 
 	/* The underlying ChaCha implementation may not overflow the block
@@ -200,22 +204,22 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	 * 32-bits and this produces a warning because it's always false.
 	 * Casting to uint64_t inside the conditional is not sufficient to stop
 	 * the warning. */
-	if (in_len_64 >= (1ull << 32)*64 - 64) {
+	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_TOO_LARGE);
-		return -1;
+		return 0;
 	}
 
 	if (nonce_len != CHACHA20_NONCE_LEN) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_IV_TOO_LARGE);
-		return -1;
+		return 0;
 	}
 
-	out_len = in_len - c20_ctx->tag_len;
+	plaintext_len = in_len - c20_ctx->tag_len;
 
-	if (max_out_len < out_len) {
+	if (max_out_len < plaintext_len) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN,
 		    EVP_R_BUFFER_TOO_SMALL);
-		return -1;
+		return 0;
 	}
 
 	memset(poly1305_key, 0, sizeof(poly1305_key));
@@ -224,17 +228,17 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 
 	CRYPTO_poly1305_init(&poly1305, poly1305_key);
 	poly1305_update_with_length(&poly1305, ad, ad_len);
-	poly1305_update_with_length(&poly1305, in, out_len);
+	poly1305_update_with_length(&poly1305, in, plaintext_len);
 	CRYPTO_poly1305_finish(&poly1305, mac);
 
-	if (CRYPTO_memcmp(mac, in + out_len, c20_ctx->tag_len) != 0) {
+	if (CRYPTO_memcmp(mac, in + plaintext_len, c20_ctx->tag_len) != 0) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
-		return -1;
+		return 0;
 	}
 
-	CRYPTO_chacha_20(out, in, out_len, c20_ctx->key, nonce, 1);
-
-	return out_len;
+	CRYPTO_chacha_20(out, in, plaintext_len, c20_ctx->key, nonce, 1);
+	*out_len = plaintext_len;
+	return 1;
 }
 
 static const EVP_AEAD aead_chacha20_poly1305 = {
