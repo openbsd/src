@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.165 2014/05/21 15:47:51 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.166 2014/05/26 06:19:07 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -127,10 +127,16 @@ struct dir_info {
 	size_t delete_moves;
 	size_t cheap_realloc_tries;
 	size_t cheap_reallocs;
-#define STATS_INC(x) ((x)++)
-#define STATS_ZERO(x) ((x) = 0)
-#define STATS_SETF(x,y) ((x)->f = (y))
+	size_t malloc_used;		/* bytes allocated */
+	size_t malloc_guarded;		/* bytes used for guards */
+#define STATS_ADD(x,y)	((x) += (y))
+#define STATS_SUB(x,y)	((x) -= (y))
+#define STATS_INC(x)	((x)++)
+#define STATS_ZERO(x)	((x) = 0)
+#define STATS_SETF(x,y)	((x)->f = (y))
 #else
+#define STATS_ADD(x,y)	/* nothing */
+#define STATS_SUB(x,y)	/* nothing */
 #define STATS_INC(x)	/* nothing */
 #define STATS_ZERO(x)	/* nothing */
 #define STATS_SETF(x,y)	/* nothing */
@@ -189,8 +195,6 @@ char		*malloc_options;	/* compile-time options */
 static char	*malloc_func;		/* current function */
 static int	malloc_active;		/* status of malloc */
 
-static size_t	malloc_guarded;		/* bytes used for guards */
-static size_t	malloc_used;		/* bytes allocated */
 
 static size_t rbytesused;		/* random bytes used */
 static u_char rbytes[512];		/* random bytes */
@@ -241,7 +245,7 @@ wrterror(char *msg, void *p)
 	iov[0].iov_base = __progname;
 	iov[0].iov_len = strlen(__progname);
 	iov[1].iov_base = pidbuf;
-	snprintf(pidbuf, sizeof(pidbuf), "(%d)", getpid());
+	snprintf(pidbuf, sizeof(pidbuf), "(%d) in ", getpid());
 	iov[1].iov_len = strlen(pidbuf);
 	iov[2].iov_base = malloc_func;
 	iov[2].iov_len = strlen(malloc_func);
@@ -311,7 +315,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	if (psz > mopts.malloc_cache) {
 		if (munmap(p, sz))
 			wrterror("munmap", p);
-		malloc_used -= sz;
+		STATS_SUB(d->malloc_used, sz);
 		return;
 	}
 	tounmap = 0;
@@ -332,7 +336,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 				tounmap = 0;
 			d->free_regions_size -= r->size;
 			r->size = 0;
-			malloc_used -= rsz;
+			STATS_SUB(d->malloc_used, rsz);
 		}
 	}
 	if (tounmap > 0)
@@ -372,7 +376,7 @@ zapcacheregion(struct dir_info *d, void *p, size_t len)
 			r->p = NULL;
 			d->free_regions_size -= r->size;
 			r->size = 0;
-			malloc_used -= rsz;
+			STATS_SUB(d->malloc_used, rsz);
 		}
 	}
 }
@@ -395,7 +399,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 	if (psz > d->free_regions_size) {
 		p = MMAP(sz);
 		if (p != MAP_FAILED)
-			malloc_used += sz;
+			STATS_ADD(d->malloc_used, sz);
 		/* zero fill not needed */
 		return p;
 	}
@@ -439,7 +443,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 	}
 	p = MMAP(sz);
 	if (p != MAP_FAILED)
-		malloc_used += sz;
+		STATS_ADD(d->malloc_used, sz);
 	if (d->free_regions_size > mopts.malloc_cache)
 		wrterror("malloc cache", NULL);
 	/* zero fill not needed */
@@ -625,7 +629,7 @@ omalloc_init(struct dir_info **dp)
 		for (j = 0; j < MALLOC_CHUNK_LISTS; j++)
 			LIST_INIT(&d->chunk_dir[i][j]);
 	}
-	malloc_used += regioninfo_size;
+	STATS_ADD(d->malloc_used, regioninfo_size);
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 
@@ -661,7 +665,7 @@ omalloc_grow(struct dir_info *d)
 	if (p == MAP_FAILED)
 		return 1;
 	
-	malloc_used += newsize;
+	STATS_ADD(d->malloc_used, newsize);
 	memset(p, 0, newsize);
 	STATS_ZERO(d->inserts);
 	STATS_ZERO(d->insert_collisions);
@@ -681,7 +685,8 @@ omalloc_grow(struct dir_info *d)
 	if (munmap(d->r, d->regions_total * sizeof(struct region_info))) 
 		wrterror("munmap", d->r);
 	else
-		malloc_used -= d->regions_total * sizeof(struct region_info);
+		STATS_SUB(d->malloc_used,
+		    d->regions_total * sizeof(struct region_info));
 	d->regions_free = d->regions_free + d->regions_total;
 	d->regions_total = newtotal;
 	d->r = p;
@@ -710,7 +715,7 @@ alloc_chunk_info(struct dir_info *d, int bits)
 		q = MMAP(MALLOC_PAGESIZE);
 		if (q == MAP_FAILED)
 			return NULL;
-		malloc_used += MALLOC_PAGESIZE;
+		STATS_ADD(d->malloc_used, MALLOC_PAGESIZE);
 		count = MALLOC_PAGESIZE / size;
 		for (i = 0; i < count; i++, q += size)
 			LIST_INSERT_HEAD(&d->chunk_info_list[bits],
@@ -1067,7 +1072,7 @@ omalloc(size_t sz, int zero_fill, void *f)
 			if (mprotect((char *)p + psz - mopts.malloc_guard,
 			    mopts.malloc_guard, PROT_NONE))
 				wrterror("mprotect", NULL);
-			malloc_guarded += mopts.malloc_guard;
+			STATS_ADD(g_pool->malloc_guarded, mopts.malloc_guard);
 		}
 
 		if (mopts.malloc_move &&
@@ -1142,7 +1147,7 @@ malloc(size_t size)
 	int saved_errno = errno;
 
 	_MALLOC_LOCK();
-	malloc_func = " in malloc():";
+	malloc_func = "malloc():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			return NULL;
@@ -1201,7 +1206,7 @@ ofree(void *p)
 				    PROT_READ | PROT_WRITE))
 					wrterror("mprotect", NULL);
 			}
-			malloc_guarded -= mopts.malloc_guard;
+			STATS_SUB(g_pool->malloc_guarded, mopts.malloc_guard);
 		}
 		if (mopts.malloc_junk && !mopts.malloc_freeunmap) {
 			size_t amt = mopts.malloc_junk == 1 ? MALLOC_MAXCHUNK :
@@ -1249,7 +1254,7 @@ free(void *ptr)
 		return;
 
 	_MALLOC_LOCK();
-	malloc_func = " in free():";  
+	malloc_func = "free():";  
 	if (g_pool == NULL) {
 		_MALLOC_UNLOCK();
 		wrterror("free() called before allocation", NULL);
@@ -1316,7 +1321,7 @@ orealloc(void *p, size_t newsz, void *f)
 				else
 					q = MAP_FAILED;
 				if (q == hint) {
-					malloc_used += needed;
+					STATS_ADD(g_pool->malloc_used, needed);
 					if (mopts.malloc_junk == 2)
 						memset(q, SOME_JUNK, needed);
 					r->size = newsz;
@@ -1378,7 +1383,7 @@ realloc(void *ptr, size_t size)
 	int saved_errno = errno;
   
 	_MALLOC_LOCK();
-	malloc_func = " in realloc():";  
+	malloc_func = "realloc():";  
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			return NULL;
@@ -1414,7 +1419,7 @@ calloc(size_t nmemb, size_t size)
 	int saved_errno = errno;
 
 	_MALLOC_LOCK();
-	malloc_func = " in calloc():";  
+	malloc_func = "calloc():";  
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			return NULL;
@@ -1480,7 +1485,7 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 	}
 	if (munmap(q + sz, alignment - (q - p)))
 		wrterror("munmap", q + sz);
-	malloc_used -= alignment;
+	STATS_SUB(d->malloc_used, alignment);
 
 	return q;
 }
@@ -1525,7 +1530,7 @@ omemalign(size_t alignment, size_t sz, int zero_fill, void *f)
 		if (mprotect((char *)p + psz - mopts.malloc_guard,
 		    mopts.malloc_guard, PROT_NONE))
 			wrterror("mprotect", NULL);
-		malloc_guarded += mopts.malloc_guard;
+		STATS_ADD(g_pool->malloc_guarded, mopts.malloc_guard);
 	}
 
 	if (mopts.malloc_junk == 2) {
@@ -1550,7 +1555,7 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 		return EINVAL;
 
 	_MALLOC_LOCK();
-	malloc_func = " in posix_memalign():";
+	malloc_func = "posix_memalign():";
 	if (g_pool == NULL) {
 		if (malloc_init() != 0)
 			goto err;
@@ -1790,9 +1795,9 @@ malloc_dump1(int fd, struct dir_info *d)
 				    d->r[i].f, 0);
 		}
 	}
-	snprintf(buf, sizeof(buf), "In use %zu\n", malloc_used);
+	snprintf(buf, sizeof(buf), "In use %zu\n", d->malloc_used);
 	write(fd, buf, strlen(buf));
-	snprintf(buf, sizeof(buf), "Guarded %zu\n", malloc_guarded);
+	snprintf(buf, sizeof(buf), "Guarded %zu\n", d->malloc_guarded);
 	write(fd, buf, strlen(buf));
 	dump_leaks(fd);
 	write(fd, "\n", 1);
