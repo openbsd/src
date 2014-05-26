@@ -314,11 +314,13 @@ dtls1_start_timer(SSL *s)
 
 	/* Add duration to current time */
 	s->d1->next_timeout.tv_sec += s->d1->timeout_duration;
-	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
+	    &(s->d1->next_timeout));
 }
 
 struct timeval*
-dtls1_get_timeout(SSL *s, struct timeval* timeleft) {
+dtls1_get_timeout(SSL *s, struct timeval* timeleft)
+{
 	struct timeval timenow;
 
 	/* If no timeout is set, just return NULL */
@@ -331,8 +333,8 @@ dtls1_get_timeout(SSL *s, struct timeval* timeleft) {
 
 	/* If timer already expired, set remaining time to 0 */
 	if (s->d1->next_timeout.tv_sec < timenow.tv_sec ||
-		(s->d1->next_timeout.tv_sec == timenow.tv_sec &&
-	s->d1->next_timeout.tv_usec <= timenow.tv_usec)) {
+	    (s->d1->next_timeout.tv_sec == timenow.tv_sec &&
+	     s->d1->next_timeout.tv_usec <= timenow.tv_usec)) {
 		memset(timeleft, 0, sizeof(struct timeval));
 		return timeleft;
 	}
@@ -393,7 +395,8 @@ dtls1_stop_timer(SSL *s)
 	memset(&(s->d1->timeout), 0, sizeof(struct dtls1_timeout_st));
 	memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
 	s->d1->timeout_duration = 1;
-	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
+	    &(s->d1->next_timeout));
 	/* Clear retransmission buffer */
 	dtls1_clear_record_buffer(s);
 }
@@ -405,7 +408,8 @@ dtls1_check_timeout_num(SSL *s)
 
 	/* Reduce MTU after 2 unsuccessful retransmissions */
 	if (s->d1->timeout.num_alerts > 2) {
-		s->d1->mtu = BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
+		s->d1->mtu = BIO_ctrl(SSL_get_wbio(s),
+		    BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
 
 	}
 
