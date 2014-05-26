@@ -1154,12 +1154,15 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			if (s->s3->client_opaque_prf_input != NULL) /* shouldn't really happen */
 				free(s->s3->client_opaque_prf_input);
 			if (s->s3->client_opaque_prf_input_len == 0)
-				s->s3->client_opaque_prf_input = malloc(1); /* dummy byte just to get non-NULL */
-			else
-				s->s3->client_opaque_prf_input = BUF_memdup(sdata, s->s3->client_opaque_prf_input_len);
-			if (s->s3->client_opaque_prf_input == NULL) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
+				s->s3->client_opaque_prf_input = NULL;
+			else {
+				s->s3->client_opaque_prf_input =
+				    BUF_memdup(sdata,
+				      s->s3->client_opaque_prf_input_len);
+				if (s->s3->client_opaque_prf_input == NULL) {
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+				}
 			}
 		}
 #endif
@@ -1458,13 +1461,15 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			if (s->s3->server_opaque_prf_input != NULL) /* shouldn't really happen */
 				free(s->s3->server_opaque_prf_input);
 			if (s->s3->server_opaque_prf_input_len == 0)
-				s->s3->server_opaque_prf_input = malloc(1); /* dummy byte just to get non-NULL */
-			else
-				s->s3->server_opaque_prf_input = BUF_memdup(sdata, s->s3->server_opaque_prf_input_len);
-
-			if (s->s3->server_opaque_prf_input == NULL) {
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
+				s->s3->server_opaque_prf_input = NULL;
+			else {
+				s->s3->server_opaque_prf_input =
+				    BUF_memdup(sdata,
+				      s->s3->server_opaque_prf_input_len);
+				if (s->s3->server_opaque_prf_input == NULL) {
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+				}
 			}
 		}
 #endif
@@ -1639,12 +1644,16 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 				free(s->s3->client_opaque_prf_input);
 
 			if (s->tlsext_opaque_prf_input_len == 0)
-				s->s3->client_opaque_prf_input = malloc(1); /* dummy byte just to get non-NULL */
-			else
-				s->s3->client_opaque_prf_input = BUF_memdup(s->tlsext_opaque_prf_input, s->tlsext_opaque_prf_input_len);
-			if (s->s3->client_opaque_prf_input == NULL) {
-				SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT, ERR_R_MALLOC_FAILURE);
-				return -1;
+				s->s3->client_opaque_prf_input = NULL;
+			else {
+				s->s3->client_opaque_prf_input =
+				    BUF_memdup(s->tlsext_opaque_prf_input,
+				      s->tlsext_opaque_prf_input_len);
+				if (s->s3->client_opaque_prf_input == NULL) {
+					SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,
+					    ERR_R_MALLOC_FAILURE);
+					return -1;
+				}
 			}
 			s->s3->client_opaque_prf_input_len = s->tlsext_opaque_prf_input_len;
 		}
@@ -1740,13 +1749,17 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 				 * of the same length as the client opaque PRF input! */
 
 				if (s->tlsext_opaque_prf_input_len == 0)
-					s->s3->server_opaque_prf_input = malloc(1); /* dummy byte just to get non-NULL */
-				else
-					s->s3->server_opaque_prf_input = BUF_memdup(s->tlsext_opaque_prf_input, s->tlsext_opaque_prf_input_len);
-				if (s->s3->server_opaque_prf_input == NULL) {
-					ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-					al = SSL_AD_INTERNAL_ERROR;
-					goto err;
+					s->s3->server_opaque_prf_input = NULL;
+				else {
+					s->s3->server_opaque_prf_input =
+					    BUF_memdup(s->tlsext_opaque_prf_input,
+					      s->tlsext_opaque_prf_input_len);
+					if (s->s3->server_opaque_prf_input ==
+					    NULL) {
+						ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+						al = SSL_AD_INTERNAL_ERROR;
+						goto err;
+					}
 				}
 				s->s3->server_opaque_prf_input_len = s->tlsext_opaque_prf_input_len;
 			}

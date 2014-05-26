@@ -2633,16 +2633,18 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		if (s->tlsext_opaque_prf_input != NULL)
 			free(s->tlsext_opaque_prf_input);
 		if ((size_t)larg == 0) {
-			/* dummy byte just to get non-NULL */
-			s->tlsext_opaque_prf_input = malloc(1);
-		} else
+			s->tlsext_opaque_prf_input = NULL;
+			s->tlsext_opaque_prf_input_len = 0;
+			ret = 1;
+		} else {
 			s->tlsext_opaque_prf_input =
 			    BUF_memdup(parg, (size_t)larg);
-		if (s->tlsext_opaque_prf_input != NULL) {
-			s->tlsext_opaque_prf_input_len = (size_t)larg;
-			ret = 1;
-		} else
-			s->tlsext_opaque_prf_input_len = 0;
+			if (s->tlsext_opaque_prf_input != NULL) {
+				s->tlsext_opaque_prf_input_len = (size_t)larg;
+				ret = 1;
+			} else
+				s->tlsext_opaque_prf_input_len = 0;
+		}
 		break;
 #endif
 
