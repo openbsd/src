@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.145 2014/05/27 09:39:58 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.146 2014/05/27 19:38:15 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -625,45 +625,23 @@ route_output(struct mbuf *m, ...)
 		 *
 		 * for RTM_GET, info.rti_info[RTAX_GATEWAY] is optional
 		 * even with multipath.
-		 * if it is NULL the first match is returned (no need to
-		 * call rt_mpath_matchgate).
 		 */
 		if (rn_mpath_capable(rnh)) {
-			/* first find correct priority bucket */
-			rn = rn_mpath_prio(rn, prio);
-			rt = (struct rtentry *)rn;
-			if (prio != RTP_ANY &&
-			    (rt->rt_priority & RTP_MASK) != prio) {
+			rt = rt_mpath_matchgate(rt,
+			    info.rti_info[RTAX_GATEWAY], prio);
+			if (!rt) {
 				error = ESRCH;
-				rt->rt_refcnt++;
 				goto flush;
 			}
 
-			/* if multipath routes */
-			if (rt_mpath_next(rt)) { /* XXX ignores down routes */
-				if (info.rti_info[RTAX_GATEWAY] != NULL) {
-					rt = rt_mpath_matchgate(rt,
-					    info.rti_info[RTAX_GATEWAY], prio);
-				} else if (rtm->rtm_type != RTM_GET) {
-					/*
-					 * only RTM_GET may use an empty
-					 * gateway  on multipath ...
-					 */
-					rt = NULL;
-				}
-			} else if ((info.rti_info[RTAX_GATEWAY] != NULL) &&
-			    (rtm->rtm_type == RTM_GET ||
-			     rtm->rtm_type == RTM_LOCK)) {
-				/*
-				 * ... but if a gateway is specified RTM_GET
-				 * and RTM_LOCK must match the gateway no matter
-				 * what.
-				 */
-				rt = rt_mpath_matchgate(rt,
-				    info.rti_info[RTAX_GATEWAY], prio);
-			}
-
-			if (!rt) {
+			/*
+			 * only RTM_GET may use an empty gateway
+			 * on multipath routes
+			 */
+			if (!info.rti_info[RTAX_GATEWAY] &&
+			    rt->rt_flags & RTF_MPATH &&
+			    rtm->rtm_type != RTM_GET) {
+				rt = NULL;
 				error = ESRCH;
 				goto flush;
 			}

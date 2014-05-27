@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.167 2014/05/27 09:39:58 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.168 2014/05/27 19:38:15 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -319,7 +319,7 @@ void
 rtalloc_noclone(struct route *ro)
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
+		return;		/* cached route is still valid */
 	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT | RT_NOCLONING,
 	    ro->ro_tableid);
 }
@@ -328,7 +328,7 @@ void
 rtalloc(struct route *ro)
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
+		return;		/* cached route is still valid */
 	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
 }
 
@@ -780,7 +780,9 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt = rt_mpath_matchgate(rt,
 			    info->rti_info[RTAX_GATEWAY], prio);
 			rn = (struct radix_node *)rt;
-			if (!rt)
+			if (!rt ||
+			    (!info->rti_info[RTAX_GATEWAY] &&
+			    rt->rt_flags & RTF_MPATH))
 				senderr(ESRCH);
 		}
 #endif
@@ -814,15 +816,6 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt->rt_parent->rt_refcnt--;
 			rt->rt_parent = NULL;
 		}
-
-#ifndef SMALL_KERNEL
-		if (rn_mpath_capable(rnh)) {
-			if ((rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
-			    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
-			    rt_mpath_next((struct rtentry *)rn) == NULL)
-				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
-		}
-#endif
 
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
@@ -1010,18 +1003,6 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
-
-#ifndef SMALL_KERNEL
-		if (rn_mpath_capable(rnh) &&
-		    (rn = rnh->rnh_lookup(info->rti_info[RTAX_DST],
-		    info->rti_info[RTAX_NETMASK], rnh)) != NULL &&
-		    (rn = rn_mpath_prio(rn, prio)) != NULL) {
-			if (rt_mpath_next((struct rtentry *)rn) == NULL)
-				((struct rtentry *)rn)->rt_flags &= ~RTF_MPATH;
-			else
-				((struct rtentry *)rn)->rt_flags |= RTF_MPATH;
-		}
-#endif
 
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt);
@@ -1634,13 +1615,5 @@ rt_if_linkstate_change(struct radix_node *rn, void *arg, u_int id)
 	}
 
 	return (0);
-}
-
-struct rtentry *
-rt_mpath_next(struct rtentry *rt)
-{
-	struct radix_node *rn = (struct radix_node *)rt;
-
-	return ((struct rtentry *)rn_mpath_next(rn, 0));
 }
 #endif

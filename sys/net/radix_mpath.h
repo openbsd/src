@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.h,v 1.11 2013/10/24 18:50:16 deraadt Exp $	*/
+/*	$OpenBSD: radix_mpath.h,v 1.12 2014/05/27 19:38:15 claudio Exp $	*/
 /*	$KAME: radix_mpath.h,v 1.9 2004/03/30 11:21:49 keiichi Exp $	*/
 
 /*
@@ -45,9 +45,13 @@ struct route;
 struct rtentry;
 struct sockaddr;
 int	rn_mpath_capable(struct radix_node_head *);
+#define RMP_MODE_ACTIVE	0
+#define RMP_MODE_ALL	1
+#define RMP_MODE_BYPRIO	2
 struct radix_node *rn_mpath_next(struct radix_node *, int);
 struct radix_node *rn_mpath_prio(struct radix_node *, u_int8_t);
 void	rn_mpath_reprio(struct radix_node *, int);
+void	rn_mpath_adj_mpflag(struct radix_node *, u_int8_t);
 int	rn_mpath_active_count(struct radix_node *);
 struct rtentry *rt_mpath_matchgate(struct rtentry *, struct sockaddr *,
 	    u_int8_t);
