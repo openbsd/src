@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.19 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.20 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred, 
+ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
     struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;
@@ -259,8 +259,8 @@ fail:
 			*allocib = 0;
 		} else {
 			int r;
-	
-			r = bread(vp, indirs[unwindidx].in_lbn, 
+
+			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->e2fs_bsize, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);

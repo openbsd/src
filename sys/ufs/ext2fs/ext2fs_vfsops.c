@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.70 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.71 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 			/*
 			 * Process export requests.
 			 */
-			return (vfs_export(mp, &ump->um_export, 
+			return (vfs_export(mp, &ump->um_export,
 			    &args.export_info));
 		}
 	}
@@ -349,14 +349,14 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	 */
 	if (vget(vp, LK_EXCLUSIVE, era->p))
 		return (0);
-	
+
 	if (vinvalbuf(vp, 0, era->cred, era->p, 0, 0))
 		panic("ext2fs_reload: dirty2");
 	/*
 	 * Step 6: re-read inode data for all active vnodes.
 	 */
 	ip = VTOI(vp);
-	error = bread(era->devvp, 
+	error = bread(era->devvp,
 	    fsbtodb(era->fs, ino_to_fsba(era->fs, ip->i_number)),
 	    (int)era->fs->e2fs_bsize, &bp);
 	if (error) {
@@ -419,7 +419,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	}
 
 	fs = VFSTOUFS(mountp)->um_e2fs;
-	/* 
+	/*
 	 * copy in new superblock, and compute in-memory values
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
@@ -521,7 +521,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	m_fs = ump->um_e2fs;
 	m_fs->e2fs_ronly = ronly;
 	ump->um_fstype = UM_EXT2FS;
-	       
+
 #ifdef DEBUG_EXT2
 	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
 #endif
@@ -715,14 +715,14 @@ struct ext2fs_sync_args {
 };
 
 int
-ext2fs_sync_vnode(struct vnode *vp, void *args) 
+ext2fs_sync_vnode(struct vnode *vp, void *args)
 {
 	struct ext2fs_sync_args *esa = args;
 	struct inode *ip;
 	int error;
 
 	ip = VTOI(vp);
-	if (vp->v_type == VNON || 
+	if (vp->v_type == VNON ||
 	    ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
 	    LIST_EMPTY(&vp->v_dirtyblkhd)) ||
 	    esa->waitfor == MNT_LAZY) {
@@ -872,7 +872,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	dp = (struct ext2fs_dinode *) ((char *)bp->b_data
 	    + EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, ino));
-	
+
 	ip->i_e2din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload(dp, ip->i_e2din);
 	brelse(bp);
@@ -957,7 +957,7 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 ||
 	    ip->i_e2fs_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
@@ -1032,7 +1032,7 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 		else
 			bawrite(bp);
 	}
-	
+
 	if (!allerror && error)
 		allerror = error;
 	return (allerror);

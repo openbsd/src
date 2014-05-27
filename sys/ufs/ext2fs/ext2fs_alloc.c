@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.30 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.31 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static int32_t	ext2fs_mapsearch(struct m_ext2fs *, char *, int32_t);
 
 /*
  * Allocate a block in the file system.
- * 
+ *
  * A preference may be optionally specified. If a preference is given
  * the following hierarchy is used to allocate a block:
  *   1) allocate the requested block.
@@ -85,7 +85,7 @@ ext2fs_alloc(struct inode *ip, int32_t lbn, int32_t bpref,
 	struct m_ext2fs *fs;
 	int32_t bno;
 	int cg;
-	
+
 	*bnp = 0;
 	fs = ip->i_e2fs;
 #ifdef DIAGNOSTIC
@@ -118,7 +118,7 @@ nospace:
 
 /*
  * Allocate an inode in the file system.
- * 
+ *
  * If allocating a directory, use ext2fs_dirpref to select the inode.
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
@@ -140,7 +140,7 @@ ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	struct inode *ip;
 	ufsino_t ino, ipref;
 	int cg, error;
-	
+
 	*vpp = NULL;
 	pvp = ITOV(pip);
 	fs = pip->i_e2fs;
@@ -211,7 +211,7 @@ ext2fs_dirpref(struct m_ext2fs *fs)
  * Select the desired position for the next block in a file.  The file is
  * logically divided into sections. The first section is composed of the
  * direct blocks. Each additional section contains fs_maxbpg blocks.
- * 
+ *
  * If no blocks have been allocated in the first section, the policy is to
  * request a block in the same cylinder group as the inode that describes
  * the file. Otherwise, the policy is to try to allocate the blocks
@@ -518,7 +518,7 @@ ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
-	error = bread(pip->i_devvp, 
+	error = bread(pip->i_devvp,
 	        fsbtodb(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, &bp);
 	if (error) {
@@ -592,7 +592,7 @@ ext2fs_mapsearch(struct m_ext2fs *fs, char *bbp, int32_t bpref)
 
 /*
  * Fserr prints the name of a file system with an error diagnostic.
- * 
+ *
  * The form of the error message is:
  *	fs: error message
  */

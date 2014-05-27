@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.64 2014/01/25 23:31:12 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.65 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ int
 ext2fs_create(void *v)
 {
 	struct vop_create_args *ap = v;
-	return ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type, 
+	return ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
 					  ap->a_vap->va_mode),
 			  	ap->a_dvp, ap->a_vpp, ap->a_cnp);
 }
@@ -238,11 +238,11 @@ ext2fs_setattr(void *v)
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
-			if ((ip->i_e2fs_flags & 
+			if ((ip->i_e2fs_flags &
 			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
 				return (EPERM);
 			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-			ip->i_e2fs_flags |= 
+			ip->i_e2fs_flags |=
 			    (vap->va_flags & SF_APPEND) ? EXT2_APPEND : 0 |
 			    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE: 0;
 		} else {
@@ -250,7 +250,7 @@ ext2fs_setattr(void *v)
 		}
 #else
 		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-		ip->i_e2fs_flags |= 
+		ip->i_e2fs_flags |=
 		    (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
 		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE: 0;
 #endif
@@ -295,7 +295,7 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
 			(error = suser_ucred(cred)) &&
-			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_mtime.tv_sec != VNOVAL)
@@ -594,7 +594,7 @@ abortit:
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
         	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
         	if (!error && tvp)
-                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred, 
+                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
         	if (error) {
                 	VOP_UNLOCK(fvp, 0, p);
@@ -647,7 +647,7 @@ abortit:
 	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
+	 * as to be able to change "..". We must repeat the call
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
@@ -674,7 +674,7 @@ abortit:
 	}
 	/*
 	 * 2) If target doesn't exist, link the target
-	 *    to the source and unlink the source. 
+	 *    to the source and unlink the source.
 	 *    Otherwise, rewrite the target directory
 	 *    entry to reference the source inode and
 	 *    expunge the original entry's existence.
@@ -828,7 +828,7 @@ abortit:
 			dp->i_flag |= IN_CHANGE;
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
-				UIO_SYSSPACE, IO_NODELOCKED, 
+				UIO_SYSSPACE, IO_NODELOCKED,
 				tcnp->cn_cred, NULL, curproc);
 			if (error == 0) {
 					namlen = dirbuf.dotdot_namlen;
@@ -1098,7 +1098,7 @@ ext2fs_symlink(void *v)
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    curproc);
-bad:	
+bad:
 	vput(vp);
 	return (error);
 }
@@ -1176,7 +1176,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
-	if ((error = ext2fs_inode_alloc(pdir, mode, cnp->cn_cred, &tvp)) 
+	if ((error = ext2fs_inode_alloc(pdir, mode, cnp->cn_cred, &tvp))
 	    != 0) {
 		pool_put(&namei_pool, cnp->cn_pnbuf);
 		vput(dvp);
@@ -1248,7 +1248,7 @@ ext2fs_reclaim(void *v)
 #ifdef DIAGNOSTIC
 	extern int prtactive;
 
-	if (prtactive && vp->v_usecount != 0) 
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_reclaim: pushing active", vp);
 #endif
 

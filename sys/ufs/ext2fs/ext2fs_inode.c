@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.47 2014/01/25 23:31:12 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.48 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
  */
 int
 ext2fs_inactive(void *v)
-{   
+{
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -146,7 +146,7 @@ out:
 	if (ip->i_e2din == NULL || ip->i_e2fs_dtime != 0)
 		vrecycle(vp, p);
 	return (error);
-}   
+}
 
 
 /*
@@ -246,7 +246,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, 1));
 	}
-	
+
 	if (ext2fs_size(oip) == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, 0));
@@ -297,7 +297,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		aflags = B_CLRBUF;
 		if (flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ext2fs_buf_alloc(oip, lbn, offset, cred, &bp, 
+		error = ext2fs_buf_alloc(oip, lbn, offset, cred, &bp,
 		    aflags);
 		if (error)
 			return (error);

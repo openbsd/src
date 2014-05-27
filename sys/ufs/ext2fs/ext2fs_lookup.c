@@ -1,7 +1,7 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.30 2013/12/12 19:00:09 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.31 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
-/* 
+/*
  * Modified for NetBSD 1.2E
  * May 1997, Manuel Bouyer
  * Laboratoire d'informatique de Paris VI
@@ -79,8 +79,8 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
  * the problem that is tackled below is the fact that FFS
  * includes the terminating zero on disk while EXT2FS doesn't
  * this implies that we need to introduce some padding.
- * For instance, a filename "sbin" has normally a reclen 12 
- * in EXT2, but 16 in FFS. 
+ * For instance, a filename "sbin" has normally a reclen 12
+ * in EXT2, but 16 in FFS.
  * This reminds me of that Pepsi commercial: 'Kid saved a lousy nine cents...'
  * If it wasn't for that, the complete ufs code for directories would
  * have worked w/o changes (except for the difference in DIRBLKSIZ)
@@ -105,7 +105,7 @@ ext2fs_dirconv2ffs(struct ext2fs_direct	*e2dir, struct dirent *ffsdir)
 #endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);
 
-	/* Godmar thinks: since e2dir->e2d_reclen can be big and means 
+	/* Godmar thinks: since e2dir->e2d_reclen can be big and means
 	   nothing anyway, we compute our own reclen according to what
 	   we think is right
 	 */
@@ -118,7 +118,7 @@ ext2fs_dirconv2ffs(struct ext2fs_direct	*e2dir, struct dirent *ffsdir)
  * Convert the on-disk entries to <sys/dirent.h> entries.
  * the problem is that the conversion will blow up some entries by four bytes,
  * so it can't be done in place. This is too bad. Right now the conversion is
- * done entry by entry, the converted entry is sent via uiomove. 
+ * done entry by entry, the converted entry is sent via uiomove.
  *
  * XXX allocate a buffer, convert as many entries as possible, then send
  * the whole buffer to uiomove
@@ -164,7 +164,7 @@ ext2fs_readdir(void *v)
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	if (error == 0) {
 		readcnt = e2fs_count - auio.uio_resid;
-		for (dp = (struct ext2fs_direct *)dirbuf; 
+		for (dp = (struct ext2fs_direct *)dirbuf;
 			(char *)dp < (char *)dirbuf + readcnt; ) {
 			e2d_reclen = fs2h16(dp->e2d_reclen);
 			if (e2d_reclen == 0) {
@@ -317,7 +317,7 @@ ext2fs_lookup(void *v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-			(error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, 
+			(error = ext2fs_bufatoff(dp, (off_t)dp->i_offset,
 			    NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
@@ -334,7 +334,7 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, 
+			error = ext2fs_bufatoff(dp, (off_t)dp->i_offset,
 			    NULL, &bp);
 			if (error != 0)
 				return (error);
@@ -793,7 +793,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	if ((error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, &dirbuf, &bp)) 
+	if ((error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, &dirbuf, &bp))
 	    != 0)
 		return (error);
 	/*
@@ -871,13 +871,13 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 	struct ext2fs_direct *ep;
 	struct buf *bp;
 	int error;
-	 
+
 	dp = VTOI(dvp);
 	if (dp->i_count == 0) {
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
-		error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, (char **)&ep, 
+		error = ext2fs_bufatoff(dp, (off_t)dp->i_offset, (char **)&ep,
 		    &bp);
 		if (error != 0)
 			return (error);
@@ -944,7 +944,7 @@ ext2fs_dirempty(struct inode *ip, ufsino_t parentino, struct ucred *cred)
 	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
 	int error, namlen;
 	size_t count;
-		 
+
 #define	MINDIRSIZ (sizeof (struct ext2fs_dirtemplate) / 2)
 
 	for (off = 0; off < ext2fs_size(ip); off += fs2h16(dp->e2d_reclen)) {

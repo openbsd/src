@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.21 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.22 2014/05/27 14:31:24 krw Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr_t *bnp,
 	}
 #endif
 	for (bp = NULL, ++xap; --num; ++xap) {
-		/* 
+		/*
 		 * Exit the loop if there is no disk address assigned yet and
 		 * the indirect block isn't in the cache, or if we were
 		 * looking for an indirect block and we've found it.
