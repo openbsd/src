@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.22 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.23 2014/05/27 12:40:00 kettenis Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -382,31 +382,6 @@ agp_intel_restore(struct agp_intel_softc *isc)
 		break;
 	}
 }
-
-#if 0
-int
-agp_intel_detach(struct agp_softc *sc)
-{
-	int error;
-	pcireg_t reg;
-	struct agp_intel_softc *isc = sc->sc_chipc;
-
-	error = agp_generic_detach(sc);
-	if (error)
-		return (error);
-
-	/* XXX i845/i855PM/i840/i850E */
-	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AGP_INTEL_NBXCFG);
-	reg &= ~(1 << 9);
-	printf("%s: set NBXCFG to %x\n", __FUNCTION__, reg);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AGP_INTEL_NBXCFG, reg);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AGP_INTEL_ATTBASE, 0);
-	AGP_SET_APERTURE(sc, isc->initial_aperture);
-	agp_free_gatt(sc, isc->gatt);
-
-	return (0);
-}
-#endif
 
 bus_size_t
 agp_intel_get_aperture(void *sc)

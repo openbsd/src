@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.18 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.19 2014/05/27 12:40:00 kettenis Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -153,18 +153,6 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 	return (gatt);
 }
 
-#if 0
-void
-agp_amd_free_gatt(bus_dma_tag_t dmat, struct agp_amd_gatt *gatt)
-{
-	bus_dmamem_unmap(dmat, gatt->ag_virtual, gatt->ag_size);
-	agp_free_dmamem(dmat, gatt->ag_size,
-	    gatt->ag_dmamap, (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg,
-	    gatt->ag_nseg);
-	free(gatt, M_AGP);
-}
-#endif
-
 int
 agp_amd_probe(struct device *parent, void *match, void *aux)
 {
@@ -242,36 +230,6 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	    asc->asc_apaddr, asc->asc_apsize, &asc->dev);
 	return;
 }
-
-#if 0
-int
-agp_amd_detach(void *sc)
-{
-	struct agp_amd_softc	*asc = sc;
-	pcireg_t		 reg;
-
-	/* Disable the TLB.. */
-	WRITE2(AGP_AMD751_STATUS,
-	    READ2(AGP_AMD751_STATUS) & ~AGP_AMD751_STATUS_GCE);
-
-	/* Disable host-agp sync */
-	reg = pci_conf_read(asc->asc_pc, asc->asc_tag, AGP_AMD751_MODECTRL);
-	reg &= 0xffffff00;
-	pci_conf_write(asc->asc_pc, asc->asc_pcitag, AGP_AMD751_MODECTRL, reg);
-
-	/* Clear the GATT base */
-	WRITE4(AGP_AMD751_ATTBASE, 0);
-
-	/* Put the aperture back the way it started. */
-	agp_amd_set_aperture(asc, asc->initial_aperture);
-
-	agp_amd_free_gatt(asc, asc->gatt);
-
-	/* XXXfvdl no pci_mapreg_unmap */
-
-	return (0);
-}
-#endif
 
 int
 agp_amd_activate(struct device *arg, int act)
