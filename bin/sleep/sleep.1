@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.20 2014/02/21 23:39:39 schwarze Exp $
+.\"	$OpenBSD: sleep.1,v 1.21 2014/05/27 13:50:52 jmc Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sleep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: February 21 2014 $
+.Dd $Mdocdate: May 27 2014 $
 .Dt SLEEP 1
 .Os
 .Sh NAME
@@ -51,19 +51,13 @@ suspends execution for a minimum of the specified number of
 This number must be positive and may contain a decimal fraction.
 .Nm
 is commonly used to schedule the execution of other commands (see below).
-.Sh EXIT STATUS
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It 0
-On successful completion, or if the signal
-.Dv SIGALRM
-was received.
-.It \*(Gt0
-An error occurred.
+.Sh ASYNCHRONOUS EVENTS
+.Bl -tag -width "SIGALRMXXX"
+.It Dv SIGALRM
+Terminate normally, with a zero exit status.
 .El
+.Sh EXIT STATUS
+.Ex -std sleep
 .Sh EXAMPLES
 Wait a half hour before running the script
 .Pa command_file
