@@ -473,7 +473,7 @@ typedef ASN1_INTEGER *(*TS_serial_cb)(struct TS_resp_ctx *, void *);
 /* This must return the seconds and microseconds since Jan 1, 1970 in
    the sec and usec variables allocated by the caller.
    Return non-zero for success and zero for failure. */
-typedef	int (*TS_time_cb)(struct TS_resp_ctx *, void *, long *sec, long *usec);
+typedef	int (*TS_time_cb)(struct TS_resp_ctx *, void *, time_t *sec, long *usec);
 
 /* This must process the given extension.
  * It can modify the TS_TST_INFO object of the context.
@@ -555,9 +555,6 @@ void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);
 
 /* Default callback always returns a constant. */
 void TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data);
-
-/* Default callback uses the gettimeofday() and gmtime() system calls. */
-void TS_RESP_CTX_set_time_cb(TS_RESP_CTX *ctx, TS_time_cb cb, void *data);
 
 /* Default callback rejects all extensions. The extension callback is called
  * when the TS_TST_INFO object is already set up and not signed yet. */

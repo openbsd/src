@@ -67,7 +67,7 @@
 /* Private function declarations. */
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
-static int def_time_cb(struct TS_resp_ctx *, void *, long *sec, long *usec);
+static int def_time_cb(struct TS_resp_ctx *, void *, time_t *sec, long *usec);
 static int def_extension_cb(struct TS_resp_ctx *, X509_EXTENSION *, void *);
 
 static void TS_RESP_CTX_init(TS_RESP_CTX *ctx);
@@ -86,7 +86,7 @@ static int TS_TST_INFO_content_new(PKCS7 *p7);
 static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
 
 static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
-    ASN1_GENERALIZEDTIME *, long, long, unsigned);
+    ASN1_GENERALIZEDTIME *, time_t, long, unsigned);
 
 /* Default callbacks for response generation. */
 
@@ -110,7 +110,7 @@ err:
 
 /* Use the gettimeofday function call. */
 static int
-def_time_cb(struct TS_resp_ctx *ctx, void *data, long *sec, long *usec)
+def_time_cb(struct TS_resp_ctx *ctx, void *data, time_t *sec, long *usec)
 {
 	struct timeval tv;
 
@@ -318,13 +318,6 @@ TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data)
 {
 	ctx->serial_cb = cb;
 	ctx->serial_cb_data = data;
-}
-
-void
-TS_RESP_CTX_set_time_cb(TS_RESP_CTX *ctx, TS_time_cb cb, void *data)
-{
-	ctx->time_cb = cb;
-	ctx->time_cb_data = data;
 }
 
 void
@@ -607,7 +600,8 @@ TS_RESP_create_tst_info(TS_RESP_CTX *ctx, ASN1_OBJECT *policy)
 	TS_TST_INFO *tst_info = NULL;
 	ASN1_INTEGER *serial = NULL;
 	ASN1_GENERALIZEDTIME *asn1_time = NULL;
-	long sec, usec;
+	time_t sec;
+	long usec;
 	TS_ACCURACY *accuracy = NULL;
 	const ASN1_INTEGER *nonce;
 	GENERAL_NAME *tsa_name = NULL;
@@ -959,9 +953,8 @@ err:
 
 static ASN1_GENERALIZEDTIME *
 TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
-    long sec, long usec, unsigned precision)
+    time_t sec, long usec, unsigned precision)
 {
-	time_t time_sec = (time_t) sec;
 	struct tm *tm = NULL;
 	char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
 	char usecstr[TS_MAX_CLOCK_PRECISION_DIGITS + 2];
@@ -971,7 +964,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
 		goto err;
 
-	if (!(tm = gmtime(&time_sec)))
+	if (!(tm = gmtime(&sec)))
 		goto err;
 
 	/*
