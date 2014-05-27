@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.64 2014/05/09 03:54:28 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.65 2014/05/27 21:52:19 sf Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -119,10 +119,16 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		error = 0;
 		if (!(pmp->pm_flags & MSDOSFSMNT_RONLY) &&
 		    (mp->mnt_flag & MNT_RDONLY)) {
+			mp->mnt_flag &= ~MNT_RDONLY;
+			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+			mp->mnt_flag |= MNT_RDONLY;
+
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = vflush(mp, NULLVP, flags);
+			if (!error)
+				pmp->pm_flags |= MSDOSFSMNT_RONLY;
 		}
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			/* not yet implemented */
