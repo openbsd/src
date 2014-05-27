@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.42 2014/05/27 07:00:44 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.43 2014/05/27 17:45:02 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -507,6 +507,34 @@ option on the command line.
 .El
 .Sh EXIT STATUS
 .Ex -std sed
+.Sh EXAMPLES
+The following simulates the
+.Xr cat 1
+.Fl s
+command,
+squeezing excess empty lines from standard input:
+.Bd -literal -offset indent
+$ sed -n '
+# Write non-empty lines.
+/./ {
+    p
+    d
+    }
+# Write a single empty line, then look for more empty lines.
+/^$/    p
+# Get the next line, discard the held <newline> (empty line),
+# and look for more empty lines.
+:Empty
+/^$/    {
+    N
+    s/.//
+    b Empty
+    }
+# Write the non-empty line before going back to search
+# for the first in a set of empty lines.
+    p
+\&'
+.Ed
 .Sh SEE ALSO
 .Xr awk 1 ,
 .Xr ed 1 ,
