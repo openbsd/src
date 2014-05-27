@@ -1731,13 +1731,15 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	   64 to 192:  external party methods assigned by IANA
 	   193 to 255: reserved for private use */
 	if (id < 193 || id > 255) {
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
+		    SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
 		return 0;
 	}
 
 	comp = malloc(sizeof(SSL_COMP));
 	if (comp == NULL) {
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
+		    ERR_R_MALLOC_FAILURE);
 		return (1);
 	}
 	comp->id = id;
@@ -1746,12 +1748,14 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	if (ssl_comp_methods &&
 	    sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
 		free(comp);
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, SSL_R_DUPLICATE_COMPRESSION_ID);
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
+		    SSL_R_DUPLICATE_COMPRESSION_ID);
 		return (1);
 	} else if ((ssl_comp_methods == NULL) ||
 	    !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
 		free(comp);
-		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
+		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
+		    ERR_R_MALLOC_FAILURE);
 		return (1);
 	} else {
 		return (0);
