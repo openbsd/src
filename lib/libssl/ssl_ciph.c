@@ -1407,8 +1407,8 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 	free((void *)ca_list);	/* Not needed anymore */
 
-	if (!ok)
-			{	/* Rule processing failure */
+	if (!ok) {
+		/* Rule processing failure */
 		free(co_list);
 		return (NULL);
 	}

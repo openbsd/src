@@ -559,7 +559,8 @@ ssl3_free_digest_list(SSL *s)
 void
 ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
-	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
+	if (s->s3->handshake_buffer &&
+	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
 		BIO_write (s->s3->handshake_buffer,(void *)buf, len);
 	} else {
 		int i;
