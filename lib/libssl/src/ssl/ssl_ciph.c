@@ -1735,7 +1735,6 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 		return 0;
 	}
 
-	MemCheck_off();
 	comp = malloc(sizeof(SSL_COMP));
 	if (comp == NULL) {
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
@@ -1747,17 +1746,14 @@ SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	if (ssl_comp_methods &&
 	    sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
 		free(comp);
-		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, SSL_R_DUPLICATE_COMPRESSION_ID);
 		return (1);
 	} else if ((ssl_comp_methods == NULL) ||
 	    !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
 		free(comp);
-		MemCheck_on();
 		SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
 		return (1);
 	} else {
-		MemCheck_on();
 		return (0);
 	}
 }
