@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.31 2014/05/24 21:49:09 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.32 2014/05/27 12:35:40 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
@@ -48,6 +49,8 @@
 #include <unistd.h>
 
 #include "dump.h"
+
+extern struct disklabel lab;
 
 union dinode {
 	struct ufs1_dinode dp1;
@@ -803,6 +806,7 @@ bread(daddr_t blkno, char *buf, int size)
 {
 	off_t offset;
 	int cnt, i;
+	u_int32_t secsize = lab.d_secsize;
 
 	offset = blkno * DEV_BSIZE;
 
@@ -821,7 +825,7 @@ loop:
 		 * we punt and scale back the read only when it gets
 		 * us into trouble. (mkm 9/25/83)
 		 */
-		size -= DEV_BSIZE;
+		size -= secsize;
 		goto loop;
 	}
 	if (cnt == -1)
@@ -845,18 +849,18 @@ loop:
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
 	memset(buf, 0, size);
-	for (i = 0; i < size; i += DEV_BSIZE, buf += DEV_BSIZE) {
-		if ((cnt = pread(diskfd, buf, DEV_BSIZE, offset + i)) ==
-		    DEV_BSIZE)
+	for (i = 0; i < size; i += secsize, buf += secsize) {
+		if ((cnt = pread(diskfd, buf, secsize, offset + i)) ==
+		    secsize)
 			continue;
 		if (cnt == -1) {
 			msg("read error from %s: %s: [sector %lld]: "
-			    "count=%d\n", disk, strerror(errno),
-			    (long long)(offset + i) / DEV_BSIZE, DEV_BSIZE);
+			    "count=%u\n", disk, strerror(errno),
+			    (long long)(offset + i) / DEV_BSIZE, secsize);
 			continue;
 		}
-		msg("short read error from %s: [sector %lld]: count=%d, "
+		msg("short read error from %s: [sector %lld]: count=%u, "
 		    "got=%d\n", disk, (long long)(offset + i) / DEV_BSIZE,
-		    DEV_BSIZE, cnt);
+		    secsize, cnt);
 	}
 }

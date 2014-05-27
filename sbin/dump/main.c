@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2014/05/24 21:49:09 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2014/05/27 12:35:40 krw Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -34,6 +34,9 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 
@@ -64,6 +67,8 @@ int	cartridge = 0;	/* Assume non-cartridge tape */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
 int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
+
+struct disklabel lab;
 
 /*
  * Possible superblock locations ordered from most to least likely.
@@ -381,6 +386,8 @@ main(int argc, char *argv[])
 		msg("Cannot open %s\n", disk);
 		exit(X_STARTUP);
 	}
+	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
+		err(1, "ioctl (DIOCGPDINFO)");
 	sync();
 	sblock = (struct fs *)sblock_buf;
 	for (i = 0; sblock_try[i] != -1; i++) {

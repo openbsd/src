@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.44 2014/05/24 21:49:09 krw Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.45 2014/05/27 12:35:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -57,6 +57,9 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
@@ -89,6 +92,8 @@ int	aflag;		/* print the . and .. entries too */
 int	mflag;		/* verbose output */
 int	iflag;		/* specific inode */
 char	*format;	/* output format */
+
+struct disklabel lab;
 
 struct icache_s {
 	ufsino_t	ino;
@@ -264,6 +269,7 @@ bread(daddr_t blkno, char *buf, int size)
 {
 	off_t offset;
  	int cnt, i;
+	u_int32_t secsize = lab.d_secsize;
 
 	offset = blkno * DEV_BSIZE;
 
@@ -282,7 +288,7 @@ loop:
 		 * we punt and scale back the read only when it gets
 		 * us into trouble. (mkm 9/25/83)
 		 */
-		size -= DEV_BSIZE;
+		size -= secsize;
 		goto loop;
 	}
 	if (cnt == -1)
@@ -298,19 +304,19 @@ loop:
 	 * Zero buffer, then try to read each sector of buffer separately.
 	 */
 	memset(buf, 0, size);
-	for (i = 0; i < size; i += DEV_BSIZE, buf += DEV_BSIZE) {
-		if ((cnt = pread(diskfd, buf, DEV_BSIZE, offset + i)) ==
-		    DEV_BSIZE)
+	for (i = 0; i < size; i += secsize, buf += secsize) {
+		if ((cnt = pread(diskfd, buf, secsize, offset + i)) ==
+		    secsize)
 			continue;
 		if (cnt == -1) {
 			warnx("read error from %s: %s: [sector %lld]: "
-			    "count=%d", disk, strerror(errno),
-			    (long long)(offset + i) / DEV_BSIZE, DEV_BSIZE);
+			    "count=%u", disk, strerror(errno),
+			    (long long)(offset + i) / DEV_BSIZE, secsize);
 			continue;
 		}
-		warnx("short read error from %s: [sector %lld]: count=%d, "
+		warnx("short read error from %s: [sector %lld]: count=%u, "
 		    "got=%d", disk, (long long)(offset + i) / DEV_BSIZE,
-		    DEV_BSIZE, cnt);
+		    secsize, cnt);
 	}
 }
 
@@ -568,6 +574,8 @@ main(int argc, char *argv[])
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0)
 		err(1, "cannot open %s", disk);
+	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
+		err(1, "ioctl (DIOCGPDINFO)");
 	sblock = (struct fs *)sblock_buf;
 	for (i = 0; sblock_try[i] != -1; i++) {
 		n = pread(diskfd, sblock, SBLOCKSIZE, (off_t)sblock_try[i]);
