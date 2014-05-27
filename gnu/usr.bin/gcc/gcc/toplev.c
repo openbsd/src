@@ -926,9 +926,9 @@ int force_align_functions_log;
 
 #if defined(STACK_PROTECTOR) && defined(STACK_GROWS_DOWNWARD)
 /* Nonzero means use propolice as a stack protection method */
-int flag_propolice_protection = 1;
+int flag_propolice_protection = 0;
 int flag_stack_protection = 0;
-int flag_strong_protection = 0;
+int flag_strong_protection = 1;
 #else
 int flag_propolice_protection = 0;
 int flag_stack_protection = 0;
@@ -1225,7 +1225,7 @@ static const lang_independent_options f_options[] =
    N_("Trap for signed overflow in addition / subtraction / multiplication") },
   { "new-ra", &flag_new_regalloc, 1,
    N_("Use graph coloring register allocation.") },
-  {"stack-protector", &flag_propolice_protection, 1,
+  {"stack-protector", &flag_strong_protection, 1,
    N_("Enables stack protection") },
   {"stack-protector-all", &flag_stack_protection, 1,
    N_("Enables stack protection of every function") },
