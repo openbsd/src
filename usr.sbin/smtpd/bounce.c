@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.64 2014/04/19 17:27:40 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.65 2014/05/28 10:34:16 daniel Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -311,7 +311,7 @@ bounce_duration(long long int d)
 		(void)snprintf(buf, sizeof buf, "%lld day%s", d, (d == 1)?"":"s");
 	}
 	return (buf);
-};
+}
 
 #define NOTICE_INTRO							    \
 	"    Hi!\n\n"							    \
