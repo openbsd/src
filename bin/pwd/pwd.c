@@ -1,5 +1,5 @@
-/*	$OpenBSD: pwd.c,v 1.11 2009/10/27 23:59:22 deraadt Exp $	*/
-/*	$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $	*/
+/*	$OpenBSD: pwd.c,v 1.12 2014/05/28 06:55:58 guenther Exp $	*/
+/*	$NetBSD: pwd.c,v 1.22 2011/08/29 14:51:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -30,50 +30,88 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-extern	char *__progname;
-
-void usage(void);
+extern char *__progname;
+static char *getcwd_logical(void);
+__dead static void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	char *p;
+	int ch, lFlag = 0;
+	const char *p;
 
-	/*
-	 * Flags for pwd are a bit strange.  The POSIX 1003.2B/D9 document
-	 * has an optional -P flag for physical, which is what this program
-	 * will produce by default.  The logical flag, -L, should fail, as
-	 * there's no way to display a logical path after forking.  We don't
-	 * document either flag, only adding -P for future portability.
-	 */
-	while ((ch = getopt(argc, argv, "P")) != -1)
+	while ((ch = getopt(argc, argv, "LP")) != -1) {
 		switch (ch) {
+		case 'L':
+			lFlag = 1;
+			break;
 		case 'P':
+			lFlag = 0;
 			break;
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 0)
 		usage();
 
-	if ((p = getcwd(NULL, (size_t)0)) == NULL)
-		err(1, "getcwd");
-	(void)printf("%s\n", p);
-	exit(0);
+	if (lFlag)
+		p = getcwd_logical();
+	else
+		p = NULL;
+	if (p == NULL)
+		p = getcwd(NULL, 0);
+
+	if (p == NULL)
+		err(EXIT_FAILURE, NULL);
+
+	puts(p);
+
+	exit(EXIT_SUCCESS);
 }
 
-void
+static char *
+getcwd_logical(void)
+{
+	char *pwd, *p;
+	struct stat s_pwd, s_dot;
+
+	/* Check $PWD -- if it's right, it's fast. */
+	pwd = getenv("PWD");
+	if (pwd == NULL)
+		return NULL;
+	if (pwd[0] != '/')
+		return NULL;
+
+	/* check for . or .. components, including trailing ones */
+	for (p = pwd; *p != '\0'; p++)
+		if (p[0] == '/' && p[1] == '.') {
+			if (p[2] == '.')
+				p++;
+			if (p[2] == '\0' || p[2] == '/')
+				return NULL;
+		}
+
+	if (stat(pwd, &s_pwd) == -1 || stat(".", &s_dot) == -1)
+		return NULL;
+	if (s_pwd.st_dev != s_dot.st_dev || s_pwd.st_ino != s_dot.st_ino)
+		return NULL;
+	return pwd;
+}
+
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s\n", __progname);
-	exit(1);
+	fprintf(stderr, "usage: %s [-LP]\n", __progname);
+	exit(EXIT_FAILURE);
 }
