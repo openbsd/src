@@ -4921,9 +4921,7 @@ RCS_checkin (rcs, workfile, message, rev, flags)
     np->type = RCSFIELD;
     np->key = xstrdup ("commitid");
     np->data = xstrdup(global_session_id);
-#ifdef notyet
     addnode (delta->other_delta, np);
-#endif
 
 #ifdef PRESERVE_PERMISSIONS_SUPPORT
     /* If permissions should be preserved on this project, then
