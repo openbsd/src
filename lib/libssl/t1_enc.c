@@ -321,17 +321,57 @@ tls1_change_cipher_state(SSL *s, int which)
 	EVP_PKEY *mac_key;
 	int is_export, n, i, j, k, exp_label_len, cl;
 	int reuse_dd = 0;
+	char is_read;
 
 	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c = s->s3->tmp.new_sym_enc;
 	m = s->s3->tmp.new_hash;
 	mac_type = s->s3->tmp.new_mac_pkey_type;
+
+	/*
+	 * is_read is true if we have just read a ChangeCipherSpec message,
+	 * that is we need to update the read cipherspec. Otherwise we have
+	 * just written one.
+	 */
+	is_read = (which & SSL3_CC_READ) != 0;
+
 #ifndef OPENSSL_NO_COMP
 	comp = s->s3->tmp.new_compression;
+	if (is_read) {
+		if (s->compress != NULL) {
+			COMP_CTX_free(s->compress);
+			s->compress = NULL;
+		}
+		if (comp != NULL) {
+			s->compress = COMP_CTX_new(comp->method);
+			if (s->compress == NULL) {
+				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
+				    SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+			}
+		}
+	} else {
+		if (s->expand != NULL) {
+			COMP_CTX_free(s->expand);
+			s->expand = NULL;
+		}
+		if (comp != NULL) {
+			s->expand = COMP_CTX_new(comp->method);
+			if (s->expand == NULL) {
+				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
+				    SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+			}
+			if (s->s3->rrec.comp == NULL)
+				s->s3->rrec.comp =
+				    malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				goto err;
+		}
+	}
 #endif
 
-
-	if (which & SSL3_CC_READ) {
+	if (is_read) {
 		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
 		else
@@ -347,23 +387,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		}
 		dd = s->enc_read_ctx;
 		mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
-#ifndef OPENSSL_NO_COMP
-		if (s->expand != NULL) {
-			COMP_CTX_free(s->expand);
-			s->expand = NULL;
-		}
-		if (comp != NULL) {
-			s->expand = COMP_CTX_new(comp->method);
-			if (s->expand == NULL) {
-				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp = malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
-			if (s->s3->rrec.comp == NULL)
-				goto err;
-		}
-#endif
+
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
 		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->read_sequence[0]), 0, 8);
@@ -386,19 +410,7 @@ tls1_change_cipher_state(SSL *s, int which)
 			s->write_hash = mac_ctx;
 		} else
 			mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
-#ifndef OPENSSL_NO_COMP
-		if (s->compress != NULL) {
-			COMP_CTX_free(s->compress);
-			s->compress = NULL;
-		}
-		if (comp != NULL) {
-			s->compress = COMP_CTX_new(comp->method);
-			if (s->compress == NULL) {
-				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-		}
-#endif
+
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
 		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->write_sequence[0]), 0, 8);
