@@ -2458,6 +2458,11 @@ ssl3_send_client_key_exchange(SSL *s)
 			 * context data
 			 */
 			ukm_hash = EVP_MD_CTX_create();
+			if (ukm_hash == NULL) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				    ERR_R_MALLOC_FAILURE);
+				goto err;
+			}
 			EVP_DigestInit(ukm_hash,
 			    EVP_get_digestbynid(NID_id_GostR3411_94));
 			EVP_DigestUpdate(ukm_hash,
