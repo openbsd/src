@@ -1313,8 +1313,7 @@ dtls1_send_server_key_exchange(SSL *s)
 			*p = encodedlen;
 			p += 1;
 			memcpy((unsigned char*)p,
-			(unsigned char *)encodedPoint,
-			encodedlen);
+			    (unsigned char *)encodedPoint, encodedlen);
 			free(encodedPoint);
 			encodedPoint = NULL;
 			p += encodedlen;
@@ -1601,7 +1600,7 @@ dtls1_send_newsession_ticket(SSL *s)
 		 */
 		if (tctx->tlsext_ticket_key_cb) {
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
-				&hctx, 1) < 0) {
+			    &hctx, 1) < 0) {
 				free(senc);
 				return -1;
 			}
