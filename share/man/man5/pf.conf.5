@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.537 2014/05/28 19:45:04 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.538 2014/05/28 21:13:21 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1518,11 +1518,11 @@ four referenced
 queues, plus a few child queues.
 Interactive
 .Xr ssh 1
-sessions get a queue with a minimum bandwidth,
+sessions get a queue with a minimum bandwidth;
 .Xr scp 1
 and
 .Xr sftp 1
-bulk transfers go to a seperate queue.
+bulk transfers go to a separate queue.
 The queues are then referenced by filtering rules (see
 .Sx PACKET FILTERING ,
 above).
