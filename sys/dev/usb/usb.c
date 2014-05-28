@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.96 2014/05/11 16:33:21 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.97 2014/05/28 11:20:55 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -260,11 +260,15 @@ usb_attach_roothub(struct usb_softc *sc)
 void
 usb_detach_roothub(struct usb_softc *sc)
 {
-	/* Make all devices disconnect. */
-	if (sc->sc_port.device != NULL)
-		usb_disconnect_port(&sc->sc_port, (struct device *)sc);
+	/*
+	 * To avoid races with the usb task thread, mark the root hub
+	 * as disconnecting and schedule an exploration task to detach
+	 * it.
+	 */
+	sc->sc_bus->flags |= USB_BUS_DISCONNECTING;
+	usb_needs_explore(sc->sc_bus->root_hub, 0);
 
-	usb_rem_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
+	usb_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
 
 	sc->sc_bus->root_hub = NULL;
 }
@@ -840,7 +844,18 @@ usb_explore(void *v)
 			usb_delay_ms(sc->sc_bus, pwrdly - waited_ms);
 	}
 
-	sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+	if (sc->sc_bus->flags & USB_BUS_DISCONNECTING) {
+		/* Prevent new tasks from being scheduled. */
+		sc->sc_bus->dying = 1;
+
+		/* Make all devices disconnect. */
+		if (sc->sc_port.device != NULL)
+			usb_disconnect_port(&sc->sc_port, (struct device *)sc);
+
+		sc->sc_bus->flags &= ~USB_BUS_DISCONNECTING;
+	} else {
+		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
+	}
 
 	if (sc->sc_bus->flags & USB_BUS_CONFIG_PENDING) {
 		DPRINTF(("%s: %s: first explore done\n", __func__,
@@ -896,7 +911,6 @@ usb_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
-		sc->sc_bus->dying = 1;
 		if (sc->sc_bus->root_hub != NULL)
 			usb_detach_roothub(sc);
 		break;
@@ -914,10 +928,6 @@ usb_activate(struct device *self, int act)
 			usb_needs_explore(sc->sc_bus->root_hub, 0);
 		sc->sc_bus->use_polling--;
 		break;
-	case DVACT_DEACTIVATE:
-		rv = config_activate_children(self, act);
-		sc->sc_bus->dying = 1;
-		break;
 	default:
 		rv = config_activate_children(self, act);
 		break;
@@ -929,10 +939,6 @@ int
 usb_detach(struct device *self, int flags)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
-
-	DPRINTF(("usb_detach: start\n"));
-
-	sc->sc_bus->dying = 1;
 
 	if (sc->sc_bus->root_hub != NULL) {
 		usb_detach_roothub(sc);

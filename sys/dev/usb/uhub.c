@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.66 2014/03/11 10:24:42 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.67 2014/05/28 11:20:55 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -545,6 +545,9 @@ void
 uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
+
+	if (usbd_is_dying(sc->sc_hub))
+		return;
 
 	DPRINTF("%s: intr status=%d\n", sc->sc_dev.dv_xname, status);
 	if (status == USBD_STALLED)

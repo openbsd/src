@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.58 2014/03/29 18:09:31 guenther Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.59 2014/05/28 11:20:55 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -105,6 +105,7 @@ struct usbd_bus {
 	char			dying;
 	int			flags;
 #define USB_BUS_CONFIG_PENDING	0x01
+#define USB_BUS_DISCONNECTING	0x02
 	struct device	       *usbctl;
 	struct usb_device_stats	stats;
 	int 			intr_context;
