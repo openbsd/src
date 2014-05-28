@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.30 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: window.c,v 1.31 2014/05/28 07:59:36 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -417,6 +417,8 @@ delwind(int f, int n)
 		wp->w_bufp->b_doto = wp->w_doto;
 		wp->w_bufp->b_markp = wp->w_markp;
 		wp->w_bufp->b_marko = wp->w_marko;
+		wp->w_bufp->b_dotline = wp->w_dotline;
+		wp->w_bufp->b_markline = wp->w_markline;
 	}
 
 	/* since shrinkwind did't crap out, we know we have a second window */
