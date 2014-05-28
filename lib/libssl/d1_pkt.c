@@ -197,8 +197,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 	rdata = (DTLS1_RECORD_DATA *)item->data;
 
-	if (s->s3->rbuf.buf != NULL)
-		free(s->s3->rbuf.buf);
+	free(s->s3->rbuf.buf);
 
 	s->packet = rdata->packet;
 	s->packet_length = rdata->packet_length;
@@ -349,8 +348,7 @@ dtls1_get_buffered_record(SSL *s)
 		item = pqueue_pop(s->d1->rcvd_records);
 		rdata = (DTLS1_RECORD_DATA *)item->data;
 
-		if (s->s3->rbuf.buf != NULL)
-			free(s->s3->rbuf.buf);
+		free(s->s3->rbuf.buf);
 
 		s->packet = rdata->packet;
 		s->packet_length = rdata->packet_length;

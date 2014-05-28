@@ -719,20 +719,16 @@ ssl3_setup_buffers(SSL *s)
 int
 ssl3_release_write_buffer(SSL *s)
 {
-	if (s->s3->wbuf.buf != NULL) {
-		free(s->s3->wbuf.buf);
-		s->s3->wbuf.buf = NULL;
-	}
+	free(s->s3->wbuf.buf);
+	s->s3->wbuf.buf = NULL;
 	return 1;
 }
 
 int
 ssl3_release_read_buffer(SSL *s)
 {
-	if (s->s3->rbuf.buf != NULL) {
-		free(s->s3->rbuf.buf);
-		s->s3->rbuf.buf = NULL;
-	}
+	free(s->s3->rbuf.buf);
+	s->s3->rbuf.buf = NULL;
 	return 1;
 }
 

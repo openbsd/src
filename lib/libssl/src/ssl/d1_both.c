@@ -200,8 +200,7 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 	if (reassembly) {
 		bitmask = malloc(RSMBLY_BITMASK_SIZE(frag_len));
 		if (bitmask == NULL) {
-			if (buf != NULL)
-				free(buf);
+			free(buf);
 			free(frag);
 			return NULL;
 		}
@@ -223,10 +222,8 @@ dtls1_hm_fragment_free(hm_fragment *frag)
 		EVP_MD_CTX_destroy(
 		    frag->msg_header.saved_retransmit_state.write_hash);
 	}
-	if (frag->fragment)
-		free(frag->fragment);
-	if (frag->reassembly)
-		free(frag->reassembly);
+	free(frag->fragment);
+	free(frag->reassembly);
 	free(frag);
 }
 

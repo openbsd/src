@@ -2332,10 +2332,8 @@ ssl3_free(SSL *s)
 		return;
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->client_opaque_prf_input != NULL)
-		free(s->s3->client_opaque_prf_input);
-	if (s->s3->server_opaque_prf_input != NULL)
-		free(s->s3->server_opaque_prf_input);
+	free(s->s3->client_opaque_prf_input);
+	free(s->s3->server_opaque_prf_input);
 #endif
 
 	ssl3_cleanup_key_block(s);
@@ -2343,8 +2341,7 @@ ssl3_free(SSL *s)
 		ssl3_release_read_buffer(s);
 	if (s->s3->wbuf.buf != NULL)
 		ssl3_release_write_buffer(s);
-	if (s->s3->rrec.comp != NULL)
-		free(s->s3->rrec.comp);
+	free(s->s3->rrec.comp);
 #ifndef OPENSSL_NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
@@ -2374,11 +2371,9 @@ ssl3_clear(SSL *s)
 	int		 init_extra;
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->client_opaque_prf_input != NULL)
-		free(s->s3->client_opaque_prf_input);
+	free(s->s3->client_opaque_prf_input);
 	s->s3->client_opaque_prf_input = NULL;
-	if (s->s3->server_opaque_prf_input != NULL)
-		free(s->s3->server_opaque_prf_input);
+	free(s->s3->server_opaque_prf_input);
 	s->s3->server_opaque_prf_input = NULL;
 #endif
 
@@ -2386,10 +2381,9 @@ ssl3_clear(SSL *s)
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 
-	if (s->s3->rrec.comp != NULL) {
-		free(s->s3->rrec.comp);
-		s->s3->rrec.comp = NULL;
-	}
+	free(s->s3->rrec.comp);
+	s->s3->rrec.comp = NULL;
+
 #ifndef OPENSSL_NO_DH
 	if (s->s3->tmp.dh != NULL) {
 		DH_free(s->s3->tmp.dh);
@@ -2437,11 +2431,9 @@ ssl3_clear(SSL *s)
 	s->version = SSL3_VERSION;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-	if (s->next_proto_negotiated) {
-		free(s->next_proto_negotiated);
-		s->next_proto_negotiated = NULL;
-		s->next_proto_negotiated_len = 0;
-	}
+	free(s->next_proto_negotiated);
+	s->next_proto_negotiated = NULL;
+	s->next_proto_negotiated_len = 0;
 #endif
 }
 
@@ -2589,8 +2581,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
 		if (larg == TLSEXT_NAMETYPE_host_name) {
-			if (s->tlsext_hostname != NULL)
-				free(s->tlsext_hostname);
+			free(s->tlsext_hostname);
 			s->tlsext_hostname = NULL;
 
 			ret = 1;
@@ -2630,8 +2621,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			    SSL_R_OPAQUE_PRF_INPUT_TOO_LONG);
 			break;
 		}
-		if (s->tlsext_opaque_prf_input != NULL)
-			free(s->tlsext_opaque_prf_input);
+		free(s->tlsext_opaque_prf_input);
 		if ((size_t)larg == 0) {
 			s->tlsext_opaque_prf_input = NULL;
 			s->tlsext_opaque_prf_input_len = 0;
@@ -2678,8 +2668,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return s->tlsext_ocsp_resplen;
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-		if (s->tlsext_ocsp_resp)
-			free(s->tlsext_ocsp_resp);
+		free(s->tlsext_ocsp_resp);
 		s->tlsext_ocsp_resp = parg;
 		s->tlsext_ocsp_resplen = larg;
 		ret = 1;

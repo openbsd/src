@@ -1927,8 +1927,7 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
 #ifndef OPENSSL_NO_ECDH
-	if (encodedPoint != NULL)
-		free(encodedPoint);
+	free(encodedPoint);
 	BN_CTX_free(bn_ctx);
 #endif
 	EVP_MD_CTX_cleanup(&md_ctx);
@@ -2435,8 +2434,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		t += psk_len;
 		s2n(psk_len, t);
 
-		if (s->session->psk_identity != NULL)
-			free(s->session->psk_identity);
+		free(s->session->psk_identity);
 		s->session->psk_identity = BUF_strdup((char *)p);
 		if (s->session->psk_identity == NULL) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2444,8 +2442,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			goto psk_err;
 		}
 
-		if (s->session->psk_identity_hint != NULL)
-			free(s->session->psk_identity_hint);
+		free(s->session->psk_identity_hint);
 		s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
 		if (s->ctx->psk_identity_hint != NULL &&
 			s->session->psk_identity_hint == NULL) {

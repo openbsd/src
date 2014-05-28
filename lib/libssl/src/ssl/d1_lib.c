@@ -149,18 +149,14 @@ dtls1_clear_queues(SSL *s)
 
 	while ((item = pqueue_pop(s->d1->unprocessed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA *) item->data;
-		if (rdata->rbuf.buf) {
-			free(rdata->rbuf.buf);
-		}
+		free(rdata->rbuf.buf);
 		free(item->data);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(s->d1->processed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA *) item->data;
-		if (rdata->rbuf.buf) {
-			free(rdata->rbuf.buf);
-		}
+		free(rdata->rbuf.buf);
 		free(item->data);
 		pitem_free(item);
 	}

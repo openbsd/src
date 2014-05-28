@@ -163,9 +163,7 @@ void
 tls1_free(SSL *s)
 {
 #ifndef OPENSSL_NO_TLSEXT
-	if (s->tlsext_session_ticket) {
-		free(s->tlsext_session_ticket);
-	}
+	free(s->tlsext_session_ticket);
 #endif /* OPENSSL_NO_TLSEXT */
 	ssl3_free(s);
 }
@@ -1082,10 +1080,7 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				return 0;
 			}
 			if (!s->hit) {
-				if (s->session->tlsext_ecpointformatlist) {
-					free(s->session->tlsext_ecpointformatlist);
-					s->session->tlsext_ecpointformatlist = NULL;
-				}
+				free(s->session->tlsext_ecpointformatlist);
 				s->session->tlsext_ecpointformatlist_length = 0;
 				if ((s->session->tlsext_ecpointformatlist =
 				    malloc(ecpointformatlist_length)) == NULL) {
@@ -1151,8 +1146,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				return 0;
 			}
 
-			if (s->s3->client_opaque_prf_input != NULL) /* shouldn't really happen */
-				free(s->s3->client_opaque_prf_input);
+			free(s->s3->client_opaque_prf_input);
+
 			if (s->s3->client_opaque_prf_input_len == 0)
 				s->s3->client_opaque_prf_input = NULL;
 			else {
@@ -1413,8 +1408,8 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				return 0;
 			}
 			s->session->tlsext_ecpointformatlist_length = 0;
-			if (s->session->tlsext_ecpointformatlist != NULL)
-				free(s->session->tlsext_ecpointformatlist);
+
+			free(s->session->tlsext_ecpointformatlist);
 			if ((s->session->tlsext_ecpointformatlist =
 			    malloc(ecpointformatlist_length)) == NULL) {
 				*al = TLS1_AD_INTERNAL_ERROR;
@@ -1458,14 +1453,13 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				return 0;
 			}
 
-			if (s->s3->server_opaque_prf_input != NULL) /* shouldn't really happen */
-				free(s->s3->server_opaque_prf_input);
-			if (s->s3->server_opaque_prf_input_len == 0)
-				s->s3->server_opaque_prf_input = NULL;
-			else {
+			free(s->s3->server_opaque_prf_input);
+			s->s3->server_opaque_prf_input = NULL;
+
+			if (s->s3->server_opaque_prf_input_len != 0)
 				s->s3->server_opaque_prf_input =
 				    BUF_memdup(sdata,
-				      s->s3->server_opaque_prf_input_len);
+					s->s3->server_opaque_prf_input_len);
 				if (s->s3->server_opaque_prf_input == NULL) {
 					*al = TLS1_AD_INTERNAL_ERROR;
 					return 0;
@@ -1600,8 +1594,7 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 	}
 	using_ecc = using_ecc && (s->version >= TLS1_VERSION);
 	if (using_ecc) {
-		if (s->tlsext_ecpointformatlist != NULL)
-			free(s->tlsext_ecpointformatlist);
+		free(s->tlsext_ecpointformatlist);
 		if ((s->tlsext_ecpointformatlist = malloc(3)) == NULL) {
 			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,
 			    ERR_R_MALLOC_FAILURE);
@@ -1613,8 +1606,7 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 
 		/* we support all named elliptic curves in draft-ietf-tls-ecc-12 */
-		if (s->tlsext_ellipticcurvelist != NULL)
-			free(s->tlsext_ellipticcurvelist);
+		free(s->tlsext_ellipticcurvelist);
 		s->tlsext_ellipticcurvelist_length = sizeof(pref_list) / sizeof(pref_list[0]) * 2;
 		if ((s->tlsext_ellipticcurvelist = malloc(s->tlsext_ellipticcurvelist_length)) == NULL) {
 			s->tlsext_ellipticcurvelist_length = 0;
@@ -1640,9 +1632,7 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 		}
 
 		if (s->tlsext_opaque_prf_input != NULL) {
-			if (s->s3->client_opaque_prf_input != NULL) /* shouldn't really happen */
-				free(s->s3->client_opaque_prf_input);
-
+			free(s->s3->client_opaque_prf_input);
 			if (s->tlsext_opaque_prf_input_len == 0)
 				s->s3->client_opaque_prf_input = NULL;
 			else {
@@ -1684,8 +1674,7 @@ ssl_prepare_serverhello_tlsext(SSL *s)
 	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 
 	if (using_ecc) {
-		if (s->tlsext_ecpointformatlist != NULL)
-			free(s->tlsext_ecpointformatlist);
+		free(s->tlsext_ecpointformatlist);
 		if ((s->tlsext_ecpointformatlist = malloc(3)) == NULL) {
 			SSLerr(SSL_F_SSL_PREPARE_SERVERHELLO_TLSEXT, ERR_R_MALLOC_FAILURE);
 			return -1;
@@ -1738,8 +1727,7 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 			}
 		}
 
-		if (s->s3->server_opaque_prf_input != NULL) /* shouldn't really happen */
-			free(s->s3->server_opaque_prf_input);
+		free(s->s3->server_opaque_prf_input);
 		s->s3->server_opaque_prf_input = NULL;
 
 		if (s->tlsext_opaque_prf_input != NULL) {
@@ -1922,10 +1910,8 @@ ssl_check_serverhello_tlsext(SSL *s)
 		/* Set resp to NULL, resplen to -1 so callback knows
  		 * there is no response.
  		 */
-		if (s->tlsext_ocsp_resp) {
-			free(s->tlsext_ocsp_resp);
-			s->tlsext_ocsp_resp = NULL;
-		}
+		free(s->tlsext_ocsp_resp);
+		s->tlsext_ocsp_resp = NULL;
 		s->tlsext_ocsp_resplen = -1;
 		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
 		if (r == 0) {

@@ -366,8 +366,7 @@ ssl_get_new_session(SSL *s, int session)
 		}
 #ifndef OPENSSL_NO_EC
 		if (s->tlsext_ecpointformatlist) {
-			if (ss->tlsext_ecpointformatlist != NULL)
-				free(ss->tlsext_ecpointformatlist);
+			free(ss->tlsext_ecpointformatlist);
 			if ((ss->tlsext_ecpointformatlist = malloc(s->tlsext_ecpointformatlist_length)) == NULL) {
 				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
 				SSL_SESSION_free(ss);
@@ -377,8 +376,7 @@ ssl_get_new_session(SSL *s, int session)
 			memcpy(ss->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
 		}
 		if (s->tlsext_ellipticcurvelist) {
-			if (ss->tlsext_ellipticcurvelist != NULL)
-				free(ss->tlsext_ellipticcurvelist);
+			free(ss->tlsext_ellipticcurvelist);
 			if ((ss->tlsext_ellipticcurvelist = malloc(s->tlsext_ellipticcurvelist_length)) == NULL) {
 				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
 				SSL_SESSION_free(ss);
@@ -704,24 +702,18 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->ciphers != NULL)
 		sk_SSL_CIPHER_free(ss->ciphers);
 #ifndef OPENSSL_NO_TLSEXT
-	if (ss->tlsext_hostname != NULL)
-		free(ss->tlsext_hostname);
-	if (ss->tlsext_tick != NULL)
-		free(ss->tlsext_tick);
+	free(ss->tlsext_hostname);
+	free(ss->tlsext_tick);
 #ifndef OPENSSL_NO_EC
 	ss->tlsext_ecpointformatlist_length = 0;
-	if (ss->tlsext_ecpointformatlist != NULL)
-		free(ss->tlsext_ecpointformatlist);
+	free(ss->tlsext_ecpointformatlist);
 	ss->tlsext_ellipticcurvelist_length = 0;
-	if (ss->tlsext_ellipticcurvelist != NULL)
-		free(ss->tlsext_ellipticcurvelist);
+	free(ss->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
 #endif
 #ifndef OPENSSL_NO_PSK
-	if (ss->psk_identity_hint != NULL)
-		free(ss->psk_identity_hint);
-	if (ss->psk_identity != NULL)
-		free(ss->psk_identity);
+	free(ss->psk_identity_hint);
+	free(ss->psk_identity);
 #endif
 	OPENSSL_cleanse(ss, sizeof(*ss));
 	free(ss);
@@ -874,11 +866,7 @@ int
 SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
 	if (s->version >= TLS1_VERSION) {
-		if (s->tlsext_session_ticket) {
-			free(s->tlsext_session_ticket);
-			s->tlsext_session_ticket = NULL;
-		}
-
+		free(s->tlsext_session_ticket);
 		s->tlsext_session_ticket = malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
 		if (!s->tlsext_session_ticket) {
 			SSLerr(SSL_F_SSL_SET_SESSION_TICKET_EXT, ERR_R_MALLOC_FAILURE);

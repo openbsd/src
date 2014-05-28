@@ -549,25 +549,20 @@ SSL_free(SSL *s)
 	/* Free up if allocated */
 
 #ifndef OPENSSL_NO_TLSEXT
-	if (s->tlsext_hostname)
-		free(s->tlsext_hostname);
+	free(s->tlsext_hostname);
 	if (s->initial_ctx)
 		SSL_CTX_free(s->initial_ctx);
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist)
-		free(s->tlsext_ecpointformatlist);
-	if (s->tlsext_ellipticcurvelist)
-		free(s->tlsext_ellipticcurvelist);
+	free(s->tlsext_ecpointformatlist);
+	free(s->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
-	if (s->tlsext_opaque_prf_input)
-		free(s->tlsext_opaque_prf_input);
+	free(s->tlsext_opaque_prf_input);
 	if (s->tlsext_ocsp_exts)
 		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
 		    X509_EXTENSION_free);
 	if (s->tlsext_ocsp_ids)
 		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
-	if (s->tlsext_ocsp_resp)
-		free(s->tlsext_ocsp_resp);
+	free(s->tlsext_ocsp_resp);
 #endif
 
 	if (s->client_CA != NULL)
@@ -581,8 +576,7 @@ SSL_free(SSL *s)
 
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-	if (s->next_proto_negotiated)
-		free(s->next_proto_negotiated);
+	free(s->next_proto_negotiated);
 #endif
 
 #ifndef OPENSSL_NO_SRTP
@@ -1893,7 +1887,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 #if 0
 static void
 SSL_COMP_free(SSL_COMP *comp)
-	{ free(comp);
+{
+	free(comp);
 }
 #endif
 
@@ -1954,8 +1949,7 @@ SSL_CTX_free(SSL_CTX *a)
 #endif
 
 #ifndef OPENSSL_NO_PSK
-	if (a->psk_identity_hint)
-		free(a->psk_identity_hint);
+	free(a->psk_identity_hint);
 #endif
 #ifndef OPENSSL_NO_ENGINE
 	if (a->client_cert_engine)
@@ -3129,8 +3123,7 @@ SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
 		    SSL_R_DATA_LENGTH_TOO_LONG);
 		return (0);
 	}
-	if (ctx->psk_identity_hint != NULL)
-		free(ctx->psk_identity_hint);
+	free(ctx->psk_identity_hint);
 	if (identity_hint != NULL) {
 		ctx->psk_identity_hint = BUF_strdup(identity_hint);
 		if (ctx->psk_identity_hint == NULL)
@@ -3155,8 +3148,7 @@ SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
 		    SSL_R_DATA_LENGTH_TOO_LONG);
 		return (0);
 	}
-	if (s->session->psk_identity_hint != NULL)
-		free(s->session->psk_identity_hint);
+	free(s->session->psk_identity_hint);
 	if (identity_hint != NULL) {
 		s->session->psk_identity_hint = BUF_strdup(identity_hint);
 		if (s->session->psk_identity_hint == NULL)
