@@ -127,7 +127,7 @@ compile_pattern(pattern, search_type, comp_pattern)
 	char *cvt_pattern;
 	int result;
 
-	if (caseless != OPT_ONPLUS)
+	if (caseless != OPT_ONPLUS && (caseless != OPT_ON || !less_is_more))
 		cvt_pattern = pattern;
 	else
 	{

@@ -39,6 +39,7 @@ extern int hilite_search;
 extern int size_linebuf;
 extern int squished;
 extern int can_goto_line;
+extern int less_is_more;
 static int hide_hilite;
 static POSITION prep_startpos;
 static POSITION prep_endpos;
@@ -122,7 +123,7 @@ set_pattern(info, pattern, search_type)
 	 * -i is set AND the pattern is all lowercase.
 	 */
 	is_ucase_pattern = is_ucase(pattern);
-	if (is_ucase_pattern && caseless != OPT_ONPLUS)
+	if (is_ucase_pattern && caseless != OPT_ONPLUS && (caseless != OPT_ON || !less_is_more))
 		is_caseless = 0;
 	else
 		is_caseless = caseless;

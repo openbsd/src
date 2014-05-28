@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.41 2014/05/13 22:07:03 jmc Exp $
+.\"	$OpenBSD: less.1,v 1.42 2014/05/28 11:39:15 millert Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2014 $
+.Dd $Mdocdate: May 28 2014 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -1607,6 +1607,15 @@ it causes
 .Xr more 1
 to exit the first time it reaches EOF,
 not the second.
+.Pp
+The
+.Fl i
+option acts like the
+.Fl I
+option.
+The normal behavior of the
+.Fl i
+option is unavailable in this mode.
 .Pp
 The
 .Fl m
