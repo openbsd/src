@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.42 2014/05/28 11:39:15 millert Exp $
+.\"	$OpenBSD: less.1,v 1.43 2014/05/28 14:06:20 jmc Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -1600,6 +1600,17 @@ or if the program is invoked via a file link named "more",
 behaves (mostly) in conformance with the POSIX "more" command specification.
 In this mode, less behaves differently in these ways:
 .Pp
+The sense of the
+.Fl c
+option is inverted:
+when
+.Xr more 1
+changes the display,
+the default is to scroll from the bottom of the screen,
+and the
+.Fl c
+option causes it to paint from the top line down.
+.Pp
 The
 .Fl e
 option works differently:
@@ -1637,16 +1648,19 @@ The parameter to the
 option is taken to be a
 command rather than a search pattern.
 .Pp
+Options to suppress error messages when the terminal is dumb
+.Pq Fl d ,
+suppress highlighting of strings in search results
+.Pq Fl G ,
+and disable termcap initialization
+.Pq Fl X
+are on by default.
+.Pp
 The
 .Ev LESS
 environment variables are ignored, and the
 .Ev MORE
 environment variable is used in its place.
-.Pp
-The error message normally displayed when the terminal is dumb is suppressed
-(as if
-.Fl d
-had been specified).
 .Sh ENVIRONMENT
 Environment variables may be specified either in the system environment
 as usual, or in a
