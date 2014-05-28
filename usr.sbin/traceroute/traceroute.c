@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.128 2014/05/01 18:46:01 jmc Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.129 2014/05/28 10:29:24 daniel Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -1513,10 +1513,10 @@ icmp_code(int af, int code, int *got_there, int *unreachable)
 {
 	switch (af) {
 	case AF_INET:
-		return icmp4_code(code, got_there, unreachable);
+		icmp4_code(code, got_there, unreachable);
 		break;
 	case AF_INET6:
-		return icmp6_code(code, got_there, unreachable);
+		icmp6_code(code, got_there, unreachable);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", af);
