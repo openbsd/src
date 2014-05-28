@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.39 2013/08/14 08:39:33 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.40 2014/05/28 17:34:10 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: May 28 2014 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -252,7 +252,7 @@ on output.
 .It Cm ocrnl Pq Fl ocrnl
 Translate (do not translate) carriage return to newline on output.
 .It Cm onocr Pq Fl onocr
-Carriage return is output (is not output) at column 0.
+Carriage return is not output (is output) at column 0.
 .It Cm onlret Pq Fl onlret
 Newline performs (does not perform) carriage return on output.
 .It Cm olcuc Pq Fl olcuc
