@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.20 2014/05/28 06:55:58 guenther Exp $
+.\"	$OpenBSD: pwd.1,v 1.21 2014/05/28 14:16:27 jmc Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -66,7 +66,7 @@ Print the physical path to the current working directory, with symbolic
 links in the path resolved.
 .El
 .Pp
-The 
+The
 .Fl L
 and
 .Fl P
@@ -82,6 +82,7 @@ see
 .Bl -tag -width PWD
 .It Ev PWD
 The presumptive logical path to the current working directory.
+.El
 .Sh EXIT STATUS
 .Ex -std pwd
 .Sh SEE ALSO
@@ -93,7 +94,11 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except the standard says the default if no options are given
+should be to behave as if
+.Fl L
+had been specified.
 .Sh HISTORY
 An
 .Nm
