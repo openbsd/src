@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.536 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.537 2014/05/28 19:45:04 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: May 28 2014 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1518,10 +1518,11 @@ four referenced
 queues, plus a few child queues.
 Interactive
 .Xr ssh 1
-sessions get priority over bulk transfers like
+sessions get a queue with a minimum bandwidth,
 .Xr scp 1
 and
-.Xr sftp 1 .
+.Xr sftp 1
+bulk transfers go to a seperate queue.
 The queues are then referenced by filtering rules (see
 .Sx PACKET FILTERING ,
 above).
@@ -1542,7 +1543,7 @@ pass out on em0 inet proto tcp from $developerhosts to any port 80 \e
 pass out on em0 inet proto tcp from $employeehosts to any port 80 \e
       set queue employees
 pass out on em0 inet proto tcp from any to any port 22 \e
-      set (queue(ssh_bulk, ssh_interactive), prio (3, 6))
+      set queue(ssh_bulk, ssh_interactive)
 pass out on em0 inet proto tcp from any to any port 25 \e
       set queue mail
 .Ed
