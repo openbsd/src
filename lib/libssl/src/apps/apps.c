@@ -234,8 +234,7 @@ chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 		if (num >= arg->count) {
 			char **tmp_p;
 			int tlen = arg->count + 20;
-			tmp_p = (char **) realloc(arg->data,
-			    sizeof(char *) * tlen);
+			tmp_p = reallocarray(arg->data, tlen, sizeof(char *));
 			if (tmp_p == NULL)
 				return 0;
 			arg->data = tmp_p;
