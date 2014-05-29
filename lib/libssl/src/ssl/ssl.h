@@ -1364,14 +1364,6 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define OpenSSL_add_ssl_algorithms()	SSL_library_init()
 #define SSLeay_add_ssl_algorithms()	SSL_library_init()
 
-/* this is for backward compatibility */
-#if 0 /* NEW_SSLEAY */
-#define SSL_CTX_set_default_verify(a,b,c) SSL_CTX_set_verify(a,b,c)
-#define SSL_set_pref_cipher(c,n)	SSL_set_cipher_list(c,n)
-#define SSL_add_session(a,b)            SSL_CTX_add_session((a),(b))
-#define SSL_remove_session(a,b)		SSL_CTX_remove_session((a),(b))
-#define SSL_flush_sessions(a,b)		SSL_CTX_flush_sessions((a),(b))
-#endif
 /* More backward compatibility */
 #define SSL_get_cipher(s) \
 		SSL_CIPHER_get_name(SSL_get_current_cipher(s))
