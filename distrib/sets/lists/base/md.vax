@@ -1235,7 +1235,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/idea.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/krb5_asn.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/kssl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md5.ph
