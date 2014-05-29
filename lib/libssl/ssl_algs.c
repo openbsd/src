@@ -111,9 +111,7 @@ SSL_library_init(void)
 	EVP_add_digest_alias(SN_dsaWithSHA1, SN_dsaWithSHA1_2);
 	EVP_add_digest_alias(SN_dsaWithSHA1, "DSS1");
 	EVP_add_digest_alias(SN_dsaWithSHA1, "dss1");
-#ifndef OPENSSL_NO_ECDSA
 	EVP_add_digest(EVP_ecdsa());
-#endif
 #ifndef OPENSSL_NO_COMP
 	/* This will initialise the built-in compression algorithms.
 	   The value returned is a STACK_OF(SSL_COMP), but that can

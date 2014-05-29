@@ -708,19 +708,8 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long 
 
 	*mkey |= SSL_kDHr|SSL_kDHd; /* no such ciphersuites supported! */
 	*auth |= SSL_aDH;
-#ifdef OPENSSL_NO_DH
-	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kEDH;
-	*auth |= SSL_aDH;
-#endif
 	*mkey |= SSL_kKRB5;
 	*auth |= SSL_aKRB5;
-#ifdef OPENSSL_NO_ECDSA
-	*auth |= SSL_aECDSA;
-#endif
-#ifdef OPENSSL_NO_ECDH
-	*mkey |= SSL_kECDHe|SSL_kECDHr;
-	*auth |= SSL_aECDH;
-#endif
 #ifdef OPENSSL_NO_PSK
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;

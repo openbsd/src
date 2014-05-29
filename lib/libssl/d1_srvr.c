@@ -122,9 +122,7 @@
 #include <openssl/x509.h>
 #include <openssl/md5.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 
 static const SSL_METHOD *dtls1_get_server_method(int ver);
 static int dtls1_send_hello_verify_request(SSL *s);
@@ -1036,17 +1034,13 @@ dtls1_send_server_key_exchange(SSL *s)
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
-#ifndef OPENSSL_NO_DH
 	DH *dh = NULL, *dhp;
-#endif
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL, *ecdhp;
 	unsigned char *encodedPoint = NULL;
 	int encodedlen = 0;
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
 
-#endif
 #ifndef OPENSSL_NO_PSK
 	size_t pskhintlen = 0;
 #endif
@@ -1093,7 +1087,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-#ifndef OPENSSL_NO_DH
 		if (type & SSL_kEDH) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
@@ -1138,8 +1131,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[1] = dh->g;
 			r[2] = dh->pub_key;
 		} else
-#endif
-#ifndef OPENSSL_NO_ECDH
 		if (type & SSL_kEECDH) {
 			const EC_GROUP *group;
 
@@ -1252,7 +1243,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			r[2] = NULL;
 			r[3] = NULL;
 		} else
-#endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
 			pskhintlen = strlen(s->ctx->psk_identity_hint);
@@ -1296,7 +1286,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			p += nr[i];
 		}
 
-#ifndef OPENSSL_NO_ECDH
 		if (type & SSL_kEECDH) {
 			/* XXX: For now, we only support named (not generic) curves.
 			 * In this situation, the serverKeyExchange message has:
@@ -1318,7 +1307,6 @@ dtls1_send_server_key_exchange(SSL *s)
 			encodedPoint = NULL;
 			p += encodedlen;
 		}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
@@ -1376,7 +1364,6 @@ dtls1_send_server_key_exchange(SSL *s)
 				s2n(i, p);
 				n += i + 2;
 			} else
-#if !defined(OPENSSL_NO_ECDSA)
 			if (pkey->type == EVP_PKEY_EC) {
 				/* let's do ECDSA */
 				EVP_SignInit_ex(&md_ctx, EVP_ecdsa(), NULL);
@@ -1391,7 +1378,6 @@ dtls1_send_server_key_exchange(SSL *s)
 				s2n(i, p);
 				n += i + 2;
 			} else
-#endif
 			{
 				/* Is this error check actually needed? */
 				al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1418,10 +1404,8 @@ dtls1_send_server_key_exchange(SSL *s)
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
-#ifndef OPENSSL_NO_ECDH
 	free(encodedPoint);
 	BN_CTX_free(bn_ctx);
-#endif
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return (-1);
 }

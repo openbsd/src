@@ -159,9 +159,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
@@ -881,18 +879,14 @@ ssl3_check_client_hello(SSL *s)
 		 * which will now be aborted. (A full SSL_clear would be too
 		 * much.)
 		 */
-#ifndef OPENSSL_NO_DH
 		if (s->s3->tmp.dh != NULL) {
 			DH_free(s->s3->tmp.dh);
 			s->s3->tmp.dh = NULL;
 		}
-#endif
-#ifndef OPENSSL_NO_ECDH
 		if (s->s3->tmp.ecdh != NULL) {
 			EC_KEY_free(s->s3->tmp.ecdh);
 			s->s3->tmp.ecdh = NULL;
 		}
-#endif
 		s->s3->flags |= SSL3_FLAGS_SGC_RESTART_DONE;
 		return (2);
 	}
@@ -1509,17 +1503,13 @@ ssl3_send_server_key_exchange(SSL *s)
 	RSA *rsa;
 	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
 	unsigned int u;
-#ifndef OPENSSL_NO_DH
 	DH *dh = NULL, *dhp;
-#endif
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL, *ecdhp;
 	unsigned char *encodedPoint = NULL;
 	int encodedlen = 0;
 	int curve_id = 0;
 	BN_CTX *bn_ctx = NULL;
 
-#endif
 #ifndef OPENSSL_NO_PSK
 	size_t pskhintlen = 0;
 #endif
@@ -1570,7 +1560,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[1] = rsa->e;
 			s->s3->tmp.use_rsa_tmp = 1;
 		} else
-#ifndef OPENSSL_NO_DH
 		if (type & SSL_kEDH) {
 			dhp = cert->dh_tmp;
 			if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
@@ -1620,8 +1609,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[1] = dh->g;
 			r[2] = dh->pub_key;
 		} else
-#endif
-#ifndef OPENSSL_NO_ECDH
 		if (type & SSL_kEECDH) {
 			const EC_GROUP *group;
 
@@ -1747,7 +1734,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[2] = NULL;
 			r[3] = NULL;
 		} else
-#endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
 			pskhintlen = strlen(s->ctx->psk_identity_hint);
@@ -1793,7 +1779,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			p += nr[i];
 		}
 
-#ifndef OPENSSL_NO_ECDH
 		if (type & SSL_kEECDH) {
 			/*
 			 * XXX: For now, we only support named (not generic)
@@ -1817,7 +1802,6 @@ ssl3_send_server_key_exchange(SSL *s)
 			encodedPoint = NULL;
 			p += encodedlen;
 		}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 		if (type & SSL_kPSK) {
@@ -1926,10 +1910,8 @@ ssl3_send_server_key_exchange(SSL *s)
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
-#ifndef OPENSSL_NO_ECDH
 	free(encodedPoint);
 	BN_CTX_free(bn_ctx);
-#endif
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return (-1);
 }
@@ -2042,18 +2024,14 @@ ssl3_get_client_key_exchange(SSL *s)
 	unsigned char *p;
 	RSA *rsa = NULL;
 	EVP_PKEY *pkey = NULL;
-#ifndef OPENSSL_NO_DH
 	BIGNUM *pub = NULL;
 	DH *dh_srvr;
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *srvr_ecdh = NULL;
 	EVP_PKEY *clnt_pub_pkey = NULL;
 	EC_POINT *clnt_ecpoint = NULL;
 	BN_CTX *bn_ctx = NULL;
 
-#endif
 
 	n = s->method->ssl_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
 	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE,
@@ -2173,7 +2151,6 @@ ssl3_get_client_key_exchange(SSL *s)
 		    p, i);
 		OPENSSL_cleanse(p, i);
 	} else
-#ifndef OPENSSL_NO_DH
 	if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
 		n2s(p, i);
 		if (n != i + 2) {
@@ -2229,9 +2206,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		        s, s->session->master_key, p, i);
 		OPENSSL_cleanse(p, i);
 	} else
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
 		int ret = 1;
 		int field_size = 0;
@@ -2375,7 +2350,6 @@ ssl3_get_client_key_exchange(SSL *s)
 		OPENSSL_cleanse(p, i);
 		return (ret);
 	} else
-#endif
 #ifndef OPENSSL_NO_PSK
 	if (alg_k & SSL_kPSK) {
 		unsigned char *t = NULL;
@@ -2542,13 +2516,11 @@ ssl3_get_client_key_exchange(SSL *s)
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
-#ifndef OPENSSL_NO_ECDH
 	EVP_PKEY_free(clnt_pub_pkey);
 	EC_POINT_free(clnt_ecpoint);
 	if (srvr_ecdh != NULL)
 		EC_KEY_free(srvr_ecdh);
 	BN_CTX_free(bn_ctx);
-#endif
 	return (-1);
 }
 
@@ -2722,7 +2694,6 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
-#ifndef OPENSSL_NO_ECDSA
 	if (pkey->type == EVP_PKEY_EC) {
 		j = ECDSA_verify(pkey->save_type,
 		    &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
@@ -2735,7 +2706,6 @@ ssl3_get_cert_verify(SSL *s)
 			goto f_err;
 		}
 	} else
-#endif
 	if (pkey->type == NID_id_GostR3410_94 ||
 	    pkey->type == NID_id_GostR3410_2001) {
 		unsigned char signature[64];

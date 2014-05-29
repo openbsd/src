@@ -490,13 +490,9 @@ typedef struct ssl3_state_st {
 
 		/* used to hold the new cipher we are going to use */
 		const SSL_CIPHER *new_cipher;
-#ifndef OPENSSL_NO_DH
 		DH *dh;
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 		EC_KEY *ecdh; /* holds short lived ECDH key */
-#endif
 
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;

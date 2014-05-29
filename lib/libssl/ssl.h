@@ -1875,18 +1875,14 @@ void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
 
 void SSL_set_tmp_rsa_callback(SSL *ssl,
     RSA *(*cb)(SSL *ssl, int is_export, int keylength));
-#ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
     DH *(*dh)(SSL *ssl, int is_export, int keylength));
 void SSL_set_tmp_dh_callback(SSL *ssl,
     DH *(*dh)(SSL *ssl, int is_export, int keylength));
-#endif
-#ifndef OPENSSL_NO_ECDH
 void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
 void SSL_set_tmp_ecdh_callback(SSL *ssl,
     EC_KEY *(*ecdh)(SSL *ssl, int is_export, int keylength));
-#endif
 
 #ifndef OPENSSL_NO_COMP
 const COMP_METHOD *SSL_get_current_compression(SSL *s);

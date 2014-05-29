@@ -479,15 +479,11 @@ typedef struct cert_st {
 	unsigned long export_mask_a;
 	RSA *rsa_tmp;
 	RSA *(*rsa_tmp_cb)(SSL *ssl, int is_export, int keysize);
-#ifndef OPENSSL_NO_DH
 	DH *dh_tmp;
 	DH *(*dh_tmp_cb)(SSL *ssl, int is_export, int keysize);
-#endif
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh_tmp;
 	/* Callback for generating ephemeral ECDH keys */
 	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl, int is_export, int keysize);
-#endif
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
@@ -507,12 +503,8 @@ typedef struct sess_cert_st {
 	 * so maybe we shouldn't even use the CERT_PKEY type here. */
 
 	RSA *peer_rsa_tmp; /* not used for SSL 2 */
-#ifndef OPENSSL_NO_DH
 	DH *peer_dh_tmp; /* not used for SSL 2 */
-#endif
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *peer_ecdh_tmp;
-#endif
 
 	int references; /* actually always 1 at the moment */
 } SESS_CERT;
@@ -836,9 +828,7 @@ int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
-#ifndef OPENSSL_NO_ECDH
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
-#endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 

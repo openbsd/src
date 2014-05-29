@@ -364,11 +364,7 @@ tls1_ec_nid2curve_id(int nid)
 
 #define tlsext_sigalg_dsa(md) md, TLSEXT_signature_dsa,
 
-#ifdef OPENSSL_NO_ECDSA
-#define tlsext_sigalg_ecdsa(md) /* */
-#else
 #define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_ecdsa,
-#endif
 
 #define tlsext_sigalg(md) \
 	tlsext_sigalg_rsa(md) \
@@ -2221,9 +2217,7 @@ static tls12_lookup tls12_md[] = {
 static tls12_lookup tls12_sig[] = {
 	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
 	{EVP_PKEY_DSA, TLSEXT_signature_dsa},
-#ifndef OPENSSL_NO_ECDSA
 	{EVP_PKEY_EC, TLSEXT_signature_ecdsa}
-#endif
 };
 
 static int
@@ -2324,11 +2318,9 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 		case TLSEXT_signature_dsa:
 			idx = SSL_PKEY_DSA_SIGN;
 			break;
-#ifndef OPENSSL_NO_ECDSA
 		case TLSEXT_signature_ecdsa:
 			idx = SSL_PKEY_ECC;
 			break;
-#endif
 		default:
 			continue;
 		}
@@ -2353,10 +2345,8 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
 		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
 	}
-#ifndef OPENSSL_NO_ECDSA
 	if (!c->pkeys[SSL_PKEY_ECC].digest)
 		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
-#endif
 	return 1;
 }
 

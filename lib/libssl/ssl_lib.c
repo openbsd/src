@@ -149,9 +149,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -2002,9 +2000,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	int		 rsa_tmp_export, dh_tmp_export, kl;
 	unsigned long	 mask_k, mask_a, emask_k, emask_a;
 	int		 have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
-#ifndef OPENSSL_NO_ECDH
 	int		 have_ecdh_tmp;
-#endif
 	X509		*x = NULL;
 	EVP_PKEY	*ecc_pkey = NULL;
 	int		 signature_nid = 0, pk_nid = 0, md_nid = 0;
@@ -2017,17 +2013,11 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	rsa_tmp = (c->rsa_tmp != NULL || c->rsa_tmp_cb != NULL);
 	rsa_tmp_export = (c->rsa_tmp_cb != NULL ||
 	(rsa_tmp && RSA_size(c->rsa_tmp)*8 <= kl));
-#ifndef OPENSSL_NO_DH
 	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL);
 	dh_tmp_export = (c->dh_tmp_cb != NULL ||
 	(dh_tmp && DH_size(c->dh_tmp)*8 <= kl));
-#else
-	dh_tmp = dh_tmp_export = 0;
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 	have_ecdh_tmp = (c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
-#endif
 	cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc = (cpk->x509 != NULL && cpk->privatekey != NULL);
 	rsa_enc_export = (rsa_enc && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
@@ -2128,7 +2118,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 			signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
 			OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
 		}
-#ifndef OPENSSL_NO_ECDH
 		if (ecdh_ok) {
 
 			if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
@@ -2149,21 +2138,16 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 				}
 			}
 		}
-#endif
-#ifndef OPENSSL_NO_ECDSA
 		if (ecdsa_ok) {
 			mask_a|=SSL_aECDSA;
 			emask_a|=SSL_aECDSA;
 		}
-#endif
 	}
 
-#ifndef OPENSSL_NO_ECDH
 	if (have_ecdh_tmp) {
 		mask_k|=SSL_kEECDH;
 		emask_k|=SSL_kEECDH;
 	}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 	mask_k |= SSL_kPSK;
@@ -3072,7 +3056,6 @@ cb(SSL *ssl, int is_export, int keylength)
  * \param dh the callback
  */
 
-#ifndef OPENSSL_NO_DH
 void
 SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx, DH *(*dh)(SSL *ssl, int is_export,
     int keylength))
@@ -3086,9 +3069,7 @@ SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh)(SSL *ssl, int is_export,
 {
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_DH_CB,(void (*)(void))dh);
 }
-#endif
 
-#ifndef OPENSSL_NO_ECDH
 void
 SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx, EC_KEY *(*ecdh)(SSL *ssl,
     int is_export, int keylength))
@@ -3103,7 +3084,6 @@ SSL_set_tmp_ecdh_callback(SSL *ssl, EC_KEY *(*ecdh)(SSL *ssl, int is_export,
 {
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
 }
-#endif
 
 #ifndef OPENSSL_NO_PSK
 int

@@ -121,9 +121,7 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 
 static const SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
@@ -958,14 +956,12 @@ dtls1_send_client_key_exchange(SSL *s)
 	unsigned long alg_k;
 	unsigned char *q;
 	EVP_PKEY *pkey = NULL;
-#ifndef OPENSSL_NO_ECDH
 	EC_KEY *clnt_ecdh = NULL;
 	const EC_POINT *srvr_ecpoint = NULL;
 	EVP_PKEY *srvr_pub_pkey = NULL;
 	unsigned char *encodedPoint = NULL;
 	int encoded_pt_len = 0;
 	BN_CTX * bn_ctx = NULL;
-#endif
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
 		d = (unsigned char *)s->init_buf->data;
@@ -1021,7 +1017,6 @@ dtls1_send_client_key_exchange(SSL *s)
 			tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
 		}
-#ifndef OPENSSL_NO_DH
 		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
 			DH *dh_srvr, *dh_clnt;
 
@@ -1071,8 +1066,6 @@ dtls1_send_client_key_exchange(SSL *s)
 
 			/* perhaps clean things up a bit EAY EAY EAY EAY*/
 		}
-#endif
-#ifndef OPENSSL_NO_ECDH 
 		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
@@ -1236,7 +1229,6 @@ dtls1_send_client_key_exchange(SSL *s)
 				EC_KEY_free(clnt_ecdh);
 			EVP_PKEY_free(srvr_pub_pkey);
 		}
-#endif /* !OPENSSL_NO_ECDH */
 
 #ifndef OPENSSL_NO_PSK
 		else if (alg_k & SSL_kPSK) {
@@ -1340,13 +1332,11 @@ psk_err:
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
 err:
-#ifndef OPENSSL_NO_ECDH
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
 	if (clnt_ecdh != NULL)
 		EC_KEY_free(clnt_ecdh);
 	EVP_PKEY_free(srvr_pub_pkey);
-#endif
 	return (-1);
 }
 
@@ -1391,7 +1381,6 @@ dtls1_send_client_verify(SSL *s)
 			s2n(j, p);
 			n = j + 2;
 		} else
-#ifndef OPENSSL_NO_ECDSA
 		if (pkey->type == EVP_PKEY_EC) {
 			if (!ECDSA_sign(pkey->save_type,
 			    &(data[MD5_DIGEST_LENGTH]),
@@ -1404,7 +1393,6 @@ dtls1_send_client_verify(SSL *s)
 			s2n(j, p);
 			n = j + 2;
 		} else
-#endif
 		{
 			SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
 			goto err;
