@@ -2137,12 +2137,7 @@ ssl3_get_client_key_exchange(SSL *s)
 			i = SSL_MAX_MASTER_KEY_LENGTH;
 			p[0] = s->client_version >> 8;
 			p[1] = s->client_version & 0xff;
-			/*
-			 * Should be RAND_bytes, but we cannot work around a
-			 * failure.
-			 */
-			if (RAND_pseudo_bytes(p+2, i-2) <= 0)
-				goto err;
+			RAND_bytes(p+2, i-2);
 		}
 
 		s->session->master_key_length =
