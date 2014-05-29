@@ -1413,8 +1413,7 @@ ssl3_get_key_exchange(SSL *s)
 		}
 		s->session->sess_cert->peer_rsa_tmp = rsa;
 		rsa = NULL;
-	}
-	else if (alg_k & SSL_kEDH) {
+	} else if (alg_k & SSL_kEDH) {
 		if ((dh = DH_new()) == NULL) {
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 			    ERR_R_DH_LIB);
@@ -1483,9 +1482,7 @@ ssl3_get_key_exchange(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
 		    SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
 		goto f_err;
-	}
-
-	else if (alg_k & SSL_kEECDH) {
+	} else if (alg_k & SSL_kEECDH) {
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
 
