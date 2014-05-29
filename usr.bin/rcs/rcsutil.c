@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.39 2013/04/16 20:24:45 deraadt Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.40 2014/05/29 16:39:42 tedu Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -479,12 +479,10 @@ rcs_splitlines(u_char *data, size_t len)
 	struct rcs_line *lp;
 	size_t i, tlen;
 
-	lines = xmalloc(sizeof(*lines));
-	memset(lines, 0, sizeof(*lines));
+	lines = xcalloc(1, sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
 
-	lp = xmalloc(sizeof(*lp));
-	memset(lp, 0, sizeof(*lp));
+	lp = xcalloc(1, sizeof(*lp));
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
 

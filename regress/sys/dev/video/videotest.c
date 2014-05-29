@@ -1,4 +1,4 @@
-/*	$OpenBSD: videotest.c,v 1.3 2010/07/22 11:58:03 mglocker Exp $ */
+/*	$OpenBSD: videotest.c,v 1.4 2014/05/29 16:35:46 tedu Exp $ */
 
 /*
  * Copyright (c) 2010 Marcus Glocker <mglocker@openbsd.org>
@@ -356,16 +356,14 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 			}
 
 			buf_size = fmt.fmt.pix.sizeimage;
-			buf = malloc(buf_size);
+			buf = calloc(1, buf_size);
 			if (buf == NULL)
 				goto error;
-			memset(buf, 0, buf_size);
 
 			img_size = fmt.fmt.pix.sizeimage + 1024;
-			img = malloc(img_size);
+			img = calloc(1, img_size);
 			if (img == NULL)
 				goto error;
-			memset(img, 0, img_size);
 
 			/* get frame */
 			if (access == ACCESS_READ)
