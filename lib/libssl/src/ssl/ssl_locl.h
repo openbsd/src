@@ -408,8 +408,20 @@
 				(c)->algo_strength)
 #define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
 
+/* Check if an SSL structure is using DTLS. */
+#define SSL_IS_DTLS(s) (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
+/* See if we need explicit IV. */
+#define SSL_USE_EXPLICIT_IV(s) \
+	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
 
+/* See if we use signature algorithms extension. */
+#define SSL_USE_SIGALGS(s) \
+	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
+
+/* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
+#define SSL_USE_TLS1_2_CIPHERS(s) \
+	(s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
@@ -535,7 +547,28 @@ typedef struct ssl3_enc_method {
 	int (*export_keying_material)(SSL *, unsigned char *, size_t,
 	    const char *, size_t, const unsigned char *, size_t,
 	    int use_context);
+	/* Flags indicating protocol version requirements. */
+	unsigned int enc_flags;
 } SSL3_ENC_METHOD;
+
+/*
+ * Flag values for enc_flags.
+ */
+
+/* Uses explicit IV. */
+#define SSL_ENC_FLAG_EXPLICIT_IV        (1 << 0)
+
+/* Uses signature algorithms extension. */
+#define SSL_ENC_FLAG_SIGALGS            (1 << 1)
+
+/* Uses SHA256 default PRF. */
+#define SSL_ENC_FLAG_SHA256_PRF         (1 << 2)
+
+/* Is DTLS. */
+#define SSL_ENC_FLAG_DTLS               (1 << 3)
+
+/* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
+#define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
@@ -552,10 +585,10 @@ extern SSL_CIPHER ssl3_ciphers[];
 SSL_METHOD *ssl_bad_method(int ver);
 
 extern SSL3_ENC_METHOD TLSv1_enc_data;
+extern SSL3_ENC_METHOD TLSv1_1_enc_data;
+extern SSL3_ENC_METHOD TLSv1_2_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
-
-#define SSL_IS_DTLS(s) (s->method->version == DTLS1_VERSION)
 
 void ssl_clear_cipher_ctx(SSL *s);
 int ssl_clear_bad_session(SSL *s);

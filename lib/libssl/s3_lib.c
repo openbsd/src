@@ -2270,6 +2270,7 @@ SSL3_ENC_METHOD SSLv3_enc_data = {
 	.export_keying_material = (int (*)(SSL *, unsigned char *, size_t,
 	    const char *, size_t, const unsigned char *, size_t,
 	    int use_context))ssl_undefined_function,
+	.enc_flags = 0,
 };
 
 long
@@ -3061,7 +3062,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		mask_a = cert->mask_a;
 		emask_k = cert->export_mask_k;
 		emask_a = cert->export_mask_a;
-
 
 		alg_k = c->algorithm_mkey;
 		alg_a = c->algorithm_auth;

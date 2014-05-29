@@ -86,6 +86,7 @@ SSL3_ENC_METHOD DTLSv1_enc_data = {
 	.server_finished_label_len = TLS_MD_SERVER_FINISH_CONST_SIZE,
 	.alert_value = tls1_alert_code,
 	.export_keying_material = tls1_export_keying_material,
+	.enc_flags = SSL_ENC_FLAG_DTLS|SSL_ENC_FLAG_EXPLICIT_IV,
 };
 
 long

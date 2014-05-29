@@ -182,6 +182,7 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
 	.export_keying_material = (int (*)(SSL *, unsigned char *, size_t,
 	    const char *, size_t, const unsigned char *, size_t,
 	    int use_context))ssl_undefined_function,
+	.enc_flags = 0,
 };
 
 int
