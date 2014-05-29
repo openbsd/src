@@ -1,4 +1,4 @@
-/* $OpenBSD: db_structinfo.c,v 1.9 2014/03/24 03:48:00 guenther Exp $ */
+/* $OpenBSD: db_structinfo.c,v 1.10 2014/05/29 09:16:22 daniel Exp $ */
 /* public domain */
 /*
  * This file is intended to be compiled with debug information,
@@ -109,7 +109,4 @@
 #include <sys/scanio.h>
 #include <sys/scsiio.h>
 #include <sys/sockio.h>
-/* videoio.h uses anonymous unions which gcc2 doesn't support */
-#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__PCC__)
 #include <sys/videoio.h>
-#endif
