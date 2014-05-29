@@ -695,9 +695,7 @@ int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 #ifndef OPENSSL_NO_BIO
 int     ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
 #endif
-#ifndef OPENSSL_NO_FP_API
 int     ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
-#endif
 
 
 /********************************************************************/
@@ -930,7 +928,6 @@ int	ECParameters_print(BIO *bp, const EC_KEY *key);
 int	EC_KEY_print(BIO *bp, const EC_KEY *key, int off);
 
 #endif
-#ifndef OPENSSL_NO_FP_API
 /** Prints out the ec parameters on human readable form.
  *  \param  fp   file descriptor to which the information is printed
  *  \param  key  EC_KEY object
@@ -946,7 +943,6 @@ int	ECParameters_print_fp(FILE *fp, const EC_KEY *key);
  */
 int	EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 
-#endif
 
 #define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 

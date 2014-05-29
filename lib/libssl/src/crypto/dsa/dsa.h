@@ -247,10 +247,8 @@ int	i2d_DSAparams(const DSA *a,unsigned char **pp);
 int	DSAparams_print(BIO *bp, const DSA *x);
 int	DSA_print(BIO *bp, const DSA *x, int off);
 #endif
-#ifndef OPENSSL_NO_FP_API
 int	DSAparams_print_fp(FILE *fp, const DSA *x);
 int	DSA_print_fp(FILE *bp, const DSA *x, int off);
-#endif
 
 #define DSS_prime_checks 50
 /* Primality test according to FIPS PUB 186[-1], Appendix 2.1:

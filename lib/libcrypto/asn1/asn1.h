@@ -931,7 +931,6 @@ void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 #define M_ASN1_free_of(x, type) \
 		ASN1_item_free(CHECKED_PTR_OF(type, x), ASN1_ITEM_rptr(type))
 
-#ifndef OPENSSL_NO_FP_API
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 
 #define ASN1_d2i_fp_of(type,xnew,d2i,in,x) \
@@ -955,7 +954,6 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x);
 
 int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
-#endif
 
 int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
 

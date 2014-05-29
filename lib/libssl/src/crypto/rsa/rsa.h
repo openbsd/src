@@ -333,9 +333,7 @@ typedef struct rsa_pss_params_st
 
 DECLARE_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
-#ifndef OPENSSL_NO_FP_API
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
-#endif
 
 #ifndef OPENSSL_NO_BIO
 int	RSA_print(BIO *bp, const RSA *r,int offset);

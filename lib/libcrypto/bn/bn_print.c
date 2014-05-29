@@ -328,7 +328,6 @@ BN_asc2bn(BIGNUM **bn, const char *a)
 }
 
 #ifndef OPENSSL_NO_BIO
-#ifndef OPENSSL_NO_FP_API
 int
 BN_print_fp(FILE *fp, const BIGNUM *a)
 {
@@ -342,7 +341,6 @@ BN_print_fp(FILE *fp, const BIGNUM *a)
 	BIO_free(b);
 	return (ret);
 }
-#endif
 
 int
 BN_print(BIO *bp, const BIGNUM *a)

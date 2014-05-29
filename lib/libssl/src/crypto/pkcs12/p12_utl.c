@@ -100,23 +100,19 @@ int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
 	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
 }
 
-#ifndef OPENSSL_NO_FP_API
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
 {
 	return ASN1_item_i2d_fp(ASN1_ITEM_rptr(PKCS12), fp, p12);
 }
-#endif
 
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
 	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
 }
-#ifndef OPENSSL_NO_FP_API
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
         return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS12), fp, p12);
 }
-#endif
 
 PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509)
 {

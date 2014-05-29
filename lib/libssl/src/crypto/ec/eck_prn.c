@@ -67,7 +67,6 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 
-#ifndef OPENSSL_NO_FP_API
 int 
 ECPKParameters_print_fp(FILE * fp, const EC_GROUP * x, int off)
 {
@@ -115,7 +114,6 @@ ECParameters_print_fp(FILE * fp, const EC_KEY * x)
 	BIO_free(b);
 	return (ret);
 }
-#endif
 
 int 
 EC_KEY_print(BIO * bp, const EC_KEY * x, int off)

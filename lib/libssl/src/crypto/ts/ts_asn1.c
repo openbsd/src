@@ -82,7 +82,6 @@ i2d_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT *a)
 }
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 TS_MSG_IMPRINT *
 d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a)
 {
@@ -95,7 +94,6 @@ i2d_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT *a)
 {
 	return ASN1_i2d_fp_of_const(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, fp, a);
 }
-#endif
 
 ASN1_SEQUENCE(TS_REQ) = {
 	ASN1_SIMPLE(TS_REQ, version, ASN1_INTEGER),
@@ -123,7 +121,6 @@ i2d_TS_REQ_bio(BIO *bp, TS_REQ *a)
 }
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 TS_REQ *
 d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
 {
@@ -135,7 +132,6 @@ i2d_TS_REQ_fp(FILE *fp, TS_REQ *a)
 {
 	return ASN1_i2d_fp_of_const(TS_REQ, i2d_TS_REQ, fp, a);
 }
-#endif
 
 ASN1_SEQUENCE(TS_ACCURACY) = {
 	ASN1_OPT(TS_ACCURACY, seconds, ASN1_INTEGER),
@@ -177,7 +173,6 @@ i2d_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO *a)
 }
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 TS_TST_INFO *
 d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
 {
@@ -190,7 +185,6 @@ i2d_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO *a)
 {
 	return ASN1_i2d_fp_of_const(TS_TST_INFO, i2d_TS_TST_INFO, fp, a);
 }
-#endif
 
 ASN1_SEQUENCE(TS_STATUS_INFO) = {
 	ASN1_SIMPLE(TS_STATUS_INFO, status, ASN1_INTEGER),
@@ -268,7 +262,6 @@ i2d_TS_RESP_bio(BIO *bp, TS_RESP *a)
 }
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 TS_RESP *
 d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
 {
@@ -280,7 +273,6 @@ i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
 {
 	return ASN1_i2d_fp_of_const(TS_RESP, i2d_TS_RESP, fp, a);
 }
-#endif
 
 ASN1_SEQUENCE(ESS_ISSUER_SERIAL) = {
 	ASN1_SEQUENCE_OF(ESS_ISSUER_SERIAL, issuer, GENERAL_NAME),

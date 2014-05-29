@@ -70,7 +70,6 @@
 #include <openssl/dsa.h>
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 STACK_OF(X509_INFO) *
 PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
     void *u)
@@ -87,7 +86,6 @@ PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 	BIO_free(b);
 	return (ret);
 }
-#endif
 
 STACK_OF(X509_INFO) *
 PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,

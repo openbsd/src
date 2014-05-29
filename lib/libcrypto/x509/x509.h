@@ -673,7 +673,6 @@ int X509_NAME_digest(const X509_NAME *data,const EVP_MD *type,
 		unsigned char *md, unsigned int *len);
 #endif
 
-#ifndef OPENSSL_NO_FP_API
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
 int i2d_X509_fp(FILE *fp,X509 *x509);
 X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL **crl);
@@ -709,7 +708,6 @@ int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
 int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a);
-#endif
 
 #ifndef OPENSSL_NO_BIO
 X509 *d2i_X509_bio(BIO *bp,X509 **x509);
@@ -965,13 +963,11 @@ unsigned long	X509_NAME_hash_old(X509_NAME *x);
 
 int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int		X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
-#ifndef OPENSSL_NO_FP_API
 int		X509_print_ex_fp(FILE *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags);
-#endif
 
 #ifndef OPENSSL_NO_BIO
 int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);

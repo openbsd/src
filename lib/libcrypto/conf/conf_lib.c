@@ -106,7 +106,6 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
 	return ltmp;
 }
 
-#ifndef OPENSSL_NO_FP_API
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
     long *eline)
 {
@@ -121,7 +120,6 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 	BIO_free(btmp);
 	return ltmp;
 }
-#endif
 
 LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,
     long *eline)
@@ -193,7 +191,6 @@ CONF_free(LHASH_OF(CONF_VALUE) *conf)
 	NCONF_free_data(&ctmp);
 }
 
-#ifndef OPENSSL_NO_FP_API
 int
 CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 {
@@ -208,7 +205,6 @@ CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 	BIO_free(btmp);
 	return ret;
 }
-#endif
 
 int
 CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
@@ -269,7 +265,6 @@ NCONF_load(CONF *conf, const char *file, long *eline)
 	return conf->meth->load(conf, file, eline);
 }
 
-#ifndef OPENSSL_NO_FP_API
 int
 NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 {
@@ -284,7 +279,6 @@ NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 	BIO_free(btmp);
 	return ret;
 }
-#endif
 
 int
 NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
@@ -357,7 +351,6 @@ NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 	return 1;
 }
 
-#ifndef OPENSSL_NO_FP_API
 int
 NCONF_dump_fp(const CONF *conf, FILE *out)
 {
@@ -371,7 +364,6 @@ NCONF_dump_fp(const CONF *conf, FILE *out)
 	BIO_free(btmp);
 	return ret;
 }
-#endif
 
 int
 NCONF_dump_bio(const CONF *conf, BIO *out)
