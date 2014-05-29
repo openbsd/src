@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.28 2014/04/25 04:10:26 jsing Exp $
+#	$OpenBSD: Makefile,v 1.29 2014/05/29 18:15:21 beck Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
 MAN1=	openssl.1
 
 CFLAGS+= -Wall
-CFLAGS+= -DOPENSSL_NO_RC5
+CFLAGS+= -DOPENSSL_NO_RC5 -DLIBRESSL_INTERNAL
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c \
 	pkcs7.c crl2p7.c crl.c ca.c \
