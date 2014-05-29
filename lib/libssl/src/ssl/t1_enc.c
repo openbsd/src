@@ -386,7 +386,11 @@ tls1_change_cipher_state(SSL *s, int which)
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		}
 		dd = s->enc_read_ctx;
-		mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
+
+		ssl_clear_hash_ctx(&s->read_hash);
+		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
+			goto err;
+		s->read_hash = mac_ctx;
 
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
 		if (s->version != DTLS1_VERSION)
@@ -403,13 +407,19 @@ tls1_change_cipher_state(SSL *s, int which)
 		else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
 		dd = s->enc_write_ctx;
-		if (SSL_IS_DTLS(s)) {
-			mac_ctx = EVP_MD_CTX_create();
-			if (!mac_ctx)
-				goto err;
-			s->write_hash = mac_ctx;
-		} else
-			mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
+
+		/*
+		 * DTLS fragments retain a pointer to the compression, cipher
+		 * and hash contexts, so that it can restore state in order
+		 * to perform retransmissions. As such, we cannot free write
+		 * contexts that are used for DTLS - these are instead freed
+		 * by DTLS when its frees a ChangeCipherSpec fragment.
+		 */
+		if (!SSL_IS_DTLS(s))
+			ssl_clear_hash_ctx(&s->write_hash);
+		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
+			goto err;
+		s->write_hash = mac_ctx;
 
 		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
 		if (s->version != DTLS1_VERSION)
