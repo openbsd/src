@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.43 2014/05/29 12:54:17 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.44 2014/05/29 12:59:13 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -660,8 +660,8 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl ef
-and the operands
+.Op Fl ef ,
+the operands
 .Cm altwerase ,
 .Cm cols ,
 .Cm columns ,
@@ -684,8 +684,16 @@ and the operands
 .Cm size ,
 .Cm speed ,
 and
-.Cm tty
-are extensions to that specification.
+.Cm tty ,
+and the control charcters
+eol2,
+dsusp,
+lnext,
+reprint,
+status,
+and
+werase
+are all extensions to that specification.
 .Pp
 The operands
 .Cm iuclc ,
