@@ -214,7 +214,7 @@ chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	i = 0;
 	if (arg->count == 0) {
 		arg->count = 20;
-		arg->data = (char **)malloc(sizeof(char *) * arg->count);
+		arg->data = reallocarray(NULL, sizeof(char *), arg->count);
 	}
 	for (i = 0; i < arg->count; i++)
 		arg->data[i] = NULL;
@@ -1838,9 +1838,9 @@ parse_name(char *subject, long chtype, int multirdn)
 						 * only become shorter */
 	char *buf = malloc(buflen);
 	size_t max_ne = buflen / 2 + 1;	/* maximum number of name elements */
-	char **ne_types = malloc(max_ne * sizeof(char *));
-	char **ne_values = malloc(max_ne * sizeof(char *));
-	int *mval = malloc(max_ne * sizeof(int));
+	char **ne_types = reallocarray(NULL, max_ne, sizeof(char *));
+	char **ne_values = reallocarray(NULL, max_ne, sizeof(char *));
+	int *mval = reallocarray(NULL, max_ne, sizeof(int));
 
 	char *sp = subject, *bp = buf;
 	int i, ne_num = 0;

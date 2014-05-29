@@ -573,7 +573,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 	if(!SRP_create_verifier_BN(user, pass, &s, &v, N_bn, g_bn)) goto err;
 
 	BN_bn2bin(v,tmp);
-	if (((vf = malloc(BN_num_bytes(v)*2)) == NULL))
+	if (((vf = reallocarray(NULL, BN_num_bytes(v), 2)) == NULL))
 		goto err;
 	t_tob64(vf, tmp, BN_num_bytes(v));
 
@@ -582,7 +582,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 		{
 		char *tmp_salt;
 
-		if ((tmp_salt = malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL)
+		if ((tmp_salt = reallocarray(NULL, SRP_RANDOM_SALT_LEN, 2)) == NULL)
 			{
 			free(vf);
 			goto err;

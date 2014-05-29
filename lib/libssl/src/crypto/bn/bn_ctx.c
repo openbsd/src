@@ -349,8 +349,8 @@ BN_STACK_push(BN_STACK *st, unsigned int idx)
 	{
 		unsigned int newsize = (st->size ?
 		    (st->size * 3 / 2) : BN_CTX_START_FRAMES);
-		unsigned int *newitems = malloc(newsize *
-		    sizeof(unsigned int));
+		unsigned int *newitems = reallocarray(NULL,
+		    newsize, sizeof(unsigned int));
 		if (!newitems)
 			return 0;
 		if (st->depth)

@@ -253,7 +253,7 @@ rsautl_main(int argc, char **argv)
 
 	keysize = RSA_size(rsa);
 
-	rsa_in = malloc(keysize * 2);
+	rsa_in = reallocarray(NULL, keysize, 2);
 	rsa_out = malloc(keysize);
 
 	/* Read the input data */

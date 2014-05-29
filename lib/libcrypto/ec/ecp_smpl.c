@@ -1257,7 +1257,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 	 */
 	pow2 <<= 1;
 
-	heap = malloc(pow2 * sizeof heap[0]);
+	heap = reallocarray(NULL, pow2, sizeof heap[0]);
 	if (heap == NULL)
 		goto err;
 

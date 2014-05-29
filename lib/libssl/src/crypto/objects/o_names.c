@@ -292,7 +292,8 @@ OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *arg),
 	int n;
 
 	d.type = type;
-	d.names = malloc(lh_OBJ_NAME_num_items(names_lh)*sizeof *d.names);
+	d.names = reallocarray(NULL, lh_OBJ_NAME_num_items(names_lh),
+	    sizeof *d.names);
 	d.n = 0;
 	OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
 

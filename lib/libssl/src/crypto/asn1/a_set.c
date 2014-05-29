@@ -121,7 +121,7 @@ i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp, i2d_of_void *i2d,
 
 	pStart  = p;	/* Catch the beg of Setblobs*/
 	/* In this array we will store the SET blobs */
-	rgSetBlob = malloc(sk_OPENSSL_BLOCK_num(a) * sizeof(MYBLOB));
+	rgSetBlob = reallocarray(NULL, sk_OPENSSL_BLOCK_num(a), sizeof(MYBLOB));
 	if (rgSetBlob == NULL) {
 		ASN1err(ASN1_F_I2D_ASN1_SET, ERR_R_MALLOC_FAILURE);
 		return 0;

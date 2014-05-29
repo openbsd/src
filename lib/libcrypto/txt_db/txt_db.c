@@ -94,9 +94,9 @@ TXT_DB_read(BIO *in, int num)
 	ret->qual = NULL;
 	if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
 		goto err;
-	if ((ret->index = malloc(sizeof(*ret->index)*num)) == NULL)
+	if ((ret->index = reallocarray(NULL, sizeof(*ret->index), num)) == NULL)
 		goto err;
-	if ((ret->qual = malloc(sizeof(*(ret->qual))*num)) == NULL)
+	if ((ret->qual = reallocarray(NULL, sizeof(*(ret->qual)), num)) == NULL)
 		goto err;
 	for (i = 0; i < num; i++) {
 		ret->index[i] = NULL;

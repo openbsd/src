@@ -268,7 +268,7 @@ static E_RSAX_MOD_CTX *e_rsax_get_ctx(RSA *rsa, int idx, BIGNUM* m)
 
 	hptr = RSA_get_ex_data(rsa, rsax_ex_data_idx);
 	if (!hptr) {
-	    hptr = malloc(3*sizeof(E_RSAX_MOD_CTX));
+	    hptr = reallocarray(NULL, 3, sizeof(E_RSAX_MOD_CTX));
 	    if (!hptr) return NULL;
             hptr[2].type = hptr[1].type= hptr[0].type = 0;
 	    RSA_set_ex_data(rsa, rsax_ex_data_idx, hptr);

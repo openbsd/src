@@ -1874,8 +1874,11 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 		}
 		secrets = calloc(num_points, sizeof(felem_bytearray));
 		pre_comp = calloc(num_points, 17 * 3 * sizeof(felem));
-		if (mixed)
-			tmp_felems = malloc((num_points * 17 + 1) * sizeof(felem));
+		if (mixed) {
+			/* XXX should do more int overflow checking */
+			tmp_felems = reallocarray(NULL,
+			    (num_points * 17 + 1), sizeof(felem));
+		}
 		if ((secrets == NULL) || (pre_comp == NULL) || (mixed && (tmp_felems == NULL))) {
 			ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_MALLOC_FAILURE);
 			goto err;

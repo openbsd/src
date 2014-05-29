@@ -425,11 +425,11 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
 	}
 	totalnum = num + numblocks;
 
-	wsize = malloc(totalnum * sizeof wsize[0]);
-	wNAF_len = malloc(totalnum * sizeof wNAF_len[0]);
-	wNAF = malloc((totalnum + 1) * sizeof wNAF[0]);	/* includes space for
-							 * pivot */
-	val_sub = malloc(totalnum * sizeof val_sub[0]);
+	wsize = reallocarray(NULL, totalnum, sizeof wsize[0]);
+	wNAF_len = reallocarray(NULL, totalnum, sizeof wNAF_len[0]);
+	/* includes space for pivot */
+	wNAF = reallocarray(NULL, (totalnum + 1), sizeof wNAF[0]);
+	val_sub = reallocarray(NULL, totalnum, sizeof val_sub[0]);
 
 	if (!wsize || !wNAF_len || !wNAF || !val_sub) {
 		ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
@@ -573,7 +573,7 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
 	 * to a subarray of 'pre_comp->points' if we already have
 	 * precomputation.
 	 */
-	val = malloc((num_val + 1) * sizeof val[0]);
+	val = reallocarray(NULL, (num_val + 1), sizeof val[0]);
 	if (val == NULL) {
 		ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -790,7 +790,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	num = pre_points_per_block * numblocks;	/* number of points to
 						 * compute and store */
 
-	points = malloc(sizeof(EC_POINT *) * (num + 1));
+	points = reallocarray(NULL, sizeof(EC_POINT *), (num + 1));
 	if (!points) {
 		ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
 		goto err;

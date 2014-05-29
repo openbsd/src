@@ -121,7 +121,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 
 	longN= BN_num_bytes(N);
 
-	if ((cAB = malloc(2*longN)) == NULL) 
+	if ((cAB = reallocarray(NULL, 2, longN)) == NULL) 
 		return NULL;
 
 	memset(cAB, 0, longN);

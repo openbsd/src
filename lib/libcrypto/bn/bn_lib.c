@@ -245,7 +245,7 @@ BN_new(void)
 {
 	BIGNUM *ret;
 
-	if ((ret = (BIGNUM *)malloc(sizeof(BIGNUM))) == NULL) {
+	if ((ret = malloc(sizeof(BIGNUM))) == NULL) {
 		BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
@@ -278,7 +278,7 @@ bn_expand_internal(const BIGNUM *b, int words)
 		    BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return (NULL);
 	}
-	a = A = (BN_ULONG *)malloc(sizeof(BN_ULONG)*words);
+	a = A = reallocarray(NULL, sizeof(BN_ULONG), words);
 	if (A == NULL) {
 		BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
 		return (NULL);
