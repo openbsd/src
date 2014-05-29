@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.40 2014/05/28 17:34:10 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.41 2014/05/29 06:19:34 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 28 2014 $
+.Dd $Mdocdate: May 29 2014 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -386,7 +386,7 @@ and
 .Cm olcuc .
 .El
 .Ss Control characters
-.Bl -tag -width Fl
+.Bl -tag -width Fl -compact
 .It Ar control-character Ar string
 Set
 .Ar control-character
@@ -401,8 +401,8 @@ two character sequence
 or the string
 .Dq undef
 the control character
-is disabled (i.e., set to
-.Pf { Dv _POSIX_VDISABLE Ns } ) .
+is disabled (i.e. set to
+.Brq Dv _POSIX_VDISABLE ) .
 .Pp
 Recognized control-characters:
 .Bl -column "character" "Subscript" "Description"
@@ -424,10 +424,15 @@ Recognized control-characters:
 .It reprint Ta Dv VREPRINT Ta "REPRINT character"
 .It status Ta Dv VSTATUS Ta "STATUS character"
 .El
+.Pp
 .It Cm min Ar number
 .It Cm time Ar number
-Set the value of min or time to
-number.
+Set the value of
+.Cm min
+or
+.Cm time
+to
+.Ar number .
 .Dv MIN
 and
 .Dv TIME
@@ -444,8 +449,12 @@ produced by the
 .Fl g
 option.
 .It Cm evenp No or Cm parity
-Enable parenb and cs7; disable
-parodd.
+Enable
+.Cm parenb
+and
+.Cm cs7 ;
+disable
+.Cm parodd .
 .It Cm oddp
 Enable
 .Cm parenb ,
