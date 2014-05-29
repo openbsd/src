@@ -371,7 +371,7 @@ SSL_new(SSL_CTX *ctx)
 #endif
 
 	return (s);
- err:
+err:
 	if (s != NULL) {
 		if (s->cert != NULL)
 			ssl_cert_free(s->cert);
@@ -664,7 +664,7 @@ SSL_set_fd(SSL *s, int fd)
 	BIO_set_fd(bio, fd, BIO_NOCLOSE);
 	SSL_set_bio(s, bio, bio);
 	ret = 1;
- err:
+err:
 	return (ret);
 }
 
@@ -688,7 +688,7 @@ SSL_set_wfd(SSL *s, int fd)
 	} else
 		SSL_set_bio(s, SSL_get_rbio(s), SSL_get_rbio(s));
 	ret = 1;
- err:
+err:
 	return (ret);
 }
 
@@ -712,7 +712,7 @@ SSL_set_rfd(SSL *s, int fd)
 	} else
 		SSL_set_bio(s, SSL_get_wbio(s), SSL_get_wbio(s));
 	ret = 1;
- err:
+err:
 	return (ret);
 }
 
@@ -1497,7 +1497,7 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 	if (skp != NULL)
 		*skp = sk;
 	return (sk);
- err:
+err:
 	if ((skp == NULL) || (*skp == NULL))
 		sk_SSL_CIPHER_free(sk);
 	return (NULL);
@@ -1596,7 +1596,7 @@ SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 	result = client;
 	status = OPENSSL_NPN_NO_OVERLAP;
 
- found:
+found:
 	*out = (unsigned char *) result + 1;
 	*outlen = result[0];
 	return (status);
@@ -1874,10 +1874,10 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
 
 	return (ret);
- err:
+err:
 	SSLerr(SSL_F_SSL_CTX_NEW,
 	    ERR_R_MALLOC_FAILURE);
- err2:
+err2:
 	if (ret != NULL)
 		SSL_CTX_free(ret);
 	return (NULL);
@@ -2700,7 +2700,7 @@ SSL_dup(SSL *s)
 	}
 
 	if (0) {
- err:
+err:
 		if (ret != NULL)
 			SSL_free(ret);
 		ret = NULL;

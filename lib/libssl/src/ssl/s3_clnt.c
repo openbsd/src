@@ -654,7 +654,7 @@ ssl3_connect(SSL *s)
 		}
 		skip = 0;
 	}
- end:
+end:
 	s->in_handshake--;
 	if (buf != NULL)
 		BUF_MEM_free(buf);
@@ -825,7 +825,7 @@ ssl3_client_hello(SSL *s)
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
- err:
+err:
 	return (-1);
 }
 
@@ -1068,9 +1068,9 @@ ssl3_get_server_hello(SSL *s)
 	}
 
 	return (1);
- f_err:
+f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
+err:
 	return (-1);
 }
 
@@ -1240,10 +1240,10 @@ ssl3_get_server_certificate(SSL *s)
 	ret = 1;
 
 	if (0) {
- f_err:
+f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
- err:
+err:
 	EVP_PKEY_free(pkey);
 	X509_free(x);
 	sk_X509_pop_free(sk, X509_free);
@@ -1706,9 +1706,9 @@ ssl3_get_key_exchange(SSL *s)
 	EVP_PKEY_free(pkey);
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return (1);
- f_err:
+f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
+err:
 	EVP_PKEY_free(pkey);
 	if (rsa != NULL)
 		RSA_free(rsa);
@@ -1860,7 +1860,7 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	if (0) {
- cont:
+cont:
 		ERR_clear_error();
 	}
 
@@ -1873,7 +1873,7 @@ ssl3_get_certificate_request(SSL *s)
 	ca_sk = NULL;
 
 	ret = 1;
- err:
+err:
 	if (ca_sk != NULL)
 		sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
 	return (ret);
@@ -1957,9 +1957,9 @@ ssl3_get_new_session_ticket(SSL *s)
 	    &s->session->session_id_length, EVP_sha256(), NULL);
 	ret = 1;
 	return (ret);
- f_err:
+f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
+err:
 	return (-1);
 }
 
@@ -2023,7 +2023,7 @@ ssl3_get_cert_status(SSL *s)
 		}
 	}
 	return (1);
- f_err:
+f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return (-1);
 }
@@ -2549,7 +2549,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			memcpy(p, identity, n);
 			n += 2;
 			psk_err = 0;
- psk_err:
+psk_err:
 			OPENSSL_cleanse(identity, PSK_MAX_IDENTITY_LEN);
 			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
 			if (psk_err != 0) {
@@ -2578,7 +2578,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
- err:
+err:
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
 	if (clnt_ecdh != NULL)
@@ -2717,7 +2717,7 @@ ssl3_send_client_verify(SSL *s)
 	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
- err:
+err:
 	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
 	return (-1);
@@ -2901,9 +2901,9 @@ ssl3_check_cert_and_algorithm(SSL *s)
 			}
 	}
 	return (1);
- f_err:
+f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
- err:
+err:
 	return (0);
 }
 
