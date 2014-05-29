@@ -251,7 +251,9 @@ ssl3_change_cipher_state(SSL *s, int which)
 		}
 		dd = s->enc_read_ctx;
 
-		ssl_replace_hash(&s->read_hash, m);
+		if (ssl_replace_hash(&s->read_hash, m) == NULL)
+			goto err;
+
 #ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->expand != NULL) {
@@ -282,7 +284,9 @@ ssl3_change_cipher_state(SSL *s, int which)
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		}
 		dd = s->enc_write_ctx;
-		ssl_replace_hash(&s->write_hash, m);
+		if (ssl_replace_hash(&s->write_hash, m) == NULL)
+			goto err;
+
 #ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->compress != NULL) {
