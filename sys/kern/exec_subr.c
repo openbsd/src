@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.32 2014/03/28 17:57:11 mpi Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.33 2014/05/29 05:05:34 guenther Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -248,9 +248,9 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	if (error)
 		return (error);
 
-	if (cmd->ev_prot != (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) {
+	if ((prot & VM_PROT_WRITE) == 0) {
 		/*
-		 * we had to map in the area at PROT_ALL so that vn_rdwr()
+		 * we had to map in the area at PROT_WRITE so that vn_rdwr()
 		 * could write to it.   however, the caller seems to want
 		 * it mapped read-only, so now we are going to have to call
 		 * uvm_map_protect() to fix up the protection.  ICK.
