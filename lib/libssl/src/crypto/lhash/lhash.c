@@ -337,8 +337,7 @@ expand(_LHASH *lh)
 
 	if ((lh->p) >= lh->pmax) {
 		j = (int)lh->num_alloc_nodes * 2;
-		n = (LHASH_NODE **)realloc(lh->b,
-		    (int)(sizeof(LHASH_NODE *) * j));
+		n = reallocarray(lh->b, j, sizeof(LHASH_NODE *));
 		if (n == NULL) {
 /*			fputs("realloc error in lhash", stderr); */
 			lh->error++;
@@ -364,8 +363,7 @@ contract(_LHASH *lh)
 	np = lh->b[lh->p + lh->pmax - 1];
 	lh->b[lh->p+lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
 	if (lh->p == 0) {
-		n = (LHASH_NODE **)realloc(lh->b,
-		    (unsigned int)(sizeof(LHASH_NODE *) * lh->pmax));
+		n = reallocarray(lh->b, lh->pmax, sizeof(LHASH_NODE *));
 		if (n == NULL) {
 /*			fputs("realloc error in lhash", stderr); */
 			lh->error++;
