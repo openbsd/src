@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.41 2014/05/29 06:19:34 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.42 2014/05/29 06:28:09 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 .Nd set the options for a terminal device interface
 .Sh SYNOPSIS
 .Nm stty
-.Op Fl a | Fl e | Fl g
+.Op Fl a | e | g
 .Op Fl f Ar file
 .Op Ar operands
 .Sh DESCRIPTION
@@ -60,9 +60,7 @@ exclusive on some terminal types.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Display all the current settings for the terminal to standard output
-as per
-.St -p1003.2 .
+Display all the current settings for the terminal to standard output.
 .It Fl e
 Display all the current settings for the terminal to standard output
 in the traditional
@@ -86,8 +84,9 @@ block on the open.
 Display all the current settings for the terminal to standard output
 in a form that may be used as an argument to a subsequent invocation of
 .Nm
-to restore the current terminal state as per
-.St -p1003.2 .
+to restore the current terminal state.
+The output does not contain any characters that require quoting,
+to avoid word expansion by the shell.
 .El
 .Pp
 The following arguments are available to set the terminal
