@@ -547,7 +547,7 @@ BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 	bn_check_top(a);
 	bn_check_top(b);
 	bn_check_top(p);
-	if ((arr = reallocarray(NULL, sizeof(int), max)) == NULL)
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
@@ -609,7 +609,7 @@ BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = reallocarray(NULL, sizeof(int), max)) == NULL)
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
@@ -1037,7 +1037,7 @@ BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p,
 	bn_check_top(a);
 	bn_check_top(b);
 	bn_check_top(p);
-	if ((arr = reallocarray(NULL, sizeof(int), max)) == NULL)
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
@@ -1099,7 +1099,7 @@ BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	int *arr = NULL;
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = reallocarray(NULL, sizeof(int), max)) == NULL)
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {
@@ -1234,7 +1234,7 @@ BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = reallocarray(NULL, sizeof(int), max)) == NULL)
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
 		goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max) {

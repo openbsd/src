@@ -214,7 +214,7 @@ chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	i = 0;
 	if (arg->count == 0) {
 		arg->count = 20;
-		arg->data = reallocarray(NULL, sizeof(char *), arg->count);
+		arg->data = reallocarray(NULL, arg->count, sizeof(char *));
 	}
 	for (i = 0; i < arg->count; i++)
 		arg->data[i] = NULL;

@@ -278,7 +278,7 @@ bn_expand_internal(const BIGNUM *b, int words)
 		    BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
 		return (NULL);
 	}
-	a = A = reallocarray(NULL, sizeof(BN_ULONG), words);
+	a = A = reallocarray(NULL, words, sizeof(BN_ULONG));
 	if (A == NULL) {
 		BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
 		return (NULL);

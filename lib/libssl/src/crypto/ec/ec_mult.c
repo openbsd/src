@@ -790,7 +790,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	num = pre_points_per_block * numblocks;	/* number of points to
 						 * compute and store */
 
-	points = reallocarray(NULL, sizeof(EC_POINT *), (num + 1));
+	points = reallocarray(NULL, (num + 1), sizeof(EC_POINT *));
 	if (!points) {
 		ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
 		goto err;
