@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.53 2014/05/09 13:56:33 krw Exp $	*/
+/*	$OpenBSD: setup.c,v 1.54 2014/05/29 12:02:50 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -602,12 +602,15 @@ calcsb(char *dev, int devfd, struct fs *fs)
 	fs->fs_frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 	fs->fs_bsize = fs->fs_fsize * fs->fs_frag;
 	fs->fs_cpg = pp->p_cpg;
-	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
-	/* unit for fs->fs_size is fragments, for DL_GETPSIZE() it is sectors */
-	fs->fs_size = DL_GETPSIZE(pp) / fs->fs_nspf;
+	fs->fs_nspf = DL_SECTOBLK(lp, fs->fs_fsize / lp->d_secsize);
+	/*
+	 * fs->fs_size is in fragments, DL_GETPSIZE() is in disk sectors
+	 * and fs_nspf is in DEV_BSIZE blocks. Shake well.
+	 */
+	fs->fs_size = DL_SECTOBLK(lp, DL_GETPSIZE(pp)) / fs->fs_nspf;
 	fs->fs_ntrak = lp->d_ntracks;
-	fs->fs_nsect = lp->d_nsectors;
-	fs->fs_spc = lp->d_secpercyl;
+	fs->fs_nsect = DL_SECTOBLK(lp, lp->d_nsectors);
+	fs->fs_spc = DL_SECTOBLK(lp, lp->d_secpercyl);
 	/* we can't use lp->d_sbsize, it is the max sb size */
 	fs->fs_sblkno = roundup(
 		howmany(lp->d_bbsize + SBSIZE, fs->fs_fsize),

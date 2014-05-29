@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.39 2013/11/12 14:20:52 krw Exp $	*/
+/*	$OpenBSD: fs.h,v 1.40 2014/05/29 12:02:50 krw Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -224,12 +224,12 @@ struct fs {
 	int32_t	 fs_csshift;		/* csum block number (now unused) */
 	int32_t	 fs_nindir;		/* value of NINDIR */
 	int32_t	 fs_inopb;		/* inodes per file system block */
-	int32_t	 fs_nspf;		/* value of NSPF */
+	int32_t	 fs_nspf;		/* DEV_BSIZE sectors per frag */
 /* yet another configuration parameter */
 	int32_t	 fs_optim;		/* optimization preference, see below */
 /* these fields are derived from the hardware */
-	int32_t	 fs_npsect;		/* # sectors/track including spares */
-	int32_t	 fs_interleave;		/* hardware sector interleave */
+	int32_t	 fs_npsect;		/* DEV_BSIZE sectors/track + spares */
+	int32_t	 fs_interleave;		/* DEV_BSIZE sector interleave */
 	int32_t	 fs_trackskew;		/* sector 0 skew, per track */
 /* fs_id takes the space of the unused fs_headswitch and fs_trkseek fields */
 	int32_t  fs_id[2];		/* unique filesystem id */
@@ -239,8 +239,8 @@ struct fs {
 	int32_t	 fs_cgsize;		/* cyl grp block size / bytes */
 /* these fields are derived from the hardware */
 	int32_t	 fs_ntrak;		/* tracks per cylinder */
-	int32_t	 fs_nsect;		/* sectors per track */
-	int32_t	 fs_spc;		/* sectors per cylinder */
+	int32_t	 fs_nsect;		/* DEV_BSIZE sectors per track */
+	int32_t	 fs_spc;		/* DEV_BSIZE sectors per cylinder */
 /* this comes from the disk driver partitioning */
 	int32_t	 fs_ncyl;		/* cylinders in file system */
 /* these fields can be computed from the others */
