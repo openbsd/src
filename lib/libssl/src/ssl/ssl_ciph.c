@@ -1619,7 +1619,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		if (buf == NULL)
 			return("malloc Error");
 	} else if (len < 128)
-	return("Buffer too small");
+		return("Buffer too small");
 
 	l = snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac, exp_str);
 	if (l >= len || l == -1)
