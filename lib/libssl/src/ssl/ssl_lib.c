@@ -2895,7 +2895,6 @@ SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	return (ssl->ctx);
 }
 
-#ifndef OPENSSL_NO_STDIO
 int
 SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 {
@@ -2908,7 +2907,6 @@ SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 {
 	return (X509_STORE_load_locations(ctx->cert_store, CAfile, CApath));
 }
-#endif
 
 void
 SSL_set_info_callback(SSL *ssl,

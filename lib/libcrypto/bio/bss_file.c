@@ -89,7 +89,6 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 
-#if !defined(OPENSSL_NO_STDIO)
 
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
@@ -324,6 +323,5 @@ file_puts(BIO *bp, const char *str)
 	return (ret);
 }
 
-#endif /* OPENSSL_NO_STDIO */
 
 #endif /* HEADER_BSS_FILE_C */

@@ -139,9 +139,7 @@ BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,
 	b = (BIO *)bio->cb_arg;
 	if (b != NULL)
 		BIO_write(b, buf, strlen(buf));
-#if !defined(OPENSSL_NO_STDIO)
 	else
 		fputs(buf, stderr);
-#endif
 	return (r);
 }

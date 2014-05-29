@@ -589,7 +589,6 @@ xname_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	return (X509_NAME_cmp(*a, *b));
 }
 
-#ifndef OPENSSL_NO_STDIO
 /*!
  * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
  * it doesn't really have anything to do with clients (except that a common use
@@ -657,7 +656,6 @@ err:
 		ERR_clear_error();
 	return (ret);
 }
-#endif
 
 /*!
  * Add a file of certs to a stack.

@@ -61,7 +61,6 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_STDIO
 int
 X509_STORE_set_default_paths(X509_STORE *ctx)
 {
@@ -106,4 +105,3 @@ X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
 		return (0);
 	return (1);
 }
-#endif
