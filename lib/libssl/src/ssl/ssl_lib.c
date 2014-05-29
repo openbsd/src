@@ -2269,13 +2269,13 @@ ssl_get_server_send_pkey(const SSL *s)
 		i = SSL_PKEY_ECC;
 	} else if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
-	} else if (alg_k & SSL_kDHr)
+	} else if (alg_k & SSL_kDHr) {
 		i = SSL_PKEY_DH_RSA;
-	else if (alg_k & SSL_kDHd)
+	} else if (alg_k & SSL_kDHd) {
 		i = SSL_PKEY_DH_DSA;
-	else if (alg_a & SSL_aDSS)
+	} else if (alg_a & SSL_aDSS) {
 		i = SSL_PKEY_DSA_SIGN;
-	else if (alg_a & SSL_aRSA) {
+	} else if (alg_a & SSL_aRSA) {
 		if (c->pkeys[SSL_PKEY_RSA_ENC].x509 == NULL)
 			i = SSL_PKEY_RSA_SIGN;
 		else
@@ -2283,11 +2283,11 @@ ssl_get_server_send_pkey(const SSL *s)
 	} else if (alg_a & SSL_aKRB5) {
 		/* VRS something else here? */
 		return (NULL);
-	} else if (alg_a & SSL_aGOST94)
+	} else if (alg_a & SSL_aGOST94) {
 		i = SSL_PKEY_GOST94;
-	else if (alg_a & SSL_aGOST01)
+	} else if (alg_a & SSL_aGOST01) {
 		i = SSL_PKEY_GOST01;
-	else { /* if (alg_a & SSL_aNULL) */
+	} else { /* if (alg_a & SSL_aNULL) */
 		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY,
 		    ERR_R_INTERNAL_ERROR);
 		return (NULL);
@@ -2423,9 +2423,9 @@ SSL_get_error(const SSL *s, int i)
 
 	if ((i < 0) && SSL_want_read(s)) {
 		bio = SSL_get_rbio(s);
-		if (BIO_should_read(bio))
+		if (BIO_should_read(bio)) {
 			return (SSL_ERROR_WANT_READ);
-		else if (BIO_should_write(bio))
+		} else if (BIO_should_write(bio)) {
 			/*
 			 * This one doesn't make too much sense...  We never
 			 * try to write to the rbio, and an application
@@ -2436,8 +2436,8 @@ SSL_get_error(const SSL *s, int i)
 			 * and rbio and wbio *are* the same, this test works
 			 * around that bug; so it might be safer to keep it.
 			 */
-		return (SSL_ERROR_WANT_WRITE);
-		else if (BIO_should_io_special(bio)) {
+			return (SSL_ERROR_WANT_WRITE);
+		} else if (BIO_should_io_special(bio)) {
 			reason = BIO_get_retry_reason(bio);
 			if (reason == BIO_RR_CONNECT)
 				return (SSL_ERROR_WANT_CONNECT);
@@ -2450,9 +2450,9 @@ SSL_get_error(const SSL *s, int i)
 
 	if ((i < 0) && SSL_want_write(s)) {
 		bio = SSL_get_wbio(s);
-		if (BIO_should_write(bio))
+		if (BIO_should_write(bio)) {
 			return (SSL_ERROR_WANT_WRITE);
-		else if (BIO_should_read(bio)) {
+		} else if (BIO_should_read(bio)) {
 			/*
 			 * See above (SSL_want_read(s) with
 			 * BIO_should_write(bio))
