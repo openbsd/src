@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.20 2011/07/04 21:41:18 matthew Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.21 2014/05/30 16:53:02 tedu Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: May 30 2014 $
 .Dt MOUNT_VND 8
 .Os
 .Sh NAME
@@ -304,3 +304,8 @@ partition,
 so checking the file system image will fail.
 .Pp
 Swapping to vnd devices is no longer supported.
+.Pp
+The encryption used is obsolete.
+Consider using
+.Xr softraid 4
+instead.
