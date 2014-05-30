@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.47 2013/11/22 15:47:35 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.48 2014/05/30 21:19:57 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -537,7 +537,7 @@ setup_meta(void)
 {
 	char *p;
 
-	for (p = "#=|^(){};&<>*?[]:$`\\\n"; *p != '\0'; p++)
+	for (p = "#=|^(){};&<>*?[]:$`\\\n~"; *p != '\0'; p++)
 		meta[(unsigned char) *p] = 1;
 	/* The null character serves as a sentinel in the string.  */
 	meta[0] = 1;
