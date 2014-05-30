@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.89 2014/05/30 21:17:42 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.90 2014/05/30 21:20:49 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -380,7 +380,8 @@ sign(const char *seckeyfile, const char *msgfile, const char *sigfile,
 	explicit_bzero(&enckey, sizeof(enckey));
 
 	memcpy(sig.pkalg, PKALG, 2);
-	if ((secname = strstr(seckeyfile, ".sec")) && strlen(secname) == 4) {
+	secname = strstr(seckeyfile, ".sec");
+	if (secname && strlen(secname) == 4) {
 		if (snprintf(sigcomment, sizeof(sigcomment), VERIFYWITH "%.*s.pub",
 		    (int)strlen(seckeyfile) - 4, seckeyfile) >= sizeof(sigcomment))
 			errx(1, "comment too long");
@@ -456,7 +457,8 @@ readpubkey(const char *pubkeyfile, struct pubkey *pubkey,
 	const char *safepath = "/etc/signify/";
 
 	if (!pubkeyfile) {
-		if ((pubkeyfile = strstr(sigcomment, VERIFYWITH))) {
+		pubkeyfile = strstr(sigcomment, VERIFYWITH);
+		if (pubkeyfile) {
 			pubkeyfile += strlen(VERIFYWITH);
 			if (strncmp(pubkeyfile, safepath, strlen(safepath)) != 0 ||
 			    strstr(pubkeyfile, "/../") != NULL)
