@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.76 2013/10/22 16:40:27 guenther Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.77 2014/05/30 07:14:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -793,12 +793,6 @@ socktrans(struct kinfo_file *kf)
 	case AF_BLUETOOTH:
 		/* print protocol number and socket address */
 		printf("* bluetooth %s", stype);
-		printf(" %d ", kf->so_protocol);
-		hide((void *)(uintptr_t)kf->f_data);
-		break;
-	case AF_NATM:
-		/* print protocol number and socket address */
-		printf("* natm %s", stype);
 		printf(" %d ", kf->so_protocol);
 		hide((void *)(uintptr_t)kf->f_data);
 		break;
