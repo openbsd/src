@@ -310,8 +310,7 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	/* once detached we can change it */
 	if ((data == NULL) || (ret->length < len)) {
 		ret->length = 0;
-		if (data != NULL)
-			free(data);
+		free(data);
 		data = malloc(len ? (int)len : 1);
 		if (data == NULL) {
 			i = ERR_R_MALLOC_FAILURE;
@@ -365,15 +364,12 @@ ASN1_OBJECT_free(ASN1_OBJECT *a)
 	if (a == NULL)
 		return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
-		if (a->sn != NULL)
-			free((void *)a->sn);
-		if (a->ln != NULL)
-			free((void *)a->ln);
+		free((void *)a->sn);
+		free((void *)a->ln);
 		a->sn = a->ln = NULL;
 	}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
-		if (a->data != NULL)
-			free((void *)a->data);
+		free((void *)a->data);
 		a->data = NULL;
 		a->length = 0;
 	}

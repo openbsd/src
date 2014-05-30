@@ -177,8 +177,7 @@ ASN1_UTCTIME_adj_internal(ASN1_UTCTIME *s, time_t t, int offset_day,
 			ASN1err(ASN1_F_ASN1_UTCTIME_ADJ, ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
-		if (s->data != NULL)
-			free(s->data);
+		free(s->data);
 		s->data = (unsigned char *)p;
 	}
 

@@ -234,8 +234,7 @@ ASN1_GENERALIZEDTIME_adj_internal(ASN1_GENERALIZEDTIME *s, time_t t,
 			    ERR_R_MALLOC_FAILURE);
 			return (NULL);
 		}
-		if (s->data != NULL)
-			free(s->data);
+		free(s->data);
 		s->data = (unsigned char *)p;
 	}
 

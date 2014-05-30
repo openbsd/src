@@ -113,8 +113,7 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 	ret = npubk;
 
 err:
-	if (s != NULL)
-		free(s);
+	free(s);
 	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
 	return (ret);
 }
@@ -182,8 +181,7 @@ PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 err:
 	EVP_MD_CTX_cleanup(&ctx->md);
 	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
-	if (s != NULL)
-		free(s);
+	free(s);
 	return (ret);
 }
 #endif

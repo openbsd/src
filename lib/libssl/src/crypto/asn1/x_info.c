@@ -102,8 +102,7 @@ X509_INFO_free(X509_INFO *x)
 		X509_CRL_free(x->crl);
 	if (x->x_pkey != NULL)
 		X509_PKEY_free(x->x_pkey);
-	if (x->enc_data != NULL)
-		free(x->enc_data);
+	free(x->enc_data);
 	free(x);
 }
 

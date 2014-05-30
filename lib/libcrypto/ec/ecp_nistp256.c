@@ -2101,12 +2101,9 @@ err:
 		EC_POINT_free(generator);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
-	if (secrets != NULL)
-		free(secrets);
-	if (pre_comp != NULL)
-		free(pre_comp);
-	if (tmp_smallfelems != NULL)
-		free(tmp_smallfelems);
+	free(secrets);
+	free(pre_comp);
+	free(tmp_smallfelems);
 	return ret;
 }
 

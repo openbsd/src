@@ -683,10 +683,8 @@ err:
 		BN_CTX_free(new_ctx);
 	if (tmp != NULL)
 		EC_POINT_free(tmp);
-	if (wsize != NULL)
-		free(wsize);
-	if (wNAF_len != NULL)
-		free(wNAF_len);
+	free(wsize);
+	free(wNAF_len);
 	if (wNAF != NULL) {
 		signed char **w;
 
@@ -698,12 +696,9 @@ err:
 	if (val != NULL) {
 		for (v = val; *v != NULL; v++)
 			EC_POINT_clear_free(*v);
-
 		free(val);
 	}
-	if (val_sub != NULL) {
-		free(val_sub);
-	}
+	free(val_sub);
 	return ret;
 }
 

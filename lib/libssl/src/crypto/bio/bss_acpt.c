@@ -148,10 +148,8 @@ BIO_ACCEPT_free(BIO_ACCEPT *a)
 	if (a == NULL)
 		return;
 
-	if (a->param_addr != NULL)
-		free(a->param_addr);
-	if (a->addr != NULL)
-		free(a->addr);
+	free(a->param_addr);
+	free(a->addr);
 	if (a->bio_chain != NULL)
 		BIO_free(a->bio_chain);
 	free(a);
@@ -352,8 +350,7 @@ acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (ptr != NULL) {
 			if (num == 0) {
 				b->init = 1;
-				if (data->param_addr != NULL)
-					free(data->param_addr);
+				free(data->param_addr);
 				data->param_addr = BUF_strdup(ptr);
 			} else if (num == 1) {
 				data->accept_nbio = (ptr != NULL);

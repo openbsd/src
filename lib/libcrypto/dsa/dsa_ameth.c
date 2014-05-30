@@ -342,8 +342,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	return 1;
 
 err:
-	if (dp != NULL)
-		free(dp);
+	free(dp);
 	if (params != NULL)
 		ASN1_STRING_free(params);
 	if (prkey != NULL)

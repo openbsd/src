@@ -110,8 +110,7 @@ d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
 	} else
 		s = NULL;
 
-	if (ret->data != NULL)
-		free(ret->data);
+	free(ret->data);
 	ret->length = (int)len;
 	ret->data = s;
 	ret->type = tag;
@@ -203,8 +202,7 @@ d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 	} else {
 		if (len != 0) {
 			if ((ret->length < len) || (ret->data == NULL)) {
-				if (ret->data != NULL)
-					free(ret->data);
+				free(ret->data);
 				ret->data = NULL;
 				s = malloc(len + 1);
 				if (s == NULL) {
@@ -218,8 +216,7 @@ d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
 			p += len;
 		} else {
 			s = NULL;
-			if (ret->data != NULL)
-				free(ret->data);
+			free(ret->data);
 		}
 
 		ret->length = (int)len;
@@ -293,8 +290,7 @@ asn1_collate_primitive(ASN1_STRING *a, ASN1_const_CTX *c)
 		goto err;
 
 	a->length = num;
-	if (a->data != NULL)
-		free(a->data);
+	free(a->data);
 	a->data = (unsigned char *)b.data;
 	if (os != NULL)
 		ASN1_STRING_free(os);
@@ -304,7 +300,6 @@ err:
 	ASN1err(ASN1_F_ASN1_COLLATE_PRIMITIVE, c->error);
 	if (os != NULL)
 		ASN1_STRING_free(os);
-	if (b.data != NULL)
-		free(b.data);
+	free(b.data);
 	return (0);
 }

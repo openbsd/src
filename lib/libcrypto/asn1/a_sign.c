@@ -218,8 +218,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (signature->data != NULL)
-		free(signature->data);
+	free(signature->data);
 	signature->data = buf_out;
 	buf_out = NULL;
 	signature->length = outl;

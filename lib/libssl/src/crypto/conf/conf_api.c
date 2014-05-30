@@ -300,8 +300,7 @@ err:
 	if (!ok) {
 		if (sk != NULL)
 			sk_CONF_VALUE_free(sk);
-		if (v != NULL)
-			free(v);
+		free(v);
 		v = NULL;
 	}
 	return (v);

@@ -217,8 +217,7 @@ dgram_free(BIO *a)
 		return 0;
 
 	data = (bio_dgram_data *)a->ptr;
-	if (data != NULL)
-		free(data);
+	free(data);
 
 	return (1);
 }
@@ -830,8 +829,7 @@ dgram_sctp_free(BIO *a)
 		return 0;
 
 	data = (bio_dgram_sctp_data *)a->ptr;
-	if (data != NULL)
-		free(data);
+	free(data);
 
 	return (1);
 }

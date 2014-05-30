@@ -178,12 +178,9 @@ err:
 		if (ret != NULL) {
 			if (ret->data != NULL)
 				sk_OPENSSL_PSTRING_free(ret->data);
-			if (ret->index != NULL)
-				free(ret->index);
-			if (ret->qual != NULL)
-				free(ret->qual);
-			if (ret != NULL)
-				free(ret);
+			free(ret->index);
+			free(ret->qual);
+			free(ret);
 		}
 		return (NULL);
 	} else
@@ -350,8 +347,7 @@ TXT_DB_free(TXT_DB *db)
 				lh_OPENSSL_STRING_free(db->index[i]);
 		free(db->index);
 	}
-	if (db->qual != NULL)
-		free(db->qual);
+	free(db->qual);
 	if (db->data != NULL) {
 		for (i = sk_OPENSSL_PSTRING_num(db->data) - 1; i >= 0; i--) {
 			/* check if any 'fields' have been allocated
@@ -361,8 +357,7 @@ TXT_DB_free(TXT_DB *db)
 			if (max == NULL) /* new row */
 			{
 				for (n = 0; n < db->num_fields; n++)
-					if (p[n] != NULL)
-						free(p[n]);
+					free(p[n]);
 			} else {
 				for (n = 0; n < db->num_fields; n++) {
 					if (((p[n] < (char *)p) ||

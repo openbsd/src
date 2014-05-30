@@ -256,8 +256,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 		memcpy(s, p, (int)len);
 	}
 
-	if (ret->data != NULL)
-		free(ret->data);
+	free(ret->data);
 	ret->data = s;
 	ret->length = (int)len;
 	if (a != NULL)
@@ -324,8 +323,7 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 		p += len;
 	}
 
-	if (ret->data != NULL)
-		free(ret->data);
+	free(ret->data);
 	ret->data = s;
 	ret->length = (int)len;
 	if (a != NULL)
@@ -350,8 +348,7 @@ ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 
 	a->type = V_ASN1_INTEGER;
 	if (a->length < (int)(sizeof(long) + 1)) {
-		if (a->data != NULL)
-			free(a->data);
+		free(a->data);
 		a->data = calloc(1, sizeof(long) + 1);
 	}
 	if (a->data == NULL) {

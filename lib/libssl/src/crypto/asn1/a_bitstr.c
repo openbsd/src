@@ -165,8 +165,7 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 		s = NULL;
 
 	ret->length = (int)len;
-	if (ret->data != NULL)
-		free(ret->data);
+	free(ret->data);
 	ret->data = s;
 	ret->type = V_ASN1_BIT_STRING;
 	if (a != NULL)

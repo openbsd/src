@@ -146,8 +146,7 @@ dlfcn_load(DSO *dso)
 
 err:
 	/* Cleanup! */
-	if (filename != NULL)
-		free(filename);
+	free(filename);
 	if (ptr != NULL)
 		dlclose(ptr);
 	return (0);

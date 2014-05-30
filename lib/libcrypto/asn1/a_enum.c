@@ -76,8 +76,7 @@ ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
 
 	a->type = V_ASN1_ENUMERATED;
 	if (a->length < (int)(sizeof(long) + 1)) {
-		if (a->data != NULL)
-			free(a->data);
+		free(a->data);
 		a->data = calloc(1, sizeof(long) + 1);
 	}
 	if (a->data == NULL) {

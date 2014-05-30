@@ -805,8 +805,7 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 	}
 	/* extract seed (optional) */
 	if (params->curve->seed != NULL) {
-		if (ret->seed != NULL)
-			free(ret->seed);
+		free(ret->seed);
 		if (!(ret->seed = malloc(params->curve->seed->length))) {
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP,
 			    ERR_R_MALLOC_FAILURE);

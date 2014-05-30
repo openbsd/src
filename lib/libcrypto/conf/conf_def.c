@@ -416,15 +416,13 @@ again:
 	}
 	if (buff != NULL)
 		BUF_MEM_free(buff);
-	if (section != NULL)
-		free(section);
+	free(section);
 	return (1);
 
 err:
 	if (buff != NULL)
 		BUF_MEM_free(buff);
-	if (section != NULL)
-		free(section);
+	free(section);
 	if (line != NULL)
 		*line = eline;
 	ERR_asprintf_error_data("line %ld", eline);
@@ -433,12 +431,9 @@ err:
 		conf->data = NULL;
 	}
 	if (v != NULL) {
-		if (v->name != NULL)
-			free(v->name);
-		if (v->value != NULL)
-			free(v->value);
-		if (v != NULL)
-			free(v);
+		free(v->name);
+		free(v->value);
+		free(v);
 	}
 	return (0);
 }
@@ -615,8 +610,7 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 			buf->data[to++] = *(from++);
 	}
 	buf->data[to]='\0';
-	if (*pto != NULL)
-		free(*pto);
+	free(*pto);
 	*pto = buf->data;
 	free(buf);
 	return (1);

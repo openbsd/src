@@ -130,10 +130,8 @@ buffer_free(BIO *a)
 	if (a == NULL)
 		return (0);
 	b = (BIO_F_BUFFER_CTX *)a->ptr;
-	if (b->ibuf != NULL)
-		free(b->ibuf);
-	if (b->obuf != NULL)
-		free(b->obuf);
+	free(b->ibuf);
+	free(b->obuf);
 	free(a->ptr);
 	a->ptr = NULL;
 	a->init = 0;
@@ -342,8 +340,7 @@ buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 			p1 = malloc((int)num);
 			if (p1 == NULL)
 				goto malloc_error;
-			if (ctx->ibuf != NULL)
-				free(ctx->ibuf);
+			free(ctx->ibuf);
 			ctx->ibuf = p1;
 		}
 		ctx->ibuf_off = 0;

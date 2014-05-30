@@ -435,8 +435,7 @@ again:
 	}
 	ret = 1;
 err:
-	if (str != NULL)
-		free(str);
+	free(str);
 	if ((ret == 0) && (s != -1)) {
 		close(s);
 		s = -1;

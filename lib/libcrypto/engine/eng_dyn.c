@@ -169,10 +169,8 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 		dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
 		if(ctx->dynamic_dso)
 			DSO_free(ctx->dynamic_dso);
-		if(ctx->DYNAMIC_LIBNAME)
-			free((void*)ctx->DYNAMIC_LIBNAME);
-		if(ctx->engine_id)
-			free((void*)ctx->engine_id);
+		free((void *)ctx->DYNAMIC_LIBNAME);
+		free((void *)ctx->engine_id);
 		if(ctx->dirs)
 			sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
 		free(ctx);
@@ -335,8 +333,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		/* a NULL 'p' or a string of zero-length is the same thing */
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
-		if(ctx->DYNAMIC_LIBNAME)
-			free((void*)ctx->DYNAMIC_LIBNAME);
+		free((void *)ctx->DYNAMIC_LIBNAME);
 		if(p)
 			ctx->DYNAMIC_LIBNAME = BUF_strdup(p);
 		else
@@ -349,8 +346,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		/* a NULL 'p' or a string of zero-length is the same thing */
 		if(p && (strlen((const char *)p) < 1))
 			p = NULL;
-		if(ctx->engine_id)
-			free((void*)ctx->engine_id);
+		free((void *)ctx->engine_id);
 		if(p)
 			ctx->engine_id = BUF_strdup(p);
 		else

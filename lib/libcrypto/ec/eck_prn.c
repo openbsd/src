@@ -325,8 +325,7 @@ err:
 		BN_free(cofactor);
 	if (ctx)
 		BN_CTX_free(ctx);
-	if (buffer != NULL)
-		free(buffer);
+	free(buffer);
 	return (ret);
 }
 

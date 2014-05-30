@@ -114,14 +114,10 @@ OBJ_dup(const ASN1_OBJECT *o)
 
 err:
 	OBJerr(OBJ_F_OBJ_DUP, ERR_R_MALLOC_FAILURE);
-	if (ln != NULL)
-		free(ln);
-	if (sn != NULL)
-		free(sn);
-	if (data != NULL)
-		free(data);
-	if (r != NULL)
-		free(r);
+	free(ln);
+	free(sn);
+	free(data);
+	free(r);
 	return (NULL);
 }
 

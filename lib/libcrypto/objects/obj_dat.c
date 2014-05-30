@@ -294,8 +294,7 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 			ao[i]->obj = o;
 			aop = lh_ADDED_OBJ_insert(added, ao[i]);
 			/* memory leak, buit should not normally matter */
-			if (aop != NULL)
-				free(aop);
+			free(aop);
 		}
 	}
 	o->flags &= ~(ASN1_OBJECT_FLAG_DYNAMIC |
@@ -308,10 +307,8 @@ err2:
 	OBJerr(OBJ_F_OBJ_ADD_OBJECT, ERR_R_MALLOC_FAILURE);
 err:
 	for (i = ADDED_DATA; i <= ADDED_NID; i++)
-		if (ao[i] != NULL)
-			free(ao[i]);
-	if (o != NULL)
-		free(o);
+		free(ao[i]);
+	free(o);
 	return (NID_undef);
 }
 

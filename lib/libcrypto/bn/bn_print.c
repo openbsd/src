@@ -157,8 +157,7 @@ BN_bn2dec(const BIGNUM *a)
 	ok = 1;
 
 err:
-	if (bn_data != NULL)
-		free(bn_data);
+	free(bn_data);
 	if (t != NULL)
 		BN_free(t);
 	if (!ok && buf) {

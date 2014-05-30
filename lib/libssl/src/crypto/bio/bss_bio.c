@@ -160,12 +160,8 @@ bio_free(BIO *bio)
 	if (b->peer)
 		bio_destroy_pair(bio);
 
-	if (b->buf != NULL) {
-		free(b->buf);
-	}
-
+	free(b->buf);
 	free(b);
-
 	return 1;
 }
 

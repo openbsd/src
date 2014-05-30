@@ -103,12 +103,9 @@ X509V3_add_value(const char *name, const char *value,
 
 err:
 	X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
-	if (vtmp)
-		free(vtmp);
-	if (tname)
-		free(tname);
-	if (tvalue)
-		free(tvalue);
+	free(vtmp);
+	free(tname);
+	free(tvalue);
 	return 0;
 }
 
@@ -126,12 +123,9 @@ X509V3_conf_free(CONF_VALUE *conf)
 {
 	if (!conf)
 		return;
-	if (conf->name)
-		free(conf->name);
-	if (conf->value)
-		free(conf->value);
-	if (conf->section)
-		free(conf->section);
+	free(conf->name);
+	free(conf->value);
+	free(conf->section);
 	free(conf);
 }
 

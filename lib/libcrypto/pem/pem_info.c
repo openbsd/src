@@ -256,12 +256,9 @@ start:
 		} else {
 			/* unknown */
 		}
-		if (name != NULL)
-			free(name);
-		if (header != NULL)
-			free(header);
-		if (data != NULL)
-			free(data);
+		free(name);
+		free(header);
+		free(data);
 		name = NULL;
 		header = NULL;
 		data = NULL;
@@ -291,12 +288,9 @@ err:
 		ret = NULL;
 	}
 
-	if (name != NULL)
-		free(name);
-	if (header != NULL)
-		free(header);
-	if (data != NULL)
-		free(data);
+	free(name);
+	free(header);
+	free(data);
 	return (ret);
 }
 

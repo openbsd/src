@@ -474,8 +474,7 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	der = NULL;
 
 bad:
-	if (der)
-		free(der);
+	free(der);
 	if (sk)
 		sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
 	if (sect)

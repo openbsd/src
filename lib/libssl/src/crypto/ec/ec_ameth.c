@@ -492,8 +492,7 @@ err:
 		BN_free(order);
 	if (ctx)
 		BN_CTX_free(ctx);
-	if (buffer != NULL)
-		free(buffer);
+	free(buffer);
 	return (ret);
 }
 
