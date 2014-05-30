@@ -510,11 +510,7 @@ unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_DigestSignUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
 #define EVP_DigestVerifyUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
 
-#ifdef CONST_STRICT
-void BIO_set_md(BIO *, const EVP_MD *md);
-#else
-# define BIO_set_md(b,md)		BIO_ctrl(b,BIO_C_SET_MD,0,(char *)md)
-#endif
+#define BIO_set_md(b,md)		BIO_ctrl(b,BIO_C_SET_MD,0,(char *)md)
 #define BIO_get_md(b,mdp)		BIO_ctrl(b,BIO_C_GET_MD,0,(char *)mdp)
 #define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0,(char *)mdcp)
 #define BIO_set_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_SET_MD_CTX,0,(char *)mdcp)

@@ -499,15 +499,8 @@ struct bio_dgram_sctp_prinfo {
 
 /* name is cast to lose const, but might be better to route through a function
    so we can do it safely */
-#ifdef CONST_STRICT
-/* If you are wondering why this isn't defined, its because CONST_STRICT is
- * purely a compile-time kludge to allow const to be checked.
- */
-int BIO_read_filename(BIO *b, const char *name);
-#else
 #define BIO_read_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_READ,(char *)name)
-#endif
 #define BIO_write_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \
 		BIO_CLOSE|BIO_FP_WRITE,name)
 #define BIO_append_filename(b,name) BIO_ctrl(b,BIO_C_SET_FILENAME, \

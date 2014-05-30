@@ -365,12 +365,10 @@ ASN1_OBJECT_free(ASN1_OBJECT *a)
 	if (a == NULL)
 		return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
-#ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause memory leaks */
 		if (a->sn != NULL)
 			free((void *)a->sn);
 		if (a->ln != NULL)
 			free((void *)a->ln);
-#endif
 		a->sn = a->ln = NULL;
 	}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
