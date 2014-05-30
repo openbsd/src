@@ -3022,9 +3022,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
 		c = sk_SSL_CIPHER_value(prio, i);
 
-		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
+		/* Skip TLS v1.2 only ciphersuites if not supported. */
 		if ((c->algorithm_ssl & SSL_TLSV1_2) &&
-		    (TLS1_get_version(s) < TLS1_2_VERSION))
+		    !SSL_USE_TLS1_2_CIPHERS(s))
 			continue;
 
 		ssl_set_cert_masks(cert, c);

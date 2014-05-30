@@ -591,13 +591,13 @@ ssl3_accept(SSL *s)
 					s->state = SSL3_ST_SR_FINISHED_A;
 #endif
 				s->init_num = 0;
-			} else if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+			} else if (SSL_USE_SIGALGS(s)) {
 				s->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num = 0;
 				if (!s->session->peer)
 					break;
 				/*
-				 * For TLS v1.2 freeze the handshake buffer
+				 * For sigalgs freeze the handshake buffer
 				 * at this point and digest cached records.
 				 */
 				if (!s->s3->handshake_buffer) {
@@ -980,7 +980,7 @@ ssl3_get_client_hello(SSL *s)
 	 * Versions before 0.9.7 always allow clients to resume sessions in
 	 * renegotiation. 0.9.7 and later allow this by default, but optionally
 	 * ignore resumption requests with flag
-         * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag
+	 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag
 	 * rather than a change to default behavior so that applications
 	 * relying on this for security won't even compile against older
 	 * library versions).
@@ -1010,7 +1010,7 @@ ssl3_get_client_hello(SSL *s)
 
 	p += j;
 
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
+	if (SSL_IS_DTLS(s)) {
 		/* cookie stuff */
 		cookie_len = *(p++);
 
@@ -1331,8 +1331,7 @@ ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher = s->session->cipher;
 	}
 
-	if (TLS1_get_version(s) < TLS1_2_VERSION ||
-	    !(s->verify_mode & SSL_VERIFY_PEER)) {
+	if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
 		if (!ssl3_digest_cached_records(s)) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
@@ -1819,8 +1818,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			 * n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end.
 			 */
-			if (pkey->type == EVP_PKEY_RSA
-				&& TLS1_get_version(s) < TLS1_2_VERSION) {
+			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
 				q = md_buf;
 				j = 0;
 				for (num = 2; num > 0; num--) {
@@ -1850,13 +1848,9 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 				s2n(u, p);
 				n += u + 2;
-			} else
-			if (md) {
-				/*
-				 * For TLS1.2 and later send signature
-				 * algorithm
-				 */
-				if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+			} else if (md) {
+				/* Send signature algorithm. */
+				if (SSL_USE_SIGALGS(s)) {
 					if (!tls12_get_sigandhash(p, pkey, md)) {
 						/* Should never happen */
 						al = SSL_AD_INTERNAL_ERROR;
@@ -1884,7 +1878,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 				s2n(i, p);
 				n += i + 2;
-				if (TLS1_get_version(s) >= TLS1_2_VERSION)
+				if (SSL_USE_SIGALGS(s))
 					n += 2;
 			} else {
 				/* Is this error check actually needed? */
@@ -1937,7 +1931,7 @@ ssl3_send_certificate_request(SSL *s)
 		p += n;
 		n++;
 
-		if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+		if (SSL_USE_SIGALGS(s)) {
 			nl = tls12_get_req_sig_algs(s, p + 2);
 			s2n(nl, p);
 			p += nl + 2;
@@ -2592,7 +2586,7 @@ ssl3_get_cert_verify(SSL *s)
 	    pkey->type == NID_id_GostR3410_2001) ) {
 		i = 64;
 	} else {
-		if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+		if (SSL_USE_SIGALGS(s)) {
 			int sigalg = tls12_get_sigid(pkey);
 			/* Should never happen */
 			if (sigalg == -1) {
@@ -2635,7 +2629,7 @@ ssl3_get_cert_verify(SSL *s)
 		goto f_err;
 	}
 
-	if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+	if (SSL_USE_SIGALGS(s)) {
 		long hdatalen = 0;
 		void *hdata;
 		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);

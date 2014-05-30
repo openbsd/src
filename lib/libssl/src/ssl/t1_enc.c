@@ -639,14 +639,11 @@ tls1_enc(SSL *s, int send)
 		if (s->enc_write_ctx == NULL)
 			enc = NULL;
 		else {
-			int ivlen;
+			int ivlen = 0;
 			enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
-			/* For TLSv1.1 and later explicit IV */
-			if (s->version >= TLS1_1_VERSION &&
+			if (SSL_USE_EXPLICIT_IV(s) &&
 			    EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
 				ivlen = EVP_CIPHER_iv_length(enc);
-			else
-				ivlen = 0;
 			if (ivlen > 1) {
 				if (rec->data != rec->input)
 					/* we can't write into the input stream:
@@ -686,7 +683,7 @@ tls1_enc(SSL *s, int send)
 
 			seq = send ? s->s3->write_sequence : s->s3->read_sequence;
 
-			if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
+			if (SSL_IS_DTLS(s)) {
 				unsigned char dtlsseq[9], *p = dtlsseq;
 
 				s2n(send ? s->d1->w_epoch : s->d1->r_epoch, p);
@@ -876,7 +873,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		mac_ctx = &hmac;
 	}
 
-	if (ssl->version == DTLS1_VERSION || ssl->version == DTLS1_BAD_VER) {
+	if (SSL_IS_DTLS(ssl)) {
 		unsigned char dtlsseq[8], *p = dtlsseq;
 
 		s2n(send ? ssl->d1->w_epoch : ssl->d1->r_epoch, p);
@@ -919,7 +916,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
 
-	if (ssl->version != DTLS1_VERSION && ssl->version != DTLS1_BAD_VER) {
+	if (!SSL_IS_DTLS(ssl)) {
 		for (i = 7; i >= 0; i--) {
 			++seq[i];
 			if (seq[i] != 0)

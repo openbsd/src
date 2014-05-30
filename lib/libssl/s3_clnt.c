@@ -848,8 +848,7 @@ ssl3_get_server_hello(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	if (SSL_version(s) == DTLS1_VERSION ||
-	    SSL_version(s) == DTLS1_BAD_VER) {
+	if (SSL_IS_DTLS(s)) {
 		if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
 			if (s->d1->send_cookie == 0) {
 				s->s3->tmp.reuse_message = 1;
@@ -986,11 +985,10 @@ ssl3_get_server_hello(SSL *s)
 	}
 	s->s3->tmp.new_cipher = c;
 	/*
-	 * Don't digest cached records if TLS v1.2: we may need them for
+	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	if (TLS1_get_version(s) < TLS1_2_VERSION &&
-	    !ssl3_digest_cached_records(s)) {
+	if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s)) {
 		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
 	}
@@ -1592,7 +1590,7 @@ ssl3_get_key_exchange(SSL *s)
 
 	/* if it was signed, check the signature */
 	if (pkey != NULL) {
-		if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+		if (SSL_USE_SIGALGS(s)) {
 			int sigalg = tls12_get_sigid(pkey);
 			/* Should never happen */
 			if (sigalg == -1) {
@@ -1634,8 +1632,7 @@ ssl3_get_key_exchange(SSL *s)
 			goto f_err;
 		}
 
-		if (pkey->type == EVP_PKEY_RSA &&
-		    TLS1_get_version(s) < TLS1_2_VERSION) {
+		if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
 			int num;
 
 			j = 0;
@@ -1787,7 +1784,7 @@ ssl3_get_certificate_request(SSL *s)
 	for (i = 0; i < ctype_num; i++)
 		s->s3->tmp.ctype[i] = p[i];
 	p += ctype_num;
-	if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+	if (SSL_USE_SIGALGS(s)) {
 		n2s(p, llen);
 		/* Check we have enough room for signature algorithms and
 		 * following length value.
@@ -2612,7 +2609,7 @@ ssl3_send_client_verify(SSL *s)
 		pctx = EVP_PKEY_CTX_new(pkey, NULL);
 		EVP_PKEY_sign_init(pctx);
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
-			if (TLS1_get_version(s) < TLS1_2_VERSION)
+			if (!SSL_USE_SIGALGS(s))
 				s->method->ssl3_enc->cert_verify_mac(s,
 				    NID_sha1, &(data[MD5_DIGEST_LENGTH]));
 		} else {
@@ -2622,7 +2619,7 @@ ssl3_send_client_verify(SSL *s)
 		 * For TLS v1.2 send signature algorithm and signature
 		 * using agreed digest and cached handshake records.
 		 */
-		if (TLS1_get_version(s) >= TLS1_2_VERSION) {
+		if (SSL_USE_SIGALGS(s)) {
 			long hdatalen = 0;
 			void *hdata;
 			const EVP_MD *md = s->cert->key->digest;

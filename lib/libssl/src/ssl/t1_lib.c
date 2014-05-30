@@ -2028,7 +2028,7 @@ tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 	if (p >= limit)
 		return -1;
 	/* Skip past DTLS cookie */
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
+	if (SSL_IS_DTLS(s)) {
 		i = *(p++);
 		p += i;
 		if (p >= limit)
@@ -2296,9 +2296,10 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	const EVP_MD *md;
 	CERT *c = s->cert;
 
-	/* Extension ignored for TLS versions below 1.2 */
-	if (TLS1_get_version(s) < TLS1_2_VERSION)
+	/* Extension ignored for inappropriate versions */
+	if (!SSL_USE_SIGALGS(s))
 		return 1;
+
 	/* Should never happen */
 	if (!c)
 		return 0;
