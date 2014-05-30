@@ -472,22 +472,19 @@ conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 				free(data->param_port);
 				data->param_port = BUF_strdup(ptr);
 			} else if (num == 2) {
-				char buf[16];
 				unsigned char *p = ptr;
-
-				snprintf(buf, sizeof buf, "%d.%d.%d.%d",
-				    p[0], p[1], p[2], p[3]);
 				free(data->param_hostname);
-				data->param_hostname = BUF_strdup(buf);
+				if (asprintf(&data->param_hostname,
+					"%u.%u.%u.%u", p[0], p[1],
+					p[2], p[3]) == -1)
+					data->param_hostname = NULL;
 				memcpy(&(data->ip[0]), ptr, 4);
 			} else if (num == 3) {
-				char buf[DECIMAL_SIZE(int) + 1];
-
-				snprintf(buf, sizeof buf, "%d",
-				    *(int *)ptr);
 				free(data->param_port);
-				data->param_port = BUF_strdup(buf);
 				data->port= *(int *)ptr;
+				if (asprintf(&data->param_port, "%d",
+					data->port) == -1)
+					data->param_port = NULL;
 			}
 		}
 		break;
