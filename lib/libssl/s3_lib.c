@@ -2999,17 +2999,12 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	/* Let's see which ciphers we can support */
 	cert = s->cert;
 
-#if 0
 	/*
 	 * Do not set the compare functions, because this may lead to a
 	 * reordering by "id". We want to keep the original ordering.
 	 * We may pay a price in performance during sk_SSL_CIPHER_find(),
 	 * but would have to pay with the price of sk_SSL_CIPHER_dup().
 	 */
-	sk_SSL_CIPHER_set_cmp_func(srvr, ssl_cipher_ptr_id_cmp);
-	sk_SSL_CIPHER_set_cmp_func(clnt, ssl_cipher_ptr_id_cmp);
-#endif
-
 
 	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
 		prio = srvr;
@@ -3267,9 +3262,7 @@ ssl3_shutdown(SSL *s)
 
 	if (!(s->shutdown & SSL_SENT_SHUTDOWN)) {
 		s->shutdown|=SSL_SENT_SHUTDOWN;
-#if 1
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
-#endif
 		/*
 		 * Our shutdown alert has been sent now, and if it still needs
 	 	 * to be written, s->s3->alert_dispatch will be true
@@ -3278,7 +3271,6 @@ ssl3_shutdown(SSL *s)
 			return(-1);	/* return WANT_WRITE */
 	} else if (s->s3->alert_dispatch) {
 		/* resend it if not sent */
-#if 1
 		ret = s->method->ssl_dispatch_alert(s);
 		if (ret == -1) {
 			/*
@@ -3289,7 +3281,6 @@ ssl3_shutdown(SSL *s)
 			 */
 			return (ret);
 		}
-#endif
 	} else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
 		/* If we are waiting for a close from our peer, we are closed */
 		s->method->ssl_read_bytes(s, 0, NULL, 0, 0);

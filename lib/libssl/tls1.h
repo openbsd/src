@@ -239,13 +239,6 @@ extern "C" {
 /* ExtensionType value from RFC4507 */
 #define TLSEXT_TYPE_session_ticket		35
 
-/* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
-#if 0   /* will have to be provided externally for now ,
-	 * i.e. build with - DTLSEXT_TYPE_opaque_prf_input = 38183
-	 * using whatever extension number you'd like to try */
-# define TLSEXT_TYPE_opaque_prf_input		?? */
-#endif
-
 /* Temporary extension type */
 #define TLSEXT_TYPE_renegotiate                 0xff01
 

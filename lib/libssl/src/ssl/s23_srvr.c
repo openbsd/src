@@ -490,14 +490,6 @@ ssl23_get_client_hello(SSL *s)
 		*(d++) = 1;
 		*(d++) = 0;
 
-#if 0
-		/* copy any remaining data with may be extensions */
-		p = p + csl + sil + cl;
-		while (p <  s->packet + s->packet_length) {
-			*(d++)=*(p++);
-		}
-#endif
-
 		i = (d - (unsigned char *)s->init_buf->data) - 4;
 		l2n3((long)i, d_len);
 
@@ -550,9 +542,6 @@ ssl23_get_client_hello(SSL *s)
 			s->method = TLSv1_server_method();
 		else
 			s->method = SSLv3_server_method();
-#if 0 /* ssl3_get_client_hello does this */
-		s->client_version = (v[0]<<8)|v[1];
-#endif
 		s->handshake_func = s->method->ssl_accept;
 	}
 

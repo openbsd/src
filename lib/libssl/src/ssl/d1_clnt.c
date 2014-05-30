@@ -703,13 +703,6 @@ dtls1_connect(SSL *s)
 			/* clean a few things up */
 			ssl3_cleanup_key_block(s);
 
-#if 0
-			if (s->init_buf != NULL) {
-				BUF_MEM_free(s->init_buf);
-				s->init_buf = NULL;
-			}
-#endif
-
 			/* If we are not 'joining' the last two packets,
 			 * remove the buffering now */
 			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))

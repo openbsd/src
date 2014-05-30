@@ -340,10 +340,6 @@ ssl_cert_free(CERT *c)
 			X509_free(c->pkeys[i].x509);
 		if (c->pkeys[i].privatekey != NULL)
 			EVP_PKEY_free(c->pkeys[i].privatekey);
-#if 0
-		if (c->pkeys[i].publickey != NULL)
-			EVP_PKEY_free(c->pkeys[i].publickey);
-#endif
 	}
 	free(c);
 }
@@ -409,12 +405,6 @@ ssl_sess_cert_free(SESS_CERT *sc)
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (sc->peer_pkeys[i].x509 != NULL)
 			X509_free(sc->peer_pkeys[i].x509);
-#if 0 /* We don't have the peer's private key.  These lines are just
-       * here as a reminder that we're still using a not-quite-appropriate
-       * data structure. */
-		if (sc->peer_pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(sc->peer_pkeys[i].privatekey);
-#endif
 	}
 
 	if (sc->peer_rsa_tmp != NULL)
@@ -449,10 +439,6 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
 		return (0);
 	}
-#if 0
-	if (SSL_get_verify_depth(s) >= 0)
-		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
-#endif
 	X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
 
 	/* We need to inherit the verify parameters. These can be determined by

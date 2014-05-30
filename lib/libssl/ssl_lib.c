@@ -215,9 +215,6 @@ SSL_clear(SSL *s)
 	s->client_version = s->version;
 	s->rwstate = SSL_NOTHING;
 	s->rstate = SSL_ST_READ_HEADER;
-#if 0
-	s->read_ahead = s->ctx->read_ahead;
-#endif
 
 	if (s->init_buf != NULL) {
 		BUF_MEM_free(s->init_buf);
@@ -230,7 +227,6 @@ SSL_clear(SSL *s)
 
 	s->first_packet = 0;
 
-#if 1
 	/*
 	 * Check to see if we were changed into a different method, if
 	 * so, revert back if we are not doing session-id reuse.
@@ -242,7 +238,6 @@ SSL_clear(SSL *s)
 		if (!s->method->ssl_new(s))
 			return (0);
 	} else
-#endif
 		s->method->ssl_clear(s);
 	return (1);
 }
@@ -312,9 +307,6 @@ SSL_new(SSL_CTX *ctx)
 	s->msg_callback = ctx->msg_callback;
 	s->msg_callback_arg = ctx->msg_callback_arg;
 	s->verify_mode = ctx->verify_mode;
-#if 0
-	s->verify_depth = ctx->verify_depth;
-#endif
 	s->sid_ctx_length = ctx->sid_ctx_length;
 	OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
 	memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
@@ -325,10 +317,6 @@ SSL_new(SSL_CTX *ctx)
 	if (!s->param)
 		goto err;
 	X509_VERIFY_PARAM_inherit(s->param, ctx->param);
-#if 0
-	s->purpose = ctx->purpose;
-	s->trust = ctx->trust;
-#endif
 	s->quiet_shutdown = ctx->quiet_shutdown;
 	s->max_send_fragment = ctx->max_send_fragment;
 
@@ -1766,9 +1754,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->msg_callback = 0;
 	ret->msg_callback_arg = NULL;
 	ret->verify_mode = SSL_VERIFY_NONE;
-#if 0
-	ret->verify_depth=-1; /* Don't impose a limit (but x509_lu.c does) */
-#endif
 	ret->sid_ctx_length = 0;
 	ret->default_verify_callback = NULL;
 	if ((ret->cert = ssl_cert_new()) == NULL)
@@ -1881,14 +1866,6 @@ err2:
 	return (NULL);
 }
 
-#if 0
-static void
-SSL_COMP_free(SSL_COMP *comp)
-{
-	free(comp);
-}
-#endif
-
 void
 SSL_CTX_free(SSL_CTX *a)
 {
@@ -1933,12 +1910,8 @@ SSL_CTX_free(SSL_CTX *a)
 		sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
 	if (a->extra_certs != NULL)
 		sk_X509_pop_free(a->extra_certs, X509_free);
-#if 0 /* This should never be done, since it removes a global database */
-	if (a->comp_methods != NULL)
-		sk_SSL_COMP_pop_free(a->comp_methods, SSL_COMP_free);
-#else
+	/* Don't free, since it removes a global database */
 	a->comp_methods = NULL;
-#endif
 
 #ifndef OPENSSL_NO_SRTP
 	if (a->srtp_profiles)
@@ -2055,16 +2028,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		mask_k|=SSL_kRSA;
 	if (rsa_enc_export || (rsa_tmp_export && (rsa_sign || rsa_enc)))
 		emask_k|=SSL_kRSA;
-
-#if 0
-	/* The match needs to be both kEDH and aRSA or aDSA, so don't worry */
-	if ((dh_tmp || dh_rsa || dh_dsa) &&
-		(rsa_enc || rsa_sign || dsa_sign))
-	mask_k|=SSL_kEDH;
-	if ((dh_tmp_export || dh_rsa_export || dh_dsa_export) &&
-		(rsa_enc || rsa_sign || dsa_sign))
-	emask_k|=SSL_kEDH;
-#endif
 
 	if (dh_tmp_export)
 		emask_k|=SSL_kEDH;

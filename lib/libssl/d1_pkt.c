@@ -181,10 +181,6 @@ static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
     unsigned int *is_next_epoch);
-#if 0
-static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
-    unsigned short *priority, unsigned long *offset);
-#endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
     unsigned char *priority);
 static int dtls1_process_record(SSL *s);
@@ -322,50 +318,6 @@ dtls1_process_buffered_records(SSL *s)
 
 	return (1);
 }
-
-
-#if 0
-
-static int
-dtls1_get_buffered_record(SSL *s)
-{
-	pitem *item;
-	PQ_64BIT priority =
-	    (((PQ_64BIT)s->d1->handshake_read_seq) << 32) |
-	    ((PQ_64BIT)s->d1->r_msg_hdr.frag_off);
-
-	if (!SSL_in_init(s))  /* if we're not (re)negotiating,
-				   nothing buffered */
-		return 0;
-
-
-	item = pqueue_peek(s->d1->rcvd_records);
-	if (item && item->priority == priority) {
-		/* Check if we've received the record of interest.  It must be
-		 * a handshake record, since data records as passed up without
-		 * buffering */
-		DTLS1_RECORD_DATA *rdata;
-		item = pqueue_pop(s->d1->rcvd_records);
-		rdata = (DTLS1_RECORD_DATA *)item->data;
-
-		free(s->s3->rbuf.buf);
-
-		s->packet = rdata->packet;
-		s->packet_length = rdata->packet_length;
-		memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
-		memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
-
-		free(item->data);
-		pitem_free(item);
-
-		/* s->d1->next_expected_seq_num++; */
-		return (1);
-	}
-
-	return 0;
-}
-
-#endif
 
 static int
 dtls1_process_record(SSL *s)
@@ -1069,29 +1021,6 @@ start:
 				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return (0);
 			}
-#if 0
-			/* XXX: this is a possible improvement in the future */
-			/* now check if it's a missing record */
-			if (alert_descr == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
-				unsigned short seq;
-				unsigned int frag_off;
-				unsigned char *p = &(s->d1->alert_fragment[2]);
-
-				n2s(p, seq);
-				n2l3(p, frag_off);
-
-				dtls1_retransmit_message(s,
-				dtls1_get_queue_priority(frag->msg_header.seq, 0),
-				frag_off, &found);
-				if (!found  && SSL_in_init(s)) {
-					/* fprintf( stderr,"in init = %d\n", SSL_in_init(s)); */
-					/* requested a message not yet sent, 
-					   send an alert ourselves */
-					ssl3_send_alert(s, SSL3_AL_WARNING,
-					DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
-				}
-			}
-#endif
 		} else if (alert_level == 2) /* fatal */
 		{
 			s->rwstate = SSL_NOTHING;
@@ -1506,13 +1435,6 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wr->type=type; /* not needed but helps for debugging */
 	wr->length += DTLS1_RT_HEADER_LENGTH;
 
-#if 0  /* this is now done at the message layer */
-	/* buffer the record, making it easy to handle retransmits */
-	if (type == SSL3_RT_HANDSHAKE || type == SSL3_RT_CHANGE_CIPHER_SPEC)
-		dtls1_buffer_record(s, wr->data, wr->length,
-	*((PQ_64BIT *)&(s->s3->write_sequence[0])));
-#endif
-
 	ssl3_record_sequence_update(&(s->s3->write_sequence[0]));
 
 	/* now let's set up wb */
@@ -1596,16 +1518,6 @@ dtls1_dispatch_alert(SSL *s)
 #ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
 	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
 		s2n(s->d1->handshake_read_seq, ptr);
-#if 0
-		if ( s->d1->r_msg_hdr.frag_off == 0)  /* waiting for a new msg */
-
-		else
-			s2n(s->d1->r_msg_hdr.seq, ptr); /* partial msg read */
-#endif
-
-#if 0
-		fprintf(stderr, "s->d1->handshake_read_seq = %d, s->d1->r_msg_hdr.seq = %d\n", s->d1->handshake_read_seq, s->d1->r_msg_hdr.seq);
-#endif
 		l2n3(s->d1->r_msg_hdr.frag_off, ptr);
 	}
 #endif
@@ -1659,64 +1571,6 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, unsigned int *is_next_epoch)
 
 	return NULL;
 }
-
-#if 0
-static int
-dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr, unsigned short *priority,
-    unsigned long *offset)
-{
-
-	/* alerts are passed up immediately */
-	if (rr->type == SSL3_RT_APPLICATION_DATA || rr->type == SSL3_RT_ALERT)
-		return 0;
-
-	/* Only need to buffer if a handshake is underway.
-	 * (this implies that Hello Request and Client Hello are passed up
-	 * immediately) */
-	if (SSL_in_init(s)) {
-		unsigned char *data = rr->data;
-		/* need to extract the HM/CCS sequence number here */
-		if (rr->type == SSL3_RT_HANDSHAKE ||
-		    rr->type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-			unsigned short seq_num;
-			struct hm_header_st msg_hdr;
-			struct ccs_header_st ccs_hdr;
-
-			if (rr->type == SSL3_RT_HANDSHAKE) {
-				dtls1_get_message_header(data, &msg_hdr);
-				seq_num = msg_hdr.seq;
-				*offset = msg_hdr.frag_off;
-			} else {
-				dtls1_get_ccs_header(data, &ccs_hdr);
-				seq_num = ccs_hdr.seq;
-				*offset = 0;
-			}
-
-			/* this is either a record we're waiting for, or a
-			 * retransmit of something we happened to previously 
-			 * receive (higher layers will drop the repeat silently */
-			if (seq_num < s->d1->handshake_read_seq)
-				return 0;
-			if (rr->type == SSL3_RT_HANDSHAKE &&
-			    seq_num == s->d1->handshake_read_seq &&
-			    msg_hdr.frag_off < s->d1->r_msg_hdr.frag_off)
-				return 0;
-			else if (seq_num == s->d1->handshake_read_seq &&
-			    (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC ||
-			    msg_hdr.frag_off == s->d1->r_msg_hdr.frag_off))
-				return 0;
-			else {
-				*priority = seq_num;
-				return 1;
-			}
-		}
-		else /* unknown record type */
-			return 0;
-	}
-
-	return 0;
-}
-#endif
 
 void
 dtls1_reset_seq_numbers(SSL *s, int rw)

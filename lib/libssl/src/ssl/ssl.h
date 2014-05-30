@@ -827,11 +827,6 @@ struct ssl_ctx_st {
 
 	X509_VERIFY_PARAM *param;
 
-#if 0
-	int purpose;		/* Purpose setting */
-	int trust;		/* Trust setting */
-#endif
-
 	int quiet_shutdown;
 
 	/* Maximum amount of data to send in one fragment.
@@ -1108,11 +1103,6 @@ struct ssl_st {
 	int hit;		/* reusing a previous session */
 
 	X509_VERIFY_PARAM *param;
-
-#if 0
-	int purpose;		/* Purpose setting */
-	int trust;		/* Trust setting */
-#endif
 
 	/* crypto */
 	STACK_OF(SSL_CIPHER) *cipher_list;

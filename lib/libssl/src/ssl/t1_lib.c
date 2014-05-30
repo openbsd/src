@@ -998,9 +998,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 		if (data + size > (d + n))
 			goto ri_check;
-#if 0
-		fprintf(stderr, "Received extension type %d size %d\n", type, size);
-#endif
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 			    s->tlsext_debug_arg);
@@ -1124,13 +1121,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
 				memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 			}
-#if 0
-			fprintf(stderr, "ssl_parse_clienthello_tlsext s->session->tlsext_ecpointformatlist (length=%i) ", s->session->tlsext_ecpointformatlist_length);
-			sdata = s->session->tlsext_ecpointformatlist;
-			for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++)
-				fprintf(stderr, "%i ", *(sdata++));
-			fprintf(stderr, "\n");
-#endif
 		} else if (type == TLSEXT_TYPE_elliptic_curves &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
@@ -1156,13 +1146,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				s->session->tlsext_ellipticcurvelist_length = ellipticcurvelist_length;
 				memcpy(s->session->tlsext_ellipticcurvelist, sdata, ellipticcurvelist_length);
 			}
-#if 0
-			fprintf(stderr, "ssl_parse_clienthello_tlsext s->session->tlsext_ellipticcurvelist (length=%i) ", s->session->tlsext_ellipticcurvelist_length);
-			sdata = s->session->tlsext_ellipticcurvelist;
-			for (i = 0; i < s->session->tlsext_ellipticcurvelist_length; i++)
-				fprintf(stderr, "%i ", *(sdata++));
-			fprintf(stderr, "\n");
-#endif
 		}
 #endif /* OPENSSL_NO_EC */
 #ifdef TLSEXT_TYPE_opaque_prf_input
@@ -1451,13 +1434,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			}
 			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
 			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
-#if 0
-			fprintf(stderr, "ssl_parse_serverhello_tlsext s->session->tlsext_ecpointformatlist ");
-			sdata = s->session->tlsext_ecpointformatlist;
-			for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++)
-				fprintf(stderr, "%i ", *(sdata++));
-			fprintf(stderr, "\n");
-#endif
 		}
 #endif /* OPENSSL_NO_EC */
 		else if (type == TLSEXT_TYPE_session_ticket) {
@@ -2230,18 +2206,6 @@ tls12_find_id(int nid, tls12_lookup *table, size_t tlen)
 	}
 	return -1;
 }
-#if 0
-static int
-tls12_find_nid(int id, tls12_lookup *table, size_t tlen)
-{
-	size_t i;
-	for (i = 0; i < tlen; i++) {
-		if (table[i].id == id)
-			return table[i].nid;
-	}
-	return -1;
-}
-#endif
 
 int
 tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)

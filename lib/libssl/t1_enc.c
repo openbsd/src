@@ -1108,10 +1108,6 @@ tls1_alert_code(int code)
 		return (TLS1_AD_BAD_CERTIFICATE_HASH_VALUE);
 	case SSL_AD_UNKNOWN_PSK_IDENTITY:
 		return (TLS1_AD_UNKNOWN_PSK_IDENTITY);
-#if 0 /* not appropriate for TLS, not used for DTLS */
-	case DTLS1_AD_MISSING_HANDSHAKE_MESSAGE : return
-		(DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
-#endif
 	default:
 		return (-1);
 	}
