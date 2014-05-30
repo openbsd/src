@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.106 2014/05/25 18:57:07 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.107 2014/05/30 02:12:04 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -180,7 +180,7 @@ ttyopen(dev_t device, struct tty *tp, struct proc *p)
 	tp->t_dev = device;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
-		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
+		memset(&tp->t_winsize, 0, sizeof(tp->t_winsize));
 		tp->t_column = 0;
 	}
 	CLR(tp->t_state, TS_WOPEN);
@@ -1851,7 +1851,7 @@ out:
 	uio->uio_resid += cc;
 done:
 	if (obufcc)
-		bzero(obuf, obufcc);
+		explicit_bzero(obuf, obufcc);
 	return (error);
 
 overfull:
@@ -1878,7 +1878,7 @@ ovhiwat:
 		splx(s);
 		uio->uio_resid += cc;
 		if (obufcc)
-			bzero(obuf, obufcc);
+			explicit_bzero(obuf, obufcc);
 		return (uio->uio_resid == cnt ? EWOULDBLOCK : 0);
 	}
 	SET(tp->t_state, TS_ASLEEP);
