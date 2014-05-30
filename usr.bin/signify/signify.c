@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.88 2014/05/16 18:35:01 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.89 2014/05/30 21:17:42 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -120,8 +120,7 @@ xmalloc(size_t len)
 {
 	void *p;
 
-	p = malloc(len);
-	if (!p)
+	if (!(p = malloc(len)))
 		err(1, "malloc %zu", len);
 	return p;
 }
@@ -143,8 +142,7 @@ parseb64file(const char *filename, char *b64, void *buf, size_t buflen,
 		    COMMENTMAXLEN) >= COMMENTMAXLEN)
 			errx(1, "comment too long");
 	}
-	b64end = strchr(commentend + 1, '\n');
-	if (!b64end)
+	if (!(b64end = strchr(commentend + 1, '\n')))
 		errx(1, "missing new line after base64 in %s", filename);
 	*b64end = '\0';
 	if (b64_pton(commentend + 1, buf, buflen) != buflen)
@@ -161,8 +159,7 @@ readb64file(const char *filename, void *buf, size_t buflen, char *comment)
 	int rv, fd;
 
 	fd = xopen(filename, O_RDONLY | O_NOFOLLOW, 0);
-	rv = read(fd, b64, sizeof(b64) - 1);
-	if (rv == -1)
+	if ((rv = read(fd, b64, sizeof(b64) - 1)) == -1)
 		err(1, "read from %s", filename);
 	b64[rv] = '\0';
 	parseb64file(filename, b64, buf, buflen, comment);
@@ -219,8 +216,7 @@ writeall(int fd, const void *buf, size_t buflen, const char *filename)
 	ssize_t x;
 
 	while (buflen != 0) {
-		x = write(fd, buf, buflen);
-		if (x == -1)
+		if ((x = write(fd, buf, buflen)) == -1)
 			err(1, "write to %s", filename);
 		buflen -= x;
 		buf = (char *)buf + x;
@@ -548,8 +544,7 @@ ecalloc(size_t s1, size_t s2, void *data)
 {
 	void *p;
 
-	p = calloc(s1, s2);
-	if (!p)
+	if (!(p = calloc(s1, s2)))
 		err(1, "calloc");
 	return p;
 }
