@@ -162,14 +162,14 @@ void
 CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
     int before_p)
 {
-	fprintf(stderr, "this is a bad idea");
+	/* CRYPTO_dbg_malloc is no longer permitted */
 	abort();
 }
 
 void
 CRYPTO_dbg_free(void *addr, int before_p)
 {
-	fprintf(stderr, "this is a bad idea");
+	/* CRYPTO_dbg_free is no longer permitted */
 	abort();
 }
 
@@ -177,7 +177,7 @@ void
 CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
     const char *file, int line, int before_p)
 {
-	fprintf(stderr, "this is a bad idea");
+	/* CRYPTO_dbg_realloc is no longer permitted */
 	abort();
 }
 
