@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.155 2014/05/16 19:00:18 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.156 2014/05/30 13:24:59 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -85,24 +85,10 @@ struct ehci_pipe {
 
 	struct ehci_soft_qh *sqh;
 	union {
-		struct ehci_soft_qtd *qtd;
-		/* struct ehci_soft_itd *itd; */
-	} tail;
-	union {
 		/* Control pipe */
 		struct {
 			struct usb_dma reqdma;
-			u_int length;
-			/* struct ehci_soft_qtd *setup, *data, *stat; */
 		} ctl;
-		/* Interrupt pipe */
-		struct {
-			u_int length;
-		} intr;
-		/* Bulk pipe */
-		struct {
-			u_int length;
-		} bulk;
 		/* Iso pipe */
 		struct {
 			u_int next_frame;
@@ -3053,7 +3039,6 @@ ehci_device_request(struct usbd_xfer *xfer)
 	}
 
 	sqh = epipe->sqh;
-	epipe->u.ctl.length = len;
 
 	/* Set up data transaction */
 	if (len != 0) {
@@ -3198,8 +3183,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 #endif
 
 	sqh = epipe->sqh;
-
-	epipe->u.bulk.length = xfer->length;
 
 	err = ehci_alloc_sqtd_chain(sc, xfer->length, xfer, &data, &dataend);
 	if (err) {
@@ -3362,8 +3345,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	sqh = epipe->sqh;
 
-	epipe->u.intr.length = xfer->length;
-
 	err = ehci_alloc_sqtd_chain(sc, xfer->length, xfer, &data, &dataend);
 	if (err) {
 		DPRINTFN(-1, ("ehci_device_intr_start: no memory\n"));
@@ -3455,7 +3436,6 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 	if (xfer->pipe->repeat) {
 		ehci_free_sqtd_chain(sc, ex);
 
-		xfer->length = epipe->u.intr.length;
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 		    usbd_xfer_isread(xfer) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);

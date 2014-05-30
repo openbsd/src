@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.130 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.131 2014/05/30 13:24:59 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -212,24 +212,16 @@ struct ohci_pipe {
 		struct ohci_soft_td *td;
 		struct ohci_soft_itd *itd;
 	} tail;
-	/* Info needed for different pipe kinds. */
 	union {
 		/* Control pipe */
 		struct {
 			struct usb_dma reqdma;
-			u_int length;
-			struct ohci_soft_td *setup, *data, *stat;
 		} ctl;
 		/* Interrupt pipe */
 		struct {
 			int nslots;
 			int pos;
 		} intr;
-		/* Bulk pipe */
-		struct {
-			u_int length;
-			int isread;
-		} bulk;
 		/* Iso pipe */
 		struct iso {
 			int next, inuse;
@@ -1617,7 +1609,6 @@ ohci_device_request(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 
 	sed = opipe->sed;
-	opipe->u.ctl.length = len;
 
 	next = stat;
 
@@ -2759,9 +2750,6 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 
 	DPRINTFN(4,("ohci_device_bulk_start: xfer=%p len=%u "
 		    "flags=%d endpt=%d\n", xfer, len, xfer->flags, endpt));
-
-	opipe->u.bulk.isread = usbd_xfer_isread(xfer);
-	opipe->u.bulk.length = len;
 
 	/* Update device address */
 	sed->ed.ed_flags = htole32(

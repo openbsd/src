@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.121 2014/05/25 09:59:12 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.122 2014/05/30 13:24:59 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -77,10 +77,6 @@ struct uhci_pipe {
 	struct usbd_pipe pipe;
 	int nexttoggle;
 
-	u_char aborting;
-	struct usbd_xfer *abortstart, *abortend;
-
-	/* Info needed for different pipe kinds. */
 	union {
 		/* Control pipe */
 		struct {
@@ -1685,9 +1681,6 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
 	sqh = upipe->u.bulk.sqh;
 
-	upipe->u.bulk.isread = usbd_xfer_isread(xfer);
-	upipe->u.bulk.length = len;
-
 	err = uhci_alloc_std_chain(sc, len, xfer, &data, &dataend);
 	if (err)
 		return (err);
@@ -2697,7 +2690,6 @@ uhci_open(struct usbd_pipe *pipe)
 	DPRINTFN(1, ("uhci_open: pipe=%p, addr=%d, endpt=%d\n",
 		     pipe, pipe->device->address, ed->bEndpointAddress));
 
-	upipe->aborting = 0;
 	upipe->nexttoggle = pipe->endpoint->savedtoggle;
 
 	/* Root Hub */
