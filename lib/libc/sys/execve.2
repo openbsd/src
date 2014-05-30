@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.40 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: execve.2,v 1.41 2014/05/30 04:38:43 guenther Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: May 30 2014 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -226,7 +226,7 @@ The
 .Fn exect
 function is equivalent to
 .Fn execve
-with the additional property that it executes the file with the program
+with the additional property that it executes the file with the process
 tracing facilities enabled (see
 .Xr ptrace 2 ) .
 .Sh RETURN VALUES
@@ -334,4 +334,4 @@ to a non-superuser, but is executed when the real
 .Em uid
 is
 .Dq root ,
-then the program has some of the powers of a superuser as well.
+then the process has some of the powers of a superuser as well.
