@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2014/05/27 12:35:40 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2014/05/30 20:48:21 stephan Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ main(int argc, char *argv[])
 	time_t t;
 	int dirlist;
 	char *toplevel, *str, *mount_point = NULL;
+	int just_estimate = 0;
 
 	spcl.c_date = (int64_t)time(NULL);
 
@@ -111,7 +112,7 @@ main(int argc, char *argv[])
 		usage();
 
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:T:uWw")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -157,6 +158,10 @@ main(int argc, char *argv[])
 
 		case 's':		/* tape size, feet */
 			tsize = numarg("tape size", 1L, 0L) * 12 * 10;
+			break;
+
+		case 'S':		/* estimate blocks and # of tapes */
+			just_estimate = 1;
 			break;
 
 		case 'T':		/* time of last dump */
@@ -475,6 +480,12 @@ main(int argc, char *argv[])
 		msg("estimated %lld tape blocks on %3.2f tape(s).\n",
 		    tapesize, fetapes);
 	}
+
+	/*
+	 * Exit if user wants an estimate of blocks and # of tapes only.
+	 */
+	if (just_estimate)
+		exit(X_FINOK);
 
 	/*
 	 * Allocate tape buffer.

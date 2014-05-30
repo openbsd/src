@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.45 2013/04/04 10:47:21 zhuk Exp $
+.\"	$OpenBSD: dump.8,v 1.46 2014/05/30 20:48:21 stephan Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)dump.8	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: April 4 2013 $
+.Dd $Mdocdate: May 30 2014 $
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm dump
 .Bk -words
-.Op Fl 0123456789acnuWw
+.Op Fl 0123456789acnSuWw
 .Op Fl B Ar records
 .Op Fl b Ar blocksize
 .Op Fl d Ar density
@@ -203,6 +203,9 @@ notify all operators in the group
 .Dq operator
 by means similar to a
 .Xr wall 1 .
+.It Fl S
+Display an estimate of the backup size and the number of tapes
+required, and exit without actually performing the dump.
 .It Fl s Ar feet
 Attempt to calculate the amount of tape needed
 at a particular density.
