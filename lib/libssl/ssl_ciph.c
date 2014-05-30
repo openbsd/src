@@ -1038,14 +1038,14 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 }
 
 static int
-ssl_cipher_process_rulestr(const char *rule_str,
-    CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p,
-const SSL_CIPHER **ca_list)
+ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
+    CIPHER_ORDER **tail_p, const SSL_CIPHER **ca_list)
 {
-	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
-	const char *l, *buf;
+	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
+	unsigned long algo_strength;
 	int j, multi, found, rule, retval, ok, buflen;
 	unsigned long cipher_id = 0;
+	const char *l, *buf;
 	char ch;
 
 	retval = 1;
@@ -1055,21 +1055,21 @@ const SSL_CIPHER **ca_list)
 
 		if (ch == '\0')
 			break;
-		/* done */
-		if (ch == '-')
-				{ rule = CIPHER_DEL;
+
+		if (ch == '-') {
+			rule = CIPHER_DEL;
 			l++;
-		} else if (ch == '+')
-			{ rule = CIPHER_ORD;
+		} else if (ch == '+') {
+			rule = CIPHER_ORD;
 			l++;
-		} else if (ch == '!')
-			{ rule = CIPHER_KILL;
+		} else if (ch == '!') {
+			rule = CIPHER_KILL;
 			l++;
-		} else if (ch == '@')
-			{ rule = CIPHER_SPECIAL;
+		} else if (ch == '@') {
+			rule = CIPHER_SPECIAL;
 			l++;
-		} else
-				{ rule = CIPHER_ADD;
+		} else {
+			rule = CIPHER_ADD;
 		}
 
 		if (ITEM_SEP(ch)) {
@@ -1091,8 +1091,7 @@ const SSL_CIPHER **ca_list)
 			while (((ch >= 'A') && (ch <= 'Z')) ||
 			    ((ch >= '0') && (ch <= '9')) ||
 			    ((ch >= 'a') && (ch <= 'z')) ||
-			    (ch == '-') || (ch == '.'))
-			{
+			    (ch == '-') || (ch == '.')) {
 				ch = *(++l);
 				buflen++;
 			}
@@ -1104,15 +1103,17 @@ const SSL_CIPHER **ca_list)
 				 * alphanumeric, so we call this an error.
 				 */
 				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
-				SSL_R_INVALID_COMMAND);
+				    SSL_R_INVALID_COMMAND);
 				retval = found = 0;
 				l++;
 				break;
 			}
 
 			if (rule == CIPHER_SPECIAL) {
-				found = 0; /* unused -- avoid compiler warning */
-				break;	/* special treatment */
+				 /* unused -- avoid compiler warning */
+				found = 0;
+				/* special treatment */
+				break;
 			}
 
 			/* check for multi-part specification */
@@ -1123,15 +1124,16 @@ const SSL_CIPHER **ca_list)
 				multi = 0;
 
 			/*
-			 * Now search for the cipher alias in the ca_list. Be careful
-			 * with the strncmp, because the "buflen" limitation
-			 * will make the rule "ADH:SOME" and the cipher
-			 * "ADH-MY-CIPHER" look like a match for buflen=3.
-			 * So additionally check whether the cipher name found
-			 * has the correct length. We can save a strlen() call:
-			 * just checking for the '\0' at the right place is
-			 * sufficient, we have to strncmp() anyway. (We cannot
-			 * use strcmp(), because buf is not '\0' terminated.)
+			 * Now search for the cipher alias in the ca_list.
+			 * Be careful with the strncmp, because the "buflen"
+			 * limitation will make the rule "ADH:SOME" and the
+			 * cipher "ADH-MY-CIPHER" look like a match for
+			 * buflen=3. So additionally check whether the cipher
+			 * name found has the correct length. We can save a
+			 * strlen() call: just checking for the '\0' at the
+			 * right place is sufficient, we have to strncmp()
+			 * anyway (we cannot use strcmp(), because buf is not
+			 * '\0' terminated.)
 			 */
 			j = found = 0;
 			cipher_id = 0;
@@ -1193,44 +1195,59 @@ const SSL_CIPHER **ca_list)
 
 			if (ca_list[j]->algo_strength & SSL_EXP_MASK) {
 				if (algo_strength & SSL_EXP_MASK) {
-					algo_strength &= (ca_list[j]->algo_strength & SSL_EXP_MASK) | ~SSL_EXP_MASK;
+					algo_strength &=
+					    (ca_list[j]->algo_strength &
+					    SSL_EXP_MASK) | ~SSL_EXP_MASK;
 					if (!(algo_strength & SSL_EXP_MASK)) {
 						found = 0;
 						break;
 					}
 				} else
-					algo_strength |= ca_list[j]->algo_strength & SSL_EXP_MASK;
+					algo_strength |=
+					    ca_list[j]->algo_strength &
+					    SSL_EXP_MASK;
 			}
 
 			if (ca_list[j]->algo_strength & SSL_STRONG_MASK) {
 				if (algo_strength & SSL_STRONG_MASK) {
-					algo_strength &= (ca_list[j]->algo_strength & SSL_STRONG_MASK) | ~SSL_STRONG_MASK;
-					if (!(algo_strength & SSL_STRONG_MASK)) {
+					algo_strength &=
+					    (ca_list[j]->algo_strength &
+					    SSL_STRONG_MASK) | ~SSL_STRONG_MASK;
+					if (!(algo_strength &
+					    SSL_STRONG_MASK)) {
 						found = 0;
 						break;
 					}
 				} else
-					algo_strength |= ca_list[j]->algo_strength & SSL_STRONG_MASK;
+					algo_strength |=
+					    ca_list[j]->algo_strength &
+					    SSL_STRONG_MASK;
 			}
 
 			if (ca_list[j]->valid) {
-				/* explicit ciphersuite found; its protocol version
-				 * does not become part of the search pattern!*/
-
+				/*
+				 * explicit ciphersuite found; its protocol
+				 * version does not become part of the search
+				 * pattern!
+				 */
 				cipher_id = ca_list[j]->id;
 			} else {
-				/* not an explicit ciphersuite; only in this case, the
-				 * protocol version is considered part of the search pattern */
-
+				/*
+				 * not an explicit ciphersuite; only in this
+				 * case, the protocol version is considered
+				 * part of the search pattern
+				 */
 				if (ca_list[j]->algorithm_ssl) {
 					if (alg_ssl) {
-						alg_ssl &= ca_list[j]->algorithm_ssl;
+						alg_ssl &=
+						    ca_list[j]->algorithm_ssl;
 						if (!alg_ssl) {
 							found = 0;
 							break;
 						}
 					} else
-						alg_ssl = ca_list[j]->algorithm_ssl;
+						alg_ssl =
+						    ca_list[j]->algorithm_ssl;
 				}
 			}
 
@@ -1241,15 +1258,14 @@ const SSL_CIPHER **ca_list)
 		/*
 		 * Ok, we have the rule, now apply it
 		 */
-		if (rule == CIPHER_SPECIAL)
-		{	/* special command */
+		if (rule == CIPHER_SPECIAL) {
+			/* special command */
 			ok = 0;
-			if ((buflen == 8) &&
-				!strncmp(buf, "STRENGTH", 8))
-			ok = ssl_cipher_strength_sort(head_p, tail_p);
+			if ((buflen == 8) && !strncmp(buf, "STRENGTH", 8))
+				ok = ssl_cipher_strength_sort(head_p, tail_p);
 			else
 				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
-			SSL_R_INVALID_COMMAND);
+				    SSL_R_INVALID_COMMAND);
 			if (ok == 0)
 				retval = 0;
 			/*
@@ -1259,17 +1275,18 @@ const SSL_CIPHER **ca_list)
 			 * end or ':' is found.
 			 */
 			while ((*l != '\0') && !ITEM_SEP(*l))
-			l++;
+				l++;
 		} else if (found) {
-			ssl_cipher_apply_rule(cipher_id,
-			alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength,
-			rule, -1, head_p, tail_p);
+			ssl_cipher_apply_rule(cipher_id, alg_mkey, alg_auth,
+			    alg_enc, alg_mac, alg_ssl, algo_strength, rule,
+			    -1, head_p, tail_p);
 		} else {
 			while ((*l != '\0') && !ITEM_SEP(*l))
-			l++;
+				l++;
 		}
-		if (*l == '\0') break; /* done */
-		}
+		if (*l == '\0')
+			break; /* done */
+	}
 
 	return (retval);
 }
