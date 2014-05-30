@@ -382,7 +382,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 err:
 		DHerr(DH_F_DO_DH_PRINT,reason);
 		}
-	if (m != NULL) free(m);
+	free(m);
 	return(ret);
 	}
 

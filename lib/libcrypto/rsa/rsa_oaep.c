@@ -179,7 +179,7 @@ decoding_err:
 	/* to avoid chosen ciphertext attacks, the error message should not reveal
 	 * which kind of decoding error happened */
 	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
-	if (db != NULL) free(db);
+	free(db);
 	return -1;
 	}
 

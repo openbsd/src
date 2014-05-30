@@ -481,7 +481,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	if (!ASN1_bn_print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) free(m);
+	free(m);
 	return(ret);
 	}
 
