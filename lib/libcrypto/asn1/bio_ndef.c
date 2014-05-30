@@ -186,8 +186,7 @@ ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
 	ndef_aux = *(NDEF_SUPPORT **)parg;
 
-	if (ndef_aux->derbuf)
-		free(ndef_aux->derbuf);
+	free(ndef_aux->derbuf);
 
 	ndef_aux->derbuf = NULL;
 	*pbuf = NULL;

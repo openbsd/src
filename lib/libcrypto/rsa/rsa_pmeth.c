@@ -148,8 +148,7 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 		{
 		if (rctx->pub_exp)
 			BN_free(rctx->pub_exp);
-		if (rctx->tbuf)
-			free(rctx->tbuf);
+		free(rctx->tbuf);
 		free(rctx);
 		}
 	}

@@ -130,8 +130,7 @@ EC_GROUP_free(EC_GROUP * group)
 	BN_free(&group->order);
 	BN_free(&group->cofactor);
 
-	if (group->seed)
-		free(group->seed);
+	free(group->seed);
 
 	free(group);
 }
@@ -218,8 +217,7 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 	dest->asn1_form = src->asn1_form;
 
 	if (src->seed) {
-		if (dest->seed)
-			free(dest->seed);
+		free(dest->seed);
 		dest->seed = malloc(src->seed_len);
 		if (dest->seed == NULL)
 			return 0;
@@ -227,8 +225,7 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 			return 0;
 		dest->seed_len = src->seed_len;
 	} else {
-		if (dest->seed)
-			free(dest->seed);
+		free(dest->seed);
 		dest->seed = NULL;
 		dest->seed_len = 0;
 	}

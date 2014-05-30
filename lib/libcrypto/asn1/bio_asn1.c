@@ -186,8 +186,7 @@ asn1_bio_free(BIO *b)
 	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
 	if (ctx == NULL)
 		return 0;
-	if (ctx->buf)
-		free(ctx->buf);
+	free(ctx->buf);
 	free(ctx);
 	b->init = 0;
 	b->ptr = NULL;

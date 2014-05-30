@@ -926,8 +926,7 @@ zapparams(struct crypt_kop *kop)
 	int i;
 
 	for (i = 0; i <= kop->crk_iparams + kop->crk_oparams; i++) {
-		if (kop->crk_param[i].crp_p)
-			free(kop->crk_param[i].crp_p);
+		free(kop->crk_param[i].crp_p);
 		kop->crk_param[i].crp_p = NULL;
 		kop->crk_param[i].crp_nbits = 0;
 	}

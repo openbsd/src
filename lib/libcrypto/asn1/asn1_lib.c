@@ -401,8 +401,7 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 void
 ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
-	if (str->data)
-		free(str->data);
+	free(str->data);
 	str->data = data;
 	str->length = len;
 }

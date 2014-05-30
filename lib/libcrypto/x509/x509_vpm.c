@@ -212,8 +212,7 @@ X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to, const X509_VERIFY_PARAM *from)
 int
 X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 {
-	if (param->name)
-		free(param->name);
+	free(param->name);
 	param->name = BUF_strdup(name);
 	if (param->name)
 		return 1;

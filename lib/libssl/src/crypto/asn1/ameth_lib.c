@@ -380,10 +380,8 @@ void
 EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 {
 	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC)) {
-		if (ameth->pem_str)
-			free(ameth->pem_str);
-		if (ameth->info)
-			free(ameth->info);
+		free(ameth->pem_str);
+		free(ameth->info);
 		free(ameth);
 	}
 }

@@ -110,8 +110,7 @@ OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 {
 	if (rctx->mem)
 		BIO_free(rctx->mem);
-	if (rctx->iobuf)
-		free(rctx->iobuf);
+	free(rctx->iobuf);
 	free(rctx);
 }
 

@@ -949,10 +949,8 @@ mime_param_find(MIME_HEADER *hdr, char *name)
 static void
 mime_hdr_free(MIME_HEADER *hdr)
 {
-	if (hdr->name)
-		free(hdr->name);
-	if (hdr->value)
-		free(hdr->value);
+	free(hdr->name);
+	free(hdr->value);
 	if (hdr->params)
 		sk_MIME_PARAM_pop_free(hdr->params, mime_param_free);
 	free(hdr);
@@ -961,10 +959,8 @@ mime_hdr_free(MIME_HEADER *hdr)
 static void
 mime_param_free(MIME_PARAM *param)
 {
-	if (param->param_name)
-		free(param->param_name);
-	if (param->param_value)
-		free(param->param_value);
+	free(param->param_name);
+	free(param->param_value);
 	free(param);
 }
 

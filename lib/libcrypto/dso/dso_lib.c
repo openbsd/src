@@ -361,8 +361,7 @@ DSO_set_filename(DSO *dso, const char *filename)
 		DSOerr(DSO_F_DSO_SET_FILENAME, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
-	if (dso->filename)
-		free(dso->filename);
+	free(dso->filename);
 	dso->filename = copied;
 	return (1);
 }

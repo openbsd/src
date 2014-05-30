@@ -951,8 +951,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 		}
 		/* If we've already allocated a buffer use it */
 		if (*free_cont) {
-			if (stmp->data)
-				free(stmp->data);
+			free(stmp->data);
 			stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
 			stmp->length = len;
 			*free_cont = 0;

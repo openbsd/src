@@ -386,10 +386,8 @@ err:
 
 memerr:
 	if (imod) {
-		if (imod->name)
-			free(imod->name);
-		if (imod->value)
-			free(imod->value);
+		free(imod->name);
+		free(imod->value);
 		free(imod);
 	}
 

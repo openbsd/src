@@ -1460,12 +1460,9 @@ end:
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 #ifndef OPENSSL_NO_TLSEXT
-	if (tlscstatp.host)
-		free(tlscstatp.host);
-	if (tlscstatp.port)
-		free(tlscstatp.port);
-	if (tlscstatp.path)
-		free(tlscstatp.path);
+	free(tlscstatp.host);
+	free(tlscstatp.port);
+	free(tlscstatp.path);
 	if (ctx2 != NULL)
 		SSL_CTX_free(ctx2);
 	if (s_cert2)

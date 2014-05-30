@@ -164,8 +164,7 @@ x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 	BUF_MEM_free(a->bytes);
 	sk_X509_NAME_ENTRY_pop_free(a->entries, X509_NAME_ENTRY_free);
-	if (a->canon_enc)
-		free(a->canon_enc);
+	free(a->canon_enc);
 	free(a);
 	*pval = NULL;
 }

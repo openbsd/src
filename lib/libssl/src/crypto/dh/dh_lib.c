@@ -193,7 +193,7 @@ void DH_free(DH *r)
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->q != NULL) BN_clear_free(r->q);
 	if (r->j != NULL) BN_clear_free(r->j);
-	if (r->seed) free(r->seed);
+	free(r->seed);
 	if (r->counter != NULL) BN_clear_free(r->counter);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);

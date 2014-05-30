@@ -548,8 +548,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		if (c->cipher_data)
 			OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
 	}
-	if (c->cipher_data)
-		free(c->cipher_data);
+	free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
 	if (c->engine)
 		/* The EVP_CIPHER we used belongs to an ENGINE, release the
