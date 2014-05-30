@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.44 2014/05/09 06:37:38 jmc Exp $
+.\"	$OpenBSD: netintro.4,v 1.45 2014/05/30 07:18:22 guenther Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: May 9 2014 $
+.Dd $Mdocdate: May 30 2014 $
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ modifier.
 .Sh PROTOCOLS
 The system currently supports the
 Internet protocols (IPv4 and IPv6),
-Appletalk,
+MPLS,
 and a few others.
 Raw socket interfaces are provided to the
 .Tn IP
@@ -160,11 +160,9 @@ are known to the system
 .Bd -literal
 #define AF_LOCAL	1	/* local to host (pipes, portals) */
 #define AF_INET		2	/* internetwork: UDP, TCP, etc. */
-#define AF_HYLINK	15	/* NSC Hyperchannel */
-#define AF_APPLETALK	16	/* AppleTalk */
 #define AF_INET6	24	/* IPv6 */
-#define AF_NATM		27	/* native ATM access */
 #define AF_BLUETOOTH	32	/* Bluetooth */
+#define AF_MPLS		33	/* Multiprotocol Label Switching */
 .Ed
 .Pp
 The
@@ -512,6 +510,7 @@ from the group
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr lo 4 ,
+.Xr mpe 4 ,
 .Xr pf 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
