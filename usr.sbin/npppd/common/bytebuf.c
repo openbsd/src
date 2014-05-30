@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytebuf.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: bytebuf.c,v 1.6 2014/05/30 05:06:00 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  *	}</pre>
  *
  * @author Yasuoka Masahiko
- * $Id: bytebuf.c,v 1.5 2012/05/08 13:15:11 yasuoka Exp $
+ * $Id: bytebuf.c,v 1.6 2014/05/30 05:06:00 yasuoka Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -96,15 +96,12 @@ bytebuffer_create(size_t capacity)
 {
 	bytebuffer *_this = NULL;
 
-	if ((_this = malloc(sizeof(bytebuffer))) == NULL)
+	if ((_this = calloc(1, sizeof(bytebuffer))) == NULL)
 		return NULL;
 
-	memset(_this, 0, sizeof(bytebuffer));
-
 	if (capacity > 0) {
-		if ((_this->data = malloc(capacity)) == NULL)
+		if ((_this->data = calloc(1, capacity)) == NULL)
 			goto fail;
-		memset(_this->data, 0, capacity);
 		_this->capacity = capacity;
 	} else
 		_this->capacity = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.20 2014/03/22 04:32:39 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.21 2014/05/30 05:06:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.20 2014/03/22 04:32:39 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.21 2014/05/30 05:06:00 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -109,11 +109,10 @@ ppp_create()
 {
 	npppd_ppp *_this;
 
-	if ((_this = malloc(sizeof(npppd_ppp))) == NULL) {
-		log_printf(LOG_ERR, "malloc() failed in %s(): %m", __func__ );
+	if ((_this = calloc(1, sizeof(npppd_ppp))) == NULL) {
+		log_printf(LOG_ERR, "calloc() failed in %s(): %m", __func__ );
 		return NULL;
 	}
-	memset(_this, 0, sizeof(npppd_ppp));
 
 	_this->snp.snp_family = AF_INET;
 	_this->snp.snp_len = sizeof(_this->snp);

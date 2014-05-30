@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.22 2014/05/30 05:06:00 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.22 2014/05/30 05:06:00 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.21 2014/03/22 04:32:39 yasuoka Exp $
+ * $Id: pptpd.c,v 1.22 2014/05/30 05:06:00 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,12 +166,11 @@ pptpd_add_listener(pptpd *_this, int idx, struct pptp_conf *conf,
 		    __func__, slist_length(&_this->listener), idx);
 		goto fail;
 	}
-	if ((plistener = malloc(sizeof(pptpd_listener))) == NULL) {
-		pptpd_log(_this, LOG_ERR, "malloc() failed in %s: %m",
+	if ((plistener = calloc(1, sizeof(pptpd_listener))) == NULL) {
+		pptpd_log(_this, LOG_ERR, "calloc() failed in %s: %m",
 		    __func__);
 		goto fail;
 	}
-	memset(plistener, 0, sizeof(pptpd_listener));
 
 	PPTPD_ASSERT(sizeof(plistener->bind_sin) >= addr->sa_len);
 	memcpy(&plistener->bind_sin, addr, addr->sa_len);

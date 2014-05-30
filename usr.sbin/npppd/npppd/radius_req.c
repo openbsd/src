@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.c,v 1.7 2014/03/22 04:25:00 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.8 2014/05/30 05:06:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.7 2014/03/22 04:25:00 yasuoka Exp $
+ * $Id: radius_req.c,v 1.8 2014/05/30 05:06:00 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,11 +275,10 @@ radius_prepare(radius_req_setting *setting, void *context,
 
 	if (setting->server[setting->curr_server].enabled == 0)
 		return 1;
-	if ((lap = malloc(sizeof(struct overlapped))) == NULL) {
-		log_printf(LOG_ERR, "malloc() failed in %s: %m", __func__);
+	if ((lap = calloc(1, sizeof(struct overlapped))) == NULL) {
+		log_printf(LOG_ERR, "calloc() failed in %s: %m", __func__);
 		goto fail;
 	}
-	memset(lap, 0, sizeof(struct overlapped));
 	lap->context = context;
 	lap->response_fn = response_fn;
 	lap->socket = -1;
@@ -534,13 +533,7 @@ fail:
 radius_req_setting *
 radius_req_setting_create(void)
 {
-	radius_req_setting *setting;
-
-	if ((setting = malloc(sizeof(radius_req_setting))) == NULL)
-		return NULL;
-	memset(setting, 0, sizeof(radius_req_setting));
-
-	return setting;
+	return calloc(1, sizeof(radius_req_setting));
 }
 
 int

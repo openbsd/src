@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_ctl.c,v 1.11 2014/03/22 04:30:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd_ctl.c,v 1.12 2014/05/30 05:06:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -71,9 +71,8 @@ npppd_ctl_create(npppd *_this)
 {
 	struct npppd_ctl *ctl;
 
-	if ((ctl = malloc(sizeof(struct npppd_ctl))) == NULL)
+	if ((ctl = calloc(1, sizeof(struct npppd_ctl))) == NULL)
 		return (NULL);
-	memset(ctl, 0, sizeof(struct npppd_ctl));
 	ctl->npppd = _this;
 	TAILQ_INIT(&ctl->stopped_ppps);
 
