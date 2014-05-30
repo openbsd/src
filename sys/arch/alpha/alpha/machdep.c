@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.154 2014/05/25 13:57:48 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.155 2014/05/30 13:46:16 mpi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1015,6 +1015,7 @@ boot(howto)
 
 	uvm_shutdown();
 	splhigh();		/* Disable interrupts. */
+	cold = 1;
 
 #if defined(MULTIPROCESSOR)
 	/*
