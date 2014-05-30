@@ -1,11 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2014/04/22 21:27:15 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/05/30 15:17:43 jsing Exp $
 
 PROG=	aes_wrap
-CRYPTO=	${.CURDIR}/../../../../lib/libssl/src/crypto
-CFLAGS+=	-DAES_WRAP_TEST
-CFLAGS+=	-I${CRYPTO} -I${CRYPTO}/aes
-.PATH:	${CRYPTO}/aes
-
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 
