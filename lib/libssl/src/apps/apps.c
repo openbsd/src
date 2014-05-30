@@ -1831,45 +1831,57 @@ parse_yesno(const char *str, int def)
 X509_NAME *
 parse_name(char *subject, long chtype, int multirdn)
 {
-	size_t buflen = strlen(subject) + 1;	/* to copy the types and
-						 * values into. due to
-						 * escaping, the copy can
-						 * only become shorter */
-	char *buf = malloc(buflen);
-	size_t max_ne = buflen / 2 + 1;	/* maximum number of name elements */
-	char **ne_types = reallocarray(NULL, max_ne, sizeof(char *));
-	char **ne_values = reallocarray(NULL, max_ne, sizeof(char *));
-	int *mval = reallocarray(NULL, max_ne, sizeof(int));
+	X509_NAME *name = NULL;
+	size_t buflen, max_ne;
+	char **ne_types, **ne_values;
+	char *buf, *bp, *sp;
+	int i, nid, ne_num = 0;
+	int *mval;
 
-	char *sp = subject, *bp = buf;
-	int i, ne_num = 0;
+	/*
+	 * Buffer to copy the types and values into. Due to escaping the 
+	 * copy can only become shorter.
+	 */
+	buflen = strlen(subject) + 1;
+	buf = malloc(buflen);
 
-	X509_NAME *n = NULL;
-	int nid;
+	/* Maximum number of name elements. */
+	max_ne = buflen / 2 + 1;
+	ne_types = reallocarray(NULL, max_ne, sizeof(char *));
+	ne_values = reallocarray(NULL, max_ne, sizeof(char *));
+	mval = reallocarray(NULL, max_ne, sizeof(int));
 
-	if (!buf || !ne_types || !ne_values || !mval) {
+	if (buf == NULL || ne_types == NULL || ne_values == NULL ||
+	    mval == NULL) {
 		BIO_printf(bio_err, "malloc error\n");
 		goto error;
 	}
+
+	bp = buf;
+	sp = subject;
+
 	if (*subject != '/') {
 		BIO_printf(bio_err, "Subject does not start with '/'.\n");
 		goto error;
 	}
-	sp++;			/* skip leading / */
 
-	/* no multivalued RDN by default */
+	/* Skip leading '/'. */
+	sp++;
+
+	/* No multivalued RDN by default. */
 	mval[ne_num] = 0;
 
 	while (*sp) {
-		/* collect type */
+		/* Collect type. */
 		ne_types[ne_num] = bp;
 		while (*sp) {
-			if (*sp == '\\') {	/* is there anything to
-						 * escape in the type...? */
+			/* is there anything to escape in the type...? */
+			if (*sp == '\\') {
 				if (*++sp)
 					*bp++ = *sp++;
 				else {
-					BIO_printf(bio_err, "escape character at end of string\n");
+					BIO_printf(bio_err, "escape character "
+					    "at end of string\n");
 					goto error;
 				}
 			} else if (*sp == '=') {
@@ -1880,7 +1892,9 @@ parse_name(char *subject, long chtype, int multirdn)
 				*bp++ = *sp++;
 		}
 		if (!*sp) {
-			BIO_printf(bio_err, "end of string encountered while processing type of subject name element #%d\n", ne_num);
+			BIO_printf(bio_err, "end of string encountered while "
+			    "processing type of subject name element #%d\n",
+			    ne_num);
 			goto error;
 		}
 		ne_values[ne_num] = bp;
@@ -1889,7 +1903,8 @@ parse_name(char *subject, long chtype, int multirdn)
 				if (*++sp)
 					*bp++ = *sp++;
 				else {
-					BIO_printf(bio_err, "escape character at end of string\n");
+					BIO_printf(bio_err, "escape character "
+					    "at end of string\n");
 					goto error;
 				}
 			} else if (*sp == '/') {
@@ -1909,7 +1924,7 @@ parse_name(char *subject, long chtype, int multirdn)
 		ne_num++;
 	}
 
-	if (!(n = X509_NAME_new()))
+	if ((name = X509_NAME_new()) == NULL)
 		goto error;
 
 	for (i = 0; i < ne_num; i++) {
@@ -1920,29 +1935,27 @@ parse_name(char *subject, long chtype, int multirdn)
 			continue;
 		}
 		if (!*ne_values[i]) {
-			BIO_printf(bio_err, "No value provided for Subject Attribute %s, skipped\n", ne_types[i]);
+			BIO_printf(bio_err, "No value provided for Subject "
+			    "Attribute %s, skipped\n", ne_types[i]);
 			continue;
 		}
-		if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
+		if (!X509_NAME_add_entry_by_NID(name, nid, chtype,
 		    (unsigned char *) ne_values[i], -1, -1, mval[i]))
 			goto error;
 	}
-
-	free(ne_values);
-	free(ne_types);
-	free(buf);
-	free(mval);
-
-	return n;
+	goto done;
 
 error:
-	X509_NAME_free(n);
+	X509_NAME_free(name);
+	name = NULL;
+
+done:
 	free(ne_values);
 	free(ne_types);
 	free(mval);
 	free(buf);
 
-	return NULL;
+	return name;
 }
 
 int
