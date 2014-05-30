@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.189 2011/12/30 12:30:59 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.190 2014/05/30 13:55:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2157,9 +2157,8 @@ $intr_cont
 	comb,<>,n r0, r8, $intr_ffs
 	ldw	-32(r1), r0	/* preload cache */
 
-	mfctl	cr29, r25
-	stw	r24, CI_IPENDING(r25)
 	mfctl	cr29, r17
+	stw	r24, CI_IPENDING(r17)
 	ldw	CI_CPL(r17), r17
 	ldil	L%imask, r16
 	ldo	R%imask(r16), r16
@@ -2278,11 +2277,10 @@ $ibrk_spllower
 	ldo	4(r9), r9
 	mtctl	r9, pcoq
 
-	mfctl	cr29, r8
-	ldw	CI_IPENDING(r8), r8
+	mfctl	cr29, r17
+	ldw	CI_IPENDING(r17), r8
 	ldil	L%imask, r9
 	ldo	R%imask(r9), r9
-	mfctl	cr29, r17
 	ldw	CI_CPL(r17), ret0
 	ldwx,s	arg0(r9), r16
 	stw	arg0, CI_CPL(r17)
