@@ -1,6 +1,3 @@
-/*! \file ssl/ssl_lib.c
- *  \brief Version independent SSL functions.
- */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2957,12 +2954,6 @@ SSL_want(const SSL *s)
 	return (s->rwstate);
 }
 
-/*!
- * \brief Set the callback for generating temporary RSA keys.
- * \param ctx the SSL context.
- * \param cb the callback
- */
-
 void
 SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,
     int is_export,
@@ -2978,28 +2969,6 @@ int keylength))
 {
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_RSA_CB,(void (*)(void))cb);
 }
-
-#ifdef DOXYGEN
-/*!
- * \brief The RSA temporary key callback function.
- * \param ssl the SSL session.
- * \param is_export \c TRUE if the temp RSA key is for an export ciphersuite.
- * \param keylength if \c is_export is \c TRUE, then \c keylength is the size
- * of the required key in bits.
- * \return the temporary RSA key.
- * \sa SSL_CTX_set_tmp_rsa_callback, SSL_set_tmp_rsa_callback
- */
-
-RSA *
-cb(SSL *ssl, int is_export, int keylength)
-{}
-#endif
-
-/*!
- * \brief Set the callback for generating temporary DH keys.
- * \param ctx the SSL context.
- * \param dh the callback
- */
 
 void
 SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx, DH *(*dh)(SSL *ssl, int is_export,
