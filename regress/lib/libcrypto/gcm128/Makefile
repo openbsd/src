@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2014/04/17 18:33:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/05/31 14:39:06 jsing Exp $
 
-PROG=	gcm128
+PROG=	gcm128test
 SRC=	${.CURDIR}/../../../../lib/libssl/src/crypto/modes
-CFLAGS+=	-DSELFTEST
-CFLAGS+=	-I${SRC}
-.PATH:	${SRC}
+CFLAGS+=-I${SRC}
 
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
