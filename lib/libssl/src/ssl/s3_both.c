@@ -315,7 +315,7 @@ ssl3_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 	unsigned char *p;
 
 	n = i2d_X509(x, NULL);
-	if (!BUF_MEM_grow_clean(buf,(int)(n + (*l) + 3))) {
+	if (!BUF_MEM_grow_clean(buf, n + (*l) + 3)) {
 		SSLerr(SSL_F_SSL3_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
 		return (-1);
 	}
@@ -479,13 +479,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 		}
-		if (l > (INT_MAX-4)) /* BUF_MEM_grow takes an 'int' parameter */
-		{
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-			goto f_err;
-		}
-		if (l && !BUF_MEM_grow_clean(s->init_buf,(int)l + 4)) {
+		if (l && !BUF_MEM_grow_clean(s->init_buf, l + 4)) {
 			SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
 			goto err;
 		}
