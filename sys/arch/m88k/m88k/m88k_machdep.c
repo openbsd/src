@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.60 2014/05/08 22:17:33 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.61 2014/05/31 11:19:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -132,13 +132,6 @@ setregs(p, pack, stack, retval)
 	__asm__ volatile ("fstcr %r0, %fcr62");
 	__asm__ volatile ("fstcr %r0, %fcr63");
 
-	/*
-	 * The syscall will ``return'' to snip; set it.
-	 * argc, argv, envp are placed on the stack by copyregs.
-	 * Point r2 to the stack. crt0 should extract envp from
-	 * argc & argv before calling user's main.
-	 */
-
 	bzero((caddr_t)tf, sizeof *tf);
 
 #ifdef M88110
@@ -263,7 +256,7 @@ regdump(struct trapframe *f)
 		printf("sxip %lx snip %lx sfip %lx\n",
 		    f->tf_sxip, f->tf_snip, f->tf_sfip);
 	}
-	if (CPU_IS88100 && f->tf_vector == 0x3) {
+	if (CPU_IS88100 && ISSET(f->tf_dmt0, DMT_VALID)) {
 		/* print dmt stuff for data access fault */
 		printf("dmt0 %lx dmd0 %lx dma0 %lx\n",
 		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
