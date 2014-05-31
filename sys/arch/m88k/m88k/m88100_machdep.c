@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.11 2013/08/24 20:54:29 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.12 2014/05/31 11:19:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -295,9 +295,7 @@ dae_process(struct trapframe *eframe, u_int x,
 			if (x == 0) {
 				if (reg != 0)
 					eframe->tf_r[reg] = dmdx;
-				eframe->tf_sfip = eframe->tf_snip;
-				eframe->tf_snip = eframe->tf_sxip;
-				eframe->tf_sxip = 0;
+				m88100_rewind_insn(&(eframe->tf_regs));
 				/* xmem RERUN ON rte */
 				eframe->tf_dmt0 = 0;
 				return;

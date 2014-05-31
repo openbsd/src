@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.19 2014/05/08 22:17:33 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.20 2014/05/31 11:19:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -463,10 +463,8 @@ ddb_break_trap(type, eframe)
 		 * at the breakpoint address.  mc88110's exip reg
 		 * already has the address of the exception instruction.
 		 */
-		if (CPU_IS88100) {
-			eframe->sfip = eframe->snip;
-			eframe->snip = eframe->sxip;
-		}
+		if (CPU_IS88100)
+			m88100_rewind_insn(eframe);
 	}
 
 	return 0;

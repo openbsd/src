@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.94 2014/05/26 17:31:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.95 2014/05/31 11:19:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -356,7 +356,6 @@ lose:
 				 */
 				frame->tf_snip = pcb_onfault | NIP_V;
 				frame->tf_sfip = (pcb_onfault + 4) | FIP_V;
-				frame->tf_sxip = 0;
 				/*
 				 * Continue as if the fault had been resolved,
 				 * but do not try to complete the faulting
@@ -436,12 +435,10 @@ user_fault:
 
 		if (result == 0) {
 			if (type == T_INSTFLT + T_USER) {
-				/*
-				 * back up SXIP, SNIP,
-				 * clearing the Error bit
-				 */
-				frame->tf_sfip = frame->tf_snip & ~FIP_E;
-				frame->tf_snip = frame->tf_sxip & ~NIP_E;
+				m88100_rewind_insn(&(frame->tf_regs));
+				/* clear the error bit */
+				frame->tf_sfip &= ~FIP_E;
+				frame->tf_snip &= ~NIP_E;
 				frame->tf_ipfsr = 0;
 			} else {
 				/*
@@ -464,7 +461,6 @@ user_fault:
 			if (pcb_onfault != 0) {
 				frame->tf_snip = pcb_onfault | NIP_V;
 				frame->tf_sfip = (pcb_onfault + 4) | FIP_V;
-				frame->tf_sxip = 0;
 				/*
 				 * Continue as if the fault had been resolved,
 				 * but do not try to complete the faulting
@@ -579,14 +575,13 @@ maysigfpe:
 				p->p_md.md_bp1va = 0;
 			}
 
-#if 1
-			frame->tf_sfip = frame->tf_snip;
-			frame->tf_snip = pc | NIP_V;
-#endif
+			m88100_rewind_insn(&(frame->tf_regs));
+			frame->tf_sxip = pc | NIP_V;
 			sig = SIGTRAP;
 			fault_type = TRAP_BRKPT;
 		}
 #else
+		m88100_rewind_insn(&(frame->tf_regs));
 		sig = SIGTRAP;
 		fault_type = TRAP_TRACE;
 #endif
@@ -598,8 +593,6 @@ maysigfpe:
 		 * breakpoint debugging.  When we get this trap, we just
 		 * return a signal which gets caught by the debugger.
 		 */
-		frame->tf_sfip = frame->tf_snip;
-		frame->tf_snip = frame->tf_sxip;
 		sig = SIGTRAP;
 		fault_type = TRAP_BRKPT;
 		break;
@@ -1265,8 +1258,10 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		tf->tf_sfip = tf->tf_snip + 4;
 		break;
 	case ERESTART:
-		tf->tf_sfip = tf->tf_snip & ~FIP_E;
-		tf->tf_snip = tf->tf_sxip & ~NIP_E;
+		m88100_rewind_insn(&(tf->tf_regs));
+		/* clear the error bit */
+		tf->tf_sfip &= ~FIP_E;
+		tf->tf_snip &= ~NIP_E;
 		break;
 	case EJUSTRETURN:
 		break;
@@ -1796,8 +1791,9 @@ cache_flush(struct trapframe *tf)
 
 #ifdef M88100
 	if (CPU_IS88100) {
-		tf->tf_snip = tf->tf_snip & ~NIP_E;
-		tf->tf_sfip = tf->tf_sfip & ~FIP_E;
+		/* clear the error bit */
+		tf->tf_sfip &= ~FIP_E;
+		tf->tf_snip &= ~NIP_E;
 	}
 #endif
 #ifdef M88110

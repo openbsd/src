@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.8 2013/08/18 22:17:26 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.9 2014/05/31 11:19:06 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -67,6 +67,14 @@ u_int8_t  do_xmem_byte(vaddr_t, u_int8_t, int);
 
 void	m88100_apply_patches(void);
 void	m88100_smp_setup(struct cpu_info *);
+
+/* rewind one instruction */
+static __inline__ void
+m88100_rewind_insn(struct reg *regs)
+{
+	regs->sfip = regs->snip;
+	regs->snip = regs->sxip;
+}
 
 #endif
 
