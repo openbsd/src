@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "chacha.h"
+#include <openssl/chacha.h>
 #include "chacha-merged.c"
 
 void
