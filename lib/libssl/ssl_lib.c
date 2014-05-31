@@ -2853,8 +2853,7 @@ SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 }
 
 void
-SSL_set_info_callback(SSL *ssl,
-    void (*cb)(const SSL *ssl, int type, int val))
+SSL_set_info_callback(SSL *ssl, void (*cb)(const SSL *ssl, int type, int val))
 {
 	ssl->info_callback = cb;
 }
@@ -2955,17 +2954,15 @@ SSL_want(const SSL *s)
 }
 
 void
-SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl,
-    int is_export,
-int keylength))
+SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx, RSA *(*cb)(SSL *ssl, int is_export,
+    int keylength))
 {
 	SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TMP_RSA_CB,(void (*)(void))cb);
 }
 
 void
-SSL_set_tmp_rsa_callback(SSL *ssl, RSA *(*cb)(SSL *ssl,
-    int is_export,
-int keylength))
+SSL_set_tmp_rsa_callback(SSL *ssl, RSA *(*cb)(SSL *ssl, int is_export,
+    int keylength))
 {
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_RSA_CB,(void (*)(void))cb);
 }
@@ -3061,35 +3058,31 @@ SSL_get_psk_identity(const SSL *s)
 }
 
 void
-SSL_set_psk_client_callback(SSL *s,
-    unsigned int (*cb)(SSL *ssl, const char *hint,
-    char *identity, unsigned int max_identity_len, unsigned char *psk,
-    unsigned int max_psk_len))
+SSL_set_psk_client_callback(SSL *s, unsigned int (*cb)(SSL *ssl,
+    const char *hint, char *identity, unsigned int max_identity_len,
+    unsigned char *psk, unsigned int max_psk_len))
 {
 	s->psk_client_callback = cb;
 }
 
 void
-SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-    unsigned int (*cb)(SSL *ssl, const char *hint,
-    char *identity, unsigned int max_identity_len, unsigned char *psk,
-    unsigned int max_psk_len))
+SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, unsigned int (*cb)(SSL *ssl,
+    const char *hint, char *identity, unsigned int max_identity_len,
+    unsigned char *psk, unsigned int max_psk_len))
 {
 	ctx->psk_client_callback = cb;
 }
 
 void
-SSL_set_psk_server_callback(SSL *s,
-    unsigned int (*cb)(SSL *ssl, const char *identity,
-    unsigned char *psk, unsigned int max_psk_len))
+SSL_set_psk_server_callback(SSL *s, unsigned int (*cb)(SSL *ssl,
+    const char *identity, unsigned char *psk, unsigned int max_psk_len))
 {
 	s->psk_server_callback = cb;
 }
 
 void
-SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-    unsigned int (*cb)(SSL *ssl, const char *identity,
-    unsigned char *psk, unsigned int max_psk_len))
+SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, unsigned int (*cb)(SSL *ssl,
+    const char *identity, unsigned char *psk, unsigned int max_psk_len))
 {
 	ctx->psk_server_callback = cb;
 }
@@ -3112,7 +3105,7 @@ SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
 
 /*
  * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
- * vairable, freeing  EVP_MD_CTX previously stored in that variable, if
+ * variable, freeing EVP_MD_CTX previously stored in that variable, if
  * any. If EVP_MD pointer is passed, initializes ctx with this md
  * Returns newly allocated ctx;
  */
