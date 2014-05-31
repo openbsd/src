@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.33 2014/05/31 11:28:44 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.34 2014/05/31 14:15:22 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -854,12 +854,12 @@ loop:
 		    secsize)
 			continue;
 		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %lld]: "
+			msg("read error from %s: %s: [block %lld]: "
 			    "count=%u\n", disk, strerror(errno),
 			    (long long)(offset + i) / DEV_BSIZE, secsize);
 			continue;
 		}
-		msg("short read error from %s: [sector %lld]: count=%u, "
+		msg("short read error from %s: [block %lld]: count=%u, "
 		    "got=%d\n", disk, (long long)(offset + i) / DEV_BSIZE,
 		    secsize, cnt);
 	}
