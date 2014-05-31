@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2014/03/18 22:36:34 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.16 2014/05/31 20:11:11 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -59,7 +59,7 @@
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(128*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
 #define STACKGAP_RANDOM	256*1024
