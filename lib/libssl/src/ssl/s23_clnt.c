@@ -431,7 +431,6 @@ ssl23_client_hello(SSL *s)
 		/* Add the NULL method */
 		*(p++) = 0;
 
-#ifndef OPENSSL_NO_TLSEXT
 		/* TLS extensions*/
 		if (ssl_prepare_clienthello_tlsext(s) <= 0) {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
@@ -443,7 +442,6 @@ ssl23_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
 			return -1;
 		}
-#endif
 
 		l = p - d;
 

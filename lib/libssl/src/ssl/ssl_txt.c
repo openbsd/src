@@ -169,7 +169,6 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	if (BIO_printf(bp, "%s", x->psk_identity_hint ? x->psk_identity_hint : "None") <= 0)
 		goto err;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
 	if (x->tlsext_tick_lifetime_hint) {
 		if (BIO_printf(bp,
 		    "\n    TLS session ticket lifetime hint: %ld (seconds)",
@@ -182,7 +181,6 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		if (BIO_dump_indent(bp, (char *)x->tlsext_tick, x->tlsext_ticklen, 4) <= 0)
 			goto err;
 	}
-#endif
 
 #ifndef OPENSSL_NO_COMP
 	if (x->compress_meth != 0) {

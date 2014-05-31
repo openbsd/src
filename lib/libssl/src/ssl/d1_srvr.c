@@ -415,14 +415,10 @@ dtls1_accept(SSL *s)
 				    BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
 				    sizeof(sctpauthkey), sctpauthkey);
 #endif
-#ifndef OPENSSL_NO_TLSEXT
 				if (s->tlsext_ticket_expected)
 					s->state = SSL3_ST_SW_SESSION_TICKET_A;
 				else
 					s->state = SSL3_ST_SW_CHANGE_A;
-#else
-				s->state = SSL3_ST_SW_CHANGE_A;
-#endif
 			} else
 				s->state = SSL3_ST_SW_CERT_A;
 			s->init_num = 0;
@@ -437,7 +433,6 @@ dtls1_accept(SSL *s)
 				ret = dtls1_send_server_certificate(s);
 				if (ret <= 0)
 					goto end;
-#ifndef OPENSSL_NO_TLSEXT
 				if (s->tlsext_status_expected)
 					s->state = SSL3_ST_SW_CERT_STATUS_A;
 				else
@@ -446,12 +441,6 @@ dtls1_accept(SSL *s)
 				skip = 1;
 				s->state = SSL3_ST_SW_KEY_EXCH_A;
 			}
-#else
-			} else
-				skip = 1;
-
-			s->state = SSL3_ST_SW_KEY_EXCH_A;
-#endif
 			s->init_num = 0;
 			break;
 
@@ -680,16 +669,13 @@ dtls1_accept(SSL *s)
 			dtls1_stop_timer(s);
 			if (s->hit)
 				s->state = SSL_ST_OK;
-#ifndef OPENSSL_NO_TLSEXT
 			else if (s->tlsext_ticket_expected)
 				s->state = SSL3_ST_SW_SESSION_TICKET_A;
-#endif
 			else
 				s->state = SSL3_ST_SW_CHANGE_A;
 			s->init_num = 0;
 			break;
 
-#ifndef OPENSSL_NO_TLSEXT
 		case SSL3_ST_SW_SESSION_TICKET_A:
 		case SSL3_ST_SW_SESSION_TICKET_B:
 			ret = dtls1_send_newsession_ticket(s);
@@ -708,7 +694,6 @@ dtls1_accept(SSL *s)
 			s->init_num = 0;
 			break;
 
-#endif
 
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
@@ -971,12 +956,10 @@ dtls1_send_server_hello(SSL *s)
 			*(p++) = s->s3->tmp.new_compression->id;
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 		if ((p = ssl_add_serverhello_tlsext(s, p, buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
 			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
 			return -1;
 		}
-#endif
 
 		/* do the header */
 		l = (p - d);
@@ -1532,7 +1515,6 @@ dtls1_send_server_certificate(SSL *s)
 	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 int
 dtls1_send_newsession_ticket(SSL *s)
 {
@@ -1638,4 +1620,3 @@ dtls1_send_newsession_ticket(SSL *s)
 	/* SSL3_ST_SW_SESSION_TICKET_B */
 	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
 }
-#endif

@@ -119,11 +119,9 @@
 
 const char tls1_version_str[] = "TLSv1" OPENSSL_VERSION_PTEXT;
 
-#ifndef OPENSSL_NO_TLSEXT
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
     const unsigned char *sess_id, int sesslen,
     SSL_SESSION **psess);
-#endif
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
 	.enc = tls1_enc,
@@ -200,9 +198,7 @@ tls1_new(SSL *s)
 void
 tls1_free(SSL *s)
 {
-#ifndef OPENSSL_NO_TLSEXT
 	free(s->tlsext_session_ticket);
-#endif /* OPENSSL_NO_TLSEXT */
 	ssl3_free(s);
 }
 
@@ -354,7 +350,6 @@ tls1_ec_nid2curve_id(int nid)
 }
 #endif /* OPENSSL_NO_EC */
 
-#ifndef OPENSSL_NO_TLSEXT
 
 /* List of supported signature algorithms and hashes. Should make this
  * customisable at some point, for now include everything we support.
@@ -2315,4 +2310,3 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	return 1;
 }
 
-#endif

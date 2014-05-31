@@ -100,11 +100,9 @@ typedef struct ssl_session_asn1_st {
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
 	ASN1_INTEGER verify_result;
-#ifndef OPENSSL_NO_TLSEXT
 	ASN1_OCTET_STRING tlsext_hostname;
 	ASN1_INTEGER tlsext_tick_lifetime;
 	ASN1_OCTET_STRING tlsext_tick;
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	ASN1_OCTET_STRING psk_identity_hint;
 	ASN1_OCTET_STRING psk_identity;
@@ -118,10 +116,8 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	int v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0, v7 = 0, v8 = 0;
 	unsigned char buf[4], ibuf1[LSIZE2], ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2], ibuf4[LSIZE2], ibuf5[LSIZE2];
-#ifndef OPENSSL_NO_TLSEXT
 	int v6 = 0, v9 = 0, v10 = 0;
 	unsigned char ibuf6[LSIZE2];
-#endif
 #ifndef OPENSSL_NO_COMP
 	unsigned char cbuf;
 	int v11 = 0;
@@ -202,7 +198,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		ASN1_INTEGER_set(&a.verify_result, in->verify_result);
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname) {
 		a.tlsext_hostname.length = strlen(in->tlsext_hostname);
 		a.tlsext_hostname.type = V_ASN1_OCTET_STRING;
@@ -219,7 +214,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.tlsext_tick_lifetime.data = ibuf6;
 		ASN1_INTEGER_set(&a.tlsext_tick_lifetime, in->tlsext_tick_lifetime_hint);
 	}
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint) {
 		a.psk_identity_hint.length = strlen(in->psk_identity_hint);
@@ -248,7 +242,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_len_EXP_opt(&(a.verify_result), i2d_ASN1_INTEGER, 5, v5);
 
-#ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_tick_lifetime_hint > 0)
 		M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER, 9, v9);
 	if (in->tlsext_tick)
@@ -259,7 +252,6 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->compress_meth)
 		M_ASN1_I2D_len_EXP_opt(&(a.comp_id), i2d_ASN1_OCTET_STRING, 11, v11);
 #endif
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
 		M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING, 7, v7);
@@ -284,22 +276,18 @@ i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	v4);
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_put_EXP_opt(&a.verify_result, i2d_ASN1_INTEGER, 5, v5);
-#ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname)
 		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING, 6, v6);
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
 		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING, 7, v7);
 	if (in->psk_identity)
 		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING, 8, v8);
 #endif /* OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_tick_lifetime_hint > 0)
 		M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER, 9, v9);
 	if (in->tlsext_tick)
 		M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING, 10, v10);
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_COMP
 	if (in->compress_meth)
 		M_ASN1_I2D_put_EXP_opt(&(a.comp_id), i2d_ASN1_OCTET_STRING, 11, v11);
@@ -436,7 +424,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 	} else
 		ret->verify_result = X509_V_OK;
 
-#ifndef OPENSSL_NO_TLSEXT
 	os.length = 0;
 	os.data = NULL;
 	M_ASN1_D2I_get_EXP_opt(osp, d2i_ASN1_OCTET_STRING, 6);
@@ -447,7 +434,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		os.length = 0;
 	} else
 		ret->tlsext_hostname = NULL;
-#endif /* OPENSSL_NO_TLSEXT */
 
 #ifndef OPENSSL_NO_PSK
 	os.length = 0;
@@ -473,7 +459,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		ret->psk_identity = NULL;
 #endif /* OPENSSL_NO_PSK */
 
-#ifndef OPENSSL_NO_TLSEXT
 	ai.length = 0;
 	M_ASN1_D2I_get_EXP_opt(aip, d2i_ASN1_INTEGER, 9);
 	if (ai.data != NULL) {
@@ -495,7 +480,6 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		os.length = 0;
 	} else
 		ret->tlsext_tick = NULL;
-#endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_COMP
 	os.length = 0;
 	os.data = NULL;

@@ -382,7 +382,6 @@ dtls1_connect(SSL *s)
 
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
-#ifndef OPENSSL_NO_TLSEXT
 			ret = ssl3_check_finished(s);
 			if (ret <= 0)
 				goto end;
@@ -395,14 +394,12 @@ dtls1_connect(SSL *s)
 				s->init_num = 0;
 				break;
 			}
-#endif
 			/* Check if it is anon DH or PSK */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
 			    !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
 					goto end;
-#ifndef OPENSSL_NO_TLSEXT
 				if (s->tlsext_status_expected)
 					s->state = SSL3_ST_CR_CERT_STATUS_A;
 				else
@@ -411,12 +408,6 @@ dtls1_connect(SSL *s)
 				skip = 1;
 				s->state = SSL3_ST_CR_KEY_EXCH_A;
 			}
-#else
-			} else
-				skip = 1;
-
-			s->state = SSL3_ST_CR_KEY_EXCH_A;
-#endif
 			s->init_num = 0;
 			break;
 
@@ -626,19 +617,16 @@ dtls1_connect(SSL *s)
 				BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->tlsext_ticket_expected)
 					s->s3->tmp.next_state = SSL3_ST_CR_SESSION_TICKET_A;
 				else
-#endif
 
 					s->s3->tmp.next_state = SSL3_ST_CR_FINISHED_A;
 			}
 			s->init_num = 0;
 			break;
 
-#ifndef OPENSSL_NO_TLSEXT
 		case SSL3_ST_CR_SESSION_TICKET_A:
 		case SSL3_ST_CR_SESSION_TICKET_B:
 			ret = ssl3_get_new_session_ticket(s);
@@ -656,7 +644,6 @@ dtls1_connect(SSL *s)
 			s->state = SSL3_ST_CR_KEY_EXCH_A;
 			s->init_num = 0;
 			break;
-#endif
 
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
@@ -787,11 +774,7 @@ dtls1_client_hello(SSL *s)
 		SSL_SESSION *sess = s->session;
 		if ((s->session == NULL) ||
 		    (s->session->ssl_version != s->version) ||
-#ifdef OPENSSL_NO_TLSEXT
-		    !sess->session_id_length ||
-#else
 		    (!sess->session_id_length && !sess->tlsext_tick) ||
-#endif
 		    (s->session->not_resumable)) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
@@ -864,12 +847,10 @@ dtls1_client_hello(SSL *s)
 		}
 		*(p++) = 0; /* Add the NULL method */
 
-#ifndef OPENSSL_NO_TLSEXT
 		if ((p = ssl_add_clienthello_tlsext(s, p, buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
 			SSLerr(SSL_F_DTLS1_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
-#endif		
 
 		l = (p - d);
 		d = buf;

@@ -151,11 +151,9 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
 #include "../crypto/ec/ec_lcl.h"
 #endif /* OPENSSL_NO_EC */
-#endif /* OPENSSL_NO_TLSEXT */
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 
@@ -2383,11 +2381,9 @@ ssl3_clear(SSL *s)
 		EC_KEY_free(s->s3->tmp.ecdh);
 		s->s3->tmp.ecdh = NULL;
 	}
-#ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
 	s->s3->is_probably_safari = 0;
 #endif /* !OPENSSL_NO_EC */
-#endif /* !OPENSSL_NO_TLSEXT */
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
@@ -2561,7 +2557,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (ret);
 		}
 		break;
-#ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
 		if (larg == TLSEXT_NAMETYPE_host_name) {
 			free(s->tlsext_hostname);
@@ -2657,7 +2652,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		ret = 1;
 		break;
 
-#endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
 	}
@@ -2694,12 +2688,10 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 			    (EC_KEY *(*)(SSL *, int, int))fp;
 		}
 		break;
-#ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
 		s->tlsext_debug_cb = (void (*)(SSL *, int , int,
 		    unsigned char *, int, void *))fp;
 		break;
-#endif
 	default:
 		break;
 	}
@@ -2824,7 +2816,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return (0);
 		}
 		break;
-#ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
 		ctx->tlsext_servername_arg = parg;
 		break;
@@ -2865,7 +2856,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return 1;
 		break;
 
-#endif /* !OPENSSL_NO_TLSEXT */
 
 		/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
@@ -2916,7 +2906,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 			cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
 		break;
-#ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->tlsext_servername_callback =
 		    (int (*)(SSL *, int *, void *))fp;
@@ -2938,7 +2927,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		    unsigned char *, EVP_CIPHER_CTX *, HMAC_CTX *, int))fp;
 		break;
 
-#endif
 	default:
 		return (0);
 	}
@@ -3043,7 +3031,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			ok = (alg_k & mask_k) && (alg_a & mask_a);
 		}
 
-#ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
 		if (
 		/*
@@ -3181,7 +3168,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			ok = ok && ec_ok;
 		}
 #endif /* OPENSSL_NO_EC */
-#endif /* OPENSSL_NO_TLSEXT */
 
 		if (!ok)
 			continue;

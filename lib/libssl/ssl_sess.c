@@ -208,7 +208,6 @@ SSL_SESSION_new(void)
 	ss->prev = NULL;
 	ss->next = NULL;
 	ss->compress_meth = 0;
-#ifndef OPENSSL_NO_TLSEXT
 	ss->tlsext_hostname = NULL;
 
 #ifndef OPENSSL_NO_EC
@@ -216,7 +215,6 @@ SSL_SESSION_new(void)
 	ss->tlsext_ecpointformatlist = NULL;
 	ss->tlsext_ellipticcurvelist_length = 0;
 	ss->tlsext_ellipticcurvelist = NULL;
-#endif
 #endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 #ifndef OPENSSL_NO_PSK
@@ -313,13 +311,11 @@ ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return (0);
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		/* If RFC4507 ticket use empty session ID */
 		if (s->tlsext_ticket_expected) {
 			ss->session_id_length = 0;
 			goto sess_id_done;
 		}
-#endif
 		/* Choose which callback will set the session ID */
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		if (s->generate_session_id)
@@ -354,7 +350,6 @@ ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return (0);
 		}
-#ifndef OPENSSL_NO_TLSEXT
 		sess_id_done:
 		if (s->tlsext_hostname) {
 			ss->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
@@ -385,7 +380,6 @@ ssl_get_new_session(SSL *s, int session)
 			ss->tlsext_ellipticcurvelist_length = s->tlsext_ellipticcurvelist_length;
 			memcpy(ss->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 		}
-#endif
 #endif
 	} else {
 		ss->session_id_length = 0;
@@ -433,9 +427,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	SSL_SESSION *ret = NULL;
 	int fatal = 0;
 	int try_session_cache = 1;
-#ifndef OPENSSL_NO_TLSEXT
 	int r;
-#endif
 
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		goto err;
@@ -443,7 +435,6 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	if (len == 0)
 		try_session_cache = 0;
 
-#ifndef OPENSSL_NO_TLSEXT
 	r = tls1_process_ticket(s, session_id, len, limit, &ret); /* sets s->tlsext_ticket_expected */
 	switch (r) {
 	case -1: /* Error during processing */
@@ -459,7 +450,6 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	default:
 		abort();
 	}
-#endif
 
 	if (try_session_cache &&
 		ret == NULL &&
@@ -570,13 +560,11 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	err:
 	if (ret != NULL) {
 		SSL_SESSION_free(ret);
-#ifndef OPENSSL_NO_TLSEXT
 		if (!try_session_cache) {
 			/* The session was from a ticket, so we should
 			 * issue a ticket for the new session */
 			s->tlsext_ticket_expected = 1;
 		}
-#endif
 	}
 	if (fatal)
 		return -1;
@@ -701,7 +689,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 		X509_free(ss->peer);
 	if (ss->ciphers != NULL)
 		sk_SSL_CIPHER_free(ss->ciphers);
-#ifndef OPENSSL_NO_TLSEXT
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);
 #ifndef OPENSSL_NO_EC
@@ -710,7 +697,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	ss->tlsext_ellipticcurvelist_length = 0;
 	free(ss->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
-#endif
 #ifndef OPENSSL_NO_PSK
 	free(ss->psk_identity_hint);
 	free(ss->psk_identity);
@@ -839,7 +825,6 @@ SSL_CTX_get_timeout(const SSL_CTX *s)
 	return (s->session_timeout);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 int
 SSL_set_session_secret_cb(SSL *s, int (*tls_session_secret_cb)(SSL *s, void *secret, int *secret_len,
     STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg), void *arg)
@@ -887,7 +872,6 @@ SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 
 	return 0;
 }
-#endif /* OPENSSL_NO_TLSEXT */
 
 typedef struct timeout_param_st {
 	SSL_CTX *ctx;

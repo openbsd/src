@@ -322,7 +322,6 @@ SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->ctx = ctx;
-#ifndef OPENSSL_NO_TLSEXT
 	s->tlsext_debug_cb = 0;
 	s->tlsext_debug_arg = NULL;
 	s->tlsext_ticket_expected = 0;
@@ -337,7 +336,6 @@ SSL_new(SSL_CTX *ctx)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	s->next_proto_negotiated = NULL;
 # endif
-#endif
 
 	s->verify_result = X509_V_OK;
 
@@ -535,7 +533,6 @@ SSL_free(SSL *s)
 		ssl_cert_free(s->cert);
 	/* Free up if allocated */
 
-#ifndef OPENSSL_NO_TLSEXT
 	free(s->tlsext_hostname);
 	if (s->initial_ctx)
 		SSL_CTX_free(s->initial_ctx);
@@ -550,7 +547,6 @@ SSL_free(SSL *s)
 	if (s->tlsext_ocsp_ids)
 		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
 	free(s->tlsext_ocsp_resp);
-#endif
 
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
@@ -1490,7 +1486,6 @@ err:
 }
 
 
-#ifndef OPENSSL_NO_TLSEXT
 /*
  * Return a servername extension value if provided in Client Hello, or NULL.
  * So far, only host_name types are defined (RFC 3546).
@@ -1648,7 +1643,6 @@ SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s,
 	ctx->next_proto_select_cb_arg = arg;
 }
 # endif
-#endif
 
 int
 SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -1808,7 +1802,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-#ifndef OPENSSL_NO_TLSEXT
 	ret->tlsext_servername_callback = 0;
 	ret->tlsext_servername_arg = NULL;
 	/* Setup RFC4507 ticket keys */
@@ -1824,7 +1817,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->next_protos_advertised_cb = 0;
 	ret->next_proto_select_cb = 0;
 # endif
-#endif
 #ifndef OPENSSL_NO_PSK
 	ret->psk_identity_hint = NULL;
 	ret->psk_client_callback = NULL;
@@ -2842,10 +2834,8 @@ SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
 	if (ssl->ctx == ctx)
 		return (ssl->ctx);
-#ifndef OPENSSL_NO_TLSEXT
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
-#endif
 	if (ssl->cert != NULL)
 		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);

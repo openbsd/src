@@ -316,12 +316,10 @@ ssl3_connect(SSL *s)
 
 			if (s->hit) {
 				s->state = SSL3_ST_CR_FINISHED_A;
-#ifndef OPENSSL_NO_TLSEXT
 				if (s->tlsext_ticket_expected) {
 					/* receive renewed session ticket */
 					s->state = SSL3_ST_CR_SESSION_TICKET_A;
 				}
-#endif
 			} else
 				s->state = SSL3_ST_CR_CERT_A;
 			s->init_num = 0;
@@ -329,7 +327,6 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
-#ifndef OPENSSL_NO_TLSEXT
 			ret = ssl3_check_finished(s);
 			if (ret <= 0)
 				goto end;
@@ -342,7 +339,6 @@ ssl3_connect(SSL *s)
 				s->init_num = 0;
 				break;
 			}
-#endif
 			/* Check if it is anon DH/ECDH or PSK */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth &
 			    SSL_aNULL) &&
@@ -351,7 +347,6 @@ ssl3_connect(SSL *s)
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
 					goto end;
-#ifndef OPENSSL_NO_TLSEXT
 				if (s->tlsext_status_expected)
 					s->state = SSL3_ST_CR_CERT_STATUS_A;
 				else
@@ -360,12 +355,6 @@ ssl3_connect(SSL *s)
 				skip = 1;
 				s->state = SSL3_ST_CR_KEY_EXCH_A;
 			}
-#else
-			} else
-				skip = 1;
-
-			s->state = SSL3_ST_CR_KEY_EXCH_A;
-#endif
 			s->init_num = 0;
 			break;
 
@@ -536,20 +525,17 @@ ssl3_connect(SSL *s)
 					s->s3->delay_buf_pop_ret = 0;
 				}
 			} else {
-#ifndef OPENSSL_NO_TLSEXT
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->tlsext_ticket_expected)
 					s->s3->tmp.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
-#endif
 
 				s->s3->tmp.next_state = SSL3_ST_CR_FINISHED_A;
 			}
 			s->init_num = 0;
 			break;
 
-#ifndef OPENSSL_NO_TLSEXT
 		case SSL3_ST_CR_SESSION_TICKET_A:
 		case SSL3_ST_CR_SESSION_TICKET_B:
 			ret = ssl3_get_new_session_ticket(s);
@@ -567,7 +553,6 @@ ssl3_connect(SSL *s)
 			s->state = SSL3_ST_CR_KEY_EXCH_A;
 			s->init_num = 0;
 			break;
-#endif
 
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
@@ -681,11 +666,7 @@ ssl3_client_hello(SSL *s)
 		SSL_SESSION *sess = s->session;
 		if ((sess == NULL) ||
 		    (sess->ssl_version != s->version) ||
-#ifdef OPENSSL_NO_TLSEXT
-		    !sess->session_id_length ||
-#else
 		    (!sess->session_id_length && !sess->tlsext_tick) ||
-#endif
 		    (sess->not_resumable)) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
@@ -791,7 +772,6 @@ ssl3_client_hello(SSL *s)
 #endif
 		*(p++) = 0; /* Add the NULL method */
 
-#ifndef OPENSSL_NO_TLSEXT
 		/* TLS extensions*/
 		if (ssl_prepare_clienthello_tlsext(s) <= 0) {
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
@@ -804,7 +784,6 @@ ssl3_client_hello(SSL *s)
 			    ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
-#endif
 
 		l = (p - d);
 		d = buf;
@@ -892,7 +871,6 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
 	/*
 	 * Check if we want to resume the session based on external
 	 * pre-shared secret
@@ -907,7 +885,6 @@ ssl3_get_server_hello(SSL *s)
 			pref_cipher : ssl_get_cipher_by_char(s, p + j);
 		}
 	}
-#endif /* OPENSSL_NO_TLSEXT */
 
 	if (j != 0 && j == s->session->session_id_length &&
 	    memcmp(p, s->session->session_id, j) == 0) {
@@ -1033,7 +1010,6 @@ ssl3_get_server_hello(SSL *s)
 	}
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
 	if (s->version >= SSL3_VERSION) {
 		if (!ssl_parse_serverhello_tlsext(s, &p, d, n, &al)) {
@@ -1049,7 +1025,6 @@ ssl3_get_server_hello(SSL *s)
 			goto err;
 		}
 	}
-#endif
 
 	if (p != (d + n)) {
 		/* wrong packet length */
@@ -1876,7 +1851,6 @@ ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 	return (X509_NAME_cmp(*a, *b));
 }
 
-#ifndef OPENSSL_NO_TLSEXT
 int
 ssl3_get_new_session_ticket(SSL *s)
 {
@@ -2018,7 +1992,6 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return (-1);
 }
-#endif
 
 int
 ssl3_get_server_done(SSL *s)
@@ -2930,7 +2903,6 @@ ssl3_send_next_proto(SSL *s)
  * session tickets we have to check the next message to be sure.
  */
 
-#ifndef OPENSSL_NO_TLSEXT
 int
 ssl3_check_finished(SSL *s)
 {
@@ -2953,7 +2925,6 @@ ssl3_check_finished(SSL *s)
 
 	return (1);
 }
-#endif
 
 int
 ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
