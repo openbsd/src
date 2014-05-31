@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2coff.c,v 1.10 2014/01/19 15:39:51 miod Exp $	*/
+/*	$OpenBSD: a2coff.c,v 1.11 2014/05/31 21:04:34 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2013, Miodrag Vallat
  *
@@ -211,11 +211,10 @@ convert_elf(const char *infile, int infd, int outfd, Elf_Ehdr *ehdr)
 	Elf_Addr minaddr, maxaddr;
 	int n, last;
 
-	phdr = (Elf_Phdr *)malloc(ehdr->e_phnum * sizeof(Elf_Phdr));
+	phdr = calloc(ehdr->e_phnum, sizeof(Elf_Phdr));
 	if (phdr == NULL)
-		err(1, "malloc");
+		err(1, "calloc");
 
-	memset(phdr, 0, sizeof phdr);
 	for (n = 0; n < ehdr->e_phnum; n++) {
 		if (lseek(infd, ehdr->e_phoff + n * ehdr->e_phentsize,
 		    SEEK_SET) == (off_t) -1)
