@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.8 2013/06/04 01:20:23 pirofti Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.9 2014/05/31 06:30:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -24,7 +24,6 @@ int	get_hibernate_info_md(union hibernate_info *);
 void	hibernate_flush(void);
 void	hibernate_enter_resume_mapping(vaddr_t, paddr_t, int);
 int	hibernate_inflate_skip(union hibernate_info *, paddr_t);
-void	hibernate_prepare_resume_machdep(union hibernate_info *);
 int	hibernate_suspend(void);
 void	hibernate_switch_stack_machdep(void);
 void	hibernate_resume_machdep(void);

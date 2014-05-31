@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.19 2014/01/10 22:34:41 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.20 2014/05/31 06:30:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -318,40 +318,6 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 		pa = (paddr_t)(phys_page_number * NBPD_L2);
 		hibernate_enter_resume_mapping(page, pa, 1);
 	}
-}
-
-/*
- * MD-specific resume preparation (creating resume time pagetables,
- * stacks, etc).
- */
-void
-hibernate_prepare_resume_machdep(union hibernate_info *hib_info)
-{
-	paddr_t pa, piglet_end;
-	vaddr_t va;
-
-	/*
-	 * At this point, we are sure that the piglet's phys space is going to
-	 * have been unused by the suspending kernel, but the vaddrs used by
-	 * the suspending kernel may or may not be available to us here in the
-	 * resuming kernel, so we allocate a new range of VAs for the piglet.
-	 * Those VAs will be temporary and will cease to exist as soon as we
-	 * switch to the resume PT, so we need to ensure that any VAs required
-	 * during inflate are also entered into that map.
-	 */
-
-        hib_info->piglet_va = (vaddr_t)km_alloc(HIBERNATE_CHUNK_SIZE*3,
-	    &kv_any, &kp_none, &kd_nowait);
-        if (!hib_info->piglet_va)
-                panic("Unable to allocate vaddr for hibernate resume piglet\n");
-
-	piglet_end = hib_info->piglet_pa + HIBERNATE_CHUNK_SIZE*3;
-
-	for (pa = hib_info->piglet_pa,va = hib_info->piglet_va;
-	    pa <= piglet_end; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, VM_PROT_ALL);
-
-	pmap_activate(curproc);
 }
 
 /*
