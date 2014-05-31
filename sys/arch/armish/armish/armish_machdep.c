@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.24 2014/05/30 13:46:16 mpi Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.25 2014/05/31 15:49:28 mpi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -274,8 +274,9 @@ boot(int howto)
 	if_downall();
 
 	uvm_shutdown();
-	splhigh();		/* Disable interrupts. */
-	cold = 1;
+
+	/* Say NO to interrupts */
+	splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
