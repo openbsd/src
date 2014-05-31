@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2014/04/18 16:38:28 claudio Exp $
+# $OpenBSD: Makefile,v 1.4 2014/05/31 14:15:53 claudio Exp $
 
 RDOMAIN?=	5
 
@@ -155,6 +155,21 @@ rttest${n}:
 	${RCMD} add -priority 17 10.8.1/24 192.0.2.2
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+n=	12
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} change -mpath 10.8.1/24 192.0.2.4
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+n=	13
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add -mpath 10.8.1/24 192.0.2.3
+	${RCMD} add -mpath 10.8.1/24 192.0.2.4
+	${RCMD} change -mpath 10.8.1/24 192.0.2.5 && exit 1 || exit 0
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
