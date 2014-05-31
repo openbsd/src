@@ -536,10 +536,8 @@ SSL_free(SSL *s)
 	free(s->tlsext_hostname);
 	if (s->initial_ctx)
 		SSL_CTX_free(s->initial_ctx);
-#ifndef OPENSSL_NO_EC
 	free(s->tlsext_ecpointformatlist);
 	free(s->tlsext_ellipticcurvelist);
-#endif /* OPENSSL_NO_EC */
 	free(s->tlsext_opaque_prf_input);
 	if (s->tlsext_ocsp_exts)
 		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
@@ -2120,7 +2118,6 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #define ku_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
 
-#ifndef OPENSSL_NO_EC
 
 int
 ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
@@ -2190,7 +2187,6 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 	/* all checks are ok */
 }
 
-#endif
 
 /* THIS NEEDS CLEANING UP */
 CERT_PKEY *

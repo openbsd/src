@@ -209,7 +209,6 @@ tls1_clear(SSL *s)
 	s->version = s->method->version;
 }
 
-#ifndef OPENSSL_NO_EC
 
 static int nid_list[] = {
 	NID_sect163k1,		/* sect163k1 (1) */
@@ -348,7 +347,6 @@ tls1_ec_nid2curve_id(int nid)
 		return 0;
 	}
 }
-#endif /* OPENSSL_NO_EC */
 
 
 /* List of supported signature algorithms and hashes. Should make this
@@ -460,7 +458,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	}
 
 
-#ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist != NULL &&
 	    s->version != DTLS1_VERSION) {
 		/* Add TLS extension ECPointFormats to the ClientHello message */
@@ -515,7 +512,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		    s->tlsext_ellipticcurvelist_length);
 		ret += s->tlsext_ellipticcurvelist_length;
 	}
-#endif /* OPENSSL_NO_EC */
 
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
 		int ticklen;
@@ -743,7 +739,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		ret += el;
 	}
 
-#ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist != NULL &&
 	    s->version != DTLS1_VERSION) {
 		/* Add TLS extension ECPointFormats to the ServerHello message */
@@ -770,7 +765,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 
 	}
 	/* Currently the server should not respond with a SupportedCurves extension */
-#endif /* OPENSSL_NO_EC */
 
 	if (s->tlsext_ticket_expected &&
 	    !(SSL_get_options(s) & SSL_OP_NO_TICKET)) {
@@ -875,7 +869,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	return ret;
 }
 
-#ifndef OPENSSL_NO_EC
 /* ssl_check_for_safari attempts to fingerprint Safari using OS X
  * SecureTransport using the TLS extension block in |d|, of length |n|.
  * Safari, since 10.6, sends exactly these extensions, in this order:
@@ -956,7 +949,6 @@ ssl_check_for_safari(SSL *s, const unsigned char *data, const unsigned char *d,
 
 	s->s3->is_probably_safari = 1;
 }
-#endif /* !OPENSSL_NO_EC */
 
 int
 ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
@@ -975,10 +967,8 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 	s->s3->next_proto_neg_seen = 0;
 #endif
 
-#ifndef OPENSSL_NO_EC
 	if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 		ssl_check_for_safari(s, data, d, n);
-#endif /* !OPENSSL_NO_EC */
 
 	if (data >= (d + n - 2))
 		goto ri_check;
@@ -1095,7 +1085,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 		}
 
-#ifndef OPENSSL_NO_EC
 		else if (type == TLSEXT_TYPE_ec_point_formats &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
@@ -1142,7 +1131,6 @@ ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 				memcpy(s->session->tlsext_ellipticcurvelist, sdata, ellipticcurvelist_length);
 			}
 		}
-#endif /* OPENSSL_NO_EC */
 #ifdef TLSEXT_TYPE_opaque_prf_input
 		else if (type == TLSEXT_TYPE_opaque_prf_input &&
 		    s->version != DTLS1_VERSION) {
@@ -1408,7 +1396,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			tlsext_servername = 1;
 
 		}
-#ifndef OPENSSL_NO_EC
 		else if (type == TLSEXT_TYPE_ec_point_formats &&
 		    s->version != DTLS1_VERSION) {
 			unsigned char *sdata = data;
@@ -1430,7 +1417,6 @@ ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
 			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 		}
-#endif /* OPENSSL_NO_EC */
 		else if (type == TLSEXT_TYPE_session_ticket) {
 			if (s->tls_session_ticket_ext_cb &&
 			    !s->tls_session_ticket_ext_cb(s, data, size, s->tls_session_ticket_ext_cb_arg)) {
@@ -1576,7 +1562,6 @@ ri_check:
 int
 ssl_prepare_clienthello_tlsext(SSL *s)
 {
-#ifndef OPENSSL_NO_EC
 	/* If we are client and using an elliptic curve cryptography cipher suite, send the point formats
 	 * and elliptic curves we support.
 	 */
@@ -1624,7 +1609,6 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 			s2n(id, j);
 		}
 	}
-#endif /* OPENSSL_NO_EC */
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	{
@@ -1667,7 +1651,6 @@ ssl_prepare_clienthello_tlsext(SSL *s)
 int
 ssl_prepare_serverhello_tlsext(SSL *s)
 {
-#ifndef OPENSSL_NO_EC
 	/* If we are server and using an ECC cipher suite, send the point formats we support
 	 * if the client sent us an ECPointsFormat extension.  Note that the server is not
 	 * supposed to send an EllipticCurves extension.
@@ -1689,7 +1672,6 @@ ssl_prepare_serverhello_tlsext(SSL *s)
 		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
 		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 	}
-#endif /* OPENSSL_NO_EC */
 
 	return 1;
 }
@@ -1700,14 +1682,12 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 	int ret = SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
 
-#ifndef OPENSSL_NO_EC
 	/* The handling of the ECPointFormats extension is done elsewhere, namely in
 	 * ssl3_choose_cipher in s3_lib.c.
 	 */
 	/* The handling of the EllipticCurves extension is done elsewhere, namely in
 	 * ssl3_choose_cipher in s3_lib.c.
 	 */
-#endif
 
 	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
 		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);
@@ -1850,7 +1830,6 @@ ssl_check_serverhello_tlsext(SSL *s)
 	int ret = SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
 
-#ifndef OPENSSL_NO_EC
 	/* If we are client and using an elliptic curve cryptography cipher
 	 * suite, then if server returns an EC point formats lists extension
 	 * it must contain uncompressed.
@@ -1879,7 +1858,6 @@ ssl_check_serverhello_tlsext(SSL *s)
 		}
 	}
 	ret = SSL_TLSEXT_ERR_OK;
-#endif /* OPENSSL_NO_EC */
 
 	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
 		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);

@@ -448,14 +448,12 @@
 #define CERT_PRIVATE_KEY	2
 */
 
-#ifndef OPENSSL_NO_EC
 /* From ECC-TLS draft, used in encoding the curve type in 
  * ECParameters
  */
 #define EXPLICIT_PRIME_CURVE_TYPE  1   
 #define EXPLICIT_CHAR2_CURVE_TYPE  2
 #define NAMED_CURVE_TYPE           3
-#endif  /* OPENSSL_NO_EC */
 
 typedef struct cert_pkey_st {
 	X509 *x509;
@@ -830,10 +828,8 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
-#ifndef OPENSSL_NO_EC
 int tls1_ec_curve_id2nid(int curve_id);
 int tls1_ec_nid2curve_id(int nid);
-#endif /* OPENSSL_NO_EC */
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p,
     unsigned char *limit);

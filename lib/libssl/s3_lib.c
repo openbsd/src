@@ -151,9 +151,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_EC
 #include "../crypto/ec/ec_lcl.h"
-#endif /* OPENSSL_NO_EC */
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 
@@ -2381,9 +2379,7 @@ ssl3_clear(SSL *s)
 		EC_KEY_free(s->s3->tmp.ecdh);
 		s->s3->tmp.ecdh = NULL;
 	}
-#ifndef OPENSSL_NO_EC
 	s->s3->is_probably_safari = 0;
-#endif /* !OPENSSL_NO_EC */
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
@@ -3031,7 +3027,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			ok = (alg_k & mask_k) && (alg_a & mask_a);
 		}
 
-#ifndef OPENSSL_NO_EC
 		if (
 		/*
 		 * if we are considering an ECC cipher suite that uses our
@@ -3167,7 +3162,6 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			}
 			ok = ok && ec_ok;
 		}
-#endif /* OPENSSL_NO_EC */
 
 		if (!ok)
 			continue;

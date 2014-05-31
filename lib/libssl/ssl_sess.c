@@ -210,12 +210,10 @@ SSL_SESSION_new(void)
 	ss->compress_meth = 0;
 	ss->tlsext_hostname = NULL;
 
-#ifndef OPENSSL_NO_EC
 	ss->tlsext_ecpointformatlist_length = 0;
 	ss->tlsext_ecpointformatlist = NULL;
 	ss->tlsext_ellipticcurvelist_length = 0;
 	ss->tlsext_ellipticcurvelist = NULL;
-#endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 #ifndef OPENSSL_NO_PSK
 	ss->psk_identity_hint = NULL;
@@ -359,7 +357,6 @@ ssl_get_new_session(SSL *s, int session)
 				return 0;
 			}
 		}
-#ifndef OPENSSL_NO_EC
 		if (s->tlsext_ecpointformatlist) {
 			free(ss->tlsext_ecpointformatlist);
 			if ((ss->tlsext_ecpointformatlist = malloc(s->tlsext_ecpointformatlist_length)) == NULL) {
@@ -380,7 +377,6 @@ ssl_get_new_session(SSL *s, int session)
 			ss->tlsext_ellipticcurvelist_length = s->tlsext_ellipticcurvelist_length;
 			memcpy(ss->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 		}
-#endif
 	} else {
 		ss->session_id_length = 0;
 	}
@@ -691,12 +687,10 @@ SSL_SESSION_free(SSL_SESSION *ss)
 		sk_SSL_CIPHER_free(ss->ciphers);
 	free(ss->tlsext_hostname);
 	free(ss->tlsext_tick);
-#ifndef OPENSSL_NO_EC
 	ss->tlsext_ecpointformatlist_length = 0;
 	free(ss->tlsext_ecpointformatlist);
 	ss->tlsext_ellipticcurvelist_length = 0;
 	free(ss->tlsext_ellipticcurvelist);
-#endif /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
 	free(ss->psk_identity_hint);
 	free(ss->psk_identity);

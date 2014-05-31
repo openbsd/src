@@ -505,12 +505,10 @@ struct ssl_session_st {
 	 * efficient and to implement a maximum cache size. */
 	struct ssl_session_st *prev, *next;
 	char *tlsext_hostname;
-#ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist; /* peer's list */
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist; /* peer's list */
-#endif /* OPENSSL_NO_EC */
 	/* RFC4507 info */
 	unsigned char *tlsext_tick;	/* Session ticket */
 	size_t tlsext_ticklen;		/* Session ticket length */
@@ -1204,12 +1202,10 @@ struct ssl_st {
 
 	/* RFC4507 session ticket expected to be received or sent */
 	int tlsext_ticket_expected;
-#ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist; /* our list */
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist; /* our list */
-#endif /* OPENSSL_NO_EC */
 
 	/* draft-rescorla-tls-opaque-prf-input-00.txt information to be used for handshakes */
 	void *tlsext_opaque_prf_input;
