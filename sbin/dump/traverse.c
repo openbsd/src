@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.32 2014/05/27 12:35:40 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.33 2014/05/31 11:28:44 krw Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -830,10 +830,10 @@ loop:
 	}
 	if (cnt == -1)
 		msg("read error from %s: %s: [block %lld]: count=%d\n",
-			disk, strerror(errno), blkno, size);
+		    disk, strerror(errno), (long long)blkno, size);
 	else
 		msg("short read error from %s: [block %lld]: count=%d, "
-		    "got=%d\n", disk, blkno, size, cnt);
+		    "got=%d\n", disk, (long long)blkno, size, cnt);
 	if (++breaderrors > BREADEMAX) {
 		msg("More than %d block read errors from %s\n",
 			BREADEMAX, disk);
