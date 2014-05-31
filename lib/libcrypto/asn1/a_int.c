@@ -347,6 +347,7 @@ ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
 	long d;
 
 	a->type = V_ASN1_INTEGER;
+	/* XXX ssl/ssl_asn1.c:i2d_SSL_SESSION() depends upon this bound vae */
 	if (a->length < (int)(sizeof(long) + 1)) {
 		free(a->data);
 		a->data = calloc(1, sizeof(long) + 1);
