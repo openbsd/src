@@ -2409,7 +2409,7 @@ ssl3_clear(SSL *s)
 	s->s3->in_read_app_data = 0;
 	s->version = SSL3_VERSION;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	free(s->next_proto_negotiated);
 	s->next_proto_negotiated = NULL;
 	s->next_proto_negotiated_len = 0;
@@ -2972,11 +2972,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER		*c, *ret = NULL;
 	STACK_OF(SSL_CIPHER)	*prio, *allow;
 	int			 i, ii, ok;
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_EC)
 	unsigned int j;
 	int ec_ok, ec_nid;
 	unsigned char ec_search1 = 0, ec_search2 = 0;
-#endif
 	CERT *cert;
 	unsigned long alg_k, alg_a, mask_k, mask_a, emask_k, emask_a;
 
@@ -3167,14 +3165,12 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			continue;
 		ii = sk_SSL_CIPHER_find(allow, c);
 		if (ii >= 0) {
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLSEXT)
 			if ((alg_k & SSL_kEECDH) &&
 			    (alg_a & SSL_aECDSA) && s->s3->is_probably_safari) {
 				if (!ret)
 					ret = sk_SSL_CIPHER_value(allow, ii);
 				continue;
 			}
-#endif
 			ret = sk_SSL_CIPHER_value(allow, ii);
 			break;
 		}

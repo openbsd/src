@@ -553,7 +553,7 @@ SSL_free(SSL *s)
 		SSL_CTX_free(s->ctx);
 
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	free(s->next_proto_negotiated);
 #endif
 

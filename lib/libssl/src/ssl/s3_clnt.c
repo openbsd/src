@@ -461,7 +461,7 @@ ssl3_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
+#ifdef OPENSSL_NO_NEXTPROTONEG
 			s->state = SSL3_ST_CW_FINISHED_A;
 #else
 			if (s->s3->next_proto_neg_seen)
@@ -494,7 +494,7 @@ ssl3_connect(SSL *s)
 
 			break;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_NEXTPROTONEG
 		case SSL3_ST_CW_NEXT_PROTO_A:
 		case SSL3_ST_CW_NEXT_PROTO_B:
 			ret = ssl3_send_next_proto(s);
@@ -2871,7 +2871,7 @@ err:
 	return (0);
 }
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#ifndef OPENSSL_NO_NEXTPROTONEG
 int
 ssl3_send_next_proto(SSL *s)
 {
@@ -2895,7 +2895,7 @@ ssl3_send_next_proto(SSL *s)
 
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
 }
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
+#endif /* !OPENSSL_NO_NEXTPROTONEG */
 
 /*
  * Check to see if handshake is full or resumed. Usually this is just a
