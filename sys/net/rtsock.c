@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.146 2014/05/27 19:38:15 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.147 2014/05/31 15:36:44 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -619,31 +619,40 @@ route_output(struct mbuf *m, ...)
 			goto flush;
 		}
 #ifndef SMALL_KERNEL
-		/*
-		 * for RTM_CHANGE/LOCK, if we got multipath routes,
-		 * we require users to specify a matching RTAX_GATEWAY.
-		 *
-		 * for RTM_GET, info.rti_info[RTAX_GATEWAY] is optional
-		 * even with multipath.
-		 */
 		if (rn_mpath_capable(rnh)) {
-			rt = rt_mpath_matchgate(rt,
-			    info.rti_info[RTAX_GATEWAY], prio);
+			/* first find the right priority */
+			rt = rt_mpath_matchgate(rt, NULL, prio);
 			if (!rt) {
 				error = ESRCH;
 				goto flush;
 			}
-
 			/*
-			 * only RTM_GET may use an empty gateway
-			 * on multipath routes
+			 * For RTM_CHANGE/LOCK, if we got multipath routes,
+			 * a matching RTAX_GATEWAY is required.
+			 * OR
+			 * If a gateway is specified then RTM_GET and
+			 * RTM_LOCK must match the gateway no matter
+			 * what even in the non multipath case.
 			 */
-			if (!info.rti_info[RTAX_GATEWAY] &&
-			    rt->rt_flags & RTF_MPATH &&
-			    rtm->rtm_type != RTM_GET) {
-				rt = NULL;
-				error = ESRCH;
-				goto flush;
+			if ((rt->rt_flags & RTF_MPATH) ||
+			    (info.rti_info[RTAX_GATEWAY] && rtm->rtm_type !=
+			    RTM_CHANGE)) {
+				rt = rt_mpath_matchgate(rt,
+				    info.rti_info[RTAX_GATEWAY], prio);
+				if (!rt) {
+					error = ESRCH;
+					goto flush;
+				}
+				/*
+				 * only RTM_GET may use an empty gateway
+				 * on multipath routes
+				 */
+				if (!info.rti_info[RTAX_GATEWAY] &&
+				    rtm->rtm_type != RTM_GET) {
+					rt = NULL;
+					error = ESRCH;
+					goto flush;
+				}
 			}
 			rn = (struct radix_node *)rt;
 		}
