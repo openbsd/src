@@ -700,9 +700,9 @@ OPENSSL_showfatal(const char *fmta, ...)
 {
 	va_list ap;
 
-	va_start (ap, fmta);
-	vfprintf (stderr, fmta, ap);
-	va_end (ap);
+	va_start(ap, fmta);
+	vfprintf(stderr, fmta, ap);
+	va_end(ap);
 }
 
 void
