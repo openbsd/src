@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.91 2014/05/29 08:00:24 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.92 2014/05/31 04:36:59 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1009,8 +1009,11 @@ hibernate_compare_signature(union hibernate_info *mine,
 		if ((mine->ranges[i].base != disk->ranges[i].base) ||
 		    (mine->ranges[i].end != disk->ranges[i].end) ) {
 			DPRINTF("hib range %d mismatch [%p-%p != %p-%p]\n",
-				i, mine->ranges[i].base, mine->ranges[i].end,
-				disk->ranges[i].base, disk->ranges[i].end);
+				i,
+				(void *)mine->ranges[i].base,
+				(void *)mine->ranges[i].end,
+				(void *)disk->ranges[i].base,
+				(void *)disk->ranges[i].end);
 			return (1);
 		}
 	}
