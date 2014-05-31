@@ -1,4 +1,19 @@
-/*	$OpenBSD: sig_machdep.c,v 1.18 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.19 2014/05/31 11:27:50 miod Exp $	*/
+/*
+ * Copyright (c) 2014 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -54,8 +69,14 @@
 #include <sys/errno.h>
 
 #include <machine/reg.h>
+#ifdef M88100
+#include <machine/m88100.h>
+#include <machine/trap.h>
+#endif
 
 #include <uvm/uvm_extern.h>
+
+vaddr_t	local_stack_frame(struct trapframe *, size_t);
 
 struct sigstate {
 	int		 ss_flags;	/* which of the following are valid */
@@ -90,30 +111,33 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	struct trapframe *tf;
 	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigframe *fp;
-	int fsize;
+	size_t fsize;
 	struct sigframe sf;
 	vaddr_t addr;
 
 	tf = p->p_md.md_tf;
 
+	if (psp->ps_siginfo & sigmask(sig))
+		fsize = sizeof(struct sigframe);
+	else
+		fsize = offsetof(struct sigframe, sf_si);
+
 	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in data space, the
-	 * call to grow() is a nop, and the copyout()
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
+	 * Allocate and validate space for the signal handler context.
+	 * Note that if the stack is in data space, the call to grow()
+	 * will be a nop, and the copyout() will fail if the process has
+	 * not already allocated the space.
 	 */
-	fsize = sizeof(struct sigframe);
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
 					 p->p_sigstk.ss_size - fsize);
 	else
-		fp = (struct sigframe *)(tf->tf_r[31] - fsize);
+		fp = (struct sigframe *)local_stack_frame(tf, fsize);
 
-	/* make sure the frame is aligned on a 8 byte boundary */
-	if (((vaddr_t)fp & 0x07) != 0)
-		fp = (struct sigframe *)((vaddr_t)fp & ~0x07);
+	/* make sure the frame is aligned on a proper stack boundary */
+	if (((vaddr_t)fp & _STACKALIGNBYTES) != 0)
+		fp = (struct sigframe *)((vaddr_t)fp & ~_STACKALIGNBYTES);
 
 	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (vaddr_t)fp);
@@ -121,19 +145,19 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		       p->p_pid, sig, &sf, fp, &fp->sf_sc);
 #endif
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	bzero(&sf, sizeof(sf));
+	bzero(&sf, fsize);
 	sf.sf_scp = &fp->sf_sc;
 	sf.sf_sc.sc_mask = mask;
 
-	if (psp->ps_siginfo & sigmask(sig)) {
+	if (psp->ps_siginfo & sigmask(sig))
 		initsiginfo(&sf.sf_si, sig, code, type, val);
-	}
 
 	/*
 	 * Copy the whole user context into signal context that we
@@ -142,7 +166,41 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	bcopy((const void *)&tf->tf_regs, (void *)&sf.sf_sc.sc_regs,
 	    sizeof(sf.sf_sc.sc_regs));
 
-	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf)) {
+#ifdef M88100
+	if (CPU_IS88100) {
+		/*
+		 * Rewind the pipeline one instruction, in order to
+		 * reexecute the faulting instruction upon sigreturn,
+		 * if we are sure the instruction execution has not
+		 * completed.
+		 *
+		 * The manual hints the valid bit in XIP should be
+		 * enough, but the description of each exception (and
+		 * the actual observed behaviour) disagree.
+		 *
+		 * Note that the values below are vector offset (in
+		 * quadword units), matching those used in eh.S, rather
+		 * than the logical T_xxx values.
+		 */
+		switch (tf->tf_vector) {
+		case 2:		/* instruction access exception */
+		case 3:		/* data access exception */
+		case 4:		/* misaligned access exception */
+		case 5:		/* unimplemented opcode exception */
+		case 6:		/* privilege violation exception */
+		case 7:		/* bounds check violation exception */
+		case 8:		/* illegal integer divide exception */
+		case 9:		/* integer overflow exception */
+		case 114:	/* FPU precise exception */
+		case 504:	/* single-step breakpoint */
+		case 511:	/* breakpoint */
+			m88100_rewind_insn((struct reg *)&sf.sf_sc.sc_regs);
+			break;
+		}
+	}
+#endif
+
+	if (copyout((caddr_t)&sf, (caddr_t)fp, fsize)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -167,9 +225,8 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	}
 #endif
 #ifdef M88110
-	if (CPU_IS88110) {
+	if (CPU_IS88110)
 		tf->tf_exip = (addr & XIP_ADDR);
-	}
 #endif
 
 #ifdef DEBUG
@@ -186,8 +243,6 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
  * carefully to make sure that the user has not modified the psl to gain
  * improper privileges or to cause a machine fault.
  */
-
-/* ARGSUSED */
 int
 sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
@@ -201,7 +256,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	scp = (struct sigcontext *)SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if (((vaddr_t)scp & 3) != 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(struct sigcontext)))
@@ -222,13 +277,61 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	 */
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
+#ifdef M88100
+	if (CPU_IS88100) {
+		/*
+		 * If we are returning from a signal handler triggered by
+		 * a data access exception, the interrupted access has
+		 * never been performed, and will not be reissued upon
+		 * returning to userland.
+		 *
+		 * We can't simply call data_access_emulation(), for
+		 * it might fault again. Instead, we invoke trap()
+		 * again, which will either trigger another signal,
+		 * or end up invoking data_access_emulation if safe.
+		 */
+		if (ISSET(tf->tf_dmt0, DMT_VALID))
+			m88100_trap(T_DATAFLT, tf);
+	}
+#endif
+
 	/*
-	 * We really want to return to the instruction pointed to by
-	 * the sigcontext.  However, due to the way exceptions work
-	 * on 88110, returning EJUSTRETURN will cause m88110_syscall()
-	 * to skip one instruction.  We avoid this by returning
-	 * ERESTART, which will indeed cause the instruction pointed
-	 * to by exip to be run.
+	 * We really want to return to the instruction pointed to by the
+	 * sigcontext.  However, due to the way exceptions work on 88110,
+	 * returning EJUSTRETURN will cause m88110_syscall() to skip one
+	 * instruction.  We avoid this by returning ERESTART, which will
+	 * indeed cause the instruction pointed to by exip to be run
+	 * again.
 	 */
-	return (CPU_IS88100 ? EJUSTRETURN : ERESTART);
+	return CPU_IS88100 ? EJUSTRETURN : ERESTART;
+}
+
+/*
+ * Find out a safe place on the process' stack to put the sigframe struct.
+ * While on 88110, this is straightforward, on 88100 we need to be
+ * careful and not stomp over potential uncompleted data accesses, which
+ * we will want to be able to perform upon sigreturn().
+ */
+vaddr_t
+local_stack_frame(struct trapframe *tf, size_t fsize)
+{
+	vaddr_t frame;
+
+	frame = tf->tf_r[31] - fsize;
+
+#ifdef M88100
+	if (CPU_IS88100 && ISSET(tf->tf_dmt0, DMT_VALID)) {
+		if (/* ISSET(tf->tf_dmt0, DMT_VALID) && */
+		    tf->tf_dma0 >= frame && tf->tf_dma0 < tf->tf_r[31])
+			frame = tf->tf_dma0 - fsize;
+		if (ISSET(tf->tf_dmt1, DMT_VALID) &&
+		    tf->tf_dma1 >= frame && tf->tf_dma1 < tf->tf_r[31])
+			frame = tf->tf_dma1 - fsize;
+		if (ISSET(tf->tf_dmt2, DMT_VALID) &&
+		    tf->tf_dma2 >= frame && tf->tf_dma2 < tf->tf_r[31])
+			frame = tf->tf_dma2 - fsize;
+	}
+#endif
+
+	return frame;
 }

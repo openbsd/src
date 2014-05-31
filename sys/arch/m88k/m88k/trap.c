@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2014/05/31 11:19:06 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2014/05/31 11:27:50 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -575,13 +575,11 @@ maysigfpe:
 				p->p_md.md_bp1va = 0;
 			}
 
-			m88100_rewind_insn(&(frame->tf_regs));
 			frame->tf_sxip = pc | NIP_V;
 			sig = SIGTRAP;
 			fault_type = TRAP_BRKPT;
 		}
 #else
-		m88100_rewind_insn(&(frame->tf_regs));
 		sig = SIGTRAP;
 		fault_type = TRAP_TRACE;
 #endif
