@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.19 2014/05/31 11:27:50 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.20 2014/06/01 10:40:07 miod Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -129,18 +129,16 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 * not already allocated the space.
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
-	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
-					 p->p_sigstk.ss_size - fsize);
-	else
-		fp = (struct sigframe *)local_stack_frame(tf, fsize);
+	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig))) {
+		addr = ((vaddr_t)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size - fsize) & ~_STACKALIGNBYTES;
+	} else
+		addr = local_stack_frame(tf, fsize);
 
-	/* make sure the frame is aligned on a proper stack boundary */
-	if (((vaddr_t)fp & _STACKALIGNBYTES) != 0)
-		fp = (struct sigframe *)((vaddr_t)fp & ~_STACKALIGNBYTES);
+	if (addr <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
+		(void)uvm_grow(p, addr);
 
-	if ((vaddr_t)fp <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, (vaddr_t)fp);
+	fp = (struct sigframe *)addr;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -317,19 +315,19 @@ local_stack_frame(struct trapframe *tf, size_t fsize)
 {
 	vaddr_t frame;
 
-	frame = tf->tf_r[31] - fsize;
+	frame = (tf->tf_r[31] - fsize) & ~_STACKALIGNBYTES;
 
 #ifdef M88100
 	if (CPU_IS88100 && ISSET(tf->tf_dmt0, DMT_VALID)) {
 		if (/* ISSET(tf->tf_dmt0, DMT_VALID) && */
 		    tf->tf_dma0 >= frame && tf->tf_dma0 < tf->tf_r[31])
-			frame = tf->tf_dma0 - fsize;
+			frame = (tf->tf_dma0 - fsize) & ~_STACKALIGNBYTES;
 		if (ISSET(tf->tf_dmt1, DMT_VALID) &&
 		    tf->tf_dma1 >= frame && tf->tf_dma1 < tf->tf_r[31])
-			frame = tf->tf_dma1 - fsize;
+			frame = (tf->tf_dma1 - fsize) & ~_STACKALIGNBYTES;
 		if (ISSET(tf->tf_dmt2, DMT_VALID) &&
 		    tf->tf_dma2 >= frame && tf->tf_dma2 < tf->tf_r[31])
-			frame = tf->tf_dma2 - fsize;
+			frame = (tf->tf_dma2 - fsize) & ~_STACKALIGNBYTES;
 	}
 #endif
 
