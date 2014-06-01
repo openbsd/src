@@ -118,7 +118,7 @@ $define|true|[yY]*)
 	;;
 	esac
 	case "$osvers" in
-	[012].*|3.[0-5])
+	[012].*|3.[0-6])
         	# Broken up to OpenBSD 3.6, fixed in OpenBSD 3.7
 		d_getservbyname_r=$undef ;;
 	esac
