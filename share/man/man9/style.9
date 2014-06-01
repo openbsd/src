@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.57 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: style.9,v 1.58 2014/06/01 15:44:09 deraadt Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: June 1 2014 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -122,13 +122,6 @@ Functions that are used locally in more than one module go into a
 separate header file, e.g.,
 .Pa extern.h .
 .Pp
-Use of the
-.Li __P
-macro has been deprecated.
-It is allowed in code imported from other sources but should not be
-used in native
-.Ox
-code.
 Prototypes should not have variable names associated with the types; i.e.,
 .Bd -literal -offset indent
 void	function(int);
