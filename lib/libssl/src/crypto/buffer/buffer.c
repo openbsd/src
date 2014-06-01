@@ -88,7 +88,7 @@ BUF_MEM_free(BUF_MEM *a)
 		return;
 
 	if (a->data != NULL) {
-		memset(a->data, 0, (unsigned int)a->max);
+		memset(a->data, 0, a->max);
 		free(a->data);
 	}
 	free(a);
