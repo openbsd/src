@@ -458,16 +458,6 @@ main(int argc, char *argv[])
 
 	CRYPTO_set_locking_callback(lock_dbg_cb);
 
-	/* enable memory leak checking unless explicitly disabled */
-	if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-		CRYPTO_malloc_debug_init();
-		CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-	} else {
-		/* OPENSSL_DEBUG_MEMORY=off */
-		CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-	}
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
 	bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE|BIO_FP_TEXT);
 
 	argc--;
@@ -2148,7 +2138,7 @@ psk_client_callback(SSL *ssl, const char *hint, char *identity,
 	unsigned int psk_len = 0;
 
 	ret = snprintf(identity, max_identity_len, "Client_identity");
-	if (ret >= max_identity_len || ret == -1)
+	if (ret == -1 || (unsigned int)ret >= max_identity_len)
 		goto out_err;
 	if (debug)
 		fprintf(stderr, "client: created identity '%s' len=%d\n", identity, ret);
