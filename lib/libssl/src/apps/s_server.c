@@ -391,7 +391,7 @@ sv_usage(void)
 	BIO_printf(bio_err, " -crl_check    - check the peer certificate has not been revoked by its CA.\n" \
 	    "                 The CRL(s) are appended to the certificate file\n");
 	BIO_printf(bio_err, " -crl_check_all - check the peer certificate has not been revoked by its CA\n" \
-	    "                 or any other CRL in the CA chain. CRL(s) are appened to the\n" \
+	    "                 or any other CRL in the CA chain. CRL(s) are appended to the\n" \
 	    "                 the certificate file.\n");
 	BIO_printf(bio_err, " -certform arg - certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err, " -key arg      - Private Key file to use, in cert file if\n");
@@ -421,7 +421,7 @@ sv_usage(void)
 	BIO_printf(bio_err, " -nocert       - Don't use any certificates (Anon-DH)\n");
 	BIO_printf(bio_err, " -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err, " -serverpref   - Use server's cipher preferences\n");
-	BIO_printf(bio_err, " -quiet        - No server output\n");
+	BIO_printf(bio_err, " -quiet        - Inhibit printing of session and certificate information\n");
 	BIO_printf(bio_err, " -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err, " -psk_hint arg - PSK identity hint to use\n");
