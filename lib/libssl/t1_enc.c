@@ -537,12 +537,12 @@ err2:
 int
 tls1_setup_key_block(SSL *s)
 {
-	unsigned char *p1, *p2 = NULL;
-	const EVP_CIPHER *c;
-	const EVP_MD *hash;
-	int num;
-	SSL_COMP *comp;
+	unsigned char *key_block, *tmp_block = NULL;
 	int mac_type = NID_undef, mac_secret_size = 0;
+	int key_block_len, key_len, iv_len;
+	const EVP_CIPHER *cipher;
+	const EVP_MD *hash;
+	SSL_COMP *comp;
 	int ret = 0;
 
 	if (s->s3->tmp.key_block_length != 0)
@@ -554,41 +554,48 @@ tls1_setup_key_block(SSL *s)
 		return (0);
 	}
 
-	if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type,
+	if (!ssl_cipher_get_evp(s->session, &cipher, &hash, &mac_type,
 	    &mac_secret_size)) {
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,
 		    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return (0);
 	}
 
-	s->s3->tmp.new_sym_enc = c;
+	key_len = EVP_CIPHER_key_length(cipher);
+
+	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
+		iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+	else
+		iv_len = EVP_CIPHER_iv_length(cipher);
+
+	s->s3->tmp.new_sym_enc = cipher;
 	s->s3->tmp.new_hash = hash;
 	s->s3->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
-	num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
-	num *= 2;
+	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p1 = malloc(num)) == NULL) {
+	if ((key_block = malloc(key_block_len)) == NULL) {
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	s->s3->tmp.key_block_length = num;
-	s->s3->tmp.key_block = p1;
+	s->s3->tmp.key_block_length = key_block_len;
+	s->s3->tmp.key_block = key_block;
 
-	if ((p2 = malloc(num)) == NULL) {
+	if ((tmp_block = malloc(key_block_len)) == NULL) {
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!tls1_generate_key_block(s, p1, p2, num))
+	if (!tls1_generate_key_block(s, key_block, tmp_block, key_block_len))
 		goto err;
 
 	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
 	    s->method->version <= TLS1_VERSION) {
-		/* enable vulnerability countermeasure for CBC ciphers with
+		/*
+		 * Enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
 		 */
 		s->s3->need_empty_fragments = 1;
@@ -606,9 +613,9 @@ tls1_setup_key_block(SSL *s)
 
 	ret = 1;
 err:
-	if (p2) {
-		OPENSSL_cleanse(p2, num);
-		free(p2);
+	if (tmp_block) {
+		OPENSSL_cleanse(tmp_block, key_block_len);
+		free(tmp_block);
 	}
 	return (ret);
 }
