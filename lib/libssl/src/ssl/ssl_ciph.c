@@ -223,109 +223,349 @@ typedef struct cipher_order_st {
 } CIPHER_ORDER;
 
 static const SSL_CIPHER cipher_aliases[] = {
+
 	/* "ALL" doesn't include eNULL (must be specifically enabled) */
-	{0, SSL_TXT_ALL, 0,     0, 0,~SSL_eNULL, 0, 0, 0, 0, 0, 0},
+	{
+		.name = SSL_TXT_ALL,
+		.algorithm_enc = ~SSL_eNULL,
+	},
+
 	/* "COMPLEMENTOFALL" */
-	{0, SSL_TXT_CMPALL, 0,  0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0},
-
-	/* "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in ALL!) */
-	{0, SSL_TXT_CMPDEF, 0,  SSL_kEDH|SSL_kEECDH, SSL_aNULL,~SSL_eNULL, 0, 0, 0, 0, 0, 0},
-
-	/* key exchange aliases
-	 * (some of those using only a single bit here combine
-	 * multiple key exchange algs according to the RFCs,
-	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
-	{0, SSL_TXT_kRSA, 0,    SSL_kRSA,  0, 0, 0, 0, 0, 0, 0, 0},
-
-	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0, SSL_TXT_kEDH, 0,    SSL_kEDH,  0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_DH, 0,      SSL_kDHr|SSL_kDHd|SSL_kEDH, 0, 0, 0, 0, 0, 0, 0, 0},
-
-	{0, SSL_TXT_kKRB5, 0,   SSL_kKRB5, 0, 0, 0, 0, 0, 0, 0, 0},
-
-	{0, SSL_TXT_kECDHr, 0,  SSL_kECDHr, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_kECDHe, 0,  SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_kECDH, 0,   SSL_kECDHr|SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_kEECDH, 0,  SSL_kEECDH, 0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_ECDH, 0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH, 0, 0, 0, 0, 0, 0, 0, 0},
-
-	{0, SSL_TXT_kPSK, 0,    SSL_kPSK,  0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_kSRP, 0,    SSL_kSRP,  0, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_kGOST, 0, SSL_kGOST, 0, 0, 0, 0, 0, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_CMPALL,
+		.algorithm_enc = SSL_eNULL,
+	},
+	
+	/*
+	 * "COMPLEMENTOFDEFAULT"
+	 * (does *not* include ciphersuites not found in ALL!)
+	 */
+	{
+		.name = SSL_TXT_CMPDEF,
+		.algorithm_mkey = SSL_kEDH|SSL_kEECDH,
+		.algorithm_auth = SSL_aNULL,
+		.algorithm_enc = ~SSL_eNULL,
+	},
+	
+	/*
+	 * key exchange aliases
+	 * (some of those using only a single bit here combine multiple key
+	 * exchange algs according to the RFCs, e.g. kEDH combines DHE_DSS
+	 * and DHE_RSA)
+	 */
+	{
+		.name = SSL_TXT_kRSA,
+		.algorithm_mkey = SSL_kRSA,
+	},
+	{
+		/* no such ciphersuites supported! */
+		.name = SSL_TXT_kDHr,
+		.algorithm_mkey = SSL_kDHr,
+	},
+	{
+		/* no such ciphersuites supported! */
+		.name = SSL_TXT_kDHd,
+		.algorithm_mkey = SSL_kDHd,
+	},
+	{
+		/* no such ciphersuites supported! */
+		.name = SSL_TXT_kDH,
+		.algorithm_mkey = SSL_kDHr|SSL_kDHd,
+	},
+	{
+		.name = SSL_TXT_kEDH,
+		.algorithm_mkey = SSL_kEDH,
+	},
+	{
+		.name = SSL_TXT_DH,
+		.algorithm_mkey = SSL_kDHr|SSL_kDHd|SSL_kEDH,
+	},
+	
+	{
+		.name = SSL_TXT_kKRB5,
+		.algorithm_mkey = SSL_kKRB5,
+	},
+	
+	{
+		.name = SSL_TXT_kECDHr,
+		.algorithm_mkey = SSL_kECDHr,
+	},
+	{
+		.name = SSL_TXT_kECDHe,
+		.algorithm_mkey = SSL_kECDHe,
+	},
+	{
+		.name = SSL_TXT_kECDH,
+		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe,
+	},
+	{
+		.name = SSL_TXT_kEECDH,
+		.algorithm_mkey = SSL_kEECDH,
+	},
+	{
+		.name = SSL_TXT_ECDH,
+		.algorithm_mkey = SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,
+	},
+	
+	{
+		.name = SSL_TXT_kPSK,
+		.algorithm_mkey = SSL_kPSK,
+	},
+	{
+		.name = SSL_TXT_kSRP,
+		.algorithm_mkey = SSL_kSRP,
+	},
+	{
+		.name = SSL_TXT_kGOST,
+		.algorithm_mkey = SSL_kGOST,
+	},
+	
 	/* server authentication aliases */
-	{0, SSL_TXT_aRSA, 0,    0, SSL_aRSA,  0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aDSS, 0,    0, SSL_aDSS,  0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_DSS, 0,     0, SSL_aDSS,   0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aKRB5, 0,   0, SSL_aKRB5, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aNULL, 0,   0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
-	{0, SSL_TXT_aECDH, 0,   0, SSL_aECDH, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aECDSA, 0,  0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_ECDSA, 0,   0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aPSK, 0,    0, SSL_aPSK,  0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aGOST94, 0, 0, SSL_aGOST94, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_aGOST, 0, 0, SSL_aGOST94|SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_aRSA,
+		.algorithm_auth = SSL_aRSA,
+	},
+	{
+		.name = SSL_TXT_aDSS,
+		.algorithm_auth = SSL_aDSS,
+	},
+	{
+		.name = SSL_TXT_DSS,
+		.algorithm_auth = SSL_aDSS,
+	},
+	{
+		.name = SSL_TXT_aKRB5,
+		.algorithm_auth = SSL_aKRB5,
+	},
+	{
+		.name = SSL_TXT_aNULL,
+		.algorithm_auth = SSL_aNULL,
+	},
+	{
+		/* no such ciphersuites supported! */
+		.name = SSL_TXT_aDH,
+		.algorithm_auth = SSL_aDH,
+	},
+	{
+		.name = SSL_TXT_aECDH,
+		.algorithm_auth = SSL_aECDH,
+	},
+	{
+		.name = SSL_TXT_aECDSA,
+		.algorithm_auth = SSL_aECDSA,
+	},
+	{
+		.name = SSL_TXT_ECDSA,
+		.algorithm_auth = SSL_aECDSA,
+	},
+	{
+		.name = SSL_TXT_aPSK,
+		.algorithm_auth = SSL_aPSK,
+	},
+	{
+		.name = SSL_TXT_aGOST94,
+		.algorithm_auth = SSL_aGOST94,
+	},
+	{
+		.name = SSL_TXT_aGOST01,
+		.algorithm_auth = SSL_aGOST01,
+	},
+	{
+		.name = SSL_TXT_aGOST,
+		.algorithm_auth = SSL_aGOST94|SSL_aGOST01,
+	},
+	
 	/* aliases combining key exchange and server authentication */
-	{0, SSL_TXT_EDH, 0,     SSL_kEDH,~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_EECDH, 0,   SSL_kEECDH,~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_NULL, 0,    0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_KRB5, 0,    SSL_kKRB5, SSL_aKRB5, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_RSA, 0,     SSL_kRSA, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_ADH, 0,     SSL_kEDH, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_AECDH, 0,   SSL_kEECDH, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_PSK, 0,     SSL_kPSK, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_SRP, 0,     SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
-
-
+	{
+		.name = SSL_TXT_EDH,
+		.algorithm_mkey = SSL_kEDH,
+		.algorithm_auth = ~SSL_aNULL,
+	},
+	{
+		.name = SSL_TXT_EECDH,
+		.algorithm_mkey = SSL_kEECDH,
+		.algorithm_auth = ~SSL_aNULL,
+	},
+	{
+		.name = SSL_TXT_NULL,
+		.algorithm_enc = SSL_eNULL,
+	},
+	{
+		.name = SSL_TXT_KRB5,
+		.algorithm_mkey = SSL_kKRB5,
+		.algorithm_auth = SSL_aKRB5,
+	},
+	{
+		.name = SSL_TXT_RSA,
+		.algorithm_mkey = SSL_kRSA,
+		.algorithm_auth = SSL_aRSA,
+	},
+	{
+		.name = SSL_TXT_ADH,
+		.algorithm_mkey = SSL_kEDH,
+		.algorithm_auth = SSL_aNULL,
+	},
+	{
+		.name = SSL_TXT_AECDH,
+		.algorithm_mkey = SSL_kEECDH,
+		.algorithm_auth = SSL_aNULL,
+	},
+	{
+		.name = SSL_TXT_PSK,
+		.algorithm_mkey = SSL_kPSK,
+		.algorithm_auth = SSL_aPSK,
+	},
+	{
+		.name = SSL_TXT_SRP,
+		.algorithm_mkey = SSL_kSRP,
+	},
+	
 	/* symmetric encryption aliases */
-	{0, SSL_TXT_DES, 0,     0, 0, SSL_DES,   0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_3DES, 0,    0, 0, SSL_3DES,  0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_RC4, 0,     0, 0, SSL_RC4,   0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_RC2, 0,     0, 0, SSL_RC2,   0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_IDEA, 0,    0, 0, SSL_IDEA,  0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_SEED, 0,    0, 0, SSL_SEED,  0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_eNULL, 0,   0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_AES128, 0,  0, 0, SSL_AES128|SSL_AES128GCM, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_AES256, 0,  0, 0, SSL_AES256|SSL_AES256GCM, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_AES, 0,     0, 0, SSL_AES, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM|SSL_AES256GCM, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
-	{0, SSL_TXT_CAMELLIA   , 0, 0, 0, SSL_CAMELLIA128|SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_DES,
+		.algorithm_enc = SSL_DES,
+	},
+	{
+		.name = SSL_TXT_3DES,
+		.algorithm_enc = SSL_3DES,
+	},
+	{
+		.name = SSL_TXT_RC4,
+		.algorithm_enc = SSL_RC4,
+	},
+	{
+		.name = SSL_TXT_RC2,
+		.algorithm_enc = SSL_RC2,
+	},
+	{
+		.name = SSL_TXT_IDEA,
+		.algorithm_enc = SSL_IDEA,
+	},
+	{
+		.name = SSL_TXT_SEED,
+		.algorithm_enc = SSL_SEED,
+	},
+	{
+		.name = SSL_TXT_eNULL,
+		.algorithm_enc = SSL_eNULL,
+	},
+	{
+		.name = SSL_TXT_AES128,
+		.algorithm_enc = SSL_AES128|SSL_AES128GCM,
+	},
+	{
+		.name = SSL_TXT_AES256,
+		.algorithm_enc = SSL_AES256|SSL_AES256GCM,
+	},
+	{
+		.name = SSL_TXT_AES,
+		.algorithm_enc = SSL_AES,
+	},
+	{
+		.name = SSL_TXT_AES_GCM,
+		.algorithm_enc = SSL_AES128GCM|SSL_AES256GCM,
+	},
+	{
+		.name = SSL_TXT_CAMELLIA128,
+		.algorithm_enc = SSL_CAMELLIA128,
+	},
+	{
+		.name = SSL_TXT_CAMELLIA256,
+		.algorithm_enc = SSL_CAMELLIA256,
+	},
+	{
+		.name = SSL_TXT_CAMELLIA,
+		.algorithm_enc = SSL_CAMELLIA128|SSL_CAMELLIA256,
+	},
+	
 	/* MAC aliases */
-	{0, SSL_TXT_MD5, 0,     0, 0, 0, SSL_MD5,   0, 0, 0, 0, 0},
-	{0, SSL_TXT_SHA1, 0,    0, 0, 0, SSL_SHA1,  0, 0, 0, 0, 0},
-	{0, SSL_TXT_SHA, 0,     0, 0, 0, SSL_SHA1,  0, 0, 0, 0, 0},
-	{0, SSL_TXT_GOST94, 0,     0, 0, 0, SSL_GOST94,  0, 0, 0, 0, 0},
-	{0, SSL_TXT_GOST89MAC, 0,     0, 0, 0, SSL_GOST89MAC,  0, 0, 0, 0, 0},
-	{0, SSL_TXT_SHA256, 0,    0, 0, 0, SSL_SHA256,  0, 0, 0, 0, 0},
-	{0, SSL_TXT_SHA384, 0,    0, 0, 0, SSL_SHA384,  0, 0, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_MD5,
+		.algorithm_mac = SSL_MD5,
+	},
+	{
+		.name = SSL_TXT_SHA1,
+		.algorithm_mac = SSL_SHA1,
+	},
+	{
+		.name = SSL_TXT_SHA,
+		.algorithm_mac = SSL_SHA1,
+	},
+	{
+		.name = SSL_TXT_GOST94,
+		.algorithm_mac = SSL_GOST94,
+	},
+	{
+		.name = SSL_TXT_GOST89MAC,
+		.algorithm_mac = SSL_GOST89MAC,
+	},
+	{
+		.name = SSL_TXT_SHA256,
+		.algorithm_mac = SSL_SHA256,
+	},
+	{
+		.name = SSL_TXT_SHA384,
+		.algorithm_mac = SSL_SHA384,
+	},
+	
 	/* protocol version aliases */
-	{0, SSL_TXT_SSLV2, 0,   0, 0, 0, 0, SSL_SSLV2, 0, 0, 0, 0},
-	{0, SSL_TXT_SSLV3, 0,   0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
-	{0, SSL_TXT_TLSV1, 0,   0, 0, 0, 0, SSL_TLSV1, 0, 0, 0, 0},
-	{0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, SSL_TLSV1_2, 0, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_SSLV2,
+		.algorithm_ssl = SSL_SSLV2,
+	},
+	{
+		.name = SSL_TXT_SSLV3,
+		.algorithm_ssl = SSL_SSLV3,
+	},
+	{
+		.name = SSL_TXT_TLSV1,
+		.algorithm_ssl = SSL_TLSV1,
+	},
+	{
+		.name = SSL_TXT_TLSV1_2,
+		.algorithm_ssl = SSL_TLSV1_2,
+	},
+	
 	/* export flag */
-	{0, SSL_TXT_EXP, 0,     0, 0, 0, 0, 0, SSL_EXPORT, 0, 0, 0},
-	{0, SSL_TXT_EXPORT, 0,  0, 0, 0, 0, 0, SSL_EXPORT, 0, 0, 0},
-
+	{
+		.name = SSL_TXT_EXP,
+		.algo_strength = SSL_EXPORT,
+	},
+	{
+		.name = SSL_TXT_EXPORT,
+		.algo_strength = SSL_EXPORT,
+	},
+	
 	/* strength classes */
-	{0, SSL_TXT_EXP40, 0,   0, 0, 0, 0, 0, SSL_EXP40, 0, 0, 0},
-	{0, SSL_TXT_EXP56, 0,   0, 0, 0, 0, 0, SSL_EXP56, 0, 0, 0},
-	{0, SSL_TXT_LOW, 0,     0, 0, 0, 0, 0, SSL_LOW,   0, 0, 0},
-	{0, SSL_TXT_MEDIUM, 0,  0, 0, 0, 0, 0, SSL_MEDIUM, 0, 0, 0},
-	{0, SSL_TXT_HIGH, 0,    0, 0, 0, 0, 0, SSL_HIGH,  0, 0, 0},
+	{
+		.name = SSL_TXT_EXP40,
+		.algo_strength = SSL_EXP40,
+	},
+	{
+		.name = SSL_TXT_EXP56,
+		.algo_strength = SSL_EXP56,
+	},
+	{
+		.name = SSL_TXT_LOW,
+		.algo_strength = SSL_LOW,
+	},
+	{
+		.name = SSL_TXT_MEDIUM,
+		.algo_strength = SSL_MEDIUM,
+	},
+	{
+		.name = SSL_TXT_HIGH,
+		.algo_strength = SSL_HIGH,
+	},
+
 	/* FIPS 140-2 approved ciphersuite */
-	{0, SSL_TXT_FIPS, 0,    0, 0,~SSL_eNULL, 0, 0, SSL_FIPS,  0, 0, 0},
+	{
+		.name = SSL_TXT_FIPS,
+		.algorithm_enc = ~SSL_eNULL,
+		.algo_strength = SSL_FIPS,
+	},
 };
+
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0
  */
