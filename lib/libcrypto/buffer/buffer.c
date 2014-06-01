@@ -115,10 +115,7 @@ BUF_MEM_grow(BUF_MEM *str, size_t len)
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
-	if (str->data == NULL)
-		ret = malloc(n);
-	else
-		ret = realloc(str->data, n);
+	ret = realloc(str->data, n);
 	if (ret == NULL) {
 		BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
 		len = 0;
