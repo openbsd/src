@@ -53,8 +53,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/aes.h>
+
+int AES_wrap_unwrap_test(const unsigned char *, int, const unsigned char *,
+	const unsigned char *, const unsigned char *, int);
 
 int
 AES_wrap_unwrap_test(const unsigned char *kek, int keybits,
@@ -150,7 +154,6 @@ main(int argc, char **argv)
 		0xfb, 0x98, 0x8b, 0x9b, 0x7a, 0x02, 0xdd, 0x21
 	};
 
-	AES_KEY wctx, xctx;
 	int ret, nfailures = 0;
 	ret = AES_wrap_unwrap_test(kek, 128, NULL, e1, key, 16);
 	if (ret == 0)

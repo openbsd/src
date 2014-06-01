@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2014/04/15 18:01:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2014/06/01 11:11:46 miod Exp $
 
 PROG=	dsatest
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
+WARNINGS=	Yes
+CFLAGS+=	-Werror
 
 REGRESS_TARGETS=regress-dsatest
 

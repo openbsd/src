@@ -327,7 +327,8 @@ static const u8 IV20[64]={0xff,0xff,0xff,0xff},	/* this results in 0xff in count
 		ret++, printf ("decrypt test#%d failed.\n",n);	\
 	} while(0)
 
-int main()
+int
+main(int argc, char **argv)
 {
 	GCM128_CONTEXT ctx;
 	AES_KEY key;

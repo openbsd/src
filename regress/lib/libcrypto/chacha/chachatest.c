@@ -227,7 +227,7 @@ main(int argc, char **argv)
 {
 	struct chacha_tv *tv;
 	unsigned char *in, *out;
-	int i, j;
+	size_t i, j;
 
 	for (i = 0; i < N_VECTORS; i++) {
 		tv = &chacha_test_vectors[i];
