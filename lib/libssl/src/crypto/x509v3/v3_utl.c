@@ -468,10 +468,8 @@ string_to_hex(const char *str, long *len)
 			free(hexbuf);
 			return NULL;
 		}
-		if (isupper(ch))
-			ch = tolower(ch);
-		if (isupper(cl))
-			cl = tolower(cl);
+		ch = tolower(ch);
+		cl = tolower(cl);
 
 		if ((ch >= '0') && (ch <= '9'))
 			ch -= '0';
