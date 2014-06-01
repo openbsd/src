@@ -485,16 +485,14 @@ OBJ_txt2obj(const char *s, int no_name)
 int
 OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 {
-	int i, n = 0, len, nid, first, use_bn;
-	BIGNUM *bl;
+	int i, ret = 0, len, nid, first = 1, use_bn;
+	BIGNUM *bl = NULL;
+	char *bndec = NULL;
 	unsigned long l;
 	const unsigned char *p;
-	char tbuf[DECIMAL_SIZE(l) + 1];
 
-	if ((a == NULL) || (a->data == NULL)) {
-		buf[0] = '\0';
-		return (0);
-	}
+	if ((a == NULL) || (a->data == NULL))
+		goto err;
 
 	if (!no_name && (nid = OBJ_obj2nid(a)) != NID_undef) {
 		const char *s;
@@ -502,18 +500,13 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		if (s == NULL)
 			s = OBJ_nid2sn(nid);
 		if (s) {
-			if (buf)
-				strlcpy(buf, s, buf_len);
-			n = strlen(s);
-			return n;
+			ret = strlcpy(buf, s, buf_len);
+			goto out;
 		}
 	}
 
 	len = a->length;
 	p = a->data;
-
-	first = 1;
-	bl = NULL;
 
 	while (len > 0) {
 		l = 0;
@@ -557,62 +550,53 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 				i = (int)(l / 40);
 				l -= (long)(i * 40);
 			}
-			if (buf && (buf_len > 0)) {
+			if (buf_len > 0) {
 				*buf++ = i + '0';
 				buf_len--;
 			}
-			n++;
+			ret++;
 		}
 
 		if (use_bn) {
-			char *bndec;
 			bndec = BN_bn2dec(bl);
 			if (!bndec)
 				goto err;
-			i = strlen(bndec);
-			if (buf) {
-				if (buf_len > 0) {
-					*buf++ = '.';
-					buf_len--;
-				}
-				strlcpy(buf, bndec, buf_len);
-				if (i > buf_len) {
-					buf += buf_len;
-					buf_len = 0;
-				} else {
-					buf += i;
-					buf_len -= i;
-				}
+			i = snprintf(buf, buf_len, ".%s", bndec);
+			if (i == -1)
+				goto err;
+			if (i >= buf_len) {
+				buf += buf_len;
+				buf_len = 0;
+			} else {
+				buf += i;
+				buf_len -= i;
 			}
-			n++;
-			n += i;
-			free(bndec);
+			ret += i;
 		} else {
-			(void) snprintf(tbuf, sizeof tbuf, ".%lu", l);
-			i = strlen(tbuf);
-			if (buf && (buf_len > 0)) {
-				strlcpy(buf, tbuf, buf_len);
-				if (i > buf_len) {
-					buf += buf_len;
-					buf_len = 0;
-				} else {
-					buf += i;
-					buf_len -= i;
-				}
+			i = snprintf(buf, buf_len, ".%lu", l);
+			if (i == -1)
+				goto err;
+			if (i >= buf_len) {
+				buf += buf_len;
+				buf_len = 0;
+			} else {
+				buf += i;
+				buf_len -= i;
 			}
-			n += i;
+			ret += i;
 			l = 0;
 		}
 	}
 
-	if (bl)
-		BN_free(bl);
-	return n;
+out:
+	free(bndec);
+	BN_free(bl);
+	return ret;
 
 err:
-	if (bl)
-		BN_free(bl);
-	return -1;
+	ret = 0;
+	buf[0] = '\0';
+	goto out;
 }
 
 int
