@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.28 2014/03/10 05:03:50 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.29 2014/06/01 00:37:37 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -85,7 +85,6 @@
 	.global _C_LABEL(acpi_long_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
 	.global _C_LABEL(acpi_pdirpa)
-	.global _C_LABEL(do_real_mode_post)
 _C_LABEL(acpi_real_mode_resume):
 _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	nop
@@ -117,32 +116,6 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 */
 	pushl	$0
 	popfl
-
-	/*
-	 * Reset the video hardware (as best as we can).
-	 * We call the video bios at c000:0003, similar to
-	 * what the BIOS does on a machine restart.
-	 * Note that this will only reset the video card, 
-	 * and may not enable LCDs or other attached displays.
-	 *
-	 * This will also put the hardware in "factory default"
-	 * display mode, which may not match what we had
-	 * when we went to sleep. On many machines (specifically
-	 * laptops), we might not restore the proper VGA mode
-	 * on resume. Caveat emptor.
-	 */
-	cmpl	$0, do_real_mode_post_off
-	jz	nobiosreset
-	lcall	$0xc000,$3
-
-	/*
-	 * Restore our segment registers in case the call to 
-	 * reset the video hardware clobbered them.
-	 */
-	movw	%cs,%ax
-	movw	%ax,%ds
-	movw	%ax,%ss
-nobiosreset:
 
 	/*
 	 * Set up esi to point to start of current routine's CS.
@@ -623,11 +596,6 @@ _ACPI_TRMP_LABEL(tmp_gdtable6416)
 	.quad	0x00cf92000000ffff
 	.quad   0x00009a0110000fff
 _ACPI_TRMP_LABEL(tmp_gdt6416_end)
-
-	.align 4
-_C_LABEL(do_real_mode_post):
-_ACPI_TRMP_OFFSET(do_real_mode_post_off)
-	.long	0
 
 	.align 8
 _ACPI_TRMP_LABEL(acpi_saved_rbx)

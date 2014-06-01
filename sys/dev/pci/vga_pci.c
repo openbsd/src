@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.77 2014/03/28 17:57:11 mpi Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.78 2014/06/01 00:37:37 mlarkin Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -139,13 +139,11 @@ struct cfattach vga_pci_ca = {
 
 #if !defined(SMALL_KERNEL) && NACPI > 0
 int vga_pci_do_post;
-extern int do_real_mode_post;
 
 struct vga_device_description {
 	u_int16_t	rval[4];
 	u_int16_t	rmask[4];
-	char	vga_pci_post;
-	char	real_mode_post;
+	char		vga_pci_post;
 };
 
 static const struct vga_device_description vga_devs[] = {
@@ -157,19 +155,18 @@ static const struct vga_device_description vga_devs[] = {
 	 *
 	 * The next entry is a list of corresponding masks.
 	 *
-	 * Finally the last two values set what resume should do, repost with
-	 * vga_pci (i.e. the x86emulator) or with a locore call to the video
-	 * bios.
+	 * Finally the last value indicates if we should repost via 
+	 * vga_pci (i.e. the x86emulator) * bios.
 	 */
 	{	/* All machines with Intel US15W (until more evidence) */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,
 	    	0x0000, 0x0000 },
-	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1
 	},
 	{	/* All machines with Intel US15L (until more evidence) */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_IGD,
 	    	0x0000, 0x0000 },
-	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
+	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1
 	},
 };
 #endif
@@ -253,8 +250,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		    (subvend & vga_devs[i].rmask[2]) == vga_devs[i].rval[2] &&
 		    (subprod & vga_devs[i].rmask[3]) == vga_devs[i].rval[3]) {
 			vga_pci_do_post = vga_devs[i].vga_pci_post;
-			if (sc->sc_dev.dv_unit == 0)	/* main screen only */
-				do_real_mode_post = vga_devs[i].real_mode_post;
 			break;
 		}
 #endif
@@ -303,13 +298,8 @@ vga_pci_activate(struct device *self, int act)
 	case DVACT_RESUME:
 #if !defined(SMALL_KERNEL) && NACPI > 0
 #if defined (X86EMU)
-		if (vga_pci_do_post) {
-#ifdef obnoxious
-			printf("%s: reposting video using BIOS.  Is this necessary?\n",
-			    sc->sc_dev.dv_xname);
-#endif
+		if (vga_pci_do_post)
 			vga_post_call(sc->sc_posth);
-		}
 #endif
 		vga_restore_state(sc);
 #endif
