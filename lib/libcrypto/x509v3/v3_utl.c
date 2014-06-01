@@ -416,9 +416,7 @@ strip_spaces(char *name)
 
 /* Given a buffer of length 'len' return a malloc'ed string with its
  * hex representation
- * @@@ (Contents of buffer are always kept in ASCII, also on EBCDIC machines)
  */
-
 char *
 hex_to_string(const unsigned char *buffer, long len)
 {
