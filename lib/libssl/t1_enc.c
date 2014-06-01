@@ -319,7 +319,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	int *mac_secret_size;
 	EVP_MD_CTX *mac_ctx;
 	EVP_PKEY *mac_key;
-	int is_export, n, i, j, k, exp_label_len, cl;
+	int is_export, n, i, k, exp_label_len, key_len;
 	int reuse_dd = 0;
 	char is_read;
 
@@ -434,11 +434,13 @@ tls1_change_cipher_state(SSL *s, int which)
 	p = s->s3->tmp.key_block;
 	i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
-	cl = EVP_CIPHER_key_length(c);
-	j = is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-	    cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
-	/* If GCM mode only part of IV comes from PRF */
+	key_len = EVP_CIPHER_key_length(c);
+	if (is_export) {
+		if (key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
+			key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
+	}
+
+	/* If GCM mode only part of IV comes from PRF. */
 	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
 		k = EVP_GCM_TLS_FIXED_IV_LEN;
 	else
@@ -448,7 +450,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		ms = &(p[0]);
 		n = i + i;
 		key = &(p[n]);
-		n += j + j;
+		n += key_len + key_len;
 		iv = &(p[n]);
 		n += k + k;
 		exp_label = (unsigned char *)TLS_MD_CLIENT_WRITE_KEY_CONST;
@@ -457,9 +459,9 @@ tls1_change_cipher_state(SSL *s, int which)
 	} else {
 		n = i;
 		ms = &(p[n]);
-		n += i + j;
+		n += i + key_len;
 		key = &(p[n]);
-		n += j + k;
+		n += key_len + k;
 		iv = &(p[n]);
 		n += k;
 		exp_label = (unsigned char *)TLS_MD_SERVER_WRITE_KEY_CONST;
@@ -488,7 +490,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		    exp_label, exp_label_len,
 		    s->s3->client_random, SSL3_RANDOM_SIZE,
 		    s->s3->server_random, SSL3_RANDOM_SIZE,
-		    NULL, 0, NULL, 0, key, j, tmp1, tmp2,
+		    NULL, 0, NULL, 0, key, key_len, tmp1, tmp2,
 		    EVP_CIPHER_key_length(c)))
 			goto err2;
 		key = tmp1;
