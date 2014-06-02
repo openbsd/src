@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.20 2014/06/01 10:40:07 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.21 2014/06/02 21:18:56 miod Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -76,7 +76,7 @@
 
 #include <uvm/uvm_extern.h>
 
-vaddr_t	local_stack_frame(struct trapframe *, size_t);
+vaddr_t	local_stack_frame(struct trapframe *, vaddr_t, size_t);
 
 struct sigstate {
 	int		 ss_flags;	/* which of the following are valid */
@@ -130,10 +130,10 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig))) {
-		addr = ((vaddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size - fsize) & ~_STACKALIGNBYTES;
+		addr = local_stack_frame(tf,
+		    (vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size, fsize);
 	} else
-		addr = local_stack_frame(tf, fsize);
+		addr = local_stack_frame(tf, tf->tf_r[31], fsize);
 
 	if (addr <= USRSTACK - ptoa(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, addr);
@@ -311,23 +311,36 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
  * we will want to be able to perform upon sigreturn().
  */
 vaddr_t
-local_stack_frame(struct trapframe *tf, size_t fsize)
+local_stack_frame(struct trapframe *tf, vaddr_t tos, size_t fsize)
 {
 	vaddr_t frame;
 
-	frame = (tf->tf_r[31] - fsize) & ~_STACKALIGNBYTES;
+	frame = (tos - fsize) & ~_STACKALIGNBYTES;
 
 #ifdef M88100
 	if (CPU_IS88100 && ISSET(tf->tf_dmt0, DMT_VALID)) {
-		if (/* ISSET(tf->tf_dmt0, DMT_VALID) && */
-		    tf->tf_dma0 >= frame && tf->tf_dma0 < tf->tf_r[31])
-			frame = (tf->tf_dma0 - fsize) & ~_STACKALIGNBYTES;
-		if (ISSET(tf->tf_dmt1, DMT_VALID) &&
-		    tf->tf_dma1 >= frame && tf->tf_dma1 < tf->tf_r[31])
-			frame = (tf->tf_dma1 - fsize) & ~_STACKALIGNBYTES;
-		if (ISSET(tf->tf_dmt2, DMT_VALID) &&
-		    tf->tf_dma2 >= frame && tf->tf_dma2 < tf->tf_r[31])
-			frame = (tf->tf_dma2 - fsize) & ~_STACKALIGNBYTES;
+		for (;;) {
+			tos = frame + fsize;
+			if (/* ISSET(tf->tf_dmt0, DMT_VALID) && */
+			    tf->tf_dma0 >= frame && tf->tf_dma0 < tos) {
+				frame = (tf->tf_dma0 - fsize) &
+				    ~_STACKALIGNBYTES;
+				continue;
+			}
+			if (ISSET(tf->tf_dmt1, DMT_VALID) &&
+			    tf->tf_dma1 >= frame && tf->tf_dma1 < tos) {
+				frame = (tf->tf_dma1 - fsize) &
+				    ~_STACKALIGNBYTES;
+				continue;
+			}
+			if (ISSET(tf->tf_dmt2, DMT_VALID) &&
+			    tf->tf_dma2 >= frame && tf->tf_dma2 < tos) {
+				frame = (tf->tf_dma2 - fsize) &
+				    ~_STACKALIGNBYTES;
+				continue;
+			}
+			break;
+		}
 	}
 #endif
 
