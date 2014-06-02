@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.95 2014/06/02 16:56:49 jsing Exp $
+.\" $OpenBSD: openssl.1,v 1.96 2014/06/02 17:06:28 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -970,13 +970,11 @@ the following options are read directly from the
 section:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It RANDFILE
 .It preserve
 .It msie_hack
 .El
 .Pp
-With the exception of RANDFILE, this is probably a bug and may
-change in future releases.
+This is probably a bug and may change in future releases.
 .Pp
 Many of the configuration file options are identical to command line
 options.
@@ -1133,10 +1131,6 @@ Same as the
 option.
 The file containing the CA private key.
 Mandatory.
-.It Ar RANDFILE
-A file used to read and write random number seed information,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
 .It Ar serial
 A text file containing the next serial number to use in hex.
 Mandatory.
@@ -1261,7 +1255,6 @@ A sample configuration file with the relevant sections for
 \& certificate    = $dir/cacert.pem       # The CA cert
 \& serial         = $dir/serial           # serial no file
 \& private_key    = $dir/private/cakey.pem# CA private key
-\& RANDFILE       = $dir/private/.rand    # random number file
 
 \& default_days   = 365                   # how long to certify for
 \& default_crl_days= 30                   # how long before next CRL
@@ -5851,11 +5844,6 @@ It also changes the expected format of the
 and
 .Em attributes
 sections.
-.It Ar RANDFILE
-This specifies a file in which random number seed information is
-placed and read from, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-It is used for private key generation.
 .It Ar req_extensions
 This specifies the configuration file section containing a list of
 extensions to add to the certificate request.
@@ -6084,7 +6072,6 @@ Sample configuration file prompting for field values:
 .Pp
 Sample configuration containing all field values:
 .Bd -literal
-\& RANDFILE               = $ENV::HOME/.rnd
 
 \& [ req ]
 \& default_bits           = 1024
@@ -8527,10 +8514,6 @@ See
 .Nm ca
 for a description.
 .It Cm oid_section
-See
-.Nm ca
-for a description.
-.It Cm RANDFILE
 See
 .Nm ca
 for a description.
