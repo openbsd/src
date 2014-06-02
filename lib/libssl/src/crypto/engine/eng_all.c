@@ -76,9 +76,6 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_RSAX
 	ENGINE_load_rsax();
 #endif
-#ifndef OPENSSL_NO_RDRAND
-	ENGINE_load_rdrand();
-#endif
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW

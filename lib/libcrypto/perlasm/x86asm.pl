@@ -130,14 +130,6 @@ sub ::pclmulqdq
     {	&::generic("pclmulqdq",@_);		}
 }
 
-sub ::rdrand
-{ my ($dst)=@_;
-    if ($dst =~ /(e[a-dsd][ixp])/)
-    {	&::data_byte(0x0f,0xc7,0xf0|$regrm{$dst});	}
-    else
-    {	&::generic("rdrand",@_);	}
-}
-
 # label management
 $lbdecor="L";		# local label decoration, set by package
 $label="000";

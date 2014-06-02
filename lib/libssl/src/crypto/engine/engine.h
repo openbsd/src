@@ -320,7 +320,6 @@ void ENGINE_load_padlock(void);
 #endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_rsax(void);
-void ENGINE_load_rdrand(void);
 void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation

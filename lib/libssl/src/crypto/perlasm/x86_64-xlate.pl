@@ -759,19 +759,6 @@ my $pclmulqdq = sub {
     }
 };
 
-my $rdrand = sub {
-    if (shift =~ /%[er](\w+)/) {
-      my @opcode=();
-      my $dst=$1;
-	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
-	rex(\@opcode,0,$1,8);
-	push @opcode,0x0f,0xc7,0xf0|($dst&7);
-	@opcode;
-    } else {
-	();
-    }
-};
-
 if ($nasm) {
     print <<___;
 default	rel
