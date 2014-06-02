@@ -97,7 +97,6 @@
 #define ENV_CRLNUMBER		"crlnumber"
 #define ENV_CRL			"crl"
 #define ENV_PRIVATE_KEY		"private_key"
-#define ENV_RANDFILE		"RANDFILE"
 #define ENV_DEFAULT_DAYS 	"default_days"
 #define ENV_DEFAULT_STARTDATE 	"default_startdate"
 #define ENV_DEFAULT_ENDDATE 	"default_enddate"
