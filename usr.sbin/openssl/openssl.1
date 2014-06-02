@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.94 2014/05/18 08:23:27 sthen Exp $
+.\" $OpenBSD: openssl.1,v 1.95 2014/06/02 16:56:49 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: May 18 2014 $
+.Dd $Mdocdate: June 2 2014 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1966,7 +1966,6 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl prverify Ar file
-.Op Fl rand Ar
 .Op Fl sign Ar file
 .Op Fl signature Ar file
 .Op Fl sigopt Ar nm : Ns Ar v
@@ -2055,12 +2054,6 @@ The output is either
 .Qq Verification OK
 or
 .Qq Verification Failure .
-.It Fl rand Ar
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl sign Ar file
 Digitally sign the digest using the private key in
 .Ar file .
@@ -2121,7 +2114,6 @@ below.
 .Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
-.Op Fl rand Ar
 .Op Fl text
 .Op Ar numbits
 .Ek
@@ -2205,12 +2197,6 @@ be the same as the input filename.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified, separated by a
-.Sq \&: .
 .It Fl text
 This option prints out the DH parameters in human readable form.
 .El
@@ -2433,7 +2419,6 @@ To just output the public part of a private key:
 .Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
-.Op Fl rand Ar
 .Op Fl text
 .Op Ar numbits
 .Ek
@@ -2500,12 +2485,6 @@ be the same as the input filename.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified, separated by a
-.Sq \&: .
 .It Fl text
 This option prints out the DSA parameters in human readable form.
 .El
@@ -2744,7 +2723,6 @@ command was first introduced in
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl param_enc Ar arg
-.Op Fl rand Ar file ...
 .Op Fl text
 .Ek
 .nr nS 0
@@ -2837,18 +2815,6 @@ Note: the
 alternative, as specified in RFC 3279,
 is currently not implemented in
 .Nm OpenSSL .
-.It Fl rand Ar file ...
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by an OS-dependent character.
-The separator is
-.Sq \&;
-for MS-Windows,
-.Sq \&,
-for OpenVMS, and
-.Sq \&:
-for all others.
 .It Fl text
 Print out the EC parameters in human readable form.
 .El
@@ -3373,7 +3339,6 @@ above.
 .Oc
 .Op Fl engine Ar id
 .Op Fl out Ar file
-.Op Fl rand Ar
 .Op Ar paramfile
 .Ek
 .nr nS 0
@@ -3407,12 +3372,6 @@ The engine will then be set as the default for all available algorithms.
 The output
 .Ar file .
 If this argument is not specified, standard output is used.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Ar paramfile
 This option specifies the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
@@ -3611,7 +3570,6 @@ $ openssl genpkey -paramfile dhp.pem -out dhkey.pem
 .Op Fl engine Ar id
 .Op Fl out Ar file
 .Op Fl passout Ar arg
-.Op Fl rand Ar
 .Op Ar numbits
 .Ek
 .nr nS 0
@@ -3655,13 +3613,6 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar
-A file or files
-containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Ar numbits
 The size of the private key to generate in bits.
 This must be the last option specified.
@@ -4700,7 +4651,6 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
-.Op Fl rand Ar
 .Op Fl twopass
 .Ek
 .nr nS 0
@@ -4915,13 +4865,6 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar
-A file or files
-containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .El
 .Sh PKCS12 NOTES
 Although there are a large number of options,
@@ -5478,7 +5421,6 @@ is prime.
 .Op Fl engine Ar id
 .Op Fl hex
 .Op Fl out Ar file
-.Op Fl rand Ar
 .Ar num
 .nr nS 0
 .Pp
@@ -5486,23 +5428,7 @@ The
 .Nm rand
 command outputs
 .Ar num
-pseudo-random bytes after seeding
-the random number generator once.
-As in other
-.Nm openssl
-command line tools, PRNG seeding uses the file
-.Pa $HOME/.rnd
-or
-.Pa .rnd
-in addition to the files given in the
-.Fl rand
-option.
-A new
-.Pa $HOME/.rnd
-or
-.Pa .rnd
-file will be written back if enough
-seeding was obtained from these sources.
+pseudo-random bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -5524,12 +5450,6 @@ Specify hexadecimal output.
 Write to
 .Ar file
 instead of standard output.
-.It Fl rand Ar
-Use specified file or files, or EGD socket (see
-.Xr RAND_egd 3 )
-for seeding the random number generator.
-Multiple files can be specified separated by a
-.Sq \&: .
 .El
 .\"
 .\" REQ
@@ -5563,7 +5483,6 @@ Multiple files can be specified separated by a
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl pubkey
-.Op Fl rand Ar
 .Op Fl reqexts Ar section
 .Op Fl reqopt Ar option
 .Op Fl set_serial Ar n
@@ -5782,12 +5701,6 @@ see the
 section above.
 .It Fl pubkey
 Outputs the public key.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl reqopt Ar option
 Customise the output format used with
 .Fl text .
@@ -6719,7 +6632,6 @@ which it can be seen agrees with the recovered value above.
 .Op Fl psk Ar key
 .Op Fl psk_identity Ar identity
 .Op Fl quiet
-.Op Fl rand Ar
 .Op Fl reconnect
 .Op Fl showcerts
 .Op Fl ssl3
@@ -6874,12 +6786,6 @@ Inhibit printing of session and certificate information.
 This implicitly turns on
 .Fl ign_eof
 as well.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl reconnect
 Reconnects to the same server 5 times using the same session ID; this can
 be used as a test that session caching is working.
@@ -7031,7 +6937,6 @@ We should really report information whenever a session is renegotiated.
 .Op Fl psk Ar key
 .Op Fl psk_hint Ar hint
 .Op Fl quiet
-.Op Fl rand Ar
 .Op Fl serverpref
 .Op Fl ssl3
 .Op Fl state
@@ -7200,12 +7105,6 @@ Use the PSK identity hint
 when using a PSK cipher suite.
 .It Fl quiet
 Inhibit printing of session and certificate information.
-.It Fl rand Ar
-A file or files containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl serverpref
 Use server's cipher preferences.
 .It Fl state
@@ -7669,7 +7568,6 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl passin Ar arg
 .Op Fl pk7out
 .Op Fl policy_check
-.Op Fl rand Ar
 .Op Fl recip Ar file
 .Op Fl resign
 .Op Fl sign
@@ -7939,13 +7837,6 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar
-A file or files
-containing random data used to seed the random number generator,
-or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl recip Ar file
 The recipients certificate when decrypting a message.
 This certificate
@@ -8290,7 +8181,6 @@ benchmarks in parallel.
 .Op Fl no_nonce
 .Op Fl out Ar request.tsq
 .Op Fl policy Ar object_id
-.Op Fl rand Ar file : Ns Ar file
 .Op Fl text
 .Ek
 .nr nS 0
@@ -8425,16 +8315,6 @@ Either the dotted OID notation or OID names defined
 in the config file can be used.
 If no policy is requested the TSA will
 use its own default policy.
-.It Fl rand Ar file : Ns Ar file
-The files containing random data for seeding the random number generator.
-Multiple files can be specified.
-The separator is
-.Sq \&;
-for MS-Windows;
-.Sq \&,
-for VMS; and
-.Sq \&:
-for all other platforms.
 .It Fl text
 If this option is specified the output is in human-readable text format
 instead of DER.
