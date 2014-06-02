@@ -144,11 +144,10 @@ struct dtls1_timeout_st {
 };
 
 struct _pqueue;
-typedef struct _pqueue *pqueue;
 
 typedef struct record_pqueue_st {
 	unsigned short epoch;
-	pqueue q;
+	struct _pqueue *q;
 } record_pqueue;
 
 typedef struct hm_fragment_st {
@@ -191,10 +190,10 @@ typedef struct dtls1_state_st {
 	record_pqueue processed_rcds;
 
 	/* Buffered handshake messages */
-	pqueue buffered_messages;
+	struct _pqueue *buffered_messages;
 
 	/* Buffered (sent) handshake records */
-	pqueue sent_messages;
+	struct _pqueue *sent_messages;
 
 	/* Buffered application records.
 	 * Only for records between CCS and Finished
