@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.166 2014/05/26 06:19:07 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.167 2014/06/02 08:49:38 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -117,6 +117,8 @@ struct dir_info {
 	struct region_info free_regions[MALLOC_MAXCACHE];
 					/* delayed free chunk slots */
 	void *delayed_chunks[MALLOC_DELAYED_CHUNK_MASK + 1];
+	size_t rbytesused;		/* random bytes used */
+	u_char rbytes[512];		/* random bytes */
 	u_short chunk_start;
 #ifdef MALLOC_STATS
 	size_t inserts;
@@ -191,14 +193,10 @@ static union {
 #define g_pool	mopts.g_pool
 
 char		*malloc_options;	/* compile-time options */
-
 static char	*malloc_func;		/* current function */
 static int	malloc_active;		/* status of malloc */
 
-
-static size_t rbytesused;		/* random bytes used */
-static u_char rbytes[512];		/* random bytes */
-static u_char getrbyte(void);
+static u_char getrbyte(struct dir_info *d);
 
 extern char	*__progname;
 
@@ -275,20 +273,20 @@ wrterror(char *msg, void *p)
 }
 
 static void
-rbytes_init(void)
+rbytes_init(struct dir_info *d)
 {
-	arc4random_buf(rbytes, sizeof(rbytes));
-	rbytesused = 0;
+	arc4random_buf(d->rbytes, sizeof(d->rbytes));
+	d->rbytesused = 0;
 }
 
 static inline u_char
-getrbyte(void)
+getrbyte(struct dir_info *d)
 {
 	u_char x;
 
-	if (rbytesused >= sizeof(rbytes))
-		rbytes_init();
-	x = rbytes[rbytesused++];
+	if (d->rbytesused >= sizeof(d->rbytes))
+		rbytes_init(d);
+	x = d->rbytes[d->rbytesused++];
 	return x;
 }
 
@@ -322,7 +320,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	rsz = mopts.malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
-	offset = getrbyte();
+	offset = getrbyte(d);
 	for (i = 0; tounmap > 0 && i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -403,7 +401,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		/* zero fill not needed */
 		return p;
 	}
-	offset = getrbyte();
+	offset = getrbyte(d);
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -460,8 +458,6 @@ omalloc_init(struct dir_info **dp)
 	int i, j;
 	size_t d_avail, regioninfo_size;
 	struct dir_info *d;
-
-	rbytes_init();
 
 	/*
 	 * Default options
@@ -616,6 +612,7 @@ omalloc_init(struct dir_info **dp)
 	d = (struct dir_info *)(p + MALLOC_PAGESIZE +
 	    (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
 
+	rbytes_init(d);
 	d->regions_free = d->regions_total = MALLOC_INITIAL_REGIONS;
 	regioninfo_size = d->regions_total * sizeof(struct region_info);
 	d->r = MMAP(regioninfo_size);
@@ -914,7 +911,7 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 			j++;
 	}
 
-	listnum = getrbyte() % MALLOC_CHUNK_LISTS;
+	listnum = getrbyte(d) % MALLOC_CHUNK_LISTS;
 	/* If it's empty, make a page more of that size chunks */
 	if ((bp = LIST_FIRST(&d->chunk_dir[j][listnum])) == NULL) {
 		bp = omalloc_make_chunks(d, j, listnum);
@@ -927,7 +924,7 @@ malloc_bytes(struct dir_info *d, size_t size, void *f)
 
 	i = d->chunk_start;
 	if (bp->free > 1)
-		i += getrbyte();
+		i += getrbyte(d);
 	if (i >= bp->total)
 		i &= bp->total - 1;
 	for (;;) {
@@ -1016,7 +1013,7 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 
 	if (info->free == 1) {
 		/* Page became non-full */
-		listnum = getrbyte() % MALLOC_CHUNK_LISTS;
+		listnum = getrbyte(d) % MALLOC_CHUNK_LISTS;
 		if (info->size != 0)
 			mp = &d->chunk_dir[info->shift][listnum];
 		else
@@ -1224,7 +1221,7 @@ ofree(void *p)
 		if (!mopts.malloc_freenow) {
 			if (find_chunknum(g_pool, r, p) == -1)
 				return;
-			i = getrbyte() & MALLOC_DELAYED_CHUNK_MASK;
+			i = getrbyte(g_pool) & MALLOC_DELAYED_CHUNK_MASK;
 			tmp = p;
 			p = g_pool->delayed_chunks[i];
 			if (tmp == p) {
