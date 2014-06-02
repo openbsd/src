@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.16 2014/03/17 17:53:33 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.17 2014/06/02 07:51:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,7 +45,6 @@ void dev_midi_omsg(void *, unsigned char *, int);
 void dev_midi_fill(void *, int);
 void dev_midi_exit(void *);
 
-void dev_mon_snoop(struct dev *);
 int play_filt_resamp(struct slot *, void *, void *, int);
 int play_filt_dec(struct slot *, void *, void *, int);
 void dev_mix_badd(struct dev *, struct slot *);
@@ -551,15 +550,6 @@ slot_skip(struct slot *s)
 		s->skip--;		
 	}
 	return max - s->skip;
-}
-
-/*
- * merge play buffer contents into record buffer as if the
- * play stream was recorded
- */
-void
-dev_mon_snoop(struct dev *d)
-{
 }
 
 int 
@@ -1631,7 +1621,7 @@ slot_attach(struct slot *s)
 
 	s->pstate = SLOT_RUN;
 #ifdef DEBUG
-	if (log_level >= 0) {
+	if (log_level >= 2) {
 		slot_log(s);
 		log_puts(": attached at ");
 		log_puti(startpos);
