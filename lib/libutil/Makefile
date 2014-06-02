@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2014/05/12 19:09:00 espie Exp $
+#	$OpenBSD: Makefile,v 1.38 2014/06/02 18:52:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -60,10 +60,8 @@ MLINKS+=uucplock.3 uu_lockerr.3
 MLINKS+=uucplock.3 uu_lock_txfr.3
 MLINKS+=fmt_scaled.3 scan_scaled.3
 
-SRCS+=	ohash_create_entry.c ohash_delete.c ohash_do.c ohash_entries.c \
-	ohash_enum.c ohash_init.c ohash_interval.c \
-	ohash_lookup_interval.c ohash_lookup_memory.c \
-	ohash_qlookup.c ohash_qlookupi.c
+SRCS+=	ohash.c
+HDRS += ohash.h
 
 MAN +=	ohash_init.3 ohash_interval.3
 MLINKS += ohash_init.3 ohash_delete.3 \
@@ -78,7 +76,6 @@ MLINKS += ohash_init.3 ohash_delete.3 \
 	ohash_interval.3 ohash_create_entry.3 \
 	ohash_interval.3 ohash_qlookupi.3 \
 	ohash_interval.3 ohash_qlookup.3
-HDRS += ohash.h
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \

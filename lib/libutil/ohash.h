@@ -1,8 +1,4 @@
-#ifndef OHASH_H
-#define OHASH_H
-/* $OpenBSD: ohash.h,v 1.1 2014/05/12 19:09:00 espie Exp $ */
-/* ex:ts=8 sw=4: 
- */
+/* $OpenBSD: ohash.h,v 1.2 2014/06/02 18:52:03 deraadt Exp $ */
 
 /* Copyright (c) 1999, 2004 Marc Espie <espie@openbsd.org>
  *
@@ -18,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef OHASH_H
+#define OHASH_H
 
 /* Open hashing support. 
  * Open hashing was chosen because it is much lighter than other hash
