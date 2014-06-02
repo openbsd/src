@@ -117,7 +117,7 @@ dsaparam_main(int argc, char **argv)
 	int i, badops = 0, text = 0;
 	BIO *in = NULL, *out = NULL;
 	int informat, outformat, noout = 0, C = 0, ret = 1;
-	char *infile, *outfile, *prog, *inrand = NULL;
+	char *infile, *outfile, *prog;
 	int numbits = -1, num, genkey = 0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
@@ -175,10 +175,6 @@ dsaparam_main(int argc, char **argv)
 			C = 1;
 		else if (strcmp(*argv, "-genkey") == 0) {
 			genkey = 1;
-		} else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
 		} else if (strcmp(*argv, "-noout") == 0)
 			noout = 1;
 		else if (sscanf(*argv, "%d", &num) == 1) {
@@ -205,7 +201,6 @@ bad:
 		BIO_printf(bio_err, " -C            Output C code\n");
 		BIO_printf(bio_err, " -noout        no output\n");
 		BIO_printf(bio_err, " -genkey       generate a DSA key\n");
-		BIO_printf(bio_err, " -rand         files to use for random number input\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e     use engine e, possibly a hardware device.\n");
 #endif

@@ -455,7 +455,6 @@ sv_usage(void)
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err, " -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
-	BIO_printf(bio_err, " -rand file:file:...\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err, " -servername host - servername for HostName TLS extension\n");
 	BIO_printf(bio_err, " -servername_fatal - on mismatch send fatal alert (default warning alert)\n");
@@ -696,7 +695,6 @@ s_server_main(int argc, char *argv[])
 	const SSL_METHOD *meth = NULL;
 	int socket_type = SOCK_STREAM;
 	ENGINE *e = NULL;
-	char *inrand = NULL;
 	int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
 	char *dpassarg = NULL, *dpass = NULL;
@@ -969,11 +967,6 @@ s_server_main(int argc, char *argv[])
 			engine_id = *(++argv);
 		}
 #endif
-		else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
-		}
 #ifndef OPENSSL_NO_TLSEXT
 		else if (strcmp(*argv, "-servername") == 0) {
 			if (--argc < 1)

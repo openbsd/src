@@ -97,7 +97,6 @@ gendh_main(int argc, char **argv)
 	int ret = 1, num = DEFBITS;
 	int g = 2;
 	char *outfile = NULL;
-	char *inrand = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine = NULL;
 #endif
@@ -131,11 +130,7 @@ gendh_main(int argc, char **argv)
 			engine = *(++argv);
 		}
 #endif
-		else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
-		} else
+		else
 			break;
 		argv++;
 		argc--;
@@ -153,9 +148,6 @@ bad:
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e - use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err, " -rand file:file:...\n");
-		BIO_printf(bio_err, "           - load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err, "             the random number generator\n");
 		goto end;
 	}
 #ifndef OPENSSL_NO_ENGINE

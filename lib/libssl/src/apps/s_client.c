@@ -316,7 +316,6 @@ sc_usage(void)
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
-	BIO_printf(bio_err, " -rand file:file:...\n");
 	BIO_printf(bio_err, " -sess_out arg - file to write SSL session to\n");
 	BIO_printf(bio_err, " -sess_in arg  - file to read SSL session from\n");
 #ifndef OPENSSL_NO_TLSEXT
@@ -437,7 +436,6 @@ s_client_main(int argc, char **argv)
 	const SSL_METHOD *meth = NULL;
 	int socket_type = SOCK_STREAM;
 	BIO *sbio;
-	char *inrand = NULL;
 	int mbuf_len = 0;
 	struct timeval timeout, *timeoutp;
 #ifndef OPENSSL_NO_ENGINE
@@ -692,11 +690,7 @@ s_client_main(int argc, char **argv)
 			ssl_client_engine_id = *(++argv);
 		}
 #endif
-		else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
-		} else if (strcmp(*argv, "-4") == 0) {
+		else if (strcmp(*argv, "-4") == 0) {
 			af = AF_INET;
 		} else if (strcmp(*argv, "-6") == 0) {
 			af = AF_INET6;

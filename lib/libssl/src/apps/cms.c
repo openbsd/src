@@ -127,7 +127,6 @@ cms_main(int argc, char **argv)
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
-	char *inrand = NULL;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
 	int rctformat = FORMAT_SMIME, keyform = FORMAT_PEM;
@@ -315,11 +314,6 @@ cms_main(int argc, char **argv)
 				BIO_printf(bio_err, "Invalid OID %s\n", *args);
 				goto argerr;
 			}
-		} else if (!strcmp(*args, "-rand")) {
-			if (!args[1])
-				goto argerr;
-			args++;
-			inrand = *args;
 		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (!strcmp(*args, "-engine")) {
@@ -553,9 +547,6 @@ argerr:
 		BIO_printf(bio_err, "-engine e      use engine e, possibly a hardware device.\n");
 #endif
 		BIO_printf(bio_err, "-passin arg    input file pass phrase source\n");
-		BIO_printf(bio_err, "-rand file:file:...\n");
-		BIO_printf(bio_err, "               load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err, "               the random number generator\n");
 		BIO_printf(bio_err, "cert.pem       recipient certificate(s) for encryption\n");
 		goto end;
 	}

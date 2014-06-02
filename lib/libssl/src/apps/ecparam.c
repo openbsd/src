@@ -107,7 +107,6 @@
  *                                     explicit
  * -no_seed         - if 'explicit' parameters are chosen do not use the seed
  * -genkey          - generate ec key
- * -rand file       - files to use for random number input
  * -engine e        - use engine e, possibly a hardware device
  */
 
@@ -124,7 +123,7 @@ ecparam_main(int argc, char **argv)
 	int new_form = 0;
 	int asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	int new_asn1_flag = 0;
-	char *curve_name = NULL, *inrand = NULL;
+	char *curve_name = NULL;
 	int list_curves = 0, no_seed = 0, check = 0, badops = 0, text = 0,
 	 i, genkey = 0;
 	char *infile = NULL, *outfile = NULL, *prog;
@@ -204,10 +203,6 @@ ecparam_main(int argc, char **argv)
 			noout = 1;
 		else if (strcmp(*argv, "-genkey") == 0) {
 			genkey = 1;
-		} else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
 		} else if (strcmp(*argv, "-engine") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -266,8 +261,6 @@ bad:
 		    " use the seed\n");
 		BIO_printf(bio_err, " -genkey           generate ec"
 		    " key\n");
-		BIO_printf(bio_err, " -rand file        files to use for"
-		    " random number input\n");
 		BIO_printf(bio_err, " -engine e         use engine e, "
 		    "possibly a hardware device\n");
 		goto end;

@@ -133,7 +133,6 @@ ts_main(int argc, char **argv)
 	char *data = NULL;
 	char *digest = NULL;
 	const EVP_MD *md = NULL;
-	char *rnd = NULL;
 	char *policy = NULL;
 	int no_nonce = 0;
 	int cert = 0;
@@ -181,10 +180,6 @@ ts_main(int argc, char **argv)
 			if (argc-- < 1)
 				goto usage;
 			digest = *++argv;
-		} else if (strcmp(*argv, "-rand") == 0) {
-			if (argc-- < 1)
-				goto usage;
-			rnd = *++argv;
 		} else if (strcmp(*argv, "-policy") == 0) {
 			if (argc-- < 1)
 				goto usage;
@@ -315,7 +310,7 @@ ts_main(int argc, char **argv)
 
 usage:
 	BIO_printf(bio_err, "usage:\n"
-	    "ts -query [-rand file:file:...] [-config configfile] "
+	    "ts -query [-config configfile] "
 	    "[-data file_to_hash] [-digest digest_bytes]"
 	    "[-md2|-md4|-md5|-sha|-sha1|-mdc2|-ripemd160] "
 	    "[-policy object_id] [-no_nonce] [-cert] "

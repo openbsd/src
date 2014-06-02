@@ -108,7 +108,6 @@ smime_main(int argc, char **argv)
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
-	char *inrand = NULL;
 	int indef = 0;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
@@ -198,12 +197,6 @@ smime_main(int argc, char **argv)
 			flags |= PKCS7_NOOLDMIMETYPE;
 		else if (!strcmp(*args, "-crlfeol"))
 			flags |= PKCS7_CRLFEOL;
-		else if (!strcmp(*args, "-rand")) {
-			if (!args[1])
-				goto argerr;
-			args++;
-			inrand = *args;
-		}
 #ifndef OPENSSL_NO_ENGINE
 		else if (!strcmp(*args, "-engine")) {
 			if (!args[1])
@@ -412,9 +405,6 @@ argerr:
 		BIO_printf(bio_err, "-engine e      use engine e, possibly a hardware device.\n");
 #endif
 		BIO_printf(bio_err, "-passin arg    input file pass phrase source\n");
-		BIO_printf(bio_err, "-rand file:file:...\n");
-		BIO_printf(bio_err, "               load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err, "               the random number generator\n");
 		BIO_printf(bio_err, "cert.pem       recipient certificate(s) for encryption\n");
 		goto end;
 	}

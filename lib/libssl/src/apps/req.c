@@ -115,7 +115,6 @@
  * -config file	- Load configuration file.
  * -key file	- make a request using key in file (or use it for verification).
  * -keyform arg	- key file format.
- * -rand file(s) - load the file(s) into the PRNG.
  * -newkey	- make a key and a request.
  * -modulus	- print RSA modulus.
  * -pubkey	- output Public Key.
@@ -179,7 +178,6 @@ req_main(int argc, char **argv)
 	const EVP_CIPHER *cipher = NULL;
 	ASN1_INTEGER *serial = NULL;
 	int modulus = 0;
-	char *inrand = NULL;
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	char *p;
@@ -262,10 +260,6 @@ req_main(int argc, char **argv)
 			if (--argc < 1)
 				goto bad;
 			passargout = *(++argv);
-		} else if (strcmp(*argv, "-rand") == 0) {
-			if (--argc < 1)
-				goto bad;
-			inrand = *(++argv);
 		} else if (strcmp(*argv, "-newkey") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -381,9 +375,6 @@ bad:
 		BIO_printf(bio_err, " -key file      use the private key contained in file\n");
 		BIO_printf(bio_err, " -keyform arg   key file format\n");
 		BIO_printf(bio_err, " -keyout arg    file to send the key to\n");
-		BIO_printf(bio_err, " -rand file:file:...\n");
-		BIO_printf(bio_err, "                load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err, "                the random number generator\n");
 		BIO_printf(bio_err, " -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err, " -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
 #ifndef OPENSSL_NO_ECDSA

@@ -64,7 +64,6 @@
 #include <openssl/rand.h>
 
 /* -out file         - write to file
- * -rand file:file   - PRNG seed files
  * -base64           - base64 encode output
  * -hex              - hex encode output
  * num               - write 'num' bytes
@@ -78,7 +77,6 @@ rand_main(int argc, char **argv)
 	int i, r, ret = 1;
 	int badopt;
 	char *outfile = NULL;
-	char *inrand = NULL;
 	int base64 = 0;
 	int hex = 0;
 	BIO *out = NULL;
@@ -107,12 +105,7 @@ rand_main(int argc, char **argv)
 				badopt = 1;
 		}
 #endif
-		else if (strcmp(argv[i], "-rand") == 0) {
-			if ((argv[i + 1] != NULL) && (inrand == NULL))
-				inrand = argv[++i];
-			else
-				badopt = 1;
-		} else if (strcmp(argv[i], "-base64") == 0) {
+		else if (strcmp(argv[i], "-base64") == 0) {
 			if (!base64)
 				base64 = 1;
 			else
@@ -146,7 +139,6 @@ rand_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, "-engine e             - use engine e, possibly a hardware device.\n");
 #endif
-		BIO_printf(bio_err, "-rand file:file:... - seed PRNG from files\n");
 		BIO_printf(bio_err, "-base64               - base64 encode output\n");
 		BIO_printf(bio_err, "-hex                  - hex encode output\n");
 		goto err;
