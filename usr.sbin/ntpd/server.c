@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.38 2013/10/21 08:48:22 phessler Exp $ */
+/*	$OpenBSD: server.c,v 1.39 2014/06/03 18:42:29 chl Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -161,7 +161,6 @@ int
 server_dispatch(int fd, struct ntpd_conf *lconf)
 {
 	ssize_t			 size;
-	u_int8_t		 version;
 	double			 rectime;
 	struct sockaddr_storage	 fsa;
 	socklen_t		 fsa_len;
@@ -184,8 +183,6 @@ server_dispatch(int fd, struct ntpd_conf *lconf)
 
 	if (ntp_getmsg((struct sockaddr *)&fsa, buf, size, &query) == -1)
 		return (0);
-
-	version = (query.status & VERSIONMASK) >> 3;
 
 	bzero(&reply, sizeof(reply));
 	if (lconf->status.synced)
