@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.30 2013/03/08 07:56:17 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.31 2014/06/03 14:05:30 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 8 2013 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -159,7 +159,10 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except that the environment variable
+.Ev TZ
+is unsupported.
 .Pp
 The obsolescent form of
 .Nm touch ,
