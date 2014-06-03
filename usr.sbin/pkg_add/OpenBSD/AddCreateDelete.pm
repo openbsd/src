@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.24 2014/05/20 05:55:43 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.25 2014/06/03 13:13:53 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -91,13 +91,16 @@ sub system
 sub run_makewhatis
 {
 	my ($state, $opts, $l) = @_;
+	my $braindead = sub { chdir('/'); };
 	while (@$l > 1000) {
 		my @b = splice(@$l, 0, 1000);
-		$state->vsystem(OpenBSD::Paths->makewhatis, @$opts, '--', @b);
+		$state->vsystem($braindead,
+		    OpenBSD::Paths->makewhatis, @$opts, '--', @b);
 	}
-	$state->vsystem(OpenBSD::Paths->makewhatis, @$opts, '--', @$l);
-
+	$state->vsystem($braindead,
+	    OpenBSD::Paths->makewhatis, @$opts, '--', @$l);
 }
+
 sub ntogo
 {
 	my ($self, $offset) = @_;
