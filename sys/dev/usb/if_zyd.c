@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.99 2014/06/03 14:41:26 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.100 2014/06/03 14:41:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2498,7 +2498,7 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 	uint16_t addr;
 	uint8_t stat;
 
-	DPRINTF(("firmware size=%d\n", size));
+	DPRINTF(("firmware size=%zd\n", size));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = ZYD_DOWNLOADREQ;
