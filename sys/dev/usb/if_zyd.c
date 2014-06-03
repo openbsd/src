@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.98 2014/06/03 14:41:04 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.99 2014/06/03 14:41:26 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2018,7 +2018,7 @@ zyd_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		for (i = 0; i < ZYD_MAX_RXFRAMECNT; i++) {
 			const uint16_t len = UGETW(desc->len[i]);
 
-			if (len == 0 || p + len > end)
+			if (len == 0 || p + len >= end)
 				break;
 
 			zyd_rx_data(sc, p, len);
