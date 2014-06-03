@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuencode.1,v 1.23 2010/09/29 07:44:57 jmc Exp $
+.\"	$OpenBSD: uuencode.1,v 1.24 2014/06/03 21:05:40 jmc Exp $
 .\"	$FreeBSD: uuencode.1,v 1.26 2003/03/18 14:24:47 fanf Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -31,7 +31,7 @@
 .\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
 .\" $FreeBSD$
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt UUENCODE 1
 .Os
 .Sh NAME
@@ -173,12 +173,7 @@ deletes any prefix ending with the last slash '/' for security
 reasons.
 .El
 .Sh EXIT STATUS
-The
-.Nm uuencode
-and
-.Nm uudecode
-utilities exit 0 on success,
-and \*(Gt0 if an error occurs.
+.Ex -std uuencode uudecode b64encode b64decode
 .Sh EXAMPLES
 The following example packages up a source tree, compresses it,
 uuencodes it and mails it to a user on another system.
@@ -196,13 +191,13 @@ uuencode src_tree.tar.Z | mail user@example.com
 The following example unpacks all uuencoded
 files from your mailbox into your current working directory.
 .Bd -literal -offset indent
-$ uudecode -c \*(Lt $MAIL
+$ uudecode -c < $MAIL
 .Ed
 .Pp
 The following example extracts a compressed tar
 archive from your mailbox
 .Bd -literal -offset indent
-$ uudecode -o /dev/stdout \*(Lt $MAIL | zcat | tar xfv -
+$ uudecode -o /dev/stdout < $MAIL | zcat | tar xfv -
 .Ed
 .Sh SEE ALSO
 .Xr basename 1 ,
