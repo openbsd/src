@@ -1,7 +1,7 @@
-/* $OpenBSD: cpu.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $ */
+/* $OpenBSD: cpu.h,v 1.7 2014/06/03 22:43:51 aoyama Exp $ */
 /* public domain */
 #ifndef	_MACHINE_CPU_H_
-#define	_LUNA88k_CPU_H_
+#define	_MACHINE_CPU_H_
 
 #include <m88k/cpu.h>
 
@@ -10,4 +10,4 @@ void luna88k_ext_int(struct trapframe *eframe);
 #define	md_interrupt_func	luna88k_ext_int
 #endif	/* _KERNEL */
 
-#endif	/* _LUNA88k_CPU_H_ */
+#endif	/* _MACHINE_CPU_H_ */
