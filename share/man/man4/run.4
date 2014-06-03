@@ -1,4 +1,4 @@
-.\" $OpenBSD: run.4,v 1.44 2014/02/15 20:28:19 tedu Exp $
+.\" $OpenBSD: run.4,v 1.45 2014/06/03 21:01:43 stsp Exp $
 .\"
 .\" Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt RUN 4
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 The
 .Nm
 driver supports USB 2.0 wireless adapters based on the Ralink RT2700U,
-RT2800U and RT3000U chipsets.
+RT2800U, RT3000U and RT3900E chipsets.
 .Pp
 The RT2700U chipset consists of two integrated chips, an RT2770 MAC/BBP and
 an RT2720 (1T2R) or RT2750 (dual-band 1T2R) radio transceiver.
@@ -36,6 +36,11 @@ an RT2820 (2T3R) or RT2850 (dual-band 2T3R) radio transceiver.
 .Pp
 The RT3000U is a single-chip solution based on an RT3070 MAC/BBP and
 an RT3020 (1T1R), RT3021 (1T2R), RT3022 (2T2R) or RT3052 (dual-band 2T2R)
+radio transceiver.
+.Pp
+The RT3900E is a single-chip solution based on an RT3593, RT5390,
+RT5392 or an RT5592 MAC/BBP and an RT3053 (dual-band 3T3R),
+RT5370 (1T1R), RT5372 (2T2R), or RT5572 (dual-band 2T2R)
 radio transceiver.
 .Pp
 These are the modes the
@@ -91,8 +96,9 @@ The following adapters should work:
 .Bl -tag -width Ds -offset indent -compact
 .It Airlink101 AWLL6090
 .It ASUS USB-N11
-.It ASUS USB-N13
+.It ASUS USB-N13 ver. A1
 .It ASUS USB-N53
+.It ASUS USB-N66
 .It ASUS WL-160N
 .It Belkin F5D8051 ver 3000
 .It Belkin F5D8053
@@ -100,6 +106,7 @@ The following adapters should work:
 .It Belkin F6D4050 ver 1
 .It Belkin F6D4050 ver 2
 .It Belkin F7D1101 ver 2
+.It Belkin F9L1103
 .It Buffalo WLI-UC-AG300N
 .It Buffalo WLI-UC-G300N
 .It Buffalo WLI-UC-G301N
@@ -114,7 +121,9 @@ The following adapters should work:
 .It Corega CG-WLUSB300GNM
 .It D-Link DWA-127
 .It D-Link DWA-130 rev B1
-.It D-Link DWA-140
+.It D-Link DWA-140 rev B1, B2, B3, \&D1
+.It D-Link DWA-160 rev B2
+.It D-Link DWA-162
 .It DrayTek Vigor N61
 .It Edimax EW-7711UAn
 .It Edimax EW-7711USn
@@ -122,6 +131,7 @@ The following adapters should work:
 .It Edimax EW-7717Un
 .It Edimax EW-7718Un
 .It Edimax EW-7722UTn
+.It Edimax EW-7733UnD
 .It Gigabyte GN-WB30N
 .It Gigabyte GN-WB31N
 .It Gigabyte GN-WB32L
@@ -133,6 +143,7 @@ The following adapters should work:
 .It Linksys AE1000
 .It Linksys WUSB54GC v3
 .It Linksys WUSB600N
+.It LogiLink WL0084B
 .It Logitec gLAN-W150NU2BK
 .It Logitec LAN-W150N/U2
 .It Logitec LAN-W300N/U2
@@ -152,6 +163,8 @@ The following adapters should work:
 .It Sweex LW303
 .It Sweex LW313
 .It TRENDnet TEW-645UB
+.It TP-LINK TL-WDN3200
+.It TP-LINK TL-WN727N v3
 .It Unex DNUR-81
 .It Unex DNUR-82
 .It ZyXEL NWD-211AN
@@ -160,6 +173,7 @@ The following adapters should work:
 .It ZyXEL NWD210N
 .It ZyXEL NWD2205
 .It ZyXEL NWD270N
+.It ZyXEL NWD2705
 .El
 .Sh EXAMPLES
 The following example scans for available networks:
