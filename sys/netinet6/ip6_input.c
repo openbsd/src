@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.125 2014/05/13 09:30:27 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.126 2014/06/03 13:32:24 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>

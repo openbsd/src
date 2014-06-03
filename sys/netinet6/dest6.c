@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.12 2013/10/17 16:27:45 bluhm Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.13 2014/06/03 13:32:24 mpi Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>

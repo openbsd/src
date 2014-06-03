@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.69 2014/05/20 10:29:01 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.70 2014/06/03 13:32:24 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>

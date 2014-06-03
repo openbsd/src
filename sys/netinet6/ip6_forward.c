@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.66 2014/05/06 09:49:58 gerhard Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.67 2014/06/03 13:32:24 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>

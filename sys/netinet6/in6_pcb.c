@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.62 2014/04/18 10:48:30 jca Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.63 2014/06/03 13:32:24 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>

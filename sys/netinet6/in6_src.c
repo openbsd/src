@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.43 2014/04/21 11:10:54 henning Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.44 2014/06/03 13:32:24 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
