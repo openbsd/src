@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.97 2014/03/19 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.98 2014/06/03 14:41:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1913,7 +1913,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	}
 
 	/* compute actual frame length */
-	len -= sizeof (*plcp) - sizeof (*stat) - IEEE80211_CRC_LEN;
+	len -= (sizeof (*plcp) + sizeof (*stat) + IEEE80211_CRC_LEN);
 
 	if (len > MCLBYTES) {
 		DPRINTFN(2, ("frame too large (length=%d)\n", len));
