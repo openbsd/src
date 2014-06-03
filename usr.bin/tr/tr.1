@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.20 2013/08/14 08:39:27 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.21 2014/06/03 20:57:23 millert Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -41,18 +41,18 @@
 .Nd translate characters
 .Sh SYNOPSIS
 .Nm tr
-.Op Fl cs
+.Op Fl Ccs
 .Ar string1 string2
 .Nm tr
-.Op Fl c
+.Op Fl Cc
 .Fl d
 .Ar string1
 .Nm tr
-.Op Fl c
+.Op Fl Cc
 .Fl s
 .Ar string1
 .Nm tr
-.Op Fl c
+.Op Fl Cc
 .Fl ds
 .Ar string1 string2
 .Sh DESCRIPTION
@@ -63,15 +63,18 @@ or deletion of selected characters.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
+.It Fl C
 Complements the set of characters in
 .Ar string1 ;
 for instance,
-.Dq -c\ ab
+.Dq -C\ ab
 includes every character except for
 .Dq a
 and
 .Dq b .
+.It Fl c
+The same as
+.Fl C .
 .It Fl d
 The
 .Fl d
@@ -283,7 +286,14 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification,
+except that the
+.Fl C
+option behaves the same as the
+.Fl c
+option since
+.Nm
+is not locale-aware.
 .Pp
 System V has historically implemented character ranges using the syntax
 .Dq [c-c]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.16 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: tr.c,v 1.17 2014/06/03 20:57:23 millert Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -88,8 +88,9 @@ main(int argc, char *argv[])
 	int cflag, dflag, sflag, isstring2;
 
 	cflag = dflag = sflag = 0;
-	while ((ch = getopt(argc, argv, "cds")) != -1)
+	while ((ch = getopt(argc, argv, "Ccds")) != -1)
 		switch(ch) {
+		case 'C':
 		case 'c':
 			cflag = 1;
 			break;
@@ -120,7 +121,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * tr -ds [-c] string1 string2
+	 * tr -ds [-Cc] string1 string2
 	 * Delete all characters (or complemented characters) in string1.
 	 * Squeeze all characters in string2.
 	 */
@@ -140,7 +141,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * tr -d [-c] string1
+	 * tr -d [-Cc] string1
 	 * Delete all characters (or complemented characters) in string1.
 	 */
 	if (dflag) {
@@ -156,7 +157,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * tr -s [-c] string1
+	 * tr -s [-Cc] string1
 	 * Squeeze all characters (or complemented characters) in string1.
 	 */
 	if (sflag && !isstring2) {
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * tr [-cs] string1 string2
+	 * tr [-Ccs] string1 string2
 	 * Replace all characters (or complemented characters) in string1 with
 	 * the character in the same position in string2.  If the -s option is
 	 * specified, squeeze all the characters in string2.
@@ -239,9 +240,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: tr [-cs] string1 string2\n"
-	    "       tr [-c] -d string1\n"
-	    "       tr [-c] -s string1\n"
-	    "       tr [-c] -ds string1 string2\n");
+	    "usage: tr [-Ccs] string1 string2\n"
+	    "       tr [-Cc] -d string1\n"
+	    "       tr [-Cc] -s string1\n"
+	    "       tr [-Cc] -ds string1 string2\n");
 	exit(1);
 }
