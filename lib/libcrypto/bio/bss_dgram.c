@@ -1222,6 +1222,7 @@ dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 		memcpy(&authkey->sca_key[0], ptr, 64 * sizeof(uint8_t));
 
 		ret = setsockopt(b->num, IPPROTO_SCTP, SCTP_AUTH_KEY, authkey, sockopt_len);
+		free(authkey);
 		if (ret < 0)
 			break;
 
