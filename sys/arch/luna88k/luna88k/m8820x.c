@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.15 2009/04/19 17:56:13 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.16 2014/06/03 12:11:19 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -150,7 +150,7 @@ m8820x_setup_board_config()
  * Better be at splhigh, or even better, with interrupts
  * disabled.
  */
-#define ILLADDRESS	0x3ffffff0 	/* any faulty address for luna88k2 */
+#define ILLADDRESS	0x3ffffff0 	/* faulty address for LUNA-88K{,2} */
 
 cpuid_t
 m8820x_cpu_number()
