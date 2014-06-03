@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.21 2014/06/03 20:57:23 millert Exp $
+.\"	$OpenBSD: tr.1,v 1.22 2014/06/03 21:50:30 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -69,9 +69,9 @@ Complements the set of characters in
 for instance,
 .Dq -C\ ab
 includes every character except for
-.Dq a
+.Sq a
 and
-.Dq b .
+.Sq b .
 .It Fl c
 The same as
 .Fl C .
@@ -270,15 +270,15 @@ The following examples are shown as given to the shell:
 Create a list of the words in file1, one per line, where a word is taken to
 be a maximal string of letters.
 .Pp
-.D1 Li "$ tr -cs \*q[:alpha:]\*q \*q\en\*q < file1"
+.Dl $ tr -cs \*q[:alpha:]\*q \*q\en\*q < file1
 .Pp
 Translate the contents of file1 to upper-case.
 .Pp
-.D1 Li "$ tr \*q[:lower:]\*q \*q[:upper:]\*q < file1"
+.Dl $ tr \*q[:lower:]\*q \*q[:upper:]\*q < file1
 .Pp
 Strip out non-printable characters from file1.
 .Pp
-.D1 Li "$ tr -cd \*q[:print:]\*q < file1"
+.Dl $ tr -cd \*q[:print:]\*q < file1
 .Sh SEE ALSO
 .Xr sed 1
 .Sh STANDARDS
@@ -305,32 +305,32 @@ implementations and
 standardized by POSIX.
 System V shell scripts should work under this implementation as long as
 the range is intended to map in another range, i.e., the command
-.Dq tr\ [a-z]\ [A-Z]
+.Dq tr [a-z] [A-Z]
 will work as it will map the
-.Dq \&[
+.Sq \&[
 character in
 .Ar string1
 to the
-.Dq \&[
+.Sq \&[
 character in
 .Ar string2 .
 However, if the shell script is deleting or squeezing characters as in
 the command
 .Dq tr\ -d\ [a-z] ,
 the characters
-.Dq \&[
+.Sq \&[
 and
-.Dq \]
+.Sq \&]
 will be
 included in the deletion or compression list, which would not have happened
 under an historic System V implementation.
 Additionally, any scripts that depended on the sequence
 .Dq a-z
 to represent the three characters
-.Dq a ,
-.Dq - ,
+.Sq a ,
+.Sq - ,
 and
-.Dq z
+.Sq z
 will have to be rewritten as
 .Dq a\e-z .
 .Pp
