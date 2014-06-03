@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.82 2014/02/19 04:50:36 lteo Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.83 2014/06/03 02:57:29 lteo Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: February 19 2014 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -1819,8 +1819,8 @@ Ethernet interface removed the packet from the wire and when the kernel
 serviced the
 .Dq new packet
 interrupt.
-.Ss IP Checksum Offload
-Some network cards support IP checksum offload.
+.Ss IP and Protocol Checksum Offload
+Some network cards support IP and/or protocol checksum offload.
 Packet headers for such interfaces erroneously indicate a bad checksum,
 since the checksum is not calculated until after
 .Nm
