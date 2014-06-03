@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.20 2012/01/15 20:06:40 schwarze Exp $
+.\"	$OpenBSD: tput.1,v 1.21 2014/06/03 20:28:24 jmc Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 15 2012 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt TPUT 1
 .Os
 .Sh NAME
@@ -113,6 +113,11 @@ Reset the terminal (using the
 .Xr terminfo
 reset sequences).
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev TERM
+Determine the terminal type.
+.El
 .Sh EXIT STATUS
 The exit value of
 .Nm
@@ -138,13 +143,13 @@ If the attribute is of type boolean,
 exits with a value of 0 if the terminal has this attribute or
 1 if it does not.
 .Sh EXAMPLES
-.Bl -tag -width "tput cup 6 11 dch 6" -compact
-.It Li "tput clear cup 5 10"
-clear the screen and goto line 5 column 10
+Clear the screen and go to line 5 column 10:
 .Pp
-.It Li "tput cup 6 11 dch 6"
-goto line 6 column 11 and delete 6 characters
-.El
+.Dl $ tput clear cup 5 10
+.Pp
+Go to line 6 column 11 and delete 6 characters:
+.Pp
+.Dl $ tput cup 6 11 dch 6
 .Sh SEE ALSO
 .Xr terminfo 3 ,
 .Xr terminfo 5
@@ -157,7 +162,9 @@ specification.
 .Pp
 The flag
 .Op Fl S
-is an extension to that specification.
+and the attribute
+.Cm longname
+are extensions to that specification.
 .Sh HISTORY
 A
 .Nm clear
