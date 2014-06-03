@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.30 2010/09/11 20:54:22 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.31 2014/06/03 20:26:37 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: September 11 2010 $
+.Dd $Mdocdate: June 3 2014 $
 .Dt TEST 1
 .Os
 .Sh NAME
@@ -336,6 +336,15 @@ The primaries
 and
 .Cm \*(Gt
 are extensions to that specification.
+.Pp
+The operators
+.Fl a ,
+.Fl o ,
+and
+.Cm ()
+are marked by
+.St -p1003.1-2008
+as part of X/Open System Interfaces and obsolete.
 .Pp
 .Nm
 also exists as a built-in to
