@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.39 2013/11/23 17:38:15 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.40 2014/06/04 07:14:29 jsg Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ mkmakefile(void)
 		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
 		    strerror(errno));
 		free(ifname);
+		(void)fclose(ifp);
 		return (1);
 	}
 	if (emitdefs(ofp) != 0)
