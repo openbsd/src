@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.1,v 1.16 2010/10/28 21:32:54 jmc Exp $
+.\"	$OpenBSD: write.1,v 1.17 2014/06/04 06:07:32 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)write.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 4 2014 $
 .Dt WRITE 1
 .Os
 .Sh NAME
@@ -92,6 +92,13 @@ The string
 .Dq oo
 means that the person believes the conversation to be
 over.
+.Sh ASYNCHRONOUS EVENTS
+.Bl -tag -width SIGINTXXX
+.It Dv SIGINT
+Terminate
+.Nm
+and exit with a zero status.
+.El
 .Sh EXIT STATUS
 The
 .Nm
@@ -100,7 +107,7 @@ utility exits with one of the following values:
 .Bl -tag -width Ds -offset indent -compact
 .It 0
 Normal behavior.
-.It \*(Gt0
+.It >0
 The specified user is either not logged in or not accepting messages.
 .El
 .Sh SEE ALSO
