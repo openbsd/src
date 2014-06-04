@@ -2083,7 +2083,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 			renew_ticket = 1;
 	} else {
 		/* Check key name matches */
-		if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
+		if (CRYPTO_memcmp(etick, tctx->tlsext_tick_key_name, 16))
 			return 2;
 		HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 		    tlsext_tick_md(), NULL);

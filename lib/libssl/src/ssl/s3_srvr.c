@@ -1025,7 +1025,7 @@ ssl3_get_client_hello(SSL *s)
 					goto f_err;
 				}
 				/* else cookie verification succeeded */
-			} else if (memcmp(s->d1->rcvd_cookie, s->d1->cookie,
+			} else if (CRYPTO_memcmp(s->d1->rcvd_cookie, s->d1->cookie,
 			    s->d1->cookie_len) != 0) {
 				/* default verification */
 				al = SSL_AD_HANDSHAKE_FAILURE;
