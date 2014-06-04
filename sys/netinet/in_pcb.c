@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.155 2014/05/07 08:26:38 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.156 2014/06/04 13:45:47 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -261,14 +261,22 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
 		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
 			sin->sin_port = 0;		/* yech... */
-			if (!(so->so_options & SO_BINDANY) &&
-			    in_iawithaddr(sin->sin_addr,
-			    inp->inp_rtableid) == NULL)
-				/* SOCK_RAW does not use in_pcbbind() */
-				if (!(so->so_type == SOCK_DGRAM &&
-				    in_broadcast(sin->sin_addr, NULL,
-				    inp->inp_rtableid)))
+			if (!((so->so_options & SO_BINDANY) ||
+			    (sin->sin_addr.s_addr == INADDR_BROADCAST &&
+			     so->so_type == SOCK_DGRAM))) {
+				struct in_ifaddr *ia;
+
+				ia = ifatoia(ifa_ifwithaddr(sintosa(sin),
+				    inp->inp_rtableid));
+				if (ia == NULL)
 					return (EADDRNOTAVAIL);
+
+				/* SOCK_RAW does not use in_pcbbind() */
+				if (so->so_type != SOCK_DGRAM &&
+				    sin->sin_addr.s_addr !=
+				    ia->ia_addr.sin_addr.s_addr)
+					return (EADDRNOTAVAIL);
+			}
 		}
 		if (lport) {
 			struct inpcb *t;
