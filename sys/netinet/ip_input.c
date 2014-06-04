@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.233 2014/05/10 12:30:27 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.234 2014/06/04 12:20:00 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ ip_init(void)
 	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
 }
 
-struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
 
 void
@@ -1003,6 +1002,7 @@ int
 ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 {
 	struct ip *ip = mtod(m, struct ip *);
+	struct sockaddr_in ipaddr;
 	u_char *cp;
 	struct ip_timestamp ipt;
 	struct in_ifaddr *ia;
@@ -1057,6 +1057,9 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
 			}
+			memset(&ipaddr, 0, sizeof(ipaddr));
+			ipaddr.sin_family = AF_INET;
+			ipaddr.sin_len = sizeof(ipaddr);
 			ipaddr.sin_addr = ip->ip_dst;
 			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
 			    m->m_pkthdr.ph_rtableid));
@@ -1084,6 +1087,9 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			/*
 			 * locate outgoing interface
 			 */
+			memset(&ipaddr, 0, sizeof(ipaddr));
+			ipaddr.sin_family = AF_INET;
+			ipaddr.sin_len = sizeof(ipaddr);
 			memcpy(&ipaddr.sin_addr, cp + off,
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR) {
@@ -1126,8 +1132,10 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
-			memcpy(&ipaddr.sin_addr, &ip->ip_dst,
-			    sizeof(ipaddr.sin_addr));
+			memset(&ipaddr, 0, sizeof(ipaddr));
+			ipaddr.sin_family = AF_INET;
+			ipaddr.sin_len = sizeof(ipaddr);
+			ipaddr.sin_addr = ip->ip_dst;
 			/*
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
@@ -1168,6 +1176,9 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
+				memset(&ipaddr, 0, sizeof(ipaddr));
+				ipaddr.sin_family = AF_INET;
+				ipaddr.sin_len = sizeof(ipaddr);
 				ipaddr.sin_addr = dst;
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
 				    ifp));
@@ -1182,8 +1193,10 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
-				memcpy(&ipaddr.sin_addr, &sin,
-				    sizeof(struct in_addr));
+				memset(&ipaddr, 0, sizeof(ipaddr));
+				ipaddr.sin_family = AF_INET;
+				ipaddr.sin_len = sizeof(ipaddr);
+				ipaddr.sin_addr = sin;
 				if (ifa_ifwithaddr(sintosa(&ipaddr),
 				    m->m_pkthdr.ph_rtableid) == 0)
 					continue;
