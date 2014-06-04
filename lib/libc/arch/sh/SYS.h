@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2014/06/04 20:13:49 matthew Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,17 +37,10 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef __STDC__
 #define	SYSENTRY(x)					\
 	WEAK_ALIAS(x,_thread_sys_ ## x);		\
 	ENTRY(_thread_sys_ ## x)
-#else
-#define	SYSENTRY(x)					\
-	WEAK_ALIAS(x,_thread_sys_/**/x);		\
-	ENTRY(_thread_sys_/**/x)
-#endif
 
-#ifdef __STDC__
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
 		.word	0xc380;	/* trapa #0x80; */	\
@@ -56,16 +49,6 @@
 		.align	2;				\
 	903:	.long	(SYS_ ## x);			\
 	904:
-#else
-#define SYSTRAP(x)					\
-		mov.l	903f, r0;			\
-		trapa	#0x80;				\
-		bra	904f;				\
-		 nop;					\
-		.align	2;				\
-	903:	.long	(SYS_/**/x);			\
-	904:
-#endif
 
 #define	CERROR	_C_LABEL(__cerror)
 #define	_CERROR	_C_LABEL(___cerror)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.6 2013/12/24 05:31:13 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.7 2014/06/04 20:13:49 matthew Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -39,27 +39,14 @@
 #include <sys/syscall.h>
 #include <arm/swi.h>
 
-#ifdef __STDC__
 #define SYSENTRY(x)					\
 	.weak _C_LABEL(x);				\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x);	\
 	ENTRY(_thread_sys_ ## x)
-#else /* ! __STDC__ */
-#define SYSENTRY(x)					\
-	.weak _C_LABEL(x);				\
-	_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x);	\
-	ENTRY(_thread_sys_/**/x)
-#endif /* ! __STDC__ */
 
-#ifdef __STDC__
 #define SYSTRAP(x) \
 			ldr	r12, =SYS_ ## x;		\
 			swi SWI_OS_NETBSD | SYS_ ## x
-#else
-#define SYSTRAP(x) \
-			ldr	r12, =SYS_/**/x;		\
-			swi SWI_OS_NETBSD | SYS_/**/x
-#endif
 
 #define	CERROR		_C_LABEL(__cerror)
 #define	_CERROR		_C_LABEL(___cerror)

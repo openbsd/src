@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.17 2013/04/11 19:15:21 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.18 2014/06/04 20:13:49 matthew Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,11 +37,7 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#ifdef __STDC__
 #define	__CONCAT(p,x)		p##x
-#else
-#define	__CONCAT(p,x)		p/**/x
-#endif
 #define	__ENTRY(p,x)		ENTRY(__CONCAT(p,x))
 #define	__END(p,x)		END(__CONCAT(p,x))
 #define	__SYSCALLNAME(p,x)	__CONCAT(p,x)

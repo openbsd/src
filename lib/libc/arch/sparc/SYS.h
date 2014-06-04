@@ -30,18 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.15 2012/09/04 19:08:13 deraadt Exp $
+ *	$OpenBSD: SYS.h,v 1.16 2014/06/04 20:13:49 matthew Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
-#ifdef __STDC__
 #define _CAT(x,y) x##y
-#else
-#define _CAT(x,y) x/**/y
-#endif
 
 #define __ENTRY(p,x) ENTRY(_CAT(p,x)) ; .weak x ; x = _CAT(p,x)
 

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.5 2011/04/04 12:42:39 guenther Exp $ 
+ *      $OpenBSD: SYS.h,v 1.6 2014/06/04 20:13:49 matthew Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -38,7 +38,6 @@
 #define CERROR		_C_LABEL(__cerror)
 #define _CERROR		_C_LABEL(___cerror)
 
-#ifdef __STDC__
 # define __ENTRY(p,x)		ENTRY(p ## x)
 
 # define __DO_SYSCALL(x)				\
@@ -51,20 +50,6 @@
 # define __END2(p,x)		END(p ## x)
 
 # define __CLABEL2(p,x)		_C_LABEL(p ## x)
-#else
-# define __ENTRY(p,x)		ENTRY(p/**/x)
-
-# define __DO_SYSCALL(x)				\
-				li	v0,SYS_/**/x;	\
-				syscall
-
-# define __LEAF2(p,x,sz)	LEAF(p/**/x, sz) \
-				WEAK_ALIAS(x, p/**/x);
-
-# define __END2(p,x)		END(p/**/x)
-
-# define __CLABEL2(p,x)		_C_LABEL(p/**/x)
-#endif
 
 #define __PSEUDO_NOERROR(p,x,y)				\
 		__LEAF2(p,x, 0);			\

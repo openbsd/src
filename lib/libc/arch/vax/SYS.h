@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: SYS.h,v 1.16 2014/06/04 20:13:49 matthew Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -33,15 +33,9 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef __STDC__
 #define	_CAT(x,y)	x##y
 #define	__ENTRY(p,x)	ENTRY(p##x,0)
 #define	__DO_SYSCALL(x)	chmk $ SYS_ ## x
-#else
-#define	_CAT(x,y)	x/**/y
-#define	__ENTRY(p,x)	ENTRY(p/**/x,0)
-#define	__DO_SYSCALL(x)	chmk $ SYS_/**/x
-#endif
 
 #define	__SYSCALL(p,x,y)						\
 	err:	jmp _C_LABEL(__cerror);					\
@@ -61,13 +55,8 @@
 		__DO_SYSCALL(y);					\
 		ret
 
-#ifdef	__STDC__
 #define	__ALIAS(prefix,name)						\
 	WEAK_ALIAS(name,prefix##name);
-#else
-#define	__ALIAS(prefix,name)						\
-	WEAK_ALIAS(name,prefix/**/name);
-#endif
 
 /*
  * For the thread_safe versions, we prepend _thread_sys_ to the function
