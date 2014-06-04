@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.25 2013/12/04 07:35:46 jmc Exp $
+.\"	$OpenBSD: who.1,v 1.26 2014/06/04 06:06:33 jmc Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)who.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 4 2013 $
+.Dd $Mdocdate: June 4 2014 $
 .Dt WHO 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ and
 if a bad line is encountered.
 .It Fl u
 Print the idle time for each user.
-.It Ar \&am I
+.It Ar am i
 Returns the invoker's real user name.
 .It Ar file
 By default,
@@ -136,6 +136,16 @@ The
 utility is compliant with the
 .St -p1003.1-2008
 specification.
+.Pp
+The flags
+.Op Fl abdHlpqrst
+are marked by
+.St -p1003.1-2008
+as being an X/Open System Interfaces option.
+Of these,
+.Op Fl abdlprst
+are not supported by this implementation of
+.Nm .
 .Sh HISTORY
 A
 .Nm
