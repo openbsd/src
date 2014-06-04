@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.119 2014/05/20 13:32:22 syl Exp $	*/
+/*	$OpenBSD: mount.h,v 1.120 2014/06/04 07:58:14 claudio Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -584,8 +584,8 @@ struct netcred {
  * Network export information
  */
 struct netexport {
-	struct	netcred ne_defexported;		      /* Default export */
-	struct	radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
+	struct	netcred ne_defexported;		/* Default export */
+	struct	radix_node_head *ne_rtable_inet;/* Individual exports */
 };
 
 /*

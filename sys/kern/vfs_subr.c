@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.213 2014/04/10 13:48:24 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.214 2014/06/04 07:58:14 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -56,12 +56,13 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/pool.h>
 #include <sys/tree.h>
 #include <sys/specdev.h>
+
+#include <netinet/in.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
@@ -1390,7 +1391,6 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 	int i;
 	struct radix_node *rn;
 	struct sockaddr *saddr, *smask = 0;
-	struct domain *dom;
 	int error;
 
 	if (argp->ex_addrlen == 0) {
@@ -1420,25 +1420,20 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 			smask->sa_len = argp->ex_masklen;
 	}
 	i = saddr->sa_family;
-	if (i < 0 || i > AF_MAX) {
+	switch (i) {
+	case AF_INET:
+		if ((rnh = nep->ne_rtable_inet) == NULL) {
+			if (!rn_inithead((void **)&nep->ne_rtable_inet,
+			    offsetof(struct sockaddr_in, sin_addr) * 8)) {
+				error = ENOBUFS;
+				goto out;
+			}
+			rnh = nep->ne_rtable_inet;
+		}
+		break;
+	default:
 		error = EINVAL;
 		goto out;
-	}
-	if ((rnh = nep->ne_rtable[i]) == 0) {
-		/*
-		 * Seems silly to initialize every AF when most are not
-		 * used, do so on demand here
-		 */
-		for (dom = domains; dom; dom = dom->dom_next)
-			if (dom->dom_family == i && dom->dom_rtattach) {
-				dom->dom_rtattach((void **)&nep->ne_rtable[i],
-					dom->dom_rtoffset);
-				break;
-			}
-		if ((rnh = nep->ne_rtable[i]) == 0) {
-			error = ENOBUFS;
-			goto out;
-		}
 	}
 	rn = (*rnh->rnh_addaddr)((caddr_t)saddr, (caddr_t)smask, rnh,
 		np->netc_rnodes, 0);
@@ -1473,15 +1468,13 @@ vfs_free_netcred(struct radix_node *rn, void *w, u_int id)
 void
 vfs_free_addrlist(struct netexport *nep)
 {
-	int i;
 	struct radix_node_head *rnh;
 
-	for (i = 0; i <= AF_MAX; i++)
-		if ((rnh = nep->ne_rtable[i]) != NULL) {
-			(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
-			free(rnh, M_RTABLE);
-			nep->ne_rtable[i] = 0;
-		}
+	if ((rnh = nep->ne_rtable_inet) != NULL) {
+		(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
+		free(rnh, M_RTABLE);
+		nep->ne_rtable_inet = NULL;
+	}
 }
 
 int
@@ -1515,7 +1508,14 @@ vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
 		 */
 		if (nam != NULL) {
 			saddr = mtod(nam, struct sockaddr *);
-			rnh = nep->ne_rtable[saddr->sa_family];
+			switch(saddr->sa_family) {
+			case AF_INET:
+				rnh = nep->ne_rtable_inet;
+				break;
+			default:
+				rnh = NULL;
+				break;
+			}
 			if (rnh != NULL) {
 				np = (struct netcred *)
 					(*rnh->rnh_matchaddr)((caddr_t)saddr,
