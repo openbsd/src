@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.129 2014/05/28 10:29:24 daniel Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.130 2014/06/04 12:20:31 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -325,8 +325,6 @@ struct in6_pktinfo *rcvpktinfo;
 
 int datalen;			/* How much data */
 int headerlen;			/* How long packet's header is */
-
-#define ICMP6ECHOLEN 8
 
 char *source = 0;
 char *hostname;
@@ -724,7 +722,8 @@ main(int argc, char *argv[])
 		break;
 	case AF_INET6:
 		if (proto == IPPROTO_ICMP)
-			minlen = ICMP6ECHOLEN + sizeof(struct packetdata);
+			minlen = sizeof(struct icmp6_hdr) +
+			    sizeof(struct packetdata);
 		else
 			minlen = sizeof(struct packetdata);
 		if (datalen < minlen)
@@ -1168,7 +1167,8 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 		icp->icmp6_cksum = 0;
 		icp->icmp6_id = ident;
 		icp->icmp6_seq = htons(seq);
-		op = (struct packetdata *)(outpacket + ICMP6ECHOLEN);
+		op = (struct packetdata *)(outpacket +
+		    sizeof(struct icmp6_hdr));
 	} else
 		op = (struct packetdata *)outpacket;
 	op->seq = seq;
