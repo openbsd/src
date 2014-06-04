@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.130 2014/06/04 12:20:31 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.131 2014/06/04 12:28:39 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
-	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error, minlen;
+	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error, packetlen;
 	int rcvcmsglen;
 	struct addrinfo hints, *res;
 	size_t size;
@@ -719,18 +719,39 @@ main(int argc, char *argv[])
 			    sizeof(from4)) < 0)
 				err(1, "bind");
 		}
+		packetlen = datalen;
 		break;
 	case AF_INET6:
-		if (proto == IPPROTO_ICMP)
-			minlen = sizeof(struct icmp6_hdr) +
+		/*
+		 * packetlen is the size of the complete IP packet sent and
+		 * reported in the first line of output.
+		 * For IPv4 this is equal to datalen since we are constructing
+		 * a raw packet.
+		 * For IPv6 we need to always add the size of the IP6 header
+		 * and for UDP packets the size of the UDP header since they
+		 * are prepended to the packet by the kernel
+		 */
+		packetlen = sizeof(struct ip6_hdr);
+		switch (proto) {
+		case IPPROTO_UDP:
+			headerlen = sizeof(struct packetdata);
+			packetlen += sizeof(struct udphdr);
+			break;
+		case IPPROTO_ICMP:
+			headerlen = sizeof(struct icmp6_hdr) +
 			    sizeof(struct packetdata);
-		else
-			minlen = sizeof(struct packetdata);
-		if (datalen < minlen)
-			datalen = minlen;
-		else if (datalen >= IP_MAXPACKET)
-			errx(1, "packet size must be %d <= s < %ld.\n", minlen,
-			    (long)IP_MAXPACKET);
+			break;
+		default:
+			errx(1, "Unsupported proto: %hhu", proto);
+			break;
+		}
+
+		if (datalen < 0 || datalen > IP_MAXPACKET - headerlen)
+			errx(1, "packet size must be 0 to %d.",
+			    IP_MAXPACKET - headerlen);
+
+		datalen += headerlen;
+		packetlen += datalen;
 
 		if ((outpacket = calloc(1, datalen)) == NULL)
 			err(1, "calloc");
@@ -823,7 +844,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "%s to %s (%s)", __progname, hostname, hbuf);
 	if (source)
 		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %u hops max, %d byte packets\n", max_ttl, datalen);
+	fprintf(stderr, ", %u hops max, %d byte packets\n", max_ttl, packetlen);
 	(void) fflush(stderr);
 
 	if (first_ttl > 1)
