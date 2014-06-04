@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.157 2014/06/04 12:28:21 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.158 2014/06/04 13:52:30 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ void		ehci_device_isoc_close(struct usbd_pipe *);
 void		ehci_device_isoc_done(struct usbd_xfer *);
 
 void		ehci_device_clear_toggle(struct usbd_pipe *pipe);
-void		ehci_noop(struct usbd_pipe *pipe);
 
 void		ehci_pcd(struct ehci_softc *, struct usbd_xfer *);
 void		ehci_disown(struct ehci_softc *, int, int);
@@ -228,7 +227,6 @@ struct usbd_pipe_methods ehci_root_ctrl_methods = {
 	.start = ehci_root_ctrl_start,
 	.abort = ehci_root_ctrl_abort,
 	.close = ehci_root_ctrl_close,
-	.cleartoggle = ehci_noop,
 	.done = ehci_root_ctrl_done,
 };
 
@@ -237,7 +235,6 @@ struct usbd_pipe_methods ehci_root_intr_methods = {
 	.start = ehci_root_intr_start,
 	.abort = ehci_root_intr_abort,
 	.close = ehci_root_intr_close,
-	.cleartoggle = ehci_noop,
 	.done = ehci_root_intr_done,
 };
 
@@ -246,7 +243,6 @@ struct usbd_pipe_methods ehci_device_ctrl_methods = {
 	.start = ehci_device_ctrl_start,
 	.abort = ehci_device_ctrl_abort,
 	.close = ehci_device_ctrl_close,
-	.cleartoggle = ehci_noop,
 	.done = ehci_device_ctrl_done,
 };
 
@@ -273,7 +269,6 @@ struct usbd_pipe_methods ehci_device_isoc_methods = {
 	.start = ehci_device_isoc_start,
 	.abort = ehci_device_isoc_abort,
 	.close = ehci_device_isoc_close,
-	.cleartoggle = ehci_noop,
 	.done = ehci_device_isoc_done,
 };
 
@@ -1224,11 +1219,6 @@ ehci_device_clear_toggle(struct usbd_pipe *pipe)
 		panic("ehci_device_clear_toggle: queue active");
 #endif
 	epipe->sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_TOGGLE_MASK);
-}
-
-void
-ehci_noop(struct usbd_pipe *pipe)
-{
 }
 
 #ifdef EHCI_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.123 2014/06/04 12:28:21 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.124 2014/06/04 13:52:30 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -191,7 +191,6 @@ usbd_status	uhci_device_setintr(struct uhci_softc *sc,
 		    struct uhci_pipe *pipe, int ival);
 
 void		uhci_device_clear_toggle(struct usbd_pipe *pipe);
-void		uhci_noop(struct usbd_pipe *pipe);
 
 __inline__ struct uhci_soft_qh *uhci_find_prev_qh(struct uhci_soft_qh *,
 		    struct uhci_soft_qh *);
@@ -262,7 +261,6 @@ struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	.start = uhci_root_ctrl_start,
 	.abort = uhci_root_ctrl_abort,
 	.close = uhci_root_ctrl_close,
-	.cleartoggle = uhci_noop,
 	.done = uhci_root_ctrl_done,
 };
 
@@ -271,7 +269,6 @@ struct usbd_pipe_methods uhci_root_intr_methods = {
 	.start = uhci_root_intr_start,
 	.abort = uhci_root_intr_abort,
 	.close = uhci_root_intr_close,
-	.cleartoggle = uhci_noop,
 	.done = uhci_root_intr_done,
 };
 
@@ -280,7 +277,6 @@ struct usbd_pipe_methods uhci_device_ctrl_methods = {
 	.start = uhci_device_ctrl_start,
 	.abort = uhci_device_ctrl_abort,
 	.close = uhci_device_ctrl_close,
-	.cleartoggle = uhci_noop,
 	.done = uhci_device_ctrl_done,
 };
 
@@ -307,7 +303,6 @@ struct usbd_pipe_methods uhci_device_isoc_methods = {
 	.start = uhci_device_isoc_start,
 	.abort = uhci_device_isoc_abort,
 	.close = uhci_device_isoc_close,
-	.cleartoggle = uhci_noop,
 	.done = uhci_device_isoc_done,
 };
 
@@ -1629,11 +1624,6 @@ uhci_device_clear_toggle(struct usbd_pipe *pipe)
 {
 	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
 	upipe->nexttoggle = 0;
-}
-
-void
-uhci_noop(struct usbd_pipe *pipe)
-{
 }
 
 usbd_status
