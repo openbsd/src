@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.122 2014/05/30 13:24:59 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.123 2014/06/04 12:28:21 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -250,65 +250,65 @@ UREAD4(struct uhci_softc *sc, bus_size_t r)
 #define UHCI_INTR_ENDPT 1
 
 struct usbd_bus_methods uhci_bus_methods = {
-	uhci_open,
-	uhci_softintr,
-	uhci_poll,
-	uhci_allocx,
-	uhci_freex,
+	.open_pipe = uhci_open,
+	.soft_intr = uhci_softintr,
+	.do_poll = uhci_poll,
+	.allocx = uhci_allocx,
+	.freex = uhci_freex,
 };
 
 struct usbd_pipe_methods uhci_root_ctrl_methods = {
-	uhci_root_ctrl_transfer,
-	uhci_root_ctrl_start,
-	uhci_root_ctrl_abort,
-	uhci_root_ctrl_close,
-	uhci_noop,
-	uhci_root_ctrl_done,
+	.transfer = uhci_root_ctrl_transfer,
+	.start = uhci_root_ctrl_start,
+	.abort = uhci_root_ctrl_abort,
+	.close = uhci_root_ctrl_close,
+	.cleartoggle = uhci_noop,
+	.done = uhci_root_ctrl_done,
 };
 
 struct usbd_pipe_methods uhci_root_intr_methods = {
-	uhci_root_intr_transfer,
-	uhci_root_intr_start,
-	uhci_root_intr_abort,
-	uhci_root_intr_close,
-	uhci_noop,
-	uhci_root_intr_done,
+	.transfer = uhci_root_intr_transfer,
+	.start = uhci_root_intr_start,
+	.abort = uhci_root_intr_abort,
+	.close = uhci_root_intr_close,
+	.cleartoggle = uhci_noop,
+	.done = uhci_root_intr_done,
 };
 
 struct usbd_pipe_methods uhci_device_ctrl_methods = {
-	uhci_device_ctrl_transfer,
-	uhci_device_ctrl_start,
-	uhci_device_ctrl_abort,
-	uhci_device_ctrl_close,
-	uhci_noop,
-	uhci_device_ctrl_done,
+	.transfer = uhci_device_ctrl_transfer,
+	.start = uhci_device_ctrl_start,
+	.abort = uhci_device_ctrl_abort,
+	.close = uhci_device_ctrl_close,
+	.cleartoggle = uhci_noop,
+	.done = uhci_device_ctrl_done,
 };
 
 struct usbd_pipe_methods uhci_device_intr_methods = {
-	uhci_device_intr_transfer,
-	uhci_device_intr_start,
-	uhci_device_intr_abort,
-	uhci_device_intr_close,
-	uhci_device_clear_toggle,
-	uhci_device_intr_done,
+	.transfer = uhci_device_intr_transfer,
+	.start = uhci_device_intr_start,
+	.abort = uhci_device_intr_abort,
+	.close = uhci_device_intr_close,
+	.cleartoggle = uhci_device_clear_toggle,
+	.done = uhci_device_intr_done,
 };
 
 struct usbd_pipe_methods uhci_device_bulk_methods = {
-	uhci_device_bulk_transfer,
-	uhci_device_bulk_start,
-	uhci_device_bulk_abort,
-	uhci_device_bulk_close,
-	uhci_device_clear_toggle,
-	uhci_device_bulk_done,
+	.transfer = uhci_device_bulk_transfer,
+	.start = uhci_device_bulk_start,
+	.abort = uhci_device_bulk_abort,
+	.close = uhci_device_bulk_close,
+	.cleartoggle = uhci_device_clear_toggle,
+	.done = uhci_device_bulk_done,
 };
 
 struct usbd_pipe_methods uhci_device_isoc_methods = {
-	uhci_device_isoc_transfer,
-	uhci_device_isoc_start,
-	uhci_device_isoc_abort,
-	uhci_device_isoc_close,
-	uhci_noop,
-	uhci_device_isoc_done,
+	.transfer = uhci_device_isoc_transfer,
+	.start = uhci_device_isoc_start,
+	.abort = uhci_device_isoc_abort,
+	.close = uhci_device_isoc_close,
+	.cleartoggle = uhci_noop,
+	.done = uhci_device_isoc_done,
 };
 
 #define uhci_add_intr_list(sc, ex) \
