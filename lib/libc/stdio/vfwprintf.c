@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.10 2014/05/03 12:36:45 deraadt Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.11 2014/06/04 07:45:25 stsp Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -324,9 +324,6 @@ __vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, __va_list ap)
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
 	const char *xdigs;	/* digits for %[xX] conversion */
-#define NIOV 8
-	struct __suio uio;	/* output information: summary */
-	struct __siov iov[NIOV];/* ... and individual io vectors */
 	wchar_t buf[BUF];	/* buffer with space for digits of uintmax_t */
 	wchar_t ox[2];		/* space for 0x; ox[1] is either x, X, or \0 */
 	union arg *argtable;	/* args, built due to positional arg */
@@ -463,9 +460,6 @@ __vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, __va_list ap)
 	argtable = NULL;
 	nextarg = 1;
 	va_copy(orgap, ap);
-	uio.uio_iov = iov;
-	uio.uio_resid = 0;
-	uio.uio_iovcnt = 0;
 	ret = 0;
 	convbuf = NULL;
 
