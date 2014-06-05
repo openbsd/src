@@ -1136,7 +1136,6 @@ ssl3_get_server_certificate(SSL *s)
 	sc = ssl_sess_cert_new();
 	if (sc == NULL)
 		goto err;
-
 	if (s->session->sess_cert)
 		ssl_sess_cert_free(s->session->sess_cert);
 	s->session->sess_cert = sc;
@@ -1252,6 +1251,8 @@ ssl3_get_key_exchange(SSL *s)
 		 */
 		if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK) {
 			s->session->sess_cert = ssl_sess_cert_new();
+			if (s->session->sess_cert == NULL)
+				goto err; 
 			free(s->ctx->psk_identity_hint);
 			s->ctx->psk_identity_hint = NULL;
 		}
@@ -1262,20 +1263,18 @@ ssl3_get_key_exchange(SSL *s)
 
 	param = p = (unsigned char *)s->init_msg;
 	if (s->session->sess_cert != NULL) {
-		if (s->session->sess_cert->peer_rsa_tmp != NULL) {
-			RSA_free(s->session->sess_cert->peer_rsa_tmp);
-			s->session->sess_cert->peer_rsa_tmp = NULL;
-		}
-		if (s->session->sess_cert->peer_dh_tmp) {
-			DH_free(s->session->sess_cert->peer_dh_tmp);
-			s->session->sess_cert->peer_dh_tmp = NULL;
-		}
-		if (s->session->sess_cert->peer_ecdh_tmp) {
-			EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
-			s->session->sess_cert->peer_ecdh_tmp = NULL;
-		}
+		RSA_free(s->session->sess_cert->peer_rsa_tmp);
+		s->session->sess_cert->peer_rsa_tmp = NULL;
+
+		DH_free(s->session->sess_cert->peer_dh_tmp);
+		s->session->sess_cert->peer_dh_tmp = NULL;
+
+		EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
+		s->session->sess_cert->peer_ecdh_tmp = NULL;
 	} else {
 		s->session->sess_cert = ssl_sess_cert_new();
+		if (s->session->sess_cert == NULL)
+			goto err; 
 	}
 
 	param_len = 0;
