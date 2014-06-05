@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2014/01/23 01:07:45 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2014/06/05 08:39:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,7 +28,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <string.h>
 #include "archdep.h"
@@ -48,12 +47,6 @@ __stack_smash_handler(char func[], int damaged)
 	_dl_exit(127);
 }
 
-/*
- * Static vars usable after bootstrapping.
- */
-static char *_dl_malloc_pool;
-static long *_dl_malloc_free;
-
 char *
 _dl_strdup(const char *orig)
 {
@@ -65,68 +58,6 @@ _dl_strdup(const char *orig)
 	_dl_strlcpy(newstr, orig, len);
 	return (newstr);
 }
-
-
-/*
- * The following malloc/free code is a very simplified implementation
- * of a malloc function. However, we do not need to be very complex here
- * because we only free memory when 'dlclose()' is called and we can
- * reuse at least the memory allocated for the object descriptor. We have
- * one dynamic string allocated, the library name and it is likely that
- * we can reuse that one too without a lot of complex collapsing code.
- */
-void *
-_dl_malloc(size_t need)
-{
-	long *p, *t, *n, have;
-
-	need = (need + 2*DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
-
-	if ((t = _dl_malloc_free) != 0) {	/* Try free list first */
-		n = (long *)&_dl_malloc_free;
-		while (t && t[-1] < need) {
-			n = t;
-			t = (long *)*t;
-		}
-		if (t) {
-			*n = *t;
-			_dl_memset(t, 0, t[-1] - DL_MALLOC_ALIGN);
-			return((void *)t);
-		}
-	}
-	have = _dl_round_page((long)_dl_malloc_pool) - (long)_dl_malloc_pool;
-	if (need > have) {
-		if (have >= 8 + DL_MALLOC_ALIGN) {
-			p = (void *)_dl_malloc_pool;
-			p = (void *) ((long)p + DL_MALLOC_ALIGN);
-			p[-1] = have;
-			_dl_free((void *)p);		/* move to freelist */
-		}
-		_dl_malloc_pool = (void *)_dl_mmap((void *)0,
-		    _dl_round_page(need), PROT_READ|PROT_WRITE,
-		    MAP_ANON|MAP_PRIVATE, -1, 0);
-		if (_dl_malloc_pool == 0 || _dl_mmap_error(_dl_malloc_pool)) {
-			_dl_printf("Dynamic loader failure: malloc.\n");
-			_dl_exit(7);
-		}
-	}
-	p = (void *)_dl_malloc_pool;
-	_dl_malloc_pool += need;
-	_dl_memset(p, 0, need);
-	p = (void *) ((long)p + DL_MALLOC_ALIGN);
-	p[-1] = need;
-	return (p);
-}
-
-void
-_dl_free(void *p)
-{
-	long *t = (long *)p;
-
-	*t = (long)_dl_malloc_free;
-	_dl_malloc_free = p;
-}
-
 
 void
 _dl_randombuf(void *buf, size_t buflen)
