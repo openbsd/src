@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.106 2014/05/12 19:11:20 espie Exp $ */
+/*	$Id: mandocdb.c,v 1.107 2014/06/05 07:13:53 espie Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -792,7 +792,7 @@ filescan(const char *file)
 		return;
 	}
 
-	if (strstr(buf, basedir) == buf)
+	if (strstr(buf, basedir) == buf && strcmp(basedir, "/") != 0)
 		start = buf + strlen(basedir) + 1;
 	else if (OP_TEST == op)
 		start = buf;
@@ -821,7 +821,8 @@ filescan(const char *file)
 			say(file, "Filename too long");
 			return;
 		}
-		start = strstr(buf, basedir) == buf ?
+		start = strstr(buf, basedir) == buf && 
+		    strcmp(basedir, "/") != 0 ?
 		    buf + strlen(basedir) + 1 : buf;
 	}
 
