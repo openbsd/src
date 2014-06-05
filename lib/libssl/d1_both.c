@@ -586,8 +586,14 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 		frag->msg_header.frag_len = frag->msg_header.msg_len;
 		frag->msg_header.frag_off = 0;
-	} else
+	} else {
 		frag = (hm_fragment*)item->data;
+		if (frag->msg_header.msg_len != msg_hdr->msg_len) {
+			item = NULL;
+			frag = NULL;
+			goto err;
+		}
+	}
 
 	/* If message is already reassembled, this must be a
 	 * retransmit and can be dropped.
