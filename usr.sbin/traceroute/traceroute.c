@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.131 2014/06/04 12:28:39 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.132 2014/06/05 14:49:11 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -357,7 +357,8 @@ main(int argc, char *argv[])
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
 	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error, packetlen;
-	int rcvcmsglen;
+	int rcvcmsglen, rcvsock4, rcvsock6, sndsock4, sndsock6;
+	int v4sock_errno, v6sock_errno;
 	struct addrinfo hints, *res;
 	size_t size;
 	static u_char *rcvcmsgbuf;
@@ -375,23 +376,46 @@ main(int argc, char *argv[])
 	u_int rtableid;
 	socklen_t len;
 
-	if (strcmp("traceroute6", __progname) == 0) {
-		v6flag = 1;
-		if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
-			err(5, "socket(ICMPv6)");
-		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-			err(5, "socket(SOCK_DGRAM)");
-	} else {
-		if ((rcvsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-			err(5, "icmp socket");
-		if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
-			err(5, "raw socket");
-	}
+	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
+	v4sock_errno = v6sock_errno = 0;
+
+	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+		v6sock_errno = errno;
+	else if ((sndsock6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		v6sock_errno = errno;
+
+	if ((rcvsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+		v4sock_errno = errno;
+	else if ((sndsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+		v4sock_errno = errno;
 
 	/* revoke privs */
 	uid = getuid();
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
+
+	if (strcmp("traceroute6", __progname) == 0) {
+		v6flag = 1;
+		if (v6sock_errno != 0)
+			errc(5, v6sock_errno, rcvsock6 < 0 ? "socket(ICMPv6)" :
+			    "socket(SOCK_DGRAM)");
+		rcvsock = rcvsock6;
+		sndsock = sndsock6;
+		if (rcvsock4 >= 0)
+			close(rcvsock4);
+		if (sndsock4 >= 0)
+			close(sndsock4);
+	} else {
+		if (v4sock_errno != 0)
+			errc(5, v4sock_errno, rcvsock4 < 0 ? "icmp socket" :
+			    "raw socket");
+		rcvsock = rcvsock4;
+		sndsock = sndsock4;
+		if (rcvsock6 >= 0)
+			close(rcvsock6);
+		if (sndsock6 >= 0)
+			close(sndsock6);
+	}
 
 	if (v6flag) {
 		mib[1] = PF_INET6;
