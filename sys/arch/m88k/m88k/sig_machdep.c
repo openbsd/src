@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.21 2014/06/02 21:18:56 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.22 2014/06/05 21:57:12 miod Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -163,40 +163,6 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 */
 	bcopy((const void *)&tf->tf_regs, (void *)&sf.sf_sc.sc_regs,
 	    sizeof(sf.sf_sc.sc_regs));
-
-#ifdef M88100
-	if (CPU_IS88100) {
-		/*
-		 * Rewind the pipeline one instruction, in order to
-		 * reexecute the faulting instruction upon sigreturn,
-		 * if we are sure the instruction execution has not
-		 * completed.
-		 *
-		 * The manual hints the valid bit in XIP should be
-		 * enough, but the description of each exception (and
-		 * the actual observed behaviour) disagree.
-		 *
-		 * Note that the values below are vector offset (in
-		 * quadword units), matching those used in eh.S, rather
-		 * than the logical T_xxx values.
-		 */
-		switch (tf->tf_vector) {
-		case 2:		/* instruction access exception */
-		case 3:		/* data access exception */
-		case 4:		/* misaligned access exception */
-		case 5:		/* unimplemented opcode exception */
-		case 6:		/* privilege violation exception */
-		case 7:		/* bounds check violation exception */
-		case 8:		/* illegal integer divide exception */
-		case 9:		/* integer overflow exception */
-		case 114:	/* FPU precise exception */
-		case 504:	/* single-step breakpoint */
-		case 511:	/* breakpoint */
-			m88100_rewind_insn((struct reg *)&sf.sf_sc.sc_regs);
-			break;
-		}
-	}
-#endif
 
 	if (copyout((caddr_t)&sf, (caddr_t)fp, fsize)) {
 		/*
