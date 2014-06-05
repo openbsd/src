@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.67 2014/04/17 12:43:38 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.68 2014/06/05 22:14:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1014,7 +1014,7 @@ input_c0_dispatch(struct input_ctx *ictx)
 
 count_c0:
 	trigger = options_get_number(&wp->window->options, "c0-change-trigger");
-	if (++wp->changes == trigger) {
+	if (trigger != 0 && ++wp->changes >= trigger) {
 		wp->flags |= PANE_DROP;
 		window_pane_timer_start(wp);
 	}
