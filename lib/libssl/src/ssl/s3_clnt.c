@@ -826,9 +826,8 @@ ssl3_get_server_hello(SSL *s)
 			if (s->d1->send_cookie == 0) {
 				s->s3->tmp.reuse_message = 1;
 				return (1);
-			}
-			else /* already sent a cookie */
-			{
+			} else {
+				/* Already sent a cookie. */
 				al = SSL_AD_UNEXPECTED_MESSAGE;
 				SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
 				    SSL_R_BAD_MESSAGE_TYPE);
@@ -844,12 +843,11 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	d = p=(unsigned char *)s->init_msg;
+	d = p = (unsigned char *)s->init_msg;
 
 	if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
-		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-		    SSL_R_WRONG_SSL_VERSION);
-		s->version = (s->version&0xff00)|p[1];
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
+		s->version = (s->version&0xff00) | p[1];
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
@@ -898,7 +896,8 @@ ssl3_get_server_hello(SSL *s)
 			goto f_err;
 		}
 		s->hit = 1;
-	} else	{ /* a miss or crap from the other end */
+	} else {
+		/* a miss or crap from the other end */
 
 		/* If we were trying for session-id reuse, make a new
 		 * SSL_SESSION so we don't stuff up other people */
@@ -1124,8 +1123,7 @@ ssl3_get_server_certificate(SSL *s)
 	}
 
 	i = ssl_verify_cert_chain(s, sk);
-	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)
-	    ) {
+	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0)) {
 		al = ssl_verify_alarm_type(s->verify_result);
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 		    SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -1738,7 +1736,7 @@ ssl3_get_certificate_request(SSL *s)
 		}
 	}
 
-	p = d=(unsigned char *)s->init_msg;
+	p = d = (unsigned char *)s->init_msg;
 
 	if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
@@ -2008,8 +2006,7 @@ ssl3_get_server_done(SSL *s)
 	if (n > 0) {
 		/* should contain no data */
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-		SSLerr(SSL_F_SSL3_GET_SERVER_DONE,
-		    SSL_R_LENGTH_MISMATCH);
+		SSLerr(SSL_F_SSL3_GET_SERVER_DONE, SSL_R_LENGTH_MISMATCH);
 		return (-1);
 	}
 	ret = 1;
@@ -2089,8 +2086,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(
 			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
 			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
-		}
-		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
+		} else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
 			DH *dh_srvr, *dh_clnt;
 
 			if (s->session->sess_cert == NULL) {
@@ -2154,9 +2150,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			DH_free(dh_clnt);
 
 			/* perhaps clean things up a bit EAY EAY EAY EAY*/
-		}
-
-		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
+		} else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) {
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
 			int ecdh_clnt_cert = 0;
@@ -2334,8 +2328,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			if (clnt_ecdh != NULL)
 				EC_KEY_free(clnt_ecdh);
 			EVP_PKEY_free(srvr_pub_pkey);
-		}
-		else if (alg_k & SSL_kGOST) {
+		} else if (alg_k & SSL_kGOST) {
 			/* GOST key exchange message creation */
 			EVP_PKEY_CTX *pkey_ctx;
 			X509 *peer_cert;
@@ -2354,7 +2347,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			if (!peer_cert)
 				peer_cert = s->session->sess_cert->peer_pkeys[
 				    (keytype = SSL_PKEY_GOST94)].x509;
-			if (!peer_cert)	{
+			if (!peer_cert) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
 				goto err;
@@ -2610,8 +2603,7 @@ ssl3_send_client_verify(SSL *s)
 			n = u + 4;
 			if (!ssl3_digest_cached_records(s))
 				goto err;
-		} else
-		if (pkey->type == EVP_PKEY_RSA) {
+		} else if (pkey->type == EVP_PKEY_RSA) {
 			s->method->ssl3_enc->cert_verify_mac(
 			    s, NID_md5, &(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
@@ -2623,8 +2615,7 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(u, p);
 			n = u + 2;
-		} else
-		if (pkey->type == EVP_PKEY_DSA) {
+		} else if (pkey->type == EVP_PKEY_DSA) {
 			if (!DSA_sign(pkey->save_type,
 			    &(data[MD5_DIGEST_LENGTH]),
 			    SHA_DIGEST_LENGTH, &(p[2]),
@@ -2635,8 +2626,7 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(j, p);
 			n = j + 2;
-		} else
-		if (pkey->type == EVP_PKEY_EC) {
+		} else if (pkey->type == EVP_PKEY_EC) {
 			if (!ECDSA_sign(pkey->save_type,
 			    &(data[MD5_DIGEST_LENGTH]),
 			    SHA_DIGEST_LENGTH, &(p[2]),
@@ -2647,8 +2637,7 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(j, p);
 			n = j + 2;
-		} else
-		if (pkey->type == NID_id_GostR3410_94 ||
+		} else if (pkey->type == NID_id_GostR3410_94 ||
 		    pkey->type == NID_id_GostR3410_2001) {
 			unsigned char signbuf[64];
 			int i;
@@ -2791,8 +2780,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	idx = sc->peer_cert_type;
 	if (idx == SSL_PKEY_ECC) {
 		if (ssl_check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
-		    s) == 0)
-			{ /* check failed */
+		    s) == 0) {
+			/* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 			    SSL_R_BAD_ECC_CERT);
 			goto f_err;
@@ -2804,14 +2793,13 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	i = X509_certificate_type(sc->peer_pkeys[idx].x509, pkey);
 	EVP_PKEY_free(pkey);
 
-
 	/* Check that we have a certificate if we require one */
 	if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA|EVP_PKT_SIGN)) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_RSA_SIGNING_CERT);
 		goto f_err;
-	}
-	else if ((alg_a & SSL_aDSS) && !has_bits(i, EVP_PK_DSA|EVP_PKT_SIGN)) {
+	} else if ((alg_a & SSL_aDSS) &&
+	    !has_bits(i, EVP_PK_DSA|EVP_PKT_SIGN)) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_DSA_SIGNING_CERT);
 		goto f_err;
@@ -2831,8 +2819,7 @@ ssl3_check_cert_and_algorithm(SSL *s)
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_DH_RSA_CERT);
 		goto f_err;
-	}
-	else if ((alg_k & SSL_kDHd) && !has_bits(i, EVP_PK_DH|EVP_PKS_DSA)) {
+	} else if ((alg_k & SSL_kDHd) && !has_bits(i, EVP_PK_DH|EVP_PKS_DSA)) {
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
 		    SSL_R_MISSING_DH_DSA_CERT);
 		goto f_err;
@@ -2847,22 +2834,18 @@ ssl3_check_cert_and_algorithm(SSL *s)
 				    SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
 				goto f_err;
 			}
-		} else
-			if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
-				if (dh == NULL || DH_size(dh) * 8 >
-				    SSL_C_EXPORT_PKEYLENGTH(
-				    s->s3->tmp.new_cipher)) {
-					SSLerr(
-					    SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-					    SSL_R_MISSING_EXPORT_TMP_DH_KEY);
-					goto f_err;
-				}
-			} else
-			{
+		} else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)) {
+			if (dh == NULL || DH_size(dh) * 8 >
+			    SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
 				SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-				    SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
+				    SSL_R_MISSING_EXPORT_TMP_DH_KEY);
 				goto f_err;
 			}
+		} else {
+			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+			    SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
+			goto f_err;
+		}
 	}
 	return (1);
 f_err:
