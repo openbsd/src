@@ -743,6 +743,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 	int i, al;
 	struct hm_header_st msg_hdr;
 
+again:
 	/* see if we have the required fragment already */
 	if ((frag_len = dtls1_retrieve_buffered_fragment(s, max, ok)) || *ok) {
 		if (*ok)
@@ -801,7 +802,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 				    s->msg_callback_arg);
 
 			s->init_num = 0;
-			return dtls1_get_message_fragment(s, st1, stn, max, ok);
+			goto again;
 		}
 		else /* Incorrectly formated Hello request */
 		{
