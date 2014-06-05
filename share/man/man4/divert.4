@@ -1,6 +1,7 @@
-.\"     $OpenBSD: divert.4,v 1.13 2013/06/02 01:07:47 benno Exp $
+.\"     $OpenBSD: divert.4,v 1.14 2014/06/05 03:36:46 lteo Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
+.\" Copyright (c) 2012-2014 Lawrence Teo <lteo@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: June 5 2014 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -118,12 +119,9 @@ apart from discarding invalid IP packets.
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <err.h>
 
@@ -140,7 +138,7 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, "socket");
 
-	bzero(&sin, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(DIVERT_PORT);
 	sin.sin_addr.s_addr = 0;
@@ -153,42 +151,53 @@ main(int argc, char *argv[])
 
 	for (;;) {
 		ssize_t n;
-		char packet[10000];
-		struct ip *ip_hdr;
-		struct tcpiphdr *tcpip_hdr;
-		char srcip[40], dstip[40];
+		char packet[IP_MAXPACKET];
+		struct ip *ip;
+		struct tcphdr *th;
+		int hlen;
+		char src[48], dst[48];
 
-		bzero(packet, sizeof(packet));
+		memset(packet, 0, sizeof(packet));
 		n = recvfrom(fd, packet, sizeof(packet), 0,
 		    (struct sockaddr *) &sin, &sin_len);
-
-		tcpip_hdr = (struct tcpiphdr *) packet;
-		ip_hdr = (struct ip *) packet;
-
-		bzero(srcip, sizeof(srcip));
-		bzero(dstip, sizeof(dstip));
-
-		if (inet_ntop(AF_INET, &ip_hdr->ip_src, srcip,
-		    sizeof(srcip)) == NULL) {
-			fprintf(stderr, "Invalid IPv4 source packet\en");
+		if (n == -1) {
+			warn("recvfrom");
 			continue;
 		}
-		if (inet_ntop(AF_INET, &ip_hdr->ip_dst, dstip,
-		    sizeof(dstip)) == NULL) {
-			fprintf(stderr, "Invalid IPv4 destination "
-			    "packet\en");
+		if (n < sizeof(struct ip)) {
+			warnx("packet is too short");
 			continue;
 		}
+
+		ip = (struct ip *) packet;
+		hlen = ip->ip_hl << 2;
+		if (hlen < sizeof(struct ip) || ntohs(ip->ip_len) < hlen ||
+		    n < ntohs(ip->ip_len)) {
+			warnx("invalid IPv4 packet");
+			continue;
+		}
+
+		th = (struct tcphdr *) (packet + hlen);
+
+		if (inet_ntop(AF_INET, &ip->ip_src, src,
+		    sizeof(src)) == NULL)
+			(void)strlcpy(src, "?", sizeof(src));
+
+		if (inet_ntop(AF_INET, &ip->ip_dst, dst,
+		    sizeof(dst)) == NULL)
+			(void)strlcpy(dst, "?", sizeof(dst));
 
 		printf("%s:%u -> %s:%u\en",
-			srcip,
-			ntohs(tcpip_hdr->ti_sport),
-			dstip,
-			ntohs(tcpip_hdr->ti_dport)
+		    src,
+		    ntohs(th->th_sport),
+		    dst,
+		    ntohs(th->th_dport)
 		);
 
 		n = sendto(fd, packet, n, 0, (struct sockaddr *) &sin,
 		    sin_len);
+		if (n == -1)
+			warn("sendto");
 	}
 
 	return 0;
