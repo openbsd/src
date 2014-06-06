@@ -1,12 +1,12 @@
 #
-#	$OpenBSD: aliases,v 1.44 2014/04/28 17:03:48 okan Exp $
+#	$OpenBSD: aliases,v 1.45 2014/06/06 16:46:43 gilles Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
 #
 #	>>>>>>>>>>	The program "newaliases" must be run after
 #	>> NOTE >>	this file is updated for any changes to
-#	>>>>>>>>>>	show through to sendmail.
+#	>>>>>>>>>>	show through to smtpd.
 #
 
 # Basic system aliases -- these MUST be present
