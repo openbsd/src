@@ -64,14 +64,14 @@ eric (about to go bushwalking for the 4 day easter break :-)
       the automactic naming out output files was being stuffed up.
 
 29-Oct-97
-    - The Cast5 cipher has been added.  MD5 and SHA-1 are now in assember
+    - The Cast5 cipher has been added.  MD5 and SHA-1 are now in assembler
       for x86.
 
 21-Oct-97
     - Fixed a bug in the BIO_gethostbyname() cache.
 
 15-Oct-97
-    - cbc mode for blowfish/des/3des is now in assember.  Blowfish asm
+    - cbc mode for blowfish/des/3des is now in assembler.  Blowfish asm
       has also been improved.  At this point in time, on the pentium,
       md5 is %80 faster, the unoptimesed sha-1 is %79 faster,
       des-cbc is %28 faster, des-ede3-cbc is %9 faster and blowfish-cbc
@@ -502,7 +502,7 @@ SSLeay 0.6.6 13-Jan-1997
 
 The main additions are
 
-- assember for x86 DES improvments.
+- assembler for x86 DES improvments.
   From 191,000 per second on a pentium 100, I now get 281,000.  The inner
   loop and the IP/FP modifications are from
   Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>.  Many thanks for his
@@ -530,7 +530,7 @@ for the last few months and so this is mostly bug fixes and improvments.
 
 The main additions are
 
-- assember for x86 DES.  For all those gcc based systems, this is a big
+- assembler for x86 DES.  For all those gcc based systems, this is a big
   improvement.  From 117,000 DES operation a second on a pentium 100,
   I now get 191,000.  I have also reworked the C version so it
   now gives 148,000 DESs per second.  
