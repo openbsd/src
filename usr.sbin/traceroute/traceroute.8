@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.60 2014/05/01 18:46:01 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.61 2014/06/06 17:42:59 florian Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 1 2014 $
+.Dd $Mdocdate: June 6 2014 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -84,9 +84,11 @@ instead using hop limits and ICMPv6
 responses.
 .Pp
 The only mandatory parameter is the destination host name or IP number.
-The default probe datagram length is 38 bytes, but this may be increased
-by specifying a packet size (in bytes) after the destination host
-name.
+The default probe datagram length is 40 bytes for IPv4 UDP and 60
+bytes for ICMP, IPv6 UDP and ICMP6.
+This may be increased by
+.Ar datalen
+bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
