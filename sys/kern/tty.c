@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.107 2014/05/30 02:12:04 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.108 2014/06/06 22:44:18 matthew Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2370,7 +2370,7 @@ ttystats_init(struct itty **ttystats)
 	struct tty *tp;
 
 	*ttystats = malloc(tty_count * sizeof(struct itty),
-	    M_SYSCTL, M_WAITOK);
+	    M_SYSCTL, M_WAITOK|M_ZERO);
 	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp;
 	    tp = TAILQ_NEXT(tp, tty_link), itp++) {
 		itp->t_dev = tp->t_dev;
