@@ -465,14 +465,10 @@ tls1_change_cipher_state(SSL *s, int which)
 		mac_secret = client_write_mac_secret;
 		key = client_write_key;
 		iv = client_write_iv;
-		exp_label = TLS_MD_CLIENT_WRITE_KEY_CONST;
-		exp_label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
 	} else {
 		mac_secret = server_write_mac_secret;
 		key = server_write_key;
 		iv = server_write_iv;
-		exp_label = TLS_MD_SERVER_WRITE_KEY_CONST;
-		exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
 	}
 
 	if (key_block - s->s3->tmp.key_block != s->s3->tmp.key_block_length) {
@@ -496,9 +492,18 @@ tls1_change_cipher_state(SSL *s, int which)
 	}
 
 	if (is_export) {
-		/* In here I set both the read and write key/iv to the
-		 * same value since only the correct one will be used :-).
+		/*
+		 * Both the read and write key/iv are set to the same value
+		 * since only the correct one will be used :-).
 		 */
+		if (use_client_keys) {
+			exp_label = TLS_MD_CLIENT_WRITE_KEY_CONST;
+			exp_label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
+		} else {
+			exp_label = TLS_MD_SERVER_WRITE_KEY_CONST;
+			exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
+		}
+
 		if (!tls1_PRF(ssl_get_algorithm2(s),
 		    exp_label, exp_label_len,
 		    s->s3->client_random, SSL3_RANDOM_SIZE,
