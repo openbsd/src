@@ -530,12 +530,11 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE) {
 		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, NULL,
-		    (which & SSL3_CC_WRITE));
+		    !is_read);
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
 		    iv_len, (unsigned char *)iv);
 	} else
-		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv,
-		    (which & SSL3_CC_WRITE));
+		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
 
 	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
 	if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) &&
