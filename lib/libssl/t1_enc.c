@@ -324,7 +324,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	EVP_PKEY *mac_key;
 	int is_export, exp_label_len;
 	char is_read, use_client_keys;
-	int reuse_dd = 0;
 
 	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
@@ -388,17 +387,14 @@ tls1_change_cipher_state(SSL *s, int which)
 		else
 			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
-		if (s->enc_read_ctx != NULL)
-			reuse_dd = 1;
-		else if ((s->enc_read_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
-			goto err;
-		else {
-			/* make sure it's intialized in case we exit later with an error */
-			EVP_CIPHER_CTX_init(s->enc_read_ctx);
-		}
-		cipher_ctx = s->enc_read_ctx;
+		EVP_CIPHER_CTX_free(s->enc_read_ctx);
+		s->enc_read_ctx = NULL;
+		EVP_MD_CTX_destroy(s->read_hash);
+		s->read_hash = NULL;
 
-		ssl_clear_hash_ctx(&s->read_hash);
+		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
+			goto err;
+		s->enc_read_ctx = cipher_ctx;
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
 		s->read_hash = mac_ctx;
@@ -411,11 +407,6 @@ tls1_change_cipher_state(SSL *s, int which)
 			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		else
 			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
-		if (s->enc_write_ctx != NULL && !SSL_IS_DTLS(s))
-			reuse_dd = 1;
-		else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL)
-			goto err;
-		cipher_ctx = s->enc_write_ctx;
 
 		/*
 		 * DTLS fragments retain a pointer to the compression, cipher
@@ -424,8 +415,15 @@ tls1_change_cipher_state(SSL *s, int which)
 		 * contexts that are used for DTLS - these are instead freed
 		 * by DTLS when its frees a ChangeCipherSpec fragment.
 		 */
-		if (!SSL_IS_DTLS(s))
-			ssl_clear_hash_ctx(&s->write_hash);
+		if (!SSL_IS_DTLS(s)) {
+			EVP_CIPHER_CTX_free(s->enc_write_ctx);
+			s->enc_write_ctx = NULL;
+			EVP_MD_CTX_destroy(s->write_hash);
+			s->write_hash = NULL;
+		}
+		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
+			goto err;
+		s->enc_write_ctx = cipher_ctx;
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
 		s->write_hash = mac_ctx;
@@ -434,9 +432,6 @@ tls1_change_cipher_state(SSL *s, int which)
 		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->write_sequence[0]), 0, 8);
 	}
-
-	if (reuse_dd)
-		EVP_CIPHER_CTX_cleanup(cipher_ctx);
 
 	key_len = EVP_CIPHER_key_length(cipher);
 	if (is_export) {
@@ -499,6 +494,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
 		EVP_PKEY_free(mac_key);
 	}
+
 	if (is_export) {
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
