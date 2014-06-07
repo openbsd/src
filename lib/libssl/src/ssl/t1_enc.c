@@ -300,11 +300,11 @@ tls1_generate_key_block(SSL *s, unsigned char *km, unsigned char *tmp, int num)
 int
 tls1_change_cipher_state(SSL *s, int which)
 {
-	static const unsigned char empty[]="";
-	unsigned char tmp1[EVP_MAX_KEY_LENGTH];
-	unsigned char tmp2[EVP_MAX_KEY_LENGTH];
-	unsigned char iv1[EVP_MAX_IV_LENGTH*2];
-	unsigned char iv2[EVP_MAX_IV_LENGTH*2];
+	static const unsigned char empty[] = "";
+	unsigned char export_tmp1[EVP_MAX_KEY_LENGTH];
+	unsigned char export_tmp2[EVP_MAX_KEY_LENGTH];
+	unsigned char export_iv1[EVP_MAX_IV_LENGTH * 2];
+	unsigned char export_iv2[EVP_MAX_IV_LENGTH * 2];
 
 	const unsigned char *client_write_mac_secret, *server_write_mac_secret;
 	const unsigned char *client_write_key, *server_write_key;
@@ -503,25 +503,25 @@ tls1_change_cipher_state(SSL *s, int which)
 		    exp_label, exp_label_len,
 		    s->s3->client_random, SSL3_RANDOM_SIZE,
 		    s->s3->server_random, SSL3_RANDOM_SIZE,
-		    NULL, 0, NULL, 0, key, key_len, tmp1, tmp2,
+		    NULL, 0, NULL, 0, key, key_len, export_tmp1, export_tmp2,
 		    EVP_CIPHER_key_length(cipher)))
 			goto err2;
-		key = tmp1;
+		key = export_tmp1;
 
 		if (iv_len > 0) {
 			if (!tls1_PRF(ssl_get_algorithm2(s),
 			    TLS_MD_IV_BLOCK_CONST, TLS_MD_IV_BLOCK_CONST_SIZE,
 			    s->s3->client_random, SSL3_RANDOM_SIZE,
 			    s->s3->server_random, SSL3_RANDOM_SIZE,
-			    NULL, 0, NULL, 0, empty, 0, iv1, iv2, iv_len * 2))
+			    NULL, 0, NULL, 0, empty, 0,
+			    export_iv1, export_iv2, iv_len * 2))
 				goto err2;
 			if (use_client_keys)
-				iv = iv1;
+				iv = export_iv1;
 			else
-				iv = &(iv1[iv_len]);
+				iv = &(export_iv1[iv_len]);
 		}
 	}
-
 
 	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE) {
 		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, NULL,
@@ -538,10 +538,13 @@ tls1_change_cipher_state(SSL *s, int which)
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
 		    mac_secret_size, (unsigned char *)mac_secret);
 
-	OPENSSL_cleanse(tmp1, sizeof(tmp1));
-	OPENSSL_cleanse(tmp2, sizeof(tmp2));
-	OPENSSL_cleanse(iv1, sizeof(iv1));
-	OPENSSL_cleanse(iv2, sizeof(iv2));
+	if (is_export) {
+		OPENSSL_cleanse(export_tmp1, sizeof(export_tmp1));
+		OPENSSL_cleanse(export_tmp2, sizeof(export_tmp2));
+		OPENSSL_cleanse(export_iv1, sizeof(export_iv1));
+		OPENSSL_cleanse(export_iv2, sizeof(export_iv2));
+	}
+
 	return (1);
 
 err:
