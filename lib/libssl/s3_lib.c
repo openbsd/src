@@ -2377,10 +2377,10 @@ ssl3_clear(SSL *s)
 	rlen = s->s3->rbuf.len;
 	wlen = s->s3->wbuf.len;
 	init_extra = s->s3->init_extra;
-	if (s->s3->handshake_buffer) {
-		BIO_free(s->s3->handshake_buffer);
-		s->s3->handshake_buffer = NULL;
-	}
+
+	BIO_free(s->s3->handshake_buffer);
+	s->s3->handshake_buffer = NULL;
+
 	ssl3_free_digest_list(s);
 
 	memset(s->s3, 0, sizeof *s->s3);
