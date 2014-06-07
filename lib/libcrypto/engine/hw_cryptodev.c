@@ -908,7 +908,7 @@ crparam2bn(struct crparam *crp, BIGNUM *a)
 	if (bytes == 0)
 		return (-1);
 
-	if ((pd = (u_int8_t *) malloc(bytes)) == NULL)
+	if ((pd = malloc(bytes)) == NULL)
 		return (-1);
 
 	for (i = 0; i < bytes; i++)

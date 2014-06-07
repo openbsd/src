@@ -178,7 +178,7 @@ ok_new(BIO *bi)
 {
 	BIO_OK_CTX *ctx;
 
-	ctx = (BIO_OK_CTX *)malloc(sizeof(BIO_OK_CTX));
+	ctx = malloc(sizeof(BIO_OK_CTX));
 	if (ctx == NULL)
 		return (0);
 

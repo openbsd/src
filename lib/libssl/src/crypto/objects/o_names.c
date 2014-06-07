@@ -166,7 +166,7 @@ OBJ_NAME_add(const char *name, int type, const char *data)
 	alias = type & OBJ_NAME_ALIAS;
 	type &= ~OBJ_NAME_ALIAS;
 
-	onp = (OBJ_NAME *)malloc(sizeof(OBJ_NAME));
+	onp = malloc(sizeof(OBJ_NAME));
 	if (onp == NULL) {
 		/* ERROR */
 		return (0);

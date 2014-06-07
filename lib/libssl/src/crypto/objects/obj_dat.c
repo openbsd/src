@@ -276,16 +276,16 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 			return (0);
 	if ((o = OBJ_dup(obj)) == NULL)
 		goto err;
-	if (!(ao[ADDED_NID] = (ADDED_OBJ *)malloc(sizeof(ADDED_OBJ))))
+	if (!(ao[ADDED_NID] = malloc(sizeof(ADDED_OBJ))))
 		goto err2;
 	if ((o->length != 0) && (obj->data != NULL))
-		if (!(ao[ADDED_DATA] = (ADDED_OBJ *)malloc(sizeof(ADDED_OBJ))))
+		if (!(ao[ADDED_DATA] = malloc(sizeof(ADDED_OBJ))))
 			goto err2;
 	if (o->sn != NULL)
-		if (!(ao[ADDED_SNAME] = (ADDED_OBJ *)malloc(sizeof(ADDED_OBJ))))
+		if (!(ao[ADDED_SNAME] = malloc(sizeof(ADDED_OBJ))))
 			goto err2;
 	if (o->ln != NULL)
-		if (!(ao[ADDED_LNAME] = (ADDED_OBJ *)malloc(sizeof(ADDED_OBJ))))
+		if (!(ao[ADDED_LNAME] = malloc(sizeof(ADDED_OBJ))))
 			goto err2;
 
 	for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -467,7 +467,7 @@ OBJ_txt2obj(const char *s, int no_name)
 	/* Work out total size */
 	j = ASN1_object_size(0, i, V_ASN1_OBJECT);
 
-	if ((buf = (unsigned char *)malloc(j)) == NULL)
+	if ((buf = malloc(j)) == NULL)
 		return NULL;
 
 	p = buf;
@@ -756,7 +756,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 	if (i <= 0)
 		return (0);
 
-	if ((buf = (unsigned char *)malloc(i)) == NULL) {
+	if ((buf = malloc(i)) == NULL) {
 		OBJerr(OBJ_F_OBJ_CREATE, ERR_R_MALLOC_FAILURE);
 		return (0);
 	}

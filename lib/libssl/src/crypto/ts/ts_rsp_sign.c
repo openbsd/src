@@ -928,7 +928,7 @@ ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 	int len;
 
 	len = i2d_ESS_SIGNING_CERT(sc, NULL);
-	if (!(pp = (unsigned char *) malloc(len))) {
+	if (!(pp = malloc(len))) {
 		TSerr(TS_F_ESS_ADD_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}

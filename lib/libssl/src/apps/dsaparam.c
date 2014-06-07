@@ -298,7 +298,7 @@ bad:
 
 		len = BN_num_bytes(dsa->p);
 		bits_p = BN_num_bits(dsa->p);
-		data = (unsigned char *) malloc(len + 20);
+		data = malloc(len + 20);
 		if (data == NULL) {
 			perror("malloc");
 			goto end;

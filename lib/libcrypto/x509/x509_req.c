@@ -84,7 +84,7 @@ X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	ri = ret->req_info;
 
 	ri->version->length = 1;
-	ri->version->data = (unsigned char *)malloc(1);
+	ri->version->data = malloc(1);
 	if (ri->version->data == NULL)
 		goto err;
 	ri->version->data[0] = 0; /* version == 0 */

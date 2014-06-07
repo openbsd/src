@@ -191,7 +191,7 @@ lh_insert(_LHASH *lh, void *data)
 	rn = getrn(lh, data, &hash);
 
 	if (*rn == NULL) {
-		if ((nn = (LHASH_NODE *)malloc(sizeof(LHASH_NODE))) == NULL) {
+		if ((nn = malloc(sizeof(LHASH_NODE))) == NULL) {
 			lh->error++;
 			return (NULL);
 		}

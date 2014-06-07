@@ -72,7 +72,7 @@ BN_bn2hex(const BIGNUM *a)
 	char *buf;
 	char *p;
 
-	buf = (char *)malloc(a->top * BN_BYTES * 2 + 2);
+	buf = malloc(a->top * BN_BYTES * 2 + 2);
 	if (buf == NULL) {
 		BNerr(BN_F_BN_BN2HEX, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -117,7 +117,7 @@ BN_bn2dec(const BIGNUM *a)
 	i = BN_num_bits(a) * 3;
 	num = (i / 10 + i / 1000 + 1) + 1;
 	bn_data = reallocarray(NULL, num / BN_DEC_NUM + 1, sizeof(BN_ULONG));
-	buf = (char *)malloc(num + 3);
+	buf = malloc(num + 3);
 	if ((buf == NULL) || (bn_data == NULL)) {
 		BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
 		goto err;

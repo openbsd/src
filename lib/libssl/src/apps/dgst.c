@@ -129,7 +129,7 @@ dgst_main(int argc, char **argv)
 	char *mac_name = NULL;
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL, *macopts = NULL;
 
-	if ((buf = (unsigned char *) malloc(BUFSIZE)) == NULL) {
+	if ((buf = malloc(BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}

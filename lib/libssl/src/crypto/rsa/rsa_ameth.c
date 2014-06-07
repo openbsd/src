@@ -201,7 +201,7 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 		update_buflen(x->iqmp, &buf_len);
 		}
 
-	m=(unsigned char *)malloc(buf_len+10);
+	m = malloc(buf_len+10);
 	if (m == NULL)
 		{
 		RSAerr(RSA_F_DO_RSA_PRINT,ERR_R_MALLOC_FAILURE);

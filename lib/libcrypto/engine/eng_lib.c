@@ -65,7 +65,7 @@ ENGINE *ENGINE_new(void)
 	{
 	ENGINE *ret;
 
-	ret = (ENGINE *)malloc(sizeof(ENGINE));
+	ret = malloc(sizeof(ENGINE));
 	if(ret == NULL)
 		{
 		ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
@@ -152,8 +152,7 @@ static int int_cleanup_check(int create)
 	}
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 	{
-	ENGINE_CLEANUP_ITEM *item = malloc(sizeof(
-					ENGINE_CLEANUP_ITEM));
+	ENGINE_CLEANUP_ITEM *item = malloc(sizeof(ENGINE_CLEANUP_ITEM));
 	if(!item) return NULL;
 	item->cb = cb;
 	return item;

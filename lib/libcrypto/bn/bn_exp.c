@@ -627,7 +627,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	numPowers = 1 << window;
 	powerbufLen = sizeof(m->d[0]) * (top * numPowers +
 	    ((2*top) > numPowers ? (2*top) : numPowers));
-	if ((powerbufFree = (unsigned char*)malloc(powerbufLen +
+	if ((powerbufFree = malloc(powerbufLen +
 	    MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
 		goto err;
 

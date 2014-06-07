@@ -109,7 +109,7 @@ STORE_new_method(const STORE_METHOD *method)
 		return NULL;
 	}
 
-	ret = (STORE *)malloc(sizeof(STORE));
+	ret = malloc(sizeof(STORE));
 	if (ret == NULL) {
 		STOREerr(STORE_F_STORE_NEW_METHOD, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -1226,7 +1226,7 @@ struct STORE_attr_info_st {
 STORE_ATTR_INFO *
 STORE_ATTR_INFO_new(void)
 {
-	return (STORE_ATTR_INFO *)malloc(sizeof(STORE_ATTR_INFO));
+	return malloc(sizeof(STORE_ATTR_INFO));
 }
 
 static void
@@ -1489,7 +1489,8 @@ STORE_parse_attrs_start(OPENSSL_ITEM *attributes)
 {
 	if (attributes) {
 		struct attr_list_ctx_st *context =
-		    (struct attr_list_ctx_st *)malloc(sizeof(struct attr_list_ctx_st));
+		    malloc(sizeof(struct attr_list_ctx_st));
+
 		if (context)
 			context->attributes = attributes;
 		else

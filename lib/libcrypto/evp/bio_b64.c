@@ -113,7 +113,7 @@ b64_new(BIO *bi)
 {
 	BIO_B64_CTX *ctx;
 
-	ctx = (BIO_B64_CTX *)malloc(sizeof(BIO_B64_CTX));
+	ctx = malloc(sizeof(BIO_B64_CTX));
 	if (ctx == NULL)
 		return (0);
 

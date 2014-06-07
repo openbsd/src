@@ -289,7 +289,7 @@ err:\
 
 /* New macros */
 #define M_ASN1_New_Malloc(ret,type) \
-	if ((ret=(type *)malloc(sizeof(type))) == NULL) \
+	if ((ret = malloc(sizeof(type))) == NULL) \
 		{ c.line=__LINE__; goto err2; }
 
 #define M_ASN1_New(arg,func) \

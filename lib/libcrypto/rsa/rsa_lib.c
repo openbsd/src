@@ -125,7 +125,7 @@ RSA *RSA_new_method(ENGINE *engine)
 	{
 	RSA *ret;
 
-	ret=(RSA *)malloc(sizeof(RSA));
+	ret = malloc(sizeof(RSA));
 	if (ret == NULL)
 		{
 		RSAerr(RSA_F_RSA_NEW_METHOD,ERR_R_MALLOC_FAILURE);

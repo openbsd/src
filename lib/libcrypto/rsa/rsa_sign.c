@@ -120,7 +120,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 	if(type != NID_md5_sha1) {
-		tmps=(unsigned char *)malloc((unsigned int)j+1);
+		tmps = malloc((unsigned int)j+1);
 		if (tmps == NULL)
 			{
 			RSAerr(RSA_F_RSA_SIGN,ERR_R_MALLOC_FAILURE);
@@ -169,7 +169,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 		return 1;
 		}
 
-	s=(unsigned char *)malloc((unsigned int)siglen);
+	s = malloc((unsigned int)siglen);
 	if (s == NULL)
 		{
 		RSAerr(RSA_F_INT_RSA_VERIFY,ERR_R_MALLOC_FAILURE);

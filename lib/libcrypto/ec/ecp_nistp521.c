@@ -1628,7 +1628,7 @@ static NISTP521_PRE_COMP *
 nistp521_pre_comp_new()
 {
 	NISTP521_PRE_COMP *ret = NULL;
-	ret = (NISTP521_PRE_COMP *) malloc(sizeof(NISTP521_PRE_COMP));
+	ret = malloc(sizeof(NISTP521_PRE_COMP));
 	if (!ret) {
 		ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
 		return ret;

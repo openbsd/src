@@ -130,7 +130,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	bit = (bits - 1) % 8;
 	mask = 0xff << (bit + 1);
 
-	buf = (unsigned char *)malloc(bytes);
+	buf = malloc(bytes);
 	if (buf == NULL) {
 		BNerr(BN_F_BNRAND, ERR_R_MALLOC_FAILURE);
 		goto err;

@@ -454,7 +454,7 @@ bad:
 		if ((tmp_len = (size_t) BN_num_bytes(ec_cofactor)) > buf_len)
 			buf_len = tmp_len;
 
-		buffer = (unsigned char *) malloc(buf_len);
+		buffer = malloc(buf_len);
 
 		if (buffer == NULL) {
 			perror("malloc");

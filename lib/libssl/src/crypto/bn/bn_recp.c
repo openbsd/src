@@ -74,7 +74,7 @@ BN_RECP_CTX_new(void)
 {
 	BN_RECP_CTX *ret;
 
-	if ((ret = (BN_RECP_CTX *)malloc(sizeof(BN_RECP_CTX))) == NULL)
+	if ((ret = malloc(sizeof(BN_RECP_CTX))) == NULL)
 		return (NULL);
 
 	BN_RECP_CTX_init(ret);

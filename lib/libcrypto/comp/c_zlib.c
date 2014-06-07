@@ -113,8 +113,7 @@ static int
 zlib_stateful_init(COMP_CTX *ctx)
 {
 	int err;
-	struct zlib_state *state =
-	    (struct zlib_state *)malloc(sizeof(struct zlib_state));
+	struct zlib_state *state = malloc(sizeof(struct zlib_state));
 
 	if (state == NULL)
 		goto err;

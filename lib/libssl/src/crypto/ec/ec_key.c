@@ -70,7 +70,7 @@ EC_KEY_new(void)
 {
 	EC_KEY *ret;
 
-	ret = (EC_KEY *) malloc(sizeof(EC_KEY));
+	ret = malloc(sizeof(EC_KEY));
 	if (ret == NULL) {
 		ECerr(EC_F_EC_KEY_NEW, ERR_R_MALLOC_FAILURE);
 		return (NULL);

@@ -325,7 +325,7 @@ BN_MONT_CTX_new(void)
 {
 	BN_MONT_CTX *ret;
 
-	if ((ret = (BN_MONT_CTX *)malloc(sizeof(BN_MONT_CTX))) == NULL)
+	if ((ret = malloc(sizeof(BN_MONT_CTX))) == NULL)
 		return (NULL);
 
 	BN_MONT_CTX_init(ret);

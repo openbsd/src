@@ -343,8 +343,8 @@ def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
 	int toret = -1;
-	CRYPTO_EX_DATA_FUNCS *a = (CRYPTO_EX_DATA_FUNCS *)malloc(
-	    sizeof(CRYPTO_EX_DATA_FUNCS));
+	CRYPTO_EX_DATA_FUNCS *a = malloc(sizeof(CRYPTO_EX_DATA_FUNCS));
+
 	if (!a) {
 		CRYPTOerr(CRYPTO_F_DEF_ADD_INDEX, ERR_R_MALLOC_FAILURE);
 		return -1;

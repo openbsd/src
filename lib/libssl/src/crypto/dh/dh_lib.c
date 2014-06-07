@@ -110,7 +110,7 @@ DH *DH_new_method(ENGINE *engine)
 	{
 	DH *ret;
 
-	ret=(DH *)malloc(sizeof(DH));
+	ret = malloc(sizeof(DH));
 	if (ret == NULL)
 		{
 		DHerr(DH_F_DH_NEW_METHOD,ERR_R_MALLOC_FAILURE);

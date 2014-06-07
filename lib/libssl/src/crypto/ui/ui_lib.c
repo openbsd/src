@@ -80,7 +80,7 @@ UI_new_method(const UI_METHOD *method)
 {
 	UI *ret;
 
-	ret = (UI *) malloc(sizeof(UI));
+	ret = malloc(sizeof(UI));
 	if (ret == NULL) {
 		UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -149,7 +149,7 @@ general_allocate_prompt(UI *ui, const char *prompt, int prompt_freeable,
 	} else if ((type == UIT_PROMPT || type == UIT_VERIFY ||
 	    type == UIT_BOOLEAN) && result_buf == NULL) {
 		UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
-	} else if ((ret = (UI_STRING *) malloc(sizeof(UI_STRING)))) {
+	} else if ((ret = malloc(sizeof(UI_STRING)))) {
 		ret->out_string = prompt;
 		ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
 		ret->input_flags = input_flags;

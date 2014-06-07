@@ -85,7 +85,7 @@ PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 		if (j > max)
 			max = j;
 	}
-	s = (char *)reallocarray(NULL, max, 2);
+	s = reallocarray(NULL, max, 2);
 	if (s == NULL) {
 		PEMerr(PEM_F_PEM_SEALINIT, ERR_R_MALLOC_FAILURE);
 		goto err;

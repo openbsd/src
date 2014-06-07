@@ -129,7 +129,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	{
 	ECDH_DATA *ret;
 
-	ret=(ECDH_DATA *)malloc(sizeof(ECDH_DATA));
+	ret = malloc(sizeof(ECDH_DATA));
 	if (ret == NULL)
 		{
 		ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
