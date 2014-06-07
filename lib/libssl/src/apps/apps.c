@@ -2012,18 +2012,18 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		if (!argn)
 			*badarg = 1;
 		else {
-			long timestamp;
+			long long timestamp;
 			/*
 			 * interpret the -attime argument as seconds since
 			 * Epoch
 			 */
-			if (sscanf(argn, "%li", &timestamp) != 1) {
+			if (sscanf(argn, "%lli", &timestamp) != 1) {
 				BIO_printf(bio_err,
 				    "Error parsing timestamp %s\n",
 				    argn);
 				*badarg = 1;
 			}
-			/* on some platforms time_t may be a float */
+			/* XXX 2038 truncation */
 			at_time = (time_t) timestamp;
 		}
 		(*pargs)++;
