@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.8 2013/06/01 01:30:54 brad Exp $	*/
+/*	$OpenBSD: config.h,v 1.9 2014/06/07 15:28:21 deraadt Exp $	*/
 /*	$KAME: config.h,v 1.3 2000/05/16 13:34:13 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@ extern void getconfig(char *);
 extern void delete_prefix(struct rainfo *, struct prefix *);
 extern void make_prefix(struct rainfo *, int, struct in6_addr *, int);
 extern void make_packet(struct rainfo *);
-extern void get_prefix __P((struct rainfo *));
+extern void get_prefix(struct rainfo *);
 
 
 /*
