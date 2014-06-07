@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.118 2014/05/15 19:36:45 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.119 2014/06/07 07:53:32 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 15 2014 $
+.Dd $Mdocdate: June 7 2014 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -594,7 +594,7 @@ Changing the default value might degrade performances.
 .Op Ic port Ar port
 .Op Ic tls | tls-require | tls-require verify | smtps | secure
 .Op Ic pki Ar pkiname
-.Op Ic auth | auth-optional Aq Ar authtable
+.Op Ic auth | auth-optional Op Aq Ar authtable
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
 .Op Ic hostnames Aq Ar names
