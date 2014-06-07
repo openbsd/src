@@ -674,9 +674,7 @@ ssl3_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p = s->s3->client_random;
-
-		if (ssl_fill_hello_random(s, 0, p, SSL3_RANDOM_SIZE) <= 0)
-			goto err;
+		RAND_pseudo_bytes(p, SSL3_RANDOM_SIZE);
 
 		/* Do the message type and length last */
 		d = p = &(buf[4]);
