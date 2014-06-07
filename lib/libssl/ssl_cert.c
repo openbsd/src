@@ -299,18 +299,14 @@ ssl_cert_dup(CERT *cert)
 	return (ret);
 
 err:
-	if (ret->rsa_tmp != NULL)
-		RSA_free(ret->rsa_tmp);
-	if (ret->dh_tmp != NULL)
-		DH_free(ret->dh_tmp);
-	if (ret->ecdh_tmp != NULL)
-		EC_KEY_free(ret->ecdh_tmp);
+	RSA_free(ret->rsa_tmp);
+	DH_free(ret->dh_tmp);
+	EC_KEY_free(ret->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (ret->pkeys[i].x509 != NULL)
 			X509_free(ret->pkeys[i].x509);
-		if (ret->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(ret->pkeys[i].privatekey);
+		EVP_PKEY_free(ret->pkeys[i].privatekey);
 	}
 
 	return NULL;
@@ -329,19 +325,16 @@ ssl_cert_free(CERT *c)
 	if (i > 0)
 		return;
 
-	if (c->rsa_tmp)
-		RSA_free(c->rsa_tmp);
-	if (c->dh_tmp)
-		DH_free(c->dh_tmp);
-	if (c->ecdh_tmp)
-		EC_KEY_free(c->ecdh_tmp);
+	RSA_free(c->rsa_tmp);
+	DH_free(c->dh_tmp);
+	EC_KEY_free(c->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (c->pkeys[i].x509 != NULL)
 			X509_free(c->pkeys[i].x509);
-		if (c->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(c->pkeys[i].privatekey);
+		EVP_PKEY_free(c->pkeys[i].privatekey);
 	}
+
 	free(c);
 }
 
@@ -408,12 +401,9 @@ ssl_sess_cert_free(SESS_CERT *sc)
 			X509_free(sc->peer_pkeys[i].x509);
 	}
 
-	if (sc->peer_rsa_tmp != NULL)
-		RSA_free(sc->peer_rsa_tmp);
-	if (sc->peer_dh_tmp != NULL)
-		DH_free(sc->peer_dh_tmp);
-	if (sc->peer_ecdh_tmp != NULL)
-		EC_KEY_free(sc->peer_ecdh_tmp);
+	RSA_free(sc->peer_rsa_tmp);
+	DH_free(sc->peer_dh_tmp);
+	EC_KEY_free(sc->peer_ecdh_tmp);
 
 	free(sc);
 }

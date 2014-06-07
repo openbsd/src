@@ -2333,16 +2333,13 @@ ssl3_free(SSL *s)
 	if (s->s3->wbuf.buf != NULL)
 		ssl3_release_write_buffer(s);
 	free(s->s3->rrec.comp);
-	if (s->s3->tmp.dh != NULL)
-		DH_free(s->s3->tmp.dh);
-	if (s->s3->tmp.ecdh != NULL)
-		EC_KEY_free(s->s3->tmp.ecdh);
+	DH_free(s->s3->tmp.dh);
+	EC_KEY_free(s->s3->tmp.ecdh);
 
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-	if (s->s3->handshake_buffer) {
+	if (s->s3->handshake_buffer)
 		BIO_free(s->s3->handshake_buffer);
-	}
 	if (s->s3->handshake_dgst)
 		ssl3_free_digest_list(s);
 	OPENSSL_cleanse(s->s3, sizeof *s->s3);
@@ -2371,14 +2368,11 @@ ssl3_clear(SSL *s)
 	free(s->s3->rrec.comp);
 	s->s3->rrec.comp = NULL;
 
-	if (s->s3->tmp.dh != NULL) {
-		DH_free(s->s3->tmp.dh);
-		s->s3->tmp.dh = NULL;
-	}
-	if (s->s3->tmp.ecdh != NULL) {
-		EC_KEY_free(s->s3->tmp.ecdh);
-		s->s3->tmp.ecdh = NULL;
-	}
+	DH_free(s->s3->tmp.dh);
+	s->s3->tmp.dh = NULL;
+	EC_KEY_free(s->s3->tmp.ecdh);
+	s->s3->tmp.ecdh = NULL;
+
 	s->s3->is_probably_safari = 0;
 
 	rp = s->s3->rbuf.buf;
@@ -2470,8 +2464,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 				    ERR_R_RSA_LIB);
 				return (ret);
 			}
-			if (s->cert->rsa_tmp != NULL)
-				RSA_free(s->cert->rsa_tmp);
+			RSA_free(s->cert->rsa_tmp);
 			s->cert->rsa_tmp = rsa;
 			ret = 1;
 		}
@@ -2504,8 +2497,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 					return (ret);
 				}
 			}
-			if (s->cert->dh_tmp != NULL)
-				DH_free(s->cert->dh_tmp);
+			DH_free(s->cert->dh_tmp);
 			s->cert->dh_tmp = dh;
 			ret = 1;
 		}
@@ -2540,8 +2532,7 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 					return (ret);
 				}
 			}
-			if (s->cert->ecdh_tmp != NULL)
-				EC_KEY_free(s->cert->ecdh_tmp);
+			EC_KEY_free(s->cert->ecdh_tmp);
 			s->cert->ecdh_tmp = ecdh;
 			ret = 1;
 		}
@@ -2729,8 +2720,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 				    ERR_R_RSA_LIB);
 				return (0);
 			} else {
-				if (cert->rsa_tmp != NULL)
-					RSA_free(cert->rsa_tmp);
+				RSA_free(cert->rsa_tmp);
 				cert->rsa_tmp = rsa;
 				return (1);
 			}
@@ -2761,8 +2751,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 					return 0;
 				}
 			}
-			if (cert->dh_tmp != NULL)
-				DH_free(cert->dh_tmp);
+			DH_free(cert->dh_tmp);
 			cert->dh_tmp = new;
 			return 1;
 		}
@@ -2798,9 +2787,7 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 				}
 			}
 
-			if (cert->ecdh_tmp != NULL) {
-				EC_KEY_free(cert->ecdh_tmp);
-			}
+			EC_KEY_free(cert->ecdh_tmp);
 			cert->ecdh_tmp = ecdh;
 			return 1;
 		}

@@ -1674,14 +1674,11 @@ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
 	EVP_PKEY_free(pkey);
-	if (rsa != NULL)
-		RSA_free(rsa);
-	if (dh != NULL)
-		DH_free(dh);
+	RSA_free(rsa);
+	DH_free(dh);
 	BN_CTX_free(bn_ctx);
 	EC_POINT_free(srvr_ecpoint);
-	if (ecdh != NULL)
-		EC_KEY_free(ecdh);
+	EC_KEY_free(ecdh);
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return (-1);
 }
@@ -2333,8 +2330,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			/* Free allocated memory */
 			BN_CTX_free(bn_ctx);
 			free(encodedPoint);
-			if (clnt_ecdh != NULL)
-				EC_KEY_free(clnt_ecdh);
+			EC_KEY_free(clnt_ecdh);
 			EVP_PKEY_free(srvr_pub_pkey);
 		} else if (alg_k & SSL_kGOST) {
 			/* GOST key exchange message creation */
@@ -2444,7 +2440,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			s->session->master_key_length =
 			    s->method->ssl3_enc->generate_master_secret(s,
 			    s->session->master_key, premaster_secret, 32);
-			    EVP_PKEY_free(pub_key);
+			EVP_PKEY_free(pub_key);
 
 		}
 #ifndef OPENSSL_NO_PSK
@@ -2543,11 +2539,11 @@ psk_err:
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+
 err:
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
-	if (clnt_ecdh != NULL)
-		EC_KEY_free(clnt_ecdh);
+	EC_KEY_free(clnt_ecdh);
 	EVP_PKEY_free(srvr_pub_pkey);
 	return (-1);
 }
@@ -2726,8 +2722,7 @@ ssl3_send_client_certificate(SSL *s)
 
 		if (x509 != NULL)
 			X509_free(x509);
-		if (pkey != NULL)
-			EVP_PKEY_free(pkey);
+		EVP_PKEY_free(pkey);
 		if (i == 0) {
 			if (s->version == SSL3_VERSION) {
 				s->s3->tmp.cert_req = 0;

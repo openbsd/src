@@ -1211,8 +1211,7 @@ dtls1_send_client_key_exchange(SSL *s)
 			/* Free allocated memory */
 			BN_CTX_free(bn_ctx);
 			free(encodedPoint);
-			if (clnt_ecdh != NULL)
-				EC_KEY_free(clnt_ecdh);
+			EC_KEY_free(clnt_ecdh);
 			EVP_PKEY_free(srvr_pub_pkey);
 		}
 
@@ -1321,11 +1320,11 @@ psk_err:
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+
 err:
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
-	if (clnt_ecdh != NULL)
-		EC_KEY_free(clnt_ecdh);
+	EC_KEY_free(clnt_ecdh);
 	EVP_PKEY_free(srvr_pub_pkey);
 	return (-1);
 }
@@ -1447,8 +1446,7 @@ dtls1_send_client_certificate(SSL *s)
 
 		if (x509 != NULL)
 			X509_free(x509);
-		if (pkey != NULL)
-			EVP_PKEY_free(pkey);
+		EVP_PKEY_free(pkey);
 		if (i == 0) {
 			if (s->version == SSL3_VERSION) {
 				s->s3->tmp.cert_req = 0;
