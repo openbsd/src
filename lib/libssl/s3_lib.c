@@ -2328,10 +2328,9 @@ ssl3_free(SSL *s)
 #endif
 
 	ssl3_cleanup_key_block(s);
-	if (s->s3->rbuf.buf != NULL)
-		ssl3_release_read_buffer(s);
-	if (s->s3->wbuf.buf != NULL)
-		ssl3_release_write_buffer(s);
+	ssl3_release_read_buffer(s);
+	ssl3_release_write_buffer(s);
+
 	free(s->s3->rrec.comp);
 	DH_free(s->s3->tmp.dh);
 	EC_KEY_free(s->s3->tmp.ecdh);
