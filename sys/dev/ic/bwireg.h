@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.8 2013/11/26 20:33:15 deraadt Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.9 2014/06/07 11:55:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -477,9 +477,20 @@
 /*
  * TX/RX interrupts
  */
-#define BWI_TXRX_INTR_ERROR		((1 << 15) | (1 << 14) | (1 << 12) | \
-					 (1 << 11) | (1 << 10))
-#define BWI_TXRX_INTR_RX		(1 << 16)
+
+/* from brcmsmac */
+#define	BWI_I_PC		(1 << 10)	/* pci descriptor error */
+#define	BWI_I_PD		(1 << 11)	/* pci data error */
+#define	BWI_I_DE		(1 << 12)	/* descriptor protocol error */
+#define	BWI_I_RU		(1 << 13)	/* receive descriptor underflow */
+#define	BWI_I_RO		(1 << 14)	/* receive fifo overflow */
+#define	BWI_I_XU		(1 << 15)	/* transmit fifo underflow */
+#define	BWI_I_RI		(1 << 16)	/* receive interrupt */
+#define	BWI_I_XI		(1 << 24)	/* transmit interrupt */
+
+#define BWI_TXRX_INTR_ERROR		(BWI_I_XU | BWI_I_RO | BWI_I_DE | \
+					 BWI_I_PD | BWI_I_PC)
+#define BWI_TXRX_INTR_RX		BWI_I_RI
 #define BWI_TXRX_TX_INTRS		BWI_TXRX_INTR_ERROR
 #define BWI_TXRX_RX_INTRS		(BWI_TXRX_INTR_ERROR | BWI_TXRX_INTR_RX)
 #define BWI_TXRX_IS_RX(i)		((i) % 3 == 0)
