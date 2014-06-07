@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.98 2014/05/24 10:10:17 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.99 2014/06/07 12:03:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -781,6 +781,11 @@ run_alloc_tx_ring(struct run_softc *sc, int qid)
 {
 	struct run_tx_ring *txq = &sc->txq[qid];
 	int i, error;
+	uint16_t txwisize;
+
+	txwisize = sizeof(struct rt2860_txwi);
+	if (sc->mac_ver == 0x5592)
+		txwisize += sizeof(uint32_t);
 
 	txq->cur = txq->queued = 0;
 
@@ -805,8 +810,7 @@ run_alloc_tx_ring(struct run_softc *sc, int qid)
 			goto fail;
 		}
 		/* zeroize the TXD + TXWI part */
-		memset(data->buf, 0, sizeof (struct rt2870_txd) +
-		    sizeof (struct rt2860_txwi));
+		memset(data->buf, 0, sizeof(struct rt2870_txd) + txwisize);
 	}
 	if (error != 0)
 fail:		run_free_tx_ring(sc, qid);
@@ -2312,6 +2316,13 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint8_t *buf;
 	uint32_t dmalen;
 	int xferlen;
+	uint16_t rxwisize;
+
+	rxwisize = sizeof(struct rt2860_rxwi);
+	if (sc->mac_ver == 0x5592)
+		rxwisize += sizeof(uint64_t);
+	else if (sc->mac_ver == 0x3593)
+		rxwisize += sizeof(uint32_t);
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		DPRINTF(("RX status=%d\n", status));
@@ -2323,8 +2334,8 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &xferlen, NULL);
 
-	if (__predict_false(xferlen < sizeof (uint32_t) +
-	    sizeof (struct rt2860_rxwi) + sizeof (struct rt2870_rxd))) {
+	if (__predict_false(xferlen < sizeof (uint32_t) + rxwisize +
+	    sizeof(struct rt2870_rxd))) {
 		DPRINTF(("xfer too short %d\n", xferlen));
 		goto skip;
 	}
@@ -2394,6 +2405,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct rt2870_txd *txd;
 	struct rt2860_txwi *txwi;
 	uint16_t qos, dur;
+	uint16_t txwisize;
 	uint8_t type, mcs, tid, qid;
 	int error, hasqos, ridx, ctl_ridx, xferlen;
 
@@ -2429,7 +2441,11 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* get MCS code from rate index */
 	mcs = rt2860_rates[ridx].mcs;
 
-	xferlen = sizeof (*txwi) + m->m_pkthdr.len;
+	txwisize = sizeof(struct rt2860_txwi);
+	if (sc->mac_ver == 0x5592)
+		txwisize += sizeof(uint32_t);
+	xferlen = txwisize + m->m_pkthdr.len;
+
 	/* roundup to 32-bit alignment */
 	xferlen = (xferlen + 3) & ~3;
 
@@ -2489,7 +2505,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 #endif
 
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)(txwi + 1));
+	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)txwi + txwisize);
 	m_freem(m);
 
 	xferlen += sizeof (*txd) + 4;
