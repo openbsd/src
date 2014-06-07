@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.6 2009/02/16 21:19:05 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.7 2014/06/07 11:55:35 aoyama Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -75,9 +75,7 @@ struct luna88k_bus_space_tag spc_bst = {
 };
 
 int
-spc_mainbus_match(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+spc_mainbus_match(struct device *parent, void *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -92,9 +90,7 @@ spc_mainbus_match(parent, cf, aux)
 }
 
 void
-spc_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spc_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;

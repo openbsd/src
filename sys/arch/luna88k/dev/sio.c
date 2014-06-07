@@ -1,4 +1,4 @@
-/* $OpenBSD: sio.c,v 1.4 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: sio.c,v 1.5 2014/06/07 11:55:35 aoyama Exp $ */
 /* $NetBSD: sio.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 
 /*-
@@ -58,9 +58,7 @@ void nullintr(int);
 int xsiointr(void *);
 
 int
-sio_match(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+sio_match(struct device *parent, void *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -72,9 +70,7 @@ sio_match(parent, cf, aux)
 }
 
 void
-sio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -97,9 +93,7 @@ sio_attach(parent, self, aux)
 }
 
 int
-sio_print(aux, name)
-	void *aux;
-	const char *name;
+sio_print(void *aux, const char *name)
 {
 	struct sio_attach_args *args = aux;
 
@@ -113,8 +107,7 @@ sio_print(aux, name)
 }
 
 int
-xsiointr(arg)
-	void *arg;
+xsiointr(void *arg)
 {
 	struct sio_softc *sc = arg;
 
@@ -123,7 +116,6 @@ xsiointr(arg)
 	return 1;
 }
 
-void nullintr(v)
-	int v;
+void nullintr(int v)
 {
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.10 2014/01/26 17:48:07 miod Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.11 2014/06/07 11:55:35 aoyama Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -139,9 +139,7 @@ extern int  syscngetc(dev_t);
 extern void syscnputc(dev_t, int);
 
 int
-wsmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wsmatch(struct device *parent, void *match, void *aux)
 {
 	struct sio_attach_args *args = aux;
 
@@ -151,10 +149,7 @@ wsmatch(parent, match, aux)
 }
 
 void
-wsattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ws_softc *sc = (struct ws_softc *)self;
 	struct sio_softc *scp = (struct sio_softc *)parent;
@@ -196,9 +191,7 @@ wsattach(parent, self, aux)
 }
 
 int
-ws_submatch_kbd(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+ws_submatch_kbd(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
@@ -210,9 +203,7 @@ ws_submatch_kbd(parent, match, aux)
 #if NWSMOUSE > 0
 
 int
-ws_submatch_mouse(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+ws_submatch_mouse(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
@@ -225,8 +216,7 @@ ws_submatch_mouse(parent, match, aux)
 
 /*ARGSUSED*/
 void
-wsintr(chan)
-	int chan;
+wsintr(int chan)
 {
 	struct ws_softc *sc = ws_cd.cd_devs[0];
 	struct sioreg *sio = sc->sc_ctl;
@@ -286,9 +276,7 @@ wsintr(chan)
 }
 
 void
-omkbd_input(v, data)
-	void *v;
-	int data;
+omkbd_input(void *v, int data)
 {
 	struct ws_softc *sc = v;
 	u_int type;
@@ -322,21 +310,14 @@ omkbd_input(v, data)
 }
 
 void
-omkbd_decode(v, datain, type, dataout)
-	void *v;
-	int datain;
-	u_int *type;
-	int *dataout;
+omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 {
 	*type = (datain & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*dataout = datain & 0x7f;
 }
 
 void
-ws_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+ws_cngetc(void *v, u_int *type, int *data)
 {
 	int code;
 
@@ -345,9 +326,7 @@ ws_cngetc(v, type, data)
 }
 
 void
-ws_cnpollc(v, on)
-	void *v;
-        int on;
+ws_cnpollc(void *v, int on)
 {
 }
 
@@ -362,17 +341,13 @@ ws_cnattach()
 }
 
 int
-omkbd_enable(v, on)
-	void *v;
-	int on;
+omkbd_enable(void *v, int on)
 {
 	return 0;
 }
 
 void
-omkbd_set_leds(v, leds)
-	void *v;
-	int leds;
+omkbd_set_leds(void *v, int leds)
 {
 #if 0
 	syscnputc((dev_t)1, 0x10); /* kana LED on */
@@ -383,12 +358,7 @@ omkbd_set_leds(v, leds)
 }
 
 int
-omkbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+omkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if WSDISPLAY_COMPAT_RAWKBD
 	struct ws_softc *sc = v;
@@ -417,8 +387,7 @@ omkbd_ioctl(v, cmd, data, flag, p)
 #if NWSMOUSE > 0
 
 int
-omms_enable(v)
-	void *v;
+omms_enable(void *v)
 {
 	struct ws_softc *sc = v;
 
@@ -429,12 +398,7 @@ omms_enable(v)
 
 /*ARGUSED*/
 int
-omms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+omms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if 0
 	struct ws_softc *sc = v;
@@ -450,8 +414,7 @@ omms_ioctl(v, cmd, data, flag, p)
 }
 
 void
-omms_disable(v)
-	void *v;
+omms_disable(void *v)
 {
 	struct ws_softc *sc = v;
 
