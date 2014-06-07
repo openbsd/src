@@ -1,4 +1,4 @@
-/* $OpenBSD: modf.S,v 1.8 2012/08/22 17:19:35 pascal Exp $ */
+/* $OpenBSD: modf.S,v 1.9 2014/06/07 01:41:26 tobiasu Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -175,11 +175,11 @@ Lbig:
 	 */
 #ifdef __PIC__
 	PICCY_SET(L0, %l0, %o7)
-	std	%f0, [%i2]		! *ival = val;
+	std	%i0, [%i2]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;
 #else
 	sethi	%hi(L0), %l0
-	std	%f0, [%i2]		! *ival = val;
+	std	%i0, [%i2]		! *ival = val;
 	ldd	[%l0 + %lo(L0)], %f0	! return 0.0;
 #endif
 	ret
