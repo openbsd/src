@@ -2338,8 +2338,7 @@ ssl3_free(SSL *s)
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 	BIO_free(s->s3->handshake_buffer);
-	if (s->s3->handshake_dgst)
-		ssl3_free_digest_list(s);
+	ssl3_free_digest_list(s);
 	OPENSSL_cleanse(s->s3, sizeof *s->s3);
 	free(s->s3);
 	s->s3 = NULL;
@@ -2382,9 +2381,8 @@ ssl3_clear(SSL *s)
 		BIO_free(s->s3->handshake_buffer);
 		s->s3->handshake_buffer = NULL;
 	}
-	if (s->s3->handshake_dgst) {
-		ssl3_free_digest_list(s);
-	}
+	ssl3_free_digest_list(s);
+
 	memset(s->s3, 0, sizeof *s->s3);
 	s->s3->rbuf.buf = rp;
 	s->s3->wbuf.buf = wp;

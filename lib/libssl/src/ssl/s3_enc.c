@@ -536,8 +536,7 @@ void
 ssl3_init_finished_mac(SSL *s)
 {
 	BIO_free(s->s3->handshake_buffer);
-	if (s->s3->handshake_dgst)
-		ssl3_free_digest_list(s);
+	ssl3_free_digest_list(s);
 	s->s3->handshake_buffer = BIO_new(BIO_s_mem());
 
 	(void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
@@ -547,7 +546,8 @@ void
 ssl3_free_digest_list(SSL *s)
 {
 	int i;
-	if (!s->s3->handshake_dgst)
+
+	if (s->s3->handshake_dgst == NULL)
 		return;
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
 		if (s->s3->handshake_dgst[i])
