@@ -2234,8 +2234,7 @@ ssl_get_server_send_pkey(const SSL *s)
 	} else if (alg_a & SSL_aGOST01) {
 		i = SSL_PKEY_GOST01;
 	} else { /* if (alg_a & SSL_aNULL) */
-		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY,
-		    ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY, ERR_R_INTERNAL_ERROR);
 		return (NULL);
 	}
 
@@ -2275,8 +2274,7 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd)
 	    (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
 		idx = SSL_PKEY_ECC;
 	if (idx == -1) {
-		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,
-		    ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SIGN_PKEY, ERR_R_INTERNAL_ERROR);
 		return (NULL);
 	}
 	if (pmd)
@@ -3025,8 +3023,8 @@ SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
 	if (s->session == NULL)
 		return (1); /* session not created yet, ignored */
 
-	if (identity_hint != NULL && strlen(identity_hint) >
-	    PSK_MAX_IDENTITY_LEN) {
+	if (identity_hint != NULL &&
+	    strlen(identity_hint) > PSK_MAX_IDENTITY_LEN) {
 		SSLerr(SSL_F_SSL_USE_PSK_IDENTITY_HINT,
 		    SSL_R_DATA_LENGTH_TOO_LONG);
 		return (0);
