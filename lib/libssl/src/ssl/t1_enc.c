@@ -487,6 +487,8 @@ tls1_change_cipher_state(SSL *s, int which)
 	if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
 		mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
 		    mac_secret, mac_secret_size);
+		if (mac_key == NULL)
+			goto err;
 		EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
 		EVP_PKEY_free(mac_key);
 	}
