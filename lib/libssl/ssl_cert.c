@@ -628,8 +628,7 @@ err:
 	}
 	if (sk != NULL)
 		sk_X509_NAME_free(sk);
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (x != NULL)
 		X509_free(x);
 	if (ret != NULL)
@@ -688,8 +687,7 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 err:
 		ret = 0;
 	}
-	if (in != NULL)
-		BIO_free(in);
+	BIO_free(in);
 	if (x != NULL)
 		X509_free(x);
 
