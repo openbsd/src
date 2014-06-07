@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.38 2014/04/14 09:06:42 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.39 2014/06/07 11:04:14 henning Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -924,9 +924,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			struct ifnet	*eth_if;
 
 			eth_if = ifunit(parms->eth_ifname);
-			if (eth_if == NULL ||
-			    (eth_if->if_type != IFT_ETHER &&
-			     eth_if->if_type != IFT_L2VLAN)) {
+			if (eth_if == NULL || eth_if->if_type != IFT_ETHER) {
 				sc->sc_eth_if = NULL;
 				return (ENXIO);
 			}

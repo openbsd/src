@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.78 2014/04/18 10:48:30 jca Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.79 2014/06/07 11:04:14 henning Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1064,7 +1064,6 @@ nd6_ifptomac(struct ifnet *ifp)
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
 	case IFT_CARP:
-	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 		return ((caddr_t)(ifp + 1));
 	default:

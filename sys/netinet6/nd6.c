@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.117 2014/05/15 09:05:13 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.118 2014/06/07 11:04:14 henning Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1824,7 +1824,6 @@ nd6_need_cache(struct ifnet *ifp)
 	case IFT_ETHER:
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
-	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */
