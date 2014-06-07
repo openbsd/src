@@ -465,13 +465,13 @@ tls1_change_cipher_state(SSL *s, int which)
 		mac_secret = client_write_mac_secret;
 		key = client_write_key;
 		iv = client_write_iv;
-		exp_label = (unsigned char *)TLS_MD_CLIENT_WRITE_KEY_CONST;
+		exp_label = TLS_MD_CLIENT_WRITE_KEY_CONST;
 		exp_label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
 	} else {
 		mac_secret = server_write_mac_secret;
 		key = server_write_key;
 		iv = server_write_iv;
-		exp_label = (unsigned char *)TLS_MD_SERVER_WRITE_KEY_CONST;
+		exp_label = TLS_MD_SERVER_WRITE_KEY_CONST;
 		exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
 	}
 
