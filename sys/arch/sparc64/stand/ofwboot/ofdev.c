@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.21 2014/06/08 15:34:05 jsg Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.22 2014/06/08 16:01:00 jsg Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -444,7 +444,6 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 		return (NULL);
 	}
 
-	bzero(buf, sizeof(buf));
 	return ("no disk label");
 }
 
