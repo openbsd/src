@@ -68,7 +68,6 @@
 #include <unistd.h>
 
 #include <openssl/bio.h>
-#include <openssl/dso.h>
 
 #include "cryptlib.h"
 
@@ -306,25 +305,7 @@ BIO_get_accept_socket(char *host, int bind_mode)
 
 #ifdef EAI_FAMILY
 	do {
-		static union {
-			void *p;
-			int (*f)(const char *, const char *,
-			    const struct addrinfo *,
-			    struct addrinfo **);
-		} p_getaddrinfo = {NULL};
-		static union {
-			void *p;
-			void (*f)(struct addrinfo *);
-		} p_freeaddrinfo = {NULL};
 		struct addrinfo *res, hint;
-
-		if (p_getaddrinfo.p == NULL) {
-			if ((p_getaddrinfo.p = DSO_global_lookup("getaddrinfo"))==NULL ||
-			    (p_freeaddrinfo.p = DSO_global_lookup("freeaddrinfo"))==NULL)
-				p_getaddrinfo.p = (void*) - 1;
-		}
-		if (p_getaddrinfo.p == (void *) - 1)
-			break;
 
 		/* '::port' enforces IPv6 wildcard listener. Some OSes,
 		 * e.g. Solaris, default to IPv6 without any hint. Also
@@ -343,14 +324,14 @@ BIO_get_accept_socket(char *host, int bind_mode)
 			}
 		}
 
-		if ((*p_getaddrinfo.f)(h, p, &hint, &res))
+		if (getaddrinfo(h, p, &hint, &res))
 			break;
 
 		addrlen = res->ai_addrlen <= sizeof(server) ?
 		    res->ai_addrlen : sizeof(server);
 		memcpy(&server, res->ai_addr, addrlen);
 
-		(*p_freeaddrinfo.f)(res);
+		freeaddrinfo(res);
 		goto again;
 	} while (0);
 #endif
@@ -478,26 +459,8 @@ BIO_accept(int sock, char **addr)
 	do {
 		char   h[NI_MAXHOST], s[NI_MAXSERV];
 		size_t nl;
-		static union {
-			void *p;
-			int (*f)(const struct sockaddr *,
-			socklen_t, char *, size_t,
-			    char *, size_t, int);
-		} p_getnameinfo = {NULL};
-		/* 2nd argument to getnameinfo is specified to
-		 * be socklen_t. Unfortunately there is a number
-		 * of environments where socklen_t is not defined.
-		 * As it's passed by value, it's safe to pass it
-		 * as size_t... <appro> */
 
-		if (p_getnameinfo.p == NULL) {
-			if ((p_getnameinfo.p = DSO_global_lookup("getnameinfo")) == NULL)
-				p_getnameinfo.p = (void*) - 1;
-		}
-		if (p_getnameinfo.p == (void *) - 1)
-			break;
-
-		if ((*p_getnameinfo.f)(&sa.from.sa, sa.len, h, sizeof(h),
+		if (getnameinfo(&sa.from.sa, sa.len, h, sizeof(h),
 		    s, sizeof(s), NI_NUMERICHOST|NI_NUMERICSERV))
 			break;
 		nl = strlen(h) + strlen(s) + 2;
