@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.53 2014/04/25 14:37:06 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.54 2014/06/08 17:53:14 daniel Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -112,22 +112,23 @@ acpi_scan(struct acpi_mem_map *handle, paddr_t pa, size_t len)
 
 	if (acpi_map(pa, len, handle))
 		return (NULL);
-	for (ptr = handle->va, i = 0;
-	     i < len;
-	     ptr += 16, i += 16)
-		if (memcmp(ptr, RSDP_SIG, sizeof(RSDP_SIG) - 1) == 0) {
-			rsdp = (struct acpi_rsdp1 *)ptr;
-			/*
-			 * Only checksum whichever portion of the
-			 * RSDP that is actually present
-			 */
-			if (rsdp->revision == 0 &&
-			    acpi_checksum(ptr, sizeof(struct acpi_rsdp1)) == 0)
+	for (ptr = handle->va, i = 0; i < len; ptr += 16, i += 16) {
+		/* is there a valid signature? */
+		if (memcmp(ptr, RSDP_SIG, sizeof(RSDP_SIG) - 1))
+			continue;
+
+		/* is the checksum valid? */
+		if (acpi_checksum(ptr, sizeof(struct acpi_rsdp1)) != 0)
+			continue;
+
+		/* check the extended checksum as needed */
+		rsdp = (struct acpi_rsdp1 *)ptr;
+		if (rsdp->revision == 0)
+			return (ptr);
+		else if (rsdp->revision >= 2 && rsdp->revision <= 4)
+			if (acpi_checksum(ptr, sizeof(struct acpi_rsdp)) == 0)
 				return (ptr);
-			else if (rsdp->revision >= 2 && rsdp->revision <= 4 &&
-			    acpi_checksum(ptr, sizeof(struct acpi_rsdp)) == 0)
-				return (ptr);
-		}
+	}
 	acpi_unmap(handle);
 
 	return (NULL);
