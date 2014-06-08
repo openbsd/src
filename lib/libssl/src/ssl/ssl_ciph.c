@@ -758,6 +758,13 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	if (c == NULL)
 		return (0);
 
+	/*
+	 * This function does not handle EVP_AEAD.
+	 * See ssl_cipher_get_aead_evp instead.
+	 */
+	if (c->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD)
+		return(0);
+
 	if ((enc == NULL) || (md == NULL))
 		return (0);
 
@@ -882,6 +889,37 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		return (1);
 	} else
 		return (0);
+}
+
+/*
+ * ssl_cipher_get_evp_aead sets aead to point to the correct EVP_AEAD object
+ * for s->cipher. It returns 1 on success and 0 on error.
+ */
+int
+ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
+{
+	const SSL_CIPHER *c = s->cipher;
+
+	*aead = NULL;
+
+	if (c == NULL)
+		return 0;
+	if ((c->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD) == 0)
+		return 0;
+
+	switch (c->algorithm_enc) {
+#ifndef OPENSSL_NO_AES
+	case SSL_AES128GCM:
+		*aead = EVP_aead_aes_128_gcm();
+		return 1;
+	case SSL_AES256GCM:
+		*aead = EVP_aead_aes_256_gcm();
+		return 1;
+#endif
+	default:
+		break;
+	}
+	return 0;
 }
 
 int

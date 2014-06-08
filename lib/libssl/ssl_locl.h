@@ -346,7 +346,25 @@
  * (currently this also goes into algorithm2) */
 #define TLS1_STREAM_MAC 0x04
 
+/*
+ * SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD is an algorithm2 flag that
+ * indicates that the variable part of the nonce is included as a prefix of
+ * the record (AES-GCM, for example, does this with an 8-byte variable nonce.)
+ */
+#define SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD (1 << 22)
+ 
+/*
+ * SSL_CIPHER_ALGORITHM2_AEAD is an algorithm2 flag that indicates the cipher
+ * is implemented via an EVP_AEAD.
+ */
+#define SSL_CIPHER_ALGORITHM2_AEAD (1 << 23)
 
+/*
+ * SSL_CIPHER_AEAD_FIXED_NONCE_LEN returns the number of bytes of fixed nonce
+ * for an SSL_CIPHER with the SSL_CIPHER_ALGORITHM2_AEAD flag.
+ */
+#define SSL_CIPHER_AEAD_FIXED_NONCE_LEN(ssl_cipher) \
+	(((ssl_cipher->algorithm2 >> 24) & 0xf) * 2)
 
 /*
  * Export and cipher strength information. For each cipher we have to decide
@@ -607,6 +625,7 @@ void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_comp(const SSL_SESSION *s, SSL_COMP **comp);
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
+int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);
 int ssl_get_handshake_digest(int i, long *mask, const EVP_MD **md);
 
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
