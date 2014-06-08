@@ -494,17 +494,16 @@ BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 	BIO *ret = NULL, *buf = NULL, *ssl = NULL;
 
 	if ((buf = BIO_new(BIO_f_buffer())) == NULL)
-		return (NULL);
+		goto err;
 	if ((ssl = BIO_new_ssl_connect(ctx)) == NULL)
 		goto err;
 	if ((ret = BIO_push(buf, ssl)) == NULL)
 		goto err;
 	return (ret);
+
 err:
-	if (buf != NULL)
-		BIO_free(buf);
-	if (ssl != NULL)
-		BIO_free(ssl);
+	BIO_free(buf);
+	BIO_free(ssl);
 	return (NULL);
 }
 
@@ -514,15 +513,16 @@ BIO_new_ssl_connect(SSL_CTX *ctx)
 	BIO *ret = NULL, *con = NULL, *ssl = NULL;
 
 	if ((con = BIO_new(BIO_s_connect())) == NULL)
-		return (NULL);
+		goto err;
 	if ((ssl = BIO_new_ssl(ctx, 1)) == NULL)
 		goto err;
 	if ((ret = BIO_push(ssl, con)) == NULL)
 		goto err;
 	return (ret);
+
 err:
-	if (con != NULL)
-		BIO_free(con);
+	BIO_free(con);
+	BIO_free(ssl);
 	return (NULL);
 }
 
@@ -533,11 +533,10 @@ BIO_new_ssl(SSL_CTX *ctx, int client)
 	SSL *ssl;
 
 	if ((ret = BIO_new(BIO_f_ssl())) == NULL)
-		return (NULL);
-	if ((ssl = SSL_new(ctx)) == NULL) {
-		BIO_free(ret);
-		return (NULL);
-	}
+		goto err;
+	if ((ssl = SSL_new(ctx)) == NULL)
+		goto err;
+
 	if (client)
 		SSL_set_connect_state(ssl);
 	else
@@ -545,6 +544,10 @@ BIO_new_ssl(SSL_CTX *ctx, int client)
 
 	BIO_set_ssl(ret, ssl, BIO_CLOSE);
 	return (ret);
+
+err:
+	BIO_free(ret);
+	return (NULL);
 }
 
 int
