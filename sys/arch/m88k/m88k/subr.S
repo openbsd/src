@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.23 2013/08/24 20:54:29 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.24 2014/06/08 13:20:39 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1086,13 +1086,13 @@ ENTRY(longjmp)
 ENTRY(sigcode)			/* r31 points to sigframe */
 	ld	%r2,  %r31, 0	/* pick sigcontext* */
 	or	%r13, %r0,  SYS_sigreturn
-	tb0	0,    %r0,  128	/* syscall trap, calling sigreturn */
+	tb0	0,    %r0,  450	/* syscall trap, calling sigreturn */
 	NOP			| failure return
 #ifdef dontbother		/* sigreturn will not return unless it fails */
 	NOP			| success return
 #endif
 	or	%r13, %r0,  SYS_exit
-	tb0	0,    %r0,  128	/* syscall trap, exit */
+	tb0	0,    %r0,  450	/* syscall trap, exit */
 	/*
 	 * this never returns, but we need to provide fetchable instructions
 	 * for the 88100 pipeline.

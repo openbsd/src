@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors_88100.S,v 1.5 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: vectors_88100.S,v 1.6 2014/06/08 13:20:39 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -78,8 +78,8 @@ GLOBAL(vector_list)
 	VECTOR(unknown_handler)			/* 7d */
 	VECTOR(unimplemented_handler)		/* 7e */
 	VECTOR(unknown_handler)			/* 7f */
-	VECTOR(syscall_handler)			/* 80 */
-	VECTOR(syscall_handler)			/* 81 */
+	VECTOR(unknown_handler)			/* 80 */
+	VECTOR(unknown_handler)			/* 81 */
 #ifdef DDB
 	VECTOR(break)				/* 82 */
 	VECTOR(trace)				/* 83 */
