@@ -306,9 +306,9 @@ tls1_generate_key_block(SSL *s, unsigned char *km, unsigned char *tmp, int num)
  */
 static int
 tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
-    const unsigned char *mac_secret, unsigned mac_secret_size,
-    const unsigned char *key, unsigned key_len, const unsigned char *iv,
-    unsigned iv_len)
+    const unsigned char *mac_secret, unsigned int mac_secret_size,
+    const unsigned char *key, unsigned int key_len, const unsigned char *iv,
+    unsigned int iv_len)
 {
 	static const unsigned char empty[] = "";
 	unsigned char export_tmp1[EVP_MAX_KEY_LENGTH];
