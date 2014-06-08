@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.127 2014/04/07 10:04:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.128 2014/06/08 14:17:52 miod Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1733,7 +1733,8 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			int s = splsoftnet();
 
 			m->m_len = sizeof(off_t);
-			*mtod(m, off_t *) = so->so_splicelen;
+			memcpy(mtod(m, off_t *), &so->so_splicelen,
+			    sizeof(off_t));
 			splx(s);
 			break;
 		    }
