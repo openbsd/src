@@ -418,9 +418,9 @@ ssl_set_peer_cert_type(SESS_CERT *sc, int type)
 int
 ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
-	X509 *x;
-	int i;
 	X509_STORE_CTX ctx;
+	X509 *x;
+	int ret;
 
 	if ((sk == NULL) || (sk_X509_num(sk) == 0))
 		return (0);
@@ -439,7 +439,8 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 	 */
 
 	X509_STORE_CTX_set_default(&ctx,
-	s->server ? "ssl_client" : "ssl_server");
+	    s->server ? "ssl_client" : "ssl_server");
+
 	/* Anything non-default in "param" should overwrite anything in the
 	 * ctx.
 	 */
@@ -449,21 +450,14 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
 
 	if (s->ctx->app_verify_callback != NULL)
-		i = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
-	else {
-#ifndef OPENSSL_NO_X509_VERIFY
-		i = X509_verify_cert(&ctx);
-#else
-		i = 0;
-		ctx.error = X509_V_ERR_APPLICATION_VERIFICATION;
-		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_NO_VERIFY_CALLBACK);
-#endif
-	}
+		ret = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
+	else
+		ret = X509_verify_cert(&ctx);
 
 	s->verify_result = ctx.error;
 	X509_STORE_CTX_cleanup(&ctx);
 
-	return (i);
+	return (ret);
 }
 
 static void
