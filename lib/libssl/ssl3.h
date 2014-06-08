@@ -232,6 +232,7 @@ extern "C" {
 
 #define SSL3_MASTER_SECRET_SIZE			48
 #define SSL3_RANDOM_SIZE			32
+#define SSL3_SEQUENCE_SIZE			8
 #define SSL3_SESSION_ID_SIZE			32
 #define SSL3_RT_HEADER_LENGTH			5
 
@@ -389,10 +390,10 @@ typedef struct ssl3_state_st {
 	long flags;
 	int delay_buf_pop_ret;
 
-	unsigned char read_sequence[8];
+	unsigned char read_sequence[SSL3_SEQUENCE_SIZE];
 	int read_mac_secret_size;
 	unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-	unsigned char write_sequence[8];
+	unsigned char write_sequence[SSL3_SEQUENCE_SIZE];
 	int write_mac_secret_size;
 	unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
 

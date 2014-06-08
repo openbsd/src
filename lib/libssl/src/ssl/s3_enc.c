@@ -272,7 +272,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 				goto err;
 		}
 #endif
-		memset(&(s->s3->read_sequence[0]), 0, 8);
+		memset(s->s3->read_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->read_mac_secret[0]);
 	} else {
 		if (s->enc_write_ctx != NULL)
@@ -301,7 +301,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 			}
 		}
 #endif
-		memset(&(s->s3->write_sequence[0]), 0, 8);
+		memset(s->s3->write_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->write_mac_secret[0]);
 	}
 

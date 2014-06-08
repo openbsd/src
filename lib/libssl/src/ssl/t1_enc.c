@@ -525,7 +525,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	 */
 	if (!SSL_IS_DTLS(s)) {
 		seq = is_read ? s->s3->read_sequence : s->s3->write_sequence;
-		memset(seq, 0, 8);
+		memset(seq, 0, SSL3_SEQUENCE_SIZE);
 	}
 
 	key_len = EVP_CIPHER_key_length(cipher);
@@ -753,7 +753,7 @@ tls1_enc(SSL *s, int send)
 				memcpy(p, &seq[2], 6);
 				memcpy(buf, dtlsseq, 8);
 			} else {
-				memcpy(buf, seq, 8);
+				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
 				for (i = 7; i >= 0; i--) {	/* increment */
 					++seq[i];
 					if (seq[i] != 0)
