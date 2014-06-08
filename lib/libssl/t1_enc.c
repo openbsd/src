@@ -311,7 +311,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	const unsigned char *client_write_iv, *server_write_iv;
 	const unsigned char *mac_secret, *key, *iv;
 	int mac_secret_size, key_len, iv_len;
-	unsigned char *key_block, *exp_label;
+	unsigned char *key_block, *exp_label, *seq;
 
 	EVP_CIPHER_CTX *cipher_ctx;
 	const EVP_CIPHER *cipher;
@@ -398,10 +398,6 @@ tls1_change_cipher_state(SSL *s, int which)
 		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
 			goto err;
 		s->read_hash = mac_ctx;
-
-		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
-		if (s->version != DTLS1_VERSION)
-			memset(&(s->s3->read_sequence[0]), 0, 8);
 	} else {
 		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -428,9 +424,15 @@ tls1_change_cipher_state(SSL *s, int which)
 			goto err;
 		s->write_hash = mac_ctx;
 
-		/* this is done by dtls1_reset_seq_numbers for DTLS1_VERSION */
-		if (s->version != DTLS1_VERSION)
-			memset(&(s->s3->write_sequence[0]), 0, 8);
+	}
+
+	/*
+	 * Reset sequence number to zero - for DTLS this is handled in
+	 * dtls1_reset_seq_numbers().
+	 */
+	if (!SSL_IS_DTLS(s)) {
+		seq = is_read ? s->s3->read_sequence : s->s3->write_sequence;
+		memset(seq, 0, 8);
 	}
 
 	key_len = EVP_CIPHER_key_length(cipher);
