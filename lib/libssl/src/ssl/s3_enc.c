@@ -178,7 +178,8 @@ ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 		k++;
 		if (k > sizeof buf) {
 			/* bug: 'buf' is too small for this ciphersuite */
-			SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK,
+			    ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 
@@ -645,10 +646,10 @@ ssl3_handshake_mac(SSL *s, int md_nid, const char *sender, int len,
 		if (!ssl3_digest_cached_records(s))
 			return 0;
 
-	/* Search for digest of specified type in the handshake_dgst
-	 * array*/
+	/* Search for digest of specified type in the handshake_dgst array. */
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i]) == md_nid) {
+		if (s->s3->handshake_dgst[i] &&
+		    EVP_MD_CTX_type(s->s3->handshake_dgst[i]) == md_nid) {
 			d = s->s3->handshake_dgst[i];
 			break;
 		}
@@ -664,7 +665,7 @@ ssl3_handshake_mac(SSL *s, int md_nid, const char *sender, int len,
 	if (n < 0)
 		return 0;
 
-	npad = (48/n)*n;
+	npad = (48 / n) * n;
 	if (sender != NULL)
 		EVP_DigestUpdate(&ctx, sender, len);
 	EVP_DigestUpdate(&ctx, s->session->master_key,
@@ -712,7 +713,7 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	if (t < 0)
 		return -1;
 	md_size = t;
-	npad = (48/md_size)*md_size;
+	npad = (48 / md_size) * md_size;
 
 	/* kludge: ssl3_cbc_remove_padding passes padding length in rec->type */
 	orig_len = rec->length + md_size + ((unsigned int)rec->type >> 8);
@@ -752,7 +753,7 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		/* Chop the digest off the end :-) */
 		EVP_MD_CTX_init(&md_ctx);
 
-		EVP_MD_CTX_copy_ex( &md_ctx, hash);
+		EVP_MD_CTX_copy_ex(&md_ctx, hash);
 		EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
 		EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad);
 		EVP_DigestUpdate(&md_ctx, seq, 8);
@@ -762,13 +763,13 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		s2n(rec->length, p);
 		EVP_DigestUpdate(&md_ctx, md, 2);
 		EVP_DigestUpdate(&md_ctx, rec->input, rec->length);
-		EVP_DigestFinal_ex( &md_ctx, md, NULL);
+		EVP_DigestFinal_ex(&md_ctx, md, NULL);
 
-		EVP_MD_CTX_copy_ex( &md_ctx, hash);
+		EVP_MD_CTX_copy_ex(&md_ctx, hash);
 		EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
 		EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad);
 		EVP_DigestUpdate(&md_ctx, md, md_size);
-		EVP_DigestFinal_ex( &md_ctx, md, &md_size_u);
+		EVP_DigestFinal_ex(&md_ctx, md, &md_size_u);
 		md_size = md_size_u;
 
 		EVP_MD_CTX_cleanup(&md_ctx);
@@ -787,7 +788,6 @@ ssl3_record_sequence_update(unsigned char *seq)
 		++seq[i];
 		if (seq[i] != 0)
 			break;
-
 	}
 }
 
