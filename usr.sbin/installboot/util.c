@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2014/01/19 03:48:07 jsing Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2014/06/09 15:50:08 jsing Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -32,33 +32,28 @@
 void
 filecopy(const char *srcfile, const char *dstfile)
 {
-	char *buf, tempfile[MAXPATHLEN];
 	struct stat sb;
 	ssize_t sz, n;
 	int sfd, dfd;
+	char *buf;
 
 	if ((buf = malloc(BUFSIZE)) == NULL)
 		err(1, "malloc");
 
 	sfd = open(srcfile, O_RDONLY);
 	if (sfd == -1)
-		err(1, "open");
+		err(1, "open %s", srcfile);
 	if (fstat(sfd, &sb) == -1)
 		err(1, "fstat");
 	sz = sb.st_size;
 
-	snprintf(tempfile, sizeof(tempfile), "%s.XXXXXXXX", dstfile);
-	dfd = mkstemp(tempfile);
+	dfd = open(dstfile, O_WRONLY|O_CREAT);
 	if (dfd == -1)
-		err(1, "mkstemp");
-
-	if (chown(tempfile, 0, 0) == -1)
+		err(1, "open %s", dstfile);
+	if (fchown(dfd, 0, 0) == -1)
 		err(1, "chown");
-	if (chmod(tempfile, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1)
+	if (fchmod(dfd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1)
 		err(1, "chmod");
-
-	if (verbose)
-		fprintf(stderr, "Copying %s to %s\n", srcfile, tempfile);
 
 	while (sz > 0) {
 		n = MIN(sz, BUFSIZE);
@@ -69,15 +64,11 @@ filecopy(const char *srcfile, const char *dstfile)
 			err(1, "write");
 	}
 
+	ftruncate(dfd, sb.st_size);
+
 	close(dfd);
 	close(sfd);
 	free(buf);
-
-	if (verbose)
-		fprintf(stderr, "Renaming %s to %s\n", tempfile, dstfile);
-
-	if (rename(tempfile, dstfile) == -1)
-		err(1, "rename");
 }
 
 char *

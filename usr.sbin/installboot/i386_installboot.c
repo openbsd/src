@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.2 2014/04/27 13:41:50 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.3 2014/06/09 15:50:08 jsing Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -137,6 +137,9 @@ md_installboot(int devfd, char *dev)
 		warnx("disklabel type unknown");
 
 	bootldr = fileprefix(root, bootldr);
+	if (verbose)
+		fprintf(stderr, "%s %s to %s\n",
+		    (nowrite ? "would copy" : "copying"), stage2, bootldr);
 	if (!nowrite)
 		filecopy(stage2, bootldr);
 
