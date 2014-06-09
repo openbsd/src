@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2014/05/17 12:22:09 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2014/06/09 14:33:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -1887,7 +1887,7 @@ pmap_set_modify(pmap_t pmap, vaddr_t va)
 	pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DIAGNOSTIC
 	if (pg == NULL)
-		panic("Write fault to unmanaged page %p", pa);
+		panic("Write fault to unmanaged page %p", (void *)pa);
 #endif
 
 	pvl = pg_to_pvh(pg);
