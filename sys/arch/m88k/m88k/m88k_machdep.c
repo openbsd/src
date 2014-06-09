@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.61 2014/05/31 11:19:56 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.62 2014/06/09 16:22:47 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -258,12 +258,6 @@ regdump(struct trapframe *f)
 	}
 	if (CPU_IS88100 && ISSET(f->tf_dmt0, DMT_VALID)) {
 		/* print dmt stuff for data access fault */
-		printf("dmt0 %lx dmd0 %lx dma0 %lx\n",
-		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
-		printf("dmt1 %lx dmd1 %lx dma1 %lx\n",
-		    f->tf_dmt1, f->tf_dmd1, f->tf_dma1);
-		printf("dmt2 %lx dmd2 %lx dma2 %lx\n",
-		    f->tf_dmt2, f->tf_dmd2, f->tf_dma2);
 		printf("fault type %ld\n", (f->tf_dpfsr >> 16) & 0x7);
 		dae_print((u_int *)f);
 	}
