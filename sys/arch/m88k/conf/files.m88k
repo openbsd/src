@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.25 2013/06/07 17:31:31 miod Exp $
+#	$OpenBSD: files.m88k,v 1.26 2014/06/09 10:26:10 miod Exp $
 
 file	arch/m88k/m88k/atomic.S				multiprocessor
 file	arch/m88k/m88k/db_disasm.c			ddb
@@ -7,6 +7,7 @@ file	arch/m88k/m88k/db_sstep.c			ddb
 file	arch/m88k/m88k/db_trace.c			ddb
 file	arch/m88k/m88k/in_cksum.c			inet
 file	arch/m88k/m88k/m88100_fp.S			m88100
+file	arch/m88k/m88k/m88100_fp_imp.S			m88100
 file	arch/m88k/m88k/m88100_machdep.c			m88100
 file	arch/m88k/m88k/m88110_mmu.S			m88110
 file	arch/m88k/m88k/m8820x_machdep.c			m88100
