@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.97 2014/06/09 14:33:20 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.98 2014/06/09 16:26:32 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -506,10 +506,9 @@ user_fault:
 		break;
 	case T_FPEPFLT+T_USER:
 		m88100_fpu_precise_exception(frame);
-		goto maysigfpe;
+		goto userexit;
 	case T_FPEIFLT+T_USER:
 		m88100_fpu_imprecise_exception(frame);
-maysigfpe:
 		/* Check for a SIGFPE condition */
 		if (frame->tf_fpsr & frame->tf_fpcr) {
 			sig = SIGFPE;
@@ -616,6 +615,7 @@ maysigfpe:
 		frame->tf_ipfsr = frame->tf_dpfsr = 0;
 	}
 
+userexit:
 	userret(p);
 }
 #endif /* M88100 */

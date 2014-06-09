@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.4 2010/04/21 15:37:32 miod Exp $ */
+/*	$OpenBSD: ieeefp.h,v 1.5 2014/06/09 16:26:32 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -56,7 +56,7 @@ typedef enum {
 #ifdef _KERNEL
 
 /*
- * Defines for the 88110 floating-point completion code.
+ * Defines for the floating-point completion code.
  */
 
 #include <sys/param.h>
@@ -83,6 +83,6 @@ countLeadingZeros32(u_int32_t a)
 	return (a != 0 ? 31 - rc : rc);
 }
 
-#endif
+#endif /* _KERNEL */
 
 #endif /* _M88K_IEEEFP_H_ */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: m88110_fp.c,v 1.10 2014/06/09 16:26:32 miod Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.1 2014/06/09 16:26:32 miod Exp $	*/
 
 /*
- * Copyright (c) 2007, Miodrag Vallat.
+ * Copyright (c) 2007, 2014, Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,124 +27,60 @@
 #include <machine/frame.h>
 #include <machine/ieeefp.h>
 #include <machine/trap.h>
-#include <machine/m88110.h>
+#include <machine/m88100.h>
 
 #include <lib/libkern/softfloat.h>
 
 #include <m88k/m88k/fpu.h>
 
-int	m88110_fpu_emulate(struct trapframe *, u_int32_t);
-void	m88110_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
+int	m88100_fpu_emulate(struct trapframe *);
+void	m88100_fpu_fetch(struct trapframe *, u_int, u_int, u_int, fparg *);
 
 /*
- * All 88110 floating-point exceptions are handled there.
+ * All 88100 precise floating-point exceptions are handled there.
  *
- * We can unfortunately not trust the floating-point exception cause
- * register, as the 88110 will conveniently only set the ``unimplemented
- * instruction'' bit, more often than not.
- *
- * So we ignore it completely, and try to emulate the faulting instruction.
- * The instruction can be:
- *
- * - an invalid SFU1 opcode, in which case we'll send SIGILL to the process.
- *
- * - a genuinely unimplemented feature: fsqrt.
- *
- * - an opcode involving an odd-numbered register pair (as a double precision
- *   operand). Rather than issueing a correctly formed flavour in kernel mode,
- *   and having to handle a possible nested exception, we emulate it. This
- *   will of course be slower, but we have to draw the line somewhere.
- *   Gcc will however never produce such code, so we don't have to worry
- *   too much about this under OpenBSD.
- *
- * Note that, currently, opcodes involving the extended register file (XRF)
- * are handled as invalid opcodes. This will eventually change once the
- * toolchain can correctly assemble XRF instructions, and the XRF is saved
- * accross context switches (or not... lazy switching for XRF makes more
- * sense).
+ * We ignore the exception cause register completely, except for the
+ * `privilege violation' bit, and attempt to perform the computation in
+ * software if needed.
  */
 
 void
-m88110_fpu_exception(struct trapframe *frame)
+m88100_fpu_precise_exception(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	int fault_type;
 	vaddr_t fault_addr;
 	union sigval sv;
-	u_int32_t insn;
 	int sig;
 
-	fault_addr = frame->tf_exip & XIP_ADDR;
+	fault_addr = frame->tf_sxip & XIP_ADDR;
 
-	/*
-	 * Skip the instruction now. Signals will blame the correct
-	 * address, and this has to be done before trapsignal() is
-	 * invoked, or we won't run the first instruction of the signal
-	 * handler...
-	 */
-	m88110_skip_insn(frame);
+	/* if FPECR_FUNIMP is set, all other bits are undefined, ignore them */
+	if (ISSET(frame->tf_fpecr, FPECR_FUNIMP))
+		frame->tf_fpecr = FPECR_FUNIMP;
 
-	/*
-	 * The low-level exception code did not save the floating point
-	 * exception registers. Do it now, and reset the exception
-	 * cause register.
-	 */
-	__asm__ volatile ("fldcr %0, %%fcr0" : "=r"(frame->tf_fpecr));
-	__asm__ volatile ("fldcr %0, %%fcr62" : "=r"(frame->tf_fpsr));
-	__asm__ volatile ("fldcr %0, %%fcr63" : "=r"(frame->tf_fpcr));
+	/* Reset the exception cause register */
 	__asm__ volatile ("fstcr %r0, %fcr0");
 
-	/*
-	 * Fetch the faulting instruction. This should not fail, if it
-	 * does, it's probably not your lucky day.
-	 */
-	if (copyin((void *)fault_addr, &insn, sizeof insn) != 0) {
-		sig = SIGBUS;
-		fault_type = BUS_OBJERR;
-		goto deliver;
-	}
-
-	switch (insn >> 26) {
-	case 0x20:
-		/*
-		 * f{ld,st,x}cr instruction. If it caused a fault in
-		 * user mode, this is a privilege violation.
-		 */
+	if (ISSET(frame->tf_fpecr, FPECR_FPRV)) {
 		sig = SIGILL;
 		fault_type = ILL_PRVREG;
-		goto deliver;
-	case 0x21:
-		/*
-		 * ``real'' FPU instruction. We'll try to emulate it,
-		 * unless FPU is disabled.
-		 */
-		if (frame->tf_epsr & PSR_SFD1) {	/* don't bother */
-			sig = SIGFPE;
-			fault_type = FPE_FLTINV;
-			goto deliver;
-		}
-		sig = m88110_fpu_emulate(frame, insn);
+	} else {
+		sig = m88100_fpu_emulate(frame);
 		fault_type = SI_NOINFO;
-		/*
-		 * Update the floating point status register regardless of
-		 * whether we'll deliver a signal or not.
-		 */
-		__asm__ volatile ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
-		break;
-	default:
-		/*
-		 * Not a FPU instruction. Should not have raised this
-		 * exception, so bail out.
-		 */
-		sig = SIGILL;
-		fault_type = ILL_ILLOPC;
-		goto deliver;
 	}
 
+	/*
+	 * Update the floating point status register regardless of
+	 * whether we'll deliver a signal or not.
+	 */
+	__asm__ volatile ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
+
 	if (sig != 0) {
-		if (sig == SIGILL)
-			fault_type = ILL_ILLOPC;
-		else {
+		if (sig == SIGILL) {
+			if (fault_type == SI_NOINFO)
+				fault_type = ILL_ILLOPC;
+		} else {
 			if (frame->tf_fpecr & FPECR_FIOV)
 				fault_type = FPE_FLTSUB;
 			else if (frame->tf_fpecr & FPECR_FROP)
@@ -165,7 +101,6 @@ m88110_fpu_exception(struct trapframe *frame)
 				fault_type = FPE_FLTRES;
 		}
 
-deliver:
 		sv.sival_ptr = (void *)fault_addr;
 		KERNEL_LOCK();
 		trapsignal(p, sig, 0, fault_type, sv);
@@ -181,14 +116,14 @@ deliver:
  * format (orig_width) <= width.
  */
 void
-m88110_fpu_fetch(struct trapframe *frame, u_int regno, u_int orig_width,
+m88100_fpu_fetch(struct trapframe *frame, u_int operandno, u_int orig_width,
     u_int width, fparg *dest)
 {
 	u_int32_t tmp;
 
 	switch (orig_width) {
 	case FTYPE_INT:
-		tmp = regno == 0 ? 0 : frame->tf_r[regno];
+		tmp = operandno == 1 ? frame->tf_fpls1 : frame->tf_fpls2;
 		switch (width) {
 		case FTYPE_SNG:
 			dest->sng = int32_to_float32(tmp);
@@ -199,7 +134,7 @@ m88110_fpu_fetch(struct trapframe *frame, u_int regno, u_int orig_width,
 		}
 		break;
 	case FTYPE_SNG:
-		tmp = regno == 0 ? 0 : frame->tf_r[regno];
+		tmp = operandno == 1 ? frame->tf_fphs1 : frame->tf_fphs2;
 		switch (width) {
 		case FTYPE_SNG:
 			dest->sng = tmp;
@@ -210,9 +145,9 @@ m88110_fpu_fetch(struct trapframe *frame, u_int regno, u_int orig_width,
 		}
 		break;
 	case FTYPE_DBL:
-		tmp = regno == 0 ? 0 : frame->tf_r[regno];
+		tmp = operandno == 1 ? frame->tf_fphs1 : frame->tf_fphs2;
 		dest->dbl = ((float64)tmp) << 32;
-		tmp = regno == 31 ? 0 : frame->tf_r[regno + 1];
+		tmp = operandno == 1 ? frame->tf_fpls1 : frame->tf_fpls2;
 		dest->dbl |= (float64)tmp;
 		break;
 	}
@@ -223,9 +158,9 @@ m88110_fpu_fetch(struct trapframe *frame, u_int regno, u_int orig_width,
  * will be modified to reflect the settings the hardware would have left.
  */
 int
-m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
+m88100_fpu_emulate(struct trapframe *frame)
 {
-	u_int rf, rd, rs1, rs2, t1, t2, td, tmax, opcode;
+	u_int rd, t1, t2, td, tmax, opcode;
 	u_int32_t old_fpsr, old_fpcr;
 	int rc;
 
@@ -234,20 +169,13 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 	/*
 	 * Crack the instruction.
 	 */
-	rd = (insn >> 21) & 0x1f;
-	rs1 = (insn >> 16) & 0x1f;
-	rs2 = insn & 0x1f;
-	rf = (insn >> 15) & 0x01;
-	opcode = (insn >> 11) & 0x0f;
-	t1 = (insn >> 9) & 0x03;
-	t2 = (insn >> 7) & 0x03;
-	td = (insn >> 5) & 0x03;
+	rd = frame->tf_fppt & 0x1f;
+	opcode = (frame->tf_fppt >> 11) & 0x1f;
+	t1 = (frame->tf_fppt >> 9) & 0x03;
+	t2 = (frame->tf_fppt >> 7) & 0x03;
+	td = (frame->tf_fppt >> 5) & 0x03;
 
-	/*
-	 * Discard invalid opcodes, as well as instructions involving XRF,
-	 * since we do not support them yet.
-	 */
-	if (rf != 0)
+	if (rd == 0)	/* r0 not allowed as destination */
 		return (SIGILL);
 
 	switch (opcode) {
@@ -261,38 +189,24 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 			return (SIGILL);
 		break;
 	case 0x04:	/* flt */
-		if (t1 != 0x00)	/* flt on XRF */
-			return (SIGILL);
 		if ((td != FTYPE_SNG && td != FTYPE_DBL) ||
-		    t2 != 0x00 || rs1 != 0)
+		    t2 != 0x00 || t1 != 0x00)
 			return (SIGILL);
 		break;
-	case 0x07:	/* fcmp, fcmpu */
+	case 0x07:	/* fcmp */
 		if ((t1 != FTYPE_SNG && t1 != FTYPE_DBL) ||
-		    (t2 != FTYPE_SNG && t2 != FTYPE_DBL))
-			return (SIGILL);
-		if (td != 0x00 /* fcmp */ && td != 0x01 /* fcmpu */)
+		    (t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
+		    td != 0x00)
 			return (SIGILL);
 		break;
 	case 0x09:	/* int */
 	case 0x0a:	/* nint */
 	case 0x0b:	/* trnc */
 		if ((t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
-		    t1 != 0x00 || td != 0x00 || rs1 != 0)
-			return (SIGILL);
-		break;
-	case 0x01:	/* fcvt */
-		if (t2 == td)
-			return (SIGILL);
-		/* FALLTHROUGH */
-	case 0x0f:	/* fsqrt */
-		if ((t2 != FTYPE_SNG && t2 != FTYPE_DBL) ||
-		    (td != FTYPE_SNG && td != FTYPE_DBL) ||
-		    t1 != 0x00 || rs1 != 0)
+		    t1 != 0x00 || td != 0x00)
 			return (SIGILL);
 		break;
 	default:
-	case 0x08:	/* mov */
 		return (SIGILL);
 	}
 
@@ -322,8 +236,8 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 	switch (opcode) {
 	case 0x00:	/* fmul */
 		tmax = fpu_precision(t1, t2, td);
-		m88110_fpu_fetch(frame, rs1, t1, tmax, &arg1);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg2);
+		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
+		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
 		switch (tmax) {
 		case FTYPE_SNG:
 			dest.sng = float32_mul(arg1.sng, arg2.sng);
@@ -335,21 +249,15 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 		fpu_store(frame, rd, tmax, td, &dest);
 		break;
 
-	case 0x01:	/* fcvt */
-		tmax = fpu_precision(IGNORE_PRECISION, t2, td);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &dest);
-		fpu_store(frame, rd, tmax, td, &dest);
-		break;
-
 	case 0x04:	/* flt */
-		m88110_fpu_fetch(frame, rs2, FTYPE_INT, td, &dest);
+		m88100_fpu_fetch(frame, 2, FTYPE_INT, td, &dest);
 		fpu_store(frame, rd, td, td, &dest);
 		break;
 
 	case 0x05:	/* fadd */
 		tmax = fpu_precision(t1, t2, td);
-		m88110_fpu_fetch(frame, rs1, t1, tmax, &arg1);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg2);
+		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
+		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
 		switch (tmax) {
 		case FTYPE_SNG:
 			dest.sng = float32_add(arg1.sng, arg2.sng);
@@ -363,8 +271,8 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 
 	case 0x06:	/* fsub */
 		tmax = fpu_precision(t1, t2, td);
-		m88110_fpu_fetch(frame, rs1, t1, tmax, &arg1);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg2);
+		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
+		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
 		switch (tmax) {
 		case FTYPE_SNG:
 			dest.sng = float32_sub(arg1.sng, arg2.sng);
@@ -376,16 +284,16 @@ m88110_fpu_emulate(struct trapframe *frame, u_int32_t insn)
 		fpu_store(frame, rd, tmax, td, &dest);
 		break;
 
-	case 0x07:	/* fcmp, fcmpu */
+	case 0x07:	/* fcmp */
 		tmax = fpu_precision(t1, t2, IGNORE_PRECISION);
-		m88110_fpu_fetch(frame, rs1, t1, tmax, &arg1);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg2);
-		fpu_compare(frame, &arg1, &arg2, tmax, rd, td /* fcmpu */);
+		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
+		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
+		fpu_compare(frame, &arg1, &arg2, tmax, rd, 0);
 		break;
 
 	case 0x09:	/* int */
 do_int:
-		m88110_fpu_fetch(frame, rs2, t2, t2, &dest);
+		m88100_fpu_fetch(frame, 2, t2, t2, &dest);
 		fpu_store(frame, rd, t2, FTYPE_INT, &dest);
 		break;
 
@@ -403,28 +311,14 @@ do_int:
 
 	case 0x0e:	/* fdiv */
 		tmax = fpu_precision(t1, t2, td);
-		m88110_fpu_fetch(frame, rs1, t1, tmax, &arg1);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg2);
+		m88100_fpu_fetch(frame, 1, t1, tmax, &arg1);
+		m88100_fpu_fetch(frame, 2, t2, tmax, &arg2);
 		switch (tmax) {
 		case FTYPE_SNG:
 			dest.sng = float32_div(arg1.sng, arg2.sng);
 			break;
 		case FTYPE_DBL:
 			dest.dbl = float64_div(arg1.dbl, arg2.dbl);
-			break;
-		}
-		fpu_store(frame, rd, tmax, td, &dest);
-		break;
-
-	case 0x0f:	/* sqrt */
-		tmax = fpu_precision(IGNORE_PRECISION, t2, td);
-		m88110_fpu_fetch(frame, rs2, t2, tmax, &arg1);
-		switch (tmax) {
-		case FTYPE_SNG:
-			dest.sng = float32_sqrt(arg1.sng);
-			break;
-		case FTYPE_DBL:
-			dest.dbl = float64_sqrt(arg1.dbl);
 			break;
 		}
 		fpu_store(frame, rd, tmax, td, &dest);
