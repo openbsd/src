@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.2 2014/06/09 13:13:48 jsing Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -129,11 +129,10 @@ sr_install_bootldr(int devfd, char *dev)
 	inodeblk = nblocks - 1;
 	bootsize = nblocks * SR_FS_BLOCKSIZE;
 
-	p = malloc(bootsize);
+	p = calloc(1, bootsize);
 	if (p == NULL)
 		err(1, NULL);
 	
-	memset(p, 0, bootsize);
 	fd = open(stage2, O_RDONLY, 0);
 	if (fd == -1)
 		err(1, NULL);

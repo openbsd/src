@@ -68,10 +68,9 @@ bootstrap(int devfd, char *dev, char *bootfile)
 		fprintf(stderr, "bootstrap is %zu bytes "
 		    "(%zu sectors @ %u bytes = %zu bytes)\n",
 		    (ssize_t)sb.st_size, bootsec, dl.d_secsize, bootsize);
-	boot = malloc(bootsize);
+	boot = calloc(1, bootsize);
 	if (boot == NULL)
-		err(1, "malloc");
-	memset(boot, 0, bootsize);
+		err(1, "calloc");
 	if (read(fd, boot, bootsize) != (ssize_t)sb.st_size)
 		err(1, "read");
 	close(fd);

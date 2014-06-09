@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.2 2014/06/09 13:13:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -68,10 +68,9 @@ md_loadboot(void)
 	if (blksize > SBSIZE - DEV_BSIZE)
 		errx(1, "boot blocks too big (%zu > %d)",
 		    blksize, SBSIZE - DEV_BSIZE);
-	blkstore = malloc(blksize);
+	blkstore = calloc(1, blksize);
 	if (blkstore == NULL)
-		err(1, "malloc");
-	memset(blkstore, 0, blksize);
+		err(1, "calloc");
 	if (read(fd, blkstore, sb.st_size) != (ssize_t)sb.st_size)
 		err(1, "read");
 	close(fd);
