@@ -60,7 +60,6 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
-#include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #ifndef OPENSSL_NO_ENGINE
