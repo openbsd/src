@@ -1,9 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2003/07/21 18:50:11 jason Exp $
-
-KMINCLUDES= arch/sparc64/SYS.h
-KMSRCS=	ffs.S strlen.S htonl.S htons.S \
-	ntohl.S ntohs.S divrem.m4 \
-	_setjmp.S mul.S saveregs.S setjmp.S umul.S
+#	$OpenBSD: Makefile.inc,v 1.4 2014/06/09 20:47:11 miod Exp $
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here

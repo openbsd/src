@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2014/05/12 19:25:16 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2014/06/09 20:47:10 miod Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -58,15 +58,3 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 
 CFLAGS+=-DNLS
-
-LIBKERN=	${LIBCSRCDIR}/../../sys/lib/libkern
-
-KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c  strncmp.c \
-	strncpy.c strnlen.c htonl.c htons.c ntohl.c ntohs.c timingsafe_bcmp.c
-.if (${MACHINE_CPU} != "alpha")
-KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
-	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
-	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
-KINCLUDES+=	quad/quad.h
-.endif
-

@@ -1,4 +1,1 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/08/11 17:30:59 pefo Exp $
-
-KMINCLUDES=
-KMSRCS=
+#	$OpenBSD: Makefile.inc,v 1.2 2014/06/09 20:47:11 miod Exp $

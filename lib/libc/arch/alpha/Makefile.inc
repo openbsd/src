@@ -1,10 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1999/01/20 04:44:58 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2014/06/09 20:47:10 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.4 1996/10/17 02:58:18 cgd Exp $
-
-KMINCLUDES=
-KMSRCS=	divrem.m4 bzero.S htonl.S htons.S ntohl.S ntohs.S \
-	byte_swap_2.S byte_swap_4.S ffs.S
-#KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
