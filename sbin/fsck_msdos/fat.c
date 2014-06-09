@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.18 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: fat.c,v 1.19 2014/06/09 09:13:33 tobias Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -535,7 +535,8 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 				ret = 1;
 			}
 		}
-		if (boot->NumFree && fat[boot->FSNext].next != CLUST_FREE) {
+		if (boot->NumFree && (boot->FSNext >= boot->NumClusters ||
+		    fat[boot->FSNext].next != CLUST_FREE)) {
 			pwarn("Next free cluster in FSInfo block (%u) not free\n",
 			      boot->FSNext);
 			if (ask(1, "fix"))
