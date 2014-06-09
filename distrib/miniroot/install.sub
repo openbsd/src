@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.774 2014/05/11 08:23:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.775 2014/06/09 18:05:55 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -2011,8 +2011,6 @@ __EOT
 ROOTDISK=
 ROOTDEV=
 PACKAGE_PATH=
-SM_ARGS=
-SM_ARGSX=
 
 SETDIR="$VNAME/$ARCH"
 CGI_INFO=/tmp/cgiinfo
