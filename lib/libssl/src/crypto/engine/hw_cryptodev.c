@@ -743,7 +743,7 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	int i;
 #endif
 
-	bzero(k, sizeof *k);
+	memset(k, 0, sizeof *k);
 	if (enc)
 		AES_set_encrypt_key(key, ctx->key_len * 8, k);
 	else
@@ -765,7 +765,7 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int
 xcrypt_cleanup(EVP_CIPHER_CTX *ctx)
 {
-	bzero(ctx->cipher_data, ctx->cipher->ctx_size);
+	memset(ctx->cipher_data, 0, ctx->cipher->ctx_size);
 	return (1);
 }
 
