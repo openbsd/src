@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.38 2014/06/02 15:08:38 deraadt Exp $
+# $OpenBSD: Makefile,v 1.39 2014/06/10 16:15:19 deraadt Exp $
 
 LIB=	crypto
 
@@ -132,7 +132,7 @@ SRCS+= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c
 SRCS+= eng_table.c eng_pkey.c eng_fat.c eng_all.c
 SRCS+= tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c
 SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c
-SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c hw_cryptodev.c
+SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c
 SRCS+= eng_rsax.c
 # XXX unnecessary? handled in EVP now...
 # SRCS+= eng_aesni.c # local addition
