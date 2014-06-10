@@ -819,8 +819,8 @@ tls1_enc(SSL *s, int send)
 int
 tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 {
-	unsigned int ret;
 	EVP_MD_CTX ctx, *d = NULL;
+	unsigned int ret;
 	int i;
 
 	if (s->s3->handshake_buffer)
@@ -834,15 +834,17 @@ tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 			break;
 		}
 	}
-	if (!d) {
+	if (d == NULL) {
 		SSLerr(SSL_F_TLS1_CERT_VERIFY_MAC, SSL_R_NO_REQUIRED_DIGEST);
 		return 0;
 	}
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_copy_ex(&ctx, d);
+	if (!EVP_MD_CTX_copy_ex(&ctx, d))
+		return 0;
 	EVP_DigestFinal_ex(&ctx, out, &ret);
 	EVP_MD_CTX_cleanup(&ctx);
+
 	return ((int)ret);
 }
 
