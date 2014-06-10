@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.120 2014/06/10 16:23:07 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.121 2014/06/10 16:35:42 tedu Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -733,7 +733,7 @@ void
 readwrite(int nfd)
 {
 	struct pollfd pfd[2];
-	unsigned char buf[64 * 1024];
+	unsigned char buf[16 * 1024];
 	int n, wfd = fileno(stdin);
 	int lfd = fileno(stdout);
 	int plen;
