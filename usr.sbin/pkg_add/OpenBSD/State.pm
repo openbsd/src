@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.29 2014/05/30 15:04:54 espie Exp $
+# $OpenBSD: State.pm,v 1.30 2014/06/10 15:50:01 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -441,8 +441,15 @@ sub system
 sub verbose_system
 {
 	my $self = shift;
+	my @p = @_;
+	if (ref $p[0]) {
+		shift @p;
+	}
+	if (ref $p[0]) {
+		shift @p;
+	}
 
-	$self->print("Running #1", join(' ', @_));
+	$self->print("Running #1", join(' ', @p));
 	my $r = $self->_system(@_);
 	if ($r != 0) {
 		$self->say("... failed: #1", $self->child_error);
