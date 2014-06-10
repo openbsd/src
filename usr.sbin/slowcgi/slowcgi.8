@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.7 2014/01/20 13:00:31 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.8 2014/06/10 14:33:01 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: June 10 2014 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ is not intended for these applications.
 .Nm
 opens a socket at
 .Pa /var/www/run/slowcgi.sock ,
-owned by root:www,
+owned by www:www,
 with permissions 0660.
 It will then
 .Xr chroot 8

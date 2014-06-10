@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.31 2014/04/16 14:43:43 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.32 2014/06/10 14:33:01 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -159,7 +159,7 @@ struct fcgi_end_request_body {
 }__packed;
 
 __dead void	usage(void);
-void		slowcgi_listen(char *, gid_t);
+void		slowcgi_listen(char *, struct passwd *);
 void		slowcgi_paused(int, short, void *);
 int		accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		    volatile int *);
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 
 	event_init();
 
-	slowcgi_listen(fcgi_socket, pw->pw_gid);
+	slowcgi_listen(fcgi_socket, pw);
 
 	if (chroot(pw->pw_dir) == -1)
 		lerr(1, "chroot(%s)", pw->pw_dir);
@@ -333,7 +333,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 void
-slowcgi_listen(char *path, gid_t gid)
+slowcgi_listen(char *path, struct passwd *pw)
 {
 	struct listener		 *l = NULL;
 	struct sockaddr_un	 sun;
@@ -356,18 +356,15 @@ slowcgi_listen(char *path, gid_t gid)
 		if (errno != ENOENT)
 			lerr(1, "slowcgi_listen: unlink %s", path);
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
-	mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
+	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|
+	    S_IXOTH);
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		lerr(1,"slowcgi_listen: bind: %s", path);
 
 	umask(old_umask);
 
-	if (chmod(path, mode) == -1)
-		lerr(1, "slowcgi_listen: chmod: %s", path);
-
-	if (chown(path, 0, gid) == -1)
+	if (chown(path, pw->pw_uid, pw->pw_gid) == -1)
 		lerr(1, "slowcgi_listen: chown: %s", path);
 
 	if (ioctl(fd, FIONBIO, &on) == -1)
