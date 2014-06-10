@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2014/05/06 17:11:16 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.14 2014/06/10 12:41:10 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -41,6 +41,9 @@ com1		at uartbus0
 
 pcibus*		at iobus0
 pci*		at pcibus?
+
+ppb*		at pci?		# PCI-PCI bridges
+pci*		at ppb?
 
 cn30xxgmx*	at iobus?
 cnmac*		at cn30xxgmx?
