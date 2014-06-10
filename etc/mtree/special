@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.105 2014/05/26 19:37:27 halex Exp $
+#	$OpenBSD: special,v 1.106 2014/06/10 17:19:25 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -98,6 +98,8 @@ ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_ecdsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_ecdsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_ed25519_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_ed25519_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
