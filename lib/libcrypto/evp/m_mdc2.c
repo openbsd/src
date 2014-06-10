@@ -90,18 +90,24 @@ final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD mdc2_md = {
-	NID_mdc2,
-	NID_mdc2WithRSA,
-	MDC2_DIGEST_LENGTH,
-	0,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_RSA_ASN1_OCTET_STRING_method,
-	MDC2_BLOCK,
-	sizeof(EVP_MD *) + sizeof(MDC2_CTX),
+	.type = NID_mdc2,
+	.pkey_type = NID_mdc2WithRSA,
+	.md_size = MDC2_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_RSA
+	.sign = (evp_sign_method *)RSA_sign_ASN1_OCTET_STRING,
+	.verify = (evp_verify_method *)RSA_verify_ASN1_OCTET_STRING,
+	.required_pkey_type = {
+		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
+	},
+#endif
+	.block_size = MDC2_BLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(MDC2_CTX),
 };
 
 const EVP_MD *

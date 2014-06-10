@@ -30,18 +30,22 @@ final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD whirlpool_md = {
-	NID_whirlpool,
-	0,
-	WHIRLPOOL_DIGEST_LENGTH,
-	0,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	WHIRLPOOL_BBLOCK/8,
-	sizeof(EVP_MD *) + sizeof(WHIRLPOOL_CTX),
+	.type = NID_whirlpool,
+	.pkey_type = 0,
+	.md_size = WHIRLPOOL_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.sign = NULL,
+	.verify = NULL,
+	.required_pkey_type = {
+		0, 0, 0, 0,
+	},
+	.block_size = WHIRLPOOL_BBLOCK / 8,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(WHIRLPOOL_CTX),
 };
 
 const EVP_MD *

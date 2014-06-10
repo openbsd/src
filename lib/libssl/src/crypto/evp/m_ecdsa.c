@@ -136,18 +136,24 @@ final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD ecdsa_md = {
-	NID_ecdsa_with_SHA1,
-	NID_ecdsa_with_SHA1,
-	SHA_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_DIGEST,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_ECDSA_method,
-	SHA_CBLOCK,
-	sizeof(EVP_MD *) + sizeof(SHA_CTX),
+	.type = NID_ecdsa_with_SHA1,
+	.pkey_type = NID_ecdsa_with_SHA1,
+	.md_size = SHA_DIGEST_LENGTH,
+	.flags = EVP_MD_FLAG_PKEY_DIGEST,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_ECDSA
+	.sign = (evp_sign_method *)ECDSA_sign,
+	.verify = (evp_verify_method *)ECDSA_verify,
+	.required_pkey_type = {
+		EVP_PKEY_EC, 0, 0, 0,
+	},
+#endif
+	.block_size = SHA_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA_CTX),
 };
 
 const EVP_MD *

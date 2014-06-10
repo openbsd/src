@@ -89,18 +89,24 @@ final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD ripemd160_md = {
-	NID_ripemd160,
-	NID_ripemd160WithRSA,
-	RIPEMD160_DIGEST_LENGTH,
-	0,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_RSA_method,
-	RIPEMD160_CBLOCK,
-	sizeof(EVP_MD *) + sizeof(RIPEMD160_CTX),
+	.type = NID_ripemd160,
+	.pkey_type = NID_ripemd160WithRSA,
+	.md_size = RIPEMD160_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_RSA
+	.sign = (evp_sign_method *)RSA_sign,
+	.verify = (evp_verify_method *)RSA_verify,
+	.required_pkey_type = {
+		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
+	},
+#endif
+	.block_size = RIPEMD160_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(RIPEMD160_CTX),
 };
 
 const EVP_MD *

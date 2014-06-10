@@ -90,18 +90,24 @@ final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD md4_md = {
-	NID_md4,
-	NID_md4WithRSAEncryption,
-	MD4_DIGEST_LENGTH,
-	0,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_RSA_method,
-	MD4_CBLOCK,
-	sizeof(EVP_MD *) + sizeof(MD4_CTX),
+	.type = NID_md4,
+	.pkey_type = NID_md4WithRSAEncryption,
+	.md_size = MD4_DIGEST_LENGTH,
+	.flags = 0,
+	.init = init,
+	.update = update,
+	.final = final,
+	.copy = NULL,
+	.cleanup = NULL,
+#ifndef OPENSSL_NO_RSA
+	.sign = (evp_sign_method *)RSA_sign,
+	.verify = (evp_verify_method *)RSA_verify,
+	.required_pkey_type = {
+		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
+	},
+#endif
+	.block_size = MD4_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(MD4_CTX),
 };
 
 const EVP_MD *
