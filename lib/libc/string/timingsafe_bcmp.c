@@ -1,4 +1,4 @@
-/*	$OpenBSD: timingsafe_bcmp.c,v 1.1 2010/09/24 13:33:00 matthew Exp $	*/
+/*	$OpenBSD: timingsafe_bcmp.c,v 1.2 2014/06/10 04:17:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
  *
@@ -15,11 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
-#endif
 
 int
 timingsafe_bcmp(const void *b1, const void *b2, size_t n)

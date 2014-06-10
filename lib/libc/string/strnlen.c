@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnlen.c,v 1.4 2012/04/26 01:22:31 matthew Exp $	*/
+/*	$OpenBSD: strnlen.c,v 1.5 2014/06/10 04:17:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -18,11 +18,7 @@
 
 #include <sys/types.h>
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
-#endif
 
 size_t
 strnlen(const char *str, size_t maxlen)

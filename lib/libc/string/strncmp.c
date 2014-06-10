@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncmp.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: strncmp.c,v 1.8 2014/06/10 04:17:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -29,11 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
-#endif
 
 int
 strncmp(const char *s1, const char *s2, size_t n)
