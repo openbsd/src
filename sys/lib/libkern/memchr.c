@@ -1,4 +1,4 @@
-/*	$OpenBSD: memchr.c,v 1.5 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: memchr.c,v 1.6 2014/06/10 04:16:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,12 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <string.h>
-#else
 #include <lib/libkern/libkern.h>
 #define	NULL	((char *)0)
-#endif 
 
 void *
 memchr(const void *s, int c, size_t n)

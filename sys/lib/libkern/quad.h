@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: quad.h,v 1.11 2009/11/07 23:09:35 jsg Exp $
+ *	$OpenBSD: quad.h,v 1.12 2014/06/10 04:16:57 deraadt Exp $
  */
 
 /*
@@ -50,11 +50,7 @@
  */
 
 #include <sys/types.h>
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <limits.h>
-#else
 #include <sys/limits.h>
-#endif
 
 /*
  * Depending on the desired operation, we view a `long long' (aka quad_t) in
@@ -103,6 +99,13 @@ quad_t __ashldi3(quad_t, qshift_t);
 quad_t __ashrdi3(quad_t, qshift_t);
 int __cmpdi2(quad_t, quad_t);
 quad_t __divdi3(quad_t, quad_t);
+quad_t __fixdfdi(double);
+quad_t __fixsfdi(float);
+u_quad_t __fixunsdfdi(double);
+u_quad_t __fixunssfdi(float);
+double __floatdidf(quad_t);
+float __floatdisf(quad_t);
+double __floatunsdidf(u_quad_t);
 quad_t __iordi3(quad_t, quad_t);
 quad_t __lshldi3(quad_t, qshift_t);
 quad_t __lshrdi3(quad_t, qshift_t);

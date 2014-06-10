@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.c,v 1.6 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.7 2014/06/10 04:16:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -16,12 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <sys/types.h>
-#include <string.h>
-#else
 #include <lib/libkern/libkern.h>
-#endif
 
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.6 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: memset.c,v 1.7 2014/06/10 04:16:57 deraadt Exp $	*/
 /*	$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $	*/
 
 /*-
@@ -35,14 +35,9 @@
 
 #include <sys/types.h>
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <string.h>
-#include <limits.h>
-#else
 #include <sys/limits.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-#endif 
 
 #define	wsize	sizeof(u_int)
 #define	wmask	(wsize - 1)

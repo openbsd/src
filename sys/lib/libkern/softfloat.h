@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.h,v 1.4 2008/10/07 22:06:29 martynas Exp $	*/
+/*	$OpenBSD: softfloat.h,v 1.5 2014/06/10 04:16:57 deraadt Exp $	*/
 /*	$NetBSD: softfloat.h,v 1.1 2001/04/26 03:10:48 ross Exp $	*/
 
 /* This is a derivative work. */
@@ -68,11 +68,7 @@ this code that are retained.
 
 #include <sys/types.h>
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <ieeefp.h>
-#else
 #include "machine/ieeefp.h"
-#endif
 #include <sys/endian.h>
 
 /*

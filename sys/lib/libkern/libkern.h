@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.32 2014/01/19 12:45:36 deraadt Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.33 2014/06/10 04:16:57 deraadt Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -152,6 +152,7 @@ int	 fls(int);
 int	 flsl(long);
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
+void	*memset(void *, int c, size_t len);
 u_int32_t random(void);
 int	 scanc(u_int, const u_char *, const u_char [], int);
 int	 skpc(int, size_t, u_char *);

@@ -1,15 +1,11 @@
-/*	$OpenBSD: ffs.c,v 1.8 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.9 2014/06/10 04:16:57 deraadt Exp $	*/
 
 /*
  * Public domain.
  * Written by Dale Rahn.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <string.h>
-#else
 #include <lib/libkern/libkern.h>
-#endif
 
 /*
  * ffs -- vax ffs instruction

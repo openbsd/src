@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncasecmp.c,v 1.5 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: strncasecmp.c,v 1.6 2014/06/10 04:16:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,11 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <string.h>
-#else
+
 #include <lib/libkern/libkern.h>
-#endif
 
 int
 strncasecmp(const char *s1, const char *s2, size_t n)
