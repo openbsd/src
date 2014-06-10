@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.32 2014/06/10 14:33:01 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.33 2014/06/10 14:38:27 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -238,7 +238,8 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d] [-s socket]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-p path] [-s socket] [-u user]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -255,6 +256,8 @@ main(int argc, char *argv[])
 	struct passwd	*pw;
 	struct stat	 sb;
 	int		 c, fd;
+	const char	*chrootpath = NULL;
+	const char	*slowcgi_user = SLOWCGI_USER;
 
 	/*
 	 * Ensure we have fds 0-2 open so that we have no fd overlaps
@@ -273,13 +276,19 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "ds:")) != -1) {
+	while ((c = getopt(argc, argv, "dp:s:u:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
 			break;
+		case 'p':
+			chrootpath = optarg;
+			break;
 		case 's':
 			fcgi_socket = optarg;
+			break;
+		case 'u':
+			slowcgi_user = optarg;
 			break;
 		default:
 			usage();
@@ -289,10 +298,6 @@ main(int argc, char *argv[])
 
 	if (geteuid() != 0)
 		errx(1, "need root privileges");
-
-	pw = getpwnam(SLOWCGI_USER);
-	if (pw == NULL)
-		err(1, "no %s user", SLOWCGI_USER);
 
 	if (!debug && daemon(1, 0) == -1)
 		err(1, "daemon");
@@ -304,15 +309,27 @@ main(int argc, char *argv[])
 
 	event_init();
 
+	pw = getpwnam(SLOWCGI_USER);
+	if (pw == NULL)
+		errx(1, "no %s user", SLOWCGI_USER);
+
 	slowcgi_listen(fcgi_socket, pw);
 
-	if (chroot(pw->pw_dir) == -1)
-		lerr(1, "chroot(%s)", pw->pw_dir);
+	lwarnx("slowcgi_user: %s", slowcgi_user);
+	pw = getpwnam(slowcgi_user);
+	if (pw == NULL)
+		errx(1, "no %s user", slowcgi_user);
+
+	if (chrootpath == NULL)
+		chrootpath = pw->pw_dir;
+
+	if (chroot(chrootpath) == -1)
+		lerr(1, "chroot(%s)", chrootpath);
+
+	ldebug("chroot: %s", chrootpath);
 
 	if (chdir("/") == -1)
-		lerr(1, "chdir(%s)", pw->pw_dir);
-
-	ldebug("chroot: %s", pw->pw_dir);
+		lerr(1, "chdir(/)");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

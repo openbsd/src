@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.8 2014/06/10 14:33:01 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.9 2014/06/10 14:38:27 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -23,7 +23,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
+.Op Fl p Ar path
 .Op Fl s Ar socket
+.Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute CGI scripts.
@@ -65,9 +67,22 @@ Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground and log to stderr.
+.It Fl p Ar path
+.Xr chroot 2
+to
+.Ar path .
+A
+.Ar path
+of
+.Pa /
+effectively disables the chroot.
 .It Fl s Ar socket
 Create and bind to alternative local socket at
 .Ar socket .
+.It Fl u Ar user
+Drop privileges to
+.Ar user
+instead of default user www.
 .El
 .\" .Sh SEE ALSO
 .Sh STANDARDS
