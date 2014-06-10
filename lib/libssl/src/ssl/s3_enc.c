@@ -668,7 +668,9 @@ ssl3_handshake_mac(SSL *s, int md_nid, const char *sender, int len,
 	}
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	EVP_MD_CTX_copy_ex(&ctx, d);
+
+	if (!EVP_MD_CTX_copy_ex(&ctx, d))
+		return 0;
 	n = EVP_MD_CTX_size(&ctx);
 	if (n < 0)
 		return 0;
