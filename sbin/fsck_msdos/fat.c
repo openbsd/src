@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.19 2014/06/09 09:13:33 tobias Exp $	*/
+/*	$OpenBSD: fat.c,v 1.20 2014/06/10 23:03:48 tobias Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -471,13 +471,15 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat)
 		default:
 			if (fat[cl].next == CLUST_FREE)
 				boot->NumFree++;
-			if (cl + 1 < boot->NumClusters
-			    && fat[cl + 1].next == CLUST_FREE)
-				boot->NumFree++;
 			*p++ = (u_char)fat[cl].next;
-			*p++ = (u_char)((fat[cl].next >> 8) & 0xf)
-			       |(u_char)(fat[cl+1].next << 4);
-			*p++ = (u_char)(fat[++cl].next >> 4);
+			*p++ = (u_char)((fat[cl].next >> 8) & 0xf);
+			cl++;
+			if (cl >= boot->NumClusters)
+				break;
+			if (fat[cl].next == CLUST_FREE)
+				boot->NumFree++;
+			*p |= (u_char)(fat[cl].next << 4);
+			*p++ = (u_char)(fat[cl].next >> 4);
 			break;
 		}
 	}
