@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.4 2014/03/28 01:12:58 guenther Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.5 2014/06/10 09:36:42 brad Exp $	*/
 /*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
 
 /*
@@ -327,14 +327,14 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 
 			offinblock = tftpfile->off % SEGSIZE;
 
-			inbuffer = tftpfile->validsize - offinblock;
-			if (inbuffer < 0) {
+			if (offinblock > tftpfile->validsize) {
 #ifdef DEBUG
 				printf("tftp: invalid offset %d\n",
 				    tftpfile->off);
 #endif
 				return EINVAL;
 			}
+			inbuffer = tftpfile->validsize - offinblock;
 			count = (size < inbuffer ? size : inbuffer);
 			bcopy(tftpfile->lastdata.t.th_data + offinblock,
 			    addr, count);
