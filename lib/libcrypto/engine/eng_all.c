@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -59,8 +59,9 @@
 #include "cryptlib.h"
 #include "eng_int.h"
 
-void ENGINE_load_builtin_engines(void)
-	{
+void
+ENGINE_load_builtin_engines(void)
+{
 	/* Some ENGINEs need this */
 	OPENSSL_cpuid_setup();
 #if 0
@@ -85,15 +86,18 @@ void ENGINE_load_builtin_engines(void)
 #endif
 #endif
 	ENGINE_register_all_complete();
-	}
+}
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-void ENGINE_setup_bsd_cryptodev(void) {
+void
+ENGINE_setup_bsd_cryptodev(void)
+{
 	static int bsd_cryptodev_default_loaded = 0;
+
 	if (!bsd_cryptodev_default_loaded) {
 		ENGINE_load_cryptodev();
 		ENGINE_register_all_complete();
 	}
-	bsd_cryptodev_default_loaded=1;
+	bsd_cryptodev_default_loaded = 1;
 }
 #endif

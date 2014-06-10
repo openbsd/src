@@ -102,7 +102,8 @@ void ENGINE_load_aesni (void)
 /* On non-x86 CPUs it just returns. */
 #ifdef COMPILE_HW_AESNI
 	ENGINE *toadd = ENGINE_aesni();
-	if (!toadd) return;
+	if (!toadd)
+		return;
 	ENGINE_add (toadd);
 	ENGINE_register_complete (toadd);
 	ENGINE_free (toadd);
@@ -112,32 +113,26 @@ void ENGINE_load_aesni (void)
 
 #ifdef COMPILE_HW_AESNI
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
-			      AES_KEY *key);
+    AES_KEY *key);
 int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
-			      AES_KEY *key);
+    AES_KEY *key);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,
-		       const AES_KEY *key);
+    const AES_KEY *key);
 void aesni_decrypt(const unsigned char *in, unsigned char *out,
-		       const AES_KEY *key);
+    const AES_KEY *key);
 
-void aesni_ecb_encrypt(const unsigned char *in,
-			   unsigned char *out,
-			   size_t length,
-			   const AES_KEY *key,
-			   int enc);
-void aesni_cbc_encrypt(const unsigned char *in,
-			   unsigned char *out,
-			   size_t length,
-			   const AES_KEY *key,
-			   unsigned char *ivec, int enc);
+void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key, int enc);
+void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key, unsigned char *ivec, int enc);
 
 /* Function for ENGINE detection and control */
 static int aesni_init(ENGINE *e);
 
 /* Cipher Stuff */
 static int aesni_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
-				const int **nids, int nid);
+    const int **nids, int nid);
 
 #define AESNI_MIN_ALIGN	16
 #define AESNI_ALIGN(x) \
@@ -145,143 +140,146 @@ static int aesni_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
 /* Engine names */
 static const char   aesni_id[] = "aesni",
-		    aesni_name[] = "Intel AES-NI engine",
-		    no_aesni_name[] = "Intel AES-NI engine (no-aesni)";
+    aesni_name[] = "Intel AES-NI engine",
+    no_aesni_name[] = "Intel AES-NI engine (no-aesni)";
 
 
 /* The input and output encrypted as though 128bit cfb mode is being
  * used.  The extra state information to record how much of the
  * 128bit block we have used is contained in *num;
  */
-static void aesni_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-				 unsigned int len, const void *key,
-				 unsigned char ivec[16], int *num,
-				 int enc)
+static void
+aesni_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+    unsigned int len, const void *key, unsigned char ivec[16], int *num,
+    int enc)
 {
-    unsigned int n;
-    size_t l = 0;
+	unsigned int n;
+	size_t l = 0;
 
-    assert(in && out && key && ivec && num);
+	assert(in && out && key && ivec && num);
 
-    n = *num;
+	n = *num;
 
-    if (enc) {
+	if (enc) {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do {	/* always true actually */
-		while (n && len) {
-			*(out++) = ivec[n] ^= *(in++);
-			--len;
-			n = (n+1) % 16;
-		}
-		while (len>=16) {
-			aesni_encrypt(ivec, ivec, key);
-			for (n=0; n<16; n+=sizeof(size_t)) {
-				*(size_t*)(out+n) =
-				*(size_t*)(ivec+n) ^= *(size_t*)(in+n);
+			if (16%sizeof(size_t) == 0) do {	/* always true actually */
+			while (n && len) {
+				*(out++) = ivec[n] ^= *(in++);
+				--len;
+				n = (n + 1) % 16;
 			}
-			len -= 16;
-			out += 16;
-			in  += 16;
-		}
-		n = 0;
-		if (len) {
-			aesni_encrypt(ivec, ivec, key);
-			while (len--) {
-				out[n] = ivec[n] ^= in[n];
-				++n;
+			while (len >= 16) {
+				aesni_encrypt(ivec, ivec, key);
+				for (n = 0; n < 16; n += sizeof(size_t)) {
+					*(size_t*)(out + n) =
+					    *(size_t*)(ivec + n) ^= *(size_t*)(in + n);
+				}
+				len -= 16;
+				out += 16;
+				in += 16;
 			}
+			n = 0;
+			if (len) {
+				aesni_encrypt(ivec, ivec, key);
+				while (len--) {
+					out[n] = ivec[n] ^= in[n];
+					++n;
+				}
+			}
+			*num = n;
+			return;
+		} while (0);
+		/* the rest would be commonly eliminated by x86* compiler */
+#endif
+		while (l < len) {
+			if (n == 0) {
+				aesni_encrypt(ivec, ivec, key);
+			}
+			out[l] = ivec[n] ^= in[l];
+			++l;
+			n = (n + 1) % 16;
 		}
 		*num = n;
-		return;
-	} while (0);
-	/* the rest would be commonly eliminated by x86* compiler */
-#endif
-	while (l<len) {
-		if (n == 0) {
-			aesni_encrypt(ivec, ivec, key);
-		}
-		out[l] = ivec[n] ^= in[l];
-		++l;
-		n = (n+1) % 16;
-	}
-	*num = n;
-    } else {
+	} else {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do {	/* always true actually */
-		while (n && len) {
-			unsigned char c;
-			*(out++) = ivec[n] ^ (c = *(in++)); ivec[n] = c;
-			--len;
-			n = (n+1) % 16;
- 		}
-		while (len>=16) {
-			aesni_encrypt(ivec, ivec, key);
-			for (n=0; n<16; n+=sizeof(size_t)) {
-				size_t t = *(size_t*)(in+n);
-				*(size_t*)(out+n) = *(size_t*)(ivec+n) ^ t;
-				*(size_t*)(ivec+n) = t;
-			}
-			len -= 16;
-			out += 16;
-			in  += 16;
-		}
-		n = 0;
-		if (len) {
-			aesni_encrypt(ivec, ivec, key);
-			while (len--) {
+			if (16%sizeof(size_t) == 0) do {	/* always true actually */
+			while (n && len) {
 				unsigned char c;
-				out[n] = ivec[n] ^ (c = in[n]); ivec[n] = c;
-				++n;
+				*(out++) = ivec[n] ^ (c = *(in++));
+				ivec[n] = c;
+				--len;
+				n = (n + 1) % 16;
 			}
- 		}
-		*num = n;
-		return;
-	} while (0);
-	/* the rest would be commonly eliminated by x86* compiler */
+			while (len >= 16) {
+				aesni_encrypt(ivec, ivec, key);
+				for (n = 0; n < 16; n += sizeof(size_t)) {
+					size_t t = *(size_t*)(in + n);
+					*(size_t*)(out + n) = *(size_t*)(ivec + n) ^ t;
+					*(size_t*)(ivec + n) = t;
+				}
+				len -= 16;
+				out += 16;
+				in += 16;
+			}
+			n = 0;
+			if (len) {
+				aesni_encrypt(ivec, ivec, key);
+				while (len--) {
+					unsigned char c;
+					out[n] = ivec[n] ^ (c = in[n]);
+					ivec[n] = c;
+					++n;
+				}
+			}
+			*num = n;
+			return;
+		} while (0);
+		/* the rest would be commonly eliminated by x86* compiler */
 #endif
-	while (l<len) {
-		unsigned char c;
-		if (n == 0) {
-			aesni_encrypt(ivec, ivec, key);
+		while (l < len) {
+			unsigned char c;
+			if (n == 0) {
+				aesni_encrypt(ivec, ivec, key);
+			}
+			out[l] = ivec[n] ^ (c = in[l]);
+			ivec[n] = c;
+			++l;
+			n = (n + 1) % 16;
 		}
-		out[l] = ivec[n] ^ (c = in[l]); ivec[n] = c;
-		++l;
-		n = (n+1) % 16;
+		*num = n;
 	}
-	*num=n;
-    }
 }
 
 /* The input and output encrypted as though 128bit ofb mode is being
  * used.  The extra state information to record how much of the
  * 128bit block we have used is contained in *num;
  */
-static void aesni_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-				 unsigned int len, const void *key,
-				 unsigned char ivec[16], int *num)
+static void
+aesni_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+    unsigned int len, const void *key, unsigned char ivec[16], int *num)
 {
 	unsigned int n;
-	size_t l=0;
+	size_t l = 0;
 
 	assert(in && out && key && ivec && num);
 
 	n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (16%sizeof(size_t) == 0) do { /* always true actually */
+		if (16%sizeof(size_t) == 0) do { /* always true actually */
 		while (n && len) {
 			*(out++) = *(in++) ^ ivec[n];
 			--len;
-			n = (n+1) % 16;
+			n = (n + 1) % 16;
 		}
-		while (len>=16) {
+		while (len >= 16) {
 			aesni_encrypt(ivec, ivec, key);
-			for (n=0; n<16; n+=sizeof(size_t))
-				*(size_t*)(out+n) =
-				*(size_t*)(in+n) ^ *(size_t*)(ivec+n);
+			for (n = 0; n < 16; n += sizeof(size_t))
+				*(size_t*)(out + n) =
+				    *(size_t*)(in + n) ^ *(size_t*)(ivec + n);
 			len -= 16;
 			out += 16;
-			in  += 16;
+			in += 16;
 		}
 		n = 0;
 		if (len) {
@@ -293,19 +291,19 @@ static void aesni_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 		}
 		*num = n;
 		return;
-	} while(0);
+	} while (0);
 	/* the rest would be commonly eliminated by x86* compiler */
 #endif
-	while (l<len) {
-		if (n==0) {
+	while (l < len) {
+		if (n == 0) {
 			aesni_encrypt(ivec, ivec, key);
 		}
 		out[l] = in[l] ^ ivec[n];
 		++l;
-		n = (n+1) % 16;
+		n = (n + 1) % 16;
 	}
 
-	*num=n;
+	*num = n;
 }
 /* ===== Engine "management" functions ===== */
 
@@ -316,6 +314,7 @@ static int
 aesni_bind_helper(ENGINE *e)
 {
 	int engage;
+
 	if (sizeof(OPENSSL_ia32cap_P) > 4) {
 		engage = ((IA32CAP)OPENSSL_ia32cap_P >> 57) & 1;
 	} else {
@@ -326,10 +325,8 @@ aesni_bind_helper(ENGINE *e)
 	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, aesni_id) ||
 	    !ENGINE_set_name(e, engage ? aesni_name : no_aesni_name) ||
-
 	    !ENGINE_set_init_function(e, aesni_init) ||
-	    (engage && !ENGINE_set_ciphers (e, aesni_ciphers))
-	    )
+	    (engage && !ENGINE_set_ciphers (e, aesni_ciphers)))
 		return 0;
 
 	/* Everything looks good */
@@ -403,60 +400,72 @@ static int aesni_cipher_nids[] = {
 	NID_aes_256_ofb,
 };
 static int aesni_cipher_nids_num =
-	(sizeof(aesni_cipher_nids)/sizeof(aesni_cipher_nids[0]));
+    (sizeof(aesni_cipher_nids) / sizeof(aesni_cipher_nids[0]));
 
-typedef struct
-{
+typedef struct {
 	AES_KEY ks;
 	unsigned int _pad1[3];
 } AESNI_KEY;
 
 static int
 aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
-		    const unsigned char *iv, int enc)
+    const unsigned char *iv, int enc)
 {
 	int ret;
 	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 
-	if ((ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_CFB_MODE
-	    || (ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_OFB_MODE
-	    || enc)
-		ret=aesni_set_encrypt_key(user_key, ctx->key_len * 8, key);
+	if ((ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_CFB_MODE ||
+	    (ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_OFB_MODE ||
+	    enc)
+		ret = aesni_set_encrypt_key(user_key, ctx->key_len * 8, key);
 	else
-		ret=aesni_set_decrypt_key(user_key, ctx->key_len * 8, key);
+		ret = aesni_set_decrypt_key(user_key, ctx->key_len * 8, key);
 
-	if(ret < 0) {
-		EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
+	if (ret < 0) {
+		EVPerr(EVP_F_AESNI_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
 
 	return 1;
 }
 
-static int aesni_cipher_ecb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, size_t inl)
-{	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+static int
+aesni_cipher_ecb(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
+{
+	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+
 	aesni_ecb_encrypt(in, out, inl, key, ctx->encrypt);
 	return 1;
 }
-static int aesni_cipher_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, size_t inl)
-{	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
-	aesni_cbc_encrypt(in, out, inl, key,
-			      ctx->iv, ctx->encrypt);
-	return 1;
-}
-static int aesni_cipher_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, size_t inl)
-{	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 
-	aesni_cfb128_encrypt(in, out, inl, key, ctx->iv,
-			     &ctx->num, ctx->encrypt);
+static int
+aesni_cipher_cbc(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
+{
+	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+
+	aesni_cbc_encrypt(in, out, inl, key, ctx->iv, ctx->encrypt);
 	return 1;
 }
-static int aesni_cipher_ofb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, size_t inl)
-{	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+
+static int
+aesni_cipher_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
+{
+	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+
+	aesni_cfb128_encrypt(in, out, inl, key, ctx->iv, &ctx->num,
+	    ctx->encrypt);
+	return 1;
+}
+
+static int
+aesni_cipher_ofb(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl)
+{
+	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+
 	aesni_ofb128_encrypt(in, out, inl, key, ctx->iv, &ctx->num);
 	return 1;
 }
@@ -487,24 +496,23 @@ static const EVP_CIPHER aesni_##ksize##_##lmode = {	\
 	NULL						\
 }
 
-DECLARE_AES_EVP(128,ecb,ECB);
-DECLARE_AES_EVP(128,cbc,CBC);
-DECLARE_AES_EVP(128,cfb,CFB);
-DECLARE_AES_EVP(128,ofb,OFB);
+DECLARE_AES_EVP(128, ecb, ECB);
+DECLARE_AES_EVP(128, cbc, CBC);
+DECLARE_AES_EVP(128, cfb, CFB);
+DECLARE_AES_EVP(128, ofb, OFB);
 
-DECLARE_AES_EVP(192,ecb,ECB);
-DECLARE_AES_EVP(192,cbc,CBC);
-DECLARE_AES_EVP(192,cfb,CFB);
-DECLARE_AES_EVP(192,ofb,OFB);
+DECLARE_AES_EVP(192, ecb, ECB);
+DECLARE_AES_EVP(192, cbc, CBC);
+DECLARE_AES_EVP(192, cfb, CFB);
+DECLARE_AES_EVP(192, ofb, OFB);
 
-DECLARE_AES_EVP(256,ecb,ECB);
-DECLARE_AES_EVP(256,cbc,CBC);
-DECLARE_AES_EVP(256,cfb,CFB);
-DECLARE_AES_EVP(256,ofb,OFB);
+DECLARE_AES_EVP(256, ecb, ECB);
+DECLARE_AES_EVP(256, cbc, CBC);
+DECLARE_AES_EVP(256, cfb, CFB);
+DECLARE_AES_EVP(256, ofb, OFB);
 
 static int
-aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
-		      const int **nids, int nid)
+aesni_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid)
 {
 	/* No specific cipher => return a list of supported nids ... */
 	if (!cipher) {
@@ -563,4 +571,3 @@ aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
 
 #endif /* COMPILE_HW_AESNI */
 #endif /* !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AESNI) && !defined(OPENSSL_NO_AES) */
-
