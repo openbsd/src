@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.h,v 1.2 2012/03/15 17:52:28 ariane Exp $	*/
+/*	$OpenBSD: uvm_addr.h,v 1.3 2014/06/10 20:08:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -56,7 +56,7 @@ struct uvm_addr_state {
 struct uvm_addr_functions {
 	int (*uaddr_select)(struct vm_map *map,
 	    struct uvm_addr_state *uaddr,
-	    struct vm_map_entry**entry_out, vaddr_t *addr_out,
+	    struct vm_map_entry **entry_out, vaddr_t *addr_out,
 	    vsize_t sz, vaddr_t align, vaddr_t offset,
 	    vm_prot_t prot, vaddr_t hint);
 	void (*uaddr_free_insert)(struct vm_map *map,
@@ -67,7 +67,7 @@ struct uvm_addr_functions {
 	    struct vm_map_entry *entry);
 	void (*uaddr_destroy)(struct uvm_addr_state *uaddr_state);
 	void (*uaddr_print)(struct uvm_addr_state *uaddr_state, boolean_t full,
-	    int (*pr)(const char*, ...));
+	    int (*pr)(const char *, ...));
 
 	const char* uaddr_name;		/* Name of the allocator. */
 };
@@ -76,17 +76,17 @@ struct uvm_addr_functions {
 #ifdef _KERNEL
 
 void			 uvm_addr_init(void);
-void			 uvm_addr_destroy(struct uvm_addr_state*);
+void			 uvm_addr_destroy(struct uvm_addr_state *);
 vaddr_t			 uvm_addr_align(vaddr_t, vaddr_t, vaddr_t);
 vaddr_t			 uvm_addr_align_back(vaddr_t, vaddr_t, vaddr_t);
-int			 uvm_addr_linsearch(struct vm_map*,
-			    struct uvm_addr_state*, struct vm_map_entry**,
+int			 uvm_addr_linsearch(struct vm_map *,
+			    struct uvm_addr_state *, struct vm_map_entry **,
 			    vaddr_t *addr_out, vaddr_t, vsize_t,
 			    vaddr_t, vaddr_t, int, vaddr_t, vaddr_t,
 			    vsize_t, vsize_t);
-int			 uvm_addr_invoke(struct vm_map*,
-			    struct uvm_addr_state*, struct vm_map_entry**,
-			    struct vm_map_entry**, vaddr_t*,
+int			 uvm_addr_invoke(struct vm_map *,
+			    struct uvm_addr_state *, struct vm_map_entry **,
+			    struct vm_map_entry **, vaddr_t*,
 			    vsize_t, vaddr_t, vaddr_t, vm_prot_t, vaddr_t);
 struct uvm_addr_state	*uaddr_lin_create(vaddr_t, vaddr_t);
 struct uvm_addr_state	*uaddr_rnd_create(vaddr_t, vaddr_t);
@@ -96,13 +96,13 @@ struct uvm_addr_state	*uaddr_bestfit_create(vaddr_t, vaddr_t);
 struct uvm_addr_state	*uaddr_pivot_create(vaddr_t, vaddr_t);
 struct uvm_addr_state	*uaddr_stack_brk_create(vaddr_t, vaddr_t);
 #endif /* SMALL_KERNEL */
-int			 uvm_addr_fitspace(vaddr_t*, vaddr_t*,
+int			 uvm_addr_fitspace(vaddr_t *, vaddr_t *,
 			    vaddr_t, vaddr_t, vsize_t, vaddr_t, vaddr_t,
 			    vsize_t, vsize_t);
 
 #if defined(DEBUG) || defined(DDB)
-void			 uvm_addr_print(struct uvm_addr_state*, const char*,
-			    boolean_t, int (*pr)(const char*, ...));
+void			 uvm_addr_print(struct uvm_addr_state *, const char *,
+			    boolean_t, int (*pr)(const char *, ...));
 #endif /* DEBUG || DDB */
 
 /*
