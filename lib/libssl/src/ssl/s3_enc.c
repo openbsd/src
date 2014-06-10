@@ -625,11 +625,16 @@ ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
 int
 ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
 {
-	int ret;
-	ret = ssl3_handshake_mac(s, NID_md5, sender, len, p);
-	p += ret;
-	ret += ssl3_handshake_mac(s, NID_sha1, sender, len, p);
-	return (ret);
+	int ret_md5, ret_sha1;
+
+	ret_md5 = ssl3_handshake_mac(s, NID_md5, sender, len, p);
+	if (ret_md5 == 0)
+		return 0;
+	p += ret_md5;
+	ret_sha1 = ssl3_handshake_mac(s, NID_sha1, sender, len, p);
+	if (ret_sha1 == 0)
+		return 0;
+	return (ret_md5 + ret_sha1);
 }
 
 static int
