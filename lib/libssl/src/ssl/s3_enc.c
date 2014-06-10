@@ -805,11 +805,7 @@ int
 ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     int len)
 {
-	static const unsigned char *salt[3] = {
-		(const unsigned char *)"A",
-		(const unsigned char *)"BB",
-		(const unsigned char *)"CCC",
-	};
+	static const unsigned char *salt[3] = { "A", "BB", "CCC", };
 	unsigned char buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx;
 	int i, ret = 0;
@@ -820,10 +816,8 @@ ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		EVP_DigestInit_ex(&ctx, s->ctx->sha1, NULL);
 		EVP_DigestUpdate(&ctx, salt[i], strlen((const char *)salt[i]));
 		EVP_DigestUpdate(&ctx, p, len);
-		EVP_DigestUpdate(&ctx, &(s->s3->client_random[0]),
-		    SSL3_RANDOM_SIZE);
-		EVP_DigestUpdate(&ctx, &(s->s3->server_random[0]),
-		    SSL3_RANDOM_SIZE);
+		EVP_DigestUpdate(&ctx, s->s3->client_random, SSL3_RANDOM_SIZE);
+		EVP_DigestUpdate(&ctx, s->s3->server_random, SSL3_RANDOM_SIZE);
 		EVP_DigestFinal_ex(&ctx, buf, &n);
 
 		EVP_DigestInit_ex(&ctx, s->ctx->md5, NULL);
