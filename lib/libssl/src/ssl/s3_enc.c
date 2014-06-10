@@ -762,7 +762,8 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		/* Chop the digest off the end :-) */
 		EVP_MD_CTX_init(&md_ctx);
 
-		EVP_MD_CTX_copy_ex(&md_ctx, hash);
+		if (!EVP_MD_CTX_copy_ex(&md_ctx, hash))
+			return (-1);
 		EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
 		EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad);
 		EVP_DigestUpdate(&md_ctx, seq, 8);
@@ -774,7 +775,8 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		EVP_DigestUpdate(&md_ctx, rec->input, rec->length);
 		EVP_DigestFinal_ex(&md_ctx, md, NULL);
 
-		EVP_MD_CTX_copy_ex(&md_ctx, hash);
+		if (!EVP_MD_CTX_copy_ex(&md_ctx, hash))
+			return (-1);
 		EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
 		EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad);
 		EVP_DigestUpdate(&md_ctx, md, md_size);
