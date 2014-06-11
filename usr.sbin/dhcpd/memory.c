@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.21 2013/10/18 13:44:35 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.22 2014/06/11 16:45:15 pelikan Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -423,6 +423,27 @@ enter_lease(struct lease *lease)
 	}
 }
 
+static inline int
+hwaddrcmp(struct hardware *a, struct hardware *b)
+{
+	return ((a->htype != b->htype) || (a->hlen != b->hlen) ||
+	    memcmp(a->haddr, b->haddr, b->hlen));
+}
+
+static inline int
+uidcmp(struct lease *a, struct lease *b)
+{
+	return (a->uid_len != b->uid_len || memcmp(a->uid, b->uid, b->uid_len));
+}
+
+static inline int
+uid_or_hwaddr_cmp(struct lease *a, struct lease *b)
+{
+	if (a->uid && b->uid)
+		return uidcmp(a, b);
+	return hwaddrcmp(&a->hardware_addr, &b->hardware_addr);
+}
+
 /*
  * Replace the data in an existing lease with the data in a new lease;
  * adjust hash tables to suit, and insertion sort the lease into the
@@ -452,17 +473,7 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 	 * requested *after* a DHCP lease has been assigned.
 	 */
 	if (!(lease->flags & ABANDONED_LEASE) &&
-	    comp->ends > cur_time &&
-	    (((comp->uid && lease->uid) &&
-	    (comp->uid_len != lease->uid_len ||
-	    memcmp (comp->uid, lease->uid, comp->uid_len))) ||
-	    (!comp->uid &&
-	    ((comp->hardware_addr.htype !=
-	    lease->hardware_addr.htype) ||
-	    (comp->hardware_addr.hlen !=
-	    lease->hardware_addr.hlen) ||
-	    memcmp(comp->hardware_addr.haddr, lease->hardware_addr.haddr,
-	    comp->hardware_addr.hlen))))) {
+	    comp->ends > cur_time && uid_or_hwaddr_cmp(comp, lease)) {
 		warning("Lease conflict at %s", piaddr(comp->ip_addr));
 		return 0;
 	} else {
@@ -481,12 +492,7 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 			enter_uid = 1;
 
 		if (comp->hardware_addr.htype &&
-		    ((comp->hardware_addr.hlen !=
-		    lease->hardware_addr.hlen) ||
-		    (comp->hardware_addr.htype !=
-		    lease->hardware_addr.htype) ||
-		    memcmp(comp->hardware_addr.haddr, lease->hardware_addr.haddr,
-		    comp->hardware_addr.hlen))) {
+		    hwaddrcmp(&comp->hardware_addr, &lease->hardware_addr)) {
 			hw_hash_delete(comp);
 			enter_hwaddr = 1;
 			do_pftable = 1;

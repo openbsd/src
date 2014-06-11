@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.13 2006/03/13 19:57:42 otto Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.14 2014/06/11 16:45:15 pelikan Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -53,6 +53,7 @@ bootp(struct packet *packet)
 	struct sockaddr_in to;
 	struct in_addr from;
 	struct tree_cache *options[256];
+	struct shared_network *s;
 	struct subnet *subnet = NULL;
 	struct lease *lease;
 	struct iaddr ip_address;
@@ -73,15 +74,15 @@ bootp(struct packet *packet)
 	hp = find_hosts_by_haddr(packet->raw->htype, packet->raw->chaddr,
 	    packet->raw->hlen);
 
-	lease = find_lease(packet, packet->shared_network, 0);
+	s = packet->shared_network;
+	lease = find_lease(packet, s, 0);
 
 	/*
 	 * Find an IP address in the host_decl that matches the specified
 	 * network.
 	 */
 	if (hp)
-		subnet = find_host_for_network(&hp, &ip_address,
-		    packet->shared_network);
+		subnet = find_host_for_network(&hp, &ip_address, s);
 
 	if (!subnet) {
 		/*
@@ -116,8 +117,7 @@ bootp(struct packet *packet)
 		 * If we've been told not to boot unknown clients, and we didn't
 		 * find any host record for this client, ignore it.
 		 */
-		if (!host &&
-		    !(packet->shared_network->group->boot_unknown_clients)) {
+		if (!host && !(s->group->boot_unknown_clients)) {
 			note("Ignoring unknown BOOTP client %s via %s",
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
@@ -131,8 +131,7 @@ bootp(struct packet *packet)
 		 * If we've been told not to boot with bootp on this network,
 		 * ignore it.
 		 */
-		if (!host &&
-		    !(packet->shared_network->group->allow_bootp)) {
+		if (!host && !(s->group->allow_bootp)) {
 			note("Ignoring BOOTP request from client %s via %s",
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
@@ -147,7 +146,7 @@ bootp(struct packet *packet)
 		 * dynamic bootp addresses on the network it came in on, drop
 		 * it on the floor.
 		 */
-		if (!(packet->shared_network->group->dynamic_bootp)) {
+		if (!(s->group->dynamic_bootp)) {
 lose:
 			note("No applicable record for BOOTP host %s via %s",
 			    print_hw_addr(packet->raw->htype,
@@ -191,7 +190,7 @@ lose:
 		 * If there are dynamic bootp addresses that might be
 		 * available, try to snag one.
 		 */
-		for (lease = packet->shared_network->last_lease;
+		for (lease = s->last_lease;
 		    lease && lease->ends <= cur_time;
 		    lease = lease->prev) {
 			if ((lease->flags & DYNAMIC_BOOTP_OK)) {
