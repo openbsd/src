@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.142 2014/05/15 04:43:25 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.143 2014/06/11 20:39:18 matthew Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -490,10 +490,10 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	error = dowait4(q, SCARG(uap, pid),
 	    SCARG(uap, status) ? &status : NULL,
 	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
-	if (error == 0 && SCARG(uap, status)) {
+	if (error == 0 && retval[0] > 0 && SCARG(uap, status)) {
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
 	}
-	if (error == 0 && SCARG(uap, rusage)) {
+	if (error == 0 && retval[0] > 0 && SCARG(uap, rusage)) {
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 #ifdef KTRACE
 		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
@@ -549,6 +549,8 @@ loop:
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(pr->ps_single->p_xstat);
+			if (rusage != NULL)
+				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
 		if (p->p_stat == SSTOP &&
@@ -561,6 +563,8 @@ loop:
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(p->p_xstat);
+			if (rusage != NULL)
+				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
 		if ((options & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
@@ -569,6 +573,8 @@ loop:
 
 			if (statusp != NULL)
 				*statusp = _WCONTINUED;
+			if (rusage != NULL)
+				memset(rusage, 0, sizeof(*rusage));
 			return (0);
 		}
 	}
