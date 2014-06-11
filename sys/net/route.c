@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.168 2014/05/27 19:38:15 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.169 2014/06/11 11:29:01 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1097,6 +1097,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct sockaddr_rtlabel	 sa_rl;
 	struct rt_addrinfo	 info;
 	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
+	u_int8_t		 prio = RTP_CONNECTED;
 	int			 error;
 
 	memset(&info, 0, sizeof(info));
@@ -1110,7 +1111,10 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &nrt, rtableid);
+	if (flags & RTF_LOCAL)
+		prio = RTP_LOCAL;
+
+	error = rtrequest1(RTM_ADD, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
@@ -1139,6 +1143,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct rt_addrinfo	 info;
 	struct sockaddr_rtlabel	 sa_rl;
 	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
+	u_int8_t		 prio = RTP_CONNECTED;
 	int			 error;
 
 	if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
@@ -1173,7 +1178,10 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 
-	error = rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, &nrt, rtableid);
+	if (flags & RTF_LOCAL)
+		prio = RTP_LOCAL;
+
+	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
 		rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
@@ -1199,7 +1207,8 @@ rt_ifa_addloop(struct ifaddr *ifa)
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
 	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
-		rt_ifa_add(ifa, RTF_UP| RTF_HOST | RTF_LLINFO, ifa->ifa_addr);
+		rt_ifa_add(ifa, RTF_UP| RTF_HOST | RTF_LLINFO | RTF_LOCAL,
+		    ifa->ifa_addr);
 	if (rt)
 		rt->rt_refcnt--;
 }
@@ -1223,7 +1232,8 @@ rt_ifa_delloop(struct ifaddr *ifa)
 	rt = rtalloc1(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt != NULL && (rt->rt_flags & RTF_HOST) != 0 &&
 	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0)
-		rt_ifa_del(ifa,  RTF_HOST | RTF_LLINFO,  ifa->ifa_addr);
+		rt_ifa_del(ifa,  RTF_HOST | RTF_LLINFO | RTF_LOCAL,
+		    ifa->ifa_addr);
 	if (rt)
 		rt->rt_refcnt--;
 }
