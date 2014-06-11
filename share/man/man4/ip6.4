@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.32 2013/10/27 18:29:02 deraadt Exp $
+.\"	$OpenBSD: ip6.4,v 1.33 2014/06/11 16:59:47 chrisz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: October 27 2013 $
+.Dd $Mdocdate: June 11 2014 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -278,7 +278,7 @@ struct ip6_hbh {
 .Ed
 .Pp
 The
-.Fn inet6_option_space
+.Fn inet6_opt_init
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
@@ -300,7 +300,7 @@ struct ip6_dest {
 .Ed
 .Pp
 The
-.Fn inet6_option_space
+.Fn inet6_opt_init
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
@@ -336,7 +336,7 @@ struct ip6_rthdr {
 .Ed
 .Pp
 The
-.Fn inet6_option_space
+.Fn inet6_rth_space
 routine and family of routines may be used to manipulate this data.
 .Pp
 This option requires superuser privileges.
@@ -653,8 +653,8 @@ An ancillary data object was improperly formed.
 .Xr send 2 ,
 .Xr setsockopt 2 ,
 .Xr socket 2 ,
-.\" .Xr inet6_option_space 3 ,
-.\" .Xr inet6_rthdr_space 3 ,
+.\" .Xr inet6_opt_init 3 ,
+.\" .Xr inet6_rth_space 3 ,
 .Xr if_nametoindex 3 ,
 .Xr bpf 4 ,
 .Xr icmp6 4 ,
