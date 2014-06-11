@@ -1304,7 +1304,6 @@ start:
 
 	switch (rr->type) {
 	default:
-#ifndef OPENSSL_NO_TLS
 		/*
 		 * TLS up to v1.1 just ignores unknown message types:
 		 * TLS v1.2 give an unexpected message alert.
@@ -1314,7 +1313,6 @@ start:
 			rr->length = 0;
 			goto start;
 		}
-#endif
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNEXPECTED_RECORD);
 		goto f_err;

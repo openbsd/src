@@ -1161,13 +1161,11 @@ start:
 
 	switch (rr->type) {
 	default:
-#ifndef OPENSSL_NO_TLS
 		/* TLS just ignores unknown message types */
 		if (s->version == TLS1_VERSION) {
 			rr->length = 0;
 			goto start;
 		}
-#endif
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_UNEXPECTED_RECORD);
 		goto f_err;
