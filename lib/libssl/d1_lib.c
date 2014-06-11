@@ -104,8 +104,10 @@ dtls1_new(SSL *s)
 
 	if (!ssl3_new(s))
 		return (0);
-	if ((d1 = calloc(1, sizeof *d1)) == NULL)
+	if ((d1 = calloc(1, sizeof *d1)) == NULL) {
+		ssl3_free(s);
 		return (0);
+	}
 
 	/* d1->handshake_epoch=0; */
 
