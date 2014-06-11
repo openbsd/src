@@ -1,13 +1,7 @@
-/*	$OpenBSD: b_print.c,v 1.22 2014/04/21 11:18:34 deraadt Exp $	*/
+/*	$OpenBSD: b_print.c,v 1.23 2014/06/11 15:08:43 deraadt Exp $	*/
 /* Theo de Raadt places this file in the public domain. */
 
 #include <openssl/bio.h>
-
-static int
-_BIO_write(void *cookie, const char *buf, int nbytes)
-{
-	return BIO_write(cookie, buf, nbytes);
-}
 
 int
 BIO_printf(BIO *bio, const char *format, ...)
@@ -21,11 +15,18 @@ BIO_printf(BIO *bio, const char *format, ...)
 	return (ret);
 }
 
+#ifdef HAVE_FUNOPEN
+static int
+_BIO_write(void *cookie, const char *buf, int nbytes)
+{
+	return BIO_write(cookie, buf, nbytes);
+}
+
 int
 BIO_vprintf(BIO *bio, const char *format, va_list args)
 {
-	FILE *fp;
 	int ret;
+	FILE *fp;
 
 	fp = funopen(bio, NULL, &_BIO_write, NULL, NULL);
 	if (fp == NULL) {
@@ -37,6 +38,27 @@ BIO_vprintf(BIO *bio, const char *format, va_list args)
 fail:
 	return (ret);
 }
+
+#else /* !HAVE_FUNOPEN */
+
+int
+BIO_vprintf(BIO *bio, const char *format, va_list args)
+{
+	int ret;
+	char *buf = NULL;
+
+	ret = vasprintf(&buf, format, args);
+	if (buf == NULL) {
+		ret = -1
+		goto fail;
+	}
+	BIO_write(bio, buf, ret);
+	free(buf);
+fail:
+	return (ret);
+}
+
+#endif /* HAVE_FUNOPEN */
 
 /*
  * BIO_snprintf and BIO_vsnprintf return -1 for overflow,

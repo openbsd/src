@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.39 2014/06/10 16:15:19 deraadt Exp $
+# $OpenBSD: Makefile,v 1.40 2014/06/11 15:08:41 deraadt Exp $
 
 LIB=	crypto
 
@@ -9,7 +9,7 @@ CFLAGS+= -Wall -Werror
 
 .include <bsd.own.mk>		# for 'NOPIC' definition
 .if !defined(NOPIC)
-CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H
+CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
 .endif
 
 .if ${MACHINE_ARCH} == "sparc"
