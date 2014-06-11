@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.11 2014/04/02 13:19:01 mpi Exp $
+.\"	$OpenBSD: task_add.9,v 1.12 2014/06/11 08:47:53 blambert Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2014 $
+.Dd $Mdocdate: June 11 2014 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Ft int
 .Fn "task_del" "struct taskq *tq" "struct task *t"
 .Vt extern struct taskq *const systq;
+.Vt extern struct taskq *const systqmp;
 .Fn "TASK_INITIALIZER" "void (*fn)(void *, void *)" "void *arg1" "void *arg2"
 .Sh DESCRIPTION
 The
@@ -125,12 +126,15 @@ against a different taskq than the one given in a previous call to
 .Fn task_add
 is an error and will lead to undefined behaviour.
 .Pp
-The kernel provides a system taskq
-.Va systq
-that can be used by any subsystem for short lived tasks.
-It is serviced by a single thread and can therefore provide predictable
+The kernel provides two system taskqs:
+.Va systq ,
+which executes while holding the kernel lock, and
+.Va systqmp ,
+which does not hold the kernel lock during execution.
+They can both be used by any subsystem for short lived tasks.
+They are serviced by a single thread and can therefore provide predictable
 ordering of work.
-Work can be scheduled on the system taskq from callers at or below IPL_HIGH.
+Work can be scheduled on the system taskqs from callers at or below IPL_HIGH.
 .Pp
 A task declaration can be initialised with the
 .Fn TASK_INITIALIZER
