@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.96 2014/04/25 09:44:38 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.97 2014/06/11 11:30:03 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -702,6 +702,7 @@ out:
 	 * carp(4).
 	 */
 	ifa_add(ifp, &ia->ia_ifa);
+	rt_ifa_addloop(&ia->ia_ifa);
 
 	if (error && newaddr)
 		in_purgeaddr(&ia->ia_ifa);
@@ -718,6 +719,8 @@ in_purgeaddr(struct ifaddr *ifa)
 	splsoftassert(IPL_SOFTNET);
 
 	in_ifscrub(ifp, ia);
+
+	rt_ifa_delloop(&ia->ia_ifa);
 
 	ifa_del(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);

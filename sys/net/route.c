@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.169 2014/06/11 11:29:01 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.170 2014/06/11 11:30:03 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1129,7 +1129,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt);
 		}
-		rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
+		if (flags & RTF_LOCAL)
+			rt_newaddrmsg(RTM_ADD, ifa, error, nrt);
 	}
 	return (error);
 }
@@ -1183,7 +1184,8 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
-		rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
+		if (flags & RTF_LOCAL)
+			rt_newaddrmsg(RTM_DELETE, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
 			rt->rt_refcnt++;
 			rtfree(rt);
