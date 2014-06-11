@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.30 2014/05/31 06:30:16 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.31 2014/06/11 00:30:25 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -217,10 +217,10 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	hibernate_enter_resume_4k_pde(0);
 
 	/*
-	 * Identity map first 640KB physical for tramps and special utility
+	 * Identity map 64KB-640KB physical for tramps and special utility
 	 * pages using 4KB mappings
 	 */
-	for (i = 0; i < 160; i ++) {
+	for (i = 16; i < 160; i ++) {
 		hibernate_enter_resume_mapping(i*PAGE_SIZE, i*PAGE_SIZE, 0);
 	}
 
