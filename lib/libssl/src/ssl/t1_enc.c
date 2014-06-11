@@ -165,8 +165,6 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_init(&ctx_tmp);
-	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	EVP_MD_CTX_set_flags(&ctx_tmp, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
 	if (!mac_key)
 		goto err;
