@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.249 2014/05/17 17:26:24 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.250 2014/06/11 17:32:59 matthew Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -753,6 +753,8 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
+	if (name[0] < 0 || name[0] >= nitems(debugvars))
+		return (EOPNOTSUPP);
 	cdp = debugvars[name[0]];
 	if (cdp->debugname == 0)
 		return (EOPNOTSUPP);
