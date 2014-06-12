@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.93 2014/03/20 07:47:29 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.94 2014/06/12 16:29:41 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -458,8 +458,7 @@ anycb(int f)
 	char		 pbuf[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
-		if (bp->b_fname != NULL && *(bp->b_fname) != '\0' &&
-		    (bp->b_flag & BFCHG) != 0) {
+		if (*(bp->b_fname) != '\0' && (bp->b_flag & BFCHG) != 0) {
 			ret = snprintf(pbuf, sizeof(pbuf), "Save file %s",
 			    bp->b_fname);
 			if (ret < 0 || ret >= sizeof(pbuf)) {
