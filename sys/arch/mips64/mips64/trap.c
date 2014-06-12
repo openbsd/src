@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.97 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.98 2014/06/12 20:52:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -627,7 +627,9 @@ fault_common_no_miss:
 #endif
 
 				/* Restore original instruction and clear BP */
+				KERNEL_LOCK();
 				process_sstep(p, 0);
+				KERNEL_UNLOCK();
 				typ = TRAP_BRKPT;
 			} else {
 				typ = TRAP_TRACE;
