@@ -1,4 +1,4 @@
-/* crypto/dso/dso_err.c */
+/* $OpenBSD: dso_err.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

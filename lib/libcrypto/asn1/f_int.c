@@ -1,4 +1,4 @@
-/* crypto/asn1/f_int.c */
+/* $OpenBSD: f_int.c,v 1.16 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

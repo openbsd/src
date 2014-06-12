@@ -1,4 +1,4 @@
-/* crypto/bio/bf_buff.c */
+/* $OpenBSD: bf_lbuf.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

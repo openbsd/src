@@ -1,4 +1,4 @@
-/* crypto/ui/ui_util.c */
+/* $OpenBSD: ui_util.c,v 1.9 2014/06/12 15:49:31 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *

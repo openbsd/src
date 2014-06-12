@@ -1,4 +1,4 @@
-/* crypto/x509v3/v3err.c */
+/* $OpenBSD: v3err.c,v 1.10 2014/06/12 15:49:31 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *

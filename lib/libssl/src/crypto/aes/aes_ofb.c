@@ -1,4 +1,4 @@
-/* crypto/aes/aes_ofb.c */
+/* $OpenBSD: aes_ofb.c,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *

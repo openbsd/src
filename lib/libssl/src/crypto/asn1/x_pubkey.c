@@ -1,4 +1,4 @@
-/* crypto/asn1/x_pubkey.c */
+/* $OpenBSD: x_pubkey.c,v 1.19 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

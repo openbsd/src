@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_prn.c */
+/* $OpenBSD: rsa_prn.c,v 1.3 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */

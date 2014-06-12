@@ -1,4 +1,4 @@
-/* ssl/ssl_err.c */
+/* $OpenBSD: ssl_err.c,v 1.23 2014/06/12 15:49:31 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

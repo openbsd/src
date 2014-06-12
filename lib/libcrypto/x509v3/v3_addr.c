@@ -1,3 +1,4 @@
+/* $OpenBSD: v3_addr.c,v 1.10 2014/06/12 15:49:31 deraadt Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").

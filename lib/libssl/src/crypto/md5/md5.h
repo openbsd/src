@@ -1,4 +1,4 @@
-/* crypto/md5/md5.h */
+/* $OpenBSD: md5.h,v 1.14 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

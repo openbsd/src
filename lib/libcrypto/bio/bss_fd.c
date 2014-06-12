@@ -1,4 +1,4 @@
-/* crypto/bio/bss_fd.c */
+/* $OpenBSD: bss_fd.c,v 1.14 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

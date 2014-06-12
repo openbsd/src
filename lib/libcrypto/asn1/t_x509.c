@@ -1,4 +1,4 @@
-/* crypto/asn1/t_x509.c */
+/* $OpenBSD: t_x509.c,v 1.22 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

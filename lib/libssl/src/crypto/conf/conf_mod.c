@@ -1,4 +1,4 @@
-/* conf_mod.c */
+/* $OpenBSD: conf_mod.c,v 1.20 2014/06/12 15:49:28 deraadt Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */

@@ -1,4 +1,4 @@
-/* ssl/d1_both.c */
+/* $OpenBSD: d1_both.c,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.

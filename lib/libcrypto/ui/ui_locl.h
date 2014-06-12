@@ -1,4 +1,5 @@
-/* crypto/ui/ui.h */
+/* $OpenBSD: ui_locl.h,v 1.6 2014/06/12 15:49:31 deraadt Exp $ */
+
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */

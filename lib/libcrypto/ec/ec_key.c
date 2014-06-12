@@ -1,4 +1,4 @@
-/* crypto/ec/ec_key.c */
+/* $OpenBSD: ec_key.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

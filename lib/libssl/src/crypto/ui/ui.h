@@ -1,4 +1,4 @@
-/* crypto/ui/ui.h */
+/* $OpenBSD: ui.h,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */

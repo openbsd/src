@@ -1,4 +1,4 @@
-/* ocsp_lib.c */
+/* $OpenBSD: ocsp_lib.c,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 

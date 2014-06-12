@@ -1,4 +1,5 @@
-/* NOCW */
+/* $OpenBSD: fcrypt.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
+
 #include <stdio.h>
 
 /* This version of crypt has been developed from my MIT compatible

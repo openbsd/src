@@ -1,4 +1,4 @@
-/* crypto/dh/dh_depr.c */
+/* $OpenBSD: dh_depr.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

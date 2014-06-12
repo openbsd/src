@@ -1,3 +1,4 @@
+/* $OpenBSD: example.h,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/pkcs7/pkcs7err.c */
+/* $OpenBSD: pkcs7err.c,v 1.9 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *

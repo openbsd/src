@@ -1,3 +1,4 @@
+/* $OpenBSD: eng_padlock.c,v 1.10 2014/06/12 15:49:29 deraadt Exp $ */
 /* 
  * Support for VIA PadLock Advanced Cryptography Engine (ACE)
  * Written by Michal Ludvig <michal@logix.cz>

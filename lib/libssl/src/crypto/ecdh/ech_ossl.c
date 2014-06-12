@@ -1,4 +1,4 @@
-/* crypto/ecdh/ech_ossl.c */
+/* $OpenBSD: ech_ossl.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

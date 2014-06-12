@@ -1,4 +1,5 @@
-/*	$OpenBSD: b_print.c,v 1.24 2014/06/11 15:40:52 jsing Exp $	*/
+/* $OpenBSD: b_print.c,v 1.25 2014/06/12 15:49:28 deraadt Exp $ */
+
 /* Theo de Raadt places this file in the public domain. */
 
 #include <openssl/bio.h>

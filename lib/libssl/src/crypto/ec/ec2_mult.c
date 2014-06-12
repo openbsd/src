@@ -1,4 +1,4 @@
-/* crypto/ec/ec2_mult.c */
+/* $OpenBSD: ec2_mult.c,v 1.3 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

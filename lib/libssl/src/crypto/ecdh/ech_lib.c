@@ -1,4 +1,4 @@
-/* crypto/ecdh/ech_lib.c */
+/* $OpenBSD: ech_lib.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

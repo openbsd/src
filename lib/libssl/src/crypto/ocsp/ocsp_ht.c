@@ -1,4 +1,4 @@
-/* ocsp_ht.c */
+/* $OpenBSD: ocsp_ht.c,v 1.19 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */

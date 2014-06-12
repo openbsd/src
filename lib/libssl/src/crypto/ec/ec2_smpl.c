@@ -1,4 +1,4 @@
-/* crypto/ec/ec2_smpl.c */
+/* $OpenBSD: ec2_smpl.c,v 1.10 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

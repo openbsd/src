@@ -1,4 +1,4 @@
-/* apps/sess_id.c */
+/* $OpenBSD: sess_id.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

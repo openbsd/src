@@ -1,4 +1,4 @@
-/* apps/ts.c */
+/* $OpenBSD: ts.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */

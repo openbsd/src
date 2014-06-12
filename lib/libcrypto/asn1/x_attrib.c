@@ -1,4 +1,4 @@
-/* crypto/asn1/x_attrib.c */
+/* $OpenBSD: x_attrib.c,v 1.8 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

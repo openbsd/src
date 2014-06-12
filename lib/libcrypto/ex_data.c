@@ -1,4 +1,4 @@
-/* crypto/ex_data.c */
+/* $OpenBSD: ex_data.c,v 1.16 2014/06/12 15:49:27 deraadt Exp $ */
 
 /*
  * Overhaul notes;

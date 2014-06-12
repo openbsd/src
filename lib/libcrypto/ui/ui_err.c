@@ -1,4 +1,4 @@
-/* crypto/ui/ui_err.c */
+/* $OpenBSD: ui_err.c,v 1.7 2014/06/12 15:49:31 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

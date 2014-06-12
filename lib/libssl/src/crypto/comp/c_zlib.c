@@ -1,3 +1,4 @@
+/* $OpenBSD: c_zlib.c,v 1.16 2014/06/12 15:49:28 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

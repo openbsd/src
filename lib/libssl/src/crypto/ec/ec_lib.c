@@ -1,4 +1,4 @@
-/* crypto/ec/ec_lib.c */
+/* $OpenBSD: ec_lib.c,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */

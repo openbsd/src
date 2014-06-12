@@ -1,4 +1,4 @@
-/* crypto/camellia/camellia.c */
+/* $OpenBSD: camellia.c,v 1.6 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.

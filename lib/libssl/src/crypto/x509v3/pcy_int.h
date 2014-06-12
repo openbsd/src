@@ -1,4 +1,4 @@
-/* pcy_int.h */
+/* $OpenBSD: pcy_int.h,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */

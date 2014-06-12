@@ -1,4 +1,4 @@
-/* crypto/engine/eng_init.c */
+/* $OpenBSD: eng_init.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *

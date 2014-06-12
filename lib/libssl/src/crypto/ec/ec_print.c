@@ -1,4 +1,4 @@
-/* crypto/ec/ec_print.c */
+/* $OpenBSD: ec_print.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

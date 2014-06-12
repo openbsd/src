@@ -1,4 +1,4 @@
-/* crypto/aes/aes_core.c */
+/* $OpenBSD: aes_x86core.c,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
 /**
  * rijndael-alg-fst.c
  *

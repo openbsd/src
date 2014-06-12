@@ -1,4 +1,4 @@
-/* crypto/bn/bn_depr.c */
+/* $OpenBSD: bn_depr.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

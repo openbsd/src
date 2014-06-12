@@ -1,4 +1,4 @@
-/* crypto/cryptlib.c */
+/* $OpenBSD: cryptlib.c,v 1.26 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *

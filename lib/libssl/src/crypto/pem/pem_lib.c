@@ -1,4 +1,4 @@
-/* crypto/pem/pem_lib.c */
+/* $OpenBSD: pem_lib.c,v 1.28 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

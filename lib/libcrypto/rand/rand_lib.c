@@ -1,3 +1,4 @@
+/* $OpenBSD: rand_lib.c,v 1.17 2014/06/12 15:49:30 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *

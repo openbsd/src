@@ -1,4 +1,4 @@
-/* crypto/ts/ts.h */
+/* $OpenBSD: ts.h,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */

@@ -1,4 +1,4 @@
-/* crypto/evp/p_dec.c */
+/* $OpenBSD: p_dec.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

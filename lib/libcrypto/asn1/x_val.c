@@ -1,4 +1,4 @@
-/* crypto/asn1/x_val.c */
+/* $OpenBSD: x_val.c,v 1.7 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

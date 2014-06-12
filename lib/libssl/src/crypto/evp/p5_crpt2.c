@@ -1,4 +1,4 @@
-/* p5_crpt2.c */
+/* $OpenBSD: p5_crpt2.c,v 1.14 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

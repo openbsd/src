@@ -1,4 +1,4 @@
-/* crypto/store/store.h */
+/* $OpenBSD: store.h,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */

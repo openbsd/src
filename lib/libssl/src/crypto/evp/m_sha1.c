@@ -1,4 +1,4 @@
-/* crypto/evp/m_sha1.c */
+/* $OpenBSD: m_sha1.c,v 1.15 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

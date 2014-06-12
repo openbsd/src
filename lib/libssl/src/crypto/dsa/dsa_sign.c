@@ -1,4 +1,4 @@
-/* crypto/dsa/dsa_sign.c */
+/* $OpenBSD: dsa_sign.c,v 1.15 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

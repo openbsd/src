@@ -1,4 +1,4 @@
-/* crypto/pem/pem_seal.c */
+/* $OpenBSD: pem_seal.c,v 1.17 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/asn1/n_pkey.c */
+/* $OpenBSD: n_pkey.c,v 1.18 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

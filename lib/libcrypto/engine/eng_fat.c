@@ -1,4 +1,4 @@
-/* crypto/engine/eng_fat.c */
+/* $OpenBSD: eng_fat.c,v 1.11 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *

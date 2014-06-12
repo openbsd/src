@@ -1,4 +1,4 @@
-/* crypto/bio/bf_nbio.c */
+/* $OpenBSD: bf_nbio.c,v 1.16 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

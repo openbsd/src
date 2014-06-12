@@ -1,4 +1,4 @@
-/* crypto/asn1/asn1.h */
+/* $OpenBSD: asn1.h,v 1.28 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

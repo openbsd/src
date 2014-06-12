@@ -1,4 +1,4 @@
-/* asn1t.h */
+/* $OpenBSD: asn1_locl.h,v 1.5 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */

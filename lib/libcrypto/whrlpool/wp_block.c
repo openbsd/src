@@ -1,3 +1,4 @@
+/* $OpenBSD: wp_block.c,v 1.7 2014/06/12 15:49:31 deraadt Exp $ */
 /**
  * The Whirlpool hashing function.
  *

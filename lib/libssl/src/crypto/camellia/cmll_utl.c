@@ -1,4 +1,4 @@
-/* crypto/camellia/cmll_utl.c */
+/* $OpenBSD: cmll_utl.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *

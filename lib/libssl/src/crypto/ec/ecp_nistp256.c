@@ -1,4 +1,4 @@
-/* crypto/ec/ecp_nistp256.c */
+/* $OpenBSD: ecp_nistp256.c,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */

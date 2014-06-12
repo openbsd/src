@@ -1,4 +1,4 @@
-/* crypto/rc2/rc2_cbc.c */
+/* $OpenBSD: rc2_cbc.c,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

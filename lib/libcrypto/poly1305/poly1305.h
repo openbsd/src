@@ -1,3 +1,4 @@
+/* $OpenBSD: poly1305.h,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
 /*
  * Copyright (c) Joel Sing <jsing@openbsd.org>
  *

@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecs_asn1.c */
+/* $OpenBSD: ecs_asn1.c,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *

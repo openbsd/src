@@ -1,3 +1,4 @@
+/* $OpenBSD: gcm128.c,v 1.8 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *

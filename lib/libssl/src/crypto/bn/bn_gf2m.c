@@ -1,4 +1,4 @@
-/* crypto/bn/bn_gf2m.c */
+/* $OpenBSD: bn_gf2m.c,v 1.13 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

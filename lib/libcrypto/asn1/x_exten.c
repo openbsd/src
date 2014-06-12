@@ -1,4 +1,4 @@
-/* x_exten.c */
+/* $OpenBSD: x_exten.c,v 1.9 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */

@@ -1,4 +1,4 @@
-/* crypto/des/ncbc_enc.c */
+/* $OpenBSD: ncbc_enc.c,v 1.6 2014/06/12 15:49:28 deraadt Exp $ */
 /*
  * #included by:
  *    cbc_enc.c  (DES_cbc_encrypt)

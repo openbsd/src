@@ -1,3 +1,4 @@
+/* $OpenBSD: charmap.h,v 1.4 2014/06/12 15:49:27 deraadt Exp $ */
 /* Auto generated with chartype.pl script.
  * Mask of various character properties
  */

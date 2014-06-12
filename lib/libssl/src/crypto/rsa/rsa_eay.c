@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_eay.c */
+/* $OpenBSD: rsa_eay.c,v 1.28 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

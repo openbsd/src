@@ -1,4 +1,4 @@
-/* crypto/md5/md5_locl.h */
+/* $OpenBSD: md5_locl.h,v 1.11 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

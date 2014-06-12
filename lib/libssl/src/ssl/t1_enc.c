@@ -1,4 +1,4 @@
-/* ssl/t1_enc.c */
+/* $OpenBSD: t1_enc.c,v 1.54 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

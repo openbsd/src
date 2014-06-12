@@ -1,4 +1,4 @@
-/* crypto/ec/eck_prn.c */
+/* $OpenBSD: eck_prn.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

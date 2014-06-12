@@ -1,4 +1,4 @@
-/* crypto/rc4/rc4_enc.c */
+/* $OpenBSD: rc4_enc.c,v 1.11 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/ts/ts_asn1.c */
+/* $OpenBSD: ts_asn1.c,v 1.4 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================

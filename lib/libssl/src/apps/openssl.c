@@ -1,4 +1,4 @@
-/* apps/openssl.c */
+/* $OpenBSD: openssl.c,v 1.38 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

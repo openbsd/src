@@ -1,4 +1,4 @@
-/* crypto/bn/bn_nist.c */
+/* $OpenBSD: bn_nist.c,v 1.11 2014/06/12 15:49:28 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

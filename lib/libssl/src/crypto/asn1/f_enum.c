@@ -1,4 +1,4 @@
-/* crypto/asn1/f_enum.c */
+/* $OpenBSD: f_enum.c,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

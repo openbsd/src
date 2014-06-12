@@ -1,3 +1,4 @@
+/* $OpenBSD: chacha.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *

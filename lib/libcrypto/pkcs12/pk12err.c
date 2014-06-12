@@ -1,4 +1,4 @@
-/* crypto/pkcs12/pk12err.c */
+/* $OpenBSD: pk12err.c,v 1.8 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/pkcs7/pkcs7.h */
+/* $OpenBSD: pkcs7.h,v 1.13 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

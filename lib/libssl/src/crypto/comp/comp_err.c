@@ -1,4 +1,4 @@
-/* crypto/comp/comp_err.c */
+/* $OpenBSD: comp_err.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *

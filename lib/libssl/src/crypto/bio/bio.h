@@ -1,4 +1,4 @@
-/* crypto/bio/bio.h */
+/* $OpenBSD: bio.h,v 1.23 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

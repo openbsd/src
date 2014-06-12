@@ -1,4 +1,4 @@
-/* crypto/rc2/rc2.h */
+/* $OpenBSD: rc2.h,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

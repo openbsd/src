@@ -1,4 +1,4 @@
-/* apps/ec.c */
+/* $OpenBSD: ec.c,v 1.14 2014/06/12 15:49:27 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

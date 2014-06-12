@@ -1,3 +1,4 @@
+/* $OpenBSD: poly1305-donna.c,v 1.3 2014/06/12 15:49:30 deraadt Exp $ */
 /*
  * Public Domain poly1305 from Andrew Moon
  * Based on poly1305-donna.c, poly1305-donna-32.h and poly1305-donna.h from:

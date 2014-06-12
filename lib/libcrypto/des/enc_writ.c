@@ -1,4 +1,4 @@
-/* crypto/des/enc_writ.c */
+/* $OpenBSD: enc_writ.c,v 1.10 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

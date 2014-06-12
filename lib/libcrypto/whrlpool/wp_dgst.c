@@ -1,3 +1,4 @@
+/* $OpenBSD: wp_dgst.c,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
 /**
  * The Whirlpool hashing function.
  *

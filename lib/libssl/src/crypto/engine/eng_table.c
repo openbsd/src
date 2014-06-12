@@ -1,3 +1,4 @@
+/* $OpenBSD: eng_table.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/camellia/camellia_ecb.c */
+/* $OpenBSD: cmll_ecb.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *

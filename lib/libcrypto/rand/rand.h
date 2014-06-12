@@ -1,4 +1,4 @@
-/* crypto/rand/rand.h */
+/* $OpenBSD: rand.h,v 1.20 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

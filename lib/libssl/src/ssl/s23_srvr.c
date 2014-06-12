@@ -1,4 +1,4 @@
-/* ssl/s23_srvr.c */
+/* $OpenBSD: s23_srvr.c,v 1.28 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

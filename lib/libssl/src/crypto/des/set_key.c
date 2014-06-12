@@ -1,4 +1,4 @@
-/* crypto/des/set_key.c */
+/* $OpenBSD: set_key.c,v 1.17 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

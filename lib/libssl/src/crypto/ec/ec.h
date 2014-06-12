@@ -1,4 +1,4 @@
-/* crypto/ec/ec.h */
+/* $OpenBSD: ec.h,v 1.9 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */

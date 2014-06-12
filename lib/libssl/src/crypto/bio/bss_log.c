@@ -1,4 +1,4 @@
-/* crypto/bio/bss_log.c */
+/* $OpenBSD: bss_log.c,v 1.19 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *

@@ -1,3 +1,4 @@
+/* $OpenBSD: progs.h,v 1.21 2014/06/12 15:49:27 deraadt Exp $ */
 /* Public domain */
 
 extern int asn1parse_main(int argc, char *argv[]);

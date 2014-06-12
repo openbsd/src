@@ -1,4 +1,4 @@
-/* crypto/pkcs7/pk7_doit.c */
+/* $OpenBSD: pk7_doit.c,v 1.22 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

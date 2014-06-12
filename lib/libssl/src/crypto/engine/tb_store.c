@@ -1,3 +1,4 @@
+/* $OpenBSD: tb_store.c,v 1.4 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
  *

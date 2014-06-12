@@ -1,4 +1,4 @@
-/* apps/dsa.c */
+/* $OpenBSD: dsa.c,v 1.25 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

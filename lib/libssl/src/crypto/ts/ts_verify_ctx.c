@@ -1,4 +1,4 @@
-/* crypto/ts/ts_verify_ctx.c */
+/* $OpenBSD: ts_verify_ctx.c,v 1.5 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */

@@ -1,4 +1,4 @@
-/* crypto/ec/ec_curve.c */
+/* $OpenBSD: ec_curve.c,v 1.5 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

@@ -1,4 +1,4 @@
-/* crypto/objects/obj_err.c */
+/* $OpenBSD: obj_err.c,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

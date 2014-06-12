@@ -1,4 +1,4 @@
-/* ssl/s23_lib.c */
+/* $OpenBSD: s23_lib.c,v 1.15 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

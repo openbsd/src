@@ -1,4 +1,4 @@
-/* crypto/crypto.h */
+/* $OpenBSD: crypto.h,v 1.30 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *

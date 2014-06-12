@@ -1,3 +1,4 @@
+/* $OpenBSD: chacha-merged.c,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein

@@ -1,4 +1,4 @@
-/* p12_mutl.c */
+/* $OpenBSD: p12_mutl.c,v 1.13 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

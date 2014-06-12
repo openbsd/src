@@ -1,4 +1,4 @@
-/* apps/s_cb.c - callback functions used by s_client, s_server, and s_time */
+/* $OpenBSD: s_cb.c,v 1.21 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

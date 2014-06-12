@@ -1,4 +1,4 @@
-/* crypto/aes/aes_ige.c */
+/* $OpenBSD: aes_ige.c,v 1.5 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *

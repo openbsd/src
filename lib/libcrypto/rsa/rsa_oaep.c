@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_oaep.c */
+/* $OpenBSD: rsa_oaep.c,v 1.16 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 

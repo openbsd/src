@@ -1,4 +1,4 @@
-/* crypto/ecdh/ech_locl.h */
+/* $OpenBSD: ech_locl.h,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *

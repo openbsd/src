@@ -1,4 +1,4 @@
-/* crypto/cms/cms_lib.c */
+/* $OpenBSD: cms_lib.c,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */

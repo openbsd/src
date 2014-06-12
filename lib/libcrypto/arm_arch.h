@@ -1,3 +1,4 @@
+/* $OpenBSD: arm_arch.h,v 1.4 2014/06/12 15:49:27 deraadt Exp $ */
 #ifndef __ARM_ARCH_H__
 #define __ARM_ARCH_H__
 

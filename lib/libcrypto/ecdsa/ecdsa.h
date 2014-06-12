@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecdsa.h */
+/* $OpenBSD: ecdsa.h,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
 /**
  * \file   crypto/ecdsa/ecdsa.h Include file for the OpenSSL ECDSA functions
  * \author Written by Nils Larsch for the OpenSSL project

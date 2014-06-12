@@ -1,4 +1,4 @@
-/* ssl/s3_cbc.c */
+/* $OpenBSD: s3_cbc.c,v 1.7 2014/06/12 15:49:31 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *

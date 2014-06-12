@@ -1,3 +1,4 @@
+/* $OpenBSD: opensslv.h,v 1.25 2014/06/12 15:49:27 deraadt Exp $ */
 #ifndef HEADER_OPENSSLV_H
 #define HEADER_OPENSSLV_H
 

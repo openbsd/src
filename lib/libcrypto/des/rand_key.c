@@ -1,4 +1,4 @@
-/* crypto/des/rand_key.c */
+/* $OpenBSD: rand_key.c,v 1.6 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* bn_x931p.c */
+/* $OpenBSD: bn_x931p.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */

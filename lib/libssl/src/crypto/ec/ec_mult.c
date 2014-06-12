@@ -1,4 +1,4 @@
-/* crypto/ec/ec_mult.c */
+/* $OpenBSD: ec_mult.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */

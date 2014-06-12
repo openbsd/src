@@ -1,4 +1,4 @@
-/* crypto/evp/p_lib.c */
+/* $OpenBSD: p_lib.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

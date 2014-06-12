@@ -1,4 +1,4 @@
-/* crypto/md32_common.h */
+/* $OpenBSD: md32_common.h,v 1.15 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *

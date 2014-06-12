@@ -1,4 +1,4 @@
-/* conf_mall.c */
+/* $OpenBSD: conf_mall.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */

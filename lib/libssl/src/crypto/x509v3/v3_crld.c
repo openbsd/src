@@ -1,4 +1,4 @@
-/* v3_crld.c */
+/* $OpenBSD: v3_crld.c,v 1.10 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

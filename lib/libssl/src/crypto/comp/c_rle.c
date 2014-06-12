@@ -1,3 +1,4 @@
+/* $OpenBSD: c_rle.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

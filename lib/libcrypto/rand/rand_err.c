@@ -1,4 +1,4 @@
-/* crypto/rand/rand_err.c */
+/* $OpenBSD: rand_err.c,v 1.13 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

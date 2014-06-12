@@ -1,4 +1,4 @@
-/* dso_lib.c */
+/* $OpenBSD: dso_lib.c,v 1.16 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */

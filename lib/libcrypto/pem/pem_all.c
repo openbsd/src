@@ -1,4 +1,4 @@
-/* crypto/pem/pem_all.c */
+/* $OpenBSD: pem_all.c,v 1.13 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

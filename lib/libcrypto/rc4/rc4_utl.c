@@ -1,4 +1,4 @@
-/* crypto/rc4/rc4_utl.c */
+/* $OpenBSD: rc4_utl.c,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *

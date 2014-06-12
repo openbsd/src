@@ -1,4 +1,4 @@
-/* x509v3.h */
+/* $OpenBSD: x509v3.h,v 1.14 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

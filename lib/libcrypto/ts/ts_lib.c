@@ -1,4 +1,4 @@
-/* crypto/ts/ts_lib.c */
+/* $OpenBSD: ts_lib.c,v 1.6 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */

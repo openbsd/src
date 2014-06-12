@@ -1,4 +1,4 @@
-/* crypto/x509/by_dir.c */
+/* $OpenBSD: by_dir.c,v 1.26 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

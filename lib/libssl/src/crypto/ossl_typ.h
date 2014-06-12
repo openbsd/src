@@ -1,3 +1,4 @@
+/* $OpenBSD: ossl_typ.h,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *

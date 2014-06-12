@@ -1,4 +1,4 @@
-/* crypto/ec/ec_asn1.c */
+/* $OpenBSD: ec_asn1.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

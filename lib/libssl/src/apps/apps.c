@@ -1,4 +1,4 @@
-/* apps/apps.c */
+/* $OpenBSD: apps.c,v 1.59 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

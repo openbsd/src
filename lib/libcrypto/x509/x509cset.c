@@ -1,4 +1,4 @@
-/* crypto/x509/x509cset.c */
+/* $OpenBSD: x509cset.c,v 1.7 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */

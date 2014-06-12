@@ -1,4 +1,4 @@
-/* crypto/ripemd/rmd_locl.h */
+/* $OpenBSD: rmd_locl.h,v 1.10 2014/06/12 15:49:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

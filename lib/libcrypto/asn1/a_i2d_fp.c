@@ -1,4 +1,4 @@
-/* crypto/asn1/a_i2d_fp.c */
+/* $OpenBSD: a_i2d_fp.c,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

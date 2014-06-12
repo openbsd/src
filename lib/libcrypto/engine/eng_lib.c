@@ -1,4 +1,4 @@
-/* crypto/engine/eng_lib.c */
+/* $OpenBSD: eng_lib.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */

@@ -1,3 +1,4 @@
+/* $OpenBSD: dsa_locl.h,v 1.2 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *

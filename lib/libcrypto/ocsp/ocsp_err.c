@@ -1,4 +1,4 @@
-/* crypto/ocsp/ocsp_err.c */
+/* $OpenBSD: ocsp_err.c,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* v3_bcons.c */
+/* $OpenBSD: v3_bcons.c,v 1.8 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

@@ -1,4 +1,4 @@
-/* crypto/camellia/camellia_locl.h */
+/* $OpenBSD: cmll_locl.h,v 1.3 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.

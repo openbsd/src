@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_depr.c */
+/* $OpenBSD: rsa_depr.c,v 1.3 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

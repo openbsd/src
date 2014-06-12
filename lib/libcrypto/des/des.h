@@ -1,4 +1,4 @@
-/* crypto/des/des.h */
+/* $OpenBSD: des.h,v 1.18 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* apps/ecparam.c */
+/* $OpenBSD: ecparam.c,v 1.20 2014/06/12 15:49:27 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

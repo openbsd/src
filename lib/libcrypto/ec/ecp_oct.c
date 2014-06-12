@@ -1,4 +1,4 @@
-/* crypto/ec/ecp_oct.c */
+/* $OpenBSD: ecp_oct.c,v 1.4 2014/06/12 15:49:29 deraadt Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.

@@ -1,4 +1,4 @@
-/* crypto/asn1/asn1_err.c */
+/* $OpenBSD: asn1_err.c,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

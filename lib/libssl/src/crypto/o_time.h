@@ -1,4 +1,4 @@
-/* crypto/o_time.h */
+/* $OpenBSD: o_time.h,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */

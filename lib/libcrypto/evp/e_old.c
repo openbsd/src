@@ -1,4 +1,4 @@
-/* crypto/evp/e_old.c */
+/* $OpenBSD: e_old.c,v 1.6 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2004.
  */

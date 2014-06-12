@@ -1,4 +1,4 @@
-/* dso.h */
+/* $OpenBSD: dso.h,v 1.9 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */

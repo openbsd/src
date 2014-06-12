@@ -1,4 +1,4 @@
-/* crypto/store/str_lib.c */
+/* $OpenBSD: str_lib.c,v 1.9 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */

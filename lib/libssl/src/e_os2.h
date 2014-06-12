@@ -1,4 +1,4 @@
-/* e_os2.h */
+/* $OpenBSD: e_os2.h,v 1.17 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *

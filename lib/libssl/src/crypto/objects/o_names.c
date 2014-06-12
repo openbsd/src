@@ -1,3 +1,4 @@
+/* $OpenBSD: o_names.c,v 1.18 2014/06/12 15:49:30 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

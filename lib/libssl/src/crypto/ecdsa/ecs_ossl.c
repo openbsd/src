@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecs_ossl.c */
+/* $OpenBSD: ecs_ossl.c,v 1.3 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

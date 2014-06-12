@@ -1,3 +1,4 @@
+/* $OpenBSD: asn1test.c,v 1.2 2014/06/12 15:49:31 deraadt Exp $ */
 #include <openssl/x509.h>
 #include <openssl/asn1_mac.h>
 

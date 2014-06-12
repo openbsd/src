@@ -1,3 +1,4 @@
+/* $OpenBSD: prime.c,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *

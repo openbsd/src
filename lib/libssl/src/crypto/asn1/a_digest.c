@@ -1,4 +1,4 @@
-/* crypto/asn1/a_digest.c */
+/* $OpenBSD: a_digest.c,v 1.13 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

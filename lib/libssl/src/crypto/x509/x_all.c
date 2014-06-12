@@ -1,4 +1,4 @@
-/* crypto/x509/x_all.c */
+/* $OpenBSD: x_all.c,v 1.16 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

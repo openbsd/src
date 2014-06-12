@@ -1,4 +1,4 @@
-/* crypto/sha/sha256.c */
+/* $OpenBSD: sha256.c,v 1.4 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].

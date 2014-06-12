@@ -1,4 +1,4 @@
-/* crypto/des/qud_cksm.c */
+/* $OpenBSD: qud_cksm.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

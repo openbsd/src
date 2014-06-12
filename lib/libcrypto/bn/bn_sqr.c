@@ -1,4 +1,4 @@
-/* crypto/bn/bn_sqr.c */
+/* $OpenBSD: bn_sqr.c,v 1.8 2014/06/12 15:49:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

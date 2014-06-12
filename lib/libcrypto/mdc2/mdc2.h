@@ -1,4 +1,4 @@
-/* crypto/mdc2/mdc2.h */
+/* $OpenBSD: mdc2.h,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

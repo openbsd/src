@@ -1,4 +1,4 @@
-/* apps/engine.c */
+/* $OpenBSD: engine.c,v 1.24 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */

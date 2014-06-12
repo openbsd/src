@@ -1,3 +1,4 @@
+/* $OpenBSD: ppccap.c,v 1.5 2014/06/12 15:49:27 deraadt Exp $ */
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>

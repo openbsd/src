@@ -1,4 +1,4 @@
-/* crypto/dh/dh_err.c */
+/* $OpenBSD: dh_err.c,v 1.14 2014/06/12 15:49:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

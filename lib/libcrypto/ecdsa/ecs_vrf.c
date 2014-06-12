@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecdsa_vrf.c */
+/* $OpenBSD: ecs_vrf.c,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

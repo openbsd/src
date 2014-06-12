@@ -1,4 +1,4 @@
-/* crypto/ui/ui_openssl.c */
+/* $OpenBSD: ui_openssl.c,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */

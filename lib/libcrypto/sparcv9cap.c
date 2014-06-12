@@ -1,3 +1,4 @@
+/* $OpenBSD: sparcv9cap.c,v 1.6 2014/06/12 15:49:27 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

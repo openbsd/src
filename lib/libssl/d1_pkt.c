@@ -1,4 +1,4 @@
-/* ssl/d1_pkt.c */
+/* $OpenBSD: d1_pkt.c,v 1.28 2014/06/12 15:49:31 deraadt Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  

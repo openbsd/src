@@ -1,4 +1,4 @@
-/* conf_sap.c */
+/* $OpenBSD: conf_sap.c,v 1.8 2014/06/12 15:49:28 deraadt Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */

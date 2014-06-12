@@ -1,4 +1,4 @@
-/* crypto/x509/x509_cmp.c */
+/* $OpenBSD: x509_cmp.c,v 1.19 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

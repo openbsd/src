@@ -1,3 +1,4 @@
+/* $OpenBSD: modes_lcl.h,v 1.7 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *

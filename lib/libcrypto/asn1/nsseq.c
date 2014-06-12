@@ -1,4 +1,4 @@
-/* nsseq.c */
+/* $OpenBSD: nsseq.c,v 1.7 2014/06/12 15:49:27 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

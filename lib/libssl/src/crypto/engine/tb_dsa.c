@@ -1,3 +1,4 @@
+/* $OpenBSD: tb_dsa.c,v 1.7 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *

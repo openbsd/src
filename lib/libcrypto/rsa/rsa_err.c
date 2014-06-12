@@ -1,4 +1,4 @@
-/* crypto/rsa/rsa_err.c */
+/* $OpenBSD: rsa_err.c,v 1.12 2014/06/12 15:49:30 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

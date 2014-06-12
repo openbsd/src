@@ -1,4 +1,4 @@
-/* crypto/bn/bn_mod.c */
+/* $OpenBSD: bn_mod.c,v 1.7 2014/06/12 15:49:28 deraadt Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================

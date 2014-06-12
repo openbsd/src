@@ -1,4 +1,4 @@
-/* crypto/engine/eng_err.c */
+/* $OpenBSD: eng_err.c,v 1.8 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *

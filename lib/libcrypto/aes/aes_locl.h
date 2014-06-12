@@ -1,4 +1,4 @@
-/* crypto/aes/aes.h */
+/* $OpenBSD: aes_locl.h,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

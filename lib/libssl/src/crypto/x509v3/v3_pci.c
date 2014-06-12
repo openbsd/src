@@ -1,4 +1,4 @@
-/* v3_pci.c */
+/* $OpenBSD: v3_pci.c,v 1.5 2014/06/12 15:49:31 deraadt Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */

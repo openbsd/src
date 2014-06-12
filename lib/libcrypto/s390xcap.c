@@ -1,3 +1,4 @@
+/* $OpenBSD: s390xcap.c,v 1.3 2014/06/12 15:49:27 deraadt Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

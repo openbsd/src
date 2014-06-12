@@ -1,4 +1,4 @@
-/* crypto/ec/ecp_nistp224.c */
+/* $OpenBSD: ecp_nistp224.c,v 1.13 2014/06/12 15:49:29 deraadt Exp $ */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */

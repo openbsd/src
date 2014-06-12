@@ -1,4 +1,4 @@
-/* crypto/ts/ts_resp_utils.c */
+/* $OpenBSD: ts_rsp_utils.c,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */

@@ -1,4 +1,4 @@
-/* ssl/ssl_locl.h */
+/* $OpenBSD: ssl_locl.h,v 1.49 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

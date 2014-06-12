@@ -1,4 +1,4 @@
-/* crypto/engine/eng_all.c */
+/* $OpenBSD: eng_all.c,v 1.25 2014/06/12 15:49:29 deraadt Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */

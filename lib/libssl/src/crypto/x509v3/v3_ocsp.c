@@ -1,4 +1,4 @@
-/* v3_ocsp.c */
+/* $OpenBSD: v3_ocsp.c,v 1.7 2014/06/12 15:49:31 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */

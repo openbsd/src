@@ -1,3 +1,4 @@
+/* $OpenBSD: e_aes.c,v 1.19 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *

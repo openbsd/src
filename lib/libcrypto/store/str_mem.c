@@ -1,4 +1,4 @@
-/* crypto/store/str_mem.c */
+/* $OpenBSD: str_mem.c,v 1.8 2014/06/12 15:49:30 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.
  */

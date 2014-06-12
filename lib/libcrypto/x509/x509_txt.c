@@ -1,4 +1,4 @@
-/* crypto/x509/x509_txt.c */
+/* $OpenBSD: x509_txt.c,v 1.18 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

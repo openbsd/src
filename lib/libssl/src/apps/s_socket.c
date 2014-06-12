@@ -1,4 +1,4 @@
-/* apps/s_socket.c -  socket-related functions used by s_client and s_server */
+/* $OpenBSD: s_socket.c,v 1.41 2014/06/12 15:49:27 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecs_err.c */
+/* $OpenBSD: ecs_err.c,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* ssl/s23_meth.c */
+/* $OpenBSD: s23_meth.c,v 1.13 2014/06/12 15:49:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
