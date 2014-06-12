@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.7 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.8 2014/06/12 20:40:57 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -518,6 +519,9 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			const char *type, const char *value)
 	{
+ 	long lval;
+	char *ep;
+
 	if (!value)
 		{
 		RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_VALUE_MISSING);
@@ -549,22 +553,35 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
 		}
 
-	if (!strcmp(type, "rsa_pss_saltlen"))
-		{
+	if (!strcmp(type, "rsa_pss_saltlen")) {
 		int saltlen;
-		saltlen = atoi(value);
+
+		errno = 0;
+		lval = strtol(value, &ep, 10);
+		if (value[0] == '\0' || *ep != '\0')
+			goto not_a_number;
+		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		    (lval > INT_MAX || lval < INT_MIN))
+			goto out_of_range;
+		saltlen = lval;
 		return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
-		}
+	}
 
-	if (!strcmp(type, "rsa_keygen_bits"))
-		{
+	if (!strcmp(type, "rsa_keygen_bits")) {
 		int nbits;
-		nbits = atoi(value);
-		return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
-		}
 
-	if (!strcmp(type, "rsa_keygen_pubexp"))
-		{
+		errno = 0;
+		lval = strtol(value, &ep, 10);
+		if (value[0] == '\0' || *ep != '\0')
+			goto not_a_number;
+		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		    (lval > INT_MAX || lval < INT_MIN))
+			goto out_of_range;
+		nbits = lval;
+		return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
+	}
+
+	if (!strcmp(type, "rsa_keygen_pubexp")) {
 		int ret;
 		BIGNUM *pubexp = NULL;
 		if (!BN_asc2bn(&pubexp, value))
@@ -573,10 +590,12 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		if (ret <= 0)
 			BN_free(pubexp);
 		return ret;
-		}
-
-	return -2;
 	}
+
+not_a_number:
+out_of_range:
+	return -2;
+}
 
 static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.5 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.6 2014/06/12 20:40:57 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -217,24 +218,43 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			const char *type, const char *value)
 	{
-	if (!strcmp(type, "dsa_paramgen_bits"))
-		{
+ 	long lval;
+	char *ep;
+
+	if (!strcmp(type, "dsa_paramgen_bits")) {
 		int nbits;
-		nbits = atoi(value);
+
+		errno = 0;
+		lval = strtol(value, &ep, 10);
+		if (value[0] == '\0' || *ep != '\0')
+			goto not_a_number;
+		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		    (lval > INT_MAX || lval < INT_MIN))
+			goto out_of_range;
+		nbits = lval;
 		return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
-		}
-	if (!strcmp(type, "dsa_paramgen_q_bits"))
-		{
-		int qbits = atoi(value);
+	}
+	if (!strcmp(type, "dsa_paramgen_q_bits")) {
+		int qbits;
+
+		errno = 0;
+		lval = strtol(value, &ep, 10);
+		if (value[0] == '\0' || *ep != '\0')
+			goto not_a_number;
+		if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+		    (lval > INT_MAX || lval < INT_MIN))
+			goto out_of_range;
+		qbits = lval;
 		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-		                         EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
-		}
-	if (!strcmp(type, "dsa_paramgen_md"))
-		{
+		    EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
+	}
+	if (!strcmp(type, "dsa_paramgen_md")){
 		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-		                         EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
-		                         (void *)EVP_get_digestbyname(value));
-		}
+		    EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
+		    (void *)EVP_get_digestbyname(value));
+	}
+not_a_number:
+out_of_range:
 	return -2;
 	}
 
