@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.11 2010/02/08 11:04:07 otto Exp $ */
+/*	$OpenBSD: qsort.c,v 1.12 2014/06/12 14:54:25 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,12 +84,11 @@ void
 qsort(void *aa, size_t n, size_t es, int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	int cmp_result, swaptype, swap_cnt;
+	int cmp_result, swaptype;
 	size_t d, r;
 	char *a = aa;
 
 loop:	SWAPINIT(a, es);
-	swap_cnt = 0;
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *) a + n * es; pm += es)
 			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0;
@@ -116,7 +115,6 @@ loop:	SWAPINIT(a, es);
 	for (;;) {
 		while (pb <= pc && (cmp_result = cmp(pb, a)) <= 0) {
 			if (cmp_result == 0) {
-				swap_cnt = 1;
 				swap(pa, pb);
 				pa += es;
 			}
@@ -124,7 +122,6 @@ loop:	SWAPINIT(a, es);
 		}
 		while (pb <= pc && (cmp_result = cmp(pc, a)) >= 0) {
 			if (cmp_result == 0) {
-				swap_cnt = 1;
 				swap(pc, pd);
 				pd -= es;
 			}
@@ -133,16 +130,8 @@ loop:	SWAPINIT(a, es);
 		if (pb > pc)
 			break;
 		swap(pb, pc);
-		swap_cnt = 1;
 		pb += es;
 		pc -= es;
-	}
-	if (swap_cnt == 0) {  /* Switch to insertion sort */
-		for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
-			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0; 
-			     pl -= es)
-				swap(pl, pl - es);
-		return;
 	}
 
 	pn = (char *)a + n * es;
