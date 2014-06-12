@@ -77,6 +77,8 @@ typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 #include <ngx_open_file_cache.h>
 #include <ngx_os.h>
 #include <ngx_connection.h>
+#include <ngx_syslog.h>
+#include <ngx_proxy_protocol.h>
 
 
 #define LF     (u_char) 10

@@ -36,7 +36,9 @@ CORE_DEPS="src/core/nginx.h \
            src/core/ngx_conf_file.h \
            src/core/ngx_resolver.h \
            src/core/ngx_open_file_cache.h \
-           src/core/ngx_crypt.h"
+           src/core/ngx_crypt.h \
+           src/core/ngx_proxy_protocol.h \
+           src/core/ngx_syslog.h"
 
 
 CORE_SRCS="src/core/nginx.c \
@@ -67,7 +69,9 @@ CORE_SRCS="src/core/nginx.c \
            src/core/ngx_conf_file.c \
            src/core/ngx_resolver.c \
            src/core/ngx_open_file_cache.c \
-           src/core/ngx_crypt.c"
+           src/core/ngx_crypt.c \
+           src/core/ngx_proxy_protocol.c \
+           src/core/ngx_syslog.c"
 
 
 REGEX_MODULE=ngx_regex_module
@@ -396,6 +400,10 @@ HTTP_ACCESS_SRCS=src/http/modules/ngx_http_access_module.c
 
 HTTP_AUTH_BASIC_MODULE=ngx_http_auth_basic_module
 HTTP_AUTH_BASIC_SRCS=src/http/modules/ngx_http_auth_basic_module.c
+
+
+HTTP_AUTH_REQUEST_MODULE=ngx_http_auth_request_module
+HTTP_AUTH_REQUEST_SRCS=src/http/modules/ngx_http_auth_request_module.c
 
 
 HTTP_AUTOINDEX_MODULE=ngx_http_autoindex_module

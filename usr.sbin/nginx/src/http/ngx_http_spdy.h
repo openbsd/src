@@ -15,12 +15,10 @@
 #include <zlib.h>
 
 
-#define NGX_SPDY_VERSION              2
+#define NGX_SPDY_VERSION              3
 
-#ifdef TLSEXT_TYPE_next_proto_neg
-#define NGX_SPDY_NPN_ADVERTISE        "\x06spdy/2"
-#define NGX_SPDY_NPN_NEGOTIATED       "spdy/2"
-#endif
+#define NGX_SPDY_NPN_ADVERTISE        "\x08spdy/3.1"
+#define NGX_SPDY_NPN_NEGOTIATED       "spdy/3.1"
 
 #define NGX_SPDY_STATE_BUFFER_SIZE    16
 
@@ -30,32 +28,34 @@
 #define NGX_SPDY_SYN_REPLY            2
 #define NGX_SPDY_RST_STREAM           3
 #define NGX_SPDY_SETTINGS             4
-#define NGX_SPDY_NOOP                 5
 #define NGX_SPDY_PING                 6
 #define NGX_SPDY_GOAWAY               7
 #define NGX_SPDY_HEADERS              8
+#define NGX_SPDY_WINDOW_UPDATE        9
 
 #define NGX_SPDY_FRAME_HEADER_SIZE    8
 
 #define NGX_SPDY_SID_SIZE             4
+#define NGX_SPDY_DELTA_SIZE           4
 
 #define NGX_SPDY_SYN_STREAM_SIZE      10
-#define NGX_SPDY_SYN_REPLY_SIZE       6
+#define NGX_SPDY_SYN_REPLY_SIZE       4
 #define NGX_SPDY_RST_STREAM_SIZE      8
 #define NGX_SPDY_PING_SIZE            4
-#define NGX_SPDY_GOAWAY_SIZE          4
-#define NGX_SPDY_NV_NUM_SIZE          2
-#define NGX_SPDY_NV_NLEN_SIZE         2
-#define NGX_SPDY_NV_VLEN_SIZE         2
+#define NGX_SPDY_GOAWAY_SIZE          8
+#define NGX_SPDY_WINDOW_UPDATE_SIZE   8
+#define NGX_SPDY_NV_NUM_SIZE          4
+#define NGX_SPDY_NV_NLEN_SIZE         4
+#define NGX_SPDY_NV_VLEN_SIZE         4
 #define NGX_SPDY_SETTINGS_NUM_SIZE    4
-#define NGX_SPDY_SETTINGS_IDF_SIZE    4
+#define NGX_SPDY_SETTINGS_FID_SIZE    4
 #define NGX_SPDY_SETTINGS_VAL_SIZE    4
 
 #define NGX_SPDY_SETTINGS_PAIR_SIZE                                           \
-    (NGX_SPDY_SETTINGS_IDF_SIZE + NGX_SPDY_SETTINGS_VAL_SIZE)
+    (NGX_SPDY_SETTINGS_FID_SIZE + NGX_SPDY_SETTINGS_VAL_SIZE)
 
 #define NGX_SPDY_HIGHEST_PRIORITY     0
-#define NGX_SPDY_LOWEST_PRIORITY      3
+#define NGX_SPDY_LOWEST_PRIORITY      7
 
 #define NGX_SPDY_FLAG_FIN             0x01
 #define NGX_SPDY_FLAG_UNIDIRECTIONAL  0x02
@@ -81,6 +81,12 @@ struct ngx_http_spdy_connection_s {
 
     ngx_uint_t                       processing;
 
+    size_t                           send_window;
+    size_t                           recv_window;
+    size_t                           init_window;
+
+    ngx_queue_t                      waiting;
+
     u_char                           buffer[NGX_SPDY_STATE_BUFFER_SIZE];
     size_t                           buffer_used;
     ngx_http_spdy_handler_pt         handler;
@@ -96,18 +102,19 @@ struct ngx_http_spdy_connection_s {
     ngx_http_spdy_stream_t         **streams_index;
 
     ngx_http_spdy_out_frame_t       *last_out;
-    ngx_http_spdy_stream_t          *last_stream;
+
+    ngx_queue_t                      posted;
 
     ngx_http_spdy_stream_t          *stream;
 
-    ngx_uint_t                       headers;
+    ngx_uint_t                       entries;
     size_t                           length;
     u_char                           flags;
 
     ngx_uint_t                       last_sid;
 
-    unsigned                         blocked:2;
-    unsigned                         waiting:1; /* FIXME better name */
+    unsigned                         blocked:1;
+    unsigned                         incomplete:1;
 };
 
 
@@ -116,15 +123,27 @@ struct ngx_http_spdy_stream_s {
     ngx_http_request_t              *request;
     ngx_http_spdy_connection_t      *connection;
     ngx_http_spdy_stream_t          *index;
-    ngx_http_spdy_stream_t          *next;
 
     ngx_uint_t                       header_buffers;
-    ngx_uint_t                       waiting;
+    ngx_uint_t                       queued;
+
+    /*
+     * A change to SETTINGS_INITIAL_WINDOW_SIZE could cause the
+     * send_window to become negative, hence it's signed.
+     */
+    ssize_t                          send_window;
+    size_t                           recv_window;
+
     ngx_http_spdy_out_frame_t       *free_frames;
     ngx_chain_t                     *free_data_headers;
+    ngx_chain_t                     *free_bufs;
 
-    unsigned                         priority:2;
+    ngx_queue_t                      queue;
+
+    unsigned                         priority:3;
     unsigned                         handled:1;
+    unsigned                         blocked:1;
+    unsigned                         exhausted:1;
     unsigned                         in_closed:1;
     unsigned                         out_closed:1;
     unsigned                         skip_data:2;
@@ -138,10 +157,8 @@ struct ngx_http_spdy_out_frame_s {
     ngx_int_t                      (*handler)(ngx_http_spdy_connection_t *sc,
                                         ngx_http_spdy_out_frame_t *frame);
 
-    ngx_http_spdy_out_frame_t       *free;
-
     ngx_http_spdy_stream_t          *stream;
-    size_t                           size;
+    size_t                           length;
 
     ngx_uint_t                       priority;
     unsigned                         blocked:1;
@@ -157,6 +174,9 @@ ngx_http_spdy_queue_frame(ngx_http_spdy_connection_t *sc,
 
     for (out = &sc->last_out; *out; out = &(*out)->next)
     {
+        /*
+         * NB: higher values represent lower priorities.
+         */
         if (frame->priority >= (*out)->priority) {
             break;
         }
@@ -173,9 +193,9 @@ ngx_http_spdy_queue_blocked_frame(ngx_http_spdy_connection_t *sc,
 {
     ngx_http_spdy_out_frame_t  **out;
 
-    for (out = &sc->last_out; *out && !(*out)->blocked; out = &(*out)->next)
+    for (out = &sc->last_out; *out; out = &(*out)->next)
     {
-        if (frame->priority >= (*out)->priority) {
+        if ((*out)->blocked) {
             break;
         }
     }
@@ -186,7 +206,7 @@ ngx_http_spdy_queue_blocked_frame(ngx_http_spdy_connection_t *sc,
 
 
 void ngx_http_spdy_init(ngx_event_t *rev);
-void ngx_http_spdy_request_headers_init();
+void ngx_http_spdy_request_headers_init(void);
 
 ngx_int_t ngx_http_spdy_read_request_body(ngx_http_request_t *r,
     ngx_http_client_body_handler_pt post_handler);
@@ -229,7 +249,10 @@ ngx_int_t ngx_http_spdy_send_output_queue(ngx_http_spdy_connection_t *sc);
 
 #define ngx_spdy_frame_write_flags_and_len(p, f, l)                           \
     ngx_spdy_frame_aligned_write_uint32(p, (f) << 24 | (l))
+#define ngx_spdy_frame_write_flags_and_id(p, f, i)                            \
+    ngx_spdy_frame_aligned_write_uint32(p, (f) << 24 | (i))
 
-#define ngx_spdy_frame_write_sid  ngx_spdy_frame_aligned_write_uint32
+#define ngx_spdy_frame_write_sid     ngx_spdy_frame_aligned_write_uint32
+#define ngx_spdy_frame_write_window  ngx_spdy_frame_aligned_write_uint32
 
 #endif /* _NGX_HTTP_SPDY_H_INCLUDED_ */

@@ -14,14 +14,12 @@
 #include <zlib.h>
 
 
-#define NGX_SPDY_WRITE_BUFFERED  NGX_HTTP_WRITE_BUFFERED
-
 #define ngx_http_spdy_nv_nsize(h)  (NGX_SPDY_NV_NLEN_SIZE + sizeof(h) - 1)
 #define ngx_http_spdy_nv_vsize(h)  (NGX_SPDY_NV_VLEN_SIZE + sizeof(h) - 1)
 
-#define ngx_http_spdy_nv_write_num   ngx_spdy_frame_write_uint16
-#define ngx_http_spdy_nv_write_nlen  ngx_spdy_frame_write_uint16
-#define ngx_http_spdy_nv_write_vlen  ngx_spdy_frame_write_uint16
+#define ngx_http_spdy_nv_write_num   ngx_spdy_frame_write_uint32
+#define ngx_http_spdy_nv_write_nlen  ngx_spdy_frame_write_uint32
+#define ngx_http_spdy_nv_write_vlen  ngx_spdy_frame_write_uint32
 
 #define ngx_http_spdy_nv_write_name(p, h)                                     \
     ngx_cpymem(ngx_http_spdy_nv_write_nlen(p, sizeof(h) - 1), h, sizeof(h) - 1)
@@ -29,12 +27,22 @@
 #define ngx_http_spdy_nv_write_val(p, h)                                      \
     ngx_cpymem(ngx_http_spdy_nv_write_vlen(p, sizeof(h) - 1), h, sizeof(h) - 1)
 
+
+static ngx_chain_t *ngx_http_spdy_send_chain(ngx_connection_t *fc,
+    ngx_chain_t *in, off_t limit);
+
 static ngx_inline ngx_int_t ngx_http_spdy_filter_send(
     ngx_connection_t *fc, ngx_http_spdy_stream_t *stream);
+static ngx_inline ngx_int_t ngx_http_spdy_flow_control(
+    ngx_http_spdy_connection_t *sc, ngx_http_spdy_stream_t *stream);
+static void ngx_http_spdy_waiting_queue(ngx_http_spdy_connection_t *sc,
+    ngx_http_spdy_stream_t *stream);
 
+static ngx_chain_t *ngx_http_spdy_filter_get_shadow(
+    ngx_http_spdy_stream_t *stream, ngx_buf_t *buf, off_t offset, off_t size);
 static ngx_http_spdy_out_frame_t *ngx_http_spdy_filter_get_data_frame(
-    ngx_http_spdy_stream_t *stream, size_t len, ngx_uint_t flags,
-    ngx_chain_t *first, ngx_chain_t *last);
+    ngx_http_spdy_stream_t *stream, size_t len, ngx_chain_t *first,
+    ngx_chain_t *last);
 
 static ngx_int_t ngx_http_spdy_syn_frame_handler(
     ngx_http_spdy_connection_t *sc, ngx_http_spdy_out_frame_t *frame);
@@ -82,7 +90,6 @@ ngx_module_t  ngx_http_spdy_filter_module = {
 
 
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
-static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
 
 static ngx_int_t
@@ -159,10 +166,12 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
     }
 
     len = NGX_SPDY_NV_NUM_SIZE
-          + ngx_http_spdy_nv_nsize("version")
+          + ngx_http_spdy_nv_nsize(":version")
           + ngx_http_spdy_nv_vsize("HTTP/1.1")
-          + ngx_http_spdy_nv_nsize("status")
-          + ngx_http_spdy_nv_vsize("418");
+          + ngx_http_spdy_nv_nsize(":status")
+          + (r->headers_out.status_line.len
+             ? NGX_SPDY_NV_VLEN_SIZE + r->headers_out.status_line.len
+             : ngx_http_spdy_nv_vsize("418"));
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
@@ -300,12 +309,20 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
 
     last = buf + NGX_SPDY_NV_NUM_SIZE;
 
-    last = ngx_http_spdy_nv_write_name(last, "version");
+    last = ngx_http_spdy_nv_write_name(last, ":version");
     last = ngx_http_spdy_nv_write_val(last, "HTTP/1.1");
 
-    last = ngx_http_spdy_nv_write_name(last, "status");
-    last = ngx_spdy_frame_write_uint16(last, 3);
-    last = ngx_sprintf(last, "%03ui", r->headers_out.status);
+    last = ngx_http_spdy_nv_write_name(last, ":status");
+
+    if (r->headers_out.status_line.len) {
+        last = ngx_http_spdy_nv_write_vlen(last,
+                                           r->headers_out.status_line.len);
+        last = ngx_cpymem(last, r->headers_out.status_line.data,
+                          r->headers_out.status_line.len);
+    } else {
+        last = ngx_http_spdy_nv_write_vlen(last, 3);
+        last = ngx_sprintf(last, "%03ui", r->headers_out.status);
+    }
 
     count = 2;
 
@@ -444,17 +461,6 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
             continue;
         }
 
-        if ((header[i].key.len == 6
-             && ngx_strncasecmp(header[i].key.data,
-                                (u_char *) "status", 6) == 0)
-            || (header[i].key.len == 7
-                && ngx_strncasecmp(header[i].key.data,
-                                   (u_char *) "version", 7) == 0))
-        {
-            header[i].hash = 0;
-            continue;
-        }
-
         last = ngx_http_spdy_nv_write_nlen(last, header[i].key.len);
 
         ngx_strlow(last, header[i].key.data, header[i].key.len);
@@ -500,7 +506,7 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
         count++;
     }
 
-    (void) ngx_spdy_frame_write_uint16(buf, count);
+    (void) ngx_http_spdy_nv_write_num(buf, count);
 
     stream = r->spdy_stream;
     sc = stream->connection;
@@ -547,13 +553,14 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
 
     r->header_size = len;
 
+    len -= NGX_SPDY_FRAME_HEADER_SIZE;
+
     if (r->header_only) {
         b->last_buf = 1;
-        p = ngx_spdy_frame_write_flags_and_len(p, NGX_SPDY_FLAG_FIN,
-                                             len - NGX_SPDY_FRAME_HEADER_SIZE);
+        p = ngx_spdy_frame_write_flags_and_len(p, NGX_SPDY_FLAG_FIN, len);
+
     } else {
-        p = ngx_spdy_frame_write_flags_and_len(p, 0,
-                                             len - NGX_SPDY_FRAME_HEADER_SIZE);
+        p = ngx_spdy_frame_write_flags_and_len(p, 0, len);
     }
 
     (void) ngx_spdy_frame_write_sid(p, stream->id);
@@ -574,20 +581,17 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
     frame->first = cl;
     frame->last = cl;
     frame->handler = ngx_http_spdy_syn_frame_handler;
-    frame->free = NULL;
     frame->stream = stream;
-    frame->size = len;
+    frame->length = len;
     frame->priority = stream->priority;
     frame->blocked = 1;
     frame->fin = r->header_only;
 
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, stream->request->connection->log, 0,
-                   "spdy:%ui create SYN_REPLY frame %p: size:%uz",
-                   stream->id, frame, frame->size);
+                   "spdy:%ui create SYN_REPLY frame %p: len:%uz",
+                   stream->id, frame, frame->length);
 
     ngx_http_spdy_queue_blocked_frame(sc, frame);
-
-    r->blocked++;
 
     cln = ngx_http_cleanup_add(r, 0);
     if (cln == NULL) {
@@ -597,109 +601,240 @@ ngx_http_spdy_header_filter(ngx_http_request_t *r)
     cln->handler = ngx_http_spdy_filter_cleanup;
     cln->data = stream;
 
-    stream->waiting = 1;
+    stream->queued = 1;
+
+    c->send_chain = ngx_http_spdy_send_chain;
+    c->need_last_buf = 1;
 
     return ngx_http_spdy_filter_send(c, stream);
 }
 
 
-static ngx_int_t
-ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
+static ngx_chain_t *
+ngx_http_spdy_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
 {
-    off_t                       size;
-    ngx_buf_t                  *b;
-    ngx_chain_t                *cl, *ll, *out, **ln;
-    ngx_http_spdy_stream_t     *stream;
-    ngx_http_spdy_out_frame_t  *frame;
+    off_t                        size, offset;
+    size_t                       rest, frame_size;
+    ngx_chain_t                 *cl, *out, **ln;
+    ngx_http_request_t          *r;
+    ngx_http_spdy_stream_t      *stream;
+    ngx_http_spdy_loc_conf_t    *slcf;
+    ngx_http_spdy_out_frame_t   *frame;
+    ngx_http_spdy_connection_t  *sc;
 
+    r = fc->data;
     stream = r->spdy_stream;
 
-    if (stream == NULL) {
-        return ngx_http_next_body_filter(r, in);
-    }
-
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "spdy body filter \"%V?%V\"", &r->uri, &r->args);
-
-    if (in == NULL || r->header_only) {
-
-        if (stream->waiting) {
-            return NGX_AGAIN;
-        }
-
-        r->connection->buffered &= ~NGX_SPDY_WRITE_BUFFERED;
-
-        return NGX_OK;
-    }
-
+#if (NGX_SUPPRESS_WARN)
     size = 0;
-    ln = &out;
-    ll = in;
-
-    for ( ;; ) {
-        b = ll->buf;
-#if 1
-        if (ngx_buf_size(b) == 0 && !ngx_buf_special(b)) {
-            ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
-                          "zero size buf in spdy body filter "
-                          "t:%d r:%d f:%d %p %p-%p %p %O-%O",
-                          b->temporary,
-                          b->recycled,
-                          b->in_file,
-                          b->start,
-                          b->pos,
-                          b->last,
-                          b->file,
-                          b->file_pos,
-                          b->file_last);
-
-            ngx_debug_point();
-            return NGX_ERROR;
-        }
 #endif
-        cl = ngx_alloc_chain_link(r->pool);
-        if (cl == NULL) {
-            return NGX_ERROR;
-        }
 
-        size += ngx_buf_size(b);
-        cl->buf = b;
+    while (in) {
+        size = ngx_buf_size(in->buf);
 
-        *ln = cl;
-        ln = &cl->next;
-
-        if (ll->next == NULL) {
+        if (size || in->buf->last_buf) {
             break;
         }
 
-        ll = ll->next;
+        in = in->next;
     }
 
-    if (size > NGX_SPDY_MAX_FRAME_SIZE) {
-        ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
-                      "FIXME: chain too big in spdy filter: %O", size);
-        return NGX_ERROR;
+    if (in == NULL) {
+
+        if (stream->queued) {
+            fc->write->delayed = 1;
+        } else {
+            fc->buffered &= ~NGX_SPDY_BUFFERED;
+        }
+
+        return NULL;
     }
 
-    frame = ngx_http_spdy_filter_get_data_frame(stream, (size_t) size,
-                                                b->last_buf, out, cl);
-    if (frame == NULL) {
-        return NGX_ERROR;
+    sc = stream->connection;
+
+    if (size && ngx_http_spdy_flow_control(sc, stream) == NGX_DECLINED) {
+        fc->write->delayed = 1;
+        return in;
     }
 
-    ngx_http_spdy_queue_frame(stream->connection, frame);
+    if (limit == 0 || limit > (off_t) sc->send_window) {
+        limit = sc->send_window;
+    }
 
-    stream->waiting++;
+    if (limit > stream->send_window) {
+        limit = (stream->send_window > 0) ? stream->send_window : 0;
+    }
 
-    r->main->blocked++;
+    if (in->buf->tag == (ngx_buf_tag_t) &ngx_http_spdy_filter_get_shadow) {
+        cl = ngx_alloc_chain_link(r->pool);
+        if (cl == NULL) {
+            return NGX_CHAIN_ERROR;
+        }
 
-    return ngx_http_spdy_filter_send(r->connection, stream);
+        cl->buf = in->buf;
+        in->buf = cl->buf->shadow;
+
+        offset = ngx_buf_in_memory(in->buf)
+                 ? (cl->buf->pos - in->buf->pos)
+                 : (cl->buf->file_pos - in->buf->file_pos);
+
+        cl->next = stream->free_bufs;
+        stream->free_bufs = cl;
+
+    } else {
+        offset = 0;
+    }
+
+#if (NGX_SUPPRESS_WARN)
+    cl = NULL;
+#endif
+
+    slcf = ngx_http_get_module_loc_conf(r, ngx_http_spdy_module);
+
+    frame_size = (limit <= (off_t) slcf->chunk_size) ? (size_t) limit
+                                                     : slcf->chunk_size;
+
+    for ( ;; ) {
+        ln = &out;
+        rest = frame_size;
+
+        while ((off_t) rest >= size) {
+
+            if (offset) {
+                cl = ngx_http_spdy_filter_get_shadow(stream, in->buf,
+                                                     offset, size);
+                if (cl == NULL) {
+                    return NGX_CHAIN_ERROR;
+                }
+
+                offset = 0;
+
+            } else {
+                cl = ngx_alloc_chain_link(r->pool);
+                if (cl == NULL) {
+                    return NGX_CHAIN_ERROR;
+                }
+
+                cl->buf = in->buf;
+            }
+
+            *ln = cl;
+            ln = &cl->next;
+
+            rest -= (size_t) size;
+            in = in->next;
+
+            if (in == NULL) {
+                frame_size -= rest;
+                rest = 0;
+                break;
+            }
+
+            size = ngx_buf_size(in->buf);
+        }
+
+        if (rest) {
+            cl = ngx_http_spdy_filter_get_shadow(stream, in->buf,
+                                                 offset, rest);
+            if (cl == NULL) {
+                return NGX_CHAIN_ERROR;
+            }
+
+            cl->buf->flush = 0;
+            cl->buf->last_buf = 0;
+
+            *ln = cl;
+
+            offset += rest;
+            size -= rest;
+        }
+
+        frame = ngx_http_spdy_filter_get_data_frame(stream, frame_size,
+                                                    out, cl);
+        if (frame == NULL) {
+            return NGX_CHAIN_ERROR;
+        }
+
+        ngx_http_spdy_queue_frame(sc, frame);
+
+        sc->send_window -= frame_size;
+
+        stream->send_window -= frame_size;
+        stream->queued++;
+
+        if (in == NULL) {
+            break;
+        }
+
+        limit -= frame_size;
+
+        if (limit == 0) {
+            break;
+        }
+
+        if (limit < (off_t) slcf->chunk_size) {
+            frame_size = (size_t) limit;
+        }
+    }
+
+    if (offset) {
+        cl = ngx_http_spdy_filter_get_shadow(stream, in->buf, offset, size);
+        if (cl == NULL) {
+            return NGX_CHAIN_ERROR;
+        }
+
+        in->buf = cl->buf;
+        ngx_free_chain(r->pool, cl);
+    }
+
+    if (ngx_http_spdy_filter_send(fc, stream) == NGX_ERROR) {
+        return NGX_CHAIN_ERROR;
+    }
+
+    if (in && ngx_http_spdy_flow_control(sc, stream) == NGX_DECLINED) {
+        fc->write->delayed = 1;
+    }
+
+    return in;
+}
+
+
+static ngx_chain_t *
+ngx_http_spdy_filter_get_shadow(ngx_http_spdy_stream_t *stream, ngx_buf_t *buf,
+    off_t offset, off_t size)
+{
+    ngx_buf_t    *chunk;
+    ngx_chain_t  *cl;
+
+    cl = ngx_chain_get_free_buf(stream->request->pool, &stream->free_bufs);
+    if (cl == NULL) {
+        return NULL;
+    }
+
+    chunk = cl->buf;
+
+    ngx_memcpy(chunk, buf, sizeof(ngx_buf_t));
+
+    chunk->tag = (ngx_buf_tag_t) &ngx_http_spdy_filter_get_shadow;
+    chunk->shadow = buf;
+
+    if (ngx_buf_in_memory(chunk)) {
+        chunk->pos += offset;
+        chunk->last = chunk->pos + size;
+    }
+
+    if (chunk->in_file) {
+        chunk->file_pos += offset;
+        chunk->file_last = chunk->file_pos + size;
+    }
+
+    return cl;
 }
 
 
 static ngx_http_spdy_out_frame_t *
 ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
-    size_t len, ngx_uint_t fin, ngx_chain_t *first, ngx_chain_t *last)
+    size_t len, ngx_chain_t *first, ngx_chain_t *last)
 {
     u_char                     *p;
     ngx_buf_t                  *buf;
@@ -711,7 +846,7 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
     frame = stream->free_frames;
 
     if (frame) {
-        stream->free_frames = frame->free;
+        stream->free_frames = frame->next;
 
     } else {
         frame = ngx_palloc(stream->request->pool,
@@ -721,62 +856,60 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
         }
     }
 
+    flags = last->buf->last_buf ? NGX_SPDY_FLAG_FIN : 0;
+
     ngx_log_debug4(NGX_LOG_DEBUG_HTTP, stream->request->connection->log, 0,
-                   "spdy:%ui create DATA frame %p: len:%uz fin:%ui",
-                   stream->id, frame, len, fin);
+                   "spdy:%ui create DATA frame %p: len:%uz flags:%ui",
+                   stream->id, frame, len, flags);
 
-    if (len || fin) {
+    cl = ngx_chain_get_free_buf(stream->request->pool,
+                                &stream->free_data_headers);
+    if (cl == NULL) {
+        return NULL;
+    }
 
-        flags = fin ? NGX_SPDY_FLAG_FIN : 0;
+    buf = cl->buf;
 
-        cl = ngx_chain_get_free_buf(stream->request->pool,
-                                    &stream->free_data_headers);
-        if (cl == NULL) {
+    if (buf->start) {
+        p = buf->start;
+        buf->pos = p;
+
+        p += NGX_SPDY_SID_SIZE;
+
+        (void) ngx_spdy_frame_write_flags_and_len(p, flags, len);
+
+    } else {
+        p = ngx_palloc(stream->request->pool, NGX_SPDY_FRAME_HEADER_SIZE);
+        if (p == NULL) {
             return NULL;
         }
 
-        buf = cl->buf;
+        buf->pos = p;
+        buf->start = p;
 
-        if (buf->start) {
-            p = buf->start;
-            buf->pos = p;
+        p = ngx_spdy_frame_write_sid(p, stream->id);
+        p = ngx_spdy_frame_write_flags_and_len(p, flags, len);
 
-            p += sizeof(uint32_t);
+        buf->last = p;
+        buf->end = p;
 
-            (void) ngx_spdy_frame_write_flags_and_len(p, flags, len);
-
-        } else {
-            p = ngx_palloc(stream->request->pool, NGX_SPDY_FRAME_HEADER_SIZE);
-            if (p == NULL) {
-                return NULL;
-            }
-
-            buf->pos = p;
-            buf->start = p;
-
-            p = ngx_spdy_frame_write_sid(p, stream->id);
-            p = ngx_spdy_frame_write_flags_and_len(p, flags, len);
-
-            buf->last = p;
-            buf->end = p;
-
-            buf->tag = (ngx_buf_tag_t) &ngx_http_spdy_filter_module;
-            buf->memory = 1;
-        }
-
-        cl->next = first;
-        first = cl;
+        buf->tag = (ngx_buf_tag_t) &ngx_http_spdy_filter_get_data_frame;
+        buf->memory = 1;
     }
+
+    cl->next = first;
+    first = cl;
+
+    last->buf->flush = 1;
 
     frame->first = first;
     frame->last = last;
     frame->handler = ngx_http_spdy_data_frame_handler;
-    frame->free = NULL;
     frame->stream = stream;
-    frame->size = NGX_SPDY_FRAME_HEADER_SIZE + len;
+    frame->length = len;
     frame->priority = stream->priority;
     frame->blocked = 0;
-    frame->fin = fin;
+    frame->fin = last->buf->last_buf;
 
     return frame;
 }
@@ -785,20 +918,73 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
 static ngx_inline ngx_int_t
 ngx_http_spdy_filter_send(ngx_connection_t *fc, ngx_http_spdy_stream_t *stream)
 {
+    stream->blocked = 1;
+
     if (ngx_http_spdy_send_output_queue(stream->connection) == NGX_ERROR) {
         fc->error = 1;
         return NGX_ERROR;
     }
 
-    if (stream->waiting) {
-        fc->buffered |= NGX_SPDY_WRITE_BUFFERED;
+    stream->blocked = 0;
+
+    if (stream->queued) {
+        fc->buffered |= NGX_SPDY_BUFFERED;
         fc->write->delayed = 1;
         return NGX_AGAIN;
     }
 
-    fc->buffered &= ~NGX_SPDY_WRITE_BUFFERED;
+    fc->buffered &= ~NGX_SPDY_BUFFERED;
 
     return NGX_OK;
+}
+
+
+static ngx_inline ngx_int_t
+ngx_http_spdy_flow_control(ngx_http_spdy_connection_t *sc,
+    ngx_http_spdy_stream_t *stream)
+{
+    if (stream->send_window <= 0) {
+        stream->exhausted = 1;
+        return NGX_DECLINED;
+    }
+
+    if (sc->send_window == 0) {
+        ngx_http_spdy_waiting_queue(sc, stream);
+        return NGX_DECLINED;
+    }
+
+    return NGX_OK;
+}
+
+
+static void
+ngx_http_spdy_waiting_queue(ngx_http_spdy_connection_t *sc,
+    ngx_http_spdy_stream_t *stream)
+{
+    ngx_queue_t             *q;
+    ngx_http_spdy_stream_t  *s;
+
+    if (stream->handled) {
+        return;
+    }
+
+    stream->handled = 1;
+
+    for (q = ngx_queue_last(&sc->waiting);
+         q != ngx_queue_sentinel(&sc->waiting);
+         q = ngx_queue_prev(q))
+    {
+        s = ngx_queue_data(q, ngx_http_spdy_stream_t, queue);
+
+        /*
+         * NB: higher values represent lower priorities.
+         */
+        if (stream->priority >= s->priority) {
+            break;
+        }
+    }
+
+    ngx_queue_insert_after(q, &stream->queue);
 }
 
 
@@ -834,6 +1020,7 @@ static ngx_int_t
 ngx_http_spdy_data_frame_handler(ngx_http_spdy_connection_t *sc,
     ngx_http_spdy_out_frame_t *frame)
 {
+    ngx_buf_t               *buf;
     ngx_chain_t             *cl, *ln;
     ngx_http_spdy_stream_t  *stream;
 
@@ -841,7 +1028,7 @@ ngx_http_spdy_data_frame_handler(ngx_http_spdy_connection_t *sc,
 
     cl = frame->first;
 
-    if (cl->buf->tag == (ngx_buf_tag_t) &ngx_http_spdy_filter_module) {
+    if (cl->buf->tag == (ngx_buf_tag_t) &ngx_http_spdy_filter_get_data_frame) {
 
         if (cl->buf->pos != cl->buf->last) {
             ngx_log_debug2(NGX_LOG_DEBUG_HTTP, sc->connection->log, 0,
@@ -864,6 +1051,18 @@ ngx_http_spdy_data_frame_handler(ngx_http_spdy_connection_t *sc,
     }
 
     for ( ;; ) {
+        if (cl->buf->tag == (ngx_buf_tag_t) &ngx_http_spdy_filter_get_shadow) {
+            buf = cl->buf->shadow;
+
+            if (ngx_buf_in_memory(buf)) {
+                buf->pos = cl->buf->pos;
+            }
+
+            if (buf->in_file) {
+                buf->file_pos = cl->buf->file_pos;
+            }
+        }
+
         if (ngx_buf_size(cl->buf) != 0) {
 
             if (cl != frame->first) {
@@ -880,7 +1079,13 @@ ngx_http_spdy_data_frame_handler(ngx_http_spdy_connection_t *sc,
 
         ln = cl->next;
 
-        ngx_free_chain(stream->request->pool, cl);
+        if (cl->buf->tag == (ngx_buf_tag_t) &ngx_http_spdy_filter_get_shadow) {
+            cl->next = stream->free_bufs;
+            stream->free_bufs = cl;
+
+        } else {
+            ngx_free_chain(stream->request->pool, cl);
+        }
 
         if (cl == frame->last) {
             goto done;
@@ -912,17 +1117,16 @@ ngx_http_spdy_handle_frame(ngx_http_spdy_stream_t *stream,
 
     r = stream->request;
 
-    r->connection->sent += frame->size;
-    r->blocked--;
+    r->connection->sent += NGX_SPDY_FRAME_HEADER_SIZE + frame->length;
 
     if (frame->fin) {
         stream->out_closed = 1;
     }
 
-    frame->free = stream->free_frames;
+    frame->next = stream->free_frames;
     stream->free_frames = frame;
 
-    stream->waiting--;
+    stream->queued--;
 }
 
 
@@ -930,21 +1134,19 @@ static ngx_inline void
 ngx_http_spdy_handle_stream(ngx_http_spdy_connection_t *sc,
     ngx_http_spdy_stream_t *stream)
 {
-    ngx_connection_t  *fc;
+    ngx_event_t  *wev;
 
-    fc = stream->request->connection;
-
-    fc->write->delayed = 0;
-
-    if (stream->handled) {
+    if (stream->handled || stream->blocked || stream->exhausted) {
         return;
     }
 
-    if (sc->blocked == 2) {
-        stream->handled = 1;
+    wev = stream->request->connection->write;
 
-        stream->next = sc->last_stream;
-        sc->last_stream = stream;
+    if (!wev->timer_set) {
+        wev->delayed = 0;
+
+        stream->handled = 1;
+        ngx_queue_insert_tail(&sc->posted, &stream->queue);
     }
 }
 
@@ -954,16 +1156,22 @@ ngx_http_spdy_filter_cleanup(void *data)
 {
     ngx_http_spdy_stream_t *stream = data;
 
-    ngx_http_request_t         *r;
-    ngx_http_spdy_out_frame_t  *frame, **fn;
+    size_t                       delta;
+    ngx_http_spdy_out_frame_t   *frame, **fn;
+    ngx_http_spdy_connection_t  *sc;
 
-    if (stream->waiting == 0) {
+    if (stream->handled) {
+        stream->handled = 0;
+        ngx_queue_remove(&stream->queue);
+    }
+
+    if (stream->queued == 0) {
         return;
     }
 
-    r = stream->request;
-
-    fn = &stream->connection->last_out;
+    delta = 0;
+    sc = stream->connection;
+    fn = &sc->last_out;
 
     for ( ;; ) {
         frame = *fn;
@@ -973,16 +1181,26 @@ ngx_http_spdy_filter_cleanup(void *data)
         }
 
         if (frame->stream == stream && !frame->blocked) {
-
-            stream->waiting--;
-            r->blocked--;
-
             *fn = frame->next;
+
+            delta += frame->length;
+
+            if (--stream->queued == 0) {
+                break;
+            }
+
             continue;
         }
 
         fn = &frame->next;
     }
+
+    if (sc->send_window == 0 && delta && !ngx_queue_empty(&sc->waiting)) {
+        ngx_queue_add(&sc->posted, &sc->waiting);
+        ngx_queue_init(&sc->waiting);
+    }
+
+    sc->send_window += delta;
 }
 
 
@@ -991,9 +1209,6 @@ ngx_http_spdy_filter_init(ngx_conf_t *cf)
 {
     ngx_http_next_header_filter = ngx_http_top_header_filter;
     ngx_http_top_header_filter = ngx_http_spdy_header_filter;
-
-    ngx_http_next_body_filter = ngx_http_top_body_filter;
-    ngx_http_top_body_filter = ngx_http_spdy_body_filter;
 
     return NGX_OK;
 }

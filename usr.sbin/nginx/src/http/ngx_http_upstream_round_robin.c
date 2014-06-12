@@ -71,20 +71,20 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
         n = 0;
 
         for (i = 0; i < us->servers->nelts; i++) {
-            for (j = 0; j < server[i].naddrs; j++) {
-                if (server[i].backup) {
-                    continue;
-                }
+            if (server[i].backup) {
+                continue;
+            }
 
+            for (j = 0; j < server[i].naddrs; j++) {
                 peers->peer[n].sockaddr = server[i].addrs[j].sockaddr;
                 peers->peer[n].socklen = server[i].addrs[j].socklen;
                 peers->peer[n].name = server[i].addrs[j].name;
-                peers->peer[n].max_fails = server[i].max_fails;
-                peers->peer[n].fail_timeout = server[i].fail_timeout;
-                peers->peer[n].down = server[i].down;
                 peers->peer[n].weight = server[i].weight;
                 peers->peer[n].effective_weight = server[i].weight;
                 peers->peer[n].current_weight = 0;
+                peers->peer[n].max_fails = server[i].max_fails;
+                peers->peer[n].fail_timeout = server[i].fail_timeout;
+                peers->peer[n].down = server[i].down;
                 n++;
             }
         }
@@ -125,11 +125,11 @@ ngx_http_upstream_init_round_robin(ngx_conf_t *cf,
         n = 0;
 
         for (i = 0; i < us->servers->nelts; i++) {
-            for (j = 0; j < server[i].naddrs; j++) {
-                if (!server[i].backup) {
-                    continue;
-                }
+            if (!server[i].backup) {
+                continue;
+            }
 
+            for (j = 0; j < server[i].naddrs; j++) {
                 backup->peer[n].sockaddr = server[i].addrs[j].sockaddr;
                 backup->peer[n].socklen = server[i].addrs[j].socklen;
                 backup->peer[n].name = server[i].addrs[j].name;
@@ -266,8 +266,9 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
 {
     u_char                            *p;
     size_t                             len;
+    socklen_t                          socklen;
     ngx_uint_t                         i, n;
-    struct sockaddr_in                *sin;
+    struct sockaddr                   *sockaddr;
     ngx_http_upstream_rr_peers_t      *peers;
     ngx_http_upstream_rr_peer_data_t  *rrp;
 
@@ -306,27 +307,34 @@ ngx_http_upstream_create_round_robin_peer(ngx_http_request_t *r,
 
         for (i = 0; i < ur->naddrs; i++) {
 
-            len = NGX_INET_ADDRSTRLEN + sizeof(":65536") - 1;
+            socklen = ur->addrs[i].socklen;
 
-            p = ngx_pnalloc(r->pool, len);
+            sockaddr = ngx_palloc(r->pool, socklen);
+            if (sockaddr == NULL) {
+                return NGX_ERROR;
+            }
+
+            ngx_memcpy(sockaddr, ur->addrs[i].sockaddr, socklen);
+
+            switch (sockaddr->sa_family) {
+#if (NGX_HAVE_INET6)
+            case AF_INET6:
+                ((struct sockaddr_in6 *) sockaddr)->sin6_port = htons(ur->port);
+                break;
+#endif
+            default: /* AF_INET */
+                ((struct sockaddr_in *) sockaddr)->sin_port = htons(ur->port);
+            }
+
+            p = ngx_pnalloc(r->pool, NGX_SOCKADDR_STRLEN);
             if (p == NULL) {
                 return NGX_ERROR;
             }
 
-            len = ngx_inet_ntop(AF_INET, &ur->addrs[i], p, NGX_INET_ADDRSTRLEN);
-            len = ngx_sprintf(&p[len], ":%d", ur->port) - p;
+            len = ngx_sock_ntop(sockaddr, socklen, p, NGX_SOCKADDR_STRLEN, 1);
 
-            sin = ngx_pcalloc(r->pool, sizeof(struct sockaddr_in));
-            if (sin == NULL) {
-                return NGX_ERROR;
-            }
-
-            sin->sin_family = AF_INET;
-            sin->sin_port = htons(ur->port);
-            sin->sin_addr.s_addr = ur->addrs[i];
-
-            peers->peer[i].sockaddr = (struct sockaddr *) sin;
-            peers->peer[i].socklen = sizeof(struct sockaddr_in);
+            peers->peer[i].sockaddr = sockaddr;
+            peers->peer[i].socklen = socklen;
             peers->peer[i].name.len = len;
             peers->peer[i].name.data = p;
             peers->peer[i].weight = 1;
