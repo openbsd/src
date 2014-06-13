@@ -1,4 +1,3 @@
-./usr/share/man/man2/getentropy.2
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1758,6 +1757,7 @@
 ./usr/share/man/man2/getdents.2
 ./usr/share/man/man2/getdtablecount.2
 ./usr/share/man/man2/getegid.2
+./usr/share/man/man2/getentropy.2
 ./usr/share/man/man2/geteuid.2
 ./usr/share/man/man2/getfh.2
 ./usr/share/man/man2/getfsstat.2
@@ -5380,6 +5380,7 @@
 ./usr/share/man/man3/times.3
 ./usr/share/man/man3/timezone.3
 ./usr/share/man/man3/timingsafe_bcmp.3
+./usr/share/man/man3/timingsafe_memcmp.3
 ./usr/share/man/man3/tmpfile.3
 ./usr/share/man/man3/tmpnam.3
 ./usr/share/man/man3/toascii.3
