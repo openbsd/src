@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.71 2014/04/20 16:48:22 naddy Exp $	*/
+/*	$OpenBSD: in6.h,v 1.72 2014/06/13 15:41:06 chrisz Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ struct ipv6_mreq {
 };
 
 /*
- * IPV6_PKTINFO: Packet information(RFC2292 sec 5)
+ * IPV6_PKTINFO: Packet information(RFC3542 sec 6)
  */
 struct in6_pktinfo {
 	struct in6_addr	ipi6_addr;	/* src/dst IPv6 address */
@@ -720,23 +720,6 @@ ifatoia6(struct ifaddr *ifa)
 
 __BEGIN_DECLS
 struct cmsghdr;
-
-extern int inet6_option_space(int);
-extern int inet6_option_init(void *, struct cmsghdr **, int);
-extern int inet6_option_append(struct cmsghdr *, const u_int8_t *,
-	int, int);
-extern u_int8_t *inet6_option_alloc(struct cmsghdr *, int, int, int);
-extern int inet6_option_next(const struct cmsghdr *, u_int8_t **);
-extern int inet6_option_find(const struct cmsghdr *, u_int8_t **, int);
-
-extern size_t inet6_rthdr_space(int, int);
-extern struct cmsghdr *inet6_rthdr_init(void *, int);
-extern int inet6_rthdr_add(struct cmsghdr *, const struct in6_addr *,
-		unsigned int);
-extern int inet6_rthdr_lasthop(struct cmsghdr *, unsigned int);
-extern int inet6_rthdr_segments(const struct cmsghdr *);
-extern struct in6_addr *inet6_rthdr_getaddr(struct cmsghdr *, int);
-extern int inet6_rthdr_getflags(const struct cmsghdr *, int);
 
 extern int inet6_opt_init(void *, socklen_t);
 extern int inet6_opt_append(void *, socklen_t, int, u_int8_t,
