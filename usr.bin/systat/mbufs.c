@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.32 2011/03/02 06:48:17 jasper Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.33 2014/06/13 07:31:18 mpi Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -84,9 +84,6 @@ field_def fields_mbuf[] = {
 /* Define views */
 field_def *view_mbuf[] = {
 	FLD_MB_IFACE,
-#if NOTYET
-	FLD_MB_RXDELAY, FLD_MB_TXDELAY,
-#endif
 	FLD_MB_LLOCKS, FLD_MB_MSIZE, FLD_MB_MALIVE, FLD_MB_MLWM, FLD_MB_MHWM,
 	FLD_MB_MCWM, NULL
 };
@@ -280,6 +277,7 @@ read_mb(void)
 			continue;
 		}
 
+		mp->mcl_livelocks = mcllivelocks;
 		mp->mcl_alive = pool.pr_nget - pool.pr_nput;
 		mp->mcl_hwm = pool.pr_hiwat;
 	}
@@ -357,14 +355,13 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
 	}
 
-#if NOTYET
-	print_fld_uint(FLD_MB_RXDELAY, ifi->data.ifi_rxdelay);
-	print_fld_uint(FLD_MB_TXDELAY, ifi->data.ifi_txdelay);
-#endif
-
 	if (p >= 0 && p < mclpool_count) {
 		struct mclpool *mp = &ifi->data.ifi_mclpool[p];
+		int livelocks_diff;
 
+		livelocks_diff = mp->mcl_livelocks - mcllivelocks;
+		if (livelocks_diff)
+			print_fld_uint(FLD_MB_LLOCKS, livelocks_diff);
 		print_fld_str(FLD_MB_MSIZE, mclpools[p].title);
 		print_fld_uint(FLD_MB_MALIVE, mp->mcl_alive);
 		if (mp->mcl_lwm)
