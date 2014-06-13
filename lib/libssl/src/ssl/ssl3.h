@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.22 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: ssl3.h,v 1.23 2014/06/13 11:52:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -488,6 +488,7 @@ typedef struct ssl3_state_st {
 		unsigned char *key_block;
 
 		const EVP_CIPHER *new_sym_enc;
+		const EVP_AEAD *new_aead;
 		const EVP_MD *new_hash;
 		int new_mac_pkey_type;
 		int new_mac_secret_size;
