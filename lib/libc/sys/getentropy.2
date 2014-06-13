@@ -1,0 +1,51 @@
+.\"	$OpenBSD: getentropy.2,v 1.1 2014/06/13 08:26:10 deraadt Exp $
+.\"
+.\" Copyright (c) 2014 Theo de Raadt
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 13 2014 $
+.Dt GETENTROPY 2
+.Os
+.Sh NAME
+.Nm getentropy
+.Nd get entropy
+.Sh SYNOPSIS
+.Fd #include <unistd.h>
+.Ft ssize_t
+.Fn getentropy "char *buf" "size_t buflen"
+.Sh DESCRIPTION
+.Nm
+returns a buffer of high-quality seed-grade entropy.
+.Pp
+This is typically used to seed a process-context generator
+like
+.Xr arc4random 3 .
+.Sh ERRORS
+.Nm
+.Fn setlogin
+will succeed unless:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+The
+.Fa name
+parameter points to an
+invalid address.
+.El
+.Sh SEE ALSO
+.Xr arc4random 3
+.Sh HISTORY
+The
+.Nm
+function appeared in
+.Ox 5.6 .

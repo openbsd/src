@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.155 2014/02/05 05:54:58 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.156 2014/06/13 08:26:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -123,6 +123,8 @@
 #include <sys/mutex.h>
 #include <sys/task.h>
 #include <sys/msgbuf.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <crypto/md5.h>
 
@@ -927,4 +929,27 @@ randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENOTTY;
 	}
 	return 0;
+}
+
+int
+sys_getentropy(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_getentropy_args /* {
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
+	} */ *uap = v;
+	char buf[256];
+	int error;
+	size_t nbyte;
+
+	nbyte = SCARG(uap, nbyte);
+	if (nbyte > sizeof(buf))
+		nbyte = sizeof(buf);
+
+	arc4random_buf(buf, nbyte);
+	if ((error = copyout(buf, SCARG(uap, buf), nbyte)) != 0)
+		return (error);
+
+	retval[0] = nbyte;
+	return (0);
 }

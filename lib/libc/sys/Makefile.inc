@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.117 2014/03/18 22:36:30 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.118 2014/06/13 08:26:10 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -33,7 +33,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
 	fchownat.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
-	fsync.o futimens.o futimes.o getdents.o getdtablecount.o \
+	fsync.o futimens.o futimes.o getentropy.o getdents.o getdtablecount.o \
 	getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
 	getgroups.o getitimer.o getpeername.o getpgid.o getpgrp.o \
 	getpid.o getppid.o getpriority.o getresgid.o getresuid.o \
@@ -200,10 +200,10 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 \
 	closefrom.2 connect.2 dup.2 execve.2 fcntl.2 fhopen.2 flock.2 \
-	fork.2 fsync.2 getdents.2 getdtablecount.2 getfh.2 getfsstat.2 \
-	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 \
-	getpgrp.2 getpid.2 getpriority.2 getrlimit.2 getrtable.2 \
-	getrusage.2 getsid.2 getsockname.2 getsockopt.2 \
+	fork.2 fsync.2 getentropy.2 getdents.2 getdtablecount.2 \
+	getfh.2 getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 \
+	getpeername.2 getpgrp.2 getpid.2 getpriority.2 getrlimit.2 \
+	getrtable.2 getrusage.2 getsid.2 getsockname.2 getsockopt.2 \
 	gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
 	kill.2 kqueue.2 ktrace.2 link.2 listen.2 lseek.2 madvise.2 \
 	mincore.2 minherit.2 mkdir.2 mkfifo.2 mknod.2 mlock.2 \
