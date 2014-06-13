@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.43 2014/06/13 14:15:14 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.44 2014/06/13 14:38:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,11 +222,13 @@ ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX mac_ctx;
 	const EVP_MD *mac;
-#ifndef OPENSSL_NO_COMP
-	COMP_METHOD *comp;
-#endif
 	int is_export, n, i, j, k, cl;
+	char is_read;
 	int reuse_dd = 0;
+
+#ifndef OPENSSL_NO_COMP
+	const SSL_COMP *comp;
+#endif
 
 	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
@@ -234,14 +236,50 @@ ssl3_change_cipher_state(SSL *s, int which)
 	/* m == NULL will lead to a crash later */
 	OPENSSL_assert(mac);
 
+	/*
+	 * is_read is true if we have just read a ChangeCipherSpec message,
+	 * that is we need to update the read cipherspec. Otherwise we have
+	 * just written one.
+	 */
+	is_read = (which & SSL3_CC_READ) != 0;
+
 #ifndef OPENSSL_NO_COMP
-	if (s->s3->tmp.new_compression == NULL)
-		comp = NULL;
-	else
-		comp = s->s3->tmp.new_compression->method;
+	comp = s->s3->tmp.new_compression;
+	if (is_read) {
+		if (s->expand != NULL) {
+			COMP_CTX_free(s->expand);
+			s->expand = NULL;
+		}
+		if (comp != NULL) {
+			s->expand = COMP_CTX_new(comp->method);
+			if (s->expand == NULL) {
+				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,
+				    SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+			}
+			if (s->s3->rrec.comp == NULL)
+				s->s3->rrec.comp =
+				    malloc(SSL3_RT_MAX_PLAIN_LENGTH);
+			if (s->s3->rrec.comp == NULL)
+				goto err;
+		}
+	} else {
+		if (s->compress != NULL) {
+			COMP_CTX_free(s->compress);
+			s->compress = NULL;
+		}
+		if (comp != NULL) {
+			s->compress = COMP_CTX_new(comp->method);
+			if (s->compress == NULL) {
+				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE,
+				    SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+			}
+		}
+	}
 #endif
 
-	if (which & SSL3_CC_READ) {
+	if (is_read) {
 		if (s->enc_read_ctx != NULL)
 			reuse_dd = 1;
 		else if ((s->enc_read_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
@@ -255,24 +293,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 		if (ssl_replace_hash(&s->read_hash, mac) == NULL)
 			goto err;
 
-#ifndef OPENSSL_NO_COMP
-		/* COMPRESS */
-		if (s->expand != NULL) {
-			COMP_CTX_free(s->expand);
-			s->expand = NULL;
-		}
-		if (comp != NULL) {
-			s->expand = COMP_CTX_new(comp);
-			if (s->expand == NULL) {
-				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-			if (s->s3->rrec.comp == NULL)
-				s->s3->rrec.comp = malloc(SSL3_RT_MAX_PLAIN_LENGTH);
-			if (s->s3->rrec.comp == NULL)
-				goto err;
-		}
-#endif
 		memset(s->s3->read_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->read_mac_secret[0]);
 	} else {
@@ -288,20 +308,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 		if (ssl_replace_hash(&s->write_hash, mac) == NULL)
 			goto err;
 
-#ifndef OPENSSL_NO_COMP
-		/* COMPRESS */
-		if (s->compress != NULL) {
-			COMP_CTX_free(s->compress);
-			s->compress = NULL;
-		}
-		if (comp != NULL) {
-			s->compress = COMP_CTX_new(comp);
-			if (s->compress == NULL) {
-				SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-		}
-#endif
 		memset(s->s3->write_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->write_mac_secret[0]);
 	}
@@ -560,8 +566,6 @@ ssl3_free_digest_list(SSL *s)
 	free(s->s3->handshake_dgst);
 	s->s3->handshake_dgst = NULL;
 }
-
-
 
 void
 ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
