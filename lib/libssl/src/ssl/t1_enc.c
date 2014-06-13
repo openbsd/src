@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.57 2014/06/13 12:49:10 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.58 2014/06/13 14:32:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -546,19 +546,6 @@ tls1_change_cipher_state(SSL *s, int which)
 #ifndef OPENSSL_NO_COMP
 	comp = s->s3->tmp.new_compression;
 	if (is_read) {
-		if (s->compress != NULL) {
-			COMP_CTX_free(s->compress);
-			s->compress = NULL;
-		}
-		if (comp != NULL) {
-			s->compress = COMP_CTX_new(comp->method);
-			if (s->compress == NULL) {
-				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
-				    SSL_R_COMPRESSION_LIBRARY_ERROR);
-				goto err2;
-			}
-		}
-	} else {
 		if (s->expand != NULL) {
 			COMP_CTX_free(s->expand);
 			s->expand = NULL;
@@ -575,6 +562,19 @@ tls1_change_cipher_state(SSL *s, int which)
 				    malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
 			if (s->s3->rrec.comp == NULL)
 				goto err;
+		}
+	} else {
+		if (s->compress != NULL) {
+			COMP_CTX_free(s->compress);
+			s->compress = NULL;
+		}
+		if (comp != NULL) {
+			s->compress = COMP_CTX_new(comp->method);
+			if (s->compress == NULL) {
+				SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE,
+				    SSL_R_COMPRESSION_LIBRARY_ERROR);
+				goto err2;
+			}
 		}
 	}
 #endif
