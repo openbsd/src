@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.45 2014/06/13 14:58:05 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.46 2014/06/13 15:28:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,7 +222,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX mac_ctx;
 	const EVP_MD *mac;
-	int is_export, n, i, j, k, cl;
+	int is_export, n, mac_len, key_len, iv_len;
 	char is_read;
 
 #ifndef OPENSSL_NO_COMP
@@ -306,34 +306,38 @@ ssl3_change_cipher_state(SSL *s, int which)
 	}
 
 	p = s->s3->tmp.key_block;
-	i = EVP_MD_size(mac);
-	if (i < 0)
+
+	mac_len = EVP_MD_size(mac);
+	key_len = EVP_CIPHER_key_length(cipher);
+	iv_len = EVP_CIPHER_iv_length(cipher);
+
+	if (mac_len < 0)
 		goto err2;
-	cl = EVP_CIPHER_key_length(cipher);
-	j = is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-	    cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-	/* Was j=(is_exp)?5:EVP_CIPHER_key_length(c); */
-	k = EVP_CIPHER_iv_length(cipher);
+
+	if (is_export &&
+	    key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
+		key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
+	
 	if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 	    (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
 		ms = &(p[0]);
-		n = i + i;
+		n = mac_len + mac_len;
 		key = &(p[n]);
-		n += j + j;
+		n += key_len + key_len;
 		iv = &(p[n]);
-		n += k + k;
-		er1 = &(s->s3->client_random[0]);
-		er2 = &(s->s3->server_random[0]);
+		n += iv_len + iv_len;
+		er1 = s->s3->client_random;
+		er2 = s->s3->server_random;
 	} else {
-		n = i;
+		n = mac_len;
 		ms = &(p[n]);
-		n += i + j;
+		n += mac_len + key_len;
 		key = &(p[n]);
-		n += j + k;
+		n += key_len + iv_len;
 		iv = &(p[n]);
-		n += k;
-		er1 = &(s->s3->server_random[0]);
-		er2 = &(s->s3->client_random[0]);
+		n += iv_len;
+		er1 = s->s3->server_random;
+		er2 = s->s3->client_random;
 	}
 
 	if (n > s->s3->tmp.key_block_length) {
@@ -342,19 +346,19 @@ ssl3_change_cipher_state(SSL *s, int which)
 	}
 
 	EVP_MD_CTX_init(&mac_ctx);
-	memcpy(mac_secret, ms, i);
+	memcpy(mac_secret, ms, mac_len);
 	if (is_export) {
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
 		EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
-		EVP_DigestUpdate(&mac_ctx, key, j);
+		EVP_DigestUpdate(&mac_ctx, key, key_len);
 		EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
 		EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
 		EVP_DigestFinal_ex(&mac_ctx, export_key, NULL);
 		key = export_key;
 
-		if (k > 0) {
+		if (iv_len > 0) {
 			EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
 			EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
 			EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
