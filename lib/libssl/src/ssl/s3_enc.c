@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.44 2014/06/13 14:38:13 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.45 2014/06/13 14:58:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 	const EVP_MD *mac;
 	int is_export, n, i, j, k, cl;
 	char is_read;
-	int reuse_dd = 0;
 
 #ifndef OPENSSL_NO_COMP
 	const SSL_COMP *comp;
@@ -233,7 +232,8 @@ ssl3_change_cipher_state(SSL *s, int which)
 	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	cipher = s->s3->tmp.new_sym_enc;
 	mac = s->s3->tmp.new_hash;
-	/* m == NULL will lead to a crash later */
+
+	/* mac == NULL will lead to a crash later */
 	OPENSSL_assert(mac);
 
 	/*
@@ -280,15 +280,11 @@ ssl3_change_cipher_state(SSL *s, int which)
 #endif
 
 	if (is_read) {
-		if (s->enc_read_ctx != NULL)
-			reuse_dd = 1;
-		else if ((s->enc_read_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+		EVP_CIPHER_CTX_free(s->enc_read_ctx);
+		s->enc_read_ctx = NULL;
+		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		else {
-			/* make sure it's intialized in case we exit later with an error */
-			EVP_CIPHER_CTX_init(s->enc_read_ctx);
-		}
-		cipher_ctx = s->enc_read_ctx;
+		s->enc_read_ctx = cipher_ctx;
 
 		if (ssl_replace_hash(&s->read_hash, mac) == NULL)
 			goto err;
@@ -296,24 +292,18 @@ ssl3_change_cipher_state(SSL *s, int which)
 		memset(s->s3->read_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->read_mac_secret[0]);
 	} else {
-		if (s->enc_write_ctx != NULL)
-			reuse_dd = 1;
-		else if ((s->enc_write_ctx = malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+		EVP_CIPHER_CTX_free(s->enc_write_ctx);
+		s->enc_write_ctx = NULL;
+		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		else {
-			/* make sure it's intialized in case we exit later with an error */
-			EVP_CIPHER_CTX_init(s->enc_write_ctx);
-		}
-		cipher_ctx = s->enc_write_ctx;
+		s->enc_write_ctx = cipher_ctx;
+
 		if (ssl_replace_hash(&s->write_hash, mac) == NULL)
 			goto err;
 
 		memset(s->s3->write_sequence, 0, SSL3_SEQUENCE_SIZE);
 		mac_secret = &(s->s3->write_mac_secret[0]);
 	}
-
-	if (reuse_dd)
-		EVP_CIPHER_CTX_cleanup(cipher_ctx);
 
 	p = s->s3->tmp.key_block;
 	i = EVP_MD_size(mac);
