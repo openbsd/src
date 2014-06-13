@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.31 2014/05/31 10:32:12 jca Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.32 2014/06/13 15:36:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -77,15 +77,10 @@ _rs_init(u_char *buf, size_t n)
 static void
 _rs_stir(void)
 {
-	int     mib[2];
-	size_t	len;
 	u_char rnd[KEYSZ + IVSZ];
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ARND;
-
-	len = sizeof(rnd);
-	sysctl(mib, 2, rnd, &len, NULL, 0);
+	if (getentropy(rnd, sizeof rnd) == -1)
+		abort();
 
 	if (!rs_initialized) {
 		rs_initialized = 1;
