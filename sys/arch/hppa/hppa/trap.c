@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.134 2014/05/11 00:12:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.135 2014/06/13 00:02:37 tobiasu Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -264,13 +264,14 @@ trap(int type, struct trapframe *frame)
 	case T_IBREAK | T_USER:
 	case T_DBREAK | T_USER: {
 		int code = TRAP_BRKPT;
+
+		KERNEL_LOCK();
 #ifdef PTRACE
 		ss_clear_breakpoints(p);
 		if (opcode == SSBREAKPOINT)
 			code = TRAP_TRACE;
 #endif
 		/* pass to user debugger */
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type & ~T_USER, code, sv);
 		KERNEL_UNLOCK();
 		}
@@ -278,10 +279,9 @@ trap(int type, struct trapframe *frame)
 
 #ifdef PTRACE
 	case T_TAKENBR | T_USER:
-		ss_clear_breakpoints(p);
-
-		/* pass to user debugger */
 		KERNEL_LOCK();
+		ss_clear_breakpoints(p);
+		/* pass to user debugger */
 		trapsignal(p, SIGTRAP, type & ~T_USER, TRAP_TRACE, sv);
 		KERNEL_UNLOCK();
 		break;
