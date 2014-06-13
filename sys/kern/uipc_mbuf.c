@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.184 2014/05/04 19:27:08 sf Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.185 2014/06/13 07:28:13 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -298,6 +298,8 @@ m_clpool(u_int pktlen)
 	return (-1);
 }
 
+u_int mcllivelocks;
+
 void
 m_clinitifp(struct ifnet *ifp)
 {
@@ -314,6 +316,7 @@ m_clinitifp(struct ifnet *ifp)
 			mclp->mcl_hwm = 32768;
 
 		mclp->mcl_cwm = MAX(4, mclp->mcl_lwm);
+		mclp->mcl_livelocks = mcllivelocks;
 	}
 }
 
@@ -345,7 +348,6 @@ m_cltick(void *arg)
 }
 
 int m_livelock;
-u_int mcllivelocks;
 
 int
 m_cldrop(struct ifnet *ifp, int pi)
@@ -353,32 +355,38 @@ m_cldrop(struct ifnet *ifp, int pi)
 	static int liveticks;
 	struct mclpool *mclp;
 	extern int ticks;
-	int i;
+	u_int diff, adj;
 
 	if (ticks - m_clticks > 1) {
-		struct ifnet *aifp;
-
 		/*
 		 * Timeout did not run, so we are in some kind of livelock.
-		 * Decrease the cluster allocation high water marks on all
-		 * interfaces and prevent them from growth for the very near
-		 * future.
+		 *
+		 * Increase the livelock counter to tell the interfaces to
+		 * decrease their cluster allocation high water marks.
 		 */
 		m_livelock = 1;
 		mcllivelocks++;
 		m_clticks = liveticks = ticks;
-		TAILQ_FOREACH(aifp, &ifnet, if_list) {
-			mclp = aifp->if_data.ifi_mclpool;
-			for (i = 0; i < MCLPOOLS; i++) {
-				int diff = max(mclp[i].mcl_cwm / 8, 2);
-				mclp[i].mcl_cwm = max(mclp[i].mcl_lwm,
-				    mclp[i].mcl_cwm - diff);
-			}
-		}
 	} else if (m_livelock && (ticks - liveticks) > 4)
 		m_livelock = 0;	/* Let the high water marks grow again */
 
 	mclp = &ifp->if_data.ifi_mclpool[pi];
+
+	/*
+	 * If at least a livelock happened since the last time a cluster
+	 * was requested, decrease its pool allocation high water mark to
+	 * prevent it from growth for the very near future.
+	 *
+	 * The decrease is proportional to the number of livelocks since
+	 * the last request for a given pool.
+	 */
+	adj = mcllivelocks - mclp->mcl_livelocks;
+	if (adj != 0) {
+		diff = max((mclp->mcl_cwm / 8) * adj, 2);
+		mclp->mcl_cwm = max(mclp->mcl_lwm, mclp->mcl_cwm - diff);
+	}
+	mclp->mcl_livelocks = mcllivelocks;
+
 	if (m_livelock == 0 && ISSET(ifp->if_flags, IFF_RUNNING) &&
 	    mclp->mcl_alive <= 4 && mclp->mcl_cwm < mclp->mcl_hwm &&
 	    mclp->mcl_grown - ticks < 0) {
