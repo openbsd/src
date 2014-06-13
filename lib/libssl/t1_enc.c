@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.56 2014/06/13 11:52:03 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.57 2014/06/13 12:49:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -382,7 +382,6 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX *mac_ctx;
 	const EVP_MD *mac;
-	EVP_PKEY *mac_key;
 	int mac_type;
 	int is_export;
 
@@ -435,15 +434,6 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		s->write_hash = mac_ctx;
 	}
 
-	if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-		mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-		    mac_secret, mac_secret_size);
-		if (mac_key == NULL)
-			goto err;
-		EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
-		EVP_PKEY_free(mac_key);
-	}
-
 	if (is_export) {
 		/*
 		 * Both the read and write key/iv are set to the same value
@@ -488,11 +478,18 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 	} else
 		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
 
-	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-	if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) &&
-	    mac_secret_size)
+	if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+		EVP_PKEY *mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
+		    mac_secret, mac_secret_size);
+		if (mac_key == NULL)
+			goto err;
+		EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
+		EVP_PKEY_free(mac_key);
+	} else if (mac_secret_size > 0) {
+		/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
 		    mac_secret_size, (unsigned char *)mac_secret);
+	}
 
 	if (is_export) {
 		OPENSSL_cleanse(export_tmp1, sizeof(export_tmp1));
