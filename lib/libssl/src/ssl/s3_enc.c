@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.46 2014/06/13 15:28:49 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.47 2014/06/13 16:04:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -386,10 +386,10 @@ err2:
 int
 ssl3_setup_key_block(SSL *s)
 {
-	unsigned char *p;
-	const EVP_CIPHER *c;
-	const EVP_MD *hash;
-	int num;
+	int key_block_len, mac_len, key_len, iv_len;
+	unsigned char *key_block;
+	const EVP_CIPHER *cipher;
+	const EVP_MD *mac;
 	int ret = 0;
 	SSL_COMP *comp;
 
@@ -402,35 +402,42 @@ ssl3_setup_key_block(SSL *s)
 		return (0);
 	}
 
-	if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL)) {
+	if (!ssl_cipher_get_evp(s->session, &cipher, &mac, NULL, NULL)) {
 		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
 		    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return (0);
 	}
 
-	s->s3->tmp.new_sym_enc = c;
-	s->s3->tmp.new_hash = hash;
+	s->s3->tmp.new_sym_enc = cipher;
+	s->s3->tmp.new_hash = mac;
 	s->s3->tmp.new_compression = comp;
 
-	num = EVP_MD_size(hash);
-	if (num < 0)
+	mac_len = EVP_MD_size(mac);
+	key_len = EVP_CIPHER_key_length(cipher);
+	iv_len = EVP_CIPHER_iv_length(cipher);
+
+	if (mac_len < 0)
 		return 0;
 
-	num = EVP_CIPHER_key_length(c) + num + EVP_CIPHER_iv_length(c);
-	num *= 2;
+	if (SSL_C_IS_EXPORT(s->session->cipher) &&
+	    key_len > SSL_C_EXPORT_KEYLENGTH(s->session->cipher))
+		key_len = SSL_C_EXPORT_KEYLENGTH(s->session->cipher);
+
+	key_block_len = (mac_len + key_len + iv_len) * 2;
 
 	ssl3_cleanup_key_block(s);
 
-	if ((p = malloc(num)) == NULL)
+	if ((key_block = malloc(key_block_len)) == NULL)
 		goto err;
 
-	s->s3->tmp.key_block_length = num;
-	s->s3->tmp.key_block = p;
+	s->s3->tmp.key_block_length = key_block_len;
+	s->s3->tmp.key_block = key_block;
 
-	ret = ssl3_generate_key_block(s, p, num);
+	ret = ssl3_generate_key_block(s, key_block, key_block_len);
 
 	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)) {
-		/* enable vulnerability countermeasure for CBC ciphers with
+		/*
+		 * Enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
 		 */
 		s->s3->need_empty_fragments = 1;
