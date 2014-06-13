@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.40 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.41 2014/06/13 12:41:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -793,9 +793,8 @@ ssl3_record_sequence_update(unsigned char *seq)
 {
 	int i;
 
-	for (i = 7; i >= 0; i--) {
-		++seq[i];
-		if (seq[i] != 0)
+	for (i = SSL3_SEQUENCE_SIZE - 1; i >= 0; i--) {
+		if (++seq[i] != 0)
 			break;
 	}
 }
