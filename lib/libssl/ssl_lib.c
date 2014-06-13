@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.66 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.67 2014/06/13 10:52:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2659,6 +2659,17 @@ ssl_clear_cipher_ctx(SSL *s)
 	s->enc_read_ctx = NULL;
 	EVP_CIPHER_CTX_free(s->enc_write_ctx);
 	s->enc_write_ctx = NULL;
+
+	if (s->aead_read_ctx != NULL) {
+		EVP_AEAD_CTX_cleanup(&s->aead_read_ctx->ctx);
+		free(s->aead_read_ctx);
+		s->aead_read_ctx = NULL;
+	}
+	if (s->aead_write_ctx != NULL) {
+		EVP_AEAD_CTX_cleanup(&s->aead_write_ctx->ctx);
+		free(s->aead_write_ctx);
+		s->aead_write_ctx = NULL;
+	}
 
 #ifndef OPENSSL_NO_COMP
 	COMP_CTX_free(s->expand);

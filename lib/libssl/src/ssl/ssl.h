@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.53 2014/06/13 04:29:13 miod Exp $ */
+/* $OpenBSD: ssl.h,v 1.54 2014/06/13 10:52:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,6 +654,8 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 #define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 
+struct ssl_aead_ctx_st;
+typedef struct ssl_aead_ctx_st SSL_AEAD_CTX;
 
 #define SSL_MAX_CERT_LIST_DEFAULT 1024*100 /* 100k max cert list :-) */
 
@@ -1093,6 +1095,10 @@ struct ssl_st {
 	 * the ones to be 'copied' into these ones */
 	int mac_flags;
 
+	SSL_AEAD_CTX *aead_read_ctx;	/* AEAD context. If non-NULL, then
+					   enc_read_ctx and read_hash are
+					   ignored. */
+
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	EVP_MD_CTX *read_hash;			/* used for mac generation */
 #ifndef OPENSSL_NO_COMP
@@ -1100,6 +1106,10 @@ struct ssl_st {
 #else
 	char *expand;
 #endif
+
+	SSL_AEAD_CTX *aead_write_ctx;	/* AEAD context. If non-NULL, then
+					   enc_write_ctx and write_hash are
+					   ignored. */
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	EVP_MD_CTX *write_hash;			/* used for mac generation */

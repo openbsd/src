@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.46 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.47 2014/06/13 10:52:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -753,6 +753,9 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
 		else
 			eivlen = 0;
+	} else if (s->aead_write_ctx != NULL &&
+	    s->aead_write_ctx->variable_nonce_in_record) {
+		eivlen = s->aead_write_ctx->variable_nonce_len;
 	} else
 		eivlen = 0;
 

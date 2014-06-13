@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.49 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.50 2014/06/13 10:52:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,6 +577,27 @@ typedef struct ssl3_enc_method {
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
+
+/*
+ * ssl_aead_ctx_st contains information about an AEAD that is being used to
+ * encrypt an SSL connection.
+ */
+struct ssl_aead_ctx_st {
+	EVP_AEAD_CTX ctx;
+	/*
+	 * fixed_nonce contains any bytes of the nonce that are fixed for all
+	 * records.
+	 */
+	unsigned char fixed_nonce[8];
+	unsigned char fixed_nonce_len;
+	unsigned char variable_nonce_len;
+	unsigned char tag_len;
+	/*
+	 * variable_nonce_in_record is non-zero if the variable nonce
+	 * for a record is included as a prefix before the ciphertext.
+	 */
+	char variable_nonce_in_record;
+};
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
