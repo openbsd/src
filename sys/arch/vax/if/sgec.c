@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.21 2013/11/27 08:56:31 mpi Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.22 2014/06/13 21:06:24 miod Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -413,6 +413,7 @@ zestart(ifp)
 		 * Loop around and set it.
 		 */
 		totlen = 0;
+		orword = ZE_TDES1_FS;
 		for (m0 = m; m0; m0 = m0->m_next) {
 			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
 			    mtod(m0, void *), m0->m_len, 0, 0);
@@ -423,9 +424,6 @@ zestart(ifp)
 
 			totlen += len;
 			/* Word alignment calc */
-			orword = 0;
-			if (totlen == len)
-				orword = ZE_TDES1_FS;
 			if (totlen == m->m_pkthdr.len) {
 				if (totlen < ETHER_ADDR_LEN)
 					len += (ETHER_ADDR_LEN - totlen);
@@ -440,6 +438,7 @@ zestart(ifp)
 			if (++idx == TXDESCS)
 				idx = 0;
 			sc->sc_inq++;
+			orword = 0;
 		}
 #ifdef DIAGNOSTIC
 		if (totlen != m->m_pkthdr.len)
@@ -495,27 +494,9 @@ sgec_rxintr(struct ze_softc *sc)
 			m->m_pkthdr.len = m->m_len = len;
 			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0) &&
-				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0) {
-					m_freem(m);
-					continue;
-				}
-			}
 #endif
-			/*
-			 * ALLMULTI means PROMISC in this driver.
-			 */
-			if ((ifp->if_flags & IFF_ALLMULTI) &&
-			    ((eh->ether_dhost[0] & 1) == 0) &&
-			    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
-			    ETHER_ADDR_LEN)) {
-				m_freem(m);
-				continue;
-			}
 			ether_input_mbuf(ifp, m);
 		}
 		if (++sc->sc_nextrx == RXDESCS)
@@ -802,7 +783,7 @@ ze_setup(sc)
 		bcopy(enm->enm_addrlo, &zc->zc_setup[j], ETHER_ADDR_LEN);
 		j += 8;
 		ETHER_NEXT_MULTI(step, enm);
-		if ((enm != NULL)&& (j == 128)) {
+		if (enm != NULL && j == sizeof(zc->zc_setup)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}
