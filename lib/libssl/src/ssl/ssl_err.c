@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.23 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.24 2014/06/13 04:29:13 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -454,7 +454,6 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED), "old session cipher not returned"},
 	{ERR_REASON(SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED), "old session compression algorithm not returned"},
 	{ERR_REASON(SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE), "only tls allowed in fips mode"},
-	{ERR_REASON(SSL_R_OPAQUE_PRF_INPUT_TOO_LONG), "opaque PRF input too long"},
 	{ERR_REASON(SSL_R_PACKET_LENGTH_TOO_LONG), "packet length too long"},
 	{ERR_REASON(SSL_R_PARSE_TLSEXT)          , "parse tlsext"},
 	{ERR_REASON(SSL_R_PATH_TOO_LONG)         , "path too long"},

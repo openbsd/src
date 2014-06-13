@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.52 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl.h,v 1.53 2014/06/13 04:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -847,11 +847,6 @@ struct ssl_ctx_st {
 	int (*tlsext_status_cb)(SSL *ssl, void *arg);
 	void *tlsext_status_arg;
 
-	/* draft-rescorla-tls-opaque-prf-input-00.txt information */
-	int (*tlsext_opaque_prf_input_callback)(SSL *, void *peerinput,
-	    size_t len, void *arg);
-	void *tlsext_opaque_prf_input_callback_arg;
-
 #ifndef OPENSSL_NO_PSK
 	char *psk_identity_hint;
 	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint,
@@ -1201,10 +1196,6 @@ struct ssl_st {
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist; /* our list */
 
-	/* draft-rescorla-tls-opaque-prf-input-00.txt information to be used for handshakes */
-	void *tlsext_opaque_prf_input;
-	size_t tlsext_opaque_prf_input_len;
-
 	/* TLS Session Ticket extension override */
 	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
 
@@ -1454,9 +1445,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_DEBUG_ARG		57
 #define SSL_CTRL_GET_TLSEXT_TICKET_KEYS		58
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEYS		59
-#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT	60
-#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB	61
-#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB	63
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG	64
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE	65
@@ -2259,7 +2247,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 197
 #define SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED 344
 #define SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE		 297
-#define SSL_R_OPAQUE_PRF_INPUT_TOO_LONG			 327
 #define SSL_R_PACKET_LENGTH_TOO_LONG			 198
 #define SSL_R_PARSE_TLSEXT				 227
 #define SSL_R_PATH_TOO_LONG				 270

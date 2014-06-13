@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.17 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: tls1.h,v 1.18 2014/06/13 04:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,13 +341,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
 
 #define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
 SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
-
-#define SSL_set_tlsext_opaque_prf_input(s, src, len) \
-SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT, len, src)
-#define SSL_CTX_set_tlsext_opaque_prf_input_callback(ctx, cb) \
-SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB, (void (*)(void))cb)
-#define SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(ctx, arg) \
-SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
 
 #define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)

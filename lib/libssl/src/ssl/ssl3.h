@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.21 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ssl3.h,v 1.22 2014/06/13 04:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -451,15 +451,6 @@ typedef struct ssl3_state_st {
 	int num_renegotiations;
 
 	int in_read_app_data;
-
-	/* Opaque PRF input as used for the current handshake.
-	 * These fields are used only if TLSEXT_TYPE_opaque_prf_input is defined
-	 * (otherwise, they are merely present to improve binary compatibility)
-	 */
-	void *client_opaque_prf_input;
-	size_t client_opaque_prf_input_len;
-	void *server_opaque_prf_input;
-	size_t server_opaque_prf_input_len;
 
 	struct	{
 		/* actually only needs to be 16+20 */

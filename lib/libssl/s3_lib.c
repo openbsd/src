@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.58 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.59 2014/06/13 04:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2322,11 +2322,6 @@ ssl3_free(SSL *s)
 	if (s == NULL)
 		return;
 
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	free(s->s3->client_opaque_prf_input);
-	free(s->s3->server_opaque_prf_input);
-#endif
-
 	ssl3_cleanup_key_block(s);
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
@@ -2350,13 +2345,6 @@ ssl3_clear(SSL *s)
 	unsigned char	*rp, *wp;
 	size_t		 rlen, wlen;
 	int		 init_extra;
-
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	free(s->s3->client_opaque_prf_input);
-	s->s3->client_opaque_prf_input = NULL;
-	free(s->s3->server_opaque_prf_input);
-	s->s3->server_opaque_prf_input = NULL;
-#endif
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
@@ -2569,35 +2557,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		s->tlsext_debug_arg = parg;
 		ret = 1;
 		break;
-
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT:
-		if (larg > 12288) {
-			/*
-			 * Actual internal limit is 2^16 for the complete
-			 * hello message (including the cert chain and
-			 * everything)
-			 */
-			SSLerr(SSL_F_SSL3_CTRL,
-			    SSL_R_OPAQUE_PRF_INPUT_TOO_LONG);
-			break;
-		}
-		free(s->tlsext_opaque_prf_input);
-		if ((size_t)larg == 0) {
-			s->tlsext_opaque_prf_input = NULL;
-			s->tlsext_opaque_prf_input_len = 0;
-			ret = 1;
-		} else {
-			s->tlsext_opaque_prf_input =
-			    BUF_memdup(parg, (size_t)larg);
-			if (s->tlsext_opaque_prf_input != NULL) {
-				s->tlsext_opaque_prf_input_len = (size_t)larg;
-				ret = 1;
-			} else
-				s->tlsext_opaque_prf_input_len = 0;
-		}
-		break;
-#endif
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
 		s->tlsext_status_type = larg;
@@ -2824,12 +2783,6 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			return 1;
 		}
 
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG:
-		ctx->tlsext_opaque_prf_input_callback_arg = parg;
-		return 1;
-#endif
-
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
 		ctx->tlsext_status_arg = parg;
 		return 1;
@@ -2889,13 +2842,6 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		ctx->tlsext_servername_callback =
 		    (int (*)(SSL *, int *, void *))fp;
 		break;
-
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB:
-		ctx->tlsext_opaque_prf_input_callback =
-		    (int (*)(SSL *, void *, size_t, void *))fp;
-		break;
-#endif
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
 		ctx->tlsext_status_cb = (int (*)(SSL *, void *))fp;

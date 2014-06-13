@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.60 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.61 2014/06/13 04:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -910,11 +910,6 @@ bad:
 	}
 #endif
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
-#if 0
-#ifdef TLSEXT_TYPE_opaque_prf_input
-	SSL_set_tlsext_opaque_prf_input(con, "Test client", 11);
-#endif
-#endif
 
 re_start:
 
