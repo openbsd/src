@@ -27,21 +27,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bcmp.3,v 1.10 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: bcmp.3,v 1.11 2014/06/13 02:12:17 matthew Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 13 2014 $
 .Dt BCMP 3
 .Os
 .Sh NAME
-.Nm bcmp ,
-.Nm timingsafe_bcmp
+.Nm bcmp
 .Nd compare byte string
 .Sh SYNOPSIS
 .In string.h
 .Ft int
 .Fn bcmp "const void *b1" "const void *b2" "size_t len"
-.Ft int
-.Fn timingsafe_bcmp "const void *b1" "const void *b2" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn bcmp
@@ -56,33 +53,15 @@ bytes long.
 Zero-length strings are always identical.
 .Pp
 The strings may overlap.
-.Pp
-The
-.Fn timingsafe_bcmp
-function has the same semantics as
-.Fn bcmp ,
-but its running time is independent of the contents of
-.Fa b1
-and
-.Fa b2 ,
-making it safe to use for comparing secret values such as cryptographic MACs.
-In contrast,
-.Fn bcmp
-returns after finding the first differing byte,
-making it vulnerable to timing attacks.
 .Sh SEE ALSO
 .Xr memcmp 3 ,
 .Xr strcasecmp 3 ,
 .Xr strcmp 3 ,
 .Xr strcoll 3 ,
-.Xr strxfrm 3
+.Xr strxfrm 3 ,
+.Xr timingsafe_bcmp 3
 .Sh HISTORY
 The
 .Fn bcmp
 function first appeared in
 .Bx 4.2 .
-.Pp
-The
-.Fn timingsafe_bcmp
-function first appeared in
-.Ox 4.9 .
