@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.39 2014/05/24 21:49:09 krw Exp $	*/
+/*	$OpenBSD: tape.c,v 1.40 2014/06/13 20:43:06 naddy Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@
 int	writesize;		/* size of malloc()ed buffer for tape */
 int64_t	lastspclrec = -1;	/* tape block number of last written header */
 int	trecno = 0;		/* next record to write in current block */
-extern	long blocksperfile;	/* number of blocks per output file */
-long	blocksthisvol;		/* number of blocks on current output file */
+extern	int64_t blocksperfile;	/* number of blocks per output file */
+int64_t	blocksthisvol;		/* number of blocks on current output file */
 extern	int ntrec;		/* blocking factor on tape */
 extern	int cartridge;
 extern	char *host;
@@ -200,7 +200,8 @@ tperror(int signo)
 		quit("Cannot recover\n");
 		/* NOTREACHED */
 	}
-	msg("write error %ld blocks into volume %d\n", blocksthisvol, tapeno);
+	msg("write error %lld blocks into volume %d\n",
+	    (long long)blocksthisvol, tapeno);
 	broadcast("DUMP WRITE ERROR!\n");
 	if (!query("Do you want to restart?"))
 		dumpabort(0);

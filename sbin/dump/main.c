@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2014/05/31 08:28:13 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2014/06/13 20:43:06 naddy Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -59,12 +59,12 @@
 #include "pathnames.h"
 
 int	notify = 0;	/* notify operator flag */
-int	blockswritten = 0;	/* number of blocks written on current tape */
+int64_t	blockswritten = 0;	/* number of blocks written on current tape */
 int	tapeno = 0;	/* current tape number */
 int	density = 0;	/* density in bytes/0.1" */
 int	ntrec = NTREC;	/* # tape blocks in each tape record */
 int	cartridge = 0;	/* Assume non-cartridge tape */
-long	blocksperfile;	/* output blocks per file */
+int64_t	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
 int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
 
@@ -75,7 +75,7 @@ struct disklabel lab;
  */
 static int sblock_try[] = SBLOCKSEARCH;
 
-static long numarg(char *, long, long);
+static long long numarg(char *, long long, long long);
 static void obsolete(int *, char **[]);
 static void usage(void);
 
@@ -121,11 +121,11 @@ main(int argc, char *argv[])
 			break;
 
 		case 'B':		/* blocks per output file */
-			blocksperfile = numarg("blocks per file", 1L, 0L);
+			blocksperfile = numarg("blocks per file", 1, 0);
 			break;
 
 		case 'b':		/* blocks per tape write */
-			ntrec = numarg("blocks per write", 1L, 1000L);
+			ntrec = numarg("blocks per write", 1, 1000);
 			if (ntrec > maxbsize/1024) {
 				msg("Please choose a blocksize <= %dKB\n",
 				    maxbsize/1024);
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':		/* density, in bits per inch */
-			density = numarg("density", 10L, 327670L) / 10;
+			density = numarg("density", 10, 327670) / 10;
 			if (density >= 625 && !bflag)
 				ntrec = HIGHDENSITYTREC;
 			break;
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'h':
-			honorlevel = numarg("honor level", 0L, 10L);
+			honorlevel = numarg("honor level", 0, 10);
 			break;
 
 		case 'n':		/* notify operators */
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 's':		/* tape size, feet */
-			tsize = numarg("tape size", 1L, 0L) * 12 * 10;
+			tsize = numarg("tape size", 1, 0) * 12 * 10;
 			break;
 
 		case 'S':		/* estimate blocks and # of tapes */
@@ -573,17 +573,17 @@ usage(void)
  * Pick up a numeric argument.  It must be nonnegative and in the given
  * range (except that a vmax of 0 means unlimited).
  */
-static long
-numarg(char *meaning, long vmin, long vmax)
+static long long
+numarg(char *meaning, long long vmin, long long vmax)
 {
-	long val;
+	long long val;
 	const char *errstr;
 
 	if (vmax == 0)
-		vmax = LONG_MAX;
+		vmax = LLONG_MAX;
 	val = strtonum(optarg, vmin, vmax, &errstr);
 	if (errstr)
-		errx(X_STARTUP, "%s is %s [%ld - %ld]",
+		errx(X_STARTUP, "%s is %s [%lld - %lld]",
 		    meaning, errstr, vmin, vmax);
 
 	return (val);

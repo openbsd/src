@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.19 2014/05/24 21:49:09 krw Exp $	*/
+/*	$OpenBSD: dump.h,v 1.20 2014/06/13 20:43:06 naddy Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -65,15 +65,15 @@ int	pipeout;	/* true => output to standard output */
 ino_t	curino;		/* current inumber; used globally */
 int	newtape;	/* new tape flag */
 int	density;	/* density in 0.1" units */
-off_t	tapesize;	/* estimated tape size, blocks */
-off_t	tsize;		/* tape size in 0.1" units */
+int64_t	tapesize;	/* estimated tape size, blocks */
+int64_t	tsize;		/* tape size in 0.1" units */
 int	unlimited;	/* if set, write to end of medium */
-off_t	asize;		/* number of 0.1" units written on current tape */
+int64_t	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
 int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
 int	notify;		/* notify operator flag */
-int	blockswritten;	/* number of blocks written on current tape */
+int64_t	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
 long	xferrate;	/* averaged transfer rate of all volumes */
@@ -96,10 +96,11 @@ void	timeest(void);
 
 /* mapping routines */
 union	dinode;
-off_t	blockest(union dinode *dp);
-void	mapfileino(ino_t, off_t *, int *);
-int	mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv);
-int	mapdirs(ino_t maxino, off_t *tapesize);
+int64_t	blockest(union dinode *dp);
+void	mapfileino(ino_t, int64_t *, int *);
+int	mapfiles(ino_t maxino, int64_t *tapesize, char *disk,
+	    char * const *dirv);
+int	mapdirs(ino_t maxino, int64_t *tapesize);
 
 /* file dumping routines */
 void	ufs1_blksout(int32_t *blkp, int frags, ino_t ino);

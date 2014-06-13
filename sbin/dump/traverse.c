@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.34 2014/05/31 14:15:22 krw Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.35 2014/06/13 20:43:06 naddy Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -63,9 +63,9 @@ union dinode {
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
 
-static	int dirindir(ino_t, daddr_t, int, off_t *, off_t *, int);
+static	int dirindir(ino_t, daddr_t, int, off_t *, int64_t *, int);
 static	void dmpindir(ino_t, daddr_t, int, off_t *);
-static	int searchdir(ino_t, daddr_t, long, off_t, off_t *, int);
+static	int searchdir(ino_t, daddr_t, long, off_t, int64_t *, int);
 void	fs_mapinodes(ino_t maxino, off_t *tapesize, int *anydirskipped);
 
 /*
@@ -75,10 +75,10 @@ void	fs_mapinodes(ino_t maxino, off_t *tapesize, int *anydirskipped);
  * (when some of the blocks are usually used for indirect pointers);
  * hence the estimate may be high.
  */
-off_t
+int64_t
 blockest(union dinode *dp)
 {
-	off_t blkest, sizeest;
+	int64_t blkest, sizeest;
 
 	/*
 	 * dp->di_size is the size of the file in bytes.
@@ -94,8 +94,8 @@ blockest(union dinode *dp)
 	 *	dump blocks (sizeest vs. blkest in the indirect block
 	 *	calculation).
 	 */
-	blkest = howmany(dbtob((off_t)DIP(dp, di_blocks)), TP_BSIZE);
-	sizeest = howmany((off_t)DIP(dp, di_size), TP_BSIZE);
+	blkest = howmany(dbtob((int64_t)DIP(dp, di_blocks)), TP_BSIZE);
+	sizeest = howmany((int64_t)DIP(dp, di_size), TP_BSIZE);
 	if (blkest > sizeest)
 		blkest = sizeest;
 	if (DIP(dp, di_size) > sblock->fs_bsize * NDADDR) {
@@ -115,7 +115,7 @@ blockest(union dinode *dp)
  * Determine if given inode should be dumped
  */
 void
-mapfileino(ino_t ino, off_t *tapesize, int *dirskipped)
+mapfileino(ino_t ino, int64_t *tapesize, int *dirskipped)
 {
 	int mode;
 	union dinode *dp;
@@ -144,7 +144,7 @@ mapfileino(ino_t ino, off_t *tapesize, int *dirskipped)
 }
 
 void
-fs_mapinodes(ino_t maxino, off_t *tapesize, int *anydirskipped)
+fs_mapinodes(ino_t maxino, int64_t *tapesize, int *anydirskipped)
 {
 	int i, cg, inosused;
 	struct cg *cgp;
@@ -204,7 +204,7 @@ fs_mapinodes(ino_t maxino, off_t *tapesize, int *anydirskipped)
  * the directories in the filesystem.
  */
 int
-mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv)
+mapfiles(ino_t maxino, int64_t *tapesize, char *disk, char * const *dirv)
 {
 	int anydirskipped = 0;
 
@@ -304,7 +304,7 @@ mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv)
  * pass using this algorithm.
  */
 int
-mapdirs(ino_t maxino, off_t *tapesize)
+mapdirs(ino_t maxino, int64_t *tapesize)
 {
 	union dinode *dp;
 	int i, isdir, nodump;
@@ -382,7 +382,7 @@ mapdirs(ino_t maxino, off_t *tapesize)
  */
 static int
 dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
-    off_t *tapesize, int nodump)
+    int64_t *tapesize, int nodump)
 {
 	int ret = 0;
 	int i;
@@ -425,7 +425,7 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
  */
 static int
 searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
-    off_t *tapesize, int nodump)
+    int64_t *tapesize, int nodump)
 {
 	struct direct *dp;
 	union dinode *ip;
