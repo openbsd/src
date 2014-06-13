@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.42 2014/06/13 14:11:35 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.43 2014/06/13 14:15:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -355,23 +355,26 @@ ssl3_change_cipher_state(SSL *s, int which)
 		EVP_DigestUpdate(&mac_ctx, key, j);
 		EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
 		EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
-		EVP_DigestFinal_ex(&mac_ctx, &(export_key[0]), NULL);
-		key = &(export_key[0]);
+		EVP_DigestFinal_ex(&mac_ctx, export_key, NULL);
+		key = export_key;
 
 		if (k > 0) {
 			EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
 			EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
 			EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
-			EVP_DigestFinal_ex(&mac_ctx, &(export_iv[0]), NULL);
-			iv = &(export_iv[0]);
+			EVP_DigestFinal_ex(&mac_ctx, export_iv, NULL);
+			iv = export_iv;
 		}
 	}
 
 	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv,
 	    (which & SSL3_CC_WRITE));
 
-	OPENSSL_cleanse(&(export_key[0]), sizeof(export_key));
-	OPENSSL_cleanse(&(export_iv[0]), sizeof(export_iv));
+	if (is_export) {
+		OPENSSL_cleanse(export_key, sizeof(export_key));
+		OPENSSL_cleanse(export_iv, sizeof(export_iv));
+	}
+
 	EVP_MD_CTX_cleanup(&mac_ctx);
 	return (1);
 err:
