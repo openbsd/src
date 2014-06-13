@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.47 2014/06/13 16:04:13 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.48 2014/06/13 16:08:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,16 +214,19 @@ ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 int
 ssl3_change_cipher_state(SSL *s, int which)
 {
-	unsigned char *p, *mac_secret;
+	const unsigned char *client_write_mac_secret, *server_write_mac_secret;
+	const unsigned char *client_write_key, *server_write_key;
+	const unsigned char *client_write_iv, *server_write_iv;
+	const unsigned char *mac_secret, *key, *iv;
+	unsigned char *key_block, *er1, *er2;
 	unsigned char export_key[EVP_MAX_KEY_LENGTH];
 	unsigned char export_iv[EVP_MAX_IV_LENGTH];
-	unsigned char *ms, *key, *iv, *er1, *er2;
+	int is_export, mac_len, key_len, iv_len;
+	char is_read, use_client_keys;
 	EVP_CIPHER_CTX *cipher_ctx;
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX mac_ctx;
 	const EVP_MD *mac;
-	int is_export, n, mac_len, key_len, iv_len;
-	char is_read;
 
 #ifndef OPENSSL_NO_COMP
 	const SSL_COMP *comp;
@@ -242,6 +245,14 @@ ssl3_change_cipher_state(SSL *s, int which)
 	 * just written one.
 	 */
 	is_read = (which & SSL3_CC_READ) != 0;
+
+	/*
+	 * use_client_keys is true if we wish to use the keys for the "client
+	 * write" direction. This is the case if we're a client sending a
+	 * ChangeCipherSpec, or a server reading a client's ChangeCipherSpec.
+	 */
+	use_client_keys = ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
+	    (which == SSL3_CHANGE_CIPHER_SERVER_READ));
 
 #ifndef OPENSSL_NO_COMP
 	comp = s->s3->tmp.new_compression;
@@ -288,9 +299,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 
 		if (ssl_replace_hash(&s->read_hash, mac) == NULL)
 			goto err;
-
-		memset(s->s3->read_sequence, 0, SSL3_SEQUENCE_SIZE);
-		mac_secret = &(s->s3->read_mac_secret[0]);
 	} else {
 		EVP_CIPHER_CTX_free(s->enc_write_ctx);
 		s->enc_write_ctx = NULL;
@@ -300,12 +308,10 @@ ssl3_change_cipher_state(SSL *s, int which)
 
 		if (ssl_replace_hash(&s->write_hash, mac) == NULL)
 			goto err;
-
-		memset(s->s3->write_sequence, 0, SSL3_SEQUENCE_SIZE);
-		mac_secret = &(s->s3->write_mac_secret[0]);
 	}
 
-	p = s->s3->tmp.key_block;
+	memset(is_read ? s->s3->read_sequence : s->s3->write_sequence,
+	    0, SSL3_SEQUENCE_SIZE);
 
 	mac_len = EVP_MD_size(mac);
 	key_len = EVP_CIPHER_key_length(cipher);
@@ -317,36 +323,44 @@ ssl3_change_cipher_state(SSL *s, int which)
 	if (is_export &&
 	    key_len > SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher))
 		key_len = SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher);
-	
-	if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
-	    (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
-		ms = &(p[0]);
-		n = mac_len + mac_len;
-		key = &(p[n]);
-		n += key_len + key_len;
-		iv = &(p[n]);
-		n += iv_len + iv_len;
+
+	key_block = s->s3->tmp.key_block;
+	client_write_mac_secret = key_block;
+	key_block += mac_len;
+	server_write_mac_secret = key_block;
+	key_block += mac_len;
+	client_write_key = key_block;
+	key_block += key_len;
+	server_write_key = key_block;
+	key_block += key_len;
+	client_write_iv = key_block;
+	key_block += iv_len;
+	server_write_iv = key_block;
+	key_block += iv_len;
+
+	if (use_client_keys) {
+		mac_secret = client_write_mac_secret;
+		key = client_write_key;
+		iv = client_write_iv;
 		er1 = s->s3->client_random;
 		er2 = s->s3->server_random;
 	} else {
-		n = mac_len;
-		ms = &(p[n]);
-		n += mac_len + key_len;
-		key = &(p[n]);
-		n += key_len + iv_len;
-		iv = &(p[n]);
-		n += iv_len;
+		mac_secret = server_write_mac_secret;
+		key = server_write_key;
+		iv = server_write_iv;
 		er1 = s->s3->server_random;
 		er2 = s->s3->client_random;
 	}
 
-	if (n > s->s3->tmp.key_block_length) {
+	if (key_block - s->s3->tmp.key_block != s->s3->tmp.key_block_length) {
 		SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
 		goto err2;
 	}
 
+	memcpy(is_read ? s->s3->read_mac_secret : s->s3->write_mac_secret,
+	    mac_secret, mac_len);
+		
 	EVP_MD_CTX_init(&mac_ctx);
-	memcpy(mac_secret, ms, mac_len);
 	if (is_export) {
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
@@ -367,8 +381,7 @@ ssl3_change_cipher_state(SSL *s, int which)
 		}
 	}
 
-	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv,
-	    (which & SSL3_CC_WRITE));
+	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
 
 	if (is_export) {
 		OPENSSL_cleanse(export_key, sizeof(export_key));
