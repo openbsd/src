@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.32 2014/06/13 15:36:37 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.33 2014/06/13 18:58:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -79,8 +79,8 @@ _rs_stir(void)
 {
 	u_char rnd[KEYSZ + IVSZ];
 
-	if (getentropy(rnd, sizeof rnd) == -1)
-		abort();
+	/* XXX */
+	(void) getentropy(rnd, sizeof rnd);
 
 	if (!rs_initialized) {
 		rs_initialized = 1;
