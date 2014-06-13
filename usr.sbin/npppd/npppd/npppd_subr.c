@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.11 2014/04/18 10:05:22 claudio Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.12 2014/06/13 06:35:58 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,8 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-#include <sys/types.h>
+#include <sys/param.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -509,6 +510,8 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 	if ((th->th_flags & TH_SYN) == 0)
 		return 0;
 
+	lpktp = MIN(th->th_off << 4, lpktp);
+
 	pktp += sizeof(struct tcphdr);
 	lpktp -= sizeof(struct tcphdr);
 
@@ -538,7 +541,9 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 			break;
 		default:
 			GETCHAR(optlen, pktp);
-			pktp += 2 - optlen;
+			if (optlen < 2)	/* packet is broken */
+				return 1;
+			pktp += optlen - 2;
 			lpktp -= optlen;
 			break;
 		}
