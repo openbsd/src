@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.51 2014/06/13 06:35:58 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.52 2014/06/13 06:44:11 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1103,10 +1103,9 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 	default:
 		if (decrypted)
 			goto drop;
-		KASSERT(session->protocol == PIPEX_PROTO_PPPOE);
-		/* will be proccessed by userland */
-		m_freem(m0);
-		return;
+		/* protocol must be checked on pipex_common_input() already */
+		KASSERT(0);
+		goto drop;
 	}
 
 	return;
