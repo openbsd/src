@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.19 2013/08/01 19:42:08 kettenis Exp $ */
+/*	$OpenBSD: random.c,v 1.20 2014/06/13 15:35:34 deraadt Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -252,7 +252,6 @@ __warn_references(srandom,
 void
 srandomdev(void)
 {
-	int mib[2];
 	size_t len;
 
 	LOCK();
@@ -261,9 +260,7 @@ srandomdev(void)
 	else
 		len = rand_deg * sizeof(state[0]);
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ARND;
-	sysctl(mib, 2, state, &len, NULL, 0);
+	getentropy(state, len);
 
 	if (rand_type != TYPE_0) {
 		fptr = &state[rand_sep];
