@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getentropy.2,v 1.1 2014/06/13 08:26:10 deraadt Exp $
+.\"	$OpenBSD: getentropy.2,v 1.2 2014/06/13 15:16:46 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -32,8 +32,7 @@ This is typically used to seed a process-context generator
 like
 .Xr arc4random 3 .
 .Sh ERRORS
-.Nm
-.Fn setlogin
+.Fn getlogin
 will succeed unless:
 .Bl -tag -width Er
 .It Bq Er EFAULT
