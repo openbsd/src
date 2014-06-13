@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.16 2014/02/12 05:47:36 guenther Exp $	*/
+/*	$OpenBSD: wait.h,v 1.17 2014/06/13 22:40:31 matthew Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -46,25 +46,19 @@
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
-#if __BSD_VISIBLE
-#define	_W_INT(w)	(*(int *)&(w))	/* convert union wait to int */
-#else
-#define	_W_INT(i)	(i)
-#endif
-
-#define	_WSTATUS(x)	(_W_INT(x) & 0177)
+#define	_WSTATUS(x)	((x) & 0177)
 #define	_WSTOPPED	0177		/* _WSTATUS if process is stopped */
 #define	_WCONTINUED	0177777		/* process has continued */
-#define WIFSTOPPED(x)	((_W_INT(x) & 0xff) == _WSTOPPED)
-#define WSTOPSIG(x)	(int)(((unsigned)_W_INT(x) >> 8) & 0xff)
+#define WIFSTOPPED(x)	(((x) & 0xff) == _WSTOPPED)
+#define WSTOPSIG(x)	(int)(((unsigned)(x) >> 8) & 0xff)
 #define WIFSIGNALED(x)	(_WSTATUS(x) != _WSTOPPED && _WSTATUS(x) != 0)
 #define WTERMSIG(x)	(_WSTATUS(x))
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
-#define WEXITSTATUS(x)	(int)(((unsigned)_W_INT(x) >> 8) & 0xff)
-#define WIFCONTINUED(x)	((_W_INT(x) & _WCONTINUED) == _WCONTINUED)
+#define WEXITSTATUS(x)	(int)(((unsigned)(x) >> 8) & 0xff)
+#define WIFCONTINUED(x)	(((x) & _WCONTINUED) == _WCONTINUED)
 #if __XPG_VISIBLE
 #define	WCOREFLAG	0200
-#define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
+#define WCOREDUMP(x)	((x) & WCOREFLAG)
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
 #define	W_STOPCODE(sig)		((sig) << 8 | _WSTOPPED)
@@ -89,59 +83,6 @@
  */
 #define	WAIT_ANY	(-1)	/* any process */
 #define	WAIT_MYPGRP	0	/* any process in my process group */
-
-#include <sys/types.h>
-
-/*
- * Deprecated:
- * Structure of the information in the status word returned by wait4.
- * If w_stopval==WSTOPPED, then the second structure describes
- * the information returned, else the first.
- */
-union wait {
-	int	w_status;		/* used in syscall */
-	/*
-	 * Terminated process status.
-	 */
-	struct {
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-		unsigned int	w_Termsig:7,	/* termination signal */
-				w_Coredump:1,	/* core dump indicator */
-				w_Retcode:8,	/* exit code if w_termsig==0 */
-				w_Filler:16;	/* upper bits filler */
-#endif
-#if _BYTE_ORDER == _BIG_ENDIAN
-		unsigned int	w_Filler:16,	/* upper bits filler */
-				w_Retcode:8,	/* exit code if w_termsig==0 */
-				w_Coredump:1,	/* core dump indicator */
-				w_Termsig:7;	/* termination signal */
-#endif
-	} w_T;
-	/*
-	 * Stopped process status.  Returned
-	 * only for traced children unless requested
-	 * with the WUNTRACED option bit.
-	 */
-	struct {
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-		unsigned int	w_Stopval:8,	/* == W_STOPPED if stopped */
-				w_Stopsig:8,	/* signal that stopped us */
-				w_Filler:16;	/* upper bits filler */
-#endif
-#if _BYTE_ORDER == _BIG_ENDIAN
-		unsigned int	w_Filler:16,	/* upper bits filler */
-				w_Stopsig:8,	/* signal that stopped us */
-				w_Stopval:8;	/* == W_STOPPED if stopped */
-#endif
-	} w_S;
-};
-#define	w_termsig	w_T.w_Termsig
-#define w_coredump	w_T.w_Coredump
-#define w_retcode	w_T.w_Retcode
-#define w_stopval	w_S.w_Stopval
-#define w_stopsig	w_S.w_Stopsig
-
-#define	WSTOPPED	_WSTOPPED
 #endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
