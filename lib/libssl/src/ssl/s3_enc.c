@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.41 2014/06/13 12:41:01 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.42 2014/06/13 14:11:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,24 +215,25 @@ int
 ssl3_change_cipher_state(SSL *s, int which)
 {
 	unsigned char *p, *mac_secret;
-	unsigned char exp_key[EVP_MAX_KEY_LENGTH];
-	unsigned char exp_iv[EVP_MAX_IV_LENGTH];
+	unsigned char export_key[EVP_MAX_KEY_LENGTH];
+	unsigned char export_iv[EVP_MAX_IV_LENGTH];
 	unsigned char *ms, *key, *iv, *er1, *er2;
-	EVP_CIPHER_CTX *dd;
-	const EVP_CIPHER *c;
+	EVP_CIPHER_CTX *cipher_ctx;
+	const EVP_CIPHER *cipher;
+	EVP_MD_CTX mac_ctx;
+	const EVP_MD *mac;
 #ifndef OPENSSL_NO_COMP
 	COMP_METHOD *comp;
 #endif
-	const EVP_MD *m;
-	EVP_MD_CTX md;
-	int is_exp, n, i, j, k, cl;
+	int is_export, n, i, j, k, cl;
 	int reuse_dd = 0;
 
-	is_exp = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
-	c = s->s3->tmp.new_sym_enc;
-	m = s->s3->tmp.new_hash;
+	is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
+	cipher = s->s3->tmp.new_sym_enc;
+	mac = s->s3->tmp.new_hash;
 	/* m == NULL will lead to a crash later */
-	OPENSSL_assert(m);
+	OPENSSL_assert(mac);
+
 #ifndef OPENSSL_NO_COMP
 	if (s->s3->tmp.new_compression == NULL)
 		comp = NULL;
@@ -249,9 +250,9 @@ ssl3_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		}
-		dd = s->enc_read_ctx;
+		cipher_ctx = s->enc_read_ctx;
 
-		if (ssl_replace_hash(&s->read_hash, m) == NULL)
+		if (ssl_replace_hash(&s->read_hash, mac) == NULL)
 			goto err;
 
 #ifndef OPENSSL_NO_COMP
@@ -283,8 +284,8 @@ ssl3_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		}
-		dd = s->enc_write_ctx;
-		if (ssl_replace_hash(&s->write_hash, m) == NULL)
+		cipher_ctx = s->enc_write_ctx;
+		if (ssl_replace_hash(&s->write_hash, mac) == NULL)
 			goto err;
 
 #ifndef OPENSSL_NO_COMP
@@ -306,17 +307,17 @@ ssl3_change_cipher_state(SSL *s, int which)
 	}
 
 	if (reuse_dd)
-		EVP_CIPHER_CTX_cleanup(dd);
+		EVP_CIPHER_CTX_cleanup(cipher_ctx);
 
 	p = s->s3->tmp.key_block;
-	i = EVP_MD_size(m);
+	i = EVP_MD_size(mac);
 	if (i < 0)
 		goto err2;
-	cl = EVP_CIPHER_key_length(c);
-	j = is_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
+	cl = EVP_CIPHER_key_length(cipher);
+	j = is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
 	    cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(is_exp)?5:EVP_CIPHER_key_length(c); */
-	k = EVP_CIPHER_iv_length(c);
+	k = EVP_CIPHER_iv_length(cipher);
 	if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 	    (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
 		ms = &(p[0]);
@@ -344,33 +345,34 @@ ssl3_change_cipher_state(SSL *s, int which)
 		goto err2;
 	}
 
-	EVP_MD_CTX_init(&md);
+	EVP_MD_CTX_init(&mac_ctx);
 	memcpy(mac_secret, ms, i);
-	if (is_exp) {
+	if (is_export) {
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
-		EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-		EVP_DigestUpdate(&md, key, j);
-		EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-		EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-		EVP_DigestFinal_ex(&md, &(exp_key[0]), NULL);
-		key = &(exp_key[0]);
+		EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
+		EVP_DigestUpdate(&mac_ctx, key, j);
+		EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
+		EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
+		EVP_DigestFinal_ex(&mac_ctx, &(export_key[0]), NULL);
+		key = &(export_key[0]);
 
 		if (k > 0) {
-			EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-			EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-			EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-			EVP_DigestFinal_ex(&md, &(exp_iv[0]), NULL);
-			iv = &(exp_iv[0]);
+			EVP_DigestInit_ex(&mac_ctx, EVP_md5(), NULL);
+			EVP_DigestUpdate(&mac_ctx, er1, SSL3_RANDOM_SIZE);
+			EVP_DigestUpdate(&mac_ctx, er2, SSL3_RANDOM_SIZE);
+			EVP_DigestFinal_ex(&mac_ctx, &(export_iv[0]), NULL);
+			iv = &(export_iv[0]);
 		}
 	}
 
-	EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
+	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv,
+	    (which & SSL3_CC_WRITE));
 
-	OPENSSL_cleanse(&(exp_key[0]), sizeof(exp_key));
-	OPENSSL_cleanse(&(exp_iv[0]), sizeof(exp_iv));
-	EVP_MD_CTX_cleanup(&md);
+	OPENSSL_cleanse(&(export_key[0]), sizeof(export_key));
+	OPENSSL_cleanse(&(export_iv[0]), sizeof(export_iv));
+	EVP_MD_CTX_cleanup(&mac_ctx);
 	return (1);
 err:
 	SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
