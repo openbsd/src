@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.168 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.169 2014/06/13 01:48:52 matthew Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -190,10 +190,13 @@ int			 uvm_mapent_bias(struct vm_map*, struct vm_map_entry*);
 struct vm_map_entry	*uvm_mapent_clone(struct vm_map*, vaddr_t, vsize_t,
 			    vsize_t, struct vm_map_entry*,
 			    struct uvm_map_deadq*, int, int);
-void			 uvm_mapent_forkshared(struct vmspace*, struct vm_map*,
+struct vm_map_entry	*uvm_mapent_forkshared(struct vmspace*, struct vm_map*,
 			    struct vm_map*, struct vm_map_entry*,
 			    struct uvm_map_deadq*);
-void			 uvm_mapent_forkcopy(struct vmspace*, struct vm_map*,
+struct vm_map_entry	*uvm_mapent_forkcopy(struct vmspace*, struct vm_map*,
+			    struct vm_map*, struct vm_map_entry*,
+			    struct uvm_map_deadq*);
+struct vm_map_entry	*uvm_mapent_forkzero(struct vmspace*, struct vm_map*,
 			    struct vm_map*, struct vm_map_entry*,
 			    struct uvm_map_deadq*);
 
@@ -3158,7 +3161,7 @@ uvmspace_free(struct vmspace *vm)
  * Space must be available.
  * Reference counters are incremented.
  */
-struct vm_map_entry*
+struct vm_map_entry *
 uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
     vsize_t off, struct vm_map_entry *old_entry, struct uvm_map_deadq *dead,
     int mapent_flags, int amap_share_flags)
@@ -3209,7 +3212,7 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
  * share the mapping: this means we want the old and
  * new entries to share amaps and backing objects.
  */
-void
+struct vm_map_entry *
 uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
     struct vm_map *old_map,
     struct vm_map_entry *old_entry, struct uvm_map_deadq *dead)
@@ -3243,13 +3246,7 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
 		pmap_copy(new_map->pmap, old_map->pmap, new_entry->start,
 		    (new_entry->end - new_entry->start), new_entry->start);
 
-	/* Update process statistics. */
-	if (!UVM_ET_ISHOLE(new_entry))
-		new_map->size += new_entry->end - new_entry->start;
-	if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry)) {
-		new_vm->vm_dused +=
-		    uvmspace_dused(new_map, new_entry->start, new_entry->end);
-	}
+	return (new_entry);
 }
 
 /*
@@ -3259,7 +3256,7 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
  * allocate new_entry, adjust reference counts.  
  * (note that new references are read-only).
  */
-void
+struct vm_map_entry *
 uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
     struct vm_map *old_map,
     struct vm_map_entry *old_entry, struct uvm_map_deadq *dead)
@@ -3396,13 +3393,42 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 		}
 	}
 
-	/* Update process statistics. */
-	if (!UVM_ET_ISHOLE(new_entry))
-		new_map->size += new_entry->end - new_entry->start;
-	if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry)) {
-		new_vm->vm_dused +=
-		    uvmspace_dused(new_map, new_entry->start, new_entry->end);
+	return (new_entry);
+}
+
+/*
+ * zero the mapping: the new entry will be zero initialized
+ */
+struct vm_map_entry *
+uvm_mapent_forkzero(struct vmspace *new_vm, struct vm_map *new_map,
+    struct vm_map *old_map,
+    struct vm_map_entry *old_entry, struct uvm_map_deadq *dead)
+{
+	struct vm_map_entry *new_entry;
+
+	new_entry = uvm_mapent_clone(new_map, old_entry->start,
+	    old_entry->end - old_entry->start, 0, old_entry,
+	    dead, 0, 0);
+
+	new_entry->etype |=
+	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
+
+	if (new_entry->aref.ar_amap) {
+		amap_unref(new_entry->aref.ar_amap, new_entry->aref.ar_pageoff,
+		    atop(new_entry->end - new_entry->start), 0);
+		new_entry->aref.ar_amap = NULL;
+		new_entry->aref.ar_pageoff = 0;
 	}
+
+	if (UVM_ET_ISOBJ(new_entry)) {
+		if (new_entry->object.uvm_obj->pgops->pgo_detach)
+			new_entry->object.uvm_obj->pgops->pgo_detach(
+			    new_entry->object.uvm_obj);
+		new_entry->object.uvm_obj = NULL;
+		new_entry->etype &= ~UVM_ET_OBJ;
+	}
+
+	return (new_entry);
 }
 
 /*
@@ -3418,7 +3444,7 @@ uvmspace_fork(struct process *pr)
 	struct vmspace *vm2;
 	struct vm_map *old_map = &vm1->vm_map;
 	struct vm_map *new_map;
-	struct vm_map_entry *old_entry;
+	struct vm_map_entry *old_entry, *new_entry;
 	struct uvm_map_deadq dead;
 
 	vm_map_lock(old_map);
@@ -3450,13 +3476,29 @@ uvmspace_fork(struct process *pr)
 		}
 
 		/* Apply inheritance. */
-		if (old_entry->inheritance == MAP_INHERIT_SHARE) {
-			uvm_mapent_forkshared(vm2, new_map,
+		switch (old_entry->inheritance) {
+		case MAP_INHERIT_SHARE:
+			new_entry = uvm_mapent_forkshared(vm2, new_map,
 			    old_map, old_entry, &dead);
+			break;
+		case MAP_INHERIT_COPY:
+			new_entry = uvm_mapent_forkcopy(vm2, new_map,
+			    old_map, old_entry, &dead);
+			break;
+		case MAP_INHERIT_ZERO:
+			new_entry = uvm_mapent_forkzero(vm2, new_map,
+			    old_map, old_entry, &dead);
+			break;
+		default:
+			continue;
 		}
-		if (old_entry->inheritance == MAP_INHERIT_COPY) {
-			uvm_mapent_forkcopy(vm2, new_map,
-			    old_map, old_entry, &dead);
+
+	 	/* Update process statistics. */
+		if (!UVM_ET_ISHOLE(new_entry))
+			new_map->size += new_entry->end - new_entry->start;
+		if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry)) {
+			vm2->vm_dused += uvmspace_dused(
+			    new_map, new_entry->start, new_entry->end);
 		}
 	}
 
@@ -3670,6 +3712,7 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	case MAP_INHERIT_NONE:
 	case MAP_INHERIT_COPY:
 	case MAP_INHERIT_SHARE:
+	case MAP_INHERIT_ZERO:
 		break;
 	default:
 		return (EINVAL);

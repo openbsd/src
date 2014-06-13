@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.23 2013/05/31 18:41:26 tedu Exp $	*/
+/*	$OpenBSD: mman.h,v 1.24 2014/06/13 01:48:52 matthew Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -107,8 +107,7 @@
 #define MAP_INHERIT_SHARE	0	/* share with child */
 #define MAP_INHERIT_COPY	1	/* copy into child */
 #define MAP_INHERIT_NONE	2	/* absent from child */
-#define MAP_INHERIT_DONATE_COPY	3	/* copy and delete -- not
-					   implemented in UVM */
+#define MAP_INHERIT_ZERO	3	/* zero in child */
 
 /*
  * Flags to msync

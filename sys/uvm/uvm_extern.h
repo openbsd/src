@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.115 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.116 2014/06/13 01:48:52 matthew Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ typedef struct vm_page  *vm_page_t;
 #define UVM_INH_SHARE	0x00	/* "share" */
 #define UVM_INH_COPY	0x10	/* "copy" */
 #define UVM_INH_NONE	0x20	/* "none" */
-#define UVM_INH_DONATE	0x30	/* "donate" << not used */
+#define UVM_INH_ZERO	0x30	/* "zero" */
 
 /* 0x40, 0x80: not used */
 
