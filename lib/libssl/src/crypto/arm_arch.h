@@ -1,4 +1,4 @@
-/* $OpenBSD: arm_arch.h,v 1.4 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: arm_arch.h,v 1.5 2014/06/13 20:47:19 miod Exp $ */
 #ifndef __ARM_ARCH_H__
 #define __ARM_ARCH_H__
 
@@ -13,7 +13,7 @@
 # elif defined(__GNUC__)
   /*
    * Why doesn't gcc define __ARM_ARCH__? Instead it defines
-   * bunch of below macros. See all_architectires[] table in
+   * bunch of below macros. See all_architectures[] table in
    * gcc/config/arm/arm.c. On a side note it defines
    * __ARMEL__/__ARMEB__ for little-/big-endian.
    */
