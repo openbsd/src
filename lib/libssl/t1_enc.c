@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.58 2014/06/13 14:32:35 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.59 2014/06/13 16:09:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -696,6 +696,10 @@ tls1_setup_key_block(SSL *s)
 		}
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
+
+		if (SSL_C_IS_EXPORT(s->session->cipher) &&
+                    key_len > SSL_C_EXPORT_KEYLENGTH(s->session->cipher))
+                        key_len = SSL_C_EXPORT_KEYLENGTH(s->session->cipher);
 
 		/* If GCM mode only part of IV comes from PRF. */ 
 		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
