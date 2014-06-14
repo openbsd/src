@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.139 2014/06/13 08:26:10 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.140 2014/06/14 18:01:42 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -57,7 +57,7 @@
 5	STD		{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	STD		{ int sys_close(int fd); }
-7	STD		{ ssize_t sys_getentropy(void *buf, size_t nbyte); }
+7	STD		{ int sys_getentropy(void *buf, size_t nbyte); }
 8	STD		{ int sys___tfork(const struct __tfork *param, \
 			    size_t psize); }
 9	STD		{ int sys_link(const char *path, const char *link); }
