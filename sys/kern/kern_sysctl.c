@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.250 2014/06/11 17:32:59 matthew Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.251 2014/06/14 21:59:38 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -410,7 +410,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
 		    sizeof(rndstats)));
 	case KERN_ARND: {
-		char buf[256];
+		char buf[512];
 
 		if (*oldlenp > sizeof(buf))
 			*oldlenp = sizeof(buf);
