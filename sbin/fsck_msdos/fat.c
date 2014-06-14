@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.21 2014/06/14 12:33:07 tobias Exp $	*/
+/*	$OpenBSD: fat.c,v 1.22 2014/06/14 19:32:25 tobias Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -364,11 +364,13 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
 			continue;
 
 		/* follow the chain to its end (hopefully) */
-		for (p = head;
+		for (len = fat[head].length, p = head;
 		     (n = fat[p].next) >= CLUST_FIRST && n < boot->NumClusters;
-		     p = n)
-			if (fat[n].head != head)
+		     p = n) {
+			/* len is always off by one due to n assignment */
+			if (fat[n].head != head || len-- < 2)
 				break;
+		}
 		if (n >= CLUST_EOFS)
 			continue;
 
@@ -381,6 +383,12 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
 		if (n < CLUST_FIRST || n >= boot->NumClusters) {
 			pwarn("Cluster chain starting at %u ends with cluster out of range (%u)\n",
 			      head, n);
+			ret |= tryclear(boot, fat, head, &fat[p].next);
+			continue;
+		}
+		if (head == fat[n].head) {
+			pwarn("Cluster chain starting at %u loops at cluster %u\n",
+			      head, p);
 			ret |= tryclear(boot, fat, head, &fat[p].next);
 			continue;
 		}
