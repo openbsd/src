@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.14 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: md5.h,v 1.15 2014/06/14 10:28:31 avsm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,9 +100,11 @@ typedef struct MD5state_st
 	} MD5_CTX;
 
 int MD5_Init(MD5_CTX *c);
-int MD5_Update(MD5_CTX *c, const void *data, size_t len);
+int MD5_Update(MD5_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int MD5_Final(unsigned char *md, MD5_CTX *c);
-unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md);
+unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 void MD5_Transform(MD5_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

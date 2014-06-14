@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.14 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: sha.h,v 1.15 2014/06/14 10:28:31 avsm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,16 +104,20 @@ typedef struct SHAstate_st
 
 #ifndef OPENSSL_NO_SHA0
 int SHA_Init(SHA_CTX *c);
-int SHA_Update(SHA_CTX *c, const void *data, size_t len);
+int SHA_Update(SHA_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA_Final(unsigned char *md, SHA_CTX *c);
-unsigned char *SHA(const unsigned char *d, size_t n, unsigned char *md);
+unsigned char *SHA(const unsigned char *d, size_t n, unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 void SHA_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
 #ifndef OPENSSL_NO_SHA1
 int SHA1_Init(SHA_CTX *c);
-int SHA1_Update(SHA_CTX *c, const void *data, size_t len);
+int SHA1_Update(SHA_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA1_Final(unsigned char *md, SHA_CTX *c);
-unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md);
+unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
 
@@ -133,13 +137,17 @@ typedef struct SHA256state_st
 
 #ifndef OPENSSL_NO_SHA256
 int SHA224_Init(SHA256_CTX *c);
-int SHA224_Update(SHA256_CTX *c, const void *data, size_t len);
+int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
-unsigned char *SHA224(const unsigned char *d, size_t n,unsigned char *md);
+unsigned char *SHA224(const unsigned char *d, size_t n,unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 int SHA256_Init(SHA256_CTX *c);
-int SHA256_Update(SHA256_CTX *c, const void *data, size_t len);
+int SHA256_Update(SHA256_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
-unsigned char *SHA256(const unsigned char *d, size_t n,unsigned char *md);
+unsigned char *SHA256(const unsigned char *d, size_t n,unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 #endif
 
@@ -177,13 +185,17 @@ typedef struct SHA512state_st
 
 #ifndef OPENSSL_NO_SHA512
 int SHA384_Init(SHA512_CTX *c);
-int SHA384_Update(SHA512_CTX *c, const void *data, size_t len);
+int SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
-unsigned char *SHA384(const unsigned char *d, size_t n,unsigned char *md);
+unsigned char *SHA384(const unsigned char *d, size_t n,unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 int SHA512_Init(SHA512_CTX *c);
-int SHA512_Update(SHA512_CTX *c, const void *data, size_t len);
+int SHA512_Update(SHA512_CTX *c, const void *data, size_t len)
+	__attribute__ ((__bounded__(__buffer__,2,3)));
 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
-unsigned char *SHA512(const unsigned char *d, size_t n,unsigned char *md);
+unsigned char *SHA512(const unsigned char *d, size_t n,unsigned char *md)
+	__attribute__ ((__bounded__(__buffer__,1,2)));
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data);
 #endif
 

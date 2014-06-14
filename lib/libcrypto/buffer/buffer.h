@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.h,v 1.9 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: buffer.h,v 1.10 2014/06/14 10:28:31 avsm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,8 +90,10 @@ void *	BUF_memdup(const void *data, size_t siz);
 void	BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
 
 /* safe string functions */
-size_t BUF_strlcpy(char *dst, const char *src, size_t siz);
-size_t BUF_strlcat(char *dst, const char *src, size_t siz);
+size_t BUF_strlcpy(char *dst, const char *src, size_t siz)
+	__attribute__ ((__bounded__(__string__,1,3)));
+size_t BUF_strlcat(char *dst, const char *src, size_t siz)
+	__attribute__ ((__bounded__(__string__,1,3)));
 
 
 /* BEGIN ERROR CODES */
