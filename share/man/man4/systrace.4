@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.19 2012/09/01 08:42:15 guenther Exp $
+.\"	$OpenBSD: systrace.4,v 1.20 2014/06/14 00:17:52 matthew Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2012 $
+.Dd $Mdocdate: June 14 2014 $
 .Dt SYSTRACE 4
 .Os
 .Sh NAME
@@ -294,9 +294,24 @@ operation changes the entry indexed by
 .Va strp_code
 to
 .Va strp_policy .
-.It Dv STRIOCGETCWD Fa "pid_t *"
-Set the working directory of the current process to that of the
-named process.
+.It Dv STRIOCGETCWD Fa "struct systrace_getcwd *"
+Set the working directory of the calling process
+to the directory associated with file descriptor
+.Va strgd_atfd
+in the process named by
+.Va strgd_pid .
+If
+.Va strgd_atfd
+is set to the special value
+.Dv AT_FDCWD ,
+then the current working directory of the named process
+is used instead.
+.Bd -literal
+struct systrace_getcwd {
+	pid_t strgd_pid;
+	int   strgd_atfd;
+};
+.Ed
 .It Dv STRIOCRESCWD
 Restore the working directory of the current process.
 .It Dv STRIOCINJECT
