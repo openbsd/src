@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_dma.c,v 1.4 2012/12/05 23:20:10 deraadt Exp $ */
+/* $OpenBSD: mcpcia_dma.c,v 1.5 2014/06/14 23:11:20 jmatthew Exp $ */
 /* $NetBSD: mcpcia_dma.c,v 1.15 2001/07/19 18:55:40 thorpej Exp $ */
 
 /*-
@@ -108,8 +108,12 @@ mcpcia_dma_init(ccp)
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = mcpcia_dma_get_tag;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
+	/*
+	 * Since we fall back to sgmap if the direct mapping fails,
+	 * we need to set up for sgmap in any case.
+	 */
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = _bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
 	t->_dmamap_load_uio = _bus_dmamap_load_uio_direct;

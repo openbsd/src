@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_dma.c,v 1.10 2009/02/01 14:34:00 miod Exp $ */
+/* $OpenBSD: cia_dma.c,v 1.11 2014/06/14 23:11:20 jmatthew Exp $ */
 /* $NetBSD: cia_dma.c,v 1.16 2000/06/29 08:58:46 mrg Exp $ */
 
 /*-
@@ -56,6 +56,7 @@ bus_dma_tag_t cia_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
 int	cia_bus_dmamap_create_direct(bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	cia_bus_dmamap_destroy_direct(bus_dma_tag_t, bus_dmamap_t);
 
 int	cia_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int);
@@ -113,7 +114,7 @@ cia_dma_init(ccp)
 	t->_sgmap = NULL;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = cia_bus_dmamap_create_direct;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
+	t->_dmamap_destroy = cia_bus_dmamap_destroy_direct;
 	t->_dmamap_load = _bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
 	t->_dmamap_load_uio = _bus_dmamap_load_uio_direct;
@@ -307,7 +308,15 @@ cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
 	if (error)
 		return (error);
 
+	/*
+	 * Since we fall back to sgmap if the direct mapping fails,
+	 * we need to set up for sgmap in any case.
+	 */
 	map = *dmamp;
+	if (alpha_sgmap_dmamap_setup(map, nsegments, flags)) {
+		_bus_dmamap_destroy(t, map);
+		return (ENOMEM);
+	}
 
 	if ((ccp->cc_flags & CCF_PYXISBUG) != 0 &&
 	    map->_dm_segcnt > 1) {
@@ -326,6 +335,18 @@ cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
 	}
 
 	return (0);
+}
+
+/*
+ * Destroy a CIA direct-mapped DMA map.
+ */
+void
+cia_bus_dmamap_destroy_direct(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	alpha_sgmap_dmamap_teardown(map);
+	_bus_dmamap_destroy(t, map);
 }
 
 /*

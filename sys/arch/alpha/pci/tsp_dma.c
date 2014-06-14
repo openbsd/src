@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_dma.c,v 1.10 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: tsp_dma.c,v 1.11 2014/06/14 23:11:20 jmatthew Exp $ */
 /* $NetBSD: tsp_dma.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -153,8 +153,12 @@ tsp_dma_init(struct device *tsp, struct tsp_config *pcp)
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = tsp_dma_get_tag;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
+	/*
+	 * Since we fall back to sgmap if the direct mapping fails,
+	 * we need to set up for sgmap in any case.
+	 */
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = _bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
 	t->_dmamap_load_uio = _bus_dmamap_load_uio_direct;
