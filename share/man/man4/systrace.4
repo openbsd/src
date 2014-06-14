@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.20 2014/06/14 00:17:52 matthew Exp $
+.\"	$OpenBSD: systrace.4,v 1.21 2014/06/14 00:24:38 matthew Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -257,6 +257,7 @@ struct systrace_policy {
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
 #define SYSTR_POLICY_NEVER	2
+#define SYSTR_POLICY_KILL	3
 			short policy;
 		} assign;
 		pid_t pid;
@@ -314,7 +315,7 @@ struct systrace_getcwd {
 .Ed
 .It Dv STRIOCRESCWD
 Restore the working directory of the current process.
-.It Dv STRIOCINJECT
+.It Dv STRIOCINJECT Fa "struct systrace_inject *"
 Inject a buffer into the stackgap of the traced process.
 This accommodates for the manipulation of non-scalar arguments.
 The actual replacement is not done until system call time,
