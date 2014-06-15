@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.51 2014/06/13 13:28:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.52 2014/06/15 15:29:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -721,18 +721,18 @@ long	ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void));
 long	ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
-void ssl3_record_sequence_update(unsigned char *seq);
+void ssl3_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
-long ssl3_default_timeout(void );
+long ssl3_default_timeout(void);
 
-int ssl23_num_ciphers(void );
+int ssl23_num_ciphers(void);
 const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 int ssl23_read(SSL *s, void *buf, int len);
 int ssl23_peek(SSL *s, void *buf, int len);
 int ssl23_write(SSL *s, const void *buf, int len);
 int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
-long ssl23_default_timeout(void );
+long ssl23_default_timeout(void);
 
 long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);

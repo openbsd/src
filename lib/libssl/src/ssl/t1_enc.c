@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.59 2014/06/13 16:09:15 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.60 2014/06/15 15:29:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -803,11 +803,7 @@ tls1_enc(SSL *s, int send)
 			memcpy(ad, dtlsseq, 8);
 		} else {
 			memcpy(ad, seq, SSL3_SEQUENCE_SIZE);
-			for (i = 7; i >= 0; i--) {
-				++seq[i];
-				if (seq[i] != 0)
-					break;
-			}
+			ssl3_record_sequence_increment(seq);
 		}
 
 		ad[8] = rec->type;
@@ -964,11 +960,7 @@ tls1_enc(SSL *s, int send)
 				memcpy(buf, dtlsseq, 8);
 			} else {
 				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
-				for (i = 7; i >= 0; i--) {	/* increment */
-					++seq[i];
-					if (seq[i] != 0)
-						break;
-				}
+				ssl3_record_sequence_increment(seq);
 			}
 
 			buf[8] = rec->type;
@@ -1117,7 +1109,6 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	unsigned char *seq;
 	EVP_MD_CTX *hash;
 	size_t md_size, orig_len;
-	int i;
 	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char header[13];
 	int stream_mac = (send ?
@@ -1191,13 +1182,8 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (!stream_mac)
 		EVP_MD_CTX_cleanup(&hmac);
 
-	if (!SSL_IS_DTLS(ssl)) {
-		for (i = 7; i >= 0; i--) {
-			++seq[i];
-			if (seq[i] != 0)
-				break;
-		}
-	}
+	if (!SSL_IS_DTLS(ssl))
+		ssl3_record_sequence_increment(seq);
 
 	return (md_size);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.28 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.29 2014/06/15 15:29:25 jsing Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -1433,7 +1433,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wr->type=type; /* not needed but helps for debugging */
 	wr->length += DTLS1_RT_HEADER_LENGTH;
 
-	ssl3_record_sequence_update(&(s->s3->write_sequence[0]));
+	ssl3_record_sequence_increment(s->s3->write_sequence);
 
 	/* now let's set up wb */
 	wb->left = prefix_len + wr->length;

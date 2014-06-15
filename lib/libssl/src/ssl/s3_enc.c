@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.48 2014/06/13 16:08:03 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.49 2014/06/15 15:29:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -807,12 +807,13 @@ n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		EVP_MD_CTX_cleanup(&md_ctx);
 	}
 
-	ssl3_record_sequence_update(seq);
+	ssl3_record_sequence_increment(seq);
+
 	return (md_size);
 }
 
 void
-ssl3_record_sequence_update(unsigned char *seq)
+ssl3_record_sequence_increment(unsigned char *seq)
 {
 	int i;
 
