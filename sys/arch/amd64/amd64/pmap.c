@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2014/03/27 10:24:40 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2014/06/15 11:43:24 sf Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2379,7 +2379,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;
-			printf("va %#lx -> pa %#lx (pte=%#lx)\n",
+			printf("va %#lx -> pa %#llx (pte=%#llx)\n",
 			       sva, *pte, *pte & PG_FRAME);
 		}
 	}

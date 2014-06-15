@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.213 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.214 2014/06/15 11:43:24 sf Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ start_init(void *arg)
 			*flagsp++ = '\0';
 			i = flagsp - flags;
 #ifdef DEBUG
-			printf("init: copying out flags `%s' %d\n", flags, i);
+			printf("init: copying out flags `%s' %ld\n", flags, i);
 #endif
 #ifdef MACHINE_STACK_GROWS_UP
 			arg1 = ucp;
@@ -671,7 +671,7 @@ start_init(void *arg)
 		 */
 		i = strlen(path) + 1;
 #ifdef DEBUG
-		printf("init: copying out path `%s' %d\n", path, i);
+		printf("init: copying out path `%s' %ld\n", path, i);
 #endif
 #ifdef MACHINE_STACK_GROWS_UP
 		arg0 = ucp;

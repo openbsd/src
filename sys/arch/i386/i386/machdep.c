@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.538 2014/05/31 15:49:28 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.539 2014/06/15 11:43:24 sf Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3301,7 +3301,7 @@ init386(paddr_t first_avail)
 	if (kb > atop(IOM_END)) {
 		paddr_t lim = atop(IOM_END);
 #ifdef DEBUG
-		printf(" %x-%x (<16M)", lim, kb);
+		printf(" %lx-%x (<16M)", lim, kb);
 #endif
 		uvm_page_physload(lim, kb, lim, kb, 0);
 	}
@@ -3318,7 +3318,7 @@ init386(paddr_t first_avail)
 
 		if (a < e) {
 #ifdef DEBUG
-				printf(" %x-%x", a, e);
+				printf(" %lx-%lx", a, e);
 #endif
 				uvm_page_physload(a, e, a, e, 0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.98 2013/12/28 03:39:16 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.99 2014/06/15 11:43:24 sf Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -1105,7 +1105,7 @@ fdformat(dev_t dev, struct fd_formb *finfo, struct proc *p)
         bp->b_data = (caddr_t)finfo;
         
 #ifdef DEBUG
-	printf("fdformat: blkno %x count %x\n", bp->b_blkno, bp->b_bcount);
+	printf("fdformat: blkno %llx count %lx\n", bp->b_blkno, bp->b_bcount);
 #endif
 
         /* now do the format */

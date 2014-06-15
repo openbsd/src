@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.65 2013/10/19 09:32:12 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.66 2014/06/15 11:43:24 sf Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	    RAW_PART));
 	if (pdi != NULL && pdi->bios_heads > 0 && pdi->bios_sectors > 0) {
 #ifdef DEBUG
-		printf("Disk GEOM %u/%u/%u -> BIOS GEOM %u/%u/%u\n",
+		printf("Disk GEOM %u/%u/%u -> BIOS GEOM %u/%u/%llu\n",
 		    lp->d_ntracks, lp->d_nsectors, lp->d_ncylinders,
 		    pdi->bios_heads, pdi->bios_sectors,
 		    DL_GETDSIZE(lp) / (pdi->bios_heads * pdi->bios_sectors));

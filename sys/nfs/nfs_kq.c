@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.17 2014/03/28 17:57:11 mpi Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.18 2014/06/15 11:43:24 sf Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ filt_nfsread(struct knote *kn, long hint)
 
 	kn->kn_data = np->n_size - kn->kn_fp->f_offset;
 #ifdef DEBUG
-	printf("nfsread event. %d\n", kn->kn_data);
+	printf("nfsread event. %lld\n", kn->kn_data);
 #endif
         return (kn->kn_data != 0);
 }
