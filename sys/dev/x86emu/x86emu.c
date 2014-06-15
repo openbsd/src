@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.8 2014/06/15 11:01:43 pirofti Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.9 2014/06/15 11:04:49 pirofti Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -5626,6 +5626,7 @@ x86emuOp2_32_movsx_byte_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg;
 
+	fetch_decode_modrm(emu);
 	destreg = decode_rh_long_register(emu);
 	*destreg = (int32_t)(int8_t)decode_and_fetch_byte(emu);
 }
