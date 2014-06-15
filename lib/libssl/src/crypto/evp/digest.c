@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.17 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: digest.c,v 1.18 2014/06/15 15:46:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,18 +120,13 @@
 void
 EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 {
-	memset(ctx, '\0', sizeof *ctx);
+	memset(ctx, 0, sizeof *ctx);
 }
 
 EVP_MD_CTX *
 EVP_MD_CTX_create(void)
 {
-	EVP_MD_CTX *ctx = malloc(sizeof *ctx);
-
-	if (ctx)
-		EVP_MD_CTX_init(ctx);
-
-	return ctx;
+	return calloc(1, sizeof(EVP_MD_CTX));
 }
 
 int
@@ -367,7 +362,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 		 * functional reference we held for this reason. */
 		ENGINE_finish(ctx->engine);
 #endif
-	memset(ctx, '\0', sizeof *ctx);
+	memset(ctx, 0, sizeof *ctx);
 
 	return 1;
 }
