@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.28 2014/01/09 20:20:01 espie Exp $
+# $OpenBSD: Installed.pm,v 1.29 2014/06/15 23:49:51 afresh1 Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -166,7 +166,7 @@ sub new
 sub relative_url
 {
 	my ($self, $name) = @_;
-	return $name or '';
+	$name or '';
 }
 
 sub close
