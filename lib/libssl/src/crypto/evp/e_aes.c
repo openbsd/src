@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.21 2014/06/15 15:41:25 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.22 2014/06/15 22:53:21 tedu Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -651,9 +651,9 @@ aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 {
 	EVP_AES_GCM_CTX *gctx = c->cipher_data;
 
-	OPENSSL_cleanse(gctx, sizeof(*gctx));
 	if (gctx->iv != c->iv)
 		free(gctx->iv);
+	OPENSSL_cleanse(gctx, sizeof(*gctx));
 	return 1;
 }
 
