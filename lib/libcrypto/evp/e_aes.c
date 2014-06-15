@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.20 2014/06/15 15:39:43 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.21 2014/06/15 15:41:25 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1323,6 +1323,7 @@ aead_aes_gcm_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_aes_gcm_ctx *gcm_ctx = ctx->aead_state;
 
+	OPENSSL_cleanse(gcm_ctx, sizeof(*gcm_ctx));
 	free(gcm_ctx);
 }
 
