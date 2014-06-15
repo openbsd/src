@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.21 2014/06/15 01:49:06 deraadt Exp $ */
+/*	$OpenBSD: random.c,v 1.22 2014/06/15 05:10:58 deraadt Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -259,7 +259,7 @@ srandomdev(void)
 	else
 		len = rand_deg * sizeof(state[0]);
 
-	arc4random_buf(buf, len);
+	arc4random_buf(state, len);
 
 	if (rand_type != TYPE_0) {
 		fptr = &state[rand_sep];
