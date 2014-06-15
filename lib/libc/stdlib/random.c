@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.20 2014/06/13 15:35:34 deraadt Exp $ */
+/*	$OpenBSD: random.c,v 1.21 2014/06/15 01:49:06 deraadt Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -242,8 +242,7 @@ __warn_references(srandom,
  * srandomdev:
  *
  * Many programs choose the seed value in a totally predictable manner.
- * This often causes problems.  We seed the generator using random
- * data from the kernel.
+ * This often causes problems.  We seed the generator using random data.
  * Note that this particular seeding procedure can generate states
  * which are impossible to reproduce by calling srandom() with any
  * value, since the succeeding terms in the state buffer are no longer
@@ -260,7 +259,7 @@ srandomdev(void)
 	else
 		len = rand_deg * sizeof(state[0]);
 
-	getentropy(state, len);
+	arc4random_buf(buf, len);
 
 	if (rand_type != TYPE_0) {
 		fptr = &state[rand_sep];
