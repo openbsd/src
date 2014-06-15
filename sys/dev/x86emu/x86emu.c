@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.7 2014/06/15 11:00:38 pirofti Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.8 2014/06/15 11:01:43 pirofti Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -2157,21 +2157,24 @@ x86emuOp_mov_word_RM_SR(struct x86emu *emu)
 static void
 x86emuOp_lea_word_R_M(struct x86emu *emu)
 {
-	uint16_t *srcreg;
 	uint32_t destoffset;
 
-/*
- * TODO: Need to handle address size prefix!
- *
- * lea  eax,[eax+ebx*2] ??
- */
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod == 3)
 		x86emu_halt_sys(emu);
 
-	srcreg = decode_rh_word_register(emu);
 	destoffset = decode_rl_address(emu);
-	*srcreg = (uint16_t) destoffset;
+	if (emu->x86.mode & SYSMODE_PREFIX_ADDR) {
+		uint32_t *srcreg;
+
+		srcreg = decode_rh_long_register(emu);
+		*srcreg = (uint32_t) destoffset;
+	} else {
+		uint16_t *srcreg;
+
+		srcreg = decode_rh_word_register(emu);
+		*srcreg = (uint16_t) destoffset;
+	}
 }
 
 /*
