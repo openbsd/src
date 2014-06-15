@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.5 2013/03/10 21:58:02 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.6 2014/06/15 11:18:39 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -277,7 +277,6 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
 
 	/* enqueue/dequeue status */
 	vq->vq_avail_idx = 0;
-	vq->vq_avail_signalled = 0xffff;
 	vq->vq_used_idx = 0;
 	vq_sync_aring(sc, vq, BUS_DMASYNC_PREWRITE);
 	vq_sync_uring(sc, vq, BUS_DMASYNC_PREREAD);
@@ -684,15 +683,13 @@ virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq,
 notify:
 	if (notifynow) {
 		if (vq->vq_owner->sc_features & VIRTIO_F_RING_EVENT_IDX) {
-			uint16_t o = vq->vq_avail_signalled;
+			uint16_t o = vq->vq_avail->idx;
 			uint16_t n = vq->vq_avail_idx;
-			uint16_t t = VQ_AVAIL_EVENT(vq) + 1;
+			uint16_t t;
 			publish_avail_idx(sc, vq);
-			if ((o < n && o < t && t <= n)
-			    || (o > n && (o < t || t <= n))) {
+			t = VQ_AVAIL_EVENT(vq) + 1;
+			if ((uint16_t)(n - t) < (uint16_t)(n - o))
 				sc->sc_ops->kick(sc, vq->vq_index);
-				vq->vq_avail_signalled = n;
-			}
 		} else {
 			publish_avail_idx(sc, vq);
 			if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))

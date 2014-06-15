@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.4 2013/03/10 21:58:02 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.5 2014/06/15 11:18:39 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ struct virtqueue {
 
 	/* enqueue/dequeue status */
 	uint16_t		vq_avail_idx;
-	uint16_t		vq_avail_signalled;
 	uint16_t		vq_used_idx;
 	int			vq_queued;
 	struct mutex		*vq_aring_lock;
