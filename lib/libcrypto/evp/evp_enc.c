@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.19 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.20 2014/06/15 15:44:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,16 +74,12 @@ void
 EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
-	/* ctx->cipher=NULL; */
 }
 
 EVP_CIPHER_CTX *
 EVP_CIPHER_CTX_new(void)
 {
-	EVP_CIPHER_CTX *ctx = malloc(sizeof *ctx);
-	if (ctx)
-		EVP_CIPHER_CTX_init(ctx);
-	return ctx;
+	return calloc(1, sizeof(EVP_CIPHER_CTX));
 }
 
 int
