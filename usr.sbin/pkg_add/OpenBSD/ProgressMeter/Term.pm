@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.23 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Term.pm,v 1.24 2014/06/16 08:58:59 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,11 +20,8 @@ use warnings;
 package OpenBSD::PackingElement;
 sub size_and
 {
-	my ($self, $progress, $donesize, $totsize, $method, @r) = @_;
-	if (defined $self->{size}) {
-		$$donesize += $self->{size};
-		$progress->show($$donesize, $totsize);
-	}
+	my ($self, $p, $method, @r) = @_;
+	$p->advance($self);
 	$self->$method(@r);
 }
 
@@ -80,18 +77,28 @@ sub compute_count
 sub visit_with_size
 {
 	my ($progress, $plist, $method, $state, @r) = @_;
+	my $p = $progress->new_sizer($plist, $state);
+	$plist->size_and($p, $method, $state, @r);
+}
+
+sub new_sizer
+{
+	my ($progress, $plist, $state) = @_;
 	$plist->{totsize} //= compute_size($plist);
-	my $donesize = 0;
-	my $totsize = $plist->{totsize};
-	$progress->show($donesize, $totsize);
+	my $p = bless {
+	    progress => $progress, 
+	    totsize => $plist->{totsize},
+	    donesize => 0,
+	    state => $state
+	    }, "_SizeCounter";
+	$progress->show(0, $p->{totsize});
 	if (defined $state->{archive}) {
 		$state->{archive}{callback} = sub {
 		    my $done = shift;
-		    $progress->show($donesize + $done, $totsize);
+		    $progress->show($p->{donesize} + $done, $p->{totsize});
 		};
 	}
-	$plist->size_and($progress, \$donesize, $totsize,
-	    $method, $state, @r);
+	return $p;
 }
 
 sub visit_with_count
@@ -304,6 +311,20 @@ sub next
 
 	$todo //= 'ok';
 	print "\r$self->{header}: $todo\n";
+}
+
+package _SizeCounter;
+sub new
+{
+}
+
+sub advance
+{
+	my ($self, $e) = @_;
+	if (defined $e->{size}) {
+		$self->{donesize} += $e->{size};
+		$self->{progress}->show($self->{donesize}, $self->{totsize});
+	}
 }
 
 1;
