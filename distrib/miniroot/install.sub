@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.775 2014/06/09 18:05:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.776 2014/06/16 19:31:41 rpe Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1563,10 +1563,11 @@ sane_install() {
 
 	for _s in $SANESETS; do
 		isin $_s $DEFAULTSETS || continue
+		[[ -n $_q ]] && return 1
 		# If sane_install has no argument, harass the user.
-		[[ -z $_q ]] &&
-			ask_yn "Are you *SURE* your $MODE is complete without '$_s'?" ||
-			return
+		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
+			$auto && exit 1 || return 1
+		fi
 	done
 }
 
@@ -1594,8 +1595,6 @@ install_sets() {
 	echo "Let's $MODE the sets!"
 	while :; do
 		umount -f /mnt2 >/dev/null 2>&1
-		[[ -n $METHOD ]] && _d=$METHOD
-		sane_install quiet && _d=done
 
 		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
@@ -1607,8 +1606,8 @@ install_sets() {
 		*)	$auto && echo "'$resp' is not a valid choice." && exit 1;;
 		esac
 
-		# Install sets only once, in non-interactive installations.
-		$auto && break
+		[[ -n $METHOD ]] && _d=$METHOD
+		sane_install quiet || $auto && _d=done
 	done
 }
 
